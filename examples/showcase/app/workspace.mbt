@@ -59,7 +59,7 @@ pub fn ShowcaseRoute::new(
   workspace~ : Workspace,
   id~ : String,
 ) -> ShowcaseRoute {
-  { workspace, id: normalize_workspace_id(workspace, id) }
+  { workspace, id: normalize_workspace_id(workspace, id), }
 }
 
 ///|

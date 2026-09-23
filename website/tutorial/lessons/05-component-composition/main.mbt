@@ -14,7 +14,7 @@ fn user_card(model : Model) -> @moui.View[Unit] {
 ///|
 fn view(model : Model) -> @moui.View[Unit] {
   @views.column(
-    [user_card(model), user_card({ name: "Another card" })],
+    [user_card(model), user_card({ name: "Another card", })],
     spacing=8.0,
   )
 }
@@ -22,7 +22,7 @@ fn view(model : Model) -> @moui.View[Unit] {
 ///|
 pub fn program() -> @moui.Program[Model, Unit] {
   @moui.Program::simple(
-    init={ name: "Component card" },
+    init={ name: "Component card", },
     update=(model, _) => model,
     view~,
   )

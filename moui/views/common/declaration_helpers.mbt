@@ -4,15 +4,15 @@
 
 ///|
 pub fn exact_channel(key : @core.DeclarationKey) -> @core.DeclarationChannel {
-  @core.DeclarationChannel::Exact(key)
+  Exact(key)
 }
 
 ///|
 pub fn view_declaration(
-  layout? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  paint? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  semantics? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  platform? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  layout? : @core.DeclarationChannel = Constant,
+  paint? : @core.DeclarationChannel = Constant,
+  semantics? : @core.DeclarationChannel = Constant,
+  platform? : @core.DeclarationChannel = Constant,
 ) -> @core.ViewDeclaration {
   @core.ViewDeclaration::channels(layout~, paint~, semantics~, platform~)
 }
@@ -41,12 +41,12 @@ pub fn view_declaration_auto(
   let semantics_key = view_record_key(kind + ".semantics", semantics_fields)
   view_declaration(
     layout=if layout_theme_dependent && theme_override is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       view_exact_channel(layout_key)
     },
     paint=if paint_theme_dependent && theme_override is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       view_exact_channel(paint_key)
     },
@@ -140,16 +140,16 @@ pub fn declaration_font(font : @core.FontSpec) -> @core.DeclarationKey {
 ///|
 pub fn declaration_brush(brush : @core.Brush) -> @core.DeclarationKey {
   match brush {
-    @core.Brush::Solid(color) =>
+    Solid(color) =>
       @core.DeclarationKey::record(type_tag="Solid", fields=[
         ("color", declaration_color(color)),
       ])
-    @core.Brush::LinearGradient(spec) =>
+    LinearGradient(spec) =>
       @core.DeclarationKey::record(type_tag="LinearGradient", fields=[
         ("start_color", declaration_color(spec.start_color)),
         ("end_color", declaration_color(spec.end_color)),
       ])
-    @core.Brush::RadialGradient(spec) =>
+    RadialGradient(spec) =>
       @core.DeclarationKey::record(type_tag="RadialGradient", fields=[
         ("center_color", declaration_color(spec.center_color)),
         ("edge_color", declaration_color(spec.edge_color)),

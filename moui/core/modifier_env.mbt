@@ -54,9 +54,9 @@ pub fn[Msg] DisabledModifier::to_any_modifier(
     paint: if disabled {
       fn(_ctx) {
         {
-          commands: [DrawCommand::PushOpacity(0.42)],
+          commands: [PushOpacity(0.42)],
           child_layers: [],
-          post_commands: [DrawCommand::PopOpacity],
+          post_commands: [PopOpacity],
           overlay_commands: [],
           repaint_boundary: false,
           animating: false,
@@ -82,7 +82,7 @@ pub(all) struct FocusableModifier {
 pub fn[Msg] FocusableModifier::to_any_modifier(
   self : FocusableModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "Focusable", focusable: self.focusable }
+  { ..noop_modifier(), identity_kind: "Focusable", focusable: self.focusable, }
 }
 
 ///|

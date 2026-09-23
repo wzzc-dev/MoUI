@@ -5,7 +5,7 @@ pub struct ImageResourceLifecycle {
 
 ///|
 pub fn ImageResourceLifecycle::new() -> ImageResourceLifecycle {
-  { records: Map([]) }
+  { records: Map([]), }
 }
 
 ///|

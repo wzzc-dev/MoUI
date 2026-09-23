@@ -3,7 +3,7 @@
 fn render(html : String) -> Array[@core.DrawCommand] {
   let size = @values.Size::new(400.0, 300.0)
   let tree = @crater.render_html_to_paint_tree(html, size)
-  paint_node_to_commands(tree)
+  @translate.paint_node_to_commands(tree)
 }
 
 ///|
@@ -14,7 +14,7 @@ test "background rect" {
   )
   let fills = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::FillRect(rect, color) => Some((rect, color))
+      FillRect(rect, color) => Some((rect, color))
       _ => None
     }
   })
@@ -37,7 +37,7 @@ test "nested coordinates accumulate" {
   )
   let fills = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::FillRect(rect, _) => Some(rect)
+      FillRect(rect, _) => Some(rect)
       _ => None
     }
   })
@@ -55,7 +55,7 @@ test "uneven borders use accumulated offset" {
   )
   let fills = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::FillRect(rect, color) => Some((rect, color))
+      FillRect(rect, color) => Some((rect, color))
       _ => None
     }
   })
@@ -77,10 +77,10 @@ test "opacity wraps background" {
   let mut bg_index = -1
   for i in 0..<cmds.length() {
     match cmds[i] {
-      @core.DrawCommand::PushOpacity(0.5) => push_index = i
-      @core.DrawCommand::FillRect(
-        { origin: { x: 8.0, y: 8.0 }, size: { width: 100.0, height: 50.0 } },
-        { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }
+      PushOpacity(0.5) => push_index = i
+      FillRect(
+        { origin: { x: 8.0, y: 8.0, }, size: { width: 100.0, height: 50.0, }, },
+        { r: 1.0, g: 0.0, b: 0.0, a: 1.0, }
       ) => bg_index = i
       _ => ()
     }
@@ -98,7 +98,7 @@ test "rounded background" {
   )
   let roundeds = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::FillRoundedRect(rounded, _) => Some(rounded)
+      FillRoundedRect(rounded, _) => Some(rounded)
       _ => None
     }
   })
@@ -115,7 +115,7 @@ test "text draws" {
   )
   let texts = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::DrawText(run) => Some(run)
+      DrawText(run) => Some(run)
       _ => None
     }
   })
@@ -133,8 +133,7 @@ test "uniform border strokes" {
   )
   let strokes = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::StrokeRect(rect, color, width) =>
-        Some((rect, color, width))
+      StrokeRect(rect, color, width) => Some((rect, color, width))
       _ => None
     }
   })
@@ -153,7 +152,7 @@ test "box shadow maps" {
   )
   let shadows = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::DrawShadow(shadow) => Some(shadow)
+      DrawShadow(shadow) => Some(shadow)
       _ => None
     }
   })
@@ -171,13 +170,13 @@ test "opacity scopes" {
   )
   let pushes = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::PushOpacity(v) => Some(v)
+      PushOpacity(v) => Some(v)
       _ => None
     }
   })
   let pops = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::PopOpacity => Some(true)
+      PopOpacity => Some(true)
       _ => None
     }
   })
@@ -194,13 +193,13 @@ test "clip scopes" {
   )
   let clips = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::PushClip(rect) => Some(rect)
+      PushClip(rect) => Some(rect)
       _ => None
     }
   })
   let pops = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::PopClip => Some(true)
+      PopClip => Some(true)
       _ => None
     }
   })
@@ -218,7 +217,7 @@ test "children nested inside scopes" {
   // 按序:父 FillRect、子 FillRect
   let fills = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::FillRect(_rect, color) => Some(color)
+      FillRect(_rect, color) => Some(color)
       _ => None
     }
   })
@@ -235,7 +234,7 @@ test "data uri image maps" {
   )
   let images = cmds.filter_map(fn(c) {
     match c {
-      @core.DrawCommand::DrawImage(image) => Some(image)
+      DrawImage(image) => Some(image)
       _ => None
     }
   })
@@ -253,7 +252,7 @@ test "text frame height is at least font size" {
   let mut checked = false
   for c in commands {
     match c {
-      @core.DrawCommand::DrawText(run) => {
+      DrawText(run) => {
         debug_inspect(run.text, content="\"Big\"")
         debug_inspect(run.frame.size.height >= run.font.size, content="true")
         debug_inspect(run.font.size, content="20")

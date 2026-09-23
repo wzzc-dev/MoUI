@@ -15,13 +15,13 @@ fn ExcelApp::view(self : ExcelApp) -> @moui.View[ExcelMsg] {
       build_status_bar(model, theme),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   let base = @views.container(
     shell,
     width=shell_width,
     height=shell_height,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=0.0,
   )

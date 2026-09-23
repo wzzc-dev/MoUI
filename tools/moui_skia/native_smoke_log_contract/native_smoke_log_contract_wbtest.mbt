@@ -30,7 +30,7 @@ fn sample_contract() -> SmokeContract {
       "native smoke text run resource plan count",
     ],
     expected_values: [
-      { marker: "native smoke text run resource plan count", value: "3" },
+      { marker: "native smoke text run resource plan count", value: "3", },
     ],
     conditional_markers: [
       {

@@ -7,17 +7,13 @@ pub fn[Msg] toolbar(
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   @container.container(
-    @layout.row(
-      children,
-      spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Center,
-    ),
+    @layout.row(children, spacing=resolved_theme.spacing_scale.sm, align=Center),
     width~,
     height~,
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.xs,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }
 
 ///|
@@ -36,7 +32,7 @@ pub fn[Msg] button_group(
     let variant = if item.id == selected {
       @style.ButtonVariant::Primary
     } else {
-      @style.ButtonVariant::Outline
+      Outline
     }
     buttons.push(
       @button.button(
@@ -51,9 +47,7 @@ pub fn[Msg] button_group(
       .semantics_selected(selected=item.id == selected),
     )
   }
-  @layout.row(buttons, spacing=0.0, align=@style.CrossAlign::Center).semantics_role(
-    @core.SemanticsRole::ButtonGroup,
-  )
+  @layout.row(buttons, spacing=0.0, align=Center).semantics_role(ButtonGroup)
 }
 
 ///|
@@ -70,7 +64,7 @@ pub fn[Msg] command_bar(
       @button.button(
         item.label,
         on_click=item.message,
-        variant=@style.ButtonVariant::Ghost,
+        variant=Ghost,
         theme=resolved_theme,
         width=command_item_width(item.label),
         height=36.0,
@@ -93,7 +87,7 @@ pub fn[Msg] status_bar(
     segments.push(
       @text.text(
         item,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=command_item_width(item),
         height=22.0,
@@ -101,18 +95,14 @@ pub fn[Msg] status_bar(
     )
   }
   @container.container(
-    @layout.row(
-      segments,
-      spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Center,
-    ),
+    @layout.row(segments, spacing=resolved_theme.spacing_scale.sm, align=Center),
     width~,
     height~,
     background=resolved_theme.palette.surface_variant.multiply_alpha(0.52),
     corner_radius=resolved_theme.radius_scale.sm,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.xs,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }
 
 ///|

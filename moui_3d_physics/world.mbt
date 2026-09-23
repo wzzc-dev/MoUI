@@ -56,12 +56,12 @@ pub(all) struct BodyDesc {
 
 ///|
 pub fn BodyDesc::new(
-  body_type? : BodyType = BodyType::Dynamic,
+  body_type? : BodyType = Dynamic,
   position? : @moui_3d.Vec3 = @moui_3d.Vec3::zero(),
   rotation? : @moui_3d.Quat = @moui_3d.Quat::identity(),
   gravity_scale? : Double = 1.0,
 ) -> BodyDesc {
-  { body_type, position, rotation, gravity_scale }
+  { body_type, position, rotation, gravity_scale, }
 }
 
 ///|
@@ -170,7 +170,7 @@ pub fn RayHit::new(
   position~ : @moui_3d.Vec3,
   normal~ : @moui_3d.Vec3,
 ) -> RayHit {
-  { collider, distance, position, normal }
+  { collider, distance, position, normal, }
 }
 
 ///|
@@ -186,7 +186,7 @@ pub(all) struct PhysicsWorld {
 pub fn PhysicsWorld::new(
   gravity? : @moui_3d.Vec3 = @moui_3d.Vec3::new(x=0.0, y=-9.81, z=0.0),
 ) -> PhysicsWorld {
-  { gravity, next_body: 1L, next_collider: 1L, bodies: {}, colliders: {} }
+  { gravity, next_body: 1L, next_collider: 1L, bodies: {}, colliders: {}, }
 }
 
 ///|

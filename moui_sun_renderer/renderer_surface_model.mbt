@@ -25,7 +25,7 @@ pub fn SunPresentTarget::new(
   description~ : String,
   present~ : (SunPixelFrame) -> Bool,
 ) -> SunPresentTarget {
-  { description, present }
+  { description, present, }
 }
 
 ///|

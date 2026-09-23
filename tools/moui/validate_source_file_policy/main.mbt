@@ -416,7 +416,7 @@ fn validate_policy(repo_root : String, policy : SourcePolicy) -> PolicyResult {
     }
   }
   review_paths.sort_by((left, right) => left.lexical_compare(right))
-  { file_count: files.length(), review_paths, failures }
+  { file_count: files.length(), review_paths, failures, }
 }
 
 ///|

@@ -122,7 +122,7 @@ pub fn parse_smoke_contract(
           "native smoke expected value references unknown marker: " + marker,
         )
       }
-      expected_values.push({ marker, value })
+      expected_values.push({ marker, value, })
     }
   }
 
@@ -176,10 +176,10 @@ pub fn parse_smoke_contract(
         when_marker,
       )
     }
-    conditional_markers.push({ marker, when_marker, when_value })
+    conditional_markers.push({ marker, when_marker, when_value, })
   }
 
-  Ok({ stage_markers, expected_values, conditional_markers })
+  Ok({ stage_markers, expected_values, conditional_markers, })
 }
 
 ///|

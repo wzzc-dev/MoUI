@@ -157,14 +157,12 @@ pub fn[Msg] PresentationSpec::new(
   id~ : String,
   kind~ : PresentationKind,
   content~ : @core.View[Msg],
-  anchor? : PresentationAnchor = PresentationAnchor::Viewport(
-    @core.Point::new(x=0.0, y=0.0),
-  ),
+  anchor? : PresentationAnchor = Viewport(@core.Point::new(x=0.0, y=0.0)),
   placement? : PresentationPlacement? = None,
-  modality? : PresentationModality = PresentationModality::NonModal,
+  modality? : PresentationModality = NonModal,
   dismiss? : PresentationDismissPolicy[Msg] = PresentationDismissPolicy::none(),
-  host_policy? : PresentationHostPolicy = PresentationHostPolicy::ViewOnly,
-  transition? : PresentationTransition = PresentationTransition::Fade,
+  host_policy? : PresentationHostPolicy = ViewOnly,
+  transition? : PresentationTransition = Fade,
   presented? : Bool = true,
 ) -> PresentationSpec[Msg] {
   let resolved_placement = placement.unwrap_or(PresentationPlacement::new())
@@ -204,25 +202,21 @@ pub fn[Msg] PresentationDismissPolicy::new(
   host_close? : Bool = true,
   message? : Msg? = None,
 ) -> PresentationDismissPolicy[Msg] {
-  { outside_tap, escape, system_back, host_close, message }
+  { outside_tap, escape, system_back, host_close, message, }
 }
 
 ///|
 pub fn PresentationPlacement::new(
-  candidates? : Array[PresentationPlacementCandidate] = [
-    PresentationPlacementCandidate::BelowStart,
-  ],
+  candidates? : Array[PresentationPlacementCandidate] = [BelowStart],
   viewport_insets? : @core.Insets = @core.Insets::all(8.0),
   clamp_to_viewport? : Bool = true,
 ) -> PresentationPlacement {
-  { candidates: candidates.copy(), viewport_insets, clamp_to_viewport }
+  { candidates: candidates.copy(), viewport_insets, clamp_to_viewport, }
 }
 
 ///|
 pub fn PresentationPlacement::viewport(
-  candidates? : Array[PresentationPlacementCandidate] = [
-    PresentationPlacementCandidate::Center,
-  ],
+  candidates? : Array[PresentationPlacementCandidate] = [Center],
   viewport_insets? : @core.Insets = @core.Insets::all(8.0),
 ) -> PresentationPlacement {
   PresentationPlacement::new(candidates~, viewport_insets~)
@@ -333,14 +327,14 @@ fn clamp_presentation_rect(
 
 ///|
 pub fn PresentationAnchor::stable_key(key : String) -> PresentationAnchor {
-  PresentationAnchor::StableKey(key)
+  StableKey(key)
 }
 
 ///|
 pub fn PresentationAnchor::viewport_point(
   point : @core.Point,
 ) -> PresentationAnchor {
-  PresentationAnchor::Viewport(point)
+  Viewport(point)
 }
 
 ///|
@@ -479,7 +473,7 @@ fn[Msg] overlay_host_with_sizing(
   let children : Array[@core.View[Msg]] = [base_child]
   for index, presentation in presentations {
     if presentation.presented {
-      if presentation.modality is PresentationModality::Modal {
+      if presentation.modality is Modal {
         children.push(presentation_barrier(presentation))
       }
       children.push(
@@ -491,7 +485,7 @@ fn[Msg] overlay_host_with_sizing(
     }
   }
   @core.View::from_node(
-    OverlayHostNode::{ presentations: presentations.copy(), sizing },
+    OverlayHostNode::{ presentations: presentations.copy(), sizing, },
     children=_node => children,
     event=(node, context) => node.event_result(context),
   )
@@ -503,8 +497,7 @@ fn[Msg] deepest_modal_index(
 ) -> Int {
   let mut result = -1
   for index, presentation in presentations {
-    if presentation.presented &&
-      presentation.modality is PresentationModality::Modal {
+    if presentation.presented && presentation.modality is Modal {
       result = index
     }
   }
@@ -539,7 +532,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn declaration(_self) {
 ///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
   let viewport = ctx.constraints.constrain(ctx.constraints.max)
-  let host_size = if self.sizing is OverlayHostSizing::BaseSized {
+  let host_size = if self.sizing is BaseSized {
     // Base-sized hosts (control popups) size to their base child. The base's
     // measured size is authoritative: parents may stretch the host's placed
     // frame, but the popup anchor and the base child must track the control.
@@ -562,7 +555,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
   let mut child_index = 1
   for presentation in self.presentations {
     if presentation.presented {
-      if presentation.modality is PresentationModality::Modal {
+      if presentation.modality is Modal {
         frames.push(
           @core.Rect::new(
             x=0.0,
@@ -622,7 +615,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
   let mut child_index = 1
   for presentation in self.presentations {
     if presentation.presented {
-      if presentation.modality is PresentationModality::Modal {
+      if presentation.modality is Modal {
         child_index = child_index + 1
       }
       let measured = if child_index < context.child_sizes.length() {
@@ -637,8 +630,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
         context.anchor_frames,
       )
       let frame = match presentation.kind {
-        PresentationKind::Toast if self.sizing
-          is OverlayHostSizing::ViewportSized =>
+        Toast if self.sizing is ViewportSized =>
           @core.Rect::new(
             x=(viewport_rect.size.width - measured.width) / 2.0,
             y=viewport_rect.size.height -
@@ -647,16 +639,14 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
             width=measured.width,
             height=measured.height,
           )
-        PresentationKind::Dialog if self.sizing
-          is OverlayHostSizing::ViewportSized =>
+        Dialog if self.sizing is ViewportSized =>
           @core.Rect::new(
             x=(viewport_rect.size.width - measured.width) / 2.0,
             y=(viewport_rect.size.height - measured.height) / 2.0,
             width=measured.width,
             height=measured.height,
           )
-        PresentationKind::Sheet if self.sizing
-          is OverlayHostSizing::ViewportSized =>
+        Sheet if self.sizing is ViewportSized =>
           @core.Rect::new(
             x=(viewport_rect.size.width - measured.width) / 2.0,
             y=viewport_rect.size.height - measured.height,
@@ -679,14 +669,12 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
 
 ///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn keyboard_policy(_self) {
-  @core.KeyboardPolicy::TopMostDismissal
+  TopMostDismissal
 }
 
 ///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -697,10 +685,10 @@ fn presentation_anchor_frame(
   anchor_frames : Array[(String, @core.Rect)],
 ) -> @core.Rect {
   match anchor {
-    PresentationAnchor::Viewport(point) =>
+    Viewport(point) =>
       @core.Rect::new(x=point.x, y=point.y, width=0.0, height=0.0)
-    PresentationAnchor::HostBase => host_frame
-    PresentationAnchor::StableKey(key) => {
+    HostBase => host_frame
+    StableKey(key) => {
       for entry in anchor_frames {
         if entry.0 == key {
           return entry.1
@@ -725,7 +713,7 @@ fn[Msg] OverlayHostNode::event_result(
   context : @core.ViewEventContext,
 ) -> @core.ViewEventResult[Msg] {
   match context.event {
-    @core.AppEvent::Keyboard(event) =>
+    Keyboard(event) =>
       if event.pressed &&
         (
           event.key == "Escape" ||
@@ -778,8 +766,8 @@ fn[Msg] presentation_barrier(
     },
     event=(node, context) => {
       match context.event {
-        @core.AppEvent::Pointer(event) =>
-          if event.phase == @core.PointerPhase::Down {
+        Pointer(event) =>
+          if event.phase == Down {
             match node.message {
               Some(message) => @core.ViewEventResult::message(message)
               None =>
@@ -787,7 +775,7 @@ fn[Msg] presentation_barrier(
                   ..@core.ViewEventResult::ignored(),
                   changed: true,
                   captured: true,
-                  dirty: @core.ViewDirtyHint::ViewPaintDirty,
+                  dirty: ViewPaintDirty,
                 }
             }
           } else {
@@ -812,17 +800,15 @@ fn[Msg] presentation_surface(
 ) -> @core.View[Msg] {
   let mut content = presentation.content
   match presentation.kind {
-    PresentationKind::Dialog | PresentationKind::Sheet =>
+    Dialog | Sheet =>
       content = content
-        .semantics_role(@core.SemanticsRole::Dialog)
-        .semantics_state(
-          modal=presentation.modality is PresentationModality::Modal,
-        )
+        .semantics_role(Dialog)
+        .semantics_state(modal=presentation.modality is Modal)
         .focus_trap()
     _ => ()
   }
   match presentation.transition {
-    PresentationTransition::None => ()
+    None => ()
     _ =>
       content = content.transition(
         spec=presentation.transition.spec(),
@@ -896,9 +882,7 @@ impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn layout(
 impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn semantics(
   _self,
 ) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -907,9 +891,9 @@ fn[Msg] PresentationSurfaceGuard::event_result(
   context : @core.ViewEventContext,
 ) -> @core.ViewEventResult[Msg] {
   match context.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       if context.frame.contains(event.position) {
-        { ..@core.ViewEventResult::ignored(), changed: true, captured: true }
+        { ..@core.ViewEventResult::ignored(), changed: true, captured: true, }
       } else {
         @core.ViewEventResult::ignored()
       }
@@ -944,21 +928,15 @@ impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn paint(_self, _ctx)
   {
     ..@core.ViewPaintPlan::empty(),
     commands: [
-      @core.DrawCommand::FillRect(
-        _ctx.frame,
-        @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.22),
-      ),
+      FillRect(_ctx.frame, @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.22)),
     ],
     overlay_commands: [
-      @core.DrawCommand::FillRect(
-        _ctx.frame,
-        @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
-      ),
+      FillRect(_ctx.frame, @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     ],
   }
 }
 
 ///|
 impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
+  @core.ViewSemanticsInfo::new(composition=Hidden)
 }

@@ -68,7 +68,7 @@ test "Inspector: records cache reuse and pointer hit paths" {
     app.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -86,7 +86,7 @@ test "RuntimeViewNode: same identity preserves state and remount resets it" {
   )
   let mounted = mount_runtime_view_node_with_next(current, 1)
   mounted.node.control.apply_view_context(
-    { ..mounted.node.control.view_state, hovered: true }.with_slot(
+    { ..mounted.node.control.view_state, hovered: true, }.with_slot(
       runtime_probe_state_slot(),
       7,
     ),
@@ -161,8 +161,8 @@ test "RuntimeViewNode: event state and routing commit before message delivery" {
     },
     event=(_node, context) => {
       match context.event {
-        @core.AppEvent::Pointer(event) =>
-          if event.phase == @core.PointerPhase::Down {
+        Pointer(event) =>
+          if event.phase == Down {
             {
               ..@core.ViewEventResult::message(()),
               focused: true,
@@ -170,7 +170,7 @@ test "RuntimeViewNode: event state and routing commit before message delivery" {
               state: Some(
                 context.state.with_slot(runtime_probe_state_slot(), 11),
               ),
-              dirty: @core.ViewDirtyHint::ViewPaintDirty,
+              dirty: ViewPaintDirty,
             }
           } else {
             @core.ViewEventResult::ignored()
@@ -203,7 +203,7 @@ test "RuntimeViewNode: event state and routing commit before message delivery" {
     runtime.dispatch_pointer_event(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )

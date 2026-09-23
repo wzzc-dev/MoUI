@@ -23,7 +23,7 @@ pub fn PlatformViewProperty::new(
   key~ : String,
   value~ : String,
 ) -> PlatformViewProperty {
-  { key, value }
+  { key, value, }
 }
 
 ///|
@@ -34,7 +34,7 @@ pub fn PlatformViewPlacement::new(
   clip? : Rect? = None,
   properties? : Array[PlatformViewProperty] = [],
 ) -> PlatformViewPlacement {
-  { id, kind, frame, clip, properties }
+  { id, kind, frame, clip, properties, }
 }
 
 ///|

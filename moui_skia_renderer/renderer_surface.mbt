@@ -83,7 +83,7 @@ pub fn HostGpuPresentOutcome::new(
   succeeded~ : Bool,
   next_surface? : @skia_native.Surface? = None,
 ) -> HostGpuPresentOutcome {
-  { succeeded, next_surface }
+  { succeeded, next_surface, }
 }
 
 ///|
@@ -104,7 +104,7 @@ pub fn HostGpuPresentTarget::new(
   create_window_surface~ : (@skia_native.GpuContext?, @core.SurfaceMetrics) -> @skia_native.Surface?,
   present_gpu~ : (@skia_native.GpuContext?, @skia_native.Surface) -> HostGpuPresentOutcome,
 ) -> HostGpuPresentTarget {
-  { description, create_window_surface, present_gpu }
+  { description, create_window_surface, present_gpu, }
 }
 
 ///|
@@ -159,32 +159,23 @@ fn skia_gpu_context_status_label(
   status : @skia_native.SkiaGpuContextSupportStatus,
 ) -> String {
   match status {
-    @skia_native.SkiaGpuContextAvailable => "available"
-    @skia_native.SkiaGpuContextSkiaUnavailable => "skia-unavailable"
-    @skia_native.SkiaGpuContextAnonymous => "anonymous"
-    @skia_native.SkiaGpuContextMockUnsupported => "mock-unsupported"
-    @skia_native.SkiaGpuContextBackendUnsupported => "backend-unsupported"
-    @skia_native.SkiaGpuContextMetalOptInDisabled => "metal-opt-in-disabled"
-    @skia_native.SkiaGpuContextMetalHeadersUnavailable =>
-      "metal-headers-unavailable"
-    @skia_native.SkiaGpuContextMetalRuntimeUnavailable =>
-      "metal-runtime-unavailable"
-    @skia_native.SkiaGpuContextDirect3DOptInDisabled =>
-      "direct3d-opt-in-disabled"
-    @skia_native.SkiaGpuContextDirect3DHeadersUnavailable =>
-      "direct3d-headers-unavailable"
-    @skia_native.SkiaGpuContextDirect3DRuntimeUnavailable =>
-      "direct3d-runtime-unavailable"
-    @skia_native.SkiaGpuContextVulkanOptInDisabled => "vulkan-opt-in-disabled"
-    @skia_native.SkiaGpuContextVulkanHeadersUnavailable =>
-      "vulkan-headers-unavailable"
-    @skia_native.SkiaGpuContextVulkanRuntimeUnavailable =>
-      "vulkan-runtime-unavailable"
-    @skia_native.SkiaGpuContextEglOptInDisabled => "egl-opt-in-disabled"
-    @skia_native.SkiaGpuContextEglHeadersUnavailable =>
-      "egl-headers-unavailable"
-    @skia_native.SkiaGpuContextEglRuntimeUnavailable =>
-      "egl-runtime-unavailable"
+    SkiaGpuContextAvailable => "available"
+    SkiaGpuContextSkiaUnavailable => "skia-unavailable"
+    SkiaGpuContextAnonymous => "anonymous"
+    SkiaGpuContextMockUnsupported => "mock-unsupported"
+    SkiaGpuContextBackendUnsupported => "backend-unsupported"
+    SkiaGpuContextMetalOptInDisabled => "metal-opt-in-disabled"
+    SkiaGpuContextMetalHeadersUnavailable => "metal-headers-unavailable"
+    SkiaGpuContextMetalRuntimeUnavailable => "metal-runtime-unavailable"
+    SkiaGpuContextDirect3DOptInDisabled => "direct3d-opt-in-disabled"
+    SkiaGpuContextDirect3DHeadersUnavailable => "direct3d-headers-unavailable"
+    SkiaGpuContextDirect3DRuntimeUnavailable => "direct3d-runtime-unavailable"
+    SkiaGpuContextVulkanOptInDisabled => "vulkan-opt-in-disabled"
+    SkiaGpuContextVulkanHeadersUnavailable => "vulkan-headers-unavailable"
+    SkiaGpuContextVulkanRuntimeUnavailable => "vulkan-runtime-unavailable"
+    SkiaGpuContextEglOptInDisabled => "egl-opt-in-disabled"
+    SkiaGpuContextEglHeadersUnavailable => "egl-headers-unavailable"
+    SkiaGpuContextEglRuntimeUnavailable => "egl-runtime-unavailable"
   }
 }
 
@@ -199,8 +190,8 @@ pub fn skia_gpu_metal_preflight_summary() -> String {
   )
   let plan = target.resource_plan()
   let target_plan_ready = target.has_gpu_context() &&
-    plan.count_kind(@moui_skia.GpuSurfaceResource) == 1 &&
-    plan.count_kind(@moui_skia.GpuContextResource) == 1 &&
+    plan.count_kind(GpuSurfaceResource) == 1 &&
+    plan.count_kind(GpuContextResource) == 1 &&
     plan.gpu_backed_count == 2
   let status = @skia_native.Surface::gpu_context_support_status(context)
   let target_label = if target_plan_ready {
@@ -221,7 +212,7 @@ pub fn SkiaPresentTarget::new(
   description~ : String,
   present~ : (SkiaPixelFrame) -> Bool,
 ) -> SkiaPresentTarget {
-  { description, present }
+  { description, present, }
 }
 
 ///|
@@ -270,7 +261,7 @@ pub fn SkiaRasterRenderer::to_renderer_session(
     render_frame=submission => self.render_frame(submission.frame()),
     text_system=() => self.text_system(),
     present_count=() => self.present_count(),
-    recover=_reason => @render.RecoveryResult::FallbackToCpu,
+    recover=_reason => FallbackToCpu,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),
     apply_image_load_completion=completion => {
@@ -306,8 +297,8 @@ fn create_gpu_context(
   surface_route : SkiaSurfaceRoute,
 ) -> @skia_native.GpuContext? raise SkiaRendererError {
   match surface_route {
-    SkiaSurfaceRoute::RasterSurfaceRoute => None
-    SkiaSurfaceRoute::MetalGpuSurfaceRoute => {
+    RasterSurfaceRoute => None
+    MetalGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::metal(
         b"moui-render-skia-metal-gpu",
       )
@@ -317,13 +308,11 @@ fn create_gpu_context(
           let status = @skia_native.Surface::gpu_context_support_status(
             descriptor,
           )
-          raise SkiaRendererError::GpuContextUnavailable(
-            skia_gpu_context_status_label(status),
-          )
+          raise GpuContextUnavailable(skia_gpu_context_status_label(status))
         }
       }
     }
-    SkiaSurfaceRoute::Direct3DGpuSurfaceRoute => {
+    Direct3DGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::direct3d12(
         b"moui-render-skia-direct3d-gpu",
       )
@@ -333,13 +322,11 @@ fn create_gpu_context(
           let status = @skia_native.Surface::gpu_context_support_status(
             descriptor,
           )
-          raise SkiaRendererError::GpuContextUnavailable(
-            skia_gpu_context_status_label(status),
-          )
+          raise GpuContextUnavailable(skia_gpu_context_status_label(status))
         }
       }
     }
-    SkiaSurfaceRoute::VulkanGpuSurfaceRoute => {
+    VulkanGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::vulkan(
         b"moui-render-skia-vulkan-gpu",
       )
@@ -349,13 +336,11 @@ fn create_gpu_context(
           let status = @skia_native.Surface::gpu_context_support_status(
             descriptor,
           )
-          raise SkiaRendererError::GpuContextUnavailable(
-            skia_gpu_context_status_label(status),
-          )
+          raise GpuContextUnavailable(skia_gpu_context_status_label(status))
         }
       }
     }
-    SkiaSurfaceRoute::EglGpuSurfaceRoute => {
+    EglGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::opengl(
         b"moui-render-skia-egl-gpu",
       )
@@ -365,9 +350,7 @@ fn create_gpu_context(
           let status = @skia_native.Surface::gpu_context_support_status(
             descriptor,
           )
-          raise SkiaRendererError::GpuContextUnavailable(
-            skia_gpu_context_status_label(status),
-          )
+          raise GpuContextUnavailable(skia_gpu_context_status_label(status))
         }
       }
     }
@@ -382,69 +365,57 @@ fn create_surface(
 ) -> @skia_native.Surface raise SkiaRendererError {
   let target = skia_surface_target(metrics, surface_route, gpu_context)
   match surface_route {
-    SkiaSurfaceRoute::RasterSurfaceRoute =>
+    RasterSurfaceRoute =>
       match @skia_native.Surface::for_target(target) {
         Some(surface) => surface
-        None => raise SkiaRendererError::SurfaceUnavailable
+        None => raise SurfaceUnavailable
       }
-    SkiaSurfaceRoute::MetalGpuSurfaceRoute =>
+    MetalGpuSurfaceRoute =>
       match gpu_context {
-        None =>
-          raise SkiaRendererError::GpuContextUnavailable(
-            "missing-metal-gpu-context",
-          )
+        None => raise GpuContextUnavailable("missing-metal-gpu-context")
         Some(gpu_context) =>
           match
             @skia_native.Surface::for_target_with_gpu_context(
               target, gpu_context,
             ) {
             Some(surface) => surface
-            None => raise SkiaRendererError::SurfaceUnavailable
+            None => raise SurfaceUnavailable
           }
       }
-    SkiaSurfaceRoute::Direct3DGpuSurfaceRoute =>
+    Direct3DGpuSurfaceRoute =>
       match gpu_context {
-        None =>
-          raise SkiaRendererError::GpuContextUnavailable(
-            "missing-direct3d-gpu-context",
-          )
+        None => raise GpuContextUnavailable("missing-direct3d-gpu-context")
         Some(gpu_context) =>
           match
             @skia_native.Surface::for_target_with_gpu_context(
               target, gpu_context,
             ) {
             Some(surface) => surface
-            None => raise SkiaRendererError::SurfaceUnavailable
+            None => raise SurfaceUnavailable
           }
       }
-    SkiaSurfaceRoute::VulkanGpuSurfaceRoute =>
+    VulkanGpuSurfaceRoute =>
       match gpu_context {
-        None =>
-          raise SkiaRendererError::GpuContextUnavailable(
-            "missing-vulkan-gpu-context",
-          )
+        None => raise GpuContextUnavailable("missing-vulkan-gpu-context")
         Some(gpu_context) =>
           match
             @skia_native.Surface::for_target_with_gpu_context(
               target, gpu_context,
             ) {
             Some(surface) => surface
-            None => raise SkiaRendererError::SurfaceUnavailable
+            None => raise SurfaceUnavailable
           }
       }
-    SkiaSurfaceRoute::EglGpuSurfaceRoute =>
+    EglGpuSurfaceRoute =>
       match gpu_context {
-        None =>
-          raise SkiaRendererError::GpuContextUnavailable(
-            "missing-egl-gpu-context",
-          )
+        None => raise GpuContextUnavailable("missing-egl-gpu-context")
         Some(gpu_context) =>
           match
             @skia_native.Surface::for_target_with_gpu_context(
               target, gpu_context,
             ) {
             Some(surface) => surface
-            None => raise SkiaRendererError::SurfaceUnavailable
+            None => raise SurfaceUnavailable
           }
       }
   }
@@ -470,9 +441,9 @@ fn skia_surface_target_for_physical_size(
   gpu_context : @skia_native.GpuContext?,
 ) -> @moui_skia.SurfaceTargetDescriptor {
   match surface_route {
-    SkiaSurfaceRoute::RasterSurfaceRoute =>
+    RasterSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
-    SkiaSurfaceRoute::MetalGpuSurfaceRoute =>
+    MetalGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -480,7 +451,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    SkiaSurfaceRoute::Direct3DGpuSurfaceRoute =>
+    Direct3DGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -488,7 +459,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    SkiaSurfaceRoute::VulkanGpuSurfaceRoute =>
+    VulkanGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -496,7 +467,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    SkiaSurfaceRoute::EglGpuSurfaceRoute =>
+    EglGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -531,7 +502,7 @@ fn raster_surface_preflight(
   let finalization = frame.finalization_descriptor()
   let submission = frame.submission_descriptor()
   let resource_plan = finalization.resource_plan
-  SkiaRasterSurfacePreflight::{
+  {
     physical_width: target.dimensions().width,
     physical_height: target.dimensions().height,
     target_ready: !target.resource_key().is_empty(),
@@ -542,7 +513,7 @@ fn raster_surface_preflight(
     cacheable_resource_count: resource_plan.cacheable_count,
     uncacheable_resource_count: resource_plan.uncacheable_count,
     gpu_backed_resource_count: resource_plan.gpu_backed_count,
-    surface_resource_count: resource_plan.count_kind(@moui_skia.SurfaceResource),
+    surface_resource_count: resource_plan.count_kind(SurfaceResource),
     byte_size: resource_plan.byte_size,
   }
 }
@@ -612,7 +583,7 @@ fn SkiaRasterRenderer::ensure_gpu_window_surface(
           self.surface = surface
           self.gpu_surface_attached = true
         }
-        None => raise SkiaRendererError::SurfaceUnavailable
+        None => raise SurfaceUnavailable
       }
     None => self.gpu_surface_attached = true
   }
@@ -639,8 +610,8 @@ pub fn SkiaRasterRenderer::target_kind(
   self : SkiaRasterRenderer,
 ) -> SkiaPresentKind {
   match self.gpu_target {
-    Some(_) => SkiaPresentKind::HostGpuSurface
-    None => SkiaPresentKind::CpuPixelFrame
+    Some(_) => HostGpuSurface
+    None => CpuPixelFrame
   }
 }
 
@@ -664,8 +635,8 @@ pub fn SkiaRasterRenderer::surface_diagnostic_summary(
   }
   let gpu_surface = if self.surface_is_gpu() { "true" } else { "false" }
   let present_kind = match self.target_kind() {
-    SkiaPresentKind::CpuPixelFrame => "cpu-pixel-frame"
-    SkiaPresentKind::HostGpuSurface => "host-gpu-surface"
+    CpuPixelFrame => "cpu-pixel-frame"
+    HostGpuSurface => "host-gpu-surface"
   }
   "surface_route=\{self.surface_route.label()}; surface_gpu=\{gpu_surface}; gpu_context=\{context}; present_kind=\{present_kind}; dimensions=\{self.surface.width()}x\{self.surface.height()}"
 }
@@ -683,6 +654,6 @@ fn SkiaRasterRenderer::read_frame(
         scale_factor: self.metrics.scale_factor,
         pixels: pixmap.pixels,
       }
-    None => raise SkiaRendererError::ReadPixelsUnavailable
+    None => raise ReadPixelsUnavailable
   }
 }

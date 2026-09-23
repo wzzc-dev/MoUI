@@ -229,7 +229,7 @@ fn pdflite_add_text_annotation(
       AnnotationText,
       contents=Some(@pdf.pdf_pdfdocstring_of_utf8(@utf8.encode(note_text))),
       rectangle=note_rect,
-      colour=Some({ red: 255, green: 222, blue: 72 }),
+      colour=Some({ red: 255, green: 222, blue: 72, }),
       subject=Some(@ascii.encode("MoUI PDF Workbench note")),
     )
     pages[index] = document.add_annotation(pages[index], annotation)
@@ -245,7 +245,7 @@ fn pdflite_annotation_rect_near_top(
   let height = 28.0
   let left = bounds.min_x + 36.0
   let top = bounds.max_y - 36.0
-  { min_x: left, min_y: top - height, max_x: left + width, max_y: top }
+  { min_x: left, min_y: top - height, max_x: left + width, max_y: top, }
 }
 
 ///|

@@ -19,7 +19,7 @@ pub struct ScriptRunResult {
 
 ///|
 pub fn JsEngine::new() -> JsEngine {
-  let js = { engine: @js_engine.Engine() }
+  let js = { engine: Engine(), }
   // 安装 DOM shim;失败(引擎语法不兼容)时页面脚本的 document 用法照旧报错
   js.engine.eval(dom_shim_js) catch {
     _ => ()
@@ -47,7 +47,7 @@ pub fn JsEngine::dump_dom_html(self : JsEngine) -> String? {
     _ => return None
   }
   match r {
-    Json::String(s) => Some(s)
+    String(s) => Some(s)
     _ => None
   }
 }
@@ -59,10 +59,10 @@ pub fn JsEngine::take_dynamic_scripts(self : JsEngine) -> Array[String] {
     _ => return []
   }
   match r {
-    Json::Array(items) =>
+    Array(items) =>
       items.filter_map(fn(item) {
         match item {
-          Json::String(s) => Some(s)
+          String(s) => Some(s)
           _ => None
         }
       })
@@ -122,7 +122,7 @@ pub fn JsEngine::run_scripts(
       // keep going: errors are non-fatal and already collected
     }
   }
-  { outputs, errors }
+  { outputs, errors, }
 }
 
 ///|
@@ -164,8 +164,8 @@ pub fn extract_script_entries(html : String) -> Array[ScriptEntry] {
       let buf = StringBuilder()
       for child in e.children {
         match child {
-          @html.Node::Text(text) => buf.write_string(text)
-          @html.Node::Element(_) => ()
+          Text(text) => buf.write_string(text)
+          Element(_) => ()
         }
       }
       out.push({
@@ -183,8 +183,8 @@ pub fn extract_script_entries(html : String) -> Array[ScriptEntry] {
     }
     for child in e.children {
       match child {
-        @html.Node::Element(sub) => visit(sub)
-        @html.Node::Text(_) => ()
+        Element(sub) => visit(sub)
+        Text(_) => ()
       }
     }
   }
@@ -212,8 +212,8 @@ pub fn extract_stylesheets(html : String) -> Array[String] {
     }
     for child in e.children {
       match child {
-        @html.Node::Element(sub) => visit(sub)
-        @html.Node::Text(_) => ()
+        Element(sub) => visit(sub)
+        Text(_) => ()
       }
     }
   }

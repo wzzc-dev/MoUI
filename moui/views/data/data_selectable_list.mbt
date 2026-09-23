@@ -32,22 +32,18 @@ pub fn[Msg] selectable_list(
       )
     }
     @container.container(
-      @layout.column(
-        rows,
-        spacing=resolved_theme.spacing_scale.xs,
-        align=@style.CrossAlign::Start,
-      ),
+      @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start),
       width~,
       height=selectable_list_height(
         items.length(),
         row_height,
         spacing=resolved_theme.spacing_scale.xs,
       ),
-      variant=@style.ContainerVariant::Base,
+      variant=Base,
       theme=resolved_theme,
       padding=0.0,
     )
-    .semantics_role(@core.SemanticsRole::List)
+    .semantics_role(List)
     .accessibility_label("Selectable list")
   }
 }
@@ -71,19 +67,13 @@ fn[Msg] selectable_list_row(
     width - detail_width - padding * 2.0 - theme.spacing_scale.sm,
   )
   let title_rows : Array[@core.View[Msg]] = [
-    @text.text(
-      item.title,
-      role=@style.TextRole::Control,
-      theme~,
-      width=text_width,
-      height=24.0,
-    ),
+    @text.text(item.title, role=Control, theme~, width=text_width, height=24.0),
   ]
   if item.subtitle != "" {
     title_rows.push(
       @text.text(
         item.subtitle,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme~,
         width=text_width,
         height=22.0,
@@ -91,17 +81,13 @@ fn[Msg] selectable_list_row(
     )
   }
   let content_children : Array[@core.View[Msg]] = [
-    @layout.column(
-      title_rows,
-      spacing=theme.spacing_scale.xs,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(title_rows, spacing=theme.spacing_scale.xs, align=Start),
   ]
   if item.detail != "" {
     content_children.push(
       @text.text(
         item.detail,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme~,
         width=detail_width,
         height=24.0,
@@ -112,8 +98,8 @@ fn[Msg] selectable_list_row(
     @layout.row(
       content_children,
       spacing=theme.spacing_scale.sm,
-      justify=@style.MainAlign::Between,
-      align=@style.CrossAlign::Center,
+      justify=Between,
+      align=Center,
     ),
     width~,
     height=row_height,
@@ -134,7 +120,7 @@ fn[Msg] selectable_list_row(
     @button.button(
       "",
       on_click=item.message,
-      variant=@style.ButtonVariant::Ghost,
+      variant=Ghost,
       theme~,
       width~,
       height=row_height,
@@ -142,7 +128,7 @@ fn[Msg] selectable_list_row(
     content,
   ])
   .disabled(disabled=!item.enabled)
-  .semantics_role(@core.SemanticsRole::ListItem)
+  .semantics_role(ListItem)
   .semantics_selected(selected~)
   .accessibility_label(selectable_list_item_label(item))
 }

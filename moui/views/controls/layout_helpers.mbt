@@ -82,9 +82,9 @@ impl @core.ViewNode for RoundedClip with fn layout(_self, ctx) {
 impl @core.ViewNode for RoundedClip with fn paint(self, ctx) {
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=self.radius)
   {
-    commands: [@core.DrawCommand::PushRoundedClip(rounded)],
+    commands: [PushRoundedClip(rounded)],
     child_layers: [],
-    post_commands: [@core.DrawCommand::PopRoundedClip],
+    post_commands: [PopRoundedClip],
     overlay_commands: [],
     repaint_boundary: false,
     animating: false,
@@ -93,9 +93,7 @@ impl @core.ViewNode for RoundedClip with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for RoundedClip with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -122,7 +120,7 @@ pub fn[Msg] custom_children_layout(
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
   paint~ : (@common.PaintContext, @core.Rect) -> Unit,
-  semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
+  semantics_role? : @core.SemanticsRole = Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
   custom_children_layout_control(

@@ -77,8 +77,7 @@ test "webview host request completion is removed exactly once" {
   ignore(host.poll_timeouts(9223372036854775807L))
   assert_true(host.pending_request_count() == 0)
   match completion.val {
-    Some(WebViewTaskResult::Failure(error)) =>
-      inspect(error.code, content="request-timeout")
+    Some(Failure(error)) => inspect(error.code, content="request-timeout")
     _ => fail("request timeout did not complete")
   }
 }

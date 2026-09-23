@@ -69,7 +69,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
             ),
           )
           self.driver.set_text_system(renderer.text_system())
-          ignore(self.driver.dispatch(@host.Event::Resized(metrics)))
+          ignore(self.driver.dispatch(Resized(metrics)))
           ignore(
             self.platform_slots.insert(
               @window_lifecycle.WindowSlot::new(
@@ -115,7 +115,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn abo
       event_loop.set_control_flow(
         @window_core.ControlFlow::wait_until(deadline),
       )
-    None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
+    None => event_loop.set_control_flow(Wait)
   }
   self.drain_window_requests(event_loop)
   for slot in self.lifecycle.runtime_slots().open_slots() {
@@ -155,17 +155,17 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
       scale_factor=self.current_scale_factor(window_id),
       surface_size~,
     ) {
-    @window_input.TransformedWindowEvent::CloseRequested => {
-      self.dispatch_host_event(window_id, @host.Event::CloseRequested)
+    CloseRequested => {
+      self.dispatch_host_event(window_id, CloseRequested)
       self.dispose_window(window_id)
       if self.lifecycle.runtime_slots_empty() {
         event_loop.exit()
       }
       return ()
     }
-    @window_input.TransformedWindowEvent::DispatchHostEvent(host_event) => {
+    DispatchHostEvent(host_event) => {
       match host_event {
-        @host.Event::Resized(surface_metrics) => {
+        Resized(surface_metrics) => {
           match self.platform_slots.lookup_host(window_id) {
             Some(slot) =>
               slot.set_extra(extra=linux_client_decoration_state(slot.window))
@@ -185,51 +185,46 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
       }
       return ()
     }
-    @window_input.TransformedWindowEvent::WindowRedrawRequired => {
+    WindowRedrawRequired => {
       if self.redraw_window(window_id) {
         event_loop.exit()
       }
       return ()
     }
-    @window_input.TransformedWindowEvent::PlatformSpecific => ()
+    PlatformSpecific => ()
   }
   match event {
-    @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
+    PointerMoved(_, position, _, _) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
-    @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
+    PointerButton(_, _, position, _, _) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_pointer_or_context_menu(window_id, event)
     }
-    @window_core.WindowEvent::DragEntered(_, position)
-    | @window_core.WindowEvent::DragMoved(position)
-    | @window_core.WindowEvent::DragDropped(_, position) => {
+    DragEntered(_, position) | DragMoved(position) | DragDropped(_, position) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
-    @window_core.WindowEvent::DragLeft(Some(position)) => {
+    DragLeft(Some(position)) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
-    @window_core.WindowEvent::KeyboardInput(_, _, _) =>
-      self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::Ime(_) =>
-      self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::ModifiersChanged(_) =>
-      self.dispatch_window_event(window_id, event)
+    KeyboardInput(_, _, _) => self.dispatch_window_event(window_id, event)
+    Ime(_) => self.dispatch_window_event(window_id, event)
+    ModifiersChanged(_) => self.dispatch_window_event(window_id, event)
     _ => self.dispatch_window_event(window_id, event)
   }
 }

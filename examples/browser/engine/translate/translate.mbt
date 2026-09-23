@@ -32,23 +32,23 @@ fn walk_node(
   // Clip scope.
   let clips = node.clips_content()
   if clips {
-    out.push(@core.DrawCommand::PushClip(rect))
+    out.push(PushClip(rect))
   }
 
   // Opacity scope.
   let opacity = node.paint.opacity
   if opacity < 1.0 {
-    out.push(@core.DrawCommand::PushOpacity(opacity))
+    out.push(PushOpacity(opacity))
   }
 
   // Box shadows (outer only; inset shadows are approximated by borders).
   for shadow in node.paint.box_shadows {
     if !shadow.inset {
       out.push(
-        @core.DrawCommand::DrawShadow({
-          rect: { rect, radius },
+        DrawShadow({
+          rect: { rect, radius, },
           color: to_moui_color(shadow.color),
-          offset: { x: shadow.offset_x, y: shadow.offset_y },
+          offset: { x: shadow.offset_x, y: shadow.offset_y, },
           blur_radius: shadow.blur_radius,
           spread: shadow.spread_radius,
         }),
@@ -60,11 +60,9 @@ fn walk_node(
   let bg = node.paint.background_color
   if !bg.is_transparent() {
     if radius > 0.0 {
-      out.push(
-        @core.DrawCommand::FillRoundedRect({ rect, radius }, to_moui_color(bg)),
-      )
+      out.push(FillRoundedRect({ rect, radius, }, to_moui_color(bg)))
     } else {
-      out.push(@core.DrawCommand::FillRect(rect, to_moui_color(bg)))
+      out.push(FillRect(rect, to_moui_color(bg)))
     }
   }
 
@@ -91,15 +89,15 @@ fn walk_node(
         rect.size.height
       }
       out.push(
-        @core.DrawCommand::DrawText({
+        DrawText({
           text,
           frame: {
             origin: rect.origin,
-            size: { width: rect.size.width, height: text_height },
+            size: { width: rect.size.width, height: text_height, },
           },
           font,
           color: to_moui_color(node.paint.color),
-          align: @core.TextAlign::TextStart,
+          align: TextStart,
         }),
       )
     }
@@ -110,12 +108,7 @@ fn walk_node(
   match node.src {
     Some(src) =>
       out.push(
-        @core.DrawCommand::DrawImage({
-          source: src,
-          frame: rect,
-          opacity: 1.0,
-          fit: @core.ImageFit::Stretch,
-        }),
+        DrawImage({ source: src, frame: rect, opacity: 1.0, fit: Stretch, }),
       )
     None => ()
   }
@@ -131,17 +124,17 @@ fn walk_node(
       let px = x + offset_x
       let py = y + offset_y
       if first {
-        verbs.push(@core.PathVerb::MoveTo({ x: px, y: py }))
+        verbs.push(MoveTo({ x: px, y: py, }))
         first = false
       } else {
-        verbs.push(@core.PathVerb::LineTo({ x: px, y: py }))
+        verbs.push(LineTo({ x: px, y: py, }))
       }
     }
-    verbs.push(@core.PathVerb::Close)
+    verbs.push(Close)
     out.push(
-      @core.DrawCommand::DrawPath({
+      DrawPath({
         verbs,
-        fill: Some(@core.Brush::Solid(to_moui_color(node.paint.color))),
+        fill: Some(Solid(to_moui_color(node.paint.color))),
         stroke: None,
         stroke_width: 0.0,
       }),
@@ -149,10 +142,10 @@ fn walk_node(
   }
 
   if opacity < 1.0 {
-    out.push(@core.DrawCommand::PopOpacity)
+    out.push(PopOpacity)
   }
   if clips {
-    out.push(@core.DrawCommand::PopClip)
+    out.push(PopClip)
   }
 }
 
@@ -163,8 +156,8 @@ fn node_rect(
   offset_y : Double,
 ) -> @core.Rect {
   {
-    origin: { x: node.x + offset_x, y: node.y + offset_y },
-    size: { width: node.width, height: node.height },
+    origin: { x: node.x + offset_x, y: node.y + offset_y, },
+    size: { width: node.width, height: node.height, },
   }
 }
 
@@ -200,14 +193,14 @@ pub fn to_moui_color(c : @values.Color) -> @core.Color {
 ///|
 fn font_spec(p : @paint_model.PaintProperties) -> @core.FontSpec {
   {
-    families: { families: [to_font_family(p.font_family)] },
+    families: { families: [to_font_family(p.font_family)], },
     size: p.font_size,
     weight: if p.is_bold {
       700
     } else {
       p.font_weight.to_int()
     },
-    style: @core.FontStyle::Normal,
+    style: Normal,
     variations: [],
   }
 }
@@ -215,10 +208,10 @@ fn font_spec(p : @paint_model.PaintProperties) -> @core.FontSpec {
 ///|
 fn to_font_family(name : String) -> @core.FontFamily {
   match name {
-    "monospace" | "ui-monospace" => @core.FontFamily::Monospace
-    "serif" => @core.FontFamily::Serif
-    "sans-serif" | "system-ui" | "ui-sans-serif" => @core.FontFamily::SystemUi
-    _ => @core.FontFamily::Name(name)
+    "monospace" | "ui-monospace" => Monospace
+    "serif" => Serif
+    "sans-serif" | "system-ui" | "ui-sans-serif" => SystemUi
+    _ => Name(name)
   }
 }
 
@@ -244,7 +237,7 @@ fn draw_borders(
     p.border_top_color == p.border_left_color &&
     p.border_top_color == p.border_right_color {
     out.push(
-      @core.DrawCommand::StrokeRect(
+      StrokeRect(
         node_rect(node, offset_x, offset_y),
         to_moui_color(p.border_top_color),
         t,
@@ -261,32 +254,32 @@ fn draw_borders(
   let h = rect.size.height
   if t > 0.0 {
     out.push(
-      @core.DrawCommand::FillRect(
-        { origin: { x, y }, size: { width: w, height: t } },
+      FillRect(
+        { origin: { x, y, }, size: { width: w, height: t, }, },
         to_moui_color(p.border_top_color),
       ),
     )
   }
   if b > 0.0 {
     out.push(
-      @core.DrawCommand::FillRect(
-        { origin: { x, y: y + h - b }, size: { width: w, height: b } },
+      FillRect(
+        { origin: { x, y: y + h - b, }, size: { width: w, height: b, }, },
         to_moui_color(p.border_bottom_color),
       ),
     )
   }
   if l > 0.0 {
     out.push(
-      @core.DrawCommand::FillRect(
-        { origin: { x, y }, size: { width: l, height: h } },
+      FillRect(
+        { origin: { x, y, }, size: { width: l, height: h, }, },
         to_moui_color(p.border_left_color),
       ),
     )
   }
   if r > 0.0 {
     out.push(
-      @core.DrawCommand::FillRect(
-        { origin: { x: x + w - r, y }, size: { width: r, height: h } },
+      FillRect(
+        { origin: { x: x + w - r, y, }, size: { width: r, height: h, }, },
         to_moui_color(p.border_right_color),
       ),
     )

@@ -183,7 +183,7 @@ fn[Msg] rich_text_editor_snapshot(
           }
           @core.ViewSemanticsActionResult::accepted(
             text_control=Some(next_control),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
             messages~,
           )
         }),
@@ -225,7 +225,7 @@ impl @core.ViewNode for RichTextEditorViewNode with fn identity(self) {
 impl @core.ViewNode for RichTextEditorViewNode with fn declaration(self) {
   rich_text_declaration(
     layout=rich_text_exact_channel(declaration_size_key(self.size)),
-    paint=@core.DeclarationChannel::Uncacheable,
+    paint=Uncacheable,
     semantics=rich_text_exact_channel(
       rich_text_record_key("RichTextEditor.semantics", [
         ("label", @core.DeclarationKey::string(self.placeholder)),
@@ -286,8 +286,8 @@ impl @core.ViewNode for RichTextEditorViewNode with fn text_input_state(
 ///|
 impl @core.ViewNode for RichTextEditorViewNode with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::TextField,
+    composition=Boundary,
+    role=TextField,
     label=self.placeholder,
     value=self.value,
   )

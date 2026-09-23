@@ -76,6 +76,6 @@ fn SunRasterRenderer::render_frame_inner(
     self.present_count = self.present_count + 1
     stats.to_render_frame_result(presented=true)
   } else {
-    raise SunRendererError::PresentFailed(self.target.description)
+    raise PresentFailed(self.target.description)
   }
 }

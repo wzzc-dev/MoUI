@@ -14,31 +14,31 @@ fn component_demo_section(
           [
             text(
               title,
-              role=@views.TextRole::Subtitle,
+              role=Subtitle,
               theme~,
               width=inner,
               height=28.0,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ),
             wrapped_text(
               detail,
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=inner,
               height=38.0,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ).foreground(theme.palette.muted),
           ],
           spacing=2.0,
-          align=@views.CrossAlign::Stretch,
+          align=Stretch,
         ),
         body,
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     padding=16.0,
     corner_radius=8.0,
     theme~,
@@ -71,27 +71,27 @@ fn component_tile(
       [
         text(
           title,
-          role=@views.TextRole::Control,
+          role=Control,
           theme~,
           width=width - 24.0,
           height=24.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
         wrapped_text(
           detail,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 24.0,
           height=36.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ).foreground(theme.palette.muted),
       ],
       spacing=2.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     height=84.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     background=theme.palette.surface_variant.multiply_alpha(0.45),
     padding=12.0,
     corner_radius=8.0,
@@ -111,27 +111,27 @@ fn layout_tile(
       [
         text(
           title,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 24.0,
           height=22.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ).foreground(theme.palette.muted),
         text(
           value,
-          role=@views.TextRole::Subtitle,
+          role=Subtitle,
           theme~,
           width=width - 24.0,
           height=28.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
       ],
       spacing=2.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     height=76.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     background=theme.palette.surface_variant.multiply_alpha(0.48),
     padding=12.0,
     corner_radius=8.0,
@@ -148,50 +148,28 @@ fn action_counter_panel(
 ) -> @moui.View[ComponentGalleryMsg] {
   let label = text(
     "Count: \{model.counter}",
-    role=@views.TextRole::Subtitle,
+    role=Subtitle,
     theme~,
     width=if compact { width } else { (width - 220.0).max(180.0) },
     height=30.0,
-    align=@text.TextAlign::TextStart,
+    align=TextStart,
   )
   let controls = row(
     [
-      button(
-        "-",
-        on_click=Decrement,
-        variant=@views.ButtonVariant::Outline,
-        theme~,
-        width=52.0,
-      ),
-      button(
-        "Reset",
-        on_click=Reset,
-        variant=@views.ButtonVariant::Tonal,
-        theme~,
-        width=92.0,
-      ),
-      button(
-        "+",
-        on_click=Increment,
-        variant=@views.ButtonVariant::Primary,
-        theme~,
-        width=52.0,
-      ),
+      button("-", on_click=Decrement, variant=Outline, theme~, width=52.0),
+      button("Reset", on_click=Reset, variant=Tonal, theme~, width=92.0),
+      button("+", on_click=Increment, variant=Primary, theme~, width=52.0),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   if compact {
-    column(
-      [label, controls],
-      spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
-    )
+    column([label, controls], spacing=theme.spacing_scale.sm, align=Start)
   } else {
     row(
       [label, spacer(weight=1.0), controls],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   }
 }
@@ -236,11 +214,11 @@ fn platform_chip(
       [
         text(
           info.name,
-          role=@views.TextRole::Control,
+          role=Control,
           theme~,
           width=label_width,
           height=24.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
         spacer(weight=1.0),
         status_badge(
@@ -249,16 +227,16 @@ fn platform_chip(
           } else {
             info.status
           },
-          tone=if active { @views.BadgeTone::Accent } else { info.badge_tone },
+          tone=if active { Accent } else { info.badge_tone },
           theme~,
           width=badge_width,
         ),
       ],
       spacing=gap,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     background=theme.palette.surface_variant.multiply_alpha(0.45),
     padding~,
     corner_radius=8.0,
@@ -289,11 +267,11 @@ fn platform_route_card(
       [
         text(
           info.name,
-          role=@views.TextRole::Subtitle,
+          role=Subtitle,
           theme~,
           width=inner,
           height=28.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
         status_badge(
           if active {
@@ -301,24 +279,24 @@ fn platform_route_card(
           } else {
             info.status
           },
-          tone=if active { @views.BadgeTone::Accent } else { info.badge_tone },
+          tone=if active { Accent } else { info.badge_tone },
           theme~,
           width=badge_width,
         ),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Start,
+      align=Start,
     )
   } else {
     row(
       [
         text(
           info.name,
-          role=@views.TextRole::Subtitle,
+          role=Subtitle,
           theme~,
           width=title_width,
           height=28.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
         spacer(weight=1.0),
         status_badge(
@@ -327,13 +305,13 @@ fn platform_route_card(
           } else {
             info.status
           },
-          tone=if active { @views.BadgeTone::Accent } else { info.badge_tone },
+          tone=if active { Accent } else { info.badge_tone },
           theme~,
           width=badge_width,
         ),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   }
   container(
@@ -342,19 +320,19 @@ fn platform_route_card(
         stack,
         wrapped_text(
           info.route,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=inner,
           height=40.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
         wrapped_text(
           info.command,
-          role=@views.TextRole::Mono,
+          role=Mono,
           theme~,
           width=inner,
           height=56.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
         progress_status(
           "Evidence",
@@ -367,20 +345,16 @@ fn platform_route_card(
         button(
           "Select",
           on_click=SelectPlatform(platform_id_to_string(info.id)),
-          variant=if selected {
-            @views.ButtonVariant::Primary
-          } else {
-            @views.ButtonVariant::Tonal
-          },
+          variant=if selected { Primary } else { Tonal },
           theme~,
           width=if inner < 160.0 { inner } else { 112.0 },
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     padding~,
     corner_radius=8.0,
     theme~,
@@ -432,10 +406,10 @@ fn score_label(model : ComponentGalleryModel) -> String {
 ///|
 fn feedback_tone(model : ComponentGalleryModel) -> @views.FeedbackTone {
   if model.slider_value >= 0.82 {
-    @views.FeedbackTone::Success
+    Success
   } else if model.slider_value >= 0.48 {
-    @views.FeedbackTone::Info
+    Info
   } else {
-    @views.FeedbackTone::Warning
+    Warning
   }
 }

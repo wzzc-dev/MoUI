@@ -55,7 +55,7 @@ fn Model::top_bar(
       button(
         "EN",
         on_click=SelectLocale("en-US"),
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=40.0,
         height=34.0,
@@ -65,7 +65,7 @@ fn Model::top_bar(
       button(
         "中",
         on_click=SelectLocale("zh-Hans"),
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=40.0,
         height=34.0,
@@ -76,7 +76,7 @@ fn Model::top_bar(
       button(
         website_message(self.locale, "nav.menu"),
         on_click=ToggleMobileMenu,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=72.0,
         height=34.0,
@@ -88,7 +88,7 @@ fn Model::top_bar(
     button(
       action_label,
       on_click=ToggleDark,
-      variant=@views.ButtonVariant::Outline,
+      variant=Outline,
       theme~,
       width=48.0,
       height=34.0,
@@ -103,7 +103,7 @@ fn Model::top_bar(
         row(
           items,
           spacing=if metrics.nav_compact { 8.0 } else { 18.0 },
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         width=metrics.content_width,
         height=metrics.top_bar_height,
@@ -111,7 +111,7 @@ fn Model::top_bar(
       spacer(min_length=0.0, weight=1.0),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   container(
     frame(
@@ -127,7 +127,7 @@ fn Model::top_bar(
     padding=0.0,
   )
   .border(website_border(theme))
-  .semantics_role(@core.SemanticsRole::Navigation)
+  .semantics_role(Navigation)
   .accessibility_label(message("site.navigation"))
 }
 
@@ -143,7 +143,7 @@ fn brand_mark(theme : @moui.Theme, locale : String) -> @moui.View[Msg] {
       .foreground(theme.palette.muted),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   ).frame(width=164.0, height=44.0)
 }
 
@@ -158,11 +158,7 @@ fn nav_button(
   button(
     label,
     on_click=message,
-    variant=if active {
-      @views.ButtonVariant::Ghost
-    } else {
-      @views.ButtonVariant::Ghost
-    },
+    variant=if active { Ghost } else { Ghost },
     theme~,
     width~,
     height=34.0,
@@ -181,7 +177,7 @@ fn Model::hero(
       button(
         message("action.get_started"),
         on_click=OpenHomeAnchor("quick-start"),
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=134.0,
         height=if metrics.compact { 40.0 } else { 46.0 },
@@ -189,14 +185,14 @@ fn Model::hero(
       button(
         message("nav.github"),
         on_click=OpenRepository,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=104.0,
         height=if metrics.compact { 40.0 } else { 46.0 },
       ).foreground(theme.palette.foreground),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   let copy = if metrics.compact {
     column(
@@ -235,7 +231,7 @@ fn Model::hero(
         ctas,
       ],
       spacing=7.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     )
   } else {
     column(
@@ -262,7 +258,7 @@ fn Model::hero(
         ctas,
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   }
   let visual = if metrics.compact {
@@ -294,7 +290,7 @@ fn Model::hero(
         self.locale,
       )
     }
-    column([tab, panel], spacing=8.0, align=@views.CrossAlign::Start)
+    column([tab, panel], spacing=8.0, align=Start)
   } else {
     hero_demo_panel(
       theme,
@@ -308,7 +304,7 @@ fn Model::hero(
   let hero_body = column(
     [copy, visual],
     spacing=if metrics.compact { 18.0 } else { 14.0 },
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   painted_section_shell(
     theme,
@@ -450,7 +446,7 @@ fn Model::foundation_section(
         ),
       ],
       spacing=38.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     top=metrics.section_top,
     bottom=metrics.section_bottom,
@@ -547,7 +543,7 @@ fn Model::platform_section(
         ),
       ],
       spacing=24.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     top=metrics.section_top,
     bottom=metrics.section_bottom,
@@ -576,7 +572,7 @@ fn Model::quick_start_section(
         quick_start_actions(theme, self.locale),
       ],
       spacing=28.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     top=metrics.section_top,
     bottom=metrics.section_bottom,
@@ -601,7 +597,7 @@ fn section_shell(
         spacer(min_length=0.0, weight=1.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=metrics.viewport.width,
   )
@@ -657,7 +653,7 @@ fn section_header(
       .foreground(theme.palette.muted),
     ],
     spacing=4.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -684,7 +680,7 @@ fn metric_card(
         .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=116.0,
@@ -727,7 +723,7 @@ fn feature_card(
             .foreground(theme.palette.foreground),
           ],
           spacing=12.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         text(zh_summary, width=content_width, height=34.0)
         .font(theme.typography.caption)
@@ -737,7 +733,7 @@ fn feature_card(
         .foreground(theme.palette.muted),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=162.0,
@@ -776,11 +772,11 @@ fn platform_card(
             platform_card_summary(theme, summary_lines, width - 32.0),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=246.0,
@@ -804,7 +800,7 @@ fn platform_card_summary(
       .foreground(theme.palette.muted)
     }),
     spacing=1.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   ).frame(width~, height=58.0)
 }
 
@@ -839,13 +835,13 @@ fn showcase_thumb(
           ctx,
           @graphics.PathSpec::new(
             verbs=[
-              @graphics.PathVerb::MoveTo(
+              MoveTo(
                 @geometry.Point::new(
                   x=start_x,
                   y=frame.origin.y + frame.size.height,
                 ),
               ),
-              @graphics.PathVerb::LineTo(
+              LineTo(
                 @geometry.Point::new(
                   x=start_x - frame.size.height,
                   y=frame.origin.y,
@@ -895,56 +891,56 @@ fn hero_statement_font(metrics : Metrics) -> @text.FontSpec {
 ///|
 fn website_blue(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.40, g=0.58, b=1.0)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.10, g=0.34, b=0.92)
+    Dark => @graphics.Color::rgba(r=0.40, g=0.58, b=1.0)
+    Light => @graphics.Color::rgba(r=0.10, g=0.34, b=0.92)
   }
 }
 
 ///|
 fn website_green(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.24, g=0.78, b=0.58)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.05, g=0.52, b=0.34)
+    Dark => @graphics.Color::rgba(r=0.24, g=0.78, b=0.58)
+    Light => @graphics.Color::rgba(r=0.05, g=0.52, b=0.34)
   }
 }
 
 ///|
 fn website_amber(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.98, g=0.69, b=0.25)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.78, g=0.39, b=0.05)
+    Dark => @graphics.Color::rgba(r=0.98, g=0.69, b=0.25)
+    Light => @graphics.Color::rgba(r=0.78, g=0.39, b=0.05)
   }
 }
 
 ///|
 fn hero_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.08, g=0.09, b=0.10)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.98, g=0.99, b=0.98)
+    Dark => @graphics.Color::rgba(r=0.08, g=0.09, b=0.10)
+    Light => @graphics.Color::rgba(r=0.98, g=0.99, b=0.98)
   }
 }
 
 ///|
 fn showcase_section_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.09, g=0.10, b=0.12)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.94, g=0.97, b=0.95)
+    Dark => @graphics.Color::rgba(r=0.09, g=0.10, b=0.12)
+    Light => @graphics.Color::rgba(r=0.94, g=0.97, b=0.95)
   }
 }
 
 ///|
 fn soft_panel_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.11, g=0.13, b=0.15)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.99, g=1.0, b=0.99)
+    Dark => @graphics.Color::rgba(r=0.11, g=0.13, b=0.15)
+    Light => @graphics.Color::rgba(r=0.99, g=1.0, b=0.99)
   }
 }
 
 ///|
 fn code_panel_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::black()
-    @state.ColorScheme::Light => @graphics.Color::white()
+    Dark => @graphics.Color::black()
+    Light => @graphics.Color::white()
   }
 }
 

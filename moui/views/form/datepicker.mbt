@@ -4,7 +4,7 @@
 pub fn[Msg] datepicker(
   selected~ : @core.DateValue,
   on_select~ : (@core.DateValue) -> Msg,
-  mode? : @style.DatePickerMode = @style.DatePickerMode::Date,
+  mode? : @style.DatePickerMode = Date,
   placeholder? : String = "Select date",
   theme? : @core.Theme,
   style? : @style.PickerStyle,
@@ -30,8 +30,8 @@ fn datepicker_mode_to_view_mode(
   mode : @style.DatePickerMode,
 ) -> DatePickerDisplayMode {
   match mode {
-    Date => DatePickerDisplayMode::Date
-    DateAndTime => DatePickerDisplayMode::DateAndTime
-    Time => DatePickerDisplayMode::Time
+    Date => Date
+    DateAndTime => DateAndTime
+    Time => Time
   }
 }

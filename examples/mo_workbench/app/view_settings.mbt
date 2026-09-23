@@ -18,7 +18,7 @@ fn settings_workspace_view(
         settings_section_panel(model, appearance, theme, panel_width, height),
       ],
       spacing=gap,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     height~,
@@ -38,36 +38,13 @@ fn settings_section_nav(
   @views.container(
     @views.column(
       [
-        @views.text(
-          "Preferences",
-          role=@views.TextRole::Subtitle,
-          theme~,
-          width=content_width,
-        ),
-        settings_nav_item(
-          "Providers",
-          SettingsSection::Api,
-          active,
-          theme,
-          content_width,
-        ),
-        settings_nav_item(
-          "Agent",
-          SettingsSection::Agent,
-          active,
-          theme,
-          content_width,
-        ),
-        settings_nav_item(
-          "Editor",
-          SettingsSection::Editor,
-          active,
-          theme,
-          content_width,
-        ),
+        @views.text("Preferences", role=Subtitle, theme~, width=content_width),
+        settings_nav_item("Providers", Api, active, theme, content_width),
+        settings_nav_item("Agent", Agent, active, theme, content_width),
+        settings_nav_item("Editor", Editor, active, theme, content_width),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     height~,
@@ -92,13 +69,13 @@ fn settings_nav_item(
     @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
   }
   @views.container(
-    @views.text(label, role=@views.TextRole::Label, theme~, width=width - 20.0),
+    @views.text(label, role=Label, theme~, width=width - 20.0),
     width~,
     height=36.0,
     background~,
     corner_radius=8.0,
     padding=10.0,
-  ).on_tap(SettingsMsg::SelectSection(section))
+  ).on_tap(SelectSection(section))
 }
 
 ///|
@@ -113,11 +90,9 @@ fn settings_section_panel(
   let content_width = (width - panel_padding * 2.0).max(220.0)
   let content_height = (height - panel_padding * 2.0).max(120.0)
   let body = match model.active_section {
-    SettingsSection::Api =>
-      settings_providers_panel(model, theme, content_width)
-    SettingsSection::Agent => settings_agent_panel(model, theme, content_width)
-    SettingsSection::Editor =>
-      settings_editor_panel(model, appearance, theme, content_width)
+    Api => settings_providers_panel(model, theme, content_width)
+    Agent => settings_agent_panel(model, theme, content_width)
+    Editor => settings_editor_panel(model, appearance, theme, content_width)
   }
   @views.container(
     @views.scroll_view(
@@ -128,12 +103,12 @@ fn settings_section_panel(
           settings_save_row(model, theme, content_width),
         ],
         spacing=18.0,
-        align=@views.CrossAlign::Stretch,
+        align=Stretch,
       ),
       width=content_width,
       height=content_height,
       offset=model.scroll_offset,
-      on_scroll=Some(offset => SettingsMsg::Scrolled(offset)),
+      on_scroll=Some(offset => Scrolled(offset)),
     ),
     width~,
     height~,
@@ -153,7 +128,7 @@ fn settings_panel_header(
     [
       @views.text(
         settings_section_title(model.active_section),
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width~,
       ),
@@ -161,22 +136,22 @@ fn settings_panel_header(
         "Loaded from " +
         model.env_source +
         ". 可选择 OpenSeek 或 ACP agent transport backend。",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width~,
       ).foreground(theme.palette.muted),
     ],
     spacing=4.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
 ///|
 fn settings_section_title(section : SettingsSection) -> String {
   match section {
-    SettingsSection::Api => "Providers"
-    SettingsSection::Agent => "Agent"
-    SettingsSection::Editor => "Editor"
+    Api => "Providers"
+    Agent => "Agent"
+    Editor => "Editor"
   }
 }
 
@@ -200,7 +175,7 @@ fn settings_providers_panel(
     rows.push(
       @views.text(
         "正在通过 v1/models 检测模型…",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=field_w,
       ).foreground(theme.palette.muted),
@@ -209,13 +184,13 @@ fn settings_providers_panel(
   match model.detect_error {
     Some(err) =>
       rows.push(
-        @views.text(err, role=@views.TextRole::Caption, theme~, width=field_w).foreground(
+        @views.text(err, role=Caption, theme~, width=field_w).foreground(
           theme.palette.danger,
         ),
       )
     None => ()
   }
-  @views.column(rows, spacing=16.0, align=@views.CrossAlign::Stretch)
+  @views.column(rows, spacing=16.0, align=Stretch)
 }
 
 ///|
@@ -234,14 +209,14 @@ fn provider_selector_row(
   children.push(
     @views.button(
       "+ 添加提供商",
-      on_click=SettingsMsg::AddProvider,
-      variant=@views.ButtonVariant::Ghost,
+      on_click=AddProvider,
+      variant=Ghost,
       theme~,
       width~,
       height=36.0,
     ),
   )
-  @views.column(children, spacing=6.0, align=@views.CrossAlign::Stretch)
+  @views.column(children, spacing=6.0, align=Stretch)
 }
 
 ///|
@@ -254,7 +229,7 @@ fn provider_selector_item(
   @views.container(
     @views.text(
       provider.name,
-      role=@views.TextRole::Caption,
+      role=Caption,
       theme~,
       width=(width - 16.0).max(48.0),
       height=20.0,
@@ -275,7 +250,7 @@ fn provider_selector_item(
     corner_radius=8.0,
     border=if selected { Some(hairline_border(theme)) } else { None },
     padding=8.0,
-  ).on_tap(SettingsMsg::SelectProvider(provider.id))
+  ).on_tap(SelectProvider(provider.id))
 }
 
 ///|
@@ -296,10 +271,10 @@ fn provider_edit_form(
       "供应商显示名",
       @views.text_field(
         p.name,
-        on_input=value => SettingsMsg::UpdateProviderField(p.id, Name, value),
+        on_input=value => UpdateProviderField(p.id, Name, value),
         on_submit=None,
         placeholder="DeepSeek",
-        variant=@views.TextFieldVariant::Filled,
+        variant=Filled,
         theme~,
         width=field_w,
         height=40.0,
@@ -314,10 +289,10 @@ fn provider_edit_form(
       "OpenAI 兼容端点，例如 https://api.deepseek.com/v1",
       @views.text_field(
         p.base_url,
-        on_input=value => SettingsMsg::UpdateProviderField(p.id, BaseUrl, value),
+        on_input=value => UpdateProviderField(p.id, BaseUrl, value),
         on_submit=None,
         placeholder="https://api.deepseek.com/v1",
-        variant=@views.TextFieldVariant::Filled,
+        variant=Filled,
         theme~,
         width=field_w,
         height=40.0,
@@ -332,10 +307,10 @@ fn provider_edit_form(
       "仅保存在本地 settings.json",
       @views.text_field(
         p.api_key,
-        on_input=value => SettingsMsg::UpdateProviderField(p.id, ApiKey, value),
+        on_input=value => UpdateProviderField(p.id, ApiKey, value),
         on_submit=None,
         placeholder="sk-...",
-        variant=@views.TextFieldVariant::Filled,
+        variant=Filled,
         theme~,
         width=field_w,
         height=40.0,
@@ -351,7 +326,7 @@ fn provider_edit_form(
       "自动检测模型 (v1/models)"
     },
     on_click=SettingsMsg::DetectModels(p.id),
-    variant=@views.ButtonVariant::Primary,
+    variant=Primary,
     theme~,
     width=field_w,
     height=40.0,
@@ -360,7 +335,7 @@ fn provider_edit_form(
   rows.push(
     @views.text(
       "模型 (" + p.models.length().to_string() + ")",
-      role=@views.TextRole::Label,
+      role=Label,
       theme~,
       width=field_w,
     ).foreground(workbench_text(theme)),
@@ -369,13 +344,7 @@ fn provider_edit_form(
     let supported = mo_workbench_model_supported_by_openseek(m)
     rows.push(
       @views.container(
-        @views.text(
-          m,
-          role=@views.TextRole::Label,
-          theme~,
-          width=field_w - 16.0,
-          height=22.0,
-        ).foreground(
+        @views.text(m, role=Label, theme~, width=field_w - 16.0, height=22.0).foreground(
           if supported {
             workbench_text(theme)
           } else {
@@ -399,40 +368,40 @@ fn provider_edit_form(
       [
         @views.text_field(
           model.new_model_id,
-          on_input=value => SettingsMsg::NewModelInputChanged(value),
-          on_submit=Some(SettingsMsg::AddManualModel(p.id, model.new_model_id)),
+          on_input=value => NewModelInputChanged(value),
+          on_submit=Some(AddManualModel(p.id, model.new_model_id)),
           placeholder="手动添加模型 id",
-          variant=@views.TextFieldVariant::Filled,
+          variant=Filled,
           theme~,
           width=field_w - 92.0,
           height=40.0,
         ),
         @views.button(
           "添加",
-          on_click=SettingsMsg::AddManualModel(p.id, model.new_model_id),
-          variant=@views.ButtonVariant::Ghost,
+          on_click=AddManualModel(p.id, model.new_model_id),
+          variant=Ghost,
           theme~,
           width=80.0,
           height=40.0,
         ),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   )
   if model.providers.length() > 1 {
     rows.push(
       @views.button(
         "移除该供应商",
-        on_click=SettingsMsg::RemoveProvider(p.id),
-        variant=@views.ButtonVariant::Ghost,
+        on_click=RemoveProvider(p.id),
+        variant=Ghost,
         theme~,
         width=field_w,
         height=40.0,
       ),
     )
   }
-  @views.column(rows, spacing=12.0, align=@views.CrossAlign::Stretch)
+  @views.column(rows, spacing=12.0, align=Stretch)
 }
 
 ///|
@@ -456,10 +425,10 @@ fn settings_agent_panel(
         "mo_workbench_workspace — agent working directory",
         @views.text_field(
           model.working_dir,
-          on_input=value => SettingsMsg::WorkingDirChanged(value),
+          on_input=value => WorkingDirChanged(value),
           on_submit=None,
           placeholder=".",
-          variant=@views.TextFieldVariant::Filled,
+          variant=Filled,
           theme~,
           width=field_w,
           height=40.0,
@@ -472,10 +441,10 @@ fn settings_agent_panel(
         "mo_workbench_session_root — OpenSeek session files",
         @views.text_field(
           model.session_root,
-          on_input=value => SettingsMsg::SessionRootChanged(value),
+          on_input=value => SessionRootChanged(value),
           on_submit=None,
           placeholder="./.openseek",
-          variant=@views.TextFieldVariant::Filled,
+          variant=Filled,
           theme~,
           width=field_w,
           height=40.0,
@@ -488,10 +457,10 @@ fn settings_agent_panel(
         "Executable for an ACP stdio agent process",
         @views.text_field(
           model.acp_command,
-          on_input=value => SettingsMsg::AcpCommandChanged(value),
+          on_input=value => AcpCommandChanged(value),
           on_submit=None,
           placeholder="acp-agent",
-          variant=@views.TextFieldVariant::Filled,
+          variant=Filled,
           theme~,
           width=field_w,
           height=40.0,
@@ -504,10 +473,10 @@ fn settings_agent_panel(
         "Whitespace args or JSON array, inherited process env",
         @views.text_field(
           model.acp_args,
-          on_input=value => SettingsMsg::AcpArgsChanged(value),
+          on_input=value => AcpArgsChanged(value),
           on_submit=None,
           placeholder="[\"--stdio\"]",
-          variant=@views.TextFieldVariant::Filled,
+          variant=Filled,
           theme~,
           width=field_w,
           height=40.0,
@@ -520,10 +489,10 @@ fn settings_agent_panel(
         "Optional process cwd; session cwd still uses Workspace",
         @views.text_field(
           model.acp_process_cwd,
-          on_input=value => SettingsMsg::AcpProcessCwdChanged(value),
+          on_input=value => AcpProcessCwdChanged(value),
           on_submit=None,
           placeholder="",
-          variant=@views.TextFieldVariant::Filled,
+          variant=Filled,
           theme~,
           width=field_w,
           height=40.0,
@@ -547,7 +516,7 @@ fn settings_agent_panel(
       ),
     ],
     spacing=16.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -577,7 +546,7 @@ fn settings_editor_panel(
       ),
     ],
     spacing=16.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -591,14 +560,14 @@ fn settings_field_row(
 ) -> @moui.View[SettingsMsg] {
   @views.column(
     [
-      @views.text(title, role=@views.TextRole::Label, theme~, width~),
-      @views.text(hint, role=@views.TextRole::Caption, theme~, width~).foreground(
+      @views.text(title, role=Label, theme~, width~),
+      @views.text(hint, role=Caption, theme~, width~).foreground(
         theme.palette.muted,
       ),
       control,
     ],
     spacing=6.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -611,12 +580,9 @@ fn settings_save_row(
   let notice : Array[@moui.View[SettingsMsg]] = match model.save_notice {
     Some(text) =>
       [
-        @views.text(
-          text,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 120.0,
-        ).foreground(theme.palette.muted),
+        @views.text(text, role=Caption, theme~, width=width - 120.0).foreground(
+          theme.palette.muted,
+        ),
       ]
     None => []
   }
@@ -624,14 +590,14 @@ fn settings_save_row(
   children.push(
     @views.button(
       "Save to .mo_workbench/settings.json",
-      on_click=SettingsMsg::SaveToDisk,
-      variant=@views.ButtonVariant::Primary,
+      on_click=SaveToDisk,
+      variant=Primary,
       theme~,
       width=200.0,
       height=40.0,
     ),
   )
-  @views.row(children, spacing=12.0, align=@views.CrossAlign::Center)
+  @views.row(children, spacing=12.0, align=Center)
 }
 
 ///|
@@ -646,8 +612,8 @@ fn backend_segmented_control(
       @views.choice_item("acp", "ACP"),
     ],
     selected=agent_backend_kind_id(backend),
-    on_select=id => SettingsMsg::BackendChanged(agent_backend_kind_from_id(id)),
-    size=@views.SegmentedControlSize::Compact,
+    on_select=id => BackendChanged(agent_backend_kind_from_id(id)),
+    size=Compact,
     theme~,
     width~,
   )
@@ -666,8 +632,8 @@ fn appearance_segmented_control(
       @views.choice_item("dark", "Dark"),
     ],
     selected=appearance_mode_id(appearance),
-    on_select=id => SettingsMsg::AppearanceChanged(appearance_mode_from_id(id)),
-    size=@views.SegmentedControlSize::Compact,
+    on_select=id => AppearanceChanged(appearance_mode_from_id(id)),
+    size=Compact,
     theme~,
     width~,
   )
@@ -686,8 +652,8 @@ fn approval_segmented_control(
       @views.choice_item("command", "Command"),
     ],
     selected=approval_policy_id(policy),
-    on_select=id => SettingsMsg::ApprovalChanged(approval_policy_from_id(id)),
-    size=@views.SegmentedControlSize::Compact,
+    on_select=id => ApprovalChanged(approval_policy_from_id(id)),
+    size=Compact,
     theme~,
     width~,
   )
@@ -706,8 +672,8 @@ fn sandbox_segmented_control(
       @views.choice_item("full", "Full"),
     ],
     selected=sandbox_mode_id(mode),
-    on_select=id => SettingsMsg::SandboxChanged(sandbox_mode_from_id(id)),
-    size=@views.SegmentedControlSize::Compact,
+    on_select=id => SandboxChanged(sandbox_mode_from_id(id)),
+    size=Compact,
     theme~,
     width~,
   )
@@ -723,28 +689,28 @@ fn font_size_stepper(
     [
       @views.button(
         "-",
-        on_click=SettingsMsg::FontSizeChanged(font_size - 1),
-        variant=@views.ButtonVariant::Ghost,
+        on_click=FontSizeChanged(font_size - 1),
+        variant=Ghost,
         theme~,
         width=40.0,
         height=36.0,
       ),
       @views.text(
         font_size.to_string() + " pt",
-        role=@views.TextRole::Label,
+        role=Label,
         theme~,
         width=width - 96.0,
       ),
       @views.button(
         "+",
-        on_click=SettingsMsg::FontSizeChanged(font_size + 1),
-        variant=@views.ButtonVariant::Ghost,
+        on_click=FontSizeChanged(font_size + 1),
+        variant=Ghost,
         theme~,
         width=40.0,
         height=36.0,
       ),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }

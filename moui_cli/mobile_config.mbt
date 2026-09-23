@@ -100,7 +100,7 @@ fn parse_mobile_android(
   if min_sdk < 23 {
     return Err(label + ".minSdk must be at least 23")
   }
-  Ok({ application_id, min_sdk })
+  Ok({ application_id, min_sdk, })
 }
 
 ///|
@@ -131,7 +131,7 @@ fn parse_mobile_ios(value : Json, label : String) -> Result[MobileIos, String] {
   if !mobile_numeric_dotted_version_at_least(_deployment_target, 15, 0) {
     return Err(label + ".deploymentTarget must be at least 15.0")
   }
-  Ok({ bundle_id, product_name })
+  Ok({ bundle_id, product_name, })
 }
 
 ///|
@@ -274,7 +274,7 @@ fn read_mobile_app_at(metadata_path : String) -> Result[MobileApp, String] {
       " must configure at least one of android, ios, or harmonyos",
     )
   }
-  Ok({ id, display_name, metadata_path, android, ios, harmonyos })
+  Ok({ id, display_name, metadata_path, android, ios, harmonyos, })
 }
 
 ///|

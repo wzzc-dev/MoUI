@@ -1,6 +1,6 @@
 ///|
 test "host window commands wrap queue request helpers" {
-  let commands = WindowCommands::new()
+  let commands = @lifecycle.WindowCommands::new()
   inspect(commands.is_empty(), content="true")
   commands.open(
     title="Inspector",
@@ -26,7 +26,7 @@ test "host window commands wrap queue request helpers" {
   let requests = commands.drain()
   inspect(commands.pending_count(), content="0")
   match requests[0] {
-    @backend_host.WindowRequest::OpenWindow({ title, scene, primary, .. }) => {
+    OpenWindow({ title, scene, primary, .. }) => {
       inspect(title, content="Inspector")
       inspect(scene.scene_id, content="inspector")
       inspect(scene.payload, content="debug")
@@ -35,11 +35,11 @@ test "host window commands wrap queue request helpers" {
     _ => fail("expected open request")
   }
   match requests[1] {
-    @backend_host.WindowRequest::FocusWindow(id) => assert_true(id == window_id)
+    FocusWindow(id) => assert_true(id == window_id)
     _ => fail("expected focus request")
   }
   match requests[2] {
-    @backend_host.WindowRequest::ResizeWindow(id, metrics) => {
+    ResizeWindow(id, metrics) => {
       assert_true(id == window_id)
       assert_true(
         metrics.logical_size == @core.Size::new(width=640.0, height=480.0),
@@ -48,15 +48,15 @@ test "host window commands wrap queue request helpers" {
     _ => fail("expected resize request")
   }
   match requests[6] {
-    @backend_host.WindowRequest::CloseWindow(id) => assert_true(id == window_id)
+    CloseWindow(id) => assert_true(id == window_id)
     _ => fail("expected close request")
   }
 }
 
 ///|
 test "host window commands drain to registry with ordered completions" {
-  let registry = WindowRegistry::new()
-  let commands = WindowCommands::new()
+  let registry = @lifecycle.WindowRegistry::new()
+  let commands = @lifecycle.WindowCommands::new()
   commands.open(
     title="Main",
     metrics=@core.SurfaceMetrics::from_logical(
@@ -70,12 +70,11 @@ test "host window commands drain to registry with ordered completions" {
   inspect(commands.completed_count(), content="2")
   inspect(completions.length(), content="2")
   match completions[0].result {
-    @backend_host.WindowRequestResult::WindowOpened(id) =>
-      inspect(id.value, content="1")
+    WindowOpened(id) => inspect(id.value, content="1")
     _ => fail("expected opened window")
   }
   match completions[1].result {
-    @backend_host.WindowRequestResult::WindowRejected(message) =>
+    WindowRejected(message) =>
       inspect(message, content="cannot focus window: 404")
     _ => fail("expected missing-window rejection")
   }
@@ -87,14 +86,14 @@ test "host window commands drain to registry with ordered completions" {
 
 ///|
 test "host window commands can drain through runtime slots" {
-  let registry = WindowRegistry::new()
+  let registry = @lifecycle.WindowRegistry::new()
   let opened = registry.open(
     title="Main",
     metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=320.0, height=240.0),
     ),
   )
-  let slots = WindowRuntimeSlots::new()
+  let slots = @lifecycle.WindowRuntimeSlots::new()
   let runtime = window_test_runtime(
     root=@views.empty(),
     size=@core.Size::new(width=320.0, height=240.0),
@@ -106,7 +105,7 @@ test "host window commands can drain through runtime slots" {
       driver=@runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     ),
   )
-  let commands = WindowCommands::new()
+  let commands = @lifecycle.WindowCommands::new()
   commands.resize(
     opened,
     @core.SurfaceMetrics::from_logical(
@@ -114,11 +113,10 @@ test "host window commands can drain through runtime slots" {
     ),
   )
   commands.close(@backend_host.WindowId::new(404))
-  let completions = drain_to_runtime_slots(commands, registry, slots)
+  let completions = @lifecycle.drain_to_runtime_slots(commands, registry, slots)
   inspect(completions.length(), content="2")
   match completions[0].result {
-    @backend_host.WindowRequestResult::WindowUpdated(id) =>
-      assert_true(id == opened)
+    WindowUpdated(id) => assert_true(id == opened)
     _ => fail("expected resize update")
   }
   match slots.lookup(opened) {
@@ -129,7 +127,7 @@ test "host window commands can drain through runtime slots" {
     None => fail("expected synced runtime slot")
   }
   match completions[1].result {
-    @backend_host.WindowRequestResult::WindowRejected(message) =>
+    WindowRejected(message) =>
       inspect(message, content="cannot close window: 404")
     _ => fail("expected close rejection")
   }

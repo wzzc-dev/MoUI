@@ -14,11 +14,11 @@ pub fn RenderPipeline::analyze(
   let mut text_count = 0
   for command in self.commands {
     match render_command_batch_kind(command) {
-      RenderPipelineBatchKind::Clear => clear_count += 1
-      RenderPipelineBatchKind::Fill => fill_count += 1
-      RenderPipelineBatchKind::Stroke => stroke_count += 1
-      RenderPipelineBatchKind::Image => image_count += 1
-      RenderPipelineBatchKind::Text => text_count += 1
+      Clear => clear_count += 1
+      Fill => fill_count += 1
+      Stroke => stroke_count += 1
+      Image => image_count += 1
+      Text => text_count += 1
     }
     match render_command_estimated_dirty_rect(command, width, height) {
       Some(rect) => dirty_region.add_clipped_rect(rect, canvas_bounds)
@@ -114,7 +114,7 @@ pub fn RenderPipeline::resource_plan(
   for index in 0..<self.commands.length() {
     let command = self.commands[index]
     match command {
-      RenderCommand::DrawPixmap(pixmap, _, _, _) =>
+      DrawPixmap(pixmap, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_image_dependency(
             index,
@@ -123,7 +123,7 @@ pub fn RenderPipeline::resource_plan(
             pixmap.get_height(),
           ),
         )
-      RenderCommand::DrawPixmapKeyed(resource_key, pixmap, _, _, _) =>
+      DrawPixmapKeyed(resource_key, pixmap, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_image_dependency(
             index,
@@ -132,19 +132,19 @@ pub fn RenderPipeline::resource_plan(
             pixmap.get_height(),
           ),
         )
-      RenderCommand::DrawBmpBytesKeyed(resource_key, image_data, _, _, _) =>
+      DrawBmpBytesKeyed(resource_key, image_data, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawPngBytesKeyed(resource_key, image_data, _, _, _) =>
+      DrawPngBytesKeyed(resource_key, image_data, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawRgbaBytesKeyed(
+      DrawRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -158,37 +158,19 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height,
           ),
         )
-      RenderCommand::DrawSampledBmpBytesKeyed(
-        resource_key,
-        image_data,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _
-      ) =>
+      DrawSampledBmpBytesKeyed(resource_key, image_data, _, _, _, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawSampledPngBytesKeyed(
-        resource_key,
-        image_data,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _
-      ) =>
+      DrawSampledPngBytesKeyed(resource_key, image_data, _, _, _, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawSampledRgbaBytesKeyed(
+      DrawSampledRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -205,22 +187,13 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height,
           ),
         )
-      RenderCommand::DrawQualityBmpBytesKeyed(
-        resource_key,
-        image_data,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _
-      ) =>
+      DrawQualityBmpBytesKeyed(resource_key, image_data, _, _, _, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawQualityBmpBytesRectKeyed(
+      DrawQualityBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -236,22 +209,13 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawQualityPngBytesKeyed(
-        resource_key,
-        image_data,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _
-      ) =>
+      DrawQualityPngBytesKeyed(resource_key, image_data, _, _, _, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawQualityPngBytesRectKeyed(
+      DrawQualityPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -267,7 +231,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawQualityRgbaBytesKeyed(
+      DrawQualityRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -284,7 +248,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height,
           ),
         )
-      RenderCommand::DrawQualityRgbaBytesRectKeyed(
+      DrawQualityRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -302,7 +266,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height, src_rect,
           ),
         )
-      RenderCommand::DrawTransformedSampledBmpBytesKeyed(
+      DrawTransformedSampledBmpBytesKeyed(
         resource_key,
         image_data,
         _,
@@ -317,7 +281,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawTransformedSampledBmpBytesRectKeyed(
+      DrawTransformedSampledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -333,7 +297,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawTransformedQualityBmpBytesKeyed(
+      DrawTransformedQualityBmpBytesKeyed(
         resource_key,
         image_data,
         _,
@@ -348,7 +312,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawTransformedQualityBmpBytesRectKeyed(
+      DrawTransformedQualityBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -364,7 +328,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawTransformedSampledPngBytesKeyed(
+      DrawTransformedSampledPngBytesKeyed(
         resource_key,
         image_data,
         _,
@@ -379,7 +343,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawTransformedSampledPngBytesRectKeyed(
+      DrawTransformedSampledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -395,7 +359,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawTransformedQualityPngBytesKeyed(
+      DrawTransformedQualityPngBytesKeyed(
         resource_key,
         image_data,
         _,
@@ -410,7 +374,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawTransformedQualityPngBytesRectKeyed(
+      DrawTransformedQualityPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -426,7 +390,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawTransformedSampledRgbaBytesKeyed(
+      DrawTransformedSampledRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -443,7 +407,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height,
           ),
         )
-      RenderCommand::DrawTransformedSampledRgbaBytesRectKeyed(
+      DrawTransformedSampledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -461,7 +425,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height, src_rect,
           ),
         )
-      RenderCommand::DrawTransformedQualityRgbaBytesKeyed(
+      DrawTransformedQualityRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -478,7 +442,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height,
           ),
         )
-      RenderCommand::DrawTransformedQualityRgbaBytesRectKeyed(
+      DrawTransformedQualityRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -496,7 +460,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height, src_rect,
           ),
         )
-      RenderCommand::DrawSampledBmpBytesRectKeyed(
+      DrawSampledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -512,7 +476,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawSampledPngBytesRectKeyed(
+      DrawSampledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -528,7 +492,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawSampledRgbaBytesRectKeyed(
+      DrawSampledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -546,33 +510,19 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height, src_rect,
           ),
         )
-      RenderCommand::DrawBmpBytesRectKeyed(
-        resource_key,
-        image_data,
-        src_rect,
-        _,
-        _,
-        _
-      ) =>
+      DrawBmpBytesRectKeyed(resource_key, image_data, src_rect, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_rect_image_dependency(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawPngBytesRectKeyed(
-        resource_key,
-        image_data,
-        src_rect,
-        _,
-        _,
-        _
-      ) =>
+      DrawPngBytesRectKeyed(resource_key, image_data, src_rect, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_rect_image_dependency(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawRgbaBytesRectKeyed(
+      DrawRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -587,7 +537,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height, src_rect,
           ),
         )
-      RenderCommand::DrawTiledBmpBytesRectKeyed(
+      DrawTiledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -602,7 +552,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawTiledPngBytesRectKeyed(
+      DrawTiledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -617,7 +567,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, src_rect,
           ),
         )
-      RenderCommand::DrawTiledRgbaBytesRectKeyed(
+      DrawTiledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -634,39 +584,19 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height, src_rect,
           ),
         )
-      RenderCommand::DrawNinePatchBmpBytesKeyed(
-        resource_key,
-        image_data,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _
-      ) =>
+      DrawNinePatchBmpBytesKeyed(resource_key, image_data, _, _, _, _, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawNinePatchPngBytesKeyed(
-        resource_key,
-        image_data,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _
-      ) =>
+      DrawNinePatchPngBytesKeyed(resource_key, image_data, _, _, _, _, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_image_dependency(
             index, resource_key, image_data,
           ),
         )
-      RenderCommand::DrawNinePatchRgbaBytesKeyed(
+      DrawNinePatchRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -684,7 +614,7 @@ pub fn RenderPipeline::resource_plan(
             index, resource_key, image_data, image_width, image_height,
           ),
         )
-      RenderCommand::DrawPixmapRect(pixmap, src_rect, _, _, _) =>
+      DrawPixmapRect(pixmap, src_rect, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_rect_image_dependency(
             index,
@@ -693,14 +623,7 @@ pub fn RenderPipeline::resource_plan(
             src_rect,
           ),
         )
-      RenderCommand::DrawPixmapRectKeyed(
-        resource_key,
-        pixmap,
-        src_rect,
-        _,
-        _,
-        _
-      ) =>
+      DrawPixmapRectKeyed(resource_key, pixmap, src_rect, _, _, _) =>
         image_dependencies.push(
           render_pipeline_make_rect_image_dependency(
             index,
@@ -709,19 +632,11 @@ pub fn RenderPipeline::resource_plan(
             src_rect,
           ),
         )
-      RenderCommand::DrawTextFace(face, text, _, _, config, _) =>
+      DrawTextFace(face, text, _, _, config, _) =>
         text_dependencies.push(
           render_pipeline_make_text_dependency(index, None, face, text, config),
         )
-      RenderCommand::DrawTextFaceKeyed(
-        resource_key,
-        face,
-        text,
-        _,
-        _,
-        config,
-        _
-      ) =>
+      DrawTextFaceKeyed(resource_key, face, text, _, _, config, _) =>
         text_dependencies.push(
           render_pipeline_make_text_dependency(
             index,
@@ -731,16 +646,7 @@ pub fn RenderPipeline::resource_plan(
             config,
           ),
         )
-      RenderCommand::DrawFontBytesKeyed(
-        font_key,
-        font_data,
-        text_key,
-        text,
-        _,
-        _,
-        config,
-        _
-      ) => {
+      DrawFontBytesKeyed(font_key, font_data, text_key, text, _, _, config, _) => {
         font_dependencies.push(
           render_pipeline_make_font_dependency(index, font_key, font_data),
         )
@@ -750,7 +656,7 @@ pub fn RenderPipeline::resource_plan(
           ),
         )
       }
-      RenderCommand::DrawFontBytesAtlasKeyed(
+      DrawFontBytesAtlasKeyed(
         font_key,
         font_data,
         glyph_key_prefix,
@@ -769,15 +675,7 @@ pub fn RenderPipeline::resource_plan(
           ),
         )
       }
-      RenderCommand::DrawFontBytesFallbackKeyed(
-        sources,
-        text_key_prefix,
-        text,
-        _,
-        _,
-        _,
-        _
-      ) => {
+      DrawFontBytesFallbackKeyed(sources, text_key_prefix, text, _, _, _, _) => {
         for source in sources {
           font_dependencies.push(
             render_pipeline_make_font_dependency(
@@ -795,7 +693,7 @@ pub fn RenderPipeline::resource_plan(
           ),
         )
       }
-      RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+      DrawFontBytesFallbackAtlasKeyed(
         sources,
         glyph_key_prefix,
         text,
@@ -821,7 +719,7 @@ pub fn RenderPipeline::resource_plan(
           ),
         )
       }
-      RenderCommand::DrawLoadedFontKeyed(font_key, text_key, text, _, _, _, _) => {
+      DrawLoadedFontKeyed(font_key, text_key, text, _, _, _, _) => {
         font_dependencies.push(
           render_pipeline_make_loaded_font_dependency(index, font_key),
         )
@@ -833,15 +731,7 @@ pub fn RenderPipeline::resource_plan(
           ),
         )
       }
-      RenderCommand::DrawLoadedFontFallbackKeyed(
-        font_keys,
-        text_key_prefix,
-        text,
-        _,
-        _,
-        _,
-        _
-      ) => {
+      DrawLoadedFontFallbackKeyed(font_keys, text_key_prefix, text, _, _, _, _) => {
         for font_key in font_keys {
           font_dependencies.push(
             render_pipeline_make_loaded_font_dependency(index, font_key),
@@ -855,7 +745,7 @@ pub fn RenderPipeline::resource_plan(
           ),
         )
       }
-      RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
+      DrawLoadedFontFallbackAtlasKeyed(
         font_keys,
         glyph_key_prefix,
         text,
@@ -877,15 +767,7 @@ pub fn RenderPipeline::resource_plan(
           ),
         )
       }
-      RenderCommand::DrawLoadedFontAtlasKeyed(
-        font_key,
-        glyph_key_prefix,
-        text,
-        _,
-        _,
-        _,
-        _
-      ) => {
+      DrawLoadedFontAtlasKeyed(font_key, glyph_key_prefix, text, _, _, _, _) => {
         font_dependencies.push(
           render_pipeline_make_loaded_font_dependency(index, font_key),
         )

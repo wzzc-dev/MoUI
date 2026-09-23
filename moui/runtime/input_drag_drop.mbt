@@ -10,7 +10,7 @@ fn ElementNode::dispatch_drag_drop(
   } else {
     let result = self.dispatch_view_event(
       self.view_node,
-      AppEvent::DragDrop(event),
+      DragDrop(event),
       render,
       TextSystem::fallback(),
       environment=Environment::neutral(),

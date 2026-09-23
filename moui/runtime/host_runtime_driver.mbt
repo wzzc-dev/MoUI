@@ -33,17 +33,15 @@ pub fn HostRuntimeDriver::dispatch(
 ) -> @backend_host.EventResult {
   match event {
     Resized(metrics) => {
-      self.runtime.dispatch_event(@core.AppEvent::Resize(metrics.logical_size))
+      self.runtime.dispatch_event(Resize(metrics.logical_size))
       self.request_redraw()
     }
     Pointer(event) => {
-      self.runtime.dispatch_event(@core.AppEvent::Pointer(event))
+      self.runtime.dispatch_event(Pointer(event))
       self.request_redraw_if_needed()
     }
     Scroll(event) => {
-      self.runtime.dispatch_event(
-        @core.AppEvent::Pointer(event.to_pointer_event()),
-      )
+      self.runtime.dispatch_event(Pointer(event.to_pointer_event()))
       self.request_redraw_if_needed()
     }
     Focus(event) =>
@@ -55,15 +53,15 @@ pub fn HostRuntimeDriver::dispatch(
         None => ()
       }
     Keyboard(event) => {
-      self.runtime.dispatch_event(@core.AppEvent::Keyboard(event))
+      self.runtime.dispatch_event(Keyboard(event))
       self.request_redraw_if_needed()
     }
     TextInput(event) => {
-      self.runtime.dispatch_event(@core.AppEvent::TextInput(event))
+      self.runtime.dispatch_event(TextInput(event))
       self.request_redraw_if_needed()
     }
     DragDrop(event) => {
-      self.runtime.dispatch_event(@core.AppEvent::DragDrop(event))
+      self.runtime.dispatch_event(DragDrop(event))
       self.request_redraw_if_needed()
     }
     ThemeChanged(scheme) => {
@@ -100,7 +98,7 @@ pub fn HostRuntimeDriver::dispatch_platform_view(
   id : String,
   event : @core.PlatformViewEvent,
 ) -> Unit {
-  self.runtime.dispatch_event(@core.AppEvent::PlatformView(id, event))
+  self.runtime.dispatch_event(PlatformView(id, event))
   self.request_redraw()
 }
 
@@ -138,18 +136,11 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
   services : @backend_host.HostServiceBridge,
 ) -> @backend_host.EventResult {
   match intent {
-    @core.CommandIntent::Copy | @core.CommandIntent::Cut => {
+    Copy | Cut => {
       let result = self.runtime.dispatch_focused_text_command(intent)
       if result.handled {
         match result.clipboard_text {
-          Some(text) =>
-            ignore(
-              services.dispatch(
-                @backend_host.HostServiceRequest::Clipboard(
-                  @backend_host.HostClipboardRequest::WriteText(text),
-                ),
-              ),
-            )
+          Some(text) => ignore(services.dispatch(Clipboard(WriteText(text))))
           None => ()
         }
         self.request_redraw_if_needed()
@@ -157,15 +148,10 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
         self.request_redraw_if_needed()
       }
     }
-    @core.CommandIntent::Paste => {
+    Paste => {
       let mut handled = false
-      match
-        services.dispatch(
-          @backend_host.HostServiceRequest::Clipboard(
-            @backend_host.HostClipboardRequest::ReadText,
-          ),
-        ) {
-        @backend_host.HostServiceResponse::ClipboardText(text) => {
+      match services.dispatch(Clipboard(ReadText)) {
+        ClipboardText(text) => {
           let result = self.runtime.dispatch_focused_text_command(
             intent,
             paste_text=Some(text),
@@ -175,7 +161,7 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
           }
           self.request_redraw_if_needed()
         }
-        @backend_host.HostServiceResponse::Pending(_) => handled = true
+        Pending(_) => handled = true
         _ => ()
       }
       if !handled && self.runtime.dispatch_command(intent) {
@@ -197,14 +183,12 @@ pub fn HostRuntimeDriver::dispatch_action_command_with_services(
   services : @backend_host.HostServiceBridge,
 ) -> @backend_host.EventResult {
   match command.intent {
-    @core.CommandIntent::Copy
-    | @core.CommandIntent::Cut
-    | @core.CommandIntent::Paste =>
+    Copy | Cut | Paste =>
       self.dispatch_command_with_services(command.intent, services)
     _ => {
       if self.runtime.dispatch_action_command(command) {
         self.request_redraw_if_needed()
-      } else if command.intent != @core.CommandIntent::Activate {
+      } else if command.intent != Activate {
         ignore(self.dispatch_command_with_services(command.intent, services))
       }
       self.event_result()
@@ -220,7 +204,7 @@ pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
 ) -> @backend_host.EventResult {
   match keyboard_service_command_intent(event) {
     Some(intent) => self.dispatch_command_with_services(intent, services)
-    None => self.dispatch(@backend_host.Event::Keyboard(event))
+    None => self.dispatch(Keyboard(event))
   }
 }
 
@@ -232,7 +216,7 @@ pub fn HostRuntimeDriver::dispatch_escape(
 ) -> @backend_host.EventResult {
   ignore(
     self.runtime.dispatch_event(
-      @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Escape")),
+      Keyboard(@core.KeyboardEvent::new(key="Escape")),
     ),
   )
   self.request_redraw_if_needed()
@@ -257,11 +241,10 @@ pub fn HostRuntimeDriver::show_context_menu(
   if commands.length() == 0 {
     return self.event_result()
   }
-  match
-    services.dispatch(@backend_host.HostServiceRequest::ShowMenu(commands)) {
-    @backend_host.HostServiceResponse::MenuAction(command) =>
+  match services.dispatch(ShowMenu(commands)) {
+    MenuAction(command) =>
       ignore(self.dispatch_action_command_with_services(command, services))
-    @backend_host.HostServiceResponse::MenuCommand(intent) =>
+    MenuCommand(intent) =>
       ignore(self.dispatch_command_with_services(intent, services))
     _ => ()
   }
@@ -308,8 +291,7 @@ fn focused_text_context_menu_commands(
   let has_selection = text_input_state_has_active_selection(input)
   @core.default_text_commands().map(command => {
     match command.intent {
-      @core.CommandIntent::Copy | @core.CommandIntent::Cut =>
-        { ..command, enabled: has_selection }
+      Copy | Cut => { ..command, enabled: has_selection, }
       _ => command
     }
   })
@@ -360,11 +342,11 @@ fn keyboard_service_command_intent(
     !(event.modifiers.meta || event.modifiers.control) {
     None
   } else if event.key == "c" || event.key == "C" {
-    Some(@core.CommandIntent::Copy)
+    Some(Copy)
   } else if event.key == "x" || event.key == "X" {
-    Some(@core.CommandIntent::Cut)
+    Some(Cut)
   } else if event.key == "v" || event.key == "V" {
-    Some(@core.CommandIntent::Paste)
+    Some(Paste)
   } else {
     None
   }
@@ -417,9 +399,7 @@ pub fn HostRuntimeDriver::begin_redraw(self : HostRuntimeDriver) -> Unit {
 
 ///|
 pub fn HostRuntimeDriver::finish_redraw(self : HostRuntimeDriver) -> Unit {
-  self.runtime.dispatch_event(
-    @core.AppEvent::Redraw(@core.RedrawReason::Explicit),
-  )
+  self.runtime.dispatch_event(Redraw(Explicit))
   self.scheduler.finish_redraw()
 }
 
@@ -496,34 +476,22 @@ pub fn HostRuntimeDriver::dispatch_service_completion(
   services : @backend_host.HostServiceBridge,
 ) -> @backend_host.EventResult {
   match (completion.request, completion.response) {
-    (
-      @backend_host.HostServiceRequest::Clipboard(
-        @backend_host.HostClipboardRequest::ReadText
-      ),
-      @backend_host.HostServiceResponse::ClipboardText(text),
-    ) => {
+    (Clipboard(ReadText), ClipboardText(text)) => {
       let result = self.runtime.dispatch_focused_text_command(
-        @core.CommandIntent::Paste,
+        Paste,
         paste_text=Some(text),
       )
       if result.handled {
         self.request_redraw_if_needed()
-      } else if self.runtime.dispatch_command(@core.CommandIntent::Paste) {
+      } else if self.runtime.dispatch_command(Paste) {
         self.request_redraw_if_needed()
       }
     }
-    (
-      @backend_host.HostServiceRequest::ShowMenu(_),
-      @backend_host.HostServiceResponse::MenuAction(command),
-    ) => ignore(self.dispatch_action_command_with_services(command, services))
-    (
-      @backend_host.HostServiceRequest::ShowMenu(_),
-      @backend_host.HostServiceResponse::MenuCommand(intent),
-    ) => ignore(self.dispatch_command_with_services(intent, services))
-    (
-      @backend_host.HostServiceRequest::QuerySystemTheme,
-      @backend_host.HostServiceResponse::SystemTheme(scheme),
-    ) => {
+    (ShowMenu(_), MenuAction(command)) =>
+      ignore(self.dispatch_action_command_with_services(command, services))
+    (ShowMenu(_), MenuCommand(intent)) =>
+      ignore(self.dispatch_command_with_services(intent, services))
+    (QuerySystemTheme, SystemTheme(scheme)) => {
       self.runtime.set_environment(
         self.runtime.environment().with_system_scheme(scheme),
       )

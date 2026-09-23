@@ -25,9 +25,7 @@ pub fn DesktopHostServices::new(
   settings~ : (@host.HostSettingsRequest) -> @host.HostServiceResponse,
   show_menu~ : (Array[@core.ActionCommand]) -> @host.HostServiceResponse,
   set_application_menu? : (Array[@host.HostApplicationMenu]) -> @host.HostServiceResponse = _ => {
-    @host.HostServiceResponse::Unavailable(
-      "application menu bar service is unavailable",
-    )
+    Unavailable("application menu bar service is unavailable")
   },
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
   binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
@@ -54,29 +52,22 @@ pub fn DesktopHostServices::bridge(
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(capabilities=self.capabilities, handle=request => {
     match request {
-      @host.HostServiceRequest::Clipboard(value) => (self.clipboard)(value)
-      @host.HostServiceRequest::ShowMenu(commands) => (self.show_menu)(commands)
-      @host.HostServiceRequest::SetApplicationMenu(menus) =>
-        (self.set_application_menu)(menus)
-      @host.HostServiceRequest::FileDialog(options) =>
-        @host.HostServiceResponse::FileDialogSelection(
-          (self.file_dialog)(options),
-        )
-      @host.HostServiceRequest::TextFile(value) => (self.text_file)(value)
-      @host.HostServiceRequest::BinaryFile(value) => (self.binary_file)(value)
-      @host.HostServiceRequest::OpenUrl(url) =>
+      Clipboard(value) => (self.clipboard)(value)
+      ShowMenu(commands) => (self.show_menu)(commands)
+      SetApplicationMenu(menus) => (self.set_application_menu)(menus)
+      FileDialog(options) => FileDialogSelection((self.file_dialog)(options))
+      TextFile(value) => (self.text_file)(value)
+      BinaryFile(value) => (self.binary_file)(value)
+      OpenUrl(url) =>
         if (self.open_url)(url) {
-          @host.HostServiceResponse::UrlOpened
+          UrlOpened
         } else {
-          @host.HostServiceResponse::Unavailable("open URL failed")
+          Unavailable("open URL failed")
         }
-      @host.HostServiceRequest::QuerySystemTheme =>
-        @host.HostServiceResponse::SystemTheme(self.system_theme)
-      @host.HostServiceRequest::Settings(value) => (self.settings)(value)
-      @host.HostServiceRequest::ListDirectory(path) =>
-        (self.list_directory)(path)
-      @host.HostServiceRequest::PlatformChannel(_) =>
-        @host.HostServiceResponse::Unavailable(request.unavailable_message())
+      QuerySystemTheme => SystemTheme(self.system_theme)
+      Settings(value) => (self.settings)(value)
+      ListDirectory(path) => (self.list_directory)(path)
+      PlatformChannel(_) => Unavailable(request.unavailable_message())
     }
   })
 }

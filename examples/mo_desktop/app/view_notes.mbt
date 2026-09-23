@@ -21,8 +21,8 @@ fn notes_body(
       @views.button(
         "New Note",
         on_click=AddNote,
-        icon=Some(@views.IconName::Plus),
-        variant=@views.ButtonVariant::Tonal,
+        icon=Some(Plus),
+        variant=Tonal,
         theme~,
         width=104.0,
         height=30.0,
@@ -31,8 +31,8 @@ fn notes_body(
         @views.button(
           "Delete",
           on_click=DeleteNote(model.active_note),
-          icon=Some(@views.IconName::Trash),
-          variant=@views.ButtonVariant::Ghost,
+          icon=Some(Trash),
+          variant=Ghost,
           theme~,
           width=92.0,
           height=30.0,
@@ -43,14 +43,14 @@ fn notes_body(
       @views.spacer(min_length=0.0, weight=1.0),
       @views.text(
         "\{model.notes.length()} notes",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=64.0,
         height=22.0,
       ).foreground(palette.muted),
     ],
     spacing=10.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   ).frame(width=metrics.width - 24.0, height=toolbar_height)
   // The sidebar lists first lines; tapping selects the note for editing.
   let rows : Array[@moui.View[Msg]] = []
@@ -60,7 +60,7 @@ fn notes_body(
       @views.container(
         @views.text(
           model.note_title(index),
-          role=@views.TextRole::Body,
+          role=Body,
           theme~,
           width=sidebar_width - 24.0,
           height=24.0,
@@ -80,7 +80,7 @@ fn notes_body(
     )
   }
   let sidebar = if sidebar_width > 0.0 {
-    @views.column(rows, spacing=2.0, align=@views.CrossAlign::Start)
+    @views.column(rows, spacing=2.0, align=Start)
     .frame(width=sidebar_width, height=editor_height)
     .clip()
   } else {
@@ -101,13 +101,12 @@ fn notes_body(
   @views.column(
     [
       toolbar,
-      @views.row(
-        [sidebar, editor],
-        spacing=12.0,
-        align=@views.CrossAlign::Start,
-      ).frame(width=metrics.width, height=editor_height),
+      @views.row([sidebar, editor], spacing=12.0, align=Start).frame(
+        width=metrics.width,
+        height=editor_height,
+      ),
     ],
     spacing=4.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }

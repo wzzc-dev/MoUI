@@ -61,7 +61,7 @@ pub fn accesskit_node_id_for_semantics(
 
 ///|
 pub fn accesskit_rect_from_core(rect : @core.Rect) -> @moon_accesskit.Rect {
-  @moon_accesskit.Rect(
+  Rect(
     rect.origin.x,
     rect.origin.y,
     rect.origin.x + rect.size.width,
@@ -74,43 +74,43 @@ pub fn accesskit_role_from_semantics(
   role : @core.SemanticsRole,
 ) -> @moon_accesskit.Role {
   match role {
-    @core.SemanticsRole::None => @moon_accesskit.Role::GenericContainer
-    @core.SemanticsRole::Text => @moon_accesskit.Role::TextRun
-    @core.SemanticsRole::Link => @moon_accesskit.Role::Link
-    @core.SemanticsRole::Heading => @moon_accesskit.Role::Heading
-    @core.SemanticsRole::Navigation => @moon_accesskit.Role::Navigation
-    @core.SemanticsRole::Main => @moon_accesskit.Role::Main
-    @core.SemanticsRole::Button => @moon_accesskit.Role::Button
-    @core.SemanticsRole::Checkbox => @moon_accesskit.Role::CheckBox
-    @core.SemanticsRole::TextField => @moon_accesskit.Role::TextInput
-    @core.SemanticsRole::List => @moon_accesskit.Role::List
-    @core.SemanticsRole::ListItem => @moon_accesskit.Role::ListItem
-    @core.SemanticsRole::Grid => @moon_accesskit.Role::Grid
-    @core.SemanticsRole::ScrollView => @moon_accesskit.Role::ScrollView
-    @core.SemanticsRole::Switch => @moon_accesskit.Role::Switch
-    @core.SemanticsRole::Radio => @moon_accesskit.Role::RadioButton
-    @core.SemanticsRole::Slider => @moon_accesskit.Role::Slider
-    @core.SemanticsRole::Progress => @moon_accesskit.Role::ProgressIndicator
-    @core.SemanticsRole::Tab => @moon_accesskit.Role::Tab
-    @core.SemanticsRole::Dialog => @moon_accesskit.Role::Dialog
-    @core.SemanticsRole::Tooltip => @moon_accesskit.Role::Tooltip
-    @core.SemanticsRole::Menu => @moon_accesskit.Role::Menu
-    @core.SemanticsRole::WebView => @moon_accesskit.Role::GenericContainer
-    @core.SemanticsRole::ButtonGroup => @moon_accesskit.Role::Group
-    @core.SemanticsRole::Form => @moon_accesskit.Role::Form
-    @core.SemanticsRole::FormField => @moon_accesskit.Role::GenericContainer
-    @core.SemanticsRole::Tree => @moon_accesskit.Role::Tree
-    @core.SemanticsRole::TreeItem => @moon_accesskit.Role::TreeItem
-    @core.SemanticsRole::Group => @moon_accesskit.Role::Group
-    @core.SemanticsRole::Image => @moon_accesskit.Role::Image
-    @core.SemanticsRole::Alert => @moon_accesskit.Role::Alert
-    @core.SemanticsRole::Status => @moon_accesskit.Role::Status
-    @core.SemanticsRole::ComboBox => @moon_accesskit.Role::ComboBox
-    @core.SemanticsRole::Option => @moon_accesskit.Role::ListBoxOption
-    @core.SemanticsRole::Table => @moon_accesskit.Role::Table
-    @core.SemanticsRole::Row => @moon_accesskit.Role::Row
-    @core.SemanticsRole::Cell => @moon_accesskit.Role::Cell
-    @core.SemanticsRole::Separator => @moon_accesskit.Role::Splitter
+    None => GenericContainer
+    Text => TextRun
+    Link => Link
+    Heading => Heading
+    Navigation => Navigation
+    Main => Main
+    Button => Button
+    Checkbox => CheckBox
+    TextField => TextInput
+    List => List
+    ListItem => ListItem
+    Grid => Grid
+    ScrollView => ScrollView
+    Switch => Switch
+    Radio => RadioButton
+    Slider => Slider
+    Progress => ProgressIndicator
+    Tab => Tab
+    Dialog => Dialog
+    Tooltip => Tooltip
+    Menu => Menu
+    WebView => GenericContainer
+    ButtonGroup => Group
+    Form => Form
+    FormField => GenericContainer
+    Tree => Tree
+    TreeItem => TreeItem
+    Group => Group
+    Image => Image
+    Alert => Alert
+    Status => Status
+    ComboBox => ComboBox
+    Option => ListBoxOption
+    Table => Table
+    Row => Row
+    Cell => Cell
+    Separator => Splitter
   }
 }
 
@@ -119,23 +119,20 @@ pub fn accesskit_action_from_semantics(
   action : @core.SemanticsActionKind,
 ) -> @moon_accesskit.Action {
   match action {
-    @core.SemanticsActionKind::Activate => @moon_accesskit.Action::Click
-    @core.SemanticsActionKind::Focus => @moon_accesskit.Action::Focus
-    @core.SemanticsActionKind::SetText => @moon_accesskit.Action::SetValue
-    @core.SemanticsActionKind::Submit => @moon_accesskit.Action::Click
-    @core.SemanticsActionKind::Scroll => @moon_accesskit.Action::ScrollIntoView
-    @core.SemanticsActionKind::Select => @moon_accesskit.Action::Click
-    @core.SemanticsActionKind::Expand => @moon_accesskit.Action::Expand
-    @core.SemanticsActionKind::Collapse => @moon_accesskit.Action::Collapse
-    @core.SemanticsActionKind::Dismiss => @moon_accesskit.Action::HideTooltip
-    @core.SemanticsActionKind::Increment => @moon_accesskit.Action::Increment
-    @core.SemanticsActionKind::Decrement => @moon_accesskit.Action::Decrement
-    @core.SemanticsActionKind::SetNumericValue =>
-      @moon_accesskit.Action::SetValue
-    @core.SemanticsActionKind::SetSelection =>
-      @moon_accesskit.Action::SetTextSelection
-    @core.SemanticsActionKind::ShowMenu =>
-      @moon_accesskit.Action::ShowContextMenu
+    Activate => Click
+    Focus => Focus
+    SetText => SetValue
+    Submit => Click
+    Scroll => ScrollIntoView
+    Select => Click
+    Expand => Expand
+    Collapse => Collapse
+    Dismiss => HideTooltip
+    Increment => Increment
+    Decrement => Decrement
+    SetNumericValue => SetValue
+    SetSelection => SetTextSelection
+    ShowMenu => ShowContextMenu
   }
 }
 
@@ -143,13 +140,13 @@ pub fn accesskit_action_from_semantics(
 pub fn accesskit_node_from_semantics(
   node : @core.SemanticsNode,
 ) -> @moon_accesskit.Node {
-  let role = if node.role == @core.SemanticsRole::TextField {
+  let role = if node.role == TextField {
     if node.state.password {
       @moon_accesskit.Role::PasswordInput
     } else if node.state.multiline {
-      @moon_accesskit.Role::MultilineTextInput
+      MultilineTextInput
     } else {
-      @moon_accesskit.Role::TextInput
+      TextInput
     }
   } else {
     accesskit_role_from_semantics(node.role)
@@ -179,19 +176,16 @@ pub fn accesskit_node_from_semantics(
     access_node.set_selected(true)
   }
   match node.state.checked {
-    Some(@core.SemanticsCheckedState::Unchecked) =>
-      access_node.set_toggled(@moon_accesskit.Toggled::False)
-    Some(@core.SemanticsCheckedState::Checked) =>
-      access_node.set_toggled(@moon_accesskit.Toggled::True)
-    Some(@core.SemanticsCheckedState::Mixed) =>
-      access_node.set_toggled(@moon_accesskit.Toggled::Mixed)
+    Some(Unchecked) => access_node.set_toggled(False)
+    Some(Checked) => access_node.set_toggled(True)
+    Some(Mixed) => access_node.set_toggled(Mixed)
     None => ()
   }
   if node.state.expanded {
     access_node.set_expanded(true)
   }
   if node.state.invalid {
-    access_node.set_invalid(@moon_accesskit.Invalid::True)
+    access_node.set_invalid(True)
   }
   if node.state.required {
     access_node.set_required()
@@ -236,9 +230,9 @@ pub fn accesskit_node_from_semantics(
         Some(selection) => {
           let id = accesskit_node_id_for_semantics(node.node_id)
           access_node.set_text_selection(
-            @moon_accesskit.TextSelection::TextSelection(
-              @moon_accesskit.TextPosition::TextPosition(id, selection.start),
-              @moon_accesskit.TextPosition::TextPosition(id, selection.end),
+            TextSelection(
+              TextPosition(id, selection.start),
+              TextPosition(id, selection.end),
             ),
           )
         }
@@ -249,9 +243,7 @@ pub fn accesskit_node_from_semantics(
               let position = @moon_accesskit.TextPosition::TextPosition(
                 id, caret,
               )
-              access_node.set_text_selection(
-                @moon_accesskit.TextSelection::TextSelection(position, position),
-              )
+              access_node.set_text_selection(TextSelection(position, position))
             }
             None => ()
           }
@@ -322,9 +314,9 @@ pub fn accesskit_node_from_semantics(
   }
   access_node.set_live(
     match node.live {
-      @core.SemanticsLive::Off => @moon_accesskit.Live::Off
-      @core.SemanticsLive::Polite => @moon_accesskit.Live::Polite
-      @core.SemanticsLive::Assertive => @moon_accesskit.Live::Assertive
+      Off => Off
+      Polite => Polite
+      Assertive => Assertive
     },
   )
   if node.live_atomic {
@@ -340,7 +332,7 @@ pub fn accesskit_node_from_semantics(
 ///|
 fn empty_accesskit_root() -> (@moon_accesskit.NodeId, @moon_accesskit.Node) {
   let id = @moon_accesskit.NodeId::from_u64(0UL)
-  (id, @moon_accesskit.Node(@moon_accesskit.Role::GenericContainer))
+  (id, Node(GenericContainer))
 }
 
 ///|
@@ -367,7 +359,7 @@ fn build_accesskit_update(
     @moon_accesskit.TreeId::root(),
     focus_id,
   )
-  update.set_tree(@moon_accesskit.Tree(root_id))
+  update.set_tree(Tree(root_id))
   match empty_node {
     Some(node) => update.push_node(root_id, node)
     None => ()
@@ -378,7 +370,7 @@ fn build_accesskit_update(
       accesskit_node_from_semantics(node),
     )
   }
-  { generation, tree_update: update, removed, announcements }
+  { generation, tree_update: update, removed, announcements, }
 }
 
 ///|
@@ -386,7 +378,7 @@ pub fn accesskit_update_from_semantics_read(
   read : @runtime.SemanticsRead,
 ) -> AccessKitUpdate? {
   match read {
-    @runtime.SemanticsRead::Full(snapshot) =>
+    Full(snapshot) =>
       Some(
         build_accesskit_update(
           snapshot.generation(),
@@ -397,7 +389,7 @@ pub fn accesskit_update_from_semantics_read(
           [],
         ),
       )
-    @runtime.SemanticsRead::Delta(delta) =>
+    Delta(delta) =>
       Some(
         build_accesskit_update(
           delta.to(),
@@ -408,7 +400,7 @@ pub fn accesskit_update_from_semantics_read(
           delta.announcements(),
         ),
       )
-    @runtime.SemanticsRead::Unchanged(_) => None
+    Unchanged(_) => None
   }
 }
 
@@ -418,11 +410,7 @@ pub fn accesskit_semantics_action_request(
   generation~ : @core.SemanticsGeneration,
   action~ : @core.SemanticsAction,
 ) -> @runtime.PerformSemanticsActionRequest {
-  {
-    target: @core.SemanticsTarget::ByNodeId(node_id),
-    action,
-    precondition: @runtime.SemanticsGenerationPrecondition::Exact(generation),
-  }
+  { target: ByNodeId(node_id), action, precondition: Exact(generation), }
 }
 
 ///|
@@ -433,12 +421,10 @@ pub fn AccessKitBridge::new(
     accesskit_update_from_semantics_read(read)
   },
   perform? : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult = _request => {
-    AccessKitActionResult::BridgeUnavailable(
-      "accessibility action transport is not configured",
-    )
+    BridgeUnavailable("accessibility action transport is not configured")
   },
 ) -> AccessKitBridge {
-  { diagnostic_name, available, publish, perform }
+  { diagnostic_name, available, publish, perform, }
 }
 
 ///|
@@ -447,7 +433,7 @@ pub fn AccessKitBridge::unavailable(
   reason? : String = "accessibility bridge is unavailable",
 ) -> AccessKitBridge {
   AccessKitBridge::new(diagnostic_name~, available=false, perform=_request => {
-    AccessKitActionResult::BridgeUnavailable(reason)
+    BridgeUnavailable(reason)
   })
 }
 
@@ -471,7 +457,7 @@ pub fn AccessKitBridge::perform_action(
   if self.available {
     (self.perform)(request)
   } else {
-    AccessKitActionResult::BridgeUnavailable(
+    BridgeUnavailable(
       "accessibility bridge is unavailable: " + self.diagnostic_name,
     )
   }
@@ -484,8 +470,8 @@ pub fn AccessKitBridge::driver(
 ) -> AccessKitBridge {
   AccessKitBridge::new(diagnostic_name~, perform=request => {
     match driver.perform_semantics_action(request) {
-      Ok(receipt) => AccessKitActionResult::Handled(receipt)
-      Err(error) => AccessKitActionResult::Rejected(error)
+      Ok(receipt) => Handled(receipt)
+      Err(error) => Rejected(error)
     }
   })
 }

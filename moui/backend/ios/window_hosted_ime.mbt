@@ -39,7 +39,7 @@ pub struct IosImeSink {
 
 ///|
 pub fn IosImeSink::new() -> IosImeSink {
-  { last_enabled: false, last_text: "", last_selection: None, last_rect: None }
+  { last_enabled: false, last_text: "", last_selection: None, last_rect: None, }
 }
 
 ///|

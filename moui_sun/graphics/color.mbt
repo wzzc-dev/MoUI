@@ -23,7 +23,7 @@ pub impl Show for Color with fn output(self, logger) {
 ///|
 /// Create a color from RGBA values
 pub fn Color::new(r~ : Byte, g~ : Byte, b~ : Byte, a? : Byte = 255) -> Color {
-  { r, g, b, a }
+  { r, g, b, a, }
 }
 
 ///|
@@ -60,7 +60,7 @@ pub fn Color::transparent() -> Color {
 ///|
 /// Return this color with a replaced alpha channel
 pub fn Color::with_alpha(self : Color, alpha : Byte) -> Color {
-  { r: self.r, g: self.g, b: self.b, a: alpha }
+  { r: self.r, g: self.g, b: self.b, a: alpha, }
 }
 
 ///|
@@ -117,16 +117,16 @@ pub fn Color::blend_with(
   blend_mode : BlendMode,
 ) -> Color {
   match blend_mode {
-    BlendMode::Clear => Color::transparent()
-    BlendMode::Source => self
-    BlendMode::Destination => dst
-    BlendMode::SourceOver => self.blend_over(dst)
-    BlendMode::DestinationOver => dst.blend_over(self)
-    BlendMode::SourceIn => self.blend_alpha_mask(dst.a.to_int())
-    BlendMode::DestinationIn => dst.blend_alpha_mask(self.a.to_int())
-    BlendMode::SourceOut => self.blend_alpha_mask(255 - dst.a.to_int())
-    BlendMode::DestinationOut => dst.blend_alpha_mask(255 - self.a.to_int())
-    BlendMode::SourceAtop =>
+    Clear => Color::transparent()
+    Source => self
+    Destination => dst
+    SourceOver => self.blend_over(dst)
+    DestinationOver => dst.blend_over(self)
+    SourceIn => self.blend_alpha_mask(dst.a.to_int())
+    DestinationIn => dst.blend_alpha_mask(self.a.to_int())
+    SourceOut => self.blend_alpha_mask(255 - dst.a.to_int())
+    DestinationOut => dst.blend_alpha_mask(255 - self.a.to_int())
+    SourceAtop =>
       blend_porter_duff(
         self,
         dst,
@@ -134,7 +134,7 @@ pub fn Color::blend_with(
         dst_factor=255 - self.a.to_int(),
         out_alpha=dst.a.to_int(),
       )
-    BlendMode::DestinationAtop =>
+    DestinationAtop =>
       blend_porter_duff(
         self,
         dst,
@@ -142,7 +142,7 @@ pub fn Color::blend_with(
         dst_factor=self.a.to_int(),
         out_alpha=self.a.to_int(),
       )
-    BlendMode::Xor =>
+    Xor =>
       blend_porter_duff(
         self,
         dst,
@@ -151,31 +151,31 @@ pub fn Color::blend_with(
         out_alpha=div_round(self.a.to_int() * (255 - dst.a.to_int()), 255) +
           div_round(dst.a.to_int() * (255 - self.a.to_int()), 255),
       )
-    BlendMode::Multiply
-    | BlendMode::Screen
-    | BlendMode::Add
-    | BlendMode::Darken
-    | BlendMode::Lighten
-    | BlendMode::Difference
-    | BlendMode::Exclusion
-    | BlendMode::Overlay
-    | BlendMode::HardLight
-    | BlendMode::SoftLight
-    | BlendMode::ColorDodge
-    | BlendMode::ColorBurn
-    | BlendMode::Hue
-    | BlendMode::Saturation
-    | BlendMode::Color
-    | BlendMode::Luminosity
-    | BlendMode::LinearBurn
-    | BlendMode::Subtract => blend_non_source_over(self, dst, blend_mode)
+    Multiply
+    | Screen
+    | Add
+    | Darken
+    | Lighten
+    | Difference
+    | Exclusion
+    | Overlay
+    | HardLight
+    | SoftLight
+    | ColorDodge
+    | ColorBurn
+    | Hue
+    | Saturation
+    | Color
+    | Luminosity
+    | LinearBurn
+    | Subtract => blend_non_source_over(self, dst, blend_mode)
   }
 }
 
 ///|
 fn should_blend_source_color(color : Color, blend_mode : BlendMode) -> Bool {
   match blend_mode {
-    BlendMode::Destination => false
+    Destination => false
     _ =>
       color.a.to_int() > 0 || blend_mode_blends_transparent_source(blend_mode)
   }
@@ -184,12 +184,8 @@ fn should_blend_source_color(color : Color, blend_mode : BlendMode) -> Bool {
 ///|
 fn blend_mode_blends_transparent_source(blend_mode : BlendMode) -> Bool {
   match blend_mode {
-    BlendMode::Clear
-    | BlendMode::Source
-    | BlendMode::SourceIn
-    | BlendMode::SourceOut
-    | BlendMode::DestinationIn
-    | BlendMode::DestinationAtop => true
+    Clear | Source | SourceIn | SourceOut | DestinationIn | DestinationAtop =>
+      true
     _ => false
   }
 }
@@ -329,25 +325,25 @@ fn blend_unpremul_rgb(
   blend_mode : BlendMode,
 ) -> (Int, Int, Int) {
   match blend_mode {
-    BlendMode::Hue =>
+    Hue =>
       rounded_blend_rgb(
         blend_nonseparable_hue(color_to_blend_rgb(src), color_to_blend_rgb(dst)),
       )
-    BlendMode::Saturation =>
+    Saturation =>
       rounded_blend_rgb(
         blend_nonseparable_saturation(
           color_to_blend_rgb(src),
           color_to_blend_rgb(dst),
         ),
       )
-    BlendMode::Color =>
+    Color =>
       rounded_blend_rgb(
         blend_nonseparable_color(
           color_to_blend_rgb(src),
           color_to_blend_rgb(dst),
         ),
       )
-    BlendMode::Luminosity =>
+    Luminosity =>
       rounded_blend_rgb(
         blend_nonseparable_luminosity(
           color_to_blend_rgb(src),
@@ -366,45 +362,40 @@ fn blend_unpremul_rgb(
 ///|
 fn blend_unpremul_channel(src : Int, dst : Int, blend_mode : BlendMode) -> Int {
   match blend_mode {
-    BlendMode::Clear => 0
-    BlendMode::Source => src
-    BlendMode::Destination => dst
-    BlendMode::SourceOver => src
-    BlendMode::DestinationOver => dst
-    BlendMode::SourceIn | BlendMode::SourceOut | BlendMode::SourceAtop => src
-    BlendMode::DestinationIn
-    | BlendMode::DestinationOut
-    | BlendMode::DestinationAtop => dst
-    BlendMode::Xor => src
-    BlendMode::Multiply => div_round(src * dst, 255)
-    BlendMode::Screen => 255 - div_round((255 - src) * (255 - dst), 255)
-    BlendMode::Add => (src + dst).min(255)
-    BlendMode::Darken => src.min(dst)
-    BlendMode::Lighten => src.max(dst)
-    BlendMode::Difference => (src - dst).abs()
-    BlendMode::Exclusion => src + dst - div_round(2 * src * dst, 255)
-    BlendMode::Overlay =>
+    Clear => 0
+    Source => src
+    Destination => dst
+    SourceOver => src
+    DestinationOver => dst
+    SourceIn | SourceOut | SourceAtop => src
+    DestinationIn | DestinationOut | DestinationAtop => dst
+    Xor => src
+    Multiply => div_round(src * dst, 255)
+    Screen => 255 - div_round((255 - src) * (255 - dst), 255)
+    Add => (src + dst).min(255)
+    Darken => src.min(dst)
+    Lighten => src.max(dst)
+    Difference => (src - dst).abs()
+    Exclusion => src + dst - div_round(2 * src * dst, 255)
+    Overlay =>
       if dst < 128 {
         div_round(2 * src * dst, 255)
       } else {
         255 - div_round(2 * (255 - src) * (255 - dst), 255)
       }
-    BlendMode::HardLight =>
+    HardLight =>
       if src < 128 {
         div_round(2 * src * dst, 255)
       } else {
         255 - div_round(2 * (255 - src) * (255 - dst), 255)
       }
-    BlendMode::SoftLight => blend_soft_light_channel(src, dst)
-    BlendMode::ColorDodge => blend_color_dodge_channel(src, dst)
-    BlendMode::ColorBurn => blend_color_burn_channel(src, dst)
+    SoftLight => blend_soft_light_channel(src, dst)
+    ColorDodge => blend_color_dodge_channel(src, dst)
+    ColorBurn => blend_color_burn_channel(src, dst)
     // Non-separable modes are handled by blend_unpremul_rgb before channel fallback.
-    BlendMode::Hue
-    | BlendMode::Saturation
-    | BlendMode::Color
-    | BlendMode::Luminosity => src
-    BlendMode::LinearBurn => (src + dst - 255).max(0)
-    BlendMode::Subtract => (dst - src).max(0)
+    Hue | Saturation | Color | Luminosity => src
+    LinearBurn => (src + dst - 255).max(0)
+    Subtract => (dst - src).max(0)
   }
 }
 

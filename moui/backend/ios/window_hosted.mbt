@@ -180,19 +180,17 @@ pub fn ios_window_hosted_pump_host_sim(
 ) -> Unit {
   @window_ios.host_reset_for_test()
   let event_loop = @window_ios.EventLoop::new()
-  @window_ios.host_push(@window_ios.HostCmd::Start)
-  @window_ios.host_push(@window_ios.HostCmd::Resume)
-  @window_ios.host_push(
-    @window_ios.HostCmd::SurfaceInit(surface_handle, 0UL, width, height, scale),
-  )
+  @window_ios.host_push(Start)
+  @window_ios.host_push(Resume)
+  @window_ios.host_push(SurfaceInit(surface_handle, 0UL, width, height, scale))
   ignore(event_loop.pump_app_events(None, app))
   app.backend.force_redraw()
   ignore(event_loop.pump_app_events(None, app))
-  @window_ios.host_push(@window_ios.HostCmd::PointerButton(true, 10.0, 20.0))
-  @window_ios.host_push(@window_ios.HostCmd::PointerButton(false, 10.0, 20.0))
+  @window_ios.host_push(PointerButton(true, 10.0, 20.0))
+  @window_ios.host_push(PointerButton(false, 10.0, 20.0))
   ignore(event_loop.pump_app_events(None, app))
-  @window_ios.host_push(@window_ios.HostCmd::SurfaceTerm)
-  @window_ios.host_push(@window_ios.HostCmd::Stop)
+  @window_ios.host_push(SurfaceTerm)
+  @window_ios.host_push(Stop)
   ignore(event_loop.pump_app_events(None, app))
   event_loop.drop()
 }

@@ -5,7 +5,7 @@ fn SkiaRasterRenderer::record_unsupported_command(
   reason : String,
 ) -> Unit {
   self.unsupported_command_count = self.unsupported_command_count + 1
-  self.unsupported_command_diagnostics.push({ command, reason })
+  self.unsupported_command_diagnostics.push({ command, reason, })
 }
 
 ///|
@@ -16,120 +16,80 @@ fn SkiaRasterRenderer::render_command(
   canvas_scopes : Array[@render_common.PlanScopeKind],
 ) -> Unit {
   match command {
-    @render_common.PlanOp::Clear(color) => canvas.clear(skia_color(color))
-    @render_common.PlanOp::FillRect(rect, color) =>
+    Clear(color) => canvas.clear(skia_color(color))
+    FillRect(rect, color) =>
       canvas.draw_rect(skia_rect(rect), skia_paint(color))
-    @render_common.PlanOp::StrokeRect(rect, color, width) =>
+    StrokeRect(rect, color, width) =>
       canvas.draw_rect(skia_rect(rect), skia_stroke_paint(color, width))
-    @render_common.PlanOp::FillRoundedRect(rounded, color) =>
+    FillRoundedRect(rounded, color) =>
       canvas.draw_round_rect(
         skia_rect(rounded.rect),
         Float::from_double(rounded.radius),
         Float::from_double(rounded.radius),
         skia_paint(color),
       )
-    @render_common.PlanOp::StrokeRoundedRect(rounded, color, width) =>
+    StrokeRoundedRect(rounded, color, width) =>
       canvas.draw_round_rect(
         skia_rect(rounded.rect),
         Float::from_double(rounded.radius),
         Float::from_double(rounded.radius),
         skia_stroke_paint(color, width),
       )
-    @render_common.PlanOp::FillRoundedRectBrush(rounded, brush) =>
+    FillRoundedRectBrush(rounded, brush) =>
       self.draw_brush_rounded_rect(canvas, rounded, brush, stroke_width=None)
-    @render_common.PlanOp::StrokeRoundedRectBrush(rounded, brush, width) =>
+    StrokeRoundedRectBrush(rounded, brush, width) =>
       self.draw_brush_rounded_rect(
         canvas,
         rounded,
         brush,
         stroke_width=Some(width),
       )
-    @render_common.PlanOp::DrawShadow(shadow) =>
-      self.draw_shadow(canvas, shadow)
-    @render_common.PlanOp::DrawText(run) => self.draw_text(canvas, run)
-    @render_common.PlanOp::DrawImage(run) => self.draw_image(canvas, run)
-    @render_common.PlanOp::PushClip(rect) => {
+    DrawShadow(shadow) => self.draw_shadow(canvas, shadow)
+    DrawText(run) => self.draw_text(canvas, run)
+    DrawImage(run) => self.draw_image(canvas, run)
+    PushClip(rect) => {
       ignore(canvas.save())
-      canvas_scopes.push(@render_common.PlanScopeKind::Clip)
+      canvas_scopes.push(Clip)
       canvas.clip_rect(skia_rect(rect), anti_alias=true)
     }
-    @render_common.PlanOp::PopClip =>
-      self.pop_canvas_scope(
-        canvas,
-        canvas_scopes,
-        @render_common.PlanScopeKind::Clip,
-      )
-    @render_common.PlanOp::PushRoundedClip(rounded) => {
+    PopClip => self.pop_canvas_scope(canvas, canvas_scopes, Clip)
+    PushRoundedClip(rounded) => {
       ignore(canvas.save())
-      canvas_scopes.push(@render_common.PlanScopeKind::RoundedClip)
+      canvas_scopes.push(RoundedClip)
       canvas.clip_rrect(skia_rrect(rounded), anti_alias=true)
     }
-    @render_common.PlanOp::PopRoundedClip =>
-      self.pop_canvas_scope(
-        canvas,
-        canvas_scopes,
-        @render_common.PlanScopeKind::RoundedClip,
-      )
-    @render_common.PlanOp::PushTransform(transform) => {
+    PopRoundedClip => self.pop_canvas_scope(canvas, canvas_scopes, RoundedClip)
+    PushTransform(transform) => {
       ignore(canvas.save())
-      canvas_scopes.push(@render_common.PlanScopeKind::Transform)
+      canvas_scopes.push(Transform)
       canvas.concat(skia_matrix(transform))
     }
-    @render_common.PlanOp::PopTransform =>
-      self.pop_canvas_scope(
-        canvas,
-        canvas_scopes,
-        @render_common.PlanScopeKind::Transform,
-      )
-    @render_common.PlanOp::PushOpacity(opacity) => {
+    PopTransform => self.pop_canvas_scope(canvas, canvas_scopes, Transform)
+    PushOpacity(opacity) => {
       ignore(canvas.save_layer(paint=skia_opacity_paint(opacity)))
-      canvas_scopes.push(@render_common.PlanScopeKind::Opacity)
+      canvas_scopes.push(Opacity)
     }
-    @render_common.PlanOp::PopOpacity =>
-      self.pop_canvas_scope(
-        canvas,
-        canvas_scopes,
-        @render_common.PlanScopeKind::Opacity,
-      )
-    @render_common.PlanOp::PushLayer(layer) => {
+    PopOpacity => self.pop_canvas_scope(canvas, canvas_scopes, Opacity)
+    PushLayer(layer) => {
       self.push_layer(canvas, layer)
-      canvas_scopes.push(@render_common.PlanScopeKind::Layer)
+      canvas_scopes.push(Layer)
     }
-    @render_common.PlanOp::PopLayer =>
-      self.pop_canvas_scope(
-        canvas,
-        canvas_scopes,
-        @render_common.PlanScopeKind::Layer,
-      )
-    @render_common.PlanOp::BeginRetainedLayer(spec) => {
+    PopLayer => self.pop_canvas_scope(canvas, canvas_scopes, Layer)
+    BeginRetainedLayer(spec) => {
       self.push_layer(
         canvas,
-        @core.LayerSpec::new(
-          mask=@core.LayerMask::RectMask(spec.frame),
-          offscreen=true,
-        ),
+        @core.LayerSpec::new(mask=RectMask(spec.frame), offscreen=true),
       )
-      canvas_scopes.push(@render_common.PlanScopeKind::Layer)
+      canvas_scopes.push(Layer)
     }
-    @render_common.PlanOp::EndRetainedLayer(_) =>
-      self.pop_canvas_scope(
-        canvas,
-        canvas_scopes,
-        @render_common.PlanScopeKind::Layer,
-      )
-    @render_common.PlanOp::PushFilter(filter) => {
+    EndRetainedLayer(_) => self.pop_canvas_scope(canvas, canvas_scopes, Layer)
+    PushFilter(filter) => {
       self.push_filter(canvas, filter)
-      canvas_scopes.push(@render_common.PlanScopeKind::Filter)
+      canvas_scopes.push(Filter)
     }
-    @render_common.PlanOp::PopFilter =>
-      self.pop_canvas_scope(
-        canvas,
-        canvas_scopes,
-        @render_common.PlanScopeKind::Filter,
-      )
-    @render_common.PlanOp::DrawPath(path) => self.draw_path(canvas, path)
-    @render_common.PlanOp::DrawShaderEffect(spec) =>
-      self.draw_shader_effect(canvas, spec)
+    PopFilter => self.pop_canvas_scope(canvas, canvas_scopes, Filter)
+    DrawPath(path) => self.draw_path(canvas, path)
+    DrawShaderEffect(spec) => self.draw_shader_effect(canvas, spec)
   }
 }
 
@@ -166,7 +126,7 @@ fn SkiaRasterRenderer::push_filter(
   filter : @core.FilterEffect,
 ) -> Unit {
   match filter {
-    @core.FilterEffect::Blur(radius) =>
+    Blur(radius) =>
       match
         @skia_native.ImageFilter::blur(
           Float::from_double(radius.max(0.0)),
@@ -181,22 +141,22 @@ fn SkiaRasterRenderer::push_filter(
           )
         }
       }
-    @core.FilterEffect::Saturate(amount) =>
+    Saturate(amount) =>
       self.push_color_filter(
         canvas,
         @skia_native.ColorFilter::saturation(Float::from_double(amount)),
       )
-    @core.FilterEffect::Brightness(amount) =>
+    Brightness(amount) =>
       self.push_color_filter(
         canvas,
         @skia_native.ColorFilter::brightness(Float::from_double(amount)),
       )
-    @core.FilterEffect::Contrast(amount) =>
+    Contrast(amount) =>
       self.push_color_filter(
         canvas,
         @skia_native.ColorFilter::contrast(Float::from_double(amount)),
       )
-    @core.FilterEffect::ColorMatrix(values) =>
+    ColorMatrix(values) =>
       self.push_color_filter(canvas, skia_color_filter_matrix(values))
   }
 }
@@ -288,7 +248,7 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
   stroke_width~ : Double?,
 ) -> Unit {
   match brush {
-    @core.Brush::Solid(color) =>
+    Solid(color) =>
       match stroke_width {
         Some(width) =>
           canvas.draw_round_rect(
@@ -353,12 +313,12 @@ fn SkiaRasterRenderer::push_layer(
     skia_blend_mode(layer.blend_mode),
   )
   match layer.mask {
-    @core.LayerMask::NoMask => ignore(canvas.save_layer(paint~))
-    @core.LayerMask::RectMask(rect) => {
+    NoMask => ignore(canvas.save_layer(paint~))
+    RectMask(rect) => {
       ignore(canvas.save_layer(bounds=Some(skia_rect(rect)), paint~))
       canvas.clip_rect(skia_rect(rect), anti_alias=true)
     }
-    @core.LayerMask::RoundedMask(rounded) => {
+    RoundedMask(rounded) => {
       ignore(canvas.save_layer(bounds=Some(skia_rect(rounded.rect)), paint~))
       canvas.clip_rrect(skia_rrect(rounded), anti_alias=true)
     }
@@ -378,14 +338,13 @@ fn SkiaRasterRenderer::draw_path(
   match skia_path(spec) {
     Some(path) => {
       match spec.fill {
-        Some(@core.Brush::Solid(color)) =>
-          canvas.draw_path(path, skia_paint(color))
+        Some(Solid(color)) => canvas.draw_path(path, skia_paint(color))
         Some(brush) =>
           self.draw_path_brush(canvas, path, brush, stroke_width=None)
         None => ()
       }
       match spec.stroke {
-        Some(@core.Brush::Solid(color)) =>
+        Some(Solid(color)) =>
           canvas.draw_path(path, skia_stroke_paint(color, spec.stroke_width))
         Some(brush) =>
           self.draw_path_brush(
@@ -478,8 +437,7 @@ fn SkiaRasterRenderer::draw_brush_rect(
   brush : @core.Brush,
 ) -> Unit {
   match brush {
-    @core.Brush::Solid(color) =>
-      canvas.draw_rect(skia_rect(frame), skia_paint(color))
+    Solid(color) => canvas.draw_rect(skia_rect(frame), skia_paint(color))
     _ =>
       match skia_brush_shader(brush) {
         Some(shader) =>
@@ -501,15 +459,15 @@ fn SkiaRasterRenderer::draw_brush_rect(
 ///|
 fn skia_brush_shader(brush : @core.Brush) -> @skia_native.Shader? {
   match brush {
-    @core.Brush::Solid(_) => None
-    @core.Brush::LinearGradient(gradient) =>
+    Solid(_) => None
+    LinearGradient(gradient) =>
       @skia_native.Shader::linear_gradient(
         skia_point(gradient.start),
         skia_point(gradient.end),
         skia_color(gradient.start_color),
         skia_color(gradient.end_color),
       )
-    @core.Brush::RadialGradient(gradient) =>
+    RadialGradient(gradient) =>
       @skia_native.Shader::radial_gradient(
         skia_point(gradient.center),
         Float::from_double(gradient.radius),
@@ -572,11 +530,7 @@ fn SkiaRasterRenderer::draw_linear_gradient_debug(
     start_color~,
     end_color~,
   )
-  self.draw_brush_rect(
-    canvas,
-    spec.frame,
-    @core.Brush::LinearGradient(gradient),
-  )
+  self.draw_brush_rect(canvas, spec.frame, LinearGradient(gradient))
 }
 
 ///|
@@ -667,12 +621,12 @@ fn skia_stroke_paint(color : @core.Color, width : Double) -> @moui_skia.Paint {
 ///|
 fn skia_blend_mode(mode : @core.BlendMode) -> @moui_skia.BlendMode {
   match mode {
-    @core.BlendMode::SourceOver => @moui_skia.BlendMode::SrcOver
-    @core.BlendMode::Multiply => @moui_skia.BlendMode::Multiply
-    @core.BlendMode::Screen => @moui_skia.BlendMode::Screen
-    @core.BlendMode::Overlay => @moui_skia.BlendMode::Overlay
-    @core.BlendMode::Darken => @moui_skia.BlendMode::Darken
-    @core.BlendMode::Lighten => @moui_skia.BlendMode::Lighten
+    SourceOver => SrcOver
+    Multiply => Multiply
+    Screen => Screen
+    Overlay => Overlay
+    Darken => Darken
+    Lighten => Lighten
   }
 }
 
@@ -681,11 +635,9 @@ fn skia_shader_effect_colors(
   fallback : @core.Brush,
 ) -> (@core.Color, @core.Color) {
   match fallback {
-    @core.Brush::Solid(color) => (color, color)
-    @core.Brush::LinearGradient(gradient) =>
-      (gradient.start_color, gradient.end_color)
-    @core.Brush::RadialGradient(gradient) =>
-      (gradient.center_color, gradient.edge_color)
+    Solid(color) => (color, color)
+    LinearGradient(gradient) => (gradient.start_color, gradient.end_color)
+    RadialGradient(gradient) => (gradient.center_color, gradient.edge_color)
   }
 }
 
@@ -766,13 +718,13 @@ fn skia_path(spec : @core.PathSpec) -> @skia_native.Path? {
     Some(path) => {
       for verb in spec.verbs {
         match verb {
-          @core.PathVerb::MoveTo(point) => path.move_to(skia_point(point))
-          @core.PathVerb::LineTo(point) => path.line_to(skia_point(point))
-          @core.PathVerb::QuadTo(control, end) =>
+          MoveTo(point) => path.move_to(skia_point(point))
+          LineTo(point) => path.line_to(skia_point(point))
+          QuadTo(control, end) =>
             path.quad_to(skia_point(control), skia_point(end))
-          @core.PathVerb::CubicTo(c1, c2, end) =>
+          CubicTo(c1, c2, end) =>
             path.cubic_to(skia_point(c1), skia_point(c2), skia_point(end))
-          @core.PathVerb::Close => path.close()
+          Close => path.close()
         }
       }
       Some(path)

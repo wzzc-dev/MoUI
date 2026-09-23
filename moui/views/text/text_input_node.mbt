@@ -22,9 +22,9 @@ impl @core.ViewNode for SingleLineTextInput with fn identity(self) {
 impl @core.ViewNode for SingleLineTextInput with fn declaration(self) {
   let variant = @core.DeclarationKey::int(
     match self.variant {
-      @style.TextFieldVariant::Filled => 0
-      @style.TextFieldVariant::Outline => 1
-      @style.TextFieldVariant::Plain => 2
+      Filled => 0
+      Outline => 1
+      Plain => 2
     },
   )
   let paint_key = @common.view_record_key("SingleLineTextInput.paint", [
@@ -37,7 +37,7 @@ impl @core.ViewNode for SingleLineTextInput with fn declaration(self) {
   @common.view_declaration(
     layout=@common.view_exact_channel(@common.view_size_key(self.size)),
     paint=if self.theme is Some(_) || self.style is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(paint_key)
     },
@@ -147,8 +147,8 @@ impl @core.ViewNode for SingleLineTextInput with fn text_input_state(self, ctx) 
 ///|
 impl @core.ViewNode for SingleLineTextInput with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::TextField,
+    composition=Boundary,
+    role=TextField,
     label=self.placeholder,
     value=self.value,
     read_only=false,

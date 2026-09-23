@@ -36,9 +36,8 @@ fn section_panel(
       )
   }
   let header_bg = match theme.scheme {
-    @state.ColorScheme::Light =>
-      theme.palette.surface_variant.multiply_alpha(0.32)
-    @state.ColorScheme::Dark => @graphics.Color::white().multiply_alpha(0.04)
+    Light => theme.palette.surface_variant.multiply_alpha(0.32)
+    Dark => @graphics.Color::white().multiply_alpha(0.04)
   }
   let header_rows : Array[@moui.View[ShowcaseMsg]] = []
   if eyebrow != "" {
@@ -61,22 +60,18 @@ fn section_panel(
   container(
     column(
       [
-        column(
-          header_rows,
-          spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
-        ),
+        column(header_rows, spacing=theme.spacing_scale.xs, align=Start),
         // A hairline separates the section header from its scrollable body so
         // the hierarchy reads even when the body is long and dense.
         divider(theme~),
         scroll_body,
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=metrics.panel_width,
     height=metrics.panel_height,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
     background=header_bg,
@@ -115,8 +110,8 @@ fn showcase_panel_border(theme : @moui.Theme) -> @graphics.BorderStyle {
 /// the shadow, not the stroke, carries the elevation cue.
 fn showcase_card_border(theme : @moui.Theme) -> @graphics.BorderStyle {
   let color = match theme.scheme {
-    @state.ColorScheme::Light => theme.palette.outline.multiply_alpha(0.55)
-    @state.ColorScheme::Dark => @graphics.Color::white().multiply_alpha(0.06)
+    Light => theme.palette.outline.multiply_alpha(0.55)
+    Dark => @graphics.Color::white().multiply_alpha(0.06)
   }
   @graphics.BorderStyle::new(brush=@graphics.Brush::solid(color), width=1.0)
 }
@@ -129,14 +124,9 @@ fn showcase_soft_card(
   height~ : Double,
   padding? : Double = 0.0,
 ) -> @moui.View[ShowcaseMsg] {
-  container(
-    child,
-    width~,
-    height~,
-    variant=@views.ContainerVariant::Raised,
-    theme~,
-    padding~,
-  ).border(showcase_card_border(theme))
+  container(child, width~, height~, variant=Raised, theme~, padding~).border(
+    showcase_card_border(theme),
+  )
 }
 
 ///|
@@ -172,17 +162,13 @@ fn ShowcaseModel::capability_card(
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
         scroll_view(
-          column(
-            rows,
-            spacing=theme.spacing_scale.xs,
-            align=@views.CrossAlign::Start,
-          ),
+          column(rows, spacing=theme.spacing_scale.xs, align=Start),
           width=inner_width,
           height=list_height,
         ),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,
@@ -247,14 +233,10 @@ fn ShowcaseModel::host_capability_card(
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
-        column(
-          rows,
-          spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
-        ),
+        column(rows, spacing=theme.spacing_scale.xs, align=Start),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,
@@ -284,14 +266,14 @@ fn host_capability_row(
           .foreground(theme.palette.primary),
         ],
         spacing=8.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       text(detail, width~, height=18.0)
       .font(theme.typography.caption)
       .foreground(theme.palette.muted),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -345,7 +327,7 @@ fn ShowcaseModel::visual_correctness_card(
   let image_motion = @animation.TransitionSpec::slide(
     from_offset=@geometry.Point::new(x=0.0, y=0.0),
     to_offset=@geometry.Point::new(x=if active { 10.0 } else { 0.0 }, y=0.0),
-    easing=@animation.Easing::Linear,
+    easing=Linear,
   )
   showcase_soft_card(
     theme,
@@ -357,7 +339,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=1.0,
           corner_radius=theme.radius_scale.sm,
-          fit=@graphics.ImageFit::Contain,
+          fit=Contain,
         ).clip(),
         image(
           showcase_image_source(),
@@ -365,7 +347,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity~,
           corner_radius=theme.radius_scale.sm,
-          fit=@graphics.ImageFit::Cover,
+          fit=Cover,
         ).clip(),
         image(
           showcase_image_source(),
@@ -373,7 +355,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.92,
           corner_radius=theme.radius_scale.sm,
-          fit=@graphics.ImageFit::FitWidth,
+          fit=FitWidth,
         ).clip(),
         image(
           showcase_image_source(),
@@ -381,7 +363,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.86,
           corner_radius=theme.radius_scale.sm,
-          fit=@graphics.ImageFit::FitHeight,
+          fit=FitHeight,
         ).clip(),
         image(
           showcase_image_source(),
@@ -389,14 +371,14 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.78,
           corner_radius=theme.radius_scale.md,
-          fit=@graphics.ImageFit::ScaleDown,
+          fit=ScaleDown,
         )
         .clip()
         .scale(sx=0.92, sy=0.92)
         .transition(spec=image_motion, progress=1.0),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=292.0,
     height=74.0,
@@ -425,7 +407,7 @@ fn ShowcaseModel::theme_helpers(
       button(
         "Switch scheme",
         on_click=ToggleScheme,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=160.0,
       ),
@@ -433,7 +415,7 @@ fn ShowcaseModel::theme_helpers(
       self.vector_path_card(theme),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -473,16 +455,14 @@ fn ShowcaseModel::vector_path_card(
         ctx,
         @graphics.PathSpec::new(
           verbs=[
-            @graphics.PathVerb::MoveTo(@geometry.Point::new(x=left, y=bottom)),
-            @graphics.PathVerb::CubicTo(
+            MoveTo(@geometry.Point::new(x=left, y=bottom)),
+            CubicTo(
               @geometry.Point::new(x=left + 24.0, y=top - 4.0),
               @geometry.Point::new(x=left + 58.0, y=top + 4.0),
               @geometry.Point::new(x=left + 82.0, y=bottom),
             ),
-            @graphics.PathVerb::LineTo(
-              @geometry.Point::new(x=left + 42.0, y=mid_y),
-            ),
-            @graphics.PathVerb::Close,
+            LineTo(@geometry.Point::new(x=left + 42.0, y=mid_y)),
+            Close,
           ],
           fill=Some(fill),
         ),
@@ -491,14 +471,12 @@ fn ShowcaseModel::vector_path_card(
         ctx,
         @graphics.PathSpec::new(
           verbs=[
-            @graphics.PathVerb::MoveTo(
-              @geometry.Point::new(x=left + 116.0, y=bottom),
-            ),
-            @graphics.PathVerb::QuadTo(
+            MoveTo(@geometry.Point::new(x=left + 116.0, y=bottom)),
+            QuadTo(
               @geometry.Point::new(x=left + 148.0, y=top),
               @geometry.Point::new(x=left + 180.0, y=bottom),
             ),
-            @graphics.PathVerb::CubicTo(
+            CubicTo(
               @geometry.Point::new(x=left + 196.0, y=mid_y),
               @geometry.Point::new(x=left + 216.0, y=mid_y),
               @geometry.Point::new(x=left + 236.0, y=top + 8.0),
@@ -532,7 +510,7 @@ fn capability_row(
       capability_status_view(entry, theme, status_width),
     ],
     spacing=theme.spacing_scale.xs,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -556,7 +534,7 @@ fn capability_status_view(
       .foreground(capability_status_color(provider.needs_follow_up, theme)),
     )
   }
-  column(rows, spacing=1.0, align=@views.CrossAlign::Start)
+  column(rows, spacing=1.0, align=Start)
 }
 
 ///|
@@ -599,7 +577,7 @@ fn layout_tile(theme : @moui.Theme, label : String) -> @moui.View[ShowcaseMsg] {
         .foreground(theme.palette.foreground),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=156.0,
     height=40.0,
@@ -626,11 +604,11 @@ fn example_preview(
         child.frame(width=inner_width, height=150.0),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=190.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
   ).border(showcase_card_border(theme))
 }
@@ -659,16 +637,16 @@ fn visual_card(
             .foreground(theme.palette.primary),
           ],
           spacing=8.0,
-          justify=@views.MainAlign::Between,
-          align=@views.CrossAlign::Center,
+          justify=Between,
+          align=Center,
         ).frame(width=inner_width, height=22.0),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=164.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=12.0,
   ).border(showcase_card_border(theme))

@@ -1,17 +1,20 @@
 ///|
 test "layout constructors expose stable public identities" {
-  let leaf : @core.View[Unit] = text("leaf")
-  let row_view : @core.View[Unit] = row(
-    [leaf, spacer(min_length=8.0)],
+  let leaf : @core.View[Unit] = @views.text("leaf")
+  let row_view : @core.View[Unit] = @views.row(
+    [leaf, @views.spacer(min_length=8.0)],
     spacing=4.0,
   )
-  let column_view : @core.View[Unit] = column(
-    [text("a"), text("b")],
+  let column_view : @core.View[Unit] = @views.column(
+    [@views.text("a"), @views.text("b")],
     spacing=6.0,
   )
-  let stack_view : @core.View[Unit] = stack([text("base"), text("overlay")])
-  let spacer_view : @core.View[Unit] = spacer()
-  let title : @core.View[Unit] = text("title")
+  let stack_view : @core.View[Unit] = @views.stack([
+    @views.text("base"),
+    @views.text("overlay"),
+  ])
+  let spacer_view : @core.View[Unit] = @views.spacer()
+  let title : @core.View[Unit] = @views.text("title")
   inspect(row_view.identity().kind, content="Flex")
   inspect(column_view.identity().kind, content="Flex")
   inspect(stack_view.identity().kind, content="Stack")

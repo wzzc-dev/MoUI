@@ -150,7 +150,7 @@ fn render_filter_resource_descriptors(
 pub fn RenderCommandList::text_run_resource_keys(
   self : RenderCommandList,
 ) -> Array[RendererResourceKey] {
-  let keys : Array[RendererResourceKey] = Array::new()
+  let keys : Array[RendererResourceKey] = Array()
   for command in self.commands {
     match command.text_run_resource_key() {
       None => ()
@@ -178,7 +178,7 @@ fn renderer_resource_descriptor_list_contains_key(
 pub fn RenderCommandList::resource_descriptors(
   self : RenderCommandList,
 ) -> Array[RendererResourceDescriptor] {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   let target_descriptor = self.pass.resource_descriptor()
   if !target_descriptor.key.is_empty() {
     descriptors.push(target_descriptor)

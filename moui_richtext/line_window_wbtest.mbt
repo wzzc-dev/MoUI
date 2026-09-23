@@ -18,7 +18,7 @@ test "line window stays disengaged for an ordinary multi-block document" {
   let session = MarkdownDocumentSession::new(line_window_blocks_document())
   let font = @core.FontSpec::new()
   let window = session.rich_text_window(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     scroll_y=0.0,
     viewport_height=600.0,
@@ -43,7 +43,7 @@ test "line window stays disengaged while scrolling a multi-block document" {
   assert_true(content_height > 0.0)
   for fraction in [0.0, 0.25, 0.5, 0.75, 1.0] {
     let window = session.rich_text_window(
-      { caret: 0, selection: None },
+      { caret: 0, selection: None, },
       base=font,
       scroll_y=content_height * fraction,
       viewport_height=600.0,
@@ -70,7 +70,7 @@ test "single oversized block reports the full block in the window" {
   let session = MarkdownDocumentSession::new(parts.join("\n"))
   let font = @core.FontSpec::new()
   let window = session.rich_text_window(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     scroll_y=0.0,
     viewport_height=600.0,
@@ -189,7 +189,7 @@ fn line_window_caret_y(scroll_y : Double) -> Double {
   let session = MarkdownDocumentSession::new(source)
   let frame = @core.Rect::new(x=0.0, y=0.0, width=860.0, height=600.0)
   let font = @core.FontSpec::new()
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let state = markdown_session_input_state(
     text=source,
     frame~,

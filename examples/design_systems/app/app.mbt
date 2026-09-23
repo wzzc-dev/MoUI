@@ -52,16 +52,16 @@ pub(all) enum DesignSystemsMsg {
 
 ///|
 pub fn DesignSystemsApp::new() -> DesignSystemsApp {
-  { unit: () }
+  { unit: (), }
 }
 
 ///|
 pub fn DesignSystemsModel::new() -> DesignSystemsModel {
   {
-    preset: DesignSystemChoice::Material,
-    scheme: @state.ColorScheme::Light,
-    variant: @common.DesignSchemeVariant::SchemeLight,
-    density: @common.DesignDensity::Standard,
+    preset: Material,
+    scheme: Light,
+    variant: SchemeLight,
+    density: Standard,
     custom_enabled: false,
     selected_component: "button",
     draft: "Token override",
@@ -74,13 +74,13 @@ pub fn DesignSystemsModel::update(
   message : DesignSystemsMsg,
 ) -> DesignSystemsModel {
   match message {
-    SelectPreset(id) => { ..self, preset: design_preset_from_id(id) }
-    SelectScheme(id) => { ..self, scheme: design_scheme_from_id(id) }
-    SelectVariant(id) => { ..self, variant: design_variant_from_id(id) }
-    SelectDensity(id) => { ..self, density: design_density_from_id(id) }
-    SelectComponent(id) => { ..self, selected_component: id }
-    ToggleCustom => { ..self, custom_enabled: !self.custom_enabled }
-    DraftChanged(value) => { ..self, draft: value }
+    SelectPreset(id) => { ..self, preset: design_preset_from_id(id), }
+    SelectScheme(id) => { ..self, scheme: design_scheme_from_id(id), }
+    SelectVariant(id) => { ..self, variant: design_variant_from_id(id), }
+    SelectDensity(id) => { ..self, density: design_density_from_id(id), }
+    SelectComponent(id) => { ..self, selected_component: id, }
+    ToggleCustom => { ..self, custom_enabled: !self.custom_enabled, }
+    DraftChanged(value) => { ..self, draft: value, }
   }
 }
 
@@ -112,8 +112,7 @@ pub fn DesignSystemsModel::tokens(
 ///|
 pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
   let base = match self.preset {
-    Sickle =>
-      @sickle.theme(scheme=self.scheme, mode=@sickle.SickleStyleMode::Hybrid)
+    Sickle => @sickle.theme(scheme=self.scheme, mode=Hybrid)
     _ => self.tokens().to_theme()
   }
   if self.custom_enabled {
@@ -121,8 +120,8 @@ pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
       ..base.palette,
       primary: @graphics.Color::rgba(r=0.82, g=0.18, b=0.42),
     }
-    let spacing_scale = { ..base.spacing_scale, sm: 14.0 }
-    let radius_scale = { ..base.radius_scale, md: 10.0 }
+    let spacing_scale = { ..base.spacing_scale, sm: 14.0, }
+    let radius_scale = { ..base.radius_scale, md: 10.0, }
     @common.custom(base~, palette~, spacing_scale~, radius_scale~)
   } else {
     base
@@ -134,7 +133,7 @@ pub fn DesignSystemsModel::view(
   self : DesignSystemsModel,
 ) -> @moui.View[DesignSystemsMsg] {
   let theme = self.theme()
-  let content = if self.preset == DesignSystemChoice::Sickle {
+  let content = if self.preset == Sickle {
     column(
       [
         self.sickle_hero(theme),
@@ -145,7 +144,7 @@ pub fn DesignSystemsModel::view(
             self.sickle_typography_panel(theme),
           ],
           spacing=theme.spacing_scale.md,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         row(
           [
@@ -153,12 +152,12 @@ pub fn DesignSystemsModel::view(
             self.sickle_component_matrix_panel(theme),
           ],
           spacing=theme.spacing_scale.md,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         self.customization_panel(theme),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     )
   } else {
     let tokens = self.tokens()
@@ -178,7 +177,7 @@ pub fn DesignSystemsModel::view(
             self.typography_panel(theme, tokens, report),
           ],
           spacing=theme.spacing_scale.md,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         row(
           [
@@ -186,19 +185,19 @@ pub fn DesignSystemsModel::view(
             self.component_matrix_panel(theme, tokens),
           ],
           spacing=theme.spacing_scale.md,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         self.customization_panel(theme),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     )
   }
   container(
     scroll_view(content, width=920.0, height=620.0),
     width=960.0,
     height=680.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -216,30 +215,24 @@ fn DesignSystemsModel::hero(
       [
         column(
           [
-            text(
-              "Design Systems",
-              role=@views.TextRole::Title,
-              theme~,
-              width=360.0,
-              height=36.0,
-            ),
+            text("Design Systems", role=Title, theme~, width=360.0, height=36.0),
             text(
               "Source-mapped preview package for official token parity work.",
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=520.0,
               height=26.0,
             ).foreground(theme.palette.muted),
             text(
               report.manifest.official_name,
-              role=@views.TextRole::Body,
+              role=Body,
               theme~,
               width=520.0,
               height=28.0,
             ),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         column(
           [
@@ -257,24 +250,24 @@ fn DesignSystemsModel::hero(
                 "preview"
               },
               tone=if report.has_official_completion_claim() {
-                @views.BadgeTone::Success
+                Success
               } else {
-                @views.BadgeTone::Warning
+                Warning
               },
               theme~,
               width=138.0,
             ),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=theme.spacing_scale.lg,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=920.0,
     height=132.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -291,57 +284,40 @@ fn DesignSystemsModel::sickle_hero(
       [
         column(
           [
-            text(
-              "Design Systems",
-              role=@views.TextRole::Title,
-              theme~,
-              width=360.0,
-              height=36.0,
-            ),
+            text("Design Systems", role=Title, theme~, width=360.0, height=36.0),
             text(
               "First-party Smartisan-inspired theme addon preview.",
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=520.0,
               height=26.0,
             ).foreground(theme.palette.muted),
-            text(
-              "Sickle",
-              role=@views.TextRole::Body,
-              theme~,
-              width=520.0,
-              height=28.0,
-            ),
+            text("Sickle", role=Body, theme~, width=520.0, height=28.0),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         column(
           [
             status_badge(
               "theme addon",
-              tone=@views.BadgeTone::Accent,
+              tone=Accent,
               detail="Hybrid mode blends tactile depth with flat semantic controls.",
               theme~,
               width=138.0,
             ),
-            status_badge(
-              "first-party",
-              tone=@views.BadgeTone::Success,
-              theme~,
-              width=138.0,
-            ),
+            status_badge("first-party", tone=Success, theme~, width=138.0),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=theme.spacing_scale.lg,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=920.0,
     height=132.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -403,7 +379,7 @@ fn DesignSystemsModel::switcher_panel(
           ),
         ],
         spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
     ],
     width=920.0,
@@ -433,7 +409,7 @@ fn DesignSystemsModel::palette_panel(
           design_swatch(theme, "info", tokens.palette.info),
         ],
         spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       design_metric_row(
         theme,
@@ -468,13 +444,7 @@ fn DesignSystemsModel::typography_panel(
     theme,
     "Typography specimen",
     [
-      text(
-        "Title role",
-        role=@views.TextRole::Title,
-        theme~,
-        width=390.0,
-        height=34.0,
-      ),
+      text("Title role", role=Title, theme~, width=390.0, height=34.0),
       text(
         "Body role: source value is resolved through neutral FontSpec.",
         theme~,
@@ -483,7 +453,7 @@ fn DesignSystemsModel::typography_panel(
       ),
       text(
         "Caption role / control role",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=390.0,
         height=24.0,
@@ -524,7 +494,7 @@ fn DesignSystemsModel::spacing_density_panel(
           spacing_tile(theme, "xl", tokens.spacing.xl),
         ],
         spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       design_metric_row(theme, "Density", self.density.label()),
       design_metric_row(
@@ -573,7 +543,7 @@ fn DesignSystemsModel::component_matrix_panel(
         button(
           "Primary",
           on_click=ToggleCustom,
-          variant=@views.ButtonVariant::Primary,
+          variant=Primary,
           theme~,
           width=96.0,
           height=36.0,
@@ -581,7 +551,7 @@ fn DesignSystemsModel::component_matrix_panel(
         button(
           "Tonal",
           on_click=ToggleCustom,
-          variant=@views.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=88.0,
           height=36.0,
@@ -589,7 +559,7 @@ fn DesignSystemsModel::component_matrix_panel(
         button(
           "Outline",
           on_click=ToggleCustom,
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=96.0,
           height=36.0,
@@ -597,14 +567,14 @@ fn DesignSystemsModel::component_matrix_panel(
         button(
           "Ghost",
           on_click=ToggleCustom,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=80.0,
           height=36.0,
         ),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     // Fluent 2 subtle / subtle-brand variants + underline text field. These
     // only differ structurally from the neutral defaults when the preset
@@ -614,7 +584,7 @@ fn DesignSystemsModel::component_matrix_panel(
         button(
           "Subtle",
           on_click=ToggleCustom,
-          variant=@views.ButtonVariant::Subtle,
+          variant=Subtle,
           theme~,
           width=88.0,
           height=36.0,
@@ -622,7 +592,7 @@ fn DesignSystemsModel::component_matrix_panel(
         button(
           "Subtle brand",
           on_click=ToggleCustom,
-          variant=@views.ButtonVariant::SubtleBrand,
+          variant=SubtleBrand,
           theme~,
           width=128.0,
           height=36.0,
@@ -638,7 +608,7 @@ fn DesignSystemsModel::component_matrix_panel(
         ),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   ]
   let mut shown = 0

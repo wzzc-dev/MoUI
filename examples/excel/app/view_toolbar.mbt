@@ -12,7 +12,7 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
           [
             @views.text(
               "Excel - " + model.file_name,
-              role=@views.TextRole::Title,
+              role=Title,
               theme~,
               width=220.0,
               height=30.0,
@@ -20,73 +20,62 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
             @views.spacer(min_length=8.0, weight=1.0),
             tool_button(
               "New",
-              ExcelMsg::NewWorkbook,
+              NewWorkbook,
               theme,
-              icon=Some(@views.IconName::FileNew),
+              icon=Some(FileNew),
               width=78.0,
             ),
             tool_button(
               "Open",
-              ExcelMsg::FileOpenRequested,
+              FileOpenRequested,
               theme,
-              icon=Some(@views.IconName::FolderOpen),
+              icon=Some(FolderOpen),
               width=84.0,
             ),
             tool_button(
               "Save",
-              ExcelMsg::FileSaveRequested,
+              FileSaveRequested,
               theme,
-              icon=Some(@views.IconName::Save),
+              icon=Some(Save),
               width=78.0,
             ),
             tool_button(
               "Demo",
-              ExcelMsg::LoadDemo,
+              LoadDemo,
               theme,
-              icon=Some(@views.IconName::Table),
-              variant=@views.ButtonVariant::Primary,
+              icon=Some(Table),
+              variant=Primary,
               width=82.0,
             ),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         @views.row(
           [
             group_label("Edit", theme),
-            tool_button("Cut", ExcelMsg::CutCells, theme, width=52.0),
+            tool_button("Cut", CutCells, theme, width=52.0),
             tool_button(
               "Copy",
-              ExcelMsg::CopyCells,
+              CopyCells,
               theme,
-              icon=Some(@views.IconName::Clipboard),
+              icon=Some(Clipboard),
               width=68.0,
             ),
-            tool_button("Paste", ExcelMsg::PasteCells, theme, width=64.0),
-            tool_button("Undo", ExcelMsg::Undo, theme, width=58.0),
-            tool_button("Redo", ExcelMsg::Redo, theme, width=58.0),
+            tool_button("Paste", PasteCells, theme, width=64.0),
+            tool_button("Undo", Undo, theme, width=58.0),
+            tool_button("Redo", Redo, theme, width=58.0),
             @views.divider(theme~),
             group_label("Format", theme),
-            format_button(
-              "B",
-              ExcelMsg::ToggleBold,
-              format.bold,
-              theme,
-              icon=Some(@views.IconName::Bold),
-            ),
+            format_button("B", ToggleBold, format.bold, theme, icon=Some(Bold)),
             format_button(
               "I",
-              ExcelMsg::ToggleItalic,
+              ToggleItalic,
               format.italic,
               theme,
-              icon=Some(@views.IconName::Italic),
+              icon=Some(Italic),
             ),
-            format_button(
-              "U",
-              ExcelMsg::ToggleUnderline,
-              format.underline,
-              theme,
-            ),
+            format_button("U", ToggleUnderline, format.underline, theme),
             @views.segmented_control(
               [
                 @views.choice_item("left", "L"),
@@ -94,8 +83,8 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
                 @views.choice_item("right", "R"),
               ],
               selected=align_id,
-              on_select=id => ExcelMsg::SetCellAlign(align_from_id(id)),
-              size=@views.SegmentedControlSize::Compact,
+              on_select=id => SetCellAlign(align_from_id(id)),
+              size=Compact,
               theme~,
               width=102.0,
             ),
@@ -109,52 +98,46 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
                 @views.picker_item("fixed", "Fixed"),
               ],
               selected=number_format_id(format.num_format),
-              on_select=id => ExcelMsg::SetCellFormat(number_format_from_id(id)),
+              on_select=id => SetCellFormat(number_format_from_id(id)),
               theme~,
             ),
             @views.divider(theme~),
             group_label("Color", theme),
-            color_swatch("", ExcelMsg::SetCellBgColor(""), theme),
-            color_swatch("dbeafe", ExcelMsg::SetCellBgColor("dbeafe"), theme),
-            color_swatch("dcfce7", ExcelMsg::SetCellBgColor("dcfce7"), theme),
-            color_swatch("fef3c7", ExcelMsg::SetCellBgColor("fef3c7"), theme),
-            color_swatch("fde2e2", ExcelMsg::SetCellBgColor("fde2e2"), theme),
+            color_swatch("", SetCellBgColor(""), theme),
+            color_swatch("dbeafe", SetCellBgColor("dbeafe"), theme),
+            color_swatch("dcfce7", SetCellBgColor("dcfce7"), theme),
+            color_swatch("fef3c7", SetCellBgColor("fef3c7"), theme),
+            color_swatch("fde2e2", SetCellBgColor("fde2e2"), theme),
             @views.divider(theme~),
             group_label("Sort", theme),
-            tool_button("A→Z", ExcelMsg::SortAscending, theme, width=56.0),
-            tool_button("Z→A", ExcelMsg::SortDescending, theme, width=56.0),
+            tool_button("A→Z", SortAscending, theme, width=56.0),
+            tool_button("Z→A", SortDescending, theme, width=56.0),
             @views.divider(theme~),
             @views.toggle(
               "Heat",
               model.heat_map,
-              on_change=fn(_) { ExcelMsg::ToggleHeatMap },
+              on_change=fn(_) { ToggleHeatMap },
               theme~,
             ),
-            tool_button(
-              "Clear",
-              ExcelMsg::ClearCell,
-              theme,
-              icon=Some(@views.IconName::Trash),
-              width=72.0,
-            ),
+            tool_button("Clear", ClearCell, theme, icon=Some(Trash), width=72.0),
             @views.menu_button(
               "More",
-              on_click=ExcelMsg::ToggleContextMenu,
-              variant=@views.ButtonVariant::Ghost,
+              on_click=ToggleContextMenu,
+              variant=Ghost,
               theme~,
               width=64.0,
               height=32.0,
             ),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width=shell_width,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.xs,
   )
@@ -162,13 +145,9 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
 
 ///|
 fn group_label(label : String, theme : Theme) -> @moui.View[ExcelMsg] {
-  @views.text(
-    label,
-    role=@views.TextRole::Caption,
-    theme~,
-    width=48.0,
-    height=24.0,
-  ).foreground(theme.palette.muted)
+  @views.text(label, role=Caption, theme~, width=48.0, height=24.0).foreground(
+    theme.palette.muted,
+  )
 }
 
 ///|
@@ -177,7 +156,7 @@ fn tool_button(
   msg : ExcelMsg,
   theme : Theme,
   icon? : @views.IconName? = None,
-  variant? : @views.ButtonVariant = @views.ButtonVariant::Ghost,
+  variant? : @views.ButtonVariant = Ghost,
   width? : Double = 64.0,
 ) -> @moui.View[ExcelMsg] {
   @views.tooltip(
@@ -206,11 +185,7 @@ fn format_button(
     @views.button(
       label,
       on_click=msg,
-      variant=if active {
-        @views.ButtonVariant::Tonal
-      } else {
-        @views.ButtonVariant::Ghost
-      },
+      variant=if active { Tonal } else { Ghost },
       theme~,
       icon~,
       width=34.0,
@@ -252,38 +227,38 @@ fn color_swatch(
 ///|
 fn align_id(align : @cell.CellAlign) -> String {
   match align {
-    @cell.CellAlign::Left => "left"
-    @cell.CellAlign::Center => "center"
-    @cell.CellAlign::Right => "right"
-    @cell.CellAlign::Auto => "left"
+    Left => "left"
+    Center => "center"
+    Right => "right"
+    Auto => "left"
   }
 }
 
 ///|
 fn align_from_id(id : String) -> @cell.CellAlign {
   match id {
-    "center" => @cell.CellAlign::Center
-    "right" => @cell.CellAlign::Right
-    _ => @cell.CellAlign::Left
+    "center" => Center
+    "right" => Right
+    _ => Left
   }
 }
 
 ///|
 fn number_format_id(format : @cell.NumFormat) -> String {
   match format {
-    @cell.NumFormat::Currency => "currency"
-    @cell.NumFormat::Percent => "percent"
-    @cell.NumFormat::Fixed => "fixed"
-    @cell.NumFormat::General => "general"
+    Currency => "currency"
+    Percent => "percent"
+    Fixed => "fixed"
+    General => "general"
   }
 }
 
 ///|
 fn number_format_from_id(id : String) -> @cell.NumFormat {
   match id {
-    "currency" => @cell.NumFormat::Currency
-    "percent" => @cell.NumFormat::Percent
-    "fixed" => @cell.NumFormat::Fixed
-    _ => @cell.NumFormat::General
+    "currency" => Currency
+    "percent" => Percent
+    "fixed" => Fixed
+    _ => General
   }
 }

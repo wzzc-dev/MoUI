@@ -75,7 +75,7 @@ pub(all) struct Workbook {
 
 ///|
 pub fn Selection::new(row~ : Int, col~ : Int) -> Selection {
-  { row, col }
+  { row, col, }
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn Selection::key(self : Selection) -> String {
 
 ///|
 pub fn Clipboard::empty() -> Clipboard {
-  { cells: [], origin: Selection::new(row=0, col=0) }
+  { cells: [], origin: Selection::new(row=0, col=0), }
 }
 
 ///|
@@ -94,7 +94,7 @@ pub fn Sheet::new(
   row_count? : Int = default_row_count,
   col_count? : Int = default_col_count,
 ) -> Sheet {
-  { name, row_count, col_count, cells: Map([]) }
+  { name, row_count, col_count, cells: Map([]), }
 }
 
 ///|
@@ -147,7 +147,7 @@ pub fn Sheet::set_raw_no_undo(
 ) -> Sheet {
   let cells = self.cells.copy()
   let old = self.get_cell(row, col)
-  let next_cell = { ..old, raw, value: @cell.parse_raw_value(raw) }
+  let next_cell = { ..old, raw, value: @cell.parse_raw_value(raw), }
   let key = @cell.make_key(row, col)
   if next_cell.is_empty() {
     cells.remove(key)
@@ -205,7 +205,7 @@ pub fn Sheet::recalc(self : Sheet) -> Sheet {
       let value = @formula.evaluate(existing.raw, ref_str => {
         match @cell.parse_ref(ref_str) {
           Some(addr) => base.get_cell(addr.row, addr.col).value
-          None => @cell.CellValue::Empty
+          None => Empty
         }
       })
       cells[key] = { ..existing, value, }
@@ -355,7 +355,7 @@ pub fn Workbook::select_cell(self : Workbook, row : Int, col : Int) -> Workbook 
     row=clamp_int(row, 0, sheet.row_count - 1),
     col=clamp_int(col, 0, sheet.col_count - 1),
   )
-  { ..self, selection: Some(next), selection_range: None }
+  { ..self, selection: Some(next), selection_range: None, }
 }
 
 ///|
@@ -545,7 +545,7 @@ pub fn Workbook::set_raw(
   if old_cell == new_cell {
     next
   } else {
-    next.push_undo(UndoOp::CellEdit(row, col, old_cell, new_cell))
+    next.push_undo(CellEdit(row, col, old_cell, new_cell))
   }
 }
 
@@ -592,9 +592,9 @@ pub fn Workbook::set_format_range(
       let old_cell = updated_sheet.get_cell(row, col)
       let new_format = updater(old_cell.format)
       if old_cell.format != new_format {
-        let new_cell = { ..old_cell, format: new_format }
+        let new_cell = { ..old_cell, format: new_format, }
         updated_sheet = updated_sheet.set_cell_no_undo(row, col, new_cell)
-        changes.push({ row, col, old_cell, new_cell })
+        changes.push({ row, col, old_cell, new_cell, })
       }
     }
   }
@@ -604,10 +604,10 @@ pub fn Workbook::set_format_range(
   } else if changes.length() == 1 {
     let change = changes[0]
     next.push_undo(
-      UndoOp::CellEdit(change.row, change.col, change.old_cell, change.new_cell),
+      CellEdit(change.row, change.col, change.old_cell, change.new_cell),
     )
   } else {
-    next.push_undo(UndoOp::CellBatchEdit(changes))
+    next.push_undo(CellBatchEdit(changes))
   }
 }
 
@@ -628,7 +628,7 @@ pub fn Workbook::set_format(
     let updated_sheet = sheet.set_format_no_undo(row, col, new_format)
     self
     .with_active_sheet(updated_sheet)
-    .push_undo(UndoOp::CellFormat(row, col, old_format, new_format))
+    .push_undo(CellFormat(row, col, old_format, new_format))
   }
 }
 
@@ -671,7 +671,7 @@ pub fn Workbook::clear_range(
       let old_cell = updated_sheet.get_cell(row, col)
       if old_cell != empty {
         updated_sheet = updated_sheet.set_cell_no_undo(row, col, empty)
-        changes.push({ row, col, old_cell, new_cell: empty })
+        changes.push({ row, col, old_cell, new_cell: empty, })
       }
     }
   }
@@ -681,10 +681,10 @@ pub fn Workbook::clear_range(
   } else if changes.length() == 1 {
     let change = changes[0]
     next.push_undo(
-      UndoOp::CellEdit(change.row, change.col, change.old_cell, change.new_cell),
+      CellEdit(change.row, change.col, change.old_cell, change.new_cell),
     )
   } else {
-    next.push_undo(UndoOp::CellBatchEdit(changes))
+    next.push_undo(CellBatchEdit(changes))
   }
 }
 
@@ -703,7 +703,7 @@ pub fn Workbook::copy_selected(self : Workbook) -> Workbook {
         None => self
         Some(sel) => {
           let cell = self.active().get_cell(sel.row, sel.col)
-          { ..self, clipboard: { cells: [[cell]], origin: sel } }
+          { ..self, clipboard: { cells: [[cell]], origin: sel, }, }
         }
       }
   }
@@ -786,7 +786,7 @@ pub fn Workbook::paste_selected(self : Workbook) -> Workbook {
           )
           sheet = sheet.set_cell_no_undo(row, col, next_cell)
           if old_cell != next_cell {
-            changes.push({ row, col, old_cell, new_cell: next_cell })
+            changes.push({ row, col, old_cell, new_cell: next_cell, })
           }
         }
       }
@@ -798,15 +798,10 @@ pub fn Workbook::paste_selected(self : Workbook) -> Workbook {
       } else if changes.length() == 1 {
         let change = changes[0]
         next.push_undo(
-          UndoOp::CellEdit(
-            change.row,
-            change.col,
-            change.old_cell,
-            change.new_cell,
-          ),
+          CellEdit(change.row, change.col, change.old_cell, change.new_cell),
         )
       } else {
-        next.push_undo(UndoOp::CellBatchEdit(changes))
+        next.push_undo(CellBatchEdit(changes))
       }
     }
   }
@@ -833,10 +828,14 @@ pub fn Workbook::paste_tsv(self : Workbook, text : String) -> Workbook {
           let row = sel.row + row_offset
           let col = sel.col + col_offset
           let old_cell = sheet.get_cell(row, col)
-          let next_cell = { ..old_cell, raw, value: @cell.parse_raw_value(raw) }
+          let next_cell = {
+            ..old_cell,
+            raw,
+            value: @cell.parse_raw_value(raw),
+          }
           sheet = sheet.set_cell_no_undo(row, col, next_cell)
           if old_cell != next_cell {
-            changes.push({ row, col, old_cell, new_cell: next_cell })
+            changes.push({ row, col, old_cell, new_cell: next_cell, })
           }
         }
       }
@@ -848,15 +847,10 @@ pub fn Workbook::paste_tsv(self : Workbook, text : String) -> Workbook {
       } else if changes.length() == 1 {
         let change = changes[0]
         next.push_undo(
-          UndoOp::CellEdit(
-            change.row,
-            change.col,
-            change.old_cell,
-            change.new_cell,
-          ),
+          CellEdit(change.row, change.col, change.old_cell, change.new_cell),
         )
       } else {
-        next.push_undo(UndoOp::CellBatchEdit(changes))
+        next.push_undo(CellBatchEdit(changes))
       }
     }
   }
@@ -990,7 +984,7 @@ pub fn Workbook::sort_selected_by_first_column(
         for col in range.start.col..<=range.end.col {
           cells.push(sheet.get_cell(row, col))
         }
-        rows.push({ source_row: row, cells })
+        rows.push({ source_row: row, cells, })
       }
       rows.sort_by(fn(left, right) {
         compare_sort_rows(left, right, ascending~)
@@ -1006,7 +1000,12 @@ pub fn Workbook::sort_selected_by_first_column(
             updated_sheet = updated_sheet.set_cell_no_undo(
               target_row, col, next_cell,
             )
-            changes.push({ row: target_row, col, old_cell, new_cell: next_cell })
+            changes.push({
+              row: target_row,
+              col,
+              old_cell,
+              new_cell: next_cell,
+            })
           }
         }
       }
@@ -1016,15 +1015,10 @@ pub fn Workbook::sort_selected_by_first_column(
       } else if changes.length() == 1 {
         let change = changes[0]
         next.push_undo(
-          UndoOp::CellEdit(
-            change.row,
-            change.col,
-            change.old_cell,
-            change.new_cell,
-          ),
+          CellEdit(change.row, change.col, change.old_cell, change.new_cell),
         )
       } else {
-        next.push_undo(UndoOp::CellBatchEdit(changes))
+        next.push_undo(CellBatchEdit(changes))
       }
     }
   }
@@ -1055,16 +1049,15 @@ fn compare_sort_rows(left : SortRow, right : SortRow, ascending~ : Bool) -> Int 
 
 ///|
 fn sort_cell_is_blank(cell : @cell.Cell) -> Bool {
-  cell.raw.trim().to_owned().is_empty() || cell.value is @cell.CellValue::Empty
+  cell.raw.trim().to_owned().is_empty() || cell.value is Empty
 }
 
 ///|
 fn compare_sort_cells(left : @cell.Cell, right : @cell.Cell) -> Int {
   match (left.value, right.value) {
-    (@cell.CellValue::Number(a), @cell.CellValue::Number(b)) =>
-      compare_double(a, b)
-    (@cell.CellValue::Text(a), @cell.CellValue::Text(b)) => compare_text(a, b)
-    (@cell.CellValue::Error(a), @cell.CellValue::Error(b)) => compare_text(a, b)
+    (Number(a), Number(b)) => compare_double(a, b)
+    (Text(a), Text(b)) => compare_text(a, b)
+    (Error(a), Error(b)) => compare_text(a, b)
     (left_value, right_value) => {
       let rank_order = sort_value_rank(left_value).compare(
         sort_value_rank(right_value),
@@ -1081,10 +1074,10 @@ fn compare_sort_cells(left : @cell.Cell, right : @cell.Cell) -> Int {
 ///|
 fn sort_value_rank(value : @cell.CellValue) -> Int {
   match value {
-    @cell.CellValue::Number(_) => 0
-    @cell.CellValue::Text(_) => 1
-    @cell.CellValue::Error(_) => 2
-    @cell.CellValue::Empty => 3
+    Number(_) => 0
+    Text(_) => 1
+    Error(_) => 2
+    Empty => 3
   }
 }
 
@@ -1131,7 +1124,7 @@ pub fn Workbook::fill_down_selected(self : Workbook) -> Workbook {
           )
           if old_cell != next_cell {
             updated_sheet = updated_sheet.set_cell_no_undo(row, col, next_cell)
-            changes.push({ row, col, old_cell, new_cell: next_cell })
+            changes.push({ row, col, old_cell, new_cell: next_cell, })
           }
         }
       }
@@ -1141,15 +1134,10 @@ pub fn Workbook::fill_down_selected(self : Workbook) -> Workbook {
       } else if changes.length() == 1 {
         let change = changes[0]
         next.push_undo(
-          UndoOp::CellEdit(
-            change.row,
-            change.col,
-            change.old_cell,
-            change.new_cell,
-          ),
+          CellEdit(change.row, change.col, change.old_cell, change.new_cell),
         )
       } else {
-        next.push_undo(UndoOp::CellBatchEdit(changes))
+        next.push_undo(CellBatchEdit(changes))
       }
     }
   }
@@ -1177,7 +1165,7 @@ pub fn Workbook::fill_right_selected(self : Workbook) -> Workbook {
           )
           if old_cell != next_cell {
             updated_sheet = updated_sheet.set_cell_no_undo(row, col, next_cell)
-            changes.push({ row, col, old_cell, new_cell: next_cell })
+            changes.push({ row, col, old_cell, new_cell: next_cell, })
           }
         }
       }
@@ -1187,15 +1175,10 @@ pub fn Workbook::fill_right_selected(self : Workbook) -> Workbook {
       } else if changes.length() == 1 {
         let change = changes[0]
         next.push_undo(
-          UndoOp::CellEdit(
-            change.row,
-            change.col,
-            change.old_cell,
-            change.new_cell,
-          ),
+          CellEdit(change.row, change.col, change.old_cell, change.new_cell),
         )
       } else {
-        next.push_undo(UndoOp::CellBatchEdit(changes))
+        next.push_undo(CellBatchEdit(changes))
       }
     }
   }
@@ -1207,7 +1190,7 @@ pub fn Workbook::insert_row(self : Workbook, index : Int) -> Workbook {
   let idx = clamp_int(index, 0, sheet.row_count)
   self
   .with_active_sheet(shift_sheet_rows(sheet, idx, 1))
-  .push_undo(UndoOp::RowInsert(idx))
+  .push_undo(RowInsert(idx))
 }
 
 ///|
@@ -1219,7 +1202,7 @@ pub fn Workbook::delete_row(self : Workbook, index : Int) -> Workbook {
     let deleted = collect_row_cells(sheet, index)
     self
     .with_active_sheet(shift_sheet_rows(sheet, index, -1))
-    .push_undo(UndoOp::RowDelete(index, deleted))
+    .push_undo(RowDelete(index, deleted))
   }
 }
 
@@ -1229,7 +1212,7 @@ pub fn Workbook::insert_column(self : Workbook, index : Int) -> Workbook {
   let idx = clamp_int(index, 0, sheet.col_count)
   self
   .with_active_sheet(shift_sheet_cols(sheet, idx, 1))
-  .push_undo(UndoOp::ColumnInsert(idx))
+  .push_undo(ColumnInsert(idx))
 }
 
 ///|
@@ -1241,7 +1224,7 @@ pub fn Workbook::delete_column(self : Workbook, index : Int) -> Workbook {
     let deleted = collect_column_cells(sheet, index)
     self
     .with_active_sheet(shift_sheet_cols(sheet, index, -1))
-    .push_undo(UndoOp::ColumnDelete(index, deleted))
+    .push_undo(ColumnDelete(index, deleted))
   }
 }
 
@@ -1323,30 +1306,30 @@ pub fn Workbook::undo(self : Workbook) -> Workbook {
       let redo_stack = self.redo_stack.copy()
       redo_stack.push(op)
       let result = match op {
-        UndoOp::CellEdit(row, col, old_cell, _new_cell) =>
+        CellEdit(row, col, old_cell, _new_cell) =>
           self.with_active_sheet(
             self.active().set_cell_no_undo(row, col, old_cell).recalc(),
           )
-        UndoOp::CellBatchEdit(changes) =>
+        CellBatchEdit(changes) =>
           self.with_active_sheet(
             apply_cell_changes(self.active(), changes, old=true),
           )
-        UndoOp::CellFormat(row, col, old_format, _new_format) =>
+        CellFormat(row, col, old_format, _new_format) =>
           self.with_active_sheet(
             self.active().set_format_no_undo(row, col, old_format),
           )
-        UndoOp::RowInsert(index) =>
+        RowInsert(index) =>
           self.with_active_sheet(shift_sheet_rows(self.active(), index, -1))
-        UndoOp::ColumnInsert(index) =>
+        ColumnInsert(index) =>
           self.with_active_sheet(shift_sheet_cols(self.active(), index, -1))
-        UndoOp::RowDelete(index, cells) =>
+        RowDelete(index, cells) =>
           self.with_active_sheet(restore_row_cells(self.active(), index, cells))
-        UndoOp::ColumnDelete(index, cells) =>
+        ColumnDelete(index, cells) =>
           self.with_active_sheet(
             restore_column_cells(self.active(), index, cells),
           )
       }
-      { ..result, undo_stack, redo_stack }
+      { ..result, undo_stack, redo_stack, }
     }
   }
 }
@@ -1361,28 +1344,28 @@ pub fn Workbook::redo(self : Workbook) -> Workbook {
       let undo_stack = self.undo_stack.copy()
       undo_stack.push(op)
       let result = match op {
-        UndoOp::CellEdit(row, col, _old_cell, new_cell) =>
+        CellEdit(row, col, _old_cell, new_cell) =>
           self.with_active_sheet(
             self.active().set_cell_no_undo(row, col, new_cell).recalc(),
           )
-        UndoOp::CellBatchEdit(changes) =>
+        CellBatchEdit(changes) =>
           self.with_active_sheet(
             apply_cell_changes(self.active(), changes, old=false),
           )
-        UndoOp::CellFormat(row, col, _old_format, new_format) =>
+        CellFormat(row, col, _old_format, new_format) =>
           self.with_active_sheet(
             self.active().set_format_no_undo(row, col, new_format),
           )
-        UndoOp::RowInsert(index) =>
+        RowInsert(index) =>
           self.with_active_sheet(shift_sheet_rows(self.active(), index, 1))
-        UndoOp::ColumnInsert(index) =>
+        ColumnInsert(index) =>
           self.with_active_sheet(shift_sheet_cols(self.active(), index, 1))
-        UndoOp::RowDelete(index, _cells) =>
+        RowDelete(index, _cells) =>
           self.with_active_sheet(shift_sheet_rows(self.active(), index, -1))
-        UndoOp::ColumnDelete(index, _cells) =>
+        ColumnDelete(index, _cells) =>
           self.with_active_sheet(shift_sheet_cols(self.active(), index, -1))
       }
-      { ..result, undo_stack, redo_stack }
+      { ..result, undo_stack, redo_stack, }
     }
   }
 }
@@ -1419,7 +1402,7 @@ pub fn Workbook::with_active_sheet(self : Workbook, sheet : Sheet) -> Workbook {
 pub fn Workbook::push_undo(self : Workbook, op : UndoOp) -> Workbook {
   let undo_stack = self.undo_stack.copy()
   undo_stack.push(op)
-  { ..self, undo_stack, redo_stack: [] }
+  { ..self, undo_stack, redo_stack: [], }
 }
 
 ///|
@@ -1449,7 +1432,7 @@ fn shift_sheet_rows(sheet : Sheet, index : Int, delta : Int) -> Sheet {
   } else {
     max_int(1, sheet.row_count - 1)
   }
-  { ..sheet, row_count, cells }.recalc()
+  { ..sheet, row_count, cells, }.recalc()
 }
 
 ///|
@@ -1457,7 +1440,10 @@ fn collect_row_cells(sheet : Sheet, row : Int) -> Array[IndexedCell] {
   let cells : Array[IndexedCell] = []
   for key, cell in sheet.cells {
     match @cell.parse_ref(key) {
-      Some(addr) => if addr.row == row { cells.push({ index: addr.col, cell }) }
+      Some(addr) =>
+        if addr.row == row {
+          cells.push({ index: addr.col, cell, })
+        }
       None => ()
     }
   }
@@ -1504,7 +1490,7 @@ fn shift_sheet_cols(sheet : Sheet, index : Int, delta : Int) -> Sheet {
   } else {
     max_int(1, sheet.col_count - 1)
   }
-  { ..sheet, col_count, cells }.recalc()
+  { ..sheet, col_count, cells, }.recalc()
 }
 
 ///|
@@ -1512,7 +1498,10 @@ fn collect_column_cells(sheet : Sheet, col : Int) -> Array[IndexedCell] {
   let cells : Array[IndexedCell] = []
   for key, cell in sheet.cells {
     match @cell.parse_ref(key) {
-      Some(addr) => if addr.col == col { cells.push({ index: addr.row, cell }) }
+      Some(addr) =>
+        if addr.col == col {
+          cells.push({ index: addr.row, cell, })
+        }
       None => ()
     }
   }
@@ -1538,7 +1527,7 @@ fn adjust_pasted_cell(
   drow~ : Int,
   dcol~ : Int,
 ) -> @cell.Cell {
-  { ..cell, raw: translate_formula_refs(cell.raw, drow~, dcol~) }
+  { ..cell, raw: translate_formula_refs(cell.raw, drow~, dcol~), }
 }
 
 ///|
@@ -1655,7 +1644,7 @@ fn rewrite_formula_refs(
       if col_start < col_end && row_start < i {
         match @cell.parse_ref(token) {
           Some(addr) =>
-            builder.write_string(rewrite({ addr, col_abs, row_abs }))
+            builder.write_string(rewrite({ addr, col_abs, row_abs, }))
           None => builder.write_string(token)
         }
       } else {

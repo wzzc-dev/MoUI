@@ -11,5 +11,5 @@ pub fn tree_item(
   label~ : String,
   children? : Array[TreeItem] = [],
 ) -> TreeItem {
-  { id, label, children }
+  { id, label, children, }
 }

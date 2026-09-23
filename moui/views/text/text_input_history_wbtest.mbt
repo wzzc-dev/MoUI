@@ -21,12 +21,7 @@ fn history_view_type(
   text : String,
   inserted : String,
 ) -> TextInputApplyResult {
-  apply_text_input(
-    control,
-    text,
-    @core.TextInputEvent::InsertText(inserted),
-    record_history=true,
-  )
+  apply_text_input(control, text, InsertText(inserted), record_history=true)
 }
 
 ///|
@@ -92,7 +87,7 @@ test "typing after an undo clears the redo branch" {
 
 ///|
 test "a paste is one entry and undo reverts all of it" {
-  let caret_at_end = { ..history_view_control(), caret: 3 }
+  let caret_at_end = { ..history_view_control(), caret: 3, }
   let base = history_view_type(caret_at_end, "hi ", "there")
   assert_eq(base.text, "hi there")
   assert_eq(base.control.undo_stack.length(), 1)
@@ -115,7 +110,7 @@ test "deleting a selection records the removed text exactly" {
   let result = apply_text_input(
     with_selection,
     "abcdef",
-    @core.TextInputEvent::DeleteRange(@core.TextRange::new(start=1, end=4)),
+    DeleteRange(@core.TextRange::new(start=1, end=4)),
     record_history=true,
   )
   assert_eq(result.text, "aef")

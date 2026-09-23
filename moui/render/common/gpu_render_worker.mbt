@@ -68,7 +68,7 @@ pub fn GpuRenderWorker::new(
   worker_thread_id? : Int = 0,
 ) -> GpuRenderWorker {
   {
-    state: GpuRenderWorkerState::Idle,
+    state: Idle,
     surface_generation: surface_generation.max(1),
     gpu_context_generation: 1,
     next_sequence: 1,
@@ -111,7 +111,7 @@ pub fn GpuRenderWorker::submit_control(
   self : GpuRenderWorker,
   control : @render.RendererControlMessage,
 ) -> Int {
-  if self.state is GpuRenderWorkerState::Shutdown {
+  if self.state is Shutdown {
     return self.controls.length()
   }
   self.controls.push(control)
@@ -134,8 +134,7 @@ pub fn GpuRenderWorker::submit(
   token? : @render.FrameToken,
   submitted_at_ms? : Double = 0.0,
 ) -> @render.RenderFrameResult {
-  if self.state is GpuRenderWorkerState::Shutdown ||
-    self.state is GpuRenderWorkerState::FallbackToRaster {
+  if self.state is Shutdown || self.state is FallbackToRaster {
     self.dropped = self.dropped + 1
     return @render.RenderFrameResult::new(presented=false, queued=false)
   }
@@ -148,7 +147,7 @@ pub fn GpuRenderWorker::submit(
   let frame = {
     token: resolved_token,
     submitted_at_ms,
-    input: { ..input, commands: input.commands.copy() },
+    input: { ..input, commands: input.commands.copy(), },
   }
   self.next_sequence = self.next_sequence + 1
   self.submitted = self.submitted + 1
@@ -169,28 +168,28 @@ fn GpuRenderWorker::apply_control(
   control : @render.RendererControlMessage,
 ) -> Bool {
   match control {
-    @render.RendererControlMessage::Resize(_) => {
+    Resize(_) => {
       self.surface_generation = self.surface_generation + 1
       self.in_flight = None
       true
     }
-    @render.RendererControlMessage::Detach => {
+    Detach => {
       self.in_flight = None
       self.pending = None
       true
     }
-    @render.RendererControlMessage::ContextLoss(_) => {
-      if self.state is GpuRenderWorkerState::FallbackToRaster {
+    ContextLoss(_) => {
+      if self.state is FallbackToRaster {
         ()
       } else {
-        self.state = GpuRenderWorkerState::Lost
+        self.state = Lost
         self.in_flight = None
         self.pending = None
       }
       true
     }
-    @render.RendererControlMessage::Shutdown => {
-      self.state = GpuRenderWorkerState::Shutdown
+    Shutdown => {
+      self.state = Shutdown
       self.in_flight = None
       self.pending = None
       false
@@ -201,13 +200,13 @@ fn GpuRenderWorker::apply_control(
 ///|
 fn GpuRenderWorker::recover_if_needed(self : GpuRenderWorker) -> Unit {
   match self.state {
-    GpuRenderWorkerState::Lost => self.state = GpuRenderWorkerState::Recovering
-    GpuRenderWorkerState::Recovering =>
+    Lost => self.state = Recovering
+    Recovering =>
       if self.fail_next_recovery {
         self.fail_next_recovery = false
         self.recovery_failures = self.recovery_failures + 1
         if self.recovery_failures >= 2 {
-          self.state = GpuRenderWorkerState::FallbackToRaster
+          self.state = FallbackToRaster
           self.completions.push(
             @render.RenderPresentCompletion::new(
               token=@render.FrameToken::new(
@@ -217,20 +216,20 @@ fn GpuRenderWorker::recover_if_needed(self : GpuRenderWorker) -> Unit {
               submitted_at_ms=0.0,
               completed_at_ms=0.0,
               presented_at_ms=0.0,
-              status=@render.RenderPresentStatus::FallbackToRaster,
+              status=FallbackToRaster,
               gpu_context_generation=self.gpu_context_generation,
             ),
           )
         } else {
-          self.state = GpuRenderWorkerState::Lost
+          self.state = Lost
         }
       } else {
         self.gpu_context_generation = self.gpu_context_generation + 1
         self.recovery_count = self.recovery_count + 1
-        self.state = GpuRenderWorkerState::Recovered
+        self.state = Recovered
         self.recovery_failures = 0
       }
-    GpuRenderWorkerState::Recovered => self.state = GpuRenderWorkerState::Idle
+    Recovered => self.state = Idle
     _ => ()
   }
 }
@@ -249,10 +248,10 @@ pub fn GpuRenderWorker::poll(
     }
   }
   self.recover_if_needed()
-  if self.state is GpuRenderWorkerState::Lost ||
-    self.state is GpuRenderWorkerState::Recovering ||
-    self.state is GpuRenderWorkerState::FallbackToRaster ||
-    self.state is GpuRenderWorkerState::Shutdown {
+  if self.state is Lost ||
+    self.state is Recovering ||
+    self.state is FallbackToRaster ||
+    self.state is Shutdown {
     return ()
   }
   if self.in_flight is None {
@@ -280,11 +279,11 @@ pub fn GpuRenderWorker::poll(
           submitted_at_ms=frame.submitted_at_ms,
           completed_at_ms~,
           presented_at_ms=0.0,
-          status=@render.RenderPresentStatus::Recorded,
+          status=Recorded,
           gpu_context_generation=self.gpu_context_generation,
         ),
       )
-      self.state = GpuRenderWorkerState::Idle
+      self.state = Idle
     }
     None => ()
   }

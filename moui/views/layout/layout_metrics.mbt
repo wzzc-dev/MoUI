@@ -23,9 +23,8 @@ pub fn layout_mirror_x(
   direction : @core.LayoutDirection,
 ) -> Double {
   match direction {
-    @core.LayoutDirection::LeftToRight => frame.origin.x + local_x
-    @core.LayoutDirection::RightToLeft =>
-      frame.origin.x + frame.size.width - local_x - width
+    LeftToRight => frame.origin.x + local_x
+    RightToLeft => frame.origin.x + frame.size.width - local_x - width
   }
 }
 

@@ -6,9 +6,9 @@ fn text_align_extra(
 ) -> Double {
   let extra = (frame_width - text_width).max(0.0)
   match align {
-    @core.TextAlign::TextStart => 0.0
-    @core.TextAlign::TextCenter => extra / 2.0
-    @core.TextAlign::TextEnd => extra
+    TextStart => 0.0
+    TextCenter => extra / 2.0
+    TextEnd => extra
   }
 }
 
@@ -25,7 +25,7 @@ fn build_native_text_run(
   let atlas_full = append_text_run_vertices(
     cache, atlas, run, state, size, scale_factor, vertices,
   )
-  { vertices, atlas_full }
+  { vertices, atlas_full, }
 }
 
 ///|
@@ -182,8 +182,8 @@ fn append_text_quad(
   let u1 = (entry.x + entry.width).to_double() / atlas.width.to_double()
   let v1 = (entry.y + entry.height).to_double() / atlas.height.to_double()
   let color_glyph = match entry.format {
-    NativeRasterGlyphFormat::AlphaMask => 0.0
-    NativeRasterGlyphFormat::ColorRgba => 1.0
+    AlphaMask => 0.0
+    ColorRgba => 1.0
   }
   push_text_vertex(vertices, p0, size, u0, v0, color, color_glyph)
   push_text_vertex(vertices, p1, size, u0, v1, color, color_glyph)

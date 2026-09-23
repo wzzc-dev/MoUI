@@ -20,7 +20,7 @@ pub fn create_hybrid_renderer(
   gpu_available~ : Bool,
   gpu_promoted~ : Bool,
   gpu_target? : HostGpuPresentTarget? = None,
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
   async_image_loading? : Bool = false,
 ) -> SkiaHybridRenderer raise SkiaRendererError {
   let surface_route = resolve_surface_route(
@@ -80,20 +80,16 @@ pub fn SkiaHybridRenderer::render_frame(
   let result = self.worker.submit(input, token=submission.token())
   self.worker.poll()
   let completions = self.worker.drain_present_completions()
-  if completions.any(c => {
-      c.status() is @render.RenderPresentStatus::FallbackToRaster
-    }) {
+  if completions.any(c => c.status() is FallbackToRaster) {
     self.fallback_to_raster = true
     self.pending_completions.append(
-      completions.filter(c => {
-        c.status() is @render.RenderPresentStatus::FallbackToRaster
-      }),
+      completions.filter(c => c.status() is FallbackToRaster),
     )
     return @render.RenderFrameResult::new(presented=false, queued=false)
   }
   let mut recorded_completion : @render.RenderPresentCompletion? = None
   for completion in completions {
-    if completion.status() is @render.RenderPresentStatus::Recorded {
+    if completion.status() is Recorded {
       recorded_completion = Some(completion)
       break
     }
@@ -108,7 +104,7 @@ pub fn SkiaHybridRenderer::render_frame(
             submitted_at_ms=recorded.submitted_at_ms(),
             completed_at_ms=recorded.completed_at_ms(),
             presented_at_ms=recorded.completed_at_ms(),
-            status=@render.RenderPresentStatus::Presented,
+            status=Presented,
             gpu_context_generation=recorded.gpu_context_generation(),
           ),
         )

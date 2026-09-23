@@ -96,16 +96,15 @@ fn SunRasterRenderer::composite_layer_pixmap(
     .set_opacity(sun_clamp_unit(opacity * spec.opacity))
     .set_blend_mode(blend_mode)
   match spec.mask {
-    @core.LayerMask::NoMask =>
-      self.canvas.draw_pixmap(layer_pixmap, 0, 0, paint)
-    @core.LayerMask::RectMask(rect) =>
+    NoMask => self.canvas.draw_pixmap(layer_pixmap, 0, 0, paint)
+    RectMask(rect) =>
       self.canvas.draw_pixmap(
         sun_rect_masked_pixmap(layer_pixmap, rect, scope.transform),
         0,
         0,
         paint,
       )
-    @core.LayerMask::RoundedMask(rounded) =>
+    RoundedMask(rounded) =>
       self.canvas.draw_pixmap(
         sun_rounded_masked_pixmap(layer_pixmap, rounded, scope.transform),
         0,

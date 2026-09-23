@@ -2,7 +2,7 @@
 pub fn view_exact_channel(
   key : @core.DeclarationKey,
 ) -> @core.DeclarationChannel {
-  @core.DeclarationChannel::Exact(key)
+  Exact(key)
 }
 
 ///|
@@ -40,20 +40,20 @@ pub fn view_insets_key(insets : @core.Insets) -> @core.DeclarationKey {
 ///|
 pub fn view_font_family_key(family : @core.FontFamily) -> @core.DeclarationKey {
   match family {
-    @core.FontFamily::Name(name) =>
+    Name(name) =>
       view_record_key("FontFamily.Name", [
         ("name", @core.DeclarationKey::string(name)),
       ])
-    @core.FontFamily::SystemUi => @core.DeclarationKey::int(1)
-    @core.FontFamily::UiSansSerif => @core.DeclarationKey::int(2)
-    @core.FontFamily::UiSerif => @core.DeclarationKey::int(3)
-    @core.FontFamily::UiMonospace => @core.DeclarationKey::int(4)
-    @core.FontFamily::SansSerif => @core.DeclarationKey::int(5)
-    @core.FontFamily::Serif => @core.DeclarationKey::int(6)
-    @core.FontFamily::Monospace => @core.DeclarationKey::int(7)
-    @core.FontFamily::Emoji => @core.DeclarationKey::int(8)
-    @core.FontFamily::Math => @core.DeclarationKey::int(9)
-    @core.FontFamily::FangSong => @core.DeclarationKey::int(10)
+    SystemUi => @core.DeclarationKey::int(1)
+    UiSansSerif => @core.DeclarationKey::int(2)
+    UiSerif => @core.DeclarationKey::int(3)
+    UiMonospace => @core.DeclarationKey::int(4)
+    SansSerif => @core.DeclarationKey::int(5)
+    Serif => @core.DeclarationKey::int(6)
+    Monospace => @core.DeclarationKey::int(7)
+    Emoji => @core.DeclarationKey::int(8)
+    Math => @core.DeclarationKey::int(9)
+    FangSong => @core.DeclarationKey::int(10)
   }
 }
 
@@ -72,8 +72,8 @@ pub fn view_font_key(font : @core.FontSpec) -> @core.DeclarationKey {
       "style",
       @core.DeclarationKey::int(
         match font.style {
-          @core.FontStyle::Normal => 0
-          @core.FontStyle::Italic => 1
+          Normal => 0
+          Italic => 1
         },
       ),
     ),
@@ -91,43 +91,43 @@ pub fn view_semantics_role_key(
 ) -> @core.DeclarationKey {
   @core.DeclarationKey::int(
     match role {
-      @core.SemanticsRole::None => 0
-      @core.SemanticsRole::Text => 1
-      @core.SemanticsRole::Link => 2
-      @core.SemanticsRole::Heading => 3
-      @core.SemanticsRole::Navigation => 4
-      @core.SemanticsRole::Main => 5
-      @core.SemanticsRole::Button => 6
-      @core.SemanticsRole::Checkbox => 7
-      @core.SemanticsRole::TextField => 8
-      @core.SemanticsRole::List => 9
-      @core.SemanticsRole::ListItem => 10
-      @core.SemanticsRole::Grid => 11
-      @core.SemanticsRole::ScrollView => 12
-      @core.SemanticsRole::Switch => 13
-      @core.SemanticsRole::Radio => 14
-      @core.SemanticsRole::Slider => 15
-      @core.SemanticsRole::Progress => 16
-      @core.SemanticsRole::Tab => 17
-      @core.SemanticsRole::Dialog => 18
-      @core.SemanticsRole::Tooltip => 19
-      @core.SemanticsRole::Menu => 20
-      @core.SemanticsRole::ButtonGroup => 21
-      @core.SemanticsRole::Form => 22
-      @core.SemanticsRole::FormField => 23
-      @core.SemanticsRole::Tree => 24
-      @core.SemanticsRole::TreeItem => 25
-      @core.SemanticsRole::Group => 26
-      @core.SemanticsRole::WebView => 27
-      @core.SemanticsRole::Image => 28
-      @core.SemanticsRole::Alert => 29
-      @core.SemanticsRole::Status => 30
-      @core.SemanticsRole::ComboBox => 31
-      @core.SemanticsRole::Option => 32
-      @core.SemanticsRole::Table => 33
-      @core.SemanticsRole::Row => 34
-      @core.SemanticsRole::Cell => 35
-      @core.SemanticsRole::Separator => 36
+      None => 0
+      Text => 1
+      Link => 2
+      Heading => 3
+      Navigation => 4
+      Main => 5
+      Button => 6
+      Checkbox => 7
+      TextField => 8
+      List => 9
+      ListItem => 10
+      Grid => 11
+      ScrollView => 12
+      Switch => 13
+      Radio => 14
+      Slider => 15
+      Progress => 16
+      Tab => 17
+      Dialog => 18
+      Tooltip => 19
+      Menu => 20
+      ButtonGroup => 21
+      Form => 22
+      FormField => 23
+      Tree => 24
+      TreeItem => 25
+      Group => 26
+      WebView => 27
+      Image => 28
+      Alert => 29
+      Status => 30
+      ComboBox => 31
+      Option => 32
+      Table => 33
+      Row => 34
+      Cell => 35
+      Separator => 36
     },
   )
 }
@@ -135,16 +135,16 @@ pub fn view_semantics_role_key(
 ///|
 pub fn view_brush_key(value : @core.Brush) -> @core.DeclarationKey {
   match value {
-    @core.Brush::Solid(color) =>
+    Solid(color) =>
       view_record_key("Brush.Solid", [("color", view_color_key(color))])
-    @core.Brush::LinearGradient(spec) =>
+    LinearGradient(spec) =>
       view_record_key("Brush.LinearGradient", [
         ("start", view_point_key(spec.start)),
         ("end", view_point_key(spec.end)),
         ("start_color", view_color_key(spec.start_color)),
         ("end_color", view_color_key(spec.end_color)),
       ])
-    @core.Brush::RadialGradient(spec) =>
+    RadialGradient(spec) =>
       view_record_key("Brush.RadialGradient", [
         ("center", view_point_key(spec.center)),
         ("radius", @core.DeclarationKey::double(spec.radius)),
@@ -225,31 +225,20 @@ pub fn view_button_next_state(
   phase : @core.PointerPhase,
 ) -> @core.PressableState {
   match phase {
-    @core.PointerPhase::Move =>
-      if current == @core.PressableState::Pressed && inside {
-        @core.PressableState::Pressed
+    Move =>
+      if current == Pressed && inside {
+        Pressed
       } else if inside {
-        @core.PressableState::Hovered
+        Hovered
       } else {
-        @core.PressableState::Normal
+        Normal
       }
-    @core.PointerPhase::Down =>
-      if inside {
-        @core.PressableState::Pressed
-      } else {
-        @core.PressableState::Normal
-      }
-    @core.PointerPhase::Up =>
-      if inside {
-        @core.PressableState::Hovered
-      } else {
-        @core.PressableState::Normal
-      }
+    Down => if inside { Pressed } else { Normal }
+    Up => if inside { Hovered } else { Normal }
     // Synthetic runtime phase: the pointer left the element. Drop any hover or
     // press state and return to rest. (`inside` is always false for an `Exit`,
     // but the branch is unconditional so the intent is explicit.)
-    @core.PointerPhase::Exit | @core.PointerPhase::Cancel =>
-      @core.PressableState::Normal
+    Exit | Cancel => Normal
   }
 }
 
@@ -275,9 +264,9 @@ impl @core.ViewStateValue for ButtonTransitionState with fn encode_view_state(
       output.write_byte(1)
       output.write_byte(
         match from_state {
-          @core.PressableState::Normal => 0
-          @core.PressableState::Hovered => 1
-          @core.PressableState::Pressed => 2
+          Normal => 0
+          Hovered => 1
+          Pressed => 2
         },
       )
       output.write_double_be(start_ms)
@@ -296,8 +285,8 @@ impl @core.ViewStateValue for ButtonTransitionState with fn decode_view_state(
   } else if bytes.length() == 10 && bytes[0] == 1 {
     let from_state = match bytes[1] {
       0 => Some(@core.PressableState::Normal)
-      1 => Some(@core.PressableState::Hovered)
-      2 => Some(@core.PressableState::Pressed)
+      1 => Some(Hovered)
+      2 => Some(Pressed)
       _ => None
     }
     let start_ms = @core.ViewStateValue::decode_view_state(
@@ -317,7 +306,7 @@ impl @core.ViewStateValue for ButtonTransitionState with fn decode_view_state(
 pub fn button_transition_slot() -> @core.ViewStateSlot[ButtonTransitionState] {
   @core.ViewStateSlot::new(
     key=@core.DeclarationKey::string("moui.views.button.transition"),
-    initial=ButtonTransitionState::Idle,
+    initial=Idle,
   )
 }
 
@@ -342,15 +331,15 @@ pub fn button_state_with_transition(
 ) -> @core.ViewStateContext {
   let interaction_state = {
     ..state,
-    hovered: next == @core.PressableState::Hovered,
-    pressed: next == @core.PressableState::Pressed,
+    hovered: next == Hovered,
+    pressed: next == Pressed,
   }
   if from_state == next {
     interaction_state
   } else {
     interaction_state.with_slot(
       button_transition_slot(),
-      ButtonTransitionState::Active(from_state, now_ms),
+      Active(from_state, now_ms),
     )
   }
 }
@@ -372,9 +361,9 @@ pub fn pressable_state_brush(
   pressed : @core.Brush,
 ) -> @core.Brush {
   match state {
-    @core.PressableState::Normal => normal
-    @core.PressableState::Hovered => hovered
-    @core.PressableState::Pressed => pressed
+    Normal => normal
+    Hovered => hovered
+    Pressed => pressed
   }
 }
 
@@ -386,7 +375,7 @@ pub fn[Msg] view_event_result(
   captured? : Bool = false,
   state? : @core.ViewStateContext? = None,
   text_control? : @core.TextControlStateContext? = None,
-  dirty? : @core.ViewDirtyHint = @core.ViewDirtyHint::ViewClean,
+  dirty? : @core.ViewDirtyHint = ViewClean,
   messages? : Array[Msg] = [],
 ) -> @core.ViewEventResult[Msg] {
   {
@@ -420,13 +409,11 @@ pub fn emit_elevation_shadow(
       // Ambient: tight, centered, low-alpha. Light surfaces use black; dark
       // surfaces lift toward white so the elevation reads.
       let ambient_color = match scheme {
-        @core.ColorScheme::Light =>
-          @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.06)
-        @core.ColorScheme::Dark =>
-          @core.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.04)
+        Light => @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.06)
+        Dark => @core.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.04)
       }
       commands.push(
-        @core.DrawCommand::DrawShadow(
+        DrawShadow(
           @core.ShadowSpec::new(
             rect=rounded,
             color=ambient_color,
@@ -436,7 +423,7 @@ pub fn emit_elevation_shadow(
         ),
       )
       commands.push(
-        @core.DrawCommand::DrawShadow(
+        DrawShadow(
           @core.ShadowSpec::new(
             rect=rounded,
             color=key.color,

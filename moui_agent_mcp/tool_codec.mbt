@@ -111,7 +111,7 @@ fn decimal_u64_codec(positive? : Bool = false) -> JsonCodec[UInt64] {
       } : Json),
     decode: value => {
       match value {
-        Json::String(text) =>
+        String(text) =>
           match parse_decimal_u64(text) {
             Some(number) if !positive || number > 0UL => Ok(number)
             _ => Err("Expected \{expected}.")
@@ -142,7 +142,7 @@ fn semantic_id_codec() -> JsonCodec[@core.SemanticId] {
       } : Json),
     decode: value => {
       match value {
-        Json::String(text) =>
+        String(text) =>
           match @core.SemanticId::parse(text) {
             Some(id) => Ok(id)
             None => Err("Invalid semantic_id.")
@@ -170,7 +170,7 @@ fn semantics_target_codec() -> JsonCodec[@core.SemanticsTarget] {
     ]),
     decode: value => {
       match value {
-        Json::Object(fields) =>
+        Object(fields) =>
           decode_target_with_codecs(fields, semantic_id, node_id)
         _ => Err("Missing tagged 'target' object.")
       }
@@ -229,7 +229,7 @@ fn semantics_action_codec() -> JsonCodec[@core.SemanticsAction] {
     ]),
     decode: value => {
       match value {
-        Json::Object(fields) => decode_action(fields)
+        Object(fields) => decode_action(fields)
         _ => Err("Missing tagged 'action' object.")
       }
     },
@@ -253,8 +253,7 @@ fn generation_precondition_codec() -> JsonCodec[
     ]),
     decode: value => {
       match value {
-        Json::Object(fields) =>
-          decode_precondition_with_codec(fields, generation)
+        Object(fields) => decode_precondition_with_codec(fields, generation)
         _ => Err("Missing tagged 'precondition' object.")
       }
     },

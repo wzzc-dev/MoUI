@@ -172,7 +172,7 @@ fn PdfWorkbenchModel::apply_open_file_pick(
   }
   match result {
     Success(path) =>
-      { ..self, pending_operation: None }.request_open_path(path, services)
+      { ..self, pending_operation: None, }.request_open_path(path, services)
     Failure(error) =>
       PdfWorkbenchUpdate::new({
         ..self,
@@ -201,7 +201,7 @@ fn PdfWorkbenchModel::apply_pdf_bytes_read(
   if self.pending_operation != Some(ReadPdf(path)) {
     return PdfWorkbenchUpdate::new(self)
   }
-  let model = { ..self, pending_operation: None }
+  let model = { ..self, pending_operation: None, }
   match result {
     Success(bytes) =>
       model
@@ -241,7 +241,7 @@ fn PdfWorkbenchModel::apply_save_file_pick(
     Success(path) =>
       match self.document {
         Some(document) =>
-          { ..self, pending_operation: None }.request_binary_write(
+          { ..self, pending_operation: None, }.request_binary_write(
             path, document, services, document_services,
           )
         None =>
@@ -480,7 +480,7 @@ fn PdfWorkbenchModel::apply_save_completion(
   if self.pending_operation != Some(WritePdf(path)) {
     return self
   }
-  let model = { ..self, pending_operation: None }
+  let model = { ..self, pending_operation: None, }
   match result {
     Success(_) =>
       model.mark_saved_from_written_bytes(

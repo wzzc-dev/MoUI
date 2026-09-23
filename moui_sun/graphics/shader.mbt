@@ -107,7 +107,7 @@ pub fn PaintGradientStop::new(
   offset~ : Double,
   color~ : Color,
 ) -> PaintGradientStop {
-  { offset: normalize_gradient_stop_offset(offset), color }
+  { offset: normalize_gradient_stop_offset(offset), color, }
 }
 
 ///|
@@ -131,10 +131,10 @@ pub fn PaintShader::linear_gradient(
   y1~ : Double,
   start_color~ : Color,
   end_color~ : Color,
-  spread? : PaintShaderSpread = PaintShaderSpread::Clamp,
+  spread? : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
-    LinearGradient({ x0, y0, x1, y1, start_color, end_color, spread }),
+    LinearGradient({ x0, y0, x1, y1, start_color, end_color, spread, }),
   )
 }
 
@@ -146,7 +146,7 @@ pub fn PaintShader::linear_gradient_stops(
   x1~ : Double,
   y1~ : Double,
   stops~ : Array[PaintGradientStop],
-  spread? : PaintShaderSpread = PaintShaderSpread::Clamp,
+  spread? : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     LinearGradientStops({
@@ -168,7 +168,7 @@ pub fn PaintShader::radial_gradient(
   radius~ : Double,
   start_color~ : Color,
   end_color~ : Color,
-  spread? : PaintShaderSpread = PaintShaderSpread::Clamp,
+  spread? : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     RadialGradient({
@@ -189,7 +189,7 @@ pub fn PaintShader::radial_gradient_stops(
   cy~ : Double,
   radius~ : Double,
   stops~ : Array[PaintGradientStop],
-  spread? : PaintShaderSpread = PaintShaderSpread::Clamp,
+  spread? : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     RadialGradientStops({
@@ -211,7 +211,7 @@ pub fn PaintShader::sweep_gradient(
   sweep_angle~ : Double,
   start_color~ : Color,
   end_color~ : Color,
-  spread? : PaintShaderSpread = PaintShaderSpread::Clamp,
+  spread? : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     SweepGradient({
@@ -234,7 +234,7 @@ pub fn PaintShader::sweep_gradient_stops(
   start_angle~ : Double,
   sweep_angle~ : Double,
   stops~ : Array[PaintGradientStop],
-  spread? : PaintShaderSpread = PaintShaderSpread::Clamp,
+  spread? : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     SweepGradientStops({
@@ -252,11 +252,9 @@ pub fn PaintShader::sweep_gradient_stops(
 /// Return the shader family.
 pub fn PaintShader::get_type(self : PaintShader) -> PaintShaderType {
   match self.kind {
-    LinearGradient(_) | LinearGradientStops(_) =>
-      PaintShaderType::LinearGradient
-    RadialGradient(_) | RadialGradientStops(_) =>
-      PaintShaderType::RadialGradient
-    SweepGradient(_) | SweepGradientStops(_) => PaintShaderType::SweepGradient
+    LinearGradient(_) | LinearGradientStops(_) => LinearGradient
+    RadialGradient(_) | RadialGradientStops(_) => RadialGradient
+    SweepGradient(_) | SweepGradientStops(_) => SweepGradient
   }
 }
 
@@ -408,7 +406,7 @@ pub fn PaintShader::transformed(
   transform : Transform,
 ) -> PaintShader {
   guard self.transform_valid else {
-    return { kind: self.kind, local_from_device: None, transform_valid: false }
+    return { kind: self.kind, local_from_device: None, transform_valid: false, }
   }
   match transform.inverse() {
     Some(inverse) => {
@@ -418,9 +416,10 @@ pub fn PaintShader::transformed(
           None => inverse
         },
       )
-      { kind: self.kind, local_from_device, transform_valid: true }
+      { kind: self.kind, local_from_device, transform_valid: true, }
     }
-    None => { kind: self.kind, local_from_device: None, transform_valid: false }
+    None =>
+      { kind: self.kind, local_from_device: None, transform_valid: false, }
   }
 }
 
@@ -446,7 +445,7 @@ pub fn PaintShader::sample(self : PaintShader, x : Double, y : Double) -> Color 
 
 ///|
 fn make_paint_shader(kind : PaintShaderKind) -> PaintShader {
-  { kind, local_from_device: None, transform_valid: true }
+  { kind, local_from_device: None, transform_valid: true, }
 }
 
 ///|
@@ -614,21 +613,16 @@ fn apply_shader_spread(value : Double, spread : PaintShaderSpread) -> Double {
   guard value == value else { return 0.0 }
   guard value - value == value - value else {
     match spread {
-      PaintShaderSpread::Clamp => if value < 0.0 { 0.0 } else { 1.0 }
-      PaintShaderSpread::Repeat | PaintShaderSpread::Mirror => 0.0
-      PaintShaderSpread::Decal => -1.0
+      Clamp => if value < 0.0 { 0.0 } else { 1.0 }
+      Repeat | Mirror => 0.0
+      Decal => -1.0
     }
   }
   match spread {
-    PaintShaderSpread::Clamp => clamp_unit(value)
-    PaintShaderSpread::Repeat => repeat_unit(value)
-    PaintShaderSpread::Mirror => mirror_unit(value)
-    PaintShaderSpread::Decal =>
-      if value >= 0.0 && value <= 1.0 {
-        value
-      } else {
-        -1.0
-      }
+    Clamp => clamp_unit(value)
+    Repeat => repeat_unit(value)
+    Mirror => mirror_unit(value)
+    Decal => if value >= 0.0 && value <= 1.0 { value } else { -1.0 }
   }
 }
 

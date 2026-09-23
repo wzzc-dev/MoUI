@@ -18,5 +18,5 @@ pub fn PlatformChannelRequest::new(
   operation~ : String,
   payload? : String = "",
 ) -> PlatformChannelRequest {
-  { channel, operation, payload }
+  { channel, operation, payload, }
 }

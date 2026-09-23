@@ -20,11 +20,7 @@ fn safari_body(
     palette,
     theme,
   )
-  @views.column(
-    [toolbar, content],
-    spacing=0.0,
-    align=@views.CrossAlign::Stretch,
-  )
+  @views.column([toolbar, content], spacing=0.0, align=Stretch)
 }
 
 ///|
@@ -45,7 +41,7 @@ fn safari_toolbar(
       [
         // macOS Safari address bar: a lock glyph on the left signals the
         // current page is loaded over a secure (https) connection.
-        desktop_icon(@views.IconName::Focus, 13.0, palette.muted),
+        desktop_icon(Focus, 13.0, palette.muted),
         @views.text_field(
           model.browser_query,
           on_input=value => BrowserQueryChanged(value),
@@ -57,14 +53,14 @@ fn safari_toolbar(
         ),
         // Reload button on the right of the address capsule.
         toolbar_icon_button(
-          @views.IconName::ArrowRight,
+          ArrowRight,
           "Reload current page",
           SubmitBrowserQuery,
           palette,
         ),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=address_width,
     height=34.0,
@@ -74,36 +70,27 @@ fn safari_toolbar(
     padding=4.0,
   )
   let navigation = if metrics.compact {
-    @views.row(
-      [address],
-      justify=@views.MainAlign::Center,
-      align=@views.CrossAlign::Center,
-    )
+    @views.row([address], justify=Center, align=Center)
   } else {
     @views.row(
       [
         toolbar_icon_button(
-          @views.IconName::ChevronLeft,
+          ChevronLeft,
           "Back to start page",
           ShowBrowserStartPage,
           palette,
         ),
         toolbar_icon_button(
-          @views.IconName::ArrowRight,
+          ArrowRight,
           "Go to address",
           SubmitBrowserQuery,
           palette,
         ),
         address,
-        toolbar_icon_button(
-          @views.IconName::Columns,
-          "Open Apps",
-          ToggleLauncher,
-          palette,
-        ),
+        toolbar_icon_button(Columns, "Open Apps", ToggleLauncher, palette),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   }
   @views.stack([
@@ -117,19 +104,19 @@ fn safari_toolbar(
             [
               safari_tab_bar(model, metrics, theme, palette),
               toolbar_icon_button(
-                @views.IconName::Plus,
+                Plus,
                 "New browser tab",
                 NewBrowserTab,
                 palette,
               ),
             ],
             spacing=6.0,
-            align=@views.CrossAlign::Center,
+            align=Center,
           ),
           navigation,
         ],
         spacing=8.0,
-        align=@views.CrossAlign::Stretch,
+        align=Stretch,
       ),
       width=metrics.width,
       height~,
@@ -203,7 +190,7 @@ fn safari_tab_bar(
       safari_tab(index, tabs[index], active == index, tab_width, palette, theme),
     )
   }
-  @views.row(children, spacing=4.0, align=@views.CrossAlign::Center)
+  @views.row(children, spacing=4.0, align=Center)
 }
 
 ///|
@@ -220,7 +207,7 @@ fn safari_tab(
     [
       @views.text(
         title,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=width - close_width - 16.0,
         height=22.0,
@@ -232,11 +219,11 @@ fn safari_tab(
       @views.container(
         @views.text(
           "×",
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=close_width,
           height=22.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.muted),
         width=close_width,
         height=22.0,
@@ -246,7 +233,7 @@ fn safari_tab(
       .accessibility_label("Close tab " + title),
     ],
     spacing=6.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   @views.container(
     inner,
@@ -347,7 +334,7 @@ fn safari_start_page(
       favorite_card(
         "MoUI",
         "https://wzzc-dev.github.io/MoUI",
-        @views.IconName::Columns,
+        Columns,
         rgba8(39, 110, 241),
         favorite_width,
         palette,
@@ -356,7 +343,7 @@ fn safari_start_page(
       favorite_card(
         "MoonBit",
         "moonbitlang.com",
-        @views.IconName::CodeInline,
+        CodeInline,
         rgba8(113, 82, 228),
         favorite_width,
         palette,
@@ -365,7 +352,7 @@ fn safari_start_page(
       favorite_card(
         "Docs",
         "docs.https://wzzc-dev.github.io/MoUI",
-        @views.IconName::ListBullet,
+        ListBullet,
         rgba8(24, 151, 132),
         favorite_width,
         palette,
@@ -374,7 +361,7 @@ fn safari_start_page(
       favorite_card(
         "Tahoe",
         "Lake Tahoe",
-        @views.IconName::FolderOpen,
+        FolderOpen,
         rgba8(232, 132, 48),
         favorite_width,
         palette,
@@ -390,7 +377,7 @@ fn safari_start_page(
     browser_report_card(
       "Privacy Report",
       "17 trackers blocked this week",
-      @views.IconName::Focus,
+      Focus,
       inner_width,
       palette,
       theme,
@@ -401,7 +388,7 @@ fn safari_start_page(
         browser_report_card(
           "Privacy Report",
           "17 trackers blocked this week",
-          @views.IconName::Focus,
+          Focus,
           (inner_width - 14.0) / 2.0,
           palette,
           theme,
@@ -409,21 +396,21 @@ fn safari_start_page(
         browser_report_card(
           "Reading List",
           "Liquid Glass: Designing for Depth",
-          @views.IconName::ListTask,
+          ListTask,
           (inner_width - 14.0) / 2.0,
           palette,
           theme,
         ),
       ],
       spacing=14.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     )
   }
   @views.column(
     [
       @views.text(
         "Favorites",
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=inner_width,
         height=34.0,
@@ -433,7 +420,7 @@ fn safari_start_page(
       favorites,
       @views.text(
         "Frequently Visited",
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=inner_width,
         height=32.0,
@@ -452,12 +439,12 @@ fn safari_start_page(
           compact_site("g", "github", "github.com", palette, theme),
         ],
         spacing=12.0,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       reports,
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   ).frame(width=inner_width, height=height - 20.0)
 }
 
@@ -484,15 +471,15 @@ fn favorite_card(
       ),
       @views.text(
         label,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width~,
         height=20.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       ).foreground(palette.foreground),
     ],
     spacing=5.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   .on_tap(OpenFavorite(query))
   .accessibility_label("Open " + label)
@@ -511,11 +498,11 @@ fn compact_site(
       @views.container(
         @views.text(
           initial,
-          role=@views.TextRole::Title,
+          role=Title,
           theme~,
           width=48.0,
           height=38.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.foreground),
         width=52.0,
         height=48.0,
@@ -526,15 +513,15 @@ fn compact_site(
       ),
       @views.text(
         label,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=72.0,
         height=18.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       ).foreground(palette.muted),
     ],
     spacing=4.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   .on_tap(OpenFavorite(query))
   .accessibility_label("Open " + label)
@@ -557,25 +544,25 @@ fn browser_report_card(
             desktop_icon(icon, 18.0, palette.accent),
             @views.text(
               title,
-              role=@views.TextRole::Label,
+              role=Label,
               theme~,
               width=(width - 66.0).max(100.0),
               height=24.0,
             ).foreground(palette.foreground),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         @views.text(
           detail,
-          role=@views.TextRole::Body,
+          role=Body,
           theme~,
           width=(width - 32.0).max(100.0),
           height=42.0,
         ).foreground(palette.muted),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width,
     94.0,
@@ -604,7 +591,7 @@ fn safari_search_results(
             [
               @views.text(
                 "Search results",
-                role=@views.TextRole::Title,
+                role=Title,
                 theme~,
                 width=(inner_width - 140.0).max(140.0),
                 height=32.0,
@@ -613,27 +600,27 @@ fn safari_search_results(
               .foreground(palette.foreground),
               @views.text(
                 "Results for \"\{query}\"",
-                role=@views.TextRole::Caption,
+                role=Caption,
                 theme~,
                 width=(inner_width - 140.0).max(140.0),
                 height=22.0,
               ).foreground(palette.muted),
             ],
             spacing=0.0,
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
           @views.spacer(min_length=8.0),
           @views.button(
             "Start Page",
             on_click=ShowBrowserStartPage,
-            variant=@views.ButtonVariant::Tonal,
+            variant=Tonal,
             theme~,
             width=112.0,
             height=36.0,
           ),
         ],
         spacing=8.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       browser_result(
         "MoUI desktop patterns", "https://wzzc-dev.github.io/MoUI/examples/mo-desktop",
@@ -650,7 +637,7 @@ fn safari_search_results(
       ),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   ).frame(width=inner_width, height=height - 20.0)
 }
 
@@ -666,32 +653,18 @@ fn browser_result(
   solid_panel(
     @views.column(
       [
-        @views.text(
-          title,
-          role=@views.TextRole::Title,
-          theme~,
-          width=width - 32.0,
-          height=28.0,
-        )
+        @views.text(title, role=Title, theme~, width=width - 32.0, height=28.0)
         .font(@text.FontSpec::new(size=17.0, weight=620))
         .foreground(palette.accent),
-        @views.text(
-          url,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 32.0,
-          height=20.0,
-        ).foreground(safari_result_url_color(palette)),
-        @views.text(
-          detail,
-          role=@views.TextRole::Body,
-          theme~,
-          width=width - 32.0,
-          height=34.0,
-        ).foreground(palette.muted),
+        @views.text(url, role=Caption, theme~, width=width - 32.0, height=20.0).foreground(
+          safari_result_url_color(palette),
+        ),
+        @views.text(detail, role=Body, theme~, width=width - 32.0, height=34.0).foreground(
+          palette.muted,
+        ),
       ],
       spacing=3.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width,
     98.0,

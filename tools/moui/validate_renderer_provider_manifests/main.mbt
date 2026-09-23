@@ -46,7 +46,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       other => return Err("unknown argument: " + other)
     }
   }
-  Ok({ repo_root: repo_root.val, help: help.val })
+  Ok({ repo_root: repo_root.val, help: help.val, })
 }
 
 ///|
@@ -97,7 +97,7 @@ fn provider_rules() -> Array[ProviderRule] {
       "webgpu_adapter" => "moui_web_renderer/moon.pkg"
       _ => ""
     }
-    rules.push({ path, forbidden })
+    rules.push({ path, forbidden, })
   }
   rules
 }

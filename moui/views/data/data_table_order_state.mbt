@@ -5,7 +5,7 @@ pub struct ColumnOrderState {
 
 ///|
 pub fn ColumnOrderState::new(order? : Array[String] = []) -> ColumnOrderState {
-  { order: order.copy() }
+  { order: order.copy(), }
 }
 
 ///|
@@ -48,7 +48,7 @@ pub fn ColumnOrderState::move_before(
   if !inserted {
     next.push(id)
   }
-  { order: next }
+  { order: next, }
 }
 
 ///|

@@ -22,12 +22,12 @@ fn markdown_editor_front_matter_metadata(
   blocks : Array[MarkdownEditorBlock],
 ) -> MarkdownEditorFrontMatterMetadata {
   if blocks.length() == 0 {
-    return { title: "", tags: [] }
+    return { title: "", tags: [], }
   }
   match blocks[0].block.kind {
     FrontMatter =>
       markdown_editor_parse_front_matter_metadata(blocks[0].block.text)
-    _ => { title: "", tags: [] }
+    _ => { title: "", tags: [], }
   }
 }
 
@@ -81,7 +81,7 @@ fn markdown_editor_parse_front_matter_metadata(
       collecting_tags = false
     }
   }
-  { title, tags }
+  { title, tags, }
 }
 
 ///|

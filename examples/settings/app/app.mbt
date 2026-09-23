@@ -110,7 +110,7 @@ pub(all) enum SettingsMsg {
 
 ///|
 pub fn SettingsApp::new() -> SettingsApp {
-  { unit: () }
+  { unit: (), }
 }
 
 // ---------------------------------------------------------------------------
@@ -124,7 +124,10 @@ fn profile_read(model : SettingsModel) -> ProfileSection {
 }
 
 ///|
-fn profile_write(section : ProfileSection, model : SettingsModel) -> SettingsModel {
+fn profile_write(
+  section : ProfileSection,
+  model : SettingsModel,
+) -> SettingsModel {
   { ..model, profile: section, }
 }
 
@@ -194,21 +197,22 @@ fn profile_update(
   message : ProfileMsg,
 ) -> (ProfileSection, @moui.Effect[ProfileMsg]) {
   match message {
-    Field(name, action) => (
-      match action {
-        FieldAction::Text(value) =>
-          if name == "display_name" {
-            { ..model, display_name: value }
-          } else if name == "email" {
-            { ..model, email: value }
-          } else {
-            model // unknown field keys are inert
-          }
-        Toggle(_enabled) => model // profile is text-only
-        Select(_value) => model
-      },
-      @moui.Effect::none(),
-    )
+    Field(name, action) =>
+      (
+        match action {
+          Text(value) =>
+            if name == "display_name" {
+              { ..model, display_name: value, }
+            } else if name == "email" {
+              { ..model, email: value, }
+            } else {
+              model // unknown field keys are inert
+            }
+          Toggle(_enabled) => model // profile is text-only
+          Select(_value) => model
+        },
+        @moui.Effect::none(),
+      )
   }
 }
 
@@ -218,14 +222,10 @@ fn workspace_update(
   message : WorkspaceMsg,
 ) -> (WorkspaceSection, @moui.Effect[WorkspaceMsg]) {
   match message {
-    WorkspaceChanged(value) => (
-      { ..model, workspace: value },
-      @moui.Effect::none(),
-    )
-    NotificationsChanged(value) => (
-      { ..model, notifications: value },
-      @moui.Effect::none(),
-    )
+    WorkspaceChanged(value) =>
+      ({ ..model, workspace: value, }, @moui.Effect::none())
+    NotificationsChanged(value) =>
+      ({ ..model, notifications: value, }, @moui.Effect::none())
   }
 }
 
@@ -235,19 +235,17 @@ fn preferences_update(
   message : PreferencesMsg,
 ) -> (PreferencesSection, @moui.Effect[PreferencesMsg]) {
   match message {
-    ThemeModeSelected(value) => (
-      { ..model, theme_mode: value },
-      @moui.Effect::none(),
-    )
-    TelemetryChanged(value) => (
-      { ..model, telemetry: value },
-      @moui.Effect::none(),
-    )
+    ThemeModeSelected(value) =>
+      ({ ..model, theme_mode: value, }, @moui.Effect::none())
+    TelemetryChanged(value) =>
+      ({ ..model, telemetry: value, }, @moui.Effect::none())
   }
 }
 
 ///|
-fn profile_feature(theme : @moui.Theme) -> @moui.Feature[ProfileSection, ProfileMsg] {
+fn profile_feature(
+  theme : @moui.Theme,
+) -> @moui.Feature[ProfileSection, ProfileMsg] {
   @moui.Feature::new(
     init=() => (profile_section_default(), @moui.Effect::none()),
     update=profile_update,
@@ -284,32 +282,38 @@ fn preferences_feature(
 fn profile_scope(
   theme? : @moui.Theme = @views.light_theme(),
 ) -> @moui.ScopedFeature[SettingsModel, ProfileSection, ProfileMsg, SettingsMsg] {
-  profile_feature(theme).scope(
-    read=profile_read,
-    write=profile_write,
-    wrap=message => SettingsMsg::Profile(message),
-  )
+  profile_feature(theme).scope(read=profile_read, write=profile_write, wrap=message => {
+    Profile(message)
+  })
 }
 
 ///|
 fn workspace_scope(
   theme? : @moui.Theme = @views.light_theme(),
-) -> @moui.ScopedFeature[SettingsModel, WorkspaceSection, WorkspaceMsg, SettingsMsg] {
-  workspace_feature(theme).scope(
-    read=workspace_read,
-    write=workspace_write,
-    wrap=message => SettingsMsg::Workspace(message),
-  )
+) -> @moui.ScopedFeature[
+  SettingsModel,
+  WorkspaceSection,
+  WorkspaceMsg,
+  SettingsMsg,
+] {
+  workspace_feature(theme).scope(read=workspace_read, write=workspace_write, wrap=message => {
+    Workspace(message)
+  })
 }
 
 ///|
 fn preferences_scope(
   theme? : @moui.Theme = @views.light_theme(),
-) -> @moui.ScopedFeature[SettingsModel, PreferencesSection, PreferencesMsg, SettingsMsg] {
+) -> @moui.ScopedFeature[
+  SettingsModel,
+  PreferencesSection,
+  PreferencesMsg,
+  SettingsMsg,
+] {
   preferences_feature(theme).scope(
     read=preferences_read,
     write=preferences_write,
-    wrap=message => SettingsMsg::Preferences(message),
+    wrap=message => Preferences(message),
   )
 }
 
@@ -323,10 +327,7 @@ pub fn SettingsModel::new() -> SettingsModel {
     profile: profile_section_default(),
     workspace: workspace_section_default(),
     preferences: preferences_section_default(),
-    shell: ShellSection::{
-      selected_section: "profile",
-      saved_label: "Saved: Not saved",
-    },
+    shell: { selected_section: "profile", saved_label: "Saved: Not saved", },
   }
 }
 
@@ -353,10 +354,10 @@ pub fn SettingsModel::update(
       next
     }
     SelectSettingsSection(section) =>
-      shell_write({ ..self.shell, selected_section: section }, self)
+      shell_write({ ..self.shell, selected_section: section, }, self)
     SaveSettings =>
       shell_write(
-        { ..self.shell, saved_label: "Saved: " + self.section_label() },
+        { ..self.shell, saved_label: "Saved: " + self.section_label(), },
         self,
       )
     ResetSettings => SettingsModel::new()
@@ -371,14 +372,14 @@ pub fn update(model : SettingsModel, message : SettingsMsg) -> SettingsModel {
 ///|
 pub fn SettingsModel::save_snapshot(self : SettingsModel) -> SettingsSnapshot {
   {
-    selected_section: (shell_read(self)).selected_section,
-    display_name: (profile_read(self)).display_name,
-    email: (profile_read(self)).email,
-    workspace: (workspace_read(self)).workspace,
-    theme_mode: (preferences_read(self)).theme_mode,
-    notifications: (workspace_read(self)).notifications,
-    telemetry: (preferences_read(self)).telemetry,
-    saved_label: (shell_read(self)).saved_label,
+    selected_section: shell_read(self).selected_section,
+    display_name: profile_read(self).display_name,
+    email: profile_read(self).email,
+    workspace: workspace_read(self).workspace,
+    theme_mode: preferences_read(self).theme_mode,
+    notifications: workspace_read(self).notifications,
+    telemetry: preferences_read(self).telemetry,
+    saved_label: shell_read(self).saved_label,
   }
 }
 
@@ -388,28 +389,19 @@ pub fn SettingsModel::restore_from_snapshot(
 ) -> SettingsModel {
   let base = SettingsModel::new()
   let base = profile_write(
-    ProfileSection::{
-      display_name: snapshot.display_name,
-      email: snapshot.email,
-    },
+    { display_name: snapshot.display_name, email: snapshot.email, },
     base,
   )
   let base = workspace_write(
-    WorkspaceSection::{
-      workspace: snapshot.workspace,
-      notifications: snapshot.notifications,
-    },
+    { workspace: snapshot.workspace, notifications: snapshot.notifications, },
     base,
   )
   let base = preferences_write(
-    PreferencesSection::{
-      theme_mode: snapshot.theme_mode,
-      telemetry: snapshot.telemetry,
-    },
+    { theme_mode: snapshot.theme_mode, telemetry: snapshot.telemetry, },
     base,
   )
   shell_write(
-    ShellSection::{
+    {
       selected_section: snapshot.selected_section,
       saved_label: snapshot.saved_label,
     },
@@ -445,28 +437,22 @@ pub fn SettingsModel::view_with_environment(
         [
           column(
             [
-              text(
-                "Settings",
-                role=@views.TextRole::Title,
-                theme~,
-                width=240.0,
-                height=34.0,
-              ),
+              text("Settings", role=Title, theme~, width=240.0, height=34.0),
               text(
                 "Form, sidebar, saveable state, and theme preferences.",
-                role=@views.TextRole::Caption,
+                role=Caption,
                 theme~,
                 width=420.0,
                 height=24.0,
               ),
             ],
             spacing=0.0,
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
           button(
             "Save Settings",
             on_click=SaveSettings,
-            variant=@views.ButtonVariant::Primary,
+            variant=Primary,
             theme~,
             width=132.0,
             height=38.0,
@@ -474,14 +460,14 @@ pub fn SettingsModel::view_with_environment(
           button(
             "Reset",
             on_click=ResetSettings,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=86.0,
             height=38.0,
           ),
         ],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       split_view(
         primary=self.settings_sidebar(theme),
@@ -502,13 +488,13 @@ pub fn SettingsModel::view_with_environment(
       ),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   container(
     content,
     width=880.0,
     height=560.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -543,11 +529,10 @@ pub fn program() -> @moui.Program[SettingsModel, SettingsMsg] {
 pub fn SettingsModel::program(
   self : SettingsModel,
 ) -> @moui.Program[SettingsModel, SettingsMsg] {
-  @moui.Program::simple_with_environment(
-    init=self,
-    update~,
-    view=(model, environment) => model.view_with_environment(environment),
-  )
+  @moui.Program::simple_with_environment(init=self, update~, view=(
+    model,
+    environment,
+  ) => model.view_with_environment(environment))
 }
 
 // ---------------------------------------------------------------------------
@@ -602,7 +587,7 @@ fn SettingsModel::settings_detail(
     scroll_view(detail, width=558.0, height=388.0),
     width=590.0,
     height=420.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -625,9 +610,9 @@ fn profile_form(
             label="Display name",
             child=text_field(
               model.display_name,
-              on_input=value => Field("display_name", FieldAction::Text(value)),
+              on_input=value => Field("display_name", Text(value)),
               placeholder="Name shown in the app",
-              variant=@views.TextFieldVariant::Outline,
+              variant=Outline,
               theme~,
               width=440.0,
             ),
@@ -640,9 +625,9 @@ fn profile_form(
             label="Email",
             child=text_field(
               model.email,
-              on_input=value => Field("email", FieldAction::Text(value)),
+              on_input=value => Field("email", Text(value)),
               placeholder="name@example.com",
-              variant=@views.TextFieldVariant::Outline,
+              variant=Outline,
               theme~,
               width=440.0,
             ),
@@ -679,7 +664,7 @@ fn workspace_form(
               model.workspace,
               on_input=value => WorkspaceChanged(value),
               placeholder="Workspace name",
-              variant=@views.TextFieldVariant::Outline,
+              variant=Outline,
               theme~,
               width=440.0,
             ),

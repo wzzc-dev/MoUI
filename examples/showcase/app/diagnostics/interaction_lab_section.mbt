@@ -45,18 +45,13 @@ fn ShowcaseModel::tooltip_demo_card(
         .font(theme.typography.caption)
         .foreground(theme.palette.foreground),
         tooltip(
-          button(
-            "Hover target",
-            variant=@views.ButtonVariant::Tonal,
-            theme~,
-            width=140.0,
-          ),
+          button("Hover target", variant=Tonal, theme~, width=140.0),
           "Tooltip: Meta+K",
           visible=true,
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=136.0,
@@ -123,7 +118,7 @@ fn ShowcaseModel::gesture_card(
         .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=146.0,
@@ -166,7 +161,7 @@ fn ShowcaseModel::focus_shortcut_card(
             key="k",
             modifiers=@views.KeyModifiers::new(meta=true),
           ),
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=260.0,
         ).focusable(),
@@ -197,37 +192,19 @@ fn ShowcaseModel::focus_shortcut_card(
             ),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         text("Focus ring: name", width=width - 32.0, height=22.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         row(
           [
-            button(
-              "Pressed",
-              variant=@views.ButtonVariant::Tonal,
-              theme~,
-              width=78.0,
-              height=32.0,
-            ).semantics_pressed(),
-            button(
-              "Selected",
-              variant=@views.ButtonVariant::Outline,
-              theme~,
-              width=82.0,
-              height=32.0,
-            ).semantics_selected(),
-            button(
-              "Disabled",
-              variant=@views.ButtonVariant::Ghost,
-              theme~,
-              width=82.0,
-              height=32.0,
-            ).disabled(),
+            button("Pressed", variant=Tonal, theme~, width=78.0, height=32.0).semantics_pressed(),
+            button("Selected", variant=Outline, theme~, width=82.0, height=32.0).semantics_selected(),
+            button("Disabled", variant=Ghost, theme~, width=82.0, height=32.0).disabled(),
           ],
           spacing=6.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         text(
           "Semantic states: pressed selected disabled",
@@ -241,23 +218,11 @@ fn ShowcaseModel::focus_shortcut_card(
         .foreground(theme.palette.muted),
         row(
           [
-            button(
-              "Trap A",
-              variant=@views.ButtonVariant::Outline,
-              theme~,
-              width=82.0,
-              height=32.0,
-            ).focusable(),
-            button(
-              "Trap B",
-              variant=@views.ButtonVariant::Outline,
-              theme~,
-              width=82.0,
-              height=32.0,
-            ).focusable(),
+            button("Trap A", variant=Outline, theme~, width=82.0, height=32.0).focusable(),
+            button("Trap B", variant=Outline, theme~, width=82.0, height=32.0).focusable(),
           ],
           spacing=6.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ).focus_trap(),
         text("Runtime trap: active", width=width - 32.0, height=22.0)
         .font(theme.typography.caption)
@@ -281,9 +246,7 @@ fn ShowcaseModel::focus_shortcut_card(
         .foreground(theme.palette.muted),
         text(
           "Enter target: " +
-          focus_scope
-          .command_target(@views.CommandIntent::Submit)
-          .unwrap_or("none"),
+          focus_scope.command_target(Submit).unwrap_or("none"),
           width=width - 32.0,
           height=22.0,
         )
@@ -291,9 +254,7 @@ fn ShowcaseModel::focus_shortcut_card(
         .foreground(theme.palette.muted),
         text(
           "Escape target: " +
-          focus_scope
-          .command_target(@views.CommandIntent::Cancel)
-          .unwrap_or("none"),
+          focus_scope.command_target(Cancel).unwrap_or("none"),
           width=width - 32.0,
           height=22.0,
         )
@@ -301,13 +262,13 @@ fn ShowcaseModel::focus_shortcut_card(
         .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=412.0,
     padding=theme.spacing_scale.md,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .accessibility_label("Focus scope keyboard rules")
 }
 
@@ -378,18 +339,16 @@ fn ShowcaseModel::popover_dropdown_card(
           button(
             "Inline popover",
             on_click=ToggleActive,
-            variant=@views.ButtonVariant::Tonal,
+            variant=Tonal,
             theme~,
             width=160.0,
           ),
           [
             PresentationSpec::new(
               id="interaction-popover",
-              kind=PresentationKind::Popover,
+              kind=Popover,
               content=text("Popover content", width=160.0, height=24.0),
-              anchor=PresentationAnchor::Viewport(
-                @core.Point::new(x=0.0, y=0.0),
-              ),
+              anchor=Viewport(@core.Point::new(x=0.0, y=0.0)),
               placement=Some(PresentationPlacement::viewport()),
               presented=true,
             ),
@@ -397,7 +356,7 @@ fn ShowcaseModel::popover_dropdown_card(
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=334.0,
@@ -420,36 +379,18 @@ fn ShowcaseModel::variant_gallery_card(
         .foreground(theme.palette.foreground),
         row(
           [
-            button(
-              "Primary",
-              variant=@views.ButtonVariant::Primary,
-              theme~,
-              width=82.0,
-              height=34.0,
-            ),
-            button(
-              "Tonal",
-              variant=@views.ButtonVariant::Tonal,
-              theme~,
-              width=76.0,
-              height=34.0,
-            ),
-            button(
-              "Ghost",
-              variant=@views.ButtonVariant::Ghost,
-              theme~,
-              width=76.0,
-              height=34.0,
-            ),
+            button("Primary", variant=Primary, theme~, width=82.0, height=34.0),
+            button("Tonal", variant=Tonal, theme~, width=76.0, height=34.0),
+            button("Ghost", variant=Ghost, theme~, width=76.0, height=34.0),
           ],
           spacing=6.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         text_field(
           self.draft,
           on_input=value => DraftChanged(value),
           placeholder="Outline",
-          variant=@views.TextFieldVariant::Outline,
+          variant=Outline,
           theme~,
           width=width - 32.0,
           height=36.0,
@@ -461,7 +402,7 @@ fn ShowcaseModel::variant_gallery_card(
           self.draft,
           on_input=value => DraftChanged(value),
           placeholder="Plain",
-          variant=@views.TextFieldVariant::Plain,
+          variant=Plain,
           theme~,
           width=width - 32.0,
           height=32.0,
@@ -471,19 +412,15 @@ fn ShowcaseModel::variant_gallery_card(
         .foreground(theme.palette.muted),
         row(
           [
-            container_variant_tile(theme, "Base", @views.ContainerVariant::Base),
-            container_variant_tile(
-              theme,
-              "Overlay",
-              @views.ContainerVariant::Overlay,
-            ),
+            container_variant_tile(theme, "Base", Base),
+            container_variant_tile(theme, "Overlay", Overlay),
           ],
           spacing=6.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=228.0,
@@ -530,11 +467,11 @@ fn ShowcaseModel::image_lifecycle_card(
             image_lifecycle_tile(theme, "Failed", "missing://showcase-image"),
           ],
           spacing=6.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=142.0,
@@ -556,7 +493,7 @@ fn image_lifecycle_tile(
         height=44.0,
         opacity=if label == "Loading" { 0.36 } else { 1.0 },
         corner_radius=theme.radius_scale.sm,
-        fit=@graphics.ImageFit::Cover,
+        fit=Cover,
       )
       .background(theme.palette.surface_variant.multiply_alpha(0.5))
       .clip(),
@@ -565,7 +502,7 @@ fn image_lifecycle_tile(
       .foreground(theme.palette.muted),
     ],
     spacing=4.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -595,7 +532,7 @@ fn ShowcaseModel::dialog_demo_card(
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=220.0,
@@ -619,14 +556,14 @@ fn ShowcaseModel::sheet_demo_card(
         .foreground(theme.palette.foreground),
         sheet(
           content=text("Sheet content", width=240.0, height=30.0),
-          presentation_mode=@views.SheetPresentationMode::BottomSheet,
+          presentation_mode=BottomSheet,
           background=theme.palette.surface,
           corner_radius=theme.radius_scale.lg,
           shadow=Some(theme.shadow_scale.lg),
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=180.0,

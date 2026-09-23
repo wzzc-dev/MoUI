@@ -81,7 +81,7 @@ pub fn update(model : Model, message : Msg) -> Model {
         status: "Package configuration edited",
         revision: model.revision + 1,
       }
-    SelectFile(file) => { ..model, active_file: file, show_find: false }
+    SelectFile(file) => { ..model, active_file: file, show_find: false, }
     SelectExample(id) =>
       {
         ..model,
@@ -94,14 +94,14 @@ pub fn update(model : Model, message : Msg) -> Model {
       }
     SetFindQuery(query) => {
       let source = current_source(model)
-      let editor = { ..model.editor, find: { ..model.editor.find, query, } }
-      let editor = { ..editor, find: editor.find.recompute(source) }
-      { ..model, editor, find_query: query, show_find: true }
+      let editor = { ..model.editor, find: { ..model.editor.find, query, }, }
+      let editor = { ..editor, find: editor.find.recompute(source), }
+      { ..model, editor, find_query: query, show_find: true, }
     }
-    SetReplaceText(value) => { ..model, replace_text: value }
+    SetReplaceText(value) => { ..model, replace_text: value, }
     EditorSelectionChanged(caret, selection) =>
-      { ..model, editor: model.editor.with_selection(caret, selection) }
-    EditorScrollChanged(offset) => { ..model, editor_scroll: offset }
+      { ..model, editor: model.editor.with_selection(caret, selection), }
+    EditorScrollChanged(offset) => { ..model, editor_scroll: offset, }
     ReplaceAll => {
       let source = current_source(model)
       let replaced = @code_editor.code_replace_all(
@@ -109,7 +109,7 @@ pub fn update(model : Model, message : Msg) -> Model {
         model.find_query,
         model.replace_text,
       )
-      update_source({ ..model, status: "Replaced all matches" }, replaced)
+      update_source({ ..model, status: "Replaced all matches", }, replaced)
     }
     FindNext => {
       let matches = model.editor.find.matches
@@ -122,7 +122,7 @@ pub fn update(model : Model, message : Msg) -> Model {
         ..model,
         editor: {
           ..model.editor,
-          find: { ..model.editor.find, active_index: next },
+          find: { ..model.editor.find, active_index: next, },
         },
       }
     }
@@ -133,8 +133,8 @@ pub fn update(model : Model, message : Msg) -> Model {
         preview_status: "Waiting for compiler worker",
         revision: model.revision + 1,
       }
-    Share => { ..model, status: "Share link requested" }
-    Stop => { ..model, status: "Stopped", preview_status: "Preview stopped" }
+    Share => { ..model, status: "Share link requested", }
+    Stop => { ..model, status: "Stopped", preview_status: "Preview stopped", }
     Reset => Model::new()
     LoadProject(value) => {
       let parsed = @json.parse(value) catch { _ => return model }
@@ -165,7 +165,7 @@ pub fn update(model : Model, message : Msg) -> Model {
         revision: model.revision + 1,
       }
     }
-    CompilerStatus(value) => { ..model, status: value }
+    CompilerStatus(value) => { ..model, status: value, }
     CompileFinished(result) =>
       if result.revision != model.revision {
         model
@@ -209,8 +209,8 @@ fn compile_diagnostic_to_editor(
 ) -> @code_editor.CodeDiagnostic {
   let severity = match diagnostic.severity.to_lower() {
     "warning" => @code_editor.CodeDiagnosticSeverity::Warning
-    "info" => @code_editor.CodeDiagnosticSeverity::Info
-    _ => @code_editor.CodeDiagnosticSeverity::Error
+    "info" => Info
+    _ => Error
   }
   @code_editor.CodeDiagnostic::new(
     range=@text.TextRange::new(
@@ -263,8 +263,8 @@ pub fn current_source(model : Model) -> String {
 ///|
 fn update_source(model : Model, source : String) -> Model {
   match model.active_file {
-    Main => { ..model, editor: model.editor.with_source(source) }
-    Package => { ..model, moon_pkg: source }
+    Main => { ..model, editor: model.editor.with_source(source), }
+    Package => { ..model, moon_pkg: source, }
   }
 }
 

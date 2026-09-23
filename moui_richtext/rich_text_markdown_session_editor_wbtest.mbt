@@ -103,13 +103,10 @@ fn session_editor_click_down(
   point~ : @core.Point,
   selection~ : MarkdownEditorSelection,
 ) -> (Int, @core.TextControlStateContext) raise {
-  let down_event = @core.PointerEvent::new(
-    position=point,
-    phase=@core.PointerPhase::Down,
-  )
+  let down_event = @core.PointerEvent::new(position=point, phase=Down)
   let down = session_editor_pointer_event(
     ctx=session_editor_ctx(
-      event=@core.AppEvent::Pointer(down_event),
+      event=Pointer(down_event),
       text_control=session_editor_text_control(caret=selection.caret),
       text_system~,
     ),
@@ -146,18 +143,15 @@ fn session_editor_assert_stationary_move_is_noop(
   control~ : @core.TextControlStateContext,
   scroll_y~ : Double,
 ) -> Unit raise {
-  let move_event = @core.PointerEvent::new(
-    position=point,
-    phase=@core.PointerPhase::Move,
-  )
+  let move_event = @core.PointerEvent::new(position=point, phase=Move)
   let move_result = session_editor_pointer_event(
     ctx=session_editor_ctx(
-      event=@core.AppEvent::Pointer(move_event),
+      event=Pointer(move_event),
       text_control=control,
       text_system~,
     ),
     session~,
-    selection={ caret, selection: None },
+    selection={ caret, selection: None, },
     font~,
     event=move_event,
     visible_scroll_y=scroll_y,
@@ -180,7 +174,7 @@ test "markdown session click move keeps the event text system" {
   let session = MarkdownDocumentSession::new(source)
   let font = @core.FontSpec::new(size=16.0)
   let text_system = session_editor_doubled_text_system()
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   // A point on the second visual line, where the two text systems wrap the
   // paragraph at different source offsets.
   let point = @core.Point::new(x=140.0, y=40.0)
@@ -214,7 +208,7 @@ test "markdown session click inside a marker span does not fabricate a selection
   let font = @core.FontSpec::new(size=16.0)
   let text_system = @core.TextSystem::fallback()
   // Caret far from the bold span: its markers stay hidden on the first map.
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let point = @core.Point::new(x=110.0, y=20.0)
   let (caret, control) = session_editor_click_down(
     session~,
@@ -249,7 +243,7 @@ test "markdown session click move after a scroll jump does not fabricate a selec
   let session = MarkdownDocumentSession::new(lines.join("\n\n"))
   let font = @core.FontSpec::new(size=16.0)
   let text_system = @core.TextSystem::fallback()
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let point = @core.Point::new(x=140.0, y=40.0)
   let (caret, control) = session_editor_click_down(
     session~,
@@ -278,7 +272,7 @@ test "markdown session drag move still extends the selection" {
   let session = MarkdownDocumentSession::new(source)
   let font = @core.FontSpec::new(size=16.0)
   let text_system = @core.TextSystem::fallback()
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let point = @core.Point::new(x=110.0, y=20.0)
   let (caret, control) = session_editor_click_down(
     session~,
@@ -288,18 +282,15 @@ test "markdown session drag move still extends the selection" {
     selection~,
   )
   let moved = @core.Point::new(x=170.0, y=20.0)
-  let move_event = @core.PointerEvent::new(
-    position=moved,
-    phase=@core.PointerPhase::Move,
-  )
+  let move_event = @core.PointerEvent::new(position=moved, phase=Move)
   let move_result = session_editor_pointer_event(
     ctx=session_editor_ctx(
-      event=@core.AppEvent::Pointer(move_event),
+      event=Pointer(move_event),
       text_control=control,
       text_system~,
     ),
     session~,
-    selection={ caret, selection: None },
+    selection={ caret, selection: None, },
     font~,
     event=move_event,
   )
@@ -324,19 +315,15 @@ test "markdown session right press places the caret without claiming activation"
   let font = @core.FontSpec::new(size=16.0)
   let text_system = @core.TextSystem::fallback()
   let point = @core.Point::new(x=60.0, y=12.0)
-  let event = @core.PointerEvent::new(
-    position=point,
-    phase=@core.PointerPhase::Down,
-    button=1,
-  )
+  let event = @core.PointerEvent::new(position=point, phase=Down, button=1)
   let result = session_editor_pointer_event(
     ctx=session_editor_ctx(
-      event=@core.AppEvent::Pointer(event),
+      event=Pointer(event),
       text_control=session_editor_text_control(caret=0),
       text_system~,
     ),
     session~,
-    selection={ caret: 0, selection: None },
+    selection={ caret: 0, selection: None, },
     font~,
     event~,
   )
@@ -373,17 +360,13 @@ test "markdown session right press inside the selection keeps it" {
     font~,
     text_system~,
     point~,
-    selection={ caret: 0, selection: None },
+    selection={ caret: 0, selection: None, },
   )
   assert_true(caret > 0)
-  let event = @core.PointerEvent::new(
-    position=point,
-    phase=@core.PointerPhase::Down,
-    button=1,
-  )
+  let event = @core.PointerEvent::new(position=point, phase=Down, button=1)
   let result = session_editor_pointer_event(
     ctx=session_editor_ctx(
-      event=@core.AppEvent::Pointer(event),
+      event=Pointer(event),
       text_control=session_editor_text_control(caret~),
       text_system~,
     ),

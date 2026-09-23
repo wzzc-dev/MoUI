@@ -57,8 +57,8 @@ pub fn HostCoordinatePolicy::logical(
   description? : String = "Host input and surface metrics use logical pixels after DPR scaling.",
 ) -> HostCoordinatePolicy {
   {
-    input_space: HostCoordinateSpace::LogicalPixels,
-    surface_space: HostCoordinateSpace::LogicalPixels,
+    input_space: LogicalPixels,
+    surface_space: LogicalPixels,
     scale_factor_applied: true,
     description,
   }
@@ -69,8 +69,8 @@ pub fn HostCoordinatePolicy::physical(
   description? : String = "Host input and surface metrics use physical pixels.",
 ) -> HostCoordinatePolicy {
   {
-    input_space: HostCoordinateSpace::PhysicalPixels,
-    surface_space: HostCoordinateSpace::PhysicalPixels,
+    input_space: PhysicalPixels,
+    surface_space: PhysicalPixels,
     scale_factor_applied: false,
     description,
   }
@@ -104,7 +104,7 @@ pub fn HostInputCapabilities::new(
   clipboard? : Bool = false,
   drag_drop? : Bool = false,
 ) -> HostInputCapabilities {
-  { pointer, scroll, keyboard, focus, text_input, ime, clipboard, drag_drop }
+  { pointer, scroll, keyboard, focus, text_input, ime, clipboard, drag_drop, }
 }
 
 ///|

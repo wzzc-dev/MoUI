@@ -12,7 +12,7 @@ fn markdown_editor_insert_table_column(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -110,7 +110,7 @@ fn markdown_editor_table_column_content_start(
   column : Int,
 ) -> Int {
   let cells = markdown_editor_table_cells_for_line(
-    { text: line, start: 0, end: markdown_editor_text_length(line) },
+    { text: line, start: 0, end: markdown_editor_text_length(line), },
     0,
   )
   for cell in cells {
@@ -135,7 +135,7 @@ fn markdown_editor_delete_table_column(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -170,7 +170,7 @@ fn markdown_editor_set_table_column_alignment(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -257,9 +257,9 @@ fn markdown_editor_rewrite_table_alignment_line(
 ///|
 fn markdown_editor_table_alignment_marker(align : @core.TextAlign?) -> String {
   match align {
-    Some(@core.TextAlign::TextStart) => ":---"
-    Some(@core.TextAlign::TextCenter) => ":---:"
-    Some(@core.TextAlign::TextEnd) => "---:"
+    Some(TextStart) => ":---"
+    Some(TextCenter) => ":---:"
+    Some(TextEnd) => "---:"
     None => "---"
   }
 }

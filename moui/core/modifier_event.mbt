@@ -41,7 +41,7 @@ fn[Msg] OnSecondaryTapModifier::to_any_modifier(
             ctx.state,
             tap.next_state,
           )
-          let activated = event.phase == PointerPhase::Down && inside
+          let activated = event.phase == Down && inside
           let changed = next_state != ctx.state || activated
           {
             changed,
@@ -55,9 +55,9 @@ fn[Msg] OnSecondaryTapModifier::to_any_modifier(
             state: Some(next_state),
             text_control: None,
             dirty: if changed {
-              ViewDirtyHint::ViewPaintDirty
+              ViewPaintDirty
             } else {
-              ViewDirtyHint::ViewClean
+              ViewClean
             },
             messages: if activated {
               [message]
@@ -81,7 +81,7 @@ pub fn[Msg] OnTapModifier::to_any_modifier(
     ..noop_modifier(),
     identity_kind: "OnTap",
     focusable: true,
-    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
+    semantics: ViewSemanticsInfo::new(role=Button),
     semantics_actions: [
       ViewSemanticsActionHandler::activate(_ctx => {
         ViewSemanticsActionResult::message(message)
@@ -106,13 +106,13 @@ pub fn[Msg] OnTapModifier::to_any_modifier(
             changed,
             activated: tap.activated,
             focused: false,
-            captured: inside || current == PressableState::Pressed,
+            captured: inside || current == Pressed,
             state: Some(next_state),
             text_control: None,
             dirty: if changed {
-              ViewDirtyHint::ViewPaintDirty
+              ViewPaintDirty
             } else {
-              ViewDirtyHint::ViewClean
+              ViewClean
             },
             messages: if tap.activated {
               [message]
@@ -147,7 +147,7 @@ pub fn[Msg] OnLongPressModifier::to_any_modifier(
     ..noop_modifier(),
     identity_kind: "OnLongPress",
     focusable: true,
-    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
+    semantics: ViewSemanticsInfo::new(role=Button),
     event: fn(ctx) {
       // Primary button only: see OnTapModifier.
       match ctx.event {
@@ -164,9 +164,9 @@ pub fn[Msg] OnLongPressModifier::to_any_modifier(
               changed: result.cancelled,
               captured: result.cancelled,
               dirty: if result.cancelled {
-                ViewDirtyHint::ViewPaintDirty
+                ViewPaintDirty
               } else {
-                ViewDirtyHint::ViewClean
+                ViewClean
               },
             }
           }
@@ -191,7 +191,7 @@ pub fn[Msg] OnDoubleTapModifier::to_any_modifier(
     ..noop_modifier(),
     identity_kind: "OnDoubleTap",
     focusable: true,
-    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
+    semantics: ViewSemanticsInfo::new(role=Button),
     event: fn(ctx) {
       // Primary button only: see OnTapModifier.
       match ctx.event {
@@ -225,7 +225,7 @@ pub fn[Msg] OnDragModifier::to_any_modifier(
   {
     ..noop_modifier(),
     identity_kind: "OnDrag",
-    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
+    semantics: ViewSemanticsInfo::new(role=Button),
     event: fn(ctx) {
       handle_drag_modifier_event(ctx, handler=fn(event, _frame) {
         handler(event)
@@ -247,7 +247,7 @@ pub fn[Msg] OnDragWithFrameModifier::to_any_modifier(
   {
     ..noop_modifier(),
     identity_kind: "OnDragWithFrame",
-    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
+    semantics: ViewSemanticsInfo::new(role=Button),
     event: fn(ctx) { handle_drag_modifier_event(ctx, handler~) },
   }
 }
@@ -266,7 +266,7 @@ fn[Msg] handle_drag_modifier_event(
         event,
         inside=ctx.frame.contains(event.position),
       )
-      let active = result.state.phase != DragGesturePhase::Idle
+      let active = result.state.phase != Idle
       let next_state = if active {
         ctx.state.with_slot(slot, result.state)
       } else {
@@ -285,7 +285,7 @@ fn[Msg] handle_drag_modifier_event(
             captured: true,
             state: Some(next_state),
             text_control: None,
-            dirty: ViewDirtyHint::ViewPaintDirty,
+            dirty: ViewPaintDirty,
             messages: [handler(drag_event, frame)],
           }
         }
@@ -299,9 +299,9 @@ fn[Msg] handle_drag_modifier_event(
               state: Some(next_state),
               text_control: None,
               dirty: if next_state != ctx.state {
-                ViewDirtyHint::ViewPaintDirty
+                ViewPaintDirty
               } else {
-                ViewDirtyHint::ViewClean
+                ViewClean
               },
               messages: [],
             }
@@ -321,9 +321,9 @@ fn[Msg] handle_drag_modifier_event(
               state: Some(next_state),
               text_control: None,
               dirty: if next_state != ctx.state {
-                ViewDirtyHint::ViewPaintDirty
+                ViewPaintDirty
               } else {
-                ViewDirtyHint::ViewClean
+                ViewClean
               },
               messages: [],
             }
@@ -360,7 +360,7 @@ pub fn[Msg] OnFileDropModifier::to_any_modifier(
                   captured: true,
                   state: None,
                   text_control: None,
-                  dirty: ViewDirtyHint::ViewPaintDirty,
+                  dirty: ViewPaintDirty,
                   messages: [handler(event.paths, position)],
                 }
               } else {
@@ -388,7 +388,7 @@ pub fn[Msg] KeyboardShortcutModifier::to_any_modifier(
     ..noop_modifier(),
     identity_kind: "KeyboardShortcut",
     focusable: true,
-    semantics: ViewSemanticsInfo::new(role=SemanticsRole::Button),
+    semantics: ViewSemanticsInfo::new(role=Button),
     event: fn(ctx) { handle_keyboard_shortcut_modifier(shortcut, ctx) },
   }
 }
@@ -401,7 +401,7 @@ fn[Msg] handle_keyboard_shortcut_modifier(
   match ctx.event {
     Keyboard(event) =>
       if shortcut.matches(event) {
-        { ..ViewEventResult::ignored(), activated: true, captured: true }
+        { ..ViewEventResult::ignored(), activated: true, captured: true, }
       } else {
         ViewEventResult::ignored()
       }

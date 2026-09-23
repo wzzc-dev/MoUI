@@ -29,7 +29,7 @@ fn Native3DRenderer::new(
 ) -> Native3DRenderer raise @wgpu_mbt.WgpuError {
   let instance = @wgpu_mbt.Instance::create()
   let surface = match platform {
-    WgpuNative3DPlatform::MacOS => {
+    MacOS => {
       let descriptor = @wgpu_mbt.surface_descriptor_metal_layer_new(
         wgpu_ptr_from_u64(native_surface.surface_handle()),
       )
@@ -37,12 +37,12 @@ fn Native3DRenderer::new(
       @wgpu_mbt.surface_descriptor_free(descriptor)
       result
     }
-    WgpuNative3DPlatform::Windows =>
+    Windows =>
       instance.create_surface_windows_hwnd(
         wgpu_windows_hinstance(),
         wgpu_ptr_from_u64(native_surface.surface_handle()),
       )
-    WgpuNative3DPlatform::Linux =>
+    Linux =>
       instance.create_surface_wayland(
         wgpu_ptr_from_u64(native_surface.display_handle().unwrap()),
         wgpu_ptr_from_u64(native_surface.surface_handle()),
@@ -154,7 +154,7 @@ fn Native3DRenderer::render(
   frame : @render.ThreeDFrame,
 ) -> @render.ThreeDRenderResult {
   if self.disposed {
-    return @render.ThreeDRenderResult::Failed("native WGPU renderer disposed")
+    return Failed("native WGPU renderer disposed")
   }
   match
     (self.surface, self.device, self.queue, self.pipeline, self.depth_view) {
@@ -162,7 +162,7 @@ fn Native3DRenderer::render(
       let current = surface.get_current_texture()
       if !current.is_success() {
         current.release()
-        return @render.ThreeDRenderResult::Failed("surface acquire failed")
+        return Failed("surface acquire failed")
       }
       let texture = current.take_texture()
       current.release()
@@ -223,12 +223,10 @@ fn Native3DRenderer::render(
       encoder.release()
       view.release()
       texture.release()
-      @render.ThreeDRenderResult::Presented
+      Presented
     }
     _ =>
-      @render.ThreeDRenderResult::Unavailable(
-        "native WGPU device/surface/depth resources are unavailable",
-      )
+      Unavailable("native WGPU device/surface/depth resources are unavailable")
   }
 }
 
@@ -304,8 +302,8 @@ fn Native3DRenderer::to_session(
   @render.ThreeDRendererSession::new(
     descriptor=@render.ThreeDRendererDescriptor::new(
       id="moui-3d-native-wgpu",
-      backend=@render.ThreeDRendererBackend::NativeWgpu,
-      status=@render.ThreeDRendererStatus::Available,
+      backend=NativeWgpu,
+      status=Available,
       description="Experimental WGPU forward pass with depth testing.",
     ),
     resize=size => {

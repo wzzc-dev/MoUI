@@ -332,7 +332,7 @@ fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
 ///|
 fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] {
   self.stats.draw_command_build_count = self.stats.draw_command_build_count + 1
-  let commands : Array[DrawCommand] = Array::new(
+  let commands : Array[DrawCommand] = Array(
     capacity=self.stats.last_command_count.max(64),
   )
   commands.push(Clear(Color::white()))
@@ -347,7 +347,7 @@ fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] 
 ///|
 fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.stats.draw_command_build_count = self.stats.draw_command_build_count + 1
-  let commands : Array[DrawCommand] = Array::new(
+  let commands : Array[DrawCommand] = Array(
     capacity=self.stats.last_command_count.max(64),
   )
   self.rebuild_if_possible()
@@ -481,7 +481,7 @@ priv struct DirtyIdSet {
 
 ///|
 fn DirtyIdSet::new() -> DirtyIdSet {
-  { items: [], seen: Map([]) }
+  { items: [], seen: Map([]), }
 }
 
 ///|
@@ -710,11 +710,11 @@ fn RuntimeState::append_exiting_overlay_commands(
       } else {
         1.0
       }
-      commands.push(DrawCommand::PushOpacity(1.0 - progress))
+      commands.push(PushOpacity(1.0 - progress))
       for command in ghost.commands {
         commands.push(command)
       }
-      commands.push(DrawCommand::PopOpacity)
+      commands.push(PopOpacity)
       index = index + 1
     }
   }

@@ -254,7 +254,7 @@ fn parse_platform_matrix(
     }
   }
   if failures.is_empty() {
-    Ok({ required_profiles, routes, architecture_variants })
+    Ok({ required_profiles, routes, architecture_variants, })
   } else {
     Err(failures)
   }

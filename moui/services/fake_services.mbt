@@ -172,7 +172,7 @@ pub fn FakeAppServices::new() -> FakeAppServices {
       calls_value.push("permission:request")
       ServiceTask::succeed(
         key="fake:permission:request",
-        value=permission_values.get(kind).unwrap_or(PermissionStatus::Denied),
+        value=permission_values.get(kind).unwrap_or(Denied),
       )
     }),
     sharing=ShareServices::new(share=request => {

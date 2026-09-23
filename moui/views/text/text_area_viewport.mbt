@@ -41,7 +41,7 @@ impl @core.ViewStateValue for TextAreaScrollState with fn decode_view_state(
 fn text_area_scroll_slot() -> @core.ViewStateSlot[TextAreaScrollState] {
   @core.ViewStateSlot::new(
     key=@core.DeclarationKey::string("moui.views.text_area.position"),
-    initial={ offset_y: 0.0 },
+    initial={ offset_y: 0.0, },
   )
 }
 

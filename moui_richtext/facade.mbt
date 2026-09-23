@@ -410,7 +410,7 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
   ignore(geometry_compensation)
   // Keep the host's animation-driven redraw loop alive until the glide
   // settles; the runtime stops ticking once this reports false.
-  { ..plan, animating: self.scroll_glide.is_animating(ctx.now_ms) }
+  { ..plan, animating: self.scroll_glide.is_animating(ctx.now_ms), }
 }
 
 ///|
@@ -443,8 +443,8 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn text_input_state(
 ///|
 impl @core.ViewNode for MarkdownSessionEditorViewNode with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::TextField,
+    composition=Boundary,
+    role=TextField,
     label=self.placeholder,
     value="Markdown document",
   )

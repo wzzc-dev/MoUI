@@ -33,12 +33,12 @@ fn damage_region_full_threshold() -> Double {
 
 ///|
 pub fn DamageRegion::empty() -> DamageRegion {
-  DamageRegion::Empty
+  Empty
 }
 
 ///|
 pub fn DamageRegion::full(reason : String) -> DamageRegion {
-  DamageRegion::FullSurface(reason)
+  FullSurface(reason)
 }
 
 ///|
@@ -54,11 +54,11 @@ pub fn DamageRegion::from_rects(
     }
   }
   if clipped.is_empty() {
-    DamageRegion::Empty
+    Empty
   } else {
     let coalesced = coalesce_damage_rects(clipped)
     if coalesced.length() > damage_region_max_rects() {
-      DamageRegion::FullSurface("too many dirty rects")
+      FullSurface("too many dirty rects")
     } else {
       let mut union_rect = coalesced[0]
       for index in 1..<coalesced.length() {
@@ -67,9 +67,9 @@ pub fn DamageRegion::from_rects(
       let surface_area = surface.area()
       if surface_area > 0.0 &&
         union_rect.area() / surface_area > damage_region_full_threshold() {
-        DamageRegion::FullSurface("dirty region covers most of the surface")
+        FullSurface("dirty region covers most of the surface")
       } else {
-        DamageRegion::Rects(coalesced)
+        Rects(coalesced)
       }
     }
   }
@@ -179,7 +179,7 @@ pub fn DrawFrame::new(
   damage~ : DamageRegion,
   clear_color? : Color = Color::white(),
 ) -> DrawFrame {
-  { commands, platform_views, overlay_bounds, damage, clear_color }
+  { commands, platform_views, overlay_bounds, damage, clear_color, }
 }
 
 ///|

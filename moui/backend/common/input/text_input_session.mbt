@@ -126,7 +126,7 @@ pub fn TextInputSession::sync(
     if self.enabled {
       self.enabled = false
       self.clear_cached_request()
-      DisableIme(@window_core.ImeRequest::Disable)
+      DisableIme(Disable)
     } else {
       self.clear_cached_request()
       NoImeChange
@@ -293,7 +293,7 @@ fn text_input_ime_window(text : String, center : Int) -> TextInputImeWindow {
     end_unit = unit_offset
   }
   let text = if start_found {
-    text.sub(start=start_unit, end=end_unit).to_owned()
+    text.exact_view(start=start_unit, end=end_unit).to_owned()
   } else {
     // Defensive: the center is at or past the text end (carets are
     // clamped by the runtime), so the window collapses to an empty slice.
@@ -377,10 +377,7 @@ fn text_input_ime_request_data_with_diagnostics(
   diagnostics : TextInputImeRequestDiagnostics,
 ) -> @window_core.ImeRequestData {
   let mut request = @window_core.ImeRequestData::default()
-    .with_hint_and_purpose(
-      @window_core.ImeHint::none(),
-      @window_core.ImePurpose::Normal,
-    )
+    .with_hint_and_purpose(@window_core.ImeHint::none(), Normal)
     .with_cursor_area(
       @dpi.LogicalPosition::LogicalPosition(
         diagnostics.candidate_anchor.origin.x,
@@ -423,11 +420,7 @@ fn text_input_surrounding_text(
     None => state.text
   }
   Some(
-    @window_core.ImeSurroundingText::ImeSurroundingText(
-      text,
-      diagnostics.cursor_utf8,
-      diagnostics.anchor_utf8,
-    ),
+    ImeSurroundingText(text, diagnostics.cursor_utf8, diagnostics.anchor_utf8),
   ) catch {
     _ => None
   }

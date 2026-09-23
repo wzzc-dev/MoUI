@@ -154,7 +154,7 @@ fn code_welcome_view(
     [
       @views.text(
         "Code with Mo",
-        role=@views.TextRole::Headline,
+        role=Headline,
         theme=title_theme,
         width=inner_width,
       ).foreground(workbench_accent(title_theme)),
@@ -170,7 +170,7 @@ fn code_welcome_view(
       ),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   let welcome_area_height = (height - 96.0).max(0.0)
   @views.container(
@@ -202,11 +202,11 @@ fn code_input_card(
   rows.push(
     @views.text_area(
       model.prompt,
-      on_input=value => CodeMsg::PromptChanged(value),
-      on_submit=Some(CodeMsg::SubmitPrompt),
+      on_input=value => PromptChanged(value),
+      on_submit=Some(SubmitPrompt),
       placeholder="帮你编写代码、调试 Bug、优化性能等开发工作…",
       lines=4,
-      variant=@views.TextFieldVariant::Plain,
+      variant=Plain,
       theme=text_area_theme,
       width~,
       line_height=25.0,
@@ -216,28 +216,24 @@ fn code_input_card(
     @views.row(
       [
         @views.container(
-          @views.icon(
-            @views.IconName::Link,
-            size=18.0,
-            color=workbench_text_muted(theme),
-          ),
+          @views.icon(Link, size=18.0, color=workbench_text_muted(theme)),
           width=20.0,
           height=20.0,
           padding=0.0,
         ),
         @views.spacer(),
         code_agent_controls(model, settings, theme, (width - 110.0).max(140.0)),
-        workbench_send_button(theme, on_tap=CodeMsg::SubmitPrompt),
+        workbench_send_button(theme, on_tap=SubmitPrompt),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   )
   if model.model_picker_open {
     rows.push(code_model_dropdown_panel(model, settings, theme, width))
   }
   @views.container(
-    @views.column(rows, spacing=1.0, align=@views.CrossAlign::Stretch),
+    @views.column(rows, spacing=1.0, align=Stretch),
     width~,
     background=workbench_card_background(theme),
     corner_radius=14.0,
@@ -248,7 +244,7 @@ fn code_input_card(
 
 ///|
 fn code_input_text_area_theme(theme : @moui.Theme) -> @moui.Theme {
-  let radius_scale = { ..theme.radius_scale, md: 14.0 }
+  let radius_scale = { ..theme.radius_scale, md: 14.0, }
   theme.with_radius_scale(radius_scale)
 }
 
@@ -262,7 +258,7 @@ fn code_model_picker(
   width : Double,
 ) -> @moui.View[CodeMsg] {
   code_compact_select_chip(code.current_model, theme, width).on_tap(
-    CodeMsg::ToggleModelPicker,
+    ToggleModelPicker,
   )
 }
 
@@ -274,7 +270,7 @@ fn code_agent_controls(
   width : Double,
 ) -> @moui.View[CodeMsg] {
   match settings.agent_backend {
-    AgentBackendKind::OpenSeek =>
+    OpenSeek =>
       @views.row(
         [
           code_model_picker(
@@ -285,9 +281,9 @@ fn code_agent_controls(
           code_thinking_picker(code, theme, 65.0),
         ],
         spacing=6.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       )
-    AgentBackendKind::Acp => acp_agent_controls(code, theme, width)
+    Acp => acp_agent_controls(code, theme, width)
   }
 }
 
@@ -308,7 +304,7 @@ fn acp_agent_controls(
   if !code.session_config_options.is_empty() {
     rows.push(acp_config_controls(code.session_config_options, theme, width))
   }
-  @views.row(rows, spacing=6.0, align=@views.CrossAlign::Center)
+  @views.row(rows, spacing=6.0, align=Center)
 }
 
 ///|
@@ -324,8 +320,8 @@ fn acp_mode_picker(
   @views.segmented_control(
     items,
     selected=modes.current_mode_id,
-    on_select=id => CodeMsg::SetSessionMode(id),
-    size=@views.SegmentedControlSize::Compact,
+    on_select=id => SetSessionMode(id),
+    size=Compact,
     theme~,
     width=width.min(260.0),
   )
@@ -345,7 +341,7 @@ fn acp_config_controls(
     }
     controls.push(acp_config_control(option, theme, shown_width))
   }
-  @views.row(controls, spacing=6.0, align=@views.CrossAlign::Center)
+  @views.row(controls, spacing=6.0, align=Center)
 }
 
 ///|
@@ -360,12 +356,7 @@ fn acp_config_control(
         option.name + ": " + (if value { "on" } else { "off" }),
         theme,
         width,
-      ).on_tap(
-        CodeMsg::SetSessionConfigOption(
-          option.id,
-          AgentConfigValue::Boolean(!value),
-        ),
-      )
+      ).on_tap(SetSessionConfigOption(option.id, Boolean(!value)))
     ValueId(_) =>
       if option.values.is_empty() {
         code_compact_select_chip(option.name, theme, width)
@@ -392,10 +383,8 @@ fn acp_config_value_picker(
   @views.segmented_control(
     items,
     selected~,
-    on_select=id => {
-      CodeMsg::SetSessionConfigOption(option.id, AgentConfigValue::ValueId(id))
-    },
-    size=@views.SegmentedControlSize::Compact,
+    on_select=id => SetSessionConfigOption(option.id, ValueId(id)),
+    size=Compact,
     theme~,
     width~,
   )
@@ -426,12 +415,9 @@ fn code_model_dropdown_panel(
   rows.push(provider_switcher_row(settings, theme, panel_width))
   rows.push(
     @views.container(
-      @views.text(
-        "模型",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=panel_width,
-      ).foreground(theme.palette.muted),
+      @views.text("模型", role=Caption, theme~, width=panel_width).foreground(
+        theme.palette.muted,
+      ),
       width=panel_width,
       height=18.0,
     ),
@@ -442,7 +428,7 @@ fn code_model_dropdown_panel(
         rows.push(
           @views.text(
             "该供应商暂无模型。可在设置中自动检测或手动添加。",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=panel_width,
           ).foreground(theme.palette.muted),
@@ -459,7 +445,7 @@ fn code_model_dropdown_panel(
   let list_h = code_model_dropdown_list_height(settings)
   @views.container(
     @views.scroll_view(
-      @views.column(rows, spacing=4.0, align=@views.CrossAlign::Stretch),
+      @views.column(rows, spacing=4.0, align=Stretch),
       width=panel_width,
       height=list_h,
     ),
@@ -513,7 +499,7 @@ fn provider_switcher_row(
       @views.center(
         @views.text(
           p.name,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=(chip_w - 12.0).max(40.0),
           height=18.0,
@@ -541,7 +527,7 @@ fn provider_switcher_row(
     ).on_tap(CodeMsg::SelectProvider(p.id))
     chips.push(chip)
   }
-  @views.row(chips, spacing=6.0, align=@views.CrossAlign::Center)
+  @views.row(chips, spacing=6.0, align=Center)
 }
 
 ///|
@@ -556,22 +542,14 @@ fn model_option_row(
 ) -> @moui.View[CodeMsg] {
   let supported = mo_workbench_model_supported_by_openseek(model_id)
   let trailing : @moui.View[CodeMsg] = if selected {
-    @views.icon(
-      @views.IconName::Check,
-      size=16.0,
-      color=workbench_accent(theme),
-    )
+    @views.icon(Check, size=16.0, color=workbench_accent(theme))
   } else if !supported {
-    @views.text(
-      "待支持",
-      role=@views.TextRole::Caption,
-      theme~,
-      width=44.0,
-      height=16.0,
-    ).foreground(theme.palette.muted)
+    @views.text("待支持", role=Caption, theme~, width=44.0, height=16.0).foreground(
+      theme.palette.muted,
+    )
   } else {
     @views.container(
-      @views.text("", role=@views.TextRole::Caption, theme~, width=16.0),
+      @views.text("", role=Caption, theme~, width=16.0),
       width=16.0,
       height=16.0,
     )
@@ -582,7 +560,7 @@ fn model_option_row(
       [
         @views.text(
           model_id,
-          role=@views.TextRole::Label,
+          role=Label,
           theme~,
           width=label_width.max(80.0),
           height=22.0,
@@ -596,7 +574,7 @@ fn model_option_row(
         trailing,
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=40.0,
@@ -611,7 +589,7 @@ fn model_option_row(
     padding=8.0,
   )
   if supported {
-    row.on_tap(CodeMsg::ModelChanged(provider_id, model_id))
+    row.on_tap(ModelChanged(provider_id, model_id))
   } else {
     row
   }
@@ -629,7 +607,7 @@ fn code_thinking_picker(
     Max => "Max"
   }
   code_compact_select_chip(label, theme, width).on_tap(
-    CodeMsg::ThinkingChanged(next_thinking_choice(code.current_thinking)),
+    ThinkingChanged(next_thinking_choice(code.current_thinking)),
   )
 }
 
@@ -646,19 +624,15 @@ fn code_compact_select_chip(
         [
           @views.text(
             label,
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=(content_width - 14.0).max(24.0),
             height=18.0,
           ).foreground(workbench_accent(theme)),
-          @views.icon(
-            @views.IconName::ChevronDown,
-            size=9.0,
-            color=workbench_accent(theme),
-          ),
+          @views.icon(ChevronDown, size=9.0, color=workbench_accent(theme)),
         ],
         spacing=4.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       width=content_width,
       height=20.0,
@@ -687,24 +661,24 @@ fn code_context_bar(
         @views.row(
           [
             @views.icon(
-              @views.IconName::FolderOpen,
+              FolderOpen,
               size=14.0,
               color=workbench_text_muted(theme),
             ),
             @views.text(
               label,
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=(chip_width - 52.0).max(60.0),
             ).foreground(workbench_text(theme)),
             @views.icon(
-              @views.IconName::ChevronDown,
+              ChevronDown,
               size=10.0,
               color=workbench_text_muted(theme),
             ),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         width=chip_width,
         height=28.0,
@@ -715,7 +689,7 @@ fn code_context_bar(
       @views.spacer(),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   ).frame(width~)
 }
 
@@ -776,35 +750,35 @@ fn quick_action_chips(
     [
       quick_chip(
         "应用开发",
-        @views.IconName::ListTask,
+        ListTask,
         "帮我开发一个应用",
         theme,
         chip_width,
       ),
       quick_chip(
         "项目理解",
-        @views.IconName::Search,
+        Search,
         "帮我理解这个项目的结构",
         theme,
         chip_width,
       ),
       quick_chip(
         "游戏创意",
-        @views.IconName::Focus,
+        Focus,
         "帮我设计一个游戏创意",
         theme,
         chip_width,
       ),
       quick_chip(
         "工具脚本",
-        @views.IconName::Settings,
+        Settings,
         "帮我写一个工具脚本",
         theme,
         chip_width,
       ),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -822,16 +796,12 @@ fn quick_chip(
     @views.row(
       [
         @views.icon(icon, size=14.0, color=workbench_accent(theme)),
-        @views.text(
-          label,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=text_width,
-          height=20.0,
-        ).foreground(workbench_accent(theme)),
+        @views.text(label, role=Caption, theme~, width=text_width, height=20.0).foreground(
+          workbench_accent(theme),
+        ),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=40.0,
@@ -839,7 +809,7 @@ fn quick_chip(
     corner_radius=18.0,
     border=Some(hairline_border(theme)),
     padding=8.0,
-  ).on_tap(CodeMsg::PromptChanged(prompt))
+  ).on_tap(PromptChanged(prompt))
 }
 
 ///|
@@ -1016,7 +986,7 @@ fn code_message_list(
       width=inner_width,
       height=inner_height,
       offset=model.scroll_offset,
-      on_scroll=Some(offset => CodeMsg::MessageListScrolled(offset)),
+      on_scroll=Some(offset => MessageListScrolled(offset)),
       request=@moui.ScrollRequest::new(
         id=model.scroll_request_id,
         offset=model.scroll_offset,
@@ -1078,11 +1048,7 @@ fn code_streaming_steer_panel(
     @views.row(
       [
         @views.container(
-          @views.icon(
-            @views.IconName::Info,
-            size=13.0,
-            color=workbench_accent(theme),
-          ),
+          @views.icon(Info, size=13.0, color=workbench_accent(theme)),
           width=22.0,
           height=22.0,
           background=workbench_accent_soft(theme),
@@ -1091,32 +1057,32 @@ fn code_streaming_steer_panel(
         ),
         @views.text(
           "AI " + truncate_text(code_activity_text(model), 32),
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=status_width - 30.0,
           height=22.0,
         ).foreground(workbench_text_muted(theme)),
         @views.text_field(
           model.steer_text,
-          on_input=value => CodeMsg::SteerChanged(value),
-          on_submit=Some(CodeMsg::SubmitSteer),
+          on_input=value => SteerChanged(value),
+          on_submit=Some(SubmitSteer),
           placeholder="Steer the running turn...",
-          variant=@views.TextFieldVariant::Filled,
+          variant=Filled,
           theme~,
           width=steer_width,
           height=34.0,
         ),
         @views.button(
           "Steer",
-          on_click=CodeMsg::SubmitSteer,
-          variant=@views.ButtonVariant::Ghost,
+          on_click=SubmitSteer,
+          variant=Ghost,
           theme~,
           width=72.0,
           height=34.0,
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     background=workbench_subtle_background(theme),
@@ -1140,12 +1106,9 @@ fn code_composer(
   match model.error {
     Some(err) =>
       rows.push(
-        @views.text(
-          err,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=inner_width,
-        ).foreground(theme.palette.danger),
+        @views.text(err, role=Caption, theme~, width=inner_width).foreground(
+          theme.palette.danger,
+        ),
       )
     None => ()
   }
@@ -1154,7 +1117,7 @@ fn code_composer(
     rows.push(code_model_dropdown_panel(model, settings, theme, inner_width))
   }
   @views.padding_edges(
-    @views.column(rows, spacing=6.0, align=@views.CrossAlign::Stretch),
+    @views.column(rows, spacing=6.0, align=Stretch),
     top=8.0,
     left=28.0,
     right=28.0,
@@ -1179,14 +1142,14 @@ fn code_composer_input_card(
     @views.text_area(
       model.prompt,
       on_input=value => CodeMsg::PromptChanged(value),
-      on_submit=Some(CodeMsg::SubmitPrompt),
+      on_submit=Some(SubmitPrompt),
       placeholder=if model.is_streaming {
         "Agent 正在运行；可在上方 Steer 调整方向"
       } else {
         "继续描述你的任务…"
       },
       lines=prompt_lines,
-      variant=@views.TextFieldVariant::Plain,
+      variant=Plain,
       theme~,
       width~,
       line_height=code_composer_prompt_line_height(),
@@ -1202,15 +1165,15 @@ fn code_composer_input_card(
         if model.is_streaming {
           @views.button(
             "Cancel",
-            on_click=CodeMsg::CancelTurn,
-            variant=@views.ButtonVariant::Ghost,
+            on_click=CancelTurn,
+            variant=Ghost,
             theme~,
             width=cancel_width,
             height=32.0,
           )
         } else {
           @views.container(
-            @views.text("", role=@views.TextRole::Caption, theme~, width=0.0),
+            @views.text("", role=Caption, theme~, width=0.0),
             width=0.0,
             height=0.0,
           )
@@ -1222,11 +1185,11 @@ fn code_composer_input_card(
         ).disabled(disabled=model.is_streaming),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   )
   @views.container(
-    @views.column(rows, spacing=0.0, align=@views.CrossAlign::Stretch),
+    @views.column(rows, spacing=0.0, align=Stretch),
     width~,
     background=workbench_card_background(theme),
     corner_radius=14.0,

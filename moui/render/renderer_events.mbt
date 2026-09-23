@@ -10,7 +10,7 @@ pub fn FrameToken::new(
   surface_generation~ : Int,
   sequence~ : Int,
 ) -> FrameToken {
-  { surface_generation, sequence }
+  { surface_generation, sequence, }
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn RenderFrameSubmission::new(
   token~ : FrameToken,
   frame~ : @core.DrawFrame,
 ) -> RenderFrameSubmission {
-  { token, frame }
+  { token, frame, }
 }
 
 ///|
@@ -76,7 +76,7 @@ fn RendererImageLoadRequest::new(
   image_source~ : HostImageSource,
   decoder~ : RendererImageDecoder,
 ) -> RendererImageLoadRequest {
-  { token, source, image_source, decoder }
+  { token, source, image_source, decoder, }
 }
 
 ///|
@@ -136,7 +136,7 @@ pub fn RendererImageLoadCompletion::new(
   token~ : RendererImageLoadToken,
   result~ : ImageResourceLoadCompletion,
 ) -> RendererImageLoadCompletion {
-  { token, result }
+  { token, result, }
 }
 
 ///|
@@ -171,7 +171,7 @@ fn RendererImageDiagnostics::new(
   records~ : Array[ImageResourceRecord],
   pending_request_count~ : Int,
 ) -> RendererImageDiagnostics {
-  { records, pending_request_count }
+  { records, pending_request_count, }
 }
 
 ///|

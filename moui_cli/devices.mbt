@@ -76,9 +76,9 @@ fn parse_devices_args(args : Array[String]) -> Result[ParsedDevices, String] {
       if value != "android" && value != "ios" && value != "harmonyos" {
         Err("unsupported --platform for moui devices: " + value)
       } else {
-        Ok({ help: help.val, json: json.val, platform: Some(value) })
+        Ok({ help: help.val, json: json.val, platform: Some(value), })
       }
-    None => Ok({ help: help.val, json: json.val, platform: None })
+    None => Ok({ help: help.val, json: json.val, platform: None, })
   }
 }
 
@@ -140,7 +140,7 @@ fn parse_adb_devices(output : String) -> Array[Device] {
       is_emulator = true
     }
     let kind = if is_emulator { "emulator" } else { "physical" }
-    devices.push({ platform: "android", id, name, state, kind })
+    devices.push({ platform: "android", id, name, state, kind, })
   }
   devices
 }
@@ -189,7 +189,7 @@ fn parse_simctl_list(output : String) -> Array[Device] {
               } else {
                 "unknown"
               }
-              devices.push({ platform: "ios", id: uuid, name, state, kind })
+              devices.push({ platform: "ios", id: uuid, name, state, kind, })
             }
           None => ()
         }
@@ -261,7 +261,7 @@ fn parse_hdc_targets(output : String) -> Array[Device] {
     } else {
       "unknown"
     }
-    devices.push({ platform: "harmonyos", id, name: id, state, kind })
+    devices.push({ platform: "harmonyos", id, name: id, state, kind, })
   }
   devices
 }

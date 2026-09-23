@@ -14,9 +14,19 @@ pub fn markdown_block_to_rich_text(
       // GitHub-like rhythm: big titles get a full blank line above and half
       // below; smaller headings keep the tighter Typora-style spacing.
       let inset : @core.Insets = if level <= 2 {
-        { top: base.size * 1.0, right: 0.0, bottom: base.size * 0.5, left: 0.0 }
+        {
+          top: base.size * 1.0,
+          right: 0.0,
+          bottom: base.size * 0.5,
+          left: 0.0,
+        }
       } else {
-        { top: base.size * 0.6, right: 0.0, bottom: base.size * 0.3, left: 0.0 }
+        {
+          top: base.size * 0.6,
+          right: 0.0,
+          bottom: base.size * 0.3,
+          left: 0.0,
+        }
       }
       RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, font, base_dir~),
@@ -32,7 +42,7 @@ pub fn markdown_block_to_rich_text(
         line_height=Some(base.size * 1.55),
         // Typora-style breathing room between list items; the last item of
         // a list gets paragraph spacing from the following blank-gap block.
-        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0 },
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     TaskListItem(checked) =>
       RichTextBlock::new(
@@ -41,16 +51,16 @@ pub fn markdown_block_to_rich_text(
         // hit-test arithmetic intact; the painter draws the vector checkbox at
         // the lane width instead of this glyph.
         prefix=" ",
-        marker=Some(RichTextMarker::TaskCheckbox(checked)),
+        marker=Some(TaskCheckbox(checked)),
         line_height=Some(base.size * 1.55),
-        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0 },
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     OrderedListItem(number) =>
       RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         prefix="\{number}. ",
         line_height=Some(base.size * 1.55),
-        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0 },
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     Blockquote =>
       RichTextBlock::new(
@@ -65,7 +75,7 @@ pub fn markdown_block_to_rich_text(
             width=4.0,
           ),
         ),
-        inset={ top: 6.0, right: 0.0, bottom: 6.0, left: 14.0 },
+        inset={ top: 6.0, right: 0.0, bottom: 6.0, left: 14.0, },
         line_height=Some(base.size * 1.55),
         corner_radius=4.0,
       )
@@ -75,7 +85,7 @@ pub fn markdown_block_to_rich_text(
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.06)),
         ),
-        inset={ top: 12.0, right: 14.0, bottom: 0.0, left: 14.0 },
+        inset={ top: 12.0, right: 14.0, bottom: 0.0, left: 14.0, },
         // 1.3x the base font is 1.4x the 0.92 code font, so descenders in code
         // stay inside the line box the painter clips to.
         line_height=Some(base.size * 1.3),
@@ -99,7 +109,7 @@ pub fn markdown_block_to_rich_text(
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.08, g=0.12, b=0.16, a=0.05)),
         ),
-        inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0 },
+        inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0, },
         line_height=Some(base.size * 1.35),
         corner_radius=6.0,
       )
@@ -109,7 +119,7 @@ pub fn markdown_block_to_rich_text(
           RichTextRun::new(
             text="[^" + label + "]: ",
             visual_text=Some(label),
-            font=Some({ ..base, size: base.size * 0.78, weight: 700 }),
+            font=Some({ ..base, size: base.size * 0.78, weight: 700, }),
             color=Some(@core.Color::black().multiply_alpha(0.58)),
             background=Some(
               @core.Brush::solid(
@@ -127,7 +137,7 @@ pub fn markdown_block_to_rich_text(
             width=3.0,
           ),
         ),
-        inset={ top: 2.0, right: 0.0, bottom: 2.0, left: 12.0 },
+        inset={ top: 2.0, right: 0.0, bottom: 2.0, left: 12.0, },
         line_height=Some(base.size * 1.45),
       )
     HtmlBlock =>
@@ -137,7 +147,7 @@ pub fn markdown_block_to_rich_text(
             runs=projection.runs,
             // Generous outer insets so consecutive html blocks (a badge row
             // followed by another badge block) read as separate lines.
-            inset={ top: 8.0, right: 0.0, bottom: 10.0, left: 0.0 },
+            inset={ top: 8.0, right: 0.0, bottom: 10.0, left: 0.0, },
             line_height=Some(base.size * 1.45),
             line_align=projection.line_align,
           )
@@ -159,7 +169,7 @@ pub fn markdown_block_to_rich_text(
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.20, g=0.28, b=0.36, a=0.07)),
         ),
-        inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0 },
+        inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0, },
         line_height=Some(base.size * 1.25),
         corner_radius=6.0,
       )
@@ -168,7 +178,7 @@ pub fn markdown_block_to_rich_text(
         runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         line_height=Some(base.size * 1.55),
         // Paragraph spacing below for readability between blocks.
-        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.4, left: 0.0 },
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.4, left: 0.0, },
       )
   }
 }
@@ -196,7 +206,7 @@ fn markdown_html_raw_block_rich_text(
     background=Some(
       @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.12, b=0.12, a=0.06)),
     ),
-    inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0 },
+    inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0, },
     // ~1.67x the monospace run size (editor-style leading) so multi-line
     // markup reads line by line instead of stacking on itself.
     line_height=Some(base.size * 1.5),
@@ -219,7 +229,7 @@ fn markdown_code_block_runs(
       let runs : Array[RichTextRun] = [
         RichTextRun::new(
           text=language,
-          font=Some({ ..font, size: base.size * 0.78, weight: 700 }),
+          font=Some({ ..font, size: base.size * 0.78, weight: 700, }),
           visual_text=Some(language),
           color=Some(@core.Color::black().multiply_alpha(0.56)),
         ),
@@ -426,27 +436,27 @@ fn markdown_inline_font(
   font : @core.FontSpec,
 ) -> @core.FontSpec {
   match kind {
-    Bold => { ..font, weight: 700 }
-    Italic => { ..font, weight: 500 }
-    Strikethrough => { ..font, weight: 400 }
+    Bold => { ..font, weight: 700, }
+    Italic => { ..font, weight: 500, }
+    Strikethrough => { ..font, weight: 400, }
     Highlight => font
-    Link | Autolink => { ..font, weight: 500 }
-    Image => { ..font, weight: 600 }
-    FootnoteReference => { ..font, size: font.size * 0.76, weight: 700 }
+    Link | Autolink => { ..font, weight: 500, }
+    Image => { ..font, weight: 600, }
+    FootnoteReference => { ..font, size: font.size * 0.76, weight: 700, }
     HtmlInline =>
       {
         ..font,
         families: @core.FontFamilyStack::named("SFMono-Regular")
-        .with_fallback(@core.FontFamily::UiMonospace)
-        .with_fallback(@core.FontFamily::Monospace),
+        .with_fallback(UiMonospace)
+        .with_fallback(Monospace),
         size: font.size * 0.9,
       }
     Code =>
       {
         ..font,
         families: @core.FontFamilyStack::named("SFMono-Regular")
-        .with_fallback(@core.FontFamily::UiMonospace)
-        .with_fallback(@core.FontFamily::Monospace),
+        .with_fallback(UiMonospace)
+        .with_fallback(Monospace),
         size: font.size * 0.92,
       }
     Plain => font
@@ -482,7 +492,7 @@ fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
 ///|
 fn markdown_inline_decoration(kind : MarkdownInlineKind) -> RichTextDecoration? {
   match kind {
-    Strikethrough => Some(RichTextDecoration::Strikethrough)
+    Strikethrough => Some(Strikethrough)
     Plain
     | Bold
     | Italic

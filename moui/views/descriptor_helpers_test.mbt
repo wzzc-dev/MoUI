@@ -7,12 +7,12 @@ enum DescriptorHelperMsg {
 
 ///|
 test "descriptor helper functions mirror typed constructors" {
-  let action = action_item(id="open", label="Open", message=Open)
+  let action = @views.action_item(id="open", label="Open", message=Open)
   assert_eq(action.id, "open")
   assert_eq(action.label, "Open")
   assert_true(action.enabled)
   guard action.message is Open else { fail("expected open message") }
-  let disabled_action = action_item(
+  let disabled_action = @views.action_item(
     id="close",
     label="Close",
     message=Close,
@@ -20,18 +20,22 @@ test "descriptor helper functions mirror typed constructors" {
   )
   assert_false(disabled_action.enabled)
   guard disabled_action.message is Close else { fail("expected close message") }
-  let menu = menu_item(id="file", label="File", message=Select("file"))
+  let menu = @views.menu_item(id="file", label="File", message=Select("file"))
   assert_eq(menu.id, "file")
-  let section = section_nav_item(
+  let section = @views.section_nav_item(
     id="data",
     label="Data",
     summary="Tables",
     message=Select("data"),
   )
   assert_eq(section.summary, "Tables")
-  let sidebar = sidebar_item(id="home", label="Home", message=Select("home"))
+  let sidebar = @views.sidebar_item(
+    id="home",
+    label="Home",
+    message=Select("home"),
+  )
   assert_eq(sidebar.label, "Home")
-  let breadcrumb = breadcrumb_item(
+  let breadcrumb = @views.breadcrumb_item(
     id="details",
     label="Details",
     message=Some(Select("details")),
@@ -39,7 +43,7 @@ test "descriptor helper functions mirror typed constructors" {
   guard breadcrumb.message is Some(Select("details")) else {
     fail("expected breadcrumb message")
   }
-  let list_item = selectable_list_item(
+  let list_item = @views.selectable_list_item(
     id="atlas",
     title="Project Atlas",
     subtitle="Healthy",
@@ -51,25 +55,22 @@ test "descriptor helper functions mirror typed constructors" {
 
 ///|
 test "command menu section helper preserves command groups" {
-  let command = @core.ActionCommand::new(
-    label="Open",
-    intent=@core.CommandIntent::Activate,
-  )
-  let section = command_menu_section(title="File", commands=[command])
+  let command = @core.ActionCommand::new(label="Open", intent=Activate)
+  let section = @views.command_menu_section(title="File", commands=[command])
   assert_eq(section.title, "File")
   assert_eq(section.commands.length(), 1)
 }
 
 ///|
 test "table column and choice helpers preserve constructor fields" {
-  let column = table_column(id="owner", label="Owner", width=112.0)
+  let column = @views.table_column(id="owner", label="Owner", width=112.0)
   assert_eq(column.id, "owner")
   assert_eq(column.label, "Owner")
   inspect(column.width, content="112")
-  let choice = choice_item("native", "Native")
+  let choice = @views.choice_item("native", "Native")
   assert_eq(choice.id, "native")
   assert_eq(choice.label, "Native")
-  let picker = picker_item("png", "PNG")
+  let picker = @views.picker_item("png", "PNG")
   assert_eq(picker.id, "png")
   assert_eq(picker.label, "PNG")
 }

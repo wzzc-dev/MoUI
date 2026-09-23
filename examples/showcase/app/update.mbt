@@ -26,16 +26,16 @@ fn ShowcaseModel::update_with_environment(
         route_host,
         push=true,
       )
-      ({ ..next, nav_query: "", mobile_showing_detail: false }, effect)
+      ({ ..next, nav_query: "", mobile_showing_detail: false, }, effect)
     }
     NavQueryChanged(query) =>
-      ({ ..self, nav_query: query }, @moui.Effect::none())
+      ({ ..self, nav_query: query, }, @moui.Effect::none())
     ShowMobileCatalog =>
-      ({ ..self, mobile_showing_detail: false }, @moui.Effect::none())
+      ({ ..self, mobile_showing_detail: false, }, @moui.Effect::none())
     SidebarScrolled(offset) =>
-      ({ ..self, sidebar_scroll: offset }, @moui.Effect::none())
+      ({ ..self, sidebar_scroll: offset, }, @moui.Effect::none())
     DetailScrolled(offset) =>
-      ({ ..self, detail_scroll: offset }, @moui.Effect::none())
+      ({ ..self, detail_scroll: offset, }, @moui.Effect::none())
     RouteBack => {
       let history = self.route_history.back()
       let next = self
@@ -175,10 +175,10 @@ fn ShowcaseModel::navigate(
     if self.route_history.current_route() == formatted {
       ShowcaseRouteHistoryCommand::ReplaceRoute(formatted)
     } else {
-      ShowcaseRouteHistoryCommand::PushRoute(formatted)
+      PushRoute(formatted)
     }
   } else {
-    ShowcaseRouteHistoryCommand::ReplaceRoute(formatted)
+    ReplaceRoute(formatted)
   }
   (next, command.effect(route_host))
 }
@@ -189,10 +189,10 @@ fn ShowcaseModel::apply_route_to_children(
   route : ShowcaseRoute,
 ) -> ShowcaseModel {
   match route.workspace {
-    Components => { ..self, components: self.components.open(route.id) }
-    Patterns => { ..self, patterns: self.patterns.open(route.id) }
-    Platform => { ..self, platform: self.platform.open(route.id) }
-    Diagnostics => { ..self, diagnostics: self.diagnostics.open(route.id) }
+    Components => { ..self, components: self.components.open(route.id), }
+    Patterns => { ..self, patterns: self.patterns.open(route.id), }
+    Platform => { ..self, platform: self.platform.open(route.id), }
+    Diagnostics => { ..self, diagnostics: self.diagnostics.open(route.id), }
   }
 }
 
@@ -229,7 +229,7 @@ fn ShowcaseModel::with_route_history(
   route_history : @views.RouteHistoryState,
 ) -> ShowcaseModel {
   let parsed = ShowcaseRoute::parse(route_history.current().path)
-  { ..self, route_history, workspace: parsed.workspace, route_id: parsed.id }
+  { ..self, route_history, workspace: parsed.workspace, route_id: parsed.id, }
 }
 
 ///|

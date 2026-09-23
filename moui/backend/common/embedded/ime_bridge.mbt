@@ -112,25 +112,21 @@ fn embedded_runtime_text_input_from_utf16(
   state : @core.TextInputState,
 ) -> @core.TextInputEvent {
   match event {
-    @core.TextInputEvent::ReplaceText(range, replacement) =>
-      @core.TextInputEvent::ReplaceText(
+    ReplaceText(range, replacement) =>
+      ReplaceText(
         embedded_runtime_text_range_from_utf16(state.text, range),
         replacement,
       )
-    @core.TextInputEvent::SetSelection(range) =>
-      @core.TextInputEvent::SetSelection(
-        embedded_runtime_text_range_from_utf16(state.text, range),
-      )
-    @core.TextInputEvent::DeleteRange(range) =>
-      @core.TextInputEvent::DeleteRange(
-        embedded_runtime_text_range_from_utf16(state.text, range),
-      )
-    @core.TextInputEvent::DeleteSurrounding(before, after) => {
+    SetSelection(range) =>
+      SetSelection(embedded_runtime_text_range_from_utf16(state.text, range))
+    DeleteRange(range) =>
+      DeleteRange(embedded_runtime_text_range_from_utf16(state.text, range))
+    DeleteSurrounding(before, after) => {
       let caret_utf16 = embedded_runtime_char_index_to_utf16(
         state.text,
         state.caret,
       )
-      @core.TextInputEvent::DeleteRange(
+      DeleteRange(
         embedded_runtime_text_range_from_utf16(
           state.text,
           @core.TextRange::new(
@@ -140,9 +136,9 @@ fn embedded_runtime_text_input_from_utf16(
         ),
       )
     }
-    @core.TextInputEvent::CompositionUpdate(update) => {
+    CompositionUpdate(update) => {
       let composition = update.text()
-      @core.TextInputEvent::CompositionUpdate(
+      CompositionUpdate(
         @core.CompositionUpdate::new(
           text=composition,
           cursor=match update.cursor() {
@@ -166,9 +162,7 @@ fn EmbeddedRuntimeHostBridge::sync_text_input(
     self.ime_revision = self.ime_revision + 1
     self.last_text_input = Some(state)
     self.updates.push(
-      EmbeddedHostUpdate::Ime(
-        EmbeddedImeRequest::from_state(revision=self.ime_revision, state),
-      ),
+      Ime(EmbeddedImeRequest::from_state(revision=self.ime_revision, state)),
     )
   }
 }

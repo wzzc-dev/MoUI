@@ -76,7 +76,7 @@ pub fn WebViewHost::create_controller(
         current_navigation: None,
         disposed: false,
       })
-      Ok({ host: self, id })
+      Ok({ host: self, id, })
     }
   }
 }
@@ -96,8 +96,8 @@ pub fn WebViewController::configure(
     label="Configure WebView",
     start=complete => {
       match self.host.configure_controller(self.id, config) {
-        Ok(receipt) => complete(WebViewTaskResult::Success(receipt))
-        Err(error) => complete(WebViewTaskResult::Failure(error))
+        Ok(receipt) => complete(Success(receipt))
+        Err(error) => complete(Failure(error))
       }
       None
     },
@@ -109,35 +109,35 @@ pub fn WebViewController::navigate(
   self : WebViewController,
   url : String,
 ) -> WebViewTask[WebViewCommandReceipt] {
-  self.command_task(HostWebViewCommand::Navigate(url), navigation=true)
+  self.command_task(Navigate(url), navigation=true)
 }
 
 ///|
 pub fn WebViewController::reload(
   self : WebViewController,
 ) -> WebViewTask[WebViewCommandReceipt] {
-  self.command_task(HostWebViewCommand::Reload, navigation=true)
+  self.command_task(Reload, navigation=true)
 }
 
 ///|
 pub fn WebViewController::stop(
   self : WebViewController,
 ) -> WebViewTask[WebViewCommandReceipt] {
-  self.command_task(HostWebViewCommand::Stop, navigation=false)
+  self.command_task(Stop, navigation=false)
 }
 
 ///|
 pub fn WebViewController::go_back(
   self : WebViewController,
 ) -> WebViewTask[WebViewCommandReceipt] {
-  self.command_task(HostWebViewCommand::GoBack, navigation=true)
+  self.command_task(GoBack, navigation=true)
 }
 
 ///|
 pub fn WebViewController::go_forward(
   self : WebViewController,
 ) -> WebViewTask[WebViewCommandReceipt] {
-  self.command_task(HostWebViewCommand::GoForward, navigation=true)
+  self.command_task(GoForward, navigation=true)
 }
 
 ///|
@@ -151,8 +151,8 @@ pub fn WebViewController::post_message(
     label="Post WebView message",
     start=complete => {
       match self.host.enqueue_message(self.id, channel, payload) {
-        Ok(receipt) => complete(WebViewTaskResult::Success(receipt))
-        Err(error) => complete(WebViewTaskResult::Failure(error))
+        Ok(receipt) => complete(Success(receipt))
+        Err(error) => complete(Failure(error))
       }
       None
     },
@@ -192,8 +192,8 @@ pub fn WebViewController::respond(
     label="Respond to WebView request",
     start=complete => {
       match self.host.enqueue_response(self.id, request_id, result) {
-        Ok(receipt) => complete(WebViewTaskResult::Success(receipt))
-        Err(error) => complete(WebViewTaskResult::Failure(error))
+        Ok(receipt) => complete(Success(receipt))
+        Err(error) => complete(Failure(error))
       }
       None
     },
@@ -204,7 +204,7 @@ pub fn WebViewController::respond(
 pub fn WebViewController::dispose(
   self : WebViewController,
 ) -> WebViewTask[WebViewCommandReceipt] {
-  self.command_task(HostWebViewCommand::Dispose, navigation=false)
+  self.command_task(Dispose, navigation=false)
 }
 
 ///|
@@ -218,8 +218,8 @@ fn WebViewController::command_task(
     label="Dispatch WebView command",
     start=complete => {
       match self.host.enqueue_controller_command(self.id, command, navigation) {
-        Ok(receipt) => complete(WebViewTaskResult::Success(receipt))
-        Err(error) => complete(WebViewTaskResult::Failure(error))
+        Ok(receipt) => complete(Success(receipt))
+        Err(error) => complete(Failure(error))
       }
       None
     },
@@ -267,7 +267,7 @@ pub fn WebViewHost::poll_timeouts(self : WebViewHost, now_ms : Int64) -> Int64? 
   for request in self.requests {
     if request.deadline_ms <= now_ms {
       (request.complete)(
-        WebViewTaskResult::Failure(
+        Failure(
           WebViewError::new(
             code="request-timeout",
             message="WebView request timed out",
@@ -304,21 +304,21 @@ fn WebViewHost::find_state(
 
 ///|
 fn WebViewHost::next_command(self : WebViewHost) -> WebViewCommandId {
-  let id : WebViewCommandId = { value: self.next_command_id }
+  let id : WebViewCommandId = { value: self.next_command_id, }
   self.next_command_id = self.next_command_id + 1UL
   id
 }
 
 ///|
 fn WebViewHost::next_navigation(self : WebViewHost) -> WebViewNavigationId {
-  let id : WebViewNavigationId = { value: self.next_navigation_id }
+  let id : WebViewNavigationId = { value: self.next_navigation_id, }
   self.next_navigation_id = self.next_navigation_id + 1UL
   id
 }
 
 ///|
 fn WebViewHost::next_request(self : WebViewHost) -> WebViewRequestId {
-  let id : WebViewRequestId = { value: self.next_request_id }
+  let id : WebViewRequestId = { value: self.next_request_id, }
   self.next_request_id = self.next_request_id + 1UL
   id
 }
@@ -338,8 +338,8 @@ fn WebViewHost::configure_controller(
   }
   state.config = config
   state.config_revision = state.config_revision + 1UL
-  self.cancel_requests(id, WebViewTaskResult::Cancelled)
-  Ok({ command_id: self.next_command(), navigation_id: None })
+  self.cancel_requests(id, Cancelled)
+  Ok({ command_id: self.next_command(), navigation_id: None, })
 }
 
 ///|
@@ -353,7 +353,7 @@ fn WebViewHost::enqueue_controller_command(
     return Err(webview_controller_unavailable(id))
   }
   match command {
-    HostWebViewCommand::Navigate(url) =>
+    Navigate(url) =>
       if !webview_policy_allows_url(state.config.security, url) {
         return Err(
           WebViewError::new(
@@ -368,17 +368,17 @@ fn WebViewHost::enqueue_controller_command(
   let navigation_id = if navigation {
     let value = self.next_navigation()
     state.current_navigation = Some(value)
-    self.cancel_requests(id, WebViewTaskResult::Cancelled)
+    self.cancel_requests(id, Cancelled)
     Some(value)
   } else {
     None
   }
-  if command is HostWebViewCommand::Dispose {
+  if command is Dispose {
     state.disposed = true
-    self.cancel_requests(id, WebViewTaskResult::Cancelled)
+    self.cancel_requests(id, Cancelled)
   }
-  self.commands.push({ controller_id: id, command_id, navigation_id, command })
-  Ok({ command_id, navigation_id })
+  self.commands.push({ controller_id: id, command_id, navigation_id, command, })
+  Ok({ command_id, navigation_id, })
 }
 
 ///|
@@ -435,12 +435,12 @@ fn WebViewHost::start_request(
   complete : (WebViewTaskResult[Json]) -> Unit,
 ) -> (() -> Unit)? {
   guard self.find_state(id) is Some(state) && !state.disposed else {
-    complete(WebViewTaskResult::Failure(webview_controller_unavailable(id)))
+    complete(Failure(webview_controller_unavailable(id)))
     return None
   }
   guard state.current_navigation is Some(navigation_id) else {
     complete(
-      WebViewTaskResult::Failure(
+      Failure(
         WebViewError::new(
           code="not-navigated",
           message="WebView has no active navigation",
@@ -451,7 +451,7 @@ fn WebViewHost::start_request(
   }
   if !webview_channel_allowed(state.config.security, channel, host_to_page=true) {
     complete(
-      WebViewTaskResult::Failure(
+      Failure(
         WebViewError::new(
           code="channel-denied",
           message="WebView channel is not allowed for host-to-page requests: " +
@@ -463,7 +463,7 @@ fn WebViewHost::start_request(
   }
   if self.requests.length() >= state.config.security.max_pending_requests {
     complete(
-      WebViewTaskResult::Failure(
+      Failure(
         WebViewError::new(
           code="too-many-requests",
           message="WebView pending request limit reached",
@@ -481,7 +481,7 @@ fn WebViewHost::start_request(
   ).to_json_string()
   if webview_utf8_size(wire) > state.config.security.max_message_bytes {
     complete(
-      WebViewTaskResult::Failure(
+      Failure(
         WebViewError::new(
           code="message-too-large",
           message="WebView request exceeds configured byte limit",
@@ -500,7 +500,7 @@ fn WebViewHost::start_request(
   })
   Some(() => {
     if self.remove_request(id, request_id) is Some(request) {
-      (request.complete)(WebViewTaskResult::Cancelled)
+      (request.complete)(Cancelled)
       ignore(
         self.enqueue_wire_message(
           id,
@@ -549,9 +549,9 @@ fn WebViewHost::enqueue_wire_message(
     controller_id: id,
     command_id,
     navigation_id: Some(navigation_id),
-    command: HostWebViewCommand::PostMessage(wire),
+    command: PostMessage(wire),
   })
-  Ok({ command_id, navigation_id: Some(navigation_id) })
+  Ok({ command_id, navigation_id: Some(navigation_id), })
 }
 
 ///|
@@ -704,9 +704,9 @@ fn webview_channel_allowed(
       false
     } else {
       match item.direction {
-        WebViewChannelDirection::Bidirectional => true
-        WebViewChannelDirection::HostToPage => host_to_page
-        WebViewChannelDirection::PageToHost => !host_to_page
+        Bidirectional => true
+        HostToPage => host_to_page
+        PageToHost => !host_to_page
       }
     }
   })

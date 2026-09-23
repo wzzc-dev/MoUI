@@ -1,17 +1,14 @@
 ///|
 test "fluent package entrypoints align with common preset" {
   let expected = @common.DesignPreset::Fluent
-  assert_true(preset() == expected)
-  assert_true(tokens().preset == expected)
-  assert_true(light_theme().scheme == @core.ColorScheme::Light)
-  assert_true(dark_theme().scheme == @core.ColorScheme::Dark)
-  assert_true(
-    system_theme(system_scheme=@core.ColorScheme::Dark).scheme ==
-    @core.ColorScheme::Dark,
-  )
-  assert_true(@audit.design_system_report(preset()).preset == expected)
-  assert_true(@audit.manifest(preset()).preset == expected)
-  assert_true(@audit.component_token_matrix(preset()).length() > 0)
+  assert_true(@fluent.preset() == expected)
+  assert_true(@fluent.tokens().preset == expected)
+  assert_true(@fluent.light_theme().scheme == Light)
+  assert_true(@fluent.dark_theme().scheme == Dark)
+  assert_true(@fluent.system_theme(system_scheme=Dark).scheme == Dark)
+  assert_true(@audit.design_system_report(@fluent.preset()).preset == expected)
+  assert_true(@audit.manifest(@fluent.preset()).preset == expected)
+  assert_true(@audit.component_token_matrix(@fluent.preset()).length() > 0)
 }
 
 ///|
@@ -19,8 +16,8 @@ test "fluent carries structural component differentiation beyond palette" {
   // Fluent 2 is not just a palette swap: it declares subtle/subtle-brand
   // button variants, an underline text-field appearance, and layered
   // card/flyout/dialog shadows that the shared neutral builder does not.
-  let light = tokens(scheme=@core.ColorScheme::Light)
-  let dark = tokens(scheme=@core.ColorScheme::Dark)
+  let light = @fluent.tokens(scheme=Light)
+  let dark = @fluent.tokens(scheme=Dark)
   let transparent = @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
 
   // Subtle / subtle-brand button variants exist and are transparent-backed.
@@ -31,10 +28,7 @@ test "fluent carries structural component differentiation beyond palette" {
 
   // Text field is underline appearance: bottom-border-only, with an inner
   // focus reveal border on the focused state.
-  assert_true(
-    light.components.text_field.appearance ==
-    @common.DesignTextFieldAppearance::Underline,
-  )
+  assert_true(light.components.text_field.appearance == Underline)
   assert_true(light.components.text_field.normal.bottom_border_only)
   assert_true(light.components.text_field.focused.bottom_border_only)
   assert_true(light.components.text_field.focused.inner_focus_border is Some(_))
@@ -54,13 +48,8 @@ test "fluent carries structural component differentiation beyond palette" {
 
   // Neutral presets (e.g. Primer) keep the neutral defaults: no underline,
   // no layered shadows, subtle/subtle-brand alias to transparent/brand.
-  let primer = @common.DesignPreset::Primer.tokens(
-    scheme=@core.ColorScheme::Light,
-  )
-  assert_true(
-    primer.components.text_field.appearance ==
-    @common.DesignTextFieldAppearance::Outline,
-  )
+  let primer = @common.DesignPreset::Primer.tokens(scheme=Light)
+  assert_true(primer.components.text_field.appearance == Outline)
   assert_true(primer.components.text_field.normal.bottom_border_only == false)
   assert_true(primer.elevation.card == None)
   assert_true(primer.components.surface.base_shadow == None)
@@ -70,29 +59,17 @@ test "fluent carries structural component differentiation beyond palette" {
 test "fluent shadow tokens align with pinned source values" {
   // shadow4/shadow16/shadow64 are source-locked and runtime-aligned: the
   // resolved key-shadow offset matches the pinned @fluentui/tokens value.
-  guard @audit.runtime_token_alignment_for(
-      @common.DesignPreset::Fluent,
-      "shadow4",
-    )
-    is Some(shadow4) else {
+  guard @audit.runtime_token_alignment_for(Fluent, "shadow4") is Some(shadow4) else {
     fail("expected shadow4 runtime alignment")
   }
   assert_true(shadow4.runtime_aligned)
   inspect(shadow4.runtime_value, content="2")
-  guard @audit.runtime_token_alignment_for(
-      @common.DesignPreset::Fluent,
-      "shadow16",
-    )
-    is Some(shadow16) else {
+  guard @audit.runtime_token_alignment_for(Fluent, "shadow16") is Some(shadow16) else {
     fail("expected shadow16 runtime alignment")
   }
   assert_true(shadow16.runtime_aligned)
   inspect(shadow16.runtime_value, content="8")
-  guard @audit.runtime_token_alignment_for(
-      @common.DesignPreset::Fluent,
-      "shadow64",
-    )
-    is Some(shadow64) else {
+  guard @audit.runtime_token_alignment_for(Fluent, "shadow64") is Some(shadow64) else {
     fail("expected shadow64 runtime alignment")
   }
   assert_true(shadow64.runtime_aligned)

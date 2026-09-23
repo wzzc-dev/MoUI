@@ -9,7 +9,7 @@ pub fn CodeCursor::new(
   position~ : Int,
   selection? : @text.TextRange? = None,
 ) -> CodeCursor {
-  { position, selection }
+  { position, selection, }
 }
 
 ///|
@@ -56,7 +56,7 @@ pub fn CodeDiagnostic::new(
   severity~ : CodeDiagnosticSeverity,
   message~ : String,
 ) -> CodeDiagnostic {
-  { range, severity, message }
+  { range, severity, message, }
 }
 
 ///|
@@ -119,7 +119,7 @@ pub fn CodeCompletionItem::new(
   insert_text~ : String,
   detail? : String = "",
 ) -> CodeCompletionItem {
-  { label, insert_text, detail }
+  { label, insert_text, detail, }
 }
 
 ///|
@@ -132,7 +132,7 @@ pub(all) struct CodeFindState {
 
 ///|
 pub fn CodeFindState::new() -> CodeFindState {
-  { query: "", replacement: "", matches: [], active_index: -1 }
+  { query: "", replacement: "", matches: [], active_index: -1, }
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn EditorDocument::new(
   text~ : String,
   language? : String = "moonbit",
 ) -> EditorDocument {
-  { path, text, language, dirty: false }
+  { path, text, language, dirty: false, }
 }
 
 ///|
@@ -195,12 +195,12 @@ pub fn EditorState::with_source(
 ) -> EditorState {
   let documents = self.documents.map(document => {
     if document.path == self.active_file {
-      { ..document, text: source, dirty: true }
+      { ..document, text: source, dirty: true, }
     } else {
       document
     }
   })
-  { ..self, documents, find: self.find.recompute(source), status: "Edited" }
+  { ..self, documents, find: self.find.recompute(source), status: "Edited", }
 }
 
 ///|
@@ -209,7 +209,7 @@ pub fn EditorState::with_selection(
   caret : Int,
   selection : @text.TextRange?,
 ) -> EditorState {
-  { ..self, cursors: [CodeCursor::new(position=caret, selection~)], selection }
+  { ..self, cursors: [CodeCursor::new(position=caret, selection~)], selection, }
 }
 
 ///|
@@ -289,7 +289,7 @@ pub fn code_editor_caret_position(
       }
     }
   }
-  { line: 1, column: 1, offset: clamped }
+  { line: 1, column: 1, offset: clamped, }
 }
 
 ///|
@@ -483,7 +483,7 @@ fn editor_cursor_edit(
     }
     None => {
       let position = clamp_editor_int(cursor.position, 0, source_length)
-      { start: position, end: position }
+      { start: position, end: position, }
     }
   }
 }
@@ -537,7 +537,7 @@ fn editor_find_forward(
     } else if chars[index] == close {
       depth = depth - 1
       if depth == 0 {
-        return Some({ open: start, close: index })
+        return Some({ open: start, close: index, })
       }
     }
   }
@@ -559,7 +559,7 @@ fn editor_find_backward(
     } else if chars[index] == open {
       depth = depth - 1
       if depth == 0 {
-        return Some({ open: index, close: end })
+        return Some({ open: index, close: end, })
       }
     }
     index = index - 1

@@ -53,7 +53,7 @@ pub fn[Msg] ProgramCommand::new(
   command~ : ActionCommand,
   message~ : Msg,
 ) -> ProgramCommand[Msg] {
-  { command, message }
+  { command, message, }
 }
 
 ///|
@@ -103,7 +103,7 @@ pub fn[Msg] Effect::run(
   kind? : String = "custom",
   label? : String = "",
 ) -> Effect[Msg] {
-  Run({ key, kind, label }, run)
+  Run({ key, kind, label, }, run)
 }
 
 ///|
@@ -113,7 +113,7 @@ pub fn[Msg] Effect::task(
   kind? : String = "task",
   label? : String = "",
 ) -> Effect[Msg] {
-  Task({ key, kind, label }, start)
+  Task({ key, kind, label, }, start)
 }
 
 ///|
@@ -187,7 +187,7 @@ pub fn[Model, Msg] Program::new_with_environment(
   view~ : (Model, ViewEnvironment) -> View[Msg],
   subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
-  { init, update, view, subscriptions, commands: _model => [] }
+  { init, update, view, subscriptions, commands: _model => [], }
 }
 
 ///|

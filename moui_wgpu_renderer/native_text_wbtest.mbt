@@ -94,7 +94,7 @@ test "native glyph atlas preserves color raster glyph pixels" {
               height=1,
               bearing_x=0,
               bearing_y=-1,
-              format=NativeRasterGlyphFormat::ColorRgba,
+              format=ColorRgba,
               pixels=Bytes::from_array([
                 b'\x10', b'\x20', b'\x30', b'\xff', b'\x40', b'\x50', b'\x60', b'\x80',
               ]),
@@ -107,10 +107,7 @@ test "native glyph atlas preserves color raster glyph pixels" {
   let atlas = GlyphAtlas::new(width=8, height=8)
   match atlas.ensure_glyph(cache, key) {
     GlyphReady(entry) => {
-      inspect(
-        entry.format == NativeRasterGlyphFormat::ColorRgba,
-        content="true",
-      )
+      inspect(entry.format == ColorRgba, content="true")
       inspect(entry.width, content="2")
       inspect(entry.height, content="1")
       let first = (entry.y * atlas.width + entry.x) * 4
@@ -162,7 +159,7 @@ test "native platform provider receives registered font data before fallback cac
     ),
   )
   system.register_font_data(
-    @core.FontFamily::Name("Acme"),
+    Name("Acme"),
     Bytes::from_array([b'A', b'c', b'm', b'e']),
   )
   inspect(registered.val, content="1")
@@ -342,7 +339,7 @@ test "native text engine falls back when platform glyph raster fails" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
     font=@core.FontSpec::new(size=16.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let vertices : Array[TextVertex] = []
   let bad_platform_layout = NativeTextLayout::new(
@@ -415,7 +412,7 @@ test "native text engine falls back when platform run layout metrics are invalid
     frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
     font=@core.FontSpec::new(size=16.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let vertices : Array[TextVertex] = []
   let atlas_full = append_text_run_vertices(
@@ -475,7 +472,7 @@ test "native text engine rejects undersized platform run layout carets" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
     font=@core.FontSpec::new(size=16.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let vertices : Array[TextVertex] = []
   let atlas_full = append_text_run_vertices(
@@ -515,7 +512,7 @@ test "native text engine falls back when platform layout has no glyphs" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
     font=@core.FontSpec::new(size=16.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let vertices : Array[TextVertex] = []
   let empty_platform_layout = NativeTextLayout::new(
@@ -566,7 +563,7 @@ test "native text engine rejects invalid platform raster glyphs" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
     font=@core.FontSpec::new(size=16.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let vertices : Array[TextVertex] = []
   let bad_raster_layout = NativeTextLayout::new(
@@ -617,7 +614,7 @@ test "native renderer builds text vertices and atlas entries" {
             size: @core.Size::new(width=64.0, height=20.0),
             baseline: 14.0,
             caret_positions: [],
-            glyphs: [{ key: glyph_key, x: 0.0, y: 0.0 }],
+            glyphs: [{ key: glyph_key, x: 0.0, y: 0.0, }],
           })
         },
         raster_glyph=(_cache_key, _payload) => {
@@ -643,12 +640,12 @@ test "native renderer builds text vertices and atlas entries" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "MoUI Counter",
       frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextCenter,
+      align: TextCenter,
     }),
   ])
   inspect(renderer.text_vertices.length() > 0, content="true")
@@ -698,7 +695,7 @@ test "native renderer marks color glyph text vertices" {
               height=2,
               bearing_x=0,
               bearing_y=-2,
-              format=NativeRasterGlyphFormat::ColorRgba,
+              format=ColorRgba,
               pixels=Bytes::from_array([
                 b'\xff', b'\x00', b'\x00', b'\xff', b'\x00', b'\xff', b'\x00', b'\xff',
                 b'\x00', b'\x00', b'\xff', b'\xff', b'\xff', b'\xff', b'\x00', b'\xff',
@@ -715,12 +712,12 @@ test "native renderer marks color glyph text vertices" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "煓?",
       frame: @core.Rect::new(x=0.0, y=0.0, width=64.0, height=32.0),
       font: @core.FontSpec::new(size=24.0),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextStart,
+      align: TextStart,
     }),
   ])
   inspect(renderer.text_vertices.length(), content="6")
@@ -728,11 +725,7 @@ test "native renderer marks color glyph text vertices" {
     inspect(vertex.color_glyph, content="1")
   }
   match renderer.glyph_atlas.entries.get("test-platform:emoji-color") {
-    Some(entry) =>
-      inspect(
-        entry.format == NativeRasterGlyphFormat::ColorRgba,
-        content="true",
-      )
+    Some(entry) => inspect(entry.format == ColorRgba, content="true")
     None => fail("expected color glyph atlas entry")
   }
   let shader = text_shader_wgsl()
@@ -808,12 +801,12 @@ test "native renderer accepts layouts that omit whitespace glyphs" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "Layered card with image",
       frame: @core.Rect::new(x=0.0, y=0.0, width=240.0, height=36.0),
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextStart,
+      align: TextStart,
     }),
   ])
   inspect(renderer.text_vertices.length() > 0, content="true")
@@ -838,7 +831,7 @@ test "native renderer blits platform glyph rows away from atlas top edge" {
             size: @core.Size::new(width=24.0, height=36.0),
             baseline: 28.0,
             caret_positions: [],
-            glyphs: [{ key: glyph_key, x: 0.0, y: 0.0 }],
+            glyphs: [{ key: glyph_key, x: 0.0, y: 0.0, }],
           })
         },
         raster_glyph=(_cache_key, _payload) => {
@@ -874,16 +867,16 @@ test "native renderer blits platform glyph rows away from atlas top edge" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "H",
       frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
       font: @core.FontSpec::new(size=32.0, weight=700),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextStart,
+      align: TextStart,
     }),
   ])
   inspect(renderer.draw_items.length(), content="1")
-  assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _, _))
+  assert_true(renderer.draw_items[0] is NativeText(_, _, _))
   match renderer.glyph_atlas.entries.get("test-platform:H") {
     Some(entry) =>
       match atlas_entry_nonzero_row_bounds(renderer.glyph_atlas, entry) {
@@ -909,12 +902,12 @@ test "native renderer builds cjk text vertices with fallback font" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "你",
       frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
       font: @core.FontSpec::new(size=18.0, weight=500),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextStart,
+      align: TextStart,
     }),
   ])
   inspect(renderer.text_vertices.length() > 0, content="true")
@@ -930,29 +923,29 @@ test "native renderer keeps text in draw item order" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "A",
       frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextCenter,
+      align: TextCenter,
     }),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=20.0, width=10.0, height=10.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "B",
       frame: @core.Rect::new(x=0.0, y=40.0, width=40.0, height=20.0),
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextCenter,
+      align: TextCenter,
     }),
   ])
   inspect(renderer.draw_items.length(), content="3")
-  assert_true(renderer.draw_items[0] is NativeDrawItem::NativeText(_, _, _))
-  assert_true(renderer.draw_items[1] is NativeDrawItem::NativeVisual(_, _, _))
-  assert_true(renderer.draw_items[2] is NativeDrawItem::NativeText(_, _, _))
+  assert_true(renderer.draw_items[0] is NativeText(_, _, _))
+  assert_true(renderer.draw_items[1] is NativeVisual(_, _, _))
+  assert_true(renderer.draw_items[2] is NativeText(_, _, _))
 }
 
 ///|
@@ -966,12 +959,12 @@ test "native renderer applies text alignment" {
     ),
   )
   left.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "Align",
       frame,
       font,
       color: @core.Color::black(),
-      align: @core.TextAlign::TextStart,
+      align: TextStart,
     }),
   ])
   let centered = new_test_renderer_handle()
@@ -981,12 +974,12 @@ test "native renderer applies text alignment" {
     ),
   )
   centered.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "Align",
       frame,
       font,
       color: @core.Color::black(),
-      align: @core.TextAlign::TextCenter,
+      align: TextCenter,
     }),
   ])
   assert_true(left.text_vertices.length() > 0)
@@ -1001,7 +994,7 @@ test "native renderer vertically centers text in taller frames" {
     frame: @core.Rect::new(x=0.0, y=20.0, width=160.0, height=44.0),
     font: @core.FontSpec::new(size=16.0, weight=500),
     color: @core.Color::black(),
-    align: @core.TextAlign::TextStart,
+    align: TextStart,
   })
   let renderer = new_test_renderer_handle()
   renderer.resize(
@@ -1022,7 +1015,7 @@ test "native renderer keeps text logical vertices stable across dpr" {
     frame: @core.Rect::new(x=20.0, y=10.0, width=160.0, height=32.0),
     font: @core.FontSpec::new(size=18.0, weight=500),
     color: @core.Color::black(),
-    align: @core.TextAlign::TextStart,
+    align: TextStart,
   })
   let scale_one = new_test_renderer_handle()
   scale_one.resize(
@@ -1077,12 +1070,12 @@ test "native renderer clears glyph atlas when dpr changes" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "Scale",
       frame: @core.Rect::new(x=0.0, y=0.0, width=120.0, height=32.0),
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextStart,
+      align: TextStart,
     }),
   ])
   assert_true(glyph_atlas_entry_count(renderer.glyph_atlas) > 0)

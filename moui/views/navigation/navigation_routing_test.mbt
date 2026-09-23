@@ -1,17 +1,17 @@
 ///|
 test "router state parses pushes replaces and pops route locations" {
-  let router = RouterState::new(
-    initial=RouteLocation::parse("/home?tab=overview"),
+  let router = @navigation.RouterState::new(
+    initial=@navigation.RouteLocation::parse("/home?tab=overview"),
   )
   inspect(router.current().path, content="/home")
   inspect(router.current().query_value("tab").unwrap_or(""), content="overview")
   let router = router.push(
-    RouteLocation::new(path="/settings", query=[
-      RouteQueryParam::new(key="section", value="display"),
+    @navigation.RouteLocation::new(path="/settings", query=[
+      @navigation.RouteQueryParam::new(key="section", value="display"),
     ]),
   )
   inspect(router.current().to_route(), content="/settings?section=display")
-  let router = router.replace(RouteLocation::new(path="/profile"))
+  let router = router.replace(@navigation.RouteLocation::new(path="/profile"))
   inspect(router.current().path, content="/profile")
   let router = router.pop()
   inspect(router.current().path, content="/home")
@@ -19,11 +19,13 @@ test "router state parses pushes replaces and pops route locations" {
 
 ///|
 test "router helpers resolve params snapshots and fallback routes" {
-  let router = RouterState::new(initial=RouteLocation::new(path="/home"))
+  let router = @navigation.RouterState::new(
+    initial=@navigation.RouteLocation::new(path="/home"),
+  )
   let router = router.push(
-    RouteLocation::new(path="/detail", query=[
-      RouteQueryParam::new(key="id", value="42"),
-      RouteQueryParam::new(key="tab", value="activity"),
+    @navigation.RouteLocation::new(path="/detail", query=[
+      @navigation.RouteQueryParam::new(key="id", value="42"),
+      @navigation.RouteQueryParam::new(key="tab", value="activity"),
     ]),
   )
   let current = router.current()
@@ -31,20 +33,28 @@ test "router helpers resolve params snapshots and fallback routes" {
   inspect(current.params().length(), content="2")
   let snapshot = router.snapshot()
   inspect(snapshot.routes.length(), content="2")
-  let router = router.replace(RouteLocation::new(path="/other"))
+  let router = router.replace(@navigation.RouteLocation::new(path="/other"))
   inspect(router.current().path, content="/other")
   let router = router.restore(snapshot)
   inspect(router.current().to_route(), content="/detail?id=42&tab=activity")
   let routes = [
-    RouteDescriptor::new(id="home", path="/home", title="Home"),
-    RouteDescriptor::new(id="detail", path="/detail", title="Detail"),
-    RouteDescriptor::new(id="missing", path="/missing", fallback=true),
+    @navigation.RouteDescriptor::new(id="home", path="/home", title="Home"),
+    @navigation.RouteDescriptor::new(
+      id="detail",
+      path="/detail",
+      title="Detail",
+    ),
+    @navigation.RouteDescriptor::new(
+      id="missing",
+      path="/missing",
+      fallback=true,
+    ),
   ]
   match router.resolve(routes) {
     Some({ id: "detail", title: "Detail", .. }) => ()
     _ => fail("expected detail route")
   }
-  let router = router.replace(RouteLocation::new(path="/unknown"))
+  let router = router.replace(@navigation.RouteLocation::new(path="/unknown"))
   match router.resolve(routes) {
     Some({ id: "missing", fallback: true, .. }) => ()
     _ => fail("expected fallback route")
@@ -53,7 +63,7 @@ test "router helpers resolve params snapshots and fallback routes" {
 
 ///|
 test "route history tracks deep links back forward and router snapshots" {
-  let initial = RouteHistoryState::from_deep_link(
+  let initial = @navigation.RouteHistoryState::from_deep_link(
     "/home?tab=overview",
     title="Home",
   )
@@ -61,11 +71,11 @@ test "route history tracks deep links back forward and router snapshots" {
   inspect(initial.current_route(), content="/home?tab=overview")
   inspect(initial.current_entry().unwrap().source, content="deep-link")
   let settings = initial.push(
-    RouteLocation::new(path="/settings"),
+    @navigation.RouteLocation::new(path="/settings"),
     title="Settings",
   )
   let detail = settings.replace(
-    RouteLocation::parse("/settings?panel=display"),
+    @navigation.RouteLocation::parse("/settings?panel=display"),
     title="Settings",
   )
   inspect(detail.entries.length(), content="2")
@@ -75,13 +85,16 @@ test "route history tracks deep links back forward and router snapshots" {
   let home = detail.back()
   inspect(home.current_route(), content="/home?tab=overview")
   assert_true(home.can_go_forward())
-  let profile = home.push(RouteLocation::new(path="/profile"), title="Profile")
+  let profile = home.push(
+    @navigation.RouteLocation::new(path="/profile"),
+    title="Profile",
+  )
   inspect(profile.entries.length(), content="2")
   inspect(profile.current_route(), content="/profile")
   assert_false(profile.can_go_forward())
   let router = profile.restore_router()
   inspect(router.current().to_route(), content="/profile")
-  let restored = RouteHistoryState::from_snapshot(
+  let restored = @navigation.RouteHistoryState::from_snapshot(
     detail.router_snapshot(),
     source="router",
   )

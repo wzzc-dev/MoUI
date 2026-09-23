@@ -11,7 +11,7 @@ fn view(model : Model) -> @moui.View[Unit] {
 ///|
 pub fn program() -> @moui.Program[Model, Unit] {
   @moui.Program::simple(
-    init={ title: "Hello, MoUI!" },
+    init={ title: "Hello, MoUI!", },
     update=(model, _message) => model,
     view~,
   )

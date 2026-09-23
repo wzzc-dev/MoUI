@@ -67,7 +67,7 @@ pub let markdown_html_image_gallery_view : MarkdownBlockView = {
 /// probe every block through the registry.
 fn markdown_html_image_gallery_signature(block : MarkdownBlock) -> Bool {
   match block.kind {
-    MarkdownBlockKind::HtmlBlock => {
+    HtmlBlock => {
       let chars = block.text.to_array()
       match
         markdown_html_image_gallery_tag_at(
@@ -122,7 +122,7 @@ fn markdown_html_image_gallery_project(
       if walk.invalid.val || walk.runs.length() == 0 {
         None
       } else {
-        Some({ runs: walk.runs, line_align: Some(line_align) })
+        Some({ runs: walk.runs, line_align: Some(line_align), })
       }
     }
     None => None
@@ -203,7 +203,7 @@ fn markdown_html_image_gallery_walk_body(
                 walk,
                 element_start,
                 tag.name,
-                { ..walk.base, size: walk.base.size * 1.15, weight: 700 },
+                { ..walk.base, size: walk.base.size * 1.15, weight: 700, },
                 false,
               )
             "span" => markdown_html_image_gallery_span_text(walk, element_start)
@@ -950,7 +950,7 @@ fn markdown_html_image_gallery_container_align(
     return Some(TextCenter)
   }
   match markdown_html_image_gallery_attribute(tag.attributes, "align") {
-    None => Some(@core.TextAlign::TextStart)
+    None => Some(TextStart)
     Some(value) =>
       match value.trim().to_owned().to_lower() {
         "center" => Some(TextCenter)
@@ -996,7 +996,7 @@ fn markdown_html_image_gallery_image_run(
           image_source=Some(resolved),
           image_size=Some(image_size),
           image_width_fraction~,
-          font=Some({ ..base, weight: 600 }),
+          font=Some({ ..base, weight: 600, }),
         ),
       )
     }
@@ -1251,7 +1251,7 @@ fn markdown_html_image_gallery_tag_at(
         value = Some(String::from_array(chars[value_start:index]))
       }
     }
-    attributes.push({ name: attribute_name, value })
+    attributes.push({ name: attribute_name, value, })
   }
   None
 }

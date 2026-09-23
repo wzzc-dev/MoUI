@@ -8,7 +8,7 @@ test "renderer remembers resize and batches" {
   )
   inspect(renderer.size.width, content="320")
   renderer.render([
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
       @core.Color::gray(),
     ),
@@ -56,17 +56,15 @@ test "native renderer clipped scissor uses physical pixels" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=10.0, y=20.0, width=30.0, height=40.0),
-    ),
-    @core.DrawCommand::FillRect(
+    PushClip(@core.Rect::new(x=10.0, y=20.0, width=30.0, height=40.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopClip,
+    PopClip,
   ])
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeVisual(_, _, Some(scissor)) => {
+    NativeVisual(_, _, Some(scissor)) => {
       inspect(scissor.x, content="20")
       inspect(scissor.y, content="40")
       inspect(scissor.width, content="60")
@@ -85,18 +83,14 @@ test "native renderer skips draw items for empty nested clip" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
-    ),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=20.0, y=20.0, width=10.0, height=10.0),
-    ),
-    @core.DrawCommand::FillRect(
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0)),
+    PushClip(@core.Rect::new(x=20.0, y=20.0, width=10.0, height=10.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopClip,
+    PopClip,
+    PopClip,
   ])
   inspect(renderer.draw_items.length(), content="0")
   inspect(renderer.visual_vertices.length(), content="0")
@@ -113,14 +107,12 @@ test "native renderer skips clip that lands exactly on surface edge" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=28.0, y=420.0, width=120.0, height=72.0),
-    ),
-    @core.DrawCommand::FillRect(
+    PushClip(@core.Rect::new(x=28.0, y=420.0, width=120.0, height=72.0)),
+    FillRect(
       @core.Rect::new(x=28.0, y=420.0, width=120.0, height=72.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopClip,
+    PopClip,
   ])
   inspect(renderer.draw_items.length(), content="0")
   inspect(renderer.visual_vertices.length(), content="0")
@@ -137,21 +129,17 @@ test "native renderer transforms clip before computing scissor" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=5.0, dy=7.0),
-    ),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=10.0, y=10.0, width=20.0, height=20.0),
-    ),
-    @core.DrawCommand::FillRect(
+    PushTransform(@core.Transform2D::translation(dx=5.0, dy=7.0)),
+    PushClip(@core.Rect::new(x=10.0, y=10.0, width=20.0, height=20.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=40.0, height=40.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopTransform,
+    PopClip,
+    PopTransform,
   ])
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeVisual(_, _, Some(scissor)) => {
+    NativeVisual(_, _, Some(scissor)) => {
       inspect(scissor.x, content="30")
       inspect(scissor.y, content="34")
       inspect(scissor.width, content="40")
@@ -174,7 +162,7 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
     radius=8.0,
   )
   renderer.render([
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       rounded,
       @core.Brush::linear_gradient(
         start=@core.Point::new(x=10.0, y=20.0),
@@ -183,7 +171,7 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
         end_color=@core.Color::gray(),
       ),
     ),
-    @core.DrawCommand::DrawShadow(
+    DrawShadow(
       @core.ShadowSpec::new(
         rect=rounded,
         color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.35),
@@ -209,7 +197,7 @@ test "native renderer plans radial brush as true radial visual payload" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=10.0, y=20.0, width=40.0, height=24.0),
         radius=8.0,
@@ -259,7 +247,7 @@ test "native renderer plans radial stroke brush as true radial visual payload" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::StrokeRoundedRectBrush(
+    StrokeRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=10.0, y=20.0, width=40.0, height=24.0),
         radius=8.0,
@@ -296,29 +284,27 @@ test "native renderer plans DrawPath mesh as visible visual triangles" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushOpacity(0.5),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=10.0, dy=20.0),
-    ),
-    @core.DrawCommand::DrawPath(
+    PushOpacity(0.5),
+    PushTransform(@core.Transform2D::translation(dx=10.0, dy=20.0)),
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=0.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=20.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=0.0, y=0.0)),
+          LineTo(@core.Point::new(x=20.0, y=0.0)),
+          LineTo(@core.Point::new(x=0.0, y=20.0)),
+          Close,
         ],
         fill=Some(@core.Brush::solid(@core.Color::blue())),
       ),
     ),
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PopOpacity,
+    PopTransform,
+    PopOpacity,
   ])
   inspect(renderer.unsupported_command_count, content="0")
   inspect(renderer.draw_items.length(), content="1")
   inspect(renderer.visual_vertices.length(), content="3")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeVisual(_, count, None) => inspect(count, content="3")
+    NativeVisual(_, count, None) => inspect(count, content="3")
     _ => fail("expected native visual path item")
   }
   let vertex = renderer.visual_vertices[0]
@@ -337,13 +323,13 @@ test "native renderer plans radial DrawPath as true radial path payload" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=0.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=20.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=0.0, y=0.0)),
+          LineTo(@core.Point::new(x=20.0, y=0.0)),
+          LineTo(@core.Point::new(x=0.0, y=20.0)),
+          Close,
         ],
         fill=Some(
           @core.Brush::radial_gradient(
@@ -360,7 +346,7 @@ test "native renderer plans radial DrawPath as true radial path payload" {
   inspect(renderer.draw_items.length(), content="1")
   inspect(renderer.visual_vertices.length(), content="3")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeVisual(_, count, None) => inspect(count, content="3")
+    NativeVisual(_, count, None) => inspect(count, content="3")
     _ => fail("expected native visual path item")
   }
   let vertex = renderer.visual_vertices[0]
@@ -387,19 +373,19 @@ test "native renderer keeps DrawPath immediately after layer" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.9)),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(opacity=0.9)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=12.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::DrawPath(
+    PopLayer,
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=20.0, y=20.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=36.0, y=20.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=36.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=20.0, y=20.0)),
+          LineTo(@core.Point::new(x=36.0, y=20.0)),
+          LineTo(@core.Point::new(x=20.0, y=36.0)),
+          Close,
         ],
         fill=Some(@core.Brush::solid(@core.Color::blue())),
       ),
@@ -407,12 +393,12 @@ test "native renderer keeps DrawPath immediately after layer" {
   ])
   inspect(renderer.draw_items.length(), content="2")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeLayer(layer) =>
+    NativeLayer(layer) =>
       inspect(layer.plan.visual_vertices.length(), content="6")
     _ => fail("expected native layer item")
   }
   match renderer.draw_items[1] {
-    NativeDrawItem::NativeVisual(_, count, None) => inspect(count, content="3")
+    NativeVisual(_, count, None) => inspect(count, content="3")
     _ => fail("expected post-layer native visual path item")
   }
   inspect(renderer.visual_vertices.length(), content="3")
@@ -427,38 +413,37 @@ test "native renderer keeps DrawPath immediately after nested filter" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=1.0)),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.6)),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(opacity=1.0)),
+    PushFilter(Brightness(0.6)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=12.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::DrawPath(
+    PopFilter,
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=20.0, y=20.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=36.0, y=20.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=36.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=20.0, y=20.0)),
+          LineTo(@core.Point::new(x=36.0, y=20.0)),
+          LineTo(@core.Point::new(x=20.0, y=36.0)),
+          Close,
         ],
         fill=Some(@core.Brush::solid(@core.Color::blue())),
       ),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   inspect(renderer.draw_items.length(), content="1")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeLayer(layer) => {
+    NativeLayer(layer) => {
       inspect(layer.plan.items.length(), content="2")
       match layer.plan.items[0] {
-        NativeDrawItem::NativeLayer(filter_layer) =>
+        NativeLayer(filter_layer) =>
           inspect(filter_layer.plan.visual_vertices.length(), content="6")
         _ => fail("expected nested filter layer")
       }
       match layer.plan.items[1] {
-        NativeDrawItem::NativeVisual(_, count, None) =>
-          inspect(count, content="3")
+        NativeVisual(_, count, None) => inspect(count, content="3")
         _ => fail("expected post-filter native visual path item")
       }
     }
@@ -486,33 +471,29 @@ test "native renderer plans image clip transform and opacity commands" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushOpacity(0.6),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
-    ),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=4.0, dy=8.0),
-    ),
-    @core.DrawCommand::DrawImage({
+    PushOpacity(0.6),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0)),
+    PushTransform(@core.Transform2D::translation(dx=4.0, dy=8.0)),
+    DrawImage({
       source: "logo.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 0.8,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopOpacity,
+    PopTransform,
+    PopClip,
+    PopOpacity,
   ])
   inspect(renderer.unsupported_command_count, content="0")
   inspect(renderer.draw_items.length(), content="1")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeImage(_, _, Some(scissor), run) => {
+    NativeImage(_, _, Some(scissor), run) => {
       inspect(scissor.x, content="0")
       inspect(scissor.y, content="0")
       inspect(scissor.width, content="20")
       inspect(scissor.height, content="20")
       inspect(run.source, content="logo.png")
-      assert_true(run.fit == @core.ImageFit::Contain)
+      assert_true(run.fit == Contain)
       assert_true(run.opacity > 0.47)
       assert_true(run.opacity < 0.49)
       inspect(run.transform.tx, content="4")
@@ -531,30 +512,29 @@ test "native renderer records image lifecycle diagnostics while planning" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: "logo.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   match renderer.image_lifecycle.lookup("logo.png") {
-    Some(record) =>
-      assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
+    Some(record) => assert_true(record.status == ImageLoading)
     None => fail("expected native image loading record")
   }
   renderer.failed_images["missing.png"] = true
   renderer.render([
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: "missing.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   match renderer.image_lifecycle.lookup("missing.png") {
     Some(record) => {
-      assert_true(record.status == @render.ImageResourceStatus::ImageFailed)
+      assert_true(record.status == ImageFailed)
       assert_true(record.diagnostic.contains("decode"))
     }
     None => fail("expected native image failure record")
@@ -563,7 +543,7 @@ test "native renderer records image lifecycle diagnostics while planning" {
 
 ///|
 test "native wgpu renderer applies image load completions to lifecycle" {
-  let renderer : WgpuRenderer = { backend: new_test_renderer_handle() }
+  let renderer : WgpuRenderer = { backend: new_test_renderer_handle(), }
   ignore(renderer.backend.image_lifecycle.mark_loading("async.png"))
   let ready = renderer.apply_image_resource_load_completion(
     @render.ImageResourceLoadCompletion::ready("async.png", width=48, height=24),
@@ -572,7 +552,7 @@ test "native wgpu renderer applies image load completions to lifecycle" {
   guard renderer.backend.image_lifecycle.lookup("async.png") is Some(record) else {
     fail("expected applied ready completion")
   }
-  assert_true(record.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(record.status == ImageReady)
   inspect(record.width, content="48")
   inspect(record.height, content="24")
   ignore(renderer.backend.image_lifecycle.mark_loading("missing.png"))
@@ -589,7 +569,7 @@ test "native wgpu renderer applies image load completions to lifecycle" {
   guard renderer.backend.image_lifecycle.lookup("missing.png") is Some(missing) else {
     fail("expected applied failed completion")
   }
-  assert_true(missing.status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(missing.status == ImageFailed)
   assert_true(missing.diagnostic.contains("decode"))
   let stale = renderer.apply_image_resource_load_completion(
     @render.ImageResourceLoadCompletion::ready("missing.png", width=8, height=8),
@@ -599,7 +579,7 @@ test "native wgpu renderer applies image load completions to lifecycle" {
     is Some(still_failed) else {
     fail("expected stale completion to leave failed record")
   }
-  assert_true(still_failed.status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(still_failed.status == ImageFailed)
 }
 
 ///|
@@ -615,36 +595,36 @@ test "native renderer plans advanced GPU layer filter and shader items" {
     radius=6.0,
   )
   renderer.render([
-    @core.DrawCommand::PushLayer(
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
-        blend_mode=@core.BlendMode::Multiply,
-        mask=@core.LayerMask::RoundedMask(mask),
+        blend_mode=Multiply,
+        mask=RoundedMask(mask),
         offscreen=true,
       ),
     ),
-    @core.DrawCommand::PushFilter(
-      @core.FilterEffect::ColorMatrix([
+    PushFilter(
+      ColorMatrix([
         0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0,
         1.0, 0.1, 0.2, 0.3, 0.0,
       ]),
     ),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="missing-effect",
         frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
         fallback=@core.Brush::solid(@core.Color::blue()),
       ),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopLayer,
+    PopFilter,
+    PopLayer,
   ])
   inspect(renderer.unsupported_command_count, content="0")
   inspect(renderer.draw_items.length(), content="1")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeLayer(layer) => {
+    NativeLayer(layer) => {
       inspect(layer.opacity, content="0.5")
-      assert_true(layer.blend_mode == @core.BlendMode::Multiply)
+      assert_true(layer.blend_mode == Multiply)
       match layer.mask {
         Some(mask) => {
           assert_true(mask.rounded)
@@ -654,13 +634,11 @@ test "native renderer plans advanced GPU layer filter and shader items" {
       }
       inspect(layer.plan.items.length(), content="1")
       match layer.plan.items[0] {
-        NativeDrawItem::NativeLayer(filter_layer) => {
-          assert_true(
-            filter_layer.filter is Some(@core.FilterEffect::ColorMatrix(_)),
-          )
+        NativeLayer(filter_layer) => {
+          assert_true(filter_layer.filter is Some(ColorMatrix(_)))
           inspect(filter_layer.plan.items.length(), content="1")
           match filter_layer.plan.items[0] {
-            NativeDrawItem::NativeShaderEffect(effect) => {
+            NativeShaderEffect(effect) => {
               inspect(native_shader_kind(effect.name), content="5")
               let colors = native_shader_effect_colors(effect)
               assert_true(colors.0 == @core.Color::blue())
@@ -691,21 +669,19 @@ test "native shader effect carries transform into advanced vertices" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=10.0, dy=20.0),
-    ),
-    @core.DrawCommand::DrawShaderEffect(
+    PushTransform(@core.Transform2D::translation(dx=10.0, dy=20.0)),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       ),
     ),
-    @core.DrawCommand::PopTransform,
+    PopTransform,
   ])
   inspect(renderer.unsupported_command_count, content="0")
   inspect(renderer.draw_items.length(), content="1")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeShaderEffect(effect) => {
+    NativeShaderEffect(effect) => {
       inspect(effect.transform.tx, content="10")
       inspect(effect.transform.ty, content="20")
       let colors = native_shader_effect_colors(effect)
@@ -713,7 +689,7 @@ test "native shader effect carries transform into advanced vertices" {
         renderer.size,
         effect.frame,
         opacity=effect.opacity,
-        blend_mode=@core.BlendMode::SourceOver,
+        blend_mode=SourceOver,
         shader_kind=native_shader_kind(effect.name),
         effect_amount=native_shader_effect_amount(effect),
         filter=None,
@@ -740,35 +716,29 @@ test "native renderer scopes inherit transform and clip but composite opacity on
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushOpacity(0.5),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=10.0, dy=20.0),
-    ),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=40.0, height=30.0),
-    ),
-    @core.DrawCommand::PushLayer(
+    PushOpacity(0.5),
+    PushTransform(@core.Transform2D::translation(dx=10.0, dy=20.0)),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=40.0, height=30.0)),
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.75,
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=0.0, y=0.0, width=30.0, height=20.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=0.0, y=0.0, width=30.0, height=20.0)),
         offscreen=true,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PopOpacity,
+    PopLayer,
+    PopClip,
+    PopTransform,
+    PopOpacity,
   ])
   inspect(renderer.unsupported_command_count, content="0")
   inspect(renderer.draw_items.length(), content="1")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeLayer(layer) => {
+    NativeLayer(layer) => {
       inspect(layer.opacity, content="0.375")
       match layer.mask {
         Some(mask) => {
@@ -814,26 +784,22 @@ test "native renderer filter scope inherits transform and transformed clip" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=10.0, dy=20.0),
-    ),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=40.0, height=30.0),
-    ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(3.0)),
-    @core.DrawCommand::FillRect(
+    PushTransform(@core.Transform2D::translation(dx=10.0, dy=20.0)),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=40.0, height=30.0)),
+    PushFilter(Blur(3.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopTransform,
+    PopFilter,
+    PopClip,
+    PopTransform,
   ])
   inspect(renderer.unsupported_command_count, content="0")
   inspect(renderer.draw_items.length(), content="1")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeLayer(filter_layer) => {
-      assert_true(filter_layer.filter is Some(@core.FilterEffect::Blur(3.0)))
+    NativeLayer(filter_layer) => {
+      assert_true(filter_layer.filter is Some(Blur(3.0)))
       match filter_layer.scissor {
         Some(scissor) => {
           inspect(scissor.x, content="10")
@@ -865,23 +831,19 @@ test "native renderer plans overlay layer for backdrop sampling pass" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(
-        opacity=0.75,
-        blend_mode=@core.BlendMode::Overlay,
-        offscreen=true,
-      ),
+    PushLayer(
+      @core.LayerSpec::new(opacity=0.75, blend_mode=Overlay, offscreen=true),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   inspect(renderer.unsupported_command_count, content="0")
   match renderer.draw_items[0] {
-    NativeDrawItem::NativeLayer(layer) => {
-      assert_true(layer.blend_mode == @core.BlendMode::Overlay)
+    NativeLayer(layer) => {
+      assert_true(layer.blend_mode == Overlay)
       let vertices = advanced_layer_vertices(renderer.size, layer)
       inspect(vertices.length(), content="6")
       inspect(vertices[0].blend_mode, content="3")

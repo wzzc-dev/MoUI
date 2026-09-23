@@ -32,7 +32,7 @@ priv enum PaintFilterKind {
 ///|
 /// Create a filter chain with no stages. Applying it returns the source color.
 pub fn PaintFilter::identity() -> PaintFilter {
-  { filters: [] }
+  { filters: [], }
 }
 
 ///|
@@ -86,7 +86,7 @@ pub fn PaintFilter::color_matrix(values : Array[Double]) -> PaintFilter {
 ///|
 /// Return a filter that applies this filter and then the next filter.
 pub fn PaintFilter::then(self : PaintFilter, next : PaintFilter) -> PaintFilter {
-  { filters: concat_filter_kinds(self.filters, next.filters) }
+  { filters: concat_filter_kinds(self.filters, next.filters), }
 }
 
 ///|
@@ -169,7 +169,7 @@ pub fn PaintFilter::apply(self : PaintFilter, color : Color) -> Color {
 
 ///|
 fn make_paint_filter(kind : PaintFilterKind) -> PaintFilter {
-  { filters: [copy_filter_kind(kind)] }
+  { filters: [copy_filter_kind(kind)], }
 }
 
 ///|
@@ -226,14 +226,14 @@ fn PaintFilter::get_stage_kind(
 ///|
 fn paint_filter_type_of(kind : PaintFilterKind) -> PaintFilterType {
   match kind {
-    Modulate(_) => PaintFilterType::Modulate
-    Grayscale => PaintFilterType::Grayscale
-    Invert => PaintFilterType::Invert
-    Brightness(_) => PaintFilterType::Brightness
-    Contrast(_) => PaintFilterType::Contrast
-    Saturate(_) => PaintFilterType::Saturate
-    Sepia => PaintFilterType::Sepia
-    ColorMatrix(_) => PaintFilterType::ColorMatrix
+    Modulate(_) => Modulate
+    Grayscale => Grayscale
+    Invert => Invert
+    Brightness(_) => Brightness
+    Contrast(_) => Contrast
+    Saturate(_) => Saturate
+    Sepia => Sepia
+    ColorMatrix(_) => ColorMatrix
   }
 }
 

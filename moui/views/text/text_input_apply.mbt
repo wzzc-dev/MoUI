@@ -13,7 +13,7 @@ fn restore_text_history(
 ) -> TextHistoryRestoreResult {
   let source = if undo { control.undo_stack } else { control.redo_stack }
   if source.length() == 0 {
-    return { text: current, control, changed: false }
+    return { text: current, control, changed: false, }
   }
   let restored = source[source.length() - 1]
   let restored_text = if undo {
@@ -79,11 +79,7 @@ fn[Msg] view_text_input_result(
     changed=result.changed,
     captured=result.changed,
     text_control=Some(result.control),
-    dirty=if result.text != text {
-      @core.ViewDirtyHint::ViewBuildDirty
-    } else {
-      @core.ViewDirtyHint::ViewPaintDirty
-    },
+    dirty=if result.text != text { ViewBuildDirty } else { ViewPaintDirty },
     messages=if result.changed {
       text_input_messages(on_input, result.text)
     } else {
@@ -107,9 +103,9 @@ fn apply_text_input(
   record_history~ : Bool,
 ) -> TextInputApplyResult {
   match event {
-    @core.TextInputEvent::InsertText(inserted) => {
+    InsertText(inserted) => {
       if inserted == "" {
-        return { text, control, changed: false }
+        return { text, control, changed: false, }
       }
       let edit = replace_current_selection(
         text,
@@ -119,11 +115,11 @@ fn apply_text_input(
       )
       apply_text_edit(control, text, edit, record_history~)
     }
-    @core.TextInputEvent::ReplaceText(range, replacement) => {
+    ReplaceText(range, replacement) => {
       let edit = replace_text_range(text, range, replacement)
       apply_text_edit(control, text, edit, record_history~)
     }
-    @core.TextInputEvent::SetSelection(range) => {
+    SetSelection(range) => {
       let normalized = normalize_text_range_to_grapheme(text, range)
       let next_selection = if normalized.is_collapsed() {
         None
@@ -146,15 +142,15 @@ fn apply_text_input(
         control.composition_cursor is Some(_),
       }
     }
-    @core.TextInputEvent::CompositionStart => {
+    CompositionStart => {
       let next_control = {
         ..control,
         composition: Some(""),
         composition_cursor: None,
       }
-      { text, control: next_control, changed: true }
+      { text, control: next_control, changed: true, }
     }
-    @core.TextInputEvent::CompositionUpdate(update) => {
+    CompositionUpdate(update) => {
       let next_control = {
         ..control,
         composition: if update.text() == "" {
@@ -176,16 +172,16 @@ fn apply_text_input(
           None => None
         },
       }
-      { text, control: next_control, changed: true }
+      { text, control: next_control, changed: true, }
     }
-    @core.TextInputEvent::CompositionEnd(inserted) => {
+    CompositionEnd(inserted) => {
       let next_control = {
         ..control,
         composition: None,
         composition_cursor: None,
       }
       if inserted == "" {
-        { text, control: { ..next_control, selection: None }, changed: true }
+        { text, control: { ..next_control, selection: None, }, changed: true, }
       } else {
         let edit = replace_current_selection(
           text,
@@ -196,11 +192,11 @@ fn apply_text_input(
         apply_text_edit(next_control, text, edit, record_history~)
       }
     }
-    @core.TextInputEvent::DeleteRange(range) => {
+    DeleteRange(range) => {
       let edit = replace_text_range(text, range, "")
       apply_text_edit(control, text, edit, record_history~)
     }
-    @core.TextInputEvent::DeleteSurrounding(before, after) => {
+    DeleteSurrounding(before, after) => {
       let range = surrounding_delete_range(text, control.caret, before, after)
       let edit = replace_text_range(text, range, "")
       apply_text_edit(control, text, edit, record_history~)
@@ -246,7 +242,7 @@ fn apply_text_edit(
       changed: true,
     }
   } else {
-    { text: previous, control, changed: false }
+    { text: previous, control, changed: false, }
   }
 }
 
@@ -260,20 +256,20 @@ fn[Msg] handle_text_field_command(
 ) -> @core.ViewTextCommandResult[Msg] {
   let text = value
   match intent {
-    @core.CommandIntent::Copy =>
+    Copy =>
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(
           clipboard_text=Some(selected_text(text, ctx.text_control.selection)),
         ),
       )
-    @core.CommandIntent::Cut => {
+    Cut => {
       let copied = selected_text(text, ctx.text_control.selection)
       match active_text_selection(ctx.text_control.selection) {
         Some(selection) => {
           let result = apply_text_input(
             ctx.text_control,
             text,
-            @core.TextInputEvent::DeleteRange(selection),
+            DeleteRange(selection),
             record_history=true,
           )
           @core.ViewTextCommandResult::new(
@@ -295,13 +291,13 @@ fn[Msg] handle_text_field_command(
           )
       }
     }
-    @core.CommandIntent::Paste =>
+    Paste =>
       match paste_text {
         Some(value_to_paste) => {
           let result = apply_text_input(
             ctx.text_control,
             text,
-            @core.TextInputEvent::InsertText(value_to_paste),
+            InsertText(value_to_paste),
             record_history=true,
           )
           @core.ViewTextCommandResult::new(
@@ -319,7 +315,7 @@ fn[Msg] handle_text_field_command(
             result=@core.TextCommandResult::handled(),
           )
       }
-    @core.CommandIntent::Undo => {
+    Undo => {
       let result = restore_text_history(ctx.text_control, text, undo=true)
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
@@ -331,7 +327,7 @@ fn[Msg] handle_text_field_command(
         },
       )
     }
-    @core.CommandIntent::Redo => {
+    Redo => {
       let result = restore_text_history(ctx.text_control, text, undo=false)
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
@@ -343,7 +339,7 @@ fn[Msg] handle_text_field_command(
         },
       )
     }
-    @core.CommandIntent::SelectAll => {
+    SelectAll => {
       let next_control = select_text_control(ctx.text_control, text)
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=true),

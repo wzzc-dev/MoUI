@@ -114,7 +114,7 @@ fn run_run_desktop(
     if result.exit_code == 0 {
       stdout_outcome(text)
     } else {
-      { exit_code: result.exit_code, stdout: text, stderr: "" }
+      { exit_code: result.exit_code, stdout: text, stderr: "", }
     }
   }
 }

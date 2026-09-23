@@ -11,7 +11,7 @@ priv struct MacosAccessibilityState {
 
 ///|
 fn MacosAccessibilityState::new() -> MacosAccessibilityState {
-  { bindings: [] }
+  { bindings: [], }
 }
 
 ///|
@@ -24,7 +24,7 @@ fn MacosAccessibilityState::binding(
       return binding
     }
   }
-  let binding = { window_id, cursor: None }
+  let binding = { window_id, cursor: None, }
   self.bindings.push(binding)
   binding
 }
@@ -66,81 +66,81 @@ fn macos_record_accessibility_evidence(message : String) -> Unit {
 ///|
 fn macos_semantics_role_code(role : @core.SemanticsRole) -> String {
   match role {
-    @core.SemanticsRole::None => "none"
-    @core.SemanticsRole::Text => "text"
-    @core.SemanticsRole::Link => "link"
-    @core.SemanticsRole::Heading => "heading"
-    @core.SemanticsRole::Navigation => "navigation"
-    @core.SemanticsRole::Main => "main"
-    @core.SemanticsRole::Button => "button"
-    @core.SemanticsRole::Checkbox => "checkbox"
-    @core.SemanticsRole::TextField => "text_field"
-    @core.SemanticsRole::List => "list"
-    @core.SemanticsRole::ListItem => "list_item"
-    @core.SemanticsRole::Grid => "grid"
-    @core.SemanticsRole::ScrollView => "scroll_view"
-    @core.SemanticsRole::Switch => "switch"
-    @core.SemanticsRole::Radio => "radio"
-    @core.SemanticsRole::Slider => "slider"
-    @core.SemanticsRole::Progress => "progress"
-    @core.SemanticsRole::Tab => "tab"
-    @core.SemanticsRole::Dialog => "dialog"
-    @core.SemanticsRole::Tooltip => "tooltip"
-    @core.SemanticsRole::Menu => "menu"
-    @core.SemanticsRole::ButtonGroup => "button_group"
-    @core.SemanticsRole::Form => "form"
-    @core.SemanticsRole::FormField => "form_field"
-    @core.SemanticsRole::Tree => "tree"
-    @core.SemanticsRole::TreeItem => "tree_item"
-    @core.SemanticsRole::Group => "group"
-    @core.SemanticsRole::WebView => "web_view"
-    @core.SemanticsRole::Image => "image"
-    @core.SemanticsRole::Alert => "alert"
-    @core.SemanticsRole::Status => "status"
-    @core.SemanticsRole::ComboBox => "combo_box"
-    @core.SemanticsRole::Option => "option"
-    @core.SemanticsRole::Table => "table"
-    @core.SemanticsRole::Row => "row"
-    @core.SemanticsRole::Cell => "cell"
-    @core.SemanticsRole::Separator => "separator"
+    None => "none"
+    Text => "text"
+    Link => "link"
+    Heading => "heading"
+    Navigation => "navigation"
+    Main => "main"
+    Button => "button"
+    Checkbox => "checkbox"
+    TextField => "text_field"
+    List => "list"
+    ListItem => "list_item"
+    Grid => "grid"
+    ScrollView => "scroll_view"
+    Switch => "switch"
+    Radio => "radio"
+    Slider => "slider"
+    Progress => "progress"
+    Tab => "tab"
+    Dialog => "dialog"
+    Tooltip => "tooltip"
+    Menu => "menu"
+    ButtonGroup => "button_group"
+    Form => "form"
+    FormField => "form_field"
+    Tree => "tree"
+    TreeItem => "tree_item"
+    Group => "group"
+    WebView => "web_view"
+    Image => "image"
+    Alert => "alert"
+    Status => "status"
+    ComboBox => "combo_box"
+    Option => "option"
+    Table => "table"
+    Row => "row"
+    Cell => "cell"
+    Separator => "separator"
   }
 }
 
 ///|
 fn macos_semantics_action_code(kind : @core.SemanticsActionKind) -> String {
   match kind {
-    @core.SemanticsActionKind::Activate => "activate"
-    @core.SemanticsActionKind::Focus => "focus"
-    @core.SemanticsActionKind::SetText => "set_text"
-    @core.SemanticsActionKind::Submit => "submit"
-    @core.SemanticsActionKind::Scroll => "scroll"
-    @core.SemanticsActionKind::Select => "select"
-    @core.SemanticsActionKind::Expand => "expand"
-    @core.SemanticsActionKind::Collapse => "collapse"
-    @core.SemanticsActionKind::Dismiss => "dismiss"
-    @core.SemanticsActionKind::Increment => "increment"
-    @core.SemanticsActionKind::Decrement => "decrement"
-    @core.SemanticsActionKind::SetNumericValue => "set_numeric_value"
-    @core.SemanticsActionKind::SetSelection => "set_selection"
-    @core.SemanticsActionKind::ShowMenu => "show_menu"
+    Activate => "activate"
+    Focus => "focus"
+    SetText => "set_text"
+    Submit => "submit"
+    Scroll => "scroll"
+    Select => "select"
+    Expand => "expand"
+    Collapse => "collapse"
+    Dismiss => "dismiss"
+    Increment => "increment"
+    Decrement => "decrement"
+    SetNumericValue => "set_numeric_value"
+    SetSelection => "set_selection"
+    ShowMenu => "show_menu"
   }
 }
 
 ///|
 fn macos_semantics_live_code(live : @core.SemanticsLive) -> String {
   match live {
-    @core.SemanticsLive::Off => "off"
-    @core.SemanticsLive::Polite => "polite"
-    @core.SemanticsLive::Assertive => "assertive"
+    Off => "off"
+    Polite => "polite"
+    Assertive => "assertive"
   }
 }
 
 ///|
 fn macos_checked_json(value : @core.SemanticsCheckedState?) -> Json {
   match value {
-    Some(@core.SemanticsCheckedState::Unchecked) => "unchecked".to_json()
-    Some(@core.SemanticsCheckedState::Checked) => "checked".to_json()
-    Some(@core.SemanticsCheckedState::Mixed) => "mixed".to_json()
+    Some(Unchecked) => "unchecked".to_json()
+    Some(Checked) => "checked".to_json()
+    Some(Mixed) => "mixed".to_json()
     None => (None : String?).to_json()
   }
 }
@@ -210,7 +210,7 @@ fn macos_optional_node_id_json(value : @core.SemanticsNodeId?) -> Json {
 ///|
 fn macos_semantics_read_json(read : @runtime.SemanticsRead) -> Json? {
   match read {
-    @runtime.SemanticsRead::Full(snapshot) =>
+    Full(snapshot) =>
       Some(
         (
           {
@@ -226,7 +226,7 @@ fn macos_semantics_read_json(read : @runtime.SemanticsRead) -> Json? {
             "announcements": ([] : Array[Json]),
           } : Json),
       )
-    @runtime.SemanticsRead::Delta(delta) =>
+    Delta(delta) =>
       Some(
         (
           {
@@ -242,7 +242,7 @@ fn macos_semantics_read_json(read : @runtime.SemanticsRead) -> Json? {
             "announcements": delta.announcements().map(macos_announcement_json),
           } : Json),
       )
-    @runtime.SemanticsRead::Unchanged(_) => None
+    Unchanged(_) => None
   }
 }
 
@@ -272,7 +272,7 @@ fn macos_json_string_field(
   name : String,
 ) -> String? {
   match fields.get(name) {
-    Some(Json::String(value)) => Some(value)
+    Some(String(value)) => Some(value)
     _ => None
   }
 }
@@ -283,50 +283,28 @@ fn macos_native_semantics_action(
   value : String,
 ) -> @core.SemanticsAction? {
   match kind {
-    "activate" => Some(@core.SemanticsAction::Activate)
-    "focus" => Some(@core.SemanticsAction::Focus)
-    "set_text" => Some(@core.SemanticsAction::SetText(value))
-    "submit" => Some(@core.SemanticsAction::Submit)
+    "activate" => Some(Activate)
+    "focus" => Some(Focus)
+    "set_text" => Some(SetText(value))
+    "submit" => Some(Submit)
     "scroll" =>
       match value {
-        "forward" =>
-          Some(
-            @core.SemanticsAction::Scroll(
-              @core.SemanticsScrollDirection::Forward,
-            ),
-          )
-        "backward" =>
-          Some(
-            @core.SemanticsAction::Scroll(
-              @core.SemanticsScrollDirection::Backward,
-            ),
-          )
-        "up" =>
-          Some(
-            @core.SemanticsAction::Scroll(@core.SemanticsScrollDirection::Up),
-          )
-        "down" =>
-          Some(
-            @core.SemanticsAction::Scroll(@core.SemanticsScrollDirection::Down),
-          )
-        "left" =>
-          Some(
-            @core.SemanticsAction::Scroll(@core.SemanticsScrollDirection::Left),
-          )
-        "right" =>
-          Some(
-            @core.SemanticsAction::Scroll(@core.SemanticsScrollDirection::Right),
-          )
+        "forward" => Some(Scroll(Forward))
+        "backward" => Some(Scroll(Backward))
+        "up" => Some(Scroll(Up))
+        "down" => Some(Scroll(Down))
+        "left" => Some(Scroll(Left))
+        "right" => Some(Scroll(Right))
         _ => None
       }
-    "select" => Some(@core.SemanticsAction::Select)
-    "expand" => Some(@core.SemanticsAction::Expand)
-    "collapse" => Some(@core.SemanticsAction::Collapse)
-    "dismiss" => Some(@core.SemanticsAction::Dismiss)
-    "increment" => Some(@core.SemanticsAction::Increment)
-    "decrement" => Some(@core.SemanticsAction::Decrement)
+    "select" => Some(Select)
+    "expand" => Some(Expand)
+    "collapse" => Some(Collapse)
+    "dismiss" => Some(Dismiss)
+    "increment" => Some(Increment)
+    "decrement" => Some(Decrement)
     "set_numeric_value" =>
-      Some(@core.SemanticsAction::SetNumericValue(@string.parse_double(value))) catch {
+      Some(SetNumericValue(@string.parse_double(value))) catch {
         _ => None
       }
     "set_selection" =>
@@ -340,7 +318,7 @@ fn macos_native_semantics_action(
             (Some(start), Some(end)) if start <= 2147483647UL &&
               end <= 2147483647UL =>
               Some(
-                @core.SemanticsAction::SetSelection(
+                SetSelection(
                   @core.TextRange::new(start=start.to_int(), end=end.to_int()),
                 ),
               )
@@ -348,7 +326,7 @@ fn macos_native_semantics_action(
           }
         _ => None
       }
-    "show_menu" => Some(@core.SemanticsAction::ShowMenu)
+    "show_menu" => Some(ShowMenu)
     _ => None
   }
 }
@@ -371,7 +349,7 @@ fn MacosNativeHostBackend::dispatch_accessibility_actions(
         continue
       }
     }
-    guard parsed is Json::Object(fields) else {
+    guard parsed is Object(fields) else {
       println("macOS accessibility action decode failed: expected object")
       continue
     }
@@ -391,13 +369,9 @@ fn MacosNativeHostBackend::dispatch_accessibility_actions(
       continue
     }
     let request : @runtime.PerformSemanticsActionRequest = {
-      target: @core.SemanticsTarget::ByNodeId(
-        @core.SemanticsNodeId::new(node_id),
-      ),
+      target: ByNodeId(@core.SemanticsNodeId::new(node_id)),
       action,
-      precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-        @core.SemanticsGeneration::new(generation),
-      ),
+      precondition: Exact(@core.SemanticsGeneration::new(generation)),
     }
     match driver.perform_semantics_action(request) {
       Ok(receipt) => {
@@ -437,10 +411,9 @@ fn MacosNativeHostBackend::sync_accessibility_window(
           let encoded = @utf8.encode(payload.stringify(), bom=false)
           if macos_accessibility_sync_native(raw_view, encoded) == 0 {
             binding.cursor = match read {
-              @runtime.SemanticsRead::Full(snapshot) =>
-                Some(snapshot.generation())
-              @runtime.SemanticsRead::Delta(delta) => Some(delta.to())
-              @runtime.SemanticsRead::Unchanged(generation) => Some(generation)
+              Full(snapshot) => Some(snapshot.generation())
+              Delta(delta) => Some(delta.to())
+              Unchanged(generation) => Some(generation)
             }
           }
         }

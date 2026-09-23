@@ -89,7 +89,7 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
   let commands : Array[@core.DrawCommand] = []
   let layer = bench_layer_frame()
   commands.push(
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(rect=layer, radius=16.0),
       @core.Brush::linear_gradient(
         start=@core.Point::new(x=layer.origin.x, y=layer.origin.y),
@@ -103,20 +103,20 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
     ),
   )
   commands.push(
-    @core.DrawCommand::StrokeRoundedRect(
+    StrokeRoundedRect(
       @core.RoundedRect::new(rect=layer, radius=16.0),
       bench_color(0.18, 0.24, 0.30, a=0.28),
       1.0,
     ),
   )
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="MoUI renderer cache benchmark",
         frame=@core.Rect::new(x=56.0, y=54.0, width=430.0, height=32.0),
         font=bench_font(22.0, weight=700),
         color=bench_color(0.05, 0.08, 0.12),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )
@@ -127,7 +127,7 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
       let tone = 0.18 + (row + col).to_double() * 0.018
       let rect = @core.Rect::new(x~, y~, width=150.0, height=30.0)
       commands.push(
-        @core.DrawCommand::DrawShadow(
+        DrawShadow(
           @core.ShadowSpec::new(
             rect=@core.RoundedRect::new(rect~, radius=8.0),
             color=bench_color(0.0, 0.0, 0.0, a=0.08),
@@ -137,7 +137,7 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
         ),
       )
       commands.push(
-        @core.DrawCommand::FillRoundedRectBrush(
+        FillRoundedRectBrush(
           @core.RoundedRect::new(rect~, radius=8.0),
           @core.Brush::linear_gradient(
             start=@core.Point::new(x~, y~),
@@ -148,14 +148,14 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
         ),
       )
       commands.push(
-        @core.DrawCommand::StrokeRoundedRect(
+        StrokeRoundedRect(
           @core.RoundedRect::new(rect~, radius=8.0),
           bench_color(0.17, 0.20, 0.24, a=0.16),
           1.0,
         ),
       )
       commands.push(
-        @core.DrawCommand::DrawText(
+        DrawText(
           @core.TextRun::new(
             text="cell \{row}.\{col}  alpha beta gamma",
             frame=@core.Rect::new(
@@ -166,7 +166,7 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
             ),
             font=bench_font(11.0, weight=500),
             color=bench_color(0.07, 0.10, 0.14),
-            align=@core.TextAlign::TextStart,
+            align=TextStart,
           ),
         ),
       )
@@ -176,11 +176,11 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
     let x = 72.0 + (index % 12).to_double() * 56.0
     let y = 520.0 + (index / 12).to_double() * 18.0
     commands.push(
-      @core.DrawCommand::DrawPath(
+      DrawPath(
         @core.PathSpec::new(
           verbs=[
-            @core.PathVerb::MoveTo(@core.Point::new(x~, y~)),
-            @core.PathVerb::CubicTo(
+            MoveTo(@core.Point::new(x~, y~)),
+            CubicTo(
               @core.Point::new(x=x + 10.0, y=y - 18.0),
               @core.Point::new(x=x + 28.0, y=y + 20.0),
               @core.Point::new(x=x + 42.0, y~),
@@ -193,10 +193,10 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
     )
   }
   commands.push(
-    @core.DrawCommand::PushLayer(
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.64,
-        mask=@core.LayerMask::RoundedMask(
+        mask=RoundedMask(
           @core.RoundedRect::new(
             rect=@core.Rect::new(x=548.0, y=66.0, width=190.0, height=86.0),
             radius=14.0,
@@ -206,11 +206,9 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
       ),
     ),
   )
+  commands.push(PushFilter(Saturate(1.35)))
   commands.push(
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(1.35)),
-  )
-  commands.push(
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=548.0, y=66.0, width=190.0, height=86.0),
         radius=14.0,
@@ -223,8 +221,8 @@ fn bench_static_layer_commands() -> Array[@core.DrawCommand] {
       ),
     ),
   )
-  commands.push(@core.DrawCommand::PopFilter)
-  commands.push(@core.DrawCommand::PopLayer)
+  commands.push(PopFilter)
+  commands.push(PopLayer)
   commands
 }
 
@@ -251,13 +249,13 @@ fn bench_append_overlay(
 ) -> Unit {
   let rect = bench_overlay_rect(frame_index)
   commands.push(
-    @core.DrawCommand::FillRoundedRect(
+    FillRoundedRect(
       @core.RoundedRect::new(rect~, radius=7.0),
       bench_color(0.98, 0.18, 0.24, a=0.86),
     ),
   )
   commands.push(
-    @core.DrawCommand::StrokeRoundedRect(
+    StrokeRoundedRect(
       @core.RoundedRect::new(rect~, radius=7.0),
       bench_color(0.10, 0.04, 0.05, a=0.62),
       1.0,
@@ -290,11 +288,9 @@ fn bench_cached_update_frame(
   spec : @core.RetainedLayerSpec,
   static_commands : Array[@core.DrawCommand],
 ) -> @core.DrawFrame {
-  let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::BeginRetainedLayer(spec),
-  ]
+  let commands : Array[@core.DrawCommand] = [BeginRetainedLayer(spec)]
   bench_append_static(commands, static_commands)
-  commands.push(@core.DrawCommand::EndRetainedLayer(spec.key))
+  commands.push(EndRetainedLayer(spec.key))
   bench_append_overlay(commands, 0)
   bench_draw_frame(commands, @core.DamageRegion::full("benchmark cache update"))
 }
@@ -305,11 +301,9 @@ fn bench_cached_hit_frame(
   static_commands : Array[@core.DrawCommand],
   frame_index : Int,
 ) -> @core.DrawFrame {
-  let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::BeginRetainedLayer(spec),
-  ]
+  let commands : Array[@core.DrawCommand] = [BeginRetainedLayer(spec)]
   bench_append_static(commands, static_commands)
-  commands.push(@core.DrawCommand::EndRetainedLayer(spec.key))
+  commands.push(EndRetainedLayer(spec.key))
   bench_append_overlay(commands, frame_index)
   bench_draw_frame(commands, bench_overlay_damage(frame_index))
 }

@@ -82,7 +82,7 @@ pub fn RendererRecoveryBudget::new(
   recovery_vsync_budget~ : Int,
   max_consecutive_recovery_failures~ : Int,
 ) -> RendererRecoveryBudget {
-  { vsync_ms, recovery_vsync_budget, max_consecutive_recovery_failures }
+  { vsync_ms, recovery_vsync_budget, max_consecutive_recovery_failures, }
 }
 
 ///|
@@ -98,7 +98,7 @@ pub fn RendererRecovery::new(
   budget? : RendererRecoveryBudget = RendererRecoveryBudget::default(),
 ) -> RendererRecovery {
   {
-    state: RendererRecoveryState::Idle,
+    state: Idle,
     loss_count: 0,
     last_loss_reason: "",
     last_loss_time_ms: 0.0,

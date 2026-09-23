@@ -2,8 +2,8 @@
 test "Renderer cached image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(2, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let icon = @graphics.Pixmap::new(1, 1)
   icon.set_pixel(0, 0, @graphics.Color::green())
 
@@ -38,8 +38,8 @@ test "Renderer cached image path uses RendererResources" {
 test "Renderer cached image source rect path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let atlas = @graphics.Pixmap::new(3, 1)
   atlas.set_pixel(0, 0, @graphics.Color::red())
   atlas.set_pixel(1, 0, @graphics.Color::green())
@@ -84,7 +84,7 @@ test "Renderer cached image source rect path uses RendererResources" {
     resources,
     "atlas",
     @graphics.Paint::new(),
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   assert_true(scaled.did_hit_cache())
   assert_eq(canvas.get_pixmap().get_pixel(2, 0), @graphics.Color::blue())
@@ -95,8 +95,8 @@ test "Renderer cached image source rect path uses RendererResources" {
 test "Renderer cached tiled image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
 
@@ -152,8 +152,8 @@ test "Renderer cached transformed image path uses RendererResources" {
     ),
   )
   canvas.set_clip_rect(@graphics.Rect::new(x=2.0, y=1.0, width=2.0, height=1.0))
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
 
   let first = renderer.draw_transformed_sampled_pixmap_cached_with_renderer_resources(
@@ -165,7 +165,7 @@ test "Renderer cached transformed image path uses RendererResources" {
     resources,
     "tile-transform",
     @graphics.Paint::new(),
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   assert_true(first.did_insert_pixmap())
   assert_true(!first.did_hit_cache())
@@ -189,7 +189,7 @@ test "Renderer cached transformed image path uses RendererResources" {
     resources,
     "tile-transform",
     @graphics.Paint::new(),
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   assert_true(!second.did_insert_pixmap())
   assert_true(second.did_hit_cache())
@@ -201,8 +201,8 @@ test "Renderer cached transformed image path uses RendererResources" {
 test "Renderer cached nine-patch image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(5, 5)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let panel = make_renderer_test_nine_patch_source()
   let insets = @graphics.NinePatchInsets::new(left=1, top=1, right=1, bottom=1)
 
@@ -216,7 +216,7 @@ test "Renderer cached nine-patch image path uses RendererResources" {
     resources,
     "panel",
     @graphics.Paint::new(),
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   assert_true(first.did_insert_pixmap())
   assert_true(!first.did_hit_cache())
@@ -246,7 +246,7 @@ test "Renderer cached nine-patch image path uses RendererResources" {
     resources,
     "panel",
     @graphics.Paint::new(),
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   assert_true(!second.did_insert_pixmap())
   assert_true(second.did_hit_cache())
@@ -260,8 +260,8 @@ test "Renderer cached nine-patch image path uses RendererResources" {
 test "Renderer sampled cached image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(3, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let image = make_renderer_test_bicubic_source()
 
   let first = renderer.draw_sampled_pixmap_cached_with_renderer_resources(
@@ -273,7 +273,7 @@ test "Renderer sampled cached image path uses RendererResources" {
     resources,
     "sampled",
     @graphics.Paint::new(),
-    @graphics.ImageSampling::Bicubic,
+    Bicubic,
   )
   assert_true(first.did_insert_pixmap())
   assert_true(!first.did_hit_cache())
@@ -297,7 +297,7 @@ test "Renderer sampled cached image path uses RendererResources" {
     resources,
     "sampled",
     @graphics.Paint::new(),
-    @graphics.ImageSampling::Bilinear,
+    Bilinear,
   )
   assert_true(!second.did_insert_pixmap())
   assert_true(second.did_hit_cache())
@@ -311,8 +311,8 @@ test "Renderer sampled cached image path uses RendererResources" {
 test "Renderer quality cached image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 2)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let panel = @graphics.Pixmap::new(1, 1)
   panel.set_pixel(0, 0, @graphics.Color::green())
 
@@ -325,7 +325,7 @@ test "Renderer quality cached image path uses RendererResources" {
     resources,
     "panel",
     @graphics.Paint::new(),
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   assert_true(first.did_insert_pixmap())
   assert_eq(canvas.get_pixmap().get_pixel(0, 0), @graphics.Color::green())
@@ -342,7 +342,7 @@ test "Renderer quality cached image path uses RendererResources" {
     resources,
     "panel",
     @graphics.Paint::new(),
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   assert_true(second.did_hit_cache())
   assert_eq(canvas.get_pixmap().get_pixel(2, 0), @graphics.Color::green())
@@ -360,7 +360,7 @@ test "Renderer quality cached image path uses RendererResources" {
       resources,
       "accent",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
   )
   assert_eq(resources.get_image_cache().len(), 1)

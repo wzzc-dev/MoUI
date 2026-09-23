@@ -37,7 +37,7 @@ fn WebApp::dispatch_web_pointer_input(
     Some(phase) => {
       let scale_factor = self.current_scale_factor(window_id)
       let position = @window_input.physical_position_to_core(
-        @dpi.PhysicalPositionF64(x_px, y_px),
+        PhysicalPositionF64(x_px, y_px),
         scale_factor~,
       )
       self.last_pointer = position
@@ -47,7 +47,7 @@ fn WebApp::dispatch_web_pointer_input(
         phase~,
         button~,
         wheel_delta=@window_input.physical_position_to_core(
-          @dpi.PhysicalPositionF64(delta_x_px, delta_y_px),
+          PhysicalPositionF64(delta_x_px, delta_y_px),
           scale_factor~,
         ),
         modifiers=self.modifiers,
@@ -59,7 +59,7 @@ fn WebApp::dispatch_web_pointer_input(
           // its ordinary fire-and-forget event result for this one path.
           let result = slot.driver.runtime.dispatch_pointer_input(pointer)
           slot.driver.request_redraw_if_needed()
-          ignore(self.input.publish(window_id, @host.Event::Pointer(pointer)))
+          ignore(self.input.publish(window_id, Pointer(pointer)))
           self.drain_async_host_services()
           self.sync_text_input_session()
           result.host_flags()

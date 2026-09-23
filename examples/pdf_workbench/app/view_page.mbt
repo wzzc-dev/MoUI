@@ -54,14 +54,10 @@ fn pdf_workbench_page_surface(
     ),
   )
   @views.container(
-    @views.column(
-      rows,
-      spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Stretch,
-    ),
+    @views.column(rows, spacing=theme.spacing_scale.sm, align=Stretch),
     width=metrics.page_width,
     height=metrics.body_height,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -80,14 +76,14 @@ fn pdf_workbench_page_toolbar(
       @views.button(
         "Prev",
         on_click=PreviousPage,
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=56.0,
         height=32.0,
       ),
       @views.text(
         page_label,
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=(metrics.page_width - 514.0).max(36.0),
         height=32.0,
@@ -95,7 +91,7 @@ fn pdf_workbench_page_toolbar(
       @views.button(
         "Next",
         on_click=NextPage,
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=56.0,
         height=32.0,
@@ -105,7 +101,7 @@ fn pdf_workbench_page_toolbar(
         model.page_number_draft,
         on_input=value => PageNumberChanged(value),
         placeholder="Page",
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width=52.0,
         height=32.0,
@@ -113,14 +109,14 @@ fn pdf_workbench_page_toolbar(
       @views.button(
         "Go",
         on_click=GoToPage,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=40.0,
         height=32.0,
       ),
       @views.text(
         pdf_workbench_zoom_label(model.zoom),
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=48.0,
         height=24.0,
@@ -130,7 +126,7 @@ fn pdf_workbench_page_toolbar(
       @views.button(
         "Fit",
         on_click=ZoomFitWidth,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=44.0,
         height=32.0,
@@ -138,14 +134,14 @@ fn pdf_workbench_page_toolbar(
       @views.button(
         fullscreen_label,
         on_click=ToggleReaderFullscreen,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=54.0,
         height=32.0,
       ),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -168,7 +164,7 @@ fn pdf_workbench_compact_edit_strip(
         } else {
           "Edit"
         },
-        role=@views.TextRole::Control,
+        role=Control,
         theme~,
         width=72.0,
         height=28.0,
@@ -176,7 +172,7 @@ fn pdf_workbench_compact_edit_strip(
       @views.button(
         "Rotate 90",
         on_click=RotateCurrentPage,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=82.0,
         height=30.0,
@@ -184,7 +180,7 @@ fn pdf_workbench_compact_edit_strip(
       @views.button(
         "Crop",
         on_click=CropCurrentPage,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=58.0,
         height=30.0,
@@ -192,7 +188,7 @@ fn pdf_workbench_compact_edit_strip(
       @views.button(
         "Stamp",
         on_click=StampCurrentPage,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=66.0,
         height=30.0,
@@ -201,7 +197,7 @@ fn pdf_workbench_compact_edit_strip(
       @views.button(
         "Undo Last",
         on_click=UndoLastEdit,
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=78.0,
         height=30.0,
@@ -209,14 +205,14 @@ fn pdf_workbench_compact_edit_strip(
       @views.button(
         "Discard Edits",
         on_click=DiscardEdits,
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=104.0,
         height=30.0,
       ),
     ],
     spacing=theme.spacing_scale.xs,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 

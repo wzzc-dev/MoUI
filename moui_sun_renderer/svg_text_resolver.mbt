@@ -15,7 +15,7 @@ priv struct SunSvgTextResolverState {
 }
 
 ///|
-let sun_svg_text_resolver_state : SunSvgTextResolverState = { face: None }
+let sun_svg_text_resolver_state : SunSvgTextResolverState = { face: None, }
 
 ///|
 fn sun_svg_default_face() -> @sun_text.FontFace? {
@@ -61,7 +61,7 @@ fn sun_svg_resolve_text_run(
       if outline.polygons.is_empty() {
         None
       } else {
-        Some({ width: outline.width, polygons: outline.polygons })
+        Some({ width: outline.width, polygons: outline.polygons, })
       }
     }
     None => None

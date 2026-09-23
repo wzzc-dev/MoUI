@@ -13,23 +13,23 @@ fn finder_content(
       [
         @views.text(
           "No files match \"\{model.finder_query}\"",
-          role=@views.TextRole::Title,
+          role=Title,
           theme~,
           width=inner_width,
           height=36.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.foreground),
         @views.button(
           "Clear Search",
           on_click=FinderQueryChanged(""),
-          variant=@views.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=126.0,
           height=38.0,
         ),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   } else {
     match model.finder_view_mode {
@@ -50,11 +50,11 @@ fn finder_content(
                 file_list_row(entry, model, inner_width, palette, theme)
               }),
               spacing=2.0,
-              align=@views.CrossAlign::Stretch,
+              align=Stretch,
             ),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Stretch,
+          align=Stretch,
         )
     }
   }
@@ -65,7 +65,7 @@ fn finder_content(
     bottom=14.0,
     right=14.0,
   )
-  @views.column([inner], spacing=0.0, align=@views.CrossAlign::Start)
+  @views.column([inner], spacing=0.0, align=Start)
   .frame(width~, height~)
   .background(palette.content)
 }
@@ -99,7 +99,7 @@ fn finder_status(
         [
           @views.text(
             left_label,
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=(width * 0.5).max(120.0),
             height=18.0,
@@ -109,17 +109,17 @@ fn finder_status(
           @views.spacer(min_length=8.0, weight=1.0),
           @views.text(
             "214.3 GB available",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=140.0,
             height=18.0,
-            align=@text.TextAlign::TextEnd,
+            align=TextEnd,
           )
           .font(@text.FontSpec::new(size=11.0, weight=520))
           .foreground(palette.muted),
         ],
         spacing=8.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       left=14.0,
       top=3.0,
@@ -139,7 +139,7 @@ fn visible_finder_entries(model : DesktopModel) -> Array[FileEntry] {
         kind: "Imported from host",
         size: "External",
         date: "Today",
-        icon: @views.IconName::FileNew,
+        icon: FileNew,
         color: rgba8(91, 143, 249),
       })
     }
@@ -159,7 +159,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Text Document",
           size: "14 KB",
           date: "Jul 22, 2026",
-          icon: @views.IconName::FileNew,
+          icon: FileNew,
           color: rgba8(91, 143, 249),
         },
         {
@@ -167,7 +167,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Text Document",
           size: "22 KB",
           date: "Jul 19, 2026",
-          icon: @views.IconName::FileNew,
+          icon: FileNew,
           color: rgba8(121, 103, 238),
         },
         {
@@ -175,7 +175,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Markdown",
           size: "8 KB",
           date: "Jul 12, 2026",
-          icon: @views.IconName::ListBullet,
+          icon: ListBullet,
           color: rgba8(45, 166, 153),
         },
       ]
@@ -186,7 +186,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Application",
           size: "48 MB",
           date: "Jul 24, 2026",
-          icon: @views.IconName::Link,
+          icon: Link,
           color: rgba8(36, 177, 216),
         },
         {
@@ -194,7 +194,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Application",
           size: "31 MB",
           date: "Jul 18, 2026",
-          icon: @views.IconName::ListTask,
+          icon: ListTask,
           color: rgba8(250, 194, 55),
         },
         {
@@ -202,7 +202,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Application",
           size: "26 MB",
           date: "Jul 21, 2026",
-          icon: @views.IconName::Settings,
+          icon: Settings,
           color: rgba8(104, 112, 124),
         },
         {
@@ -210,7 +210,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Application",
           size: "19 MB",
           date: "Jul 15, 2026",
-          icon: @views.IconName::CodeInline,
+          icon: CodeInline,
           color: rgba8(35, 39, 47),
         },
       ]
@@ -221,7 +221,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "PDF Document",
           size: "4.8 MB",
           date: "Jul 26, 2026",
-          icon: @views.IconName::FileNew,
+          icon: FileNew,
           color: rgba8(238, 82, 83),
         },
         {
@@ -229,7 +229,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Folder",
           size: "184 MB",
           date: "Jul 23, 2026",
-          icon: @views.IconName::FolderOpen,
+          icon: FolderOpen,
           color: rgba8(33, 150, 243),
         },
         {
@@ -237,7 +237,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           kind: "Archive",
           size: "72 MB",
           date: "Jul 20, 2026",
-          icon: @views.IconName::Save,
+          icon: Save,
           color: rgba8(244, 137, 53),
         },
       ]
@@ -261,17 +261,17 @@ fn file_icon(
         glyph,
         @views.text(
           entry.name,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=112.0,
           height=34.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=12.0, weight=500))
         .foreground(palette.foreground),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=118.0,
     height=118.0,
@@ -342,11 +342,11 @@ fn document_glyph(
       @views.container(
         @views.text(
           badge,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme=@views.light_theme(),
           width=34.0,
           height=14.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=9.0, weight=700))
         .foreground(@graphics.Color::white()),
@@ -395,47 +395,35 @@ fn file_list_header(
     [
       @views.row(
         [
-          @views.text(
-            "Name",
-            role=@views.TextRole::Caption,
-            theme~,
-            width=name_w,
-            height=18.0,
-          )
+          @views.text("Name", role=Caption, theme~, width=name_w, height=18.0)
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.muted),
           @views.text(
             "Date Modified",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=date_w,
             height=18.0,
           )
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.muted),
-          @views.text(
-            "Kind",
-            role=@views.TextRole::Caption,
-            theme~,
-            width=kind_w,
-            height=18.0,
-          )
+          @views.text("Kind", role=Caption, theme~, width=kind_w, height=18.0)
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.muted),
           @views.spacer(min_length=4.0, weight=1.0),
           @views.text(
             "Size",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=size_w,
             height=18.0,
-            align=@text.TextAlign::TextEnd,
+            align=TextEnd,
           )
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.muted),
         ],
         spacing=10.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       @views.container(
         @views.spacer(min_length=0.0, weight=0.0),
@@ -446,7 +434,7 @@ fn file_list_header(
       ),
     ],
     spacing=4.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -472,21 +460,21 @@ fn file_list_row(
         ),
         @views.text(
           entry.name,
-          role=@views.TextRole::Body,
+          role=Body,
           theme~,
           width=(width * 0.40).max(120.0),
           height=30.0,
         ).foreground(palette.foreground),
         @views.text(
           entry.date,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=(width * 0.22).max(96.0),
           height=30.0,
         ).foreground(palette.muted),
         @views.text(
           entry.kind,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=(width * 0.20).max(72.0),
           height=30.0,
@@ -494,15 +482,15 @@ fn file_list_row(
         @views.spacer(min_length=4.0),
         @views.text(
           entry.size,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=66.0,
           height=30.0,
-          align=@text.TextAlign::TextEnd,
+          align=TextEnd,
         ).foreground(palette.muted),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=42.0,

@@ -1,34 +1,34 @@
 ///|
 test "desktop session opens windows and keeps overlays exclusive" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
   debug_inspect(model.phase, content="Boot")
   // Boot advances on the clock tick or an explicit tap.
-  let booted = update(model, AdvanceBoot)
+  let booted = @app.update(model, AdvanceBoot)
   debug_inspect(booted.phase, content="Locked")
-  let at_login = update(booted, ShowLogin)
+  let at_login = @app.update(booted, ShowLogin)
   debug_inspect(at_login.phase, content="Login")
-  let unlocked = update(at_login, SubmitLogin("demo"))
+  let unlocked = @app.update(at_login, SubmitLogin("demo"))
   debug_inspect(unlocked.phase, content="Unlocked")
   debug_inspect(
     unlocked.focused_window().map(record => record.id.app),
     content="Some(FinderApp)",
   )
-  let launcher = update(unlocked, ToggleLauncher)
+  let launcher = @app.update(unlocked, ToggleLauncher)
   debug_inspect(launcher.overlay, content="Launcher")
-  let controls = update(launcher, ToggleControlCenter)
+  let controls = @app.update(launcher, ToggleControlCenter)
   debug_inspect(controls.overlay, content="ControlCenter")
-  let safari = update(controls, OpenSafari)
+  let safari = @app.update(controls, OpenSafari)
   debug_inspect(safari.overlay, content="OverlayNone")
   debug_inspect(
     safari.focused_window().map(record => record.id.app),
     content="Some(SafariApp)",
   )
-  inspect(update(safari, ToggleDarkMode).dark_mode, content="true")
+  inspect(@app.update(safari, ToggleDarkMode).dark_mode, content="true")
 }
 
 ///|
 test "finder and browser interactions update controlled state" {
-  let finder = DesktopModel::new()
+  let finder = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -53,7 +53,7 @@ test "finder and browser interactions update controlled state" {
 
 ///|
 test "finder history restores locations and drops the forward branch" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -85,34 +85,28 @@ test "finder history restores locations and drops the forward branch" {
 
 ///|
 test "typed service completions retain imported files and system appearance" {
-  let waiting = DesktopModel::new().update(RequestFileImport)
+  let waiting = @app.DesktopModel::new().update(RequestFileImport)
   debug_inspect(waiting.pending_service, content="Some(FileImportService)")
   let imported = waiting.update(
     FileImportCompleted(
-      @services.ServiceTaskResult::Success([
-        "/tmp/notes.md", "/tmp/notes.md", "/tmp/tahoe.jpg",
-      ]),
+      Success(["/tmp/notes.md", "/tmp/notes.md", "/tmp/tahoe.jpg"]),
     ),
   )
   inspect(imported.imported_files.length(), content="2")
   inspect(imported.last_diagnostic, content="Imported 3 file(s)")
   let dark = imported
     .update(UseSystemAppearance)
-    .update(
-      SystemAppearanceCompleted(
-        @services.ServiceTaskResult::Success(@state.ColorScheme::Dark),
-      ),
-    )
+    .update(SystemAppearanceCompleted(Success(Dark)))
   assert_true(dark.dark_mode)
 }
 
 ///|
 test "service failure cancellation and stale completion stay typed" {
-  let failed = DesktopModel::new()
+  let failed = @app.DesktopModel::new()
     .update(RequestFileImport)
     .update(
       FileImportCompleted(
-        @services.ServiceTaskResult::Failure(
+        Failure(
           @services.ServiceError::new(
             code="unavailable",
             message="file picker unavailable",
@@ -122,23 +116,19 @@ test "service failure cancellation and stale completion stay typed" {
     )
   inspect(failed.last_diagnostic, content="file picker unavailable")
   assert_true(failed.pending_service is None)
-  let cancelled = DesktopModel::new()
+  let cancelled = @app.DesktopModel::new()
     .update(OpenFavorite("moonbitlang.com"))
-    .update(UrlOpenCompleted(@services.ServiceTaskResult::Cancelled))
+    .update(UrlOpenCompleted(Cancelled))
   inspect(cancelled.last_diagnostic, content="URL open cancelled")
-  let waiting = DesktopModel::new().update(RequestFileImport)
-  let stale = waiting.update(
-    SystemAppearanceCompleted(
-      @services.ServiceTaskResult::Success(@state.ColorScheme::Dark),
-    ),
-  )
+  let waiting = @app.DesktopModel::new().update(RequestFileImport)
+  let stale = waiting.update(SystemAppearanceCompleted(Success(Dark)))
   assert_false(stale.dark_mode)
   debug_inspect(stale.pending_service, content="Some(FileImportService)")
 }
 
 ///|
 test "control center values and notification tasks are model owned" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(WifiChanged(false))
     .update(BluetoothChanged(false))
     .update(BrightnessChanged(0.55))
@@ -158,7 +148,7 @@ test "control center values and notification tasks are model owned" {
 
 ///|
 test "menu bar menus are exclusive and commands dismiss after acting" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -200,7 +190,7 @@ test "menu bar menus are exclusive and commands dismiss after acting" {
 
 ///|
 test "window drag preserves a native-style restore position" {
-  let moved = DesktopModel::new()
+  let moved = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -228,7 +218,7 @@ test "window drag preserves a native-style restore position" {
 
 ///|
 test "focus cycles across simultaneous windows by raising z-order" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -260,7 +250,7 @@ test "focus cycles across simultaneous windows by raising z-order" {
 test "closing the focused window falls back to the next window" {
   // Dock-style OpenSafari refocuses; the File-menu "New Safari Window"
   // command spawns a second instance, giving Finder + two Safaris.
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -271,7 +261,7 @@ test "closing the focused window falls back to the next window" {
     model.focused_window().map(record => record.id.serial),
     content="Some(3)",
   )
-  let closed_top = update(model, CloseWindow)
+  let closed_top = @app.update(model, CloseWindow)
   debug_inspect(
     closed_top.focused_window().map(record => record.id),
     content="Some({ app: SafariApp, serial: 2 })",
@@ -292,7 +282,7 @@ test "closing the focused window falls back to the next window" {
 
 ///|
 test "minimize demotes a window and dock reopen restores it" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -326,7 +316,7 @@ test "minimize demotes a window and dock reopen restores it" {
 test "zoom is tracked per window and restore keeps bounds" {
   // Drag the initial Finder window before opening Safari, so the bounds are
   // not affected by the new window's cascade offset.
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -365,7 +355,7 @@ test "zoom is tracked per window and restore keeps bounds" {
 
 ///|
 test "resize stores clamped sizes and skips zoomed windows" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -391,13 +381,13 @@ test "resize stores clamped sizes and skips zoomed windows" {
 ///|
 test "same-app windows cascade and close falls back inside an app" {
   // File-menu "New Finder Window" spawns a second Finder instance.
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
     .update(RunMenuCommand(OpenFinderWindow))
   inspect(model.windows.length(), content="2")
-  let first = model.window_with_id({ app: FinderApp, serial: 1 }).unwrap()
+  let first = model.window_with_id({ app: FinderApp, serial: 1, }).unwrap()
   let second = model.focused_window().unwrap()
   debug_inspect(second.id, content="{ app: FinderApp, serial: 2 }")
   // The new instance cascades down-right from the original position.
@@ -414,13 +404,13 @@ test "same-app windows cascade and close falls back inside an app" {
 
 ///|
 test "menu bar reflects the focused app and lock preserves windows" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
     .update(OpenSafari)
   inspect(model.active_app_label(), content="Safari")
-  let focused_finder = model.update(FocusWindow({ app: FinderApp, serial: 1 }))
+  let focused_finder = model.update(FocusWindow({ app: FinderApp, serial: 1, }))
   inspect(focused_finder.active_app_label(), content="Finder")
   // Locking keeps the session's windows so unlocking restores the layout.
   let locked = focused_finder.update(LockDesktop)
@@ -436,7 +426,7 @@ test "menu bar reflects the focused app and lock preserves windows" {
 ///|
 test "desktop runtime unlocks into Finder at desktop size" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=1280.0,
     height=800.0,
   )
@@ -456,15 +446,13 @@ test "desktop runtime unlocks into Finder at desktop size" {
 ///|
 test "desktop runtime reaches login with Enter from the lock screen" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=1280.0,
     height=800.0,
   )
   skip_boot(runtime)
   // Enter on the lock screen opens the sign-in form.
-  runtime.dispatch_event(
-    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Enter")),
-  )
+  runtime.dispatch_event(Keyboard(@core.KeyboardEvent::new(key="Enter")))
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Unlock"))
   assert_true(has_text(commands, "Demo account — any password works"))
@@ -472,7 +460,7 @@ test "desktop runtime reaches login with Enter from the lock screen" {
 
 ///|
 test "app registry drives labels sizes and ordering" {
-  let registry = app_registry()
+  let registry = @app.app_registry()
   inspect(registry.length(), content="4")
   inspect(registry[0].label, content="Finder")
   inspect(registry[1].label, content="Safari")
@@ -487,7 +475,7 @@ test "app registry drives labels sizes and ordering" {
 
 ///|
 test "new windows adopt registry default sizes" {
-  let opened = DesktopModel::new()
+  let opened = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -497,13 +485,13 @@ test "new windows adopt registry default sizes" {
   inspect(record.bounds.width, content="760")
   inspect(record.bounds.height, content="520")
   // Responsive-default apps keep 0.0 bounds.
-  let finder = opened.window_with_id({ app: FinderApp, serial: 1 }).unwrap()
+  let finder = opened.window_with_id({ app: FinderApp, serial: 1, }).unwrap()
   inspect(finder.bounds.width, content="0")
 }
 
 ///|
 test "notes app creates selects edits and deletes notes" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
   inspect(model.notes.length(), content="1")
   debug_inspect(
     model.active_note_body().has_prefix("Welcome to Mo Notes"),
@@ -545,7 +533,7 @@ test "notes app creates selects edits and deletes notes" {
 
 ///|
 test "terminal commands drive the desktop and report errors" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -594,7 +582,7 @@ test "terminal commands drive the desktop and report errors" {
 ///|
 test "v2 snapshots migrate forward with default notes" {
   let v2 = "{\"schema_version\":2,\"dark_mode\":false,\"wallpaper_source\":\"w.jpg\",\"volume\":0.4,\"brightness\":0.7,\"wifi_enabled\":true,\"bluetooth_enabled\":false,\"low_power_mode\":false,\"windows\":[],\"recent_files\":[],\"icon_placements\":[]}"
-  let migrated = decode_desktop_snapshot(v2)
+  let migrated = @app.decode_desktop_snapshot(v2)
   assert_true(migrated is Some(_))
   let snapshot = migrated.unwrap()
   inspect(snapshot.schema_version, content="4")
@@ -606,7 +594,7 @@ test "v2 snapshots migrate forward with default notes" {
 ///|
 test "desktop runtime shows new apps from the registry" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=1280.0,
     height=800.0,
   )
@@ -615,9 +603,7 @@ test "desktop runtime shows new apps from the registry" {
   click_text(runtime, "Unlock")
   // Open Notes via Spotlight search.
   click_text(runtime, "Spotlight")
-  runtime.dispatch_event(
-    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("Notes")),
-  )
+  runtime.dispatch_event(TextInput(InsertText("Notes")))
   click_text(runtime, "Notes")
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Welcome to Mo Notes"))
@@ -629,10 +615,10 @@ test "desktop runtime shows new apps from the registry" {
 
 ///|
 test "session flows boot lock login logout and back" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
   debug_inspect(model.phase, content="Boot")
   // The clock subscription auto-advances after the second tick.
-  let tick = DesktopClock::new(2026, 7, 19, 0, 9, 41)
+  let tick = @app.DesktopClock::new(2026, 7, 19, 0, 9, 41)
   let ticked = model.update(ClockUpdated(tick))
   debug_inspect(ticked.phase, content="Boot")
   let booted = ticked.update(ClockUpdated(tick))
@@ -660,7 +646,7 @@ test "session flows boot lock login logout and back" {
 
 ///|
 test "boot tap skips the splash in one step" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
   let skipped = model.update(AdvanceBoot)
   debug_inspect(skipped.phase, content="Locked")
   // AdvanceBoot outside of Boot is inert.
@@ -671,32 +657,38 @@ test "boot tap skips the splash in one step" {
 ///|
 test "desktop catalogs translate interpolate and fall back" {
   // English and Simplified Chinese resolve from the app-owned catalog.
-  inspect(AppLanguage::EnglishLanguage.text("lock.sign_in"), content="Sign In")
-  inspect(AppLanguage::ChineseLanguage.text("lock.sign_in"), content="登录")
-  inspect(AppLanguage::ChineseLanguage.text("menu.file"), content="文件")
+  inspect(
+    @app.AppLanguage::EnglishLanguage.text("lock.sign_in"),
+    content="Sign In",
+  )
+  inspect(
+    @app.AppLanguage::ChineseLanguage.text("lock.sign_in"),
+    content="登录",
+  )
+  inspect(@app.AppLanguage::ChineseLanguage.text("menu.file"), content="文件")
   // Named interpolation flows through the translator.
   inspect(
-    AppLanguage::ChineseLanguage.translate("item.close", values=[
+    @app.AppLanguage::ChineseLanguage.translate("item.close", values=[
       ("app", "Finder"),
     ]),
     content="关闭Finder",
   )
   inspect(
-    AppLanguage::EnglishLanguage.translate("item.close", values=[
+    @app.AppLanguage::EnglishLanguage.translate("item.close", values=[
       ("app", "Safari"),
     ]),
     content="Close Safari",
   )
   // Unknown keys surface the visible missing-key marker.
   inspect(
-    AppLanguage::EnglishLanguage.text("no.such.key"),
+    @app.AppLanguage::EnglishLanguage.text("no.such.key"),
     content="[[no.such.key]]",
   )
 }
 
 ///|
 test "language toggles at runtime and persists in snapshots" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
   debug_inspect(model.language, content="EnglishLanguage")
   let switched = model.update(SetLanguage(ChineseLanguage))
   debug_inspect(switched.language, content="ChineseLanguage")
@@ -704,18 +696,18 @@ test "language toggles at runtime and persists in snapshots" {
   let back = switched.update(RunMenuCommand(ToggleLanguageCommand))
   debug_inspect(back.language, content="EnglishLanguage")
   // Language rides the snapshot across restarts.
-  let decoded = decode_desktop_snapshot(
-    encode_desktop_snapshot(switched.persisted_snapshot()),
+  let decoded = @app.decode_desktop_snapshot(
+    @app.encode_desktop_snapshot(switched.persisted_snapshot()),
   ).unwrap()
   assert_true(decoded.language == "zh-Hans")
-  let restored = DesktopModel::new().restore_snapshot(decoded)
+  let restored = @app.DesktopModel::new().restore_snapshot(decoded)
   debug_inspect(restored.language, content="ChineseLanguage")
 }
 
 ///|
 test "v3 snapshots migrate forward with the default language" {
   let v3 = "{\"schema_version\":3,\"dark_mode\":true,\"wallpaper_source\":\"w.jpg\",\"volume\":0.4,\"brightness\":0.7,\"wifi_enabled\":true,\"bluetooth_enabled\":false,\"low_power_mode\":false,\"windows\":[],\"recent_files\":[],\"notes\":[],\"icon_placements\":[]}"
-  let migrated = decode_desktop_snapshot(v3)
+  let migrated = @app.decode_desktop_snapshot(v3)
   assert_true(migrated is Some(_))
   let snapshot = migrated.unwrap()
   inspect(snapshot.schema_version, content="4")
@@ -727,7 +719,7 @@ test "v3 snapshots migrate forward with the default language" {
 ///|
 test "desktop runtime switches language from the system menu" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=1280.0,
     height=800.0,
   )
@@ -748,7 +740,7 @@ test "desktop runtime switches language from the system menu" {
 
 ///|
 test "desktop snapshot roundtrips through encode and decode" {
-  let model = DesktopModel::new()
+  let model = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -758,16 +750,14 @@ test "desktop snapshot roundtrips through encode and decode" {
     .update(MoveWindowBy(48.0, -24.0))
     .update(OpenSafari)
     .update(RequestFileImport)
-    .update(
-      FileImportCompleted(
-        @services.ServiceTaskResult::Success(["/tmp/a.md", "/tmp/b.md"]),
-      ),
-    )
+    .update(FileImportCompleted(Success(["/tmp/a.md", "/tmp/b.md"])))
     .update(MoveDesktopIcon("Tahoe Trip", 40.0, -12.0))
   let snapshot = model.persisted_snapshot()
-  let decoded = decode_desktop_snapshot(encode_desktop_snapshot(snapshot))
+  let decoded = @app.decode_desktop_snapshot(
+    @app.encode_desktop_snapshot(snapshot),
+  )
   assert_true(decoded == Some(snapshot))
-  let restored = DesktopModel::new().restore_snapshot(snapshot)
+  let restored = @app.DesktopModel::new().restore_snapshot(snapshot)
   assert_true(restored.dark_mode)
   debug_inspect(restored.appearance, content="DarkAppearance")
   inspect(restored.volume, content="0.2")
@@ -778,15 +768,15 @@ test "desktop snapshot roundtrips through encode and decode" {
   inspect(restored.icon_placements.length(), content="1")
   inspect(restored.icon_placements[0].name, content="Tahoe Trip")
   // Serial/z counters continue above the restored records.
-  let raised = restored.update(FocusWindow({ app: FinderApp, serial: 1 }))
-  let finder = raised.window_with_id({ app: FinderApp, serial: 1 }).unwrap()
+  let raised = restored.update(FocusWindow({ app: FinderApp, serial: 1, }))
+  let finder = raised.window_with_id({ app: FinderApp, serial: 1, }).unwrap()
   assert_true(finder.z_order >= 3)
 }
 
 ///|
 test "v1 snapshots migrate into the current window table" {
   let legacy = "{\"schema_version\":1,\"dark_mode\":true,\"wallpaper_source\":\"w.jpg\",\"volume\":0.5,\"brightness\":0.9,\"window_offset_x\":40,\"window_offset_y\":-20,\"window_maximized\":true}"
-  let migrated = decode_desktop_snapshot(legacy)
+  let migrated = @app.decode_desktop_snapshot(legacy)
   assert_true(migrated is Some(_))
   let snapshot = migrated.unwrap()
   inspect(snapshot.schema_version, content="4")
@@ -805,33 +795,33 @@ test "v1 snapshots migrate into the current window table" {
 
 ///|
 test "corrupt or unknown snapshots degrade to defaults" {
-  assert_true(decode_desktop_snapshot("not json at all") is None)
-  assert_true(decode_desktop_snapshot("{}") is None)
+  assert_true(@app.decode_desktop_snapshot("not json at all") is None)
+  assert_true(@app.decode_desktop_snapshot("{}") is None)
   assert_true(
-    decode_desktop_snapshot("{\"schema_version\":99,\"dark_mode\":true}")
+    @app.decode_desktop_snapshot("{\"schema_version\":99,\"dark_mode\":true}")
     is None,
   )
   // A failed decode never reaches restore_snapshot, so a fresh model keeps
   // its defaults; loading reports the degradation instead of crashing.
-  let loaded = DesktopModel::new().update(
-    DesktopSettingsLoaded(@services.ServiceTaskResult::Success(None)),
+  let loaded = @app.DesktopModel::new().update(
+    DesktopSettingsLoaded(Success(None)),
   )
   inspect(loaded.settings_loaded, content="true")
   inspect(
     loaded.last_diagnostic,
     content="Starting with default desktop settings",
   )
-  let broken = DesktopModel::new().update(
-    DesktopSettingsLoaded(@services.ServiceTaskResult::Success(Some("garbage"))),
+  let broken = @app.DesktopModel::new().update(
+    DesktopSettingsLoaded(Success(Some("garbage"))),
   )
   inspect(broken.settings_loaded, content="true")
   inspect(
     broken.last_diagnostic,
     content="Stored desktop data was unusable; using defaults",
   )
-  let failed = DesktopModel::new().update(
+  let failed = @app.DesktopModel::new().update(
     DesktopSettingsLoaded(
-      @services.ServiceTaskResult::Failure(
+      Failure(
         @services.ServiceError::new(code="unavailable", message="no storage"),
       ),
     ),
@@ -841,7 +831,7 @@ test "corrupt or unknown snapshots degrade to defaults" {
 
 ///|
 test "desktop icon drags move and clamp persisted placements" {
-  let moved = DesktopModel::new()
+  let moved = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -858,15 +848,15 @@ test "desktop icon drags move and clamp persisted placements" {
   inspect(wild.icon_placements[0].offset_x, content="320")
   inspect(wild.icon_placements[0].offset_y, content="-420")
   // Placements ride along in the snapshot.
-  let decoded = decode_desktop_snapshot(
-    encode_desktop_snapshot(wild.persisted_snapshot()),
+  let decoded = @app.decode_desktop_snapshot(
+    @app.encode_desktop_snapshot(wild.persisted_snapshot()),
   )
   assert_true(decoded.unwrap().icon_placements[0].offset_x == 320.0)
 }
 
 ///|
 test "reset desktop settings restores factory values" {
-  let dirty = DesktopModel::new()
+  let dirty = @app.DesktopModel::new()
     .update(AdvanceBoot)
     .update(ShowLogin)
     .update(SubmitLogin(""))
@@ -911,27 +901,33 @@ fn map_settings_store(store : Map[String, String]) -> @services.AppEnvironment {
 ///|
 test "desktop layout persists across program restarts" {
   let store : Map[String, String] = Map([])
-  let clock = () => DesktopClock::new(2026, 7, 19, 0, 9, 41)
+  let clock = () => @app.DesktopClock::new(2026, 7, 19, 0, 9, 41)
   // Session one: unlock, open Safari, and let the auto-save run.
   let first = @runtime.new_program_with_dimensions(
-    program=program(environment=map_settings_store(store), wall_clock=clock),
+    program=@app.program(
+      environment=map_settings_store(store),
+      wall_clock=clock,
+    ),
     width=1280.0,
     height=800.0,
   )
   skip_boot(first)
   click_text(first, "Sign In")
   click_text(first, "Unlock")
-  assert_false(store.contains(SETTINGS_STORAGE_KEY))
+  assert_false(store.contains(@app.SETTINGS_STORAGE_KEY))
   click_text(first, "Window")
   click_text(first, "Bring Safari Forward")
-  assert_true(store.contains(SETTINGS_STORAGE_KEY))
-  let stored = store.get(SETTINGS_STORAGE_KEY).unwrap()
-  let saved = decode_desktop_snapshot(stored).unwrap()
+  assert_true(store.contains(@app.SETTINGS_STORAGE_KEY))
+  let stored = store.get(@app.SETTINGS_STORAGE_KEY).unwrap()
+  let saved = @app.decode_desktop_snapshot(stored).unwrap()
   inspect(saved.schema_version, content="4")
   inspect(saved.windows.length(), content="2")
   // Session two over the same store boots straight into both windows.
   let second = @runtime.new_program_with_dimensions(
-    program=program(environment=map_settings_store(store), wall_clock=clock),
+    program=@app.program(
+      environment=map_settings_store(store),
+      wall_clock=clock,
+    ),
     width=1280.0,
     height=800.0,
   )
@@ -946,7 +942,7 @@ test "desktop layout persists across program restarts" {
 ///|
 test "desktop runtime renders simultaneous windows after menu open" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=1280.0,
     height=800.0,
   )
@@ -969,7 +965,7 @@ test "desktop runtime renders simultaneous windows after menu open" {
 ///|
 test "desktop runtime keeps primary controls visible in compact viewport" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=390.0,
     height=720.0,
   )
@@ -994,7 +990,7 @@ fn skip_boot(runtime : @runtime.AppRuntime) -> Unit raise {
 ///|
 test "traffic light close button removes its window at runtime" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=1280.0,
     height=800.0,
   )
@@ -1006,25 +1002,25 @@ test "traffic light close button removes its window at runtime" {
   let cx = 192.4
   let cy = 121.0
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=cx, y=cy),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=cx, y=cy),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
   let after = runtime.draw_commands()
   for command in after {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         if value == "Documents" || value == "Project Notes.txt" {
           println("AFTER \{value} @ (\{frame.origin.x},\{frame.origin.y})")
         }
@@ -1041,7 +1037,7 @@ test "traffic light close button removes its window at runtime" {
 ///|
 test "titlebar drag moves the window on screen" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=1280.0,
     height=800.0,
   )
@@ -1056,31 +1052,31 @@ test "titlebar drag moves the window on screen" {
   let gx = before.origin.x + before.size.width / 2.0
   let gy = before.origin.y + 11.0
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=gx, y=gy),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   for step in 1..<=5 {
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@geometry.Point::new(
             x=gx + step.to_double() * 12.0,
             y=gy + step.to_double() * 8.0,
           ),
-          phase=@core.PointerPhase::Move,
+          phase=Move,
         ),
       ),
     )
   }
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=gx + 60.0, y=gy + 40.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -1103,29 +1099,24 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
     y=frame.origin.y + frame.size.height / 2.0,
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
   )
 }
 
 ///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+    command is DrawText({ text: value, .. }) && value == text
   })
 }
 
 ///|
 fn has_image(commands : Array[@core.DrawCommand], suffix : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawImage({ source, .. }) &&
-    source.has_suffix(suffix)
+    command is DrawImage({ source, .. }) && source.has_suffix(suffix)
   })
 }
 
@@ -1136,7 +1127,7 @@ fn text_frame(
 ) -> @core.Rect? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         if value == text {
           return Some(frame)
         }

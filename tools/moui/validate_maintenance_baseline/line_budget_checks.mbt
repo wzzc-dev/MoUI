@@ -25,7 +25,7 @@ fn record_file_budget_overflow(
   }
   let lines = line_count(text)
   if lines > budget.max_lines {
-    overflows.push({ path: budget.path, lines })
+    overflows.push({ path: budget.path, lines, })
   }
 }
 
@@ -52,7 +52,7 @@ fn record_untracked_oversized_files(
       }
       let lines = line_count(text)
       if lines > oversized_file_threshold() {
-        overflows.push({ path, lines })
+        overflows.push({ path, lines, })
       }
     }
   }

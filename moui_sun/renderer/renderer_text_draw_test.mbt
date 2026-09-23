@@ -3,7 +3,7 @@ test "Renderer::draw_text_face_cached reuses rendered text masks" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -50,7 +50,7 @@ test "Renderer::draw_text_face preserves holes in parsed TTF glyphs" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -75,12 +75,12 @@ test "Renderer::draw_text_face applies layout alignment" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=30.0,
     font_size=10.0,
     line_height=10.0,
-    alignment=@text.TextAlign::Right,
+    alignment=Right,
   )
   renderer.draw_text_face(
     face,
@@ -100,7 +100,7 @@ test "Renderer::draw_text_face applies explicit newlines" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(12, 24)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=30.0,
     font_size=10.0,
@@ -125,7 +125,7 @@ test "Renderer::draw_text_face applies letter spacing" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(26, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -151,7 +151,7 @@ test "Renderer::draw_text_face wraps after trailing space" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(14, 24)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=12.0,
     font_size=10.0,
@@ -237,7 +237,7 @@ test "Renderer checked generated font fixture applies kern table to layout and p
 
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   renderer.draw_text_face(
     face,
     "AV",
@@ -272,8 +272,10 @@ test "Renderer generated format 12 fixture draws supplementary glyph through cac
 
   let canvas = @graphics.Canvas::new(16, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 2, 2, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 2, 2, 1,
+  )
   let first = match
     renderer.draw_font_bytes_atlas_with_renderer_resources(
       font_bytes,
@@ -323,8 +325,10 @@ test "Renderer generated fallback atlas fixture reports supplementary spans and 
   let text = string_from_codepoints(['A'.to_int(), 0x1F600, 'Z'.to_int()])
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(24, 12, 2, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    24, 12, 2, 4, 4, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -333,8 +337,14 @@ test "Renderer generated fallback atlas fixture reports supplementary spans and 
   let first = match
     renderer.draw_font_bytes_fallback_line_atlas_with_renderer_resources(
       [
-        FontBytesFallbackSource::new("latin", make_ttf_for_codes([65])),
-        FontBytesFallbackSource::new("emoji", make_ttf_for_codes([0x1F600])),
+        @renderer.FontBytesFallbackSource::new(
+          "latin",
+          make_ttf_for_codes([65]),
+        ),
+        @renderer.FontBytesFallbackSource::new(
+          "emoji",
+          make_ttf_for_codes([0x1F600]),
+        ),
       ],
       text,
       1.0,
@@ -363,8 +373,8 @@ test "Renderer generated fallback atlas fixture reports supplementary spans and 
   let second = match
     renderer.draw_font_bytes_fallback_line_atlas_with_renderer_resources(
       [
-        FontBytesFallbackSource::new("latin", b"not a font"),
-        FontBytesFallbackSource::new("emoji", b"also not a font"),
+        @renderer.FontBytesFallbackSource::new("latin", b"not a font"),
+        @renderer.FontBytesFallbackSource::new("emoji", b"also not a font"),
       ],
       text,
       1.0,

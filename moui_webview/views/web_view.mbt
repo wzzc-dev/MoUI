@@ -24,7 +24,7 @@ pub fn[Msg] web_view(
     },
     event=(node, ctx) => {
       match (ctx.event, on_event) {
-        (@core.AppEvent::PlatformView(event_id, event), Some(handler)) =>
+        (PlatformView(event_id, event), Some(handler)) =>
           if event_id == node.id {
             match @host.WebViewEvent::from_platform_event(event) {
               Some(web_event) =>
@@ -87,8 +87,8 @@ impl @core.ViewNode for WebViewNode with fn declaration(self) {
       "color-scheme",
       @core.DeclarationKey::string(
         match self.color_scheme {
-          Some(@core.ColorScheme::Dark) => "dark"
-          Some(@core.ColorScheme::Light) => "light"
+          Some(Dark) => "dark"
+          Some(Light) => "light"
           None => ""
         },
       ),
@@ -101,14 +101,14 @@ impl @core.ViewNode for WebViewNode with fn declaration(self) {
     ),
   ])
   @core.ViewDeclaration::channels(
-    layout=@core.DeclarationChannel::Exact(size_key),
-    paint=@core.DeclarationChannel::Constant,
-    semantics=@core.DeclarationChannel::Exact(
+    layout=Exact(size_key),
+    paint=Constant,
+    semantics=Exact(
       @core.DeclarationKey::record(type_tag="WebView.semantics", fields=[
         ("title", @core.DeclarationKey::string(self.title)),
       ]),
     ),
-    platform=@core.DeclarationChannel::Exact(content_key),
+    platform=Exact(content_key),
   )
 }
 
@@ -146,8 +146,8 @@ impl @core.ViewNode for WebViewNode with fn platform_views(self, ctx) {
 ///|
 impl @core.ViewNode for WebViewNode with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Group,
+    composition=Boundary,
+    role=Group,
     label=self.title,
     value="",
   )

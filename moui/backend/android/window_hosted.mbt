@@ -37,7 +37,7 @@ pub fn AndroidHostAppOptions::with_status_bar_immersive(
   enabled : Bool,
 ) -> AndroidHostAppOptions {
   let _ = self
-  { status_bar_immersive: enabled }
+  { status_bar_immersive: enabled, }
 }
 
 ///|
@@ -217,25 +217,19 @@ pub fn android_window_hosted_pump_host_sim(
 ) -> Unit {
   @window_android.host_reset_for_test()
   let event_loop = @window_android.EventLoop::new()
-  @window_android.host_push(@window_android.HostCmd::Start)
-  @window_android.host_push(@window_android.HostCmd::Resume)
+  @window_android.host_push(Start)
+  @window_android.host_push(Resume)
   @window_android.host_push(
-    @window_android.HostCmd::SurfaceInit(
-      surface_handle, 0UL, width, height, scale,
-    ),
+    SurfaceInit(surface_handle, 0UL, width, height, scale),
   )
   ignore(event_loop.pump_app_events(None, app))
   app.backend.force_redraw()
   ignore(event_loop.pump_app_events(None, app))
-  @window_android.host_push(
-    @window_android.HostCmd::PointerButton(true, 10.0, 20.0),
-  )
-  @window_android.host_push(
-    @window_android.HostCmd::PointerButton(false, 10.0, 20.0),
-  )
+  @window_android.host_push(PointerButton(true, 10.0, 20.0))
+  @window_android.host_push(PointerButton(false, 10.0, 20.0))
   ignore(event_loop.pump_app_events(None, app))
-  @window_android.host_push(@window_android.HostCmd::SurfaceTerm)
-  @window_android.host_push(@window_android.HostCmd::Stop)
+  @window_android.host_push(SurfaceTerm)
+  @window_android.host_push(Stop)
   ignore(event_loop.pump_app_events(None, app))
   event_loop.drop()
 }

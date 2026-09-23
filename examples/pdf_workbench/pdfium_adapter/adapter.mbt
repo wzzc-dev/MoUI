@@ -50,17 +50,13 @@ fn pdfium_decode_response(
     lines.push(line.trim().to_owned())
   }
   if lines.is_empty() {
-    return @app.PdfWorkbenchRasterResponse::RasterPageFailed(
-      "PDFium adapter returned an empty response",
-    )
+    return RasterPageFailed("PDFium adapter returned an empty response")
   }
   let tag = lines[0]
   match tag {
     "READY" =>
       if lines.length() < 6 {
-        @app.PdfWorkbenchRasterResponse::RasterPageFailed(
-          "PDFium adapter returned an incomplete ready response",
-        )
+        RasterPageFailed("PDFium adapter returned an incomplete ready response")
       } else {
         let image_source = lines[1]
         match
@@ -70,7 +66,7 @@ fn pdfium_decode_response(
             pdfium_parse_positive_int(lines[4]),
           ) {
           (Some(width_px), Some(height_px), Some(page_count)) =>
-            @app.PdfWorkbenchRasterResponse::RasterPageReady({
+            RasterPageReady({
               cache_key: request.cache_key,
               page_number: request.page_number,
               zoom: request.zoom,
@@ -81,26 +77,24 @@ fn pdfium_decode_response(
               diagnostic: lines[5],
             })
           _ =>
-            @app.PdfWorkbenchRasterResponse::RasterPageFailed(
+            RasterPageFailed(
               "PDFium adapter returned invalid bitmap dimensions or page count",
             )
         }
       }
     "UNAVAILABLE" =>
-      @app.PdfWorkbenchRasterResponse::RasterPageUnavailable(
+      RasterPageUnavailable(
         pdfium_response_reason(
           lines,
           fallback="PDFium raster service unavailable",
         ),
       )
     "FAILED" =>
-      @app.PdfWorkbenchRasterResponse::RasterPageFailed(
+      RasterPageFailed(
         pdfium_response_reason(lines, fallback="PDFium rasterization failed"),
       )
     _ =>
-      @app.PdfWorkbenchRasterResponse::RasterPageFailed(
-        "PDFium adapter returned unknown response tag: " + tag,
-      )
+      RasterPageFailed("PDFium adapter returned unknown response tag: " + tag)
   }
 }
 

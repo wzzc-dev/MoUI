@@ -306,10 +306,7 @@ test "font registration retires cached layouts" {
   let _ = system.layout_paragraph(input)
   let _ = system.layout_paragraph(input)
   assert_eq(layout_count[0], 1)
-  system.register_font_data(
-    FontFamily::Name("regenerated"),
-    Bytes::make(4, b'\x00'),
-  )
+  system.register_font_data(Name("regenerated"), Bytes::make(4, b'\x00'))
   let _ = system.layout_paragraph(input)
   assert_eq(layout_count[0], 2)
 }

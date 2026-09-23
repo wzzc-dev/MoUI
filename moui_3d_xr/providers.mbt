@@ -1,7 +1,7 @@
 ///|
 pub fn webxr_descriptor() -> XrProviderDescriptor {
   XrProviderDescriptor::new(
-    backend=XrBackend::WebXr,
+    backend=WebXr,
     id="moui-3d-webxr",
     status="contract-only",
   )
@@ -10,7 +10,7 @@ pub fn webxr_descriptor() -> XrProviderDescriptor {
 ///|
 pub fn openxr_descriptor() -> XrProviderDescriptor {
   XrProviderDescriptor::new(
-    backend=XrBackend::OpenXr,
+    backend=OpenXr,
     id="moui-3d-openxr",
     status="contract-only",
   )

@@ -1,6 +1,8 @@
 ///|
 test "RenderPipeline replays parsed text commands and can be cleared" {
-  let pipeline = RenderPipeline::new().clear_canvas(@graphics.Color::white())
+  let pipeline = @renderer.RenderPipeline::new().clear_canvas(
+    @graphics.Color::white(),
+  )
   assert_eq(pipeline.len(), 1)
   pipeline.clear_commands()
   assert_true(pipeline.is_empty())
@@ -24,8 +26,8 @@ test "RenderPipeline replays parsed text commands and can be cleared" {
     ),
   )
   let canvas = @graphics.Canvas::new(12, 12)
-  let renderer = Renderer::new(canvas)
-  let text_analysis = RenderPipeline::new()
+  let renderer = @renderer.Renderer::new(canvas)
+  let text_analysis = @renderer.RenderPipeline::new()
     .draw_text_face(
       face,
       "A",

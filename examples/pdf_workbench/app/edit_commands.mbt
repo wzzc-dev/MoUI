@@ -23,7 +23,7 @@ fn PdfWorkbenchModel::crop_current_page(
 ) -> PdfWorkbenchModel {
   match self.document {
     Some(document) => {
-      let box = { left: 36.0, bottom: 36.0, right: 523.0, top: 770.0 }
+      let box = { left: 36.0, bottom: 36.0, right: 523.0, top: 770.0, }
       self.replace_document_summary(
         document.with_edit(CropPage(document.selected_page, box)),
         event="Queued sample crop box",
@@ -77,7 +77,7 @@ fn PdfWorkbenchModel::discard_edits(
           last_event: "Discarded queued edits",
         }
       } else {
-        { ..self, status: Ready, last_event: "No queued edits to discard" }
+        { ..self, status: Ready, last_event: "No queued edits to discard", }
       }
     None =>
       {
@@ -93,7 +93,7 @@ fn PdfWorkbenchModel::clear_failure(
   self : PdfWorkbenchModel,
 ) -> PdfWorkbenchModel {
   match self.status {
-    Failed(_) => { ..self, status: Ready, last_event: "Cleared failure" }
+    Failed(_) => { ..self, status: Ready, last_event: "Cleared failure", }
     _ => self
   }
 }
@@ -115,7 +115,8 @@ fn PdfWorkbenchModel::undo_last_edit(
             status: Ready,
             last_event: "Undid last queued edit",
           }
-        None => { ..self, status: Ready, last_event: "No queued edits to undo" }
+        None =>
+          { ..self, status: Ready, last_event: "No queued edits to undo", }
       }
     None =>
       {
@@ -134,7 +135,7 @@ fn PdfWorkbenchModel::apply_metadata_title(
     Some(document) => {
       let next_title = self.metadata_title_draft.trim().to_owned()
       if next_title == document.metadata_title {
-        { ..self, status: Ready, last_event: "Metadata title unchanged" }
+        { ..self, status: Ready, last_event: "Metadata title unchanged", }
       } else {
         self.replace_document_summary(
           document.with_edit(SetMetadataTitle(next_title)),
@@ -159,7 +160,7 @@ fn PdfWorkbenchModel::add_bookmark_for_current_page(
     Some(document) => {
       let title = self.bookmark_title_draft.trim().to_owned()
       if title == "" {
-        { ..self, status: Ready, last_event: "Bookmark title required" }
+        { ..self, status: Ready, last_event: "Bookmark title required", }
       } else {
         self.replace_document_summary(
           document.with_edit(AddBookmark(document.selected_page, title)),
@@ -184,7 +185,7 @@ fn PdfWorkbenchModel::add_annotation_for_current_page(
     Some(document) => {
       let text = self.annotation_text_draft.trim().to_owned()
       if text == "" {
-        { ..self, status: Ready, last_event: "Annotation text required" }
+        { ..self, status: Ready, last_event: "Annotation text required", }
       } else {
         self.replace_document_summary(
           document.with_edit(AddTextAnnotation(document.selected_page, text)),
@@ -207,5 +208,5 @@ fn PdfWorkbenchModel::replace_document_summary(
   document : PdfWorkbenchDocument,
   event~ : String,
 ) -> PdfWorkbenchModel {
-  { ..self, document: Some(document), status: Ready, last_event: event }
+  { ..self, document: Some(document), status: Ready, last_event: event, }
 }

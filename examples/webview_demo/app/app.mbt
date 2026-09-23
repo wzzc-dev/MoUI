@@ -93,20 +93,20 @@ pub fn Model::new(
 pub fn WebViewCapability::available(
   description? : String = "Native controlled WebView embedding is available.",
 ) -> WebViewCapability {
-  { available: true, description }
+  { available: true, description, }
 }
 
 ///|
 pub fn WebViewCapability::unavailable(
   description? : String = "Native WebView is unavailable on this host.",
 ) -> WebViewCapability {
-  { available: false, description }
+  { available: false, description, }
 }
 
 ///|
 pub fn update(model : Model, msg : Msg) -> Model {
   match msg {
-    AddressChanged(value) => { ..model, address: value }
+    AddressChanged(value) => { ..model, address: value, }
     LoadAddress =>
       model.with_log("load " + model.address).with_url(model.address)
     Reload => model.with_log("reload")
@@ -122,7 +122,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
 
 ///|
 fn Model::with_url(self : Model, url : String) -> Model {
-  { ..self, url, address: url, status: "loading" }
+  { ..self, url, address: url, status: "loading", }
 }
 
 ///|
@@ -139,21 +139,18 @@ fn Model::with_log(self : Model, entry : String) -> Model {
 ///|
 fn Model::apply_web_view_event(self : Model, event : WebViewAppEvent) -> Model {
   match event {
-    WebViewAppEvent::NavigationRequested(url) =>
-      self.with_log("request " + url).with_url(url)
-    WebViewAppEvent::NavigationStarted(url) =>
-      { ..self.with_log("start " + url), status: "loading" }
-    WebViewAppEvent::NavigationCommitted(url) =>
-      { ..self.with_log("commit " + url), url, address: url, status: "loaded" }
-    WebViewAppEvent::NavigationFinished(url) =>
-      { ..self.with_log("finish " + url), url, address: url, status: "done" }
-    WebViewAppEvent::NavigationFailed(url, reason) =>
-      { ..self.with_log("failed " + url), status: reason }
-    WebViewAppEvent::TitleChanged(value) =>
-      { ..self.with_log("title " + value), title: value }
-    WebViewAppEvent::CanGoBackChanged(value) => { ..self, can_go_back: value }
-    WebViewAppEvent::CanGoForwardChanged(value) =>
-      { ..self, can_go_forward: value }
+    NavigationRequested(url) => self.with_log("request " + url).with_url(url)
+    NavigationStarted(url) =>
+      { ..self.with_log("start " + url), status: "loading", }
+    NavigationCommitted(url) =>
+      { ..self.with_log("commit " + url), url, address: url, status: "loaded", }
+    NavigationFinished(url) =>
+      { ..self.with_log("finish " + url), url, address: url, status: "done", }
+    NavigationFailed(url, reason) =>
+      { ..self.with_log("failed " + url), status: reason, }
+    TitleChanged(value) => { ..self.with_log("title " + value), title: value, }
+    CanGoBackChanged(value) => { ..self, can_go_back: value, }
+    CanGoForwardChanged(value) => { ..self, can_go_forward: value, }
   }
 }
 
@@ -198,7 +195,7 @@ fn header(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
         spacer(min_length=12.0),
         status_chip(model, theme),
       ],
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     padding=14.0,
   )
@@ -213,22 +210,18 @@ fn toolbar(model : Model) -> @moui.View[Msg] {
           model.address,
           on_input=value => AddressChanged(value),
           on_submit=Some(LoadAddress),
-          variant=@views.TextFieldVariant::Outline,
+          variant=Outline,
           width=520.0,
           height=36.0,
         ),
-        button(
-          "Open",
-          on_click=LoadAddress,
-          variant=@views.ButtonVariant::Primary,
-        ),
+        button("Open", on_click=LoadAddress, variant=Primary),
         command_button("Back", GoBack, enabled=model.can_go_back),
         command_button("Forward", GoForward, enabled=model.can_go_forward),
-        button("Reload", on_click=Reload, variant=@views.ButtonVariant::Tonal),
-        button("Stop", on_click=Stop, variant=@views.ButtonVariant::Ghost),
+        button("Reload", on_click=Reload, variant=Tonal),
+        button("Stop", on_click=Stop, variant=Ghost),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     padding=10.0,
   )
@@ -241,9 +234,9 @@ fn command_button(
   enabled~ : Bool,
 ) -> @moui.View[Msg] {
   if enabled {
-    button(label, on_click=message, variant=@views.ButtonVariant::Tonal)
+    button(label, on_click=message, variant=Tonal)
   } else {
-    button(label, variant=@views.ButtonVariant::Ghost).disabled()
+    button(label, variant=Ghost).disabled()
   }
 }
 
@@ -277,7 +270,7 @@ fn unavailable_view(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
       spacer(min_length=120.0, weight=0.0),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   ).background(theme.palette.surface_variant.multiply_alpha(0.45))
 }
 
@@ -322,7 +315,7 @@ fn stat_line(label : String, value : String) -> @moui.View[Msg] {
   row(
     [text(label).caption().frame(width=74.0), text(value).mono().expanded()],
     spacing=8.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -411,16 +404,14 @@ pub fn program(
 ///|
 fn web_view_event(event : @webview_host.WebViewEvent) -> WebViewAppEvent {
   match event {
-    NavigationRequested(value) => WebViewAppEvent::NavigationRequested(value)
-    NavigationStarted(value) => WebViewAppEvent::NavigationStarted(value.url)
-    NavigationCommitted(value) =>
-      WebViewAppEvent::NavigationCommitted(value.url)
-    NavigationFinished(value) => WebViewAppEvent::NavigationFinished(value.url)
-    NavigationFailed(_, url, reason) =>
-      WebViewAppEvent::NavigationFailed(url, reason.message)
-    TitleChanged(value) => WebViewAppEvent::TitleChanged(value)
-    CanGoBackChanged(value) => WebViewAppEvent::CanGoBackChanged(value)
-    CanGoForwardChanged(value) => WebViewAppEvent::CanGoForwardChanged(value)
-    _ => WebViewAppEvent::NavigationRequested("")
+    NavigationRequested(value) => NavigationRequested(value)
+    NavigationStarted(value) => NavigationStarted(value.url)
+    NavigationCommitted(value) => NavigationCommitted(value.url)
+    NavigationFinished(value) => NavigationFinished(value.url)
+    NavigationFailed(_, url, reason) => NavigationFailed(url, reason.message)
+    TitleChanged(value) => TitleChanged(value)
+    CanGoBackChanged(value) => CanGoBackChanged(value)
+    CanGoForwardChanged(value) => CanGoForwardChanged(value)
+    _ => NavigationRequested("")
   }
 }

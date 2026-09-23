@@ -1,6 +1,6 @@
 ///|
 test "web document metadata retains existing constructor calls" {
-  let metadata = WebDocumentMetadata::new(
+  let metadata = @web.WebDocumentMetadata::new(
     title="MoUI Docs",
     description="MoonBit GUI documentation",
     canonical="https://example.test/docs",
@@ -12,7 +12,7 @@ test "web document metadata retains existing constructor calls" {
 
 ///|
 test "web document metadata serializes locale and direction" {
-  let metadata = WebDocumentMetadata::new(
+  let metadata = @web.WebDocumentMetadata::new(
     title="MoUI 文档",
     locale="zh-Hans",
     direction="ltr",

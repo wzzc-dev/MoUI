@@ -24,7 +24,7 @@ pub fn[Msg] route_header(
   let title_rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
-      role=@style.TextRole::Control,
+      role=Control,
       theme=resolved_theme,
       width=title_width,
       height=28.0,
@@ -34,7 +34,7 @@ pub fn[Msg] route_header(
     title_rows.push(
       @text.text(
         subtitle,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=title_width,
         height=24.0,
@@ -47,7 +47,7 @@ pub fn[Msg] route_header(
       @button.button(
         action.label,
         on_click=action.message,
-        variant=@style.ButtonVariant::Tonal,
+        variant=Tonal,
         theme=resolved_theme,
         width=route_header_action_width(action.label),
         height=34.0,
@@ -58,7 +58,7 @@ pub fn[Msg] route_header(
     @layout.column(
       title_rows,
       spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Start,
+      align=Start,
     ),
   ]
   if action_buttons.length() > 0 {
@@ -66,7 +66,7 @@ pub fn[Msg] route_header(
       @layout.row(
         action_buttons,
         spacing=resolved_theme.spacing_scale.xs,
-        align=@style.CrossAlign::Center,
+        align=Center,
       ),
     )
   }
@@ -74,16 +74,16 @@ pub fn[Msg] route_header(
     @layout.row(
       children,
       spacing=resolved_theme.spacing_scale.md,
-      justify=@style.MainAlign::Between,
-      align=@style.CrossAlign::Center,
+      justify=Between,
+      align=Center,
     ),
     width~,
     height=if subtitle == "" { 58.0 } else { 78.0 },
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding~,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .accessibility_label(title)
 }
 

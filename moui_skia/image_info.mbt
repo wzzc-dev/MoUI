@@ -13,7 +13,7 @@ pub fn ColorInfo::new(
   color_type? : ColorType = Unknown,
   alpha_type? : AlphaType = Unknown,
 ) -> ColorInfo {
-  { color_type, alpha_type }
+  { color_type, alpha_type, }
 }
 
 ///|
@@ -99,7 +99,7 @@ pub fn ImageInfo::new(
   color_type? : ColorType = Unknown,
   alpha_type? : AlphaType = Unknown,
 ) -> ImageInfo {
-  { dimensions, color_info: ColorInfo::new(color_type~, alpha_type~) }
+  { dimensions, color_info: ColorInfo::new(color_type~, alpha_type~), }
 }
 
 ///|
@@ -107,7 +107,7 @@ pub fn ImageInfo::from_color_info(
   dimensions : ISize,
   color_info : ColorInfo,
 ) -> ImageInfo {
-  { dimensions, color_info }
+  { dimensions, color_info, }
 }
 
 ///|
@@ -259,7 +259,7 @@ pub fn ImageInfo::with_alpha_type(
   self : ImageInfo,
   alpha_type : AlphaType,
 ) -> ImageInfo {
-  { ..self, color_info: self.color_info.with_alpha_type(alpha_type) }
+  { ..self, color_info: self.color_info.with_alpha_type(alpha_type), }
 }
 
 ///|
@@ -267,5 +267,5 @@ pub fn ImageInfo::with_color_type(
   self : ImageInfo,
   color_type : ColorType,
 ) -> ImageInfo {
-  { ..self, color_info: self.color_info.with_color_type(color_type) }
+  { ..self, color_info: self.color_info.with_color_type(color_type), }
 }

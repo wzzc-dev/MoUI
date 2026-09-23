@@ -16,14 +16,12 @@ test "ServiceTask reports success failure and explicit cancellation" {
   )
   ignore(cancelled.start(result => results.push(result)))
   assert_eq(results.length(), 3)
-  assert_eq(results[0], @services.ServiceTaskResult::Success(7))
+  assert_eq(results[0], Success(7))
   assert_eq(
     results[1],
-    @services.ServiceTaskResult::Failure(
-      @services.ServiceError::new(code="io", message="disk"),
-    ),
+    Failure(@services.ServiceError::new(code="io", message="disk")),
   )
-  assert_eq(results[2], @services.ServiceTaskResult::Cancelled)
+  assert_eq(results[2], Cancelled)
 }
 
 ///|
@@ -43,7 +41,7 @@ test "ServiceTask cleanup suppresses a stale completion in an adapter" {
     None => fail("expected cleanup")
   }
   match completion.val {
-    Some(complete) => complete(@services.ServiceTaskResult::Success(9))
+    Some(complete) => complete(Success(9))
     None => fail("expected deferred completion")
   }
   assert_true(results.is_empty())

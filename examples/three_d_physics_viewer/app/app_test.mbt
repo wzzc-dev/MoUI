@@ -1,6 +1,6 @@
 ///|
 test "physics viewer starts with a dynamic sphere above fixed ground" {
-  let model = Model::new()
+  let model = @app.Model::new()
   assert_eq(model.snapshot.scene().nodes().length(), 2)
   assert_eq(model.snapshot.scene().meshes().length(), 2)
   assert_eq(model.snapshot.scene().materials().length(), 7)
@@ -12,9 +12,9 @@ test "physics viewer starts with a dynamic sphere above fixed ground" {
 
 ///|
 test "physics viewer steps Rapier and synchronizes the scene" {
-  let model = Model::new()
-  let started = update(model, TogglePlayback)
-  let advanced = update(started, Advance(0.5))
+  let model = @app.Model::new()
+  let started = @app.update(model, TogglePlayback)
+  let advanced = @app.update(started, Advance(0.5))
   let position = advanced.world.body_translation(advanced.dynamic_body).unwrap()
   assert_true(position.y() < 4.0)
   let rendered_position = advanced.snapshot
@@ -30,14 +30,14 @@ test "physics viewer steps Rapier and synchronizes the scene" {
 
 ///|
 test "physics viewer supports paused single steps and reset" {
-  let model = Model::new()
-  let stepped = update(model, Step)
+  let model = @app.Model::new()
+  let stepped = @app.update(model, Step)
   let step_position = stepped.world
     .body_translation(stepped.dynamic_body)
     .unwrap()
   assert_true(step_position.y() < 4.0)
   assert_true(!stepped.playing)
-  let reset = update(stepped, Reset)
+  let reset = @app.update(stepped, Reset)
   let reset_position = reset.world.body_translation(reset.dynamic_body).unwrap()
   assert_true((reset_position.y() - 4.0).abs() < 1.0e-6)
   assert_eq(reset.simulation_time, 0.0)
@@ -46,9 +46,9 @@ test "physics viewer supports paused single steps and reset" {
 
 ///|
 test "physics viewer makes the sphere bounce visibly" {
-  let mut model = update(Model::new(), TogglePlayback)
+  let mut model = @app.update(@app.Model::new(), TogglePlayback)
   for _ in 0..<70 {
-    model = update(model, Advance(1.0 / 60.0))
+    model = @app.update(model, Advance(1.0 / 60.0))
   }
   let after_first_bounce = model.world
     .body_translation(model.dynamic_body)

@@ -7,7 +7,7 @@ pub(all) struct AssetByteSource {
 
 ///|
 pub fn AssetByteSource::new(read : (String) -> Bytes?) -> AssetByteSource {
-  { read_fn: read }
+  { read_fn: read, }
 }
 
 ///|
@@ -30,11 +30,11 @@ pub fn load_asset(
   asset : TextureSource,
 ) -> AssetLoadResult {
   match asset {
-    TextureSource::Embedded(bytes) => AssetLoadResult::Bytes(bytes)
-    TextureSource::Uri(uri) =>
+    Embedded(bytes) => Bytes(bytes)
+    Uri(uri) =>
       match source.read(uri) {
-        Some(bytes) => AssetLoadResult::Bytes(bytes)
-        None => AssetLoadResult::Missing(uri)
+        Some(bytes) => Bytes(bytes)
+        None => Missing(uri)
       }
   }
 }

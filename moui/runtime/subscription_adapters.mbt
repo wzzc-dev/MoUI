@@ -42,7 +42,7 @@ priv struct HostWindowEventSubscriptionHandler {
 
 ///|
 pub fn HostEventSource::new() -> HostEventSource {
-  { next_handler_value: 1, handlers: [] }
+  { next_handler_value: 1, handlers: [], }
 }
 
 ///|
@@ -50,7 +50,7 @@ pub fn HostPlatformEventSources::new(
   host_events? : HostEventSource = HostEventSource::new(),
   window_events? : HostWindowEventSource = HostWindowEventSource::new(),
 ) -> HostPlatformEventSources {
-  { host_events, window_events }
+  { host_events, window_events, }
 }
 
 ///|
@@ -84,12 +84,12 @@ pub fn HostWindowEvent::new(
   window_id~ : @backend_host.WindowId,
   event~ : @backend_host.Event,
 ) -> HostWindowEvent {
-  { window_id, event }
+  { window_id, event, }
 }
 
 ///|
 pub fn HostWindowEventSource::new() -> HostWindowEventSource {
-  { next_handler_value: 1, handlers: [] }
+  { next_handler_value: 1, handlers: [], }
 }
 
 ///|
@@ -175,7 +175,7 @@ fn HostEventSource::add_handler(
 ) -> Int {
   let token = self.next_handler_value
   self.next_handler_value = self.next_handler_value + 1
-  self.handlers.push({ token, handle })
+  self.handlers.push({ token, handle, })
   token
 }
 
@@ -186,7 +186,7 @@ fn HostWindowEventSource::add_handler(
 ) -> Int {
   let token = self.next_handler_value
   self.next_handler_value = self.next_handler_value + 1
-  self.handlers.push({ token, handle })
+  self.handlers.push({ token, handle, })
   token
 }
 

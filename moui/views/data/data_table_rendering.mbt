@@ -19,7 +19,7 @@ fn[Msg] table_header(
           @button.button(
             label,
             on_click=handler(column.id),
-            variant=@style.ButtonVariant::Ghost,
+            variant=Ghost,
             theme~,
             width=@common.view_max_double(40.0, column.width - 8.0),
             height=@common.view_max_double(24.0, row_height - 8.0),
@@ -31,7 +31,7 @@ fn[Msg] table_header(
         } else {
           @text.text(
             label,
-            role=@style.TextRole::Caption,
+            role=Caption,
             theme~,
             width=column.width - 16.0,
             height=row_height - 8.0,
@@ -40,7 +40,7 @@ fn[Msg] table_header(
       None =>
         @text.text(
           label,
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme~,
           width=column.width - 16.0,
           height=row_height - 8.0,
@@ -66,7 +66,7 @@ fn[Msg] table_header(
     )
   }
   data_grid_row_semantics(
-    @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start),
+    @layout.row(cells, spacing=0.0, align=Start),
     row_index=0,
     row_count~,
     column_count=columns.length(),
@@ -97,7 +97,7 @@ fn[Msg] table_row(
       None =>
         @text.text(
           value,
-          role=@style.TextRole::Body,
+          role=Body,
           theme~,
           width=column.width - 16.0,
           height=row_height - 8.0,
@@ -133,7 +133,7 @@ fn[Msg] table_row(
     )
   }
   let base = data_grid_row_semantics(
-    @layout.row(cells, spacing=0.0, align=@style.CrossAlign::Start),
+    @layout.row(cells, spacing=0.0, align=Start),
     row_index=row_index + 1,
     row_count~,
     column_count=columns.length(),

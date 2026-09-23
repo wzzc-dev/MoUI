@@ -7,13 +7,13 @@
 pub fn[Msg] button(
   text : String,
   on_click? : Msg,
-  variant? : @style.ButtonVariant = @style.ButtonVariant::Primary,
+  variant? : @style.ButtonVariant = Primary,
   theme? : @core.Theme,
   style? : @style.ButtonStyle,
   icon? : @style.IconName? = None,
   width? : Double = 100.0,
   height? : Double = 40.0,
-  label_align? : @core.TextAlign = @core.TextAlign::TextCenter,
+  label_align? : @core.TextAlign = TextCenter,
 ) -> @core.View[Msg] {
   button_control(
     text~,
@@ -38,7 +38,7 @@ fn[Msg] button_control(
   on_click? : Msg? = None,
   kind? : String = "Button",
   key? : String? = None,
-  label_align? : @core.TextAlign = @core.TextAlign::TextCenter,
+  label_align? : @core.TextAlign = TextCenter,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     Button::{
@@ -106,9 +106,9 @@ impl @core.ViewNode for Button with fn declaration(self) {
       "label_align",
       @core.DeclarationKey::int(
         match self.label_align {
-          @core.TextAlign::TextStart => 0
-          @core.TextAlign::TextCenter => 1
-          @core.TextAlign::TextEnd => 2
+          TextStart => 0
+          TextCenter => 1
+          TextEnd => 2
         },
       ),
     ),
@@ -116,12 +116,12 @@ impl @core.ViewNode for Button with fn declaration(self) {
       "variant",
       @core.DeclarationKey::int(
         match self.variant {
-          @style.ButtonVariant::Primary => 0
-          @style.ButtonVariant::Tonal => 1
-          @style.ButtonVariant::Outline => 2
-          @style.ButtonVariant::Ghost => 3
-          @style.ButtonVariant::Subtle => 4
-          @style.ButtonVariant::SubtleBrand => 5
+          Primary => 0
+          Tonal => 1
+          Outline => 2
+          Ghost => 3
+          Subtle => 4
+          SubtleBrand => 5
         },
       ),
     ),
@@ -136,12 +136,12 @@ impl @core.ViewNode for Button with fn declaration(self) {
   ])
   @common.view_declaration(
     layout=if self.theme is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(layout_key)
     },
     paint=if self.theme is Some(_) || self.style is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(paint_key)
     },
@@ -209,9 +209,9 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
   let current_state = if ctx.state.pressed {
     @core.PressableState::Pressed
   } else if ctx.state.hovered {
-    @core.PressableState::Hovered
+    Hovered
   } else {
-    @core.PressableState::Normal
+    Normal
   }
   let transition = @common.button_transition(ctx.state)
   let (background_brush, animating) = match transition {
@@ -322,7 +322,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
         scale,
       )
       commands.push(
-        @core.DrawCommand::DrawPath(
+        DrawPath(
           @core.PathSpec::new(
             verbs=scaled,
             stroke=Some(@core.Brush::solid(foreground)),
@@ -334,7 +334,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
     None => ()
   }
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=self.text,
         frame=text_frame,
@@ -354,8 +354,8 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Button with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Button,
+    composition=Boundary,
+    role=Button,
     label=self.text,
   )
 }
@@ -373,34 +373,32 @@ fn[Msg] button_event(
   match ctx.event {
     // Primary button only: right-button presses now reach the view tree for
     // per-target context menus and must not press or activate the button.
-    @core.AppEvent::Pointer(event) if event.button == 0 => {
+    Pointer(event) if event.button == 0 => {
       let inside = ctx.frame.contains(event.position)
       // A stale-hover Exit re-dispatches positionally and can carry a
       // position that is still inside this button; such an Exit must not
       // clear press/hover, or the terminating Up never activates.
-      let exit_inside = event.phase == @core.PointerPhase::Exit && inside
+      let exit_inside = event.phase == Exit && inside
       let current = if ctx.state.pressed {
         @core.PressableState::Pressed
       } else if ctx.state.hovered {
-        @core.PressableState::Hovered
+        Hovered
       } else {
-        @core.PressableState::Normal
+        Normal
       }
       let next = if exit_inside {
         current
       } else {
         @common.view_button_next_state(current, inside, event.phase)
       }
-      let activated = event.phase == @core.PointerPhase::Up &&
-        inside &&
-        current == @core.PressableState::Pressed
+      let activated = event.phase == Up && inside && current == Pressed
       let changed = next != current || activated
       // A stale-hover Exit carries the current pointer position; when it
       // lands inside the button the pointer never left, so press/hover must
       // survive it (synthetic Exit cascades re-dispatch positionally and can
       // otherwise clear a button the pointer is still on).
-      let is_instant_clear = event.phase == @core.PointerPhase::Exit &&
-        current != @core.PressableState::Normal &&
+      let is_instant_clear = event.phase == Exit &&
+        current != Normal &&
         !inside &&
         !exit_inside
       let next_state = if is_instant_clear {
@@ -427,7 +425,7 @@ fn[Msg] button_event(
             activated=true,
             captured=true,
             state=Some(next_state),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
             messages=[message],
           )
         (true, None) =>
@@ -435,22 +433,18 @@ fn[Msg] button_event(
             changed~,
             captured=true,
             state=Some(next_state),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
           )
         (false, _) =>
           @common.view_event_result(
             changed~,
             captured=inside || changed,
             state=if changed { Some(next_state) } else { None },
-            dirty=if changed {
-              @core.ViewDirtyHint::ViewPaintDirty
-            } else {
-              @core.ViewDirtyHint::ViewClean
-            },
+            dirty=if changed { ViewPaintDirty } else { ViewClean },
           )
       }
     }
-    @core.AppEvent::Keyboard(event) =>
+    Keyboard(event) =>
       if event.pressed &&
         (event.key == "Enter" || event.key == "Space" || event.key == " ") {
         match on_click {
@@ -459,7 +453,7 @@ fn[Msg] button_event(
               changed=true,
               activated=true,
               captured=true,
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              dirty=ViewPaintDirty,
               messages=[message],
             )
           None =>
@@ -467,7 +461,7 @@ fn[Msg] button_event(
               changed=true,
               activated=true,
               captured=true,
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              dirty=ViewPaintDirty,
             )
         }
       } else {

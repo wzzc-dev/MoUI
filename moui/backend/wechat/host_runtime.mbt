@@ -37,7 +37,7 @@ pub fn WechatAppOptions::new(
   logical_height~ : Double,
   scale_factor? : Double = 2.0,
 ) -> WechatAppOptions {
-  { canvas_id, logical_width, logical_height, scale_factor }
+  { canvas_id, logical_width, logical_height, scale_factor, }
 }
 
 ///|
@@ -136,12 +136,12 @@ pub fn wechat_dispatch_pointer_input(
     Some(driver) => {
       let phase = match kind {
         0 => @core.PointerPhase::Move
-        1 => @core.PointerPhase::Down
-        2 => @core.PointerPhase::Up
-        _ => @core.PointerPhase::Cancel
+        1 => Down
+        2 => Up
+        _ => Cancel
       }
       let result = driver.dispatch(
-        @host.Event::Pointer(
+        Pointer(
           @core.PointerEvent::new(
             position=@core.Point::new(x=x_px, y=y_px),
             phase~,

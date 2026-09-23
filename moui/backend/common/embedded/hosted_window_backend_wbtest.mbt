@@ -17,7 +17,7 @@ fn hosted_backend_test_window(
 ) -> HostedWindow {
   HostedWindow::new(
     scale_factor=() => 2.0,
-    inner_size=() => @dpi.PhysicalSize::PhysicalSize(240, 160),
+    inner_size=() => PhysicalSize(240, 160),
     request_redraw=() => redraw_count.val = redraw_count.val + 1,
     drop=() => drop_count.val = drop_count.val + 1,
   )
@@ -137,9 +137,7 @@ test "application close disposes the logical surface before physical exit" {
       Some((hosted_backend_test_window(redraw_count, drop_count), 61UL))
     }),
   )
-  backend.handle_window_event(@window_core.WindowEvent::CloseRequested, exit=() => {
-    exits.val += 1
-  })
+  backend.handle_window_event(CloseRequested, exit=() => exits.val += 1)
   inspect(exits.val, content="1")
   inspect(dispose_count.val, content="1")
   inspect(drop_count.val, content="1")

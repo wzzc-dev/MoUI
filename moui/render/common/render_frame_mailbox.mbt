@@ -45,7 +45,7 @@ pub fn RenderFramePacket::new(
   {
     sequence,
     surface_generation,
-    input: { ..input, commands: input.commands.copy() },
+    input: { ..input, commands: input.commands.copy(), },
   }
 }
 

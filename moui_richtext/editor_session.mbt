@@ -191,7 +191,7 @@ pub fn MarkdownEditTransaction::from_sources(
   {
     previous_source,
     source,
-    edit_range: { start: prefix, end: previous_suffix },
+    edit_range: { start: prefix, end: previous_suffix, },
     replacement: markdown_document_source_substring_after_prefix(
       source, source_length, prefix, next_suffix, source_prefix_offset,
     ),
@@ -288,7 +288,7 @@ fn markdown_document_source_substring_after_prefix(
     )
     .unwrap_or(source_utf16_length)
   }
-  source.sub(start=start_offset, end=end_offset).to_owned()
+  source.exact_view(start=start_offset, end=end_offset).to_owned()
 }
 
 ///|
@@ -415,7 +415,7 @@ pub fn MarkdownEditTransaction::from_edit(
   {
     previous_source,
     source,
-    edit_range: { start, end: start + markdown_editor_text_length(deleted) },
+    edit_range: { start, end: start + markdown_editor_text_length(deleted), },
     replacement,
     deleted,
     caret,
@@ -987,7 +987,7 @@ fn markdown_document_session_apply_in_line_edit(
       in_end,
       markdown_editor_text_length(pre_line),
     )
-  let post_view = post_line.sub(start=0, end=post_line.length())
+  let post_view = post_line.exact_view(start=0, end=post_line.length())
   if markdown_editor_line_text_is_blank(post_view) {
     return None
   }
@@ -997,7 +997,7 @@ fn markdown_document_session_apply_in_line_edit(
   }
   if markdown_editor_shell_line_may_open_html(post_view) {
     let probe : Array[MarkdownLine] = [
-      { text: post_view, start: line_start, end: line_end },
+      { text: post_view, start: line_start, end: line_end, },
     ]
     if markdown_editor_html_block_at(probe, 0) is Some(_) {
       return None
@@ -1034,9 +1034,9 @@ fn markdown_document_session_apply_in_line_edit(
       markdown_editor_text_length(editor_block.block.text),
     )
   session.editor_blocks[cluster.start_index] = {
-    block: { ..editor_block.block, text: next_text, inlines: [] },
-    source_range: { start: old_source_start, end: old_source_end + delta },
-    content_range: { start: content_start, end: content_end + delta },
+    block: { ..editor_block.block, text: next_text, inlines: [], },
+    source_range: { start: old_source_start, end: old_source_end + delta, },
+    content_range: { start: content_start, end: content_end + delta, },
   }
   // Maintain the document line index in place: line starts after the edit
   // shift by the delta (the edit cannot add or remove a line, and no line
@@ -1861,8 +1861,8 @@ fn MarkdownDocumentLayoutCache::new(
       {
         id: index,
         revision: 0,
-        source_range: { start: 0, end: 0 },
-        content_range: { start: 0, end: 0 },
+        source_range: { start: 0, end: 0, },
+        content_range: { start: 0, end: 0, },
         kind: Paragraph,
         text: "",
         fingerprint: 0UL,
@@ -1908,10 +1908,6 @@ priv struct MarkdownDocumentWindowRange {
   // a separate offset.
   top_padding : Double
   content_height : Double
-  // Visual lines clipped off the top of `visible_start`'s block. Non-zero only
-  // for a block taller than the viewport, which the block-granular range can
-  // never cull.
-  clip_lines : Int
 }
 
 ///|
@@ -1943,7 +1939,6 @@ fn markdown_document_window_range(
       visible_end: -1,
       top_padding: 0.0,
       content_height: 0.0,
-      clip_lines: 0,
     }
   }
   let content_units = markdown_document_height_index_content_units(
@@ -1957,7 +1952,6 @@ fn markdown_document_window_range(
       visible_end: index.blocks.length() - 1,
       top_padding: 0.0,
       content_height,
-      clip_lines: 0,
     }
   }
   let visible_min_units = max_double(0.0, (scroll_y - overscan) / base.size)
@@ -1980,7 +1974,7 @@ fn markdown_document_window_range(
       source_mode~,
     ) *
     base.size
-  { visible_start, visible_end, top_padding, content_height, clip_lines: 0 }
+  { visible_start, visible_end, top_padding, content_height, }
 }
 
 ///|
@@ -2486,7 +2480,6 @@ fn markdown_document_window_range_for_geometry(
       visible_end: -1,
       top_padding: 0.0,
       content_height: 0.0,
-      clip_lines: 0,
     }
   }
   let content_height = markdown_document_scroll_geometry_prefix_at(
@@ -2499,7 +2492,6 @@ fn markdown_document_window_range_for_geometry(
       visible_end: count - 1,
       top_padding: 0.0,
       content_height,
-      clip_lines: 0,
     }
   }
   let visible_min = max_double(0.0, scroll_y - overscan)
@@ -2549,7 +2541,6 @@ fn markdown_document_window_range_for_geometry(
       count=visible_start,
     ),
     content_height,
-    clip_lines: 0,
   }
 }
 
@@ -3143,14 +3134,15 @@ fn markdown_document_estimated_inset_units(
   kind : MarkdownBlockKind,
 ) -> @core.Insets {
   match kind {
-    Heading(_) => { top: 0.6, right: 0.0, bottom: 0.3, left: 0.0 }
-    Blockquote => { top: 0.43, right: 0.0, bottom: 0.86, left: 1.0 }
-    CodeBlock => { top: 0.86, right: 1.0, bottom: 0.86, left: 1.0 }
-    Table => { top: 0.43, right: 0.71, bottom: 0.43, left: 0.71 }
-    FootnoteDefinition(_) => { top: 0.14, right: 0.0, bottom: 0.14, left: 0.86 }
-    HtmlBlock => { top: 0.29, right: 0.71, bottom: 0.29, left: 0.71 }
-    FrontMatter => { top: 0.43, right: 0.71, bottom: 0.43, left: 0.71 }
-    Paragraph => { top: 0.0, right: 0.0, bottom: 0.4, left: 0.0 }
+    Heading(_) => { top: 0.6, right: 0.0, bottom: 0.3, left: 0.0, }
+    Blockquote => { top: 0.43, right: 0.0, bottom: 0.86, left: 1.0, }
+    CodeBlock => { top: 0.86, right: 1.0, bottom: 0.86, left: 1.0, }
+    Table => { top: 0.43, right: 0.71, bottom: 0.43, left: 0.71, }
+    FootnoteDefinition(_) =>
+      { top: 0.14, right: 0.0, bottom: 0.14, left: 0.86, }
+    HtmlBlock => { top: 0.29, right: 0.71, bottom: 0.29, left: 0.71, }
+    FrontMatter => { top: 0.43, right: 0.71, bottom: 0.43, left: 0.71, }
+    Paragraph => { top: 0.0, right: 0.0, bottom: 0.4, left: 0.0, }
     UnorderedListItem | TaskListItem(_) | OrderedListItem(_) | HorizontalRule =>
       @core.Insets::symmetric()
   }
@@ -3223,7 +3215,7 @@ fn markdown_document_source_chars_in_range(
   } else {
     source.offset_of_nth_char(end).unwrap_or(source_length)
   }
-  source.sub(start=start_offset, end=end_offset).to_array()
+  source.exact_view(start=start_offset, end=end_offset).to_array()
 }
 
 ///|
@@ -3596,7 +3588,7 @@ fn markdown_document_assign_blocks_reuse(
   for offset, record in window_records {
     blocks[window.prefix_count + offset] = record
   }
-  { blocks, next_id }
+  { blocks, next_id, }
 }
 
 ///|
@@ -3670,7 +3662,7 @@ fn markdown_document_assign_blocks_full(
       ),
     )
   }
-  { blocks, next_id }
+  { blocks, next_id, }
 }
 
 ///|
@@ -4003,7 +3995,7 @@ fn markdown_document_dirty_range(
     start_block,
     blocks.length() - 1,
   )
-  Some({ start_block, end_block, source_start, source_end })
+  Some({ start_block, end_block, source_start, source_end, })
 }
 
 ///|

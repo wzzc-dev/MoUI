@@ -28,7 +28,7 @@ pub fn WindowRuntimeSlot::from_driver(
   record~ : @backend_host.WindowRecord,
   driver~ : @runtime.HostRuntimeDriver,
 ) -> WindowRuntimeSlot {
-  { id: record.id, record, driver }
+  { id: record.id, record, driver, }
 }
 
 ///|
@@ -45,7 +45,7 @@ pub fn WindowRuntimeSlot::from_resolved_open(
 
 ///|
 pub fn WindowRuntimeSlots::new() -> WindowRuntimeSlots {
-  { slots: [] }
+  { slots: [], }
 }
 
 ///|
@@ -103,7 +103,7 @@ pub fn WindowRuntimeSlots::lookup(
 pub fn WindowRuntimeSlots::open_slots(
   self : WindowRuntimeSlots,
 ) -> Array[WindowRuntimeSlot] {
-  self.slots.filter(slot => slot.record.phase != @backend_host.WindowClosed)
+  self.slots.filter(slot => slot.record.phase != WindowClosed)
 }
 
 ///|
@@ -123,7 +123,7 @@ pub fn WindowRuntimeSlots::focused_slot(
   self : WindowRuntimeSlots,
 ) -> WindowRuntimeSlot? {
   for slot in self.open_slots() {
-    if slot.record.phase == @backend_host.WindowFocused {
+    if slot.record.phase == WindowFocused {
       return Some(slot)
     }
   }
@@ -196,10 +196,9 @@ pub fn WindowRuntimeSlots::apply_request(
 ) -> @backend_host.WindowRequestResult {
   let result = registry.apply_request(request)
   match result {
-    @backend_host.WindowRequestResult::WindowOpened(_)
-    | @backend_host.WindowRequestResult::WindowUpdated(_) =>
+    WindowOpened(_) | WindowUpdated(_) =>
       ignore(self.sync_open_from_registry(registry))
-    @backend_host.WindowRequestResult::WindowRejected(_) => ()
+    WindowRejected(_) => ()
   }
   result
 }
@@ -225,9 +224,7 @@ pub fn WindowRuntimeSlots::remove(
 ///|
 pub fn WindowRuntimeSlots::remove_closed(self : WindowRuntimeSlots) -> Int {
   let before = self.slots.length()
-  self.slots = self.slots.filter(slot => {
-    slot.record.phase != @backend_host.WindowClosed
-  })
+  self.slots = self.slots.filter(slot => slot.record.phase != WindowClosed)
   before - self.slots.length()
 }
 

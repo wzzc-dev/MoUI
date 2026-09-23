@@ -57,14 +57,14 @@ fn ShowcaseModel::theme_side_section(
         button(
           "Open Dialog",
           on_click=ShowDialog,
-          variant=@views.ButtonVariant::Primary,
+          variant=Primary,
           theme~,
           width=body_width,
           height=36.0,
         ),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     metrics~,
   )

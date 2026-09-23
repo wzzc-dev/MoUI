@@ -59,7 +59,7 @@ test "expanded wrapping child re-measures to its weighted width" {
     width=300.0,
     height=100.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=100.0),
   )
@@ -112,17 +112,17 @@ test "tight-fit re-measure leaves matched children untouched" {
         @views.expanded(
           @views.column(
             [wrap_leaf_box(natural=150.0, line_height=10.0)],
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
         ),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=100.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=100.0),
   )

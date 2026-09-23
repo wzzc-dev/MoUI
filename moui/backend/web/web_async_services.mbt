@@ -76,48 +76,43 @@ fn WebAsyncHostServiceRequest::from_pending(
   pending : @host.HostPendingServiceRequest,
 ) -> WebAsyncHostServiceRequest? {
   match pending.request {
-    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText) =>
+    Clipboard(ReadText) =>
       Some({
         id: pending.id,
-        kind: WebAsyncHostServiceKind::ClipboardReadText,
+        kind: ClipboardReadText,
         title: "",
         filters: [],
         default_name: "",
         path: "",
         text: "",
       })
-    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadImage) =>
+    Clipboard(ReadImage) =>
       Some({
         id: pending.id,
-        kind: WebAsyncHostServiceKind::ClipboardReadImage,
+        kind: ClipboardReadImage,
         title: "",
         filters: [],
         default_name: "",
         path: "",
         text: "",
       })
-    @host.HostServiceRequest::Clipboard(
-      @host.HostClipboardRequest::WriteImage(_mime, bytes)
-    ) =>
+    Clipboard(WriteImage(_mime, bytes)) =>
       Some({
         id: pending.id,
-        kind: WebAsyncHostServiceKind::ClipboardWriteImage,
+        kind: ClipboardWriteImage,
         title: "",
         filters: [],
         default_name: "",
         path: "",
         text: @base64.encode(bytes[:]),
       })
-    @host.HostServiceRequest::FileDialog(options) =>
+    FileDialog(options) =>
       Some({
         id: pending.id,
         kind: match options.kind {
-          @host.HostFileDialogKind::OpenFile =>
-            WebAsyncHostServiceKind::FileDialogOpenFile
-          @host.HostFileDialogKind::SaveFile =>
-            WebAsyncHostServiceKind::FileDialogSaveFile
-          @host.HostFileDialogKind::PickDirectory =>
-            WebAsyncHostServiceKind::FileDialogPickDirectory
+          OpenFile => FileDialogOpenFile
+          SaveFile => FileDialogSaveFile
+          PickDirectory => FileDialogPickDirectory
         },
         title: options.title,
         filters: options.filters,
@@ -128,24 +123,20 @@ fn WebAsyncHostServiceRequest::from_pending(
         path: "",
         text: "",
       })
-    @host.HostServiceRequest::TextFile(
-      @host.HostTextFileRequest::ReadText(path)
-    ) =>
+    TextFile(ReadText(path)) =>
       Some({
         id: pending.id,
-        kind: WebAsyncHostServiceKind::TextFileReadText,
+        kind: TextFileReadText,
         title: "",
         filters: [],
         default_name: "",
         path,
         text: "",
       })
-    @host.HostServiceRequest::TextFile(
-      @host.HostTextFileRequest::WriteText(path, text)
-    ) =>
+    TextFile(WriteText(path, text)) =>
       Some({
         id: pending.id,
-        kind: WebAsyncHostServiceKind::TextFileWriteText,
+        kind: TextFileWriteText,
         title: "",
         filters: [],
         default_name: "",
@@ -226,7 +217,7 @@ fn web_complete_async_clipboard_read_text(
     Some(queue) => {
       let id = @host.HostServiceRequestId::new(request_id)
       if ok {
-        queue.complete(id, @host.HostServiceResponse::ClipboardText(text))
+        queue.complete(id, ClipboardText(text))
       } else {
         queue.reject(
           id,
@@ -252,7 +243,7 @@ fn web_complete_async_clipboard_read_image_text(
       if ok && base64_png != "" {
         queue.complete(
           id,
-          @host.HostServiceResponse::ClipboardImage(
+          ClipboardImage(
             @base64.decode(base64_png, ignore_whitespace=false) catch {
               _ => return queue.reject(id, "clipboard image decode failed")
             },
@@ -282,7 +273,7 @@ fn web_complete_async_clipboard_write_image(
     Some(queue) => {
       let id = @host.HostServiceRequestId::new(request_id)
       if ok {
-        queue.complete(id, @host.HostServiceResponse::ClipboardWritten)
+        queue.complete(id, ClipboardWritten)
       } else {
         queue.reject(id, "clipboard image write failed on Web")
       }
@@ -304,10 +295,7 @@ fn web_complete_async_text_file_read_text(
         match web_take_text_file_read(request_id) {
           Some(entry) => {
             web_cache_text_file(entry.path, text)
-            queue.complete(
-              id,
-              @host.HostServiceResponse::TextFileContent(entry.path, text),
-            )
+            queue.complete(id, TextFileContent(entry.path, text))
           }
           None =>
             queue.reject(
@@ -345,7 +333,7 @@ fn web_complete_async_text_file_write_text(
           }
           None => text
         }
-        queue.complete(id, @host.HostServiceResponse::TextFileWritten(path))
+        queue.complete(id, TextFileWritten(path))
       } else {
         ignore(web_take_text_file_write(request_id))
         queue.reject(
@@ -393,9 +381,7 @@ fn web_complete_async_file_dialog_selection_text(
       if ok {
         queue.complete(
           id,
-          @host.HostServiceResponse::FileDialogSelection(
-            decode_web_file_dialog_selection(selection_text),
-          ),
+          FileDialogSelection(decode_web_file_dialog_selection(selection_text)),
         )
       } else {
         queue.reject(
@@ -526,7 +512,7 @@ fn web_remember_text_file_read(request_id : Int, path : String) -> Unit {
       entries.push(entry)
     }
   }
-  entries.push({ request_id, path })
+  entries.push({ request_id, path, })
   web_text_file_reads.val = entries
 }
 
@@ -557,7 +543,7 @@ fn web_remember_text_file_write(
       entries.push(entry)
     }
   }
-  entries.push({ request_id, path, text })
+  entries.push({ request_id, path, text, })
   web_text_file_writes.val = entries
 }
 
@@ -584,7 +570,7 @@ fn web_cache_text_file(path : String, text : String) -> Unit {
       entries.push(entry)
     }
   }
-  entries.push({ path, text })
+  entries.push({ path, text, })
   web_text_file_cache.val = entries
 }
 

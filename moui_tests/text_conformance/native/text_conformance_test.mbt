@@ -163,10 +163,10 @@ fn diagnostic_native_text_field_runtime() -> @runtime.AppRuntime {
 ///|
 fn focus_diagnostic_native_text_field(runtime : @runtime.AppRuntime) -> Unit {
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
@@ -308,12 +308,10 @@ test "diagnostic native skia text system drives runtime text field geometry" {
   let skia_system = @skia_renderer.skia_text_system()
   runtime.set_text_system(skia_system)
   focus_diagnostic_native_text_field(runtime)
+  runtime.dispatch_event(TextInput(CompositionStart))
   runtime.dispatch_event(
-    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionStart),
-  )
-  runtime.dispatch_event(
-    @core.AppEvent::TextInput(
-      @core.TextInputEvent::CompositionUpdate(
+    TextInput(
+      CompositionUpdate(
         @core.CompositionUpdate::new(
           text="你🙂a",
           cursor=Some(@core.TextRange::new(start=2, end=2)),
@@ -333,14 +331,10 @@ test "diagnostic native skia text system drives runtime text field geometry" {
   assert_true(composing.caret_rect.origin.x > 10.0)
   assert_true(composing.caret_rect.origin.x == 10.0 + layout.caret_positions[2])
 
+  runtime.dispatch_event(TextInput(CompositionEnd("你🙂a")))
+  runtime.dispatch_event(Keyboard(@core.KeyboardEvent::new(key="End")))
   runtime.dispatch_event(
-    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd("你🙂a")),
-  )
-  runtime.dispatch_event(
-    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
-  )
-  runtime.dispatch_event(
-    @core.AppEvent::Keyboard(
+    Keyboard(
       @core.KeyboardEvent::new(
         key="ArrowLeft",
         modifiers=@core.KeyModifiers::new(shift=true),
@@ -357,7 +351,7 @@ test "diagnostic native skia text system drives runtime text field geometry" {
   assert_true(
     commands.any(command => {
       match command {
-        @core.DrawCommand::FillRect(_, color) => color.a == 0.18
+        FillRect(_, color) => color.a == 0.18
         _ => false
       }
     }),

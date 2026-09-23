@@ -38,23 +38,23 @@ pub fn evaluate(
 ) -> @cell.CellValue {
   let trimmed = raw.trim().to_owned()
   if trimmed.is_empty() {
-    return @cell.CellValue::Empty
+    return Empty
   }
   if trimmed[0] != '=' {
     return @cell.parse_raw_value(trimmed)
   }
   let expr = trimmed[1:].to_owned()
   if expr.contains("#REF!") {
-    return @cell.CellValue::Error("#REF!")
+    return Error("#REF!")
   }
   let result = eval_expr(expr, ref_str => lookup(ref_str).to_display())
   match result {
     Ok(value) =>
       match @cell.parse_number(value) {
-        Some(n) => @cell.CellValue::Number(n)
-        None => @cell.CellValue::Text(value)
+        Some(n) => Number(n)
+        None => Text(value)
       }
-    Err(message) => @cell.CellValue::Error("#" + message)
+    Err(message) => Error("#" + message)
   }
 }
 
@@ -201,7 +201,7 @@ fn ParseState::advance(self : ParseState) -> Unit {
 
 ///|
 fn eval_expr(s : String, lookup : (String) -> String) -> Result[String, String] {
-  let state = { tokens: tokenize(s), pos: 0 }
+  let state = { tokens: tokenize(s), pos: 0, }
   try {
     let value = parse_comparison(state, lookup)
     Ok(format_value(value))

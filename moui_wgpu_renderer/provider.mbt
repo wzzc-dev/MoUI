@@ -9,9 +9,8 @@ pub fn wgpu_provider_capabilities(
       // transform support exists in the native WGPU visual pipeline, but the
       // diagnostic smoke has not yet recorded the required pixel markers, so
       // the self-report stays `Partial` until that evidence lands.
-      @render.RendererFeature::Gradient | @render.RendererFeature::Transform =>
-        @render.RendererFeatureStatus::Partial
-      _ => @render.RendererFeatureStatus::Supported
+      Gradient | Transform => @render.RendererFeatureStatus::Partial
+      _ => Supported
     }
     (status, "Native WGPU provider declares \{feature.label()} support.")
   })

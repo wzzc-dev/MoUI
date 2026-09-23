@@ -4,7 +4,7 @@ fn[Msg] text_area_control(
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Outline,
+  variant? : @style.TextFieldVariant = Outline,
   style? : @style.TextFieldStyle,
   on_input? : ((String) -> Msg)? = None,
   on_submit? : Msg? = None,
@@ -55,7 +55,7 @@ fn[Msg] text_area_control(
                 Some(selection.start)
               },
             }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
           )
         }),
       ]
@@ -106,9 +106,9 @@ fn[Msg] handle_text_area_event(
   line_height~ : Double,
 ) -> @core.ViewEventResult[Msg] {
   let result = match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       handle_text_area_pointer(ctx, value~, font~, line_height~, event)
-    @core.AppEvent::Keyboard(event) =>
+    Keyboard(event) =>
       handle_text_area_keyboard(
         ctx,
         value~,
@@ -118,7 +118,7 @@ fn[Msg] handle_text_area_event(
         line_height~,
         event,
       )
-    @core.AppEvent::TextInput(event) =>
+    TextInput(event) =>
       view_text_input_result(ctx, value~, on_input~, event, record_history=true)
     _ => @core.ViewEventResult::ignored()
   }
@@ -182,9 +182,9 @@ fn[Msg] text_area_reveal_caret(
     {
       ..result,
       state: Some(
-        base_state.with_slot(text_area_scroll_slot(), { offset_y: next_offset }),
+        base_state.with_slot(text_area_scroll_slot(), { offset_y: next_offset, }),
       ),
-      dirty: @core.ViewDirtyHint::ViewLayoutDirty,
+      dirty: ViewLayoutDirty,
     }
   }
 }
@@ -208,7 +208,7 @@ fn[Msg] handle_text_area_keyboard(
         changed=true,
         activated=on_submit is Some(_),
         captured=true,
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        dirty=ViewPaintDirty,
         messages=option_message(on_submit),
       )
     }
@@ -216,7 +216,7 @@ fn[Msg] handle_text_area_keyboard(
       ctx,
       value~,
       on_input~,
-      @core.TextInputEvent::InsertText("\n"),
+      InsertText("\n"),
       record_history=true,
     )
   }
@@ -226,7 +226,7 @@ fn[Msg] handle_text_area_keyboard(
       changed=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
     )
   }
   if @core.is_undo_shortcut(event) {
@@ -235,7 +235,7 @@ fn[Msg] handle_text_area_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewBuildDirty,
+      dirty=ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
@@ -245,7 +245,7 @@ fn[Msg] handle_text_area_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewBuildDirty,
+      dirty=ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
@@ -256,7 +256,7 @@ fn[Msg] handle_text_area_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteRange(selection),
+          DeleteRange(selection),
           record_history=true,
         )
       None =>
@@ -264,7 +264,7 @@ fn[Msg] handle_text_area_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteSurrounding(1, 0),
+          DeleteSurrounding(1, 0),
           record_history=true,
         )
     }
@@ -276,7 +276,7 @@ fn[Msg] handle_text_area_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteRange(selection),
+          DeleteRange(selection),
           record_history=true,
         )
       None =>
@@ -284,7 +284,7 @@ fn[Msg] handle_text_area_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteSurrounding(0, 1),
+          DeleteSurrounding(0, 1),
           record_history=true,
         )
     }
@@ -310,36 +310,16 @@ fn[Msg] handle_text_area_keyboard(
     )
   }
   if event.key == "ArrowLeft" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      TextCaretDirection::MoveLeft,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveLeft, event.modifiers.shift)
   }
   if event.key == "ArrowRight" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      TextCaretDirection::MoveRight,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveRight, event.modifiers.shift)
   }
   if event.key == "Home" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      TextCaretDirection::MoveStart,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveStart, event.modifiers.shift)
   }
   if event.key == "End" {
-    return view_caret_move_result(
-      ctx,
-      value,
-      TextCaretDirection::MoveEnd,
-      event.modifiers.shift,
-    )
+    return view_caret_move_result(ctx, value, MoveEnd, event.modifiers.shift)
   }
   match event.text {
     Some(text) =>
@@ -348,7 +328,7 @@ fn[Msg] handle_text_area_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::InsertText(text),
+          InsertText(text),
           record_history=true,
         )
       } else {
@@ -429,7 +409,7 @@ fn[Msg] text_area_vertical_caret_move(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    dirty=ViewPaintDirty,
   )
 }
 
@@ -483,13 +463,14 @@ fn[Msg] handle_text_area_pointer(
         changed=true,
         captured=true,
         state=Some(
-          ctx.state.with_slot(text_area_scroll_slot(), { offset_y: next_offset }),
+          ctx.state.with_slot(text_area_scroll_slot(), {
+            offset_y: next_offset,
+          }),
         ),
-        dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+        dirty=ViewLayoutDirty,
       )
     }
-  } else if event.phase == @core.PointerPhase::Down &&
-    ctx.frame.contains(event.position) {
+  } else if event.phase == Down && ctx.frame.contains(event.position) {
     let paragraph = text_area_paragraph(
       ctx.text_system,
       display_text,
@@ -522,9 +503,9 @@ fn[Msg] handle_text_area_pointer(
       focused=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
     )
-  } else if event.phase == @core.PointerPhase::Move &&
+  } else if event.phase == Move &&
     ctx.text_control.text_selection_anchor is Some(anchor) {
     let paragraph = text_area_paragraph(
       ctx.text_system,
@@ -557,18 +538,18 @@ fn[Msg] handle_text_area_pointer(
         changed=true,
         captured=true,
         text_control=Some(next_control),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        dirty=ViewPaintDirty,
       )
     } else {
       @core.ViewEventResult::ignored()
     }
-  } else if event.phase == @core.PointerPhase::Up &&
+  } else if event.phase == Up &&
     ctx.text_control.text_selection_anchor is Some(_) {
     @common.view_event_result(
       changed=true,
       captured=true,
-      text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      text_control=Some({ ..ctx.text_control, text_selection_anchor: None, }),
+      dirty=ViewPaintDirty,
     )
   } else {
     @core.ViewEventResult::ignored()

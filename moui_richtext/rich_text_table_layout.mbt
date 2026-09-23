@@ -175,7 +175,7 @@ fn rich_text_table_layout(
           })
           line_count = @core.max_int(line_count, lines.length())
         }
-        cells.push({ lines, segments: [], font })
+        cells.push({ lines, segments: [], font, })
       }
     }
     rows.push({
@@ -183,7 +183,7 @@ fn rich_text_table_layout(
       height: table.row_height + (line_count - 1).to_double() * line_step,
     })
   }
-  { rows, column_width, cell_inner_width, line_step }
+  { rows, column_width, cell_inner_width, line_step, }
 }
 
 ///|
@@ -218,7 +218,7 @@ fn rich_text_table_cell_segments_layout(
     // cursor (offsets only advance by its visible length).
     let range = match run.source_range {
       Some(range) => range
-      None => { start: cursor, end: cursor }
+      None => { start: cursor, end: cursor, }
     }
     let mut index = 0
     while index < visible_chars.length() {
@@ -290,7 +290,7 @@ fn rich_text_table_cell_segments_layout(
   }
   // One trailing line record so empty cells and the last line have a band.
   if lines.is_empty() {
-    lines.push({ start: 0, end: chars.length(), width: 0.0, text: "" })
+    lines.push({ start: 0, end: chars.length(), width: 0.0, text: "", })
   } else {
     let last = lines[lines.length() - 1]
     let next_start = last.end
@@ -303,5 +303,5 @@ fn rich_text_table_cell_segments_layout(
       })
     }
   }
-  { layout: { lines, segments, font }, line_count: lines.length() }
+  { layout: { lines, segments, font, }, line_count: lines.length(), }
 }

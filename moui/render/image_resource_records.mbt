@@ -1,12 +1,6 @@
 ///|
 pub fn ImageResourceRecord::loading(source : String) -> ImageResourceRecord {
-  {
-    source,
-    status: ImageResourceStatus::ImageLoading,
-    width: 0,
-    height: 0,
-    diagnostic: "",
-  }
+  { source, status: ImageLoading, width: 0, height: 0, diagnostic: "", }
 }
 
 ///|
@@ -15,13 +9,7 @@ pub fn ImageResourceRecord::ready(
   width~ : Int,
   height~ : Int,
 ) -> ImageResourceRecord {
-  {
-    source,
-    status: ImageResourceStatus::ImageReady,
-    width,
-    height,
-    diagnostic: "",
-  }
+  { source, status: ImageReady, width, height, diagnostic: "", }
 }
 
 ///|
@@ -29,22 +17,10 @@ pub fn ImageResourceRecord::failed(
   source : String,
   diagnostic~ : String,
 ) -> ImageResourceRecord {
-  {
-    source,
-    status: ImageResourceStatus::ImageFailed,
-    width: 0,
-    height: 0,
-    diagnostic,
-  }
+  { source, status: ImageFailed, width: 0, height: 0, diagnostic, }
 }
 
 ///|
 pub fn ImageResourceRecord::disposed(source : String) -> ImageResourceRecord {
-  {
-    source,
-    status: ImageResourceStatus::ImageDisposed,
-    width: 0,
-    height: 0,
-    diagnostic: "",
-  }
+  { source, status: ImageDisposed, width: 0, height: 0, diagnostic: "", }
 }

@@ -12,7 +12,7 @@ priv struct LinuxAtspiHostState {
 
 ///|
 fn LinuxAtspiHostState::new() -> LinuxAtspiHostState {
-  { bindings: [] }
+  { bindings: [], }
 }
 
 ///|
@@ -25,7 +25,7 @@ fn LinuxAtspiHostState::binding(
       return binding
     }
   }
-  let binding = { window_id, cursor: None, attached: false }
+  let binding = { window_id, cursor: None, attached: false, }
   self.bindings.push(binding)
   binding
 }
@@ -171,20 +171,20 @@ fn linux_atspi_state_flags(
 ///|
 fn linux_atspi_action_flag(action : @core.SemanticsActionKind) -> UInt {
   match action {
-    @core.SemanticsActionKind::Activate => 1U
-    @core.SemanticsActionKind::Focus => 2U
-    @core.SemanticsActionKind::SetText => 4U
-    @core.SemanticsActionKind::Submit => 8U
-    @core.SemanticsActionKind::Scroll => 16U
-    @core.SemanticsActionKind::Select => 32U
-    @core.SemanticsActionKind::Expand => 64U
-    @core.SemanticsActionKind::Collapse => 128U
-    @core.SemanticsActionKind::Dismiss => 256U
-    @core.SemanticsActionKind::Increment => 512U
-    @core.SemanticsActionKind::Decrement => 1024U
-    @core.SemanticsActionKind::SetNumericValue => 2048U
-    @core.SemanticsActionKind::SetSelection => 4096U
-    @core.SemanticsActionKind::ShowMenu => 8192U
+    Activate => 1U
+    Focus => 2U
+    SetText => 4U
+    Submit => 8U
+    Scroll => 16U
+    Select => 32U
+    Expand => 64U
+    Collapse => 128U
+    Dismiss => 256U
+    Increment => 512U
+    Decrement => 1024U
+    SetNumericValue => 2048U
+    SetSelection => 4096U
+    ShowMenu => 8192U
   }
 }
 
@@ -198,28 +198,28 @@ fn linux_atspi_action_flags(actions : Array[@core.SemanticsActionKind]) -> UInt 
 ///|
 fn linux_atspi_role_code(role : @core.SemanticsRole) -> String {
   match role {
-    @core.SemanticsRole::Button => "push button"
-    @core.SemanticsRole::Checkbox => "check box"
-    @core.SemanticsRole::Switch => "check box"
-    @core.SemanticsRole::Radio => "radio button"
-    @core.SemanticsRole::Slider => "slider"
-    @core.SemanticsRole::Progress => "progress bar"
-    @core.SemanticsRole::TextField => "entry"
-    @core.SemanticsRole::List => "list"
-    @core.SemanticsRole::ListItem => "list item"
-    @core.SemanticsRole::Grid => "table"
-    @core.SemanticsRole::Table => "table"
-    @core.SemanticsRole::Row => "table row"
-    @core.SemanticsRole::Cell => "table cell"
-    @core.SemanticsRole::Tree => "tree"
-    @core.SemanticsRole::TreeItem => "tree item"
-    @core.SemanticsRole::Dialog => "dialog"
-    @core.SemanticsRole::Image => "image"
-    @core.SemanticsRole::Separator => "separator"
-    @core.SemanticsRole::Link => "link"
-    @core.SemanticsRole::Heading => "heading"
-    @core.SemanticsRole::Alert => "alert"
-    @core.SemanticsRole::Status => "status"
+    Button => "push button"
+    Checkbox => "check box"
+    Switch => "check box"
+    Radio => "radio button"
+    Slider => "slider"
+    Progress => "progress bar"
+    TextField => "entry"
+    List => "list"
+    ListItem => "list item"
+    Grid => "table"
+    Table => "table"
+    Row => "table row"
+    Cell => "table cell"
+    Tree => "tree"
+    TreeItem => "tree item"
+    Dialog => "dialog"
+    Image => "image"
+    Separator => "separator"
+    Link => "link"
+    Heading => "heading"
+    Alert => "alert"
+    Status => "status"
     _ => "panel"
   }
 }
@@ -267,9 +267,9 @@ fn linux_atspi_publish_node(
     @utf8.encode(node.description, bom=false),
     linux_atspi_state_flags(node.state, node.text),
     match node.state.checked {
-      Some(@core.SemanticsCheckedState::Unchecked) => 0
-      Some(@core.SemanticsCheckedState::Checked) => 1
-      Some(@core.SemanticsCheckedState::Mixed) => 2
+      Some(Unchecked) => 0
+      Some(Checked) => 1
+      Some(Mixed) => 2
       None => -1
     },
     numeric_flags,
@@ -290,9 +290,9 @@ fn linux_atspi_publish_node(
     linux_atspi_optional(collection.set_position),
     linux_atspi_action_flags(node.actions),
     match node.live {
-      @core.SemanticsLive::Off => 0
-      @core.SemanticsLive::Polite => 1
-      @core.SemanticsLive::Assertive => 2
+      Off => 0
+      Polite => 1
+      Assertive => 2
     },
     if node.live_atomic {
       1
@@ -338,7 +338,7 @@ fn linux_atspi_json_string_field(
   name : String,
 ) -> String? {
   match fields.get(name) {
-    Some(Json::String(value)) => Some(value)
+    Some(String(value)) => Some(value)
     _ => None
   }
 }
@@ -349,24 +349,24 @@ fn linux_atspi_native_semantics_action(
   value : String,
 ) -> @core.SemanticsAction? {
   match kind {
-    "activate" => Some(@core.SemanticsAction::Activate)
-    "focus" => Some(@core.SemanticsAction::Focus)
-    "set_text" => Some(@core.SemanticsAction::SetText(value))
-    "submit" => Some(@core.SemanticsAction::Submit)
-    "scroll_forward" => Some(@core.SemanticsAction::Scroll(Forward))
-    "scroll_backward" => Some(@core.SemanticsAction::Scroll(Backward))
-    "scroll_up" => Some(@core.SemanticsAction::Scroll(Up))
-    "scroll_down" => Some(@core.SemanticsAction::Scroll(Down))
-    "scroll_left" => Some(@core.SemanticsAction::Scroll(Left))
-    "scroll_right" => Some(@core.SemanticsAction::Scroll(Right))
-    "select" => Some(@core.SemanticsAction::Select)
-    "expand" => Some(@core.SemanticsAction::Expand)
-    "collapse" => Some(@core.SemanticsAction::Collapse)
-    "dismiss" => Some(@core.SemanticsAction::Dismiss)
-    "increment" => Some(@core.SemanticsAction::Increment)
-    "decrement" => Some(@core.SemanticsAction::Decrement)
+    "activate" => Some(Activate)
+    "focus" => Some(Focus)
+    "set_text" => Some(SetText(value))
+    "submit" => Some(Submit)
+    "scroll_forward" => Some(Scroll(Forward))
+    "scroll_backward" => Some(Scroll(Backward))
+    "scroll_up" => Some(Scroll(Up))
+    "scroll_down" => Some(Scroll(Down))
+    "scroll_left" => Some(Scroll(Left))
+    "scroll_right" => Some(Scroll(Right))
+    "select" => Some(Select)
+    "expand" => Some(Expand)
+    "collapse" => Some(Collapse)
+    "dismiss" => Some(Dismiss)
+    "increment" => Some(Increment)
+    "decrement" => Some(Decrement)
     "set_numeric_value" =>
-      Some(@core.SemanticsAction::SetNumericValue(@string.parse_double(value))) catch {
+      Some(SetNumericValue(@string.parse_double(value))) catch {
         _ => None
       }
     "set_selection" =>
@@ -380,7 +380,7 @@ fn linux_atspi_native_semantics_action(
             (Some(start), Some(end)) if start <= 2147483647UL &&
               end <= 2147483647UL =>
               Some(
-                @core.SemanticsAction::SetSelection(
+                SetSelection(
                   @core.TextRange::new(start=start.to_int(), end=end.to_int()),
                 ),
               )
@@ -388,7 +388,7 @@ fn linux_atspi_native_semantics_action(
           }
         _ => None
       }
-    "show_menu" => Some(@core.SemanticsAction::ShowMenu)
+    "show_menu" => Some(ShowMenu)
     _ => None
   }
 }
@@ -403,7 +403,7 @@ fn linux_atspi_decode_action(
   let parsed = @json.parse(@utf8.decode_lossy(bytes[:], ignore_bom=false)) catch {
     _ => return None
   }
-  guard parsed is Json::Object(fields) &&
+  guard parsed is Object(fields) &&
     linux_atspi_json_string_field(fields, "node_id") is Some(node_text) &&
     linux_atspi_json_string_field(fields, "generation") is Some(generation_text) &&
     linux_atspi_json_string_field(fields, "kind") is Some(kind) &&
@@ -416,11 +416,9 @@ fn linux_atspi_decode_action(
     return None
   }
   Some({
-    target: @core.SemanticsTarget::ByNodeId(@core.SemanticsNodeId::new(node_id)),
+    target: ByNodeId(@core.SemanticsNodeId::new(node_id)),
     action,
-    precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-      @core.SemanticsGeneration::new(generation),
-    ),
+    precondition: Exact(@core.SemanticsGeneration::new(generation)),
   })
 }
 
@@ -463,7 +461,7 @@ fn LinuxNativeHostBackend::sync_atspi_window(
     None => runtime_slot.driver.read_semantics()
   }
   match read {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) => {
+    Ok(Full(snapshot)) => {
       if linux_atspi_begin_native(
           window_id.value.to_uint64(),
           1,
@@ -481,7 +479,7 @@ fn LinuxNativeHostBackend::sync_atspi_window(
       linux_atspi_end_native(window_id.value.to_uint64())
       binding.cursor = Some(snapshot.generation())
     }
-    Ok(@runtime.SemanticsRead::Delta(delta)) => {
+    Ok(Delta(delta)) => {
       if linux_atspi_begin_native(
           window_id.value.to_uint64(),
           0,
@@ -504,9 +502,9 @@ fn LinuxNativeHostBackend::sync_atspi_window(
           window_id.value.to_uint64(),
           announcement.node_id.value(),
           match announcement.live {
-            @core.SemanticsLive::Off => 0
-            @core.SemanticsLive::Polite => 1
-            @core.SemanticsLive::Assertive => 2
+            Off => 0
+            Polite => 1
+            Assertive => 2
           },
           if announcement.is_atomic {
             1
@@ -519,8 +517,7 @@ fn LinuxNativeHostBackend::sync_atspi_window(
       linux_atspi_end_native(window_id.value.to_uint64())
       binding.cursor = Some(delta.to())
     }
-    Ok(@runtime.SemanticsRead::Unchanged(generation)) =>
-      binding.cursor = Some(generation)
+    Ok(Unchanged(generation)) => binding.cursor = Some(generation)
     Err(_) => ()
   }
 }

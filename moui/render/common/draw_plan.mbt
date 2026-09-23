@@ -114,82 +114,78 @@ pub fn lower_draw_commands(commands : Array[@core.DrawCommand]) -> DrawPlan {
   let scopes : Array[PlanScopeKind] = []
   for command in commands {
     match command {
-      @core.DrawCommand::Clear(color) => ops.push(PlanOp::Clear(color))
-      @core.DrawCommand::FillRect(rect, color) =>
-        ops.push(PlanOp::FillRect(rect, color))
-      @core.DrawCommand::StrokeRect(rect, color, width) =>
-        ops.push(PlanOp::StrokeRect(rect, color, width))
-      @core.DrawCommand::FillRoundedRect(rounded, color) =>
-        ops.push(PlanOp::FillRoundedRect(rounded, color))
-      @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
-        ops.push(PlanOp::StrokeRoundedRect(rounded, color, width))
-      @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
-        ops.push(PlanOp::FillRoundedRectBrush(rounded, brush))
-      @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
-        ops.push(PlanOp::StrokeRoundedRectBrush(rounded, brush, width))
-      @core.DrawCommand::DrawShadow(shadow) =>
-        ops.push(PlanOp::DrawShadow(shadow))
-      @core.DrawCommand::DrawText(run) => ops.push(PlanOp::DrawText(run))
-      @core.DrawCommand::DrawImage(run) => ops.push(PlanOp::DrawImage(run))
-      @core.DrawCommand::PushClip(rect) => {
-        scopes.push(PlanScopeKind::Clip)
-        ops.push(PlanOp::PushClip(rect))
+      Clear(color) => ops.push(Clear(color))
+      FillRect(rect, color) => ops.push(FillRect(rect, color))
+      StrokeRect(rect, color, width) => ops.push(StrokeRect(rect, color, width))
+      FillRoundedRect(rounded, color) =>
+        ops.push(FillRoundedRect(rounded, color))
+      StrokeRoundedRect(rounded, color, width) =>
+        ops.push(StrokeRoundedRect(rounded, color, width))
+      FillRoundedRectBrush(rounded, brush) =>
+        ops.push(FillRoundedRectBrush(rounded, brush))
+      StrokeRoundedRectBrush(rounded, brush, width) =>
+        ops.push(StrokeRoundedRectBrush(rounded, brush, width))
+      DrawShadow(shadow) => ops.push(DrawShadow(shadow))
+      DrawText(run) => ops.push(DrawText(run))
+      DrawImage(run) => ops.push(DrawImage(run))
+      PushClip(rect) => {
+        scopes.push(Clip)
+        ops.push(PushClip(rect))
       }
-      @core.DrawCommand::PopClip => {
-        plan_pop_scope(scopes, diagnostics, PlanScopeKind::Clip)
-        ops.push(PlanOp::PopClip)
+      PopClip => {
+        plan_pop_scope(scopes, diagnostics, Clip)
+        ops.push(PopClip)
       }
-      @core.DrawCommand::PushRoundedClip(rounded) => {
-        scopes.push(PlanScopeKind::RoundedClip)
-        ops.push(PlanOp::PushRoundedClip(rounded))
+      PushRoundedClip(rounded) => {
+        scopes.push(RoundedClip)
+        ops.push(PushRoundedClip(rounded))
       }
-      @core.DrawCommand::PopRoundedClip => {
-        plan_pop_scope(scopes, diagnostics, PlanScopeKind::RoundedClip)
-        ops.push(PlanOp::PopRoundedClip)
+      PopRoundedClip => {
+        plan_pop_scope(scopes, diagnostics, RoundedClip)
+        ops.push(PopRoundedClip)
       }
-      @core.DrawCommand::PushTransform(transform) => {
-        scopes.push(PlanScopeKind::Transform)
-        ops.push(PlanOp::PushTransform(transform))
+      PushTransform(transform) => {
+        scopes.push(Transform)
+        ops.push(PushTransform(transform))
       }
-      @core.DrawCommand::PopTransform => {
-        plan_pop_scope(scopes, diagnostics, PlanScopeKind::Transform)
-        ops.push(PlanOp::PopTransform)
+      PopTransform => {
+        plan_pop_scope(scopes, diagnostics, Transform)
+        ops.push(PopTransform)
       }
-      @core.DrawCommand::PushOpacity(opacity) => {
-        scopes.push(PlanScopeKind::Opacity)
-        ops.push(PlanOp::PushOpacity(opacity))
+      PushOpacity(opacity) => {
+        scopes.push(Opacity)
+        ops.push(PushOpacity(opacity))
       }
-      @core.DrawCommand::PopOpacity => {
-        plan_pop_scope(scopes, diagnostics, PlanScopeKind::Opacity)
-        ops.push(PlanOp::PopOpacity)
+      PopOpacity => {
+        plan_pop_scope(scopes, diagnostics, Opacity)
+        ops.push(PopOpacity)
       }
-      @core.DrawCommand::PushLayer(layer) => {
-        scopes.push(PlanScopeKind::Layer)
-        ops.push(PlanOp::PushLayer(layer))
+      PushLayer(layer) => {
+        scopes.push(Layer)
+        ops.push(PushLayer(layer))
       }
-      @core.DrawCommand::PopLayer => {
-        plan_pop_scope(scopes, diagnostics, PlanScopeKind::Layer)
-        ops.push(PlanOp::PopLayer)
+      PopLayer => {
+        plan_pop_scope(scopes, diagnostics, Layer)
+        ops.push(PopLayer)
       }
-      @core.DrawCommand::BeginRetainedLayer(spec) => {
-        scopes.push(PlanScopeKind::Layer)
-        ops.push(PlanOp::BeginRetainedLayer(spec))
+      BeginRetainedLayer(spec) => {
+        scopes.push(Layer)
+        ops.push(BeginRetainedLayer(spec))
       }
-      @core.DrawCommand::EndRetainedLayer(key) => {
-        plan_pop_scope(scopes, diagnostics, PlanScopeKind::Layer)
-        ops.push(PlanOp::EndRetainedLayer(key))
+      EndRetainedLayer(key) => {
+        plan_pop_scope(scopes, diagnostics, Layer)
+        ops.push(EndRetainedLayer(key))
       }
-      @core.DrawCommand::PushFilter(filter) => {
-        scopes.push(PlanScopeKind::Filter)
-        ops.push(PlanOp::PushFilter(filter))
+      PushFilter(filter) => {
+        scopes.push(Filter)
+        ops.push(PushFilter(filter))
       }
-      @core.DrawCommand::PopFilter => {
-        plan_pop_scope(scopes, diagnostics, PlanScopeKind::Filter)
-        ops.push(PlanOp::PopFilter)
+      PopFilter => {
+        plan_pop_scope(scopes, diagnostics, Filter)
+        ops.push(PopFilter)
       }
-      @core.DrawCommand::DrawPath(path) => ops.push(PlanOp::DrawPath(path))
-      @core.DrawCommand::DrawShaderEffect(spec) =>
-        ops.push(PlanOp::DrawShaderEffect(spec))
+      DrawPath(path) => ops.push(DrawPath(path))
+      DrawShaderEffect(spec) => ops.push(DrawShaderEffect(spec))
     }
   }
   while scopes.length() > 0 {
@@ -199,7 +195,7 @@ pub fn lower_draw_commands(commands : Array[@core.DrawCommand]) -> DrawPlan {
       reason: "push scope was never popped: \{plan_scope_name(scope)}",
     })
   }
-  { ops, diagnostics }
+  { ops, diagnostics, }
 }
 
 ///|

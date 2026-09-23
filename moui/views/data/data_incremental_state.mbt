@@ -14,7 +14,7 @@ pub struct IncrementalData[T] {
 
 ///|
 pub fn[T] IncrementalData::new(items? : Array[T] = []) -> IncrementalData[T] {
-  { items: items.copy(), revision: 0 }
+  { items: items.copy(), revision: 0, }
 }
 
 ///|
@@ -67,5 +67,5 @@ pub fn[T] IncrementalData::apply(
       }
     }
   }
-  { items, revision: self.revision + 1 }
+  { items, revision: self.revision + 1, }
 }

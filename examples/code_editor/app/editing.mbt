@@ -9,7 +9,7 @@ pub fn CodeCursor::new(
   position~ : Int,
   selection? : @text.TextRange? = None,
 ) -> CodeCursor {
-  { position, selection }
+  { position, selection, }
 }
 
 ///|
@@ -22,7 +22,7 @@ pub(all) struct CodeFindState {
 
 ///|
 pub fn CodeFindState::new() -> CodeFindState {
-  { query: "", replacement: "", matches: [], active_index: -1 }
+  { query: "", replacement: "", matches: [], active_index: -1, }
 }
 
 ///|
@@ -196,7 +196,7 @@ fn cursor_edit(cursor : CodeCursor, source_length : Int) -> CursorEdit {
     }
     None => {
       let position = clamp_int(cursor.position, 0, source_length)
-      { start: position, end: position }
+      { start: position, end: position, }
     }
   }
 }
@@ -273,7 +273,7 @@ fn find_forward_bracket(
     } else if chars[i] == close {
       depth = depth - 1
       if depth == 0 {
-        return Some({ open: start, close: i })
+        return Some({ open: start, close: i, })
       }
     }
   }
@@ -295,7 +295,7 @@ fn find_backward_bracket(
     } else if chars[i] == open {
       depth = depth - 1
       if depth == 0 {
-        return Some({ open: i, close: end })
+        return Some({ open: i, close: end, })
       }
     }
     i = i - 1

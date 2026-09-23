@@ -64,13 +64,13 @@ pub async fn fetch_page(
           current = resolve_location(loc, current)
           hops = hops + 1
         }
-        None => return { url: current, status: raw.status, html: raw.body }
+        None => return { url: current, status: raw.status, html: raw.body, }
       }
     } else {
-      return { url: current, status: raw.status, html: raw.body }
+      return { url: current, status: raw.status, html: raw.body, }
     }
   }
-  raise NetError::Redirect("too many redirects: " + url)
+  raise Redirect("too many redirects: " + url)
 }
 
 ///|
@@ -102,29 +102,24 @@ async fn one_request(
   let client = match proxy_url {
     Some(proxy_url) => {
       let proxy_client = @async_http.Client(proxy_url) catch {
-        _ => raise NetError::InvalidUrl("invalid proxy url: " + proxy_url)
+        _ => raise InvalidUrl("invalid proxy url: " + proxy_url)
       }
       @async_http.Client(host, proxy=proxy_client) catch {
-        _ => raise NetError::InvalidUrl("invalid url: " + url)
+        _ => raise InvalidUrl("invalid url: " + url)
       }
     }
-    None =>
-      @async_http.Client(host) catch {
-        _ => raise NetError::InvalidUrl("invalid url: " + url)
-      }
+    None => Client(host) catch { _ => raise InvalidUrl("invalid url: " + url) }
   }
   let response = client.get(path) catch {
     err => {
       client.close()
-      raise NetError::Network(
-        "network error for " + url + ": " + err.to_string(),
-      )
+      raise Network("network error for " + url + ": " + err.to_string())
     }
   }
   let body = @async_io.Reader::read_all(client).text() catch {
     err => {
       client.close()
-      raise NetError::Network("read error for " + url + ": " + err.to_string())
+      raise Network("read error for " + url + ": " + err.to_string())
     }
   }
   client.close()
@@ -132,5 +127,5 @@ async fn one_request(
   for k, v in response.headers {
     headers[k.to_string().to_lower()] = v
   }
-  { status: response.code, headers, body }
+  { status: response.code, headers, body, }
 }

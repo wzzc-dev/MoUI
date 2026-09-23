@@ -57,7 +57,7 @@ pub fn ShowcaseDevToolsReport::new(
   report_text~ : String,
   json_text~ : String,
 ) -> ShowcaseDevToolsReport {
-  { summary_text, report_text, json_text }
+  { summary_text, report_text, json_text, }
 }
 
 ///|
@@ -75,7 +75,7 @@ pub fn ShowcaseDiagnosticsInput::new(
   inspector~ : ShowcaseInspectorDiagnostics,
   devtools~ : ShowcaseDevToolsReport,
 ) -> ShowcaseDiagnosticsInput {
-  { host, renderer_features, inspector, devtools }
+  { host, renderer_features, inspector, devtools, }
 }
 
 ///|

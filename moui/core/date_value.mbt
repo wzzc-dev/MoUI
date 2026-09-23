@@ -17,7 +17,7 @@ pub fn DateValue::new(
   minute? : Int = 0,
   second? : Int = 0,
 ) -> DateValue {
-  { year, month, day, hour, minute, second }
+  { year, month, day, hour, minute, second, }
 }
 
 ///|

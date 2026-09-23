@@ -1,7 +1,7 @@
 ///|
 fn draw_text_rect(command : @core.DrawCommand) -> @core.Rect? {
   match command {
-    @core.DrawCommand::DrawText(run) => Some(run.frame)
+    DrawText(run) => Some(run.frame)
     _ => None
   }
 }
@@ -98,7 +98,7 @@ test "selection highlight shares the painted line rows" {
   )
   assert_eq(rects.length(), 2)
   let chars = text.to_array()
-  let black : @core.Color = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+  let black : @core.Color = { r: 0.0, g: 0.0, b: 0.0, a: 1.0, }
   for line_index, rect in rects {
     let line_text = String::from_array(
       chars[paragraph.lines[line_index].text_range.start:paragraph.lines[line_index].text_range.end],

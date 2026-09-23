@@ -8,7 +8,7 @@ pub fn[Msg] toggle(
   check_color? : @core.Color,
 ) -> @core.View[Msg] {
   checkbox(label, checked~, on_change~, theme?, foreground?, check_color?).semantics_role(
-    @core.SemanticsRole::Switch,
+    Switch,
   )
 }
 
@@ -28,7 +28,7 @@ pub fn[Msg] radio(
     theme?,
     foreground?,
     check_color?,
-    box_shape=@style.ChoiceControlShape::Circle,
-    check_style=@style.CheckMarkStyle::Dot,
-  ).semantics_role(@core.SemanticsRole::Radio)
+    box_shape=Circle,
+    check_style=Dot,
+  ).semantics_role(Radio)
 }

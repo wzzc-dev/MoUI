@@ -8,7 +8,7 @@ test "Renderer::draw_text_fallback_line draws spans with covering faces" {
   )
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -48,7 +48,7 @@ test "Renderer::draw_text_fallback_line draws spans with covering faces" {
 test "Renderer::draw_text_fallback_line handles empty fallback stack" {
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -82,7 +82,7 @@ test "Renderer::draw_text_fallback_line keeps spacing across fallback spans" {
   )
   let canvas = @graphics.Canvas::new(40, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,

@@ -5,7 +5,7 @@ priv struct Clock {
 
 ///|
 fn Clock::new() -> Clock {
-  { last_time_ms: None }
+  { last_time_ms: None, }
 }
 
 ///|
@@ -15,5 +15,5 @@ fn Clock::frame(self : Clock, time_ms : Double) -> Frame {
     None => 0.0
   }
   self.last_time_ms = Some(time_ms)
-  { time_ms, delta_ms: delta }
+  { time_ms, delta_ms: delta, }
 }

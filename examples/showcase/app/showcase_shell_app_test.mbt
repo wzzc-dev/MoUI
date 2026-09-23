@@ -1,6 +1,6 @@
 ///|
 test "global catalog merges packages into categories" {
-  let model = ShowcaseModel::new(route="components/welcome")
+  let model = @app.ShowcaseModel::new(route="components/welcome")
   let groups = model.catalog_groups().map(group => group.id)
   assert_true(groups.contains("start"))
   assert_true(groups.contains("controls"))
@@ -30,7 +30,7 @@ test "global catalog merges packages into categories" {
 
 ///|
 test "nav query filters across workspaces" {
-  let model = ShowcaseModel::new(route="components/welcome").update(
+  let model = @app.ShowcaseModel::new(route="components/welcome").update(
     NavQueryChanged("todo"),
   )
   let filtered = model.filtered_catalog_items()
@@ -40,7 +40,7 @@ test "nav query filters across workspaces" {
 
 ///|
 test "current catalog item resolves full route" {
-  let model = ShowcaseModel::new(route="platform/mobile-service-probe")
+  let model = @app.ShowcaseModel::new(route="platform/mobile-service-probe")
   guard model.current_catalog_item() is Some(item) else {
     fail("expected catalog item")
   }

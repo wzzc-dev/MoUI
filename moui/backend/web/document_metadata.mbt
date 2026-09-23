@@ -17,7 +17,7 @@ pub fn WebDocumentMetadata::new(
   locale? : String = "",
   direction? : String = "",
 ) -> WebDocumentMetadata {
-  { title, description, canonical, image, locale, direction }
+  { title, description, canonical, image, locale, direction, }
 }
 
 ///|

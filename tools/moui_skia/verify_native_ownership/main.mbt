@@ -437,7 +437,7 @@ fn parse_manifest(text : String) -> Result[OwnershipManifest, String] {
       Err(message) => return Err(message)
     }
   }
-  Ok({ external_wrappers, regular_objects, regular_runtime_objects })
+  Ok({ external_wrappers, regular_objects, regular_runtime_objects, })
 }
 
 ///|
@@ -1626,7 +1626,7 @@ fn load_inputs(
   Ok(
     (
       manifest,
-      { manifest_path, handle_paths, header_text, source_text, types_text },
+      { manifest_path, handle_paths, header_text, source_text, types_text, },
     ),
   )
 }

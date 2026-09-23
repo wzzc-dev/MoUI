@@ -48,7 +48,7 @@ pub fn RendererResourceKey::new(
   kind : RendererResourceKind,
   id : Bytes,
 ) -> RendererResourceKey {
-  { kind, id }
+  { kind, id, }
 }
 
 ///|

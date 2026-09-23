@@ -42,7 +42,7 @@ pub fn render_html_document(
   )
   let commands = @translate.paint_node_to_commands(tree)
   let links = collect_anchor_links(tree, hrefs)
-  { commands, links }
+  { commands, links, }
 }
 
 ///|

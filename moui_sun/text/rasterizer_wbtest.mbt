@@ -4,10 +4,10 @@ fn make_box_glyph() -> SimpleGlyph {
     contours: [
       {
         points: [
-          { x: 0, y: 10, on_curve: true },
-          { x: 10, y: 10, on_curve: true },
-          { x: 10, y: 0, on_curve: true },
-          { x: 0, y: 0, on_curve: true },
+          { x: 0, y: 10, on_curve: true, },
+          { x: 10, y: 10, on_curve: true, },
+          { x: 10, y: 0, on_curve: true, },
+          { x: 0, y: 0, on_curve: true, },
         ],
       },
     ],
@@ -24,18 +24,18 @@ fn make_ring_glyph() -> SimpleGlyph {
     contours: [
       {
         points: [
-          { x: 0, y: 10, on_curve: true },
-          { x: 10, y: 10, on_curve: true },
-          { x: 10, y: 0, on_curve: true },
-          { x: 0, y: 0, on_curve: true },
+          { x: 0, y: 10, on_curve: true, },
+          { x: 10, y: 10, on_curve: true, },
+          { x: 10, y: 0, on_curve: true, },
+          { x: 0, y: 0, on_curve: true, },
         ],
       },
       {
         points: [
-          { x: 3, y: 7, on_curve: true },
-          { x: 3, y: 3, on_curve: true },
-          { x: 7, y: 3, on_curve: true },
-          { x: 7, y: 7, on_curve: true },
+          { x: 3, y: 7, on_curve: true, },
+          { x: 3, y: 3, on_curve: true, },
+          { x: 7, y: 3, on_curve: true, },
+          { x: 7, y: 7, on_curve: true, },
         ],
       },
     ],
@@ -52,11 +52,11 @@ fn make_consecutive_off_curve_glyph() -> SimpleGlyph {
     contours: [
       {
         points: [
-          { x: 0, y: 0, on_curve: true },
-          { x: 4, y: 8, on_curve: false },
-          { x: 8, y: 8, on_curve: false },
-          { x: 10, y: 4, on_curve: false },
-          { x: 10, y: 0, on_curve: true },
+          { x: 0, y: 0, on_curve: true, },
+          { x: 4, y: 8, on_curve: false, },
+          { x: 8, y: 8, on_curve: false, },
+          { x: 10, y: 4, on_curve: false, },
+          { x: 10, y: 0, on_curve: true, },
         ],
       },
     ],
@@ -77,19 +77,15 @@ fn make_box_font() -> Font {
   cmap[0x4E8C] = 1
   cmap[0x4E09] = 1
   {
-    head: { units_per_em: 10, index_to_loc_format: 0 },
-    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3 },
+    head: { units_per_em: 10, index_to_loc_format: 0, },
+    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3, },
     hmtx: [
-      { advance_width: 0, lsb: 0 },
-      { advance_width: 10, lsb: 0 },
-      { advance_width: 5, lsb: 0 },
+      { advance_width: 0, lsb: 0, },
+      { advance_width: 10, lsb: 0, },
+      { advance_width: 5, lsb: 0, },
     ],
     cmap,
-    glyphs: [
-      GlyphData::Empty,
-      GlyphData::Simple(make_box_glyph()),
-      GlyphData::Empty,
-    ],
+    glyphs: [Empty, Simple(make_box_glyph()), Empty],
     glyph_count: 3,
     kern: [],
   }
@@ -100,11 +96,11 @@ fn make_space_only_font() -> Font {
   let cmap : Map[Int, Int] = Map([])
   cmap[' '.to_int()] = 1
   {
-    head: { units_per_em: 10, index_to_loc_format: 0 },
-    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 2 },
-    hmtx: [{ advance_width: 0, lsb: 0 }, { advance_width: 5, lsb: 0 }],
+    head: { units_per_em: 10, index_to_loc_format: 0, },
+    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 2, },
+    hmtx: [{ advance_width: 0, lsb: 0, }, { advance_width: 5, lsb: 0, }],
     cmap,
-    glyphs: [GlyphData::Empty, GlyphData::Empty],
+    glyphs: [Empty, Empty],
     glyph_count: 2,
     kern: [],
   }
@@ -458,7 +454,7 @@ test "FontFaceCache::get_or_parse reuses cached face and preserves errors" {
   assert_eq(cache.len(), 1)
 
   match cache.get_or_parse("bad", b"not a font") {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 10)) => ()
+    Err(UnexpectedEndOfData(0, 12, 10)) => ()
     _ => abort("expected checked parser error")
   }
   assert_eq(cache.len(), 1)
@@ -627,7 +623,7 @@ test "TextLayout aligns center and right lines" {
       max_width=30.0,
       font_size=10.0,
       line_height=10.0,
-      alignment=TextAlign::Center,
+      alignment=Center,
     ),
   )
   let center_glyphs = center.get_runs()[0].get_glyphs()
@@ -640,7 +636,7 @@ test "TextLayout aligns center and right lines" {
       max_width=30.0,
       font_size=10.0,
       line_height=10.0,
-      alignment=TextAlign::Right,
+      alignment=Right,
     ),
   )
   let right_glyphs = right.get_runs()[0].get_glyphs()
@@ -657,7 +653,7 @@ test "TextLayout justifies non-final lines" {
       max_width=34.0,
       font_size=10.0,
       line_height=10.0,
-      alignment=TextAlign::Justify,
+      alignment=Justify,
     ),
   )
   assert_eq(layout.run_count(), 2)
@@ -725,7 +721,7 @@ test "TextLayout does not justify explicit line breaks" {
       max_width=30.0,
       font_size=10.0,
       line_height=10.0,
-      alignment=TextAlign::Justify,
+      alignment=Justify,
     ),
   )
   assert_eq(layout.run_count(), 2)
@@ -864,7 +860,7 @@ test "TextLayout does not justify final trailing spaces" {
       max_width=30.0,
       font_size=10.0,
       line_height=10.0,
-      alignment=TextAlign::Justify,
+      alignment=Justify,
     ),
   )
   assert_eq(layout.run_count(), 1)
@@ -881,7 +877,7 @@ test "render_text_mask_face applies alignment" {
     max_width=30.0,
     font_size=10.0,
     line_height=10.0,
-    alignment=TextAlign::Right,
+    alignment=Right,
   )
   let mask = render_text_mask_face(face, "A", 36, 12, 1.0, 1.0, config)
   assert_eq(mask.get_pixels()[1 * 36 + 20], 0)
@@ -935,7 +931,7 @@ test "render_text_mask_face wraps after trailing space" {
 test "FontData::parse reports checked parser errors" {
   let data = FontData::new(b"")
   match data.parse() {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 0)) => ()
+    Err(UnexpectedEndOfData(0, 12, 0)) => ()
     _ => abort("expected checked font-data parse error")
   }
 }

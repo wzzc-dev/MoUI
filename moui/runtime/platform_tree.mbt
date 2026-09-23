@@ -50,7 +50,7 @@ fn ElementNode::platform_with_environment(
       )
     }
   }
-  let node = PlatformNode::{ placements, children }
+  let node = PlatformNode::{ placements, children, }
   self.dirty.needs_platform = false
   self.refresh_descendant_dirty_flags()
   self.platform_cache.frame = Some(placed.frame)

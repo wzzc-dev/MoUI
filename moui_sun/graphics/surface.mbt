@@ -83,7 +83,7 @@ pub fn PresentRectPayload::new(
       row_bytes,
       pixels,
     ) {
-    Ok(_) => Ok({ rect, row_bytes, pixels: copy_byte_pixels(pixels) })
+    Ok(_) => Ok({ rect, row_bytes, pixels: copy_byte_pixels(pixels), })
     Err(error) => Err(error)
   }
 }
@@ -225,11 +225,11 @@ pub fn PresentBatch::get_present_strategy(
   width : Int,
   height : Int,
 ) -> DirtyPresentStrategy {
-  guard !self.is_empty() else { return DirtyPresentStrategy::Skip }
+  guard !self.is_empty() else { return Skip }
   if self.saves_full_present_pixels(width, height) {
-    DirtyPresentStrategy::Partial
+    Partial
   } else {
-    DirtyPresentStrategy::Full
+    Full
   }
 }
 
@@ -597,7 +597,7 @@ pub fn[S : Surface] PresentBatch::submit_plan_for(
   let surface_width = surface.get_width()
   let surface_height = surface.get_height()
   match self.validate_for(surface) {
-    Ok(_) => Ok({ batch: self, surface_width, surface_height })
+    Ok(_) => Ok({ batch: self, surface_width, surface_height, })
     Err(error) => Err(error)
   }
 }
@@ -651,7 +651,7 @@ pub fn[S : Surface] PresentBatchSubmitPlan::submit_to_result(
   guard surface_width == self.surface_width &&
     surface_height == self.surface_height else {
     return Err(
-      PresentError::SizeMismatch(
+      SizeMismatch(
         self.surface_width,
         self.surface_height,
         surface_width,
@@ -670,7 +670,7 @@ pub fn[S : Surface] PresentBatchSubmitPlan::submit_to_result(
       Err(error) => return Err(error)
     }
   }
-  Ok({ submit_plan: self, presented_rect_count: presented })
+  Ok({ submit_plan: self, presented_rect_count: presented, })
 }
 
 ///|
@@ -938,7 +938,7 @@ pub fn MemorySurface::to_png_rect_bytes(
     Ok(pixmap) =>
       match pixmap.to_png_bytes() {
         Ok(bytes) => Ok(bytes)
-        Err(_) => Err(PresentError::InvalidDimensions(rect.width, rect.height))
+        Err(_) => Err(InvalidDimensions(rect.width, rect.height))
       }
     Err(error) => Err(error)
   }
@@ -979,12 +979,10 @@ pub fn MemorySurface::present_pixels(
   pixels : FixedArray[Byte],
 ) -> Result[Unit, PresentError] {
   guard width > 0 && height > 0 else {
-    return Err(PresentError::InvalidDimensions(width, height))
+    return Err(InvalidDimensions(width, height))
   }
   guard width == self.width && height == self.height else {
-    return Err(
-      PresentError::SizeMismatch(self.width, self.height, width, height),
-    )
+    return Err(SizeMismatch(self.width, self.height, width, height))
   }
   self.present_pixels_rect(0, 0, width, height, row_bytes, pixels)
 }
@@ -1041,27 +1039,25 @@ pub fn validate_present_rect(
   pixels : FixedArray[Byte],
 ) -> Result[PresentRectInfo, PresentError] {
   guard width > 0 && height > 0 else {
-    return Err(PresentError::InvalidDimensions(width, height))
+    return Err(InvalidDimensions(width, height))
   }
   guard x >= 0 &&
     y >= 0 &&
     width <= surface_width - x &&
     height <= surface_height - y else {
     return Err(
-      PresentError::RectOutOfBounds(
-        x, y, width, height, surface_width, surface_height,
-      ),
+      RectOutOfBounds(x, y, width, height, surface_width, surface_height),
     )
   }
   let required_row_bytes = width * 4
   guard row_bytes >= required_row_bytes else {
-    return Err(PresentError::InvalidRowBytes(row_bytes, required_row_bytes))
+    return Err(InvalidRowBytes(row_bytes, required_row_bytes))
   }
   let required_len = row_bytes * (height - 1) + required_row_bytes
   guard pixels.length() >= required_len else {
-    return Err(PresentError::PixelBufferTooSmall(pixels.length(), required_len))
+    return Err(PixelBufferTooSmall(pixels.length(), required_len))
   }
-  Ok({ required_row_bytes, required_len })
+  Ok({ required_row_bytes, required_len, })
 }
 
 ///|
@@ -1156,7 +1152,7 @@ pub fn Pixmap::present_rect_payload(
     Err(error) => Err(error)
     Ok(_) => {
       let row_bytes = rect.width * 4
-      Ok({ rect, row_bytes, pixels: copy_pixmap_rect(self, rect) })
+      Ok({ rect, row_bytes, pixels: copy_pixmap_rect(self, rect), })
     }
   }
 }
@@ -1238,7 +1234,7 @@ pub fn Pixmap::to_png_rect_bytes(
     Ok(pixmap) =>
       match pixmap.to_png_bytes() {
         Ok(bytes) => Ok(bytes)
-        Err(_) => Err(PresentError::InvalidDimensions(rect.width, rect.height))
+        Err(_) => Err(InvalidDimensions(rect.width, rect.height))
       }
     Err(error) => Err(error)
   }
@@ -1264,7 +1260,7 @@ pub fn Pixmap::present_batch(
       Err(error) => return Err(error)
     }
   }
-  Ok({ payloads, present_pixel_count, present_byte_count })
+  Ok({ payloads, present_pixel_count, present_byte_count, })
 }
 
 ///|
@@ -1290,9 +1286,7 @@ pub fn[S : Surface] Canvas::dirty_present_plan(
   max_rects : Int,
 ) -> DirtyPresentPlan {
   let dirty_region = self.get_dirty_region()
-  guard !dirty_region.is_empty() else {
-    return { mode: DirtyPresentPlanMode::Empty, rects: [] }
-  }
+  guard !dirty_region.is_empty() else { return { mode: Empty, rects: [], } }
   let surface_bounds = PixelRect::new(
     x=0,
     y=0,
@@ -1307,7 +1301,7 @@ pub fn[S : Surface] Canvas::dirty_present_plan(
   )
   match surface_bounds.intersection(pixmap_bounds) {
     Some(present_bounds) => dirty_region.present_plan(present_bounds, max_rects)
-    None => { mode: DirtyPresentPlanMode::Empty, rects: [] }
+    None => { mode: Empty, rects: [], }
   }
 }
 
@@ -1373,21 +1367,14 @@ fn validate_pixel_rect_bounds(
   rect : PixelRect,
 ) -> Result[Unit, PresentError] {
   guard !rect.is_empty() else {
-    return Err(PresentError::InvalidDimensions(rect.width, rect.height))
+    return Err(InvalidDimensions(rect.width, rect.height))
   }
   guard rect.x >= 0 &&
     rect.y >= 0 &&
     rect.width <= width - rect.x &&
     rect.height <= height - rect.y else {
     return Err(
-      PresentError::RectOutOfBounds(
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height,
-        width,
-        height,
-      ),
+      RectOutOfBounds(rect.x, rect.y, rect.width, rect.height, width, height),
     )
   }
   Ok(())

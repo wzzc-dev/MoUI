@@ -32,11 +32,11 @@ test "directwrite native stub parses versioned font spec payload" {
   let font_spec = @text_protocol.native_font_spec_bytes(
     @core.FontSpec::new(
       families=@core.FontFamilyStack::named("Acme Sans")
-        .with_fallback(@core.FontFamily::UiSansSerif)
-        .with_fallback(@core.FontFamily::SansSerif),
+        .with_fallback(UiSansSerif)
+        .with_fallback(SansSerif),
       size=15.0,
       weight=500,
-      style=@core.FontStyle::Italic,
+      style=Italic,
     ),
   )
   inspect(
@@ -58,7 +58,7 @@ test "directwrite run layout delegates native stub to shared text protocol" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=24.0),
     font=@core.FontSpec::new(size=14.0, weight=400),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   inspect(directwrite_layout_run(run, 1.0) is None, content="true")
 }
@@ -78,7 +78,7 @@ test "directwrite raster delegates native stub to shared text protocol" {
 ///|
 test "directwrite register font data reaches native stub" {
   directwrite_register_font_data(
-    @core.FontFamily::Name("Acme"),
+    Name("Acme"),
     Bytes::from_array([b'\x01', b'\x02']),
   )
   inspect("ok", content="ok")

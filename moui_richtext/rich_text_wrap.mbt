@@ -52,7 +52,7 @@ fn rich_text_block_soft_wrap(
       if rich_text_soft_wrap_cache.length() >= 4096 {
         rich_text_soft_wrap_cache.clear()
       }
-      rich_text_soft_wrap_cache.set(key, { source_start, block: wrapped })
+      rich_text_soft_wrap_cache.set(key, { source_start, block: wrapped, })
       wrapped
     }
   }
@@ -122,7 +122,7 @@ fn rich_text_block_soft_wrap_key(
     block.line_height.unwrap_or(-1.0).to_string(),
     block.prefix,
     match block.marker {
-      Some(RichTextMarker::TaskCheckbox(checked)) =>
+      Some(TaskCheckbox(checked)) =>
         if checked {
           "task-checkbox:checked"
         } else {

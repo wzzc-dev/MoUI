@@ -1,6 +1,6 @@
 ///|
 test "basic print and cursor" {
-  let s = TermScreen::new(10, 3)
+  let s = @app.TermScreen::new(10, 3)
   for ch in ["a", "b", "c"] {
     s.print_char(ch, 1)
   }
@@ -11,7 +11,7 @@ test "basic print and cursor" {
 
 ///|
 test "linefeed scrolls into scrollback" {
-  let s = TermScreen::new(4, 2)
+  let s = @app.TermScreen::new(4, 2)
   for _ in 0..<3 {
     for _ in 0..<4 {
       s.print_char("x", 1)
@@ -28,7 +28,7 @@ test "linefeed scrolls into scrollback" {
 
 ///|
 test "wide char occupies two cells" {
-  let s = TermScreen::new(5, 1)
+  let s = @app.TermScreen::new(5, 1)
   s.print_char("a", 1)
   s.print_char("中", 2)
   s.print_char("b", 1)
@@ -40,7 +40,7 @@ test "wide char occupies two cells" {
 
 ///|
 test "wide char dropped at right edge" {
-  let s = TermScreen::new(4, 1)
+  let s = @app.TermScreen::new(4, 1)
   s.print_char("a", 1)
   s.print_char("b", 1)
   s.print_char("c", 1)
@@ -50,7 +50,7 @@ test "wide char dropped at right edge" {
 
 ///|
 test "auto wrap at last column" {
-  let s = TermScreen::new(3, 2)
+  let s = @app.TermScreen::new(3, 2)
   s.print_char("a", 1)
   s.print_char("b", 1)
   s.print_char("c", 1)
@@ -63,14 +63,14 @@ test "auto wrap at last column" {
 
 ///|
 test "sgr attrs and runs merging" {
-  let s = TermScreen::new(10, 1)
-  let red = CellAttrs::default()
-  s.set_current_attrs(attrs_with_fg(red, TermColor::Indexed(1)))
+  let s = @app.TermScreen::new(10, 1)
+  let red = @app.CellAttrs::default()
+  s.set_current_attrs(@app.attrs_with_fg(red, Indexed(1)))
   s.print_char("h", 1)
   s.print_char("i", 1)
-  s.set_current_attrs(CellAttrs::default())
+  s.set_current_attrs(@app.CellAttrs::default())
   s.print_char(" ", 1)
-  s.set_current_attrs(attrs_with_fg(red, TermColor::Indexed(1)))
+  s.set_current_attrs(@app.attrs_with_fg(red, Indexed(1)))
   s.print_char("!", 1)
   let runs = s.line_at(0).runs()
   inspect(runs.length(), content="3")
@@ -81,7 +81,7 @@ test "sgr attrs and runs merging" {
 
 ///|
 test "erase in display and line" {
-  let s = TermScreen::new(4, 3)
+  let s = @app.TermScreen::new(4, 3)
   for r in 0..<3 {
     for c in 0..<4 {
       s.cursor_position(r + 1, c + 1)
@@ -101,7 +101,7 @@ test "erase in display and line" {
 
 ///|
 test "scroll region and insert/delete lines" {
-  let s = TermScreen::new(3, 4)
+  let s = @app.TermScreen::new(3, 4)
   // 填充
   for r in 0..<4 {
     s.cursor_position(r + 1, 1)
@@ -120,7 +120,7 @@ test "scroll region and insert/delete lines" {
 
 ///|
 test "cursor save restore and tab" {
-  let s = TermScreen::new(20, 4)
+  let s = @app.TermScreen::new(20, 4)
   s.cursor_position(3, 5)
   s.save_cursor()
   s.cursor_position(1, 1)
@@ -133,7 +133,7 @@ test "cursor save restore and tab" {
 
 ///|
 test "resize keeps content" {
-  let s = TermScreen::new(4, 2)
+  let s = @app.TermScreen::new(4, 2)
   s.print_char("a", 1)
   s.print_char("b", 1)
   s.carriage_return()
@@ -153,7 +153,7 @@ test "resize keeps content" {
 
 ///|
 test "scrollback limit" {
-  let s = TermScreen::new(2, 2)
+  let s = @app.TermScreen::new(2, 2)
   s.set_scrollback_limit(3)
   for row in 0..<6 {
     for col in 0..<2 {
@@ -168,7 +168,7 @@ test "scrollback limit" {
 
 ///|
 test "reverse index scrolls down" {
-  let s = TermScreen::new(2, 2)
+  let s = @app.TermScreen::new(2, 2)
   s.print_char("a", 1)
   s.carriage_return()
   s.linefeed()
@@ -187,7 +187,7 @@ test "reverse index scrolls down" {
 
 ///|
 test "delete and insert chars" {
-  let s = TermScreen::new(5, 1)
+  let s = @app.TermScreen::new(5, 1)
   for ch in ["a", "b", "c", "d"] {
     s.print_char(ch, 1)
   }

@@ -104,18 +104,14 @@ fn create_webgpu_3d_session(
     },
     render=frame => {
       if !host_webgpu_available() {
-        return @render.ThreeDRenderResult::Unavailable(
-          "WebGPU device is unavailable",
-        )
+        return Unavailable("WebGPU device is unavailable")
       }
       let resource_status = host_update_3d_resources(
         renderer,
         host_string(frame.packet().resource_payload()),
       )
       if resource_status != 0 {
-        return @render.ThreeDRenderResult::Failed(
-          "WebGPU 3D resource residency error {resource_status}",
-        )
+        return Failed("WebGPU 3D resource residency error {resource_status}")
       }
       let status = host_draw_3d_mesh_binary(
         renderer,
@@ -124,9 +120,9 @@ fn create_webgpu_3d_session(
         ),
       )
       if status == 0 {
-        @render.ThreeDRenderResult::Presented
+        Presented
       } else {
-        @render.ThreeDRenderResult::Failed("WebGPU 3D host error {status}")
+        Failed("WebGPU 3D host error {status}")
       }
     },
     dispose=() => {

@@ -11,7 +11,7 @@ test "pointer hit test matches painted geometry around image galleries" {
   let session = MarkdownDocumentSession::new(source)
   let font = @core.FontSpec::new(size=17.0)
   let text_system = @core.TextSystem::fallback()
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let content_width = 960.0
   let window = session.rich_text_window(
     selection,
@@ -147,7 +147,7 @@ test "caret rect stays inside the clicked block's painted band" {
       break
     }
   }
-  let selection : MarkdownEditorSelection = { caret: anchor, selection: None }
+  let selection : MarkdownEditorSelection = { caret: anchor, selection: None, }
   let scroll_y = session.source_offset_y(anchor, base=font, content_width~) -
     240.0
   let window = session.rich_text_window(
@@ -242,7 +242,7 @@ test "table cells wrap and selection follows cell geometry" {
   let text_system = @core.TextSystem::fallback()
   let content_width = 960.0
   let window = session.rich_text_window(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     scroll_y=0.0,
     viewport_height=900.0,
@@ -343,7 +343,7 @@ test "table cells wrap and selection follows cell geometry" {
   let mut has_band_in_row = false
   for command in commands {
     match command {
-      @core.DrawCommand::FillRect(rect, _) =>
+      FillRect(rect, _) =>
         if rect.origin.y >=
           frame.origin.y + layout.row_top(layout.rows.length() - 1) &&
           rect.origin.y <
@@ -368,7 +368,7 @@ test "table caret rect stays inside the clicked cell band" {
   let text_system = @core.TextSystem::fallback()
   let content_width = 960.0
   let window = session.rich_text_window(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     scroll_y=0.0,
     viewport_height=900.0,
@@ -482,7 +482,7 @@ test "table caret lands in clicked row while scrolled" {
     }
   }
   let window = session.rich_text_window(
-    { caret: caret_anchor, selection: None },
+    { caret: caret_anchor, selection: None, },
     base=font,
     scroll_y=120.0,
     viewport_height~,

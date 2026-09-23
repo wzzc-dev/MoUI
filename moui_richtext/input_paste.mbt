@@ -18,7 +18,7 @@ fn markdown_editor_paste_footnote_definition(
     0,
     markdown_editor_text_length(source),
   )
-  let editor_selection : MarkdownEditorSelection = { caret, selection }
+  let editor_selection : MarkdownEditorSelection = { caret, selection, }
   match markdown_editor_footnote_label_at_selection(source, editor_selection) {
     Some(label) => {
       let updated = markdown_editor_upsert_pasted_footnote_definition(
@@ -281,11 +281,11 @@ fn markdown_editor_autolink_target_with_trailing_punctuation(
   token : String,
 ) -> MarkdownEditorAutolinkTarget {
   let chars = token.to_array()
-  let empty = { leading: "", target: "", trailing: "" }
+  let empty = { leading: "", target: "", trailing: "", }
   if chars.length() > 0 &&
     !markdown_editor_autolink_trailing_punctuation(chars[chars.length() - 1]) &&
     markdown_editor_is_autolink_target(token) {
-    return { leading: "", target: token, trailing: "" }
+    return { leading: "", target: token, trailing: "", }
   }
   let mut start = 0
   while start < chars.length() &&
@@ -377,7 +377,7 @@ fn markdown_editor_paste_html_block(
   if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
-  let editor_selection : MarkdownEditorSelection = { caret, selection }
+  let editor_selection : MarkdownEditorSelection = { caret, selection, }
   if markdown_editor_active_selection(selection) is None {
     match markdown_editor_html_block_at_selection(source, editor_selection) {
       Some(block) => {
@@ -412,7 +412,7 @@ fn markdown_editor_pasted_html_block(input : String) -> String? {
     return None
   }
   match blocks[0].kind {
-    MarkdownBlockKind::HtmlBlock => Some(text)
+    HtmlBlock => Some(text)
     _ => None
   }
 }
@@ -491,7 +491,7 @@ fn markdown_editor_paste_reference_over_selection(
   }
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  let editor_selection : MarkdownEditorSelection = { caret, selection }
+  let editor_selection : MarkdownEditorSelection = { caret, selection, }
   match markdown_editor_active_selection(selection) {
     Some(range) => {
       if paste.reference_style {
@@ -501,7 +501,7 @@ fn markdown_editor_paste_reference_over_selection(
       }
       let result = markdown_editor_set_reference_target(
         source,
-        ({ caret: range.end, selection: Some(range) } : MarkdownEditorSelection),
+        ({ caret: range.end, selection: Some(range), } : MarkdownEditorSelection),
         paste.command,
         paste.target,
       )
@@ -702,7 +702,7 @@ fn markdown_editor_pasted_reference_target(
     if target == "" {
       return None
     }
-    return Some({ target, image, reference_style: true })
+    return Some({ target, image, reference_style: true, })
   }
   if chars[close + 1] == '[' {
     let reference_start = close + 2
@@ -727,7 +727,7 @@ fn markdown_editor_pasted_reference_target(
     if target == "" {
       return None
     }
-    return Some({ target, image, reference_style: true })
+    return Some({ target, image, reference_style: true, })
   }
   if close + 2 >= chars.length() ||
     chars[close + 1] != '(' ||
@@ -744,7 +744,7 @@ fn markdown_editor_pasted_reference_target(
   if image && !markdown_editor_is_image_source(target) {
     return None
   }
-  Some({ target, image, reference_style: false })
+  Some({ target, image, reference_style: false, })
 }
 
 ///|

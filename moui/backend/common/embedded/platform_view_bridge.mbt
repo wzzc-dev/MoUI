@@ -9,7 +9,7 @@ pub fn EmbeddedRuntimeHostBridge::sync_platform_views(
     self.platform_view_revision = self.platform_view_revision + 1
     self.last_platform_views = placements.copy()
     self.updates.push(
-      EmbeddedHostUpdate::PlatformViews({
+      PlatformViews({
         revision: self.platform_view_revision,
         placements: placements.copy(),
       }),

@@ -33,31 +33,31 @@ pub struct ToastQueue[Msg] {
 pub fn[Msg] ToastStackItem::new(
   id~ : String,
   message~ : String,
-  tone? : @style.FeedbackTone = @style.FeedbackTone::Neutral,
+  tone? : @style.FeedbackTone = Neutral,
   action? : StateViewAction[Msg]? = None,
   dismiss? : Msg? = None,
 ) -> ToastStackItem[Msg] {
-  { id, message, tone, action, dismiss }
+  { id, message, tone, action, dismiss, }
 }
 
 ///|
 pub fn[Msg] ToastQueueItem::new(
   id~ : String,
   message~ : String,
-  tone? : @style.FeedbackTone = @style.FeedbackTone::Neutral,
+  tone? : @style.FeedbackTone = Neutral,
   action? : StateViewAction[Msg]? = None,
   dismiss? : Msg? = None,
   created_at_ms? : Double = 0.0,
   ttl_ms? : Double = 0.0,
 ) -> ToastQueueItem[Msg] {
-  { id, message, tone, action, dismiss, created_at_ms, ttl_ms }
+  { id, message, tone, action, dismiss, created_at_ms, ttl_ms, }
 }
 
 ///|
 pub fn[Msg] ToastQueue::new(
   items? : Array[ToastQueueItem[Msg]] = [],
 ) -> ToastQueue[Msg] {
-  { items: items.copy() }
+  { items: items.copy(), }
 }
 
 ///|

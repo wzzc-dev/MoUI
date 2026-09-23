@@ -40,7 +40,7 @@ pub(all) enum CommandPaletteMsg {
 
 ///|
 pub fn CommandPaletteApp::new() -> CommandPaletteApp {
-  { unit: () }
+  { unit: (), }
 }
 
 ///|
@@ -59,14 +59,15 @@ pub fn CommandPaletteModel::update(
   message : CommandPaletteMsg,
 ) -> CommandPaletteModel {
   match message {
-    QueryChanged(value) => { ..self, query: value }
+    QueryChanged(value) => { ..self, query: value, }
     CommandSelected(intent) => self.dispatch_intent(intent)
     ShowNativeMenu =>
-      { ..self, last_result: "Native menu requires host services" }
+      { ..self, last_result: "Native menu requires host services", }
     MenuCompleted(result) => self.apply_menu_result(result)
-    ToggleContextMenu => { ..self, context_visible: !self.context_visible }
-    HideContextMenu => { ..self, context_visible: false }
-    ClearLog => { ..self, dispatched: [], last_result: "No command dispatched" }
+    ToggleContextMenu => { ..self, context_visible: !self.context_visible, }
+    HideContextMenu => { ..self, context_visible: false, }
+    ClearLog =>
+      { ..self, dispatched: [], last_result: "No command dispatched", }
   }
 }
 
@@ -79,7 +80,7 @@ pub fn CommandPaletteModel::update_with_services(
   match message {
     ShowNativeMenu =>
       (
-        { ..self, last_result: "Opening native menu" },
+        { ..self, last_result: "Opening native menu", },
         services
         .menus()
         .show_context(self.commands())
@@ -139,9 +140,9 @@ pub fn CommandPaletteModel::dispatch_intent(
           context_visible: false,
         }
       } else {
-        { ..self, last_result: "Disabled: " + command.display_label() }
+        { ..self, last_result: "Disabled: " + command.display_label(), }
       }
-    None => { ..self, last_result: "Unknown command" }
+    None => { ..self, last_result: "Unknown command", }
   }
 }
 
@@ -153,8 +154,8 @@ fn CommandPaletteModel::apply_menu_result(
   match result {
     Success(command) => self.dispatch_intent(command.intent)
     Failure(error) =>
-      { ..self, last_result: "Native menu unavailable: " + error.message }
-    Cancelled => { ..self, last_result: "Native menu cancelled" }
+      { ..self, last_result: "Native menu unavailable: " + error.message, }
+    Cancelled => { ..self, last_result: "Native menu cancelled", }
   }
 }
 
@@ -176,33 +177,33 @@ pub fn CommandPaletteModel::view(
             [
               text(
                 "Command Palette",
-                role=@views.TextRole::Title,
+                role=Title,
                 theme~,
                 width=300.0,
                 height=34.0,
               ),
               text(
                 "Metadata, shortcuts, disabled rows, and context fallback.",
-                role=@views.TextRole::Caption,
+                role=Caption,
                 theme~,
                 width=460.0,
                 height=24.0,
               ),
             ],
             spacing=0.0,
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
           button(
             "Clear Log",
             on_click=ClearLog,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=96.0,
             height=36.0,
           ),
         ],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       toolbar(
         [
@@ -210,7 +211,7 @@ pub fn CommandPaletteModel::view(
             self.query,
             on_input=value => QueryChanged(value),
             placeholder="Filter commands",
-            variant=@views.TextFieldVariant::Outline,
+            variant=Outline,
             theme~,
             width=260.0,
             height=38.0,
@@ -218,7 +219,7 @@ pub fn CommandPaletteModel::view(
           button(
             "Context",
             on_click=ToggleContextMenu,
-            variant=@views.ButtonVariant::Tonal,
+            variant=Tonal,
             theme~,
             width=96.0,
             height=36.0,
@@ -226,15 +227,15 @@ pub fn CommandPaletteModel::view(
           button(
             "Native Menu",
             on_click=ShowNativeMenu,
-            variant=@views.ButtonVariant::Tonal,
+            variant=Tonal,
             theme~,
             width=118.0,
             height=36.0,
           ),
           button(
             "Submit",
-            on_click=CommandSelected(@views.CommandIntent::Submit),
-            variant=@views.ButtonVariant::Primary,
+            on_click=CommandSelected(Submit),
+            variant=Primary,
             theme~,
             width=88.0,
             height=36.0,
@@ -256,7 +257,7 @@ pub fn CommandPaletteModel::view(
           self.context_region(theme),
         ],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       self.command_log(theme),
       status_bar(
@@ -266,13 +267,13 @@ pub fn CommandPaletteModel::view(
       ),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   container(
     shell,
     width=760.0,
     height=620.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -327,25 +328,25 @@ fn CommandPaletteModel::context_region(
         [
           text(
             "Context menu fallback",
-            role=@views.TextRole::Control,
+            role=Control,
             theme~,
             width=230.0,
             height=28.0,
           ),
           text(
             "Use command menu rows when native menus are unavailable.",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=230.0,
             height=42.0,
           ),
         ],
         spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       width=260.0,
       height=96.0,
-      variant=@views.ContainerVariant::Raised,
+      variant=Raised,
       theme~,
       padding=theme.spacing_scale.md,
     ),
@@ -367,42 +368,22 @@ fn CommandPaletteModel::command_log(
   theme : @moui.Theme,
 ) -> @moui.View[CommandPaletteMsg] {
   let rows : Array[@moui.View[CommandPaletteMsg]] = [
-    text(
-      "Dispatch Log",
-      role=@views.TextRole::Control,
-      theme~,
-      width=680.0,
-      height=26.0,
-    ),
+    text("Dispatch Log", role=Control, theme~, width=680.0, height=26.0),
   ]
   if self.dispatched.is_empty() {
     rows.push(
-      text(
-        "No commands yet",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=680.0,
-        height=24.0,
-      ),
+      text("No commands yet", role=Caption, theme~, width=680.0, height=24.0),
     )
   } else {
     for item in self.dispatched {
-      rows.push(
-        text(
-          item,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=680.0,
-          height=24.0,
-        ),
-      )
+      rows.push(text(item, role=Caption, theme~, width=680.0, height=24.0))
     }
   }
   container(
-    column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
+    column(rows, spacing=theme.spacing_scale.xs, align=Start),
     width=700.0,
     height=110.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -412,7 +393,7 @@ fn CommandPaletteModel::command_log(
 pub fn command_palette_commands() -> Array[@views.ActionCommand] {
   [
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::Submit,
+      intent=Submit,
       label="Save Document",
       shortcut=Some(
         @views.KeyboardShortcut::new(
@@ -424,7 +405,7 @@ pub fn command_palette_commands() -> Array[@views.ActionCommand] {
       description="Persist the current document.",
     ),
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::Copy,
+      intent=Copy,
       label="Copy Selection",
       shortcut=Some(
         @views.KeyboardShortcut::new(
@@ -436,7 +417,7 @@ pub fn command_palette_commands() -> Array[@views.ActionCommand] {
       description="Copy the selected block.",
     ),
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::Paste,
+      intent=Paste,
       label="Paste Selection",
       shortcut=Some(
         @views.KeyboardShortcut::new(
@@ -448,7 +429,7 @@ pub fn command_palette_commands() -> Array[@views.ActionCommand] {
       description="Paste from the clipboard.",
     ),
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::Cancel,
+      intent=Cancel,
       label="Archive Document",
       shortcut=Some(
         @views.KeyboardShortcut::new(
@@ -461,7 +442,7 @@ pub fn command_palette_commands() -> Array[@views.ActionCommand] {
       description="Disabled until a document is selected.",
     ),
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::OpenContextMenu,
+      intent=OpenContextMenu,
       label="Open Fallback Menu",
       shortcut=Some(
         @views.KeyboardShortcut::new(

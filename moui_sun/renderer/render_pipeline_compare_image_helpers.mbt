@@ -6,13 +6,10 @@ fn render_point_image_commands_are_same(
   match (a, b) {
     // Unkeyed pixmap commands depend on mutable/external resources.
     // Treat them as changed unless a stable key can prove identity.
+    (DrawPixmap(_, _, _, _), DrawPixmap(_, _, _, _)) => Some(false)
     (
-      RenderCommand::DrawPixmap(_, _, _, _),
-      RenderCommand::DrawPixmap(_, _, _, _),
-    ) => Some(false)
-    (
-      RenderCommand::DrawPixmapKeyed(a_key, _, ax, ay, a_paint),
-      RenderCommand::DrawPixmapKeyed(b_key, _, bx, by, b_paint),
+      DrawPixmapKeyed(a_key, _, ax, ay, a_paint),
+      DrawPixmapKeyed(b_key, _, bx, by, b_paint),
     ) =>
       Some(
         render_keyed_image_point_is_same(
@@ -20,8 +17,8 @@ fn render_point_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawBmpBytesKeyed(a_key, _, ax, ay, a_paint),
-      RenderCommand::DrawBmpBytesKeyed(b_key, _, bx, by, b_paint),
+      DrawBmpBytesKeyed(a_key, _, ax, ay, a_paint),
+      DrawBmpBytesKeyed(b_key, _, bx, by, b_paint),
     ) =>
       Some(
         render_keyed_image_point_is_same(
@@ -29,8 +26,8 @@ fn render_point_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawPngBytesKeyed(a_key, _, ax, ay, a_paint),
-      RenderCommand::DrawPngBytesKeyed(b_key, _, bx, by, b_paint),
+      DrawPngBytesKeyed(a_key, _, ax, ay, a_paint),
+      DrawPngBytesKeyed(b_key, _, bx, by, b_paint),
     ) =>
       Some(
         render_keyed_image_point_is_same(
@@ -38,24 +35,8 @@ fn render_point_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawRgbaBytesKeyed(
-        a_key,
-        _,
-        a_width,
-        a_height,
-        ax,
-        ay,
-        a_paint
-      ),
-      RenderCommand::DrawRgbaBytesKeyed(
-        b_key,
-        _,
-        b_width,
-        b_height,
-        bx,
-        by,
-        b_paint
-      ),
+      DrawRgbaBytesKeyed(a_key, _, a_width, a_height, ax, ay, a_paint),
+      DrawRgbaBytesKeyed(b_key, _, b_width, b_height, bx, by, b_paint),
     ) =>
       Some(
         render_keyed_image_dimensions_point_is_same(
@@ -64,8 +45,8 @@ fn render_point_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawBmpBytesRectKeyed(a_key, _, a_src, ax, ay, a_paint),
-      RenderCommand::DrawBmpBytesRectKeyed(b_key, _, b_src, bx, by, b_paint),
+      DrawBmpBytesRectKeyed(a_key, _, a_src, ax, ay, a_paint),
+      DrawBmpBytesRectKeyed(b_key, _, b_src, bx, by, b_paint),
     ) =>
       Some(
         render_keyed_image_source_point_is_same(
@@ -73,8 +54,8 @@ fn render_point_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawPngBytesRectKeyed(a_key, _, a_src, ax, ay, a_paint),
-      RenderCommand::DrawPngBytesRectKeyed(b_key, _, b_src, bx, by, b_paint),
+      DrawPngBytesRectKeyed(a_key, _, a_src, ax, ay, a_paint),
+      DrawPngBytesRectKeyed(b_key, _, b_src, bx, by, b_paint),
     ) =>
       Some(
         render_keyed_image_source_point_is_same(
@@ -82,7 +63,7 @@ fn render_point_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawRgbaBytesRectKeyed(
+      DrawRgbaBytesRectKeyed(
         a_key,
         _,
         a_width,
@@ -92,7 +73,7 @@ fn render_point_image_commands_are_same(
         ay,
         a_paint
       ),
-      RenderCommand::DrawRgbaBytesRectKeyed(
+      DrawRgbaBytesRectKeyed(
         b_key,
         _,
         b_width,
@@ -120,26 +101,8 @@ fn render_sampled_image_commands_are_same(
 ) -> Bool? {
   match (a, b) {
     (
-      RenderCommand::DrawSampledBmpBytesKeyed(
-        a_key,
-        _,
-        ax,
-        ay,
-        aw,
-        ah,
-        a_paint,
-        a_sampling
-      ),
-      RenderCommand::DrawSampledBmpBytesKeyed(
-        b_key,
-        _,
-        bx,
-        by,
-        bw,
-        bh,
-        b_paint,
-        b_sampling
-      ),
+      DrawSampledBmpBytesKeyed(a_key, _, ax, ay, aw, ah, a_paint, a_sampling),
+      DrawSampledBmpBytesKeyed(b_key, _, bx, by, bw, bh, b_paint, b_sampling),
     ) =>
       Some(
         render_keyed_image_rect_is_same(
@@ -148,26 +111,8 @@ fn render_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawSampledPngBytesKeyed(
-        a_key,
-        _,
-        ax,
-        ay,
-        aw,
-        ah,
-        a_paint,
-        a_sampling
-      ),
-      RenderCommand::DrawSampledPngBytesKeyed(
-        b_key,
-        _,
-        bx,
-        by,
-        bw,
-        bh,
-        b_paint,
-        b_sampling
-      ),
+      DrawSampledPngBytesKeyed(a_key, _, ax, ay, aw, ah, a_paint, a_sampling),
+      DrawSampledPngBytesKeyed(b_key, _, bx, by, bw, bh, b_paint, b_sampling),
     ) =>
       Some(
         render_keyed_image_rect_is_same(
@@ -176,7 +121,7 @@ fn render_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawSampledRgbaBytesKeyed(
+      DrawSampledRgbaBytesKeyed(
         a_key,
         _,
         a_image_width,
@@ -188,7 +133,7 @@ fn render_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawSampledRgbaBytesKeyed(
+      DrawSampledRgbaBytesKeyed(
         b_key,
         _,
         b_image_width,
@@ -209,7 +154,7 @@ fn render_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawSampledBmpBytesRectKeyed(
+      DrawSampledBmpBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -220,7 +165,7 @@ fn render_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawSampledBmpBytesRectKeyed(
+      DrawSampledBmpBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -239,7 +184,7 @@ fn render_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawSampledPngBytesRectKeyed(
+      DrawSampledPngBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -250,7 +195,7 @@ fn render_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawSampledPngBytesRectKeyed(
+      DrawSampledPngBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -269,7 +214,7 @@ fn render_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawSampledRgbaBytesRectKeyed(
+      DrawSampledRgbaBytesRectKeyed(
         a_key,
         _,
         a_image_width,
@@ -282,7 +227,7 @@ fn render_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawSampledRgbaBytesRectKeyed(
+      DrawSampledRgbaBytesRectKeyed(
         b_key,
         _,
         b_image_width,
@@ -314,26 +259,8 @@ fn render_quality_image_commands_are_same(
 ) -> Bool? {
   match (a, b) {
     (
-      RenderCommand::DrawQualityBmpBytesKeyed(
-        a_key,
-        _,
-        ax,
-        ay,
-        aw,
-        ah,
-        a_paint,
-        a_quality
-      ),
-      RenderCommand::DrawQualityBmpBytesKeyed(
-        b_key,
-        _,
-        bx,
-        by,
-        bw,
-        bh,
-        b_paint,
-        b_quality
-      ),
+      DrawQualityBmpBytesKeyed(a_key, _, ax, ay, aw, ah, a_paint, a_quality),
+      DrawQualityBmpBytesKeyed(b_key, _, bx, by, bw, bh, b_paint, b_quality),
     ) =>
       Some(
         render_keyed_image_rect_is_same(
@@ -342,7 +269,7 @@ fn render_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawQualityBmpBytesRectKeyed(
+      DrawQualityBmpBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -353,7 +280,7 @@ fn render_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawQualityBmpBytesRectKeyed(
+      DrawQualityBmpBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -372,26 +299,8 @@ fn render_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawQualityPngBytesKeyed(
-        a_key,
-        _,
-        ax,
-        ay,
-        aw,
-        ah,
-        a_paint,
-        a_quality
-      ),
-      RenderCommand::DrawQualityPngBytesKeyed(
-        b_key,
-        _,
-        bx,
-        by,
-        bw,
-        bh,
-        b_paint,
-        b_quality
-      ),
+      DrawQualityPngBytesKeyed(a_key, _, ax, ay, aw, ah, a_paint, a_quality),
+      DrawQualityPngBytesKeyed(b_key, _, bx, by, bw, bh, b_paint, b_quality),
     ) =>
       Some(
         render_keyed_image_rect_is_same(
@@ -400,7 +309,7 @@ fn render_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawQualityPngBytesRectKeyed(
+      DrawQualityPngBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -411,7 +320,7 @@ fn render_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawQualityPngBytesRectKeyed(
+      DrawQualityPngBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -430,7 +339,7 @@ fn render_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawQualityRgbaBytesKeyed(
+      DrawQualityRgbaBytesKeyed(
         a_key,
         _,
         a_image_width,
@@ -442,7 +351,7 @@ fn render_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawQualityRgbaBytesKeyed(
+      DrawQualityRgbaBytesKeyed(
         b_key,
         _,
         b_image_width,
@@ -463,7 +372,7 @@ fn render_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawQualityRgbaBytesRectKeyed(
+      DrawQualityRgbaBytesRectKeyed(
         a_key,
         _,
         a_image_width,
@@ -476,7 +385,7 @@ fn render_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawQualityRgbaBytesRectKeyed(
+      DrawQualityRgbaBytesRectKeyed(
         b_key,
         _,
         b_image_width,
@@ -508,7 +417,7 @@ fn render_transformed_sampled_image_commands_are_same(
 ) -> Bool? {
   match (a, b) {
     (
-      RenderCommand::DrawTransformedSampledBmpBytesKeyed(
+      DrawTransformedSampledBmpBytesKeyed(
         a_key,
         _,
         ax,
@@ -518,7 +427,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawTransformedSampledBmpBytesKeyed(
+      DrawTransformedSampledBmpBytesKeyed(
         b_key,
         _,
         bx,
@@ -536,7 +445,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawTransformedSampledBmpBytesRectKeyed(
+      DrawTransformedSampledBmpBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -547,7 +456,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawTransformedSampledBmpBytesRectKeyed(
+      DrawTransformedSampledBmpBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -566,7 +475,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawTransformedSampledPngBytesKeyed(
+      DrawTransformedSampledPngBytesKeyed(
         a_key,
         _,
         ax,
@@ -576,7 +485,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawTransformedSampledPngBytesKeyed(
+      DrawTransformedSampledPngBytesKeyed(
         b_key,
         _,
         bx,
@@ -594,7 +503,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawTransformedSampledPngBytesRectKeyed(
+      DrawTransformedSampledPngBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -605,7 +514,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawTransformedSampledPngBytesRectKeyed(
+      DrawTransformedSampledPngBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -624,7 +533,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawTransformedSampledRgbaBytesKeyed(
+      DrawTransformedSampledRgbaBytesKeyed(
         a_key,
         _,
         a_image_width,
@@ -636,7 +545,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawTransformedSampledRgbaBytesKeyed(
+      DrawTransformedSampledRgbaBytesKeyed(
         b_key,
         _,
         b_image_width,
@@ -657,7 +566,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_sampling == b_sampling,
       )
     (
-      RenderCommand::DrawTransformedSampledRgbaBytesRectKeyed(
+      DrawTransformedSampledRgbaBytesRectKeyed(
         a_key,
         _,
         a_image_width,
@@ -670,7 +579,7 @@ fn render_transformed_sampled_image_commands_are_same(
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawTransformedSampledRgbaBytesRectKeyed(
+      DrawTransformedSampledRgbaBytesRectKeyed(
         b_key,
         _,
         b_image_width,
@@ -702,7 +611,7 @@ fn render_transformed_quality_image_commands_are_same(
 ) -> Bool? {
   match (a, b) {
     (
-      RenderCommand::DrawTransformedQualityBmpBytesKeyed(
+      DrawTransformedQualityBmpBytesKeyed(
         a_key,
         _,
         ax,
@@ -712,7 +621,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawTransformedQualityBmpBytesKeyed(
+      DrawTransformedQualityBmpBytesKeyed(
         b_key,
         _,
         bx,
@@ -730,7 +639,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawTransformedQualityBmpBytesRectKeyed(
+      DrawTransformedQualityBmpBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -741,7 +650,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawTransformedQualityBmpBytesRectKeyed(
+      DrawTransformedQualityBmpBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -760,7 +669,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawTransformedQualityPngBytesKeyed(
+      DrawTransformedQualityPngBytesKeyed(
         a_key,
         _,
         ax,
@@ -770,7 +679,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawTransformedQualityPngBytesKeyed(
+      DrawTransformedQualityPngBytesKeyed(
         b_key,
         _,
         bx,
@@ -788,7 +697,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawTransformedQualityPngBytesRectKeyed(
+      DrawTransformedQualityPngBytesRectKeyed(
         a_key,
         _,
         a_src,
@@ -799,7 +708,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawTransformedQualityPngBytesRectKeyed(
+      DrawTransformedQualityPngBytesRectKeyed(
         b_key,
         _,
         b_src,
@@ -818,7 +727,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawTransformedQualityRgbaBytesKeyed(
+      DrawTransformedQualityRgbaBytesKeyed(
         a_key,
         _,
         a_image_width,
@@ -830,7 +739,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawTransformedQualityRgbaBytesKeyed(
+      DrawTransformedQualityRgbaBytesKeyed(
         b_key,
         _,
         b_image_width,
@@ -851,7 +760,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_quality == b_quality,
       )
     (
-      RenderCommand::DrawTransformedQualityRgbaBytesRectKeyed(
+      DrawTransformedQualityRgbaBytesRectKeyed(
         a_key,
         _,
         a_image_width,
@@ -864,7 +773,7 @@ fn render_transformed_quality_image_commands_are_same(
         a_paint,
         a_quality
       ),
-      RenderCommand::DrawTransformedQualityRgbaBytesRectKeyed(
+      DrawTransformedQualityRgbaBytesRectKeyed(
         b_key,
         _,
         b_image_width,
@@ -896,26 +805,8 @@ fn render_tiled_image_commands_are_same(
 ) -> Bool? {
   match (a, b) {
     (
-      RenderCommand::DrawTiledBmpBytesRectKeyed(
-        a_key,
-        _,
-        a_src,
-        ax,
-        ay,
-        aw,
-        ah,
-        a_paint
-      ),
-      RenderCommand::DrawTiledBmpBytesRectKeyed(
-        b_key,
-        _,
-        b_src,
-        bx,
-        by,
-        bw,
-        bh,
-        b_paint
-      ),
+      DrawTiledBmpBytesRectKeyed(a_key, _, a_src, ax, ay, aw, ah, a_paint),
+      DrawTiledBmpBytesRectKeyed(b_key, _, b_src, bx, by, bw, bh, b_paint),
     ) =>
       Some(
         render_keyed_image_source_rect_is_same(
@@ -923,26 +814,8 @@ fn render_tiled_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawTiledPngBytesRectKeyed(
-        a_key,
-        _,
-        a_src,
-        ax,
-        ay,
-        aw,
-        ah,
-        a_paint
-      ),
-      RenderCommand::DrawTiledPngBytesRectKeyed(
-        b_key,
-        _,
-        b_src,
-        bx,
-        by,
-        bw,
-        bh,
-        b_paint
-      ),
+      DrawTiledPngBytesRectKeyed(a_key, _, a_src, ax, ay, aw, ah, a_paint),
+      DrawTiledPngBytesRectKeyed(b_key, _, b_src, bx, by, bw, bh, b_paint),
     ) =>
       Some(
         render_keyed_image_source_rect_is_same(
@@ -950,7 +823,7 @@ fn render_tiled_image_commands_are_same(
         ),
       )
     (
-      RenderCommand::DrawTiledRgbaBytesRectKeyed(
+      DrawTiledRgbaBytesRectKeyed(
         a_key,
         _,
         a_image_width,
@@ -962,7 +835,7 @@ fn render_tiled_image_commands_are_same(
         ah,
         a_paint
       ),
-      RenderCommand::DrawTiledRgbaBytesRectKeyed(
+      DrawTiledRgbaBytesRectKeyed(
         b_key,
         _,
         b_image_width,

@@ -2,7 +2,7 @@
 /// Fake outline used by the resolver tests: a closed triangle 20 wide, 8 tall
 /// above the baseline (negative y is up in SVG user space).
 fn svg_test_triangle() -> SvgTextRunOutline {
-  { width: 20.0, polygons: [[(0.0, 0.0), (20.0, 0.0), (10.0, -8.0)]] }
+  { width: 20.0, polygons: [[(0.0, 0.0), (20.0, 0.0), (10.0, -8.0)]], }
 }
 
 ///|
@@ -48,7 +48,7 @@ test "svg_apply_text_paths replaces resolved runs with anchored paths" {
     Some(svg_test_triangle())
   }
   let anchors = svg_scan_text_anchors(svg)
-  let cursor : SvgTextAnchorCursor = { value: 0 }
+  let cursor : SvgTextAnchorCursor = { value: 0, }
   let replaced = svg_apply_text_paths(
     document.root(),
     resolver,
@@ -79,7 +79,7 @@ test "svg_apply_text_paths keeps declined runs on their original shape" {
   let document = @svg.parse_svg_document(svg).unwrap()
   let resolver : SvgTextPathResolver = fn(_run) { None }
   let anchors = svg_scan_text_anchors(svg)
-  let cursor : SvgTextAnchorCursor = { value: 0 }
+  let cursor : SvgTextAnchorCursor = { value: 0, }
   let replaced = svg_apply_text_paths(
     document.root(),
     resolver,
@@ -90,8 +90,8 @@ test "svg_apply_text_paths keeps declined runs on their original shape" {
   let mut saw_text = false
   fn walk(node : @svg.SVGNode) -> Unit {
     match node.shape {
-      @svg.Shape::Text(..) => saw_text = true
-      @svg.Shape::Group =>
+      Text(..) => saw_text = true
+      Group =>
         for child in node.children {
           walk(child)
         }
@@ -148,14 +148,14 @@ fn svg_text_path_collect_first_commands(
   out : Array[String],
 ) -> Unit {
   match node.shape {
-    @svg.Shape::Path(commands~) =>
+    Path(commands~) =>
       if commands.length() > 0 {
         match commands[0] {
-          @svg.PathCommand::MoveTo(x, y) => out.push("MoveTo(\{x}, \{y})")
+          MoveTo(x, y) => out.push("MoveTo(\{x}, \{y})")
           _ => out.push("other")
         }
       }
-    @svg.Shape::Group =>
+    Group =>
       for child in node.children {
         svg_text_path_collect_first_commands(child, out)
       }

@@ -149,15 +149,15 @@ pub enum PdfWorkbenchMsg {
 
 ///|
 pub fn PdfWorkbenchApp::new() -> PdfWorkbenchApp {
-  { unit: () }
+  { unit: (), }
 }
 
 ///|
 pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
   {
     document: None,
-    status: PdfWorkbenchStatus::Empty,
-    raster_status: PdfWorkbenchRasterStatus::RasterIdle,
+    status: Empty,
+    raster_status: RasterIdle,
     raster_page: None,
     raster_cache: [],
     sidebar_scroll: @geometry.Point::new(x=0.0, y=0.0),
@@ -181,7 +181,7 @@ fn PdfWorkbenchUpdate::new(
   model : PdfWorkbenchModel,
   effect? : @moui.Effect[PdfWorkbenchMsg] = @moui.Effect::none(),
 ) -> PdfWorkbenchUpdate {
-  { model, effect }
+  { model, effect, }
 }
 
 ///|
@@ -253,7 +253,7 @@ fn PdfWorkbenchModel::update_with_services(
     SearchNext =>
       self.select_next_search_result().request_current_raster(raster_services)
     PageNumberChanged(value) =>
-      PdfWorkbenchUpdate::new({ ..self, page_number_draft: value })
+      PdfWorkbenchUpdate::new({ ..self, page_number_draft: value, })
     GoToPage =>
       match self.document {
         Some(_) =>
@@ -265,22 +265,22 @@ fn PdfWorkbenchModel::update_with_services(
         None => PdfWorkbenchUpdate::new(self.go_to_page_number())
       }
     MetadataTitleChanged(value) =>
-      PdfWorkbenchUpdate::new({ ..self, metadata_title_draft: value })
+      PdfWorkbenchUpdate::new({ ..self, metadata_title_draft: value, })
     ApplyMetadataTitle => PdfWorkbenchUpdate::new(self.apply_metadata_title())
     BookmarkTitleChanged(value) =>
-      PdfWorkbenchUpdate::new({ ..self, bookmark_title_draft: value })
+      PdfWorkbenchUpdate::new({ ..self, bookmark_title_draft: value, })
     AddBookmarkForCurrentPage =>
       PdfWorkbenchUpdate::new(self.add_bookmark_for_current_page())
     AnnotationTextChanged(value) =>
-      PdfWorkbenchUpdate::new({ ..self, annotation_text_draft: value })
+      PdfWorkbenchUpdate::new({ ..self, annotation_text_draft: value, })
     AddAnnotationForCurrentPage =>
       PdfWorkbenchUpdate::new(self.add_annotation_for_current_page())
     PreviewScrolled(delta) =>
       PdfWorkbenchUpdate::new(self.scroll_preview(delta))
     SidebarScrolled(offset) =>
-      PdfWorkbenchUpdate::new({ ..self, sidebar_scroll: offset })
+      PdfWorkbenchUpdate::new({ ..self, sidebar_scroll: offset, })
     InspectorScrolled(offset) =>
-      PdfWorkbenchUpdate::new({ ..self, inspector_scroll: offset })
+      PdfWorkbenchUpdate::new({ ..self, inspector_scroll: offset, })
     ToggleReaderFullscreen =>
       PdfWorkbenchUpdate::new(self.toggle_reader_fullscreen())
     ZoomIn =>

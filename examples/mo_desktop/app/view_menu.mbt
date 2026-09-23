@@ -44,7 +44,7 @@ fn menu_bar_popup(
     items.length().to_double() * item_height +
     separator_count * 9.0
   let panel = @views.container(
-    @views.column(children, spacing=0.0, align=@views.CrossAlign::Stretch),
+    @views.column(children, spacing=0.0, align=Stretch),
     width~,
     height~,
     background=overlay_panel_background(palette),
@@ -99,13 +99,17 @@ fn menu_bar_items(
   match menu {
     SystemMenu =>
       [
-        { label: t.text("item.about"), shortcut: "", command: ShowAboutThisMac },
+        {
+          label: t.text("item.about"),
+          shortcut: "",
+          command: ShowAboutThisMac,
+        },
         {
           label: t.text("item.settings"),
           shortcut: "",
           command: ShowSystemSettings,
         },
-        { label: t.text("item.appstore"), shortcut: "", command: ShowAppStore },
+        { label: t.text("item.appstore"), shortcut: "", command: ShowAppStore, },
         {
           label: t.text("item.reset"),
           shortcut: "",
@@ -117,7 +121,7 @@ fn menu_bar_items(
           shortcut: "",
           command: ToggleLanguageCommand,
         },
-        { label: t.text("item.logout"), shortcut: "", command: LogOutSession },
+        { label: t.text("item.logout"), shortcut: "", command: LogOutSession, },
         {
           label: t.text("item.lock"),
           shortcut: "⌃⌘Q",
@@ -200,8 +204,8 @@ fn menu_bar_items(
       ]
     GoMenu =>
       [
-        { label: "Documents", shortcut: "⇧⌘O", command: OpenDocuments },
-        { label: "Downloads", shortcut: "⌥⌘L", command: OpenDownloads },
+        { label: "Documents", shortcut: "⇧⌘O", command: OpenDocuments, },
+        { label: "Downloads", shortcut: "⌥⌘L", command: OpenDownloads, },
         {
           label: t.text("item.applications"),
           shortcut: "⇧⌘A",
@@ -215,7 +219,11 @@ fn menu_bar_items(
           shortcut: "⌘M",
           command: MinimizeFocusedWindow,
         },
-        { label: t.text("item.zoom"), shortcut: "", command: ZoomFocusedWindow },
+        {
+          label: t.text("item.zoom"),
+          shortcut: "",
+          command: ZoomFocusedWindow,
+        },
         {
           label: t.text("item.bring_finder"),
           shortcut: "",
@@ -256,7 +264,7 @@ fn menu_bar_item(
       [
         @views.text(
           item.label,
-          role=@views.TextRole::Label,
+          role=Label,
           theme~,
           width=width - 54.0,
           height=20.0,
@@ -265,17 +273,17 @@ fn menu_bar_item(
         .foreground(palette.foreground),
         @views.text(
           item.shortcut,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=48.0,
           height=20.0,
-          align=@text.TextAlign::TextEnd,
+          align=TextEnd,
         )
         .font(@text.FontSpec::new(size=11.5, weight=460))
         .foreground(palette.muted),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=item_height,

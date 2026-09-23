@@ -5,7 +5,7 @@ test "Renderer::draw_coverage_mask composites text mask" {
   let pixels : FixedArray[Byte] = FixedArray::make(4, 0)
   pixels[1] = 255
   let mask = @text.CoverageMask::new(2, 2, pixels)
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   renderer.draw_coverage_mask(
     mask,
     @graphics.Paint::new().set_color(@graphics.Color::black()),
@@ -33,7 +33,7 @@ test "Renderer::draw_glyph_atlas_entry composites atlas subrect" {
 
   let canvas = @graphics.Canvas::new(4, 3)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   renderer.draw_glyph_atlas_entry(
     atlas.to_mask(),
     entry,
@@ -64,7 +64,7 @@ test "Renderer::draw_coverage_mask uses paint opacity" {
   let paint = @graphics.Paint::new()
     .set_color(@graphics.Color::black())
     .set_opacity(0.5)
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   renderer.draw_coverage_mask(mask, paint)
   assert_eq(
     renderer.get_canvas().get_pixmap().get_pixel(0, 0),

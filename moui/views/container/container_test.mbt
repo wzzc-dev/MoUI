@@ -11,7 +11,7 @@
 ///|
 /// A leaf view that reports a fixed intrinsic size and paints nothing.
 fn center_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
-  @core.View::from_node(CenterTestRect::{ width, height })
+  @core.View::from_node(CenterTestRect::{ width, height, })
 }
 
 ///|
@@ -28,15 +28,15 @@ impl @core.ViewNode for CenterTestRect with fn identity(_self) {
 ///|
 impl @core.ViewNode for CenterTestRect with fn declaration(self) {
   @core.ViewDeclaration::channels(
-    layout=@core.DeclarationChannel::Exact(
+    layout=Exact(
       @core.DeclarationKey::record(type_tag="CenterTestRect", fields=[
         ("width", @core.DeclarationKey::double(self.width)),
         ("height", @core.DeclarationKey::double(self.height)),
       ]),
     ),
-    paint=@core.DeclarationChannel::Constant,
-    semantics=@core.DeclarationChannel::Constant,
-    platform=@core.DeclarationChannel::Constant,
+    paint=Constant,
+    semantics=Constant,
+    platform=Constant,
   )
 }
 
@@ -116,7 +116,7 @@ fn center_paint_context(frame~ : @core.Rect) -> @core.ViewPaintContext {
 ///|
 test "center measures to bounded constraints when no explicit size is given" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child)
+  let view = @container.center(child)
   let ctx = center_layout_context(
     constraints=@core.Constraints::loose(
       @core.Size::new(width=300.0, height=200.0),
@@ -138,7 +138,7 @@ test "center measures to bounded constraints when no explicit size is given" {
 ///|
 test "center honors explicit width and height" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child, width=400.0, height=300.0)
+  let view = @container.center(child, width=400.0, height=300.0)
   let ctx = center_layout_context(
     constraints=@core.Constraints::loose(
       @core.Size::new(width=500.0, height=400.0),
@@ -158,7 +158,7 @@ test "center honors explicit width and height" {
 ///|
 test "center falls back to child size under unbounded constraints" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child)
+  let view = @container.center(child)
   let ctx = center_layout_context(
     constraints=@core.Constraints::unbounded(),
     child_size=@core.Size::new(width=100.0, height=50.0),
@@ -176,7 +176,7 @@ test "center falls back to child size under unbounded constraints" {
 ///|
 test "center clamps child origin to zero when child exceeds the frame" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child)
+  let view = @container.center(child)
   let ctx = center_layout_context(
     constraints=@core.Constraints::loose(
       @core.Size::new(width=60.0, height=30.0),
@@ -196,7 +196,7 @@ test "center clamps child origin to zero when child exceeds the frame" {
 ///|
 test "center with background wraps the content in a container" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child, background=@core.Color::blue())
+  let view = @container.center(child, background=@core.Color::blue())
   assert_eq(view.identity().kind, "Container")
   // The centered child is preserved inside the container wrapper.
   let children = view.children()
@@ -205,10 +205,7 @@ test "center with background wraps the content in a container" {
   // and padding wrappers.
   let inner = children[0].children()
   assert_eq(inner.length(), 1)
-  assert_eq(
-    inner[0].semantics().composition,
-    @core.SemanticsComposition::Transparent,
-  )
+  assert_eq(inner[0].semantics().composition, Transparent)
   assert_eq(inner[0].semantics().label, None)
   // Driving the wrapper layout with a pretend child size confirms the
   // container reports the child's measured size.
@@ -225,7 +222,7 @@ test "center with background wraps the content in a container" {
 ///|
 test "center applies explicit width and height together with a background" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(
+  let view = @container.center(
     child,
     width=400.0,
     height=300.0,
@@ -247,18 +244,15 @@ test "center applies explicit width and height together with a background" {
 ///|
 test "center is semantics-transparent" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child)
-  assert_eq(
-    view.semantics().composition,
-    @core.SemanticsComposition::Transparent,
-  )
+  let view = @container.center(child)
+  assert_eq(view.semantics().composition, Transparent)
   assert_eq(view.semantics().label, None)
 }
 
 ///|
 test "center paints no commands for its custom layout" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child)
+  let view = @container.center(child)
   let plan = view.paint(
     center_paint_context(
       frame=@core.Rect::new(x=0.0, y=0.0, width=300.0, height=200.0),
@@ -270,7 +264,7 @@ test "center paints no commands for its custom layout" {
 ///|
 test "center accepts an explicit theme override without changing layout" {
   let child = center_test_rect(width=100.0, height=50.0)
-  let view = center(child, theme=@core.Theme::neutral())
+  let view = @container.center(child, theme=@core.Theme::neutral())
   let ctx = center_layout_context(
     constraints=@core.Constraints::loose(
       @core.Size::new(width=300.0, height=200.0),

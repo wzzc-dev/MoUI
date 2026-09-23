@@ -166,7 +166,7 @@ fn hot_path_bench_scroll(fixture : String, steps : Int) -> Unit {
 /// block conversions).
 fn hot_path_bench_rebuild(fixture : String, steps : Int) -> Unit {
   let session = MarkdownDocumentSession::new(fixture)
-  let selection = { caret: 0, selection: None }
+  let selection = { caret: 0, selection: None, }
   hot_path_metrics_reset()
   let mut keep = 0
   let mut window_us = 0.0
@@ -286,7 +286,7 @@ fn hot_path_bench_transaction(fixture : String, ops : Int) -> Unit {
     text: next,
     caret: insert_at + 1,
     selection: None,
-    edit_range: Some({ start: insert_at, end: insert_at }),
+    edit_range: Some({ start: insert_at, end: insert_at, }),
   }
   let mut new_keep = 0
   let new_start = @bench.monotonic_clock_start()

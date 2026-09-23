@@ -50,8 +50,8 @@ pub fn backend_info() -> @render.RendererBackendInfo {
     ),
   )
   @render.RendererBackendInfo::new(
-    backend=@render.RendererBackendKind::SunRasterNative,
-    status=@render.RendererCapabilityStatus::Supported,
+    backend=SunRasterNative,
+    status=Supported,
     can_render=true,
     can_resize=true,
     owns_surface=true,
@@ -67,10 +67,10 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor {
 ///|
 pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor {
   @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::SunRasterNative,
-    family=@render.RendererFamily::Sun,
-    presentation=@render.RendererPresentationModel::CpuPixelFrame,
-    supported_targets=[@render.RendererTarget::Native],
+    backend=SunRasterNative,
+    family=Sun,
+    presentation=CpuPixelFrame,
+    supported_targets=[Native],
     capabilities=sun_feature_capabilities(),
     description="Native Sun CPU raster renderer that presents copied RGBA pixel frames to host providers.",
   )
@@ -84,9 +84,7 @@ pub fn create_with_present_target(
 ) -> SunRasterRenderer raise SunRendererError {
   let width = sun_dim_to_int(metrics.physical_size.width)
   let height = sun_dim_to_int(metrics.physical_size.height)
-  guard width > 0 && height > 0 else {
-    raise SunRendererError::InvalidSurfaceSize(width, height)
-  }
+  guard width > 0 && height > 0 else { raise InvalidSurfaceSize(width, height) }
   let renderer = {
     metrics,
     target,
@@ -188,7 +186,7 @@ pub fn SunRasterRenderer::render(
   if (self.target.present)(frame) {
     self.present_count = self.present_count + 1
   } else {
-    raise SunRendererError::PresentFailed(self.target.description)
+    raise PresentFailed(self.target.description)
   }
 }
 
@@ -319,9 +317,7 @@ fn new_canvas_for_metrics(
 ) -> @sun_graphics.Canvas raise SunRendererError {
   let width = sun_dim_to_int(metrics.physical_size.width)
   let height = sun_dim_to_int(metrics.physical_size.height)
-  guard width > 0 && height > 0 else {
-    raise SunRendererError::InvalidSurfaceSize(width, height)
-  }
+  guard width > 0 && height > 0 else { raise InvalidSurfaceSize(width, height) }
   @sun_graphics.Canvas::new(width, height)
 }
 
@@ -331,7 +327,7 @@ fn SunRasterRenderer::read_frame(self : SunRasterRenderer) -> SunPixelFrame {
   let width = pixmap.get_width()
   let height = pixmap.get_height()
   let pixels = copy_fixed_pixels(pixmap.get_pixels())
-  SunPixelFrame::{
+  {
     width,
     height,
     row_bytes: width * 4,

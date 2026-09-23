@@ -71,16 +71,14 @@ test "website selects Simplified Chinese route and catalog" {
     capabilities=@host.HostServiceCapabilities::new(file_access=true),
     handle=request => {
       match request {
-        @host.HostServiceRequest::TextFile(
-          @host.HostTextFileRequest::ReadText(path)
-        ) => {
+        TextFile(ReadText(path)) => {
           requested_paths.push(path)
-          @host.HostServiceResponse::TextFileContent(
+          TextFileContent(
             path,
             ToJson::to_json(website_test_catalog()).stringify(),
           )
         }
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -119,11 +117,11 @@ test "website Get Started navigates and GitHub opens repository URL" {
     capabilities=@host.HostServiceCapabilities::new(open_url=true),
     handle=request => {
       match request {
-        @host.HostServiceRequest::OpenUrl(url) => {
+        OpenUrl(url) => {
           opened_urls.push(url)
-          @host.HostServiceResponse::UrlOpened
+          UrlOpened
         }
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -136,9 +134,7 @@ test "website Get Started navigates and GitHub opens repository URL" {
   assert_true(
     runtime
     .draw_commands()
-    .any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Quick Start", .. })
-    }),
+    .any(command => command is DrawText({ text: "Quick Start", .. })),
   )
   click_text(runtime, "GitHub")
   inspect(opened_urls.length(), content="1")
@@ -196,7 +192,7 @@ test "website showcases scroll their virtual grid without a duplicate page headi
         x=image.origin.x + image.size.width / 2.0,
         y=image.origin.y + image.size.height / 2.0,
       ),
-      phase=@core.PointerPhase::Move,
+      phase=Move,
       wheel_delta=@geometry.Point::new(x=0.0, y=-2000.0),
     ),
   )
@@ -256,22 +252,20 @@ test "website docs portal loads runtime markdown through host text service" {
     capabilities=@host.HostServiceCapabilities::new(file_access=true),
     handle=request => {
       match request {
-        @host.HostServiceRequest::TextFile(
-          @host.HostTextFileRequest::ReadText(path)
-        ) => {
+        TextFile(ReadText(path)) => {
           requested_paths.push(path)
           if path == "docs/catalog.json" {
-            @host.HostServiceResponse::TextFileContent(
+            TextFileContent(
               path,
               ToJson::to_json(website_test_catalog()).stringify(),
             )
           } else {
-            @host.HostServiceResponse::TextFileContent(
+            TextFileContent(
               path, "# Runtime Docs\n\nMoUI fetches **Markdown** at runtime.\n\n- One source file\n\n[Android](android-support.md)\n\n```moonbit\nfn main {}\n```",
             )
           }
         }
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -293,13 +287,9 @@ test "website docs portal loads runtime markdown through host text service" {
   assert_true(has_text(commands, "Markdown"))
   assert_true(has_text(commands, "Android"))
   assert_true(has_text_on_line(commands, "fn main {}"))
-  assert_true(
-    has_text_align(commands, "MoUI Documentation", @core.TextAlign::TextStart),
-  )
-  assert_true(
-    has_text_align(commands, "Runtime Docs", @core.TextAlign::TextStart),
-  )
-  assert_true(has_text_align(commands, "fn", @core.TextAlign::TextStart))
+  assert_true(has_text_align(commands, "MoUI Documentation", TextStart))
+  assert_true(has_text_align(commands, "Runtime Docs", TextStart))
+  assert_true(has_text_align(commands, "fn", TextStart))
 }
 
 ///|
@@ -328,10 +318,10 @@ test "website desktop docs keeps navigation fixed while markdown scrolls" {
     fail("expected docs navigation item")
   }
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=820.0, y=520.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
       ),
     ),
@@ -359,10 +349,10 @@ test "website desktop docs sidebar scrolls independently" {
   let latest = Ref(model)
   let runtime = model.tracked_test_runtime(latest, width=1180.0, height=760.0)
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=180.0, y=600.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
       ),
     ),
@@ -412,10 +402,10 @@ test "website compact docs renders and scrolls markdown" {
   assert_true(has_text(before, "Compact Section 0"))
   assert_true(has_text(before, "evidence."))
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=210.0, y=720.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
       ),
     ),
@@ -460,9 +450,7 @@ test "website desktop docs navigation labels are start aligned" {
     ),
   }
   let commands = model.test_runtime(width=1180.0, height=760.0).draw_commands()
-  assert_true(
-    has_text_align(commands, "MoUI README", @core.TextAlign::TextStart),
-  )
+  assert_true(has_text_align(commands, "MoUI README", TextStart))
 }
 
 ///|
@@ -477,11 +465,7 @@ test "website docs completion ignores stale app-owned token" {
     doc_state: DocLoading(current_token, path),
   }
   let unchanged = model.update(
-    HostDocsCompleted(
-      1,
-      path,
-      @services.ServiceTaskResult::Success("# Stale\n\nOld response"),
-    ),
+    HostDocsCompleted(1, path, Success("# Stale\n\nOld response")),
   )
   match unchanged.doc_state {
     DocLoading(token, loading_path) => {
@@ -495,7 +479,7 @@ test "website docs completion ignores stale app-owned token" {
       HostDocsCompleted(
         current_token,
         path,
-        @services.ServiceTaskResult::Success("# Fresh\n\nLatest response"),
+        Success("# Fresh\n\nLatest response"),
       ),
     ).doc_state {
     DocLoaded(loaded_path, document) => {
@@ -578,10 +562,10 @@ test "website positive wheel delta scrolls body downward" {
     fail("expected visible website scrollbar thumb")
   }
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=size.width / 2.0, y=120.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@geometry.Point::new(x=0.0, y=-180.0),
       ),
     ),
@@ -717,10 +701,8 @@ test "website route host receives deep-link and anchor commands" {
     capabilities=@host.HostServiceCapabilities::new(file_access=true),
     handle=request => {
       match request {
-        @host.HostServiceRequest::TextFile(
-          @host.HostTextFileRequest::ReadText(path)
-        ) =>
-          @host.HostServiceResponse::TextFileContent(
+        TextFile(ReadText(path)) =>
+          TextFileContent(
             path,
             if path == "docs/catalog.json" {
               ToJson::to_json(website_test_catalog()).stringify()
@@ -728,7 +710,7 @@ test "website route host receives deep-link and anchor commands" {
               "# Doc"
             },
           )
-        _ => @host.HostServiceResponse::Unavailable("unexpected")
+        _ => Unavailable("unexpected")
       }
     },
   )
@@ -774,9 +756,7 @@ test "website docs metadata refreshes after deep-link catalog load" {
     model.update_with_services(
       HostCatalogCompleted(
         1,
-        @services.ServiceTaskResult::Success(
-          ToJson::to_json(website_test_catalog()).stringify(),
-        ),
+        Success(ToJson::to_json(website_test_catalog()).stringify()),
       ),
       @services.AppServices::unavailable(),
       Some(route_host),
@@ -815,9 +795,9 @@ fn assert_feature_card_stacked(
 ///|
 fn website_test_catalog() -> WebsiteDocsCatalog {
   let groups = [
-    WebsiteDocGroup::{ id: "get-started", title: "Get Started" },
-    WebsiteDocGroup::{ id: "platforms", title: "Platforms" },
-    WebsiteDocGroup::{ id: "guides", title: "Guides" },
+    WebsiteDocGroup::{ id: "get-started", title: "Get Started", },
+    { id: "platforms", title: "Platforms", },
+    { id: "guides", title: "Guides", },
   ]
   let entries : Array[WebsiteDocEntry] = []
   let core_entries = [
@@ -854,7 +834,7 @@ fn website_test_catalog() -> WebsiteDocsCatalog {
       keywords: ["guide"],
     })
   }
-  { schemaVersion: 1, siteUrl: "https://example.test/MoUI/", groups, entries }
+  { schemaVersion: 1, siteUrl: "https://example.test/MoUI/", groups, entries, }
 }
 
 ///|
@@ -926,14 +906,10 @@ fn click_frame(runtime : @runtime.AppRuntime, frame : @core.Rect) -> Unit {
     y=frame.origin.y + frame.size.height / 2.0,
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
   )
 }
 
@@ -945,7 +921,7 @@ fn last_text_frame(
   let mut result = None
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         if value == text {
           result = Some(frame)
         }
@@ -958,8 +934,7 @@ fn last_text_frame(
 ///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) &&
-    value.contains(text)
+    command is DrawText({ text: value, .. }) && value.contains(text)
   })
 }
 
@@ -968,8 +943,7 @@ fn exact_text_count(commands : Array[@core.DrawCommand], text : String) -> Int {
   let mut count = 0
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, .. }) if value == text =>
-        count += 1
+      DrawText({ text: value, .. }) if value == text => count += 1
       _ => ()
     }
   }
@@ -984,7 +958,7 @@ fn has_text_on_line(commands : Array[@core.DrawCommand], text : String) -> Bool 
   let items : Array[(Double, Double, String)] = []
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         items.push((frame.origin.y, frame.origin.x, value))
       _ => ()
     }
@@ -1020,8 +994,7 @@ fn has_image_source(
   source : String,
 ) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawImage({ source: value, .. }) &&
-    value == source
+    command is DrawImage({ source: value, .. }) && value == source
   })
 }
 
@@ -1032,8 +1005,8 @@ fn image_frame(
 ) -> @core.Rect? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawImage({ source: value, frame, .. }) if value ==
-        source => return Some(frame)
+      DrawImage({ source: value, frame, .. }) if value == source =>
+        return Some(frame)
       _ => ()
     }
   }
@@ -1047,8 +1020,7 @@ fn has_text_align(
   align : @core.TextAlign,
 ) -> Bool {
   commands.any(command => {
-    command
-    is @core.DrawCommand::DrawText({ text: value, align: actual_align, .. }) &&
+    command is DrawText({ text: value, align: actual_align, .. }) &&
     value.contains(text) &&
     actual_align == align
   })
@@ -1064,7 +1036,7 @@ fn has_text_color_different(
   let plain_colors : Array[@core.Color] = []
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, color, .. }) =>
+      DrawText({ text: value, color, .. }) =>
         if value == highlighted {
           highlighted_colors.push(color)
         } else if value == plain {
@@ -1091,7 +1063,7 @@ fn website_scrollbar_thumb_frame(
   let candidates : Array[@core.Rect] = []
   for command in commands {
     match command {
-      @core.DrawCommand::FillRoundedRectBrush({ rect, .. }, _) =>
+      FillRoundedRectBrush({ rect, .. }, _) =>
         if rect.origin.x > size.width - 18.0 &&
           rect.size.width <= 6.0 &&
           rect.size.height >= 36.0 {
@@ -1127,7 +1099,7 @@ fn text_frame(
 ) -> @core.Rect? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         if value == text {
           return Some(frame)
         }

@@ -35,9 +35,9 @@ pub(all) struct DesignSystemReport {
 ///|
 pub fn design_system_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  system_scheme? : @core.ColorScheme = @core.ColorScheme::Dark,
-  density? : @common.DesignDensity = @common.DesignDensity::Standard,
+  scheme? : @core.ColorScheme = Light,
+  system_scheme? : @core.ColorScheme = Dark,
+  density? : @common.DesignDensity = Standard,
 ) -> DesignSystemReport {
   let manifest = manifest(preset)
   let complete = is_design_system_complete(preset)
@@ -47,7 +47,7 @@ pub fn design_system_report(
     system_scheme,
     density,
     status: if complete {
-      DesignTokenStatus::OfficialComplete
+      OfficialComplete
     } else {
       manifest.stage
     },
@@ -111,7 +111,7 @@ pub fn DesignSystemReport::evidence_row_count(
 pub fn DesignSystemReport::gap_count(preset : DesignSystemReport) -> Int {
   let mut count = 0
   for item in preset.requirement_audit {
-    if item.status != DesignTokenStatus::OfficialComplete {
+    if item.status != OfficialComplete {
       count = count + 1
     }
   }
@@ -127,7 +127,7 @@ pub fn DesignSystemReport::typography_gap_count(
     if item.required &&
       (
         !item.resolves_core_surface ||
-        item.status == DesignTokenStatus::NotMapped ||
+        item.status == NotMapped ||
         item.remaining_gap != "none"
       ) {
       count = count + 1
@@ -145,7 +145,7 @@ pub fn DesignSystemReport::semantic_palette_gap_count(
     if item.required &&
       (
         !item.resolves_core_surface ||
-        item.status == DesignTokenStatus::NotMapped ||
+        item.status == NotMapped ||
         item.remaining_gap != "none"
       ) {
       count = count + 1
@@ -162,7 +162,7 @@ pub fn DesignSystemReport::taxonomy_gap_count(
   for item in preset.token_taxonomy {
     if item.required &&
       (
-        item.status == DesignTokenStatus::NotMapped ||
+        item.status == NotMapped ||
         !item.manifest_declared ||
         !item.source_declared ||
         !item.source_locked
@@ -177,7 +177,7 @@ pub fn DesignSystemReport::taxonomy_gap_count(
 pub fn DesignSystemReport::has_official_completion_claim(
   preset : DesignSystemReport,
 ) -> Bool {
-  preset.status == DesignTokenStatus::OfficialComplete || preset.complete
+  preset.status == OfficialComplete || preset.complete
 }
 
 ///|

@@ -96,11 +96,7 @@ pub fn HostCapabilitySummary::unavailable(
   label? : String = "Unavailable host",
   description? : String = "No platform host capability summary is available.",
 ) -> HostCapabilitySummary {
-  HostCapabilitySummary::new(
-    backend=HostBackendKind::Test,
-    label~,
-    description~,
-  )
+  HostCapabilitySummary::new(backend=Test, label~, description~)
 }
 
 ///|
@@ -109,7 +105,7 @@ pub fn HostCapabilitySummary::test_host(
 ) -> HostCapabilitySummary {
   HostCapabilitySummary::from_contracts(
     info=HostAppInfo::new(
-      backend=HostBackendKind::Test,
+      backend=Test,
       description="In-process test host using shared runtime contracts.",
     ),
     services=HostServiceCapabilities::none(),

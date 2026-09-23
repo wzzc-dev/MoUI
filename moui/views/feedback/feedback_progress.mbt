@@ -4,7 +4,7 @@ pub fn[Msg] progress_status(
   value~ : Double,
   message? : String = "",
   status? : String = "",
-  tone? : @style.FeedbackTone = @style.FeedbackTone::Info,
+  tone? : @style.FeedbackTone = Info,
   action? : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
@@ -41,7 +41,7 @@ pub fn[Msg] progress_status(
       [
         @text.text(
           title,
-          role=@style.TextRole::Control,
+          role=Control,
           theme=resolved_theme,
           width=title_width,
           height=24.0,
@@ -56,14 +56,14 @@ pub fn[Msg] progress_status(
         ),
       ],
       spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Center,
+      align=Center,
     ),
   ]
   if message != "" {
     rows.push(
       @text.text(
         message,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=inner_width,
         height=28.0,
@@ -82,7 +82,7 @@ pub fn[Msg] progress_status(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Tonal,
+          variant=Tonal,
           theme=resolved_theme,
           width=128.0,
           height=34.0,
@@ -91,11 +91,7 @@ pub fn[Msg] progress_status(
     None => ()
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Start),
     width~,
     height=progress_status_height(message != "", action is Some(_)),
     background=@controls.feedback_background(tone, style),
@@ -111,7 +107,7 @@ pub fn[Msg] progress_status(
       width=1.0,
     ),
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .semantics_description(status_text)
   .accessibility_label("Progress: " + title)
 }
@@ -131,10 +127,10 @@ fn progress_status_label(value : Double) -> String {
 ///|
 fn progress_status_badge_tone(tone : @style.FeedbackTone) -> @style.BadgeTone {
   match tone {
-    Success => @style.BadgeTone::Success
-    Warning => @style.BadgeTone::Warning
-    Danger => @style.BadgeTone::Danger
-    Neutral | Info => @style.BadgeTone::Accent
+    Success => Success
+    Warning => Warning
+    Danger => Danger
+    Neutral | Info => Accent
   }
 }
 

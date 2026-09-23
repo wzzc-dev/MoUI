@@ -59,14 +59,14 @@ fn read_evidence_manifest(
   let parsed = @json.parse(text) catch { _ => return None }
   guard parsed is Object(fields) else { return None }
   let generated_by = match fields.get("generatedBy") {
-    Some(Json::String(value)) => value
+    Some(String(value)) => value
     _ => return None
   }
   if !is_accepted_generated_by(generated_by) {
     return None
   }
   let status = match fields.get("status") {
-    Some(Json::String(value)) => value
+    Some(String(value)) => value
     _ => "unknown"
   }
   let passed = status == "passed"
@@ -74,12 +74,12 @@ fn read_evidence_manifest(
   let mut passed_count = 0
   let mut total = 0
   match fields.get("observations") {
-    Some(Json::Array(items)) =>
+    Some(Array(items)) =>
       for item in items {
         guard item is Object(obs_fields) else { continue }
         let obs_passed = match obs_fields.get("passed") {
-          Some(Json::True) => true
-          Some(Json::False) => false
+          Some(True) => true
+          Some(False) => false
           _ => continue
         }
         total += 1

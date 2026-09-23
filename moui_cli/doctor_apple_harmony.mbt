@@ -86,7 +86,7 @@ fn xcode_doctor_check(
   }
   let selected_root = match
     run_doctor_probe(xcode_select.unwrap(), XcodeDeveloperPath) {
-    { status: 0, output } if output != "" => output
+    { status: 0, output, } if output != "" => output
     probe =>
       return doctor_check(
         "xcode",

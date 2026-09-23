@@ -101,7 +101,7 @@ pub struct HostFrameScheduler {
 
 ///|
 pub fn HostFrameScheduler::new() -> HostFrameScheduler {
-  { requested: false, in_frame: false, follow_up: false }
+  { requested: false, in_frame: false, follow_up: false, }
 }
 
 ///|
@@ -166,12 +166,12 @@ pub struct HostChannel {
 
 ///|
 pub fn HostChannel::new() -> HostChannel {
-  { next_request_id: 1, pending: [], updates: [] }
+  { next_request_id: 1, pending: [], updates: [], }
 }
 
 ///|
 pub fn HostChannel::begin_request(self : HostChannel) -> HostRequestId {
-  let id = { value: self.next_request_id }
+  let id = { value: self.next_request_id, }
   self.next_request_id = self.next_request_id + 1
   self.pending.push(id)
   id
@@ -199,7 +199,7 @@ pub fn HostChannel::track_request(
   if id <= 0 || self.pending.any(item => item.value == id) {
     None
   } else {
-    let request = { value: id }
+    let request = { value: id, }
     self.pending.push(request)
     Some(request)
   }
@@ -246,7 +246,7 @@ pub fn HostChannel::enqueue_update(
   if kind == "" {
     return false
   }
-  self.updates.push({ kind, request_id, payload })
+  self.updates.push({ kind, request_id, payload, })
   true
 }
 
@@ -356,7 +356,7 @@ fn host_wire_update(value : Json) -> HostWireUpdate? {
         _ => return None
       }
   }
-  Some({ kind, request_id, payload })
+  Some({ kind, request_id, payload, })
 }
 
 ///|
@@ -529,7 +529,7 @@ pub fn HostSessionTransport::enqueue_tracked_update(
     self.channel.enqueue_update(
       kind~,
       payload~,
-      request_id=Some({ value: request_id }),
+      request_id=Some({ value: request_id, }),
     )
   }
 }

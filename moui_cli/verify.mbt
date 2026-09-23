@@ -102,7 +102,7 @@ fn parse_verify_args(
     index += 1
   }
   if help.val {
-    return Ok({ help: true, json: json.val, platform: "", options: None })
+    return Ok({ help: true, json: json.val, platform: "", options: None, })
   }
   if positional.length() != 2 {
     return Err("usage: moui verify <platform> <app> [options]")
@@ -226,7 +226,7 @@ fn resolve_verify_device(
 ) -> Result[Device, String] {
   match options.device {
     Some(id) =>
-      Ok({ platform, id, name: id, state: "selected", kind: "unknown" })
+      Ok({ platform, id, name: id, state: "selected", kind: "unknown", })
     None => {
       let devices = list_all_devices(host)
       let matching : Array[Device] = []
@@ -292,7 +292,7 @@ fn run_verify(parsed : ParsedVerify, host : HostPlatform) -> CliOutcome {
     "android" => probe_android(device, app.id, app.id, host, 30)
     "ios" => probe_ios(device, app.id, host, 30)
     "harmonyos" => probe_harmonyos(device, app.id, app.id, host, 30)
-    _ => { ok: false, observations: [] }
+    _ => { ok: false, observations: [], }
   }
   let status = verify_status_from_probe(probe)
   // 5. Write the manifest.
@@ -328,12 +328,12 @@ fn run_verify(parsed : ParsedVerify, host : HostPlatform) -> CliOutcome {
       "manifest": Json::string(manifest_path),
       "probe": probe_result_to_json(probe),
     }
-    { exit_code, stdout: output.stringify(indent=2) + "\n", stderr: "" }
+    { exit_code, stdout: output.stringify(indent=2) + "\n", stderr: "", }
   } else {
     let mut text = "[verify] " + parsed.platform + " app=" + app.id + "\n"
     text += "  status: " + status + "\n"
     text += "  manifest: " + manifest_path + "\n"
     text += probe_result_to_text(probe)
-    { exit_code, stdout: text, stderr: "" }
+    { exit_code, stdout: text, stderr: "", }
   }
 }

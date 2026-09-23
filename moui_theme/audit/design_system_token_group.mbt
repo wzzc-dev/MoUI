@@ -24,51 +24,16 @@ pub(all) struct DesignTokenGroupResolverRecord {
 ///|
 pub fn token_group_resolver_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> Array[DesignTokenGroupResolverRecord] {
   [
-    token_group_resolver_record(
-      preset,
-      DesignSystemRequirement::SemanticPalette,
-      DesignTokenCategory::Color,
-      scheme,
-    ),
-    token_group_resolver_record(
-      preset,
-      DesignSystemRequirement::Typography,
-      DesignTokenCategory::Typography,
-      scheme,
-    ),
-    token_group_resolver_record(
-      preset,
-      DesignSystemRequirement::ShapeRadius,
-      DesignTokenCategory::Shape,
-      scheme,
-    ),
-    token_group_resolver_record(
-      preset,
-      DesignSystemRequirement::ElevationShadow,
-      DesignTokenCategory::Elevation,
-      scheme,
-    ),
-    token_group_resolver_record(
-      preset,
-      DesignSystemRequirement::Motion,
-      DesignTokenCategory::Motion,
-      scheme,
-    ),
-    token_group_resolver_record(
-      preset,
-      DesignSystemRequirement::Surface,
-      DesignTokenCategory::Surface,
-      scheme,
-    ),
-    token_group_resolver_record(
-      preset,
-      DesignSystemRequirement::StateLayer,
-      DesignTokenCategory::StateLayer,
-      scheme,
-    ),
+    token_group_resolver_record(preset, SemanticPalette, Color, scheme),
+    token_group_resolver_record(preset, Typography, Typography, scheme),
+    token_group_resolver_record(preset, ShapeRadius, Shape, scheme),
+    token_group_resolver_record(preset, ElevationShadow, Elevation, scheme),
+    token_group_resolver_record(preset, Motion, Motion, scheme),
+    token_group_resolver_record(preset, Surface, Surface, scheme),
+    token_group_resolver_record(preset, StateLayer, StateLayer, scheme),
   ]
 }
 
@@ -76,7 +41,7 @@ pub fn token_group_resolver_report(
 pub fn token_group_resolver_for(
   preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> DesignTokenGroupResolverRecord? {
   for item in token_group_resolver_report(preset, scheme~) {
     if item.requirement == requirement {
@@ -97,9 +62,9 @@ pub fn token_group_resolver_gap_count(preset : @common.DesignPreset) -> Int {
   for item in token_group_resolver_report(preset) {
     if !item.resolves_tokens ||
       !item.resolves_neutral_surface ||
-      item.status == DesignTokenStatus::NotMapped ||
-      item.status == DesignTokenStatus::SourceMapped ||
-      item.status == DesignTokenStatus::PreviewMapped {
+      item.status == NotMapped ||
+      item.status == SourceMapped ||
+      item.status == PreviewMapped {
       count = count + 1
     }
   }
@@ -137,13 +102,13 @@ fn token_group_requirement_supported(
   requirement : DesignSystemRequirement,
 ) -> Bool {
   match requirement {
-    DesignSystemRequirement::SemanticPalette
-    | DesignSystemRequirement::Typography
-    | DesignSystemRequirement::ShapeRadius
-    | DesignSystemRequirement::ElevationShadow
-    | DesignSystemRequirement::Motion
-    | DesignSystemRequirement::Surface
-    | DesignSystemRequirement::StateLayer => true
+    SemanticPalette
+    | Typography
+    | ShapeRadius
+    | ElevationShadow
+    | Motion
+    | Surface
+    | StateLayer => true
     _ => false
   }
 }
@@ -173,9 +138,9 @@ fn token_group_resolver_gap_count_for(
       (
         !item.resolves_tokens ||
         !item.resolves_neutral_surface ||
-        item.status == DesignTokenStatus::NotMapped ||
-        item.status == DesignTokenStatus::SourceMapped ||
-        item.status == DesignTokenStatus::PreviewMapped
+        item.status == NotMapped ||
+        item.status == SourceMapped ||
+        item.status == PreviewMapped
       ) {
       count = count + 1
     }
@@ -252,10 +217,10 @@ fn token_group_resolver_record(
     !resolves_tokens ||
     !resolves_neutral_surface {
     DesignTokenStatus::NotMapped
-  } else if requirement == DesignSystemRequirement::StateLayer {
-    DesignTokenStatus::ComponentMapped
+  } else if requirement == StateLayer {
+    ComponentMapped
   } else {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   }
   {
     preset,
@@ -290,25 +255,24 @@ fn token_group_resolves_tokens(
   requirement : DesignSystemRequirement,
 ) -> Bool {
   match requirement {
-    DesignSystemRequirement::SemanticPalette =>
+    SemanticPalette =>
       tokens.palette.foreground != tokens.palette.background &&
       tokens.palette.primary != tokens.palette.background &&
       tokens.palette.focus.a > 0.0 &&
       tokens.palette.scrim.a > 0.0
-    DesignSystemRequirement::Typography =>
+    Typography =>
       tokens.typography.body.size > 0.0 && tokens.typography.control.size > 0.0
-    DesignSystemRequirement::ShapeRadius =>
+    ShapeRadius =>
       tokens.radius.md >= tokens.radius.sm &&
       tokens.radius.pill >= tokens.radius.lg
-    DesignSystemRequirement::ElevationShadow =>
+    ElevationShadow =>
       tokens.elevation.md.blur_radius >= tokens.elevation.sm.blur_radius
-    DesignSystemRequirement::Motion =>
-      tokens.motion.normal_ms >= tokens.motion.fast_ms
-    DesignSystemRequirement::Surface =>
+    Motion => tokens.motion.normal_ms >= tokens.motion.fast_ms
+    Surface =>
       tokens.surfaces.core_surfaces().base == tokens.surfaces.base &&
       tokens.surfaces.core_surfaces().raised == tokens.surfaces.raised &&
       tokens.surfaces.core_surfaces().overlay == tokens.surfaces.overlay
-    DesignSystemRequirement::StateLayer =>
+    StateLayer =>
       tokens.state_layer.hover_alpha > 0.0 &&
       tokens.state_layer.disabled_alpha > tokens.state_layer.hover_alpha
     _ => false
@@ -322,19 +286,15 @@ fn token_group_resolves_neutral_surface(
   requirement : DesignSystemRequirement,
 ) -> Bool {
   match requirement {
-    DesignSystemRequirement::SemanticPalette =>
+    SemanticPalette =>
       theme.palette == tokens.palette.core_palette(tokens.scheme)
-    DesignSystemRequirement::Typography =>
-      theme.typography == tokens.typography.core_typography()
-    DesignSystemRequirement::ShapeRadius =>
-      theme.radius_scale == tokens.radius.core_radius_scale()
-    DesignSystemRequirement::ElevationShadow =>
+    Typography => theme.typography == tokens.typography.core_typography()
+    ShapeRadius => theme.radius_scale == tokens.radius.core_radius_scale()
+    ElevationShadow =>
       theme.shadow_scale == tokens.elevation.core_shadow_scale()
-    DesignSystemRequirement::Motion =>
-      theme.motion == tokens.motion.core_motion()
-    DesignSystemRequirement::Surface =>
-      theme.surfaces == tokens.surfaces.core_surfaces()
-    DesignSystemRequirement::StateLayer =>
+    Motion => theme.motion == tokens.motion.core_motion()
+    Surface => theme.surfaces == tokens.surfaces.core_surfaces()
+    StateLayer =>
       tokens.components.button.primary.state_layer_alpha ==
       tokens.state_layer.pressed_alpha &&
       tokens.components.button.tonal.state_layer_alpha ==
@@ -350,20 +310,14 @@ fn token_group_resolves_neutral_surface(
 ///|
 fn token_group_theme_api(requirement : DesignSystemRequirement) -> String {
   match requirement {
-    DesignSystemRequirement::SemanticPalette =>
+    SemanticPalette =>
       "DesignSemanticPalette::core_palette/core_semantic_colors -> @core.Theme"
-    DesignSystemRequirement::Typography =>
-      "DesignTypographyTokens::core_typography -> @core.Theme"
-    DesignSystemRequirement::ShapeRadius =>
-      "DesignRadiusTokens::core_radius_scale -> @core.Theme"
-    DesignSystemRequirement::ElevationShadow =>
-      "DesignElevationTokens::core_shadow_scale -> @core.Theme"
-    DesignSystemRequirement::Motion =>
-      "DesignMotionTokens::core_motion -> @core.Theme"
-    DesignSystemRequirement::Surface =>
-      "DesignSurfaceTokens::core_surfaces -> @core.Theme"
-    DesignSystemRequirement::StateLayer =>
-      "DesignStateLayerTokens -> @common.DesignComponentTokens"
+    Typography => "DesignTypographyTokens::core_typography -> @core.Theme"
+    ShapeRadius => "DesignRadiusTokens::core_radius_scale -> @core.Theme"
+    ElevationShadow => "DesignElevationTokens::core_shadow_scale -> @core.Theme"
+    Motion => "DesignMotionTokens::core_motion -> @core.Theme"
+    Surface => "DesignSurfaceTokens::core_surfaces -> @core.Theme"
+    StateLayer => "DesignStateLayerTokens -> @common.DesignComponentTokens"
     _ => ""
   }
 }
@@ -376,17 +330,13 @@ fn token_group_surface(
   let fallback = token_group_theme_api(requirement)
   let surface = if coverage_surface == "" { fallback } else { coverage_surface }
   match requirement {
-    DesignSystemRequirement::SemanticPalette =>
-      "DesignSemanticPalette -> " + surface
-    DesignSystemRequirement::Typography =>
-      "DesignTypographyTokens -> " + surface
-    DesignSystemRequirement::ShapeRadius => "DesignRadiusTokens -> " + surface
-    DesignSystemRequirement::ElevationShadow =>
-      "DesignElevationTokens -> " + surface
-    DesignSystemRequirement::Motion => "DesignMotionTokens -> " + surface
-    DesignSystemRequirement::Surface => "DesignSurfaceTokens -> " + surface
-    DesignSystemRequirement::StateLayer =>
-      "DesignStateLayerTokens -> " + surface
+    SemanticPalette => "DesignSemanticPalette -> " + surface
+    Typography => "DesignTypographyTokens -> " + surface
+    ShapeRadius => "DesignRadiusTokens -> " + surface
+    ElevationShadow => "DesignElevationTokens -> " + surface
+    Motion => "DesignMotionTokens -> " + surface
+    Surface => "DesignSurfaceTokens -> " + surface
+    StateLayer => "DesignStateLayerTokens -> " + surface
     _ => surface
   }
 }
@@ -403,10 +353,10 @@ fn token_group_coverage_for(
   }
   {
     category,
-    layer: DesignTokenLayer::MoUIAdapter,
+    layer: MoUIAdapter,
     source_family: "",
     moui_surface: "",
-    status: DesignTokenStatus::NotMapped,
+    status: NotMapped,
     note: "Missing token coverage row.",
   }
 }
@@ -419,32 +369,24 @@ fn token_group_official_source(
   match preset {
     Material =>
       match requirement {
-        DesignSystemRequirement::SemanticPalette
-        | DesignSystemRequirement::Surface =>
-          "https://material-web.dev/theming/color/"
+        SemanticPalette | Surface => "https://material-web.dev/theming/color/"
         _ => "https://material-web.dev/theming/material-theming/"
       }
     Carbon =>
       match requirement {
-        DesignSystemRequirement::SemanticPalette
-        | DesignSystemRequirement::Surface
-        | DesignSystemRequirement::StateLayer =>
+        SemanticPalette | Surface | StateLayer =>
           "https://carbondesignsystem.com/elements/color/tokens/"
         _ => "https://carbondesignsystem.com/elements/themes/code/"
       }
     Primer =>
       match requirement {
-        DesignSystemRequirement::SemanticPalette
-        | DesignSystemRequirement::Surface
-        | DesignSystemRequirement::StateLayer =>
+        SemanticPalette | Surface | StateLayer =>
           "https://primer.style/product/primitives/color/"
         _ => "https://primer.style/primitives/"
       }
     Fluent =>
       match requirement {
-        DesignSystemRequirement::SemanticPalette
-        | DesignSystemRequirement::Surface
-        | DesignSystemRequirement::StateLayer =>
+        SemanticPalette | Surface | StateLayer =>
           "https://fluent2.microsoft.design/theming"
         _ => "https://fluent2.microsoft.design/design-tokens"
       }
@@ -473,7 +415,7 @@ fn token_group_source_for_url(
 
 ///|
 fn token_group_source_locked(source : DesignSystemSource) -> Bool {
-  if source.status == DesignTokenStatus::NotMapped || source.source_ref == "" {
+  if source.status == NotMapped || source.source_ref == "" {
     false
   } else if source.source_kind == "official-source" ||
     source.source_kind == "internal-token-contract" ||

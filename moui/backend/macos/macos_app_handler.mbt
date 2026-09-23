@@ -24,7 +24,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
     .with_visible(!self.show_after_first_present)
     .with_platform_attributes(platform)
   let attributes = match self.min_window_size {
-    Some(min) => base_attributes.with_min_inner_size(@dpi.Size::Logical(min))
+    Some(min) => base_attributes.with_min_inner_size(Logical(min))
     None => base_attributes
   }
   let window : @window_macos.Window? = Some(
@@ -66,7 +66,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
             ),
           )
           self.driver.set_text_system(renderer.text_system())
-          ignore(self.driver.dispatch(@host.Event::Resized(metrics)))
+          ignore(self.driver.dispatch(Resized(metrics)))
           ignore(
             self.platform_slots.insert(
               @window_lifecycle.WindowSlot::new(
@@ -110,7 +110,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn abo
       event_loop.set_control_flow(
         @window_core.ControlFlow::wait_until(deadline),
       )
-    None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
+    None => event_loop.set_control_flow(Wait)
   }
   self.drain_window_requests(event_loop)
   self.sync_accessibility_environment()
@@ -157,17 +157,17 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
       scale_factor=self.current_scale_factor(window_id),
       surface_size~,
     ) {
-    @window_input.TransformedWindowEvent::CloseRequested => {
-      self.dispatch_host_event(window_id, @host.Event::CloseRequested)
+    CloseRequested => {
+      self.dispatch_host_event(window_id, CloseRequested)
       self.dispose_window(window_id)
       if self.lifecycle.runtime_slots().is_empty() {
         event_loop.exit()
       }
       return ()
     }
-    @window_input.TransformedWindowEvent::DispatchHostEvent(host_event) => {
+    DispatchHostEvent(host_event) => {
       match host_event {
-        @host.Event::Resized(metrics) =>
+        Resized(metrics) =>
           ignore(
             @window_host.sync_observed_resize(
               self.lifecycle,
@@ -181,51 +181,46 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
       }
       return ()
     }
-    @window_input.TransformedWindowEvent::WindowRedrawRequired => {
+    WindowRedrawRequired => {
       if self.redraw_window(window_id) {
         event_loop.exit()
       }
       return ()
     }
-    @window_input.TransformedWindowEvent::PlatformSpecific => ()
+    PlatformSpecific => ()
   }
   match event {
-    @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
+    PointerMoved(_, position, _, _) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
-    @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
+    PointerButton(_, _, position, _, _) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_pointer_or_context_menu(window_id, event)
     }
-    @window_core.WindowEvent::DragEntered(_, position)
-    | @window_core.WindowEvent::DragMoved(position)
-    | @window_core.WindowEvent::DragDropped(_, position) => {
+    DragEntered(_, position) | DragMoved(position) | DragDropped(_, position) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
-    @window_core.WindowEvent::DragLeft(Some(position)) => {
+    DragLeft(Some(position)) => {
       self.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
-    @window_core.WindowEvent::KeyboardInput(_, _, _) =>
-      self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::Ime(_) =>
-      self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::ModifiersChanged(_) =>
-      self.dispatch_window_event(window_id, event)
+    KeyboardInput(_, _, _) => self.dispatch_window_event(window_id, event)
+    Ime(_) => self.dispatch_window_event(window_id, event)
+    ModifiersChanged(_) => self.dispatch_window_event(window_id, event)
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -478,9 +473,7 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
           let height = if odd { base.height() + 12 } else { base.height() - 12 }
           ignore(
             platform_slot.window.request_inner_size(
-              @dpi.Size::Physical(
-                @dpi.PhysicalSize::PhysicalSize(width.max(320), height.max(240)),
-              ),
+              Physical(PhysicalSize(width.max(320), height.max(240))),
             ),
           )
           self.promotion_surface_cycles_done = self.promotion_surface_cycles_done +

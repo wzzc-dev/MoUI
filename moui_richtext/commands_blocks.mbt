@@ -75,7 +75,7 @@ fn markdown_editor_transform_current_block(
       source: next_source,
       caret: next_caret,
       selection: None,
-      edit_range: Some({ start: range.start, end: range.end }),
+      edit_range: Some({ start: range.start, end: range.end, }),
     }
   } else if command == HorizontalRule {
     let next_source = String::from_array(chars[:range.start]) +
@@ -85,7 +85,7 @@ fn markdown_editor_transform_current_block(
       source: next_source,
       caret: range.start + 3,
       selection: None,
-      edit_range: Some({ start: range.start, end: range.end }),
+      edit_range: Some({ start: range.start, end: range.end, }),
     }
   } else if command == Table {
     let snippet = markdown_editor_command_snippet(Table)
@@ -96,7 +96,7 @@ fn markdown_editor_transform_current_block(
       source: next_source,
       caret: range.start + 2,
       selection: None,
-      edit_range: Some({ start: range.start, end: range.end }),
+      edit_range: Some({ start: range.start, end: range.end, }),
     }
   } else if prefix == "" {
     markdown_editor_append_snippet(source, command)
@@ -130,7 +130,7 @@ fn markdown_editor_transform_current_block(
       source: next_source,
       caret: next_caret,
       selection: None,
-      edit_range: Some({ start: range.start, end: range.end }),
+      edit_range: Some({ start: range.start, end: range.end, }),
     }
   } else {
     let replacement = if markdown_editor_line_has_same_block_marker(
@@ -155,7 +155,7 @@ fn markdown_editor_transform_current_block(
       source: next_source,
       caret: next_caret,
       selection: None,
-      edit_range: Some({ start: range.start, end: range.end }),
+      edit_range: Some({ start: range.start, end: range.end, }),
     }
   }
 }
@@ -171,7 +171,7 @@ fn markdown_editor_setext_block_at_selection(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Heading(_)) ||
+    if !(block.block.kind is Heading(_)) ||
       anchor < block.source_range.start ||
       anchor > block.content_range.end ||
       block.source_range.end <= block.content_range.end {
@@ -271,7 +271,7 @@ fn markdown_editor_replace_selected_lines_with_table(
     source: text,
     caret: range.start + 2,
     selection: Some(next_selection),
-    edit_range: Some({ start: range.start, end: range.end }),
+    edit_range: Some({ start: range.start, end: range.end, }),
   }
 }
 
@@ -293,7 +293,7 @@ fn markdown_editor_replace_selected_lines_with_rule(
     source: text,
     caret: range.start + 3,
     selection: Some(next_selection),
-    edit_range: Some({ start: range.start, end: range.end }),
+    edit_range: Some({ start: range.start, end: range.end, }),
   }
 }
 
@@ -381,7 +381,7 @@ fn markdown_editor_transform_selected_lines(
     source: text,
     caret,
     selection: next_selection,
-    edit_range: Some({ start: range.start, end: range.end }),
+    edit_range: Some({ start: range.start, end: range.end, }),
   }
 }
 
@@ -582,14 +582,14 @@ fn markdown_editor_next_selected_ordered_number(
     contexts[contexts.length() - 1].context_prefix == context_prefix {
     let context = contexts[contexts.length() - 1]
     ignore(contexts.pop())
-    contexts.push({ indent, context_prefix, expected: context.expected + 1 })
+    contexts.push({ indent, context_prefix, expected: context.expected + 1, })
     context.expected
   } else {
     while contexts.length() > 0 &&
           contexts[contexts.length() - 1].indent >= indent {
       ignore(contexts.pop())
     }
-    contexts.push({ indent, context_prefix, expected: 2 })
+    contexts.push({ indent, context_prefix, expected: 2, })
     1
   }
 }
@@ -665,7 +665,7 @@ fn markdown_editor_duplicate_current_block(
           group,
           duplicate_start,
         ),
-        edit_range: Some({ start: group.source_end, end: group.source_end }),
+        edit_range: Some({ start: group.source_end, end: group.source_end, }),
       }
     }
     None => markdown_editor_noop_result(source, Some(selection))
@@ -866,7 +866,7 @@ fn markdown_editor_active_edit_block_from_blocks(
       continue
     }
     if anchor >= block.source_range.start && anchor <= block.source_range.end {
-      return Some({ block, index })
+      return Some({ block, index, })
     }
   }
   None

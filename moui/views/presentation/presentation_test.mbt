@@ -1,10 +1,7 @@
 ///|
 test "presentation placement falls back and clamps to viewport" {
-  let placement = PresentationPlacement::new(
-    candidates=[
-      PresentationPlacementCandidate::AboveCenter,
-      PresentationPlacementCandidate::BelowCenter,
-    ],
+  let placement = @presentation.PresentationPlacement::new(
+    candidates=[AboveCenter, BelowCenter],
     viewport_insets=@core.Insets::all(4.0),
   )
   let resolved = placement.resolve(
@@ -20,26 +17,26 @@ test "presentation placement falls back and clamps to viewport" {
 
 ///|
 test "overlay host preserves active presentation order" {
-  let first : PresentationSpec[Unit] = PresentationSpec::new(
+  let first : @presentation.PresentationSpec[Unit] = @presentation.PresentationSpec::new(
     id="first",
-    kind=PresentationKind::Tooltip,
+    kind=Tooltip,
     content=@container.empty(),
   )
-  let second : PresentationSpec[Unit] = PresentationSpec::new(
+  let second : @presentation.PresentationSpec[Unit] = @presentation.PresentationSpec::new(
     id="second",
-    kind=PresentationKind::Dialog,
+    kind=Dialog,
     content=@container.empty(),
-    modality=PresentationModality::Modal,
+    modality=Modal,
   )
-  let view = overlay_host(@text.text("base"), [first, second])
+  let view = @presentation.overlay_host(@text.text("base"), [first, second])
   assert_eq(view.children().length(), 4)
 }
 
 ///|
 test "presentation transitions use shared motion specs" {
-  let fade = PresentationTransition::Fade.spec().sample(0.5)
-  let scale = PresentationTransition::Scale.spec().sample(0.0)
-  let slide = PresentationTransition::Slide.spec().sample(0.0)
+  let fade = @presentation.PresentationTransition::Fade.spec().sample(0.5)
+  let scale = @presentation.PresentationTransition::Scale.spec().sample(0.0)
+  let slide = @presentation.PresentationTransition::Slide.spec().sample(0.0)
   assert_true(fade.style.opacity > 0.0 && fade.style.opacity < 1.0)
   assert_true(scale.style.scale.x < 1.0)
   assert_true(slide.style.offset.y > 0.0)
@@ -47,11 +44,23 @@ test "presentation transitions use shared motion specs" {
 
 ///|
 test "presentation host policy keeps transparent fallback" {
-  assert_true(!PresentationHostPolicy::ViewOnly.requests_native(true))
-  assert_true(PresentationHostPolicy::PreferNative.requests_native(true))
-  assert_true(!PresentationHostPolicy::PreferNative.requests_native(false))
-  assert_true(PresentationHostPolicy::NativeRequired.shows_view_surface(false))
-  assert_true(!PresentationHostPolicy::PreferNative.shows_view_surface(true))
+  assert_true(
+    !@presentation.PresentationHostPolicy::ViewOnly.requests_native(true),
+  )
+  assert_true(
+    @presentation.PresentationHostPolicy::PreferNative.requests_native(true),
+  )
+  assert_true(
+    !@presentation.PresentationHostPolicy::PreferNative.requests_native(false),
+  )
+  assert_true(
+    @presentation.PresentationHostPolicy::NativeRequired.shows_view_surface(
+      false,
+    ),
+  )
+  assert_true(
+    !@presentation.PresentationHostPolicy::PreferNative.shows_view_surface(true),
+  )
 }
 
 ///|
@@ -68,13 +77,15 @@ fn toast_panel() -> @core.View[String] {
 
 ///|
 test "toast presentations dock bottom-center in the viewport" {
-  let root = overlay_host(@text.text("Base"), [
-    PresentationSpec::new(
+  let root = @presentation.overlay_host(@text.text("Base"), [
+    @presentation.PresentationSpec::new(
       id="toast",
-      kind=PresentationKind::Toast,
+      kind=Toast,
       content=toast_panel(),
       placement=Some(
-        PresentationPlacement::new(viewport_insets=@core.Insets::all(12.0)),
+        @presentation.PresentationPlacement::new(
+          viewport_insets=@core.Insets::all(12.0),
+        ),
       ),
     ),
   ])

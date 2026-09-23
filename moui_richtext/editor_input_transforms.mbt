@@ -92,7 +92,7 @@ pub fn markdown_editor_transform_input(
   if input == "\n" && markdown_editor_active_selection(selection) is None {
     let chars = source.to_array()
     let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-    let current : MarkdownEditorSelection = { caret, selection }
+    let current : MarkdownEditorSelection = { caret, selection, }
     let range = markdown_editor_current_line_range_from_chars(chars, current)
     let line = String::from_array(chars[range.start:range.end])
     match
@@ -233,7 +233,7 @@ pub fn markdown_editor_transform_input(
     return None
   }
   let chars = source.to_array()
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   match
@@ -292,7 +292,7 @@ pub fn markdown_editor_transform_input(
           "\n\n" +
           String::from_array(chars[caret:]),
         caret=caret + 2,
-        edit_range=Some({ start: caret, end: caret }),
+        edit_range=Some({ start: caret, end: caret, }),
       ),
     )
   } else {
@@ -304,7 +304,7 @@ pub fn markdown_editor_transform_input(
           insert +
           String::from_array(chars[caret:]),
         caret=caret + markdown_editor_text_length(insert),
-        edit_range=Some({ start: caret, end: caret }),
+        edit_range=Some({ start: caret, end: caret, }),
       ),
     )
   }

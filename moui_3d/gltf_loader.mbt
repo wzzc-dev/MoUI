@@ -10,16 +10,16 @@ pub fn load_gltf_scene(
   resolve? : GltfResourceResolver? = None,
 ) -> Scene raise GltfError {
   let root : GltfRoot = @json.from_json(@json.parse(json)) catch {
-    err => raise GltfError::InvalidJson(err.to_string())
+    err => raise InvalidJson(err.to_string())
   }
   if root.asset.version != "2.0" {
-    raise GltfError::UnsupportedAssetVersion(root.asset.version)
+    raise UnsupportedAssetVersion(root.asset.version)
   }
   for extension in root.extensionsRequired.unwrap_or([]) {
-    raise GltfError::UnsupportedRequiredExtension(extension)
+    raise UnsupportedRequiredExtension(extension)
   }
   for extension in root.extensionsUsed.unwrap_or([]) {
-    raise GltfError::UnsupportedExtension(extension)
+    raise UnsupportedExtension(extension)
   }
 
   let buffers = root.buffers.unwrap_or([])
@@ -34,20 +34,20 @@ pub fn load_gltf_scene(
           Some(bytes) => buffer_data[index] = Some(bytes)
           None =>
             match resolve {
-              None => raise GltfError::ExternalResourceUnavailable(uri)
+              None => raise ExternalResourceUnavailable(uri)
               Some(loader) =>
                 match loader(uri) {
-                  None => raise GltfError::ExternalResourceUnavailable(uri)
+                  None => raise ExternalResourceUnavailable(uri)
                   Some(bytes) => buffer_data[index] = Some(bytes)
                 }
             }
         }
     }
     match buffer_data[index] {
-      None => raise GltfError::MissingBuffer(index)
+      None => raise MissingBuffer(index)
       Some(bytes) =>
         if bytes.length() < buffer.byteLength {
-          raise GltfError::MissingBuffer(index)
+          raise MissingBuffer(index)
         }
     }
   }
@@ -71,11 +71,11 @@ pub fn load_gltf_scene(
   let texture_ids : Array[TextureId?] = Array::make(texture_json.length(), None)
   for texture_index, texture in texture_json {
     let source_index = match texture.source {
-      None => raise GltfError::InvalidTexture(texture_index)
+      None => raise InvalidTexture(texture_index)
       Some(value) => value
     }
     if source_index < 0 || source_index >= images.length() {
-      raise GltfError::InvalidTexture(source_index)
+      raise InvalidTexture(source_index)
     }
     let image = images[source_index]
     let sampler = match texture.sampler {
@@ -84,7 +84,7 @@ pub fn load_gltf_scene(
         if value >= 0 && value < sampler_ids.length() {
           sampler_ids[value]
         } else {
-          raise GltfError::InvalidSampler(value)
+          raise InvalidSampler(value)
         }
     }
     let texture_id = match image.uri {
@@ -92,7 +92,7 @@ pub fn load_gltf_scene(
         scene.add_texture(Texture::uri(uri, mime_type=image.mimeType, sampler~))
       None =>
         match image.bufferView {
-          None => raise GltfError::InvalidTexture(source_index)
+          None => raise InvalidTexture(source_index)
           Some(view_index) => {
             let bytes = read_buffer_view(view_index, buffer_views, buffer_data)
             scene.add_texture(
@@ -136,7 +136,7 @@ pub fn load_gltf_scene(
             if info.index >= 0 && info.index < texture_ids.length() {
               texture_ids[info.index]
             } else {
-              raise GltfError::InvalidTexture(info.index)
+              raise InvalidTexture(info.index)
             }
         }
     }
@@ -152,8 +152,8 @@ pub fn load_gltf_scene(
     let emissive_factor = vec3_from_array(material.emissiveFactor, Vec3::zero())
     let alpha_mode = match material.alphaMode.unwrap_or("OPAQUE") {
       "MASK" => AlphaMode::Mask
-      "BLEND" => AlphaMode::Blend
-      _ => AlphaMode::Opaque
+      "BLEND" => Blend
+      _ => Opaque
     }
     material_ids[index] = Some(
       scene.add_material(
@@ -180,10 +180,10 @@ pub fn load_gltf_scene(
     for primitive in mesh.primitives {
       let mode = primitive.mode.unwrap_or(4)
       if mode != 4 {
-        raise GltfError::UnsupportedPrimitiveMode(mode)
+        raise UnsupportedPrimitiveMode(mode)
       }
       let position_accessor = match primitive.attributes.get("POSITION") {
-        None => raise GltfError::MissingAttribute("POSITION")
+        None => raise MissingAttribute("POSITION")
         Some(value) => value
       }
       let positions = decode_vec3_accessor(
@@ -213,7 +213,7 @@ pub fn load_gltf_scene(
         texcoords.length() != positions.length() ||
         joints.length() != positions.length() ||
         weights.length() != positions.length() {
-        raise GltfError::InvalidAccessor(position_accessor)
+        raise InvalidAccessor(position_accessor)
       }
       let vertices : Array[Vertex] = []
       for index in 0..<positions.length() {
@@ -247,7 +247,7 @@ pub fn load_gltf_scene(
         if positions_delta.length() != positions.length() ||
           normals_delta.length() != positions.length() ||
           tangents_delta.length() != positions.length() {
-          raise GltfError::InvalidAccessor(position_accessor)
+          raise InvalidAccessor(position_accessor)
         }
         let deltas : Array[VertexDelta] = []
         for vertex_index in 0..<positions.length() {
@@ -272,7 +272,7 @@ pub fn load_gltf_scene(
           if value >= 0 && value < material_ids.length() {
             material_ids[value]
           } else {
-            raise GltfError::InvalidAccessor(value)
+            raise InvalidAccessor(value)
           }
       }
       primitives.push(
@@ -296,7 +296,7 @@ pub fn load_gltf_scene(
     let joints : Array[NodeId] = []
     for joint in skin.joints {
       if joint < 0 || joint >= nodes.length() {
-        raise GltfError::InvalidNode(joint)
+        raise InvalidNode(joint)
       }
       joints.push(NodeId::new(joint))
     }
@@ -307,7 +307,7 @@ pub fn load_gltf_scene(
     }
     if inverse_bind_matrices.length() != 0 &&
       inverse_bind_matrices.length() != joints.length() {
-      raise GltfError::InvalidSkin(0)
+      raise InvalidSkin(0)
     }
     let skeleton = match skin.skeleton {
       None => None
@@ -315,7 +315,7 @@ pub fn load_gltf_scene(
         if value >= 0 && value < nodes.length() {
           Some(NodeId::new(value))
         } else {
-          raise GltfError::InvalidNode(value)
+          raise InvalidNode(value)
         }
     }
     ignore(
@@ -333,11 +333,10 @@ pub fn load_gltf_scene(
   for parent_index, node in nodes {
     for child in node.children.unwrap_or([]) {
       if child < 0 || child >= parents.length() {
-        raise GltfError::InvalidNode(child)
+        raise InvalidNode(child)
       }
       match parents[child] {
-        Some(previous) if previous != parent_index =>
-          raise GltfError::InvalidNode(child)
+        Some(previous) if previous != parent_index => raise InvalidNode(child)
         _ => parents[child] = Some(parent_index)
       }
     }
@@ -347,7 +346,7 @@ pub fn load_gltf_scene(
     let mut current = index
     while current >= 0 {
       if seen.contains(current) {
-        raise GltfError::InvalidNodeCycle(index)
+        raise InvalidNodeCycle(index)
       }
       seen.push(current)
       current = match parents[current] {
@@ -363,7 +362,7 @@ pub fn load_gltf_scene(
         if value >= 0 && value < mesh_json.length() {
           Some(MeshId::new(value))
         } else {
-          raise GltfError::InvalidAccessor(value)
+          raise InvalidAccessor(value)
         }
     }
     let parent = parents[index].map(value => NodeId::new(value))
@@ -373,7 +372,7 @@ pub fn load_gltf_scene(
         if value >= 0 && value < root.cameras.unwrap_or([]).length() {
           Some(value)
         } else {
-          raise GltfError::InvalidCamera(value)
+          raise InvalidCamera(value)
         }
     }
     let skin = match node.skin {
@@ -382,7 +381,7 @@ pub fn load_gltf_scene(
         if value >= 0 && value < skin_json.length() {
           Some(value)
         } else {
-          raise GltfError::InvalidSkin(value)
+          raise InvalidSkin(value)
         }
     }
     ignore(
@@ -405,7 +404,7 @@ pub fn load_gltf_scene(
     let projection = match camera.camera_type {
       "perspective" =>
         match camera.perspective {
-          None => raise GltfError::InvalidCamera(0)
+          None => raise InvalidCamera(0)
           Some(value) =>
             CameraProjection::Perspective(
               value.yfov,
@@ -416,16 +415,11 @@ pub fn load_gltf_scene(
         }
       "orthographic" =>
         match camera.orthographic {
-          None => raise GltfError::InvalidCamera(0)
+          None => raise InvalidCamera(0)
           Some(value) =>
-            CameraProjection::Orthographic(
-              value.xmag,
-              value.ymag,
-              value.znear,
-              value.zfar,
-            )
+            Orthographic(value.xmag, value.ymag, value.znear, value.zfar)
         }
-      _ => raise GltfError::InvalidCamera(0)
+      _ => raise InvalidCamera(0)
     }
     ignore(
       scene.add_camera(Camera::new(name=camera.name.unwrap_or(""), projection~)),
@@ -436,7 +430,7 @@ pub fn load_gltf_scene(
     let roots : Array[NodeId] = []
     for node in definition.nodes.unwrap_or([]) {
       if node < 0 || node >= nodes.length() {
-        raise GltfError::InvalidScene(node)
+        raise InvalidScene(node)
       }
       roots.push(NodeId::new(node))
     }
@@ -450,7 +444,7 @@ pub fn load_gltf_scene(
     None => ()
     Some(value) =>
       if value < 0 || value >= scene_json.length() {
-        raise GltfError::InvalidScene(value)
+        raise InvalidScene(value)
       } else {
         scene.set_default_scene(Some(value))
       }
@@ -462,25 +456,25 @@ pub fn load_gltf_scene(
     for channel in animation.channels {
       let node_index = match channel.target.node {
         Some(value) => value
-        None => raise GltfError::InvalidAnimation(0)
+        None => raise InvalidAnimation(0)
       }
       if node_index < 0 || node_index >= nodes.length() {
-        raise GltfError::InvalidAnimation(node_index)
+        raise InvalidAnimation(node_index)
       }
       if channel.sampler < 0 || channel.sampler >= animation.samplers.length() {
-        raise GltfError::InvalidAnimation(channel.sampler)
+        raise InvalidAnimation(channel.sampler)
       }
       let sampler = animation.samplers[channel.sampler]
       let path = match channel.target.path {
         "translation" => AnimationPath::Translation
-        "rotation" => AnimationPath::Rotation
-        "scale" => AnimationPath::Scale
-        "weights" => AnimationPath::Weights
-        value => raise GltfError::UnsupportedAnimationPath(value)
+        "rotation" => Rotation
+        "scale" => Scale
+        "weights" => Weights
+        value => raise UnsupportedAnimationPath(value)
       }
       let components = match path {
-        AnimationPath::Rotation => 4
-        AnimationPath::Weights => 1
+        Rotation => 4
+        Weights => 1
         _ => 3
       }
       let times = decode_accessor_values(
@@ -499,32 +493,31 @@ pub fn load_gltf_scene(
       )
       if times.length() != outputs.length() &&
         sampler.interpolation.unwrap_or("LINEAR") != "CUBICSPLINE" {
-        raise GltfError::InvalidAnimation(channel.sampler)
+        raise InvalidAnimation(channel.sampler)
       }
       let interpolation = match sampler.interpolation.unwrap_or("LINEAR") {
         "STEP" => AnimationInterpolation::Step
-        "CUBICSPLINE" => AnimationInterpolation::CubicSpline
-        _ => AnimationInterpolation::Linear
+        "CUBICSPLINE" => CubicSpline
+        _ => Linear
       }
       let keyframes : Array[AnimationKeyframe] = []
       let key_count = times.length()
       for index in 0..<key_count {
-        let value_index = if interpolation ==
-          AnimationInterpolation::CubicSpline {
+        let value_index = if interpolation == CubicSpline {
           index * 3 + 1
         } else {
           index
         }
         if value_index >= outputs.length() {
-          raise GltfError::InvalidAnimation(channel.sampler)
+          raise InvalidAnimation(channel.sampler)
         }
-        let incoming = if interpolation == AnimationInterpolation::CubicSpline &&
+        let incoming = if interpolation == CubicSpline &&
           index * 3 < outputs.length() {
           outputs[index * 3]
         } else {
           []
         }
-        let outgoing = if interpolation == AnimationInterpolation::CubicSpline &&
+        let outgoing = if interpolation == CubicSpline &&
           index * 3 + 2 < outputs.length() {
           outputs[index * 3 + 2]
         } else {
@@ -568,7 +561,7 @@ fn texture_info_id(
       if value.index >= 0 && value.index < texture_ids.length() {
         texture_ids[value.index]
       } else {
-        raise GltfError::InvalidTexture(value.index)
+        raise InvalidTexture(value.index)
       }
   }
 }
@@ -704,30 +697,25 @@ fn filter_from_gltf(
   mipmap : Bool,
 ) -> SamplerFilter raise GltfError {
   match value {
-    None =>
-      if mipmap {
-        SamplerFilter::LinearMipmapLinear
-      } else {
-        SamplerFilter::Linear
-      }
-    Some(9728) => SamplerFilter::Nearest
-    Some(9729) => SamplerFilter::Linear
-    Some(9984) => SamplerFilter::NearestMipmapNearest
-    Some(9985) => SamplerFilter::LinearMipmapNearest
-    Some(9986) => SamplerFilter::NearestMipmapLinear
-    Some(9987) => SamplerFilter::LinearMipmapLinear
-    Some(_) => raise GltfError::InvalidSampler(0)
+    None => if mipmap { LinearMipmapLinear } else { Linear }
+    Some(9728) => Nearest
+    Some(9729) => Linear
+    Some(9984) => NearestMipmapNearest
+    Some(9985) => LinearMipmapNearest
+    Some(9986) => NearestMipmapLinear
+    Some(9987) => LinearMipmapLinear
+    Some(_) => raise InvalidSampler(0)
   }
 }
 
 ///|
 fn wrap_from_gltf(value : Int?) -> SamplerWrap raise GltfError {
   match value {
-    None => SamplerWrap::Repeat
-    Some(10497) => SamplerWrap::Repeat
-    Some(33648) => SamplerWrap::MirroredRepeat
-    Some(33071) => SamplerWrap::ClampToEdge
-    Some(_) => raise GltfError::InvalidSampler(0)
+    None => Repeat
+    Some(10497) => Repeat
+    Some(33648) => MirroredRepeat
+    Some(33071) => ClampToEdge
+    Some(_) => raise InvalidSampler(0)
   }
 }
 
@@ -740,7 +728,7 @@ fn decode_vec3_accessor(
 ) -> Array[Vec3] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "VEC3" {
-    raise GltfError::UnsupportedAccessorType(accessor.accessor_kind)
+    raise UnsupportedAccessorType(accessor.accessor_kind)
   }
   let values = decode_accessor_values(
     accessor_index, accessors, views, buffers, 3,
@@ -761,7 +749,7 @@ fn decode_vec2_accessor(
 ) -> Array[Vec2] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "VEC2" {
-    raise GltfError::UnsupportedAccessorType(accessor.accessor_kind)
+    raise UnsupportedAccessorType(accessor.accessor_kind)
   }
   let values = decode_accessor_values(
     accessor_index, accessors, views, buffers, 2,
@@ -782,7 +770,7 @@ fn decode_vec4_accessor(
 ) -> Array[Vec4] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "VEC4" {
-    raise GltfError::UnsupportedAccessorType(accessor.accessor_kind)
+    raise UnsupportedAccessorType(accessor.accessor_kind)
   }
   decode_accessor_values(accessor_index, accessors, views, buffers, 4).map(item => {
     Vec4::new(x=item[0], y=item[1], z=item[2], w=item[3])
@@ -799,7 +787,7 @@ fn decode_joints_accessor(
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "VEC4" ||
     (accessor.componentType != 5121 && accessor.componentType != 5123) {
-    raise GltfError::UnsupportedAccessorType(accessor.accessor_kind)
+    raise UnsupportedAccessorType(accessor.accessor_kind)
   }
   decode_accessor_values(accessor_index, accessors, views, buffers, 4).map(item => {
     (item[0].to_int(), item[1].to_int(), item[2].to_int(), item[3].to_int())
@@ -815,7 +803,7 @@ fn decode_mat4_accessor(
 ) -> Array[Mat4] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "MAT4" || accessor.componentType != 5126 {
-    raise GltfError::UnsupportedAccessorType(accessor.accessor_kind)
+    raise UnsupportedAccessorType(accessor.accessor_kind)
   }
   decode_accessor_values(accessor_index, accessors, views, buffers, 16).map(item => {
     Mat4::from_values([
@@ -848,12 +836,12 @@ fn decode_indices_accessor(
 ) -> Array[Int] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "SCALAR" {
-    raise GltfError::UnsupportedAccessorType(accessor.accessor_kind)
+    raise UnsupportedAccessorType(accessor.accessor_kind)
   }
   if accessor.componentType != 5121 &&
     accessor.componentType != 5123 &&
     accessor.componentType != 5125 {
-    raise GltfError::UnsupportedComponentType(accessor.componentType)
+    raise UnsupportedComponentType(accessor.componentType)
   }
   let values = decode_accessor_values(
     accessor_index, accessors, views, buffers, 1,
@@ -872,11 +860,11 @@ fn decode_accessor_values(
   let accessor = accessor_at(accessor_index, accessors)
   let component_size = component_size_for(accessor.componentType)
   if component_size == 0 {
-    raise GltfError::UnsupportedComponentType(accessor.componentType)
+    raise UnsupportedComponentType(accessor.componentType)
   }
   let element_size = component_size * components
   if accessor.count < 0 {
-    raise GltfError::InvalidAccessor(accessor_index)
+    raise InvalidAccessor(accessor_index)
   }
   let result : Array[Array[Double]] = Array::make(
     accessor.count,
@@ -885,24 +873,24 @@ fn decode_accessor_values(
   match accessor.bufferView {
     None =>
       match accessor.sparse {
-        None => raise GltfError::InvalidAccessor(accessor_index)
+        None => raise InvalidAccessor(accessor_index)
         Some(_) => ()
       }
     Some(view_index) => {
       if view_index < 0 || view_index >= views.length() {
-        raise GltfError::MissingBufferView(view_index)
+        raise MissingBufferView(view_index)
       }
       let view = views[view_index]
       if view.buffer < 0 || view.buffer >= buffers.length() {
-        raise GltfError::MissingBuffer(view.buffer)
+        raise MissingBuffer(view.buffer)
       }
       let bytes = match buffers[view.buffer] {
-        None => raise GltfError::MissingBuffer(view.buffer)
+        None => raise MissingBuffer(view.buffer)
         Some(value) => value
       }
       let stride = view.byteStride.unwrap_or(element_size)
       if stride < element_size {
-        raise GltfError::InvalidAccessor(accessor_index)
+        raise InvalidAccessor(accessor_index)
       }
       let view_start = view.byteOffset.unwrap_or(0)
       let start = view_start + accessor.byteOffset.unwrap_or(0)
@@ -914,7 +902,7 @@ fn decode_accessor_values(
       if start < 0 ||
         required > bytes.length() ||
         required > view_start + view.byteLength {
-        raise GltfError::InvalidAccessor(accessor_index)
+        raise InvalidAccessor(accessor_index)
       }
       for index in 0..<accessor.count {
         let values : Array[Double] = []
@@ -937,12 +925,12 @@ fn decode_accessor_values(
     None => ()
     Some(sparse) => {
       if sparse.count < 0 || sparse.count > accessor.count {
-        raise GltfError::InvalidAccessor(accessor_index)
+        raise InvalidAccessor(accessor_index)
       }
       if sparse.indices.componentType != 5121 &&
         sparse.indices.componentType != 5123 &&
         sparse.indices.componentType != 5125 {
-        raise GltfError::UnsupportedComponentType(sparse.indices.componentType)
+        raise UnsupportedComponentType(sparse.indices.componentType)
       }
       let index_bytes = read_buffer_view(
         sparse.indices.bufferView,
@@ -963,7 +951,7 @@ fn decode_accessor_values(
         indices_start < 0 ||
         values_required > value_bytes.length() ||
         indices_required > index_bytes.length() {
-        raise GltfError::InvalidAccessor(accessor_index)
+        raise InvalidAccessor(accessor_index)
       }
       for sparse_index in 0..<sparse.count {
         let index = read_component(
@@ -973,7 +961,7 @@ fn decode_accessor_values(
           false,
         ).to_int()
         if index < 0 || index >= accessor.count {
-          raise GltfError::InvalidAccessor(accessor_index)
+          raise InvalidAccessor(accessor_index)
         }
         let values : Array[Double] = []
         let base = values_start + sparse_index * element_size
@@ -1000,7 +988,7 @@ fn accessor_at(
   accessors : Array[GltfAccessorJson],
 ) -> GltfAccessorJson raise GltfError {
   if index < 0 || index >= accessors.length() {
-    raise GltfError::MissingAccessor(index)
+    raise MissingAccessor(index)
   }
   accessors[index]
 }
@@ -1084,20 +1072,20 @@ fn read_buffer_view(
   buffers : Array[Bytes?],
 ) -> Bytes raise GltfError {
   if index < 0 || index >= views.length() {
-    raise GltfError::MissingBufferView(index)
+    raise MissingBufferView(index)
   }
   let view = views[index]
   if view.buffer < 0 || view.buffer >= buffers.length() {
-    raise GltfError::MissingBuffer(view.buffer)
+    raise MissingBuffer(view.buffer)
   }
   let bytes = match buffers[view.buffer] {
-    None => raise GltfError::MissingBuffer(view.buffer)
+    None => raise MissingBuffer(view.buffer)
     Some(value) => value
   }
   let start = view.byteOffset.unwrap_or(0)
   let end = start + view.byteLength
   if start < 0 || end > bytes.length() {
-    raise GltfError::InvalidAccessor(index)
+    raise InvalidAccessor(index)
   }
   bytes[start:end].to_owned()
 }

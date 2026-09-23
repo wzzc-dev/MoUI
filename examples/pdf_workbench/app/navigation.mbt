@@ -12,7 +12,7 @@ fn PdfWorkbenchModel::select_page_delta(
       )
       {
         ..self,
-        document: Some({ ..document, selected_page: next }),
+        document: Some({ ..document, selected_page: next, }),
         page_number_draft: next.to_string(),
         preview_scroll_offset: if next == document.selected_page {
           self.preview_scroll_offset
@@ -35,7 +35,7 @@ fn PdfWorkbenchModel::select_page(
       let selected = pdf_workbench_clamp_int(page, 1, document.page_count)
       {
         ..self,
-        document: Some({ ..document, selected_page: selected }),
+        document: Some({ ..document, selected_page: selected, }),
         page_number_draft: selected.to_string(),
         preview_scroll_offset: if selected == document.selected_page {
           self.preview_scroll_offset
@@ -125,7 +125,7 @@ fn PdfWorkbenchModel::select_search_result(
         Some(page) =>
           {
             ..self,
-            document: Some({ ..document, selected_page: page }),
+            document: Some({ ..document, selected_page: page, }),
             page_number_draft: page.to_string(),
             preview_scroll_offset: if page == document.selected_page {
               self.preview_scroll_offset
@@ -147,7 +147,7 @@ fn PdfWorkbenchModel::select_search_result(
           }
       }
     }
-    None => { ..self, last_event: "Open a PDF before searching" }
+    None => { ..self, last_event: "Open a PDF before searching", }
   }
 }
 
@@ -174,7 +174,7 @@ fn PdfWorkbenchModel::with_search_query(
       None => "Open a PDF before searching"
     }
   }
-  { ..self, query, last_event }
+  { ..self, query, last_event, }
 }
 
 ///|
@@ -188,7 +188,7 @@ fn PdfWorkbenchModel::go_to_page_number(
           let selected = pdf_workbench_clamp_int(page, 1, document.page_count)
           {
             ..self,
-            document: Some({ ..document, selected_page: selected }),
+            document: Some({ ..document, selected_page: selected, }),
             page_number_draft: selected.to_string(),
             preview_scroll_offset: if selected == document.selected_page {
               self.preview_scroll_offset

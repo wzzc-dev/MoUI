@@ -1,12 +1,12 @@
 ///|
 /// Build a Skia CPU raster provider from the renderer-neutral host contract.
 pub fn raster(
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
 ) -> @render.RendererProvider {
   let image_decoder = skia_image_decoder()
   let caps = skia_provider_capabilities(
     provider_id="skia-raster",
-    backend=@render.RendererBackendKind::SkiaRasterNative,
+    backend=SkiaRasterNative,
   )
   @render.RendererProvider::new(
     id="skia-raster",
@@ -14,13 +14,11 @@ pub fn raster(
     capabilities=() => caps,
     bind=surface => {
       match @render_common.host_surface_metrics_error(surface) {
-        Some(message) => return @render.RendererBindResult::Rejected(message)
+        Some(message) => return Rejected(message)
         None => ()
       }
       guard surface.cpu_present() is Some(host) else {
-        return @render.RendererBindResult::Rejected(
-          "skia-raster requires a CPU presenter",
-        )
+        return Rejected("skia-raster requires a CPU presenter")
       }
       let target = skia_present_target_from_host(Some(host))
       let renderer = create_with_present_target(
@@ -29,12 +27,9 @@ pub fn raster(
         font_resolution~,
         async_image_loading=true,
       ) catch {
-        err =>
-          return @render.RendererBindResult::Rejected(
-            "skia-raster unavailable: " + err.message(),
-          )
+        err => return Rejected("skia-raster unavailable: " + err.message())
       }
-      @render.RendererBindResult::Bound(
+      Bound(
         renderer.to_renderer_session(
           image_source=surface
             .image_source()
@@ -51,12 +46,12 @@ pub fn raster(
 /// renderer module and interprets the opaque native handles after binding.
 pub fn gpu(
   platform~ : NativeGpuPlatform,
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
 ) -> @render.RendererProvider {
   let image_decoder = skia_image_decoder()
   let caps = skia_provider_capabilities(
     provider_id="skia-hybrid",
-    backend=@render.RendererBackendKind::SkiaGpuNative,
+    backend=SkiaGpuNative,
   )
   @render.RendererProvider::new(
     id="skia-hybrid",
@@ -64,20 +59,18 @@ pub fn gpu(
     capabilities=() => caps,
     bind=surface => {
       match @render_common.host_surface_metrics_error(surface) {
-        Some(message) => return @render.RendererBindResult::Rejected(message)
+        Some(message) => return Rejected(message)
         None => ()
       }
       guard surface.native_surface() is Some(native_surface) else {
-        return @render.RendererBindResult::Rejected(
-          "skia-hybrid requires a native surface capability",
-        )
+        return Rejected("skia-hybrid requires a native surface capability")
       }
       match skia_native_surface_error(platform, native_surface) {
-        Some(message) => return @render.RendererBindResult::Rejected(message)
+        Some(message) => return Rejected(message)
         None => ()
       }
       if !skia_gpu_runtime_available(platform) {
-        return @render.RendererBindResult::Rejected(
+        return Rejected(
           "skia-hybrid GPU runtime unavailable for \{NativePlatformSurface::platform_label(platform)}",
         )
       }
@@ -92,7 +85,7 @@ pub fn gpu(
           .unwrap_or(@render.HostImageSource::unavailable()),
         image_decoder=Some(image_decoder),
       )
-      @render.RendererBindResult::Bound(session)
+      Bound(session)
     },
   )
 }
@@ -420,32 +413,32 @@ fn skia_gpu_window_surface(
 ) -> @skia_native.Surface? {
   let surface = skia_gpu_surface_descriptor(metrics)
   match platform {
-    NativeGpuPlatform::MacOS | NativeGpuPlatform::IOS =>
+    MacOS | IOS =>
       @skia_native.Surface::metal_window_surface(
         context,
         native_surface.surface_handle(),
         surface,
       )
-    NativeGpuPlatform::Windows =>
+    Windows =>
       @skia_native.Surface::direct3d_window_surface(
         context,
         native_surface.surface_handle(),
         surface,
       )
-    NativeGpuPlatform::Android =>
+    Android =>
       @skia_native.Surface::vulkan_window_surface(
         context,
         native_surface.surface_handle(),
         surface,
       )
-    NativeGpuPlatform::Linux =>
+    Linux =>
       @skia_native.Surface::vulkan_wayland_surface(
         context,
         native_surface.display_handle().unwrap(),
         native_surface.surface_handle(),
         surface,
       )
-    NativeGpuPlatform::HarmonyOS =>
+    HarmonyOS =>
       @skia_native.Surface::egl_window_surface(
         context,
         native_surface.surface_handle(),
@@ -463,26 +456,26 @@ fn skia_gpu_present_and_acquire_next(
   expected_size? : @moui_skia.ISize? = None,
 ) -> @skia_native.Surface? {
   match platform {
-    NativeGpuPlatform::MacOS | NativeGpuPlatform::IOS =>
+    MacOS | IOS =>
       @skia_native.Surface::metal_present_and_acquire_next(
         surface,
         context,
         native_surface.surface_handle(),
       )
-    NativeGpuPlatform::Windows =>
+    Windows =>
       @skia_native.Surface::direct3d_present_and_acquire_next(
         surface,
         context,
         native_surface.surface_handle(),
         expected_size~,
       )
-    NativeGpuPlatform::Linux | NativeGpuPlatform::Android =>
+    Linux | Android =>
       @skia_native.Surface::vulkan_present_and_acquire_next(
         surface,
         context,
         native_surface.surface_handle(),
       )
-    NativeGpuPlatform::HarmonyOS =>
+    HarmonyOS =>
       @skia_native.Surface::egl_present_and_acquire_next(
         surface,
         context,
@@ -494,14 +487,11 @@ fn skia_gpu_present_and_acquire_next(
 ///|
 fn skia_gpu_runtime_available(platform : NativeGpuPlatform) -> Bool {
   match platform {
-    NativeGpuPlatform::MacOS | NativeGpuPlatform::IOS =>
-      @skia_native.Surface::metal_gpu_context_runtime_available()
-    NativeGpuPlatform::Windows =>
-      @skia_native.Surface::direct3d_gpu_context_runtime_available()
-    NativeGpuPlatform::Linux | NativeGpuPlatform::Android =>
+    MacOS | IOS => @skia_native.Surface::metal_gpu_context_runtime_available()
+    Windows => @skia_native.Surface::direct3d_gpu_context_runtime_available()
+    Linux | Android =>
       @skia_native.Surface::vulkan_gpu_context_runtime_available()
-    NativeGpuPlatform::HarmonyOS =>
-      @skia_native.Surface::egl_gpu_context_runtime_available()
+    HarmonyOS => @skia_native.Surface::egl_gpu_context_runtime_available()
   }
 }
 
@@ -514,7 +504,7 @@ fn skia_native_surface_error(
     return Some("skia-hybrid requires a non-zero surface handle")
   }
   match platform {
-    NativeGpuPlatform::Linux =>
+    Linux =>
       match surface.display_handle() {
         Some(display) if display != 0UL => None
         _ => Some("skia-hybrid linux requires a non-zero display handle")
@@ -541,8 +531,8 @@ fn providers_for_mode(
   mode : NativeRendererMode?,
 ) -> Array[@render.RendererProvider] {
   match mode {
-    Some(NativeRendererMode::SkiaRaster) => [raster()]
-    Some(NativeRendererMode::SkiaGpu) => [gpu(platform~)]
-    Some(NativeRendererMode::Auto) | None => [gpu(platform~), raster()]
+    Some(SkiaRaster) => [raster()]
+    Some(SkiaGpu) => [gpu(platform~)]
+    Some(Auto) | None => [gpu(platform~), raster()]
   }
 }

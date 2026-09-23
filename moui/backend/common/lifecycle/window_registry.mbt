@@ -6,7 +6,7 @@ pub struct WindowRegistry {
 
 ///|
 pub fn WindowRegistry::new() -> WindowRegistry {
-  { next_value: 1, records: [] }
+  { next_value: 1, records: [], }
 }
 
 ///|
@@ -29,7 +29,7 @@ pub fn WindowRegistry::open(
       title~,
       scene~,
       metrics~,
-      phase=@backend_host.WindowLifecyclePhase::WindowVisible,
+      phase=WindowVisible,
       primary=is_primary,
     ),
   )
@@ -53,9 +53,7 @@ pub fn WindowRegistry::lookup(
 pub fn WindowRegistry::open_windows(
   self : WindowRegistry,
 ) -> Array[@backend_host.WindowRecord] {
-  self.records.filter(record => {
-    record.phase != @backend_host.WindowLifecyclePhase::WindowClosed
-  })
+  self.records.filter(record => record.phase != WindowClosed)
 }
 
 ///|
@@ -68,8 +66,7 @@ pub fn WindowRegistry::primary_window(
   self : WindowRegistry,
 ) -> @backend_host.WindowRecord? {
   for record in self.records {
-    if record.primary &&
-      record.phase != @backend_host.WindowLifecyclePhase::WindowClosed {
+    if record.primary && record.phase != WindowClosed {
       return Some(record)
     }
   }
@@ -81,7 +78,7 @@ pub fn WindowRegistry::focused_window(
   self : WindowRegistry,
 ) -> @backend_host.WindowRecord? {
   for record in self.records {
-    if record.phase == @backend_host.WindowLifecyclePhase::WindowFocused {
+    if record.phase == WindowFocused {
       return Some(record)
     }
   }
@@ -98,9 +95,9 @@ pub fn WindowRegistry::focus(
   }
   self.records = self.records.map(record => {
     if record.id == id {
-      { ..record, phase: @backend_host.WindowLifecyclePhase::WindowFocused }
-    } else if record.phase == @backend_host.WindowLifecyclePhase::WindowFocused {
-      { ..record, phase: @backend_host.WindowLifecyclePhase::WindowVisible }
+      { ..record, phase: WindowFocused, }
+    } else if record.phase == WindowFocused {
+      { ..record, phase: WindowVisible, }
     } else {
       record
     }
@@ -122,10 +119,7 @@ pub fn WindowRegistry::minimize(
   self : WindowRegistry,
   id : @backend_host.WindowId,
 ) -> Bool {
-  self.update_open_window(id, record => {
-    ..record,
-    phase: @backend_host.WindowLifecyclePhase::WindowMinimized,
-  })
+  self.update_open_window(id, record => { ..record, phase: WindowMinimized, })
 }
 
 ///|
@@ -133,10 +127,7 @@ pub fn WindowRegistry::show(
   self : WindowRegistry,
   id : @backend_host.WindowId,
 ) -> Bool {
-  self.update_open_window(id, record => {
-    ..record,
-    phase: @backend_host.WindowLifecyclePhase::WindowVisible,
-  })
+  self.update_open_window(id, record => { ..record, phase: WindowVisible, })
 }
 
 ///|
@@ -146,7 +137,7 @@ pub fn WindowRegistry::request_close(
 ) -> Bool {
   self.update_open_window(id, record => {
     ..record,
-    phase: @backend_host.WindowLifecyclePhase::WindowCloseRequested,
+    phase: WindowCloseRequested,
   })
 }
 
@@ -157,7 +148,7 @@ pub fn WindowRegistry::close(
 ) -> Bool {
   let changed = self.update_open_window(id, record => {
     ..record,
-    phase: @backend_host.WindowLifecyclePhase::WindowClosed,
+    phase: WindowClosed,
     primary: false,
   })
   if changed {
@@ -169,9 +160,7 @@ pub fn WindowRegistry::close(
 ///|
 pub fn WindowRegistry::remove_closed(self : WindowRegistry) -> Int {
   let before = self.records.length()
-  self.records = self.records.filter(record => {
-    record.phase != @backend_host.WindowLifecyclePhase::WindowClosed
-  })
+  self.records = self.records.filter(record => record.phase != WindowClosed)
   before - self.records.length()
 }
 
@@ -185,8 +174,7 @@ pub fn WindowRegistry::set_primary(
   }
   self.records = self.records.map(record => {
     ..record,
-    primary: record.id == id &&
-    record.phase != @backend_host.WindowLifecyclePhase::WindowClosed,
+    primary: record.id == id && record.phase != WindowClosed,
   })
   true
 }
@@ -198,17 +186,17 @@ pub fn WindowRegistry::apply_host_event(
   event : @backend_host.Event,
 ) -> Bool {
   match event {
-    @backend_host.Event::Resized(metrics) => self.resize(id, metrics)
-    @backend_host.Event::Focus({ focused: true, .. }) => self.focus(id)
-    @backend_host.Event::Focus({ focused: false, .. }) =>
+    Resized(metrics) => self.resize(id, metrics)
+    Focus({ focused: true, .. }) => self.focus(id)
+    Focus({ focused: false, .. }) =>
       self.update_open_window(id, record => {
-        if record.phase == @backend_host.WindowLifecyclePhase::WindowFocused {
-          { ..record, phase: @backend_host.WindowLifecyclePhase::WindowVisible }
+        if record.phase == WindowFocused {
+          { ..record, phase: WindowVisible, }
         } else {
           record
         }
       })
-    @backend_host.Event::CloseRequested => self.request_close(id)
+    CloseRequested => self.request_close(id)
     _ => false
   }
 }
@@ -219,8 +207,8 @@ pub fn WindowRegistry::apply_request(
   request : @backend_host.WindowRequest,
 ) -> @backend_host.WindowRequestResult {
   match request {
-    @backend_host.WindowRequest::OpenWindow(request) =>
-      @backend_host.WindowRequestResult::WindowOpened(
+    OpenWindow(request) =>
+      WindowOpened(
         self.open(
           title=request.title,
           scene=request.scene,
@@ -228,21 +216,21 @@ pub fn WindowRegistry::apply_request(
           primary=request.primary,
         ),
       )
-    @backend_host.WindowRequest::FocusWindow(id) =>
+    FocusWindow(id) =>
       window_request_update_result(id, self.focus(id), action="focus")
-    @backend_host.WindowRequest::CloseWindow(id) =>
+    CloseWindow(id) =>
       window_request_update_result(id, self.request_close(id), action="close")
-    @backend_host.WindowRequest::ResizeWindow(id, metrics) =>
+    ResizeWindow(id, metrics) =>
       window_request_update_result(
         id,
         self.resize(id, metrics),
         action="resize",
       )
-    @backend_host.WindowRequest::MinimizeWindow(id) =>
+    MinimizeWindow(id) =>
       window_request_update_result(id, self.minimize(id), action="minimize")
-    @backend_host.WindowRequest::ShowWindow(id) =>
+    ShowWindow(id) =>
       window_request_update_result(id, self.show(id), action="show")
-    @backend_host.WindowRequest::SetPrimaryWindow(id) =>
+    SetPrimaryWindow(id) =>
       window_request_update_result(
         id,
         self.set_primary(id),
@@ -257,15 +245,14 @@ fn WindowRegistry::has_open_window(
   id : @backend_host.WindowId,
 ) -> Bool {
   match self.lookup(id) {
-    Some(record) =>
-      record.phase != @backend_host.WindowLifecyclePhase::WindowClosed
+    Some(record) => record.phase != WindowClosed
     None => false
   }
 }
 
 ///|
 fn WindowRegistry::clear_primary(self : WindowRegistry) -> Unit {
-  self.records = self.records.map(record => { ..record, primary: false })
+  self.records = self.records.map(record => { ..record, primary: false, })
 }
 
 ///|
@@ -275,10 +262,9 @@ fn WindowRegistry::ensure_primary_window(self : WindowRegistry) -> Unit {
     None => {
       let mut assigned = false
       self.records = self.records.map(record => {
-        if !assigned &&
-          record.phase != @backend_host.WindowLifecyclePhase::WindowClosed {
+        if !assigned && record.phase != WindowClosed {
           assigned = true
-          { ..record, primary: true }
+          { ..record, primary: true, }
         } else {
           record
         }
@@ -295,8 +281,7 @@ fn WindowRegistry::update_open_window(
 ) -> Bool {
   let mut changed = false
   self.records = self.records.map(record => {
-    if record.id == id &&
-      record.phase != @backend_host.WindowLifecyclePhase::WindowClosed {
+    if record.id == id && record.phase != WindowClosed {
       changed = true
       update(record)
     } else {
@@ -313,10 +298,8 @@ fn window_request_update_result(
   action~ : String,
 ) -> @backend_host.WindowRequestResult {
   if changed {
-    @backend_host.WindowRequestResult::WindowUpdated(id)
+    WindowUpdated(id)
   } else {
-    @backend_host.WindowRequestResult::WindowRejected(
-      "cannot " + action + " window: \{id.value}",
-    )
+    WindowRejected("cannot " + action + " window: \{id.value}")
   }
 }

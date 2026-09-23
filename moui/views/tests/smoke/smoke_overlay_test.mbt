@@ -8,7 +8,7 @@ test "popover smoke" {
     [
       @views.PresentationSpec::new(
         id="menu",
-        kind=@views.PresentationKind::Popover,
+        kind=Popover,
         content=@views.text("Menu content"),
       ),
     ],

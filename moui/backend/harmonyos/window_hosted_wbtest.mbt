@@ -30,8 +30,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
       )
       runtime.set_event_observer(event => {
         match event {
-          @core.AppEvent::Pointer(_) =>
-            pointer_count.val = pointer_count.val + 1
+          Pointer(_) => pointer_count.val = pointer_count.val + 1
           _ => ()
         }
       })

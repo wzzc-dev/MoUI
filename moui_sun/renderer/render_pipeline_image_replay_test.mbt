@@ -4,7 +4,7 @@ test "RenderPipeline replays transformed quality BMP and RGBA byte commands" {
   source.set_pixel(0, 0, @graphics.Color::red())
   source.set_pixel(1, 0, @graphics.Color::green())
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-transform-quality",
@@ -14,7 +14,7 @@ test "RenderPipeline replays transformed quality BMP and RGBA byte commands" {
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-transform-quality",
@@ -27,7 +27,7 @@ test "RenderPipeline replays transformed quality BMP and RGBA byte commands" {
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-transform-quality-sprite",
@@ -38,7 +38,7 @@ test "RenderPipeline replays transformed quality BMP and RGBA byte commands" {
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba-transform-quality-full",
@@ -50,12 +50,12 @@ test "RenderPipeline replays transformed quality BMP and RGBA byte commands" {
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
 
   let batches = pipeline.batch_plan(11, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_eq(batches[1].get_command_count(), 4)
   assert_eq(batches[1].get_dirty_rect_count(), 4)
   assert_true(
@@ -66,7 +66,7 @@ test "RenderPipeline replays transformed quality BMP and RGBA byte commands" {
   assert_eq(image_present_plan.get_rect_count(), 4)
   assert_eq(image_present_plan.get_present_pixel_count(), 8)
 
-  let renderer = Renderer::new(@graphics.Canvas::new(11, 1))
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(11, 1))
   let result = must_draw_pipeline(renderer, pipeline)
   assert_eq(result.get_command_count(), 5)
   assert_eq(result.get_clear_count(), 1)
@@ -92,7 +92,7 @@ test "RenderPipeline replays transformed quality PNG byte commands" {
   source.set_pixel(0, 0, @graphics.Color::red())
   source.set_pixel(1, 0, @graphics.Color::green())
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_quality_png_bytes_keyed(
       "png-transform-quality",
@@ -102,7 +102,7 @@ test "RenderPipeline replays transformed quality PNG byte commands" {
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-transform-quality-sprite",
@@ -113,12 +113,12 @@ test "RenderPipeline replays transformed quality PNG byte commands" {
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
 
   let batches = pipeline.batch_plan(6, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_eq(batches[1].get_command_count(), 2)
   assert_eq(batches[1].get_dirty_rect_count(), 2)
   assert_true(
@@ -129,7 +129,7 @@ test "RenderPipeline replays transformed quality PNG byte commands" {
   assert_eq(image_present_plan.get_rect_count(), 2)
   assert_eq(image_present_plan.get_present_pixel_count(), 4)
 
-  let renderer = Renderer::new(@graphics.Canvas::new(6, 1))
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(6, 1))
   let result = must_draw_pipeline(renderer, pipeline)
   assert_eq(result.get_command_count(), 3)
   assert_eq(result.get_clear_count(), 1)

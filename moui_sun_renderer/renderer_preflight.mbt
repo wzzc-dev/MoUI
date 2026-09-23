@@ -68,7 +68,7 @@ fn sun_cpu_raster_preflight(
     text_snapshot.get_glyph_mask_capacity() > 0 &&
     text_snapshot.get_atlas_capacity() > 0 &&
     snapshot.get_image_capacity() > 0
-  SunCpuRasterPreflight::{
+  {
     physical_width: width,
     physical_height: height,
     row_bytes,

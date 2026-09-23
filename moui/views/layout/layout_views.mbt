@@ -5,7 +5,7 @@ pub fn[Msg] padding_layout(
   kind? : String = "Padding",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::from_node(PaddingLayout::{ insets, kind, key }, children=_node => {
+  @core.View::from_node(PaddingLayout::{ insets, kind, key, }, children=_node => {
     [child]
   })
 }
@@ -61,9 +61,7 @@ impl @core.ViewNode for PaddingLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for PaddingLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -153,9 +151,7 @@ impl @core.ViewNode for FrameLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for FrameLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -170,7 +166,15 @@ pub fn[Msg] container_box(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    ContainerBox::{ size, background, border, corner_radius, shadow, kind, key },
+    ContainerBox::{
+      size,
+      background,
+      border,
+      corner_radius,
+      shadow,
+      kind,
+      key,
+    },
     children=_node => {
       match child {
         Some(value) => [value]
@@ -249,9 +253,7 @@ impl @core.ViewNode for ContainerBox with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for ContainerBox with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -264,7 +266,7 @@ pub fn[Msg] grid_layout(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    GridLayout::{ columns, row_spacing, column_spacing, kind, key },
+    GridLayout::{ columns, row_spacing, column_spacing, kind, key, },
     children=_node => children,
   )
 }
@@ -331,9 +333,7 @@ impl @core.ViewNode for GridLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for GridLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -348,7 +348,7 @@ pub fn[Msg] list_layout(
     captured_children
   }
   @core.View::from_node(
-    ListLayout::{ spacing, kind, key },
+    ListLayout::{ spacing, kind, key, },
     children=child_views,
   )
 }
@@ -393,9 +393,7 @@ impl @core.ViewNode for ListLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for ListLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -458,20 +456,13 @@ fn container_paint(
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   @common.emit_elevation_shadow(commands, rounded, shadow, scheme)
   match background {
-    Some(brush) =>
-      commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, brush))
+    Some(brush) => commands.push(FillRoundedRectBrush(rounded, brush))
     None => ()
   }
   match border {
     Some(style) =>
       if style.width > 0.0 {
-        commands.push(
-          @core.DrawCommand::StrokeRoundedRectBrush(
-            rounded,
-            style.brush,
-            style.width,
-          ),
-        )
+        commands.push(StrokeRoundedRectBrush(rounded, style.brush, style.width))
       }
     None => ()
   }

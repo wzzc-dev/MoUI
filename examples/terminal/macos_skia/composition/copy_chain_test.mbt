@@ -4,14 +4,16 @@
 async test "drag select and cmd-c copies selection to clipboard" {
   let original = @macos_host.macos_clipboard_read_text()
   let dispatch_ref : Ref[((@app.Msg) -> Unit)?] = Ref(None)
-  let input_queue : @async.Queue[InputWork] = @async.Queue(kind=Unbounded)
+  let input_queue : @async.Queue[@composition.InputWork] = Queue(kind=Unbounded)
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let pty = match @pty.Pty::spawn("/bin/sh", 24, 6) {
     Some(value) => value
     None => return
   }
   let runtime = @runtime.AppRuntime::new_program(
-    program=terminal_program(pty, dispatch_ref, input_queue, runtime_ref),
+    program=@composition.terminal_program(
+      pty, dispatch_ref, input_queue, runtime_ref,
+    ),
     size=@core.Size::new(width=864.0, height=520.0),
   )
   runtime_ref.val = Some(runtime)
@@ -25,7 +27,7 @@ async test "drag select and cmd-c copies selection to clipboard" {
   match dispatch_ref.val {
     Some(dispatch) => {
       // 注入屏幕内容(等价于 worker 读到的 shell 输出)
-      dispatch(@app.Msg::Feed(@utf8.encode("hello world\r\n")))
+      dispatch(Feed(@utf8.encode("hello world\r\n")))
       // 渲染一次(元素树/布局就绪)
       ignore(runtime.draw_commands())
       ignore(runtime.focus_next())
@@ -34,32 +36,30 @@ async test "drag select and cmd-c copies selection to clipboard" {
       let up = @core.Point::new(x=110.0, y=10.0)
       ignore(
         runtime.dispatch_pointer_input(
-          @core.PointerEvent::new(position=down, phase=@core.PointerPhase::Down),
+          @core.PointerEvent::new(position=down, phase=Down),
         ),
       )
       ignore(
         runtime.dispatch_pointer_input(
-          @core.PointerEvent::new(position=up, phase=@core.PointerPhase::Move),
+          @core.PointerEvent::new(position=up, phase=Move),
         ),
       )
       ignore(
         runtime.dispatch_pointer_input(
-          @core.PointerEvent::new(position=up, phase=@core.PointerPhase::Up),
+          @core.PointerEvent::new(position=up, phase=Up),
         ),
       )
       // ⌘+C:复制(不写入 PTY)
       let meta = @core.KeyModifiers::new(meta=true)
       runtime.dispatch_event(
-        @core.AppEvent::Keyboard(
-          @core.KeyboardEvent::new(key="c", modifiers=meta),
-        ),
+        Keyboard(@core.KeyboardEvent::new(key="c", modifiers=meta)),
       )
       // PTY 不应收到任何输入
       let mut wrote_to_pty = false
       for _ in 0..<8 {
         match (input_queue.try_get() catch { _ => None }) {
-          Some(InputWork::Write(_)) => wrote_to_pty = true
-          Some(InputWork::Shutdown) => ()
+          Some(Write(_)) => wrote_to_pty = true
+          Some(Shutdown) => ()
           None => ()
         }
         if wrote_to_pty {
@@ -87,14 +87,16 @@ async test "drag select and cmd-c copies selection to clipboard" {
 /// ⌘+C 在无选择时不应产生任何效果(不写剪贴板、不写 PTY)。
 async test "cmd-c without selection does not write clipboard" {
   let dispatch_ref : Ref[((@app.Msg) -> Unit)?] = Ref(None)
-  let input_queue : @async.Queue[InputWork] = @async.Queue(kind=Unbounded)
+  let input_queue : @async.Queue[@composition.InputWork] = Queue(kind=Unbounded)
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let pty = match @pty.Pty::spawn("/bin/sh", 24, 6) {
     Some(value) => value
     None => return
   }
   let runtime = @runtime.AppRuntime::new_program(
-    program=terminal_program(pty, dispatch_ref, input_queue, runtime_ref),
+    program=@composition.terminal_program(
+      pty, dispatch_ref, input_queue, runtime_ref,
+    ),
     size=@core.Size::new(width=864.0, height=520.0),
   )
   runtime_ref.val = Some(runtime)
@@ -103,7 +105,7 @@ async test "cmd-c without selection does not write clipboard" {
   ignore(runtime.focus_next())
   let meta = @core.KeyModifiers::new(meta=true)
   runtime.dispatch_event(
-    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="c", modifiers=meta)),
+    Keyboard(@core.KeyboardEvent::new(key="c", modifiers=meta)),
   )
   let after = @macos_host.macos_clipboard_read_text()
   inspect(after == before, content="true")

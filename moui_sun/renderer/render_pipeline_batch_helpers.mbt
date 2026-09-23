@@ -19,7 +19,7 @@ fn render_pipeline_make_batch(
   command_count : Int,
   dirty_region : @graphics.DirtyRegion,
 ) -> RenderPipelineBatch {
-  { kind, start_index, command_count, dirty_region }
+  { kind, start_index, command_count, dirty_region, }
 }
 
 ///|
@@ -27,193 +27,58 @@ fn render_command_batch_kind(
   command : RenderCommand,
 ) -> RenderPipelineBatchKind {
   match command {
-    RenderCommand::Clear(_) => RenderPipelineBatchKind::Clear
-    RenderCommand::FillRect(_, _, _, _, _) | RenderCommand::FillPath(_, _) =>
-      RenderPipelineBatchKind::Fill
-    RenderCommand::StrokeRect(_, _, _, _, _)
-    | RenderCommand::StrokePath(_, _) => RenderPipelineBatchKind::Stroke
-    RenderCommand::DrawPixmap(_, _, _, _)
-    | RenderCommand::DrawPixmapKeyed(_, _, _, _, _)
-    | RenderCommand::DrawBmpBytesKeyed(_, _, _, _, _)
-    | RenderCommand::DrawPngBytesKeyed(_, _, _, _, _)
-    | RenderCommand::DrawRgbaBytesKeyed(_, _, _, _, _, _, _)
-    | RenderCommand::DrawSampledBmpBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawSampledPngBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawSampledRgbaBytesKeyed(_, _, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawQualityBmpBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawQualityBmpBytesRectKeyed(_, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawQualityPngBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawQualityPngBytesRectKeyed(_, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawQualityRgbaBytesKeyed(_, _, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawQualityRgbaBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedSampledBmpBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawTransformedSampledBmpBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedQualityBmpBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawTransformedQualityBmpBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedSampledPngBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawTransformedSampledPngBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedQualityPngBytesKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawTransformedQualityPngBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedSampledRgbaBytesKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedSampledRgbaBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedQualityRgbaBytesKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawTransformedQualityRgbaBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawSampledBmpBytesRectKeyed(_, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawSampledPngBytesRectKeyed(_, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawSampledRgbaBytesRectKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawBmpBytesRectKeyed(_, _, _, _, _, _)
-    | RenderCommand::DrawPngBytesRectKeyed(_, _, _, _, _, _)
-    | RenderCommand::DrawRgbaBytesRectKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawTiledBmpBytesRectKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawTiledPngBytesRectKeyed(_, _, _, _, _, _, _, _)
-    | RenderCommand::DrawTiledRgbaBytesRectKeyed(_, _, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawNinePatchBmpBytesKeyed(_, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawNinePatchPngBytesKeyed(_, _, _, _, _, _, _, _, _)
-    | RenderCommand::DrawNinePatchRgbaBytesKeyed(
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _,
-      _
-    )
-    | RenderCommand::DrawPixmapRect(_, _, _, _, _)
-    | RenderCommand::DrawPixmapRectKeyed(_, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Image
-    RenderCommand::DrawTextFace(_, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawTextFaceKeyed(_, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawFontBytesKeyed(_, _, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawFontBytesAtlasKeyed(_, _, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawFontBytesFallbackKeyed(_, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawFontBytesFallbackAtlasKeyed(_, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawLoadedFontKeyed(_, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawLoadedFontFallbackKeyed(_, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawLoadedFontFallbackAtlasKeyed(_, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
-    RenderCommand::DrawLoadedFontAtlasKeyed(_, _, _, _, _, _, _) =>
-      RenderPipelineBatchKind::Text
+    Clear(_) => Clear
+    FillRect(_, _, _, _, _) | FillPath(_, _) => Fill
+    StrokeRect(_, _, _, _, _) | StrokePath(_, _) => Stroke
+    DrawPixmap(_, _, _, _)
+    | DrawPixmapKeyed(_, _, _, _, _)
+    | DrawBmpBytesKeyed(_, _, _, _, _)
+    | DrawPngBytesKeyed(_, _, _, _, _)
+    | DrawRgbaBytesKeyed(_, _, _, _, _, _, _)
+    | DrawSampledBmpBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawSampledPngBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawSampledRgbaBytesKeyed(_, _, _, _, _, _, _, _, _, _)
+    | DrawQualityBmpBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawQualityBmpBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawQualityPngBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawQualityPngBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawQualityRgbaBytesKeyed(_, _, _, _, _, _, _, _, _, _)
+    | DrawQualityRgbaBytesRectKeyed(_, _, _, _, _, _, _, _, _, _, _)
+    | DrawTransformedSampledBmpBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawTransformedSampledBmpBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawTransformedQualityBmpBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawTransformedQualityBmpBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawTransformedSampledPngBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawTransformedSampledPngBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawTransformedQualityPngBytesKeyed(_, _, _, _, _, _, _, _)
+    | DrawTransformedQualityPngBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawTransformedSampledRgbaBytesKeyed(_, _, _, _, _, _, _, _, _, _)
+    | DrawTransformedSampledRgbaBytesRectKeyed(_, _, _, _, _, _, _, _, _, _, _)
+    | DrawTransformedQualityRgbaBytesKeyed(_, _, _, _, _, _, _, _, _, _)
+    | DrawTransformedQualityRgbaBytesRectKeyed(_, _, _, _, _, _, _, _, _, _, _)
+    | DrawSampledBmpBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawSampledPngBytesRectKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawSampledRgbaBytesRectKeyed(_, _, _, _, _, _, _, _, _, _, _)
+    | DrawBmpBytesRectKeyed(_, _, _, _, _, _)
+    | DrawPngBytesRectKeyed(_, _, _, _, _, _)
+    | DrawRgbaBytesRectKeyed(_, _, _, _, _, _, _, _)
+    | DrawTiledBmpBytesRectKeyed(_, _, _, _, _, _, _, _)
+    | DrawTiledPngBytesRectKeyed(_, _, _, _, _, _, _, _)
+    | DrawTiledRgbaBytesRectKeyed(_, _, _, _, _, _, _, _, _, _)
+    | DrawNinePatchBmpBytesKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawNinePatchPngBytesKeyed(_, _, _, _, _, _, _, _, _)
+    | DrawNinePatchRgbaBytesKeyed(_, _, _, _, _, _, _, _, _, _, _)
+    | DrawPixmapRect(_, _, _, _, _)
+    | DrawPixmapRectKeyed(_, _, _, _, _, _) => Image
+    DrawTextFace(_, _, _, _, _, _) => Text
+    DrawTextFaceKeyed(_, _, _, _, _, _, _) => Text
+    DrawFontBytesKeyed(_, _, _, _, _, _, _, _) => Text
+    DrawFontBytesAtlasKeyed(_, _, _, _, _, _, _, _) => Text
+    DrawFontBytesFallbackKeyed(_, _, _, _, _, _, _) => Text
+    DrawFontBytesFallbackAtlasKeyed(_, _, _, _, _, _, _) => Text
+    DrawLoadedFontKeyed(_, _, _, _, _, _, _) => Text
+    DrawLoadedFontFallbackKeyed(_, _, _, _, _, _, _) => Text
+    DrawLoadedFontFallbackAtlasKeyed(_, _, _, _, _, _, _) => Text
+    DrawLoadedFontAtlasKeyed(_, _, _, _, _, _, _) => Text
   }
 }

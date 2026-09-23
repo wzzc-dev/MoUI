@@ -8,15 +8,10 @@ test "pdf workbench opens via binary host service" {
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::FileDialog(_) =>
-          @host.HostServiceResponse::FileDialogSelection(["/tmp/minimum.pdf"])
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::ReadBytes(path)
-        ) => @host.HostServiceResponse::BinaryFileContent(path, bytes)
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(path, _)
-        ) => @host.HostServiceResponse::BinaryFileWritten(path)
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        FileDialog(_) => FileDialogSelection(["/tmp/minimum.pdf"])
+        BinaryFile(ReadBytes(path)) => BinaryFileContent(path, bytes)
+        BinaryFile(WriteBytes(path, _)) => BinaryFileWritten(path)
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -74,12 +69,9 @@ test "pdf workbench runtime open click rebuilds loaded preview" {
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::FileDialog(_) =>
-          @host.HostServiceResponse::FileDialogSelection(["/tmp/minimum.pdf"])
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::ReadBytes(path)
-        ) => @host.HostServiceResponse::BinaryFileContent(path, bytes)
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        FileDialog(_) => FileDialogSelection(["/tmp/minimum.pdf"])
+        BinaryFile(ReadBytes(path)) => BinaryFileContent(path, bytes)
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -120,7 +112,7 @@ test "pdf workbench raster preview expands with wider runtime resize" {
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),
-    status: PdfWorkbenchStatus::Ready,
+    status: Ready,
     raster_status: RasterReady,
     raster_page: Some({
       cache_key: "resize-test",
@@ -138,7 +130,7 @@ test "pdf workbench raster preview expands with wider runtime resize" {
     fail("expected raster image before resize")
   }
   runtime.dispatch_event(
-    @core.AppEvent::Resize(@geometry.Size::new(width=1600.0, height=720.0)),
+    Resize(@geometry.Size::new(width=1600.0, height=720.0)),
   )
   guard pdf_workbench_image_frame(runtime.draw_commands()) is Some(after) else {
     fail("expected raster image after resize")
@@ -184,7 +176,7 @@ test "pdf workbench narrow viewport prioritizes reader canvas" {
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),
-    status: PdfWorkbenchStatus::Ready,
+    status: Ready,
     raster_status: RasterReady,
     raster_page: Some({
       cache_key: "narrow-test",
@@ -321,7 +313,7 @@ test "pdf workbench side panels scroll while reader stays expanded" {
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),
-    status: PdfWorkbenchStatus::Ready,
+    status: Ready,
     raster_status: RasterReady,
     raster_page: Some({
       cache_key: "scroll-test",
@@ -388,7 +380,7 @@ test "pdf workbench typed full reader command fills window and restores chrome" 
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),
-    status: PdfWorkbenchStatus::Ready,
+    status: Ready,
     raster_status: RasterReady,
     raster_page: Some({
       cache_key: "full-reader-test",
@@ -407,7 +399,7 @@ test "pdf workbench typed full reader command fills window and restores chrome" 
     .with_commands(commands=_model => {
       [
         @moui.ProgramCommand::new(
-          command=@core.ActionCommand::new(intent=@core.CommandIntent::Activate),
+          command=@core.ActionCommand::new(intent=Activate),
           message=ToggleReaderFullscreen,
         ),
       ]
@@ -428,7 +420,7 @@ test "pdf workbench typed full reader command fills window and restores chrome" 
     fail("expected reader image before fullscreen")
   }
 
-  assert_true(runtime.dispatch_command(@core.CommandIntent::Activate))
+  assert_true(runtime.dispatch_command(Activate))
   let full_commands = runtime.draw_commands()
   assert_false(
     pdf_workbench_draw_has_text_containing(full_commands, "PDF Workbench"),
@@ -447,7 +439,7 @@ test "pdf workbench typed full reader command fills window and restores chrome" 
   assert_true(full_image.size.width > before_image.size.width + 60.0)
   assert_true(full_image.size.height > before_image.size.height + 80.0)
 
-  assert_true(runtime.dispatch_command(@core.CommandIntent::Activate))
+  assert_true(runtime.dispatch_command(Activate))
   let restored_commands = runtime.draw_commands()
   assert_true(
     pdf_workbench_draw_has_text_containing(restored_commands, "PDF Workbench"),

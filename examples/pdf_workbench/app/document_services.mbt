@@ -15,7 +15,7 @@ pub fn PdfWorkbenchDocumentServices::new(
   load~ : (String, Bytes) -> PdfWorkbenchLoadResult,
   writeback? : (PdfWorkbenchDocument) -> PdfWorkbenchDocumentWritebackResult = pdf_workbench_default_writeback,
 ) -> PdfWorkbenchDocumentServices {
-  { load, writeback }
+  { load, writeback, }
 }
 
 ///|

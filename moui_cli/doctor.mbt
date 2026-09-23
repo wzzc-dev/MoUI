@@ -53,7 +53,7 @@ fn doctor_check(
   detail? : String = "",
   remediation? : String = "",
 ) -> DoctorCheck {
-  { id, status, required, summary, detail, remediation }
+  { id, status, required, summary, detail, remediation, }
 }
 
 ///|

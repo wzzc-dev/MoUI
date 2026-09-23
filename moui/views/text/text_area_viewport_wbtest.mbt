@@ -80,7 +80,7 @@ test "wheel scrolls the text area viewport and persists the offset" {
   let event = @core.AppEvent::Pointer(
     @core.PointerEvent::new(
       position=@core.Point::new(x=100.0, y=50.0),
-      phase=@core.PointerPhase::Move,
+      phase=Move,
       wheel_delta=@core.Point::new(x=0.0, y=-56.0),
     ),
   )
@@ -109,7 +109,7 @@ test "wheel past the top edge is a no-op instead of negative jitter" {
   let event = @core.AppEvent::Pointer(
     @core.PointerEvent::new(
       position=@core.Point::new(x=100.0, y=50.0),
-      phase=@core.PointerPhase::Move,
+      phase=Move,
       wheel_delta=@core.Point::new(x=0.0, y=100.0),
     ),
   )
@@ -135,7 +135,7 @@ test "wheel past the bottom edge clamps to content minus viewport" {
   let event = @core.AppEvent::Pointer(
     @core.PointerEvent::new(
       position=@core.Point::new(x=100.0, y=50.0),
-      phase=@core.PointerPhase::Move,
+      phase=Move,
       wheel_delta=@core.Point::new(x=0.0, y=-1000.0),
     ),
   )
@@ -164,7 +164,7 @@ test "wheel past the bottom edge clamps to content minus viewport" {
 test "typing past the viewport reveals the caret line at the bottom" {
   let result : @core.ViewEventResult[Unit] = handle_text_area_event(
     viewport_test_event_context(
-      event=@core.AppEvent::TextInput(@core.TextInputEvent::InsertText("x")),
+      event=TextInput(InsertText("x")),
       state=viewport_test_state(),
       text_control=viewport_test_text_control(caret=119),
       frame=viewport_test_frame(),
@@ -187,14 +187,14 @@ test "typing past the viewport reveals the caret line at the bottom" {
       // the absolute bottom of the content.
       assert_eq(viewport_test_offset(state), 388.0)
   }
-  assert_true(result.dirty == @core.ViewDirtyHint::ViewLayoutDirty)
+  assert_true(result.dirty == ViewLayoutDirty)
 }
 
 ///|
 test "typing with a visible caret leaves the scroll state alone" {
   let result : @core.ViewEventResult[Unit] = handle_text_area_event(
     viewport_test_event_context(
-      event=@core.AppEvent::TextInput(@core.TextInputEvent::InsertText("x")),
+      event=TextInput(InsertText("x")),
       state=viewport_test_state(),
       text_control=viewport_test_text_control(caret=3),
       frame=viewport_test_frame(),
@@ -231,7 +231,7 @@ test "clicks hit the scrolled line, not the unscrolled one" {
   let event = @core.AppEvent::Pointer(
     @core.PointerEvent::new(
       position=@core.Point::new(x=text_frame.origin.x + 5.0, y=click_y),
-      phase=@core.PointerPhase::Down,
+      phase=Down,
     ),
   )
   let result : @core.ViewEventResult[Unit] = handle_text_area_event(

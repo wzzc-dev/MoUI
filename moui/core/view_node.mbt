@@ -127,7 +127,7 @@ impl ViewNode with fn focus_trap(_self) {
 
 ///|
 impl ViewNode with fn keyboard_policy(_self) {
-  KeyboardPolicy::Passthrough
+  Passthrough
 }
 
 ///|
@@ -157,7 +157,7 @@ impl ViewNode for EmptyViewNode with fn layout(_self, context) {
 
 ///|
 fn[Msg] empty_view() -> View[Msg] {
-  View::from_node(EmptyViewNode::{  })
+  View::from_node(EmptyViewNode::{ })
 }
 
 ///|
@@ -278,7 +278,7 @@ fn[Msg] ViewAdapter::semantics_action_kinds(
 ) -> Array[SemanticsActionKind] {
   let kinds : Array[SemanticsActionKind] = []
   if self.focusable_snapshot {
-    kinds.push(SemanticsActionKind::Focus)
+    kinds.push(Focus)
   }
   for handler in self.semantics_action_handlers {
     if !kinds.contains(handler.kind()) {

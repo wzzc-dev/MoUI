@@ -16,7 +16,7 @@ pub fn[Msg] empty_state(
     theme=resolved_theme,
     style~,
     width~,
-    tone=@style.FeedbackTone::Neutral,
+    tone=Neutral,
   )
 }
 
@@ -37,7 +37,7 @@ pub fn[Msg] loading_state(
     theme=resolved_theme,
     style~,
     width~,
-    tone=@style.FeedbackTone::Info,
+    tone=Info,
   )
 }
 
@@ -59,7 +59,7 @@ pub fn[Msg] error_state(
     theme=resolved_theme,
     style~,
     width~,
-    tone=@style.FeedbackTone::Danger,
+    tone=Danger,
   )
 }
 
@@ -86,18 +86,18 @@ pub fn[Msg] inline_error(
   let body : Array[@core.View[Msg]] = [
     badge(
       "Error",
-      tone=@style.BadgeTone::Danger,
+      tone=Danger,
       theme=resolved_theme,
       style=badge_style,
       width=64.0,
     ),
     @text.text(
       message,
-      role=@style.TextRole::Caption,
+      role=Caption,
       theme=resolved_theme,
       width=message_width,
       height=28.0,
-    ).foreground(@controls.feedback_accent(@style.FeedbackTone::Danger, style)),
+    ).foreground(@controls.feedback_accent(Danger, style)),
   ]
   match action {
     Some(action) =>
@@ -105,7 +105,7 @@ pub fn[Msg] inline_error(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Ghost,
+          variant=Ghost,
           theme=resolved_theme,
           width=86.0,
           height=32.0,
@@ -114,27 +114,21 @@ pub fn[Msg] inline_error(
     None => ()
   }
   @container.container(
-    @layout.row(
-      body,
-      spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Center,
-    ),
+    @layout.row(body, spacing=resolved_theme.spacing_scale.sm, align=Center),
     width~,
     height=44.0,
-    background=@controls.feedback_background(@style.FeedbackTone::Danger, style),
+    background=@controls.feedback_background(Danger, style),
     corner_radius=style.radius,
     theme=resolved_theme,
     padding=style.padding,
   )
   .border(
     @core.BorderStyle::new(
-      brush=@core.Brush::solid(
-        @controls.feedback_border(@style.FeedbackTone::Danger, style),
-      ),
+      brush=@core.Brush::solid(@controls.feedback_border(Danger, style)),
       width=1.0,
     ),
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .semantics_invalid()
   .accessibility_label("Error: " + message)
 }
@@ -150,20 +144,8 @@ fn[Msg] state_panel(
   tone~ : @style.FeedbackTone,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = [
-    @text.text(
-      title,
-      role=@style.TextRole::Control,
-      theme~,
-      width=width - 32.0,
-      height=28.0,
-    ),
-    @text.text(
-      message,
-      role=@style.TextRole::Caption,
-      theme~,
-      width=width - 32.0,
-      height=42.0,
-    ),
+    @text.text(title, role=Control, theme~, width=width - 32.0, height=28.0),
+    @text.text(message, role=Caption, theme~, width=width - 32.0, height=42.0),
   ]
   match action {
     Some(action) =>
@@ -171,7 +153,7 @@ fn[Msg] state_panel(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Primary,
+          variant=Primary,
           theme~,
           width=128.0,
         ),
@@ -179,16 +161,12 @@ fn[Msg] state_panel(
     None => ()
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=theme.spacing_scale.sm,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=theme.spacing_scale.sm, align=Start),
     width~,
     height=148.0,
     background=@controls.feedback_background(tone, style),
     corner_radius=style.radius,
     theme~,
     padding=style.padding,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }

@@ -11,7 +11,7 @@ pub struct WindowImageTaskStates {
 
 ///|
 pub fn WindowImageTaskStates::new() -> WindowImageTaskStates {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|

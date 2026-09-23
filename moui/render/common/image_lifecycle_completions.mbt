@@ -4,15 +4,15 @@ pub fn ImageResourceLifecycle::apply_load_completion(
   completion : @render.ImageResourceLoadCompletion,
 ) -> Bool {
   match self.lookup(completion.source) {
-    Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) =>
+    Some({ status: ImageLoading, .. }) =>
       match completion.status {
-        @render.ImageResourceLoadCompletionStatus::ImageLoadReady =>
+        ImageLoadReady =>
           self.mark_ready(
             completion.source,
             width=completion.width,
             height=completion.height,
           )
-        @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
+        ImageLoadFailed =>
           self.mark_failed(completion.source, diagnostic=completion.diagnostic)
       }
     _ => false

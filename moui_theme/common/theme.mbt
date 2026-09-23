@@ -30,7 +30,7 @@ pub fn DesignPreset::summary(self : DesignPreset) -> String {
 ///|
 pub fn preset(
   preset : DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> @core.Theme {
   preset.theme(scheme~)
 }
@@ -38,9 +38,9 @@ pub fn preset(
 ///|
 pub fn preset_for_variant(
   preset : DesignPreset,
-  variant? : DesignSchemeVariant = DesignSchemeVariant::SchemeLight,
-  system_scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  density? : DesignDensity = DesignDensity::Standard,
+  variant? : DesignSchemeVariant = SchemeLight,
+  system_scheme? : @core.ColorScheme = Light,
+  density? : DesignDensity = Standard,
 ) -> @core.Theme {
   preset.theme_for_variant(variant~, system_scheme~, density~)
 }
@@ -48,8 +48,8 @@ pub fn preset_for_variant(
 ///|
 pub fn DesignPreset::theme(
   self : DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  density? : DesignDensity = DesignDensity::Standard,
+  scheme? : @core.ColorScheme = Light,
+  density? : DesignDensity = Standard,
 ) -> @core.Theme {
   self.tokens(scheme~, density~).to_theme()
 }
@@ -57,9 +57,9 @@ pub fn DesignPreset::theme(
 ///|
 pub fn DesignPreset::theme_for_variant(
   self : DesignPreset,
-  variant? : DesignSchemeVariant = DesignSchemeVariant::SchemeLight,
-  system_scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  density? : DesignDensity = DesignDensity::Standard,
+  variant? : DesignSchemeVariant = SchemeLight,
+  system_scheme? : @core.ColorScheme = Light,
+  density? : DesignDensity = Standard,
 ) -> @core.Theme {
   self.tokens_for_variant(variant~, system_scheme~, density~).to_theme()
 }
@@ -72,7 +72,7 @@ pub fn DesignPreset::theme_for_variant(
 /// attach it via the ambient resolver; this builder composes the neutral base
 /// only.
 pub fn custom(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
   base? : @core.Theme,
   palette? : @core.ColorPalette,
   spacing_scale? : @core.SpacingScale,
@@ -86,8 +86,8 @@ pub fn custom(
     Some(value) => value
     None =>
       match scheme {
-        @core.ColorScheme::Light => @views.light_theme()
-        @core.ColorScheme::Dark => @views.dark_theme()
+        Light => @views.light_theme()
+        Dark => @views.dark_theme()
       }
   }
   match palette {
@@ -127,8 +127,8 @@ fn shadow_scale(
   lift~ : Double,
 ) -> @core.ShadowScale {
   let base_alpha = match scheme {
-    @core.ColorScheme::Light => 0.16
-    @core.ColorScheme::Dark => 0.34
+    Light => 0.16
+    Dark => 0.34
   }
   {
     sm: shadow(alpha=base_alpha * 0.55 * lift, y=1.0, blur=5.0),

@@ -12,7 +12,7 @@ pub fn ViewportSnapshot::new(
   scene~ : Scene,
   camera~ : OrbitCamera,
 ) -> ViewportSnapshot {
-  { scene_revision, scene, camera, bounds: scene.bounds() }
+  { scene_revision, scene, camera, bounds: scene.bounds(), }
 }
 
 ///|
@@ -53,7 +53,7 @@ pub(all) enum ViewportStatus {
 
 ///|
 pub fn ThreeDViewportBinding::new() -> ThreeDViewportBinding {
-  { latest: @ref.Ref(None), status: @ref.Ref(ViewportStatus::Loading) }
+  { latest: Ref(None), status: Ref(Loading), }
 }
 
 ///|
@@ -116,10 +116,10 @@ pub fn ThreeDViewportHost::new(
 ) -> ThreeDViewportHost {
   {
     binding,
-    surface_handler: @ref.Ref((_handle, _width, _height, _scale) => ()),
-    frame_handler: @ref.Ref((_snapshot, _width, _height, _scale) => ()),
-    dispose_handler: @ref.Ref(_handle => ()),
-    invalidate_handler: @ref.Ref(() => ()),
+    surface_handler: Ref((_handle, _width, _height, _scale) => ()),
+    frame_handler: Ref((_snapshot, _width, _height, _scale) => ()),
+    dispose_handler: Ref(_handle => ()),
+    invalidate_handler: Ref(() => ()),
   }
 }
 
@@ -234,12 +234,12 @@ pub fn[Msg] three_d_viewport(
   on_event? : ((ViewportEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   ignore(binding.publish(snapshot))
-  @core.View::from_node(ThreeDViewportNode::{ binding, semantics_label }, event=(
+  @core.View::from_node(ThreeDViewportNode::{ binding, semantics_label, }, event=(
     _node,
     context,
   ) => {
     match (context.event, on_event) {
-      (@core.AppEvent::PlatformView(event_id, event), Some(handler)) if event_id ==
+      (PlatformView(event_id, event), Some(handler)) if event_id ==
         "moui-3d-viewport" =>
         match decode_viewport_event(event) {
           Some(value) => @core.ViewEventResult::message(handler(value))
@@ -309,8 +309,8 @@ impl @core.ViewNode for ThreeDViewportNode with fn platform_views(self, context)
 ///|
 impl @core.ViewNode for ThreeDViewportNode with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Group,
+    composition=Boundary,
+    role=Group,
     label=self.semantics_label,
     description="Interactive 3D model viewport",
   )
@@ -333,28 +333,28 @@ pub(all) enum ViewportEvent {
 /// plugin. Pointer payloads are `x,y`; wheel payload is a signed scalar.
 pub fn decode_viewport_event(event : @core.PlatformViewEvent) -> ViewportEvent? {
   match event {
-    @core.PlatformViewEvent::Named(name~, value~, detail~, flag~) => {
+    Named(name~, value~, detail~, flag~) => {
       ignore(detail)
       if name == "pointer_down" {
-        parse_point(value).map(point => ViewportEvent::PointerDown(point))
+        parse_point(value).map(point => PointerDown(point))
       } else if name == "pointer_move" {
-        parse_point(value).map(point => ViewportEvent::PointerMove(point))
+        parse_point(value).map(point => PointerMove(point))
       } else if name == "pointer_up" {
-        parse_point(value).map(point => ViewportEvent::PointerUp(point))
+        parse_point(value).map(point => PointerUp(point))
       } else if name == "wheel" {
         let amount = @string.parse_double(value) catch { _ => return None }
-        Some(ViewportEvent::Wheel(amount))
+        Some(Wheel(amount))
       } else if name == "resize" {
         parse_point(value).map(point => {
-          ViewportEvent::Resize(@core.Size::new(width=point.x, height=point.y))
+          Resize(@core.Size::new(width=point.x, height=point.y))
         })
       } else if name == "focus" {
-        Some(ViewportEvent::Focus(flag))
+        Some(Focus(flag))
       } else if name == "pick" {
         let node_id = @string.parse_int(value) catch { _ => return None }
-        Some(ViewportEvent::Pick(NodeId::new(node_id)))
+        Some(Pick(NodeId::new(node_id)))
       } else if name == "renderer_status" {
-        Some(ViewportEvent::RendererStatus)
+        Some(RendererStatus)
       } else {
         None
       }

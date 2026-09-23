@@ -302,7 +302,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("unknown argument: " + value)
     }
   }
-  Ok({ metrics, out_dir, runner, artifact, repo_root, help })
+  Ok({ metrics, out_dir, runner, artifact, repo_root, help, })
 }
 
 ///|

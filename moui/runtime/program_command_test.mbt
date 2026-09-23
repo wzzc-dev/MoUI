@@ -11,15 +11,12 @@ test "program commands dispatch through the FIFO typed update queue" {
   ).with_commands(commands=model => {
     [
       @core.ProgramCommand::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="Add one",
-        ),
+        command=@core.ActionCommand::new(intent=Activate, label="Add one"),
         message=model + 1,
       ),
       @core.ProgramCommand::new(
         command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Submit,
+          intent=Submit,
           label="Add ten",
           context_menu=true,
         ),
@@ -27,9 +24,13 @@ test "program commands dispatch through the FIFO typed update queue" {
       ),
     ]
   })
-  let runtime = new_program_with_dimensions(program~, width=100.0, height=100.0)
-  assert_true(runtime.dispatch_command(@core.CommandIntent::Activate))
-  assert_true(runtime.dispatch_command(@core.CommandIntent::Submit))
+  let runtime = @runtime.new_program_with_dimensions(
+    program~,
+    width=100.0,
+    height=100.0,
+  )
+  assert_true(runtime.dispatch_command(Activate))
+  assert_true(runtime.dispatch_command(Submit))
   assert_eq(seen, [1, 10])
   assert_eq(runtime.action_commands().length(), 2)
 }

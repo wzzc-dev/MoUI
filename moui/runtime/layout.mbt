@@ -95,7 +95,7 @@ fn ElementNode::place_with_text_system(
   environment~ : Environment,
   style? : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
-  layout_direction? : LayoutDirection = LayoutDirection::LeftToRight,
+  layout_direction? : LayoutDirection = LeftToRight,
   overlay_overrides? : Array[(Int, Array[(Int, Rect)])] = [],
 ) -> PlacedNode {
   if !self.has_dirty_layout() &&

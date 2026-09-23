@@ -79,13 +79,13 @@ pub fn update(model : Model, message : Msg) -> Model {
     SeekStart => {
       model.player.seek(0.0)
       model.player.pause()
-      refresh_animation({ ..model, orbit_time: 0.0 })
+      refresh_animation({ ..model, orbit_time: 0.0, })
     }
     SelectClip(index) => {
       let clips = model.snapshot.scene().animations()
       if index >= 0 && index < clips.length() {
         model.player.set_clip(clips[index])
-        refresh_animation({ ..model, selected_clip: index, orbit_time: 0.0 })
+        refresh_animation({ ..model, selected_clip: index, orbit_time: 0.0, })
       } else {
         model
       }
@@ -113,14 +113,14 @@ pub fn update(model : Model, message : Msg) -> Model {
     }
     Viewport(event) =>
       match event {
-        @moui_3d.ViewportEvent::PointerDown(point) =>
+        PointerDown(point) =>
           {
             ..model,
             dragging: true,
             last_pointer_x: point.x,
             last_pointer_y: point.y,
           }
-        @moui_3d.ViewportEvent::PointerMove(point) =>
+        PointerMove(point) =>
           if !model.dragging {
             model
           } else {
@@ -134,8 +134,8 @@ pub fn update(model : Model, message : Msg) -> Model {
               last_pointer_y: point.y,
             }
           }
-        @moui_3d.ViewportEvent::PointerUp(_) => { ..model, dragging: false }
-        @moui_3d.ViewportEvent::Wheel(amount) => {
+        PointerUp(_) => { ..model, dragging: false, }
+        Wheel(amount) => {
           let magnitude = amount.abs().min(100.0) * 0.01
           let factor = if amount >= 0.0 {
             1.0 + magnitude
@@ -144,11 +144,8 @@ pub fn update(model : Model, message : Msg) -> Model {
           }
           with_camera(model, model.snapshot.camera().zoom(factor))
         }
-        @moui_3d.ViewportEvent::Resize(_)
-        | @moui_3d.ViewportEvent::Focus(_)
-        | @moui_3d.ViewportEvent::RendererStatus => model
-        @moui_3d.ViewportEvent::Pick(node) =>
-          { ..model, picked_node: Some(node) }
+        Resize(_) | Focus(_) | RendererStatus => model
+        Pick(node) => { ..model, picked_node: Some(node), }
       }
   }
 }
@@ -156,11 +153,10 @@ pub fn update(model : Model, message : Msg) -> Model {
 ///|
 pub fn view(model : Model) -> @moui.View[Msg] {
   let status = match model.binding.status() {
-    @moui_3d.ViewportStatus::Loading => "GPU renderer status: loading"
-    @moui_3d.ViewportStatus::Ready => "GPU renderer status: host connected"
-    @moui_3d.ViewportStatus::Unavailable(reason) =>
-      "GPU renderer unavailable: \{reason}"
-    @moui_3d.ViewportStatus::Failed(reason) => "GPU renderer failed: \{reason}"
+    Loading => "GPU renderer status: loading"
+    Ready => "GPU renderer status: host connected"
+    Unavailable(reason) => "GPU renderer unavailable: \{reason}"
+    Failed(reason) => "GPU renderer failed: \{reason}"
   }
   let playback = if model.player.playing() { "playing" } else { "paused" }
   let animation_time = "t=\{model.player.time().to_string()}s"
@@ -185,16 +181,8 @@ pub fn view(model : Model) -> @moui.View[Msg] {
               },
               on_click=TogglePlayback,
             ),
-            button(
-              "Seek start",
-              on_click=SeekStart,
-              variant=@views.ButtonVariant::Tonal,
-            ),
-            button(
-              "Clip 0",
-              on_click=SelectClip(0),
-              variant=@views.ButtonVariant::Tonal,
-            ),
+            button("Seek start", on_click=SeekStart, variant=Tonal),
+            button("Clip 0", on_click=SelectClip(0), variant=Tonal),
           ],
           spacing=6.0,
         ),
@@ -202,7 +190,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
           binding=model.binding,
           snapshot=model.snapshot,
           semantics_label="3D model viewport",
-          on_event=Some(event => Msg::Viewport(event)),
+          on_event=Some(event => Viewport(event)),
         ),
         text(
           status +
@@ -295,7 +283,7 @@ fn orbit_samples(model : Model) -> Array[@moui_3d.AnimationSample] {
   let orbit_z = 0.34 * (1.0 - @math.cos(phase))
   let translated = samples.map(sample => {
     match sample.path() {
-      @moui_3d.AnimationPath::Translation if sample.node().value() == 0 =>
+      Translation if sample.node().value() == 0 =>
         @moui_3d.AnimationSample::new(node=sample.node(), path=sample.path(), value=[
           orbit_x, orbit_y, orbit_z,
         ])
@@ -312,11 +300,12 @@ fn orbit_samples(model : Model) -> Array[@moui_3d.AnimationSample] {
   )
   let rotation = yaw.mul(pitch)
   translated.push(
-    @moui_3d.AnimationSample::new(
-      node=@moui_3d.NodeId::new(0),
-      path=@moui_3d.AnimationPath::Rotation,
-      value=[rotation.x(), rotation.y(), rotation.z(), rotation.w()],
-    ),
+    @moui_3d.AnimationSample::new(node=@moui_3d.NodeId::new(0), path=Rotation, value=[
+      rotation.x(),
+      rotation.y(),
+      rotation.z(),
+      rotation.w(),
+    ]),
   )
   translated
 }

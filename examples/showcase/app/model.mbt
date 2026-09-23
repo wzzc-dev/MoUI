@@ -57,7 +57,7 @@ pub struct ShowcaseRouteHost {
 
 ///|
 pub fn ShowcaseApp::new() -> ShowcaseApp {
-  { unit: () }
+  { unit: (), }
 }
 
 ///|
@@ -65,7 +65,7 @@ pub fn ShowcaseRouteHost::new(
   route_source~ : @services.RouteSource,
   dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit,
 ) -> ShowcaseRouteHost {
-  { route_source, dispatch_command }
+  { route_source, dispatch_command, }
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn ShowcaseModel::new(
         },
       ) {
       Some(id) => id
-      None => @components.ComponentGalleryItemId::Welcome
+      None => Welcome
     },
   )
   let patterns = @patterns.Model::new(
@@ -153,18 +153,18 @@ pub fn ShowcaseModel::current_route_string(self : ShowcaseModel) -> String {
 fn platform_id_from_host(host_label : String) -> @components.PlatformId {
   let label = host_label.to_lower()
   if label.contains("android") {
-    @components.PlatformId::Android
+    Android
   } else if label.contains("ios") || label.contains("iphone") {
-    @components.PlatformId::IOS
+    IOS
   } else if label.contains("harmony") {
-    @components.PlatformId::HarmonyOS
+    HarmonyOS
   } else if label.contains("linux") {
-    @components.PlatformId::Linux
+    Linux
   } else if label.contains("windows") {
-    @components.PlatformId::Windows
+    Windows
   } else if label.contains("web") {
-    @components.PlatformId::Web
+    Web
   } else {
-    @components.PlatformId::MacOS
+    MacOS
   }
 }

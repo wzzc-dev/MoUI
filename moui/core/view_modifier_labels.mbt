@@ -34,18 +34,18 @@ fn declaration_insets(insets : Insets) -> DeclarationKey {
 ///|
 fn declaration_brush(value : Brush) -> DeclarationKey {
   match value {
-    Brush::Solid(color) =>
+    Solid(color) =>
       DeclarationKey::record(type_tag="Brush.Solid", fields=[
         ("color", declaration_color(color)),
       ])
-    Brush::LinearGradient(spec) =>
+    LinearGradient(spec) =>
       DeclarationKey::record(type_tag="Brush.LinearGradient", fields=[
         ("start", declaration_point(spec.start)),
         ("end", declaration_point(spec.end)),
         ("start_color", declaration_color(spec.start_color)),
         ("end_color", declaration_color(spec.end_color)),
       ])
-    Brush::RadialGradient(spec) =>
+    RadialGradient(spec) =>
       DeclarationKey::record(type_tag="Brush.RadialGradient", fields=[
         ("center", declaration_point(spec.center)),
         ("radius", DeclarationKey::double(spec.radius)),

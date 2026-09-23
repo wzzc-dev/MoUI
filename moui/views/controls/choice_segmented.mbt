@@ -3,14 +3,14 @@ pub fn[Msg] segmented_control(
   items : Array[ChoiceItem],
   selected~ : String,
   on_select~ : (String) -> Msg,
-  size? : @style.SegmentedControlSize = @style.SegmentedControlSize::Regular,
+  size? : @style.SegmentedControlSize = Regular,
   theme? : @core.Theme,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let height = match size {
-    @style.SegmentedControlSize::Compact => 32.0
-    @style.SegmentedControlSize::Regular => 40.0
+    Compact => 32.0
+    Regular => 40.0
   }
   let item_width = if items.length() == 0 {
     width
@@ -24,25 +24,21 @@ pub fn[Msg] segmented_control(
       @button.button(
         item.label,
         on_click=on_select(item.id),
-        variant=if active {
-          @style.ButtonVariant::Primary
-        } else {
-          @style.ButtonVariant::Ghost
-        },
+        variant=if active { Primary } else { Ghost },
         theme=resolved_theme,
         width=item_width,
         height~,
       )
-      .semantics_role(@core.SemanticsRole::Tab)
+      .semantics_role(Tab)
       .semantics_selected(selected=active),
     )
   }
   @container.container(
-    @layout.row(segments, spacing=0.0, align=@style.CrossAlign::Center),
+    @layout.row(segments, spacing=0.0, align=Center),
     width~,
     height~,
     background=resolved_theme.palette.surface_variant.multiply_alpha(0.55),
     corner_radius=resolved_theme.radius_scale.md,
     padding=2.0,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }

@@ -7,7 +7,7 @@ pub fn ButtonStyle::new(
   pressed~ : ControlStateStyle,
   disabled~ : ControlStateStyle,
 ) -> ButtonStyle {
-  { normal, hovered, pressed, disabled }
+  { normal, hovered, pressed, disabled, }
 }
 
 ///|

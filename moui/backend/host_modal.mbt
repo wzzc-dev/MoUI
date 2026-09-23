@@ -101,7 +101,7 @@ pub fn HostModalRequest::new(
   presentation_id~ : String,
   generation~ : Int,
   bounds~ : @core.Rect,
-  modality? : HostModalModality = HostModalModality::NonModal,
+  modality? : HostModalModality = NonModal,
   semantics_generation? : Int = 0,
 ) -> HostModalRequest {
   {

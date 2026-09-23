@@ -1,6 +1,6 @@
 ///|
 fn WebGpuLayerCommandCache::new() -> WebGpuLayerCommandCache {
-  { entries: [], tick: 0 }
+  { entries: [], tick: 0, }
 }
 
 ///|
@@ -17,7 +17,7 @@ fn WebGpuLayerCommandCache::expand_frame_commands(
   let mut index = 0
   while index < commands.length() {
     match commands[index] {
-      @core.DrawCommand::BeginRetainedLayer(spec) =>
+      BeginRetainedLayer(spec) =>
         match
           webgpu_find_retained_layer_end(commands, start=index + 1, spec.key) {
           Some(layer_end) =>
@@ -42,12 +42,12 @@ fn WebGpuLayerCommandCache::expand_frame_commands(
                 misses = misses + 1
                 let layer = @core.DrawCommand::PushLayer(
                   @core.LayerSpec::new(
-                    mask=@core.LayerMask::RectMask(spec.frame),
+                    mask=RectMask(spec.frame),
                     offscreen=true,
                   ),
                 )
                 append_webgpu_layer_cache_command(output, captures, layer)
-                captures.push({ spec, commands: [layer] })
+                captures.push({ spec, commands: [layer], })
                 index = index + 1
               }
             }
@@ -55,17 +55,13 @@ fn WebGpuLayerCommandCache::expand_frame_commands(
             append_webgpu_layer_cache_command(
               output,
               captures,
-              @core.DrawCommand::BeginRetainedLayer(spec),
+              BeginRetainedLayer(spec),
             )
             index = index + 1
           }
         }
-      @core.DrawCommand::EndRetainedLayer(key) => {
-        append_webgpu_layer_cache_command(
-          output,
-          captures,
-          @core.DrawCommand::PopLayer,
-        )
+      EndRetainedLayer(key) => {
+        append_webgpu_layer_cache_command(output, captures, PopLayer)
         match captures.pop() {
           Some(capture) =>
             if capture.spec.key == key {
@@ -106,8 +102,8 @@ fn webgpu_find_retained_layer_end(
   let mut depth = 0
   for index in start..<commands.length() {
     match commands[index] {
-      @core.DrawCommand::BeginRetainedLayer(_) => depth = depth + 1
-      @core.DrawCommand::EndRetainedLayer(end_key) =>
+      BeginRetainedLayer(_) => depth = depth + 1
+      EndRetainedLayer(end_key) =>
         if depth == 0 {
           if end_key == key {
             return Some(index)
@@ -161,7 +157,7 @@ fn WebGpuLayerCommandCache::store(
       return ()
     }
   }
-  self.entries.push({ spec, commands })
+  self.entries.push({ spec, commands, })
 }
 
 ///|
@@ -188,92 +184,75 @@ fn webgpu_offset_draw_command(
     return command
   }
   match command {
-    @core.DrawCommand::Clear(_)
-    | @core.DrawCommand::PopClip
-    | @core.DrawCommand::PopRoundedClip
-    | @core.DrawCommand::PopTransform
-    | @core.DrawCommand::PopOpacity
-    | @core.DrawCommand::PopLayer
-    | @core.DrawCommand::EndRetainedLayer(_)
-    | @core.DrawCommand::PopFilter
-    | @core.DrawCommand::PushOpacity(_)
-    | @core.DrawCommand::PushFilter(_) => command
-    @core.DrawCommand::FillRect(rect, color) =>
-      @core.DrawCommand::FillRect(webgpu_offset_rect(rect, dx~, dy~), color)
-    @core.DrawCommand::StrokeRect(rect, color, width) =>
-      @core.DrawCommand::StrokeRect(
-        webgpu_offset_rect(rect, dx~, dy~),
-        color,
-        width,
-      )
-    @core.DrawCommand::FillRoundedRect(rect, color) =>
-      @core.DrawCommand::FillRoundedRect(
-        webgpu_offset_rounded_rect(rect, dx~, dy~),
-        color,
-      )
-    @core.DrawCommand::StrokeRoundedRect(rect, color, width) =>
-      @core.DrawCommand::StrokeRoundedRect(
+    Clear(_)
+    | PopClip
+    | PopRoundedClip
+    | PopTransform
+    | PopOpacity
+    | PopLayer
+    | EndRetainedLayer(_)
+    | PopFilter
+    | PushOpacity(_)
+    | PushFilter(_) => command
+    FillRect(rect, color) => FillRect(webgpu_offset_rect(rect, dx~, dy~), color)
+    StrokeRect(rect, color, width) =>
+      StrokeRect(webgpu_offset_rect(rect, dx~, dy~), color, width)
+    FillRoundedRect(rect, color) =>
+      FillRoundedRect(webgpu_offset_rounded_rect(rect, dx~, dy~), color)
+    StrokeRoundedRect(rect, color, width) =>
+      StrokeRoundedRect(
         webgpu_offset_rounded_rect(rect, dx~, dy~),
         color,
         width,
       )
-    @core.DrawCommand::FillRoundedRectBrush(rect, brush) =>
-      @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(rect, brush) =>
+      FillRoundedRectBrush(
         webgpu_offset_rounded_rect(rect, dx~, dy~),
         webgpu_offset_brush(brush, dx~, dy~),
       )
-    @core.DrawCommand::StrokeRoundedRectBrush(rect, brush, width) =>
-      @core.DrawCommand::StrokeRoundedRectBrush(
+    StrokeRoundedRectBrush(rect, brush, width) =>
+      StrokeRoundedRectBrush(
         webgpu_offset_rounded_rect(rect, dx~, dy~),
         webgpu_offset_brush(brush, dx~, dy~),
         width,
       )
-    @core.DrawCommand::DrawShadow(shadow) =>
-      @core.DrawCommand::DrawShadow({
+    DrawShadow(shadow) =>
+      DrawShadow({
         ..shadow,
         rect: webgpu_offset_rounded_rect(shadow.rect, dx~, dy~),
       })
-    @core.DrawCommand::DrawText(run) =>
-      @core.DrawCommand::DrawText({
-        ..run,
-        frame: webgpu_offset_rect(run.frame, dx~, dy~),
-      })
-    @core.DrawCommand::DrawImage(run) =>
-      @core.DrawCommand::DrawImage({
-        ..run,
-        frame: webgpu_offset_rect(run.frame, dx~, dy~),
-      })
-    @core.DrawCommand::PushClip(rect) =>
-      @core.DrawCommand::PushClip(webgpu_offset_rect(rect, dx~, dy~))
-    @core.DrawCommand::PushRoundedClip(rect) =>
-      @core.DrawCommand::PushRoundedClip(
-        webgpu_offset_rounded_rect(rect, dx~, dy~),
-      )
-    @core.DrawCommand::PushTransform(transform) =>
-      @core.DrawCommand::PushTransform({
+    DrawText(run) =>
+      DrawText({ ..run, frame: webgpu_offset_rect(run.frame, dx~, dy~), })
+    DrawImage(run) =>
+      DrawImage({ ..run, frame: webgpu_offset_rect(run.frame, dx~, dy~), })
+    PushClip(rect) => PushClip(webgpu_offset_rect(rect, dx~, dy~))
+    PushRoundedClip(rect) =>
+      PushRoundedClip(webgpu_offset_rounded_rect(rect, dx~, dy~))
+    PushTransform(transform) =>
+      PushTransform({
         ..transform,
         tx: transform.tx + dx,
         ty: transform.ty + dy,
       })
-    @core.DrawCommand::PushLayer(layer) =>
-      @core.DrawCommand::PushLayer({
+    PushLayer(layer) =>
+      PushLayer({
         ..layer,
         mask: webgpu_offset_layer_mask(layer.mask, dx~, dy~),
       })
-    @core.DrawCommand::BeginRetainedLayer(spec) =>
-      @core.DrawCommand::BeginRetainedLayer({
+    BeginRetainedLayer(spec) =>
+      BeginRetainedLayer({
         ..spec,
         frame: webgpu_offset_rect(spec.frame, dx~, dy~),
       })
-    @core.DrawCommand::DrawPath(path) =>
-      @core.DrawCommand::DrawPath({
+    DrawPath(path) =>
+      DrawPath({
         ..path,
         verbs: path.verbs.map(verb => webgpu_offset_path_verb(verb, dx~, dy~)),
         fill: webgpu_offset_optional_brush(path.fill, dx~, dy~),
         stroke: webgpu_offset_optional_brush(path.stroke, dx~, dy~),
       })
-    @core.DrawCommand::DrawShaderEffect(spec) =>
-      @core.DrawCommand::DrawShaderEffect({
+    DrawShaderEffect(spec) =>
+      DrawShaderEffect({
         ..spec,
         frame: webgpu_offset_rect(spec.frame, dx~, dy~),
         fallback: webgpu_offset_brush(spec.fallback, dx~, dy~),
@@ -305,7 +284,7 @@ fn webgpu_offset_rounded_rect(
   dx~ : Double,
   dy~ : Double,
 ) -> @core.RoundedRect {
-  { ..rect, rect: webgpu_offset_rect(rect.rect, dx~, dy~) }
+  { ..rect, rect: webgpu_offset_rect(rect.rect, dx~, dy~), }
 }
 
 ///|
@@ -315,11 +294,9 @@ fn webgpu_offset_layer_mask(
   dy~ : Double,
 ) -> @core.LayerMask {
   match mask {
-    @core.LayerMask::NoMask => mask
-    @core.LayerMask::RectMask(rect) =>
-      @core.LayerMask::RectMask(webgpu_offset_rect(rect, dx~, dy~))
-    @core.LayerMask::RoundedMask(rect) =>
-      @core.LayerMask::RoundedMask(webgpu_offset_rounded_rect(rect, dx~, dy~))
+    NoMask => mask
+    RectMask(rect) => RectMask(webgpu_offset_rect(rect, dx~, dy~))
+    RoundedMask(rect) => RoundedMask(webgpu_offset_rounded_rect(rect, dx~, dy~))
   }
 }
 
@@ -330,18 +307,16 @@ fn webgpu_offset_path_verb(
   dy~ : Double,
 ) -> @core.PathVerb {
   match verb {
-    @core.PathVerb::Close => verb
-    @core.PathVerb::MoveTo(point) =>
-      @core.PathVerb::MoveTo(webgpu_offset_point(point, dx~, dy~))
-    @core.PathVerb::LineTo(point) =>
-      @core.PathVerb::LineTo(webgpu_offset_point(point, dx~, dy~))
-    @core.PathVerb::QuadTo(c, point) =>
-      @core.PathVerb::QuadTo(
+    Close => verb
+    MoveTo(point) => MoveTo(webgpu_offset_point(point, dx~, dy~))
+    LineTo(point) => LineTo(webgpu_offset_point(point, dx~, dy~))
+    QuadTo(c, point) =>
+      QuadTo(
         webgpu_offset_point(c, dx~, dy~),
         webgpu_offset_point(point, dx~, dy~),
       )
-    @core.PathVerb::CubicTo(c1, c2, point) =>
-      @core.PathVerb::CubicTo(
+    CubicTo(c1, c2, point) =>
+      CubicTo(
         webgpu_offset_point(c1, dx~, dy~),
         webgpu_offset_point(c2, dx~, dy~),
         webgpu_offset_point(point, dx~, dy~),
@@ -356,15 +331,15 @@ fn webgpu_offset_brush(
   dy~ : Double,
 ) -> @core.Brush {
   match brush {
-    @core.Brush::Solid(_) => brush
-    @core.Brush::LinearGradient(spec) =>
-      @core.Brush::LinearGradient({
+    Solid(_) => brush
+    LinearGradient(spec) =>
+      LinearGradient({
         ..spec,
         start: webgpu_offset_point(spec.start, dx~, dy~),
         end: webgpu_offset_point(spec.end, dx~, dy~),
       })
-    @core.Brush::RadialGradient(spec) =>
-      @core.Brush::RadialGradient({
+    RadialGradient(spec) =>
+      RadialGradient({
         ..spec,
         center: webgpu_offset_point(spec.center, dx~, dy~),
       })

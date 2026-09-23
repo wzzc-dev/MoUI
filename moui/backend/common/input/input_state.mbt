@@ -13,7 +13,7 @@ pub fn InputState::new(
   modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
   contract? : @backend_host.HostInputContract = @backend_host.HostInputContract::new(),
 ) -> InputState {
-  { focused, modifiers, contract }
+  { focused, modifiers, contract, }
 }
 
 ///|
@@ -57,7 +57,7 @@ pub fn InputState::focus_event(
   if self.contract.capabilities.focus {
     self.focused = focused
     Some(
-      @backend_host.Event::Focus(
+      Focus(
         @backend_host.HostFocusEvent::new(focused~, pointer_cancel_position~),
       ),
     )
@@ -76,7 +76,7 @@ pub fn InputState::keyboard_event(
 ) -> @backend_host.Event? {
   if self.contract.capabilities.keyboard {
     Some(
-      @backend_host.Event::Keyboard(
+      Keyboard(
         @core.KeyboardEvent::new(
           key~,
           text~,
@@ -97,7 +97,7 @@ pub fn InputState::text_event(
   event : @core.TextInputEvent,
 ) -> @backend_host.Event? {
   if self.focused && self.contract.capabilities.text_input {
-    Some(@backend_host.Event::TextInput(event))
+    Some(TextInput(event))
   } else {
     None
   }
@@ -108,5 +108,5 @@ pub fn InputState::insert_text(
   self : InputState,
   text : String,
 ) -> @backend_host.Event? {
-  self.text_event(@core.TextInputEvent::InsertText(text))
+  self.text_event(InsertText(text))
 }

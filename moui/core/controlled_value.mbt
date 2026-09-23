@@ -14,7 +14,7 @@ pub fn[T, Msg] ControlledValue::new(
   value~ : T,
   changed~ : (T) -> Msg,
 ) -> ControlledValue[T, Msg] {
-  { current: value, changed_message: changed }
+  { current: value, changed_message: changed, }
 }
 
 ///|

@@ -35,12 +35,12 @@ test "weighted spacers center a fixed child horizontally" {
         @views.spacer(min_length=0.0, weight=1.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=10.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=10.0),
   )
@@ -67,12 +67,12 @@ test "weighted spacer pushes a trailing child to the right edge" {
         flex_test_box(width=60.0, height=10.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=10.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=10.0),
   )
@@ -99,12 +99,12 @@ test "weighted spacers center a fixed child vertically in a column" {
         @views.spacer(min_length=0.0, weight=1.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=10.0,
     height=300.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=10.0, height=300.0),
   )
@@ -131,12 +131,12 @@ test "unequal weights split slack proportionally" {
         @views.spacer(min_length=0.0, weight=1.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=10.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=10.0),
   )
@@ -171,12 +171,12 @@ test "View::flexible grows a child to fill remaining space" {
         flex_test_box(width=20.0, height=10.0).flexible(weight=1.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=10.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=10.0),
   )

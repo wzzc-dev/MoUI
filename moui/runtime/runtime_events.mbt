@@ -228,7 +228,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       }
       self.deliver_messages(result.deliveries)
     }
-    AppEvent::PlatformView(id, event) => {
+    PlatformView(id, event) => {
       let result = self.element_tree.root.dispatch_web_view_event(
         id,
         event,
@@ -286,11 +286,10 @@ fn RuntimeState::dispatch_pointer_event(
     self.render_tree.root,
   )
   let release_pointer = match self.animfocus.active_pointer_capture {
-    Some(_) =>
-      event.phase == PointerPhase::Up || event.phase == PointerPhase::Cancel
+    Some(_) => event.phase == Up || event.phase == Cancel
     None => false
   }
-  if event.phase == PointerPhase::Down {
+  if event.phase == Down {
     let previous_focus = self.animfocus.focused_element
     let candidate_focus = self.element_tree.root.find_focusable_at(
       event.position,
@@ -307,7 +306,7 @@ fn RuntimeState::dispatch_pointer_event(
   }
   let result = match self.animfocus.active_pointer_capture {
     Some(target) =>
-      if event.phase == PointerPhase::Down {
+      if event.phase == Down {
         self.element_tree.root.dispatch_pointer(
           event,
           self.render_tree.root,
@@ -357,13 +356,13 @@ fn RuntimeState::dispatch_pointer_event(
     Some(target) => ignore(self.commit_focus(Some(target)))
     None => ()
   }
-  if event.phase == PointerPhase::Down {
+  if event.phase == Down {
     // Standard controls report `captured` on a handled Down. Retain the
     // focusable hit target so the matching Up reaches the same element even
     // if browser focus/semantics updates repaint the tree between DOM events.
     // A control with an explicit local capture keeps precedence.
     self.animfocus.active_pointer_capture = match
-      self.element_tree.root.active_pointer_capture_id(PointerPhase::Move) {
+      self.element_tree.root.active_pointer_capture_id(Move) {
       Some(target) => Some(target)
       None =>
         if result.captured {
@@ -375,8 +374,7 @@ fn RuntimeState::dispatch_pointer_event(
           None
         }
     }
-  } else if event.phase == PointerPhase::Up ||
-    event.phase == PointerPhase::Cancel {
+  } else if event.phase == Up || event.phase == Cancel {
     self.animfocus.active_pointer_capture = None
   }
   self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
@@ -398,7 +396,7 @@ fn RuntimeState::dispatch_pointer_event(
     } else {
       result.captured || result.changed || result.activated
     },
-    capture_pointer: event.phase == PointerPhase::Down && result.captured,
+    capture_pointer: event.phase == Down && result.captured,
     release_pointer,
   }
   self.deliver_messages(result.deliveries)

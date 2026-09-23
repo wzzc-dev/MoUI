@@ -21,8 +21,8 @@ pub(all) struct CellAttrs {
 ///|
 pub fn CellAttrs::default() -> CellAttrs {
   {
-    fg: TermColor::Default,
-    bg: TermColor::Default,
+    fg: Default,
+    bg: Default,
     bold: false,
     dim: false,
     italic: false,
@@ -91,7 +91,7 @@ pub(all) struct Cell {
 
 ///|
 pub fn blank_cell(attrs : CellAttrs) -> Cell {
-  { ch: " ", width: 1, attrs }
+  { ch: " ", width: 1, attrs, }
 }
 
 ///|
@@ -137,7 +137,7 @@ pub fn TermRow::runs(self : TermRow) -> Array[(String, Int, CellAttrs)] {
   // 裁剪尾部无背景 run 的空格后缀(渲染无意义)
   if out.length() > 0 {
     let (tail, tail_width, tail_attrs) = out[out.length() - 1]
-    if tail_attrs.bg == TermColor::Default {
+    if tail_attrs.bg == Default {
       let trimmed = trim_trailing_spaces(tail)
       if trimmed.length() == 0 {
         ignore(out.pop())

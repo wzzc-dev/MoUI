@@ -10,7 +10,7 @@ pub struct ScanlineRasterizer {
 /// Create a new scanline rasterizer
 pub fn ScanlineRasterizer::new(width : Int, height : Int) -> ScanlineRasterizer {
   let size = width * height * 4 // RGBA
-  { width, height, pixels: FixedArray::make(size, 0) }
+  { width, height, pixels: FixedArray::make(size, 0), }
 }
 
 ///|

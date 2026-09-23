@@ -7,7 +7,7 @@ pub fn ImageResourceLoadCompletion::ready(
 ) -> ImageResourceLoadCompletion {
   {
     source,
-    status: ImageResourceLoadCompletionStatus::ImageLoadReady,
+    status: ImageLoadReady,
     width,
     height,
     diagnostic: "",
@@ -30,7 +30,7 @@ pub fn ImageResourceLoadCompletion::ready_decoded_rgba(
 ) -> ImageResourceLoadCompletion {
   {
     source,
-    status: ImageResourceLoadCompletionStatus::ImageLoadReady,
+    status: ImageLoadReady,
     width,
     height,
     diagnostic: "",
@@ -49,7 +49,7 @@ pub fn ImageResourceLoadCompletion::failed(
 ) -> ImageResourceLoadCompletion {
   {
     source,
-    status: ImageResourceLoadCompletionStatus::ImageLoadFailed,
+    status: ImageLoadFailed,
     width: 0,
     height: 0,
     diagnostic,
@@ -64,7 +64,7 @@ pub fn ImageResourceLoadCompletion::failed(
 pub fn ImageResourceLoadCompletion::has_decoded_rgba_payload(
   self : ImageResourceLoadCompletion,
 ) -> Bool {
-  self.status == ImageResourceLoadCompletionStatus::ImageLoadReady &&
+  self.status == ImageLoadReady &&
   self.width > 0 &&
   self.height > 0 &&
   self.decoded_row_bytes >= self.width * 4 &&

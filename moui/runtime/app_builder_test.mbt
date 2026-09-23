@@ -1,7 +1,10 @@
 ///|
-fn app_builder_test_runtime() -> AppRuntime {
+fn app_builder_test_runtime() -> @runtime.AppRuntime {
   let root : @core.View[Unit] = @views.text("builder test")
-  AppRuntime::new_view(root~, size=@core.Size::new(width=320.0, height=240.0))
+  @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=320.0, height=240.0),
+  )
 }
 
 ///|
@@ -9,15 +12,15 @@ fn app_builder_test_provider(id : String) -> @render.RendererProvider {
   @render.RendererProvider::new(
     id~,
     descriptor=@render.RendererDescriptor::new(
-      backend=@render.RendererBackendKind::SkiaRasterNative,
-      family=@render.RendererFamily::Skia,
-      presentation=@render.RendererPresentationModel::CpuPixelFrame,
-      supported_targets=[@render.RendererTarget::Native],
+      backend=SkiaRasterNative,
+      family=Skia,
+      presentation=CpuPixelFrame,
+      supported_targets=[Native],
       capabilities=[],
       description="app builder test provider",
     ),
     capabilities=() => [],
-    bind=_surface => @render.RendererBindResult::Rejected("not bound"),
+    bind=_surface => Rejected("not bound"),
   )
 }
 
@@ -28,7 +31,7 @@ test "AppBuilder passes ordered providers and window requests to backend" {
   let provider_ids : Array[String] = []
   let requests = @backend_host.WindowRequests::new(pending_count=() => 1)
   let pending_requests = Ref(0)
-  let entry = PlatformEntry::new(id="test", launch=request => {
+  let entry = @runtime.PlatformEntry::new(id="test", launch=request => {
     launched.val = true
     title.val = request.title()
     for provider in request.renderer_providers() {
@@ -36,7 +39,7 @@ test "AppBuilder passes ordered providers and window requests to backend" {
     }
     pending_requests.val = request.window_requests().pending_count()
   })
-  run_app("Builder Test", app_builder_test_runtime())
+  @runtime.run_app("Builder Test", app_builder_test_runtime())
   .render(app_builder_test_provider("first"))
   .render_all([
     app_builder_test_provider("second"),

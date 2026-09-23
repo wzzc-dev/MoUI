@@ -50,7 +50,7 @@ pub fn visible_row_window(
   let stride = row_extent + row_spacing
   if stride <= 0.0 {
     // Degenerate stride: no meaningful windowing; fall back to the full list.
-    return Some({ first_row: 0, last_row: row_count - 1 })
+    return Some({ first_row: 0, last_row: row_count - 1, })
   }
   let scan = if overscan > 0 { overscan } else { 0 }
   let first = (scroll_y / stride).floor().to_int() - scan
@@ -60,5 +60,5 @@ pub fn visible_row_window(
   // Scroll past the content end (transient during request/overscroll):
   // collapse the window onto the last rows instead of returning an empty range.
   let first = if first > last { last } else { first }
-  Some({ first_row: first, last_row: last })
+  Some({ first_row: first, last_row: last, })
 }

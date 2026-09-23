@@ -19,46 +19,33 @@ test "host driver includes focused text commands in context menu" {
     ),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::WriteText(value)
-        ) => {
+        Clipboard(WriteText(value)) => {
           clipboard.val = value
-          @backend_host.HostServiceResponse::ClipboardWritten
+          ClipboardWritten
         }
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadText
-        ) => @backend_host.HostServiceResponse::ClipboardText(clipboard.val)
-        @backend_host.HostServiceRequest::ShowMenu(commands) => {
-          saw_copy_command.val = commands.any(command => {
-            command.intent == @core.CommandIntent::Copy
-          })
-          @backend_host.HostServiceResponse::MenuCommand(
-            @core.CommandIntent::Copy,
-          )
+        Clipboard(ReadText) => ClipboardText(clipboard.val)
+        ShowMenu(commands) => {
+          saw_copy_command.val = commands.any(command => command.intent == Copy)
+          MenuCommand(Copy)
         }
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
+  ignore(driver.dispatch(TextInput(InsertText("hello"))))
   ignore(
     driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::InsertText("hello")),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::Keyboard(
+      Keyboard(
         @core.KeyboardEvent::new(
           key="a",
           modifiers=@core.KeyModifiers::new(meta=true),
@@ -89,27 +76,26 @@ test "host driver disables copy and cut context menu commands without selection"
     capabilities=@backend_host.HostServiceCapabilities::new(menus=true),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::ShowMenu(commands) => {
+        ShowMenu(commands) => {
           for command in commands {
-            if command.intent == @core.CommandIntent::Copy {
+            if command.intent == Copy {
               copy_enabled.val = command.enabled
-            } else if command.intent == @core.CommandIntent::Cut {
+            } else if command.intent == Cut {
               cut_enabled.val = command.enabled
             }
           }
-          @backend_host.HostServiceResponse::Unavailable("cancelled")
+          Unavailable("cancelled")
         }
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
@@ -137,39 +123,34 @@ test "host driver enables copy and cut context menu commands with selection" {
     capabilities=@backend_host.HostServiceCapabilities::new(menus=true),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::ShowMenu(commands) => {
+        ShowMenu(commands) => {
           for command in commands {
-            if command.intent == @core.CommandIntent::Copy {
+            if command.intent == Copy {
               copy_enabled.val = command.enabled
-            } else if command.intent == @core.CommandIntent::Cut {
+            } else if command.intent == Cut {
               cut_enabled.val = command.enabled
             }
           }
-          @backend_host.HostServiceResponse::Unavailable("cancelled")
+          Unavailable("cancelled")
         }
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
+  ignore(driver.dispatch(TextInput(InsertText("hello"))))
   ignore(
     driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::InsertText("hello")),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::Keyboard(
+      Keyboard(
         @core.KeyboardEvent::new(
           key="a",
           modifiers=@core.KeyModifiers::new(meta=true),
@@ -203,34 +184,27 @@ test "host driver context menu pastes unicode into focused text input" {
     ),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadText
-        ) => @backend_host.HostServiceResponse::ClipboardText(clipboard.val)
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::WriteText(value)
-        ) => {
+        Clipboard(ReadText) => ClipboardText(clipboard.val)
+        Clipboard(WriteText(value)) => {
           clipboard.val = value
-          @backend_host.HostServiceResponse::ClipboardWritten
+          ClipboardWritten
         }
-        @backend_host.HostServiceRequest::ShowMenu(commands) => {
+        ShowMenu(commands) => {
           saw_paste_command.val = commands.any(command => {
-            command.intent == @core.CommandIntent::Paste
+            command.intent == Paste
           })
-          @backend_host.HostServiceResponse::MenuCommand(
-            @core.CommandIntent::Paste,
-          )
+          MenuCommand(Paste)
         }
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),

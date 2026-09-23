@@ -1,11 +1,11 @@
 ///|
 test "wgpu web adapter encodes image fit host codes" {
-  inspect(image_fit_host_code(@core.ImageFit::Contain), content="0")
-  inspect(image_fit_host_code(@core.ImageFit::Cover), content="1")
-  inspect(image_fit_host_code(@core.ImageFit::Stretch), content="2")
-  inspect(image_fit_host_code(@core.ImageFit::ScaleDown), content="3")
-  inspect(image_fit_host_code(@core.ImageFit::FitWidth), content="4")
-  inspect(image_fit_host_code(@core.ImageFit::FitHeight), content="5")
+  inspect(image_fit_host_code(Contain), content="0")
+  inspect(image_fit_host_code(Cover), content="1")
+  inspect(image_fit_host_code(Stretch), content="2")
+  inspect(image_fit_host_code(ScaleDown), content="3")
+  inspect(image_fit_host_code(FitWidth), content="4")
+  inspect(image_fit_host_code(FitHeight), content="5")
 }
 
 ///|
@@ -35,7 +35,7 @@ test "wgpu web adapter routes radial rounded brush through radial payload" {
     ),
     @core.Rect::new(x=10.0, y=6.0, width=32.0, height=18.0),
   )
-  guard payload is RoundedBrushHostPayload::RadialGradientPayload(radial) else {
+  guard payload is RadialGradientPayload(radial) else {
     fail("expected radial rounded brush to use radial host payload")
   }
   assert_true(radial.center == @core.Point::new(x=14.0, y=11.0))
@@ -50,7 +50,7 @@ test "wgpu web adapter keeps solid rounded brush on solid host payload" {
     @core.Brush::solid(@core.Color::blue()),
     @core.Rect::new(x=10.0, y=6.0, width=32.0, height=18.0),
   )
-  guard payload is RoundedBrushHostPayload::SolidColor(color) else {
+  guard payload is SolidColor(color) else {
     fail("expected solid rounded brush to keep solid host payload")
   }
   assert_true(color == @core.Color::blue())
@@ -75,7 +75,7 @@ test "wgpu web host derives long text carets from one measured width" {
     0.01,
   )
   let clamped = host_text_layout_from_measured_width(
-    { ..input, max_width: Some(320.0) },
+    { ..input, max_width: Some(320.0), },
     24000.0,
   )
   inspect(clamped.size.width, content="320")

@@ -12,7 +12,7 @@ priv struct ThrowawayState {
 }
 
 ///|
-let throwaway_state : ThrowawayState = { binds: 0 }
+let throwaway_state : ThrowawayState = { binds: 0, }
 
 ///|
 pub fn throwaway_bind_count() -> Int {
@@ -34,17 +34,17 @@ pub fn throwaway_provider() -> @render.RendererProvider {
   @render.RendererProvider::new(
     id="throwaway",
     descriptor=@render.RendererDescriptor::new(
-      backend=@render.RendererBackendKind::SkiaRasterNative,
-      family=@render.RendererFamily::Skia,
-      presentation=@render.RendererPresentationModel::CpuPixelFrame,
-      supported_targets=[@render.RendererTarget::Native],
+      backend=SkiaRasterNative,
+      family=Skia,
+      presentation=CpuPixelFrame,
+      supported_targets=[Native],
       capabilities=[],
       description="throwaway open-extension renderer",
     ),
     capabilities=() => [],
     bind=_surface => {
       throwaway_state.binds = throwaway_state.binds + 1
-      @render.RendererBindResult::Bound(throwaway_session())
+      Bound(throwaway_session())
     },
   )
 }

@@ -109,12 +109,12 @@ pub fn PointerEvent::new(
   time_ms? : Double = 0.0,
   modifiers? : KeyModifiers = KeyModifiers::none(),
 ) -> PointerEvent {
-  { position, phase, button, wheel_delta, time_ms, modifiers }
+  { position, phase, button, wheel_delta, time_ms, modifiers, }
 }
 
 ///|
 pub fn KeyModifiers::none() -> KeyModifiers {
-  { shift: false, control: false, alt: false, meta: false }
+  { shift: false, control: false, alt: false, meta: false, }
 }
 
 ///|
@@ -124,7 +124,7 @@ pub fn KeyModifiers::new(
   alt? : Bool = false,
   meta? : Bool = false,
 ) -> KeyModifiers {
-  { shift, control, alt, meta }
+  { shift, control, alt, meta, }
 }
 
 ///|
@@ -135,17 +135,17 @@ pub fn KeyboardEvent::new(
   repeat? : Bool = false,
   modifiers? : KeyModifiers = KeyModifiers::none(),
 ) -> KeyboardEvent {
-  { key, text, pressed, repeat, modifiers }
+  { key, text, pressed, repeat, modifiers, }
 }
 
 ///|
 pub fn TextRange::new(start~ : Int, end~ : Int) -> TextRange {
-  { start, end }
+  { start, end, }
 }
 
 ///|
 pub fn TextRange::collapsed(index : Int) -> TextRange {
-  { start: index, end: index }
+  { start: index, end: index, }
 }
 
 ///|
@@ -153,7 +153,7 @@ pub fn TextRange::normalized(self : TextRange) -> TextRange {
   if self.start <= self.end {
     self
   } else {
-    { start: self.end, end: self.start }
+    { start: self.end, end: self.start, }
   }
 }
 
@@ -167,7 +167,7 @@ pub fn CompositionUpdate::new(
   text~ : String,
   cursor? : TextRange? = None,
 ) -> CompositionUpdate {
-  { text, cursor }
+  { text, cursor, }
 }
 
 ///|
@@ -186,5 +186,5 @@ pub fn DragDropEvent::new(
   paths? : Array[String] = [],
   position? : Point? = None,
 ) -> DragDropEvent {
-  { phase, paths, position }
+  { phase, paths, position, }
 }

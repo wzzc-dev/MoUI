@@ -37,9 +37,7 @@ fn append_visual_item(
     state~,
     size~,
   )
-  items.push(
-    NativeDrawItem::NativeVisual(start, vertices.length() - start, scissor),
-  )
+  items.push(NativeVisual(start, vertices.length() - start, scissor))
 }
 
 ///|
@@ -96,7 +94,7 @@ fn append_image_item(
   }
   let start = vertices.length()
   items.push(
-    NativeDrawItem::NativeImage(start, vertices.length() - start, scissor, {
+    NativeImage(start, vertices.length() - start, scissor, {
       source: run.source,
       frame: run.frame,
       opacity: clamp_opacity(run.opacity) * state.opacity,
@@ -129,7 +127,7 @@ fn append_path_item(
   }
   let count = vertices.length() - start
   if count > 0 {
-    items.push(NativeDrawItem::NativeVisual(start, count, scissor))
+    items.push(NativeVisual(start, count, scissor))
   }
 }
 
@@ -320,15 +318,15 @@ fn push_path_visual_vertex(
 ///|
 fn visual_gradient(brush : @core.Brush) -> @core.LinearGradientSpec {
   match brush {
-    @core.Brush::Solid(color) =>
+    Solid(color) =>
       @core.LinearGradientSpec::new(
         start=@core.Point::new(x=0.0, y=0.0),
         end=@core.Point::new(x=1.0, y=0.0),
         start_color=color,
         end_color=color,
       )
-    @core.Brush::LinearGradient(gradient) => gradient
-    @core.Brush::RadialGradient(gradient) =>
+    LinearGradient(gradient) => gradient
+    RadialGradient(gradient) =>
       @core.LinearGradientSpec::new(
         start=gradient.center,
         end=@core.Point::new(
@@ -344,7 +342,7 @@ fn visual_gradient(brush : @core.Brush) -> @core.LinearGradientSpec {
 ///|
 fn visual_brush_kind(brush : @core.Brush) -> Double {
   match brush {
-    @core.Brush::RadialGradient(_) => 1.0
+    RadialGradient(_) => 1.0
     _ => 0.0
   }
 }
@@ -356,7 +354,7 @@ fn visual_brush_start_x(
   rect : @core.Rect,
 ) -> Double {
   match brush {
-    @core.Brush::RadialGradient(radial) => radial.center.x - rect.origin.x
+    RadialGradient(radial) => radial.center.x - rect.origin.x
     _ => gradient.start.x - rect.origin.x
   }
 }
@@ -368,7 +366,7 @@ fn visual_brush_start_y(
   rect : @core.Rect,
 ) -> Double {
   match brush {
-    @core.Brush::RadialGradient(radial) => radial.center.y - rect.origin.y
+    RadialGradient(radial) => radial.center.y - rect.origin.y
     _ => gradient.start.y - rect.origin.y
   }
 }
@@ -380,7 +378,7 @@ fn visual_brush_end_x(
   rect : @core.Rect,
 ) -> Double {
   match brush {
-    @core.Brush::RadialGradient(radial) => radial.radius.max(1.0)
+    RadialGradient(radial) => radial.radius.max(1.0)
     _ => gradient.end.x - rect.origin.x
   }
 }
@@ -392,7 +390,7 @@ fn visual_brush_end_y(
   rect : @core.Rect,
 ) -> Double {
   match brush {
-    @core.Brush::RadialGradient(_) => 0.0
+    RadialGradient(_) => 0.0
     _ => gradient.end.y - rect.origin.y
   }
 }

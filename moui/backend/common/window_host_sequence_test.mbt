@@ -26,7 +26,7 @@ test "window host sequence: open, present, close with stale and cross-window int
     _complete,
   ) => Some(() => trace.push("image-cancel")))
   assert_true(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -37,7 +37,7 @@ test "window host sequence: open, present, close with stale and cross-window int
     ),
   )
   assert_true(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -47,7 +47,7 @@ test "window host sequence: open, present, close with stale and cross-window int
     ),
   )
   assert_false(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -61,7 +61,7 @@ test "window host sequence: open, present, close with stale and cross-window int
 
   // present
   ignore(
-    run_window_redraw(
+    @common.run_window_redraw(
       lifecycle,
       frames,
       images,
@@ -74,14 +74,14 @@ test "window host sequence: open, present, close with stale and cross-window int
 
   // close (first): teardown follows the owner order exactly once; duplicate
   // dispose calls are no-ops. The shared services stay open (second lives).
-  dispose_window(lifecycle, frames, images, services, first)
-  dispose_window(lifecycle, frames, images, services, first)
+  @common.dispose_window(lifecycle, frames, images, services, first)
+  @common.dispose_window(lifecycle, frames, images, services, first)
   assert_eq(trace, [
     "renderer", "image-cancel", "renderer", "platform-views", "native-surface",
   ])
   // present after dispose is a no-op (stale completion at workflow level).
   ignore(
-    run_window_redraw(
+    @common.run_window_redraw(
       lifecycle,
       frames,
       images,
@@ -102,7 +102,7 @@ test "window host sequence: open, present, close with stale and cross-window int
 
   // close (second, last window): shared services dispose before the renderer
   // session, per the contract order.
-  dispose_window(lifecycle, frames, images, services, second)
+  @common.dispose_window(lifecycle, frames, images, services, second)
   assert_eq(trace, [
     "renderer", "image-cancel", "renderer", "platform-views", "native-surface", "services",
     "renderer", "platform-views", "native-surface",

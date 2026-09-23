@@ -17,7 +17,7 @@ test "skia render_frame full damage clears entire surface" {
   let first = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
           @core.Color::black(),
         ),
@@ -69,7 +69,7 @@ test "skia preserves transparent modal scrim pixels" {
   let result = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
           @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.22),
         ),
@@ -109,7 +109,7 @@ test "skia frame contract fully overwrites despite rect damage" {
   let _ = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
           @core.Color::black(),
         ),
@@ -124,14 +124,12 @@ test "skia frame contract fully overwrites despite rect damage" {
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=8.0, y=0.0, width=8.0, height=16.0),
           @core.Color::black(),
         ),
       ],
-      @core.DamageRegion::Rects([
-        @core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0),
-      ]),
+      Rects([@core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0)]),
     ),
   )
   inspect(second.presented, content="true")
@@ -160,9 +158,7 @@ test "skia frame contract fully overwrites despite rect damage" {
   let third = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [],
-      @core.DamageRegion::Rects([
-        @core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0),
-      ]),
+      Rects([@core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0)]),
     ),
   )
   inspect(third.presented, content="true")
@@ -193,7 +189,7 @@ test "skia render_frame empty damage falls back to full clear" {
   let _ = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
           @core.Color::black(),
         ),
@@ -239,13 +235,13 @@ test "skia redraws retained layer outside damage rects instead of retaining" {
   let first = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(spec),
-        @core.DrawCommand::FillRect(
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(spec),
+        FillRect(
           @core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
           @core.Color::black(),
         ),
-        @core.DrawCommand::EndRetainedLayer(spec.key),
+        EndRetainedLayer(spec.key),
       ],
       @core.DamageRegion::full("establish cached layer"),
     ),
@@ -260,14 +256,12 @@ test "skia redraws retained layer outside damage rects instead of retaining" {
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(spec),
-        @core.DrawCommand::FillRect(spec.frame, @core.Color::black()),
-        @core.DrawCommand::EndRetainedLayer(spec.key),
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(spec),
+        FillRect(spec.frame, @core.Color::black()),
+        EndRetainedLayer(spec.key),
       ],
-      @core.DamageRegion::Rects([
-        @core.Rect::new(x=10.0, y=10.0, width=4.0, height=4.0),
-      ]),
+      Rects([@core.Rect::new(x=10.0, y=10.0, width=4.0, height=4.0)]),
     ),
   )
   inspect(second.presented, content="true")
@@ -301,7 +295,7 @@ test "skia frame contract clears hidpi surface despite rect damage" {
     renderer.render_frame(
       skia_test_draw_frame_with_damage(
         [
-          @core.DrawCommand::FillRect(
+          FillRect(
             @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
             @core.Color::black(),
           ),
@@ -313,9 +307,7 @@ test "skia frame contract clears hidpi surface despite rect damage" {
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [],
-      @core.DamageRegion::Rects([
-        @core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0),
-      ]),
+      Rects([@core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0)]),
     ),
   )
   inspect(second.presented, content="true")
@@ -348,7 +340,7 @@ test "skia scope commands never rely on partial damage" {
   let _ = renderer.render_frame(
     skia_test_draw_frame_with_damage(
       [
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
           @core.Color::black(),
         ),
@@ -360,10 +352,8 @@ test "skia scope commands never rely on partial damage" {
   // frame contract clears everything regardless of scope commands.
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
-      [@core.DrawCommand::PushOpacity(1.0), @core.DrawCommand::PopOpacity],
-      @core.DamageRegion::Rects([
-        @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
-      ]),
+      [PushOpacity(1.0), PopOpacity],
+      Rects([@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0)]),
     ),
   )
   inspect(second.presented, content="true")

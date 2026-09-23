@@ -337,8 +337,8 @@ fn sun_find_cached_layer_end(
   let mut depth = 0
   for index in start..<commands.length() {
     match commands[index] {
-      @render_common.PlanOp::BeginRetainedLayer(_) => depth = depth + 1
-      @render_common.PlanOp::EndRetainedLayer(end_key) =>
+      BeginRetainedLayer(_) => depth = depth + 1
+      EndRetainedLayer(end_key) =>
         if depth == 0 {
           if end_key == key {
             return Some(index)
@@ -370,7 +370,7 @@ fn SunRasterRenderer::render_cached_command_range(
   let mut index = start
   while index < end {
     match commands[index] {
-      @render_common.PlanOp::BeginRetainedLayer(spec) =>
+      BeginRetainedLayer(spec) =>
         match sun_find_cached_layer_end(commands, index + 1, spec.key) {
           Some(layer_end) => {
             if !self.render_or_draw_cached_layer(
@@ -393,7 +393,7 @@ fn SunRasterRenderer::render_cached_command_range(
             return false
           }
         }
-      @render_common.PlanOp::EndRetainedLayer(_) => {
+      EndRetainedLayer(_) => {
         self.record_unsupported_command(
           "EndRetainedLayer", "EndRetainedLayer encountered without matching BeginRetainedLayer",
         )
@@ -583,7 +583,7 @@ fn SunRasterRenderer::draw_cached_layer_pixmap(
     frame.size.width,
     frame.size.height,
     @sun_graphics.Paint::new().set_opacity(opacity),
-    @sun_graphics.ImageQuality::Balanced,
+    Balanced,
   )
 }
 

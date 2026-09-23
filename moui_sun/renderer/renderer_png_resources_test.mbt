@@ -1,6 +1,6 @@
 ///|
 test "RendererResources exposes image cache for PNG decode" {
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 2)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 2)
   let icon = @graphics.Pixmap::new(1, 1)
   icon.set_pixel(0, 0, @graphics.Color::green())
   let png = must_renderer_test_png_bytes(icon)
@@ -28,8 +28,8 @@ test "RendererResources exposes image cache for PNG decode" {
 test "Renderer cached PNG image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(3, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 2)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 2)
   let icon = @graphics.Pixmap::new(1, 1)
   icon.set_pixel(0, 0, @graphics.Color::green())
 
@@ -80,7 +80,7 @@ test "Renderer cached PNG image path uses RendererResources" {
       "broken",
       @graphics.Paint::new(),
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 8, 2)) => ()
+    Err(UnexpectedEndOfData(0, 8, 2)) => ()
     _ => abort("expected cached PNG draw decode error")
   }
   assert_true(!resources.contains_image("broken"))
@@ -91,8 +91,8 @@ test "Renderer cached PNG image path uses RendererResources" {
 test "Renderer cached PNG source rect path uses RendererResources" {
   let canvas = @graphics.Canvas::new(3, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let atlas = @graphics.Pixmap::new(3, 1)
   atlas.set_pixel(0, 0, @graphics.Color::red())
   atlas.set_pixel(1, 0, @graphics.Color::green())
@@ -146,7 +146,7 @@ test "Renderer cached PNG source rect path uses RendererResources" {
       resources,
       "atlas-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(scaled) => assert_true(scaled.did_hit_cache())
     Err(_) => abort("expected cached quality PNG source rect hit")
@@ -159,8 +159,8 @@ test "Renderer cached PNG source rect path uses RendererResources" {
 test "Renderer cached PNG tiled image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
 
@@ -225,7 +225,7 @@ test "Renderer cached PNG tiled image path uses RendererResources" {
       "broken-tile-png",
       @graphics.Paint::new(),
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 8, 2)) => ()
+    Err(UnexpectedEndOfData(0, 8, 2)) => ()
     _ => abort("expected cached PNG tiled decode error")
   }
   assert_true(!resources.contains_image("broken-tile-png"))
@@ -237,8 +237,8 @@ test "Renderer cached PNG tiled image path uses RendererResources" {
 test "Renderer cached PNG nine-patch image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(5, 5)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let panel = make_renderer_test_nine_patch_source()
   let insets = @graphics.NinePatchInsets::new(left=1, top=1, right=1, bottom=1)
 
@@ -253,7 +253,7 @@ test "Renderer cached PNG nine-patch image path uses RendererResources" {
       resources,
       "panel-png",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -279,7 +279,7 @@ test "Renderer cached PNG nine-patch image path uses RendererResources" {
       resources,
       "panel-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => {
       assert_true(!second.did_decode_pixmap())
@@ -303,9 +303,9 @@ test "Renderer cached PNG nine-patch image path uses RendererResources" {
       resources,
       "broken-panel-png",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 8, 2)) => ()
+    Err(UnexpectedEndOfData(0, 8, 2)) => ()
     _ => abort("expected cached PNG nine-patch decode error")
   }
   assert_true(!resources.contains_image("broken-panel-png"))
@@ -315,8 +315,8 @@ test "Renderer cached PNG nine-patch image path uses RendererResources" {
 test "Renderer sampled cached PNG image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let sprite = make_renderer_test_tile_source()
 
   match
@@ -329,7 +329,7 @@ test "Renderer sampled cached PNG image path uses RendererResources" {
       resources,
       "sprite-png",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -350,7 +350,7 @@ test "Renderer sampled cached PNG image path uses RendererResources" {
       resources,
       "sprite-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => assert_true(second.did_hit_cache())
     Err(_) => abort("expected cached quality PNG hit")
@@ -370,7 +370,7 @@ test "Renderer sampled cached PNG image path uses RendererResources" {
       resources,
       "sprite-png",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(rect) => assert_true(rect.did_hit_cache())
     Err(_) => abort("expected cached sampled PNG source rect hit")
@@ -386,7 +386,7 @@ test "Renderer sampled cached PNG image path uses RendererResources" {
       resources,
       "sprite-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(rect) => assert_true(rect.did_hit_cache())
     Err(_) => abort("expected cached quality PNG source rect hit")
@@ -402,8 +402,8 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
   canvas.set_transform(@graphics.Transform::translate(tx=1.0, ty=0.0))
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
   let full_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
   let green_rect = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
@@ -418,7 +418,7 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "tile-transform-png",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -442,7 +442,7 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "tile-transform-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => assert_true(second.did_hit_cache())
     Err(_) => abort("expected cached transformed quality PNG hit")
@@ -462,7 +462,7 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "tile-transform-png",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(rect) => assert_true(rect.did_hit_cache())
     Err(_) => abort("expected cached transformed sampled PNG source rect hit")
@@ -481,7 +481,7 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "tile-transform-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(rect) => assert_true(rect.did_hit_cache())
     Err(_) => abort("expected cached transformed quality PNG source rect hit")
@@ -500,9 +500,9 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "broken-transform-png",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 8, 2)) => ()
+    Err(UnexpectedEndOfData(0, 8, 2)) => ()
     _ => abort("expected cached transformed PNG decode error")
   }
   assert_true(!resources.contains_image("broken-transform-png"))
@@ -519,9 +519,9 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "broken-transform-quality-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 8, 2)) => ()
+    Err(UnexpectedEndOfData(0, 8, 2)) => ()
     _ => abort("expected cached transformed quality PNG decode error")
   }
   assert_true(!resources.contains_image("broken-transform-quality-png"))
@@ -539,9 +539,9 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "broken-transform-quality-png-rect",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 8, 2)) => ()
+    Err(UnexpectedEndOfData(0, 8, 2)) => ()
     _ => abort("expected cached transformed quality PNG rect decode error")
   }
   assert_true(!resources.contains_image("broken-transform-quality-png-rect"))
@@ -558,7 +558,7 @@ test "Renderer cached PNG transformed image path uses RendererResources" {
       resources,
       "tile-transform-quality-png",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(quality) => {
       assert_true(quality.did_decode_pixmap())

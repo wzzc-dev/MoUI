@@ -54,10 +54,10 @@ pub fn[Msg] table(
       )
     }
     let base = @container.container(
-      @layout.column(rendered_rows, spacing=0.0, align=@style.CrossAlign::Start),
+      @layout.column(rendered_rows, spacing=0.0, align=Start),
       width=table_width,
       height=row_height * (rows.length() + 1).to_double(),
-      variant=@style.ContainerVariant::Base,
+      variant=Base,
       theme=resolved_theme,
       padding=0.0,
     )

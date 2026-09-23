@@ -94,7 +94,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("unknown argument: " + value)
     }
   }
-  Ok({ input, display_input, out, check, help })
+  Ok({ input, display_input, out, check, help, })
 }
 
 ///|
@@ -421,7 +421,7 @@ fn reject_duplicate_json_keys(
   text : String,
   label : String,
 ) -> Result[Unit, String] {
-  let scanner = { chars: text.to_array(), cursor: 0 }
+  let scanner = { chars: text.to_array(), cursor: 0, }
   scan_json_value_for_duplicate_keys(scanner, label)
 }
 
@@ -467,7 +467,7 @@ fn parse_manifest(
     catalog_paths.push(resolved)
   }
   catalog_paths.sort_by((left, right) => left.lexical_compare(right))
-  Ok({ path, catalogs: catalog_paths })
+  Ok({ path, catalogs: catalog_paths, })
 }
 
 ///|
@@ -490,7 +490,7 @@ fn validate_plural_forms(
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  Ok({ key: "", one: Some(one), other: Some(other) })
+  Ok({ key: "", one: Some(one), other: Some(other), })
 }
 
 ///|
@@ -547,7 +547,7 @@ fn parse_catalog(path : String, text : String) -> Result[SourceCatalog, String] 
         if text == "" {
           return Err(path + ".messages." + key + " must not be empty")
         }
-        { key, one: Some(text), other: None }
+        { key, one: Some(text), other: None, }
       }
       Json::Object(plural) => {
         let parsed_plural = match
@@ -555,7 +555,7 @@ fn parse_catalog(path : String, text : String) -> Result[SourceCatalog, String] 
           Ok(value) => value
           Err(message) => return Err(message)
         }
-        { key, one: parsed_plural.one, other: parsed_plural.other }
+        { key, one: parsed_plural.one, other: parsed_plural.other, }
       }
       _ =>
         return Err(
@@ -564,7 +564,7 @@ fn parse_catalog(path : String, text : String) -> Result[SourceCatalog, String] 
     }
     messages.push(message)
   }
-  Ok({ locale, path, messages })
+  Ok({ locale, path, messages, })
 }
 
 ///|

@@ -32,7 +32,7 @@ test "click on the first visual line of a wrapped source line stays inside the l
   let width = 752.0
   let frame = @core.Rect::new(x=0.0, y=0.0, width=752.0, height=viewport)
   let scroll_y = 5000.0
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let window = markdown_session_visible_window(
     session,
     selection,

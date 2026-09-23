@@ -214,11 +214,11 @@ priv struct GltfAccessorJson {
 ///|
 impl @json.FromJson for GltfAccessorJson with fn from_json(json, path) {
   guard json is Object(fields) else {
-    raise @json.JsonDecodeError((path, "accessor must be an object"))
+    raise JsonDecodeError((path, "accessor must be an object"))
   }
   let kind_json = match fields.get("type") {
     Some(value) => value
-    None => raise @json.JsonDecodeError((path, "accessor.type is required"))
+    None => raise JsonDecodeError((path, "accessor.type is required"))
   }
   {
     bufferView: optional_field(fields, "bufferView", path),
@@ -238,7 +238,7 @@ fn object_fields(
 ) -> Map[String, Json] raise @json.JsonDecodeError {
   match json {
     Object(fields) => fields
-    _ => raise @json.JsonDecodeError((path, "expected object"))
+    _ => raise JsonDecodeError((path, "expected object"))
   }
 }
 
@@ -250,7 +250,7 @@ fn[T : @json.FromJson] required_field(
 ) -> T raise @json.JsonDecodeError {
   match fields.get(key) {
     Some(value) => @json.from_json(value, path=path.add_key(key))
-    None => raise @json.JsonDecodeError((path, "missing field " + key))
+    None => raise JsonDecodeError((path, "missing field " + key))
   }
 }
 
@@ -623,38 +623,38 @@ pub fn GltfDocument::scene_count(self : GltfDocument) -> Int {
 ///|
 pub fn parse_glb(bytes : Bytes) -> GltfDocument raise GltfError {
   if bytes.length() < 12 {
-    raise GltfError::EmptyInput
+    raise EmptyInput
   }
   if bytes[0] != b'g' ||
     bytes[1] != b'l' ||
     bytes[2] != b'T' ||
     bytes[3] != b'F' {
-    raise GltfError::InvalidMagic
+    raise InvalidMagic
   }
   let version = read_u32_le(bytes, 4)
   if version != 2 {
-    raise GltfError::UnsupportedVersion(version)
+    raise UnsupportedVersion(version)
   }
   let declared_length = read_u32_le(bytes, 8)
   if declared_length < 12 || declared_length > bytes.length() {
-    raise GltfError::InvalidDeclaredLength
+    raise InvalidDeclaredLength
   }
   let mut offset = 12
   let mut json_bytes : Bytes? = None
   let mut binary : Bytes? = None
   while offset < declared_length {
     if offset + 8 > declared_length {
-      raise GltfError::TruncatedChunk
+      raise TruncatedChunk
     }
     let chunk_length = read_u32_le(bytes, offset)
     let chunk_type = read_u32_le(bytes, offset + 4)
     if chunk_length % 4 != 0 {
-      raise GltfError::TruncatedChunk
+      raise TruncatedChunk
     }
     let chunk_start = offset + 8
     let chunk_end = chunk_start + chunk_length
     if chunk_end > declared_length || chunk_end > bytes.length() {
-      raise GltfError::TruncatedChunk
+      raise TruncatedChunk
     }
     if chunk_type == 0x4E4F534A {
       if json_bytes is None {
@@ -669,10 +669,10 @@ pub fn parse_glb(bytes : Bytes) -> GltfDocument raise GltfError {
   }
   let json_chunk = match json_bytes {
     Some(value) => value
-    None => raise GltfError::MissingJsonChunk
+    None => raise MissingJsonChunk
   }
   let json = @utf8.decode(json_chunk[:], ignore_bom=true) catch {
-    _ => raise GltfError::InvalidJson("JSON chunk is not valid UTF-8")
+    _ => raise InvalidJson("JSON chunk is not valid UTF-8")
   }
   parse_gltf_json(json, binary~)
 }
@@ -683,10 +683,10 @@ pub fn parse_gltf_json(
   binary? : Bytes? = None,
 ) -> GltfDocument raise GltfError {
   let root : GltfRoot = @json.from_json(@json.parse(json)) catch {
-    err => raise GltfError::InvalidJson(err.to_string())
+    err => raise InvalidJson(err.to_string())
   }
   if root.asset.version != "2.0" {
-    raise GltfError::UnsupportedAssetVersion(root.asset.version)
+    raise UnsupportedAssetVersion(root.asset.version)
   }
   {
     json,

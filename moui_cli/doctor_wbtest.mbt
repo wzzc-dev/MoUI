@@ -74,7 +74,7 @@ test "doctor JSON preserves status, required, and ok fields" {
 ///|
 test "Web-only doctor has no required environment failure under the test toolchain" {
   let report = match
-    run_doctor({ project_root: ".", platforms: ["web"], all: false }) {
+    run_doctor({ project_root: ".", platforms: ["web"], all: false, }) {
     Ok(report) => report
     Err(message) => fail(message)
   }
@@ -94,7 +94,7 @@ test "Web-only doctor has no required environment failure under the test toolcha
 ///|
 test "doctor rejects unsupported platform names" {
   inspect(
-    run_doctor({ project_root: ".", platforms: ["plan9"], all: false })
+    run_doctor({ project_root: ".", platforms: ["plan9"], all: false, })
     is Err(_),
     content="true",
   )
@@ -117,7 +117,7 @@ test "doctor rejects an invalid existing project manifest" {
       fail("could not write invalid doctor fixture")
     }
   }
-  let result = run_doctor({ project_root: root, platforms: [], all: false })
+  let result = run_doctor({ project_root: root, platforms: [], all: false, })
   let explicit = run_doctor({
     project_root: root,
     platforms: ["web"],

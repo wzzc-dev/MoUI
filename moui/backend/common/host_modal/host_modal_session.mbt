@@ -37,10 +37,10 @@ pub fn HostModalSession::new(
 ) -> HostModalSession {
   {
     request,
-    state: HostModalSessionState::Pending,
+    state: Pending,
     surface: None,
     close_emitted: false,
-    transform: HostModalInputTransform::{
+    transform: {
       offset: @core.Point::new(x=0.0, y=0.0),
       scale: @core.Point::new(x=1.0, y=1.0),
     },
@@ -65,7 +65,7 @@ pub fn HostModalSession::state(
 pub fn HostModalSession::begin(
   self : HostModalSession,
 ) -> @backend_host.HostModalEvent {
-  @backend_host.HostModalEvent::Pending(
+  Pending(
     self.request.request_id,
     self.request.presentation_id,
     self.request.generation,
@@ -80,11 +80,9 @@ pub fn HostModalSession::apply_result(
   result : @backend_host.HostModalResult,
 ) -> @backend_host.HostModalEvent? {
   match result {
-    @backend_host.HostModalResult::Accepted =>
-      self.accept(request_id, generation)
-    @backend_host.HostModalResult::Rejected(reason) =>
-      self.reject(request_id, generation, reason)
-    @backend_host.HostModalResult::Closed => self.close(request_id, generation)
+    Accepted => self.accept(request_id, generation)
+    Rejected(reason) => self.reject(request_id, generation, reason)
+    Closed => self.close(request_id, generation)
   }
 }
 
@@ -103,16 +101,9 @@ pub fn HostModalSession::accept(
   request_id : Int,
   generation : Int,
 ) -> @backend_host.HostModalEvent? {
-  if self.is_current(request_id, generation) &&
-    self.state is HostModalSessionState::Pending {
-    self.state = HostModalSessionState::Accepted
-    Some(
-      @backend_host.HostModalEvent::Accepted(
-        request_id,
-        self.request.presentation_id,
-        generation,
-      ),
-    )
+  if self.is_current(request_id, generation) && self.state is Pending {
+    self.state = Accepted
+    Some(Accepted(request_id, self.request.presentation_id, generation))
   } else {
     None
   }
@@ -125,17 +116,9 @@ pub fn HostModalSession::reject(
   generation : Int,
   reason : String,
 ) -> @backend_host.HostModalEvent? {
-  if self.is_current(request_id, generation) &&
-    self.state is HostModalSessionState::Pending {
-    self.state = HostModalSessionState::Rejected
-    Some(
-      @backend_host.HostModalEvent::Rejected(
-        request_id,
-        self.request.presentation_id,
-        generation,
-        reason,
-      ),
-    )
+  if self.is_current(request_id, generation) && self.state is Pending {
+    self.state = Rejected
+    Some(Rejected(request_id, self.request.presentation_id, generation, reason))
   } else {
     None
   }
@@ -149,20 +132,14 @@ pub fn HostModalSession::close(
   generation : Int,
 ) -> @backend_host.HostModalEvent? {
   let can_close = match self.state {
-    HostModalSessionState::Pending | HostModalSessionState::Accepted => true
-    HostModalSessionState::Rejected | HostModalSessionState::Closed => false
+    Pending | Accepted => true
+    Rejected | Closed => false
   }
   if self.is_current(request_id, generation) && !self.close_emitted && can_close {
     self.close_emitted = true
-    self.state = HostModalSessionState::Closed
+    self.state = Closed
     self.surface = None
-    Some(
-      @backend_host.HostModalEvent::Closed(
-        request_id,
-        self.request.presentation_id,
-        generation,
-      ),
-    )
+    Some(Closed(request_id, self.request.presentation_id, generation))
   } else {
     None
   }
@@ -174,9 +151,8 @@ pub fn HostModalSession::attach_surface(
   token : String,
   generation : Int,
 ) -> Bool {
-  if generation == self.request.generation &&
-    self.state is HostModalSessionState::Accepted {
-    self.surface = Some(HostModalSurface::{ token, generation })
+  if generation == self.request.generation && self.state is Accepted {
+    self.surface = Some({ token, generation, })
     true
   } else {
     false
@@ -191,7 +167,7 @@ pub fn HostModalSession::attach_surface_event(
 ) -> @backend_host.HostModalEvent? {
   if self.attach_surface(token, generation) {
     Some(
-      @backend_host.HostModalEvent::SurfaceAttached(
+      SurfaceAttached(
         self.request.request_id,
         self.request.presentation_id,
         generation,
@@ -229,7 +205,7 @@ pub fn HostModalSession::detach_surface_event(
 ) -> @backend_host.HostModalEvent? {
   if self.detach_surface(token, generation) {
     Some(
-      @backend_host.HostModalEvent::SurfaceDetached(
+      SurfaceDetached(
         self.request.request_id,
         self.request.presentation_id,
         generation,
@@ -252,7 +228,7 @@ pub fn HostModalSession::set_input_transform(
   offset~ : @core.Point,
   scale~ : @core.Point,
 ) -> Unit {
-  self.transform = HostModalInputTransform::{
+  self.transform = {
     offset,
     scale: @core.Point::new(
       x=if scale.x <= 0.0 { 1.0 } else { scale.x },
@@ -263,7 +239,7 @@ pub fn HostModalSession::set_input_transform(
 
 ///|
 pub fn HostModalSession::is_native_only(self : HostModalSession) -> Bool {
-  self.state is HostModalSessionState::Accepted
+  self.state is Accepted
 }
 
 ///|
@@ -287,19 +263,14 @@ pub fn HostModalSession::route_input(
   event : @core.PointerEvent,
 ) -> @backend_host.HostModalEvent? {
   if self.is_current(request_id, generation) &&
-    self.state is HostModalSessionState::Accepted &&
+    self.state is Accepted &&
     self.surface is Some(_) {
     let transformed = {
       ..event,
       position: self.transform_input(event.position),
     }
     Some(
-      @backend_host.HostModalEvent::Input(
-        request_id,
-        self.request.presentation_id,
-        generation,
-        transformed,
-      ),
+      Input(request_id, self.request.presentation_id, generation, transformed),
     )
   } else {
     None

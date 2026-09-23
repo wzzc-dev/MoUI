@@ -42,7 +42,7 @@ pub async fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
   let fd = packed.to_int() // 低 32 位
   let pid = (packed >> 32).to_int() // 高 32 位
   let raw = raw_fd_from_int(fd)
-  Some({ fd, pid, raw })
+  Some({ fd, pid, raw, })
 }
 
 ///|
@@ -50,7 +50,7 @@ pub async fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
 /// Unix:系统 fd 即整数,直接包装。
 #cfg(not(platform="windows"))
 async fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
-  @raw_fd.RawFd::RawFd(fd)
+  RawFd(fd)
 }
 
 ///|

@@ -68,29 +68,19 @@ pub fn[P : NativePlatformSurface] resolve_surface_route(
   let gpu_route = platform.surface_route()
   let raster_route = SkiaSurfaceRoute::RasterSurfaceRoute
   match requested {
-    NativeRendererMode::SkiaRaster => raster_route
-    NativeRendererMode::SkiaGpu =>
-      if gpu_available {
-        gpu_route
-      } else {
-        raster_route
-      }
-    NativeRendererMode::Auto =>
-      if gpu_available && gpu_promoted {
-        gpu_route
-      } else {
-        raster_route
-      }
+    SkiaRaster => raster_route
+    SkiaGpu => if gpu_available { gpu_route } else { raster_route }
+    Auto => if gpu_available && gpu_promoted { gpu_route } else { raster_route }
   }
 }
 
 ///|
 pub impl NativePlatformSurface for NativeGpuPlatform with fn surface_route(self) {
   match self {
-    MacOS | IOS => SkiaSurfaceRoute::MetalGpuSurfaceRoute
-    Windows => SkiaSurfaceRoute::Direct3DGpuSurfaceRoute
-    Linux | Android => SkiaSurfaceRoute::VulkanGpuSurfaceRoute
-    HarmonyOS => SkiaSurfaceRoute::EglGpuSurfaceRoute
+    MacOS | IOS => MetalGpuSurfaceRoute
+    Windows => Direct3DGpuSurfaceRoute
+    Linux | Android => VulkanGpuSurfaceRoute
+    HarmonyOS => EglGpuSurfaceRoute
   }
 }
 
@@ -116,9 +106,9 @@ pub impl NativePlatformSurface for NativeGpuPlatform with fn platform_label(
 ///|
 pub fn NativeRendererMode::parse(value : String) -> NativeRendererMode? {
   match value.trim().to_lower() {
-    "auto" => Some(NativeRendererMode::Auto)
-    "skia-gpu" => Some(NativeRendererMode::SkiaGpu)
-    "skia-raster" => Some(NativeRendererMode::SkiaRaster)
+    "auto" => Some(Auto)
+    "skia-gpu" => Some(SkiaGpu)
+    "skia-raster" => Some(SkiaRaster)
     _ => None
   }
 }

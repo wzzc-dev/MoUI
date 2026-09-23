@@ -55,16 +55,9 @@ fn append_rich_text_marker_commands(
             radius=rich_text_marker_corner_radius(side),
           )
           commands.push(
-            @core.DrawCommand::FillRoundedRect(
-              rounded,
-              rich_text_marker_accent_color(),
-            ),
+            FillRoundedRect(rounded, rich_text_marker_accent_color()),
           )
-          commands.push(
-            @core.DrawCommand::DrawPath(
-              rich_text_marker_checkmark_path(box, side),
-            ),
-          )
+          commands.push(DrawPath(rich_text_marker_checkmark_path(box, side)))
         }
         false => {
           // Inset by half the stroke so the outline stays inside the square.
@@ -79,11 +72,7 @@ fn append_rich_text_marker_commands(
             radius=rich_text_marker_corner_radius(side),
           )
           commands.push(
-            @core.DrawCommand::StrokeRoundedRect(
-              rounded,
-              rich_text_marker_outline_color(),
-              stroke,
-            ),
+            StrokeRoundedRect(rounded, rich_text_marker_outline_color(), stroke),
           )
         }
       }
@@ -177,13 +166,13 @@ fn rich_text_marker_checkmark_path(
   )
   @core.PathSpec::new(
     verbs=[
-      @core.PathVerb::MoveTo(outer_start),
-      @core.PathVerb::LineTo(miter),
-      @core.PathVerb::LineTo(outer_tip),
-      @core.PathVerb::LineTo(inner_tip),
-      @core.PathVerb::LineTo(inner_elbow),
-      @core.PathVerb::LineTo(inner_start),
-      @core.PathVerb::Close,
+      MoveTo(outer_start),
+      LineTo(miter),
+      LineTo(outer_tip),
+      LineTo(inner_tip),
+      LineTo(inner_elbow),
+      LineTo(inner_start),
+      Close,
     ],
     fill=Some(@core.Brush::solid(@core.Color::white())),
   )

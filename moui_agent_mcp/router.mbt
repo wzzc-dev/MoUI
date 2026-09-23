@@ -171,7 +171,7 @@ fn rpc_result(id : Json, result : Json) -> Json {
 ///|
 fn rpc_id(request : Json) -> Json {
   match request {
-    Json::Object(fields) => fields.get("id").unwrap_or(json_null())
+    Object(fields) => fields.get("id").unwrap_or(json_null())
     _ => json_null()
   }
 }
@@ -179,11 +179,11 @@ fn rpc_id(request : Json) -> Json {
 ///|
 fn rpc_method(request : Json) -> String? {
   match request {
-    Json::Object(fields) =>
+    Object(fields) =>
       match fields.get("jsonrpc") {
-        Some(Json::String("2.0")) =>
+        Some(String("2.0")) =>
           match fields.get("method") {
-            Some(Json::String(method_name)) => Some(method_name)
+            Some(String(method_name)) => Some(method_name)
             _ => None
           }
         _ => None
@@ -234,47 +234,41 @@ fn tool_failure(
 ///|
 fn semantics_action_kind_code(kind : @core.SemanticsActionKind) -> String {
   match kind {
-    @core.SemanticsActionKind::Activate => "activate"
-    @core.SemanticsActionKind::Focus => "focus"
-    @core.SemanticsActionKind::SetText => "set_text"
-    @core.SemanticsActionKind::Submit => "submit"
-    @core.SemanticsActionKind::Scroll => "scroll"
-    @core.SemanticsActionKind::Select => "select"
-    @core.SemanticsActionKind::Expand => "expand"
-    @core.SemanticsActionKind::Collapse => "collapse"
-    @core.SemanticsActionKind::Dismiss => "dismiss"
-    @core.SemanticsActionKind::Increment => "increment"
-    @core.SemanticsActionKind::Decrement => "decrement"
-    @core.SemanticsActionKind::SetNumericValue => "set_numeric_value"
-    @core.SemanticsActionKind::SetSelection => "set_selection"
-    @core.SemanticsActionKind::ShowMenu => "show_menu"
+    Activate => "activate"
+    Focus => "focus"
+    SetText => "set_text"
+    Submit => "submit"
+    Scroll => "scroll"
+    Select => "select"
+    Expand => "expand"
+    Collapse => "collapse"
+    Dismiss => "dismiss"
+    Increment => "increment"
+    Decrement => "decrement"
+    SetNumericValue => "set_numeric_value"
+    SetSelection => "set_selection"
+    ShowMenu => "show_menu"
   }
 }
 
 ///|
 fn semantics_target_json(target : @core.SemanticsTarget) -> Json {
   match target {
-    @core.SemanticsTarget::BySemanticId(id) =>
-      ({ "kind": "semantic_id", "id": id } : Json)
-    @core.SemanticsTarget::ByNodeId(id) =>
-      ({ "kind": "node_id", "id": id } : Json)
+    BySemanticId(id) => ({ "kind": "semantic_id", "id": id } : Json)
+    ByNodeId(id) => ({ "kind": "node_id", "id": id } : Json)
   }
 }
 
 ///|
 fn agent_action_error_details(error : @agent.AgentActionError) -> Json {
   match error {
-    @agent.AgentActionError::HostClosed
-    | @agent.AgentActionError::ReentrantDispatch => Json::empty_object()
-    @agent.AgentActionError::StaleGeneration(expected, current) =>
+    HostClosed | ReentrantDispatch => Json::empty_object()
+    StaleGeneration(expected, current) =>
       ({ "expected": expected, "current": current } : Json)
-    @agent.AgentActionError::TargetNotFound(target)
-    | @agent.AgentActionError::TargetDisabled(target) =>
+    TargetNotFound(target) | TargetDisabled(target) =>
       ({ "target": semantics_target_json(target) } : Json)
-    @agent.AgentActionError::TargetAmbiguous(id) =>
-      ({ "semantic_id": id } : Json)
-    @agent.AgentActionError::ActionUnavailable(target, kind)
-    | @agent.AgentActionError::HandlerRejected(target, kind) =>
+    TargetAmbiguous(id) => ({ "semantic_id": id } : Json)
+    ActionUnavailable(target, kind) | HandlerRejected(target, kind) =>
       (
         {
           "target": semantics_target_json(target),
@@ -335,18 +329,18 @@ fn call_envelope(
   id : Json,
   request : Json,
 ) -> Result[(String, Map[String, Json]), Json] {
-  guard request is Json::Object(fields) else {
+  guard request is Object(fields) else {
     return Err(rpc_error(id, -32600, "Invalid Request"))
   }
-  guard fields.get("params") is Some(Json::Object(params)) else {
+  guard fields.get("params") is Some(Object(params)) else {
     return Err(rpc_error(id, -32602, "Invalid tools/call params object"))
   }
-  guard params.get("name") is Some(Json::String(name)) else {
+  guard params.get("name") is Some(String(name)) else {
     return Err(rpc_error(id, -32602, "Invalid tools/call tool name"))
   }
   let arguments = match params.get("arguments") {
     None => Map([])
-    Some(Json::Object(arguments)) => arguments
+    Some(Object(arguments)) => arguments
     _ =>
       return Err(rpc_error(id, -32602, "Invalid tools/call arguments object"))
   }
@@ -510,7 +504,7 @@ fn decode_read_semantics_invocation_with_codec(
     return Err("read_semantics contains unknown arguments.")
   }
   match decode_since_with_codec(arguments, generation) {
-    Ok(since) => Ok(ToolInvocation::ReadSemantics(since))
+    Ok(since) => Ok(ReadSemantics(since))
     Err(message) => Err(message)
   }
 }
@@ -541,7 +535,7 @@ fn decode_action_request_with_codecs(
       (precondition.decode)(precondition_json),
     ) {
     (Ok(target), Ok(action), Ok(precondition)) =>
-      Ok(ToolInvocation::PerformAction({ target, action, precondition }))
+      Ok(PerformAction({ target, action, precondition, }))
     (Err(message), _, _) => Err(message)
     (_, Err(message), _) => Err(message)
     (_, _, Err(message)) => Err(message)
@@ -553,7 +547,7 @@ fn decode_diagnostics_read_state_invocation(
   arguments : Map[String, Json],
 ) -> Result[ToolInvocation, String] {
   if arguments.length() == 0 {
-    Ok(ToolInvocation::DiagnosticsReadState)
+    Ok(DiagnosticsReadState)
   } else {
     Err("diagnostics_read_state does not accept arguments.")
   }
@@ -564,7 +558,7 @@ fn decode_diagnostics_read_paint_invocation(
   arguments : Map[String, Json],
 ) -> Result[ToolInvocation, String] {
   if arguments.length() == 0 {
-    Ok(ToolInvocation::DiagnosticsReadPaint)
+    Ok(DiagnosticsReadPaint)
   } else {
     Err("diagnostics_read_paint does not accept arguments.")
   }
@@ -578,7 +572,7 @@ fn decode_diagnostics_dispatch_event_invocation(
     return Err("diagnostics_dispatch_event contains unknown arguments.")
   }
   match decode_event_argument(arguments) {
-    Some(event) => Ok(ToolInvocation::DiagnosticsDispatchEvent(event))
+    Some(event) => Ok(DiagnosticsDispatchEvent(event))
     None => Err("Invalid event payload.")
   }
 }
@@ -591,7 +585,7 @@ fn decode_diagnostics_dispatch_command_invocation(
     return Err("diagnostics_dispatch_command contains unknown arguments.")
   }
   match decode_command_argument(arguments) {
-    Some(intent) => Ok(ToolInvocation::DiagnosticsDispatchCommand(intent))
+    Some(intent) => Ok(DiagnosticsDispatchCommand(intent))
     None => Err("Invalid command intent.")
   }
 }
@@ -614,7 +608,7 @@ fn decode_since_with_codec(
 ///|
 fn json_string_field(fields : Map[String, Json], name : String) -> String? {
   match fields.get(name) {
-    Some(Json::String(value)) => Some(value)
+    Some(String(value)) => Some(value)
     _ => None
   }
 }
@@ -637,13 +631,12 @@ fn decode_target_with_codecs(
   match kind {
     "semantic_id" =>
       match (semantic_id.decode)(value) {
-        Ok(id) => Ok(@core.SemanticsTarget::BySemanticId(id))
+        Ok(id) => Ok(BySemanticId(id))
         Err(message) => Err(message)
       }
     "node_id" =>
       match (node_id.decode)(value) {
-        Ok(id) =>
-          Ok(@core.SemanticsTarget::ByNodeId(@core.SemanticsNodeId::new(id)))
+        Ok(id) => Ok(ByNodeId(@core.SemanticsNodeId::new(id)))
         Err(_) => Err("Invalid node_id.")
       }
     _ => Err("Unknown target kind.")
@@ -660,13 +653,13 @@ fn decode_action(
   match kind {
     "activate" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Activate)
+        Ok(Activate)
       } else {
         Err("activate contains unknown fields.")
       }
     "focus" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Focus)
+        Ok(Focus)
       } else {
         Err("focus contains unknown fields.")
       }
@@ -677,12 +670,12 @@ fn decode_action(
           json_string_field(fields, "value"),
         ) {
         (false, _) => Err("set_text contains unknown fields.")
-        (true, Some(value)) => Ok(@core.SemanticsAction::SetText(value))
+        (true, Some(value)) => Ok(SetText(value))
         (true, None) => Err("set_text requires string 'value'.")
       }
     "submit" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Submit)
+        Ok(Submit)
       } else {
         Err("submit contains unknown fields.")
       }
@@ -695,58 +688,58 @@ fn decode_action(
         (false, _) => Err("scroll contains unknown fields.")
         (true, Some(direction)) =>
           match decode_scroll_direction(direction) {
-            Some(value) => Ok(@core.SemanticsAction::Scroll(value))
+            Some(value) => Ok(Scroll(value))
             None => Err("Invalid scroll direction.")
           }
         (true, None) => Err("scroll requires string 'direction'.")
       }
     "select" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Select)
+        Ok(Select)
       } else {
         Err("select contains unknown fields.")
       }
     "expand" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Expand)
+        Ok(Expand)
       } else {
         Err("expand contains unknown fields.")
       }
     "collapse" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Collapse)
+        Ok(Collapse)
       } else {
         Err("collapse contains unknown fields.")
       }
     "dismiss" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Dismiss)
+        Ok(Dismiss)
       } else {
         Err("dismiss contains unknown fields.")
       }
     "increment" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Increment)
+        Ok(Increment)
       } else {
         Err("increment contains unknown fields.")
       }
     "decrement" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::Decrement)
+        Ok(Decrement)
       } else {
         Err("decrement contains unknown fields.")
       }
     "set_numeric_value" =>
       match fields.get("value") {
-        Some(Json::Number(value, repr=_)) if fields_are_exact(fields, [
+        Some(Number(value, repr=_)) if fields_are_exact(fields, [
             "kind", "value",
-          ]) => Ok(@core.SemanticsAction::SetNumericValue(value))
+          ]) => Ok(SetNumericValue(value))
         Some(_) => Err("set_numeric_value requires numeric 'value'.")
         None => Err("set_numeric_value requires numeric 'value'.")
       }
     "set_selection" =>
       match (fields.get("start"), fields.get("end")) {
-        (Some(Json::Number(start, repr=_)), Some(Json::Number(end, repr=_))) if fields_are_exact(
+        (Some(Number(start, repr=_)), Some(Number(end, repr=_))) if fields_are_exact(
             fields,
             ["kind", "start", "end"],
           ) &&
@@ -755,7 +748,7 @@ fn decode_action(
           start == start.to_int().to_double() &&
           end == end.to_int().to_double() =>
           Ok(
-            @core.SemanticsAction::SetSelection(
+            SetSelection(
               @core.TextRange::new(start=start.to_int(), end=end.to_int()),
             ),
           )
@@ -763,7 +756,7 @@ fn decode_action(
       }
     "show_menu" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@core.SemanticsAction::ShowMenu)
+        Ok(ShowMenu)
       } else {
         Err("show_menu contains unknown fields.")
       }
@@ -774,12 +767,12 @@ fn decode_action(
 ///|
 fn decode_scroll_direction(value : String) -> @core.SemanticsScrollDirection? {
   match value {
-    "forward" => Some(@core.SemanticsScrollDirection::Forward)
-    "backward" => Some(@core.SemanticsScrollDirection::Backward)
-    "up" => Some(@core.SemanticsScrollDirection::Up)
-    "down" => Some(@core.SemanticsScrollDirection::Down)
-    "left" => Some(@core.SemanticsScrollDirection::Left)
-    "right" => Some(@core.SemanticsScrollDirection::Right)
+    "forward" => Some(Forward)
+    "backward" => Some(Backward)
+    "up" => Some(Up)
+    "down" => Some(Down)
+    "left" => Some(Left)
+    "right" => Some(Right)
     _ => None
   }
 }
@@ -795,7 +788,7 @@ fn decode_precondition_with_codec(
   match kind {
     "latest" =>
       if fields_are_exact(fields, ["kind"]) {
-        Ok(@agent.AgentGenerationPrecondition::Latest)
+        Ok(Latest)
       } else {
         Err("latest precondition contains unknown fields.")
       }
@@ -809,11 +802,7 @@ fn decode_precondition_with_codec(
         (true, Some(value)) =>
           match (generation.decode)(value) {
             Ok(generation) =>
-              Ok(
-                @agent.AgentGenerationPrecondition::Exact(
-                  @core.SemanticsGeneration::new(generation),
-                ),
-              )
+              Ok(Exact(@core.SemanticsGeneration::new(generation)))
             Err(_) => Err("Invalid exact generation.")
           }
         (true, None) => Err("exact precondition requires string 'generation'.")
@@ -825,11 +814,11 @@ fn decode_precondition_with_codec(
 ///|
 fn agent_semantics_issue_json(issue : @agent.AgentSemanticsIssue) -> Json {
   match issue {
-    @agent.AgentSemanticsIssue::DuplicateSemanticId(id, nodes) =>
+    DuplicateSemanticId(id, nodes) =>
       (
         { "kind": "duplicate_semantic_id", "semantic_id": id, "nodes": nodes } :
         Json)
-    @agent.AgentSemanticsIssue::MissingRelationTarget(source, kind, id) =>
+    MissingRelationTarget(source, kind, id) =>
       (
         {
           "kind": "missing_relation_target",
@@ -837,7 +826,7 @@ fn agent_semantics_issue_json(issue : @agent.AgentSemanticsIssue) -> Json {
           "relation": semantics_relation_kind_code(kind),
           "semantic_id": id,
         } : Json)
-    @agent.AgentSemanticsIssue::AmbiguousRelationTarget(source, kind, id, nodes) =>
+    AmbiguousRelationTarget(source, kind, id, nodes) =>
       (
         {
           "kind": "ambiguous_relation_target",
@@ -852,54 +841,54 @@ fn agent_semantics_issue_json(issue : @agent.AgentSemanticsIssue) -> Json {
 ///|
 fn semantics_relation_kind_code(kind : @core.SemanticsRelationKind) -> String {
   match kind {
-    @core.SemanticsRelationKind::LabelledBy => "labelled_by"
-    @core.SemanticsRelationKind::DescribedBy => "described_by"
-    @core.SemanticsRelationKind::Controls => "controls"
-    @core.SemanticsRelationKind::ErrorMessage => "error_message"
-    @core.SemanticsRelationKind::ActiveDescendant => "active_descendant"
+    LabelledBy => "labelled_by"
+    DescribedBy => "described_by"
+    Controls => "controls"
+    ErrorMessage => "error_message"
+    ActiveDescendant => "active_descendant"
   }
 }
 
 ///|
 fn semantics_role_code(role : @core.SemanticsRole) -> String {
   match role {
-    @core.SemanticsRole::None => "none"
-    @core.SemanticsRole::Text => "text"
-    @core.SemanticsRole::Link => "link"
-    @core.SemanticsRole::Heading => "heading"
-    @core.SemanticsRole::Navigation => "navigation"
-    @core.SemanticsRole::Main => "main"
-    @core.SemanticsRole::Button => "button"
-    @core.SemanticsRole::Checkbox => "checkbox"
-    @core.SemanticsRole::TextField => "text_field"
-    @core.SemanticsRole::List => "list"
-    @core.SemanticsRole::ListItem => "list_item"
-    @core.SemanticsRole::Grid => "grid"
-    @core.SemanticsRole::ScrollView => "scroll_view"
-    @core.SemanticsRole::Switch => "switch"
-    @core.SemanticsRole::Radio => "radio"
-    @core.SemanticsRole::Slider => "slider"
-    @core.SemanticsRole::Progress => "progress"
-    @core.SemanticsRole::Tab => "tab"
-    @core.SemanticsRole::Dialog => "dialog"
-    @core.SemanticsRole::Tooltip => "tooltip"
-    @core.SemanticsRole::Menu => "menu"
-    @core.SemanticsRole::ButtonGroup => "button_group"
-    @core.SemanticsRole::Form => "form"
-    @core.SemanticsRole::FormField => "form_field"
-    @core.SemanticsRole::Tree => "tree"
-    @core.SemanticsRole::TreeItem => "tree_item"
-    @core.SemanticsRole::Group => "group"
-    @core.SemanticsRole::WebView => "web_view"
-    @core.SemanticsRole::Image => "image"
-    @core.SemanticsRole::Alert => "alert"
-    @core.SemanticsRole::Status => "status"
-    @core.SemanticsRole::ComboBox => "combo_box"
-    @core.SemanticsRole::Option => "option"
-    @core.SemanticsRole::Table => "table"
-    @core.SemanticsRole::Row => "row"
-    @core.SemanticsRole::Cell => "cell"
-    @core.SemanticsRole::Separator => "separator"
+    None => "none"
+    Text => "text"
+    Link => "link"
+    Heading => "heading"
+    Navigation => "navigation"
+    Main => "main"
+    Button => "button"
+    Checkbox => "checkbox"
+    TextField => "text_field"
+    List => "list"
+    ListItem => "list_item"
+    Grid => "grid"
+    ScrollView => "scroll_view"
+    Switch => "switch"
+    Radio => "radio"
+    Slider => "slider"
+    Progress => "progress"
+    Tab => "tab"
+    Dialog => "dialog"
+    Tooltip => "tooltip"
+    Menu => "menu"
+    ButtonGroup => "button_group"
+    Form => "form"
+    FormField => "form_field"
+    Tree => "tree"
+    TreeItem => "tree_item"
+    Group => "group"
+    WebView => "web_view"
+    Image => "image"
+    Alert => "alert"
+    Status => "status"
+    ComboBox => "combo_box"
+    Option => "option"
+    Table => "table"
+    Row => "row"
+    Cell => "cell"
+    Separator => "separator"
   }
 }
 
@@ -930,9 +919,9 @@ fn optional_int_json(value : Int?) -> Json {
 ///|
 fn optional_checked_json(value : @core.SemanticsCheckedState?) -> Json {
   match value {
-    Some(@core.SemanticsCheckedState::Unchecked) => "unchecked".to_json()
-    Some(@core.SemanticsCheckedState::Checked) => "checked".to_json()
-    Some(@core.SemanticsCheckedState::Mixed) => "mixed".to_json()
+    Some(Unchecked) => "unchecked".to_json()
+    Some(Checked) => "checked".to_json()
+    Some(Mixed) => "mixed".to_json()
     None => json_null()
   }
 }
@@ -960,9 +949,9 @@ fn semantics_state_json(state : @core.SemanticsState) -> Json {
 ///|
 fn semantics_live_code(value : @core.SemanticsLive) -> String {
   match value {
-    @core.SemanticsLive::Off => "off"
-    @core.SemanticsLive::Polite => "polite"
-    @core.SemanticsLive::Assertive => "assertive"
+    Off => "off"
+    Polite => "polite"
+    Assertive => "assertive"
   }
 }
 
@@ -1009,7 +998,7 @@ fn semantics_node_json(node : @core.SemanticsNode) -> Json {
 ///|
 fn agent_semantics_read_json(read : @agent.AgentSemanticsRead) -> Json {
   match read {
-    @agent.AgentSemanticsRead::Full(snapshot) =>
+    Full(snapshot) =>
       (
         {
           "kind": "full",
@@ -1019,7 +1008,7 @@ fn agent_semantics_read_json(read : @agent.AgentSemanticsRead) -> Json {
           "nodes": snapshot.nodes.map(semantics_node_json),
           "issues": snapshot.issues.map(agent_semantics_issue_json),
         } : Json)
-    @agent.AgentSemanticsRead::Delta(delta) =>
+    Delta(delta) =>
       (
         {
           "kind": "delta",
@@ -1034,7 +1023,7 @@ fn agent_semantics_read_json(read : @agent.AgentSemanticsRead) -> Json {
             accessibility_announcement_json,
           ),
         } : Json)
-    @agent.AgentSemanticsRead::Unchanged(generation) =>
+    Unchanged(generation) =>
       ({ "kind": "unchanged", "generation": generation } : Json)
   }
 }
@@ -1047,44 +1036,40 @@ fn decode_command_argument(
     return None
   }
   match intent {
-    "Activate" => Some(@core.CommandIntent::Activate)
-    "Submit" => Some(@core.CommandIntent::Submit)
-    "Cancel" => Some(@core.CommandIntent::Cancel)
-    "Copy" => Some(@core.CommandIntent::Copy)
-    "Cut" => Some(@core.CommandIntent::Cut)
-    "Paste" => Some(@core.CommandIntent::Paste)
-    "Undo" => Some(@core.CommandIntent::Undo)
-    "Redo" => Some(@core.CommandIntent::Redo)
-    "SelectAll" => Some(@core.CommandIntent::SelectAll)
-    "OpenContextMenu" => Some(@core.CommandIntent::OpenContextMenu)
+    "Activate" => Some(Activate)
+    "Submit" => Some(Submit)
+    "Cancel" => Some(Cancel)
+    "Copy" => Some(Copy)
+    "Cut" => Some(Cut)
+    "Paste" => Some(Paste)
+    "Undo" => Some(Undo)
+    "Redo" => Some(Redo)
+    "SelectAll" => Some(SelectAll)
+    "OpenContextMenu" => Some(OpenContextMenu)
     _ => None
   }
 }
 
 ///|
 fn decode_event_argument(arguments : Map[String, Json]) -> @core.AppEvent? {
-  guard arguments.get("event") is Some(Json::Object(fields)) else {
-    return None
-  }
+  guard arguments.get("event") is Some(Object(fields)) else { return None }
   guard json_string_field(fields, "kind") is Some("Pointer") else {
     return None
   }
-  guard fields.get("position") is Some(Json::Object(position)) else {
-    return None
-  }
-  guard position.get("x") is Some(Json::Number(x, repr=_)) else { return None }
-  guard position.get("y") is Some(Json::Number(y, repr=_)) else { return None }
+  guard fields.get("position") is Some(Object(position)) else { return None }
+  guard position.get("x") is Some(Number(x, repr=_)) else { return None }
+  guard position.get("y") is Some(Number(y, repr=_)) else { return None }
   guard json_string_field(fields, "phase") is Some(phase) else { return None }
   let pointer_phase = match phase {
     "Down" => @core.PointerPhase::Down
-    "Up" => @core.PointerPhase::Up
-    "Move" => @core.PointerPhase::Move
-    "Cancel" => @core.PointerPhase::Cancel
-    "Exit" => @core.PointerPhase::Exit
+    "Up" => Up
+    "Move" => Move
+    "Cancel" => Cancel
+    "Exit" => Exit
     _ => return None
   }
   Some(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x~, y~),
         phase=pointer_phase,

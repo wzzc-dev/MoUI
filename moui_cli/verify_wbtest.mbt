@@ -113,7 +113,7 @@ test "test_is_accepted_generated_by_rejects_unknown" {
 
 ///|
 test "test_verify_status_from_probe_passed" {
-  let probe : ProbeResult = { ok: true, observations: [] }
+  let probe : ProbeResult = { ok: true, observations: [], }
   inspect(verify_status_from_probe(probe), content="passed")
 }
 
@@ -122,7 +122,7 @@ test "test_verify_status_from_probe_failed" {
   let probe : ProbeResult = {
     ok: false,
     observations: [
-      { kind: "stability", name: "crash_free", value: "fail", passed: false },
+      { kind: "stability", name: "crash_free", value: "fail", passed: false, },
     ],
   }
   inspect(verify_status_from_probe(probe), content="failed")
@@ -133,8 +133,8 @@ test "test_verify_manifest_to_json_emits_schema_and_generated_by" {
   let probe : ProbeResult = {
     ok: false,
     observations: [
-      { kind: "lifecycle", name: "app_start", value: "ok", passed: true },
-      { kind: "stability", name: "crash_free", value: "fail", passed: false },
+      { kind: "lifecycle", name: "app_start", value: "ok", passed: true, },
+      { kind: "stability", name: "crash_free", value: "fail", passed: false, },
     ],
   }
   let json = verify_manifest_to_json(
@@ -158,7 +158,7 @@ test "test_verify_manifest_to_json_emits_schema_and_generated_by" {
 
 ///|
 test "test_verify_manifest_to_json_emits_passed_when_ok" {
-  let probe : ProbeResult = { ok: true, observations: [] }
+  let probe : ProbeResult = { ok: true, observations: [], }
   let json = verify_manifest_to_json(
     "ios", "demo", "/tmp/demo.app", "passed", probe,
   )

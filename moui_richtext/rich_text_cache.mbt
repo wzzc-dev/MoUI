@@ -116,7 +116,7 @@ fn markdown_document_scroll_geometry_from_heights(
   source_length~ : Int,
 ) -> MarkdownDocumentScrollGeometry {
   let tree = markdown_document_scroll_geometry_build_tree(heights)
-  { heights, tree, epoch, source_digest, source_length }
+  { heights, tree, epoch, source_digest, source_length, }
 }
 
 ///|
@@ -309,9 +309,9 @@ fn markdown_editor_block_key(block : MarkdownBlock) -> String {
   for align in block.table_alignments {
     let align_tag = match align {
       None => 'n'
-      Some(@core.TextStart) => 's'
-      Some(@core.TextCenter) => 'e'
-      Some(@core.TextEnd) => 'd'
+      Some(TextStart) => 's'
+      Some(TextCenter) => 'e'
+      Some(TextEnd) => 'd'
     }
     key.write_char(align_tag)
   }
@@ -336,7 +336,7 @@ fn rich_text_source_range_shift(
   delta : Int,
 ) -> RichTextSourceRange? {
   match range {
-    Some(range) => Some({ start: range.start + delta, end: range.end + delta })
+    Some(range) => Some({ start: range.start + delta, end: range.end + delta, })
     None => None
   }
 }

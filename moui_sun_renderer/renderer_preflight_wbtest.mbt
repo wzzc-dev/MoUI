@@ -42,13 +42,13 @@ test "sun surface diagnostic reports cached layer admission telemetry" {
       renderer.render_frame(
         @core.DrawFrame::new(
           commands=[
-            @core.DrawCommand::Clear(@core.Color::white()),
-            @core.DrawCommand::BeginRetainedLayer(spec),
-            @core.DrawCommand::FillRect(
+            Clear(@core.Color::white()),
+            BeginRetainedLayer(spec),
+            FillRect(
               @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
               @core.Color::blue(),
             ),
-            @core.DrawCommand::EndRetainedLayer(spec.key),
+            EndRetainedLayer(spec.key),
           ],
           damage=@core.DamageRegion::full("sun surface diagnostic cache"),
         ),

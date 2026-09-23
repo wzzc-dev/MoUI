@@ -173,25 +173,19 @@ pub fn harmonyos_window_hosted_pump_host_sim(
 ) -> Unit {
   @window_harmonyos.host_reset_for_test()
   let event_loop = @window_harmonyos.EventLoop::new()
-  @window_harmonyos.host_push(@window_harmonyos.HostCmd::Start)
-  @window_harmonyos.host_push(@window_harmonyos.HostCmd::Resume)
+  @window_harmonyos.host_push(Start)
+  @window_harmonyos.host_push(Resume)
   @window_harmonyos.host_push(
-    @window_harmonyos.HostCmd::SurfaceInit(
-      surface_handle, 0UL, width, height, scale,
-    ),
+    SurfaceInit(surface_handle, 0UL, width, height, scale),
   )
   ignore(event_loop.pump_app_events(None, app))
   app.backend.force_redraw()
   ignore(event_loop.pump_app_events(None, app))
-  @window_harmonyos.host_push(
-    @window_harmonyos.HostCmd::PointerButton(true, 10.0, 20.0),
-  )
-  @window_harmonyos.host_push(
-    @window_harmonyos.HostCmd::PointerButton(false, 10.0, 20.0),
-  )
+  @window_harmonyos.host_push(PointerButton(true, 10.0, 20.0))
+  @window_harmonyos.host_push(PointerButton(false, 10.0, 20.0))
   ignore(event_loop.pump_app_events(None, app))
-  @window_harmonyos.host_push(@window_harmonyos.HostCmd::SurfaceTerm)
-  @window_harmonyos.host_push(@window_harmonyos.HostCmd::Stop)
+  @window_harmonyos.host_push(SurfaceTerm)
+  @window_harmonyos.host_push(Stop)
   ignore(event_loop.pump_app_events(None, app))
   event_loop.drop()
 }

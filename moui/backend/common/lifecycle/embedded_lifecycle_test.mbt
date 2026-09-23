@@ -1,6 +1,6 @@
 ///|
 test "embedded host owns logical generation and primary routing" {
-  let host = EmbeddedLifecycle::new()
+  let host = @lifecycle.EmbeddedLifecycle::new()
   inspect(host.resumed().length(), content="1")
   inspect(host.resumed().length(), content="0")
   let metrics = @core.SurfaceMetrics::from_logical(
@@ -25,7 +25,7 @@ test "embedded host owns logical generation and primary routing" {
 
 ///|
 test "embedded host exit intent is explicit and terminal" {
-  let host = EmbeddedLifecycle::new()
+  let host = @lifecycle.EmbeddedLifecycle::new()
   match host.request_exit(23) {
     Exit(code) => inspect(code, content="23")
     _ => fail("expected exit action")

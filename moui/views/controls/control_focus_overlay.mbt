@@ -41,7 +41,7 @@ pub fn[Msg] focus_ring(
 pub fn[Msg] menu_button(
   label : String,
   on_click? : Msg,
-  variant? : @style.ButtonVariant = @style.ButtonVariant::Tonal,
+  variant? : @style.ButtonVariant = Tonal,
   theme? : @core.Theme,
   width? : Double = 160.0,
   height? : Double = 40.0,
@@ -60,7 +60,7 @@ pub fn[Msg] menu_button(
     None =>
       @button.button(label, variant~, theme=resolved_theme, width~, height~)
   }
-  spec.semantics_role(@core.SemanticsRole::Menu)
+  spec.semantics_role(Menu)
 }
 
 ///|
@@ -73,24 +73,17 @@ pub fn[Msg] tooltip(
     @presentation.popup_host(child, [
       @presentation.PresentationSpec::new(
         id="tooltip:\{message}",
-        kind=@presentation.PresentationKind::Tooltip,
-        anchor=@presentation.PresentationAnchor::HostBase,
+        kind=Tooltip,
+        anchor=HostBase,
         placement=Some(
           @presentation.PresentationPlacement::new(
-            candidates=[
-              @presentation.PresentationPlacementCandidate::AboveEnd,
-              @presentation.PresentationPlacementCandidate::BelowEnd,
-              @presentation.PresentationPlacementCandidate::AboveStart,
-              @presentation.PresentationPlacementCandidate::BelowStart,
-            ],
+            candidates=[AboveEnd, BelowEnd, AboveStart, BelowStart],
             viewport_insets=@core.Insets::all(0.0),
           ),
         ),
         content=@container.container(
-          @text.text(message, width=180.0, height=24.0).semantics_role(
-            @core.SemanticsRole::Tooltip,
-          ),
-          variant=@style.ContainerVariant::Raised,
+          @text.text(message, width=180.0, height=24.0).semantics_role(Tooltip),
+          variant=Raised,
         ),
       ),
     ])

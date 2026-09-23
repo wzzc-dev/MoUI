@@ -50,16 +50,16 @@ pub fn element_state_to_pointer_phase(
   state : @window_core.ElementState,
 ) -> @core.PointerPhase {
   match state {
-    @window_core.ElementState::Pressed => @core.PointerPhase::Down
-    @window_core.ElementState::Released => @core.PointerPhase::Up
+    Pressed => Down
+    Released => Up
   }
 }
 
 ///|
 pub fn element_state_pressed(state : @window_core.ElementState) -> Bool {
   match state {
-    @window_core.ElementState::Pressed => true
-    @window_core.ElementState::Released => false
+    Pressed => true
+    Released => false
   }
 }
 
@@ -100,25 +100,25 @@ pub fn key_event_text(event : @window_core.KeyEvent) -> String? {
 ///|
 pub fn key_event_name(event : @window_core.KeyEvent) -> String {
   match event.logical_key() {
-    @window_core.Key::Character(text) => text
-    @window_core.Key::Named(named) => named_key_name(named)
-    @window_core.Key::Dead(_) => "Dead"
-    @window_core.Key::Unidentified(_) => "Unidentified"
+    Character(text) => text
+    Named(named) => named_key_name(named)
+    Dead(_) => "Dead"
+    Unidentified(_) => "Unidentified"
   }
 }
 
 ///|
 pub fn named_key_name(key : @window_core.NamedKey) -> String {
   match key {
-    @window_core.NamedKey::Enter => "Enter"
-    @window_core.NamedKey::Tab => "Tab"
-    @window_core.NamedKey::Backspace => "Backspace"
-    @window_core.NamedKey::Escape => "Escape"
-    @window_core.NamedKey::Delete => "Delete"
-    @window_core.NamedKey::ArrowLeft => "ArrowLeft"
-    @window_core.NamedKey::ArrowRight => "ArrowRight"
-    @window_core.NamedKey::ArrowUp => "ArrowUp"
-    @window_core.NamedKey::ArrowDown => "ArrowDown"
+    Enter => "Enter"
+    Tab => "Tab"
+    Backspace => "Backspace"
+    Escape => "Escape"
+    Delete => "Delete"
+    ArrowLeft => "ArrowLeft"
+    ArrowRight => "ArrowRight"
+    ArrowUp => "ArrowUp"
+    ArrowDown => "ArrowDown"
     _ => "\{key}"
   }
 }
@@ -126,11 +126,11 @@ pub fn named_key_name(key : @window_core.NamedKey) -> String {
 ///|
 pub fn mouse_button_to_core(button : @window_core.MouseButton) -> Int? {
   match button {
-    @window_core.MouseButton::Left => Some(0)
-    @window_core.MouseButton::Right => Some(1)
-    @window_core.MouseButton::Middle => Some(2)
-    @window_core.MouseButton::Back => Some(3)
-    @window_core.MouseButton::Forward => Some(4)
+    Left => Some(0)
+    Right => Some(1)
+    Middle => Some(2)
+    Back => Some(3)
+    Forward => Some(4)
     _ => None
   }
 }
@@ -140,8 +140,8 @@ pub fn window_theme_to_color_scheme(
   theme : @window_core.Theme,
 ) -> @core.ColorScheme {
   match theme {
-    @window_core.Theme::Light => @core.ColorScheme::Light
-    @window_core.Theme::Dark => @core.ColorScheme::Dark
+    Light => Light
+    Dark => Dark
   }
 }
 
@@ -150,13 +150,7 @@ pub fn window_event_is_context_menu_trigger(
   event : @window_core.WindowEvent,
 ) -> Bool {
   match event {
-    @window_core.WindowEvent::PointerButton(
-      _,
-      @window_core.ElementState::Pressed,
-      _,
-      true,
-      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right)
-    ) => true
+    PointerButton(_, Pressed, _, true, Mouse(Right)) => true
     _ => false
   }
 }
@@ -166,13 +160,7 @@ pub fn window_event_is_context_menu_button(
   event : @window_core.WindowEvent,
 ) -> Bool {
   match event {
-    @window_core.WindowEvent::PointerButton(
-      _,
-      _,
-      _,
-      _,
-      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right)
-    ) => true
+    PointerButton(_, _, _, _, Mouse(Right)) => true
     _ => false
   }
 }
@@ -182,11 +170,10 @@ pub fn touch_phase_to_host(
   phase : @window_core.TouchPhase,
 ) -> @backend_host.HostScrollPhase {
   match phase {
-    @window_core.TouchPhase::Started => @backend_host.HostScrollPhase::Started
-    @window_core.TouchPhase::Moved => @backend_host.HostScrollPhase::Moved
-    @window_core.TouchPhase::Ended => @backend_host.HostScrollPhase::Ended
-    @window_core.TouchPhase::Cancelled =>
-      @backend_host.HostScrollPhase::Cancelled
+    Started => Started
+    Moved => Moved
+    Ended => Ended
+    Cancelled => Cancelled
   }
 }
 
@@ -196,12 +183,9 @@ pub fn mouse_scroll_delta_to_host(
   scale_factor? : Double = 1.0,
 ) -> @backend_host.HostScrollDelta {
   match delta {
-    @window_core.MouseScrollDelta::LineDelta(x, y) =>
-      @backend_host.HostScrollDelta::Lines(@core.Point::new(x~, y~))
-    @window_core.MouseScrollDelta::PixelDelta(position) =>
-      @backend_host.HostScrollDelta::Pixels(
-        physical_position_to_core(position, scale_factor~),
-      )
+    LineDelta(x, y) => Lines(@core.Point::new(x~, y~))
+    PixelDelta(position) =>
+      Pixels(physical_position_to_core(position, scale_factor~))
   }
 }
 
@@ -225,38 +209,34 @@ pub fn window_event_to_host_with_modifiers(
   blur_to_cancel? : Bool = false,
 ) -> @backend_host.Event? {
   match event {
-    @window_core.WindowEvent::SurfaceResized(size) =>
+    SurfaceResized(size) =>
+      Some(Resized(surface_metrics_from_physical(size, scale_factor~)))
+    ScaleFactorChanged(scale, writer) =>
       Some(
-        @backend_host.Event::Resized(
-          surface_metrics_from_physical(size, scale_factor~),
-        ),
-      )
-    @window_core.WindowEvent::ScaleFactorChanged(scale, writer) =>
-      Some(
-        @backend_host.Event::Resized(
+        Resized(
           surface_metrics_from_physical(
             writer.surface_size(),
             scale_factor=scale,
           ),
         ),
       )
-    @window_core.WindowEvent::PointerMoved(_, position, _, _) =>
+    PointerMoved(_, position, _, _) =>
       Some(
-        @backend_host.Event::Pointer(
+        Pointer(
           @core.PointerEvent::new(
             position=physical_position_to_core(position, scale_factor~),
-            phase=@core.PointerPhase::Move,
+            phase=Move,
             modifiers~,
           ),
         ),
       )
-    @window_core.WindowEvent::PointerButton(_, state, position, _, source) =>
+    PointerButton(_, state, position, _, source) =>
       match source.mouse_button() {
         Some(button) =>
           match mouse_button_to_core(button) {
             Some(button) =>
               Some(
-                @backend_host.Event::Pointer(
+                Pointer(
                   @core.PointerEvent::new(
                     position=physical_position_to_core(position, scale_factor~),
                     phase=element_state_to_pointer_phase(state),
@@ -269,9 +249,9 @@ pub fn window_event_to_host_with_modifiers(
           }
         None => None
       }
-    @window_core.WindowEvent::MouseWheel(_, delta, phase) =>
+    MouseWheel(_, delta, phase) =>
       Some(
-        @backend_host.Event::Scroll(
+        Scroll(
           @backend_host.HostScrollEvent::new(
             position=last_pointer,
             delta=mouse_scroll_delta_to_host(delta, scale_factor~),
@@ -279,66 +259,57 @@ pub fn window_event_to_host_with_modifiers(
           ),
         ),
       )
-    @window_core.WindowEvent::DragEntered(paths, position) =>
+    DragEntered(paths, position) =>
       Some(
-        @backend_host.Event::DragDrop(
+        DragDrop(
           @core.DragDropEvent::new(
-            phase=@core.DragDropPhase::Entered,
+            phase=Entered,
             paths~,
             position=Some(physical_position_to_core(position, scale_factor~)),
           ),
         ),
       )
-    @window_core.WindowEvent::DragMoved(position) =>
+    DragMoved(position) =>
       Some(
-        @backend_host.Event::DragDrop(
+        DragDrop(
           @core.DragDropEvent::new(
-            phase=@core.DragDropPhase::Moved,
+            phase=Moved,
             position=Some(physical_position_to_core(position, scale_factor~)),
           ),
         ),
       )
-    @window_core.WindowEvent::DragDropped(paths, position) =>
+    DragDropped(paths, position) =>
       Some(
-        @backend_host.Event::DragDrop(
+        DragDrop(
           @core.DragDropEvent::new(
-            phase=@core.DragDropPhase::Dropped,
+            phase=Dropped,
             paths~,
             position=Some(physical_position_to_core(position, scale_factor~)),
           ),
         ),
       )
-    @window_core.WindowEvent::DragLeft(position) =>
+    DragLeft(position) =>
       Some(
-        @backend_host.Event::DragDrop(
+        DragDrop(
           @core.DragDropEvent::new(
-            phase=@core.DragDropPhase::Left,
+            phase=Left,
             position=drag_drop_position_to_core(position, scale_factor~),
           ),
         ),
       )
-    @window_core.WindowEvent::CloseRequested =>
-      Some(@backend_host.Event::CloseRequested)
-    @window_core.WindowEvent::RedrawRequested =>
-      Some(@backend_host.Event::RedrawRequested)
-    @window_core.WindowEvent::KeyboardInput(_, key_event, is_synthetic) =>
+    CloseRequested => Some(CloseRequested)
+    RedrawRequested => Some(RedrawRequested)
+    KeyboardInput(_, key_event, is_synthetic) =>
       if is_synthetic {
         None
       } else {
-        Some(
-          @backend_host.Event::Keyboard(
-            keyboard_event_to_core(key_event, modifiers),
-          ),
-        )
+        Some(Keyboard(keyboard_event_to_core(key_event, modifiers)))
       }
-    @window_core.WindowEvent::Ime(@window_core.Ime::Enabled) =>
+    Ime(Enabled) => Some(TextInput(CompositionStart))
+    Ime(Preedit(text, cursor)) =>
       Some(
-        @backend_host.Event::TextInput(@core.TextInputEvent::CompositionStart),
-      )
-    @window_core.WindowEvent::Ime(@window_core.Ime::Preedit(text, cursor)) =>
-      Some(
-        @backend_host.Event::TextInput(
-          @core.TextInputEvent::CompositionUpdate(
+        TextInput(
+          CompositionUpdate(
             @core.CompositionUpdate::new(
               text~,
               cursor=ime_cursor_range_to_core(cursor),
@@ -346,27 +317,13 @@ pub fn window_event_to_host_with_modifiers(
           ),
         ),
       )
-    @window_core.WindowEvent::Ime(@window_core.Ime::Commit(text)) =>
+    Ime(Commit(text)) => Some(TextInput(CompositionEnd(text)))
+    Ime(DeleteSurrounding(before, after)) =>
+      Some(TextInput(DeleteSurrounding(before, after)))
+    Ime(Disabled) => Some(TextInput(CompositionEnd("")))
+    Focused(focused) =>
       Some(
-        @backend_host.Event::TextInput(
-          @core.TextInputEvent::CompositionEnd(text),
-        ),
-      )
-    @window_core.WindowEvent::Ime(
-      @window_core.Ime::DeleteSurrounding(before, after)
-    ) =>
-      Some(
-        @backend_host.Event::TextInput(
-          @core.TextInputEvent::DeleteSurrounding(before, after),
-        ),
-      )
-    @window_core.WindowEvent::Ime(@window_core.Ime::Disabled) =>
-      Some(
-        @backend_host.Event::TextInput(@core.TextInputEvent::CompositionEnd("")),
-      )
-    @window_core.WindowEvent::Focused(focused) =>
-      Some(
-        @backend_host.Event::Focus(
+        Focus(
           @backend_host.HostFocusEvent::new(
             focused~,
             pointer_cancel_position=if blur_to_cancel && !focused {
@@ -377,10 +334,8 @@ pub fn window_event_to_host_with_modifiers(
           ),
         ),
       )
-    @window_core.WindowEvent::ThemeChanged(theme) =>
-      Some(
-        @backend_host.Event::ThemeChanged(window_theme_to_color_scheme(theme)),
-      )
+    ThemeChanged(theme) =>
+      Some(ThemeChanged(window_theme_to_color_scheme(theme)))
     _ => None
   }
 }

@@ -20,7 +20,7 @@ pub fn[Msg] padding_edges(
   bottom? : Double = 0.0,
   left? : Double = 0.0,
 ) -> @core.View[Msg] {
-  padding_layout(child~, insets={ top, right, bottom, left })
+  padding_layout(child~, insets={ top, right, bottom, left, })
 }
 
 ///|

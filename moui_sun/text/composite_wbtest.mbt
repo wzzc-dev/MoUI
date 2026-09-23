@@ -2,7 +2,7 @@
 test "parse_glyph reads signed byte xy args for composite glyphs" {
   let bytes = Bytes::from_array(make_signed_byte_composite())
   match parse_glyph_checked(bytes, 0, bytes.length()) {
-    Ok(GlyphData::Composite(components)) => {
+    Ok(Composite(components)) => {
       assert_eq(components.length(), 1)
       let component = components[0]
       assert_eq(component.glyph_index, 7)
@@ -20,7 +20,7 @@ test "parse_glyph reads signed byte xy args for composite glyphs" {
 test "parse_glyph reads composite scale modes" {
   let bytes = Bytes::from_array(make_scaled_composite())
   match parse_glyph_checked(bytes, 0, bytes.length()) {
-    Ok(GlyphData::Composite(components)) => {
+    Ok(Composite(components)) => {
       assert_eq(components.length(), 3)
       assert_eq(components[0].scale_x, 0.5)
       assert_eq(components[0].scale_y, 0.5)
@@ -40,7 +40,7 @@ test "parse_glyph reads composite scale modes" {
 test "Font::get_glyph resolves composite transforms" {
   let font = make_composite_transform_font()
   match font.get_glyph(2) {
-    GlyphData::Simple(simple) => {
+    Simple(simple) => {
       assert_eq(simple.contours.length(), 3)
       assert_point(simple.contours[0].points[0], 11, 0)
       assert_point(simple.contours[1].points[0], 21, 6)
@@ -63,18 +63,18 @@ fn assert_point(point : GlyphPoint, x : Int, y : Int) -> Unit raise {
 ///|
 fn make_composite_transform_font() -> Font {
   {
-    head: { units_per_em: 10, index_to_loc_format: 0 },
-    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3 },
+    head: { units_per_em: 10, index_to_loc_format: 0, },
+    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3, },
     hmtx: [
-      { advance_width: 0, lsb: 0 },
-      { advance_width: 10, lsb: 0 },
-      { advance_width: 10, lsb: 0 },
+      { advance_width: 0, lsb: 0, },
+      { advance_width: 10, lsb: 0, },
+      { advance_width: 10, lsb: 0, },
     ],
     cmap: Map([]),
     glyphs: [
-      GlyphData::Empty,
-      GlyphData::Simple(make_transform_base_glyph()),
-      GlyphData::Composite([
+      Empty,
+      Simple(make_transform_base_glyph()),
+      Composite([
         {
           glyph_index: 1,
           x_offset: 10,
@@ -115,9 +115,9 @@ fn make_transform_base_glyph() -> SimpleGlyph {
     contours: [
       {
         points: [
-          { x: 2, y: 4, on_curve: true },
-          { x: 4, y: 4, on_curve: true },
-          { x: 4, y: 6, on_curve: true },
+          { x: 2, y: 4, on_curve: true, },
+          { x: 4, y: 4, on_curve: true, },
+          { x: 4, y: 6, on_curve: true, },
         ],
       },
     ],

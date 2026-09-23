@@ -18,13 +18,7 @@ fn apple_logo_glyph(size : Double, color : @graphics.Color) -> @moui.View[Msg] {
   // tight vertical space — its glyph bounds extend beyond the menu bar's
   // clip region.  A styled monogram is the de-facto fallback used by many
   // macOS menu bars when the system logo is unavailable.
-  @views.text(
-    "Mo",
-    role=@views.TextRole::Label,
-    width=size,
-    height=size,
-    align=@text.TextAlign::TextCenter,
-  )
+  @views.text("Mo", role=Label, width=size, height=size, align=TextCenter)
   .font(@text.FontSpec::new(size=size * 0.56, weight=680))
   .foreground(color)
   .accessibility_label("Apple menu")

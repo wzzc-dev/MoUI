@@ -266,7 +266,7 @@ fn markdown_editor_reference_marker_target_after(
       target_end = target_end + 1
     }
     if target_end < chars.length() && chars[target_end] == ')' {
-      Some({ start: close_start + 2, end: target_end, label: "" })
+      Some({ start: close_start + 2, end: target_end, label: "", })
     } else {
       None
     }
@@ -292,7 +292,7 @@ fn markdown_editor_reference_marker_target_after(
       markdown_editor_reference_definition_target_range(source, label) is None {
       None
     } else {
-      Some({ start: close_start, end: close_start, label })
+      Some({ start: close_start, end: close_start, label, })
     }
   }
 }

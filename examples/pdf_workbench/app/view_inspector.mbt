@@ -35,7 +35,7 @@ fn pdf_workbench_inspector(
         @views.banner(
           "Skia PDF note",
           "Skia's PDF sample is for PDF output generation, not existing-page rasterization.",
-          tone=@views.FeedbackTone::Info,
+          tone=Info,
           theme~,
           width=item_width,
         ),
@@ -43,11 +43,7 @@ fn pdf_workbench_inspector(
   }
   @views.container(
     @views.scroll_view(
-      @views.column(
-        rows,
-        spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Stretch,
-      ),
+      @views.column(rows, spacing=theme.spacing_scale.sm, align=Stretch),
       width=metrics.inspector_scroll_width,
       height=pdf_workbench_panel_scroll_height(metrics, theme),
       offset=model.inspector_scroll,
@@ -55,7 +51,7 @@ fn pdf_workbench_inspector(
     ),
     width=metrics.inspector_width,
     height=metrics.body_height,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.sm,
   )
@@ -73,7 +69,7 @@ fn pdf_workbench_inspector_summary(
   let edit_tone = if document.dirty {
     @views.BadgeTone::Warning
   } else {
-    @views.BadgeTone::Success
+    Success
   }
   @views.container(
     @views.column(
@@ -98,25 +94,21 @@ fn pdf_workbench_inspector_summary(
             ),
             @views.badge(
               zoom_label,
-              tone=@views.BadgeTone::Neutral,
+              tone=Neutral,
               theme~,
               width=58.0,
               height=24.0,
             ),
             @views.badge(
               pdf_workbench_search_badge_label(document, model.query),
-              tone=if matches > 0 {
-                @views.BadgeTone::Accent
-              } else {
-                @views.BadgeTone::Neutral
-              },
+              tone=if matches > 0 { Accent } else { Neutral },
               theme~,
               width=64.0,
               height=24.0,
             ),
           ],
           spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         pdf_workbench_inspector_caption(
           "Page " +
@@ -131,7 +123,7 @@ fn pdf_workbench_inspector_summary(
         ),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     height=72.0,
@@ -156,7 +148,7 @@ fn pdf_workbench_inspector_page_group(
           @views.button(
             "Rotate 90",
             on_click=RotateCurrentPage,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=button_width,
             height=34.0,
@@ -164,19 +156,19 @@ fn pdf_workbench_inspector_page_group(
           @views.button(
             "Crop",
             on_click=CropCurrentPage,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=button_width,
             height=34.0,
           ),
         ],
         spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       @views.button(
         "Stamp",
         on_click=StampCurrentPage,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width~,
         height=34.0,
@@ -201,7 +193,7 @@ fn pdf_workbench_inspector_document_group(
         model.metadata_title_draft,
         on_input=value => MetadataTitleChanged(value),
         placeholder="Document title",
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width~,
         height=34.0,
@@ -209,7 +201,7 @@ fn pdf_workbench_inspector_document_group(
       @views.button(
         "Apply Title",
         on_click=ApplyMetadataTitle,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width~,
         height=34.0,
@@ -218,7 +210,7 @@ fn pdf_workbench_inspector_document_group(
         model.bookmark_title_draft,
         on_input=value => BookmarkTitleChanged(value),
         placeholder="Current page bookmark",
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width~,
         height=34.0,
@@ -226,7 +218,7 @@ fn pdf_workbench_inspector_document_group(
       @views.button(
         "Add Bookmark",
         on_click=AddBookmarkForCurrentPage,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width~,
         height=34.0,
@@ -235,7 +227,7 @@ fn pdf_workbench_inspector_document_group(
         model.annotation_text_draft,
         on_input=value => AnnotationTextChanged(value),
         placeholder="Current page note",
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width~,
         height=34.0,
@@ -243,7 +235,7 @@ fn pdf_workbench_inspector_document_group(
       @views.button(
         "Add Note",
         on_click=AddAnnotationForCurrentPage,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width~,
         height=34.0,
@@ -276,7 +268,7 @@ fn pdf_workbench_inspector_queue_group(
         @views.button(
           "Undo Last",
           on_click=UndoLastEdit,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=(width - theme.spacing_scale.sm) / 2.0,
           height=34.0,
@@ -284,14 +276,14 @@ fn pdf_workbench_inspector_queue_group(
         @views.button(
           "Discard Edits",
           on_click=DiscardEdits,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=(width - theme.spacing_scale.sm) / 2.0,
           height=34.0,
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   ]
   if document.edits.is_empty() {
@@ -376,23 +368,13 @@ fn pdf_workbench_inspector_group(
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
   let rows : Array[@moui.View[PdfWorkbenchMsg]] = [
-    @views.text(
-      title,
-      role=@views.TextRole::Control,
-      theme~,
-      width~,
-      height=24.0,
-    ),
+    @views.text(title, role=Control, theme~, width~, height=24.0),
   ]
   for child in children {
     rows.push(child)
   }
   @views.container(
-    @views.column(
-      rows,
-      spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Stretch,
-    ),
+    @views.column(rows, spacing=theme.spacing_scale.xs, align=Stretch),
     width~,
     background=theme.palette.surface.multiply_alpha(0.96),
     corner_radius=theme.radius_scale.sm,
@@ -408,7 +390,7 @@ fn pdf_workbench_inspector_caption(
   height : Double,
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
-  @views.text(value, role=@views.TextRole::Caption, theme~, width~, height~).foreground(
+  @views.text(value, role=Caption, theme~, width~, height~).foreground(
     theme.palette.muted,
   )
 }

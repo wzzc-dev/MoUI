@@ -28,12 +28,12 @@ test "expanded column child fills remaining height and hosts its content" {
         expanded_test_box(width=10.0, height=26.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=100.0,
     height=300.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=100.0, height=300.0),
   )
@@ -85,9 +85,9 @@ test "background root keeps tight constraints so expanded fills the viewport" {
       expanded_test_box(width=640.0, height=26.0),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   ).background(@core.Color::white())
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=640.0, height=820.0),
   )

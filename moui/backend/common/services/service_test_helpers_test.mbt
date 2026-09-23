@@ -45,8 +45,8 @@ fn window_test_text_field_runtime(
         @views.column(
           [host_test_text_field(model, width~, height~)],
           spacing=0.0,
-          justify=@views.MainAlign::Start,
-          align=@views.CrossAlign::Start,
+          justify=Start,
+          align=Start,
         )
       },
     ),

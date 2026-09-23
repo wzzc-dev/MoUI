@@ -242,7 +242,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
         in_word = false
       }
       lines.push({
-        text: source.sub(start=unit_start, end=unit_offset),
+        text: source.exact_view(start=unit_start, end=unit_offset),
         start: char_start,
         end: char_index,
       })
@@ -268,7 +268,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
     words = words + 1
   }
   lines.push({
-    text: source.sub(start=unit_start, end=unit_offset),
+    text: source.exact_view(start=unit_start, end=unit_offset),
     start: char_start,
     end: char_index,
   })
@@ -350,7 +350,7 @@ pub fn markdown_editor_substring(
   } else {
     source.offset_of_nth_char(end).unwrap_or(source_length)
   }
-  source.sub(start=start_offset, end=end_offset).to_owned()
+  source.exact_view(start=start_offset, end=end_offset).to_owned()
 }
 
 ///|

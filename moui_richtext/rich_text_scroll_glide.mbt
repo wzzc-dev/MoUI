@@ -99,7 +99,7 @@ pub fn MarkdownScrollGlide::new(
   start_ms~ : Double,
   tau_ms? : Double = markdown_scroll_glide_time_constant_ms(),
 ) -> MarkdownScrollGlide {
-  { from_y, to_y, start_ms, tau_ms }
+  { from_y, to_y, start_ms, tau_ms, }
 }
 
 ///|
@@ -157,7 +157,7 @@ pub fn MarkdownScrollGlide::with_anchor_compensation(
   // already visible, compensated position and keep the clamped target; this
   // changes no displayed frame and only removes the impossible tail.
   if (candidate.exact_offset_at(now_ms) - shifted_shown).abs() > 0.0001 {
-    { from_y: shifted_shown, to_y: to, start_ms: now_ms, tau_ms: self.tau_ms }
+    { from_y: shifted_shown, to_y: to, start_ms: now_ms, tau_ms: self.tau_ms, }
   } else {
     candidate
   }

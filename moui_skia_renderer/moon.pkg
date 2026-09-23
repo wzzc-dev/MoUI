@@ -3,7 +3,6 @@ import {
   "moonbitlang/x/fs",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
-  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,

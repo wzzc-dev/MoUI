@@ -59,16 +59,16 @@ pub fn HostInputContract::new(
   capabilities? : HostInputCapabilities = HostInputCapabilities::new(),
   coordinates? : HostCoordinatePolicy = HostCoordinatePolicy::logical(),
 ) -> HostInputContract {
-  { capabilities, coordinates }
+  { capabilities, coordinates, }
 }
 
 ///|
 pub fn HostScrollEvent::new(
   position~ : @core.Point,
   delta~ : HostScrollDelta,
-  phase? : HostScrollPhase = HostScrollPhase::Moved,
+  phase? : HostScrollPhase = Moved,
 ) -> HostScrollEvent {
-  { position, delta, phase }
+  { position, delta, phase, }
 }
 
 ///|
@@ -89,7 +89,7 @@ pub fn HostScrollEvent::to_pointer_event(
 ) -> @core.PointerEvent {
   @core.PointerEvent::new(
     position=self.position,
-    phase=@core.PointerPhase::Move,
+    phase=Move,
     wheel_delta=self.delta.to_logical_pixels(),
   )
 }
@@ -99,18 +99,14 @@ pub fn HostFocusEvent::new(
   focused~ : Bool,
   pointer_cancel_position? : @core.Point? = None,
 ) -> HostFocusEvent {
-  { focused, pointer_cancel_position }
+  { focused, pointer_cancel_position, }
 }
 
 ///|
 pub fn HostFocusEvent::to_core(self : HostFocusEvent) -> @core.AppEvent? {
   match (self.focused, self.pointer_cancel_position) {
     (false, Some(position)) =>
-      Some(
-        @core.AppEvent::Pointer(
-          @core.PointerEvent::new(position~, phase=@core.PointerPhase::Cancel),
-        ),
-      )
+      Some(Pointer(@core.PointerEvent::new(position~, phase=Cancel)))
     _ => None
   }
 }
@@ -118,17 +114,16 @@ pub fn HostFocusEvent::to_core(self : HostFocusEvent) -> @core.AppEvent? {
 ///|
 pub fn Event::to_core(self : Event) -> @core.AppEvent? {
   match self {
-    Resized(metrics) => Some(@core.AppEvent::Resize(metrics.logical_size))
-    Pointer(event) => Some(@core.AppEvent::Pointer(event))
-    Scroll(event) => Some(@core.AppEvent::Pointer(event.to_pointer_event()))
+    Resized(metrics) => Some(Resize(metrics.logical_size))
+    Pointer(event) => Some(Pointer(event))
+    Scroll(event) => Some(Pointer(event.to_pointer_event()))
     Focus(event) => event.to_core()
-    Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
-    TextInput(event) => Some(@core.AppEvent::TextInput(event))
-    DragDrop(event) => Some(@core.AppEvent::DragDrop(event))
+    Keyboard(event) => Some(Keyboard(event))
+    TextInput(event) => Some(TextInput(event))
+    DragDrop(event) => Some(DragDrop(event))
     ThemeChanged(_) => None
     Command(_) => None
-    RedrawRequested =>
-      Some(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
-    CloseRequested => Some(@core.AppEvent::CloseRequested)
+    RedrawRequested => Some(Redraw(Explicit))
+    CloseRequested => Some(CloseRequested)
   }
 }

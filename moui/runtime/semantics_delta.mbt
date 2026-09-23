@@ -23,7 +23,7 @@ fn semantics_delta_between(
   }
   let announcements : Array[AccessibilityAnnouncement] = []
   for node in current.nodes {
-    if node.live != SemanticsLive::Off {
+    if node.live != Off {
       let text = join_semantics_text(
         join_semantics_text(node.label, node.value),
         node.description,

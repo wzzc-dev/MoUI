@@ -339,7 +339,10 @@ test "project manifest parser rejects unsupported and duplicate platforms" {
     parse_project_manifest(unsupported_manifest.to_json_text()) is Err(_),
     content="true",
   )
-  let duplicate_manifest = { ..unsupported_manifest, platforms: ["web", "web"] }
+  let duplicate_manifest = {
+    ..unsupported_manifest,
+    platforms: ["web", "web"],
+  }
   inspect(
     parse_project_manifest(duplicate_manifest.to_json_text()) is Err(_),
     content="true",

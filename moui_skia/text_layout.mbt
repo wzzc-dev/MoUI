@@ -30,7 +30,7 @@ pub(all) struct TextRange {
 ///|
 pub fn TextRange::new(start : Int, end : Int) -> TextRange {
   let start = Int::max(0, start)
-  { start, end: Int::max(start, end) }
+  { start, end: Int::max(start, end), }
 }
 
 ///|
@@ -62,7 +62,7 @@ pub fn TextRunDescriptor::new(
   direction? : TextDirection = LeftToRight,
   fallback? : FontFallbackRequest = FontFallbackRequest::new(),
 ) -> TextRunDescriptor {
-  { range, direction, fallback }
+  { range, direction, fallback, }
 }
 
 ///|

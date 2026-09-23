@@ -140,22 +140,22 @@ pub fn ButtonVariant::style(
   let bt = components.button
   let v = self.to_token()
   {
-    normal: bt.resolve(v, @core.InteractionState::Normal),
-    hovered: bt.resolve(v, @core.InteractionState::Hovered),
-    pressed: bt.resolve(v, @core.InteractionState::Pressed),
-    disabled: bt.resolve(v, @core.InteractionState::Disabled),
+    normal: bt.resolve(v, Normal),
+    hovered: bt.resolve(v, Hovered),
+    pressed: bt.resolve(v, Pressed),
+    disabled: bt.resolve(v, Disabled),
   }
 }
 
 ///|
 pub fn ButtonVariant::to_token(self : ButtonVariant) -> ButtonVariantToken {
   match self {
-    Primary => ButtonVariantToken::Primary
-    Tonal => ButtonVariantToken::Tonal
-    Outline => ButtonVariantToken::Outline
-    Ghost => ButtonVariantToken::Ghost
-    Subtle => ButtonVariantToken::Subtle
-    SubtleBrand => ButtonVariantToken::SubtleBrand
+    Primary => Primary
+    Tonal => Tonal
+    Outline => Outline
+    Ghost => Ghost
+    Subtle => Subtle
+    SubtleBrand => SubtleBrand
   }
 }
 
@@ -178,7 +178,7 @@ pub fn TextFieldVariant::style(
         border: None,
         radius: 0.0,
       }
-      { ..base, normal, focused: normal }
+      { ..base, normal, focused: normal, }
     }
   }
 }
@@ -194,8 +194,8 @@ pub fn ContainerVariant::style(
     Overlay =>
       {
         ..SurfaceStyle::default(theme~),
-        brush: theme.surface_brush(@core.SurfaceLevel::Overlay),
-        level: @core.SurfaceLevel::Overlay,
+        brush: theme.surface_brush(Overlay),
+        level: Overlay,
       }
   }
 }
@@ -208,7 +208,7 @@ pub fn TextRole::font(self : TextRole, theme : @core.Theme) -> @core.FontSpec {
     Caption => theme.typography.caption
     Control => theme.typography.control
     Mono =>
-      { ..theme.typography.body, families: @core.FontFamilyStack::monospace() }
+      { ..theme.typography.body, families: @core.FontFamilyStack::monospace(), }
     Display => theme.typography.display
     Headline => theme.typography.headline
     Subtitle => theme.typography.subtitle
@@ -229,21 +229,21 @@ pub fn TextRole::color(self : TextRole, theme : @core.Theme) -> @core.Color {
 ///|
 pub fn MainAlign::core(self : MainAlign) -> @core.MainAxisAlignment {
   match self {
-    Start => @core.MainAxisAlignment::MainStart
-    Center => @core.MainAxisAlignment::MainCenter
-    End => @core.MainAxisAlignment::MainEnd
-    Between => @core.MainAxisAlignment::SpaceBetween
-    Around => @core.MainAxisAlignment::SpaceAround
-    Evenly => @core.MainAxisAlignment::SpaceEvenly
+    Start => MainStart
+    Center => MainCenter
+    End => MainEnd
+    Between => SpaceBetween
+    Around => SpaceAround
+    Evenly => SpaceEvenly
   }
 }
 
 ///|
 pub fn CrossAlign::core(self : CrossAlign) -> @core.CrossAxisAlignment {
   match self {
-    Start => @core.CrossAxisAlignment::CrossStart
-    Center => @core.CrossAxisAlignment::CrossCenter
-    End => @core.CrossAxisAlignment::CrossEnd
-    Stretch => @core.CrossAxisAlignment::CrossStretch
+    Start => CrossStart
+    Center => CrossCenter
+    End => CrossEnd
+    Stretch => CrossStretch
   }
 }

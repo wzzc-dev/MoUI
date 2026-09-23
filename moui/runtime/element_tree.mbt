@@ -204,7 +204,7 @@ fn ElementTree::new(root : ElementNode) -> ElementTree {
 
 ///|
 fn ElementTree::empty() -> ElementTree {
-  { root: mount_runtime_view_node(empty_runtime_view_node()) }
+  { root: mount_runtime_view_node(empty_runtime_view_node()), }
 }
 
 ///|
@@ -214,17 +214,17 @@ fn ElementTree::id(self : ElementTree) -> ElementId {
 
 ///|
 fn RenderTree::empty() -> RenderTree {
-  { root: RenderNode::empty() }
+  { root: RenderNode::empty(), }
 }
 
 ///|
 fn PlatformNode::empty() -> PlatformNode {
-  { placements: [], children: [] }
+  { placements: [], children: [], }
 }
 
 ///|
 fn PlatformTree::empty() -> PlatformTree {
-  { root: PlatformNode::empty() }
+  { root: PlatformNode::empty(), }
 }
 
 ///|
@@ -324,7 +324,7 @@ fn ElementRenderCache::invalidate_composition(
 
 ///|
 fn ElementSemanticsCache::empty() -> ElementSemanticsCache {
-  { frame: None, environment: None, style: None, roots: [] }
+  { frame: None, environment: None, style: None, roots: [], }
 }
 
 ///|
@@ -337,5 +337,5 @@ fn ElementSemanticsCache::clear(self : ElementSemanticsCache) -> Unit {
 
 ///|
 fn ElementPlatformCache::empty() -> ElementPlatformCache {
-  { frame: None, environment: None, style: None, node: None }
+  { frame: None, environment: None, style: None, node: None, }
 }

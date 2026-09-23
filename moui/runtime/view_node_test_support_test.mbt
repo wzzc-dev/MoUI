@@ -23,10 +23,10 @@ fn runtime_fixture_exact_declaration(
 ) -> @core.ViewDeclaration {
   let key = @core.DeclarationKey::record(type_tag~, fields~)
   @core.ViewDeclaration::channels(
-    layout=@core.DeclarationChannel::Exact(key),
-    paint=@core.DeclarationChannel::Exact(key),
-    semantics=@core.DeclarationChannel::Exact(key),
-    platform=@core.DeclarationChannel::Exact(key),
+    layout=Exact(key),
+    paint=Exact(key),
+    semantics=Exact(key),
+    platform=Exact(key),
   )
 }
 

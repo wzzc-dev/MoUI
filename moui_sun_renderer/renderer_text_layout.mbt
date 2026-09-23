@@ -37,7 +37,7 @@ fn sun_text_line_plan(
   let mut saw_line = false
   for token in tokens {
     match token {
-      SunTextLayoutToken::Text(token_text, token_scalar_count) => {
+      Text(token_text, token_scalar_count) => {
         let token_width = sun_measure_fallback_line_width(
           faces, token_text, config,
         )
@@ -61,7 +61,7 @@ fn sun_text_line_plan(
         current_scalar_count += token_scalar_count
         cursor_scalar += token_scalar_count
       }
-      SunTextLayoutToken::LineBreak(line_break_scalar_count) => {
+      LineBreak(line_break_scalar_count) => {
         sun_text_line_plan_push(
           lines, faces, config, current_text, current_start, current_scalar_count,
         )
@@ -79,7 +79,7 @@ fn sun_text_line_plan(
       lines, faces, config, current_text, current_start, current_scalar_count,
     )
   }
-  { lines, line_height, baseline }
+  { lines, line_height, baseline, }
 }
 
 ///|
@@ -118,13 +118,13 @@ fn sun_text_layout_tokens(text : String) -> Array[SunTextLayoutToken] {
       } else {
         1
       }
-      tokens.push(SunTextLayoutToken::LineBreak(line_break_scalar_count))
+      tokens.push(LineBreak(line_break_scalar_count))
       current_word_class = None
     } else if ch is ' ' || ch is '\t' {
       sun_text_layout_tokens_flush_word(tokens, current_word)
       current_word_class = None
       if ch is ' ' {
-        tokens.push(SunTextLayoutToken::Text(" ", 1))
+        tokens.push(Text(" ", 1))
       }
     } else {
       let curr_class = @sun_text.get_line_break_class(ch.to_int())
@@ -151,12 +151,7 @@ fn sun_text_layout_tokens_flush_word(
   current_word : Array[Char],
 ) -> Unit {
   if current_word.length() > 0 {
-    tokens.push(
-      SunTextLayoutToken::Text(
-        String::from_array(current_word),
-        current_word.length(),
-      ),
-    )
+    tokens.push(Text(String::from_array(current_word), current_word.length()))
     current_word.clear()
   }
 }
@@ -179,12 +174,12 @@ fn sun_can_start_unspaced_layout_token(
   class : @sun_text.LineBreakClass,
 ) -> Bool {
   match class {
-    @sun_text.LineBreakClass::CL => false
-    @sun_text.LineBreakClass::CP => false
-    @sun_text.LineBreakClass::EX => false
-    @sun_text.LineBreakClass::IS => false
-    @sun_text.LineBreakClass::SY => false
-    @sun_text.LineBreakClass::NS => false
+    CL => false
+    CP => false
+    EX => false
+    IS => false
+    SY => false
+    NS => false
     _ => true
   }
 }
@@ -192,12 +187,12 @@ fn sun_can_start_unspaced_layout_token(
 ///|
 fn sun_is_unspaced_layout_break_class(class : @sun_text.LineBreakClass) -> Bool {
   match class {
-    @sun_text.LineBreakClass::ID => true
-    @sun_text.LineBreakClass::H2 => true
-    @sun_text.LineBreakClass::H3 => true
-    @sun_text.LineBreakClass::JL => true
-    @sun_text.LineBreakClass::JV => true
-    @sun_text.LineBreakClass::JT => true
+    ID => true
+    H2 => true
+    H3 => true
+    JL => true
+    JV => true
+    JT => true
     _ => false
   }
 }
@@ -263,7 +258,7 @@ fn SunRasterRenderer::paragraph_layout_result(
     y = y + plan.line_height
   }
   let visual_order = sun_text_visual_order_metadata(input.text)
-  @core.TextParagraphLayoutResult::{
+  {
     text: input.text,
     size: @core.Size::new(
       width=width.min(input.max_width.unwrap_or(width)),

@@ -30,7 +30,7 @@ pub fn Model::new(cols : Int, rows : Int) -> Model {
     screen,
     parser,
     scroll_offset: 0,
-    theme_pref: ThemePreference::System,
+    theme_pref: System,
     selection: None,
     selection_dragging: false,
   }
@@ -71,37 +71,37 @@ fn Model::clamp_scroll(self : Model) -> Unit {
 ///|
 pub fn update(model : Model, msg : Msg) -> Model {
   match msg {
-    Msg::Feed(bytes) => {
+    Feed(bytes) => {
       model.parser.feed_bytes(bytes)
       // ESC c / ED 3 等会清空回看,偏移需重新收敛到合法范围
       model.clamp_scroll()
       model
     }
-    Msg::Resize(cols, rows) => {
+    Resize(cols, rows) => {
       model.screen.resize(cols, rows)
       model.clamp_scroll()
       model
     }
-    Msg::WriteInput(_) => {
+    WriteInput(_) => {
       // 输入时回到最新输出(滚动回底部)
       model.scroll_offset = 0
       model
     }
-    Msg::ScrollBy(delta) => {
+    ScrollBy(delta) => {
       model.scroll_offset = model.scroll_offset + delta
       model.clamp_scroll()
       model
     }
-    Msg::SetTheme(pref) => {
+    SetTheme(pref) => {
       model.theme_pref = pref
       model
     }
-    Msg::SelectionBegin(row, col) => {
+    SelectionBegin(row, col) => {
       model.selection = Some(Selection::new(row, col, row, col))
       model.selection_dragging = true
       model
     }
-    Msg::SelectionMove(row, col) => {
+    SelectionMove(row, col) => {
       if model.selection_dragging {
         match model.selection {
           Some(sel) =>
@@ -113,11 +113,11 @@ pub fn update(model : Model, msg : Msg) -> Model {
       }
       model
     }
-    Msg::SelectionEnd => {
+    SelectionEnd => {
       model.selection_dragging = false
       model
     }
-    Msg::Copy => model // 复制动作由宿主(平台)处理,app 只提供 selection_text
+    Copy => model // 复制动作由宿主(平台)处理,app 只提供 selection_text
   }
 }
 

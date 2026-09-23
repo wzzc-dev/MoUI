@@ -22,15 +22,15 @@ pub(all) enum Msg {
 
 ///|
 pub fn Model::new() -> Model {
-  { count: 0 }
+  { count: 0, }
 }
 
 ///|
 pub fn update(model : Model, msg : Msg) -> Model {
   match msg {
-    Increment => { count: model.count + 1 }
-    Decrement => { count: model.count - 1 }
-    Reset => { count: 0 }
+    Increment => { count: model.count + 1, }
+    Decrement => { count: model.count - 1, }
+    Reset => { count: 0, }
   }
 }
 

@@ -1,7 +1,7 @@
 ///|
 test "FontFace::from_bytes reports short input" {
   match parse_font_face_result(b"") {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 0)) => ()
+    Err(UnexpectedEndOfData(0, 12, 0)) => ()
     _ => abort("expected short input error")
   }
 }
@@ -12,7 +12,7 @@ test "FontFace::from_bytes reports invalid sfnt header" {
   append_u32(bytes, 0)
   append_zeroes(bytes, 8)
   match parse_font_face_result(Bytes::from_array(bytes)) {
-    Err(FontParseError::InvalidFontHeader(0)) => ()
+    Err(InvalidFontHeader(0)) => ()
     _ => abort("expected invalid font header error")
   }
 }
@@ -20,13 +20,13 @@ test "FontFace::from_bytes reports invalid sfnt header" {
 ///|
 test "FontFace::from_bytes reports missing required table" {
   match parse_font_face_result(make_font_with_tables([])) {
-    Err(FontParseError::MissingTable("head")) => ()
+    Err(MissingTable("head")) => ()
     _ => abort("expected missing head table error")
   }
 
   let head = make_table_record("head", 28, 54)
   match parse_font_face_result(make_font_with_tables([head])) {
-    Err(FontParseError::MissingTable("hhea")) => ()
+    Err(MissingTable("hhea")) => ()
     _ => abort("expected missing hhea table error")
   }
 }
@@ -35,13 +35,13 @@ test "FontFace::from_bytes reports missing required table" {
 test "FontFace::from_bytes validates table bounds and minimum lengths" {
   let out_of_bounds = make_table_record("head", 100, 54)
   match parse_font_face_result(make_font_directory_only([out_of_bounds])) {
-    Err(FontParseError::TableOutOfBounds("head", 100, 54, 28)) => ()
+    Err(TableOutOfBounds("head", 100, 54, 28)) => ()
     _ => abort("expected table bounds error")
   }
 
   let short_head = make_table_record("head", 28, 10)
   match parse_font_face_result(make_font_with_tables([short_head])) {
-    Err(FontParseError::TableTooShort("head", 10, 54)) => ()
+    Err(TableTooShort("head", 10, 54)) => ()
     _ => abort("expected table length error")
   }
 }
@@ -50,7 +50,7 @@ test "FontFace::from_bytes validates table bounds and minimum lengths" {
 test "FontFace::from_bytes validates cmap format 12 group length" {
   let bytes = make_structural_font_with_cmap(make_bad_cmap_format12())
   match parse_font_face_result(bytes) {
-    Err(FontParseError::TableTooShort("cmap", 16, 28)) => ()
+    Err(TableTooShort("cmap", 16, 28)) => ()
     _ => abort("expected cmap group length error")
   }
 }
@@ -59,7 +59,7 @@ test "FontFace::from_bytes validates cmap format 12 group length" {
 test "FontFace::from_bytes validates cmap format 12 group ranges" {
   let bytes = make_structural_font_with_cmap(make_bad_cmap_format12_range())
   match parse_font_face_result(bytes) {
-    Err(FontParseError::InvalidCmapGroupRange(20, 10)) => ()
+    Err(InvalidCmapGroupRange(20, 10)) => ()
     _ => abort("expected cmap group range error")
   }
 }
@@ -77,7 +77,7 @@ test "FontFace::from_bytes validates structured core table errors" {
     None,
   )
   match parse_font_face_result(bad_loca_format) {
-    Err(FontParseError::UnsupportedIndexToLocFormat(2)) => ()
+    Err(UnsupportedIndexToLocFormat(2)) => ()
     _ => abort("expected unsupported loca format error")
   }
 
@@ -92,7 +92,7 @@ test "FontFace::from_bytes validates structured core table errors" {
     None,
   )
   match parse_font_face_result(missing_metrics) {
-    Err(FontParseError::MissingHorizontalMetrics) => ()
+    Err(MissingHorizontalMetrics) => ()
     _ => abort("expected missing horizontal metrics error")
   }
 }
@@ -101,13 +101,13 @@ test "FontFace::from_bytes validates structured core table errors" {
 test "FontFace::from_bytes validates structured loca and cmap errors" {
   let unsorted_loca = make_structural_font_with_glyf([2, 0], [0, 0])
   match parse_font_face_result(unsorted_loca) {
-    Err(FontParseError::UnsortedLocaOffsets) => ()
+    Err(UnsortedLocaOffsets) => ()
     _ => abort("expected unsorted loca offsets error")
   }
 
   let unsupported_cmap = make_structural_font_with_cmap(make_bad_cmap_version())
   match parse_font_face_result(unsupported_cmap) {
-    Err(FontParseError::UnsupportedCmapVersion(1)) => ()
+    Err(UnsupportedCmapVersion(1)) => ()
     _ => abort("expected unsupported cmap version error")
   }
 
@@ -115,7 +115,7 @@ test "FontFace::from_bytes validates structured loca and cmap errors" {
     make_bad_cmap_format4_segment_count(),
   )
   match parse_font_face_result(odd_segment_count) {
-    Err(FontParseError::InvalidCmapSegmentCount(3)) => ()
+    Err(InvalidCmapSegmentCount(3)) => ()
     _ => abort("expected invalid cmap segment count error")
   }
 
@@ -123,7 +123,7 @@ test "FontFace::from_bytes validates structured loca and cmap errors" {
     make_bad_cmap_format4_segment_range(),
   )
   match parse_font_face_result(inverted_segment) {
-    Err(FontParseError::InvalidCmapSegmentRange(66, 65)) => ()
+    Err(InvalidCmapSegmentRange(66, 65)) => ()
     _ => abort("expected invalid cmap segment range error")
   }
 }
@@ -136,7 +136,7 @@ test "FontFace::from_bytes validates structured glyph outline errors" {
     unsorted_glyph,
   )
   match parse_font_face_result(unsorted_contours) {
-    Err(FontParseError::UnsortedGlyphContourEndpoints) => ()
+    Err(UnsortedGlyphContourEndpoints) => ()
     _ => abort("expected unsorted glyph contour endpoints error")
   }
 
@@ -145,7 +145,7 @@ test "FontFace::from_bytes validates structured glyph outline errors" {
     make_bad_flag_repeat_glyph(),
   )
   match parse_font_face_result(repeated_flags) {
-    Err(FontParseError::GlyphFlagRepeatOverflow) => ()
+    Err(GlyphFlagRepeatOverflow) => ()
     _ => abort("expected glyph flag repeat overflow error")
   }
 }
@@ -156,7 +156,7 @@ test "FontFace::from_bytes validates cmap format 4 glyph id array reads" {
     make_bad_cmap_format4_range_offset(),
   )
   match parse_font_face_result(bytes) {
-    Err(FontParseError::TableTooShort("cmap", 24, 28)) => ()
+    Err(TableTooShort("cmap", 24, 28)) => ()
     _ => abort("expected cmap format 4 glyph array length error")
   }
 }
@@ -180,10 +180,14 @@ test "FontFace::from_bytes reads checked core metric tables" {
       assert_eq(metrics.ascent, 15)
       assert_eq(metrics.descent, -5)
       assert_eq(metrics.line_gap, 3)
-      let layout = TextLayout::layout(
+      let layout = @text.TextLayout::layout(
         face,
         "A",
-        LayoutConfig::new(max_width=20.0, font_size=10.0, line_height=10.0),
+        @text.LayoutConfig::new(
+          max_width=20.0,
+          font_size=10.0,
+          line_height=10.0,
+        ),
       )
       assert_eq(layout.get_width(), 3.5)
     }
@@ -204,7 +208,7 @@ test "FontFace::from_bytes uses maxp glyph count to validate loca" {
     None,
   )
   match parse_font_face_result(bytes) {
-    Err(FontParseError::TableTooShort("loca", 4, 6)) => ()
+    Err(TableTooShort("loca", 4, 6)) => ()
     _ => abort("expected maxp-driven loca length error")
   }
 }
@@ -226,21 +230,21 @@ test "FontFace::from_bytes parses a structurally valid empty glyph font" {
 
 ///|
 test "FontFace::from_data rejects unsupported nonzero font index" {
-  let data = FontData::new(make_structural_font(), font_index=2)
+  let data = @text.FontData::new(make_structural_font(), font_index=2)
   assert_eq(data.get_font_index(), 2)
   match data.parse() {
-    Err(FontParseError::UnsupportedFontIndex(2)) => ()
+    Err(UnsupportedFontIndex(2)) => ()
     _ => abort("expected unsupported font index error")
   }
-  match FontFace::from_data(data) {
-    Err(FontParseError::UnsupportedFontIndex(2)) => ()
+  match @text.FontFace::from_data(data) {
+    Err(UnsupportedFontIndex(2)) => ()
     _ => abort("expected unsupported font index error")
   }
 }
 
 ///|
 test "FontFaceCache::get_or_parse_result reports cache misses" {
-  let cache = FontFaceCache::new()
+  let cache = @text.FontFaceCache::new()
   match cache.get_or_parse_result("ui", make_structural_font()) {
     Ok(result) => {
       assert_true(result.did_parse())
@@ -264,15 +268,15 @@ test "FontFaceCache::get_or_parse_result reports cache misses" {
 
 ///|
 test "MemoryFontLoader loads registered font data and faces" {
-  let loader = MemoryFontLoader::new()
+  let loader = @text.MemoryFontLoader::new()
   assert_true(loader.is_empty())
-  let data = FontData::new(make_structural_font())
+  let data = @text.FontData::new(make_structural_font())
   assert_eq(data.get_font_index(), 0)
   ignore(loader.insert("ui", data))
   assert_eq(loader.len(), 1)
   assert_true(loader.contains("ui"))
 
-  match load_font_data(loader, "ui") {
+  match @text.load_font_data(loader, "ui") {
     Ok(loaded) => {
       assert_eq(loaded.get_font_index(), 0)
       assert_eq(loaded.get_data(), data.get_data())
@@ -280,44 +284,39 @@ test "MemoryFontLoader loads registered font data and faces" {
     Err(_) => abort("expected memory font data")
   }
 
-  match load_font_face(loader, "ui") {
+  match @text.load_font_face(loader, "ui") {
     Ok(face) => assert_eq(face.get_units_per_em(), 10)
     Err(_) => abort("expected memory font face")
   }
 
-  let indexed = FontData::new(make_structural_font(), font_index=2)
+  let indexed = @text.FontData::new(make_structural_font(), font_index=2)
   ignore(loader.insert("indexed", indexed))
-  match load_font_data(loader, "indexed") {
+  match @text.load_font_data(loader, "indexed") {
     Ok(loaded) => assert_eq(loaded.get_font_index(), 2)
     Err(_) => abort("expected indexed memory font data")
   }
-  match load_font_face(loader, "indexed") {
-    Err(
-      FontLoadError::FontParseFailed(
-        "indexed",
-        FontParseError::UnsupportedFontIndex(2)
-      )
-    ) => ()
+  match @text.load_font_face(loader, "indexed") {
+    Err(FontParseFailed("indexed", UnsupportedFontIndex(2))) => ()
     _ => abort("expected indexed memory font face to be rejected")
   }
 
   loader.remove("ui")
   assert_true(!loader.contains("ui"))
-  match load_font_data(loader, "ui") {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+  match @text.load_font_data(loader, "ui") {
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected missing font data")
   }
 }
 
 ///|
 test "FileFontLoader reports missing and unreadable font sources" {
-  let loader = FileFontLoader::new()
-  match load_font_data(loader, "ui") {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+  let loader = @text.FileFontLoader::new()
+  match @text.load_font_data(loader, "ui") {
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected missing file font source")
   }
 
-  let source = FontFileSource::new(
+  let source = @text.FontFileSource::new(
     "/private/tmp/sun-font-loader-missing.ttf",
     font_index=3,
   )
@@ -326,22 +325,18 @@ test "FileFontLoader reports missing and unreadable font sources" {
   ignore(loader.insert("ui", source))
   assert_eq(loader.len(), 1)
   assert_true(loader.contains("ui"))
-  match load_font_data(loader, "ui") {
-    Err(
-      FontLoadError::FontFileReadFailed(
-        "ui",
-        "/private/tmp/sun-font-loader-missing.ttf"
-      )
-    ) => ()
+  match @text.load_font_data(loader, "ui") {
+    Err(FontFileReadFailed("ui", "/private/tmp/sun-font-loader-missing.ttf")) =>
+      ()
     _ => abort("expected unreadable file font source")
   }
 }
 
 ///|
 test "FontFaceCache::get_or_load_result loads misses and reports hits" {
-  let cache = FontFaceCache::new()
-  let loader = MemoryFontLoader::new()
-  ignore(loader.insert("ui", FontData::new(make_structural_font())))
+  let cache = @text.FontFaceCache::new()
+  let loader = @text.MemoryFontLoader::new()
+  ignore(loader.insert("ui", @text.FontData::new(make_structural_font())))
 
   match cache.get_or_load_result("ui", loader) {
     Ok(first) => {
@@ -363,15 +358,10 @@ test "FontFaceCache::get_or_load_result loads misses and reports hits" {
     Err(_) => abort("expected font load cache hit")
   }
 
-  let bad_loader = MemoryFontLoader::new()
-  ignore(bad_loader.insert("bad", FontData::new(b"bad")))
+  let bad_loader = @text.MemoryFontLoader::new()
+  ignore(bad_loader.insert("bad", @text.FontData::new(b"bad")))
   match cache.get_or_load_result("bad", bad_loader) {
-    Err(
-      FontLoadError::FontParseFailed(
-        "bad",
-        FontParseError::UnexpectedEndOfData(0, 12, 3)
-      )
-    ) => ()
+    Err(FontParseFailed("bad", UnexpectedEndOfData(0, 12, 3))) => ()
     _ => abort("expected loader-backed parse error")
   }
   assert_true(!cache.contains("bad"))
@@ -398,17 +388,21 @@ test "FontFace::from_bytes maps supplementary Unicode cmap format 12 groups" {
     [],
     None,
   )
-  match FontFace::from_bytes(bytes) {
+  match @text.FontFace::from_bytes(bytes) {
     Ok(face) => {
       assert_eq(face.char_to_glyph(0x1F600), 1)
       assert_eq(face.char_to_glyph(0x1F601), 0)
       assert_true(face.has_glyph_for_char(0x1F600))
       assert_true(!face.has_glyph_for_char(0x1F601))
       let text = parser_test_string_from_codepoints([0x1F600])
-      let layout = TextLayout::layout(
+      let layout = @text.TextLayout::layout(
         face,
         text,
-        LayoutConfig::new(max_width=20.0, font_size=10.0, line_height=10.0),
+        @text.LayoutConfig::new(
+          max_width=20.0,
+          font_size=10.0,
+          line_height=10.0,
+        ),
       )
       assert_eq(layout.run_count(), 1)
       assert_eq(layout.get_width(), 7.0)
@@ -486,7 +480,7 @@ test "FontFace::from_bytes reads long loca glyph offsets" {
   )
   match parse_font_face_result(bytes) {
     Ok(face) => {
-      let cache = GlyphMaskCache::new()
+      let cache = @text.GlyphMaskCache::new()
       match
         cache.get_or_rasterize_face_glyph_result("long-loca", face, 0, 1.0) {
         Some(result) => {
@@ -512,7 +506,7 @@ test "FontFace::from_bytes validates glyf glyph byte requirements" {
      0x00, 0x01, // ymax
   ])
   match parse_font_face_result(bytes) {
-    Err(FontParseError::TableTooShort("glyf", 4, 10)) => ()
+    Err(TableTooShort("glyf", 4, 10)) => ()
     _ => abort("expected short glyph error")
   }
 }
@@ -523,7 +517,7 @@ test "FontFace::from_bytes parses simple glyph outline through checked path" {
   let bytes = make_structural_font_with_glyf([0, glyph.length()], glyph)
   match parse_font_face_result(bytes) {
     Ok(face) => {
-      let cache = GlyphMaskCache::new()
+      let cache = @text.GlyphMaskCache::new()
       match cache.get_or_rasterize_face_glyph_result("triangle", face, 0, 1.0) {
         Some(first) => {
           assert_true(first.did_rasterize())
@@ -546,7 +540,7 @@ test "FontFace::from_bytes validates composite glyph scale bytes" {
   let glyph = make_bad_scaled_composite_glyph()
   let bytes = make_structural_font_with_glyf([0, glyph.length()], glyph)
   match parse_font_face_result(bytes) {
-    Err(FontParseError::TableTooShort("glyf", 18, 20)) => ()
+    Err(TableTooShort("glyf", 18, 20)) => ()
     _ => abort("expected composite scale length error")
   }
 }
@@ -555,7 +549,7 @@ test "FontFace::from_bytes validates composite glyph scale bytes" {
 test "FontFace::from_bytes validates kern format 0 pair length" {
   let bytes = make_structural_font_with_kern(make_bad_kern_table())
   match parse_font_face_result(bytes) {
-    Err(FontParseError::TableTooShort("kern", 14, 20)) => ()
+    Err(TableTooShort("kern", 14, 20)) => ()
     _ => abort("expected kern pair length error")
   }
 }
@@ -574,10 +568,14 @@ test "FontFace::from_bytes parses kern format 0 pairs" {
   )
   match parse_font_face_result(bytes) {
     Ok(face) => {
-      let layout = TextLayout::layout(
+      let layout = @text.TextLayout::layout(
         face,
         "AB",
-        LayoutConfig::new(max_width=20.0, font_size=10.0, line_height=10.0),
+        @text.LayoutConfig::new(
+          max_width=20.0,
+          font_size=10.0,
+          line_height=10.0,
+        ),
       )
       assert_eq(layout.get_width(), 11.0)
     }
@@ -586,8 +584,10 @@ test "FontFace::from_bytes parses kern format 0 pairs" {
 }
 
 ///|
-fn parse_font_face_result(data : Bytes) -> Result[FontFace, FontParseError] {
-  FontFace::from_bytes(data)
+fn parse_font_face_result(
+  data : Bytes,
+) -> Result[@text.FontFace, @text.FontParseError] {
+  @text.FontFace::from_bytes(data)
 }
 
 ///|
@@ -603,7 +603,7 @@ fn make_table_record(
   offset : Int,
   length : Int,
 ) -> TestTableRecord {
-  { tag, offset, length }
+  { tag, offset, length, }
 }
 
 ///|

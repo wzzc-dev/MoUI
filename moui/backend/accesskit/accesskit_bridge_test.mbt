@@ -4,7 +4,7 @@ test "accesskit adapter maps flat runtime semantics nodes" {
   let child = @core.SemanticsNode::{
     node_id: child_id,
     semantic_id: @core.SemanticId::parse("document.save"),
-    role: @core.SemanticsRole::Heading,
+    role: Heading,
     level: Some(2),
     url: "https://example.test/save",
     label: "Save",
@@ -15,12 +15,9 @@ test "accesskit adapter maps flat runtime semantics nodes" {
     text: None,
     collection: None,
     relations: @core.SemanticsRelations::empty(),
-    live: @core.SemanticsLive::Off,
+    live: Off,
     live_atomic: false,
-    actions: [
-      @core.SemanticsActionKind::Focus,
-      @core.SemanticsActionKind::Activate,
-    ],
+    actions: [Focus, Activate],
     focus_order: Some(0),
     frame: @core.Rect::new(x=8.0, y=8.0, width=80.0, height=32.0),
     children: [],
@@ -28,7 +25,7 @@ test "accesskit adapter maps flat runtime semantics nodes" {
   let root = @core.SemanticsNode::{
     node_id: @core.SemanticsNodeId::new(1UL),
     semantic_id: None,
-    role: @core.SemanticsRole::Group,
+    role: Group,
     level: None,
     url: "",
     label: "Root",
@@ -39,7 +36,7 @@ test "accesskit adapter maps flat runtime semantics nodes" {
     text: None,
     collection: None,
     relations: @core.SemanticsRelations::empty(),
-    live: @core.SemanticsLive::Off,
+    live: Off,
     live_atomic: false,
     actions: [],
     focus_order: None,
@@ -66,7 +63,7 @@ test "accesskit adapter maps flat runtime semantics nodes" {
     Some(description) => inspect(description, content="Save current document")
     None => fail("expected child accessibility description")
   }
-  assert_true(child_node.supports_action(@moon_accesskit.Action::Click))
+  assert_true(child_node.supports_action(Click))
 }
 
 ///|
@@ -75,20 +72,17 @@ test "accesskit bridge forwards generation-checked neutral actions" {
   let node_id = @core.SemanticsNodeId::new(42UL)
   let generation = @core.SemanticsGeneration::new(7UL)
   let bridge = @accesskit.AccessKitBridge::new(diagnostic_name="test", perform=request => {
-    if request.target == @core.SemanticsTarget::ByNodeId(node_id) &&
-      request.precondition ==
-      @runtime.SemanticsGenerationPrecondition::Exact(generation) &&
-      request.action == @core.SemanticsAction::SetText("Luna") {
+    if request.target == ByNodeId(node_id) &&
+      request.precondition == Exact(generation) &&
+      request.action == SetText("Luna") {
       invoked.val = invoked.val + 1
-      @accesskit.AccessKitActionResult::Handled({
+      Handled({
         before: generation,
         after: @core.SemanticsGeneration::new(8UL),
         pending_work: false,
       })
     } else {
-      @accesskit.AccessKitActionResult::Rejected(
-        @runtime.SemanticsActionDispatchError::TargetNotFound(request.target),
-      )
+      Rejected(TargetNotFound(request.target))
     }
   })
   match
@@ -96,10 +90,10 @@ test "accesskit bridge forwards generation-checked neutral actions" {
       @accesskit.accesskit_semantics_action_request(
         node_id~,
         generation~,
-        action=@core.SemanticsAction::SetText("Luna"),
+        action=SetText("Luna"),
       ),
     ) {
-    @accesskit.AccessKitActionResult::Handled(receipt) =>
+    Handled(receipt) =>
       assert_true(receipt.after == @core.SemanticsGeneration::new(8UL))
     _ => fail("expected handled action")
   }
@@ -112,16 +106,14 @@ test "unavailable accesskit bridge is inert" {
   let request = @accesskit.accesskit_semantics_action_request(
     node_id=@core.SemanticsNodeId::new(1UL),
     generation=@core.SemanticsGeneration::new(1UL),
-    action=@core.SemanticsAction::Activate,
+    action=Activate,
   )
   assert_true(
-    bridge.publish_semantics(
-      @runtime.SemanticsRead::Unchanged(@core.SemanticsGeneration::new(1UL)),
-    )
+    bridge.publish_semantics(Unchanged(@core.SemanticsGeneration::new(1UL)))
     is None,
   )
   match bridge.perform_action(request) {
-    @accesskit.AccessKitActionResult::BridgeUnavailable(_) => ()
+    BridgeUnavailable(_) => ()
     _ => fail("expected unavailable bridge")
   }
 }

@@ -16,7 +16,7 @@ pub fn SurfaceMetrics::new(
   physical_size~ : Size,
   scale_factor? : Double = 1.0,
 ) -> SurfaceMetrics {
-  { logical_size, physical_size, scale_factor: normalize_scale(scale_factor) }
+  { logical_size, physical_size, scale_factor: normalize_scale(scale_factor), }
 }
 
 ///|

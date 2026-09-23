@@ -22,7 +22,7 @@ pub fn Renderer::draw_transformed_sampled_pixmap_cached(
     paint,
     sampling,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn Renderer::draw_transformed_sampled_pixmap_rect_cached(
     paint,
     sampling,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -253,7 +253,7 @@ pub fn Renderer::draw_transformed_sampled_bmp_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -312,7 +312,7 @@ pub fn Renderer::draw_transformed_sampled_png_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -377,7 +377,7 @@ pub fn Renderer::draw_transformed_sampled_rgba_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -443,7 +443,7 @@ pub fn Renderer::draw_transformed_sampled_bmp_bytes_rect_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -507,7 +507,7 @@ pub fn Renderer::draw_transformed_sampled_png_bytes_rect_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -576,7 +576,7 @@ pub fn Renderer::draw_transformed_sampled_rgba_bytes_rect_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }

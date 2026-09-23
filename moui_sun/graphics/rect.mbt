@@ -15,7 +15,7 @@ pub fn Rect::new(
   width~ : Double,
   height~ : Double,
 ) -> Rect {
-  { x, y, width, height }
+  { x, y, width, height, }
 }
 
 ///|
@@ -68,5 +68,5 @@ pub struct Size {
 
 ///|
 pub fn Size::new(width~ : Double, height~ : Double) -> Size {
-  { width, height }
+  { width, height, }
 }

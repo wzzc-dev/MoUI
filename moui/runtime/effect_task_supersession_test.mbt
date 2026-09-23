@@ -37,16 +37,16 @@ test "runtime records effect task key supersession in diagnostics" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program~,
     size=@core.Size::new(width=100.0, height=100.0),
   )
   let tap = () => {
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=5.0, y=5.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     )
@@ -78,9 +78,8 @@ test "runtime records effect task key supersession in diagnostics" {
     superseded
     .effect_task_lifecycle()
     .any(entry => {
-      entry.status() == EffectTaskLifecycleStatus::EffectTaskCancelled &&
-      entry.cancel_reason() ==
-      Some(EffectTaskCancelReason::EffectTaskKindChanged)
+      entry.status() == EffectTaskCancelled &&
+      entry.cancel_reason() == Some(EffectTaskKindChanged)
     }),
     content="true",
   )

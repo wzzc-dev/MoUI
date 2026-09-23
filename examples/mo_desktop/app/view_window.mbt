@@ -32,7 +32,7 @@ fn window_metrics(
     } else {
       (viewport_height - 118.0).max(350.0)
     }
-    { width, height, compact }
+    { width, height, compact, }
   } else {
     let width = if record.bounds.width > 0.0 {
       record.bounds.width.min(viewport_width - 24.0).max(272.0)
@@ -44,7 +44,7 @@ fn window_metrics(
     } else {
       (viewport_height * 0.74).min(620.0).max(480.0)
     }
-    { width, height, compact }
+    { width, height, compact, }
   }
 }
 
@@ -126,11 +126,7 @@ fn app_window(
   let radius = if maximized { 10.0 } else { 12.0 }
   let window = @views.stack([
       @views.container(
-        @views.column(
-          [titlebar, body],
-          spacing=0.0,
-          align=@views.CrossAlign::Stretch,
-        ),
+        @views.column([titlebar, body], spacing=0.0, align=Stretch),
         width=metrics.width,
         height=metrics.height,
         background=palette.glass_strong,
@@ -193,12 +189,8 @@ fn resize_grip(
           ctx,
           @graphics.PathSpec::new(
             verbs=[
-              @graphics.PathVerb::MoveTo(
-                @geometry.Point::new(x=x0, y=inset + inner),
-              ),
-              @graphics.PathVerb::LineTo(
-                @geometry.Point::new(x=inset + inner, y=y1),
-              ),
+              MoveTo(@geometry.Point::new(x=x0, y=inset + inner)),
+              LineTo(@geometry.Point::new(x=inset + inner, y=y1)),
             ],
             stroke=Some(stroke),
             stroke_width=1.6,
@@ -260,7 +252,7 @@ fn window_titlebar(
       ),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   // Background windows dim their titles like macOS non-key windows.
   let foreground = if focused {
@@ -270,11 +262,11 @@ fn window_titlebar(
   }
   let title_label = @views.text(
       window_title(model, record),
-      role=@views.TextRole::Label,
+      role=Label,
       theme~,
       width=(width * 0.42).max(140.0),
       height=22.0,
-      align=@text.TextAlign::TextCenter,
+      align=TextCenter,
     )
     .font(@text.FontSpec::new(size=13.0, weight=590))
     .foreground(foreground)

@@ -353,7 +353,7 @@ fn resolve_skia(
   gpu_env : Array[(String, String)],
 ) -> Result[SkiaLink, String] {
   if fallback {
-    return Ok({ stub_flags: "", link_flags: "" })
+    return Ok({ stub_flags: "", link_flags: "", })
   }
   let env = skia_resolve_env()
   env.push(("MOUI_SKIA_PLATFORM", platform))
@@ -377,11 +377,11 @@ fn resolve_skia(
         _ => return Err("moui_skia build.js output is missing .vars object")
       }
       let stub_flags = match vars.get("MOUI_SKIA_STUB_CC_FLAGS") {
-        Some(Json::String(value)) => value
+        Some(String(value)) => value
         _ => ""
       }
       let link_flags = match vars.get("MOUI_SKIA_CC_LINK_FLAGS") {
-        Some(Json::String(value)) => value
+        Some(String(value)) => value
         _ => ""
       }
       if !options_fallback_allows_stub_link(fallback, stub_flags, link_flags) {
@@ -400,7 +400,7 @@ fn resolve_skia(
         " flags_len=" +
         link_flags.length().to_string(),
       )
-      Ok({ stub_flags, link_flags })
+      Ok({ stub_flags, link_flags, })
     }
     Ok(result) =>
       Err(

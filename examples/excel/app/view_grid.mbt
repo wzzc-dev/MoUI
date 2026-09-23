@@ -11,7 +11,7 @@ fn build_grid(model : ExcelModel, theme : @moui.Theme) -> @moui.View[ExcelMsg] {
     sheet.col_count.to_double() * (cell_width + cell_gap)
   @views.container(
     @views.scroll_view(
-      @views.column(rows, spacing=cell_gap, align=@views.CrossAlign::Start),
+      @views.column(rows, spacing=cell_gap, align=Start),
       width=content_width,
       height=grid_height,
     ),
@@ -30,17 +30,17 @@ fn build_header_row(
 ) -> @moui.View[ExcelMsg] {
   let cells : Array[@moui.View[ExcelMsg]] = [
     header_cell("", row_header_width, col_header_height, theme).on_tap(
-      ExcelMsg::SelectAllCells,
+      SelectAllCells,
     ),
   ]
   for col in 0..<sheet.col_count {
     cells.push(
       header_cell(@cell.column_label(col), cell_width, col_header_height, theme).on_tap(
-        ExcelMsg::ColumnSelected(col),
+        ColumnSelected(col),
       ),
     )
   }
-  @views.row(cells, spacing=cell_gap, align=@views.CrossAlign::Center)
+  @views.row(cells, spacing=cell_gap, align=Center)
 }
 
 ///|
@@ -53,13 +53,13 @@ fn build_data_row(
   let sheet = model.active_sheet()
   let cells : Array[@moui.View[ExcelMsg]] = [
     header_cell((row + 1).to_string(), row_header_width, cell_height, theme).on_tap(
-      ExcelMsg::RowSelected(row),
+      RowSelected(row),
     ),
   ]
   for col in 0..<sheet.col_count {
     cells.push(build_cell(model, row, col, heat_range, theme))
   }
-  @views.row(cells, spacing=cell_gap, align=@views.CrossAlign::Center)
+  @views.row(cells, spacing=cell_gap, align=Center)
 }
 
 ///|
@@ -73,7 +73,7 @@ fn header_cell(
     @views.align(
       @views.text(
         label,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=width - 4.0,
         height=height - 4.0,
@@ -115,8 +115,8 @@ fn build_cell(
     @views.text_field(
       model.edit_value,
       on_input=fn(v) { ExcelMsg::CellRawChanged(row, col, v) },
-      on_submit=Some(ExcelMsg::CellEditCommittedAndNavigate(1, 0)),
-      variant=@views.TextFieldVariant::Plain,
+      on_submit=Some(CellEditCommittedAndNavigate(1, 0)),
+      variant=Plain,
       theme~,
       width=cell_width - 8.0,
       height=cell_height - 8.0,
@@ -133,8 +133,8 @@ fn build_cell(
     padding=3.0,
   )
   .border(border)
-  .on_tap(ExcelMsg::CellSelected(row, col))
-  .on_double_tap(ExcelMsg::CellEditStarted)
+  .on_tap(CellSelected(row, col))
+  .on_double_tap(CellEditStarted)
 }
 
 ///|
@@ -152,8 +152,8 @@ fn cell_display_content(
       on_input=fn(v) {
         ExcelMsg::CellRawChanged(row, col, direct_cell_input(cell.raw, v))
       },
-      on_submit=Some(ExcelMsg::CellEditCommitted),
-      variant=@views.TextFieldVariant::Plain,
+      on_submit=Some(CellEditCommitted),
+      variant=Plain,
       theme~,
       width=cell_width - 8.0,
       height=cell_height - 8.0,
@@ -165,8 +165,8 @@ fn cell_display_content(
       on_input=fn(v) {
         ExcelMsg::CellRawChanged(row, col, direct_cell_input(display_value, v))
       },
-      on_submit=Some(ExcelMsg::CellEditCommitted),
-      variant=@views.TextFieldVariant::Plain,
+      on_submit=Some(CellEditCommitted),
+      variant=Plain,
       theme~,
       width=cell_width - 8.0,
       height=cell_height - 8.0,
@@ -216,7 +216,7 @@ fn cell_background(
       theme.palette.primary_container
     } else if model.heat_map {
       match (cell.value, heat_range) {
-        (@cell.CellValue::Number(n), Some((min_value, max_value))) =>
+        (Number(n), Some((min_value, max_value))) =>
           heat_color(n, min_value, max_value)
         _ => theme.palette.surface
       }
@@ -233,7 +233,7 @@ fn heat_map_range(sheet : @sheet.Sheet) -> (Double, Double)? {
   let mut max_value = -1.0e18
   for _, cell in sheet.cells {
     match cell.value {
-      @cell.CellValue::Number(n) => {
+      Number(n) => {
         found = true
         if n < min_value {
           min_value = n

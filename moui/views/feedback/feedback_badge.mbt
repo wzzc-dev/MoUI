@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] badge(
   label : String,
-  tone? : @style.BadgeTone = @style.BadgeTone::Neutral,
+  tone? : @style.BadgeTone = Neutral,
   theme? : @core.Theme,
   style? : @style.BadgeStyle,
   width? : Double = 72.0,
@@ -12,7 +12,7 @@ pub fn[Msg] badge(
   @container.container(
     @text.text(
       label,
-      role=@style.TextRole::Caption,
+      role=Caption,
       theme=resolved_theme,
       width=width - style.padding * 2.0,
       height=height - style.padding * 2.0,
@@ -22,13 +22,13 @@ pub fn[Msg] badge(
     background=badge_background(tone, style),
     corner_radius=@common.min_view_double(height / 2.0, style.radius),
     padding=style.padding,
-  ).semantics_role(@core.SemanticsRole::Text)
+  ).semantics_role(Text)
 }
 
 ///|
 pub fn[Msg] status_badge(
   label : String,
-  tone? : @style.BadgeTone = @style.BadgeTone::Neutral,
+  tone? : @style.BadgeTone = Neutral,
   detail? : String = "",
   theme? : @core.Theme,
   style? : @style.BadgeStyle,
@@ -51,7 +51,7 @@ pub fn[Msg] stat_card(
   label : String,
   value : String,
   caption? : String = "",
-  tone? : @style.FeedbackTone = @style.FeedbackTone::Neutral,
+  tone? : @style.FeedbackTone = Neutral,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
   width? : Double = 180.0,
@@ -62,14 +62,14 @@ pub fn[Msg] stat_card(
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       label,
-      role=@style.TextRole::Caption,
+      role=Caption,
       theme=resolved_theme,
       width=width - 24.0,
       height=22.0,
     ),
     @text.text(
       value,
-      role=@style.TextRole::Title,
+      role=Title,
       theme=resolved_theme,
       width=width - 24.0,
       height=34.0,
@@ -79,7 +79,7 @@ pub fn[Msg] stat_card(
     rows.push(
       @text.text(
         caption,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=width - 24.0,
         height=22.0,
@@ -87,14 +87,10 @@ pub fn[Msg] stat_card(
     )
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start),
     width~,
     height~,
-    variant=@style.ContainerVariant::Raised,
+    variant=Raised,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )

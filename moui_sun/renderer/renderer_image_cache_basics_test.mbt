@@ -1,6 +1,6 @@
 ///|
 test "RendererResources exposes image cache for BMP decode" {
-  let resources = RendererResources::new(16, 16)
+  let resources = @renderer.RendererResources::new(16, 16)
   let icon = @graphics.Pixmap::new(1, 1)
   icon.set_pixel(0, 0, @graphics.Color::green())
 
@@ -30,7 +30,7 @@ test "RendererResources exposes image cache for BMP decode" {
 
 ///|
 test "RendererResources exposes image cache for RGBA decode" {
-  let resources = RendererResources::new(16, 16)
+  let resources = @renderer.RendererResources::new(16, 16)
   let pixels = Bytes::from_array([0, 255, 0, 255])
 
   match
@@ -59,7 +59,7 @@ test "RendererResources exposes image cache for RGBA decode" {
 test "Renderer::draw_pixmap_cached reuses cached pixmap copies" {
   let canvas = @graphics.Canvas::new(3, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let image_cache = @graphics.PixmapCache::new()
   let icon = @graphics.Pixmap::new(1, 1)
   icon.set_pixel(0, 0, @graphics.Color::red())

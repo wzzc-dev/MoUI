@@ -71,7 +71,7 @@ pub fn WindowScene::new(
   scene_id~ : String,
   payload? : String = "",
 ) -> WindowScene {
-  { scene_id, payload }
+  { scene_id, payload, }
 }
 
 ///|
@@ -88,7 +88,7 @@ pub fn WindowRecord::new(
   phase? : WindowLifecyclePhase = WindowCreated,
   primary? : Bool = false,
 ) -> WindowRecord {
-  { id, title, scene, metrics, phase, primary }
+  { id, title, scene, metrics, phase, primary, }
 }
 
 ///|
@@ -98,5 +98,5 @@ pub fn WindowOpenRequest::new(
   metrics~ : @core.SurfaceMetrics,
   primary? : Bool = false,
 ) -> WindowOpenRequest {
-  { title, scene, metrics, primary }
+  { title, scene, metrics, primary, }
 }

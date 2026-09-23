@@ -1,8 +1,8 @@
 ///|
 test "Pixmap::to_rgba_bytes exports raw RGBA bytes" {
-  let pixmap = Pixmap::new(2, 1)
-  pixmap.set_pixel(0, 0, Color::new(r=1, g=2, b=3, a=4))
-  pixmap.set_pixel(1, 0, Color::new(r=5, g=6, b=7, a=8))
+  let pixmap = @graphics.Pixmap::new(2, 1)
+  pixmap.set_pixel(0, 0, @graphics.Color::new(r=1, g=2, b=3, a=4))
+  pixmap.set_pixel(1, 0, @graphics.Color::new(r=5, g=6, b=7, a=8))
   let expected : Array[Byte] = [1, 2, 3, 4, 5, 6, 7, 8]
   assert_eq(pixmap.to_rgba_bytes(), Bytes::from_array(expected))
 }
@@ -10,19 +10,25 @@ test "Pixmap::to_rgba_bytes exports raw RGBA bytes" {
 ///|
 test "Pixmap::from_rgba_bytes decodes packed raw pixels" {
   let bytes = Bytes::from_array([1, 2, 3, 4, 5, 6, 7, 8])
-  match Pixmap::from_rgba_bytes(2, 1, bytes) {
+  match @graphics.Pixmap::from_rgba_bytes(2, 1, bytes) {
     Ok(decoded) => {
       assert_eq(decoded.get_width(), 2)
       assert_eq(decoded.get_height(), 1)
-      assert_eq(decoded.get_pixel(0, 0), Color::new(r=1, g=2, b=3, a=4))
-      assert_eq(decoded.get_pixel(1, 0), Color::new(r=5, g=6, b=7, a=8))
-      decoded.set_pixel(0, 0, Color::red())
+      assert_eq(
+        decoded.get_pixel(0, 0),
+        @graphics.Color::new(r=1, g=2, b=3, a=4),
+      )
+      assert_eq(
+        decoded.get_pixel(1, 0),
+        @graphics.Color::new(r=5, g=6, b=7, a=8),
+      )
+      decoded.set_pixel(0, 0, @graphics.Color::red())
       assert_eq(bytes, Bytes::from_array([1, 2, 3, 4, 5, 6, 7, 8]))
     }
     Err(_) => abort("expected RGBA decode")
   }
 
-  match Pixmap::from_rgba_bytes(0, 0, Bytes::from_array([])) {
+  match @graphics.Pixmap::from_rgba_bytes(0, 0, Bytes::from_array([])) {
     Ok(empty) => {
       assert_eq(empty.get_width(), 0)
       assert_eq(empty.get_height(), 0)
@@ -34,22 +40,23 @@ test "Pixmap::from_rgba_bytes decodes packed raw pixels" {
 
 ///|
 test "Pixmap::from_rgba_bytes reports structural errors" {
-  match Pixmap::from_rgba_bytes(-1, 1, Bytes::from_array([])) {
-    Err(PixmapDecodeError::InvalidRgbaDimensions(-1, 1)) => ()
+  match @graphics.Pixmap::from_rgba_bytes(-1, 1, Bytes::from_array([])) {
+    Err(InvalidRgbaDimensions(-1, 1)) => ()
     _ => abort("expected RGBA dimensions error")
   }
 
-  match Pixmap::from_rgba_bytes(2, 1, Bytes::from_array([1, 2, 3, 4])) {
-    Err(PixmapDecodeError::RgbaByteLengthMismatch(8, 4)) => ()
+  match
+    @graphics.Pixmap::from_rgba_bytes(2, 1, Bytes::from_array([1, 2, 3, 4])) {
+    Err(RgbaByteLengthMismatch(8, 4)) => ()
     _ => abort("expected RGBA length mismatch")
   }
 }
 
 ///|
 test "Pixmap::to_ppm_bytes encodes deterministic P6 RGB output" {
-  let pixmap = Pixmap::new(2, 1)
-  pixmap.set_pixel(0, 0, Color::new(r=1, g=2, b=3, a=4))
-  pixmap.set_pixel(1, 0, Color::new(r=250, g=251, b=252, a=253))
+  let pixmap = @graphics.Pixmap::new(2, 1)
+  pixmap.set_pixel(0, 0, @graphics.Color::new(r=1, g=2, b=3, a=4))
+  pixmap.set_pixel(1, 0, @graphics.Color::new(r=250, g=251, b=252, a=253))
   let ppm = pixmap.to_ppm_bytes()
   let expected : Array[Byte] = [
     80, 54, 10, 50, 32, 49, 10, 50, 53, 53, 10, 1, 2, 3, 250, 251, 252,
@@ -59,18 +66,18 @@ test "Pixmap::to_ppm_bytes encodes deterministic P6 RGB output" {
 
 ///|
 test "Pixmap::to_ppm_bytes encodes empty dimensions" {
-  let pixmap = Pixmap::new(0, 0)
+  let pixmap = @graphics.Pixmap::new(0, 0)
   let expected : Array[Byte] = [80, 54, 10, 48, 32, 48, 10, 50, 53, 53, 10]
   assert_eq(pixmap.to_ppm_bytes(), Bytes::from_array(expected))
 }
 
 ///|
 test "Pixmap::to_bmp_bytes encodes deterministic BGRA output" {
-  let pixmap = Pixmap::new(2, 2)
-  pixmap.set_pixel(0, 0, Color::new(r=255, g=0, b=0, a=255))
-  pixmap.set_pixel(1, 0, Color::new(r=0, g=255, b=0, a=128))
-  pixmap.set_pixel(0, 1, Color::new(r=0, g=0, b=255, a=64))
-  pixmap.set_pixel(1, 1, Color::transparent())
+  let pixmap = @graphics.Pixmap::new(2, 2)
+  pixmap.set_pixel(0, 0, @graphics.Color::new(r=255, g=0, b=0, a=255))
+  pixmap.set_pixel(1, 0, @graphics.Color::new(r=0, g=255, b=0, a=128))
+  pixmap.set_pixel(0, 1, @graphics.Color::new(r=0, g=0, b=255, a=64))
+  pixmap.set_pixel(1, 1, @graphics.Color::transparent())
   let expected : Array[Byte] = [
     66, 77, 70, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0, 40, 0, 0, 0, 2, 0, 0, 0, 2, 0,
     0, 0, 1, 0, 32, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -81,7 +88,7 @@ test "Pixmap::to_bmp_bytes encodes deterministic BGRA output" {
 
 ///|
 test "Pixmap::to_bmp_bytes encodes empty dimensions" {
-  let pixmap = Pixmap::new(0, 0)
+  let pixmap = @graphics.Pixmap::new(0, 0)
   let expected : Array[Byte] = [
     66, 77, 54, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 1, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -92,8 +99,8 @@ test "Pixmap::to_bmp_bytes encodes empty dimensions" {
 
 ///|
 test "Pixmap::to_png_bytes encodes deterministic RGBA output" {
-  let pixmap = Pixmap::new(1, 1)
-  pixmap.set_pixel(0, 0, Color::new(r=255, g=0, b=0, a=255))
+  let pixmap = @graphics.Pixmap::new(1, 1)
+  pixmap.set_pixel(0, 0, @graphics.Color::new(r=255, g=0, b=0, a=255))
   match pixmap.to_png_bytes() {
     Ok(png) => assert_eq(png, Bytes::from_array(make_pixmap_test_red_png()))
     Err(_) => abort("expected PNG encode")
@@ -102,23 +109,23 @@ test "Pixmap::to_png_bytes encodes deterministic RGBA output" {
 
 ///|
 test "Pixmap::to_png_bytes rejects empty dimensions" {
-  match Pixmap::new(0, 0).to_png_bytes() {
-    Err(PixmapEncodeError::InvalidPngDimensions(0, 0)) => ()
+  match @graphics.Pixmap::new(0, 0).to_png_bytes() {
+    Err(InvalidPngDimensions(0, 0)) => ()
     _ => abort("expected PNG dimensions error")
   }
 }
 
 ///|
 test "Pixmap::from_png_bytes decodes exported RGBA PNG bytes" {
-  let pixmap = Pixmap::new(2, 2)
-  pixmap.set_pixel(0, 0, Color::new(r=255, g=0, b=0, a=255))
-  pixmap.set_pixel(1, 0, Color::new(r=0, g=255, b=0, a=128))
-  pixmap.set_pixel(0, 1, Color::new(r=0, g=0, b=255, a=64))
-  pixmap.set_pixel(1, 1, Color::new(r=10, g=20, b=30, a=40))
+  let pixmap = @graphics.Pixmap::new(2, 2)
+  pixmap.set_pixel(0, 0, @graphics.Color::new(r=255, g=0, b=0, a=255))
+  pixmap.set_pixel(1, 0, @graphics.Color::new(r=0, g=255, b=0, a=128))
+  pixmap.set_pixel(0, 1, @graphics.Color::new(r=0, g=0, b=255, a=64))
+  pixmap.set_pixel(1, 1, @graphics.Color::new(r=10, g=20, b=30, a=40))
 
   match pixmap.to_png_bytes() {
     Ok(png) =>
-      match Pixmap::from_png_bytes(png) {
+      match @graphics.Pixmap::from_png_bytes(png) {
         Ok(decoded) => {
           assert_eq(decoded.get_width(), 2)
           assert_eq(decoded.get_height(), 2)
@@ -136,19 +143,19 @@ test "Pixmap::from_png_bytes decodes RGBA scanline filters" {
     0, 10, 20, 30, 40, 50, 60, 70, 80, 1, 1, 2, 3, 4, 5, 6, 7, 8, 2, 2, 3, 4, 5,
     4, 5, 6, 7, 3, 19, 18, 17, 16, 45, 44, 42, 41, 4, 5, 6, 7, 8, 10, 11, 12, 13,
   ])
-  let expected = Pixmap::new(2, 5)
-  expected.set_pixel(0, 0, Color::new(r=10, g=20, b=30, a=40))
-  expected.set_pixel(1, 0, Color::new(r=50, g=60, b=70, a=80))
-  expected.set_pixel(0, 1, Color::new(r=1, g=2, b=3, a=4))
-  expected.set_pixel(1, 1, Color::new(r=6, g=8, b=10, a=12))
-  expected.set_pixel(0, 2, Color::new(r=3, g=5, b=7, a=9))
-  expected.set_pixel(1, 2, Color::new(r=10, g=13, b=16, a=19))
-  expected.set_pixel(0, 3, Color::new(r=20, g=20, b=20, a=20))
-  expected.set_pixel(1, 3, Color::new(r=60, g=60, b=60, a=60))
-  expected.set_pixel(0, 4, Color::new(r=25, g=26, b=27, a=28))
-  expected.set_pixel(1, 4, Color::new(r=70, g=71, b=72, a=73))
+  let expected = @graphics.Pixmap::new(2, 5)
+  expected.set_pixel(0, 0, @graphics.Color::new(r=10, g=20, b=30, a=40))
+  expected.set_pixel(1, 0, @graphics.Color::new(r=50, g=60, b=70, a=80))
+  expected.set_pixel(0, 1, @graphics.Color::new(r=1, g=2, b=3, a=4))
+  expected.set_pixel(1, 1, @graphics.Color::new(r=6, g=8, b=10, a=12))
+  expected.set_pixel(0, 2, @graphics.Color::new(r=3, g=5, b=7, a=9))
+  expected.set_pixel(1, 2, @graphics.Color::new(r=10, g=13, b=16, a=19))
+  expected.set_pixel(0, 3, @graphics.Color::new(r=20, g=20, b=20, a=20))
+  expected.set_pixel(1, 3, @graphics.Color::new(r=60, g=60, b=60, a=60))
+  expected.set_pixel(0, 4, @graphics.Color::new(r=25, g=26, b=27, a=28))
+  expected.set_pixel(1, 4, @graphics.Color::new(r=70, g=71, b=72, a=73))
 
-  match Pixmap::from_png_bytes(png) {
+  match @graphics.Pixmap::from_png_bytes(png) {
     Ok(decoded) => assert_eq(decoded.to_rgba_bytes(), expected.to_rgba_bytes())
     Err(_) => abort("expected filtered PNG decode")
   }
@@ -160,13 +167,13 @@ test "Pixmap::from_png_bytes decodes fixed Huffman DEFLATE data" {
     120, 1, 99, 248, 207, 192, 240, 31, 8, 27, 24, 128, 180, 3, 151, 136, 156, 6,
     0, 55, 233, 5, 33,
   ])
-  let expected = Pixmap::new(2, 2)
-  expected.set_pixel(0, 0, Color::new(r=255, g=0, b=0, a=255))
-  expected.set_pixel(1, 0, Color::new(r=0, g=255, b=0, a=128))
-  expected.set_pixel(0, 1, Color::new(r=0, g=0, b=255, a=64))
-  expected.set_pixel(1, 1, Color::new(r=10, g=20, b=30, a=40))
+  let expected = @graphics.Pixmap::new(2, 2)
+  expected.set_pixel(0, 0, @graphics.Color::new(r=255, g=0, b=0, a=255))
+  expected.set_pixel(1, 0, @graphics.Color::new(r=0, g=255, b=0, a=128))
+  expected.set_pixel(0, 1, @graphics.Color::new(r=0, g=0, b=255, a=64))
+  expected.set_pixel(1, 1, @graphics.Color::new(r=10, g=20, b=30, a=40))
 
-  match Pixmap::from_png_bytes(png) {
+  match @graphics.Pixmap::from_png_bytes(png) {
     Ok(decoded) => assert_eq(decoded.to_rgba_bytes(), expected.to_rgba_bytes())
     Err(_) => abort("expected fixed-Huffman PNG decode")
   }
@@ -184,14 +191,18 @@ test "Pixmap::from_png_bytes decodes dynamic Huffman DEFLATE data" {
     156, 248, 227, 159, 16, 3, 98, 64, 12, 136, 1, 49, 32, 6, 92, 111, 192, 5, 57,
     152, 61, 31,
   ])
-  let expected = Pixmap::new(64, 8)
+  let expected = @graphics.Pixmap::new(64, 8)
   for y in 0..<8 {
     for x in 0..<64 {
-      expected.set_pixel(x, y, Color::new(r=x.to_byte(), g=0, b=0, a=255))
+      expected.set_pixel(
+        x,
+        y,
+        @graphics.Color::new(r=x.to_byte(), g=0, b=0, a=255),
+      )
     }
   }
 
-  match Pixmap::from_png_bytes(png) {
+  match @graphics.Pixmap::from_png_bytes(png) {
     Ok(decoded) => assert_eq(decoded.to_rgba_bytes(), expected.to_rgba_bytes())
     Err(_) => abort("expected dynamic-Huffman PNG decode")
   }
@@ -199,43 +210,43 @@ test "Pixmap::from_png_bytes decodes dynamic Huffman DEFLATE data" {
 
 ///|
 test "Pixmap::from_png_bytes reports structural errors" {
-  match Pixmap::from_png_bytes(Bytes::from_array([137, 80])) {
-    Err(PixmapDecodeError::UnexpectedEndOfData(0, 8, 2)) => ()
+  match @graphics.Pixmap::from_png_bytes(Bytes::from_array([137, 80])) {
+    Err(UnexpectedEndOfData(0, 8, 2)) => ()
     _ => abort("expected short PNG error")
   }
 
   let bad_signature = make_pixmap_test_red_png()
   bad_signature[0] = 0
-  match Pixmap::from_png_bytes(Bytes::from_array(bad_signature)) {
-    Err(PixmapDecodeError::InvalidPngSignature) => ()
+  match @graphics.Pixmap::from_png_bytes(Bytes::from_array(bad_signature)) {
+    Err(InvalidPngSignature) => ()
     _ => abort("expected PNG signature error")
   }
 
   let bad_crc = make_pixmap_test_red_png()
   bad_crc[32] = 0
-  match Pixmap::from_png_bytes(Bytes::from_array(bad_crc)) {
-    Err(PixmapDecodeError::PngCrcMismatch(0x1F15C400, 0x1F15C489)) => ()
+  match @graphics.Pixmap::from_png_bytes(Bytes::from_array(bad_crc)) {
+    Err(PngCrcMismatch(0x1F15C400, 0x1F15C489)) => ()
     _ => abort("expected PNG CRC mismatch")
   }
 
   let bad_filter = make_pixmap_test_rgba_png_from_scanlines(1, 1, [
     5, 0, 0, 0, 0,
   ])
-  match Pixmap::from_png_bytes(bad_filter) {
-    Err(PixmapDecodeError::UnsupportedPngFilterType(5)) => ()
+  match @graphics.Pixmap::from_png_bytes(bad_filter) {
+    Err(UnsupportedPngFilterType(5)) => ()
     _ => abort("expected PNG filter type error")
   }
 }
 
 ///|
 test "Pixmap::from_bmp_bytes decodes exported 32-bit BMP bytes" {
-  let pixmap = Pixmap::new(2, 2)
-  pixmap.set_pixel(0, 0, Color::new(r=255, g=0, b=0, a=255))
-  pixmap.set_pixel(1, 0, Color::new(r=0, g=255, b=0, a=128))
-  pixmap.set_pixel(0, 1, Color::new(r=0, g=0, b=255, a=64))
-  pixmap.set_pixel(1, 1, Color::new(r=10, g=20, b=30, a=40))
+  let pixmap = @graphics.Pixmap::new(2, 2)
+  pixmap.set_pixel(0, 0, @graphics.Color::new(r=255, g=0, b=0, a=255))
+  pixmap.set_pixel(1, 0, @graphics.Color::new(r=0, g=255, b=0, a=128))
+  pixmap.set_pixel(0, 1, @graphics.Color::new(r=0, g=0, b=255, a=64))
+  pixmap.set_pixel(1, 1, @graphics.Color::new(r=10, g=20, b=30, a=40))
 
-  match Pixmap::from_bmp_bytes(pixmap.to_bmp_bytes()) {
+  match @graphics.Pixmap::from_bmp_bytes(pixmap.to_bmp_bytes()) {
     Ok(decoded) => {
       assert_eq(decoded.get_width(), 2)
       assert_eq(decoded.get_height(), 2)
@@ -253,12 +264,18 @@ test "Pixmap::from_bmp_bytes accepts top-down BMP row order" {
     0, 0, 0, 0, 0, 0, 7, 8, 9, 6, 3, 2, 1, 4,
   ]
 
-  match Pixmap::from_bmp_bytes(Bytes::from_array(top_down_bmp)) {
+  match @graphics.Pixmap::from_bmp_bytes(Bytes::from_array(top_down_bmp)) {
     Ok(decoded) => {
       assert_eq(decoded.get_width(), 1)
       assert_eq(decoded.get_height(), 2)
-      assert_eq(decoded.get_pixel(0, 0), Color::new(r=9, g=8, b=7, a=6))
-      assert_eq(decoded.get_pixel(0, 1), Color::new(r=1, g=2, b=3, a=4))
+      assert_eq(
+        decoded.get_pixel(0, 0),
+        @graphics.Color::new(r=9, g=8, b=7, a=6),
+      )
+      assert_eq(
+        decoded.get_pixel(0, 1),
+        @graphics.Color::new(r=1, g=2, b=3, a=4),
+      )
     }
     Err(_) => abort("expected top-down BMP decode")
   }
@@ -272,14 +289,14 @@ test "Pixmap::from_bmp_bytes decodes padded 24-bit BMP rows" {
     0, 0, 0, 0, 0, 255, 0, 0, 255, 255, 255, 12, 34, 0, 0, 255, 0, 255, 0, 56, 78,
   ]
 
-  match Pixmap::from_bmp_bytes(Bytes::from_array(bmp)) {
+  match @graphics.Pixmap::from_bmp_bytes(Bytes::from_array(bmp)) {
     Ok(decoded) => {
       assert_eq(decoded.get_width(), 2)
       assert_eq(decoded.get_height(), 2)
-      assert_eq(decoded.get_pixel(0, 0), Color::red())
-      assert_eq(decoded.get_pixel(1, 0), Color::green())
-      assert_eq(decoded.get_pixel(0, 1), Color::blue())
-      assert_eq(decoded.get_pixel(1, 1), Color::white())
+      assert_eq(decoded.get_pixel(0, 0), @graphics.Color::red())
+      assert_eq(decoded.get_pixel(1, 0), @graphics.Color::green())
+      assert_eq(decoded.get_pixel(0, 1), @graphics.Color::blue())
+      assert_eq(decoded.get_pixel(1, 1), @graphics.Color::white())
     }
     Err(_) => abort("expected padded 24-bit BMP decode")
   }
@@ -287,8 +304,8 @@ test "Pixmap::from_bmp_bytes decodes padded 24-bit BMP rows" {
 
 ///|
 test "Pixmap::from_bmp_bytes reports structural errors" {
-  match Pixmap::from_bmp_bytes(Bytes::from_array([66, 77])) {
-    Err(PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+  match @graphics.Pixmap::from_bmp_bytes(Bytes::from_array([66, 77])) {
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected BMP short-data error")
   }
 
@@ -297,8 +314,8 @@ test "Pixmap::from_bmp_bytes reports structural errors" {
     0, 1, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0,
   ]
-  match Pixmap::from_bmp_bytes(Bytes::from_array(bad_signature)) {
-    Err(PixmapDecodeError::InvalidBmpSignature(0, 0)) => ()
+  match @graphics.Pixmap::from_bmp_bytes(Bytes::from_array(bad_signature)) {
+    Err(InvalidBmpSignature(0, 0)) => ()
     _ => abort("expected BMP signature error")
   }
 
@@ -307,8 +324,8 @@ test "Pixmap::from_bmp_bytes reports structural errors" {
     0, 0, 1, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0,
   ]
-  match Pixmap::from_bmp_bytes(Bytes::from_array(unsupported_bpp)) {
-    Err(PixmapDecodeError::UnsupportedBmpBitsPerPixel(16)) => ()
+  match @graphics.Pixmap::from_bmp_bytes(Bytes::from_array(unsupported_bpp)) {
+    Err(UnsupportedBmpBitsPerPixel(16)) => ()
     _ => abort("expected BMP bits-per-pixel error")
   }
 
@@ -317,8 +334,8 @@ test "Pixmap::from_bmp_bytes reports structural errors" {
     0, 0, 1, 0, 32, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0,
   ]
-  match Pixmap::from_bmp_bytes(Bytes::from_array(truncated_pixels)) {
-    Err(PixmapDecodeError::BmpPixelDataOutOfBounds(54, 58, 54)) => ()
+  match @graphics.Pixmap::from_bmp_bytes(Bytes::from_array(truncated_pixels)) {
+    Err(BmpPixelDataOutOfBounds(54, 58, 54)) => ()
     _ => abort("expected BMP pixel-data bounds error")
   }
 }

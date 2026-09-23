@@ -9,7 +9,7 @@ test "embedded font registration drives measurement with variations" {
   }
   let data = @fs.read_file_to_bytes(font_path) catch { _ => return }
   let text_system = skia_text_system()
-  text_system.register_font_data(@core.FontFamily::Name("MouiEmbedSF"), data)
+  text_system.register_font_data(Name("MouiEmbedSF"), data)
   let families = @core.FontFamilyStack::named("MouiEmbedSF")
   let light = @core.FontSpec::new(families~, size=32.0, variations=[
     @core.FontVariation::new(axis="wght", value=100.0),
@@ -25,7 +25,7 @@ test "embedded font registration drives measurement with variations" {
     ).size.width
   assert_true(black_width > light_width)
   // Re-registering the same family replaces the previous entry.
-  text_system.register_font_data(@core.FontFamily::Name("MouiEmbedSF"), data)
+  text_system.register_font_data(Name("MouiEmbedSF"), data)
   let replaced_width = text_system.measure_text(
       @core.TextLayoutInput::new(text="WWWW", font=black),
     ).size.width
@@ -36,7 +36,7 @@ test "embedded font registration drives measurement with variations" {
 // Registering garbage data must not crash or poison the text system.
 test "embedded font registration rejects invalid data" {
   let text_system = skia_text_system()
-  text_system.register_font_data(@core.FontFamily::Name("Broken"), b"\x00\x01")
+  text_system.register_font_data(Name("Broken"), b"\x00\x01")
   let width = text_system.measure_text(
       @core.TextLayoutInput::new(
         text="A",

@@ -37,7 +37,7 @@ fn run_doctor_probe(
         status: result.exit_code,
         output: (result.stdout + "\n" + result.stderr).trim().to_owned(),
       }
-    Err(_message) => { status: 102, output: "" }
+    Err(_message) => { status: 102, output: "", }
   }
 }
 

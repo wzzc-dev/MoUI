@@ -49,7 +49,7 @@ pub fn PerspectiveCamera::with_aspect(
   self : PerspectiveCamera,
   aspect : Double,
 ) -> PerspectiveCamera {
-  { ..self, aspect: if aspect <= 0.0 { 1.0 } else { aspect } }
+  { ..self, aspect: if aspect <= 0.0 { 1.0 } else { aspect }, }
 }
 
 ///|
@@ -159,7 +159,7 @@ pub fn OrbitCamera::orbit(
 
 ///|
 pub fn OrbitCamera::zoom(self : OrbitCamera, amount : Double) -> OrbitCamera {
-  { ..self, radius: clamp(self.radius * amount, 0.01, 1.0e9) }
+  { ..self, radius: clamp(self.radius * amount, 0.01, 1.0e9), }
 }
 
 ///|
@@ -181,7 +181,7 @@ pub fn OrbitCamera::with_aspect(
   self : OrbitCamera,
   aspect : Double,
 ) -> OrbitCamera {
-  { ..self, perspective: self.perspective.with_aspect(aspect) }
+  { ..self, perspective: self.perspective.with_aspect(aspect), }
 }
 
 ///|
@@ -196,7 +196,7 @@ pub fn OrbitCamera::fit(
     let radius = clamp(bounds.radius() * clamp(padding, 1.0, 10.0), 0.01, 1.0e9)
     let half_fov = self.perspective.fov_y_radians() / 2.0
     let distance = radius / @math.sin(half_fov)
-    { ..self, target: bounds.center(), radius: clamp(distance, 0.01, 1.0e9) }
+    { ..self, target: bounds.center(), radius: clamp(distance, 0.01, 1.0e9), }
   }
 }
 

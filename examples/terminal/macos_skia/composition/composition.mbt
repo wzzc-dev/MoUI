@@ -25,7 +25,7 @@ fn terminal_size() -> (Int, Int) {
 /// (ActionCommandMap 按全等比较)。
 pub fn theme_command(pref : @app.ThemePreference) -> @core.ActionCommand {
   @core.ActionCommand::new(
-    intent=@core.CommandIntent::Activate,
+    intent=Activate,
     label=pref.label(),
     group="Theme",
     description="Switch terminal theme to \{pref.label()}",
@@ -38,15 +38,9 @@ pub fn theme_command(pref : @app.ThemePreference) -> @core.ActionCommand {
 pub fn theme_menus() -> Array[@services.ApplicationMenu] {
   [
     @services.ApplicationMenu::new(title="Terminal", items=[
-      @services.ApplicationMenuItem::MenuCommand(
-        theme_command(@app.ThemePreference::System),
-      ),
-      @services.ApplicationMenuItem::MenuCommand(
-        theme_command(@app.ThemePreference::Light),
-      ),
-      @services.ApplicationMenuItem::MenuCommand(
-        theme_command(@app.ThemePreference::Dark),
-      ),
+      MenuCommand(theme_command(System)),
+      MenuCommand(theme_command(Light)),
+      MenuCommand(theme_command(Dark)),
     ]),
   ]
 }
@@ -76,7 +70,7 @@ pub fn terminal_program(
     },
     update=(model, msg) => {
       match msg {
-        @app.Msg::WriteInput(text) =>
+        WriteInput(text) =>
           (
             @app.update(model, msg),
             @moui.Effect::run(
@@ -84,15 +78,11 @@ pub fn terminal_program(
               kind="terminal",
               label="PTY input",
               run=_dispatch => {
-                ignore(
-                  input_queue.try_put(InputWork::Write(text)) catch {
-                    _ => false
-                  },
-                )
+                ignore(input_queue.try_put(Write(text)) catch { _ => false })
               },
             ),
           )
-        @app.Msg::Copy => {
+        Copy => {
           let text = @app.selection_text(model.screen, model.selection)
           (
             @app.update(model, msg),
@@ -110,7 +100,7 @@ pub fn terminal_program(
             },
           )
         }
-        @app.Msg::SetTheme(pref) =>
+        SetTheme(pref) =>
           (
             @app.update(model, msg),
             @moui.Effect::run(
@@ -140,14 +130,10 @@ pub fn terminal_program(
     let mk = fn(pref : @app.ThemePreference) -> @core.ProgramCommand[@app.Msg] {
       @core.ProgramCommand::new(
         command=theme_command(pref),
-        message=@app.Msg::SetTheme(pref),
+        message=SetTheme(pref),
       )
     }
-    [
-      mk(@app.ThemePreference::System),
-      mk(@app.ThemePreference::Light),
-      mk(@app.ThemePreference::Dark),
-    ]
+    [mk(System), mk(Light), mk(Dark)]
   })
 }
 
@@ -156,9 +142,9 @@ pub fn terminal_program(
 /// Light/Dark 强制对应 scheme。
 fn theme_spec_for(pref : @app.ThemePreference) -> @core.ThemeSpec {
   match pref {
-    @app.ThemePreference::System => @core.ThemeSpec::default()
-    @app.ThemePreference::Light => @core.ThemeSpec::minimal_light()
-    @app.ThemePreference::Dark => @core.ThemeSpec::minimal_dark()
+    System => @core.ThemeSpec::default()
+    Light => @core.ThemeSpec::minimal_light()
+    Dark => @core.ThemeSpec::minimal_dark()
   }
 }
 
@@ -170,15 +156,15 @@ fn theme_spec_for(pref : @app.ThemePreference) -> @core.ThemeSpec {
 fn keyboard_to_msg(event : @core.KeyboardEvent) -> @app.Msg? {
   if event.modifiers.meta {
     match event.key {
-      "ArrowUp" => Some(@app.Msg::ScrollBy(-3))
-      "ArrowDown" => Some(@app.Msg::ScrollBy(3))
-      "Home" => Some(@app.Msg::ScrollBy(-100000))
-      "End" => Some(@app.Msg::ScrollBy(100000))
-      "c" => Some(@app.Msg::Copy)
+      "ArrowUp" => Some(ScrollBy(-3))
+      "ArrowDown" => Some(ScrollBy(3))
+      "Home" => Some(ScrollBy(-100000))
+      "End" => Some(ScrollBy(100000))
+      "c" => Some(Copy)
       _ => None
     }
   } else {
-    @addon.encode_key(event).map(text => @app.Msg::WriteInput(text))
+    @addon.encode_key(event).map(text => WriteInput(text))
   }
 }
 
@@ -188,9 +174,9 @@ pub fn terminal_view_wrapped(model : @app.Model) -> @moui.View[@app.Msg] {
   let screen = model.screen()
   let selection_view = @addon.terminal_selection_input(
     @app.view(model),
-    (row, col) => Some(@app.Msg::SelectionBegin(row, col)),
-    (row, col) => Some(@app.Msg::SelectionMove(row, col)),
-    () => Some(@app.Msg::SelectionEnd),
+    (row, col) => Some(SelectionBegin(row, col)),
+    (row, col) => Some(SelectionMove(row, col)),
+    () => Some(SelectionEnd),
     cell_width=@app.cell_width(theme),
     cell_height=@app.cell_height(theme),
     scroll_offset=model.scroll_offset(),
@@ -199,7 +185,7 @@ pub fn terminal_view_wrapped(model : @app.Model) -> @moui.View[@app.Msg] {
     cols=screen.cols(),
   )
   @addon.keyboard_input(selection_view, keyboard_to_msg, text => {
-    Some(@app.Msg::WriteInput(text))
+    Some(WriteInput(text))
   })
 }
 
@@ -214,10 +200,10 @@ pub async fn run_terminal() -> Unit {
     }
   }
   let dispatch_ref : Ref[((@app.Msg) -> Unit)?] = Ref(None)
-  let input_queue : @async.Queue[InputWork] = @async.Queue(kind=Unbounded)
+  let input_queue : @async.Queue[InputWork] = Queue(kind=Unbounded)
   // 窗口画布尺寸与等宽单元格度量联动:列数 × cell_width × 行数 × cell_height
   // (构建期度量;终端文本/按钮渲染色由 runtime environment 驱动)。
-  let theme = @app.theme_for_pref(@app.ThemePreference::System)
+  let theme = @app.theme_for_pref(System)
   let (cols, rows) = terminal_size()
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let runtime = @runtime.new_program_with_dimensions(
@@ -228,9 +214,7 @@ pub async fn run_terminal() -> Unit {
   runtime_ref.val = Some(runtime)
   let window_task : async () -> Unit = async fn() {
     @runtime.run_app("MoUI Terminal", runtime)
-    .render_all(
-      @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
-    )
+    .render_all(@render_skia.from_env(platform=MacOS))
     .backend(
       @macos_host.entry(
         options=@macos_host.MacosHostAppOptions::new(
@@ -245,7 +229,7 @@ pub async fn run_terminal() -> Unit {
     )
     .run_async_pump()
     // 窗口关闭后通知 worker 退出并关闭 PTY
-    ignore(input_queue.try_put(InputWork::Shutdown) catch { _ => false })
+    ignore(input_queue.try_put(Shutdown) catch { _ => false })
   }
   let worker_task : async () -> Unit = async fn() {
     // 等待 UI dispatch 就绪(init effect 执行)
@@ -254,7 +238,7 @@ pub async fn run_terminal() -> Unit {
     }
     let emit = fn(bytes : Bytes) -> Unit {
       match dispatch_ref.val {
-        Some(dispatch) => dispatch(@app.Msg::Feed(bytes))
+        Some(dispatch) => dispatch(Feed(bytes))
         None => ()
       }
     }
@@ -266,9 +250,9 @@ pub async fn run_terminal() -> Unit {
       while true {
         let work = input_queue.get()
         match work {
-          InputWork::Write(text) =>
+          Write(text) =>
             ignore(pty.write_input(@utf8.encode(text)) catch { _ => 0 })
-          InputWork::Shutdown => {
+          Shutdown => {
             // 先取消读循环(避免与 close 竞争同一 fd),再关闭 PTY
             reader_task.cancel()
             pty.close()

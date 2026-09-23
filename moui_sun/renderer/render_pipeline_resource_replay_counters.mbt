@@ -40,12 +40,7 @@ fn record_bmp_resource_image_replay_result(
       )
       Ok(1)
     }
-    Err(error) =>
-      Err(
-        RenderPipelineResourceReplayError::ImageDecodeFailed(
-          resource_key, error,
-        ),
-      )
+    Err(error) => Err(ImageDecodeFailed(resource_key, error))
   }
 }
 
@@ -62,12 +57,7 @@ fn record_png_resource_image_replay_result(
       )
       Ok(1)
     }
-    Err(error) =>
-      Err(
-        RenderPipelineResourceReplayError::ImageDecodeFailed(
-          resource_key, error,
-        ),
-      )
+    Err(error) => Err(ImageDecodeFailed(resource_key, error))
   }
 }
 
@@ -84,12 +74,7 @@ fn record_rgba_resource_image_replay_result(
       )
       Ok(1)
     }
-    Err(error) =>
-      Err(
-        RenderPipelineResourceReplayError::ImageDecodeFailed(
-          resource_key, error,
-        ),
-      )
+    Err(error) => Err(ImageDecodeFailed(resource_key, error))
   }
 }
 
@@ -102,7 +87,7 @@ priv struct RenderPipelineTextCacheReplayCounters {
 
 ///|
 fn RenderPipelineTextCacheReplayCounters::new() -> RenderPipelineTextCacheReplayCounters {
-  { keyed_text_count: 0, text_cache_hit_count: 0, text_mask_render_count: 0 }
+  { keyed_text_count: 0, text_cache_hit_count: 0, text_mask_render_count: 0, }
 }
 
 ///|
@@ -139,7 +124,7 @@ priv struct RenderPipelineFontCacheReplayCounters {
 
 ///|
 fn RenderPipelineFontCacheReplayCounters::new() -> RenderPipelineFontCacheReplayCounters {
-  { keyed_font_count: 0, font_cache_hit_count: 0, font_parse_count: 0 }
+  { keyed_font_count: 0, font_cache_hit_count: 0, font_parse_count: 0, }
 }
 
 ///|

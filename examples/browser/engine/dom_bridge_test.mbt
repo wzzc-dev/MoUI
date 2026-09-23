@@ -3,7 +3,7 @@
 /// 事件派发、重置。
 
 ///|
-fn run_and_dump(js : JsEngine, code : String) -> String? {
+fn run_and_dump(js : @engine.JsEngine, code : String) -> String? {
   js.engine.eval(code) catch {
     _ => ()
   }
@@ -13,14 +13,14 @@ fn run_and_dump(js : JsEngine, code : String) -> String? {
 ///|
 fn json_string_contains(j : Json, needle : String) -> Bool {
   match j {
-    Json::String(s) => s.contains(needle)
+    String(s) => s.contains(needle)
     _ => false
   }
 }
 
 ///|
 test "dom shim: createElement appendChild textContent" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   let html = run_and_dump(
     js,
     "var d = document.createElement('div'); d.setAttribute('id','box');" +
@@ -31,7 +31,7 @@ test "dom shim: createElement appendChild textContent" {
 
 ///|
 test "dom shim: nested tree and className" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   let html = run_and_dump(
     js,
     "var ul = document.createElement('ul'); ul.className = 'list';" +
@@ -48,7 +48,7 @@ test "dom shim: nested tree and className" {
 
 ///|
 test "dom shim: classList and style" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   let html = run_and_dump(
     js,
     "var a = document.createElement('a'); a.href = '/x'; a.classList.add('nav');" +
@@ -63,7 +63,7 @@ test "dom shim: classList and style" {
 
 ///|
 test "dom shim: getElementById and querySelector" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   js.engine.eval(
     "var root = document.createElement('div'); root.id = 'app';" +
     "var p = document.createElement('p'); p.className = 'msg'; p.textContent = 'hi';" +
@@ -81,7 +81,7 @@ test "dom shim: getElementById and querySelector" {
 
 ///|
 test "dom shim: documentFragment and innerHTML passthrough" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   let html = run_and_dump(
     js,
     "var frag = document.createDocumentFragment();" +
@@ -98,7 +98,7 @@ test "dom shim: documentFragment and innerHTML passthrough" {
 
 ///|
 test "dom shim: reset clears tree between navigations" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   ignore(
     run_and_dump(js, "document.body.appendChild(document.createElement('div'))"),
   )
@@ -109,7 +109,7 @@ test "dom shim: reset clears tree between navigations" {
 
 ///|
 test "dom shim: DOMContentLoaded listeners fire after scripts" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   js.engine.eval(
     "window.__ready = 0;" +
     "document.addEventListener('DOMContentLoaded', function(){ window.__ready = 1 });" +
@@ -126,7 +126,7 @@ test "dom shim: DOMContentLoaded listeners fire after scripts" {
 
 ///|
 test "dom shim: innerHTML setter survives page script reading it" {
-  let js = JsEngine::new()
+  let js = @engine.JsEngine::new()
   js.engine.eval(
     "var box = document.createElement('div'); box.innerHTML = '<i>x</i>';" +
     "var read = box.innerHTML; document.body.appendChild(box);",

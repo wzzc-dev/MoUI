@@ -53,9 +53,7 @@ fn bench_dirty(
   // the full rebuild→layout→paint→draw cycle.
   let view = bench_deep_view(depth, width_per_level)
   let env_light = @core.Environment::neutral()
-  let env_dark = @core.Environment::neutral().with_system_scheme(
-    @core.ColorScheme::Dark,
-  )
+  let env_dark = @core.Environment::neutral().with_system_scheme(Dark)
   let runtime = @runtime.AppRuntime::new_view(
     root=view,
     size=@core.Size::new(width=800.0, height=600.0),

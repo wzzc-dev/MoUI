@@ -9,7 +9,7 @@ fn WebApp::dispatch_host_event(
   host_event : @host.Event,
 ) -> Unit {
   match host_event {
-    @host.Event::Resized(metrics) => self.resize_renderer(window_id, metrics)
+    Resized(metrics) => self.resize_renderer(window_id, metrics)
     _ => ()
   }
   @window_host.dispatch_host_event(

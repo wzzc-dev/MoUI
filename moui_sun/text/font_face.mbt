@@ -23,7 +23,7 @@ pub fn FontFace::from_bytes(data : Bytes) -> Result[FontFace, FontParseError] {
 /// Parse a raw font-data container into a checked font face.
 pub fn FontFace::from_data(data : FontData) -> Result[FontFace, FontParseError] {
   guard data.get_font_index() is 0 else {
-    return Err(FontParseError::UnsupportedFontIndex(data.get_font_index()))
+    return Err(UnsupportedFontIndex(data.get_font_index()))
   }
   FontFace::from_bytes(data.get_data())
 }
@@ -54,7 +54,7 @@ struct FontFaceCacheParseResult {
 ///|
 /// Create an empty font-face cache.
 pub fn FontFaceCache::new() -> FontFaceCache {
-  { faces: Map([]), access_order: [], capacity: 0, is_bounded: false }
+  { faces: Map([]), access_order: [], capacity: 0, is_bounded: false, }
 }
 
 ///|
@@ -168,10 +168,10 @@ pub fn FontFaceCache::get_or_parse_result(
   data : Bytes,
 ) -> Result[FontFaceCacheParseResult, FontParseError] {
   match self.get(key) {
-    Some(face) => Ok({ face, did_parse: false })
+    Some(face) => Ok({ face, did_parse: false, })
     None =>
       match FontFace::from_bytes(data) {
-        Ok(face) => Ok({ face: self.insert(key, face), did_parse: true })
+        Ok(face) => Ok({ face: self.insert(key, face), did_parse: true, })
         Err(error) => Err(error)
       }
   }

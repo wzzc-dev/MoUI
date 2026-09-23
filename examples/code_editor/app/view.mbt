@@ -13,7 +13,7 @@ pub fn view(model : CodeEditorModel) -> @moui.View[CodeEditorMsg] {
     Some(panel) => workspace.push(side_panel_view(model, panel, theme))
     None => ()
   }
-  row(workspace, spacing=0.0, align=@views.CrossAlign::Stretch)
+  row(workspace, spacing=0.0, align=Stretch)
   .padding(0.0)
   .background(editor_chrome_background())
 }
@@ -47,7 +47,7 @@ fn activity_rail(
         panel_button("F", ToggleFind, model.find_visible, theme),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=54.0,
     background=editor_rail_background(),
@@ -65,11 +65,7 @@ fn panel_button(
   button(
     label,
     on_click=message,
-    variant=if active {
-      @views.ButtonVariant::Primary
-    } else {
-      @views.ButtonVariant::Tonal
-    },
+    variant=if active { Primary } else { Tonal },
     theme~,
     width=38.0,
     height=34.0,
@@ -120,11 +116,7 @@ fn editor_tab_bar(
         button(
           "main.mbt",
           on_click=SetMode(SourceEditor),
-          variant=if model.mode == SourceEditor {
-            @views.ButtonVariant::Primary
-          } else {
-            @views.ButtonVariant::Ghost
-          },
+          variant=if model.mode == SourceEditor { Primary } else { Ghost },
           theme~,
           width=116.0,
           height=34.0,
@@ -132,11 +124,7 @@ fn editor_tab_bar(
         button(
           "diff",
           on_click=ToggleDiffEditor,
-          variant=if model.mode == DiffEditor {
-            @views.ButtonVariant::Primary
-          } else {
-            @views.ButtonVariant::Ghost
-          },
+          variant=if model.mode == DiffEditor { Primary } else { Ghost },
           theme~,
           width=78.0,
           height=34.0,
@@ -145,7 +133,7 @@ fn editor_tab_bar(
         button(
           "Search",
           on_click=ToggleFind,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=86.0,
           height=34.0,
@@ -153,7 +141,7 @@ fn editor_tab_bar(
         button(
           "Complete",
           on_click=TriggerCompletion,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=96.0,
           height=34.0,
@@ -161,7 +149,7 @@ fn editor_tab_bar(
         button(
           "Problems",
           on_click=ToggleIntelliSense,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=98.0,
           height=34.0,
@@ -169,14 +157,14 @@ fn editor_tab_bar(
         button(
           "Info",
           on_click=ToggleCapabilities,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=70.0,
           height=34.0,
         ),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     height=44.0,
     background=editor_tab_background(),
@@ -247,7 +235,7 @@ fn code_editor_surface(
     row(
       [line_number_gutter(model, theme, viewport_height), editor],
       spacing=0.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     background=editor_surface_background(),
   )
@@ -290,7 +278,7 @@ fn line_number_gutter(
       container(
         text(
           marker + " " + line.number.to_string(),
-          role=@views.TextRole::Mono,
+          role=Mono,
           theme~,
           width=48.0,
           height=20.0,
@@ -327,9 +315,7 @@ fn completion_overlay(
 ) -> @moui.View[CodeEditorMsg] {
   let rows : Array[@moui.View[CodeEditorMsg]] = []
   if model.completions.is_empty() {
-    rows.push(
-      text("No completions", role=@views.TextRole::Caption, theme~, width=240.0),
-    )
+    rows.push(text("No completions", role=Caption, theme~, width=240.0))
   } else {
     for index in 0..<model.completions.length() {
       let item = model.completions[index]
@@ -337,11 +323,7 @@ fn completion_overlay(
         button(
           item.label,
           on_click=ApplyCompletion(index),
-          variant=if index == 0 {
-            @views.ButtonVariant::Primary
-          } else {
-            @views.ButtonVariant::Ghost
-          },
+          variant=if index == 0 { Primary } else { Ghost },
           theme~,
           width=240.0,
           height=30.0,
@@ -369,34 +351,22 @@ fn find_overlay(
   container(
     row(
       [
-        text(
-          "Find",
-          role=@views.TextRole::Caption,
-          theme~,
-          width=38.0,
-          height=30.0,
-        ),
+        text("Find", role=Caption, theme~, width=38.0, height=30.0),
         text_field(
           model.find.query,
           on_input=value => SetFindQuery(value),
           placeholder="Find",
-          variant=@views.TextFieldVariant::Outline,
+          variant=Outline,
           theme~,
           width=150.0,
           height=32.0,
         ),
-        text(
-          "Replace",
-          role=@views.TextRole::Caption,
-          theme~,
-          width=58.0,
-          height=30.0,
-        ),
+        text("Replace", role=Caption, theme~, width=58.0, height=30.0),
         text_field(
           model.find.replacement,
           on_input=value => SetReplaceText(value),
           placeholder="Replace",
-          variant=@views.TextFieldVariant::Outline,
+          variant=Outline,
           theme~,
           width=150.0,
           height=32.0,
@@ -404,7 +374,7 @@ fn find_overlay(
         button(
           "Next",
           on_click=FindNext,
-          variant=@views.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=68.0,
           height=32.0,
@@ -412,7 +382,7 @@ fn find_overlay(
         button(
           "All",
           on_click=ReplaceAll,
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=62.0,
           height=32.0,
@@ -420,14 +390,14 @@ fn find_overlay(
         button(
           "x",
           on_click=CloseFind,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=36.0,
           height=32.0,
         ),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     background=editor_popup_background(),
     padding=8.0,
@@ -474,7 +444,7 @@ fn diff_editor_main(
         diff_column("Modified", diff, old=false, theme),
       ],
       spacing=1.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     background=editor_surface_background(),
     padding=12.0,
@@ -490,13 +460,7 @@ fn diff_column(
 ) -> @moui.View[CodeEditorMsg] {
   let rows : Array[@moui.View[CodeEditorMsg]] = [
     container(
-      text(
-        title,
-        role=@views.TextRole::Control,
-        theme~,
-        width=420.0,
-        height=28.0,
-      ),
+      text(title, role=Control, theme~, width=420.0, height=28.0),
       background=editor_tab_background(),
       padding=4.0,
     ),
@@ -517,23 +481,15 @@ fn diff_column(
       container(
         row(
           [
-            text(
-              label,
-              role=@views.TextRole::Mono,
-              theme~,
-              width=42.0,
-              height=22.0,
-            ).foreground(theme.palette.muted),
-            text(
-              content,
-              role=@views.TextRole::Mono,
-              theme~,
-              width=370.0,
-              height=22.0,
-            ).foreground(diff_color(line.kind, theme)),
+            text(label, role=Mono, theme~, width=42.0, height=22.0).foreground(
+              theme.palette.muted,
+            ),
+            text(content, role=Mono, theme~, width=370.0, height=22.0).foreground(
+              diff_color(line.kind, theme),
+            ),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         background=diff_line_background(line.kind, old, visible),
       ),
@@ -649,26 +605,16 @@ fn capabilities_panel(
   theme : @moui.Theme,
 ) -> @moui.View[CodeEditorMsg] {
   let rows : Array[@moui.View[CodeEditorMsg]] = [
-    text("Capabilities", role=@views.TextRole::Control, theme~, width=232.0),
+    text("Capabilities", role=Control, theme~, width=232.0),
   ]
   for item in code_editor_features() {
     rows.push(
       column(
         [
-          text(
-            item.label,
-            role=@views.TextRole::Caption,
-            theme~,
-            width=232.0,
-            height=22.0,
+          text(item.label, role=Caption, theme~, width=232.0, height=22.0),
+          text(item.detail, role=Caption, theme~, width=232.0, height=30.0).foreground(
+            theme.palette.muted,
           ),
-          text(
-            item.detail,
-            role=@views.TextRole::Caption,
-            theme~,
-            width=232.0,
-            height=30.0,
-          ).foreground(theme.palette.muted),
         ],
         spacing=0.0,
       ),
@@ -693,38 +639,28 @@ fn intellisense_panel(
   container(
     column(
       [
-        text("IntelliSense", role=@views.TextRole::Control, theme~, width=260.0),
-        text(
-          "Completion provider",
-          role=@views.TextRole::Caption,
-          theme~,
-          width=260.0,
-        ),
+        text("IntelliSense", role=Control, theme~, width=260.0),
+        text("Completion provider", role=Caption, theme~, width=260.0),
         completion_list(model, theme),
-        text("Diagnostics", role=@views.TextRole::Caption, theme~, width=260.0),
+        text("Diagnostics", role=Caption, theme~, width=260.0),
         diagnostic_list(model, theme),
-        text(
-          "Bracket Match",
-          role=@views.TextRole::Caption,
-          theme~,
-          width=260.0,
-        ),
+        text("Bracket Match", role=Caption, theme~, width=260.0),
         bracket_match_view(model, theme),
-        text("Hover", role=@views.TextRole::Caption, theme~, width=260.0),
+        text("Hover", role=Caption, theme~, width=260.0),
         hover_view(model, theme),
-        text("Definition", role=@views.TextRole::Caption, theme~, width=260.0),
+        text("Definition", role=Caption, theme~, width=260.0),
         definition_view(model, theme),
         button(
           "Go to Definition",
           on_click=GoToDefinition,
-          variant=@views.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=160.0,
         ),
         button(
           "Register Custom Language",
           on_click=RegisterSampleLanguage,
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=220.0,
         ),
@@ -748,19 +684,16 @@ fn completion_list(
   let rows : Array[@moui.View[CodeEditorMsg]] = []
   if model.completions.is_empty() {
     rows.push(
-      text(
-        "No completions yet",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=252.0,
-      ).foreground(theme.palette.muted),
+      text("No completions yet", role=Caption, theme~, width=252.0).foreground(
+        theme.palette.muted,
+      ),
     )
   } else {
     for item in model.completions {
       rows.push(
         text(
           item.label + " - " + item.detail,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=252.0,
           height=24.0,
@@ -779,7 +712,7 @@ fn diagnostic_list(
   let rows : Array[@moui.View[CodeEditorMsg]] = []
   if model.diagnostics.is_empty() {
     rows.push(
-      text("No diagnostics", role=@views.TextRole::Caption, theme~, width=252.0).foreground(
+      text("No diagnostics", role=Caption, theme~, width=252.0).foreground(
         theme.palette.muted,
       ),
     )
@@ -788,7 +721,7 @@ fn diagnostic_list(
       rows.push(
         text(
           item.severity.label() + ": " + item.message,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=252.0,
           height=28.0,
@@ -808,7 +741,7 @@ fn bracket_match_view(
     Some(value) => "open \{value.open}, close \{value.close}"
     None => "No active bracket pair"
   }
-  text(detail, role=@views.TextRole::Caption, theme~, width=252.0, height=28.0).foreground(
+  text(detail, role=Caption, theme~, width=252.0, height=28.0).foreground(
     if model.bracket_match is Some(_) {
       theme.palette.foreground
     } else {
@@ -826,7 +759,7 @@ fn hover_view(
     Some(value) => value.detail
     None => "No hover result"
   }
-  text(detail, role=@views.TextRole::Caption, theme~, width=252.0, height=38.0).foreground(
+  text(detail, role=Caption, theme~, width=252.0, height=38.0).foreground(
     if model.hover is Some(_) {
       theme.palette.foreground
     } else {
@@ -845,7 +778,7 @@ fn definition_view(
       value.symbol + " -> " + value.file + ":\{value.line}:\{value.column}"
     None => "No definition result"
   }
-  text(detail, role=@views.TextRole::Caption, theme~, width=252.0, height=38.0).foreground(
+  text(detail, role=Caption, theme~, width=252.0, height=38.0).foreground(
     if model.definition is Some(_) {
       theme.palette.foreground
     } else {

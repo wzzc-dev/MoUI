@@ -2,8 +2,8 @@
 test "Renderer cached BMP image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(3, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 2)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 2)
   let icon = @graphics.Pixmap::new(1, 1)
   icon.set_pixel(0, 0, @graphics.Color::green())
 
@@ -54,7 +54,7 @@ test "Renderer cached BMP image path uses RendererResources" {
       "broken",
       @graphics.Paint::new(),
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected cached BMP draw decode error")
   }
   assert_true(!resources.contains_image("broken"))
@@ -65,8 +65,8 @@ test "Renderer cached BMP image path uses RendererResources" {
 test "Renderer cached BMP source rect path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let atlas = @graphics.Pixmap::new(3, 1)
   atlas.set_pixel(0, 0, @graphics.Color::red())
   atlas.set_pixel(1, 0, @graphics.Color::green())
@@ -120,7 +120,7 @@ test "Renderer cached BMP source rect path uses RendererResources" {
       resources,
       "atlas",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(scaled) => assert_true(scaled.did_hit_cache())
     Err(_) => abort("expected cached quality BMP source rect hit")
@@ -133,8 +133,8 @@ test "Renderer cached BMP source rect path uses RendererResources" {
 test "Renderer cached BMP tiled image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
 
@@ -200,7 +200,7 @@ test "Renderer cached BMP tiled image path uses RendererResources" {
       "broken",
       @graphics.Paint::new(),
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected cached BMP tiled decode error")
   }
   assert_true(!resources.contains_image("broken"))
@@ -213,8 +213,8 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
   canvas.set_transform(@graphics.Transform::translate(tx=1.0, ty=0.0))
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
 
@@ -228,7 +228,7 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
       resources,
       "tile-transform-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -252,7 +252,7 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
       resources,
       "tile-transform-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(full) => {
       assert_true(!full.did_decode_pixmap())
@@ -275,7 +275,7 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
       resources,
       "tile-transform-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => {
       assert_true(!second.did_decode_pixmap())
@@ -297,9 +297,9 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
       resources,
       "broken-transform-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected cached transformed BMP decode error")
   }
   assert_true(!resources.contains_image("broken-transform-bmp"))
@@ -316,9 +316,9 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
       resources,
       "broken-transform-quality-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected cached transformed quality BMP decode error")
   }
   assert_true(!resources.contains_image("broken-transform-quality-bmp"))
@@ -336,9 +336,9 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
       resources,
       "broken-transform-quality-bmp-rect",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected cached transformed quality BMP rect decode error")
   }
   assert_true(!resources.contains_image("broken-transform-quality-bmp-rect"))
@@ -355,7 +355,7 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
       resources,
       "tile-transform-quality-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(quality) => {
       assert_true(quality.did_decode_pixmap())
@@ -374,8 +374,8 @@ test "Renderer cached BMP transformed image path uses RendererResources" {
 test "Renderer sampled cached BMP image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(3, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let image = make_renderer_test_bicubic_source()
 
   match
@@ -388,7 +388,7 @@ test "Renderer sampled cached BMP image path uses RendererResources" {
       resources,
       "sampled-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Bicubic,
+      Bicubic,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -414,7 +414,7 @@ test "Renderer sampled cached BMP image path uses RendererResources" {
       resources,
       "sampled-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     ) {
     Ok(second) => {
       assert_true(!second.did_decode_pixmap())
@@ -438,9 +438,9 @@ test "Renderer sampled cached BMP image path uses RendererResources" {
       resources,
       "broken-sampled-bmp",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Bicubic,
+      Bicubic,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected sampled BMP decode error")
   }
   assert_true(!resources.contains_image("broken-sampled-bmp"))
@@ -452,8 +452,8 @@ test "Renderer sampled cached BMP image path uses RendererResources" {
 test "Renderer quality cached BMP image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let panel = @graphics.Pixmap::new(1, 1)
   panel.set_pixel(0, 0, @graphics.Color::green())
 
@@ -467,7 +467,7 @@ test "Renderer quality cached BMP image path uses RendererResources" {
       resources,
       "panel",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(first) => assert_true(first.did_decode_pixmap())
     Err(_) => abort("expected cached quality BMP draw")
@@ -486,7 +486,7 @@ test "Renderer quality cached BMP image path uses RendererResources" {
       resources,
       "panel",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => assert_true(second.did_hit_cache())
     Err(_) => abort("expected cached quality BMP hit")
@@ -499,8 +499,8 @@ test "Renderer quality cached BMP image path uses RendererResources" {
 test "Renderer cached BMP nine-patch image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(5, 5)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let panel = make_renderer_test_nine_patch_source()
   let insets = @graphics.NinePatchInsets::new(left=1, top=1, right=1, bottom=1)
 
@@ -515,7 +515,7 @@ test "Renderer cached BMP nine-patch image path uses RendererResources" {
       resources,
       "panel",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -541,7 +541,7 @@ test "Renderer cached BMP nine-patch image path uses RendererResources" {
       resources,
       "panel",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => {
       assert_true(!second.did_decode_pixmap())
@@ -565,9 +565,9 @@ test "Renderer cached BMP nine-patch image path uses RendererResources" {
       resources,
       "broken",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
-    Err(@graphics.PixmapDecodeError::UnexpectedEndOfData(0, 54, 2)) => ()
+    Err(UnexpectedEndOfData(0, 54, 2)) => ()
     _ => abort("expected cached BMP nine-patch decode error")
   }
   assert_true(!resources.contains_image("broken"))

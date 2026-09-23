@@ -8,13 +8,13 @@ test "linux host options carry optional scene resolver and smoke options stay se
     ),
   )
   match LinuxHostAppOptions::new().scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneRejected(message) =>
+    SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Linux scene resolver rejection")
   }
   assert_false(LinuxHostSmokeOptions::new().first_frame_smoke_auto_exit)
   let resolver = @window_lifecycle.WindowSceneResolver::new(resolve=request => {
-    @window_lifecycle.WindowSceneResolution::SceneResolved(
+    SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
@@ -40,7 +40,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
     None => fail("expected configured Linux platform event sources")
   }
   match options.scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Linux scene resolver")
   }
@@ -54,36 +54,31 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
     size=@core.Size::new(width=120.0, height=80.0),
   )
   let snapshot = match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) => snapshot
+    Ok(Full(snapshot)) => snapshot
     _ => abort("expected full committed semantics")
   }
   let mut target : @core.SemanticsNode? = None
   for node in snapshot.nodes() {
-    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+    if node.actions.any(action => action == Activate) {
       target = Some(node)
     }
   }
   let target = target.unwrap()
   let binding = LinuxATSPIBinding::new(dispatch=request => {
-    if request.target == @core.SemanticsTarget::ByNodeId(target.node_id) &&
-      request.precondition ==
-      @runtime.SemanticsGenerationPrecondition::Exact(snapshot.generation()) &&
-      request.action == @core.SemanticsAction::Activate {
+    if request.target == ByNodeId(target.node_id) &&
+      request.precondition == Exact(snapshot.generation()) &&
+      request.action == Activate {
       invoked.val = invoked.val + 1
-      @accesskit_bridge.AccessKitActionResult::Handled({
+      Handled({
         before: snapshot.generation(),
         after: snapshot.generation(),
         pending_work: false,
       })
     } else {
-      @accesskit_bridge.AccessKitActionResult::Rejected(
-        @runtime.SemanticsActionDispatchError::TargetNotFound(request.target),
-      )
+      Rejected(TargetNotFound(request.target))
     }
   })
-  let published = binding.publish_semantics(
-    @runtime.SemanticsRead::Full(snapshot),
-  )
+  let published = binding.publish_semantics(Full(snapshot))
   inspect(published.native_binding_ready, content="false")
   assert_true(published.published_node_count >= 1)
   inspect(published.disposed, content="false")
@@ -92,10 +87,10 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
       @accesskit_bridge.accesskit_semantics_action_request(
         node_id=target.node_id,
         generation=snapshot.generation(),
-        action=@core.SemanticsAction::Activate,
+        action=Activate,
       ),
     ) {
-    @accesskit_bridge.AccessKitActionResult::Handled(_) => ()
+    Handled(_) => ()
     _ => fail("expected Linux AT-SPI action dispatch")
   }
   inspect(invoked.val, content="1")
@@ -108,10 +103,10 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
       @accesskit_bridge.accesskit_semantics_action_request(
         node_id=target.node_id,
         generation=snapshot.generation(),
-        action=@core.SemanticsAction::Activate,
+        action=Activate,
       ),
     ) {
-    @accesskit_bridge.AccessKitActionResult::BridgeUnavailable(message) =>
+    BridgeUnavailable(message) =>
       inspect(message, content="Linux AT-SPI binding is disposed")
     _ => fail("expected disposed Linux AT-SPI binding to reject actions")
   }
@@ -125,11 +120,9 @@ test "linux native at-spi actions preserve identity generation and payload" {
   guard numeric
     is Some(
       {
-        target: @core.SemanticsTarget::ByNodeId(node_id),
-        action: @core.SemanticsAction::SetNumericValue(value),
-        precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-          generation
-        ),
+        target: ByNodeId(node_id),
+        action: SetNumericValue(value),
+        precondition: Exact(generation),
       }
     ) else {
     fail("expected decoded AT-SPI numeric action")
@@ -141,8 +134,7 @@ test "linux native at-spi actions preserve identity generation and payload" {
   let selection = linux_atspi_decode_action(
     b"{\"node_id\":\"43\",\"generation\":\"8\",\"kind\":\"set_selection\",\"value\":\"3,9\"}",
   )
-  guard selection
-    is Some({ action: @core.SemanticsAction::SetSelection(range), .. }) else {
+  guard selection is Some({ action: SetSelection(range), .. }) else {
     fail("expected decoded AT-SPI selection action")
   }
   inspect(range.start, content="3")

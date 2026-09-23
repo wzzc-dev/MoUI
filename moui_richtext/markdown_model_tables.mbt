@@ -101,13 +101,7 @@ fn markdown_table_block(
   text : String,
   table_alignments : Array[@core.TextAlign?],
 ) -> MarkdownBlock {
-  {
-    kind: MarkdownBlockKind::Table,
-    text,
-    inlines: [],
-    table_alignments,
-    code_language: None,
-  }
+  { kind: Table, text, inlines: [], table_alignments, code_language: None, }
 }
 
 ///|
@@ -268,7 +262,7 @@ fn markdown_table_find_run_range(
       }
     }
     if matched {
-      return Some({ start: index, end: index + raw_chars.length() })
+      return Some({ start: index, end: index + raw_chars.length(), })
     }
     index = index + 1
   }
@@ -342,9 +336,9 @@ fn markdown_table_alignment_for_separator_cell(
   let leading = chars[0] == ':'
   let trailing = chars[chars.length() - 1] == ':'
   if leading && trailing {
-    Some(@core.TextAlign::TextCenter)
+    Some(TextCenter)
   } else if trailing {
-    Some(@core.TextAlign::TextEnd)
+    Some(TextEnd)
   } else {
     None
   }
@@ -378,5 +372,5 @@ fn markdown_table_trimmed_range(
         (chars[content_end - 1] == ' ' || chars[content_end - 1] == '\t') {
     content_end = content_end - 1
   }
-  { start: content_start, end: content_end }
+  { start: content_start, end: content_end, }
 }

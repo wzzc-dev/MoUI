@@ -144,7 +144,7 @@ fn make_cmap_format12_cjk_mapping() -> Array[Byte] {
 }
 
 ///|
-fn register_text_system_ab_font(system : TextSystem) -> Unit {
+fn register_text_system_ab_font(system : @text.TextSystem) -> Unit {
   match system.register_font_bytes("ui", make_text_system_ab_font()) {
     Ok(_) => ()
     Err(_) => abort("expected registered text-system font")
@@ -153,18 +153,18 @@ fn register_text_system_ab_font(system : TextSystem) -> Unit {
 
 ///|
 fn write_text_system_font_fixture(path : String, data : Bytes) -> Unit {
-  write_file(path, data) catch {
+  @text.write_file(path, data) catch {
     _ => abort("expected writable text-system font fixture")
   }
 }
 
 ///|
 test "TextSystem registers checked font data" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   assert_eq(system.font_count(), 0)
   assert_true(!system.contains_font("ui"))
 
-  let font_data = FontData::new(make_text_system_ab_font())
+  let font_data = @text.FontData::new(make_text_system_ab_font())
   match system.register_font_data("ui", font_data) {
     Ok(face) => {
       assert_eq(face.get_units_per_em(), 10)
@@ -179,15 +179,15 @@ test "TextSystem registers checked font data" {
     Err(_) => abort("expected registered font data")
   }
 
-  match system.register_font_data("bad", FontData::new(b"not-font")) {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 8)) => ()
+  match system.register_font_data("bad", @text.FontData::new(b"not-font")) {
+    Err(UnexpectedEndOfData(0, 12, 8)) => ()
     _ => abort("expected invalid font data to be rejected")
   }
   assert_eq(system.font_count(), 1)
   assert_true(!system.contains_font("bad"))
 
-  match system.register_font_data("ui", FontData::new(b"not-font")) {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 8)) => ()
+  match system.register_font_data("ui", @text.FontData::new(b"not-font")) {
+    Err(UnexpectedEndOfData(0, 12, 8)) => ()
     _ => abort("expected invalid replacement font data to be rejected")
   }
   assert_eq(system.font_count(), 1)
@@ -199,10 +199,10 @@ test "TextSystem registers checked font data" {
 
 ///|
 test "TextSystem rejects empty font data without mutating registry" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
 
-  match system.register_font_data("empty", FontData::new(b"")) {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 0)) => ()
+  match system.register_font_data("empty", @text.FontData::new(b"")) {
+    Err(UnexpectedEndOfData(0, 12, 0)) => ()
     _ => abort("expected empty font data to be rejected")
   }
   assert_eq(system.font_count(), 0)
@@ -225,7 +225,7 @@ test "TextSystem rejects empty font data without mutating registry" {
   assert_true(system.get_font_key(1) is None)
 
   match system.register_font_bytes("ui", b"") {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 0)) => ()
+    Err(UnexpectedEndOfData(0, 12, 0)) => ()
     _ => abort("expected empty font-byte replacement to be rejected")
   }
   assert_eq(system.font_count(), 1)
@@ -242,7 +242,7 @@ test "TextSystem rejects empty font data without mutating registry" {
     Err(_) => abort("expected original font data after empty replacement")
   }
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -255,7 +255,7 @@ test "TextSystem rejects empty font data without mutating registry" {
 
 ///|
 test "TextSystem registers checked font files" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let path = "/private/tmp/sun-text-system-register-font-file.ttf"
   let font_bytes = make_text_system_wide_font()
   write_text_system_font_fixture(path, font_bytes)
@@ -275,7 +275,7 @@ test "TextSystem registers checked font files" {
     Err(_) => abort("expected file-backed font registration")
   }
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -291,7 +291,7 @@ test "TextSystem registers checked font files" {
 
 ///|
 test "TextSystem register_font_file returns checked face" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let path = "/private/tmp/sun-text-system-register-font-file-face.ttf"
   write_text_system_font_fixture(path, make_text_system_ab_font())
 
@@ -308,7 +308,7 @@ test "TextSystem register_font_file returns checked face" {
 
 ///|
 test "TextSystem register_font_file errors preserve registry" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let original_font = make_text_system_ab_font()
   match system.register_font_bytes_result("ui", original_font) {
     Ok(_) => ()
@@ -319,8 +319,7 @@ test "TextSystem register_font_file errors preserve registry" {
 
   let missing_path = "/private/tmp/sun-text-system-register-font-file-missing/nope.ttf"
   match system.register_font_file_result("ui", missing_path) {
-    Err(FontLoadError::FontFileReadFailed("ui", path)) =>
-      assert_eq(path, missing_path)
+    Err(FontFileReadFailed("ui", path)) => assert_eq(path, missing_path)
     _ => abort("expected missing file to be rejected")
   }
   assert_eq(system.font_count(), 1)
@@ -330,12 +329,7 @@ test "TextSystem register_font_file errors preserve registry" {
   let invalid_path = "/private/tmp/sun-text-system-register-font-file-invalid.ttf"
   write_text_system_font_fixture(invalid_path, b"not-font")
   match system.register_font_file_result("bad", invalid_path) {
-    Err(
-      FontLoadError::FontParseFailed(
-        "bad",
-        FontParseError::UnexpectedEndOfData(0, 12, 8)
-      )
-    ) => ()
+    Err(FontParseFailed("bad", UnexpectedEndOfData(0, 12, 8))) => ()
     _ => abort("expected invalid file font to be rejected")
   }
   assert_eq(system.font_count(), 1)
@@ -345,19 +339,14 @@ test "TextSystem register_font_file errors preserve registry" {
   let indexed_path = "/private/tmp/sun-text-system-register-font-file-indexed.ttf"
   write_text_system_font_fixture(indexed_path, make_text_system_wide_font())
   match system.register_font_file_result("ui", indexed_path, font_index=1) {
-    Err(
-      FontLoadError::FontParseFailed(
-        "ui",
-        FontParseError::UnsupportedFontIndex(1)
-      )
-    ) => ()
+    Err(FontParseFailed("ui", UnsupportedFontIndex(1))) => ()
     _ => abort("expected indexed file font replacement to be rejected")
   }
   assert_eq(system.font_count(), 1)
   assert_true(system.contains_font("ui"))
   assert_true(system.contains_cached_font_face("ui"))
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -370,7 +359,7 @@ test "TextSystem register_font_file errors preserve registry" {
 
 ///|
 test "TextSystem register_font_file replaces font data and cached face" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match system.register_font_bytes_result("ui", make_text_system_ab_font()) {
     Ok(_) => ()
     Err(_) => abort("expected initial font registration")
@@ -394,7 +383,7 @@ test "TextSystem register_font_file replaces font data and cached face" {
     Err(_) => abort("expected file-backed replacement")
   }
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -407,62 +396,65 @@ test "TextSystem register_font_file replaces font data and cached face" {
 
 ///|
 test "TextSystem implements FontLoader for registered font data" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let first_font = make_text_system_ab_font()
   let replacement_font = make_text_system_wide_font()
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
   )
 
-  match load_font_data(system, "ui") {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+  match @text.load_font_data(system, "ui") {
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected missing TextSystem font data")
   }
 
-  match system.register_font_data("ui", FontData::new(first_font)) {
+  match system.register_font_data("ui", @text.FontData::new(first_font)) {
     Ok(_) => ()
     Err(_) => abort("expected registered TextSystem font data")
   }
-  match load_font_data(system, "ui") {
+  match @text.load_font_data(system, "ui") {
     Ok(data) => {
       assert_eq(data.get_font_index(), 0)
       assert_eq(data.get_data().length(), first_font.length())
     }
     Err(_) => abort("expected TextSystem FontLoader data")
   }
-  match load_font_face(system, "ui") {
+  match @text.load_font_face(system, "ui") {
     Ok(face) => {
       assert_eq(face.get_units_per_em(), 10)
-      assert_eq(TextLayout::layout(face, "AB", config).get_width(), 12.0)
+      assert_eq(@text.TextLayout::layout(face, "AB", config).get_width(), 12.0)
     }
     Err(_) => abort("expected TextSystem FontLoader face")
   }
 
-  match system.register_font_data("ui", FontData::new(replacement_font)) {
+  match system.register_font_data("ui", @text.FontData::new(replacement_font)) {
     Ok(_) => ()
     Err(_) => abort("expected TextSystem replacement font data")
   }
-  match load_font_data(system, "ui") {
+  match @text.load_font_data(system, "ui") {
     Ok(data) => assert_eq(data.get_data().length(), replacement_font.length())
     Err(_) => abort("expected replaced TextSystem FontLoader data")
   }
-  match load_font_face(system, "ui") {
+  match @text.load_font_face(system, "ui") {
     Ok(face) =>
-      assert_eq(TextLayout::layout(face, "AB", config).get_width(), 20.0)
+      assert_eq(@text.TextLayout::layout(face, "AB", config).get_width(), 20.0)
     Err(_) => abort("expected replaced TextSystem FontLoader face")
   }
 }
 
 ///|
 test "TextSystem register_font_data rejects unsupported nonzero font index" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let font_bytes = make_text_system_ab_font()
 
   match
-    system.register_font_data("ui", FontData::new(font_bytes, font_index=1)) {
-    Err(FontParseError::UnsupportedFontIndex(1)) => ()
+    system.register_font_data(
+      "ui",
+      @text.FontData::new(font_bytes, font_index=1),
+    ) {
+    Err(UnsupportedFontIndex(1)) => ()
     _ => abort("expected nonzero font index to be rejected")
   }
   assert_eq(system.font_count(), 0)
@@ -475,7 +467,7 @@ test "TextSystem register_font_data rejects unsupported nonzero font index" {
       make_text_system_ab_font(),
       font_index=3,
     ) {
-    Err(FontParseError::UnsupportedFontIndex(3)) => ()
+    Err(UnsupportedFontIndex(3)) => ()
     _ => abort("expected nonzero byte font index wrapper to be rejected")
   }
   assert_eq(system.font_count(), 0)
@@ -488,7 +480,7 @@ test "TextSystem register_font_data rejects unsupported nonzero font index" {
       make_text_system_ab_font(),
       font_index=2,
     ) {
-    Err(FontParseError::UnsupportedFontIndex(2)) => ()
+    Err(UnsupportedFontIndex(2)) => ()
     _ => abort("expected nonzero byte font index to be rejected")
   }
   assert_eq(system.font_count(), 0)
@@ -497,15 +489,15 @@ test "TextSystem register_font_data rejects unsupported nonzero font index" {
 
 ///|
 test "TextSystem register_font_data_result rejects unsupported font index without mutation" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let font_bytes = make_text_system_ab_font()
 
   match
     system.register_font_data_result(
       "ui",
-      FontData::new(font_bytes, font_index=1),
+      @text.FontData::new(font_bytes, font_index=1),
     ) {
-    Err(FontParseError::UnsupportedFontIndex(1)) => ()
+    Err(UnsupportedFontIndex(1)) => ()
     _ => abort("expected direct font-data result index to be rejected")
   }
   assert_eq(system.font_count(), 0)
@@ -517,9 +509,9 @@ test "TextSystem register_font_data_result rejects unsupported font index withou
   match
     system.register_font_data_result(
       "negative",
-      FontData::new(make_text_system_ab_font(), font_index=-1),
+      @text.FontData::new(make_text_system_ab_font(), font_index=-1),
     ) {
-    Err(FontParseError::UnsupportedFontIndex(-1)) => ()
+    Err(UnsupportedFontIndex(-1)) => ()
     _ => abort("expected negative direct font-data result index to be rejected")
   }
   assert_eq(system.font_count(), 0)
@@ -527,7 +519,8 @@ test "TextSystem register_font_data_result rejects unsupported font index withou
   assert_true(!system.contains_font("negative"))
   assert_true(!system.contains_cached_font_face("negative"))
 
-  match system.register_font_data_result("ui", FontData::new(font_bytes)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(font_bytes)) {
     Ok(result) => {
       assert_true(!result.did_replace())
       assert_true(!result.did_replace_cached_face())
@@ -544,9 +537,9 @@ test "TextSystem register_font_data_result rejects unsupported font index withou
   match
     system.register_font_data_result(
       "ui",
-      FontData::new(make_text_system_wide_font(), font_index=2),
+      @text.FontData::new(make_text_system_wide_font(), font_index=2),
     ) {
-    Err(FontParseError::UnsupportedFontIndex(2)) => ()
+    Err(UnsupportedFontIndex(2)) => ()
     _ => abort("expected direct indexed replacement to be rejected")
   }
   assert_eq(system.font_count(), 1)
@@ -562,7 +555,7 @@ test "TextSystem register_font_data_result rejects unsupported font index withou
     }
     Err(_) => abort("expected original direct font data to survive")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -577,7 +570,7 @@ test "TextSystem register_font_data_result rejects unsupported font index withou
       assert_true(result.did_hit_cache())
       assert_true(!result.did_parse())
       assert_eq(
-        TextLayout::layout(result.get_face(), "AB", config).get_width(),
+        @text.TextLayout::layout(result.get_face(), "AB", config).get_width(),
         12.0,
       )
     }
@@ -587,9 +580,9 @@ test "TextSystem register_font_data_result rejects unsupported font index withou
 
 ///|
 test "TextSystem nonzero font-index replacement preserves registered font data" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let font_bytes = make_text_system_ab_font()
-  match system.register_font_data("ui", FontData::new(font_bytes)) {
+  match system.register_font_data("ui", @text.FontData::new(font_bytes)) {
     Ok(_) => ()
     Err(_) => abort("expected initial font data registration")
   }
@@ -599,9 +592,9 @@ test "TextSystem nonzero font-index replacement preserves registered font data" 
   match
     system.register_font_data(
       "ui",
-      FontData::new(make_text_system_wide_font(), font_index=1),
+      @text.FontData::new(make_text_system_wide_font(), font_index=1),
     ) {
-    Err(FontParseError::UnsupportedFontIndex(1)) => ()
+    Err(UnsupportedFontIndex(1)) => ()
     _ => abort("expected indexed replacement font data to be rejected")
   }
 
@@ -621,7 +614,7 @@ test "TextSystem nonzero font-index replacement preserves registered font data" 
 
   system.clear_font_face_cache()
   assert_true(!system.contains_cached_font_face("ui"))
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -634,9 +627,10 @@ test "TextSystem nonzero font-index replacement preserves registered font data" 
 
 ///|
 test "TextSystem register_font_data_result replaces after clearing face cache" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let first_font = make_text_system_ab_font()
-  match system.register_font_data_result("ui", FontData::new(first_font)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(first_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -661,7 +655,10 @@ test "TextSystem register_font_data_result replaces after clearing face cache" {
 
   let replacement_font = make_text_system_wide_font()
   match
-    system.register_font_data_result("ui", FontData::new(replacement_font)) {
+    system.register_font_data_result(
+      "ui",
+      @text.FontData::new(replacement_font),
+    ) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(result.did_replace())
@@ -689,7 +686,7 @@ test "TextSystem register_font_data_result replaces after clearing face cache" {
     Err(_) => abort("expected replaced font data after cache clear")
   }
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -711,7 +708,7 @@ test "TextSystem register_font_data_result replaces after clearing face cache" {
 
 ///|
 test "TextSystem registers checked font bytes with FontData telemetry" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let font_bytes = make_text_system_ab_font()
   match system.register_font_bytes_result("ui", font_bytes) {
     Ok(result) => {
@@ -736,9 +733,10 @@ test "TextSystem registers checked font bytes with FontData telemetry" {
 
 ///|
 test "TextSystem duplicate font-data registration reports key replacement" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let font_bytes = make_text_system_ab_font()
-  match system.register_font_data_result("ui", FontData::new(font_bytes)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(font_bytes)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -751,7 +749,8 @@ test "TextSystem duplicate font-data registration reports key replacement" {
   }
   assert_true(system.contains_cached_font_face("ui"))
 
-  match system.register_font_data_result("ui", FontData::new(font_bytes)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(font_bytes)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(result.did_replace())
@@ -781,7 +780,7 @@ test "TextSystem duplicate font-data registration reports key replacement" {
     Err(_) => abort("expected duplicate registration cache hit")
   }
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -801,9 +800,10 @@ test "TextSystem duplicate font-data registration reports key replacement" {
 
 ///|
 test "TextSystem registration result reports replacement and final count" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let first_font = make_text_system_ab_font()
-  match system.register_font_data_result("ui", FontData::new(first_font)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(first_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -825,7 +825,10 @@ test "TextSystem registration result reports replacement and final count" {
 
   let replacement_font = make_text_system_wide_font()
   match
-    system.register_font_data_result("ui", FontData::new(replacement_font)) {
+    system.register_font_data_result(
+      "ui",
+      @text.FontData::new(replacement_font),
+    ) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(result.did_replace())
@@ -848,7 +851,7 @@ test "TextSystem registration result reports replacement and final count" {
     Err(_) => abort("expected replaced font data")
   }
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -858,8 +861,9 @@ test "TextSystem registration result reports replacement and final count" {
     Err(_) => abort("expected replacement font layout")
   }
 
-  match system.register_font_data_result("ui", FontData::new(b"not-font")) {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 8)) => ()
+  match
+    system.register_font_data_result("ui", @text.FontData::new(b"not-font")) {
+    Err(UnexpectedEndOfData(0, 12, 8)) => ()
     _ => abort("expected invalid replacement result to be rejected")
   }
   match system.get_font_data("ui") {
@@ -899,11 +903,11 @@ test "TextSystem registration result reports replacement and final count" {
 
 ///|
 test "TextSystem direct caret geometry uses replacement font data" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match
     system.register_font_data_result(
       "ui",
-      FontData::new(make_text_system_ab_font()),
+      @text.FontData::new(make_text_system_ab_font()),
     ) {
     Ok(result) => {
       assert_true(!result.did_replace())
@@ -911,7 +915,7 @@ test "TextSystem direct caret geometry uses replacement font data" {
     }
     Err(_) => abort("expected initial font registration")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -925,7 +929,7 @@ test "TextSystem direct caret geometry uses replacement font data" {
   match
     system.register_font_data_result(
       "ui",
-      FontData::new(make_text_system_wide_font()),
+      @text.FontData::new(make_text_system_wide_font()),
     ) {
     Ok(result) => {
       assert_true(result.did_replace())
@@ -959,7 +963,7 @@ test "TextSystem direct caret geometry uses replacement font data" {
 
 ///|
 test "TextSystem registration distinguishes font-data and cached-face replacement" {
-  let system = TextSystem::with_font_cache_capacity(1)
+  let system = @text.TextSystem::with_font_cache_capacity(1)
   match system.register_font_bytes_result("ui", make_text_system_ab_font()) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
@@ -985,7 +989,7 @@ test "TextSystem registration distinguishes font-data and cached-face replacemen
   match
     system.register_font_data_result(
       "ui",
-      FontData::new(make_text_system_wide_font()),
+      @text.FontData::new(make_text_system_wide_font()),
     ) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
@@ -999,7 +1003,7 @@ test "TextSystem registration distinguishes font-data and cached-face replacemen
     Err(_) => abort("expected evicted ui cache replacement")
   }
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1015,9 +1019,10 @@ test "TextSystem registration distinguishes font-data and cached-face replacemen
 
 ///|
 test "TextSystem invalid register_font_data replacement preserves evicted cached face state" {
-  let system = TextSystem::with_font_cache_capacity(1)
+  let system = @text.TextSystem::with_font_cache_capacity(1)
   let original_font = make_text_system_ab_font()
-  match system.register_font_data_result("ui", FontData::new(original_font)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(original_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -1031,7 +1036,7 @@ test "TextSystem invalid register_font_data replacement preserves evicted cached
   match
     system.register_font_data_result(
       "wide",
-      FontData::new(make_text_system_wide_font()),
+      @text.FontData::new(make_text_system_wide_font()),
     ) {
     Ok(result) => {
       assert_eq(result.get_key(), "wide")
@@ -1044,8 +1049,9 @@ test "TextSystem invalid register_font_data replacement preserves evicted cached
     Err(_) => abort("expected wide registration to evict ui cache")
   }
 
-  match system.register_font_data_result("ui", FontData::new(b"not-font")) {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 8)) => ()
+  match
+    system.register_font_data_result("ui", @text.FontData::new(b"not-font")) {
+    Err(UnexpectedEndOfData(0, 12, 8)) => ()
     _ => abort("expected invalid evicted replacement to be rejected")
   }
   assert_eq(system.font_count(), 2)
@@ -1074,7 +1080,7 @@ test "TextSystem invalid register_font_data replacement preserves evicted cached
     }
     Err(_) => abort("expected original evicted font data to reparse")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1091,7 +1097,7 @@ test "TextSystem invalid register_font_data replacement preserves evicted cached
 
 ///|
 test "TextSystem tracks registered font keys in stable registration order" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   assert_eq(system.get_font_keys().length(), 0)
   assert_true(system.get_font_key(0) is None)
 
@@ -1126,11 +1132,11 @@ test "TextSystem tracks registered font keys in stable registration order" {
   assert_true(system.get_font_key(1) == Some("wide"))
 
   match system.register_font_bytes("bad", b"not-font") {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 8)) => ()
+    Err(UnexpectedEndOfData(0, 12, 8)) => ()
     _ => abort("expected invalid new font to be rejected")
   }
   match system.register_font_bytes("wide", b"not-font") {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 8)) => ()
+    Err(UnexpectedEndOfData(0, 12, 8)) => ()
     _ => abort("expected invalid replacement font to be rejected")
   }
   assert_eq(system.font_count(), 2)
@@ -1153,9 +1159,9 @@ test "TextSystem tracks registered font keys in stable registration order" {
 
 ///|
 test "TextSystem lays out text from registered font data" {
-  let system = TextSystem::with_font_cache_capacity(1)
+  let system = @text.TextSystem::with_font_cache_capacity(1)
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1176,37 +1182,37 @@ test "TextSystem lays out text from registered font data" {
   }
 
   match system.layout_text("missing", "AB", config) {
-    Err(FontLoadError::MissingFontData("missing")) => ()
+    Err(MissingFontData("missing")) => ()
     _ => abort("expected missing text-system font")
   }
 }
 
 ///|
 test "TextSystem direct geometry APIs report missing registered font" {
-  let system = TextSystem::new()
-  let config = LayoutConfig::new(
+  let system = @text.TextSystem::new()
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
   )
 
   match system.caret_for_text("missing", "AB", 1, config) {
-    Err(FontLoadError::MissingFontData("missing")) => ()
+    Err(MissingFontData("missing")) => ()
     _ => abort("expected missing font for direct caret geometry")
   }
   match system.caret_at_text_position("missing", "AB", 4.0, 0.0, config) {
-    Err(FontLoadError::MissingFontData("missing")) => ()
+    Err(MissingFontData("missing")) => ()
     _ => abort("expected missing font for direct caret hit-test")
   }
   match system.selection_rects_for_text("missing", "AB", 0, 2, config) {
-    Err(FontLoadError::MissingFontData("missing")) => ()
+    Err(MissingFontData("missing")) => ()
     _ => abort("expected missing font for direct selection geometry")
   }
 }
 
 ///|
 test "TextSystem font face result reports cache hits and reparses" {
-  let system = TextSystem::with_font_cache_capacity(1)
+  let system = @text.TextSystem::with_font_cache_capacity(1)
   register_text_system_ab_font(system)
 
   match system.get_font_face_result("ui") {
@@ -1232,14 +1238,14 @@ test "TextSystem font face result reports cache hits and reparses" {
   }
 
   match system.get_font_face_result("missing") {
-    Err(FontLoadError::MissingFontData("missing")) => ()
+    Err(MissingFontData("missing")) => ()
     _ => abort("expected missing text-system font face result")
   }
 }
 
 ///|
 test "TextSystem exposes and clears parsed font face cache state" {
-  let system = TextSystem::with_font_cache_capacity(1)
+  let system = @text.TextSystem::with_font_cache_capacity(1)
   assert_true(system.is_font_face_cache_capacity_bounded())
   assert_eq(system.font_face_cache_capacity(), 1)
   assert_eq(system.font_face_cache_len(), 0)
@@ -1276,12 +1282,12 @@ test "TextSystem exposes and clears parsed font face cache state" {
 
 ///|
 test "TextSystem caret uses glyph advance origins instead of drawing bearings" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match system.register_font_bytes("ui", make_text_system_bearing_font()) {
     Ok(_) => ()
     Err(_) => abort("expected bearing font")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1313,9 +1319,9 @@ test "TextSystem caret uses glyph advance origins instead of drawing bearings" {
 
 ///|
 test "TextSystem computes single-line caret geometry" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1354,9 +1360,9 @@ test "TextSystem computes single-line caret geometry" {
 
 ///|
 test "TextSystem editor geometry preserves trailing spaces with spacing" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1424,13 +1430,16 @@ test "TextSystem editor geometry preserves trailing spaces with spacing" {
 
 ///|
 test "TextSystem tab caret geometry treats registered font data tabs as zero width" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match
-    system.register_font_data("ui", FontData::new(make_text_system_ab_font())) {
+    system.register_font_data(
+      "ui",
+      @text.FontData::new(make_text_system_ab_font()),
+    ) {
     Ok(_) => ()
     Err(_) => abort("expected registered font data")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1503,13 +1512,16 @@ test "TextSystem tab caret geometry treats registered font data tabs as zero wid
 
 ///|
 test "TextSystem keeps zero-width tabs before soft-wrapped text on previous line" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match
-    system.register_font_data("ui", FontData::new(make_text_system_ab_font())) {
+    system.register_font_data(
+      "ui",
+      @text.FontData::new(make_text_system_ab_font()),
+    ) {
     Ok(_) => ()
     Err(_) => abort("expected registered font data")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=6.0,
     font_size=10.0,
     line_height=12.0,
@@ -1597,13 +1609,16 @@ test "TextSystem keeps zero-width tabs before soft-wrapped text on previous line
 
 ///|
 test "TextSystem keeps zero-width tabs before line breaks on the previous line" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match
-    system.register_font_data("ui", FontData::new(make_text_system_ab_font())) {
+    system.register_font_data(
+      "ui",
+      @text.FontData::new(make_text_system_ab_font()),
+    ) {
     Ok(_) => ()
     Err(_) => abort("expected registered font data")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1697,7 +1712,7 @@ test "TextSystem keeps zero-width tabs before line breaks on the previous line" 
 
 ///|
 test "TextSystem Unicode caret respects supplementary character boundaries" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match system.register_font_bytes("emoji", make_text_system_emoji_font()) {
     Ok(_) => ()
     Err(_) => abort("expected emoji font")
@@ -1705,7 +1720,7 @@ test "TextSystem Unicode caret respects supplementary character boundaries" {
   let text = parser_test_string_from_codepoints([(0x1F600 : Int)])
   assert_eq(text.length(), 2)
   assert_eq(text.char_length(), 1)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1762,9 +1777,9 @@ test "TextSystem Unicode caret respects supplementary character boundaries" {
 
 ///|
 test "TextSystem computes empty text caret geometry" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1785,12 +1800,12 @@ test "TextSystem computes empty text caret geometry" {
 
 ///|
 test "TextSystem hit-tests single-line caret positions" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match system.register_font_bytes("ui", make_text_system_bearing_font()) {
     Ok(_) => ()
     Err(_) => abort("expected bearing font")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -1865,13 +1880,13 @@ test "TextSystem hit-tests single-line caret positions" {
 
 ///|
 test "TextSystem editor geometry honors center-aligned multiline text" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
     line_height=12.0,
-    alignment=TextAlign::Center,
+    alignment=Center,
   )
 
   match system.caret_for_text("ui", "A\nAB", 0, config) {
@@ -1969,13 +1984,13 @@ test "TextSystem editor geometry honors center-aligned multiline text" {
 
 ///|
 test "TextSystem editor geometry honors right-aligned text" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
     line_height=12.0,
-    alignment=TextAlign::Right,
+    alignment=Right,
   )
 
   match system.caret_for_text("ui", "AB", 0, config) {
@@ -2013,13 +2028,13 @@ test "TextSystem editor geometry honors right-aligned text" {
 
 ///|
 test "TextSystem editor geometry honors justified wrapped text" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=24.0,
     font_size=10.0,
     line_height=12.0,
-    alignment=TextAlign::Justify,
+    alignment=Justify,
   )
 
   match system.layout_text("ui", "A B A", config) {
@@ -2093,9 +2108,9 @@ test "TextSystem editor geometry honors justified wrapped text" {
 
 ///|
 test "TextSystem hit-tests empty and multiline caret positions" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2221,9 +2236,9 @@ test "TextSystem hit-tests empty and multiline caret positions" {
 
 ///|
 test "TextSystem maps newline and wrapped carets to visual lines" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=6.0,
     font_size=10.0,
     line_height=12.0,
@@ -2263,15 +2278,18 @@ test "TextSystem maps newline and wrapped carets to visual lines" {
 
 ///|
 test "TextSystem maps CJK soft-wrap editor geometry to visual lines" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   match
-    system.register_font_data("cjk", FontData::new(make_text_system_cjk_font())) {
+    system.register_font_data(
+      "cjk",
+      @text.FontData::new(make_text_system_cjk_font()),
+    ) {
     Ok(_) => ()
     Err(_) => abort("expected CJK font data")
   }
   let text = parser_test_string_from_codepoints([0x4E00, 0x4E8C, 0x4E09])
   assert_eq(text.length(), 3)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
     line_height=10.0,
@@ -2353,9 +2371,9 @@ test "TextSystem maps CJK soft-wrap editor geometry to visual lines" {
 
 ///|
 test "TextSystem maps carets through empty visual lines" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2423,9 +2441,9 @@ test "TextSystem maps carets through empty visual lines" {
 
 ///|
 test "TextSystem normalizes caret indices inside CRLF line breaks" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2484,11 +2502,11 @@ test "TextSystem normalizes caret indices inside CRLF line breaks" {
 
 ///|
 test "TextSystem maps standalone CR line breaks to visual lines" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
   let text = "A\rB"
   assert_eq(text.length(), 3)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2568,11 +2586,11 @@ test "TextSystem maps standalone CR line breaks to visual lines" {
 
 ///|
 test "TextSystem maps trailing CRLF to final empty visual line" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
   let text = "A\r\n"
   assert_eq(text.length(), 3)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2638,9 +2656,9 @@ test "TextSystem maps trailing CRLF to final empty visual line" {
 
 ///|
 test "TextSystem prepared layout carries reusable caret and selection helpers" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2685,16 +2703,16 @@ test "TextSystem prepared layout carries reusable caret and selection helpers" {
   assert_eq(empty_caret.get_baseline_y(), 10.0)
 
   match system.prepare_layout("missing", "AB", config) {
-    Err(FontLoadError::MissingFontData("missing")) => ()
+    Err(MissingFontData("missing")) => ()
     _ => abort("expected missing prepared-layout font")
   }
 }
 
 ///|
 test "TextSystem prepared layout is stable across font replacement" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2715,7 +2733,7 @@ test "TextSystem prepared layout is stable across font replacement" {
   }
 
   assert_eq(
-    TextLayout::layout(prepared.get_face(), "AB", config).get_width(),
+    @text.TextLayout::layout(prepared.get_face(), "AB", config).get_width(),
     12.0,
   )
   assert_eq(prepared.get_layout().get_width(), 12.0)
@@ -2729,9 +2747,10 @@ test "TextSystem prepared layout is stable across font replacement" {
 
 ///|
 test "TextSystem prepared layout snapshot survives font-data result replacement" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let first_font = make_text_system_ab_font()
-  match system.register_font_data_result("ui", FontData::new(first_font)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(first_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -2742,7 +2761,7 @@ test "TextSystem prepared layout snapshot survives font-data result replacement"
     }
     Err(_) => abort("expected initial font data registration")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2758,7 +2777,7 @@ test "TextSystem prepared layout snapshot survives font-data result replacement"
   assert_eq(prepared_hit.get_x(), 12.0)
 
   let wide_font = make_text_system_wide_font()
-  match system.register_font_data_result("ui", FontData::new(wide_font)) {
+  match system.register_font_data_result("ui", @text.FontData::new(wide_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(result.did_replace())
@@ -2819,7 +2838,7 @@ test "TextSystem prepared layout snapshot survives font-data result replacement"
 
 ///|
 test "TextSystem prepared layout snapshot survives register_font_file replacement" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let first_font = make_text_system_ab_font()
   match system.register_font_bytes_result("ui", first_font) {
     Ok(result) => {
@@ -2832,7 +2851,7 @@ test "TextSystem prepared layout snapshot survives register_font_file replacemen
     }
     Err(_) => abort("expected initial font-byte registration")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2869,16 +2888,16 @@ test "TextSystem prepared layout snapshot survives register_font_file replacemen
   assert_true(system.get_font_key(0) == Some("ui"))
   assert_true(system.get_font_key(1) is None)
   assert_true(system.contains_cached_font_face("ui"))
-  match load_font_data(system, "ui") {
+  match @text.load_font_data(system, "ui") {
     Ok(data) => {
       assert_eq(data.get_font_index(), 0)
       assert_eq(data.get_data().length(), replacement_font.length())
     }
     Err(_) => abort("expected file-backed data through TextSystem loader")
   }
-  match load_font_face(system, "ui") {
+  match @text.load_font_face(system, "ui") {
     Ok(face) =>
-      assert_eq(TextLayout::layout(face, "AB", config).get_width(), 20.0)
+      assert_eq(@text.TextLayout::layout(face, "AB", config).get_width(), 20.0)
     Err(_) => abort("expected file-backed face through TextSystem loader")
   }
   match system.layout_text("ui", "AB", config) {
@@ -2907,7 +2926,7 @@ test "TextSystem prepared layout snapshot survives register_font_file replacemen
   assert_eq(fresh.caret_for_index(2).get_x(), 20.0)
 
   assert_eq(
-    TextLayout::layout(prepared.get_face(), "AB", config).get_width(),
+    @text.TextLayout::layout(prepared.get_face(), "AB", config).get_width(),
     12.0,
   )
   assert_eq(prepared.get_layout().get_width(), 12.0)
@@ -2922,7 +2941,7 @@ test "TextSystem prepared layout snapshot survives register_font_file replacemen
 
 ///|
 test "TextSystem invalid font-file result replacement preserves prepared layout and cache" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let original_font = make_text_system_ab_font()
   match system.register_font_bytes_result("ui", original_font) {
     Ok(result) => {
@@ -2937,7 +2956,7 @@ test "TextSystem invalid font-file result replacement preserves prepared layout 
     }
     Err(_) => abort("expected initial font-byte registration")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -2953,12 +2972,7 @@ test "TextSystem invalid font-file result replacement preserves prepared layout 
   let invalid_path = "/private/tmp/sun-text-system-prepared-file-invalid.ttf"
   write_text_system_font_fixture(invalid_path, b"not-font")
   match system.register_font_file_result("ui", invalid_path) {
-    Err(
-      FontLoadError::FontParseFailed(
-        "ui",
-        FontParseError::UnexpectedEndOfData(0, 12, 8)
-      )
-    ) => ()
+    Err(FontParseFailed("ui", UnexpectedEndOfData(0, 12, 8))) => ()
     _ => abort("expected invalid file-backed replacement to be rejected")
   }
   assert_eq(system.font_count(), 1)
@@ -3006,7 +3020,7 @@ test "TextSystem invalid font-file result replacement preserves prepared layout 
 
 ///|
 test "TextSystem invalid font-byte result replacement preserves prepared layout and cache" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let original_font = make_text_system_ab_font()
   match system.register_font_bytes_result("ui", original_font) {
     Ok(result) => {
@@ -3016,7 +3030,7 @@ test "TextSystem invalid font-byte result replacement preserves prepared layout 
     }
     Err(_) => abort("expected initial font-byte registration")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3029,7 +3043,7 @@ test "TextSystem invalid font-byte result replacement preserves prepared layout 
   assert_true(system.contains_cached_font_face("ui"))
 
   match system.register_font_bytes_result("ui", b"not-font") {
-    Err(FontParseError::UnexpectedEndOfData(0, 12, 8)) => ()
+    Err(UnexpectedEndOfData(0, 12, 8)) => ()
     _ => abort("expected invalid font-byte result replacement to be rejected")
   }
   assert_eq(system.font_count(), 1)
@@ -3064,9 +3078,9 @@ test "TextSystem invalid font-byte result replacement preserves prepared layout 
 
 ///|
 test "TextSystem prepared empty layout keeps captured face metrics across replacement" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3089,7 +3103,7 @@ test "TextSystem prepared empty layout keeps captured face metrics across replac
   match
     system.register_font_data_result(
       "ui",
-      FontData::new(make_text_system_tall_font()),
+      @text.FontData::new(make_text_system_tall_font()),
     ) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
@@ -3135,13 +3149,13 @@ test "TextSystem prepared empty layout keeps captured face metrics across replac
 
 ///|
 test "TextSystem prepared layout is stable across font removal and re-registration" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
   match system.register_font_bytes("wide", make_text_system_wide_font()) {
     Ok(_) => ()
     Err(_) => abort("expected wide font")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3188,9 +3202,10 @@ test "TextSystem prepared layout is stable across font removal and re-registrati
 
 ///|
 test "TextSystem prepared layout is stable across clear_fonts and font-data re-registration" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let first_font = make_text_system_ab_font()
-  match system.register_font_data_result("ui", FontData::new(first_font)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(first_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -3200,7 +3215,7 @@ test "TextSystem prepared layout is stable across clear_fonts and font-data re-r
     }
     Err(_) => abort("expected initial font data registration")
   }
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3221,7 +3236,7 @@ test "TextSystem prepared layout is stable across clear_fonts and font-data re-r
   assert_eq(prepared.caret_for_index(2).get_x(), 12.0)
 
   let wide_font = make_text_system_wide_font()
-  match system.register_font_data_result("ui", FontData::new(wide_font)) {
+  match system.register_font_data_result("ui", @text.FontData::new(wide_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -3249,9 +3264,9 @@ test "TextSystem prepared layout is stable across clear_fonts and font-data re-r
 
 ///|
 test "TextSystem computes selection rectangles for normalized ranges" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3281,9 +3296,9 @@ test "TextSystem computes selection rectangles for normalized ranges" {
 
 ///|
 test "TextSystem computes selection rectangles across visual lines" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3318,9 +3333,9 @@ test "TextSystem computes selection rectangles across visual lines" {
 
 ///|
 test "TextSystem normalizes reversed selection ranges across visual lines" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3378,27 +3393,28 @@ test "TextSystem normalizes reversed selection ranges across visual lines" {
 
 ///|
 test "TextSystem clears registered font state" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
   assert_eq(system.font_count(), 1)
   system.clear_fonts()
   assert_eq(system.font_count(), 0)
   assert_true(!system.contains_font("ui"))
   match system.get_font_data("ui") {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected cleared text-system font data")
   }
   match system.get_font_face("ui") {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected cleared text-system font")
   }
 }
 
 ///|
 test "TextSystem clear_fonts makes same-key font-data registration fresh" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   let first_font = make_text_system_ab_font()
-  match system.register_font_data_result("ui", FontData::new(first_font)) {
+  match
+    system.register_font_data_result("ui", @text.FontData::new(first_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -3423,7 +3439,7 @@ test "TextSystem clear_fonts makes same-key font-data registration fresh" {
   assert_true(system.get_font_key(0) is None)
 
   let wide_font = make_text_system_wide_font()
-  match system.register_font_data_result("ui", FontData::new(wide_font)) {
+  match system.register_font_data_result("ui", @text.FontData::new(wide_font)) {
     Ok(result) => {
       assert_eq(result.get_key(), "ui")
       assert_true(!result.did_replace())
@@ -3441,7 +3457,7 @@ test "TextSystem clear_fonts makes same-key font-data registration fresh" {
   assert_true(system.get_font_key(0) == Some("ui"))
   assert_true(system.get_font_key(1) is None)
 
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3461,9 +3477,9 @@ test "TextSystem clear_fonts makes same-key font-data registration fresh" {
 
 ///|
 test "TextSystem removes one registered font and cached face" {
-  let system = TextSystem::new()
+  let system = @text.TextSystem::new()
   register_text_system_ab_font(system)
-  let config = LayoutConfig::new(
+  let config = @text.LayoutConfig::new(
     max_width=100.0,
     font_size=10.0,
     line_height=12.0,
@@ -3477,15 +3493,15 @@ test "TextSystem removes one registered font and cached face" {
   assert_eq(system.font_count(), 0)
   assert_true(!system.contains_font("ui"))
   match system.get_font_data("ui") {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected removed text-system font data")
   }
   match system.get_font_face("ui") {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected removed text-system font")
   }
   match system.layout_text("ui", "AB", config) {
-    Err(FontLoadError::MissingFontData("ui")) => ()
+    Err(MissingFontData("ui")) => ()
     _ => abort("expected removed font layout error")
   }
   assert_true(!system.remove_font("ui"))

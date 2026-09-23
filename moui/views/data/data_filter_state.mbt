@@ -15,5 +15,5 @@ pub fn[Msg] data_filter(
   message~ : Msg,
   enabled? : Bool = true,
 ) -> DataFilter[Msg] {
-  { id, label, selected, message, enabled }
+  { id, label, selected, message, enabled, }
 }

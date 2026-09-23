@@ -1,17 +1,11 @@
 ///|
 test "source imported Fluent tokens expose pinned source values" {
-  guard source_imported_token_for(
-      @common.DesignPreset::Fluent,
-      "colorBrandBackground",
-    )
+  guard @audit.source_imported_token_for(Fluent, "colorBrandBackground")
     is Some(fluent_brand) else {
     fail("expected imported Fluent brand token")
   }
   assert_true(fluent_brand.source_value.contains("#0f6cbd"))
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
-      "colorBrandBackground",
-    )
+  guard @audit.source_import_integrity_for(Fluent, "colorBrandBackground")
     is Some(fluent_brand_integrity) else {
     fail("expected Fluent brand integrity record")
   }
@@ -45,17 +39,14 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_fluent_preview_global_color_source_import(
     "blue.primary", "#0078d4", "DesignSemanticPalette.info",
   )
-  guard source_imported_token_for(
-      @common.DesignPreset::Fluent,
-      "colorCompoundBrandBackground",
-    )
+  guard @audit.source_imported_token_for(Fluent, "colorCompoundBrandBackground")
     is Some(fluent_compound_brand) else {
     fail("expected imported Fluent compound brand token")
   }
   assert_true(fluent_compound_brand.source_file.contains("lightColor.ts"))
   assert_true(fluent_compound_brand.source_value.contains("#0f6cbd"))
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
+  guard @audit.source_import_coverage_for(
+      Fluent,
       "colorCompoundBrandBackground",
     )
     is Some(fluent_compound_brand_coverage) else {
@@ -67,11 +58,9 @@ test "source imported Fluent tokens expose pinned source values" {
     fluent_compound_brand_coverage.moui_token ==
     "DesignComponentTokens.button.primary.background",
   )
-  assert_true(
-    fluent_compound_brand_coverage.status == DesignTokenStatus::ComponentMapped,
-  )
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
+  assert_true(fluent_compound_brand_coverage.status == ComponentMapped)
+  guard @audit.source_import_coverage_for(
+      Fluent,
       "ProgressBar.indicator.backgroundColor",
     )
     is Some(fluent_progress) else {
@@ -82,13 +71,13 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_true(
     fluent_progress.moui_token == "DesignComponentTokens.progress.foreground",
   )
-  assert_true(fluent_progress.status == DesignTokenStatus::ComponentMapped)
+  assert_true(fluent_progress.status == ComponentMapped)
   assert_true(fluent_progress.source_file.contains("progress-bar.styles.ts"))
   assert_true(
     fluent_progress.source_value.contains("colorCompoundBrandBackground"),
   )
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
+  guard @audit.source_import_integrity_for(
+      Fluent,
       "ProgressBar.indicator.backgroundColor",
     )
     is Some(fluent_progress_integrity) else {
@@ -96,8 +85,8 @@ test "source imported Fluent tokens expose pinned source values" {
   }
   assert_true(fluent_progress_integrity.integrity_ok)
   assert_true(fluent_progress_integrity.moui_token_matches_golden)
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
+  guard @audit.source_import_integrity_for(
+      Fluent,
       "colorCompoundBrandBackground",
     )
     is Some(fluent_compound_brand_integrity) else {
@@ -105,21 +94,15 @@ test "source imported Fluent tokens expose pinned source values" {
   }
   assert_true(fluent_compound_brand_integrity.integrity_ok)
   assert_true(fluent_compound_brand_integrity.moui_token_matches_golden)
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "spacingHorizontalM",
-    )
+  guard @audit.source_import_coverage_for(Fluent, "spacingHorizontalM")
     is Some(fluent_spacing) else {
     fail("expected Fluent spacing source-import coverage")
   }
   assert_true(fluent_spacing.source_imported)
   assert_true(fluent_spacing.golden_mapped)
   assert_true(fluent_spacing.moui_token == "DesignSpacingTokens.md")
-  assert_true(fluent_spacing.status == DesignTokenStatus::ThemeMapped)
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
-      "spacingHorizontalM",
-    )
+  assert_true(fluent_spacing.status == ThemeMapped)
+  guard @audit.source_import_integrity_for(Fluent, "spacingHorizontalM")
     is Some(fluent_spacing_integrity) else {
     fail("expected Fluent spacing integrity record")
   }
@@ -179,10 +162,7 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_fluent_mapped_spacing_source_import(
     "spacingVerticalXXXL", "xxxl = '32px'", "DesignSpacingTokens.xl",
   )
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "durationUltraFast",
-    )
+  guard @audit.source_import_coverage_for(Fluent, "durationUltraFast")
     is Some(fluent_duration_ultra_fast) else {
     fail("expected Fluent ultra-fast duration source-import coverage")
   }
@@ -191,30 +171,22 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_true(
     fluent_duration_ultra_fast.moui_token == "DesignMotionTokens.fast_ms",
   )
-  assert_true(
-    fluent_duration_ultra_fast.status == DesignTokenStatus::PreviewMapped,
-  )
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "durationFaster",
-    )
+  assert_true(fluent_duration_ultra_fast.status == PreviewMapped)
+  guard @audit.source_import_coverage_for(Fluent, "durationFaster")
     is Some(fluent_duration_fast) else {
     fail("expected Fluent faster duration source-import coverage")
   }
   assert_true(fluent_duration_fast.source_imported)
   assert_true(fluent_duration_fast.golden_mapped)
   assert_true(fluent_duration_fast.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(fluent_duration_fast.status == DesignTokenStatus::ThemeMapped)
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
-      "durationFaster",
-    )
+  assert_true(fluent_duration_fast.status == ThemeMapped)
+  guard @audit.source_import_integrity_for(Fluent, "durationFaster")
     is Some(fluent_duration_fast_integrity) else {
     fail("expected Fluent faster duration integrity record")
   }
   assert_true(fluent_duration_fast_integrity.integrity_ok)
   assert_true(fluent_duration_fast_integrity.moui_token_matches_golden)
-  guard source_import_coverage_for(@common.DesignPreset::Fluent, "durationFast")
+  guard @audit.source_import_coverage_for(Fluent, "durationFast")
     is Some(fluent_duration_fast_preview) else {
     fail("expected Fluent fast duration source-import coverage")
   }
@@ -223,33 +195,22 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_true(
     fluent_duration_fast_preview.moui_token == "DesignMotionTokens.fast_ms",
   )
-  assert_true(
-    fluent_duration_fast_preview.status == DesignTokenStatus::PreviewMapped,
-  )
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "durationNormal",
-    )
+  assert_true(fluent_duration_fast_preview.status == PreviewMapped)
+  guard @audit.source_import_coverage_for(Fluent, "durationNormal")
     is Some(fluent_duration) else {
     fail("expected Fluent duration source-import coverage")
   }
   assert_true(fluent_duration.source_imported)
   assert_true(fluent_duration.golden_mapped)
   assert_true(fluent_duration.moui_token == "DesignMotionTokens.normal_ms")
-  assert_true(fluent_duration.status == DesignTokenStatus::ThemeMapped)
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
-      "durationNormal",
-    )
+  assert_true(fluent_duration.status == ThemeMapped)
+  guard @audit.source_import_integrity_for(Fluent, "durationNormal")
     is Some(fluent_duration_integrity) else {
     fail("expected Fluent duration integrity record")
   }
   assert_true(fluent_duration_integrity.integrity_ok)
   assert_true(fluent_duration_integrity.moui_token_matches_golden)
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "durationGentle",
-    )
+  guard @audit.source_import_coverage_for(Fluent, "durationGentle")
     is Some(fluent_duration_gentle) else {
     fail("expected Fluent gentle duration source-import coverage")
   }
@@ -258,30 +219,24 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_true(
     fluent_duration_gentle.moui_token == "DesignMotionTokens.normal_ms",
   )
-  assert_true(fluent_duration_gentle.status == DesignTokenStatus::PreviewMapped)
-  guard source_import_coverage_for(@common.DesignPreset::Fluent, "durationSlow")
+  assert_true(fluent_duration_gentle.status == PreviewMapped)
+  guard @audit.source_import_coverage_for(Fluent, "durationSlow")
     is Some(fluent_duration_slow) else {
     fail("expected Fluent slow duration source-import coverage")
   }
   assert_true(fluent_duration_slow.source_imported)
   assert_true(fluent_duration_slow.golden_mapped)
   assert_true(fluent_duration_slow.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(fluent_duration_slow.status == DesignTokenStatus::ThemeMapped)
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "durationSlower",
-    )
+  assert_true(fluent_duration_slow.status == ThemeMapped)
+  guard @audit.source_import_coverage_for(Fluent, "durationSlower")
     is Some(fluent_duration_slower) else {
     fail("expected Fluent slower duration source-import coverage")
   }
   assert_true(fluent_duration_slower.source_imported)
   assert_true(fluent_duration_slower.golden_mapped)
   assert_true(fluent_duration_slower.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(fluent_duration_slower.status == DesignTokenStatus::PreviewMapped)
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "durationUltraSlow",
-    )
+  assert_true(fluent_duration_slower.status == PreviewMapped)
+  guard @audit.source_import_coverage_for(Fluent, "durationUltraSlow")
     is Some(fluent_duration_ultra_slow) else {
     fail("expected Fluent ultra-slow duration source-import coverage")
   }
@@ -290,9 +245,7 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_true(
     fluent_duration_ultra_slow.moui_token == "DesignMotionTokens.slow_ms",
   )
-  assert_true(
-    fluent_duration_ultra_slow.status == DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_duration_ultra_slow.status == PreviewMapped)
   assert_fluent_preview_curve_source_import(
     "curveAccelerateMax", "cubic-bezier(0.9,0.1,1,0.2)",
   )
@@ -314,21 +267,15 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_fluent_preview_curve_source_import(
     "curveEasyEaseMax", "cubic-bezier(0.8,0,0.2,1)",
   )
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "curveEasyEase",
-    )
+  guard @audit.source_import_coverage_for(Fluent, "curveEasyEase")
     is Some(fluent_curve) else {
     fail("expected Fluent curve source-import coverage")
   }
   assert_true(fluent_curve.source_imported)
   assert_true(fluent_curve.golden_mapped)
   assert_true(fluent_curve.moui_token == "DesignMotionTokens.easing")
-  assert_true(fluent_curve.status == DesignTokenStatus::PreviewMapped)
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
-      "curveEasyEase",
-    )
+  assert_true(fluent_curve.status == PreviewMapped)
+  guard @audit.source_import_integrity_for(Fluent, "curveEasyEase")
     is Some(fluent_curve_integrity) else {
     fail("expected Fluent curve integrity record")
   }
@@ -337,29 +284,20 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_fluent_preview_curve_source_import(
     "curveLinear", "cubic-bezier(0,0,1,1)",
   )
-  guard source_imported_token_for(
-      @common.DesignPreset::Fluent,
-      "fontSizeBase300",
-    )
+  guard @audit.source_imported_token_for(Fluent, "fontSizeBase300")
     is Some(fluent_font_size) else {
     fail("expected imported Fluent font-size token")
   }
   assert_true(fluent_font_size.source_file.contains("fonts.ts"))
   assert_true(fluent_font_size.source_value.contains("14px"))
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "fontSizeBase300",
-    )
+  guard @audit.source_import_coverage_for(Fluent, "fontSizeBase300")
     is Some(fluent_font_coverage) else {
     fail("expected Fluent font-size source-import coverage")
   }
   assert_true(fluent_font_coverage.source_imported)
   assert_true(fluent_font_coverage.golden_mapped)
-  assert_true(fluent_font_coverage.status == DesignTokenStatus::ThemeMapped)
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "fontWeightSemibold",
-    )
+  assert_true(fluent_font_coverage.status == ThemeMapped)
+  guard @audit.source_import_coverage_for(Fluent, "fontWeightSemibold")
     is Some(fluent_semibold) else {
     fail("expected Fluent semibold source-import coverage")
   }
@@ -368,11 +306,8 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_true(
     fluent_semibold.moui_token == "DesignTypographyTokens.control.weight",
   )
-  assert_true(fluent_semibold.status == DesignTokenStatus::ThemeMapped)
-  guard source_import_integrity_for(
-      @common.DesignPreset::Fluent,
-      "fontWeightSemibold",
-    )
+  assert_true(fluent_semibold.status == ThemeMapped)
+  guard @audit.source_import_integrity_for(Fluent, "fontWeightSemibold")
     is Some(fluent_semibold_integrity) else {
     fail("expected Fluent semibold integrity record")
   }
@@ -459,30 +394,21 @@ test "source imported Fluent tokens expose pinned source values" {
   assert_fluent_preview_stroke_width_source_import(
     "strokeWidthThickest", "4px", "DesignComponentTokens.text_field.focused.border_width",
   )
-  guard source_imported_token_for(
-      @common.DesignPreset::Fluent,
-      "spacingHorizontalXS",
-    )
+  guard @audit.source_imported_token_for(Fluent, "spacingHorizontalXS")
     is Some(fluent_spacing_xs_import) else {
     fail("expected imported Fluent extra-small spacing token")
   }
   assert_true(fluent_spacing_xs_import.source_file.contains("spacings.ts"))
   assert_true(fluent_spacing_xs_import.source_value.contains("'4px'"))
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "spacingHorizontalXS",
-    )
+  guard @audit.source_import_coverage_for(Fluent, "spacingHorizontalXS")
     is Some(fluent_spacing_xs) else {
     fail("expected Fluent extra-small spacing source-import coverage")
   }
   assert_true(fluent_spacing_xs.source_imported)
   assert_true(fluent_spacing_xs.golden_mapped)
   assert_true(fluent_spacing_xs.moui_token == "DesignSpacingTokens.xs")
-  assert_true(fluent_spacing_xs.status == DesignTokenStatus::ThemeMapped)
-  guard source_imported_token_for(
-      @common.DesignPreset::Fluent,
-      "borderRadiusCircular",
-    )
+  assert_true(fluent_spacing_xs.status == ThemeMapped)
+  guard @audit.source_imported_token_for(Fluent, "borderRadiusCircular")
     is Some(fluent_radius_circular_import) else {
     fail("expected imported Fluent circular radius token")
   }
@@ -490,17 +416,14 @@ test "source imported Fluent tokens expose pinned source values" {
     fluent_radius_circular_import.source_file.contains("borderRadius.ts"),
   )
   assert_true(fluent_radius_circular_import.source_value.contains("10000px"))
-  guard source_import_coverage_for(
-      @common.DesignPreset::Fluent,
-      "borderRadiusCircular",
-    )
+  guard @audit.source_import_coverage_for(Fluent, "borderRadiusCircular")
     is Some(fluent_radius_circular) else {
     fail("expected Fluent circular radius source-import coverage")
   }
   assert_true(fluent_radius_circular.source_imported)
   assert_true(fluent_radius_circular.golden_mapped)
   assert_true(fluent_radius_circular.moui_token == "DesignRadiusTokens.pill")
-  assert_true(fluent_radius_circular.status == DesignTokenStatus::PreviewMapped)
+  assert_true(fluent_radius_circular.status == PreviewMapped)
   assert_fluent_preview_radius_source_import(
     "borderRadiusNone", "borderRadiusNone: '0'", "DesignRadiusTokens.sm",
   )

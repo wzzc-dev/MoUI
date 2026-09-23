@@ -38,12 +38,12 @@ pub(all) enum Axis {
 
 ///|
 pub fn Point::new(x~ : Double, y~ : Double) -> Point {
-  { x, y }
+  { x, y, }
 }
 
 ///|
 pub fn Size::new(width~ : Double, height~ : Double) -> Size {
-  { width, height }
+  { width, height, }
 }
 
 ///|
@@ -53,12 +53,12 @@ pub fn Rect::new(
   width~ : Double,
   height~ : Double,
 ) -> Rect {
-  { origin: Point::new(x~, y~), size: Size::new(width~, height~) }
+  { origin: Point::new(x~, y~), size: Size::new(width~, height~), }
 }
 
 ///|
 pub fn Insets::all(value : Double) -> Insets {
-  { top: value, right: value, bottom: value, left: value }
+  { top: value, right: value, bottom: value, left: value, }
 }
 
 ///|
@@ -66,17 +66,17 @@ pub fn Insets::symmetric(
   horizontal? : Double = 0.0,
   vertical? : Double = 0.0,
 ) -> Insets {
-  { top: vertical, right: horizontal, bottom: vertical, left: horizontal }
+  { top: vertical, right: horizontal, bottom: vertical, left: horizontal, }
 }
 
 ///|
 pub fn Constraints::tight(size : Size) -> Constraints {
-  { min: size, max: size }
+  { min: size, max: size, }
 }
 
 ///|
 pub fn Constraints::loose(max : Size) -> Constraints {
-  { min: Size::new(width=0.0, height=0.0), max }
+  { min: Size::new(width=0.0, height=0.0), max, }
 }
 
 ///|
@@ -94,7 +94,7 @@ pub fn Constraints::is_tight(self : Constraints) -> Bool {
 
 ///|
 pub fn Constraints::loosen(self : Constraints) -> Constraints {
-  { min: Size::new(width=0.0, height=0.0), max: self.max }
+  { min: Size::new(width=0.0, height=0.0), max: self.max, }
 }
 
 ///|

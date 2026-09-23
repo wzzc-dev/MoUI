@@ -8,7 +8,7 @@ pub struct PlatformViewPixelSink {
 pub fn PlatformViewPixelSink::new(
   draw~ : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit,
 ) -> PlatformViewPixelSink {
-  { draw_fn: draw }
+  { draw_fn: draw, }
 }
 
 ///|

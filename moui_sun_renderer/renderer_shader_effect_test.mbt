@@ -1,11 +1,11 @@
 ///|
 test "sun renderer linear gradient debug shader uses fallback colors" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=1.0),
     ),
@@ -18,8 +18,8 @@ test "sun renderer linear gradient debug shader uses fallback colors" {
     edge_color=@core.Color::rgba(r=0.05, g=0.10, b=0.95),
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="linear-gradient-debug",
         frame=@core.Rect::new(x=0.0, y=0.0, width=16.0, height=1.0),
@@ -50,19 +50,19 @@ test "sun renderer linear gradient debug shader uses fallback colors" {
 ///|
 test "sun renderer solid shader fills fallback without diagnostic" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::white()),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="solid",
         frame=@core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
@@ -88,19 +88,19 @@ test "sun renderer solid shader fills fallback without diagnostic" {
 ///|
 test "sun renderer checker shader uses fallback colors and cell count" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::white()),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
@@ -131,19 +131,19 @@ test "sun renderer checker shader uses fallback colors and cell count" {
 ///|
 test "sun renderer vignette shader uses fallback center color" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::white()),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="vignette",
         frame=@core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),

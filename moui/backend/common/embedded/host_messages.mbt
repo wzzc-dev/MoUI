@@ -5,9 +5,7 @@ using @host {
   type HostServiceResponse,
   type PlatformChannelResponse,
   type HostServiceBridge,
-  type HostServiceRequest,
   type HostClipboardRequest,
-  type Event,
 }
 
 ///|
@@ -113,52 +111,21 @@ pub fn embedded_text_input_response(
 ) -> EmbeddedHostResponse? {
   let range = @core.TextRange::new(start~, end~)
   match kind {
-    0 =>
-      Some(
-        EmbeddedHostResponse::TextInput(@core.TextInputEvent::InsertText(text)),
-      )
-    1 =>
-      Some(
-        EmbeddedHostResponse::TextInput(
-          @core.TextInputEvent::ReplaceText(range, text),
-        ),
-      )
-    2 =>
-      Some(
-        EmbeddedHostResponse::TextInput(
-          @core.TextInputEvent::SetSelection(range),
-        ),
-      )
-    3 =>
-      Some(
-        EmbeddedHostResponse::TextInput(@core.TextInputEvent::CompositionStart),
-      )
+    0 => Some(TextInput(InsertText(text)))
+    1 => Some(TextInput(ReplaceText(range, text)))
+    2 => Some(TextInput(SetSelection(range)))
+    3 => Some(TextInput(CompositionStart))
     4 =>
       Some(
-        EmbeddedHostResponse::TextInput(
-          @core.TextInputEvent::CompositionUpdate(
+        TextInput(
+          CompositionUpdate(
             @core.CompositionUpdate::new(text~, cursor=Some(range)),
           ),
         ),
       )
-    5 =>
-      Some(
-        EmbeddedHostResponse::TextInput(
-          @core.TextInputEvent::CompositionEnd(text),
-        ),
-      )
-    6 =>
-      Some(
-        EmbeddedHostResponse::TextInput(
-          @core.TextInputEvent::DeleteSurrounding(start, end),
-        ),
-      )
-    7 =>
-      Some(
-        EmbeddedHostResponse::TextInput(
-          @core.TextInputEvent::DeleteRange(range),
-        ),
-      )
+    5 => Some(TextInput(CompositionEnd(text)))
+    6 => Some(TextInput(DeleteSurrounding(start, end)))
+    7 => Some(TextInput(DeleteRange(range)))
     _ => None
   }
 }
@@ -166,10 +133,10 @@ pub fn embedded_text_input_response(
 ///|
 pub fn embedded_command_response(kind : Int) -> EmbeddedHostResponse? {
   match kind {
-    0 => Some(EmbeddedHostResponse::Command(@core.CommandIntent::Copy))
-    1 => Some(EmbeddedHostResponse::Command(@core.CommandIntent::Cut))
-    2 => Some(EmbeddedHostResponse::Command(@core.CommandIntent::Paste))
-    3 => Some(EmbeddedHostResponse::Command(@core.CommandIntent::Submit))
+    0 => Some(Command(Copy))
+    1 => Some(Command(Cut))
+    2 => Some(Command(Paste))
+    3 => Some(Command(Submit))
     _ => None
   }
 }
@@ -180,10 +147,10 @@ pub fn embedded_accessibility_response(
   generation : @core.SemanticsGeneration,
   action : @core.SemanticsAction,
 ) -> EmbeddedHostResponse {
-  EmbeddedHostResponse::Accessibility({
-    target: @core.SemanticsTarget::ByNodeId(node_id),
+  Accessibility({
+    target: ByNodeId(node_id),
     action,
-    precondition: @runtime.SemanticsGenerationPrecondition::Exact(generation),
+    precondition: Exact(generation),
   })
 }
 

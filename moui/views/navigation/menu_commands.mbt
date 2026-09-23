@@ -14,33 +14,25 @@ pub fn[Msg] menu_bar(
       @button.button(
         item.label,
         on_click=item.message,
-        variant=if selected {
-          @style.ButtonVariant::Tonal
-        } else {
-          @style.ButtonVariant::Ghost
-        },
+        variant=if selected { Tonal } else { Ghost },
         theme=resolved_theme,
         width=menu_command_item_width(item.label),
         height=34.0,
       )
       .disabled(disabled=!item.enabled)
-      .semantics_role(@core.SemanticsRole::Menu)
+      .semantics_role(Menu)
       .semantics_selected(selected~),
     )
   }
   @container.container(
-    @layout.row(
-      items,
-      spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Center,
-    ),
+    @layout.row(items, spacing=resolved_theme.spacing_scale.xs, align=Center),
     width~,
     height~,
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.xs,
   )
-  .semantics_role(@core.SemanticsRole::Menu)
+  .semantics_role(Menu)
   .accessibility_label("Menu bar")
 }
 
@@ -59,7 +51,7 @@ pub fn[Msg] command_menu(
       rows.push(
         @text.text(
           section.title,
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme=resolved_theme,
           width=width - resolved_theme.spacing_scale.md * 2.0,
           height=22.0,
@@ -81,7 +73,7 @@ pub fn[Msg] command_menu(
     rows.push(
       @text.text(
         "No commands",
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=width - resolved_theme.spacing_scale.md * 2.0,
         height=28.0,
@@ -90,17 +82,13 @@ pub fn[Msg] command_menu(
   }
   @container.container(
     @controls.scroll_view(
-      @layout.column(
-        rows,
-        spacing=resolved_theme.spacing_scale.xs,
-        align=@style.CrossAlign::Start,
-      ),
+      @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start),
       width=width - resolved_theme.spacing_scale.md * 2.0,
       height=max_height - resolved_theme.spacing_scale.md * 2.0,
     ),
     width~,
     height=max_height,
-    variant=@style.ContainerVariant::Overlay,
+    variant=Overlay,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
@@ -112,7 +100,7 @@ pub fn[Msg] command_menu(
       resolved_theme.shadow_scale.lg,
     ),
   )
-  .semantics_role(@core.SemanticsRole::Menu)
+  .semantics_role(Menu)
   .accessibility_label("Command menu")
 }
 
@@ -128,7 +116,7 @@ pub fn[Msg] context_menu_region(
   // overlay shadow (Fluent flyout) or the neutral large elevation shadow.
   let panel = @container.container(
     menu,
-    variant=@style.ContainerVariant::Overlay,
+    variant=Overlay,
     theme=resolved_theme,
     padding=0.0,
   ).shadow(
@@ -140,16 +128,11 @@ pub fn[Msg] context_menu_region(
     [
       @presentation.PresentationSpec::new(
         id="context-menu",
-        kind=@presentation.PresentationKind::ContextMenu,
-        anchor=@presentation.PresentationAnchor::HostBase,
+        kind=ContextMenu,
+        anchor=HostBase,
         placement=Some(
           @presentation.PresentationPlacement::new(
-            candidates=[
-              @presentation.PresentationPlacementCandidate::AboveEnd,
-              @presentation.PresentationPlacementCandidate::BelowEnd,
-              @presentation.PresentationPlacementCandidate::AboveStart,
-              @presentation.PresentationPlacementCandidate::BelowStart,
-            ],
+            candidates=[AboveEnd, BelowEnd, AboveStart, BelowStart],
             viewport_insets=@core.Insets::all(0.0),
           ),
         ),
@@ -160,7 +143,7 @@ pub fn[Msg] context_menu_region(
     []
   }
   @presentation.popup_host(child, popups)
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .accessibility_label("Context menu region")
   .semantics_description("Context menu region")
   .semantics_expanded(expanded=visible)
@@ -179,27 +162,21 @@ fn[Msg] command_menu_row(
     [
       @text.text(
         command.display_label(),
-        role=@style.TextRole::Control,
+        role=Control,
         theme~,
         width=label_width,
         height=24.0,
       ),
-      @text.text(
-        shortcut,
-        role=@style.TextRole::Mono,
-        theme~,
-        width=88.0,
-        height=24.0,
-      ),
+      @text.text(shortcut, role=Mono, theme~, width=88.0, height=24.0),
     ],
     spacing=theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
+    align=Center,
   )
   @layout.stack([
     @button.button(
       "",
       on_click=on_select(command.intent),
-      variant=@style.ButtonVariant::Ghost,
+      variant=Ghost,
       theme~,
       width~,
       height=34.0,

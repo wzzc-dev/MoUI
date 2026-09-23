@@ -87,16 +87,16 @@ pub fn native_utf32_bytes(text : String) -> Bytes {
 ///|
 pub fn native_font_style_code(style : @core.FontStyle) -> Int {
   match style {
-    @core.FontStyle::Normal => 0
-    @core.FontStyle::Italic => 1
+    Normal => 0
+    Italic => 1
   }
 }
 
 ///|
 fn native_font_style_from_code(code : Int) -> @core.FontStyle? {
   match code {
-    0 => Some(@core.FontStyle::Normal)
-    1 => Some(@core.FontStyle::Italic)
+    0 => Some(Normal)
+    1 => Some(Italic)
     _ => None
   }
 }
@@ -364,7 +364,7 @@ pub fn native_raster_glyph_from_bytes(
   }
   let format = match format_code {
     0 => @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask
-    1 => @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba
+    1 => ColorRgba
     _ => return None
   }
   Some(

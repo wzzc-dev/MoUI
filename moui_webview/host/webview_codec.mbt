@@ -24,7 +24,7 @@ pub fn WebViewBridgeEnvelope::event(
   payload~ : Json,
 ) -> WebViewBridgeEnvelope {
   {
-    kind: WebViewBridgeKind::Event,
+    kind: Event,
     channel,
     request_id: None,
     navigation_id,
@@ -41,7 +41,7 @@ pub fn WebViewBridgeEnvelope::request(
   payload~ : Json,
 ) -> WebViewBridgeEnvelope {
   {
-    kind: WebViewBridgeKind::Request,
+    kind: Request,
     channel,
     request_id: Some(request_id),
     navigation_id,
@@ -59,7 +59,7 @@ pub fn WebViewBridgeEnvelope::response(
   match result {
     Ok(payload) =>
       {
-        kind: WebViewBridgeKind::Response,
+        kind: Response,
         channel: "",
         request_id: Some(request_id),
         navigation_id,
@@ -68,7 +68,7 @@ pub fn WebViewBridgeEnvelope::response(
       }
     Err(error) =>
       {
-        kind: WebViewBridgeKind::Response,
+        kind: Response,
         channel: "",
         request_id: Some(request_id),
         navigation_id,
@@ -84,7 +84,7 @@ pub fn WebViewBridgeEnvelope::cancel(
   navigation_id~ : WebViewNavigationId,
 ) -> WebViewBridgeEnvelope {
   {
-    kind: WebViewBridgeKind::Cancel,
+    kind: Cancel,
     channel: "",
     request_id: Some(request_id),
     navigation_id,
@@ -99,7 +99,7 @@ pub fn WebViewBridgeEnvelope::to_json_string(
 ) -> String {
   let navigation_id = self.navigation_id.to_wire()
   match (self.kind, self.request_id, self.error) {
-    (WebViewBridgeKind::Hello, _, _) =>
+    (Hello, _, _) =>
       (
         {
           "schemaVersion": 1,
@@ -107,7 +107,7 @@ pub fn WebViewBridgeEnvelope::to_json_string(
           "navigationId": navigation_id,
           "payload": self.payload,
         } : Json).stringify()
-    (WebViewBridgeKind::Event, _, _) =>
+    (Event, _, _) =>
       (
         {
           "schemaVersion": 1,
@@ -116,7 +116,7 @@ pub fn WebViewBridgeEnvelope::to_json_string(
           "navigationId": navigation_id,
           "payload": self.payload,
         } : Json).stringify()
-    (WebViewBridgeKind::Request, Some(request_id), _) =>
+    (Request, Some(request_id), _) =>
       (
         {
           "schemaVersion": 1,
@@ -126,7 +126,7 @@ pub fn WebViewBridgeEnvelope::to_json_string(
           "navigationId": navigation_id,
           "payload": self.payload,
         } : Json).stringify()
-    (WebViewBridgeKind::Response, Some(request_id), None) =>
+    (Response, Some(request_id), None) =>
       (
         {
           "schemaVersion": 1,
@@ -135,7 +135,7 @@ pub fn WebViewBridgeEnvelope::to_json_string(
           "navigationId": navigation_id,
           "payload": self.payload,
         } : Json).stringify()
-    (WebViewBridgeKind::Response, Some(request_id), Some(error)) =>
+    (Response, Some(request_id), Some(error)) =>
       (
         {
           "schemaVersion": 1,
@@ -145,7 +145,7 @@ pub fn WebViewBridgeEnvelope::to_json_string(
           "payload": self.payload,
           "error": error,
         } : Json).stringify()
-    (WebViewBridgeKind::Cancel, Some(request_id), _) =>
+    (Cancel, Some(request_id), _) =>
       (
         {
           "schemaVersion": 1,
@@ -178,7 +178,7 @@ pub fn WebViewBridgeEnvelope::parse(
         ),
       )
   }
-  guard parsed is Json::Object(fields) else {
+  guard parsed is Object(fields) else {
     return Err(
       WebViewError::new(
         code="invalid-envelope",
@@ -212,14 +212,14 @@ pub fn WebViewBridgeEnvelope::parse(
       ),
     )
   }
-  let navigation_id : WebViewNavigationId = { value: navigation_raw }
+  let navigation_id : WebViewNavigationId = { value: navigation_raw, }
   let payload = fields.get("payload").unwrap_or(Json::null())
   let channel = webview_json_string(fields.get("channel")).unwrap_or("")
   let request_id = match fields.get("requestId") {
-    None | Some(Json::Null) => None
+    None | Some(Null) => None
     value =>
       match webview_json_wire_u64(value) {
-        Some(raw) if raw != 0UL => Some(({ value: raw } : WebViewRequestId))
+        Some(raw) if raw != 0UL => Some(({ value: raw, } : WebViewRequestId))
         _ =>
           return Err(
             WebViewError::new(
@@ -230,8 +230,8 @@ pub fn WebViewBridgeEnvelope::parse(
       }
   }
   let error = match fields.get("error") {
-    None | Some(Json::Null) => None
-    Some(Json::Object(error_fields)) => {
+    None | Some(Null) => None
+    Some(Object(error_fields)) => {
       guard webview_json_string(error_fields.get("code")) is Some(code) &&
         webview_json_string(error_fields.get("message")) is Some(message) else {
         return Err(
@@ -253,10 +253,10 @@ pub fn WebViewBridgeEnvelope::parse(
   }
   let kind = match kind_text {
     "hello" => WebViewBridgeKind::Hello
-    "event" => WebViewBridgeKind::Event
-    "request" => WebViewBridgeKind::Request
-    "response" => WebViewBridgeKind::Response
-    "cancel" => WebViewBridgeKind::Cancel
+    "event" => Event
+    "request" => Request
+    "response" => Response
+    "cancel" => Cancel
     _ =>
       return Err(
         WebViewError::new(
@@ -266,22 +266,21 @@ pub fn WebViewBridgeEnvelope::parse(
       )
   }
   match kind {
-    WebViewBridgeKind::Event if channel.is_empty() =>
+    Event if channel.is_empty() =>
       return Err(
         WebViewError::new(
           code="invalid-channel",
           message="WebView event channel is required",
         ),
       )
-    WebViewBridgeKind::Request if channel.is_empty() || request_id is None =>
+    Request if channel.is_empty() || request_id is None =>
       return Err(
         WebViewError::new(
           code="invalid-request",
           message="WebView request requires channel and requestId",
         ),
       )
-    WebViewBridgeKind::Response | WebViewBridgeKind::Cancel if request_id
-      is None =>
+    Response | Cancel if request_id is None =>
       return Err(
         WebViewError::new(
           code="invalid-response",
@@ -290,14 +289,14 @@ pub fn WebViewBridgeEnvelope::parse(
       )
     _ => ()
   }
-  Ok({ kind, channel, request_id, navigation_id, payload, error })
+  Ok({ kind, channel, request_id, navigation_id, payload, error, })
 }
 
 ///|
 pub fn WebViewEvent::to_platform_event(
   self : WebViewEvent,
 ) -> @core.PlatformViewEvent {
-  @core.PlatformViewEvent::Named(
+  Named(
     name="moui-webview-v1",
     value=webview_event_to_json(self).stringify(),
     detail="",
@@ -309,8 +308,7 @@ pub fn WebViewEvent::to_platform_event(
 pub fn WebViewEvent::from_platform_event(
   event : @core.PlatformViewEvent,
 ) -> WebViewEvent? {
-  guard event is @core.PlatformViewEvent::Named(name~, value~, ..) &&
-    name == "moui-webview-v1" else {
+  guard event is Named(name~, value~, ..) && name == "moui-webview-v1" else {
     return None
   }
   let parsed = @json.parse(value) catch { _ => return None }
@@ -342,20 +340,14 @@ pub fn webview_encode_native_command(
     None => 0UL
   }
   match queued.command {
-    HostWebViewCommand::Navigate(url) =>
-      (0, queued.command_id.value(), navigation_id, url)
-    HostWebViewCommand::Reload =>
-      (1, queued.command_id.value(), navigation_id, "")
-    HostWebViewCommand::Stop =>
-      (2, queued.command_id.value(), navigation_id, "")
-    HostWebViewCommand::GoBack =>
-      (3, queued.command_id.value(), navigation_id, "")
-    HostWebViewCommand::GoForward =>
-      (4, queued.command_id.value(), navigation_id, "")
-    HostWebViewCommand::PostMessage(message) =>
+    Navigate(url) => (0, queued.command_id.value(), navigation_id, url)
+    Reload => (1, queued.command_id.value(), navigation_id, "")
+    Stop => (2, queued.command_id.value(), navigation_id, "")
+    GoBack => (3, queued.command_id.value(), navigation_id, "")
+    GoForward => (4, queued.command_id.value(), navigation_id, "")
+    PostMessage(message) =>
       (5, queued.command_id.value(), navigation_id, message)
-    HostWebViewCommand::Dispose =>
-      (6, queued.command_id.value(), navigation_id, "")
+    Dispose => (6, queued.command_id.value(), navigation_id, "")
   }
 }
 
@@ -373,7 +365,7 @@ pub fn WebViewHost::accept_native_event(
   let native_navigation : WebViewNavigationId? = if navigation_raw == 0UL {
     state.current_navigation
   } else {
-    Some({ value: navigation_raw })
+    Some({ value: navigation_raw, })
   }
   if kind >= 1 && kind <= 4 && native_navigation != state.current_navigation {
     return None
@@ -381,7 +373,7 @@ pub fn WebViewHost::accept_native_event(
   match kind {
     0 =>
       if webview_policy_allows_url(state.config.security, url) {
-        Some(WebViewEvent::NavigationRequested(url))
+        Some(NavigationRequested(url))
       } else {
         Some(
           webview_diagnostic_event(
@@ -391,37 +383,37 @@ pub fn WebViewHost::accept_native_event(
       }
     1 =>
       native_navigation.map(id => {
-        WebViewEvent::NavigationStarted({ id, url, redirected: false })
+        NavigationStarted({ id, url, redirected: false, })
       })
     2 =>
       native_navigation.map(id => {
-        WebViewEvent::NavigationCommitted({ id, url, redirected: false })
+        NavigationCommitted({ id, url, redirected: false, })
       })
     3 =>
       native_navigation.map(id => {
-        WebViewEvent::NavigationFinished({ id, url, redirected: false })
+        NavigationFinished({ id, url, redirected: false, })
       })
     4 =>
       Some(
-        WebViewEvent::NavigationFailed(
+        NavigationFailed(
           native_navigation,
           url,
           WebViewError::new(code="navigation-failed", message=detail),
         ),
       )
-    5 => Some(WebViewEvent::TitleChanged(detail))
-    6 => Some(WebViewEvent::CanGoBackChanged(flag != 0))
-    7 => Some(WebViewEvent::CanGoForwardChanged(flag != 0))
+    5 => Some(TitleChanged(detail))
+    6 => Some(CanGoBackChanged(flag != 0))
+    7 => Some(CanGoForwardChanged(flag != 0))
     8 => self.accept_bridge_message(state, native_navigation, url, detail)
     9 =>
       webview_host_patch_report(native_navigation, detail).map(report => {
-        WebViewEvent::HostPatchReported(report)
+        HostPatchReported(report)
       })
-    10 => Some(WebViewEvent::Ready(state.config.capabilities.copy()))
-    11 => Some(WebViewEvent::Disposed)
+    10 => Some(Ready(state.config.capabilities.copy()))
+    11 => Some(Disposed)
     _ =>
       Some(
-        WebViewEvent::Diagnostic({
+        Diagnostic({
           code: "unknown-native-event",
           message: "Unknown native WebView event kind: " + kind.to_string(),
         }),
@@ -465,9 +457,8 @@ fn WebViewHost::accept_bridge_message(
     return None
   }
   match envelope.kind {
-    WebViewBridgeKind::Hello =>
-      Some(WebViewEvent::Ready(state.config.capabilities.copy()))
-    WebViewBridgeKind::Event =>
+    Hello => Some(Ready(state.config.capabilities.copy()))
+    Event =>
       if !webview_channel_allowed(
           state.config.security,
           envelope.channel,
@@ -481,7 +472,7 @@ fn WebViewHost::accept_bridge_message(
         )
       } else {
         Some(
-          WebViewEvent::Message({
+          Message({
             channel: envelope.channel,
             origin,
             navigation_id,
@@ -489,7 +480,7 @@ fn WebViewHost::accept_bridge_message(
           }),
         )
       }
-    WebViewBridgeKind::Request =>
+    Request =>
       if !webview_channel_allowed(
           state.config.security,
           envelope.channel,
@@ -514,7 +505,7 @@ fn WebViewHost::accept_bridge_message(
             )
           Some(request_id) =>
             Some(
-              WebViewEvent::Request({
+              Request({
                 id: request_id,
                 channel: envelope.channel,
                 origin,
@@ -525,18 +516,14 @@ fn WebViewHost::accept_bridge_message(
           None => None
         }
       }
-    WebViewBridgeKind::Response => {
+    Response => {
       match envelope.request_id {
         Some(request_id) =>
           match self.remove_request(state.id, request_id) {
             Some(request) if request.navigation_id == navigation_id =>
               match envelope.error {
-                Some(error) =>
-                  (request.complete)(WebViewTaskResult::Failure(error))
-                None =>
-                  (request.complete)(
-                    WebViewTaskResult::Success(envelope.payload),
-                  )
+                Some(error) => (request.complete)(Failure(error))
+                None => (request.complete)(Success(envelope.payload))
               }
             _ => ()
           }
@@ -544,11 +531,11 @@ fn WebViewHost::accept_bridge_message(
       }
       None
     }
-    WebViewBridgeKind::Cancel => {
+    Cancel => {
       match envelope.request_id {
         Some(request_id) =>
           match self.remove_request(state.id, request_id) {
-            Some(request) => (request.complete)(WebViewTaskResult::Cancelled)
+            Some(request) => (request.complete)(Cancelled)
             None => ()
           }
         None => ()
@@ -560,7 +547,7 @@ fn WebViewHost::accept_bridge_message(
 
 ///|
 fn webview_diagnostic_event(code : String, message : String) -> WebViewEvent {
-  WebViewEvent::Diagnostic({ code, message })
+  Diagnostic({ code, message, })
 }
 
 ///|
@@ -650,32 +637,30 @@ fn webview_navigation_event_json(
 
 ///|
 fn webview_event_from_json(value : Json) -> WebViewEvent? {
-  guard value is Json::Object(fields) &&
+  guard value is Object(fields) &&
     webview_json_string(fields.get("kind")) is Some(kind) else {
     return None
   }
   match kind {
     "ready" =>
       Some(
-        WebViewEvent::Ready(
+        Ready(
           webview_json_string_array(fields.get("capabilities")).unwrap_or([]),
         ),
       )
     "navigation-requested" =>
-      webview_json_string(fields.get("url")).map(url => {
-        WebViewEvent::NavigationRequested(url)
-      })
+      webview_json_string(fields.get("url")).map(url => NavigationRequested(url))
     "navigation-started" =>
       webview_navigation_from_fields(fields).map(navigation => {
-        WebViewEvent::NavigationStarted(navigation)
+        NavigationStarted(navigation)
       })
     "navigation-committed" =>
       webview_navigation_from_fields(fields).map(navigation => {
-        WebViewEvent::NavigationCommitted(navigation)
+        NavigationCommitted(navigation)
       })
     "navigation-finished" =>
       webview_navigation_from_fields(fields).map(navigation => {
-        WebViewEvent::NavigationFinished(navigation)
+        NavigationFinished(navigation)
       })
     "navigation-failed" => {
       guard webview_json_string(fields.get("url")) is Some(url) &&
@@ -683,28 +668,26 @@ fn webview_event_from_json(value : Json) -> WebViewEvent? {
         return None
       }
       let id = webview_json_wire_u64(fields.get("navigationId")).map(raw => {
-        ({ value: raw } : WebViewNavigationId)
+        ({ value: raw, } : WebViewNavigationId)
       })
-      Some(WebViewEvent::NavigationFailed(id, url, error))
+      Some(NavigationFailed(id, url, error))
     }
     "title-changed" =>
-      webview_json_string(fields.get("title")).map(title => {
-        WebViewEvent::TitleChanged(title)
-      })
+      webview_json_string(fields.get("title")).map(title => TitleChanged(title))
     "can-go-back-changed" =>
       webview_json_bool(fields.get("value")).map(value => {
-        WebViewEvent::CanGoBackChanged(value)
+        CanGoBackChanged(value)
       })
     "can-go-forward-changed" =>
       webview_json_bool(fields.get("value")).map(value => {
-        WebViewEvent::CanGoForwardChanged(value)
+        CanGoForwardChanged(value)
       })
     "message" => {
       guard webview_message_fields(fields)
         is Some((channel, origin, navigation_id, payload)) else {
         return None
       }
-      Some(WebViewEvent::Message({ channel, origin, navigation_id, payload }))
+      Some(Message({ channel, origin, navigation_id, payload, }))
     }
     "request" => {
       guard webview_message_fields(fields)
@@ -713,8 +696,8 @@ fn webview_event_from_json(value : Json) -> WebViewEvent? {
         return None
       }
       Some(
-        WebViewEvent::Request({
-          id: { value: request_raw },
+        Request({
+          id: { value: request_raw, },
           channel,
           origin,
           navigation_id,
@@ -731,10 +714,10 @@ fn webview_event_from_json(value : Json) -> WebViewEvent? {
         return None
       }
       Some(
-        WebViewEvent::HostPatchReported({
+        HostPatchReported({
           bundle_id,
           version,
-          navigation_id: { value: navigation_raw },
+          navigation_id: { value: navigation_raw, },
           success,
           detail: webview_json_string(fields.get("detail")).unwrap_or(""),
         }),
@@ -745,9 +728,9 @@ fn webview_event_from_json(value : Json) -> WebViewEvent? {
         webview_json_string(fields.get("message")) is Some(message) else {
         return None
       }
-      Some(WebViewEvent::Diagnostic({ code, message }))
+      Some(Diagnostic({ code, message, }))
     }
-    "disposed" => Some(WebViewEvent::Disposed)
+    "disposed" => Some(Disposed)
     _ => None
   }
 }
@@ -761,7 +744,7 @@ fn webview_navigation_from_fields(
     return None
   }
   Some({
-    id: { value: raw },
+    id: { value: raw, },
     url,
     redirected: webview_json_bool(fields.get("redirected")).unwrap_or(false),
   })
@@ -781,7 +764,7 @@ fn webview_message_fields(
     (
       channel,
       origin,
-      { value: raw },
+      { value: raw, },
       fields.get("payload").unwrap_or(Json::null()),
     ),
   )
@@ -789,12 +772,12 @@ fn webview_message_fields(
 
 ///|
 fn webview_error_from_json(value : Json?) -> WebViewError? {
-  guard value is Some(Json::Object(fields)) &&
+  guard value is Some(Object(fields)) &&
     webview_json_string(fields.get("code")) is Some(code) &&
     webview_json_string(fields.get("message")) is Some(message) else {
     return None
   }
-  Some({ code, message })
+  Some({ code, message, })
 }
 
 ///|
@@ -804,7 +787,7 @@ fn webview_host_patch_report(
 ) -> HostPatchReport? {
   guard navigation_id is Some(navigation_id) else { return None }
   let parsed = @json.parse(text) catch { _ => return None }
-  guard parsed is Json::Object(fields) &&
+  guard parsed is Object(fields) &&
     webview_json_string(fields.get("bundleId")) is Some(bundle_id) &&
     webview_json_string(fields.get("version")) is Some(version) else {
     return None
@@ -821,7 +804,7 @@ fn webview_host_patch_report(
 ///|
 fn webview_json_string(value : Json?) -> String? {
   match value {
-    Some(Json::String(text)) => Some(text)
+    Some(String(text)) => Some(text)
     _ => None
   }
 }
@@ -829,8 +812,8 @@ fn webview_json_string(value : Json?) -> String? {
 ///|
 fn webview_json_bool(value : Json?) -> Bool? {
   match value {
-    Some(Json::True) => Some(true)
-    Some(Json::False) => Some(false)
+    Some(True) => Some(true)
+    Some(False) => Some(false)
     _ => None
   }
 }
@@ -838,7 +821,7 @@ fn webview_json_bool(value : Json?) -> Bool? {
 ///|
 fn webview_json_int(value : Json?) -> Int? {
   match value {
-    Some(Json::Number(number, repr=_)) => {
+    Some(Number(number, repr=_)) => {
       let result = number.to_int()
       if result.to_double() == number {
         Some(result)
@@ -852,10 +835,10 @@ fn webview_json_int(value : Json?) -> Int? {
 
 ///|
 fn webview_json_string_array(value : Json?) -> Array[String]? {
-  guard value is Some(Json::Array(values)) else { return None }
+  guard value is Some(Array(values)) else { return None }
   let result = []
   for value in values {
-    guard value is Json::String(text) else { return None }
+    guard value is String(text) else { return None }
     result.push(text)
   }
   Some(result)

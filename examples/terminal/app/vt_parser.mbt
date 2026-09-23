@@ -27,7 +27,7 @@ pub(all) struct VtParser {
 pub fn VtParser::new(screen : TermScreen) -> VtParser {
   {
     screen,
-    state: ParseState::Ground,
+    state: Ground,
     params: [],
     param_buf: "",
     private_marker: false,
@@ -60,16 +60,16 @@ pub fn VtParser::feed_bytes(self : VtParser, bytes : Bytes) -> Unit {
 ///|
 fn VtParser::advance(self : VtParser, b : Byte) -> Unit {
   match self.state {
-    ParseState::Ground => self.ground(b)
-    ParseState::Escape => self.escape(b)
-    ParseState::Csi => self.csi(b)
-    ParseState::Osc => self.osc(b)
-    ParseState::OscEscape =>
+    Ground => self.ground(b)
+    Escape => self.escape(b)
+    Csi => self.csi(b)
+    Osc => self.osc(b)
+    OscEscape =>
       if b.to_int() == 0x5C {
         self.osc_finish()
-        self.state = ParseState::Ground
+        self.state = Ground
       } else {
-        self.state = ParseState::Ground
+        self.state = Ground
       }
   }
 }
@@ -85,7 +85,7 @@ fn VtParser::ground(self : VtParser, b : Byte) -> Unit {
   if b.to_int() == 0x1B {
     // 丢弃未完成的 UTF-8 序列,避免与后续字节错误拼接
     self.discard_utf8()
-    self.state = ParseState::Escape
+    self.state = Escape
   } else if v < 0x20 {
     // C0 控制字符;同样先丢弃未完成的 UTF-8 序列
     self.discard_utf8()
@@ -162,12 +162,12 @@ fn VtParser::escape(self : VtParser, b : Byte) -> Unit {
       self.params = []
       self.param_buf = ""
       self.private_marker = false
-      self.state = ParseState::Csi
+      self.state = Csi
     }
     0x5D => {
       // ']' → OSC
       self.osc_buf = ""
-      self.state = ParseState::Osc
+      self.state = Osc
     }
     0x37 => self.screen.save_cursor() // ESC 7
     0x38 => self.screen.restore_cursor() // ESC 8
@@ -184,7 +184,7 @@ fn VtParser::escape(self : VtParser, b : Byte) -> Unit {
     _ => ()
   }
   if v != 0x5B && v != 0x5D {
-    self.state = ParseState::Ground
+    self.state = Ground
   }
 }
 
@@ -231,12 +231,12 @@ fn VtParser::csi(self : VtParser, b : Byte) -> Unit {
     // 最终字节
     self.push_param()
     self.dispatch(v)
-    self.state = ParseState::Ground
+    self.state = Ground
     // 中间字节或非法字节:忽略
   } else if b.to_int() == 0x1B {
-    self.state = ParseState::Escape
+    self.state = Escape
   } else {
-    self.state = ParseState::Ground
+    self.state = Ground
   }
 }
 
@@ -327,15 +327,12 @@ fn VtParser::sgr(self : VtParser) -> Unit {
       23 => attrs = attrs_with(attrs, italic=Some(false))
       24 => attrs = attrs_with(attrs, underline=Some(false))
       27 => attrs = attrs_with(attrs, reverse=Some(false))
-      30..=37 => attrs = attrs_with(attrs, fg=Some(TermColor::Indexed(p - 30)))
+      30..=37 => attrs = attrs_with(attrs, fg=Some(Indexed(p - 30)))
       38 =>
         if i + 1 < self.params.length() &&
           self.params[i + 1] == 5 &&
           i + 2 < self.params.length() {
-          attrs = attrs_with(
-            attrs,
-            fg=Some(TermColor::Indexed(self.params[i + 2])),
-          )
+          attrs = attrs_with(attrs, fg=Some(Indexed(self.params[i + 2])))
           i = i + 2
         } else if i + 1 < self.params.length() &&
           self.params[i + 1] == 2 &&
@@ -343,25 +340,18 @@ fn VtParser::sgr(self : VtParser) -> Unit {
           attrs = attrs_with(
             attrs,
             fg=Some(
-              TermColor::Rgb(
-                self.params[i + 2],
-                self.params[i + 3],
-                self.params[i + 4],
-              ),
+              Rgb(self.params[i + 2], self.params[i + 3], self.params[i + 4]),
             ),
           )
           i = i + 4
         }
-      39 => attrs = attrs_with(attrs, fg=Some(TermColor::Default))
-      40..=47 => attrs = attrs_with(attrs, bg=Some(TermColor::Indexed(p - 40)))
+      39 => attrs = attrs_with(attrs, fg=Some(Default))
+      40..=47 => attrs = attrs_with(attrs, bg=Some(Indexed(p - 40)))
       48 =>
         if i + 1 < self.params.length() &&
           self.params[i + 1] == 5 &&
           i + 2 < self.params.length() {
-          attrs = attrs_with(
-            attrs,
-            bg=Some(TermColor::Indexed(self.params[i + 2])),
-          )
+          attrs = attrs_with(attrs, bg=Some(Indexed(self.params[i + 2])))
           i = i + 2
         } else if i + 1 < self.params.length() &&
           self.params[i + 1] == 2 &&
@@ -369,20 +359,14 @@ fn VtParser::sgr(self : VtParser) -> Unit {
           attrs = attrs_with(
             attrs,
             bg=Some(
-              TermColor::Rgb(
-                self.params[i + 2],
-                self.params[i + 3],
-                self.params[i + 4],
-              ),
+              Rgb(self.params[i + 2], self.params[i + 3], self.params[i + 4]),
             ),
           )
           i = i + 4
         }
-      49 => attrs = attrs_with(attrs, bg=Some(TermColor::Default))
-      90..=97 =>
-        attrs = attrs_with(attrs, fg=Some(TermColor::Indexed(p - 90 + 8)))
-      100..=107 =>
-        attrs = attrs_with(attrs, bg=Some(TermColor::Indexed(p - 100 + 8)))
+      49 => attrs = attrs_with(attrs, bg=Some(Default))
+      90..=97 => attrs = attrs_with(attrs, fg=Some(Indexed(p - 90 + 8)))
+      100..=107 => attrs = attrs_with(attrs, bg=Some(Indexed(p - 100 + 8)))
       _ => ()
     }
     i = i + 1
@@ -395,9 +379,9 @@ fn VtParser::osc(self : VtParser, b : Byte) -> Unit {
   if b.to_int() == 0x07 {
     // BEL 结束 OSC
     self.osc_finish()
-    self.state = ParseState::Ground
+    self.state = Ground
   } else if b.to_int() == 0x1B {
-    self.state = ParseState::OscEscape
+    self.state = OscEscape
     // OSC 文本限长,防无界累积
   } else if self.osc_buf.length() < 8192 {
     self.osc_buf = self.osc_buf + decode_utf8(Bytes::from_array([b]))
@@ -422,7 +406,7 @@ fn VtParser::osc_finish(self : VtParser) -> Unit {
 ///|
 /// Bytes → UTF-8 字符串(无效字节替换为 U+FFFD,不抛错)。
 fn decode_utf8(bytes : Bytes) -> String {
-  @utf8.decode_lossy(bytes.view())
+  @utf8.decode_lossy(bytes.exact_view())
 }
 
 ///|

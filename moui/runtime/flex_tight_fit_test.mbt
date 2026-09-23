@@ -81,12 +81,12 @@ test "expanded greedy child shares the row with a fixed sibling" {
         @views.frame(@views.empty(), width=100.0, height=10.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=10.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=10.0),
   )
@@ -124,12 +124,12 @@ test "two expanded greedy children split the row evenly" {
         @views.expanded(greedy_box(width=None, height=Some(10.0))),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=10.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=10.0),
   )
@@ -165,12 +165,12 @@ test "unequal weights split the whole row between greedy children" {
         @views.expanded(greedy_box(width=None, height=Some(10.0)), weight=1.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=300.0,
     height=10.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=10.0),
   )
@@ -204,12 +204,12 @@ test "expanded greedy child shares a column with a fixed sibling" {
         @views.frame(@views.empty(), width=10.0, height=100.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=10.0,
     height=300.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=10.0, height=300.0),
   )

@@ -18,7 +18,7 @@ pub fn SvgImportResult::diagnostics(self : SvgImportResult) -> Array[String] {
 
 ///|
 pub fn import_svg(svg : String) -> SvgImportResult {
-  let result = SvgImportResult::{ commands: [], diagnostics: [] }
+  let result = SvgImportResult::{ commands: [], diagnostics: [], }
   if !svg.contains("<svg") {
     result.diagnostics.push("missing <svg> root")
     return result
@@ -51,37 +51,36 @@ fn lower_svg_node(node : @svg.SVGNode, result : SvgImportResult) -> Unit {
   let pushed_transform = push_svg_transform(node.transform, result)
   let pushed_opacity = push_svg_opacity(node.opacity, result)
   match node.shape {
-    @svg.Shape::Group =>
+    Group =>
       for child in node.children {
         lower_svg_node(child, result)
       }
-    @svg.Shape::Rect(x~, y~, width~, height~, rx~, ry~) =>
+    Rect(x~, y~, width~, height~, rx~, ry~) =>
       lower_svg_rect(node, result, x, y, width, height, rx, ry)
-    @svg.Shape::Circle(cx~, cy~, r~) =>
+    Circle(cx~, cy~, r~) =>
       lower_svg_path(node, result, svg_circle_verbs(cx, cy, r))
-    @svg.Shape::Ellipse(cx~, cy~, rx~, ry~) =>
+    Ellipse(cx~, cy~, rx~, ry~) =>
       lower_svg_path(node, result, svg_ellipse_verbs(cx, cy, rx, ry))
-    @svg.Shape::Line(x1~, y1~, x2~, y2~) =>
+    Line(x1~, y1~, x2~, y2~) =>
       lower_svg_path(node, result, [
-        @core.PathVerb::MoveTo(@core.Point::new(x=x1, y=y1)),
-        @core.PathVerb::LineTo(@core.Point::new(x=x2, y=y2)),
+        MoveTo(@core.Point::new(x=x1, y=y1)),
+        LineTo(@core.Point::new(x=x2, y=y2)),
       ])
-    @svg.Shape::Polyline(points~) =>
+    Polyline(points~) =>
       lower_svg_path(node, result, svg_points_to_verbs(points, close=false))
-    @svg.Shape::Polygon(points~) =>
+    Polygon(points~) =>
       lower_svg_path(node, result, svg_points_to_verbs(points, close=true))
-    @svg.Shape::Path(commands~) =>
+    Path(commands~) =>
       lower_svg_path(node, result, svg_path_commands_to_verbs(commands, result))
-    @svg.Shape::Text(x~, y~, text~, font_size~) =>
+    Text(x~, y~, text~, font_size~) =>
       lower_svg_text(node, result, x, y, text, font_size)
-    @svg.Shape::Image(..) =>
-      result.diagnostics.push("image elements are unsupported")
+    Image(..) => result.diagnostics.push("image elements are unsupported")
   }
   if pushed_opacity {
-    result.commands.push(@core.DrawCommand::PopOpacity)
+    result.commands.push(PopOpacity)
   }
   if pushed_transform {
-    result.commands.push(@core.DrawCommand::PopTransform)
+    result.commands.push(PopTransform)
   }
 }
 
@@ -99,7 +98,7 @@ fn push_svg_transform(
     false
   } else {
     result.commands.push(
-      @core.DrawCommand::PushTransform({
+      PushTransform({
         a: transform.a,
         b: transform.b,
         c: transform.c,
@@ -117,7 +116,7 @@ fn push_svg_opacity(node_opacity : Double, result : SvgImportResult) -> Bool {
   if node_opacity >= 0.999999 {
     false
   } else {
-    result.commands.push(@core.DrawCommand::PushOpacity(node_opacity))
+    result.commands.push(PushOpacity(node_opacity))
     true
   }
 }
@@ -139,13 +138,10 @@ fn lower_svg_rect(
     Some(color) =>
       if radius > 0.0 {
         result.commands.push(
-          @core.DrawCommand::FillRoundedRect(
-            @core.RoundedRect::new(rect~, radius~),
-            color,
-          ),
+          FillRoundedRect(@core.RoundedRect::new(rect~, radius~), color),
         )
       } else {
-        result.commands.push(@core.DrawCommand::FillRect(rect, color))
+        result.commands.push(FillRect(rect, color))
       }
     None => ()
   }
@@ -153,16 +149,14 @@ fn lower_svg_rect(
     Some((color, stroke_width)) =>
       if radius > 0.0 {
         result.commands.push(
-          @core.DrawCommand::StrokeRoundedRect(
+          StrokeRoundedRect(
             @core.RoundedRect::new(rect~, radius~),
             color,
             stroke_width,
           ),
         )
       } else {
-        result.commands.push(
-          @core.DrawCommand::StrokeRect(rect, color, stroke_width),
-        )
+        result.commands.push(StrokeRect(rect, color, stroke_width))
       }
     None => ()
   }
@@ -178,7 +172,7 @@ fn lower_svg_path(
     return
   }
   result.commands.push(
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs~,
         fill=svg_node_fill(node, result).map(@core.Brush::solid),
@@ -203,13 +197,13 @@ fn lower_svg_text(
   match svg_node_fill(node, result) {
     Some(color) =>
       result.commands.push(
-        @core.DrawCommand::DrawText(
+        DrawText(
           @core.TextRun::new(
             text~,
             frame=@core.Rect::new(x~, y~, width=0.0, height=font_size),
-            font={ ..@core.FontSpec::new(), size: font_size },
+            font={ ..@core.FontSpec::new(), size: font_size, },
             color~,
-            align=@core.TextAlign::TextStart,
+            align=TextStart,
           ),
         ),
       )
@@ -256,20 +250,19 @@ fn svg_paint_to_color(
   result : SvgImportResult,
 ) -> @core.Color? {
   match paint {
-    @svg.Paint::None => None
-    @svg.Paint::SolidColor(color) => Some(svg_color_to_core(color, opacity))
-    @svg.Paint::CurrentColor =>
+    None => None
+    SolidColor(color) => Some(svg_color_to_core(color, opacity))
+    CurrentColor =>
       current_color.map(fn(color) { svg_color_to_core(color, opacity) })
-    @svg.Paint::LinearGrad(_) | @svg.Paint::RadialGrad(_) => {
+    LinearGrad(_) | RadialGrad(_) => {
       result.diagnostics.push("gradient paint is unsupported")
       None
     }
-    @svg.Paint::PaintServerRef(_, fallback) =>
+    PaintServerRef(_, fallback) =>
       match fallback {
-        @svg.PaintFallback::NoPaint => None
-        @svg.PaintFallback::SolidColor(color) =>
-          Some(svg_color_to_core(color, opacity))
-        @svg.PaintFallback::CurrentColor =>
+        NoPaint => None
+        SolidColor(color) => Some(svg_color_to_core(color, opacity))
+        CurrentColor =>
           current_color.map(fn(color) { svg_color_to_core(color, opacity) })
       }
   }
@@ -318,12 +311,12 @@ fn svg_ellipse_verbs(
   for index, unit in unit_points {
     let point = @core.Point::new(x=cx + unit.x * rx, y=cy + unit.y * ry)
     if index == 0 {
-      verbs.push(@core.PathVerb::MoveTo(point))
+      verbs.push(MoveTo(point))
     } else {
-      verbs.push(@core.PathVerb::LineTo(point))
+      verbs.push(LineTo(point))
     }
   }
-  verbs.push(@core.PathVerb::Close)
+  verbs.push(Close)
   verbs
 }
 
@@ -336,18 +329,12 @@ fn svg_points_to_verbs(
   if points.length() == 0 {
     return verbs
   }
-  verbs.push(
-    @core.PathVerb::MoveTo(@core.Point::new(x=points[0].0, y=points[0].1)),
-  )
+  verbs.push(MoveTo(@core.Point::new(x=points[0].0, y=points[0].1)))
   for index in 1..<points.length() {
-    verbs.push(
-      @core.PathVerb::LineTo(
-        @core.Point::new(x=points[index].0, y=points[index].1),
-      ),
-    )
+    verbs.push(LineTo(@core.Point::new(x=points[index].0, y=points[index].1)))
   }
   if close {
-    verbs.push(@core.PathVerb::Close)
+    verbs.push(Close)
   }
   verbs
 }
@@ -362,128 +349,125 @@ fn svg_path_commands_to_verbs(
   let mut y = 0.0
   for command in commands {
     match command {
-      @svg.PathCommand::MoveTo(nx, ny) => {
+      MoveTo(nx, ny) => {
         x = nx
         y = ny
-        verbs.push(@core.PathVerb::MoveTo(@core.Point::new(x~, y~)))
+        verbs.push(MoveTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::MoveToRel(dx, dy) => {
+      MoveToRel(dx, dy) => {
         x = x + dx
         y = y + dy
-        verbs.push(@core.PathVerb::MoveTo(@core.Point::new(x~, y~)))
+        verbs.push(MoveTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::LineTo(nx, ny) => {
+      LineTo(nx, ny) => {
         x = nx
         y = ny
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::LineToRel(dx, dy) => {
+      LineToRel(dx, dy) => {
         x = x + dx
         y = y + dy
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::HorizontalLineTo(nx) => {
+      HorizontalLineTo(nx) => {
         x = nx
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::HorizontalLineToRel(dx) => {
+      HorizontalLineToRel(dx) => {
         x = x + dx
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::VerticalLineTo(ny) => {
+      VerticalLineTo(ny) => {
         y = ny
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::VerticalLineToRel(dy) => {
+      VerticalLineToRel(dy) => {
         y = y + dy
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::CurveTo(x1, y1, x2, y2, nx, ny) => {
+      CurveTo(x1, y1, x2, y2, nx, ny) => {
         x = nx
         y = ny
         verbs.push(
-          @core.PathVerb::CubicTo(
+          CubicTo(
             @core.Point::new(x=x1, y=y1),
             @core.Point::new(x=x2, y=y2),
             @core.Point::new(x~, y~),
           ),
         )
       }
-      @svg.PathCommand::CurveToRel(dx1, dy1, dx2, dy2, dx, dy) => {
+      CurveToRel(dx1, dy1, dx2, dy2, dx, dy) => {
         let x0 = x
         let y0 = y
         x = x + dx
         y = y + dy
         verbs.push(
-          @core.PathVerb::CubicTo(
+          CubicTo(
             @core.Point::new(x=x0 + dx1, y=y0 + dy1),
             @core.Point::new(x=x0 + dx2, y=y0 + dy2),
             @core.Point::new(x~, y~),
           ),
         )
       }
-      @svg.PathCommand::QuadraticCurveTo(x1, y1, nx, ny) => {
+      QuadraticCurveTo(x1, y1, nx, ny) => {
         x = nx
         y = ny
         verbs.push(
-          @core.PathVerb::QuadTo(
-            @core.Point::new(x=x1, y=y1),
-            @core.Point::new(x~, y~),
-          ),
+          QuadTo(@core.Point::new(x=x1, y=y1), @core.Point::new(x~, y~)),
         )
       }
-      @svg.PathCommand::QuadraticCurveToRel(dx1, dy1, dx, dy) => {
+      QuadraticCurveToRel(dx1, dy1, dx, dy) => {
         let x0 = x
         let y0 = y
         x = x + dx
         y = y + dy
         verbs.push(
-          @core.PathVerb::QuadTo(
+          QuadTo(
             @core.Point::new(x=x0 + dx1, y=y0 + dy1),
             @core.Point::new(x~, y~),
           ),
         )
       }
-      @svg.PathCommand::ClosePath => verbs.push(@core.PathVerb::Close)
-      @svg.PathCommand::SmoothCurveTo(_, _, nx, ny) => {
+      ClosePath => verbs.push(Close)
+      SmoothCurveTo(_, _, nx, ny) => {
         x = nx
         y = ny
         result.diagnostics.push("smooth cubic path commands are approximated")
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::SmoothCurveToRel(_, _, dx, dy) => {
+      SmoothCurveToRel(_, _, dx, dy) => {
         x = x + dx
         y = y + dy
         result.diagnostics.push("smooth cubic path commands are approximated")
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::SmoothQuadraticCurveTo(nx, ny) => {
+      SmoothQuadraticCurveTo(nx, ny) => {
         x = nx
         y = ny
         result.diagnostics.push(
           "smooth quadratic path commands are approximated",
         )
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::SmoothQuadraticCurveToRel(dx, dy) => {
+      SmoothQuadraticCurveToRel(dx, dy) => {
         x = x + dx
         y = y + dy
         result.diagnostics.push(
           "smooth quadratic path commands are approximated",
         )
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::ArcTo(_, _, _, _, _, nx, ny) => {
+      ArcTo(_, _, _, _, _, nx, ny) => {
         x = nx
         y = ny
         result.diagnostics.push("arc path commands are approximated")
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
-      @svg.PathCommand::ArcToRel(_, _, _, _, _, dx, dy) => {
+      ArcToRel(_, _, _, _, _, dx, dy) => {
         x = x + dx
         y = y + dy
         result.diagnostics.push("arc path commands are approximated")
-        verbs.push(@core.PathVerb::LineTo(@core.Point::new(x~, y~)))
+        verbs.push(LineTo(@core.Point::new(x~, y~)))
       }
     }
   }

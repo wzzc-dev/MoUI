@@ -18,11 +18,11 @@ pub fn[Msg] dropdown(
   let anchor_view = @button.button(
       label + ": " + selected_label,
       on_click=on_toggle,
-      variant=@style.ButtonVariant::Tonal,
+      variant=Tonal,
       theme=resolved_theme,
       width~,
     )
-    .semantics_role(@core.SemanticsRole::Menu)
+    .semantics_role(Menu)
     .semantics_expanded(expanded=state.expanded)
     .accessibility_label(label + ": " + selected_label)
   let anchor = @controls.semantic_toggle_action_control(
@@ -72,14 +72,14 @@ pub fn[Msg] combobox(
         value,
         on_input~,
         placeholder~,
-        variant=@style.TextFieldVariant::Outline,
+        variant=Outline,
         theme=resolved_theme,
         width=@common.max_view_double(80.0, width - 70.0),
       ),
       @button.button(
         "Open",
         on_click=on_toggle,
-        variant=@style.ButtonVariant::Ghost,
+        variant=Ghost,
         theme=resolved_theme,
         width=62.0,
       )
@@ -93,7 +93,7 @@ pub fn[Msg] combobox(
       ),
     ],
     spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
+    align=Center,
   ).frame(width~)
   let anchor = @controls.semantic_toggle_action_control(
     anchor_view, expanded, on_toggle,

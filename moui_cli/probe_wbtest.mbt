@@ -117,7 +117,7 @@ test "test_build_probe_result_ok_when_all_observations_present" {
 test "test_build_probe_result_fails_when_missing_observation" {
   // Construct only 1 observation; the rest are missing.
   let observations : Array[Observation] = [
-    { kind: "lifecycle", name: "app_start", value: "ok", passed: true },
+    { kind: "lifecycle", name: "app_start", value: "ok", passed: true, },
   ]
   let result = build_probe_result(observations)
   assert_false(result.ok)
@@ -177,8 +177,8 @@ test "test_probe_result_to_json_emits_schema_and_observations" {
   let result : ProbeResult = {
     ok: false,
     observations: [
-      { kind: "lifecycle", name: "app_start", value: "ok", passed: true },
-      { kind: "stability", name: "crash_free", value: "fail", passed: false },
+      { kind: "lifecycle", name: "app_start", value: "ok", passed: true, },
+      { kind: "stability", name: "crash_free", value: "fail", passed: false, },
     ],
   }
   let json = probe_result_to_json(result)
@@ -197,8 +197,8 @@ test "test_probe_result_to_text_emits_status_lines" {
   let result : ProbeResult = {
     ok: false,
     observations: [
-      { kind: "lifecycle", name: "app_start", value: "ok", passed: true },
-      { kind: "stability", name: "crash_free", value: "fail", passed: false },
+      { kind: "lifecycle", name: "app_start", value: "ok", passed: true, },
+      { kind: "stability", name: "crash_free", value: "fail", passed: false, },
     ],
   }
   let text = probe_result_to_text(result)
@@ -212,7 +212,7 @@ test "test_probe_result_to_text_emits_passed_when_ok" {
   let result : ProbeResult = {
     ok: true,
     observations: [
-      { kind: "lifecycle", name: "app_start", value: "ok", passed: true },
+      { kind: "lifecycle", name: "app_start", value: "ok", passed: true, },
     ],
   }
   let text = probe_result_to_text(result)

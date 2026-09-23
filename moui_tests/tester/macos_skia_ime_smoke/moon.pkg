@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/env",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/macos",
   "wzzc-dev/moui_skia_renderer" @render_skia,

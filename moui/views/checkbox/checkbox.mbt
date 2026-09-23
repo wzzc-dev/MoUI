@@ -81,10 +81,9 @@ pub fn[Msg] checkbox_control(
       [
         @core.ViewSemanticsActionHandler::activate(_ctx => {
           let next = !checked.value()
-          @core.ViewSemanticsActionResult::accepted(
-            dirty=@core.ViewDirtyHint::ViewBuildDirty,
-            messages=[checked.changed(next)],
-          )
+          @core.ViewSemanticsActionResult::accepted(dirty=ViewBuildDirty, messages=[
+            checked.changed(next),
+          ])
         }),
       ]
     },
@@ -143,8 +142,8 @@ impl @core.ViewNode for Checkbox with fn declaration(self) {
           self.box_shape.map(value => {
             @core.DeclarationKey::int(
               match value {
-                @style.ChoiceControlShape::Square => 0
-                @style.ChoiceControlShape::Circle => 1
+                Square => 0
+                Circle => 1
               },
             )
           }),
@@ -156,8 +155,8 @@ impl @core.ViewNode for Checkbox with fn declaration(self) {
           self.check_style.map(value => {
             @core.DeclarationKey::int(
               match value {
-                @style.CheckMarkStyle::Checkmark => 0
-                @style.CheckMarkStyle::Dot => 1
+                Checkmark => 0
+                Dot => 1
               },
             )
           }),
@@ -232,15 +231,11 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Checkbox with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Checkbox,
+    composition=Boundary,
+    role=Checkbox,
     label=self.label,
     value=if self.checked { "true" } else { "false" },
-    checked=if self.checked {
-      @core.SemanticsCheckedState::Checked
-    } else {
-      @core.SemanticsCheckedState::Unchecked
-    },
+    checked=if self.checked { Checked } else { Unchecked },
   )
 }
 
@@ -256,21 +251,20 @@ fn[Msg] checkbox_event(
   checked : @core.ControlledValue[Bool, Msg],
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
-      if event.phase == @core.PointerPhase::Up &&
-        ctx.frame.contains(event.position) {
+    Pointer(event) =>
+      if event.phase == Up && ctx.frame.contains(event.position) {
         let next = !checked.value()
         @common.view_event_result(
           changed=true,
           activated=true,
           captured=true,
-          dirty=@core.ViewDirtyHint::ViewBuildDirty,
+          dirty=ViewBuildDirty,
           messages=[checked.changed(next)],
         )
       } else {
         @core.ViewEventResult::ignored()
       }
-    @core.AppEvent::Keyboard(event) =>
+    Keyboard(event) =>
       if event.pressed &&
         (event.key == "Enter" || event.key == "Space" || event.key == " ") {
         let next = !checked.value()
@@ -278,7 +272,7 @@ fn[Msg] checkbox_event(
           changed=true,
           activated=true,
           captured=true,
-          dirty=@core.ViewDirtyHint::ViewBuildDirty,
+          dirty=ViewBuildDirty,
           messages=[checked.changed(next)],
         )
       } else {
@@ -313,16 +307,16 @@ fn append_checkbox_commands(
     height=box_side,
   )
   let box_radius = match box_shape {
-    @style.ChoiceControlShape::Circle => box_side / 2.0
-    @style.ChoiceControlShape::Square => theme.radius_scale.sm
+    Circle => box_side / 2.0
+    Square => theme.radius_scale.sm
   }
   let box = @core.RoundedRect::new(rect=box_rect, radius=box_radius)
   if checked {
     match check_style {
-      @style.CheckMarkStyle::Checkmark => {
-        commands.push(@core.DrawCommand::FillRoundedRect(box, check_color))
+      Checkmark => {
+        commands.push(FillRoundedRect(box, check_color))
         commands.push(
-          @core.DrawCommand::DrawText(
+          DrawText(
             @core.TextRun::new(
               text="✓",
               frame=box_rect,
@@ -332,10 +326,8 @@ fn append_checkbox_commands(
           ),
         )
       }
-      @style.CheckMarkStyle::Dot => {
-        commands.push(
-          @core.DrawCommand::StrokeRoundedRect(box, check_color, 2.0),
-        )
+      Dot => {
+        commands.push(StrokeRoundedRect(box, check_color, 2.0))
         let inner_side = box_side * 0.5
         let inner_rect = @core.Rect::new(
           x=box_rect.origin.x + (box_side - inner_side) / 2.0,
@@ -347,15 +339,15 @@ fn append_checkbox_commands(
           rect=inner_rect,
           radius=inner_side / 2.0,
         )
-        commands.push(@core.DrawCommand::FillRoundedRect(inner, check_color))
+        commands.push(FillRoundedRect(inner, check_color))
       }
     }
   } else {
     let outline = if focused { check_color } else { theme.palette.outline }
-    commands.push(@core.DrawCommand::StrokeRoundedRect(box, outline, 2.0))
+    commands.push(StrokeRoundedRect(box, outline, 2.0))
   }
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=label,
         frame=@core.Rect::new(
@@ -366,7 +358,7 @@ fn append_checkbox_commands(
         ),
         font~,
         color=foreground,
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )

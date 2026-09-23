@@ -214,12 +214,12 @@ fn native_gpu_worker_completion_status_from_int(
   value : Int,
 ) -> NativeGpuWorkerCompletionStatus {
   match value {
-    1 => NativeGpuWorkerCompletionStatus::PictureRecorded
-    2 => NativeGpuWorkerCompletionStatus::Dropped
-    3 => NativeGpuWorkerCompletionStatus::ControlAcknowledged
-    4 => NativeGpuWorkerCompletionStatus::FallbackToRaster
-    5 => NativeGpuWorkerCompletionStatus::Presented
-    value => NativeGpuWorkerCompletionStatus::Unknown(value)
+    1 => PictureRecorded
+    2 => Dropped
+    3 => ControlAcknowledged
+    4 => FallbackToRaster
+    5 => Presented
+    value => Unknown(value)
   }
 }
 

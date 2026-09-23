@@ -5,16 +5,16 @@ test "overlay host modal barrier blocks base and dismisses outside" {
   let root = @views.overlay_host(base, [
     @views.PresentationSpec::new(
       id="dialog",
-      kind=@views.PresentationKind::Dialog,
+      kind=Dialog,
       content=@views.text("Dialog", width=40.0, height=20.0),
-      modality=@views.PresentationModality::Modal,
+      modality=Modal,
       dismiss=@views.PresentationDismissPolicy::new(
         outside_tap=true,
         message=Some("dismiss"),
       ),
     ),
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=100.0),
     on_message=Some(message => received.push(message)),
@@ -24,17 +24,14 @@ test "overlay host modal barrier blocks base and dismisses outside" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=2.0, y=2.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   assert_true(received == ["dismiss"])
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=2.0, y=2.0),
-        phase=@core.PointerPhase::Up,
-      ),
+      @core.PointerEvent::new(position=@core.Point::new(x=2.0, y=2.0), phase=Up),
     ),
   )
   assert_true(!received.contains("base"))
@@ -46,18 +43,18 @@ test "overlay host escape dismisses the top-most presentation" {
   let root = @views.overlay_host(@views.text("Base"), [
     @views.PresentationSpec::new(
       id="first",
-      kind=@views.PresentationKind::Dialog,
+      kind=Dialog,
       content=@views.text("First"),
       dismiss=@views.PresentationDismissPolicy::new(message=Some("first")),
     ),
     @views.PresentationSpec::new(
       id="second",
-      kind=@views.PresentationKind::Dialog,
+      kind=Dialog,
       content=@views.text("Second"),
       dismiss=@views.PresentationDismissPolicy::new(message=Some("second")),
     ),
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=100.0),
     on_message=Some(message => received.push(message)),
@@ -73,7 +70,7 @@ test "overlay host back and host close use independent policies" {
   let root = @views.overlay_host(@views.text("Base"), [
     @views.PresentationSpec::new(
       id="back",
-      kind=@views.PresentationKind::Sheet,
+      kind=Sheet,
       content=@views.text("Back"),
       dismiss=@views.PresentationDismissPolicy::new(
         escape=false,
@@ -83,7 +80,7 @@ test "overlay host back and host close use independent policies" {
       ),
     ),
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=120.0, height=80.0),
     on_message=Some(message => received.push(message)),
@@ -106,18 +103,18 @@ test "overlay host resolves stable anchors after base layout" {
   let root = @views.overlay_host(base, [
     @views.PresentationSpec::new(
       id="menu",
-      kind=@views.PresentationKind::Popover,
+      kind=Popover,
       anchor=@views.PresentationAnchor::stable_key("menu-anchor"),
       placement=Some(
         @views.PresentationPlacement::new(
-          candidates=[@views.PresentationPlacementCandidate::BelowStart],
+          candidates=[BelowStart],
           viewport_insets=@core.Insets::all(4.0),
         ),
       ),
       content=@views.frame(@views.text("Menu"), width=40.0, height=20.0),
     ),
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -145,12 +142,12 @@ test "overlay host placement settles in a single layout pass" {
   let root = @views.overlay_host(base, [
     @views.PresentationSpec::new(
       id="menu",
-      kind=@views.PresentationKind::Popover,
+      kind=Popover,
       anchor=@views.PresentationAnchor::stable_key("menu-anchor"),
       content=@views.frame(@views.text("Menu"), width=40.0, height=20.0),
     ),
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -179,12 +176,12 @@ test "anchored relayout adds exactly one layout pass" {
   let root = @views.overlay_host(base, [
     @views.PresentationSpec::new(
       id="menu",
-      kind=@views.PresentationKind::Popover,
+      kind=Popover,
       anchor=@views.PresentationAnchor::stable_key("menu-anchor"),
       content=@views.frame(@views.text("Menu"), width=40.0, height=20.0),
     ),
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -211,8 +208,8 @@ test "popup host sizes to base and places popup below it" {
     [
       @views.PresentationSpec::new(
         id="menu",
-        kind=@views.PresentationKind::Popover,
-        anchor=@views.PresentationAnchor::HostBase,
+        kind=Popover,
+        anchor=HostBase,
         placement=Some(
           @views.PresentationPlacement::new(
             viewport_insets=@core.Insets::all(0.0),
@@ -222,7 +219,7 @@ test "popup host sizes to base and places popup below it" {
       ),
     ],
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -251,8 +248,8 @@ test "nested overlay hosts dismiss top-most first" {
     [
       @views.PresentationSpec::new(
         id="inner",
-        kind=@views.PresentationKind::Popover,
-        anchor=@views.PresentationAnchor::HostBase,
+        kind=Popover,
+        anchor=HostBase,
         content=@views.frame(@views.text("Inner"), width=40.0, height=20.0),
         dismiss=@views.PresentationDismissPolicy::new(
           message=Some("close-inner"),
@@ -263,15 +260,15 @@ test "nested overlay hosts dismiss top-most first" {
   let root = @views.overlay_host(@views.text("Base"), [
     @views.PresentationSpec::new(
       id="dialog",
-      kind=@views.PresentationKind::Dialog,
+      kind=Dialog,
       content=@views.frame(inner_popover, width=100.0, height=40.0),
-      modality=@views.PresentationModality::Modal,
+      modality=Modal,
       dismiss=@views.PresentationDismissPolicy::new(
         message=Some("close-dialog"),
       ),
     ),
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=100.0),
     on_message=Some(message => received.push(message)),
@@ -286,7 +283,7 @@ test "nested overlay hosts dismiss top-most first" {
 ///|
 test "closing a picker popup retains a fading ghost then prunes it" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.column(
       [
         @views.frame(
@@ -309,10 +306,10 @@ test "closing a picker popup retains a fading ghost then prunes it" {
   ignore(runtime.draw_frame())
   ignore(
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=12.0, y=12.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     ),
@@ -323,7 +320,7 @@ test "closing a picker popup retains a fading ghost then prunes it" {
     .draw_commands()
     .any(command => {
       match command {
-        @core.DrawCommand::PushOpacity(_) => true
+        PushOpacity(_) => true
         _ => false
       }
     })
@@ -332,10 +329,10 @@ test "closing a picker popup retains a fading ghost then prunes it" {
   // fading ghost until the transition duration elapses.
   ignore(
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=12.0, y=84.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     ),
@@ -350,7 +347,7 @@ test "closing a picker popup retains a fading ghost then prunes it" {
 ///|
 test "overlay exit ghost follows the theme motion duration" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.column(
       [
         @views.frame(
@@ -373,10 +370,10 @@ test "overlay exit ghost follows the theme motion duration" {
   ignore(runtime.draw_frame())
   ignore(
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=12.0, y=12.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     ),
@@ -387,17 +384,17 @@ test "overlay exit ghost follows the theme motion duration" {
     .draw_commands()
     .any(command => {
       match command {
-        @core.DrawCommand::PushOpacity(_) => true
+        PushOpacity(_) => true
         _ => false
       }
     })
   }
   ignore(
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=12.0, y=84.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     ),
@@ -418,7 +415,7 @@ test "overlay exit ghost follows the theme motion duration" {
 ///|
 test "reduced motion completes overlay exits immediately" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.column(
       [
         @views.frame(
@@ -442,10 +439,10 @@ test "reduced motion completes overlay exits immediately" {
   ignore(runtime.draw_frame())
   ignore(
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=12.0, y=12.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     ),
@@ -456,17 +453,17 @@ test "reduced motion completes overlay exits immediately" {
     .draw_commands()
     .any(command => {
       match command {
-        @core.DrawCommand::PushOpacity(_) => true
+        PushOpacity(_) => true
         _ => false
       }
     })
   }
   ignore(
     runtime.dispatch_event(
-      @core.AppEvent::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=12.0, y=84.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     ),
@@ -502,8 +499,8 @@ test "portal popup covering a text field blocks focus until dismissed" {
             [
               @views.PresentationSpec::new(
                 id="menu",
-                kind=@views.PresentationKind::Popover,
-                anchor=@views.PresentationAnchor::HostBase,
+                kind=Popover,
+                anchor=HostBase,
                 content=@views.frame(
                   @views.text("Item"),
                   width=200.0,
@@ -531,7 +528,7 @@ test "portal popup covering a text field blocks focus until dismissed" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program~,
     size=@core.Size::new(width=200.0, height=160.0),
   )
@@ -541,18 +538,18 @@ test "portal popup covering a text field blocks focus until dismissed" {
   // it: the popup owns pointer pickup, and its non-focusable content must
   // not let the event fall through to in-flow content.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=100.0, y=45.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=100.0, y=45.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -567,18 +564,18 @@ test "portal popup covering a text field blocks focus until dismissed" {
   ignore(runtime.draw_frame())
   // With the popup gone the field is reachable again.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=100.0, y=45.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=100.0, y=45.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )

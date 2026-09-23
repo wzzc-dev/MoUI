@@ -12,7 +12,7 @@ pub struct WindowFrameStates {
 
 ///|
 pub fn WindowFrameStates::new() -> WindowFrameStates {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|

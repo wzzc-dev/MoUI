@@ -295,8 +295,8 @@ fn appearance_mode_id(mode : AppearanceMode) -> String {
 ///|
 fn appearance_mode_from_id(id : String) -> AppearanceMode {
   match id {
-    "light" => AppearanceMode::Light
-    "dark" => AppearanceMode::Dark
-    _ => AppearanceMode::System
+    "light" => Light
+    "dark" => Dark
+    _ => System
   }
 }

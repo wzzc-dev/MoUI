@@ -76,7 +76,7 @@ impl @core.ViewNode for Progress with fn declaration(self) {
       ]),
     ),
     paint=if self.theme is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(paint_key)
     },
@@ -122,11 +122,11 @@ impl @core.ViewNode for Progress with fn paint(self, ctx) {
   let frame = ctx.frame
   let radius = @common.min_view_double(self.height / 2.0, resolved_style.radius)
   @core.ViewPaintPlan::commands([
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(rect=frame, radius~),
       @core.Brush::solid(resolved_background),
     ),
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(
           x=frame.origin.x,
@@ -144,8 +144,8 @@ impl @core.ViewNode for Progress with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Progress with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Progress,
+    composition=Boundary,
+    role=Progress,
     label=self.label,
     value="\{self.value}",
     numeric=@core.SemanticsNumericValue::new(

@@ -12,7 +12,7 @@ pub fn[Msg] custom_children_layout_control(
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
   paint~ : (@common.PaintContext, @core.Rect) -> Unit,
-  semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
+  semantics_role? : @core.SemanticsRole = Group,
   semantics_label? : String = "",
   kind? : String = "CustomLayout",
   key? : String? = None,
@@ -58,8 +58,8 @@ impl @core.ViewNode for CustomChildrenLayout with fn identity(self) {
 ///|
 impl @core.ViewNode for CustomChildrenLayout with fn declaration(self) {
   @common.view_declaration(
-    layout=@core.DeclarationChannel::Uncacheable,
-    paint=@core.DeclarationChannel::Uncacheable,
+    layout=Uncacheable,
+    paint=Uncacheable,
     semantics=@common.view_exact_channel(
       @common.view_record_key("CustomChildrenLayout.semantics", [
         ("role", @common.view_semantics_role_key(self.semantics_role)),
@@ -120,11 +120,10 @@ impl @core.ViewNode for CustomChildrenLayout with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for CustomChildrenLayout with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=if self.semantics_label == "" &&
-      self.semantics_role == @core.SemanticsRole::Group {
-      @core.SemanticsComposition::Transparent
+    composition=if self.semantics_label == "" && self.semantics_role == Group {
+      Transparent
     } else {
-      @core.SemanticsComposition::Boundary
+      Boundary
     },
     role=self.semantics_role,
     label=self.semantics_label,

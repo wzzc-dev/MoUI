@@ -9,12 +9,12 @@ pub fn skia_provider_capabilities(
   @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let base_note = skia_feature_note(feature)
     let note = match backend {
-      @render.RendererBackendKind::SkiaGpuNative =>
+      SkiaGpuNative =>
         "Skia GPU reuses the native Skia command and resource semantics; " +
         base_note
       _ => base_note
     }
-    (@render.RendererFeatureStatus::Supported, note)
+    (Supported, note)
   })
 }
 

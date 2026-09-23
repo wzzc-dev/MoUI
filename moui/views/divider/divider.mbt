@@ -26,8 +26,8 @@ impl @core.ViewNode for Divider with fn identity(_self) {
 impl @core.ViewNode for Divider with fn declaration(self) {
   let axis = @core.DeclarationKey::int(
     match self.axis {
-      @core.Axis::Horizontal => 0
-      @core.Axis::Vertical => 1
+      Horizontal => 0
+      Vertical => 1
     },
   )
   @common.view_declaration(
@@ -51,7 +51,7 @@ impl @core.ViewNode for Divider with fn declaration(self) {
 impl @core.ViewNode for Divider with fn layout(self, ctx) {
   let line_thickness = @common.max_view_double(1.0, self.thickness)
   let size = match self.axis {
-    @core.Axis::Horizontal =>
+    Horizontal =>
       @core.Size::new(
         width=if ctx.constraints.max.width < 1.0e8 {
           ctx.constraints.max.width
@@ -60,7 +60,7 @@ impl @core.ViewNode for Divider with fn layout(self, ctx) {
         },
         height=line_thickness,
       )
-    @core.Axis::Vertical =>
+    Vertical =>
       @core.Size::new(
         width=line_thickness,
         height=if ctx.constraints.max.height < 1.0e8 {
@@ -78,7 +78,7 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
   let frame = ctx.frame
   let rect = if self.inset > 0.0 {
     match self.axis {
-      @core.Axis::Horizontal =>
+      Horizontal =>
         @core.Rect::new(
           x=frame.origin.x + self.inset,
           y=frame.origin.y,
@@ -88,7 +88,7 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
           ),
           height=frame.size.height,
         )
-      @core.Axis::Vertical =>
+      Vertical =>
         @core.Rect::new(
           x=frame.origin.x,
           y=frame.origin.y + self.inset,
@@ -102,20 +102,17 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
   } else {
     frame
   }
-  @core.ViewPaintPlan::commands([@core.DrawCommand::FillRect(rect, self.color)])
+  @core.ViewPaintPlan::commands([FillRect(rect, self.color)])
 }
 
 ///|
 impl @core.ViewNode for Divider with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Separator,
-  )
+  @core.ViewSemanticsInfo::new(composition=Boundary, role=Separator)
 }
 
 ///|
 pub fn[Msg] divider(
-  axis? : @core.Axis = @core.Axis::Horizontal,
+  axis? : @core.Axis = Horizontal,
   theme? : @core.Theme,
   thickness? : Double = 1.0,
   color? : @core.Color,
@@ -126,5 +123,5 @@ pub fn[Msg] divider(
     Some(value) => value
     None => resolved_theme.palette.outline_variant
   }
-  @core.View::from_node(Divider::{ axis, thickness, color: line_color, inset })
+  @core.View::from_node(Divider::{ axis, thickness, color: line_color, inset, })
 }

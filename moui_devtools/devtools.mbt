@@ -170,7 +170,7 @@ pub fn snapshot_json(
 
 ///|
 pub fn SnapshotHistory::new() -> SnapshotHistory {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|

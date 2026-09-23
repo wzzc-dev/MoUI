@@ -203,8 +203,7 @@ fn collect_overlay_overrides(
         }
       }
       if pairs.length() > 0 &&
-        element.view_node.keyboard_policy()
-        is @core.KeyboardPolicy::TopMostDismissal {
+        element.view_node.keyboard_policy() is TopMostDismissal {
         layers.push(element.id)
       }
       for pair in pairs {

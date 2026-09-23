@@ -1,15 +1,15 @@
 ///|
 test "renderer backend info records unified renderer capability" {
   let info = @render.RendererBackendInfo::new(
-    backend=@render.RendererBackendKind::WebGpuWasm,
-    status=@render.RendererCapabilityStatus::Supported,
+    backend=WebGpuWasm,
+    status=Supported,
     can_render=true,
     can_resize=true,
     owns_surface=false,
     description="wasm-gc browser WebGPU host imports",
   )
-  assert_true(info.backend == @render.RendererBackendKind::WebGpuWasm)
-  assert_true(info.status == @render.RendererCapabilityStatus::Supported)
+  assert_true(info.backend == WebGpuWasm)
+  assert_true(info.status == Supported)
   inspect(info.can_render, content="true")
   inspect(info.can_resize, content="true")
 }
@@ -17,42 +17,31 @@ test "renderer backend info records unified renderer capability" {
 ///|
 test "renderer descriptor models backend family selection and presentation" {
   let descriptor = @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::SkiaRasterNative,
-    family=@render.RendererFamily::Skia,
-    presentation=@render.RendererPresentationModel::CpuPixelFrame,
-    supported_targets=[@render.RendererTarget::Native],
+    backend=SkiaRasterNative,
+    family=Skia,
+    presentation=CpuPixelFrame,
+    supported_targets=[Native],
     capabilities=@render_common.renderer_provider_capabilities(
       provider_id="test-skia",
-      backend=@render.RendererBackendKind::SkiaRasterNative,
-      capability_for=_feature => {
-        (@render.RendererFeatureStatus::Supported, "test provider capability")
-      },
+      backend=SkiaRasterNative,
+      capability_for=_feature => (Supported, "test provider capability"),
     ),
     description="test skia raster descriptor",
   )
-  assert_true(descriptor.backend.family() == @render.RendererFamily::Skia)
+  assert_true(descriptor.backend.family() == Skia)
+  assert_true(descriptor.presentation == CpuPixelFrame)
   assert_true(
-    descriptor.presentation == @render.RendererPresentationModel::CpuPixelFrame,
-  )
-  assert_true(
-    @render.RendererSelection::Backend(
-      @render.RendererBackendKind::SkiaRasterNative,
-    ).matches_backend(@render.RendererBackendKind::SkiaRasterNative),
-  )
-  assert_true(
-    @render.RendererSelection::Family(@render.RendererFamily::Skia).matches_backend(
-      @render.RendererBackendKind::SkiaRasterNative,
+    @render.RendererSelection::Backend(SkiaRasterNative).matches_backend(
+      SkiaRasterNative,
     ),
   )
   assert_true(
-    @render.RendererSelection::Family(@render.RendererFamily::Sun).matches_backend(
-      @render.RendererBackendKind::SunRasterNative,
-    ),
+    @render.RendererSelection::Family(Skia).matches_backend(SkiaRasterNative),
   )
   assert_true(
-    @render.RendererBackendKind::SunRasterNative.family() ==
-    @render.RendererFamily::Sun,
+    @render.RendererSelection::Family(Sun).matches_backend(SunRasterNative),
   )
+  assert_true(@render.RendererBackendKind::SunRasterNative.family() == Sun)
   inspect(
     @render.RendererBackendKind::SunRasterNative.label(),
     content="sun-raster-native",
@@ -60,18 +49,14 @@ test "renderer descriptor models backend family selection and presentation" {
   inspect(@render.RendererFamily::Sun.label(), content="sun")
   assert_true(
     @render.RendererSelection::native_default().matches_backend(
-      @render.RendererBackendKind::SkiaRasterNative,
+      SkiaRasterNative,
     ),
   )
   assert_true(
-    @render.RendererSelection::web_default().matches_backend(
-      @render.RendererBackendKind::WebGpuWasm,
-    ),
+    @render.RendererSelection::web_default().matches_backend(WebGpuWasm),
   )
   assert_false(
-    @render.RendererSelection::Default.matches_backend(
-      @render.RendererBackendKind::SkiaRasterNative,
-    ),
+    @render.RendererSelection::Default.matches_backend(SkiaRasterNative),
   )
   inspect(descriptor.capabilities.length(), content="17")
 }
@@ -79,23 +64,21 @@ test "renderer descriptor models backend family selection and presentation" {
 ///|
 test "wgpu surface contract distinguishes native and web canvas sources" {
   let contract = @render.WgpuSurfaceContract::new(
-    source=@render.WgpuSurfaceSourceKind::WebCanvasSurface,
-    backend=@render.RendererBackendKind::WebGpuWasm,
+    source=WebCanvasSurface,
+    backend=WebGpuWasm,
     ready=false,
     description="browser WebGPU surface pending",
   )
-  assert_true(
-    contract.source == @render.WgpuSurfaceSourceKind::WebCanvasSurface,
-  )
-  assert_true(contract.backend == @render.RendererBackendKind::WebGpuWasm)
+  assert_true(contract.source == WebCanvasSurface)
+  assert_true(contract.backend == WebGpuWasm)
   inspect(contract.ready, content="false")
 }
 
 ///|
 test "collect rect batches" {
   let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::blue(),
     ),
@@ -106,7 +89,7 @@ test "collect rect batches" {
 ///|
 test "collect rect batches expands strokes into border rects" {
   let batches = @render.collect_rect_batches([
-    @core.DrawCommand::StrokeRect(
+    StrokeRect(
       @core.Rect::new(x=2.0, y=3.0, width=10.0, height=8.0),
       @core.Color::blue(),
       1.0,
@@ -153,9 +136,7 @@ test "rect batches convert to colored vertices" {
 
 ///|
 test "clear only commands produce empty rect vertices" {
-  let batches = @render.collect_rect_batches([
-    @core.DrawCommand::Clear(@core.Color::white()),
-  ])
+  let batches = @render.collect_rect_batches([Clear(@core.Color::white())])
   inspect(batches.length(), content="0")
   inspect(
     @render.rect_batches_to_vertices(
@@ -169,7 +150,7 @@ test "clear only commands produce empty rect vertices" {
 ///|
 test "rounded rects are collectable as rect batches for simple renderers" {
   let batches = @render.collect_rect_batches([
-    @core.DrawCommand::FillRoundedRect(
+    FillRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0),
         radius=6.0,
@@ -186,7 +167,7 @@ test "rounded rects are collectable as rect batches for simple renderers" {
 ///|
 test "stroke rounded rects use the same fallback batch geometry as stroke rects" {
   let rounded = @render.collect_rect_batches([
-    @core.DrawCommand::StrokeRoundedRect(
+    StrokeRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=2.0, y=3.0, width=10.0, height=8.0),
         radius=5.0,
@@ -196,7 +177,7 @@ test "stroke rounded rects use the same fallback batch geometry as stroke rects"
     ),
   ])
   let square = @render.collect_rect_batches([
-    @core.DrawCommand::StrokeRect(
+    StrokeRect(
       @core.Rect::new(x=2.0, y=3.0, width=10.0, height=8.0),
       @core.Color::blue(),
       1.0,
@@ -208,27 +189,25 @@ test "stroke rounded rects use the same fallback batch geometry as stroke rects"
 ///|
 test "non-rect commands do not leak into native rect batches" {
   let batches = @render.collect_rect_batches([
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "Hello",
       frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
       font: @core.FontSpec::new(size=14.0),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextCenter,
+      align: TextCenter,
     }),
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: "logo.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
       opacity: 0.8,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
-    ),
-    @core.DrawCommand::PushTransform(@core.Transform2D::identity()),
-    @core.DrawCommand::PushOpacity(0.5),
-    @core.DrawCommand::PopOpacity,
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PopClip,
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0)),
+    PushTransform(@core.Transform2D::identity()),
+    PushOpacity(0.5),
+    PopOpacity,
+    PopTransform,
+    PopClip,
   ])
   inspect(batches.length(), content="0")
 }
@@ -240,7 +219,7 @@ test "brush commands degrade to deterministic rect batches" {
     radius=6.0,
   )
   let batches = @render.collect_rect_batches([
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       rounded,
       @core.Brush::linear_gradient(
         start=@core.Point::new(x=0.0, y=0.0),
@@ -249,7 +228,7 @@ test "brush commands degrade to deterministic rect batches" {
         end_color=@core.Color::gray(),
       ),
     ),
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       rounded,
       @core.Brush::radial_gradient(
         center=@core.Point::new(x=15.0, y=20.0),
@@ -258,7 +237,7 @@ test "brush commands degrade to deterministic rect batches" {
         edge_color=@core.Color::gray(),
       ),
     ),
-    @core.DrawCommand::StrokeRoundedRectBrush(
+    StrokeRoundedRectBrush(
       rounded,
       @core.Brush::solid(@core.Color::gray()),
       1.0,
@@ -273,7 +252,7 @@ test "brush commands degrade to deterministic rect batches" {
 ///|
 test "shadow command degrades to layered rect batches" {
   let batches = @render.collect_rect_batches([
-    @core.DrawCommand::DrawShadow(
+    DrawShadow(
       @core.ShadowSpec::new(
         rect=@core.RoundedRect::new(
           rect=@core.Rect::new(x=10.0, y=10.0, width=20.0, height=20.0),
@@ -324,19 +303,11 @@ test "render mailbox control queue is ordered and never dropped" {
   assert_false(mailbox.has_control())
   inspect(mailbox.control_pending(), content="0")
   ignore(
-    mailbox.submit_control(
-      @render.RendererControlMessage::Resize(
-        @core.Size::new(width=200.0, height=120.0),
-      ),
-    ),
+    mailbox.submit_control(Resize(@core.Size::new(width=200.0, height=120.0))),
   )
-  ignore(mailbox.submit_control(@render.RendererControlMessage::Detach))
-  ignore(
-    mailbox.submit_control(
-      @render.RendererControlMessage::ContextLoss("metal-device-lost"),
-    ),
-  )
-  ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
+  ignore(mailbox.submit_control(Detach))
+  ignore(mailbox.submit_control(ContextLoss("metal-device-lost")))
+  ignore(mailbox.submit_control(Shutdown))
   assert_true(mailbox.has_control())
   inspect(mailbox.control_pending(), content="4")
   let drained = mailbox.drain_control()
@@ -381,15 +352,11 @@ test "render mailbox control and frame queues coexist without interference" {
   // survive frame flooding and be drained in order.
   let first = mailbox.submit(input)
   ignore(
-    mailbox.submit_control(
-      @render.RendererControlMessage::Resize(
-        @core.Size::new(width=128.0, height=128.0),
-      ),
-    ),
+    mailbox.submit_control(Resize(@core.Size::new(width=128.0, height=128.0))),
   )
   ignore(mailbox.submit(input))
   let latest = mailbox.submit(input)
-  ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
+  ignore(mailbox.submit_control(Shutdown))
   // Frames still behave as capacity-two latest-wins: pending now holds
   // `latest` and `first` was discarded when `latest` replaced the prior
   // pending entry.
@@ -425,13 +392,9 @@ test "render mailbox control and frame queues coexist without interference" {
 /// any queued before the shutdown signal.
 test "render mailbox shutdown does not drop earlier control messages" {
   let mailbox = @render_common.RenderFrameMailbox::new()
-  ignore(
-    mailbox.submit_control(
-      @render.RendererControlMessage::ContextLoss("vulkan-device-lost"),
-    ),
-  )
-  ignore(mailbox.submit_control(@render.RendererControlMessage::Detach))
-  ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
+  ignore(mailbox.submit_control(ContextLoss("vulkan-device-lost")))
+  ignore(mailbox.submit_control(Detach))
+  ignore(mailbox.submit_control(Shutdown))
   let drained = mailbox.drain_control()
   inspect(drained.length(), content="3")
   assert_true(drained[0] is ContextLoss(_))

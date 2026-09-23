@@ -12,7 +12,7 @@ pub fn SurfaceState::new(
   owns_surface? : Bool = false,
   can_reconfigure? : Bool = true,
 ) -> SurfaceState {
-  { metrics, owns_surface, can_reconfigure }
+  { metrics, owns_surface, can_reconfigure, }
 }
 
 ///|
@@ -21,7 +21,7 @@ pub fn SurfaceState::resize(
   metrics : @core.SurfaceMetrics,
 ) -> @backend_host.Event {
   self.metrics = metrics
-  @backend_host.Event::Resized(metrics)
+  Resized(metrics)
 }
 
 ///|

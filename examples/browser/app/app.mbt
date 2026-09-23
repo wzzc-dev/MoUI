@@ -94,13 +94,13 @@ pub fn Model::new(
 ///|
 pub fn update(model : Model, message : Msg) -> (Model, @moui.Effect[Msg]) {
   match message {
-    AddressChanged(value) => ({ ..model, address: value }, @moui.Effect::none())
+    AddressChanged(value) =>
+      ({ ..model, address: value, }, @moui.Effect::none())
     LoadAddress => model.navigate(model.address)
     PollNetwork => model.poll_network()
     CanvasDrag(event) =>
       match event.phase {
-        @core.DragGesturePhase::Ended =>
-          model.handle_canvas_click(event.position)
+        Ended => model.handle_canvas_click(event.position)
         _ => (model, @moui.Effect::none())
       }
   }
@@ -180,12 +180,12 @@ fn Model::navigate(self : Model, href : String) -> (Model, @moui.Effect[Msg]) {
 /// 每帧轮询 curl 桥的结果队列(由 subscriptions 的 timer 触发)。
 fn Model::poll_network(self : Model) -> (Model, @moui.Effect[Msg]) {
   match @moui_crater.poll_fetch() {
-    Some(@moui_crater.FetchOutcome::Fetched(html~)) =>
+    Some(Fetched(html~)) =>
       (
-        { ..self.render_source(html, self.pending_url), loading: false },
+        { ..self.render_source(html, self.pending_url), loading: false, },
         @moui.Effect::none(),
       )
-    Some(@moui_crater.FetchOutcome::FetchFailed(message~)) =>
+    Some(FetchFailed(message~)) =>
       (
         {
           ..self.render_source(
@@ -314,7 +314,7 @@ fn header(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
         ),
         spacer(min_length=12.0),
       ],
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     padding=6.0,
   )
@@ -329,18 +329,14 @@ fn toolbar(model : Model) -> @moui.View[Msg] {
           model.address,
           on_input=value => AddressChanged(value),
           on_submit=Some(LoadAddress),
-          variant=@views.TextFieldVariant::Outline,
+          variant=Outline,
           width=640.0,
           height=34.0,
         ),
-        button(
-          "Go",
-          on_click=LoadAddress,
-          variant=@views.ButtonVariant::Primary,
-        ),
+        button("Go", on_click=LoadAddress, variant=Primary),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     padding=4.0,
   )
@@ -357,12 +353,10 @@ fn content_surface(model : Model) -> @moui.View[Msg] {
   container(
     canvas(
       measure=fn(_constraints : @core.Constraints) -> @core.Size {
-        { width: content_width, height: content_height }
+        { width: content_width, height: content_height, }
       },
       draw=fn(ctx : @views.PaintContext, _frame : @core.Rect) -> Unit {
-        ctx.commands.push(
-          @core.DrawCommand::Clear({ r: 1.0, g: 1.0, b: 1.0, a: 1.0 }),
-        )
+        ctx.commands.push(Clear({ r: 1.0, g: 1.0, b: 1.0, a: 1.0, }))
         for command in model.commands {
           ctx.commands.push(command)
         }

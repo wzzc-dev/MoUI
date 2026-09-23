@@ -38,7 +38,7 @@
   "ratchets": [
     {
       "path": "moui_sun/text/text_system_test.mbt",
-      "maxLines": 3499,
+      "maxLines": 3515,
       "reason": "Existing comprehensive text-system logic test."
     },
     {
@@ -48,17 +48,17 @@
     },
     {
       "path": "moui_sun/graphics/render_frame_test.mbt",
-      "maxLines": 3129,
+      "maxLines": 3328,
       "reason": "Existing comprehensive render-frame logic test."
     },
     {
       "path": "moui_sun/graphics/layer_tree_test.mbt",
-      "maxLines": 3040,
+      "maxLines": 3166,
       "reason": "Existing comprehensive layer-tree logic test."
     },
     {
       "path": "moui_sun/graphics/canvas_shape_test.mbt",
-      "maxLines": 2908,
+      "maxLines": 3364,
       "reason": "Existing comprehensive canvas shape logic test."
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "path": "moui_skia/native/canvas_native.mbt",
-      "maxLines": 2560,
+      "maxLines": 2558,
       "reason": "Existing native canvas binding implementation."
     },
     {
@@ -78,37 +78,37 @@
     },
     {
       "path": "moui_sun/renderer/render_pipeline_resource_replay.mbt",
-      "maxLines": 2284,
+      "maxLines": 2169,
       "reason": "Existing renderer resource replay pipeline."
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1652,
+      "maxLines": 1659,
       "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits."
     },
     {
       "path": "moui_sun/graphics/path.mbt",
-      "maxLines": 1945,
+      "maxLines": 1941,
       "reason": "Existing path model and algorithms."
     },
     {
       "path": "moui_tests/skia_renderer_smoke/native/main.mbt",
-      "maxLines": 1815,
+      "maxLines": 1698,
       "reason": "Existing end-to-end renderer smoke harness."
     },
     {
       "path": "moui_sun/graphics/pixmap.mbt",
-      "maxLines": 1877,
+      "maxLines": 1876,
       "reason": "Existing pixmap implementation and codecs."
     },
     {
       "path": "examples/excel/sheet/sheet.mbt",
-      "maxLines": 1822,
+      "maxLines": 1811,
       "reason": "Existing spreadsheet domain implementation."
     },
     {
       "path": "moui_sun_renderer/renderer_test.mbt",
-      "maxLines": 1728,
+      "maxLines": 1703,
       "reason": "Existing Sun renderer integration test."
     },
     {
@@ -123,17 +123,17 @@
     },
     {
       "path": "moui_sun/graphics/surface_test.mbt",
-      "maxLines": 1683,
+      "maxLines": 1777,
       "reason": "Existing comprehensive surface logic test."
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 3014,
+      "maxLines": 2994,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
       "path": "moui_wgpu_renderer/native_renderer.mbt",
-      "maxLines": 1848,
+      "maxLines": 1847,
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
     {
@@ -148,7 +148,7 @@
     },
     {
       "path": "moui_sun/graphics/canvas_image_test.mbt",
-      "maxLines": 1502,
+      "maxLines": 1593,
       "reason": "Existing comprehensive canvas image logic test."
     },
     {
@@ -158,7 +158,7 @@
     },
     {
       "path": "moui_sun/graphics/surface.mbt",
-      "maxLines": 1432,
+      "maxLines": 1419,
       "reason": "Existing surface implementation."
     },
     {
@@ -168,23 +168,18 @@
     },
     {
       "path": "moui_sun/graphics/path_test.mbt",
-      "maxLines": 1415,
+      "maxLines": 1453,
       "reason": "Existing comprehensive path logic test."
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1684,
+      "maxLines": 1520,
       "reason": "Existing workbench integration test with declaration invalidation coverage."
     },
     {
       "path": "moui_skia_renderer/skia_renderer_text_wbtest.mbt",
-      "maxLines": 1412,
+      "maxLines": 1390,
       "reason": "Existing Skia text integration test."
-    },
-    {
-      "path": "moui_theme/audit/theme_runtime_alignment_test.mbt",
-      "maxLines": 1362,
-      "reason": "Existing cross-theme runtime alignment test."
     },
     {
       "path": "tools/moui/validate_web_runtime_presentation_manifest/main.mbt",
@@ -197,13 +192,8 @@
       "reason": "Existing Skia binding render integration test."
     },
     {
-      "path": "moui_sun/renderer/render_pipeline_compare_image_helpers.mbt",
-      "maxLines": 1325,
-      "reason": "Existing renderer image comparison helpers."
-    },
-    {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 4161,
+      "maxLines": 4153,
       "reason": "Existing rich-text editor session state machine."
     },
     {
@@ -213,17 +203,17 @@
     },
     {
       "path": "moui/runtime/semantics.mbt",
-      "maxLines": 1293,
+      "maxLines": 1285,
       "reason": "Existing committed semantics tree, relation, modal, delta, announcement, and exact-generation action implementation."
     },
     {
       "path": "moui/runtime/semantics_runtime_test.mbt",
-      "maxLines": 1263,
+      "maxLines": 1221,
       "reason": "Existing runtime semantics contract and modal, focus, delta, announcement, and stale-action regression suite."
     },
     {
       "path": "moui/runtime/view_runtime_test.mbt",
-      "maxLines": 1389,
+      "maxLines": 1366,
       "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration."
     },
     {
@@ -233,12 +223,12 @@
     },
     {
       "path": "moui_wgpu_renderer/native_smoke.mbt",
-      "maxLines": 1252,
+      "maxLines": 1234,
       "reason": "Existing native WGPU diagnostic smoke."
     },
     {
       "path": "examples/mo_workbench/app/view_code.mbt",
-      "maxLines": 1241,
+      "maxLines": 1204,
       "reason": "Existing workbench code workspace view implementation."
     },
     {
@@ -248,7 +238,7 @@
     },
     {
       "path": "moui_sun/text/parser.mbt",
-      "maxLines": 1232,
+      "maxLines": 1206,
       "reason": "Existing text parser implementation."
     },
     {
@@ -268,13 +258,18 @@
     },
     {
       "path": "moui_richtext/rich_text_markdown_session_editor.mbt",
-      "maxLines": 1315,
+      "maxLines": 1313,
       "reason": "Existing rich-text markdown session editor state and rendering."
     },
     {
       "path": "moui_richtext/editor_selection.mbt",
-      "maxLines": 1231,
+      "maxLines": 1228,
       "reason": "Existing selection, hit-test, and block-context helpers."
+    },
+    {
+      "path": "moui_sun/graphics/shader_test.mbt",
+      "maxLines": 1360,
+      "reason": "MoonBit toolchain upgrade required cross-package qualification in black-box tests, which wraps long lines under moon fmt."
     }
   ],
   "data": [

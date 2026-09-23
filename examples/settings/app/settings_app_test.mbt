@@ -1,22 +1,14 @@
 ///|
-using @views { type FieldAction }
 
 ///|
 test "settings update edits fields and selection" {
-  let model = SettingsModel::new()
-    .update(
-      Profile(ProfileMsg::Field(
-        "display_name",
-        FieldAction::Text("Grace Hopper"),
-      )),
-    )
-    .update(
-      Profile(ProfileMsg::Field("email", FieldAction::Text("grace@example.com"))),
-    )
-    .update(Workspace(WorkspaceMsg::WorkspaceChanged("Compiler Lab")))
-    .update(Preferences(PreferencesMsg::ThemeModeSelected("dark")))
-    .update(Workspace(WorkspaceMsg::NotificationsChanged(false)))
-    .update(Preferences(PreferencesMsg::TelemetryChanged(true)))
+  let model = @app.SettingsModel::new()
+    .update(Profile(Field("display_name", Text("Grace Hopper"))))
+    .update(Profile(Field("email", Text("grace@example.com"))))
+    .update(Workspace(WorkspaceChanged("Compiler Lab")))
+    .update(Preferences(ThemeModeSelected("dark")))
+    .update(Workspace(NotificationsChanged(false)))
+    .update(Preferences(TelemetryChanged(true)))
     .update(SelectSettingsSection("preferences"))
   inspect(model.profile.display_name, content="Grace Hopper")
   inspect(model.profile.email, content="grace@example.com")
@@ -29,21 +21,18 @@ test "settings update edits fields and selection" {
 
 ///|
 test "settings saveable snapshot restores model state" {
-  let model = SettingsModel::new()
-    .update(
-      Profile(ProfileMsg::Field(
-        "display_name",
-        FieldAction::Text("Katherine Johnson"),
-      )),
-    )
-    .update(Profile(ProfileMsg::Field("email", FieldAction::Text("kj@nasa.example"))))
-    .update(Workspace(WorkspaceMsg::WorkspaceChanged("Orbital Mechanics")))
-    .update(Preferences(PreferencesMsg::ThemeModeSelected("light")))
-    .update(Workspace(WorkspaceMsg::NotificationsChanged(false)))
-    .update(Preferences(PreferencesMsg::TelemetryChanged(true)))
+  let model = @app.SettingsModel::new()
+    .update(Profile(Field("display_name", Text("Katherine Johnson"))))
+    .update(Profile(Field("email", Text("kj@nasa.example"))))
+    .update(Workspace(WorkspaceChanged("Orbital Mechanics")))
+    .update(Preferences(ThemeModeSelected("light")))
+    .update(Workspace(NotificationsChanged(false)))
+    .update(Preferences(TelemetryChanged(true)))
     .update(SelectSettingsSection("workspace"))
     .update(SaveSettings)
-  let restored = SettingsModel::restore_from_snapshot(model.save_snapshot())
+  let restored = @app.SettingsModel::restore_from_snapshot(
+    model.save_snapshot(),
+  )
   inspect(restored.profile.display_name, content="Katherine Johnson")
   inspect(restored.profile.email, content="kj@nasa.example")
   inspect(restored.workspace.workspace, content="Orbital Mechanics")
@@ -57,7 +46,7 @@ test "settings saveable snapshot restores model state" {
 ///|
 test "settings runtime draws profile shell" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=920.0,
     height=620.0,
   )
@@ -73,7 +62,7 @@ test "settings runtime draws profile shell" {
 ///|
 test "settings preferences section exposes theme controls" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=SettingsModel::new()
+    program=@app.SettingsModel::new()
       .update(SelectSettingsSection("preferences"))
       .program(),
     width=920.0,
@@ -91,7 +80,7 @@ test "settings preferences section exposes theme controls" {
 ///|
 test "settings runtime save button updates status" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=920.0,
     height=620.0,
   )
@@ -110,21 +99,17 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
     y=frame.origin.y + frame.size.height / 2.0,
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
   )
 }
 
 ///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+    command is DrawText({ text: value, .. }) && value == text
   })
 }
 
@@ -135,7 +120,7 @@ fn text_frame(
 ) -> @core.Rect? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         if value == text {
           return Some(frame)
         }

@@ -14,19 +14,13 @@ pub using @core {type TypographyScale}
 /// are resolved views-side as a `ControlThemeSet` (ADR 0017); this builder
 /// returns the neutral `core.Theme` only.
 pub fn light_theme() -> @core.Theme {
-  @core.resolve_minimal_theme(
-    @core.ThemeSpec::minimal_light(),
-    @core.ColorScheme::Light,
-  )
+  @core.resolve_minimal_theme(@core.ThemeSpec::minimal_light(), Light)
 }
 
 ///|
 /// Minimal dark theme. Mirrors `light_theme` via the resolver.
 pub fn dark_theme() -> @core.Theme {
-  @core.resolve_minimal_theme(
-    @core.ThemeSpec::minimal_dark(),
-    @core.ColorScheme::Dark,
-  )
+  @core.resolve_minimal_theme(@core.ThemeSpec::minimal_dark(), Dark)
 }
 
 ///|
@@ -44,7 +38,7 @@ pub fn default_theme() -> @core.Theme {
 /// neutral base only.
 pub fn theme(
   base? : @core.Theme,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
   palette? : @core.ColorPalette,
   spacing_scale? : @core.SpacingScale,
   radius_scale? : @core.RadiusScale,
@@ -57,8 +51,8 @@ pub fn theme(
     Some(value) => value
     None =>
       match scheme {
-        @core.ColorScheme::Light => light_theme()
-        @core.ColorScheme::Dark => dark_theme()
+        Light => light_theme()
+        Dark => dark_theme()
       }
   }
   match palette {

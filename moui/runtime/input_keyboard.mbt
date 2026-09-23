@@ -10,7 +10,7 @@ fn ElementNode::dispatch_keyboard(
   if self.id == target {
     self.dispatch_view_event(
       self.view_node,
-      AppEvent::Keyboard(event),
+      Keyboard(event),
       RenderNode::empty(),
       text_system,
       environment~,
@@ -60,10 +60,8 @@ fn ElementNode::dispatch_keyboard_shortcut(
 ) -> ElementEventResult {
   // Keyboard policy is typed (ADR 0033): overlay hosts own top-most-first
   // dismissal, keyboard-shortcut modifier scopes handle their own shortcuts.
-  let owns_dismissal = self.view_node.keyboard_policy()
-    is @core.KeyboardPolicy::TopMostDismissal
-  let is_shortcut_scope = self.view_node.keyboard_policy()
-    is @core.KeyboardPolicy::ShortcutScope
+  let owns_dismissal = self.view_node.keyboard_policy() is TopMostDismissal
+  let is_shortcut_scope = self.view_node.keyboard_policy() is ShortcutScope
   let own = if owns_dismissal {
     // Give the host the first chance to consume Escape so a focused base
     // control cannot observe the event before the top-most presentation
@@ -71,7 +69,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
     // this tree dispatch; this pass stays for unconsumed fall-through.)
     self.dispatch_view_event(
       self.view_node,
-      AppEvent::Keyboard(event),
+      Keyboard(event),
       RenderNode::empty(),
       text_system,
       environment~,
@@ -107,7 +105,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
         // change (meaning the shortcut matched) do we activate the first child.
         let scope_own = self.dispatch_view_event(
           self.view_node,
-          AppEvent::Keyboard(event),
+          Keyboard(event),
           RenderNode::empty(),
           text_system,
           environment~,
@@ -192,7 +190,7 @@ fn ElementNode::activate_primary(
   } else {
     self.dispatch_view_event(
       self.view_node,
-      AppEvent::Keyboard(KeyboardEvent::new(key="Enter")),
+      Keyboard(KeyboardEvent::new(key="Enter")),
       RenderNode::empty(),
       text_system,
       environment~,

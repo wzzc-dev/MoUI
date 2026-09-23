@@ -14,9 +14,9 @@ test "window frame state coalesces pending frames and ignores late completion af
   let ime_syncs = Ref(0)
   let finishes = Ref(0)
   let disposals = Ref(0)
-  let state = WindowFrameState::new(
+  let state = @frame.WindowFrameState::new(
     renderer=frame_test_renderer(disposals),
-    hooks=WindowFrameHooks::new(
+    hooks=@frame.WindowFrameHooks::new(
       finish_presented=_ => finishes.val = finishes.val + 1,
       request_redraw=() => redraws.val = redraws.val + 1,
       sync_ime=() => ime_syncs.val = ime_syncs.val + 1,
@@ -44,7 +44,7 @@ test "window frame state coalesces pending frames and ignores late completion af
     submitted_at_ms=0.0,
     completed_at_ms=1.0,
     presented_at_ms=1.0,
-    status=@render.RenderPresentStatus::Presented,
+    status=Presented,
     gpu_context_generation=1,
   )
   assert_false(state.accept_present_completions([stale]))
@@ -54,7 +54,7 @@ test "window frame state coalesces pending frames and ignores late completion af
     submitted_at_ms=0.0,
     completed_at_ms=1.0,
     presented_at_ms=1.0,
-    status=@render.RenderPresentStatus::Presented,
+    status=Presented,
     gpu_context_generation=1,
   )
   assert_true(state.accept_present_completions([completion]))
@@ -73,7 +73,7 @@ test "window frame state coalesces pending frames and ignores late completion af
 
 ///|
 test "window frame collections isolate sessions by window" {
-  let states = WindowFrameStates::new()
+  let states = @frame.WindowFrameStates::new()
   let first_disposals = Ref(0)
   let second_disposals = Ref(0)
   let first = @backend_host.WindowId::new(1)

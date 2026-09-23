@@ -3,13 +3,13 @@ test "window service state rejects re-entry and disposes exactly once" {
   let handled = Ref(0)
   let disposed = Ref(0)
   let reentry_closed = Ref(false)
-  let holder : Ref[WindowServiceState?] = Ref(None)
-  let state = WindowServiceState::new(
+  let holder : Ref[@services.WindowServiceState?] = Ref(None)
+  let state = @services.WindowServiceState::new(
     bridge=@backend_host.HostServiceBridge::new(
       capabilities=@backend_host.HostServiceCapabilities::new(open_url=true),
       handle=_request => {
         handled.val = handled.val + 1
-        @backend_host.HostServiceResponse::UrlOpened
+        UrlOpened
       },
     ),
     dispose=() => {
@@ -18,20 +18,14 @@ test "window service state rejects re-entry and disposes exactly once" {
         Some(current) =>
           reentry_closed.val = current
             .bridge()
-            .dispatch(
-              @backend_host.HostServiceRequest::OpenUrl("https://closed.test"),
-            )
-            is @backend_host.HostServiceResponse::Unavailable(_)
+            .dispatch(OpenUrl("https://closed.test"))
+            is Unavailable(_)
         None => ()
       }
     },
   )
   holder.val = Some(state)
-  ignore(
-    state
-    .bridge()
-    .dispatch(@backend_host.HostServiceRequest::OpenUrl("https://open.test")),
-  )
+  ignore(state.bridge().dispatch(OpenUrl("https://open.test")))
   inspect(handled.val, content="1")
   state.dispose()
   state.dispose()

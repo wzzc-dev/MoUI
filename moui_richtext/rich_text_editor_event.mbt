@@ -17,7 +17,7 @@ fn[Msg] rich_text_editor_event(
   visible_overscan~ : Double,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       rich_text_pointer_event(
         ctx,
         value~,
@@ -32,7 +32,7 @@ fn[Msg] rich_text_editor_event(
         visible_viewport_height~,
         visible_overscan~,
       )
-    @core.AppEvent::Keyboard(event) =>
+    Keyboard(event) =>
       rich_text_keyboard_event(
         ctx,
         value~,
@@ -45,7 +45,7 @@ fn[Msg] rich_text_editor_event(
         accepts_tab_input~,
         event~,
       )
-    @core.AppEvent::TextInput(event) =>
+    TextInput(event) =>
       rich_text_input_event(
         ctx,
         value~,
@@ -81,8 +81,7 @@ fn[Msg] rich_text_pointer_event(
   // the caret (see the Down branch), so the menu the host builds next describes
   // what was pressed; every other button and phase is ignored, which keeps a
   // right-drag from selecting and leaves the wheel path (button 0) untouched.
-  if event.button != 0 &&
-    !(event.button == 1 && event.phase == @core.PointerPhase::Down) {
+  if event.button != 0 && !(event.button == 1 && event.phase == Down) {
     return @core.ViewEventResult::ignored()
   }
   let inside = ctx.frame.contains(event.position)
@@ -100,7 +99,7 @@ fn[Msg] rich_text_pointer_event(
     )
   }
   match event.phase {
-    @core.PointerPhase::Down =>
+    Down =>
       if inside {
         let text = value
         let document = format(text)
@@ -141,7 +140,7 @@ fn[Msg] rich_text_pointer_event(
               composition: None,
               composition_cursor: None,
             }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
             messages=selection_messages(on_selection_change, caret, None),
           )
         }
@@ -163,7 +162,7 @@ fn[Msg] rich_text_pointer_event(
               focused=true,
               captured=true,
               text_control=Some(ctx.text_control),
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              dirty=ViewPaintDirty,
               messages=[handler(offset)],
             )
           }
@@ -203,7 +202,7 @@ fn[Msg] rich_text_pointer_event(
               focused=true,
               captured=true,
               text_control=Some(next_control),
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              dirty=ViewPaintDirty,
               messages=prefix_messages +
                 selection_messages(on_selection_change, caret, None),
             )
@@ -212,7 +211,7 @@ fn[Msg] rich_text_pointer_event(
       } else {
         @core.ViewEventResult::ignored()
       }
-    @core.PointerPhase::Move =>
+    Move =>
       match ctx.text_control.text_selection_anchor {
         Some(anchor) => {
           let text = value
@@ -248,7 +247,7 @@ fn[Msg] rich_text_pointer_event(
             changed~,
             captured=true,
             text_control=Some(next_control),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
             messages=if changed {
               selection_messages(on_selection_change, caret, next_selection)
             } else {
@@ -258,15 +257,13 @@ fn[Msg] rich_text_pointer_event(
         }
         None => @core.ViewEventResult::ignored()
       }
-    @core.PointerPhase::Up
-    | @core.PointerPhase::Cancel
-    | @core.PointerPhase::Exit => {
+    Up | Cancel | Exit => {
       let changed = ctx.text_control.text_selection_anchor is Some(_)
       view_event_result(
         changed~,
         captured=changed,
-        text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        text_control=Some({ ..ctx.text_control, text_selection_anchor: None, }),
+        dirty=ViewPaintDirty,
       )
     }
   }
@@ -307,7 +304,7 @@ fn[Msg] rich_text_scroll_event(
         changed=next_y != visible_scroll_y,
         activated=next_y != visible_scroll_y,
         captured=true,
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        dirty=ViewPaintDirty,
         messages=if next_y != visible_scroll_y { [handler(next_y)] } else { [] },
       )
     }
@@ -340,7 +337,7 @@ fn[Msg] rich_text_keyboard_event(
       on_input_edit~,
       on_selection_change~,
       input_transform~,
-      event=@core.TextInputEvent::InsertText(text),
+      event=InsertText(text),
       record_history=true,
     )
   }
@@ -352,7 +349,7 @@ fn[Msg] rich_text_keyboard_event(
       on_input_edit~,
       on_selection_change~,
       input_transform~,
-      event=@core.TextInputEvent::InsertText("\n"),
+      event=InsertText("\n"),
       record_history=true,
     )
   }
@@ -362,7 +359,7 @@ fn[Msg] rich_text_keyboard_event(
       changed=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
       messages=selection_messages(
         on_selection_change,
         next_control.caret,
@@ -376,7 +373,7 @@ fn[Msg] rich_text_keyboard_event(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
         text_input_edit_messages(
           on_input_edit,
@@ -397,7 +394,7 @@ fn[Msg] rich_text_keyboard_event(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
         text_input_edit_messages(
           on_input_edit,
@@ -422,7 +419,7 @@ fn[Msg] rich_text_keyboard_event(
           on_input_edit~,
           on_selection_change~,
           input_transform~,
-          event=@core.TextInputEvent::DeleteRange(selection),
+          event=DeleteRange(selection),
           record_history=true,
         )
       None =>
@@ -433,7 +430,7 @@ fn[Msg] rich_text_keyboard_event(
           on_input_edit~,
           on_selection_change~,
           input_transform~,
-          event=@core.TextInputEvent::DeleteSurrounding(1, 0),
+          event=DeleteSurrounding(1, 0),
           record_history=true,
         )
     }
@@ -448,7 +445,7 @@ fn[Msg] rich_text_keyboard_event(
           on_input_edit~,
           on_selection_change~,
           input_transform~,
-          event=@core.TextInputEvent::DeleteRange(selection),
+          event=DeleteRange(selection),
           record_history=true,
         )
       None =>
@@ -459,7 +456,7 @@ fn[Msg] rich_text_keyboard_event(
           on_input_edit~,
           on_selection_change~,
           input_transform~,
-          event=@core.TextInputEvent::DeleteSurrounding(0, 1),
+          event=DeleteSurrounding(0, 1),
           record_history=true,
         )
     }
@@ -498,7 +495,7 @@ fn[Msg] rich_text_keyboard_event(
     return rich_text_caret_move_result(
       ctx,
       value,
-      @core.TextCaretDirection::MoveLeft,
+      MoveLeft,
       event.modifiers.shift,
       on_selection_change,
     )
@@ -507,7 +504,7 @@ fn[Msg] rich_text_keyboard_event(
     return rich_text_caret_move_result(
       ctx,
       value,
-      @core.TextCaretDirection::MoveRight,
+      MoveRight,
       event.modifiers.shift,
       on_selection_change,
     )
@@ -538,7 +535,7 @@ fn[Msg] rich_text_keyboard_event(
           on_input_edit~,
           on_selection_change~,
           input_transform~,
-          event=@core.TextInputEvent::InsertText(text),
+          event=InsertText(text),
           record_history=true,
         )
       } else {
@@ -561,10 +558,10 @@ fn[Msg] rich_text_input_event(
 ) -> @core.ViewEventResult[Msg] {
   let text = value
   let result = match event {
-    @core.TextInputEvent::InsertText(inserted) =>
+    InsertText(inserted) =>
       if inserted == "" {
         (
-          { text, control: ctx.text_control, changed: false, edit: None } :
+          { text, control: ctx.text_control, changed: false, edit: None, } :
           TextInputApplyResult)
       } else {
         match
@@ -585,7 +582,7 @@ fn[Msg] rich_text_input_event(
             apply_text_input(ctx.text_control, text, event, record_history~)
         }
       }
-    @core.TextInputEvent::DeleteRange(_) =>
+    DeleteRange(_) =>
       match
         rich_text_transform_insert(
           input_transform,
@@ -602,7 +599,7 @@ fn[Msg] rich_text_input_event(
           )
         None => apply_text_input(ctx.text_control, text, event, record_history~)
       }
-    @core.TextInputEvent::DeleteSurrounding(before, after) => {
+    DeleteSurrounding(before, after) => {
       let signal = if before > 0 && after == 0 {
         "\u{0008}"
       } else if before == 0 && after > 0 {
@@ -638,7 +635,7 @@ fn[Msg] rich_text_input_event(
     changed=result.changed,
     captured=result.changed,
     text_control=Some(result.control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    dirty=ViewPaintDirty,
     messages=if result.changed {
       text_input_messages(on_input, result.text) +
       text_input_edit_messages(
@@ -673,7 +670,7 @@ fn[Msg] rich_text_editor_command(
   let text = value
   let document = format(text)
   match intent {
-    @core.CommandIntent::Copy =>
+    Copy =>
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(
           clipboard_text=Some(
@@ -681,7 +678,7 @@ fn[Msg] rich_text_editor_command(
           ),
         ),
       )
-    @core.CommandIntent::Cut => {
+    Cut => {
       let copied = selected_rich_text(
         text,
         document,
@@ -696,7 +693,7 @@ fn[Msg] rich_text_editor_command(
             on_input_edit~,
             on_selection_change~,
             input_transform~,
-            event=@core.TextInputEvent::DeleteRange(selection),
+            event=DeleteRange(selection),
             record_history=true,
           )
           @core.ViewTextCommandResult::new(
@@ -714,7 +711,7 @@ fn[Msg] rich_text_editor_command(
           )
       }
     }
-    @core.CommandIntent::Paste =>
+    Paste =>
       match paste_text {
         Some(value_to_paste) => {
           let event_result = rich_text_input_event(
@@ -724,7 +721,7 @@ fn[Msg] rich_text_editor_command(
             on_input_edit~,
             on_selection_change~,
             input_transform~,
-            event=@core.TextInputEvent::InsertText(value_to_paste),
+            event=InsertText(value_to_paste),
             record_history=true,
           )
           @core.ViewTextCommandResult::new(
@@ -740,7 +737,7 @@ fn[Msg] rich_text_editor_command(
             result=@core.TextCommandResult::handled(),
           )
       }
-    @core.CommandIntent::Undo => {
+    Undo => {
       let result = restore_text_history(ctx.text_control, text, undo=true)
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
@@ -763,7 +760,7 @@ fn[Msg] rich_text_editor_command(
         },
       )
     }
-    @core.CommandIntent::Redo => {
+    Redo => {
       let result = restore_text_history(ctx.text_control, text, undo=false)
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
@@ -786,7 +783,7 @@ fn[Msg] rich_text_editor_command(
         },
       )
     }
-    @core.CommandIntent::SelectAll => {
+    SelectAll => {
       let next_control = select_rich_text_control(ctx.text_control, text)
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=true),
@@ -819,7 +816,7 @@ fn rich_text_input_state(
   ignore(visible_overscan)
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let control = if selection_caret >= 0 {
-    { ..control, caret: selection_caret, selection: selection_range }
+    { ..control, caret: selection_caret, selection: selection_range, }
   } else {
     control
   }
@@ -882,7 +879,7 @@ fn[Msg] rich_text_caret_move_result(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    dirty=ViewPaintDirty,
     messages=if changed {
       selection_messages(
         on_selection_change,

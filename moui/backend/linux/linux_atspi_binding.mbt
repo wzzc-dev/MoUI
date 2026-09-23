@@ -36,13 +36,13 @@ pub fn LinuxATSPIBinding::publish_semantics(
   }
   ignore(@accesskit_bridge.accesskit_update_from_semantics_read(read))
   match read {
-    @runtime.SemanticsRead::Full(snapshot) => {
+    Full(snapshot) => {
       self.published_nodes.clear()
       for node in snapshot.nodes() {
         self.published_nodes[node.node_id] = ()
       }
     }
-    @runtime.SemanticsRead::Delta(delta) => {
+    Delta(delta) => {
       for node_id in delta.removed() {
         self.published_nodes.remove(node_id)
       }
@@ -50,7 +50,7 @@ pub fn LinuxATSPIBinding::publish_semantics(
         self.published_nodes[node.node_id] = ()
       }
     }
-    @runtime.SemanticsRead::Unchanged(_) => ()
+    Unchanged(_) => ()
   }
   self.diagnostics()
 }
@@ -61,14 +61,11 @@ pub fn LinuxATSPIBinding::perform_action(
   request : @runtime.PerformSemanticsActionRequest,
 ) -> @accesskit_bridge.AccessKitActionResult {
   if self.disposed {
-    return @accesskit_bridge.AccessKitActionResult::BridgeUnavailable(
-      "Linux AT-SPI binding is disposed",
-    )
+    return BridgeUnavailable("Linux AT-SPI binding is disposed")
   }
   let result = (self.dispatch)(request)
   match result {
-    @accesskit_bridge.AccessKitActionResult::Handled(_) =>
-      self.action_dispatch_count = self.action_dispatch_count + 1
+    Handled(_) => self.action_dispatch_count = self.action_dispatch_count + 1
     _ => ()
   }
   result

@@ -169,7 +169,7 @@ fn skia_text_descriptor_preflight(
   let shaping_plan = shaping.resource_plan(text_bytes)
   let shaped_run_plan = shaped_run.resource_plan(text_bytes)
   let glyph_run_plan = glyph_run.resource_plan(text_bytes)
-  SkiaTextDescriptorPreflight::{
+  {
     family_count: families.length(),
     fallback_character: fallback.character,
     fallback_ready: !fallback.is_empty(),
@@ -188,13 +188,11 @@ fn skia_text_descriptor_preflight(
 ///|
 fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
   let descriptor = skia_text_descriptor_preflight(
-    @core.FontSpec::new(size=18.0, weight=500, style=@core.FontStyle::Italic),
+    @core.FontSpec::new(size=18.0, weight=500, style=Italic),
     "A\u{1F469}\u{200D}\u{1F373}",
   )
   let font = @core.FontSpec::new(
-    families=@core.FontFamilyStack::system_ui().with_fallback(
-      @core.FontFamily::Emoji,
-    ),
+    families=@core.FontFamilyStack::system_ui().with_fallback(Emoji),
     size=18.0,
     weight=500,
   )
@@ -211,7 +209,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
   let empty_typeface_emoji_retry_disabled = skia_emoji_fallback_draw_font(
       font,
       "\u{1F469}\u{200D}\u{1F373}",
-      SkiaFontResolution::EmptyTypeface,
+      EmptyTypeface,
     )
     is None
   let missing_glyph_recovery_ready = skia_sample_missing_glyph_recovery_ready()
@@ -239,7 +237,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
   let gap_count = skia_gap_count([
     bidi_reordering_ready, paragraph_line_breaking_ready, deterministic_color_emoji_ready,
   ])
-  SkiaTextMaturityPreflight::{
+  {
     descriptor_ready: descriptor.ready(),
     fallback_request_ready: !fallback_request.is_empty() &&
     fallback_request.has_character(),
@@ -517,7 +515,7 @@ fn skia_preflight_family_candidates(font : @core.FontSpec) -> Array[String] {
     }
   }
   if candidates.is_empty() {
-    skia_font_family_candidates(@core.FontFamily::SystemUi)
+    skia_font_family_candidates(SystemUi)
   } else {
     candidates
   }

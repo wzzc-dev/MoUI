@@ -54,7 +54,7 @@ fn markdown_editor_insert_front_matter(
     source: text,
     caret: markdown_editor_text_length(snippet),
     selection: None,
-    edit_range: Some({ start: 0, end: 0 }),
+    edit_range: Some({ start: 0, end: 0, }),
   }
 }
 
@@ -99,7 +99,7 @@ fn markdown_editor_replace_with_block(
   let suffix = markdown_editor_block_insert_suffix(chars, end)
   let text = before + prefix + block + suffix + after
   let caret = markdown_editor_text_length(before + prefix + block)
-  { source: text, caret, selection: None, edit_range: Some({ start, end }) }
+  { source: text, caret, selection: None, edit_range: Some({ start, end, }), }
 }
 
 ///|

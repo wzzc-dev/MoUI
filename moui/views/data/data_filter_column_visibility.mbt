@@ -23,14 +23,14 @@ pub fn[Msg] column_visibility_panel(
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
-      role=@style.TextRole::Control,
+      role=Control,
       theme=resolved_theme,
       width=inner_width,
       height=26.0,
     ),
     @text.text(
       summary_label,
-      role=@style.TextRole::Caption,
+      role=Caption,
       theme=resolved_theme,
       width=inner_width,
       height=22.0,
@@ -40,7 +40,7 @@ pub fn[Msg] column_visibility_panel(
     rows.push(
       @text.text(
         "No columns",
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=inner_width,
         height=28.0,
@@ -61,18 +61,14 @@ pub fn[Msg] column_visibility_panel(
     }
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start),
     width~,
     height=column_visibility_panel_height(columns.length()),
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .semantics_description(summary_label)
   .accessibility_label("Column visibility")
 }
@@ -104,13 +100,7 @@ fn[Msg] column_visibility_row(
       )
       .frame(width=label_width, height=32.0)
       .disabled(disabled=locked),
-      @text.text(
-        status,
-        role=@style.TextRole::Caption,
-        theme~,
-        width=72.0,
-        height=28.0,
-      ).foreground(
+      @text.text(status, role=Caption, theme~, width=72.0, height=28.0).foreground(
         if visible {
           theme.palette.foreground
         } else {
@@ -119,9 +109,9 @@ fn[Msg] column_visibility_row(
       ),
     ],
     spacing=theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
+    align=Center,
   )
-  .semantics_role(@core.SemanticsRole::ListItem)
+  .semantics_role(ListItem)
   .semantics_selected(selected=visible)
   .disabled(disabled=locked)
   .accessibility_label(column.label + ", " + status)

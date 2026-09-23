@@ -22,7 +22,7 @@ fn Model::tutorial_content(
       tutorial_action_section(self.locale, theme, metrics),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -53,7 +53,7 @@ fn tutorial_intro_section(
         ),
         badge(
           website_message(locale, "tutorial.badge"),
-          tone=@views.BadgeTone::Accent,
+          tone=Accent,
           theme~,
           width=116.0,
           height=26.0,
@@ -63,7 +63,7 @@ fn tutorial_intro_section(
           theme~,
           width=metrics.content_width,
           height=if metrics.compact { 46.0 } else { 54.0 },
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         )
         .font(
           @text.FontSpec::new(
@@ -77,7 +77,7 @@ fn tutorial_intro_section(
           theme~,
           width=metrics.content_width,
           height=32.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         )
         .font(@text.FontSpec::new(size=18.0, weight=720))
         .foreground(website_green(theme)),
@@ -110,11 +110,11 @@ fn tutorial_intro_section(
             ),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ).frame(width=metrics.content_width),
     top=if metrics.compact { 48.0 } else { 68.0 },
     bottom=if metrics.compact { 48.0 } else { 64.0 },
@@ -153,7 +153,7 @@ fn tutorial_course_section(
               theme~,
               width=metrics.content_width,
               height=40.0,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             )
             .font(@text.FontSpec::new(size=28.0, weight=820))
             .foreground(theme.palette.foreground),
@@ -166,12 +166,12 @@ fn tutorial_course_section(
             ),
           ],
           spacing=6.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         grid(cards, columns=lesson_columns, row_spacing=16.0, column_spacing~),
       ],
       spacing=26.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ).frame(width=metrics.content_width),
     top=if metrics.compact { 48.0 } else { 64.0 },
     bottom=if metrics.compact { 48.0 } else { 68.0 },
@@ -213,7 +213,7 @@ fn tutorial_lesson_card(
               website_message_with(locale, "tutorial.lesson.badge", [
                 ("number", lesson.number),
               ]),
-              tone=@views.BadgeTone::Accent,
+              tone=Accent,
               theme~,
               width=96.0,
               height=24.0,
@@ -221,22 +221,22 @@ fn tutorial_lesson_card(
             spacer(min_length=0.0, weight=1.0),
             text(
               lesson.id,
-              role=@views.TextRole::Mono,
+              role=Mono,
               theme~,
               width=id_width,
               height=24.0,
-              align=@text.TextAlign::TextEnd,
+              align=TextEnd,
             ).foreground(theme.palette.muted),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ).frame(width=inner_width),
         text(
           website_message(locale, lesson.title_key),
           theme~,
           width=inner_width,
           height=28.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         )
         .font(@text.FontSpec::new(size=20.0, weight=800))
         .foreground(theme.palette.foreground),
@@ -245,7 +245,7 @@ fn tutorial_lesson_card(
           theme~,
           width=inner_width,
           height=22.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         )
         .font(@text.FontSpec::new(size=14.0, weight=650))
         .foreground(lesson.accent),
@@ -256,19 +256,19 @@ fn tutorial_lesson_card(
           13.0,
           20.0,
         ),
-        row(tags, spacing=8.0, align=@views.CrossAlign::Center),
+        row(tags, spacing=8.0, align=Center),
         button(
           website_message(locale, "action.open_lesson"),
           on_click=OpenPlaygroundLesson(lesson.id),
-          variant=@views.ButtonVariant::Tonal,
-          icon=Some(@views.IconName::ArrowRight),
+          variant=Tonal,
+          icon=Some(ArrowRight),
           theme~,
           width=154.0,
           height=36.0,
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ).frame(width=inner_width),
     width~,
     height=if compact { 284.0 } else { 264.0 },
@@ -297,7 +297,7 @@ fn tutorial_action_section(
         theme~,
         width=copy_width,
         height=34.0,
-        align=@text.TextAlign::TextStart,
+        align=TextStart,
       )
       .font(@text.FontSpec::new(size=24.0, weight=820))
       .foreground(theme.palette.foreground),
@@ -310,24 +310,24 @@ fn tutorial_action_section(
       ),
     ],
     spacing=4.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   ).frame(width=copy_width)
   let action = button(
     website_message(locale, "action.open_playground"),
     on_click=OpenPlayground,
-    variant=@views.ButtonVariant::Primary,
-    icon=Some(@views.IconName::ArrowRight),
+    variant=Primary,
+    icon=Some(ArrowRight),
     theme~,
     width=176.0,
     height=42.0,
   )
   let content = if metrics.compact {
-    column([copy, action], spacing=20.0, align=@views.CrossAlign::Start)
+    column([copy, action], spacing=20.0, align=Start)
   } else {
     row(
       [copy, spacer(min_length=0.0, weight=1.0), action],
       spacing=20.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ).frame(width=metrics.content_width)
   }
   section_shell(
@@ -412,16 +412,10 @@ fn tutorial_wrapped_text(
   let lines : Array[@moui.View[Msg]] = []
   for line in website_doc_wrap_lines(value, width, font_size) {
     lines.push(
-      text(
-        line,
-        theme~,
-        width~,
-        height=line_height,
-        align=@text.TextAlign::TextStart,
-      )
+      text(line, theme~, width~, height=line_height, align=TextStart)
       .font(font)
       .foreground(theme.palette.muted),
     )
   }
-  column(lines, spacing=0.0, align=@views.CrossAlign::Start)
+  column(lines, spacing=0.0, align=Start)
 }

@@ -4,7 +4,7 @@ fn[Msg] text_field_control(
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
   on_input? : ((String) -> Msg)? = None,
   on_submit? : Msg? = None,
@@ -58,7 +58,7 @@ fn[Msg] text_field_control(
           }
           @core.ViewSemanticsActionResult::accepted(
             text_control=Some(text_control),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
           )
         }),
       ]
@@ -108,7 +108,7 @@ fn[Msg] controlled_text_field_control(
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
   on_submit? : Msg? = None,
   kind? : String = "TextField",
@@ -133,7 +133,7 @@ fn[Msg] search_bar_control(
   query~ : String,
   placeholder~ : String,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
   on_input? : ((String) -> Msg)? = None,
   on_submit? : Msg? = None,
@@ -193,7 +193,7 @@ fn[Msg] search_bar_control(
                 Some(selection.start)
               },
             }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
           )
         }),
       ]
@@ -217,7 +217,7 @@ pub fn[Msg] controlled_search_bar_control(
   on_input~ : (String) -> Msg,
   placeholder~ : String,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
   on_submit? : Msg? = None,
   on_clear? : Msg? = None,

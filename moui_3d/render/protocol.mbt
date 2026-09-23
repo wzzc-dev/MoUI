@@ -28,7 +28,7 @@ pub fn ThreeDRendererDescriptor::new(
   status~ : ThreeDRendererStatus,
   description? : String = "",
 ) -> ThreeDRendererDescriptor {
-  { id, backend, status, description }
+  { id, backend, status, description, }
 }
 
 ///|
@@ -127,7 +127,7 @@ pub fn ThreeDResourceKey::new(
   kind~ : ThreeDResourceKind,
   value~ : Int64,
 ) -> ThreeDResourceKey {
-  { kind, value }
+  { kind, value, }
 }
 
 ///|
@@ -158,7 +158,7 @@ pub fn ThreeDResourceDiff::new(
   revision~ : Int64,
   changes~ : Array[ThreeDResourceChange],
 ) -> ThreeDResourceDiff {
-  { revision, changes: changes.copy() }
+  { revision, changes: changes.copy(), }
 }
 
 ///|
@@ -182,7 +182,7 @@ pub struct ThreeDResourceGraph {
 
 ///|
 pub fn ThreeDResourceGraph::new() -> ThreeDResourceGraph {
-  { resident: Ref([]), revisions: Ref([]) }
+  { resident: Ref([]), revisions: Ref([]), }
 }
 
 ///|
@@ -203,40 +203,40 @@ pub fn ThreeDResourceGraph::sync(
   let changes : Array[ThreeDResourceChange] = []
   for change in diff.changes() {
     match change {
-      ThreeDResourceChange::Create(key) => {
+      Create(key) => {
         desired.push(key)
         match find_resource_key(self.resident.val, key) {
           None => {
             self.resident.val.push(key)
             self.revisions.val.push(diff.revision())
-            changes.push(ThreeDResourceChange::Create(key))
+            changes.push(Create(key))
           }
           Some(_) => ()
         }
       }
-      ThreeDResourceChange::Update(key) => {
+      Update(key) => {
         desired.push(key)
         match find_resource_key(self.resident.val, key) {
           None => {
             self.resident.val.push(key)
             self.revisions.val.push(diff.revision())
-            changes.push(ThreeDResourceChange::Create(key))
+            changes.push(Create(key))
           }
           Some(index) if self.revisions.val[index] != diff.revision() => {
             self.revisions.val[index] = diff.revision()
-            changes.push(ThreeDResourceChange::Update(key))
+            changes.push(Update(key))
           }
           _ => ()
         }
       }
-      ThreeDResourceChange::Remove(_) => ()
+      Remove(_) => ()
     }
   }
   let mut index = 0
   while index < self.resident.val.length() {
     let key = self.resident.val[index]
     if !contains_resource_key(desired, key) {
-      changes.push(ThreeDResourceChange::Remove(key))
+      changes.push(Remove(key))
       ignore(self.resident.val.remove(index))
       ignore(self.revisions.val.remove(index))
     } else {
@@ -427,14 +427,12 @@ pub fn ThreeDRenderPacket::resource_payload(
       output.write_char(';')
     }
     match change {
-      ThreeDResourceChange::Create(_) => output.write_string("create:")
-      ThreeDResourceChange::Update(_) => output.write_string("update:")
-      ThreeDResourceChange::Remove(_) => output.write_string("remove:")
+      Create(_) => output.write_string("create:")
+      Update(_) => output.write_string("update:")
+      Remove(_) => output.write_string("remove:")
     }
     match change {
-      ThreeDResourceChange::Create(key)
-      | ThreeDResourceChange::Update(key)
-      | ThreeDResourceChange::Remove(key) => {
+      Create(key) | Update(key) | Remove(key) => {
         output.write_string(resource_kind_name(key.kind()))
         output.write_char(':')
         output.write_string(key.value().to_string())
@@ -447,12 +445,12 @@ pub fn ThreeDRenderPacket::resource_payload(
 ///|
 fn resource_kind_name(kind : ThreeDResourceKind) -> String {
   match kind {
-    ThreeDResourceKind::Mesh => "mesh"
-    ThreeDResourceKind::Material => "material"
-    ThreeDResourceKind::Texture => "texture"
-    ThreeDResourceKind::Sampler => "sampler"
-    ThreeDResourceKind::Skin => "skin"
-    ThreeDResourceKind::Pipeline => "pipeline"
+    Mesh => "mesh"
+    Material => "material"
+    Texture => "texture"
+    Sampler => "sampler"
+    Skin => "skin"
+    Pipeline => "pipeline"
   }
 }
 
@@ -596,9 +594,9 @@ pub fn ThreeDRenderPacket::from_snapshot(
           None => ()
           Some(mesh) => {
             changes.push(
-              ThreeDResourceChange::Update(
+              Update(
                 ThreeDResourceKey::new(
-                  kind=ThreeDResourceKind::Mesh,
+                  kind=Mesh,
                   value=mesh_id.value().to_int64(),
                 ),
               ),
@@ -608,11 +606,8 @@ pub fn ThreeDRenderPacket::from_snapshot(
               None => ()
               Some(skin) =>
                 changes.push(
-                  ThreeDResourceChange::Update(
-                    ThreeDResourceKey::new(
-                      kind=ThreeDResourceKind::Skin,
-                      value=skin.to_int64(),
-                    ),
+                  Update(
+                    ThreeDResourceKey::new(kind=Skin, value=skin.to_int64()),
                   ),
                 )
             }
@@ -628,9 +623,9 @@ pub fn ThreeDRenderPacket::from_snapshot(
               match primitive.material() {
                 Some(id) => {
                   changes.push(
-                    ThreeDResourceChange::Update(
+                    Update(
                       ThreeDResourceKey::new(
-                        kind=ThreeDResourceKind::Material,
+                        kind=Material,
                         value=id.value().to_int64(),
                       ),
                     ),
@@ -638,9 +633,9 @@ pub fn ThreeDRenderPacket::from_snapshot(
                   match material.base_color_texture() {
                     Some(texture) =>
                       changes.push(
-                        ThreeDResourceChange::Update(
+                        Update(
                           ThreeDResourceKey::new(
-                            kind=ThreeDResourceKind::Texture,
+                            kind=Texture,
                             value=texture.value().to_int64(),
                           ),
                         ),
@@ -650,9 +645,9 @@ pub fn ThreeDRenderPacket::from_snapshot(
                   match material.normal_texture() {
                     Some(texture) =>
                       changes.push(
-                        ThreeDResourceChange::Update(
+                        Update(
                           ThreeDResourceKey::new(
-                            kind=ThreeDResourceKind::Texture,
+                            kind=Texture,
                             value=texture.value().to_int64(),
                           ),
                         ),
@@ -662,9 +657,9 @@ pub fn ThreeDRenderPacket::from_snapshot(
                   match material.occlusion_texture() {
                     Some(texture) =>
                       changes.push(
-                        ThreeDResourceChange::Update(
+                        Update(
                           ThreeDResourceKey::new(
-                            kind=ThreeDResourceKind::Texture,
+                            kind=Texture,
                             value=texture.value().to_int64(),
                           ),
                         ),
@@ -674,9 +669,9 @@ pub fn ThreeDRenderPacket::from_snapshot(
                   match material.emissive_texture() {
                     Some(texture) =>
                       changes.push(
-                        ThreeDResourceChange::Update(
+                        Update(
                           ThreeDResourceKey::new(
-                            kind=ThreeDResourceKind::Texture,
+                            kind=Texture,
                             value=texture.value().to_int64(),
                           ),
                         ),
@@ -700,9 +695,9 @@ pub fn ThreeDRenderPacket::from_snapshot(
                               None => ()
                               Some(sampler_id) =>
                                 changes.push(
-                                  ThreeDResourceChange::Update(
+                                  Update(
                                     ThreeDResourceKey::new(
-                                      kind=ThreeDResourceKind::Sampler,
+                                      kind=Sampler,
                                       value=sampler_id.value().to_int64(),
                                     ),
                                   ),
@@ -714,7 +709,7 @@ pub fn ThreeDRenderPacket::from_snapshot(
                 }
                 None => ()
               }
-              items.push(ThreeDRenderItem::{
+              items.push({
                 node: @moui_3d.NodeId::new(node_index),
                 primitive_index,
                 model,
@@ -759,7 +754,7 @@ pub fn ThreeDFrame::new(
   size~ : ThreeDViewportSize,
 ) -> ThreeDFrame {
   let packet = ThreeDRenderPacket::from_snapshot(snapshot, size)
-  { revision, snapshot, packet, size }
+  { revision, snapshot, packet, size, }
 }
 
 ///|
@@ -769,7 +764,7 @@ pub fn ThreeDFrame::from_packet(
   packet~ : ThreeDRenderPacket,
   size~ : ThreeDViewportSize,
 ) -> ThreeDFrame {
-  { revision, snapshot, packet, size }
+  { revision, snapshot, packet, size, }
 }
 
 ///|
@@ -797,7 +792,7 @@ pub fn ThreeDFrame::with_packet(
   self : ThreeDFrame,
   packet : ThreeDRenderPacket,
 ) -> ThreeDFrame {
-  { revision: self.revision, snapshot: self.snapshot, packet, size: self.size }
+  { revision: self.revision, snapshot: self.snapshot, packet, size: self.size, }
 }
 
 ///|
@@ -861,10 +856,10 @@ pub fn ThreeDRendererSession::render(
   frame : ThreeDFrame,
 ) -> ThreeDRenderResult {
   if self.disposed {
-    return ThreeDRenderResult::Failed("renderer disposed")
+    return Failed("renderer disposed")
   }
   if frame.revision < self.last_revision {
-    return ThreeDRenderResult::Queued
+    return Queued
   }
   self.last_revision = frame.revision
   let resources = self.residency.sync(frame.packet().resources())
@@ -895,7 +890,7 @@ pub fn ThreeDRendererProvider::new(
     _size,
   ) => None,
 ) -> ThreeDRendererProvider {
-  { descriptor, bind_fn: bind, bind_surface_fn: bind_surface }
+  { descriptor, bind_fn: bind, bind_surface_fn: bind_surface, }
 }
 
 ///|
@@ -984,11 +979,11 @@ pub fn connect_viewport_host(
           Some(renderer) => {
             session.val = Some(renderer)
             bind_failed.val = false
-            set_status(@moui_3d.ViewportStatus::Ready)
+            set_status(Ready)
           }
           None => {
             bind_failed.val = true
-            set_status(@moui_3d.ViewportStatus::Unavailable(unavailable_reason))
+            set_status(Unavailable(unavailable_reason))
           }
         }
       None => ()
@@ -1005,13 +1000,10 @@ pub fn connect_viewport_host(
           ),
         )
         match result {
-          ThreeDRenderResult::Presented =>
-            set_status(@moui_3d.ViewportStatus::Ready)
-          ThreeDRenderResult::Queued => ()
-          ThreeDRenderResult::Unavailable(reason) =>
-            set_status(@moui_3d.ViewportStatus::Unavailable(reason))
-          ThreeDRenderResult::Failed(reason) =>
-            set_status(@moui_3d.ViewportStatus::Failed(reason))
+          Presented => set_status(Ready)
+          Queued => ()
+          Unavailable(reason) => set_status(Unavailable(reason))
+          Failed(reason) => set_status(Failed(reason))
         }
       }
       None => ()

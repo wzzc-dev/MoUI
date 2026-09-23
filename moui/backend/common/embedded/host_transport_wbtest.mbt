@@ -22,16 +22,11 @@ test "shell Host Wire v1 parses revisioned PlatformView events" {
       {
         schema_version: 1,
         session_generation: 7,
-        response: EmbeddedHostResponse::PlatformView(
+        response: PlatformView(
           3,
           "camera.preview",
           "preview",
-          @core.PlatformViewEvent::Named(
-            name="ready",
-            value="yes",
-            detail="",
-            flag=true
-          )
+          Named(name="ready", value="yes", detail="", flag=true)
         ),
       }
     ) => ()
@@ -48,10 +43,7 @@ test "shell Host Wire v1 parses PlatformChannel completion request ids" {
       {
         schema_version: 1,
         session_generation: 9,
-        response: EmbeddedHostResponse::PlatformChannel(
-          { value: 12 },
-          @host.PlatformChannelResponse::Error("denied")
-        ),
+        response: PlatformChannel({ value: 12, }, Error("denied")),
       }
     ) => ()
     _ => fail("expected a PlatformChannel error completion")
@@ -67,13 +59,11 @@ test "shell Host Wire parses generation-checked typed accessibility actions" {
       {
         schema_version: 1,
         session_generation: 9,
-        response: EmbeddedHostResponse::Accessibility(
+        response: Accessibility(
           {
-            target: @core.SemanticsTarget::ByNodeId(node_id),
-            precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-              generation
-            ),
-            action: @core.SemanticsAction::SetText("Luna"),
+            target: ByNodeId(node_id),
+            precondition: Exact(generation),
+            action: SetText("Luna"),
           }
         ),
       }

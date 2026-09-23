@@ -9,7 +9,7 @@ pub fn SliderStyle::new(
   thumb_size~ : Double,
   radius~ : Double,
 ) -> SliderStyle {
-  { foreground, background, thumb_color, track_height, thumb_size, radius }
+  { foreground, background, thumb_color, track_height, thumb_size, radius, }
 }
 
 ///|

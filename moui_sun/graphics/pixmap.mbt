@@ -27,9 +27,9 @@ pub(all) enum ImageQuality {
 /// Return the concrete sampling mode selected by this quality strategy.
 pub fn ImageQuality::to_sampling(self : ImageQuality) -> ImageSampling {
   match self {
-    ImageQuality::Fast => ImageSampling::Nearest
-    ImageQuality::Balanced => ImageSampling::Bilinear
-    ImageQuality::High => ImageSampling::Bicubic
+    Fast => Nearest
+    Balanced => Bilinear
+    High => Bicubic
   }
 }
 
@@ -49,7 +49,7 @@ pub fn NinePatchInsets::new(
   right~ : Int,
   bottom~ : Int,
 ) -> NinePatchInsets {
-  { left, top, right, bottom }
+  { left, top, right, bottom, }
 }
 
 ///|
@@ -68,7 +68,7 @@ struct NinePatchSlices {
 /// Create a new pixmap filled with transparent pixels
 pub fn Pixmap::new(width : Int, height : Int) -> Pixmap {
   let size = width * height * 4
-  { width, height, pixels: FixedArray::make(size, 0) }
+  { width, height, pixels: FixedArray::make(size, 0), }
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn Pixmap::get_pixels(self : Pixmap) -> FixedArray[Byte] {
 ///|
 /// Copy this pixmap and its raw pixel storage.
 pub fn Pixmap::copy(self : Pixmap) -> Pixmap {
-  { width: self.width, height: self.height, pixels: copy_pixmap_pixels(self) }
+  { width: self.width, height: self.height, pixels: copy_pixmap_pixels(self), }
 }
 
 ///|
@@ -406,7 +406,7 @@ pub fn Pixmap::blend_scaled_pixmap(
       src,
       opacity,
       None,
-      BlendMode::SourceOver,
+      SourceOver,
       x_start,
       y_start,
       x_end,
@@ -443,7 +443,7 @@ pub fn Pixmap::blend_scaled_pixmap_bilinear(
       src,
       opacity,
       None,
-      BlendMode::SourceOver,
+      SourceOver,
       x_start,
       y_start,
       x_end,
@@ -480,7 +480,7 @@ pub fn Pixmap::blend_scaled_pixmap_bicubic(
       src,
       opacity,
       None,
-      BlendMode::SourceOver,
+      SourceOver,
       x_start,
       y_start,
       x_end,
@@ -502,11 +502,10 @@ pub fn Pixmap::blend_sampled_pixmap(
   sampling : ImageSampling,
 ) -> Unit {
   match sampling {
-    ImageSampling::Nearest =>
-      self.blend_scaled_pixmap(x, y, width, height, src, opacity)
-    ImageSampling::Bilinear =>
+    Nearest => self.blend_scaled_pixmap(x, y, width, height, src, opacity)
+    Bilinear =>
       self.blend_scaled_pixmap_bilinear(x, y, width, height, src, opacity)
-    ImageSampling::Bicubic =>
+    Bicubic =>
       self.blend_scaled_pixmap_bicubic(x, y, width, height, src, opacity)
   }
 }
@@ -554,7 +553,7 @@ pub fn Pixmap::blend_scaled_pixmap_rect(
     src,
     src_rect,
     opacity,
-    ImageSampling::Nearest,
+    Nearest,
   )
 }
 
@@ -578,7 +577,7 @@ pub fn Pixmap::blend_scaled_pixmap_rect_bilinear(
     src,
     src_rect,
     opacity,
-    ImageSampling::Bilinear,
+    Bilinear,
   )
 }
 
@@ -602,7 +601,7 @@ pub fn Pixmap::blend_scaled_pixmap_rect_bicubic(
     src,
     src_rect,
     opacity,
-    ImageSampling::Bicubic,
+    Bicubic,
   )
 }
 
@@ -646,7 +645,7 @@ pub fn Pixmap::blend_sampled_pixmap_rect(
           opacity,
           None,
           sampling,
-          BlendMode::SourceOver,
+          SourceOver,
           x_start,
           y_start,
           x_end,
@@ -721,7 +720,7 @@ pub fn Pixmap::blend_tiled_pixmap_rect(
           clipped_src,
           opacity,
           None,
-          BlendMode::SourceOver,
+          SourceOver,
           x_start,
           y_start,
           x_end,
@@ -765,7 +764,7 @@ pub fn Pixmap::blend_nine_patch_pixmap(
       opacity,
       None,
       sampling,
-      BlendMode::SourceOver,
+      SourceOver,
       x_start,
       y_start,
       x_end,
@@ -1153,17 +1152,17 @@ fn blend_sampled_pixmap_rect_region(
   y_end : Int,
 ) -> Bool {
   match sampling {
-    ImageSampling::Nearest =>
+    Nearest =>
       blend_scaled_pixmap_rect_region(
         dst, x, y, width, height, src, src_rect, opacity, filter, blend_mode, x_start,
         y_start, x_end, y_end,
       )
-    ImageSampling::Bilinear =>
+    Bilinear =>
       blend_scaled_pixmap_rect_bilinear_region(
         dst, x, y, width, height, src, src_rect, opacity, filter, blend_mode, x_start,
         y_start, x_end, y_end,
       )
-    ImageSampling::Bicubic =>
+    Bicubic =>
       blend_scaled_pixmap_rect_bicubic_region(
         dst, x, y, width, height, src, src_rect, opacity, filter, blend_mode, x_start,
         y_start, x_end, y_end,

@@ -30,8 +30,8 @@ pub fn PressableState::to_interaction(
   self : PressableState,
 ) -> InteractionState {
   match self {
-    Normal => InteractionState::Normal
-    Hovered => InteractionState::Hovered
-    Pressed => InteractionState::Pressed
+    Normal => Normal
+    Hovered => Hovered
+    Pressed => Pressed
   }
 }

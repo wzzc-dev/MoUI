@@ -131,7 +131,7 @@ pub fn plan_font_fallback(
     )
   }
 
-  { spans, char_count, missing_char_count }
+  { spans, char_count, missing_char_count, }
 }
 
 ///|
@@ -140,7 +140,7 @@ fn make_font_fallback_span(
   text : String,
   char_count : Int,
 ) -> FontFallbackSpan {
-  { face_index, text, char_count }
+  { face_index, text, char_count, }
 }
 
 ///|

@@ -36,7 +36,7 @@ test "overlay host smoke" {
   let view : @core.View[Unit] = @views.overlay_host(@views.text("base"), [
     @views.PresentationSpec::new(
       id="over",
-      kind=@views.PresentationKind::Tooltip,
+      kind=Tooltip,
       content=@views.text("over"),
     ),
   ])

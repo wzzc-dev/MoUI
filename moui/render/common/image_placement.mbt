@@ -31,14 +31,13 @@ pub fn image_placement(
     image_size.height <= 0.0 ||
     frame.size.width <= 0.0 ||
     frame.size.height <= 0.0 {
-    return { frame, crop_axis: ImageCropAxis::None, visible: 1.0 }
+    return { frame, crop_axis: None, visible: 1.0, }
   }
   let image_ratio = image_size.width / image_size.height
   let frame_ratio = frame.size.width / frame.size.height
   match fit {
-    @core.ImageFit::Stretch =>
-      { frame, crop_axis: ImageCropAxis::None, visible: 1.0 }
-    @core.ImageFit::ScaleDown =>
+    Stretch => { frame, crop_axis: None, visible: 1.0, }
+    ScaleDown =>
       if image_size.width <= frame.size.width &&
         image_size.height <= frame.size.height {
         {
@@ -48,28 +47,20 @@ pub fn image_placement(
             width=image_size.width,
             height=image_size.height,
           ),
-          crop_axis: ImageCropAxis::None,
+          crop_axis: None,
           visible: 1.0,
         }
       } else {
         image_contain_placement(frame, image_size)
       }
-    @core.ImageFit::FitWidth => image_fit_width_placement(frame, image_ratio)
-    @core.ImageFit::FitHeight => image_fit_height_placement(frame, image_ratio)
-    @core.ImageFit::Contain => image_contain_placement(frame, image_size)
-    @core.ImageFit::Cover =>
+    FitWidth => image_fit_width_placement(frame, image_ratio)
+    FitHeight => image_fit_height_placement(frame, image_ratio)
+    Contain => image_contain_placement(frame, image_size)
+    Cover =>
       if image_ratio > frame_ratio {
-        {
-          frame,
-          crop_axis: ImageCropAxis::Horizontal,
-          visible: frame_ratio / image_ratio,
-        }
+        { frame, crop_axis: Horizontal, visible: frame_ratio / image_ratio, }
       } else {
-        {
-          frame,
-          crop_axis: ImageCropAxis::Vertical,
-          visible: image_ratio / frame_ratio,
-        }
+        { frame, crop_axis: Vertical, visible: image_ratio / frame_ratio, }
       }
   }
 }
@@ -88,15 +79,11 @@ fn image_fit_width_placement(
         width=frame.size.width,
         height=scaled_height,
       ),
-      crop_axis: ImageCropAxis::None,
+      crop_axis: None,
       visible: 1.0,
     }
   } else {
-    {
-      frame,
-      crop_axis: ImageCropAxis::Vertical,
-      visible: frame.size.height / scaled_height,
-    }
+    { frame, crop_axis: Vertical, visible: frame.size.height / scaled_height, }
   }
 }
 
@@ -114,15 +101,11 @@ fn image_fit_height_placement(
         width=scaled_width,
         height=frame.size.height,
       ),
-      crop_axis: ImageCropAxis::None,
+      crop_axis: None,
       visible: 1.0,
     }
   } else {
-    {
-      frame,
-      crop_axis: ImageCropAxis::Horizontal,
-      visible: frame.size.width / scaled_width,
-    }
+    { frame, crop_axis: Horizontal, visible: frame.size.width / scaled_width, }
   }
 }
 
@@ -143,7 +126,7 @@ fn image_contain_placement(
       width~,
       height~,
     ),
-    crop_axis: ImageCropAxis::None,
+    crop_axis: None,
     visible: 1.0,
   }
 }

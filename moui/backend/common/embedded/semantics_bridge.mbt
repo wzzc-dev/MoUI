@@ -28,7 +28,7 @@ fn embedded_semantics_update(
   read : @runtime.SemanticsRead,
 ) -> EmbeddedSemanticsUpdate? {
   match read {
-    @runtime.SemanticsRead::Full(snapshot) =>
+    Full(snapshot) =>
       Some({
         kind: "full",
         generation: snapshot.generation(),
@@ -40,7 +40,7 @@ fn embedded_semantics_update(
         issues: snapshot.issues(),
         announcements: [],
       })
-    @runtime.SemanticsRead::Delta(delta) =>
+    Delta(delta) =>
       Some({
         kind: "delta",
         generation: delta.to(),
@@ -52,7 +52,7 @@ fn embedded_semantics_update(
         issues: delta.issues(),
         announcements: delta.announcements(),
       })
-    @runtime.SemanticsRead::Unchanged(_) => None
+    Unchanged(_) => None
   }
 }
 
@@ -70,7 +70,7 @@ fn EmbeddedRuntimeHostBridge::sync_semantics(
       match embedded_semantics_update(read) {
         Some(update) => {
           self.semantics_cursor = Some(update.generation)
-          self.updates.push(EmbeddedHostUpdate::Semantics(update))
+          self.updates.push(Semantics(update))
         }
         None => ()
       }

@@ -40,7 +40,7 @@ pub(all) struct WechatBackendInfo {
 ///|
 pub fn wechat_backend_info() -> @host.HostAppInfo {
   @host.HostAppInfo::new(
-    backend=@host.HostBackendKind::Wechat,
+    backend=Wechat,
     description="WeChat Mini Program Skyline canvas + wasm-gc host",
   )
 }

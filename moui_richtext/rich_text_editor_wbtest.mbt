@@ -16,7 +16,7 @@ test "rich text run frame leaves right ink bleed" {
   guard commands.length() == 1 else {
     fail("expected one rich text draw command")
   }
-  guard commands[0] is @core.DrawCommand::DrawText({ text: "Today", frame, .. }) else {
+  guard commands[0] is DrawText({ text: "Today", frame, .. }) else {
     fail("expected Today text command")
   }
   assert_true(frame.origin.x == 10.0)
@@ -58,10 +58,10 @@ test "rich text editor wheel event emits a controlled scroll message" {
   )
   ignore(runtime.layout())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@core.Point::new(x=0.0, y=-48.0),
       ),
     ),

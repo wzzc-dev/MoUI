@@ -5,7 +5,7 @@ pub fn TextStyle::new(
   font~ : @core.FontSpec,
   color~ : @core.Color,
 ) -> TextStyle {
-  { font, color }
+  { font, color, }
 }
 
 ///|

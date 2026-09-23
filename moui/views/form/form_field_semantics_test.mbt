@@ -69,17 +69,16 @@ fn find_semantics_invalid(view : @core.View[Unit]) -> Bool {
 
 ///|
 test "form field semantics mark required and invalid state" {
-  let field : @core.View[Unit] = form_field(
+  let field : @core.View[Unit] = @form.form_field(
     label="Email",
     child=@text.text("input"),
     error="Email required",
     required=true,
   )
-  guard find_semantics_role(field, @core.SemanticsRole::FormField)
-    is Some(role_info) else {
+  guard find_semantics_role(field, FormField) is Some(role_info) else {
     fail("expected FormField semantics role wrapper")
   }
-  assert_true(role_info.role == Some(@core.SemanticsRole::FormField))
+  assert_true(role_info.role == Some(FormField))
   assert_true(find_semantics_required(field))
   assert_true(find_semantics_invalid(field))
   guard find_semantics_description(field) is Some(description) else {
@@ -98,13 +97,13 @@ test "form field semantics mark required and invalid state" {
 
 ///|
 test "form field without error stays valid when required" {
-  let field : @core.View[Unit] = form_field(
+  let field : @core.View[Unit] = @form.form_field(
     label="Name",
     child=@text.text("input"),
     helper="Visible name",
     required=true,
   )
-  guard find_semantics_role(field, @core.SemanticsRole::FormField) is Some(_) else {
+  guard find_semantics_role(field, FormField) is Some(_) else {
     fail("expected FormField semantics role wrapper")
   }
   assert_true(find_semantics_required(field))

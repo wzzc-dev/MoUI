@@ -12,26 +12,21 @@ pub fn native(
   text_engine~ : NativeTextEngine,
 ) -> @render.RendererProvider {
   let image_decoder = native_image_decoder()
-  let caps = wgpu_provider_capabilities(
-    provider_id="wgpu",
-    backend=@render.RendererBackendKind::NativeWgpu,
-  )
+  let caps = wgpu_provider_capabilities(provider_id="wgpu", backend=NativeWgpu)
   @render.RendererProvider::new(
     id="wgpu",
     descriptor=renderer_descriptor(),
     capabilities=() => caps,
     bind=surface => {
       match @render_common.host_surface_metrics_error(surface) {
-        Some(message) => return @render.RendererBindResult::Rejected(message)
+        Some(message) => return Rejected(message)
         None => ()
       }
       guard surface.native_surface() is Some(native_surface) else {
-        return @render.RendererBindResult::Rejected(
-          "wgpu requires a native surface capability",
-        )
+        return Rejected("wgpu requires a native surface capability")
       }
       match native_surface_error(platform, native_surface) {
-        Some(message) => return @render.RendererBindResult::Rejected(message)
+        Some(message) => return Rejected(message)
         None => ()
       }
       let renderer = create_native_renderer(
@@ -41,11 +36,11 @@ pub fn native(
         text_engine,
       ) catch {
         err =>
-          return @render.RendererBindResult::Rejected(
+          return Rejected(
             "wgpu unavailable for \{platform.label()}: \{err.message()}",
           )
       }
-      @render.RendererBindResult::Bound(
+      Bound(
         renderer.to_renderer_session(
           image_source=surface
             .image_source()
@@ -91,7 +86,7 @@ fn create_native_host_surface(
 ) -> HostWgpuSurface raise @wgpu_mbt.WgpuError {
   let instance = @wgpu_mbt.Instance::create()
   let surface = match platform {
-    WgpuNativePlatform::MacOS => {
+    MacOS => {
       let native_descriptor = @wgpu_mbt.surface_descriptor_metal_layer_new(
         wgpu_ptr_from_u64(native_surface.surface_handle()),
       )
@@ -99,12 +94,12 @@ fn create_native_host_surface(
       @wgpu_mbt.surface_descriptor_free(native_descriptor)
       surface
     }
-    WgpuNativePlatform::Windows =>
+    Windows =>
       instance.create_surface_windows_hwnd(
         wgpu_windows_hinstance(),
         wgpu_ptr_from_u64(native_surface.surface_handle()),
       )
-    WgpuNativePlatform::Linux =>
+    Linux =>
       instance.create_surface_wayland(
         wgpu_ptr_from_u64(native_surface.display_handle().unwrap()),
         wgpu_ptr_from_u64(native_surface.surface_handle()),
@@ -122,12 +117,12 @@ fn native_surface_error(
     return Some("wgpu requires a non-zero surface handle")
   }
   match platform {
-    WgpuNativePlatform::Linux =>
+    Linux =>
       match surface.display_handle() {
         Some(display) if display != 0UL => None
         _ => Some("wgpu linux requires a non-zero display handle")
       }
-    WgpuNativePlatform::MacOS | WgpuNativePlatform::Windows => None
+    MacOS | Windows => None
   }
 }
 
@@ -153,7 +148,7 @@ pub fn WgpuRenderer::to_renderer_session(
     },
     text_system=() => self.text_system(),
     present_count=() => self.present_count(),
-    recover=_reason => @render.RecoveryResult::FallbackToCpu,
+    recover=_reason => FallbackToCpu,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),
     apply_image_load_completion=completion => {

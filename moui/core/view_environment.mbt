@@ -10,7 +10,7 @@ pub fn ViewEnvironment::new(
   viewport_size~ : Size,
   environment~ : Environment,
 ) -> ViewEnvironment {
-  { viewport_size, environment }
+  { viewport_size, environment, }
 }
 
 ///|

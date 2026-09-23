@@ -476,7 +476,7 @@ pub fn FontBytesFallbackSource::new(
   font_key : String,
   font_data : Bytes,
 ) -> FontBytesFallbackSource {
-  { font_key, font_data }
+  { font_key, font_data, }
 }
 
 ///|

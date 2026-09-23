@@ -12,7 +12,7 @@ fn markdown_editor_insert_table_row(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -34,7 +34,7 @@ fn markdown_editor_insert_table_row(
           source: transform.text,
           caret: transform.caret,
           selection: transform.selection,
-          edit_range: Some({ start: insert_at, end: insert_at }),
+          edit_range: Some({ start: insert_at, end: insert_at, }),
         }
       }
       None => ()
@@ -116,7 +116,7 @@ fn markdown_editor_delete_table_row(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -167,7 +167,7 @@ fn markdown_editor_delete_table_row_at_cell(
     source: text,
     caret,
     selection: None,
-    edit_range: Some({ start: remove_start, end: row_end }),
+    edit_range: Some({ start: remove_start, end: row_end, }),
   }
 }
 
@@ -189,7 +189,7 @@ fn markdown_editor_clear_table_row(
     source: text,
     caret: row_start + 2,
     selection: None,
-    edit_range: Some({ start: row_start, end: row_end }),
+    edit_range: Some({ start: row_start, end: row_end, }),
   }
 }
 

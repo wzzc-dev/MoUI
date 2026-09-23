@@ -13,7 +13,7 @@ pub fn TextShapingDescriptor::new(
   font_key? : RendererResourceKey = RendererResourceKey::font(b""),
   width? : Float = 1000000000.0,
 ) -> TextShapingDescriptor {
-  { run, font_key, width: normalized_text_measurement_width(width) }
+  { run, font_key, width: normalized_text_measurement_width(width), }
 }
 
 ///|
@@ -37,7 +37,7 @@ pub fn TextShapingDescriptor::with_width(
   self : TextShapingDescriptor,
   width : Float,
 ) -> TextShapingDescriptor {
-  { ..self, width: normalized_text_measurement_width(width) }
+  { ..self, width: normalized_text_measurement_width(width), }
 }
 
 ///|
@@ -89,7 +89,7 @@ pub fn TextShapingDescriptor::resource_plan(
   font_byte_size? : Int64 = 0L,
   fallback_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(self.resource_descriptor(text, byte_size=shaping_byte_size))
   for
     descriptor in self.run.resource_plan(
@@ -209,7 +209,7 @@ pub fn ShapedTextRunDescriptor::resource_plan(
   font_byte_size? : Int64 = 0L,
   fallback_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(self.resource_descriptor(text, byte_size=shaped_byte_size))
   if self.is_valid() {
     for
@@ -254,7 +254,7 @@ fn normalized_shaped_glyph_ids(
   glyph_ids : Array[Int],
   count : Int,
 ) -> Array[Int] {
-  let result : Array[Int] = Array::new(capacity=count)
+  let result : Array[Int] = Array(capacity=count)
   for index in 0..<count {
     match glyph_ids.get(index) {
       Some(glyph_id) => result.push(Int::max(0, glyph_id))
@@ -269,7 +269,7 @@ fn normalized_shaped_glyph_positions(
   positions : Array[Point],
   count : Int,
 ) -> Array[Point] {
-  let result : Array[Point] = Array::new(capacity=count)
+  let result : Array[Point] = Array(capacity=count)
   for index in 0..<count {
     match positions.get(index) {
       Some(position) =>
@@ -285,7 +285,7 @@ fn normalized_shaped_glyph_clusters(
   clusters : Array[Int],
   count : Int,
 ) -> Array[Int] {
-  let result : Array[Int] = Array::new(capacity=count)
+  let result : Array[Int] = Array(capacity=count)
   for index in 0..<count {
     match clusters.get(index) {
       Some(cluster) => result.push(Int::max(0, cluster))
@@ -464,7 +464,7 @@ pub fn ShapedGlyphRunDescriptor::resource_plan(
   font_byte_size? : Int64 = 0L,
   fallback_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(
     self.resource_descriptor(text, byte_size=glyph_run_byte_size),
   )

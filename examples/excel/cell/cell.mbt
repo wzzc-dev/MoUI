@@ -54,7 +54,7 @@ pub(all) struct Cell {
 
 ///|
 pub fn CellAddress::new(row~ : Int, col~ : Int) -> CellAddress {
-  { row, col }
+  { row, col, }
 }
 
 ///|
@@ -64,7 +64,7 @@ pub fn CellAddress::key(self : CellAddress) -> String {
 
 ///|
 pub fn CellRange::new(start~ : CellAddress, end~ : CellAddress) -> CellRange {
-  { start, end }
+  { start, end, }
 }
 
 ///|
@@ -73,8 +73,8 @@ pub fn CellFormat::default() -> CellFormat {
     bold: false,
     italic: false,
     underline: false,
-    align: CellAlign::Auto,
-    num_format: NumFormat::General,
+    align: Auto,
+    num_format: General,
     bg_color: "",
     text_color: "",
   }
@@ -82,16 +82,16 @@ pub fn CellFormat::default() -> CellFormat {
 
 ///|
 pub fn Cell::empty() -> Cell {
-  { raw: "", value: CellValue::Empty, format: CellFormat::default() }
+  { raw: "", value: Empty, format: CellFormat::default(), }
 }
 
 ///|
 pub fn Cell::new(
   raw? : String = "",
-  value? : CellValue = CellValue::Empty,
+  value? : CellValue = Empty,
   format? : CellFormat = CellFormat::default(),
 ) -> Cell {
-  { raw, value, format }
+  { raw, value, format, }
 }
 
 ///|
@@ -102,27 +102,26 @@ pub fn Cell::display(self : Cell) -> String {
 ///|
 pub fn Cell::is_empty(self : Cell) -> Bool {
   self.raw.is_empty() &&
-  self.value is CellValue::Empty &&
+  self.value is Empty &&
   self.format == CellFormat::default()
 }
 
 ///|
 pub fn CellValue::to_display(self : CellValue) -> String {
   match self {
-    CellValue::Empty => ""
-    CellValue::Number(n) => format_general_number(n)
-    CellValue::Text(s) => s
-    CellValue::Error(e) => e
+    Empty => ""
+    Number(n) => format_general_number(n)
+    Text(s) => s
+    Error(e) => e
   }
 }
 
 ///|
 pub fn CellValue::format_with(self : CellValue, fmt : NumFormat) -> String {
   match (self, fmt) {
-    (CellValue::Number(n), NumFormat::Currency) => "$" + format_decimal_2(n)
-    (CellValue::Number(n), NumFormat::Percent) =>
-      format_decimal_2(n * 100.0) + "%"
-    (CellValue::Number(n), NumFormat::Fixed) => format_decimal_2(n)
+    (Number(n), Currency) => "$" + format_decimal_2(n)
+    (Number(n), Percent) => format_decimal_2(n * 100.0) + "%"
+    (Number(n), Fixed) => format_decimal_2(n)
     _ => self.to_display()
   }
 }
@@ -131,11 +130,11 @@ pub fn CellValue::format_with(self : CellValue, fmt : NumFormat) -> String {
 pub fn parse_raw_value(raw : String) -> CellValue {
   let trimmed = raw.trim().to_owned()
   if trimmed.is_empty() {
-    CellValue::Empty
+    Empty
   } else {
     match parse_number(trimmed) {
-      Some(n) => CellValue::Number(n)
-      None => CellValue::Text(raw)
+      Some(n) => Number(n)
+      None => Text(raw)
     }
   }
 }

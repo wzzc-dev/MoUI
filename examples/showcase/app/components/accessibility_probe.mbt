@@ -93,17 +93,13 @@ fn accessibility_probe(
         .semantic_id(probe_semantic_id("a11y.tree")),
         responsive_grid(
           [
-            text("A1", theme~, width=96.0).semantics_role(
-              @core.SemanticsRole::Cell,
-            ),
-            text("B1", theme~, width=96.0).semantics_role(
-              @core.SemanticsRole::Cell,
-            ),
+            text("A1", theme~, width=96.0).semantics_role(Cell),
+            text("B1", theme~, width=96.0).semantics_role(Cell),
           ],
           width=inner,
           min_column_width=96.0,
         )
-        .semantics_role(@core.SemanticsRole::Grid)
+        .semantics_role(Grid)
         .semantics_collection(
           @core.SemanticsCollectionInfo::new(row_count=1, column_count=2),
         )
@@ -121,12 +117,12 @@ fn accessibility_probe(
         .accessibility_label("Probe scroll area")
         .semantic_id(probe_semantic_id("a11y.scroll")),
         text("Actions: \{model.probe_action_count}", theme~, width=inner)
-        .semantics_role(@core.SemanticsRole::Status)
-        .semantics_live(@core.SemanticsLive::Polite, live_atomic=true)
+        .semantics_role(Status)
+        .semantics_live(Polite, live_atomic=true)
         .semantic_id(probe_semantic_id("a11y.status")),
         text("Probe alert", theme~, width=inner)
-        .semantics_role(@core.SemanticsRole::Alert)
-        .semantics_live(@core.SemanticsLive::Assertive, live_atomic=true)
+        .semantics_role(Alert)
+        .semantics_live(Assertive, live_atomic=true)
         .semantic_id(probe_semantic_id("a11y.alert")),
         @views.image(
           "assets/moonbit.svg",
@@ -139,7 +135,7 @@ fn accessibility_probe(
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     theme,
     width,

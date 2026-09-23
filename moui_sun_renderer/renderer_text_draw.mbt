@@ -94,11 +94,9 @@ fn sun_text_placeholder_start_x(
   line_width : Double,
 ) -> Double {
   match run.align {
-    @core.TextAlign::TextStart => run.frame.origin.x
-    @core.TextAlign::TextCenter =>
-      run.frame.origin.x + (run.frame.size.width - line_width) * 0.5
-    @core.TextAlign::TextEnd =>
-      run.frame.origin.x + run.frame.size.width - line_width
+    TextStart => run.frame.origin.x
+    TextCenter => run.frame.origin.x + (run.frame.size.width - line_width) * 0.5
+    TextEnd => run.frame.origin.x + run.frame.size.width - line_width
   }
 }
 
@@ -317,7 +315,7 @@ fn SunRasterRenderer::draw_text_clipped(
           ),
           font=run.font,
           color=run.color,
-          align=@core.TextAlign::TextStart,
+          align=TextStart,
         ),
         opacity,
       )
@@ -367,29 +365,20 @@ fn sun_default_platform_font_sources() -> Array[SunDefaultPlatformFontSource] {
     {
       path: "/System/Library/Fonts/Supplemental/Arial.ttf",
       families: [
-        @core.FontFamily::SystemUi,
-        @core.FontFamily::UiSansSerif,
-        @core.FontFamily::SansSerif,
-        @core.FontFamily::Name("Arial"),
-        @core.FontFamily::Name("Helvetica"),
+        SystemUi,
+        UiSansSerif,
+        SansSerif,
+        Name("Arial"),
+        Name("Helvetica"),
       ],
     },
     {
       path: "/System/Library/Fonts/Supplemental/Courier New.ttf",
-      families: [
-        @core.FontFamily::UiMonospace,
-        @core.FontFamily::Monospace,
-        @core.FontFamily::Name("Courier New"),
-        @core.FontFamily::Name("Menlo"),
-      ],
+      families: [UiMonospace, Monospace, Name("Courier New"), Name("Menlo")],
     },
     {
       path: "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
-      families: [
-        @core.FontFamily::UiSerif,
-        @core.FontFamily::Serif,
-        @core.FontFamily::Name("Times New Roman"),
-      ],
+      families: [UiSerif, Serif, Name("Times New Roman")],
     },
   ]
 }
@@ -400,7 +389,7 @@ fn sun_font_family_registration_keys(
 ) -> Array[String] {
   let keys : Array[String] = []
   match family {
-    @core.FontFamily::Name(name) => {
+    Name(name) => {
       keys.push(name)
       keys.push(name.to_lower())
     }
@@ -448,7 +437,7 @@ fn sun_font_spec_candidate_keys(font : @core.FontSpec) -> Array[String] {
   let keys : Array[String] = []
   for family in font.families.families {
     match family {
-      @core.FontFamily::Name(name) => {
+      Name(name) => {
         keys.push(name)
         keys.push(name.to_lower())
       }
@@ -471,7 +460,7 @@ fn sun_text_layout_config(
     max_width=max_width.max(0.0),
     font_size=font.size,
     line_height=(font.size * 1.2).max(1.0),
-    alignment=@sun_text.TextAlign::Left,
+    alignment=Left,
   )
 }
 
@@ -515,7 +504,7 @@ fn SunRasterRenderer::measure_text_layout(
     input.text,
     carets,
   )
-  @core.TextLayoutResult::{
+  {
     size: @core.Size::new(
       width=max_width.min(input.max_width.unwrap_or(max_width)),
       height=plan.line_height * plan.lines.length().to_double(),
@@ -534,7 +523,7 @@ fn SunRasterRenderer::measure_single_line_text(
 ) -> @core.TextLayoutResult {
   ignore(self)
   if text == "" {
-    return @core.TextLayoutResult::{
+    return {
       size: @core.Size::new(width=0.0, height=config.line_height),
       baseline: sun_text_baseline_for_faces(faces, config),
       caret_positions: [0.0],
@@ -570,7 +559,7 @@ fn SunRasterRenderer::measure_single_line_text(
   while carets.length() < text.to_array().length() + 1 {
     carets.push(width)
   }
-  @core.TextLayoutResult::{
+  {
     size: @core.Size::new(width~, height=config.line_height),
     baseline: sun_text_baseline_for_faces(faces, config),
     caret_positions: carets,

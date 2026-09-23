@@ -8,7 +8,7 @@ pub(all) struct RenderCommandList {
 
 ///|
 pub fn RenderCommandList::new(pass : RenderPassDescriptor) -> RenderCommandList {
-  { pass, commands: Array::new() }
+  { pass, commands: Array(), }
 }
 
 ///|

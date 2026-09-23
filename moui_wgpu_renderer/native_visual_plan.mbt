@@ -51,8 +51,8 @@ fn build_native_draw_plan_range(
       let command = commands[index]
       if !full {
         match command {
-          @render_common.PlanOp::Clear(_) => ()
-          @render_common.PlanOp::FillRect(rect, color) =>
+          Clear(_) => ()
+          FillRect(rect, color) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -66,7 +66,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @render_common.PlanOp::StrokeRect(rect, color, width) =>
+          StrokeRect(rect, color, width) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -80,7 +80,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @render_common.PlanOp::FillRoundedRect(rounded, color) =>
+          FillRoundedRect(rounded, color) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -94,7 +94,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @render_common.PlanOp::StrokeRoundedRect(rounded, color, width) =>
+          StrokeRoundedRect(rounded, color, width) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -108,7 +108,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @render_common.PlanOp::FillRoundedRectBrush(rounded, brush) =>
+          FillRoundedRectBrush(rounded, brush) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -122,7 +122,7 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @render_common.PlanOp::StrokeRoundedRectBrush(rounded, brush, width) =>
+          StrokeRoundedRectBrush(rounded, brush, width) =>
             append_visual_item(
               visual_vertices,
               items,
@@ -136,11 +136,11 @@ fn build_native_draw_plan_range(
               size~,
               scale_factor~,
             )
-          @render_common.PlanOp::DrawShadow(shadow) =>
+          DrawShadow(shadow) =>
             append_shadow_item(
               visual_vertices, items, shadow, state, size, scale_factor,
             )
-          @render_common.PlanOp::DrawText(run) =>
+          DrawText(run) =>
             if native_paint_state_visible(state) &&
               native_scissor_visible(
                 native_scissor_for_state(state, size, scale_factor),
@@ -155,7 +155,7 @@ fn build_native_draw_plan_range(
               let count = text_vertices.length() - start
               if count > 0 {
                 items.push(
-                  NativeDrawItem::NativeText(
+                  NativeText(
                     start,
                     count,
                     native_scissor_for_state(state, size, scale_factor),
@@ -164,38 +164,37 @@ fn build_native_draw_plan_range(
               }
               full = result.atlas_full
             }
-          @render_common.PlanOp::DrawImage(run) =>
+          DrawImage(run) =>
             append_image_item(
               image_vertices, items, run, state, size, scale_factor,
             )
-          @render_common.PlanOp::PushClip(rect) => {
+          PushClip(rect) => {
             state_stack.push(state)
             state = push_clip_state(state, rect)
           }
-          @render_common.PlanOp::PopClip =>
-            state = pop_native_paint_state(state_stack, state)
-          @render_common.PlanOp::PushRoundedClip(rounded) => {
+          PopClip => state = pop_native_paint_state(state_stack, state)
+          PushRoundedClip(rounded) => {
             state_stack.push(state)
             state = push_rounded_clip_state(state, rounded)
           }
-          @render_common.PlanOp::PopRoundedClip =>
-            state = pop_native_paint_state(state_stack, state)
-          @render_common.PlanOp::PushTransform(transform) => {
+          PopRoundedClip => state = pop_native_paint_state(state_stack, state)
+          PushTransform(transform) => {
             state_stack.push(state)
             state = {
               ..state,
               transform: multiply_transform(state.transform, transform),
             }
           }
-          @render_common.PlanOp::PopTransform =>
-            state = pop_native_paint_state(state_stack, state)
-          @render_common.PlanOp::PushOpacity(opacity) => {
+          PopTransform => state = pop_native_paint_state(state_stack, state)
+          PushOpacity(opacity) => {
             state_stack.push(state)
-            state = { ..state, opacity: state.opacity * clamp_opacity(opacity) }
+            state = {
+              ..state,
+              opacity: state.opacity * clamp_opacity(opacity),
+            }
           }
-          @render_common.PlanOp::PopOpacity =>
-            state = pop_native_paint_state(state_stack, state)
-          @render_common.PlanOp::PushLayer(layer) => {
+          PopOpacity => state = pop_native_paint_state(state_stack, state)
+          PushLayer(layer) => {
             let mask = native_layer_mask_for_state(state, layer.mask)
             let child = build_native_draw_plan_range(
               cache,
@@ -209,7 +208,7 @@ fn build_native_draw_plan_range(
               scale_factor,
             )
             items.push(
-              NativeDrawItem::NativeLayer({
+              NativeLayer({
                 plan: child.plan,
                 opacity: state.opacity * layer.opacity,
                 blend_mode: layer.blend_mode,
@@ -220,7 +219,7 @@ fn build_native_draw_plan_range(
             )
             index = child.next_index - 1
           }
-          @render_common.PlanOp::PopLayer =>
+          PopLayer =>
             if stop_at_layer {
               return {
                 plan: {
@@ -233,11 +232,8 @@ fn build_native_draw_plan_range(
                 next_index: index + 1,
               }
             }
-          @render_common.PlanOp::BeginRetainedLayer(spec) => {
-            let mask = native_layer_mask_for_state(
-              state,
-              @core.LayerMask::RectMask(spec.frame),
-            )
+          BeginRetainedLayer(spec) => {
+            let mask = native_layer_mask_for_state(state, RectMask(spec.frame))
             let child = build_native_draw_plan_range(
               cache,
               atlas,
@@ -250,10 +246,10 @@ fn build_native_draw_plan_range(
               scale_factor,
             )
             items.push(
-              NativeDrawItem::NativeLayer({
+              NativeLayer({
                 plan: child.plan,
                 opacity: state.opacity,
-                blend_mode: @core.BlendMode::SourceOver,
+                blend_mode: SourceOver,
                 mask,
                 filter: None,
                 scissor: native_layer_scissor(state, size, scale_factor, mask),
@@ -261,7 +257,7 @@ fn build_native_draw_plan_range(
             )
             index = child.next_index - 1
           }
-          @render_common.PlanOp::EndRetainedLayer(_) =>
+          EndRetainedLayer(_) =>
             if stop_at_layer {
               return {
                 plan: {
@@ -274,7 +270,7 @@ fn build_native_draw_plan_range(
                 next_index: index + 1,
               }
             }
-          @render_common.PlanOp::PushFilter(filter) => {
+          PushFilter(filter) => {
             let child = build_native_draw_plan_range(
               cache,
               atlas,
@@ -287,10 +283,10 @@ fn build_native_draw_plan_range(
               scale_factor,
             )
             items.push(
-              NativeDrawItem::NativeLayer({
+              NativeLayer({
                 plan: child.plan,
                 opacity: state.opacity,
-                blend_mode: @core.BlendMode::SourceOver,
+                blend_mode: SourceOver,
                 mask: None,
                 filter: Some(filter),
                 scissor: native_scissor_for_state(state, size, scale_factor),
@@ -298,7 +294,7 @@ fn build_native_draw_plan_range(
             )
             index = child.next_index - 1
           }
-          @render_common.PlanOp::PopFilter =>
+          PopFilter =>
             if stop_at_filter {
               return {
                 plan: {
@@ -311,9 +307,9 @@ fn build_native_draw_plan_range(
                 next_index: index + 1,
               }
             }
-          @render_common.PlanOp::DrawShaderEffect(spec) =>
+          DrawShaderEffect(spec) =>
             items.push(
-              NativeDrawItem::NativeShaderEffect({
+              NativeShaderEffect({
                 name: spec.name,
                 frame: spec.frame,
                 uniforms: spec.uniforms,
@@ -323,7 +319,7 @@ fn build_native_draw_plan_range(
                 scissor: native_scissor_for_state(state, size, scale_factor),
               }),
             )
-          @render_common.PlanOp::DrawPath(path) =>
+          DrawPath(path) =>
             append_path_item(
               visual_vertices, items, path, state, size, scale_factor,
             )

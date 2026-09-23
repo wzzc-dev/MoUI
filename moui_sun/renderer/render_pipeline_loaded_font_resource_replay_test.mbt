@@ -1,7 +1,9 @@
 ///|
 test "RenderPipeline loaded font replay uses FontLoader and RendererResources" {
-  let renderer = Renderer::new(@graphics.Canvas::new(12, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 1, 2, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(12, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 1, 2, 1,
+  )
   let loader = @text.MemoryFontLoader::new()
   ignore(loader.insert("ui-font", @text.FontData::new(make_minimal_ttf())))
   let config = @text.LayoutConfig::new(
@@ -10,7 +12,7 @@ test "RenderPipeline loaded font replay uses FontLoader and RendererResources" {
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_loaded_font_keyed("ui-font", "label", "A", 1.0, 1.0, config, paint)
   let plan = first_pipeline.resource_plan()
@@ -57,7 +59,7 @@ test "RenderPipeline loaded font replay uses FontLoader and RendererResources" {
   loader.clear()
   let second = match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_loaded_font_keyed("ui-font", "label", "A", 1.0, 1.0, config, paint),
       resources,
@@ -77,17 +79,16 @@ test "RenderPipeline loaded font replay uses FontLoader and RendererResources" {
     @graphics.Color::black(),
   )
 
-  let bad_resources = RendererResources::new(16, 16)
+  let bad_resources = @renderer.RendererResources::new(16, 16)
   match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new().draw_loaded_font_keyed(
+      @renderer.RenderPipeline::new().draw_loaded_font_keyed(
         "missing-font", "bad-label", "A", 1.0, 1.0, config, paint,
       ),
       bad_resources,
       loader,
     ) {
-    Err(RenderPipelineResourceReplayError::FontDataMissing("missing-font")) =>
-      ()
+    Err(FontDataMissing("missing-font")) => ()
     _ => abort("expected missing loader-backed font")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())
@@ -96,8 +97,10 @@ test "RenderPipeline loaded font replay uses FontLoader and RendererResources" {
 
 ///|
 test "RenderPipeline loaded font replay accepts TextSystem font loader" {
-  let renderer = Renderer::new(@graphics.Canvas::new(12, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 1, 2, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(12, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 1, 2, 1,
+  )
   let system = @text.TextSystem::new()
   match
     system.register_font_data(
@@ -116,7 +119,7 @@ test "RenderPipeline loaded font replay accepts TextSystem font loader" {
 
   let first = match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_loaded_font_keyed("ui-font", "label", "A", 1.0, 1.0, config, paint),
       resources,
@@ -139,7 +142,7 @@ test "RenderPipeline loaded font replay accepts TextSystem font loader" {
   system.clear_fonts()
   let second = match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_loaded_font_keyed("ui-font", "label", "A", 1.0, 1.0, config, paint),
       resources,
@@ -156,8 +159,10 @@ test "RenderPipeline loaded font replay accepts TextSystem font loader" {
 
 ///|
 test "RenderPipeline loaded font fallback replay uses FontLoader and RendererResources" {
-  let renderer = Renderer::new(@graphics.Canvas::new(36, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 2, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(36, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 2, 4, 4, 1,
+  )
   let loader = @text.MemoryFontLoader::new()
   ignore(
     loader.insert("primary", @text.FontData::new(make_ttf_for_codes([65]))),
@@ -171,7 +176,7 @@ test "RenderPipeline loaded font fallback replay uses FontLoader and RendererRes
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_loaded_font_fallback_keyed(
       ["primary", "fallback"],
@@ -227,7 +232,7 @@ test "RenderPipeline loaded font fallback replay uses FontLoader and RendererRes
   loader.clear()
   let second = match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_loaded_font_fallback_keyed(
         ["primary", "fallback"],
@@ -254,10 +259,10 @@ test "RenderPipeline loaded font fallback replay uses FontLoader and RendererRes
   assert_eq(resources.get_text_mask_cache().len(), 2)
   assert_true(pixmap_has_ink(renderer.get_canvas().get_pixmap()))
 
-  let bad_resources = RendererResources::new(16, 16)
+  let bad_resources = @renderer.RendererResources::new(16, 16)
   match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new().draw_loaded_font_fallback_keyed(
+      @renderer.RenderPipeline::new().draw_loaded_font_fallback_keyed(
         ["missing-font"],
         "bad-label",
         "A",
@@ -269,8 +274,7 @@ test "RenderPipeline loaded font fallback replay uses FontLoader and RendererRes
       bad_resources,
       loader,
     ) {
-    Err(RenderPipelineResourceReplayError::FontDataMissing("missing-font")) =>
-      ()
+    Err(FontDataMissing("missing-font")) => ()
     _ => abort("expected missing fallback font")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())
@@ -279,8 +283,10 @@ test "RenderPipeline loaded font fallback replay uses FontLoader and RendererRes
 
 ///|
 test "RenderPipeline loaded font fallback atlas replay uses FontLoader and RendererResources" {
-  let renderer = Renderer::new(@graphics.Canvas::new(36, 12))
-  let resources = RendererResources::with_font_capacity(24, 12, 2, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(36, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    24, 12, 2, 4, 4, 1,
+  )
   let loader = @text.MemoryFontLoader::new()
   ignore(
     loader.insert("primary", @text.FontData::new(make_ttf_for_codes([65]))),
@@ -294,7 +300,7 @@ test "RenderPipeline loaded font fallback atlas replay uses FontLoader and Rende
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_loaded_font_fallback_atlas_keyed(
       ["primary", "fallback"],
@@ -357,7 +363,7 @@ test "RenderPipeline loaded font fallback atlas replay uses FontLoader and Rende
   loader.clear()
   let second = match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_loaded_font_fallback_atlas_keyed(
         ["primary", "fallback"],
@@ -387,10 +393,12 @@ test "RenderPipeline loaded font fallback atlas replay uses FontLoader and Rende
   assert_eq(resources.get_glyph_mask_atlas().len(), 2)
   assert_true(pixmap_has_ink(renderer.get_canvas().get_pixmap()))
 
-  let bad_resources = RendererResources::with_font_capacity(24, 12, 2, 4, 4, 1)
+  let bad_resources = @renderer.RendererResources::with_font_capacity(
+    24, 12, 2, 4, 4, 1,
+  )
   match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new().draw_loaded_font_fallback_atlas_keyed(
+      @renderer.RenderPipeline::new().draw_loaded_font_fallback_atlas_keyed(
         ["missing-font"],
         "bad-glyph",
         "A",
@@ -402,8 +410,7 @@ test "RenderPipeline loaded font fallback atlas replay uses FontLoader and Rende
       bad_resources,
       loader,
     ) {
-    Err(RenderPipelineResourceReplayError::FontDataMissing("missing-font")) =>
-      ()
+    Err(FontDataMissing("missing-font")) => ()
     _ => abort("expected missing fallback atlas font")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())
@@ -413,8 +420,10 @@ test "RenderPipeline loaded font fallback atlas replay uses FontLoader and Rende
 
 ///|
 test "RenderPipeline loaded font atlas replay uses FontLoader and RendererResources" {
-  let renderer = Renderer::new(@graphics.Canvas::new(24, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(24, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 4, 4, 1,
+  )
   let loader = @text.MemoryFontLoader::new()
   ignore(loader.insert("ui-font", @text.FontData::new(make_minimal_ttf())))
   let config = @text.LayoutConfig::new(
@@ -423,7 +432,7 @@ test "RenderPipeline loaded font atlas replay uses FontLoader and RendererResour
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_loaded_font_atlas_keyed(
       "ui-font", "glyph-label", "AA", 1.0, 1.0, config, paint,
@@ -479,7 +488,7 @@ test "RenderPipeline loaded font atlas replay uses FontLoader and RendererResour
   loader.clear()
   let second = match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_loaded_font_atlas_keyed(
         "ui-font", "glyph-label", "AA", 1.0, 1.0, config, paint,
@@ -500,17 +509,18 @@ test "RenderPipeline loaded font atlas replay uses FontLoader and RendererResour
   assert_eq(second.get_resource_cache_hit_count(), 5)
   assert_eq(resources.get_glyph_mask_atlas().len(), 1)
 
-  let bad_resources = RendererResources::with_font_capacity(16, 16, 1, 4, 4, 1)
+  let bad_resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 4, 4, 1,
+  )
   match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new().draw_loaded_font_atlas_keyed(
+      @renderer.RenderPipeline::new().draw_loaded_font_atlas_keyed(
         "missing-font", "missing-glyph", "A", 1.0, 1.0, config, paint,
       ),
       bad_resources,
       loader,
     ) {
-    Err(RenderPipelineResourceReplayError::FontDataMissing("missing-font")) =>
-      ()
+    Err(FontDataMissing("missing-font")) => ()
     _ => abort("expected missing loader-backed atlas font")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())

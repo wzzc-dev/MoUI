@@ -152,8 +152,8 @@ fn parse_run_payload(
   }
   let successful_jobs = string_array_field(root, "successful_jobs")
   let artifacts = string_array_field(root, "artifacts")
-  let run = { id: run_id, head_sha, created_at, html_url }
-  let details = { successful_jobs, artifacts }
+  let run = { id: run_id, head_sha, created_at, html_url, }
+  let details = { successful_jobs, artifacts, }
   Ok((run, details, mode))
 }
 

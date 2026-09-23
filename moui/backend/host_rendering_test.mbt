@@ -14,16 +14,16 @@ test "present completion helpers distinguish terminal outcomes" {
       gpu_context_generation=1,
     )
   }
-  let recorded = [completion(@render.RenderPresentStatus::Recorded)]
+  let recorded = [completion(Recorded)]
   assert_false(@render.render_present_completions_have_terminal(recorded))
   assert_false(@render.render_present_completions_have_presented(recorded))
-  let dropped = [completion(@render.RenderPresentStatus::Dropped)]
+  let dropped = [completion(Dropped)]
   assert_true(@render.render_present_completions_have_terminal(dropped))
   assert_false(@render.render_present_completions_have_presented(dropped))
-  let fallback = [completion(@render.RenderPresentStatus::FallbackToRaster)]
+  let fallback = [completion(FallbackToRaster)]
   assert_true(@render.render_present_completions_have_terminal(fallback))
   assert_false(@render.render_present_completions_have_presented(fallback))
-  let presented = [completion(@render.RenderPresentStatus::Presented)]
+  let presented = [completion(Presented)]
   assert_true(@render.render_present_completions_have_terminal(presented))
   assert_true(@render.render_present_completions_have_presented(presented))
 }
@@ -41,14 +41,14 @@ test "host driver dispatches resize and deduplicates redraw requests" {
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=320.0, height=240.0),
   )
-  let first = driver.dispatch(Event::Resized(metrics))
-  let second = driver.dispatch(Event::Resized(metrics))
+  let first = driver.dispatch(Resized(metrics))
+  let second = driver.dispatch(Resized(metrics))
   assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
   inspect(first.redraw_requested, content="true")
   inspect(second.redraw_requested, content="true")
   inspect(scheduled.val, content="1")
   driver.begin_redraw()
-  ignore(driver.dispatch(Event::Resized(metrics)))
+  ignore(driver.dispatch(Resized(metrics)))
   inspect(scheduled.val, content="1")
   driver.finish_redraw()
   inspect(scheduled.val, content="2")
@@ -69,25 +69,21 @@ test "host driver coalesces dirty redraw while previous redraw is pending" {
   })
   ignore(
     driver.dispatch(
-      Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
   inspect(scheduled.val, content="1")
-  let pending = driver.dispatch(
-    Event::TextInput(@core.TextInputEvent::InsertText("a")),
-  )
+  let pending = driver.dispatch(TextInput(InsertText("a")))
   inspect(text.val, content="a")
   inspect(pending.redraw_requested, content="true")
   inspect(scheduled.val, content="1")
   driver.begin_redraw()
-  ignore(
-    driver.dispatch(Event::TextInput(@core.TextInputEvent::InsertText("b"))),
-  )
+  ignore(driver.dispatch(TextInput(InsertText("b"))))
   inspect(text.val, content="ab")
   inspect(scheduled.val, content="1")
   driver.finish_redraw()

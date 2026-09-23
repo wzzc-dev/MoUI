@@ -18,7 +18,7 @@ test "excel model loads, selects, edits, and formats workbook data" {
 ///|
 test "excel model applies range copy, paste, and selection navigation" {
   let model = ExcelModel::with_demo_data()
-  let ranged = { ..model, workbook: model.workbook.select_range(1, 0, 2, 1) }
+  let ranged = { ..model, workbook: model.workbook.select_range(1, 0, 2, 1), }
   let copied = update(ranged, ExcelMsg::CopyCells)
   let pasted = update(copied.select_cell(10, 0), ExcelMsg::PasteCells)
   inspect(pasted.active_sheet().display_cell(10, 0), content="Widget A")

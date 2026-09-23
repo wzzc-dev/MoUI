@@ -45,7 +45,7 @@ priv struct CliConfig {
 
 ///|
 fn default_harmonyos_config() -> HarmonyosConfig {
-  { sdk_home: None, hvigorw: None, ohpm: None, signing_config_file: None }
+  { sdk_home: None, hvigorw: None, ohpm: None, signing_config_file: None, }
 }
 
 ///|
@@ -61,12 +61,12 @@ fn default_android_config() -> AndroidConfig {
 
 ///|
 fn default_ios_config() -> IosConfig {
-  { sdk: None, arch: None, deployment_target: None }
+  { sdk: None, arch: None, deployment_target: None, }
 }
 
 ///|
 fn default_paths_config() -> PathsConfig {
-  { moon_home: None, moui_root: None, skia_root: None }
+  { moon_home: None, moui_root: None, skia_root: None, }
 }
 
 ///|
@@ -200,7 +200,7 @@ fn optional_string(
   match fields.get(key) {
     None => Ok(None)
     Some(Null) => Ok(None)
-    Some(Json::String(value)) => Ok(Some(value))
+    Some(String(value)) => Ok(Some(value))
     Some(_) => Err("config field " + key + " must be a string or null")
   }
 }
@@ -213,7 +213,7 @@ fn optional_int(
   match fields.get(key) {
     None => Ok(None)
     Some(Null) => Ok(None)
-    Some(Json::Number(value, repr=_)) if value.to_int().to_double() == value =>
+    Some(Number(value, repr=_)) if value.to_int().to_double() == value =>
       Ok(Some(value.to_int()))
     Some(_) => Err("config field " + key + " must be an integer or null")
   }
@@ -227,10 +227,10 @@ fn required_string_array(
   match fields.get(key) {
     None => Ok([])
     Some(Null) => Ok([])
-    Some(Json::Array(values)) => {
+    Some(Array(values)) => {
       let result : Array[String] = []
       for value in values {
-        guard value is Json::String(text) else {
+        guard value is String(text) else {
           return Err("config field " + key + " must be an array of strings")
         }
         result.push(text)
@@ -262,7 +262,7 @@ fn harmonyos_config_from_json(value : Json) -> Result[HarmonyosConfig, String] {
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  Ok({ sdk_home, hvigorw, ohpm, signing_config_file })
+  Ok({ sdk_home, hvigorw, ohpm, signing_config_file, })
 }
 
 ///|
@@ -290,7 +290,7 @@ fn android_config_from_json(value : Json) -> Result[AndroidConfig, String] {
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  Ok({ sdk_home, ndk_home, abi, compile_sdk, target_sdk })
+  Ok({ sdk_home, ndk_home, abi, compile_sdk, target_sdk, })
 }
 
 ///|
@@ -310,7 +310,7 @@ fn ios_config_from_json(value : Json) -> Result[IosConfig, String] {
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  Ok({ sdk, arch, deployment_target })
+  Ok({ sdk, arch, deployment_target, })
 }
 
 ///|
@@ -330,7 +330,7 @@ fn paths_config_from_json(value : Json) -> Result[PathsConfig, String] {
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  Ok({ moon_home, moui_root, skia_root })
+  Ok({ moon_home, moui_root, skia_root, })
 }
 
 ///|
@@ -339,7 +339,7 @@ fn cli_config_from_json(value : Json) -> Result[CliConfig, String] {
     return Err("cli config must be an object")
   }
   let schema_version = match fields.get("schemaVersion") {
-    Some(Json::Number(value, repr=_)) if value.to_int().to_double() == value =>
+    Some(Number(value, repr=_)) if value.to_int().to_double() == value =>
       value.to_int()
     _ => return Err("cli config schemaVersion must be an integer")
   }
@@ -375,7 +375,7 @@ fn cli_config_from_json(value : Json) -> Result[CliConfig, String] {
         Err(e) => return Err(e)
       }
   }
-  let config : CliConfig = { schema_version, harmonyos, android, ios, paths }
+  let config : CliConfig = { schema_version, harmonyos, android, ios, paths, }
   match validate_cli_config(config) {
     Ok(_) => Ok(config)
     Err(message) => Err(message)

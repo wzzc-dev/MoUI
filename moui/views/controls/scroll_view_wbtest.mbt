@@ -1,6 +1,6 @@
 ///|
 fn scroll_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
-  @core.View::from_node(ScrollTestRect::{ width, height })
+  @core.View::from_node(ScrollTestRect::{ width, height, })
 }
 
 ///|
@@ -106,7 +106,7 @@ fn scroll_test_pointer(
   phase~ : @core.PointerPhase,
   wheel_y? : Double = 0.0,
 ) -> @core.AppEvent {
-  @core.AppEvent::Pointer(
+  Pointer(
     @core.PointerEvent::new(
       position=@core.Point::new(x~, y~),
       phase~,
@@ -138,12 +138,7 @@ test "controlled scroll emits the absolute clamped offset" {
   )
   let result = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=50.0,
-        y=50.0,
-        phase=@core.PointerPhase::Move,
-        wheel_y=40.0,
-      ),
+      event=scroll_test_pointer(x=50.0, y=50.0, phase=Move, wheel_y=40.0),
       child_frames=layout.child_frames,
     ),
   )
@@ -166,18 +161,13 @@ test "scroll wheel at a clamped edge stays clean" {
   )
   let result = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=50.0,
-        y=50.0,
-        phase=@core.PointerPhase::Move,
-        wheel_y=-40.0,
-      ),
+      event=scroll_test_pointer(x=50.0, y=50.0, phase=Move, wheel_y=-40.0),
       child_frames=layout.child_frames,
     ),
   )
   assert_false(result.changed)
   assert_false(result.captured)
-  assert_true(result.dirty is @core.ViewDirtyHint::ViewClean)
+  assert_true(result.dirty is ViewClean)
   assert_true(result.messages.is_empty())
 }
 
@@ -194,12 +184,7 @@ test "uncontrolled scroll stores wheel offset in the element slot" {
   )
   let result = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=50.0,
-        y=50.0,
-        phase=@core.PointerPhase::Move,
-        wheel_y=-40.0,
-      ),
+      event=scroll_test_pointer(x=50.0, y=50.0, phase=Move, wheel_y=-40.0),
       child_frames=layout.child_frames,
     ),
   )
@@ -230,12 +215,7 @@ test "scroll request ids are applied once per mounted slot" {
   assert_true(requested_layout.child_frames[0].origin.y == -80.0)
   let scrolled = requested.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(
-        x=50.0,
-        y=50.0,
-        phase=@core.PointerPhase::Move,
-        wheel_y=-20.0,
-      ),
+      event=scroll_test_pointer(x=50.0, y=50.0, phase=Move, wheel_y=-20.0),
       child_frames=requested_layout.child_frames,
       state=initial,
     ),
@@ -291,7 +271,7 @@ test "scroll indicator is opt-in and draggable" {
   assert_true(paint.overlay_commands.length() == 1)
   let result = visible.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(x=98.0, y=80.0, phase=@core.PointerPhase::Down),
+      event=scroll_test_pointer(x=98.0, y=80.0, phase=Down),
       child_frames=layout.child_frames,
     ),
   )
@@ -331,7 +311,7 @@ test "scroll drag state and offset stay element-owned" {
   let initial = scroll_test_state_context()
   let down = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(x=50.0, y=50.0, phase=@core.PointerPhase::Down),
+      event=scroll_test_pointer(x=50.0, y=50.0, phase=Down),
       child_frames=layout.child_frames,
       state=initial,
     ),
@@ -339,7 +319,7 @@ test "scroll drag state and offset stay element-owned" {
   let after_down = down.state.unwrap_or(initial)
   let moved = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(x=50.0, y=20.0, phase=@core.PointerPhase::Move),
+      event=scroll_test_pointer(x=50.0, y=20.0, phase=Move),
       child_frames=layout.child_frames,
       state=after_down,
     ),
@@ -350,7 +330,7 @@ test "scroll drag state and offset stay element-owned" {
   )
   let released = view.event(
     scroll_test_event_context(
-      event=scroll_test_pointer(x=50.0, y=20.0, phase=@core.PointerPhase::Up),
+      event=scroll_test_pointer(x=50.0, y=20.0, phase=Up),
       child_frames=layout.child_frames,
       state=after_move,
     ),

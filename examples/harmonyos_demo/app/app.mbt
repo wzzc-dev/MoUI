@@ -28,15 +28,15 @@ pub(all) enum Msg {
 
 ///|
 pub fn Model::new() -> Model {
-  { tap_count: 0, render_hint: 0 }
+  { tap_count: 0, render_hint: 0, }
 }
 
 ///|
 pub fn update(model : Model, msg : Msg) -> Model {
   match msg {
-    TapDemo => { ..model, tap_count: model.tap_count + 1 }
-    Reset => { ..model, tap_count: 0 }
-    MarkRendered => { ..model, render_hint: model.render_hint + 1 }
+    TapDemo => { ..model, tap_count: model.tap_count + 1, }
+    Reset => { ..model, tap_count: 0, }
+    MarkRendered => { ..model, render_hint: model.render_hint + 1, }
   }
 }
 
@@ -57,15 +57,15 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
           badge("HarmonyOS", theme~, width=92.0),
         ],
         spacing=8.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       text("MoUI HarmonyOS Demo").title(),
-      text("Standalone embedded Skia route", role=@views.TextRole::Subtitle),
+      text("Standalone embedded Skia route", role=Subtitle),
       divider(theme~),
       callout(
         "Runtime proof pending",
         "This demo validates the package and host glue shape. Device or emulator smoke must prove first frame, pointer input, resize, and lifecycle before support is marked passed.",
-        tone=@views.FeedbackTone::Warning,
+        tone=Warning,
         theme~,
         width=body_width,
       ),
@@ -87,16 +87,16 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
           ),
         ],
         spacing=8.0,
-        align=@views.CrossAlign::Stretch,
+        align=Stretch,
       ),
       row(
         [button("Tap", on_click=TapDemo), button("Reset", on_click=Reset)],
         spacing=8.0,
       ),
-      text("Render hint: \{model.render_hint}", role=@views.TextRole::Caption),
+      text("Render hint: \{model.render_hint}", role=Caption),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   fill_app_surface(
     frame(content, width=body_width, height=body_height),

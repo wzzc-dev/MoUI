@@ -25,7 +25,7 @@ fn PdfWorkbenchModel::view_for_viewport(
       pdf_workbench_page_surface(self, metrics, theme),
       width=metrics.viewport.width,
       height=metrics.viewport.height,
-      variant=@views.ContainerVariant::Base,
+      variant=Base,
       theme~,
       padding=theme.spacing_scale.sm,
     )
@@ -39,11 +39,7 @@ fn PdfWorkbenchModel::view_for_viewport(
   if metrics.inspector_visible {
     body_columns.push(pdf_workbench_inspector(self, metrics, theme))
   }
-  let body = row(
-    body_columns,
-    spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Start,
-  )
+  let body = row(body_columns, spacing=theme.spacing_scale.md, align=Start)
   let rows : Array[@moui.View[PdfWorkbenchMsg]] = [header]
   match self.status {
     Failed(_) => rows.push(pdf_workbench_failure_banner(self, metrics, theme))
@@ -52,14 +48,10 @@ fn PdfWorkbenchModel::view_for_viewport(
   rows.push(body)
   rows.push(pdf_workbench_status(self, metrics, theme))
   container(
-    column(
-      rows,
-      spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Stretch,
-    ),
+    column(rows, spacing=theme.spacing_scale.md, align=Stretch),
     width=metrics.viewport.width,
     height=metrics.viewport.height,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )

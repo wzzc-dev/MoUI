@@ -24,7 +24,7 @@ test "coretext zwj caret folder moves cluster interiors to end" {
 ///|
 test "coretext explicit emoji measure folds zwj interior carets" {
   let font = @core.FontSpec::new(
-    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    families=@core.FontFamilyStack::new([Emoji]),
     size=26.0,
     weight=400,
   )
@@ -139,7 +139,7 @@ test "coretext glyph payload is private and versioned" {
     font_name: Bytes::from_array([b'T', b'e', b's', b't']),
     size_key: coretext_size_key(18.0),
     weight: 600,
-    style: @core.FontStyle::Italic,
+    style: Italic,
     scale_key: coretext_scale_key(2.0),
   })
   inspect(payload.length(), content="36")
@@ -151,7 +151,7 @@ test "coretext glyph payload is private and versioned" {
   inspect(key.font_name.length(), content="4")
   inspect(key.size_key, content="1152")
   inspect(key.weight, content="600")
-  assert_true(key.style == @core.FontStyle::Italic)
+  assert_true(key.style == Italic)
   inspect(key.scale_key, content="128")
   let legacy : Array[Byte] = []
   push_i32_le(legacy, 42)
@@ -186,7 +186,7 @@ test "coretext run layout returns shaped glyph placements" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=32.0),
     font=@core.FontSpec::new(size=18.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   match coretext_layout_for_run(run, 2.0) {
     Some(layout) => {
@@ -208,7 +208,7 @@ test "coretext run layout rejects glyph records without serialized font identity
     frame=@core.Rect::new(x=0.0, y=0.0, width=40.0, height=24.0),
     font=@core.FontSpec::new(size=18.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let bytes : Array[Byte] = []
   push_i32_le(bytes, coretext_run_protocol_version)
@@ -235,7 +235,7 @@ test "coretext run layout parses serialized font identity" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=40.0, height=24.0),
     font=@core.FontSpec::new(size=18.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let bytes : Array[Byte] = []
   let font_name = [b'T', b'e', b's', b't', b'P', b'S']
@@ -266,7 +266,7 @@ test "coretext run layout rejects trailing bytes after glyph records" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=40.0, height=24.0),
     font=@core.FontSpec::new(size=18.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let bytes : Array[Byte] = []
   let font_name = [b'T', b'e', b's', b't', b'P', b'S']
@@ -410,7 +410,7 @@ test "coretext text engine rasterizes cjk glyphs with serialized run fonts" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=40.0),
     font=@core.FontSpec::new(size=20.0, weight=400),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   match coretext_layout_glyph_records_for_run(run, 2.0) {
     Some(records) => {
@@ -436,9 +436,7 @@ test "coretext text engine rasterizes cjk glyphs with serialized run fonts" {
 ///|
 test "coretext text engine accepts named family stacks" {
   let font = @core.FontSpec::new(
-    families=@core.FontFamilyStack::named("Helvetica").with_fallback(
-      @core.FontFamily::SystemUi,
-    ),
+    families=@core.FontFamilyStack::named("Helvetica").with_fallback(SystemUi),
     size=17.0,
     weight=500,
   )
@@ -459,7 +457,7 @@ test "coretext text engine accepts named family stacks" {
     frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=32.0),
     font~,
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   match coretext_layout_for_run(run, 1.0) {
     Some(layout) => inspect(layout.glyphs().length() > 0, content="true")
@@ -504,7 +502,7 @@ test "coretext marks AppleColorEmoji raster payloads as color glyphs" {
     @utf8.encode("AppleColorEmoji", bom=false),
     18.0,
     400,
-    coretext_style_code(@core.FontStyle::Normal),
+    coretext_style_code(Normal),
   )
   if format < 0 {
     inspect("missing", content="available")
@@ -551,7 +549,7 @@ test "coretext text engine rasterizes system glyphs" {
       codepoint='a'.to_int(),
       size=18.0,
       weight=400,
-      style=@core.FontStyle::Italic,
+      style=Italic,
       scale_factor=1.0,
     ) {
     Some(glyph) => {
@@ -579,7 +577,7 @@ test "coretext raster glyph rows follow top-left baseline convention" {
       codepoint='H'.to_int(),
       size=32.0,
       weight=700,
-      style=@core.FontStyle::Normal,
+      style=Normal,
       scale_factor=1.0,
     ) {
     Some(glyph) =>

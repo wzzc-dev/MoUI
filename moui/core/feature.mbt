@@ -35,8 +35,7 @@ pub fn[Model, Msg] Feature::new(
   init~ : () -> (Model, Effect[Msg]),
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model =>
-    Subscription::none(),
+  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Feature[Model, Msg] {
   {
     init,
@@ -52,10 +51,9 @@ pub fn[Model, Msg] Feature::new_with_environment(
   init~ : () -> (Model, Effect[Msg]),
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model, ViewEnvironment) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model =>
-    Subscription::none(),
+  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Feature[Model, Msg] {
-  { init, update, view, subscriptions, commands: _model => [] }
+  { init, update, view, subscriptions, commands: _model => [], }
 }
 
 ///|
@@ -186,9 +184,9 @@ pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::commands(
   self : ScopedFeature[Parent, Child, ChildMsg, ParentMsg],
   parent : Parent,
 ) -> Array[ProgramCommand[ParentMsg]] {
-  (self.feature.commands)((self.read)(parent)).map(command =>
+  (self.feature.commands)((self.read)(parent)).map(command => {
     command.map(self.wrap)
-  )
+  })
 }
 
 ///|

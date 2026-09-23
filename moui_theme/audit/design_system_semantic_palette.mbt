@@ -84,79 +84,23 @@ pub fn DesignSemanticPaletteRole::label(
 ///|
 pub fn semantic_palette_role_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> Array[DesignSemanticPaletteRoleRecord] {
   [
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteForeground,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteBackground,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteSurface,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteSurfaceVariant,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PalettePrimary,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PalettePrimaryForeground,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteOutline,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteMuted,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteSuccess,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteWarning,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteDanger,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteInfo,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteFocus,
-      scheme,
-    ),
-    semantic_palette_role_record(
-      preset,
-      DesignSemanticPaletteRole::PaletteScrim,
-      scheme,
-    ),
+    semantic_palette_role_record(preset, PaletteForeground, scheme),
+    semantic_palette_role_record(preset, PaletteBackground, scheme),
+    semantic_palette_role_record(preset, PaletteSurface, scheme),
+    semantic_palette_role_record(preset, PaletteSurfaceVariant, scheme),
+    semantic_palette_role_record(preset, PalettePrimary, scheme),
+    semantic_palette_role_record(preset, PalettePrimaryForeground, scheme),
+    semantic_palette_role_record(preset, PaletteOutline, scheme),
+    semantic_palette_role_record(preset, PaletteMuted, scheme),
+    semantic_palette_role_record(preset, PaletteSuccess, scheme),
+    semantic_palette_role_record(preset, PaletteWarning, scheme),
+    semantic_palette_role_record(preset, PaletteDanger, scheme),
+    semantic_palette_role_record(preset, PaletteInfo, scheme),
+    semantic_palette_role_record(preset, PaletteFocus, scheme),
+    semantic_palette_role_record(preset, PaletteScrim, scheme),
   ]
 }
 
@@ -164,7 +108,7 @@ pub fn semantic_palette_role_report(
 pub fn semantic_palette_role_for(
   preset : @common.DesignPreset,
   role : DesignSemanticPaletteRole,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> DesignSemanticPaletteRoleRecord? {
   for item in semantic_palette_role_report(preset, scheme~) {
     if item.role == role {
@@ -210,7 +154,7 @@ pub fn semantic_palette_role_gap_count(preset : @common.DesignPreset) -> Int {
     if item.required &&
       (
         !item.resolves_core_surface ||
-        item.status == DesignTokenStatus::NotMapped ||
+        item.status == NotMapped ||
         item.official_token_count == 0 ||
         item.source_imported_count == 0 ||
         item.runtime_aligned_count == 0
@@ -354,8 +298,7 @@ fn semantic_palette_source_evidence(
     }
   }
   if official_token == "" {
-    match
-      token_group_resolver_for(preset, DesignSystemRequirement::SemanticPalette) {
+    match token_group_resolver_for(preset, SemanticPalette) {
       Some(group) => {
         source_declared = group.source_declared
         source_label = group.source_label
@@ -389,14 +332,14 @@ fn semantic_palette_role_status(
   resolves_core_surface : Bool,
 ) -> DesignTokenStatus {
   if !resolves_core_surface {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if evidence.runtime_aligned_count > 0 {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   } else if evidence.official_token_count > 0 ||
     evidence.source_imported_count > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   }
 }
 

@@ -24,8 +24,8 @@ pub(all) struct DesignVariantResolverRecord {
 ///|
 pub fn variant_resolver_report(
   preset : @common.DesignPreset,
-  system_scheme? : @core.ColorScheme = @core.ColorScheme::Dark,
-  density? : @common.DesignDensity = @common.DesignDensity::Standard,
+  system_scheme? : @core.ColorScheme = Dark,
+  density? : @common.DesignDensity = Standard,
 ) -> Array[DesignVariantResolverRecord] {
   let records : Array[DesignVariantResolverRecord] = []
   for item in variant_coverage(preset) {
@@ -38,8 +38,8 @@ pub fn variant_resolver_report(
 pub fn variant_resolver_for(
   preset : @common.DesignPreset,
   variant : @common.DesignSchemeVariant,
-  system_scheme? : @core.ColorScheme = @core.ColorScheme::Dark,
-  density? : @common.DesignDensity = @common.DesignDensity::Standard,
+  system_scheme? : @core.ColorScheme = Dark,
+  density? : @common.DesignDensity = Standard,
 ) -> DesignVariantResolverRecord? {
   for item in variant_resolver_report(preset, system_scheme~, density~) {
     if item.variant == variant {
@@ -60,9 +60,9 @@ pub fn variant_resolver_gap_count(preset : @common.DesignPreset) -> Int {
   for item in variant_resolver_report(preset) {
     if !item.resolves_tokens ||
       !item.resolves_theme ||
-      item.status == DesignTokenStatus::NotMapped ||
-      item.status == DesignTokenStatus::SourceMapped ||
-      item.status == DesignTokenStatus::PreviewMapped {
+      item.status == NotMapped ||
+      item.status == SourceMapped ||
+      item.status == PreviewMapped {
       count = count + 1
     }
   }
@@ -177,7 +177,7 @@ fn variant_official_source(preset : @common.DesignPreset) -> String {
 
 ///|
 fn variant_remaining_gap(coverage : DesignVariantCoverage) -> String {
-  if coverage.status == DesignTokenStatus::OfficialComplete {
+  if coverage.status == OfficialComplete {
     "none"
   } else {
     "Official scheme variant token matrices are not fully imported; this resolver proves the current neutral MoUI adapter only."
@@ -199,7 +199,7 @@ fn variant_source_for_url(
 
 ///|
 fn variant_source_locked(source : DesignSystemSource) -> Bool {
-  if source.status == DesignTokenStatus::NotMapped || source.source_ref == "" {
+  if source.status == NotMapped || source.source_ref == "" {
     false
   } else if source.source_kind == "official-source" ||
     source.source_kind == "internal-token-contract" ||

@@ -13,11 +13,7 @@ fn[Msg] dropdown_menu(
       @button.button(
         item.label,
         on_click=item.message,
-        variant=if item.enabled {
-          @style.ButtonVariant::Ghost
-        } else {
-          @style.ButtonVariant::Outline
-        },
+        variant=if item.enabled { Ghost } else { Outline },
         theme~,
         width~,
         height=34.0,
@@ -32,7 +28,7 @@ fn[Msg] dropdown_menu(
     width~,
     height=max_height,
   )
-  .semantics_role(@core.SemanticsRole::Menu)
+  .semantics_role(Menu)
   .accessibility_label(label)
 }
 

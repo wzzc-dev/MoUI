@@ -18,7 +18,7 @@ fn DesignSystemsModel::sickle_palette_panel(
           design_swatch(theme, "info", theme.palette.info),
         ],
         spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       design_metric_row(theme, "Role rows", "6"),
       design_metric_row(theme, "Role gaps", "0"),
@@ -39,13 +39,7 @@ fn DesignSystemsModel::sickle_typography_panel(
     theme,
     "Typography specimen",
     [
-      text(
-        "Title role",
-        role=@views.TextRole::Title,
-        theme~,
-        width=390.0,
-        height=34.0,
-      ),
+      text("Title role", role=Title, theme~, width=390.0, height=34.0),
       text(
         "Body role: precision typography with compact control rhythm.",
         theme~,
@@ -54,7 +48,7 @@ fn DesignSystemsModel::sickle_typography_panel(
       ),
       text(
         "Caption role / control role",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=390.0,
         height=24.0,
@@ -90,7 +84,7 @@ fn DesignSystemsModel::sickle_spacing_panel(
           spacing_tile(theme, "xl", theme.spacing_scale.xl),
         ],
         spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       design_metric_row(
         theme,
@@ -131,7 +125,7 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
           button(
             "Primary",
             on_click=ToggleCustom,
-            variant=@views.ButtonVariant::Primary,
+            variant=Primary,
             theme~,
             width=96.0,
             height=36.0,
@@ -139,7 +133,7 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
           button(
             "Tonal",
             on_click=ToggleCustom,
-            variant=@views.ButtonVariant::Tonal,
+            variant=Tonal,
             theme~,
             width=88.0,
             height=36.0,
@@ -147,7 +141,7 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
           button(
             "Outline",
             on_click=ToggleCustom,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=96.0,
             height=36.0,
@@ -155,21 +149,21 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
           button(
             "Ghost",
             on_click=ToggleCustom,
-            variant=@views.ButtonVariant::Ghost,
+            variant=Ghost,
             theme~,
             width=80.0,
             height=36.0,
           ),
         ],
         spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       row(
         [
           button(
             "Subtle",
             on_click=ToggleCustom,
-            variant=@views.ButtonVariant::Subtle,
+            variant=Subtle,
             theme~,
             width=88.0,
             height=36.0,
@@ -177,7 +171,7 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
           button(
             "Subtle brand",
             on_click=ToggleCustom,
-            variant=@views.ButtonVariant::SubtleBrand,
+            variant=SubtleBrand,
             theme~,
             width=128.0,
             height=36.0,
@@ -192,7 +186,7 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
           ),
         ],
         spacing=theme.spacing_scale.xs,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       design_metric_row(theme, "Button", "hybrid flat+skeuo"),
       design_metric_row(theme, "TextField", "layered control states"),
@@ -213,7 +207,7 @@ fn DesignSystemsModel::customization_panel(
   } else {
     "Custom override off"
   }
-  if self.preset == DesignSystemChoice::Sickle {
+  if self.preset == Sickle {
     design_panel(
       theme,
       "Custom inheritance and coverage",
@@ -223,30 +217,16 @@ fn DesignSystemsModel::customization_panel(
             button(
               custom_label,
               on_click=ToggleCustom,
-              variant=if self.custom_enabled {
-                @views.ButtonVariant::Primary
-              } else {
-                @views.ButtonVariant::Outline
-              },
+              variant=if self.custom_enabled { Primary } else { Outline },
               theme~,
               width=180.0,
               height=38.0,
             ),
-            status_badge(
-              "first-party theme",
-              tone=@views.BadgeTone::Accent,
-              theme~,
-              width=152.0,
-            ),
-            status_badge(
-              "not source-mapped",
-              tone=@views.BadgeTone::Neutral,
-              theme~,
-              width=152.0,
-            ),
+            status_badge("first-party theme", tone=Accent, theme~, width=152.0),
+            status_badge("not source-mapped", tone=Neutral, theme~, width=152.0),
           ],
           spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         design_metric_row(theme, "Custom APIs", "theme/palette/mode"),
         design_metric_row(theme, "Custom gaps", "0"),
@@ -265,30 +245,26 @@ fn DesignSystemsModel::customization_panel(
             button(
               custom_label,
               on_click=ToggleCustom,
-              variant=if self.custom_enabled {
-                @views.ButtonVariant::Primary
-              } else {
-                @views.ButtonVariant::Outline
-              },
+              variant=if self.custom_enabled { Primary } else { Outline },
               theme~,
               width=180.0,
               height=38.0,
             ),
             status_badge(
               "source-mapped preview",
-              tone=@views.BadgeTone::Warning,
+              tone=Warning,
               theme~,
               width=152.0,
             ),
             status_badge(
               "not official complete",
-              tone=@views.BadgeTone::Neutral,
+              tone=Neutral,
               theme~,
               width=152.0,
             ),
           ],
           spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         design_metric_row(
           theme,
@@ -328,22 +304,16 @@ fn design_panel(
   height~ : Double,
 ) -> @moui.View[DesignSystemsMsg] {
   let rows : Array[@moui.View[DesignSystemsMsg]] = [
-    text(
-      title,
-      role=@views.TextRole::Control,
-      theme~,
-      width=width - 32.0,
-      height=28.0,
-    ),
+    text(title, role=Control, theme~, width=width - 32.0, height=28.0),
   ]
   for child in children {
     rows.push(child)
   }
   container(
-    column(rows, spacing=theme.spacing_scale.sm, align=@views.CrossAlign::Start),
+    column(rows, spacing=theme.spacing_scale.sm, align=Start),
     width~,
     height~,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -357,23 +327,13 @@ fn design_metric_row(
 ) -> @moui.View[DesignSystemsMsg] {
   row(
     [
-      text(
-        label,
-        role=@views.TextRole::Caption,
-        theme~,
-        width=170.0,
-        height=24.0,
-      ).foreground(theme.palette.muted),
-      text(
-        value,
-        role=@views.TextRole::Caption,
-        theme~,
-        width=210.0,
-        height=24.0,
+      text(label, role=Caption, theme~, width=170.0, height=24.0).foreground(
+        theme.palette.muted,
       ),
+      text(value, role=Caption, theme~, width=210.0, height=24.0),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -384,7 +344,7 @@ fn design_swatch(
   color : @graphics.Color,
 ) -> @moui.View[DesignSystemsMsg] {
   container(
-    text(label, role=@views.TextRole::Caption, theme~, width=76.0, height=24.0).foreground(
+    text(label, role=Caption, theme~, width=76.0, height=24.0).foreground(
       theme.palette.on_primary,
     ),
     width=88.0,
@@ -405,23 +365,11 @@ fn spacing_tile(
   container(
     column(
       [
-        text(
-          label,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=54.0,
-          height=20.0,
-        ),
-        text(
-          value.to_string(),
-          role=@views.TextRole::Caption,
-          theme~,
-          width=54.0,
-          height=20.0,
-        ),
+        text(label, role=Caption, theme~, width=54.0, height=20.0),
+        text(value.to_string(), role=Caption, theme~, width=54.0, height=20.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=66.0,
     height=54.0,
@@ -435,23 +383,22 @@ fn spacing_tile(
 ///|
 fn design_status_label(status : @audit.DesignTokenStatus) -> String {
   match status {
-    @audit.DesignTokenStatus::NotMapped => "not mapped"
-    @audit.DesignTokenStatus::SourceMapped => "source mapped"
-    @audit.DesignTokenStatus::PreviewMapped => "preview"
-    @audit.DesignTokenStatus::ThemeMapped => "theme mapped"
-    @audit.DesignTokenStatus::ComponentMapped => "component"
-    @audit.DesignTokenStatus::OfficialComplete => "official"
+    NotMapped => "not mapped"
+    SourceMapped => "source mapped"
+    PreviewMapped => "preview"
+    ThemeMapped => "theme mapped"
+    ComponentMapped => "component"
+    OfficialComplete => "official"
   }
 }
 
 ///|
 fn design_status_tone(status : @audit.DesignTokenStatus) -> @views.BadgeTone {
   match status {
-    @audit.DesignTokenStatus::OfficialComplete => @views.BadgeTone::Success
-    @audit.DesignTokenStatus::ThemeMapped
-    | @audit.DesignTokenStatus::ComponentMapped => @views.BadgeTone::Accent
-    @audit.DesignTokenStatus::NotMapped => @views.BadgeTone::Danger
-    _ => @views.BadgeTone::Warning
+    OfficialComplete => Success
+    ThemeMapped | ComponentMapped => Accent
+    NotMapped => Danger
+    _ => Warning
   }
 }
 
@@ -469,11 +416,11 @@ fn design_preset_id(preset : DesignSystemChoice) -> String {
 ///|
 fn design_preset_from_id(id : String) -> DesignSystemChoice {
   match id {
-    "carbon" => DesignSystemChoice::Carbon
-    "primer" => DesignSystemChoice::Primer
-    "fluent" => DesignSystemChoice::Fluent
-    "sickle" => DesignSystemChoice::Sickle
-    _ => DesignSystemChoice::Material
+    "carbon" => Carbon
+    "primer" => Primer
+    "fluent" => Fluent
+    "sickle" => Sickle
+    _ => Material
   }
 }
 
@@ -562,54 +509,54 @@ fn design_customization_capability_gap_count(
 ///|
 fn design_scheme_id(scheme : @state.ColorScheme) -> String {
   match scheme {
-    @state.ColorScheme::Light => "light"
-    @state.ColorScheme::Dark => "dark"
+    Light => "light"
+    Dark => "dark"
   }
 }
 
 ///|
 fn design_scheme_from_id(id : String) -> @state.ColorScheme {
   match id {
-    "dark" => @state.ColorScheme::Dark
-    _ => @state.ColorScheme::Light
+    "dark" => Dark
+    _ => Light
   }
 }
 
 ///|
 fn design_variant_id(variant : @common.DesignSchemeVariant) -> String {
   match variant {
-    @common.DesignSchemeVariant::SchemeLight => "light"
-    @common.DesignSchemeVariant::SchemeDark => "dark"
-    @common.DesignSchemeVariant::SchemeHighContrast => "high"
-    @common.DesignSchemeVariant::SchemeSystem => "system"
+    SchemeLight => "light"
+    SchemeDark => "dark"
+    SchemeHighContrast => "high"
+    SchemeSystem => "system"
   }
 }
 
 ///|
 fn design_variant_from_id(id : String) -> @common.DesignSchemeVariant {
   match id {
-    "dark" => @common.DesignSchemeVariant::SchemeDark
-    "high" => @common.DesignSchemeVariant::SchemeHighContrast
-    "system" => @common.DesignSchemeVariant::SchemeSystem
-    _ => @common.DesignSchemeVariant::SchemeLight
+    "dark" => SchemeDark
+    "high" => SchemeHighContrast
+    "system" => SchemeSystem
+    _ => SchemeLight
   }
 }
 
 ///|
 fn design_density_id(density : @common.DesignDensity) -> String {
   match density {
-    @common.DesignDensity::Compact => "compact"
-    @common.DesignDensity::Standard => "standard"
-    @common.DesignDensity::Comfortable => "comfortable"
+    Compact => "compact"
+    Standard => "standard"
+    Comfortable => "comfortable"
   }
 }
 
 ///|
 fn design_density_from_id(id : String) -> @common.DesignDensity {
   match id {
-    "compact" => @common.DesignDensity::Compact
-    "comfortable" => @common.DesignDensity::Comfortable
-    _ => @common.DesignDensity::Standard
+    "compact" => Compact
+    "comfortable" => Comfortable
+    _ => Standard
   }
 }
 

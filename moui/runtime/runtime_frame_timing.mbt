@@ -15,7 +15,7 @@ pub struct ProfiledDrawFrame {
 
 ///|
 fn RuntimeFrameTiming::zero() -> RuntimeFrameTiming {
-  { build_ms: 0.0, layout_ms: 0.0, paint_ms: 0.0, draw_ms: 0.0, total_ms: 0.0 }
+  { build_ms: 0.0, layout_ms: 0.0, paint_ms: 0.0, draw_ms: 0.0, total_ms: 0.0, }
 }
 
 ///|
@@ -104,5 +104,5 @@ pub fn AppRuntime::profile_draw_frame(
     total_ms: runtime_elapsed_ms(total_start, clock()),
   }
   self.state.last_frame_timing = timing
-  { frame, timing }
+  { frame, timing, }
 }

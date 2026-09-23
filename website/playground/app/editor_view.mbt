@@ -56,7 +56,7 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
       editor,
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   @views.column(
     [
@@ -73,7 +73,7 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
       ),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   ).background(playground_editor_background())
 }
 
@@ -89,11 +89,11 @@ fn playground_toolbar(
   toolbar_items.push(
     @views.text(
       "MoUI",
-      role=@views.TextRole::Control,
+      role=Control,
       theme~,
       width=if compact { 36.0 } else { 42.0 },
       height=26.0,
-      align=@text.TextAlign::TextStart,
+      align=TextStart,
     ).foreground(playground_foreground()),
   )
   toolbar_items.push(playground_example_picker(model, theme, compact))
@@ -102,11 +102,7 @@ fn playground_toolbar(
       @views.button(
         "Packages",
         on_click=SelectFile(Package),
-        variant=if model.active_file == Package {
-          @views.ButtonVariant::Tonal
-        } else {
-          @views.ButtonVariant::Ghost
-        },
+        variant=if model.active_file == Package { Tonal } else { Ghost },
         theme~,
         width=82.0,
         height=26.0,
@@ -118,7 +114,7 @@ fn playground_toolbar(
     @views.button(
       "Share",
       on_click=Share,
-      variant=@views.ButtonVariant::Ghost,
+      variant=Ghost,
       theme~,
       width=if compact { 50.0 } else { 54.0 },
       height=26.0,
@@ -132,7 +128,7 @@ fn playground_toolbar(
         "Rebuild"
       },
       on_click=Run,
-      variant=@views.ButtonVariant::Primary,
+      variant=Primary,
       theme~,
       style=playground_rebuild_style(theme),
       width=if compact { 70.0 } else { 76.0 },
@@ -140,7 +136,7 @@ fn playground_toolbar(
     ),
   )
   @views.container(
-    @views.row(toolbar_items, spacing=2.0, align=@views.CrossAlign::Center).frame(
+    @views.row(toolbar_items, spacing=2.0, align=Center).frame(
       width=width - 4.0,
     ),
     width~,
@@ -215,11 +211,7 @@ fn playground_tabs(
         @views.button(
           "main.mbt",
           on_click=SelectFile(Main),
-          variant=if model.active_file == Main {
-            @views.ButtonVariant::Tonal
-          } else {
-            @views.ButtonVariant::Ghost
-          },
+          variant=if model.active_file == Main { Tonal } else { Ghost },
           theme~,
           width=100.0,
           height=26.0,
@@ -227,18 +219,14 @@ fn playground_tabs(
         @views.button(
           "moon.pkg",
           on_click=SelectFile(Package),
-          variant=if model.active_file == Package {
-            @views.ButtonVariant::Tonal
-          } else {
-            @views.ButtonVariant::Ghost
-          },
+          variant=if model.active_file == Package { Tonal } else { Ghost },
           theme~,
           width=96.0,
           height=26.0,
         ),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ).frame(width=width - 2.0),
     width~,
     height~,
@@ -273,11 +261,11 @@ fn playground_line_number_gutter(
         @views.text(
           (if diagnostics.contains(line.number) { "!" } else { " " }) +
           line.number.to_string(),
-          role=@views.TextRole::Mono,
+          role=Mono,
           theme~,
           width=width - 4.0,
           height=line_height,
-          align=@text.TextAlign::TextEnd,
+          align=TextEnd,
         ).foreground(
           if line.number == active {
             playground_foreground()
@@ -338,11 +326,11 @@ fn playground_status_bar(
     status_items.push(
       @views.text(
         short_status,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=90.0,
         height=22.0,
-        align=@text.TextAlign::TextStart,
+        align=TextStart,
       ).foreground(playground_muted()),
     )
     status_items.push(@views.spacer(min_length=2.0))
@@ -350,17 +338,17 @@ fn playground_status_bar(
     status_items.push(
       @views.text(
         status,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=max_playground_double(50.0, width - 360.0),
         height=22.0,
-        align=@text.TextAlign::TextStart,
+        align=TextStart,
       ).foreground(playground_muted()),
     )
     status_items.push(
       @views.text(
         "Ln " + caret.line.to_string() + ", Col " + caret.column.to_string(),
-        role=@views.TextRole::Mono,
+        role=Mono,
         theme~,
         width=92.0,
         height=22.0,
@@ -372,7 +360,7 @@ fn playground_status_bar(
     @views.button(
       "Find",
       on_click=FindNext,
-      variant=@views.ButtonVariant::Ghost,
+      variant=Ghost,
       theme~,
       width=42.0,
       height=22.0,
@@ -382,7 +370,7 @@ fn playground_status_bar(
     @views.button(
       "Reset",
       on_click=Reset,
-      variant=@views.ButtonVariant::Ghost,
+      variant=Ghost,
       theme~,
       width=50.0,
       height=22.0,
@@ -392,16 +380,14 @@ fn playground_status_bar(
     @views.button(
       "Stop",
       on_click=Stop,
-      variant=@views.ButtonVariant::Ghost,
+      variant=Ghost,
       theme~,
       width=42.0,
       height=22.0,
     ),
   )
   @views.container(
-    @views.row(status_items, spacing=2.0, align=@views.CrossAlign::Center).frame(
-      width=width - 4.0,
-    ),
+    @views.row(status_items, spacing=2.0, align=Center).frame(width=width - 4.0),
     width~,
     height~,
     background=playground_toolbar_background(),
@@ -496,7 +482,7 @@ fn playground_line_block(
         text=span.text,
         font=Some(font),
         color=playground_token_color(span.kind),
-        source_range=Some({ start: offset, end }),
+        source_range=Some({ start: offset, end, }),
       ),
     )
     offset = end
@@ -506,15 +492,15 @@ fn playground_line_block(
       @moui_richtext.RichTextRun::new(
         text="",
         font=Some(font),
-        source_range=Some({ start: line_start, end: line_start }),
+        source_range=Some({ start: line_start, end: line_start, }),
       ),
     )
   }
   @moui_richtext.RichTextBlock::new(
     runs~,
     font=Some(font),
-    source_range=Some({ start: line_start, end: source_end }),
-    content_range=Some({ start: line_start, end: content_end }),
+    source_range=Some({ start: line_start, end: source_end, }),
+    content_range=Some({ start: line_start, end: content_end, }),
     line_height=Some(font.size * 1.55),
   )
 }

@@ -9,7 +9,7 @@ pub fn data_grid_freeze_panes(
   rows? : Int = 0,
   columns? : Int = 0,
 ) -> DataGridFreezePanes {
-  { rows: rows.max(0), columns: columns.max(0) }
+  { rows: rows.max(0), columns: columns.max(0), }
 }
 
 ///|

@@ -74,7 +74,7 @@ fn cosmic_text_platform_fallback_profile() -> @moon_cosmic.FallbackProfile {
 ///|
 #cfg(not(any(platform="windows", platform="macos", platform="linux")))
 fn cosmic_text_platform_fallback_profile() -> @moon_cosmic.FallbackProfile {
-  @moon_cosmic.FallbackProfile::Other
+  Other
 }
 
 ///|
@@ -368,8 +368,8 @@ fn cosmic_text_attrs_for_font(font : @core.FontSpec) -> @moon_cosmic.Attrs {
 ///|
 fn cosmic_text_style_for_font(style : @core.FontStyle) -> @moon_swash.Style {
   match style {
-    @core.FontStyle::Normal => @moon_swash.Style::Normal
-    @core.FontStyle::Italic => @moon_swash.Style::Italic
+    Normal => Normal
+    Italic => Italic
   }
 }
 
@@ -381,17 +381,17 @@ fn cosmic_text_family_for_font(font : @core.FontSpec) -> @moon_cosmic.Family {
     font.families.families[0]
   }
   match family {
-    @core.FontFamily::Name(name) => @moon_cosmic.Family::Name(name)
-    @core.FontFamily::SystemUi => @moon_cosmic.Family::SystemUi
-    @core.FontFamily::UiSansSerif => @moon_cosmic.Family::UiSansSerif
-    @core.FontFamily::UiSerif => @moon_cosmic.Family::UiSerif
-    @core.FontFamily::UiMonospace => @moon_cosmic.Family::UiMonospace
-    @core.FontFamily::SansSerif => @moon_cosmic.Family::SansSerif
-    @core.FontFamily::Serif => @moon_cosmic.Family::Serif
-    @core.FontFamily::Monospace => @moon_cosmic.Family::Monospace
-    @core.FontFamily::Emoji => @moon_cosmic.Family::Emoji
-    @core.FontFamily::Math => @moon_cosmic.Family::Math
-    @core.FontFamily::FangSong => @moon_cosmic.Family::FangSong
+    Name(name) => Name(name)
+    SystemUi => SystemUi
+    UiSansSerif => UiSansSerif
+    UiSerif => UiSerif
+    UiMonospace => UiMonospace
+    SansSerif => SansSerif
+    Serif => Serif
+    Monospace => Monospace
+    Emoji => Emoji
+    Math => Math
+    FangSong => FangSong
   }
 }
 
@@ -408,11 +408,7 @@ fn build_cosmic_text_buffer(
   let attrs = cosmic_text_attrs_for_font(run.font)
   let text = cosmic_text_layout_text(run.text, run.font)
   let preserves_source = cosmic_text_preserves_source_text(run.font)
-  let wrap = if preserves_source {
-    @moon_cosmic.Wrap::Glyph
-  } else {
-    @moon_cosmic.Wrap::None
-  }
+  let wrap = if preserves_source { @moon_cosmic.Wrap::Glyph } else { None }
   let width = if preserves_source {
     None
   } else {
@@ -421,11 +417,7 @@ fn build_cosmic_text_buffer(
   @moon_cosmic.Buffer::new(metrics)
   .set_wrap(wrap)
   .set_size(width, None)
-  .set_text(
-    text,
-    @moon_cosmic.AttrsList::new(attrs),
-    @moon_cosmic.Shaping::Advanced,
-  )
+  .set_text(text, @moon_cosmic.AttrsList::new(attrs), Advanced)
   .shape_all_with_font_system(cache.font_system)
   .layout_all_with_font_system(cache.font_system)
 }
@@ -445,7 +437,7 @@ fn build_cosmic_text_input_buffer(
   let wrap = if cosmic_text_preserves_source_text(input.font) {
     @moon_cosmic.Wrap::Glyph
   } else {
-    @moon_cosmic.Wrap::None
+    None
   }
   @moon_cosmic.Buffer::new(metrics)
   .set_wrap(wrap)
@@ -453,11 +445,7 @@ fn build_cosmic_text_input_buffer(
   // provider measure pass unconstrained avoids width-triggered shaping panics
   // for emoji and mixed-script diagnostic strings.
   .set_size(None, None)
-  .set_text(
-    text,
-    @moon_cosmic.AttrsList::new(attrs),
-    @moon_cosmic.Shaping::Advanced,
-  )
+  .set_text(text, @moon_cosmic.AttrsList::new(attrs), Advanced)
   .shape_all_with_font_system(cache.font_system)
   .layout_all_with_font_system(cache.font_system)
 }
@@ -672,7 +660,7 @@ fn cosmic_text_layout_text(text : String, font : @core.FontSpec) -> String {
 
 ///|
 fn cosmic_text_preserves_source_text(font : @core.FontSpec) -> Bool {
-  font.families.families.any(family => family is @core.FontFamily::Emoji)
+  font.families.families.any(family => family is Emoji)
 }
 
 ///|
@@ -1091,7 +1079,7 @@ fn CosmicTextCache::raster_cosmic_glyph(
     self.font_system,
     cache_key,
     @moon_cosmic.Color::rgba(b'\xff', b'\xff', b'\xff', b'\xff'),
-    fn(x, y, color) { pixels.push({ x, y, color }) },
+    fn(x, y, color) { pixels.push({ x, y, color, }) },
   )
   if pixels.is_empty() {
     None
@@ -1111,7 +1099,7 @@ fn CosmicTextCache::raster_cosmic_glyph(
     let format = if color_glyph {
       @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba
     } else {
-      @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask
+      AlphaMask
     }
     let bytes_per_pixel = if color_glyph { 4 } else { 1 }
     let bytes = Array::make(width * height * bytes_per_pixel, b'\x00')
@@ -1147,7 +1135,7 @@ fn CosmicTextCache::cosmic_glyph_uses_color_bitmap(
   cache_key : @moon_cosmic.CacheKey,
 ) -> Bool {
   match self.swash_cache.get_image(self.font_system, cache_key) {
-    Some(image) => image.content() is @moon_swash_scale.Content::Color
+    Some(image) => image.content() is Color
     None => false
   }
 }

@@ -143,7 +143,7 @@ pub let cell_gap : Double = 1.0
 
 ///|
 pub fn ExcelApp::new() -> ExcelApp {
-  { model: ExcelModel::new() }
+  { model: ExcelModel::new(), }
 }
 
 ///|
@@ -185,7 +185,7 @@ pub fn ExcelModel::from_workbook(
     edit_redo_stack: workbook.redo_stack.copy(),
     file_name,
     status,
-    file_status: ExcelFileStatus::Idle,
+    file_status: Idle,
     context_menu_visible: false,
     cell_ref_input: "",
     heat_map: false,
@@ -418,7 +418,7 @@ pub fn ExcelModel::set_formula_bar_value(
 ) -> ExcelModel {
   match self.workbook.selection {
     None =>
-      { ..self.update_autocomplete(value), edit_value: value, editing: false }
+      { ..self.update_autocomplete(value), edit_value: value, editing: false, }
     Some(sel) => self.set_cell_raw(sel.row, sel.col, value)
   }
 }
@@ -614,7 +614,7 @@ pub fn ExcelModel::go_to_cell(
     None =>
       match @cell.parse_ref(target) {
         Some(addr) => self.select_cell(addr.row, addr.col)
-        None => { ..self, status: "Invalid cell reference: " + ref_str }
+        None => { ..self, status: "Invalid cell reference: " + ref_str, }
       }
   }
 }
@@ -624,7 +624,7 @@ pub fn ExcelModel::update_edit_value(
   self : ExcelModel,
   value : String,
 ) -> ExcelModel {
-  { ..self.update_autocomplete(value), edit_value: value }
+  { ..self.update_autocomplete(value), edit_value: value, }
 }
 
 ///|
@@ -641,7 +641,7 @@ pub fn ExcelModel::update_autocomplete(
       }
     }
   }
-  { ..self, autocomplete_suggestions: suggestions, autocomplete_index: 0 }
+  { ..self, autocomplete_suggestions: suggestions, autocomplete_index: 0, }
 }
 
 ///|
@@ -712,7 +712,7 @@ pub fn ExcelModel::toggle_format(
   status : String,
 ) -> ExcelModel {
   let workbook = self.workbook.set_selected_format(updater)
-  { ..self, workbook, status }
+  { ..self, workbook, status, }
 }
 
 ///|
@@ -721,35 +721,35 @@ pub fn ExcelModel::handle_context_menu(
   action : ContextMenuAction,
 ) -> ExcelModel {
   match action {
-    ContextMenuAction::Cut =>
+    Cut =>
       {
         ..self,
         workbook: self.workbook.cut_selected(),
         context_menu_visible: false,
         status: "Cut",
       }
-    ContextMenuAction::Copy =>
+    Copy =>
       {
         ..self,
         workbook: self.workbook.copy_selected(),
         context_menu_visible: false,
         status: "Copied",
       }
-    ContextMenuAction::Paste =>
+    Paste =>
       {
         ..self,
         workbook: self.workbook.paste_selected(),
         context_menu_visible: false,
         status: "Pasted",
       }
-    ContextMenuAction::Delete | ContextMenuAction::ClearContents =>
+    Delete | ClearContents =>
       {
         ..self,
         workbook: self.workbook.clear_selected(),
         context_menu_visible: false,
         status: "Cleared",
       }
-    ContextMenuAction::InsertRowAbove => {
+    InsertRowAbove => {
       let row = match self.workbook.selection {
         Some(sel) => sel.row
         None => 0
@@ -761,7 +761,7 @@ pub fn ExcelModel::handle_context_menu(
         status: "Inserted row",
       }
     }
-    ContextMenuAction::InsertRowBelow => {
+    InsertRowBelow => {
       let row = match self.workbook.selection {
         Some(sel) => sel.row + 1
         None => 0
@@ -773,7 +773,7 @@ pub fn ExcelModel::handle_context_menu(
         status: "Inserted row",
       }
     }
-    ContextMenuAction::DeleteRow => {
+    DeleteRow => {
       let row = match self.workbook.selection {
         Some(sel) => sel.row
         None => 0
@@ -785,7 +785,7 @@ pub fn ExcelModel::handle_context_menu(
         status: "Deleted row",
       }
     }
-    ContextMenuAction::InsertColumnLeft => {
+    InsertColumnLeft => {
       let col = match self.workbook.selection {
         Some(sel) => sel.col
         None => 0
@@ -797,7 +797,7 @@ pub fn ExcelModel::handle_context_menu(
         status: "Inserted column",
       }
     }
-    ContextMenuAction::InsertColumnRight => {
+    InsertColumnRight => {
       let col = match self.workbook.selection {
         Some(sel) => sel.col + 1
         None => 0
@@ -809,7 +809,7 @@ pub fn ExcelModel::handle_context_menu(
         status: "Inserted column",
       }
     }
-    ContextMenuAction::DeleteColumn => {
+    DeleteColumn => {
       let col = match self.workbook.selection {
         Some(sel) => sel.col
         None => 0
@@ -821,14 +821,14 @@ pub fn ExcelModel::handle_context_menu(
         status: "Deleted column",
       }
     }
-    ContextMenuAction::SortAscending =>
+    SortAscending =>
       {
         ..self,
         workbook: self.workbook.sort_selected_by_first_column(ascending=true),
         context_menu_visible: false,
         status: "Sorted A to Z",
       }
-    ContextMenuAction::SortDescending =>
+    SortDescending =>
       {
         ..self,
         workbook: self.workbook.sort_selected_by_first_column(ascending=false),

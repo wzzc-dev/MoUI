@@ -9,7 +9,7 @@ fn ElementNode::dispatch_web_view_event(
 ) -> ElementEventResult {
   let result = self.dispatch_view_event(
     self.view_node,
-    @core.AppEvent::PlatformView(id, event),
+    PlatformView(id, event),
     RenderNode::empty(),
     text_system,
     environment~,

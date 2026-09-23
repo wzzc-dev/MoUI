@@ -37,7 +37,7 @@ fn markdown_editor_backspace_marker(
     None => ()
   }
   let chars = source.to_array()
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   match
@@ -61,7 +61,7 @@ fn markdown_editor_backspace_marker(
       markdown_editor_transform_result(
         text~,
         caret=markdown_editor_clamp_int(caret - delta, range.start, caret),
-        edit_range=Some({ start: range.start, end: range.end }),
+        edit_range=Some({ start: range.start, end: range.end, }),
       ),
     )
   }
@@ -71,7 +71,7 @@ fn markdown_editor_backspace_marker(
     markdown_editor_transform_result(
       text~,
       caret=range.start,
-      edit_range=Some({ start: range.start, end: range.end }),
+      edit_range=Some({ start: range.start, end: range.end, }),
     ),
   )
 }
@@ -103,7 +103,7 @@ fn markdown_editor_backspace_quoted_inner_marker(
     markdown_editor_transform_result(
       text~,
       caret=range.start + context_length,
-      edit_range=Some({ start: range.start, end: range.end }),
+      edit_range=Some({ start: range.start, end: range.end, }),
     ),
   )
 }
@@ -119,7 +119,7 @@ fn markdown_editor_delete_marker(
   }
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   let marker_length = markdown_editor_marker_prefix_length(line)
@@ -138,7 +138,7 @@ fn markdown_editor_delete_marker(
       markdown_editor_transform_result(
         text~,
         caret=markdown_editor_clamp_int(caret - delta, range.start, caret),
-        edit_range=Some({ start: range.start, end: range.end }),
+        edit_range=Some({ start: range.start, end: range.end, }),
       ),
     )
   }
@@ -148,7 +148,7 @@ fn markdown_editor_delete_marker(
     markdown_editor_transform_result(
       text~,
       caret=range.start,
-      edit_range=Some({ start: range.start, end: range.end }),
+      edit_range=Some({ start: range.start, end: range.end, }),
     ),
   )
 }
@@ -163,7 +163,7 @@ fn markdown_editor_delete_quoted_inner_marker(
     return None
   }
   let chars = source.to_array()
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   let context_length = markdown_editor_block_command_context_prefix_length(line)
@@ -186,7 +186,7 @@ fn markdown_editor_delete_quoted_inner_marker(
     markdown_editor_transform_result(
       text~,
       caret=range.start + context_length,
-      edit_range=Some({ start: range.start, end: range.end }),
+      edit_range=Some({ start: range.start, end: range.end, }),
     ),
   )
 }
@@ -205,7 +205,7 @@ fn markdown_editor_backspace_merge_block(
   if caret == 0 || chars[caret - 1] != '\n' {
     return None
   }
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range_from_chars(chars, current)
   if caret != range.start {
     return None
@@ -221,7 +221,7 @@ fn markdown_editor_backspace_merge_block(
       markdown_editor_transform_result(
         text~,
         caret=previous_end,
-        edit_range=Some({ start: previous_end, end: range.end }),
+        edit_range=Some({ start: previous_end, end: range.end, }),
       ),
     )
   }
@@ -246,7 +246,7 @@ fn markdown_editor_backspace_merge_block(
     markdown_editor_transform_result(
       text~,
       caret~,
-      edit_range=Some({ start: previous_start, end: range.end }),
+      edit_range=Some({ start: previous_start, end: range.end, }),
     ),
   )
 }
@@ -269,7 +269,7 @@ fn markdown_editor_delete_merge_block(
   if caret >= chars.length() || chars[caret] != '\n' {
     return None
   }
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range_from_chars(chars, current)
   if caret != range.end {
     return None
@@ -285,7 +285,7 @@ fn markdown_editor_delete_merge_block(
       markdown_editor_transform_result(
         text~,
         caret=range.end,
-        edit_range=Some({ start: range.end, end: next_end }),
+        edit_range=Some({ start: range.end, end: next_end, }),
       ),
     )
   }
@@ -309,7 +309,7 @@ fn markdown_editor_delete_merge_block(
       caret=range.start +
         markdown_editor_text_length(preserve_prefix) +
         markdown_editor_text_length(current_content),
-      edit_range=Some({ start: range.start, end: next_end }),
+      edit_range=Some({ start: range.start, end: next_end, }),
     ),
   )
 }
@@ -329,11 +329,8 @@ fn markdown_editor_preserved_merge_prefix(
     return ""
   }
   match markdown_editor_merge_block_kind(first_line) {
-    MarkdownEditorMergeBlockKind::Plain => ""
-    MarkdownEditorMergeBlockKind::Bullet
-    | MarkdownEditorMergeBlockKind::Task
-    | MarkdownEditorMergeBlockKind::Ordered
-    | MarkdownEditorMergeBlockKind::Quote =>
+    Plain => ""
+    Bullet | Task | Ordered | Quote =>
       markdown_editor_merge_block_marker_prefix(first_line)
   }
 }

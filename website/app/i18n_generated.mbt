@@ -8,9 +8,9 @@ fn website_i18n_messages() -> Array[@i18n.Message] {
     for pair in catalog.messages {
       let (key, message) = pair
       match message {
-        GeneratedI18nMessage::Text(value) =>
+        Text(value) =>
           messages.push(@i18n.Message::new(locale=catalog.locale, key~, value~))
-        GeneratedI18nMessage::Plural(one~, other~) => {
+        Plural(one~, other~) => {
           messages.push(
             @i18n.Message::new(
               locale=catalog.locale,

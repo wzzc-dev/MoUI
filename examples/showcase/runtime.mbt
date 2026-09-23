@@ -14,9 +14,9 @@ pub fn runtime(
   let diagnostics_input = diagnostics_input(host_summary, renderer_providers)
   let model = @app.ShowcaseModel::new(diagnostics_input~, route~)
   let model = if initial_section_code == 1 {
-    model.update(@app.ShowcaseMsg::Navigate("diagnostics/advanced-rendering"))
+    model.update(Navigate("diagnostics/advanced-rendering"))
   } else if initial_section_code == 2 {
-    model.update(@app.ShowcaseMsg::Navigate("components/accessibility-probe"))
+    model.update(Navigate("components/accessibility-probe"))
   } else {
     model
   }
@@ -37,10 +37,10 @@ pub fn route_host(
 ) -> @app.ShowcaseRouteHost {
   @app.ShowcaseRouteHost::new(route_source=source, dispatch_command=command => {
     match command {
-      @app.ShowcaseRouteHistoryCommand::PushRoute(route) => push(route)
-      @app.ShowcaseRouteHistoryCommand::ReplaceRoute(route) => replace(route)
-      @app.ShowcaseRouteHistoryCommand::BackRoute => back()
-      @app.ShowcaseRouteHistoryCommand::ForwardRoute => forward()
+      PushRoute(route) => push(route)
+      ReplaceRoute(route) => replace(route)
+      BackRoute => back()
+      ForwardRoute => forward()
     }
   })
 }

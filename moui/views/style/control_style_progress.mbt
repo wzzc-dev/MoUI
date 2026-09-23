@@ -6,7 +6,7 @@ pub fn ProgressStyle::new(
   background~ : @core.Color,
   radius~ : Double,
 ) -> ProgressStyle {
-  { foreground, background, radius }
+  { foreground, background, radius, }
 }
 
 ///|

@@ -22,7 +22,7 @@ fn menu_bar(
         ),
       ],
       spacing=2.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   } else {
     @views.row(
@@ -93,57 +93,27 @@ fn menu_bar(
         ),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   }
   let clock_width = if compact { 52.0 } else { 128.0 }
   let status_items = if compact {
     [
-      menu_icon(
-        @views.IconName::Search,
-        "Open app launcher",
-        ToggleLauncher,
-        palette,
-      ),
-      menu_icon(
-        @views.IconName::Settings,
-        "Open Control Center",
-        ToggleControlCenter,
-        palette,
-      ),
+      menu_icon(Search, "Open app launcher", ToggleLauncher, palette),
+      menu_icon(Settings, "Open Control Center", ToggleControlCenter, palette),
     ]
   } else {
     [
       spotlight_button(palette, theme),
-      menu_icon(
-        @views.IconName::Search,
-        "Open app launcher",
-        ToggleLauncher,
-        palette,
-      ),
-      menu_icon(
-        @views.IconName::Link,
-        "Wi-Fi connected",
-        ToggleControlCenter,
-        palette,
-      ),
-      menu_icon(
-        @views.IconName::Focus,
-        "Sound controls",
-        ToggleControlCenter,
-        palette,
-      ),
-      menu_icon(
-        @views.IconName::Settings,
-        "Open Control Center",
-        ToggleControlCenter,
-        palette,
-      ),
+      menu_icon(Search, "Open app launcher", ToggleLauncher, palette),
+      menu_icon(Link, "Wi-Fi connected", ToggleControlCenter, palette),
+      menu_icon(Focus, "Sound controls", ToggleControlCenter, palette),
+      menu_icon(Settings, "Open Control Center", ToggleControlCenter, palette),
     ]
   }
   let right = @views.row(
     [
-      @views.row(status_items, spacing=2.0, align=@views.CrossAlign::Center),
+      @views.row(status_items, spacing=2.0, align=Center),
       @views.container(
         @views.text(
           if compact {
@@ -151,11 +121,11 @@ fn menu_bar(
           } else {
             desktop_clock_menu_label(model.clock)
           },
-          role=@views.TextRole::Label,
+          role=Label,
           theme~,
           width=clock_width,
           height=20.0,
-          align=@text.TextAlign::TextEnd,
+          align=TextEnd,
         )
         .font(@text.FontSpec::new(size=12.5, weight=480))
         .foreground(palette.foreground),
@@ -169,7 +139,7 @@ fn menu_bar(
       .accessibility_label("Open Notification Center"),
     ],
     spacing=2.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   // Translucent strip across the top, matching macOS menu bar chrome.
   // Menus and status items are absolutely pinned so the bar never centers as a
@@ -216,14 +186,7 @@ fn menu_text(
   theme : @moui.Theme,
   strong : Bool,
 ) -> @moui.View[Msg] {
-  @views.text(
-    label,
-    role=@views.TextRole::Label,
-    theme~,
-    width~,
-    height=20.0,
-    align=@text.TextAlign::TextCenter,
-  )
+  @views.text(label, role=Label, theme~, width~, height=20.0, align=TextCenter)
   .font(@text.FontSpec::new(size=13.0, weight=if strong { 620 } else { 430 }))
   .foreground(palette.foreground)
 }
@@ -398,8 +361,8 @@ fn dock(
   let dock_row = @views.row(
     tiles + [separator] + utilities,
     spacing=item_gap,
-    justify=@views.MainAlign::Center,
-    align=@views.CrossAlign::Center,
+    justify=Center,
+    align=Center,
   )
   let content_width = icon_size *
     (tiles.length() + utilities.length()).to_double() +
@@ -541,7 +504,7 @@ fn dock_tile(
         indicator,
       ],
       spacing=2.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=icon_size,
     height=icon_size + 6.0,
@@ -594,13 +557,9 @@ fn spotlight_button(
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
-    @views.text(
-      "Spotlight",
-      role=@views.TextRole::Caption,
-      theme~,
-      width=58.0,
-      height=18.0,
-    ).foreground(palette.foreground),
+    @views.text("Spotlight", role=Caption, theme~, width=58.0, height=18.0).foreground(
+      palette.foreground,
+    ),
     width=64.0,
     height=22.0,
     background=rgba8(0, 0, 0, a=0.0),
@@ -663,12 +622,7 @@ fn dock_terminal_glyph(
   _palette : DesktopPalette,
 ) -> @moui.View[Msg] {
   @views.container(
-    @views.text(
-      ">_",
-      role=@views.TextRole::Caption,
-      width=size * 0.6,
-      height=size * 0.5,
-    )
+    @views.text(">_", role=Caption, width=size * 0.6, height=size * 0.5)
     .font(@text.FontSpec::new(size=size * 0.26, weight=700))
     .foreground(rgba8(158, 226, 158)),
     width=size * 0.64,
@@ -731,19 +685,11 @@ fn dock_apps_glyph(size : Double, _palette : DesktopPalette) -> @moui.View[Msg] 
   })
   let grid = @views.column(
     [
-      @views.row(
-        [dots[0], dots[1]],
-        spacing=gap,
-        align=@views.CrossAlign::Center,
-      ),
-      @views.row(
-        [dots[2], dots[3]],
-        spacing=gap,
-        align=@views.CrossAlign::Center,
-      ),
+      @views.row([dots[0], dots[1]], spacing=gap, align=Center),
+      @views.row([dots[2], dots[3]], spacing=gap, align=Center),
     ],
     spacing=gap,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   dock_tile_shell(size, rgba8(56, 60, 68), grid)
 }
@@ -814,7 +760,7 @@ fn dock_inbox_glyph(
       corner_radius=size * 0.05,
       padding=0.0,
     ).align(alignment=@geometry.Alignment::bottom_leading()),
-    desktop_icon(@views.IconName::Info, size * 0.22, @graphics.Color::white()).align(
+    desktop_icon(Info, size * 0.22, @graphics.Color::white()).align(
       alignment=@geometry.Alignment::center(),
     ),
   ]).frame(width=size * 0.56, height=size * 0.46)

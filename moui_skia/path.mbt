@@ -79,7 +79,7 @@ pub(all) struct PathLine {
 
 ///|
 pub fn PathLine::new(start : Point, end : Point) -> PathLine {
-  { start, end }
+  { start, end, }
 }
 
 ///|
@@ -96,7 +96,7 @@ pub fn PathRect::new(
   is_closed : Bool,
   direction : PathDirection,
 ) -> PathRect {
-  { rect, is_closed, direction }
+  { rect, is_closed, direction, }
 }
 
 ///|
@@ -169,7 +169,7 @@ pub(all) struct Path {
 
 ///|
 pub fn Path::new(fill_type? : PathFillType = Winding) -> Path {
-  { fill_type, verbs: Array::new(), current_point: None }
+  { fill_type, verbs: Array(), current_point: None, }
 }
 
 ///|

@@ -29,7 +29,7 @@ fn Model::docs_content(
         button(
           message("docs.button"),
           on_click=ToggleDocsDrawer,
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=metrics.content_width,
           height=42.0,
@@ -42,7 +42,7 @@ fn Model::docs_content(
         ),
       ],
       spacing=18.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     )
   } else {
     let workspace_height = max_website_double(
@@ -67,11 +67,11 @@ fn Model::docs_content(
             ),
           ],
           spacing=24.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=20.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     )
   }
   section_shell(
@@ -93,12 +93,7 @@ fn docs_header(
   let message = key => website_message(locale, key)
   column(
     [
-      badge(
-        message("docs.badge"),
-        tone=@views.BadgeTone::Accent,
-        theme~,
-        width=112.0,
-      ),
+      badge(message("docs.badge"), tone=Accent, theme~, width=112.0),
       docs_start_text(
         message("docs.title"),
         width~,
@@ -106,7 +101,7 @@ fn docs_header(
         font=@text.FontSpec::new(size=30.0, weight=820),
         color=theme.palette.foreground,
       )
-      .semantics_role(@core.SemanticsRole::Heading)
+      .semantics_role(Heading)
       .semantics_level(1),
       docs_wrapped_text(
         theme,
@@ -118,7 +113,7 @@ fn docs_header(
       ),
     ],
     spacing=6.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -152,7 +147,7 @@ fn Model::docs_sidebar(
                     entry.title,
                     width=content_width - 16.0,
                     height=36.0,
-                    align=@text.TextAlign::TextStart,
+                    align=TextStart,
                   )
                   .font(@text.FontSpec::new(size=13.0, weight=680))
                   .foreground(
@@ -174,7 +169,7 @@ fn Model::docs_sidebar(
                   ("title", entry.title),
                 ]),
               )
-              .semantics_role(@core.SemanticsRole::Link)
+              .semantics_role(Link)
               .semantics_url("docs/" + entry.slug)
               .key("docs-nav-" + entry.slug),
             )
@@ -191,12 +186,12 @@ fn Model::docs_sidebar(
                   font=@text.FontSpec::new(size=13.0, weight=760),
                   color=theme.palette.muted,
                 )
-                .semantics_role(@core.SemanticsRole::Heading)
+                .semantics_role(Heading)
                 .semantics_level(2),
-                column(rows, spacing=2.0, align=@views.CrossAlign::Start),
+                column(rows, spacing=2.0, align=Start),
               ],
               spacing=4.0,
-              align=@views.CrossAlign::Start,
+              align=Start,
             ),
           )
         }
@@ -215,11 +210,7 @@ fn Model::docs_sidebar(
     }
     None => ()
   }
-  let catalog_content = column(
-    groups,
-    spacing=12.0,
-    align=@views.CrossAlign::Start,
-  )
+  let catalog_content = column(groups, spacing=12.0, align=Start)
   let list_height = max_website_double(120.0, max_height - 92.0)
   container(
     column(
@@ -228,7 +219,7 @@ fn Model::docs_sidebar(
           self.docs_search,
           on_input=value => SearchDocs(value),
           placeholder=message("docs.search"),
-          variant=@views.TextFieldVariant::Outline,
+          variant=Outline,
           theme~,
           width=content_width,
           height=40.0,
@@ -243,7 +234,7 @@ fn Model::docs_sidebar(
         ),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=max_height,
@@ -253,7 +244,7 @@ fn Model::docs_sidebar(
     padding=14.0,
   )
   .border(website_border(theme))
-  .semantics_role(@core.SemanticsRole::Navigation)
+  .semantics_role(Navigation)
   .accessibility_label(message("docs.navigation"))
 }
 
@@ -352,7 +343,7 @@ fn Model::docs_document_panel(
                     body,
                   ],
                   spacing=18.0,
-                  align=@views.CrossAlign::Start,
+                  align=Start,
                 ),
                 width~,
                 height=if independent_scroll { viewport_height } else { 0.0 },
@@ -414,7 +405,7 @@ fn docs_not_found_panel(
           font=@text.FontSpec::new(size=22.0, weight=780),
           color=theme.palette.foreground,
         )
-        .semantics_role(@core.SemanticsRole::Heading)
+        .semantics_role(Heading)
         .semantics_level(1),
         docs_wrapped_text(
           theme,
@@ -427,14 +418,14 @@ fn docs_not_found_panel(
         button(
           message("action.open_docs"),
           on_click=SelectDoc("moui-readme"),
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=110.0,
           height=36.0,
         ),
       ],
       spacing=14.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=190.0,
@@ -461,13 +452,13 @@ fn docs_document_header(
         font=@text.FontSpec::new(size=27.0, weight=820),
         color=theme.palette.foreground,
       )
-      .semantics_role(@core.SemanticsRole::Heading)
+      .semantics_role(Heading)
       .semantics_level(2),
       docs_wrapped_text(theme, entry.summary, width, 13.0, 21.0, muted=true),
       tag(entry.path, theme~, width=website_doc_tag_width(width)),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -490,20 +481,20 @@ fn docs_status_panel(
           font=@text.FontSpec::new(size=22.0, weight=780),
           color=theme.palette.foreground,
         )
-        .semantics_role(@core.SemanticsRole::Heading)
+        .semantics_role(Heading)
         .semantics_level(1),
         docs_wrapped_text(theme, detail, width - 40.0, 13.0, 21.0, muted=true),
         button(
           action_label,
           on_click=action,
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=94.0,
           height=36.0,
         ),
       ],
       spacing=14.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=190.0,
@@ -536,7 +527,7 @@ fn docs_wrapped_text(
       ),
     )
   }
-  column(lines, spacing=0.0, align=@views.CrossAlign::Start)
+  column(lines, spacing=0.0, align=Start)
 }
 
 ///|
@@ -552,17 +543,11 @@ fn docs_start_text(
     paint=(ctx, frame) => {
       draw_text(
         ctx,
-        @text.TextRun::new(
-          text=value,
-          frame~,
-          font~,
-          color~,
-          align=@text.TextAlign::TextStart,
-        ),
+        @text.TextRun::new(text=value, frame~, font~, color~, align=TextStart),
       )
     },
     semantics_label=value,
-  ).semantics_role(@core.SemanticsRole::Text)
+  ).semantics_role(Text)
 }
 
 ///|

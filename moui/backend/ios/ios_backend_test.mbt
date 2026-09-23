@@ -1,7 +1,7 @@
 ///|
 test "ios backend reports experimental readiness" {
-  let info = backend_info()
-  assert_true(info.host_info.backend == @host.HostBackendKind::Native)
+  let info = @ios.backend_info()
+  assert_true(info.host_info.backend == Native)
   inspect(info.capabilities.embedded_view, content="true")
   inspect(info.capabilities.external_event_loop, content="true")
   inspect(info.capabilities.surface_binding, content="true")
@@ -14,7 +14,7 @@ test "ios backend reports experimental readiness" {
   inspect(info.readiness.status, content="experimental")
   assert_true(info.readiness.blocked_by.length() >= 1)
   assert_true(info.readiness.blocked_by[0].contains("experimental"))
-  let summary = ios_capability_summary()
+  let summary = @ios.ios_capability_summary()
   inspect(summary.label, content="iOS host")
   inspect(summary.window_lifecycle, content="true")
   inspect(summary.multi_window, content="false")
@@ -32,7 +32,7 @@ test "ios runtime session renders through supplied surface binding" {
   let create_count = Ref(0)
   let dispose_count = Ref(0)
   let completion_drain_count = Ref(0)
-  let binding = IosSurfaceBinding::new(
+  let binding = @ios.IosSurfaceBinding::new(
     create_renderer=(_view, _metrics) => {
       create_count.val = create_count.val + 1
       Some(
@@ -66,7 +66,7 @@ test "ios runtime session renders through supplied surface binding" {
       runtime~,
       raw_handle=42UL,
       metrics~,
-      binding=host_surface_binding_from_ios(binding),
+      binding=@ios.host_surface_binding_from_ios(binding),
       surface_generation=1,
     ) {
     Some(session) => {
@@ -97,7 +97,7 @@ test "ios runtime session renders through supplied surface binding" {
         session.attach(
           raw_handle=84UL,
           metrics=resized,
-          binding=host_surface_binding_from_ios(binding),
+          binding=@ios.host_surface_binding_from_ios(binding),
           surface_generation=2,
         ),
       )
@@ -107,7 +107,10 @@ test "ios runtime session renders through supplied surface binding" {
       inspect(sync_count.val, content="2")
       ignore(session.render_frame())
       inspect(render_count.val, content="2")
-      (host_surface_binding_from_ios(binding).sync)(84UL, session.metrics())
+      (@ios.host_surface_binding_from_ios(binding).sync)(
+        84UL,
+        session.metrics(),
+      )
       inspect(sync_count.val, content="3")
       session.dispose()
       inspect(session.disposed(), content="true")

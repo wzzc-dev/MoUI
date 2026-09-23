@@ -18,7 +18,7 @@ pub fn PdfWorkbenchPdfliteNativeTransportConfig::new(
   args? : Array[String] = [],
   cwd? : String = "",
 ) -> PdfWorkbenchPdfliteNativeTransportConfig {
-  { command, args, cwd }
+  { command, args, cwd, }
 }
 
 ///|
@@ -27,7 +27,7 @@ pub fn PdfWorkbenchPdfliteNativeTransportEnvConfig::new(
   helper_args? : String = "",
   helper_cwd? : String = "",
 ) -> PdfWorkbenchPdfliteNativeTransportEnvConfig {
-  { helper_path, helper_args, helper_cwd }
+  { helper_path, helper_args, helper_cwd, }
 }
 
 ///|
@@ -151,16 +151,11 @@ pub fn PdfWorkbenchPdfliteNativeTransportConfig::document_services(
 ) -> @app.PdfWorkbenchDocumentServices {
   @app.PdfWorkbenchDocumentServices::new(
     load=(path, bytes) => {
-      match
-        self.run_request_blocking(
-          @protocol.PdfWorkbenchPdfliteServiceRequest::LoadDocument(path, bytes),
-        ) {
-        @protocol.PdfWorkbenchPdfliteServiceResponse::DocumentLoaded(document) =>
-          @app.PdfWorkbenchLoadResult::Loaded(document)
-        @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed(reason) =>
-          @app.PdfWorkbenchLoadResult::Failed(reason)
-        @protocol.PdfWorkbenchPdfliteServiceResponse::WritebackReady(_, _) =>
-          @app.PdfWorkbenchLoadResult::Failed(
+      match self.run_request_blocking(LoadDocument(path, bytes)) {
+        DocumentLoaded(document) => Loaded(document)
+        ServiceFailed(reason) => Failed(reason)
+        WritebackReady(_, _) =>
+          Failed(
             "pdflite native transport returned writeback response while loading",
           )
       }
@@ -168,23 +163,16 @@ pub fn PdfWorkbenchPdfliteNativeTransportConfig::document_services(
     writeback=document => {
       match
         self.run_request_blocking(
-          @protocol.PdfWorkbenchPdfliteServiceRequest::WritebackDocument(
+          WritebackDocument(
             document.path,
             document.original_bytes,
             document.edits,
           ),
         ) {
-        @protocol.PdfWorkbenchPdfliteServiceResponse::WritebackReady(
-          bytes,
-          diagnostics
-        ) =>
-          @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
-            bytes, diagnostics,
-          )
-        @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed(reason) =>
-          @app.PdfWorkbenchDocumentWritebackResult::WritebackFailed(reason)
-        @protocol.PdfWorkbenchPdfliteServiceResponse::DocumentLoaded(_) =>
-          @app.PdfWorkbenchDocumentWritebackResult::WritebackFailed(
+        WritebackReady(bytes, diagnostics) => WritebackReady(bytes, diagnostics)
+        ServiceFailed(reason) => WritebackFailed(reason)
+        DocumentLoaded(_) =>
+          WritebackFailed(
             "pdflite native transport returned load response while writing",
           )
       }
@@ -198,24 +186,18 @@ fn PdfWorkbenchPdfliteNativeTransportConfig::run_request_blocking(
   request : @protocol.PdfWorkbenchPdfliteServiceRequest,
 ) -> @protocol.PdfWorkbenchPdfliteServiceResponse {
   if self.command.trim().to_owned() == "" {
-    return @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed(
-      "pdflite helper command is not configured",
-    )
+    return ServiceFailed("pdflite helper command is not configured")
   }
   let result : Ref[@protocol.PdfWorkbenchPdfliteServiceResponse?] = Ref(None)
   @async.run_async_main(() => {
     let response = self.run_request(request) catch {
-      err =>
-        @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed("\{err}")
+      err => ServiceFailed("\{err}")
     }
     result.val = Some(response)
   })
   match result.val {
     Some(response) => response
-    None =>
-      @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed(
-        "pdflite native transport did not produce a response",
-      )
+    None => ServiceFailed("pdflite native transport did not produce a response")
   }
 }
 
@@ -317,14 +299,12 @@ fn pdf_workbench_pdflite_decode_run_response(
   original_bytes~ : Bytes,
 ) -> @protocol.PdfWorkbenchPdfliteServiceResponse {
   if exit_code != 0 {
-    return @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed(
+    return ServiceFailed(
       pdf_workbench_pdflite_exit_failure(config, exit_code, stderr_lines),
     )
   }
   if response_lines.is_empty() {
-    return @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed(
-      "pdflite helper produced no JSONL response",
-    )
+    return ServiceFailed("pdflite helper produced no JSONL response")
   }
   match
     @protocol.PdfWorkbenchPdfliteServiceResponse::from_json_line(
@@ -332,10 +312,7 @@ fn pdf_workbench_pdflite_decode_run_response(
       original_bytes~,
     ) {
     Some(response) => response
-    None =>
-      @protocol.PdfWorkbenchPdfliteServiceResponse::ServiceFailed(
-        "pdflite helper returned malformed JSONL response",
-      )
+    None => ServiceFailed("pdflite helper returned malformed JSONL response")
   }
 }
 
@@ -359,9 +336,8 @@ fn pdf_workbench_pdflite_request_original_bytes(
   request : @protocol.PdfWorkbenchPdfliteServiceRequest,
 ) -> Bytes {
   match request {
-    @protocol.PdfWorkbenchPdfliteServiceRequest::LoadDocument(_, bytes) => bytes
-    @protocol.PdfWorkbenchPdfliteServiceRequest::WritebackDocument(_, bytes, _) =>
-      bytes
+    LoadDocument(_, bytes) => bytes
+    WritebackDocument(_, bytes, _) => bytes
   }
 }
 
@@ -374,10 +350,10 @@ fn pdf_workbench_pdflite_looks_like_json_array(value : String) -> Bool {
 ///|
 fn pdf_workbench_pdflite_helper_json_args(value : String) -> Array[String]? {
   let parsed = @json.parse(value) catch { _ => return None }
-  guard parsed is Json::Array(values) else { return None }
+  guard parsed is Array(values) else { return None }
   let args : Array[String] = []
   for item in values {
-    guard item is Json::String(arg) else { return None }
+    guard item is String(arg) else { return None }
     let clean = arg.trim().to_owned()
     if clean != "" {
       args.push(clean)

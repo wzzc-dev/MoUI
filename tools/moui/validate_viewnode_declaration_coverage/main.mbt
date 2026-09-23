@@ -98,7 +98,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ repo_root, json, help })
+  Ok({ repo_root, json, help, })
 }
 
 ///|
@@ -272,7 +272,10 @@ fn struct_fields(lines : Array[String], start : Int) -> (Array[NodeField], Int) 
           let head = line[:name.length()].to_owned()
           let rest = line[name.length():]
           if head == name && rest.trim_start().has_prefix(":") {
-            fields.push({ name, exempt: raw.contains("// declaration-exempt:") })
+            fields.push({
+              name,
+              exempt: raw.contains("// declaration-exempt:"),
+            })
           }
           index += 1
         }
@@ -359,7 +362,7 @@ fn scan_file_lines(
         if multi_line {
           let (fields, next) = struct_fields(lines, index + 1)
           if fields.length() > 0 && !structs.contains(name) {
-            structs[name] = { name, line: index + 1, fields }
+            structs[name] = { name, line: index + 1, fields, }
           }
           index = next
         } else {
@@ -423,7 +426,7 @@ fn struct_violations(
       contains_identifier(impl_entry.declaration_body, field.name) ||
       contains_identifier(impl_entry.identity_body, field.name)
     if !covered {
-      violations.push({ path, node: struct_def.name, field: field.name })
+      violations.push({ path, node: struct_def.name, field: field.name, })
     }
   }
   violations
@@ -458,7 +461,7 @@ fn json_array_items(json : Json?) -> Array[Json]? {
 /// before the catalog is first checked in; parse errors fail loudly.
 fn load_baseline(path : String) -> Result[Baseline, String] {
   if !@tools.file_exists(path) {
-    return Ok({ waived: [] })
+    return Ok({ waived: [], })
   }
   let text = match @tools.read_required_text(path, "coverage baseline") {
     Ok(value) => value
@@ -504,7 +507,7 @@ fn load_baseline(path : String) -> Result[Baseline, String] {
       Some(v) => v
       None => return Err("coverage waiver requires reason")
     }
-    waived.push({ pkg, node, field, reason })
+    waived.push({ pkg, node, field, reason, })
   }
   Ok({ waived, })
 }
@@ -650,7 +653,7 @@ fn scan_repo(repo_root : String) -> Result[Finding, String] {
     }
   }
   let (active, stale_waivers) = apply_waivers(violations, baseline)
-  Ok({ violations: active, stale_waivers, scanned_nodes })
+  Ok({ violations: active, stale_waivers, scanned_nodes, })
 }
 
 ///|

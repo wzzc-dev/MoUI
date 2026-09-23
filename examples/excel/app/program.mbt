@@ -183,43 +183,10 @@ pub fn excel_program_commands(
   add(excel_command("Select Column", " ", ColumnSelected(col), control=true))
   add_dual("Fill Down", "d", FillDown)
   add_dual("Fill Right", "r", FillRight)
-  add(
-    excel_command(
-      "Undo",
-      "z",
-      Undo,
-      meta=true,
-      intent=@views.CommandIntent::Undo,
-    ),
-  )
-  add(
-    excel_command(
-      "Undo",
-      "z",
-      Undo,
-      control=true,
-      intent=@views.CommandIntent::Undo,
-    ),
-  )
-  add(
-    excel_command(
-      "Redo",
-      "z",
-      Redo,
-      meta=true,
-      shift=true,
-      intent=@views.CommandIntent::Redo,
-    ),
-  )
-  add(
-    excel_command(
-      "Redo",
-      "y",
-      Redo,
-      control=true,
-      intent=@views.CommandIntent::Redo,
-    ),
-  )
+  add(excel_command("Undo", "z", Undo, meta=true, intent=Undo))
+  add(excel_command("Undo", "z", Undo, control=true, intent=Undo))
+  add(excel_command("Redo", "z", Redo, meta=true, shift=true, intent=Redo))
+  add(excel_command("Redo", "y", Redo, control=true, intent=Redo))
   add_dual("Bold", "b", ToggleBold)
   add_dual("Italic", "i", ToggleItalic)
   add_dual("Underline", "u", ToggleUnderline)
@@ -236,7 +203,7 @@ fn excel_command(
   meta? : Bool = false,
   control? : Bool = false,
   shift? : Bool = false,
-  intent? : @views.CommandIntent = @views.CommandIntent::Activate,
+  intent? : @views.CommandIntent = Activate,
 ) -> @moui.ProgramCommand[ExcelMsg] {
   @moui.ProgramCommand::new(
     command=@views.ActionCommand::new(

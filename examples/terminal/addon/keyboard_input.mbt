@@ -38,11 +38,11 @@ pub fn[Msg] keyboard_input(
   on_text : (String) -> Msg?,
 ) -> @moui.View[Msg] {
   @core.View::from_node(
-    TerminalKeyboardNode::{  },
+    TerminalKeyboardNode::{ },
     children=_node => [content],
     event=(_node, ctx) => {
       match ctx.event {
-        @core.AppEvent::Keyboard(event) =>
+        Keyboard(event) =>
           if !event.pressed {
             @core.ViewEventResult::ignored()
           } else {
@@ -51,9 +51,9 @@ pub fn[Msg] keyboard_input(
               None => @core.ViewEventResult::ignored()
             }
           }
-        @core.AppEvent::TextInput(event) => {
+        TextInput(event) => {
           let text = match event {
-            @core.TextInputEvent::InsertText(t) => Some(t)
+            InsertText(t) => Some(t)
             _ => None
           }
           match text {

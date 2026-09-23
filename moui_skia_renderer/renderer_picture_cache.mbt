@@ -63,7 +63,7 @@ fn SkiaRasterRenderer::render_picture_command_range(
   let mut index = start_index
   while index < end_index {
     match commands[index] {
-      @render_common.PlanOp::BeginRetainedLayer(spec) =>
+      BeginRetainedLayer(spec) =>
         match find_cached_layer_end(commands, index + 1, spec.key) {
           Some(layer_end) =>
             if self.draw_picture_cached_layer(canvas, spec, stats) {
@@ -90,7 +90,7 @@ fn SkiaRasterRenderer::render_picture_command_range(
             return false
           }
         }
-      @render_common.PlanOp::EndRetainedLayer(_) => return true
+      EndRetainedLayer(_) => return true
       command => {
         self.render_command(canvas, command, scopes)
         index = index + 1
@@ -231,10 +231,7 @@ fn SkiaRasterRenderer::render_uncached_picture_layer(
   let saved = canvas.save_count()
   self.push_layer(
     canvas,
-    @core.LayerSpec::new(
-      mask=@core.LayerMask::RectMask(spec.frame),
-      offscreen=true,
-    ),
+    @core.LayerSpec::new(mask=RectMask(spec.frame), offscreen=true),
   )
   let scopes : Array[@render_common.PlanScopeKind] = []
   let complete = self.render_picture_command_range(
@@ -309,7 +306,7 @@ fn SkiaRasterRenderer::store_picture_cached_layer(
 ) -> Unit {
   self.remove_picture_cached_layers_by_identity(entry.identity_key)
   let tick = self.next_layer_cache_tick()
-  let stored = { ..entry, last_used: tick }
+  let stored = { ..entry, last_used: tick, }
   self.picture_layer_cache[entry.key] = stored
   self.picture_layer_cache_identity_index[entry.identity_key] = entry.key
   self.picture_layer_cache_total_bytes += entry.byte_size

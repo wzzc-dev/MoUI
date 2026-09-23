@@ -338,19 +338,13 @@ pub fn ColorPalette::from_seed(
 /// the legacy hand-written palette but now fills the full on*/container matrix
 /// via `from_seed`.
 pub fn ColorPalette::light() -> ColorPalette {
-  ColorPalette::from_seed(
-    primary=Color::rgba(r=0.145, g=0.145, b=0.149),
-    ColorScheme::Light,
-  )
+  ColorPalette::from_seed(primary=Color::rgba(r=0.145, g=0.145, b=0.149), Light)
 }
 
 ///|
 /// Minimal dark palette (zinc neutrals, near-white primary). Mirrors light.
 pub fn ColorPalette::dark() -> ColorPalette {
-  ColorPalette::from_seed(
-    primary=Color::rgba(r=0.953, g=0.953, b=0.953),
-    ColorScheme::Dark,
-  )
+  ColorPalette::from_seed(primary=Color::rgba(r=0.953, g=0.953, b=0.953), Dark)
 }
 
 // ---------------------------------------------------------------------------
@@ -359,14 +353,14 @@ pub fn ColorPalette::dark() -> ColorPalette {
 
 ///|
 pub fn SpacingScale::default() -> SpacingScale {
-  { xs: 4.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0 }
+  { xs: 4.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0, }
 }
 
 ///|
 pub fn RadiusScale::default() -> RadiusScale {
   // shadcn/minimal: sharp, small radii. Controls read as crisp rectangles,
   // not soft pills. `pill` retained for chips/badges that need full rounding.
-  { sm: 4.0, md: 6.0, lg: 8.0, pill: 999.0 }
+  { sm: 4.0, md: 6.0, lg: 8.0, pill: 999.0, }
 }
 
 ///|
@@ -388,9 +382,7 @@ pub fn TypographyScale::default() -> TypographyScale {
 }
 
 ///|
-pub fn ShadowScale::default(
-  scheme? : ColorScheme = ColorScheme::Light,
-) -> ShadowScale {
+pub fn ShadowScale::default(scheme? : ColorScheme = Light) -> ShadowScale {
   // shadcn/minimal: near-zero shadows by default. Cards and buttons rely on
   // borders, not elevation. `sm` stays flat so controls read as crisp
   // rectangles. `md` carries a hair of depth so floating mid layers (picker
@@ -423,12 +415,7 @@ pub fn ShadowScale::default(
 
 ///|
 pub fn MotionScale::default() -> MotionScale {
-  {
-    fast_ms: 120.0,
-    normal_ms: 180.0,
-    slow_ms: 280.0,
-    easing: Easing::EaseInOut,
-  }
+  { fast_ms: 120.0, normal_ms: 180.0, slow_ms: 280.0, easing: EaseInOut, }
 }
 
 ///|
@@ -455,13 +442,13 @@ pub fn SurfaceScale::default(
 /// a light system scheme. Carries the neutral palette + scales only; concrete
 /// control tokens are resolved views-side as a `ControlThemeSet` (ADR 0017).
 pub fn Theme::neutral() -> Theme {
-  resolve_minimal_theme(ThemeSpec::minimal_light(), ColorScheme::Light)
+  resolve_minimal_theme(ThemeSpec::minimal_light(), Light)
 }
 
 ///|
 pub fn Theme::with_palette(self : Theme, palette : ColorPalette) -> Theme {
   let surfaces = SurfaceScale::default(palette, self.scheme)
-  { ..self, palette, surfaces }
+  { ..self, palette, surfaces, }
 }
 
 ///|
@@ -526,18 +513,18 @@ pub fn Theme::surface_brush(self : Theme, level : SurfaceLevel) -> Brush {
 /// leaving a stale light palette.
 pub fn Environment::neutral() -> Environment {
   let spec = ThemeSpec::default()
-  let theme = resolve_minimal_theme(spec, ColorScheme::Light)
+  let theme = resolve_minimal_theme(spec, Light)
   {
     theme_spec: spec,
-    system_scheme: ColorScheme::Light,
+    system_scheme: Light,
     theme,
     scale_factor: 1.0,
     text_scale: 1.0,
     locale: "en-US",
-    layout_direction: LayoutDirection::LeftToRight,
-    accessibility_contrast: AccessibilityContrast::Standard,
+    layout_direction: LeftToRight,
+    accessibility_contrast: Standard,
     reduced_motion: false,
-    content_size_category: ContentSizeCategory::Medium,
+    content_size_category: Medium,
     enabled: true,
   }
 }
@@ -551,7 +538,7 @@ pub fn Environment::with_theme(
   self : Environment,
   theme : Theme,
 ) -> Environment {
-  { ..self, theme, system_scheme: theme.scheme }
+  { ..self, theme, system_scheme: theme.scheme, }
 }
 
 ///|
@@ -564,7 +551,7 @@ pub fn Environment::with_system_scheme(
   system_scheme : ColorScheme,
 ) -> Environment {
   let theme = resolve_theme(self.theme_spec, system_scheme)
-  { ..self, system_scheme, theme }
+  { ..self, system_scheme, theme, }
 }
 
 ///|
@@ -576,7 +563,7 @@ pub fn Environment::with_theme_spec(
   theme_spec : ThemeSpec,
 ) -> Environment {
   let theme = resolve_theme(theme_spec, self.system_scheme)
-  { ..self, theme_spec, theme }
+  { ..self, theme_spec, theme, }
 }
 
 ///|
@@ -591,7 +578,7 @@ pub fn Environment::with_scale_factor(
   self : Environment,
   scale_factor : Double,
 ) -> Environment {
-  { ..self, scale_factor: max_double(0.1, scale_factor) }
+  { ..self, scale_factor: max_double(0.1, scale_factor), }
 }
 
 ///|
@@ -599,7 +586,7 @@ pub fn Environment::with_text_scale(
   self : Environment,
   text_scale : Double,
 ) -> Environment {
-  { ..self, text_scale: max_double(0.1, text_scale) }
+  { ..self, text_scale: max_double(0.1, text_scale), }
 }
 
 ///|
@@ -676,7 +663,7 @@ pub fn ViewStyle::from_theme(theme : Theme) -> ViewStyle {
   {
     font: Some(theme.typography.body),
     foreground: Some(theme.palette.foreground),
-    background: Some(theme.surface_brush(SurfaceLevel::Base)),
+    background: Some(theme.surface_brush(Base)),
     corner_radius: Some(theme.radius_scale.md),
   }
 }

@@ -1,6 +1,6 @@
 ///|
 test "plain text and newlines" {
-  let p = VtParser::new(TermScreen::new(10, 3))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 3))
   p.feed("hello")
   p.feed("\r\nworld")
   debug_inspect(p.screen().line_at(0).text(), content="\"hello\"")
@@ -11,7 +11,7 @@ test "plain text and newlines" {
 
 ///|
 test "utf8 wide chars" {
-  let p = VtParser::new(TermScreen::new(10, 1))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 1))
   p.feed("中文ab")
   debug_inspect(p.screen().cursor_col(), content="6")
   debug_inspect(p.screen().line_at(0).text(), content="\"中文ab\"")
@@ -19,7 +19,7 @@ test "utf8 wide chars" {
 
 ///|
 test "sgr colors and reset" {
-  let p = VtParser::new(TermScreen::new(20, 1))
+  let p = @app.VtParser::new(@app.TermScreen::new(20, 1))
   p.feed("\u{1b}[31mred\u{1b}[0mplain")
   let runs = p.screen().line_at(0).runs()
   debug_inspect(runs.length(), content="2")
@@ -31,7 +31,7 @@ test "sgr colors and reset" {
 
 ///|
 test "sgr 256 and rgb" {
-  let p = VtParser::new(TermScreen::new(20, 1))
+  let p = @app.VtParser::new(@app.TermScreen::new(20, 1))
   p.feed("\u{1b}[38;5;196mA\u{1b}[48;2;10;20;30mB")
   let runs = p.screen().line_at(0).runs()
   debug_inspect(runs[0].2.fg, content="Indexed(196)")
@@ -41,7 +41,7 @@ test "sgr 256 and rgb" {
 
 ///|
 test "sgr styles" {
-  let p = VtParser::new(TermScreen::new(20, 1))
+  let p = @app.VtParser::new(@app.TermScreen::new(20, 1))
   p.feed("\u{1b}[1;3;4mbold")
   debug_inspect(p.screen().current_attrs().bold, content="true")
   debug_inspect(p.screen().current_attrs().italic, content="true")
@@ -54,7 +54,7 @@ test "sgr styles" {
 
 ///|
 test "cursor movement" {
-  let p = VtParser::new(TermScreen::new(10, 5))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 5))
   p.feed("\u{1b}[3;4H")
   debug_inspect(p.screen().cursor_row(), content="2")
   debug_inspect(p.screen().cursor_col(), content="3")
@@ -71,7 +71,7 @@ test "cursor movement" {
 
 ///|
 test "erase display and line" {
-  let p = VtParser::new(TermScreen::new(4, 3))
+  let p = @app.VtParser::new(@app.TermScreen::new(4, 3))
   p.feed("abcd\r\nefgh\r\nijkl")
   p.feed("\u{1b}[2J")
   debug_inspect(p.screen().line_at(0).text(), content="\"\"")
@@ -85,7 +85,7 @@ test "erase display and line" {
 
 ///|
 test "insert and delete lines" {
-  let p = VtParser::new(TermScreen::new(4, 4))
+  let p = @app.VtParser::new(@app.TermScreen::new(4, 4))
   p.feed("a\r\nb\r\nc\r\nd")
   p.feed("\u{1b}[2;3r") // 滚动区域 2-3
   p.feed("\u{1b}[2;1H") // 光标到 (2,1)
@@ -106,7 +106,7 @@ test "insert and delete lines" {
 
 ///|
 test "scroll region and su/sd" {
-  let p = VtParser::new(TermScreen::new(4, 4))
+  let p = @app.VtParser::new(@app.TermScreen::new(4, 4))
   p.feed("a\r\nb\r\nc\r\nd")
   p.feed("\u{1b}[2;3r")
   p.feed("\u{1b}[S") // 区域内上滚:顶行 b 进入回看
@@ -126,7 +126,7 @@ test "scroll region and su/sd" {
 
 ///|
 test "osc title" {
-  let p = VtParser::new(TermScreen::new(10, 2))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 2))
   p.feed("\u{1b}]0;My Shell\u{7}")
   debug_inspect(p.screen().title(), content="\"My Shell\"")
   p.feed("\u{1b}]2;Another:Title\u{1b}\\")
@@ -135,7 +135,7 @@ test "osc title" {
 
 ///|
 test "save restore cursor" {
-  let p = VtParser::new(TermScreen::new(10, 5))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 5))
   p.feed("\u{1b}[3;4H\u{1b}[s")
   p.feed("\u{1b}[1;1H")
   p.feed("\u{1b}[u")
@@ -145,7 +145,7 @@ test "save restore cursor" {
 
 ///|
 test "wrap mode and cursor visibility" {
-  let p = VtParser::new(TermScreen::new(3, 2))
+  let p = @app.VtParser::new(@app.TermScreen::new(3, 2))
   p.feed("\u{1b}[?7l") // 关闭自动换行
   p.feed("abcde")
   // 光标停在最后一列,后续字符覆盖
@@ -159,7 +159,7 @@ test "wrap mode and cursor visibility" {
 
 ///|
 test "ris reset" {
-  let p = VtParser::new(TermScreen::new(10, 3))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 3))
   p.feed("\u{1b}[31mtext")
   p.feed("\u{1b}[2;2H")
   p.feed("\u{1b}c")
@@ -171,7 +171,7 @@ test "ris reset" {
 
 ///|
 test "csi params edge cases" {
-  let p = VtParser::new(TermScreen::new(10, 5))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 5))
   p.feed("\u{1b}[H") // 无参数定位
   debug_inspect(p.screen().cursor_row(), content="0")
   debug_inspect(p.screen().cursor_col(), content="0")
@@ -186,7 +186,7 @@ test "csi params edge cases" {
 
 ///|
 test "unknown sequences ignored" {
-  let p = VtParser::new(TermScreen::new(10, 2))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 2))
   p.feed("\u{1b}[?1000h\u{1b}(B\u{1b}=")
   p.feed("ok")
   debug_inspect(p.screen().line_at(0).text(), content="\"ok\"")
@@ -194,7 +194,7 @@ test "unknown sequences ignored" {
 
 ///|
 test "out of range scroll region clamps" {
-  let p = VtParser::new(TermScreen::new(10, 3))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 3))
   p.feed("\u{1b}[999;999r") // 越界滚动区域:必须 clamp 而非 panic
   p.feed("\u{1b}[B")
   p.feed("x")
@@ -206,13 +206,13 @@ test "out of range scroll region clamps" {
 
 ///|
 test "truncated utf8 discarded on escape" {
-  let p = VtParser::new(TermScreen::new(10, 2))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 2))
   // 中 = E4 B8 AD;E4 B8 后 ESC[31m 打断,再喂完整 "文"
   p.feed_bytes(Bytes::from_array([0xE4, 0xB8, 0x1B, 0x5B, 0x33, 0x31, 0x6D]))
   p.feed("文")
   debug_inspect(p.screen().line_at(0).text(), content="\"文\"")
   // C0 打断同理
-  let p2 = VtParser::new(TermScreen::new(10, 2))
+  let p2 = @app.VtParser::new(@app.TermScreen::new(10, 2))
   p2.feed_bytes(Bytes::from_array([0xE4, 0xB8, 0x0D, 0x0A]))
   p2.feed("文")
   debug_inspect(p2.screen().line_at(1).text(), content="\"文\"")
@@ -220,7 +220,7 @@ test "truncated utf8 discarded on escape" {
 
 ///|
 test "overflow csi params do not crash" {
-  let p = VtParser::new(TermScreen::new(10, 4))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 4))
   // 19 位数字溢出 Int64 → 饱和;insert_chars/delete_chars/cursor 必须安全
   p.feed("\u{1b}[9999999999999999999@")
   p.feed("\u{1b}[9999999999999999999P")
@@ -250,7 +250,7 @@ test "overflow csi params do not crash" {
 
 ///|
 test "huge positive counts clamp quickly" {
-  let p = VtParser::new(TermScreen::new(10, 4))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 4))
   p.feed("a\r\nb\r\nc")
   // 10 位正数:若未 clamp 会冻结;clamp 到区域高度后立即完成
   p.feed("\u{1b}[9999999999S")
@@ -272,7 +272,7 @@ test "huge positive counts clamp quickly" {
 
 ///|
 test "unbounded osc and params are capped" {
-  let p = VtParser::new(TermScreen::new(10, 2))
+  let p = @app.VtParser::new(@app.TermScreen::new(10, 2))
   // 超长 OSC(>8KB)不崩溃,标题取截断值
   let long_osc = "\u{1b}]0;" + "x".repeat(20000) + "\u{7}"
   p.feed(long_osc)

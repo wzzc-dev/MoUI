@@ -22,18 +22,14 @@ fn toggle_demo(
           } else {
             "off"
           },
-          tone=if model.feature_enabled {
-            @views.BadgeTone::Success
-          } else {
-            @views.BadgeTone::Neutral
-          },
+          tone=if model.feature_enabled { Success } else { Neutral },
           detail="toggle state",
           theme~,
           width=84.0,
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     theme,
     width,
@@ -67,7 +63,7 @@ fn radio_demo(
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     theme,
     width,

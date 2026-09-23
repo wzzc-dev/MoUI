@@ -11,7 +11,7 @@ fn desktop_widgets(
       [
         @views.text(
           desktop_month_year(model.clock),
-          role=@views.TextRole::Title,
+          role=Title,
           theme~,
           width=222.0,
           height=28.0,
@@ -22,14 +22,14 @@ fn desktop_widgets(
         calendar_month_grid(model.clock, palette, theme),
         @views.text(
           "Today  |  \{desktop_clock_lock_date(model.clock)}",
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=222.0,
           height=22.0,
         ).foreground(palette.muted),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     250.0,
     268.0,
@@ -46,42 +46,42 @@ fn desktop_widgets(
               [
                 @views.text(
                   "Cupertino",
-                  role=@views.TextRole::Label,
+                  role=Label,
                   theme~,
                   width=96.0,
                   height=22.0,
                 ).foreground(palette.foreground),
                 @views.text(
                   "Clear  |  H:83  L:56",
-                  role=@views.TextRole::Caption,
+                  role=Caption,
                   theme~,
                   width=110.0,
                   height=20.0,
                 ).foreground(palette.muted),
               ],
               spacing=2.0,
-              align=@views.CrossAlign::Start,
+              align=Start,
             ),
             @views.spacer(min_length=2.0),
             @views.container(
-              desktop_icon(@views.IconName::Focus, 24.0, rgba8(255, 180, 40)),
+              desktop_icon(Focus, 24.0, rgba8(255, 180, 40)),
               width=32.0,
               height=32.0,
               padding=4.0,
             ),
             @views.text(
               "68",
-              role=@views.TextRole::Display,
+              role=Display,
               theme~,
               width=42.0,
               height=42.0,
-              align=@text.TextAlign::TextCenter,
+              align=TextCenter,
             )
             .font(@text.FontSpec::new(size=30.0, weight=300))
             .foreground(palette.foreground),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         @views.spacer(min_length=4.0),
         // Hourly forecast strip: a glanceable row of the next few hours with
@@ -95,12 +95,12 @@ fn desktop_widgets(
             weather_hour_cell("4PM", 68.0, palette, theme),
           ],
           spacing=8.0,
-          justify=@views.MainAlign::Between,
-          align=@views.CrossAlign::Center,
+          justify=Between,
+          align=Center,
         ),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     250.0,
     150.0,
@@ -111,24 +111,20 @@ fn desktop_widgets(
       [
         @views.row(
           [
-            @views.text(
-              "Today",
-              role=@views.TextRole::Label,
-              theme~,
-              width=120.0,
-              height=22.0,
-            ).foreground(palette.foreground),
+            @views.text("Today", role=Label, theme~, width=120.0, height=22.0).foreground(
+              palette.foreground,
+            ),
             @views.spacer(min_length=4.0),
             @views.badge(
               "\{model.remaining_tasks()} left",
-              tone=@views.BadgeTone::Accent,
+              tone=Accent,
               theme~,
               width=66.0,
               height=24.0,
             ),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         task_preview(
           "Review desktop polish",
@@ -140,17 +136,13 @@ fn desktop_widgets(
         task_preview("Plan Tahoe photos", model.third_task_done, palette, theme),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     250.0,
     126.0,
     palette,
   )
-  @views.column(
-    [calendar, weather, tasks],
-    spacing=12.0,
-    align=@views.CrossAlign::Start,
-  )
+  @views.column([calendar, weather, tasks], spacing=12.0, align=Start)
   .frame(width=250.0, height=(height - 118.0).max(420.0))
   .align(alignment=@geometry.Alignment::top_leading())
   .offset(dx=18.0, dy=48.0)
@@ -196,7 +188,7 @@ fn calendar_month_grid(
     }
     rows.push(calendar_row(row_cells, Some(clock.day), palette, theme))
   }
-  @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start)
+  @views.column(rows, spacing=4.0, align=Start)
 }
 
 ///|
@@ -232,11 +224,11 @@ fn calendar_row(
         @views.container(
           @views.text(
             label,
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=22.0,
             height=16.0,
-            align=@text.TextAlign::TextCenter,
+            align=TextCenter,
           )
           .font(@text.FontSpec::new(size=11.0, weight=650))
           .foreground(@graphics.Color::white()),
@@ -249,18 +241,18 @@ fn calendar_row(
       } else {
         @views.text(
           label,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=25.0,
           height=18.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=11.0, weight=500))
         .foreground(palette.muted)
       }
     }),
     spacing=7.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -315,33 +307,33 @@ fn weather_hour_cell(
     [
       @views.text(
         hour,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=36.0,
         height=14.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=10.0, weight=520))
       .foreground(palette.muted),
       @views.container(
-        desktop_icon(@views.IconName::Focus, 14.0, rgba8(255, 180, 40)),
+        desktop_icon(Focus, 14.0, rgba8(255, 180, 40)),
         width=18.0,
         height=18.0,
         padding=2.0,
       ),
       @views.text(
         "\{temp.to_int()}\u00B0",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=36.0,
         height=16.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=12.0, weight=600))
       .foreground(palette.foreground),
     ],
     spacing=2.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -366,11 +358,11 @@ fn task_checkbox(
       ),
       @views.text(
         "✓",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=size,
         height=size,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=11.0, weight=700))
       .foreground(@graphics.Color::white())
@@ -408,18 +400,12 @@ fn task_preview(
   @views.row(
     [
       task_checkbox(done, palette, theme),
-      @views.text(
-        label,
-        role=@views.TextRole::Body,
-        theme~,
-        width=196.0,
-        height=18.0,
-      )
+      @views.text(label, role=Body, theme~, width=196.0, height=18.0)
       .font(@text.FontSpec::new(size=13.0, weight=520))
       .foreground(if done { palette.muted } else { palette.foreground }),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -456,7 +442,7 @@ fn desktop_files(
       ),
     ],
     spacing=20.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   .frame(width=112.0, height=230.0)
   .align(alignment=@geometry.Alignment::top_trailing())
@@ -477,7 +463,7 @@ fn desktop_file(
   // Folder: soft blue plate. Document: white paper glyph with TXT badge.
   let glyph = if is_folder {
     @views.container(
-      desktop_icon(@views.IconName::FolderOpen, 28.0, @graphics.Color::white()),
+      desktop_icon(FolderOpen, 28.0, @graphics.Color::white()),
       width=56.0,
       height=48.0,
       background=rgba8(52, 148, 246),
@@ -523,11 +509,11 @@ fn desktop_file(
       @views.container(
         @views.text(
           "TXT",
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=30.0,
           height=12.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=8.5, weight=700))
         .foreground(@graphics.Color::white()),
@@ -546,11 +532,11 @@ fn desktop_file(
       glyph,
       @views.text(
         label,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=104.0,
         height=30.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=11.5, weight=500))
       .foreground(@graphics.Color::white())
@@ -564,7 +550,7 @@ fn desktop_file(
       ),
     ],
     spacing=6.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   .on_tap(message)
   .on_drag(event => {

@@ -1,6 +1,6 @@
 ///|
 async test "pty spawns shell and echoes" {
-  let pty = match Pty::spawn("/bin/sh", 80, 24) {
+  let pty = match @pty_host.Pty::spawn("/bin/sh", 80, 24) {
     Some(p) => p
     None => fail("failed to spawn pty")
   }
@@ -25,7 +25,7 @@ async test "pty spawns shell and echoes" {
 
 ///|
 async test "pty exit closes reader" {
-  let pty = match Pty::spawn("/bin/sh", 80, 24) {
+  let pty = match @pty_host.Pty::spawn("/bin/sh", 80, 24) {
     Some(p) => p
     None => fail("failed to spawn pty")
   }
@@ -46,7 +46,7 @@ async test "pty exit closes reader" {
 
 ///|
 async test "pty resize does not crash" {
-  let pty = match Pty::spawn("/bin/sh", 80, 24) {
+  let pty = match @pty_host.Pty::spawn("/bin/sh", 80, 24) {
     Some(p) => p
     None => fail("failed to spawn pty")
   }
@@ -68,7 +68,7 @@ async test "pty resize does not crash" {
 /// Ctrl+C(\x03)必须终止前台进程:sleep 5 在 2 秒内被中断,
 /// shell 输出回到提示符(读到新 prompt 或内容增长)。
 async test "ctrl-c terminates foreground process" {
-  let pty = match Pty::spawn("/bin/sh", 80, 24) {
+  let pty = match @pty_host.Pty::spawn("/bin/sh", 80, 24) {
     Some(p) => p
     None => fail("failed to spawn pty")
   }

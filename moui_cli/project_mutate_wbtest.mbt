@@ -13,7 +13,7 @@ test "merge platform lists reports only newly added platforms" {
 test "add platform updates manifest and writes entrypoints" {
   let root = test_temp_path("add-platform")
   remove_tree(root)
-  let options = { ..test_project_options(["web", "macos"]), target: root }
+  let options = { ..test_project_options(["web", "macos"]), target: root, }
   match generate_project_with_validator(options, _ => Ok(())) {
     Ok(_) => ()
     Err(message) => {
@@ -59,7 +59,7 @@ test "add platform updates manifest and writes entrypoints" {
 test "doctor fix creates missing moon.work and README" {
   let root = test_temp_path("doctor-fix")
   remove_tree(root)
-  let options = { ..test_project_options(["web"]), target: root }
+  let options = { ..test_project_options(["web"]), target: root, }
   match generate_project_with_validator(options, _ => Ok(())) {
     Ok(_) => ()
     Err(message) => {
@@ -70,7 +70,7 @@ test "doctor fix creates missing moon.work and README" {
   remove_tree(join_path(root, "moon.work"))
   remove_tree(join_path(root, "README.md"))
   let fixes = match
-    apply_doctor_fixes({ project_root: root, platforms: [], all: false }) {
+    apply_doctor_fixes({ project_root: root, platforms: [], all: false, }) {
     Ok(value) => value
     Err(message) => {
       remove_tree(root)
@@ -87,7 +87,7 @@ test "doctor fix creates missing moon.work and README" {
 test "package report includes project inventory" {
   let root = test_temp_path("package-report")
   remove_tree(root)
-  let options = { ..test_project_options(["web", "macos"]), target: root }
+  let options = { ..test_project_options(["web", "macos"]), target: root, }
   match generate_project_with_validator(options, _ => Ok(())) {
     Ok(_) => ()
     Err(message) => {
@@ -120,7 +120,7 @@ test "package report includes project inventory" {
 test "package manifest is deterministic and records host release gaps" {
   let root = test_temp_path("package-manifest")
   remove_tree(root)
-  let options = { ..test_project_options(["web", "macos"]), target: root }
+  let options = { ..test_project_options(["web", "macos"]), target: root, }
   match generate_project_with_validator(options, _ => Ok(())) {
     Ok(_) => ()
     Err(message) => {

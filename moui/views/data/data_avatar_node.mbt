@@ -34,18 +34,16 @@ impl @core.ViewNode for AvatarImage with fn layout(self, context) {
 ///|
 impl @core.ViewNode for AvatarImage with fn paint(self, context) {
   @core.ViewPaintPlan::commands([
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: self.source,
       frame: context.frame,
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
 }
 
 ///|
 impl @core.ViewNode for AvatarImage with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }

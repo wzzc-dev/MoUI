@@ -735,7 +735,7 @@ fn build_harmonyos(
       moonbit_c +
       ")",
     )
-    return Ok({ build_dir: build_dir_abs, output_artifact: "" })
+    return Ok({ build_dir: build_dir_abs, output_artifact: "", })
   }
   // 5. Resolve SDK home + hvigorw + ohpm.
   let requested_sdk_home = match options.sdk_home {
@@ -900,7 +900,7 @@ fn build_harmonyos(
   log_info(
     "This is build/install evidence only until a device or emulator smoke proves first frame, input, resize, lifecycle, and real Skia present.",
   )
-  Ok({ build_dir: build_dir_abs, output_artifact: options.output_hap })
+  Ok({ build_dir: build_dir_abs, output_artifact: options.output_hap, })
 }
 
 ///|

@@ -58,7 +58,7 @@ pub fn dispatch_host_event(
       match lifecycle.runtime_slot_lookup(id) {
         Some(slot) =>
           match adjusted {
-            @backend_host.Event::Keyboard(key) =>
+            Keyboard(key) =>
               ignore(
                 slot.driver.dispatch_keyboard_with_services(
                   key,
@@ -86,7 +86,7 @@ pub fn sync_text_input_session(
       match lifecycle.surface_actions(slot.id) {
         Some(actions) =>
           match input.sync(slot.driver.focused_text_input()) {
-            @window_input.TextInputSessionAction::NoImeChange => ()
+            NoImeChange => ()
             action => (actions.request_ime_update)(action)
           }
         None => ()
@@ -106,42 +106,36 @@ pub fn apply_window_request(
   exit~ : () -> Unit,
 ) -> @backend_host.WindowRequestResult {
   match request {
-    @backend_host.WindowRequest::OpenWindow(open_request) =>
-      open_window(open_request)
-    @backend_host.WindowRequest::FocusWindow(id) =>
+    OpenWindow(open_request) => open_window(open_request)
+    FocusWindow(id) =>
       apply_platform_window_request(lifecycle, id, request, actions => {
         (actions.focus)()
       })
-    @backend_host.WindowRequest::CloseWindow(id) =>
+    CloseWindow(id) =>
       apply_platform_window_request(lifecycle, id, request, _ => {
         dispose_window(id)
         if lifecycle.runtime_slots_empty() {
           exit()
         }
       })
-    @backend_host.WindowRequest::ResizeWindow(id, metrics) =>
+    ResizeWindow(id, metrics) =>
       apply_platform_window_request(lifecycle, id, request, actions => {
         let applied = (actions.request_resize)(metrics)
-        dispatch_host_event(
-          lifecycle,
-          input,
-          services,
-          id,
-          @backend_host.Event::Resized(applied),
-          adjust=event => Some(event),
-        )
+        dispatch_host_event(lifecycle, input, services, id, Resized(applied), adjust=event => {
+          Some(event)
+        })
         (actions.request_redraw)()
       })
-    @backend_host.WindowRequest::MinimizeWindow(id) =>
+    MinimizeWindow(id) =>
       apply_platform_window_request(lifecycle, id, request, actions => {
         (actions.set_minimized)(true)
       })
-    @backend_host.WindowRequest::ShowWindow(id) =>
+    ShowWindow(id) =>
       apply_platform_window_request(lifecycle, id, request, actions => {
         (actions.set_minimized)(false)
         (actions.set_visible)(true)
       })
-    @backend_host.WindowRequest::SetPrimaryWindow(id) =>
+    SetPrimaryWindow(id) =>
       apply_platform_window_request(lifecycle, id, request, _ => ())
   }
 }
@@ -157,15 +151,12 @@ pub fn apply_platform_window_request(
     Some(actions) => {
       let result = lifecycle.apply_request_state(request)
       match result {
-        @backend_host.WindowRequestResult::WindowRejected(_) => ()
+        WindowRejected(_) => ()
         _ => apply(actions)
       }
       result
     }
-    None =>
-      @backend_host.WindowRequestResult::WindowRejected(
-        "window request has no active platform window",
-      )
+    None => WindowRejected("window request has no active platform window")
   }
 }
 
@@ -180,14 +171,9 @@ pub fn sync_observed_resize(
   match lifecycle.surface_actions(id) {
     Some(actions) => {
       let applied = (actions.sync_observed_resize)(metrics)
-      dispatch_host_event(
-        lifecycle,
-        input,
-        services,
-        id,
-        @backend_host.Event::Resized(applied),
-        adjust=event => Some(event),
-      )
+      dispatch_host_event(lifecycle, input, services, id, Resized(applied), adjust=event => {
+        Some(event)
+      })
       (actions.request_redraw)()
       Some(applied)
     }
@@ -248,9 +234,8 @@ fn drain_renderer_events(
   let completions : Array[@render.RenderPresentCompletion] = []
   for event in renderer.drain_events() {
     match event {
-      @render.RendererEvent::PresentCompleted(completion) =>
-        completions.push(completion)
-      @render.RendererEvent::ImageLoadRequested(request) =>
+      PresentCompleted(completion) => completions.push(completion)
+      ImageLoadRequested(request) =>
         match image_tasks {
           Some(tasks) => ignore(tasks.schedule(renderer, request))
           None => ()

@@ -80,7 +80,7 @@ pub fn SurfaceFinalizationDescriptor::new(
   target : SurfaceTargetDescriptor,
   frame_index? : Int = 0,
 ) -> SurfaceFinalizationDescriptor {
-  { target, frame_index: normalized_surface_present_frame_index(frame_index) }
+  { target, frame_index: normalized_surface_present_frame_index(frame_index), }
 }
 
 ///|

@@ -13,8 +13,7 @@ fn WebGpuWasmRenderer::record_web_image_commands(
 ) -> Unit {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawImage(run) =>
-        ignore(self.image_lifecycle.mark_loading(run.source))
+      DrawImage(run) => ignore(self.image_lifecycle.mark_loading(run.source))
       _ => ()
     }
   }
@@ -27,8 +26,7 @@ fn WebGpuWasmRenderer::refresh_web_image_commands(
 ) -> Unit {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawImage(run) =>
-        self.sync_web_image_resource(run.source)
+      DrawImage(run) => self.sync_web_image_resource(run.source)
       _ => ()
     }
   }
@@ -40,13 +38,13 @@ fn WebGpuWasmRenderer::sync_web_image_resource(
   source : String,
 ) -> Unit {
   match self.port.image_resource(source) {
-    Some({ status: @render.ImageResourceStatus::ImageReady, width, height, .. }) =>
+    Some({ status: ImageReady, width, height, .. }) =>
       ignore(self.image_lifecycle.mark_ready(source, width~, height~))
-    Some({ status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. }) =>
+    Some({ status: ImageFailed, diagnostic, .. }) =>
       ignore(self.image_lifecycle.mark_failed(source, diagnostic~))
-    Some({ status: @render.ImageResourceStatus::ImageDisposed, .. }) =>
+    Some({ status: ImageDisposed, .. }) =>
       ignore(self.image_lifecycle.dispose(source))
-    Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) =>
+    Some({ status: ImageLoading, .. }) =>
       ignore(self.image_lifecycle.mark_loading(source))
     None => ()
   }

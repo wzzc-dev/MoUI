@@ -166,8 +166,8 @@ impl @core.ViewNode for MarkdownViewerNode with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for MarkdownViewerNode with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::ScrollView,
+    composition=Boundary,
+    role=ScrollView,
     label="Markdown document",
   )
 }
@@ -185,8 +185,8 @@ fn[Msg] markdown_viewer_event(
   match on_link_click {
     Some(handler) =>
       match ctx.event {
-        @core.AppEvent::Pointer(event) =>
-          if event.phase == @core.PointerPhase::Up && event.button == 0 {
+        Pointer(event) =>
+          if event.phase == Up && event.button == 0 {
             match
               rich_text_document_session_view_offset_at_point(
                 source,

@@ -76,64 +76,64 @@ pub fn requirement_audit(
     category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::SemanticPalette,
-      DesignTokenCategory::Color,
+      SemanticPalette,
+      Color,
       "DesignSemanticPalette plus @core.ColorPalette and @core.SemanticColorScale adapters",
       "Complete official semantic role matrix and generated token import are pending.",
     ),
     category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::Typography,
-      DesignTokenCategory::Typography,
+      Typography,
+      Typography,
       "DesignTypographyTokens plus @core.TypographyScale adapter",
       "Complete official type ramp and font-family token import are pending.",
     ),
     multi_category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::SpacingDensity,
-      [DesignTokenCategory::Spacing, DesignTokenCategory::Density],
+      SpacingDensity,
+      [Spacing, Density],
       "DesignSpacingTokens and @common.DesignDensity resolve into @core.SpacingScale",
       "Complete official size/density matrices and component density overrides are pending.",
     ),
     category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::ShapeRadius,
-      DesignTokenCategory::Shape,
+      ShapeRadius,
+      Shape,
       "DesignRadiusTokens plus @core.RadiusScale adapter",
       "Complete official shape role matrix is pending.",
     ),
     category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::ElevationShadow,
-      DesignTokenCategory::Elevation,
+      ElevationShadow,
+      Elevation,
       "DesignElevationTokens plus @core.ShadowScale adapter",
       "Official tonal elevation, layer, or shadow-level import is pending.",
     ),
     category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::Motion,
-      DesignTokenCategory::Motion,
+      Motion,
+      Motion,
       "DesignMotionTokens plus @core.MotionScale adapter",
       "Complete official duration/easing/component-motion import is pending.",
     ),
     category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::Surface,
-      DesignTokenCategory::Surface,
+      Surface,
+      Surface,
       "DesignSurfaceTokens plus @core.SurfaceScale adapter",
       "Complete official surface/layer role matrix is pending.",
     ),
     category_audit(
       preset,
       manifest,
-      DesignSystemRequirement::StateLayer,
-      DesignTokenCategory::StateLayer,
+      StateLayer,
+      StateLayer,
       "DesignStateLayerTokens",
       "Component-specific state-layer matrix and disabled-state role coverage are pending.",
     ),
@@ -164,7 +164,7 @@ pub fn requirement_audit_for(
 pub fn requirement_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
   for item in requirement_audit(preset) {
-    if item.status != DesignTokenStatus::OfficialComplete {
+    if item.status != OfficialComplete {
       count = count + 1
     }
   }
@@ -237,15 +237,15 @@ fn official_sources_audit(
   let status = if manifest.is_official_complete() {
     DesignTokenStatus::OfficialComplete
   } else if undeclared > 0 || undeclared_token_sources > 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if has_official_docs && has_official_source_locks {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   } else {
-    DesignTokenStatus::NotMapped
+    NotMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::OfficialSources,
+    OfficialSources,
     status,
     manifest.sources.length().to_string() +
     " source anchors recorded; " +
@@ -257,7 +257,7 @@ fn official_sources_audit(
     " undeclared golden sources; " +
     undeclared_token_sources.to_string() +
     " undeclared official-token sources",
-    if status == DesignTokenStatus::OfficialComplete {
+    if status == OfficialComplete {
       "none"
     } else if undeclared > 0 || undeclared_token_sources > 0 {
       "One or more golden mappings or official-token anchors cite URLs that are not declared in the manifest sources."
@@ -283,17 +283,17 @@ fn source_version_lock_audit(
   let status = if manifest(preset).is_official_complete() && gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if records.length() == 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if gaps == 0 {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   } else if stable > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::SourceVersionLocks,
+    SourceVersionLocks,
     status,
     stable.to_string() +
     "/" +
@@ -331,17 +331,17 @@ fn source_imported_token_audit(
     unanchored > 0 ||
     lock_gaps > 0 ||
     integrity_gaps > 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if imported > 0 {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   } else {
-    DesignTokenStatus::NotMapped
+    NotMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::SourceImportedTokens,
+    SourceImportedTokens,
     status,
     imported.to_string() +
     "/" +
@@ -387,15 +387,15 @@ fn source_package_inventory_audit(
     imported_lock_gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if rows == 0 || snapshot_gaps > 0 || imported_lock_gaps > 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if import_gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::SourcePackageInventory,
+    SourcePackageInventory,
     status,
     rows.to_string() +
     " source package rows; " +
@@ -429,17 +429,17 @@ fn runtime_token_alignment_audit(
   let status = if manifest(preset).is_official_complete() && gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if rows == 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if aligned > 0 && gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if aligned > 0 {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   } else {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::RuntimeTokenAlignment,
+    RuntimeTokenAlignment,
     status,
     aligned.to_string() +
     "/" +
@@ -472,13 +472,13 @@ fn token_taxonomy_audit(
   let status = if manifest.is_official_complete() && parity_gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if rows == 0 || !complete {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::TokenTaxonomy,
+    TokenTaxonomy,
     status,
     mapped.to_string() +
     "/" +
@@ -492,7 +492,7 @@ fn token_taxonomy_audit(
     " source-lock gaps; " +
     parity_gaps.to_string() +
     " official parity gaps",
-    if status == DesignTokenStatus::OfficialComplete {
+    if status == OfficialComplete {
       "none"
     } else if complete {
       "Taxonomy exists, but full official token role matrices are not imported yet."
@@ -528,10 +528,8 @@ fn category_audit(
   } else {
     0
   }
-  let semantic_palette_requirement = requirement ==
-    DesignSystemRequirement::SemanticPalette
-  let typography_requirement = requirement ==
-    DesignSystemRequirement::Typography
+  let semantic_palette_requirement = requirement == SemanticPalette
+  let typography_requirement = requirement == Typography
   let semantic_role_gaps = if semantic_palette_requirement {
     semantic_palette_role_gap_count(preset)
   } else {
@@ -622,7 +620,7 @@ fn category_audit(
   let audit_status = if source_gaps > 0 {
     DesignTokenStatus::NotMapped
   } else if semantic_palette_requirement && semantic_role_gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if typography_requirement &&
     (
       typography_role_gaps > 0 ||
@@ -630,7 +628,7 @@ fn category_audit(
       typography_role_destination_gaps > 0 ||
       typography_role_parity_gaps > 0
     ) {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else {
     complete_status_if_manifest_complete(manifest, status)
   }
@@ -656,8 +654,7 @@ fn multi_category_audit(
   for category in categories {
     statuses.push(token_category_status(manifest, category))
   }
-  let density_requirement = requirement ==
-    DesignSystemRequirement::SpacingDensity
+  let density_requirement = requirement == SpacingDensity
   let density_resolver_gaps = if density_requirement {
     density_resolver_gap_count(preset)
   } else {
@@ -675,7 +672,7 @@ fn multi_category_audit(
   }
   let status = complete_status_if_manifest_complete(
     manifest,
-    combined_status(statuses, mapped_fallback=DesignTokenStatus::ThemeMapped),
+    combined_status(statuses, mapped_fallback=ThemeMapped),
   )
   let evidence = if density_requirement {
     evidence +
@@ -695,7 +692,7 @@ fn multi_category_audit(
     preset,
     requirement,
     if density_source_gaps > 0 {
-      DesignTokenStatus::NotMapped
+      NotMapped
     } else {
       status
     },
@@ -718,13 +715,13 @@ fn scheme_variant_audit(
   let official_parity_gaps = variant_resolver_official_parity_gap_count(preset)
   let status = complete_status_if_manifest_complete(
     manifest,
-    combined_status(statuses, mapped_fallback=DesignTokenStatus::ThemeMapped),
+    combined_status(statuses, mapped_fallback=ThemeMapped),
   )
   audit(
     preset,
-    DesignSystemRequirement::SchemeVariants,
+    SchemeVariants,
     if source_gaps > 0 {
-      DesignTokenStatus::NotMapped
+      NotMapped
     } else {
       status
     },
@@ -769,10 +766,7 @@ fn component_token_audit(
   } else {
     complete_status_if_manifest_complete(
       manifest,
-      combined_status(
-        statuses,
-        mapped_fallback=DesignTokenStatus::ComponentMapped,
-      ),
+      combined_status(statuses, mapped_fallback=ComponentMapped),
     )
   }
   let resolver_gaps = component_style_resolver_gap_count(preset)
@@ -782,9 +776,9 @@ fn component_token_audit(
   )
   audit(
     preset,
-    DesignSystemRequirement::ComponentTokens,
+    ComponentTokens,
     if source_gaps > 0 {
-      DesignTokenStatus::NotMapped
+      NotMapped
     } else {
       status
     },
@@ -824,15 +818,15 @@ fn component_matrix_audit(
     source_gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if rows == 0 || source_gaps > 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else {
-    DesignTokenStatus::ComponentMapped
+    ComponentMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::ComponentMatrix,
+    ComponentMatrix,
     status,
     rows.to_string() +
     " component matrix rows; " +
@@ -865,11 +859,11 @@ fn customization_audit(
   let official_parity_gaps = customization_official_parity_gap_count(preset)
   let status = complete_status_if_manifest_complete(
     manifest,
-    combined_status(statuses, mapped_fallback=DesignTokenStatus::ThemeMapped),
+    combined_status(statuses, mapped_fallback=ThemeMapped),
   )
   audit(
     preset,
-    DesignSystemRequirement::Customization,
+    Customization,
     status,
     manifest.customization_coverage.length().to_string() +
     " manifest customization APIs; " +
@@ -894,15 +888,15 @@ fn golden_mapping_audit(
   let status = if manifest(preset).is_official_complete() && gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if mapped > 0 && gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if mapped > 0 {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   } else {
-    DesignTokenStatus::NotMapped
+    NotMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::GoldenMappings,
+    GoldenMappings,
     status,
     mapped.to_string() + " mapped, " + gaps.to_string() + " gaps",
     gap_for_status(
@@ -927,19 +921,19 @@ fn official_token_coverage_audit(
     unanchored == 0 {
     DesignTokenStatus::OfficialComplete
   } else if source_gaps > 0 || unanchored > 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if anchors == 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if mapped > 0 && gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if mapped > 0 {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   } else {
-    DesignTokenStatus::NotMapped
+    NotMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::OfficialTokenCoverage,
+    OfficialTokenCoverage,
     status,
     mapped.to_string() +
     "/" +
@@ -973,17 +967,17 @@ fn adaptation_difference_audit(
     source_gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if records == 0 || source_gaps > 0 || undeclared > 0 {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if aligned > 0 && gaps > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if aligned > 0 {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   } else {
-    DesignTokenStatus::NotMapped
+    NotMapped
   }
   audit(
     preset,
-    DesignSystemRequirement::AdaptationDifferences,
+    AdaptationDifferences,
     status,
     records.to_string() +
     " adaptation records; " +
@@ -1009,7 +1003,7 @@ fn token_category_status(
       return item.status
     }
   }
-  DesignTokenStatus::NotMapped
+  NotMapped
 }
 
 ///|
@@ -1026,7 +1020,7 @@ fn complete_status_if_manifest_complete(
   status : DesignTokenStatus,
 ) -> DesignTokenStatus {
   if manifest.is_official_complete() {
-    DesignTokenStatus::OfficialComplete
+    OfficialComplete
   } else {
     status
   }
@@ -1044,30 +1038,30 @@ fn combined_status(
   let mut has_component = false
   let mut has_theme = false
   for status in statuses {
-    if status != DesignTokenStatus::OfficialComplete {
+    if status != OfficialComplete {
       all_official = false
     }
     match status {
-      DesignTokenStatus::NotMapped => has_not_mapped = true
-      DesignTokenStatus::SourceMapped => has_source = true
-      DesignTokenStatus::PreviewMapped => has_preview = true
-      DesignTokenStatus::ComponentMapped => has_component = true
-      DesignTokenStatus::ThemeMapped => has_theme = true
-      DesignTokenStatus::OfficialComplete => ()
+      NotMapped => has_not_mapped = true
+      SourceMapped => has_source = true
+      PreviewMapped => has_preview = true
+      ComponentMapped => has_component = true
+      ThemeMapped => has_theme = true
+      OfficialComplete => ()
     }
   }
   if all_official {
-    DesignTokenStatus::OfficialComplete
+    OfficialComplete
   } else if has_not_mapped {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if has_source {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   } else if has_preview {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if has_component {
-    DesignTokenStatus::ComponentMapped
+    ComponentMapped
   } else if has_theme {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   } else {
     mapped_fallback
   }
@@ -1075,7 +1069,7 @@ fn combined_status(
 
 ///|
 fn gap_for_status(status : DesignTokenStatus, gap : String) -> String {
-  if status == DesignTokenStatus::OfficialComplete {
+  if status == OfficialComplete {
     "none"
   } else {
     gap
@@ -1090,5 +1084,5 @@ fn audit(
   evidence : String,
   remaining_gap : String,
 ) -> DesignSystemRequirementAudit {
-  { preset, requirement, status, evidence, remaining_gap }
+  { preset, requirement, status, evidence, remaining_gap, }
 }

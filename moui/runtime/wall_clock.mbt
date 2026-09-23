@@ -25,5 +25,5 @@ pub fn HostWallClock::new(
   minute : Int,
   second? : Int = 0,
 ) -> HostWallClock {
-  { year, month, day, weekday, hour, minute, second }
+  { year, month, day, weekday, hour, minute, second, }
 }

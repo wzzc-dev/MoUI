@@ -173,7 +173,7 @@ fn markdown_session_editor_paint(
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   append_rich_text_border(
     commands,
     rounded,
@@ -191,18 +191,18 @@ fn markdown_session_editor_paint(
   )
   let display_session = markdown_session_display_session(session, display_text)
   let content = rich_text_editor_content_rect(ctx.frame)
-  commands.push(@core.DrawCommand::PushClip(content))
+  commands.push(PushClip(content))
   let child_layers : Array[@core.ViewPaintLayer] = []
   let mut geometry_compensation = 0.0
   if display_text == "" {
     commands.push(
-      @core.DrawCommand::DrawText(
+      DrawText(
         @core.TextRun::new(
           text=placeholder,
           frame=content,
           font~,
           color=placeholder_color,
-          align=@core.TextAlign::TextStart,
+          align=TextStart,
         ),
       ),
     )
@@ -331,7 +331,7 @@ fn markdown_session_editor_paint(
     {
       commands,
       child_layers,
-      post_commands: [@core.DrawCommand::PopClip],
+      post_commands: [PopClip],
       overlay_commands,
       repaint_boundary: false,
       animating: false,
@@ -362,7 +362,7 @@ fn[Msg] markdown_session_editor_event(
   let value = session.source()
   let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       markdown_session_pointer_event(
         ctx,
         session~,
@@ -380,7 +380,7 @@ fn[Msg] markdown_session_editor_event(
         visible_viewport_height~,
         visible_overscan~,
       )
-    @core.AppEvent::Keyboard(event) => {
+    Keyboard(event) => {
       // ArrowUp/ArrowDown 需要用 visible_window 的 document 来正确计算
       // 视觉位置（考虑 scroll offset），所以在这里预处理，而不是走
       // rich_text_keyboard_event 的通用 format(text) 路径。
@@ -439,7 +439,7 @@ fn[Msg] markdown_session_editor_event(
         event~,
       )
     }
-    @core.AppEvent::TextInput(event) =>
+    TextInput(event) =>
       rich_text_input_event(
         ctx,
         value~,
@@ -482,8 +482,7 @@ fn[Msg] markdown_session_pointer_event(
   // the caret (see the Down branch), so the menu the host builds next describes
   // what was pressed; every other button and phase is ignored, which keeps a
   // right-drag from selecting and leaves the wheel path (button 0) untouched.
-  if event.button != 0 &&
-    !(event.button == 1 && event.phase == @core.PointerPhase::Down) {
+  if event.button != 0 && !(event.button == 1 && event.phase == Down) {
     return @core.ViewEventResult::ignored()
   }
   let inside = ctx.frame.contains(event.position)
@@ -496,7 +495,7 @@ fn[Msg] markdown_session_pointer_event(
     )
   }
   match event.phase {
-    @core.PointerPhase::Down =>
+    Down =>
       if inside {
         let text = session.source()
         let window = markdown_session_visible_window(
@@ -546,7 +545,7 @@ fn[Msg] markdown_session_pointer_event(
               composition: None,
               composition_cursor: None,
             }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
             messages=selection_messages(on_selection_change, caret, None),
           )
         }
@@ -565,7 +564,7 @@ fn[Msg] markdown_session_pointer_event(
               focused=true,
               captured=true,
               text_control=Some(ctx.text_control),
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              dirty=ViewPaintDirty,
               messages=[handler(offset)],
             )
           }
@@ -606,7 +605,7 @@ fn[Msg] markdown_session_pointer_event(
               focused=true,
               captured=true,
               text_control=Some(next_control),
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              dirty=ViewPaintDirty,
               messages=prefix_messages +
                 selection_messages(on_selection_change, caret, None),
             )
@@ -615,7 +614,7 @@ fn[Msg] markdown_session_pointer_event(
       } else {
         @core.ViewEventResult::ignored()
       }
-    @core.PointerPhase::Move =>
+    Move =>
       match ctx.text_control.text_selection_anchor {
         Some(anchor) => {
           let text = session.source()
@@ -643,7 +642,7 @@ fn[Msg] markdown_session_pointer_event(
             // the pointer and inflate the selection on its own.
             let window = markdown_session_visible_window(
               session,
-              { caret: anchor, selection: None },
+              { caret: anchor, selection: None, },
               font,
               source_mode~,
               focus_mode~,
@@ -683,7 +682,7 @@ fn[Msg] markdown_session_pointer_event(
                   composition: None,
                   composition_cursor: None,
                 }),
-                dirty=@core.ViewDirtyHint::ViewPaintDirty,
+                dirty=ViewPaintDirty,
                 messages=selection_messages(
                   on_selection_change, caret, next_selection,
                 ),
@@ -699,7 +698,7 @@ fn[Msg] markdown_session_pointer_event(
         }
         None => @core.ViewEventResult::ignored()
       }
-    @core.PointerPhase::Up =>
+    Up =>
       if ctx.text_control.text_selection_anchor is Some(_) {
         view_event_result(
           changed=true,
@@ -710,7 +709,7 @@ fn[Msg] markdown_session_pointer_event(
             text_selection_anchor: None,
             text_selection_origin: None,
           }),
-          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          dirty=ViewPaintDirty,
         )
       } else {
         @core.ViewEventResult::ignored()
@@ -745,7 +744,7 @@ fn[Msg] markdown_session_scroll_event(
         changed=delta_y != 0.0,
         activated=delta_y != 0.0,
         captured=true,
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        dirty=ViewPaintDirty,
         messages=if delta_y != 0.0 { [handler(delta_y, clock_ms)] } else { [] },
       )
     }
@@ -1032,8 +1031,8 @@ fn markdown_session_estimated_caret_inset_x(
             ),
             inlines: [],
           },
-          source_range: { start: window_start, end: slice_end },
-          content_range: { start: window_start, end: slice_end },
+          source_range: { start: window_start, end: slice_end, },
+          content_range: { start: window_start, end: slice_end, },
         }
       } else {
         editor_block
@@ -1161,7 +1160,7 @@ fn markdown_session_input_state(
   }
   let window = markdown_session_visible_window(
     display_session,
-    { caret: visual_caret, selection: control.selection },
+    { caret: visual_caret, selection: control.selection, },
     font,
     source_mode~,
     focus_mode~,
@@ -1271,8 +1270,7 @@ fn[Msg] markdown_session_editor_command(
   let value = session.source()
   let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
   let format_selection = match intent {
-    @core.CommandIntent::Copy | @core.CommandIntent::Cut =>
-      ({ caret: -1, selection: None } : MarkdownEditorSelection)
+    Copy | Cut => ({ caret: -1, selection: None, } : MarkdownEditorSelection)
     _ => selection
   }
   let format = display_source => {

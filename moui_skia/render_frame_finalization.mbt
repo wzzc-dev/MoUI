@@ -3,7 +3,7 @@ fn render_frame_finalization_resource_plan(
   frame : RenderFrameDescriptor,
   finalization : SurfaceFinalizationDescriptor?,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   for descriptor in frame.resource_plan.descriptors {
     descriptors.push(descriptor)
   }

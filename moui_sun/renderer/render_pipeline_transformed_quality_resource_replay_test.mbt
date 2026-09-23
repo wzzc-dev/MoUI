@@ -2,9 +2,9 @@
 test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 8, 8)
-  let renderer = Renderer::new(@graphics.Canvas::new(10, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 8, 8)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(10, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-transform-quality",
@@ -14,7 +14,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-transform-quality-sprite",
@@ -25,7 +25,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba-transform-quality",
@@ -37,7 +37,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-transform-quality-sprite",
@@ -50,7 +50,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 5)
@@ -78,7 +78,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
   assert_eq(images[3].get_source_pixel_count(), 1)
   let batches = first_pipeline.batch_plan(10, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_eq(batches[1].get_dirty_rect_count(), 3)
   assert_true(
     batches[1].get_dirty_bounds() ==
@@ -159,7 +159,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
     @graphics.Color::green(),
   )
 
-  let second_pipeline = RenderPipeline::new()
+  let second_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-transform-quality",
@@ -169,7 +169,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-transform-quality-sprite",
@@ -180,7 +180,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba-transform-quality",
@@ -192,7 +192,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-transform-quality-sprite",
@@ -205,7 +205,7 @@ test "RenderPipeline BMP and RGBA transformed quality replay uses RendererResour
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
   let second = must_draw_pipeline_with_renderer_resources(
     renderer, second_pipeline, resources,

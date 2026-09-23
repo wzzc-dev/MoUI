@@ -12,16 +12,16 @@ test "design systems app renders source mapped preview evidence" {
 
 ///|
 test "design systems app switches official presets and custom override" {
-  let model = DesignSystemsModel::new()
-    .update(@app.DesignSystemsMsg::SelectPreset("carbon"))
-    .update(@app.DesignSystemsMsg::SelectScheme("dark"))
-    .update(@app.DesignSystemsMsg::SelectVariant("system"))
-    .update(@app.DesignSystemsMsg::SelectDensity("compact"))
-    .update(@app.DesignSystemsMsg::ToggleCustom)
-  assert_true(model.preset == @app.DesignSystemChoice::Carbon)
-  assert_true(model.scheme == @state.ColorScheme::Dark)
-  assert_true(model.variant == @common.DesignSchemeVariant::SchemeSystem)
-  assert_true(model.density == @common.DesignDensity::Compact)
+  let model = @app.DesignSystemsModel::new()
+    .update(SelectPreset("carbon"))
+    .update(SelectScheme("dark"))
+    .update(SelectVariant("system"))
+    .update(SelectDensity("compact"))
+    .update(ToggleCustom)
+  assert_true(model.preset == Carbon)
+  assert_true(model.scheme == Dark)
+  assert_true(model.variant == SchemeSystem)
+  assert_true(model.density == Compact)
   assert_true(model.custom_enabled)
   let commands = test_runtime(model.program()).draw_commands()
   assert_true(has_text(commands, "IBM Carbon Design System"))
@@ -35,10 +35,8 @@ test "design systems app renders fluent structural component variants" {
   // text field) is surfaced through the component token matrix panel. The
   // underline text field shares the draft state with the rest of the app, so
   // we assert on the button variant labels that are always rendered.
-  let model = @app.DesignSystemsModel::new().update(
-    @app.DesignSystemsMsg::SelectPreset("fluent"),
-  )
-  assert_true(model.preset == @app.DesignSystemChoice::Fluent)
+  let model = @app.DesignSystemsModel::new().update(SelectPreset("fluent"))
+  assert_true(model.preset == Fluent)
   let commands = test_runtime(model.program()).draw_commands()
   assert_true(has_text(commands, "Subtle"))
   assert_true(has_text(commands, "Subtle brand"))
@@ -48,10 +46,8 @@ test "design systems app renders fluent structural component variants" {
 
 ///|
 test "design systems app renders sickle first party theme addon" {
-  let model = @app.DesignSystemsModel::new().update(
-    @app.DesignSystemsMsg::SelectPreset("sickle"),
-  )
-  assert_true(model.preset == @app.DesignSystemChoice::Sickle)
+  let model = @app.DesignSystemsModel::new().update(SelectPreset("sickle"))
+  assert_true(model.preset == Sickle)
   let commands = test_runtime(model.program()).draw_commands()
   assert_true(has_text(commands, "Sickle"))
   assert_true(has_text(commands, "first-party theme"))
@@ -71,6 +67,6 @@ fn test_runtime(
 ///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+    command is DrawText({ text: value, .. }) && value == text
   })
 }

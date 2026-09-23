@@ -84,7 +84,7 @@ pub fn ControlStateTokens::resolve(
 ) -> ControlStateStyle {
   {
     foreground: self.foreground,
-    background: @core.Brush::Solid(self.background),
+    background: Solid(self.background),
     border: control_state_border(self),
     radius: self.radius,
     shadow: None,
@@ -98,7 +98,7 @@ fn control_state_border(state : ControlStateTokens) -> @core.BorderStyle? {
   if state.border_width > 0.0 {
     Some(
       @core.BorderStyle::new(
-        brush=@core.Brush::Solid(state.border),
+        brush=Solid(state.border),
         width=state.border_width,
       ),
     )
@@ -169,7 +169,7 @@ pub fn ButtonTheme::resolve(
     Hovered =>
       {
         ..normal,
-        background: @core.Brush::Solid(
+        background: Solid(
           state_layer_background(
             base.background,
             self.state_layer.color,
@@ -180,7 +180,7 @@ pub fn ButtonTheme::resolve(
     Pressed =>
       {
         ..normal,
-        background: @core.Brush::Solid(
+        background: Solid(
           state_layer_background(
             base.background,
             self.state_layer.color,
@@ -191,7 +191,7 @@ pub fn ButtonTheme::resolve(
     Focused =>
       {
         ..normal,
-        background: @core.Brush::Solid(
+        background: Solid(
           state_layer_background(
             base.background,
             self.state_layer.color,

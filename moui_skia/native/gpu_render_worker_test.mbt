@@ -1,15 +1,13 @@
 ///|
 test "native gpu picture worker queue is latest wins" {
-  let worker = GpuRenderWorker::new(worker_thread_id=7L)
+  let worker = @native.GpuRenderWorker::new(worker_thread_id=7L)
   assert_eq(worker.submit(None, submitted_at_ms=1.0), 1)
   assert_eq(worker.submit(None, submitted_at_ms=2.0), 2)
   worker.poll(gpu_completed_at_ms=3.0, presented_at_ms=4.0)
   let completions = worker.drain_completions()
   assert_eq(completions.length(), 1)
   assert_eq(completions[0].sequence, 2)
-  assert_true(
-    completions[0].status is GpuRenderCompletionStatus::PictureRecorded,
-  )
+  assert_true(completions[0].status is PictureRecorded)
   assert_eq(completions[0].presented_at_ms, 0.0)
   assert_eq(worker.diagnostics().replaced_pending, 1)
   assert_eq(worker.diagnostics().readback_count, 0)
@@ -17,11 +15,11 @@ test "native gpu picture worker queue is latest wins" {
 
 ///|
 test "native gpu picture worker preserves control fifo" {
-  let worker = GpuRenderWorker::new()
+  let worker = @native.GpuRenderWorker::new()
   ignore(worker.submit(None))
-  ignore(worker.submit_control(GpuRenderWorkerControl::Resize(20, 20)))
-  ignore(worker.submit_control(GpuRenderWorkerControl::Detach))
-  ignore(worker.submit_control(GpuRenderWorkerControl::Attach(42UL)))
+  ignore(worker.submit_control(Resize(20, 20)))
+  ignore(worker.submit_control(Detach))
+  ignore(worker.submit_control(Attach(42UL)))
   worker.poll()
   let diagnostics = worker.diagnostics()
   assert_eq(diagnostics.surface_generation, 4)
@@ -31,13 +29,13 @@ test "native gpu picture worker preserves control fifo" {
 
 ///|
 test "native gpu worker runs on an independent thread and acknowledges detach" {
-  guard skia_available() else { return () }
-  let worker = match NativeGpuRenderWorker::new() {
+  guard @native.skia_available() else { return () }
+  let worker = match @native.NativeGpuRenderWorker::new() {
     Some(worker) => worker
     None =>
       fail("skia_available() but NativeGpuRenderWorker::new() returned None")
   }
-  let sequence = match PictureRecorder::new() {
+  let sequence = match @native.PictureRecorder::new() {
     Some(recorder) => {
       match recorder.begin(8, 8) {
         Some(canvas) => canvas.clear(@skia.Color::blue())
@@ -68,11 +66,11 @@ test "native gpu worker runs on an independent thread and acknowledges detach" {
       completion.image_resource_revision == 9L &&
       completion.submitted_at_ms == 1.0 &&
       completion.processed_at_ms > 0.0 &&
-      completion.status is NativeGpuWorkerCompletionStatus::PictureRecorded
+      completion.status is PictureRecorded
     }),
   )
 
-  let detach = worker.submit_control(GpuRenderWorkerControl::Detach)
+  let detach = worker.submit_control(Detach)
   assert_true(detach > 0L)
   assert_true(worker.wait_completion(timeout_ms=1000))
   let controls = worker.drain_completions()

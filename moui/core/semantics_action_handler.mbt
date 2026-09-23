@@ -43,7 +43,7 @@ pub struct ViewSemanticsActionHandler[Msg] {
 pub fn[Msg] ViewSemanticsActionResult::accepted(
   state? : ViewStateContext? = None,
   text_control? : TextControlStateContext? = None,
-  dirty? : ViewDirtyHint = ViewDirtyHint::ViewPaintDirty,
+  dirty? : ViewDirtyHint = ViewPaintDirty,
   messages? : Array[Msg] = [],
   commit? : (() -> Unit)? = None,
 ) -> ViewSemanticsActionResult[Msg] {
@@ -75,7 +75,7 @@ pub fn[Msg] ViewSemanticsActionResult::rejected() -> ViewSemanticsActionResult[
     accepted: false,
     state: None,
     text_control: None,
-    dirty: ViewDirtyHint::ViewClean,
+    dirty: ViewClean,
     messages: [],
     deferred_commits: [],
   }
@@ -86,10 +86,10 @@ pub fn[Msg] ViewSemanticsActionHandler::activate(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Activate,
+    kind: Activate,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Activate => handle(context)
+        Activate => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -103,10 +103,10 @@ pub fn[Msg] ViewSemanticsActionHandler::set_text(
   ],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::SetText,
+    kind: SetText,
     handle: (context, action) => {
       match action {
-        SemanticsAction::SetText(value) => handle(context, value)
+        SetText(value) => handle(context, value)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -118,10 +118,10 @@ pub fn[Msg] ViewSemanticsActionHandler::submit(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Submit,
+    kind: Submit,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Submit => handle(context)
+        Submit => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -135,10 +135,10 @@ pub fn[Msg] ViewSemanticsActionHandler::scroll(
   ],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Scroll,
+    kind: Scroll,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Scroll(direction) => handle(context, direction)
+        Scroll(direction) => handle(context, direction)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -150,10 +150,10 @@ pub fn[Msg] ViewSemanticsActionHandler::select(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Select,
+    kind: Select,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Select => handle(context)
+        Select => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -165,10 +165,10 @@ pub fn[Msg] ViewSemanticsActionHandler::expand(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Expand,
+    kind: Expand,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Expand => handle(context)
+        Expand => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -180,10 +180,10 @@ pub fn[Msg] ViewSemanticsActionHandler::collapse(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Collapse,
+    kind: Collapse,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Collapse => handle(context)
+        Collapse => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -195,10 +195,10 @@ pub fn[Msg] ViewSemanticsActionHandler::dismiss(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Dismiss,
+    kind: Dismiss,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Dismiss => handle(context)
+        Dismiss => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -210,10 +210,10 @@ pub fn[Msg] ViewSemanticsActionHandler::increment(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Increment,
+    kind: Increment,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Increment => handle(context)
+        Increment => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -225,10 +225,10 @@ pub fn[Msg] ViewSemanticsActionHandler::decrement(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::Decrement,
+    kind: Decrement,
     handle: (context, action) => {
       match action {
-        SemanticsAction::Decrement => handle(context)
+        Decrement => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -242,10 +242,10 @@ pub fn[Msg] ViewSemanticsActionHandler::set_numeric_value(
   ],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::SetNumericValue,
+    kind: SetNumericValue,
     handle: (context, action) => {
       match action {
-        SemanticsAction::SetNumericValue(value) => handle(context, value)
+        SetNumericValue(value) => handle(context, value)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -259,10 +259,10 @@ pub fn[Msg] ViewSemanticsActionHandler::set_selection(
   ],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::SetSelection,
+    kind: SetSelection,
     handle: (context, action) => {
       match action {
-        SemanticsAction::SetSelection(selection) => handle(context, selection)
+        SetSelection(selection) => handle(context, selection)
         _ => ViewSemanticsActionResult::rejected()
       }
     },
@@ -274,10 +274,10 @@ pub fn[Msg] ViewSemanticsActionHandler::show_menu(
   handle : (ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg],
 ) -> ViewSemanticsActionHandler[Msg] {
   {
-    kind: SemanticsActionKind::ShowMenu,
+    kind: ShowMenu,
     handle: (context, action) => {
       match action {
-        SemanticsAction::ShowMenu => handle(context)
+        ShowMenu => handle(context)
         _ => ViewSemanticsActionResult::rejected()
       }
     },

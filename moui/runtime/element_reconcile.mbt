@@ -29,12 +29,12 @@ priv struct ReconcileDirtyKind {
 
 ///|
 fn ReconcileDirtyKind::clean() -> ReconcileDirtyKind {
-  { layout: false, paint: false, semantics: false, platform: false }
+  { layout: false, paint: false, semantics: false, platform: false, }
 }
 
 ///|
 fn ReconcileDirtyKind::layout() -> ReconcileDirtyKind {
-  { layout: true, paint: true, semantics: true, platform: true }
+  { layout: true, paint: true, semantics: true, platform: true, }
 }
 
 ///|
@@ -142,7 +142,7 @@ fn reconcile_element_for_runtime(
     old.refresh_descendant_dirty_flags()
     old.apply_descendant_reconcile_dirty(children_result.dirty_kind)
     let dirty_kind = effective_own_dirty.combine(children_result.dirty_kind)
-    { node: old, next_id: children_result.next_id, dirty_kind }
+    { node: old, next_id: children_result.next_id, dirty_kind, }
   }
 }
 
@@ -207,7 +207,7 @@ fn reconcile_children_for_runtime(
       dirty = dirty.combine(ReconcileDirtyKind::layout())
     }
   }
-  { children, next_id: next, dirty_kind: dirty, structure_changed }
+  { children, next_id: next, dirty_kind: dirty, structure_changed, }
 }
 
 ///|

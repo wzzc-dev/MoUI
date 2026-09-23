@@ -50,7 +50,7 @@ fn ShowcaseModel::devtools_inspector_card(
         .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=430.0,

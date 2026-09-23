@@ -79,7 +79,7 @@ pub(all) struct VisualStyle {
 
 ///|
 pub fn ViewStyle::empty() -> ViewStyle {
-  { font: None, foreground: None, background: None, corner_radius: None }
+  { font: None, foreground: None, background: None, corner_radius: None, }
 }
 
 ///|
@@ -89,12 +89,12 @@ pub fn ShadowStyle::new(
   blur_radius? : Double = 8.0,
   spread? : Double = 0.0,
 ) -> ShadowStyle {
-  { color, offset, blur_radius, spread }
+  { color, offset, blur_radius, spread, }
 }
 
 ///|
 pub fn BorderStyle::new(brush~ : Brush, width? : Double = 1.0) -> BorderStyle {
-  { brush, width }
+  { brush, width, }
 }
 
 ///|
@@ -111,7 +111,7 @@ pub fn VisualStyle::empty() -> VisualStyle {
 
 ///|
 pub fn Alignment::new(x~ : Double, y~ : Double) -> Alignment {
-  { x: clamp_double(x, -1.0, 1.0), y: clamp_double(y, -1.0, 1.0) }
+  { x: clamp_double(x, -1.0, 1.0), y: clamp_double(y, -1.0, 1.0), }
 }
 
 ///|
@@ -144,7 +144,7 @@ pub fn KeyboardShortcut::new(
   key~ : String,
   modifiers? : KeyModifiers = KeyModifiers::none(),
 ) -> KeyboardShortcut {
-  { key, modifiers }
+  { key, modifiers, }
 }
 
 ///|

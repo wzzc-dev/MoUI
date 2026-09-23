@@ -76,10 +76,10 @@ pub(all) struct ThemeSpec {
 /// contrast, no seed, full motion.
 pub fn ThemeSpec::default() -> ThemeSpec {
   {
-    preset: ThemePreset::Minimal,
-    color_mode: ColorMode::System,
-    density: ThemeDensity::Standard,
-    contrast: AccessibilityContrast::Standard,
+    preset: Minimal,
+    color_mode: System,
+    density: Standard,
+    contrast: Standard,
     seed: None,
     reduced_motion: false,
   }
@@ -88,13 +88,13 @@ pub fn ThemeSpec::default() -> ThemeSpec {
 ///|
 /// Minimal-light spec (forced light, used by the legacy `light_theme()` helper).
 pub fn ThemeSpec::minimal_light() -> ThemeSpec {
-  { ..ThemeSpec::default(), preset: Minimal, color_mode: ColorMode::Light }
+  { ..ThemeSpec::default(), preset: Minimal, color_mode: Light, }
 }
 
 ///|
 /// Minimal-dark spec (forced dark, used by the legacy `dark_theme()` helper).
 pub fn ThemeSpec::minimal_dark() -> ThemeSpec {
-  { ..ThemeSpec::default(), preset: Minimal, color_mode: ColorMode::Dark }
+  { ..ThemeSpec::default(), preset: Minimal, color_mode: Dark, }
 }
 
 ///|

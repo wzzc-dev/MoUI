@@ -21,7 +21,7 @@ fn markdown_editor_complete_code_fence_on_enter(
     markdown_editor_transform_result(
       text~,
       caret=caret + 1 + markdown_editor_text_length(indent),
-      edit_range=Some({ start: caret, end: caret }),
+      edit_range=Some({ start: caret, end: caret, }),
     ),
   )
 }
@@ -56,7 +56,7 @@ fn markdown_editor_complete_quoted_code_fence_on_enter(
     markdown_editor_transform_result(
       text~,
       caret=caret + 1 + markdown_editor_text_length(content_prefix),
-      edit_range=Some({ start: caret, end: caret }),
+      edit_range=Some({ start: caret, end: caret, }),
     ),
   )
 }
@@ -108,7 +108,7 @@ fn markdown_editor_exit_empty_code_block_on_enter(
       markdown_editor_transform_result(
         text=source + insert,
         caret=closing_end + markdown_editor_text_length(insert),
-        edit_range=Some({ start: closing_end, end: closing_end }),
+        edit_range=Some({ start: closing_end, end: closing_end, }),
       ),
     )
   } else {
@@ -119,7 +119,7 @@ fn markdown_editor_exit_empty_code_block_on_enter(
           markdown_editor_transform_result(
             text=source,
             caret=after_close,
-            edit_range=Some({ start: after_close, end: after_close }),
+            edit_range=Some({ start: after_close, end: after_close, }),
           ),
         )
       } else {
@@ -127,7 +127,7 @@ fn markdown_editor_exit_empty_code_block_on_enter(
           markdown_editor_transform_result(
             text=source + exit_indent,
             caret=after_close + markdown_editor_text_length(exit_indent),
-            edit_range=Some({ start: after_close, end: after_close }),
+            edit_range=Some({ start: after_close, end: after_close, }),
           ),
         )
       }
@@ -139,7 +139,7 @@ fn markdown_editor_exit_empty_code_block_on_enter(
             insert +
             String::from_array(chars[after_close:]),
           caret=after_close + markdown_editor_text_length(exit_indent),
-          edit_range=Some({ start: after_close, end: after_close }),
+          edit_range=Some({ start: after_close, end: after_close, }),
         ),
       )
     }
@@ -195,7 +195,7 @@ fn markdown_editor_quoted_code_block_at_content_offset(
         markdown_editor_block_at_offset_of_kind(
           context.blocks,
           caret,
-          MarkdownBlockKind::Blockquote,
+          Blockquote,
         ) {
         Some(block) => {
           let range = block.source_range
@@ -217,7 +217,7 @@ fn markdown_editor_quoted_code_block_at_content_offset(
     None =>
       markdown_editor_containing_quoted_code_block(
         source,
-        ({ caret, selection } : MarkdownEditorSelection),
+        ({ caret, selection, } : MarkdownEditorSelection),
       )
   }
   match containing {
@@ -309,7 +309,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
       markdown_editor_transform_result(
         text=source + insert,
         caret=closing_end + markdown_editor_text_length(insert),
-        edit_range=Some({ start: closing_end, end: closing_end }),
+        edit_range=Some({ start: closing_end, end: closing_end, }),
       ),
     )
   } else {
@@ -319,7 +319,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
         markdown_editor_transform_result(
           text=source + exit_indent,
           caret=after_close + markdown_editor_text_length(exit_indent),
-          edit_range=Some({ start: after_close, end: after_close }),
+          edit_range=Some({ start: after_close, end: after_close, }),
         ),
       )
     } else {
@@ -330,7 +330,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
             insert +
             String::from_array(chars[after_close:]),
           caret=after_close + markdown_editor_text_length(exit_indent),
-          edit_range=Some({ start: after_close, end: after_close }),
+          edit_range=Some({ start: after_close, end: after_close, }),
         ),
       )
     }
@@ -361,7 +361,7 @@ fn markdown_editor_quoted_code_block_enter(
       insert +
       String::from_array(chars[caret:]),
     caret=caret + markdown_editor_text_length(insert),
-    edit_range=Some({ start: caret, end: caret }),
+    edit_range=Some({ start: caret, end: caret, }),
   )
 }
 
@@ -465,13 +465,7 @@ fn markdown_editor_code_block(
   text : String,
   code_language : String?,
 ) -> MarkdownBlock {
-  {
-    kind: MarkdownBlockKind::CodeBlock,
-    text,
-    inlines: [],
-    table_alignments: [],
-    code_language,
-  }
+  { kind: CodeBlock, text, inlines: [], table_alignments: [], code_language, }
 }
 
 ///|

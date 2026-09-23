@@ -4,10 +4,8 @@ fn NativeRasterGlyph::is_valid(self : NativeRasterGlyph) -> Bool {
     return false
   }
   match self.format {
-    NativeRasterGlyphFormat::AlphaMask =>
-      self.width <= self.pixels.length() / self.height
-    NativeRasterGlyphFormat::ColorRgba =>
-      self.width <= self.pixels.length() / self.height / 4
+    AlphaMask => self.width <= self.pixels.length() / self.height
+    ColorRgba => self.width <= self.pixels.length() / self.height / 4
   }
 }
 

@@ -1,7 +1,7 @@
 ///|
 test "skia renderer backend info reflects native availability" {
-  let info = backend_info()
-  assert_true(info.backend == @render.RendererBackendKind::SkiaRasterNative)
+  let info = @moui_skia_renderer.backend_info()
+  assert_true(info.backend == SkiaRasterNative)
   assert_true(info.owns_surface)
   assert_true(info.description.contains("SurfaceTargetDescriptor"))
   assert_true(info.description.contains("finalization preflight"))
@@ -26,18 +26,18 @@ test "skia renderer backend info reflects native availability" {
     info.description.contains("color emoji pending"),
   )
   assert_true(info.description.contains("flush-and-submit finalization"))
-  if skia_available() {
-    assert_true(info.status == @render.RendererCapabilityStatus::Supported)
+  if @moui_skia_renderer.skia_available() {
+    assert_true(info.status == Supported)
     assert_true(info.can_render)
   } else {
-    assert_true(info.status == @render.RendererCapabilityStatus::Unavailable)
+    assert_true(info.status == Unavailable)
     assert_false(info.can_render)
   }
 }
 
 ///|
 test "skia gpu metal preflight reports explicit opt-in route" {
-  let summary = skia_gpu_metal_preflight_summary()
+  let summary = @moui_skia_renderer.skia_gpu_metal_preflight_summary()
   assert_true(summary.contains("Metal GPU opt-in preflight"))
   assert_true(summary.contains("target-plan-ready"))
   assert_true(summary.contains("explicit-offscreen-surface-api-"))
@@ -46,26 +46,37 @@ test "skia gpu metal preflight reports explicit opt-in route" {
 
 ///|
 test "skia surface routes keep raster default and gate metal gpu explicitly" {
-  assert_false(SkiaSurfaceRoute::RasterSurfaceRoute.is_gpu())
-  assert_true(SkiaSurfaceRoute::MetalGpuSurfaceRoute.is_gpu())
-  assert_true(SkiaSurfaceRoute::RasterSurfaceRoute.label() == "raster")
-  assert_true(SkiaSurfaceRoute::MetalGpuSurfaceRoute.label() == "metal-gpu")
+  assert_false(
+    @moui_skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute.is_gpu(),
+  )
+  assert_true(
+    @moui_skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute.is_gpu(),
+  )
+  assert_true(
+    @moui_skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute.label() == "raster",
+  )
+  assert_true(
+    @moui_skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute.label() ==
+    "metal-gpu",
+  )
 
-  let target = SkiaPresentTarget::new(description="test", present=_frame => true)
+  let target = @moui_skia_renderer.SkiaPresentTarget::new(description="test", present=_frame => {
+    true
+  })
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=16.0, height=16.0),
   )
-  if !skia_available() {
+  if !@moui_skia_renderer.skia_available() {
     try
-      create_with_present_target_and_route(
+      @moui_skia_renderer.create_with_present_target_and_route(
         metrics,
         target,
-        surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+        surface_route=MetalGpuSurfaceRoute,
       )
     catch {
       err =>
         match err {
-          SkiaRendererError::SkiaUnavailable => ()
+          SkiaUnavailable => ()
           _ => fail("expected unavailable Skia before GPU route creation")
         }
     } noraise {
@@ -77,10 +88,10 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
     )
     let status = @skia_native.Surface::gpu_context_support_status(descriptor)
     if status.is_available() {
-      let renderer = create_with_present_target_and_route(
+      let renderer = @moui_skia_renderer.create_with_present_target_and_route(
         metrics,
         target,
-        surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+        surface_route=MetalGpuSurfaceRoute,
       ) catch {
         err => fail("expected GPU renderer route, got \{err.message()}")
       }
@@ -96,15 +107,15 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
       )
     } else {
       try
-        create_with_present_target_and_route(
+        @moui_skia_renderer.create_with_present_target_and_route(
           metrics,
           target,
-          surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+          surface_route=MetalGpuSurfaceRoute,
         )
       catch {
         err =>
           match err {
-            SkiaRendererError::GpuContextUnavailable(_) => ()
+            GpuContextUnavailable(_) => ()
             _ => fail("expected explicit GPU context unavailable error")
           }
       } noraise {
@@ -116,25 +127,22 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
 
 ///|
 test "skia renderer descriptor is a skia cpu pixel backend" {
-  let descriptor = renderer_descriptor()
-  assert_true(
-    descriptor.backend == @render.RendererBackendKind::SkiaRasterNative,
-  )
-  assert_true(descriptor.family == @render.RendererFamily::Skia)
-  assert_true(
-    descriptor.presentation == @render.RendererPresentationModel::CpuPixelFrame,
-  )
+  let descriptor = @moui_skia_renderer.renderer_descriptor()
+  assert_true(descriptor.backend == SkiaRasterNative)
+  assert_true(descriptor.family == Skia)
+  assert_true(descriptor.presentation == CpuPixelFrame)
   inspect(descriptor.capabilities.length(), content="17")
 }
 
 ///|
 test "skia renderer fails explicitly when real skia is unavailable" {
-  if !skia_available() {
-    let target = SkiaPresentTarget::new(description="test", present=_frame => {
-      true
-    })
+  if !@moui_skia_renderer.skia_available() {
+    let target = @moui_skia_renderer.SkiaPresentTarget::new(
+      description="test",
+      present=_frame => true,
+    )
     try
-      create_with_present_target(
+      @moui_skia_renderer.create_with_present_target(
         @core.SurfaceMetrics::from_logical(
           size=@core.Size::new(width=16.0, height=16.0),
         ),
@@ -143,24 +151,24 @@ test "skia renderer fails explicitly when real skia is unavailable" {
     catch {
       err =>
         match err {
-          SkiaRendererError::SkiaUnavailable => ()
+          SkiaUnavailable => ()
           _ => fail("expected explicit unavailable error")
         }
     } noraise {
       _ => fail("expected explicit unavailable error")
     }
     try
-      create_with_present_target(
+      @moui_skia_renderer.create_with_present_target(
         @core.SurfaceMetrics::from_logical(
           size=@core.Size::new(width=16.0, height=16.0),
         ),
         target,
-        font_resolution=SkiaFontResolution::EmptyTypeface,
+        font_resolution=EmptyTypeface,
       )
     catch {
       err =>
         match err {
-          SkiaRendererError::SkiaUnavailable => ()
+          SkiaUnavailable => ()
           _ => fail("expected explicit unavailable error")
         }
     } noraise {
@@ -171,7 +179,7 @@ test "skia renderer fails explicitly when real skia is unavailable" {
 
 ///|
 test "skia text system is directly available for diagnostic conformance" {
-  let system = skia_text_system()
+  let system = @moui_skia_renderer.skia_text_system()
   assert_true(system.id() == "skia-raster-text-system")
   let text = "abc אבג 👩‍💻"
   let input = @core.TextLayoutInput::new(
@@ -239,7 +247,7 @@ test "skia paragraph line metrics are character offsets for CJK mixed text" {
   if !@skia_native.skia_paragraph_available() {
     return
   }
-  let system = skia_text_system()
+  let system = @moui_skia_renderer.skia_text_system()
   let text = "MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，共享平台无关的应用逻辑。"
   let chars = text.to_array()
   let paragraph = system.layout_paragraph(
@@ -265,7 +273,7 @@ test "skia paragraph line metrics are character offsets for CJK mixed text" {
 ///|
 test "skia selection geometry diagnostic covers line ranges hit testing and bidi observation" {
   let text = "ABC \u{05D0}\u{05D1}\u{05D2} 123 alpha beta gamma"
-  guard skia_text_selection_geometry_diagnostic(
+  guard @moui_skia_renderer.skia_text_selection_geometry_diagnostic(
       text,
       font=@core.FontSpec::new(size=18.0, weight=500),
       max_width=96.0,
@@ -281,7 +289,7 @@ test "skia selection geometry diagnostic covers line ranges hit testing and bidi
   assert_true(
     diagnostic.hit_test_offset() >= diagnostic.selection_range().start,
   )
-  if skia_available() {
+  if @moui_skia_renderer.skia_available() {
     assert_true(diagnostic.visual_order_differs())
     assert_true(diagnostic.visual_segment_count() >= 3)
     assert_true(diagnostic.bidi_visual_order_observed())
@@ -290,8 +298,8 @@ test "skia selection geometry diagnostic covers line ranges hit testing and bidi
 
 ///|
 test "skia empty typeface text system remains opt-in and fallback-safe" {
-  let system = skia_text_system(resolution=SkiaFontResolution::EmptyTypeface)
-  if skia_available() {
+  let system = @moui_skia_renderer.skia_text_system(resolution=EmptyTypeface)
+  if @moui_skia_renderer.skia_available() {
     assert_true(system.id() == "skia-raster-empty-typeface-text-system")
   } else {
     assert_true(system.id() == @core.TextSystem::fallback().id())
@@ -300,16 +308,16 @@ test "skia empty typeface text system remains opt-in and fallback-safe" {
 
 ///|
 test "skia pixel frame carries presenter payload" {
-  let captured : Ref[SkiaPixelFrame?] = Ref(None)
-  let target = SkiaPresentTarget::new(description="test", present=next => {
+  let captured : Ref[@moui_skia_renderer.SkiaPixelFrame?] = Ref(None)
+  let target = @moui_skia_renderer.SkiaPresentTarget::new(description="test", present=next => {
     captured.val = Some(next)
     true
   })
-  guard skia_available() else {
+  guard @moui_skia_renderer.skia_available() else {
     assert_true(captured.val is None)
     return ()
   }
-  let renderer = create_with_present_target(
+  let renderer = @moui_skia_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=1.0, height=1.0),
       scale_factor=2.0,
@@ -318,7 +326,7 @@ test "skia pixel frame carries presenter payload" {
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
-  renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
+  renderer.render([Clear(@core.Color::white())]) catch {
     err => fail("expected Skia renderer render: \{err.message()}")
   }
   guard captured.val is Some(frame) else {
@@ -333,39 +341,15 @@ test "skia pixel frame carries presenter payload" {
 
 ///|
 test "skia renderer descriptor exposes observation-gated backend capabilities" {
-  let descriptor = skia_raster_native_descriptor()
-  let image = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::Image,
-  )
-  let gradient = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::Gradient,
-  )
-  let path = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::PathVector,
-  )
-  let layer = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::LayerCompositing,
-  )
-  let blend = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::BlendMode,
-  )
-  let filter = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::FilterEffect,
-  )
-  let transform = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::Transform,
-  )
-  let shader = find_skia_descriptor_capability(
-    descriptor,
-    @render.RendererFeature::ShaderEffect,
-  )
+  let descriptor = @moui_skia_renderer.skia_raster_native_descriptor()
+  let image = find_skia_descriptor_capability(descriptor, Image)
+  let gradient = find_skia_descriptor_capability(descriptor, Gradient)
+  let path = find_skia_descriptor_capability(descriptor, PathVector)
+  let layer = find_skia_descriptor_capability(descriptor, LayerCompositing)
+  let blend = find_skia_descriptor_capability(descriptor, BlendMode)
+  let filter = find_skia_descriptor_capability(descriptor, FilterEffect)
+  let transform = find_skia_descriptor_capability(descriptor, Transform)
+  let shader = find_skia_descriptor_capability(descriptor, ShaderEffect)
   match (image, gradient, path, layer, blend, filter, transform, shader) {
     (
       Some(image),
@@ -377,36 +361,22 @@ test "skia renderer descriptor exposes observation-gated backend capabilities" {
       Some(transform),
       Some(shader),
     ) => {
-      assert_true(
-        image.backend == @render.RendererBackendKind::SkiaRasterNative,
-      )
-      assert_true(
-        gradient.backend == @render.RendererBackendKind::SkiaRasterNative,
-      )
-      assert_true(path.backend == @render.RendererBackendKind::SkiaRasterNative)
-      assert_true(
-        layer.backend == @render.RendererBackendKind::SkiaRasterNative,
-      )
-      assert_true(
-        blend.backend == @render.RendererBackendKind::SkiaRasterNative,
-      )
-      assert_true(
-        filter.backend == @render.RendererBackendKind::SkiaRasterNative,
-      )
-      assert_true(
-        transform.backend == @render.RendererBackendKind::SkiaRasterNative,
-      )
-      assert_true(
-        shader.backend == @render.RendererBackendKind::SkiaRasterNative,
-      )
-      assert_true(image.status == @render.RendererFeatureStatus::Supported)
-      assert_true(gradient.status == @render.RendererFeatureStatus::Supported)
-      assert_true(path.status == @render.RendererFeatureStatus::Supported)
-      assert_true(layer.status == @render.RendererFeatureStatus::Supported)
-      assert_true(blend.status == @render.RendererFeatureStatus::Supported)
-      assert_true(filter.status == @render.RendererFeatureStatus::Supported)
-      assert_true(transform.status == @render.RendererFeatureStatus::Supported)
-      assert_true(shader.status == @render.RendererFeatureStatus::Supported)
+      assert_true(image.backend == SkiaRasterNative)
+      assert_true(gradient.backend == SkiaRasterNative)
+      assert_true(path.backend == SkiaRasterNative)
+      assert_true(layer.backend == SkiaRasterNative)
+      assert_true(blend.backend == SkiaRasterNative)
+      assert_true(filter.backend == SkiaRasterNative)
+      assert_true(transform.backend == SkiaRasterNative)
+      assert_true(shader.backend == SkiaRasterNative)
+      assert_true(image.status == Supported)
+      assert_true(gradient.status == Supported)
+      assert_true(path.status == Supported)
+      assert_true(layer.status == Supported)
+      assert_true(blend.status == Supported)
+      assert_true(filter.status == Supported)
+      assert_true(transform.status == Supported)
+      assert_true(shader.status == Supported)
       assert_true(image.note.contains("data URI"))
       assert_true(image.note.contains("JPEG/BMP"))
       assert_true(image.note.contains("local PNG/JPEG/BMP"))
@@ -436,7 +406,7 @@ test "skia filter bindings stay fallback-safe" {
     1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 1.0, 0.0,
   ]
-  if skia_available() {
+  if @moui_skia_renderer.skia_available() {
     // ColorFilter/ImageFilter/MaskFilter bindings may be unavailable even
     // when Skia is linked, because the release binary's header structure
     // may not include SkColorFilter.h at compile time. Accept either

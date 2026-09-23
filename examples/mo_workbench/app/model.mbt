@@ -84,7 +84,7 @@ pub fn ProviderConfig::new(
   api_key~ : String,
   models? : Array[String] = [],
 ) -> ProviderConfig {
-  { id, name, base_url, api_key, models }
+  { id, name, base_url, api_key, models, }
 }
 
 ///|
@@ -223,9 +223,9 @@ fn update_provider_field(
   for p in providers {
     if p.id == id {
       match field {
-        Name => out.push({ ..p, name: value })
-        BaseUrl => out.push({ ..p, base_url: value })
-        ApiKey => out.push({ ..p, api_key: value })
+        Name => out.push({ ..p, name: value, })
+        BaseUrl => out.push({ ..p, base_url: value, })
+        ApiKey => out.push({ ..p, api_key: value, })
       }
     } else {
       out.push(p)
@@ -252,7 +252,7 @@ fn add_manual_model(
       if p.models.contains(trimmed) {
         out.push(p)
       } else {
-        out.push({ ..p, models: p.models + [trimmed] })
+        out.push({ ..p, models: p.models + [trimmed], })
       }
     } else {
       out.push(p)
@@ -360,7 +360,7 @@ fn CodeWorkspace::new() -> CodeWorkspace {
     current_model: "deepseek-v4-flash",
     current_provider_id: Some("deepseek"),
     model_picker_open: false,
-    current_thinking: ThinkingChoice::Normal,
+    current_thinking: Normal,
     agent_info: None,
     session_modes: None,
     session_config_options: [],
@@ -418,18 +418,18 @@ pub(all) enum SettingsSection {
 fn SettingsWorkspace::new() -> SettingsWorkspace {
   let providers = default_providers()
   {
-    agent_backend: AgentBackendKind::OpenSeek,
+    agent_backend: OpenSeek,
     providers,
     active_provider_id: Some("deepseek"),
-    approval_policy: ApprovalPolicy::AskOnWrite,
-    sandbox_mode: SandboxMode::WorkspaceWritable,
+    approval_policy: AskOnWrite,
+    sandbox_mode: WorkspaceWritable,
     working_dir: ".",
     session_root: "./.openseek",
     acp_command: "",
     acp_args: "",
     acp_process_cwd: "",
     font_size: 14,
-    active_section: SettingsSection::Api,
+    active_section: Api,
     scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     save_notice: None,
     env_source: ".mo_workbench/settings.json.example",
@@ -482,7 +482,7 @@ fn WorkbenchModel::new(
         Some(file) => {
           settings = SettingsWorkspace::merge_settings_file(settings, file)
           appearance = AppearanceMode::merge_settings_file(appearance, file)
-          settings = { ..settings, env_source: ".mo_workbench/settings.json" }
+          settings = { ..settings, env_source: ".mo_workbench/settings.json", }
           if !file.current_model.is_empty() &&
             mo_workbench_model_supported_by_openseek(file.current_model) {
             applied_model = file.current_model
@@ -494,9 +494,9 @@ fn WorkbenchModel::new(
     None => ()
   }
   {
-    active_tab: TopTab::Code,
+    active_tab: Code,
     task_tree: [],
-    task_filter: TaskFilter::AllTasks,
+    task_filter: AllTasks,
     task_search_query: "",
     task_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     settings_open: false,
@@ -644,5 +644,5 @@ fn MoWorkbenchApp::new(
   model_detect? : ModelDetectFn? = None,
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> MoWorkbenchApp {
-  { backend, settings_load, settings_persist, model_detect, environment }
+  { backend, settings_load, settings_persist, model_detect, environment, }
 }

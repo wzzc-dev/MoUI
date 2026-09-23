@@ -31,7 +31,7 @@ pub fn[Msg] wizard(
     let variant = if step.id == current {
       @style.ButtonVariant::Primary
     } else {
-      @style.ButtonVariant::Tonal
+      Tonal
     }
     step_buttons.push(
       @button.button(
@@ -43,7 +43,7 @@ pub fn[Msg] wizard(
         height=36.0,
       )
       .disabled(disabled=!step.enabled)
-      .semantics_role(@core.SemanticsRole::Tab)
+      .semantics_role(Tab)
       .semantics_selected(selected=step.id == current),
     )
   }
@@ -53,19 +53,19 @@ pub fn[Msg] wizard(
         @layout.row(
           step_buttons,
           spacing=resolved_theme.spacing_scale.xs,
-          align=@style.CrossAlign::Center,
+          align=Center,
         ),
         content.frame(width=header_width, height=height - 74.0),
       ],
       spacing=resolved_theme.spacing_scale.md,
-      align=@style.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,
-    variant=@style.ContainerVariant::Raised,
+    variant=Raised,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }
 
 ///|

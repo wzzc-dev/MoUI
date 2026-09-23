@@ -51,7 +51,7 @@ fn path_to_edges(path : Path, transform : Transform) -> Array[CanvasEdge] {
 
   for segment in path.segments {
     match segment {
-      PathSegment::MoveTo(x, y) => {
+      MoveTo(x, y) => {
         close_current_fill_subpath(
           edges, transform, current_x, current_y, start_x, start_y, has_current,
         )
@@ -61,21 +61,21 @@ fn path_to_edges(path : Path, transform : Transform) -> Array[CanvasEdge] {
         start_y = y
         has_current = true
       }
-      PathSegment::LineTo(x, y) => {
+      LineTo(x, y) => {
         if has_current {
           push_transformed_edge(edges, transform, current_x, current_y, x, y)
         }
         current_x = x
         current_y = y
       }
-      PathSegment::QuadTo(cx, cy, x, y) => {
+      QuadTo(cx, cy, x, y) => {
         if has_current {
           flatten_quad(edges, transform, current_x, current_y, cx, cy, x, y)
         }
         current_x = x
         current_y = y
       }
-      PathSegment::CubicTo(cx1, cy1, cx2, cy2, x, y) => {
+      CubicTo(cx1, cy1, cx2, cy2, x, y) => {
         if has_current {
           flatten_cubic(
             edges, transform, current_x, current_y, cx1, cy1, cx2, cy2, x, y,
@@ -84,7 +84,7 @@ fn path_to_edges(path : Path, transform : Transform) -> Array[CanvasEdge] {
         current_x = x
         current_y = y
       }
-      PathSegment::Close => {
+      Close => {
         if has_current {
           push_transformed_edge(
             edges, transform, current_x, current_y, start_x, start_y,
@@ -135,7 +135,7 @@ fn path_to_stroke_path(path : Path, transform : Transform) -> StrokePathData {
 
   for segment in path.segments {
     match segment {
-      PathSegment::MoveTo(x, y) => {
+      MoveTo(x, y) => {
         if has_current && !subpath_closed {
           push_open_subpath_endpoints(edges, endpoints, subpath_start)
           push_open_subpath_joins(edges, joins, subpath_start)
@@ -149,7 +149,7 @@ fn path_to_stroke_path(path : Path, transform : Transform) -> StrokePathData {
         push_subpath_start(subpath_starts, subpath_start)
         subpath_closed = false
       }
-      PathSegment::LineTo(x, y) => {
+      LineTo(x, y) => {
         if has_current {
           if subpath_closed {
             subpath_start = edges.length()
@@ -161,7 +161,7 @@ fn path_to_stroke_path(path : Path, transform : Transform) -> StrokePathData {
         current_x = x
         current_y = y
       }
-      PathSegment::QuadTo(cx, cy, x, y) => {
+      QuadTo(cx, cy, x, y) => {
         if has_current {
           if subpath_closed {
             subpath_start = edges.length()
@@ -173,7 +173,7 @@ fn path_to_stroke_path(path : Path, transform : Transform) -> StrokePathData {
         current_x = x
         current_y = y
       }
-      PathSegment::CubicTo(cx1, cy1, cx2, cy2, x, y) => {
+      CubicTo(cx1, cy1, cx2, cy2, x, y) => {
         if has_current {
           if subpath_closed {
             subpath_start = edges.length()
@@ -187,7 +187,7 @@ fn path_to_stroke_path(path : Path, transform : Transform) -> StrokePathData {
         current_x = x
         current_y = y
       }
-      PathSegment::Close => {
+      Close => {
         if has_current {
           push_transformed_edge(
             edges, transform, current_x, current_y, start_x, start_y,
@@ -206,7 +206,7 @@ fn path_to_stroke_path(path : Path, transform : Transform) -> StrokePathData {
     push_open_subpath_joins(edges, joins, subpath_start)
   }
 
-  { edges, endpoints, joins, subpath_starts }
+  { edges, endpoints, joins, subpath_starts, }
 }
 
 ///|
@@ -277,7 +277,7 @@ fn apply_stroke_dash(
     has_previous_source_edge = true
   }
   finish_dash_run(edges, endpoints, joins, dash_run_start)
-  { edges, endpoints, joins, subpath_starts: [] }
+  { edges, endpoints, joins, subpath_starts: [], }
 }
 
 ///|
@@ -344,7 +344,7 @@ fn DashCursor::new(pattern : Array[Double], offset : Double) -> DashCursor {
     index = (index + 1) % pattern.length()
     remaining = pattern[index]
   }
-  { pattern, index, remaining: remaining - phase, is_drawing: index % 2 == 0 }
+  { pattern, index, remaining: remaining - phase, is_drawing: index % 2 == 0, }
 }
 
 ///|
@@ -460,7 +460,7 @@ fn blend_clipped_rect(
     x_end - x_start,
     y_end - y_start,
     color,
-    BlendMode::SourceOver,
+    SourceOver,
   )
   canvas.mark_dirty_bounds(x_start, y_start, x_end, y_end)
 }
@@ -552,7 +552,7 @@ fn push_endpoint(
 ) -> Unit {
   let len = (dir_x * dir_x + dir_y * dir_y).sqrt()
   guard len > 0.0 else { return }
-  endpoints.push({ x, y, dir_x: dir_x / len, dir_y: dir_y / len })
+  endpoints.push({ x, y, dir_x: dir_x / len, dir_y: dir_y / len, })
 }
 
 ///|
@@ -567,7 +567,7 @@ fn push_transformed_edge(
   let (tx0, ty0) = transform.apply(x0, y0)
   let (tx1, ty1) = transform.apply(x1, y1)
   if tx0 != tx1 || ty0 != ty1 {
-    edges.push({ x0: tx0, y0: ty0, x1: tx1, y1: ty1 })
+    edges.push({ x0: tx0, y0: ty0, x1: tx1, y1: ty1, })
   }
 }
 
@@ -653,8 +653,8 @@ fn is_point_in_edges(
   fill_rule : FillRule,
 ) -> Bool {
   match fill_rule {
-    FillRule::EvenOdd => is_point_in_edges_even_odd(px, py, edges)
-    FillRule::NonZero => is_point_in_edges_non_zero(px, py, edges)
+    EvenOdd => is_point_in_edges_even_odd(px, py, edges)
+    NonZero => is_point_in_edges_non_zero(px, py, edges)
   }
 }
 
@@ -747,7 +747,7 @@ fn is_point_on_stroke_join(
   miter_limit : Double,
 ) -> Bool {
   match stroke_join {
-    StrokeJoin::Round => {
+    Round => {
       let max_distance_sq = half_width * half_width
       for join in joins {
         let dx = px - join.x
@@ -759,7 +759,7 @@ fn is_point_on_stroke_join(
       }
       false
     }
-    StrokeJoin::Bevel => {
+    Bevel => {
       for join in joins {
         if is_point_in_join_wedge(px, py, join, half_width) {
           return true
@@ -767,7 +767,7 @@ fn is_point_on_stroke_join(
       }
       false
     }
-    StrokeJoin::Miter => {
+    Miter => {
       for join in joins {
         if is_point_in_miter_join(px, py, join, half_width, miter_limit) {
           return true
@@ -860,8 +860,8 @@ fn is_point_on_stroke_cap(
   stroke_cap : StrokeCap,
 ) -> Bool {
   match stroke_cap {
-    StrokeCap::Butt => false
-    StrokeCap::Round => {
+    Butt => false
+    Round => {
       let max_distance_sq = half_width * half_width
       for endpoint in endpoints {
         let dx = px - endpoint.x
@@ -873,7 +873,7 @@ fn is_point_on_stroke_cap(
       }
       false
     }
-    StrokeCap::Square => {
+    Square => {
       for endpoint in endpoints {
         let dx = px - endpoint.x
         let dy = py - endpoint.y

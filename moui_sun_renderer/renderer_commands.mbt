@@ -10,8 +10,8 @@ fn SunRasterRenderer::render_command(
 ) -> Unit {
   let opacity = sun_current_opacity(opacity_stack)
   match command {
-    @render_common.PlanOp::Clear(color) => self.canvas.clear(sun_color(color))
-    @render_common.PlanOp::FillRect(rect, color) =>
+    Clear(color) => self.canvas.clear(sun_color(color))
+    FillRect(rect, color) =>
       self.canvas.fill_rect(
         rect.origin.x,
         rect.origin.y,
@@ -19,7 +19,7 @@ fn SunRasterRenderer::render_command(
         rect.size.height,
         sun_paint(color, opacity),
       )
-    @render_common.PlanOp::StrokeRect(rect, color, width) =>
+    StrokeRect(rect, color, width) =>
       self.canvas.stroke_rect(
         rect.origin.x,
         rect.origin.y,
@@ -27,45 +27,39 @@ fn SunRasterRenderer::render_command(
         rect.size.height,
         sun_stroke_paint(color, width, opacity),
       )
-    @render_common.PlanOp::FillRoundedRect(rounded, color) =>
+    FillRoundedRect(rounded, color) =>
       self.fill_rounded_rect(rounded, @core.Brush::solid(color), opacity)
-    @render_common.PlanOp::StrokeRoundedRect(rounded, color, width) =>
+    StrokeRoundedRect(rounded, color, width) =>
       self.stroke_rounded_rect(
         rounded,
         @core.Brush::solid(color),
         width,
         opacity,
       )
-    @render_common.PlanOp::FillRoundedRectBrush(rounded, brush) =>
+    FillRoundedRectBrush(rounded, brush) =>
       self.fill_rounded_rect(rounded, brush, opacity)
-    @render_common.PlanOp::StrokeRoundedRectBrush(rounded, brush, width) =>
+    StrokeRoundedRectBrush(rounded, brush, width) =>
       self.stroke_rounded_rect(rounded, brush, width, opacity)
-    @render_common.PlanOp::DrawShadow(shadow) =>
-      self.draw_shadow(shadow, opacity)
-    @render_common.PlanOp::DrawText(run) => self.draw_text(run, opacity)
-    @render_common.PlanOp::DrawImage(image) => self.draw_image(image, opacity)
-    @render_common.PlanOp::PushClip(rect) => {
+    DrawShadow(shadow) => self.draw_shadow(shadow, opacity)
+    DrawText(run) => self.draw_text(run, opacity)
+    DrawImage(image) => self.draw_image(image, opacity)
+    PushClip(rect) => {
       self.canvas.save()
-      canvas_scopes.push(@render_common.PlanScopeKind::Clip)
+      canvas_scopes.push(Clip)
       self.canvas.intersect_clip_rect(
         sun_transformed_rect_bounds(self.canvas.get_transform(), rect),
       )
     }
-    @render_common.PlanOp::PopClip =>
-      self.pop_canvas_scope(
-        canvas_scopes,
-        opacity_stack,
-        @render_common.PlanScopeKind::Clip,
-      )
-    @render_common.PlanOp::PushRoundedClip(rounded) => {
+    PopClip => self.pop_canvas_scope(canvas_scopes, opacity_stack, Clip)
+    PushRoundedClip(rounded) => {
       self.rounded_clip_stack.push(rounded)
       rounded_clip_transform_stack.push(self.canvas.get_transform())
       self.push_transparent_offscreen_canvas()
-      canvas_scopes.push(@render_common.PlanScopeKind::RoundedClip)
+      canvas_scopes.push(RoundedClip)
     }
-    @render_common.PlanOp::PopRoundedClip =>
+    PopRoundedClip =>
       match canvas_scopes.pop() {
-        Some(@render_common.PlanScopeKind::RoundedClip) => {
+        Some(RoundedClip) => {
           let layer_pixmap = self.canvas.get_pixmap()
           match self.canvas_stack.pop() {
             Some(parent_canvas) =>
@@ -114,40 +108,31 @@ fn SunRasterRenderer::render_command(
             "PopRoundedClip", "pop has no matching push scope",
           )
       }
-    @render_common.PlanOp::PushTransform(transform) => {
+    PushTransform(transform) => {
       self.canvas.save()
-      canvas_scopes.push(@render_common.PlanScopeKind::Transform)
+      canvas_scopes.push(Transform)
       self.canvas.concat_transform(sun_transform(transform))
     }
-    @render_common.PlanOp::PopTransform =>
-      self.pop_canvas_scope(
-        canvas_scopes,
-        opacity_stack,
-        @render_common.PlanScopeKind::Transform,
-      )
-    @render_common.PlanOp::PushOpacity(opacity) => {
-      canvas_scopes.push(@render_common.PlanScopeKind::Opacity)
+    PopTransform =>
+      self.pop_canvas_scope(canvas_scopes, opacity_stack, Transform)
+    PushOpacity(opacity) => {
+      canvas_scopes.push(Opacity)
       opacity_stack.push(sun_clamp_unit(opacity))
     }
-    @render_common.PlanOp::PopOpacity =>
-      self.pop_canvas_scope(
-        canvas_scopes,
-        opacity_stack,
-        @render_common.PlanScopeKind::Opacity,
-      )
-    @render_common.PlanOp::PushLayer(spec) => {
+    PopOpacity => self.pop_canvas_scope(canvas_scopes, opacity_stack, Opacity)
+    PushLayer(spec) => {
       blend_mode_stack.push(sun_blend_mode(spec.blend_mode))
-      layer_spec_stack.push({ spec, transform: self.canvas.get_transform() })
+      layer_spec_stack.push({ spec, transform: self.canvas.get_transform(), })
       self.push_transparent_offscreen_canvas()
-      canvas_scopes.push(@render_common.PlanScopeKind::Layer)
+      canvas_scopes.push(Layer)
     }
-    @render_common.PlanOp::PopLayer =>
+    PopLayer =>
       match canvas_scopes.pop() {
-        Some(@render_common.PlanScopeKind::Layer) => {
+        Some(Layer) => {
           let layer_pixmap = self.canvas.get_pixmap()
           let layer_blend = match blend_mode_stack.pop() {
             Some(m) => m
-            None => @sun_graphics.BlendMode::SourceOver
+            None => SourceOver
           }
           let layer_scope = match layer_spec_stack.pop() {
             Some(scope) => scope
@@ -186,22 +171,21 @@ fn SunRasterRenderer::render_command(
             "PopLayer", "pop has no matching push scope",
           )
       }
-    @render_common.PlanOp::PushFilter(effect) => {
+    PushFilter(effect) => {
       self.filter_stack.push(sun_filter_effect(effect))
       match effect {
-        @core.FilterEffect::Blur(radius) =>
-          self.blur_radius_stack.push(radius.max(0.0))
+        Blur(radius) => self.blur_radius_stack.push(radius.max(0.0))
         _ => self.blur_radius_stack.push(0.0)
       }
       self.push_transparent_offscreen_canvas()
-      canvas_scopes.push(@render_common.PlanScopeKind::Filter)
+      canvas_scopes.push(Filter)
     }
-    @render_common.PlanOp::PopFilter => {
+    PopFilter => {
       let filter = self.filter_stack.pop()
       let blur_radius_entry = self.blur_radius_stack.pop()
       let blur_radius = blur_radius_entry.unwrap_or(0.0)
       match canvas_scopes.pop() {
-        Some(@render_common.PlanScopeKind::Filter) => {
+        Some(Filter) => {
           let layer_pixmap = self.canvas.get_pixmap()
           let effective_pixmap = if blur_radius > 0.0 {
             sun_box_blur_pixmap(layer_pixmap, blur_radius)
@@ -268,14 +252,13 @@ fn SunRasterRenderer::render_command(
         }
       }
     }
-    @render_common.PlanOp::DrawPath(path) => self.draw_path(path, opacity)
-    @render_common.PlanOp::DrawShaderEffect(spec) =>
-      self.draw_shader_effect(spec, opacity)
-    @render_common.PlanOp::BeginRetainedLayer(_) =>
+    DrawPath(path) => self.draw_path(path, opacity)
+    DrawShaderEffect(spec) => self.draw_shader_effect(spec, opacity)
+    BeginRetainedLayer(_) =>
       self.record_unsupported_command(
         "BeginRetainedLayer", "cached layer scope not intercepted by render_cached_command_range",
       )
-    @render_common.PlanOp::EndRetainedLayer(_) =>
+    EndRetainedLayer(_) =>
       self.record_unsupported_command(
         "EndRetainedLayer", "cached layer scope intercepted by render_cached_command_range",
       )
@@ -352,7 +335,7 @@ fn SunRasterRenderer::pop_canvas_scope(
     Some(actual) =>
       if actual == expected {
         match actual {
-          @render_common.PlanScopeKind::Opacity => ignore(opacity_stack.pop())
+          Opacity => ignore(opacity_stack.pop())
           _ => ignore(self.canvas.restore())
         }
       } else {
@@ -377,7 +360,7 @@ fn SunRasterRenderer::record_unsupported_command(
   reason : String,
 ) -> Unit {
   self.unsupported_command_count = self.unsupported_command_count + 1
-  self.unsupported_command_diagnostics.push({ command, reason })
+  self.unsupported_command_diagnostics.push({ command, reason, })
 }
 
 ///|
@@ -432,9 +415,7 @@ fn sun_stroke_paint(
   width : Double,
   opacity : Double,
 ) -> @sun_graphics.Paint {
-  sun_paint(color, opacity)
-  .set_style(@sun_graphics.PaintStyle::Stroke)
-  .set_stroke_width(width)
+  sun_paint(color, opacity).set_style(Stroke).set_stroke_width(width)
 }
 
 ///|
@@ -444,8 +425,8 @@ fn sun_brush_paint(
 ) -> @sun_graphics.Paint {
   let paint = @sun_graphics.Paint::new().set_opacity(opacity)
   match brush {
-    @core.Brush::Solid(color) => paint.set_color(sun_color(color))
-    @core.Brush::LinearGradient(gradient) =>
+    Solid(color) => paint.set_color(sun_color(color))
+    LinearGradient(gradient) =>
       paint
       .set_color(sun_color(gradient.start_color))
       .set_shader(
@@ -458,7 +439,7 @@ fn sun_brush_paint(
           end_color=sun_color(gradient.end_color),
         ),
       )
-    @core.Brush::RadialGradient(gradient) =>
+    RadialGradient(gradient) =>
       paint
       .set_color(sun_color(gradient.center_color))
       .set_shader(
@@ -480,10 +461,10 @@ fn sun_brush_stroke_paint(
   opacity : Double,
 ) -> @sun_graphics.Paint {
   sun_brush_paint(brush, opacity)
-  .set_style(@sun_graphics.PaintStyle::Stroke)
+  .set_style(Stroke)
   .set_stroke_width(width)
-  .set_stroke_cap(@sun_graphics.StrokeCap::Round)
-  .set_stroke_join(@sun_graphics.StrokeJoin::Round)
+  .set_stroke_cap(Round)
+  .set_stroke_join(Round)
 }
 
 ///|
@@ -503,11 +484,11 @@ fn sun_path(path : @core.PathSpec) -> @sun_graphics.Path {
   let out = @sun_graphics.Path::new()
   for verb in path.verbs {
     match verb {
-      @core.PathVerb::MoveTo(point) => ignore(out.move_to(point.x, point.y))
-      @core.PathVerb::LineTo(point) => ignore(out.line_to(point.x, point.y))
-      @core.PathVerb::QuadTo(control, point) =>
+      MoveTo(point) => ignore(out.move_to(point.x, point.y))
+      LineTo(point) => ignore(out.line_to(point.x, point.y))
+      QuadTo(control, point) =>
         ignore(out.quad_to(control.x, control.y, point.x, point.y))
-      @core.PathVerb::CubicTo(control1, control2, point) =>
+      CubicTo(control1, control2, point) =>
         ignore(
           out.cubic_to(
             control1.x,
@@ -518,7 +499,7 @@ fn sun_path(path : @core.PathSpec) -> @sun_graphics.Path {
             point.y,
           ),
         )
-      @core.PathVerb::Close => ignore(out.close())
+      Close => ignore(out.close())
     }
   }
   out
@@ -631,15 +612,11 @@ fn SunRasterRenderer::draw_shader_effect(
 ///|
 fn sun_filter_effect(effect : @core.FilterEffect) -> @sun_graphics.PaintFilter {
   match effect {
-    @core.FilterEffect::Blur(_) => @sun_graphics.PaintFilter::identity()
-    @core.FilterEffect::Saturate(factor) =>
-      @sun_graphics.PaintFilter::saturate(factor)
-    @core.FilterEffect::Brightness(factor) =>
-      @sun_graphics.PaintFilter::brightness(factor)
-    @core.FilterEffect::Contrast(factor) =>
-      @sun_graphics.PaintFilter::contrast(factor)
-    @core.FilterEffect::ColorMatrix(values) =>
-      @sun_graphics.PaintFilter::color_matrix(values)
+    Blur(_) => @sun_graphics.PaintFilter::identity()
+    Saturate(factor) => @sun_graphics.PaintFilter::saturate(factor)
+    Brightness(factor) => @sun_graphics.PaintFilter::brightness(factor)
+    Contrast(factor) => @sun_graphics.PaintFilter::contrast(factor)
+    ColorMatrix(values) => @sun_graphics.PaintFilter::color_matrix(values)
   }
 }
 
@@ -804,11 +781,11 @@ fn sun_filter_pixmap(
 ///|
 fn sun_blend_mode(mode : @core.BlendMode) -> @sun_graphics.BlendMode {
   match mode {
-    @core.BlendMode::SourceOver => @sun_graphics.BlendMode::SourceOver
-    @core.BlendMode::Multiply => @sun_graphics.BlendMode::Multiply
-    @core.BlendMode::Screen => @sun_graphics.BlendMode::Screen
-    @core.BlendMode::Overlay => @sun_graphics.BlendMode::Overlay
-    @core.BlendMode::Darken => @sun_graphics.BlendMode::Darken
-    @core.BlendMode::Lighten => @sun_graphics.BlendMode::Lighten
+    SourceOver => SourceOver
+    Multiply => Multiply
+    Screen => Screen
+    Overlay => Overlay
+    Darken => Darken
+    Lighten => Lighten
   }
 }

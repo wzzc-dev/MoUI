@@ -27,7 +27,7 @@ pub fn EmbeddedHostResponseEnvelope::new(
   session_generation~ : Int,
   response~ : EmbeddedHostResponse,
 ) -> EmbeddedHostResponseEnvelope {
-  { schema_version: 1, session_generation, response }
+  { schema_version: 1, session_generation, response, }
 }
 
 ///|
@@ -57,10 +57,8 @@ pub fn EmbeddedRuntimeHostBridge::sync(
   self.sync_semantics(runtime)
   for pending in self.services.drain_pending() {
     match pending.request {
-      HostServiceRequest::Clipboard(_) =>
-        self.updates.push(EmbeddedHostUpdate::Clipboard(pending))
-      HostServiceRequest::PlatformChannel(_) =>
-        self.updates.push(EmbeddedHostUpdate::PlatformChannel(pending))
+      Clipboard(_) => self.updates.push(Clipboard(pending))
+      PlatformChannel(_) => self.updates.push(PlatformChannel(pending))
       _ => ()
     }
   }
@@ -75,7 +73,7 @@ pub fn EmbeddedRuntimeHostBridge::push_diagnostic(
   if self.disposed {
     false
   } else {
-    self.updates.push(EmbeddedHostUpdate::Diagnostic(message))
+    self.updates.push(Diagnostic(message))
     true
   }
 }

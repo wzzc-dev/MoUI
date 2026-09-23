@@ -4,7 +4,7 @@
 ///|
 pub fn[Msg] sheet(
   content~ : @core.View[Msg],
-  presentation_mode? : @style.SheetPresentationMode = @style.SheetPresentationMode::Modal,
+  presentation_mode? : @style.SheetPresentationMode = Modal,
   theme? : @core.Theme,
   background? : @core.Color,
   corner_radius? : Double,

@@ -1,11 +1,11 @@
 ///|
 test "runtime semantics: browsing focus is independent from input focus" {
   let semantic_id = runtime_test_semantic_id("test.browse-focus")
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=(
       runtime_semantic_test_view(
         semantic_id~,
-        role=@core.SemanticsRole::Button,
+        role=Button,
         label="Browse me",
         focusable=true,
       ) : @core.View[Unit]),

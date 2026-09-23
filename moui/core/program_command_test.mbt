@@ -1,10 +1,7 @@
 ///|
 test "Program commands stay typed and can be mapped" {
   let command = @core.ProgramCommand::new(
-    command=@core.ActionCommand::new(
-      intent=@core.CommandIntent::Submit,
-      label="Save",
-    ),
+    command=@core.ActionCommand::new(intent=Submit, label="Save"),
     message="save",
   )
   assert_eq(command.command().display_label(), "Save")
@@ -21,7 +18,7 @@ test "Program with_commands derives declarations from the model" {
   ).with_commands(commands=model => {
     [
       @core.ProgramCommand::new(
-        command=@core.ActionCommand::new(intent=@core.CommandIntent::Activate),
+        command=@core.ActionCommand::new(intent=Activate),
         message=model,
       ),
     ]

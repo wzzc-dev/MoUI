@@ -3,8 +3,8 @@ test "RendererTextResources::clear drops all text draw resources" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererTextResources::new(16, 16)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererTextResources::new(16, 16)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -48,8 +48,8 @@ test "RendererTextResources::clear drops all text draw resources" {
 test "RendererResources::clear drops font text and image resources" {
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::new(16, 16)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::new(16, 16)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,

@@ -1,6 +1,6 @@
 ///|
 test "gpu worker latest wins and completion polling" {
-  let worker = GpuRenderWorker::new()
+  let worker = @common.GpuRenderWorker::new()
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=10.0, height=10.0),
   )
@@ -16,25 +16,21 @@ test "gpu worker latest wins and completion polling" {
   let completions = worker.drain_present_completions()
   assert_eq(completions.length(), 1)
   assert_eq(completions[0].token().sequence(), 2)
-  assert_true(completions[0].status() is @render.RenderPresentStatus::Recorded)
+  assert_true(completions[0].status() is Recorded)
   assert_eq(completions[0].presented_at_ms(), 0.0)
   assert_eq(worker.diagnostics().replaced_pending, 1)
 }
 
 ///|
 test "gpu worker control ordering rejects old generation" {
-  let worker = GpuRenderWorker::new()
+  let worker = @common.GpuRenderWorker::new()
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let input = @render.RenderFrameInput::new(metrics~, commands=[])
   ignore(worker.submit(input, submitted_at_ms=1.0))
   ignore(
-    worker.submit_control(
-      @render.RendererControlMessage::Resize(
-        @core.Size::new(width=20.0, height=20.0),
-      ),
-    ),
+    worker.submit_control(Resize(@core.Size::new(width=20.0, height=20.0))),
   )
   worker.poll(completed_at_ms=2.0)
   let diagnostics = worker.diagnostics()
@@ -45,24 +41,16 @@ test "gpu worker control ordering rejects old generation" {
 
 ///|
 test "gpu worker falls back after two recovery failures" {
-  let worker = GpuRenderWorker::new()
+  let worker = @common.GpuRenderWorker::new()
   worker.fail_next_context_recovery()
-  ignore(
-    worker.submit_control(@render.RendererControlMessage::ContextLoss("test")),
-  )
+  ignore(worker.submit_control(ContextLoss("test")))
   worker.poll()
   worker.poll()
   worker.fail_next_context_recovery()
-  ignore(
-    worker.submit_control(@render.RendererControlMessage::ContextLoss("test-2")),
-  )
+  ignore(worker.submit_control(ContextLoss("test-2")))
   worker.poll()
   worker.poll()
-  assert_true(worker.state() is GpuRenderWorkerState::FallbackToRaster)
+  assert_true(worker.state() is FallbackToRaster)
   let completions = worker.drain_present_completions()
-  assert_true(
-    completions.any(c => {
-      c.status() is @render.RenderPresentStatus::FallbackToRaster
-    }),
-  )
+  assert_true(completions.any(c => c.status() is FallbackToRaster))
 }

@@ -17,8 +17,7 @@ pub impl AgentHost for RuntimeAgentHost with fn read_semantics(self, since) {
   }
   match result {
     Ok(read) => Ok(agent_semantics_read(read))
-    Err(@runtime.SemanticsReadError::RuntimeClosed) =>
-      Err(AgentReadError::HostClosed)
+    Err(RuntimeClosed) => Err(HostClosed)
   }
 }
 
@@ -36,8 +35,7 @@ fn RuntimeAgentHost::diagnostics_open(
 ) -> Result[Unit, AgentDiagnosticsError] {
   match self.runtime.read_semantics() {
     Ok(_) => Ok(())
-    Err(@runtime.SemanticsReadError::RuntimeClosed) =>
-      Err(AgentDiagnosticsError::HostClosed)
+    Err(RuntimeClosed) => Err(HostClosed)
   }
 }
 
@@ -67,11 +65,11 @@ pub impl AgentDiagnosticsHost for RuntimeAgentHost with fn paint_summary(self) {
       let texts : Array[String] = []
       for command in commands {
         match command {
-          @core.DrawCommand::DrawText(run) => texts.push(run.text)
+          DrawText(run) => texts.push(run.text)
           _ => ()
         }
       }
-      Ok({ texts, draw_command_count: commands.length() })
+      Ok({ texts, draw_command_count: commands.length(), })
     }
   }
 }
@@ -85,7 +83,7 @@ pub impl AgentDiagnosticsHost for RuntimeAgentHost with fn dispatch_event(
     Err(error) => Err(error)
     Ok(_) => {
       self.runtime.dispatch_event(event)
-      Ok({ accepted: true, reason: None })
+      Ok({ accepted: true, reason: None, })
     }
   }
 }

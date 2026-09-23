@@ -16,20 +16,13 @@ pub fn SickleStyleMode::label(self : SickleStyleMode) -> String {
 
 ///|
 pub fn theme(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  mode? : SickleStyleMode = SickleStyleMode::Hybrid,
+  scheme? : @core.ColorScheme = Light,
+  mode? : SickleStyleMode = Hybrid,
 ) -> @core.Theme {
   let base = match scheme {
-    @core.ColorScheme::Light =>
-      @core.resolve_minimal_theme(
-        @core.ThemeSpec::minimal_light(),
-        @core.ColorScheme::Light,
-      )
-    @core.ColorScheme::Dark =>
-      @core.resolve_minimal_theme(
-        @core.ThemeSpec::minimal_dark(),
-        @core.ColorScheme::Dark,
-      )
+    Light =>
+      @core.resolve_minimal_theme(@core.ThemeSpec::minimal_light(), Light)
+    Dark => @core.resolve_minimal_theme(@core.ThemeSpec::minimal_dark(), Dark)
   }
   let palette = sickle_palette(scheme)
   base
@@ -43,44 +36,32 @@ pub fn theme(
 }
 
 ///|
-pub fn light_theme(
-  mode? : SickleStyleMode = SickleStyleMode::Hybrid,
-) -> @core.Theme {
-  theme(scheme=@core.ColorScheme::Light, mode~)
+pub fn light_theme(mode? : SickleStyleMode = Hybrid) -> @core.Theme {
+  theme(scheme=Light, mode~)
 }
 
 ///|
-pub fn dark_theme(
-  mode? : SickleStyleMode = SickleStyleMode::Hybrid,
-) -> @core.Theme {
-  theme(scheme=@core.ColorScheme::Dark, mode~)
+pub fn dark_theme(mode? : SickleStyleMode = Hybrid) -> @core.Theme {
+  theme(scheme=Dark, mode~)
 }
 
 ///|
-pub fn skeuo_theme(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-) -> @core.Theme {
-  theme(scheme~, mode=SickleStyleMode::Skeuo)
+pub fn skeuo_theme(scheme? : @core.ColorScheme = Light) -> @core.Theme {
+  theme(scheme~, mode=Skeuo)
 }
 
 ///|
-pub fn flat_theme(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-) -> @core.Theme {
-  theme(scheme~, mode=SickleStyleMode::Flat)
+pub fn flat_theme(scheme? : @core.ColorScheme = Light) -> @core.Theme {
+  theme(scheme~, mode=Flat)
 }
 
 ///|
-pub fn hybrid_theme(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-) -> @core.Theme {
-  theme(scheme~, mode=SickleStyleMode::Hybrid)
+pub fn hybrid_theme(scheme? : @core.ColorScheme = Light) -> @core.Theme {
+  theme(scheme~, mode=Hybrid)
 }
 
 ///|
-pub fn palette(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-) -> @core.ColorPalette {
+pub fn palette(scheme? : @core.ColorScheme = Light) -> @core.ColorPalette {
   sickle_palette(scheme)
 }
 
@@ -90,8 +71,8 @@ pub fn palette(
 /// to `core.Theme` (which is now neutral). Apps that want sickle's branded
 /// control tokens resolve this alongside the neutral `theme()`.
 pub fn control_theme_set(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  mode? : SickleStyleMode = SickleStyleMode::Hybrid,
+  scheme? : @core.ColorScheme = Light,
+  mode? : SickleStyleMode = Hybrid,
 ) -> @views.ControlThemeSet {
   sickle_components(sickle_palette(scheme), scheme, mode)
 }
@@ -99,11 +80,11 @@ pub fn control_theme_set(
 ///|
 fn sickle_palette(scheme : @core.ColorScheme) -> @core.ColorPalette {
   match scheme {
-    @core.ColorScheme::Light =>
+    Light =>
       {
         ..@core.ColorPalette::from_seed(
           primary=color_byte(r=185, g=36, b=34),
-          @core.ColorScheme::Light,
+          Light,
           foreground=color_byte(r=42, g=37, b=33),
           background=color_byte(r=242, g=238, b=230),
           surface=color_byte(r=252, g=250, b=245),
@@ -130,11 +111,11 @@ fn sickle_palette(scheme : @core.ColorScheme) -> @core.ColorPalette {
         focus: color_byte(r=185, g=36, b=34),
         scrim: color(r=0.0, g=0.0, b=0.0, a=0.42),
       }
-    @core.ColorScheme::Dark =>
+    Dark =>
       {
         ..@core.ColorPalette::from_seed(
           primary=color_byte(r=236, g=91, b=75),
-          @core.ColorScheme::Dark,
+          Dark,
           foreground=color_byte(r=238, g=232, b=221),
           background=color_byte(r=28, g=26, b=24),
           surface=color_byte(r=43, g=39, b=35),
@@ -167,9 +148,9 @@ fn sickle_palette(scheme : @core.ColorScheme) -> @core.ColorPalette {
 ///|
 fn sickle_spacing(mode : SickleStyleMode) -> @core.SpacingScale {
   let multiplier = match mode {
-    SickleStyleMode::Skeuo => 1.10
-    SickleStyleMode::Flat => 0.92
-    SickleStyleMode::Hybrid => 1.0
+    Skeuo => 1.10
+    Flat => 0.92
+    Hybrid => 1.0
   }
   {
     xs: 4.0 * multiplier,
@@ -183,9 +164,9 @@ fn sickle_spacing(mode : SickleStyleMode) -> @core.SpacingScale {
 ///|
 fn sickle_radius(mode : SickleStyleMode) -> @core.RadiusScale {
   match mode {
-    SickleStyleMode::Skeuo => { sm: 6.0, md: 10.0, lg: 16.0, pill: 999.0 }
-    SickleStyleMode::Flat => { sm: 3.0, md: 5.0, lg: 7.0, pill: 999.0 }
-    SickleStyleMode::Hybrid => { sm: 5.0, md: 8.0, lg: 12.0, pill: 999.0 }
+    Skeuo => { sm: 6.0, md: 10.0, lg: 16.0, pill: 999.0, }
+    Flat => { sm: 3.0, md: 5.0, lg: 7.0, pill: 999.0, }
+    Hybrid => { sm: 5.0, md: 8.0, lg: 12.0, pill: 999.0, }
   }
 }
 
@@ -211,13 +192,13 @@ fn sickle_shadow_scale(
   mode : SickleStyleMode,
 ) -> @core.ShadowScale {
   let alpha = match scheme {
-    @core.ColorScheme::Light => 0.22
-    @core.ColorScheme::Dark => 0.54
+    Light => 0.22
+    Dark => 0.54
   }
   let lift = match mode {
-    SickleStyleMode::Skeuo => 1.28
-    SickleStyleMode::Flat => 0.36
-    SickleStyleMode::Hybrid => 0.84
+    Skeuo => 1.28
+    Flat => 0.36
+    Hybrid => 0.84
   }
   {
     sm: shadow(alpha=alpha * 0.48 * lift, y=1.0, blur=4.0),
@@ -229,27 +210,12 @@ fn sickle_shadow_scale(
 ///|
 fn sickle_motion(mode : SickleStyleMode) -> @core.MotionScale {
   match mode {
-    SickleStyleMode::Skeuo =>
-      {
-        fast_ms: 140.0,
-        normal_ms: 220.0,
-        slow_ms: 360.0,
-        easing: @core.Easing::EaseOut,
-      }
-    SickleStyleMode::Flat =>
-      {
-        fast_ms: 80.0,
-        normal_ms: 120.0,
-        slow_ms: 180.0,
-        easing: @core.Easing::EaseInOut,
-      }
-    SickleStyleMode::Hybrid =>
-      {
-        fast_ms: 110.0,
-        normal_ms: 170.0,
-        slow_ms: 260.0,
-        easing: @core.Easing::EaseOut,
-      }
+    Skeuo =>
+      { fast_ms: 140.0, normal_ms: 220.0, slow_ms: 360.0, easing: EaseOut, }
+    Flat =>
+      { fast_ms: 80.0, normal_ms: 120.0, slow_ms: 180.0, easing: EaseInOut, }
+    Hybrid =>
+      { fast_ms: 110.0, normal_ms: 170.0, slow_ms: 260.0, easing: EaseOut, }
   }
 }
 
@@ -260,29 +226,29 @@ fn sickle_surfaces(
   mode : SickleStyleMode,
 ) -> @core.SurfaceScale {
   let base = match scheme {
-    @core.ColorScheme::Light => color_byte(r=242, g=238, b=230)
-    @core.ColorScheme::Dark => color_byte(r=28, g=26, b=24)
+    Light => color_byte(r=242, g=238, b=230)
+    Dark => color_byte(r=28, g=26, b=24)
   }
   let raised_top = match scheme {
-    @core.ColorScheme::Light => color_byte(r=255, g=253, b=248)
-    @core.ColorScheme::Dark => color_byte(r=64, g=58, b=51)
+    Light => color_byte(r=255, g=253, b=248)
+    Dark => color_byte(r=64, g=58, b=51)
   }
   let raised_bottom = match scheme {
-    @core.ColorScheme::Light => color_byte(r=229, g=222, b=208)
-    @core.ColorScheme::Dark => color_byte(r=37, g=34, b=31)
+    Light => color_byte(r=229, g=222, b=208)
+    Dark => color_byte(r=37, g=34, b=31)
   }
   let overlay = match scheme {
-    @core.ColorScheme::Light => color_byte(r=255, g=255, b=252)
-    @core.ColorScheme::Dark => color_byte(r=72, g=65, b=57)
+    Light => color_byte(r=255, g=255, b=252)
+    Dark => color_byte(r=72, g=65, b=57)
   }
   match mode {
-    SickleStyleMode::Flat =>
+    Flat =>
       {
         base: @core.Brush::solid(palette.surface),
         raised: @core.Brush::solid(palette.surface),
         overlay: @core.Brush::solid(palette.surface_variant),
       }
-    SickleStyleMode::Skeuo | SickleStyleMode::Hybrid =>
+    Skeuo | Hybrid =>
       {
         base: @core.Brush::solid(base),
         raised: @core.Brush::linear_gradient(
@@ -311,16 +277,16 @@ fn sickle_components(
   let spacing = sickle_spacing(mode)
   let shadow = sickle_shadow_scale(scheme, mode)
   let typography = sickle_typography()
-  let flat = mode == SickleStyleMode::Flat
+  let flat = mode == Flat
   let primary_shadow = if flat { None } else { Some(shadow.sm) }
   let surface_shadow = if flat { None } else { Some(shadow.md) }
   let inset_border = match scheme {
-    @core.ColorScheme::Light => color_byte(r=152, g=139, b=124)
-    @core.ColorScheme::Dark => color_byte(r=120, g=108, b=96)
+    Light => color_byte(r=152, g=139, b=124)
+    Dark => color_byte(r=120, g=108, b=96)
   }
   let field_background = match scheme {
-    @core.ColorScheme::Light => color_byte(r=255, g=253, b=248)
-    @core.ColorScheme::Dark => color_byte(r=35, g=32, b=29)
+    Light => color_byte(r=255, g=253, b=248)
+    Dark => color_byte(r=35, g=32, b=29)
   }
   {
     button: {
@@ -426,7 +392,7 @@ fn sickle_components(
       placeholder: palette.muted,
       cursor: palette.primary,
       font: typography.body,
-      appearance: @views.TextFieldAppearance::Outline,
+      appearance: Outline,
     },
     surface: {
       base_padding: spacing.md,
@@ -453,8 +419,8 @@ fn sickle_components(
       } else {
         20.0
       },
-      box_shape: @views.ChoiceControlShape::Square,
-      check_style: @views.CheckMarkStyle::Checkmark,
+      box_shape: Square,
+      check_style: Checkmark,
     },
     progress: {
       foreground: palette.primary,
@@ -480,7 +446,7 @@ fn sickle_components(
         22.0
       },
       radius: radius.pill,
-      thumb_shape: @views.ThumbShape::Circle,
+      thumb_shape: Circle,
     },
     picker: {
       font: typography.control,
@@ -570,7 +536,7 @@ fn tone(foreground~ : @core.Color, alpha~ : Double) -> @views.ToneTokens {
 
 ///|
 fn filled_tone(color : @core.Color) -> @views.ToneTokens {
-  { foreground: @core.Color::white(), background: color, border: color }
+  { foreground: @core.Color::white(), background: color, border: color, }
 }
 
 ///|

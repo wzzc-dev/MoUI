@@ -44,7 +44,7 @@ pub fn[Msg] SidebarItem::new(
   message~ : Msg,
   enabled? : Bool = true,
 ) -> SidebarItem[Msg] {
-  { id, label, message, enabled }
+  { id, label, message, enabled, }
 }
 
 ///|
@@ -65,7 +65,7 @@ pub fn[Msg] SectionNavItem::new(
   summary? : String = "",
   enabled? : Bool = true,
 ) -> SectionNavItem[Msg] {
-  { id, label, summary, message, enabled }
+  { id, label, summary, message, enabled, }
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn[Msg] BreadcrumbItem::new(
   label~ : String,
   message? : Msg? = None,
 ) -> BreadcrumbItem[Msg] {
-  { id, label, message }
+  { id, label, message, }
 }
 
 ///|

@@ -32,7 +32,7 @@ fn collect_template_files(
       let bytes = @fs.read_file_to_bytes(child) catch {
         _ => return Err("could not read mobile template file: " + child)
       }
-      files.push({ path: child_relative, bytes })
+      files.push({ path: child_relative, bytes, })
     }
   }
   Ok(files)

@@ -1,15 +1,15 @@
 ///|
 test "viewport host forwards latest snapshot and geometry" {
-  let binding = ThreeDViewportBinding::new()
-  let scene = Scene::empty()
-  let snapshot = ViewportSnapshot::new(
+  let binding = @moui_3d.ThreeDViewportBinding::new()
+  let scene = @moui_3d.Scene::empty()
+  let snapshot = @moui_3d.ViewportSnapshot::new(
     scene_revision=7L,
     scene~,
-    camera=OrbitCamera::new(),
+    camera=@moui_3d.OrbitCamera::new(),
   )
   ignore(binding.publish(snapshot))
-  let host = ThreeDViewportHost::new(binding~)
-  let seen : @ref.Ref[(UInt64, Int, Int, Double, Int64)?] = @ref.Ref(None)
+  let host = @moui_3d.ThreeDViewportHost::new(binding~)
+  let seen : @ref.Ref[(UInt64, Int, Int, Double, Int64)?] = Ref(None)
   host.set_surface_handler((handle, width, height, scale) => {
     seen.val = Some((handle, width, height, scale, 0L))
   })

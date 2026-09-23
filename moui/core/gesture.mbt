@@ -100,12 +100,12 @@ impl ViewStateValue for DragGestureState with fn encode_view_state(self) {
   let output = Buffer(size_hint=43)
   output.write_byte(
     match self.phase {
-      DragGesturePhase::Idle => 0
-      DragGesturePhase::Pending => 1
-      DragGesturePhase::Started => 2
-      DragGesturePhase::Changed => 3
-      DragGesturePhase::Ended => 4
-      DragGesturePhase::Cancelled => 5
+      Idle => 0
+      Pending => 1
+      Started => 2
+      Changed => 3
+      Ended => 4
+      Cancelled => 5
     },
   )
   match self.origin {
@@ -143,11 +143,11 @@ impl ViewStateValue for DragGestureState with fn decode_view_state(_self, bytes)
   }
   let phase = match bytes[0] {
     0 => Some(DragGesturePhase::Idle)
-    1 => Some(DragGesturePhase::Pending)
-    2 => Some(DragGesturePhase::Started)
-    3 => Some(DragGesturePhase::Changed)
-    4 => Some(DragGesturePhase::Ended)
-    5 => Some(DragGesturePhase::Cancelled)
+    1 => Some(Pending)
+    2 => Some(Started)
+    3 => Some(Changed)
+    4 => Some(Ended)
+    5 => Some(Cancelled)
     _ => None
   }
   let origin_x = ViewStateValue::decode_view_state(0.0, bytes[2:10].to_owned())
@@ -206,7 +206,7 @@ priv struct DragGestureResult {
 ///|
 test {
   ignore(
-    DragGestureResult::{ state: DragGestureState::new(), event: None }.state,
+    DragGestureResult::{ state: DragGestureState::new(), event: None, }.state,
   )
 }
 
@@ -254,28 +254,20 @@ fn recognize_press_tap(
 ) -> TapGestureResult {
   let next_state = match phase {
     Move =>
-      if current == PressableState::Pressed && inside {
+      if current == Pressed && inside {
         PressableState::Pressed
       } else if inside {
-        PressableState::Hovered
+        Hovered
       } else {
-        PressableState::Normal
+        Normal
       }
-    Down =>
-      if inside {
-        PressableState::Pressed
-      } else {
-        PressableState::Normal
-      }
-    Up => if inside { PressableState::Hovered } else { PressableState::Normal }
+    Down => if inside { Pressed } else { Normal }
+    Up => if inside { Hovered } else { Normal }
     // Synthetic runtime phase: the pointer left the element, so drop any hover
     // or press state and return to rest.
-    Exit | Cancel => PressableState::Normal
+    Exit | Cancel => Normal
   }
-  {
-    next_state,
-    activated: phase == Up && inside && current == PressableState::Pressed,
-  }
+  { next_state, activated: phase == Up && inside && current == Pressed, }
 }
 
 ///|
@@ -284,7 +276,7 @@ fn LongPressGestureState::new(
   max_movement? : Double = 8.0,
 ) -> LongPressGestureState {
   {
-    phase: LongPressGesturePhase::Idle,
+    phase: Idle,
     origin: None,
     start_time_ms: 0.0,
     duration_ms: max_double(0.0, duration_ms),
@@ -303,9 +295,9 @@ fn LongPressGestureState::update(
       let next = {
         ..self,
         phase: if inside {
-          LongPressGesturePhase::Pressing
+          Pressing
         } else {
-          LongPressGesturePhase::Idle
+          Idle
         },
         origin: if inside {
           Some(event.position)
@@ -314,7 +306,7 @@ fn LongPressGestureState::update(
         },
         start_time_ms: event.time_ms,
       }
-      { state: next, recognized: false, cancelled: false }
+      { state: next, recognized: false, cancelled: false, }
     }
     Move =>
       match self.origin {
@@ -324,24 +316,24 @@ fn LongPressGestureState::update(
           let due = event.time_ms - self.start_time_ms >= self.duration_ms
           if outside {
             {
-              state: { ..self, phase: LongPressGesturePhase::Cancelled },
+              state: { ..self, phase: Cancelled, },
               recognized: false,
               cancelled: true,
             }
-          } else if self.phase == LongPressGesturePhase::Pressing && due {
+          } else if self.phase == Pressing && due {
             {
-              state: { ..self, phase: LongPressGesturePhase::Recognized },
+              state: { ..self, phase: Recognized, },
               recognized: true,
               cancelled: false,
             }
           } else {
-            { state: self, recognized: false, cancelled: false }
+            { state: self, recognized: false, cancelled: false, }
           }
         }
-        None => { state: self, recognized: false, cancelled: false }
+        None => { state: self, recognized: false, cancelled: false, }
       }
     Up | Cancel | Exit => {
-      let cancelled = self.phase == LongPressGesturePhase::Pressing
+      let cancelled = self.phase == Pressing
       {
         state: LongPressGestureState::new(
           duration_ms=self.duration_ms,
@@ -414,10 +406,10 @@ fn DoubleTapGestureState::update(
   event : PointerEvent,
   inside? : Bool = true,
 ) -> DoubleTapGestureResult {
-  if inside && event.phase == PointerPhase::Up {
+  if inside && event.phase == Up {
     self.tap(event.position, event.time_ms)
   } else {
-    { state: self, recognized: false }
+    { state: self, recognized: false, }
   }
 }
 
@@ -429,7 +421,7 @@ pub fn DragGestureEvent::new(
   delta~ : Point,
   translation~ : Point,
 ) -> DragGestureEvent {
-  { phase, start, position, delta, translation }
+  { phase, start, position, delta, translation, }
 }
 
 ///|
@@ -447,7 +439,7 @@ pub fn DragGesturePhase::label(self : DragGesturePhase) -> String {
 ///|
 fn DragGestureState::new(min_distance? : Double = 3.0) -> DragGestureState {
   {
-    phase: DragGesturePhase::Idle,
+    phase: Idle,
     origin: None,
     last_position: None,
     min_distance: max_double(0.0, min_distance),
@@ -465,14 +457,14 @@ fn DragGestureState::update(
       let next = if inside {
         {
           ..self,
-          phase: DragGesturePhase::Pending,
+          phase: Pending,
           origin: Some(event.position),
           last_position: Some(event.position),
         }
       } else {
         DragGestureState::new(min_distance=self.min_distance)
       }
-      { state: next, event: None }
+      { state: next, event: None, }
     }
     Move =>
       match (self.origin, self.last_position) {
@@ -480,17 +472,16 @@ fn DragGestureState::update(
           let translation = point_delta(origin, event.position)
           let delta = point_delta(last, event.position)
           let distance = point_distance(origin, event.position)
-          if self.phase == DragGesturePhase::Pending &&
-            distance < self.min_distance {
+          if self.phase == Pending && distance < self.min_distance {
             {
-              state: { ..self, last_position: Some(event.position) },
+              state: { ..self, last_position: Some(event.position), },
               event: None,
             }
           } else {
-            let phase = if self.phase == DragGesturePhase::Pending {
+            let phase = if self.phase == Pending {
               DragGesturePhase::Started
             } else {
-              DragGesturePhase::Changed
+              Changed
             }
             let drag_event = DragGestureEvent::new(
               phase~,
@@ -500,22 +491,22 @@ fn DragGestureState::update(
               translation~,
             )
             {
-              state: { ..self, phase, last_position: Some(event.position) },
+              state: { ..self, phase, last_position: Some(event.position), },
               event: Some(drag_event),
             }
           }
         }
-        _ => { state: self, event: None }
+        _ => { state: self, event: None, }
       }
     Up =>
       match (self.origin, self.last_position) {
         (Some(origin), Some(last)) => {
-          let phase = if self.phase == DragGesturePhase::Pending {
+          let phase = if self.phase == Pending {
             DragGesturePhase::Cancelled
           } else {
-            DragGesturePhase::Ended
+            Ended
           }
-          let drag_event = if phase == DragGesturePhase::Ended {
+          let drag_event = if phase == Ended {
             Some(
               DragGestureEvent::new(
                 phase~,
@@ -542,11 +533,10 @@ fn DragGestureState::update(
     Cancel | Exit => {
       let drag_event = match (self.origin, self.last_position) {
         (Some(origin), Some(last)) =>
-          if self.phase == DragGesturePhase::Started ||
-            self.phase == DragGesturePhase::Changed {
+          if self.phase == Started || self.phase == Changed {
             Some(
               DragGestureEvent::new(
-                phase=DragGesturePhase::Cancelled,
+                phase=Cancelled,
                 start=origin,
                 position=event.position,
                 delta=point_delta(last, event.position),
@@ -588,7 +578,7 @@ pub fn ActionCommand::new(
   description? : String = "",
   context_menu? : Bool = false,
 ) -> ActionCommand {
-  { intent, shortcut, label, enabled, group, description, context_menu }
+  { intent, shortcut, label, enabled, group, description, context_menu, }
 }
 
 ///|
@@ -676,7 +666,7 @@ pub fn CommandBinding::new(
   command~ : ActionCommand,
   handle~ : () -> Unit,
 ) -> CommandBinding {
-  { command, handle }
+  { command, handle, }
 }
 
 ///|
@@ -752,7 +742,7 @@ pub fn ActionCommandMap::dispatch_command(
 pub fn default_text_commands() -> Array[ActionCommand] {
   [
     ActionCommand::new(
-      intent=CommandIntent::Copy,
+      intent=Copy,
       label="Copy",
       group="Edit",
       description="Copy the current selection.",
@@ -761,7 +751,7 @@ pub fn default_text_commands() -> Array[ActionCommand] {
       ),
     ),
     ActionCommand::new(
-      intent=CommandIntent::Cut,
+      intent=Cut,
       label="Cut",
       group="Edit",
       description="Cut the current selection.",
@@ -770,7 +760,7 @@ pub fn default_text_commands() -> Array[ActionCommand] {
       ),
     ),
     ActionCommand::new(
-      intent=CommandIntent::Paste,
+      intent=Paste,
       label="Paste",
       group="Edit",
       description="Paste clipboard text.",
@@ -779,7 +769,7 @@ pub fn default_text_commands() -> Array[ActionCommand] {
       ),
     ),
     ActionCommand::new(
-      intent=CommandIntent::Undo,
+      intent=Undo,
       label="Undo",
       group="Edit",
       description="Undo the last text edit.",
@@ -788,7 +778,7 @@ pub fn default_text_commands() -> Array[ActionCommand] {
       ),
     ),
     ActionCommand::new(
-      intent=CommandIntent::Redo,
+      intent=Redo,
       label="Redo",
       group="Edit",
       description="Redo the last undone text edit.",
@@ -800,7 +790,7 @@ pub fn default_text_commands() -> Array[ActionCommand] {
       ),
     ),
     ActionCommand::new(
-      intent=CommandIntent::SelectAll,
+      intent=SelectAll,
       label="Select All",
       group="Edit",
       description="Select all text in the focused input.",

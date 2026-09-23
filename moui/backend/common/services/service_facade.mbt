@@ -18,7 +18,7 @@ pub fn WindowServiceState::new(
   bridge~ : @backend_host.HostServiceBridge,
   dispose? : () -> Unit = () => (),
 ) -> WindowServiceState {
-  { bridge, dispose_fn: dispose, open: true }
+  { bridge, dispose_fn: dispose, open: true, }
 }
 
 ///|
@@ -51,7 +51,7 @@ fn HostServicesAdapter::new(
   bridge~ : @backend_host.HostServiceBridge,
   async_queue? : ServiceAsyncQueue? = None,
 ) -> HostServicesAdapter {
-  { bridge, async_queue }
+  { bridge, async_queue, }
 }
 
 ///|

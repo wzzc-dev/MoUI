@@ -71,7 +71,7 @@ fn markdown_editor_replace_code_language(
     source: text,
     caret,
     selection: selection.selection,
-    edit_range: Some({ start: marker_end, end: block.content_range.start - 1 }),
+    edit_range: Some({ start: marker_end, end: block.content_range.start - 1, }),
   }
 }
 
@@ -185,7 +185,7 @@ fn markdown_editor_quoted_code_block_scan(
                   start: lines[open_index].start,
                   end: lines[close_index].end,
                 },
-                content_range: { start: content_start, end: content_end },
+                content_range: { start: content_start, end: content_end, },
               })
             }
             break
@@ -232,7 +232,7 @@ fn markdown_editor_quoted_code_fence_opening(
     markdown_editor_text_length(line),
   )
   match markdown_editor_opening_code_fence_marker(nested) {
-    Some(fence) => Some({ quote_prefix, fence: fence.marker })
+    Some(fence) => Some({ quote_prefix, fence: fence.marker, })
     None => None
   }
 }
@@ -342,7 +342,7 @@ fn markdown_editor_containing_code_block(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if block.block.kind is MarkdownBlockKind::CodeBlock &&
+    if block.block.kind is CodeBlock &&
       anchor >= block.source_range.start &&
       anchor <= block.source_range.end {
       return Some(block)
@@ -475,7 +475,7 @@ fn markdown_editor_wrap_lines_in_code_block(
     source: text,
     caret,
     selection: next_selection,
-    edit_range: Some({ start: range.start, end: range.end }),
+    edit_range: Some({ start: range.start, end: range.end, }),
   }
 }
 

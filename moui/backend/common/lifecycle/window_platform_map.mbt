@@ -11,7 +11,7 @@ pub struct PlatformWindowMap {
 
 ///|
 pub fn PlatformWindowMap::new() -> PlatformWindowMap {
-  { bindings: [] }
+  { bindings: [], }
 }
 
 ///|
@@ -32,7 +32,7 @@ pub fn PlatformWindowMap::bind(
 ) -> Bool {
   match (self.lookup_host(platform_id), self.lookup_platform(host_id)) {
     (None, None) => {
-      self.bindings.push({ platform_id, host_id })
+      self.bindings.push({ platform_id, host_id, })
       true
     }
     _ => false

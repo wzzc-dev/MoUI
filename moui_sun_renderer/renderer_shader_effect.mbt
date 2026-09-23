@@ -119,10 +119,8 @@ fn sun_shader_effect_colors(
   fallback : @core.Brush,
 ) -> (@core.Color, @core.Color) {
   match fallback {
-    @core.Brush::Solid(color) => (color, color)
-    @core.Brush::LinearGradient(gradient) =>
-      (gradient.start_color, gradient.end_color)
-    @core.Brush::RadialGradient(gradient) =>
-      (gradient.center_color, gradient.edge_color)
+    Solid(color) => (color, color)
+    LinearGradient(gradient) => (gradient.start_color, gradient.end_color)
+    RadialGradient(gradient) => (gradient.center_color, gradient.edge_color)
   }
 }

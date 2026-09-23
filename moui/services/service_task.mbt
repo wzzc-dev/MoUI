@@ -20,7 +20,7 @@ pub struct ServiceTask[T] {
 
 ///|
 pub fn ServiceError::new(code~ : String, message~ : String) -> ServiceError {
-  { code, message }
+  { code, message, }
 }
 
 ///|
@@ -34,7 +34,7 @@ pub fn[T] ServiceTask::new(
   start~ : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?,
   label? : String = "",
 ) -> ServiceTask[T] {
-  { key, label, start_fn: start }
+  { key, label, start_fn: start, }
 }
 
 ///|
@@ -44,7 +44,7 @@ pub fn[T] ServiceTask::succeed(
   label? : String = "",
 ) -> ServiceTask[T] {
   ServiceTask::new(key~, label~, start=complete => {
-    complete(ServiceTaskResult::Success(value))
+    complete(Success(value))
     None
   })
 }
@@ -56,7 +56,7 @@ pub fn[T] ServiceTask::fail(
   label? : String = "",
 ) -> ServiceTask[T] {
   ServiceTask::new(key~, label~, start=complete => {
-    complete(ServiceTaskResult::Failure(error))
+    complete(Failure(error))
     None
   })
 }
@@ -67,7 +67,7 @@ pub fn[T] ServiceTask::cancelled(
   label? : String = "",
 ) -> ServiceTask[T] {
   ServiceTask::new(key~, label~, start=complete => {
-    complete(ServiceTaskResult::Cancelled)
+    complete(Cancelled)
     None
   })
 }
@@ -98,9 +98,9 @@ pub fn[T, U] ServiceTask::map(
   ServiceTask::new(key=self.key, label=self.label, start=complete => {
     self.start(result => {
       match result {
-        Success(value) => complete(ServiceTaskResult::Success(map(value)))
-        Failure(error) => complete(ServiceTaskResult::Failure(error))
-        Cancelled => complete(ServiceTaskResult::Cancelled)
+        Success(value) => complete(Success(map(value)))
+        Failure(error) => complete(Failure(error))
+        Cancelled => complete(Cancelled)
       }
     })
   })

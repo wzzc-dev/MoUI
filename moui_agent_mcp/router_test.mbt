@@ -16,7 +16,7 @@ pub impl @agent.AgentHost for SemanticsWireHost with fn read_semantics(
   _since,
 ) {
   Ok(
-    @agent.AgentSemanticsRead::Delta({
+    Delta({
       from: @core.SemanticsGeneration::new(7UL),
       to: @core.SemanticsGeneration::new(8UL),
       root: None,
@@ -24,9 +24,9 @@ pub impl @agent.AgentHost for SemanticsWireHost with fn read_semantics(
       upserted: [],
       removed: [],
       issues: [
-        @agent.AgentSemanticsIssue::MissingRelationTarget(
+        MissingRelationTarget(
           @core.SemanticsNodeId::new(3UL),
-          @core.SemanticsRelationKind::LabelledBy,
+          LabelledBy,
           @core.SemanticId::parse("missing.label").unwrap(),
         ),
       ],
@@ -34,7 +34,7 @@ pub impl @agent.AgentHost for SemanticsWireHost with fn read_semantics(
         {
           node_id: @core.SemanticsNodeId::new(4UL),
           generation: @core.SemanticsGeneration::new(8UL),
-          live: @core.SemanticsLive::Assertive,
+          live: Assertive,
           is_atomic: true,
           text: "Validation failed",
         },
@@ -48,7 +48,7 @@ pub impl @agent.AgentHost for SemanticsWireHost with fn perform_action(
   _self,
   _request,
 ) {
-  Err(@agent.AgentActionError::HostClosed)
+  Err(HostClosed)
 }
 
 ///|
@@ -69,10 +69,10 @@ fn RecordingHost::new(
 pub impl @agent.AgentHost for RecordingHost with fn read_semantics(self, since) {
   self.last_since = since
   if self.closed {
-    Err(@agent.AgentReadError::HostClosed)
+    Err(HostClosed)
   } else {
     Ok(
-      @agent.AgentSemanticsRead::Full({
+      Full({
         generation: @core.SemanticsGeneration::new(7UL),
         root: None,
         focused: None,
@@ -90,10 +90,10 @@ pub impl @agent.AgentHost for RecordingHost with fn perform_action(
 ) {
   self.last_action = Some(request)
   if self.closed {
-    Err(@agent.AgentActionError::HostClosed)
+    Err(HostClosed)
   } else if self.reject_action {
     Err(
-      @agent.AgentActionError::StaleGeneration(
+      StaleGeneration(
         @core.SemanticsGeneration::new(6UL),
         @core.SemanticsGeneration::new(7UL),
       ),
@@ -126,7 +126,7 @@ pub impl @agent.AgentDiagnosticsHost for RecordingHost with fn paint_summary(
   self,
 ) {
   self.last_diagnostic = Some("read_paint")
-  Ok({ texts: [], draw_command_count: 0 })
+  Ok({ texts: [], draw_command_count: 0, })
 }
 
 ///|
@@ -135,7 +135,7 @@ pub impl @agent.AgentDiagnosticsHost for RecordingHost with fn dispatch_event(
   _event,
 ) {
   self.last_diagnostic = Some("dispatch_event")
-  Ok({ accepted: true, reason: None })
+  Ok({ accepted: true, reason: None, })
 }
 
 ///|
@@ -144,7 +144,7 @@ pub impl @agent.AgentDiagnosticsHost for RecordingHost with fn dispatch_command(
   _intent,
 ) {
   self.last_diagnostic = Some("dispatch_command")
-  Ok({ accepted: true, reason: None })
+  Ok({ accepted: true, reason: None, })
 }
 
 ///|
@@ -167,9 +167,9 @@ fn tool_call(name : String, arguments : Json) -> Json {
 
 ///|
 fn listed_tool_count(response : Json) -> Int {
-  guard response is Json::Object(root) &&
-    root.get("result") is Some(Json::Object(result)) &&
-    result.get("tools") is Some(Json::Array(tools)) else {
+  guard response is Object(root) &&
+    root.get("result") is Some(Object(result)) &&
+    result.get("tools") is Some(Array(tools)) else {
     abort("invalid tools/list response")
   }
   tools.length()
@@ -177,14 +177,14 @@ fn listed_tool_count(response : Json) -> Int {
 
 ///|
 fn listed_tool_descriptor(response : Json, name : String) -> Json {
-  guard response is Json::Object(root) &&
-    root.get("result") is Some(Json::Object(result)) &&
-    result.get("tools") is Some(Json::Array(tools)) else {
+  guard response is Object(root) &&
+    root.get("result") is Some(Object(result)) &&
+    result.get("tools") is Some(Array(tools)) else {
     abort("invalid tools/list response")
   }
   for tool in tools {
-    if tool is Json::Object(fields) &&
-      fields.get("name") is Some(Json::String(found_name)) &&
+    if tool is Object(fields) &&
+      fields.get("name") is Some(String(found_name)) &&
       found_name == name {
       return tool
     }
@@ -199,8 +199,8 @@ fn required_json_field(fields : Map[String, Json], name : String) -> Json {
 
 ///|
 fn schema_property(schema : Json, name : String) -> Json {
-  guard schema is Json::Object(schema_fields) &&
-    schema_fields.get("properties") is Some(Json::Object(properties)) else {
+  guard schema is Object(schema_fields) &&
+    schema_fields.get("properties") is Some(Object(properties)) else {
     abort("schema has no properties")
   }
   required_json_field(properties, name)
@@ -208,8 +208,7 @@ fn schema_property(schema : Json, name : String) -> Json {
 
 ///|
 fn schema_variants(schema : Json) -> Array[Json] {
-  guard schema is Json::Object(fields) &&
-    fields.get("oneOf") is Some(Json::Array(variants)) else {
+  guard schema is Object(fields) && fields.get("oneOf") is Some(Array(variants)) else {
     abort("schema has no oneOf variants")
   }
   variants
@@ -219,8 +218,8 @@ fn schema_variants(schema : Json) -> Array[Json] {
 fn tagged_schema_variant(schema : Json, kind : String) -> Json {
   for variant in schema_variants(schema) {
     let kind_schema = schema_property(variant, "kind")
-    if kind_schema is Json::Object(fields) &&
-      fields.get("const") is Some(Json::String(found_kind)) &&
+    if kind_schema is Object(fields) &&
+      fields.get("const") is Some(String(found_kind)) &&
       found_kind == kind {
       return variant
     }
@@ -230,9 +229,7 @@ fn tagged_schema_variant(schema : Json, kind : String) -> Json {
 
 ///|
 fn array_item_schema(schema : Json) -> Json {
-  guard schema is Json::Object(fields) else {
-    abort("array schema is not an object")
-  }
+  guard schema is Object(fields) else { abort("array schema is not an object") }
   required_json_field(fields, "items")
 }
 
@@ -248,11 +245,11 @@ fn semantic_action_arguments(target_kind : String, target_id : String) -> Json {
 
 ///|
 fn tool_error_details(response : Json) -> Map[String, Json] {
-  guard response is Json::Object(root) &&
-    root.get("result") is Some(Json::Object(result)) &&
-    result.get("structuredContent") is Some(Json::Object(envelope)) &&
-    envelope.get("error") is Some(Json::Object(error)) &&
-    error.get("details") is Some(Json::Object(details)) else {
+  guard response is Object(root) &&
+    root.get("result") is Some(Object(result)) &&
+    result.get("structuredContent") is Some(Object(envelope)) &&
+    envelope.get("error") is Some(Object(error)) &&
+    error.get("details") is Some(Object(details)) else {
     abort("invalid structured tool error response")
   }
   details
@@ -261,7 +258,7 @@ fn tool_error_details(response : Json) -> Map[String, Json] {
 ///|
 fn required_string_field(fields : Map[String, Json], name : String) -> String {
   match fields.get(name) {
-    Some(Json::String(value)) => value
+    Some(String(value)) => value
     _ => abort("missing string field: \{name}")
   }
 }
@@ -269,13 +266,13 @@ fn required_string_field(fields : Map[String, Json], name : String) -> String {
 ///|
 test "default tools list contains exactly the semantic surface" {
   let host = RecordingHost::new()
-  let response = route(
+  let response = @moui_agent_mcp.route(
     host,
     request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   ).stringify()
   assert_eq(
     listed_tool_count(
-      route(
+      @moui_agent_mcp.route(
         host,
         request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
       ),
@@ -292,13 +289,13 @@ test "default tools list contains exactly the semantic surface" {
 ///|
 test "diagnostics tools require the explicit diagnostics router" {
   let host = RecordingHost::new()
-  let response = route_with_diagnostics(
+  let response = @moui_agent_mcp.route_with_diagnostics(
     host,
     request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   ).stringify()
   assert_eq(
     listed_tool_count(
-      route_with_diagnostics(
+      @moui_agent_mcp.route_with_diagnostics(
         host,
         request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
       ),
@@ -313,7 +310,7 @@ test "diagnostics tools require the explicit diagnostics router" {
 ///|
 test "diagnostics registry entry owns decoding and dispatch" {
   let host = RecordingHost::new()
-  let response = route_with_diagnostics(
+  let response = @moui_agent_mcp.route_with_diagnostics(
     host,
     tool_call("diagnostics_dispatch_command", ({ "intent": "Activate" } : Json)),
   ).stringify()
@@ -324,7 +321,7 @@ test "diagnostics registry entry owns decoding and dispatch" {
 ///|
 test "read_semantics returns structured content and text fallback" {
   let host = RecordingHost::new()
-  let response = route(
+  let response = @moui_agent_mcp.route(
     host,
     request(
       "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"read_semantics\",\"arguments\":{\"since\":\"5\"}}}",
@@ -338,8 +335,8 @@ test "read_semantics returns structured content and text fallback" {
 
 ///|
 test "read_semantics explicitly encodes relation and announcement wire values" {
-  let response = route(
-    SemanticsWireHost::{  },
+  let response = @moui_agent_mcp.route(
+    SemanticsWireHost::{ },
     tool_call("read_semantics", Json::empty_object()),
   ).stringify()
   assert_true(response.contains("\"relation\":\"labelled_by\""))
@@ -352,7 +349,7 @@ test "read_semantics explicitly encodes relation and announcement wire values" {
 ///|
 test "perform_action decodes tagged typed action" {
   let host = RecordingHost::new()
-  let response = route(
+  let response = @moui_agent_mcp.route(
     host,
     request(
       "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"perform_action\",\"arguments\":{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter.increment\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"exact\",\"generation\":\"7\"}}}}",
@@ -362,19 +359,14 @@ test "perform_action decodes tagged typed action" {
   guard host.last_action is Some(action) else {
     fail("host did not receive action")
   }
-  assert_true(action.action == @core.SemanticsAction::Activate)
-  assert_true(
-    action.precondition ==
-    @agent.AgentGenerationPrecondition::Exact(
-      @core.SemanticsGeneration::new(7UL),
-    ),
-  )
+  assert_true(action.action == Activate)
+  assert_true(action.precondition == Exact(@core.SemanticsGeneration::new(7UL)))
 }
 
 ///|
 test "invalid action payload is a normal MCP tool error" {
   let host = RecordingHost::new()
-  let response = route(
+  let response = @moui_agent_mcp.route(
     host,
     request(
       "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"perform_action\",\"arguments\":{\"target\":{\"kind\":\"semantic_id\",\"id\":\"editor\"},\"action\":{\"kind\":\"set_text\"},\"precondition\":{\"kind\":\"latest\"}}}}",
@@ -389,7 +381,7 @@ test "invalid action payload is a normal MCP tool error" {
 ///|
 test "business rejection is a structured tool error" {
   let host = RecordingHost::new(reject_action=true)
-  let routed = route(
+  let routed = @moui_agent_mcp.route(
     host,
     request(
       "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"perform_action\",\"arguments\":{\"target\":{\"kind\":\"node_id\",\"id\":\"12\"},\"action\":{\"kind\":\"scroll\",\"direction\":\"down\"},\"precondition\":{\"kind\":\"latest\"}}}}",
@@ -405,16 +397,13 @@ test "business rejection is a structured tool error" {
   guard host.last_action is Some(action) else {
     fail("host did not receive action")
   }
-  assert_true(
-    action.action ==
-    @core.SemanticsAction::Scroll(@core.SemanticsScrollDirection::Down),
-  )
+  assert_true(action.action == Scroll(Down))
 }
 
 ///|
 test "malformed tools call envelope uses JSON-RPC invalid params" {
   let host = RecordingHost::new()
-  let response = route(
+  let response = @moui_agent_mcp.route(
     host,
     request(
       "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{}}",
@@ -431,7 +420,7 @@ test "malformed JSON-RPC version uses invalid request" {
     source in [
       "{\"id\":1,\"method\":\"tools/list\"}", "{\"jsonrpc\":\"1.0\",\"id\":1,\"method\":\"tools/list\"}",
     ] {
-    let response = route(host, request(source)).stringify()
+    let response = @moui_agent_mcp.route(host, request(source)).stringify()
     assert_true(response.contains("\"code\":-32600"))
     assert_false(response.contains("structuredContent"))
   }
@@ -467,7 +456,10 @@ test "typed registry rejects invalid targets actions payloads and generations" {
     ),
   ]
   for arguments in invalid_arguments {
-    let response = route(host, tool_call("perform_action", arguments)).stringify()
+    let response = @moui_agent_mcp.route(
+      host,
+      tool_call("perform_action", arguments),
+    ).stringify()
     assert_true(response.contains("\"isError\":true"))
     assert_true(response.contains("invalid_arguments"))
     assert_false(response.contains("\"code\":-32602"))
@@ -477,24 +469,24 @@ test "typed registry rejects invalid targets actions payloads and generations" {
 
 ///|
 test "UInt64 codecs keep descriptor schemas and decoders canonical" {
-  let list_response = route(
+  let list_response = @moui_agent_mcp.route(
     RecordingHost::new(),
     request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   )
   let read_descriptor = listed_tool_descriptor(list_response, "read_semantics")
-  guard read_descriptor is Json::Object(read_fields) else {
+  guard read_descriptor is Object(read_fields) else {
     fail("read descriptor is not an object")
   }
   let since_schema = schema_property(
     required_json_field(read_fields, "inputSchema"),
     "since",
   )
-  guard since_schema is Json::Object(since_fields) else {
+  guard since_schema is Object(since_fields) else {
     fail("since schema is not an object")
   }
   assert_eq(required_string_field(since_fields, "type"), "string")
   assert_true(
-    since_fields.get("maxLength") is Some(Json::Number(max_length, repr=_)) &&
+    since_fields.get("maxLength") is Some(Number(max_length, repr=_)) &&
     max_length == 20.0,
   )
   assert_true(
@@ -506,7 +498,7 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
   let action_descriptor = listed_tool_descriptor(
     list_response, "perform_action",
   )
-  guard action_descriptor is Json::Object(action_fields) else {
+  guard action_descriptor is Object(action_fields) else {
     fail("perform_action descriptor is not an object")
   }
   let action_input = required_json_field(action_fields, "inputSchema")
@@ -514,14 +506,14 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
     schema_property(action_input, "target"),
     "node_id",
   )
-  guard schema_property(node_target, "id") is Json::Object(node_id_fields) else {
+  guard schema_property(node_target, "id") is Object(node_id_fields) else {
     fail("node id schema is not an object")
   }
   assert_true(
     required_string_field(node_id_fields, "pattern").has_prefix("^([1-9]"),
   )
   assert_true(
-    node_id_fields.get("maxLength") is Some(Json::Number(max_length, repr=_)) &&
+    node_id_fields.get("maxLength") is Some(Number(max_length, repr=_)) &&
     max_length == 20.0,
   )
   let exact_precondition = tagged_schema_variant(
@@ -529,7 +521,7 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
     "exact",
   )
   guard schema_property(exact_precondition, "generation")
-    is Json::Object(exact_generation_fields) else {
+    is Object(exact_generation_fields) else {
     fail("exact generation schema is not an object")
   }
   assert_eq(
@@ -539,7 +531,7 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
 
   for value in ["0", "18446744073709551615"] {
     let host = RecordingHost::new()
-    let response = route(
+    let response = @moui_agent_mcp.route(
       host,
       tool_call("read_semantics", ({ "since": value } : Json)),
     ).stringify()
@@ -548,7 +540,7 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
   }
   for value in ["", "00", "01", "-1", "18446744073709551616"] {
     let host = RecordingHost::new()
-    let response = route(
+    let response = @moui_agent_mcp.route(
       host,
       tool_call("read_semantics", ({ "since": value } : Json)),
     ).stringify()
@@ -559,7 +551,7 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
 
   for value in ["1", "18446744073709551615"] {
     let host = RecordingHost::new()
-    let response = route(
+    let response = @moui_agent_mcp.route(
       host,
       tool_call("perform_action", semantic_action_arguments("node_id", value)),
     ).stringify()
@@ -567,14 +559,14 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
     guard host.last_action is Some(action) else {
       fail("valid node id was not dispatched")
     }
-    guard action.target is @core.SemanticsTarget::ByNodeId(node_id) else {
+    guard action.target is ByNodeId(node_id) else {
       fail("valid node id decoded to the wrong target")
     }
     assert_eq(node_id.to_wire(), value)
   }
   for value in ["0", "00", "01", "18446744073709551616"] {
     let host = RecordingHost::new()
-    let response = route(
+    let response = @moui_agent_mcp.route(
       host,
       tool_call("perform_action", semantic_action_arguments("node_id", value)),
     ).stringify()
@@ -585,12 +577,12 @@ test "UInt64 codecs keep descriptor schemas and decoders canonical" {
 
 ///|
 test "SemanticId codec exposes and enforces byte and whitespace constraints" {
-  let list_response = route(
+  let list_response = @moui_agent_mcp.route(
     RecordingHost::new(),
     request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   )
   let descriptor = listed_tool_descriptor(list_response, "perform_action")
-  guard descriptor is Json::Object(descriptor_fields) else {
+  guard descriptor is Object(descriptor_fields) else {
     fail("perform_action descriptor is not an object")
   }
   let target_schema = schema_property(
@@ -599,16 +591,16 @@ test "SemanticId codec exposes and enforces byte and whitespace constraints" {
   )
   let semantic_target = tagged_schema_variant(target_schema, "semantic_id")
   let semantic_id_schema = schema_property(semantic_target, "id")
-  guard semantic_id_schema is Json::Object(id_fields) &&
-    id_fields.get("x-moui-utf8ByteLength") is Some(Json::Object(byte_length)) else {
+  guard semantic_id_schema is Object(id_fields) &&
+    id_fields.get("x-moui-utf8ByteLength") is Some(Object(byte_length)) else {
     fail("semantic id schema is missing its UTF-8 byte contract")
   }
   assert_true(
-    byte_length.get("minimum") is Some(Json::Number(minimum, repr=_)) &&
+    byte_length.get("minimum") is Some(Number(minimum, repr=_)) &&
     minimum == 1.0,
   )
   assert_true(
-    byte_length.get("maximum") is Some(Json::Number(maximum, repr=_)) &&
+    byte_length.get("maximum") is Some(Number(maximum, repr=_)) &&
     maximum == 255.0,
   )
   let pattern = required_string_field(id_fields, "pattern")
@@ -617,7 +609,7 @@ test "SemanticId codec exposes and enforces byte and whitespace constraints" {
 
   let valid = "\u{754C}".repeat(85)
   let valid_host = RecordingHost::new()
-  let valid_response = route(
+  let valid_response = @moui_agent_mcp.route(
     valid_host,
     tool_call("perform_action", semantic_action_arguments("semantic_id", valid)),
   ).stringify()
@@ -633,7 +625,7 @@ test "SemanticId codec exposes and enforces byte and whitespace constraints" {
       "bad\u{3000}value",
     ] {
     let host = RecordingHost::new()
-    let response = route(
+    let response = @moui_agent_mcp.route(
       host,
       tool_call(
         "perform_action",
@@ -648,12 +640,12 @@ test "SemanticId codec exposes and enforces byte and whitespace constraints" {
 
 ///|
 test "read_semantics output schema fully types node issue and delta arrays" {
-  let list_response = route(
+  let list_response = @moui_agent_mcp.route(
     RecordingHost::new(),
     request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   )
   let descriptor = listed_tool_descriptor(list_response, "read_semantics")
-  guard descriptor is Json::Object(descriptor_fields) else {
+  guard descriptor is Object(descriptor_fields) else {
     fail("read_semantics descriptor is not an object")
   }
   let output = required_json_field(descriptor_fields, "outputSchema")
@@ -696,7 +688,7 @@ test "read_semantics output schema fully types node issue and delta arrays" {
 ///|
 test "host closure is a normal structured tool error" {
   let host = RecordingHost::new(closed=true)
-  let read_response = route(
+  let read_response = @moui_agent_mcp.route(
     host,
     tool_call("read_semantics", Json::empty_object()),
   ).stringify()
@@ -706,7 +698,7 @@ test "host closure is a normal structured tool error" {
   let action_arguments = request(
     "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"latest\"}}",
   )
-  let action_response = route(
+  let action_response = @moui_agent_mcp.route(
     host,
     tool_call("perform_action", action_arguments),
   ).stringify()
@@ -717,7 +709,7 @@ test "host closure is a normal structured tool error" {
 ///|
 test "diagnostics tools stay unavailable on the default router" {
   let host = RecordingHost::new()
-  let response = route(
+  let response = @moui_agent_mcp.route(
     host,
     tool_call("diagnostics_read_state", Json::empty_object()),
   ).stringify()

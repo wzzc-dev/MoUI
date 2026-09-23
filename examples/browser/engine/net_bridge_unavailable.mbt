@@ -25,7 +25,7 @@ pub fn fetch_resources(
 ) -> Array[FetchedResource] {
   let out : Array[FetchedResource] = []
   for _ in urls {
-    out.push({ ok: false, body: "" })
+    out.push({ ok: false, body: "", })
   }
   out
 }

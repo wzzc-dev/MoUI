@@ -61,5 +61,5 @@ pub fn[Msg] BaselineFormRow::new(
   label~ : @core.View[Msg],
   control~ : @core.View[Msg],
 ) -> BaselineFormRow[Msg] {
-  { label, control }
+  { label, control, }
 }

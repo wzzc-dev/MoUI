@@ -4,7 +4,7 @@ pub fn[Msg] alert(
   message : String,
   primary_action~ : StateViewAction[Msg],
   secondary_action? : StateViewAction[Msg]? = None,
-  tone? : @style.FeedbackTone = @style.FeedbackTone::Info,
+  tone? : @style.FeedbackTone = Info,
   theme? : @core.Theme,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
@@ -21,7 +21,7 @@ pub fn[Msg] alert(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Ghost,
+          variant=Ghost,
           theme=resolved_theme,
           width=104.0,
           height=36.0,
@@ -33,7 +33,7 @@ pub fn[Msg] alert(
     @button.button(
       primary_action.label,
       on_click=primary_action.message,
-      variant=@style.ButtonVariant::Primary,
+      variant=Primary,
       theme=resolved_theme,
       width=104.0,
       height=36.0,
@@ -44,14 +44,14 @@ pub fn[Msg] alert(
       [
         @text.text(
           title,
-          role=@style.TextRole::Control,
+          role=Control,
           theme=resolved_theme,
           width=content_width,
           height=28.0,
         ).foreground(feedback_accent(tone, feedback_style)),
         @text.text(
           message,
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme=resolved_theme,
           width=content_width,
           height=54.0,
@@ -59,16 +59,16 @@ pub fn[Msg] alert(
         @layout.row(
           actions,
           spacing=resolved_theme.spacing_scale.sm,
-          justify=@style.MainAlign::End,
-          align=@style.CrossAlign::Center,
+          justify=End,
+          align=Center,
         ).frame(width=content_width, height=40.0),
       ],
       spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=158.0,
-    variant=@style.ContainerVariant::Raised,
+    variant=Raised,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
@@ -79,6 +79,6 @@ pub fn[Msg] alert(
     ),
   )
   .shadow(resolved_theme.shadow_scale.lg)
-  .semantics_role(@core.SemanticsRole::Dialog)
+  .semantics_role(Dialog)
   .accessibility_label(title)
 }

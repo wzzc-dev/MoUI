@@ -28,13 +28,13 @@ pub fn Canvas2DRenderer::new(canvas_id~ : String) -> Canvas2DRenderer {
 ///|
 pub fn canvas2d_descriptor() -> @render.RendererDescriptor {
   @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::Canvas2DWasm,
-    family=@render.RendererFamily::Canvas2D,
-    presentation=@render.RendererPresentationModel::WebCanvas,
-    supported_targets=[@render.RendererTarget::WasmGc],
+    backend=Canvas2DWasm,
+    family=Canvas2D,
+    presentation=WebCanvas,
+    supported_targets=[WasmGc],
     capabilities=canvas2d_provider_capabilities(
       provider_id="wxCanvas2d",
-      backend=@render.RendererBackendKind::Canvas2DWasm,
+      backend=Canvas2DWasm,
     ),
     description="Canvas 2D renderer for WeChat Mini Program Skyline engine; renders DrawCommand sequences through the CanvasRenderingContext2D API.",
   )
@@ -43,8 +43,8 @@ pub fn canvas2d_descriptor() -> @render.RendererDescriptor {
 ///|
 pub fn canvas2d_preflight() -> @render.RendererBackendInfo {
   @render.RendererBackendInfo::new(
-    backend=@render.RendererBackendKind::Canvas2DWasm,
-    status=@render.RendererCapabilityStatus::Supported,
+    backend=Canvas2DWasm,
+    status=Supported,
     can_render=true,
     can_resize=true,
     owns_surface=false,
@@ -507,7 +507,7 @@ fn canvas2d_render_commands(
           None =>
             match path.stroke {
               Some(b) => b.fallback_color()
-              None => @core.Color::{ r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+              None => { r: 0.0, g: 0.0, b: 0.0, a: 1.0, }
             }
         }
         // Simple path rendering: op=0 for fill, op=1 for stroke
@@ -583,7 +583,7 @@ fn canvas2d_measure_text_impl(
     input.font.weight,
   )
   let font_size = input.font.size
-  @core.TextLayoutResult::{
+  {
     size: @core.Size::new(width~, height=font_size * 1.2),
     baseline: font_size * 0.85,
     caret_positions: [],

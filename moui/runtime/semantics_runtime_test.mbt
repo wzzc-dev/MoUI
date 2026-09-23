@@ -50,12 +50,12 @@ fn runtime_modal_focus_program() -> @core.Program[
   let first_id = runtime_test_semantic_id("modal.first")
   let second_id = runtime_test_semantic_id("modal.second")
   @core.Program::simple(
-    init={ modal_open: false, origin_present: true },
+    init={ modal_open: false, origin_present: true, },
     update=(model, message) => {
       match message {
-        OpenModal => { ..model, modal_open: true }
-        CloseModal => { ..model, modal_open: false }
-        RemoveOriginAndClose => { modal_open: false, origin_present: false }
+        OpenModal => { ..model, modal_open: true, }
+        CloseModal => { ..model, modal_open: false, }
+        RemoveOriginAndClose => { modal_open: false, origin_present: false, }
       }
     },
     view=model => {
@@ -108,11 +108,11 @@ fn runtime_modal_focus_program() -> @core.Program[
               ).key("modal.second.key"),
             ],
             kind="RuntimeModalDialog",
-            composition=@core.SemanticsComposition::Boundary,
+            composition=Boundary,
             semantic_id=dialog_id,
             focus_trap=true,
           )
-          .semantics_role(@core.SemanticsRole::Dialog)
+          .semantics_role(Dialog)
           .semantics_state(modal=true)
         children.push(dialog)
       }
@@ -144,10 +144,10 @@ fn runtime_semantic_batch_program(
         value=model.join(","),
         handlers=[
           @core.ViewSemanticsActionHandler::activate(_context => {
-            @core.ViewSemanticsActionResult::accepted(
-              dirty=@core.ViewDirtyHint::ViewClean,
-              messages=[BatchFirst, BatchSecond],
-            )
+            @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+              BatchFirst,
+              BatchSecond,
+            ])
           }),
         ],
       )
@@ -160,12 +160,12 @@ fn runtime_semantic_scroll_label(
   direction : @core.SemanticsScrollDirection,
 ) -> String {
   match direction {
-    @core.SemanticsScrollDirection::Forward => "forward"
-    @core.SemanticsScrollDirection::Backward => "backward"
-    @core.SemanticsScrollDirection::Up => "up"
-    @core.SemanticsScrollDirection::Down => "down"
-    @core.SemanticsScrollDirection::Left => "left"
-    @core.SemanticsScrollDirection::Right => "right"
+    Forward => "forward"
+    Backward => "backward"
+    Up => "up"
+    Down => "down"
+    Left => "left"
+    Right => "right"
   }
 }
 
@@ -175,52 +175,44 @@ fn runtime_semantic_action_handlers() -> Array[
 ] {
   [
     @core.ViewSemanticsActionHandler::activate(_context => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionActivated],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionActivated,
+      ])
     }),
     @core.ViewSemanticsActionHandler::set_text((_context, value) => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionSetText(value)],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionSetText(value),
+      ])
     }),
     @core.ViewSemanticsActionHandler::submit(_context => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionSubmitted],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionSubmitted,
+      ])
     }),
     @core.ViewSemanticsActionHandler::scroll((_context, direction) => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionScrolled(runtime_semantic_scroll_label(direction))],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionScrolled(runtime_semantic_scroll_label(direction)),
+      ])
     }),
     @core.ViewSemanticsActionHandler::select(_context => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionSelected],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionSelected,
+      ])
     }),
     @core.ViewSemanticsActionHandler::expand(_context => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionExpanded],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionExpanded,
+      ])
     }),
     @core.ViewSemanticsActionHandler::collapse(_context => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionCollapsed],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionCollapsed,
+      ])
     }),
     @core.ViewSemanticsActionHandler::dismiss(_context => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[ActionDismissed],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+        ActionDismissed,
+      ])
     }),
   ]
 }
@@ -239,14 +231,14 @@ fn runtime_semantic_action_program(
     },
     update=(model, message) => {
       match message {
-        ActionActivated => { ..model, activations: model.activations + 1 }
+        ActionActivated => { ..model, activations: model.activations + 1, }
         ActionSetText(value) => { ..model, value, }
-        ActionSubmitted => { ..model, value: "\{model.value}:submitted" }
-        ActionScrolled(direction) => { ..model, value: "scroll:\{direction}" }
-        ActionSelected => { ..model, selected: true }
-        ActionExpanded => { ..model, expanded: true }
-        ActionCollapsed => { ..model, expanded: false }
-        ActionDismissed => { ..model, dismissed: true }
+        ActionSubmitted => { ..model, value: "\{model.value}:submitted", }
+        ActionScrolled(direction) => { ..model, value: "scroll:\{direction}", }
+        ActionSelected => { ..model, selected: true, }
+        ActionExpanded => { ..model, expanded: true, }
+        ActionCollapsed => { ..model, expanded: false, }
+        ActionDismissed => { ..model, dismissed: true, }
       }
     },
     view=model => {
@@ -268,7 +260,7 @@ fn runtime_semantic_action_program(
 test "runtime semantics: typed actions commit through TEA without fake input" {
   let semantic_id = runtime_test_semantic_id("test.actions")
   let observed_events : Array[@core.AppEvent] = []
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_semantic_action_program(semantic_id),
     size=@core.Size::new(width=200.0, height=80.0),
   )
@@ -283,65 +275,65 @@ test "runtime semantics: typed actions commit through TEA without fake input" {
   let mut generation = initial_generation
   let focus_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::ByNodeId(initial_node_id),
-    @core.SemanticsAction::Focus,
+    ByNodeId(initial_node_id),
+    Focus,
     generation,
   )
   generation = focus_receipt.after
   let activate_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(semantic_id),
+    Activate,
     generation,
   )
   generation = activate_receipt.after
   let set_text_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::SetText("typed"),
+    BySemanticId(semantic_id),
+    SetText("typed"),
     generation,
   )
   generation = set_text_receipt.after
   let scroll_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Scroll(@core.SemanticsScrollDirection::Down),
+    BySemanticId(semantic_id),
+    Scroll(Down),
     generation,
   )
   generation = scroll_receipt.after
   let select_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Select,
+    BySemanticId(semantic_id),
+    Select,
     generation,
   )
   generation = select_receipt.after
   let expand_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Expand,
+    BySemanticId(semantic_id),
+    Expand,
     generation,
   )
   generation = expand_receipt.after
   let collapse_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Collapse,
+    BySemanticId(semantic_id),
+    Collapse,
     generation,
   )
   generation = collapse_receipt.after
   let submit_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Submit,
+    BySemanticId(semantic_id),
+    Submit,
     generation,
   )
   generation = submit_receipt.after
   let before_dismiss = generation
   let dismiss_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Dismiss,
+    BySemanticId(semantic_id),
+    Dismiss,
     generation,
   )
   generation = dismiss_receipt.after
@@ -369,7 +361,7 @@ test "runtime semantics: typed actions commit through TEA without fake input" {
     initial_runtime.paint_pass_count(),
   )
   match runtime.read_semantics(since=before_dismiss) {
-    Ok(SemanticsRead::Delta(delta)) => {
+    Ok(Delta(delta)) => {
       assert_eq(delta.from(), before_dismiss)
       assert_eq(delta.to(), generation)
       assert_eq(delta.upserted().length(), 1)
@@ -378,21 +370,21 @@ test "runtime semantics: typed actions commit through TEA without fake input" {
     _ => fail("expected a one-node semantic delta")
   }
   match runtime.read_semantics(since=before_dismiss) {
-    Ok(SemanticsRead::Delta(delta)) => assert_eq(delta.to(), generation)
+    Ok(Delta(delta)) => assert_eq(delta.to(), generation)
     _ => fail("independent consumer should receive the same delta")
   }
   match runtime.read_semantics(since=generation) {
-    Ok(SemanticsRead::Unchanged(current)) => assert_eq(current, generation)
+    Ok(Unchanged(current)) => assert_eq(current, generation)
     _ => fail("expected unchanged semantics cursor")
   }
   let generation_before_stale = final_snapshot.generation()
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(initial_generation),
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(initial_generation),
     }) {
-    Err(SemanticsActionDispatchError::StaleGeneration(expected, actual)) => {
+    Err(StaleGeneration(expected, actual)) => {
       assert_eq(expected, initial_generation)
       assert_eq(actual, generation_before_stale)
     }
@@ -407,21 +399,21 @@ test "runtime semantics: typed actions commit through TEA without fake input" {
 ///|
 test "runtime semantics: live changes announce without moving focus" {
   let semantic_id = runtime_test_semantic_id("test.live")
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init=0,
       update=(value, _message : Unit) => value + 1,
       view=value => {
         runtime_semantic_test_view(
           semantic_id~,
-          role=@core.SemanticsRole::Status,
+          role=Status,
           label="Status \{value}",
           handlers=[
             @core.ViewSemanticsActionHandler::activate(_context => {
               @core.ViewSemanticsActionResult::message(())
             }),
           ],
-        ).semantics_live(@core.SemanticsLive::Polite, live_atomic=true)
+        ).semantics_live(Polite, live_atomic=true)
       },
     ),
     size=@core.Size::new(width=200.0, height=80.0),
@@ -429,17 +421,17 @@ test "runtime semantics: live changes announce without moving focus" {
   let initial = runtime_expect_full_semantics(runtime)
   let receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(semantic_id),
+    Activate,
     initial.generation(),
   )
   match runtime.read_semantics(since=initial.generation()) {
-    Ok(SemanticsRead::Delta(delta)) => {
+    Ok(Delta(delta)) => {
       assert_eq(delta.focused(), initial.focused())
       assert_eq(delta.announcements().length(), 1)
       let announcement = delta.announcements()[0]
       assert_eq(announcement.generation, receipt.after)
-      assert_eq(announcement.live, @core.SemanticsLive::Polite)
+      assert_eq(announcement.live, Polite)
       assert_true(announcement.is_atomic)
       assert_eq(announcement.text, "Status 1")
     }
@@ -449,7 +441,7 @@ test "runtime semantics: live changes announce without moving focus" {
 
 ///|
 test "runtime semantics: modal trap isolates tree and restores stable focus" {
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_modal_focus_program(),
     size=@core.Size::new(width=240.0, height=160.0),
   )
@@ -470,18 +462,17 @@ test "runtime semantics: modal trap isolates tree and restores stable focus" {
   }
   let open_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(origin_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(origin_id),
+    Activate,
     focused_origin.generation(),
   )
-  guard runtime.read_semantics(since=open_receipt.after)
-    is Ok(SemanticsRead::Unchanged(_)) else {
+  guard runtime.read_semantics(since=open_receipt.after) is Ok(Unchanged(_)) else {
     fail("open action should commit synchronously")
   }
   let modal = runtime_expect_full_semantics(runtime)
   assert_true(modal.generation() > initial.generation())
   match runtime.read_semantics(since=focused_origin.generation()) {
-    Ok(SemanticsRead::Delta(delta)) =>
+    Ok(Delta(delta)) =>
       for node_id in initial_background_ids {
         assert_true(delta.removed().contains(node_id))
       }
@@ -512,23 +503,23 @@ test "runtime semantics: modal trap isolates tree and restores stable focus" {
   assert_eq(runtime_expect_full_semantics(runtime).focused(), Some(first_node))
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(outside_id),
-      action: @core.SemanticsAction::Focus,
-      precondition: SemanticsGenerationPrecondition::Latest,
+      target: BySemanticId(outside_id),
+      action: Focus,
+      precondition: Latest,
     }) {
-    Err(SemanticsActionDispatchError::TargetNotFound(_)) => ()
+    Err(TargetNotFound(_)) => ()
     _ => fail("outside semantic focus must be isolated while modal is open")
   }
   let close_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(first_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(first_id),
+    Activate,
     runtime_expect_full_semantics(runtime).generation(),
   )
   let restored = runtime_expect_full_semantics(runtime)
   assert_true(restored.generation() >= close_receipt.after)
   match runtime.read_semantics(since=second_focused.generation()) {
-    Ok(SemanticsRead::Delta(delta)) =>
+    Ok(Delta(delta)) =>
       for node_id in initial_background_ids {
         assert_true(delta.upserted().any(node => node.node_id == node_id))
       }
@@ -549,7 +540,7 @@ test "runtime semantics: modal trap isolates tree and restores stable focus" {
 
 ///|
 test "runtime semantics: modal restore falls back when original target is gone" {
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_modal_focus_program(),
     size=@core.Size::new(width=240.0, height=160.0),
   )
@@ -558,8 +549,8 @@ test "runtime semantics: modal restore falls back when original target is gone" 
   assert_true(runtime.focus_key("modal.origin.key"))
   let opened = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(origin_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(origin_id),
+    Activate,
     runtime_expect_full_semantics(runtime).generation(),
   )
   let modal = runtime_expect_full_semantics(runtime)
@@ -569,8 +560,8 @@ test "runtime semantics: modal restore falls back when original target is gone" 
   ignore(
     runtime_expect_semantics_action(
       runtime,
-      @core.SemanticsTarget::ByNodeId(second.node_id),
-      @core.SemanticsAction::Focus,
+      ByNodeId(second.node_id),
+      Focus,
       opened.after,
     ),
   )
@@ -578,8 +569,8 @@ test "runtime semantics: modal restore falls back when original target is gone" 
   ignore(
     runtime_expect_semantics_action(
       runtime,
-      @core.SemanticsTarget::BySemanticId(second_id),
-      @core.SemanticsAction::Activate,
+      BySemanticId(second_id),
+      Activate,
       changed.generation(),
     ),
   )
@@ -595,7 +586,7 @@ test "runtime semantics: modal restore falls back when original target is gone" 
 ///|
 test "runtime semantics: action message batch preserves FIFO before effects" {
   let semantic_id = runtime_test_semantic_id("test.batch")
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_semantic_batch_program(semantic_id),
     size=@core.Size::new(width=160.0, height=60.0),
   )
@@ -603,8 +594,8 @@ test "runtime semantics: action message batch preserves FIFO before effects" {
   ignore(
     runtime_expect_semantics_action(
       runtime,
-      @core.SemanticsTarget::BySemanticId(semantic_id),
-      @core.SemanticsAction::Activate,
+      BySemanticId(semantic_id),
+      Activate,
       initial.generation(),
     ),
   )
@@ -639,7 +630,7 @@ test "runtime semantics: rejection paths preserve committed state" {
       }),
     ]),
   ]
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_container(views),
     size=@core.Size::new(width=200.0, height=120.0),
     on_message=Some(message => received.push(message)),
@@ -648,47 +639,45 @@ test "runtime semantics: rejection paths preserve committed state" {
   let generation = before.generation()
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(unavailable_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Latest,
+      target: BySemanticId(unavailable_id),
+      action: Activate,
+      precondition: Latest,
     }) {
-    Err(SemanticsActionDispatchError::ActionUnavailable(target, kind)) => {
-      assert_eq(target, @core.SemanticsTarget::BySemanticId(unavailable_id))
-      assert_eq(kind, @core.SemanticsActionKind::Activate)
+    Err(ActionUnavailable(target, kind)) => {
+      assert_eq(target, BySemanticId(unavailable_id))
+      assert_eq(kind, Activate)
     }
     _ => fail("expected unavailable action rejection")
   }
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(disabled_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Latest,
+      target: BySemanticId(disabled_id),
+      action: Activate,
+      precondition: Latest,
     }) {
-    Err(SemanticsActionDispatchError::TargetDisabled(target)) =>
-      assert_eq(target, @core.SemanticsTarget::BySemanticId(disabled_id))
+    Err(TargetDisabled(target)) => assert_eq(target, BySemanticId(disabled_id))
     _ => fail("expected disabled target rejection")
   }
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(rejected_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Latest,
+      target: BySemanticId(rejected_id),
+      action: Activate,
+      precondition: Latest,
     }) {
-    Err(SemanticsActionDispatchError::HandlerRejected(target, kind)) => {
-      assert_eq(target, @core.SemanticsTarget::BySemanticId(rejected_id))
-      assert_eq(kind, @core.SemanticsActionKind::Activate)
+    Err(HandlerRejected(target, kind)) => {
+      assert_eq(target, BySemanticId(rejected_id))
+      assert_eq(kind, Activate)
     }
     _ => fail("expected handler rejection")
   }
   let missing = runtime_test_semantic_id("test.missing")
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(missing),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Latest,
+      target: BySemanticId(missing),
+      action: Activate,
+      precondition: Latest,
     }) {
-    Err(SemanticsActionDispatchError::TargetNotFound(target)) =>
-      assert_eq(target, @core.SemanticsTarget::BySemanticId(missing))
+    Err(TargetNotFound(target)) => assert_eq(target, BySemanticId(missing))
     _ => fail("expected missing target rejection")
   }
   let after = runtime_expect_full_semantics(runtime)
@@ -708,7 +697,7 @@ test "runtime semantics: duplicate ids are committed but never dispatched" {
       }),
     ])
   }
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_container([child("first"), child("second")]),
     size=@core.Size::new(width=200.0, height=120.0),
     on_message=Some(message => received.push(message)),
@@ -716,7 +705,7 @@ test "runtime semantics: duplicate ids are committed but never dispatched" {
   let snapshot = runtime_expect_full_semantics(runtime)
   assert_eq(snapshot.issues().length(), 1)
   match snapshot.issues()[0] {
-    SemanticsIssue::DuplicateSemanticId(id, nodes) => {
+    DuplicateSemanticId(id, nodes) => {
       assert_eq(id, duplicate_id)
       assert_eq(nodes.length(), 2)
     }
@@ -724,14 +713,11 @@ test "runtime semantics: duplicate ids are committed but never dispatched" {
   }
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(duplicate_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(
-        snapshot.generation(),
-      ),
+      target: BySemanticId(duplicate_id),
+      action: Activate,
+      precondition: Exact(snapshot.generation()),
     }) {
-    Err(SemanticsActionDispatchError::TargetAmbiguous(id)) =>
-      assert_eq(id, duplicate_id)
+    Err(TargetAmbiguous(id)) => assert_eq(id, duplicate_id)
     _ => fail("expected ambiguous target rejection")
   }
   assert_true(received.is_empty())
@@ -746,18 +732,10 @@ test "runtime semantics: explicit composition has no first-child inheritance" {
   let first_id = runtime_test_semantic_id("test.first")
   let second_id = runtime_test_semantic_id("test.second")
   let children : Array[@core.View[Unit]] = [
-    runtime_semantic_test_view(
-      semantic_id=first_id,
-      role=@core.SemanticsRole::Button,
-      label="first",
-    ),
-    runtime_semantic_test_view(
-      semantic_id=second_id,
-      role=@core.SemanticsRole::Text,
-      label="second",
-    ),
+    runtime_semantic_test_view(semantic_id=first_id, role=Button, label="first"),
+    runtime_semantic_test_view(semantic_id=second_id, role=Text, label="second"),
   ]
-  let transparent = AppRuntime::new_view(
+  let transparent = @runtime.AppRuntime::new_view(
     root=runtime_semantic_container(children),
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -774,33 +752,27 @@ test "runtime semantics: explicit composition has no first-child inheritance" {
     }
   }
   guard root_node is Some(root) else { fail("missing root node") }
-  assert_eq(root.role, @core.SemanticsRole::Group)
+  assert_eq(root.role, Group)
   assert_eq(root.label, "")
   assert_eq(root.children.length(), 2)
-  let merged = AppRuntime::new_view(
-    root=runtime_semantic_container(
-      children,
-      composition=@core.SemanticsComposition::MergeDescendants,
-    ),
+  let merged = @runtime.AppRuntime::new_view(
+    root=runtime_semantic_container(children, composition=MergeDescendants),
     size=@core.Size::new(width=200.0, height=100.0),
   )
   let merged_snapshot = runtime_expect_full_semantics(merged)
   assert_eq(merged_snapshot.nodes().length(), 1)
-  assert_eq(merged_snapshot.nodes()[0].role, @core.SemanticsRole::Group)
+  assert_eq(merged_snapshot.nodes()[0].role, Group)
   assert_eq(merged_snapshot.nodes()[0].label, "first second")
   assert_true(merged_snapshot.nodes()[0].children.is_empty())
-  let hidden = AppRuntime::new_view(
-    root=runtime_semantic_container(
-      children,
-      composition=@core.SemanticsComposition::Hidden,
-    ),
+  let hidden = @runtime.AppRuntime::new_view(
+    root=runtime_semantic_container(children, composition=Hidden),
     size=@core.Size::new(width=200.0, height=100.0),
   )
   let hidden_snapshot = runtime_expect_full_semantics(hidden)
   assert_eq(hidden_snapshot.root(), None)
   assert_true(hidden_snapshot.nodes().is_empty())
   let overlay_id = runtime_test_semantic_id("test.overlay")
-  let overlay = AppRuntime::new_view(
+  let overlay = @runtime.AppRuntime::new_view(
     root=runtime_semantic_container([children[0]], semantic_id=overlay_id),
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -827,10 +799,9 @@ fn runtime_semantic_toggle_program(
         label="toggle",
         handlers=[
           @core.ViewSemanticsActionHandler::activate(_context => {
-            @core.ViewSemanticsActionResult::accepted(
-              dirty=@core.ViewDirtyHint::ViewClean,
-              messages=[ToggleTarget],
-            )
+            @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+              ToggleTarget,
+            ])
           }),
         ],
       ),
@@ -861,10 +832,9 @@ fn runtime_semantic_visibility_program(
         label="toggle visibility",
         handlers=[
           @core.ViewSemanticsActionHandler::activate(_context => {
-            @core.ViewSemanticsActionResult::accepted(
-              dirty=@core.ViewDirtyHint::ViewClean,
-              messages=[ToggleTarget],
-            )
+            @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[
+              ToggleTarget,
+            ])
           }),
         ],
       ),
@@ -872,11 +842,7 @@ fn runtime_semantic_visibility_program(
         [],
         kind="RuntimeSemanticVisibilityTarget",
         semantic_id=target_id,
-        composition=if visible {
-          @core.SemanticsComposition::Boundary
-        } else {
-          @core.SemanticsComposition::Hidden
-        },
+        composition=if visible { Boundary } else { Hidden },
       ),
     ])
   })
@@ -886,7 +852,7 @@ fn runtime_semantic_visibility_program(
 test "runtime semantics: node ids survive rebuild and are never reused after removal" {
   let toggle_id = runtime_test_semantic_id("test.toggle")
   let target_id = runtime_test_semantic_id("test.remount")
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_semantic_toggle_program(toggle_id, target_id),
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -899,8 +865,8 @@ test "runtime semantics: node ids survive rebuild and are never reused after rem
   }
   let removed_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(toggle_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(toggle_id),
+    Activate,
     initial.generation(),
   )
   let removed = runtime_expect_full_semantics(runtime)
@@ -911,8 +877,8 @@ test "runtime semantics: node ids survive rebuild and are never reused after rem
   assert_eq(runtime_semantic_node_by_id(removed, target_id), None)
   let restored_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(toggle_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(toggle_id),
+    Activate,
     removed_receipt.after,
   )
   let restored = runtime_expect_full_semantics(runtime)
@@ -928,7 +894,7 @@ test "runtime semantics: node ids survive rebuild and are never reused after rem
 test "runtime semantics: hidden then restored boundary retains its node id" {
   let toggle_id = runtime_test_semantic_id("test.visibility.toggle")
   let target_id = runtime_test_semantic_id("test.visibility.target")
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_semantic_visibility_program(toggle_id, target_id),
     size=@core.Size::new(width=200.0, height=100.0),
   )
@@ -938,16 +904,16 @@ test "runtime semantics: hidden then restored boundary retains its node id" {
   }
   let hidden_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(toggle_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(toggle_id),
+    Activate,
     initial.generation(),
   )
   let hidden = runtime_expect_full_semantics(runtime)
   assert_eq(runtime_semantic_node_by_id(hidden, target_id), None)
   let restored_receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(toggle_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(toggle_id),
+    Activate,
     hidden_receipt.after,
   )
   let restored = runtime_expect_full_semantics(runtime)
@@ -962,16 +928,16 @@ test "runtime semantics: hidden then restored boundary retains its node id" {
 ///|
 test "runtime semantics: reentrant and closed runtimes reject without mutation" {
   let semantic_id = runtime_test_semantic_id("test.reentrant")
-  let runtime_ref : Ref[AppRuntime?] = Ref(None)
-  let nested_error : Ref[SemanticsActionDispatchError?] = Ref(None)
+  let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
+  let nested_error : Ref[@runtime.SemanticsActionDispatchError?] = Ref(None)
   let handler : @core.ViewSemanticsActionHandler[Unit] = @core.ViewSemanticsActionHandler::activate(_context => {
       match runtime_ref.val {
         Some(runtime) =>
           match
             runtime.perform_semantics_action({
-              target: @core.SemanticsTarget::BySemanticId(semantic_id),
-              action: @core.SemanticsAction::Activate,
-              precondition: SemanticsGenerationPrecondition::Latest,
+              target: BySemanticId(semantic_id),
+              action: Activate,
+              precondition: Latest,
             }) {
             Ok(_) => ()
             Err(error) => nested_error.val = Some(error)
@@ -981,7 +947,7 @@ test "runtime semantics: reentrant and closed runtimes reject without mutation" 
       @core.ViewSemanticsActionResult::rejected()
     },
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_test_view(semantic_id~, label="reentrant", handlers=[
       handler,
     ]),
@@ -991,33 +957,30 @@ test "runtime semantics: reentrant and closed runtimes reject without mutation" 
   let before = runtime_expect_full_semantics(runtime)
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(before.generation()),
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(before.generation()),
     }) {
-    Err(SemanticsActionDispatchError::HandlerRejected(_, _)) => ()
+    Err(HandlerRejected(_, _)) => ()
     _ => fail("expected outer handler rejection")
   }
-  assert_eq(
-    nested_error.val,
-    Some(SemanticsActionDispatchError::ReentrantDispatch),
-  )
+  assert_eq(nested_error.val, Some(ReentrantDispatch))
   assert_eq(
     runtime_expect_full_semantics(runtime).generation(),
     before.generation(),
   )
   runtime.destroy()
   match runtime.read_semantics() {
-    Err(SemanticsReadError::RuntimeClosed) => ()
+    Err(RuntimeClosed) => ()
     _ => fail("expected closed semantics read rejection")
   }
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Latest,
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Latest,
     }) {
-    Err(SemanticsActionDispatchError::RuntimeClosed) => ()
+    Err(RuntimeClosed) => ()
     _ => fail("expected closed action rejection")
   }
 }
@@ -1025,7 +988,7 @@ test "runtime semantics: reentrant and closed runtimes reject without mutation" 
 ///|
 test "runtime semantics: rejected handler discards a transactional destroy request" {
   let semantic_id = runtime_test_semantic_id("test.transaction.reject-destroy")
-  let runtime_ref : Ref[AppRuntime?] = Ref(None)
+  let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let destroy_requested = Ref(false)
   let handler : @core.ViewSemanticsActionHandler[Unit] = @core.ViewSemanticsActionHandler::activate(_context => {
       destroy_requested.val = true
@@ -1036,7 +999,7 @@ test "runtime semantics: rejected handler discards a transactional destroy reque
       @core.ViewSemanticsActionResult::rejected()
     },
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_test_view(
       semantic_id~,
       label="rejected transactional destroy",
@@ -1048,11 +1011,11 @@ test "runtime semantics: rejected handler discards a transactional destroy reque
   let before = runtime_expect_full_semantics(runtime)
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(before.generation()),
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(before.generation()),
     }) {
-    Err(SemanticsActionDispatchError::HandlerRejected(_, _)) => ()
+    Err(HandlerRejected(_, _)) => ()
     _ => fail("expected rejected action")
   }
   assert_true(destroy_requested.val)
@@ -1064,22 +1027,22 @@ test "runtime semantics: rejected handler discards a transactional destroy reque
 ///|
 test "runtime semantics: accepted handler defers destroy until after commit" {
   let semantic_id = runtime_test_semantic_id("test.transaction.accept-destroy")
-  let runtime_ref : Ref[AppRuntime?] = Ref(None)
+  let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let handler : @core.ViewSemanticsActionHandler[Unit] = @core.ViewSemanticsActionHandler::activate(context => {
       match runtime_ref.val {
         Some(runtime) => runtime.destroy()
         None => ()
       }
       @core.ViewSemanticsActionResult::accepted(
-        state=Some({ ..context.state, checked: true }),
-        dirty=@core.ViewDirtyHint::ViewClean,
+        state=Some({ ..context.state, checked: true, }),
+        dirty=ViewClean,
       )
     },
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_test_view(
       semantic_id~,
-      role=@core.SemanticsRole::Checkbox,
+      role=Checkbox,
       label="accepted transactional destroy",
       handlers=[handler],
     ),
@@ -1089,9 +1052,9 @@ test "runtime semantics: accepted handler defers destroy until after commit" {
   let before = runtime_expect_full_semantics(runtime)
   let receipt = match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(before.generation()),
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(before.generation()),
     }) {
     Ok(receipt) => receipt
     Err(_) => fail("accepted transactional destroy unexpectedly failed")
@@ -1099,7 +1062,7 @@ test "runtime semantics: accepted handler defers destroy until after commit" {
   assert_true(receipt.after.value() > receipt.before.value())
   assert_false(receipt.pending_work)
   match runtime.read_semantics() {
-    Err(SemanticsReadError::RuntimeClosed) => ()
+    Err(RuntimeClosed) => ()
     _ => fail("accepted transactional destroy must close after commit")
   }
 }
@@ -1107,21 +1070,21 @@ test "runtime semantics: accepted handler defers destroy until after commit" {
 ///|
 test "runtime semantics: reentrant reads observe only the committed snapshot" {
   let semantic_id = runtime_test_semantic_id("test.transaction.read")
-  let runtime_ref : Ref[AppRuntime?] = Ref(None)
+  let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let observed_checked = Ref(true)
   let observed_generation : Ref[@core.SemanticsGeneration?] = Ref(None)
   let handler : @core.ViewSemanticsActionHandler[Unit] = @core.ViewSemanticsActionHandler::activate(context => {
       @core.ViewSemanticsActionResult::accepted(
-        state=Some({ ..context.state, checked: true }),
-        dirty=@core.ViewDirtyHint::ViewClean,
+        state=Some({ ..context.state, checked: true, }),
+        dirty=ViewClean,
         messages=[()],
       )
     },
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_test_view(
       semantic_id~,
-      role=@core.SemanticsRole::Checkbox,
+      role=Checkbox,
       label="transaction read",
       handlers=[handler],
     ),
@@ -1130,12 +1093,11 @@ test "runtime semantics: reentrant reads observe only the committed snapshot" {
       match runtime_ref.val {
         Some(runtime) =>
           match runtime.read_semantics() {
-            Ok(SemanticsRead::Full(snapshot)) => {
+            Ok(Full(snapshot)) => {
               observed_generation.val = Some(snapshot.generation())
               match runtime_semantic_node_by_id(snapshot, semantic_id) {
                 Some(node) =>
-                  observed_checked.val = node.state.checked ==
-                    Some(@core.SemanticsCheckedState::Checked)
+                  observed_checked.val = node.state.checked == Some(Checked)
                 None => ()
               }
             }
@@ -1149,8 +1111,8 @@ test "runtime semantics: reentrant reads observe only the committed snapshot" {
   let before = runtime_expect_full_semantics(runtime)
   let receipt = runtime_expect_semantics_action(
     runtime,
-    @core.SemanticsTarget::BySemanticId(semantic_id),
-    @core.SemanticsAction::Activate,
+    BySemanticId(semantic_id),
+    Activate,
     before.generation(),
   )
   assert_false(observed_checked.val)
@@ -1159,22 +1121,19 @@ test "runtime semantics: reentrant reads observe only the committed snapshot" {
   guard runtime_semantic_node_by_id(after, semantic_id) is Some(node) else {
     fail("missing transaction read node")
   }
-  assert_eq(node.state.checked, Some(@core.SemanticsCheckedState::Checked))
+  assert_eq(node.state.checked, Some(Checked))
   assert_eq(after.generation(), receipt.after)
 }
 
 ///|
 test "runtime semantics: destruction during delivery still completes the accepted transaction" {
   let semantic_id = runtime_test_semantic_id("test.transaction.destroy")
-  let runtime_ref : Ref[AppRuntime?] = Ref(None)
+  let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let handler : @core.ViewSemanticsActionHandler[Unit] = @core.ViewSemanticsActionHandler::activate(_context => {
-      @core.ViewSemanticsActionResult::accepted(
-        dirty=@core.ViewDirtyHint::ViewClean,
-        messages=[()],
-      )
+      @core.ViewSemanticsActionResult::accepted(dirty=ViewClean, messages=[()])
     },
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_test_view(semantic_id~, label="transaction destroy", handlers=[
       handler,
     ]),
@@ -1190,9 +1149,9 @@ test "runtime semantics: destruction during delivery still completes the accepte
   let before = runtime_expect_full_semantics(runtime)
   let receipt = match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(before.generation()),
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(before.generation()),
     }) {
     Ok(receipt) => receipt
     Err(_) => fail("accepted action unexpectedly failed")
@@ -1201,7 +1160,7 @@ test "runtime semantics: destruction during delivery still completes the accepte
   assert_eq(receipt.after, before.generation())
   assert_false(receipt.pending_work)
   match runtime.read_semantics() {
-    Err(SemanticsReadError::RuntimeClosed) => ()
+    Err(RuntimeClosed) => ()
     _ => fail("destroyed runtime should reject semantics reads")
   }
 }
@@ -1212,10 +1171,10 @@ test "runtime semantics: rejected proposal never runs deferred commits" {
   let committed = Ref(false)
   let handler : @core.ViewSemanticsActionHandler[Unit] = @core.ViewSemanticsActionHandler::activate(_context => {
       let rejected : @core.ViewSemanticsActionResult[Unit] = @core.ViewSemanticsActionResult::rejected()
-      { ..rejected, deferred_commits: [() => committed.val = true] }
+      { ..rejected, deferred_commits: [() => committed.val = true], }
     },
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_semantic_test_view(semantic_id~, label="deferred reject", handlers=[
       handler,
     ]),
@@ -1224,11 +1183,11 @@ test "runtime semantics: rejected proposal never runs deferred commits" {
   let before = runtime_expect_full_semantics(runtime)
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(before.generation()),
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(before.generation()),
     }) {
-    Err(SemanticsActionDispatchError::HandlerRejected(_, _)) => ()
+    Err(HandlerRejected(_, _)) => ()
     _ => fail("expected rejected deferred proposal")
   }
   assert_false(committed.val)
@@ -1241,7 +1200,7 @@ test "runtime semantics: rejected proposal never runs deferred commits" {
 ///|
 test "runtime semantics: expired delta cursor falls back to full snapshot" {
   let semantic_id = runtime_test_semantic_id("test.journal")
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_semantic_action_program(semantic_id),
     size=@core.Size::new(width=200.0, height=80.0),
   )
@@ -1250,14 +1209,13 @@ test "runtime semantics: expired delta cursor falls back to full snapshot" {
   for _ in 0..<66 {
     generation = runtime_expect_semantics_action(
         runtime,
-        @core.SemanticsTarget::BySemanticId(semantic_id),
-        @core.SemanticsAction::Activate,
+        BySemanticId(semantic_id),
+        Activate,
         generation,
       ).after
   }
   match runtime.read_semantics(since=initial.generation()) {
-    Ok(SemanticsRead::Full(snapshot)) =>
-      assert_eq(snapshot.generation(), generation)
+    Ok(Full(snapshot)) => assert_eq(snapshot.generation(), generation)
     _ => fail("expired cursor should recover with a full snapshot")
   }
 }

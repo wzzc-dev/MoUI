@@ -37,7 +37,7 @@ pub fn canvas_metrics(
 ///|
 pub fn web_host_info() -> @host.HostAppInfo {
   @host.HostAppInfo::new(
-    backend=@host.HostBackendKind::Web,
+    backend=Web,
     description="window/web canvas surface + wasm-gc browser host",
   )
 }
@@ -113,13 +113,13 @@ fn async_dispatch(
 ) -> @host.HostServiceResponse {
   match async_queue {
     Some(queue) => queue.submit(request)
-    None => @host.HostServiceResponse::Unavailable(unavailable_msg)
+    None => Unavailable(unavailable_msg)
   }
 }
 
 ///|
 pub fn web_service_bridge(
-  system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+  system_theme? : @core.ColorScheme = Light,
   open_url? : (String) -> Bool = _url => false,
   clipboard? : Bool = false,
   clipboard_read? : Bool = false,
@@ -128,7 +128,7 @@ pub fn web_service_bridge(
   file_access? : Bool = false,
   settings_available? : Bool = false,
   settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = request => {
-    @host.HostServiceResponse::Unavailable(
+    Unavailable(
       @host.HostServiceRequest::Settings(request).unavailable_message(),
     )
   },
@@ -145,115 +145,82 @@ pub fn web_service_bridge(
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::OpenUrl(url) =>
+        OpenUrl(url) =>
           if open_url(url) {
-            @host.HostServiceResponse::UrlOpened
+            UrlOpened
           } else {
-            @host.HostServiceResponse::Unavailable("open URL failed")
+            Unavailable("open URL failed")
           }
-        @host.HostServiceRequest::QuerySystemTheme =>
-          @host.HostServiceResponse::SystemTheme(system_theme)
-        @host.HostServiceRequest::Settings(settings_request) =>
-          settings(settings_request)
-        @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::WriteText(text)
-        ) =>
+        QuerySystemTheme => SystemTheme(system_theme)
+        Settings(settings_request) => settings(settings_request)
+        Clipboard(WriteText(text)) =>
           if clipboard_write(text) {
-            @host.HostServiceResponse::ClipboardWritten
+            ClipboardWritten
           } else {
-            @host.HostServiceResponse::Unavailable("clipboard write failed")
+            Unavailable("clipboard write failed")
           }
-        @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::ReadText
-        ) =>
+        Clipboard(ReadText) =>
           async_dispatch(
             async_queue, request, "clipboard read is unavailable on Web; paste is delivered by browser text input events",
           )
-        @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::ReadImage
-        ) =>
+        Clipboard(ReadImage) =>
           async_dispatch(
             async_queue, request, "clipboard image read is unavailable on Web",
           )
-        @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::WriteImage(_, _)
-        ) =>
+        Clipboard(WriteImage(_, _)) =>
           async_dispatch(
             async_queue, request, "clipboard image write is unavailable on Web",
           )
-        @host.HostServiceRequest::FileDialog(_) =>
+        FileDialog(_) =>
           async_dispatch(
             async_queue, request, "file dialog service is asynchronous on Web",
           )
-        @host.HostServiceRequest::TextFile(
-          @host.HostTextFileRequest::ReadText(path)
-        ) =>
+        TextFile(ReadText(path)) =>
           match web_cached_text_file(path) {
-            Some(text) => @host.HostServiceResponse::TextFileContent(path, text)
+            Some(text) => TextFileContent(path, text)
             None =>
               match async_queue {
                 Some(queue) => {
-                  let response = queue.submit(
-                    @host.HostServiceRequest::TextFile(
-                      @host.HostTextFileRequest::ReadText(path),
-                    ),
-                  )
+                  let response = queue.submit(TextFile(ReadText(path)))
                   match response {
-                    @host.HostServiceResponse::Pending(id) =>
-                      web_remember_text_file_read(id.value, path)
+                    Pending(id) => web_remember_text_file_read(id.value, path)
                     _ => ()
                   }
                   response
                 }
                 None =>
-                  @host.HostServiceResponse::Unavailable(
+                  Unavailable(
                     "text file content is unavailable on Web until a browser file is selected",
                   )
               }
           }
-        @host.HostServiceRequest::TextFile(
-          @host.HostTextFileRequest::WriteText(_, _)
-        ) =>
+        TextFile(WriteText(_, _)) =>
           match request {
-            @host.HostServiceRequest::TextFile(
-              @host.HostTextFileRequest::WriteText(path, text)
-            ) =>
+            TextFile(WriteText(path, text)) =>
               match async_queue {
                 Some(queue) => {
                   let response = queue.submit(request)
                   match response {
-                    @host.HostServiceResponse::Pending(id) =>
+                    Pending(id) =>
                       web_remember_text_file_write(id.value, path, text)
                     _ => ()
                   }
                   response
                 }
-                None =>
-                  @host.HostServiceResponse::Unavailable(
-                    "text file writing is asynchronous on Web",
-                  )
+                None => Unavailable("text file writing is asynchronous on Web")
               }
-            _ =>
-              @host.HostServiceResponse::Unavailable(
-                "text file writing is unavailable on Web",
-              )
+            _ => Unavailable("text file writing is unavailable on Web")
           }
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::ReadBytes(_)
-        ) =>
-          @host.HostServiceResponse::Unavailable(
+        BinaryFile(ReadBytes(_)) =>
+          Unavailable(
             "binary file content is unavailable on Web until binary browser file reads are wired",
           )
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(_, _)
-        ) =>
-          @host.HostServiceResponse::Unavailable(
+        BinaryFile(WriteBytes(_, _)) =>
+          Unavailable(
             "binary file writing is unavailable on Web until binary browser downloads are wired",
           )
-        @host.HostServiceRequest::PlatformChannel(_) =>
-          @host.HostServiceResponse::Unavailable(request.unavailable_message())
-        _ =>
-          @host.HostServiceResponse::Unavailable(request.unavailable_message())
+        PlatformChannel(_) => Unavailable(request.unavailable_message())
+        _ => Unavailable(request.unavailable_message())
       }
     },
   )
@@ -261,7 +228,7 @@ pub fn web_service_bridge(
 
 ///|
 pub fn web_app_services(
-  system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+  system_theme? : @core.ColorScheme = Light,
 ) -> @services.AppServices {
   let async_queue = web_async_host_service_queue()
   @window_services.app_services(
@@ -327,25 +294,25 @@ fn dispatch_web_settings(
   match request {
     Read(key) =>
       if web_settings_has_value(web_host_string(key)) {
-        @host.HostServiceResponse::SettingValue(
+        SettingValue(
           Some(
             web_host_string_to_string(web_settings_read(web_host_string(key))),
           ),
         )
       } else {
-        @host.HostServiceResponse::SettingValue(None)
+        SettingValue(None)
       }
     Write(key, value) =>
       if web_settings_write(web_host_string(key), web_host_string(value)) {
-        @host.HostServiceResponse::SettingWritten
+        SettingWritten
       } else {
-        @host.HostServiceResponse::Unavailable("settings write failed")
+        Unavailable("settings write failed")
       }
     Remove(key) =>
       if web_settings_remove(web_host_string(key)) {
-        @host.HostServiceResponse::SettingRemoved
+        SettingRemoved
       } else {
-        @host.HostServiceResponse::Unavailable("settings remove failed")
+        Unavailable("settings remove failed")
       }
   }
 }
@@ -479,5 +446,5 @@ fn web_async_text_file_write(
 
 ///|
 pub fn request_animation_frame_event() -> @host.Event {
-  @host.Event::RedrawRequested
+  RedrawRequested
 }

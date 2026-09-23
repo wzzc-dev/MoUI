@@ -1,16 +1,13 @@
 ///|
 test "rapier adapter integrates gravity and preserves neutral ids" {
-  let world = RapierWorld::new()
+  let world = @moui_3d_physics_rapier.RapierWorld::new()
   let body = world.create_body(
     @moui_3d_physics.BodyDesc::new(
       position=@moui_3d.Vec3::new(x=0.0, y=2.0, z=0.0),
     ),
   )
   let collider = world.create_collider(
-    @moui_3d_physics.ColliderDesc::new(
-      shape=@moui_3d_physics.Shape::Ball(0.5),
-      body=Some(body),
-    ),
+    @moui_3d_physics.ColliderDesc::new(shape=Ball(0.5), body=Some(body)),
   )
   assert_true(collider is Some(_))
   let initial = world.body_translation(body).unwrap()
@@ -24,19 +21,17 @@ test "rapier adapter integrates gravity and preserves neutral ids" {
 
 ///|
 test "rapier adapter collides with fixed ground and casts rays" {
-  let world = RapierWorld::new()
+  let world = @moui_3d_physics_rapier.RapierWorld::new()
   let ground = world.create_body(
     @moui_3d_physics.BodyDesc::new(
-      body_type=@moui_3d_physics.BodyType::Fixed,
+      body_type=Fixed,
       position=@moui_3d.Vec3::new(x=0.0, y=-0.5, z=0.0),
     ),
   )
   let ground_collider = world
     .create_collider(
       @moui_3d_physics.ColliderDesc::new(
-        shape=@moui_3d_physics.Shape::Cuboid(
-          @moui_3d.Vec3::new(x=5.0, y=0.5, z=5.0),
-        ),
+        shape=Cuboid(@moui_3d.Vec3::new(x=5.0, y=0.5, z=5.0)),
         body=Some(ground),
       ),
     )
@@ -48,10 +43,7 @@ test "rapier adapter collides with fixed ground and casts rays" {
   )
   ignore(
     world.create_collider(
-      @moui_3d_physics.ColliderDesc::new(
-        shape=@moui_3d_physics.Shape::Ball(0.5),
-        body=Some(body),
-      ),
+      @moui_3d_physics.ColliderDesc::new(shape=Ball(0.5), body=Some(body)),
     ),
   )
   for _ in 0..<120 {

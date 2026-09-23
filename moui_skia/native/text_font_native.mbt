@@ -403,7 +403,7 @@ pub fn Font::text_to_glyphs_utf8(self : Font, text : Bytes) -> Array[GlyphId] {
     []
   } else {
     let count = native_font_count_text_utf8(self.handle, text)
-    let glyphs : Array[GlyphId] = Array::new(capacity=count)
+    let glyphs : Array[GlyphId] = Array(capacity=count)
     for i in 0..<count {
       let value = native_font_text_to_glyphs_utf8_value(self.handle, text, i)
       glyphs.push(GlyphId::new(value.clamp(min=0, max=65535).to_uint16()))
@@ -425,7 +425,7 @@ pub fn Font::glyph_widths(self : Font, glyphs : Array[GlyphId]) -> Array[Float] 
   // incompatible with MoonBit's Array[Float] (a val array with inline data
   // and length stored in the object header meta). Calling it directly causes
   // garbage lengths and data to be read, failing the native smoke test.
-  let widths : Array[Float] = Array::new(capacity=glyphs.length())
+  let widths : Array[Float] = Array(capacity=glyphs.length())
   for glyph in glyphs {
     widths.push(self.glyph_width(glyph))
   }
@@ -438,7 +438,7 @@ pub fn Font::glyph_x_positions(
   glyphs : Array[GlyphId],
   origin? : Float = 0.0,
 ) -> Array[Float] {
-  let positions : Array[Float] = Array::new(capacity=glyphs.length())
+  let positions : Array[Float] = Array(capacity=glyphs.length())
   let origin = native_font_position_scalar(origin)
   for x = origin, i = 0; i < glyphs.length(); i = i + 1 {
     positions.push(x)
@@ -453,7 +453,7 @@ pub fn Font::glyph_positions(
   glyphs : Array[GlyphId],
   origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
 ) -> Array[@skia.Point] {
-  let positions : Array[@skia.Point] = Array::new(capacity=glyphs.length())
+  let positions : Array[@skia.Point] = Array(capacity=glyphs.length())
   let origin = native_font_position_origin(origin)
   let x_positions = self.glyph_x_positions(glyphs, origin=origin.x)
   for x in x_positions {
@@ -518,7 +518,7 @@ pub fn Font::glyph_bounds_many(
   // native_font_glyph_bounds_many. The C function returns
   // MoonbitSkiaRectArray* whose memory layout is incompatible with
   // MoonBit's Array[@skia.Rect].
-  let bounds : Array[@skia.Rect] = Array::new(capacity=glyphs.length())
+  let bounds : Array[@skia.Rect] = Array(capacity=glyphs.length())
   for glyph in glyphs {
     bounds.push(self.glyph_bounds(glyph))
   }
@@ -611,7 +611,7 @@ fn text_run_bytes_for_shaping(
   if end <= start {
     b""
   } else {
-    let bytes : Array[Byte] = Array::new(capacity=end - start)
+    let bytes : Array[Byte] = Array(capacity=end - start)
     for index in start..<end {
       bytes.push(text[index])
     }
@@ -638,7 +638,7 @@ pub fn Font::shape_text_run_utf8(
       None => None
       Some(run) => {
         let glyphs = run.glyphs()
-        let glyph_ids : Array[Int] = Array::new(capacity=glyphs.length())
+        let glyph_ids : Array[Int] = Array(capacity=glyphs.length())
         for glyph in glyphs {
           glyph_ids.push(glyph.to_int())
         }
@@ -692,7 +692,7 @@ pub fn ShapedTextRun::advance(self : ShapedTextRun) -> @skia.Point {
 ///|
 pub fn ShapedTextRun::glyphs(self : ShapedTextRun) -> Array[GlyphId] {
   let count = self.glyph_count()
-  let glyphs : Array[GlyphId] = Array::new(capacity=count)
+  let glyphs : Array[GlyphId] = Array(capacity=count)
   for index in 0..<count {
     glyphs.push(
       GlyphId::new(
@@ -708,7 +708,7 @@ pub fn ShapedTextRun::glyphs(self : ShapedTextRun) -> Array[GlyphId] {
 ///|
 pub fn ShapedTextRun::positions(self : ShapedTextRun) -> Array[@skia.Point] {
   let count = self.glyph_count()
-  let positions : Array[@skia.Point] = Array::new(capacity=count)
+  let positions : Array[@skia.Point] = Array(capacity=count)
   for index in 0..<count {
     positions.push(
       @skia.Point::new(
@@ -723,7 +723,7 @@ pub fn ShapedTextRun::positions(self : ShapedTextRun) -> Array[@skia.Point] {
 ///|
 pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int] {
   let count = self.glyph_count()
-  let clusters : Array[Int] = Array::new(capacity=count)
+  let clusters : Array[Int] = Array(capacity=count)
   for index in 0..<count {
     clusters.push(
       Int::max(0, native_shaped_text_run_cluster_value(self.handle, index)),
@@ -1075,7 +1075,7 @@ pub fn FontMgr::resolve_fallback_request(
             } else {
               let resolution = request.resolution_descriptor(family_name)
               if resolution.is_valid() {
-                Some({ typeface, resolution })
+                Some({ typeface, resolution, })
               } else {
                 None
               }

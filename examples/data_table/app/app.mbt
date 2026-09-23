@@ -95,7 +95,7 @@ pub(all) enum DataTableMsg {
 
 ///|
 pub fn DataTableApp::new() -> DataTableApp {
-  { unit: () }
+  { unit: (), }
 }
 
 ///|
@@ -107,7 +107,7 @@ pub fn DataRecord::new(
   team~ : String,
   priority~ : String,
 ) -> DataRecord {
-  { id, project, status, owner, team, priority }
+  { id, project, status, owner, team, priority, }
 }
 
 ///|
@@ -134,7 +134,7 @@ pub fn DataTableModel::new() -> DataTableModel {
     expanded: ["teams"],
     pagination: @views.PaginationState::new(page=0, page_size=3, total_count=6),
     sort: @views.DataSortState::new(column="project"),
-    status: DataStatus::Ready,
+    status: Ready,
     last_action: "Ready",
   }
 }
@@ -146,9 +146,9 @@ pub fn DataTableModel::update(
 ) -> DataTableModel {
   match message {
     QueryChanged(value) =>
-      { ..self, query: value, pagination: self.first_page() }
+      { ..self, query: value, pagination: self.first_page(), }
     TeamSelected(value) =>
-      { ..self, selected_team: value, pagination: self.first_page() }
+      { ..self, selected_team: value, pagination: self.first_page(), }
     ToggleStatusFilter(status) =>
       {
         ..self,
@@ -187,7 +187,10 @@ pub fn DataTableModel::update(
         last_action: "Export queued for \{self.selected_rows.count()} row(s)",
       }
     ToggleColumnVisibility(id, visible) =>
-      { ..self, visible_columns: self.visible_columns.set_visible(id, visible) }
+      {
+        ..self,
+        visible_columns: self.visible_columns.set_visible(id, visible),
+      }
     ResizeColumn(id, width) =>
       {
         ..self,
@@ -200,18 +203,18 @@ pub fn DataTableModel::update(
         column_order: self.column_order.move_before(id, before),
         last_action: "Moved column " + id,
       }
-    ToggleTree(id) => { ..self, expanded: toggle_id(self.expanded, id) }
+    ToggleTree(id) => { ..self, expanded: toggle_id(self.expanded, id), }
     SortBy(key) =>
       {
         ..self,
         sort: self.sort.toggle(data_sort_column_id_for_key(key)),
         pagination: self.first_page(),
       }
-    NextPage => { ..self, pagination: self.pagination_state().next() }
-    PreviousPage => { ..self, pagination: self.pagination_state().previous() }
-    SetLoading => { ..self, status: DataStatus::Loading }
-    SetFailed(message) => { ..self, status: DataStatus::Failed(message) }
-    SetReady => { ..self, status: DataStatus::Ready }
+    NextPage => { ..self, pagination: self.pagination_state().next(), }
+    PreviousPage => { ..self, pagination: self.pagination_state().previous(), }
+    SetLoading => { ..self, status: Loading, }
+    SetFailed(message) => { ..self, status: Failed(message), }
+    SetReady => { ..self, status: Ready, }
   }
 }
 
@@ -317,28 +320,22 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
         [
           column(
             [
-              text(
-                "Data Table",
-                role=@views.TextRole::Title,
-                theme~,
-                width=260.0,
-                height=34.0,
-              ),
+              text("Data Table", role=Title, theme~, width=260.0, height=34.0),
               text(
                 "Filter bar, column visibility, row selection, pagination, and state panels.",
-                role=@views.TextRole::Caption,
+                role=Caption,
                 theme~,
                 width=520.0,
                 height=24.0,
               ),
             ],
             spacing=0.0,
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
           button(
             "Loading",
             on_click=SetLoading,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=96.0,
             height=36.0,
@@ -346,7 +343,7 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
           button(
             "Error",
             on_click=SetFailed("Import failed"),
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=82.0,
             height=36.0,
@@ -354,19 +351,19 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
           button(
             "Ready",
             on_click=SetReady,
-            variant=@views.ButtonVariant::Primary,
+            variant=Primary,
             theme~,
             width=82.0,
             height=36.0,
           ),
         ],
         spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       row(
         [self.filter_tree(theme), self.data_panel(theme)],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       status_bar(
         [
@@ -382,13 +379,13 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
       ),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   container(
     shell,
     width=980.0,
     height=700.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -422,13 +419,7 @@ fn DataTableModel::filter_tree(
   container(
     column(
       [
-        text(
-          "Teams",
-          role=@views.TextRole::Control,
-          theme~,
-          width=190.0,
-          height=26.0,
-        ),
+        text("Teams", role=Control, theme~, width=190.0, height=26.0),
         tree_view(
           [
             tree_item(id="teams", label="All Teams", children=[
@@ -449,11 +440,11 @@ fn DataTableModel::filter_tree(
         self.selected_summary(theme),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=250.0,
     height=540.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -490,7 +481,7 @@ fn DataTableModel::data_panel(
             ),
           ],
           spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         selection_toolbar(
           selected_count=self.selected_rows.count(),
@@ -508,7 +499,7 @@ fn DataTableModel::data_panel(
             button(
               "Widen Project",
               on_click=ResizeColumn("project", project_width + 24.0),
-              variant=@views.ButtonVariant::Outline,
+              variant=Outline,
               theme~,
               width=136.0,
               height=34.0,
@@ -516,21 +507,21 @@ fn DataTableModel::data_panel(
             button(
               "Priority first",
               on_click=MoveColumnBefore("priority", "project"),
-              variant=@views.ButtonVariant::Outline,
+              variant=Outline,
               theme~,
               width=128.0,
               height=34.0,
             ),
             text(
               "Project width \{project_width}",
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=170.0,
               height=28.0,
             ),
           ],
           spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         self.state_or_table(theme),
         pagination(
@@ -543,11 +534,11 @@ fn DataTableModel::data_panel(
         ),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=660.0,
     height=540.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -559,14 +550,14 @@ fn DataTableModel::state_or_table(
   theme : @moui.Theme,
 ) -> @moui.View[DataTableMsg] {
   match self.status {
-    DataStatus::Loading =>
+    Loading =>
       loading_state(
         title="Loading data",
         message="Fetching project rows.",
         theme~,
         width=600.0,
       )
-    DataStatus::Failed(message) =>
+    Failed(message) =>
       error_state(
         "Could not load data",
         message,
@@ -576,7 +567,7 @@ fn DataTableModel::state_or_table(
         theme~,
         width=600.0,
       )
-    DataStatus::Ready => self.table_view(theme)
+    Ready => self.table_view(theme)
   }
 }
 
@@ -601,13 +592,7 @@ fn DataTableModel::table_view(
       let base : @moui.View[DataTableMsg] = if column.id() == "status" {
         badge(value, tone=status_tone(value), theme~, width=82.0, height=24.0)
       } else {
-        text(
-          value,
-          role=@views.TextRole::Body,
-          theme~,
-          width=column.width() - 16.0,
-          height=30.0,
-        )
+        text(value, role=Body, theme~, width=column.width() - 16.0, height=30.0)
       }
       base
     }),
@@ -642,13 +627,7 @@ fn DataTableModel::selected_summary(
     items,
     subtitle="Click a table row",
     empty=Some(
-      text(
-        "No row selected",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=178.0,
-        height=28.0,
-      ),
+      text("No row selected", role=Caption, theme~, width=178.0, height=28.0),
     ),
     theme~,
     width=210.0,
@@ -911,11 +890,11 @@ fn selected_visible_index(records : Array[DataRecord], id : Int) -> Int? {
 ///|
 fn status_tone(status : String) -> @views.BadgeTone {
   match status {
-    "Active" => @views.BadgeTone::Success
-    "Review" => @views.BadgeTone::Accent
-    "Paused" => @views.BadgeTone::Warning
-    "Blocked" => @views.BadgeTone::Danger
-    _ => @views.BadgeTone::Neutral
+    "Active" => Success
+    "Review" => Accent
+    "Paused" => Warning
+    "Blocked" => Danger
+    _ => Neutral
   }
 }
 

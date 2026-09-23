@@ -101,7 +101,7 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
     placeholder: palette.muted,
     cursor: palette.focus,
     font: typography.body,
-    appearance: TextFieldAppearance::Outline,
+    appearance: Outline,
   }
   let surface = {
     base_padding: spacing.md,
@@ -120,8 +120,8 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
     disabled_foreground: palette.muted,
     disabled_selected_color: palette.primary.multiply_alpha(0.42),
     control_size: 20.0,
-    box_shape: ChoiceControlShape::Square,
-    check_style: CheckMarkStyle::Checkmark,
+    box_shape: Square,
+    check_style: Checkmark,
   }
   let progress : ProgressTheme = {
     foreground: palette.primary,
@@ -137,7 +137,7 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
     track_height: 4.0,
     thumb_size: 18.0,
     radius: radius.pill,
-    thumb_shape: ThumbShape::Circle,
+    thumb_shape: Circle,
   }
   let picker : PickerTheme = {
     font: typography.control,

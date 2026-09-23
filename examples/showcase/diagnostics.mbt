@@ -35,7 +35,7 @@ fn devtools_report() -> @diagnostics.ShowcaseDevToolsReport {
     probe.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=16.0, y=16.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -54,17 +54,16 @@ fn renderer_diagnostics(
   @render_common.renderer_feature_capability_report(providers).map(entry => {
     let gap_or_partial = entry.providers.any(provider => {
       match provider.status {
-        @render.RendererFeatureStatus::Partial
-        | @render.RendererFeatureStatus::Gap => true
+        Partial | Gap => true
         _ => false
       }
     })
     let priority = if gap_or_partial {
       @diagnostics.ShowcaseCapabilityPriority::GapOrPartial
     } else if entry.needs_follow_up() {
-      @diagnostics.ShowcaseCapabilityPriority::FollowUp
+      FollowUp
     } else {
-      @diagnostics.ShowcaseCapabilityPriority::Complete
+      Complete
     }
     {
       feature_label: entry.feature.label(),

@@ -3,9 +3,9 @@
 ///|
 fn guidance_include_rules() -> Array[TextRule] {
   [
-    { path: "AGENTS.md", token: "sh scripts/check.sh --profile daily" },
-    { path: "AGENTS.md", token: "node scripts/validate-api-surface.mjs" },
-    { path: ".github/workflows/ci.yml", token: "name: PR profile gate" },
+    { path: "AGENTS.md", token: "sh scripts/check.sh --profile daily", },
+    { path: "AGENTS.md", token: "node scripts/validate-api-surface.mjs", },
+    { path: ".github/workflows/ci.yml", token: "name: PR profile gate", },
     {
       path: ".github/workflows/ci.yml",
       token: "run: sh scripts/check.sh --profile pr",
@@ -74,7 +74,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml",
       token: "name: MoUI Skia Provider Windows Real Skia Manual",
     },
-    { path: "docs/development.md", token: "repository-facts.md" },
+    { path: "docs/development.md", token: "repository-facts.md", },
     {
       path: "docs/development.md",
       token: "-Profile Pr -DryRun -Json -SkipSubmoduleInit",
@@ -91,7 +91,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "docs/testing.md",
       token: "node scripts/validate-guidance-consistency.mjs",
     },
-    { path: "docs/testing.md", token: "moui-renderer-real-skia-ci.yml" },
+    { path: "docs/testing.md", token: "moui-renderer-real-skia-ci.yml", },
     {
       path: "docs/feature-proof-matrix.md",
       token: "moui-renderer-real-skia-ci.yml",
@@ -104,7 +104,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "docs/feature-status-dashboard.md",
       token: "moui-renderer-real-skia-ci.yml",
     },
-    { path: "docs/testing.md", token: "shared platform service checks" },
+    { path: "docs/testing.md", token: "shared platform service checks", },
     {
       path: "docs/release-readiness.md",
       token: "shared platform service checks",
@@ -133,12 +133,12 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "skills/moui-app-development/SKILL.md",
       token: "shared platform service checks",
     },
-    { path: "AGENTS.md", token: "Windows check wrapper plan" },
-    { path: "AGENTS.md", token: "shared platform service checks" },
-    { path: "AGENTS.md", token: "Script Tooling Policy" },
-    { path: "AGENTS.md", token: "EmbedderHostChannel" },
-    { path: "AGENTS.md", token: "Native XComponent callbacks are the only" },
-    { path: "docs/window-hosted-moui.md", token: "HostCmd" },
+    { path: "AGENTS.md", token: "Windows check wrapper plan", },
+    { path: "AGENTS.md", token: "shared platform service checks", },
+    { path: "AGENTS.md", token: "Script Tooling Policy", },
+    { path: "AGENTS.md", token: "EmbedderHostChannel", },
+    { path: "AGENTS.md", token: "Native XComponent callbacks are the only", },
+    { path: "docs/window-hosted-moui.md", token: "HostCmd", },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
       token: "SkiaGpuNative",
@@ -147,15 +147,15 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "skills/moui-app-development/SKILL.md",
       token: "before/after pixel change",
     },
-    { path: "docs/development.md", token: "Script Tooling Policy" },
-    { path: "docs/testing.md", token: "Script Tooling Policy" },
+    { path: "docs/development.md", token: "Script Tooling Policy", },
+    { path: "docs/testing.md", token: "Script Tooling Policy", },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
       token: "Script Tooling Policy",
     },
-    { path: "docs/development.md", token: "Windows MSVC, vcpkg, and zlib" },
-    { path: "docs/testing.md", token: "Windows MSVC, vcpkg, and zlib" },
-    { path: "AGENTS.md", token: "rule`/`dev_build`" },
+    { path: "docs/development.md", token: "Windows MSVC, vcpkg, and zlib", },
+    { path: "docs/testing.md", token: "Windows MSVC, vcpkg, and zlib", },
+    { path: "AGENTS.md", token: "rule`/`dev_build`", },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
       token: "rule`/`dev_build`",
@@ -164,14 +164,17 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "skills/moui-app-development/SKILL.md",
       token: "examples/<name>/app",
     },
-    { path: "AGENTS.md", token: "linux-skia-riscv64" },
-    { path: "docs/platform-notes-linux.md", token: "riscv64-linux-gnu" },
-    { path: "docs/testing.md", token: "test-linux-riscv64-cross-build.sh" },
+    { path: "AGENTS.md", token: "linux-skia-riscv64", },
+    { path: "docs/platform-notes-linux.md", token: "riscv64-linux-gnu", },
+    { path: "docs/testing.md", token: "test-linux-riscv64-cross-build.sh", },
     {
       path: "docs/platform-readiness-declaration.md",
       token: "checks/architecture-evidence/linux-skia-riscv64.json",
     },
-    { path: "docs/zh-Hans/platform-notes-linux.md", token: "riscv64-linux-gnu" },
+    {
+      path: "docs/zh-Hans/platform-notes-linux.md",
+      token: "riscv64-linux-gnu",
+    },
     {
       path: "docs/zh-Hans/testing.md",
       token: "test-linux-riscv64-cross-build.sh",
@@ -193,7 +196,7 @@ fn guidance_include_rules() -> Array[TextRule] {
 
 ///|
 fn guidance_absent_rules() -> Array[TextRule] {
-  [{ path: "moon.work", token: "\"./window\"" }]
+  [{ path: "moon.work", token: "\"./window\"", }]
 }
 
 ///|

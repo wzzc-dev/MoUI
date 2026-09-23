@@ -13,25 +13,23 @@ test "skia renderer paints blend and saturation filter pixels" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Multiply),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Multiply)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
       @core.Color::rgba(r=0.0, g=0.0, b=1.0),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(0.0)),
-    @core.DrawCommand::FillRect(
+    PopLayer,
+    PushFilter(Saturate(0.0)),
+    FillRect(
       @core.Rect::new(x=16.0, y=0.0, width=16.0, height=16.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ]) catch {
     err => fail("expected Skia blend/filter render: \{err.message()}")
   }
@@ -91,22 +89,22 @@ test "skia renderer paints path fill and stroke pixels" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(
+    Clear(@core.Color::white()),
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=6.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=32.0, y=6.0)),
-          @core.PathVerb::QuadTo(
+          MoveTo(@core.Point::new(x=6.0, y=6.0)),
+          LineTo(@core.Point::new(x=32.0, y=6.0)),
+          QuadTo(
             @core.Point::new(x=36.0, y=18.0),
             @core.Point::new(x=30.0, y=32.0),
           ),
-          @core.PathVerb::CubicTo(
+          CubicTo(
             @core.Point::new(x=22.0, y=36.0),
             @core.Point::new(x=12.0, y=34.0),
             @core.Point::new(x=6.0, y=28.0),
           ),
-          @core.PathVerb::Close,
+          Close,
         ],
         fill=Some(@core.Brush::solid(@core.Color::rgba(r=0.95, g=0.08, b=0.08))),
         stroke=Some(@core.Brush::solid(@core.Color::black())),
@@ -149,15 +147,15 @@ test "skia renderer paints path linear gradient pixels" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(
+    Clear(@core.Color::white()),
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=2.0, y=2.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=2.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=18.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=2.0, y=18.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=2.0, y=2.0)),
+          LineTo(@core.Point::new(x=38.0, y=2.0)),
+          LineTo(@core.Point::new(x=38.0, y=18.0)),
+          LineTo(@core.Point::new(x=2.0, y=18.0)),
+          Close,
         ],
         fill=Some(
           @core.Brush::linear_gradient(
@@ -205,8 +203,8 @@ test "skia renderer paints radial gradient brush pixels" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRoundedRectBrush(
+    Clear(@core.Color::white()),
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=2.0, y=2.0, width=20.0, height=20.0),
         radius=10.0,
@@ -218,14 +216,14 @@ test "skia renderer paints radial gradient brush pixels" {
         edge_color=@core.Color::rgba(r=0.05, g=0.10, b=0.95),
       ),
     ),
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=26.0, y=2.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=46.0, y=2.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=46.0, y=22.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=26.0, y=22.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=26.0, y=2.0)),
+          LineTo(@core.Point::new(x=46.0, y=2.0)),
+          LineTo(@core.Point::new(x=46.0, y=22.0)),
+          LineTo(@core.Point::new(x=26.0, y=22.0)),
+          Close,
         ],
         fill=Some(
           @core.Brush::radial_gradient(
@@ -280,8 +278,8 @@ test "skia renderer paints built-in shader effect pixels" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::white()),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=0.0, y=0.0, width=24.0, height=16.0),
@@ -330,8 +328,8 @@ test "skia renderer paints shader gradient and vignette pixels" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::white()),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="linear-gradient-debug",
         frame=@core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0),
@@ -343,7 +341,7 @@ test "skia renderer paints shader gradient and vignette pixels" {
         ),
       ),
     ),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="vignette",
         frame=@core.Rect::new(x=24.0, y=0.0, width=24.0, height=24.0),

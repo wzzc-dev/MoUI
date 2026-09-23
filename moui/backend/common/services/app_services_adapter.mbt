@@ -21,7 +21,7 @@ fn[T] HostServicesAdapter::service_task(
         if !registered {
           active.val = false
           complete(
-            @app_services.ServiceTaskResult::Failure(
+            Failure(
               @app_services.ServiceError::new(
                 code="completion-unavailable",
                 message="host service completion could not be registered",
@@ -53,11 +53,9 @@ fn[T] host_failure(
 ) -> @app_services.ServiceTaskResult[T] {
   match response {
     Unavailable(message) =>
-      @app_services.ServiceTaskResult::Failure(
-        @app_services.ServiceError::unavailable(message),
-      )
+      Failure(@app_services.ServiceError::unavailable(message))
     _ =>
-      @app_services.ServiceTaskResult::Failure(
+      Failure(
         @app_services.ServiceError::new(
           code="unexpected-response",
           message="host service returned an unexpected response",
@@ -78,7 +76,7 @@ fn[T] HostServicesAdapter::platform_task(
   self.service_task(
     key="platform:" + operation,
     label="Platform " + operation,
-    request=@backend_host.HostServiceRequest::PlatformChannel(
+    request=PlatformChannel(
       @backend_host.PlatformChannelRequest::new(
         channel="moui.platform",
         operation~,
@@ -87,8 +85,7 @@ fn[T] HostServicesAdapter::platform_task(
     ),
     decode=response => {
       match response {
-        @backend_host.HostServiceResponse::PlatformChannel(platform_response) =>
-          decode(platform_response)
+        PlatformChannel(platform_response) => decode(platform_response)
         other => host_failure(other)
       }
     },
@@ -100,16 +97,11 @@ fn platform_unit_result(
   response : @backend_host.PlatformChannelResponse,
 ) -> @app_services.ServiceTaskResult[Unit] {
   match response {
-    @backend_host.PlatformChannelResponse::Ok(_) =>
-      @app_services.ServiceTaskResult::Success(())
-    @backend_host.PlatformChannelResponse::Unavailable(message) =>
-      @app_services.ServiceTaskResult::Failure(
-        @app_services.ServiceError::unavailable(message),
-      )
-    @backend_host.PlatformChannelResponse::Error(message) =>
-      @app_services.ServiceTaskResult::Failure(
-        @app_services.ServiceError::new(code="platform-error", message~),
-      )
+    Ok(_) => Success(())
+    Unavailable(message) =>
+      Failure(@app_services.ServiceError::unavailable(message))
+    Error(message) =>
+      Failure(@app_services.ServiceError::new(code="platform-error", message~))
   }
 }
 
@@ -118,33 +110,20 @@ fn platform_permission_result(
   response : @backend_host.PlatformChannelResponse,
 ) -> @app_services.ServiceTaskResult[@app_services.PermissionStatus] {
   match response {
-    @backend_host.PlatformChannelResponse::Ok("granted") =>
-      @app_services.ServiceTaskResult::Success(
-        @app_services.PermissionStatus::Granted,
-      )
-    @backend_host.PlatformChannelResponse::Ok("denied") =>
-      @app_services.ServiceTaskResult::Success(
-        @app_services.PermissionStatus::Denied,
-      )
-    @backend_host.PlatformChannelResponse::Ok("restricted") =>
-      @app_services.ServiceTaskResult::Success(
-        @app_services.PermissionStatus::Restricted,
-      )
-    @backend_host.PlatformChannelResponse::Ok(_) =>
-      @app_services.ServiceTaskResult::Failure(
+    Ok("granted") => Success(Granted)
+    Ok("denied") => Success(Denied)
+    Ok("restricted") => Success(Restricted)
+    Ok(_) =>
+      Failure(
         @app_services.ServiceError::new(
           code="invalid-platform-response",
           message="permission service returned an unknown status",
         ),
       )
-    @backend_host.PlatformChannelResponse::Unavailable(message) =>
-      @app_services.ServiceTaskResult::Failure(
-        @app_services.ServiceError::unavailable(message),
-      )
-    @backend_host.PlatformChannelResponse::Error(message) =>
-      @app_services.ServiceTaskResult::Failure(
-        @app_services.ServiceError::new(code="platform-error", message~),
-      )
+    Unavailable(message) =>
+      Failure(@app_services.ServiceError::unavailable(message))
+    Error(message) =>
+      Failure(@app_services.ServiceError::new(code="platform-error", message~))
   }
 }
 
@@ -237,14 +216,11 @@ fn HostServicesAdapter::app_platform_services(
           payload=@json.to_json(window_id).stringify(),
           decode=response => {
             match response {
-              @backend_host.PlatformChannelResponse::Ok(snapshot) =>
-                @app_services.ServiceTaskResult::Success(Some(snapshot))
-              @backend_host.PlatformChannelResponse::Unavailable(message) =>
-                @app_services.ServiceTaskResult::Failure(
-                  @app_services.ServiceError::unavailable(message),
-                )
-              @backend_host.PlatformChannelResponse::Error(message) =>
-                @app_services.ServiceTaskResult::Failure(
+              Ok(snapshot) => Success(Some(snapshot))
+              Unavailable(message) =>
+                Failure(@app_services.ServiceError::unavailable(message))
+              Error(message) =>
+                Failure(
                   @app_services.ServiceError::new(
                     code="platform-error",
                     message~,
@@ -282,9 +258,9 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:open",
         label="Open file",
-        request=@backend_host.HostServiceRequest::FileDialog(
+        request=FileDialog(
           @backend_host.HostFileDialogOptions::new(
-            kind=@backend_host.HostFileDialogKind::OpenFile,
+            kind=OpenFile,
             title=options.title,
             filters=options.filters,
             default_name=options.default_name,
@@ -292,10 +268,8 @@ fn HostServicesAdapter::app_file_services(
         ),
         decode=response => {
           match response {
-            FileDialogSelection([path, ..]) =>
-              @app_services.ServiceTaskResult::Success(path)
-            FileDialogSelection([]) =>
-              @app_services.ServiceTaskResult::Cancelled
+            FileDialogSelection([path, ..]) => Success(path)
+            FileDialogSelection([]) => Cancelled
             other => host_failure(other)
           }
         },
@@ -305,9 +279,9 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:save",
         label="Save file",
-        request=@backend_host.HostServiceRequest::FileDialog(
+        request=FileDialog(
           @backend_host.HostFileDialogOptions::new(
-            kind=@backend_host.HostFileDialogKind::SaveFile,
+            kind=SaveFile,
             title=options.title,
             filters=options.filters,
             default_name=options.default_name,
@@ -315,10 +289,8 @@ fn HostServicesAdapter::app_file_services(
         ),
         decode=response => {
           match response {
-            FileDialogSelection([path, ..]) =>
-              @app_services.ServiceTaskResult::Success(path)
-            FileDialogSelection([]) =>
-              @app_services.ServiceTaskResult::Cancelled
+            FileDialogSelection([path, ..]) => Success(path)
+            FileDialogSelection([]) => Cancelled
             other => host_failure(other)
           }
         },
@@ -328,9 +300,9 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:pick-directory",
         label="Pick directory",
-        request=@backend_host.HostServiceRequest::FileDialog(
+        request=FileDialog(
           @backend_host.HostFileDialogOptions::new(
-            kind=@backend_host.HostFileDialogKind::PickDirectory,
+            kind=PickDirectory,
             title=options.title,
             filters=options.filters,
             default_name=options.default_name,
@@ -338,10 +310,8 @@ fn HostServicesAdapter::app_file_services(
         ),
         decode=response => {
           match response {
-            FileDialogSelection([path, ..]) =>
-              @app_services.ServiceTaskResult::Success(path)
-            FileDialogSelection([]) =>
-              @app_services.ServiceTaskResult::Cancelled
+            FileDialogSelection([path, ..]) => Success(path)
+            FileDialogSelection([]) => Cancelled
             other => host_failure(other)
           }
         },
@@ -351,13 +321,10 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:read-text:" + path,
         label="Read text file",
-        request=@backend_host.HostServiceRequest::TextFile(
-          @backend_host.HostTextFileRequest::ReadText(path),
-        ),
+        request=TextFile(ReadText(path)),
         decode=response => {
           match response {
-            TextFileContent(_path, text) =>
-              @app_services.ServiceTaskResult::Success(text)
+            TextFileContent(_path, text) => Success(text)
             other => host_failure(other)
           }
         },
@@ -367,12 +334,10 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:write-text:" + path,
         label="Write text file",
-        request=@backend_host.HostServiceRequest::TextFile(
-          @backend_host.HostTextFileRequest::WriteText(path, text),
-        ),
+        request=TextFile(WriteText(path, text)),
         decode=response => {
           match response {
-            TextFileWritten(_) => @app_services.ServiceTaskResult::Success(())
+            TextFileWritten(_) => Success(())
             other => host_failure(other)
           }
         },
@@ -382,13 +347,10 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:read-bytes:" + path,
         label="Read binary file",
-        request=@backend_host.HostServiceRequest::BinaryFile(
-          @backend_host.HostBinaryFileRequest::ReadBytes(path),
-        ),
+        request=BinaryFile(ReadBytes(path)),
         decode=response => {
           match response {
-            BinaryFileContent(_path, bytes) =>
-              @app_services.ServiceTaskResult::Success(bytes)
+            BinaryFileContent(_path, bytes) => Success(bytes)
             other => host_failure(other)
           }
         },
@@ -398,12 +360,10 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:write-bytes:" + path,
         label="Write binary file",
-        request=@backend_host.HostServiceRequest::BinaryFile(
-          @backend_host.HostBinaryFileRequest::WriteBytes(path, bytes),
-        ),
+        request=BinaryFile(WriteBytes(path, bytes)),
         decode=response => {
           match response {
-            BinaryFileWritten(_) => @app_services.ServiceTaskResult::Success(())
+            BinaryFileWritten(_) => Success(())
             other => host_failure(other)
           }
         },
@@ -413,12 +373,12 @@ fn HostServicesAdapter::app_file_services(
       self.service_task(
         key="file:list-directory:" + path,
         label="List directory",
-        request=@backend_host.HostServiceRequest::ListDirectory(path),
+        request=ListDirectory(path),
         decode=response => {
           match response {
             DirectoryListing(_path, entries) =>
-              @app_services.ServiceTaskResult::Success(
-                entries.map(entry => @app_services.DirectoryEntry::{
+              Success(
+                entries.map(entry => {
                   name: entry.name(),
                   path: entry.path(),
                   is_directory: entry.is_directory(),
@@ -441,13 +401,10 @@ fn HostServicesAdapter::app_clipboard_services(
       self.service_task(
         key="clipboard:read-text",
         label="Read clipboard text",
-        request=@backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadText,
-        ),
+        request=Clipboard(ReadText),
         decode=response => {
           match response {
-            ClipboardText(text) =>
-              @app_services.ServiceTaskResult::Success(text)
+            ClipboardText(text) => Success(text)
             other => host_failure(other)
           }
         },
@@ -457,12 +414,10 @@ fn HostServicesAdapter::app_clipboard_services(
       self.service_task(
         key="clipboard:write-text",
         label="Write clipboard text",
-        request=@backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::WriteText(text),
-        ),
+        request=Clipboard(WriteText(text)),
         decode=response => {
           match response {
-            ClipboardWritten => @app_services.ServiceTaskResult::Success(())
+            ClipboardWritten => Success(())
             other => host_failure(other)
           }
         },
@@ -472,16 +427,11 @@ fn HostServicesAdapter::app_clipboard_services(
       self.service_task(
         key="clipboard:read-image",
         label="Read clipboard image",
-        request=@backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadImage,
-        ),
+        request=Clipboard(ReadImage),
         decode=response => {
           match response {
             ClipboardImage(bytes) =>
-              @app_services.ServiceTaskResult::Success(@app_services.ClipboardImage::{
-                mime_type: "application/octet-stream",
-                bytes,
-              })
+              Success({ mime_type: "application/octet-stream", bytes, })
             other => host_failure(other)
           }
         },
@@ -491,15 +441,10 @@ fn HostServicesAdapter::app_clipboard_services(
       self.service_task(
         key="clipboard:write-image",
         label="Write clipboard image",
-        request=@backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::WriteImage(
-            image.mime_type,
-            image.bytes,
-          ),
-        ),
+        request=Clipboard(WriteImage(image.mime_type, image.bytes)),
         decode=response => {
           match response {
-            ClipboardWritten => @app_services.ServiceTaskResult::Success(())
+            ClipboardWritten => Success(())
             other => host_failure(other)
           }
         },
@@ -517,16 +462,13 @@ fn app_menu_to_host(
     @backend_host.HostApplicationMenu::new(
       title=menu.title,
       placement=match menu.placement {
-        @app_services.ApplicationMenuPlacement::MenuBar =>
-          @backend_host.HostApplicationMenuPlacement::MenuBar
-        @app_services.ApplicationMenuPlacement::ApplicationMenu =>
-          @backend_host.HostApplicationMenuPlacement::ApplicationMenu
+        MenuBar => MenuBar
+        ApplicationMenu => ApplicationMenu
       },
       items=menu.items.map(item => {
         match item {
-          @app_services.ApplicationMenuItem::MenuSeparator =>
-            @backend_host.HostApplicationMenuItem::separator()
-          @app_services.ApplicationMenuItem::MenuCommand(command) => {
+          MenuSeparator => @backend_host.HostApplicationMenuItem::separator()
+          MenuCommand(command) => {
             let action_id = next_action_id.val
             next_action_id.val = action_id + 1
             @backend_host.HostApplicationMenuItem::new(
@@ -550,16 +492,14 @@ fn HostServicesAdapter::app_menu_services(
       self.service_task(
         key="menu:context",
         label="Show context menu",
-        request=@backend_host.HostServiceRequest::ShowMenu(commands),
+        request=ShowMenu(commands),
         decode=response => {
           match response {
-            MenuAction(command) =>
-              @app_services.ServiceTaskResult::Success(command)
+            MenuAction(command) => Success(command)
             MenuCommand(intent) =>
               match
                 commands.iter().find_first(command => command.intent == intent) {
-                Some(command) =>
-                  @app_services.ServiceTaskResult::Success(command)
+                Some(command) => Success(command)
                 None => host_failure(response)
               }
             other => host_failure(other)
@@ -571,13 +511,10 @@ fn HostServicesAdapter::app_menu_services(
       self.service_task(
         key="menu:application",
         label="Install application menu",
-        request=@backend_host.HostServiceRequest::SetApplicationMenu(
-          app_menu_to_host(menus),
-        ),
+        request=SetApplicationMenu(app_menu_to_host(menus)),
         decode=response => {
           match response {
-            ApplicationMenuInstalled =>
-              @app_services.ServiceTaskResult::Success(())
+            ApplicationMenuInstalled => Success(())
             other => host_failure(other)
           }
         },
@@ -598,10 +535,10 @@ fn HostServicesAdapter::as_app_services(
       self.service_task(
         key="url:open",
         label="Open URL",
-        request=@backend_host.HostServiceRequest::OpenUrl(url),
+        request=OpenUrl(url),
         decode=response => {
           match response {
-            UrlOpened => @app_services.ServiceTaskResult::Success(())
+            UrlOpened => Success(())
             other => host_failure(other)
           }
         },
@@ -612,13 +549,10 @@ fn HostServicesAdapter::as_app_services(
         self.service_task(
           key="settings:read:" + key,
           label="Read setting",
-          request=@backend_host.HostServiceRequest::Settings(
-            @backend_host.HostSettingsRequest::Read(key),
-          ),
+          request=Settings(Read(key)),
           decode=response => {
             match response {
-              SettingValue(value) =>
-                @app_services.ServiceTaskResult::Success(value)
+              SettingValue(value) => Success(value)
               other => host_failure(other)
             }
           },
@@ -628,12 +562,10 @@ fn HostServicesAdapter::as_app_services(
         self.service_task(
           key="settings:write:" + key,
           label="Write setting",
-          request=@backend_host.HostServiceRequest::Settings(
-            @backend_host.HostSettingsRequest::Write(key, value),
-          ),
+          request=Settings(Write(key, value)),
           decode=response => {
             match response {
-              SettingWritten => @app_services.ServiceTaskResult::Success(())
+              SettingWritten => Success(())
               other => host_failure(other)
             }
           },
@@ -643,12 +575,10 @@ fn HostServicesAdapter::as_app_services(
         self.service_task(
           key="settings:remove:" + key,
           label="Remove setting",
-          request=@backend_host.HostServiceRequest::Settings(
-            @backend_host.HostSettingsRequest::Remove(key),
-          ),
+          request=Settings(Remove(key)),
           decode=response => {
             match response {
-              SettingRemoved => @app_services.ServiceTaskResult::Success(())
+              SettingRemoved => Success(())
               other => host_failure(other)
             }
           },
@@ -659,11 +589,10 @@ fn HostServicesAdapter::as_app_services(
       self.service_task(
         key="appearance:system-color-scheme",
         label="Read system color scheme",
-        request=@backend_host.HostServiceRequest::QuerySystemTheme,
+        request=QuerySystemTheme,
         decode=response => {
           match response {
-            SystemTheme(scheme) =>
-              @app_services.ServiceTaskResult::Success(scheme)
+            SystemTheme(scheme) => Success(scheme)
             other => host_failure(other)
           }
         },

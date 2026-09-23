@@ -131,11 +131,11 @@ test "Metal host GPU backing rotates drawables without CPU readback" {
   let first = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
           @core.Color::white(),
         ),
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=3.0, height=8.0),
           @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
         ),
@@ -149,14 +149,12 @@ test "Metal host GPU backing rotates drawables without CPU readback" {
   let second = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(x=3.0, y=0.0, width=5.0, height=8.0),
           @core.Color::rgba(r=0.0, g=0.0, b=1.0, a=1.0),
         ),
       ],
-      damage=@core.DamageRegion::Rects([
-        @core.Rect::new(x=3.0, y=0.0, width=5.0, height=8.0),
-      ]),
+      damage=Rects([@core.Rect::new(x=3.0, y=0.0, width=5.0, height=8.0)]),
       clear_color=@core.Color::white(),
     ),
   )

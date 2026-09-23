@@ -55,7 +55,7 @@ pub fn PictureRecorder::new() -> PictureRecorder? {
   if native_picture_recorder_is_null(handle) {
     None
   } else {
-    Some(PictureRecorder::{ handle, })
+    Some({ handle, })
   }
 }
 
@@ -83,7 +83,7 @@ pub fn PictureRecorder::begin(
   if native_picture_recorder_canvas_is_null(handle) {
     None
   } else {
-    Some({ handle, owner: None, recorder_owner: Some(self) })
+    Some({ handle, owner: None, recorder_owner: Some(self), })
   }
 }
 
@@ -93,7 +93,7 @@ pub fn PictureRecorder::finish(self : PictureRecorder) -> Picture? {
   if native_picture_is_null(handle) {
     None
   } else {
-    Some(Picture::{ handle, })
+    Some({ handle, })
   }
 }
 

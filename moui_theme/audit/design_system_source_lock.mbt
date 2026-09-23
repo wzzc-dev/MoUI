@@ -95,8 +95,7 @@ pub fn source_snapshot_url_gap_count(preset : @common.DesignPreset) -> Int {
 pub fn moving_source_ref_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
   for item in source_lock_report(preset) {
-    if item.ref_kind == DesignSourceRefKind::LiveDocumentationRef ||
-      item.ref_kind == DesignSourceRefKind::MovingBranchRef {
+    if item.ref_kind == LiveDocumentationRef || item.ref_kind == MovingBranchRef {
       count = count + 1
     }
   }
@@ -116,7 +115,7 @@ fn source_lock_record(
 ) -> DesignSourceLockRecord {
   let ref_kind = source_ref_kind(source.source_ref)
   let declared_lock = source.source_ref != "" &&
-    source.status != DesignTokenStatus::NotMapped &&
+    source.status != NotMapped &&
     (
       source.token_path != "" ||
       source.source_kind == "official-docs" ||
@@ -124,17 +123,14 @@ fn source_lock_record(
       source.source_kind == "internal-component-adapter"
     )
   let stable_lock = declared_lock &&
-    (
-      ref_kind == DesignSourceRefKind::WorkspaceRef ||
-      ref_kind == DesignSourceRefKind::StableSnapshotRef
-    )
+    (ref_kind == WorkspaceRef || ref_kind == StableSnapshotRef)
   let snapshot_url = source_snapshot_url(source, ref_kind, stable_lock)
   let status = if stable_lock {
     source.status
   } else if declared_lock {
-    DesignTokenStatus::SourceMapped
+    SourceMapped
   } else {
-    DesignTokenStatus::NotMapped
+    NotMapped
   }
   {
     preset,
@@ -161,12 +157,12 @@ fn source_lock_record(
 ///|
 fn source_ref_kind(source_ref : String) -> DesignSourceRefKind {
   match source_ref {
-    "" => DesignSourceRefKind::MissingRef
-    "workspace" => DesignSourceRefKind::WorkspaceRef
-    "live" => DesignSourceRefKind::LiveDocumentationRef
-    "main" => DesignSourceRefKind::MovingBranchRef
-    "master" => DesignSourceRefKind::MovingBranchRef
-    _ => DesignSourceRefKind::StableSnapshotRef
+    "" => MissingRef
+    "workspace" => WorkspaceRef
+    "live" => LiveDocumentationRef
+    "main" => MovingBranchRef
+    "master" => MovingBranchRef
+    _ => StableSnapshotRef
   }
 }
 
@@ -178,7 +174,7 @@ fn source_snapshot_url(
 ) -> String {
   if !stable_lock {
     ""
-  } else if ref_kind == DesignSourceRefKind::WorkspaceRef {
+  } else if ref_kind == WorkspaceRef {
     source.url
   } else if source.url ==
     "https://github.com/material-components/material-web/tree/main/tokens" {

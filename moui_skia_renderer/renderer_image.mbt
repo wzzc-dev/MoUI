@@ -165,7 +165,7 @@ fn SkiaRasterRenderer::skia_image_placeholder_failed(
     return true
   }
   match self.image_lifecycle.lookup(source) {
-    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => true
+    Some({ status: ImageFailed, .. }) => true
     _ => false
   }
 }
@@ -248,10 +248,7 @@ fn SkiaRasterRenderer::draw_image_placeholder_glyph(
     self.draw_path(
       canvas,
       @core.PathSpec::new(
-        verbs=[
-          @core.PathVerb::MoveTo(at(0.06, 0.06)),
-          @core.PathVerb::LineTo(at(0.94, 0.94)),
-        ],
+        verbs=[MoveTo(at(0.06, 0.06)), LineTo(at(0.94, 0.94))],
         fill=None,
         stroke=Some(brush),
         stroke_width=stroke,
@@ -277,16 +274,16 @@ fn skia_image_placeholder_sun_and_peak(
     @core.Point::new(x=center.x + dx, y=center.y + dy)
   }
   [
-    @core.PathVerb::MoveTo(p(0.0, -radius)),
-    @core.PathVerb::CubicTo(p(k, -radius), p(radius, -k), p(radius, 0.0)),
-    @core.PathVerb::CubicTo(p(radius, k), p(k, radius), p(0.0, radius)),
-    @core.PathVerb::CubicTo(p(-k, radius), p(-radius, k), p(-radius, 0.0)),
-    @core.PathVerb::CubicTo(p(-radius, -k), p(-k, -radius), p(0.0, -radius)),
-    @core.PathVerb::Close,
-    @core.PathVerb::MoveTo(at(0.16, 0.76)),
-    @core.PathVerb::LineTo(at(0.45, 0.44)),
-    @core.PathVerb::LineTo(at(0.74, 0.76)),
-    @core.PathVerb::Close,
+    MoveTo(p(0.0, -radius)),
+    CubicTo(p(k, -radius), p(radius, -k), p(radius, 0.0)),
+    CubicTo(p(radius, k), p(k, radius), p(0.0, radius)),
+    CubicTo(p(-k, radius), p(-radius, k), p(-radius, 0.0)),
+    CubicTo(p(-radius, -k), p(-k, -radius), p(0.0, -radius)),
+    Close,
+    MoveTo(at(0.16, 0.76)),
+    LineTo(at(0.45, 0.44)),
+    LineTo(at(0.74, 0.76)),
+    Close,
   ]
 }
 
@@ -310,16 +307,13 @@ fn SkiaRasterRenderer::skia_image_for_source(
       }
       if self.async_image_loading {
         match self.image_lifecycle.lookup(source) {
-          Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) =>
-            return None
-          Some({ status: @render.ImageResourceStatus::ImageReady, .. }) =>
+          Some({ status: ImageLoading, .. }) => return None
+          Some({ status: ImageReady, .. }) =>
             return self.decode_and_cache_image_source(
               source,
               mark_loading=false,
             )
-          Some(
-            { status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. }
-          ) => {
+          Some({ status: ImageFailed, diagnostic, .. }) => {
             self.failed_images[source] = diagnostic
             return None
           }
@@ -510,15 +504,14 @@ fn skia_image_placement(
 ) -> SkiaImagePlacement {
   let placement = @render_common.image_placement(frame, image_size, fit)
   match placement.crop_axis {
-    @render_common.ImageCropAxis::None =>
-      { frame: placement.frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
-    @render_common.ImageCropAxis::Horizontal => {
+    None => { frame: placement.frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0, }
+    Horizontal => {
       let inset = (1.0 - placement.visible) / 2.0
-      { frame: placement.frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
+      { frame: placement.frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0, }
     }
-    @render_common.ImageCropAxis::Vertical => {
+    Vertical => {
       let inset = (1.0 - placement.visible) / 2.0
-      { frame: placement.frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
+      { frame: placement.frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset, }
     }
   }
 }
@@ -560,14 +553,14 @@ pub fn SkiaRasterRenderer::apply_image_resource_load_completion(
     // stable chrome as churn-without-hit.
     self.clear_layer_cache()
     match completion_to_apply.status {
-      @render.ImageResourceLoadCompletionStatus::ImageLoadReady => {
+      ImageLoadReady => {
         self.failed_images.remove(completion.source)
         match decoded_image {
           Some(image) => self.image_cache[completion.source] = image
           None => ()
         }
       }
-      @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
+      ImageLoadFailed =>
         self.failed_images[completion.source] = completion_to_apply.diagnostic
     }
   }

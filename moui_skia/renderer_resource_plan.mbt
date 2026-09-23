@@ -16,7 +16,7 @@ fn renderer_resource_descriptor_array_contains_key(
 fn renderer_resource_plan_unique_descriptors(
   descriptors : Array[RendererResourceDescriptor],
 ) -> Array[RendererResourceDescriptor] {
-  let result : Array[RendererResourceDescriptor] = Array::new(
+  let result : Array[RendererResourceDescriptor] = Array(
     capacity=descriptors.length(),
   )
   for descriptor in descriptors {
@@ -106,7 +106,7 @@ pub fn RendererResourcePlan::has_uncacheable_resources(
 pub fn RendererResourcePlan::cacheable_descriptors(
   self : RendererResourcePlan,
 ) -> Array[RendererResourceDescriptor] {
-  let result : Array[RendererResourceDescriptor] = Array::new()
+  let result : Array[RendererResourceDescriptor] = Array()
   for descriptor in self.descriptors {
     if descriptor.is_cacheable() {
       result.push(descriptor)
@@ -126,7 +126,7 @@ pub fn RendererResourcePlan::cacheable_resource_plan(
 pub fn RendererResourcePlan::uncacheable_descriptors(
   self : RendererResourcePlan,
 ) -> Array[RendererResourceDescriptor] {
-  let result : Array[RendererResourceDescriptor] = Array::new()
+  let result : Array[RendererResourceDescriptor] = Array()
   for descriptor in self.descriptors {
     if !descriptor.is_cacheable() {
       result.push(descriptor)
@@ -146,7 +146,7 @@ pub fn RendererResourcePlan::uncacheable_resource_plan(
 pub fn RendererResourcePlan::gpu_backed_descriptors(
   self : RendererResourcePlan,
 ) -> Array[RendererResourceDescriptor] {
-  let result : Array[RendererResourceDescriptor] = Array::new()
+  let result : Array[RendererResourceDescriptor] = Array()
   for descriptor in self.descriptors {
     if descriptor.is_gpu_backed() {
       result.push(descriptor)
@@ -189,7 +189,7 @@ pub fn RendererResourcePlan::descriptors_of_kind(
   self : RendererResourcePlan,
   kind : RendererResourceKind,
 ) -> Array[RendererResourceDescriptor] {
-  let result : Array[RendererResourceDescriptor] = Array::new()
+  let result : Array[RendererResourceDescriptor] = Array()
   for descriptor in self.descriptors {
     if descriptor.key.kind == kind {
       result.push(descriptor)

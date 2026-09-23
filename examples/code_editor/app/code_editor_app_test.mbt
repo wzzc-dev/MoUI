@@ -1,6 +1,6 @@
 ///|
 test "native code editor feature catalog covers requested capabilities" {
-  let features = code_editor_features()
+  let features = @app.code_editor_features()
   assert_true(has_feature(features, "Code highlighting"))
   assert_true(has_feature(features, "Bracket matching"))
   assert_true(has_feature(features, "Auto indentation"))
@@ -21,8 +21,8 @@ test "native code editor feature catalog covers requested capabilities" {
 
 ///|
 test "custom language registry invokes registered tokenizer and providers" {
-  let registry = CodeLanguageRegistry::new().register_language(
-    CodeLanguageProvider::new(
+  let registry = @app.CodeLanguageRegistry::new().register_language(
+    @app.CodeLanguageProvider::new(
       id="calc",
       label="Calc DSL",
       tokenizer=source => {
@@ -38,14 +38,19 @@ test "custom language registry invokes registered tokenizer and providers" {
         ]
       },
       completion_provider=(_source, _offset) => {
-        [CodeCompletionItem::new(label="let", insert_text="let value = ")]
+        [@app.CodeCompletionItem::new(label="let", insert_text="let value = ")]
       },
       hover_provider=(_source, _offset) => {
-        Some(CodeHover::new(symbol="let", detail="Declares a Calc value."))
+        Some(@app.CodeHover::new(symbol="let", detail="Declares a Calc value."))
       },
       definition_provider=(_source, _offset) => {
         Some(
-          CodeDefinition::new(symbol="let", file="calc.dsl", line=1, column=1),
+          @app.CodeDefinition::new(
+            symbol="let",
+            file="calc.dsl",
+            line=1,
+            column=1,
+          ),
         )
       },
     ),
@@ -68,14 +73,14 @@ test "custom language registry invokes registered tokenizer and providers" {
 
 ///|
 test "native code editor builds highlighted rich text document" {
-  let registry = CodeLanguageRegistry::new().register_language(
-    CodeLanguageProvider::new(
+  let registry = @app.CodeLanguageRegistry::new().register_language(
+    @app.CodeLanguageProvider::new(
       id="calc",
       label="Calc DSL",
       tokenizer=_source => {
         [
-          { text: "let", kind: "keyword" },
-          { text: " total = 1", kind: "plain" },
+          { text: "let", kind: "keyword", },
+          { text: " total = 1", kind: "plain", },
         ]
       },
       completion_provider=(_source, _offset) => [],
@@ -87,7 +92,9 @@ test "native code editor builds highlighted rich text document" {
     families=@text.FontFamilyStack::monospace(),
     size=14.0,
   )
-  let document = code_editor_document("let total = 1", "calc", registry, font)
+  let document = @app.code_editor_document(
+    "let total = 1", "calc", registry, font,
+  )
   inspect(document.blocks.length(), content="1")
   inspect(document.blocks[0].runs.length(), content="2")
   inspect(document.blocks[0].runs[0].text, content="let")
@@ -103,11 +110,11 @@ test "native code editor builds highlighted rich text document" {
 
 ///|
 test "native code editor document maps each source line to its own block" {
-  let registry = CodeLanguageRegistry::new().register_language(
-    CodeLanguageProvider::new(
+  let registry = @app.CodeLanguageRegistry::new().register_language(
+    @app.CodeLanguageProvider::new(
       id="plain-code",
       label="Plain Code",
-      tokenizer=source => [{ text: source, kind: "plain" }],
+      tokenizer=source => [{ text: source, kind: "plain", }],
       completion_provider=(_source, _offset) => [],
       hover_provider=(_source, _offset) => None,
       definition_provider=(_source, _offset) => None,
@@ -117,7 +124,7 @@ test "native code editor document maps each source line to its own block" {
     families=@text.FontFamilyStack::monospace(),
     size=14.0,
   )
-  let document = code_editor_document(
+  let document = @app.code_editor_document(
     "let a = 1\nlet b = 2", "plain-code", registry, font,
   )
   inspect(document.blocks.length(), content="2")
@@ -147,14 +154,16 @@ test "native code editor document maps each source line to its own block" {
 
 ///|
 test "native code editor exposes shortcut metadata for native hosts" {
-  let commands = code_editor_action_commands()
+  let commands = @app.code_editor_action_commands()
   inspect(commands.length(), content="3")
   assert_true(has_shortcut(commands, "Command Palette", "k", meta=true))
   assert_true(has_shortcut(commands, "Run Diagnostics", "b", meta=true))
   assert_true(
     has_shortcut(commands, "Trigger Completion", "Space", control=true),
   )
-  let program_commands = program().runtime_commands(CodeEditorModel::new())
+  let program_commands = @app.program().runtime_commands(
+    @app.CodeEditorModel::new(),
+  )
   inspect(program_commands.length(), content="3")
   inspect(program_commands[0].message() is OpenCommandPalette, content="true")
   inspect(program_commands[1].message() is RunDiagnostics, content="true")
@@ -163,34 +172,39 @@ test "native code editor exposes shortcut metadata for native hosts" {
 
 ///|
 test "native code editor supports auto indent and multi-cursor edits" {
-  let model = CodeEditorModel::new().with_source("fn main {").with_cursor(9)
-  let indented = update(model, InsertText("\n"))
+  let model = @app.CodeEditorModel::new()
+    .with_source("fn main {")
+    .with_cursor(9)
+  let indented = @app.update(model, InsertText("\n"))
   inspect(indented.source, content="fn main {\n  ")
   inspect(indented.cursors.length(), content="1")
   inspect(indented.cursors[0].position, content="12")
 
-  let multicursor = CodeEditorModel::new()
+  let multicursor = @app.CodeEditorModel::new()
     .with_source("alpha\nbeta\n")
-    .with_cursors([CodeCursor::new(position=0), CodeCursor::new(position=6)])
-  let edited = update(multicursor, InsertText("// "))
+    .with_cursors([
+      @app.CodeCursor::new(position=0),
+      @app.CodeCursor::new(position=6),
+    ])
+  let edited = @app.update(multicursor, InsertText("// "))
   inspect(edited.source, content="// alpha\n// beta\n")
   inspect(edited.cursors.length(), content="2")
   inspect(edited.cursors[0].position, content="3")
   inspect(edited.cursors[1].position, content="12")
 
-  let selected = CodeEditorModel::new()
+  let selected = @app.CodeEditorModel::new()
     .with_source("alpha beta")
     .with_cursors([
-      CodeCursor::new(
+      @app.CodeCursor::new(
         position=5,
         selection=Some(@text.TextRange::new(start=0, end=5)),
       ),
-      CodeCursor::new(
+      @app.CodeCursor::new(
         position=10,
         selection=Some(@text.TextRange::new(start=6, end=10)),
       ),
     ])
-  let replaced = update(selected, InsertText("x"))
+  let replaced = @app.update(selected, InsertText("x"))
   inspect(replaced.source, content="x x")
   inspect(replaced.cursors.length(), content="2")
   inspect(replaced.cursors[0].position, content="1")
@@ -199,29 +213,29 @@ test "native code editor supports auto indent and multi-cursor edits" {
 
 ///|
 test "native code editor finds replaces and builds review diffs" {
-  let model = CodeEditorModel::new()
+  let model = @app.CodeEditorModel::new()
     .with_source("let count = 1\nlet total = count + 1\n")
     .with_find("count")
     .with_replace("value")
-  let found = update(model, FindNext)
+  let found = @app.update(model, FindNext)
   inspect(found.find.matches.length(), content="2")
   guard found.selection is Some(range) else {
     fail("expected first find match to be selected")
   }
   inspect(range.start, content="4")
   inspect(range.end, content="9")
-  let replaced = update(found, ReplaceAll)
+  let replaced = @app.update(found, ReplaceAll)
   inspect(replaced.source, content="let value = 1\nlet total = value + 1\n")
   inspect(replaced.find.matches.length(), content="0")
 
-  let diff = code_diff(
+  let diff = @app.code_diff(
     "fn add(a, b) {\n  a + b\n}\n", "fn add(a, b) {\n  return a + b\n}\n",
   )
   inspect(diff.lines.length(), content="4")
   inspect(diff.lines[1].kind.label(), content="Removed")
   inspect(diff.lines[2].kind.label(), content="Added")
 
-  let inserted = code_diff("a\nb\nc\n", "a\nx\nb\nc\n")
+  let inserted = @app.code_diff("a\nb\nc\n", "a\nx\nb\nc\n")
   inspect(inserted.lines.length(), content="4")
   inspect(inserted.lines[0].kind.label(), content="Context")
   inspect(inserted.lines[1].kind.label(), content="Added")
@@ -246,18 +260,18 @@ test "native code editor finds replaces and builds review diffs" {
 
 ///|
 test "native code editor produces diagnostics hover definitions and completions" {
-  let model = CodeEditorModel::new()
+  let model = @app.CodeEditorModel::new()
     .with_source("fn main {\n  print(unknown)\n}\n")
     .with_cursor(14)
-  let diagnosed = update(model, RunDiagnostics)
+  let diagnosed = @app.update(model, RunDiagnostics)
   inspect(diagnosed.diagnostics.length(), content="1")
   inspect(diagnosed.diagnostics[0].severity.label(), content="Error")
-  let completed = update(diagnosed, TriggerCompletion)
+  let completed = @app.update(diagnosed, TriggerCompletion)
   assert_true(completed.completions.any(item => item.label == "println"))
-  let hovered = update(completed, ShowHover)
+  let hovered = @app.update(completed, ShowHover)
   guard hovered.hover is Some(hover) else { fail("expected hover result") }
   assert_true(hover.detail.contains("Print"))
-  let jumped = update(hovered, GoToDefinition)
+  let jumped = @app.update(hovered, GoToDefinition)
   guard jumped.definition is Some(definition) else {
     fail("expected definition result")
   }
@@ -266,12 +280,13 @@ test "native code editor produces diagnostics hover definitions and completions"
 
 ///|
 test "native code editor matches brackets around the caret" {
-  guard code_bracket_match("fn main {\n  value\n}\n", 9) is Some(after_open) else {
+  guard @app.code_bracket_match("fn main {\n  value\n}\n", 9)
+    is Some(after_open) else {
     fail("expected bracket match when caret is after opening brace")
   }
   inspect(after_open.open, content="8")
   inspect(after_open.close, content="18")
-  guard code_bracket_match("fn main {\n  value\n}\n", 18) is Some(on_close) else {
+  guard @app.code_bracket_match("fn main {\n  value\n}\n", 18) is Some(on_close) else {
     fail("expected bracket match when caret is on closing brace")
   }
   inspect(on_close.open, content="8")
@@ -280,16 +295,16 @@ test "native code editor matches brackets around the caret" {
 
 ///|
 test "registered language provider can supply diagnostics" {
-  let registry = CodeLanguageRegistry::new().register_language(
-    CodeLanguageProvider::new(
+  let registry = @app.CodeLanguageRegistry::new().register_language(
+    @app.CodeLanguageProvider::new(
       id="calc",
       label="Calc DSL",
-      tokenizer=source => [{ text: source, kind: "plain" }],
+      tokenizer=source => [{ text: source, kind: "plain", }],
       completion_provider=(_source, _offset) => [],
       hover_provider=(_source, _offset) => None,
       definition_provider=(_source, _offset) => None,
       diagnostic_provider=source => {
-        code_find_matches(source, "todo").map(range => {
+        @app.code_find_matches(source, "todo").map(range => {
           range,
           severity: Warning,
           message: "Calc todo marker",
@@ -298,11 +313,11 @@ test "registered language provider can supply diagnostics" {
     ),
   )
   let model = {
-    ..CodeEditorModel::new().with_source("let todo = 1"),
+    ..@app.CodeEditorModel::new().with_source("let todo = 1"),
     registry,
     language_id: "calc",
   }
-  let diagnosed = update(model, RunDiagnostics)
+  let diagnosed = @app.update(model, RunDiagnostics)
   inspect(diagnosed.diagnostics.length(), content="1")
   inspect(diagnosed.diagnostics[0].severity.label(), content="Warning")
   inspect(diagnosed.diagnostics[0].message, content="Calc todo marker")
@@ -311,7 +326,7 @@ test "registered language provider can supply diagnostics" {
 ///|
 test "native code editor computes line column and line metadata" {
   let source = "fn add(a, b) {\n  a + b\n}\n"
-  let lines = code_editor_source_lines(source)
+  let lines = @app.code_editor_source_lines(source)
   inspect(lines.length(), content="3")
   inspect(lines[0].number, content="1")
   inspect(lines[0].start, content="0")
@@ -319,24 +334,24 @@ test "native code editor computes line column and line metadata" {
   inspect(lines[1].number, content="2")
   inspect(lines[1].start, content="15")
   inspect(lines[1].end, content="23")
-  let at_start = code_editor_caret_position(source, 0)
+  let at_start = @app.code_editor_caret_position(source, 0)
   inspect(at_start.line, content="1")
   inspect(at_start.column, content="1")
-  let second_line = code_editor_caret_position(source, 17)
+  let second_line = @app.code_editor_caret_position(source, 17)
   inspect(second_line.line, content="2")
   inspect(second_line.column, content="3")
 }
 
 ///|
 test "native code editor maps diagnostics to one based source lines" {
-  let diagnostics : Array[CodeDiagnostic] = [
+  let diagnostics : Array[@app.CodeDiagnostic] = [
     {
       range: @text.TextRange::new(start=17, end=22),
       severity: Error,
       message: "bad value",
     },
   ]
-  let lines = code_editor_diagnostic_lines(
+  let lines = @app.code_editor_diagnostic_lines(
     "fn main {\n  bad()\n}\n", diagnostics,
   )
   inspect(lines.length(), content="1")
@@ -345,7 +360,7 @@ test "native code editor maps diagnostics to one based source lines" {
 
 ///|
 test "native code editor ui state toggles editor panels and modes" {
-  let model = CodeEditorModel::new()
+  let model = @app.CodeEditorModel::new()
   guard model.active_panel is None else {
     fail("expected side panels to be hidden by default")
   }
@@ -353,18 +368,18 @@ test "native code editor ui state toggles editor panels and modes" {
   inspect(model.find_visible, content="false")
   inspect(model.completion_visible, content="false")
 
-  let finding = update(model, ToggleFind)
+  let finding = @app.update(model, ToggleFind)
   inspect(finding.find_visible, content="true")
-  inspect(update(finding, CloseFind).find_visible, content="false")
+  inspect(@app.update(finding, CloseFind).find_visible, content="false")
 
-  let capabilities = update(model, ToggleCapabilities)
+  let capabilities = @app.update(model, ToggleCapabilities)
   inspect(capabilities.active_panel is Some(CapabilitiesPanel), content="true")
-  guard update(capabilities, ToggleCapabilities).active_panel is None else {
+  guard @app.update(capabilities, ToggleCapabilities).active_panel is None else {
     fail("expected clicking the active capabilities button to hide the panel")
   }
-  let intellisense = update(model, ToggleIntelliSense)
+  let intellisense = @app.update(model, ToggleIntelliSense)
   inspect(intellisense.active_panel is Some(IntelliSensePanel), content="true")
-  let diff = update(model, ToggleDiffEditor)
+  let diff = @app.update(model, ToggleDiffEditor)
   inspect(diff.mode.label(), content="Diff Editor")
   guard diff.active_panel is None else {
     fail("expected diff to be a main editor mode, not a side panel")
@@ -373,21 +388,21 @@ test "native code editor ui state toggles editor panels and modes" {
 
 ///|
 test "native code editor applies completion item and closes overlay" {
-  let model = CodeEditorModel::new()
+  let model = @app.CodeEditorModel::new()
     .with_source("fn main {\n  prin\n}\n")
     .with_cursor(16)
-  let completed = update(model, TriggerCompletion)
+  let completed = @app.update(model, TriggerCompletion)
   inspect(completed.completion_visible, content="true")
   assert_true(completed.completions.any(item => item.label == "println"))
 
-  let applied = update(completed, ApplyCompletion(0))
+  let applied = @app.update(completed, ApplyCompletion(0))
   inspect(applied.completion_visible, content="false")
   assert_true(applied.source.contains("println"))
 }
 
 ///|
 test "native code editor runtime renders editor shell by default without platform views" {
-  let runtime = test_runtime(program(), width=1180.0, height=760.0)
+  let runtime = test_runtime(@app.program(), width=1180.0, height=760.0)
   let frame = runtime.draw_frame()
   inspect(frame.platform_views.length(), content="0")
   assert_true(has_draw_text(frame.commands, "main.mbt"))
@@ -407,9 +422,9 @@ test "native code editor runtime renders editor shell by default without platfor
 test "native code editor runtime renders find and completion overlays on demand" {
   let find_runtime = test_runtime(
     @moui.Program::simple(
-      init=update(CodeEditorModel::new(), ToggleFind),
-      update~,
-      view~,
+      init=@app.update(@app.CodeEditorModel::new(), ToggleFind),
+      update=@app.update,
+      view=@app.view,
     ),
     width=1180.0,
     height=760.0,
@@ -420,9 +435,9 @@ test "native code editor runtime renders find and completion overlays on demand"
 
   let completion_runtime = test_runtime(
     @moui.Program::simple(
-      init=update(CodeEditorModel::new(), TriggerCompletion),
-      update~,
-      view~,
+      init=@app.update(@app.CodeEditorModel::new(), TriggerCompletion),
+      update=@app.update,
+      view=@app.view,
     ),
     width=1180.0,
     height=760.0,
@@ -436,9 +451,9 @@ test "native code editor runtime renders find and completion overlays on demand"
 test "native code editor runtime renders panels and diff as editor mode" {
   let capabilities_runtime = test_runtime(
     @moui.Program::simple(
-      init=update(CodeEditorModel::new(), ToggleCapabilities),
-      update~,
-      view~,
+      init=@app.update(@app.CodeEditorModel::new(), ToggleCapabilities),
+      update=@app.update,
+      view=@app.view,
     ),
     width=1180.0,
     height=760.0,
@@ -449,9 +464,9 @@ test "native code editor runtime renders panels and diff as editor mode" {
 
   let intellisense_runtime = test_runtime(
     @moui.Program::simple(
-      init=update(CodeEditorModel::new(), ToggleIntelliSense),
-      update~,
-      view~,
+      init=@app.update(@app.CodeEditorModel::new(), ToggleIntelliSense),
+      update=@app.update,
+      view=@app.view,
     ),
     width=1180.0,
     height=760.0,
@@ -462,9 +477,9 @@ test "native code editor runtime renders panels and diff as editor mode" {
 
   let diff_runtime = test_runtime(
     @moui.Program::simple(
-      init=update(CodeEditorModel::new(), ToggleDiffEditor),
-      update~,
-      view~,
+      init=@app.update(@app.CodeEditorModel::new(), ToggleDiffEditor),
+      update=@app.update,
+      view=@app.view,
     ),
     width=1180.0,
     height=760.0,
@@ -477,7 +492,10 @@ test "native code editor runtime renders panels and diff as editor mode" {
 }
 
 ///|
-fn has_feature(features : Array[CodeEditorFeature], label : String) -> Bool {
+fn has_feature(
+  features : Array[@app.CodeEditorFeature],
+  label : String,
+) -> Bool {
   features.any(feature => feature.label == label)
 }
 
@@ -501,7 +519,7 @@ fn has_shortcut(
 ///|
 fn has_draw_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+    command is DrawText({ text: value, .. }) && value == text
   })
 }
 
@@ -512,7 +530,7 @@ fn draw_text_color(
 ) -> @core.Color? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, color, .. }) =>
+      DrawText({ text: value, color, .. }) =>
         if value == text {
           return Some(color)
         }
@@ -529,7 +547,7 @@ fn code_editor_test_is_light_text(color : @core.Color) -> Bool {
 
 ///|
 fn test_runtime(
-  program : @moui.Program[CodeEditorModel, CodeEditorMsg],
+  program : @moui.Program[@app.CodeEditorModel, @app.CodeEditorMsg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {

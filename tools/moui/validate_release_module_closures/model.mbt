@@ -118,7 +118,7 @@ fn parse_catalog(text : String) -> Result[ReleaseCatalog, Array[String]] {
     })
   }
   if failures.is_empty() {
-    Ok({ release_stages, modules })
+    Ok({ release_stages, modules, })
   } else {
     Err(failures)
   }

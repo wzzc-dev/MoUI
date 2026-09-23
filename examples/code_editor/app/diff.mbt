@@ -71,7 +71,7 @@ pub fn code_diff(original : String, modified : String) -> CodeDiff {
       i = i - 1
     }
   }
-  { original, modified, lines: reverse_diff_lines(lines) }
+  { original, modified, lines: reverse_diff_lines(lines), }
 }
 
 ///|

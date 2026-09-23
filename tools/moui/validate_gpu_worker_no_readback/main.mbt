@@ -17,12 +17,12 @@ fn usage() -> String {
 ///|
 fn forbidden_patterns() -> Array[ForbiddenPattern] {
   [
-    { label: "Skia readback", needles: ["read_pixels", "readPixels"] },
+    { label: "Skia readback", needles: ["read_pixels", "readPixels"], },
     {
       label: "CPU pixel presenter",
       needles: ["present_skia_pixels", "present_rgba_pixels"],
     },
-    { label: "renderer read-frame path", needles: ["read_frame("] },
+    { label: "renderer read-frame path", needles: ["read_frame("], },
     {
       label: "platform CPU presenter",
       needles: ["CGImage", "UIImage", "StretchDIBits", "wl_shm"],

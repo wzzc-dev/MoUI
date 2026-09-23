@@ -147,7 +147,7 @@ pub fn CodeEditorModel::with_cursors(
   self : CodeEditorModel,
   cursors : Array[CodeCursor],
 ) -> CodeEditorModel {
-  { ..self, cursors, bracket_match: self.primary_bracket_match(self.source) }
+  { ..self, cursors, bracket_match: self.primary_bracket_match(self.source), }
 }
 
 ///|
@@ -155,7 +155,7 @@ pub fn CodeEditorModel::with_find(
   self : CodeEditorModel,
   query : String,
 ) -> CodeEditorModel {
-  let find = { ..self.find, query, active_index: -1 }.recompute(self.source)
+  let find = { ..self.find, query, active_index: -1, }.recompute(self.source)
   { ..self, find, }
 }
 
@@ -164,7 +164,7 @@ pub fn CodeEditorModel::with_replace(
   self : CodeEditorModel,
   replacement : String,
 ) -> CodeEditorModel {
-  { ..self, find: { ..self.find, replacement, } }
+  { ..self, find: { ..self.find, replacement, }, }
 }
 
 ///|
@@ -218,7 +218,7 @@ pub fn update(
         selection: range,
         bracket_match: code_bracket_match(model.source, position),
       }
-    EditorScrollChanged(offset) => { ..model, editor_scroll: offset }
+    EditorScrollChanged(offset) => { ..model, editor_scroll: offset, }
     SetFindQuery(value) => model.with_find(value)
     SetReplaceText(value) => model.with_replace(value)
     FindNext => model.select_next_match()
@@ -267,21 +267,21 @@ pub fn update(
         ),
         status: "Definition provider queried",
       }
-    ShowSource => { ..model, mode: SourceEditor, active_panel: None }
+    ShowSource => { ..model, mode: SourceEditor, active_panel: None, }
     ShowDiff => model.toggle_diff_mode()
     ShowProviders => model.toggle_side_panel(IntelliSensePanel)
     ToggleCapabilities => model.toggle_side_panel(CapabilitiesPanel)
     ToggleIntelliSense => model.toggle_side_panel(IntelliSensePanel)
     ToggleDiffEditor => model.toggle_diff_mode()
-    ToggleFind => { ..model, find_visible: !model.find_visible }
-    CloseFind => { ..model, find_visible: false }
+    ToggleFind => { ..model, find_visible: !model.find_visible, }
+    CloseFind => { ..model, find_visible: false, }
     ApplyCompletion(index) => model.apply_completion(index)
     OpenPanel(panel) =>
       match panel {
         Some(value) => model.toggle_side_panel(value)
-        None => { ..model, active_panel: None }
+        None => { ..model, active_panel: None, }
       }
-    SetMode(mode) => { ..model, mode, active_panel: None }
+    SetMode(mode) => { ..model, mode, active_panel: None, }
     ChangeLanguage(id) =>
       {
         ..model,
@@ -318,7 +318,7 @@ fn CodeEditorModel::toggle_side_panel(
   panel : CodeEditorSidePanel,
 ) -> CodeEditorModel {
   if side_panel_matches(self.active_panel, panel) {
-    { ..self, active_panel: None }
+    { ..self, active_panel: None, }
   } else {
     {
       ..self,
@@ -357,7 +357,11 @@ fn CodeEditorModel::apply_completion(
   index : Int,
 ) -> CodeEditorModel {
   if index < 0 || index >= self.completions.length() {
-    return { ..self, completion_visible: false, status: "Completion dismissed" }
+    return {
+      ..self,
+      completion_visible: false,
+      status: "Completion dismissed",
+    }
   }
   let item = self.completions[index]
   let caret = self.primary_offset()
@@ -407,7 +411,7 @@ fn CodeEditorModel::select_next_match(
 ) -> CodeEditorModel {
   let find = self.find.recompute(self.source)
   if find.matches.is_empty() {
-    return { ..self, find, selection: None, status: "No matches" }
+    return { ..self, find, selection: None, status: "No matches", }
   }
   let next_index = if find.active_index + 1 >= find.matches.length() {
     0
@@ -417,7 +421,7 @@ fn CodeEditorModel::select_next_match(
   let range = find.matches[next_index]
   {
     ..self,
-    find: { ..find, active_index: next_index },
+    find: { ..find, active_index: next_index, },
     selection: Some(range),
     cursors: [CodeCursor::new(position=range.end, selection=Some(range))],
     status: "Match \{next_index + 1}/\{find.matches.length()}",
@@ -430,7 +434,7 @@ fn CodeEditorModel::replace_all_matches(
 ) -> CodeEditorModel {
   let find = self.find.recompute(self.source)
   let source = code_replace_all(self.source, find.query, find.replacement)
-  let next_find = { ..find, active_index: -1 }.recompute(source)
+  let next_find = { ..find, active_index: -1, }.recompute(source)
   {
     ..self.with_source(source),
     find: next_find,
@@ -496,14 +500,14 @@ pub fn code_editor_features() -> Array[CodeEditorFeature] {
 
 ///|
 fn feature(label : String, detail : String) -> CodeEditorFeature {
-  { label, detail }
+  { label, detail, }
 }
 
 ///|
 pub fn code_editor_action_commands() -> Array[@views.ActionCommand] {
   [
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::OpenContextMenu,
+      intent=OpenContextMenu,
       label="Command Palette",
       shortcut=Some(
         @views.KeyboardShortcut::new(
@@ -515,7 +519,7 @@ pub fn code_editor_action_commands() -> Array[@views.ActionCommand] {
       description="Open native command palette metadata.",
     ),
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::Submit,
+      intent=Submit,
       label="Run Diagnostics",
       shortcut=Some(
         @views.KeyboardShortcut::new(
@@ -527,7 +531,7 @@ pub fn code_editor_action_commands() -> Array[@views.ActionCommand] {
       description="Refresh diagnostics for the active document.",
     ),
     @views.ActionCommand::new(
-      intent=@views.CommandIntent::Activate,
+      intent=Activate,
       label="Trigger Completion",
       shortcut=Some(
         @views.KeyboardShortcut::new(
@@ -602,7 +606,7 @@ fn code_editor_line_block(
         text=token.text,
         font=Some(font),
         color=token_color(token.kind),
-        source_range=Some({ start, end }),
+        source_range=Some({ start, end, }),
       ),
     )
     start = end
@@ -612,15 +616,15 @@ fn code_editor_line_block(
       @moui_richtext.RichTextRun::new(
         text="",
         font=Some(font),
-        source_range=Some({ start: line_start, end: line_start }),
+        source_range=Some({ start: line_start, end: line_start, }),
       ),
     )
   }
   @moui_richtext.RichTextBlock::new(
     runs~,
     font=Some(font),
-    source_range=Some({ start: line_start, end: source_end }),
-    content_range=Some({ start: line_start, end: content_end }),
+    source_range=Some({ start: line_start, end: source_end, }),
+    content_range=Some({ start: line_start, end: content_end, }),
     line_height=Some(font.size * 1.42),
   )
 }

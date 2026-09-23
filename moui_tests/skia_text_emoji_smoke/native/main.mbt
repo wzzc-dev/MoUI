@@ -215,7 +215,7 @@ fn emoji_variant_diagnostics_ready(text : String, label : String) -> Bool {
 ///|
 fn emoji_diagnostic_font() -> @core.FontSpec {
   @core.FontSpec::new(
-    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    families=@core.FontFamilyStack::new([Emoji]),
     size=32.0,
     weight=400,
   )
@@ -337,10 +337,10 @@ fn smoke_text_field_runtime(
 ///|
 fn focus_smoke_text_field(runtime : @runtime.AppRuntime) -> Unit {
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
@@ -350,9 +350,7 @@ fn focus_smoke_text_field(runtime : @runtime.AppRuntime) -> Unit {
 fn commands_with_clear(
   commands : Array[@core.DrawCommand],
 ) -> Array[@core.DrawCommand] {
-  let result : Array[@core.DrawCommand] = [
-    @core.DrawCommand::Clear(@core.Color::white()),
-  ]
+  let result : Array[@core.DrawCommand] = [Clear(@core.Color::white())]
   for command in commands {
     result.push(command)
   }
@@ -517,9 +515,7 @@ fn ime_candidate_anchor_observation_available(
     "A\u{1F469}\u{200D}\u{1F4BB}B", text_system,
   )
   focus_smoke_text_field(runtime)
-  runtime.dispatch_event(
-    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
-  )
+  runtime.dispatch_event(Keyboard(@core.KeyboardEvent::new(key="End")))
   let input = runtime.focused_text_input()
   let diagnostics = @window_input.text_input_ime_request_diagnostics(input)
   println(
@@ -544,15 +540,11 @@ fn ime_composition_visual_observation_available(
 ) -> Bool {
   let runtime = smoke_text_field_runtime("x", text_system)
   focus_smoke_text_field(runtime)
+  runtime.dispatch_event(Keyboard(@core.KeyboardEvent::new(key="End")))
+  runtime.dispatch_event(TextInput(CompositionStart))
   runtime.dispatch_event(
-    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
-  )
-  runtime.dispatch_event(
-    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionStart),
-  )
-  runtime.dispatch_event(
-    @core.AppEvent::TextInput(
-      @core.TextInputEvent::CompositionUpdate(
+    TextInput(
+      CompositionUpdate(
         @core.CompositionUpdate::new(
           text="你🙂a",
           cursor=Some(@core.TextRange::new(start=2, end=2)),
@@ -606,14 +598,14 @@ fn skia_text_emoji_smoke_commands(
   paragraph_lines : Array[SkiaParagraphSmokeLine],
 ) -> Array[@core.DrawCommand] {
   let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawText(
+    Clear(@core.Color::white()),
+    DrawText(
       @core.TextRun::new(
         text=emoji_diagnostic_text(),
         frame=@core.Rect::new(x=8.0, y=8.0, width=72.0, height=44.0),
         font=emoji_diagnostic_font(),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   ]
@@ -622,13 +614,13 @@ fn skia_text_emoji_smoke_commands(
   }
   for line in paragraph_lines {
     commands.push(
-      @core.DrawCommand::DrawText(
+      DrawText(
         @core.TextRun::new(
           text=line.text,
           frame=line.frame,
           font=paragraph_font(),
           color=@core.Color::black(),
-          align=@core.TextAlign::TextStart,
+          align=TextStart,
         ),
       ),
     )
@@ -639,13 +631,13 @@ fn skia_text_emoji_smoke_commands(
 ///|
 fn skia_bidi_visual_order_commands() -> Array[@core.DrawCommand] {
   [
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="ABC \u{05D0}\u{05D1}\u{05D2} 123",
         frame=@core.Rect::new(x=8.0, y=58.0, width=150.0, height=28.0),
         font=@core.FontSpec::new(size=20.0, weight=500),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   ]

@@ -6,5 +6,5 @@ pub struct DescriptionItem {
 
 ///|
 pub fn description_item(term : String, detail : String) -> DescriptionItem {
-  { term, detail }
+  { term, detail, }
 }

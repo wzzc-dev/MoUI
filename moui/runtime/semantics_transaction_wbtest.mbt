@@ -16,8 +16,8 @@ fn runtime_pending_scroll_target() -> @core.View[@core.Point] {
     },
     semantics=() => {
       @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Boundary,
-        role=@core.SemanticsRole::Text,
+        composition=Boundary,
+        role=Text,
         label="pending target",
       )
     },
@@ -41,11 +41,7 @@ fn runtime_pending_scroll_content(visible : Bool) -> @core.View[@core.Point] {
         },
       )
     },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Transparent,
-      )
-    },
+    semantics=() => @core.ViewSemanticsInfo::new(composition=Transparent),
   )
 }
 
@@ -58,15 +54,15 @@ fn runtime_pending_scroll_view(
     identity=() => @core.ViewIdentity::new(kind="PendingScrollView"),
     declaration=() => {
       @core.ViewDeclaration::channels(
-        layout=@core.DeclarationChannel::Exact(
+        layout=Exact(
           @core.DeclarationKey::record(type_tag="PendingScrollView.layout", fields=[
             ("x", @core.DeclarationKey::double(offset.x)),
             ("y", @core.DeclarationKey::double(offset.y)),
           ]),
         ),
-        paint=@core.DeclarationChannel::Constant,
-        semantics=@core.DeclarationChannel::Constant,
-        platform=@core.DeclarationChannel::Constant,
+        paint=Constant,
+        semantics=Constant,
+        platform=Constant,
       )
     },
     children=() => [runtime_pending_scroll_content(visible)],
@@ -81,7 +77,7 @@ fn runtime_pending_scroll_view(
     },
     event=context => {
       match context.event {
-        @core.AppEvent::Pointer(event) =>
+        Pointer(event) =>
           if event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0 {
             @core.ViewEventResult::message(
               @core.Point::new(
@@ -96,10 +92,7 @@ fn runtime_pending_scroll_view(
       }
     },
     semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Boundary,
-        role=@core.SemanticsRole::ScrollView,
-      )
+      @core.ViewSemanticsInfo::new(composition=Boundary, role=ScrollView)
     },
   )
 }
@@ -129,10 +122,7 @@ test "semantics commit stabilizes pending scroll before publishing bounds" {
       runtime.request_root_rebuild(reason="test scroll model changed")
     })
   })
-  inspect(
-    runtime.scroll_to_key("pending-target", @core.ScrollAlignment::Nearest),
-    content="false",
-  )
+  inspect(runtime.scroll_to_key("pending-target", Nearest), content="false")
   visible.val = true
   runtime.request_root_rebuild(reason="test model changed")
   let snapshot = runtime.cached_semantics()

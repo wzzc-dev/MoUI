@@ -150,7 +150,7 @@ fn package_usage() -> String {
 
 ///|
 fn stdout_outcome(text : String) -> CliOutcome {
-  { exit_code: 0, stdout: text, stderr: "" }
+  { exit_code: 0, stdout: text, stderr: "", }
 }
 
 ///|
@@ -172,7 +172,7 @@ fn failed_outcome(
   } else {
     "error: " + message + "\n\n" + usage
   }
-  { exit_code, stdout: "", stderr }
+  { exit_code, stdout: "", stderr, }
 }
 
 // CLI argument helpers (`json_requested`, `option_parts`, `option_value`,
@@ -251,7 +251,7 @@ fn parse_new_args(
     }
   }
   if help.val {
-    return Ok({ help: true, json: json.val, options: None })
+    return Ok({ help: true, json: json.val, options: None, })
   }
   guard target.val is Some(raw_target) else {
     return Err("missing target path for moui new")
@@ -280,7 +280,7 @@ fn parse_new_args(
     bundle_id: bundle_id.val,
   }
   match validate_project_options(options) {
-    Ok(_) => Ok({ help: false, json: json.val, options: Some(options) })
+    Ok(_) => Ok({ help: false, json: json.val, options: Some(options), })
     Err(message) => Err(message)
   }
 }
@@ -334,7 +334,7 @@ fn parse_doctor_args(
     help: help.val,
     json: json.val,
     fix: fix.val,
-    options: { project_root: project_root.val, platforms, all: all.val },
+    options: { project_root: project_root.val, platforms, all: all.val, },
   })
 }
 
@@ -387,7 +387,7 @@ fn parse_add_platform_args(
     }
   }
   if help.val {
-    return Ok({ help: true, json: json.val, options: None })
+    return Ok({ help: true, json: json.val, options: None, })
   }
   if platforms.is_empty() {
     return Err("moui add platform requires at least one platform")
@@ -599,7 +599,7 @@ fn doctor_report_outcome(
     }
     builder.to_string()
   }
-  { exit_code: if report.ok { 0 } else { 1 }, stdout: text, stderr: "" }
+  { exit_code: if report.ok { 0 } else { 1 }, stdout: text, stderr: "", }
 }
 
 ///|

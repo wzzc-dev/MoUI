@@ -9,7 +9,7 @@ pub fn Canvas::draw_mask(
   mask : FixedArray[Byte],
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0 && height > 0 && mask.length() >= width * height else {
     return
   }
@@ -58,7 +58,7 @@ pub fn Canvas::draw_mask_rect(
   src_rect : PixelRect,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard mask_width > 0 &&
     mask_height > 0 &&
     mask.length() >= mask_width * mask_height else {
@@ -119,7 +119,7 @@ pub fn Canvas::draw_pixmap(
   y : Int,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let (x_start, y_start, x_end, y_end) = clipped_int_bounds(
     self,
@@ -150,7 +150,7 @@ pub fn Canvas::draw_pixmap_rect(
   y : Int,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let src_bounds = PixelRect::new(
     x=0,
@@ -220,7 +220,7 @@ fn Canvas::draw_layer_pixmap_rect(
     self.draw_pixmap_rect(src, src_rect, x, y, paint)
     return
   }
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let src_bounds = PixelRect::new(
     x=0,
@@ -271,7 +271,7 @@ pub fn Canvas::draw_scaled_pixmap(
   height : Int,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0 && height > 0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let (x_start, y_start, x_end, y_end) = clipped_int_bounds(
@@ -312,7 +312,7 @@ pub fn Canvas::draw_scaled_pixmap_bilinear(
   height : Int,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0 && height > 0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let (x_start, y_start, x_end, y_end) = clipped_int_bounds(
@@ -353,7 +353,7 @@ pub fn Canvas::draw_scaled_pixmap_bicubic(
   height : Int,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0 && height > 0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let (x_start, y_start, x_end, y_end) = clipped_int_bounds(
@@ -396,12 +396,10 @@ pub fn Canvas::draw_sampled_pixmap(
   sampling : ImageSampling,
 ) -> Unit {
   match sampling {
-    ImageSampling::Nearest =>
-      self.draw_scaled_pixmap(src, x, y, width, height, paint)
-    ImageSampling::Bilinear =>
+    Nearest => self.draw_scaled_pixmap(src, x, y, width, height, paint)
+    Bilinear =>
       self.draw_scaled_pixmap_bilinear(src, x, y, width, height, paint)
-    ImageSampling::Bicubic =>
-      self.draw_scaled_pixmap_bicubic(src, x, y, width, height, paint)
+    Bicubic => self.draw_scaled_pixmap_bicubic(src, x, y, width, height, paint)
   }
 }
 
@@ -448,7 +446,7 @@ pub fn Canvas::draw_scaled_pixmap_rect(
     width,
     height,
     paint,
-    ImageSampling::Nearest,
+    Nearest,
   )
 }
 
@@ -472,7 +470,7 @@ pub fn Canvas::draw_scaled_pixmap_rect_bilinear(
     width,
     height,
     paint,
-    ImageSampling::Bilinear,
+    Bilinear,
   )
 }
 
@@ -496,7 +494,7 @@ pub fn Canvas::draw_scaled_pixmap_rect_bicubic(
     width,
     height,
     paint,
-    ImageSampling::Bicubic,
+    Bicubic,
   )
 }
 
@@ -513,7 +511,7 @@ pub fn Canvas::draw_sampled_pixmap_rect(
   paint : Paint,
   sampling : ImageSampling,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0 && height > 0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let src_bounds = PixelRect::new(
@@ -642,7 +640,7 @@ pub fn Canvas::draw_transformed_sampled_pixmap_rect(
   paint : Paint,
   sampling : ImageSampling,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0.0 && height > 0.0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let src_bounds = PixelRect::new(
@@ -740,7 +738,7 @@ pub fn Canvas::draw_tiled_pixmap_rect(
   height : Int,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0 && height > 0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let src_bounds = PixelRect::new(
@@ -795,7 +793,7 @@ pub fn Canvas::draw_nine_patch_pixmap(
   paint : Paint,
   sampling : ImageSampling,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard width > 0 && height > 0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
   let (x_start, y_start, x_end, y_end) = clipped_int_bounds(
@@ -896,7 +894,7 @@ fn sample_transformed_pixmap_rect(
   let u = (local_x - dst_x) / dst_width
   let v = (local_y - dst_y) / dst_height
   match sampling {
-    ImageSampling::Nearest => {
+    Nearest => {
       let src_x = src_rect.x +
         floor_to_int(u * src_rect.width.to_double())
         .max(0)
@@ -907,12 +905,12 @@ fn sample_transformed_pixmap_rect(
         .min(src_rect.height - 1)
       src.get_pixel(src_x, src_y)
     }
-    ImageSampling::Bilinear => {
+    Bilinear => {
       let src_x = src_rect.x.to_double() + u * src_rect.width.to_double() - 0.5
       let src_y = src_rect.y.to_double() + v * src_rect.height.to_double() - 0.5
       sample_bilinear_rect(src, src_x, src_y, src_rect)
     }
-    ImageSampling::Bicubic => {
+    Bicubic => {
       let src_x = src_rect.x.to_double() + u * src_rect.width.to_double() - 0.5
       let src_y = src_rect.y.to_double() + v * src_rect.height.to_double() - 0.5
       sample_bicubic_rect(src, src_x, src_y, src_rect)

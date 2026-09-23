@@ -96,7 +96,7 @@ fn perf_showcase_runtimes(
   height : Double,
 ) -> Array[@runtime.AppRuntime] {
   let model = @showcase.ShowcaseModel::new().update(
-    @showcase.ShowcaseMsg::Navigate("diagnostics/advanced-rendering"),
+    Navigate("diagnostics/advanced-rendering"),
   )
   [
     @runtime.new_program_with_dimensions(
@@ -245,10 +245,10 @@ fn perf_drive_showcase(
 ) -> Unit {
   let direction = if index / 18 % 2 == 0 { -44.0 } else { 44.0 }
   runtimes[0].dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=470.0, y=260.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@core.Point::new(x=0.0, y=direction),
       ),
     ),
@@ -260,11 +260,8 @@ fn perf_drive_excel(runtimes : Array[@runtime.AppRuntime], index : Int) -> Unit 
   let x = 92.0 + (index % 6).to_double() * 110.0
   let y = 172.0 + (index / 6 % 8).to_double() * 28.0
   runtimes[0].dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x~, y~),
-        phase=@core.PointerPhase::Down,
-      ),
+    Pointer(
+      @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Down),
     ),
   )
 }
@@ -276,10 +273,10 @@ fn perf_drive_virtual_list(
 ) -> Unit {
   let direction = if index / 20 % 2 == 0 { -120.0 } else { 120.0 }
   runtimes[0].dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=400.0, y=300.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@core.Point::new(x=0.0, y=direction),
       ),
     ),
@@ -315,7 +312,7 @@ fn perf_cache_counters(
       snapshot.layout_cache_miss_count() +
       snapshot.render_cache_miss_count()
   }
-  { hits, misses }
+  { hits, misses, }
 }
 
 ///|
@@ -335,7 +332,7 @@ fn perf_cache_hit_rate(
 
 ///|
 fn perf_empty_samples() -> TimingSamples {
-  { build_ms: [], layout_ms: [], paint_ms: [], present_ms: [], frame_ms: [] }
+  { build_ms: [], layout_ms: [], paint_ms: [], present_ms: [], frame_ms: [], }
 }
 
 ///|

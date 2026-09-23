@@ -18,8 +18,6 @@ using @views {
   image,
   menu_item,
   overlay_host,
-  type PresentationAnchor,
-  type PresentationKind,
   type PresentationPlacement,
   type PresentationSpec,
   progress,

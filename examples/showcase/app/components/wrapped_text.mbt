@@ -15,7 +15,7 @@ fn wrapped_text(
       @views.text(line, role~, theme~, width~, height=line_height, align~)
     }),
     spacing=0.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   ).frame(width~, height~)
 }
 
@@ -88,27 +88,27 @@ fn wrapped_text_max_chars(role : @views.TextRole, width : Double) -> Int {
 ///|
 fn wrapped_text_average_char_width(role : @views.TextRole) -> Double {
   match role {
-    @views.TextRole::Caption | @views.TextRole::Overline => 7.0
-    @views.TextRole::Mono => 8.4
-    @views.TextRole::Title => 9.2
-    @views.TextRole::Headline => 9.4
-    @views.TextRole::Subtitle => 8.4
-    @views.TextRole::Control | @views.TextRole::Label => 7.4
-    @views.TextRole::Display => 12.0
-    @views.TextRole::Body => 7.8
+    Caption | Overline => 7.0
+    Mono => 8.4
+    Title => 9.2
+    Headline => 9.4
+    Subtitle => 8.4
+    Control | Label => 7.4
+    Display => 12.0
+    Body => 7.8
   }
 }
 
 ///|
 fn wrapped_text_line_height(role : @views.TextRole) -> Double {
   match role {
-    @views.TextRole::Caption | @views.TextRole::Overline => 18.0
-    @views.TextRole::Control | @views.TextRole::Label => 20.0
-    @views.TextRole::Mono => 20.0
-    @views.TextRole::Body => 22.0
-    @views.TextRole::Subtitle => 26.0
-    @views.TextRole::Title | @views.TextRole::Headline => 28.0
-    @views.TextRole::Display => 36.0
+    Caption | Overline => 18.0
+    Control | Label => 20.0
+    Mono => 20.0
+    Body => 22.0
+    Subtitle => 26.0
+    Title | Headline => 28.0
+    Display => 36.0
   }
 }
 

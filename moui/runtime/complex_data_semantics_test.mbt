@@ -30,19 +30,17 @@ test "runtime commits data grid collection coordinates" {
     size=@core.Size::new(width=320.0, height=120.0),
   )
   let snapshot = match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(value)) => value
+    Ok(Full(value)) => value
     _ => abort("expected full semantics snapshot")
   }
-  guard complex_data_semantics_node_by_role(snapshot, @core.SemanticsRole::Grid)
-    is Some(grid) else {
+  guard complex_data_semantics_node_by_role(snapshot, Grid) is Some(grid) else {
     fail("expected grid semantics node")
   }
   assert_eq(
     grid.collection,
     Some(@core.SemanticsCollectionInfo::new(row_count=8, column_count=4)),
   )
-  guard complex_data_semantics_node_by_role(snapshot, @core.SemanticsRole::Cell)
-    is Some(cell) else {
+  guard complex_data_semantics_node_by_role(snapshot, Cell) is Some(cell) else {
     fail("expected cell semantics node")
   }
   assert_true(cell.state.selected)
@@ -74,11 +72,10 @@ test "table commits grid row and cell semantics" {
     size=@core.Size::new(width=320.0, height=160.0),
   )
   let snapshot = match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(value)) => value
+    Ok(Full(value)) => value
     _ => abort("expected full semantics snapshot")
   }
-  guard complex_data_semantics_node_by_role(snapshot, @core.SemanticsRole::Grid)
-    is Some(grid) else {
+  guard complex_data_semantics_node_by_role(snapshot, Grid) is Some(grid) else {
     fail("expected table grid semantics node")
   }
   assert_eq(
@@ -86,17 +83,11 @@ test "table commits grid row and cell semantics" {
     Some(@core.SemanticsCollectionInfo::new(row_count=3, column_count=2)),
   )
   inspect(
-    snapshot
-    .nodes()
-    .filter(node => node.role == @core.SemanticsRole::Row)
-    .length(),
+    snapshot.nodes().filter(node => node.role == Row).length(),
     content="3",
   )
   inspect(
-    snapshot
-    .nodes()
-    .filter(node => node.role == @core.SemanticsRole::Cell)
-    .length(),
+    snapshot.nodes().filter(node => node.role == Cell).length(),
     content="6",
   )
 }

@@ -159,8 +159,8 @@ async fn launch_macos_app_async_pump(
   }
   while !event_loop.exiting() {
     match event_loop.pump_app_events(Some(0), app) {
-      @window_core.PumpStatus::Exit(_) => return ()
-      @window_core.PumpStatus::Continue => ()
+      Exit(_) => return ()
+      Continue => ()
     }
     // Frame pacing: while the runtime still owes a frame (an animation is
     // ticking — scroll glides, overlay fades) or a sub-frame timer
@@ -275,8 +275,8 @@ fn run_app_until_first_present(
   let mut remaining = macos_first_present_pump_limit
   while remaining > 0 && !event_loop.exiting() {
     match event_loop.pump_app_events(Some(1), app) {
-      @window_core.PumpStatus::Exit(_) => return ()
-      @window_core.PumpStatus::Continue => ()
+      Exit(_) => return ()
+      Continue => ()
     }
     remaining = remaining - 1
   }
@@ -304,8 +304,8 @@ async fn run_async_pump_until_first_present(
   let mut remaining = macos_first_present_pump_limit
   while remaining > 0 && !event_loop.exiting() {
     match event_loop.pump_app_events(Some(1), app) {
-      @window_core.PumpStatus::Exit(_) => return ()
-      @window_core.PumpStatus::Continue => ()
+      Exit(_) => return ()
+      Continue => ()
     }
     remaining = remaining - 1
     @async.sleep(frame_interval_ms)

@@ -1,8 +1,8 @@
 ///|
 test "sun renderer backend info is ready cpu raster" {
-  let info = backend_info()
-  assert_true(info.backend == @render.RendererBackendKind::SunRasterNative)
-  assert_true(info.status == @render.RendererCapabilityStatus::Supported)
+  let info = @moui_sun_renderer.backend_info()
+  assert_true(info.backend == SunRasterNative)
+  assert_true(info.status == Supported)
   assert_true(info.can_render)
   assert_true(info.can_resize)
   assert_true(info.owns_surface)
@@ -20,23 +20,20 @@ test "sun renderer backend info is ready cpu raster" {
 
 ///|
 test "sun renderer descriptor exposes sun cpu pixel backend" {
-  let descriptor = renderer_descriptor()
-  assert_true(
-    descriptor.backend == @render.RendererBackendKind::SunRasterNative,
-  )
-  assert_true(descriptor.family == @render.RendererFamily::Sun)
-  assert_true(
-    descriptor.presentation == @render.RendererPresentationModel::CpuPixelFrame,
-  )
+  let descriptor = @moui_sun_renderer.renderer_descriptor()
+  assert_true(descriptor.backend == SunRasterNative)
+  assert_true(descriptor.family == Sun)
+  assert_true(descriptor.presentation == CpuPixelFrame)
   inspect(descriptor.capabilities.length(), content="17")
 }
 
 ///|
 test "sun renderer surface diagnostic summary tracks cpu pixel target" {
-  let target = SunPresentTarget::new(description="diagnostic-target", present=_frame => {
-    true
-  })
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(
+    description="diagnostic-target",
+    present=_frame => true,
+  )
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=5.0, height=3.0),
       scale_factor=2.0,
@@ -57,19 +54,19 @@ test "sun renderer surface diagnostic summary tracks cpu pixel target" {
 ///|
 test "sun renderer presents rect pixels" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
       @core.Color::blue(),
     ),
@@ -92,11 +89,11 @@ test "sun renderer presents rect pixels" {
 ///|
 test "sun renderer applies multiply blend mode in layer compositing" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -105,19 +102,17 @@ test "sun renderer applies multiply blend mode in layer compositing" {
   // Base: fill with light gray (200,200,200), layer with Multiply blend mode fill (128,128,128)
   // Multiply result: 200*128/255 ≈ 100 per channel, different from SourceOver (128)
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.784, g=0.784, b=0.784, a=1.0),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Multiply),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Multiply)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.502, g=0.502, b=0.502, a=1.0),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -134,24 +129,24 @@ test "sun renderer applies multiply blend mode in layer compositing" {
 ///|
 test "sun renderer applies layer spec opacity at compositing" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushLayer(@core.LayerSpec::new(opacity=0.5)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -168,30 +163,28 @@ test "sun renderer applies layer spec opacity at compositing" {
 ///|
 test "sun renderer applies rectangular layer mask" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushLayer(
+    Clear(@core.Color::white()),
+    PushLayer(
       @core.LayerSpec::new(
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0)),
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -210,11 +203,11 @@ test "sun renderer applies rectangular layer mask" {
 ///|
 test "sun renderer applies rounded layer mask corners" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
@@ -225,15 +218,13 @@ test "sun renderer applies rounded layer mask corners" {
     radius=4.0,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(mask=@core.LayerMask::RoundedMask(rounded)),
-    ),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushLayer(@core.LayerSpec::new(mask=RoundedMask(rounded))),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -251,19 +242,19 @@ test "sun renderer applies rounded layer mask corners" {
 ///|
 test "sun renderer draws text without unsupported diagnostic" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=24.0, height=12.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawText(
+    Clear(@core.Color::white()),
+    DrawText(
       @core.TextRun::new(
         text="A",
         frame=@core.Rect::new(x=0.0, y=0.0, width=24.0, height=12.0),
@@ -293,12 +284,12 @@ test "sun renderer draws text without unsupported diagnostic" {
 ///|
 test "sun renderer works at 2x scale factor" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
   // Create with 2x scale factor
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
@@ -306,8 +297,8 @@ test "sun renderer works at 2x scale factor" {
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
       @core.Color::blue(),
     ),
@@ -331,11 +322,11 @@ test "sun renderer works at 2x scale factor" {
 ///|
 test "sun renderer renders linear gradient pixels" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=1.0),
     ),
@@ -348,8 +339,8 @@ test "sun renderer renders linear gradient pixels" {
     end_color=@core.Color::rgba(r=0.0, g=0.0, b=1.0, a=1.0),
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRoundedRectBrush(
+    Clear(@core.Color::white()),
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=1.0),
       ),
@@ -377,8 +368,10 @@ fn sun_test_png_data_uri() -> String {
 
 ///|
 test "sun renderer records ready image lifecycle once for cached image draws" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -386,11 +379,11 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
   )
   let source = sun_test_png_data_uri()
   let commands = [
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    @core.DrawCommand::DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
 
@@ -399,12 +392,7 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
     fail("expected one sun image resource record")
   }
   guard renderer.image_resources()[0]
-    is {
-      status: @render.ImageResourceStatus::ImageReady,
-      width: 1,
-      height: 1,
-      ..,
-    } else {
+    is { status: ImageReady, width: 1, height: 1, .. } else {
     fail("expected ready sun image record")
   }
   renderer.render(commands)
@@ -413,8 +401,10 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
 
 ///|
 test "sun renderer records failed image lifecycle once for repeated decode errors" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -422,11 +412,11 @@ test "sun renderer records failed image lifecycle once for repeated decode error
   )
   let source = "moui-sun-missing-image://not-decodable"
   let commands = [
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    @core.DrawCommand::DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
 
@@ -435,8 +425,7 @@ test "sun renderer records failed image lifecycle once for repeated decode error
   guard renderer.image_resources().length() == 1 else {
     fail("expected one failed sun image resource record")
   }
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageFailed, diagnostic, .. } else {
     fail("expected failed sun image record")
   }
   assert_true(diagnostic.contains("could not decode image source"))
@@ -449,8 +438,10 @@ test "sun renderer records failed image lifecycle once for repeated decode error
 
 ///|
 test "sun renderer async image loading waits for explicit completion" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -459,37 +450,29 @@ test "sun renderer async image loading waits for explicit completion" {
   )
   let source = sun_test_png_data_uri()
   let commands = [
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    @core.DrawCommand::DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
 
   renderer.render(commands)
   inspect(renderer.present_count(), content="1")
   inspect(renderer.image_resources().length(), content="1")
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageLoading, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageLoading, .. } else {
     fail("expected loading sun image record")
   }
   inspect(renderer.unsupported_command_count(), content="0")
 
-  let completion = sun_image_load_completion(source)
-  guard completion
-    is {
-      status: @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-      width: 1,
-      height: 1,
-      ..,
-    } else {
+  let completion = @moui_sun_renderer.sun_image_load_completion(source)
+  guard completion is { status: ImageLoadReady, width: 1, height: 1, .. } else {
     fail("expected ready sun image load completion")
   }
   let ready_snapshot = renderer.apply_image_resource_load_completion(completion)
   assert_true(ready_snapshot)
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageReady, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageReady, .. } else {
     fail("expected ready sun image record")
   }
 
@@ -501,13 +484,10 @@ test "sun renderer async image loading waits for explicit completion" {
 
 ///|
 test "sun image load completion reports decode failures" {
-  let completion = sun_image_load_completion("moui-sun-missing-image://async")
-  guard completion
-    is {
-      status: @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-      diagnostic,
-      ..,
-    } else {
+  let completion = @moui_sun_renderer.sun_image_load_completion(
+    "moui-sun-missing-image://async",
+  )
+  guard completion is { status: ImageLoadFailed, diagnostic, .. } else {
     fail("expected failed sun image load completion")
   }
   assert_true(diagnostic.contains("could not decode image source"))
@@ -520,56 +500,51 @@ test "sun image load completion from bytes decodes provided image bytes" {
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
     ignore_whitespace=true,
   )
-  let completion = sun_image_load_completion_from_bytes(
+  let completion = @moui_sun_renderer.sun_image_load_completion_from_bytes(
     source,
     data,
     background_io=true,
   )
-  assert_true(
-    completion.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-  )
+  assert_true(completion.status == ImageLoadReady)
   inspect(completion.source, content=source)
   inspect(completion.width, content="1")
   inspect(completion.height, content="1")
   inspect(completion.background_io, content="true")
-  let failed = sun_image_load_completion_from_bytes(
+  let failed = @moui_sun_renderer.sun_image_load_completion_from_bytes(
     "invalid.png", b"not-an-image",
   )
-  assert_true(
-    failed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-  )
+  assert_true(failed.status == ImageLoadFailed)
   assert_true(failed.diagnostic.contains("could not decode PNG image bytes"))
 }
 
 ///|
 test "sun renderer rounded clip + blur integration" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushRoundedClip(
+    Clear(@core.Color::white()),
+    PushRoundedClip(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=2.0, y=2.0, width=12.0, height=12.0),
         radius=4.0,
       ),
     ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(1.0)),
-    @core.DrawCommand::FillRect(
+    PushFilter(Blur(1.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopRoundedClip,
+    PopFilter,
+    PopRoundedClip,
   ])
   match presented.val {
     Some(frame) => {
@@ -588,28 +563,26 @@ test "sun renderer rounded clip + blur integration" {
 ///|
 test "sun renderer nested layers with opacity compositing" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::SourceOver),
-    ),
-    @core.DrawCommand::PushOpacity(0.5),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushLayer(@core.LayerSpec::new(blend_mode=SourceOver)),
+    PushOpacity(0.5),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopOpacity,
-    @core.DrawCommand::PopLayer,
+    PopOpacity,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -627,24 +600,24 @@ test "sun renderer nested layers with opacity compositing" {
 ///|
 test "sun renderer triple-pass blur produces smooth falloff" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(2.0)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushFilter(Blur(2.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ])
   match presented.val {
     Some(frame) => {
@@ -670,19 +643,19 @@ test "sun renderer triple-pass blur produces smooth falloff" {
 ///|
 test "sun renderer vignette shader paints radial fallback" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::white()),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="vignette",
         frame=@core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
@@ -708,11 +681,11 @@ test "sun renderer vignette shader paints radial fallback" {
 ///|
 test "sun renderer brightness filter applies via pixmap compositing" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -720,13 +693,13 @@ test "sun renderer brightness filter applies via pixmap compositing" {
   )
   // Draw a mid-gray rect with brightness=2.0 filter
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(2.0)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
+    PushFilter(Brightness(2.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.5, g=0.5, b=0.5, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ])
   match presented.val {
     Some(frame) => {
@@ -743,11 +716,11 @@ test "sun renderer brightness filter applies via pixmap compositing" {
 ///|
 test "sun renderer blur filter softens edge" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=8.0),
     ),
@@ -755,17 +728,17 @@ test "sun renderer blur filter softens edge" {
   )
   // Left half red, right half blue, separated by a sharp edge at x=8
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(2.0)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushFilter(Blur(2.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=8.0, y=0.0, width=8.0, height=8.0),
       @core.Color::rgba(r=0.0, g=0.0, b=1.0, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ])
   match presented.val {
     Some(frame) => {
@@ -794,29 +767,29 @@ test "sun renderer blur filter softens edge" {
 ///|
 test "sun renderer rounded clip draws center pixel" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushRoundedClip(
+    Clear(@core.Color::white()),
+    PushRoundedClip(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=2.0, y=2.0, width=12.0, height=12.0),
         radius=3.0,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopRoundedClip,
+    PopRoundedClip,
   ])
   match presented.val {
     Some(frame) => {
@@ -832,29 +805,29 @@ test "sun renderer rounded clip draws center pixel" {
 ///|
 test "sun renderer rounded clip masks corner pixel" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushRoundedClip(
+    Clear(@core.Color::white()),
+    PushRoundedClip(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=2.0, y=2.0, width=12.0, height=12.0),
         radius=4.0,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopRoundedClip,
+    PopRoundedClip,
   ])
   match presented.val {
     Some(frame) => {
@@ -872,29 +845,29 @@ test "sun renderer rounded clip masks corner pixel" {
 ///|
 test "sun renderer rounded clip with zero radius acts as rect clip" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushRoundedClip(
+    Clear(@core.Color::white()),
+    PushRoundedClip(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
         radius=0.0,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopRoundedClip,
+    PopRoundedClip,
   ])
   match presented.val {
     Some(frame) => {
@@ -911,8 +884,10 @@ test "sun renderer rounded clip with zero radius acts as rect clip" {
 
 ///|
 test "sun renderer records disposed image resources after ready lifecycle" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -920,24 +895,25 @@ test "sun renderer records disposed image resources after ready lifecycle" {
   )
   let source = sun_test_png_data_uri()
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   renderer.dispose()
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageDisposed, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageDisposed, .. } else {
     fail("expected disposed sun image record")
   }
 }
 
 ///|
 test "sun renderer exposes stale image load completion apply port" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -950,11 +926,11 @@ test "sun renderer exposes stale image load completion apply port" {
 
   let source = "moui-sun-missing-image://not-decodable"
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   let stale_failed = renderer.apply_image_resource_load_completion(
@@ -964,8 +940,7 @@ test "sun renderer exposes stale image load completion apply port" {
     ),
   )
   assert_true(!stale_failed)
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageFailed, diagnostic, .. } else {
     fail("expected existing failed record after stale completion")
   }
   assert_true(diagnostic.contains("could not decode image source"))
@@ -974,30 +949,30 @@ test "sun renderer exposes stale image load completion apply port" {
 ///|
 test "sun renderer cached layer renders and caches on first draw" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ])
   inspect(renderer.cached_layer_miss_count(), content="1")
   inspect(renderer.cached_layer_hit_count(), content="0")
@@ -1013,8 +988,10 @@ test "sun renderer cached layer renders and caches on first draw" {
 
 ///|
 test "sun renderer cached layer hits on second render with same revision" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
@@ -1022,18 +999,18 @@ test "sun renderer cached layer hits on second render with same revision" {
   )
   let commands = [
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ]
   renderer.render(commands)
   inspect(renderer.cached_layer_miss_count(), content="1")
@@ -1046,43 +1023,45 @@ test "sun renderer cached layer hits on second render with same revision" {
 
 ///|
 test "sun renderer cached layer misses on revision change" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ])
   inspect(renderer.cached_layer_miss_count(), content="1")
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=2,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.0, g=1.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ])
   inspect(renderer.cached_layer_miss_count(), content="2")
   inspect(renderer.cached_layer_hit_count(), content="0")
@@ -1090,43 +1069,45 @@ test "sun renderer cached layer misses on revision change" {
 
 ///|
 test "sun renderer retained layer draws from cache" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ])
   inspect(renderer.cached_layer_miss_count(), content="1")
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ])
   inspect(renderer.cached_layer_hit_count(), content="1")
   inspect(renderer.unsupported_command_count(), content="0")
@@ -1134,44 +1115,46 @@ test "sun renderer retained layer draws from cache" {
 
 ///|
 test "sun renderer dispose clears cached layers" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ])
   inspect(renderer.cached_layer_miss_count(), content="1")
   renderer.dispose()
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="test-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("test-layer"),
+    EndRetainedLayer("test-layer"),
   ])
   inspect(renderer.unsupported_command_count(), content="0")
 }
@@ -1179,26 +1162,26 @@ test "sun renderer dispose clears cached layers" {
 ///|
 test "sun renderer DrawPath fills a rect path" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(
+    Clear(@core.Color::white()),
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=4.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=4.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=12.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=12.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=4.0, y=4.0)),
+          LineTo(@core.Point::new(x=12.0, y=4.0)),
+          LineTo(@core.Point::new(x=12.0, y=12.0)),
+          LineTo(@core.Point::new(x=4.0, y=12.0)),
+          Close,
         ],
         fill=Some(
           @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0)),
@@ -1224,26 +1207,26 @@ test "sun renderer DrawPath fills a rect path" {
 ///|
 test "sun renderer DrawPath strokes a rect path" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(
+    Clear(@core.Color::white()),
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=4.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=4.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=12.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=12.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=4.0, y=4.0)),
+          LineTo(@core.Point::new(x=12.0, y=4.0)),
+          LineTo(@core.Point::new(x=12.0, y=12.0)),
+          LineTo(@core.Point::new(x=4.0, y=12.0)),
+          Close,
         ],
         stroke=Some(@core.Brush::solid(@core.Color::blue())),
         stroke_width=2.0,
@@ -1268,19 +1251,19 @@ test "sun renderer DrawPath strokes a rect path" {
 ///|
 test "sun renderer DrawShadow renders shadow behind rect" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=32.0, height=32.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShadow(
+    Clear(@core.Color::white()),
+    DrawShadow(
       @core.ShadowSpec::new(
         rect=@core.RoundedRect::new(
           rect=@core.Rect::new(x=8.0, y=8.0, width=16.0, height=16.0),
@@ -1311,24 +1294,24 @@ test "sun renderer DrawShadow renders shadow behind rect" {
 ///|
 test "sun renderer saturate filter desaturates red to gray" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(0.0)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushFilter(Saturate(0.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ])
   match presented.val {
     Some(frame) => {
@@ -1352,24 +1335,24 @@ test "sun renderer saturate filter desaturates red to gray" {
 ///|
 test "sun renderer contrast filter increases contrast" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Contrast(2.0)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
+    PushFilter(Contrast(2.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.7, g=0.7, b=0.7, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ])
   match presented.val {
     Some(frame) => {
@@ -1386,19 +1369,19 @@ test "sun renderer contrast filter increases contrast" {
 ///|
 test "sun renderer checker shader alternates tiles" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(
+    Clear(@core.Color::white()),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
@@ -1433,11 +1416,11 @@ test "sun renderer checker shader alternates tiles" {
 ///|
 test "sun renderer radial gradient varies center to edge" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=1.0),
     ),
@@ -1450,8 +1433,8 @@ test "sun renderer radial gradient varies center to edge" {
     edge_color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0),
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
-    @core.DrawCommand::FillRoundedRectBrush(
+    Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=0.0, y=0.0, width=16.0, height=1.0),
       ),
@@ -1475,30 +1458,28 @@ test "sun renderer radial gradient varies center to edge" {
 ///|
 test "sun renderer screen blend mode brightens" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.784, g=0.784, b=0.784, a=1.0),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Screen),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Screen)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.502, g=0.502, b=0.502, a=1.0),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -1515,11 +1496,11 @@ test "sun renderer screen blend mode brightens" {
 ///|
 test "sun renderer darken blend mode keeps darker" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -1529,19 +1510,17 @@ test "sun renderer darken blend mode keeps darker" {
   // Darken keeps the darker: min(100,200)=100
   // SourceOver would overwrite with 200
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.392, g=0.392, b=0.392, a=1.0),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Darken),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Darken)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.784, g=0.784, b=0.784, a=1.0),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -1556,11 +1535,11 @@ test "sun renderer darken blend mode keeps darker" {
 ///|
 test "sun renderer lighten blend mode keeps lighter" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -1570,19 +1549,17 @@ test "sun renderer lighten blend mode keeps lighter" {
   // Lighten keeps the lighter: max(200,100)=200
   // SourceOver would overwrite with 100
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.784, g=0.784, b=0.784, a=1.0),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Lighten),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Lighten)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.392, g=0.392, b=0.392, a=1.0),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -1597,11 +1574,11 @@ test "sun renderer lighten blend mode keeps lighter" {
 ///|
 test "sun renderer overlay blend mode combines correctly" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -1612,19 +1589,17 @@ test "sun renderer overlay blend mode combines correctly" {
   // = 255 - 55*155*2/255 = 255 - 66.6 = ~188
   // SourceOver would be 100 (layer overwrites)
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.784, g=0.784, b=0.784, a=1.0),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Overlay),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Overlay)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.392, g=0.392, b=0.392, a=1.0),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -1640,11 +1615,11 @@ test "sun renderer overlay blend mode combines correctly" {
 ///|
 test "sun renderer color matrix filter inverts via matrix" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -1653,18 +1628,18 @@ test "sun renderer color matrix filter inverts via matrix" {
   // Invert matrix: R'=1-R, G'=1-G, B'=1-B
   // Matrix: [-1,0,0,0,1, 0,-1,0,0,1, 0,0,-1,0,1, 0,0,0,1,0]
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushFilter(
-      @core.FilterEffect::ColorMatrix([
+    Clear(@core.Color::white()),
+    PushFilter(
+      ColorMatrix([
         -1.0, 0.0, 0.0, 0.0, 255.0, 0.0, -1.0, 0.0, 0.0, 255.0, 0.0, 0.0, -1.0, 0.0,
         255.0, 0.0, 0.0, 0.0, 1.0, 0.0,
       ]),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ])
   match presented.val {
     Some(frame) => {
@@ -1685,11 +1660,11 @@ test "sun renderer color matrix filter inverts via matrix" {
 ///|
 test "sun renderer gradient stroke on path" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=1.0),
     ),
@@ -1702,13 +1677,13 @@ test "sun renderer gradient stroke on path" {
     end_color=@core.Color::rgba(r=0.0, g=0.0, b=1.0, a=1.0),
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(
+    Clear(@core.Color::white()),
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.5)),
-          @core.PathVerb::LineTo(@core.Point::new(x=8.0, y=0.5)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=0.0, y=0.5)),
+          LineTo(@core.Point::new(x=8.0, y=0.5)),
+          Close,
         ],
         stroke=Some(gradient),
         stroke_width=1.0,

@@ -47,10 +47,16 @@ fn history_apply(
   rich_text_history_extend_stack(
     undo_stack,
     rich_text_history_record_edit(control, previous, next, control.caret),
-    { start, before, after, caret: control.caret, selection: control.selection },
+    {
+      start,
+      before,
+      after,
+      caret: control.caret,
+      selection: control.selection,
+    },
   )
   let caret = control.caret + text_length(next) - text_length(previous)
-  { ..control, caret, undo_stack, redo_stack: [] }
+  { ..control, caret, undo_stack, redo_stack: [], }
 }
 
 ///|
@@ -144,7 +150,7 @@ test "undo merge window: backspaces group leftward into one delta" {
   control = history_apply(control, "", "abcdef")
   // The paste baseline pushes.
   assert_eq(control.undo_stack.length(), 1)
-  control = { ..control, caret: 6 }
+  control = { ..control, caret: 6, }
   control = history_apply(control, "abcdef", "abcde")
   control = history_apply(control, "abcde", "abcd")
   // The backspaces must share one undo group whose delta deleted "ef".
@@ -167,7 +173,7 @@ test "undo merge window: repeated forward deletes group at one position" {
   let mut control = history_test_control(caret=1)
   control = history_apply(control, "abcd", "acd")
   // A forward delete leaves the caret at the same column.
-  control = { ..control, caret: 1 }
+  control = { ..control, caret: 1, }
   control = history_apply(control, "acd", "ad")
   // Forward deletes at one caret must share a group: undoing restores
   // both deleted characters at the one recorded position.
@@ -240,14 +246,14 @@ test "undo merge window: applied input edits flow through the window" {
   let first = apply_rich_text_input_transform(
     control,
     "",
-    { text: "h", caret: 1, selection: None, edit_range: None },
+    { text: "h", caret: 1, selection: None, edit_range: None, },
     record_history=true,
   )
   history_advance(40)
   let second = apply_rich_text_input_transform(
     first.control,
     "h",
-    { text: "he", caret: 2, selection: None, edit_range: None },
+    { text: "he", caret: 2, selection: None, edit_range: None, },
     record_history=true,
   )
   assert_eq(second.changed, true)

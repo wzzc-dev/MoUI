@@ -127,7 +127,7 @@ pub fn linux_webview_get_surface_data(
   let width = linux_webview_get_surface_width(wl_surface, id)
   let height = linux_webview_get_surface_height(wl_surface, id)
   let stride = linux_webview_get_surface_stride(wl_surface, id)
-  { surface_ptr, width, height, stride }
+  { surface_ptr, width, height, stride, }
 }
 
 ///|

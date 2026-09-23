@@ -17,7 +17,7 @@ test "overlay fade duration resolves reduced motion and theme tiers" {
         fast_ms: 10.0,
         normal_ms: 50.0,
         slow_ms: 100.0,
-        easing: @core.Easing::EaseInOut,
+        easing: EaseInOut,
       },
     },
   }

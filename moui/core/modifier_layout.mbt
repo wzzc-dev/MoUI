@@ -267,7 +267,7 @@ pub(all) struct SpacingModifier {
 pub fn[Msg] SpacingModifier::to_any_modifier(
   _self : SpacingModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "Spacing" }
+  { ..noop_modifier(), identity_kind: "Spacing", }
 }
 
 ///|
@@ -279,7 +279,7 @@ pub(all) struct LayoutPriorityModifier {
 pub fn[Msg] LayoutPriorityModifier::to_any_modifier(
   _self : LayoutPriorityModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "LayoutPriority" }
+  { ..noop_modifier(), identity_kind: "LayoutPriority", }
 }
 
 ///|
@@ -291,7 +291,7 @@ pub(all) struct MainAxisAlignmentModifier {
 pub fn[Msg] MainAxisAlignmentModifier::to_any_modifier(
   _self : MainAxisAlignmentModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "MainAxisAlignment" }
+  { ..noop_modifier(), identity_kind: "MainAxisAlignment", }
 }
 
 ///|
@@ -303,7 +303,7 @@ pub(all) struct CrossAxisAlignmentModifier {
 pub fn[Msg] CrossAxisAlignmentModifier::to_any_modifier(
   _self : CrossAxisAlignmentModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "CrossAxisAlignment" }
+  { ..noop_modifier(), identity_kind: "CrossAxisAlignment", }
 }
 
 ///|
@@ -313,7 +313,7 @@ pub(all) struct IntrinsicWidthModifier {}
 pub fn[Msg] IntrinsicWidthModifier::to_any_modifier(
   _self : IntrinsicWidthModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "IntrinsicWidth" }
+  { ..noop_modifier(), identity_kind: "IntrinsicWidth", }
 }
 
 ///|
@@ -323,7 +323,7 @@ pub(all) struct IntrinsicHeightModifier {}
 pub fn[Msg] IntrinsicHeightModifier::to_any_modifier(
   _self : IntrinsicHeightModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "IntrinsicHeight" }
+  { ..noop_modifier(), identity_kind: "IntrinsicHeight", }
 }
 
 ///|
@@ -336,5 +336,5 @@ pub fn[Msg] KeyModifier::to_any_modifier(
   self : KeyModifier,
 ) -> AnyModifier[Msg] {
   let key = self.key
-  { ..noop_modifier(), identity_kind: "Key", identity_key: Some(key) }
+  { ..noop_modifier(), identity_kind: "Key", identity_key: Some(key), }
 }

@@ -24,12 +24,7 @@ fn terminal_body(
   for index, line in model.terminal_lines {
     if index >= visible {
       rows.push(
-        @views.text(
-          line,
-          role=@views.TextRole::Caption,
-          width=metrics.width - 32.0,
-          height=22.0,
-        )
+        @views.text(line, role=Caption, width=metrics.width - 32.0, height=22.0)
         .font(@text.FontSpec::new(size=12.0, weight=430))
         .foreground(
           if line.has_prefix("mo> ") {
@@ -46,16 +41,12 @@ fn terminal_body(
       )
     }
   }
-  let transcript = @views.column(
-      rows,
-      spacing=2.0,
-      align=@views.CrossAlign::Start,
-    )
+  let transcript = @views.column(rows, spacing=2.0, align=Start)
     .frame(width=metrics.width - 24.0, height=body_height - input_height - 16.0)
     .clip()
   let input_row = @views.row(
     [
-      @views.text("mo>", role=@views.TextRole::Caption, width=28.0, height=30.0)
+      @views.text("mo>", role=Caption, width=28.0, height=30.0)
       .font(@text.FontSpec::new(size=12.5, weight=600))
       .foreground(text_color),
       @views.text_field(
@@ -63,7 +54,7 @@ fn terminal_body(
         on_input=value => TerminalInputChanged(value),
         on_submit=Some(RunTerminalCommand),
         placeholder="type help",
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width=metrics.width - 220.0,
         height=32.0,
@@ -71,7 +62,7 @@ fn terminal_body(
       @views.button(
         "Run",
         on_click=RunTerminalCommand,
-        variant=@views.ButtonVariant::Tonal,
+        variant=Tonal,
         theme~,
         width=72.0,
         height=30.0,
@@ -79,15 +70,15 @@ fn terminal_body(
       @views.button(
         "Clear",
         on_click=ClearTerminal,
-        icon=Some(@views.IconName::Close),
-        variant=@views.ButtonVariant::Ghost,
+        icon=Some(Close),
+        variant=Ghost,
         theme~,
         width=76.0,
         height=30.0,
       ),
     ],
     spacing=10.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   ).frame(width=metrics.width - 24.0, height=input_height)
   let shell = @views.container(
     @views.padding_edges(transcript, left=12.0, right=12.0, top=8.0, bottom=8.0),
@@ -97,5 +88,5 @@ fn terminal_body(
     corner_radius=0.0,
     padding=0.0,
   )
-  @views.column([shell, input_row], spacing=6.0, align=@views.CrossAlign::Start)
+  @views.column([shell, input_row], spacing=6.0, align=Start)
 }

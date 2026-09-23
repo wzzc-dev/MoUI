@@ -13,7 +13,7 @@ pub fn WindowFrameHooks::new(
   request_redraw? : () -> Unit = () => (),
   sync_ime? : () -> Unit = () => (),
 ) -> WindowFrameHooks {
-  { prepare_frame, finish_presented, request_redraw, sync_ime }
+  { prepare_frame, finish_presented, request_redraw, sync_ime, }
 }
 
 ///|

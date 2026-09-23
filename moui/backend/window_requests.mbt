@@ -89,7 +89,7 @@ pub fn WindowRequests::drain_with_handler(
   let completions = []
   for request in self.drain() {
     let result = handle(request)
-    let completion : WindowRequestCompletion = { request, result }
+    let completion : WindowRequestCompletion = { request, result, }
     self.record_result(request, result)
     completions.push(completion)
   }

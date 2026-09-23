@@ -24,7 +24,7 @@ pub(all) struct DesignComponentStyleResolverRecord {
 ///|
 pub fn component_style_resolver_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> Array[DesignComponentStyleResolverRecord] {
   [
     component_style_resolver_record(preset, "Button", scheme),
@@ -45,7 +45,7 @@ pub fn component_style_resolver_report(
 pub fn component_style_resolver_for(
   preset : @common.DesignPreset,
   component : String,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> DesignComponentStyleResolverRecord? {
   for item in component_style_resolver_report(preset, scheme~) {
     if item.component == component {
@@ -66,9 +66,9 @@ pub fn component_style_resolver_gap_count(preset : @common.DesignPreset) -> Int 
   for item in component_style_resolver_report(preset) {
     if !item.resolves_tokens ||
       !item.resolves_core_style ||
-      item.status == DesignTokenStatus::NotMapped ||
-      item.status == DesignTokenStatus::SourceMapped ||
-      item.status == DesignTokenStatus::PreviewMapped {
+      item.status == NotMapped ||
+      item.status == SourceMapped ||
+      item.status == PreviewMapped {
       count = count + 1
     }
   }
@@ -151,7 +151,7 @@ fn component_style_resolver_record(
     !resolves_core_style {
     DesignTokenStatus::NotMapped
   } else {
-    DesignTokenStatus::ComponentMapped
+    ComponentMapped
   }
   {
     preset,
@@ -210,8 +210,8 @@ fn component_tokens_resolve(
       (
         tokens.components.slider.foreground == tokens.palette.primary ||
         (
-          tokens.preset == @common.DesignPreset::Carbon &&
-          tokens.scheme == @core.ColorScheme::Light &&
+          tokens.preset == Carbon &&
+          tokens.scheme == Light &&
           tokens.components.slider.foreground == tokens.palette.foreground
         )
       ) &&
@@ -279,7 +279,7 @@ fn component_core_style_resolves(
       styles.surface.raised.radius == tokens.components.surface.raised_radius &&
       styles.surface.raised.padding ==
       @core.Insets::all(tokens.components.surface.raised_padding) &&
-      styles.surface.overlay.level == @core.SurfaceLevel::Overlay
+      styles.surface.overlay.level == Overlay
     "ChoiceControl" =>
       styles.choice_control == tokens.components.choice_control.core_style()
     "Progress" => styles.progress == tokens.components.progress.core_style()

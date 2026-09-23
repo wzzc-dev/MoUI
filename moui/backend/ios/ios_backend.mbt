@@ -11,7 +11,7 @@ pub fn IosSurfaceHandle::new(raw~ : UInt64) -> IosSurfaceHandle {
 
 ///|
 pub fn IosSurfaceHandle::none() -> IosSurfaceHandle {
-  { raw: 0UL }
+  { raw: 0UL, }
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn IosSurfaceBinding::new(
     _metrics,
   ) => (),
 ) -> IosSurfaceBinding {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, }
 }
 
 ///|
@@ -202,7 +202,7 @@ pub fn ios_readiness() -> IosBackendReadiness {
 pub fn backend_info() -> IosBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
-      backend=@host.HostBackendKind::Native,
+      backend=Native,
       description="iOS window-hosted native host (HostCmd/ApplicationHandler)",
     ),
     capabilities: ios_capability_matrix(),

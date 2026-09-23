@@ -35,7 +35,7 @@ pub fn WindowCommands::open_window(
   self : WindowCommands,
   request : @backend_host.WindowOpenRequest,
 ) -> Unit {
-  self.queue.push(@backend_host.WindowRequest::OpenWindow(request))
+  self.queue.push(OpenWindow(request))
 }
 
 ///|

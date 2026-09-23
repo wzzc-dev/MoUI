@@ -1,15 +1,14 @@
 ///|
 test "material package entrypoints align with common preset" {
   let expected = @common.DesignPreset::Material
-  assert_true(preset() == expected)
-  assert_true(tokens().preset == expected)
-  assert_true(light_theme().scheme == @core.ColorScheme::Light)
-  assert_true(dark_theme().scheme == @core.ColorScheme::Dark)
+  assert_true(@material.preset() == expected)
+  assert_true(@material.tokens().preset == expected)
+  assert_true(@material.light_theme().scheme == Light)
+  assert_true(@material.dark_theme().scheme == Dark)
+  assert_true(@material.system_theme(system_scheme=Dark).scheme == Dark)
   assert_true(
-    system_theme(system_scheme=@core.ColorScheme::Dark).scheme ==
-    @core.ColorScheme::Dark,
+    @audit.design_system_report(@material.preset()).preset == expected,
   )
-  assert_true(@audit.design_system_report(preset()).preset == expected)
-  assert_true(@audit.manifest(preset()).preset == expected)
-  assert_true(@audit.component_token_matrix(preset()).length() > 0)
+  assert_true(@audit.manifest(@material.preset()).preset == expected)
+  assert_true(@audit.component_token_matrix(@material.preset()).length() > 0)
 }

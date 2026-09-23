@@ -21,7 +21,7 @@ fn MoWorkbenchApp::initial_state(
   (
     model,
     self.backend.effect([FetchSessionList], event => {
-      WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(event))
+      CodeMsg(ReceiveAgentEvent(event))
     }),
   )
 }

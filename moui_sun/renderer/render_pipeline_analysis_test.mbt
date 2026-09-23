@@ -1,7 +1,7 @@
 ///|
 test "RenderPipeline analyzes dirty bounds and present plan" {
   let icon = @graphics.Pixmap::new(2, 2)
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .fill_rect(
       1.0,
       1.0,
@@ -39,9 +39,9 @@ test "RenderPipeline analyzes dirty bounds and present plan" {
 
 ///|
 test "RenderPipeline analysis clips canvas bounds and estimates stroke paths" {
-  let renderer = Renderer::new(@graphics.Canvas::new(4, 3))
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(4, 3))
   let clear_analysis = renderer.analyze_pipeline(
-    RenderPipeline::new().clear_canvas(@graphics.Color::white()),
+    @renderer.RenderPipeline::new().clear_canvas(@graphics.Color::white()),
   )
   assert_true(
     clear_analysis.get_dirty_bounds() ==
@@ -50,10 +50,10 @@ test "RenderPipeline analysis clips canvas bounds and estimates stroke paths" {
   assert_eq(clear_analysis.get_dirty_rect_count(), 1)
 
   let stroke_paint = @graphics.Paint::new()
-    .set_style(@graphics.PaintStyle::Stroke)
+    .set_style(Stroke)
     .set_stroke_width(4.0)
   let stroke_path = @graphics.Path::new().move_to(4.0, 4.0).line_to(6.0, 4.0)
-  let stroke_analysis = RenderPipeline::new()
+  let stroke_analysis = @renderer.RenderPipeline::new()
     .stroke_path(stroke_path, stroke_paint)
     .analyze(10, 10)
   assert_eq(stroke_analysis.get_stroke_count(), 1)
@@ -66,7 +66,7 @@ test "RenderPipeline analysis clips canvas bounds and estimates stroke paths" {
 ///|
 test "RenderPipeline analysis uses path control bounds" {
   let path = @graphics.Path::new().move_to(1.0, 1.0).quad_to(5.0, 2.0, 1.0, 3.0)
-  let analysis = RenderPipeline::new()
+  let analysis = @renderer.RenderPipeline::new()
     .fill_path(path, @graphics.Paint::new())
     .analyze(8, 6)
   assert_true(

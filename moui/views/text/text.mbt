@@ -1,14 +1,14 @@
 ///|
 pub fn[Msg] text(
   text : String,
-  role? : @style.TextRole = @style.TextRole::Body,
+  role? : @style.TextRole = Body,
   theme? : @core.Theme,
   width? : Double = 160.0,
   height? : Double = 32.0,
-  align? : @core.TextAlign = @core.TextAlign::TextCenter,
+  align? : @core.TextAlign = TextCenter,
 ) -> @core.View[Msg] {
   let size = @core.Size::new(width~, height~)
-  @core.View::from_node(Text::{ text, role, theme, size, align })
+  @core.View::from_node(Text::{ text, role, theme, size, align, })
 }
 
 ///|
@@ -43,9 +43,9 @@ impl @core.ViewNode for Text with fn declaration(self) {
   )
   let align = @core.DeclarationKey::int(
     match self.align {
-      @core.TextAlign::TextStart => 0
-      @core.TextAlign::TextCenter => 1
-      @core.TextAlign::TextEnd => 2
+      TextStart => 0
+      TextCenter => 1
+      TextEnd => 2
     },
   )
   @common.view_declaration(
@@ -67,7 +67,7 @@ impl @core.ViewNode for Text with fn declaration(self) {
       ]),
     ),
     paint=if self.theme is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(
         @common.view_record_key("Text.paint", [
@@ -115,7 +115,7 @@ impl @core.ViewNode for Text with fn paint(self, context) {
     .multiply_alpha(0.7)
   }
   @core.ViewPaintPlan::commands([
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=self.text,
         frame=context.frame,
@@ -130,8 +130,8 @@ impl @core.ViewNode for Text with fn paint(self, context) {
 ///|
 impl @core.ViewNode for Text with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Text,
+    composition=Boundary,
+    role=Text,
     label=self.text,
     value=self.text,
   )
@@ -143,7 +143,7 @@ pub fn[Msg] text_field(
   on_input~ : (String) -> Msg,
   on_submit? : Msg? = None,
   placeholder? : String = "",
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
   style? : @style.TextFieldStyle,
   width? : Double = 240.0,
@@ -170,7 +170,7 @@ pub fn[Msg] text_area(
   on_input~ : (String) -> Msg,
   placeholder? : String = "",
   lines? : Int = 4,
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Outline,
+  variant? : @style.TextFieldVariant = Outline,
   theme? : @core.Theme,
   width? : Double = 320.0,
   line_height? : Double = 28.0,

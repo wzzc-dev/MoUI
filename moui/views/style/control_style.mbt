@@ -140,12 +140,12 @@ pub fn SurfaceStyle::default(theme? : @core.Theme) -> SurfaceStyle {
   let resolved_theme = @common.views_ambient_theme(theme)
   let set = views_ambient_control_theme(resolved_theme)
   {
-    brush: resolved_theme.surface_brush(@core.SurfaceLevel::Base),
+    brush: resolved_theme.surface_brush(Base),
     border: None,
     radius: set.surface.base_radius,
     shadow: set.surface.base_shadow,
     padding: @core.Insets::all(set.surface.base_padding),
-    level: @core.SurfaceLevel::Base,
+    level: Base,
   }
 }
 
@@ -156,18 +156,18 @@ pub fn SurfaceStyle::raised(theme? : @core.Theme) -> SurfaceStyle {
   // separation comes from the outline tone. Dark mode uses a faint white edge
   // since the outline token alone is too subtle against dark surfaces.
   let border_color = match resolved_theme.scheme {
-    @core.ColorScheme::Light => resolved_theme.palette.outline
-    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.06)
+    Light => resolved_theme.palette.outline
+    Dark => @core.Color::white().multiply_alpha(0.06)
   }
   {
-    brush: resolved_theme.surface_brush(@core.SurfaceLevel::Raised),
+    brush: resolved_theme.surface_brush(Raised),
     border: Some(
       @core.BorderStyle::new(brush=@core.Brush::solid(border_color), width=1.0),
     ),
     radius: resolved_theme.radius_scale.lg,
     shadow: None,
     padding: @core.Insets::all(resolved_theme.spacing_scale.lg),
-    level: @core.SurfaceLevel::Raised,
+    level: Raised,
   }
 }
 
@@ -242,7 +242,7 @@ pub fn ButtonStyle::filled(theme? : @core.Theme) -> ButtonStyle {
     background=@core.Brush::solid(resolved_theme.palette.surface_variant),
     radius=resolved_theme.radius_scale.md,
   )
-  { normal, hovered, pressed, disabled }
+  { normal, hovered, pressed, disabled, }
 }
 
 ///|
@@ -278,7 +278,7 @@ pub fn ButtonStyle::tonal(theme? : @core.Theme) -> ButtonStyle {
     background=@core.Brush::solid(base.multiply_alpha(0.6)),
     radius=resolved_theme.radius_scale.md,
   )
-  { normal, hovered, pressed, disabled }
+  { normal, hovered, pressed, disabled, }
 }
 
 ///|
@@ -322,7 +322,7 @@ pub fn ButtonStyle::outline(theme? : @core.Theme) -> ButtonStyle {
     ),
     radius=resolved_theme.radius_scale.md,
   )
-  { normal, hovered, pressed, disabled }
+  { normal, hovered, pressed, disabled, }
 }
 
 ///|
@@ -355,7 +355,7 @@ pub fn ButtonStyle::ghost(theme? : @core.Theme) -> ButtonStyle {
     background=transparent,
     radius=resolved_theme.radius_scale.md,
   )
-  { normal, hovered, pressed, disabled }
+  { normal, hovered, pressed, disabled, }
 }
 
 ///|
@@ -491,7 +491,7 @@ pub fn FormValidationStyle::default(
 /// `ToneStyle` shape. After the style unification, `XStyle::default` helpers
 /// project from `ControlThemeSet`; this bridges the two parallel token types.
 fn tone_style_from_tokens(t : ToneTokens) -> ToneStyle {
-  { foreground: t.foreground, background: t.background, border: t.border }
+  { foreground: t.foreground, background: t.background, border: t.border, }
 }
 
 ///|
@@ -502,7 +502,7 @@ pub(all) struct PickerItem {
 
 ///|
 pub fn PickerItem::new(id~ : String, label~ : String) -> PickerItem {
-  { id, label }
+  { id, label, }
 }
 
 ///|

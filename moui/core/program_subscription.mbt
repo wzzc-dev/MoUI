@@ -47,14 +47,14 @@ pub fn SubscriptionDescriptor::label(self : SubscriptionDescriptor) -> String {
 
 ///|
 pub fn[Msg] Subscription::none() -> Subscription[Msg] {
-  { node: SubscriptionNone }
+  { node: SubscriptionNone, }
 }
 
 ///|
 pub fn[Msg] Subscription::batch(
   subscriptions : Array[Subscription[Msg]],
 ) -> Subscription[Msg] {
-  { node: SubscriptionBatch(subscriptions) }
+  { node: SubscriptionBatch(subscriptions), }
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn[Msg] Subscription::listen(
   kind? : String = "custom",
   label? : String = "",
 ) -> Subscription[Msg] {
-  { node: SubscriptionSource({ key, kind, label, start }) }
+  { node: SubscriptionSource({ key, kind, label, start, }), }
 }
 
 ///|
@@ -245,5 +245,5 @@ fn[Msg] Subscription::sources(
 fn[Msg] SubscriptionSource::descriptor(
   self : SubscriptionSource[Msg],
 ) -> SubscriptionDescriptor {
-  { key: self.key, kind: self.kind, label: self.label }
+  { key: self.key, kind: self.kind, label: self.label, }
 }

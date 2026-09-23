@@ -113,14 +113,14 @@ pub fn resolve_shader_effect(
   if builtin_shader_names().any(name => name == spec.name) {
     {
       name: spec.name,
-      status: ShaderRegistryStatus::ShaderReady,
+      status: ShaderReady,
       fallback: spec.fallback,
       diagnostic: "",
     }
   } else {
     {
       name: spec.name,
-      status: ShaderRegistryStatus::ShaderFallback,
+      status: ShaderFallback,
       fallback: spec.fallback,
       diagnostic: "unknown shader effect: " + spec.name,
     }
@@ -129,7 +129,7 @@ pub fn resolve_shader_effect(
 
 ///|
 pub fn tessellate_path(spec : @core.PathSpec) -> PathMesh {
-  let mesh = PathMesh::{ vertices: [], diagnostics: [] }
+  let mesh = PathMesh::{ vertices: [], diagnostics: [], }
   let path = zeno_path_from_spec(spec, mesh)
   append_zeno_fill_mesh(mesh, path, spec.fill)
   ignore(append_flattened_stroke_mesh(mesh, spec))
@@ -145,17 +145,17 @@ fn zeno_path_from_spec(
   let mut has_current = false
   for verb in spec.verbs {
     match verb {
-      @core.PathVerb::MoveTo(point) => {
+      MoveTo(point) => {
         @zeno.PathBuilder::move_to(path, zeno_vector(point))
         has_current = true
       }
-      @core.PathVerb::LineTo(point) =>
+      LineTo(point) =>
         if has_current {
           @zeno.PathBuilder::line_to(path, zeno_vector(point))
         } else {
           mesh.diagnostics.push("LineTo ignored before MoveTo")
         }
-      @core.PathVerb::QuadTo(control, point) =>
+      QuadTo(control, point) =>
         if has_current {
           @zeno.PathBuilder::quad_to(
             path,
@@ -165,7 +165,7 @@ fn zeno_path_from_spec(
         } else {
           mesh.diagnostics.push("QuadTo ignored before MoveTo")
         }
-      @core.PathVerb::CubicTo(c1, c2, point) =>
+      CubicTo(c1, c2, point) =>
         if has_current {
           @zeno.PathBuilder::curve_to(
             path,
@@ -176,7 +176,7 @@ fn zeno_path_from_spec(
         } else {
           mesh.diagnostics.push("CubicTo ignored before MoveTo")
         }
-      @core.PathVerb::Close =>
+      Close =>
         if has_current {
           @zeno.PathBuilder::close(path)
           has_current = false
@@ -199,7 +199,7 @@ fn append_zeno_fill_mesh(
       append_zeno_vertices(
         mesh.vertices,
         path,
-        @zeno.Style::Fill(@zeno.Fill::NonZero),
+        Fill(NonZero),
         brush_to_path_payload(brush),
       )
     None => ()
@@ -218,11 +218,11 @@ fn append_flattened_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
         let mut emitted = false
         for verb in spec.verbs {
           match verb {
-            @core.PathVerb::MoveTo(point) => {
+            MoveTo(point) => {
               current = Some(point)
               subpath_start = Some(point)
             }
-            @core.PathVerb::LineTo(point) => {
+            LineTo(point) => {
               match current {
                 Some(start) =>
                   if append_line_stroke_vertices(
@@ -238,7 +238,7 @@ fn append_flattened_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
               }
               current = Some(point)
             }
-            @core.PathVerb::QuadTo(control, point) => {
+            QuadTo(control, point) => {
               match current {
                 Some(start) =>
                   if append_quadratic_stroke_vertices(
@@ -255,7 +255,7 @@ fn append_flattened_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
               }
               current = Some(point)
             }
-            @core.PathVerb::CubicTo(c1, c2, point) => {
+            CubicTo(c1, c2, point) => {
               match current {
                 Some(start) =>
                   if append_cubic_stroke_vertices(
@@ -273,7 +273,7 @@ fn append_flattened_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
               }
               current = Some(point)
             }
-            @core.PathVerb::Close => {
+            Close => {
               match (current, subpath_start) {
                 (Some(start), Some(point)) =>
                   if append_line_stroke_vertices(
@@ -410,12 +410,12 @@ fn append_line_stroke_vertices(
   let half_width = stroke_width / 2.0
   let nx = -dy / length * half_width
   let ny = dx / length * half_width
-  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), payload)
-  push_path_vertex(vertices, @zeno.Vector(start.x - nx, start.y - ny), payload)
-  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), payload)
-  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), payload)
-  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), payload)
-  push_path_vertex(vertices, @zeno.Vector(end.x + nx, end.y + ny), payload)
+  push_path_vertex(vertices, Vector(start.x + nx, start.y + ny), payload)
+  push_path_vertex(vertices, Vector(start.x - nx, start.y - ny), payload)
+  push_path_vertex(vertices, Vector(end.x - nx, end.y - ny), payload)
+  push_path_vertex(vertices, Vector(start.x + nx, start.y + ny), payload)
+  push_path_vertex(vertices, Vector(end.x - nx, end.y - ny), payload)
+  push_path_vertex(vertices, Vector(end.x + nx, end.y + ny), payload)
   true
 }
 
@@ -432,9 +432,9 @@ fn append_zeno_vertices(
   let points : Array[@zeno.Vector] = []
   while walker.next() is Some(vertex) {
     match vertex {
-      @zeno.Vertex::Start(point, _) => points.push(point)
-      @zeno.Vertex::Middle(point, _, _) => points.push(point)
-      @zeno.Vertex::End(point, _, _) => points.push(point)
+      Start(point, _) => points.push(point)
+      Middle(point, _, _) => points.push(point)
+      End(point, _, _) => points.push(point)
     }
   }
   for index in 0..<(points.length() / 3) {
@@ -448,7 +448,7 @@ fn append_zeno_vertices(
 ///|
 fn brush_to_path_payload(brush : @core.Brush) -> PathBrushPayload {
   match brush {
-    @core.Brush::Solid(color) =>
+    Solid(color) =>
       {
         kind: 0.0,
         start: @core.Point::new(x=0.0, y=0.0),
@@ -456,7 +456,7 @@ fn brush_to_path_payload(brush : @core.Brush) -> PathBrushPayload {
         color0: color,
         color1: color,
       }
-    @core.Brush::LinearGradient(gradient) =>
+    LinearGradient(gradient) =>
       {
         kind: 0.0,
         start: gradient.start,
@@ -464,7 +464,7 @@ fn brush_to_path_payload(brush : @core.Brush) -> PathBrushPayload {
         color0: gradient.start_color,
         color1: gradient.end_color,
       }
-    @core.Brush::RadialGradient(gradient) =>
+    RadialGradient(gradient) =>
       {
         kind: 1.0,
         start: gradient.center,
@@ -502,5 +502,5 @@ fn push_path_vertex(
 
 ///|
 fn zeno_vector(point : @core.Point) -> @zeno.Vector {
-  @zeno.Vector(point.x, point.y)
+  Vector(point.x, point.y)
 }

@@ -16,7 +16,7 @@ fn window_web_default_canvas_id(raw_id : Int) -> String {
 
 ///|
 fn WebWindowPlatformSlots::new() -> WebWindowPlatformSlots {
-  { slots: [] }
+  { slots: [], }
 }
 
 ///|

@@ -7,8 +7,7 @@ fn image_task_test_session(applied : Ref[Int]) -> @render.RendererSession {
     image_records=() => [@render.ImageResourceRecord::loading("asset.png")],
     apply_image_load_completion=completion => {
       applied.val = applied.val + 1
-      completion.status
-      is @render.ImageResourceLoadCompletionStatus::ImageLoadReady
+      completion.status is ImageLoadReady
     },
     image_source=@render.HostImageSource::new(read=_ => Some(b"image")),
     image_decoder=Some(
@@ -37,7 +36,7 @@ fn next_image_request(
   )
   for event in renderer.drain_events() {
     match event {
-      @render.RendererEvent::ImageLoadRequested(request) => return request
+      ImageLoadRequested(request) => return request
       _ => ()
     }
   }
@@ -53,8 +52,8 @@ test "window image tasks de-duplicate, apply once, and ignore late completion" {
     None,
   )
   let renderer = image_task_test_session(applied)
-  let tasks = WindowImageTasks::new(
-    starter=WindowImageTaskStarter::new(start=(_request, complete) => {
+  let tasks = @image.WindowImageTasks::new(
+    starter=@image.WindowImageTaskStarter::new(start=(_request, complete) => {
       completion_slot.val = Some(complete)
       Some(() => cancellations.val = cancellations.val + 1)
     }),
@@ -105,8 +104,7 @@ fn deferred_image_starter_session(
     image_records=() => [@render.ImageResourceRecord::loading(source)],
     apply_image_load_completion=completion => {
       applied.val = applied.val + 1
-      completion.status
-      is @render.ImageResourceLoadCompletionStatus::ImageLoadReady
+      completion.status is ImageLoadReady
     },
     image_source=@render.HostImageSource::new(read=_ => Some(b"local")),
     image_decoder=Some(
@@ -132,8 +130,8 @@ test "deferred image starter fetches remote sources through the worker" {
   let renderer = deferred_image_starter_session(
     "https://example.com/mark.svg", applied, bytes_len,
   )
-  let tasks = WindowImageTasks::new(
-    starter=WindowImageTaskStarter::deferred(
+  let tasks = @image.WindowImageTasks::new(
+    starter=@image.WindowImageTaskStarter::deferred(
       fetch=_source => {
         fetch_calls.val = fetch_calls.val + 1
         Some(b"remote-bytes")
@@ -174,8 +172,8 @@ test "deferred image starter completes local sources without a worker" {
   let renderer = deferred_image_starter_session(
     "/tmp/notes/local.png", applied, bytes_len,
   )
-  let tasks = WindowImageTasks::new(
-    starter=WindowImageTaskStarter::deferred(
+  let tasks = @image.WindowImageTasks::new(
+    starter=@image.WindowImageTaskStarter::deferred(
       fetch=_source => {
         fetches.val = fetches.val + 1
         None

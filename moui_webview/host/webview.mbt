@@ -74,9 +74,9 @@ pub(all) struct WebViewChannelPolicy {
 ///|
 pub fn WebViewChannelPolicy::new(
   name~ : String,
-  direction? : WebViewChannelDirection = WebViewChannelDirection::Bidirectional,
+  direction? : WebViewChannelDirection = Bidirectional,
 ) -> WebViewChannelPolicy {
-  { name, direction }
+  { name, direction, }
 }
 
 ///|
@@ -158,7 +158,7 @@ pub fn WebViewControllerConfig::new(
   capabilities? : Array[String] = [],
   host_patches? : Array[HostPatchBundle] = [],
 ) -> WebViewControllerConfig {
-  { security, capabilities, host_patches }
+  { security, capabilities, host_patches, }
 }
 
 ///|
@@ -169,7 +169,7 @@ pub(all) struct WebViewError {
 
 ///|
 pub fn WebViewError::new(code~ : String, message~ : String) -> WebViewError {
-  { code, message }
+  { code, message, }
 }
 
 ///|
@@ -192,7 +192,7 @@ pub fn[T] WebViewTask::new(
   start~ : ((WebViewTaskResult[T]) -> Unit) -> (() -> Unit)?,
   label? : String = "",
 ) -> WebViewTask[T] {
-  { key, label, start_fn: start }
+  { key, label, start_fn: start, }
 }
 
 ///|
@@ -373,7 +373,7 @@ pub fn WebViewNoDragRegion::new(
   right~ : Double,
   bottom~ : Double,
 ) -> WebViewNoDragRegion {
-  { left, top, right, bottom }
+  { left, top, right, bottom, }
 }
 
 ///|
@@ -421,8 +421,8 @@ pub fn WebViewSpec::platform_view_placement(
     @core.PlatformViewProperty::new(
       key="color-scheme",
       value=match self.color_scheme {
-        Some(@core.ColorScheme::Dark) => "dark"
-        Some(@core.ColorScheme::Light) => "light"
+        Some(Dark) => "dark"
+        Some(Light) => "light"
         None => ""
       },
     ),

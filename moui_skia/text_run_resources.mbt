@@ -7,7 +7,7 @@ fn TextRange::text_run_cache_id(self : TextRange) -> Bytes {
 fn TextRange::clamp_to_text(self : TextRange, text : Bytes) -> TextRange {
   let text_length = text.length()
   let start = self.start.clamp(min=0, max=text_length)
-  { start, end: self.end.clamp(min=start, max=text_length) }
+  { start, end: self.end.clamp(min=start, max=text_length), }
 }
 
 ///|
@@ -16,7 +16,7 @@ fn TextRange::bytes_from_text(self : TextRange, text : Bytes) -> Bytes {
   if range.is_empty() {
     b""
   } else {
-    let bytes : Array[Byte] = Array::new(capacity=range.length())
+    let bytes : Array[Byte] = Array(capacity=range.length())
     for index in range.start..<range.end {
       bytes.push(text[index])
     }
@@ -72,7 +72,7 @@ pub fn TextRunDescriptor::resource_plan(
   font_byte_size? : Int64 = 0L,
   fallback_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(
     self.resource_descriptor(text, font_key~, byte_size=text_byte_size),
   )

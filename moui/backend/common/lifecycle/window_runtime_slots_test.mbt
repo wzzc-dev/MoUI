@@ -1,11 +1,11 @@
 ///|
 test "host window runtime slots manage multiple window drivers" {
-  let registry = WindowRegistry::new()
-  let slots = WindowRuntimeSlots::new()
+  let registry = @lifecycle.WindowRegistry::new()
+  let slots = @lifecycle.WindowRuntimeSlots::new()
   inspect(slots.is_empty(), content="true")
-  let resolver = WindowSceneResolver::new(resolve=request => {
-    WindowSceneResolution::SceneResolved(
-      WindowSceneInstance::new(
+  let resolver = @lifecycle.WindowSceneResolver::new(resolve=request => {
+    SceneResolved(
+      @lifecycle.WindowSceneInstance::new(
         request~,
         runtime=window_test_runtime(
           root=@views.empty(),
@@ -23,9 +23,10 @@ test "host window runtime slots manage multiple window drivers" {
     primary=true,
   )
   let main_redraws = Ref(0)
-  let main_slot = match resolve_open_request(registry, main_request, resolver) {
-    WindowOpenResolution::OpenResolved(resolved) =>
-      WindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
+  let main_slot = match
+    @lifecycle.resolve_open_request(registry, main_request, resolver) {
+    OpenResolved(resolved) =>
+      @lifecycle.WindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
         main_redraws.val = main_redraws.val + 1
       })
     _ => fail("expected main runtime slot")
@@ -50,9 +51,9 @@ test "host window runtime slots manage multiple window drivers" {
   )
   let inspector_redraws = Ref(0)
   let inspector_slot = match
-    resolve_open_request(registry, inspector_request, resolver) {
-    WindowOpenResolution::OpenResolved(resolved) =>
-      WindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
+    @lifecycle.resolve_open_request(registry, inspector_request, resolver) {
+    OpenResolved(resolved) =>
+      @lifecycle.WindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
         inspector_redraws.val = inspector_redraws.val + 1
       })
     _ => fail("expected inspector runtime slot")
@@ -68,31 +69,22 @@ test "host window runtime slots manage multiple window drivers" {
     slots.apply_host_event(
       registry,
       inspector_slot.id,
-      @backend_host.Event::Focus(
-        @backend_host.HostFocusEvent::new(focused=true),
-      ),
+      Focus(@backend_host.HostFocusEvent::new(focused=true)),
     ),
   )
   match slots.focused_slot() {
     Some({ id, record, .. }) => {
       assert_true(id == inspector_slot.id)
-      assert_true(
-        record.phase == @backend_host.WindowLifecyclePhase::WindowFocused,
-      )
+      assert_true(record.phase == WindowFocused)
     }
     None => fail("expected focused inspector slot")
   }
   match slots.lookup(main_slot.id) {
-    Some({ record: { phase, .. }, .. }) =>
-      assert_true(phase == @backend_host.WindowLifecyclePhase::WindowVisible)
+    Some({ record: { phase, .. }, .. }) => assert_true(phase == WindowVisible)
     None => fail("expected main slot")
   }
   inspect(
-    slots.apply_host_event(
-      registry,
-      inspector_slot.id,
-      @backend_host.Event::RedrawRequested,
-    ),
+    slots.apply_host_event(registry, inspector_slot.id, RedrawRequested),
     content="false",
   )
   match slots.lookup(inspector_slot.id) {
@@ -104,15 +96,14 @@ test "host window runtime slots manage multiple window drivers" {
   match
     slots.apply_request(
       registry,
-      @backend_host.WindowRequest::ResizeWindow(
+      ResizeWindow(
         inspector_slot.id,
         @core.SurfaceMetrics::from_logical(
           size=@core.Size::new(width=420.0, height=500.0),
         ),
       ),
     ) {
-    @backend_host.WindowRequestResult::WindowUpdated(id) =>
-      assert_true(id == inspector_slot.id)
+    WindowUpdated(id) => assert_true(id == inspector_slot.id)
     _ => fail("expected resize request to update inspector slot")
   }
   match slots.lookup(inspector_slot.id) {
@@ -122,13 +113,8 @@ test "host window runtime slots manage multiple window drivers" {
       )
     None => fail("expected resized inspector slot")
   }
-  match
-    slots.apply_request(
-      registry,
-      @backend_host.WindowRequest::SetPrimaryWindow(inspector_slot.id),
-    ) {
-    @backend_host.WindowRequestResult::WindowUpdated(id) =>
-      assert_true(id == inspector_slot.id)
+  match slots.apply_request(registry, SetPrimaryWindow(inspector_slot.id)) {
+    WindowUpdated(id) => assert_true(id == inspector_slot.id)
     _ => fail("expected set-primary request to update inspector slot")
   }
   match slots.lookup(main_slot.id) {
@@ -143,11 +129,8 @@ test "host window runtime slots manage multiple window drivers" {
     None => fail("expected primary inspector slot")
   }
   match
-    slots.apply_request(
-      registry,
-      @backend_host.WindowRequest::FocusWindow(@backend_host.WindowId::new(404)),
-    ) {
-    @backend_host.WindowRequestResult::WindowRejected(message) =>
+    slots.apply_request(registry, FocusWindow(@backend_host.WindowId::new(404))) {
+    WindowRejected(message) =>
       inspect(message, content="cannot focus window: 404")
     _ => fail("expected missing request rejection")
   }
@@ -185,10 +168,10 @@ test "host runtime driver exposes runtime state for platform slots" {
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
-  let dark = runtime.environment().with_system_scheme(@core.ColorScheme::Dark)
+  let dark = runtime.environment().with_system_scheme(Dark)
   driver.set_environment(dark)
-  assert_true(driver.environment().color_scheme() == @core.ColorScheme::Dark)
-  assert_true(runtime.environment().color_scheme() == @core.ColorScheme::Dark)
+  assert_true(driver.environment().color_scheme() == Dark)
+  assert_true(runtime.environment().color_scheme() == Dark)
   driver.set_text_system(@core.TextSystem::fallback())
   assert_true(driver.focused_text_input() == runtime.focused_text_input())
 }

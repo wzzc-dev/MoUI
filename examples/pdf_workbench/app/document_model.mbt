@@ -97,7 +97,7 @@ pub fn PdfWorkbenchDocument::with_edit(
   edit : PdfWorkbenchEdit,
 ) -> PdfWorkbenchDocument {
   let base = match edit {
-    SetMetadataTitle(title) => { ..self, metadata_title: title }
+    SetMetadataTitle(title) => { ..self, metadata_title: title, }
     AddTextAnnotation(page, text) =>
       {
         ..self,
@@ -133,7 +133,7 @@ pub fn PdfWorkbenchDocument::with_edit(
         }
       })
   }
-  { ..base, dirty: true, edits, unsupported_entries, page_summaries }
+  { ..base, dirty: true, edits, unsupported_entries, page_summaries, }
 }
 
 ///|

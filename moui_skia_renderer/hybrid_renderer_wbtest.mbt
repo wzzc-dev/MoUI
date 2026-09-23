@@ -18,33 +18,25 @@ test "skia hybrid renderer presents next frame through raster after terminal rec
     worker: @render_common.GpuRenderWorker::new(),
     surface_route: resolve_surface_route(
       NativeGpuPlatform::MacOS,
-      NativeRendererMode::SkiaGpu,
+      SkiaGpu,
       gpu_available=true,
       gpu_promoted=false,
     ),
-    requested: NativeRendererMode::SkiaGpu,
+    requested: SkiaGpu,
     fallback_to_raster: false,
     pending_completions: [],
   }
   hybrid.worker.fail_next_context_recovery()
-  ignore(
-    hybrid.worker.submit_control(
-      @render.RendererControlMessage::ContextLoss("first"),
-    ),
-  )
+  ignore(hybrid.worker.submit_control(ContextLoss("first")))
   hybrid.worker.poll()
   hybrid.worker.poll()
   hybrid.worker.fail_next_context_recovery()
-  ignore(
-    hybrid.worker.submit_control(
-      @render.RendererControlMessage::ContextLoss("second"),
-    ),
-  )
+  ignore(hybrid.worker.submit_control(ContextLoss("second")))
   hybrid.worker.poll()
   hybrid.worker.poll()
   let frame = skia_test_draw_frame([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=1.0, y=1.0, width=4.0, height=4.0),
       @core.Color::black(),
     ),
@@ -59,9 +51,7 @@ test "skia hybrid renderer presents next frame through raster after terminal rec
   assert_true(hybrid.fallback_to_raster())
   let completions = hybrid.drain_present_completions()
   assert_true(
-    completions.any(completion => {
-      completion.status() is @render.RenderPresentStatus::FallbackToRaster
-    }),
+    completions.any(completion => completion.status() is FallbackToRaster),
   )
   let fallback = hybrid.render_frame(
     @render.RenderFrameSubmission::new(

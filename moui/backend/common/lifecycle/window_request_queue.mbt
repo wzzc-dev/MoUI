@@ -69,7 +69,7 @@ pub fn WindowRequestQueue::open_window(
   primary? : Bool = false,
 ) -> Unit {
   self.push(
-    @backend_host.WindowRequest::OpenWindow(
+    OpenWindow(
       @backend_host.WindowOpenRequest::new(title~, scene~, metrics~, primary~),
     ),
   )
@@ -80,7 +80,7 @@ pub fn WindowRequestQueue::focus_window(
   self : WindowRequestQueue,
   id : @backend_host.WindowId,
 ) -> Unit {
-  self.push(@backend_host.WindowRequest::FocusWindow(id))
+  self.push(FocusWindow(id))
 }
 
 ///|
@@ -88,7 +88,7 @@ pub fn WindowRequestQueue::close_window(
   self : WindowRequestQueue,
   id : @backend_host.WindowId,
 ) -> Unit {
-  self.push(@backend_host.WindowRequest::CloseWindow(id))
+  self.push(CloseWindow(id))
 }
 
 ///|
@@ -97,7 +97,7 @@ pub fn WindowRequestQueue::resize_window(
   id : @backend_host.WindowId,
   metrics : @core.SurfaceMetrics,
 ) -> Unit {
-  self.push(@backend_host.WindowRequest::ResizeWindow(id, metrics))
+  self.push(ResizeWindow(id, metrics))
 }
 
 ///|
@@ -105,7 +105,7 @@ pub fn WindowRequestQueue::minimize_window(
   self : WindowRequestQueue,
   id : @backend_host.WindowId,
 ) -> Unit {
-  self.push(@backend_host.WindowRequest::MinimizeWindow(id))
+  self.push(MinimizeWindow(id))
 }
 
 ///|
@@ -113,7 +113,7 @@ pub fn WindowRequestQueue::show_window(
   self : WindowRequestQueue,
   id : @backend_host.WindowId,
 ) -> Unit {
-  self.push(@backend_host.WindowRequest::ShowWindow(id))
+  self.push(ShowWindow(id))
 }
 
 ///|
@@ -121,7 +121,7 @@ pub fn WindowRequestQueue::set_primary_window(
   self : WindowRequestQueue,
   id : @backend_host.WindowId,
 ) -> Unit {
-  self.push(@backend_host.WindowRequest::SetPrimaryWindow(id))
+  self.push(SetPrimaryWindow(id))
 }
 
 ///|
@@ -139,7 +139,7 @@ pub fn WindowRequestQueue::record_result(
   request : @backend_host.WindowRequest,
   result : @backend_host.WindowRequestResult,
 ) -> Unit {
-  self.record_completion({ request, result })
+  self.record_completion({ request, result, })
 }
 
 ///|
@@ -151,7 +151,7 @@ pub fn WindowRequestQueue::subscribe_completed(
 ) -> () -> Unit {
   let token = self.next_completion_handler
   self.next_completion_handler = token + 1
-  self.completion_handlers.push({ token, handle })
+  self.completion_handlers.push({ token, handle, })
   () => ignore(self.remove_completion_handler(token))
 }
 
@@ -163,7 +163,7 @@ pub fn WindowRequestQueue::drain_with_handler(
   let completions = []
   for request in self.drain() {
     let result = handle(request)
-    let completion = @backend_host.WindowRequestCompletion::{ request, result }
+    let completion = @backend_host.WindowRequestCompletion::{ request, result, }
     self.record_completion(completion)
     completions.push(completion)
   }

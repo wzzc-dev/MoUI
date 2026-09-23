@@ -9,10 +9,10 @@ test "RenderPipeline batch plan groups contiguous command categories" {
   )
   let fill_paint = @graphics.Paint::new().set_color(@graphics.Color::red())
   let stroke_paint = @graphics.Paint::new()
-    .set_style(@graphics.PaintStyle::Stroke)
+    .set_style(Stroke)
     .set_stroke_width(2.0)
   let path = @graphics.Path::new().move_to(0.0, 4.0).line_to(4.0, 4.0)
-  let plan = RenderPipeline::new()
+  let plan = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .fill_rect(1.0, 1.0, 2.0, 2.0, fill_paint)
     .fill_path(@graphics.Path::new().add_rect(3.0, 1.0, 1.0, 2.0), fill_paint)
@@ -43,35 +43,35 @@ test "RenderPipeline batch plan groups contiguous command categories" {
     Some(@graphics.PixelRect::new(x=0, y=0, width=8, height=6)),
   )
   let batches = plan.get_batches()
-  assert_true(batches[0].get_kind() == RenderPipelineBatchKind::Clear)
+  assert_true(batches[0].get_kind() == Clear)
   assert_eq(batches[0].get_start_index(), 0)
   assert_eq(batches[0].get_command_count(), 1)
   assert_true(
     batches[0].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=8, height=6)),
   )
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Fill)
+  assert_true(batches[1].get_kind() == Fill)
   assert_eq(batches[1].get_start_index(), 1)
   assert_eq(batches[1].get_command_count(), 2)
   assert_true(
     batches[1].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=1, y=1, width=3, height=2)),
   )
-  assert_true(batches[2].get_kind() == RenderPipelineBatchKind::Stroke)
+  assert_true(batches[2].get_kind() == Stroke)
   assert_eq(batches[2].get_start_index(), 3)
   assert_eq(batches[2].get_command_count(), 1)
   assert_true(
     batches[2].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=3, width=5, height=2)),
   )
-  assert_true(batches[3].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[3].get_kind() == Image)
   assert_eq(batches[3].get_start_index(), 4)
   assert_eq(batches[3].get_command_count(), 2)
   assert_true(
     batches[3].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=6, y=0, width=2, height=2)),
   )
-  assert_true(batches[4].get_kind() == RenderPipelineBatchKind::Text)
+  assert_true(batches[4].get_kind() == Text)
   assert_eq(batches[4].get_start_index(), 6)
   assert_eq(batches[4].get_command_count(), 1)
   assert_true(batches[4].has_dirty())
@@ -79,16 +79,21 @@ test "RenderPipeline batch plan groups contiguous command categories" {
 
 ///|
 test "Renderer batch plan uses canvas bounds for present planning" {
-  let empty = RenderPipeline::new().batch_plan(5, 3)
+  let empty = @renderer.RenderPipeline::new().batch_plan(5, 3)
   assert_eq(empty.get_command_count(), 0)
   assert_eq(empty.get_batch_count(), 0)
   assert_true(!empty.has_dirty())
   assert_true(empty.get_dirty_bounds() == None)
 
   let icon = @graphics.Pixmap::new(4, 1)
-  let renderer = Renderer::new(@graphics.Canvas::new(5, 3))
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(5, 3))
   let plan = renderer.plan_pipeline_batches(
-    RenderPipeline::new().draw_pixmap(icon, 3, 1, @graphics.Paint::new()),
+    @renderer.RenderPipeline::new().draw_pixmap(
+      icon,
+      3,
+      1,
+      @graphics.Paint::new(),
+    ),
   )
   assert_eq(plan.get_batch_count(), 1)
   assert_true(
@@ -104,9 +109,9 @@ test "Renderer batch plan uses canvas bounds for present planning" {
 test "RenderPipeline planning dirty snapshots are isolated" {
   let fill_paint = @graphics.Paint::new().set_color(@graphics.Color::red())
   let stroke_paint = @graphics.Paint::new()
-    .set_style(@graphics.PaintStyle::Stroke)
+    .set_style(Stroke)
     .set_stroke_width(1.0)
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .fill_rect(1.0, 1.0, 1.0, 1.0, fill_paint)
     .stroke_rect(3.0, 1.0, 1.0, 1.0, stroke_paint)
 
@@ -122,7 +127,12 @@ test "RenderPipeline planning dirty snapshots are isolated" {
     Some(@graphics.PixelRect::new(x=1, y=0, width=4, height=3)),
   )
 
-  let diff = RenderPipeline::diff(RenderPipeline::new(), pipeline, 6, 4)
+  let diff = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new(),
+    pipeline,
+    6,
+    4,
+  )
   let diff_region = diff.get_dirty_region()
   diff_region.clear()
   assert_true(diff.has_dirty())
@@ -153,9 +163,9 @@ test "RenderPipeline planning dirty snapshots are isolated" {
 
   let fresh = plan.get_batches()
   assert_eq(fresh.length(), 2)
-  assert_true(fresh[0].get_kind() == RenderPipelineBatchKind::Fill)
+  assert_true(fresh[0].get_kind() == Fill)
   assert_true(fresh[0].has_dirty())
-  assert_true(fresh[1].get_kind() == RenderPipelineBatchKind::Stroke)
+  assert_true(fresh[1].get_kind() == Stroke)
 }
 
 ///|
@@ -167,7 +177,7 @@ test "RenderPipeline resource plan pre-resolves image and text dependencies" {
     font_size=10.0,
     line_height=10.0,
   )
-  let plan = RenderPipeline::new()
+  let plan = @renderer.RenderPipeline::new()
     .fill_rect(0.0, 0.0, 1.0, 1.0, @graphics.Paint::new())
     .draw_pixmap(icon, 0, 0, @graphics.Paint::new())
     .draw_pixmap_rect(
@@ -222,8 +232,8 @@ test "RenderPipeline resource plan pre-resolves image and text dependencies" {
 
 ///|
 test "Renderer resource plan reports empty and clipped-away dependencies" {
-  let renderer = Renderer::new(@graphics.Canvas::new(2, 2))
-  let empty = renderer.plan_pipeline_resources(RenderPipeline::new())
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(2, 2))
+  let empty = renderer.plan_pipeline_resources(@renderer.RenderPipeline::new())
   assert_eq(empty.get_command_count(), 0)
   assert_eq(empty.get_resource_count(), 0)
   assert_true(!empty.has_resources())
@@ -236,7 +246,7 @@ test "Renderer resource plan reports empty and clipped-away dependencies" {
     line_height=10.0,
   )
   let plan = renderer.plan_pipeline_resources(
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .draw_pixmap_rect(
       icon,
       @graphics.PixelRect::new(x=4, y=4, width=2, height=2),
@@ -280,7 +290,7 @@ test "RenderPipeline resource dependency snapshots are isolated" {
     line_height=10.0,
   )
   let paint = @graphics.Paint::new()
-  let plan = RenderPipeline::new()
+  let plan = @renderer.RenderPipeline::new()
     .draw_pixmap_keyed("image-a", icon, 0, 0, paint)
     .draw_pixmap_keyed("image-b", icon, 1, 0, paint)
     .draw_font_bytes_keyed(
@@ -343,7 +353,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
   )
   let tile_src = @graphics.PixelRect::new(x=2, y=2, width=3, height=2)
   let tall_tile_src = @graphics.PixelRect::new(x=0, y=1, width=1, height=3)
-  let plan = RenderPipeline::new()
+  let plan = @renderer.RenderPipeline::new()
     .draw_rgba_bytes_keyed(
       "rgba-full",
       Bytes::from_array([0]),
@@ -372,7 +382,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       2,
       1,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_quality_png_bytes_rect_keyed(
       "png-rect",
@@ -383,7 +393,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       1,
       2,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_tiled_bmp_bytes_rect_keyed(
       "bmp-tile",
@@ -415,7 +425,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       2.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-transform-rect",
@@ -426,7 +436,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       2.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-transform-full",
@@ -436,7 +446,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       2.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-transform-rect",
@@ -447,7 +457,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       3.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba-transform-full",
@@ -459,7 +469,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       4.0,
       3.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-transform-rect",
@@ -472,7 +482,7 @@ test "RenderPipeline resource plan uses declared image sizes for placeholder byt
       3.0,
       3.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .resource_plan()
 
@@ -533,7 +543,7 @@ test "RenderPipeline keyed resources expose identity and replay normally" {
     font_size=10.0,
     line_height=10.0,
   )
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .draw_pixmap_keyed("hero", icon, 0, 0, @graphics.Paint::new())
     .draw_pixmap_rect_keyed(
       "sprite",
@@ -568,7 +578,7 @@ test "RenderPipeline keyed resources expose identity and replay normally" {
   assert_true(texts[0].get_resource_key() == Some("ui-font"))
   assert_eq(texts[0].get_glyph_count(), 1)
 
-  let renderer = Renderer::new(@graphics.Canvas::new(12, 12))
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(12, 12))
   renderer.get_canvas().clear(@graphics.Color::white())
   let result = must_draw_pipeline(renderer, pipeline)
   assert_eq(result.get_image_count(), 2)
@@ -594,11 +604,11 @@ test "RenderPipeline resource replay caches keyed image and text commands" {
     font_size=10.0,
     line_height=10.0,
   )
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 2)
-  let renderer = Renderer::new(@graphics.Canvas::new(8, 12))
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 2)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(8, 12))
   let first = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_pixmap_keyed("icon", first_icon, 0, 0, @graphics.Paint::new())
     .draw_pixmap_rect_keyed(
@@ -647,7 +657,7 @@ test "RenderPipeline resource replay caches keyed image and text commands" {
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_pixmap_keyed("icon", second_icon, 0, 0, @graphics.Paint::new())
     .draw_pixmap_rect_keyed(

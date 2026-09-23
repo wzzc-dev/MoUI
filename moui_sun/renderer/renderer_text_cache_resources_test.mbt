@@ -3,8 +3,8 @@ test "Renderer::draw_text_face_cached_with_resources reuses text masks" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererTextResources::with_capacities(16, 16, 1, 2)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererTextResources::with_capacities(16, 16, 1, 2)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -60,8 +60,8 @@ test "Renderer cached text path uses RendererResources" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 2, 2)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 2, 2)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -101,8 +101,8 @@ test "Renderer::draw_text_face_atlas_with_resources reuses glyph resources" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererTextResources::with_capacities(16, 16, 4, 4)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererTextResources::with_capacities(16, 16, 4, 4)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -151,8 +151,8 @@ test "Renderer atlas text path uses RendererResources" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 4, 4, 2)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 4, 4, 2)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,

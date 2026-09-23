@@ -5,7 +5,7 @@
 test "button smoke" {
   let view : @core.View[Unit] = @views.button("Click", on_click=())
   assert_eq(view.identity().kind, "Button")
-  assert_true(view.semantics().role == Some(@core.SemanticsRole::Button))
+  assert_true(view.semantics().role == Some(Button))
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
@@ -15,11 +15,11 @@ test "button variants smoke" {
   for
     variant in [
       @views.ButtonVariant::Primary,
-      @views.ButtonVariant::Ghost,
-      @views.ButtonVariant::Outline,
-      @views.ButtonVariant::Subtle,
-      @views.ButtonVariant::SubtleBrand,
-      @views.ButtonVariant::Tonal,
+      Ghost,
+      Outline,
+      Subtle,
+      SubtleBrand,
+      Tonal,
     ] {
     let view : @core.View[Unit] = @views.button("Action", on_click=(), variant~)
     assert_eq(view.identity().kind, "Button")

@@ -12,31 +12,31 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
   let replay_state = RenderPipelineResourceReplayState::new()
   for command in self.commands {
     match command {
-      RenderCommand::Clear(color) => {
+      Clear(color) => {
         canvas.clear(color)
         replay_state.clear_count += 1
       }
-      RenderCommand::FillRect(x, y, width, height, paint) => {
+      FillRect(x, y, width, height, paint) => {
         canvas.fill_rect(x, y, width, height, paint)
         replay_state.fill_count += 1
       }
-      RenderCommand::StrokeRect(x, y, width, height, paint) => {
+      StrokeRect(x, y, width, height, paint) => {
         canvas.stroke_rect(x, y, width, height, paint)
         replay_state.stroke_count += 1
       }
-      RenderCommand::FillPath(path, paint) => {
+      FillPath(path, paint) => {
         canvas.fill_path(path, paint)
         replay_state.fill_count += 1
       }
-      RenderCommand::StrokePath(path, paint) => {
+      StrokePath(path, paint) => {
         canvas.stroke_path(path, paint)
         replay_state.stroke_count += 1
       }
-      RenderCommand::DrawPixmap(pixmap, x, y, paint) => {
+      DrawPixmap(pixmap, x, y, paint) => {
         canvas.draw_pixmap(pixmap, x, y, paint)
         replay_state.image_count += 1
       }
-      RenderCommand::DrawPixmapKeyed(resource_key, pixmap, x, y, paint) => {
+      DrawPixmapKeyed(resource_key, pixmap, x, y, paint) => {
         let result = renderer.draw_pixmap_cached_with_renderer_resources(
           pixmap, x, y, resources, resource_key, paint,
         )
@@ -45,7 +45,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         )
         replay_state.image_count += 1
       }
-      RenderCommand::DrawBmpBytesKeyed(resource_key, image_data, x, y, paint) =>
+      DrawBmpBytesKeyed(resource_key, image_data, x, y, paint) =>
         match
           record_bmp_resource_image_replay_result(
             replay_state,
@@ -57,7 +57,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawPngBytesKeyed(resource_key, image_data, x, y, paint) =>
+      DrawPngBytesKeyed(resource_key, image_data, x, y, paint) =>
         match
           record_png_resource_image_replay_result(
             replay_state,
@@ -69,7 +69,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawRgbaBytesKeyed(
+      DrawRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -90,7 +90,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledBmpBytesKeyed(
+      DrawSampledBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -111,7 +111,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledPngBytesKeyed(
+      DrawSampledPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -132,7 +132,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledRgbaBytesKeyed(
+      DrawSampledRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -156,7 +156,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityBmpBytesKeyed(
+      DrawQualityBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -177,7 +177,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityBmpBytesRectKeyed(
+      DrawQualityBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -200,7 +200,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityPngBytesKeyed(
+      DrawQualityPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -221,7 +221,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityPngBytesRectKeyed(
+      DrawQualityPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -244,7 +244,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityRgbaBytesKeyed(
+      DrawQualityRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -268,7 +268,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityRgbaBytesRectKeyed(
+      DrawQualityRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -293,7 +293,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledBmpBytesKeyed(
+      DrawTransformedSampledBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -314,7 +314,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledBmpBytesRectKeyed(
+      DrawTransformedSampledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -337,7 +337,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityBmpBytesKeyed(
+      DrawTransformedQualityBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -358,7 +358,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityBmpBytesRectKeyed(
+      DrawTransformedQualityBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -381,7 +381,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledPngBytesKeyed(
+      DrawTransformedSampledPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -402,7 +402,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledPngBytesRectKeyed(
+      DrawTransformedSampledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -425,7 +425,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityPngBytesKeyed(
+      DrawTransformedQualityPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -446,7 +446,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityPngBytesRectKeyed(
+      DrawTransformedQualityPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -469,7 +469,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledRgbaBytesKeyed(
+      DrawTransformedSampledRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -493,7 +493,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledRgbaBytesRectKeyed(
+      DrawTransformedSampledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -518,7 +518,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityRgbaBytesKeyed(
+      DrawTransformedQualityRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -542,7 +542,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityRgbaBytesRectKeyed(
+      DrawTransformedQualityRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -567,7 +567,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledBmpBytesRectKeyed(
+      DrawSampledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -590,7 +590,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledPngBytesRectKeyed(
+      DrawSampledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -613,7 +613,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledRgbaBytesRectKeyed(
+      DrawSampledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -638,14 +638,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawBmpBytesRectKeyed(
-        resource_key,
-        image_data,
-        src_rect,
-        x,
-        y,
-        paint
-      ) =>
+      DrawBmpBytesRectKeyed(resource_key, image_data, src_rect, x, y, paint) =>
         match
           record_bmp_resource_image_replay_result(
             replay_state,
@@ -657,14 +650,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawPngBytesRectKeyed(
-        resource_key,
-        image_data,
-        src_rect,
-        x,
-        y,
-        paint
-      ) =>
+      DrawPngBytesRectKeyed(resource_key, image_data, src_rect, x, y, paint) =>
         match
           record_png_resource_image_replay_result(
             replay_state,
@@ -676,7 +662,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawRgbaBytesRectKeyed(
+      DrawRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -698,7 +684,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTiledBmpBytesRectKeyed(
+      DrawTiledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -720,7 +706,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTiledPngBytesRectKeyed(
+      DrawTiledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -742,7 +728,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTiledRgbaBytesRectKeyed(
+      DrawTiledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -766,7 +752,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawNinePatchBmpBytesKeyed(
+      DrawNinePatchBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -789,7 +775,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawNinePatchPngBytesKeyed(
+      DrawNinePatchPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -812,7 +798,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawNinePatchRgbaBytesKeyed(
+      DrawNinePatchRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -837,18 +823,11 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawPixmapRect(pixmap, src_rect, x, y, paint) => {
+      DrawPixmapRect(pixmap, src_rect, x, y, paint) => {
         canvas.draw_pixmap_rect(pixmap, src_rect, x, y, paint)
         replay_state.image_count += 1
       }
-      RenderCommand::DrawPixmapRectKeyed(
-        resource_key,
-        pixmap,
-        src_rect,
-        x,
-        y,
-        paint
-      ) => {
+      DrawPixmapRectKeyed(resource_key, pixmap, src_rect, x, y, paint) => {
         let result = renderer.draw_pixmap_rect_cached_with_renderer_resources(
           pixmap, src_rect, x, y, resources, resource_key, paint,
         )
@@ -857,19 +836,11 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         )
         replay_state.image_count += 1
       }
-      RenderCommand::DrawTextFace(face, text, x, y, config, paint) => {
+      DrawTextFace(face, text, x, y, config, paint) => {
         renderer.draw_text_face(face, text, x, y, config, paint)
         replay_state.text_count += 1
       }
-      RenderCommand::DrawTextFaceKeyed(
-        resource_key,
-        face,
-        text,
-        x,
-        y,
-        config,
-        paint
-      ) => {
+      DrawTextFaceKeyed(resource_key, face, text, x, y, config, paint) => {
         let result = renderer.draw_text_face_cached_with_renderer_resources(
           face, text, x, y, config, resources, resource_key, paint,
         )
@@ -878,7 +849,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         )
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesKeyed(
+      DrawFontBytesKeyed(
         font_key,
         font_data,
         text_key,
@@ -900,16 +871,11 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
               result.did_hit_text_cache(),
             )
           }
-          Err(error) =>
-            return Err(
-              RenderPipelineResourceReplayError::FontParseFailed(
-                font_key, error,
-              ),
-            )
+          Err(error) => return Err(FontParseFailed(font_key, error))
         }
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesAtlasKeyed(
+      DrawFontBytesAtlasKeyed(
         font_key,
         font_data,
         glyph_key_prefix,
@@ -937,16 +903,11 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
               1,
             )
           }
-          Err(error) =>
-            return Err(
-              RenderPipelineResourceReplayError::FontParseFailed(
-                font_key, error,
-              ),
-            )
+          Err(error) => return Err(FontParseFailed(font_key, error))
         }
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesFallbackKeyed(
+      DrawFontBytesFallbackKeyed(
         sources,
         text_key_prefix,
         text,
@@ -973,7 +934,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           }
           Err(error) =>
             return Err(
-              RenderPipelineResourceReplayError::FontParseFailed(
+              FontParseFailed(
                 render_pipeline_first_font_source_key(sources),
                 error,
               ),
@@ -981,7 +942,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         }
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+      DrawFontBytesFallbackAtlasKeyed(
         sources,
         glyph_key_prefix,
         text,
@@ -1011,7 +972,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
           }
           Err(error) =>
             return Err(
-              RenderPipelineResourceReplayError::FontParseFailed(
+              FontParseFailed(
                 render_pipeline_first_font_source_key(sources),
                 error,
               ),
@@ -1019,34 +980,18 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         }
         replay_state.text_count += 1
       }
-      RenderCommand::DrawLoadedFontKeyed(font_key, _, _, _, _, _, _) =>
+      DrawLoadedFontKeyed(font_key, _, _, _, _, _, _) =>
+        return Err(FontLoaderRequired(font_key))
+      DrawLoadedFontFallbackKeyed(font_keys, _, _, _, _, _, _) =>
         return Err(
-          RenderPipelineResourceReplayError::FontLoaderRequired(font_key),
+          FontLoaderRequired(render_pipeline_first_font_key(font_keys)),
         )
-      RenderCommand::DrawLoadedFontFallbackKeyed(font_keys, _, _, _, _, _, _) =>
+      DrawLoadedFontFallbackAtlasKeyed(font_keys, _, _, _, _, _, _) =>
         return Err(
-          RenderPipelineResourceReplayError::FontLoaderRequired(
-            render_pipeline_first_font_key(font_keys),
-          ),
+          FontLoaderRequired(render_pipeline_first_font_key(font_keys)),
         )
-      RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
-        font_keys,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _
-      ) =>
-        return Err(
-          RenderPipelineResourceReplayError::FontLoaderRequired(
-            render_pipeline_first_font_key(font_keys),
-          ),
-        )
-      RenderCommand::DrawLoadedFontAtlasKeyed(font_key, _, _, _, _, _, _) =>
-        return Err(
-          RenderPipelineResourceReplayError::FontLoaderRequired(font_key),
-        )
+      DrawLoadedFontAtlasKeyed(font_key, _, _, _, _, _, _) =>
+        return Err(FontLoaderRequired(font_key))
     }
   }
   Ok(replay_state.to_result(self.commands.length()))
@@ -1067,12 +1012,9 @@ fn render_pipeline_font_load_error_to_resource_replay_error(
   error : @text.FontLoadError,
 ) -> RenderPipelineResourceReplayError {
   match error {
-    @text.FontLoadError::MissingFontData(font_key) =>
-      RenderPipelineResourceReplayError::FontDataMissing(font_key)
-    @text.FontLoadError::FontFileReadFailed(font_key, path) =>
-      RenderPipelineResourceReplayError::FontFileReadFailed(font_key, path)
-    @text.FontLoadError::FontParseFailed(font_key, error) =>
-      RenderPipelineResourceReplayError::FontParseFailed(font_key, error)
+    MissingFontData(font_key) => FontDataMissing(font_key)
+    FontFileReadFailed(font_key, path) => FontFileReadFailed(font_key, path)
+    FontParseFailed(font_key, error) => FontParseFailed(font_key, error)
   }
 }
 
@@ -1091,31 +1033,31 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
   let replay_state = RenderPipelineResourceReplayState::new()
   for command in self.commands {
     match command {
-      RenderCommand::Clear(color) => {
+      Clear(color) => {
         canvas.clear(color)
         replay_state.clear_count += 1
       }
-      RenderCommand::FillRect(x, y, width, height, paint) => {
+      FillRect(x, y, width, height, paint) => {
         canvas.fill_rect(x, y, width, height, paint)
         replay_state.fill_count += 1
       }
-      RenderCommand::StrokeRect(x, y, width, height, paint) => {
+      StrokeRect(x, y, width, height, paint) => {
         canvas.stroke_rect(x, y, width, height, paint)
         replay_state.stroke_count += 1
       }
-      RenderCommand::FillPath(path, paint) => {
+      FillPath(path, paint) => {
         canvas.fill_path(path, paint)
         replay_state.fill_count += 1
       }
-      RenderCommand::StrokePath(path, paint) => {
+      StrokePath(path, paint) => {
         canvas.stroke_path(path, paint)
         replay_state.stroke_count += 1
       }
-      RenderCommand::DrawPixmap(pixmap, x, y, paint) => {
+      DrawPixmap(pixmap, x, y, paint) => {
         canvas.draw_pixmap(pixmap, x, y, paint)
         replay_state.image_count += 1
       }
-      RenderCommand::DrawPixmapKeyed(resource_key, pixmap, x, y, paint) => {
+      DrawPixmapKeyed(resource_key, pixmap, x, y, paint) => {
         let result = renderer.draw_pixmap_cached_with_renderer_resources(
           pixmap, x, y, resources, resource_key, paint,
         )
@@ -1124,7 +1066,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         )
         replay_state.image_count += 1
       }
-      RenderCommand::DrawBmpBytesKeyed(resource_key, image_data, x, y, paint) =>
+      DrawBmpBytesKeyed(resource_key, image_data, x, y, paint) =>
         match
           record_bmp_resource_image_replay_result(
             replay_state,
@@ -1136,7 +1078,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawPngBytesKeyed(resource_key, image_data, x, y, paint) =>
+      DrawPngBytesKeyed(resource_key, image_data, x, y, paint) =>
         match
           record_png_resource_image_replay_result(
             replay_state,
@@ -1148,7 +1090,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawRgbaBytesKeyed(
+      DrawRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1169,7 +1111,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledBmpBytesKeyed(
+      DrawSampledBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1190,7 +1132,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledPngBytesKeyed(
+      DrawSampledPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1211,7 +1153,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledRgbaBytesKeyed(
+      DrawSampledRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1235,7 +1177,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityBmpBytesKeyed(
+      DrawQualityBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1256,7 +1198,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityBmpBytesRectKeyed(
+      DrawQualityBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1279,7 +1221,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityPngBytesKeyed(
+      DrawQualityPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1300,7 +1242,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityPngBytesRectKeyed(
+      DrawQualityPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1323,7 +1265,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityRgbaBytesKeyed(
+      DrawQualityRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1347,7 +1289,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawQualityRgbaBytesRectKeyed(
+      DrawQualityRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1372,7 +1314,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledBmpBytesRectKeyed(
+      DrawSampledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1395,7 +1337,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledPngBytesRectKeyed(
+      DrawSampledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1418,7 +1360,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawSampledRgbaBytesRectKeyed(
+      DrawSampledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1443,14 +1385,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawBmpBytesRectKeyed(
-        resource_key,
-        image_data,
-        src_rect,
-        x,
-        y,
-        paint
-      ) =>
+      DrawBmpBytesRectKeyed(resource_key, image_data, src_rect, x, y, paint) =>
         match
           record_bmp_resource_image_replay_result(
             replay_state,
@@ -1462,14 +1397,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawPngBytesRectKeyed(
-        resource_key,
-        image_data,
-        src_rect,
-        x,
-        y,
-        paint
-      ) =>
+      DrawPngBytesRectKeyed(resource_key, image_data, src_rect, x, y, paint) =>
         match
           record_png_resource_image_replay_result(
             replay_state,
@@ -1481,7 +1409,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawRgbaBytesRectKeyed(
+      DrawRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1503,7 +1431,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTiledBmpBytesRectKeyed(
+      DrawTiledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1525,7 +1453,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTiledPngBytesRectKeyed(
+      DrawTiledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1547,7 +1475,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTiledRgbaBytesRectKeyed(
+      DrawTiledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1571,7 +1499,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawNinePatchBmpBytesKeyed(
+      DrawNinePatchBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1594,7 +1522,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawNinePatchPngBytesKeyed(
+      DrawNinePatchPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1617,7 +1545,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawNinePatchRgbaBytesKeyed(
+      DrawNinePatchRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -1642,18 +1570,11 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawPixmapRect(pixmap, src_rect, x, y, paint) => {
+      DrawPixmapRect(pixmap, src_rect, x, y, paint) => {
         canvas.draw_pixmap_rect(pixmap, src_rect, x, y, paint)
         replay_state.image_count += 1
       }
-      RenderCommand::DrawPixmapRectKeyed(
-        resource_key,
-        pixmap,
-        src_rect,
-        x,
-        y,
-        paint
-      ) => {
+      DrawPixmapRectKeyed(resource_key, pixmap, src_rect, x, y, paint) => {
         let result = renderer.draw_pixmap_rect_cached_with_renderer_resources(
           pixmap, src_rect, x, y, resources, resource_key, paint,
         )
@@ -1662,19 +1583,11 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         )
         replay_state.image_count += 1
       }
-      RenderCommand::DrawTextFace(face, text, x, y, config, paint) => {
+      DrawTextFace(face, text, x, y, config, paint) => {
         renderer.draw_text_face(face, text, x, y, config, paint)
         replay_state.text_count += 1
       }
-      RenderCommand::DrawTextFaceKeyed(
-        resource_key,
-        face,
-        text,
-        x,
-        y,
-        config,
-        paint
-      ) => {
+      DrawTextFaceKeyed(resource_key, face, text, x, y, config, paint) => {
         let result = renderer.draw_text_face_cached_with_renderer_resources(
           face, text, x, y, config, resources, resource_key, paint,
         )
@@ -1683,7 +1596,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         )
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesKeyed(
+      DrawFontBytesKeyed(
         font_key,
         font_data,
         text_key,
@@ -1705,16 +1618,11 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
               result.did_hit_text_cache(),
             )
           }
-          Err(error) =>
-            return Err(
-              RenderPipelineResourceReplayError::FontParseFailed(
-                font_key, error,
-              ),
-            )
+          Err(error) => return Err(FontParseFailed(font_key, error))
         }
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesAtlasKeyed(
+      DrawFontBytesAtlasKeyed(
         font_key,
         font_data,
         glyph_key_prefix,
@@ -1742,16 +1650,11 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
               1,
             )
           }
-          Err(error) =>
-            return Err(
-              RenderPipelineResourceReplayError::FontParseFailed(
-                font_key, error,
-              ),
-            )
+          Err(error) => return Err(FontParseFailed(font_key, error))
         }
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesFallbackKeyed(
+      DrawFontBytesFallbackKeyed(
         sources,
         text_key_prefix,
         text,
@@ -1777,12 +1680,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
               }
             }
             Err(error) =>
-              return Err(
-                RenderPipelineResourceReplayError::FontParseFailed(
-                  source.get_font_key(),
-                  error,
-                ),
-              )
+              return Err(FontParseFailed(source.get_font_key(), error))
           }
         }
         let result = renderer.draw_text_fallback_line_cached_with_renderer_resources(
@@ -1800,7 +1698,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         )
         replay_state.text_count += 1
       }
-      RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+      DrawFontBytesFallbackAtlasKeyed(
         sources,
         glyph_key_prefix,
         text,
@@ -1826,12 +1724,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
               }
             }
             Err(error) =>
-              return Err(
-                RenderPipelineResourceReplayError::FontParseFailed(
-                  source.get_font_key(),
-                  error,
-                ),
-              )
+              return Err(FontParseFailed(source.get_font_key(), error))
           }
         }
         let result = renderer.draw_text_fallback_line_atlas_with_renderer_resources(
@@ -1852,7 +1745,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         )
         replay_state.text_count += 1
       }
-      RenderCommand::DrawTransformedSampledBmpBytesKeyed(
+      DrawTransformedSampledBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1873,7 +1766,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledBmpBytesRectKeyed(
+      DrawTransformedSampledBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1896,7 +1789,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityBmpBytesKeyed(
+      DrawTransformedQualityBmpBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1917,7 +1810,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityBmpBytesRectKeyed(
+      DrawTransformedQualityBmpBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1940,7 +1833,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledPngBytesKeyed(
+      DrawTransformedSampledPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -1961,7 +1854,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledPngBytesRectKeyed(
+      DrawTransformedSampledPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -1984,7 +1877,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledRgbaBytesKeyed(
+      DrawTransformedSampledRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -2008,7 +1901,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedSampledRgbaBytesRectKeyed(
+      DrawTransformedSampledRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -2033,7 +1926,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityRgbaBytesKeyed(
+      DrawTransformedQualityRgbaBytesKeyed(
         resource_key,
         image_data,
         image_width,
@@ -2057,7 +1950,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityRgbaBytesRectKeyed(
+      DrawTransformedQualityRgbaBytesRectKeyed(
         resource_key,
         image_data,
         image_width,
@@ -2082,7 +1975,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityPngBytesKeyed(
+      DrawTransformedQualityPngBytesKeyed(
         resource_key,
         image_data,
         x,
@@ -2103,7 +1996,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawTransformedQualityPngBytesRectKeyed(
+      DrawTransformedQualityPngBytesRectKeyed(
         resource_key,
         image_data,
         src_rect,
@@ -2126,15 +2019,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
           Ok(count) => replay_state.image_count += count
           Err(error) => return Err(error)
         }
-      RenderCommand::DrawLoadedFontKeyed(
-        font_key,
-        text_key,
-        text,
-        x,
-        y,
-        config,
-        paint
-      ) => {
+      DrawLoadedFontKeyed(font_key, text_key, text, x, y, config, paint) => {
         match
           renderer.draw_loaded_font_cached_with_renderer_resources(
             loader, text, x, y, config, resources, font_key, text_key, paint,
@@ -2154,7 +2039,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         }
         replay_state.text_count += 1
       }
-      RenderCommand::DrawLoadedFontFallbackKeyed(
+      DrawLoadedFontFallbackKeyed(
         font_keys,
         text_key_prefix,
         text,
@@ -2198,7 +2083,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         )
         replay_state.text_count += 1
       }
-      RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
+      DrawLoadedFontFallbackAtlasKeyed(
         font_keys,
         glyph_key_prefix,
         text,
@@ -2245,7 +2130,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         )
         replay_state.text_count += 1
       }
-      RenderCommand::DrawLoadedFontAtlasKeyed(
+      DrawLoadedFontAtlasKeyed(
         font_key,
         glyph_key_prefix,
         text,

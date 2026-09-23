@@ -8,7 +8,7 @@ pub struct Point {
 ///|
 /// Create a new point
 pub fn Point::new(x~ : Double, y~ : Double) -> Point {
-  { x, y }
+  { x, y, }
 }
 
 ///|
@@ -20,5 +20,5 @@ pub struct Vec2 {
 
 ///|
 pub fn Vec2::new(x~ : Double, y~ : Double) -> Vec2 {
-  { x, y }
+  { x, y, }
 }

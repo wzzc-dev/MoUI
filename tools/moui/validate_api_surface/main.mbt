@@ -78,15 +78,16 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       other => return Err("unknown argument: " + other)
     }
   }
-  Ok({ repo_root: repo_root.val, report_path: report_path.val, help: help.val })
+  Ok({ repo_root: repo_root.val, report_path: report_path.val, help: help.val, })
 }
 
 ///|
 /// App-loop types forwarded by root `wzzc-dev/moui` (not a subpackage).
 fn root_app_shape_tokens() -> Array[String] {
   [
-    "View", "Program", "ProgramCommand", "Feature", "ScopedFeature", "Effect", "Subscription", "Theme",
-    "Environment", "ViewEnvironment", "SemanticId", "ControlledValue", "ScrollRequest", "FocusRequest",
+    "View", "Program", "ProgramCommand", "Feature", "ScopedFeature", "Effect", "Subscription",
+    "Theme", "Environment", "ViewEnvironment", "SemanticId", "ControlledValue", "ScrollRequest",
+    "FocusRequest",
   ]
 }
 
@@ -154,15 +155,16 @@ fn sugar_cross_domain_forbidden_tokens(
   own_tokens : Array[String],
 ) -> Array[String] {
   let all = [
-    "View", "Program", "Effect", "Subscription", "Feature", "ScopedFeature", "Theme", "Environment", "ViewEnvironment",
-    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment", "MainAxisAlignment",
-    "CrossAxisAlignment", "Color", "Brush", "BorderStyle", "ShadowStyle", "RoundedRect",
-    "PathSpec", "PathVerb", "ImageRun", "ImageFit", "BlendMode", "LayerSpec", "LayerMask",
-    "FilterEffect", "ShadowSpec", "Transform2D", "ShaderEffectSpec", "Easing", "TransitionSpec",
-    "TransitionStyle", "FontSpec", "FontFamily", "TextRange", "TextAlign", "State",
-    "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState", "ColorScheme",
-    "LayoutDirection", "FocusScope", "FocusScopeItem", "CommandIntent", "KeyboardShortcut",
-    "KeyModifiers", "DateValue", "FontFamilyStack", "AccessibilityContrast", "ContentSizeCategory",
+    "View", "Program", "Effect", "Subscription", "Feature", "ScopedFeature", "Theme",
+    "Environment", "ViewEnvironment", "Point", "Size", "Rect", "Insets", "Constraints",
+    "Axis", "Alignment", "MainAxisAlignment", "CrossAxisAlignment", "Color", "Brush",
+    "BorderStyle", "ShadowStyle", "RoundedRect", "PathSpec", "PathVerb", "ImageRun",
+    "ImageFit", "BlendMode", "LayerSpec", "LayerMask", "FilterEffect", "ShadowSpec",
+    "Transform2D", "ShaderEffectSpec", "Easing", "TransitionSpec", "TransitionStyle",
+    "FontSpec", "FontFamily", "TextRange", "TextAlign", "State", "Binding", "DerivedState",
+    "ScrollState", "FocusState", "NavigationState", "ColorScheme", "LayoutDirection",
+    "FocusScope", "FocusScopeItem", "CommandIntent", "KeyboardShortcut", "KeyModifiers",
+    "DateValue", "FontFamilyStack", "AccessibilityContrast", "ContentSizeCategory",
     "ActionCommand", "ActionCommandMap", "CommandBinding", "ComponentContext", "ElementId",
     "SemanticsRole", "SemanticId",
   ]
@@ -1050,18 +1052,18 @@ fn app_api_hygiene_roots() -> Array[String] {
 ///|
 fn app_api_hygiene_forbidden_tokens() -> Array[ForbiddenSourceToken] {
   [
-    { label: "Program type", token: "@core.Program[" },
-    { label: "Program constructor", token: "@core.Program::" },
-    { label: "View type", token: "@core.View[" },
-    { label: "View constructor", token: "@core.View::" },
-    { label: "State type", token: "@core.State[" },
-    { label: "State constructor", token: "@core.State::" },
-    { label: "Binding type", token: "@core.Binding[" },
-    { label: "Binding constructor", token: "@core.Binding::" },
-    { label: "Effect type", token: "@core.Effect[" },
-    { label: "Effect constructor", token: "@core.Effect::" },
-    { label: "Subscription type", token: "@core.Subscription[" },
-    { label: "Subscription constructor", token: "@core.Subscription::" },
+    { label: "Program type", token: "@core.Program[", },
+    { label: "Program constructor", token: "@core.Program::", },
+    { label: "View type", token: "@core.View[", },
+    { label: "View constructor", token: "@core.View::", },
+    { label: "State type", token: "@core.State[", },
+    { label: "State constructor", token: "@core.State::", },
+    { label: "Binding type", token: "@core.Binding[", },
+    { label: "Binding constructor", token: "@core.Binding::", },
+    { label: "Effect type", token: "@core.Effect[", },
+    { label: "Effect constructor", token: "@core.Effect::", },
+    { label: "Subscription type", token: "@core.Subscription[", },
+    { label: "Subscription constructor", token: "@core.Subscription::", },
   ]
 }
 

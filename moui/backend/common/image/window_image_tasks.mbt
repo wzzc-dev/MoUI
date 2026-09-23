@@ -13,7 +13,7 @@ pub fn WindowImageTaskStarter::new(
     (@render.RendererImageLoadCompletion) -> Unit,
   ) -> (() -> Unit)?,
 ) -> WindowImageTaskStarter {
-  { start_fn: start }
+  { start_fn: start, }
 }
 
 ///|
@@ -149,16 +149,13 @@ pub fn WindowImageTasks::schedule(
   if self.disposed || self.contains(request.token()) {
     return false
   }
-  self.tasks.push({ token: request.token(), cancel: None })
+  self.tasks.push({ token: request.token(), cancel: None, })
   self.scheduled_since_observation = self.scheduled_since_observation + 1
   let cancel = (self.starter.start_fn)(request, completion => {
     if self.remove(completion.token()) {
       match renderer.apply_image_load_completion(completion) {
-        @render.RendererImageCompletionResult::Applied(true) =>
-          (self.request_redraw)()
-        @render.RendererImageCompletionResult::Applied(false)
-        | @render.RendererImageCompletionResult::Stale
-        | @render.RendererImageCompletionResult::Disposed => ()
+        Applied(true) => (self.request_redraw)()
+        Applied(false) | Stale | Disposed => ()
       }
     }
   })
@@ -240,7 +237,7 @@ fn WindowImageTasks::set_cancel(
 ) -> Unit {
   for index, task in self.tasks {
     if task.token == token {
-      self.tasks[index] = { token, cancel }
+      self.tasks[index] = { token, cancel, }
       return
     }
   }

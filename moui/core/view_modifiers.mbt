@@ -3,12 +3,12 @@ pub fn[Msg, NextMsg] View::map(
   self : View[Msg],
   map : (Msg) -> NextMsg,
 ) -> View[NextMsg] {
-  { adapter: self.adapter.map(map) }
+  { adapter: self.adapter.map(map), }
 }
 
 ///|
 pub fn[Msg] View::key(self : View[Msg], value : String) -> View[Msg] {
-  self.apply_modifier(KeyModifier::{ key: Key::new(value) }.to_any_modifier())
+  self.apply_modifier(KeyModifier::{ key: Key::new(value), }.to_any_modifier())
 }
 
 ///|
@@ -36,7 +36,7 @@ pub fn[Msg] View::caption(self : View[Msg]) -> View[Msg] {
 ///|
 pub fn[Msg] View::mono(self : View[Msg]) -> View[Msg] {
   let theme = Theme::neutral()
-  self.font({ ..theme.typography.body, families: FontFamilyStack::monospace() })
+  self.font({ ..theme.typography.body, families: FontFamilyStack::monospace(), })
 }
 
 ///|
@@ -78,12 +78,12 @@ pub fn[Msg] View::offset(
   dx? : Double = 0.0,
   dy? : Double = 0.0,
 ) -> View[Msg] {
-  self.apply_modifier(OffsetModifier::{ dx, dy }.to_any_modifier())
+  self.apply_modifier(OffsetModifier::{ dx, dy, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::clip(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(ClipModifier::{  }.to_any_modifier())
+  self.apply_modifier(ClipModifier::{ }.to_any_modifier())
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn[Msg] View::scale(
   sx? : Double = 1.0,
   sy? : Double = 1.0,
 ) -> View[Msg] {
-  self.apply_modifier(ScaleModifier::{ sx, sy }.to_any_modifier())
+  self.apply_modifier(ScaleModifier::{ sx, sy, }.to_any_modifier())
 }
 
 ///|
@@ -176,17 +176,17 @@ pub fn[Msg] View::semantics_composition(
 
 ///|
 pub fn[Msg] View::semantics_boundary(self : View[Msg]) -> View[Msg] {
-  self.semantics_composition(SemanticsComposition::Boundary)
+  self.semantics_composition(Boundary)
 }
 
 ///|
 pub fn[Msg] View::merge_descendant_semantics(self : View[Msg]) -> View[Msg] {
-  self.semantics_composition(SemanticsComposition::MergeDescendants)
+  self.semantics_composition(MergeDescendants)
 }
 
 ///|
 pub fn[Msg] View::hide_semantics(self : View[Msg]) -> View[Msg] {
-  self.semantics_composition(SemanticsComposition::Hidden)
+  self.semantics_composition(Hidden)
 }
 
 ///|
@@ -228,7 +228,7 @@ pub fn[Msg] View::semantics_pressed(
 ///|
 pub fn[Msg] View::semantics_checked(
   self : View[Msg],
-  checked? : SemanticsCheckedState = SemanticsCheckedState::Checked,
+  checked? : SemanticsCheckedState = Checked,
 ) -> View[Msg] {
   self.apply_modifier(SemanticsCheckedModifier::{ checked, }.to_any_modifier())
 }
@@ -299,7 +299,7 @@ pub fn[Msg] View::semantics_numeric(
   numeric : SemanticsNumericValue,
 ) -> View[Msg] {
   self.apply_modifier(
-    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(numeric~) }.to_any_modifier(),
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(numeric~), }.to_any_modifier(),
   )
 }
 
@@ -309,7 +309,7 @@ pub fn[Msg] View::semantics_text_metadata(
   text : SemanticsTextValue,
 ) -> View[Msg] {
   self.apply_modifier(
-    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(text~) }.to_any_modifier(),
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(text~), }.to_any_modifier(),
   )
 }
 
@@ -319,7 +319,7 @@ pub fn[Msg] View::semantics_collection(
   collection : SemanticsCollectionInfo,
 ) -> View[Msg] {
   self.apply_modifier(
-    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(collection~) }.to_any_modifier(),
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(collection~), }.to_any_modifier(),
   )
 }
 
@@ -329,7 +329,7 @@ pub fn[Msg] View::semantics_relations(
   relations : SemanticsRelationsDeclaration,
 ) -> View[Msg] {
   self.apply_modifier(
-    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(relations~) }.to_any_modifier(),
+    SemanticsMetadataModifier::{ info: ViewSemanticsInfo::new(relations~), }.to_any_modifier(),
   )
 }
 
@@ -359,7 +359,7 @@ pub fn[Msg] View::focus_trap(
   self : View[Msg],
   enabled? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(FocusTrapModifier::{ trap: enabled }.to_any_modifier())
+  self.apply_modifier(FocusTrapModifier::{ trap: enabled, }.to_any_modifier())
 }
 
 ///|
@@ -423,7 +423,7 @@ pub fn[Msg] View::flexible(
   weight? : Double = 1.0,
 ) -> View[Msg] {
   self.apply_modifier(
-    FlexibleModifier::{ weight: max_double(0.0, weight) }.to_any_modifier(),
+    FlexibleModifier::{ weight: max_double(0.0, weight), }.to_any_modifier(),
   )
 }
 
@@ -454,29 +454,29 @@ pub fn[Msg] View::align(
 ///|
 pub fn[Msg] View::aspect_ratio(self : View[Msg], ratio : Double) -> View[Msg] {
   self.apply_modifier(
-    AspectRatioModifier::{ ratio: max_double(0.01, ratio) }.to_any_modifier(),
+    AspectRatioModifier::{ ratio: max_double(0.01, ratio), }.to_any_modifier(),
   )
 }
 
 ///|
 pub fn[Msg] View::intrinsic_width(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(IntrinsicWidthModifier::{  }.to_any_modifier())
+  self.apply_modifier(IntrinsicWidthModifier::{ }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::intrinsic_height(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(IntrinsicHeightModifier::{  }.to_any_modifier())
+  self.apply_modifier(IntrinsicHeightModifier::{ }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::repaint_boundary(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(RepaintBoundaryModifier::{  }.to_any_modifier())
+  self.apply_modifier(RepaintBoundaryModifier::{ }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::padding(self : View[Msg], value : Double) -> View[Msg] {
   self.apply_modifier(
-    PaddingModifier::{ insets: Insets::all(value) }.to_any_modifier(),
+    PaddingModifier::{ insets: Insets::all(value), }.to_any_modifier(),
   )
 }
 

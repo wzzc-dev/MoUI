@@ -5,7 +5,7 @@ test "direct pointer input reports scroll consumption at boundaries" {
     width=20.0,
     height=40.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=20.0, height=40.0),
   )
@@ -13,7 +13,7 @@ test "direct pointer input reports scroll consumption at boundaries" {
   let consumed = runtime.dispatch_pointer_input(
     @core.PointerEvent::new(
       position=@core.Point::new(x=5.0, y=5.0),
-      phase=@core.PointerPhase::Move,
+      phase=Move,
       wheel_delta=@core.Point::new(x=0.0, y=-12.0),
     ),
   )
@@ -24,7 +24,7 @@ test "direct pointer input reports scroll consumption at boundaries" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=5.0, y=5.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@core.Point::new(x=0.0, y=-1000.0),
       ),
     ),
@@ -32,7 +32,7 @@ test "direct pointer input reports scroll consumption at boundaries" {
   let edge = runtime.dispatch_pointer_input(
     @core.PointerEvent::new(
       position=@core.Point::new(x=5.0, y=5.0),
-      phase=@core.PointerPhase::Move,
+      phase=Move,
       wheel_delta=@core.Point::new(x=0.0, y=-12.0),
     ),
   )
@@ -48,7 +48,7 @@ test "direct pointer input drags a scroll view" {
     width=20.0,
     height=40.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=20.0, height=40.0),
   )
@@ -56,7 +56,7 @@ test "direct pointer input drags a scroll view" {
   let down = runtime.dispatch_pointer_input(
     @core.PointerEvent::new(
       position=@core.Point::new(x=5.0, y=30.0),
-      phase=@core.PointerPhase::Down,
+      phase=Down,
     ),
   )
   if down.host_flags() != 3 {
@@ -65,7 +65,7 @@ test "direct pointer input drags a scroll view" {
   let move_result = runtime.dispatch_pointer_input(
     @core.PointerEvent::new(
       position=@core.Point::new(x=5.0, y=10.0),
-      phase=@core.PointerPhase::Move,
+      phase=Move,
     ),
   )
   if move_result.host_flags() != 1 {
@@ -73,10 +73,7 @@ test "direct pointer input drags a scroll view" {
   }
   assert_true(runtime.layout().children[0].frame.origin.y == -20.0)
   let up = runtime.dispatch_pointer_input(
-    @core.PointerEvent::new(
-      position=@core.Point::new(x=5.0, y=10.0),
-      phase=@core.PointerPhase::Up,
-    ),
+    @core.PointerEvent::new(position=@core.Point::new(x=5.0, y=10.0), phase=Up),
   )
   if up.host_flags() != 5 {
     fail("expected a scroll view to release pointer capture")
@@ -97,7 +94,7 @@ test "direct pointer input drags a scroll view from a child control" {
     width=20.0,
     height=40.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=20.0, height=40.0),
     on_message=Some(message => received.push(message)),
@@ -107,7 +104,7 @@ test "direct pointer input drags a scroll view from a child control" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=5.0, y=10.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
@@ -115,17 +112,14 @@ test "direct pointer input drags a scroll view from a child control" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=5.0, y=0.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
   assert_true(runtime.layout().children[0].frame.origin.y < 0.0)
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=5.0, y=0.0),
-        phase=@core.PointerPhase::Up,
-      ),
+      @core.PointerEvent::new(position=@core.Point::new(x=5.0, y=0.0), phase=Up),
     ),
   )
   assert_true(received.is_empty())
@@ -145,7 +139,7 @@ test "direct pointer input keeps a child click within scroll drag slop" {
     width=20.0,
     height=40.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=20.0, height=40.0),
     on_message=Some(message => received.push(message)),
@@ -154,7 +148,7 @@ test "direct pointer input keeps a child click within scroll drag slop" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=5.0, y=10.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
@@ -162,7 +156,7 @@ test "direct pointer input keeps a child click within scroll drag slop" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=6.0, y=11.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -171,7 +165,7 @@ test "direct pointer input keeps a child click within scroll drag slop" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=6.0, y=11.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -181,7 +175,7 @@ test "direct pointer input keeps a child click within scroll drag slop" {
 ///|
 test "direct pointer input keeps a button target from down through up" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
@@ -189,14 +183,14 @@ test "direct pointer input keeps a button target from down through up" {
   let position = @core.Point::new(x=8.0, y=8.0)
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Move),
+      @core.PointerEvent::new(position~, phase=Move),
     ),
   )
   let down = runtime.dispatch_pointer_input(
-    @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+    @core.PointerEvent::new(position~, phase=Down),
   )
   let up = runtime.dispatch_pointer_input(
-    @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
+    @core.PointerEvent::new(position~, phase=Up),
   )
   inspect(down.host_flags(), content="3")
   inspect(up.host_flags(), content="5")
@@ -206,18 +200,18 @@ test "direct pointer input keeps a button target from down through up" {
 ///|
 test "direct pointer input keeps a button target across a redraw" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
   )
   let position = @core.Point::new(x=8.0, y=8.0)
   let down = runtime.dispatch_pointer_input(
-    @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+    @core.PointerEvent::new(position~, phase=Down),
   )
   ignore(runtime.draw_frame())
   let up = runtime.dispatch_pointer_input(
-    @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
+    @core.PointerEvent::new(position~, phase=Up),
   )
   inspect(down.host_flags(), content="3")
   inspect(up.host_flags(), content="5")
@@ -239,7 +233,7 @@ test "drag modifier clears its state after a child tap consumes Up" {
     )
     .on_drag(event => "drag:" + event.phase.label())
     .on_tap("clicked")
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=40.0, height=40.0),
     on_message=Some(message => received.push(message)),
@@ -247,12 +241,12 @@ test "drag modifier clears its state after a child tap consumes Up" {
   let center = @core.Point::new(x=20.0, y=20.0)
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position=center, phase=@core.PointerPhase::Down),
+      @core.PointerEvent::new(position=center, phase=Down),
     ),
   )
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position=center, phase=@core.PointerPhase::Up),
+      @core.PointerEvent::new(position=center, phase=Up),
     ),
   )
   // This is an ordinary hover move after the click, not a button drag.
@@ -260,7 +254,7 @@ test "drag modifier clears its state after a child tap consumes Up" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=24.0, y=20.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -280,7 +274,7 @@ test "captured gesture ancestors arbitrate tap versus drag" {
     )
     .on_drag(event => "drag:" + event.phase.label())
     .on_tap("clicked")
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=40.0, height=40.0),
     on_message=Some(message => received.push(message)),
@@ -288,12 +282,12 @@ test "captured gesture ancestors arbitrate tap versus drag" {
   let center = @core.Point::new(x=20.0, y=20.0)
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position=center, phase=@core.PointerPhase::Down),
+      @core.PointerEvent::new(position=center, phase=Down),
     ),
   )
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position=center, phase=@core.PointerPhase::Up),
+      @core.PointerEvent::new(position=center, phase=Up),
     ),
   )
   inspect(received.join(","), content="clicked")
@@ -301,14 +295,14 @@ test "captured gesture ancestors arbitrate tap versus drag" {
   received.clear()
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position=center, phase=@core.PointerPhase::Down),
+      @core.PointerEvent::new(position=center, phase=Down),
     ),
   )
   ignore(
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=28.0, y=20.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -316,7 +310,7 @@ test "captured gesture ancestors arbitrate tap versus drag" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=28.0, y=20.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -352,7 +346,7 @@ fn runtime_damage_rebuild_program() -> @core.Program[Bool, Unit] {
 
 ///|
 test "component rebuild requests full damage after replacing content" {
-  let runtime = AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=runtime_damage_rebuild_program(),
     size=@core.Size::new(width=120.0, height=80.0),
   )
@@ -360,16 +354,14 @@ test "component rebuild requests full damage after replacing content" {
   let position = @core.Point::new(x=8.0, y=8.0)
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+      @core.PointerEvent::new(position~, phase=Down),
     ),
   )
   ignore(
-    runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
-    ),
+    runtime.dispatch_pointer_input(@core.PointerEvent::new(position~, phase=Up)),
   )
   let frame = runtime.draw_frame()
-  assert_true(frame.damage is @core.DamageRegion::FullSurface(_))
+  assert_true(frame.damage is FullSurface(_))
 }
 
 ///|
@@ -382,26 +374,24 @@ fn[Msg] runtime_pointer_capture_probe(message : Msg) -> @core.View[Msg] {
       )
     },
     paint=ctx => {
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(ctx.frame, @core.Color::blue()),
-      ])
+      @core.ViewPaintPlan::commands([FillRect(ctx.frame, @core.Color::blue())])
     },
     event=ctx => {
       match ctx.event {
-        @core.AppEvent::Pointer(event) =>
+        Pointer(event) =>
           match event.phase {
-            @core.PointerPhase::Down =>
+            Down =>
               {
                 ..@core.ViewEventResult::ignored(),
                 captured: true,
-                state: Some({ ..ctx.state, pressed: true }),
-                dirty: @core.ViewDirtyHint::ViewPaintDirty,
+                state: Some({ ..ctx.state, pressed: true, }),
+                dirty: ViewPaintDirty,
               }
-            @core.PointerPhase::Up =>
+            Up =>
               if ctx.state.pressed {
                 {
                   ..@core.ViewEventResult::message(message),
-                  state: Some({ ..ctx.state, pressed: false }),
+                  state: Some({ ..ctx.state, pressed: false, }),
                 }
               } else {
                 @core.ViewEventResult::ignored()
@@ -417,30 +407,24 @@ fn[Msg] runtime_pointer_capture_probe(message : Msg) -> @core.View[Msg] {
 ///|
 test "direct pointer input retains a captured non-focusable target" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_pointer_capture_probe("clicked"),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
   )
   let down = runtime.dispatch_pointer_input(
-    @core.PointerEvent::new(
-      position=@core.Point::new(x=8.0, y=8.0),
-      phase=@core.PointerPhase::Down,
-    ),
+    @core.PointerEvent::new(position=@core.Point::new(x=8.0, y=8.0), phase=Down),
   )
   ignore(
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=72.0, y=8.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
   let up = runtime.dispatch_pointer_input(
-    @core.PointerEvent::new(
-      position=@core.Point::new(x=72.0, y=8.0),
-      phase=@core.PointerPhase::Up,
-    ),
+    @core.PointerEvent::new(position=@core.Point::new(x=72.0, y=8.0), phase=Up),
   )
   inspect(down.host_flags(), content="3")
   inspect(up.host_flags(), content="5")
@@ -459,7 +443,7 @@ test "secondary pointer press delivers the context menu target" {
     height=40.0,
     padding=0.0,
   ).on_secondary_tap("context")
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=40.0, height=40.0),
     on_message=Some(message => received.push(message)),
@@ -467,11 +451,7 @@ test "secondary pointer press delivers the context menu target" {
   let center = @core.Point::new(x=20.0, y=20.0)
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(
-        position=center,
-        phase=@core.PointerPhase::Down,
-        button=1,
-      ),
+      @core.PointerEvent::new(position=center, phase=Down, button=1),
     ),
   )
   inspect(received.join(","), content="context")
@@ -482,7 +462,7 @@ test "secondary pointer press delivers the context menu target" {
 /// control's primary activation.
 test "secondary pointer press does not activate a button" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
@@ -490,16 +470,12 @@ test "secondary pointer press does not activate a button" {
   let position = @core.Point::new(x=8.0, y=8.0)
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(
-        position~,
-        phase=@core.PointerPhase::Down,
-        button=1,
-      ),
+      @core.PointerEvent::new(position~, phase=Down, button=1),
     ),
   )
   ignore(
     runtime.dispatch_pointer_input(
-      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up, button=1),
+      @core.PointerEvent::new(position~, phase=Up, button=1),
     ),
   )
   assert_true(received.length() == 0)
@@ -516,7 +492,7 @@ test "tree view secondary tap reports the row id" {
       @views.tree_item(id="/tmp/project/a.md", label="a.md"),
     ]),
   ]
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.tree_view(
       items,
       expanded=["/tmp/project"],
@@ -530,7 +506,7 @@ test "tree view secondary tap reports the row id" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=60.0, y=10.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
         button=1,
       ),
     ),

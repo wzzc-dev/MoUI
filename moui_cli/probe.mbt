@@ -177,7 +177,7 @@ fn build_probe_result(observations : Array[Observation]) -> ProbeResult {
       }
     }
   }
-  { ok, observations: final_obs }
+  { ok, observations: final_obs, }
 }
 
 ///|

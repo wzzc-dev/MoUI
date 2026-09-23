@@ -10,8 +10,8 @@ fn active_scheme(
 ) -> @state.ColorScheme {
   match appearance {
     System => env.environment().system_scheme
-    Light => @state.ColorScheme::Light
-    Dark => @state.ColorScheme::Dark
+    Light => Light
+    Dark => Dark
   }
 }
 
@@ -41,7 +41,7 @@ fn workbench_theme(
         a=1.0,
       )
   }
-  let palette = { ..base.palette, primary: accent }
+  let palette = { ..base.palette, primary: accent, }
   { ..base, palette, }
 }
 
@@ -117,7 +117,7 @@ fn workbench_font_variant(
   size_delta : Double,
   weight : Int,
 ) -> @text.FontSpec {
-  { ..font, size: (font.size + size_delta).max(10.0), weight }
+  { ..font, size: (font.size + size_delta).max(10.0), weight, }
 }
 
 // ---------------------------------------------------------------------------
@@ -541,7 +541,7 @@ fn[Msg] workbench_send_button(
   @views.container(
     @views.center(
       @views.icon(
-        @views.IconName::ArrowRight,
+        ArrowRight,
         size=icon_size,
         color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
       ),

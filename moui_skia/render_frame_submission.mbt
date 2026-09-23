@@ -3,7 +3,7 @@ fn render_frame_submission_resource_plan(
   frame : RenderFrameDescriptor,
   present : SurfacePresentDescriptor?,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   for descriptor in frame.resource_plan.descriptors {
     descriptors.push(descriptor)
   }

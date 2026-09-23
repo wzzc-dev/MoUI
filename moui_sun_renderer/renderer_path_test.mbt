@@ -1,24 +1,24 @@
 ///|
 test "sun renderer DrawPath without fill or stroke is no-op" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(
+    Clear(@core.Color::white()),
+    DrawPath(
       @core.PathSpec::new(verbs=[
-        @core.PathVerb::MoveTo(@core.Point::new(x=1.0, y=1.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=3.0, y=1.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=3.0, y=3.0)),
-        @core.PathVerb::Close,
+        MoveTo(@core.Point::new(x=1.0, y=1.0)),
+        LineTo(@core.Point::new(x=3.0, y=1.0)),
+        LineTo(@core.Point::new(x=3.0, y=3.0)),
+        Close,
       ]),
     ),
   ])

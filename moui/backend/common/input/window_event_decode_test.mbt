@@ -1,10 +1,10 @@
 ///|
 test "host app info records shared model boundaries" {
   let info = @backend_host.HostAppInfo::new(
-    backend=@backend_host.HostBackendKind::Native,
+    backend=Native,
     description="native host",
   )
-  assert_true(info.backend == @backend_host.HostBackendKind::Native)
+  assert_true(info.backend == Native)
   inspect(info.uses_shared_event_model, content="true")
   inspect(info.uses_shared_surface_model, content="true")
   inspect(info.uses_shared_input_model, content="true")
@@ -26,10 +26,7 @@ test "host capability summary combines service input and window readiness" {
     drag_drop=true,
   )
   let summary = @backend_host.HostCapabilitySummary::from_contracts(
-    info=@backend_host.HostAppInfo::new(
-      backend=@backend_host.HostBackendKind::Web,
-      description="browser host",
-    ),
+    info=@backend_host.HostAppInfo::new(backend=Web, description="browser host"),
     services~,
     input~,
     label="Web host",
@@ -69,10 +66,7 @@ test "host capability summary combines service input and window readiness" {
   assert_true(preflight.contains("host_modal=available"))
   assert_true(preflight.contains("native_accessibility=gap"))
   let unmodal = @backend_host.HostCapabilitySummary::from_contracts(
-    info=@backend_host.HostAppInfo::new(
-      backend=@backend_host.HostBackendKind::Web,
-      description="browser host",
-    ),
+    info=@backend_host.HostAppInfo::new(backend=Web, description="browser host"),
     services~,
     input~,
   )
@@ -98,7 +92,7 @@ test "host capability summary reports unavailable host" {
 
 ///|
 test "input host owns capabilities focus modifiers and text input gating" {
-  let input = InputState::new()
+  let input = @input.InputState::new()
   let capabilities = input.capabilities()
   inspect(capabilities.pointer, content="true")
   inspect(capabilities.scroll, content="true")
@@ -110,25 +104,24 @@ test "input host owns capabilities focus modifiers and text input gating" {
     Some(_) => fail("unfocused input host should not emit text")
   }
   match input.focus_event(focused=true) {
-    Some(@backend_host.Event::Focus({ focused: true, .. })) => ()
+    Some(Focus({ focused: true, .. })) => ()
     _ => fail("expected focus event")
   }
   input.set_modifiers(@core.KeyModifiers::new(shift=true))
   let key_event = input.keyboard_event(key="A", text=Some("A"))
   match key_event {
-    Some(@backend_host.Event::Keyboard(event)) => {
+    Some(Keyboard(event)) => {
       inspect(event.key, content="A")
       inspect(event.modifiers.shift, content="true")
     }
     _ => fail("expected keyboard event")
   }
   match input.insert_text("A") {
-    Some(@backend_host.Event::TextInput(@core.TextInputEvent::InsertText(text))) =>
-      inspect(text, content="A")
+    Some(TextInput(InsertText(text))) => inspect(text, content="A")
     _ => fail("expected focused text input")
   }
   match input.focus_event(focused=false) {
-    Some(@backend_host.Event::Focus({ focused: false, .. })) => ()
+    Some(Focus({ focused: false, .. })) => ()
     _ => fail("expected blur event")
   }
   match input.insert_text("b") {
@@ -139,23 +132,16 @@ test "input host owns capabilities focus modifiers and text input gating" {
 
 ///|
 test "host converts window drag drop events to logical core events" {
-  let event = window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::DragDropped(
-      ["/tmp/note.md"],
-      @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
-    ),
+  let event = @input.window_event_to_host_with_modifiers(
+    DragDropped(["/tmp/note.md"], PhysicalPositionF64(24.0, 48.0)),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
   )
   match event {
     Some(
-      @backend_host.Event::DragDrop(
-        {
-          phase: @core.DragDropPhase::Dropped,
-          paths,
-          position: Some({ x: 12.0, y: 24.0 }),
-        }
+      DragDrop(
+        { phase: Dropped, paths, position: Some({ x: 12.0, y: 24.0, }), }
       )
     ) => inspect(paths[0], content="/tmp/note.md")
     _ => fail("expected logical file drop")
@@ -163,23 +149,17 @@ test "host converts window drag drop events to logical core events" {
   match event {
     Some(host_event) =>
       match host_event.to_core() {
-        Some(
-          @core.AppEvent::DragDrop({ phase: @core.DragDropPhase::Dropped, .. })
-        ) => ()
+        Some(DragDrop({ phase: Dropped, .. })) => ()
         _ => fail("expected drag drop app event")
       }
     _ => fail("expected drag drop app event")
   }
-  let left = window_event_to_host(
-    @window_core.WindowEvent::DragLeft(None),
+  let left = @input.window_event_to_host(
+    DragLeft(None),
     @core.Point::new(x=0.0, y=0.0),
   )
   match left {
-    Some(
-      @backend_host.Event::DragDrop(
-        { phase: @core.DragDropPhase::Left, position: None, .. }
-      )
-    ) => ()
+    Some(DragDrop({ phase: Left, position: None, .. })) => ()
     _ => fail("expected drag left without position")
   }
 }
@@ -188,41 +168,53 @@ test "host converts window drag drop events to logical core events" {
 test "host recognizes secondary pointer context menu requests" {
   let right_down = @window_core.WindowEvent::PointerButton(
     None,
-    @window_core.ElementState::Pressed,
-    @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
+    Pressed,
+    PhysicalPositionF64(3.0, 4.0),
     true,
-    @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right),
+    Mouse(Right),
   )
-  inspect(window_event_is_context_menu_trigger(right_down), content="true")
-  inspect(window_event_is_context_menu_button(right_down), content="true")
+  inspect(
+    @input.window_event_is_context_menu_trigger(right_down),
+    content="true",
+  )
+  inspect(
+    @input.window_event_is_context_menu_button(right_down),
+    content="true",
+  )
   let right_up = @window_core.WindowEvent::PointerButton(
     None,
-    @window_core.ElementState::Released,
-    @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
+    Released,
+    PhysicalPositionF64(3.0, 4.0),
     true,
-    @window_core.ButtonSource::Mouse(@window_core.MouseButton::Right),
+    Mouse(Right),
   )
-  inspect(window_event_is_context_menu_trigger(right_up), content="false")
-  inspect(window_event_is_context_menu_button(right_up), content="true")
+  inspect(
+    @input.window_event_is_context_menu_trigger(right_up),
+    content="false",
+  )
+  inspect(@input.window_event_is_context_menu_button(right_up), content="true")
   let left_down = @window_core.WindowEvent::PointerButton(
     None,
-    @window_core.ElementState::Pressed,
-    @dpi.PhysicalPositionF64::PhysicalPositionF64(3.0, 4.0),
+    Pressed,
+    PhysicalPositionF64(3.0, 4.0),
     true,
-    @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
+    Mouse(Left),
   )
-  inspect(window_event_is_context_menu_button(left_down), content="false")
+  inspect(
+    @input.window_event_is_context_menu_button(left_down),
+    content="false",
+  )
 }
 
 ///|
 test "host maps touch button events to core pointer phases" {
-  let touch_down = window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::PointerButton(
+  let touch_down = @input.window_event_to_host_with_modifiers(
+    PointerButton(
       None,
-      @window_core.ElementState::Pressed,
-      @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
+      Pressed,
+      PhysicalPositionF64(24.0, 48.0),
       true,
-      @window_core.ButtonSource::Touch(@window_core.FingerId::from_raw(0), None),
+      Touch(@window_core.FingerId::from_raw(0), None),
     ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
@@ -230,37 +222,29 @@ test "host maps touch button events to core pointer phases" {
   )
   match touch_down {
     Some(
-      @backend_host.Event::Pointer(
-        {
-          phase: @core.PointerPhase::Down,
-          button: 0,
-          position: { x: 12.0, y: 24.0 },
-          ..,
-        }
-      )
+      Pointer({ phase: Down, button: 0, position: { x: 12.0, y: 24.0, }, .. })
     ) => ()
     _ => fail("expected touch down pointer event")
   }
-  let touch_up = window_event_to_host(
-    @window_core.WindowEvent::PointerButton(
+  let touch_up = @input.window_event_to_host(
+    PointerButton(
       None,
-      @window_core.ElementState::Released,
-      @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, 48.0),
+      Released,
+      PhysicalPositionF64(24.0, 48.0),
       true,
-      @window_core.ButtonSource::Touch(@window_core.FingerId::from_raw(0), None),
+      Touch(@window_core.FingerId::from_raw(0), None),
     ),
     @core.Point::new(x=0.0, y=0.0),
   )
   match touch_up {
-    Some(@backend_host.Event::Pointer({ phase: @core.PointerPhase::Up, .. })) =>
-      ()
+    Some(Pointer({ phase: Up, .. })) => ()
     _ => fail("expected touch up pointer event")
   }
 }
 
 ///|
 test "surface host resizes through host event" {
-  let surface = SurfaceState::new(
+  let surface = @input.SurfaceState::new(
     metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=10.0, height=10.0),
     ),
@@ -273,7 +257,7 @@ test "surface host resizes through host event" {
     ),
   )
   match event {
-    @backend_host.Event::Resized(metrics) => {
+    Resized(metrics) => {
       assert_true(
         surface.logical_size() == @core.Size::new(width=20.0, height=12.0),
       )
@@ -289,12 +273,12 @@ test "surface host resizes through host event" {
 
 ///|
 test "window theme change maps to host theme event" {
-  let event = window_event_to_host(
-    @window_core.WindowEvent::ThemeChanged(@window_core.Theme::Dark),
+  let event = @input.window_event_to_host(
+    ThemeChanged(Dark),
     @core.Point::new(x=0.0, y=0.0),
   )
   match event {
-    Some(@backend_host.Event::ThemeChanged(@core.ColorScheme::Dark)) => ()
+    Some(ThemeChanged(Dark)) => ()
     _ => fail("expected dark host theme event")
   }
   match event.unwrap().to_core() {

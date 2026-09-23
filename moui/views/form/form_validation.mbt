@@ -47,20 +47,16 @@ fn[Msg] form_validation_error_summary(
     width - style.padding * 2.0,
   )
   let rows : Array[@core.View[Msg]] = [
-    @text.text(
-      title,
-      role=@style.TextRole::Control,
-      theme~,
-      width=content_width,
-      height=26.0,
-    ).foreground(style.foreground),
+    @text.text(title, role=Control, theme~, width=content_width, height=26.0).foreground(
+      style.foreground,
+    ),
   ]
   match summary.first_invalid_id {
     Some(id) =>
       rows.push(
         @text.text(
           "First invalid: " + id,
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme~,
           width=content_width,
           height=22.0,
@@ -72,7 +68,7 @@ fn[Msg] form_validation_error_summary(
     rows.push(
       @text.text(
         form_validation_error_label(error),
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme~,
         width=content_width,
         height=24.0,
@@ -85,7 +81,7 @@ fn[Msg] form_validation_error_summary(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=144.0,
           height=34.0,
@@ -94,11 +90,7 @@ fn[Msg] form_validation_error_summary(
     None => ()
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=theme.spacing_scale.xs,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=theme.spacing_scale.xs, align=Start),
     width~,
     height=form_validation_summary_height(summary, action, base=70.0),
     background=style.background,
@@ -109,7 +101,7 @@ fn[Msg] form_validation_error_summary(
   .border(
     @core.BorderStyle::new(brush=@core.Brush::solid(style.border), width=1.0),
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .semantics_invalid()
   .accessibility_label("Validation summary")
 }
@@ -128,7 +120,7 @@ fn[Msg] form_validation_success(
   }
   let message_view = @text.text(
     message,
-    role=@style.TextRole::Caption,
+    role=Caption,
     theme~,
     width=content_width,
     height=28.0,
@@ -145,7 +137,7 @@ fn[Msg] form_validation_success(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=144.0,
           height=34.0,
@@ -156,11 +148,7 @@ fn[Msg] form_validation_success(
   let summary_view : @core.View[Msg] = match style {
     Some(value) =>
       @container.container(
-        @layout.column(
-          rows,
-          spacing=theme.spacing_scale.xs,
-          align=@style.CrossAlign::Start,
-        ),
+        @layout.column(rows, spacing=theme.spacing_scale.xs, align=Start),
         width~,
         height=if action is Some(_) { 82.0 } else { 48.0 },
         background=value.background,
@@ -175,21 +163,15 @@ fn[Msg] form_validation_success(
       )
     None =>
       @container.container(
-        @layout.column(
-          rows,
-          spacing=theme.spacing_scale.xs,
-          align=@style.CrossAlign::Start,
-        ),
+        @layout.column(rows, spacing=theme.spacing_scale.xs, align=Start),
         width~,
         height=if action is Some(_) { 82.0 } else { 48.0 },
-        variant=@style.ContainerVariant::Base,
+        variant=Base,
         theme~,
         padding=theme.spacing_scale.sm,
       )
   }
-  summary_view
-  .semantics_role(@core.SemanticsRole::Group)
-  .accessibility_label("Validation summary")
+  summary_view.semantics_role(Group).accessibility_label("Validation summary")
 }
 
 ///|

@@ -55,7 +55,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ check, repo_root, out_dir, help })
+  Ok({ check, repo_root, out_dir, help, })
 }
 
 ///|

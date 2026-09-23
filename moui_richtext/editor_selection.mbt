@@ -35,7 +35,7 @@ pub fn markdown_editor_link_context(
     Some(range) => {
       let range = range.normalized()
       match markdown_editor_range_link_bounds(source, range) {
-        Some(bounds) => Some({ range, bounds })
+        Some(bounds) => Some({ range, bounds, })
         None => None
       }
     }
@@ -52,7 +52,7 @@ pub fn markdown_editor_image_context(
     Some(range) => {
       let range = range.normalized()
       match markdown_editor_range_image_bounds(source, range) {
-        Some(bounds) => Some({ range, bounds })
+        Some(bounds) => Some({ range, bounds, })
         None => None
       }
     }
@@ -79,7 +79,7 @@ fn markdown_editor_link_context_at_caret(
     ) {
     Some(range) =>
       match markdown_editor_range_link_bounds(source, range) {
-        Some(bounds) => Some({ range, bounds })
+        Some(bounds) => Some({ range, bounds, })
         None => None
       }
     None => None
@@ -97,7 +97,7 @@ fn markdown_editor_image_context_at_caret(
     markdown_editor_bracketed_reference_range_at_caret(chars, caret, image=true) {
     Some(range) =>
       match markdown_editor_range_image_bounds(source, range) {
-        Some(bounds) => Some({ range, bounds })
+        Some(bounds) => Some({ range, bounds, })
         None => None
       }
     None => None
@@ -126,7 +126,7 @@ fn markdown_editor_autolink_context_at_caret(
   }
   let range = @core.TextRange::new(start=open, end=close)
   match markdown_editor_range_link_bounds(source, range) {
-    Some(bounds) => Some({ range, bounds })
+    Some(bounds) => Some({ range, bounds, })
     None => None
   }
 }
@@ -234,7 +234,7 @@ fn markdown_editor_code_block_at_content_offset(
   match markdown_editor_block_index_at_offset(blocks, caret) {
     Some(index) => {
       let block = blocks[index]
-      if block.block.kind is MarkdownBlockKind::CodeBlock &&
+      if block.block.kind is CodeBlock &&
         caret >= block.content_range.start &&
         caret <= block.content_range.end {
         Some(block)
@@ -260,7 +260,7 @@ fn markdown_editor_code_block_at_selection(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if block.block.kind is MarkdownBlockKind::CodeBlock &&
+    if block.block.kind is CodeBlock &&
       caret >= block.source_range.start &&
       caret <= block.source_range.end {
       return Some(block)
@@ -292,10 +292,7 @@ fn markdown_editor_verbatim_block_at_content_offset(
     None => parse_markdown_editor_blocks(source)
   }
   for block in blocks {
-    if (
-        block.block.kind is MarkdownBlockKind::HtmlBlock ||
-        block.block.kind is MarkdownBlockKind::FrontMatter
-      ) &&
+    if (block.block.kind is HtmlBlock || block.block.kind is FrontMatter) &&
       caret >= block.source_range.start &&
       caret <= block.source_range.end {
       return Some(block)
@@ -318,7 +315,7 @@ fn markdown_editor_html_block_at_selection(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if block.block.kind is MarkdownBlockKind::HtmlBlock &&
+    if block.block.kind is HtmlBlock &&
       caret >= block.source_range.start &&
       caret <= block.source_range.end {
       return Some(block)
@@ -342,7 +339,7 @@ fn markdown_editor_code_block_enter(
       insert +
       String::from_array(chars[caret:]),
     caret=caret + markdown_editor_text_length(insert),
-    edit_range=Some({ start: caret, end: caret }),
+    edit_range=Some({ start: caret, end: caret, }),
   )
 }
 
@@ -734,7 +731,7 @@ fn markdown_editor_reference_definition_line_target_range(
   Some(
     (
       String::from_array(chars[start + 1:close]),
-      { start: line.start + target_start, end: line.start + target_end },
+      { start: line.start + target_start, end: line.start + target_end, },
     ),
   )
 }
@@ -774,7 +771,7 @@ fn markdown_editor_wrap_link_range_with_target(
     source: text,
     caret: next_selection.end,
     selection: Some(next_selection),
-    edit_range: Some({ start, end }),
+    edit_range: Some({ start, end, }),
   }
 }
 
@@ -811,7 +808,7 @@ fn markdown_editor_wrap_image_range_with_target(
     source: text,
     caret: next_selection.end,
     selection: Some(next_selection),
-    edit_range: Some({ start, end }),
+    edit_range: Some({ start, end, }),
   }
 }
 
@@ -860,7 +857,7 @@ fn markdown_editor_replace_reference_target(
     source: text,
     caret: next_selection.end,
     selection: Some(next_selection),
-    edit_range: Some({ start: target_start, end: target_end }),
+    edit_range: Some({ start: target_start, end: target_end, }),
   }
 }
 
@@ -991,7 +988,7 @@ fn markdown_editor_footnote_definition_line_text_range(
   Some(
     (
       String::from_array(chars[start + 2:close]),
-      { start: line.start + text_start, end: line.end },
+      { start: line.start + text_start, end: line.end, },
     ),
   )
 }
@@ -1035,7 +1032,7 @@ fn markdown_editor_replace_footnote_definition_text(
             source: next_source,
             caret: range.start + markdown_editor_text_length(text),
             selection: None,
-            edit_range: Some({ start: range.start, end: range.end }),
+            edit_range: Some({ start: range.start, end: range.end, }),
           })
         }
       None => ()
@@ -1110,7 +1107,7 @@ fn markdown_editor_unwrap_link_range(
     source: text,
     caret: next_selection.end,
     selection: Some(next_selection),
-    edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }),
+    edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1, }),
   }
 }
 
@@ -1132,7 +1129,7 @@ fn markdown_editor_unwrap_image_range(
     source: text,
     caret: next_selection.end,
     selection: Some(next_selection),
-    edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1 }),
+    edit_range: Some({ start: bounds.open_start, end: bounds.target_end + 1, }),
   }
 }
 
@@ -1177,7 +1174,7 @@ fn markdown_editor_line_range_around(
   while end < chars.length() && chars[end] != '\n' {
     end = end + 1
   }
-  { start, end }
+  { start, end, }
 }
 
 ///|
@@ -1208,7 +1205,7 @@ fn markdown_editor_current_line_range_from_chars(
   while end < chars.length() && chars[end] != '\n' {
     end = end + 1
   }
-  { start, end }
+  { start, end, }
 }
 
 ///|

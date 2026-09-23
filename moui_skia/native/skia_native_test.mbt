@@ -822,7 +822,7 @@ test "gpu context support diagnostics follow native Metal probe gates" {
     b"native-test-metal-gpu-context-diagnostics",
   )
   let anonymous_context = @skia.GpuContextDescriptor::new(
-    backend=@skia.MetalGpuContext,
+    backend=MetalGpuContext,
   )
   assert_true(@native.GpuContext::metal(mock_context) is None)
   assert_true(@native.GpuContext::metal(anonymous_context) is None)

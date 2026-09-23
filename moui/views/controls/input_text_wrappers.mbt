@@ -4,7 +4,7 @@ pub fn[Msg] clearable_text_field(
   on_input~ : (String) -> Msg,
   on_clear~ : Msg,
   placeholder? : String = "",
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
   width? : Double = 280.0,
   height? : Double = 40.0,
@@ -24,14 +24,14 @@ pub fn[Msg] clearable_text_field(
       @button.button(
         "Clear",
         on_click=on_clear,
-        variant=@style.ButtonVariant::Ghost,
+        variant=Ghost,
         theme=resolved_theme,
         width=64.0,
         height~,
       ),
     ],
     spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
+    align=Center,
   ).frame(width~)
 }
 
@@ -42,7 +42,7 @@ pub fn[Msg] password_field(
   revealed~ : Bool,
   on_toggle_reveal~ : Msg,
   placeholder? : String = "Password",
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
   width? : Double = 280.0,
   height? : Double = 40.0,
@@ -67,14 +67,14 @@ pub fn[Msg] password_field(
           "Show"
         },
         on_click=on_toggle_reveal,
-        variant=@style.ButtonVariant::Ghost,
+        variant=Ghost,
         theme=resolved_theme,
         width=64.0,
         height~,
       ),
     ],
     spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
+    align=Center,
   ).frame(width~)
 }
 

@@ -30,7 +30,7 @@ pub fn FileDialogOptions::new(
   filters? : Array[String] = [],
   default_name? : String? = None,
 ) -> FileDialogOptions {
-  { title, filters, default_name }
+  { title, filters, default_name, }
 }
 
 ///|

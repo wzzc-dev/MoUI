@@ -77,7 +77,7 @@ pub fn TextLayoutInput::new(
   font~ : FontSpec,
   max_width? : Double,
 ) -> TextLayoutInput {
-  { text, font, max_width }
+  { text, font, max_width, }
 }
 
 ///|
@@ -91,7 +91,7 @@ pub fn TextSystem::new(
     Some(layout) => layout
     None => input => fallback_paragraph_layout_result(input, measure, id)
   }
-  { id, measure, paragraph_layout, register_font_data }
+  { id, measure, paragraph_layout, register_font_data, }
 }
 
 ///|

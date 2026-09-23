@@ -198,8 +198,8 @@ test "parse_markdown recognizes plus unordered list markers" {
 test "markdown_document projects task list items as checkbox markers" {
   let document = markdown_document("- [ ] todo\n- [x] done")
   let markers = document.blocks.map(block => block.marker)
-  assert_true(markers.contains(Some(RichTextMarker::TaskCheckbox(false))))
-  assert_true(markers.contains(Some(RichTextMarker::TaskCheckbox(true))))
+  assert_true(markers.contains(Some(TaskCheckbox(false))))
+  assert_true(markers.contains(Some(TaskCheckbox(true))))
   let prefixes = document.blocks.map(block => block.prefix)
   assert_true(prefixes.contains(" "))
 }
@@ -378,7 +378,7 @@ test "RichTextBlock source_range and content_range are populated for parsed bloc
 test "markdown_document maps decoded entity runs to full source range" {
   let document = markdown_document("AT&amp;T &lt; 5")
   guard document.blocks[0].runs[0]
-    is { text: "AT&T < 5", source_range: Some({ start: 0, end: 15 }), .. } else {
+    is { text: "AT&T < 5", source_range: Some({ start: 0, end: 15, }), .. } else {
     fail("expected decoded entity run to cover raw source")
   }
 }
@@ -387,7 +387,7 @@ test "markdown_document maps decoded entity runs to full source range" {
 test "markdown_document maps numeric entity runs to full source range" {
   let document = markdown_document("A&#38;B &#x3c; C")
   guard document.blocks[0].runs[0]
-    is { text: "A&B < C", source_range: Some({ start: 0, end: 16 }), .. } else {
+    is { text: "A&B < C", source_range: Some({ start: 0, end: 16, }), .. } else {
     fail("expected numeric entity run to cover raw source")
   }
 }
@@ -471,7 +471,7 @@ test "vertical caret movement steps onto the visible blank line" {
   let content = @core.Rect::new(x=0.0, y=0.0, width=640.0, height=400.0)
   let document = markdown_editor_format_for_selection(
     "123\n\n\n\n123",
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base~,
   )
   inspect(document.blocks.length(), content="5")
@@ -585,7 +585,7 @@ test "blank line runs alternate separator and visible empty line" {
   for index, source in sources {
     let document = markdown_editor_format_for_selection(
       source,
-      { caret: 0, selection: None },
+      { caret: 0, selection: None, },
       base~,
     )
     let run_height = markdown_editor_blank_gap_run_height(
@@ -624,7 +624,7 @@ test "blank lines are pointer targets and the caret line stays a writing line" {
   let content = @core.Rect::new(x=0.0, y=0.0, width=640.0, height=400.0)
   let document = markdown_editor_format_for_selection(
     "123\n\n\n456",
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base~,
   )
   // Paragraph "123" is a 1.55em line box (24.8) plus its 0.4em inset (6.4),
@@ -657,7 +657,7 @@ test "blank lines are pointer targets and the caret line stays a writing line" {
   // The caret's own blank line still renders as a full writing line.
   let active = markdown_editor_format_for_selection(
     "123\n\n\n456",
-    { caret: 5, selection: None },
+    { caret: 5, selection: None, },
     base~,
   )
   debug_inspect(active.blocks[1].line_height, content="Some(0)")
@@ -690,7 +690,7 @@ fn vertical_caret_step(
 ) -> Int {
   let window = markdown_session_visible_window(
     session,
-    { caret, selection: None },
+    { caret, selection: None, },
     base,
     source_mode=false,
     focus_mode=false,
@@ -814,7 +814,7 @@ test "every line box covers the font it renders" {
   let text_system = @core.TextSystem::fallback()
   let document = markdown_editor_format_for_selection(
     "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\n---\n\n[^note]: definition",
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base~,
   )
   let mut checked = 0

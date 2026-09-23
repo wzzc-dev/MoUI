@@ -70,7 +70,7 @@ fn[Msg] runtime_view_node(
   view : @core.View[Msg],
   emit : (Msg) -> Unit,
 ) -> &RuntimeViewNode {
-  RuntimeViewAdapter::{ view, emit } as &RuntimeViewNode
+  RuntimeViewAdapter::{ view, emit, } as &RuntimeViewNode
 }
 
 ///|
@@ -273,6 +273,6 @@ impl @core.ViewNode for EmptyCoreViewNode with fn layout(_self, context) {
 
 ///|
 fn empty_runtime_view_node() -> &RuntimeViewNode {
-  let view : @core.View[Unit] = @core.View::from_node(EmptyCoreViewNode::{  })
+  let view : @core.View[Unit] = @core.View::from_node(EmptyCoreViewNode::{ })
   runtime_view_node(view, _message => ())
 }

@@ -6,7 +6,7 @@ priv struct PickerOption {
 
 ///|
 fn PickerOption::new(id~ : String, label~ : String) -> PickerOption {
-  { id, label }
+  { id, label, }
 }
 
 ///|
@@ -59,8 +59,8 @@ fn[Msg] picker_control(
       [
         @core.ViewSemanticsActionHandler::activate(ctx => {
           @core.ViewSemanticsActionResult::accepted(
-            state=Some({ ..ctx.state, expanded: !ctx.state.expanded }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            state=Some({ ..ctx.state, expanded: !ctx.state.expanded, }),
+            dirty=ViewPaintDirty,
           )
         }),
       ]
@@ -95,7 +95,7 @@ impl @core.ViewNode for Picker with fn declaration(self) {
   ])
   @common.view_declaration(
     paint=if self.theme is Some(_) || self.style is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(paint_key)
     },
@@ -156,10 +156,7 @@ impl @core.ViewNode for Picker with fn place_overlays(_self, context) {
   }
   let content_size = context.child_sizes[0]
   let placement = @presentation.PresentationPlacement::new(
-    candidates=[
-      @presentation.PresentationPlacementCandidate::BelowStart,
-      @presentation.PresentationPlacementCandidate::AboveStart,
-    ],
+    candidates=[BelowStart, AboveStart],
     viewport_insets=@core.Insets::all(0.0),
   )
   let frame = placement.resolve(
@@ -197,8 +194,8 @@ impl @core.ViewNode for Picker with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Picker with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Menu,
+    composition=Boundary,
+    role=Menu,
     label=self.placeholder,
     value=picker_selected_label(self.items, self.selected, self.placeholder),
   )
@@ -216,7 +213,7 @@ fn[Msg] picker_event(
   selected : @core.ControlledValue[String, Msg],
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       handle_picker_pointer(
         ctx.state,
         event,
@@ -225,7 +222,7 @@ fn[Msg] picker_event(
         items=node.items,
         selected~,
       )
-    @core.AppEvent::Keyboard(event) =>
+    Keyboard(event) =>
       handle_picker_keyboard(ctx.state, event, items=node.items, selected~)
     _ => @core.ViewEventResult::ignored()
   }
@@ -246,9 +243,9 @@ fn append_picker_commands(
   theme~ : @core.Theme,
 ) -> Unit {
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   commands.push(
-    @core.DrawCommand::StrokeRoundedRectBrush(
+    StrokeRoundedRectBrush(
       rounded,
       @core.Brush::solid(theme.palette.outline.multiply_alpha(0.6)),
       1.0,
@@ -256,7 +253,7 @@ fn append_picker_commands(
   )
   let selected_label = picker_selected_label(items, selected_id, placeholder)
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=selected_label,
         frame=frame.inset(
@@ -264,7 +261,7 @@ fn append_picker_commands(
         ),
         font~,
         color=foreground,
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )
@@ -276,13 +273,13 @@ fn append_picker_commands(
     height=arrow_size,
   )
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=if expanded { "▲" } else { "▼" },
         frame=arrow_frame,
         font=@core.FontSpec::new(size=arrow_size * 0.9, weight=400),
         color=foreground,
-        align=@core.TextAlign::TextCenter,
+        align=TextCenter,
       ),
     ),
   )
@@ -302,10 +299,10 @@ fn[Msg] handle_picker_pointer(
     Some(popup) => popup.contains(event.position)
     None => false
   }
-  let claim_focus = event.phase == @core.PointerPhase::Down &&
+  let claim_focus = event.phase == Down &&
     (inside_button || (state.expanded && inside_popup))
   if state.expanded {
-    if event.phase == @core.PointerPhase::Up && inside_popup {
+    if event.phase == Up && inside_popup {
       let hit_id = match popup_frame {
         Some(popup) => picker_item_id_at_position(popup, event.position, items)
         None => None
@@ -317,8 +314,8 @@ fn[Msg] handle_picker_pointer(
             activated=true,
             focused=true,
             captured=true,
-            state=Some({ ..state, expanded: false }),
-            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+            state=Some({ ..state, expanded: false, }),
+            dirty=ViewLayoutDirty,
             messages=[selected.changed(id)],
           )
         None =>
@@ -326,24 +323,24 @@ fn[Msg] handle_picker_pointer(
             changed=true,
             focused=true,
             captured=true,
-            state=Some({ ..state, expanded: false }),
-            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+            state=Some({ ..state, expanded: false, }),
+            dirty=ViewLayoutDirty,
           )
       }
-    } else if event.phase == @core.PointerPhase::Up && inside_button {
+    } else if event.phase == Up && inside_button {
       @common.view_event_result(
         changed=true,
         focused=true,
         captured=true,
-        state=Some({ ..state, expanded: false }),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        state=Some({ ..state, expanded: false, }),
+        dirty=ViewPaintDirty,
       )
-    } else if event.phase == @core.PointerPhase::Up {
+    } else if event.phase == Up {
       @common.view_event_result(
         changed=true,
         captured=true,
-        state=Some({ ..state, expanded: false }),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        state=Some({ ..state, expanded: false, }),
+        dirty=ViewPaintDirty,
       )
     } else if inside_button || inside_popup {
       @common.view_event_result(
@@ -354,13 +351,13 @@ fn[Msg] handle_picker_pointer(
     } else {
       @core.ViewEventResult::ignored()
     }
-  } else if event.phase == @core.PointerPhase::Up && inside_button {
+  } else if event.phase == Up && inside_button {
     @common.view_event_result(
       changed=true,
       focused=true,
       captured=true,
-      state=Some({ ..state, expanded: true }),
-      dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+      state=Some({ ..state, expanded: true, }),
+      dirty=ViewLayoutDirty,
     )
   } else if claim_focus {
     @common.view_event_result(changed=true, focused=true, captured=true)
@@ -382,8 +379,8 @@ fn[Msg] handle_picker_keyboard(
     @common.view_event_result(
       changed=true,
       captured=true,
-      state=Some({ ..state, expanded: false }),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      state=Some({ ..state, expanded: false, }),
+      dirty=ViewPaintDirty,
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     if state.expanded {
@@ -393,24 +390,24 @@ fn[Msg] handle_picker_keyboard(
             changed=true,
             activated=true,
             captured=true,
-            state=Some({ ..state, expanded: false }),
-            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+            state=Some({ ..state, expanded: false, }),
+            dirty=ViewLayoutDirty,
             messages=[selected.changed(id)],
           )
         None =>
           @common.view_event_result(
             changed=true,
             captured=true,
-            state=Some({ ..state, expanded: false }),
-            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+            state=Some({ ..state, expanded: false, }),
+            dirty=ViewLayoutDirty,
           )
       }
     } else {
       @common.view_event_result(
         changed=true,
         captured=true,
-        state=Some({ ..state, expanded: true }),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        state=Some({ ..state, expanded: true, }),
+        dirty=ViewPaintDirty,
       )
     }
   } else {
@@ -516,7 +513,7 @@ impl @core.ViewNode for PickerRow with fn declaration(self) {
         ("row_width", @core.DeclarationKey::double(self.width)),
       ]),
     ),
-    paint=@core.DeclarationChannel::Uncacheable,
+    paint=Uncacheable,
     semantics=@common.view_exact_channel(
       @common.view_record_key("PickerRow.semantics", [
         ("label", @core.DeclarationKey::string(self.label)),
@@ -540,7 +537,7 @@ impl @core.ViewNode for PickerRow with fn paint(self, ctx) {
   let commands : Array[@core.DrawCommand] = []
   if self.is_selected {
     commands.push(
-      @core.DrawCommand::FillRoundedRectBrush(
+      FillRoundedRectBrush(
         @core.RoundedRect::new(
           rect=@core.Rect::new(
             x=ctx.frame.origin.x + 4.0,
@@ -555,7 +552,7 @@ impl @core.ViewNode for PickerRow with fn paint(self, ctx) {
     )
   }
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=self.label,
         frame=ctx.frame.inset(
@@ -567,7 +564,7 @@ impl @core.ViewNode for PickerRow with fn paint(self, ctx) {
         } else {
           self.foreground
         },
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )
@@ -577,8 +574,8 @@ impl @core.ViewNode for PickerRow with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for PickerRow with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Option,
+    composition=Boundary,
+    role=Option,
     label=self.label,
     selected=self.is_selected,
   )
@@ -621,7 +618,7 @@ fn[Msg] picker_popup_view(
     @layout.column(rows, spacing=0.0),
     width=width - 2.0,
     height=list_height,
-    variant=@style.ContainerVariant::Overlay,
+    variant=Overlay,
     theme=resolved_theme,
     padding=0.0,
   )
@@ -630,5 +627,5 @@ fn[Msg] picker_popup_view(
       resolved_theme.shadow_scale.md,
     ),
   )
-  .semantics_role(@core.SemanticsRole::Menu)
+  .semantics_role(Menu)
 }

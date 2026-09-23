@@ -56,7 +56,7 @@ pub fn resolve_minimal_theme(
   let shadow_scale = ShadowScale::default(scheme~)
   let motion = match spec.reduced_motion {
     true =>
-      { ..MotionScale::default(), fast_ms: 0.0, normal_ms: 0.0, slow_ms: 0.0 }
+      { ..MotionScale::default(), fast_ms: 0.0, normal_ms: 0.0, slow_ms: 0.0, }
     false => MotionScale::default()
   }
   let surfaces = SurfaceScale::default(palette, scheme)

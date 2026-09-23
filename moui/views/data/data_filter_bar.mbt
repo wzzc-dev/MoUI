@@ -19,19 +19,19 @@ pub fn[Msg] data_filter_bar(
           query~,
           on_input=on_query,
           placeholder~,
-          variant=@style.TextFieldVariant::Outline,
+          variant=Outline,
           theme=resolved_theme,
         ).frame(width=search_width, height=36.0),
         @text.text(
           data_filter_result_label(result_count),
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme=resolved_theme,
           width=meta_width,
           height=28.0,
         ).foreground(resolved_theme.palette.muted),
       ],
       spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Center,
+      align=Center,
     ),
   ]
   let chips : Array[@core.View[Msg]] = []
@@ -63,18 +63,14 @@ pub fn[Msg] data_filter_bar(
     )
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Stretch,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Stretch),
     width~,
     height=data_filter_bar_height(chips.length()),
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.sm,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .accessibility_label("Data filters")
 }
 
@@ -86,11 +82,7 @@ fn[Msg] data_filter_button(
   @button.button(
     filter.label,
     on_click=filter.message,
-    variant=if filter.selected {
-      @style.ButtonVariant::Primary
-    } else {
-      @style.ButtonVariant::Tonal
-    },
+    variant=if filter.selected { Primary } else { Tonal },
     theme~,
     width=data_filter_chip_width(filter.label),
     height=32.0,
@@ -110,7 +102,7 @@ fn[Msg] data_filter_clear_button(
   @button.button(
     "Clear",
     on_click=message,
-    variant=@style.ButtonVariant::Ghost,
+    variant=Ghost,
     theme~,
     width=74.0,
     height=32.0,

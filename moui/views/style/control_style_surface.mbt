@@ -9,7 +9,7 @@ pub fn SurfaceStyle::new(
   padding~ : @core.Insets,
   level~ : @core.SurfaceLevel,
 ) -> SurfaceStyle {
-  { brush, border, radius, shadow, padding, level }
+  { brush, border, radius, shadow, padding, level, }
 }
 
 ///|

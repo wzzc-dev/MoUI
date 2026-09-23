@@ -139,29 +139,29 @@ pub fn customization_coverage(
 pub fn DesignSystemManifest::is_official_complete(
   preset : DesignSystemManifest,
 ) -> Bool {
-  let mut complete = preset.stage == DesignTokenStatus::OfficialComplete
+  let mut complete = preset.stage == OfficialComplete
   for item in preset.sources {
-    if item.status != DesignTokenStatus::OfficialComplete {
+    if item.status != OfficialComplete {
       complete = false
     }
   }
   for item in preset.token_coverage {
-    if item.status != DesignTokenStatus::OfficialComplete {
+    if item.status != OfficialComplete {
       complete = false
     }
   }
   for item in preset.variant_coverage {
-    if item.status != DesignTokenStatus::OfficialComplete {
+    if item.status != OfficialComplete {
       complete = false
     }
   }
   for item in preset.component_coverage {
-    if item.status != DesignTokenStatus::OfficialComplete {
+    if item.status != OfficialComplete {
       complete = false
     }
   }
   for item in preset.customization_coverage {
-    if item.status != DesignTokenStatus::OfficialComplete {
+    if item.status != OfficialComplete {
       complete = false
     }
   }
@@ -214,7 +214,7 @@ pub fn DesignSystemManifest::source_lock_count(
     if source.source_kind == "official-source" &&
       source.source_ref != "" &&
       source.token_path != "" &&
-      source.status != DesignTokenStatus::NotMapped {
+      source.status != NotMapped {
       count = count + 1
     }
   }
@@ -232,9 +232,9 @@ pub fn DesignSystemManifest::has_official_source_locks(
 ///|
 fn material_manifest() -> DesignSystemManifest {
   {
-    preset: @common.DesignPreset::Material,
+    preset: Material,
     official_name: "Material Design 3",
-    stage: DesignTokenStatus::PreviewMapped,
+    stage: PreviewMapped,
     sources: [
       source(
         "Material Web tokens", "https://material-web.dev/theming/material-theming/",
@@ -256,9 +256,7 @@ fn material_manifest() -> DesignSystemManifest {
     token_coverage: material_token_coverage(),
     variant_coverage: material_variant_coverage(),
     component_coverage: material_component_coverage(),
-    customization_coverage: build_customization_coverage(
-      DesignTokenStatus::ThemeMapped,
-    ),
+    customization_coverage: build_customization_coverage(ThemeMapped),
     note: "Current MoUI tokens are source-mapped previews, not full Material compliance.",
   }
 }
@@ -266,9 +264,9 @@ fn material_manifest() -> DesignSystemManifest {
 ///|
 fn carbon_manifest() -> DesignSystemManifest {
   {
-    preset: @common.DesignPreset::Carbon,
+    preset: Carbon,
     official_name: "IBM Carbon Design System",
-    stage: DesignTokenStatus::PreviewMapped,
+    stage: PreviewMapped,
     sources: [
       source(
         "Carbon themes", "https://carbondesignsystem.com/elements/themes/code/",
@@ -330,9 +328,7 @@ fn carbon_manifest() -> DesignSystemManifest {
     token_coverage: carbon_token_coverage(),
     variant_coverage: carbon_variant_coverage(),
     component_coverage: carbon_component_coverage(),
-    customization_coverage: build_customization_coverage(
-      DesignTokenStatus::ThemeMapped,
-    ),
+    customization_coverage: build_customization_coverage(ThemeMapped),
     note: "Current MoUI tokens are source-mapped previews, not full Carbon compliance.",
   }
 }
@@ -340,9 +336,9 @@ fn carbon_manifest() -> DesignSystemManifest {
 ///|
 fn primer_manifest() -> DesignSystemManifest {
   {
-    preset: @common.DesignPreset::Primer,
+    preset: Primer,
     official_name: "GitHub Primer",
-    stage: DesignTokenStatus::PreviewMapped,
+    stage: PreviewMapped,
     sources: [
       source(
         "Primer primitives", "https://primer.style/primitives/", "official-docs",
@@ -364,9 +360,7 @@ fn primer_manifest() -> DesignSystemManifest {
     token_coverage: primer_token_coverage(),
     variant_coverage: primer_variant_coverage(),
     component_coverage: primer_component_coverage(),
-    customization_coverage: build_customization_coverage(
-      DesignTokenStatus::ThemeMapped,
-    ),
+    customization_coverage: build_customization_coverage(ThemeMapped),
     note: "Current MoUI tokens are source-mapped previews, not full Primer compliance.",
   }
 }
@@ -374,9 +368,9 @@ fn primer_manifest() -> DesignSystemManifest {
 ///|
 fn fluent_manifest() -> DesignSystemManifest {
   {
-    preset: @common.DesignPreset::Fluent,
+    preset: Fluent,
     official_name: "Microsoft Fluent 2",
-    stage: DesignTokenStatus::PreviewMapped,
+    stage: PreviewMapped,
     sources: [
       source(
         "Fluent 2 design tokens", "https://fluent2.microsoft.design/design-tokens",
@@ -406,9 +400,7 @@ fn fluent_manifest() -> DesignSystemManifest {
     token_coverage: fluent_token_coverage(),
     variant_coverage: fluent_variant_coverage(),
     component_coverage: fluent_component_coverage(),
-    customization_coverage: build_customization_coverage(
-      DesignTokenStatus::ThemeMapped,
-    ),
+    customization_coverage: build_customization_coverage(ThemeMapped),
     note: "Current MoUI tokens are source-mapped previews, not full Fluent compliance.",
   }
 }
@@ -417,83 +409,83 @@ fn fluent_manifest() -> DesignSystemManifest {
 fn material_token_coverage() -> Array[DesignTokenCoverage] {
   [
     coverage(
-      DesignTokenCategory::Color,
-      DesignTokenLayer::SystemToken,
+      Color,
+      SystemToken,
       "md.sys.color roles",
       "@core.ColorPalette + @core.SemanticColorScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped into MoUI palette slots; full role matrix is pending.",
     ),
     coverage(
-      DesignTokenCategory::Typography,
-      DesignTokenLayer::SystemToken,
+      Typography,
+      SystemToken,
       "md.sys.typescale",
       "@core.TypographyScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to body/title/caption/control; full type scale is pending.",
     ),
     coverage(
-      DesignTokenCategory::Spacing,
-      DesignTokenLayer::SystemToken,
+      Spacing,
+      SystemToken,
       "Material layout spacing",
       "@core.SpacingScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Five-point MoUI scale stands in for the broader Material spacing system.",
     ),
     coverage(
-      DesignTokenCategory::Density,
-      DesignTokenLayer::SystemToken,
+      Density,
+      SystemToken,
       "Material density",
       "DesignDensity -> @core.SpacingScale",
-      DesignTokenStatus::ThemeMapped,
+      ThemeMapped,
       "Density-aware spacing resolver is exposed by @common.DesignPreset::tokens.",
     ),
     coverage(
-      DesignTokenCategory::Shape,
-      DesignTokenLayer::SystemToken,
+      Shape,
+      SystemToken,
       "md.sys.shape.corner",
       "@core.RadiusScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to small/medium/large/pill radius slots.",
     ),
     coverage(
-      DesignTokenCategory::Elevation,
-      DesignTokenLayer::SystemToken,
+      Elevation,
+      SystemToken,
       "md.sys.elevation",
       "@core.ShadowScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Approximated through shadows; tonal elevation overlay is pending.",
     ),
     coverage(
-      DesignTokenCategory::Motion,
-      DesignTokenLayer::SystemToken,
+      Motion,
+      SystemToken,
       "md.sys.motion",
       "@core.MotionScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Duration/easing mapped; component motion specs are pending.",
     ),
     coverage(
-      DesignTokenCategory::Surface,
-      DesignTokenLayer::SystemToken,
+      Surface,
+      SystemToken,
       "md.sys.color surface roles",
       "@core.SurfaceScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Surface colors are generated from palette roles.",
     ),
     coverage(
-      DesignTokenCategory::StateLayer,
-      DesignTokenLayer::ComponentToken,
+      StateLayer,
+      ComponentToken,
       "md.comp.* state-layer tokens",
       "DesignStateLayerTokens",
-      DesignTokenStatus::ComponentMapped,
+      ComponentMapped,
       "State-layer opacity tokens are represented; full component-specific matrix is pending.",
     ),
     coverage(
-      DesignTokenCategory::ComponentStyle,
-      DesignTokenLayer::ComponentToken,
+      ComponentStyle,
+      ComponentToken,
       "md.comp.* tokens",
       "DesignComponentTokens",
-      DesignTokenStatus::ComponentMapped,
+      ComponentMapped,
       "Button, text-field, surface, choice-control, progress, slider, picker, date-picker, feedback, badge, and form-validation token sets exist; full Material component matrix is pending.",
     ),
   ]
@@ -562,83 +554,83 @@ fn common_official_token_coverage(
 ) -> Array[DesignTokenCoverage] {
   [
     coverage(
-      DesignTokenCategory::Color,
-      DesignTokenLayer::AliasToken,
+      Color,
+      AliasToken,
       color_family,
       "@core.ColorPalette + @core.SemanticColorScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped into MoUI palette slots; complete semantic role matrix is pending.",
     ),
     coverage(
-      DesignTokenCategory::Typography,
-      DesignTokenLayer::AliasToken,
+      Typography,
+      AliasToken,
       typography_family,
       "@core.TypographyScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to body/title/caption/control; complete type ramp is pending.",
     ),
     coverage(
-      DesignTokenCategory::Spacing,
-      DesignTokenLayer::AliasToken,
+      Spacing,
+      AliasToken,
       spacing_family,
       "@core.SpacingScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped into five MoUI spacing slots.",
     ),
     coverage(
-      DesignTokenCategory::Density,
-      DesignTokenLayer::AliasToken,
+      Density,
+      AliasToken,
       density_family,
       "DesignDensity -> @core.SpacingScale",
-      DesignTokenStatus::ThemeMapped,
+      ThemeMapped,
       "Density variants resolve through @common.DesignPreset::tokens.",
     ),
     coverage(
-      DesignTokenCategory::Shape,
-      DesignTokenLayer::AliasToken,
+      Shape,
+      AliasToken,
       shape_family,
       "@core.RadiusScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to small/medium/large/pill radius slots.",
     ),
     coverage(
-      DesignTokenCategory::Elevation,
-      DesignTokenLayer::AliasToken,
+      Elevation,
+      AliasToken,
       elevation_family,
       "@core.ShadowScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to small/medium/large shadow slots.",
     ),
     coverage(
-      DesignTokenCategory::Motion,
-      DesignTokenLayer::AliasToken,
+      Motion,
+      AliasToken,
       motion_family,
       "@core.MotionScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Duration/easing mapped; component motion specs are pending.",
     ),
     coverage(
-      DesignTokenCategory::Surface,
-      DesignTokenLayer::AliasToken,
+      Surface,
+      AliasToken,
       surface_family,
       "@core.SurfaceScale",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Surface roles are adapted into base/raised/overlay.",
     ),
     coverage(
-      DesignTokenCategory::StateLayer,
-      DesignTokenLayer::ComponentToken,
+      StateLayer,
+      ComponentToken,
       state_family,
       "DesignStateLayerTokens",
-      DesignTokenStatus::ComponentMapped,
+      ComponentMapped,
       "Interaction-state tokens are represented; full component-specific matrix is pending.",
     ),
     coverage(
-      DesignTokenCategory::ComponentStyle,
-      DesignTokenLayer::ComponentToken,
+      ComponentStyle,
+      ComponentToken,
       component_family,
       "DesignComponentTokens",
-      DesignTokenStatus::ComponentMapped,
+      ComponentMapped,
       "Button, text-field, surface, choice-control, progress, slider, picker, date-picker, feedback, badge, and form-validation token sets exist; complete official component matrix is pending.",
     ),
   ]
@@ -663,27 +655,27 @@ fn primer_variant_coverage() -> Array[DesignVariantCoverage] {
 fn fluent_variant_coverage() -> Array[DesignVariantCoverage] {
   [
     variant(
-      @common.DesignSchemeVariant::SchemeLight,
+      SchemeLight,
       "Fluent light theme",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to the MoUI light preset.",
     ),
     variant(
-      @common.DesignSchemeVariant::SchemeDark,
+      SchemeDark,
       "Fluent dark theme",
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to the MoUI dark preset.",
     ),
     variant(
-      @common.DesignSchemeVariant::SchemeHighContrast,
+      SchemeHighContrast,
       "Fluent high contrast theme",
-      DesignTokenStatus::ThemeMapped,
+      ThemeMapped,
       "Dedicated high-contrast token adapter exists in moui_theme/common.",
     ),
     variant(
-      @common.DesignSchemeVariant::SchemeSystem,
+      SchemeSystem,
       "Fluent system-aware theme selection",
-      DesignTokenStatus::ThemeMapped,
+      ThemeMapped,
       "Preset-preserving system-scheme token resolver exists in moui_theme/common.",
     ),
   ]
@@ -695,27 +687,27 @@ fn official_variant_coverage(
 ) -> Array[DesignVariantCoverage] {
   [
     variant(
-      @common.DesignSchemeVariant::SchemeLight,
+      SchemeLight,
       source_family,
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to the MoUI light preset.",
     ),
     variant(
-      @common.DesignSchemeVariant::SchemeDark,
+      SchemeDark,
       source_family,
-      DesignTokenStatus::PreviewMapped,
+      PreviewMapped,
       "Mapped to the MoUI dark preset.",
     ),
     variant(
-      @common.DesignSchemeVariant::SchemeHighContrast,
+      SchemeHighContrast,
       source_family,
-      DesignTokenStatus::ThemeMapped,
+      ThemeMapped,
       "Dedicated high-contrast token adapter exists in moui_theme/common.",
     ),
     variant(
-      @common.DesignSchemeVariant::SchemeSystem,
+      SchemeSystem,
       source_family,
-      DesignTokenStatus::ThemeMapped,
+      ThemeMapped,
       "Preset-preserving system-scheme token resolver exists in moui_theme/common.",
     ),
   ]
@@ -723,34 +715,22 @@ fn official_variant_coverage(
 
 ///|
 fn material_component_coverage() -> Array[DesignComponentCoverage] {
-  neutral_component_coverage(
-    "Material component tokens",
-    DesignTokenStatus::ComponentMapped,
-  )
+  neutral_component_coverage("Material component tokens", ComponentMapped)
 }
 
 ///|
 fn carbon_component_coverage() -> Array[DesignComponentCoverage] {
-  neutral_component_coverage(
-    "Carbon component tokens",
-    DesignTokenStatus::ComponentMapped,
-  )
+  neutral_component_coverage("Carbon component tokens", ComponentMapped)
 }
 
 ///|
 fn primer_component_coverage() -> Array[DesignComponentCoverage] {
-  neutral_component_coverage(
-    "Primer component tokens",
-    DesignTokenStatus::ComponentMapped,
-  )
+  neutral_component_coverage("Primer component tokens", ComponentMapped)
 }
 
 ///|
 fn fluent_component_coverage() -> Array[DesignComponentCoverage] {
-  neutral_component_coverage(
-    "Fluent component tokens",
-    DesignTokenStatus::ComponentMapped,
-  )
+  neutral_component_coverage("Fluent component tokens", ComponentMapped)
 }
 
 ///|
@@ -818,7 +798,7 @@ fn build_customization_coverage(
     customization(
       "Component token override",
       "@common.custom_tokens(components=...)",
-      DesignTokenStatus::ComponentMapped,
+      ComponentMapped,
       "Custom design-system tokens can replace component token bundles explicitly.",
     ),
     customization(
@@ -835,9 +815,9 @@ fn source(
   note : String,
   source_ref? : String = "live",
   token_path? : String = "",
-  status? : DesignTokenStatus = DesignTokenStatus::SourceMapped,
+  status? : DesignTokenStatus = SourceMapped,
 ) -> DesignSystemSource {
-  { label, url, source_kind, source_ref, token_path, status, note }
+  { label, url, source_kind, source_ref, token_path, status, note, }
 }
 
 ///|
@@ -849,7 +829,7 @@ fn coverage(
   status : DesignTokenStatus,
   note : String,
 ) -> DesignTokenCoverage {
-  { category, layer, source_family, moui_surface, status, note }
+  { category, layer, source_family, moui_surface, status, note, }
 }
 
 ///|
@@ -859,7 +839,7 @@ fn variant(
   status : DesignTokenStatus,
   note : String,
 ) -> DesignVariantCoverage {
-  { variant, source_family, status, note }
+  { variant, source_family, status, note, }
 }
 
 ///|
@@ -870,7 +850,7 @@ fn component(
   status : DesignTokenStatus,
   note : String,
 ) -> DesignComponentCoverage {
-  { component, source_family, moui_surface, status, note }
+  { component, source_family, moui_surface, status, note, }
 }
 
 ///|
@@ -880,5 +860,5 @@ fn customization(
   status : DesignTokenStatus,
   note : String,
 ) -> DesignCustomizationCoverage {
-  { capability, api_surface, status, note }
+  { capability, api_surface, status, note, }
 }

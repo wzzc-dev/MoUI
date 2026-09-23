@@ -7,23 +7,23 @@
 test "lower_draw_commands mirrors every variant" {
   let commands = [
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::StrokeRect(
+    StrokeRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::black(),
       2.0,
     ),
-    @core.DrawCommand::FillRoundedRect(
+    FillRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
         radius=2.0,
       ),
       @core.Color::black(),
     ),
-    @core.DrawCommand::StrokeRoundedRect(
+    StrokeRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
         radius=2.0,
@@ -31,14 +31,14 @@ test "lower_draw_commands mirrors every variant" {
       @core.Color::black(),
       2.0,
     ),
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
         radius=2.0,
       ),
       @core.Brush::solid(@core.Color::black()),
     ),
-    @core.DrawCommand::StrokeRoundedRectBrush(
+    StrokeRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
         radius=2.0,
@@ -46,7 +46,7 @@ test "lower_draw_commands mirrors every variant" {
       @core.Brush::solid(@core.Color::black()),
       2.0,
     ),
-    @core.DrawCommand::DrawShadow(
+    DrawShadow(
       @core.ShadowSpec::new(
         rect=@core.RoundedRect::new(
           rect=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
@@ -58,7 +58,7 @@ test "lower_draw_commands mirrors every variant" {
         spread=0.0,
       ),
     ),
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="hello",
         frame=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
@@ -66,19 +66,19 @@ test "lower_draw_commands mirrors every variant" {
         color=@core.Color::black(),
       ),
     ),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: "",
       frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
-        verbs=[@core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0))],
+        verbs=[MoveTo(@core.Point::new(x=0.0, y=0.0))],
         fill=Some(@core.Brush::solid(@core.Color::black())),
       ),
     ),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="vignette",
         frame=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
@@ -86,23 +86,21 @@ test "lower_draw_commands mirrors every variant" {
       ),
     ),
   ]
-  let plan = lower_draw_commands(commands)
+  let plan = @common.lower_draw_commands(commands)
   assert_eq(plan.ops.length(), 12)
   assert_eq(plan.diagnostics.length(), 0)
 }
 
 ///|
 test "lower_draw_commands balances scopes and reports mismatches" {
-  let plan = lower_draw_commands([
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
-    ),
-    @core.DrawCommand::PushTransform(@core.Transform2D::identity()),
-    @core.DrawCommand::PushOpacity(0.5),
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopOpacity,
-    @core.DrawCommand::PopClip,
+  let plan = @common.lower_draw_commands([
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0)),
+    PushTransform(@core.Transform2D::identity()),
+    PushOpacity(0.5),
+    PopTransform,
+    PopClip,
+    PopOpacity,
+    PopClip,
   ])
   assert_eq(plan.ops.length(), 7)
   assert_eq(plan.diagnostics.length(), 4)
@@ -114,10 +112,10 @@ test "lower_draw_commands balances scopes and reports mismatches" {
 
 ///|
 test "lower_draw_commands reports unpopped scopes" {
-  let plan = lower_draw_commands([
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new()),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::blur(2.0)),
-    @core.DrawCommand::FillRect(
+  let plan = @common.lower_draw_commands([
+    PushLayer(@core.LayerSpec::new()),
+    PushFilter(@core.FilterEffect::blur(2.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
       @core.Color::black(),
     ),
@@ -130,15 +128,15 @@ test "lower_draw_commands reports unpopped scopes" {
 
 ///|
 test "lower_draw_commands accepts balanced cached layer scopes" {
-  let plan = lower_draw_commands([
-    @core.DrawCommand::BeginRetainedLayer(
+  let plan = @common.lower_draw_commands([
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="k",
         frame=@core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
         content_revision=1,
       ),
     ),
-    @core.DrawCommand::EndRetainedLayer("k"),
+    EndRetainedLayer("k"),
   ])
   assert_eq(plan.diagnostics.length(), 0)
 }

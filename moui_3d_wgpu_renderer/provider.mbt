@@ -4,8 +4,8 @@
 pub fn descriptor() -> @render.ThreeDRendererDescriptor {
   @render.ThreeDRendererDescriptor::new(
     id="moui-3d-native-wgpu",
-    backend=@render.ThreeDRendererBackend::NativeWgpu,
-    status=@render.ThreeDRendererStatus::Available,
+    backend=NativeWgpu,
+    status=Available,
     description="Experimental native WGPU 3D forward renderer; no CPU fallback.",
   )
 }
@@ -19,7 +19,7 @@ pub enum WgpuNative3DPlatform {
 
 ///|
 pub fn create_provider(
-  platform? : WgpuNative3DPlatform = WgpuNative3DPlatform::MacOS,
+  platform? : WgpuNative3DPlatform = MacOS,
 ) -> @render.ThreeDRendererProvider {
   @render.ThreeDRendererProvider::new(
     descriptor=descriptor(),
@@ -52,19 +52,19 @@ pub fn create_provider(
 /// Alias used by composition roots that already selected macOS in their
 /// platform entrypoint.
 pub fn macos_provider() -> @render.ThreeDRendererProvider {
-  create_provider(platform=WgpuNative3DPlatform::MacOS)
+  create_provider(platform=MacOS)
 }
 
 ///|
 /// Provider factory for a platform-owned HWND surface. The matching platform
 /// view plugin remains outside the macOS-first MVP.
 pub fn windows_provider() -> @render.ThreeDRendererProvider {
-  create_provider(platform=WgpuNative3DPlatform::Windows)
+  create_provider(platform=Windows)
 }
 
 ///|
 /// Provider factory for a platform-owned Wayland surface. Its native surface
 /// descriptor must include both display and surface handles.
 pub fn linux_provider() -> @render.ThreeDRendererProvider {
-  create_provider(platform=WgpuNative3DPlatform::Linux)
+  create_provider(platform=Linux)
 }

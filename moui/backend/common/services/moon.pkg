@@ -7,6 +7,12 @@ import {
 
 supported_targets = "+native+wasm-gc+wasm"
 
+// The backend/common ownership rule (checks/backend-common-ownership.json)
+// requires this package to declare its core dependency, but only its
+// black-box tests reference @core names.
+
+warnings = "-unused_package"
+
 import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",

@@ -15,7 +15,7 @@ pub fn Selection::new(
   active_row : Int,
   active_col : Int,
 ) -> Selection {
-  { anchor_row, anchor_col, active_row, active_col }
+  { anchor_row, anchor_col, active_row, active_col, }
 }
 
 ///|

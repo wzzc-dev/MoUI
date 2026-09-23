@@ -57,7 +57,11 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   } else {
     display_path.val
   }
-  Ok({ manifest_path: manifest_path.val, display_path: display, help: help.val })
+  Ok({
+    manifest_path: manifest_path.val,
+    display_path: display,
+    help: help.val,
+  })
 }
 
 ///|

@@ -10,10 +10,7 @@ test "badge smoke" {
 
 ///|
 test "status_badge smoke" {
-  let view : @core.View[Unit] = @views.status_badge(
-    "Active",
-    tone=@views.BadgeTone::Success,
-  )
+  let view : @core.View[Unit] = @views.status_badge("Active", tone=Success)
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

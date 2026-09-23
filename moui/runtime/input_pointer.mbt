@@ -23,7 +23,7 @@ fn ElementNode::dispatch_pointer(
   } else {
     let own = self.dispatch_view_event(
       self.view_node,
-      AppEvent::Pointer(event),
+      Pointer(event),
       render,
       text_system,
       environment~,
@@ -167,10 +167,10 @@ fn ElementNode::dispatch_pointer_to_children(
   // and the next Down hits a *different* control without a Move. Without Exit
   // on Down, the previous button keeps its hover/press tint (gray-white) until
   // some later full redraw. Include Down (and Cancel) in the stale-hover clear.
-  let clear_stale_hover = event.phase == PointerPhase::Move ||
-    event.phase == PointerPhase::Exit ||
-    event.phase == PointerPhase::Down ||
-    event.phase == PointerPhase::Cancel
+  let clear_stale_hover = event.phase == Move ||
+    event.phase == Exit ||
+    event.phase == Down ||
+    event.phase == Cancel
   let mut delivered_main_event = false
   // Once a hoisted overlay surface covering the point has been dispatched,
   // in-flow siblings must not receive the same main event — even when the
@@ -274,10 +274,7 @@ fn ElementNode::dispatch_pointer_to_children(
         // Pointer left this child (Move) or pressed elsewhere (Down on touch)
         // without a host leave event — send `Exit` so hover/press clears. The
         // exit carries the current position, outside this child by definition.
-        let exit_event = PointerEvent::new(
-          position=event.position,
-          phase=PointerPhase::Exit,
-        )
+        let exit_event = PointerEvent::new(position=event.position, phase=Exit)
         let exit_result = child.dispatch_pointer(
           exit_event,
           child_render,
@@ -305,7 +302,7 @@ fn ElementNode::dispatch_pointer_to_children(
       self.mark_pointer_descendant_paint_dirty()
     }
   }
-  { changed, activated, captured, capture_target, focused, deliveries }
+  { changed, activated, captured, capture_target, focused, deliveries, }
 }
 
 ///|
@@ -341,7 +338,7 @@ fn ElementNode::has_active_pointer_capture(
   self : ElementNode,
   phase : PointerPhase,
 ) -> Bool {
-  if phase == PointerPhase::Down {
+  if phase == Down {
     false
   } else if self.has_local_active_pointer_capture() {
     true
@@ -360,7 +357,7 @@ fn ElementNode::active_pointer_capture_id(
   self : ElementNode,
   phase : PointerPhase,
 ) -> ElementId? {
-  if phase == PointerPhase::Down {
+  if phase == Down {
     None
   } else if self.has_local_active_pointer_capture() {
     Some(self.id)
@@ -457,18 +454,17 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
             // they can release pending drag/tap state without activating a
             // second command.
             let should_bubble = bubble_scroll &&
-              event.phase != PointerPhase::Down &&
+              event.phase != Down &&
               // A nested scroll view has already observed this stream when
               // `bubbled` is true. Keep walking so non-scroll gesture
               // ancestors can still clean up, but avoid feeding a second
               // scroll container the same captured event.
               (!bubbled || !self.is_scroll_view_node())
             if should_bubble {
-              let ancestor_event = if result.activated &&
-                event.phase == PointerPhase::Up {
+              let ancestor_event = if result.activated && event.phase == Up {
                 PointerEvent::new(
                   position=event.position,
-                  phase=PointerPhase::Cancel,
+                  phase=Cancel,
                   button=event.button,
                   modifiers=event.modifiers,
                   time_ms=event.time_ms,
@@ -478,7 +474,7 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
               }
               let own = self.dispatch_view_event(
                 self.view_node,
-                AppEvent::Pointer(ancestor_event),
+                Pointer(ancestor_event),
                 render,
                 text_system,
                 environment~,
@@ -489,13 +485,13 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
               // Once an ancestor drag recognizes a Move, cancel the child
               // press recognizer. Otherwise the captured child can still
               // activate on Up after the drag has already started.
-              let combined = if event.phase == PointerPhase::Move &&
+              let combined = if event.phase == Move &&
                 own.changed &&
                 (own.activated || self.is_scroll_view_node()) &&
                 result.captured {
                 let cancel_event = PointerEvent::new(
                   position=event.position,
-                  phase=PointerPhase::Cancel,
+                  phase=Cancel,
                   button=event.button,
                   modifiers=event.modifiers,
                   time_ms=event.time_ms,
@@ -569,5 +565,5 @@ fn merge_element_event_results(
 
 ///|
 fn ElementNode::is_scroll_view_node(self : ElementNode) -> Bool {
-  self.view_node.semantics().role == Some(@core.SemanticsRole::ScrollView)
+  self.view_node.semantics().role == Some(ScrollView)
 }

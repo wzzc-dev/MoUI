@@ -58,7 +58,7 @@ pub fn[Msg] AppRuntime::new_view(
   environment? : @core.Environment = @core.Environment::neutral(),
   on_message? : ((Msg) -> Unit)? = None,
 ) -> AppRuntime {
-  AppRuntime::{
+  {
     state: RuntimeState::new_view(root~, size~, environment~, on_message~),
     program_runtime_snapshot_fn: () => program_runtime_snapshot_empty(),
     destroy_program_runtime_fn: Ref(() => ()),
@@ -217,12 +217,8 @@ pub fn[Model, Msg] AppRuntime::new_program(
   runtime.destroy_program_runtime_fn.val = () => {
     if program_active.val {
       program_active.val = false
-      program_runtime.cancel_all_effect_tasks(
-        EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
-      )
-      program_runtime.cancel_all_subscriptions(
-        SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
-      )
+      program_runtime.cancel_all_effect_tasks(EffectTaskRuntimeDestroyed)
+      program_runtime.cancel_all_subscriptions(SubscriptionRuntimeDestroyed)
     }
   }
   runtime

@@ -26,10 +26,7 @@ test "native range replacement and selection normalize grapheme boundaries" {
   let replaced = apply_text_input(
     control,
     "a🤣b",
-    @core.TextInputEvent::ReplaceText(
-      @core.TextRange::new(start=1, end=2),
-      "你",
-    ),
+    ReplaceText(@core.TextRange::new(start=1, end=2), "你"),
     record_history=true,
   )
   inspect(replaced.text, content="a你b")
@@ -38,7 +35,7 @@ test "native range replacement and selection normalize grapheme boundaries" {
   let selected = apply_text_input(
     replaced.control,
     replaced.text,
-    @core.TextInputEvent::SetSelection(@core.TextRange::new(start=3, end=1)),
+    SetSelection(@core.TextRange::new(start=3, end=1)),
     record_history=true,
   )
   inspect(selected.control.caret, content="3")

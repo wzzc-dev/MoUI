@@ -5,14 +5,13 @@ fn[Msg] view_map_test_rect(
   color~ : @core.Color,
   on_tap? : Msg? = None,
 ) -> @core.View[Msg] {
-  @core.View::from_node(ViewMapTestRect::{ width, height, color }, event=(
+  @core.View::from_node(ViewMapTestRect::{ width, height, color, }, event=(
     _node,
     ctx,
   ) => {
     match (ctx.event, on_tap) {
-      (@core.AppEvent::Pointer(event), Some(message)) =>
-        if event.phase == @core.PointerPhase::Up &&
-          ctx.frame.contains(event.position) {
+      (Pointer(event), Some(message)) =>
+        if event.phase == Up && ctx.frame.contains(event.position) {
           @core.ViewEventResult::message(message)
         } else {
           @core.ViewEventResult::ignored()
@@ -37,13 +36,13 @@ impl @core.ViewNode for ViewMapTestRect with fn identity(_self) {
 ///|
 impl @core.ViewNode for ViewMapTestRect with fn declaration(self) {
   @core.ViewDeclaration::channels(
-    layout=@core.DeclarationChannel::Exact(
+    layout=Exact(
       @core.DeclarationKey::record(type_tag="ViewMapTestRect.layout", fields=[
         ("width", @core.DeclarationKey::double(self.width)),
         ("height", @core.DeclarationKey::double(self.height)),
       ]),
     ),
-    paint=@core.DeclarationChannel::Exact(
+    paint=Exact(
       @core.DeclarationKey::record(type_tag="ViewMapTestRect.paint", fields=[
         ("r", @core.DeclarationKey::double(self.color.r)),
         ("g", @core.DeclarationKey::double(self.color.g)),
@@ -51,8 +50,8 @@ impl @core.ViewNode for ViewMapTestRect with fn declaration(self) {
         ("a", @core.DeclarationKey::double(self.color.a)),
       ]),
     ),
-    semantics=@core.DeclarationChannel::Constant,
-    platform=@core.DeclarationChannel::Constant,
+    semantics=Constant,
+    platform=Constant,
   )
 }
 
@@ -67,16 +66,14 @@ impl @core.ViewNode for ViewMapTestRect with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for ViewMapTestRect with fn paint(self, ctx) {
-  @core.ViewPaintPlan::commands([
-    @core.DrawCommand::FillRect(ctx.frame, self.color),
-  ])
+  @core.ViewPaintPlan::commands([FillRect(ctx.frame, self.color)])
 }
 
 ///|
 fn[Msg] view_map_test_stack(
   children~ : Array[@core.View[Msg]],
 ) -> @core.View[Msg] {
-  @core.View::from_node(ViewMapTestStack::{  }, children=_node => children)
+  @core.View::from_node(ViewMapTestStack::{ }, children=_node => children)
 }
 
 ///|
@@ -125,11 +122,8 @@ test "view map maps direct event messages" {
   let result = view.event({
     frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
     child_frames: [],
-    event: @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=5.0, y=5.0),
-        phase=@core.PointerPhase::Up,
-      ),
+    event: Pointer(
+      @core.PointerEvent::new(position=@core.Point::new(x=5.0, y=5.0), phase=Up),
     ),
     focused: false,
     state: view_test_state(),
@@ -158,10 +152,10 @@ test "view map maps nested children" {
       let result = child.event({
         frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
         child_frames: [],
-        event: @core.AppEvent::Pointer(
+        event: Pointer(
           @core.PointerEvent::new(
             position=@core.Point::new(x=5.0, y=5.0),
-            phase=@core.PointerPhase::Up,
+            phase=Up,
           ),
         ),
         focused: false,

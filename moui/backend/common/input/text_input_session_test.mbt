@@ -11,25 +11,19 @@ test "host driver maps focused text input through core text input event" {
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::InsertText("a")),
-    ),
-  )
+  ignore(driver.dispatch(TextInput(InsertText("a"))))
   inspect(text.val, content="")
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
-  let result = driver.dispatch(
-    @backend_host.Event::TextInput(@core.TextInputEvent::InsertText("a")),
-  )
+  let result = driver.dispatch(TextInput(InsertText("a")))
   inspect(text.val, content="a")
   inspect(result.redraw_requested, content="true")
 }
@@ -51,38 +45,29 @@ test "host driver routes text clipboard commands through service bridge" {
     capabilities=@backend_host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::WriteText(value)
-        ) => {
+        Clipboard(WriteText(value)) => {
           clipboard.val = value
-          @backend_host.HostServiceResponse::ClipboardWritten
+          ClipboardWritten
         }
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadText
-        ) => @backend_host.HostServiceResponse::ClipboardText(clipboard.val)
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        Clipboard(ReadText) => ClipboardText(clipboard.val)
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
+  ignore(driver.dispatch(TextInput(InsertText("hello"))))
   ignore(
     driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::InsertText("hello")),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::Keyboard(
+      Keyboard(
         @core.KeyboardEvent::new(
           key="a",
           modifiers=@core.KeyModifiers::new(meta=true),
@@ -90,18 +75,12 @@ test "host driver routes text clipboard commands through service bridge" {
       ),
     ),
   )
-  ignore(
-    driver.dispatch_command_with_services(@core.CommandIntent::Copy, bridge),
-  )
+  ignore(driver.dispatch_command_with_services(Copy, bridge))
   inspect(clipboard.val, content="hello")
-  ignore(
-    driver.dispatch_command_with_services(@core.CommandIntent::Cut, bridge),
-  )
+  ignore(driver.dispatch_command_with_services(Cut, bridge))
   inspect(text.val, content="")
   clipboard.val = "world"
-  ignore(
-    driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge),
-  )
+  ignore(driver.dispatch_command_with_services(Paste, bridge))
   inspect(text.val, content="world")
 }
 
@@ -122,35 +101,26 @@ test "host driver routes clipboard keyboard shortcuts through service bridge" {
     capabilities=@backend_host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::WriteText(value)
-        ) => {
+        Clipboard(WriteText(value)) => {
           clipboard.val = value
-          @backend_host.HostServiceResponse::ClipboardWritten
+          ClipboardWritten
         }
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadText
-        ) => @backend_host.HostServiceResponse::ClipboardText(clipboard.val)
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        Clipboard(ReadText) => ClipboardText(clipboard.val)
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::InsertText("hello")),
-    ),
-  )
+  ignore(driver.dispatch(TextInput(InsertText("hello"))))
   ignore(
     driver.dispatch_keyboard_with_services(
       @core.KeyboardEvent::new(
@@ -210,34 +180,25 @@ test "host driver keyboard paste replaces selection with extended emoji" {
     capabilities=@backend_host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadText
-        ) => @backend_host.HostServiceResponse::ClipboardText(clipboard.val)
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        Clipboard(ReadText) => ClipboardText(clipboard.val)
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
+  ignore(driver.dispatch(TextInput(InsertText("replace"))))
   ignore(
     driver.dispatch(
-      @backend_host.Event::TextInput(
-        @core.TextInputEvent::InsertText("replace"),
-      ),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::Keyboard(
+      Keyboard(
         @core.KeyboardEvent::new(
           key="a",
           modifiers=@core.KeyModifiers::new(meta=true),
@@ -264,7 +225,7 @@ test "host driver falls back clipboard shortcuts to action commands" {
   let runtime = window_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-    commands=[@core.ActionCommand::new(intent=@core.CommandIntent::Copy)],
+    commands=[@core.ActionCommand::new(intent=Copy)],
     on_message=_ => copied.val = copied.val + 1,
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
@@ -272,7 +233,7 @@ test "host driver falls back clipboard shortcuts to action commands" {
   })
   let bridge = @backend_host.HostServiceBridge::new(
     capabilities=@backend_host.HostServiceCapabilities::new(clipboard=true),
-    handle=_request => @backend_host.HostServiceResponse::ClipboardWritten,
+    handle=_request => ClipboardWritten,
   )
   ignore(
     driver.dispatch_keyboard_with_services(
@@ -293,7 +254,7 @@ test "host driver defers paste action command while clipboard read is pending" {
   let runtime = window_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-    commands=[@core.ActionCommand::new(intent=@core.CommandIntent::Paste)],
+    commands=[@core.ActionCommand::new(intent=Paste)],
     on_message=_ => pasted.val = pasted.val + 1,
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
@@ -303,26 +264,16 @@ test "host driver defers paste action command while clipboard read is pending" {
     capabilities=@backend_host.HostServiceCapabilities::new(clipboard=true),
     handle=request => {
       match request {
-        @backend_host.HostServiceRequest::Clipboard(
-          @backend_host.HostClipboardRequest::ReadText
-        ) => queue.submit(request)
-        _ =>
-          @backend_host.HostServiceResponse::Unavailable("unexpected request")
+        Clipboard(ReadText) => queue.submit(request)
+        _ => Unavailable("unexpected request")
       }
     },
   )
-  ignore(
-    driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge),
-  )
+  ignore(driver.dispatch_command_with_services(Paste, bridge))
   inspect(pasted.val, content="0")
   let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
-  assert_true(
-    queue.complete(
-      pending[0].id,
-      @backend_host.HostServiceResponse::ClipboardText("delayed"),
-    ),
-  )
+  assert_true(queue.complete(pending[0].id, ClipboardText("delayed")))
   for completion in queue.drain_completed() {
     ignore(driver.dispatch_service_completion(completion, bridge))
   }

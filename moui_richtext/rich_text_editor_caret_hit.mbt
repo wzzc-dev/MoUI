@@ -115,7 +115,7 @@ fn[Msg] rich_text_line_edge_move_result(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    dirty=ViewPaintDirty,
     messages=if changed {
       selection_messages(
         on_selection_change,
@@ -420,7 +420,7 @@ fn[Msg] rich_text_vertical_caret_move_result(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    dirty=ViewPaintDirty,
     messages=if changed {
       selection_messages(
         on_selection_change,
@@ -525,10 +525,10 @@ fn apply_rich_text_input_transform(
         redo_stack: [],
       },
       changed: true,
-      edit: Some({ start, deleted: before, replacement: after }),
+      edit: Some({ start, deleted: before, replacement: after, }),
     }
   } else {
-    { text: previous, control, changed: false, edit: None }
+    { text: previous, control, changed: false, edit: None, }
   }
 }
 
@@ -709,7 +709,7 @@ fn append_rich_text_table_selection_rects(
             rich_text_width(covered, font, text_system)
           if x1 > x0 {
             commands.push(
-              @core.DrawCommand::FillRect(
+              FillRect(
                 @core.Rect::new(
                   x=x0,
                   y=row_y +
@@ -735,7 +735,7 @@ fn append_rich_text_table_selection_rects(
         let line_chars = line.text.to_array()
         let before = String::from_array(line_chars[0:s - line.start])
         let covered = String::from_array(line_chars[0:e - line.start])
-        let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
+        let text_x = match cell.align.unwrap_or(TextStart) {
           TextStart => inner_x
           TextCenter =>
             inner_x +
@@ -748,7 +748,7 @@ fn append_rich_text_table_selection_rects(
           rich_text_width(covered, cell_layout.font, text_system)
         if x1 > x0 {
           commands.push(
-            @core.DrawCommand::FillRect(
+            FillRect(
               @core.Rect::new(
                 x=x0,
                 y=row_y +
@@ -830,7 +830,7 @@ fn append_rich_text_block_selection_rect(
       }
       if right > left {
         commands.push(
-          @core.DrawCommand::FillRect(
+          FillRect(
             @core.Rect::new(
               x=left,
               y=y + 4.0,
@@ -1806,7 +1806,7 @@ fn rich_text_block_table_source_offset_at_point(
               @core.clamp_int(range.start + line.start, range.start, range.end),
             )
           }
-          let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
+          let text_x = match cell.align.unwrap_or(TextStart) {
             TextStart => inner_x
             TextCenter =>
               inner_x + max_double(0.0, (inner_width - line.width) / 2.0)
@@ -2101,9 +2101,9 @@ fn rich_text_block_table_caret_rect(
   )
   // cell 字体（header 加重，与渲染端一致）。
   let cell_font = if cell.header {
-    { ..base_font_resolved, weight: 700 }
+    { ..base_font_resolved, weight: 700, }
   } else {
-    { ..base_font_resolved, weight: 400 }
+    { ..base_font_resolved, weight: 400, }
   }
   // 空 cell 直接返回 cell 文本起点。
   if cell.text == "" {
@@ -2164,7 +2164,7 @@ fn rich_text_block_table_caret_rect(
       let prefix_width = rich_text_width(prefix, cell_font, text_system)
       // 按 align 计算 text_x（与点击映射对称）。
       let inner_width = text_frame.size.width
-      let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
+      let text_x = match cell.align.unwrap_or(TextStart) {
         TextStart => text_frame.origin.x
         TextCenter => text_frame.origin.x + (inner_width - line.width) / 2.0
         TextEnd => text_frame.origin.x + inner_width - line.width

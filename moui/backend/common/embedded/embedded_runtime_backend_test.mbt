@@ -25,7 +25,7 @@ test "hosted runtime core owns shared render resize and dispose lifecycle" {
     root=(@views.empty() : @core.View[Unit]),
     size=metrics.logical_size,
   )
-  let core = EmbeddedRuntimeBackendCore::new(
+  let core = @embedded.EmbeddedRuntimeBackendCore::new(
     runtime~,
     renderer~,
     metrics~,
@@ -40,10 +40,10 @@ test "hosted runtime core owns shared render resize and dispose lifecycle" {
   assert_true(
     core.drain_host_update_envelope_json().contains("\"kind\":\"ime\""),
   )
-  let submit = embedded_command_response(3).unwrap()
+  let submit = @embedded.embedded_command_response(3).unwrap()
   assert_false(
     core.dispatch_host_response_envelope(
-      EmbeddedHostResponseEnvelope::new(
+      @embedded.EmbeddedHostResponseEnvelope::new(
         session_generation=core.session_generation() + 1,
         response=submit,
       ),
@@ -102,7 +102,7 @@ test "hosted runtime core owns shared render resize and dispose lifecycle" {
   assert_true(core.take_redraw_requested())
   assert_false(
     core.dispatch_host_response_envelope(
-      EmbeddedHostResponseEnvelope::new(
+      @embedded.EmbeddedHostResponseEnvelope::new(
         session_generation=first_generation,
         response=submit,
       ),

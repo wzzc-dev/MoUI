@@ -10,7 +10,7 @@ pub fn BadgeStyle::new(
   radius~ : Double,
   padding~ : Double,
 ) -> BadgeStyle {
-  { neutral, accent, success, warning, danger, radius, padding }
+  { neutral, accent, success, warning, danger, radius, padding, }
 }
 
 ///|

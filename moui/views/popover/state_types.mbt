@@ -21,7 +21,7 @@ pub fn DropdownState::new(
   expanded? : Bool = false,
   selected? : String = "",
 ) -> DropdownState {
-  { expanded, selected }
+  { expanded, selected, }
 }
 
 // === Enum to_string() methods ===

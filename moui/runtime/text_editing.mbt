@@ -32,7 +32,11 @@ fn ElementNode::dispatch_text_command(
         return result
       }
     }
-    { result: TextCommandResult::ignored(), text_control: None, deliveries: [] }
+    {
+      result: TextCommandResult::ignored(),
+      text_control: None,
+      deliveries: [],
+    }
   }
 }
 
@@ -50,7 +54,7 @@ fn ElementNode::dispatch_view_text_command(
     {
       frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
       child_frames: [],
-      event: AppEvent::Keyboard(KeyboardEvent::new(key="", pressed=false)),
+      event: Keyboard(KeyboardEvent::new(key="", pressed=false)),
       focused: true,
       state: self.control.view_context(true),
       text_control: self.control.text_context(),

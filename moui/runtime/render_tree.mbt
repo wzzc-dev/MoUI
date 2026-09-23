@@ -84,7 +84,7 @@ fn RenderNode::collect_frame_commands_with_overlays(
   }
   if fade {
     commands.push(
-      DrawCommand::PushOpacity(
+      PushOpacity(
         match self.render_opacity {
           Some(opacity) => opacity
           None => 1.0
@@ -126,7 +126,7 @@ fn RenderNode::collect_draw_commands_with_overlays(
   }
   if fade {
     commands.push(
-      DrawCommand::PushOpacity(
+      PushOpacity(
         match self.render_opacity {
           Some(opacity) => opacity
           None => 1.0

@@ -94,7 +94,7 @@ fn DesktopSnapshotV1::migrate(self : DesktopSnapshotV1) -> DesktopSnapshot {
     height: 0.0,
   }
   let record : WindowRecord = {
-    id: { app: FinderApp, serial: 1 },
+    id: { app: FinderApp, serial: 1, },
     state: if self.window_maximized {
       MaximizedWindow
     } else {
@@ -367,5 +367,5 @@ pub fn DesktopModel::move_icon_by(
       offset_y: clamp(dy, limit_y),
     })
   }
-  { ..self, icon_placements: updated }
+  { ..self, icon_placements: updated, }
 }

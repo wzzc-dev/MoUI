@@ -4,8 +4,8 @@ test "checkbox exposes role value and checked on the control node" {
     ()
   })
   let info = box.semantics()
-  assert_true(info.role == Some(@core.SemanticsRole::Checkbox))
-  assert_true(info.checked is Some(@core.SemanticsCheckedState::Checked))
+  assert_true(info.role == Some(Checkbox))
+  assert_true(info.checked is Some(Checked))
   assert_eq(info.value, Some("true"))
   assert_eq(info.label, Some("Accept"))
 }
@@ -15,23 +15,19 @@ test "toggle and radio wrap checkbox with public semantics roles" {
   let switch : @core.View[Unit] = @checkbox.toggle("Dark mode", true, on_change=_value => {
     ()
   })
-  assert_true(switch.semantics().role == Some(@core.SemanticsRole::Switch))
+  assert_true(switch.semantics().role == Some(Switch))
   assert_true(switch.identity().kind.contains("SemanticsRole"))
   assert_true(switch.children().length() == 1)
   let switch_child = switch.children()[0].semantics()
-  assert_true(switch_child.role == Some(@core.SemanticsRole::Checkbox))
-  assert_true(
-    switch_child.checked is Some(@core.SemanticsCheckedState::Checked),
-  )
+  assert_true(switch_child.role == Some(Checkbox))
+  assert_true(switch_child.checked is Some(Checked))
 
   let option : @core.View[Unit] = @checkbox.radio("Option A", true, on_change=_value => {
     ()
   })
-  assert_true(option.semantics().role == Some(@core.SemanticsRole::Radio))
+  assert_true(option.semantics().role == Some(Radio))
   assert_true(option.children().length() == 1)
   let option_child = option.children()[0].semantics()
-  assert_true(option_child.role == Some(@core.SemanticsRole::Checkbox))
-  assert_true(
-    option_child.checked is Some(@core.SemanticsCheckedState::Checked),
-  )
+  assert_true(option_child.role == Some(Checkbox))
+  assert_true(option_child.checked is Some(Checked))
 }

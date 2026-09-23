@@ -24,7 +24,7 @@ fn require_probe_node(
 
 ///|
 test "accessibility probe publishes contracts and modal lifecycle" {
-  let app = ShowcaseApp::new().program_with_initial_route(
+  let app = @app.ShowcaseApp::new().program_with_initial_route(
     "showcase/accessibility-probe",
   )
   let runtime = @runtime.AppRuntime::new_program(
@@ -32,7 +32,7 @@ test "accessibility probe publishes contracts and modal lifecycle" {
     size=@geometry.Size::new(width=1024.0, height=1200.0),
   )
   let snapshot = match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) => snapshot
+    Ok(Full(snapshot)) => snapshot
     _ => fail("expected full accessibility probe snapshot")
   }
   let required = [
@@ -53,56 +53,48 @@ test "accessibility probe publishes contracts and modal lifecycle" {
   assert_eq(snapshot.issues(), [])
 
   let button = require_probe_node(snapshot, "a11y.button")
-  assert_eq(button.role, @core.SemanticsRole::Button)
+  assert_eq(button.role, Button)
   assert_eq(button.label, "Open probe dialog")
-  assert_true(button.actions.contains(@core.SemanticsActionKind::Activate))
+  assert_true(button.actions.contains(Activate))
   let checkbox = require_probe_node(snapshot, "a11y.checkbox")
-  assert_eq(checkbox.role, @core.SemanticsRole::Checkbox)
-  assert_eq(checkbox.state.checked, Some(@core.SemanticsCheckedState::Checked))
+  assert_eq(checkbox.role, Checkbox)
+  assert_eq(checkbox.state.checked, Some(Checked))
   let slider = require_probe_node(snapshot, "a11y.slider")
-  assert_eq(slider.role, @core.SemanticsRole::Slider)
+  assert_eq(slider.role, Slider)
   guard slider.numeric is Some(numeric) else {
     fail("slider missing numeric metadata")
   }
   assert_eq(numeric.min, Some(0.0))
   assert_eq(numeric.max, Some(1.0))
   assert_eq(numeric.step, Some(0.1))
-  assert_true(slider.actions.contains(@core.SemanticsActionKind::Increment))
-  assert_true(slider.actions.contains(@core.SemanticsActionKind::Decrement))
-  assert_true(
-    slider.actions.contains(@core.SemanticsActionKind::SetNumericValue),
-  )
+  assert_true(slider.actions.contains(Increment))
+  assert_true(slider.actions.contains(Decrement))
+  assert_true(slider.actions.contains(SetNumericValue))
   let textfield = require_probe_node(snapshot, "a11y.textfield")
-  assert_eq(textfield.role, @core.SemanticsRole::TextField)
+  assert_eq(textfield.role, TextField)
   assert_eq(textfield.value, "mobile-service-probe")
   guard textfield.text is Some(text) else {
     fail("textfield missing text metadata")
   }
   assert_true(text.editable)
-  assert_true(
-    textfield.actions.contains(@core.SemanticsActionKind::SetSelection),
-  )
+  assert_true(textfield.actions.contains(SetSelection))
 
   let after_toggle = match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(
-        @core.SemanticId::parse("a11y.checkbox").unwrap(),
-      ),
-      action: @core.SemanticsAction::Activate,
-      precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-        snapshot.generation(),
-      ),
+      target: BySemanticId(@core.SemanticId::parse("a11y.checkbox").unwrap()),
+      action: Activate,
+      precondition: Exact(snapshot.generation()),
     }) {
     Ok(receipt) =>
       match runtime.read_semantics(since=snapshot.generation()) {
-        Ok(@runtime.SemanticsRead::Delta(delta)) => {
+        Ok(Delta(delta)) => {
           assert_eq(delta.to(), receipt.after)
           assert_true(
             delta
             .announcements()
             .any(announcement => {
               announcement.text.contains("Actions: 1") &&
-              announcement.live == @core.SemanticsLive::Polite &&
+              announcement.live == Polite &&
               announcement.is_atomic
             }),
           )
@@ -115,30 +107,22 @@ test "accessibility probe publishes contracts and modal lifecycle" {
 
   let after_open = match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(
-        @core.SemanticId::parse("a11y.button").unwrap(),
-      ),
-      action: @core.SemanticsAction::Activate,
-      precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-        after_toggle.generation(),
-      ),
+      target: BySemanticId(@core.SemanticId::parse("a11y.button").unwrap()),
+      action: Activate,
+      precondition: Exact(after_toggle.generation()),
     }) {
     Ok(receipt) => runtime_expect_probe_snapshot(runtime, receipt.after)
     Err(_) => fail("probe button action rejected")
   }
   let dialog = require_probe_node(after_open, "a11y.dialog")
-  assert_eq(dialog.role, @core.SemanticsRole::Dialog)
+  assert_eq(dialog.role, Dialog)
   assert_true(dialog.state.modal)
-  assert_true(dialog.actions.contains(@core.SemanticsActionKind::Dismiss))
+  assert_true(dialog.actions.contains(Dismiss))
   let after_close = match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(
-        @core.SemanticId::parse("a11y.dialog").unwrap(),
-      ),
-      action: @core.SemanticsAction::Dismiss,
-      precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-        after_open.generation(),
-      ),
+      target: BySemanticId(@core.SemanticId::parse("a11y.dialog").unwrap()),
+      action: Dismiss,
+      precondition: Exact(after_open.generation()),
     }) {
     Ok(receipt) => runtime_expect_probe_snapshot(runtime, receipt.after)
     Err(_) => fail("probe dialog dismiss rejected")
@@ -152,7 +136,7 @@ fn runtime_expect_probe_snapshot(
   generation : @core.SemanticsGeneration,
 ) -> @runtime.SemanticsSnapshot {
   match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) => {
+    Ok(Full(snapshot)) => {
       if snapshot.generation() != generation {
         abort("probe snapshot generation mismatch")
       }

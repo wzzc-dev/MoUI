@@ -46,13 +46,8 @@ pub async fn acp_worker_loop(owner : AcpBackendOwner) -> Unit {
         RunCommands(commands, emit) =>
           for cmd in commands {
             match cmd {
-              @app.AgentCommand::Shutdown => return
-              _ =>
-                emit(
-                  @app.AgentEvent::RuntimeNoticeAdded(
-                    "ACP command is not configured",
-                  ),
-                )
+              Shutdown => return
+              _ => emit(RuntimeNoticeAdded("ACP command is not configured"))
             }
           }
       }
@@ -155,7 +150,7 @@ async fn acp_send_request(
   params_line : (String) -> String,
 ) -> Unit {
   let id = acp_next_id(state)
-  state.pending.push({ id, kind, emit })
+  state.pending.push({ id, kind, emit, })
   acp_write_line(state, params_line(id))
 }
 
@@ -167,25 +162,21 @@ async fn acp_worker_handle_command(
   emit : (@app.AgentEvent) -> Unit,
 ) -> Bool {
   match cmd {
-    @app.AgentCommand::NewSession(_) =>
+    NewSession(_) =>
       acp_send_request(state, NewSession, emit, id => {
         acp_new_session_request_line(
           id,
           acp_absolute_workspace(config.workspace),
         )
       })
-    @app.AgentCommand::SendTask(task) =>
+    SendTask(task) =>
       match state.active_session_id {
         Some(session_id) =>
           acp_send_request(state, Prompt, emit, id => {
             acp_prompt_request_line(id, session_id, task)
           })
         None => {
-          emit(
-            @app.AgentEvent::RuntimeNoticeAdded(
-              "ACP session is not ready; creating one.",
-            ),
-          )
+          emit(RuntimeNoticeAdded("ACP session is not ready; creating one."))
           acp_send_request(state, NewSessionForPrompt(task), emit, id => {
             acp_new_session_request_line(
               id,
@@ -194,7 +185,7 @@ async fn acp_worker_handle_command(
           })
         }
       }
-    @app.AgentCommand::FetchSessionList =>
+    FetchSessionList =>
       if state.session_list_supported {
         acp_send_request(state, ListSessions, emit, id => {
           acp_list_sessions_request_line(id)
@@ -208,9 +199,9 @@ async fn acp_worker_handle_command(
             )
           None => ()
         }
-        emit(@app.AgentEvent::SessionListed(summaries))
+        emit(SessionListed(summaries))
       }
-    @app.AgentCommand::SwitchSession(session_id) =>
+    SwitchSession(session_id) =>
       if state.load_session_supported {
         acp_send_request(state, LoadSession, emit, id => {
           acp_load_session_request_line(
@@ -229,29 +220,24 @@ async fn acp_worker_handle_command(
         })
       } else {
         emit(
-          @app.AgentEvent::RuntimeNoticeAdded(
-            "ACP agent does not support session load/resume",
-          ),
+          RuntimeNoticeAdded("ACP agent does not support session load/resume"),
         )
       }
-    @app.AgentCommand::CancelTurn =>
+    CancelTurn =>
       match state.active_session_id {
         Some(session_id) => {
           acp_write_line(state, acp_cancel_notification_line(session_id))
           for pending in state.pending_permissions {
             acp_write_line(
               state,
-              acp_permission_response_line(
-                pending.rpc_id,
-                @app.PermissionOutcome::Cancelled,
-              ),
+              acp_permission_response_line(pending.rpc_id, Cancelled),
             )
           }
           state.pending_permissions = []
         }
         None => ()
       }
-    @app.AgentCommand::SetSessionMode(mode_id) =>
+    SetSessionMode(mode_id) =>
       match state.active_session_id {
         Some(session_id) =>
           if state.set_mode_supported {
@@ -260,34 +246,25 @@ async fn acp_worker_handle_command(
             })
           } else {
             emit(
-              @app.AgentEvent::RuntimeNoticeAdded(
-                "ACP agent did not advertise session modes",
-              ),
+              RuntimeNoticeAdded("ACP agent did not advertise session modes"),
             )
           }
-        None =>
-          emit(@app.AgentEvent::RuntimeNoticeAdded("ACP session is not ready"))
+        None => emit(RuntimeNoticeAdded("ACP session is not ready"))
       }
-    @app.AgentCommand::SetSessionConfigOption(config_id, value) =>
+    SetSessionConfigOption(config_id, value) =>
       match state.active_session_id {
         Some(session_id) =>
           acp_send_request(state, SetConfig, emit, id => {
             acp_set_config_option_request_line(id, session_id, config_id, value)
           })
-        None =>
-          emit(@app.AgentEvent::RuntimeNoticeAdded("ACP session is not ready"))
+        None => emit(RuntimeNoticeAdded("ACP session is not ready"))
       }
-    @app.AgentCommand::RespondPermission(request_id, outcome) =>
+    RespondPermission(request_id, outcome) =>
       acp_respond_permission(state, request_id, outcome)
-    @app.AgentCommand::Steer(text) =>
-      emit(
-        @app.AgentEvent::RuntimeNoticeAdded(
-          "ACP steer is not supported yet: " + text,
-        ),
-      )
-    @app.AgentCommand::SetModel(_, _, _) | @app.AgentCommand::SetThinking(_) =>
-      ()
-    @app.AgentCommand::Shutdown => return true
+    Steer(text) =>
+      emit(RuntimeNoticeAdded("ACP steer is not supported yet: " + text))
+    SetModel(_, _, _) | SetThinking(_) => ()
+    Shutdown => return true
   }
   false
 }
@@ -341,7 +318,7 @@ async fn acp_stderr_loop(
     if !clean.is_empty() {
       let notice = "[ACP stderr] " + clean
       match state.last_emit {
-        Some(emit) => emit(@app.AgentEvent::RuntimeNoticeAdded(notice))
+        Some(emit) => emit(RuntimeNoticeAdded(notice))
         None => println("[Mo Workbench ACP] " + clean)
       }
     }
@@ -350,9 +327,9 @@ async fn acp_stderr_loop(
 
 ///|
 async fn acp_handle_rpc_message(state : AcpWorkerState, message : Json) -> Unit {
-  guard message is Json::Object(fields) else { return }
+  guard message is Object(fields) else { return }
   match fields.get("method") {
-    Some(Json::String(method_name)) =>
+    Some(String(method_name)) =>
       acp_handle_agent_method(state, method_name, fields)
     _ =>
       match fields.get("id") {
@@ -372,7 +349,7 @@ async fn acp_handle_agent_method(
   match method_name {
     "session/update" =>
       match fields.get("params") {
-        Some(Json::Object(params)) =>
+        Some(Object(params)) =>
           match params.get("update") {
             Some(update) => {
               let session_id = acp_json_string_field(params, "sessionId").unwrap_or(
@@ -395,11 +372,8 @@ async fn acp_handle_agent_method(
         Some(params) =>
           match acp_parse_permission_request(request_id, params) {
             Some(request) => {
-              state.pending_permissions.push({ request_id, rpc_id: id })
-              acp_emit_to_active_pending(
-                state,
-                @app.AgentEvent::PermissionRequested(request),
-              )
+              state.pending_permissions.push({ request_id, rpc_id: id, })
+              acp_emit_to_active_pending(state, PermissionRequested(request))
             }
             None =>
               acp_write_line(
@@ -430,8 +404,8 @@ fn acp_attach_session_id(
   event : @app.AgentEvent,
 ) -> @app.AgentEvent {
   match event {
-    @app.AgentEvent::SessionInfoUpdated("", title, updated_at) =>
-      @app.AgentEvent::SessionInfoUpdated(session_id, title, updated_at)
+    SessionInfoUpdated("", title, updated_at) =>
+      SessionInfoUpdated(session_id, title, updated_at)
     _ => event
   }
 }
@@ -462,10 +436,7 @@ async fn acp_handle_response(
   match pending {
     Some(p) =>
       match acp_response_error_message(fields) {
-        Some(message) =>
-          (p.emit)(
-            @app.AgentEvent::TurnTerminal(@app.TurnStatus::Failed, message),
-          )
+        Some(message) => (p.emit)(TurnTerminal(Failed, message))
         None =>
           match acp_response_result(fields) {
             Some(result) => acp_handle_pending_result(state, p, result)
@@ -503,16 +474,15 @@ async fn acp_handle_pending_result(
     NewSession | NewSessionForPrompt(_) | LoadSession | ResumeSession => {
       for event in acp_session_setup_events(result) {
         match event {
-          @app.AgentEvent::ActiveSessionChanged(id) =>
-            state.active_session_id = Some(id)
-          @app.AgentEvent::SessionModeStateChanged(modes) =>
+          ActiveSessionChanged(id) => state.active_session_id = Some(id)
+          SessionModeStateChanged(modes) =>
             state.set_mode_supported = !modes.available_modes.is_empty()
           _ => ()
         }
         (pending.emit)(event)
       }
       state.last_emit = Some(pending.emit)
-      (pending.emit)(@app.AgentEvent::SessionRebuilt([]))
+      (pending.emit)(SessionRebuilt([]))
       match pending.kind {
         NewSessionForPrompt(task) =>
           match state.active_session_id {
@@ -527,19 +497,15 @@ async fn acp_handle_pending_result(
     }
     Prompt => (pending.emit)(acp_prompt_stop_event(result))
     ListSessions =>
-      (pending.emit)(
-        @app.AgentEvent::SessionListed(acp_parse_session_list(result)),
-      )
+      (pending.emit)(SessionListed(acp_parse_session_list(result)))
     SetMode => ()
     SetConfig =>
       match result {
-        Json::Object(fields) =>
+        Object(fields) =>
           match fields.get("configOptions") {
-            Some(Json::Array(values)) =>
+            Some(Array(values)) =>
               (pending.emit)(
-                @app.AgentEvent::SessionConfigOptionsChanged(
-                  acp_parse_config_options(values),
-                ),
+                SessionConfigOptionsChanged(acp_parse_config_options(values)),
               )
             _ => ()
           }
@@ -550,14 +516,14 @@ async fn acp_handle_pending_result(
 
 ///|
 fn acp_handle_initialize_result(state : AcpWorkerState, result : Json) -> Unit {
-  guard result is Json::Object(fields) else { return }
+  guard result is Object(fields) else { return }
   match fields.get("agentCapabilities") {
-    Some(Json::Object(caps)) => {
+    Some(Object(caps)) => {
       state.load_session_supported = acp_json_bool_field(caps, "loadSession").unwrap_or(
         false,
       )
       match caps.get("sessionCapabilities") {
-        Some(Json::Object(session_caps)) => {
+        Some(Object(session_caps)) => {
           state.session_list_supported = session_caps.get("list") != None
           state.resume_session_supported = session_caps.get("resume") != None
         }

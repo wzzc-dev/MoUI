@@ -15,7 +15,7 @@ pub fn[Msg] form_actions(
     rows.push(
       @text.text(
         status,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width~,
         height=24.0,
@@ -29,7 +29,7 @@ pub fn[Msg] form_actions(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Ghost,
+          variant=Ghost,
           theme=resolved_theme,
           width=action_width,
           height=36.0,
@@ -41,7 +41,7 @@ pub fn[Msg] form_actions(
     @button.button(
       primary.label,
       on_click=primary.message,
-      variant=@style.ButtonVariant::Primary,
+      variant=Primary,
       theme=resolved_theme,
       width=action_width,
       height=36.0,
@@ -51,23 +51,19 @@ pub fn[Msg] form_actions(
     @layout.row(
       actions,
       spacing=resolved_theme.spacing_scale.sm,
-      justify=@style.MainAlign::End,
-      align=@style.CrossAlign::Center,
+      justify=End,
+      align=Center,
     ).frame(width~, height=40.0),
   )
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Stretch,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Stretch),
     width~,
     height=if status == "" { 52.0 } else { 82.0 },
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.xs,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .accessibility_label("Form actions")
 }
 
@@ -110,13 +106,9 @@ pub fn[Msg] form_workflow_bar(
       width~,
     ),
   )
-  @layout.column(
-    rows,
-    spacing=resolved_theme.spacing_scale.sm,
-    align=@style.CrossAlign::Stretch,
-  )
+  @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Stretch)
   .frame(width~)
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .semantics_invalid(invalid=!summary.valid)
   .semantics_description(form_workflow_description(summary, focus_scope))
   .accessibility_label("Form workflow")
@@ -153,12 +145,8 @@ fn form_workflow_status(
 
 ///|
 fn form_workflow_command_status(scope : @core.FocusScope) -> String {
-  let submit = form_workflow_target(
-    scope.command_target(@core.CommandIntent::Submit),
-  )
-  let cancel = form_workflow_target(
-    scope.command_target(@core.CommandIntent::Cancel),
-  )
+  let submit = form_workflow_target(scope.command_target(Submit))
+  let cancel = form_workflow_target(scope.command_target(Cancel))
   if submit == "none" && cancel == "none" {
     "Ready to submit"
   } else if cancel == "none" {

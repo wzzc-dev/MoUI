@@ -253,7 +253,7 @@ pub fn Paragraph::line_count(self : Paragraph) -> Int {
 ///|
 pub fn Paragraph::line_metrics(self : Paragraph) -> Array[ParagraphLineMetric] {
   let count = self.line_count()
-  let metrics : Array[ParagraphLineMetric] = Array::new(capacity=count)
+  let metrics : Array[ParagraphLineMetric] = Array(capacity=count)
   for index in 0..<count {
     let metric = ParagraphLineMetric::{
       start: native_paragraph_line_start(self.handle, index),
@@ -297,7 +297,7 @@ pub fn Paragraph::text_boxes_utf8(
     let s = start.max(0)
     let e = end.max(start)
     let count = native_paragraph_text_boxes_utf8_count(self.handle, s, e)
-    let boxes : Array[@skia.Rect] = Array::new(capacity=count)
+    let boxes : Array[@skia.Rect] = Array(capacity=count)
     for index in 0..<count {
       boxes.push(
         @skia.Rect::new(
@@ -330,7 +330,7 @@ pub fn Paragraph::text_box_directions_utf8(
       s,
       e,
     )
-    let directions : Array[Int] = Array::new(capacity=count)
+    let directions : Array[Int] = Array(capacity=count)
     for index in 0..<count {
       directions.push(
         native_paragraph_text_box_directions_utf8_at(self.handle, s, e, index),
@@ -348,7 +348,7 @@ pub fn Paragraph::hit_test_utf8(
 ) -> ParagraphHitTestResult {
   if !native_paragraph_scalar_is_finite(x) ||
     !native_paragraph_scalar_is_finite(y) {
-    { offset: 0, downstream: true }
+    { offset: 0, downstream: true, }
   } else {
     {
       offset: native_paragraph_hit_test_utf8_offset(self.handle, x, y).max(0),

@@ -133,7 +133,7 @@ pub fn WebGpuHostCapabilities::new(
   adapter_ready? : Bool = true,
   can_render? : Bool = true,
 ) -> WebGpuHostCapabilities {
-  { webgpu_available, adapter_ready, can_render }
+  { webgpu_available, adapter_ready, can_render, }
 }
 
 ///|
@@ -144,7 +144,7 @@ pub fn WebGpuHostImportInfo::new(
   renderer_resource~ : String,
   description? : String = "",
 ) -> WebGpuHostImportInfo {
-  { import_module, target, surface_resource, renderer_resource, description }
+  { import_module, target, surface_resource, renderer_resource, description, }
 }
 
 ///|
@@ -155,7 +155,7 @@ pub fn WebGpuHostAdapterInfo::new(
   capabilities~ : WebGpuHostCapabilities,
   description? : String = "",
 ) -> WebGpuHostAdapterInfo {
-  { renderer, surface_contract, imports, capabilities, description }
+  { renderer, surface_contract, imports, capabilities, description, }
 }
 
 ///|
@@ -163,7 +163,7 @@ pub fn WebGpuHostSurface::new(
   canvas_id~ : String,
   metrics~ : @core.SurfaceMetrics,
 ) -> WebGpuHostSurface {
-  { canvas_id, metrics }
+  { canvas_id, metrics, }
 }
 
 ///|

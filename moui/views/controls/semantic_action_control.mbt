@@ -77,7 +77,7 @@ impl @core.ViewNode for SemanticActionControl with fn layout(_self, ctx) {
 ///|
 impl @core.ViewNode for SemanticActionControl with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::MergeDescendants,
+    composition=MergeDescendants,
     role?=self.role,
     expanded?=self.expanded,
   )
@@ -89,13 +89,9 @@ pub fn[Msg] semantic_toggle_action_control(
   expanded : Bool,
   message : Msg,
 ) -> @core.View[Msg] {
-  let action = if expanded {
-    SemanticControlAction::Collapse
-  } else {
-    SemanticControlAction::Expand
-  }
+  let action = if expanded { SemanticControlAction::Collapse } else { Expand }
   @core.View::from_node(
-    SemanticActionControl::{ action, expanded: Some(expanded), role: None },
+    SemanticActionControl::{ action, expanded: Some(expanded), role: None, },
     children=_node => [child],
     semantics_actions=_node => {
       match action {
@@ -124,7 +120,7 @@ pub fn[Msg] semantic_dismiss_action_control(
   role? : @core.SemanticsRole? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    SemanticActionControl::{ action: Dismiss, expanded: None, role },
+    SemanticActionControl::{ action: Dismiss, expanded: None, role, },
     children=_node => [child],
     semantics_actions=_node => {
       [

@@ -55,7 +55,7 @@ fn advanced_rendering_card(
         advanced_rendering_canvas(theme, mode, width - 32.0, 108.0),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=158.0,
@@ -109,7 +109,7 @@ fn advanced_rendering_canvas(
             ctx,
             @graphics.LayerSpec::new(
               opacity=0.86,
-              blend_mode=@graphics.BlendMode::Multiply,
+              blend_mode=Multiply,
               mask=layer_mask,
               offscreen=true,
             ),
@@ -124,7 +124,7 @@ fn advanced_rendering_canvas(
             ctx,
             @graphics.LayerSpec::new(
               opacity=0.72,
-              blend_mode=@graphics.BlendMode::Screen,
+              blend_mode=Screen,
               mask=layer_mask,
               offscreen=true,
             ),
@@ -147,7 +147,7 @@ fn advanced_rendering_canvas(
             ctx,
             @graphics.LayerSpec::new(
               opacity=0.68,
-              blend_mode=@graphics.BlendMode::Overlay,
+              blend_mode=Overlay,
               mask=layer_mask,
               offscreen=true,
             ),
@@ -236,14 +236,14 @@ fn advanced_rendering_canvas(
             ctx,
             @graphics.LayerSpec::new(
               opacity=0.96,
-              blend_mode=@graphics.BlendMode::SourceOver,
-              mask=@graphics.LayerMask::RoundedMask(
+              blend_mode=SourceOver,
+              mask=RoundedMask(
                 @graphics.RoundedRect::new(rect=mask_rect, radius=18.0),
               ),
               offscreen=true,
             ),
           )
-          push_filter(ctx, @graphics.FilterEffect::Saturate(1.08))
+          push_filter(ctx, Saturate(1.08))
           fill_rounded_rect(
             ctx,
             @graphics.RoundedRect::new(rect=mask_rect, radius=18.0),
@@ -263,11 +263,11 @@ fn advanced_rendering_canvas(
             ctx,
             @graphics.PathSpec::new(
               verbs=[
-                @graphics.PathVerb::MoveTo(@geometry.Point::new(x=0.0, y=60.0)),
-                @graphics.PathVerb::LineTo(@geometry.Point::new(x=34.0, y=4.0)),
-                @graphics.PathVerb::LineTo(@geometry.Point::new(x=78.0, y=54.0)),
-                @graphics.PathVerb::LineTo(@geometry.Point::new(x=42.0, y=44.0)),
-                @graphics.PathVerb::Close,
+                MoveTo(@geometry.Point::new(x=0.0, y=60.0)),
+                LineTo(@geometry.Point::new(x=34.0, y=4.0)),
+                LineTo(@geometry.Point::new(x=78.0, y=54.0)),
+                LineTo(@geometry.Point::new(x=42.0, y=44.0)),
+                Close,
               ],
               fill=Some(
                 @graphics.Brush::solid(
@@ -298,11 +298,11 @@ fn advanced_rendering_canvas(
             ),
             @graphics.Brush::solid(@graphics.Color::rgba(r=0.0, g=0.82, b=0.92)),
           )
-          draw_image(ctx, @graphics.ImageRun::{
+          draw_image(ctx, {
             source: showcase_image_source(),
             frame: @geometry.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
             opacity: 0.95,
-            fit: @graphics.ImageFit::Cover,
+            fit: Cover,
           })
           draw_text(
             ctx,
@@ -321,10 +321,7 @@ fn advanced_rendering_canvas(
         }
         "renderer-smoke" => {
           let smoke_font = @text.FontSpec::new(
-            families=@text.FontFamilyStack::new([
-              @text.FontFamily::Emoji,
-              @text.FontFamily::SystemUi,
-            ]),
+            families=@text.FontFamilyStack::new([Emoji, SystemUi]),
             size=28.0,
             weight=500,
           )
@@ -346,7 +343,7 @@ fn advanced_rendering_canvas(
               edge_color=@graphics.Color::rgba(r=0.02, g=0.2, b=1.0),
             ),
           )
-          draw_image(ctx, @graphics.ImageRun::{
+          draw_image(ctx, {
             source: showcase_image_source(),
             frame: @geometry.Rect::new(
               x=left + 92.0,
@@ -355,7 +352,7 @@ fn advanced_rendering_canvas(
               height=32.0,
             ),
             opacity: 1.0,
-            fit: @graphics.ImageFit::Cover,
+            fit: Cover,
           })
           draw_text(
             ctx,
@@ -383,7 +380,7 @@ fn advanced_rendering_canvas(
               ),
               font=body_font,
               color=@graphics.Color::black(),
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ),
           )
           for index in 0..<3 {
@@ -399,7 +396,7 @@ fn advanced_rendering_canvas(
                 ),
                 font=body_font,
                 color=@graphics.Color::black(),
-                align=@text.TextAlign::TextStart,
+                align=TextStart,
               ),
             )
           }
@@ -414,18 +411,14 @@ fn advanced_rendering_canvas(
             ctx,
             @graphics.PathSpec::new(
               verbs=[
-                @graphics.PathVerb::MoveTo(
-                  @geometry.Point::new(x=left + 8.0, y=top + 74.0),
-                ),
-                @graphics.PathVerb::CubicTo(
+                MoveTo(@geometry.Point::new(x=left + 8.0, y=top + 74.0)),
+                CubicTo(
                   @geometry.Point::new(x=left + 42.0, y=top - 6.0),
                   @geometry.Point::new(x=left + 104.0, y=top + 14.0),
                   @geometry.Point::new(x=left + 136.0, y=top + 76.0),
                 ),
-                @graphics.PathVerb::LineTo(
-                  @geometry.Point::new(x=left + 70.0, y=top + 48.0),
-                ),
-                @graphics.PathVerb::Close,
+                LineTo(@geometry.Point::new(x=left + 70.0, y=top + 48.0)),
+                Close,
               ],
               fill=Some(
                 @graphics.Brush::solid(

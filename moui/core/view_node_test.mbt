@@ -20,7 +20,7 @@ fn downstream_event_context() -> @core.ViewEventContext {
   {
     frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
     child_frames: [],
-    event: @core.AppEvent::CloseRequested,
+    event: CloseRequested,
     focused: false,
     state: {
       focused: false,
@@ -189,10 +189,7 @@ test "View::from_node freezes declarations semantics and static children" {
   ignore(mapped.declaration())
   ignore(mapped.semantics())
   ignore(mapped.children())
-  inspect(
-    mapped.semantics_action_kinds() == [@core.SemanticsActionKind::Activate],
-    content="true",
-  )
+  inspect(mapped.semantics_action_kinds() == [Activate], content="true")
   let event_context = downstream_event_context()
   let result = mapped.dispatch_semantics_action(
     {
@@ -205,7 +202,7 @@ test "View::from_node freezes declarations semantics and static children" {
       environment: event_context.environment,
       style: event_context.style,
     },
-    @core.SemanticsAction::Activate,
+    Activate,
   )
   inspect(result.accepted, content="true")
   debug_inspect(result.messages, content="[8]")
@@ -238,14 +235,10 @@ test "View::from_node snapshots producer-owned child and action arrays" {
   handlers.clear()
   assert_eq(view.children().length(), 1)
   inspect(view.children()[0].identity().kind, content="aliased-child")
-  assert_true(
-    view.semantics_action_kinds() == [@core.SemanticsActionKind::Activate],
-  )
+  assert_true(view.semantics_action_kinds() == [Activate])
   let mapped = view.map(message => message.length())
   assert_eq(mapped.children().length(), 1)
-  assert_true(
-    mapped.semantics_action_kinds() == [@core.SemanticsActionKind::Activate],
-  )
+  assert_true(mapped.semantics_action_kinds() == [Activate])
 }
 
 ///|

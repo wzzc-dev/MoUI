@@ -104,7 +104,7 @@ pub fn RichTextRun::new(
   visual_text? : String? = None,
   image_source? : String? = None,
   image_size? : @core.Size? = None,
-  image_fit? : @core.ImageFit = @core.ImageFit::Contain,
+  image_fit? : @core.ImageFit = Contain,
   font? : @core.FontSpec? = None,
   color? : @core.Color? = None,
   background? : @core.Brush? = None,
@@ -136,7 +136,7 @@ pub fn RichTextInputTransform::new(
   selection? : @core.TextRange? = None,
   edit_range? : MarkdownSourceRange? = None,
 ) -> RichTextInputTransform {
-  { text, caret, selection, edit_range }
+  { text, caret, selection, edit_range, }
 }
 
 ///|

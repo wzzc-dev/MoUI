@@ -8,9 +8,7 @@ test "runtime draw frame separates clear color from content commands" {
       )
     },
     paint=ctx => {
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(ctx.frame, @core.Color::black()),
-      ])
+      @core.ViewPaintPlan::commands([FillRect(ctx.frame, @core.Color::black())])
     },
   )
   let runtime = AppRuntime::new_view(
@@ -20,14 +18,10 @@ test "runtime draw frame separates clear color from content commands" {
   let frame = runtime.draw_frame()
   assert_true(frame.clear_color == @core.Color::white())
   assert_true(frame.overlay_bounds is None)
-  assert_false(
-    frame.commands.any(command => command is @core.DrawCommand::Clear(_)),
-  )
-  assert_true(
-    frame.commands.any(command => command is @core.DrawCommand::FillRect(_, _)),
-  )
+  assert_false(frame.commands.any(command => command is Clear(_)))
+  assert_true(frame.commands.any(command => command is FillRect(_, _)))
   let legacy = runtime.draw_commands()
-  assert_true(legacy[0] is @core.DrawCommand::Clear(_))
+  assert_true(legacy[0] is Clear(_))
 }
 
 ///|
@@ -44,9 +38,7 @@ test "runtime draw frame exposes view overlay paint bounds" {
       commands: [],
       child_layers: [],
       post_commands: [],
-      overlay_commands: [
-        @core.DrawCommand::FillRect(overlay, @core.Color::black()),
-      ],
+      overlay_commands: [FillRect(overlay, @core.Color::black())],
       repaint_boundary: false,
       animating: false,
     },

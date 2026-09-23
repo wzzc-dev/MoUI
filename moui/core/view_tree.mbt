@@ -23,11 +23,11 @@ fn first_modifier_child_size(sizes : Array[Size]) -> Size {
 /// Map a `ViewStateContext` to a `PressableState` for gesture recognition.
 fn view_state_to_pressable_state(state : ViewStateContext) -> PressableState {
   if state.pressed {
-    PressableState::Pressed
+    Pressed
   } else if state.hovered {
-    PressableState::Hovered
+    Hovered
   } else {
-    PressableState::Normal
+    Normal
   }
 }
 
@@ -38,8 +38,8 @@ fn pressable_state_to_view_state(
   pressable_state : PressableState,
 ) -> ViewStateContext {
   match pressable_state {
-    PressableState::Normal => { ..state, hovered: false, pressed: false }
-    PressableState::Hovered => { ..state, hovered: true, pressed: false }
-    PressableState::Pressed => { ..state, hovered: true, pressed: true }
+    Normal => { ..state, hovered: false, pressed: false, }
+    Hovered => { ..state, hovered: true, pressed: false, }
+    Pressed => { ..state, hovered: true, pressed: true, }
   }
 }

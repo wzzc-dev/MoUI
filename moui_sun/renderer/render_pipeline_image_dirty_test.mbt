@@ -6,7 +6,7 @@ test "RenderPipeline replays byte image commands and analyzes dirty bounds" {
   source.set_pixel(0, 1, @graphics.Color::blue())
   source.set_pixel(1, 1, @graphics.Color::black())
   let paint = @graphics.Paint::new()
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .draw_bmp_bytes_keyed("bmp", source.to_bmp_bytes(), 0, 0, paint)
     .draw_png_bytes_rect_keyed(
       "png-sprite",
@@ -36,7 +36,7 @@ test "RenderPipeline replays byte image commands and analyzes dirty bounds" {
     Some(@graphics.PixelRect::new(x=0, y=0, width=5, height=2)),
   )
 
-  let renderer = Renderer::new(@graphics.Canvas::new(5, 3))
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(5, 3))
   let result = must_draw_pipeline(renderer, pipeline)
   assert_eq(result.get_image_count(), 3)
   let pixmap = renderer.get_canvas().get_pixmap()
@@ -53,7 +53,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
   let src = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let empty_src = @graphics.PixelRect::new(x=0, y=0, width=0, height=1)
   let insets = @graphics.NinePatchInsets::new(left=1, top=0, right=1, bottom=0)
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .draw_rgba_bytes_keyed("rgba", Bytes::from_array([0]), 2, 1, 0, 0, paint)
     .draw_png_bytes_rect_keyed(
       "png-sprite",
@@ -71,7 +71,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
       2,
       1,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_quality_png_bytes_rect_keyed(
       "png-quality-sprite",
@@ -82,7 +82,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
       2,
       1,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-transform-quality",
@@ -92,7 +92,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
       2.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_sampled_rgba_bytes_rect_keyed(
       "rgba-transform-sprite",
@@ -105,7 +105,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
       2.0,
       1.0,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_tiled_bmp_bytes_rect_keyed(
       "bmp-tile",
@@ -126,7 +126,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
       1,
       insets,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_rgba_bytes_rect_keyed(
       "empty-source",
@@ -139,7 +139,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
       2,
       1,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
 
   let analysis = pipeline.analyze(8, 3)
@@ -156,13 +156,13 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
   assert_eq(present_plan.get_present_pixel_count(), 24)
   let batches = pipeline.batch_plan(8, 3).get_batches()
   assert_eq(batches.length(), 1)
-  assert_true(batches[0].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[0].get_kind() == Image)
   assert_true(
     batches[0].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=8, height=3)),
   )
 
-  let empty_source = RenderPipeline::new()
+  let empty_source = @renderer.RenderPipeline::new()
     .draw_sampled_png_bytes_rect_keyed(
       "empty",
       Bytes::from_array([137, 80]),
@@ -172,12 +172,12 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
       2,
       1,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .analyze(4, 1)
   assert_true(!empty_source.has_dirty())
 
-  let unknown_full_images = RenderPipeline::new()
+  let unknown_full_images = @renderer.RenderPipeline::new()
     .draw_bmp_bytes_keyed("bmp-full", Bytes::from_array([66, 77]), 2, 1, paint)
     .draw_png_bytes_keyed("png-full", Bytes::from_array([137, 80]), 1, 2, paint)
   let unknown_analysis = unknown_full_images.analyze(5, 4)
@@ -196,7 +196,7 @@ test "RenderPipeline conservatively estimates dirty bounds for placeholder image
 test "RenderPipeline transformed quality byte commands skip empty dirty targets" {
   let paint = @graphics.Paint::new()
   let empty_src = @graphics.PixelRect::new(x=0, y=0, width=0, height=1)
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-zero-width",
       Bytes::from_array([66, 77]),
@@ -205,7 +205,7 @@ test "RenderPipeline transformed quality byte commands skip empty dirty targets"
       0.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_keyed(
       "png-zero-height",
@@ -215,7 +215,7 @@ test "RenderPipeline transformed quality byte commands skip empty dirty targets"
       2.0,
       0.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-empty-source",
@@ -226,7 +226,7 @@ test "RenderPipeline transformed quality byte commands skip empty dirty targets"
       2.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-empty-source",
@@ -237,7 +237,7 @@ test "RenderPipeline transformed quality byte commands skip empty dirty targets"
       2.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba-zero-width",
@@ -249,7 +249,7 @@ test "RenderPipeline transformed quality byte commands skip empty dirty targets"
       0.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-empty-source",
@@ -262,7 +262,7 @@ test "RenderPipeline transformed quality byte commands skip empty dirty targets"
       2.0,
       1.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
 
   let analysis = pipeline.analyze(4, 3)
@@ -280,7 +280,7 @@ test "RenderPipeline transformed quality byte commands skip empty dirty targets"
   assert_eq(batch_plan.get_batch_count(), 1)
   assert_true(!batch_plan.has_dirty())
   let batches = batch_plan.get_batches()
-  assert_true(batches[0].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[0].get_kind() == Image)
   assert_eq(batches[0].get_command_count(), 6)
   assert_eq(batches[0].get_dirty_rect_count(), 0)
   assert_true(batches[0].get_dirty_bounds() == None)
@@ -301,7 +301,7 @@ test "RenderPipeline transformed quality byte commands use fractional dirty boun
   let source = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
   let paint = @graphics.Paint::new()
-  let pipeline = RenderPipeline::new()
+  let pipeline = @renderer.RenderPipeline::new()
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-fractional",
       source.to_bmp_bytes(),
@@ -310,7 +310,7 @@ test "RenderPipeline transformed quality byte commands use fractional dirty boun
       1.25,
       1.25,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-rect-fractional",
@@ -321,7 +321,7 @@ test "RenderPipeline transformed quality byte commands use fractional dirty boun
       1.5,
       1.5,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-rect-fractional",
@@ -334,7 +334,7 @@ test "RenderPipeline transformed quality byte commands use fractional dirty boun
       0.6,
       0.6,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
 
   let analysis = pipeline.analyze(10, 5)
@@ -374,7 +374,7 @@ test "RenderPipeline transformed quality byte commands use fractional dirty boun
 
   let batches = pipeline.batch_plan(10, 5).get_batches()
   assert_eq(batches.length(), 1)
-  assert_true(batches[0].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[0].get_kind() == Image)
   assert_eq(batches[0].get_dirty_rect_count(), 3)
   assert_true(
     batches[0].get_dirty_bounds() ==

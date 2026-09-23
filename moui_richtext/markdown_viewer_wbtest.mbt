@@ -18,7 +18,7 @@ fn mv_layer_text_commands(
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::DrawText(run) => runs.push(run)
+        DrawText(run) => runs.push(run)
         _ => ()
       }
     }
@@ -35,10 +35,9 @@ fn mv_layer_rect_commands(
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::FillRoundedRectBrush(rounded, _) =>
-          rects.push(rounded.rect)
-        @core.DrawCommand::FillRect(rect, _) => rects.push(rect)
-        @core.DrawCommand::StrokeRect(rect, _, _) => rects.push(rect)
+        FillRoundedRectBrush(rounded, _) => rects.push(rounded.rect)
+        FillRect(rect, _) => rects.push(rect)
+        StrokeRect(rect, _, _) => rects.push(rect)
         _ => ()
       }
     }
@@ -278,7 +277,7 @@ test "markdown_viewer renders code block with background" {
     .any(layer => {
       layer.commands
       .iter()
-      .any(command => command is @core.DrawCommand::FillRoundedRectBrush(_, _))
+      .any(command => command is FillRoundedRectBrush(_, _))
     })
   assert_true(has_background)
   // Code block text should use monospace font.
@@ -338,8 +337,7 @@ fn mv_layer_fill_rounded_commands(
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::FillRoundedRect(rounded, color) =>
-          boxes.push((rounded, color))
+        FillRoundedRect(rounded, color) => boxes.push((rounded, color))
         _ => ()
       }
     }
@@ -356,7 +354,7 @@ fn mv_layer_stroke_rounded_commands(
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
+        StrokeRoundedRect(rounded, color, width) =>
           boxes.push((rounded, color, width))
         _ => ()
       }
@@ -374,7 +372,7 @@ fn mv_layer_path_commands(
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::DrawPath(path) => paths.push(path)
+        DrawPath(path) => paths.push(path)
         _ => ()
       }
     }
@@ -457,7 +455,7 @@ test "markdown_viewer checkmark path stays inside the marker box" {
   guard paths.length() >= 1 else { fail("expected a checkmark path") }
   for verb in paths[0].verbs {
     match verb {
-      @core.PathVerb::MoveTo(point) | @core.PathVerb::LineTo(point) => {
+      MoveTo(point) | LineTo(point) => {
         assert_true(
           point.x >= box.origin.x && point.x <= box.origin.x + box.size.width,
         )
@@ -532,7 +530,7 @@ test "markdown_viewer renders horizontal rule as thin rect" {
       .iter()
       .any(command => {
         match command {
-          @core.DrawCommand::FillRect(rect, _) => rect.size.height <= 2.0
+          FillRect(rect, _) => rect.size.height <= 2.0
           _ => false
         }
       })
@@ -562,9 +560,7 @@ test "markdown_viewer renders table with borders and header background" {
   let has_stroke = layers
     .iter()
     .any(layer => {
-      layer.commands
-      .iter()
-      .any(command => command is @core.DrawCommand::StrokeRect(_, _, _))
+      layer.commands.iter().any(command => command is StrokeRect(_, _, _))
     })
   assert_true(has_stroke)
   // Table should render text for all cells including header.
@@ -598,8 +594,7 @@ test "markdown_viewer table column widths are equal" {
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::StrokeRect(rect, _, _) =>
-          cell_widths.push(rect.size.width)
+        StrokeRect(rect, _, _) => cell_widths.push(rect.size.width)
         _ => ()
       }
     }
@@ -950,10 +945,10 @@ test "markdown_viewer repaints a visible window from controlled parent scroll" {
   runtime.set_text_system(mv_text_system())
   ignore(runtime.draw_commands())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=160.0, y=200.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@core.Point::new(x=0.0, y=-960.0),
       ),
     ),
@@ -963,7 +958,7 @@ test "markdown_viewer repaints a visible window from controlled parent scroll" {
     .draw_commands()
     .any(command => {
       match command {
-        @core.DrawCommand::DrawText(run) =>
+        DrawText(run) =>
           run.frame.origin.y < 400.0 &&
           run.frame.origin.y + run.frame.size.height > 0.0
         _ => false
@@ -1077,7 +1072,7 @@ test "markdown viewer renders centered responsive html image galleries" {
       text: "<img src=\"resource/a.png\" width=\"48%\" alt=\"A\"/>",
       image_source: Some("/tmp/docs/resource/a.png"),
       image_width_fraction: Some(fraction),
-      ..,
+      ..
     } else {
     fail("expected relative gallery image with a width fraction")
   }
@@ -1099,7 +1094,7 @@ test "markdown viewer renders centered responsive html image galleries" {
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::DrawImage({ source, frame, .. }) => {
+        DrawImage({ source, frame, .. }) => {
           image_sources.push(source)
           image_frames.push(frame)
         }
@@ -1142,7 +1137,7 @@ test "markdown viewer keeps fixed html image dimensions and raw html fallback" {
   for layer in layers {
     for command in layer.commands {
       match command {
-        @core.DrawCommand::DrawImage({ frame, .. }) => frames.push(frame)
+        DrawImage({ frame, .. }) => frames.push(frame)
         _ => ()
       }
     }

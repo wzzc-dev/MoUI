@@ -52,16 +52,16 @@ fn menu_command_response_with_unavailable_sentinel(
 ) -> @host.HostServiceResponse {
   match unavailable_sentinel {
     Some(sentinel) if selected_index == sentinel =>
-      @host.HostServiceResponse::Unavailable("menu service is unavailable")
+      Unavailable("menu service is unavailable")
     _ =>
       if selected_index < 0 || selected_index >= commands.length() {
-        @host.HostServiceResponse::Unavailable("menu selection cancelled")
+        Unavailable("menu selection cancelled")
       } else {
         let command = commands[selected_index]
         if command.enabled {
-          @host.HostServiceResponse::MenuAction(command)
+          MenuAction(command)
         } else {
-          @host.HostServiceResponse::Unavailable("menu command is disabled")
+          Unavailable("menu command is disabled")
         }
       }
   }
@@ -71,9 +71,9 @@ fn menu_command_response_with_unavailable_sentinel(
 /// Encode a file-dialog kind into the shared wire code.
 pub fn host_file_dialog_kind_code(kind : @host.HostFileDialogKind) -> Int {
   match kind {
-    @host.HostFileDialogKind::OpenFile => 0
-    @host.HostFileDialogKind::SaveFile => 1
-    @host.HostFileDialogKind::PickDirectory => 2
+    OpenFile => 0
+    SaveFile => 1
+    PickDirectory => 2
   }
 }
 

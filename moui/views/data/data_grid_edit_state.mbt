@@ -13,7 +13,7 @@ pub struct DataGridEditState {
 
 ///|
 pub fn DataGridEditState::idle() -> DataGridEditState {
-  { active: None, original: "", draft: "" }
+  { active: None, original: "", draft: "", }
 }
 
 ///|
@@ -22,7 +22,7 @@ pub fn DataGridEditState::begin(
   cell : DataGridCell,
   value : String,
 ) -> DataGridEditState {
-  { active: Some(cell), original: value, draft: value }
+  { active: Some(cell), original: value, draft: value, }
 }
 
 ///|
@@ -66,7 +66,7 @@ pub fn DataGridEditState::commit(
   self : DataGridEditState,
 ) -> DataGridEditCommit? {
   match self.active {
-    Some(cell) => Some({ cell, value: self.draft })
+    Some(cell) => Some({ cell, value: self.draft, })
     None => None
   }
 }

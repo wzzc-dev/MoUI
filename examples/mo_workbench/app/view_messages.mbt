@@ -37,7 +37,7 @@ fn message_row_height(
   theme : @moui.Theme,
   width : Double,
 ) -> Double {
-  let body_size = chat_message_text_role_font(@views.TextRole::Body, theme).size
+  let body_size = chat_message_text_role_font(Body, theme).size
   let line_h = chat_message_line_height(body_size)
   // `message_row` 的 `padding_edges(top=2, bottom=2)`。
   let row_edge = 4.0
@@ -125,7 +125,7 @@ fn message_row_heights(
   theme : @moui.Theme,
   width : Double,
 ) -> Array[Double] {
-  let body_size = chat_message_text_role_font(@views.TextRole::Body, theme).size
+  let body_size = chat_message_text_role_font(Body, theme).size
   match message_row_heights_snapshot.val {
     Some(snapshot) if snapshot.width == width && snapshot.body_size == body_size => {
       if physical_equal(snapshot.messages, messages) {
@@ -219,9 +219,9 @@ fn user_message_row(
   let content_width = (bubble_width - 28.0).max(80.0)
   let bubble = @views.container(
     @views.column(
-      [chat_message_body(text_, @views.TextRole::Body, theme, content_width)],
+      [chat_message_body(text_, Body, theme, content_width)],
       spacing=4.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width=bubble_width,
     background=user_message_background(theme),
@@ -249,7 +249,7 @@ fn assistant_message_row(
           @views.container(
             chat_message_body(
               r,
-              @views.TextRole::Caption,
+              Caption,
               theme,
               (content_width - 16.0).max(64.0),
             ).foreground(theme.palette.muted),
@@ -260,11 +260,9 @@ fn assistant_message_row(
       }
     None => ()
   }
-  rows.push(
-    chat_message_body(content, @views.TextRole::Body, theme, content_width),
-  )
+  rows.push(chat_message_body(content, Body, theme, content_width))
   let bubble = @views.container(
-    @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start),
+    @views.column(rows, spacing=4.0, align=Start),
     width=bubble_width,
     background=user_message_background(theme),
     corner_radius=12.0,
@@ -283,11 +281,7 @@ fn tool_result_row(
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let card_width = width * 0.9
-  let tone = if is_error {
-    @views.BadgeTone::Danger
-  } else {
-    @views.BadgeTone::Neutral
-  }
+  let tone = if is_error { @views.BadgeTone::Danger } else { Neutral }
   let background = if is_error {
     workbench_diff_removed_soft(theme)
   } else {
@@ -296,7 +290,7 @@ fn tool_result_row(
   let rows : Array[@moui.View[CodeMsg]] = [
     @views.row(
       [@views.badge(tool_name, tone~, theme~, width=96.0), @views.spacer()],
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   ]
   // Prefer the brief for a compact one-line summary; fall back to full content.
@@ -304,14 +298,12 @@ fn tool_result_row(
     Some(b) => b
     None => content
   }
-  rows.push(
-    chat_message_body(shown, @views.TextRole::Mono, theme, card_width - 24.0),
-  )
+  rows.push(chat_message_body(shown, Mono, theme, card_width - 24.0))
   @views.container(
     @views.row(
       [
         @views.container(
-          @views.column(rows, spacing=6.0, align=@views.CrossAlign::Start),
+          @views.column(rows, spacing=6.0, align=Start),
           width=card_width,
           background~,
           corner_radius=8.0,
@@ -319,7 +311,7 @@ fn tool_result_row(
         ),
         @views.spacer(),
       ],
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     padding=4.0,
@@ -336,12 +328,12 @@ fn runtime_notice_row(
     @views.row(
       [
         @views.spacer(),
-        chat_message_body(text_, @views.TextRole::Caption, theme, width - 16.0).foreground(
+        chat_message_body(text_, Caption, theme, width - 16.0).foreground(
           theme.palette.muted,
         ),
         @views.spacer(),
       ],
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     padding=4.0,
@@ -359,35 +351,27 @@ fn permission_request_row(
   rows.push(
     @views.row(
       [
-        @views.badge(
-          "Permission",
-          tone=@views.BadgeTone::Warning,
-          theme~,
-          width=96.0,
-        ),
+        @views.badge("Permission", tone=Warning, theme~, width=96.0),
         @views.text(
           if request.title.is_empty() {
             request.tool_call_id
           } else {
             request.title
           },
-          role=@views.TextRole::Label,
+          role=Label,
           theme~,
           width=card_width - 128.0,
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   )
   if !request.kind.is_empty() {
     rows.push(
-      chat_message_body(
-        request.kind,
-        @views.TextRole::Caption,
-        theme,
-        card_width - 24.0,
-      ).foreground(theme.palette.muted),
+      chat_message_body(request.kind, Caption, theme, card_width - 24.0).foreground(
+        theme.palette.muted,
+      ),
     )
   }
   let button_width = ((card_width - 24.0) / 3.0).max(96.0)
@@ -396,10 +380,7 @@ fn permission_request_row(
     buttons.push(
       @views.button(
         option.name,
-        on_click=CodeMsg::RespondPermission(
-          request.request_id,
-          PermissionOutcome::Selected(option.id),
-        ),
+        on_click=RespondPermission(request.request_id, Selected(option.id)),
         variant=permission_button_variant(option.kind),
         theme~,
         width=button_width,
@@ -410,22 +391,19 @@ fn permission_request_row(
   buttons.push(
     @views.button(
       "Cancel",
-      on_click=CodeMsg::RespondPermission(
-        request.request_id,
-        PermissionOutcome::Cancelled,
-      ),
-      variant=@views.ButtonVariant::Ghost,
+      on_click=RespondPermission(request.request_id, Cancelled),
+      variant=Ghost,
       theme~,
       width=button_width,
       height=34.0,
     ),
   )
-  rows.push(@views.row(buttons, spacing=8.0, align=@views.CrossAlign::Center))
+  rows.push(@views.row(buttons, spacing=8.0, align=Center))
   @views.container(
     @views.row(
       [
         @views.container(
-          @views.column(rows, spacing=8.0, align=@views.CrossAlign::Stretch),
+          @views.column(rows, spacing=8.0, align=Stretch),
           width=card_width,
           background=workbench_diff_removed_soft(theme),
           corner_radius=8.0,
@@ -433,7 +411,7 @@ fn permission_request_row(
         ).border(hairline_border(theme)),
         @views.spacer(),
       ],
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     padding=4.0,
@@ -443,9 +421,9 @@ fn permission_request_row(
 ///|
 fn permission_button_variant(kind : String) -> @views.ButtonVariant {
   match kind {
-    "allow_always" | "allow_once" => @views.ButtonVariant::Primary
-    "reject_once" | "reject_always" => @views.ButtonVariant::Ghost
-    _ => @views.ButtonVariant::Ghost
+    "allow_always" | "allow_once" => Primary
+    "reject_once" | "reject_always" => Ghost
+    _ => Ghost
   }
 }
 
@@ -458,24 +436,21 @@ fn terminal_row(
 ) -> @moui.View[CodeMsg] {
   let (label, tone) = match status {
     Finished => ("Done", @views.BadgeTone::Success)
-    Aborted => ("Aborted", @views.BadgeTone::Warning)
-    Interrupted => ("Interrupted", @views.BadgeTone::Warning)
-    Failed => ("Failed", @views.BadgeTone::Danger)
+    Aborted => ("Aborted", Warning)
+    Interrupted => ("Interrupted", Warning)
+    Failed => ("Failed", Danger)
   }
   @views.container(
     @views.row(
       [
         @views.badge(label, tone~, theme~, width=64.0),
-        chat_message_body(
-          message,
-          @views.TextRole::Caption,
-          theme,
-          width - 96.0,
-        ).foreground(theme.palette.muted),
+        chat_message_body(message, Caption, theme, width - 96.0).foreground(
+          theme.palette.muted,
+        ),
         @views.spacer(),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     padding=4.0,

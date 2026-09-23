@@ -17,7 +17,7 @@ pub fn[Msg] selection_toolbar(
       @button.button(
         action.label,
         on_click=action.message,
-        variant=@style.ButtonVariant::Tonal,
+        variant=Tonal,
         theme=resolved_theme,
         width=selection_toolbar_action_width(action.label),
         height=32.0,
@@ -30,7 +30,7 @@ pub fn[Msg] selection_toolbar(
         @button.button(
           "Clear",
           on_click=message,
-          variant=@style.ButtonVariant::Ghost,
+          variant=Ghost,
           theme=resolved_theme,
           width=70.0,
           height=32.0,
@@ -43,7 +43,7 @@ pub fn[Msg] selection_toolbar(
       [
         @text.text(
           selection_toolbar_label(selected, total_count),
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme=resolved_theme,
           width=summary_width,
           height=28.0,
@@ -62,15 +62,15 @@ pub fn[Msg] selection_toolbar(
         ),
       ],
       spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=selection_toolbar_height(action_views.length()),
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.sm,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .semantics_selected(selected=selected > 0)
   .semantics_description(selection_toolbar_label(selected, total_count))
   .accessibility_label("Selection toolbar")

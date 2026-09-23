@@ -168,7 +168,7 @@ pub fn SubscriptionPlanSummary::descriptors(
 ///|
 pub fn EffectPlanSummary::empty() -> EffectPlanSummary {
   {
-    root_kind: EffectPlanKind::EffectPlanNone,
+    root_kind: EffectPlanNone,
     none_count: 0,
     batch_count: 0,
     send_count: 0,
@@ -186,7 +186,7 @@ pub fn EffectPlanSummary::empty() -> EffectPlanSummary {
 ///|
 pub fn SubscriptionPlanSummary::empty() -> SubscriptionPlanSummary {
   {
-    root_kind: SubscriptionPlanKind::SubscriptionPlanNone,
+    root_kind: SubscriptionPlanNone,
     none_count: 0,
     batch_count: 0,
     source_count: 0,
@@ -210,9 +210,9 @@ fn[Msg] summarize_effect(
   depth~ : Int,
 ) -> EffectPlanSummary {
   match effect {
-    @core.Effect::NoEffect =>
+    NoEffect =>
       {
-        root_kind: EffectPlanKind::EffectPlanNone,
+        root_kind: EffectPlanNone,
         none_count: 1,
         batch_count: 0,
         send_count: 0,
@@ -225,9 +225,9 @@ fn[Msg] summarize_effect(
         duplicate_descriptor_key_count: 0,
         duplicate_descriptor_keys: [],
       }
-    @core.Effect::Send(_) =>
+    Send(_) =>
       {
-        root_kind: EffectPlanKind::EffectPlanSend,
+        root_kind: EffectPlanSend,
         none_count: 0,
         batch_count: 0,
         send_count: 1,
@@ -240,9 +240,9 @@ fn[Msg] summarize_effect(
         duplicate_descriptor_key_count: 0,
         duplicate_descriptor_keys: [],
       }
-    @core.Effect::Dispatch(_) =>
+    Dispatch(_) =>
       {
-        root_kind: EffectPlanKind::EffectPlanDispatch,
+        root_kind: EffectPlanDispatch,
         none_count: 0,
         batch_count: 0,
         send_count: 0,
@@ -255,9 +255,9 @@ fn[Msg] summarize_effect(
         duplicate_descriptor_key_count: 0,
         duplicate_descriptor_keys: [],
       }
-    @core.Effect::Run(descriptor, _) =>
+    Run(descriptor, _) =>
       {
-        root_kind: EffectPlanKind::EffectPlanRun,
+        root_kind: EffectPlanRun,
         none_count: 0,
         batch_count: 0,
         send_count: 0,
@@ -270,9 +270,9 @@ fn[Msg] summarize_effect(
         duplicate_descriptor_key_count: 0,
         duplicate_descriptor_keys: [],
       }
-    @core.Effect::Task(descriptor, _) =>
+    Task(descriptor, _) =>
       {
-        root_kind: EffectPlanKind::EffectPlanTask,
+        root_kind: EffectPlanTask,
         none_count: 0,
         batch_count: 0,
         send_count: 0,
@@ -285,7 +285,7 @@ fn[Msg] summarize_effect(
         duplicate_descriptor_key_count: 0,
         duplicate_descriptor_keys: [],
       }
-    @core.Effect::Batch(effects) => {
+    Batch(effects) => {
       let mut none_count = 0
       let mut batch_count = 1
       let mut send_count = 0
@@ -310,7 +310,7 @@ fn[Msg] summarize_effect(
         descriptors.append(child_summary.descriptors)
       }
       {
-        root_kind: EffectPlanKind::EffectPlanBatch,
+        root_kind: EffectPlanBatch,
         none_count,
         batch_count,
         send_count,
@@ -343,7 +343,7 @@ pub fn[Msg] subscription_plan_summary(
   subscription.runtime_visit(
     depth => {
       if !seen_root {
-        root_kind = SubscriptionPlanKind::SubscriptionPlanNone
+        root_kind = SubscriptionPlanNone
         seen_root = true
       }
       none_count = none_count + 1
@@ -351,7 +351,7 @@ pub fn[Msg] subscription_plan_summary(
     },
     (depth, _child_count) => {
       if !seen_root {
-        root_kind = SubscriptionPlanKind::SubscriptionPlanBatch
+        root_kind = SubscriptionPlanBatch
         seen_root = true
       }
       batch_count = batch_count + 1
@@ -359,7 +359,7 @@ pub fn[Msg] subscription_plan_summary(
     },
     (depth, descriptor) => {
       if !seen_root {
-        root_kind = SubscriptionPlanKind::SubscriptionPlanSource
+        root_kind = SubscriptionPlanSource
         seen_root = true
       }
       source_count = source_count + 1

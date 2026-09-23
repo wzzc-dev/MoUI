@@ -9,7 +9,7 @@ test "host event source subscription dispatches mapped host events" {
       subscriptions=_model => {
         source.subscription(key="host:event", label="Host event adapter", map=event => {
           match event {
-            Event::ThemeChanged(_) => Some("theme changed")
+            ThemeChanged(_) => Some("theme changed")
             _ => None
           }
         })
@@ -26,20 +26,14 @@ test "host event source subscription dispatches mapped host events" {
     initial.active_subscriptions()[0].label(),
     content="Host event adapter",
   )
-  inspect(source.publish(Event::RedrawRequested), content="1")
+  inspect(source.publish(RedrawRequested), content="1")
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
-  inspect(
-    source.publish(Event::ThemeChanged(@core.ColorScheme::Dark)),
-    content="1",
-  )
+  inspect(source.publish(ThemeChanged(Dark)), content="1")
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="1")
   assert_true(
     runtime
     .draw_commands()
-    .any(command => {
-      command is @core.DrawCommand::DrawText({ text, .. }) &&
-      text == "theme changed"
-    }),
+    .any(command => command is DrawText({ text, .. }) && text == "theme changed"),
   )
 }
 
@@ -54,7 +48,7 @@ test "host event source subscription cleanup removes late publishers" {
       subscriptions=_model => {
         source.subscription(key="host:event", label="Host event adapter", map=event => {
           match event {
-            Event::ThemeChanged(_) => Some("theme changed")
+            ThemeChanged(_) => Some("theme changed")
             _ => None
           }
         })
@@ -65,10 +59,7 @@ test "host event source subscription cleanup removes late publishers" {
   inspect(source.active_handler_count(), content="1")
   runtime.destroy()
   inspect(source.active_handler_count(), content="0")
-  inspect(
-    source.publish(Event::ThemeChanged(@core.ColorScheme::Dark)),
-    content="0",
-  )
+  inspect(source.publish(ThemeChanged(Dark)), content="0")
   let destroyed = runtime.program_runtime_snapshot()
   inspect(destroyed.cancelled_subscription_count(), content="1")
   inspect(destroyed.ignored_subscription_dispatch_count(), content="0")
@@ -77,7 +68,7 @@ test "host event source subscription cleanup removes late publishers" {
 ///|
 test "host platform event sources publish host and window subscriptions" {
   let sources = @runtime.HostPlatformEventSources::new()
-  let window_id = WindowId::new(9)
+  let window_id = @backend.WindowId::new(9)
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
@@ -89,7 +80,7 @@ test "host platform event sources publish host and window subscriptions" {
           .host_events()
           .subscription(key="host:event", label="Host event adapter", map=event => {
             match event {
-              Event::ThemeChanged(_) => Some("host theme")
+              ThemeChanged(_) => Some("host theme")
               _ => None
             }
           }),
@@ -113,27 +104,22 @@ test "host platform event sources publish host and window subscriptions" {
   )
   inspect(sources.host_events().active_handler_count(), content="1")
   inspect(sources.window_events().active_handler_count(), content="1")
-  let result = sources.publish(
-    window_id~,
-    event=Event::ThemeChanged(@core.ColorScheme::Dark),
-  )
+  let result = sources.publish(window_id~, event=ThemeChanged(Dark))
   inspect(result.host_event_count, content="1")
   inspect(result.window_event_count, content="1")
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="2")
   assert_true(
     runtime
     .draw_commands()
-    .any(command => {
-      command is @core.DrawCommand::DrawText({ text, .. }) && text == "window 9"
-    }),
+    .any(command => command is DrawText({ text, .. }) && text == "window 9"),
   )
 }
 
 ///|
 test "host window event source subscription dispatches mapped window events" {
   let source = @runtime.HostWindowEventSource::new()
-  let target = WindowId::new(7)
-  let other = WindowId::new(8)
+  let target = @backend.WindowId::new(7)
+  let other = @backend.WindowId::new(8)
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
@@ -146,7 +132,7 @@ test "host window event source subscription dispatches mapped window events" {
           map=window_event => {
             if window_event.window_id == target {
               match window_event.event {
-                Event::CloseRequested =>
+                CloseRequested =>
                   Some(
                     "window \{window_event.window_id.value.to_string()} close",
                   )
@@ -170,27 +156,17 @@ test "host window event source subscription dispatches mapped window events" {
     initial.active_subscriptions()[0].label(),
     content="Host window event adapter",
   )
-  inspect(
-    source.publish(window_id=other, event=Event::CloseRequested),
-    content="1",
-  )
+  inspect(source.publish(window_id=other, event=CloseRequested), content="1")
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
-  inspect(
-    source.publish(window_id=target, event=Event::RedrawRequested),
-    content="1",
-  )
+  inspect(source.publish(window_id=target, event=RedrawRequested), content="1")
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
-  inspect(
-    source.publish(window_id=target, event=Event::CloseRequested),
-    content="1",
-  )
+  inspect(source.publish(window_id=target, event=CloseRequested), content="1")
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="1")
   assert_true(
     runtime
     .draw_commands()
     .any(command => {
-      command is @core.DrawCommand::DrawText({ text, .. }) &&
-      text == "window 7 close"
+      command is DrawText({ text, .. }) && text == "window 7 close"
     }),
   )
 }
@@ -198,7 +174,7 @@ test "host window event source subscription dispatches mapped window events" {
 ///|
 test "host window event source subscription cleanup removes late publishers" {
   let source = @runtime.HostWindowEventSource::new()
-  let window_id = WindowId::new(1)
+  let window_id = @backend.WindowId::new(1)
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
@@ -217,7 +193,7 @@ test "host window event source subscription cleanup removes late publishers" {
   inspect(source.active_handler_count(), content="1")
   runtime.destroy()
   inspect(source.active_handler_count(), content="0")
-  inspect(source.publish(window_id~, event=Event::CloseRequested), content="0")
+  inspect(source.publish(window_id~, event=CloseRequested), content="0")
   let destroyed = runtime.program_runtime_snapshot()
   inspect(destroyed.cancelled_subscription_count(), content="1")
   inspect(destroyed.ignored_subscription_dispatch_count(), content="0")

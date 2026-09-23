@@ -1,14 +1,16 @@
 ///|
 test "RenderPipeline font bytes replay uses RendererResources and preserves errors" {
-  let renderer = Renderer::new(@graphics.Canvas::new(12, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 1, 2, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(12, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 1, 2, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_font_bytes_keyed(
       "ui-font",
@@ -63,7 +65,7 @@ test "RenderPipeline font bytes replay uses RendererResources and preserves erro
 
   let second = match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_font_bytes_keyed(
         "ui-font", b"not a font", "label", "O", 1.0, 1.0, config, paint,
@@ -84,20 +86,15 @@ test "RenderPipeline font bytes replay uses RendererResources and preserves erro
     @graphics.Color::black(),
   )
 
-  let bad_resources = RendererResources::new(16, 16)
+  let bad_resources = @renderer.RendererResources::new(16, 16)
   match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new().draw_font_bytes_keyed(
+      @renderer.RenderPipeline::new().draw_font_bytes_keyed(
         "bad-font", b"not a font", "bad-label", "A", 1.0, 1.0, config, paint,
       ),
       bad_resources,
     ) {
-    Err(
-      RenderPipelineResourceReplayError::FontParseFailed(
-        "bad-font",
-        @text.FontParseError::UnexpectedEndOfData(0, 12, 10)
-      )
-    ) => ()
+    Err(FontParseFailed("bad-font", UnexpectedEndOfData(0, 12, 10))) => ()
     _ => abort("expected checked parser error")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())
@@ -106,15 +103,17 @@ test "RenderPipeline font bytes replay uses RendererResources and preserves erro
 
 ///|
 test "RenderPipeline font bytes atlas replay uses RendererResources and preserves errors" {
-  let renderer = Renderer::new(@graphics.Canvas::new(24, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(24, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 4, 4, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_font_bytes_atlas_keyed(
       "ui-font",
@@ -177,7 +176,7 @@ test "RenderPipeline font bytes atlas replay uses RendererResources and preserve
 
   let second = match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_font_bytes_atlas_keyed(
         "ui-font", b"not a font", "glyph-label", "AA", 1.0, 1.0, config, paint,
@@ -197,20 +196,17 @@ test "RenderPipeline font bytes atlas replay uses RendererResources and preserve
   assert_eq(second.get_resource_cache_hit_count(), 5)
   assert_eq(resources.get_glyph_mask_atlas().len(), 1)
 
-  let bad_resources = RendererResources::with_font_capacity(16, 16, 1, 4, 4, 1)
+  let bad_resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 4, 4, 1,
+  )
   match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new().draw_font_bytes_atlas_keyed(
+      @renderer.RenderPipeline::new().draw_font_bytes_atlas_keyed(
         "bad-font", b"not a font", "bad-glyph", "A", 1.0, 1.0, config, paint,
       ),
       bad_resources,
     ) {
-    Err(
-      RenderPipelineResourceReplayError::FontParseFailed(
-        "bad-font",
-        @text.FontParseError::UnexpectedEndOfData(0, 12, 10)
-      )
-    ) => ()
+    Err(FontParseFailed("bad-font", UnexpectedEndOfData(0, 12, 10))) => ()
     _ => abort("expected checked atlas parser error")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())
@@ -220,20 +216,28 @@ test "RenderPipeline font bytes atlas replay uses RendererResources and preserve
 
 ///|
 test "RenderPipeline font bytes fallback replay uses RendererResources and preserves errors" {
-  let renderer = Renderer::new(@graphics.Canvas::new(36, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 2, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(36, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 2, 4, 4, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_font_bytes_fallback_keyed(
       [
-        FontBytesFallbackSource::new("primary", make_ttf_for_codes([65])),
-        FontBytesFallbackSource::new("fallback", make_ttf_for_codes([66])),
+        @renderer.FontBytesFallbackSource::new(
+          "primary",
+          make_ttf_for_codes([65]),
+        ),
+        @renderer.FontBytesFallbackSource::new(
+          "fallback",
+          make_ttf_for_codes([66]),
+        ),
       ],
       "label",
       "ABZ",
@@ -284,12 +288,12 @@ test "RenderPipeline font bytes fallback replay uses RendererResources and prese
 
   let second = match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_font_bytes_fallback_keyed(
         [
-          FontBytesFallbackSource::new("primary", b"not a font"),
-          FontBytesFallbackSource::new("fallback", b"also not a font"),
+          @renderer.FontBytesFallbackSource::new("primary", b"not a font"),
+          @renderer.FontBytesFallbackSource::new("fallback", b"also not a font"),
         ],
         "label",
         "ABZ",
@@ -313,11 +317,11 @@ test "RenderPipeline font bytes fallback replay uses RendererResources and prese
   assert_eq(resources.get_text_mask_cache().len(), 2)
   assert_true(pixmap_has_ink(renderer.get_canvas().get_pixmap()))
 
-  let bad_resources = RendererResources::new(16, 16)
+  let bad_resources = @renderer.RendererResources::new(16, 16)
   match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new().draw_font_bytes_fallback_keyed(
-        [FontBytesFallbackSource::new("bad-font", b"not a font")],
+      @renderer.RenderPipeline::new().draw_font_bytes_fallback_keyed(
+        [@renderer.FontBytesFallbackSource::new("bad-font", b"not a font")],
         "bad-label",
         "A",
         1.0,
@@ -327,12 +331,7 @@ test "RenderPipeline font bytes fallback replay uses RendererResources and prese
       ),
       bad_resources,
     ) {
-    Err(
-      RenderPipelineResourceReplayError::FontParseFailed(
-        "bad-font",
-        @text.FontParseError::UnexpectedEndOfData(0, 12, 10)
-      )
-    ) => ()
+    Err(FontParseFailed("bad-font", UnexpectedEndOfData(0, 12, 10))) => ()
     _ => abort("expected checked fallback parser error")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())
@@ -341,20 +340,28 @@ test "RenderPipeline font bytes fallback replay uses RendererResources and prese
 
 ///|
 test "RenderPipeline font bytes fallback atlas replay uses RendererResources and preserves errors" {
-  let renderer = Renderer::new(@graphics.Canvas::new(36, 12))
-  let resources = RendererResources::with_font_capacity(24, 12, 2, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(36, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    24, 12, 2, 4, 4, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_font_bytes_fallback_atlas_keyed(
       [
-        FontBytesFallbackSource::new("primary", make_ttf_for_codes([65])),
-        FontBytesFallbackSource::new("fallback", make_ttf_for_codes([66])),
+        @renderer.FontBytesFallbackSource::new(
+          "primary",
+          make_ttf_for_codes([65]),
+        ),
+        @renderer.FontBytesFallbackSource::new(
+          "fallback",
+          make_ttf_for_codes([66]),
+        ),
       ],
       "glyph-label",
       "ABZ",
@@ -412,12 +419,12 @@ test "RenderPipeline font bytes fallback atlas replay uses RendererResources and
 
   let second = match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_font_bytes_fallback_atlas_keyed(
         [
-          FontBytesFallbackSource::new("primary", b"not a font"),
-          FontBytesFallbackSource::new("fallback", b"also not a font"),
+          @renderer.FontBytesFallbackSource::new("primary", b"not a font"),
+          @renderer.FontBytesFallbackSource::new("fallback", b"also not a font"),
         ],
         "glyph-label",
         "ABZ",
@@ -444,11 +451,13 @@ test "RenderPipeline font bytes fallback atlas replay uses RendererResources and
   assert_eq(resources.get_glyph_mask_atlas().len(), 2)
   assert_true(pixmap_has_ink(renderer.get_canvas().get_pixmap()))
 
-  let bad_resources = RendererResources::with_font_capacity(24, 12, 2, 4, 4, 1)
+  let bad_resources = @renderer.RendererResources::with_font_capacity(
+    24, 12, 2, 4, 4, 1,
+  )
   match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new().draw_font_bytes_fallback_atlas_keyed(
-        [FontBytesFallbackSource::new("bad-font", b"not a font")],
+      @renderer.RenderPipeline::new().draw_font_bytes_fallback_atlas_keyed(
+        [@renderer.FontBytesFallbackSource::new("bad-font", b"not a font")],
         "bad-glyph",
         "A",
         1.0,
@@ -458,12 +467,7 @@ test "RenderPipeline font bytes fallback atlas replay uses RendererResources and
       ),
       bad_resources,
     ) {
-    Err(
-      RenderPipelineResourceReplayError::FontParseFailed(
-        "bad-font",
-        @text.FontParseError::UnexpectedEndOfData(0, 12, 10)
-      )
-    ) => ()
+    Err(FontParseFailed("bad-font", UnexpectedEndOfData(0, 12, 10))) => ()
     _ => abort("expected checked fallback atlas parser error")
   }
   assert_true(bad_resources.get_font_face_cache().is_empty())
@@ -473,8 +477,8 @@ test "RenderPipeline font bytes fallback atlas replay uses RendererResources and
 
 ///|
 test "RenderPipeline renderer-resource replay reports loader-backed commands" {
-  let renderer = Renderer::new(@graphics.Canvas::new(12, 12))
-  let resources = RendererResources::new(16, 16)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(12, 12))
+  let resources = @renderer.RendererResources::new(16, 16)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -483,12 +487,12 @@ test "RenderPipeline renderer-resource replay reports loader-backed commands" {
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
   match
     renderer.draw_pipeline_with_renderer_resources_result(
-      RenderPipeline::new().draw_loaded_font_keyed(
+      @renderer.RenderPipeline::new().draw_loaded_font_keyed(
         "ui-font", "label", "A", 1.0, 1.0, config, paint,
       ),
       resources,
     ) {
-    Err(RenderPipelineResourceReplayError::FontLoaderRequired("ui-font")) => ()
+    Err(FontLoaderRequired("ui-font")) => ()
     _ => abort("expected loader-required replay error")
   }
   assert_true(resources.get_font_face_cache().is_empty())

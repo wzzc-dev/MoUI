@@ -74,7 +74,7 @@ pub fn AnimationChannel::new(
   interpolation~ : AnimationInterpolation,
   keyframes~ : Array[AnimationKeyframe],
 ) -> AnimationChannel {
-  { node, path, interpolation, keyframes: keyframes.copy() }
+  { node, path, interpolation, keyframes: keyframes.copy(), }
 }
 
 ///|
@@ -122,7 +122,7 @@ pub fn AnimationClip::new(
       duration = duration.max(keyframe.time())
     }
   }
-  { name, channels: channels.copy(), duration }
+  { name, channels: channels.copy(), duration, }
 }
 
 ///|
@@ -153,7 +153,7 @@ pub fn AnimationSample::new(
   path~ : AnimationPath,
   value~ : Array[Double],
 ) -> AnimationSample {
-  { node, path, value: value.copy() }
+  { node, path, value: value.copy(), }
 }
 
 ///|
@@ -183,7 +183,7 @@ pub struct AnimationPlayer {
 
 ///|
 pub fn AnimationPlayer::new() -> AnimationPlayer {
-  { clip: None, time: 0.0, playing: false }
+  { clip: None, time: 0.0, playing: false, }
 }
 
 ///|
@@ -308,10 +308,9 @@ pub fn sample_animation_channel(
   let result : Array[Double] = []
   for component in 0..<count {
     let value = match channel.interpolation() {
-      AnimationInterpolation::Step => a[component]
-      AnimationInterpolation::Linear =>
-        a[component] + (b[component] - a[component]) * t
-      AnimationInterpolation::CubicSpline => {
+      Step => a[component]
+      Linear => a[component] + (b[component] - a[component]) * t
+      CubicSpline => {
         let out = first.out_tangent()
         let incoming = second.in_tangent()
         let m0 = if component < out.length() {

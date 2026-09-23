@@ -181,7 +181,7 @@ test "pdf workbench lightweight smoke covers startup raster navigation search an
     raster_services~,
     document_services~,
   )
-  assert_true(unzoomed_page_three.effect is @moui.Effect::NoEffect)
+  assert_true(unzoomed_page_three.effect is NoEffect)
   inspect(render_count.val, content="5")
   guard unzoomed_page_three.model.raster_page is Some(page_three_cached) else {
     fail("expected cached page three raster in smoke")
@@ -194,7 +194,7 @@ test "pdf workbench lightweight smoke covers startup raster navigation search an
     raster_services~,
     document_services~,
   )
-  assert_true(cached_page_one.effect is @moui.Effect::NoEffect)
+  assert_true(cached_page_one.effect is NoEffect)
   inspect(render_count.val, content="5")
   guard cached_page_one.model.raster_page is Some(cached_raster) else {
     fail("expected cached page one raster in smoke")
@@ -414,7 +414,7 @@ test "pdf workbench sidebar uses clean thumbnail navigation" {
   let commands = runtime.draw_commands()
   inspect(pdf_workbench_draw_text_count(commands, "Current"), content="1")
   assert_true(pdf_workbench_draw_has_text_containing(commands, "Page 2"))
-  let search_runtime = { ..loaded.model, query: "page 2" }.runtime_with_services(
+  let search_runtime = { ..loaded.model, query: "page 2", }.runtime_with_services(
     services,
     raster_services~,
     width=1120.0,
@@ -551,7 +551,7 @@ test "pdf workbench find previous wraps and reports active match position" {
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),
-    status: PdfWorkbenchStatus::Ready,
+    status: Ready,
     query: "page",
     page_number_draft: "2",
   }
@@ -608,7 +608,7 @@ test "pdf workbench opening a new document clears stale search state" {
   let render_count = Ref(0)
   let keys : Array[String] = []
   let raster_services = pdf_workbench_ready_raster_services(render_count, keys)
-  let model = { ..PdfWorkbenchModel::new(), query: "stale query" }
+  let model = { ..PdfWorkbenchModel::new(), query: "stale query", }
   let loaded = run_pdf_workbench_effect_chain(
     model.update_with_services(OpenRequested, services, raster_services~),
     services,
@@ -798,7 +798,7 @@ test "pdf workbench zoom changes raster key and cache hit skips render" {
     services,
     raster_services~,
   )
-  assert_true(hit.effect is @moui.Effect::NoEffect)
+  assert_true(hit.effect is NoEffect)
   inspect(render_count.val, content="2")
   guard hit.model.raster_page is Some(_) else {
     fail("expected cached raster page")
@@ -882,7 +882,7 @@ test "pdf workbench raster cache is bounded and preserves recent hits" {
     services,
     raster_services~,
   )
-  assert_true(hit_original.effect is @moui.Effect::NoEffect)
+  assert_true(hit_original.effect is NoEffect)
   model = hit_original.model
   inspect(render_count.val, content="12")
   guard model.raster_cache.last() is Some(recent) else {

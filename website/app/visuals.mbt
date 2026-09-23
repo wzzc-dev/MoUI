@@ -22,7 +22,7 @@ fn hero_demo_panel(
         ),
       ],
       spacing=gap,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height~,
@@ -55,7 +55,7 @@ fn hero_source_panel(
         hero_source_code(theme, width, height - header_height, compact),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,
@@ -96,7 +96,7 @@ fn hero_counter_panel(
         ),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,
@@ -128,7 +128,7 @@ fn hero_demo_header(
         .foreground(theme.palette.muted),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height~,
@@ -204,7 +204,7 @@ fn hero_source_code(
         code_snippet_line(theme, "15", "}", inner_width, line_height, font_size),
       ],
       spacing=row_gap,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,
@@ -288,7 +288,7 @@ fn hero_counter_demo(
             button(
               "+",
               on_click=CounterIncrement,
-              variant=@views.ButtonVariant::Primary,
+              variant=Primary,
               theme~,
               width=button_width,
               height=if narrow { 30.0 } else if compact { 34.0 } else { 38.0 },
@@ -296,19 +296,19 @@ fn hero_counter_demo(
             button(
               website_message(locale, "hero.reset"),
               on_click=CounterReset,
-              variant=@views.ButtonVariant::Outline,
+              variant=Outline,
               theme~,
               width=button_width,
               height=if narrow { 30.0 } else if compact { 34.0 } else { 38.0 },
             ),
           ],
           spacing=if narrow { 6.0 } else { 8.0 },
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         spacer(min_length=0.0, weight=1.0),
       ],
       spacing=if narrow { 6.0 } else if compact { 8.0 } else { 10.0 },
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height~,
@@ -347,7 +347,7 @@ fn code_snippet_line(
           ),
           font~,
           color=code_snippet_gutter(theme),
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
       )
       syntax_highlight_draw_commands(
@@ -417,7 +417,7 @@ fn syntax_highlight_draw_commands(
           ),
           font~,
           color=syntax_tone_color(theme, segment.tone),
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
       )
       column = column + length
@@ -490,7 +490,7 @@ fn syntax_push_segment(
   tone : SyntaxTone,
 ) -> Unit {
   if end > start {
-    segments.push({ value: String::from_array(chars[start:end]), tone })
+    segments.push({ value: String::from_array(chars[start:end]), tone, })
   }
 }
 
@@ -561,16 +561,16 @@ fn code_snippet_font(size : Double) -> @text.FontSpec {
 ///|
 fn code_snippet_foreground(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.86, g=0.93, b=0.90)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.08, g=0.10, b=0.13)
+    Dark => @graphics.Color::rgba(r=0.86, g=0.93, b=0.90)
+    Light => @graphics.Color::rgba(r=0.08, g=0.10, b=0.13)
   }
 }
 
 ///|
 fn code_snippet_gutter(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.46, g=0.58, b=0.57)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.42, g=0.48, b=0.52)
+    Dark => @graphics.Color::rgba(r=0.46, g=0.58, b=0.57)
+    Light => @graphics.Color::rgba(r=0.42, g=0.48, b=0.52)
   }
 }
 
@@ -591,56 +591,56 @@ fn syntax_tone_color(theme : @moui.Theme, tone : SyntaxTone) -> @graphics.Color 
 ///|
 fn code_syntax_keyword(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.56, g=0.75, b=1.0)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.07, g=0.29, b=0.84)
+    Dark => @graphics.Color::rgba(r=0.56, g=0.75, b=1.0)
+    Light => @graphics.Color::rgba(r=0.07, g=0.29, b=0.84)
   }
 }
 
 ///|
 fn code_syntax_type(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.90, g=0.66, b=1.0)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.56, g=0.20, b=0.76)
+    Dark => @graphics.Color::rgba(r=0.90, g=0.66, b=1.0)
+    Light => @graphics.Color::rgba(r=0.56, g=0.20, b=0.76)
   }
 }
 
 ///|
 fn code_syntax_function(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.36, g=0.87, b=0.68)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.03, g=0.45, b=0.28)
+    Dark => @graphics.Color::rgba(r=0.36, g=0.87, b=0.68)
+    Light => @graphics.Color::rgba(r=0.03, g=0.45, b=0.28)
   }
 }
 
 ///|
 fn code_syntax_string(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=1.0, g=0.70, b=0.44)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.72, g=0.30, b=0.02)
+    Dark => @graphics.Color::rgba(r=1.0, g=0.70, b=0.44)
+    Light => @graphics.Color::rgba(r=0.72, g=0.30, b=0.02)
   }
 }
 
 ///|
 fn code_syntax_number(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.73, g=0.83, b=1.0)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.18, g=0.39, b=0.78)
+    Dark => @graphics.Color::rgba(r=0.73, g=0.83, b=1.0)
+    Light => @graphics.Color::rgba(r=0.18, g=0.39, b=0.78)
   }
 }
 
 ///|
 fn code_syntax_operator(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.70, g=0.76, b=0.78)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.38, g=0.44, b=0.48)
+    Dark => @graphics.Color::rgba(r=0.70, g=0.76, b=0.78)
+    Light => @graphics.Color::rgba(r=0.38, g=0.44, b=0.48)
   }
 }
 
 ///|
 fn code_syntax_module(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.53, g=0.87, b=0.92)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.00, g=0.45, b=0.56)
+    Dark => @graphics.Color::rgba(r=0.53, g=0.87, b=0.92)
+    Light => @graphics.Color::rgba(r=0.00, g=0.45, b=0.56)
   }
 }
 
@@ -652,7 +652,7 @@ fn hero_demo_header_background(theme : @moui.Theme) -> @graphics.Color {
 ///|
 fn hero_counter_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.10, g=0.11, b=0.13)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.98, g=0.99, b=0.98)
+    Dark => @graphics.Color::rgba(r=0.10, g=0.11, b=0.13)
+    Light => @graphics.Color::rgba(r=0.98, g=0.99, b=0.98)
   }
 }

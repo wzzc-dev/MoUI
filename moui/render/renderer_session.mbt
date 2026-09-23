@@ -164,7 +164,7 @@ pub fn RendererSession::drain_events(
 pub fn render_present_completion_is_presented(
   completion : RenderPresentCompletion,
 ) -> Bool {
-  completion.status() is RenderPresentStatus::Presented
+  completion.status() is Presented
 }
 
 ///|
@@ -180,10 +180,8 @@ pub fn render_present_completions_have_terminal(
 ) -> Bool {
   completions.any(completion => {
     match completion.status() {
-      RenderPresentStatus::Presented
-      | RenderPresentStatus::Dropped
-      | RenderPresentStatus::FallbackToRaster => true
-      RenderPresentStatus::Recorded => false
+      Presented | Dropped | FallbackToRaster => true
+      Recorded => false
     }
   })
 }
@@ -199,17 +197,15 @@ pub fn RendererSession::apply_image_load_completion(
   completion : RendererImageLoadCompletion,
 ) -> RendererImageCompletionResult {
   if self.disposed {
-    return RendererImageCompletionResult::Disposed
+    return Disposed
   }
   guard self.take_image_request(completion.token()) is Some(source) else {
-    return RendererImageCompletionResult::Stale
+    return Stale
   }
   if source != completion.result().source {
-    return RendererImageCompletionResult::Stale
+    return Stale
   }
-  RendererImageCompletionResult::Applied(
-    (self.apply_image_load_completion_fn)(completion.result()),
-  )
+  Applied((self.apply_image_load_completion_fn)(completion.result()))
 }
 
 ///|
@@ -300,14 +296,14 @@ pub fn RendererSession::set_platform_view_draw_fn(
 fn RendererSession::queue_image_requests(self : RendererSession) -> Unit {
   guard self.image_decoder is Some(decoder) else { return }
   for record in (self.image_records_fn)() {
-    if record.status == ImageResourceStatus::ImageLoading &&
+    if record.status == ImageLoading &&
       !self.image_sources.any(source => source == record.source) {
       let token = RendererImageLoadToken::new(self.next_image_token)
       self.next_image_token = self.next_image_token + 1L
       self.image_tokens.push(token)
       self.image_sources.push(record.source)
       self.image_events.push(
-        RendererEvent::ImageLoadRequested(
+        ImageLoadRequested(
           RendererImageLoadRequest::new(
             token~,
             source=record.source,

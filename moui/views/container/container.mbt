@@ -18,7 +18,7 @@ pub fn[Msg] container(
   background? : @core.Color,
   corner_radius? : Double = 0.0,
   border? : @core.BorderStyle? = None,
-  variant? : @style.ContainerVariant = @style.ContainerVariant::Base,
+  variant? : @style.ContainerVariant = Base,
   theme? : @core.Theme,
   padding? : Double,
 ) -> @core.View[Msg] {
@@ -67,7 +67,7 @@ pub fn[Msg] card(
     child,
     width?,
     height?,
-    variant=@style.ContainerVariant::Raised,
+    variant=Raised,
     theme=resolved_theme,
     padding~,
   )
@@ -82,7 +82,7 @@ pub fn[Msg] center(
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let centered = @core.View::from_node(Center::{ width, height }, children=_node => {
+  let centered = @core.View::from_node(Center::{ width, height, }, children=_node => {
     [child]
   })
   match background {
@@ -166,14 +166,12 @@ impl @core.ViewNode for Center with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Center with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
 pub fn[Msg] empty() -> @core.View[Msg] {
-  @core.View::from_node(EmptyControl::{  })
+  @core.View::from_node(EmptyControl::{ })
 }
 
 ///|
@@ -201,7 +199,7 @@ pub fn[Msg] spacer(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,
 ) -> @core.View[Msg] {
-  @core.View::from_node(SpacerViewNode::{ min_length, weight })
+  @core.View::from_node(SpacerViewNode::{ min_length, weight, })
 }
 
 ///|

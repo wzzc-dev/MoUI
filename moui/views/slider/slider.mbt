@@ -40,9 +40,9 @@ pub fn[Msg] slider(
       (_node : Slider, context : @core.ViewEventContext) => {
         match context.event {
           // Primary button only: secondary presses belong to context menus.
-          @core.AppEvent::Pointer(pointer) if pointer.button == 0 =>
+          Pointer(pointer) if pointer.button == 0 =>
             match pointer.phase {
-              @core.PointerPhase::Down =>
+              Down =>
                 if context.frame.contains(pointer.position) {
                   let local_x = pointer.position.x - context.frame.origin.x
                   let next = slider_value_at(
@@ -60,12 +60,12 @@ pub fn[Msg] slider(
                       focused: true,
                       pressed: true,
                     }),
-                    dirty: @core.ViewDirtyHint::ViewPaintDirty,
+                    dirty: ViewPaintDirty,
                   }
                 } else {
                   @core.ViewEventResult::ignored()
                 }
-              @core.PointerPhase::Move =>
+              Move =>
                 if context.state.pressed {
                   let local_x = pointer.position.x - context.frame.origin.x
                   let next = slider_value_at(
@@ -77,20 +77,18 @@ pub fn[Msg] slider(
                   {
                     ..@core.ViewEventResult::message(handler(next)),
                     captured: true,
-                    state: Some({ ..context.state, pressed: true }),
-                    dirty: @core.ViewDirtyHint::ViewPaintDirty,
+                    state: Some({ ..context.state, pressed: true, }),
+                    dirty: ViewPaintDirty,
                   }
                 } else {
                   @core.ViewEventResult::ignored()
                 }
-              @core.PointerPhase::Up
-              | @core.PointerPhase::Cancel
-              | @core.PointerPhase::Exit =>
+              Up | Cancel | Exit =>
                 if context.state.pressed {
                   {
                     ..@core.ViewEventResult::ignored(),
-                    state: Some({ ..context.state, pressed: false }),
-                    dirty: @core.ViewDirtyHint::ViewPaintDirty,
+                    state: Some({ ..context.state, pressed: false, }),
+                    dirty: ViewPaintDirty,
                   }
                 } else {
                   @core.ViewEventResult::ignored()
@@ -142,12 +140,8 @@ pub fn[Msg] slider(
           }),
           @core.ViewSemanticsActionHandler::scroll((_ctx, direction) => {
             let delta = match direction {
-              @core.SemanticsScrollDirection::Forward
-              | @core.SemanticsScrollDirection::Up
-              | @core.SemanticsScrollDirection::Right => node.step
-              @core.SemanticsScrollDirection::Backward
-              | @core.SemanticsScrollDirection::Down
-              | @core.SemanticsScrollDirection::Left => -node.step
+              Forward | Up | Right => node.step
+              Backward | Down | Left => -node.step
             }
             let next = @common.clamp_view_double(
               node.value + delta,
@@ -263,7 +257,7 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
     Some(value) => value
     None => {
       let s = set.slider
-      @style.SliderStyle::{
+      {
         foreground: s.foreground,
         background: s.background,
         thumb_color: s.thumb_color,
@@ -290,9 +284,8 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
   )
   let thumb_shape = set.slider.thumb_shape
   let thumb_radius = match thumb_shape {
-    @style.ThumbShape::Circle => knob / 2.0
-    @style.ThumbShape::Rounded =>
-      @common.min_view_double(knob / 2.0, resolved_style.radius)
+    Circle => knob / 2.0
+    Rounded => @common.min_view_double(knob / 2.0, resolved_style.radius)
   }
   let foreground_color = @common.resolve_control_color(
     self.foreground,
@@ -310,9 +303,8 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
   let focused = ctx.focused
   let thumb_size = knob + (if focused { 3.0 } else { 0.0 })
   let ring_color = match resolved_theme.scheme {
-    @core.ColorScheme::Light => @core.Color::white().with_alpha(0.92)
-    @core.ColorScheme::Dark =>
-      resolved_theme.palette.foreground.with_alpha(0.18)
+    Light => @core.Color::white().with_alpha(0.92)
+    Dark => resolved_theme.palette.foreground.with_alpha(0.18)
   }
   let ring_width = 2.0
   let track = @core.Rect::new(
@@ -333,11 +325,11 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
     radius=thumb_radius,
   )
   @core.ViewPaintPlan::commands([
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(rect=track, radius=track_radius),
       @core.Brush::solid(track_background),
     ),
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(
           x=track.origin.x,
@@ -349,11 +341,8 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
       ),
       @core.Brush::solid(foreground_color),
     ),
-    @core.DrawCommand::FillRoundedRectBrush(
-      thumb_rect,
-      @core.Brush::solid(thumb_color),
-    ),
-    @core.DrawCommand::StrokeRoundedRectBrush(
+    FillRoundedRectBrush(thumb_rect, @core.Brush::solid(thumb_color)),
+    StrokeRoundedRectBrush(
       thumb_rect,
       @core.Brush::solid(ring_color),
       ring_width,
@@ -369,8 +358,8 @@ impl @core.ViewNode for Slider with fn focusable(_self) {
 ///|
 impl @core.ViewNode for Slider with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Slider,
+    composition=Boundary,
+    role=Slider,
     label=self.label,
     value="\{self.value}",
     numeric=@core.SemanticsNumericValue::new(

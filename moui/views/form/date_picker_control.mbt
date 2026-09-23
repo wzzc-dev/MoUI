@@ -59,7 +59,7 @@ impl @core.ViewStateValue for DatePickerViewDateState with fn decode_view_state(
 fn datepicker_view_date_slot() -> @core.ViewStateSlot[DatePickerViewDateState] {
   @core.ViewStateSlot::new(
     key=@core.DeclarationKey::string("moui.views.date-picker.view-date"),
-    initial=DatePickerViewDateState::FollowSelection,
+    initial=FollowSelection,
   )
 }
 
@@ -109,8 +109,8 @@ fn[Msg] date_picker_control(
       [
         @core.ViewSemanticsActionHandler::activate(ctx => {
           @core.ViewSemanticsActionResult::accepted(
-            state=Some({ ..ctx.state, expanded: !ctx.state.expanded }),
-            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+            state=Some({ ..ctx.state, expanded: !ctx.state.expanded, }),
+            dirty=ViewLayoutDirty,
           )
         }),
       ]
@@ -147,7 +147,7 @@ impl @core.ViewNode for DatePicker with fn declaration(self) {
   ])
   @common.view_declaration(
     paint=if self.theme is Some(_) || self.style is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(paint_key)
     },
@@ -214,10 +214,7 @@ impl @core.ViewNode for DatePicker with fn place_overlays(_self, context) {
     height=natural.height,
   )
   let placement = @presentation.PresentationPlacement::new(
-    candidates=[
-      @presentation.PresentationPlacementCandidate::BelowStart,
-      @presentation.PresentationPlacementCandidate::AboveStart,
-    ],
+    candidates=[BelowStart, AboveStart],
     viewport_insets=@core.Insets::all(0.0),
   )
   let frame = placement.resolve(
@@ -255,8 +252,8 @@ impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for DatePicker with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Menu,
+    composition=Boundary,
+    role=Menu,
     label=self.placeholder,
     value=datepicker_display_value(self.selected, self.mode),
   )
@@ -275,7 +272,7 @@ fn[Msg] date_picker_event(
   _on_select : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       handle_datepicker_pointer(
         ctx.state,
         event,
@@ -283,8 +280,7 @@ fn[Msg] date_picker_event(
         popup_frame=ctx.child_frames.get(0),
         selected~,
       )
-    @core.AppEvent::Keyboard(event) =>
-      handle_datepicker_keyboard(ctx.state, event, selected~)
+    Keyboard(event) => handle_datepicker_keyboard(ctx.state, event, selected~)
     _ => @core.ViewEventResult::ignored()
   }
 }
@@ -307,9 +303,9 @@ fn append_datepicker_commands(
   // reconstructed neutral theme, so the field outline and popup track the
   // real color scheme and accent in dark mode.
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   commands.push(
-    @core.DrawCommand::StrokeRoundedRectBrush(
+    StrokeRoundedRectBrush(
       rounded,
       @core.Brush::solid(theme.palette.outline.multiply_alpha(0.6)),
       1.0,
@@ -318,7 +314,7 @@ fn append_datepicker_commands(
   let formatted = datepicker_display_value(selected, mode)
   let display_text = if formatted == "" { placeholder } else { formatted }
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=display_text,
         frame=frame.inset(
@@ -326,7 +322,7 @@ fn append_datepicker_commands(
         ),
         font~,
         color=foreground,
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )
@@ -338,7 +334,7 @@ fn append_datepicker_commands(
     height=arrow_size,
   )
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=if expanded { "▲" } else { "▼" },
         frame=arrow_frame,
@@ -357,8 +353,7 @@ fn[Msg] handle_datepicker_pointer(
   popup_frame~ : @core.Rect?,
   selected~ : @core.DateValue,
 ) -> @core.ViewEventResult[Msg] {
-  let main_button_clicked = event.phase == @core.PointerPhase::Up &&
-    frame.contains(event.position)
+  let main_button_clicked = event.phase == Up && frame.contains(event.position)
   let panel_hit = match popup_frame {
     Some(popup) => popup.contains(event.position)
     None => false
@@ -366,8 +361,7 @@ fn[Msg] handle_datepicker_pointer(
   let inside_panel = state.expanded && panel_hit
   // Panel interactions (month nav, day selection) are handled by the panel
   // subtree itself; this handler only toggles and closes the popup.
-  let claim_focus = event.phase == @core.PointerPhase::Down &&
-    frame.contains(event.position)
+  let claim_focus = event.phase == Down && frame.contains(event.position)
   if state.expanded {
     if main_button_clicked && !inside_panel {
       @common.view_event_result(
@@ -375,14 +369,14 @@ fn[Msg] handle_datepicker_pointer(
         focused=true,
         captured=true,
         state=Some(datepicker_state(state, expanded=false, selected)),
-        dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+        dirty=ViewLayoutDirty,
       )
-    } else if event.phase == @core.PointerPhase::Up {
+    } else if event.phase == Up {
       @common.view_event_result(
         changed=true,
         captured=true,
         state=Some(datepicker_state(state, expanded=false, selected)),
-        dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+        dirty=ViewLayoutDirty,
       )
     } else if frame.contains(event.position) {
       @common.view_event_result(
@@ -399,7 +393,7 @@ fn[Msg] handle_datepicker_pointer(
       focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, selected)),
-      dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+      dirty=ViewLayoutDirty,
     )
   } else if claim_focus {
     @common.view_event_result(changed=true, focused=true, captured=true)
@@ -431,7 +425,7 @@ fn[Msg] handle_datepicker_panel_pointer(
       focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
     )
   } else if datepicker_right_nav_frame(panel_frame).contains(event.position) {
     let next_view = datepicker_next_month(view_date)
@@ -441,7 +435,7 @@ fn[Msg] handle_datepicker_panel_pointer(
       focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
     )
   } else {
     match datepicker_day_at_position(panel_frame, event.position, view_date) {
@@ -459,7 +453,7 @@ fn[Msg] handle_datepicker_panel_pointer(
             focused=true,
             captured=true,
             state=Some(datepicker_state(state, expanded=true, next)),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=ViewPaintDirty,
             messages=datepicker_messages(on_select, next),
           )
         } else {
@@ -485,14 +479,14 @@ fn[Msg] handle_datepicker_keyboard(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=false, selected)),
-      dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+      dirty=ViewLayoutDirty,
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     @common.view_event_result(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=!state.expanded, selected)),
-      dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+      dirty=ViewLayoutDirty,
     )
   } else {
     @core.ViewEventResult::ignored()
@@ -518,7 +512,7 @@ fn datepicker_state(
 ) -> @core.ViewStateContext {
   { ..state, expanded, }.with_slot(
     datepicker_view_date_slot(),
-    DatePickerViewDateState::Month(view_date.year, view_date.month),
+    Month(view_date.year, view_date.month),
   )
 }
 
@@ -528,7 +522,7 @@ fn datepicker_view_date(
   selected : @core.DateValue,
 ) -> @core.DateValue {
   match state.read_slot(datepicker_view_date_slot()) {
-    Month(year, month) => { ..selected, year, month }
+    Month(year, month) => { ..selected, year, month, }
     FollowSelection => selected
   }
 }
@@ -592,18 +586,18 @@ fn datepicker_day_at_position(
 ///|
 fn datepicker_previous_month(value : @core.DateValue) -> @core.DateValue {
   if value.month == 1 {
-    { ..value, year: value.year - 1, month: 12 }
+    { ..value, year: value.year - 1, month: 12, }
   } else {
-    { ..value, month: value.month - 1 }
+    { ..value, month: value.month - 1, }
   }
 }
 
 ///|
 fn datepicker_next_month(value : @core.DateValue) -> @core.DateValue {
   if value.month == 12 {
-    { ..value, year: value.year + 1, month: 1 }
+    { ..value, year: value.year + 1, month: 1, }
   } else {
-    { ..value, month: value.month + 1 }
+    { ..value, month: value.month + 1, }
   }
 }
 
@@ -822,7 +816,7 @@ fn[Msg] datepicker_panel_event(
   ctx : @core.ViewEventContext,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       handle_datepicker_panel_pointer(
         ctx.state,
         event,
@@ -855,7 +849,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
     resolved_theme.shadow_scale.md,
   )
   commands.push(
-    @core.DrawCommand::DrawShadow(
+    DrawShadow(
       @core.ShadowSpec::new(
         rect=panel_rounded,
         color=shadow.color,
@@ -865,12 +859,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
       ),
     ),
   )
-  commands.push(
-    @core.DrawCommand::FillRoundedRectBrush(
-      panel_rounded,
-      resolved_style.background,
-    ),
-  )
+  commands.push(FillRoundedRectBrush(panel_rounded, resolved_style.background))
   let header_height = datepicker_header_height()
   let header_frame = @core.Rect::new(
     x=ctx.frame.origin.x,
@@ -879,7 +868,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
     height=header_height,
   )
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="\{view_date.year}年\{view_date.month}月",
         frame=header_frame,
@@ -891,7 +880,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
   let left_button_frame = datepicker_left_nav_frame(ctx.frame)
   let right_button_frame = datepicker_right_nav_frame(ctx.frame)
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="◀",
         frame=left_button_frame,
@@ -901,7 +890,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
     ),
   )
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="▶",
         frame=right_button_frame,
@@ -921,7 +910,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
       height=day_header_height,
     )
     commands.push(
-      @core.DrawCommand::DrawText(
+      DrawText(
         @core.TextRun::new(
           text=day,
           frame=day_frame,
@@ -950,7 +939,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
     let is_selected = self.selected.year == year &&
       self.selected.month == month &&
       self.selected.day == day
-    let candidate = { ..self.selected, year, month, day }
+    let candidate = { ..self.selected, year, month, day, }
     let is_selectable = datepicker_value_in_range(
       candidate,
       self.min_date,
@@ -962,10 +951,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
     )
     if is_selected {
       commands.push(
-        @core.DrawCommand::FillRoundedRect(
-          cell_rounded,
-          resolved_theme.palette.primary,
-        ),
+        FillRoundedRect(cell_rounded, resolved_theme.palette.primary),
       )
     }
     let day_color = if is_selected {
@@ -976,7 +962,7 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
       resolved_style.foreground
     }
     commands.push(
-      @core.DrawCommand::DrawText(
+      DrawText(
         @core.TextRun::new(
           text="\{day}",
           frame=cell_frame,
@@ -992,8 +978,8 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
 ///|
 impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Dialog,
+    composition=Boundary,
+    role=Dialog,
     label="Calendar",
   )
 }

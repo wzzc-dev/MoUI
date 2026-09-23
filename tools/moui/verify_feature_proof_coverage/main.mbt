@@ -157,7 +157,7 @@ fn verify_report_json(report : Json) -> Result[CoverageResult, String] {
     None => 0
     _ => return Err("report.summary.skipped must be a number when present")
   }
-  Ok({ gaps, proven, gap_count, skipped })
+  Ok({ gaps, proven, gap_count, skipped, })
 }
 
 ///|

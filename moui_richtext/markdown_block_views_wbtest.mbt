@@ -35,7 +35,7 @@ fn markdown_block_view_wbtest_images(block : MarkdownBlock) -> Int {
 ///|
 fn markdown_block_view_wbtest_projected_flags(source : String) -> Array[Bool] {
   parse_markdown(source).map(block => {
-    if block.kind is MarkdownBlockKind::HtmlBlock {
+    if block.kind is HtmlBlock {
       markdown_block_view_wbtest_projects(block)
     } else {
       false
@@ -49,7 +49,7 @@ test "container view projects badge rows wrapped in anchors" {
     "<div align=\"center\"><a href=\"#\"><img src=\"b1.svg\"/></a><a href=\"#\"><img src=\"b2.svg\"/></a></div>",
   )
   inspect(blocks.length(), content="1")
-  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+  guard blocks[0].kind is HtmlBlock else {
     fail("expected a single html block")
   }
   inspect(markdown_block_view_wbtest_images(blocks[0]), content="2")
@@ -125,7 +125,7 @@ test "unclosed container cannot swallow the next healthy container" {
   )
   let session = MarkdownDocumentSession::new(source)
   let session_flags = session.editor_blocks.map(editor_block => {
-    if editor_block.block.kind is MarkdownBlockKind::HtmlBlock {
+    if editor_block.block.kind is HtmlBlock {
       markdown_block_view_wbtest_projects(editor_block.block)
     } else {
       false
@@ -212,7 +212,7 @@ test "paragraph with an inline anchor projects instead of staying raw" {
     "<div align=\"center\">\n<p>\n简体中文 | <a href=\"./README.md\">English</a>\n</p>\n</div>",
   )
   inspect(blocks.length(), content="1")
-  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+  guard blocks[0].kind is HtmlBlock else {
     fail("expected a single html block")
   }
   match
@@ -240,7 +240,7 @@ test "badge row anchored inside a paragraph projects its images" {
     "<div align=\"center\">\n<p>\n<a href=\"#\"><img src=\"b1.svg\"/></a>\n<a href=\"#\"><img src=\"b2.svg\"/></a>\n</p>\n</div>",
   )
   inspect(blocks.length(), content="1")
-  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+  guard blocks[0].kind is HtmlBlock else {
     fail("expected a single html block")
   }
   inspect(markdown_block_view_wbtest_images(blocks[0]), content="2")
@@ -271,7 +271,7 @@ test "readme hero container projects images, heading and links" {
     #|</div>
   let blocks = parse_markdown(source)
   inspect(blocks.length(), content="1")
-  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+  guard blocks[0].kind is HtmlBlock else {
     fail("expected a single html block")
   }
   match
@@ -306,7 +306,7 @@ test "readme hero container projects images, heading and links" {
       guard heading else { fail("expected the heading text run") }
       guard english else { fail("expected the inline link run") }
       guard nav else { fail("expected the nav link run") }
-      guard projection.line_align is Some(@core.TextAlign::TextCenter) else {
+      guard projection.line_align is Some(TextCenter) else {
         fail("expected the container to project center alignment")
       }
     }
@@ -319,7 +319,7 @@ test "container view drops the trailing newline after the last child" {
     "<div align=\"center\"><img src=\"logo.png\" alt=\"logo\"/><p>intro</p><p>nav</p>\n</div>",
   )
   inspect(blocks.length(), content="1")
-  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+  guard blocks[0].kind is HtmlBlock else {
     fail("expected a single html block")
   }
   match
@@ -344,7 +344,7 @@ test "container view keeps interior row separators" {
   let blocks = parse_markdown(
     "<div align=\"center\"><p>first</p><p>second</p></div>",
   )
-  guard blocks[0].kind is MarkdownBlockKind::HtmlBlock else {
+  guard blocks[0].kind is HtmlBlock else {
     fail("expected a single html block")
   }
   match

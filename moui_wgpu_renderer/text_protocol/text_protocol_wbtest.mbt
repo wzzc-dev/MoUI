@@ -12,11 +12,11 @@ test "native text protocol encodes and parses font spec payload" {
   let bytes = native_font_spec_bytes(
     @core.FontSpec::new(
       families=@core.FontFamilyStack::named("Acme Sans")
-        .with_fallback(@core.FontFamily::UiSansSerif)
-        .with_fallback(@core.FontFamily::SansSerif),
+        .with_fallback(UiSansSerif)
+        .with_fallback(SansSerif),
       size=17.5,
       weight=650,
-      style=@core.FontStyle::Italic,
+      style=Italic,
     ),
   )
   match native_font_spec_from_bytes(bytes) {
@@ -24,7 +24,7 @@ test "native text protocol encodes and parses font spec payload" {
       inspect(payload.size, content="17.5")
       inspect(payload.size_key, content="1120")
       inspect(payload.weight, content="650")
-      assert_true(payload.style == @core.FontStyle::Italic)
+      assert_true(payload.style == Italic)
       inspect(payload.family_names.length(), content="3")
       inspect(payload.family_names[0].length(), content="9")
       inspect(payload.family_names[0][0].to_int(), content="65")
@@ -38,10 +38,10 @@ test "native text protocol encodes and parses font spec payload" {
 test "native text protocol encodes empty font stack as system-ui" {
   let bytes = native_font_spec_bytes(
     @core.FontSpec::new(
-      families={ families: [] },
+      families={ families: [], },
       size=16.0,
       weight=400,
-      style=@core.FontStyle::Normal,
+      style=Normal,
     ),
   )
   match native_font_spec_from_bytes(bytes) {
@@ -330,9 +330,7 @@ test "native text protocol parses versioned raster glyph" {
       inspect(glyph.height(), content="2")
       inspect(glyph.bearing_x(), content="1")
       inspect(glyph.bearing_y(), content="-3")
-      assert_true(
-        glyph.format() == @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
-      )
+      assert_true(glyph.format() == AlphaMask)
       inspect(glyph.pixels().length(), content="4")
     }
     None => fail("expected native raster glyph payload to parse")
@@ -401,9 +399,7 @@ test "native text protocol parses color raster glyph" {
     Some(glyph) => {
       inspect(glyph.width(), content="1")
       inspect(glyph.height(), content="2")
-      assert_true(
-        glyph.format() == @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba,
-      )
+      assert_true(glyph.format() == ColorRgba)
       inspect(glyph.pixels().length(), content="8")
     }
     None => fail("expected color native raster glyph payload to parse")

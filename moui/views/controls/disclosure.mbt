@@ -13,7 +13,7 @@ pub fn[Msg] disclosure(
   let title_rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
-      role=@style.TextRole::Control,
+      role=Control,
       theme=resolved_theme,
       width=title_width,
       height=24.0,
@@ -23,7 +23,7 @@ pub fn[Msg] disclosure(
     title_rows.push(
       @text.text(
         subtitle,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=title_width,
         height=22.0,
@@ -39,15 +39,15 @@ pub fn[Msg] disclosure(
           ">"
         },
         on_click=on_toggle,
-        variant=@style.ButtonVariant::Ghost,
+        variant=Ghost,
         theme=resolved_theme,
         width=34.0,
         height=34.0,
       ),
-      @layout.column(title_rows, spacing=0.0, align=@style.CrossAlign::Start),
+      @layout.column(title_rows, spacing=0.0, align=Start),
     ],
     spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
+    align=Center,
   )
   let rows : Array[@core.View[Msg]] = [header]
   if expanded {
@@ -55,12 +55,8 @@ pub fn[Msg] disclosure(
       content.frame(width=width - resolved_theme.spacing_scale.md * 2.0),
     )
   }
-  @layout.column(
-    rows,
-    spacing=resolved_theme.spacing_scale.sm,
-    align=@style.CrossAlign::Start,
-  )
-  .semantics_role(@core.SemanticsRole::Group)
+  @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Start)
+  .semantics_role(Group)
   .semantics_expanded(expanded~)
   .semantics_description(subtitle)
 }
@@ -88,11 +84,9 @@ pub fn[Msg] accordion(
       ).disabled(disabled=!section.enabled),
     )
   }
-  @layout.column(
-    rows,
-    spacing=resolved_theme.spacing_scale.sm,
-    align=@style.CrossAlign::Start,
-  ).semantics_role(@core.SemanticsRole::Group)
+  @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Start).semantics_role(
+    Group,
+  )
 }
 
 ///|
@@ -117,7 +111,7 @@ pub fn[Msg] collapsible_panel(
       width=width - resolved_theme.spacing_scale.md * 2.0,
     ),
     width~,
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   ).border(
@@ -173,15 +167,15 @@ pub fn[Msg] resizable_panel(
         ),
         width=panel_width,
         height~,
-        variant=@style.ContainerVariant::Raised,
+        variant=Raised,
         theme=resolved_theme,
         padding=resolved_theme.spacing_scale.md,
       ),
       handle,
     ],
     spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Start,
-  ).semantics_role(@core.SemanticsRole::Group)
+    align=Start,
+  ).semantics_role(Group)
 }
 
 ///|

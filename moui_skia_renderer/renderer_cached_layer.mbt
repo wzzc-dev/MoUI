@@ -79,7 +79,7 @@ fn SkiaRasterRenderer::render_cached_command_range(
   let mut index = start_index
   while index < end_index {
     match commands[index] {
-      @render_common.PlanOp::BeginRetainedLayer(spec) =>
+      BeginRetainedLayer(spec) =>
         match find_cached_layer_end(commands, index + 1, spec.key) {
           Some(layer_end) =>
             if self.should_skip_command_for_damage(spec.frame, damage) ||
@@ -107,7 +107,7 @@ fn SkiaRasterRenderer::render_cached_command_range(
             return false
           }
         }
-      @render_common.PlanOp::EndRetainedLayer(_) => return true
+      EndRetainedLayer(_) => return true
       command => {
         self.render_command(canvas, command, canvas_scopes)
         index = index + 1
@@ -125,9 +125,9 @@ fn SkiaRasterRenderer::should_skip_command_for_damage(
 ) -> Bool {
   let _ = self
   match damage {
-    @core.DamageRegion::Empty => false
-    @core.DamageRegion::FullSurface(_) => false
-    @core.DamageRegion::Rects(rects) => {
+    Empty => false
+    FullSurface(_) => false
+    Rects(rects) => {
       let mut intersects = false
       for rect in rects {
         match bounds.intersection(rect) {
@@ -153,8 +153,8 @@ fn find_cached_layer_end(
   let mut depth = 0
   for index in start_index..<commands.length() {
     match commands[index] {
-      @render_common.PlanOp::BeginRetainedLayer(_) => depth = depth + 1
-      @render_common.PlanOp::EndRetainedLayer(end_key) =>
+      BeginRetainedLayer(_) => depth = depth + 1
+      EndRetainedLayer(end_key) =>
         if depth == 0 {
           if end_key == key {
             return Some(index)
@@ -363,10 +363,7 @@ fn SkiaRasterRenderer::render_uncached_layer_to_canvas(
   let saved = canvas.save_count()
   self.push_layer(
     canvas,
-    @core.LayerSpec::new(
-      mask=@core.LayerMask::RectMask(spec.frame),
-      offscreen=true,
-    ),
+    @core.LayerSpec::new(mask=RectMask(spec.frame), offscreen=true),
   )
   let layer_scopes : Array[@render_common.PlanScopeKind] = []
   let complete = self.render_cached_command_range(

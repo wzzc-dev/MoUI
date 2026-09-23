@@ -90,7 +90,7 @@ pub fn Vertex::new(
   joints? : (Int, Int, Int, Int) = (0, 0, 0, 0),
   weights? : Vec4 = Vec4::zero(),
 ) -> Vertex {
-  { position, normal, texcoord, joints, weights }
+  { position, normal, texcoord, joints, weights, }
 }
 
 ///|
@@ -151,12 +151,12 @@ pub(all) struct Sampler {
 
 ///|
 pub fn Sampler::new(
-  mag_filter? : SamplerFilter = SamplerFilter::Linear,
-  min_filter? : SamplerFilter = SamplerFilter::LinearMipmapLinear,
-  wrap_s? : SamplerWrap = SamplerWrap::Repeat,
-  wrap_t? : SamplerWrap = SamplerWrap::Repeat,
+  mag_filter? : SamplerFilter = Linear,
+  min_filter? : SamplerFilter = LinearMipmapLinear,
+  wrap_s? : SamplerWrap = Repeat,
+  wrap_t? : SamplerWrap = Repeat,
 ) -> Sampler {
-  { mag_filter, min_filter, wrap_s, wrap_t }
+  { mag_filter, min_filter, wrap_s, wrap_t, }
 }
 
 ///|
@@ -192,7 +192,7 @@ pub fn Texture::uri(
   mime_type? : String? = None,
   sampler? : SamplerId? = None,
 ) -> Texture {
-  { source: TextureSource::Uri(uri), mime_type, sampler }
+  { source: Uri(uri), mime_type, sampler, }
 }
 
 ///|
@@ -201,7 +201,7 @@ pub fn Texture::embedded(
   mime_type? : String? = None,
   sampler? : SamplerId? = None,
 ) -> Texture {
-  { source: TextureSource::Embedded(bytes), mime_type, sampler }
+  { source: Embedded(bytes), mime_type, sampler, }
 }
 
 ///|
@@ -251,7 +251,7 @@ pub fn Camera::new(
   name? : String = "",
   projection~ : CameraProjection,
 ) -> Camera {
-  { name, projection }
+  { name, projection, }
 }
 
 ///|
@@ -275,7 +275,7 @@ pub fn SceneDefinition::new(
   name? : String = "",
   roots~ : Array[NodeId],
 ) -> SceneDefinition {
-  { name, roots: roots.copy() }
+  { name, roots: roots.copy(), }
 }
 
 ///|
@@ -301,7 +301,7 @@ pub fn VertexDelta::new(
   normal? : Vec3 = Vec3::zero(),
   tangent? : Vec3 = Vec3::zero(),
 ) -> VertexDelta {
-  { position, normal, tangent }
+  { position, normal, tangent, }
 }
 
 ///|
@@ -379,7 +379,7 @@ pub fn Material::pbr(
   occlusion_texture? : TextureId? = None,
   emissive_texture? : TextureId? = None,
   emissive_factor? : Vec3 = Vec3::zero(),
-  alpha_mode? : AlphaMode = AlphaMode::Opaque,
+  alpha_mode? : AlphaMode = Opaque,
   alpha_cutoff? : Double = 0.5,
   double_sided? : Bool = false,
 ) -> Material {
@@ -522,7 +522,7 @@ pub fn Mesh::new(
   for primitive in primitives {
     bounds = bounds.union(primitive.bounds)
   }
-  { name, primitives: primitives.copy(), weights: weights.copy(), bounds }
+  { name, primitives: primitives.copy(), weights: weights.copy(), bounds, }
 }
 
 ///|
@@ -567,7 +567,7 @@ pub fn Node::new(
   skin? : Int? = None,
   weights? : Array[Double]? = None,
 ) -> Node {
-  { name, parent, children: [], local_transform, mesh, camera, skin, weights }
+  { name, parent, children: [], local_transform, mesh, camera, skin, weights, }
 }
 
 ///|
@@ -751,21 +751,21 @@ fn apply_animation_sample(
   values : Array[Double],
 ) -> Mat4 {
   match path {
-    AnimationPath::Translation if values.length() >= 3 => {
+    Translation if values.length() >= 3 => {
       let matrix = authored.values()
       matrix[3] = values[0]
       matrix[7] = values[1]
       matrix[11] = values[2]
       Mat4::from_values(matrix)
     }
-    AnimationPath::Scale if values.length() >= 3 => {
+    Scale if values.length() >= 3 => {
       let matrix = authored.values()
       matrix[0] = values[0]
       matrix[5] = values[1]
       matrix[10] = values[2]
       Mat4::from_values(matrix)
     }
-    AnimationPath::Rotation if values.length() >= 4 => {
+    Rotation if values.length() >= 4 => {
       let x = values[0]
       let y = values[1]
       let z = values[2]
@@ -1019,7 +1019,7 @@ pub fn Scene::pick(self : Scene, ray : Ray) -> PickHit? {
                       Some(distance) =>
                         match best {
                           None =>
-                            best = Some(PickHit::{
+                            best = Some({
                               node: node_id,
                               primitive_index,
                               distance,
@@ -1027,7 +1027,7 @@ pub fn Scene::pick(self : Scene, ray : Ray) -> PickHit? {
                             })
                           Some(previous) =>
                             if distance < previous.distance {
-                              best = Some(PickHit::{
+                              best = Some({
                                 node: node_id,
                                 primitive_index,
                                 distance,

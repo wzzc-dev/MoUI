@@ -244,7 +244,7 @@ fn parse_groups(
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    groups.push({ id, title })
+    groups.push({ id, title, })
   }
   Ok(groups)
 }
@@ -289,7 +289,7 @@ fn parse_entries(
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    entries.push({ group, slug, title, path, summary, keywords })
+    entries.push({ group, slug, title, path, summary, keywords, })
   }
   Ok(entries)
 }
@@ -335,7 +335,7 @@ fn parse_localized_entries(
       Some(Json::String(path)) if path.trim().to_owned() != "" => Some(path)
       _ => return Err(item_label + ".localizedPath must be a non-empty string")
     }
-    entries.push({ group, slug, title, summary, keywords, localized_path })
+    entries.push({ group, slug, title, summary, keywords, localized_path, })
   }
   Ok(entries)
 }
@@ -410,7 +410,7 @@ fn parse_locales(
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    locales.push({ tag, groups, entries })
+    locales.push({ tag, groups, entries, })
   }
   Ok(locales)
 }
@@ -488,13 +488,13 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    excluded.push({ path, reason })
+    excluded.push({ path, reason, })
   }
   let locales = match parse_locales(root) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  Ok({ schema_version, site_url, groups, entries, excluded, locales })
+  Ok({ schema_version, site_url, groups, entries, excluded, locales, })
 }
 
 ///|
@@ -808,5 +808,5 @@ fn validate_catalog_against_repo(
     ignore(item.keywords)
   }
   ignore(reason_chars)
-  Ok({ catalog, entries: validated_entries, locales: validated_locales })
+  Ok({ catalog, entries: validated_entries, locales: validated_locales, })
 }

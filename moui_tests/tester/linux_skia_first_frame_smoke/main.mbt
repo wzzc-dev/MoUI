@@ -1,9 +1,7 @@
 ///|
 fn main {
   @runtime.run_app("MoUI Text Input Smoke", @fixture.runtime())
-  .render_all(
-    @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Linux),
-  )
+  .render_all(@render_skia.from_env(platform=Linux))
   .backend(
     @linux.entry(
       smoke_options=@linux.LinuxHostSmokeOptions::new(

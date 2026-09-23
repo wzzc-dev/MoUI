@@ -53,11 +53,7 @@ fn finder_body(
   // macOS Finder stacks: toolbar → content → path bar (bottom) → status.
   // The path bar lives at the bottom of the content area, just above the
   // status strip, not under the toolbar.
-  @views.column(
-    [toolbar, content, pathbar, status],
-    spacing=0.0,
-    align=@views.CrossAlign::Stretch,
-  )
+  @views.column([toolbar, content, pathbar, status], spacing=0.0, align=Stretch)
 }
 
 ///|
@@ -82,20 +78,20 @@ fn finder_pathbar(
     @views.padding_edges(
       @views.row(
         [
-          desktop_icon(@views.IconName::FolderOpen, 13.0, palette.muted),
+          desktop_icon(FolderOpen, 13.0, palette.muted),
           @views.text(
             location,
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=width - 60.0,
             height=18.0,
           )
           .font(@text.FontSpec::new(size=11.5, weight=520))
           .foreground(palette.foreground),
-          desktop_icon(@views.IconName::ChevronDown, 10.0, palette.muted),
+          desktop_icon(ChevronDown, 10.0, palette.muted),
         ],
         spacing=6.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       left=14.0,
       top=4.0,
@@ -124,7 +120,7 @@ fn finder_toolbar(
   let search = @views.container(
     @views.row(
       [
-        desktop_icon(@views.IconName::Search, 13.0, palette.muted),
+        desktop_icon(Search, 13.0, palette.muted),
         @views.text_field(
           model.finder_query,
           on_input=value => FinderQueryChanged(value),
@@ -135,7 +131,7 @@ fn finder_toolbar(
         ),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=search_width,
     height=28.0,
@@ -152,14 +148,14 @@ fn finder_toolbar(
   let nav = @views.row(
     [
       toolbar_nav_button(
-        @views.IconName::ChevronLeft,
+        ChevronLeft,
         "Go back",
         GoFinderBack,
         model.can_go_finder_back(),
         palette,
       ),
       toolbar_nav_button(
-        @views.IconName::ChevronRight,
+        ChevronRight,
         "Go forward",
         GoFinderForward,
         model.can_go_finder_forward(),
@@ -167,7 +163,7 @@ fn finder_toolbar(
       ),
     ],
     spacing=2.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   let content = if metrics.compact {
     @views.column(
@@ -176,11 +172,11 @@ fn finder_toolbar(
         @views.row(
           [mode, @views.spacer(min_length=6.0), search],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     )
   } else {
     @views.row(
@@ -189,25 +185,25 @@ fn finder_toolbar(
         mode,
         @views.spacer(min_length=8.0, weight=1.0),
         toolbar_icon_button(
-          @views.IconName::ListBullet,
+          ListBullet,
           "Sort by name",
           SelectFinderView(ListView),
           palette,
         ),
         toolbar_icon_button(
-          @views.IconName::Link,
+          Link,
           "Share selected file",
           RequestFileImport,
           palette,
         ),
         toolbar_icon_button(
-          @views.IconName::FileNew,
+          FileNew,
           "Import files into Finder",
           RequestFileImport,
           palette,
         ),
         toolbar_icon_button(
-          @views.IconName::Settings,
+          Settings,
           "Finder actions",
           ToggleControlCenter,
           palette,
@@ -215,7 +211,7 @@ fn finder_toolbar(
         search,
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   }
   @views.stack([
@@ -315,7 +311,7 @@ fn finder_view_mode_control(
       [
         finder_view_mode_button(
           "Icons",
-          @views.IconName::Columns,
+          Columns,
           model.finder_view_mode == IconView,
           SelectFinderView(IconView),
           palette,
@@ -324,7 +320,7 @@ fn finder_view_mode_control(
         ),
         finder_view_mode_button(
           "List",
-          @views.IconName::ListBullet,
+          ListBullet,
           model.finder_view_mode == ListView,
           SelectFinderView(ListView),
           palette,
@@ -333,7 +329,7 @@ fn finder_view_mode_control(
         ),
       ],
       spacing=2.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width=76.0,
     height=28.0,
@@ -441,7 +437,7 @@ fn finder_main(
         finder_content(model, width - sidebar_width, height, palette, theme),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     )
   }
 }
@@ -459,7 +455,7 @@ fn finder_sidebar(
         sidebar_section_header("Favorites", width, palette, theme),
         finder_sidebar_button(
           "Documents",
-          @views.IconName::FileNew,
+          FileNew,
           rgba8(91, 143, 249),
           Documents,
           model,
@@ -469,7 +465,7 @@ fn finder_sidebar(
         ),
         finder_sidebar_button(
           "Applications",
-          @views.IconName::Columns,
+          Columns,
           rgba8(156, 97, 222),
           Applications,
           model,
@@ -479,7 +475,7 @@ fn finder_sidebar(
         ),
         finder_sidebar_button(
           "Downloads",
-          @views.IconName::ArrowRight,
+          ArrowRight,
           rgba8(38, 175, 129),
           Downloads,
           model,
@@ -491,7 +487,7 @@ fn finder_sidebar(
         sidebar_section_header("Locations", width, palette, theme),
         sidebar_static_row(
           "MacBook",
-          @views.IconName::FileNew,
+          FileNew,
           rgba8(116, 128, 142),
           palette,
           theme,
@@ -499,7 +495,7 @@ fn finder_sidebar(
         ),
         sidebar_static_row(
           "Cloud Drive",
-          @views.IconName::Focus,
+          Focus,
           rgba8(53, 143, 242),
           palette,
           theme,
@@ -507,7 +503,7 @@ fn finder_sidebar(
         ),
         sidebar_static_row(
           "Network",
-          @views.IconName::Link,
+          Link,
           rgba8(112, 132, 154),
           palette,
           theme,
@@ -538,7 +534,7 @@ fn finder_sidebar(
         ),
       ],
       spacing=2.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     padding=12.0,
@@ -548,7 +544,7 @@ fn finder_sidebar(
   @views.column(
     [panel, @views.spacer(min_length=0.0, weight=1.0)],
     spacing=0.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   .frame(width~)
   .background(palette.sidebar)
@@ -563,13 +559,7 @@ fn sidebar_section_header(
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  @views.text(
-    label,
-    role=@views.TextRole::Caption,
-    theme~,
-    width=width - 28.0,
-    height=18.0,
-  )
+  @views.text(label, role=Caption, theme~, width=width - 28.0, height=18.0)
   .font(@text.FontSpec::new(size=11.0, weight=700))
   .foreground(palette.muted)
 }
@@ -593,16 +583,12 @@ fn sidebar_tag_row(
         corner_radius=4.0,
         padding=0.0,
       ),
-      @views.text(
-        label,
-        role=@views.TextRole::Body,
-        theme~,
-        width=width - 32.0,
-        height=22.0,
-      ).foreground(palette.foreground),
+      @views.text(label, role=Body, theme~, width=width - 32.0, height=22.0).foreground(
+        palette.foreground,
+      ),
     ],
     spacing=10.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -632,13 +618,7 @@ fn finder_sidebar_button(
     @views.row(
       [
         desktop_icon(icon, 15.0, icon_color),
-        @views.text(
-          label,
-          role=@views.TextRole::Body,
-          theme~,
-          width=width - 42.0,
-          height=22.0,
-        )
+        @views.text(label, role=Body, theme~, width=width - 42.0, height=22.0)
         .font(
           @text.FontSpec::new(
             size=13.0,
@@ -648,7 +628,7 @@ fn finder_sidebar_button(
         .foreground(palette.foreground),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=30.0,
@@ -676,15 +656,11 @@ fn sidebar_static_row(
   @views.row(
     [
       desktop_icon(icon, 15.0, icon_color),
-      @views.text(
-        label,
-        role=@views.TextRole::Body,
-        theme~,
-        width=width - 30.0,
-        height=30.0,
-      ).foreground(palette.foreground),
+      @views.text(label, role=Body, theme~, width=width - 30.0, height=30.0).foreground(
+        palette.foreground,
+      ),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }

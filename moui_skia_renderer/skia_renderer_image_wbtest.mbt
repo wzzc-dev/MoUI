@@ -39,7 +39,7 @@ test "skia renderer decodes jpeg and bmp data uris through encoded image api" {
   guard renderer.image_lifecycle.lookup(jpeg_source) is Some(jpeg_ready) else {
     fail("expected ready JPEG image lifecycle record")
   }
-  assert_true(jpeg_ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(jpeg_ready.status == ImageReady)
 
   let bmp_source = skia_test_bmp_data_uri()
   match renderer.skia_image_for_source(bmp_source) {
@@ -52,7 +52,7 @@ test "skia renderer decodes jpeg and bmp data uris through encoded image api" {
   guard renderer.image_lifecycle.lookup(bmp_source) is Some(bmp_ready) else {
     fail("expected ready BMP image lifecycle record")
   }
-  assert_true(bmp_ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(bmp_ready.status == ImageReady)
   inspect(renderer.image_resources().length(), content="2")
 }
 
@@ -114,7 +114,7 @@ test "skia renderer decodes host-provided jpeg and bmp file bytes" {
   guard renderer.image_lifecycle.lookup(jpeg_path) is Some(jpeg_ready) else {
     fail("expected ready local JPEG image lifecycle record")
   }
-  assert_true(jpeg_ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(jpeg_ready.status == ImageReady)
 
   assert_true(renderer.skia_image_for_source(bmp_path) is None)
   ignore(
@@ -138,7 +138,7 @@ test "skia renderer decodes host-provided jpeg and bmp file bytes" {
   guard renderer.image_lifecycle.lookup(bmp_path) is Some(bmp_ready) else {
     fail("expected ready local BMP image lifecycle record")
   }
-  assert_true(bmp_ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(bmp_ready.status == ImageReady)
   inspect(renderer.image_resources().length(), content="2")
 
   @fs.remove_file(jpeg_path) catch {
@@ -154,24 +154,16 @@ test "skia image load completion reports decoded dimensions or fallback failure"
   let source = skia_test_png_data_uri()
   let completion = skia_image_load_completion(source)
   if skia_available() {
-    assert_true(
-      completion.status ==
-      @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-    )
+    assert_true(completion.status == ImageLoadReady)
     inspect(completion.source, content=source)
     inspect(completion.width, content="1")
     inspect(completion.height, content="1")
   } else {
-    assert_true(
-      completion.status ==
-      @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-    )
+    assert_true(completion.status == ImageLoadFailed)
     inspect(completion.diagnostic, content="Skia image decode failed")
   }
   let missing = skia_image_load_completion("moui-skia-missing://nope")
-  assert_true(
-    missing.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-  )
+  assert_true(missing.status == ImageLoadFailed)
   inspect(missing.diagnostic, content="Skia image source bytes are unavailable")
 }
 
@@ -182,10 +174,7 @@ test "skia image load completion from bytes decodes provided image bytes" {
     Some(bytes) => {
       let completion = skia_image_load_completion_from_bytes(source, bytes)
       if skia_available() {
-        assert_true(
-          completion.status ==
-          @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-        )
+        assert_true(completion.status == ImageLoadReady)
         inspect(completion.source, content=source)
         inspect(completion.width, content="1")
         inspect(completion.height, content="1")
@@ -194,10 +183,7 @@ test "skia image load completion from bytes decodes provided image bytes" {
         inspect(completion.decoded_pixels.length(), content="4")
         inspect(completion.background_decode, content="false")
       } else {
-        assert_true(
-          completion.status ==
-          @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-        )
+        assert_true(completion.status == ImageLoadFailed)
         inspect(completion.diagnostic, content="Skia image decode failed")
       }
     }
@@ -207,9 +193,7 @@ test "skia image load completion from bytes decodes provided image bytes" {
   let failed = skia_image_load_completion_from_bytes(
     "invalid://bytes", invalid_bytes,
   )
-  assert_true(
-    failed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-  )
+  assert_true(failed.status == ImageLoadFailed)
   inspect(failed.diagnostic, content="Skia image decode failed")
 }
 
@@ -235,10 +219,7 @@ test "skia image decoder rasterizes svg ahead of the raster codec" {
     match skia_image_data_uri_bytes(png_source) {
       Some(bytes) => {
         let raster = decoder.decode(png_source, Some(bytes))
-        assert_true(
-          raster.status ==
-          @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-        )
+        assert_true(raster.status == ImageLoadReady)
         inspect(raster.width, content="1")
         inspect(raster.height, content="1")
       }
@@ -261,11 +242,11 @@ test "skia renderer dispose clears cached image resources and records disposal" 
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err => fail("expected Skia image render: \{err.message()}")
@@ -274,13 +255,13 @@ test "skia renderer dispose clears cached image resources and records disposal" 
   guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
     fail("expected ready image lifecycle record before dispose")
   }
-  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(ready.status == ImageReady)
   renderer.dispose()
   assert_true(renderer.image_cache.get(source) is None)
   guard renderer.image_lifecycle.lookup(source) is Some(disposed) else {
     fail("expected disposed image lifecycle record after dispose")
   }
-  assert_true(disposed.status == @render.ImageResourceStatus::ImageDisposed)
+  assert_true(disposed.status == ImageDisposed)
   inspect(renderer.image_resources().length(), content="1")
 }
 
@@ -299,26 +280,25 @@ test "skia renderer owns image lifecycle for ready and disposed resources" {
   }
 
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err => fail("expected Skia image render: \{err.message()}")
   }
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageReady, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageReady, .. } else {
     fail("expected ready image resource")
   }
 
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err => fail("expected cached Skia image render: \{err.message()}")
@@ -326,8 +306,7 @@ test "skia renderer owns image lifecycle for ready and disposed resources" {
   inspect(renderer.image_resources().length(), content="1")
 
   renderer.dispose()
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageDisposed, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageDisposed, .. } else {
     fail("expected disposed image resource")
   }
 }
@@ -351,7 +330,7 @@ test "skia renderer applies image load completions and rejects stale results" {
   )
   assert_true(ready)
   guard renderer.image_lifecycle.lookup("async.png")
-    is Some({ status: @render.ImageResourceStatus::ImageReady, .. }) else {
+    is Some({ status: ImageReady, .. }) else {
     fail("expected ready async image")
   }
   let stale = renderer.apply_image_resource_load_completion(
@@ -370,7 +349,7 @@ test "skia renderer applies image load completions and rejects stale results" {
   )
   assert_true(failed)
   guard renderer.image_lifecycle.lookup("missing.png")
-    is Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) else {
+    is Some({ status: ImageFailed, .. }) else {
     fail("expected failed image")
   }
   assert_true(renderer.failed_images.get("missing.png") is Some(_))
@@ -401,14 +380,14 @@ test "skia renderer retained layer refreshes after async image completion" {
   )
   let commands = [
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(spec),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    BeginRetainedLayer(spec),
+    DrawImage({
       source,
       frame: @core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Stretch,
+      fit: Stretch,
     }),
-    @core.DrawCommand::EndRetainedLayer(spec.key),
+    EndRetainedLayer(spec.key),
   ]
   let first = renderer.render_frame(
     @core.DrawFrame::new(
@@ -437,9 +416,7 @@ test "skia renderer retained layer refreshes after async image completion" {
   let second = renderer.render_frame(
     @core.DrawFrame::new(
       commands~,
-      damage=@core.DamageRegion::Rects([
-        @core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0),
-      ]),
+      damage=Rects([@core.Rect::new(x=0.0, y=0.0, width=1.0, height=1.0)]),
     ),
   )
   assert_true(second.presented)
@@ -472,11 +449,11 @@ test "skia renderer async image loading waits for explicit decoded completion be
   }
   let commands = [
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
   renderer.render(commands) catch {
@@ -487,7 +464,7 @@ test "skia renderer async image loading waits for explicit decoded completion be
   guard renderer.image_lifecycle.lookup(source) is Some(loading) else {
     fail("expected loading image lifecycle record")
   }
-  assert_true(loading.status == @render.ImageResourceStatus::ImageLoading)
+  assert_true(loading.status == ImageLoading)
 
   let completed = renderer.apply_image_resource_load_completion(
     skia_image_load_completion(source),
@@ -496,7 +473,7 @@ test "skia renderer async image loading waits for explicit decoded completion be
   guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
     fail("expected ready image lifecycle record")
   }
-  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(ready.status == ImageReady)
   assert_true(renderer.image_cache.get(source) is Some(_))
 
   renderer.render(commands) catch {
@@ -522,11 +499,11 @@ test "skia renderer caches decoded async image completion without source decode"
   }
   let commands = [
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
   renderer.render(commands) catch {
@@ -536,7 +513,7 @@ test "skia renderer caches decoded async image completion without source decode"
   guard renderer.image_lifecycle.lookup(source) is Some(loading) else {
     fail("expected loading image lifecycle record")
   }
-  assert_true(loading.status == @render.ImageResourceStatus::ImageLoading)
+  assert_true(loading.status == ImageLoading)
 
   let pixels = Bytes::from_array([b'\xff', b'\x00', b'\x00', b'\xff'])
   let completed = renderer.apply_image_resource_load_completion(
@@ -554,7 +531,7 @@ test "skia renderer caches decoded async image completion without source decode"
   guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
     fail("expected ready image lifecycle record")
   }
-  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(ready.status == ImageReady)
   assert_true(renderer.image_cache.get(source) is Some(_))
 
   renderer.render(commands) catch {
@@ -579,11 +556,11 @@ test "skia renderer records failed image resources and reuses failed cache" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: missing_source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err =>
@@ -593,7 +570,7 @@ test "skia renderer records failed image resources and reuses failed cache" {
   guard renderer.image_lifecycle.lookup(missing_source) is Some(failed) else {
     fail("expected failed image lifecycle record")
   }
-  assert_true(failed.status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(failed.status == ImageFailed)
   assert_true(failed.diagnostic.contains("unavailable"))
   assert_true(renderer.failed_images.get(missing_source) is Some(_))
   inspect(renderer.image_resources().length(), content="1")
@@ -609,7 +586,7 @@ test "skia renderer records failed image resources and reuses failed cache" {
   guard renderer.image_lifecycle.lookup(valid_source) is Some(cached) else {
     fail("expected cached failed image lifecycle record")
   }
-  assert_true(cached.status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(cached.status == ImageFailed)
   inspect(cached.diagnostic, content="cached failure")
 }
 
@@ -627,34 +604,32 @@ test "skia renderer keeps unchanged failed image cache stable" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: missing_source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err =>
       fail("expected Skia missing-image placeholder render: \{err.message()}")
   }
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageFailed, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageFailed, .. } else {
     fail("expected failed image resource")
   }
 
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: missing_source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err =>
       fail("expected cached failed-image placeholder render: \{err.message()}")
   }
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageFailed, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageFailed, .. } else {
     fail("expected cached failed image resource")
   }
 }
@@ -678,11 +653,11 @@ test "skia renderer retries local image failures when the file appears" {
   }
 
   renderer.render([
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err => fail("expected Skia placeholder render: \{err.message()}")
@@ -692,7 +667,7 @@ test "skia renderer retries local image failures when the file appears" {
   guard renderer.image_lifecycle.lookup(source) is Some(failed) else {
     fail("expected loading local image lifecycle record")
   }
-  assert_true(failed.status == @render.ImageResourceStatus::ImageLoading)
+  assert_true(failed.status == ImageLoading)
   ignore(
     renderer.apply_image_resource_load_completion(
       skia_image_load_completion(source),
@@ -729,7 +704,7 @@ test "skia renderer retries local image failures when the file appears" {
   guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
     fail("expected ready local image lifecycle record after retry")
   }
-  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(ready.status == ImageReady)
   inspect(ready.width, content="1")
   inspect(ready.height, content="1")
 }
@@ -741,7 +716,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let wide_contain = skia_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::Contain,
+    Contain,
   )
   inspect(wide_contain.frame.origin.x, content="10")
   inspect(wide_contain.frame.origin.y, content="45")
@@ -755,7 +730,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let tall_contain = skia_image_placement(
     frame,
     @core.Size::new(width=100.0, height=200.0),
-    @core.ImageFit::Contain,
+    Contain,
   )
   inspect(tall_contain.frame.origin.x, content="35")
   inspect(tall_contain.frame.origin.y, content="20")
@@ -769,7 +744,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let wide_cover = skia_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::Cover,
+    Cover,
   )
   inspect(wide_cover.frame.origin.x, content="10")
   inspect(wide_cover.frame.origin.y, content="20")
@@ -783,7 +758,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let tall_cover = skia_image_placement(
     frame,
     @core.Size::new(width=100.0, height=200.0),
-    @core.ImageFit::Cover,
+    Cover,
   )
   inspect(tall_cover.u0, content="0")
   inspect(tall_cover.v0, content="0.25")
@@ -793,7 +768,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let stretch = skia_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::Stretch,
+    Stretch,
   )
   inspect(stretch.frame.origin.x, content="10")
   inspect(stretch.frame.origin.y, content="20")
@@ -807,7 +782,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let small_scale_down = skia_image_placement(
     frame,
     @core.Size::new(width=40.0, height=20.0),
-    @core.ImageFit::ScaleDown,
+    ScaleDown,
   )
   inspect(small_scale_down.frame.origin.x, content="40")
   inspect(small_scale_down.frame.origin.y, content="60")
@@ -821,7 +796,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let large_scale_down = skia_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::ScaleDown,
+    ScaleDown,
   )
   inspect(large_scale_down.frame.origin.x, content="10")
   inspect(large_scale_down.frame.origin.y, content="45")
@@ -831,7 +806,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let fit_width_short = skia_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::FitWidth,
+    FitWidth,
   )
   inspect(fit_width_short.frame.origin.x, content="10")
   inspect(fit_width_short.frame.origin.y, content="45")
@@ -845,7 +820,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let fit_width_tall = skia_image_placement(
     frame,
     @core.Size::new(width=100.0, height=200.0),
-    @core.ImageFit::FitWidth,
+    FitWidth,
   )
   inspect(fit_width_tall.frame.origin.x, content="10")
   inspect(fit_width_tall.frame.origin.y, content="20")
@@ -859,7 +834,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let fit_height_narrow = skia_image_placement(
     frame,
     @core.Size::new(width=100.0, height=200.0),
-    @core.ImageFit::FitHeight,
+    FitHeight,
   )
   inspect(fit_height_narrow.frame.origin.x, content="35")
   inspect(fit_height_narrow.frame.origin.y, content="20")
@@ -873,7 +848,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let fit_height_wide = skia_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::FitHeight,
+    FitHeight,
   )
   inspect(fit_height_wide.frame.origin.x, content="10")
   inspect(fit_height_wide.frame.origin.y, content="20")
@@ -887,7 +862,7 @@ test "skia image placement records contain and cover sampling geometry" {
   let degenerate = skia_image_placement(
     frame,
     @core.Size::new(width=0.0, height=200.0),
-    @core.ImageFit::Cover,
+    Cover,
   )
   inspect(degenerate.frame.origin.x, content="10")
   inspect(degenerate.frame.origin.y, content="20")
@@ -921,12 +896,12 @@ test "skia renderer image placeholder is a neutral card with a border and glyph"
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    Clear(@core.Color::white()),
+    DrawImage({
       source: missing,
       frame: @core.Rect::new(x=8.0, y=8.0, width=80.0, height=48.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]) catch {
     err => fail("expected Skia placeholder render: \{err.message()}")
@@ -973,7 +948,7 @@ test "skia renderer image placeholder draws firmer once the load has failed" {
     source: "moui-skia-placeholder-style://not-a-file",
     frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
     opacity: 1.0,
-    fit: @core.ImageFit::Contain,
+    fit: Contain,
   }
   let pending = skia_image_placeholder_alpha(
     skia_image_placeholder_border(run, false),
@@ -988,7 +963,7 @@ test "skia renderer image placeholder draws firmer once the load has failed" {
 ///|
 fn skia_image_placeholder_alpha(brush : @core.Brush) -> Double {
   match brush {
-    @core.Brush::Solid(color) => color.a
+    Solid(color) => color.a
     _ => -1.0
   }
 }

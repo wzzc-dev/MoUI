@@ -45,8 +45,8 @@ pub fn agent_backend_kind_id(kind : AgentBackendKind) -> String {
 ///|
 pub fn agent_backend_kind_from_id(id : String) -> AgentBackendKind {
   match id {
-    "acp" => AgentBackendKind::Acp
-    _ => AgentBackendKind::OpenSeek
+    "acp" => Acp
+    _ => OpenSeek
   }
 }
 
@@ -75,7 +75,7 @@ pub fn agent_permission_option(
   name~ : String,
   kind? : String = "",
 ) -> AgentPermissionOption {
-  { id, name, kind }
+  { id, name, kind, }
 }
 
 ///|
@@ -97,7 +97,7 @@ pub fn agent_permission_request(
   kind? : String = "",
   options? : Array[AgentPermissionOption] = [],
 ) -> AgentPermissionRequest {
-  { request_id, session_id, tool_call_id, title, kind, options }
+  { request_id, session_id, tool_call_id, title, kind, options, }
 }
 
 ///|
@@ -113,7 +113,7 @@ pub fn agent_session_mode(
   name~ : String,
   description? : String? = None,
 ) -> AgentSessionMode {
-  { id, name, description }
+  { id, name, description, }
 }
 
 ///|
@@ -127,7 +127,7 @@ pub fn agent_session_mode_state(
   current_mode_id~ : String,
   available_modes~ : Array[AgentSessionMode],
 ) -> AgentSessionModeState {
-  { current_mode_id, available_modes }
+  { current_mode_id, available_modes, }
 }
 
 ///|
@@ -147,7 +147,7 @@ pub fn agent_session_config_option(
   current_value~ : AgentConfigValue,
   values? : Array[AgentPermissionOption] = [],
 ) -> AgentSessionConfigOption {
-  { id, name, description, current_value, values }
+  { id, name, description, current_value, values, }
 }
 
 ///|
@@ -204,7 +204,7 @@ fn SessionSummary::new(
   first_prompt~ : String,
   last_active_unix_seconds? : Int64? = None,
 ) -> SessionSummary {
-  { id, first_prompt, last_active_unix_seconds }
+  { id, first_prompt, last_active_unix_seconds, }
 }
 
 ///|
@@ -286,7 +286,7 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
               None,
             ),
           )
-          emit(TurnTerminal(TurnStatus::Finished, "Done"))
+          emit(TurnTerminal(Finished, "Done"))
         }
         Steer(text) =>
           emit(RuntimeNoticeAdded("Steer recorded (stub): " + text))
@@ -301,7 +301,7 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
         }
         SetModel(_, _, _) => ()
         SetThinking(_) => ()
-        CancelTurn => emit(TurnTerminal(TurnStatus::Aborted, "Cancelled"))
+        CancelTurn => emit(TurnTerminal(Aborted, "Cancelled"))
         SetSessionMode(mode_id) =>
           emit(RuntimeNoticeAdded("ACP mode ignored by stub: " + mode_id))
         SetSessionConfigOption(config_id, _) =>
@@ -355,7 +355,7 @@ pub struct AgentBackendFixture {
 pub fn AgentBackendFixture::new(
   script~ : (AgentCommand) -> Array[AgentEvent],
 ) -> AgentBackendFixture {
-  { dispatched: [], script }
+  { dispatched: [], script, }
 }
 
 ///|

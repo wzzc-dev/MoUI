@@ -63,17 +63,17 @@ pub fn RouteLocation::new(
   path~ : String,
   query? : Array[RouteQueryParam] = [],
 ) -> RouteLocation {
-  { path, query }
+  { path, query, }
 }
 
 ///|
 pub fn RouteParam::new(key~ : String, value~ : String) -> RouteParam {
-  { key, value }
+  { key, value, }
 }
 
 ///|
 pub fn RouteQueryParam::new(key~ : String, value~ : String) -> RouteQueryParam {
-  { key, value }
+  { key, value, }
 }
 
 ///|
@@ -83,7 +83,7 @@ pub fn RouteDescriptor::new(
   title? : String = "",
   fallback? : Bool = false,
 ) -> RouteDescriptor {
-  { id, path, title, fallback }
+  { id, path, title, fallback, }
 }
 
 ///|
@@ -97,7 +97,7 @@ pub fn RouteHistoryEntry::new(
   title? : String = "",
   source? : String = "app",
 ) -> RouteHistoryEntry {
-  { route, title, source }
+  { route, title, source, }
 }
 
 ///|
@@ -144,7 +144,7 @@ pub fn RouteHistoryState::from_routes(
     } else {
       clamp_route_history_cursor(entries, cursor)
     }
-    { entries, cursor: selected }
+    { entries, cursor: selected, }
   }
 }
 
@@ -214,7 +214,7 @@ pub fn RouteHistoryState::push(
     }
   }
   entries.push(entry)
-  { entries, cursor: entries.length() - 1 }
+  { entries, cursor: entries.length() - 1, }
 }
 
 ///|
@@ -241,7 +241,7 @@ pub fn RouteHistoryState::replace(
         entries.push(current)
       }
     }
-    { entries, cursor }
+    { entries, cursor, }
   }
 }
 
@@ -249,7 +249,7 @@ pub fn RouteHistoryState::replace(
 pub fn RouteHistoryState::back(self : RouteHistoryState) -> RouteHistoryState {
   let cursor = clamp_route_history_cursor(self.entries, self.cursor)
   if cursor > 0 {
-    { ..self, cursor: cursor - 1 }
+    { ..self, cursor: cursor - 1, }
   } else {
     { ..self, cursor, }
   }
@@ -261,7 +261,7 @@ pub fn RouteHistoryState::forward(
 ) -> RouteHistoryState {
   let cursor = clamp_route_history_cursor(self.entries, self.cursor)
   if cursor >= 0 && cursor + 1 < self.entries.length() {
-    { ..self, cursor: cursor + 1 }
+    { ..self, cursor: cursor + 1, }
   } else {
     { ..self, cursor, }
   }
@@ -295,12 +295,12 @@ fn RouteFocusEntry::new(
   route~ : String,
   focus_key~ : String,
 ) -> RouteFocusEntry {
-  { route, focus_key }
+  { route, focus_key, }
 }
 
 ///|
 pub fn RouteFocusStore::new() -> RouteFocusStore {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|
@@ -357,8 +357,8 @@ pub fn RouteLocation::parse(value : String) -> RouteLocation {
         let pair = pair_view.to_owned()
         if pair != "" {
           match split_once(pair, '=') {
-            Some((key, value)) => query.push({ key, value })
-            None => query.push({ key: pair, value: "" })
+            Some((key, value)) => query.push({ key, value, })
+            None => query.push({ key: pair, value: "", })
           }
         }
       }
@@ -412,7 +412,7 @@ pub fn RouteLocation::to_route(self : RouteLocation) -> String {
 pub fn RouterState::new(
   initial? : RouteLocation = RouteLocation::new(path="/"),
 ) -> RouterState {
-  { routes: [initial.to_route()] }
+  { routes: [initial.to_route()], }
 }
 
 ///|
@@ -420,7 +420,7 @@ pub fn RouterState::from_snapshot(snapshot : RouterSnapshot) -> RouterState {
   if snapshot.routes.is_empty() {
     RouterState::new()
   } else {
-    { routes: snapshot.routes.copy() }
+    { routes: snapshot.routes.copy(), }
   }
 }
 
@@ -479,7 +479,7 @@ pub fn RouterState::pop(self : RouterState) -> RouterState {
   if self.routes.length() <= 1 {
     self
   } else {
-    { routes: self.routes[0:self.routes.length() - 1].to_owned() }
+    { routes: self.routes[0:self.routes.length() - 1].to_owned(), }
   }
 }
 

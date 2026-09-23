@@ -1,6 +1,6 @@
 ///|
 test "pdflite native transport config labels helper command" {
-  let config = PdfWorkbenchPdfliteNativeTransportConfig::executable(
+  let config = @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportConfig::executable(
     path="/tmp/pdflite-helper",
     args=["--jsonl"],
     cwd="/tmp",
@@ -15,10 +15,10 @@ test "pdflite native transport config labels helper command" {
 ///|
 test "pdflite native transport parses helper env values" {
   inspect(
-    pdf_workbench_pdflite_default_helper_path(),
+    @pdflite_service_native_transport.pdf_workbench_pdflite_default_helper_path(),
     content="_build/native/debug/build/examples/pdf_workbench/pdflite_service_cli/pdflite_service_cli.exe",
   )
-  let env_config = PdfWorkbenchPdfliteNativeTransportEnvConfig::new(
+  let env_config = @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportEnvConfig::new(
     helper_path=" /tmp/pdflite-helper ",
     helper_args=" --jsonl  --fixture ",
     helper_cwd=" /tmp/work ",
@@ -34,18 +34,20 @@ test "pdflite native transport parses helper env values" {
     None => fail("expected helper config from env config")
   }
   match
-    PdfWorkbenchPdfliteNativeTransportEnvConfig::new(helper_path=" AUTO ").transport_config() {
+    @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportEnvConfig::new(
+      helper_path=" AUTO ",
+    ).transport_config() {
     Some(config) => {
       inspect(
         config.command,
-        content=pdf_workbench_pdflite_default_helper_path(),
+        content=@pdflite_service_native_transport.pdf_workbench_pdflite_default_helper_path(),
       )
       inspect(config.args.length(), content="0")
     }
     None => fail("expected auto helper config")
   }
   match
-    PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(
+    @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(
       Some("/tmp/pdflite-helper"),
       args_value=" --jsonl  --fixture ",
       cwd=" /tmp/work ",
@@ -64,7 +66,7 @@ test "pdflite native transport parses helper env values" {
     None => fail("expected helper config")
   }
   match
-    PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(
+    @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(
       Some("  "),
       args_value="--jsonl",
     ) {
@@ -72,11 +74,13 @@ test "pdflite native transport parses helper env values" {
     None => ()
   }
   match
-    PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(Some("auto")) {
+    @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(
+      Some("auto"),
+    ) {
     Some(config) =>
       inspect(
         config.command,
-        content=pdf_workbench_pdflite_default_helper_path(),
+        content=@pdflite_service_native_transport.pdf_workbench_pdflite_default_helper_path(),
       )
     None => fail("expected auto helper config")
   }
@@ -84,14 +88,16 @@ test "pdflite native transport parses helper env values" {
 
 ///|
 test "pdflite native transport parses JSON helper args" {
-  let args = pdf_workbench_pdflite_helper_args(
+  let args = @pdflite_service_native_transport.pdf_workbench_pdflite_helper_args(
     "[\"--jsonl\",\"--profile\",\"fixture mode\"]",
   )
   inspect(args.length(), content="3")
   inspect(args[0], content="--jsonl")
   inspect(args[1], content="--profile")
   inspect(args[2], content="fixture mode")
-  let fallback = pdf_workbench_pdflite_helper_args("[bad json")
+  let fallback = @pdflite_service_native_transport.pdf_workbench_pdflite_helper_args(
+    "[bad json",
+  )
   inspect(fallback.length(), content="2")
   inspect(fallback[0], content="[bad")
   inspect(fallback[1], content="json")
@@ -128,12 +134,12 @@ test "pdflite native transport loads document summary through jsonl helper" {
         },
       ],
     } : Json).stringify()
-  let config = PdfWorkbenchPdfliteNativeTransportConfig::shell(
+  let config = @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportConfig::shell(
     script="if IFS= read -r line; then printf '%s\\n' '" + response + "'; fi",
   )
   let services = config.document_services()
   match services.load_document("/tmp/native.pdf", bytes) {
-    @app.PdfWorkbenchLoadResult::Loaded(document) => {
+    Loaded(document) => {
       inspect(document.path, content="/tmp/native.pdf")
       inspect(document.original_bytes.length(), content="\{bytes.length()}")
       inspect(document.page_count, content="2")
@@ -145,7 +151,7 @@ test "pdflite native transport loads document summary through jsonl helper" {
       inspect(document.page_summaries.length(), content="2")
       inspect(document.page_summaries[1].text_preview, content="beta page")
     }
-    @app.PdfWorkbenchLoadResult::Failed(reason) => fail(reason)
+    Failed(reason) => fail(reason)
   }
 }
 
@@ -163,7 +169,7 @@ test "pdflite native transport writes document through jsonl helper" {
       "byteLength": output.length(),
       "diagnostics": ["fixture writeback applied"],
     } : Json).stringify()
-  let config = PdfWorkbenchPdfliteNativeTransportConfig::shell(
+  let config = @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportConfig::shell(
     script="if IFS= read -r line; then printf '%s\\n' '" + response + "'; fi",
   )
   let services = config.document_services()
@@ -177,28 +183,23 @@ test "pdflite native transport writes document through jsonl helper" {
       dirty=false,
       writeback_available=true,
     ) {
-    @app.PdfWorkbenchLoadResult::Loaded(document) =>
-      document.with_edit(@app.PdfWorkbenchEdit::StampText(1, "REVIEWED"))
-    @app.PdfWorkbenchLoadResult::Failed(reason) => fail(reason)
+    Loaded(document) => document.with_edit(StampText(1, "REVIEWED"))
+    Failed(reason) => fail(reason)
   }
   match services.writeback_document(document) {
-    @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
-      written,
-      diagnostics
-    ) => {
+    WritebackReady(written, diagnostics) => {
       inspect(written.length(), content="\{output.length()}")
       inspect(diagnostics.length(), content="1")
       inspect(diagnostics[0], content="fixture writeback applied")
     }
-    @app.PdfWorkbenchDocumentWritebackResult::WritebackFailed(reason) =>
-      fail(reason)
+    WritebackFailed(reason) => fail(reason)
   }
 }
 
 ///|
 #cfg(all(target="native", not(platform="windows")))
 test "pdflite native transport surfaces helper failure" {
-  let config = PdfWorkbenchPdfliteNativeTransportConfig::shell(
+  let config = @pdflite_service_native_transport.PdfWorkbenchPdfliteNativeTransportConfig::shell(
     script=(
       #|if IFS= read -r line; then
       #|  printf 'fixture exploded\n' >&2
@@ -212,9 +213,8 @@ test "pdflite native transport surfaces helper failure" {
       "/tmp/native.pdf",
       @app.pdf_workbench_minimum_pdf_bytes(),
     ) {
-    @app.PdfWorkbenchLoadResult::Loaded(_) =>
-      fail("expected failed helper load")
-    @app.PdfWorkbenchLoadResult::Failed(reason) => {
+    Loaded(_) => fail("expected failed helper load")
+    Failed(reason) => {
       assert_true(reason.contains("exited with code 7"))
       assert_true(reason.contains("fixture exploded"))
     }

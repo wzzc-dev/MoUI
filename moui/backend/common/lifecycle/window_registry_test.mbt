@@ -1,6 +1,6 @@
 ///|
 test "host window registry tracks primary focus resize and close lifecycle" {
-  let registry = WindowRegistry::new()
+  let registry = @lifecycle.WindowRegistry::new()
   let first = registry.open(
     title="Main",
     metrics=@core.SurfaceMetrics::from_logical(
@@ -25,7 +25,7 @@ test "host window registry tracks primary focus resize and close lifecycle" {
   match registry.focused_window() {
     Some({ id, phase, .. }) => {
       assert_true(id == second)
-      assert_true(phase == @backend_host.WindowLifecyclePhase::WindowFocused)
+      assert_true(phase == WindowFocused)
     }
     None => fail("expected focused window")
   }
@@ -70,7 +70,7 @@ test "host window registry tracks primary focus resize and close lifecycle" {
 
 ///|
 test "host window registry applies shared lifecycle host events" {
-  let registry = WindowRegistry::new()
+  let registry = @lifecycle.WindowRegistry::new()
   let window_id = registry.open(
     title="Main",
     metrics=@core.SurfaceMetrics::from_logical(
@@ -80,7 +80,7 @@ test "host window registry applies shared lifecycle host events" {
   assert_true(
     registry.apply_host_event(
       window_id,
-      @backend_host.Event::Resized(
+      Resized(
         @core.SurfaceMetrics::from_logical(
           size=@core.Size::new(width=640.0, height=480.0),
           scale_factor=2.0,
@@ -102,9 +102,7 @@ test "host window registry applies shared lifecycle host events" {
   assert_true(
     registry.apply_host_event(
       window_id,
-      @backend_host.Event::Focus(
-        @backend_host.HostFocusEvent::new(focused=true),
-      ),
+      Focus(@backend_host.HostFocusEvent::new(focused=true)),
     ),
   )
   match registry.focused_window() {
@@ -114,35 +112,27 @@ test "host window registry applies shared lifecycle host events" {
   assert_true(
     registry.apply_host_event(
       window_id,
-      @backend_host.Event::Focus(
-        @backend_host.HostFocusEvent::new(focused=false),
-      ),
+      Focus(@backend_host.HostFocusEvent::new(focused=false)),
     ),
   )
   match registry.lookup(window_id) {
-    Some({ phase, .. }) =>
-      assert_true(phase == @backend_host.WindowLifecyclePhase::WindowVisible)
+    Some({ phase, .. }) => assert_true(phase == WindowVisible)
     None => fail("expected blurred window")
   }
-  assert_true(
-    registry.apply_host_event(window_id, @backend_host.Event::CloseRequested),
-  )
+  assert_true(registry.apply_host_event(window_id, CloseRequested))
   match registry.lookup(window_id) {
-    Some({ phase, .. }) =>
-      assert_true(
-        phase == @backend_host.WindowLifecyclePhase::WindowCloseRequested,
-      )
+    Some({ phase, .. }) => assert_true(phase == WindowCloseRequested)
     None => fail("expected close-requested window")
   }
   inspect(
-    registry.apply_host_event(window_id, @backend_host.Event::RedrawRequested),
+    registry.apply_host_event(window_id, RedrawRequested),
     content="false",
   )
 }
 
 ///|
 test "host platform window map routes platform window ids" {
-  let map = PlatformWindowMap::new()
+  let map = @lifecycle.PlatformWindowMap::new()
   inspect(map.is_empty(), content="true")
   let platform_main = @window_core.WindowId::from_raw(11)
   let platform_inspector = @window_core.WindowId::from_raw(12)
@@ -184,10 +174,10 @@ test "host platform window map routes platform window ids" {
 
 ///|
 test "host window scene resolver maps open requests to runtimes" {
-  let resolver = WindowSceneResolver::new(resolve=request => {
+  let resolver = @lifecycle.WindowSceneResolver::new(resolve=request => {
     if request.scene.scene_id == "inspector" {
-      WindowSceneResolution::SceneResolved(
-        WindowSceneInstance::new(
+      SceneResolved(
+        @lifecycle.WindowSceneInstance::new(
           request~,
           runtime=window_test_runtime(
             root=@views.empty(),
@@ -196,9 +186,7 @@ test "host window scene resolver maps open requests to runtimes" {
         ),
       )
     } else {
-      WindowSceneResolution::SceneRejected(
-        "unknown window scene: " + request.scene.scene_id,
-      )
+      SceneRejected("unknown window scene: " + request.scene.scene_id)
     }
   })
   let request = @backend_host.WindowOpenRequest::new(
@@ -212,7 +200,7 @@ test "host window scene resolver maps open requests to runtimes" {
     ),
   )
   match resolver.resolve(request) {
-    WindowSceneResolution::SceneResolved({ request, runtime }) => {
+    SceneResolved({ request, runtime, }) => {
       inspect(request.title, content="Inspector")
       inspect(request.scene.payload, content="outline")
       assert_true(runtime.size() == @core.Size::new(width=360.0, height=480.0))
@@ -227,12 +215,12 @@ test "host window scene resolver maps open requests to runtimes" {
     ),
   )
   match resolver.resolve(unknown) {
-    WindowSceneResolution::SceneRejected(message) =>
+    SceneRejected(message) =>
       inspect(message, content="unknown window scene: unknown")
     _ => fail("expected unknown scene rejection")
   }
-  match WindowSceneResolver::unavailable().resolve(request) {
-    WindowSceneResolution::SceneRejected(message) =>
+  match @lifecycle.WindowSceneResolver::unavailable().resolve(request) {
+    SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected unavailable resolver rejection")
   }
@@ -240,11 +228,11 @@ test "host window scene resolver maps open requests to runtimes" {
 
 ///|
 test "host window registry resolves scenes before registering opened windows" {
-  let registry = WindowRegistry::new()
-  let resolver = WindowSceneResolver::new(resolve=request => {
+  let registry = @lifecycle.WindowRegistry::new()
+  let resolver = @lifecycle.WindowSceneResolver::new(resolve=request => {
     if request.scene.scene_id == "inspector" {
-      WindowSceneResolution::SceneResolved(
-        WindowSceneInstance::new(
+      SceneResolved(
+        @lifecycle.WindowSceneInstance::new(
           request~,
           runtime=window_test_runtime(
             root=@views.empty(),
@@ -253,9 +241,7 @@ test "host window registry resolves scenes before registering opened windows" {
         ),
       )
     } else {
-      WindowSceneResolution::SceneRejected(
-        "unknown window scene: " + request.scene.scene_id,
-      )
+      SceneRejected("unknown window scene: " + request.scene.scene_id)
     }
   })
   let rejected = @backend_host.WindowOpenRequest::new(
@@ -265,8 +251,8 @@ test "host window registry resolves scenes before registering opened windows" {
       size=@core.Size::new(width=320.0, height=240.0),
     ),
   )
-  match resolve_open_request(registry, rejected, resolver) {
-    WindowOpenResolution::OpenRejected(message) =>
+  match @lifecycle.resolve_open_request(registry, rejected, resolver) {
+    OpenRejected(message) =>
       inspect(message, content="unknown window scene: unknown")
     _ => fail("expected rejected window scene")
   }
@@ -283,8 +269,8 @@ test "host window registry resolves scenes before registering opened windows" {
     ),
     primary=true,
   )
-  match resolve_open_request(registry, request, resolver) {
-    WindowOpenResolution::OpenResolved({ id, record, instance }) => {
+  match @lifecycle.resolve_open_request(registry, request, resolver) {
+    OpenResolved({ id, record, instance, }) => {
       assert_true(id == record.id)
       inspect(record.title, content="Inspector")
       inspect(record.scene.scene_id, content="inspector")
@@ -293,8 +279,8 @@ test "host window registry resolves scenes before registering opened windows" {
         instance.runtime.size() == @core.Size::new(width=360.0, height=480.0),
       )
       let redraws = Ref(0)
-      let slot = WindowRuntimeSlot::from_resolved_open(
-        { id, record, instance },
+      let slot = @lifecycle.WindowRuntimeSlot::from_resolved_open(
+        { id, record, instance, },
         schedule_redraw=() => redraws.val = redraws.val + 1,
       )
       assert_true(slot.id == id)
@@ -304,7 +290,7 @@ test "host window registry resolves scenes before registering opened windows" {
       )
       slot.driver.request_redraw()
       inspect(redraws.val, content="1")
-      let driver_backed = WindowRuntimeSlot::from_driver(
+      let driver_backed = @lifecycle.WindowRuntimeSlot::from_driver(
         record~,
         driver=slot.driver,
       )

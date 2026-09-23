@@ -88,13 +88,13 @@ fn config_get(config : CliConfig, key_path : String) -> Result[String, String] {
   }
   match fields.get(field) {
     None => Err("not set: " + key_path)
-    Some(Json::Null) => Err("not set: " + key_path)
-    Some(Json::String(value)) => Ok(value)
-    Some(Json::Number(value, repr=_)) if value.to_int().to_double() == value =>
+    Some(Null) => Err("not set: " + key_path)
+    Some(String(value)) => Ok(value)
+    Some(Number(value, repr=_)) if value.to_int().to_double() == value =>
       Ok(value.to_int().to_string())
-    Some(Json::Number(value, repr=_)) => Ok(value.to_string())
-    Some(Json::True) => Ok("true")
-    Some(Json::False) => Ok("false")
+    Some(Number(value, repr=_)) => Ok(value.to_string())
+    Some(True) => Ok("true")
+    Some(False) => Ok("false")
     Some(value) => Ok(value.stringify())
   }
 }
@@ -137,56 +137,57 @@ fn config_set(
     "harmonyos" => {
       let harmonyos = config.harmonyos
       let new_harmonyos = match field {
-        "sdkHome" => { ..harmonyos, sdk_home: Some(value) }
-        "hvigorw" => { ..harmonyos, hvigorw: Some(value) }
-        "ohpm" => { ..harmonyos, ohpm: Some(value) }
-        "signingConfigFile" => { ..harmonyos, signing_config_file: Some(value) }
+        "sdkHome" => { ..harmonyos, sdk_home: Some(value), }
+        "hvigorw" => { ..harmonyos, hvigorw: Some(value), }
+        "ohpm" => { ..harmonyos, ohpm: Some(value), }
+        "signingConfigFile" =>
+          { ..harmonyos, signing_config_file: Some(value), }
         _ => return Err("unknown harmonyos field: " + field)
       }
-      Ok({ ..config, harmonyos: new_harmonyos })
+      Ok({ ..config, harmonyos: new_harmonyos, })
     }
     "android" => {
       let android = config.android
       let new_android = match field {
-        "sdkHome" => { ..android, sdk_home: Some(value) }
-        "ndkHome" => { ..android, ndk_home: Some(value) }
+        "sdkHome" => { ..android, sdk_home: Some(value), }
+        "ndkHome" => { ..android, ndk_home: Some(value), }
         "compileSdk" =>
           match try_parse_int(value) {
-            Some(n) => { ..android, compile_sdk: Some(n) }
+            Some(n) => { ..android, compile_sdk: Some(n), }
             None => return Err("android.compileSdk must be an integer")
           }
         "targetSdk" =>
           match try_parse_int(value) {
-            Some(n) => { ..android, target_sdk: Some(n) }
+            Some(n) => { ..android, target_sdk: Some(n), }
             None => return Err("android.targetSdk must be an integer")
           }
         _ => return Err("unknown android field: " + field)
       }
-      Ok({ ..config, android: new_android })
+      Ok({ ..config, android: new_android, })
     }
     "ios" => {
       let ios = config.ios
       let new_ios = match field {
-        "sdk" => { ..ios, sdk: Some(value) }
-        "arch" => { ..ios, arch: Some(value) }
+        "sdk" => { ..ios, sdk: Some(value), }
+        "arch" => { ..ios, arch: Some(value), }
         "deploymentTarget" =>
           match try_parse_int(value) {
-            Some(n) => { ..ios, deployment_target: Some(n) }
+            Some(n) => { ..ios, deployment_target: Some(n), }
             None => return Err("ios.deploymentTarget must be an integer")
           }
         _ => return Err("unknown ios field: " + field)
       }
-      Ok({ ..config, ios: new_ios })
+      Ok({ ..config, ios: new_ios, })
     }
     "paths" => {
       let paths = config.paths
       let new_paths = match field {
-        "moonHome" => { ..paths, moon_home: Some(value) }
-        "mouiRoot" => { ..paths, moui_root: Some(value) }
-        "skiaRoot" => { ..paths, skia_root: Some(value) }
+        "moonHome" => { ..paths, moon_home: Some(value), }
+        "mouiRoot" => { ..paths, moui_root: Some(value), }
+        "skiaRoot" => { ..paths, skia_root: Some(value), }
         _ => return Err("unknown paths field: " + field)
       }
-      Ok({ ..config, paths: new_paths })
+      Ok({ ..config, paths: new_paths, })
     }
     _ => Err("unknown config section: " + section)
   }

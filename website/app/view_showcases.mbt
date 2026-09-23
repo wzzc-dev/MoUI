@@ -123,7 +123,7 @@ fn Model::showcases_content(
             .foreground(theme.palette.muted),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         lazy_grid(
           entries,
@@ -143,7 +143,7 @@ fn Model::showcases_content(
         ),
       ],
       spacing=16.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     top=section_inset,
     bottom=section_inset,
@@ -172,10 +172,10 @@ fn showcase_card(
             showcase_image_source(slug),
             width=width - 2.0,
             height=thumb_height,
-            fit=@graphics.ImageFit::Contain,
+            fit=Contain,
           )
           .on_tap(OpenShowcaseSource(source_url))
-          .semantics_role(@core.SemanticsRole::Link)
+          .semantics_role(Link)
           .semantics_url(source_url)
           .accessibility_label(
             website_message_with(locale, "action.open_source_for", [
@@ -201,12 +201,12 @@ fn showcase_card(
             .foreground(theme.palette.muted),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         button(
           website_message(locale, "action.open_source"),
           on_click=OpenShowcaseSource(source_url),
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=width - 32.0,
           height=36.0,
@@ -217,7 +217,7 @@ fn showcase_card(
         ),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=thumb_height + 134.0,

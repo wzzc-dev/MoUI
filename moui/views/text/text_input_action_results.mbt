@@ -27,7 +27,7 @@ fn[Msg] view_caret_move_result(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    dirty=ViewPaintDirty,
   )
 }
 
@@ -40,9 +40,7 @@ fn[Msg] text_semantics_set_text(
 ) -> @core.ViewSemanticsActionResult[Msg] {
   let previous = value
   if previous == next {
-    return @core.ViewSemanticsActionResult::accepted(
-      dirty=@core.ViewDirtyHint::ViewClean,
-    )
+    return @core.ViewSemanticsActionResult::accepted(dirty=ViewClean)
   }
   let undo_stack : Array[@core.TextHistoryEntryContext] = []
   undo_stack.append(ctx.text_control.undo_stack)
@@ -66,7 +64,7 @@ fn[Msg] text_semantics_set_text(
   }
   @core.ViewSemanticsActionResult::accepted(
     text_control=Some(next_control),
-    dirty=@core.ViewDirtyHint::ViewBuildDirty,
+    dirty=ViewBuildDirty,
     messages=text_input_messages(on_input, next),
   )
 }

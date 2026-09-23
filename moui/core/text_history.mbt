@@ -125,7 +125,7 @@ test "one delta serves both stacks across an undo-redo round trip" {
   // it re-applies the forward edit exactly.
   let after_undo = entry.undo_text("hello")
   assert_eq(after_undo, "")
-  let redo_entry = { ..entry, caret: 0 }
+  let redo_entry = { ..entry, caret: 0, }
   assert_eq(redo_entry.redo_text(after_undo), "hello")
   assert_eq(redo_entry.undo_text("hello"), after_undo)
 }

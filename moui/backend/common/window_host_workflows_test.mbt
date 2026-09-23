@@ -91,7 +91,7 @@ test "duplicate window attach disposes only the rejected renderer session" {
   let accepted_trace : Array[String] = []
   let rejected_trace : Array[String] = []
   assert_true(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -101,7 +101,7 @@ test "duplicate window attach disposes only the rejected renderer session" {
     ),
   )
   assert_false(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -133,7 +133,7 @@ test "last window close follows owner teardown order exactly once" {
   )
   let id = workflow_open_window(lifecycle, "main")
   assert_true(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -144,7 +144,7 @@ test "last window close follows owner teardown order exactly once" {
     ),
   )
   ignore(
-    run_window_redraw(
+    @common.run_window_redraw(
       lifecycle,
       frames,
       images,
@@ -154,8 +154,8 @@ test "last window close follows owner teardown order exactly once" {
     ),
   )
   trace.clear()
-  dispose_window(lifecycle, frames, images, services, id)
-  dispose_window(lifecycle, frames, images, services, id)
+  @common.dispose_window(lifecycle, frames, images, services, id)
+  @common.dispose_window(lifecycle, frames, images, services, id)
   assert_eq(trace, [
     "image-cancel", "services", "renderer", "platform-views", "native-surface",
   ])
@@ -178,7 +178,7 @@ test "closing one of two windows preserves the other owners and services" {
   let first_trace : Array[String] = []
   let second_trace : Array[String] = []
   assert_true(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -188,7 +188,7 @@ test "closing one of two windows preserves the other owners and services" {
     ),
   )
   assert_true(
-    attach_window_surface(
+    @common.attach_window_surface(
       lifecycle,
       frames,
       images,
@@ -197,7 +197,7 @@ test "closing one of two windows preserves the other owners and services" {
       workflow_test_actions(second_trace),
     ),
   )
-  dispose_window(lifecycle, frames, images, services, first)
+  @common.dispose_window(lifecycle, frames, images, services, first)
   assert_true(services.is_open())
   inspect(frames.count(), content="1")
   inspect(images.count(), content="1")

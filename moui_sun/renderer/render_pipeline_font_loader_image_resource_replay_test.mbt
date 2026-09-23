@@ -2,8 +2,10 @@
 test "RenderPipeline font-loader replay reuses transformed quality image resources" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let renderer = Renderer::new(@graphics.Canvas::new(18, 12))
-  let resources = RendererResources::with_font_capacity(16, 16, 2, 2, 2, 6)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(18, 12))
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 2, 2, 2, 6,
+  )
   let loader = @text.MemoryFontLoader::new()
   ignore(loader.insert("ui-font", @text.FontData::new(make_minimal_ttf())))
   let config = @text.LayoutConfig::new(
@@ -12,7 +14,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
     line_height=10.0,
   )
   let paint = @graphics.Paint::new().set_color(@graphics.Color::black())
-  let first_pipeline = RenderPipeline::new()
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp-transform-quality",
@@ -22,7 +24,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-transform-quality-sprite",
@@ -33,7 +35,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_keyed(
       "png-transform-quality",
@@ -43,7 +45,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-transform-quality-sprite",
@@ -54,7 +56,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba-transform-quality",
@@ -66,7 +68,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-transform-quality-sprite",
@@ -79,7 +81,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_loaded_font_keyed("ui-font", "label", "A", 1.0, 1.0, config, paint)
   let plan = first_pipeline.resource_plan()
@@ -133,14 +135,14 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
     Some(@graphics.PixelRect::new(x=0, y=0, width=18, height=12)),
   )
   let batches = batch_plan.get_batches()
-  assert_true(batches[0].get_kind() == RenderPipelineBatchKind::Clear)
+  assert_true(batches[0].get_kind() == Clear)
   assert_eq(batches[0].get_start_index(), 0)
   assert_eq(batches[0].get_command_count(), 1)
   assert_true(
     batches[0].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=18, height=12)),
   )
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_eq(batches[1].get_start_index(), 1)
   assert_eq(batches[1].get_command_count(), 6)
   assert_eq(batches[1].get_dirty_rect_count(), 6)
@@ -160,7 +162,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
     Some(@graphics.PixelRect::new(x=0, y=0, width=17, height=1)),
   )
   assert_eq(image_bounds_present.get_present_pixel_count(), 17)
-  assert_true(batches[2].get_kind() == RenderPipelineBatchKind::Text)
+  assert_true(batches[2].get_kind() == Text)
   assert_eq(batches[2].get_start_index(), 7)
   assert_eq(batches[2].get_command_count(), 1)
   assert_true(batches[2].has_dirty())
@@ -237,7 +239,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
   loader.clear()
   let second = match
     renderer.draw_pipeline_with_font_loader_resources_result(
-      RenderPipeline::new()
+      @renderer.RenderPipeline::new()
       .clear_canvas(@graphics.Color::white())
       .draw_transformed_quality_bmp_bytes_keyed(
         "bmp-transform-quality",
@@ -247,7 +249,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
         2.0,
         1.0,
         @graphics.Paint::new(),
-        @graphics.ImageQuality::Fast,
+        Fast,
       )
       .draw_transformed_quality_bmp_bytes_rect_keyed(
         "bmp-transform-quality-sprite",
@@ -258,7 +260,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
         2.0,
         1.0,
         @graphics.Paint::new(),
-        @graphics.ImageQuality::Fast,
+        Fast,
       )
       .draw_transformed_quality_png_bytes_keyed(
         "png-transform-quality",
@@ -268,7 +270,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
         2.0,
         1.0,
         @graphics.Paint::new(),
-        @graphics.ImageQuality::Fast,
+        Fast,
       )
       .draw_transformed_quality_png_bytes_rect_keyed(
         "png-transform-quality-sprite",
@@ -279,7 +281,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
         2.0,
         1.0,
         @graphics.Paint::new(),
-        @graphics.ImageQuality::Fast,
+        Fast,
       )
       .draw_transformed_quality_rgba_bytes_keyed(
         "rgba-transform-quality",
@@ -291,7 +293,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
         2.0,
         1.0,
         @graphics.Paint::new(),
-        @graphics.ImageQuality::Fast,
+        Fast,
       )
       .draw_transformed_quality_rgba_bytes_rect_keyed(
         "rgba-transform-quality-sprite",
@@ -304,7 +306,7 @@ test "RenderPipeline font-loader replay reuses transformed quality image resourc
         2.0,
         1.0,
         @graphics.Paint::new(),
-        @graphics.ImageQuality::Fast,
+        Fast,
       )
       .draw_loaded_font_keyed("ui-font", "label", "A", 1.0, 1.0, config, paint),
       resources,

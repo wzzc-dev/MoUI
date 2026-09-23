@@ -1,7 +1,7 @@
 ///|
 test "webview demo omits platform view without a composition-root controller" {
   let runtime = test_runtime(
-    program(capability=WebViewCapability::unavailable()),
+    @app.program(capability=@app.WebViewCapability::unavailable()),
     width=960.0,
     height=640.0,
   )
@@ -12,7 +12,7 @@ test "webview demo omits platform view without a composition-root controller" {
 ///|
 test "webview demo keeps pure app tests independent of native controller" {
   let runtime = test_runtime(
-    program(capability=WebViewCapability::available()),
+    @app.program(capability=@app.WebViewCapability::available()),
     width=960.0,
     height=640.0,
   )
@@ -22,7 +22,7 @@ test "webview demo keeps pure app tests independent of native controller" {
 
 ///|
 test "webview commands have no effect without an injected controller" {
-  let program = program(capability=WebViewCapability::available())
+  let program = @app.program(capability=@app.WebViewCapability::available())
   let (model, _effect) = program.runtime_init()
   let (_next, effect) = program.runtime_update(model, Reload)
   inspect(@runtime.effect_plan_summary(effect).run_count(), content="0")
@@ -30,7 +30,7 @@ test "webview commands have no effect without an injected controller" {
 
 ///|
 fn test_runtime(
-  program : @moui.Program[Model, Msg],
+  program : @moui.Program[@app.Model, @app.Msg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {

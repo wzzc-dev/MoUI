@@ -14,7 +14,7 @@ pub fn[Msg] drop_zone(
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
-      role=@style.TextRole::Control,
+      role=Control,
       theme=resolved_theme,
       width=width - 32.0,
       height=title_height,
@@ -24,7 +24,7 @@ pub fn[Msg] drop_zone(
     rows.push(
       @text.text(
         message,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=width - 32.0,
         height=message_height,
@@ -35,7 +35,7 @@ pub fn[Msg] drop_zone(
       @layout.column(
         rows,
         spacing=resolved_theme.spacing_scale.xs,
-        align=@style.CrossAlign::Center,
+        align=Center,
       ),
       width~,
       height~,
@@ -60,7 +60,7 @@ pub fn[Msg] drop_zone(
         width=1.0,
       ),
     )
-    .semantics_role(@core.SemanticsRole::Button)
+    .semantics_role(Button)
     .semantics_description("File drop target")
     .disabled(disabled=!enabled)
   if enabled {
@@ -75,7 +75,7 @@ pub fn[Msg] file_import_panel(
   selection~ : FileSelection,
   on_drop~ : (Array[String]) -> Msg,
   on_browse? : Msg? = None,
-  availability? : FileImportAvailability = FileImportAvailability::Available,
+  availability? : FileImportAvailability = Available,
   title? : String = "Import files",
   drop_title? : String = "Drop files here",
   empty_message? : String = "No files selected",
@@ -83,11 +83,11 @@ pub fn[Msg] file_import_panel(
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let enabled = availability is FileImportAvailability::Available
+  let enabled = availability is Available
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
-      role=@style.TextRole::Control,
+      role=Control,
       theme=resolved_theme,
       width=width - 32.0,
       height=28.0,
@@ -107,11 +107,7 @@ pub fn[Msg] file_import_panel(
         @button.button(
           "Browse",
           on_click=message,
-          variant=if enabled {
-            @style.ButtonVariant::Primary
-          } else {
-            @style.ButtonVariant::Tonal
-          },
+          variant=if enabled { Primary } else { Tonal },
           theme=resolved_theme,
           width=112.0,
           height=36.0,
@@ -127,18 +123,14 @@ pub fn[Msg] file_import_panel(
   )
   rows.push(list)
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Start),
     width~,
     height=file_import_panel_height(selection, on_browse is Some(_)),
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .semantics_description("File import panel")
 }
 
@@ -163,31 +155,13 @@ fn[Msg] file_selection_list(
   empty_message~ : String,
 ) -> @core.View[Msg] {
   if selection.is_empty() {
-    @text.text(
-      empty_message,
-      role=@style.TextRole::Caption,
-      theme~,
-      width~,
-      height=24.0,
-    )
+    @text.text(empty_message, role=Caption, theme~, width~, height=24.0)
   } else {
     let rows : Array[@core.View[Msg]] = []
     for path in selection.paths {
-      rows.push(
-        @text.text(
-          path,
-          role=@style.TextRole::Caption,
-          theme~,
-          width~,
-          height=24.0,
-        ),
-      )
+      rows.push(@text.text(path, role=Caption, theme~, width~, height=24.0))
     }
-    @layout.column(
-      rows,
-      spacing=theme.spacing_scale.xs,
-      align=@style.CrossAlign::Start,
-    )
+    @layout.column(rows, spacing=theme.spacing_scale.xs, align=Start)
   }
 }
 

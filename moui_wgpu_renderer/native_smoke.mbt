@@ -15,7 +15,7 @@ pub fn NativeRendererSmokeFrame::new(
   pixels~ : Bytes,
   flip_y? : Bool = false,
 ) -> NativeRendererSmokeFrame {
-  { width, height, row_bytes, pixels, flip_y }
+  { width, height, row_bytes, pixels, flip_y, }
 }
 
 ///|
@@ -159,21 +159,21 @@ fn create_headless_proof_renderer(
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::SourceOver,
+    SourceOver,
   )
   let advanced_pipeline_multiply = create_advanced_pipeline(
     device,
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Multiply,
+    Multiply,
   )
   let advanced_pipeline_screen = create_advanced_pipeline(
     device,
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Screen,
+    Screen,
   )
   let advanced_pipeline_overlay = create_advanced_overlay_pipeline(
     device, advanced_shader, format, advanced_overlay_pipeline_layout,
@@ -183,14 +183,14 @@ fn create_headless_proof_renderer(
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Darken,
+    Darken,
   )
   let advanced_pipeline_lighten = create_advanced_pipeline(
     device,
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Lighten,
+    Lighten,
   )
   let advanced_sampler = device.create_sampler_linear_clamp()
   let white_usage = @wgpu_mbt.TextureUsage::from_u64(
@@ -405,8 +405,8 @@ fn align_native_smoke_row_bytes(value : Int) -> Int {
 ///|
 fn native_smoke_commands(async_source : String) -> Array[@core.DrawCommand] {
   [
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRoundedRectBrush(
+    Clear(@core.Color::white()),
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=8.0, y=8.0, width=48.0, height=48.0),
         radius=24.0,
@@ -418,108 +418,100 @@ fn native_smoke_commands(async_source : String) -> Array[@core.DrawCommand] {
         edge_color=@core.Color::rgba(r=0.05, g=0.08, b=0.95),
       ),
     ),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=72.0, dy=8.0),
-    ),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=72.0, height=44.0),
-    ),
-    @core.DrawCommand::PushLayer(
+    PushTransform(@core.Transform2D::translation(dx=72.0, dy=8.0)),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=72.0, height=44.0)),
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.9,
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=0.0, y=0.0, width=72.0, height=44.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=0.0, y=0.0, width=72.0, height=44.0)),
       ),
     ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.6)),
-    @core.DrawCommand::FillRect(
+    PushFilter(Brightness(0.6)),
+    FillRect(
       @core.Rect::new(x=4.0, y=4.0, width=14.0, height=14.0),
       @core.Color::rgba(r=1.0, g=0.0, b=1.0),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::DrawText(
+    PopFilter,
+    DrawText(
       @core.TextRun::new(
         text="A",
         frame=@core.Rect::new(x=42.0, y=2.0, width=24.0, height=28.0),
         font=@core.FontSpec::new(size=22.0, weight=600),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::DrawPath(
+    PopLayer,
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=22.0, y=8.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=44.0, y=8.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=44.0, y=30.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=22.0, y=30.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=22.0, y=8.0)),
+          LineTo(@core.Point::new(x=44.0, y=8.0)),
+          LineTo(@core.Point::new(x=44.0, y=30.0)),
+          LineTo(@core.Point::new(x=22.0, y=30.0)),
+          Close,
         ],
         fill=Some(@core.Brush::solid(@core.Color::rgba(r=0.0, g=1.0, b=1.0))),
       ),
     ),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=8.0, y=62.0, width=42.0, height=34.0),
-    ),
-    @core.DrawCommand::DrawText(
+    PopClip,
+    PopTransform,
+    PushClip(@core.Rect::new(x=8.0, y=62.0, width=42.0, height=34.0)),
+    DrawText(
       @core.TextRun::new(
         text="\u{1F469}\u{200D}\u{1F4BB}",
         frame=@core.Rect::new(x=8.0, y=62.0, width=42.0, height=34.0),
         font=@core.FontSpec::new(
-          families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+          families=@core.FontFamilyStack::new([Emoji]),
           size=26.0,
           weight=400,
         ),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::DrawText(
+    PopClip,
+    DrawText(
       @core.TextRun::new(
         text="ABC \u{05D0}\u{05D1}\u{05D2} 123",
         frame=@core.Rect::new(x=54.0, y=60.0, width=100.0, height=22.0),
         font=@core.FontSpec::new(size=16.0, weight=500),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="wrap one",
         frame=@core.Rect::new(x=54.0, y=82.0, width=64.0, height=12.0),
         font=@core.FontSpec::new(size=10.0, weight=500),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="wrap two",
         frame=@core.Rect::new(x=54.0, y=94.0, width=64.0, height=12.0),
         font=@core.FontSpec::new(size=10.0, weight=500),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="wrap three",
         frame=@core.Rect::new(x=54.0, y=106.0, width=80.0, height=12.0),
         font=@core.FontSpec::new(size=10.0, weight=500),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: async_source,
       frame: @core.Rect::new(x=136.0, y=88.0, width=10.0, height=10.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
 }
@@ -640,7 +632,7 @@ fn assert_native_smoke_text_diagnostic(
     frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
     font=@core.FontSpec::new(size=18.0, weight=500),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   match text_engine.layout_run(renderer.font_cache, bidi, 1.0) {
     Some(layout) =>
@@ -675,12 +667,12 @@ fn native_smoke_emoji_run(text : String) -> @core.TextRun {
     text~,
     frame=@core.Rect::new(x=0.0, y=0.0, width=64.0, height=40.0),
     font=@core.FontSpec::new(
-      families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+      families=@core.FontFamilyStack::new([Emoji]),
       size=26.0,
       weight=400,
     ),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
 }
 
@@ -704,7 +696,7 @@ fn assert_native_smoke_color_emoji(
         for glyph in layout.glyphs {
           match text_engine.raster_glyph(renderer.font_cache, glyph.key) {
             Some(raster) =>
-              if raster.format == NativeRasterGlyphFormat::ColorRgba {
+              if raster.format == ColorRgba {
                 color_glyphs = color_glyphs + 1
                 high_saturation_pixels += count_high_saturation_rgba(
                   raster.pixels,
@@ -736,11 +728,7 @@ fn assert_native_smoke_async_second_frame(
   commands : Array[@core.DrawCommand],
   source : String,
 ) -> Unit {
-  assert_native_smoke_image_status(
-    renderer,
-    source,
-    @render.ImageResourceStatus::ImageLoading,
-  )
+  assert_native_smoke_image_status(renderer, source, ImageLoading)
   @fs.write_bytes_to_file(source, native_smoke_png_bytes()) catch {
     _ =>
       native_smoke_fail(
@@ -752,16 +740,10 @@ fn assert_native_smoke_async_second_frame(
     native_smoke_fail("native WGPU smoke async image completion was not late")
   }
   match completion.status {
-    @render.ImageResourceLoadCompletionStatus::ImageLoadReady =>
-      ignore(renderer.failed_images.remove(completion.source))
-    @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
-      renderer.failed_images[completion.source] = true
+    ImageLoadReady => ignore(renderer.failed_images.remove(completion.source))
+    ImageLoadFailed => renderer.failed_images[completion.source] = true
   }
-  assert_native_smoke_image_status(
-    renderer,
-    source,
-    @render.ImageResourceStatus::ImageReady,
-  )
+  assert_native_smoke_image_status(renderer, source, ImageReady)
   let second_frame = renderer.render_offscreen_proof_frame(commands)
   if renderer.present_count < 2 {
     native_smoke_fail(
@@ -1089,7 +1071,7 @@ fn region_red_debug(
   rect : @core.Rect,
   label : String,
 ) -> String {
-  region_best_pixel_debug(frame, rect, label, NativeSmokeDebugColor::Red)
+  region_best_pixel_debug(frame, rect, label, Red)
 }
 
 ///|
@@ -1098,7 +1080,7 @@ fn region_purple_debug(
   rect : @core.Rect,
   label : String,
 ) -> String {
-  region_best_pixel_debug(frame, rect, label, NativeSmokeDebugColor::Purple)
+  region_best_pixel_debug(frame, rect, label, Purple)
 }
 
 ///|
@@ -1107,7 +1089,7 @@ fn region_blue_debug(
   rect : @core.Rect,
   label : String,
 ) -> String {
-  region_best_pixel_debug(frame, rect, label, NativeSmokeDebugColor::Blue)
+  region_best_pixel_debug(frame, rect, label, Blue)
 }
 
 ///|

@@ -1,11 +1,11 @@
 ///|
 test "sun renderer draws platform view pixels before presenting frame" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -27,7 +27,7 @@ test "sun renderer draws platform view pixels before presenting frame" {
   )
   let result = renderer.render_frame(
     @core.DrawFrame::new(
-      commands=[@core.DrawCommand::Clear(@core.Color::white())],
+      commands=[Clear(@core.Color::white())],
       damage=@core.DamageRegion::full("sun platform view pixels"),
     ),
   )

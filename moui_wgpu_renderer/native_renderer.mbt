@@ -332,21 +332,21 @@ fn create_with_surface(
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::SourceOver,
+    SourceOver,
   )
   let advanced_pipeline_multiply = create_advanced_pipeline(
     device,
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Multiply,
+    Multiply,
   )
   let advanced_pipeline_screen = create_advanced_pipeline(
     device,
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Screen,
+    Screen,
   )
   let advanced_pipeline_overlay = create_advanced_overlay_pipeline(
     device, advanced_shader, format, advanced_overlay_pipeline_layout,
@@ -356,14 +356,14 @@ fn create_with_surface(
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Darken,
+    Darken,
   )
   let advanced_pipeline_lighten = create_advanced_pipeline(
     device,
     advanced_shader,
     format,
     advanced_pipeline_layout,
-    @core.BlendMode::Lighten,
+    Lighten,
   )
   let advanced_sampler = device.create_sampler_linear_clamp()
   let white_usage = @wgpu_mbt.TextureUsage::from_u64(
@@ -837,7 +837,7 @@ fn RendererHandle::encode_plan_to_view(
   let mut index = 0
   while index < plan.items.length() {
     match plan.items[index] {
-      NativeDrawItem::NativeLayer(layer) => {
+      NativeLayer(layer) => {
         if span_start < index {
           self.draw_plan_item_span(
             encoder,
@@ -930,7 +930,7 @@ fn RendererHandle::draw_plan_item_span(
   for index in start_index..<end_index {
     let item = items[index]
     match item {
-      NativeDrawItem::NativeVisual(start, count, scissor) =>
+      NativeVisual(start, count, scissor) =>
         match buffers.visual_buffer {
           Some(buffer) => {
             self.apply_scissor(pass, scissor)
@@ -945,7 +945,7 @@ fn RendererHandle::draw_plan_item_span(
           }
           None => ()
         }
-      NativeDrawItem::NativeText(start, count, scissor) =>
+      NativeText(start, count, scissor) =>
         match (self.text_pipeline, self.text_bind_group, buffers.text_buffer) {
           (Some(text_pipeline), Some(text_bind_group), Some(buffer)) => {
             self.apply_scissor(pass, scissor)
@@ -961,7 +961,7 @@ fn RendererHandle::draw_plan_item_span(
           }
           _ => ()
         }
-      NativeDrawItem::NativeImage(start, count, scissor, run) =>
+      NativeImage(start, count, scissor, run) =>
         match
           (
             self.image_pipeline,
@@ -982,8 +982,8 @@ fn RendererHandle::draw_plan_item_span(
           }
           _ => ()
         }
-      NativeDrawItem::NativeLayer(_) => ()
-      NativeDrawItem::NativeShaderEffect(effect) =>
+      NativeLayer(_) => ()
+      NativeShaderEffect(effect) =>
         self.draw_native_shader_effect(
           pass, device, queue, effect, frame_buffers,
         )
@@ -1028,7 +1028,7 @@ fn RendererHandle::draw_native_layer_to_view(
     frame_buffers,
     false,
   )
-  if layer.blend_mode == @core.BlendMode::Overlay {
+  if layer.blend_mode == Overlay {
     return self.draw_overlay_layer_to_view(
       encoder,
       target_texture,
@@ -1086,7 +1086,7 @@ fn RendererHandle::draw_native_shader_effect(
         self.size,
         effect.frame,
         opacity=effect.opacity,
-        blend_mode=@core.BlendMode::SourceOver,
+        blend_mode=SourceOver,
         shader_kind=native_shader_kind(effect.name),
         effect_amount=native_shader_effect_amount(effect),
         filter=None,
@@ -1100,7 +1100,7 @@ fn RendererHandle::draw_native_shader_effect(
         queue,
         vertices,
         bind_group,
-        @core.BlendMode::SourceOver,
+        SourceOver,
         effect.scissor,
         frame_buffers,
       )
@@ -1241,12 +1241,12 @@ fn RendererHandle::advanced_pipeline_for_blend(
   blend_mode : @core.BlendMode,
 ) -> @wgpu_mbt.RenderPipeline? {
   match blend_mode {
-    @core.BlendMode::SourceOver => self.advanced_pipeline_source_over
-    @core.BlendMode::Multiply => self.advanced_pipeline_multiply
-    @core.BlendMode::Screen => self.advanced_pipeline_screen
-    @core.BlendMode::Overlay => self.advanced_pipeline_source_over
-    @core.BlendMode::Darken => self.advanced_pipeline_darken
-    @core.BlendMode::Lighten => self.advanced_pipeline_lighten
+    SourceOver => self.advanced_pipeline_source_over
+    Multiply => self.advanced_pipeline_multiply
+    Screen => self.advanced_pipeline_screen
+    Overlay => self.advanced_pipeline_source_over
+    Darken => self.advanced_pipeline_darken
+    Lighten => self.advanced_pipeline_lighten
   }
 }
 
@@ -1275,7 +1275,7 @@ fn RendererHandle::create_offscreen_texture(
       let bind_group = create_advanced_bind_group(
         device, layout, sampler, view, view,
       )
-      Some({ texture, view, bind_group })
+      Some({ texture, view, bind_group, })
     }
     _ => None
   }
@@ -1310,7 +1310,7 @@ fn RendererHandle::create_backdrop_texture(
       let bind_group = create_advanced_bind_group(
         device, layout, sampler, layer_view, view,
       )
-      Some({ texture, view, bind_group })
+      Some({ texture, view, bind_group, })
     }
     _ => None
   }
@@ -1806,9 +1806,8 @@ fn set_advanced_blend(
   blend_mode : @core.BlendMode,
 ) -> Unit {
   match blend_mode {
-    @core.BlendMode::SourceOver | @core.BlendMode::Overlay =>
-      try! builder.enable_alpha_blend()
-    @core.BlendMode::Multiply =>
+    SourceOver | Overlay => try! builder.enable_alpha_blend()
+    Multiply =>
       try! builder.set_blend_components(
         @wgpu_mbt.BLEND_FACTOR_DST,
         @wgpu_mbt.BLEND_FACTOR_ZERO,
@@ -1817,7 +1816,7 @@ fn set_advanced_blend(
         @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
         @wgpu_mbt.BLEND_OPERATION_ADD,
       )
-    @core.BlendMode::Screen =>
+    Screen =>
       try! builder.set_blend_components(
         @wgpu_mbt.BLEND_FACTOR_ONE,
         @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC,
@@ -1826,7 +1825,7 @@ fn set_advanced_blend(
         @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
         @wgpu_mbt.BLEND_OPERATION_ADD,
       )
-    @core.BlendMode::Darken =>
+    Darken =>
       try! builder.set_blend_components(
         @wgpu_mbt.BLEND_FACTOR_ONE,
         @wgpu_mbt.BLEND_FACTOR_ONE,
@@ -1835,7 +1834,7 @@ fn set_advanced_blend(
         @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
         @wgpu_mbt.BLEND_OPERATION_ADD,
       )
-    @core.BlendMode::Lighten =>
+    Lighten =>
       try! builder.set_blend_components(
         @wgpu_mbt.BLEND_FACTOR_ONE,
         @wgpu_mbt.BLEND_FACTOR_ONE,

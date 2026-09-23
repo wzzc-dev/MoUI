@@ -53,7 +53,7 @@ pub fn HostDirectoryEntry::new(
   path~ : String,
   is_directory? : Bool = false,
 ) -> HostDirectoryEntry {
-  { name, path, is_directory }
+  { name, path, is_directory, }
 }
 
 ///|
@@ -130,9 +130,9 @@ pub(all) struct HostApplicationMenuItem {
 pub fn HostApplicationMenu::new(
   title~ : String,
   items~ : Array[HostApplicationMenuItem],
-  placement? : HostApplicationMenuPlacement = HostApplicationMenuPlacement::MenuBar,
+  placement? : HostApplicationMenuPlacement = MenuBar,
 ) -> HostApplicationMenu {
-  { title, items, placement }
+  { title, items, placement, }
 }
 
 ///|
@@ -144,7 +144,7 @@ pub fn HostApplicationMenuItem::new(
   separator? : Bool = false,
   enabled? : Bool = true,
 ) -> HostApplicationMenuItem {
-  { title, action_id, key_equivalent, key_modifier_mask, separator, enabled }
+  { title, action_id, key_equivalent, key_modifier_mask, separator, enabled, }
 }
 
 ///|
@@ -210,7 +210,7 @@ pub fn HostFileDialogOptions::new(
   filters? : Array[String] = [],
   default_name? : String? = None,
 ) -> HostFileDialogOptions {
-  { kind, title, filters, default_name }
+  { kind, title, filters, default_name, }
 }
 
 ///|
@@ -218,9 +218,9 @@ pub fn HostBinaryFileRequest::diagnostic(
   self : HostBinaryFileRequest,
 ) -> HostBinaryFileDiagnostic {
   match self {
-    ReadBytes(path) => { path, byte_length: 0, operation: "read-bytes" }
+    ReadBytes(path) => { path, byte_length: 0, operation: "read-bytes", }
     WriteBytes(path, bytes) =>
-      { path, byte_length: bytes.length(), operation: "write-bytes" }
+      { path, byte_length: bytes.length(), operation: "write-bytes", }
   }
 }
 
@@ -251,9 +251,9 @@ pub fn HostServiceResponse::binary_file_diagnostic(
 ) -> HostBinaryFileDiagnostic? {
   match self {
     BinaryFileContent(path, bytes) =>
-      Some({ path, byte_length: bytes.length(), operation: "read-bytes" })
+      Some({ path, byte_length: bytes.length(), operation: "read-bytes", })
     BinaryFileWritten(path) =>
-      Some({ path, byte_length: 0, operation: "write-bytes" })
+      Some({ path, byte_length: 0, operation: "write-bytes", })
     _ => None
   }
 }
@@ -263,13 +263,13 @@ pub fn HostServiceBridge::new(
   capabilities~ : HostServiceCapabilities,
   handle~ : (HostServiceRequest) -> HostServiceResponse,
 ) -> HostServiceBridge {
-  { capabilities, handle }
+  { capabilities, handle, }
 }
 
 ///|
 pub fn HostServiceBridge::unavailable() -> HostServiceBridge {
   HostServiceBridge::new(capabilities=HostServiceCapabilities::none(), handle=request => {
-    HostServiceResponse::Unavailable(request.unavailable_message())
+    Unavailable(request.unavailable_message())
   })
 }
 
@@ -288,7 +288,7 @@ pub fn HostServiceBridge::dispatch(
   if self.can_handle(request) {
     (self.handle)(request)
   } else {
-    HostServiceResponse::Unavailable(request.unavailable_message())
+    Unavailable(request.unavailable_message())
   }
 }
 
@@ -296,8 +296,8 @@ pub fn HostServiceBridge::dispatch(
 pub fn HostServiceBridge::query_system_theme(
   self : HostServiceBridge,
 ) -> @core.ColorScheme? {
-  match self.dispatch(HostServiceRequest::QuerySystemTheme) {
-    HostServiceResponse::SystemTheme(scheme) => Some(scheme)
+  match self.dispatch(QuerySystemTheme) {
+    SystemTheme(scheme) => Some(scheme)
     _ => None
   }
 }

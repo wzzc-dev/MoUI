@@ -2,11 +2,7 @@
 test "image placement for contain fit - image wider than frame" {
   let image_size = @core.Size::new(width=200.0, height=100.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::Contain,
-  )
+  let result = calculate_image_placement(frame, image_size, Contain)
   inspect(result.frame.origin.x, content="10")
   inspect(result.frame.origin.y, content="45")
   inspect(result.frame.size.width, content="100")
@@ -21,11 +17,7 @@ test "image placement for contain fit - image wider than frame" {
 test "image placement for contain fit - image taller than frame" {
   let image_size = @core.Size::new(width=100.0, height=200.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::Contain,
-  )
+  let result = calculate_image_placement(frame, image_size, Contain)
   inspect(result.frame.origin.x, content="35")
   inspect(result.frame.origin.y, content="20")
   inspect(result.frame.size.width, content="50")
@@ -40,11 +32,7 @@ test "image placement for contain fit - image taller than frame" {
 test "image placement for contain fit - image same ratio as frame" {
   let image_size = @core.Size::new(width=100.0, height=100.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::Contain,
-  )
+  let result = calculate_image_placement(frame, image_size, Contain)
   inspect(result.frame.origin.x, content="10")
   inspect(result.frame.origin.y, content="20")
   inspect(result.frame.size.width, content="100")
@@ -59,11 +47,7 @@ test "image placement for contain fit - image same ratio as frame" {
 test "image placement for cover fit - image wider than frame" {
   let image_size = @core.Size::new(width=200.0, height=100.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::Cover,
-  )
+  let result = calculate_image_placement(frame, image_size, Cover)
   inspect(result.frame.origin.x, content="10")
   inspect(result.frame.origin.y, content="20")
   inspect(result.frame.size.width, content="100")
@@ -78,11 +62,7 @@ test "image placement for cover fit - image wider than frame" {
 test "image placement for cover fit - image taller than frame" {
   let image_size = @core.Size::new(width=100.0, height=200.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::Cover,
-  )
+  let result = calculate_image_placement(frame, image_size, Cover)
   inspect(result.u0, content="0")
   inspect(result.v0, content="0.25")
   inspect(result.u1, content="1")
@@ -93,11 +73,7 @@ test "image placement for cover fit - image taller than frame" {
 test "image placement for cover fit - image same ratio as frame" {
   let image_size = @core.Size::new(width=100.0, height=100.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::Cover,
-  )
+  let result = calculate_image_placement(frame, image_size, Cover)
   inspect(result.u0, content="0")
   inspect(result.v0, content="0")
   inspect(result.u1, content="1")
@@ -108,11 +84,7 @@ test "image placement for cover fit - image same ratio as frame" {
 test "image placement for stretch fit fills frame without cropping" {
   let image_size = @core.Size::new(width=200.0, height=100.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::Stretch,
-  )
+  let result = calculate_image_placement(frame, image_size, Stretch)
   inspect(result.frame.origin.x, content="10")
   inspect(result.frame.origin.y, content="20")
   inspect(result.frame.size.width, content="100")
@@ -127,11 +99,7 @@ test "image placement for stretch fit fills frame without cropping" {
 test "image placement for scale-down fit preserves smaller natural size" {
   let image_size = @core.Size::new(width=40.0, height=20.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::ScaleDown,
-  )
+  let result = calculate_image_placement(frame, image_size, ScaleDown)
   inspect(result.frame.origin.x, content="40")
   inspect(result.frame.origin.y, content="60")
   inspect(result.frame.size.width, content="40")
@@ -146,11 +114,7 @@ test "image placement for scale-down fit preserves smaller natural size" {
 test "image placement for scale-down fit contains oversized image" {
   let image_size = @core.Size::new(width=200.0, height=100.0)
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
-  let result = calculate_image_placement(
-    frame,
-    image_size,
-    @core.ImageFit::ScaleDown,
-  )
+  let result = calculate_image_placement(frame, image_size, ScaleDown)
   inspect(result.frame.origin.x, content="10")
   inspect(result.frame.origin.y, content="45")
   inspect(result.frame.size.width, content="100")
@@ -167,7 +131,7 @@ test "image placement for fit-width preserves full width" {
   let short = calculate_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::FitWidth,
+    FitWidth,
   )
   inspect(short.frame.origin.x, content="10")
   inspect(short.frame.origin.y, content="45")
@@ -181,7 +145,7 @@ test "image placement for fit-width preserves full width" {
   let tall = calculate_image_placement(
     frame,
     @core.Size::new(width=100.0, height=200.0),
-    @core.ImageFit::FitWidth,
+    FitWidth,
   )
   inspect(tall.frame.origin.x, content="10")
   inspect(tall.frame.origin.y, content="20")
@@ -199,7 +163,7 @@ test "image placement for fit-height preserves full height" {
   let narrow = calculate_image_placement(
     frame,
     @core.Size::new(width=100.0, height=200.0),
-    @core.ImageFit::FitHeight,
+    FitHeight,
   )
   inspect(narrow.frame.origin.x, content="35")
   inspect(narrow.frame.origin.y, content="20")
@@ -213,7 +177,7 @@ test "image placement for fit-height preserves full height" {
   let wide = calculate_image_placement(
     frame,
     @core.Size::new(width=200.0, height=100.0),
-    @core.ImageFit::FitHeight,
+    FitHeight,
   )
   inspect(wide.frame.origin.x, content="10")
   inspect(wide.frame.origin.y, content="20")
@@ -279,7 +243,11 @@ fn assert_double_close(actual : Double, expected : Double) -> Unit raise {
 
 ///|
 test "native image decodes png data uri through mizchi image" {
-  let png = @image.encode_png({ width: 1, height: 1, data: b"\x20\x80\xff\xcc" }) catch {
+  let png = @image.encode_png({
+    width: 1,
+    height: 1,
+    data: b"\x20\x80\xff\xcc",
+  }) catch {
     _ => panic()
   }
   let source = "data:image/png;base64," + @base64.encode(png)
@@ -349,7 +317,11 @@ test "native image decodes bmp data uri through mizchi image" {
 ///|
 test "native image decodes host-provided local png bytes through mizchi image" {
   let path = "moui_native_image_test.tmp.png"
-  let png = @image.encode_png({ width: 1, height: 1, data: b"\xff\x00\x40\xff" }) catch {
+  let png = @image.encode_png({
+    width: 1,
+    height: 1,
+    data: b"\xff\x00\x40\xff",
+  }) catch {
     _ => panic()
   }
   @fs.write_bytes_to_file(path, png) catch {
@@ -397,15 +369,11 @@ test "native image load completion reports decoded dimensions or failure" {
   }
   let source = "data:image/png;base64," + @base64.encode(png)
   let ready = native_image_load_completion(source)
-  assert_true(
-    ready.status == @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-  )
+  assert_true(ready.status == ImageLoadReady)
   inspect(ready.source, content=source)
   inspect(ready.width, content="2")
   inspect(ready.height, content="1")
   let failed = native_image_load_completion("moui-native-image-missing://nope")
-  assert_true(
-    failed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-  )
+  assert_true(failed.status == ImageLoadFailed)
   inspect(failed.diagnostic, content="native image decode failed")
 }

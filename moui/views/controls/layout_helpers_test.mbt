@@ -5,7 +5,7 @@
 
 ///|
 fn center_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
-  @core.View::from_node(CenterTestRect::{ width, height })
+  @core.View::from_node(CenterTestRect::{ width, height, })
 }
 
 ///|
@@ -22,15 +22,15 @@ impl @core.ViewNode for CenterTestRect with fn identity(_self) {
 ///|
 impl @core.ViewNode for CenterTestRect with fn declaration(self) {
   @core.ViewDeclaration::channels(
-    layout=@core.DeclarationChannel::Exact(
+    layout=Exact(
       @core.DeclarationKey::record(type_tag="CenterTestRect", fields=[
         ("width", @core.DeclarationKey::double(self.width)),
         ("height", @core.DeclarationKey::double(self.height)),
       ]),
     ),
-    paint=@core.DeclarationChannel::Constant,
-    semantics=@core.DeclarationChannel::Constant,
-    platform=@core.DeclarationChannel::Constant,
+    paint=Constant,
+    semantics=Constant,
+    platform=Constant,
   )
 }
 
@@ -113,23 +113,23 @@ test "text forwards explicit alignment to text run" {
     "left aligned",
     width=120.0,
     height=24.0,
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   let plan = view.paint(
     center_paint_context(
       frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=24.0),
     ),
   )
-  guard plan.commands[0] is @core.DrawCommand::DrawText({ text, align, .. }) else {
+  guard plan.commands[0] is DrawText({ text, align, .. }) else {
     fail("expected text draw command")
   }
   inspect(text, content="left aligned")
-  inspect(align == @core.TextAlign::TextStart, content="true")
+  inspect(align == TextStart, content="true")
 }
 
 ///|
 test "rounded clip wraps child with rounded clip paint commands" {
-  let view = rounded_clip(
+  let view = @controls.rounded_clip(
     center_test_rect(width=80.0, height=40.0),
     radius=12.0,
   )
@@ -151,12 +151,12 @@ test "rounded clip wraps child with rounded clip paint commands" {
       frame=@core.Rect::new(x=10.0, y=20.0, width=80.0, height=40.0),
     ),
   )
-  guard plan.commands[0] is @core.DrawCommand::PushRoundedClip({ rect, radius }) else {
+  guard plan.commands[0] is PushRoundedClip({ rect, radius, }) else {
     fail("expected rounded clip command")
   }
   assert_true(rect == @core.Rect::new(x=10.0, y=20.0, width=80.0, height=40.0))
   inspect(radius, content="12")
-  guard plan.post_commands[0] is @core.DrawCommand::PopRoundedClip else {
+  guard plan.post_commands[0] is PopRoundedClip else {
     fail("expected rounded clip pop command")
   }
 }

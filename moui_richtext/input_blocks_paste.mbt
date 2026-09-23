@@ -8,7 +8,7 @@ fn markdown_editor_transform_multiline_paste(
   match markdown_editor_active_selection(selection) {
     Some(_) => None
     None => {
-      let current : MarkdownEditorSelection = { caret, selection }
+      let current : MarkdownEditorSelection = { caret, selection, }
       let range = markdown_editor_current_line_range(source, current)
       let chars = source.to_array()
       let line = String::from_array(chars[range.start:range.end])

@@ -700,7 +700,7 @@ fn GpuContext::from_handle(
   if native_gpu_context_is_null(handle) {
     None
   } else {
-    Some({ handle, descriptor })
+    Some({ handle, descriptor, })
   }
 }
 
@@ -726,7 +726,7 @@ pub fn GpuContext::metal(
   descriptor : @skia.GpuContextDescriptor,
 ) -> GpuContext? {
   if !Surface::gpu_context_support_status(descriptor).is_available() ||
-    descriptor.backend != @skia.MetalGpuContext {
+    descriptor.backend != MetalGpuContext {
     None
   } else {
     GpuContext::from_handle(native_gpu_context_metal(), descriptor)
@@ -741,7 +741,7 @@ fn Surface::from_handle(
   if native_surface_is_null(handle) {
     None
   } else {
-    Some({ handle, descriptor })
+    Some({ handle, descriptor, })
   }
 }
 
@@ -768,8 +768,8 @@ pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
 ///|
 fn native_surface_origin_ordinal(origin : @skia.SurfaceOrigin) -> Int {
   match origin {
-    @skia.TopLeft => 0
-    @skia.BottomLeft => 1
+    TopLeft => 0
+    BottomLeft => 1
   }
 }
 
@@ -898,7 +898,7 @@ pub fn GpuContext::direct3d12(
   descriptor : @skia.GpuContextDescriptor,
 ) -> GpuContext? {
   if !Surface::gpu_context_support_status(descriptor).is_available() ||
-    descriptor.backend != @skia.Direct3D12GpuContext {
+    descriptor.backend != Direct3D12GpuContext {
     None
   } else {
     GpuContext::from_handle(native_gpu_context_direct3d(), descriptor)
@@ -1024,7 +1024,7 @@ pub fn GpuContext::vulkan(
   descriptor : @skia.GpuContextDescriptor,
 ) -> GpuContext? {
   if !Surface::gpu_context_support_status(descriptor).is_available() ||
-    descriptor.backend != @skia.VulkanGpuContext {
+    descriptor.backend != VulkanGpuContext {
     None
   } else {
     GpuContext::from_handle(native_gpu_context_vulkan(), descriptor)
@@ -1144,7 +1144,7 @@ pub fn Surface::vulkan_gpu_context_runtime_available() -> Bool {
 ///|
 pub fn GpuContext::egl(descriptor : @skia.GpuContextDescriptor) -> GpuContext? {
   if !Surface::gpu_context_support_status(descriptor).is_available() ||
-    descriptor.backend != @skia.OpenGLGpuContext {
+    descriptor.backend != OpenGLGpuContext {
     None
   } else {
     GpuContext::from_handle(native_gpu_context_egl(), descriptor)
@@ -1238,8 +1238,8 @@ pub fn Surface::gpu_context_support_status(
     SkiaGpuContextAnonymous
   } else {
     match context.backend {
-      @skia.MockGpuContext => SkiaGpuContextMockUnsupported
-      @skia.MetalGpuContext =>
+      MockGpuContext => SkiaGpuContextMockUnsupported
+      MetalGpuContext =>
         if !Surface::metal_gpu_context_opt_in_enabled() {
           SkiaGpuContextMetalOptInDisabled
         } else if !Surface::metal_gpu_context_headers_available() {
@@ -1249,7 +1249,7 @@ pub fn Surface::gpu_context_support_status(
         } else {
           SkiaGpuContextAvailable
         }
-      @skia.Direct3D12GpuContext =>
+      Direct3D12GpuContext =>
         if !Surface::direct3d_gpu_context_opt_in_enabled() {
           SkiaGpuContextDirect3DOptInDisabled
         } else if !Surface::direct3d_gpu_context_headers_available() {
@@ -1259,7 +1259,7 @@ pub fn Surface::gpu_context_support_status(
         } else {
           SkiaGpuContextAvailable
         }
-      @skia.VulkanGpuContext =>
+      VulkanGpuContext =>
         if !Surface::vulkan_gpu_context_opt_in_enabled() {
           SkiaGpuContextVulkanOptInDisabled
         } else if !Surface::vulkan_gpu_context_headers_available() {
@@ -1269,7 +1269,7 @@ pub fn Surface::gpu_context_support_status(
         } else {
           SkiaGpuContextAvailable
         }
-      @skia.OpenGLGpuContext =>
+      OpenGLGpuContext =>
         if !Surface::egl_gpu_context_opt_in_enabled() {
           SkiaGpuContextEglOptInDisabled
         } else if !Surface::egl_gpu_context_headers_available() {
@@ -1428,7 +1428,7 @@ fn Surface::render_frame_internal(
     replay.is_complete() &&
     finalization.is_ready() &&
     self.flush_and_submit()
-  { replay, validation_status, surface_matches, finalization, finalized }
+  { replay, validation_status, surface_matches, finalization, finalized, }
 }
 
 ///|
@@ -1510,6 +1510,6 @@ pub fn Surface::canvas(self : Surface) -> Canvas? {
   if native_canvas_is_null(handle) {
     None
   } else {
-    Some({ handle, owner: Some(self), recorder_owner: None })
+    Some({ handle, owner: Some(self), recorder_owner: None, })
   }
 }

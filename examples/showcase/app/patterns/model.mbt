@@ -87,9 +87,9 @@ pub fn Model::open(self : Model, route : String) -> Model {
 pub fn update(model : Model, message : Msg) -> Model {
   match message {
     Navigate(route) => model.open(route)
-    Increment => { ..model, counter: model.counter + 1 }
-    Decrement => { ..model, counter: model.counter - 1 }
-    TodoDraftChanged(value) => { ..model, todo_draft: value }
+    Increment => { ..model, counter: model.counter + 1, }
+    Decrement => { ..model, counter: model.counter - 1, }
+    TodoDraftChanged(value) => { ..model, todo_draft: value, }
     TodoSubmit =>
       if model.todo_draft == "" {
         model
@@ -119,14 +119,16 @@ pub fn update(model : Model, message : Msg) -> Model {
         }),
       }
     TodoRemoved(id) =>
-      { ..model, todo_items: model.todo_items.filter(item => item.id != id) }
-    ProfileNameChanged(value) => { ..model, profile_name: value }
-    SaveProfile => { ..model, notice: "Profile saved locally" }
-    DataFilterChanged(value) => { ..model, data_filter: value }
-    WorkflowBack => { ..model, workflow_step: (model.workflow_step - 1).max(0) }
-    WorkflowNext => { ..model, workflow_step: (model.workflow_step + 1).min(2) }
-    DismissNotice => { ..model, notice: "" }
-    Scrolled(offset) => { ..model, scroll: offset }
+      { ..model, todo_items: model.todo_items.filter(item => item.id != id), }
+    ProfileNameChanged(value) => { ..model, profile_name: value, }
+    SaveProfile => { ..model, notice: "Profile saved locally", }
+    DataFilterChanged(value) => { ..model, data_filter: value, }
+    WorkflowBack =>
+      { ..model, workflow_step: (model.workflow_step - 1).max(0), }
+    WorkflowNext =>
+      { ..model, workflow_step: (model.workflow_step + 1).min(2), }
+    DismissNotice => { ..model, notice: "", }
+    Scrolled(offset) => { ..model, scroll: offset, }
   }
 }
 

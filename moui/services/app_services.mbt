@@ -126,7 +126,7 @@ pub fn UrlServices::new(
     unavailable_task("url:open", "URL open")
   },
 ) -> UrlServices {
-  { open_fn: open }
+  { open_fn: open, }
 }
 
 ///|
@@ -146,7 +146,7 @@ pub fn SettingsServices::new(
     unavailable_task("settings:remove", "settings remove")
   },
 ) -> SettingsServices {
-  { read_fn: read, write_fn: write, remove_fn: remove }
+  { read_fn: read, write_fn: write, remove_fn: remove, }
 }
 
 ///|
@@ -180,7 +180,7 @@ pub fn AppearanceServices::new(
     unavailable_task("appearance:system-color-scheme", "system color scheme")
   },
 ) -> AppearanceServices {
-  { system_color_scheme_fn: system_color_scheme }
+  { system_color_scheme_fn: system_color_scheme, }
 }
 
 ///|
@@ -194,9 +194,9 @@ pub fn AppearanceServices::system_color_scheme(
 pub fn ApplicationMenu::new(
   title~ : String,
   items~ : Array[ApplicationMenuItem],
-  placement? : ApplicationMenuPlacement = ApplicationMenuPlacement::MenuBar,
+  placement? : ApplicationMenuPlacement = MenuBar,
 ) -> ApplicationMenu {
-  { title, items, placement }
+  { title, items, placement, }
 }
 
 ///|
@@ -205,7 +205,7 @@ pub fn ApplicationMenu::new(
 pub fn ApplicationMenu::application(
   items~ : Array[ApplicationMenuItem],
 ) -> ApplicationMenu {
-  { title: "", items, placement: ApplicationMenuPlacement::ApplicationMenu }
+  { title: "", items, placement: ApplicationMenu, }
 }
 
 ///|
@@ -217,7 +217,10 @@ pub fn MenuServices::new(
     unavailable_task("menu:application", "application menu")
   },
 ) -> MenuServices {
-  { show_context_fn: show_context, install_application_fn: install_application }
+  {
+    show_context_fn: show_context,
+    install_application_fn: install_application,
+  }
 }
 
 ///|

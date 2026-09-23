@@ -6,9 +6,7 @@ fn main {
     height=760.0,
   )
   @runtime.run_app("MoUI Code Editor", runtime)
-  .render_all(
-    @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
-  )
+  .render_all(@render_skia.from_env(platform=MacOS))
   .backend(@macos_backend.entry())
   .run()
 }

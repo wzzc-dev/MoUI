@@ -124,7 +124,7 @@ fn markdown_editor_renumber_ordered_lists(
       }
     }
   }
-  { text: markdown_join_lines(rendered), replacements }
+  { text: markdown_join_lines(rendered), replacements, }
 }
 
 ///|

@@ -22,21 +22,21 @@ fn notification_center(
       // date stacked at the top, above the "Today" notifications section.
       @views.text(
         desktop_clock_time(model.clock),
-        role=@views.TextRole::Display,
+        role=Display,
         theme~,
         width=inner_width,
         height=60.0,
-        align=@text.TextAlign::TextStart,
+        align=TextStart,
       )
       .font(@text.FontSpec::new(size=48.0, weight=240))
       .foreground(palette.foreground),
       @views.text(
         desktop_clock_menu_label(model.clock),
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=inner_width,
         height=20.0,
-        align=@text.TextAlign::TextStart,
+        align=TextStart,
       )
       .font(@text.FontSpec::new(size=13.0, weight=520))
       .foreground(palette.muted),
@@ -50,7 +50,7 @@ fn notification_center(
         [
           @views.text(
             "Today",
-            role=@views.TextRole::Title,
+            role=Title,
             theme~,
             width=(inner_width - 24.0).max(140.0),
             height=28.0,
@@ -74,7 +74,7 @@ fn notification_center(
           ).accessibility_label("Unread notification status"),
         ],
         spacing=6.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       notification_card(
         "Messages",
@@ -101,7 +101,7 @@ fn notification_center(
         [
           @views.text(
             "Today's Tasks",
-            role=@views.TextRole::Label,
+            role=Label,
             theme~,
             width=(inner_width - 64.0).max(140.0),
             height=20.0,
@@ -111,11 +111,11 @@ fn notification_center(
           @views.spacer(min_length=4.0, weight=1.0),
           @views.text(
             "Mark read",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=48.0,
             height=20.0,
-            align=@text.TextAlign::TextEnd,
+            align=TextEnd,
           )
           .font(@text.FontSpec::new(size=12.0, weight=560))
           .foreground(palette.accent)
@@ -125,7 +125,7 @@ fn notification_center(
           .accessibility_label("Mark notifications read"),
         ],
         spacing=4.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       notification_task(
         "Review desktop polish",
@@ -153,7 +153,7 @@ fn notification_center(
       ),
     ],
     spacing=10.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   let panel = @views.container(
     body,
@@ -200,7 +200,7 @@ fn overlay_header(
     [
       @views.text(
         title,
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=(width - 50.0).max(120.0),
         height=30.0,
@@ -211,14 +211,14 @@ fn overlay_header(
       @views.button(
         "x",
         on_click=close_message,
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=32.0,
         height=32.0,
       ).accessibility_label("Close " + title),
     ],
     spacing=6.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -239,11 +239,7 @@ fn notification_card(
         @views.row(
           [
             @views.container(
-              desktop_icon(
-                @views.IconName::Info,
-                13.0,
-                @graphics.Color::white(),
-              ),
+              desktop_icon(Info, 13.0, @graphics.Color::white()),
               width=30.0,
               height=30.0,
               background=accent,
@@ -252,7 +248,7 @@ fn notification_card(
             ),
             @views.text(
               app,
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=(width - 100.0).max(80.0),
               height=18.0,
@@ -262,30 +258,24 @@ fn notification_card(
             @views.spacer(min_length=4.0, weight=1.0),
             @views.text(
               time,
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=42.0,
               height=18.0,
-              align=@text.TextAlign::TextEnd,
+              align=TextEnd,
             )
             .font(@text.FontSpec::new(size=11.0, weight=460))
             .foreground(palette.muted),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
-        @views.text(
-          title,
-          role=@views.TextRole::Label,
-          theme~,
-          width=width - 24.0,
-          height=20.0,
-        )
+        @views.text(title, role=Label, theme~, width=width - 24.0, height=20.0)
         .font(@text.FontSpec::new(size=14.0, weight=640))
         .foreground(palette.foreground),
         @views.text(
           detail,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 24.0,
           height=28.0,
@@ -294,7 +284,7 @@ fn notification_card(
         .foreground(palette.muted),
       ],
       spacing=3.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=92.0,
@@ -323,13 +313,7 @@ fn notification_card(
 /// Small × button overlaid at the top-right of a notification card.
 fn notification_close(palette : DesktopPalette) -> @moui.View[Msg] {
   @views.container(
-    @views.text(
-      "×",
-      role=@views.TextRole::Caption,
-      width=18.0,
-      height=18.0,
-      align=@text.TextAlign::TextCenter,
-    )
+    @views.text("×", role=Caption, width=18.0, height=18.0, align=TextCenter)
     .font(@text.FontSpec::new(size=12.0, weight=600))
     .foreground(palette.muted),
     width=18.0,
@@ -352,7 +336,7 @@ fn notification_task(
 ) -> @moui.View[Msg] {
   let check = @views.container(
     if done {
-      desktop_icon(@views.IconName::Check, 10.0, @graphics.Color::white())
+      desktop_icon(Check, 10.0, @graphics.Color::white())
     } else {
       @views.spacer(min_length=0.0, weight=0.0)
     },
@@ -380,7 +364,7 @@ fn notification_task(
         check,
         @views.text(
           label,
-          role=@views.TextRole::Body,
+          role=Body,
           theme~,
           width=(width - 54.0).max(140.0),
           height=22.0,
@@ -391,7 +375,7 @@ fn notification_task(
         .foreground(if done { palette.muted } else { palette.foreground }),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=30.0,
@@ -416,7 +400,7 @@ fn notification_widget_calendar(
       [
         @views.text(
           desktop_month_year(model.clock),
-          role=@views.TextRole::Label,
+          role=Label,
           theme~,
           width~,
           height=22.0,
@@ -432,7 +416,7 @@ fn notification_widget_calendar(
         ),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     background=rgba8(0, 0, 0, a=0.0),
@@ -468,42 +452,42 @@ fn notification_widget_weather(
           [
             @views.text(
               "Cupertino",
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=(width - 80.0).max(80.0),
               height=18.0,
             ).foreground(palette.foreground),
             @views.text(
               "Clear  |  H:83  L:56",
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=(width - 80.0).max(80.0),
               height=18.0,
             ).foreground(palette.muted),
           ],
           spacing=0.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         @views.spacer(min_length=4.0, weight=1.0),
         @views.container(
-          desktop_icon(@views.IconName::Focus, 20.0, rgba8(255, 180, 40)),
+          desktop_icon(Focus, 20.0, rgba8(255, 180, 40)),
           width=28.0,
           height=28.0,
           padding=4.0,
         ),
         @views.text(
           "68°",
-          role=@views.TextRole::Display,
+          role=Display,
           theme~,
           width=40.0,
           height=32.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=22.0, weight=280))
         .foreground(palette.foreground),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     background=rgba8(0, 0, 0, a=0.0),

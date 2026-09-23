@@ -226,7 +226,7 @@ fn apply_config_overrides_run(
   let renderer = options.renderer
   let app_config_path = options.app_config_path
   let _ = config
-  { ..options, device, renderer, app_config_path }
+  { ..options, device, renderer, app_config_path, }
 }
 
 ///|
@@ -288,7 +288,7 @@ fn resolve_target_device(
 ) -> Result[Device, String] {
   match options.device {
     Some(id) =>
-      Ok({ platform, id, name: id, state: "selected", kind: "unknown" })
+      Ok({ platform, id, name: id, state: "selected", kind: "unknown", })
     None => {
       let devices = list_all_devices(host)
       let matching : Array[Device] = []
@@ -839,7 +839,7 @@ fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome 
         }
         probe_harmonyos(device, bundle_id, module_name, host, 30)
       }
-      _ => { ok: false, observations: [] }
+      _ => { ok: false, observations: [], }
     }
     Some(result)
   } else {

@@ -25,7 +25,7 @@ pub fn[Msg] command_palette(
     rows.push(
       @text.text(
         "No commands",
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=width - resolved_theme.spacing_scale.md * 2.0,
         height=28.0,
@@ -34,24 +34,20 @@ pub fn[Msg] command_palette(
   }
   @container.container(
     @controls.scroll_view(
-      @layout.column(
-        rows,
-        spacing=resolved_theme.spacing_scale.xs,
-        align=@style.CrossAlign::Start,
-      ),
+      @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start),
       width=width - resolved_theme.spacing_scale.md * 2.0,
       height=max_height - resolved_theme.spacing_scale.md * 2.0,
     ),
     width~,
     height=max_height,
-    variant=@style.ContainerVariant::Overlay,
+    variant=Overlay,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
   // Command palettes float over the whole window, so lift them with the
   // theme's large elevation shadow like a dialog/popover.
   .shadow(resolved_theme.shadow_scale.lg)
-  .semantics_role(@core.SemanticsRole::Menu)
+  .semantics_role(Menu)
 }
 
 ///|
@@ -69,46 +65,29 @@ fn[Msg] command_palette_row(
       [
         @text.text(
           command.display_label(),
-          role=@style.TextRole::Control,
+          role=Control,
           theme~,
           width=label_width,
           height=24.0,
         ),
-        @text.text(
-          shortcut,
-          role=@style.TextRole::Mono,
-          theme~,
-          width=96.0,
-          height=24.0,
-        ),
+        @text.text(shortcut, role=Mono, theme~, width=96.0, height=24.0),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@style.CrossAlign::Center,
+      align=Center,
     ),
   ]
   if meta != "" {
-    rows.push(
-      @text.text(
-        meta,
-        role=@style.TextRole::Caption,
-        theme~,
-        width~,
-        height=22.0,
-      ),
-    )
+    rows.push(@text.text(meta, role=Caption, theme~, width~, height=22.0))
   }
   let base = @button.button(
     "",
     on_click=on_select(command.intent),
-    variant=@style.ButtonVariant::Ghost,
+    variant=Ghost,
     theme~,
     width~,
     height=if meta == "" { 36.0 } else { 58.0 },
   )
-  @layout.stack([
-    base,
-    @layout.column(rows, spacing=0.0, align=@style.CrossAlign::Start),
-  ])
+  @layout.stack([base, @layout.column(rows, spacing=0.0, align=Start)])
   .disabled(disabled=!command.enabled)
   .accessibility_label(command.display_label())
 }

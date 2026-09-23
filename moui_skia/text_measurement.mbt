@@ -63,7 +63,7 @@ pub fn TextMeasurementDescriptor::with_width(
   self : TextMeasurementDescriptor,
   width : Float,
 ) -> TextMeasurementDescriptor {
-  { ..self, width: normalized_text_measurement_width(width) }
+  { ..self, width: normalized_text_measurement_width(width), }
 }
 
 ///|
@@ -120,7 +120,7 @@ pub fn TextMeasurementDescriptor::resource_plan(
   font_byte_size? : Int64 = 0L,
   fallback_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(
     self.resource_descriptor(text, byte_size=measurement_byte_size),
   )
@@ -270,7 +270,7 @@ pub fn MeasuredTextRunDescriptor::resource_plan(
   font_byte_size? : Int64 = 0L,
   fallback_byte_size? : Int64 = -1L,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(self.resource_descriptor(text, byte_size=measured_byte_size))
   if self.is_valid() {
     for

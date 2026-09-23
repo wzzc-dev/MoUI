@@ -13,7 +13,7 @@ fn GlyphRun::new(
   width~ : Double,
   baseline_y~ : Double,
 ) -> GlyphRun {
-  { glyphs, width, baseline_y }
+  { glyphs, width, baseline_y, }
 }
 
 ///|
@@ -53,7 +53,7 @@ fn TextLayout::new(
   runs : Array[GlyphRun],
   metrics : LayoutMetrics,
 ) -> TextLayout {
-  { runs, metrics }
+  { runs, metrics, }
 }
 
 ///|

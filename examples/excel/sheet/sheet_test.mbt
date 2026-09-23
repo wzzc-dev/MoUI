@@ -218,7 +218,7 @@ test "workbook applies formats to selected ranges" {
     .recalc()
   let formatted = Workbook::from_sheets([sheet])
     .select_range(0, 0, 1, 1)
-    .set_selected_format(fmt => { ..fmt, bold: true })
+    .set_selected_format(fmt => { ..fmt, bold: true, })
   inspect(
     formatted.active().get_cell(0, 0).format.bold.to_string(),
     content="true",

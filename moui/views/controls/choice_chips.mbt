@@ -3,7 +3,7 @@ pub fn[Msg] chip(
   label : String,
   selected? : Bool = false,
   on_click? : Msg? = None,
-  variant? : @style.ChipVariant = @style.ChipVariant::Soft,
+  variant? : @style.ChipVariant = Soft,
   theme? : @core.Theme,
   width? : Double = 112.0,
   height? : Double = 32.0,
@@ -11,7 +11,7 @@ pub fn[Msg] chip(
   let resolved_theme = @common.views_ambient_theme(theme)
   let child = @text.text(
     label,
-    role=@style.TextRole::Control,
+    role=Control,
     theme=resolved_theme,
     width=width - 18.0,
     height=height - 8.0,
@@ -28,9 +28,7 @@ pub fn[Msg] chip(
     Some(border) => surfaced.border(border)
     None => surfaced
   }
-  let base = bordered
-    .semantics_role(@core.SemanticsRole::Button)
-    .semantics_selected(selected~)
+  let base = bordered.semantics_role(Button).semantics_selected(selected~)
   match on_click {
     Some(message) => base.on_tap(message)
     None => base
@@ -48,11 +46,11 @@ pub fn[Msg] tag(
   chip(
     label,
     selected=false,
-    variant=@style.ChipVariant::Outline,
+    variant=Outline,
     theme=resolved_theme,
     width~,
     height~,
-  ).semantics_role(@core.SemanticsRole::Text)
+  ).semantics_role(Text)
 }
 
 ///|
@@ -69,7 +67,7 @@ pub fn[Msg] filter_chip(
     label,
     selected~,
     on_click=Some(on_change(!selected)),
-    variant=@style.ChipVariant::Soft,
+    variant=Soft,
     theme=resolved_theme,
     width~,
     height~,
@@ -90,7 +88,7 @@ pub fn[Msg] choice_chip(
     label,
     selected~,
     on_click=Some(on_select),
-    variant=@style.ChipVariant::Filled,
+    variant=Filled,
     theme=resolved_theme,
     width~,
     height~,
@@ -116,10 +114,9 @@ fn chip_background(
     theme.palette.primary
   } else {
     match variant {
-      @style.ChipVariant::Filled => theme.palette.surface_variant
-      @style.ChipVariant::Outline => theme.palette.surface.multiply_alpha(0.1)
-      @style.ChipVariant::Soft =>
-        theme.palette.surface_variant.multiply_alpha(0.62)
+      Filled => theme.palette.surface_variant
+      Outline => theme.palette.surface.multiply_alpha(0.1)
+      Soft => theme.palette.surface_variant.multiply_alpha(0.62)
     }
   }
 }
@@ -130,7 +127,7 @@ fn chip_border(
   variant : @style.ChipVariant,
   theme : @core.Theme,
 ) -> @core.BorderStyle? {
-  if selected || variant == @style.ChipVariant::Outline {
+  if selected || variant == Outline {
     Some(
       @core.BorderStyle::new(
         brush=@core.Brush::solid(

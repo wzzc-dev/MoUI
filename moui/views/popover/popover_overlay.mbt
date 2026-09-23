@@ -12,7 +12,7 @@ fn[Msg] popover_panel(
     content,
     width~,
     height?,
-    variant=@style.ContainerVariant::Overlay,
+    variant=Overlay,
     theme~,
     padding=theme.spacing_scale.sm,
   ).shadow(
@@ -34,16 +34,16 @@ pub fn[Msg] popup_spec(
   width~ : Double,
   height? : Double,
   candidates? : Array[@presentation.PresentationPlacementCandidate] = [
-    @presentation.PresentationPlacementCandidate::BelowStart,
-    @presentation.PresentationPlacementCandidate::AboveStart,
-    @presentation.PresentationPlacementCandidate::BelowEnd,
-    @presentation.PresentationPlacementCandidate::AboveEnd,
+    BelowStart,
+    AboveStart,
+    BelowEnd,
+    AboveEnd,
   ],
 ) -> @presentation.PresentationSpec[Msg] {
   @presentation.PresentationSpec::new(
     id~,
-    kind=@presentation.PresentationKind::Popover,
-    anchor=@presentation.PresentationAnchor::HostBase,
+    kind=Popover,
+    anchor=HostBase,
     placement=Some(
       @presentation.PresentationPlacement::new(
         candidates~,

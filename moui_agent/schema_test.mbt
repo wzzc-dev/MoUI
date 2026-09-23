@@ -1,11 +1,11 @@
 ///|
 test "agent action request is typed" {
   let id = @core.SemanticId::parse("editor.body").unwrap()
-  let request : AgentActionRequest = {
-    target: @core.SemanticsTarget::BySemanticId(id),
-    action: @core.SemanticsAction::SetText("next"),
-    precondition: AgentGenerationPrecondition::Latest,
+  let request : @moui_agent.AgentActionRequest = {
+    target: BySemanticId(id),
+    action: SetText("next"),
+    precondition: Latest,
   }
-  assert_true(request.action == @core.SemanticsAction::SetText("next"))
-  assert_true(request.target == @core.SemanticsTarget::BySemanticId(id))
+  assert_true(request.action == SetText("next"))
+  assert_true(request.target == BySemanticId(id))
 }

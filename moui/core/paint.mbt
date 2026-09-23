@@ -225,7 +225,7 @@ pub fn Color::rgba(
   b~ : Double,
   a? : Double = 1.0,
 ) -> Color {
-  { r, g, b, a }
+  { r, g, b, a, }
 }
 
 ///|
@@ -250,7 +250,7 @@ pub fn Color::gray() -> Color {
 
 ///|
 pub fn Color::with_alpha(self : Color, alpha : Double) -> Color {
-  { ..self, a: clamp_double(alpha, 0.0, 1.0) }
+  { ..self, a: clamp_double(alpha, 0.0, 1.0), }
 }
 
 ///|
@@ -340,27 +340,27 @@ pub fn FontFamilyStack::new(families : Array[FontFamily]) -> FontFamilyStack {
 
 ///|
 pub fn FontFamilyStack::system_ui() -> FontFamilyStack {
-  { families: [SystemUi] }
+  { families: [SystemUi], }
 }
 
 ///|
 pub fn FontFamilyStack::sans_serif() -> FontFamilyStack {
-  { families: [SansSerif] }
+  { families: [SansSerif], }
 }
 
 ///|
 pub fn FontFamilyStack::serif() -> FontFamilyStack {
-  { families: [Serif] }
+  { families: [Serif], }
 }
 
 ///|
 pub fn FontFamilyStack::monospace() -> FontFamilyStack {
-  { families: [UiMonospace, Monospace] }
+  { families: [UiMonospace, Monospace], }
 }
 
 ///|
 pub fn FontFamilyStack::named(name : String) -> FontFamilyStack {
-  { families: [FontFamily::Name(name)] }
+  { families: [Name(name)], }
 }
 
 ///|
@@ -384,7 +384,7 @@ pub fn FontFamilyStack::css(self : FontFamilyStack) -> String {
 
 ///|
 pub fn FontVariation::new(axis~ : String, value~ : Double) -> FontVariation {
-  { axis, value }
+  { axis, value, }
 }
 
 ///|
@@ -402,10 +402,10 @@ pub fn FontSpec::new(
   families? : FontFamilyStack = FontFamilyStack::system_ui(),
   size? : Double = 16.0,
   weight? : Int = 400,
-  style? : FontStyle = FontStyle::Normal,
+  style? : FontStyle = Normal,
   variations? : Array[FontVariation] = [],
 ) -> FontSpec {
-  { families, size, weight, style, variations }
+  { families, size, weight, style, variations, }
 }
 
 ///|
@@ -451,14 +451,14 @@ pub fn TextRun::new(
   frame~ : Rect,
   font~ : FontSpec,
   color~ : Color,
-  align? : TextAlign = TextAlign::TextCenter,
+  align? : TextAlign = TextCenter,
 ) -> TextRun {
-  { text, frame, font, color, align }
+  { text, frame, font, color, align, }
 }
 
 ///|
 pub fn RoundedRect::new(rect~ : Rect, radius? : Double = 0.0) -> RoundedRect {
-  { rect, radius }
+  { rect, radius, }
 }
 
 ///|
@@ -468,7 +468,7 @@ pub fn LinearGradientSpec::new(
   start_color~ : Color,
   end_color~ : Color,
 ) -> LinearGradientSpec {
-  { start, end, start_color, end_color }
+  { start, end, start_color, end_color, }
 }
 
 ///|
@@ -478,7 +478,7 @@ pub fn RadialGradientSpec::new(
   center_color~ : Color,
   edge_color~ : Color,
 ) -> RadialGradientSpec {
-  { center, radius: radius.max(0.0), center_color, edge_color }
+  { center, radius: radius.max(0.0), center_color, edge_color, }
 }
 
 ///|
@@ -546,32 +546,32 @@ pub fn ShadowSpec::new(
   blur_radius? : Double = 8.0,
   spread? : Double = 0.0,
 ) -> ShadowSpec {
-  { rect, color, offset, blur_radius, spread }
+  { rect, color, offset, blur_radius, spread, }
 }
 
 ///|
 pub fn Transform2D::identity() -> Transform2D {
-  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: 0.0, ty: 0.0 }
+  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: 0.0, ty: 0.0, }
 }
 
 ///|
 pub fn Transform2D::translation(dx~ : Double, dy~ : Double) -> Transform2D {
-  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: dx, ty: dy }
+  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: dx, ty: dy, }
 }
 
 ///|
 pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Transform2D {
-  { a: sx, b: 0.0, c: 0.0, d: sy, tx: 0.0, ty: 0.0 }
+  { a: sx, b: 0.0, c: 0.0, d: sy, tx: 0.0, ty: 0.0, }
 }
 
 ///|
 pub fn LayerSpec::new(
   opacity? : Double = 1.0,
-  blend_mode? : BlendMode = BlendMode::SourceOver,
-  mask? : LayerMask = LayerMask::NoMask,
+  blend_mode? : BlendMode = SourceOver,
+  mask? : LayerMask = NoMask,
   offscreen? : Bool = false,
 ) -> LayerSpec {
-  { opacity: clamp_double(opacity, 0.0, 1.0), blend_mode, mask, offscreen }
+  { opacity: clamp_double(opacity, 0.0, 1.0), blend_mode, mask, offscreen, }
 }
 
 ///|
@@ -581,7 +581,7 @@ pub fn RetainedLayerSpec::new(
   content_revision~ : Int,
   scale_factor? : Double = 1.0,
 ) -> RetainedLayerSpec {
-  { key, frame, content_revision, scale_factor }
+  { key, frame, content_revision, scale_factor, }
 }
 
 ///|
@@ -596,7 +596,7 @@ pub fn PathSpec::new(
   stroke? : Brush? = None,
   stroke_width? : Double = 1.0,
 ) -> PathSpec {
-  { verbs, fill, stroke, stroke_width }
+  { verbs, fill, stroke, stroke_width, }
 }
 
 ///|
@@ -606,5 +606,5 @@ pub fn ShaderEffectSpec::new(
   uniforms? : Array[Double] = [],
   fallback? : Brush = Brush::solid(Color::black()),
 ) -> ShaderEffectSpec {
-  { name, frame, uniforms, fallback }
+  { name, frame, uniforms, fallback, }
 }

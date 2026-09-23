@@ -19,15 +19,15 @@ priv struct HostLayerMaskPayload {
 ///|
 fn layer_mask_payload(mask : @core.LayerMask) -> HostLayerMaskPayload {
   match mask {
-    @core.LayerMask::NoMask =>
+    NoMask =>
       {
         kind: 0,
         rect: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
         radius: 0.0,
       }
-    @core.LayerMask::RectMask(rect) => { kind: 1, rect, radius: 0.0 }
-    @core.LayerMask::RoundedMask(rounded) =>
-      { kind: 2, rect: rounded.rect, radius: rounded.radius }
+    RectMask(rect) => { kind: 1, rect, radius: 0.0, }
+    RoundedMask(rounded) =>
+      { kind: 2, rect: rounded.rect, radius: rounded.radius, }
   }
 }
 
@@ -41,49 +41,45 @@ priv struct HostFilterPayload {
 ///|
 fn filter_effect_payload(filter : @core.FilterEffect) -> HostFilterPayload {
   match filter {
-    @core.FilterEffect::Blur(radius) =>
-      { kind: 0, amount: radius.max(0.0), matrix_values: "" }
-    @core.FilterEffect::Saturate(amount) =>
-      { kind: 1, amount, matrix_values: "" }
-    @core.FilterEffect::Brightness(amount) =>
-      { kind: 2, amount, matrix_values: "" }
-    @core.FilterEffect::Contrast(amount) =>
-      { kind: 3, amount, matrix_values: "" }
-    @core.FilterEffect::ColorMatrix(values) =>
-      { kind: 4, amount: 1.0, matrix_values: double_array_string(values) }
+    Blur(radius) => { kind: 0, amount: radius.max(0.0), matrix_values: "", }
+    Saturate(amount) => { kind: 1, amount, matrix_values: "", }
+    Brightness(amount) => { kind: 2, amount, matrix_values: "", }
+    Contrast(amount) => { kind: 3, amount, matrix_values: "", }
+    ColorMatrix(values) =>
+      { kind: 4, amount: 1.0, matrix_values: double_array_string(values), }
   }
 }
 
 ///|
 fn blend_mode_host_code(mode : @core.BlendMode) -> Int {
   match mode {
-    @core.BlendMode::SourceOver => 0
-    @core.BlendMode::Multiply => 1
-    @core.BlendMode::Screen => 2
-    @core.BlendMode::Overlay => 3
-    @core.BlendMode::Darken => 4
-    @core.BlendMode::Lighten => 5
+    SourceOver => 0
+    Multiply => 1
+    Screen => 2
+    Overlay => 3
+    Darken => 4
+    Lighten => 5
   }
 }
 
 ///|
 fn brush_payload(brush : @core.Brush, frame : @core.Rect) -> HostBrushPayload {
   match brush {
-    @core.Brush::Solid(color) =>
+    Solid(color) =>
       {
         start: frame.origin,
         end: @core.Point::new(x=frame.origin.x + 1.0, y=frame.origin.y),
         start_color: color,
         end_color: color,
       }
-    @core.Brush::LinearGradient(gradient) =>
+    LinearGradient(gradient) =>
       {
         start: gradient.start,
         end: gradient.end,
         start_color: gradient.start_color,
         end_color: gradient.end_color,
       }
-    @core.Brush::RadialGradient(gradient) =>
+    RadialGradient(gradient) =>
       {
         start: gradient.center,
         end: @core.Point::new(
@@ -114,15 +110,10 @@ fn rounded_brush_host_payload(
   frame : @core.Rect,
 ) -> RoundedBrushHostPayload {
   match brush {
-    @core.Brush::Solid(color) => RoundedBrushHostPayload::SolidColor(color)
-    @core.Brush::LinearGradient(_) =>
-      RoundedBrushHostPayload::LinearGradientPayload(
-        brush_payload(brush, frame),
-      )
-    @core.Brush::RadialGradient(gradient) =>
-      RoundedBrushHostPayload::RadialGradientPayload(
-        radial_brush_payload(gradient),
-      )
+    Solid(color) => SolidColor(color)
+    LinearGradient(_) => LinearGradientPayload(brush_payload(brush, frame))
+    RadialGradient(gradient) =>
+      RadialGradientPayload(radial_brush_payload(gradient))
   }
 }
 
@@ -142,7 +133,7 @@ fn submit_fill_rounded_rect_brush(
   brush : @core.Brush,
 ) -> Unit raise WebGpuHostError {
   match rounded_brush_host_payload(brush, rounded.rect) {
-    RoundedBrushHostPayload::SolidColor(color) =>
+    SolidColor(color) =>
       raise_for_host_status(
         host_fill_rounded_rect(
           renderer,
@@ -157,7 +148,7 @@ fn submit_fill_rounded_rect_brush(
           color.a,
         ),
       )
-    RoundedBrushHostPayload::LinearGradientPayload(payload) =>
+    LinearGradientPayload(payload) =>
       raise_for_host_status(
         host_fill_rounded_rect_gradient(
           renderer,
@@ -180,7 +171,7 @@ fn submit_fill_rounded_rect_brush(
           payload.end_color.a,
         ),
       )
-    RoundedBrushHostPayload::RadialGradientPayload(payload) =>
+    RadialGradientPayload(payload) =>
       raise_for_host_status(
         host_fill_rounded_rect_radial(
           renderer,
@@ -213,7 +204,7 @@ fn submit_stroke_rounded_rect_brush(
   width : Double,
 ) -> Unit raise WebGpuHostError {
   match rounded_brush_host_payload(brush, rounded.rect) {
-    RoundedBrushHostPayload::SolidColor(color) =>
+    SolidColor(color) =>
       raise_for_host_status(
         host_stroke_rounded_rect(
           renderer,
@@ -229,7 +220,7 @@ fn submit_stroke_rounded_rect_brush(
           width,
         ),
       )
-    RoundedBrushHostPayload::LinearGradientPayload(payload) =>
+    LinearGradientPayload(payload) =>
       raise_for_host_status(
         host_stroke_rounded_rect_gradient(
           renderer,
@@ -253,7 +244,7 @@ fn submit_stroke_rounded_rect_brush(
           payload.end_color.a,
         ),
       )
-    RoundedBrushHostPayload::RadialGradientPayload(payload) =>
+    RadialGradientPayload(payload) =>
       raise_for_host_status(
         host_stroke_rounded_rect_radial(
           renderer,

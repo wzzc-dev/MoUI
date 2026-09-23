@@ -37,16 +37,16 @@ pub fn token_taxonomy_report(
   preset : @common.DesignPreset,
 ) -> Array[DesignTokenTaxonomyRecord] {
   [
-    token_taxonomy_record(preset, DesignTokenCategory::Color),
-    token_taxonomy_record(preset, DesignTokenCategory::Typography),
-    token_taxonomy_record(preset, DesignTokenCategory::Spacing),
-    token_taxonomy_record(preset, DesignTokenCategory::Density),
-    token_taxonomy_record(preset, DesignTokenCategory::Shape),
-    token_taxonomy_record(preset, DesignTokenCategory::Elevation),
-    token_taxonomy_record(preset, DesignTokenCategory::Motion),
-    token_taxonomy_record(preset, DesignTokenCategory::Surface),
-    token_taxonomy_record(preset, DesignTokenCategory::StateLayer),
-    token_taxonomy_record(preset, DesignTokenCategory::ComponentStyle),
+    token_taxonomy_record(preset, Color),
+    token_taxonomy_record(preset, Typography),
+    token_taxonomy_record(preset, Spacing),
+    token_taxonomy_record(preset, Density),
+    token_taxonomy_record(preset, Shape),
+    token_taxonomy_record(preset, Elevation),
+    token_taxonomy_record(preset, Motion),
+    token_taxonomy_record(preset, Surface),
+    token_taxonomy_record(preset, StateLayer),
+    token_taxonomy_record(preset, ComponentStyle),
   ]
 }
 
@@ -83,7 +83,7 @@ pub fn token_taxonomy_required_count(preset : @common.DesignPreset) -> Int {
 pub fn token_taxonomy_mapped_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
   for item in token_taxonomy_report(preset) {
-    if item.status != DesignTokenStatus::NotMapped &&
+    if item.status != NotMapped &&
       item.manifest_declared &&
       item.source_declared &&
       item.source_locked {
@@ -99,7 +99,7 @@ pub fn token_taxonomy_gap_count(preset : @common.DesignPreset) -> Int {
   for item in token_taxonomy_report(preset) {
     if item.required &&
       (
-        item.status == DesignTokenStatus::NotMapped ||
+        item.status == NotMapped ||
         !item.manifest_declared ||
         !item.source_declared ||
         !item.source_locked
@@ -141,7 +141,7 @@ fn token_taxonomy_record(
 ) -> DesignTokenTaxonomyRecord {
   let coverage = token_taxonomy_coverage_for(preset, category)
   let evidence = token_taxonomy_source_evidence(preset, category)
-  let manifest_declared = coverage.status != DesignTokenStatus::NotMapped
+  let manifest_declared = coverage.status != NotMapped
   let layer = if manifest_declared {
     coverage.layer
   } else {
@@ -204,7 +204,7 @@ fn token_taxonomy_coverage_for(
     layer: token_taxonomy_default_layer(category),
     source_family: "",
     moui_surface: "",
-    status: DesignTokenStatus::NotMapped,
+    status: NotMapped,
     note: "Missing token coverage row.",
   }
 }
@@ -215,36 +215,14 @@ fn token_taxonomy_source_evidence(
   category : DesignTokenCategory,
 ) -> DesignTokenTaxonomySourceEvidence {
   match category {
-    Color =>
-      token_taxonomy_from_token_group(
-        preset,
-        DesignSystemRequirement::SemanticPalette,
-      )
-    Typography =>
-      token_taxonomy_from_token_group(
-        preset,
-        DesignSystemRequirement::Typography,
-      )
+    Color => token_taxonomy_from_token_group(preset, SemanticPalette)
+    Typography => token_taxonomy_from_token_group(preset, Typography)
     Spacing | Density => token_taxonomy_from_density(preset)
-    Shape =>
-      token_taxonomy_from_token_group(
-        preset,
-        DesignSystemRequirement::ShapeRadius,
-      )
-    Elevation =>
-      token_taxonomy_from_token_group(
-        preset,
-        DesignSystemRequirement::ElevationShadow,
-      )
-    Motion =>
-      token_taxonomy_from_token_group(preset, DesignSystemRequirement::Motion)
-    Surface =>
-      token_taxonomy_from_token_group(preset, DesignSystemRequirement::Surface)
-    StateLayer =>
-      token_taxonomy_from_token_group(
-        preset,
-        DesignSystemRequirement::StateLayer,
-      )
+    Shape => token_taxonomy_from_token_group(preset, ShapeRadius)
+    Elevation => token_taxonomy_from_token_group(preset, ElevationShadow)
+    Motion => token_taxonomy_from_token_group(preset, Motion)
+    Surface => token_taxonomy_from_token_group(preset, Surface)
+    StateLayer => token_taxonomy_from_token_group(preset, StateLayer)
     ComponentStyle => token_taxonomy_from_component_style(preset)
     _ => empty_token_taxonomy_source_evidence()
   }
@@ -276,7 +254,7 @@ fn token_taxonomy_from_token_group(
 fn token_taxonomy_from_density(
   preset : @common.DesignPreset,
 ) -> DesignTokenTaxonomySourceEvidence {
-  match density_resolver_for(preset, @common.DesignDensity::Standard) {
+  match density_resolver_for(preset, Standard) {
     Some(item) =>
       {
         source_declared: item.source_declared,
@@ -311,9 +289,9 @@ fn token_taxonomy_from_component_style(
       source_locked: item.source_locked && source_gap_count == 0,
       token_surface: "DesignComponentTokens -> @core.*Style",
       status: if component_style_resolver_gap_count(preset) == 0 {
-        DesignTokenStatus::ComponentMapped
+        ComponentMapped
       } else {
-        DesignTokenStatus::NotMapped
+        NotMapped
       },
       remaining_gap: if parity_gap_count == 0 {
         "none"
@@ -335,7 +313,7 @@ fn empty_token_taxonomy_source_evidence() -> DesignTokenTaxonomySourceEvidence {
     token_path: "",
     source_locked: false,
     token_surface: "",
-    status: DesignTokenStatus::NotMapped,
+    status: NotMapped,
     remaining_gap: "Missing resolver evidence for this token taxonomy row.",
   }
 }
@@ -346,8 +324,8 @@ fn token_taxonomy_status(
   evidence : DesignTokenTaxonomySourceEvidence,
 ) -> DesignTokenStatus {
   if !evidence.source_declared || !evidence.source_locked {
-    DesignTokenStatus::NotMapped
-  } else if coverage_status != DesignTokenStatus::NotMapped {
+    NotMapped
+  } else if coverage_status != NotMapped {
     coverage_status
   } else {
     evidence.status
@@ -365,12 +343,9 @@ fn token_taxonomy_remaining_gap(
     "Required token category is missing from the source-mapped manifest."
   } else if !evidence.source_declared || !evidence.source_locked {
     "Required taxonomy row is missing a declared stable source lock."
-  } else if status == DesignTokenStatus::OfficialComplete {
+  } else if status == OfficialComplete {
     "none"
-  } else if (
-      category == DesignTokenCategory::Spacing ||
-      category == DesignTokenCategory::Density
-    ) &&
+  } else if (category == Spacing || category == Density) &&
     evidence.remaining_gap == "none" {
     "none"
   } else if evidence.remaining_gap != "" && evidence.remaining_gap != "none" {
@@ -405,8 +380,8 @@ fn token_taxonomy_default_layer(
   category : DesignTokenCategory,
 ) -> DesignTokenLayer {
   match category {
-    StateLayer | ComponentStyle => DesignTokenLayer::ComponentToken
-    _ => DesignTokenLayer::SystemToken
+    StateLayer | ComponentStyle => ComponentToken
+    _ => SystemToken
   }
 }
 

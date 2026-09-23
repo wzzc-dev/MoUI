@@ -1,7 +1,7 @@
 ///|
 test "linux backend reports Wayland renderer readiness with explicit gaps" {
-  let info = backend_info()
-  assert_true(info.host_info.backend == @host.HostBackendKind::Native)
+  let info = @linux.backend_info()
+  assert_true(info.host_info.backend == Native)
   inspect(info.window_backend_available, content="true")
   inspect(info.renderer_available, content="true")
   inspect(info.capabilities.window, content="true")
@@ -35,11 +35,11 @@ test "linux client decoration commands reserve a titlebar" {
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=320.0, height=232.0),
   )
-  let decorations = LinuxClientDecorationState::new(active=true)
-  let commands = linux_client_decorated_commands(
+  let decorations = @linux.LinuxClientDecorationState::new(active=true)
+  let commands = @linux.linux_client_decorated_commands(
     [
-      @core.DrawCommand::Clear(@core.Color::gray()),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::gray()),
+      FillRect(
         @core.Rect::new(x=0.0, y=0.0, width=320.0, height=200.0),
         @core.Color::blue(),
       ),
@@ -49,49 +49,42 @@ test "linux client decoration commands reserve a titlebar" {
     decorations~,
   )
   assert_true(commands.length() > 6)
-  guard commands[0] is @core.DrawCommand::Clear(clear_color) else {
+  guard commands[0] is Clear(clear_color) else {
     fail("expected wrapper clear")
   }
   assert_true(clear_color == @core.Color::gray())
-  guard commands[1]
-    is @core.DrawCommand::FillRect({ size: { height, .. }, .. }, _) else {
+  guard commands[1] is FillRect({ size: { height, .. }, .. }, _) else {
     fail("expected titlebar fill")
   }
   inspect(height, content="32")
   assert_true(
-    commands.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Inspector", .. })
-    }),
+    commands.any(command => command is DrawText({ text: "Inspector", .. })),
   )
   assert_true(
-    commands.any(command => {
-      command is @core.DrawCommand::PushTransform({ ty: 32.0, .. })
-    }),
+    commands.any(command => command is PushTransform({ ty: 32.0, .. })),
   )
-  assert_false(
-    commands[1:].any(command => command is @core.DrawCommand::Clear(_)),
-  )
+  assert_false(commands[1:].any(command => command is Clear(_)))
 }
 
 ///|
 test "linux client decoration metrics and input stay in the content space" {
-  let decorations = LinuxClientDecorationState::new(active=true)
+  let decorations = @linux.LinuxClientDecorationState::new(active=true)
   let content = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=320.0, height=200.0),
     scale_factor=2.0,
   )
-  let surface = linux_surface_metrics_for_content(content, decorations)
+  let surface = @linux.linux_surface_metrics_for_content(content, decorations)
   inspect(surface.logical_size.height, content="232")
   inspect(surface.physical_size.height, content="464")
-  let recovered = linux_content_metrics_for_surface(surface, decorations)
+  let recovered = @linux.linux_content_metrics_for_surface(surface, decorations)
   inspect(recovered.logical_size.height, content="200")
   inspect(recovered.physical_size.height, content="400")
   match
-    linux_adjust_host_event_for_client_decorations(
-      @host.Event::Pointer(
+    @linux.linux_adjust_host_event_for_client_decorations(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=18.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
       decorations,
@@ -100,17 +93,16 @@ test "linux client decoration metrics and input stay in the content space" {
     Some(_) => fail("expected titlebar pointer to stay out of app content")
   }
   match
-    linux_adjust_host_event_for_client_decorations(
-      @host.Event::Pointer(
+    @linux.linux_adjust_host_event_for_client_decorations(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=52.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
       decorations,
     ) {
-    Some(@host.Event::Pointer({ position, .. })) =>
-      inspect(position.y, content="20")
+    Some(Pointer({ position, .. })) => inspect(position.y, content="20")
     _ => fail("expected content pointer to be translated")
   }
 }
@@ -118,25 +110,25 @@ test "linux client decoration metrics and input stay in the content space" {
 ///|
 test "linux backend carries tracked modifiers into keyboard events" {
   let key_event = @window_core.KeyEvent::KeyEvent(
-    @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyA),
-    @window_core.Key::Character("a"),
-    @window_core.Key::Character("a"),
-    @window_core.KeyLocation::Standard,
-    @window_core.ElementState::Pressed,
+    @window_core.PhysicalKey::from_key_code(KeyA),
+    Character("a"),
+    Character("a"),
+    Standard,
+    Pressed,
     false,
     Some("a"),
     Some("A"),
   )
   let modifiers = @window_input.modifiers_to_core(
-    @window_core.Modifiers::Modifiers(true, true, false, false),
+    Modifiers(true, true, false, false),
   )
   let event = @window_input.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::KeyboardInput(None, key_event, false),
+    KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     modifiers,
   )
   match event {
-    Some(@host.Event::Keyboard(event)) => {
+    Some(Keyboard(event)) => {
       inspect(event.key, content="a")
       match event.text {
         Some(text) => inspect(text, content="a")
@@ -154,21 +146,21 @@ test "linux backend carries tracked modifiers into keyboard events" {
 ///|
 test "linux backend uses Wayland button event coordinates" {
   let event = @window_input.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::PointerButton(
+    PointerButton(
       None,
-      @window_core.ElementState::Pressed,
-      @dpi.PhysicalPositionF64::PhysicalPositionF64(42.0, 64.0),
+      Pressed,
+      PhysicalPositionF64(42.0, 64.0),
       true,
-      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
+      Mouse(Left),
     ),
     @core.Point::new(x=1.0, y=2.0),
     @core.KeyModifiers::none(),
   )
   match event {
-    Some(@host.Event::Pointer(event)) => {
+    Some(Pointer(event)) => {
       inspect(event.position.x, content="42")
       inspect(event.position.y, content="64")
-      assert_true(event.phase == @core.PointerPhase::Down)
+      assert_true(event.phase == Down)
       inspect(event.button, content="0")
     }
     _ => fail("expected Linux pointer button host event")
@@ -178,18 +170,13 @@ test "linux backend uses Wayland button event coordinates" {
 ///|
 test "linux backend converts high dpi pointer coordinates to logical space" {
   let event = @window_input.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::PointerMoved(
-      None,
-      @dpi.PhysicalPositionF64::PhysicalPositionF64(84.0, 128.0),
-      true,
-      @window_core.PointerSource::Mouse,
-    ),
+    PointerMoved(None, PhysicalPositionF64(84.0, 128.0), true, Mouse),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
   )
   match event {
-    Some(@host.Event::Pointer({ position, .. })) => {
+    Some(Pointer({ position, .. })) => {
       inspect(position.x, content="42")
       inspect(position.y, content="64")
     }
@@ -200,23 +187,17 @@ test "linux backend converts high dpi pointer coordinates to logical space" {
 ///|
 test "linux backend preserves normalized vertical wheel direction" {
   let event = @window_input.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::MouseWheel(
-      None,
-      @window_core.MouseScrollDelta::PixelDelta(
-        @dpi.PhysicalPositionF64::PhysicalPositionF64(0.0, -120.0),
-      ),
-      @window_core.TouchPhase::Moved,
-    ),
+    MouseWheel(None, PixelDelta(PhysicalPositionF64(0.0, -120.0)), Moved),
     @core.Point::new(x=8.0, y=24.0),
     @core.KeyModifiers::none(),
   )
   match event {
     Some(
-      @host.Event::Scroll(
+      Scroll(
         {
-          position: { x: 8.0, y: 24.0 },
-          delta: @host.HostScrollDelta::Pixels({ x: 0.0, y: -120.0 }),
-          ..,
+          position: { x: 8.0, y: 24.0, },
+          delta: Pixels({ x: 0.0, y: -120.0, }),
+          ..
         }
       )
     ) => ()
@@ -227,23 +208,13 @@ test "linux backend preserves normalized vertical wheel direction" {
 ///|
 test "linux backend converts high dpi pixel scroll delta to logical space" {
   let event = @window_input.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::MouseWheel(
-      None,
-      @window_core.MouseScrollDelta::PixelDelta(
-        @dpi.PhysicalPositionF64::PhysicalPositionF64(24.0, -120.0),
-      ),
-      @window_core.TouchPhase::Moved,
-    ),
+    MouseWheel(None, PixelDelta(PhysicalPositionF64(24.0, -120.0)), Moved),
     @core.Point::new(x=8.0, y=24.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
   )
   match event {
-    Some(
-      @host.Event::Scroll(
-        { delta: @host.HostScrollDelta::Pixels({ x: 12.0, y: -60.0 }), .. }
-      )
-    ) => ()
+    Some(Scroll({ delta: Pixels({ x: 12.0, y: -60.0, }), .. })) => ()
     _ => fail("expected logical high dpi pixel scroll delta")
   }
 }
@@ -251,23 +222,14 @@ test "linux backend converts high dpi pixel scroll delta to logical space" {
 ///|
 test "linux backend converts high dpi drag drop coordinates to logical space" {
   let event = @window_input.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::DragDropped(
-      ["/tmp/high-dpi.txt"],
-      @dpi.PhysicalPositionF64::PhysicalPositionF64(96.0, 144.0),
-    ),
+    DragDropped(["/tmp/high-dpi.txt"], PhysicalPositionF64(96.0, 144.0)),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
   )
   match event {
     Some(
-      @host.Event::DragDrop(
-        {
-          phase: @core.DragDropPhase::Dropped,
-          position: Some({ x: 48.0, y: 72.0 }),
-          ..,
-        }
-      )
+      DragDrop({ phase: Dropped, position: Some({ x: 48.0, y: 72.0, }), .. })
     ) => ()
     _ => fail("expected logical high dpi drag drop position")
   }
@@ -275,7 +237,7 @@ test "linux backend converts high dpi drag drop coordinates to logical space" {
 
 ///|
 test "linux capability summary exposes known service gaps" {
-  let summary = linux_capability_summary()
+  let summary = @linux.linux_capability_summary()
   inspect(summary.label, content="Linux host")
   inspect(summary.services.system_theme, content="true")
   inspect(summary.services.clipboard, content="true")
@@ -295,24 +257,17 @@ test "linux capability summary exposes known service gaps" {
 test "linux service bridge routes real service contracts through handlers" {
   let clipboard_text = Ref("")
   let opened_url = Ref("")
-  let bridge = linux_service_bridge(
-    system_theme=@core.ColorScheme::Dark,
+  let bridge = @linux.linux_service_bridge(
+    system_theme=Dark,
     clipboard=request => {
       match request {
-        @host.HostClipboardRequest::ReadText =>
-          @host.HostServiceResponse::ClipboardText(clipboard_text.val)
-        @host.HostClipboardRequest::WriteText(text) => {
+        ReadText => ClipboardText(clipboard_text.val)
+        WriteText(text) => {
           clipboard_text.val = text
-          @host.HostServiceResponse::ClipboardWritten
+          ClipboardWritten
         }
-        @host.HostClipboardRequest::ReadImage =>
-          @host.HostServiceResponse::Unavailable(
-            "clipboard image read is unavailable",
-          )
-        @host.HostClipboardRequest::WriteImage(_, _) =>
-          @host.HostServiceResponse::Unavailable(
-            "clipboard image write is unavailable",
-          )
+        ReadImage => Unavailable("clipboard image read is unavailable")
+        WriteImage(_, _) => Unavailable("clipboard image write is unavailable")
       }
     },
     open_url=url => {
@@ -322,18 +277,16 @@ test "linux service bridge routes real service contracts through handlers" {
     file_dialog=options => {
       [
         match options.kind {
-          @host.HostFileDialogKind::OpenFile => "/tmp/open.txt"
-          @host.HostFileDialogKind::SaveFile => "/tmp/save.txt"
-          @host.HostFileDialogKind::PickDirectory => "/tmp"
+          OpenFile => "/tmp/open.txt"
+          SaveFile => "/tmp/save.txt"
+          PickDirectory => "/tmp"
         },
       ]
     },
     text_file=request => {
       match request {
-        @host.HostTextFileRequest::ReadText(path) =>
-          @host.HostServiceResponse::TextFileContent(path, "Linux text")
-        @host.HostTextFileRequest::WriteText(path, _text) =>
-          @host.HostServiceResponse::TextFileWritten(path)
+        ReadText(path) => TextFileContent(path, "Linux text")
+        WriteText(path, _text) => TextFileWritten(path)
       }
     },
     menu=_commands => -2,
@@ -343,55 +296,32 @@ test "linux service bridge routes real service contracts through handlers" {
   inspect(bridge.capabilities().file_access, content="true")
   inspect(bridge.capabilities().open_url, content="true")
   inspect(bridge.capabilities().menus, content="true")
-  match
-    bridge.dispatch(
-      @host.HostServiceRequest::Clipboard(
-        @host.HostClipboardRequest::WriteText("copied from Linux"),
-      ),
-    ) {
-    @host.HostServiceResponse::ClipboardWritten => ()
+  match bridge.dispatch(Clipboard(WriteText("copied from Linux"))) {
+    ClipboardWritten => ()
     _ => fail("expected Linux clipboard write")
   }
-  match
-    bridge.dispatch(
-      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
-    ) {
-    @host.HostServiceResponse::ClipboardText(text) =>
-      inspect(text, content="copied from Linux")
+  match bridge.dispatch(Clipboard(ReadText)) {
+    ClipboardText(text) => inspect(text, content="copied from Linux")
     _ => fail("expected Linux clipboard read")
   }
-  match
-    bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
-    @host.HostServiceResponse::UrlOpened =>
-      inspect(opened_url.val, content="https://example.test")
+  match bridge.dispatch(OpenUrl("https://example.test")) {
+    UrlOpened => inspect(opened_url.val, content="https://example.test")
     _ => fail("expected Linux URL open")
   }
   match
-    bridge.dispatch(
-      @host.HostServiceRequest::FileDialog(
-        @host.HostFileDialogOptions::new(
-          kind=@host.HostFileDialogKind::OpenFile,
-        ),
-      ),
-    ) {
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      inspect(paths[0], content="/tmp/open.txt")
+    bridge.dispatch(FileDialog(@host.HostFileDialogOptions::new(kind=OpenFile))) {
+    FileDialogSelection(paths) => inspect(paths[0], content="/tmp/open.txt")
     _ => fail("expected Linux file dialog selection")
   }
-  match
-    bridge.dispatch(
-      @host.HostServiceRequest::TextFile(
-        @host.HostTextFileRequest::ReadText("/tmp/note.md"),
-      ),
-    ) {
-    @host.HostServiceResponse::TextFileContent(path, text) => {
+  match bridge.dispatch(TextFile(ReadText("/tmp/note.md"))) {
+    TextFileContent(path, text) => {
       inspect(path, content="/tmp/note.md")
       inspect(text, content="Linux text")
     }
     _ => fail("expected Linux text-file read")
   }
-  match bridge.dispatch(@host.HostServiceRequest::ShowMenu([])) {
-    @host.HostServiceResponse::Unavailable(message) =>
+  match bridge.dispatch(ShowMenu([])) {
+    Unavailable(message) =>
       inspect(message, content="menu service is unavailable")
     _ => fail("expected Linux native menu fallback")
   }
@@ -399,17 +329,17 @@ test "linux service bridge routes real service contracts through handlers" {
 
 ///|
 test "linux service bridge reports unregistered platform channels unavailable" {
-  let bridge = linux_service_bridge()
+  let bridge = @linux.linux_service_bridge()
   match
     bridge.dispatch(
-      @host.HostServiceRequest::PlatformChannel(
+      PlatformChannel(
         @host.PlatformChannelRequest::new(
           channel="linux.missing",
           operation="probe",
         ),
       ),
     ) {
-    @host.HostServiceResponse::Unavailable(message) =>
+    Unavailable(message) =>
       inspect(message, content="platform channel is unavailable: linux.missing")
     _ => fail("expected unavailable Linux platform channel")
   }
@@ -418,23 +348,20 @@ test "linux service bridge reports unregistered platform channels unavailable" {
 ///|
 test "linux service bridge exposes menu selection dispatch" {
   let seen_count = Ref(0)
-  let bridge = linux_service_bridge(menu=commands => {
+  let bridge = @linux.linux_service_bridge(menu=commands => {
     seen_count.val = commands.length()
     1
   })
   inspect(bridge.capabilities().menus, content="true")
   match
     bridge.dispatch(
-      @host.HostServiceRequest::ShowMenu([
-        @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
-        @core.ActionCommand::new(
-          intent=@core.CommandIntent::Paste,
-          label="Paste",
-        ),
+      ShowMenu([
+        @core.ActionCommand::new(intent=Copy, label="Copy"),
+        @core.ActionCommand::new(intent=Paste, label="Paste"),
       ]),
     ) {
-    @host.HostServiceResponse::MenuAction(command) => {
-      assert_true(command.intent == @core.CommandIntent::Paste)
+    MenuAction(command) => {
+      assert_true(command.intent == Paste)
       inspect(command.label, content="Paste")
     }
     _ => fail("expected selected Linux menu command")
@@ -444,40 +371,30 @@ test "linux service bridge exposes menu selection dispatch" {
 
 ///|
 test "linux service bridge reports cancelled disabled and unavailable menu selections" {
-  let cancelled = linux_service_bridge(menu=_commands => -1)
+  let cancelled = @linux.linux_service_bridge(menu=_commands => -1)
   match
     cancelled.dispatch(
-      @host.HostServiceRequest::ShowMenu([
-        @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
-      ]),
+      ShowMenu([@core.ActionCommand::new(intent=Copy, label="Copy")]),
     ) {
-    @host.HostServiceResponse::Unavailable(message) =>
-      inspect(message, content="menu selection cancelled")
+    Unavailable(message) => inspect(message, content="menu selection cancelled")
     _ => fail("expected cancelled Linux menu response")
   }
-  let disabled = linux_service_bridge(menu=_commands => 0)
+  let disabled = @linux.linux_service_bridge(menu=_commands => 0)
   match
     disabled.dispatch(
-      @host.HostServiceRequest::ShowMenu([
-        @core.ActionCommand::new(
-          intent=@core.CommandIntent::Paste,
-          label="Paste",
-          enabled=false,
-        ),
+      ShowMenu([
+        @core.ActionCommand::new(intent=Paste, label="Paste", enabled=false),
       ]),
     ) {
-    @host.HostServiceResponse::Unavailable(message) =>
-      inspect(message, content="menu command is disabled")
+    Unavailable(message) => inspect(message, content="menu command is disabled")
     _ => fail("expected disabled Linux menu response")
   }
-  let unavailable = linux_service_bridge(menu=_commands => -2)
+  let unavailable = @linux.linux_service_bridge(menu=_commands => -2)
   match
     unavailable.dispatch(
-      @host.HostServiceRequest::ShowMenu([
-        @core.ActionCommand::new(intent=@core.CommandIntent::Undo, label="Undo"),
-      ]),
+      ShowMenu([@core.ActionCommand::new(intent=Undo, label="Undo")]),
     ) {
-    @host.HostServiceResponse::Unavailable(message) =>
+    Unavailable(message) =>
       inspect(message, content="menu service is unavailable")
     _ => fail("expected unavailable Linux menu response")
   }
@@ -485,7 +402,7 @@ test "linux service bridge reports cancelled disabled and unavailable menu selec
 
 ///|
 test "linux scaffold exposes host contracts without owning a surface" {
-  let surface = scaffold_surface_host(
+  let surface = @linux.scaffold_surface_host(
     logical_width=320.0,
     logical_height=200.0,
     scale_factor=2.0,
@@ -495,32 +412,29 @@ test "linux scaffold exposes host contracts without owning a surface" {
   )
   inspect(surface.owns_surface, content="false")
   inspect(surface.can_reconfigure, content="false")
-  let input = scaffold_input_host()
+  let input = @linux.scaffold_input_host()
   inspect(input.capabilities().text_input, content="false")
   inspect(input.capabilities().ime, content="false")
   inspect(input.capabilities().clipboard, content="false")
   inspect(input.capabilities().drag_drop, content="false")
-  let services = scaffold_service_bridge()
-  match
-    services.dispatch(
-      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
-    ) {
-    @host.HostServiceResponse::Unavailable(message) =>
+  let services = @linux.scaffold_service_bridge()
+  match services.dispatch(Clipboard(ReadText)) {
+    Unavailable(message) =>
       inspect(message, content="clipboard service is unavailable")
     _ => fail("expected unavailable Linux scaffold service")
   }
-  let platform_services = linux_service_bridge()
-  match platform_services.dispatch(@host.HostServiceRequest::QuerySystemTheme) {
-    @host.HostServiceResponse::SystemTheme(@core.ColorScheme::Light) => ()
+  let platform_services = @linux.linux_service_bridge()
+  match platform_services.dispatch(QuerySystemTheme) {
+    SystemTheme(Light) => ()
     _ => fail("expected Linux platform system theme response")
   }
 }
 
 ///|
 test "linux host options construct without renderer dependencies" {
-  let options = LinuxHostAppOptions::new()
+  let options = @linux.LinuxHostAppOptions::new()
   let _ = options
-  assert_true(backend_info().renderer_available)
+  assert_true(@linux.backend_info().renderer_available)
 }
 
 ///|
@@ -530,12 +444,12 @@ test "linux accessibility bridge dispatches semantics actions" {
     size=@core.Size::new(width=120.0, height=60.0),
   )
   let snapshot = match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) => snapshot
+    Ok(Full(snapshot)) => snapshot
     _ => abort("expected full committed semantics")
   }
   let mut target : @core.SemanticsNode? = None
   for node in snapshot.nodes() {
-    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+    if node.actions.any(action => action == Activate) {
       target = Some(node)
     }
   }
@@ -543,10 +457,10 @@ test "linux accessibility bridge dispatches semantics actions" {
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
-  let bridge = linux_accessibility_bridge(driver)
-  inspect(linux_accessibility_bridge_info().kind, content="at-spi")
+  let bridge = @linux.linux_accessibility_bridge(driver)
+  inspect(@linux.linux_accessibility_bridge_info().kind, content="at-spi")
   inspect(bridge.available, content="true")
-  match bridge.publish_semantics(@runtime.SemanticsRead::Full(snapshot)) {
+  match bridge.publish_semantics(Full(snapshot)) {
     Some(_) => ()
     None => fail("expected Linux AT-SPI semantics update")
   }
@@ -555,24 +469,23 @@ test "linux accessibility bridge dispatches semantics actions" {
       @accesskit_bridge.accesskit_semantics_action_request(
         node_id=target.node_id,
         generation=snapshot.generation(),
-        action=@core.SemanticsAction::Activate,
+        action=Activate,
       ),
     ) {
-    @accesskit_bridge.AccessKitActionResult::Handled(receipt) =>
-      assert_true(receipt.before == snapshot.generation())
+    Handled(receipt) => assert_true(receipt.before == snapshot.generation())
     _ => fail("expected Linux accessibility bridge action dispatch")
   }
 }
 
 ///|
 test "linux list directory service returns entries for existing directory" {
-  let bridge = linux_service_bridge()
-  match bridge.dispatch(@host.HostServiceRequest::ListDirectory("/tmp")) {
-    @host.HostServiceResponse::DirectoryListing(path, entries) => {
+  let bridge = @linux.linux_service_bridge()
+  match bridge.dispatch(ListDirectory("/tmp")) {
+    DirectoryListing(path, entries) => {
       inspect(path, content="/tmp")
       assert_true(entries.length() >= 0)
     }
-    @host.HostServiceResponse::Unavailable(_) =>
+    Unavailable(_) =>
       fail(
         "expected Linux ListDirectory to use @fs.read_dir instead of unavailable",
       )
@@ -582,14 +495,9 @@ test "linux list directory service returns entries for existing directory" {
 
 ///|
 test "linux list directory returns empty list for missing path" {
-  let bridge = linux_service_bridge()
-  match
-    bridge.dispatch(
-      @host.HostServiceRequest::ListDirectory(
-        "/tmp/moui-nonexistent-directory-xyz",
-      ),
-    ) {
-    @host.HostServiceResponse::DirectoryListing(path, entries) => {
+  let bridge = @linux.linux_service_bridge()
+  match bridge.dispatch(ListDirectory("/tmp/moui-nonexistent-directory-xyz")) {
+    DirectoryListing(path, entries) => {
       inspect(path, content="/tmp/moui-nonexistent-directory-xyz")
       inspect(entries.length(), content="0")
     }
@@ -599,7 +507,7 @@ test "linux list directory returns empty list for missing path" {
 
 ///|
 test "linux list directory hides dotfiles and reports is_directory" {
-  let bridge = linux_service_bridge(list_directory=path => {
+  let bridge = @linux.linux_service_bridge(list_directory=path => {
     let entries : Array[@host.HostDirectoryEntry] = [
       @host.HostDirectoryEntry::new(
         name="readme.md",
@@ -617,11 +525,10 @@ test "linux list directory hides dotfiles and reports is_directory" {
         is_directory=true,
       ),
     ]
-    @host.HostServiceResponse::DirectoryListing(path, entries)
+    DirectoryListing(path, entries)
   })
-  match
-    bridge.dispatch(@host.HostServiceRequest::ListDirectory("/tmp/project")) {
-    @host.HostServiceResponse::DirectoryListing(path, entries) => {
+  match bridge.dispatch(ListDirectory("/tmp/project")) {
+    DirectoryListing(path, entries) => {
       inspect(path, content="/tmp/project")
       inspect(entries.length(), content="3")
       assert_true(
@@ -642,9 +549,9 @@ test "linux list directory hides dotfiles and reports is_directory" {
 
 ///|
 test "linux list directory filters hidden files in real dispatch" {
-  let bridge = linux_service_bridge()
-  match bridge.dispatch(@host.HostServiceRequest::ListDirectory("/tmp")) {
-    @host.HostServiceResponse::DirectoryListing(_, listing) =>
+  let bridge = @linux.linux_service_bridge()
+  match bridge.dispatch(ListDirectory("/tmp")) {
+    DirectoryListing(_, listing) =>
       assert_true(listing.all(entry => !entry.name().has_prefix(".")))
     _ => ()
   }

@@ -1,6 +1,5 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend" @backend_host,
   "wzzc-dev/moui/backend/common/lifecycle" @window_lifecycle,
   "wzzc-dev/moui/backend/common/frame" @window_frame,
@@ -12,6 +11,7 @@ import {
 
 import {
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui/runtime",
 } for "test"
 
 supported_targets = "+native+wasm-gc+wasm"

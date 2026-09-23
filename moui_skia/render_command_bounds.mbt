@@ -205,7 +205,7 @@ priv struct RenderCommandBoundsState {
 fn RenderCommandBoundsState::new(
   pass_bounds : Rect,
 ) -> RenderCommandBoundsState {
-  { matrix: Matrix::identity(), clip: pass_bounds }
+  { matrix: Matrix::identity(), clip: pass_bounds, }
 }
 
 ///|
@@ -357,7 +357,7 @@ pub fn RenderCommandList::touched_bounds(self : RenderCommandList) -> Rect? {
         pass_bounds,
         clip_stack,
       )
-      continue bounds, { matrix, clip }, i + 1
+      continue bounds, { matrix, clip, }, i + 1
     } nobreak {
       bounds
     }

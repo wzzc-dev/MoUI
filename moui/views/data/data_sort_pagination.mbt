@@ -16,7 +16,7 @@ pub fn DataSortState::new(
   column? : String = "",
   ascending? : Bool = true,
 ) -> DataSortState {
-  { column, ascending }
+  { column, ascending, }
 }
 
 ///|
@@ -35,9 +35,9 @@ pub fn DataSortState::toggle(
   column : String,
 ) -> DataSortState {
   if self.column == column {
-    { column, ascending: !self.ascending }
+    { column, ascending: !self.ascending, }
   } else {
-    { column, ascending: true }
+    { column, ascending: true, }
   }
 }
 
@@ -84,12 +84,12 @@ pub fn PaginationState::clamped(self : PaginationState) -> PaginationState {
 
 ///|
 pub fn PaginationState::next(self : PaginationState) -> PaginationState {
-  { ..self, page: @layout.min_int(self.page + 1, self.page_count() - 1) }
+  { ..self, page: @layout.min_int(self.page + 1, self.page_count() - 1), }
 }
 
 ///|
 pub fn PaginationState::previous(self : PaginationState) -> PaginationState {
-  { ..self, page: @common.view_max_int(0, self.page - 1) }
+  { ..self, page: @common.view_max_int(0, self.page - 1), }
 }
 
 ///|

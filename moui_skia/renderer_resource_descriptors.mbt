@@ -166,12 +166,12 @@ pub fn RendererResourceDescriptor::with_byte_size(
   self : RendererResourceDescriptor,
   byte_size : Int64,
 ) -> RendererResourceDescriptor {
-  { ..self, byte_size: renderer_resource_non_negative_i64(byte_size) }
+  { ..self, byte_size: renderer_resource_non_negative_i64(byte_size), }
 }
 
 ///|
 pub fn RendererResourceDescriptor::uncacheable(
   self : RendererResourceDescriptor,
 ) -> RendererResourceDescriptor {
-  { ..self, cacheable: false }
+  { ..self, cacheable: false, }
 }

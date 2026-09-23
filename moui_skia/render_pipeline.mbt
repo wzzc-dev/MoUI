@@ -242,7 +242,7 @@ pub fn RenderPassDescriptor::with_bounds(
   self : RenderPassDescriptor,
   bounds : IRect,
 ) -> RenderPassDescriptor {
-  { ..self, bounds: normalized_render_pass_bounds(self.surface, Some(bounds)) }
+  { ..self, bounds: normalized_render_pass_bounds(self.surface, Some(bounds)), }
 }
 
 ///|

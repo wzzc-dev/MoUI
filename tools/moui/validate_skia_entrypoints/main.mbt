@@ -40,7 +40,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       }
     }
   }
-  Ok({ repo_root: repo_root.val, help: help.val })
+  Ok({ repo_root: repo_root.val, help: help.val, })
 }
 
 ///|

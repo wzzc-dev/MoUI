@@ -161,7 +161,7 @@ pub fn[K : Hash + Eq, V] ResourceCache::insert(
       Some(item) => self.current_bytes -= item.byte_size
     }
     self.clock += 1L
-    self.entries.set(key, { value, byte_size, last_used: self.clock })
+    self.entries.set(key, { value, byte_size, last_used: self.clock, })
     self.current_bytes += byte_size
     self.evict_until_fit()
     true
@@ -192,7 +192,7 @@ pub fn[K : Hash + Eq, V] ResourceCache::get(
     Some(item) => {
       self.hits += 1
       self.clock += 1L
-      self.entries.set(key, { ..item, last_used: self.clock })
+      self.entries.set(key, { ..item, last_used: self.clock, })
       Some(item.value)
     }
   }

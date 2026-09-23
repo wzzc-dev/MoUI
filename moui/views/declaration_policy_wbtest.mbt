@@ -49,12 +49,8 @@ test "controlled values are sampled into immutable node declarations" {
     declaration_policy_changes(after.declaration(), before.declaration()),
     content="(false, true, true, false)",
   )
-  assert_true(
-    before.semantics().checked == Some(@core.SemanticsCheckedState::Unchecked),
-  )
-  assert_true(
-    after.semantics().checked == Some(@core.SemanticsCheckedState::Checked),
-  )
+  assert_true(before.semantics().checked == Some(Unchecked))
+  assert_true(after.semantics().checked == Some(Checked))
 }
 
 ///|

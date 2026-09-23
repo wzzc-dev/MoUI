@@ -16,7 +16,7 @@ pub fn PixelFrame::new(
   scale_factor~ : Double,
   pixels~ : Bytes,
 ) -> PixelFrame {
-  { width, height, row_bytes, scale_factor, pixels }
+  { width, height, row_bytes, scale_factor, pixels, }
 }
 
 ///|
@@ -57,7 +57,7 @@ pub fn PresentTarget::new(
   description~ : String,
   present~ : (PixelFrame) -> Bool,
 ) -> PresentTarget {
-  { description, present_fn: present }
+  { description, present_fn: present, }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub struct HostImageSource {
 
 ///|
 pub fn HostImageSource::new(read~ : (String) -> Bytes?) -> HostImageSource {
-  { read_fn: read }
+  { read_fn: read, }
 }
 
 ///|
@@ -102,7 +102,7 @@ pub struct RendererImageDecoder {
 pub fn RendererImageDecoder::new(
   decode~ : (String, Bytes?) -> ImageResourceLoadCompletion,
 ) -> RendererImageDecoder {
-  { decode_fn: decode }
+  { decode_fn: decode, }
 }
 
 ///|
@@ -214,7 +214,7 @@ pub fn NativeSurface::new(
     dispose_fn: dispose,
     disposed: false,
   }
-  Some({ capability: capability as &NativeSurfaceCapability })
+  Some({ capability: capability as &NativeSurfaceCapability, })
 }
 
 ///|
@@ -328,7 +328,7 @@ pub fn HostSurface::new(
     native_surface,
     image_source,
   }
-  { capability: capability as &HostSurfaceCapability }
+  { capability: capability as &HostSurfaceCapability, }
 }
 
 ///|

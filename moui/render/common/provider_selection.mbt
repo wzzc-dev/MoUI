@@ -5,14 +5,14 @@ pub struct RendererProviderRegistry {
 
 ///|
 pub fn RendererProviderRegistry::new() -> RendererProviderRegistry {
-  { providers: [] }
+  { providers: [], }
 }
 
 ///|
 pub fn RendererProviderRegistry::from_providers(
   providers : Array[@render.RendererProvider],
 ) -> RendererProviderRegistry {
-  { providers: providers.copy() }
+  { providers: providers.copy(), }
 }
 
 ///|
@@ -52,8 +52,8 @@ pub fn resolve_renderer(
 ) -> @render.RendererSession? {
   for provider in providers {
     match provider.bind_surface(surface) {
-      @render.RendererBindResult::Bound(session) => return Some(session)
-      @render.RendererBindResult::Rejected(_) => ()
+      Bound(session) => return Some(session)
+      Rejected(_) => ()
     }
   }
   None

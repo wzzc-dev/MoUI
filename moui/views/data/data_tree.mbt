@@ -25,11 +25,9 @@ pub fn[Msg] tree_view(
       width~,
     )
   }
-  @layout.column(
-    rows,
-    spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Start,
-  ).semantics_role(@core.SemanticsRole::Tree)
+  @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start).semantics_role(
+    Tree,
+  )
 }
 
 ///|
@@ -106,7 +104,7 @@ fn[Msg] tree_row(
       @button.button(
         toggle_label,
         on_click=handler(item.id),
-        variant=@style.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         width=toggle_width,
         height=30.0,
@@ -114,7 +112,7 @@ fn[Msg] tree_row(
     None =>
       @text.text(
         toggle_label,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme~,
         width=toggle_width,
         height=30.0,
@@ -129,34 +127,20 @@ fn[Msg] tree_row(
       @button.button(
         item.label,
         on_click=handler(item.id),
-        variant=if selected {
-          @style.ButtonVariant::Primary
-        } else {
-          @style.ButtonVariant::Ghost
-        },
+        variant=if selected { Primary } else { Ghost },
         theme~,
         width=label_width,
         height=30.0,
-        label_align=@core.TextAlign::TextStart,
+        label_align=TextStart,
       )
     None =>
-      @text.text(
-        item.label,
-        role=@style.TextRole::Body,
-        theme~,
-        width=label_width,
-        height=30.0,
-      )
+      @text.text(item.label, role=Body, theme~, width=label_width, height=30.0)
   }
   // Depth is a left padding, not a spacer child: a spacer with weight 0 still
   // absorbed the row's slack here, which pushed the label to the right edge and
   // left a gap after the disclosure glyph.
   let row_body = @layout.padding_edges(
-    @layout.row(
-      [toggle, label_view],
-      spacing=2.0,
-      align=@style.CrossAlign::Center,
-    ),
+    @layout.row([toggle, label_view], spacing=2.0, align=Center),
     left=indent,
   )
   // Right-click target coverage spans the whole row (glyph + label), not just
@@ -167,7 +151,7 @@ fn[Msg] tree_row(
     None => row_body
   }
   row_view
-  .semantics_role(@core.SemanticsRole::TreeItem)
+  .semantics_role(TreeItem)
   .semantics_expanded(expanded~)
   .semantics_selected(selected~)
   .accessibility_label(item.label)

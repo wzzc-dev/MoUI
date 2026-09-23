@@ -24,21 +24,16 @@ fn browser_provider(canvas_fallback~ : Bool) -> @render.RendererProvider {
     }
     let canvas_id = surface.surface_id()
     if canvas_id.is_empty() {
-      return @render.RendererBindResult::Rejected(
-        "browser renderer requires a canvas id",
-      )
+      return Rejected("browser renderer requires a canvas id")
     }
     let renderer = create_webgpu_renderer(
       canvas_id~,
       logical_size=surface.metrics().logical_size,
       scale_factor=surface.metrics().scale_factor,
     ) catch {
-      _err =>
-        return @render.RendererBindResult::Rejected(
-          "browser renderer unavailable",
-        )
+      _err => return Rejected("browser renderer unavailable")
     }
-    @render.RendererBindResult::Bound(renderer.to_renderer_session())
+    Bound(renderer.to_renderer_session())
   }
   if canvas_fallback {
     create_browser_canvas2d_fallback_provider(bind~)
@@ -62,7 +57,7 @@ pub fn WebGpuWasmRenderer::to_renderer_session(
     render_frame=submission => self.render_frame(submission.frame()),
     text_system=() => self.text_system(),
     present_count=() => self.present_count(),
-    recover=_reason => @render.RecoveryResult::RecoverySucceeded,
+    recover=_reason => RecoverySucceeded,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),
     apply_image_load_completion=completion => {

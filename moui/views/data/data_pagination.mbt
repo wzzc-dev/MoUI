@@ -28,14 +28,14 @@ pub fn[Msg] pagination(
       @button.button(
         previous_label,
         on_click=on_previous,
-        variant=@style.ButtonVariant::Outline,
+        variant=Outline,
         theme=resolved_theme,
         width=previous_width,
         height=36.0,
       ).disabled(disabled=!has_previous),
       @text.text(
         "Page \{current_page + 1} of \{total_pages}",
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=label_width,
         height=28.0,
@@ -43,16 +43,16 @@ pub fn[Msg] pagination(
       @button.button(
         next_label,
         on_click=on_next,
-        variant=@style.ButtonVariant::Outline,
+        variant=Outline,
         theme=resolved_theme,
         width=next_width,
         height=36.0,
       ).disabled(disabled=!has_next),
     ],
     spacing=resolved_theme.spacing_scale.sm,
-    align=@style.CrossAlign::Center,
+    align=Center,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .accessibility_label("Page \{current_page + 1} of \{total_pages}")
 }
 

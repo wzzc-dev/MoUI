@@ -37,7 +37,7 @@ pub struct RouteSource {
 pub fn TimerSource::new(
   start~ : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?,
 ) -> TimerSource {
-  { start_fn: start }
+  { start_fn: start, }
 }
 
 ///|
@@ -86,12 +86,12 @@ pub fn RouteLocation::new(
   path~ : String,
   query? : Array[RouteQueryParam] = [],
 ) -> RouteLocation {
-  { path, query }
+  { path, query, }
 }
 
 ///|
 pub fn RouteQueryParam::new(key~ : String, value~ : String) -> RouteQueryParam {
-  { key, value }
+  { key, value, }
 }
 
 ///|
@@ -103,8 +103,8 @@ pub fn RouteLocation::parse(value : String) -> RouteLocation {
         let pair = pair_view.to_owned()
         if pair != "" {
           match route_split_once(pair, '=') {
-            Some((key, value)) => query.push({ key, value })
-            None => query.push({ key: pair, value: "" })
+            Some((key, value)) => query.push({ key, value, })
+            None => query.push({ key: pair, value: "", })
           }
         }
       }
@@ -143,7 +143,7 @@ pub fn RouteEvent::new(
   location~ : RouteLocation,
   source? : String = "host-route",
 ) -> RouteEvent {
-  { location, source }
+  { location, source, }
 }
 
 ///|
@@ -169,7 +169,7 @@ pub fn RouteEvent::route(self : RouteEvent) -> String {
 
 ///|
 pub fn RouteSource::new() -> RouteSource {
-  { next_token: 1, handlers: [] }
+  { next_token: 1, handlers: [], }
 }
 
 ///|

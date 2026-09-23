@@ -23,7 +23,7 @@ pub fn runtime_token_alignment_report(
   preset : @common.DesignPreset,
 ) -> Array[DesignRuntimeTokenAlignmentRecord] {
   let rows : Array[DesignRuntimeTokenAlignmentRecord] = []
-  let tokens = preset.tokens(scheme=@core.ColorScheme::Light)
+  let tokens = preset.tokens(scheme=Light)
   for item in source_import_coverage(preset) {
     rows.push(runtime_token_alignment_record(preset, item, tokens))
   }
@@ -111,13 +111,13 @@ fn runtime_token_alignment_record(
   let status = if runtime_aligned {
     coverage.status
   } else if !coverage.source_imported {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if !expected.available {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else if !actual.available {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   }
   {
     preset,
@@ -885,19 +885,19 @@ fn runtime_int_value(value : Int) -> RuntimeTokenValue {
 ///|
 fn easing_runtime_value(value : @core.Easing) -> String {
   match value {
-    @core.Easing::Linear => "linear"
-    @core.Easing::EaseIn => "ease-in"
-    @core.Easing::EaseOut => "ease-out"
-    @core.Easing::EaseInOut => "ease-in-out"
+    Linear => "linear"
+    EaseIn => "ease-in"
+    EaseOut => "ease-out"
+    EaseInOut => "ease-in-out"
   }
 }
 
 ///|
 fn runtime_value(value : String) -> RuntimeTokenValue {
-  { available: true, value }
+  { available: true, value, }
 }
 
 ///|
 fn runtime_unavailable() -> RuntimeTokenValue {
-  { available: false, value: "" }
+  { available: false, value: "", }
 }

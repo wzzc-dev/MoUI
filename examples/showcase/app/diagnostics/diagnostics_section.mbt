@@ -139,7 +139,7 @@ fn ShowcaseModel::diagnostics_section(
             .foreground(theme.palette.foreground),
             width=280.0,
             height=100.0,
-            variant=@views.ContainerVariant::Base,
+            variant=Base,
             theme~,
             padding=theme.spacing_scale.sm,
           ).border(showcase_card_border(theme)),
@@ -147,7 +147,7 @@ fn ShowcaseModel::diagnostics_section(
         ),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     metrics~,
     scroll_offset=self.diagnostics_panel_scroll,
@@ -369,7 +369,7 @@ fn ShowcaseModel::inspector_snapshot_card(
         .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=card_height,
@@ -398,7 +398,7 @@ fn showcase_inspector_snapshot(
 ) -> ShowcaseInspectorSnapshot {
   {
     runtime: {
-      dirty_state: { dirty_count: 0, reason: "redraw requested" },
+      dirty_state: { dirty_count: 0, reason: "redraw requested", },
       program_dispatched_count: 1,
       program_update_count: 1,
       program_effect_plan_count: 2,
@@ -415,12 +415,12 @@ fn showcase_inspector_snapshot(
       started_subscription_count: 2,
       active_subscriptions: [input.active_subscription_label],
       active_subscription_kind_counts: [
-        { kind: "animation", count: 1 },
-        { kind: "host-event", count: 1 },
+        { kind: "animation", count: 1, },
+        { kind: "host-event", count: 1, },
       ],
     },
-    view_tree: { node_count: 6 },
-    layout: { bounds_count: 3, max_depth: 3 },
+    view_tree: { node_count: 6, },
+    layout: { bounds_count: 3, max_depth: 3, },
     render: {
       command_count: 8,
       text_count: 3,
@@ -432,7 +432,7 @@ fn showcase_inspector_snapshot(
       open_filter_depth: 0,
       unbalanced_pop_count: 0,
     },
-    semantics: { node_count: 4, invalid_count: 1 },
+    semantics: { node_count: 4, invalid_count: 1, },
   }
 }
 
@@ -459,14 +459,14 @@ fn ShowcaseModel::diagnostics_route_card(
         button(
           "Open",
           on_click=SelectSection(route),
-          variant=@views.ButtonVariant::Outline,
+          variant=Outline,
           theme~,
           width=110.0,
           height=34.0,
         ),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=144.0,

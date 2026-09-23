@@ -88,7 +88,7 @@ fn svg_rect_command_matches(
   height : Double,
 ) -> Bool {
   match command {
-    @core.DrawCommand::FillRect(rect, color) =>
+    FillRect(rect, color) =>
       rect.size.width == width &&
       rect.size.height == height &&
       color == @core.Color::rgba(r=1.0, g=0.0, b=0.0)

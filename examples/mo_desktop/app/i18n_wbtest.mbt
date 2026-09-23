@@ -37,7 +37,7 @@ test "unlocked desktop renders the localized menu bar" {
   let mut window_menu = false
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, .. }) =>
+      DrawText({ text: value, .. }) =>
         if value == "文件" {
           file_menu = true
         } else if value == "窗口" {

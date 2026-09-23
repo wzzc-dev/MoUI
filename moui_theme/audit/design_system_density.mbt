@@ -30,12 +30,12 @@ pub(all) struct DesignDensityResolverRecord {
 ///|
 pub fn density_resolver_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> Array[DesignDensityResolverRecord] {
   [
-    density_resolver_record(preset, @common.DesignDensity::Compact, scheme),
-    density_resolver_record(preset, @common.DesignDensity::Standard, scheme),
-    density_resolver_record(preset, @common.DesignDensity::Comfortable, scheme),
+    density_resolver_record(preset, Compact, scheme),
+    density_resolver_record(preset, Standard, scheme),
+    density_resolver_record(preset, Comfortable, scheme),
   ]
 }
 
@@ -43,7 +43,7 @@ pub fn density_resolver_report(
 pub fn density_resolver_for(
   preset : @common.DesignPreset,
   density : @common.DesignDensity,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> DesignDensityResolverRecord? {
   for item in density_resolver_report(preset, scheme~) {
     if item.density == density {
@@ -65,9 +65,9 @@ pub fn density_resolver_gap_count(preset : @common.DesignPreset) -> Int {
     if !item.resolves_tokens ||
       !item.resolves_theme ||
       !item.resolves_components ||
-      item.status == DesignTokenStatus::NotMapped ||
-      item.status == DesignTokenStatus::SourceMapped ||
-      item.status == DesignTokenStatus::PreviewMapped {
+      item.status == NotMapped ||
+      item.status == SourceMapped ||
+      item.status == PreviewMapped {
       count = count + 1
     }
   }
@@ -143,7 +143,7 @@ fn density_resolver_record(
     !resolves_components {
     DesignTokenStatus::NotMapped
   } else {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   }
   {
     preset,
@@ -198,7 +198,7 @@ fn density_official_source(preset : @common.DesignPreset) -> String {
 fn density_remaining_gap(preset : @common.DesignPreset) -> String {
   if density_representative_spacing_aligned(preset) {
     "none"
-  } else if preset == @common.DesignPreset::Material {
+  } else if preset == Material {
     "Material Web's pinned token source does not expose concrete spacing tokens for the neutral MoUI spacing scale; density remains a MoUI adapter until an official source anchor is available."
   } else {
     "At least one neutral spacing slot lacks a pinned official source-import record that exact-aligns with the current density-aware MoUI spacing scale."
@@ -242,7 +242,7 @@ fn density_source_for_url(
 
 ///|
 fn density_source_locked(source : DesignSystemSource) -> Bool {
-  if source.status == DesignTokenStatus::NotMapped || source.source_ref == "" {
+  if source.status == NotMapped || source.source_ref == "" {
     false
   } else if source.source_kind == "official-source" ||
     source.source_kind == "internal-token-contract" ||

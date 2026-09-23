@@ -54,8 +54,10 @@ test "sun renderer accepts host bytes after an earlier source read failure" {
     _ => ()
   }
   defer (@fs.remove_file(source) catch { _ => () })
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -63,41 +65,38 @@ test "sun renderer accepts host bytes after an earlier source read failure" {
     async_image_loading=true,
   )
   let commands = [
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    @core.DrawCommand::DrawImage({
       source,
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
 
   renderer.render(commands)
   inspect(renderer.image_resources().length(), content="1")
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageLoading, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageLoading, .. } else {
     fail("expected initial loading local image record")
   }
   let failed_snapshot = renderer.apply_image_resource_load_completion(
-    sun_image_load_completion(source),
+    @moui_sun_renderer.sun_image_load_completion(source),
   )
   assert_true(failed_snapshot)
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageFailed, diagnostic, .. } else {
     fail("expected failed local image record")
   }
   assert_true(diagnostic.contains("could not decode image source"))
 
   renderer.render(commands)
   inspect(renderer.image_resources().length(), content="1")
-  guard renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageFailed, .. } else {
+  guard renderer.image_resources()[0] is { status: ImageFailed, .. } else {
     fail("expected missing local image to stay failed before file appears")
   }
 
   @fs.write_bytes_to_file(source, sun_retry_test_png_bytes()) catch {
     _ => fail("expected local image retry fixture write")
   }
-  let ready_renderer = create_with_present_target(
+  let ready_renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -106,12 +105,11 @@ test "sun renderer accepts host bytes after an earlier source read failure" {
   )
   ready_renderer.render(commands)
   inspect(ready_renderer.image_resources().length(), content="1")
-  guard ready_renderer.image_resources()[0]
-    is { status: @render.ImageResourceStatus::ImageLoading, .. } else {
+  guard ready_renderer.image_resources()[0] is { status: ImageLoading, .. } else {
     fail("expected a fresh host-byte request to start loading")
   }
   let ready_snapshot = ready_renderer.apply_image_resource_load_completion(
-    sun_image_load_completion_from_bytes(
+    @moui_sun_renderer.sun_image_load_completion_from_bytes(
       source,
       @fs.read_file_to_bytes(source) catch {
         _ => fail("expected host retry byte read")
@@ -121,12 +119,7 @@ test "sun renderer accepts host bytes after an earlier source read failure" {
   )
   assert_true(ready_snapshot)
   guard ready_renderer.image_resources()[0]
-    is {
-      status: @render.ImageResourceStatus::ImageReady,
-      width: 1,
-      height: 1,
-      ..,
-    } else {
+    is { status: ImageReady, width: 1, height: 1, .. } else {
     fail("expected ready local image record after retry")
   }
   ready_renderer.render(commands)

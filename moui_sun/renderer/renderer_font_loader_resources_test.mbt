@@ -1,6 +1,8 @@
 ///|
 test "RendererResources exposes font cache for font loaders" {
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 1, 1, 1)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 1, 1, 1,
+  )
   let loader = @text.MemoryFontLoader::new()
   ignore(loader.insert("ui-font", @text.FontData::new(make_minimal_ttf())))
 
@@ -22,7 +24,7 @@ test "RendererResources exposes font cache for font loaders" {
   }
 
   match resources.get_font_face_cache().get_or_load("missing-font", loader) {
-    Err(@text.FontLoadError::MissingFontData("missing-font")) => ()
+    Err(MissingFontData("missing-font")) => ()
     _ => abort("expected missing renderer font loader source")
   }
 }
@@ -31,8 +33,10 @@ test "RendererResources exposes font cache for font loaders" {
 test "Renderer loaded font draw paths reuse font cache" {
   let canvas = @graphics.Canvas::new(18, 14)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(32, 32, 2, 2, 8, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    32, 32, 2, 2, 8, 1,
+  )
   let loader = @text.MemoryFontLoader::new()
   ignore(loader.insert("ui-font", @text.FontData::new(make_minimal_ttf())))
   let config = @text.LayoutConfig::new(
@@ -75,8 +79,10 @@ test "Renderer loaded font draw paths reuse font cache" {
 test "Renderer loaded font draw paths accept TextSystem font loader" {
   let canvas = @graphics.Canvas::new(18, 14)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(32, 32, 2, 2, 8, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    32, 32, 2, 2, 8, 1,
+  )
   let system = @text.TextSystem::new()
   match
     system.register_font_data(

@@ -13,9 +13,9 @@ pub(all) enum ThemePreference {
 /// 稳定 id(用于 button_group 的 selected 匹配)。
 pub fn ThemePreference::id(self : ThemePreference) -> String {
   match self {
-    ThemePreference::System => "system"
-    ThemePreference::Light => "light"
-    ThemePreference::Dark => "dark"
+    System => "system"
+    Light => "light"
+    Dark => "dark"
   }
 }
 
@@ -23,9 +23,9 @@ pub fn ThemePreference::id(self : ThemePreference) -> String {
 /// 显示标签。
 pub fn ThemePreference::label(self : ThemePreference) -> String {
   match self {
-    ThemePreference::System => "System"
-    ThemePreference::Light => "Light"
-    ThemePreference::Dark => "Dark"
+    System => "System"
+    Light => "Light"
+    Dark => "Dark"
   }
 }
 
@@ -36,8 +36,8 @@ pub fn ThemePreference::label(self : ThemePreference) -> String {
 /// System 无显式主题时退回 neutral(与默认环境一致,字号相同)。
 pub fn theme_for_pref(pref : ThemePreference) -> @moui.Theme {
   match pref {
-    ThemePreference::System => @views.default_theme()
-    ThemePreference::Light => @views.light_theme()
-    ThemePreference::Dark => @views.dark_theme()
+    System => @views.default_theme()
+    Light => @views.light_theme()
+    Dark => @views.dark_theme()
   }
 }

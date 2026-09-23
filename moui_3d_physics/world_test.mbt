@@ -1,9 +1,9 @@
 ///|
 test "physics world allocates stable handles and validates descriptors" {
-  let world = PhysicsWorld::new()
-  let body = world.create_body(BodyDesc::new())
+  let world = @moui_3d_physics.PhysicsWorld::new()
+  let body = world.create_body(@moui_3d_physics.BodyDesc::new())
   let collider = world.create_collider(
-    ColliderDesc::new(shape=Shape::Ball(1.0), body=Some(body)),
+    @moui_3d_physics.ColliderDesc::new(shape=Ball(1.0), body=Some(body)),
   )
   assert_eq(body.value(), 1L)
   assert_eq(collider.value(), 1L)

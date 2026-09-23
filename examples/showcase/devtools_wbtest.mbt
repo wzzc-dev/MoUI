@@ -1,9 +1,7 @@
 ///|
 test "diagnostics landing carries a populated devtools inspector report" {
   let runtime = runtime(
-    host_summary=@host.HostCapabilitySummary::new(
-      backend=@host.HostBackendKind::Test,
-    ),
+    host_summary=@host.HostCapabilitySummary::new(backend=Test),
     route="diagnostics",
   )
   ignore(runtime.draw_commands())
@@ -19,15 +17,13 @@ test "diagnostics landing carries a populated devtools inspector report" {
 ///|
 test "diagnostics landing semantics include the devtools inspector card" {
   let runtime = runtime(
-    host_summary=@host.HostCapabilitySummary::new(
-      backend=@host.HostBackendKind::Test,
-    ),
+    host_summary=@host.HostCapabilitySummary::new(backend=Test),
     route="diagnostics",
   )
   ignore(runtime.draw_commands())
   let mut found = false
   match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) =>
+    Ok(Full(snapshot)) =>
       for node in snapshot.nodes() {
         if node.label.contains("DevTools Inspector") ||
           node.value.contains("DevTools Inspector") {

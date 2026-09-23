@@ -14,6 +14,6 @@ pub fn AppRuntime::dispatch_pointer_input(
   self : AppRuntime,
   event : @core.PointerEvent,
 ) -> InputDispatchResult {
-  (self.state.event_observer)(@core.AppEvent::Pointer(event))
+  (self.state.event_observer)(Pointer(event))
   self.state.dispatch_pointer_event(event)
 }

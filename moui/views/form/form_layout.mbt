@@ -6,9 +6,9 @@ pub fn[Msg] form(
   width? : Double,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  @layout.column(children, spacing~, align=@style.CrossAlign::Stretch)
+  @layout.column(children, spacing~, align=Stretch)
   .frame(width?)
-  .semantics_role(@core.SemanticsRole::Form)
+  .semantics_role(Form)
   .accessibility_label("Form")
   .theme(resolved_theme)
 }
@@ -33,7 +33,7 @@ pub fn[Msg] form_section(
     rows.push(
       @text.text(
         title,
-        role=@style.TextRole::Control,
+        role=Control,
         theme=resolved_theme,
         width=content_width,
         height=28.0,
@@ -44,7 +44,7 @@ pub fn[Msg] form_section(
     rows.push(
       @text.text(
         summary,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=content_width,
         height=24.0,
@@ -60,10 +60,10 @@ pub fn[Msg] form_section(
     rows.push(child)
   }
   @container.container(
-    @layout.column(rows, spacing~, align=@style.CrossAlign::Stretch),
+    @layout.column(rows, spacing~, align=Stretch),
     width?,
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding~,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }

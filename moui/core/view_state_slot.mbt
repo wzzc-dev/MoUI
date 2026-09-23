@@ -43,7 +43,7 @@ pub fn[T : ViewStateValue] ViewStateSlot::new(
 
 ///|
 pub fn ViewStateSlots::empty() -> ViewStateSlots {
-  { values: Map([]) }
+  { values: Map([]), }
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn[T : ViewStateValue] ViewStateContext::with_slot(
     _ => {
       let values = self.slots.values.copy()
       values[slot.key] = encoded
-      { ..self, slots: { values, } }
+      { ..self, slots: { values, }, }
     }
   }
 }
@@ -90,7 +90,7 @@ pub fn[T] ViewStateContext::without_slot(
   } else {
     let values = self.slots.values.copy()
     values.remove(slot.key)
-    { ..self, slots: { values, } }
+    { ..self, slots: { values, }, }
   }
 }
 

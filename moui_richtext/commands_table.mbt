@@ -21,7 +21,7 @@ fn markdown_editor_move_table_cell(
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -195,7 +195,7 @@ fn markdown_editor_table_cell_content_range(
         (chars[content_end - 1] == ' ' || chars[content_end - 1] == '\t') {
     content_end = content_end - 1
   }
-  { start: content_start, end: content_end }
+  { start: content_start, end: content_end, }
 }
 
 ///|
@@ -224,7 +224,7 @@ fn markdown_editor_insert_table_row_on_enter(
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -398,7 +398,7 @@ fn markdown_editor_remove_empty_trailing_table_row_at_caret(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue

@@ -1,12 +1,8 @@
 ///|
 test "wgpu web adapter is wasm-gc host-import only" {
-  let info = adapter_info()
-  assert_true(
-    info.renderer().backend == @render.RendererBackendKind::WebGpuWasm,
-  )
-  assert_true(
-    info.renderer().status == @render.RendererCapabilityStatus::Supported,
-  )
+  let info = @moui_web_renderer.adapter_info()
+  assert_true(info.renderer().backend == WebGpuWasm)
+  assert_true(info.renderer().status == Supported)
   inspect(info.renderer().can_render, content="true")
   inspect(info.renderer().can_resize, content="true")
   inspect(info.surface_contract().ready, content="true")
@@ -16,20 +12,18 @@ test "wgpu web adapter is wasm-gc host-import only" {
 
 ///|
 test "browser Canvas2D fallback provider shares the browser host port" {
-  let provider = create_browser_canvas2d_fallback_provider(bind=surface => {
-    let renderer = try! create_renderer(
+  let provider = @moui_web_renderer.create_browser_canvas2d_fallback_provider(bind=surface => {
+    let renderer = try! @moui_web_renderer.create_renderer(
       canvas_id=surface.surface_id(),
       logical_size=surface.metrics().logical_size,
       scale_factor=surface.metrics().scale_factor,
       port=test_port(created=Ref(0)),
     )
-    @render.RendererBindResult::Bound(renderer.to_renderer_session())
+    Bound(renderer.to_renderer_session())
   })
   inspect(provider.id, content="canvas2d")
-  assert_true(
-    provider.descriptor.backend == @render.RendererBackendKind::Canvas2DWasm,
-  )
-  assert_true(provider.descriptor.family == @render.RendererFamily::Canvas2D)
+  assert_true(provider.descriptor.backend == Canvas2DWasm)
+  assert_true(provider.descriptor.family == Canvas2D)
   let surface = @render.HostSurface::new(
     surface_id="moui-fallback-canvas",
     metrics=@core.SurfaceMetrics::from_logical(
@@ -38,8 +32,8 @@ test "browser Canvas2D fallback provider shares the browser host port" {
     ),
   )
   match provider.bind_surface(surface) {
-    @render.RendererBindResult::Bound(session) => session.dispose()
-    @render.RendererBindResult::Rejected(message) => fail(message)
+    Bound(session) => session.dispose()
+    Rejected(message) => fail(message)
   }
 }
 
@@ -47,7 +41,7 @@ test "browser Canvas2D fallback provider shares the browser host port" {
 test "wgpu web surface must be created through host port" {
   let created = Ref(0)
   let port = test_port(created~)
-  let surface = create_surface(
+  let surface = @moui_web_renderer.create_surface(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=320.0, height=180.0),
     scale_factor=1.5,
@@ -71,7 +65,7 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
   let resized = Ref(0)
   let submitted = Ref(0)
   let disposed = Ref(0)
-  let last_calls : Array[WebGpuHostCall] = []
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
   let port = test_port(
     created~,
     on_resize=() => resized.val = resized.val + 1,
@@ -84,7 +78,7 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
     },
     on_dispose=() => disposed.val = disposed.val + 1,
   )
-  let renderer = create_renderer(
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port~,
@@ -96,17 +90,17 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
     ),
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::DrawText({
+    DrawText({
       text: "Hello",
       frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
       font: @core.FontSpec::new(size=14.0),
       color: @core.Color::black(),
-      align: @core.TextAlign::TextCenter,
+      align: TextCenter,
     }),
   ])
   renderer.dispose()
@@ -115,17 +109,17 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
   inspect(disposed.val, content="1")
   inspect(renderer.present_count(), content="1")
   inspect(last_calls.length(), content="5")
-  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
-  assert_true(last_calls[1] is WebGpuHostCall::Clear(_))
-  assert_true(last_calls[2] is WebGpuHostCall::FillRect(_, _))
-  assert_true(last_calls[3] is WebGpuHostCall::DrawText(_))
-  assert_true(last_calls[4] is WebGpuHostCall::Present)
+  assert_true(last_calls[0] is BeginFrame(_))
+  assert_true(last_calls[1] is Clear(_))
+  assert_true(last_calls[2] is FillRect(_, _))
+  assert_true(last_calls[3] is DrawText(_))
+  assert_true(last_calls[4] is Present)
 }
 
 ///|
 test "wgpu web render_frame materializes the frame clear color" {
-  let last_calls : Array[WebGpuHostCall] = []
-  let renderer = create_renderer(
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_submit=calls => {
@@ -137,7 +131,7 @@ test "wgpu web render_frame materializes the frame clear color" {
     renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::FillRect(
+          FillRect(
             @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
             @core.Color::blue(),
           ),
@@ -148,24 +142,22 @@ test "wgpu web render_frame materializes the frame clear color" {
     ),
   )
   inspect(last_calls.length(), content="4")
-  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
-  guard last_calls[1] is WebGpuHostCall::Clear(color) else {
-    fail("expected frame clear call")
-  }
+  assert_true(last_calls[0] is BeginFrame(_))
+  guard last_calls[1] is Clear(color) else { fail("expected frame clear call") }
   assert_true(color == @core.Color::gray())
-  assert_true(last_calls[2] is WebGpuHostCall::FillRect(_, _))
-  assert_true(last_calls[3] is WebGpuHostCall::Present)
+  assert_true(last_calls[2] is FillRect(_, _))
+  assert_true(last_calls[3] is Present)
 }
 
 ///|
 test "wgpu web renderer fails startup when host lacks capabilities" {
   let result = try
-    create_renderer(
+    @moui_web_renderer.create_renderer(
       canvas_id="moui-web-wasm",
       logical_size=@core.Size::new(width=100.0, height=50.0),
       port=test_port(
         created=Ref(0),
-        capabilities=WebGpuHostCapabilities::new(
+        capabilities=@moui_web_renderer.WebGpuHostCapabilities::new(
           webgpu_available=false,
           adapter_ready=true,
           can_render=true,
@@ -175,7 +167,7 @@ test "wgpu web renderer fails startup when host lacks capabilities" {
   catch {
     e =>
       match e {
-        WebGpuHostError::Unavailable => Some(e)
+        Unavailable => Some(e)
         _ => fail("unexpected error type")
       }
   } noraise {
@@ -183,7 +175,7 @@ test "wgpu web renderer fails startup when host lacks capabilities" {
   }
 
   match result {
-    Some(WebGpuHostError::Unavailable) => ()
+    Some(Unavailable) => ()
     None => fail("expected unavailable host error")
     _ => fail("unexpected error type")
   }
@@ -208,7 +200,7 @@ test "wgpu web renderer exposes host backed text system" {
     },
     on_register=(_family, _data) => registered.val = registered.val + 1,
   )
-  let renderer = create_renderer(
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port~,
@@ -224,7 +216,7 @@ test "wgpu web renderer exposes host backed text system" {
   inspect(result.caret_positions.length(), content="3")
   renderer
   .text_system()
-  .register_font_data(@core.FontFamily::Name("Acme"), Bytes::make(4, b'\x00'))
+  .register_font_data(Name("Acme"), Bytes::make(4, b'\x00'))
   inspect(registered.val, content="1")
 }
 
@@ -256,7 +248,7 @@ fn web_adapter_test_measure(
 ///|
 test "wgpu web host text system conforms for mixed text carets and clamping" {
   let port = test_port(created=Ref(0), on_measure=web_adapter_test_measure)
-  let renderer = create_renderer(
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port~,
@@ -299,58 +291,58 @@ test "wgpu web host text system conforms for mixed text carets and clamping" {
 
 ///|
 test "wgpu web command bridge covers image command in host ABI" {
-  let calls = draw_commands_to_host_calls(
+  let calls = @moui_web_renderer.draw_commands_to_host_calls(
     [
-      @core.DrawCommand::DrawImage({
+      DrawImage({
         source: "logo.png",
         frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
         opacity: 1.0,
-        fit: @core.ImageFit::Contain,
+        fit: Contain,
       }),
     ],
     @core.Size::new(width=100.0, height=50.0),
   )
   inspect(calls.length(), content="3")
-  assert_true(calls[0] is WebGpuHostCall::BeginFrame(_))
-  assert_true(calls[1] is WebGpuHostCall::DrawImage(_))
-  assert_true(calls[2] is WebGpuHostCall::Present)
+  assert_true(calls[0] is BeginFrame(_))
+  assert_true(calls[1] is DrawImage(_))
+  assert_true(calls[2] is Present)
 }
 
 ///|
 test "wgpu web command bridge forwards DrawPath to host ABI" {
   let path = @core.PathSpec::new(
     verbs=[
-      @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=10.0)),
-      @core.PathVerb::Close,
+      MoveTo(@core.Point::new(x=0.0, y=0.0)),
+      LineTo(@core.Point::new(x=10.0, y=0.0)),
+      LineTo(@core.Point::new(x=0.0, y=10.0)),
+      Close,
     ],
     fill=Some(@core.Brush::solid(@core.Color::blue())),
   )
-  let calls = draw_commands_to_host_calls(
-    [@core.DrawCommand::DrawPath(path)],
+  let calls = @moui_web_renderer.draw_commands_to_host_calls(
+    [DrawPath(path)],
     @core.Size::new(width=100.0, height=50.0),
   )
   inspect(calls.length(), content="3")
-  assert_true(calls[0] is WebGpuHostCall::BeginFrame(_))
-  guard calls[1] is WebGpuHostCall::DrawPath(forwarded) else {
+  assert_true(calls[0] is BeginFrame(_))
+  guard calls[1] is DrawPath(forwarded) else {
     fail("expected DrawPath host call")
   }
   inspect(
     @render_common.tessellate_path(forwarded).vertices().length(),
     content="3",
   )
-  assert_true(calls[2] is WebGpuHostCall::Present)
+  assert_true(calls[2] is Present)
 }
 
 ///|
 test "wgpu web command bridge preserves radial DrawPath shader payload" {
   let path = @core.PathSpec::new(
     verbs=[
-      @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=10.0)),
-      @core.PathVerb::Close,
+      MoveTo(@core.Point::new(x=0.0, y=0.0)),
+      LineTo(@core.Point::new(x=10.0, y=0.0)),
+      LineTo(@core.Point::new(x=0.0, y=10.0)),
+      Close,
     ],
     fill=Some(
       @core.Brush::radial_gradient(
@@ -361,14 +353,14 @@ test "wgpu web command bridge preserves radial DrawPath shader payload" {
       ),
     ),
   )
-  let calls = draw_commands_to_host_calls(
-    [@core.DrawCommand::DrawPath(path)],
+  let calls = @moui_web_renderer.draw_commands_to_host_calls(
+    [DrawPath(path)],
     @core.Size::new(width=100.0, height=50.0),
   )
-  guard calls[1] is WebGpuHostCall::DrawPath(forwarded) else {
+  guard calls[1] is DrawPath(forwarded) else {
     fail("expected DrawPath host call")
   }
-  guard forwarded.fill is Some(@core.Brush::RadialGradient(gradient)) else {
+  guard forwarded.fill is Some(RadialGradient(gradient)) else {
     fail("expected radial path brush to stay visible to the host bridge")
   }
   assert_true(gradient.center_color == @core.Color::blue())
@@ -391,8 +383,8 @@ test "wgpu web command bridge preserves radial DrawPath shader payload" {
 
 ///|
 test "wgpu web renderer submits DrawPath without fallback diagnostics" {
-  let last_calls : Array[WebGpuHostCall] = []
-  let renderer = create_renderer(
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_submit=calls => {
@@ -403,13 +395,13 @@ test "wgpu web renderer submits DrawPath without fallback diagnostics" {
     }),
   )
   renderer.render([
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=10.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=0.0, y=0.0)),
+          LineTo(@core.Point::new(x=10.0, y=0.0)),
+          LineTo(@core.Point::new(x=0.0, y=10.0)),
+          Close,
         ],
         fill=Some(@core.Brush::solid(@core.Color::blue())),
       ),
@@ -417,33 +409,33 @@ test "wgpu web renderer submits DrawPath without fallback diagnostics" {
   ])
   inspect(renderer.last_fallback_plan().fallback_count(), content="0")
   inspect(last_calls.length(), content="3")
-  assert_true(last_calls[1] is WebGpuHostCall::DrawPath(_))
+  assert_true(last_calls[1] is DrawPath(_))
 }
 
 ///|
 test "wgpu web renderer exposes submitted image lifecycle diagnostics" {
-  let renderer = create_renderer(
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0)),
   )
   renderer.render([
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: "logo.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 0.75,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   let resources = renderer.image_resources()
   inspect(resources.length(), content="1")
   inspect(resources[0].source, content="logo.png")
-  assert_true(resources[0].status == @render.ImageResourceStatus::ImageLoading)
+  assert_true(resources[0].status == ImageLoading)
 }
 
 ///|
 test "wgpu web renderer refreshes ready image lifecycle from host" {
-  let renderer = create_renderer(
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_image_resource=source => {
@@ -451,17 +443,17 @@ test "wgpu web renderer refreshes ready image lifecycle from host" {
     }),
   )
   renderer.render([
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: "ready.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   let resources = renderer.image_resources()
   inspect(resources.length(), content="1")
   inspect(resources[0].source, content="ready.png")
-  assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
+  assert_true(resources[0].status == ImageReady)
   inspect(resources[0].width, content="64")
   inspect(resources[0].height, content="32")
   inspect(renderer.image_resources().length(), content="1")
@@ -469,7 +461,7 @@ test "wgpu web renderer refreshes ready image lifecycle from host" {
 
 ///|
 test "wgpu web renderer refreshes failed image lifecycle from host" {
-  let renderer = create_renderer(
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_image_resource=source => {
@@ -482,33 +474,33 @@ test "wgpu web renderer refreshes failed image lifecycle from host" {
     }),
   )
   renderer.render([
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: "missing.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   let resources = renderer.image_resources()
   inspect(resources.length(), content="1")
   inspect(resources[0].source, content="missing.png")
-  assert_true(resources[0].status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(resources[0].status == ImageFailed)
   inspect(resources[0].diagnostic, content="browser image load failed")
 }
 
 ///|
 test "wgpu web renderer applies image load completions" {
-  let renderer = create_renderer(
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0)),
   )
   renderer.render([
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: "async.png",
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ])
   let ready = renderer.apply_image_resource_load_completion(
@@ -517,7 +509,7 @@ test "wgpu web renderer applies image load completions" {
   assert_true(ready)
   let resources = renderer.image_resources()
   inspect(resources.length(), content="1")
-  assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
+  assert_true(resources[0].status == ImageReady)
   inspect(resources[0].width, content="90")
   inspect(resources[0].height, content="45")
   let stale = renderer.apply_image_resource_load_completion(
@@ -527,24 +519,21 @@ test "wgpu web renderer applies image load completions" {
     ),
   )
   assert_true(!stale)
-  assert_true(
-    renderer.image_resources()[0].status ==
-    @render.ImageResourceStatus::ImageReady,
-  )
+  assert_true(renderer.image_resources()[0].status == ImageReady)
 }
 
 ///|
 test "wgpu web command bridge preserves full draw command parity order" {
   let rect = @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0)
   let rounded = @core.RoundedRect::new(rect~, radius=6.0)
-  let calls = draw_commands_to_host_calls(
+  let calls = @moui_web_renderer.draw_commands_to_host_calls(
     [
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::FillRect(rect, @core.Color::blue()),
-      @core.DrawCommand::StrokeRect(rect, @core.Color::gray(), 1.0),
-      @core.DrawCommand::FillRoundedRect(rounded, @core.Color::gray()),
-      @core.DrawCommand::StrokeRoundedRect(rounded, @core.Color::blue(), 2.0),
-      @core.DrawCommand::FillRoundedRectBrush(
+      Clear(@core.Color::white()),
+      FillRect(rect, @core.Color::blue()),
+      StrokeRect(rect, @core.Color::gray(), 1.0),
+      FillRoundedRect(rounded, @core.Color::gray()),
+      StrokeRoundedRect(rounded, @core.Color::blue(), 2.0),
+      FillRoundedRectBrush(
         rounded,
         @core.Brush::linear_gradient(
           start=@core.Point::new(x=0.0, y=0.0),
@@ -553,65 +542,63 @@ test "wgpu web command bridge preserves full draw command parity order" {
           end_color=@core.Color::gray(),
         ),
       ),
-      @core.DrawCommand::StrokeRoundedRectBrush(
+      StrokeRoundedRectBrush(
         rounded,
         @core.Brush::solid(@core.Color::gray()),
         1.0,
       ),
-      @core.DrawCommand::DrawShadow(
+      DrawShadow(
         @core.ShadowSpec::new(
           rect=rounded,
           color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.4),
         ),
       ),
-      @core.DrawCommand::DrawText({
+      DrawText({
         text: "Hello",
         frame: rect,
         font: @core.FontSpec::new(size=14.0),
         color: @core.Color::black(),
-        align: @core.TextAlign::TextStart,
+        align: TextStart,
       }),
-      @core.DrawCommand::DrawImage({
+      DrawImage({
         source: "logo.png",
         frame: rect,
         opacity: 0.75,
-        fit: @core.ImageFit::Contain,
+        fit: Contain,
       }),
-      @core.DrawCommand::PushClip(rect),
-      @core.DrawCommand::PushRoundedClip(rounded),
-      @core.DrawCommand::PushTransform(@core.Transform2D::identity()),
-      @core.DrawCommand::PushOpacity(0.5),
-      @core.DrawCommand::PopOpacity,
-      @core.DrawCommand::PopTransform,
-      @core.DrawCommand::PopRoundedClip,
-      @core.DrawCommand::PopClip,
+      PushClip(rect),
+      PushRoundedClip(rounded),
+      PushTransform(@core.Transform2D::identity()),
+      PushOpacity(0.5),
+      PopOpacity,
+      PopTransform,
+      PopRoundedClip,
+      PopClip,
     ],
     @core.Size::new(width=100.0, height=50.0),
   )
   inspect(calls.length(), content="20")
-  assert_true(calls[0] is WebGpuHostCall::BeginFrame(_))
-  assert_true(calls[1] is WebGpuHostCall::Clear(_))
-  assert_true(calls[2] is WebGpuHostCall::FillRect(_, _))
-  assert_true(calls[3] is WebGpuHostCall::StrokeRect(_, _, _))
-  assert_true(calls[4] is WebGpuHostCall::FillRoundedRect(_, _))
-  assert_true(calls[5] is WebGpuHostCall::StrokeRoundedRect(_, _, _))
-  assert_true(calls[6] is WebGpuHostCall::FillRoundedRectBrush(_, _))
-  assert_true(calls[7] is WebGpuHostCall::StrokeRoundedRectBrush(_, _, _))
-  assert_true(calls[8] is WebGpuHostCall::DrawShadow(_))
-  guard calls[9] is WebGpuHostCall::DrawText({ align, .. }) else {
-    fail("expected text call")
-  }
-  assert_true(align == @core.TextAlign::TextStart)
-  assert_true(calls[10] is WebGpuHostCall::DrawImage(_))
-  assert_true(calls[11] is WebGpuHostCall::PushClip(_))
-  assert_true(calls[12] is WebGpuHostCall::PushRoundedClip(_))
-  assert_true(calls[13] is WebGpuHostCall::PushTransform(_))
-  assert_true(calls[14] is WebGpuHostCall::PushOpacity(_))
-  assert_true(calls[15] is WebGpuHostCall::PopOpacity)
-  assert_true(calls[16] is WebGpuHostCall::PopTransform)
-  assert_true(calls[17] is WebGpuHostCall::PopRoundedClip)
-  assert_true(calls[18] is WebGpuHostCall::PopClip)
-  assert_true(calls[19] is WebGpuHostCall::Present)
+  assert_true(calls[0] is BeginFrame(_))
+  assert_true(calls[1] is Clear(_))
+  assert_true(calls[2] is FillRect(_, _))
+  assert_true(calls[3] is StrokeRect(_, _, _))
+  assert_true(calls[4] is FillRoundedRect(_, _))
+  assert_true(calls[5] is StrokeRoundedRect(_, _, _))
+  assert_true(calls[6] is FillRoundedRectBrush(_, _))
+  assert_true(calls[7] is StrokeRoundedRectBrush(_, _, _))
+  assert_true(calls[8] is DrawShadow(_))
+  guard calls[9] is DrawText({ align, .. }) else { fail("expected text call") }
+  assert_true(align == TextStart)
+  assert_true(calls[10] is DrawImage(_))
+  assert_true(calls[11] is PushClip(_))
+  assert_true(calls[12] is PushRoundedClip(_))
+  assert_true(calls[13] is PushTransform(_))
+  assert_true(calls[14] is PushOpacity(_))
+  assert_true(calls[15] is PopOpacity)
+  assert_true(calls[16] is PopTransform)
+  assert_true(calls[17] is PopRoundedClip)
+  assert_true(calls[18] is PopClip)
+  assert_true(calls[19] is Present)
 }
 
 ///|
@@ -638,51 +625,28 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
     blur_radius=12.0,
     spread=2.0,
   )
-  let calls = draw_commands_to_host_calls(
+  let calls = @moui_web_renderer.draw_commands_to_host_calls(
     [
-      @core.DrawCommand::FillRoundedRectBrush(rounded, gradient),
-      @core.DrawCommand::StrokeRoundedRectBrush(rounded, gradient, 2.0),
-      @core.DrawCommand::FillRoundedRectBrush(rounded, radial),
-      @core.DrawCommand::StrokeRoundedRectBrush(rounded, radial, 3.0),
-      @core.DrawCommand::DrawShadow(shadow),
+      FillRoundedRectBrush(rounded, gradient),
+      StrokeRoundedRectBrush(rounded, gradient, 2.0),
+      FillRoundedRectBrush(rounded, radial),
+      StrokeRoundedRectBrush(rounded, radial, 3.0),
+      DrawShadow(shadow),
     ],
     @core.Size::new(width=120.0, height=80.0),
   )
   inspect(calls.length(), content="7")
-  assert_true(
-    calls[1]
-    is WebGpuHostCall::FillRoundedRectBrush(_, @core.Brush::LinearGradient(_)),
-  )
-  assert_true(
-    calls[2]
-    is WebGpuHostCall::StrokeRoundedRectBrush(
-      _,
-      @core.Brush::LinearGradient(_),
-      _
-    ),
-  )
-  assert_true(
-    calls[3]
-    is WebGpuHostCall::FillRoundedRectBrush(_, @core.Brush::RadialGradient(_)),
-  )
-  assert_true(
-    calls[4]
-    is WebGpuHostCall::StrokeRoundedRectBrush(
-      _,
-      @core.Brush::RadialGradient(_),
-      3.0
-    ),
-  )
-  assert_true(
-    calls[5]
-    is WebGpuHostCall::DrawShadow({ blur_radius: 12.0, spread: 2.0, .. }),
-  )
+  assert_true(calls[1] is FillRoundedRectBrush(_, LinearGradient(_)))
+  assert_true(calls[2] is StrokeRoundedRectBrush(_, LinearGradient(_), _))
+  assert_true(calls[3] is FillRoundedRectBrush(_, RadialGradient(_)))
+  assert_true(calls[4] is StrokeRoundedRectBrush(_, RadialGradient(_), 3.0))
+  assert_true(calls[5] is DrawShadow({ blur_radius: 12.0, spread: 2.0, .. }))
 }
 
 ///|
 test "wgpu web renderer forwards advanced layer filter and shader commands" {
-  let last_calls : Array[WebGpuHostCall] = []
-  let renderer = create_renderer(
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_submit=calls => {
@@ -693,11 +657,11 @@ test "wgpu web renderer forwards advanced layer filter and shader commands" {
     }),
   )
   renderer.render([
-    @core.DrawCommand::PushLayer(
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
-        blend_mode=@core.BlendMode::Screen,
-        mask=@core.LayerMask::RoundedMask(
+        blend_mode=Screen,
+        mask=RoundedMask(
           @core.RoundedRect::new(
             rect=@core.Rect::new(x=1.0, y=2.0, width=30.0, height=20.0),
             radius=4.0,
@@ -706,37 +670,37 @@ test "wgpu web renderer forwards advanced layer filter and shader commands" {
         offscreen=true,
       ),
     ),
-    @core.DrawCommand::PushFilter(
-      @core.FilterEffect::ColorMatrix([
+    PushFilter(
+      ColorMatrix([
         1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
         1.0, 0.0, 0.0, 0.0, 0.0,
       ]),
     ),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       ),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopLayer,
+    PopFilter,
+    PopLayer,
   ])
   let plan = renderer.last_fallback_plan()
   inspect(plan.fallback_count(), content="0")
   inspect(last_calls.length(), content="7")
-  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
-  assert_true(last_calls[1] is WebGpuHostCall::PushLayer(_))
-  assert_true(last_calls[2] is WebGpuHostCall::PushFilter(_))
-  assert_true(last_calls[3] is WebGpuHostCall::DrawShaderEffect(_))
-  assert_true(last_calls[4] is WebGpuHostCall::PopFilter)
-  assert_true(last_calls[5] is WebGpuHostCall::PopLayer)
-  assert_true(last_calls[6] is WebGpuHostCall::Present)
+  assert_true(last_calls[0] is BeginFrame(_))
+  assert_true(last_calls[1] is PushLayer(_))
+  assert_true(last_calls[2] is PushFilter(_))
+  assert_true(last_calls[3] is DrawShaderEffect(_))
+  assert_true(last_calls[4] is PopFilter)
+  assert_true(last_calls[5] is PopLayer)
+  assert_true(last_calls[6] is Present)
 }
 
 ///|
 test "wgpu web renderer keeps transform scope around layer commands" {
-  let last_calls : Array[WebGpuHostCall] = []
-  let renderer = create_renderer(
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_submit=calls => {
@@ -747,33 +711,29 @@ test "wgpu web renderer keeps transform scope around layer commands" {
     }),
   )
   renderer.render([
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=10.0, dy=20.0),
-    ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(opacity=0.75, offscreen=true),
-    ),
-    @core.DrawCommand::FillRect(
+    PushTransform(@core.Transform2D::translation(dx=10.0, dy=20.0)),
+    PushLayer(@core.LayerSpec::new(opacity=0.75, offscreen=true)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PopTransform,
+    PopLayer,
+    PopTransform,
   ])
   inspect(last_calls.length(), content="7")
-  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
-  assert_true(last_calls[1] is WebGpuHostCall::PushTransform(_))
-  assert_true(last_calls[2] is WebGpuHostCall::PushLayer(_))
-  assert_true(last_calls[3] is WebGpuHostCall::FillRect(_, _))
-  assert_true(last_calls[4] is WebGpuHostCall::PopLayer)
-  assert_true(last_calls[5] is WebGpuHostCall::PopTransform)
-  assert_true(last_calls[6] is WebGpuHostCall::Present)
+  assert_true(last_calls[0] is BeginFrame(_))
+  assert_true(last_calls[1] is PushTransform(_))
+  assert_true(last_calls[2] is PushLayer(_))
+  assert_true(last_calls[3] is FillRect(_, _))
+  assert_true(last_calls[4] is PopLayer)
+  assert_true(last_calls[5] is PopTransform)
+  assert_true(last_calls[6] is Present)
 }
 
 ///|
 test "wgpu web renderer keeps transform scope around filter commands" {
-  let last_calls : Array[WebGpuHostCall] = []
-  let renderer = create_renderer(
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_submit=calls => {
@@ -784,35 +744,33 @@ test "wgpu web renderer keeps transform scope around filter commands" {
     }),
   )
   renderer.render([
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=10.0, dy=20.0),
-    ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(2.0)),
-    @core.DrawCommand::FillRect(
+    PushTransform(@core.Transform2D::translation(dx=10.0, dy=20.0)),
+    PushFilter(Blur(2.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopTransform,
+    PopFilter,
+    PopTransform,
   ])
   inspect(last_calls.length(), content="7")
-  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
-  guard last_calls[1] is WebGpuHostCall::PushTransform(transform) else {
+  assert_true(last_calls[0] is BeginFrame(_))
+  guard last_calls[1] is PushTransform(transform) else {
     fail("expected push transform")
   }
   inspect(transform.tx, content="10")
   inspect(transform.ty, content="20")
-  assert_true(last_calls[2] is WebGpuHostCall::PushFilter(_))
-  assert_true(last_calls[3] is WebGpuHostCall::FillRect(_, _))
-  assert_true(last_calls[4] is WebGpuHostCall::PopFilter)
-  assert_true(last_calls[5] is WebGpuHostCall::PopTransform)
-  assert_true(last_calls[6] is WebGpuHostCall::Present)
+  assert_true(last_calls[2] is PushFilter(_))
+  assert_true(last_calls[3] is FillRect(_, _))
+  assert_true(last_calls[4] is PopFilter)
+  assert_true(last_calls[5] is PopTransform)
+  assert_true(last_calls[6] is Present)
 }
 
 ///|
 test "wgpu web renderer keeps transform scope around shader effects" {
-  let last_calls : Array[WebGpuHostCall] = []
-  let renderer = create_renderer(
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=100.0, height=50.0),
     port=test_port(created=Ref(0), on_submit=calls => {
@@ -823,27 +781,25 @@ test "wgpu web renderer keeps transform scope around shader effects" {
     }),
   )
   renderer.render([
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=10.0, dy=20.0),
-    ),
-    @core.DrawCommand::DrawShaderEffect(
+    PushTransform(@core.Transform2D::translation(dx=10.0, dy=20.0)),
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       ),
     ),
-    @core.DrawCommand::PopTransform,
+    PopTransform,
   ])
   inspect(last_calls.length(), content="5")
-  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
-  guard last_calls[1] is WebGpuHostCall::PushTransform(transform) else {
+  assert_true(last_calls[0] is BeginFrame(_))
+  guard last_calls[1] is PushTransform(transform) else {
     fail("expected push transform")
   }
   inspect(transform.tx, content="10")
   inspect(transform.ty, content="20")
-  assert_true(last_calls[2] is WebGpuHostCall::DrawShaderEffect(_))
-  assert_true(last_calls[3] is WebGpuHostCall::PopTransform)
-  assert_true(last_calls[4] is WebGpuHostCall::Present)
+  assert_true(last_calls[2] is DrawShaderEffect(_))
+  assert_true(last_calls[3] is PopTransform)
+  assert_true(last_calls[4] is Present)
 }
 
 ///|
@@ -852,8 +808,8 @@ test "wgpu web renderer keeps transform scope around shader effects" {
 /// retained declaration frame origin; replaying absolute capture coordinates
 /// leaves text outside the editor clip or stacked with a later paint.
 test "wgpu web retained layer hit repositions geometry for scroll moves" {
-  let last_calls : Array[WebGpuHostCall] = []
-  let renderer = create_renderer(
+  let last_calls : Array[@moui_web_renderer.WebGpuHostCall] = []
+  let renderer = @moui_web_renderer.create_renderer(
     canvas_id="moui-web-wasm",
     logical_size=@core.Size::new(width=320.0, height=200.0),
     port=test_port(created=Ref(0), on_submit=calls => {
@@ -881,8 +837,8 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
     renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::BeginRetainedLayer(capture_spec),
-          @core.DrawCommand::DrawText(
+          BeginRetainedLayer(capture_spec),
+          DrawText(
             @core.TextRun::new(
               text="line three",
               frame=capture_frame,
@@ -890,7 +846,7 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
               color=@core.Color::black(),
             ),
           ),
-          @core.DrawCommand::EndRetainedLayer(capture_spec.key),
+          EndRetainedLayer(capture_spec.key),
         ],
         damage=@core.DamageRegion::full("capture"),
         clear_color=@core.Color::white(),
@@ -902,8 +858,8 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
   let replay = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::BeginRetainedLayer(replay_spec),
-        @core.DrawCommand::DrawText(
+        BeginRetainedLayer(replay_spec),
+        DrawText(
           @core.TextRun::new(
             text="line three",
             frame=replay_frame,
@@ -911,7 +867,7 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
             color=@core.Color::black(),
           ),
         ),
-        @core.DrawCommand::EndRetainedLayer(replay_spec.key),
+        EndRetainedLayer(replay_spec.key),
       ],
       damage=@core.DamageRegion::full("replay"),
       clear_color=@core.Color::white(),
@@ -921,7 +877,7 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
   let mut text_y : Double? = None
   for call in last_calls {
     match call {
-      WebGpuHostCall::DrawText(run) => text_y = Some(run.frame.origin.y)
+      DrawText(run) => text_y = Some(run.frame.origin.y)
       _ => ()
     }
   }
@@ -934,21 +890,21 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
 ///|
 fn test_port(
   created~ : Ref[Int],
-  capabilities? : WebGpuHostCapabilities = required_capabilities(),
+  capabilities? : @moui_web_renderer.WebGpuHostCapabilities = @moui_web_renderer.required_capabilities(),
   on_resize? : () -> Unit = () => (),
   on_measure? : (@core.TextLayoutInput) -> @core.TextLayoutResult = input => {
     @core.TextSystem::fallback().measure_text(input)
   },
   on_register? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => (),
   on_image_resource? : (String) -> @render.ImageResourceRecord? = _ => None,
-  on_submit? : (Array[WebGpuHostCall]) -> Unit = _ => (),
+  on_submit? : (Array[@moui_web_renderer.WebGpuHostCall]) -> Unit = _ => (),
   on_dispose? : () -> Unit = () => (),
-) -> WebGpuHostRendererPort {
-  WebGpuHostRendererPort::new(
+) -> @moui_web_renderer.WebGpuHostRendererPort {
+  @moui_web_renderer.WebGpuHostRendererPort::new(
     capabilities=() => capabilities,
     create_surface=(canvas_id, metrics) => {
       created.val = created.val + 1
-      WebGpuHostSurface::new(canvas_id~, metrics~)
+      @moui_web_renderer.WebGpuHostSurface::new(canvas_id~, metrics~)
     },
     create_renderer=_surface => (),
     resize=_metrics => on_resize(),

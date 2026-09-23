@@ -14,18 +14,18 @@ pub(all) struct RedrawScheduler {
 
 ///|
 pub fn RedrawScheduler::new(schedule~ : () -> Unit) -> RedrawScheduler {
-  { state: RedrawSchedulerState::RedrawIdle, schedule }
+  { state: RedrawIdle, schedule, }
 }
 
 ///|
 pub fn RedrawScheduler::request(self : RedrawScheduler) -> Unit {
   match self.state {
     RedrawIdle => {
-      self.state = RedrawSchedulerState::RedrawScheduled
+      self.state = RedrawScheduled
       (self.schedule)()
     }
     RedrawScheduled | RedrawFollowUpScheduled => ()
-    RedrawInFrame => self.state = RedrawSchedulerState::RedrawFollowUpScheduled
+    RedrawInFrame => self.state = RedrawFollowUpScheduled
   }
 }
 
@@ -36,17 +36,17 @@ fn RedrawScheduler::request_dirty(self : RedrawScheduler) -> Unit {
 
 ///|
 pub fn RedrawScheduler::begin_redraw(self : RedrawScheduler) -> Unit {
-  self.state = RedrawSchedulerState::RedrawInFrame
+  self.state = RedrawInFrame
 }
 
 ///|
 pub fn RedrawScheduler::finish_redraw(self : RedrawScheduler) -> Unit {
   match self.state {
     RedrawFollowUpScheduled => {
-      self.state = RedrawSchedulerState::RedrawScheduled
+      self.state = RedrawScheduled
       (self.schedule)()
     }
-    _ => self.state = RedrawSchedulerState::RedrawIdle
+    _ => self.state = RedrawIdle
   }
 }
 
@@ -60,8 +60,7 @@ pub fn RedrawScheduler::set_schedule(
 
 ///|
 pub fn RedrawScheduler::is_redraw_requested(self : RedrawScheduler) -> Bool {
-  self.state == RedrawSchedulerState::RedrawScheduled ||
-  self.state == RedrawSchedulerState::RedrawFollowUpScheduled
+  self.state == RedrawScheduled || self.state == RedrawFollowUpScheduled
 }
 
 ///|

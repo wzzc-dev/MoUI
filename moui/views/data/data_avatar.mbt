@@ -8,7 +8,7 @@ pub fn[Msg] avatar(
   let resolved_theme = @common.views_ambient_theme(theme)
   match image {
     Some(source) =>
-      @core.View::from_node(AvatarImage::{ source, size })
+      @core.View::from_node(AvatarImage::{ source, size, })
       .corner_radius(size / 2.0)
       .clip()
       .accessibility_label(label)
@@ -16,7 +16,7 @@ pub fn[Msg] avatar(
       @container.container(
         @text.text(
           avatar_initials(label),
-          role=@style.TextRole::Control,
+          role=Control,
           theme=resolved_theme,
           width=size - 10.0,
           height=size - 10.0,
@@ -56,7 +56,7 @@ pub fn[Msg] avatar_group(
       @container.container(
         @text.text(
           "+\{remaining}",
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme=resolved_theme,
           width=size - 10.0,
           height=size - 10.0,
@@ -69,7 +69,7 @@ pub fn[Msg] avatar_group(
       ),
     )
   }
-  @layout.row(children, spacing=0.0, align=@style.CrossAlign::Center)
+  @layout.row(children, spacing=0.0, align=Center)
 }
 
 ///|

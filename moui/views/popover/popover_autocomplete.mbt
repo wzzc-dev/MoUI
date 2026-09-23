@@ -14,7 +14,7 @@ pub fn[Msg] autocomplete(
     query,
     on_input~,
     placeholder~,
-    variant=@style.TextFieldVariant::Outline,
+    variant=Outline,
     theme=resolved_theme,
     width~,
   )

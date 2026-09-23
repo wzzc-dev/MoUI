@@ -11,7 +11,7 @@ pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> AndroidSurfaceHandle {
 
 ///|
 pub fn AndroidSurfaceHandle::none() -> AndroidSurfaceHandle {
-  { raw: 0UL }
+  { raw: 0UL, }
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn AndroidSurfaceBinding::new(
     _metrics,
   ) => (),
 ) -> AndroidSurfaceBinding {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, }
 }
 
 ///|
@@ -202,7 +202,7 @@ pub fn android_readiness() -> AndroidBackendReadiness {
 pub fn backend_info() -> AndroidBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
-      backend=@host.HostBackendKind::Native,
+      backend=Native,
       description="Android window-hosted native host (HostCmd/ApplicationHandler)",
     ),
     capabilities: android_capability_matrix(),

@@ -316,7 +316,7 @@ pub fn Renderer::draw_font_bytes_cached_with_renderer_resources(
         text_key,
         paint,
       )
-      Ok({ did_parse_font: parse_result.did_parse(), text_result })
+      Ok({ did_parse_font: parse_result.did_parse(), text_result, })
     }
     Err(error) => Err(error)
   }
@@ -349,7 +349,7 @@ pub fn[L : @text.FontLoader] Renderer::draw_loaded_font_cached_with_renderer_res
         text_key,
         paint,
       )
-      Ok({ did_parse_font: load_result.did_parse(), text_result })
+      Ok({ did_parse_font: load_result.did_parse(), text_result, })
     }
     Err(error) => Err(error)
   }
@@ -391,7 +391,7 @@ pub fn Renderer::draw_font_bytes_fallback_line_cached_with_renderer_resources(
   let fallback_result = self.draw_text_fallback_line_cached_with_renderer_resources(
     faces, text, x, y, config, resources, text_key_prefix, paint,
   )
-  Ok({ parsed_font_count, font_cache_hit_count, fallback_result })
+  Ok({ parsed_font_count, font_cache_hit_count, fallback_result, })
 }
 
 ///|
@@ -430,7 +430,7 @@ pub fn Renderer::draw_font_bytes_fallback_line_atlas_with_renderer_resources(
   let fallback_result = self.draw_text_fallback_line_atlas_with_renderer_resources(
     faces, text, x, y, config, resources, glyph_key_prefix, paint,
   )
-  Ok({ parsed_font_count, font_cache_hit_count, fallback_result })
+  Ok({ parsed_font_count, font_cache_hit_count, fallback_result, })
 }
 
 ///|
@@ -540,7 +540,7 @@ pub fn Renderer::draw_font_bytes_atlas_with_renderer_resources(
         glyph_key_prefix,
         paint,
       )
-      Ok({ did_parse_font: parse_result.did_parse(), atlas_result })
+      Ok({ did_parse_font: parse_result.did_parse(), atlas_result, })
     }
     Err(error) => Err(error)
   }
@@ -573,7 +573,7 @@ pub fn[L : @text.FontLoader] Renderer::draw_loaded_font_atlas_with_renderer_reso
         glyph_key_prefix,
         paint,
       )
-      Ok({ did_parse_font: load_result.did_parse(), atlas_result })
+      Ok({ did_parse_font: load_result.did_parse(), atlas_result, })
     }
     Err(error) => Err(error)
   }
@@ -640,7 +640,7 @@ fn draw_text_face_cached(
     text_key, face, text, width, height, x, y, config,
   )
   draw_coverage_mask(canvas, result.get_mask(), paint)
-  { did_render_mask: result.did_render() }
+  { did_render_mask: result.did_render(), }
 }
 
 ///|
@@ -963,7 +963,7 @@ fn fallback_line_config(config : @text.LayoutConfig) -> @text.LayoutConfig {
     max_width=1000000000.0,
     font_size=config.font_size,
     line_height=config.line_height,
-    alignment=@text.TextAlign::Left,
+    alignment=Left,
     letter_spacing=config.letter_spacing,
     word_spacing=config.word_spacing,
   )

@@ -19,7 +19,7 @@ pub(all) struct CatalogItem {
 
 ///|
 pub fn CatalogGroup::new(id~ : String, title~ : String) -> CatalogGroup {
-  { id, title }
+  { id, title, }
 }
 
 ///|
@@ -30,9 +30,9 @@ pub fn CatalogItem::new(
   title~ : String,
   summary~ : String,
   badge? : String = "",
-  tone? : @views.BadgeTone = @views.BadgeTone::Neutral,
+  tone? : @views.BadgeTone = Neutral,
 ) -> CatalogItem {
-  { workspace, id, group_id, title, summary, badge, tone }
+  { workspace, id, group_id, title, summary, badge, tone, }
 }
 
 ///|

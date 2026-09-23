@@ -8,7 +8,7 @@ pub fn PickerStyle::new(
   radius~ : Double,
   popup_max_height~ : Double,
 ) -> PickerStyle {
-  { font, foreground, background, radius, popup_max_height }
+  { font, foreground, background, radius, popup_max_height, }
 }
 
 ///|

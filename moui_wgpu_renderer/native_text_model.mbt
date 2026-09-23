@@ -156,7 +156,7 @@ fn NativeFontCache::new() -> NativeFontCache {
 fn NativeFontCache::new_with_engine(
   text_engine : NativeTextEngine,
 ) -> NativeFontCache {
-  { text_engine, measure_cache: Map([]), layout_cache: Map([]) }
+  { text_engine, measure_cache: Map([]), layout_cache: Map([]), }
 }
 
 ///|
@@ -189,14 +189,14 @@ pub fn NativePlatformTextProvider::new(
     ()
   },
 ) -> NativePlatformTextProvider {
-  { id, measure, layout_run, raster_glyph, register_font_data }
+  { id, measure, layout_run, raster_glyph, register_font_data, }
 }
 
 ///|
 pub fn native_platform_text_engine(
   provider : NativePlatformTextProvider,
 ) -> NativeTextEngine {
-  { provider, fallback: None }
+  { provider, fallback: None, }
 }
 
 ///|
@@ -204,7 +204,7 @@ pub fn native_platform_text_engine_with_fallback(
   provider : NativePlatformTextProvider,
   fallback~ : NativeTextEngine,
 ) -> NativeTextEngine {
-  { provider, fallback: Some(fallback.provider) }
+  { provider, fallback: Some(fallback.provider), }
 }
 
 ///|
@@ -226,7 +226,7 @@ pub fn native_platform_glyph_key(
   cache_key~ : String,
   payload~ : Bytes,
 ) -> NativeGlyphKey {
-  { cache_key, payload }
+  { cache_key, payload, }
 }
 
 ///|
@@ -236,7 +236,7 @@ pub fn NativeGlyphPlacement::new(
   x~ : Double,
   y? : Double = 0.0,
 ) -> NativeGlyphPlacement {
-  { key, x, y }
+  { key, x, y, }
 }
 
 ///|
@@ -263,7 +263,7 @@ pub fn NativeTextLayout::new(
   caret_positions? : Array[Double] = [],
   glyphs? : Array[NativeGlyphPlacement] = [],
 ) -> NativeTextLayout {
-  { size, baseline, caret_positions, glyphs }
+  { size, baseline, caret_positions, glyphs, }
 }
 
 ///|
@@ -298,10 +298,10 @@ pub fn NativeRasterGlyph::new(
   height~ : Int,
   bearing_x~ : Int,
   bearing_y~ : Int,
-  format? : NativeRasterGlyphFormat = NativeRasterGlyphFormat::AlphaMask,
+  format? : NativeRasterGlyphFormat = AlphaMask,
   pixels~ : Bytes,
 ) -> NativeRasterGlyph {
-  { width, height, bearing_x, bearing_y, format, pixels }
+  { width, height, bearing_x, bearing_y, format, pixels, }
 }
 
 ///|

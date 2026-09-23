@@ -35,19 +35,13 @@ fn project_agent_event(
   event : AgentEvent,
 ) -> (Array[ChatMessage], Bool, String?) {
   match event {
-    UserMessageAdded(text) => ([ChatMessage::User(text)], false, None)
+    UserMessageAdded(text) => ([User(text)], false, None)
     AssistantMessageAdded(content, reasoning) =>
-      ([ChatMessage::Assistant(content, reasoning)], false, None)
+      ([Assistant(content, reasoning)], false, None)
     ToolResultAdded(tool_name, content, is_error, brief) =>
-      (
-        [ChatMessage::ToolResult(tool_name, content, is_error, brief)],
-        false,
-        None,
-      )
-    RuntimeNoticeAdded(text) =>
-      ([ChatMessage::RuntimeNotice(text)], false, None)
-    PermissionRequested(request) =>
-      ([ChatMessage::PermissionRequest(request)], false, None)
+      ([ToolResult(tool_name, content, is_error, brief)], false, None)
+    RuntimeNoticeAdded(text) => ([RuntimeNotice(text)], false, None)
+    PermissionRequested(request) => ([PermissionRequest(request)], false, None)
     TurnTerminal(status, message) => {
       let err = match status {
         Failed => Some(message)
@@ -112,12 +106,11 @@ fn append_user_chunk(
   if !out.is_empty() && message_id_matches(previous_id, next_id) {
     let index = out.length() - 1
     match out[index] {
-      User(text) =>
-        out[index] = ChatMessage::User(append_text_chunk(text, chunk))
-      _ => out.push(ChatMessage::User(chunk))
+      User(text) => out[index] = User(append_text_chunk(text, chunk))
+      _ => out.push(User(chunk))
     }
   } else {
-    out.push(ChatMessage::User(chunk))
+    out.push(User(chunk))
   }
   out
 }
@@ -134,14 +127,11 @@ fn append_assistant_chunk(
     let index = out.length() - 1
     match out[index] {
       Assistant(content, reasoning) =>
-        out[index] = ChatMessage::Assistant(
-          append_text_chunk(content, chunk),
-          reasoning,
-        )
-      _ => out.push(ChatMessage::Assistant(chunk, None))
+        out[index] = Assistant(append_text_chunk(content, chunk), reasoning)
+      _ => out.push(Assistant(chunk, None))
     }
   } else {
-    out.push(ChatMessage::Assistant(chunk, None))
+    out.push(Assistant(chunk, None))
   }
   out
 }
@@ -155,7 +145,7 @@ fn append_thought_chunk(
 ) -> Array[ChatMessage] {
   let out = Array::copy(messages)
   if out.is_empty() {
-    out.push(ChatMessage::Assistant("", Some(chunk)))
+    out.push(Assistant("", Some(chunk)))
     return out
   }
   let index = out.length() - 1
@@ -166,11 +156,11 @@ fn append_thought_chunk(
           Some(text) => Some(append_text_chunk(text, chunk))
           None => Some(chunk)
         }
-        out[index] = ChatMessage::Assistant(content, next_reasoning)
+        out[index] = Assistant(content, next_reasoning)
       } else {
-        out.push(ChatMessage::Assistant("", Some(chunk)))
+        out.push(Assistant("", Some(chunk)))
       }
-    _ => out.push(ChatMessage::Assistant("", Some(chunk)))
+    _ => out.push(Assistant("", Some(chunk)))
   }
   out
 }
@@ -222,7 +212,7 @@ fn CodeWorkspace::apply_agent_event(
 ) -> CodeWorkspace {
   match event {
     SessionListed(sessions) => { ..self, sessions, }
-    ActiveSessionChanged(id) => { ..self, active_session_id: Some(id) }
+    ActiveSessionChanged(id) => { ..self, active_session_id: Some(id), }
     UserMessageChunk(message_id, content) => {
       let messages = append_user_chunk(
         self.messages,
@@ -230,7 +220,7 @@ fn CodeWorkspace::apply_agent_event(
         message_id,
         content,
       )
-      let model = { ..self, messages, last_user_message_id: message_id }
+      let model = { ..self, messages, last_user_message_id: message_id, }
       model.scroll_to_latest_if_following()
     }
     AssistantMessageChunk(message_id, content) => {
@@ -240,7 +230,7 @@ fn CodeWorkspace::apply_agent_event(
         message_id,
         content,
       )
-      let model = { ..self, messages, last_assistant_message_id: message_id }
+      let model = { ..self, messages, last_assistant_message_id: message_id, }
       model.scroll_to_latest_if_following()
     }
     ThoughtMessageChunk(message_id, content) => {
@@ -250,23 +240,23 @@ fn CodeWorkspace::apply_agent_event(
         message_id,
         content,
       )
-      let model = { ..self, messages, last_thought_message_id: message_id }
+      let model = { ..self, messages, last_thought_message_id: message_id, }
       model.scroll_to_latest_if_following()
     }
     SessionModeStateChanged(modes) => {
       let merged_modes = match self.session_modes {
         Some(existing) =>
           if modes.available_modes.is_empty() {
-            { ..existing, current_mode_id: modes.current_mode_id }
+            { ..existing, current_mode_id: modes.current_mode_id, }
           } else {
             modes
           }
         None => modes
       }
-      { ..self, session_modes: Some(merged_modes) }
+      { ..self, session_modes: Some(merged_modes), }
     }
     SessionConfigOptionsChanged(options) =>
-      { ..self, session_config_options: options }
+      { ..self, session_config_options: options, }
     SessionInfoUpdated(session_id, title, updated_at) => {
       let sessions : Array[SessionSummary] = []
       for s in self.sessions {
@@ -288,7 +278,7 @@ fn CodeWorkspace::apply_agent_event(
         Some(text) => "Session updated: " + text
         None => "Session updated"
       }
-      { ..self, sessions, progress_notice: Some(notice) }
+      { ..self, sessions, progress_notice: Some(notice), }
     }
     SessionRebuilt(items) => {
       // Replace the whole message list.
@@ -311,7 +301,7 @@ fn CodeWorkspace::apply_agent_event(
       model.scroll_to_latest()
     }
     ProgressNotice(text) => {
-      let model = { ..self, progress_notice: Some(text) }
+      let model = { ..self, progress_notice: Some(text), }
       model.scroll_to_latest_if_following()
     }
     _ => {
@@ -329,7 +319,7 @@ fn CodeWorkspace::apply_agent_event(
       } else {
         self.progress_notice
       }
-      let model = { ..self, messages, is_streaming, progress_notice, error }
+      let model = { ..self, messages, is_streaming, progress_notice, error, }
       // Auto-scroll to bottom on new content.
       if !appended.is_empty() || is_terminal || self.is_streaming {
         model.scroll_to_latest_if_following()
@@ -350,9 +340,10 @@ fn CodeWorkspace::update(
   backend : AgentBackendRuntime,
 ) -> (CodeWorkspace, @moui.Effect[CodeMsg]) {
   match msg {
-    PromptChanged(value) => ({ ..self, prompt: value }, @moui.Effect::none())
-    SteerChanged(value) => ({ ..self, steer_text: value }, @moui.Effect::none())
-    ClearError => ({ ..self, error: None }, @moui.Effect::none())
+    PromptChanged(value) => ({ ..self, prompt: value, }, @moui.Effect::none())
+    SteerChanged(value) =>
+      ({ ..self, steer_text: value, }, @moui.Effect::none())
+    ClearError => ({ ..self, error: None, }, @moui.Effect::none())
     MessageListScrolled(offset) =>
       (
         {
@@ -387,7 +378,7 @@ fn CodeWorkspace::update(
       }
     ToggleModelPicker =>
       (
-        { ..self, model_picker_open: !self.model_picker_open },
+        { ..self, model_picker_open: !self.model_picker_open, },
         @moui.Effect::none(),
       )
     PickWorkspaceFolder
@@ -399,9 +390,9 @@ fn CodeWorkspace::update(
       (self, @moui.Effect::none())
     ThinkingChanged(thinking) =>
       (
-        { ..self, current_thinking: thinking },
+        { ..self, current_thinking: thinking, },
         backend.effect([SetThinking(thinking)], event => {
-          CodeMsg::ReceiveAgentEvent(event)
+          ReceiveAgentEvent(event)
         }),
       )
     CancelTurn =>
@@ -412,9 +403,7 @@ fn CodeWorkspace::update(
             is_streaming: false,
             progress_notice: Some("Cancelling agent turn..."),
           },
-          backend.effect([CancelTurn], event => {
-            CodeMsg::ReceiveAgentEvent(event)
-          }),
+          backend.effect([CancelTurn], event => ReceiveAgentEvent(event)),
         )
       } else {
         (self, @moui.Effect::none())
@@ -426,7 +415,7 @@ fn CodeWorkspace::update(
           session_modes: update_session_mode_state(self.session_modes, mode_id),
         },
         backend.effect([SetSessionMode(mode_id)], event => {
-          CodeMsg::ReceiveAgentEvent(event)
+          ReceiveAgentEvent(event)
         }),
       )
     SetSessionConfigOption(config_id, value) =>
@@ -440,7 +429,7 @@ fn CodeWorkspace::update(
           ),
         },
         backend.effect([SetSessionConfigOption(config_id, value)], event => {
-          CodeMsg::ReceiveAgentEvent(event)
+          ReceiveAgentEvent(event)
         }),
       )
     RespondPermission(request_id, outcome) =>
@@ -450,7 +439,7 @@ fn CodeWorkspace::update(
           messages: mark_permission_response(self.messages, request_id, outcome),
         },
         backend.effect([RespondPermission(request_id, outcome)], event => {
-          CodeMsg::ReceiveAgentEvent(event)
+          ReceiveAgentEvent(event)
         }),
       )
     SubmitPrompt => {
@@ -460,7 +449,7 @@ fn CodeWorkspace::update(
       } else {
         // Optimistically append the user message and start streaming.
         let messages = Array::copy(self.messages)
-        messages.push(ChatMessage::User(task))
+        messages.push(User(task))
         let model = {
           ..self,
           messages,
@@ -473,9 +462,7 @@ fn CodeWorkspace::update(
         let model = model.scroll_to_latest()
         (
           model,
-          backend.effect([SendTask(task)], event => {
-            CodeMsg::ReceiveAgentEvent(event)
-          }),
+          backend.effect([SendTask(task)], event => ReceiveAgentEvent(event)),
         )
       }
     }
@@ -493,9 +480,7 @@ fn CodeWorkspace::update(
         let model = model.scroll_to_latest()
         (
           model,
-          backend.effect([Steer(text)], event => {
-            CodeMsg::ReceiveAgentEvent(event)
-          }),
+          backend.effect([Steer(text)], event => ReceiveAgentEvent(event)),
         )
       }
     }
@@ -513,7 +498,7 @@ fn CodeWorkspace::update(
       (
         model,
         backend.effect([NewSession(name_prefix)], event => {
-          CodeMsg::ReceiveAgentEvent(event)
+          ReceiveAgentEvent(event)
         }),
       )
     }
@@ -529,9 +514,7 @@ fn CodeWorkspace::update(
       }
       (
         model,
-        backend.effect([SwitchSession(id)], event => {
-          CodeMsg::ReceiveAgentEvent(event)
-        }),
+        backend.effect([SwitchSession(id)], event => ReceiveAgentEvent(event)),
       )
     }
     ReceiveAgentEvent(event) =>
@@ -546,9 +529,9 @@ fn CodeWorkspace::update(
               } else {
                 let id = sessions[0].id
                 (
-                  { ..model, active_session_id: Some(id), messages: [] },
+                  { ..model, active_session_id: Some(id), messages: [], },
                   backend.effect([SwitchSession(id)], event => {
-                    CodeMsg::ReceiveAgentEvent(event)
+                    ReceiveAgentEvent(event)
                   }),
                 )
               }
@@ -565,7 +548,7 @@ fn update_session_mode_state(
   mode_id : String,
 ) -> AgentSessionModeState? {
   match state {
-    Some(s) => Some({ ..s, current_mode_id: mode_id })
+    Some(s) => Some({ ..s, current_mode_id: mode_id, })
     None => None
   }
 }
@@ -579,7 +562,7 @@ fn update_session_config_option(
   let out : Array[AgentSessionConfigOption] = []
   for option in options {
     if option.id == config_id {
-      out.push({ ..option, current_value: value })
+      out.push({ ..option, current_value: value, })
     } else {
       out.push(option)
     }
@@ -607,7 +590,7 @@ fn mark_permission_response(
     match msg {
       PermissionRequest(req) =>
         if req.request_id == request_id {
-          out.push(ChatMessage::RuntimeNotice(label))
+          out.push(RuntimeNotice(label))
         } else {
           out.push(msg)
         }
@@ -639,36 +622,42 @@ fn SettingsWorkspace::update(
         @moui.Effect::none(),
       )
     Scrolled(offset) =>
-      ({ ..self, scroll_offset: offset }, @moui.Effect::none())
+      ({ ..self, scroll_offset: offset, }, @moui.Effect::none())
     BackendChanged(kind) =>
-      ({ ..self, agent_backend: kind, save_notice: None }, @moui.Effect::none())
+      (
+        { ..self, agent_backend: kind, save_notice: None, },
+        @moui.Effect::none(),
+      )
     ApprovalChanged(policy) =>
       (
-        { ..self, approval_policy: policy, save_notice: None },
+        { ..self, approval_policy: policy, save_notice: None, },
         @moui.Effect::none(),
       )
     SandboxChanged(mode) =>
-      ({ ..self, sandbox_mode: mode, save_notice: None }, @moui.Effect::none())
+      ({ ..self, sandbox_mode: mode, save_notice: None, }, @moui.Effect::none())
     WorkingDirChanged(value) =>
-      ({ ..self, working_dir: value, save_notice: None }, @moui.Effect::none())
+      ({ ..self, working_dir: value, save_notice: None, }, @moui.Effect::none())
     SessionRootChanged(value) =>
-      ({ ..self, session_root: value, save_notice: None }, @moui.Effect::none())
+      (
+        { ..self, session_root: value, save_notice: None, },
+        @moui.Effect::none(),
+      )
     AcpCommandChanged(value) =>
-      ({ ..self, acp_command: value, save_notice: None }, @moui.Effect::none())
+      ({ ..self, acp_command: value, save_notice: None, }, @moui.Effect::none())
     AcpArgsChanged(value) =>
-      ({ ..self, acp_args: value, save_notice: None }, @moui.Effect::none())
+      ({ ..self, acp_args: value, save_notice: None, }, @moui.Effect::none())
     AcpProcessCwdChanged(value) =>
       (
-        { ..self, acp_process_cwd: value, save_notice: None },
+        { ..self, acp_process_cwd: value, save_notice: None, },
         @moui.Effect::none(),
       )
     FontSizeChanged(size) => {
       let clamped = if size < 10 { 10 } else if size > 24 { 24 } else { size }
-      ({ ..self, font_size: clamped, save_notice: None }, @moui.Effect::none())
+      ({ ..self, font_size: clamped, save_notice: None, }, @moui.Effect::none())
     }
     SelectProvider(id) =>
       (
-        { ..self, active_provider_id: Some(id), save_notice: None },
+        { ..self, active_provider_id: Some(id), save_notice: None, },
         @moui.Effect::none(),
       )
     AddProvider => {
@@ -736,10 +725,10 @@ fn SettingsWorkspace::update(
         @moui.Effect::none(),
       )
     NewModelInputChanged(value) =>
-      ({ ..self, new_model_id: value }, @moui.Effect::none())
+      ({ ..self, new_model_id: value, }, @moui.Effect::none())
     DetectModels(_) | ModelsDetected(_, _) => (self, @moui.Effect::none())
     AppearanceChanged(_) | SaveToDisk => (self, @moui.Effect::none())
-    DismissSaveNotice => ({ ..self, save_notice: None }, @moui.Effect::none())
+    DismissSaveNotice => ({ ..self, save_notice: None, }, @moui.Effect::none())
   }
 }
 
@@ -754,9 +743,9 @@ fn pick_workspace_folder_effect(
   )
   .effect(map=result => {
     match result {
-      Success(path) => CodeMsg::WorkspaceFolderSelected(Some(path))
-      Cancelled => CodeMsg::WorkspaceFolderSelected(None)
-      Failure(error) => CodeMsg::WorkspaceFolderPickFailed(error.message)
+      Success(path) => WorkspaceFolderSelected(Some(path))
+      Cancelled => WorkspaceFolderSelected(None)
+      Failure(error) => WorkspaceFolderPickFailed(error.message)
     }
   })
 }

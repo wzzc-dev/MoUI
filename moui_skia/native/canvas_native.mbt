@@ -1505,7 +1505,7 @@ pub fn Canvas::draw_text_utf8(
 
 ///|
 fn native_canvas_glyph_id_bytes(glyphs : Array[GlyphId]) -> Bytes {
-  let bytes : Array[Byte] = Array::new(capacity=glyphs.length() * 2)
+  let bytes : Array[Byte] = Array(capacity=glyphs.length() * 2)
   for glyph in glyphs {
     let value = glyph.to_uint16()
     bytes.push(value.shr(8).to_byte())
@@ -1516,7 +1516,7 @@ fn native_canvas_glyph_id_bytes(glyphs : Array[GlyphId]) -> Bytes {
 
 ///|
 fn native_canvas_glyph_position_bytes(positions : Array[@skia.Point]) -> Bytes {
-  let bytes : Array[Byte] = Array::new(capacity=positions.length() * 8)
+  let bytes : Array[Byte] = Array(capacity=positions.length() * 8)
   for position in positions {
     for byte in position.x.to_be_bytes() {
       bytes.push(byte)
@@ -1689,9 +1689,7 @@ fn native_replay_typeface_from_resources(
 fn shaped_glyph_run_native_glyph_ids(
   glyph_run : @skia.ShapedGlyphRunDescriptor,
 ) -> Array[GlyphId] {
-  let glyphs : Array[GlyphId] = Array::new(
-    capacity=glyph_run.glyph_ids.length(),
-  )
+  let glyphs : Array[GlyphId] = Array(capacity=glyph_run.glyph_ids.length())
   for glyph_id in glyph_run.glyph_ids {
     glyphs.push(GlyphId::new(glyph_id.clamp(min=0, max=65535).to_uint16()))
   }

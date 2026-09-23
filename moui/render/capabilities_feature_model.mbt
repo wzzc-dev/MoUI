@@ -80,10 +80,10 @@ pub fn RendererCommandFallback::new(
   index~ : Int,
   feature~ : RendererFeature,
   command~ : String,
-  kind? : RendererCommandFallbackKind = RendererCommandFallbackKind::PlannedFallback,
+  kind? : RendererCommandFallbackKind = PlannedFallback,
   reason~ : String,
 ) -> RendererCommandFallback {
-  { index, feature, command, kind, reason }
+  { index, feature, command, kind, reason, }
 }
 
 ///|
@@ -214,7 +214,7 @@ pub fn RendererBackendFeatureCapability::new(
   status~ : RendererFeatureStatus,
   note? : String = "",
 ) -> RendererBackendFeatureCapability {
-  { provider_id, feature, backend, status, note }
+  { provider_id, feature, backend, status, note, }
 }
 
 ///|
@@ -222,7 +222,7 @@ pub fn RendererFeatureCapability::new(
   feature~ : RendererFeature,
   providers~ : Array[RendererBackendFeatureCapability],
 ) -> RendererFeatureCapability {
-  { feature, providers }
+  { feature, providers, }
 }
 
 ///|
@@ -245,7 +245,7 @@ pub fn RendererFeatureCapability::status_for_provider(
 ) -> RendererFeatureStatus {
   match self.provider_capability(provider_id) {
     Some(capability) => capability.status
-    None => RendererFeatureStatus::Unavailable
+    None => Unavailable
   }
 }
 

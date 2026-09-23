@@ -6,63 +6,61 @@ pub fn sun_feature_status(
   feature : @render.RendererFeature,
 ) -> @render.RendererFeatureStatus {
   match feature {
-    @render.RendererFeature::Rect
-    | @render.RendererFeature::RoundedRect
-    | @render.RendererFeature::Clip
-    | @render.RendererFeature::Transform
-    | @render.RendererFeature::Opacity
-    | @render.RendererFeature::PathVector
-    | @render.RendererFeature::Gradient
-    | @render.RendererFeature::BlendMode
-    | @render.RendererFeature::Text
-    | @render.RendererFeature::Image
-    | @render.RendererFeature::Shadow
-    | @render.RendererFeature::LayerCompositing
-    | @render.RendererFeature::FilterEffect
-    | @render.RendererFeature::ShaderEffect
-    | @render.RendererFeature::AsyncImage =>
-      @render.RendererFeatureStatus::Supported
-    @render.RendererFeature::TextShaping | @render.RendererFeature::EmojiText =>
-      @render.RendererFeatureStatus::Partial
+    Rect
+    | RoundedRect
+    | Clip
+    | Transform
+    | Opacity
+    | PathVector
+    | Gradient
+    | BlendMode
+    | Text
+    | Image
+    | Shadow
+    | LayerCompositing
+    | FilterEffect
+    | ShaderEffect
+    | AsyncImage => Supported
+    TextShaping | EmojiText => Partial
   }
 }
 
 ///|
 pub fn sun_feature_note(feature : @render.RendererFeature) -> String {
   match feature {
-    @render.RendererFeature::Rect =>
+    Rect =>
       "Sun raster renders clear, rect fill, and rect stroke commands through moui_sun/graphics Canvas."
-    @render.RendererFeature::RoundedRect =>
+    RoundedRect =>
       "Sun raster renders rounded rect fills and strokes through moui_sun/graphics rounded path helpers."
-    @render.RendererFeature::Gradient =>
+    Gradient =>
       "Sun raster maps MoUI linear and radial brushes to moui_sun PaintShader for rect and path drawing; runtime evidence exists through PaintShader linear and radial gradient mapping."
-    @render.RendererFeature::Shadow =>
+    Shadow =>
       "Sun raster renders shadows by filling the rounded-rect shadow shape using SDF on an offscreen pixmap, applying separable box blur, and compositing onto the main canvas, producing real soft-shadow falloff that respects corner radius, blur_radius, and spread."
-    @render.RendererFeature::Text =>
+    Text =>
       "Sun raster uses moui_sun/text FontFace and CoverageMask when fonts are registered, clips glyph drawing to the TextRun frame, and falls back to debug placeholder glyphs otherwise."
-    @render.RendererFeature::Image =>
+    Image =>
       "Sun raster decodes PNG/BMP data URI and local-file image sources through moui_sun Pixmap codecs, decodes JPEG data URI and local-file image sources through mizchi/image RGBA normalization, caches them as moui_sun Pixmaps, and validates contain/cover/stretch/scale-down/fit-width/fit-height placement plus source-crop geometry before drawing through draw_quality_pixmap or draw_quality_pixmap_rect."
-    @render.RendererFeature::Clip =>
+    Clip =>
       "Sun raster applies transformed rectangular clips through moui_sun Canvas clip state; rounded clips render child commands into an offscreen canvas that inherits parent transform/clip state and composite back with per-pixel inverse-transform SDF rounded-rect masking; renderer-local tests cover 2x rectangular and rounded clip pixels."
-    @render.RendererFeature::Transform =>
+    Transform =>
       "Sun raster maps MoUI affine transform scopes to moui_sun Canvas transform state."
-    @render.RendererFeature::Opacity =>
+    Opacity =>
       "Sun raster applies scoped opacity by multiplying Paint opacity for supported primitive commands."
-    @render.RendererFeature::LayerCompositing =>
+    LayerCompositing =>
       "Sun raster composites PushLayer/PopLayer scopes by rendering child commands into an offscreen canvas that inherits parent transform/clip state and drawing the result with LayerSpec opacity, inverse-transform rectangular masks, inverse-transform rounded masks, and blend mode; renderer-local tests cover transform-scoped layers plus 2x layer and mask pixels. Complete BeginRetainedLayer/EndRetainedLayer declarations cache layer pixmaps with content-revision, scale-factor, and physical-size validation, skip payload on renderer-local hits, rebuild from the current payload on misses, apply surrounding opacity when drawing cached pixels, allow same-size frame moves to reuse cache entries, clear cached layers on resize and dispose, use FIFO eviction, expose a cached-layer diagnostic summary with live entry keys, cumulative hit/miss/update/evict counters, and admission records that skip churn-without-hit identities while keeping hot layers admitted, and have renderer-local pixel coverage for cache hit, miss, refresh, resize, and dispose lifecycle."
-    @render.RendererFeature::BlendMode =>
+    BlendMode =>
       "Sun raster maps all MoUI blend modes to moui_sun Paint blend modes and applies them when compositing PushLayer/PopLayer layer scopes; renderer-local pixel test covers Multiply."
-    @render.RendererFeature::FilterEffect =>
+    FilterEffect =>
       "Sun raster applies PushFilter/PopFilter scopes using offscreen canvases that inherit parent transform/clip state plus moui_sun PaintFilter pixmap-level color transforms for saturate, brightness, contrast, and color matrix effects; blur uses three-pass separable box blur (Gaussian approximation) on the layer pixmap before compositing; renderer-local tests cover transformed filter scopes."
-    @render.RendererFeature::PathVector =>
+    PathVector =>
       "Sun raster maps MoUI PathSpec verbs to moui_sun Path fill and stroke drawing."
-    @render.RendererFeature::ShaderEffect =>
+    ShaderEffect =>
       "Sun raster implements checker shader-effect builtin with canvas-level tile rendering; vignette builtin uses concentric fill_circle calls for circular falloff; unknown builtins fall back to the spec fallback brush with an unsupported-command diagnostic."
-    @render.RendererFeature::TextShaping =>
+    TextShaping =>
       "Sun raster text uses moui_sun/text FontFace, LayoutConfig, rasterize_text_face, and ShapingBuffer-backed layout metadata for font-metric baseline/height, direction/script-aware shaping inputs, paragraph metadata, and requested-family-first fallback chain resolution across registered faces; renderer-local tests cover mixed Latin-plus-emoji measurement, paragraph metadata, and frame-clipped text rendering."
-    @render.RendererFeature::EmojiText =>
+    EmojiText =>
       "moui_sun/text FontFallbackPlan selects registered fallback faces for emoji spans after requested family faces, so mixed Latin-plus-emoji Sun text can measure and draw without missing fallback diagnostics when coverage is registered; Sun raster renders the selected glyph coverage through FontFace and CoverageMask."
-    @render.RendererFeature::AsyncImage =>
+    AsyncImage =>
       "Sun raster decodes PNG/JPEG/BMP data URI and backend-supplied HostImageSource bytes through moui_sun Pixmap codecs plus the mizchi/image JPEG adapter. The Sun factory owns RendererImageDecoder completion creation; the backend performs no image decode. Sun records renderer-local loading/ready/failed/disposed snapshots, clears cached pixmaps on dispose, keeps repeat draws revision-stable, retries missing local files after they appear, and exposes callback/apply ports through RendererSession for second-frame repaint routing."
   }
 }
@@ -77,28 +75,28 @@ pub fn sun_feature_capabilities() -> Array[
 ] {
   let all_features = [
     @render.RendererFeature::Rect,
-    @render.RendererFeature::RoundedRect,
-    @render.RendererFeature::Gradient,
-    @render.RendererFeature::Shadow,
-    @render.RendererFeature::Text,
-    @render.RendererFeature::Image,
-    @render.RendererFeature::Clip,
-    @render.RendererFeature::Transform,
-    @render.RendererFeature::Opacity,
-    @render.RendererFeature::LayerCompositing,
-    @render.RendererFeature::BlendMode,
-    @render.RendererFeature::FilterEffect,
-    @render.RendererFeature::PathVector,
-    @render.RendererFeature::ShaderEffect,
-    @render.RendererFeature::TextShaping,
-    @render.RendererFeature::EmojiText,
-    @render.RendererFeature::AsyncImage,
+    RoundedRect,
+    Gradient,
+    Shadow,
+    Text,
+    Image,
+    Clip,
+    Transform,
+    Opacity,
+    LayerCompositing,
+    BlendMode,
+    FilterEffect,
+    PathVector,
+    ShaderEffect,
+    TextShaping,
+    EmojiText,
+    AsyncImage,
   ]
   all_features.map(feature => {
     @render.RendererBackendFeatureCapability::new(
       provider_id="sun-raster",
       feature~,
-      backend=@render.RendererBackendKind::SunRasterNative,
+      backend=SunRasterNative,
       status=sun_feature_status(feature),
       note=sun_feature_note(feature),
     )

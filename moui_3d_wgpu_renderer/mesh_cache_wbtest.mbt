@@ -6,7 +6,7 @@ priv struct MeshCacheDecision {
 
 ///|
 fn MeshCacheDecision::new() -> MeshCacheDecision {
-  { revision: -1L, uploads: 0 }
+  { revision: -1L, uploads: 0, }
 }
 
 ///|

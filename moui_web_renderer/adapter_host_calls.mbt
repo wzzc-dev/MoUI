@@ -3,67 +3,47 @@ pub fn draw_commands_to_host_calls(
   commands : Array[@core.DrawCommand],
   size : @core.Size,
 ) -> Array[WebGpuHostCall] {
-  let calls : Array[WebGpuHostCall] = [WebGpuHostCall::BeginFrame(size)]
+  let calls : Array[WebGpuHostCall] = [BeginFrame(size)]
   for command in commands {
     match command {
-      @core.DrawCommand::Clear(color) =>
-        calls.push(WebGpuHostCall::Clear(color))
-      @core.DrawCommand::FillRect(rect, color) =>
-        calls.push(WebGpuHostCall::FillRect(rect, color))
-      @core.DrawCommand::StrokeRect(rect, color, width) =>
-        calls.push(WebGpuHostCall::StrokeRect(rect, color, width))
-      @core.DrawCommand::FillRoundedRect(rect, color) =>
-        calls.push(WebGpuHostCall::FillRoundedRect(rect, color))
-      @core.DrawCommand::StrokeRoundedRect(rect, color, width) =>
-        calls.push(WebGpuHostCall::StrokeRoundedRect(rect, color, width))
-      @core.DrawCommand::FillRoundedRectBrush(rect, brush) =>
-        calls.push(WebGpuHostCall::FillRoundedRectBrush(rect, brush))
-      @core.DrawCommand::StrokeRoundedRectBrush(rect, brush, width) =>
-        calls.push(WebGpuHostCall::StrokeRoundedRectBrush(rect, brush, width))
-      @core.DrawCommand::DrawShadow(shadow) =>
-        calls.push(WebGpuHostCall::DrawShadow(shadow))
-      @core.DrawCommand::DrawText(run) =>
-        calls.push(WebGpuHostCall::DrawText(run))
-      @core.DrawCommand::DrawImage(run) =>
-        calls.push(WebGpuHostCall::DrawImage(run))
-      @core.DrawCommand::DrawPath(path) =>
-        calls.push(WebGpuHostCall::DrawPath(path))
-      @core.DrawCommand::PushClip(rect) =>
-        calls.push(WebGpuHostCall::PushClip(rect))
-      @core.DrawCommand::PopClip => calls.push(WebGpuHostCall::PopClip)
-      @core.DrawCommand::PushRoundedClip(rect) =>
-        calls.push(WebGpuHostCall::PushRoundedClip(rect))
-      @core.DrawCommand::PopRoundedClip =>
-        calls.push(WebGpuHostCall::PopRoundedClip)
-      @core.DrawCommand::PushTransform(transform) =>
-        calls.push(WebGpuHostCall::PushTransform(transform))
-      @core.DrawCommand::PopTransform =>
-        calls.push(WebGpuHostCall::PopTransform)
-      @core.DrawCommand::PushOpacity(opacity) =>
-        calls.push(WebGpuHostCall::PushOpacity(opacity))
-      @core.DrawCommand::PopOpacity => calls.push(WebGpuHostCall::PopOpacity)
-      @core.DrawCommand::PushLayer(layer) =>
-        calls.push(WebGpuHostCall::PushLayer(layer))
-      @core.DrawCommand::PopLayer => calls.push(WebGpuHostCall::PopLayer)
-      @core.DrawCommand::BeginRetainedLayer(spec) =>
+      Clear(color) => calls.push(Clear(color))
+      FillRect(rect, color) => calls.push(FillRect(rect, color))
+      StrokeRect(rect, color, width) =>
+        calls.push(StrokeRect(rect, color, width))
+      FillRoundedRect(rect, color) => calls.push(FillRoundedRect(rect, color))
+      StrokeRoundedRect(rect, color, width) =>
+        calls.push(StrokeRoundedRect(rect, color, width))
+      FillRoundedRectBrush(rect, brush) =>
+        calls.push(FillRoundedRectBrush(rect, brush))
+      StrokeRoundedRectBrush(rect, brush, width) =>
+        calls.push(StrokeRoundedRectBrush(rect, brush, width))
+      DrawShadow(shadow) => calls.push(DrawShadow(shadow))
+      DrawText(run) => calls.push(DrawText(run))
+      DrawImage(run) => calls.push(DrawImage(run))
+      DrawPath(path) => calls.push(DrawPath(path))
+      PushClip(rect) => calls.push(PushClip(rect))
+      PopClip => calls.push(PopClip)
+      PushRoundedClip(rect) => calls.push(PushRoundedClip(rect))
+      PopRoundedClip => calls.push(PopRoundedClip)
+      PushTransform(transform) => calls.push(PushTransform(transform))
+      PopTransform => calls.push(PopTransform)
+      PushOpacity(opacity) => calls.push(PushOpacity(opacity))
+      PopOpacity => calls.push(PopOpacity)
+      PushLayer(layer) => calls.push(PushLayer(layer))
+      PopLayer => calls.push(PopLayer)
+      BeginRetainedLayer(spec) =>
         calls.push(
-          WebGpuHostCall::PushLayer(
-            @core.LayerSpec::new(
-              mask=@core.LayerMask::RectMask(spec.frame),
-              offscreen=true,
-            ),
+          PushLayer(
+            @core.LayerSpec::new(mask=RectMask(spec.frame), offscreen=true),
           ),
         )
-      @core.DrawCommand::EndRetainedLayer(_) =>
-        calls.push(WebGpuHostCall::PopLayer)
-      @core.DrawCommand::PushFilter(filter) =>
-        calls.push(WebGpuHostCall::PushFilter(filter))
-      @core.DrawCommand::PopFilter => calls.push(WebGpuHostCall::PopFilter)
-      @core.DrawCommand::DrawShaderEffect(spec) =>
-        calls.push(WebGpuHostCall::DrawShaderEffect(spec))
+      EndRetainedLayer(_) => calls.push(PopLayer)
+      PushFilter(filter) => calls.push(PushFilter(filter))
+      PopFilter => calls.push(PopFilter)
+      DrawShaderEffect(spec) => calls.push(DrawShaderEffect(spec))
     }
   }
-  calls.push(WebGpuHostCall::Present)
+  calls.push(Present)
   calls
 }
 
@@ -72,13 +52,13 @@ fn ensure_required_capabilities(
   capabilities : WebGpuHostCapabilities,
 ) -> Unit raise WebGpuHostError {
   if !capabilities.webgpu_available() {
-    raise WebGpuHostError::Unavailable
+    raise Unavailable
   }
   if !capabilities.adapter_ready() {
-    raise WebGpuHostError::AdapterUnavailable
+    raise AdapterUnavailable
   }
   if !capabilities.can_render() {
-    raise WebGpuHostError::PipelineUnavailable
+    raise PipelineUnavailable
   }
 }
 
@@ -280,12 +260,12 @@ fn submit_push_rounded_clip(
   renderer : HostWebGpuRenderer,
   rounded : @core.RoundedRect,
 ) -> Unit raise WebGpuHostError {
-  let mask = layer_mask_payload(@core.LayerMask::RoundedMask(rounded))
+  let mask = layer_mask_payload(RoundedMask(rounded))
   raise_for_host_status(
     host_push_layer(
       renderer,
       1.0,
-      blend_mode_host_code(@core.BlendMode::SourceOver),
+      blend_mode_host_code(SourceOver),
       mask.kind,
       mask.rect.origin.x,
       mask.rect.origin.y,

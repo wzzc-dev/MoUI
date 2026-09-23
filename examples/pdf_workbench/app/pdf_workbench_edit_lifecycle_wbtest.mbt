@@ -29,7 +29,7 @@ test "pdf workbench discard edits restores clean preview state" {
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),
-    status: PdfWorkbenchStatus::Ready,
+    status: Ready,
     metadata_title_draft: document.metadata_title,
   }
   let edited = model
@@ -109,7 +109,7 @@ test "pdf workbench undo last edit replays remaining cleanly" {
   let model = {
     ..PdfWorkbenchModel::new(),
     document: Some(document),
-    status: PdfWorkbenchStatus::Ready,
+    status: Ready,
     metadata_title_draft: document.metadata_title,
   }
   let edited = model

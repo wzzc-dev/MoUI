@@ -88,15 +88,15 @@ pub fn Paint::new() -> Paint {
     color: Color::black(),
     shader: None,
     filter: None,
-    style: PaintStyle::Fill,
-    blend_mode: BlendMode::SourceOver,
+    style: Fill,
+    blend_mode: SourceOver,
     stroke_width: 1.0,
-    stroke_cap: StrokeCap::Butt,
-    stroke_join: StrokeJoin::Miter,
+    stroke_cap: Butt,
+    stroke_join: Miter,
     miter_limit: 4.0,
     stroke_dash_pattern: [],
     stroke_dash_offset: 0.0,
-    fill_rule: FillRule::NonZero,
+    fill_rule: NonZero,
     opacity: 1.0,
   }
 }
@@ -290,7 +290,7 @@ pub fn Paint::clear_stroke_dash(self : Paint) -> Paint {
 pub fn Paint::set_dotted_stroke(self : Paint) -> Paint {
   let dot_length = 0.0001
   let gap = (self.stroke_width * 2.0).max(dot_length)
-  self.stroke_cap = StrokeCap::Round
+  self.stroke_cap = Round
   self.stroke_dash_pattern = [dot_length, gap]
   self.stroke_dash_offset = 0.0
   self

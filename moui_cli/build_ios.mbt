@@ -457,7 +457,7 @@ fn build_ios(
       moonbit_c +
       ")",
     )
-    return Ok({ build_dir: build_dir_abs, output_artifact: "" })
+    return Ok({ build_dir: build_dir_abs, output_artifact: "", })
   }
   // 6. Resolve iOS SDK + clang/clang++ via xcrun.
   let sdk = options.sdk
@@ -720,5 +720,5 @@ fn build_ios(
   log_info(
     "This is build/install evidence only until a simulator/device smoke proves first frame, input, resize, and lifecycle.",
   )
-  Ok({ build_dir: build_dir_abs, output_artifact: final_output })
+  Ok({ build_dir: build_dir_abs, output_artifact: final_output, })
 }

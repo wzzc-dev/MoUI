@@ -13,7 +13,7 @@ pub fn LayoutMetrics::new(
   height~ : Double,
   baseline~ : Double,
 ) -> LayoutMetrics {
-  { width, height, baseline }
+  { width, height, baseline, }
 }
 
 ///|
@@ -42,11 +42,18 @@ pub fn LayoutConfig::new(
   max_width? : Double = 800.0,
   font_size? : Double = 16.0,
   line_height? : Double = 24.0,
-  alignment? : TextAlign = TextAlign::Left,
+  alignment? : TextAlign = Left,
   letter_spacing? : Double = 0.0,
   word_spacing? : Double = 0.0,
 ) -> LayoutConfig {
-  { max_width, font_size, line_height, alignment, letter_spacing, word_spacing }
+  {
+    max_width,
+    font_size,
+    line_height,
+    alignment,
+    letter_spacing,
+    word_spacing,
+  }
 }
 
 ///|
@@ -133,7 +140,7 @@ fn layout_text(
 
   for token in tokens {
     match token {
-      LayoutToken::LineBreak => {
+      LineBreak => {
         line_entries.push(
           make_layout_line_entry(
             current_line_glyphs,
@@ -147,7 +154,7 @@ fn layout_text(
         current_y = current_y + line_height
         has_visible_line = true
       }
-      LayoutToken::Text(word) => {
+      Text(word) => {
         // Calculate word width
         let word_width = calculate_word_width(font, word, scale, config)
         let is_space = is_space_token(word)
@@ -212,7 +219,7 @@ fn layout_text(
     0.0
   }
 
-  { lines: aligned_lines, total_width, total_height }
+  { lines: aligned_lines, total_width, total_height, }
 }
 
 ///|
@@ -222,7 +229,7 @@ fn make_layout_line_entry(
   y : Double,
   should_justify~ : Bool,
 ) -> LayoutLineEntry {
-  { line: { glyphs, width, y }, should_justify }
+  { line: { glyphs, width, y, }, should_justify, }
 }
 
 ///|
@@ -254,11 +261,10 @@ fn align_layout_line(
   should_justify~ : Bool,
 ) -> LayoutLine {
   match config.alignment {
-    TextAlign::Left => line
-    TextAlign::Center =>
-      shift_layout_line(line, alignment_extra(line, config) / 2.0)
-    TextAlign::Right => shift_layout_line(line, alignment_extra(line, config))
-    TextAlign::Justify =>
+    Left => line
+    Center => shift_layout_line(line, alignment_extra(line, config) / 2.0)
+    Right => shift_layout_line(line, alignment_extra(line, config))
+    Justify =>
       if should_justify {
         justify_layout_line(font, line, config)
       } else {
@@ -290,7 +296,7 @@ fn shift_layout_line(line : LayoutLine, offset : Double) -> LayoutLine {
       advance_width: glyph.advance_width,
     })
   }
-  { glyphs, width: line.width, y: line.y }
+  { glyphs, width: line.width, y: line.y, }
 }
 
 ///|
@@ -331,7 +337,7 @@ fn justify_layout_line(
       shift = shift + extra_per_space
     }
   }
-  { glyphs, width: config.max_width, y: line.y }
+  { glyphs, width: config.max_width, y: line.y, }
 }
 
 ///|
@@ -397,7 +403,7 @@ fn split_layout_tokens(text : String) -> Array[LayoutToken] {
             current_word = ""
             current_word_class = None
           }
-          tokens.push(LayoutToken::LineBreak)
+          tokens.push(LineBreak)
           if c is '\r' {
             match text.get_char(i + 1) {
               Some('\n') => i = i + 1
@@ -407,20 +413,20 @@ fn split_layout_tokens(text : String) -> Array[LayoutToken] {
         } else if c is ' ' || c is '\t' {
           // End current word
           if current_word.length() > 0 {
-            tokens.push(LayoutToken::Text(current_word))
+            tokens.push(Text(current_word))
             current_word = ""
             current_word_class = None
           }
           // Add space as separate word
           if c is ' ' {
-            tokens.push(LayoutToken::Text(" "))
+            tokens.push(Text(" "))
           }
         } else {
           let curr_class = get_line_break_class(c.to_int())
           match current_word_class {
             Some(prev_class) =>
               if should_split_unspaced_layout_token(prev_class, curr_class) {
-                tokens.push(LayoutToken::Text(current_word))
+                tokens.push(Text(current_word))
                 current_word = ""
                 current_word_class = None
               }
@@ -436,7 +442,7 @@ fn split_layout_tokens(text : String) -> Array[LayoutToken] {
 
   // Add final word
   if current_word.length() > 0 {
-    tokens.push(LayoutToken::Text(current_word))
+    tokens.push(Text(current_word))
   }
 
   tokens
@@ -458,12 +464,12 @@ fn should_split_unspaced_layout_token(
 ///|
 fn can_start_unspaced_layout_token(class : LineBreakClass) -> Bool {
   match class {
-    LineBreakClass::CL => false
-    LineBreakClass::CP => false
-    LineBreakClass::EX => false
-    LineBreakClass::IS => false
-    LineBreakClass::SY => false
-    LineBreakClass::NS => false
+    CL => false
+    CP => false
+    EX => false
+    IS => false
+    SY => false
+    NS => false
     _ => true
   }
 }
@@ -471,12 +477,12 @@ fn can_start_unspaced_layout_token(class : LineBreakClass) -> Bool {
 ///|
 fn is_unspaced_layout_break_class(class : LineBreakClass) -> Bool {
   match class {
-    LineBreakClass::ID => true
-    LineBreakClass::H2 => true
-    LineBreakClass::H3 => true
-    LineBreakClass::JL => true
-    LineBreakClass::JV => true
-    LineBreakClass::JT => true
+    ID => true
+    H2 => true
+    H3 => true
+    JL => true
+    JV => true
+    JT => true
     _ => false
   }
 }

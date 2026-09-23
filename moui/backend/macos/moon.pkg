@@ -27,7 +27,6 @@ import {
 
 import {
   "wzzc-dev/moui/views",
-  "wzzc-dev/moui/backend/common/host_modal",
 } for "test"
 
 import {

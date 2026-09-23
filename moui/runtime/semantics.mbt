@@ -212,13 +212,7 @@ fn semantics_state_for_element(
       None =>
         match info.role {
           Some(Checkbox | Switch | Radio) =>
-            Some(
-              if state.checked {
-                SemanticsCheckedState::Checked
-              } else {
-                SemanticsCheckedState::Unchecked
-              },
-            )
+            Some(if state.checked { Checked } else { Unchecked })
           _ => None
         }
     },
@@ -245,11 +239,11 @@ fn RuntimeState::route_for_element(
   let kinds = element.view_node.semantics_action_kinds()
   let actions : Array[SemanticActionRoute] = []
   for kind in kinds {
-    if kind != SemanticsActionKind::Focus {
-      actions.push({ kind, element, layout, environment, style })
+    if kind != Focus {
+      actions.push({ kind, element, layout, environment, style, })
     }
   }
-  let focus_element = if kinds.contains(SemanticsActionKind::Focus) {
+  let focus_element = if kinds.contains(Focus) {
     Some(element.id)
   } else {
     None
@@ -257,7 +251,7 @@ fn RuntimeState::route_for_element(
   if focus_element is Some(_) {
     context.next_focus_order = context.next_focus_order + 1
   }
-  { focus_element, actions }
+  { focus_element, actions, }
 }
 
 ///|
@@ -282,7 +276,7 @@ fn RuntimeState::boundary_node(
   let node : SemanticsNode = {
     node_id: id,
     semantic_id: info.semantic_id,
-    role: info.role.unwrap_or(SemanticsRole::Group),
+    role: info.role.unwrap_or(Group),
     level: info.level,
     url: info.url.unwrap_or(""),
     label: info.label.unwrap_or(""),
@@ -306,7 +300,7 @@ fn RuntimeState::boundary_node(
     },
     collection: info.collection,
     relations: SemanticsRelations::empty(),
-    live: info.live.unwrap_or(SemanticsLive::Off),
+    live: info.live.unwrap_or(Off),
     live_atomic: info.live_atomic.unwrap_or(false),
     actions: element.view_node.semantics_action_kinds(),
     focus_order,
@@ -363,7 +357,7 @@ fn RuntimeState::apply_semantics_overlay(
   let route = context.routes
     .get(target)
     .map(clone_semantics_node_route)
-    .unwrap_or({ focus_element: None, actions: [] })
+    .unwrap_or({ focus_element: None, actions: [], })
   match overlay_route.focus_element {
     Some(element_id) => route.focus_element = Some(element_id)
     None => ()
@@ -508,7 +502,7 @@ fn RuntimeState::merged_boundary_node(
               if current == next {
                 Some(current)
               } else {
-                Some(SemanticsCheckedState::Mixed)
+                Some(Mixed)
               }
           },
           expanded: state.expanded || descendant.state.expanded,
@@ -583,8 +577,7 @@ fn RuntimeState::build_semantics_for_element(
   self.stats.semantics_recompute_count = self.stats.semantics_recompute_count +
     1
   let info = element.view_node.semantics()
-  let roots : Array[SemanticsNodeId] = if info.composition ==
-    SemanticsComposition::Hidden {
+  let roots : Array[SemanticsNodeId] = if info.composition == Hidden {
     for child in element.children {
       child.invalidate_uncommitted_semantics()
     }
@@ -652,8 +645,7 @@ fn RuntimeState::build_semantics_for_element(
   element.semantics_cache.capture(roots, layout.frame, environment, style)
   element.dirty.needs_semantics = false
   element.refresh_descendant_dirty_flags()
-  if info.composition == SemanticsComposition::Hidden ||
-    info.composition == SemanticsComposition::MergeDescendants {
+  if info.composition == Hidden || info.composition == MergeDescendants {
     element.dirty.descendant_semantics = false
   }
   roots
@@ -722,11 +714,11 @@ fn deepest_modal_semantics_node(
 fn assign_semantics_focus_order(nodes : Array[SemanticsNode]) -> Unit {
   let mut next_order = 0
   for index, node in nodes {
-    if node.actions.contains(SemanticsActionKind::Focus) {
-      nodes[index] = { ..node, focus_order: Some(next_order) }
+    if node.actions.contains(Focus) {
+      nodes[index] = { ..node, focus_order: Some(next_order), }
       next_order = next_order + 1
     } else if node.focus_order is Some(_) {
-      nodes[index] = { ..node, focus_order: None }
+      nodes[index] = { ..node, focus_order: None, }
     }
   }
 }
@@ -796,7 +788,7 @@ fn resolve_semantics_relations_and_issues(
         let relations = SemanticsRelations::empty()
         resolve_semantics_relation_targets(
           node.node_id,
-          SemanticsRelationKind::LabelledBy,
+          LabelledBy,
           declaration.labelled_by,
           occurrences,
           relations.labelled_by,
@@ -804,7 +796,7 @@ fn resolve_semantics_relations_and_issues(
         )
         resolve_semantics_relation_targets(
           node.node_id,
-          SemanticsRelationKind::DescribedBy,
+          DescribedBy,
           declaration.described_by,
           occurrences,
           relations.described_by,
@@ -812,7 +804,7 @@ fn resolve_semantics_relations_and_issues(
         )
         resolve_semantics_relation_targets(
           node.node_id,
-          SemanticsRelationKind::Controls,
+          Controls,
           declaration.controls,
           occurrences,
           relations.controls,
@@ -820,7 +812,7 @@ fn resolve_semantics_relations_and_issues(
         )
         resolve_semantics_relation_targets(
           node.node_id,
-          SemanticsRelationKind::ErrorMessage,
+          ErrorMessage,
           declaration.error_message,
           occurrences,
           relations.error_message,
@@ -828,7 +820,7 @@ fn resolve_semantics_relations_and_issues(
         )
         resolve_semantics_relation_targets(
           node.node_id,
-          SemanticsRelationKind::ActiveDescendant,
+          ActiveDescendant,
           declaration.active_descendant,
           occurrences,
           relations.active_descendant,
@@ -925,7 +917,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
         context,
         self.element_tree.root,
         self.layout_tree.root,
-        ViewSemanticsInfo::new(composition=SemanticsComposition::Boundary),
+        ViewSemanticsInfo::new(composition=Boundary),
         roots,
         self.environment,
         ViewStyle::empty(),
@@ -1076,14 +1068,14 @@ fn RuntimeState::read_semantics(
   since : SemanticsGeneration?,
 ) -> Result[SemanticsRead, SemanticsReadError] {
   if self.closed {
-    return Err(SemanticsReadError::RuntimeClosed)
+    return Err(RuntimeClosed)
   }
   if !self.semantics.semantics_action_dispatching &&
     !self.semantics.semantics_commit_in_progress {
     self.commit_semantics()
   }
   if self.closed {
-    return Err(SemanticsReadError::RuntimeClosed)
+    return Err(RuntimeClosed)
   }
   match since {
     None => Ok(Full(self.semantics.committed_semantics))
@@ -1188,17 +1180,17 @@ fn RuntimeState::perform_semantics_action(
   request : PerformSemanticsActionRequest,
 ) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError] {
   if self.closed {
-    return Err(SemanticsActionDispatchError::RuntimeClosed)
+    return Err(RuntimeClosed)
   }
   if self.semantics.semantics_action_dispatching {
-    return Err(SemanticsActionDispatchError::ReentrantDispatch)
+    return Err(ReentrantDispatch)
   }
   if self.semantics.semantics_commit_in_progress {
-    return Err(SemanticsActionDispatchError::ReentrantDispatch)
+    return Err(ReentrantDispatch)
   }
   self.commit_semantics()
   if self.closed {
-    return Err(SemanticsActionDispatchError::RuntimeClosed)
+    return Err(RuntimeClosed)
   }
   let before = self.semantics.committed_semantics.generation
   match request.precondition {
@@ -1222,9 +1214,9 @@ fn RuntimeState::perform_semantics_action(
   }
   let route = self.semantics.semantics_tree.routes
     .get(node_id)
-    .unwrap_or({ focus_element: None, actions: [] })
+    .unwrap_or({ focus_element: None, actions: [], })
   match request.action {
-    SemanticsAction::Focus => {
+    Focus => {
       guard route.focus_element is Some(element_id) else {
         return Err(ActionUnavailable(request.target, kind))
       }
@@ -1286,7 +1278,7 @@ fn RuntimeState::perform_semantics_action(
   }
   self.semantics.semantics_action_dispatching = false
   if self.complete_semantics_destroy_request() {
-    Ok({ ..receipt, pending_work: false })
+    Ok({ ..receipt, pending_work: false, })
   } else {
     Ok(receipt)
   }

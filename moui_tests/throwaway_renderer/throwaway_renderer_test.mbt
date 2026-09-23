@@ -8,10 +8,10 @@ test "throwaway renderer registers through AppBuilder and binds in registry orde
   let builder = @runtime.run_app(
     "throwaway",
     @runtime.AppRuntime::new_view(
-      root=@views.text("throwaway"),
+      root=(@views.text("throwaway") : @core.View[Unit]),
       size=@core.Size::new(width=120.0, height=80.0),
     ),
-  ).render(throwaway_provider())
+  ).render(@throwaway_renderer.throwaway_provider())
   assert_eq(builder.renderer_providers.length(), 1)
   assert_eq(builder.renderer_providers[0].id(), "throwaway")
 
@@ -35,5 +35,5 @@ test "throwaway renderer registers through AppBuilder and binds in registry orde
   assert_true(session is Some(_))
   // The provider's bind side effect ran exactly once (registration-order
   // first match).
-  assert_eq(throwaway_bind_count(), 1)
+  assert_eq(@throwaway_renderer.throwaway_bind_count(), 1)
 }

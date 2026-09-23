@@ -49,13 +49,13 @@ test "pdfium adapter classifies bad pdf and invalid pages" {
     assert_true(true)
     return
   }
-  let bad = render_page({ ..pdfium_test_request(), bytes: b"not a pdf" })
+  let bad = render_page({ ..pdfium_test_request(), bytes: b"not a pdf", })
   match bad {
     @app.PdfWorkbenchRasterResponse::RasterPageFailed(reason) =>
       assert_true(reason.contains("load") || reason.contains("parse"))
     _ => fail("expected bad PDF to fail")
   }
-  let invalid = render_page({ ..pdfium_test_request(), page_number: 99 })
+  let invalid = render_page({ ..pdfium_test_request(), page_number: 99, })
   match invalid {
     @app.PdfWorkbenchRasterResponse::RasterPageFailed(reason) =>
       assert_true(reason.contains("range") || reason.contains("bounds"))

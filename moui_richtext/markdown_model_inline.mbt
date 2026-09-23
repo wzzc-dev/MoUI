@@ -32,7 +32,7 @@ fn markdown_inline(
   kind : MarkdownInlineKind,
   target? : String? = None,
 ) -> MarkdownInline {
-  { text, kind, target }
+  { text, kind, target, }
 }
 
 ///|
@@ -80,7 +80,7 @@ fn markdown_html_entity_decode_at(
     markdown_html_entity_char(
       String::from_array(chars[start + 1:end]).to_lower(),
     ) {
-    Some(ch) => Some({ ch, end: end + 1 })
+    Some(ch) => Some({ ch, end: end + 1, })
     None => None
   }
 }
@@ -265,42 +265,6 @@ fn markdown_parse_inlines_preserving_plain_html(
 }
 
 ///|
-/// Collapse neighbouring plain spans into one.
-///
-/// The backtick rule below emits an unclosed run as its own plain span between
-/// two parsed segments, so without this a paragraph with stray backticks would
-/// fragment into three times as many inlines — and therefore three times as
-/// many layout runs — as the text needs. Runs of plain text are joined in one
-/// pass rather than accumulated, so a paragraph made entirely of stray
-/// backticks stays linear.
-fn markdown_merge_adjacent_plain_inlines(
-  spans : Array[MarkdownInline],
-) -> Array[MarkdownInline] {
-  let merged : Array[MarkdownInline] = []
-  let pending : Array[String] = []
-  let flush = () => {
-    if pending.length() > 0 {
-      merged.push(markdown_inline(pending.join(""), Plain))
-      pending.clear()
-    }
-  }
-  for span in spans {
-    // A bare newline stays a span of its own. It is what gives a soft-wrapped
-    // paragraph one layout run per source line, and folding it into the
-    // surrounding text would hand the wrap a single run holding the whole
-    // block — the very shape this pass exists to avoid.
-    if span.kind == Plain && span.text != "\n" {
-      pending.push(span.text)
-    } else {
-      flush()
-      merged.push(span)
-    }
-  }
-  flush()
-  merged
-}
-
-///|
 /// End of the backtick run starting at `start` (exclusive).
 fn markdown_backtick_run_end(chars : Array[Char], start : Int) -> Int {
   let mut index = start
@@ -380,7 +344,7 @@ fn markdown_normalize_html_inlines(
   let normalized : Array[MarkdownInline] = []
   for inline in inlines {
     match inline.kind {
-      MarkdownInlineKind::HtmlInline =>
+      HtmlInline =>
         normalized.push({
           ..inline,
           text: markdown_html_inline_source(inline.text),
@@ -795,7 +759,7 @@ fn markdown_scan_reference_definition_line(
   if url == "" {
     return None
   }
-  Some({ label: markdown_reference_label_key(label), url })
+  Some({ label: markdown_reference_label_key(label), url, })
 }
 
 ///|

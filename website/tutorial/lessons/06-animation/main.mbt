@@ -92,7 +92,7 @@ fn view(model : Model) -> @moui.View[Unit] {
 ///|
 pub fn program() -> @moui.Program[Model, Unit] {
   @moui.Program::simple(
-    init={ label: "Driven by ViewPaintContext.now_ms" },
+    init={ label: "Driven by ViewPaintContext.now_ms", },
     update=(model, _) => model,
     view~,
   )

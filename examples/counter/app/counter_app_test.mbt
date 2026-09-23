@@ -1,19 +1,19 @@
 ///|
 test "counter update changes model" {
-  let incremented = update(Model::new(), Increment)
+  let incremented = @app.update(@app.Model::new(), Increment)
   inspect(incremented.count, content="1")
-  inspect(update(incremented, Decrement).count, content="0")
-  let reset_target = update(
-    update(update(Model::new(), Increment), Increment),
+  inspect(@app.update(incremented, Decrement).count, content="0")
+  let reset_target = @app.update(
+    @app.update(@app.update(@app.Model::new(), Increment), Increment),
     Increment,
   )
-  inspect(update(reset_target, Reset).count, content="0")
+  inspect(@app.update(reset_target, Reset).count, content="0")
 }
 
 ///|
 test "counter runtime increments from button click" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@app.program(),
     width=520.0,
     height=360.0,
   )
@@ -32,21 +32,17 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
     y=frame.origin.y + frame.size.height / 2.0,
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
   )
 }
 
 ///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+    command is DrawText({ text: value, .. }) && value == text
   })
 }
 
@@ -57,7 +53,7 @@ fn text_frame(
 ) -> @core.Rect? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         if value == text {
           return Some(frame)
         }

@@ -13,7 +13,7 @@ pub fn AcpNativeTransportConfig::new(
   process_cwd? : String = "",
   workspace? : String = ".",
 ) -> AcpNativeTransportConfig {
-  { command, args, process_cwd, workspace }
+  { command, args, process_cwd, workspace, }
 }
 
 ///|
@@ -37,8 +37,8 @@ pub struct AcpBackendBundle {
 pub fn acp_backend_bundle(
   config : AcpNativeTransportConfig,
 ) -> AcpBackendBundle {
-  let owner = { config, queue: @async.Queue(kind=Unbounded) }
-  { runtime: acp_backend_runtime(owner), owner }
+  let owner = { config, queue: Queue(kind=Unbounded), }
+  { runtime: acp_backend_runtime(owner), owner, }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn acp_backend_bundle_from_settings(
 fn acp_backend_runtime(owner : AcpBackendOwner) -> @app.AgentBackendRuntime {
   @app.agent_backend_runtime(run=(commands, emit) => {
     ignore(
-      owner.queue.try_put(AcpWork::RunCommands(commands, emit)) catch {
+      owner.queue.try_put(RunCommands(commands, emit)) catch {
         _ => false
       },
     )

@@ -51,13 +51,13 @@ priv struct PolygonBoundarySegment {
 ///|
 /// Create a new empty path
 pub fn Path::new() -> Path {
-  { segments: [], current_x: 0.0, current_y: 0.0, start_x: 0.0, start_y: 0.0 }
+  { segments: [], current_x: 0.0, current_y: 0.0, start_x: 0.0, start_y: 0.0, }
 }
 
 ///|
 /// Move to a point without drawing
 pub fn Path::move_to(self : Path, x : Double, y : Double) -> Path {
-  self.segments.push(PathSegment::MoveTo(x, y))
+  self.segments.push(MoveTo(x, y))
   self.current_x = x
   self.current_y = y
   self.start_x = x
@@ -68,7 +68,7 @@ pub fn Path::move_to(self : Path, x : Double, y : Double) -> Path {
 ///|
 /// Draw a line to a point
 pub fn Path::line_to(self : Path, x : Double, y : Double) -> Path {
-  self.segments.push(PathSegment::LineTo(x, y))
+  self.segments.push(LineTo(x, y))
   self.current_x = x
   self.current_y = y
   self
@@ -83,7 +83,7 @@ pub fn Path::quad_to(
   x : Double,
   y : Double,
 ) -> Path {
-  self.segments.push(PathSegment::QuadTo(cx, cy, x, y))
+  self.segments.push(QuadTo(cx, cy, x, y))
   self.current_x = x
   self.current_y = y
   self
@@ -100,7 +100,7 @@ pub fn Path::cubic_to(
   x : Double,
   y : Double,
 ) -> Path {
-  self.segments.push(PathSegment::CubicTo(cx1, cy1, cx2, cy2, x, y))
+  self.segments.push(CubicTo(cx1, cy1, cx2, cy2, x, y))
   self.current_x = x
   self.current_y = y
   self
@@ -109,7 +109,7 @@ pub fn Path::cubic_to(
 ///|
 /// Close the current subpath
 pub fn Path::close(self : Path) -> Path {
-  self.segments.push(PathSegment::Close)
+  self.segments.push(Close)
   self.current_x = self.start_x
   self.current_y = self.start_y
   self
@@ -479,7 +479,7 @@ pub fn Path::simplified(self : Path) -> Path {
 
   for segment in self.segments {
     match segment {
-      PathSegment::MoveTo(x, y) => {
+      MoveTo(x, y) => {
         remove_trailing_open_move(simplified)
         ignore(simplified.move_to(x, y))
         has_current = true
@@ -490,7 +490,7 @@ pub fn Path::simplified(self : Path) -> Path {
         subpath_has_draw = false
         can_merge_line = false
       }
-      PathSegment::LineTo(x, y) => {
+      LineTo(x, y) => {
         if has_current && !same_path_point(current_x, current_y, x, y) {
           let result = append_simplified_line_to(
             simplified, current_x, current_y, x, y, can_merge_line, merge_start_x,
@@ -504,7 +504,7 @@ pub fn Path::simplified(self : Path) -> Path {
         current_x = x
         current_y = y
       }
-      PathSegment::QuadTo(cx, cy, x, y) => {
+      QuadTo(cx, cy, x, y) => {
         if has_current {
           if is_straight_quad_segment(current_x, current_y, cx, cy, x, y) {
             let result = append_simplified_line_to(
@@ -525,7 +525,7 @@ pub fn Path::simplified(self : Path) -> Path {
         current_x = x
         current_y = y
       }
-      PathSegment::CubicTo(cx1, cy1, cx2, cy2, x, y) => {
+      CubicTo(cx1, cy1, cx2, cy2, x, y) => {
         if has_current {
           if is_straight_cubic_segment(
               current_x, current_y, cx1, cy1, cx2, cy2, x, y,
@@ -549,7 +549,7 @@ pub fn Path::simplified(self : Path) -> Path {
         current_x = x
         current_y = y
       }
-      PathSegment::Close => {
+      Close => {
         if has_current && !ends_with_close(simplified) {
           if !subpath_has_draw {
             remove_trailing_open_move(simplified)
@@ -580,26 +580,26 @@ pub fn Path::transformed(self : Path, transform : Transform) -> Path {
   let out = Path::new()
   for segment in self.segments {
     match segment {
-      PathSegment::MoveTo(x, y) => {
+      MoveTo(x, y) => {
         let (tx, ty) = transform.apply(x, y)
         ignore(out.move_to(tx, ty))
       }
-      PathSegment::LineTo(x, y) => {
+      LineTo(x, y) => {
         let (tx, ty) = transform.apply(x, y)
         ignore(out.line_to(tx, ty))
       }
-      PathSegment::QuadTo(cx, cy, x, y) => {
+      QuadTo(cx, cy, x, y) => {
         let (tcx, tcy) = transform.apply(cx, cy)
         let (tx, ty) = transform.apply(x, y)
         ignore(out.quad_to(tcx, tcy, tx, ty))
       }
-      PathSegment::CubicTo(cx1, cy1, cx2, cy2, x, y) => {
+      CubicTo(cx1, cy1, cx2, cy2, x, y) => {
         let (tcx1, tcy1) = transform.apply(cx1, cy1)
         let (tcx2, tcy2) = transform.apply(cx2, cy2)
         let (tx, ty) = transform.apply(x, y)
         ignore(out.cubic_to(tcx1, tcy1, tcx2, tcy2, tx, ty))
       }
-      PathSegment::Close => ignore(out.close())
+      Close => ignore(out.close())
     }
   }
   out
@@ -611,18 +611,17 @@ pub fn Path::control_bounds(self : Path) -> Rect? {
   let bounds = PathControlBounds::new()
   for segment in self.segments {
     match segment {
-      PathSegment::MoveTo(x, y) | PathSegment::LineTo(x, y) =>
-        bounds.add_point(x, y)
-      PathSegment::QuadTo(cx, cy, x, y) => {
+      MoveTo(x, y) | LineTo(x, y) => bounds.add_point(x, y)
+      QuadTo(cx, cy, x, y) => {
         bounds.add_point(cx, cy)
         bounds.add_point(x, y)
       }
-      PathSegment::CubicTo(cx1, cy1, cx2, cy2, x, y) => {
+      CubicTo(cx1, cy1, cx2, cy2, x, y) => {
         bounds.add_point(cx1, cy1)
         bounds.add_point(cx2, cy2)
         bounds.add_point(x, y)
       }
-      PathSegment::Close => ()
+      Close => ()
     }
   }
   bounds.to_rect()
@@ -680,16 +679,14 @@ pub fn Path::boolean(self : Path, other : Path, op : PathBooleanOp) -> Path? {
   let right = other.simplified()
   if path_boolean_operand_is_empty(left) {
     match op {
-      PathBooleanOp::Union | PathBooleanOp::Xor => return Some(right)
-      PathBooleanOp::Intersection | PathBooleanOp::Difference =>
-        return Some(Path::new())
+      Union | Xor => return Some(right)
+      Intersection | Difference => return Some(Path::new())
     }
   }
   if path_boolean_operand_is_empty(right) {
     match op {
-      PathBooleanOp::Union | PathBooleanOp::Difference | PathBooleanOp::Xor =>
-        return Some(left)
-      PathBooleanOp::Intersection => return Some(Path::new())
+      Union | Difference | Xor => return Some(left)
+      Intersection => return Some(Path::new())
     }
   }
   match left.rect_boolean(right, op) {
@@ -705,25 +702,25 @@ pub fn Path::boolean(self : Path, other : Path, op : PathBooleanOp) -> Path? {
 ///|
 /// Return the geometric union of two supported path shapes.
 pub fn Path::union(self : Path, other : Path) -> Path? {
-  self.boolean(other, PathBooleanOp::Union)
+  self.boolean(other, Union)
 }
 
 ///|
 /// Return the geometric intersection of two supported path shapes.
 pub fn Path::intersection(self : Path, other : Path) -> Path? {
-  self.boolean(other, PathBooleanOp::Intersection)
+  self.boolean(other, Intersection)
 }
 
 ///|
 /// Return the geometric difference of this path minus another supported shape.
 pub fn Path::difference(self : Path, other : Path) -> Path? {
-  self.boolean(other, PathBooleanOp::Difference)
+  self.boolean(other, Difference)
 }
 
 ///|
 /// Return the geometric symmetric difference of two supported path shapes.
 pub fn Path::xor(self : Path, other : Path) -> Path? {
-  self.boolean(other, PathBooleanOp::Xor)
+  self.boolean(other, Xor)
 }
 
 ///|
@@ -764,21 +761,20 @@ fn path_line_polygon_points(path : Path) -> Array[Point]? {
   let mut closed = false
   for i in 0..<path.segments.length() {
     match path.segments[i] {
-      PathSegment::MoveTo(x, y) => {
+      MoveTo(x, y) => {
         guard !has_move && points.length() == 0 else { return None }
         points.push(Point::new(x~, y~))
         has_move = true
       }
-      PathSegment::LineTo(x, y) => {
+      LineTo(x, y) => {
         guard has_move && !closed else { return None }
         points.push(Point::new(x~, y~))
       }
-      PathSegment::Close => {
+      Close => {
         guard has_move && i == path.segments.length() - 1 else { return None }
         closed = true
       }
-      PathSegment::QuadTo(_, _, _, _)
-      | PathSegment::CubicTo(_, _, _, _, _, _) => return None
+      QuadTo(_, _, _, _) | CubicTo(_, _, _, _, _, _) => return None
     }
   }
   guard has_move && points.length() > 1 else { return None }
@@ -821,25 +817,25 @@ fn convex_line_polygon_boolean_path(
           let subject = counter_clockwise_polygon_points(subject)
           let clip = counter_clockwise_polygon_points(clip)
           match op {
-            PathBooleanOp::Intersection =>
+            Intersection =>
               Some(
                 path_from_optional_polygon_points(
                   clip_polygon_by_convex_polygon(subject, clip),
                 ),
               )
-            PathBooleanOp::Difference =>
+            Difference =>
               Some(
                 path_from_polygon_fragments(
                   convex_polygon_boundary_boolean_fragments(subject, clip, op),
                 ),
               )
-            PathBooleanOp::Xor =>
+            Xor =>
               Some(
                 path_from_polygon_fragments(
                   convex_polygon_boundary_boolean_fragments(subject, clip, op),
                 ),
               )
-            PathBooleanOp::Union =>
+            Union =>
               Some(
                 path_from_polygon_fragments(
                   convex_polygon_boundary_boolean_fragments(subject, clip, op),
@@ -952,10 +948,10 @@ fn orthogonal_boolean_keeps_cell(
   let in_subject = point_inside_line_polygon_points(center, subject)
   let in_clip = point_inside_line_polygon_points(center, clip)
   match op {
-    PathBooleanOp::Union => in_subject || in_clip
-    PathBooleanOp::Intersection => in_subject && in_clip
-    PathBooleanOp::Difference => in_subject && !in_clip
-    PathBooleanOp::Xor => in_subject != in_clip
+    Union => in_subject || in_clip
+    Intersection => in_subject && in_clip
+    Difference => in_subject && !in_clip
+    Xor => in_subject != in_clip
   }
 }
 
@@ -987,7 +983,7 @@ fn convex_polygon_boundary_boolean_fragments(
 ) -> Array[Array[Point]] {
   let segments : Array[PolygonBoundarySegment] = []
   match op {
-    PathBooleanOp::Union => {
+    Union => {
       append_union_boundary_segments(
         segments,
         subject,
@@ -1001,17 +997,17 @@ fn convex_polygon_boundary_boolean_fragments(
         keep_same_direction_boundary=false,
       )
     }
-    PathBooleanOp::Difference => {
+    Difference => {
       append_difference_subject_boundary_segments(segments, subject, clip)
       append_difference_clip_boundary_segments(segments, clip, subject)
     }
-    PathBooleanOp::Xor => {
+    Xor => {
       append_difference_subject_boundary_segments(segments, subject, clip)
       append_difference_clip_boundary_segments(segments, clip, subject)
       append_difference_subject_boundary_segments(segments, clip, subject)
       append_difference_clip_boundary_segments(segments, subject, clip)
     }
-    PathBooleanOp::Intersection => ()
+    Intersection => ()
   }
   trace_polygon_boundary_segments(segments)
 }
@@ -1242,9 +1238,9 @@ fn push_polygon_boundary_segment(
 ) -> Unit {
   guard !same_polygon_point(from, to) else { return }
   if reverse {
-    out.push({ from: to, to: from })
+    out.push({ from: to, to: from, })
   } else {
-    out.push({ from, to })
+    out.push({ from, to, })
   }
 }
 
@@ -1683,10 +1679,10 @@ fn rect_boolean_keeps_cell(
   let in_a = a.contains(center_x, center_y)
   let in_b = b.contains(center_x, center_y)
   match op {
-    PathBooleanOp::Union => in_a || in_b
-    PathBooleanOp::Intersection => in_a && in_b
-    PathBooleanOp::Difference => in_a && !in_b
-    PathBooleanOp::Xor => in_a != in_b
+    Union => in_a || in_b
+    Intersection => in_a && in_b
+    Difference => in_a && !in_b
+    Xor => in_a != in_b
   }
 }
 
@@ -1772,10 +1768,10 @@ fn append_simplified_line_to(
       merge_start_x, merge_start_y, x, y, line_start_x, line_start_y,
     ) {
     replace_trailing_line_to(path, x, y)
-    { start_x: merge_start_x, start_y: merge_start_y }
+    { start_x: merge_start_x, start_y: merge_start_y, }
   } else {
     ignore(path.line_to(x, y))
-    { start_x: line_start_x, start_y: line_start_y }
+    { start_x: line_start_x, start_y: line_start_y, }
   }
 }
 
@@ -1854,7 +1850,7 @@ fn remove_trailing_open_move(path : Path) -> Unit {
   let length = path.segments.length()
   guard length > 0 else { return }
   match path.segments[length - 1] {
-    PathSegment::MoveTo(_, _) => ignore(path.segments.remove(length - 1))
+    MoveTo(_, _) => ignore(path.segments.remove(length - 1))
     _ => ()
   }
 }
@@ -1864,7 +1860,7 @@ fn replace_trailing_line_to(path : Path, x : Double, y : Double) -> Unit {
   let length = path.segments.length()
   guard length > 0 else { return }
   match path.segments[length - 1] {
-    PathSegment::LineTo(_, _) => {
+    LineTo(_, _) => {
       ignore(path.segments.remove(length - 1))
       ignore(path.line_to(x, y))
     }
@@ -1877,7 +1873,7 @@ fn remove_trailing_line_to_point(path : Path, x : Double, y : Double) -> Unit {
   let length = path.segments.length()
   guard length > 0 else { return }
   match path.segments[length - 1] {
-    PathSegment::LineTo(line_x, line_y) =>
+    LineTo(line_x, line_y) =>
       if same_path_point(line_x, line_y, x, y) {
         ignore(path.segments.remove(length - 1))
       }
@@ -1889,7 +1885,7 @@ fn remove_trailing_line_to_point(path : Path, x : Double, y : Double) -> Unit {
 fn ends_with_close(path : Path) -> Bool {
   let length = path.segments.length()
   guard length > 0 else { return false }
-  path.segments[length - 1] is PathSegment::Close
+  path.segments[length - 1] is Close
 }
 
 ///|
@@ -1908,7 +1904,7 @@ pub fn Path::contains_point(
 
 ///|
 fn PathControlBounds::new() -> PathControlBounds {
-  { has_bounds: false, min_x: 0.0, min_y: 0.0, max_x: 0.0, max_y: 0.0 }
+  { has_bounds: false, min_x: 0.0, min_y: 0.0, max_x: 0.0, max_y: 0.0, }
 }
 
 ///|

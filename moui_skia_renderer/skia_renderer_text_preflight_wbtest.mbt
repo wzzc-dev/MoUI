@@ -1,7 +1,7 @@
 ///|
 test "skia text descriptor preflight consumes fallback and shaping resource plans" {
   let preflight = skia_text_descriptor_preflight(
-    @core.FontSpec::new(size=18.0, weight=600, style=@core.FontStyle::Italic),
+    @core.FontSpec::new(size=18.0, weight=600, style=Italic),
     "MoUI",
   )
   assert_true(preflight.family_count > 0)
@@ -108,12 +108,10 @@ test "skia text visual order diagnostic records rtl glyph layout observation" {
 ///|
 test "skia font fallback request preserves family chain style and coverage character" {
   let font = @core.FontSpec::new(
-    families=@core.FontFamilyStack::system_ui().with_fallback(
-      @core.FontFamily::Emoji,
-    ),
+    families=@core.FontFamilyStack::system_ui().with_fallback(Emoji),
     size=18.0,
     weight=650,
-    style=@core.FontStyle::Italic,
+    style=Italic,
   )
   let request = skia_font_fallback_request(font, "A\u{1F642}B")
   inspect(request.character, content="128578")
@@ -136,10 +134,9 @@ test "skia font fallback request preserves family chain style and coverage chara
   inspect(request.style.weight, content="650")
   inspect(request.style.width, content="5")
   inspect(request.style.slant, content="1")
-  assert_true(request.resource_key().kind == @moui_skia.TypefaceResource)
+  assert_true(request.resource_key().kind == TypefaceResource)
   assert_true(
-    request.font_descriptor(size=18.0).resource_key().kind ==
-    @moui_skia.FontResource,
+    request.font_descriptor(size=18.0).resource_key().kind == FontResource,
   )
 }
 
@@ -199,39 +196,32 @@ test "skia text maturity preflight separates covered baseline from gaps" {
 
 ///|
 test "skia font resolver maps MoUI font families to platform candidates" {
-  assert_true(
-    skia_font_family_candidates(@core.FontFamily::Name("Acme Sans")) ==
-    ["Acme Sans"],
-  )
-  let system_ui = skia_font_family_candidates(@core.FontFamily::SystemUi)
+  assert_true(skia_font_family_candidates(Name("Acme Sans")) == ["Acme Sans"])
+  let system_ui = skia_font_family_candidates(SystemUi)
   assert_true(system_ui[0] == "Helvetica Neue")
   assert_true(system_ui[1] == "Segoe UI")
   assert_true(system_ui[2] == "Arial")
   assert_true(system_ui.contains("HarmonyOS Sans"))
   assert_true(system_ui.contains("HarmonyOS Sans SC"))
-  let sans = skia_font_family_candidates(@core.FontFamily::SansSerif)
+  let sans = skia_font_family_candidates(SansSerif)
   assert_true(sans[0] == "Helvetica Neue")
   assert_true(sans.contains("HarmonyOS Sans SC"))
   assert_true(sans.contains("DejaVu Sans"))
-  assert_true(
-    skia_font_family_candidates(@core.FontFamily::Serif).contains(
-      "Times New Roman",
-    ),
-  )
-  let mono = skia_font_family_candidates(@core.FontFamily::UiMonospace)
+  assert_true(skia_font_family_candidates(Serif).contains("Times New Roman"))
+  let mono = skia_font_family_candidates(UiMonospace)
   assert_true(
     mono.contains("Menlo") ||
     mono.contains("DejaVu Sans Mono") ||
     mono.contains("Liberation Mono"),
   )
-  let emoji = skia_font_family_candidates(@core.FontFamily::Emoji)
+  let emoji = skia_font_family_candidates(Emoji)
   assert_true(emoji[0] == "Apple Color Emoji")
   assert_true(emoji[1] == "Segoe UI Emoji")
   assert_true(emoji.contains("HMOS Color Emoji"))
   assert_true(emoji.contains("HarmonyOS Color Emoji"))
   assert_true(emoji.contains("Noto Color Emoji"))
-  assert_true(skia_font_slant(@core.FontStyle::Normal) == 0)
-  assert_true(skia_font_slant(@core.FontStyle::Italic) == 1)
+  assert_true(skia_font_slant(Normal) == 0)
+  assert_true(skia_font_slant(Italic) == 1)
 }
 
 ///|
@@ -246,27 +236,12 @@ test "skia emoji hints cover representative diagnostic samples" {
 test "skia emoji fallback is limited to the system font manager path" {
   let font = @core.FontSpec::new(size=18.0, weight=400)
   assert_true(
-    skia_emoji_fallback_draw_font(
-      font,
-      "\u{1F642}",
-      SkiaFontResolution::EmptyTypeface,
-    )
-    is None,
+    skia_emoji_fallback_draw_font(font, "\u{1F642}", EmptyTypeface) is None,
   )
   assert_true(
-    skia_emoji_fallback_draw_font(
-      font,
-      "Plain MoUI",
-      SkiaFontResolution::SystemFontMgr,
-    )
-    is None,
+    skia_emoji_fallback_draw_font(font, "Plain MoUI", SystemFontMgr) is None,
   )
-  match
-    skia_emoji_fallback_draw_font(
-      font,
-      "\u{1F642}",
-      SkiaFontResolution::SystemFontMgr,
-    ) {
+  match skia_emoji_fallback_draw_font(font, "\u{1F642}", SystemFontMgr) {
     Some(emoji_font) => assert_true(emoji_font.size() == 18.0)
     None =>
       assert_true(!skia_available() || skia_system_emoji_font(font) is None)
@@ -283,7 +258,7 @@ test "skia font resolver preserves fallback availability" {
     families=@core.FontFamilyStack::named("Definitely Missing MoUI Font"),
     size=15.0,
     weight=700,
-    style=@core.FontStyle::Italic,
+    style=Italic,
   )
   match skia_test_font(missing) {
     Some(font) => assert_true(font.size() == 15.0)
@@ -294,12 +269,7 @@ test "skia font resolver preserves fallback availability" {
 ///|
 test "skia empty typeface resolution avoids system font manager" {
   let font_spec = @core.FontSpec::new(size=14.0, weight=400)
-  match
-    skia_font_with_resolution_for_text(
-      font_spec,
-      "",
-      SkiaFontResolution::EmptyTypeface,
-    ) {
+  match skia_font_with_resolution_for_text(font_spec, "", EmptyTypeface) {
     None => assert_true(!skia_available())
     Some(font) => {
       assert_true(font.size() == 14.0)
@@ -319,7 +289,7 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
       size=@core.Size::new(width=1.0, height=1.0),
     ),
     target,
-    font_resolution=SkiaFontResolution::EmptyTypeface,
+    font_resolution=EmptyTypeface,
   ) catch {
     _ => return ()
   }
@@ -328,7 +298,7 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
     skia_draw_text_payload_for_resolution(
       @core.FontSpec::new(size=18.0, weight=400),
       "Slim",
-      SkiaFontResolution::EmptyTypeface,
+      EmptyTypeface,
     ) {
     Some((font, run)) => {
       assert_true(font.size() == 18.0)
@@ -351,14 +321,14 @@ test "skia text drawing clips glyphs to the TextRun frame" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawText(
+    Clear(@core.Color::white()),
+    DrawText(
       @core.TextRun::new(
         text="MMMMMMMM",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=36.0),
         font=@core.FontSpec::new(size=18.0, weight=400),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   ]) catch {

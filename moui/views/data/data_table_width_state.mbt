@@ -42,12 +42,12 @@ pub fn ColumnWidthState::resize(
   let clamped = @common.clamp_view_double(width, self.min_width, self.max_width)
   for index, column in next {
     if column.id == id {
-      next[index] = { ..column, width: clamped }
-      return { ..self, widths: next }
+      next[index] = { ..column, width: clamped, }
+      return { ..self, widths: next, }
     }
   }
   next.push(table_column(id~, label=id, width=clamped))
-  { ..self, widths: next }
+  { ..self, widths: next, }
 }
 
 ///|

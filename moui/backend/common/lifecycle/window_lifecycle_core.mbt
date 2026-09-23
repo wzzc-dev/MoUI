@@ -23,7 +23,7 @@ priv struct WindowLifecycleCore {
 
 ///|
 fn WindowLifecycleCore::new() -> WindowLifecycleCore {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|
@@ -37,7 +37,7 @@ fn WindowLifecycleCore::register(
       return false
     }
   }
-  self.entries.push({ id, state: WindowLifecycleState::Active })
+  self.entries.push({ id, state: Active, })
   true
 }
 
@@ -50,12 +50,11 @@ fn WindowLifecycleCore::begin_close(
   for entry in self.entries {
     if entry.id == id {
       match entry.state {
-        WindowLifecycleState::Active => {
-          entry.state = WindowLifecycleState::Closing
+        Active => {
+          entry.state = Closing
           return true
         }
-        WindowLifecycleState::Closing | WindowLifecycleState::Closed =>
-          return false
+        Closing | Closed => return false
       }
     }
   }
@@ -71,12 +70,12 @@ fn WindowLifecycleCore::finish_close(
   for entry in self.entries {
     if entry.id == id {
       match entry.state {
-        WindowLifecycleState::Closing => {
-          entry.state = WindowLifecycleState::Closed
+        Closing => {
+          entry.state = Closed
           return true
         }
-        WindowLifecycleState::Closed => return false
-        WindowLifecycleState::Active => return false
+        Closed => return false
+        Active => return false
       }
     }
   }

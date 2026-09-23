@@ -120,9 +120,9 @@ test "merge settings file into workspace" {
   inspect_active_provider_id(merged.active_provider_id, "deepseek")
   inspect(merged.working_dir, content="/tmp/ws")
   inspect(merged.session_root, content="/tmp/sessions")
-  inspect(merged.agent_backend == AgentBackendKind::Acp, content="true")
+  inspect(merged.agent_backend == Acp, content="true")
   inspect(merged.acp_command, content="agent")
   inspect(merged.acp_args, content="--stdio")
   inspect(merged.font_size, content="12")
-  inspect(merged.approval_policy == ApprovalPolicy::NeverAsk, content="true")
+  inspect(merged.approval_policy == NeverAsk, content="true")
 }

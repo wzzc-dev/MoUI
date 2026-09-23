@@ -9,7 +9,7 @@ fn[Msg] handle_text_field_event(
   on_clear~ : Msg?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       handle_text_field_pointer(
         ctx,
         value~,
@@ -19,9 +19,9 @@ fn[Msg] handle_text_field_event(
         on_clear~,
         event,
       )
-    @core.AppEvent::Keyboard(event) =>
+    Keyboard(event) =>
       handle_text_field_keyboard(ctx, value~, on_input~, on_submit~, event)
-    @core.AppEvent::TextInput(event) =>
+    TextInput(event) =>
       view_text_input_result(ctx, value~, on_input~, event, record_history=true)
     _ => @core.ViewEventResult::ignored()
   }
@@ -46,8 +46,7 @@ fn[Msg] handle_text_field_pointer(
   let text = value
   if search_bar && text != "" {
     let clear_frame = searchbar_clear_frame(ctx.frame)
-    if event.phase == @core.PointerPhase::Up &&
-      clear_frame.contains(event.position) {
+    if event.phase == Up && clear_frame.contains(event.position) {
       let next_control = text_control_for_text(ctx.text_control, "")
       let messages = text_input_messages(on_input, "") +
         option_message(on_clear)
@@ -57,13 +56,12 @@ fn[Msg] handle_text_field_pointer(
         focused=true,
         captured=true,
         text_control=Some(next_control),
-        dirty=@core.ViewDirtyHint::ViewBuildDirty,
+        dirty=ViewBuildDirty,
         messages~,
       )
     }
   }
-  if event.phase == @core.PointerPhase::Down &&
-    ctx.frame.contains(event.position) {
+  if event.phase == Down && ctx.frame.contains(event.position) {
     let caret = single_line_text_caret_at_position(
       text,
       ctx.frame,
@@ -85,9 +83,9 @@ fn[Msg] handle_text_field_pointer(
       focused=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
     )
-  } else if event.phase == @core.PointerPhase::Move &&
+  } else if event.phase == Move &&
     ctx.text_control.text_selection_anchor is Some(anchor) {
     let caret = single_line_text_caret_at_position(
       text,
@@ -112,19 +110,19 @@ fn[Msg] handle_text_field_pointer(
       @common.view_event_result(
         changed=true,
         captured=true,
-        text_control=Some({ ..ctx.text_control, caret, selection }),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        text_control=Some({ ..ctx.text_control, caret, selection, }),
+        dirty=ViewPaintDirty,
       )
     } else {
       @core.ViewEventResult::ignored()
     }
-  } else if event.phase == @core.PointerPhase::Up &&
+  } else if event.phase == Up &&
     ctx.text_control.text_selection_anchor is Some(_) {
     @common.view_event_result(
       changed=true,
       captured=true,
-      text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      text_control=Some({ ..ctx.text_control, text_selection_anchor: None, }),
+      dirty=ViewPaintDirty,
     )
   } else {
     @core.ViewEventResult::ignored()
@@ -147,7 +145,7 @@ fn[Msg] handle_text_field_keyboard(
       changed=true,
       activated=on_submit is Some(_),
       captured=true,
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
       messages=option_message(on_submit),
     )
   }
@@ -157,7 +155,7 @@ fn[Msg] handle_text_field_keyboard(
       changed=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=ViewPaintDirty,
     )
   }
   if @core.is_undo_shortcut(event) {
@@ -166,7 +164,7 @@ fn[Msg] handle_text_field_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewBuildDirty,
+      dirty=ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
@@ -176,7 +174,7 @@ fn[Msg] handle_text_field_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewBuildDirty,
+      dirty=ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
@@ -187,7 +185,7 @@ fn[Msg] handle_text_field_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteRange(selection),
+          DeleteRange(selection),
           record_history=true,
         )
       None =>
@@ -195,7 +193,7 @@ fn[Msg] handle_text_field_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteSurrounding(1, 0),
+          DeleteSurrounding(1, 0),
           record_history=true,
         )
     }
@@ -207,7 +205,7 @@ fn[Msg] handle_text_field_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteRange(selection),
+          DeleteRange(selection),
           record_history=true,
         )
       None =>
@@ -215,7 +213,7 @@ fn[Msg] handle_text_field_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::DeleteSurrounding(0, 1),
+          DeleteSurrounding(0, 1),
           record_history=true,
         )
     }
@@ -239,7 +237,7 @@ fn[Msg] handle_text_field_keyboard(
           ctx,
           value~,
           on_input~,
-          @core.TextInputEvent::InsertText(text),
+          InsertText(text),
           record_history=true,
         )
       } else {

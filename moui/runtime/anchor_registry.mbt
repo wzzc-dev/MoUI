@@ -8,7 +8,7 @@ pub struct AnchorFrameRegistry {
 
 ///|
 pub fn AnchorFrameRegistry::new() -> AnchorFrameRegistry {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|

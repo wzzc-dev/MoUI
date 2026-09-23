@@ -7,19 +7,19 @@ pub(all) struct CubicResampler {
 
 ///|
 pub fn CubicResampler::new(b : Scalar, c : Scalar) -> CubicResampler {
-  { b, c }
+  { b, c, }
 }
 
 ///|
 /// Mitchell-Netravali cubic resampler.
 pub fn CubicResampler::mitchell() -> CubicResampler {
-  { b: 1.0 / 3.0, c: 1.0 / 3.0 }
+  { b: 1.0 / 3.0, c: 1.0 / 3.0, }
 }
 
 ///|
 /// Catmull-Rom cubic resampler.
 pub fn CubicResampler::catmull_rom() -> CubicResampler {
-  { b: 0.0, c: 0.5 }
+  { b: 0.0, c: 0.5, }
 }
 
 ///|
@@ -35,12 +35,12 @@ pub fn SamplingOptions::new(
   filter? : FilterMode = Nearest,
   mipmap? : MipmapMode = None,
 ) -> SamplingOptions {
-  { filter, mipmap, cubic: None }
+  { filter, mipmap, cubic: None, }
 }
 
 ///|
 pub fn SamplingOptions::from_cubic(cubic : CubicResampler) -> SamplingOptions {
-  { filter: Linear, mipmap: None, cubic: Some(cubic) }
+  { filter: Linear, mipmap: None, cubic: Some(cubic), }
 }
 
 ///|

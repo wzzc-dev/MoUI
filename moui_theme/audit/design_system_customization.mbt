@@ -43,69 +43,69 @@ pub fn customization_report(
   [
     customization_capability_record(
       preset,
-      DesignCustomizationKind::ThemeInheritance,
+      ThemeInheritance,
       "Theme base inheritance",
       "@common.custom(base=...)",
       "@core.Theme",
       inherits_base=true,
       supports_override=false,
       recomputes_dependents=false,
-      status=DesignTokenStatus::ThemeMapped,
+      status=ThemeMapped,
     ),
     customization_capability_record(
       preset,
-      DesignCustomizationKind::ThemeTokenOverride,
+      ThemeTokenOverride,
       "Theme token group override",
       "@common.custom(palette/semantic_colors/spacing_scale/radius_scale/typography/shadow_scale/motion/surfaces)",
       "@core.Theme token groups",
       inherits_base=true,
       supports_override=true,
       recomputes_dependents=false,
-      status=DesignTokenStatus::ThemeMapped,
+      status=ThemeMapped,
     ),
     customization_capability_record(
       preset,
-      DesignCustomizationKind::DesignTokenInheritance,
+      DesignTokenInheritance,
       "Design token base inheritance",
       "@common.custom_tokens(base=...)",
       "DesignSystemTokens",
       inherits_base=true,
       supports_override=false,
       recomputes_dependents=true,
-      status=DesignTokenStatus::ThemeMapped,
+      status=ThemeMapped,
     ),
     customization_capability_record(
       preset,
-      DesignCustomizationKind::DesignTokenGroupOverride,
+      DesignTokenGroupOverride,
       "Design token group override",
       "@common.custom_tokens(palette/typography/spacing/radius/elevation/motion/surfaces/state_layer)",
       "DesignSystemTokens",
       inherits_base=true,
       supports_override=true,
       recomputes_dependents=true,
-      status=DesignTokenStatus::ThemeMapped,
+      status=ThemeMapped,
     ),
     customization_capability_record(
       preset,
-      DesignCustomizationKind::ComponentTokenOverride,
+      ComponentTokenOverride,
       "Component token override",
       "@common.custom_tokens(components=...)",
       "DesignComponentTokens",
       inherits_base=true,
       supports_override=true,
       recomputes_dependents=false,
-      status=DesignTokenStatus::ComponentMapped,
+      status=ComponentMapped,
     ),
     customization_capability_record(
       preset,
-      DesignCustomizationKind::VariantThemeResolution,
+      VariantThemeResolution,
       "Variant Theme resolver",
       "DesignPreset::theme_for_variant(...)",
       "DesignSchemeVariant -> @core.Theme",
       inherits_base=false,
       supports_override=false,
       recomputes_dependents=true,
-      status=DesignTokenStatus::ThemeMapped,
+      status=ThemeMapped,
     ),
   ]
 }
@@ -132,9 +132,9 @@ pub fn customization_report_count(preset : @common.DesignPreset) -> Int {
 pub fn customization_capability_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
   for item in customization_report(preset) {
-    if item.status == DesignTokenStatus::NotMapped ||
-      item.status == DesignTokenStatus::SourceMapped ||
-      item.status == DesignTokenStatus::PreviewMapped {
+    if item.status == NotMapped ||
+      item.status == SourceMapped ||
+      item.status == PreviewMapped {
       count = count + 1
     }
   }

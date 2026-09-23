@@ -21,12 +21,7 @@ pub fn view(
   ]
   if model.wallpaper_source != "" {
     background_layers.push(
-      @views.image(
-        model.wallpaper_source,
-        width~,
-        height~,
-        fit=@graphics.ImageFit::Cover,
-      ),
+      @views.image(model.wallpaper_source, width~, height~, fit=Cover),
     )
   }
   background_layers.push(
@@ -85,11 +80,11 @@ fn lock_screen(
     [
       @views.text(
         desktop_clock_lock_date(model.clock),
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=320.0,
         height=30.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(
         @text.FontSpec::new(size=if compact { 18.0 } else { 22.0 }, weight=500),
@@ -97,26 +92,26 @@ fn lock_screen(
       .foreground(@graphics.Color::white()),
       @views.text(
         desktop_clock_time(model.clock),
-        role=@views.TextRole::Display,
+        role=Display,
         theme~,
         width=460.0,
         height=clock_size + 10.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=clock_size, weight=180))
       .foreground(@graphics.Color::white()),
     ],
     spacing=2.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   let avatar = @views.container(
     @views.text(
       "M",
-      role=@views.TextRole::Display,
+      role=Display,
       theme~,
       width=avatar_size - 8.0,
       height=avatar_size - 14.0,
-      align=@text.TextAlign::TextCenter,
+      align=TextCenter,
     )
     .font(@text.FontSpec::new(size=avatar_size * 0.48, weight=560))
     .foreground(@graphics.Color::white()),
@@ -145,11 +140,11 @@ fn lock_screen(
       avatar,
       @views.text(
         "mo",
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=160.0,
         height=24.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=16.0, weight=500))
       .foreground(@graphics.Color::white()),
@@ -158,7 +153,7 @@ fn lock_screen(
       @views.button(
         model.language.text("lock.sign_in"),
         on_click=ShowLogin,
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         style=entry_style,
         width=184.0,
@@ -168,7 +163,7 @@ fn lock_screen(
       .on_tap(ShowLogin),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   // Stack clock near the top third and identity near the lower third.
   @views.stack([
@@ -249,11 +244,11 @@ fn boot_screen(
       @views.container(
         @views.text(
           "Mo",
-          role=@views.TextRole::Display,
+          role=Display,
           theme~,
           width=logo_size,
           height=logo_size - 14.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=logo_size * 0.48, weight=560))
         .foreground(@graphics.Color::white()),
@@ -272,11 +267,11 @@ fn boot_screen(
       ),
       @views.text(
         t.text("boot.title"),
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=280.0,
         height=30.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=17.0, weight=500))
       .foreground(@graphics.Color::white()),
@@ -302,15 +297,15 @@ fn boot_screen(
       .accessibility_label("Boot progress"),
       @views.text(
         t.text("boot.skip"),
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=220.0,
         height=20.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       ).foreground(rgba8(255, 255, 255, a=0.72)),
     ],
     spacing=14.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   @views.container(
     column.align(alignment=@geometry.Alignment::center()).frame(width~, height~),
@@ -340,11 +335,11 @@ fn login_screen(
   let avatar = @views.container(
     @views.text(
       "M",
-      role=@views.TextRole::Display,
+      role=Display,
       theme~,
       width=avatar_size - 8.0,
       height=avatar_size - 14.0,
-      align=@text.TextAlign::TextCenter,
+      align=TextCenter,
     )
     .font(@text.FontSpec::new(size=avatar_size * 0.48, weight=560))
     .foreground(@graphics.Color::white()),
@@ -372,11 +367,11 @@ fn login_screen(
       avatar,
       @views.text(
         "mo",
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=160.0,
         height=24.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       )
       .font(@text.FontSpec::new(size=16.0, weight=500))
       .foreground(@graphics.Color::white()),
@@ -385,7 +380,7 @@ fn login_screen(
         on_input=value => LoginPasswordChanged(value),
         on_submit=Some(SubmitLogin(model.login_password)),
         placeholder=model.language.text("login.password"),
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width=field_width,
         height=38.0,
@@ -393,7 +388,7 @@ fn login_screen(
       @views.button(
         model.language.text("login.unlock"),
         on_click=SubmitLogin(model.login_password),
-        variant=@views.ButtonVariant::Ghost,
+        variant=Ghost,
         theme~,
         style=entry_style,
         width=field_width,
@@ -401,15 +396,15 @@ fn login_screen(
       ).keyboard_shortcut(@views.KeyboardShortcut::new(key="Enter")),
       @views.text(
         model.language.text("login.hint"),
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=240.0,
         height=18.0,
-        align=@text.TextAlign::TextCenter,
+        align=TextCenter,
       ).foreground(rgba8(255, 255, 255, a=0.72)),
     ],
     spacing=10.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   identity
   .align(alignment=@geometry.Alignment::top_leading())

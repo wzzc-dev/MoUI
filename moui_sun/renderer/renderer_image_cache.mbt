@@ -11,7 +11,7 @@ pub fn Renderer::draw_pixmap_cached(
 ) -> CachedPixmapDrawResult {
   let result = image_cache.get_or_insert_result(image_key, pixmap)
   self.canvas.draw_pixmap(result.get_pixmap(), x, y, paint)
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -49,7 +49,7 @@ pub fn Renderer::draw_pixmap_rect_cached(
 ) -> CachedPixmapDrawResult {
   let result = image_cache.get_or_insert_result(image_key, pixmap)
   self.canvas.draw_pixmap_rect(result.get_pixmap(), src_rect, x, y, paint)
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -100,7 +100,7 @@ pub fn Renderer::draw_tiled_pixmap_rect_cached(
     height,
     paint,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -157,7 +157,7 @@ pub fn Renderer::draw_nine_patch_pixmap_cached(
     paint,
     sampling,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -203,7 +203,7 @@ pub fn Renderer::draw_bmp_bytes_cached(
   match image_cache.get_or_decode_bmp_result(image_key, image_data) {
     Ok(result) => {
       self.canvas.draw_pixmap(result.get_pixmap(), x, y, paint)
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -244,7 +244,7 @@ pub fn Renderer::draw_png_bytes_cached(
   match image_cache.get_or_decode_png_result(image_key, image_data) {
     Ok(result) => {
       self.canvas.draw_pixmap(result.get_pixmap(), x, y, paint)
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -290,7 +290,7 @@ pub fn Renderer::draw_rgba_bytes_cached(
     ) {
     Ok(result) => {
       self.canvas.draw_pixmap(result.get_pixmap(), x, y, paint)
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -341,7 +341,7 @@ pub fn Renderer::draw_rgba_bytes_rect_cached(
     ) {
     Ok(result) => {
       self.canvas.draw_pixmap_rect(result.get_pixmap(), src_rect, x, y, paint)
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -390,7 +390,7 @@ pub fn Renderer::draw_bmp_bytes_rect_cached(
   match image_cache.get_or_decode_bmp_result(image_key, image_data) {
     Ok(result) => {
       self.canvas.draw_pixmap_rect(result.get_pixmap(), src_rect, x, y, paint)
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -434,7 +434,7 @@ pub fn Renderer::draw_png_bytes_rect_cached(
   match image_cache.get_or_decode_png_result(image_key, image_data) {
     Ok(result) => {
       self.canvas.draw_pixmap_rect(result.get_pixmap(), src_rect, x, y, paint)
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -488,7 +488,7 @@ pub fn Renderer::draw_tiled_bmp_bytes_rect_cached(
         height,
         paint,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -547,7 +547,7 @@ pub fn Renderer::draw_tiled_png_bytes_rect_cached(
         height,
         paint,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -612,7 +612,7 @@ pub fn Renderer::draw_tiled_rgba_bytes_rect_cached(
         height,
         paint,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -677,7 +677,7 @@ pub fn Renderer::draw_nine_patch_bmp_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -740,7 +740,7 @@ pub fn Renderer::draw_nine_patch_png_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -809,7 +809,7 @@ pub fn Renderer::draw_nine_patch_rgba_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }

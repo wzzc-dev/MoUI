@@ -8,8 +8,8 @@ pub fn preflight() -> @render.RendererBackendInfo {
 #skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_preflight_reports_ready" {
   let info = preflight()
-  assert_eq(info.backend, @render.RendererBackendKind::Canvas2DWasm)
-  assert_eq(info.status, @render.RendererCapabilityStatus::Supported)
+  assert_eq(info.backend, Canvas2DWasm)
+  assert_eq(info.status, Supported)
   assert_true(info.can_render)
   assert_true(info.can_resize)
   assert_false(info.owns_surface)
@@ -19,12 +19,9 @@ test "canvas2d_preflight_reports_ready" {
 #skip("requires the JS-host `canvas2d` wasm import module; run via `moon test --include-skipped` under a JS host")
 test "canvas2d_descriptor_has_correct_family" {
   let descriptor = canvas2d_descriptor()
-  assert_eq(descriptor.backend, @render.RendererBackendKind::Canvas2DWasm)
-  assert_eq(descriptor.family, @render.RendererFamily::Canvas2D)
-  assert_eq(
-    descriptor.presentation,
-    @render.RendererPresentationModel::WebCanvas,
-  )
+  assert_eq(descriptor.backend, Canvas2DWasm)
+  assert_eq(descriptor.family, Canvas2D)
+  assert_eq(descriptor.presentation, WebCanvas)
   assert_eq(descriptor.supported_targets.length(), 1)
-  assert_eq(descriptor.supported_targets[0], @render.RendererTarget::WasmGc)
+  assert_eq(descriptor.supported_targets[0], WasmGc)
 }

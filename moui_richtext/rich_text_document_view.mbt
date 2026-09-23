@@ -33,7 +33,7 @@ fn RichTextDocumentViewPrepared::new(
     block_heights.push(height)
     content_height = content_height + height
   }
-  { document, content_height, block_tops, block_heights }
+  { document, content_height, block_tops, block_heights, }
 }
 
 ///|
@@ -113,7 +113,7 @@ fn RichTextDocumentViewCache::prepare(
     }
   }
   let session = MarkdownDocumentSession::new(source)
-  let dummy_selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let dummy_selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let document = session.rich_text(
     dummy_selection,
     base=base_font,
@@ -190,9 +190,9 @@ fn rich_text_document_session_view_paint(
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   let content = rich_text_editor_content_rect(ctx.frame)
-  commands.push(@core.DrawCommand::PushClip(content))
+  commands.push(PushClip(content))
 
   let prepared = cache.prepare(
     source,
@@ -228,7 +228,7 @@ fn rich_text_document_session_view_paint(
   {
     commands,
     child_layers: [],
-    post_commands: [@core.DrawCommand::PopClip],
+    post_commands: [PopClip],
     overlay_commands,
     repaint_boundary: false,
     animating: false,
@@ -259,7 +259,7 @@ fn rich_text_document_session_view_offset_at_point(
   ignore(visible_overscan)
   let content = rich_text_editor_content_rect(frame)
   let session = MarkdownDocumentSession::new(source)
-  let dummy_selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let dummy_selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let document = session.rich_text(
     dummy_selection,
     base=base_font,
@@ -410,7 +410,7 @@ fn rich_text_document_view_wrap_block(
           output.push('\n')
         }
       }
-      runs.push({ ..run, visual_text: Some(String::from_array(output)) })
+      runs.push({ ..run, visual_text: Some(String::from_array(output)), })
     }
     offset = offset + run_length
   }

@@ -16,9 +16,9 @@ pub(all) struct CatalogItem {
 ///|
 pub fn catalog_groups() -> Array[CatalogGroup] {
   [
-    { id: "host", title: "Host" },
-    { id: "graphics", title: "Graphics" },
-    { id: "mobile", title: "Mobile" },
+    { id: "host", title: "Host", },
+    { id: "graphics", title: "Graphics", },
+    { id: "mobile", title: "Mobile", },
   ]
 }
 

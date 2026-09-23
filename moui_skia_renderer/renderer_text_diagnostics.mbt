@@ -350,7 +350,7 @@ pub fn SkiaEmojiFontFallbackDiagnostic::deterministic_color_emoji_ready(
 pub fn skia_text_visual_order_diagnostic(
   text : String,
   font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
 ) -> SkiaTextVisualOrderDiagnostic? {
   if text == "" {
     return None
@@ -386,7 +386,7 @@ pub fn skia_text_selection_geometry_diagnostic(
   selection? : @core.TextRange? = None,
   font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
   max_width? : Double = 96.0,
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
 ) -> SkiaTextSelectionGeometryDiagnostic? {
   if text == "" {
     return None
@@ -451,11 +451,11 @@ pub fn skia_text_selection_geometry_diagnostic(
 pub fn skia_emoji_font_fallback_diagnostic(
   text? : String = "\u{1F469}\u{200D}\u{1F4BB}",
   font? : @core.FontSpec = @core.FontSpec::new(
-    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    families=@core.FontFamilyStack::new([Emoji]),
     size=32.0,
     weight=400,
   ),
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
 ) -> SkiaEmojiFontFallbackDiagnostic? {
   if text == "" {
     return None
@@ -512,9 +512,7 @@ pub fn skia_emoji_font_fallback_diagnostic(
         resolved_missing_glyph_count,
         fallback_character,
         emoji_hint,
-        emoji_fallback_attempted: font_resolution ==
-        SkiaFontResolution::SystemFontMgr &&
-        emoji_hint,
+        emoji_fallback_attempted: font_resolution == SystemFontMgr && emoji_hint,
         fallback_request_ready: !fallback_request.is_empty() &&
         fallback_request.has_character() &&
         fallback_request_language_count == fallback_language_tags.length(),
@@ -529,8 +527,8 @@ pub fn skia_emoji_font_fallback_diagnostic(
 ///|
 fn skia_emoji_font_source_label(resolution : SkiaFontResolution) -> String {
   match resolution {
-    SkiaFontResolution::SystemFontMgr => "skia-system-fontmgr"
-    SkiaFontResolution::EmptyTypeface => "skia-empty-typeface"
+    SystemFontMgr => "skia-system-fontmgr"
+    EmptyTypeface => "skia-empty-typeface"
   }
 }
 

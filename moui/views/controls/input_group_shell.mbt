@@ -20,14 +20,10 @@ pub fn[Msg] input_group(
     None => ()
   }
   @container.container(
-    @layout.row(
-      rows,
-      spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Center,
-    ),
+    @layout.row(rows, spacing=resolved_theme.spacing_scale.xs, align=Center),
     width~,
     height~,
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding~,
   ).border(

@@ -1,15 +1,13 @@
 ///|
 test "web maps surface resize through current scale factor" {
   let event = window_event_to_host_with_scale(
-    @window_core.WindowEvent::SurfaceResized(
-      @dpi.PhysicalSize::PhysicalSize(800, 600),
-    ),
+    SurfaceResized(PhysicalSize(800, 600)),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
   )
   match event {
-    Some(@host.Event::Resized(metrics)) => {
+    Some(Resized(metrics)) => {
       assert_true(
         metrics.logical_size == @core.Size::new(width=400.0, height=300.0),
       )
@@ -25,21 +23,21 @@ test "web maps surface resize through current scale factor" {
 ///|
 test "web maps physical pointer positions through current scale factor" {
   let event = window_event_to_host_with_scale(
-    @window_core.WindowEvent::PointerButton(
+    PointerButton(
       None,
-      @window_core.ElementState::Pressed,
-      @dpi.PhysicalPositionF64::PhysicalPositionF64(240.0, 120.0),
+      Pressed,
+      PhysicalPositionF64(240.0, 120.0),
       true,
-      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
+      Mouse(Left),
     ),
     @core.Point::new(x=0.0, y=0.0),
     @core.KeyModifiers::none(),
     scale_factor=2.0,
   )
   match event {
-    Some(@host.Event::Pointer({ position, phase, .. })) => {
+    Some(Pointer({ position, phase, .. })) => {
       assert_true(position == @core.Point::new(x=120.0, y=60.0))
-      assert_true(phase == @core.PointerPhase::Down)
+      assert_true(phase == Down)
     }
     _ => fail("expected scaled pointer button")
   }
@@ -61,12 +59,12 @@ test "web app options carry optional scene resolver" {
     ),
   )
   match WebAppOptions::new().scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneRejected(message) =>
+    SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Web scene resolver rejection")
   }
   let resolver = @window_lifecycle.WindowSceneResolver::new(resolve=request => {
-    @window_lifecycle.WindowSceneResolution::SceneResolved(
+    SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
@@ -78,7 +76,7 @@ test "web app options carry optional scene resolver" {
   })
   match
     WebAppOptions::new(scene_resolver=resolver).scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Web scene resolver")
   }
@@ -116,12 +114,12 @@ test "web route dispatch publishes active route source events" {
 test "web tracks modifiers from keyboard input events" {
   let control_down = @window_core.WindowEvent::KeyboardInput(
     None,
-    @window_core.KeyEvent::KeyEvent(
-      @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::ControlLeft),
-      @window_core.Key::Named(@window_core.NamedKey::Control),
-      @window_core.Key::Named(@window_core.NamedKey::Control),
-      @window_core.KeyLocation::Left,
-      @window_core.ElementState::Pressed,
+    KeyEvent(
+      @window_core.PhysicalKey::from_key_code(ControlLeft),
+      Named(Control),
+      Named(Control),
+      Left,
+      Pressed,
       false,
       None,
       None,
@@ -135,14 +133,14 @@ test "web tracks modifiers from keyboard input events" {
   inspect(with_control.control, content="true")
 
   let copy_event = @window_input.window_event_to_host_with_modifiers(
-    @window_core.WindowEvent::KeyboardInput(
+    KeyboardInput(
       None,
-      @window_core.KeyEvent::KeyEvent(
-        @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyC),
-        @window_core.Key::Character("c"),
-        @window_core.Key::Character("c"),
-        @window_core.KeyLocation::Standard,
-        @window_core.ElementState::Pressed,
+      KeyEvent(
+        @window_core.PhysicalKey::from_key_code(KeyC),
+        Character("c"),
+        Character("c"),
+        Standard,
+        Pressed,
         false,
         Some("c"),
         Some("c"),
@@ -154,19 +152,18 @@ test "web tracks modifiers from keyboard input events" {
     scale_factor=1.0,
   )
   match copy_event {
-    Some(@host.Event::Keyboard(event)) =>
-      inspect(event.modifiers.control, content="true")
+    Some(Keyboard(event)) => inspect(event.modifiers.control, content="true")
     _ => fail("expected keyboard event with control modifier")
   }
 
   let control_up = @window_core.WindowEvent::KeyboardInput(
     None,
-    @window_core.KeyEvent::KeyEvent(
-      @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::ControlLeft),
-      @window_core.Key::Named(@window_core.NamedKey::Control),
-      @window_core.Key::Named(@window_core.NamedKey::Control),
-      @window_core.KeyLocation::Left,
-      @window_core.ElementState::Released,
+    KeyEvent(
+      @window_core.PhysicalKey::from_key_code(ControlLeft),
+      Named(Control),
+      Named(Control),
+      Left,
+      Released,
       false,
       None,
       None,

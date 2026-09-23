@@ -31,7 +31,7 @@ fn performance_parse_percentile_budget(
       label + ".maxRegressionPercent must be in [0, 100]",
     )
   }
-  Some({ p50, p95, p99, max_regression_percent: regression })
+  Some({ p50, p95, p99, max_regression_percent: regression, })
 }
 
 ///|
@@ -63,7 +63,7 @@ fn performance_parse_resource_budget(
       label + ".maxRegressionPercent must be in [0, 100]",
     )
   }
-  Some({ baseline, max_regression_percent: regression, higher_is_better })
+  Some({ baseline, max_regression_percent: regression, higher_is_better, })
 }
 
 ///|
@@ -130,7 +130,7 @@ fn performance_parse_scenario_budget(
       ".resources must contain exactly peakRssBytes, allocationCount, cacheHitRate, startupMs, and packageBytes",
     )
   }
-  Some({ minimum_samples, timings, resources })
+  Some({ minimum_samples, timings, resources, })
 }
 
 ///|

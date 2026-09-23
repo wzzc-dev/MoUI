@@ -152,7 +152,7 @@ fn WindowsSurfaceBinding::new(
     _metrics,
   ) => (),
 ) -> WindowsSurfaceBinding {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, }
 }
 
 ///|
@@ -268,11 +268,11 @@ async fn launch_windows_app_async_pump(
   windows_time_begin_period()
   while !event_loop.exiting() {
     match event_loop.pump_app_events(Some(0), app) {
-      @window_core.PumpStatus::Exit(_) => {
+      Exit(_) => {
         windows_time_end_period()
         return ()
       }
-      @window_core.PumpStatus::Continue => ()
+      Continue => ()
     }
     match options.pump_tick {
       Some(tick) =>
@@ -367,7 +367,7 @@ pub fn windows_accessibility_bridge(
 ///|
 pub fn windows_host_info() -> @host.HostAppInfo {
   @host.HostAppInfo::new(
-    backend=@host.HostBackendKind::Native,
+    backend=Native,
     description="Windows Win32 window host with renderer providers",
   )
 }
@@ -411,9 +411,9 @@ pub fn windows_capability_summary(
 ///|
 pub fn windows_system_theme() -> @core.ColorScheme {
   if windows_system_theme_is_light() != 0 {
-    @core.ColorScheme::Light
+    Light
   } else {
-    @core.ColorScheme::Dark
+    Dark
   }
 }
 
@@ -452,9 +452,9 @@ fn dispatch_windows_settings(
     Read(key) => {
       let key_bytes = @utf8.encode(key[:], bom=false)
       if windows_settings_has_value(key_bytes) == 0 {
-        @host.HostServiceResponse::SettingValue(None)
+        SettingValue(None)
       } else {
-        @host.HostServiceResponse::SettingValue(
+        SettingValue(
           Some(
             @utf8.decode_lossy(
               windows_settings_read_bytes(key_bytes)[:],
@@ -468,17 +468,17 @@ fn dispatch_windows_settings(
       let key_bytes = @utf8.encode(key[:], bom=false)
       let value_bytes = @utf8.encode(value[:], bom=false)
       if windows_settings_write_bytes(key_bytes, value_bytes) != 0 {
-        @host.HostServiceResponse::SettingWritten
+        SettingWritten
       } else {
-        @host.HostServiceResponse::Unavailable("settings write failed")
+        Unavailable("settings write failed")
       }
     }
     Remove(key) => {
       let key_bytes = @utf8.encode(key[:], bom=false)
       if windows_settings_remove_bytes(key_bytes) != 0 {
-        @host.HostServiceResponse::SettingRemoved
+        SettingRemoved
       } else {
-        @host.HostServiceResponse::Unavailable("settings remove failed")
+        Unavailable("settings remove failed")
       }
     }
   }
@@ -489,35 +489,27 @@ fn dispatch_windows_clipboard(
   request : @host.HostClipboardRequest,
 ) -> @host.HostServiceResponse {
   match request {
-    @host.HostClipboardRequest::ReadText =>
+    ReadText =>
       if windows_clipboard_has_text() != 0 {
-        @host.HostServiceResponse::ClipboardText(
+        ClipboardText(
           @utf8.decode_lossy(
             windows_clipboard_read_text_bytes()[:],
             ignore_bom=false,
           ),
         )
       } else {
-        @host.HostServiceResponse::Unavailable(
-          "clipboard does not contain text",
-        )
+        Unavailable("clipboard does not contain text")
       }
-    @host.HostClipboardRequest::WriteText(text) => {
+    WriteText(text) => {
       let bytes = @utf8.encode(text[:], bom=false)
       if windows_clipboard_write_text_bytes(bytes) != 0 {
-        @host.HostServiceResponse::ClipboardWritten
+        ClipboardWritten
       } else {
-        @host.HostServiceResponse::Unavailable("clipboard write failed")
+        Unavailable("clipboard write failed")
       }
     }
-    @host.HostClipboardRequest::ReadImage =>
-      @host.HostServiceResponse::Unavailable(
-        "clipboard image read is unavailable",
-      )
-    @host.HostClipboardRequest::WriteImage(_, _) =>
-      @host.HostServiceResponse::Unavailable(
-        "clipboard image write is unavailable",
-      )
+    ReadImage => Unavailable("clipboard image read is unavailable")
+    WriteImage(_, _) => Unavailable("clipboard image write is unavailable")
   }
 }
 
@@ -569,7 +561,7 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
             ),
           )
           self.driver.set_text_system(renderer.text_system())
-          ignore(self.driver.dispatch(@host.Event::Resized(metrics)))
+          ignore(self.driver.dispatch(Resized(metrics)))
           ignore(
             self.platform_slots.insert(
               @window_lifecycle.WindowSlot::new(
@@ -605,7 +597,7 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn about_to_w
       event_loop.set_control_flow(
         @window_core.ControlFlow::wait_until(deadline),
       )
-    None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
+    None => event_loop.set_control_flow(Wait)
   }
   self.drain_window_requests(event_loop)
   self.sync_accessibility_environment()
@@ -619,7 +611,7 @@ fn WindowsNativeHostBackend::sync_accessibility_environment(
   let contrast = if windows_accessibility_high_contrast() != 0 {
     @core.AccessibilityContrast::High
   } else {
-    @core.AccessibilityContrast::Standard
+    Standard
   }
   let reduced_motion = windows_accessibility_reduce_motion() != 0
   for slot in self.lifecycle.runtime_slots().open_slots() {
@@ -748,7 +740,7 @@ fn WindowsNativeHostBackend::dispatch_window_event(
   event : @window_core.WindowEvent,
 ) -> Unit {
   match event {
-    @window_core.WindowEvent::ModifiersChanged(modifiers) =>
+    ModifiersChanged(modifiers) =>
       self.modifiers = @window_input.modifiers_to_core(modifiers)
     _ => ()
   }
@@ -836,10 +828,8 @@ fn WindowsNativeHostBackend::open_window(
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
   match self.lifecycle.open_resolution(request) {
-    @window_lifecycle.WindowOpenResolution::OpenRejected(message) =>
-      @host.WindowRequestResult::WindowRejected(message)
-    @window_lifecycle.WindowOpenResolution::OpenResolved(resolved) =>
-      self.create_resolved_window(event_loop, resolved)
+    OpenRejected(message) => WindowRejected(message)
+    OpenResolved(resolved) => self.create_resolved_window(event_loop, resolved)
   }
 }
 
@@ -864,9 +854,7 @@ fn WindowsNativeHostBackend::create_resolved_window(
     Some(window) => self.attach_resolved_window(window, resolved)
     None => {
       self.rollback_window_record(resolved.id)
-      @host.WindowRequestResult::WindowRejected(
-        "failed to create Windows window",
-      )
+      WindowRejected("failed to create Windows window")
     }
   }
 }
@@ -907,7 +895,7 @@ fn WindowsNativeHostBackend::attach_resolved_window(
         .environment_with_system_theme(driver.environment()),
       )
       driver.set_text_system(renderer.text_system())
-      ignore(driver.dispatch(@host.Event::Resized(metrics)))
+      ignore(driver.dispatch(Resized(metrics)))
       ignore(
         self.lifecycle.register_runtime_slot(
           @window_lifecycle.WindowRuntimeSlot::from_driver(record~, driver~),
@@ -940,14 +928,12 @@ fn WindowsNativeHostBackend::attach_resolved_window(
       )
       self.sync_accessibility_window(resolved.id)
       self.request_platform_redraw(resolved.id)
-      @host.WindowRequestResult::WindowOpened(resolved.id)
+      WindowOpened(resolved.id)
     }
     None => {
       window.drop()
       self.rollback_window_record(resolved.id)
-      @host.WindowRequestResult::WindowRejected(
-        "failed to create Windows renderer",
-      )
+      WindowRejected("failed to create Windows renderer")
     }
   }
 }
@@ -1049,13 +1035,11 @@ fn WindowsNativeHostBackend::windows_surface_actions(
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {
-        @window_input.TextInputSessionAction::EnableIme(request)
-        | @window_input.TextInputSessionAction::UpdateIme(request)
-        | @window_input.TextInputSessionAction::DisableIme(request) =>
+        EnableIme(request) | UpdateIme(request) | DisableIme(request) =>
           window.request_ime_update(request) catch {
             _ => ()
           }
-        @window_input.TextInputSessionAction::NoImeChange => ()
+        NoImeChange => ()
       }
     },
     drop=fn() { window.drop() },

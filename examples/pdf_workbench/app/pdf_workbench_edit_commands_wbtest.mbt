@@ -4,11 +4,7 @@ test "pdf workbench rotate and crop mark document dirty" {
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/minimum.pdf", bytes~) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let rotated = model.update(RotateCurrentPage)
@@ -35,11 +31,7 @@ test "pdf workbench metadata title apply marks document dirty" {
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/minimum.pdf", bytes~) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let drafted = model.update(MetadataTitleChanged("Quarterly Review"))
@@ -62,11 +54,7 @@ test "pdf workbench add bookmark marks document dirty" {
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/minimum.pdf", bytes~) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let drafted = model.update(BookmarkTitleChanged("Chapter 1"))
@@ -88,11 +76,7 @@ test "pdf workbench add note marks document dirty" {
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/minimum.pdf", bytes~) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let drafted = model.update(AnnotationTextChanged("Check the source table"))

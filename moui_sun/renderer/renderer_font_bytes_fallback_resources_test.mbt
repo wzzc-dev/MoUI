@@ -2,8 +2,10 @@
 test "Renderer cached font bytes fallback path uses RendererResources" {
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(16, 16, 2, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 2, 4, 4, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -12,8 +14,14 @@ test "Renderer cached font bytes fallback path uses RendererResources" {
   let first = match
     renderer.draw_font_bytes_fallback_line_cached_with_renderer_resources(
       [
-        FontBytesFallbackSource::new("primary", make_ttf_for_codes([65])),
-        FontBytesFallbackSource::new("fallback", make_ttf_for_codes([66])),
+        @renderer.FontBytesFallbackSource::new(
+          "primary",
+          make_ttf_for_codes([65]),
+        ),
+        @renderer.FontBytesFallbackSource::new(
+          "fallback",
+          make_ttf_for_codes([66]),
+        ),
       ],
       "ABZ",
       1.0,
@@ -45,8 +53,8 @@ test "Renderer cached font bytes fallback path uses RendererResources" {
   let second = match
     renderer.draw_font_bytes_fallback_line_cached_with_renderer_resources(
       [
-        FontBytesFallbackSource::new("primary", b"not a font"),
-        FontBytesFallbackSource::new("fallback", b"also not a font"),
+        @renderer.FontBytesFallbackSource::new("primary", b"not a font"),
+        @renderer.FontBytesFallbackSource::new("fallback", b"also not a font"),
       ],
       "ABZ",
       1.0,
@@ -72,8 +80,10 @@ test "Renderer cached font bytes fallback path uses RendererResources" {
 test "Renderer cached font bytes fallback atlas path uses RendererResources" {
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(24, 12, 2, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    24, 12, 2, 4, 4, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -82,8 +92,14 @@ test "Renderer cached font bytes fallback atlas path uses RendererResources" {
   let first = match
     renderer.draw_font_bytes_fallback_line_atlas_with_renderer_resources(
       [
-        FontBytesFallbackSource::new("primary", make_ttf_for_codes([65])),
-        FontBytesFallbackSource::new("fallback", make_ttf_for_codes([66])),
+        @renderer.FontBytesFallbackSource::new(
+          "primary",
+          make_ttf_for_codes([65]),
+        ),
+        @renderer.FontBytesFallbackSource::new(
+          "fallback",
+          make_ttf_for_codes([66]),
+        ),
       ],
       "ABZ",
       1.0,
@@ -121,8 +137,8 @@ test "Renderer cached font bytes fallback atlas path uses RendererResources" {
   let second = match
     renderer.draw_font_bytes_fallback_line_atlas_with_renderer_resources(
       [
-        FontBytesFallbackSource::new("primary", b"not a font"),
-        FontBytesFallbackSource::new("fallback", b"also not a font"),
+        @renderer.FontBytesFallbackSource::new("primary", b"not a font"),
+        @renderer.FontBytesFallbackSource::new("fallback", b"also not a font"),
       ],
       "ABZ",
       1.0,
@@ -154,8 +170,8 @@ test "Renderer cached font bytes fallback atlas path uses RendererResources" {
 test "Renderer cached font bytes fallback path preserves parse errors" {
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::new(16, 16)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::new(16, 16)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -164,8 +180,11 @@ test "Renderer cached font bytes fallback path preserves parse errors" {
   match
     renderer.draw_font_bytes_fallback_line_cached_with_renderer_resources(
       [
-        FontBytesFallbackSource::new("primary", make_ttf_for_codes([65])),
-        FontBytesFallbackSource::new("bad-fallback", b"not a font"),
+        @renderer.FontBytesFallbackSource::new(
+          "primary",
+          make_ttf_for_codes([65]),
+        ),
+        @renderer.FontBytesFallbackSource::new("bad-fallback", b"not a font"),
       ],
       "AB",
       1.0,
@@ -175,7 +194,7 @@ test "Renderer cached font bytes fallback path preserves parse errors" {
       "label",
       @graphics.Paint::new().set_color(@graphics.Color::black()),
     ) {
-    Err(@text.FontParseError::UnexpectedEndOfData(0, 12, 10)) => ()
+    Err(UnexpectedEndOfData(0, 12, 10)) => ()
     _ => abort("expected checked parser error")
   }
   assert_true(resources.get_text_mask_cache().is_empty())

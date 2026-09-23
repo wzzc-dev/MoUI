@@ -51,7 +51,7 @@ fn bench_build_items(count : Int, keyed : Bool) -> Array[BenchItem] {
   let items : Array[BenchItem] = []
   for index in 0..<count {
     let key = if keyed { Some("item-\{index}") } else { None }
-    items.push({ key, kind: 1 })
+    items.push({ key, kind: 1, })
   }
   items
 }
@@ -300,7 +300,7 @@ fn bench_build_index_struct(
   for old_index, old_item in old_items {
     match old_item.key {
       Some(key) => {
-        let composite : BenchCompositeKey = { key, kind: old_item.kind }
+        let composite : BenchCompositeKey = { key, kind: old_item.kind, }
         match index.get(composite) {
           Some(arr) => arr.push(old_index)
           None => index[composite] = [old_index]
@@ -323,7 +323,7 @@ fn bench_find_indexed_struct(
   let mut comparisons = 0
   match next_item.key {
     Some(key) => {
-      let composite : BenchCompositeKey = { key, kind: next_item.kind }
+      let composite : BenchCompositeKey = { key, kind: next_item.kind, }
       comparisons += 1
       match key_index.get(composite) {
         Some(candidates) => {

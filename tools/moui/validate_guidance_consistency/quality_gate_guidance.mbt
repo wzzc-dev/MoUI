@@ -60,10 +60,10 @@ fn push_agent_quality_gate_checks(
 ///|
 fn theme_diagnostic_rules() -> Array[TextRule] {
   [
-    { path: "checks/profiles.json", token: "\"theme\"" },
-    { path: "checks/profiles.json", token: "moui_theme/common" },
-    { path: "checks/profiles.json", token: "examples/design_systems/web_wasm" },
-    { path: "docs/testing.md", token: "scripts/check.sh --profile theme" },
+    { path: "checks/profiles.json", token: "\"theme\"", },
+    { path: "checks/profiles.json", token: "moui_theme/common", },
+    { path: "checks/profiles.json", token: "examples/design_systems/web_wasm", },
+    { path: "docs/testing.md", token: "scripts/check.sh --profile theme", },
     {
       path: "docs/testing.md",
       token: "Design Systems is addon diagnostic coverage",
@@ -76,9 +76,9 @@ fn theme_diagnostic_rules() -> Array[TextRule] {
       path: "docs/release-readiness.md",
       token: "Design Systems is addon diagnostic coverage",
     },
-    { path: "AGENTS.md", token: "scripts/check.sh --profile theme" },
-    { path: "AGENTS.md", token: "Design Systems is addon diagnostic coverage" },
-    { path: "moui/README.mbt.md", token: "scripts/check.sh --profile theme" },
+    { path: "AGENTS.md", token: "scripts/check.sh --profile theme", },
+    { path: "AGENTS.md", token: "Design Systems is addon diagnostic coverage", },
+    { path: "moui/README.mbt.md", token: "scripts/check.sh --profile theme", },
     {
       path: "docs/maintenance.md",
       token: "Design Systems is addon diagnostic coverage",

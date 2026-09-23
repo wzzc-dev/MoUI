@@ -5,7 +5,7 @@ pub fn[Msg] number_field(
   on_step? : ((Double) -> Msg)? = None,
   step? : Double = 1.0,
   placeholder? : String = "0",
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
   width? : Double = 220.0,
   height? : Double = 40.0,
@@ -39,11 +39,9 @@ pub fn[Msg] number_field(
       )
     None => ()
   }
-  @layout.row(
-    rows,
-    spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
-  ).frame(width~)
+  @layout.row(rows, spacing=resolved_theme.spacing_scale.xs, align=Center).frame(
+    width~,
+  )
 }
 
 ///|
@@ -60,7 +58,7 @@ pub fn[Msg] stepper(
     @button.button(
       "-",
       on_click=on_decrement,
-      variant=@style.ButtonVariant::Outline,
+      variant=Outline,
       theme=resolved_theme,
       width=36.0,
       height~,
@@ -70,7 +68,7 @@ pub fn[Msg] stepper(
     rows.push(
       @text.text(
         label,
-        role=@style.TextRole::Control,
+        role=Control,
         theme=resolved_theme,
         width=@common.view_max_double(24.0, width - 80.0),
         height~,
@@ -81,15 +79,14 @@ pub fn[Msg] stepper(
     @button.button(
       "+",
       on_click=on_increment,
-      variant=@style.ButtonVariant::Outline,
+      variant=Outline,
       theme=resolved_theme,
       width=36.0,
       height~,
     ),
   )
-  @layout.row(
-    rows,
-    spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Center,
-  ).frame(width~, height~)
+  @layout.row(rows, spacing=resolved_theme.spacing_scale.xs, align=Center).frame(
+    width~,
+    height~,
+  )
 }

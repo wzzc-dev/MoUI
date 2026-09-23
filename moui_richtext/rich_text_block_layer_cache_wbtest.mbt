@@ -7,7 +7,7 @@ fn layer_drawn_texts(
 ) -> Unit {
   for command in layer.commands {
     match command {
-      @core.DrawCommand::DrawText(run) => texts.push(run.text)
+      DrawText(run) => texts.push(run.text)
       _ => ()
     }
   }
@@ -98,7 +98,7 @@ test "band-fitting blocks paint every line at band-edge admission" {
   parts.push("Trailing paragraph after the fenced code block.")
   let source = parts.join("\n\n")
   let session = MarkdownDocumentSession::new(source)
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let viewport_height = 520.0
   let overscan = 320.0
   let content = @core.Rect::new(x=0.0, y=0.0, width~, height=viewport_height)
@@ -138,7 +138,7 @@ test "band-fitting blocks paint every line at band-edge admission" {
   }
   let mut code_index = -1
   for index, block in session.editor_blocks {
-    if block.block.kind is MarkdownBlockKind::CodeBlock {
+    if block.block.kind is CodeBlock {
       code_index = index
       break
     }
@@ -225,7 +225,7 @@ test "blocks taller than the visible band opt out of the layer cache" {
   parts.push("Paragraph after the tall block.")
   let source = parts.join("\n\n")
   let session = MarkdownDocumentSession::new(source)
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let viewport_height = 520.0
   let overscan = 320.0
   let content = @core.Rect::new(x=0.0, y=0.0, width~, height=viewport_height)

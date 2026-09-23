@@ -23,7 +23,7 @@ fn markdown_editor_wrap_range(
     source: text,
     caret: next_selection.end,
     selection: Some(next_selection),
-    edit_range: Some({ start, end }),
+    edit_range: Some({ start, end, }),
   }
 }
 
@@ -129,7 +129,7 @@ fn markdown_editor_unwrap_range(
     source: text,
     caret: next_selection.end,
     selection: Some(next_selection),
-    edit_range: Some({ start: open_start, end: range.end + marker_length }),
+    edit_range: Some({ start: open_start, end: range.end + marker_length, }),
   }
 }
 
@@ -284,7 +284,7 @@ fn markdown_editor_toggle_task_block(
     source: text,
     caret: block.content_range.start,
     selection: None,
-    edit_range: Some({ start: marker_index, end: marker_index + 1 }),
+    edit_range: Some({ start: marker_index, end: marker_index + 1, }),
   })
 }
 

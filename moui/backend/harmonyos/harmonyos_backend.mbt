@@ -11,7 +11,7 @@ pub fn HarmonyOSSurfaceHandle::new(raw~ : UInt64) -> HarmonyOSSurfaceHandle {
 
 ///|
 pub fn HarmonyOSSurfaceHandle::none() -> HarmonyOSSurfaceHandle {
-  { raw: 0UL }
+  { raw: 0UL, }
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn HarmonyOSSurfaceBinding::new(
     _metrics,
   ) => (),
 ) -> HarmonyOSSurfaceBinding {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, }
 }
 
 ///|
@@ -202,7 +202,7 @@ pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness {
 pub fn backend_info() -> HarmonyOSBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
-      backend=@host.HostBackendKind::Native,
+      backend=Native,
       description="HarmonyOS window-hosted native host (HostCmd/ApplicationHandler)",
     ),
     capabilities: harmonyos_capability_matrix(),

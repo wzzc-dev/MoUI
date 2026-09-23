@@ -85,7 +85,7 @@ fn check_fast_path(
 ///|
 fn code_block_context(source : String) -> MarkdownEditorInputContext {
   let session = MarkdownDocumentSession::new(source)
-  { blocks: session.editor_blocks, store: session.text_store }
+  { blocks: session.editor_blocks, store: session.text_store, }
 }
 
 ///|
@@ -98,7 +98,7 @@ test "fast path: plain typing" {
     text: "aXbc",
     caret: 2,
     selection: None,
-    edit_range: Some({ start: 1, end: 1 }),
+    edit_range: Some({ start: 1, end: 1, }),
   }
   let tx = check_transform("abc", transform)
   inspect(tx.source, content="aXbc")

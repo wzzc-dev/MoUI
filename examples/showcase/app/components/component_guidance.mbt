@@ -11,7 +11,7 @@ fn banner_demo(
     @views.banner(
       "Build ready",
       "The Component Gallery app package passed focused checks.",
-      tone=@views.FeedbackTone::Success,
+      tone=Success,
       action=Some(@views.StateViewAction::new(label="Reset", message=Reset)),
       theme~,
       width=inner,
@@ -38,14 +38,14 @@ fn callout_demo(
         @views.callout(
           "Tip",
           "Keep component examples short and direct.",
-          tone=@views.FeedbackTone::Info,
+          tone=Info,
           theme~,
           width=card_width,
         ),
         @views.callout(
           "Check",
           "Use focused package checks before packaging.",
-          tone=@views.FeedbackTone::Warning,
+          tone=Warning,
           theme~,
           width=card_width,
         ),
@@ -146,13 +146,13 @@ fn toast_demo(
       [
         @views.toast(
           "Saved component settings.",
-          tone=@views.FeedbackTone::Success,
+          tone=Success,
           theme~,
           width=toast_width,
         ),
         @views.toast(
           "Renderer fallback active.",
-          tone=@views.FeedbackTone::Warning,
+          tone=Warning,
           action=Some(@views.StateViewAction::new(label="Reset", message=Reset)),
           theme~,
           width=toast_width,

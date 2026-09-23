@@ -64,7 +64,7 @@ test "code chat message list uses explicit scroll viewport" {
   )
   inspect(list_height, content="410")
   let list = code_message_list(
-    { ..model.code, messages: [ChatMessage::User("hello")] },
+    { ..model.code, messages: [User("hello")], },
     theme,
     640.0,
     list_height,
@@ -72,7 +72,7 @@ test "code chat message list uses explicit scroll viewport" {
   let children = list.children()
   guard children.get(0) is Some(scroll) else { fail("expected scroll child") }
   let shorter = code_message_list(
-    { ..model.code, messages: [ChatMessage::User("hello")] },
+    { ..model.code, messages: [User("hello")], },
     theme,
     640.0,
     list_height - 20.0,
@@ -89,24 +89,10 @@ test "sidebar task window mounts a bounded slice" {
   let children : Array[TaskTreeNode] = []
   for i in 0..<200 {
     children.push(
-      TaskTreeNode::Task(
-        "s" + i.to_string(),
-        "task " + i.to_string(),
-        TaskGroup::Today,
-        TaskStatus::Completed,
-        0,
-      ),
+      Task("s" + i.to_string(), "task " + i.to_string(), Today, Completed, 0),
     )
   }
-  nodes.push(
-    TaskTreeNode::Folder(
-      "folder_today",
-      "Today",
-      TaskGroup::Today,
-      children,
-      true,
-    ),
-  )
+  nodes.push(Folder("folder_today", "Today", Today, children, true))
   let entries = sidebar_task_entries(nodes)
   let cached_entries = sidebar_task_entries(nodes)
   inspect(physical_equal(entries, cached_entries), content="true")
@@ -132,7 +118,7 @@ test "code composer prompt grows from two lines with content" {
     code_composer_prompt_lines("one\ntwo\nthree", theme, 360.0),
     content="3",
   )
-  let taller = { ..model.code, prompt: "one\ntwo\nthree" }
+  let taller = { ..model.code, prompt: "one\ntwo\nthree", }
   inspect(
     code_composer_height(taller, model.settings, theme, 640.0) >
     code_composer_height(model.code, model.settings, theme, 640.0),
@@ -198,12 +184,10 @@ fn workbench_view_test_paint_context(
 ///|
 test "backend user echo does not duplicate optimistic user message" {
   let model = test_model(script=_cmd => [])
-  let model = { ..model, code: { ..model.code, prompt: "hello" } }
+  let model = { ..model, code: { ..model.code, prompt: "hello", }, }
+  let (model, _effect) = model.update(CodeMsg(SubmitPrompt))
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SubmitPrompt),
-  )
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(UserMessageAdded("hello"))),
+    CodeMsg(ReceiveAgentEvent(UserMessageAdded("hello"))),
   )
   inspect(model.code.messages.length(), content="1")
 }
@@ -213,7 +197,7 @@ test "chat message text paints reply body left aligned" {
   let theme = @views.light_theme()
   let view = chat_message_text(
     "assistant reply",
-    role=@views.TextRole::Body,
+    role=Body,
     theme~,
     width=240.0,
     height=24.0,
@@ -224,11 +208,11 @@ test "chat message text paints reply body left aligned" {
       theme~,
     ),
   )
-  guard plan.commands[0] is @core.DrawCommand::DrawText({ text, align, .. }) else {
+  guard plan.commands[0] is DrawText({ text, align, .. }) else {
     fail("expected text draw command")
   }
   inspect(text, content="assistant reply")
-  inspect(align == @text.TextAlign::TextStart, content="true")
+  inspect(align == TextStart, content="true")
 }
 
 ///|
@@ -252,15 +236,13 @@ test "submit prompt appends user message and starts streaming" {
       SendTask(task) =>
         [
           AssistantMessageAdded("reply to " + task, None),
-          TurnTerminal(TurnStatus::Finished, "Done"),
+          TurnTerminal(Finished, "Done"),
         ]
       _ => []
     }
   })
-  let model = { ..model, code: { ..model.code, prompt: "hello" } }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SubmitPrompt),
-  )
+  let model = { ..model, code: { ..model.code, prompt: "hello", }, }
+  let (model, _effect) = model.update(CodeMsg(SubmitPrompt))
   // The user message is appended optimistically.
   inspect(model.code.messages.length(), content="1")
   guard model.code.messages[0] is User(text) else {
@@ -280,15 +262,13 @@ test "streaming progress notice scrolls to latest placeholder" {
     ..model,
     code: {
       ..model.code,
-      messages: [ChatMessage::User("hello")],
+      messages: [User("hello")],
       is_streaming: true,
       scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     },
   }
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(ProgressNotice("thinking...")),
-    ),
+    CodeMsg(ReceiveAgentEvent(ProgressNotice("thinking..."))),
   )
   inspect(model.code.messages.length(), content="1")
   guard model.code.progress_notice is Some(text) else {
@@ -305,22 +285,18 @@ test "manual upward message scroll pauses auto-follow" {
     ..model,
     code: {
       ..model.code,
-      messages: [ChatMessage::User("hello")],
+      messages: [User("hello")],
       is_streaming: true,
       follow_latest: true,
       scroll_offset: @geometry.Point::new(x=0.0, y=120.0),
     },
   }
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=40.0)),
-    ),
+    CodeMsg(MessageListScrolled(@geometry.Point::new(x=0.0, y=40.0))),
   )
   inspect(model.code.follow_latest, content="false")
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply")),
-    ),
+    CodeMsg(ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply"))),
   )
   inspect(model.code.scroll_offset.y, content="40")
 }
@@ -332,22 +308,18 @@ test "manual downward message scroll resumes auto-follow" {
     ..model,
     code: {
       ..model.code,
-      messages: [ChatMessage::User("hello")],
+      messages: [User("hello")],
       is_streaming: true,
       follow_latest: false,
       scroll_offset: @geometry.Point::new(x=0.0, y=120.0),
     },
   }
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=160.0)),
-    ),
+    CodeMsg(MessageListScrolled(@geometry.Point::new(x=0.0, y=160.0))),
   )
   inspect(model.code.follow_latest, content="true")
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply")),
-    ),
+    CodeMsg(ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply"))),
   )
   inspect(model.code.scroll_offset.y > 1.0e8, content="true")
 }
@@ -355,11 +327,9 @@ test "manual downward message scroll resumes auto-follow" {
 ///|
 test "receive assistant event appends message and hides successful terminal" {
   let model = test_model(script=_cmd => [])
-  let model = { ..model, code: { ..model.code, is_streaming: true } }
+  let model = { ..model, code: { ..model.code, is_streaming: true, }, }
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(AssistantMessageAdded("hi", None)),
-    ),
+    CodeMsg(ReceiveAgentEvent(AssistantMessageAdded("hi", None))),
   )
   inspect(model.code.messages.length(), content="1")
   guard model.code.messages[0] is Assistant(content, _) else {
@@ -370,9 +340,7 @@ test "receive assistant event appends message and hides successful terminal" {
   assert_true(model.code.is_streaming)
   // Now receive the terminal event.
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(TurnTerminal(TurnStatus::Finished, "Done")),
-    ),
+    CodeMsg(ReceiveAgentEvent(TurnTerminal(Finished, "Done"))),
   )
   assert_false(model.code.is_streaming)
   inspect(model.code.messages.length(), content="1")
@@ -386,14 +354,10 @@ test "receive assistant event appends message and hides successful terminal" {
 test "assistant chunks with same message id merge into one message" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "hello")),
-    ),
+    CodeMsg(ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "hello"))),
   )
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), " world")),
-    ),
+    CodeMsg(ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), " world"))),
   )
   inspect(model.code.messages.length(), content="1")
   guard model.code.messages[0] is Assistant(content, _) else {
@@ -406,14 +370,10 @@ test "assistant chunks with same message id merge into one message" {
 test "thought chunks merge into assistant reasoning" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "answer")),
-    ),
+    CodeMsg(ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "answer"))),
   )
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(ThoughtMessageChunk(Some("t1"), "reason")),
-    ),
+    CodeMsg(ReceiveAgentEvent(ThoughtMessageChunk(Some("t1"), "reason"))),
   )
   inspect(model.code.messages.length(), content="1")
   guard model.code.messages[0] is Assistant(content, reasoning) else {
@@ -437,12 +397,10 @@ test "permission response dispatches backend command" {
   )
   let model = {
     ..model,
-    code: { ..model.code, messages: [ChatMessage::PermissionRequest(request)] },
+    code: { ..model.code, messages: [PermissionRequest(request)], },
   }
   let (model, effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::RespondPermission("perm-1", PermissionOutcome::Selected("allow")),
-    ),
+    CodeMsg(RespondPermission("perm-1", Selected("allow"))),
   )
   ignore(drain_workbench_effect(effect))
   guard model.code.messages[0] is RuntimeNotice(text) else {
@@ -455,15 +413,15 @@ test "permission response dispatches backend command" {
     fail("expected respond permission command")
   }
   inspect(id, content="perm-1")
-  inspect(outcome == PermissionOutcome::Selected("allow"), content="true")
+  inspect(outcome == Selected("allow"), content="true")
 }
 
 ///|
 test "cancel turn dispatches cancel command and clears streaming" {
   let fixture = AgentBackendFixture::new(script=_cmd => [])
   let model = WorkbenchModel::new(backend=fixture.runtime())
-  let model = { ..model, code: { ..model.code, is_streaming: true } }
-  let (model, effect) = model.update(WorkbenchMsg::CodeMsg(CodeMsg::CancelTurn))
+  let model = { ..model, code: { ..model.code, is_streaming: true, }, }
+  let (model, effect) = model.update(CodeMsg(CancelTurn))
   assert_false(model.code.is_streaming)
   ignore(drain_workbench_effect(effect))
   let commands = fixture.dispatched_commands()
@@ -479,15 +437,11 @@ test "current mode update preserves advertised ACP modes" {
     agent_session_mode(id="code", name="Code"),
   ])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(SessionModeStateChanged(modes)),
-    ),
+    CodeMsg(ReceiveAgentEvent(SessionModeStateChanged(modes))),
   )
   let update = agent_session_mode_state(current_mode_id="code", available_modes=[])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(SessionModeStateChanged(update)),
-    ),
+    CodeMsg(ReceiveAgentEvent(SessionModeStateChanged(update))),
   )
   guard model.code.session_modes is Some(next_modes) else {
     fail("expected session modes")
@@ -499,13 +453,9 @@ test "current mode update preserves advertised ACP modes" {
 ///|
 test "failed terminal sets error" {
   let model = test_model(script=_cmd => [])
-  let model = { ..model, code: { ..model.code, is_streaming: true } }
+  let model = { ..model, code: { ..model.code, is_streaming: true, }, }
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(
-        TurnTerminal(TurnStatus::Failed, "network error"),
-      ),
-    ),
+    CodeMsg(ReceiveAgentEvent(TurnTerminal(Failed, "network error"))),
   )
   assert_false(model.code.is_streaming)
   guard model.code.error is Some(err) else { fail("expected error to be set") }
@@ -514,7 +464,7 @@ test "failed terminal sets error" {
   guard model.code.messages[0] is Terminal(status, message) else {
     fail("expected failed terminal message")
   }
-  inspect(status == TurnStatus::Failed, content="true")
+  inspect(status == Failed, content="true")
   inspect(message, content="network error")
 }
 
@@ -522,8 +472,8 @@ test "failed terminal sets error" {
 test "tool result event projects to tool message" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(
+    CodeMsg(
+      ReceiveAgentEvent(
         ToolResultAdded("shell", "exit 0", false, Some("ran ls")),
       ),
     ),
@@ -546,7 +496,7 @@ test "session list event updates sessions" {
     SessionSummary::new(id="s2", first_prompt="second"),
   ]
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(SessionListed(sessions))),
+    CodeMsg(ReceiveAgentEvent(SessionListed(sessions))),
   )
   inspect(model.code.sessions.length(), content="2")
   inspect(model.code.sessions[0].id, content="s1")
@@ -556,13 +506,7 @@ test "session list event updates sessions" {
 test "scroll and streaming chunks preserve the existing task projection" {
   let model = test_model(script=_cmd => [])
   let sentinel = [
-    TaskTreeNode::Task(
-      "sentinel",
-      "must stay mounted",
-      TaskGroup::Today,
-      TaskStatus::Completed,
-      0,
-    ),
+    TaskTreeNode::Task("sentinel", "must stay mounted", Today, Completed, 0),
   ]
   let model = {
     ..model,
@@ -575,15 +519,11 @@ test "scroll and streaming chunks preserve the existing task projection" {
     },
   }
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=120.0)),
-    ),
+    CodeMsg(MessageListScrolled(@geometry.Point::new(x=0.0, y=120.0))),
   )
   inspect(physical_equal(model.task_tree, sentinel), content="true")
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "chunk")),
-    ),
+    CodeMsg(ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "chunk"))),
   )
   inspect(physical_equal(model.task_tree, sentinel), content="true")
 }
@@ -602,10 +542,8 @@ test "session metadata and terminal events refresh the task projection" {
   }
   let model = sync_task_tree(model)
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(
-        SessionInfoUpdated("s1", Some("new title"), None),
-      ),
+    CodeMsg(
+      ReceiveAgentEvent(SessionInfoUpdated("s1", Some("new title"), None)),
     ),
   )
   guard model.task_tree[0] is Folder(_, _, _, children, _) else {
@@ -615,19 +553,15 @@ test "session metadata and terminal events refresh the task projection" {
     fail("expected task")
   }
   inspect(title, content="new title")
-  inspect(status == TaskStatus::Running, content="true")
+  inspect(status == Running, content="true")
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(
-        TurnTerminal(TurnStatus::Failed, "network error"),
-      ),
-    ),
+    CodeMsg(ReceiveAgentEvent(TurnTerminal(Failed, "network error"))),
   )
   guard model.task_tree[0] is Folder(_, _, _, children, _) else {
     fail("expected folder")
   }
   guard children[0] is Task(_, _, _, status, _) else { fail("expected task") }
-  inspect(status == TaskStatus::Failed, content="true")
+  inspect(status == Failed, content="true")
 }
 
 ///|
@@ -651,7 +585,7 @@ test "session list auto-selects first session when none is active" {
     SessionSummary::new(id="s2", first_prompt="next"),
   ]
   let (model, effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(SessionListed(sessions))),
+    CodeMsg(ReceiveAgentEvent(SessionListed(sessions))),
   )
   guard model.code.active_session_id is Some(id) else {
     fail("expected active session id")
@@ -666,14 +600,10 @@ test "session list auto-selects first session when none is active" {
   }
   inspect(selected, content="s1")
   inspect(messages.length(), content="2")
-  guard messages[0]
-    is WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(ActiveSessionChanged("s1"))
-    ) else {
+  guard messages[0] is CodeMsg(ReceiveAgentEvent(ActiveSessionChanged("s1"))) else {
     fail("expected active-session event")
   }
-  guard messages[1]
-    is WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(SessionRebuilt(items))) else {
+  guard messages[1] is CodeMsg(ReceiveAgentEvent(SessionRebuilt(items))) else {
     fail("expected rebuild event")
   }
   inspect(items.length(), content="2")
@@ -683,13 +613,16 @@ test "session list auto-selects first session when none is active" {
 test "session list preserves existing active session" {
   let fixture = AgentBackendFixture::new(script=_cmd => [])
   let model = WorkbenchModel::new(backend=fixture.runtime())
-  let model = { ..model, code: { ..model.code, active_session_id: Some("s2") } }
+  let model = {
+    ..model,
+    code: { ..model.code, active_session_id: Some("s2"), },
+  }
   let sessions = [
     SessionSummary::new(id="s1", first_prompt="first"),
     SessionSummary::new(id="s2", first_prompt="current"),
   ]
   let (model, effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(SessionListed(sessions))),
+    CodeMsg(ReceiveAgentEvent(SessionListed(sessions))),
   )
   guard model.code.active_session_id is Some(id) else {
     fail("expected active session id")
@@ -702,29 +635,29 @@ test "session list preserves existing active session" {
 ///|
 test "task filter cycles all active running failed" {
   let model = test_model(script=_cmd => [])
-  inspect(model.task_filter == TaskFilter::AllTasks, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::CycleTaskFilter)
-  inspect(model.task_filter == TaskFilter::ActiveTask, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::CycleTaskFilter)
-  inspect(model.task_filter == TaskFilter::RunningTasks, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::CycleTaskFilter)
-  inspect(model.task_filter == TaskFilter::FailedTasks, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::CycleTaskFilter)
-  inspect(model.task_filter == TaskFilter::AllTasks, content="true")
+  inspect(model.task_filter == AllTasks, content="true")
+  let (model, _effect) = model.update(CycleTaskFilter)
+  inspect(model.task_filter == ActiveTask, content="true")
+  let (model, _effect) = model.update(CycleTaskFilter)
+  inspect(model.task_filter == RunningTasks, content="true")
+  let (model, _effect) = model.update(CycleTaskFilter)
+  inspect(model.task_filter == FailedTasks, content="true")
+  let (model, _effect) = model.update(CycleTaskFilter)
+  inspect(model.task_filter == AllTasks, content="true")
 }
 
 ///|
 test "task filter direct messages select concrete views" {
-  let model = { ..test_model(script=_cmd => []), active_tab: TopTab::Work }
-  let (model, _effect) = model.update(WorkbenchMsg::ShowRunningTasks)
-  inspect(model.task_filter == TaskFilter::RunningTasks, content="true")
-  inspect(model.active_tab == TopTab::Code, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::ShowFailedTasks)
-  inspect(model.task_filter == TaskFilter::FailedTasks, content="true")
-  inspect(model.active_tab == TopTab::Code, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::ShowAllTasks)
-  inspect(model.task_filter == TaskFilter::AllTasks, content="true")
-  inspect(model.active_tab == TopTab::Code, content="true")
+  let model = { ..test_model(script=_cmd => []), active_tab: Work, }
+  let (model, _effect) = model.update(ShowRunningTasks)
+  inspect(model.task_filter == RunningTasks, content="true")
+  inspect(model.active_tab == Code, content="true")
+  let (model, _effect) = model.update(ShowFailedTasks)
+  inspect(model.task_filter == FailedTasks, content="true")
+  inspect(model.active_tab == Code, content="true")
+  let (model, _effect) = model.update(ShowAllTasks)
+  inspect(model.task_filter == AllTasks, content="true")
+  inspect(model.active_tab == Code, content="true")
 }
 
 ///|
@@ -736,8 +669,8 @@ test "active task filter keeps only active session in task tree" {
   ]
   let model = {
     ..model,
-    task_filter: TaskFilter::ActiveTask,
-    code: { ..model.code, sessions, active_session_id: Some("s2") },
+    task_filter: ActiveTask,
+    code: { ..model.code, sessions, active_session_id: Some("s2"), },
   }
   let model = sync_task_tree(model)
   inspect(model.task_tree.length(), content="1")
@@ -759,7 +692,7 @@ test "running task filter hides completed sessions" {
   ]
   let model = {
     ..model,
-    task_filter: TaskFilter::RunningTasks,
+    task_filter: RunningTasks,
     code: {
       ..model.code,
       sessions,
@@ -775,7 +708,7 @@ test "running task filter hides completed sessions" {
   inspect(children.length(), content="1")
   guard children[0] is Task(id, _, _, status, _) else { fail("expected task") }
   inspect(id, content="s1")
-  inspect(status == TaskStatus::Running, content="true")
+  inspect(status == Running, content="true")
 }
 
 ///|
@@ -784,12 +717,12 @@ test "failed task filter keeps failed active session" {
   let sessions = [SessionSummary::new(id="s1", first_prompt="first")]
   let model = {
     ..model,
-    task_filter: TaskFilter::FailedTasks,
+    task_filter: FailedTasks,
     code: {
       ..model.code,
       sessions,
       active_session_id: Some("s1"),
-      messages: [ChatMessage::Terminal(TurnStatus::Failed, "failed")],
+      messages: [Terminal(Failed, "failed")],
     },
   }
   let model = sync_task_tree(model)
@@ -800,7 +733,7 @@ test "failed task filter keeps failed active session" {
   inspect(children.length(), content="1")
   guard children[0] is Task(id, _, _, status, _) else { fail("expected task") }
   inspect(id, content="s1")
-  inspect(status == TaskStatus::Failed, content="true")
+  inspect(status == Failed, content="true")
 }
 
 ///|
@@ -810,8 +743,8 @@ test "task search filters sessions by prompt text" {
     SessionSummary::new(id="s1", first_prompt="Fix renderer crash"),
     SessionSummary::new(id="s2", first_prompt="Write release notes"),
   ]
-  let model = { ..model, code: { ..model.code, sessions, } }
-  let (model, _effect) = model.update(WorkbenchMsg::TaskSearchChanged("render"))
+  let model = { ..model, code: { ..model.code, sessions, }, }
+  let (model, _effect) = model.update(TaskSearchChanged("render"))
   inspect(model.task_search_query, content="render")
   inspect(model.task_tree.length(), content="1")
   guard model.task_tree[0] is Folder(_, _, _, children, _) else {
@@ -880,7 +813,7 @@ test "work tab summary counts failed active task" {
       ..model.code,
       sessions,
       active_session_id: Some("s1"),
-      messages: [ChatMessage::Terminal(TurnStatus::Failed, "failed")],
+      messages: [Terminal(Failed, "failed")],
     },
   }
   let summary = work_tab_summary(model)
@@ -904,13 +837,13 @@ test "work next actions start with failed work" {
       ..model.code,
       sessions,
       active_session_id: Some("s1"),
-      messages: [ChatMessage::Terminal(TurnStatus::Failed, "failed")],
+      messages: [Terminal(Failed, "failed")],
     },
   }
   let actions = work_next_actions(model)
   inspect(actions.length(), content="5")
   inspect(actions[0].title, content="Review failed tasks")
-  guard actions[0].action is WorkbenchMsg::ShowFailedTasks else {
+  guard actions[0].action is ShowFailedTasks else {
     fail("expected failed action")
   }
   inspect(actions[1].title, content="Continue active task")
@@ -931,7 +864,7 @@ test "work next actions prefer running before continuing code" {
   }
   let actions = work_next_actions(model)
   inspect(actions[0].title, content="Watch running work")
-  guard actions[0].action is WorkbenchMsg::ShowRunningTasks else {
+  guard actions[0].action is ShowRunningTasks else {
     fail("expected running action")
   }
   inspect(actions[1].title, content="Continue active task")
@@ -943,9 +876,7 @@ test "work next actions stay useful with no sessions" {
   let actions = work_next_actions(model)
   inspect(actions.length(), content="2")
   inspect(actions[0].title, content="Start a new task")
-  guard actions[0].action is WorkbenchMsg::NewTask else {
-    fail("expected new task action")
-  }
+  guard actions[0].action is NewTask else { fail("expected new task action") }
   inspect(actions[1].title, content="Agent settings")
 }
 
@@ -966,8 +897,8 @@ test "design tab summary reflects tasks and settings" {
     },
     settings: {
       ..model.settings,
-      approval_policy: ApprovalPolicy::AskOnCommand,
-      sandbox_mode: SandboxMode::FullAccess,
+      approval_policy: AskOnCommand,
+      sandbox_mode: FullAccess,
       font_size: 18,
     },
   }
@@ -984,9 +915,7 @@ test "design tab summary reflects tasks and settings" {
 test "active session changed event updates active id" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(ActiveSessionChanged("abc-123")),
-    ),
+    CodeMsg(ReceiveAgentEvent(ActiveSessionChanged("abc-123"))),
   )
   guard model.code.active_session_id is Some(id) else {
     fail("expected active session id")
@@ -1002,17 +931,14 @@ test "session rebuilt replaces message list" {
     ..model,
     code: {
       ..model.code,
-      messages: [
-        ChatMessage::User("old"),
-        ChatMessage::Assistant("old reply", None),
-      ],
+      messages: [User("old"), Assistant("old reply", None)],
     },
   }
   inspect(model.code.messages.length(), content="2")
   // Rebuild with a fresh set.
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(
+    CodeMsg(
+      ReceiveAgentEvent(
         SessionRebuilt([
           UserMessageAdded("new"),
           AssistantMessageAdded("new reply", None),
@@ -1032,14 +958,12 @@ test "new session clears messages and prompt" {
     ..model,
     code: {
       ..model.code,
-      messages: [ChatMessage::User("old")],
+      messages: [User("old")],
       prompt: "draft",
       is_streaming: true,
     },
   }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::NewSession),
-  )
+  let (model, _effect) = model.update(CodeMsg(NewSession))
   inspect(model.code.messages.length(), content="0")
   inspect(model.code.prompt, content="")
   assert_false(model.code.is_streaming)
@@ -1048,13 +972,8 @@ test "new session clears messages and prompt" {
 ///|
 test "select session switches active id and clears messages" {
   let model = test_model(script=_cmd => [])
-  let model = {
-    ..model,
-    code: { ..model.code, messages: [ChatMessage::User("old")] },
-  }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SelectSession("target-id")),
-  )
+  let model = { ..model, code: { ..model.code, messages: [User("old")], }, }
+  let (model, _effect) = model.update(CodeMsg(SelectSession("target-id")))
   guard model.code.active_session_id is Some(id) else {
     fail("expected active session id")
   }
@@ -1065,22 +984,20 @@ test "select session switches active id and clears messages" {
 ///|
 test "toggle appearance cycles system light dark" {
   let model = test_model(script=_cmd => [])
-  inspect(model.appearance == AppearanceMode::System, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::ToggleAppearance)
-  inspect(model.appearance == AppearanceMode::Light, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::ToggleAppearance)
-  inspect(model.appearance == AppearanceMode::Dark, content="true")
-  let (model, _effect) = model.update(WorkbenchMsg::ToggleAppearance)
-  inspect(model.appearance == AppearanceMode::System, content="true")
+  inspect(model.appearance == System, content="true")
+  let (model, _effect) = model.update(ToggleAppearance)
+  inspect(model.appearance == Light, content="true")
+  let (model, _effect) = model.update(ToggleAppearance)
+  inspect(model.appearance == Dark, content="true")
+  let (model, _effect) = model.update(ToggleAppearance)
+  inspect(model.appearance == System, content="true")
 }
 
 ///|
 test "clear error removes error" {
   let model = test_model(script=_cmd => [])
-  let model = { ..model, code: { ..model.code, error: Some("oops") } }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ClearError),
-  )
+  let model = { ..model, code: { ..model.code, error: Some("oops"), }, }
+  let (model, _effect) = model.update(CodeMsg(ClearError))
   guard model.code.error is None else { fail("expected error to be cleared") }
 }
 
@@ -1088,10 +1005,8 @@ test "clear error removes error" {
 test "empty prompt submit is a no-op" {
   let fixture = AgentBackendFixture::new(script=_cmd => [])
   let model = WorkbenchModel::new(backend=fixture.runtime())
-  let model = { ..model, code: { ..model.code, prompt: "   \n  " } }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SubmitPrompt),
-  )
+  let model = { ..model, code: { ..model.code, prompt: "   \n  ", }, }
+  let (model, _effect) = model.update(CodeMsg(SubmitPrompt))
   inspect(model.code.messages.length(), content="0")
   assert_false(model.code.is_streaming)
   inspect(fixture.dispatched_commands().length(), content="0")
@@ -1105,15 +1020,13 @@ test "streaming prompt submit is ignored" {
     ..model,
     code: {
       ..model.code,
-      messages: [ChatMessage::User("first task")],
+      messages: [User("first task")],
       prompt: "second task",
       is_streaming: true,
       progress_notice: Some("Running tool..."),
     },
   }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SubmitPrompt),
-  )
+  let (model, _effect) = model.update(CodeMsg(SubmitPrompt))
   inspect(model.code.messages.length(), content="1")
   inspect(model.code.prompt, content="second task")
   assert_true(model.code.is_streaming)
@@ -1143,10 +1056,7 @@ test "program init fetches existing sessions" {
     fail("expected startup session fetch")
   }
   inspect(messages.length(), content="1")
-  guard messages[0]
-    is WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(SessionListed(sessions))
-    ) else {
+  guard messages[0] is CodeMsg(ReceiveAgentEvent(SessionListed(sessions))) else {
     fail("expected session list event")
   }
   inspect(sessions.length(), content="1")
@@ -1156,17 +1066,13 @@ test "program init fetches existing sessions" {
 ///|
 test "steer submit only works while streaming" {
   let model = test_model(script=_cmd => [])
-  let model = { ..model, code: { ..model.code, steer_text: "go left" } }
+  let model = { ..model, code: { ..model.code, steer_text: "go left", }, }
   // Not streaming -> no-op.
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SubmitSteer),
-  )
+  let (model, _effect) = model.update(CodeMsg(SubmitSteer))
   inspect(model.code.steer_text, content="go left")
   // Now streaming -> clears steer text.
-  let model = { ..model, code: { ..model.code, is_streaming: true } }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SubmitSteer),
-  )
+  let model = { ..model, code: { ..model.code, is_streaming: true, }, }
+  let (model, _effect) = model.update(CodeMsg(SubmitSteer))
   inspect(model.code.steer_text, content="")
 }
 
@@ -1175,7 +1081,7 @@ test "model changed updates current model" {
   let model = test_model(script=_cmd => [])
   inspect(model.code.current_model == "deepseek-v4-flash", content="true")
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ModelChanged("deepseek", "deepseek-v4-pro")),
+    CodeMsg(ModelChanged("deepseek", "deepseek-v4-pro")),
   )
   inspect(model.code.current_model == "deepseek-v4-pro", content="true")
 }
@@ -1183,9 +1089,7 @@ test "model changed updates current model" {
 ///|
 test "unsupported custom model change is ignored" {
   let model = test_model(script=_cmd => [])
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ModelChanged("openai", "gpt-4o")),
-  )
+  let (model, _effect) = model.update(CodeMsg(ModelChanged("openai", "gpt-4o")))
   inspect(model.code.current_model, content="deepseek-v4-flash")
   guard model.code.current_provider_id is Some(provider_id) else {
     fail("expected current provider")
@@ -1196,10 +1100,8 @@ test "unsupported custom model change is ignored" {
 ///|
 test "provider with only unsupported models stays inspectable but not selected" {
   let model = test_model(script=_cmd => [])
-  let model = { ..model, code: { ..model.code, model_picker_open: true } }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SelectProvider("openai")),
-  )
+  let model = { ..model, code: { ..model.code, model_picker_open: true, }, }
+  let (model, _effect) = model.update(CodeMsg(SelectProvider("openai")))
   guard model.settings.active_provider_id is Some(active_provider_id) else {
     fail("expected active provider")
   }
@@ -1215,36 +1117,23 @@ test "provider with only unsupported models stays inspectable but not selected" 
 ///|
 test "thinking changed updates current thinking" {
   let model = test_model(script=_cmd => [])
-  inspect(model.code.current_thinking == ThinkingChoice::Normal, content="true")
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ThinkingChanged(ThinkingChoice::Normal)),
-  )
-  inspect(model.code.current_thinking == ThinkingChoice::Normal, content="true")
+  inspect(model.code.current_thinking == Normal, content="true")
+  let (model, _effect) = model.update(CodeMsg(ThinkingChanged(Normal)))
+  inspect(model.code.current_thinking == Normal, content="true")
 }
 
 ///|
 test "compact picker cycles are stable" {
-  inspect(
-    next_thinking_choice(ThinkingChoice::Normal) == ThinkingChoice::High,
-    content="true",
-  )
-  inspect(
-    next_thinking_choice(ThinkingChoice::High) == ThinkingChoice::Max,
-    content="true",
-  )
-  inspect(
-    next_thinking_choice(ThinkingChoice::Max) == ThinkingChoice::Normal,
-    content="true",
-  )
+  inspect(next_thinking_choice(Normal) == High, content="true")
+  inspect(next_thinking_choice(High) == Max, content="true")
+  inspect(next_thinking_choice(Max) == Normal, content="true")
 }
 
 ///|
 test "progress notice does not add a message" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(ProgressNotice("thinking...")),
-    ),
+    CodeMsg(ReceiveAgentEvent(ProgressNotice("thinking..."))),
   )
   inspect(model.code.messages.length(), content="0")
   guard model.code.progress_notice is Some(text) else {
@@ -1265,9 +1154,7 @@ test "terminal event clears transient progress notice" {
     },
   }
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(TurnTerminal(TurnStatus::Finished, "Done")),
-    ),
+    CodeMsg(ReceiveAgentEvent(TurnTerminal(Finished, "Done"))),
   )
   assert_false(model.code.is_streaming)
   guard model.code.progress_notice is None else {
@@ -1279,9 +1166,7 @@ test "terminal event clears transient progress notice" {
 test "runtime notice projects to runtime message" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(
-      CodeMsg::ReceiveAgentEvent(RuntimeNoticeAdded("compacted")),
-    ),
+    CodeMsg(ReceiveAgentEvent(RuntimeNoticeAdded("compacted"))),
   )
   inspect(model.code.messages.length(), content="1")
   guard model.code.messages[0] is RuntimeNotice(text) else {
@@ -1311,9 +1196,7 @@ test "fixture backend records dispatched commands" {
 test "settings api key change updates settings workspace" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(
-      SettingsMsg::UpdateProviderField("deepseek", ApiKey, "sk-xxx"),
-    ),
+    SettingsMsg(UpdateProviderField("deepseek", ApiKey, "sk-xxx")),
   )
   inspect(
     model.settings.find_provider("deepseek").unwrap().api_key,
@@ -1325,12 +1208,8 @@ test "settings api key change updates settings workspace" {
 test "settings base url change updates settings workspace" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(
-      SettingsMsg::UpdateProviderField(
-        "deepseek",
-        BaseUrl,
-        "https://api.example.com",
-      ),
+    SettingsMsg(
+      UpdateProviderField("deepseek", BaseUrl, "https://api.example.com"),
     ),
   )
   inspect(
@@ -1343,9 +1222,7 @@ test "settings base url change updates settings workspace" {
 test "settings add provider creates selectable additional providers" {
   let model = test_model(script=_cmd => [])
   inspect(model.settings.providers.length(), content="2")
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(SettingsMsg::AddProvider),
-  )
+  let (model, _effect) = model.update(SettingsMsg(AddProvider))
   inspect(model.settings.providers.length(), content="3")
   guard model.settings.active_provider_id is Some(active) else {
     fail("expected active provider")
@@ -1355,9 +1232,7 @@ test "settings add provider creates selectable additional providers" {
     model.settings.find_provider("provider-3").unwrap().name,
     content="Provider 3",
   )
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(SettingsMsg::AddProvider),
-  )
+  let (model, _effect) = model.update(SettingsMsg(AddProvider))
   inspect(model.settings.providers.length(), content="4")
   guard model.settings.active_provider_id is Some(active2) else {
     fail("expected active provider")
@@ -1368,49 +1243,29 @@ test "settings add provider creates selectable additional providers" {
 ///|
 test "settings approval change updates settings workspace" {
   let model = test_model(script=_cmd => [])
-  inspect(
-    model.settings.approval_policy == ApprovalPolicy::AskOnWrite,
-    content="true",
-  )
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(
-      SettingsMsg::ApprovalChanged(ApprovalPolicy::NeverAsk),
-    ),
-  )
-  inspect(
-    model.settings.approval_policy == ApprovalPolicy::NeverAsk,
-    content="true",
-  )
+  inspect(model.settings.approval_policy == AskOnWrite, content="true")
+  let (model, _effect) = model.update(SettingsMsg(ApprovalChanged(NeverAsk)))
+  inspect(model.settings.approval_policy == NeverAsk, content="true")
 }
 
 ///|
 test "settings sandbox change updates settings workspace" {
   let model = test_model(script=_cmd => [])
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(
-      SettingsMsg::SandboxChanged(SandboxMode::ReadOnly),
-    ),
-  )
-  inspect(model.settings.sandbox_mode == SandboxMode::ReadOnly, content="true")
+  let (model, _effect) = model.update(SettingsMsg(SandboxChanged(ReadOnly)))
+  inspect(model.settings.sandbox_mode == ReadOnly, content="true")
 }
 
 ///|
 test "settings font size clamps to range" {
   let model = test_model(script=_cmd => [])
   // Below minimum (10).
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(SettingsMsg::FontSizeChanged(4)),
-  )
+  let (model, _effect) = model.update(SettingsMsg(FontSizeChanged(4)))
   inspect(model.settings.font_size, content="10")
   // Above maximum (24).
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(SettingsMsg::FontSizeChanged(99)),
-  )
+  let (model, _effect) = model.update(SettingsMsg(FontSizeChanged(99)))
   inspect(model.settings.font_size, content="24")
   // In range.
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(SettingsMsg::FontSizeChanged(16)),
-  )
+  let (model, _effect) = model.update(SettingsMsg(FontSizeChanged(16)))
   inspect(model.settings.font_size, content="16")
 }
 
@@ -1418,7 +1273,7 @@ test "settings font size clamps to range" {
 test "settings working dir change updates settings workspace" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
-    WorkbenchMsg::SettingsMsg(SettingsMsg::WorkingDirChanged("~/projects/x")),
+    SettingsMsg(WorkingDirChanged("~/projects/x")),
   )
   inspect(model.settings.working_dir, content="~/projects/x")
 }
@@ -1440,17 +1295,11 @@ test "welcome folder picker stores selected workspace" {
     backend=fixture.runtime(),
     settings_persist=Some(file => persisted.val = Some(file)),
   )
-  let (model, effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::PickWorkspaceFolder),
-    services~,
-  )
+  let (model, effect) = model.update(CodeMsg(PickWorkspaceFolder), services~)
   inspect(model.settings.working_dir, content=".")
   let messages = drain_workbench_effect(effect)
   inspect(messages.length(), content="1")
-  guard messages[0]
-    is WorkbenchMsg::CodeMsg(
-      CodeMsg::WorkspaceFolderSelected(Some("/tmp/project"))
-    ) else {
+  guard messages[0] is CodeMsg(WorkspaceFolderSelected(Some("/tmp/project"))) else {
     fail("expected selected folder message")
   }
   let (model, _effect) = model.update(messages[0])
@@ -1463,18 +1312,12 @@ test "welcome folder picker stores selected workspace" {
 
 ///|
 test "settings segmented ids map to stable enum values" {
-  inspect(approval_policy_id(ApprovalPolicy::NeverAsk), content="never")
-  inspect(approval_policy_id(ApprovalPolicy::AskOnWrite), content="write")
-  inspect(
-    approval_policy_from_id("command") == ApprovalPolicy::AskOnCommand,
-    content="true",
-  )
-  inspect(sandbox_mode_id(SandboxMode::ReadOnly), content="read-only")
-  inspect(sandbox_mode_id(SandboxMode::WorkspaceWritable), content="workspace")
-  inspect(
-    sandbox_mode_from_id("full") == SandboxMode::FullAccess,
-    content="true",
-  )
+  inspect(approval_policy_id(NeverAsk), content="never")
+  inspect(approval_policy_id(AskOnWrite), content="write")
+  inspect(approval_policy_from_id("command") == AskOnCommand, content="true")
+  inspect(sandbox_mode_id(ReadOnly), content="read-only")
+  inspect(sandbox_mode_id(WorkspaceWritable), content="workspace")
+  inspect(sandbox_mode_from_id("full") == FullAccess, content="true")
 }
 
 ///|
@@ -1526,10 +1369,10 @@ test "workbench theme token helpers use neutral gray reference colors" {
 test "message row height tracks wrapped lines and card kinds" {
   let theme = @views.light_theme()
   let width = 640.0
-  let body_size = chat_message_text_role_font(@views.TextRole::Body, theme).size
+  let body_size = chat_message_text_role_font(Body, theme).size
   let line_h = chat_message_line_height(body_size)
   // 短消息:高度 = 消息行边距 + 气泡 padding + 换行行数 × 行高。
-  let short = message_row_height(ChatMessage::User("hi"), theme, width)
+  let short = message_row_height(User("hi"), theme, width)
   let content_w = (width * 0.72 - 28.0).max(80.0)
   let short_lines = chat_message_display_lines("hi", content_w, body_size).length()
   inspect(
@@ -1538,27 +1381,23 @@ test "message row height tracks wrapped lines and card kinds" {
   )
   // 长消息行数更多 → 高度更高。
   let long_text = "word word word word word word word word word word word word word word"
-  let long = message_row_height(ChatMessage::User(long_text), theme, width)
+  let long = message_row_height(User(long_text), theme, width)
   inspect(long > short, content="true")
   // Assistant 带 reasoning 比不带高。
   let with_r = message_row_height(
-    ChatMessage::Assistant("a", Some("long reasoning text here")),
+    Assistant("a", Some("long reasoning text here")),
     theme,
     width,
   )
-  let without_r = message_row_height(
-    ChatMessage::Assistant("a", None),
-    theme,
-    width,
-  )
+  let without_r = message_row_height(Assistant("a", None), theme, width)
   inspect(with_r > without_r, content="true")
   // 工具结果卡片比运行时提示高。
   let tool = message_row_height(
-    ChatMessage::ToolResult("bash", "output line", false, None),
+    ToolResult("bash", "output line", false, None),
     theme,
     width,
   )
-  let notice = message_row_height(ChatMessage::RuntimeNotice("n"), theme, width)
+  let notice = message_row_height(RuntimeNotice("n"), theme, width)
   inspect(tool > notice, content="true")
 }
 
@@ -1580,15 +1419,12 @@ test "message line memo reuses identical wrap results" {
 ///|
 test "message row heights reuse unchanged message arrays" {
   let theme = @views.light_theme()
-  let messages = [
-    ChatMessage::User("question"),
-    ChatMessage::Assistant("answer", None),
-  ]
+  let messages = [ChatMessage::User("question"), Assistant("answer", None)]
   let first = message_row_heights(messages, theme, 584.0)
   let second = message_row_heights(messages, theme, 584.0)
   inspect(physical_equal(first, second), content="true")
   let grown = Array::copy(messages)
-  grown[1] = ChatMessage::Assistant("answer with more content", None)
+  grown[1] = Assistant("answer with more content", None)
   let third = message_row_heights(grown, theme, 584.0)
   inspect(third.length(), content="2")
   inspect(third[0] == first[0], content="true")
@@ -1627,7 +1463,7 @@ test "message window builds only the visible slice" {
   let theme = @views.light_theme()
   let messages : Array[ChatMessage] = []
   for _ in 0..<200 {
-    messages.push(ChatMessage::User("short"))
+    messages.push(User("short"))
   }
   let at_bottom = {
     ..model.code,

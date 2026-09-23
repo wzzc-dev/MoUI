@@ -24,7 +24,7 @@ fn append_text_field_commands(
   ignore(size)
   let border = if focused { focused_border } else { border }
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   if bottom_border_only {
     append_bottom_border(commands, frame, border)
   } else {
@@ -43,13 +43,13 @@ fn append_text_field_commands(
     @core.Insets::symmetric(horizontal=10.0, vertical=4.0),
   )
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=display,
         frame=text_frame,
         font~,
         color~,
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )
@@ -96,7 +96,7 @@ fn append_searchbar_commands(
 ) -> Unit {
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   let border = if focused { focused_border } else { border }
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   append_border(commands, rounded, border)
   let icon_frame = @core.Rect::new(
     x=frame.origin.x + 10.0,
@@ -110,13 +110,13 @@ fn append_searchbar_commands(
   let color = if text == "" { placeholder_color } else { foreground }
   let text_frame = searchbar_text_frame(frame, has_text=text != "")
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=display,
         frame=text_frame,
         font~,
         color~,
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )
@@ -159,11 +159,7 @@ fn append_border(
     Some(border) =>
       if border.width > 0.0 {
         commands.push(
-          @core.DrawCommand::StrokeRoundedRectBrush(
-            rounded,
-            border.brush,
-            border.width,
-          ),
+          StrokeRoundedRectBrush(rounded, border.brush, border.width),
         )
       }
     None => ()
@@ -184,15 +180,13 @@ fn append_bottom_border(
         let y = frame.origin.y + frame.size.height - border.width / 2.0
         let path = @core.PathSpec::new(
           verbs=[
-            @core.PathVerb::MoveTo(@core.Point::new(x=frame.origin.x, y~)),
-            @core.PathVerb::LineTo(
-              @core.Point::new(x=frame.origin.x + frame.size.width, y~),
-            ),
+            MoveTo(@core.Point::new(x=frame.origin.x, y~)),
+            LineTo(@core.Point::new(x=frame.origin.x + frame.size.width, y~)),
           ],
           stroke=Some(border.brush),
           stroke_width=border.width,
         )
-        commands.push(@core.DrawCommand::DrawPath(path))
+        commands.push(DrawPath(path))
       }
     None => ()
   }
@@ -218,13 +212,7 @@ fn append_inner_focus_border(
     ),
     radius=(corner_radius - inset).clamp(min=0.0, max=corner_radius),
   )
-  commands.push(
-    @core.DrawCommand::StrokeRoundedRectBrush(
-      inner,
-      @core.Brush::solid(color),
-      1.0,
-    ),
-  )
+  commands.push(StrokeRoundedRectBrush(inner, @core.Brush::solid(color), 1.0))
 }
 
 ///|
@@ -238,7 +226,7 @@ fn append_text_field_editing_overlay(
   cursor_color~ : @core.Color,
   theme~ : @core.Theme,
 ) -> Unit {
-  commands.push(@core.DrawCommand::PushClip(text_frame))
+  commands.push(PushClip(text_frame))
   if control.composition is None {
     append_text_field_selection_commands(
       commands,
@@ -274,8 +262,8 @@ fn append_text_field_editing_overlay(
     caret,
     display_text.to_array().length(),
   )
-  commands.push(@core.DrawCommand::FillRect(cursor, cursor_color))
-  commands.push(@core.DrawCommand::PopClip)
+  commands.push(FillRect(cursor, cursor_color))
+  commands.push(PopClip)
 }
 
 ///|
@@ -313,7 +301,7 @@ fn append_text_field_selection_commands(
         // fields and rich editors render selection highlights consistently.
         let selection_color = theme.palette.primary.with_alpha(0.18)
         commands.push(
-          @core.DrawCommand::FillRect(
+          FillRect(
             @core.Rect::new(
               x=x0,
               y=text_frame.origin.y + 6.0,
@@ -355,7 +343,7 @@ fn append_text_field_composition_underline(
         let x1 = text_frame.origin.x + layout.caret_positions[end]
         if x1 > x0 {
           commands.push(
-            @core.DrawCommand::FillRect(
+            FillRect(
               @core.Rect::new(
                 x=x0,
                 y=text_frame.origin.y + text_frame.size.height - 7.0,
@@ -383,7 +371,7 @@ fn append_searchbar_search_icon(
   )
   let radius = frame.size.width * 0.26
   commands.push(
-    @core.DrawCommand::StrokeRoundedRect(
+    StrokeRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(
           x=center.x - radius,
@@ -398,16 +386,16 @@ fn append_searchbar_search_icon(
     ),
   )
   commands.push(
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(
+          MoveTo(
             @core.Point::new(
               x=center.x + radius * 0.7,
               y=center.y + radius * 0.7,
             ),
           ),
-          @core.PathVerb::LineTo(
+          LineTo(
             @core.Point::new(
               x=frame.origin.x + frame.size.width * 0.86,
               y=frame.origin.y + frame.size.height * 0.86,
@@ -429,25 +417,25 @@ fn append_searchbar_clear_icon(
 ) -> Unit {
   let inset = frame.size.width * 0.28
   commands.push(
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(
+          MoveTo(
             @core.Point::new(x=frame.origin.x + inset, y=frame.origin.y + inset),
           ),
-          @core.PathVerb::LineTo(
+          LineTo(
             @core.Point::new(
               x=frame.origin.x + frame.size.width - inset,
               y=frame.origin.y + frame.size.height - inset,
             ),
           ),
-          @core.PathVerb::MoveTo(
+          MoveTo(
             @core.Point::new(
               x=frame.origin.x + frame.size.width - inset,
               y=frame.origin.y + inset,
             ),
           ),
-          @core.PathVerb::LineTo(
+          LineTo(
             @core.Point::new(
               x=frame.origin.x + inset,
               y=frame.origin.y + frame.size.height - inset,

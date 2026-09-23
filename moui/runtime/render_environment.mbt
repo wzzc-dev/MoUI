@@ -96,10 +96,10 @@ fn RenderEnvironment::matches_default_cache_key(
   self.scale_factor == 1.0 &&
   self.text_scale == 1.0 &&
   self.locale == "en-US" &&
-  self.layout_direction == LayoutDirection::LeftToRight &&
-  self.accessibility_contrast == AccessibilityContrast::Standard &&
+  self.layout_direction == LeftToRight &&
+  self.accessibility_contrast == Standard &&
   !self.reduced_motion &&
-  self.content_size_category == ContentSizeCategory::Medium &&
+  self.content_size_category == Medium &&
   self.now_ms == 0.0
 }
 

@@ -68,25 +68,13 @@ pub fn DesignTypographyRole::label(preset : DesignTypographyRole) -> String {
 ///|
 pub fn typography_role_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> Array[DesignTypographyRoleRecord] {
   [
-    typography_role_record(preset, DesignTypographyRole::TypographyBody, scheme),
-    typography_role_record(
-      preset,
-      DesignTypographyRole::TypographyTitle,
-      scheme,
-    ),
-    typography_role_record(
-      preset,
-      DesignTypographyRole::TypographyCaption,
-      scheme,
-    ),
-    typography_role_record(
-      preset,
-      DesignTypographyRole::TypographyControl,
-      scheme,
-    ),
+    typography_role_record(preset, TypographyBody, scheme),
+    typography_role_record(preset, TypographyTitle, scheme),
+    typography_role_record(preset, TypographyCaption, scheme),
+    typography_role_record(preset, TypographyControl, scheme),
   ]
 }
 
@@ -94,7 +82,7 @@ pub fn typography_role_report(
 pub fn typography_role_for(
   preset : @common.DesignPreset,
   role : DesignTypographyRole,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  scheme? : @core.ColorScheme = Light,
 ) -> DesignTypographyRoleRecord? {
   for item in typography_role_report(preset, scheme~) {
     if item.role == role {
@@ -138,7 +126,7 @@ pub fn typography_role_gap_count(preset : @common.DesignPreset) -> Int {
     if item.required &&
       (
         !item.resolves_core_surface ||
-        item.status == DesignTokenStatus::NotMapped ||
+        item.status == NotMapped ||
         item.official_token_count == 0 ||
         item.source_imported_count == 0 ||
         item.runtime_aligned_count == 0 ||
@@ -302,8 +290,7 @@ fn typography_source_evidence(
     }
   }
   if official_token == "" {
-    match
-      token_group_resolver_for(preset, DesignSystemRequirement::Typography) {
+    match token_group_resolver_for(preset, Typography) {
       Some(group) => {
         source_declared = group.source_declared
         source_label = group.source_label
@@ -338,15 +325,15 @@ fn typography_role_status(
   resolves_core_surface : Bool,
 ) -> DesignTokenStatus {
   if !resolves_core_surface {
-    DesignTokenStatus::NotMapped
+    NotMapped
   } else if evidence.runtime_aligned_count > 0 &&
     evidence.runtime_destination_gap_count == 0 {
-    DesignTokenStatus::ThemeMapped
+    ThemeMapped
   } else if evidence.official_token_count > 0 ||
     evidence.source_imported_count > 0 {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   } else {
-    DesignTokenStatus::PreviewMapped
+    PreviewMapped
   }
 }
 

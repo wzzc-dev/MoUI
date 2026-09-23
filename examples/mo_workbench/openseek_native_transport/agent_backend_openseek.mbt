@@ -93,21 +93,21 @@ fn openseek_thinking_from_choice(
   choice : @app.ThinkingChoice,
 ) -> @deepseek.ThinkingMode {
   match choice {
-    @app.ThinkingChoice::Normal => @deepseek.ThinkingMode::No
-    @app.ThinkingChoice::High => @deepseek.ThinkingMode::High
+    Normal => No
+    High => High
     // OpenAI-compatible gateways (e.g. Sensenova) reject `reasoning_effort=max`.
-    @app.ThinkingChoice::Max => @deepseek.ThinkingMode::High
+    Max => High
   }
 }
 
 ///|
 fn openseek_default_model() -> @deepseek.Model {
-  @deepseek.Model::V4Flash
+  V4Flash
 }
 
 ///|
 fn openseek_default_thinking() -> @deepseek.ThinkingMode {
-  @deepseek.ThinkingMode::No
+  No
 }
 
 ///|
@@ -243,9 +243,7 @@ let openseek_session_counter : Ref[Int] = Ref(0)
 ///|
 fn openseek_new_session_id(prefix : String) -> @agent_session.SessionId {
   openseek_session_counter.val = openseek_session_counter.val + 1
-  @agent_session.SessionId::SessionId(
-    prefix + "-" + openseek_session_counter.val.to_string(),
-  )
+  SessionId(prefix + "-" + openseek_session_counter.val.to_string())
 }
 
 ///|
@@ -271,35 +269,27 @@ fn openseek_item_to_agent_events(
   item : @agent_session.SessionItem,
 ) -> Array[@app.AgentEvent] {
   match item {
-    @agent_session.SessionItem::User(message) =>
-      [@app.AgentEvent::UserMessageAdded(message.content())]
-    @agent_session.SessionItem::Assistant(message) => {
+    User(message) => [UserMessageAdded(message.content())]
+    Assistant(message) => {
       let content = message.content()
       if content.trim().is_empty() {
         []
       } else {
-        [
-          @app.AgentEvent::AssistantMessageAdded(
-            content,
-            message.reasoning_content(),
-          ),
-        ]
+        [AssistantMessageAdded(content, message.reasoning_content())]
       }
     }
-    @agent_session.SessionItem::Tool(result) =>
+    Tool(result) =>
       [
-        @app.AgentEvent::ToolResultAdded(
+        ToolResultAdded(
           result.tool_name(),
           result.content(),
           result.is_error(),
           result.brief(),
         ),
       ]
-    @agent_session.SessionItem::Runtime(notice) =>
-      [@app.AgentEvent::RuntimeNoticeAdded(notice.content())]
-    @agent_session.SessionItem::Summary(_) => []
-    @agent_session.SessionItem::Terminal(terminal) =>
-      openseek_terminal_to_agent_events(terminal)
+    Runtime(notice) => [RuntimeNoticeAdded(notice.content())]
+    Summary(_) => []
+    Terminal(terminal) => openseek_terminal_to_agent_events(terminal)
   }
 }
 
@@ -308,20 +298,17 @@ fn openseek_terminal_to_agent_events(
   terminal : @agent_session.TurnTerminal,
 ) -> Array[@app.AgentEvent] {
   match terminal {
-    @agent_session.TurnTerminal::Finished(message) => {
+    Finished(message) => {
       let out : Array[@app.AgentEvent] = []
       if !message.trim().is_empty() {
-        out.push(@app.AgentEvent::AssistantMessageAdded(message, None))
+        out.push(AssistantMessageAdded(message, None))
       }
-      out.push(@app.AgentEvent::TurnTerminal(@app.TurnStatus::Finished, ""))
+      out.push(TurnTerminal(Finished, ""))
       out
     }
-    @agent_session.TurnTerminal::Aborted(message) =>
-      [@app.AgentEvent::TurnTerminal(@app.TurnStatus::Aborted, message)]
-    @agent_session.TurnTerminal::Interrupted(message) =>
-      [@app.AgentEvent::TurnTerminal(@app.TurnStatus::Interrupted, message)]
-    @agent_session.TurnTerminal::Failed(message) =>
-      [@app.AgentEvent::TurnTerminal(@app.TurnStatus::Failed, message)]
+    Aborted(message) => [TurnTerminal(Aborted, message)]
+    Interrupted(message) => [TurnTerminal(Interrupted, message)]
+    Failed(message) => [TurnTerminal(Failed, message)]
   }
 }
 
@@ -374,7 +361,7 @@ pub fn openseek_backend_bundle(
   config : OpenSeekBackendConfig,
 ) -> OpenSeekBackendBundle {
   let owner = OpenSeekBackendOwner::new(config)
-  { runtime: openseek_backend_runtime(owner), owner }
+  { runtime: openseek_backend_runtime(owner), owner, }
 }
 
 ///|
@@ -417,7 +404,7 @@ fn openseek_engine_state(
     session,
     model: config.model,
     thinking: config.thinking,
-    runtime: @agent_runtime.AgentRuntime(workspace_root=config.workspace_root),
+    runtime: AgentRuntime(workspace_root=config.workspace_root),
     turn_task: None,
   }
 }

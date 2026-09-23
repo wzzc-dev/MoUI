@@ -62,7 +62,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       other => return Err("unknown argument: " + other)
     }
   }
-  Ok({ repo_root: repo_root.val, help: help.val })
+  Ok({ repo_root: repo_root.val, help: help.val, })
 }
 
 ///|
@@ -125,7 +125,7 @@ fn discover_window_consumers(
   for path in paths {
     match read_optional_text(repo_root, path) {
       Some(text) if text.contains("\"wzzc-dev/window@") =>
-        consumers.push({ path, text: Some(text) })
+        consumers.push({ path, text: Some(text), })
       Some(_) => ()
       None => errors.push("missing file after discovery: " + path)
     }
@@ -295,7 +295,7 @@ fn validate_window_dependency_inputs(
             "  See: docs/invariants.md#A6",
           )
         } else {
-          versions_by_consumer.push({ path: consumer.path, versions })
+          versions_by_consumer.push({ path: consumer.path, versions, })
           for version in versions {
             all_versions.push(version)
           }

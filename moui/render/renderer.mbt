@@ -160,7 +160,7 @@ pub fn RendererBackendInfo::new(
   owns_surface~ : Bool,
   description? : String = "",
 ) -> RendererBackendInfo {
-  { backend, status, can_render, can_resize, owns_surface, description }
+  { backend, status, can_render, can_resize, owns_surface, description, }
 }
 
 ///|
@@ -212,12 +212,12 @@ pub fn RendererPresentationModel::label(
 
 ///|
 pub fn RendererSelection::native_default() -> RendererSelection {
-  RendererSelection::Backend(RendererBackendKind::SkiaRasterNative)
+  Backend(SkiaRasterNative)
 }
 
 ///|
 pub fn RendererSelection::web_default() -> RendererSelection {
-  RendererSelection::Backend(RendererBackendKind::WebGpuWasm)
+  Backend(WebGpuWasm)
 }
 
 ///|
@@ -237,11 +237,11 @@ pub fn RendererBackendKind::family(
   self : RendererBackendKind,
 ) -> RendererFamily {
   match self {
-    NativeWgpu => RendererFamily::Wgpu
-    WebGpuWasm => RendererFamily::WebGpu
-    SkiaRasterNative | SkiaGpuNative => RendererFamily::Skia
-    SunRasterNative => RendererFamily::Sun
-    Canvas2DWasm => RendererFamily::Canvas2D
+    NativeWgpu => Wgpu
+    WebGpuWasm => WebGpu
+    SkiaRasterNative | SkiaGpuNative => Skia
+    SunRasterNative => Sun
+    Canvas2DWasm => Canvas2D
   }
 }
 
@@ -273,7 +273,7 @@ pub fn RenderFrameInput::new(
   ),
   clear_color? : @core.Color? = None,
 ) -> RenderFrameInput {
-  { metrics, commands, damage, clear_color }
+  { metrics, commands, damage, clear_color, }
 }
 
 ///|
@@ -363,7 +363,7 @@ pub fn WgpuSurfaceContract::new(
   ready~ : Bool,
   description? : String = "",
 ) -> WgpuSurfaceContract {
-  { source, backend, ready, description }
+  { source, backend, ready, description, }
 }
 
 ///|
@@ -384,7 +384,7 @@ pub struct RectVertex {
 
 ///|
 pub fn RectBatch::new(rect~ : @core.Rect, color~ : @core.Color) -> RectBatch {
-  { rect, color }
+  { rect, color, }
 }
 
 ///|
@@ -434,43 +434,42 @@ pub fn collect_rect_batches(
   let batches : Array[RectBatch] = []
   for command in commands {
     match command {
-      @core.DrawCommand::FillRect(rect, color) => batches.push({ rect, color })
-      @core.DrawCommand::FillRoundedRect(rounded, color) =>
-        batches.push({ rect: rounded.rect, color })
-      @core.DrawCommand::StrokeRect(rect, color, width) =>
+      FillRect(rect, color) => batches.push({ rect, color, })
+      FillRoundedRect(rounded, color) =>
+        batches.push({ rect: rounded.rect, color, })
+      StrokeRect(rect, color, width) =>
         append_stroke_rect_batches(batches, rect, color, width)
-      @core.DrawCommand::StrokeRoundedRect(rounded, color, width) =>
+      StrokeRoundedRect(rounded, color, width) =>
         append_stroke_rect_batches(batches, rounded.rect, color, width)
-      @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
-        batches.push({ rect: rounded.rect, color: brush_fallback_color(brush) })
-      @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
+      FillRoundedRectBrush(rounded, brush) =>
+        batches.push({ rect: rounded.rect, color: brush_fallback_color(brush), })
+      StrokeRoundedRectBrush(rounded, brush, width) =>
         append_stroke_rect_batches(
           batches,
           rounded.rect,
           brush_fallback_color(brush),
           width,
         )
-      @core.DrawCommand::DrawShadow(shadow) =>
-        append_shadow_batches(batches, shadow)
-      @core.DrawCommand::Clear(_)
-      | @core.DrawCommand::DrawText(_)
-      | @core.DrawCommand::DrawImage(_)
-      | @core.DrawCommand::PushClip(_)
-      | @core.DrawCommand::PopClip
-      | @core.DrawCommand::PushRoundedClip(_)
-      | @core.DrawCommand::PopRoundedClip
-      | @core.DrawCommand::PushTransform(_)
-      | @core.DrawCommand::PopTransform
-      | @core.DrawCommand::PushOpacity(_)
-      | @core.DrawCommand::PopOpacity
-      | @core.DrawCommand::PushLayer(_)
-      | @core.DrawCommand::PopLayer
-      | @core.DrawCommand::BeginRetainedLayer(_)
-      | @core.DrawCommand::EndRetainedLayer(_)
-      | @core.DrawCommand::PushFilter(_)
-      | @core.DrawCommand::PopFilter
-      | @core.DrawCommand::DrawPath(_)
-      | @core.DrawCommand::DrawShaderEffect(_) => ()
+      DrawShadow(shadow) => append_shadow_batches(batches, shadow)
+      Clear(_)
+      | DrawText(_)
+      | DrawImage(_)
+      | PushClip(_)
+      | PopClip
+      | PushRoundedClip(_)
+      | PopRoundedClip
+      | PushTransform(_)
+      | PopTransform
+      | PushOpacity(_)
+      | PopOpacity
+      | PushLayer(_)
+      | PopLayer
+      | BeginRetainedLayer(_)
+      | EndRetainedLayer(_)
+      | PushFilter(_)
+      | PopFilter
+      | DrawPath(_)
+      | DrawShaderEffect(_) => ()
     }
   }
   batches
@@ -479,9 +478,9 @@ pub fn collect_rect_batches(
 ///|
 fn brush_fallback_color(brush : @core.Brush) -> @core.Color {
   match brush {
-    @core.Brush::Solid(color) => color
-    @core.Brush::LinearGradient(gradient) => gradient.start_color
-    @core.Brush::RadialGradient(gradient) => gradient.center_color
+    Solid(color) => color
+    LinearGradient(gradient) => gradient.start_color
+    RadialGradient(gradient) => gradient.center_color
   }
 }
 
@@ -605,7 +604,7 @@ pub fn first_clear_color(commands : Array[@core.DrawCommand]) -> @core.Color {
   for command in commands {
     if !found {
       match command {
-        @core.DrawCommand::Clear(color) => {
+        Clear(color) => {
           clear = color
           found = true
         }
@@ -643,7 +642,7 @@ fn push_vertex(
   y : Double,
   color : @core.Color,
 ) -> Unit {
-  vertices.push({ x, y, r: color.r, g: color.g, b: color.b, a: color.a })
+  vertices.push({ x, y, r: color.r, g: color.g, b: color.b, a: color.a, })
 }
 
 ///|

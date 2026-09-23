@@ -9,7 +9,7 @@ pub fn HostWgpuSurface::new(
   instance~ : @wgpu_mbt.Instance,
   surface~ : @wgpu_mbt.Surface,
 ) -> HostWgpuSurface {
-  { instance, surface }
+  { instance, surface, }
 }
 
 ///|

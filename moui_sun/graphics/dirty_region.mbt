@@ -115,22 +115,22 @@ pub fn DirtyPresentPlan::get_present_strategy(
   width : Int,
   height : Int,
 ) -> DirtyPresentStrategy {
-  guard !self.is_empty() else { return DirtyPresentStrategy::Skip }
+  guard !self.is_empty() else { return Skip }
   if self.saves_full_present_pixels(width, height) {
-    DirtyPresentStrategy::Partial
+    Partial
   } else {
-    DirtyPresentStrategy::Full
+    Full
   }
 }
 
 ///|
 pub fn DirtyPresentPlan::is_empty(self : DirtyPresentPlan) -> Bool {
-  self.mode == DirtyPresentPlanMode::Empty || self.rects.length() == 0
+  self.mode == Empty || self.rects.length() == 0
 }
 
 ///|
 pub fn DirtyPresentPlan::uses_bounds_fallback(self : DirtyPresentPlan) -> Bool {
-  self.mode == DirtyPresentPlanMode::Bounds
+  self.mode == Bounds
 }
 
 ///|
@@ -161,12 +161,12 @@ pub fn DirtySubmitPlan::needs_present(self : DirtySubmitPlan) -> Bool {
 ///|
 pub fn DirtySubmitPlan::get_state(self : DirtySubmitPlan) -> DirtySubmitState {
   if self.needs_present() {
-    return DirtySubmitState::Present
+    return Present
   }
   if self.has_dirty() {
-    return DirtySubmitState::DirtyClippedAway
+    return DirtyClippedAway
   }
-  DirtySubmitState::Clean
+  Clean
 }
 
 ///|
@@ -247,7 +247,7 @@ pub fn DirtySubmitResult::needs_present(self : DirtySubmitResult) -> Bool {
 
 ///|
 pub fn DirtySubmitResult::was_clipped_away(self : DirtySubmitResult) -> Bool {
-  self.get_state() == DirtySubmitState::DirtyClippedAway
+  self.get_state() == DirtyClippedAway
 }
 
 ///|
@@ -315,7 +315,7 @@ pub fn PixelRect::new(
   width~ : Int,
   height~ : Int,
 ) -> PixelRect {
-  { x, y, width, height }
+  { x, y, width, height, }
 }
 
 ///|
@@ -453,7 +453,7 @@ pub struct DirtyRegion {
 
 ///|
 pub fn DirtyRegion::new() -> DirtyRegion {
-  { rects: [] }
+  { rects: [], }
 }
 
 ///|
@@ -547,18 +547,16 @@ pub fn DirtyRegion::present_plan(
       None => ()
     }
   }
-  guard clipped.length() > 0 else {
-    return { mode: DirtyPresentPlanMode::Empty, rects: [] }
-  }
+  guard clipped.length() > 0 else { return { mode: Empty, rects: [], } }
   guard max_rects <= 0 || clipped.length() <= max_rects else {
     let region = DirtyRegion::new()
     for rect in clipped {
       region.add_rect(rect)
     }
     match region.bounds() {
-      Some(value) => { mode: DirtyPresentPlanMode::Bounds, rects: [value] }
-      None => { mode: DirtyPresentPlanMode::Empty, rects: [] }
+      Some(value) => { mode: Bounds, rects: [value], }
+      None => { mode: Empty, rects: [], }
     }
   }
-  { mode: DirtyPresentPlanMode::Rects, rects: clipped }
+  { mode: Rects, rects: clipped, }
 }

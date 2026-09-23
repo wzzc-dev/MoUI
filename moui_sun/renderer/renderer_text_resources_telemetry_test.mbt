@@ -1,6 +1,6 @@
 ///|
 test "RendererTextResources configures bounded text caches" {
-  let resources = RendererTextResources::with_capacities(16, 16, 1, 2)
+  let resources = @renderer.RendererTextResources::with_capacities(16, 16, 1, 2)
   let text_cache = resources.get_text_mask_cache()
   let glyph_cache = resources.get_glyph_mask_cache()
   let atlas = resources.get_glyph_mask_atlas()
@@ -14,7 +14,7 @@ test "RendererTextResources configures bounded text caches" {
 
 ///|
 test "RendererTextResources reports cached text and glyph residency" {
-  let resources = RendererTextResources::new(16, 16)
+  let resources = @renderer.RendererTextResources::new(16, 16)
   let text_pixels : FixedArray[Byte] = FixedArray::make(1, 24)
   let glyph_pixels : FixedArray[Byte] = FixedArray::make(1, 48)
   ignore(
@@ -39,7 +39,7 @@ test "RendererTextResources reports cached text and glyph residency" {
 
 ///|
 test "RendererTextResources snapshots cache and atlas telemetry" {
-  let resources = RendererTextResources::with_capacities(16, 8, 2, 3)
+  let resources = @renderer.RendererTextResources::with_capacities(16, 8, 2, 3)
   let empty = resources.snapshot()
   assert_eq(empty.get_text_mask_count(), 0)
   assert_eq(empty.get_text_mask_capacity(), 2)

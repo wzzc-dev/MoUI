@@ -4,9 +4,9 @@ pub fn[Msg] form_field(
   child~ : @core.View[Msg],
   helper? : String = "",
   error? : String = "",
-  status? : FormFieldStatus = FormFieldStatus::Normal,
-  layout? : FormFieldLayout = FormFieldLayout::Vertical,
-  validation_display? : FormValidationDisplay = FormValidationDisplay::OnInvalid,
+  status? : FormFieldStatus = Normal,
+  layout? : FormFieldLayout = Vertical,
+  validation_display? : FormValidationDisplay = OnInvalid,
   required? : Bool = false,
   disabled? : Bool = false,
   read_only? : Bool = false,
@@ -29,7 +29,7 @@ pub fn[Msg] form_field(
   let label_view = form_field_label(
     label,
     status=resolved_status,
-    required=required || resolved_status == FormFieldStatus::Required,
+    required=required || resolved_status == Required,
     width=match layout {
       Vertical => width
       Horizontal => label_width
@@ -54,7 +54,7 @@ pub fn[Msg] form_field(
   let body = @layout.column(
     body_rows,
     spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Stretch,
+    align=Stretch,
   )
   let field = match layout {
     Vertical =>
@@ -66,16 +66,14 @@ pub fn[Msg] form_field(
       @layout.row(
         [label_view, body],
         spacing=resolved_theme.spacing_scale.md,
-        align=@style.CrossAlign::Start,
+        align=Start,
       )
   }
   field
   .frame(width~)
-  .semantics_role(@core.SemanticsRole::FormField)
-  .semantics_required(
-    required=required || resolved_status == FormFieldStatus::Required,
-  )
-  .semantics_invalid(invalid=resolved_status == FormFieldStatus::Invalid)
+  .semantics_role(FormField)
+  .semantics_required(required=required || resolved_status == Required)
+  .semantics_invalid(invalid=resolved_status == Invalid)
   .semantics_description(
     form_field_semantics_description(resolved_status, helper, error),
   )

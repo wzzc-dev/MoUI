@@ -140,7 +140,7 @@ pub fn readiness() -> LinuxBackendReadiness {
 pub fn backend_info() -> LinuxBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
-      backend=@host.HostBackendKind::Native,
+      backend=Native,
       description="Linux Wayland window host with renderer providers",
     ),
     window_backend_available: true,
@@ -173,9 +173,9 @@ pub fn linux_environment_with_accessibility_settings(
   let updated = environment
     .with_accessibility_contrast(
       if linux_accessibility_high_contrast() != 0 {
-        @core.AccessibilityContrast::High
+        High
       } else {
-        @core.AccessibilityContrast::Standard
+        Standard
       },
     )
     .with_reduced_motion(linux_accessibility_reduce_motion() != 0)
@@ -215,7 +215,7 @@ fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int {
 
 ///|
 pub fn linux_service_bridge(
-  system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+  system_theme? : @core.ColorScheme = Light,
   clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_linux_clipboard,
   open_url? : (String) -> Bool = dispatch_linux_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_linux_file_dialog,
@@ -252,9 +252,9 @@ fn dispatch_linux_settings(
     Read(key) => {
       let key_bytes = @utf8.encode(key[:], bom=false)
       if linux_settings_has_value(key_bytes) == 0 {
-        @host.HostServiceResponse::SettingValue(None)
+        SettingValue(None)
       } else {
-        @host.HostServiceResponse::SettingValue(
+        SettingValue(
           Some(
             @utf8.decode_lossy(
               linux_settings_read_bytes(key_bytes)[:],
@@ -268,17 +268,17 @@ fn dispatch_linux_settings(
       let key_bytes = @utf8.encode(key[:], bom=false)
       let value_bytes = @utf8.encode(value[:], bom=false)
       if linux_settings_write_bytes(key_bytes, value_bytes) != 0 {
-        @host.HostServiceResponse::SettingWritten
+        SettingWritten
       } else {
-        @host.HostServiceResponse::Unavailable("settings write failed")
+        Unavailable("settings write failed")
       }
     }
     Remove(key) => {
       let key_bytes = @utf8.encode(key[:], bom=false)
       if linux_settings_remove_bytes(key_bytes) != 0 {
-        @host.HostServiceResponse::SettingRemoved
+        SettingRemoved
       } else {
-        @host.HostServiceResponse::Unavailable("settings remove failed")
+        Unavailable("settings remove failed")
       }
     }
   }
@@ -297,40 +297,38 @@ fn dispatch_linux_clipboard(
   request : @host.HostClipboardRequest,
 ) -> @host.HostServiceResponse {
   match request {
-    @host.HostClipboardRequest::ReadText =>
+    ReadText =>
       match @window_linux.read_clipboard_text() {
-        Some(text) => @host.HostServiceResponse::ClipboardText(text)
+        Some(text) => ClipboardText(text)
         None =>
-          @host.HostServiceResponse::Unavailable(
+          Unavailable(
             "clipboard does not contain text or Wayland selection is unavailable",
           )
       }
-    @host.HostClipboardRequest::WriteText(text) =>
+    WriteText(text) =>
       if @window_linux.write_clipboard_text(text) {
-        @host.HostServiceResponse::ClipboardWritten
+        ClipboardWritten
       } else {
-        @host.HostServiceResponse::Unavailable(
+        Unavailable(
           "clipboard write failed or Wayland selection is unavailable",
         )
       }
-    @host.HostClipboardRequest::ReadImage =>
+    ReadImage =>
       match linux_clipboard_read_image_bytes() {
         bytes if bytes.length() > 0 =>
           // The C implementation is expected to return a payload that can be
           // interpreted as a simple image (e.g., raw PNG bytes).
           // For a more robust solution, a structured format (mime + data) could be used.
-          @host.HostServiceResponse::ClipboardImage(bytes)
+          ClipboardImage(bytes)
         _ =>
-          @host.HostServiceResponse::Unavailable(
-            "clipboard image read failed or no image data available",
-          )
+          Unavailable("clipboard image read failed or no image data available")
       }
-    @host.HostClipboardRequest::WriteImage(mime_type, image_bytes) => {
+    WriteImage(mime_type, image_bytes) => {
       let mime_encoded = @host_services_desktop.encode_host_string(mime_type)
       if linux_clipboard_write_image_bytes(mime_encoded, image_bytes) != 0 {
-        @host.HostServiceResponse::ClipboardWritten
+        ClipboardWritten
       } else {
-        @host.HostServiceResponse::Unavailable(
+        Unavailable(
           "clipboard image write failed or Wayland selection is unavailable",
         )
       }

@@ -1,8 +1,8 @@
 ///|
 pub fn backend_info() -> @render.RendererBackendInfo {
   @render.RendererBackendInfo::new(
-    backend=@render.RendererBackendKind::WebGpuWasm,
-    status=@render.RendererCapabilityStatus::Supported,
+    backend=WebGpuWasm,
+    status=Supported,
     can_render=true,
     can_resize=true,
     owns_surface=false,
@@ -33,8 +33,8 @@ pub fn required_capabilities() -> WebGpuHostCapabilities {
 ///|
 pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
   @render.WgpuSurfaceContract::new(
-    source=@render.WgpuSurfaceSourceKind::WebCanvasSurface,
-    backend=@render.RendererBackendKind::WebGpuWasm,
+    source=WebCanvasSurface,
+    backend=WebGpuWasm,
     ready=true,
     description="Canvas surface is supplied by window/web and configured by the wasm-gc `webgpu` host import module.",
   )
@@ -43,16 +43,13 @@ pub fn canvas_surface_contract() -> @render.WgpuSurfaceContract {
 ///|
 pub fn renderer_descriptor() -> @render.RendererDescriptor {
   @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::WebGpuWasm,
-    family=@render.RendererFamily::WebGpu,
-    presentation=@render.RendererPresentationModel::WebCanvas,
-    supported_targets=[
-      @render.RendererTarget::WasmGc,
-      @render.RendererTarget::Web,
-    ],
+    backend=WebGpuWasm,
+    family=WebGpu,
+    presentation=WebCanvas,
+    supported_targets=[WasmGc, Web],
     capabilities=webgpu_provider_capabilities(
       provider_id="webgpu-wasm",
-      backend=@render.RendererBackendKind::WebGpuWasm,
+      backend=WebGpuWasm,
     ),
     description="Browser WebGPU renderer reached through wasm-gc host imports.",
   )
@@ -67,7 +64,7 @@ pub fn create_webgpu_provider(
 ) -> @render.RendererProvider {
   let caps = webgpu_provider_capabilities(
     provider_id="webgpu-wasm",
-    backend=@render.RendererBackendKind::WebGpuWasm,
+    backend=WebGpuWasm,
   )
   @render.RendererProvider::new(
     id="webgpu-wasm",
@@ -87,18 +84,15 @@ pub fn create_browser_canvas2d_fallback_provider(
 ) -> @render.RendererProvider {
   let caps = browser_canvas2d_fallback_capabilities(
     provider_id="canvas2d",
-    backend=@render.RendererBackendKind::Canvas2DWasm,
+    backend=Canvas2DWasm,
   )
   @render.RendererProvider::new(
     id="canvas2d",
     descriptor=@render.RendererDescriptor::new(
-      backend=@render.RendererBackendKind::Canvas2DWasm,
-      family=@render.RendererFamily::Canvas2D,
-      presentation=@render.RendererPresentationModel::WebCanvas,
-      supported_targets=[
-        @render.RendererTarget::WasmGc,
-        @render.RendererTarget::Web,
-      ],
+      backend=Canvas2DWasm,
+      family=Canvas2D,
+      presentation=WebCanvas,
+      supported_targets=[WasmGc, Web],
       capabilities=caps,
       description="Browser Canvas2D fallback reached through the WebGPU-compatible wasm-gc host-import port.",
     ),
@@ -114,9 +108,8 @@ pub fn webgpu_provider_capabilities(
 ) -> Array[@render.RendererBackendFeatureCapability] {
   @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let status = match feature {
-      @render.RendererFeature::Gradient | @render.RendererFeature::Transform =>
-        @render.RendererFeatureStatus::Partial
-      _ => @render.RendererFeatureStatus::Supported
+      Gradient | Transform => @render.RendererFeatureStatus::Partial
+      _ => Supported
     }
     (status, "Browser WebGPU provider declares \{feature.label()} support.")
   })
@@ -129,9 +122,8 @@ pub fn browser_canvas2d_fallback_capabilities(
 ) -> Array[@render.RendererBackendFeatureCapability] {
   @render_common.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
     let status = match feature {
-      @render.RendererFeature::Image | @render.RendererFeature::AsyncImage =>
-        @render.RendererFeatureStatus::Partial
-      _ => @render.RendererFeatureStatus::Supported
+      Image | AsyncImage => @render.RendererFeatureStatus::Partial
+      _ => Supported
     }
     (
       status,
@@ -185,7 +177,7 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         metrics.scale_factor,
       )
       if !host_surface_is_valid(surface) {
-        raise WebGpuHostError::SurfaceUnavailable
+        raise SurfaceUnavailable
       }
       surface_ref.val = Some(surface)
       WebGpuHostSurface::new(canvas_id~, metrics~)
@@ -195,11 +187,11 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         Some(surface) => {
           let renderer = host_create_renderer(surface)
           if !host_renderer_is_valid(renderer) {
-            raise WebGpuHostError::DeviceUnavailable
+            raise DeviceUnavailable
           }
           renderer_ref.val = Some(renderer)
         }
-        None => raise WebGpuHostError::SurfaceUnavailable
+        None => raise SurfaceUnavailable
       }
     },
     resize=metrics => {
@@ -222,7 +214,7 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
             ),
           )
         }
-        _ => raise WebGpuHostError::InvalidResource
+        _ => raise InvalidResource
       }
     },
     measure_text=input => host_measure_text_layout(input),
@@ -243,7 +235,7 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
     submit=calls => {
       match renderer_ref.val {
         Some(renderer) => submit_host_calls(renderer, calls)
-        None => raise WebGpuHostError::InvalidResource
+        None => raise InvalidResource
       }
     },
     dispose=() => {
@@ -303,7 +295,7 @@ pub fn WebGpuWasmRenderer::backend_kind(
   self : WebGpuWasmRenderer,
 ) -> @render.RendererBackendKind {
   let _ = self
-  @render.RendererBackendKind::WebGpuWasm
+  WebGpuWasm
 }
 
 ///|
@@ -346,9 +338,7 @@ pub fn WebGpuWasmRenderer::render_frame(
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult {
   let expanded = self.layer_cache.expand_frame_commands(frame.commands)
-  let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::Clear(frame.clear_color),
-  ]
+  let commands : Array[@core.DrawCommand] = [Clear(frame.clear_color)]
   commands.append(expanded.commands)
   self.render(commands) catch {
     _ => ()

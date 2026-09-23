@@ -8,7 +8,7 @@ struct FontData {
 ///|
 /// Create font data from bytes
 pub fn FontData::new(data : Bytes, font_index? : Int = 0) -> FontData {
-  { data, font_index }
+  { data, font_index, }
 }
 
 ///|
@@ -40,7 +40,7 @@ pub fn FontMetrics::new(
   descent~ : Int,
   line_gap? : Int = 0,
 ) -> FontMetrics {
-  { units_per_em, ascent, descent, line_gap }
+  { units_per_em, ascent, descent, line_gap, }
 }
 
 ///|

@@ -15,8 +15,8 @@ pub fn[Msg] flex_layout(
   children~ : Array[@core.View[Msg]],
   axis~ : @core.Axis,
   spacing? : Double = 0.0,
-  main_axis_alignment? : @core.MainAxisAlignment = @core.MainAxisAlignment::MainStart,
-  cross_axis_alignment? : @core.CrossAxisAlignment = @core.CrossAxisAlignment::CrossStretch,
+  main_axis_alignment? : @core.MainAxisAlignment = MainStart,
+  cross_axis_alignment? : @core.CrossAxisAlignment = CrossStretch,
   kind? : String = "Flex",
   key? : String? = None,
 ) -> @core.View[Msg] {
@@ -56,8 +56,8 @@ impl @core.ViewNode for FlexLayout with fn declaration(self) {
         "axis",
         @core.DeclarationKey::int(
           match self.axis {
-            @core.Axis::Horizontal => 0
-            @core.Axis::Vertical => 1
+            Horizontal => 0
+            Vertical => 1
           },
         ),
       ),
@@ -66,12 +66,12 @@ impl @core.ViewNode for FlexLayout with fn declaration(self) {
         "main_axis_alignment",
         @core.DeclarationKey::int(
           match self.main_axis_alignment {
-            @core.MainAxisAlignment::MainStart => 0
-            @core.MainAxisAlignment::MainCenter => 1
-            @core.MainAxisAlignment::MainEnd => 2
-            @core.MainAxisAlignment::SpaceBetween => 3
-            @core.MainAxisAlignment::SpaceAround => 4
-            @core.MainAxisAlignment::SpaceEvenly => 5
+            MainStart => 0
+            MainCenter => 1
+            MainEnd => 2
+            SpaceBetween => 3
+            SpaceAround => 4
+            SpaceEvenly => 5
           },
         ),
       ),
@@ -79,10 +79,10 @@ impl @core.ViewNode for FlexLayout with fn declaration(self) {
         "cross_axis_alignment",
         @core.DeclarationKey::int(
           match self.cross_axis_alignment {
-            @core.CrossAxisAlignment::CrossStart => 0
-            @core.CrossAxisAlignment::CrossCenter => 1
-            @core.CrossAxisAlignment::CrossEnd => 2
-            @core.CrossAxisAlignment::CrossStretch => 3
+            CrossStart => 0
+            CrossCenter => 1
+            CrossEnd => 2
+            CrossStretch => 3
           },
         ),
       ),
@@ -120,9 +120,7 @@ impl @core.ViewNode for FlexLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for FlexLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -145,11 +143,11 @@ fn flex_measured_size(
     // counts so a row/column reports the right height/width.
     let main_contribution = flex_child_main_base(axis, size, weight)
     match axis {
-      @core.Axis::Horizontal => {
+      Horizontal => {
         main = main + main_contribution
         cross = view_max_double(cross, size.height)
       }
-      @core.Axis::Vertical => {
+      Vertical => {
         main = main + main_contribution
         cross = view_max_double(cross, size.width)
       }
@@ -159,8 +157,8 @@ fn flex_measured_size(
     }
   }
   match axis {
-    @core.Axis::Horizontal => @core.Size::new(width=main, height=cross)
-    @core.Axis::Vertical => @core.Size::new(width=cross, height=main)
+    Horizontal => @core.Size::new(width=main, height=cross)
+    Vertical => @core.Size::new(width=cross, height=main)
   }
 }
 
@@ -191,8 +189,8 @@ fn flex_child_frames(
         flex_child_main_base(axis, child_size, weight)
     }
     let available_main = match axis {
-      @core.Axis::Horizontal => size.width
-      @core.Axis::Vertical => size.height
+      Horizontal => size.width
+      Vertical => size.height
     }
     // Slack is the main-axis space left after every child's base size. Weighted
     // children are tight-fit (base 0), so they share the full leftover space by
@@ -215,25 +213,25 @@ fn flex_child_frames(
     for index, child_size in child_sizes {
       let main_size = main_sizes[index]
       let cross_size = match axis {
-        @core.Axis::Horizontal => child_size.height
-        @core.Axis::Vertical => child_size.width
+        Horizontal => child_size.height
+        Vertical => child_size.width
       }
       let cross_available = match axis {
-        @core.Axis::Horizontal => size.height
-        @core.Axis::Vertical => size.width
+        Horizontal => size.height
+        Vertical => size.width
       }
       let cross = cross_axis_offset(
         cross_axis_alignment, cross_available, cross_size,
       )
       let frame = match axis {
-        @core.Axis::Horizontal =>
+        Horizontal =>
           @core.Rect::new(
             x=cursor,
             y=cross.offset,
             width=main_size,
             height=cross.size,
           )
-        @core.Axis::Vertical =>
+        Vertical =>
           @core.Rect::new(
             x=cross.offset,
             y=cursor,
@@ -298,8 +296,8 @@ fn flex_sum(values : Array[Double]) -> Double {
 ///|
 fn flex_child_main_size(axis : @core.Axis, size : @core.Size) -> Double {
   match axis {
-    @core.Axis::Horizontal => size.width
-    @core.Axis::Vertical => size.height
+    Horizontal => size.width
+    Vertical => size.height
   }
 }
 
@@ -333,23 +331,22 @@ fn flex_offsets(
   count : Int,
 ) -> FlexOffsets {
   match alignment {
-    @core.MainAxisAlignment::MainStart => { leading: 0.0, gap: base_gap }
-    @core.MainAxisAlignment::MainCenter =>
-      { leading: remaining / 2.0, gap: base_gap }
-    @core.MainAxisAlignment::MainEnd => { leading: remaining, gap: base_gap }
-    @core.MainAxisAlignment::SpaceBetween =>
+    MainStart => { leading: 0.0, gap: base_gap, }
+    MainCenter => { leading: remaining / 2.0, gap: base_gap, }
+    MainEnd => { leading: remaining, gap: base_gap, }
+    SpaceBetween =>
       if count > 1 {
-        { leading: 0.0, gap: base_gap + remaining / (count.to_double() - 1.0) }
+        { leading: 0.0, gap: base_gap + remaining / (count.to_double() - 1.0), }
       } else {
-        { leading: 0.0, gap: base_gap }
+        { leading: 0.0, gap: base_gap, }
       }
-    @core.MainAxisAlignment::SpaceAround => {
+    SpaceAround => {
       let extra = remaining / count.to_double()
-      { leading: extra / 2.0, gap: base_gap + extra }
+      { leading: extra / 2.0, gap: base_gap + extra, }
     }
-    @core.MainAxisAlignment::SpaceEvenly => {
+    SpaceEvenly => {
       let extra = remaining / (count.to_double() + 1.0)
-      { leading: extra, gap: base_gap + extra }
+      { leading: extra, gap: base_gap + extra, }
     }
   }
 }
@@ -367,11 +364,11 @@ fn cross_axis_offset(
   child : Double,
 ) -> CrossAxisOffset {
   match alignment {
-    @core.CrossAxisAlignment::CrossStart => { offset: 0.0, size: child }
-    @core.CrossAxisAlignment::CrossCenter =>
-      { offset: view_max_double(0.0, available - child) / 2.0, size: child }
-    @core.CrossAxisAlignment::CrossEnd =>
-      { offset: view_max_double(0.0, available - child), size: child }
-    @core.CrossAxisAlignment::CrossStretch => { offset: 0.0, size: available }
+    CrossStart => { offset: 0.0, size: child, }
+    CrossCenter =>
+      { offset: view_max_double(0.0, available - child) / 2.0, size: child, }
+    CrossEnd =>
+      { offset: view_max_double(0.0, available - child), size: child, }
+    CrossStretch => { offset: 0.0, size: available, }
   }
 }

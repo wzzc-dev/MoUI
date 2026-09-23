@@ -6,8 +6,8 @@ pub struct WgpuRenderer {
 ///|
 pub fn backend_info() -> @render.RendererBackendInfo {
   @render.RendererBackendInfo::new(
-    backend=@render.RendererBackendKind::NativeWgpu,
-    status=@render.RendererCapabilityStatus::Supported,
+    backend=NativeWgpu,
+    status=Supported,
     can_render=true,
     can_resize=true,
     owns_surface=false,
@@ -18,8 +18,8 @@ pub fn backend_info() -> @render.RendererBackendInfo {
 ///|
 pub fn native_surface_contract() -> @render.WgpuSurfaceContract {
   @render.WgpuSurfaceContract::new(
-    source=@render.WgpuSurfaceSourceKind::NativeHostSurface,
-    backend=@render.RendererBackendKind::NativeWgpu,
+    source=NativeHostSurface,
+    backend=NativeWgpu,
     ready=true,
     description="Native host owns HWND/Metal/window handles and passes an initialized wgpu surface to render/wgpu.",
   )
@@ -28,13 +28,13 @@ pub fn native_surface_contract() -> @render.WgpuSurfaceContract {
 ///|
 pub fn renderer_descriptor() -> @render.RendererDescriptor {
   @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::NativeWgpu,
-    family=@render.RendererFamily::Wgpu,
-    presentation=@render.RendererPresentationModel::HostGpuSurface,
-    supported_targets=[@render.RendererTarget::Native],
+    backend=NativeWgpu,
+    family=Wgpu,
+    presentation=HostGpuSurface,
+    supported_targets=[Native],
     capabilities=wgpu_provider_capabilities(
       provider_id="wgpu",
-      backend=@render.RendererBackendKind::NativeWgpu,
+      backend=NativeWgpu,
     ),
     description="Native wgpu renderer over host-provided GPU surfaces.",
   )
@@ -45,7 +45,7 @@ pub fn create_with_host_surface(
   metrics : @core.SurfaceMetrics,
   surface : HostWgpuSurface,
 ) -> WgpuRenderer raise @wgpu_mbt.WgpuError {
-  { backend: RendererHandle::create_with_host_surface(metrics, surface) }
+  { backend: RendererHandle::create_with_host_surface(metrics, surface), }
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn WgpuRenderer::backend_kind(
   self : WgpuRenderer,
 ) -> @render.RendererBackendKind {
   let _ = self
-  @render.RendererBackendKind::NativeWgpu
+  NativeWgpu
 }
 
 ///|
@@ -133,7 +133,7 @@ pub fn WgpuRenderer::apply_image_resource_load_completion(
   let changed = self.backend.image_lifecycle.apply_load_completion(completion)
   if changed {
     match completion.status {
-      @render.ImageResourceLoadCompletionStatus::ImageLoadReady => {
+      ImageLoadReady => {
         ignore(self.backend.failed_images.remove(completion.source))
         if completion.has_decoded_rgba_payload() {
           self.backend.decoded_image_cache[completion.source] = {
@@ -143,8 +143,7 @@ pub fn WgpuRenderer::apply_image_resource_load_completion(
           }
         }
       }
-      @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
-        self.backend.failed_images[completion.source] = true
+      ImageLoadFailed => self.backend.failed_images[completion.source] = true
     }
   }
   changed

@@ -8,7 +8,7 @@ fn assert_matrix_glyph(
 ) -> Unit raise {
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   renderer.draw_text_face(
     face,
     text,
@@ -46,7 +46,7 @@ fn assert_ascii_visible_glyph(
 
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   renderer.draw_text_face(
     face,
     text,
@@ -73,7 +73,7 @@ fn assert_ascii_space_glyph(
 
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   renderer.draw_text_face(
     face,
     text,

@@ -7,7 +7,7 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
     ColumnSelected(col) => model.select_column(col)
     SelectAllCells => model.select_all_cells()
     CellEditStarted => model.start_editing()
-    CellRefChanged(value) => { ..model, cell_ref_input: value }
+    CellRefChanged(value) => { ..model, cell_ref_input: value, }
     CellValueChanged(value) => model.set_formula_bar_value(value)
     CellRawChanged(row, col, value) => model.set_cell_raw(row, col, value)
     CellEditCommitted =>
@@ -33,9 +33,9 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
     SelectionNavigateDataEdge(drow, dcol) =>
       model.extend_selection_to_data_edge(drow, dcol)
     CopyCells =>
-      { ..model, workbook: model.workbook.copy_selected(), status: "Copied" }
+      { ..model, workbook: model.workbook.copy_selected(), status: "Copied", }
     CutCells =>
-      { ..model, workbook: model.workbook.cut_selected(), status: "Cut" }
+      { ..model, workbook: model.workbook.cut_selected(), status: "Cut", }
     PasteCells => {
       let workbook = model.workbook.paste_selected()
       {
@@ -70,33 +70,37 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
         status: "Sorted Z to A",
       }
     DeleteSelectedCells =>
-      { ..model, workbook: model.workbook.clear_selected(), status: "Deleted" }
-    Undo => { ..model, workbook: model.workbook.undo(), status: "Undo" }
-    Redo => { ..model, workbook: model.workbook.redo(), status: "Redo" }
+      { ..model, workbook: model.workbook.clear_selected(), status: "Deleted", }
+    Undo => { ..model, workbook: model.workbook.undo(), status: "Undo", }
+    Redo => { ..model, workbook: model.workbook.redo(), status: "Redo", }
     ToggleContextMenu =>
-      { ..model, context_menu_visible: !model.context_menu_visible }
-    HideContextMenu => { ..model, context_menu_visible: false }
+      { ..model, context_menu_visible: !model.context_menu_visible, }
+    HideContextMenu => { ..model, context_menu_visible: false, }
     ContextMenuAction(action) => model.handle_context_menu(action)
     GoToCell(ref_str) => model.go_to_cell(ref_str)
-    ToggleBold => model.toggle_format(fmt => { ..fmt, bold: !fmt.bold }, "Bold")
+    ToggleBold =>
+      model.toggle_format(fmt => { ..fmt, bold: !fmt.bold, }, "Bold")
     ToggleItalic =>
-      model.toggle_format(fmt => { ..fmt, italic: !fmt.italic }, "Italic")
+      model.toggle_format(fmt => { ..fmt, italic: !fmt.italic, }, "Italic")
     ToggleUnderline =>
       model.toggle_format(
-        fmt => { ..fmt, underline: !fmt.underline },
+        fmt => { ..fmt, underline: !fmt.underline, },
         "Underline",
       )
     SetCellAlign(align) =>
       model.toggle_format(fmt => { ..fmt, align, }, "Aligned")
-    ToggleHeatMap => { ..model, heat_map: !model.heat_map }
+    ToggleHeatMap => { ..model, heat_map: !model.heat_map, }
     SetCellBgColor(color) =>
-      model.toggle_format(fmt => { ..fmt, bg_color: color }, "Cell color")
+      model.toggle_format(fmt => { ..fmt, bg_color: color, }, "Cell color")
     SetCellFormat(format) =>
-      model.toggle_format(fmt => { ..fmt, num_format: format }, "Number format")
+      model.toggle_format(
+        fmt => { ..fmt, num_format: format, },
+        "Number format",
+      )
     ClearCell =>
-      { ..model, workbook: model.workbook.clear_selected(), status: "Cleared" }
+      { ..model, workbook: model.workbook.clear_selected(), status: "Cleared", }
     AddSheet =>
-      { ..model, workbook: model.workbook.add_sheet(), status: "Added sheet" }
+      { ..model, workbook: model.workbook.add_sheet(), status: "Added sheet", }
     DeleteSheet(index) =>
       {
         ..model,
@@ -107,7 +111,7 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
     AutocompleteNext => model.next_autocomplete()
     AutocompletePrev => model.prev_autocomplete()
     HideAutocomplete =>
-      { ..model, autocomplete_suggestions: [], autocomplete_index: 0 }
+      { ..model, autocomplete_suggestions: [], autocomplete_index: 0, }
     FileOpenRequested | FileSaveRequested | ServiceCompleted(_) => model
   }
 }
@@ -134,12 +138,9 @@ pub fn ExcelApp::update_with_services(
     CopyCells => self.copy_cells_to_clipboard(services)
     CutCells => self.cut_cells_to_clipboard(services)
     PasteCells => self.paste_cells_from_clipboard(services)
-    ContextMenuAction(ContextMenuAction::Copy) =>
-      self.copy_cells_to_clipboard(services)
-    ContextMenuAction(ContextMenuAction::Cut) =>
-      self.cut_cells_to_clipboard(services)
-    ContextMenuAction(ContextMenuAction::Paste) =>
-      self.paste_cells_from_clipboard(services)
+    ContextMenuAction(Copy) => self.copy_cells_to_clipboard(services)
+    ContextMenuAction(Cut) => self.cut_cells_to_clipboard(services)
+    ContextMenuAction(Paste) => self.paste_cells_from_clipboard(services)
     _ => (self.with_model(update(self.model, msg)), Effect::none())
   }
 }
@@ -339,7 +340,7 @@ fn ExcelApp::apply_clipboard_text(
     workbook,
     cell_ref_input: workbook.selected_ref(),
     context_menu_visible: false,
-    file_status: ExcelFileStatus::Idle,
+    file_status: Idle,
     last_clipboard_text: text,
     last_clipboard_from_app: use_internal_clipboard,
     status: "Pasted",
@@ -364,7 +365,7 @@ fn ExcelApp::paste_cells_locally(
     workbook,
     cell_ref_input: workbook.selected_ref(),
     context_menu_visible: false,
-    file_status: ExcelFileStatus::Idle,
+    file_status: Idle,
     status,
   })
   (next, Effect::none())
@@ -424,18 +425,14 @@ pub fn ExcelApp::set_status(
   status : String,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   (
-    self.with_model({ ..self.model, status, file_status: ExcelFileStatus::Idle }),
+    self.with_model({ ..self.model, status, file_status: Idle, }),
     Effect::none(),
   )
 }
 
 ///|
 pub fn ExcelApp::set_running(self : ExcelApp, status : String) -> ExcelApp {
-  self.with_model({
-    ..self.model,
-    status,
-    file_status: ExcelFileStatus::Running(status),
-  })
+  self.with_model({ ..self.model, status, file_status: Running(status), })
 }
 
 ///|

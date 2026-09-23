@@ -142,7 +142,7 @@ pub(all) struct Color4f {
 
 ///|
 pub fn Color4f::new(r : Scalar, g : Scalar, b : Scalar, a : Scalar) -> Color4f {
-  { r, g, b, a }
+  { r, g, b, a, }
 }
 
 ///|

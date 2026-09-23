@@ -78,7 +78,7 @@ pub fn RenderFrameLayerClearRequest::new(
   layer_index : Int,
   color : Color,
 ) -> RenderFrameLayerClearRequest {
-  { layer_index, color }
+  { layer_index, color, }
 }
 
 ///|
@@ -103,7 +103,7 @@ pub fn RenderFrameLayerReplacementRequest::new(
   layer_index : Int,
   layer : Layer,
 ) -> RenderFrameLayerReplacementRequest {
-  { layer_index, layer }
+  { layer_index, layer, }
 }
 
 ///|
@@ -159,14 +159,14 @@ pub fn RenderFrameSubmitPlan::has_dirty(self : RenderFrameSubmitPlan) -> Bool {
 pub fn RenderFrameSubmitPlan::needs_present(
   self : RenderFrameSubmitPlan,
 ) -> Bool {
-  self.strategy != DirtyPresentStrategy::Skip && self.present_rect_count > 0
+  self.strategy != Skip && self.present_rect_count > 0
 }
 
 ///|
 pub fn RenderFrameSubmitPlan::was_clipped_away(
   self : RenderFrameSubmitPlan,
 ) -> Bool {
-  self.get_state() == DirtySubmitState::DirtyClippedAway
+  self.get_state() == DirtyClippedAway
 }
 
 ///|
@@ -208,7 +208,7 @@ pub fn RenderFrameSubmitPlan::get_present_byte_count(
 pub fn RenderFrameSubmitPlan::saves_full_present_pixels(
   self : RenderFrameSubmitPlan,
 ) -> Bool {
-  self.strategy == DirtyPresentStrategy::Partial
+  self.strategy == Partial
 }
 
 ///|
@@ -358,12 +358,12 @@ pub fn RenderFrameSchedule::has_dirty(self : RenderFrameSchedule) -> Bool {
 
 ///|
 pub fn RenderFrameSchedule::needs_present(self : RenderFrameSchedule) -> Bool {
-  self.action == RenderFrameScheduleAction::Present
+  self.action == Present
 }
 
 ///|
 pub fn RenderFrameSchedule::should_submit(self : RenderFrameSchedule) -> Bool {
-  self.action != RenderFrameScheduleAction::Skip
+  self.action != Skip
 }
 
 ///|
@@ -427,7 +427,7 @@ pub fn RenderFrameSubmitRequest::new(
   policy : RenderFrameSubmitPolicy,
   schedule : RenderFrameSchedule,
 ) -> RenderFrameSubmitRequest {
-  { policy, schedule }
+  { policy, schedule, }
 }
 
 ///|
@@ -566,7 +566,7 @@ fn render_frame_submit_result(
   submit_plan : RenderFrameSubmitPlan,
   presented_rect_count : Int,
 ) -> RenderFrameSubmitResult {
-  { submit_plan, presented_rect_count }
+  { submit_plan, presented_rect_count, }
 }
 
 ///|
@@ -574,10 +574,9 @@ fn render_frame_schedule(
   submit_plan : RenderFrameSubmitPlan,
 ) -> RenderFrameSchedule {
   let action = match submit_plan.get_state() {
-    DirtySubmitState::Clean => RenderFrameScheduleAction::Skip
-    DirtySubmitState::DirtyClippedAway =>
-      RenderFrameScheduleAction::SubmitWithoutPresent
-    DirtySubmitState::Present => RenderFrameScheduleAction::Present
+    Clean => RenderFrameScheduleAction::Skip
+    DirtyClippedAway => SubmitWithoutPresent
+    Present => Present
   }
   render_frame_schedule_with_action(submit_plan, action)
 }
@@ -587,7 +586,7 @@ fn render_frame_schedule_with_action(
   submit_plan : RenderFrameSubmitPlan,
   action : RenderFrameScheduleAction,
 ) -> RenderFrameSchedule {
-  { submit_plan, action }
+  { submit_plan, action, }
 }
 
 ///|
@@ -616,7 +615,7 @@ fn render_frame_full_present_plan(
   let present_rect_count = if present_pixels > 0 { 1 } else { 0 }
   render_frame_submit_plan(
     dirty_submit_plan,
-    DirtyPresentStrategy::Full,
+    Full,
     present_bounds,
     present_rect_count,
     present_pixels,
@@ -658,10 +657,7 @@ fn render_frame_full_present_schedule(
     dirty_submit_plan, frame_width, frame_height, surface_width, surface_height,
   )
   if submit_plan.get_present_rect_count() > 0 {
-    render_frame_schedule_with_action(
-      submit_plan,
-      RenderFrameScheduleAction::Present,
-    )
+    render_frame_schedule_with_action(submit_plan, Present)
   } else {
     render_frame_schedule(submit_plan)
   }
@@ -980,7 +976,7 @@ pub fn[S : Surface] RenderFrame::redraw_schedule(
   self : RenderFrame,
   surface : S,
 ) -> RenderFrameSchedule {
-  self.submit_schedule_by_policy(surface, RenderFrameSubmitPolicy::CachedRedraw)
+  self.submit_schedule_by_policy(surface, CachedRedraw)
 }
 
 ///|
@@ -1028,7 +1024,7 @@ pub fn[S : Surface] RenderFrame::submit_redraw_to(
   self : RenderFrame,
   surface : S,
 ) -> Result[RenderFrameSubmitResult, PresentError] {
-  self.submit_to_by_policy(surface, RenderFrameSubmitPolicy::CachedRedraw)
+  self.submit_to_by_policy(surface, CachedRedraw)
 }
 
 ///|

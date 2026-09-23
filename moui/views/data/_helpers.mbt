@@ -14,27 +14,15 @@ fn[Msg] empty_state(
   @container.container(
     @layout.column(
       [
-        @text.text(
-          title,
-          role=@style.TextRole::Control,
-          theme~,
-          width=280.0,
-          height=28.0,
-        ),
-        @text.text(
-          message,
-          role=@style.TextRole::Caption,
-          theme~,
-          width=280.0,
-          height=42.0,
-        ),
+        @text.text(title, role=Control, theme~, width=280.0, height=28.0),
+        @text.text(message, role=Caption, theme~, width=280.0, height=42.0),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@style.CrossAlign::Start,
+      align=Start,
     ),
     width=320.0,
     height=100.0,
     theme~,
     padding=16.0,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }

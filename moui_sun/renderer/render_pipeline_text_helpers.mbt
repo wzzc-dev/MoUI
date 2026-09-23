@@ -6,13 +6,7 @@ fn render_pipeline_parse_font_bytes_fallback_sources_result(
   for source in sources {
     match @text.FontFace::from_bytes(source.get_font_data()) {
       Ok(face) => faces.push(face)
-      Err(error) =>
-        return Err(
-          RenderPipelineReplayError::FontParseFailed(
-            source.get_font_key(),
-            error,
-          ),
-        )
+      Err(error) => return Err(FontParseFailed(source.get_font_key(), error))
     }
   }
   Ok(faces)

@@ -50,15 +50,13 @@ pub fn image_decoder_plugin_chain(
   @render.RendererImageDecoder::new(decode=(source, bytes) => {
     for plugin in image_decoder_plugins.val {
       let completion = plugin.decode(source, bytes)
-      if completion.status ==
-        @render.ImageResourceLoadCompletionStatus::ImageLoadReady {
+      if completion.status == ImageLoadReady {
         return completion
       }
     }
     for decoder in builtin {
       let completion = decoder.decode(source, bytes)
-      if completion.status ==
-        @render.ImageResourceLoadCompletionStatus::ImageLoadReady {
+      if completion.status == ImageLoadReady {
         return completion
       }
     }

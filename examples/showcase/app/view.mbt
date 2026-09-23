@@ -49,7 +49,7 @@ pub fn ShowcaseModel::view(
     },
     width~,
     height~,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     background=theme.palette.background,
     theme~,
   )
@@ -90,7 +90,7 @@ fn desktop_shell(
       ),
     ],
     spacing=pad,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   .padding(pad)
   .frame(width~, height~)
@@ -117,7 +117,7 @@ fn mobile_shell(
       },
     ],
     spacing=pad,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   .padding(pad)
   .frame(width~, height~)
@@ -132,36 +132,22 @@ fn shell_top_bar(
 ) -> @moui.View[ShowcaseMsg] {
   row(
     [
-      text("MoUI Showcase", role=@views.TextRole::Title, theme~),
+      text("MoUI Showcase", role=Title, theme~),
       @views.spacer(weight=1.0),
       if !compact {
-        text(
-          model.current_route_string(),
-          role=@views.TextRole::Caption,
-          theme~,
-        )
+        text(model.current_route_string(), role=Caption, theme~)
       } else {
         @views.spacer(min_length=0.0)
       },
-      button(
-        "Back",
-        on_click=RouteBack,
-        variant=@views.ButtonVariant::Ghost,
-        theme~,
-      ),
+      button("Back", on_click=RouteBack, variant=Ghost, theme~),
       if !compact {
-        button(
-          "Forward",
-          on_click=RouteForward,
-          variant=@views.ButtonVariant::Ghost,
-          theme~,
-        )
+        button("Forward", on_click=RouteForward, variant=Ghost, theme~)
       } else {
         @views.spacer(min_length=0.0)
       },
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
+    align=Center,
   ).frame(width~)
 }
 
@@ -208,12 +194,7 @@ fn catalog_list_rows(
   }
   if items.length() == 0 {
     rows.push(
-      text(
-        "No matching stories",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=list_width,
-      ),
+      text("No matching stories", role=Caption, theme~, width=list_width),
     )
   }
   // Trailing inset so the last story is not clipped by the scroll clip edge.
@@ -240,9 +221,9 @@ fn shell_sidebar(
     theme,
     list_width,
     34.0,
-    selected_variant=@views.ButtonVariant::Primary,
-    unselected_variant=@views.ButtonVariant::Ghost,
-    group_role=@views.TextRole::Caption,
+    selected_variant=Primary,
+    unselected_variant=Ghost,
+    group_role=Caption,
     key_rows=true,
   )
   // Stories title (~32) + search field (~40) + two column gaps + safety.
@@ -250,13 +231,7 @@ fn shell_sidebar(
   let list_height = (height - header_block).max(120.0)
   column(
     [
-      text(
-        "Stories",
-        role=@views.TextRole::Subtitle,
-        theme~,
-        width=rail_width,
-        height=28.0,
-      ),
+      text("Stories", role=Subtitle, theme~, width=rail_width, height=28.0),
       text_field(
         model.nav_query,
         on_input=value => NavQueryChanged(value),
@@ -265,11 +240,7 @@ fn shell_sidebar(
         width=rail_width,
       ),
       scroll_view(
-        column(
-          list_rows,
-          spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
-        ),
+        column(list_rows, spacing=theme.spacing_scale.xs, align=Start),
         width=rail_width,
         height=list_height,
         offset=model.sidebar_scroll,
@@ -278,7 +249,7 @@ fn shell_sidebar(
       ),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   ).frame(width~, height~)
 }
 
@@ -336,7 +307,7 @@ fn shell_detail(
         spacer(min_length=shell_scroll_end_inset),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,
@@ -359,9 +330,9 @@ fn mobile_catalog_list(
     theme,
     list_width,
     40.0,
-    selected_variant=@views.ButtonVariant::Primary,
-    unselected_variant=@views.ButtonVariant::Outline,
-    group_role=@views.TextRole::Subtitle,
+    selected_variant=Primary,
+    unselected_variant=Outline,
+    group_role=Subtitle,
     key_rows=false,
   )
   // Search field + gap + safety (mobile list has no Stories subtitle row).
@@ -377,11 +348,7 @@ fn mobile_catalog_list(
         width~,
       ),
       scroll_view(
-        column(
-          list_rows,
-          spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Start,
-        ),
+        column(list_rows, spacing=theme.spacing_scale.sm, align=Start),
         width~,
         height=list_height,
         offset=model.sidebar_scroll,
@@ -390,7 +357,7 @@ fn mobile_catalog_list(
       ),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   ).frame(width~, height~)
 }
 
@@ -413,7 +380,7 @@ fn mobile_detail(
         button(
           "All stories",
           on_click=ShowMobileCatalog,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=content_width,
         ),
@@ -422,7 +389,7 @@ fn mobile_detail(
         spacer(min_length=shell_scroll_end_inset),
       ],
       spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height~,

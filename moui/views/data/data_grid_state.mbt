@@ -6,7 +6,7 @@ pub struct DataGridCell {
 
 ///|
 pub fn data_grid_cell(row~ : Int, column~ : Int) -> DataGridCell {
-  { row: row.max(0), column: column.max(0) }
+  { row: row.max(0), column: column.max(0), }
 }
 
 ///|
@@ -90,7 +90,7 @@ pub fn DataGridSelectionState::new(
   column? : Int = 0,
 ) -> DataGridSelectionState {
   let cell = data_grid_cell(row~, column~)
-  { anchor: cell, focus: cell }
+  { anchor: cell, focus: cell, }
 }
 
 ///|
@@ -121,9 +121,9 @@ pub fn DataGridSelectionState::select(
   extending? : Bool = false,
 ) -> DataGridSelectionState {
   if extending {
-    { ..self, focus: cell }
+    { ..self, focus: cell, }
   } else {
-    { anchor: cell, focus: cell }
+    { anchor: cell, focus: cell, }
   }
 }
 

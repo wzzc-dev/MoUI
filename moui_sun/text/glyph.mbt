@@ -35,7 +35,7 @@ pub fn GlyphPosition::new(
   x_offset? : Int = 0,
   y_offset? : Int = 0,
 ) -> GlyphPosition {
-  { glyph_id, x_advance, y_advance, x_offset, y_offset }
+  { glyph_id, x_advance, y_advance, x_offset, y_offset, }
 }
 
 ///|
@@ -78,7 +78,7 @@ struct GlyphInfo {
 ///|
 /// Create glyph info
 pub fn GlyphInfo::new(glyph_id~ : GlyphId, cluster~ : Int) -> GlyphInfo {
-  { glyph_id, cluster }
+  { glyph_id, cluster, }
 }
 
 ///|

@@ -20,7 +20,7 @@ pub fn TerminalSelectionNode::new(
   rows~ : Int,
   cols~ : Int,
 ) -> TerminalSelectionNode {
-  { cell_width, cell_height, scroll_offset, total_lines, rows, cols }
+  { cell_width, cell_height, scroll_offset, total_lines, rows, cols, }
 }
 
 ///|
@@ -101,9 +101,9 @@ pub fn[Msg] terminal_selection_input(
   )
   @core.View::from_node(node, children=_node => [content], event=(_node, ctx) => {
     match ctx.event {
-      @core.AppEvent::Pointer(pointer) =>
+      Pointer(pointer) =>
         match pointer.phase {
-          @core.PointerPhase::Down =>
+          Down =>
             if pointer.button == 0 {
               let (row, col) = node.cell_at(pointer.position, ctx.frame)
               match on_begin(row, col) {
@@ -113,14 +113,14 @@ pub fn[Msg] terminal_selection_input(
             } else {
               @core.ViewEventResult::ignored()
             }
-          @core.PointerPhase::Move => {
+          Move => {
             let (row, col) = node.cell_at(pointer.position, ctx.frame)
             match on_move(row, col) {
               Some(msg) => @core.ViewEventResult::message(msg)
               None => @core.ViewEventResult::ignored()
             }
           }
-          @core.PointerPhase::Up =>
+          Up =>
             if pointer.button == 0 {
               match on_end() {
                 Some(msg) => @core.ViewEventResult::message(msg)

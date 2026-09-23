@@ -7,7 +7,7 @@ pub(all) struct TextCommandResult {
 
 ///|
 pub fn TextCommandResult::ignored() -> TextCommandResult {
-  { handled: false, changed: false, clipboard_text: None }
+  { handled: false, changed: false, clipboard_text: None, }
 }
 
 ///|
@@ -15,7 +15,7 @@ pub fn TextCommandResult::handled(
   changed? : Bool = false,
   clipboard_text? : String? = None,
 ) -> TextCommandResult {
-  { handled: true, changed, clipboard_text }
+  { handled: true, changed, clipboard_text, }
 }
 
 ///|
@@ -88,7 +88,6 @@ fn grapheme_trivial_boundary(before : Char?, at : Char?) -> Bool {
 /// on trivial grapheme boundaries without materializing the boundary
 /// table).
 priv struct TextRangeScan {
-  length : Int
   start : Int
   end : Int
   start_offset : Int
@@ -153,7 +152,6 @@ fn scan_text_for_range(
     at_end = None
   }
   {
-    length: index,
     start: clamp_int(want_start, 0, index),
     end: clamp_int(want_end, 0, index),
     start_offset,
@@ -228,10 +226,10 @@ pub fn move_text_caret(
       Some(selection) => {
         let selection = normalize_grapheme_range_fast(text, selection)
         match direction {
-          MoveLeft => { caret: selection.start, selection: None }
-          MoveRight => { caret: selection.end, selection: None }
-          MoveStart => { caret: 0, selection: None }
-          MoveEnd => { caret: length, selection: None }
+          MoveLeft => { caret: selection.start, selection: None, }
+          MoveRight => { caret: selection.end, selection: None, }
+          MoveStart => { caret: 0, selection: None, }
+          MoveEnd => { caret: length, selection: None, }
         }
       }
       None =>
@@ -359,7 +357,7 @@ pub fn selected_text(text : String, selection : TextRange?) -> String {
         ) &&
         grapheme_trivial_boundary(scan.before_end, scan.at_end)
       if endpoints_trivial {
-        text.sub(start=scan.start_offset, end=scan.end_offset).to_owned()
+        text.exact_view(start=scan.start_offset, end=scan.end_offset).to_owned()
       } else {
         text_substring_by_char_range(
           text,
@@ -394,11 +392,11 @@ pub fn replace_text_range_edit(
     ) &&
     grapheme_trivial_boundary(scan.before_end, scan.at_end)
   if endpoints_trivial {
-    let next_text = text.sub(start=0, end=scan.start_offset).to_owned() +
+    let next_text = text.exact_view(start=0, end=scan.start_offset).to_owned() +
       replacement +
-      text.sub(start=scan.end_offset, end=text.length()).to_owned()
+      text.exact_view(start=scan.end_offset, end=text.length()).to_owned()
     let deleted = text
-      .sub(start=scan.start_offset, end=scan.end_offset)
+      .exact_view(start=scan.start_offset, end=scan.end_offset)
       .to_owned()
     (next_text, deleted, scan.start)
   } else {
@@ -449,7 +447,7 @@ fn text_substring_by_char_range(
   } else {
     text.offset_of_nth_char(end).unwrap_or(utf16_length)
   }
-  text.sub(start=start_offset, end=end_offset).to_owned()
+  text.exact_view(start=start_offset, end=end_offset).to_owned()
 }
 
 ///|

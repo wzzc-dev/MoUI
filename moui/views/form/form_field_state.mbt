@@ -3,7 +3,7 @@ pub fn[Msg] form_field_state(
   field~ : FormFieldState,
   child~ : @core.View[Msg],
   helper? : String = "",
-  validation_display? : FormValidationDisplay = FormValidationDisplay::OnInvalid,
+  validation_display? : FormValidationDisplay = OnInvalid,
   required? : Bool = false,
   disabled? : Bool = false,
   read_only? : Bool = false,
@@ -22,11 +22,7 @@ pub fn[Msg] form_field_state(
     child~,
     helper~,
     error~,
-    status=if error == "" {
-      FormFieldStatus::Normal
-    } else {
-      FormFieldStatus::Invalid
-    },
+    status=if error == "" { Normal } else { Invalid },
     validation_display~,
     required~,
     disabled~,

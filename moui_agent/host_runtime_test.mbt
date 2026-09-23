@@ -21,16 +21,16 @@ impl @core.ViewNode for AgentFixtureNode with fn layout(_self, context) {
 ///|
 impl @core.ViewNode for AgentFixtureNode with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
+    composition=Boundary,
     semantic_id=@core.SemanticId::parse("fixture.activate").unwrap(),
-    role=@core.SemanticsRole::Button,
+    role=Button,
     label="Activate fixture",
   )
 }
 
 ///|
 fn agent_fixture_view() -> @core.View[Unit] {
-  @core.View::from_node(AgentFixtureNode::{  }, semantics_actions=_node => {
+  @core.View::from_node(AgentFixtureNode::{ }, semantics_actions=_node => {
     [
       @core.ViewSemanticsActionHandler::activate(_context => {
         @core.ViewSemanticsActionResult::accepted(messages=[()])
@@ -45,9 +45,9 @@ test "RuntimeAgentHost reads committed semantics and performs typed actions" {
     root=agent_fixture_view(),
     size=@core.Size::new(width=120.0, height=80.0),
   )
-  let host = RuntimeAgentHost::new(runtime)
+  let host = @moui_agent.RuntimeAgentHost::new(runtime)
   let generation = match host.read_semantics(None) {
-    Ok(AgentSemanticsRead::Full(snapshot)) => {
+    Ok(Full(snapshot)) => {
       assert_eq(snapshot.nodes.length(), 1)
       assert_true(snapshot.root is Some(_))
       assert_eq(snapshot.nodes[0].label, "Activate fixture")
@@ -59,9 +59,9 @@ test "RuntimeAgentHost reads committed semantics and performs typed actions" {
   let semantic_id = @core.SemanticId::parse("fixture.activate").unwrap()
   match
     host.perform_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: AgentGenerationPrecondition::Exact(generation),
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(generation),
     }) {
     Ok(receipt) => assert_true(receipt.after >= receipt.before)
     Err(error) => fail("unexpected action error: \{Repr(error)}")
@@ -74,16 +74,16 @@ test "RuntimeAgentHost returns HostClosed after runtime destruction" {
     root=agent_fixture_view(),
     size=@core.Size::new(width=120.0, height=80.0),
   )
-  let host = RuntimeAgentHost::new(runtime)
+  let host = @moui_agent.RuntimeAgentHost::new(runtime)
   runtime.destroy()
-  assert_true(host.read_semantics(None) == Err(AgentReadError::HostClosed))
+  assert_true(host.read_semantics(None) == Err(HostClosed))
   let semantic_id = @core.SemanticId::parse("fixture.activate").unwrap()
   assert_true(
     host.perform_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: AgentGenerationPrecondition::Latest,
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Latest,
     }) ==
-    Err(AgentActionError::HostClosed),
+    Err(HostClosed),
   )
 }

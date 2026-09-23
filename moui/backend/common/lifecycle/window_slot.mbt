@@ -15,7 +15,7 @@ pub fn[W, X] WindowSlot::new(
   window~ : W,
   extra~ : X,
 ) -> WindowSlot[W, X] {
-  { host_id, window, extra }
+  { host_id, window, extra, }
 }
 
 ///|
@@ -26,7 +26,7 @@ pub struct WindowSlotMap[W, X] {
 
 ///|
 pub fn[W, X] WindowSlotMap::new() -> WindowSlotMap[W, X] {
-  { slots: [] }
+  { slots: [], }
 }
 
 ///|

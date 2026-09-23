@@ -70,11 +70,11 @@ fn sun_codec_test_temp_path(filename : String) -> String {
 
 ///|
 fn sun_codec_test_image_command(source : String) -> @core.DrawCommand {
-  @core.DrawCommand::DrawImage(@core.ImageRun::{
+  DrawImage({
     source,
     frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
     opacity: 1.0,
-    fit: @core.ImageFit::Contain,
+    fit: Contain,
   })
 }
 
@@ -97,14 +97,7 @@ fn sun_codec_test_assert_ready_jpeg(
   source : String,
 ) -> Unit raise {
   match sun_codec_test_image_record(records, source) {
-    Some(
-      {
-        status: @render.ImageResourceStatus::ImageReady,
-        width: 1,
-        height: 1,
-        ..,
-      }
-    ) => ()
+    Some({ status: ImageReady, width: 1, height: 1, .. }) => ()
     _ => fail("expected ready 1x1 Sun JPEG image record")
   }
 }
@@ -115,14 +108,7 @@ fn sun_codec_test_assert_ready_bmp(
   source : String,
 ) -> Unit raise {
   match sun_codec_test_image_record(records, source) {
-    Some(
-      {
-        status: @render.ImageResourceStatus::ImageReady,
-        width: 1,
-        height: 1,
-        ..,
-      }
-    ) => ()
+    Some({ status: ImageReady, width: 1, height: 1, .. }) => ()
     _ => fail("expected ready 1x1 Sun BMP image record")
   }
 }
@@ -138,11 +124,13 @@ test "sun renderer decodes jpeg data uri and local files" {
     _ => fail("expected local JPEG fixture write")
   }
   let data_uri_source = sun_codec_test_jpeg_data_uri()
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
-    SunPresentTarget::new(description="test", present=_ => true),
+    @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+      true
+    }),
     async_image_loading=true,
   )
 
@@ -150,12 +138,12 @@ test "sun renderer decodes jpeg data uri and local files" {
   renderer.render([sun_codec_test_image_command(local_source)])
   ignore(
     renderer.apply_image_resource_load_completion(
-      sun_image_load_completion(data_uri_source),
+      @moui_sun_renderer.sun_image_load_completion(data_uri_source),
     ),
   )
   ignore(
     renderer.apply_image_resource_load_completion(
-      sun_image_load_completion_from_bytes(
+      @moui_sun_renderer.sun_image_load_completion_from_bytes(
         local_source,
         @fs.read_file_to_bytes(local_source) catch {
           _ => fail("expected host JPEG byte read")
@@ -185,11 +173,13 @@ test "sun renderer decodes bmp sources with uppercase type and extension" {
     _ => fail("expected local BMP fixture write")
   }
   let data_uri_source = sun_codec_test_bmp_data_uri_uppercase_type()
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
-    SunPresentTarget::new(description="test", present=_ => true),
+    @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+      true
+    }),
     async_image_loading=true,
   )
 
@@ -197,12 +187,12 @@ test "sun renderer decodes bmp sources with uppercase type and extension" {
   renderer.render([sun_codec_test_image_command(local_source)])
   ignore(
     renderer.apply_image_resource_load_completion(
-      sun_image_load_completion(data_uri_source),
+      @moui_sun_renderer.sun_image_load_completion(data_uri_source),
     ),
   )
   ignore(
     renderer.apply_image_resource_load_completion(
-      sun_image_load_completion_from_bytes(
+      @moui_sun_renderer.sun_image_load_completion_from_bytes(
         local_source,
         @fs.read_file_to_bytes(local_source) catch {
           _ => fail("expected host BMP byte read")
@@ -235,11 +225,13 @@ test "sun renderer decodes image sources by byte signature fallback" {
   }
   let data_uri_source = "data:image/jpeg;base64," +
     @base64.encode(sun_codec_test_bmp_bytes(), padding=true)
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
-    SunPresentTarget::new(description="test", present=_ => true),
+    @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+      true
+    }),
     async_image_loading=true,
   )
 
@@ -247,12 +239,12 @@ test "sun renderer decodes image sources by byte signature fallback" {
   renderer.render([sun_codec_test_image_command(local_source)])
   ignore(
     renderer.apply_image_resource_load_completion(
-      sun_image_load_completion(data_uri_source),
+      @moui_sun_renderer.sun_image_load_completion(data_uri_source),
     ),
   )
   ignore(
     renderer.apply_image_resource_load_completion(
-      sun_image_load_completion_from_bytes(
+      @moui_sun_renderer.sun_image_load_completion_from_bytes(
         local_source,
         @fs.read_file_to_bytes(local_source) catch {
           _ => fail("expected host signature-fallback byte read")
@@ -273,51 +265,40 @@ test "sun renderer decodes image sources by byte signature fallback" {
 
 ///|
 test "sun image load completion from bytes decodes jpeg" {
-  let completion = sun_image_load_completion_from_bytes(
+  let completion = @moui_sun_renderer.sun_image_load_completion_from_bytes(
     "fixture.jpeg",
     sun_codec_test_jpeg_bytes(),
     background_io=true,
   )
-  assert_true(
-    completion.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-  )
+  assert_true(completion.status == ImageLoadReady)
   inspect(completion.width, content="1")
   inspect(completion.height, content="1")
   inspect(completion.background_io, content="true")
-  let failed = sun_image_load_completion_from_bytes(
+  let failed = @moui_sun_renderer.sun_image_load_completion_from_bytes(
     "invalid.jpg", b"not-a-jpeg",
   )
-  assert_true(
-    failed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-  )
+  assert_true(failed.status == ImageLoadFailed)
   assert_true(failed.diagnostic.contains("could not decode JPEG image bytes"))
 }
 
 ///|
 test "sun image load completion from bytes infers format from bytes" {
-  let completion = sun_image_load_completion_from_bytes(
+  let completion = @moui_sun_renderer.sun_image_load_completion_from_bytes(
     "fixture-without-extension",
     sun_codec_test_bmp_bytes(),
   )
-  assert_true(
-    completion.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-  )
+  assert_true(completion.status == ImageLoadReady)
   inspect(completion.width, content="1")
   inspect(completion.height, content="1")
 }
 
 ///|
 test "sun image load completion from bytes handles misleading extensions" {
-  let completion = sun_image_load_completion_from_bytes(
+  let completion = @moui_sun_renderer.sun_image_load_completion_from_bytes(
     "fixture.jpg",
     sun_codec_test_bmp_bytes(),
   )
-  assert_true(
-    completion.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-  )
+  assert_true(completion.status == ImageLoadReady)
   inspect(completion.width, content="1")
   inspect(completion.height, content="1")
 }

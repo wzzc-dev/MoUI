@@ -1,6 +1,6 @@
 ///|
 test "command palette filters metadata and shortcuts" {
-  let model = CommandPaletteModel::new().update(QueryChanged("edit"))
+  let model = @app.CommandPaletteModel::new().update(QueryChanged("edit"))
   let filtered = model.filtered_commands()
   inspect(filtered.length(), content="2")
   assert_true(
@@ -9,7 +9,7 @@ test "command palette filters metadata and shortcuts" {
   assert_true(
     filtered.any(command => command.display_label() == "Paste Selection"),
   )
-  let shortcut = CommandPaletteModel::new().update(QueryChanged("Meta+s"))
+  let shortcut = @app.CommandPaletteModel::new().update(QueryChanged("Meta+s"))
   inspect(shortcut.filtered_commands().length(), content="1")
   inspect(
     shortcut.filtered_commands()[0].display_label(),
@@ -19,37 +19,35 @@ test "command palette filters metadata and shortcuts" {
 
 ///|
 test "command palette dispatches enabled and ignores disabled" {
-  let saved = CommandPaletteModel::new().update(
-    CommandSelected(@core.CommandIntent::Submit),
-  )
+  let saved = @app.CommandPaletteModel::new().update(CommandSelected(Submit))
   inspect(saved.dispatched.length(), content="1")
   inspect(saved.last_result, content="Dispatched: Save Document")
-  let disabled = saved.update(CommandSelected(@core.CommandIntent::Cancel))
+  let disabled = saved.update(CommandSelected(Cancel))
   inspect(disabled.dispatched.length(), content="1")
   inspect(disabled.last_result, content="Disabled: Archive Document")
 }
 
 ///|
 test "command palette Program declares enabled and disabled shortcuts" {
-  let commands = program().runtime_commands(CommandPaletteModel::new())
+  let commands = @app.program().runtime_commands(
+    @app.CommandPaletteModel::new(),
+  )
   inspect(commands.length(), content="5")
   assert_true(
     commands.any(command => {
-      command.command().intent == @core.CommandIntent::Submit &&
-      command.command().enabled
+      command.command().intent == Submit && command.command().enabled
     }),
   )
   assert_true(
     commands.any(command => {
-      command.command().intent == @core.CommandIntent::Cancel &&
-      !command.command().enabled
+      command.command().intent == Cancel && !command.command().enabled
     }),
   )
 }
 
 ///|
 test "command palette runtime exposes command rows" {
-  let commands = test_runtime(program(), width=800.0, height=680.0).draw_commands()
+  let commands = test_runtime(@app.program(), width=800.0, height=680.0).draw_commands()
   assert_true(has_text(commands, "Command Palette"))
   assert_true(has_text(commands, "Save Document"))
   assert_true(has_text(commands, "Meta+s"))
@@ -67,19 +65,16 @@ test "command palette host menu service dispatches selected command" {
       capabilities=@host.HostServiceCapabilities::new(menus=true),
       handle=request => {
         match request {
-          @host.HostServiceRequest::ShowMenu(commands) => {
+          ShowMenu(commands) => {
             saw_menu.val = true
-            @host.HostServiceResponse::MenuCommand(commands[0].intent)
+            MenuCommand(commands[0].intent)
           }
-          _ =>
-            @host.HostServiceResponse::Unavailable(
-              request.unavailable_message(),
-            )
+          _ => Unavailable(request.unavailable_message())
         }
       },
     ),
   )
-  let (opening, effect) = CommandPaletteModel::new().update_with_services(
+  let (opening, effect) = @app.CommandPaletteModel::new().update_with_services(
     ShowNativeMenu,
     services,
   )
@@ -91,7 +86,7 @@ test "command palette host menu service dispatches selected command" {
   inspect(summary.descriptors()[0].label(), content="Show context menu")
   let model = Ref(opening)
   match effect {
-    @moui.Effect::Task(_descriptor, start) =>
+    Task(_descriptor, start) =>
       ignore(
         start(message => {
           let (next, _effect) = model.val.update_with_services(
@@ -108,9 +103,9 @@ test "command palette host menu service dispatches selected command" {
 
 ///|
 test "command palette shortcut dispatch does not regress runtime command map" {
-  let runtime = test_runtime(program(), width=800.0, height=680.0)
+  let runtime = test_runtime(@app.program(), width=800.0, height=680.0)
   runtime.dispatch_event(
-    @core.AppEvent::Keyboard(
+    Keyboard(
       @core.KeyboardEvent::new(
         key="s",
         modifiers=@core.KeyModifiers::new(meta=true),
@@ -126,7 +121,7 @@ test "command palette shortcut dispatch does not regress runtime command map" {
 
 ///|
 fn test_runtime(
-  program : @moui.Program[CommandPaletteModel, CommandPaletteMsg],
+  program : @moui.Program[@app.CommandPaletteModel, @app.CommandPaletteMsg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {
@@ -136,6 +131,6 @@ fn test_runtime(
 ///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+    command is DrawText({ text: value, .. }) && value == text
   })
 }

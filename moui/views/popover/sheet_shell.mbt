@@ -1,7 +1,7 @@
 ///|
 fn[Msg] sheet_shell(
   content~ : @core.View[Msg],
-  presentation_mode? : @style.SheetPresentationMode = @style.SheetPresentationMode::Modal,
+  presentation_mode? : @style.SheetPresentationMode = Modal,
   theme? : @core.Theme,
   background? : @core.Brush,
   corner_radius? : Double,
@@ -58,8 +58,8 @@ impl @core.ViewNode for SheetShell with fn identity(self) {
 impl @core.ViewNode for SheetShell with fn declaration(self) {
   let mode = @core.DeclarationKey::int(
     match self.presentation_mode {
-      @style.SheetPresentationMode::Modal => 0
-      @style.SheetPresentationMode::BottomSheet => 1
+      Modal => 0
+      BottomSheet => 1
     },
   )
   let paint_key = @common.view_record_key("SheetShell.paint", [
@@ -70,7 +70,7 @@ impl @core.ViewNode for SheetShell with fn declaration(self) {
   @common.view_declaration(
     layout=@common.view_exact_channel(mode),
     paint=if self.theme is Some(_) {
-      @core.DeclarationChannel::Uncacheable
+      Uncacheable
     } else {
       @common.view_exact_channel(paint_key)
     },
@@ -84,8 +84,8 @@ impl @core.ViewNode for SheetShell with fn declaration(self) {
 impl @core.ViewNode for SheetShell with fn child_constraints(self, constraints) {
   let content_constraints = constraints.deflate(sheet_content_insets())
   match self.presentation_mode {
-    @style.SheetPresentationMode::Modal => content_constraints
-    @style.SheetPresentationMode::BottomSheet => content_constraints.loosen()
+    Modal => content_constraints
+    BottomSheet => content_constraints.loosen()
   }
 }
 
@@ -128,18 +128,13 @@ impl @core.ViewNode for SheetShell with fn paint(self, ctx) {
     self.shadow,
     ctx.environment.color_scheme(),
   )
-  commands.push(
-    @core.DrawCommand::FillRoundedRectBrush(rounded, resolved_background),
-  )
+  commands.push(FillRoundedRectBrush(rounded, resolved_background))
   @core.ViewPaintPlan::commands(commands)
 }
 
 ///|
 impl @core.ViewNode for SheetShell with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Dialog,
-  )
+  @core.ViewSemanticsInfo::new(composition=Boundary, role=Dialog)
 }
 
 ///|
@@ -148,15 +143,15 @@ fn[Msg] sheet_shell_event(
   on_dismiss : Msg?,
 ) -> @core.ViewEventResult[Msg] {
   match (ctx.event, on_dismiss) {
-    (@core.AppEvent::Pointer(event), Some(message)) =>
-      if event.phase == @core.PointerPhase::Up &&
+    (Pointer(event), Some(message)) =>
+      if event.phase == Up &&
         ctx.frame.contains(event.position) &&
         sheet_point_outside_content(event.position, ctx.child_frames) {
         @common.view_event_result(
           changed=true,
           activated=true,
           captured=true,
-          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          dirty=ViewPaintDirty,
           messages=[message],
         )
       } else if ctx.frame.contains(event.position) {
@@ -164,8 +159,8 @@ fn[Msg] sheet_shell_event(
       } else {
         @core.ViewEventResult::ignored()
       }
-    (@core.AppEvent::Pointer(event), None) =>
-      if event.phase == @core.PointerPhase::Up &&
+    (Pointer(event), None) =>
+      if event.phase == Up &&
         ctx.frame.contains(event.position) &&
         sheet_point_outside_content(event.position, ctx.child_frames) {
         @common.view_event_result(changed=true, captured=true)
@@ -191,8 +186,8 @@ fn sheet_content_frame(
 ) -> @core.Rect {
   let content = frame.inset(sheet_content_insets())
   match presentation_mode {
-    @style.SheetPresentationMode::Modal => content
-    @style.SheetPresentationMode::BottomSheet => {
+    Modal => content
+    BottomSheet => {
       let height = sheet_min_double(content.size.height, child_size.height)
       @core.Rect::new(
         x=content.origin.x,

@@ -12,7 +12,7 @@ priv struct WindowsAccessibilityState {
 
 ///|
 fn WindowsAccessibilityState::new() -> WindowsAccessibilityState {
-  { bindings: [] }
+  { bindings: [], }
 }
 
 ///|
@@ -25,7 +25,7 @@ fn WindowsAccessibilityState::binding(
       return binding
     }
   }
-  let binding = { window_id, cursor: None, attached: false }
+  let binding = { window_id, cursor: None, attached: false, }
   self.bindings.push(binding)
   binding
 }
@@ -124,43 +124,43 @@ extern "C" fn windows_accessibility_dispose_native(hwnd : UInt64) -> Unit = "mou
 ///|
 fn windows_semantics_role_code(role : @core.SemanticsRole) -> String {
   match role {
-    @core.SemanticsRole::None => "none"
-    @core.SemanticsRole::Text => "text"
-    @core.SemanticsRole::Link => "link"
-    @core.SemanticsRole::Heading => "heading"
-    @core.SemanticsRole::Navigation => "navigation"
-    @core.SemanticsRole::Main => "main"
-    @core.SemanticsRole::Button => "button"
-    @core.SemanticsRole::Checkbox => "checkbox"
-    @core.SemanticsRole::TextField => "text_field"
-    @core.SemanticsRole::List => "list"
-    @core.SemanticsRole::ListItem => "list_item"
-    @core.SemanticsRole::Grid => "grid"
-    @core.SemanticsRole::ScrollView => "scroll_view"
-    @core.SemanticsRole::Switch => "switch"
-    @core.SemanticsRole::Radio => "radio"
-    @core.SemanticsRole::Slider => "slider"
-    @core.SemanticsRole::Progress => "progress"
-    @core.SemanticsRole::Tab => "tab"
-    @core.SemanticsRole::Dialog => "dialog"
-    @core.SemanticsRole::Tooltip => "tooltip"
-    @core.SemanticsRole::Menu => "menu"
-    @core.SemanticsRole::ButtonGroup => "button_group"
-    @core.SemanticsRole::Form => "form"
-    @core.SemanticsRole::FormField => "form_field"
-    @core.SemanticsRole::Tree => "tree"
-    @core.SemanticsRole::TreeItem => "tree_item"
-    @core.SemanticsRole::Group => "group"
-    @core.SemanticsRole::WebView => "web_view"
-    @core.SemanticsRole::Image => "image"
-    @core.SemanticsRole::Alert => "alert"
-    @core.SemanticsRole::Status => "status"
-    @core.SemanticsRole::ComboBox => "combo_box"
-    @core.SemanticsRole::Option => "option"
-    @core.SemanticsRole::Table => "table"
-    @core.SemanticsRole::Row => "row"
-    @core.SemanticsRole::Cell => "cell"
-    @core.SemanticsRole::Separator => "separator"
+    None => "none"
+    Text => "text"
+    Link => "link"
+    Heading => "heading"
+    Navigation => "navigation"
+    Main => "main"
+    Button => "button"
+    Checkbox => "checkbox"
+    TextField => "text_field"
+    List => "list"
+    ListItem => "list_item"
+    Grid => "grid"
+    ScrollView => "scroll_view"
+    Switch => "switch"
+    Radio => "radio"
+    Slider => "slider"
+    Progress => "progress"
+    Tab => "tab"
+    Dialog => "dialog"
+    Tooltip => "tooltip"
+    Menu => "menu"
+    ButtonGroup => "button_group"
+    Form => "form"
+    FormField => "form_field"
+    Tree => "tree"
+    TreeItem => "tree_item"
+    Group => "group"
+    WebView => "web_view"
+    Image => "image"
+    Alert => "alert"
+    Status => "status"
+    ComboBox => "combo_box"
+    Option => "option"
+    Table => "table"
+    Row => "row"
+    Cell => "cell"
+    Separator => "separator"
   }
 }
 
@@ -209,9 +209,9 @@ fn windows_state_flags(state : @core.SemanticsState) -> UInt64 {
 ///|
 fn windows_checked_code(value : @core.SemanticsCheckedState?) -> Int {
   match value {
-    Some(@core.SemanticsCheckedState::Unchecked) => 0
-    Some(@core.SemanticsCheckedState::Checked) => 1
-    Some(@core.SemanticsCheckedState::Mixed) => 2
+    Some(Unchecked) => 0
+    Some(Checked) => 1
+    Some(Mixed) => 2
     None => -1
   }
 }
@@ -219,20 +219,20 @@ fn windows_checked_code(value : @core.SemanticsCheckedState?) -> Int {
 ///|
 fn windows_action_flag(kind : @core.SemanticsActionKind) -> UInt64 {
   match kind {
-    @core.SemanticsActionKind::Activate => 1UL
-    @core.SemanticsActionKind::Focus => 2UL
-    @core.SemanticsActionKind::SetText => 4UL
-    @core.SemanticsActionKind::Submit => 8UL
-    @core.SemanticsActionKind::Scroll => 16UL
-    @core.SemanticsActionKind::Select => 32UL
-    @core.SemanticsActionKind::Expand => 64UL
-    @core.SemanticsActionKind::Collapse => 128UL
-    @core.SemanticsActionKind::Dismiss => 256UL
-    @core.SemanticsActionKind::Increment => 512UL
-    @core.SemanticsActionKind::Decrement => 1024UL
-    @core.SemanticsActionKind::SetNumericValue => 2048UL
-    @core.SemanticsActionKind::SetSelection => 4096UL
-    @core.SemanticsActionKind::ShowMenu => 8192UL
+    Activate => 1UL
+    Focus => 2UL
+    SetText => 4UL
+    Submit => 8UL
+    Scroll => 16UL
+    Select => 32UL
+    Expand => 64UL
+    Collapse => 128UL
+    Dismiss => 256UL
+    Increment => 512UL
+    Decrement => 1024UL
+    SetNumericValue => 2048UL
+    SetSelection => 4096UL
+    ShowMenu => 8192UL
   }
 }
 
@@ -244,9 +244,9 @@ fn windows_action_flags(actions : Array[@core.SemanticsActionKind]) -> UInt64 {
 ///|
 fn windows_live_code(value : @core.SemanticsLive) -> Int {
   match value {
-    @core.SemanticsLive::Off => 0
-    @core.SemanticsLive::Polite => 1
-    @core.SemanticsLive::Assertive => 2
+    Off => 0
+    Polite => 1
+    Assertive => 2
   }
 }
 
@@ -346,7 +346,7 @@ fn WindowsNativeHostBackend::publish_windows_accessibility_read(
   read : @runtime.SemanticsRead,
 ) -> Unit {
   match read {
-    @runtime.SemanticsRead::Full(snapshot) => {
+    Full(snapshot) => {
       if windows_accessibility_begin_native(
           hwnd,
           1,
@@ -362,7 +362,7 @@ fn WindowsNativeHostBackend::publish_windows_accessibility_read(
         windows_sync_native_node(hwnd, snapshot.generation(), node)
       }
     }
-    @runtime.SemanticsRead::Delta(delta) => {
+    Delta(delta) => {
       if windows_accessibility_begin_native(
           hwnd,
           0,
@@ -394,7 +394,7 @@ fn WindowsNativeHostBackend::publish_windows_accessibility_read(
         )
       }
     }
-    @runtime.SemanticsRead::Unchanged(_) => return
+    Unchanged(_) => return
   }
   windows_accessibility_end_native(hwnd)
 }
@@ -425,7 +425,7 @@ fn windows_json_string_field(
   name : String,
 ) -> String? {
   match fields.get(name) {
-    Some(Json::String(value)) => Some(value)
+    Some(String(value)) => Some(value)
     _ => None
   }
 }
@@ -436,24 +436,24 @@ fn windows_native_semantics_action(
   value : String,
 ) -> @core.SemanticsAction? {
   match kind {
-    "activate" => Some(@core.SemanticsAction::Activate)
-    "focus" => Some(@core.SemanticsAction::Focus)
-    "set_text" => Some(@core.SemanticsAction::SetText(value))
-    "submit" => Some(@core.SemanticsAction::Submit)
-    "scroll_forward" => Some(@core.SemanticsAction::Scroll(Forward))
-    "scroll_backward" => Some(@core.SemanticsAction::Scroll(Backward))
-    "scroll_up" => Some(@core.SemanticsAction::Scroll(Up))
-    "scroll_down" => Some(@core.SemanticsAction::Scroll(Down))
-    "scroll_left" => Some(@core.SemanticsAction::Scroll(Left))
-    "scroll_right" => Some(@core.SemanticsAction::Scroll(Right))
-    "select" => Some(@core.SemanticsAction::Select)
-    "expand" => Some(@core.SemanticsAction::Expand)
-    "collapse" => Some(@core.SemanticsAction::Collapse)
-    "dismiss" => Some(@core.SemanticsAction::Dismiss)
-    "increment" => Some(@core.SemanticsAction::Increment)
-    "decrement" => Some(@core.SemanticsAction::Decrement)
+    "activate" => Some(Activate)
+    "focus" => Some(Focus)
+    "set_text" => Some(SetText(value))
+    "submit" => Some(Submit)
+    "scroll_forward" => Some(Scroll(Forward))
+    "scroll_backward" => Some(Scroll(Backward))
+    "scroll_up" => Some(Scroll(Up))
+    "scroll_down" => Some(Scroll(Down))
+    "scroll_left" => Some(Scroll(Left))
+    "scroll_right" => Some(Scroll(Right))
+    "select" => Some(Select)
+    "expand" => Some(Expand)
+    "collapse" => Some(Collapse)
+    "dismiss" => Some(Dismiss)
+    "increment" => Some(Increment)
+    "decrement" => Some(Decrement)
     "set_numeric_value" =>
-      Some(@core.SemanticsAction::SetNumericValue(@string.parse_double(value))) catch {
+      Some(SetNumericValue(@string.parse_double(value))) catch {
         _ => None
       }
     "set_selection" =>
@@ -467,7 +467,7 @@ fn windows_native_semantics_action(
             (Some(start), Some(end)) if start <= 2147483647UL &&
               end <= 2147483647UL =>
               Some(
-                @core.SemanticsAction::SetSelection(
+                SetSelection(
                   @core.TextRange::new(start=start.to_int(), end=end.to_int()),
                 ),
               )
@@ -475,7 +475,7 @@ fn windows_native_semantics_action(
           }
         _ => None
       }
-    "show_menu" => Some(@core.SemanticsAction::ShowMenu)
+    "show_menu" => Some(ShowMenu)
     _ => None
   }
 }
@@ -490,7 +490,7 @@ fn windows_decode_accessibility_action(
   let parsed = @json.parse(@utf8.decode_lossy(bytes[:], ignore_bom=false)) catch {
     _ => return None
   }
-  guard parsed is Json::Object(fields) &&
+  guard parsed is Object(fields) &&
     windows_json_string_field(fields, "node_id") is Some(node_text) &&
     windows_json_string_field(fields, "generation") is Some(generation_text) &&
     windows_json_string_field(fields, "kind") is Some(kind) &&
@@ -503,11 +503,9 @@ fn windows_decode_accessibility_action(
     return None
   }
   Some({
-    target: @core.SemanticsTarget::ByNodeId(@core.SemanticsNodeId::new(node_id)),
+    target: ByNodeId(@core.SemanticsNodeId::new(node_id)),
     action,
-    precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-      @core.SemanticsGeneration::new(generation),
-    ),
+    precondition: Exact(@core.SemanticsGeneration::new(generation)),
   })
 }
 
@@ -555,9 +553,9 @@ fn WindowsNativeHostBackend::sync_accessibility_window(
     Ok(value) => {
       self.publish_windows_accessibility_read(hwnd, value)
       binding.cursor = match value {
-        @runtime.SemanticsRead::Full(snapshot) => Some(snapshot.generation())
-        @runtime.SemanticsRead::Delta(delta) => Some(delta.to())
-        @runtime.SemanticsRead::Unchanged(generation) => Some(generation)
+        Full(snapshot) => Some(snapshot.generation())
+        Delta(delta) => Some(delta.to())
+        Unchanged(generation) => Some(generation)
       }
     }
     Err(_) => ()

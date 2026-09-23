@@ -22,7 +22,7 @@ fn ShowcaseModel::theme_renderer_section(
           shortcut_preview(theme),
         ],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
+        align=Start,
       )
     } else {
       row(
@@ -34,7 +34,7 @@ fn ShowcaseModel::theme_renderer_section(
               self.capability_card(theme, 360.0, 250.0),
             ],
             spacing=theme.spacing_scale.md,
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
           column(
             [
@@ -43,11 +43,11 @@ fn ShowcaseModel::theme_renderer_section(
               sparkline(theme, 0.72),
             ],
             spacing=theme.spacing_scale.md,
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
         ],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
+        align=Start,
       )
     },
     metrics~,
@@ -68,7 +68,7 @@ fn progress_preview(
     ),
     width~,
     height=42.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=12.0,
   ).border(showcase_card_border(theme))
@@ -82,7 +82,7 @@ fn shortcut_preview(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
     .foreground(theme.palette.foreground),
     width=220.0,
     height=50.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.md,
   ).border(showcase_card_border(theme))

@@ -2,7 +2,7 @@
 test "pdf workbench failure banner can be dismissed" {
   let model = {
     ..PdfWorkbenchModel::new(),
-    status: PdfWorkbenchStatus::Failed("PDF parse failed for test"),
+    status: Failed("PDF parse failed for test"),
     last_event: "PDF load failed",
   }
   let runtime = model.runtime(width=1120.0, height=720.0)

@@ -18,7 +18,7 @@ test "skia renderer resize updates presented frame metrics" {
   ) catch {
     err => fail("expected Skia renderer resize: \{err.message()}")
   }
-  renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
+  renderer.render([Clear(@core.Color::white())]) catch {
     err => fail("expected Skia renderer render: \{err.message()}")
   }
   guard renderer.last_frame() is Some(frame) else {
@@ -44,10 +44,10 @@ test "skia renderer reports presenter failure without counting present" {
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
-  try renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
+  try renderer.render([Clear(@core.Color::white())]) catch {
     err =>
       match err {
-        SkiaRendererError::PresentFailed(description) =>
+        PresentFailed(description) =>
           inspect(description, content="failing-presenter")
         _ => fail("expected Skia presenter failure")
       }
@@ -75,14 +75,14 @@ test "skia unmatched scope pops are ignored and counted" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopRoundedClip,
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PopOpacity,
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PopClip,
+    PopRoundedClip,
+    PopTransform,
+    PopOpacity,
+    PopLayer,
+    PopFilter,
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::black(),
     ),
@@ -117,16 +117,14 @@ test "skia mismatched scope pop preserves the active scope" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
-    ),
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0)),
+    PopTransform,
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::PopClip,
+    PopClip,
   ]) catch {
     err =>
       fail("expected Skia renderer to ignore mismatched pop: \{err.message()}")
@@ -166,11 +164,9 @@ test "skia unclosed scopes are counted and restored at frame boundary" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
-    ),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
       @core.Color::black(),
     ),
@@ -200,8 +196,8 @@ test "skia unclosed scopes are counted and restored at frame boundary" {
   )
 
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
       @core.Color::black(),
     ),
@@ -236,7 +232,7 @@ test "skia unsupported command diagnostics reset per frame" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="missing-shader",
         frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
@@ -253,7 +249,7 @@ test "skia unsupported command diagnostics reset per frame" {
   assert_true(diagnostics[0].reason.contains("missing-shader"))
   assert_true(diagnostics[0].reason.contains("fallback brush"))
   inspect(renderer.present_count(), content="1")
-  renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
+  renderer.render([Clear(@core.Color::white())]) catch {
     err => fail("expected Skia supported render: \{err.message()}")
   }
   inspect(renderer.unsupported_command_count(), content="0")
@@ -303,20 +299,18 @@ test "skia renderer composites masked opacity layer pixels" {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushLayer(
+    Clear(@core.Color::white()),
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=4.0, y=4.0, width=12.0, height=12.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=4.0, y=4.0, width=12.0, height=12.0)),
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=24.0, height=24.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ]) catch {
     err => fail("expected Skia masked layer render: \{err.message()}")
   }
@@ -361,13 +355,13 @@ test "skia render_frame updates and reuses renderer-local cached layers" {
   )
   let first = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(spec),
+      FillRect(
         @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      EndRetainedLayer(spec.key),
     ]),
   )
   inspect(first.presented, content="true")
@@ -386,13 +380,13 @@ test "skia render_frame updates and reuses renderer-local cached layers" {
   )
   let second = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(spec),
+      FillRect(
         @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      EndRetainedLayer(spec.key),
     ]),
   )
   inspect(second.presented, content="true")
@@ -435,26 +429,26 @@ test "skia render_frame reuses cached layer when only origin changes" {
   )
   let first = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(initial),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(initial),
+      FillRect(
         @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(initial.key),
+      EndRetainedLayer(initial.key),
     ]),
   )
   inspect(first.presented, content="true")
   inspect(first.cache_update_count, content="1")
   let second = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(moved),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(moved),
+      FillRect(
         @core.Rect::new(x=4.0, y=8.0, width=4.0, height=4.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(moved.key),
+      EndRetainedLayer(moved.key),
     ]),
   )
   inspect(second.presented, content="true")
@@ -502,19 +496,19 @@ test "skia render_frame snapshots nested cached layers into parent cache" {
   )
   let first = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(outer),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(outer),
+      FillRect(
         @core.Rect::new(x=2.0, y=2.0, width=14.0, height=14.0),
         @core.Color::gray(),
       ),
-      @core.DrawCommand::BeginRetainedLayer(inner),
-      @core.DrawCommand::FillRect(
+      BeginRetainedLayer(inner),
+      FillRect(
         @core.Rect::new(x=6.0, y=6.0, width=6.0, height=6.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(inner.key),
-      @core.DrawCommand::EndRetainedLayer(outer.key),
+      EndRetainedLayer(inner.key),
+      EndRetainedLayer(outer.key),
     ]),
   )
   inspect(first.presented, content="true")
@@ -530,13 +524,13 @@ test "skia render_frame snapshots nested cached layers into parent cache" {
   )
   let second = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(outer),
-      @core.DrawCommand::FillRect(outer.frame, @core.Color::gray()),
-      @core.DrawCommand::BeginRetainedLayer(inner),
-      @core.DrawCommand::FillRect(inner.frame, @core.Color::black()),
-      @core.DrawCommand::EndRetainedLayer(inner.key),
-      @core.DrawCommand::EndRetainedLayer(outer.key),
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(outer),
+      FillRect(outer.frame, @core.Color::gray()),
+      BeginRetainedLayer(inner),
+      FillRect(inner.frame, @core.Color::black()),
+      EndRetainedLayer(inner.key),
+      EndRetainedLayer(outer.key),
     ]),
   )
   inspect(second.presented, content="true")
@@ -577,12 +571,12 @@ test "skia picture producer caches nested layers as pictures without surfaces" {
   )
   let first = renderer.record_frame_picture(
     skia_test_draw_frame([
-      @core.DrawCommand::BeginRetainedLayer(outer),
-      @core.DrawCommand::FillRect(outer.frame, @core.Color::gray()),
-      @core.DrawCommand::BeginRetainedLayer(inner),
-      @core.DrawCommand::FillRect(inner.frame, @core.Color::black()),
-      @core.DrawCommand::EndRetainedLayer(inner.key),
-      @core.DrawCommand::EndRetainedLayer(outer.key),
+      BeginRetainedLayer(outer),
+      FillRect(outer.frame, @core.Color::gray()),
+      BeginRetainedLayer(inner),
+      FillRect(inner.frame, @core.Color::black()),
+      EndRetainedLayer(inner.key),
+      EndRetainedLayer(outer.key),
     ]),
   )
   assert_true(first is Some(_))
@@ -590,12 +584,12 @@ test "skia picture producer caches nested layers as pictures without surfaces" {
   inspect(renderer.layer_cache.length(), content="0")
   let second = renderer.record_frame_picture(
     skia_test_draw_frame([
-      @core.DrawCommand::BeginRetainedLayer(outer),
-      @core.DrawCommand::FillRect(outer.frame, @core.Color::gray()),
-      @core.DrawCommand::BeginRetainedLayer(inner),
-      @core.DrawCommand::FillRect(inner.frame, @core.Color::black()),
-      @core.DrawCommand::EndRetainedLayer(inner.key),
-      @core.DrawCommand::EndRetainedLayer(outer.key),
+      BeginRetainedLayer(outer),
+      FillRect(outer.frame, @core.Color::gray()),
+      BeginRetainedLayer(inner),
+      FillRect(inner.frame, @core.Color::black()),
+      EndRetainedLayer(inner.key),
+      EndRetainedLayer(outer.key),
     ]),
   )
   assert_true(second is Some(_))
@@ -636,12 +630,12 @@ test "skia raster fallback replays cached layers recorded by GPU producer" {
   )
   let recorded = renderer.record_frame_picture(
     skia_test_draw_frame([
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::FillRect(
+      BeginRetainedLayer(spec),
+      FillRect(
         @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      EndRetainedLayer(spec.key),
     ]),
   )
   assert_true(recorded is Some(_))
@@ -649,13 +643,13 @@ test "skia raster fallback replays cached layers recorded by GPU producer" {
   inspect(renderer.layer_cache.length(), content="0")
   let fallback = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(spec),
+      FillRect(
         @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      EndRetainedLayer(spec.key),
     ]),
   )
   inspect(fallback.presented, content="true")
@@ -687,8 +681,8 @@ test "skia render_frame cache miss rebuilds from the current frame" {
   }
   let baseline = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      FillRect(
         @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
         @core.Color::black(),
       ),
@@ -705,10 +699,10 @@ test "skia render_frame cache miss rebuilds from the current frame" {
   )
   let miss = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(missing),
-      @core.DrawCommand::FillRect(missing.frame, @core.Color::blue()),
-      @core.DrawCommand::EndRetainedLayer(missing.key),
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(missing),
+      FillRect(missing.frame, @core.Color::blue()),
+      EndRetainedLayer(missing.key),
     ]),
   )
   inspect(miss.presented, content="true")
@@ -735,13 +729,13 @@ test "skia render_frame resize clears renderer-local cached layers" {
   )
   let update = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(spec),
+      FillRect(
         @core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
         @core.Color::black(),
       ),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      EndRetainedLayer(spec.key),
     ]),
   )
   inspect(update.cache_update_count, content="1")
@@ -756,10 +750,10 @@ test "skia render_frame resize clears renderer-local cached layers" {
   }
   let miss = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::FillRect(spec.frame, @core.Color::black()),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(spec),
+      FillRect(spec.frame, @core.Color::black()),
+      EndRetainedLayer(spec.key),
     ]),
   )
   inspect(miss.presented, content="true")
@@ -786,9 +780,9 @@ test "skia render_frame treats empty cached layer draws as no-op" {
   )
   let result = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(spec),
+      EndRetainedLayer(spec.key),
     ]),
   )
   inspect(result.presented, content="true")
@@ -808,23 +802,21 @@ test "skia render_frame evicts cached layers by surface budget" {
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
-  let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::Clear(@core.Color::white()),
-  ]
+  let commands : Array[@core.DrawCommand] = [Clear(@core.Color::white())]
   for index in 0..<4 {
     let spec = @core.RetainedLayerSpec::new(
       key="evict-layer-\{index}",
       frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       content_revision=1,
     )
-    commands.push(@core.DrawCommand::BeginRetainedLayer(spec))
+    commands.push(BeginRetainedLayer(spec))
     commands.push(
-      @core.DrawCommand::FillRect(
+      FillRect(
         @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         @core.Color::black(),
       ),
     )
-    commands.push(@core.DrawCommand::EndRetainedLayer(spec.key))
+    commands.push(EndRetainedLayer(spec.key))
   }
   let result = renderer.render_frame(skia_test_draw_frame(commands))
   inspect(result.presented, content="true")
@@ -876,13 +868,13 @@ test "skia render_frame skips churny cached layer admission" {
     )
     let result = renderer.render_frame(
       skia_test_draw_frame([
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(spec),
-        @core.DrawCommand::FillRect(
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(spec),
+        FillRect(
           @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
           @core.Color::black(),
         ),
-        @core.DrawCommand::EndRetainedLayer(spec.key),
+        EndRetainedLayer(spec.key),
       ]),
     )
     inspect(result.presented, content="true")
@@ -922,22 +914,22 @@ test "skia render_frame keeps hot cached layer admitted across revisions" {
   ignore(
     renderer.render_frame(
       skia_test_draw_frame([
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(first_spec),
-        @core.DrawCommand::FillRect(
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(first_spec),
+        FillRect(
           @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
           @core.Color::black(),
         ),
-        @core.DrawCommand::EndRetainedLayer(first_spec.key),
+        EndRetainedLayer(first_spec.key),
       ]),
     ),
   )
   let hit = renderer.render_frame(
     skia_test_draw_frame([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(first_spec),
-      @core.DrawCommand::FillRect(first_spec.frame, @core.Color::black()),
-      @core.DrawCommand::EndRetainedLayer(first_spec.key),
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(first_spec),
+      FillRect(first_spec.frame, @core.Color::black()),
+      EndRetainedLayer(first_spec.key),
     ]),
   )
   inspect(hit.cache_hit_count, content="1")
@@ -949,13 +941,13 @@ test "skia render_frame keeps hot cached layer admitted across revisions" {
     )
     let update = renderer.render_frame(
       skia_test_draw_frame([
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(spec),
-        @core.DrawCommand::FillRect(
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(spec),
+        FillRect(
           @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
           @core.Color::black(),
         ),
-        @core.DrawCommand::EndRetainedLayer(spec.key),
+        EndRetainedLayer(spec.key),
       ]),
     )
     inspect(update.cache_update_count, content="1")

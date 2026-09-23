@@ -24,16 +24,10 @@ fn[Msg] measured_text_fixture(label : String) -> @core.View[Msg] {
     identity=() => @core.ViewIdentity::new(kind="MeasuredText"),
     declaration=() => {
       @core.ViewDeclaration::channels(
-        layout=@core.DeclarationChannel::Uncacheable,
-        paint=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string(label),
-        ),
-        semantics=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string(label),
-        ),
-        platform=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string(label),
-        ),
+        layout=Uncacheable,
+        paint=Exact(@core.DeclarationKey::string(label)),
+        semantics=Exact(@core.DeclarationKey::string(label)),
+        platform=Exact(@core.DeclarationKey::string(label)),
       )
     },
     layout=ctx => {
@@ -74,10 +68,10 @@ fn[Msg] hug_container(child : @core.View[Msg]) -> @core.View[Msg] {
     identity=() => @core.ViewIdentity::new(kind="HugContainer"),
     declaration=() => {
       @core.ViewDeclaration::channels(
-        layout=@core.DeclarationChannel::Uncacheable,
-        paint=@core.DeclarationChannel::Constant,
-        semantics=@core.DeclarationChannel::Constant,
-        platform=@core.DeclarationChannel::Constant,
+        layout=Uncacheable,
+        paint=Constant,
+        semantics=Constant,
+        platform=Constant,
       )
     },
     layout=ctx => {
@@ -107,7 +101,7 @@ fn runtime_intrinsic_child_width(text_system~ : @core.TextSystem) -> Double {
   let root : @core.View[Unit] = hug_container(
     measured_text_fixture("MoUI Showcase"),
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=1000.0, height=200.0),
   )

@@ -24,7 +24,7 @@ pub fn[Msg] dialog(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Ghost,
+          variant=Ghost,
           theme=resolved_theme,
           width=dialog_action_width(action.label),
           height=36.0,
@@ -38,7 +38,7 @@ pub fn[Msg] dialog(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Primary,
+          variant=Primary,
           theme=resolved_theme,
           width=dialog_action_width(action.label),
           height=36.0,
@@ -73,26 +73,22 @@ pub fn[Msg] dialog(
       @layout.row(
         actions,
         spacing=resolved_theme.spacing_scale.sm,
-        justify=@style.MainAlign::End,
-        align=@style.CrossAlign::Center,
+        justify=End,
+        align=Center,
       ).frame(width=content_width, height=footer_height),
     )
   }
   let dialog_view = @container.container(
-      @layout.column(
-        body_rows,
-        spacing=section_spacing,
-        align=@style.CrossAlign::Start,
-      ),
+      @layout.column(body_rows, spacing=section_spacing, align=Start),
       width~,
       height~,
-      variant=@style.ContainerVariant::Raised,
+      variant=Raised,
       theme=resolved_theme,
       padding=panel_padding,
     )
     .border(dialog_border(resolved_theme))
     .shadow(resolved_theme.shadow_scale.lg)
-    .semantics_role(@core.SemanticsRole::Dialog)
+    .semantics_role(Dialog)
     .semantics_description(subtitle)
     .accessibility_label(title)
   match dismiss_action {
@@ -100,7 +96,7 @@ pub fn[Msg] dialog(
       semantic_dismiss_action_control(
         dialog_view,
         action.message,
-        role=Some(@core.SemanticsRole::Dialog),
+        role=Some(Dialog),
       )
     None => dialog_view
   }
@@ -138,29 +134,17 @@ fn[Msg] dialog_header(
     None => width
   }
   let rows : Array[@core.View[Msg]] = [
-    @text.text(
-      title,
-      role=@style.TextRole::Control,
-      theme~,
-      width=title_width,
-      height=28.0,
-    ),
+    @text.text(title, role=Control, theme~, width=title_width, height=28.0),
   ]
   if subtitle != "" {
     rows.push(
-      @text.text(
-        subtitle,
-        role=@style.TextRole::Caption,
-        theme~,
-        width=title_width,
-        height=24.0,
-      ),
+      @text.text(subtitle, role=Caption, theme~, width=title_width, height=24.0),
     )
   }
   let title_block = @layout.column(
     rows,
     spacing=theme.spacing_scale.xs,
-    align=@style.CrossAlign::Start,
+    align=Start,
   )
   match dismiss_action {
     Some(action) =>
@@ -171,7 +155,7 @@ fn[Msg] dialog_header(
             @button.button(
               action.label,
               on_click=action.message,
-              variant=@style.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=dialog_dismiss_action_width(action.label),
               height=32.0,
@@ -180,7 +164,7 @@ fn[Msg] dialog_header(
           ),
         ],
         spacing=theme.spacing_scale.md,
-        align=@style.CrossAlign::Start,
+        align=Start,
       ).frame(width~, height~)
     None => title_block.frame(width~, height~)
   }

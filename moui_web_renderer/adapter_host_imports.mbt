@@ -8,13 +8,13 @@ fn raise_for_host_status(code : Int) -> Unit raise WebGpuHostError {
 ///|
 fn host_status_to_error(code : Int) -> WebGpuHostError {
   match code {
-    1 => WebGpuHostError::Unavailable
-    2 => WebGpuHostError::AdapterUnavailable
-    3 => WebGpuHostError::DeviceUnavailable
-    4 => WebGpuHostError::SurfaceUnavailable
-    5 => WebGpuHostError::PipelineUnavailable
-    6 => WebGpuHostError::InvalidResource
-    _ => WebGpuHostError::HostError("webgpu host error code \{code}")
+    1 => Unavailable
+    2 => AdapterUnavailable
+    3 => DeviceUnavailable
+    4 => SurfaceUnavailable
+    5 => PipelineUnavailable
+    6 => InvalidResource
+    _ => HostError("webgpu host error code \{code}")
   }
 }
 
@@ -296,9 +296,9 @@ fn host_draw_text(
 ///|
 fn text_align_host_code(align : @core.TextAlign) -> Int {
   match align {
-    @core.TextAlign::TextStart => 0
-    @core.TextAlign::TextCenter => 1
-    @core.TextAlign::TextEnd => 2
+    TextStart => 0
+    TextCenter => 1
+    TextEnd => 2
   }
 }
 
@@ -341,12 +341,12 @@ fn host_image_resource_height(
 ///|
 fn image_fit_host_code(fit : @core.ImageFit) -> Int {
   match fit {
-    @core.ImageFit::Contain => 0
-    @core.ImageFit::Cover => 1
-    @core.ImageFit::Stretch => 2
-    @core.ImageFit::ScaleDown => 3
-    @core.ImageFit::FitWidth => 4
-    @core.ImageFit::FitHeight => 5
+    Contain => 0
+    Cover => 1
+    Stretch => 2
+    ScaleDown => 3
+    FitWidth => 4
+    FitHeight => 5
   }
 }
 

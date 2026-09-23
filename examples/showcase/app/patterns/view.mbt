@@ -50,31 +50,21 @@ fn welcome_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   let card_width = (width - 8.0).max(220.0)
   @views.column(
     [
-      @views.text(
-        "Patterns",
-        role=@views.TextRole::Headline,
-        theme~,
-        width=card_width,
-      ),
+      @views.text("Patterns", role=Headline, theme~, width=card_width),
       @views.text(
         "These pages are small, complete app features — not single-widget demos. Open one from the left rail under Patterns, or jump below.",
-        role=@views.TextRole::Body,
+        role=Body,
         theme~,
         width=card_width,
       ),
       @views.callout(
         "How to use this section",
         "Copy a pattern package as a whole: model + messages + update + view. The Showcase shell only routes into the package.",
-        tone=@views.FeedbackTone::Info,
+        tone=Info,
         width=card_width,
         theme~,
       ),
-      @views.text(
-        "Jump to a pattern",
-        role=@views.TextRole::Subtitle,
-        theme~,
-        width=card_width,
-      ),
+      @views.text("Jump to a pattern", role=Subtitle, theme~, width=card_width),
       @views.column(
         [
           pattern_jump_row(
@@ -104,11 +94,11 @@ fn welcome_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
           ),
         ],
         spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Stretch,
+        align=Stretch,
       ),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -125,22 +115,22 @@ fn pattern_jump_row(
       [
         @views.row(
           [
-            @views.text(title, role=@views.TextRole::Subtitle, theme~),
+            @views.text(title, role=Subtitle, theme~),
             @views.spacer(weight=1.0),
             @views.button(
               "Open",
               on_click=Navigate(route),
-              variant=@views.ButtonVariant::Outline,
+              variant=Outline,
               theme~,
             ),
           ],
           spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
-        @views.text(summary, role=@views.TextRole::Caption, theme~, width~),
+        @views.text(summary, role=Caption, theme~, width~),
       ],
       spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     padding=12.0,
@@ -152,19 +142,10 @@ fn pattern_jump_row(
 fn counter_pattern(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text(
-        "Counter: \{model.counter}",
-        role=@views.TextRole::Headline,
-        theme~,
-      ),
+      @views.text("Counter: \{model.counter}", role=Headline, theme~),
       @views.row(
         [
-          @views.button(
-            "-",
-            on_click=Decrement,
-            variant=@views.ButtonVariant::Outline,
-            theme~,
-          ),
+          @views.button("-", on_click=Decrement, variant=Outline, theme~),
           @views.button("+", on_click=Increment, theme~),
         ],
         spacing=theme.spacing_scale.sm,
@@ -181,7 +162,7 @@ fn todo_pattern(
   width : Double,
 ) -> @moui.View[Msg] {
   let rows : Array[@moui.View[Msg]] = [
-    @views.text("Todo", role=@views.TextRole::Headline, theme~),
+    @views.text("Todo", role=Headline, theme~),
     @views.row(
       [
         @views.text_field(
@@ -210,7 +191,7 @@ fn todo_pattern(
           @views.button(
             "Remove",
             on_click=TodoRemoved(item.id),
-            variant=@views.ButtonVariant::Ghost,
+            variant=Ghost,
             theme~,
           ),
         ],
@@ -218,11 +199,7 @@ fn todo_pattern(
       ),
     )
   }
-  @views.column(
-    rows,
-    spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Stretch,
-  )
+  @views.column(rows, spacing=theme.spacing_scale.sm, align=Stretch)
 }
 
 ///|
@@ -234,7 +211,7 @@ fn form_pattern(
   let valid = model.profile_name.length() >= 2
   @views.column(
     [
-      @views.text("Profile form", role=@views.TextRole::Headline, theme~),
+      @views.text("Profile form", role=Headline, theme~),
       @views.text_field(
         model.profile_name,
         on_input=value => ProfileNameChanged(value),
@@ -253,17 +230,11 @@ fn form_pattern(
       if model.notice == "" {
         @views.text("")
       } else {
-        @views.banner(
-          "Saved",
-          model.notice,
-          tone=@views.FeedbackTone::Success,
-          width~,
-          theme~,
-        )
+        @views.banner("Saved", model.notice, tone=Success, width~, theme~)
       },
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -281,7 +252,7 @@ fn data_pattern(
   })
   @views.column(
     [
-      @views.text("Data collection", role=@views.TextRole::Headline, theme~),
+      @views.text("Data collection", role=Headline, theme~),
       @views.text_field(
         model.data_filter,
         on_input=value => DataFilterChanged(value),
@@ -302,7 +273,7 @@ fn data_pattern(
       ),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -314,15 +285,11 @@ fn navigation_pattern(
 ) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text(
-        "Feature-owned navigation",
-        role=@views.TextRole::Headline,
-        theme~,
-      ),
+      @views.text("Feature-owned navigation", role=Headline, theme~),
       @views.callout(
         "Current child route",
         "patterns/\{model.route}",
-        tone=@views.FeedbackTone::Info,
+        tone=Info,
         width~,
         theme~,
       ),
@@ -343,24 +310,19 @@ fn workflow_pattern(
   let labels = ["Profile", "Permissions", "Review"]
   @views.column(
     [
-      @views.text("Workflow", role=@views.TextRole::Headline, theme~),
+      @views.text("Workflow", role=Headline, theme~),
       @views.progress_status(
         labels[model.workflow_step],
         value=(model.workflow_step + 1).to_double() / 3.0,
         message="Step \{model.workflow_step + 1} of 3",
         status="in progress",
-        tone=@views.FeedbackTone::Info,
+        tone=Info,
         width~,
         theme~,
       ),
       @views.row(
         [
-          @views.button(
-            "Back",
-            on_click=WorkflowBack,
-            variant=@views.ButtonVariant::Outline,
-            theme~,
-          ),
+          @views.button("Back", on_click=WorkflowBack, variant=Outline, theme~),
           @views.button("Next", on_click=WorkflowNext, theme~),
         ],
         spacing=theme.spacing_scale.sm,
@@ -374,7 +336,7 @@ fn workflow_pattern(
 fn text_media_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text("Text & Media", role=@views.TextRole::Headline, theme~),
+      @views.text("Text & Media", role=Headline, theme~),
       @views.text(
         "# Local Markdown\n\nA **bold** word and an image belong behind app-safe view APIs.",
       ),

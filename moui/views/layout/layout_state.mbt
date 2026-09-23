@@ -17,5 +17,5 @@ pub fn[T] SectionListSection::new(
   title~ : String,
   items~ : Array[T],
 ) -> SectionListSection[T] {
-  { id, title, items }
+  { id, title, items, }
 }

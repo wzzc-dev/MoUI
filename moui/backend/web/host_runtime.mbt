@@ -42,7 +42,7 @@ pub(all) struct WebAppOptions {
 pub fn backend_info() -> WebBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
-      backend=@host.HostBackendKind::Web,
+      backend=Web,
       description="canonical wzzc-dev/window browser host for wasm-gc",
     ),
     uses_window_web_backend: true,
@@ -59,14 +59,14 @@ fn run_app_internal(
   window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
 ) -> Unit {
   let event_loop = @window_web.EventLoop::new()
-  event_loop.set_control_flow(@window_core.ControlFlow::Poll)
+  event_loop.set_control_flow(Poll)
   let async_services = web_async_host_service_queue()
   set_web_async_host_service_queue(Some(async_services))
   set_web_route_source(options.route_source)
   let services = web_service_bridge(
     system_theme=match event_loop.system_theme() {
       Some(theme) => @window_input.window_theme_to_color_scheme(theme)
-      None => @core.ColorScheme::Light
+      None => Light
     },
     open_url=dispatch_web_open_url,
     clipboard=true,
@@ -127,9 +127,9 @@ fn web_environment_with_accessibility_settings(
   environment
   .with_accessibility_contrast(
     if web_accessibility_contrast() != 0 {
-      @core.AccessibilityContrast::High
+      High
     } else {
-      @core.AccessibilityContrast::Standard
+      Standard
     },
   )
   .with_reduced_motion(web_reduced_motion() != 0)
@@ -158,7 +158,7 @@ pub fn WebAppOptions::new(
   route_source? : @services.RouteSource? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> WebAppOptions {
-  { scene_resolver, event_sources, route_source, platform_view_plugins }
+  { scene_resolver, event_sources, route_source, platform_view_plugins, }
 }
 
 ///|
@@ -216,8 +216,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
           let renderer = resolution
           self.driver.set_text_system(renderer.text_system())
           match self.lifecycle.runtime_slot_lookup(window_id) {
-            Some(slot) =>
-              ignore(slot.driver.dispatch(@host.Event::Resized(metrics)))
+            Some(slot) => ignore(slot.driver.dispatch(Resized(metrics)))
             None => ()
           }
           ignore(
@@ -230,7 +229,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
               self.web_surface_actions(window, renderer),
             ),
           )
-          ignore(self.platform_slots.insert({ host_id: window_id, window }))
+          ignore(self.platform_slots.insert({ host_id: window_id, window, }))
           register_web_semantics_runtime(
             window.id().into_raw(),
             window_web_default_canvas_id(window.id().into_raw()),
@@ -388,13 +387,11 @@ fn WebApp::web_surface_actions(
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {
-        @window_input.TextInputSessionAction::EnableIme(request)
-        | @window_input.TextInputSessionAction::UpdateIme(request)
-        | @window_input.TextInputSessionAction::DisableIme(request) =>
+        EnableIme(request) | UpdateIme(request) | DisableIme(request) =>
           window.request_ime_update(request) catch {
             _ => ()
           }
-        @window_input.TextInputSessionAction::NoImeChange => ()
+        NoImeChange => ()
       }
     },
     drop=fn() { window.drop() },

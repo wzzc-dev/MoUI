@@ -271,7 +271,7 @@ pub fn SurfaceTargetDescriptor::resource_descriptors(
   self : SurfaceTargetDescriptor,
   byte_size? : Int64 = -1L,
 ) -> Array[RendererResourceDescriptor] {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   let surface_descriptor = self.resource_descriptor(byte_size~)
   if !surface_descriptor.key.is_empty() {
     descriptors.push(surface_descriptor)

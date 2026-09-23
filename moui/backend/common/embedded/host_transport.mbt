@@ -1,7 +1,7 @@
 ///|
 fn wire_object(value : Json?) -> Map[String, Json]? {
   match value {
-    Some(Json::Object(fields)) => Some(fields)
+    Some(Object(fields)) => Some(fields)
     _ => None
   }
 }
@@ -9,7 +9,7 @@ fn wire_object(value : Json?) -> Map[String, Json]? {
 ///|
 fn wire_string(value : Json?, allow_empty? : Bool = false) -> String? {
   match value {
-    Some(Json::String(text)) if allow_empty || text != "" => Some(text)
+    Some(String(text)) if allow_empty || text != "" => Some(text)
     _ => None
   }
 }
@@ -17,7 +17,7 @@ fn wire_string(value : Json?, allow_empty? : Bool = false) -> String? {
 ///|
 fn wire_int(value : Json?) -> Int? {
   match value {
-    Some(Json::Number(number, repr=_)) => {
+    Some(Number(number, repr=_)) => {
       let integer = number.to_int()
       if integer.to_double() == number {
         Some(integer)
@@ -32,8 +32,8 @@ fn wire_int(value : Json?) -> Int? {
 ///|
 fn wire_bool(value : Json?) -> Bool? {
   match value {
-    Some(Json::True) => Some(true)
-    Some(Json::False) => Some(false)
+    Some(True) => Some(true)
+    Some(False) => Some(false)
     _ => None
   }
 }
@@ -74,12 +74,12 @@ fn parse_semantics_scroll_direction(
   value : Json?,
 ) -> @core.SemanticsScrollDirection? {
   match wire_string(value) {
-    Some("forward") => Some(@core.SemanticsScrollDirection::Forward)
-    Some("backward") => Some(@core.SemanticsScrollDirection::Backward)
-    Some("up") => Some(@core.SemanticsScrollDirection::Up)
-    Some("down") => Some(@core.SemanticsScrollDirection::Down)
-    Some("left") => Some(@core.SemanticsScrollDirection::Left)
-    Some("right") => Some(@core.SemanticsScrollDirection::Right)
+    Some("forward") => Some(Forward)
+    Some("backward") => Some(Backward)
+    Some("up") => Some(Up)
+    Some("down") => Some(Down)
+    Some("left") => Some(Left)
+    Some("right") => Some(Right)
     _ => None
   }
 }
@@ -89,37 +89,32 @@ fn parse_semantics_action(value : Json?) -> @core.SemanticsAction? {
   guard wire_object(value) is Some(fields) else { return None }
   match wire_string(fields.get("kind")) {
     Some("activate") if wire_fields_are_exact(fields, ["kind"]) =>
-      Some(@core.SemanticsAction::Activate)
-    Some("focus") if wire_fields_are_exact(fields, ["kind"]) =>
-      Some(@core.SemanticsAction::Focus)
+      Some(Activate)
+    Some("focus") if wire_fields_are_exact(fields, ["kind"]) => Some(Focus)
     Some("set-text") =>
       if wire_fields_are_exact(fields, ["kind", "value"]) {
         match wire_string(fields.get("value"), allow_empty=true) {
-          Some(value) => Some(@core.SemanticsAction::SetText(value))
+          Some(value) => Some(SetText(value))
           None => None
         }
       } else {
         None
       }
-    Some("submit") if wire_fields_are_exact(fields, ["kind"]) =>
-      Some(@core.SemanticsAction::Submit)
+    Some("submit") if wire_fields_are_exact(fields, ["kind"]) => Some(Submit)
     Some("scroll") =>
       if wire_fields_are_exact(fields, ["kind", "direction"]) {
         match parse_semantics_scroll_direction(fields.get("direction")) {
-          Some(direction) => Some(@core.SemanticsAction::Scroll(direction))
+          Some(direction) => Some(Scroll(direction))
           None => None
         }
       } else {
         None
       }
-    Some("select") if wire_fields_are_exact(fields, ["kind"]) =>
-      Some(@core.SemanticsAction::Select)
-    Some("expand") if wire_fields_are_exact(fields, ["kind"]) =>
-      Some(@core.SemanticsAction::Expand)
+    Some("select") if wire_fields_are_exact(fields, ["kind"]) => Some(Select)
+    Some("expand") if wire_fields_are_exact(fields, ["kind"]) => Some(Expand)
     Some("collapse") if wire_fields_are_exact(fields, ["kind"]) =>
-      Some(@core.SemanticsAction::Collapse)
-    Some("dismiss") if wire_fields_are_exact(fields, ["kind"]) =>
-      Some(@core.SemanticsAction::Dismiss)
+      Some(Collapse)
+    Some("dismiss") if wire_fields_are_exact(fields, ["kind"]) => Some(Dismiss)
     _ => None
   }
 }
@@ -170,12 +165,7 @@ fn parse_platform_view_response(
   }
   guard wire_bool(event.get("flag")) is Some(flag) else { return None }
   Some(
-    EmbeddedHostResponse::PlatformView(
-      revision,
-      view_kind,
-      id,
-      @core.PlatformViewEvent::Named(name~, value~, detail~, flag~),
-    ),
+    PlatformView(revision, view_kind, id, Named(name~, value~, detail~, flag~)),
   )
 }
 
@@ -191,17 +181,12 @@ fn parse_platform_channel_response(
     return None
   }
   let response : @host.PlatformChannelResponse = match status {
-    "ok" => @host.PlatformChannelResponse::Ok(payload)
-    "error" => @host.PlatformChannelResponse::Error(payload)
-    "unavailable" => @host.PlatformChannelResponse::Unavailable(payload)
+    "ok" => Ok(payload)
+    "error" => Error(payload)
+    "unavailable" => Unavailable(payload)
     _ => return None
   }
-  Some(
-    EmbeddedHostResponse::PlatformChannel(
-      @host.HostServiceRequestId::new(request_id),
-      response,
-    ),
-  )
+  Some(PlatformChannel(@host.HostServiceRequestId::new(request_id), response))
 }
 
 ///|
@@ -295,17 +280,16 @@ pub fn EmbeddedRuntimeHostBridge::drain_update_envelope_json(
 ///|
 fn embedded_host_update_json(update : EmbeddedHostUpdate) -> Json {
   match update {
-    EmbeddedHostUpdate::Ime(request) =>
+    Ime(request) =>
       ({ "kind": "ime", "payload": ToJson::to_json(request) } : Json)
-    EmbeddedHostUpdate::Semantics(snapshot) =>
+    Semantics(snapshot) =>
       ({ "kind": "semantics", "payload": ToJson::to_json(snapshot) } : Json)
-    EmbeddedHostUpdate::Diagnostic(message) =>
-      ({ "kind": "diagnostic", "payload": message } : Json)
-    EmbeddedHostUpdate::PlatformViews(snapshot) =>
+    Diagnostic(message) => ({ "kind": "diagnostic", "payload": message } : Json)
+    PlatformViews(snapshot) =>
       ({ "kind": "platform-views", "payload": ToJson::to_json(snapshot) } : Json)
-    EmbeddedHostUpdate::PlatformChannel(pending) =>
+    PlatformChannel(pending) =>
       match pending.request {
-        HostServiceRequest::PlatformChannel(request) =>
+        PlatformChannel(request) =>
           (
             {
               "kind": "platform-channel",
@@ -314,9 +298,9 @@ fn embedded_host_update_json(update : EmbeddedHostUpdate) -> Json {
             } : Json)
         _ => ({ "kind": "unsupported", "id": pending.id.value } : Json)
       }
-    EmbeddedHostUpdate::Clipboard(pending) =>
+    Clipboard(pending) =>
       match pending.request {
-        HostServiceRequest::Clipboard(request) =>
+        Clipboard(request) =>
           (
             {
               "kind": "clipboard",
@@ -338,18 +322,17 @@ pub fn EmbeddedRuntimeHostBridge::flush_updates_to_shell(
   for update in updates {
     let payload = embedded_host_update_json(update)
     match update {
-      EmbeddedHostUpdate::Clipboard({ id, .. })
-      | EmbeddedHostUpdate::PlatformChannel({ id, .. }) => {
+      Clipboard({ id, .. }) | PlatformChannel({ id, .. }) => {
         ignore(transport.track_request(id=id.value))
         ignore(
           match payload {
-            Json::Object(fields) =>
+            Object(fields) =>
               match fields.get("payload") {
                 Some(payload) =>
                   ignore(
                     transport.enqueue_tracked_update(
                       kind=match update {
-                        EmbeddedHostUpdate::Clipboard(_) => "clipboard"
+                        Clipboard(_) => "clipboard"
                         _ => "platform-channel"
                       },
                       payload~,
@@ -364,9 +347,9 @@ pub fn EmbeddedRuntimeHostBridge::flush_updates_to_shell(
       }
       _ =>
         match payload {
-          Json::Object(fields) => {
+          Object(fields) => {
             let kind = match fields.get("kind") {
-              Some(Json::String(kind)) => kind
+              Some(String(kind)) => kind
               _ => "diagnostic"
             }
             match fields.get("payload") {
@@ -386,8 +369,7 @@ pub fn embedded_host_response_request_id(
   response : EmbeddedHostResponse,
 ) -> Int? {
   match response {
-    EmbeddedHostResponse::Clipboard(id, _)
-    | EmbeddedHostResponse::PlatformChannel(id, _) => Some(id.value)
+    Clipboard(id, _) | PlatformChannel(id, _) => Some(id.value)
     _ => None
   }
 }
@@ -397,11 +379,10 @@ fn embedded_runtime_clipboard_request_json(
   request : HostClipboardRequest,
 ) -> Json {
   match request {
-    HostClipboardRequest::ReadText => ({ "operation": "read-text" } : Json)
-    HostClipboardRequest::WriteText(text) =>
-      ({ "operation": "write-text", "text": text } : Json)
-    HostClipboardRequest::ReadImage => ({ "operation": "read-image" } : Json)
-    HostClipboardRequest::WriteImage(mime, bytes) =>
+    ReadText => ({ "operation": "read-text" } : Json)
+    WriteText(text) => ({ "operation": "write-text", "text": text } : Json)
+    ReadImage => ({ "operation": "read-image" } : Json)
+    WriteImage(mime, bytes) =>
       (
         { "operation": "write-image", "mime": mime, "bytes": bytes.to_json() } :
         Json)
@@ -418,35 +399,30 @@ pub fn EmbeddedRuntimeHostBridge::dispatch_response(
     return false
   }
   match response {
-    EmbeddedHostResponse::TextInput(event) => {
+    TextInput(event) => {
       let event = embedded_runtime_text_input_from_utf16(
         event,
         driver.focused_text_input(),
       )
-      ignore(driver.dispatch(Event::TextInput(event)))
+      ignore(driver.dispatch(TextInput(event)))
       true
     }
-    EmbeddedHostResponse::Command(intent) => {
+    Command(intent) => {
       ignore(
         driver.dispatch_command_with_services(intent, self.service_bridge()),
       )
       true
     }
-    EmbeddedHostResponse::Clipboard(id, result) =>
-      self.complete_service_response(id, result, driver)
-    EmbeddedHostResponse::Accessibility(request) =>
+    Clipboard(id, result) => self.complete_service_response(id, result, driver)
+    Accessibility(request) =>
       match driver.perform_semantics_action(request) {
         Ok(_) => true
         Err(_) => false
       }
-    EmbeddedHostResponse::PlatformView(revision, kind, id, event) =>
+    PlatformView(revision, kind, id, event) =>
       self.dispatch_platform_view_response(revision, kind, id, event, driver)
-    EmbeddedHostResponse::PlatformChannel(id, response) =>
-      self.complete_service_response(
-        id,
-        HostServiceResponse::PlatformChannel(response),
-        driver,
-      )
+    PlatformChannel(id, response) =>
+      self.complete_service_response(id, PlatformChannel(response), driver)
   }
 }
 

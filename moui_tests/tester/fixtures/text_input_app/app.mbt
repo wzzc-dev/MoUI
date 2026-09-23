@@ -33,7 +33,7 @@ pub fn view(model : TextInputSmokeModel) -> @core.View[TextInputSmokeMsg] {
     [
       text(
         "MoUI Text Input Smoke",
-        role=@views.TextRole::Title,
+        role=Title,
         theme~,
         width=420.0,
         height=34.0,
@@ -42,7 +42,7 @@ pub fn view(model : TextInputSmokeModel) -> @core.View[TextInputSmokeMsg] {
         model.value,
         on_input=value => ValueChanged(value),
         placeholder="Type here",
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width=420.0,
         height=42.0,

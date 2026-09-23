@@ -84,7 +84,7 @@ pub fn WebsiteRouteHost::new(
     _direction,
   ) => (),
 ) -> WebsiteRouteHost {
-  { route_source, push_route, scroll_to_key, apply_locale, update_metadata }
+  { route_source, push_route, scroll_to_key, apply_locale, update_metadata, }
 }
 
 ///|
@@ -168,7 +168,7 @@ fn website_parse_markdown_document(
   let mut title = path
   for block in blocks {
     match block.kind {
-      @moui_richtext.MarkdownBlockKind::Heading(_) =>
+      Heading(_) =>
         if block.text != "" {
           title = block.text
           break
@@ -176,7 +176,7 @@ fn website_parse_markdown_document(
       _ => ()
     }
   }
-  { title, source }
+  { title, source, }
 }
 
 ///|

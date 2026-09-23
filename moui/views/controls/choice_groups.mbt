@@ -1,6 +1,6 @@
 ///|
 pub fn choice_item(id : String, label : String) -> ChoiceItem {
-  { id, label }
+  { id, label, }
 }
 
 ///|
@@ -23,9 +23,7 @@ pub fn[Msg] radio_group(
       ).semantics_selected(selected=item.id == selected),
     )
   }
-  @layout.column(rows, spacing~, align=@style.CrossAlign::Start).semantics_role(
-    @core.SemanticsRole::Group,
-  )
+  @layout.column(rows, spacing~, align=Start).semantics_role(Group)
 }
 
 ///|
@@ -46,18 +44,10 @@ pub fn[Msg] checkbox_group(
         checked~,
         on_change=value => on_change(item.id, value),
         theme=resolved_theme,
-      ).semantics_checked(
-        checked=if checked {
-          @core.SemanticsCheckedState::Checked
-        } else {
-          @core.SemanticsCheckedState::Unchecked
-        },
-      ),
+      ).semantics_checked(checked=if checked { Checked } else { Unchecked }),
     )
   }
-  @layout.column(rows, spacing~, align=@style.CrossAlign::Start).semantics_role(
-    @core.SemanticsRole::Group,
-  )
+  @layout.column(rows, spacing~, align=Start).semantics_role(Group)
 }
 
 ///|

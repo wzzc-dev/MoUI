@@ -38,11 +38,11 @@ fn pdf_workbench_preview_canvas(
       fill_rect(ctx, page_rect, @graphics.Color::white())
       match raster_page {
         Some(raster) =>
-          draw_image(ctx, @graphics.ImageRun::{
+          draw_image(ctx, {
             source: raster.image_source,
             frame: page_rect,
             opacity: 1.0,
-            fit: @graphics.ImageFit::Contain,
+            fit: Contain,
           })
         None => {
           draw_text(
@@ -57,7 +57,7 @@ fn pdf_workbench_preview_canvas(
               ),
               font=@text.FontSpec::new(size=18.0),
               color=theme.palette.foreground,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ),
           )
           draw_text(
@@ -72,7 +72,7 @@ fn pdf_workbench_preview_canvas(
               ),
               font=@text.FontSpec::new(size=12.0),
               color=theme.palette.muted,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ),
           )
           draw_text(
@@ -87,7 +87,7 @@ fn pdf_workbench_preview_canvas(
               ),
               font=@text.FontSpec::new(size=14.0),
               color=theme.palette.foreground,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ),
           )
           draw_text(
@@ -102,7 +102,7 @@ fn pdf_workbench_preview_canvas(
               ),
               font=@text.FontSpec::new(size=12.0),
               color=theme.palette.muted,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ),
           )
         }
@@ -125,7 +125,7 @@ fn pdf_workbench_preview_canvas(
           ),
           font=@text.FontSpec::new(size=12.0),
           color=theme.palette.muted,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ),
       )
     },
@@ -221,7 +221,7 @@ fn pdf_workbench_push_page_edit_overlays(
               frame=stamp_rect,
               font=@text.FontSpec::new(size=12.0),
               color=theme.palette.primary,
-              align=@text.TextAlign::TextCenter,
+              align=TextCenter,
             ),
           )
           stamp_index = stamp_index + 1
@@ -255,7 +255,7 @@ fn pdf_workbench_push_page_edit_overlays(
               ),
               font=@text.FontSpec::new(size=11.0),
               color=theme.palette.primary,
-              align=@text.TextAlign::TextStart,
+              align=TextStart,
             ),
           )
           note_index = note_index + 1

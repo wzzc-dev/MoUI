@@ -27,7 +27,7 @@ fn platform_routes_demo(
       ),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -88,22 +88,22 @@ fn session_runtime_panel(
         ),
         status_badge(
           info.host,
-          tone=@views.BadgeTone::Accent,
+          tone=Accent,
           detail=info.path,
           theme~,
           width=if inner < 280.0 { inner } else { 180.0 },
         ),
         wrapped_text(
           note,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=inner,
           height=48.0,
-          align=@text.TextAlign::TextStart,
+          align=TextStart,
         ).foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     theme,
     width,

@@ -20,7 +20,7 @@ pub fn Pixmap::new(
   } else if pixels.length() < image_info.compute_byte_size(row_bytes) {
     None
   } else {
-    Some({ image_info, row_bytes, pixels })
+    Some({ image_info, row_bytes, pixels, })
   }
 }
 
@@ -108,7 +108,7 @@ pub fn Pixmap::sample(self : Pixmap, point : IPoint) -> Bytes? {
       if bytes_per_pixel <= 0 || offset + bytes_per_pixel > self.pixels.length() {
         None
       } else {
-        let sample : Array[Byte] = Array::new(capacity=bytes_per_pixel)
+        let sample : Array[Byte] = Array(capacity=bytes_per_pixel)
         for index in 0..<bytes_per_pixel {
           sample.push(self.pixels[offset + index])
         }

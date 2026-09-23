@@ -3,24 +3,21 @@
 
 ///|
 test "icon smoke" {
-  let view : @core.View[Unit] = @views.icon(@views.IconName::Check)
+  let view : @core.View[Unit] = @views.icon(Check)
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
 
 ///|
 test "icon sized smoke" {
-  let view : @core.View[Unit] = @views.icon(@views.IconName::Search, size=24.0)
+  let view : @core.View[Unit] = @views.icon(Search, size=24.0)
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
 
 ///|
 test "icon colored smoke" {
-  let view : @core.View[Unit] = @views.icon(
-    @views.IconName::Close,
-    color=@core.Color::black(),
-  )
+  let view : @core.View[Unit] = @views.icon(Close, color=@core.Color::black())
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
@@ -35,7 +32,7 @@ test "divider horizontal smoke" {
 
 ///|
 test "divider vertical smoke" {
-  let view : @core.View[Unit] = @views.divider(axis=@core.Axis::Vertical)
+  let view : @core.View[Unit] = @views.divider(axis=Vertical)
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

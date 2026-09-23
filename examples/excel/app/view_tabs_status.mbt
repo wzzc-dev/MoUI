@@ -7,18 +7,12 @@ fn build_sheet_tabs(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
       @views.container(
         @views.row(
           [
-            @views.text(
-              name,
-              role=@views.TextRole::Label,
-              theme~,
-              width=112.0,
-              height=28.0,
-            ),
+            @views.text(name, role=Label, theme~, width=112.0, height=28.0),
             if model.workbook.sheets.length() > 1 {
               @views.button(
                 "x",
                 on_click=ExcelMsg::DeleteSheet(i),
-                variant=@views.ButtonVariant::Ghost,
+                variant=Ghost,
                 theme~,
                 width=24.0,
                 height=24.0,
@@ -28,35 +22,31 @@ fn build_sheet_tabs(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
             },
           ],
           spacing=0.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         width=148.0,
         height=34.0,
-        variant=if active {
-          @views.ContainerVariant::Raised
-        } else {
-          @views.ContainerVariant::Base
-        },
+        variant=if active { Raised } else { Base },
         theme~,
         padding=3.0,
-      ).on_tap(ExcelMsg::SheetSelected(i)),
+      ).on_tap(SheetSelected(i)),
     )
   }
   tabs.push(
     @views.button(
       "+",
-      on_click=ExcelMsg::AddSheet,
-      variant=@views.ButtonVariant::Ghost,
+      on_click=AddSheet,
+      variant=Ghost,
       theme~,
       width=38.0,
       height=32.0,
     ),
   )
   @views.container(
-    @views.row(tabs, spacing=0.0, align=@views.CrossAlign::Center),
+    @views.row(tabs, spacing=0.0, align=Center),
     width=shell_width,
     height=40.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=3.0,
   )
@@ -85,16 +75,10 @@ fn build_status_bar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
     " grid | " +
     model.status
   @views.container(
-    @views.text(
-      text,
-      role=@views.TextRole::Caption,
-      theme~,
-      width=grid_width,
-      height=24.0,
-    ),
+    @views.text(text, role=Caption, theme~, width=grid_width, height=24.0),
     width=shell_width,
     height=32.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.xs,
   )
@@ -105,61 +89,29 @@ fn build_more_menu_overlay(theme : Theme) -> @moui.View[ExcelMsg] {
   @views.container(
     @views.column(
       [
-        context_menu_item("Cut", ContextMenuAction::Cut, theme),
-        context_menu_item("Copy", ContextMenuAction::Copy, theme),
-        context_menu_item("Paste", ContextMenuAction::Paste, theme),
+        context_menu_item("Cut", Cut, theme),
+        context_menu_item("Copy", Copy, theme),
+        context_menu_item("Paste", Paste, theme),
         @views.divider(theme~),
-        context_menu_item("Delete", ContextMenuAction::Delete, theme),
+        context_menu_item("Delete", Delete, theme),
         @views.divider(theme~),
-        context_menu_item(
-          "Insert Row Above",
-          ContextMenuAction::InsertRowAbove,
-          theme,
-        ),
-        context_menu_item(
-          "Insert Row Below",
-          ContextMenuAction::InsertRowBelow,
-          theme,
-        ),
-        context_menu_item("Delete Row", ContextMenuAction::DeleteRow, theme),
-        context_menu_item(
-          "Insert Column Left",
-          ContextMenuAction::InsertColumnLeft,
-          theme,
-        ),
-        context_menu_item(
-          "Insert Column Right",
-          ContextMenuAction::InsertColumnRight,
-          theme,
-        ),
-        context_menu_item(
-          "Delete Column",
-          ContextMenuAction::DeleteColumn,
-          theme,
-        ),
+        context_menu_item("Insert Row Above", InsertRowAbove, theme),
+        context_menu_item("Insert Row Below", InsertRowBelow, theme),
+        context_menu_item("Delete Row", DeleteRow, theme),
+        context_menu_item("Insert Column Left", InsertColumnLeft, theme),
+        context_menu_item("Insert Column Right", InsertColumnRight, theme),
+        context_menu_item("Delete Column", DeleteColumn, theme),
         @views.divider(theme~),
-        context_menu_item(
-          "Sort A to Z",
-          ContextMenuAction::SortAscending,
-          theme,
-        ),
-        context_menu_item(
-          "Sort Z to A",
-          ContextMenuAction::SortDescending,
-          theme,
-        ),
+        context_menu_item("Sort A to Z", SortAscending, theme),
+        context_menu_item("Sort Z to A", SortDescending, theme),
         @views.divider(theme~),
-        context_menu_item(
-          "Clear Contents",
-          ContextMenuAction::ClearContents,
-          theme,
-        ),
+        context_menu_item("Clear Contents", ClearContents, theme),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width=190.0,
-    variant=@views.ContainerVariant::Overlay,
+    variant=Overlay,
     theme~,
     padding=4.0,
   )
@@ -173,8 +125,8 @@ fn context_menu_item(
 ) -> @moui.View[ExcelMsg] {
   @views.button(
     label,
-    on_click=ExcelMsg::ContextMenuAction(action),
-    variant=@views.ButtonVariant::Tonal,
+    on_click=ContextMenuAction(action),
+    variant=Tonal,
     theme~,
     width=182.0,
     height=34.0,

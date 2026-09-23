@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] toast(
   message : String,
-  tone? : @style.FeedbackTone = @style.FeedbackTone::Neutral,
+  tone? : @style.FeedbackTone = Neutral,
   action? : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
@@ -18,7 +18,7 @@ pub fn[Msg] toast(
     width~,
     title="",
     height=52.0,
-  ).semantics_role(@core.SemanticsRole::Group)
+  ).semantics_role(Group)
 }
 
 ///|
@@ -40,8 +40,8 @@ pub fn[Msg] toast_stack(
         toast_stack_row(item, theme=resolved_theme, style~, width~, spacing~),
       )
     }
-    @layout.column(rows, spacing~, align=@style.CrossAlign::Stretch)
-    .semantics_role(@core.SemanticsRole::Group)
+    @layout.column(rows, spacing~, align=Stretch)
+    .semantics_role(Group)
     .accessibility_label("Toast stack")
   }
 }
@@ -58,7 +58,7 @@ pub fn[Msg] snackbar(
   let style = resolve_feedback_style(style, resolved_theme)
   feedback_panel(
     message,
-    tone=@style.FeedbackTone::Neutral,
+    tone=Neutral,
     action~,
     theme=resolved_theme,
     style~,
@@ -96,7 +96,7 @@ fn[Msg] toast_stack_row(
             @button.button(
               "Dismiss",
               on_click=message,
-              variant=@style.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=dismiss_width,
               height=36.0,
@@ -105,7 +105,7 @@ fn[Msg] toast_stack_row(
           ),
         ],
         spacing~,
-        align=@style.CrossAlign::Center,
+        align=Center,
       ).frame(width~, height=52.0)
     }
     None =>

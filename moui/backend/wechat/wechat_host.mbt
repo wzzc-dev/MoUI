@@ -25,7 +25,7 @@ pub fn canvas_host_constraints() -> CanvasHostConstraints {
 ///|
 pub fn wechat_host_info() -> @host.HostAppInfo {
   @host.HostAppInfo::new(
-    backend=@host.HostBackendKind::Wechat,
+    backend=Wechat,
     description="window/wechat canvas + wasm-gc WeChat Mini Program Skyline host",
   )
 }

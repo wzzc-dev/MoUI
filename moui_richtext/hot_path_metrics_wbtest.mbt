@@ -218,7 +218,7 @@ test "hot path: wheel and rebuild walk zero blocks once geometry exists" {
   for step in 0..<10 {
     let _ = session.estimated_content_height(base~, content_width=720.0)
     let _ = session.rich_text_window(
-      { caret: 0, selection: None },
+      { caret: 0, selection: None, },
       scroll_y=step.to_double() * 100.0,
       viewport_height=900.0,
       overscan=320.0,
@@ -463,7 +463,7 @@ test "hot path: scrolling through freshly measured blocks stays walk-free" {
       )
     }
     let _ = session.rich_text_window(
-      { caret: 0, selection: None },
+      { caret: 0, selection: None, },
       scroll_y=steps.to_double() * 200.0,
       viewport_height=800.0,
       overscan=320.0,

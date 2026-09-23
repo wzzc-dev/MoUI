@@ -65,7 +65,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ dry_run, no_token, mode, payload, payload_file, help })
+  Ok({ dry_run, no_token, mode, payload, payload_file, help, })
 }
 
 ///|

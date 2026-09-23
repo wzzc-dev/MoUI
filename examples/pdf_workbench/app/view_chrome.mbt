@@ -9,21 +9,21 @@ fn pdf_workbench_toolbar(
         [
           @views.text(
             "PDF Workbench",
-            role=@views.TextRole::Title,
+            role=Title,
             theme~,
             width=220.0,
             height=32.0,
           ),
           @views.text(
             "Native PDF reader with light editing",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=300.0,
             height=22.0,
           ).foreground(theme.palette.muted),
         ],
         spacing=0.0,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       @views.spacer(min_length=16.0, weight=1.0),
       @views.button(
@@ -36,7 +36,7 @@ fn pdf_workbench_toolbar(
       @views.button(
         "Save",
         on_click=SaveRequested,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=78.0,
         height=36.0,
@@ -44,7 +44,7 @@ fn pdf_workbench_toolbar(
       @views.button(
         "Save As",
         on_click=SaveAsRequested,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=92.0,
         height=36.0,
@@ -53,14 +53,14 @@ fn pdf_workbench_toolbar(
         model.query,
         on_input=query => SearchChanged(query),
         placeholder="Search extracted text",
-        variant=@views.TextFieldVariant::Outline,
+        variant=Outline,
         theme~,
         width=156.0,
         height=36.0,
       ),
       @views.text(
         model.search_status_label(),
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=92.0,
         height=24.0,
@@ -68,7 +68,7 @@ fn pdf_workbench_toolbar(
       @views.button(
         "Prev Hit",
         on_click=SearchPrevious,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=78.0,
         height=36.0,
@@ -76,14 +76,14 @@ fn pdf_workbench_toolbar(
       @views.button(
         "Next Hit",
         on_click=SearchNext,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=78.0,
         height=36.0,
       ),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -105,7 +105,7 @@ fn pdf_workbench_failure_banner(
           @views.banner(
             "PDF Workbench needs attention",
             reason,
-            tone=@views.FeedbackTone::Danger,
+            tone=Danger,
             theme~,
             width=(metrics.inner_width - 112.0 - theme.spacing_scale.sm).max(
               360.0,
@@ -114,14 +114,14 @@ fn pdf_workbench_failure_banner(
           @views.button(
             "Dismiss",
             on_click=ClearFailure,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=88.0,
             height=36.0,
           ),
         ],
         spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Center,
+        align=Center,
       )
     _ => @views.spacer(min_length=0.0)
   }

@@ -209,7 +209,7 @@ test "test_parse_devices_args_help_flag" {
 
 ///|
 test "test_run_devices_help_emits_usage" {
-  let parsed : ParsedDevices = { help: true, json: false, platform: None }
+  let parsed : ParsedDevices = { help: true, json: false, platform: None, }
   let outcome = run_devices(parsed, detect_host_platform())
   assert_true(outcome.exit_code == 0)
   assert_true(outcome.stdout.contains("Usage: moui devices"))
@@ -219,7 +219,7 @@ test "test_run_devices_help_emits_usage" {
 test "test_run_devices_json_empty_when_no_tooling" {
   // On a typical sandbox without adb/xcrun/hdc installed, list_all_devices
   // returns an empty array. The JSON output must still be valid.
-  let parsed : ParsedDevices = { help: false, json: true, platform: None }
+  let parsed : ParsedDevices = { help: false, json: true, platform: None, }
   let outcome = run_devices(parsed, detect_host_platform())
   assert_true(outcome.exit_code == 0)
   // Output is JSON; either an empty array or a non-empty array depending on
@@ -232,7 +232,7 @@ test "test_run_devices_text_empty_emits_no_devices_message" {
   // Force an empty list by filtering for an unavailable platform-specific
   // tool. We use a sandbox where adb may or may not be installed; assert that
   // the message is either "(no devices found)" or a tab-separated list.
-  let parsed : ParsedDevices = { help: false, json: false, platform: None }
+  let parsed : ParsedDevices = { help: false, json: false, platform: None, }
   let outcome = run_devices(parsed, detect_host_platform())
   assert_true(outcome.exit_code == 0)
   assert_true(

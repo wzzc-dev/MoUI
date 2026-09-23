@@ -35,7 +35,7 @@ pub fn SunRasterRenderer::draw_platform_view_pixels(
         dst_width,
         dst_height,
         @sun_graphics.Paint::new(),
-        @sun_graphics.ImageQuality::Balanced,
+        Balanced,
       )
     Err(_) => ()
   }

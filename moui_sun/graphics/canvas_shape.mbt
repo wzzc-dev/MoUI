@@ -8,7 +8,7 @@ pub fn Canvas::fill_rect(
   h : Double,
   paint : Paint,
 ) -> Unit {
-  guard paint.style is PaintStyle::Fill else { return }
+  guard paint.style is Fill else { return }
   guard w > 0.0 && h > 0.0 else { return }
 
   if self.transform != Transform::identity() ||
@@ -280,7 +280,7 @@ pub fn Canvas::stroke_ellipse(
 ///|
 /// Fill a path with the given paint
 pub fn Canvas::fill_path(self : Canvas, path : Path, paint : Paint) -> Unit {
-  guard paint.style is PaintStyle::Fill && !path.is_empty() else { return }
+  guard paint.style is Fill && !path.is_empty() else { return }
   let edges = path_to_edges(path, self.transform)
   guard edges.length() > 0 else { return }
 
@@ -370,7 +370,7 @@ pub fn Canvas::stroke_rounded_rect_corners(
 ///|
 /// Stroke a path with the given paint
 pub fn Canvas::stroke_path(self : Canvas, path : Path, paint : Paint) -> Unit {
-  guard paint.style is PaintStyle::Stroke && !path.is_empty() else { return }
+  guard paint.style is Stroke && !path.is_empty() else { return }
   guard paint.stroke_width > 0.0 else { return }
   match self.transform.inverse() {
     Some(device_to_local) =>
@@ -547,12 +547,12 @@ fn stroke_bounds_outset(
   miter_limit : Double,
 ) -> Double {
   let cap_extension = match stroke_cap {
-    StrokeCap::Butt => 0.0
-    StrokeCap::Round | StrokeCap::Square => half_width
+    Butt => 0.0
+    Round | Square => half_width
   }
   let join_extension = match stroke_join {
-    StrokeJoin::Miter => half_width * (miter_limit - 1.0).max(0.0)
-    StrokeJoin::Round | StrokeJoin::Bevel => 0.0
+    Miter => half_width * (miter_limit - 1.0).max(0.0)
+    Round | Bevel => 0.0
   }
   half_width + cap_extension.max(join_extension)
 }

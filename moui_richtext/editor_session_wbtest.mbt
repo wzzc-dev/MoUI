@@ -66,7 +66,7 @@ test "markdown document layout cache reports visible variable height blocks" {
     "# A\n\nParagraph\n\n```\nline one\nline two\n```\n\nTail",
   )
   let font = @core.FontSpec::new(size=16.0)
-  let document = session.rich_text({ caret: 0, selection: None }, base=font)
+  let document = session.rich_text({ caret: 0, selection: None, }, base=font)
   let layout = MarkdownDocumentLayoutCache::new(
     session,
     document,
@@ -94,7 +94,7 @@ test "markdown document rich text window renders only visible blocks" {
   let session = MarkdownDocumentSession::new(parts.join("\n"))
   let font = @core.FontSpec::new(size=16.0)
   let window = session.rich_text_window(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     scroll_y=0.0,
     viewport_height=180.0,
@@ -127,7 +127,7 @@ test "markdown document rich text window starts near scrolled block" {
     base=font,
   )
   let window = session.rich_text_window(
-    { caret: target_block.source_range.start, selection: None },
+    { caret: target_block.source_range.start, selection: None, },
     base=font,
     scroll_y~,
     viewport_height=220.0,
@@ -343,7 +343,7 @@ test "markdown document session measures responsive html galleries by width" {
   )
   assert_true(wide_height > narrow_height)
   let window = session.rich_text_window(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     scroll_y=0.0,
     viewport_height=300.0,
@@ -420,7 +420,7 @@ test "markdown document session snapshot produces consistent metadata" {
 test "markdown document session rich_text produces a document with blocks" {
   let session = MarkdownDocumentSession::new("# Title\n\n**bold** text")
   let font = @core.FontSpec::new(size=16.0)
-  let document = session.rich_text({ caret: 0, selection: None }, base=font)
+  let document = session.rich_text({ caret: 0, selection: None, }, base=font)
   assert_true(document.blocks.length() >= 1)
 }
 
@@ -429,7 +429,7 @@ test "markdown document session rich_text source_mode produces monospace runs" {
   let session = MarkdownDocumentSession::new("# Title\n\nBody")
   let font = @core.FontSpec::new(size=16.0)
   let document = session.rich_text(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     source_mode=true,
   )
@@ -467,7 +467,7 @@ test "markdown document session source_mode window slices visible source" {
     source_mode=true,
   )
   let window = session.rich_text_window(
-    { caret: 0, selection: None },
+    { caret: 0, selection: None, },
     base=font,
     source_mode=true,
     scroll_y=source_height * 0.65,

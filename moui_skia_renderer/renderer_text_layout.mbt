@@ -31,7 +31,7 @@ priv struct SkiaResolvedTextLayout {
 fn SkiaResolvedTextLayout::copy_layout(
   self : SkiaResolvedTextLayout,
 ) -> SkiaResolvedTextLayout {
-  { segments: self.segments.copy(), width: self.width, metrics: self.metrics }
+  { segments: self.segments.copy(), width: self.width, metrics: self.metrics, }
 }
 
 ///|
@@ -67,11 +67,9 @@ fn skia_text_placement_for_width(
   metrics : SkiaTextMetrics,
 ) -> SkiaTextPlacement {
   let x = match run.align {
-    @core.TextAlign::TextStart => run.frame.origin.x
-    @core.TextAlign::TextCenter =>
-      run.frame.origin.x + (run.frame.size.width - text_width) / 2.0
-    @core.TextAlign::TextEnd =>
-      run.frame.origin.x + run.frame.size.width - text_width
+    TextStart => run.frame.origin.x
+    TextCenter => run.frame.origin.x + (run.frame.size.width - text_width) / 2.0
+    TextEnd => run.frame.origin.x + run.frame.size.width - text_width
   }
   let y = skia_text_baseline_y(run.frame, metrics)
   {
@@ -134,7 +132,7 @@ fn skia_resolved_text_layout_for_resolution(
     match skia_draw_text_payload_for_resolution(font_spec, text, resolution) {
       Some((font, glyph_run)) =>
         Some({
-          segments: [{ text, font, glyph_run, x_offset: 0.0 }],
+          segments: [{ text, font, glyph_run, x_offset: 0.0, }],
           width: glyph_run.width,
           metrics: skia_text_metrics(
             font,
@@ -174,7 +172,7 @@ fn skia_resolved_text_segments(
         )
         baseline = baseline.max(metrics.baseline)
         height = height.max(metrics.height)
-        segments.push({ text: segment_text, font, glyph_run, x_offset })
+        segments.push({ text: segment_text, font, glyph_run, x_offset, })
         x_offset = x_offset + glyph_run.width
       }
       None => return None
@@ -186,7 +184,7 @@ fn skia_resolved_text_segments(
     Some({
       segments,
       width: x_offset,
-      metrics: { baseline, height: height.max(baseline) },
+      metrics: { baseline, height: height.max(baseline), },
     })
   }
 }

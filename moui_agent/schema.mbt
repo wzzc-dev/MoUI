@@ -119,11 +119,10 @@ fn agent_semantics_issue(
   issue : @runtime.SemanticsIssue,
 ) -> AgentSemanticsIssue {
   match issue {
-    @runtime.SemanticsIssue::DuplicateSemanticId(id, nodes) =>
-      DuplicateSemanticId(id, nodes.copy())
-    @runtime.SemanticsIssue::MissingRelationTarget(source, kind, id) =>
+    DuplicateSemanticId(id, nodes) => DuplicateSemanticId(id, nodes.copy())
+    MissingRelationTarget(source, kind, id) =>
       MissingRelationTarget(source, kind, id)
-    @runtime.SemanticsIssue::AmbiguousRelationTarget(source, kind, id, nodes) =>
+    AmbiguousRelationTarget(source, kind, id, nodes) =>
       AmbiguousRelationTarget(source, kind, id, nodes.copy())
   }
 }
@@ -131,7 +130,7 @@ fn agent_semantics_issue(
 ///|
 fn agent_semantics_read(read : @runtime.SemanticsRead) -> AgentSemanticsRead {
   match read {
-    @runtime.SemanticsRead::Full(snapshot) =>
+    Full(snapshot) =>
       Full({
         generation: snapshot.generation(),
         root: snapshot.root(),
@@ -139,7 +138,7 @@ fn agent_semantics_read(read : @runtime.SemanticsRead) -> AgentSemanticsRead {
         nodes: snapshot.nodes(),
         issues: snapshot.issues().map(agent_semantics_issue),
       })
-    @runtime.SemanticsRead::Delta(delta) =>
+    Delta(delta) =>
       Delta({
         from: delta.from(),
         to: delta.to(),
@@ -158,7 +157,7 @@ fn agent_semantics_read(read : @runtime.SemanticsRead) -> AgentSemanticsRead {
           text: announcement.text,
         }),
       })
-    @runtime.SemanticsRead::Unchanged(generation) => Unchanged(generation)
+    Unchanged(generation) => Unchanged(generation)
   }
 }
 
@@ -170,9 +169,8 @@ fn runtime_action_request(
     target: request.target,
     action: request.action,
     precondition: match request.precondition {
-      Exact(generation) =>
-        @runtime.SemanticsGenerationPrecondition::Exact(generation)
-      Latest => @runtime.SemanticsGenerationPrecondition::Latest
+      Exact(generation) => Exact(generation)
+      Latest => Latest
     },
   }
 }
@@ -193,21 +191,14 @@ fn agent_action_error(
   error : @runtime.SemanticsActionDispatchError,
 ) -> AgentActionError {
   match error {
-    @runtime.SemanticsActionDispatchError::RuntimeClosed => HostClosed
-    @runtime.SemanticsActionDispatchError::StaleGeneration(expected, current) =>
-      StaleGeneration(expected, current)
-    @runtime.SemanticsActionDispatchError::TargetNotFound(target) =>
-      TargetNotFound(target)
-    @runtime.SemanticsActionDispatchError::TargetAmbiguous(id) =>
-      TargetAmbiguous(id)
-    @runtime.SemanticsActionDispatchError::TargetDisabled(target) =>
-      TargetDisabled(target)
-    @runtime.SemanticsActionDispatchError::ActionUnavailable(target, kind) =>
-      ActionUnavailable(target, kind)
-    @runtime.SemanticsActionDispatchError::HandlerRejected(target, kind) =>
-      HandlerRejected(target, kind)
-    @runtime.SemanticsActionDispatchError::ReentrantDispatch =>
-      ReentrantDispatch
+    RuntimeClosed => HostClosed
+    StaleGeneration(expected, current) => StaleGeneration(expected, current)
+    TargetNotFound(target) => TargetNotFound(target)
+    TargetAmbiguous(id) => TargetAmbiguous(id)
+    TargetDisabled(target) => TargetDisabled(target)
+    ActionUnavailable(target, kind) => ActionUnavailable(target, kind)
+    HandlerRejected(target, kind) => HandlerRejected(target, kind)
+    ReentrantDispatch => ReentrantDispatch
   }
 }
 

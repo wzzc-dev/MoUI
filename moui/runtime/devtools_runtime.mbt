@@ -3,7 +3,7 @@ fn AppRuntime::inspector_snapshot_from_state(
   self : AppRuntime,
 ) -> InspectorSnapshot {
   let view_tree = self.state.view_tree_inspector_snapshot()
-  InspectorSnapshot::{
+  {
     runtime: runtime_inspector_snapshot_from_state(
       self.state,
       self.program_runtime_snapshot(),
@@ -17,7 +17,7 @@ fn AppRuntime::inspector_snapshot_from_state(
 
 ///|
 fn program_runtime_snapshot_empty() -> ProgramRuntimeSnapshot {
-  ProgramRuntimeSnapshot::{
+  {
     dispatched_count: 0,
     update_count: 0,
     ignored_program_dispatch_count: 0,
@@ -111,7 +111,7 @@ fn runtime_inspector_snapshot_from_state(
     damage_full_reason: state.stats.last_damage_region.full_reason(),
   }
   let draw_commands = state.cached_draw_commands()
-  RuntimeInspectorSnapshot::{
+  {
     size: state.size,
     dirty_count,
     dirty_element_ids,
@@ -187,7 +187,7 @@ fn layout_inspector_snapshot_from_state(
   state : RuntimeState,
 ) -> LayoutInspectorSnapshot {
   let layout = state.cached_layout()
-  LayoutInspectorSnapshot::{
+  {
     root_frame: layout.frame,
     node_count: layout_node_count(layout),
     leaf_count: layout_leaf_count(layout),
@@ -245,7 +245,7 @@ fn semantics_inspector_snapshot_from_state(
     if node.state.selected {
       selected_count = selected_count + 1
     }
-    if node.state.checked == Some(SemanticsCheckedState::Checked) {
+    if node.state.checked == Some(Checked) {
       checked_count = checked_count + 1
     }
     if node.state.expanded {
@@ -265,7 +265,7 @@ fn semantics_inspector_snapshot_from_state(
     Some(root) => semantics_depth_from(root, nodes_by_id)
     None => 0
   }
-  SemanticsInspectorSnapshot::{
+  {
     root_role,
     node_count: nodes.length(),
     focusable_count,
@@ -322,7 +322,7 @@ fn layout_bounds_entries(
   depth~ : Int,
 ) -> Array[LayoutBoundsInspectorEntry] {
   let entries : Array[LayoutBoundsInspectorEntry] = [
-    LayoutBoundsInspectorEntry::{
+    {
       element_id: node.element_id.value(),
       frame: node.frame,
       constraints: element.layout_cache.cached_measure_constraints.unwrap_or(
@@ -386,7 +386,7 @@ fn semantics_inspector_entries(
       action_count: node.actions.length(),
       focusable: node.focus_order is Some(_),
       selected: node.state.selected,
-      checked: node.state.checked == Some(SemanticsCheckedState::Checked),
+      checked: node.state.checked == Some(Checked),
       expanded: node.state.expanded,
       disabled: node.state.disabled,
     },
@@ -453,7 +453,7 @@ fn render_inspector_from_commands(
       _ => ()
     }
   }
-  RenderInspectorSnapshot::{
+  {
     command_count: commands.length(),
     text_count,
     image_count,

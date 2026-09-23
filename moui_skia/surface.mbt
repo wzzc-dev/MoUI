@@ -221,7 +221,7 @@ pub fn SurfaceDescriptor::with_sample_count(
   self : SurfaceDescriptor,
   sample_count : Int,
 ) -> SurfaceDescriptor {
-  { ..self, sample_count: Int::max(1, sample_count) }
+  { ..self, sample_count: Int::max(1, sample_count), }
 }
 
 ///|
@@ -229,7 +229,7 @@ pub fn SurfaceDescriptor::with_stencil_bits(
   self : SurfaceDescriptor,
   stencil_bits : Int,
 ) -> SurfaceDescriptor {
-  { ..self, stencil_bits: Int::max(0, stencil_bits) }
+  { ..self, stencil_bits: Int::max(0, stencil_bits), }
 }
 
 ///|

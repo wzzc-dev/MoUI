@@ -17,7 +17,7 @@ test "blank separators measure as painted collapsed height" {
   }
   let source = parts.join("\n\n")
   let session = MarkdownDocumentSession::new(source)
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let scroll_y = 500.0
   let viewport_height = 300.0
   let window = markdown_session_visible_window(

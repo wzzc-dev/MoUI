@@ -14,14 +14,14 @@ pub fn[Msg] description_list(
         [
           @text.text(
             item.term,
-            role=@style.TextRole::Caption,
+            role=Caption,
             theme=resolved_theme,
             width=term_width,
             height=row_height,
           ),
           @text.text(
             item.detail,
-            role=@style.TextRole::Body,
+            role=Body,
             theme=resolved_theme,
             width=@common.view_max_double(
               80.0,
@@ -31,15 +31,13 @@ pub fn[Msg] description_list(
           ),
         ],
         spacing=resolved_theme.spacing_scale.sm,
-        align=@style.CrossAlign::Center,
+        align=Center,
       ),
     )
   }
-  @layout.column(
-    rows,
-    spacing=resolved_theme.spacing_scale.xs,
-    align=@style.CrossAlign::Start,
-  ).semantics_role(@core.SemanticsRole::Group)
+  @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start).semantics_role(
+    Group,
+  )
 }
 
 ///|
@@ -61,7 +59,7 @@ pub fn[Msg] detail_panel(
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
-      role=@style.TextRole::Control,
+      role=Control,
       theme=resolved_theme,
       width=inner_width,
       height=26.0,
@@ -71,7 +69,7 @@ pub fn[Msg] detail_panel(
     rows.push(
       @text.text(
         subtitle,
-        role=@style.TextRole::Caption,
+        role=Caption,
         theme=resolved_theme,
         width=inner_width,
         height=22.0,
@@ -85,7 +83,7 @@ pub fn[Msg] detail_panel(
         rows.push(
           @text.text(
             "No detail selected",
-            role=@style.TextRole::Caption,
+            role=Caption,
             theme=resolved_theme,
             width=inner_width,
             height=28.0,
@@ -109,7 +107,7 @@ pub fn[Msg] detail_panel(
         @button.button(
           action.label,
           on_click=action.message,
-          variant=@style.ButtonVariant::Tonal,
+          variant=Tonal,
           theme=resolved_theme,
           width=@common.view_min_double(148.0, inner_width),
           height=36.0,
@@ -118,17 +116,13 @@ pub fn[Msg] detail_panel(
     None => ()
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.xs,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start),
     width~,
     height~,
-    variant=@style.ContainerVariant::Raised,
+    variant=Raised,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(Group)
   .accessibility_label(title)
 }

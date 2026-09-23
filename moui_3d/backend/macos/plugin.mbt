@@ -12,10 +12,10 @@ pub fn plugin(
         binding=@moui_3d.ThreeDViewportBinding::new(),
       )
   }
-  let dispatcher : @ref.Ref[@host.PlatformViewEventCallback?] = @ref.Ref(None)
-  let active_window : @ref.Ref[UInt64?] = @ref.Ref(None)
-  let active_id : @ref.Ref[String?] = @ref.Ref(None)
-  let last_status : @ref.Ref[@moui_3d.ViewportStatus?] = @ref.Ref(None)
+  let dispatcher : @ref.Ref[@host.PlatformViewEventCallback?] = Ref(None)
+  let active_window : @ref.Ref[UInt64?] = Ref(None)
+  let active_id : @ref.Ref[String?] = Ref(None)
+  let last_status : @ref.Ref[@moui_3d.ViewportStatus?] = Ref(None)
   let notify_status = () => {
     match (dispatcher.val, active_window.val, active_id.val) {
       (Some(callback), Some(window), Some(id)) => {
@@ -25,12 +25,7 @@ pub fn plugin(
           callback(
             window,
             id,
-            @core.PlatformViewEvent::Named(
-              name="renderer_status",
-              value="",
-              detail="",
-              flag=false,
-            ),
+            Named(name="renderer_status", value="", detail="", flag=false),
           )
         }
       }

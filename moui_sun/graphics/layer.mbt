@@ -32,7 +32,7 @@ pub fn Layer::new(width : Int, height : Int) -> Layer {
     y: 0,
     visible: true,
     opacity: 1.0,
-    blend_mode: BlendMode::SourceOver,
+    blend_mode: SourceOver,
     shader: None,
     filter: None,
   }

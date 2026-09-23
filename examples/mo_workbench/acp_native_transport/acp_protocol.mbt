@@ -9,7 +9,7 @@ fn acp_json_null() -> Json {
 ///|
 fn acp_json_string_field(fields : Map[String, Json], key : String) -> String? {
   match fields.get(key) {
-    Some(Json::String(value)) => Some(value)
+    Some(String(value)) => Some(value)
     _ => None
   }
 }
@@ -17,8 +17,8 @@ fn acp_json_string_field(fields : Map[String, Json], key : String) -> String? {
 ///|
 fn acp_json_bool_field(fields : Map[String, Json], key : String) -> Bool? {
   match fields.get(key) {
-    Some(Json::True) => Some(true)
-    Some(Json::False) => Some(false)
+    Some(True) => Some(true)
+    Some(False) => Some(false)
     _ => None
   }
 }
@@ -173,7 +173,7 @@ fn acp_set_config_option_request_line(
   value : @app.AgentConfigValue,
 ) -> String {
   let payload : Json = match value {
-    @app.AgentConfigValue::Boolean(v) =>
+    Boolean(v) =>
       (
         {
           "sessionId": session_id,
@@ -181,7 +181,7 @@ fn acp_set_config_option_request_line(
           "type": "boolean",
           "value": v,
         } : Json)
-    @app.AgentConfigValue::ValueId(v) =>
+    ValueId(v) =>
       ({ "sessionId": session_id, "configId": config_id, "value": v } : Json)
   }
   acp_rpc_request(id, "session/set_config_option", payload).stringify()
@@ -193,10 +193,9 @@ fn acp_permission_response_line(
   outcome : @app.PermissionOutcome,
 ) -> String {
   let outcome_json : Json = match outcome {
-    @app.PermissionOutcome::Selected(option_id) =>
+    Selected(option_id) =>
       ({ "outcome": { "outcome": "selected", "optionId": option_id } } : Json)
-    @app.PermissionOutcome::Cancelled =>
-      ({ "outcome": { "outcome": "cancelled" } } : Json)
+    Cancelled => ({ "outcome": { "outcome": "cancelled" } } : Json)
   }
   acp_rpc_result(id, outcome_json).stringify()
 }
@@ -212,8 +211,8 @@ fn acp_unsupported_method_response_line(
 ///|
 fn acp_json_id_to_key(id : Json) -> String {
   match id {
-    Json::String(value) => value
-    Json::Number(value, ..) => value.to_string()
+    String(value) => value
+    Number(value, ..) => value.to_string()
     _ => ""
   }
 }
@@ -244,9 +243,9 @@ fn acp_response_result(fields : Map[String, Json]) -> Json? {
 ///|
 fn acp_response_error_message(fields : Map[String, Json]) -> String? {
   match fields.get("error") {
-    Some(Json::Object(error)) =>
+    Some(Object(error)) =>
       match error.get("message") {
-        Some(Json::String(message)) => Some(message)
+        Some(String(message)) => Some(message)
         _ => Some("ACP request failed")
       }
     _ => None
@@ -256,7 +255,7 @@ fn acp_response_error_message(fields : Map[String, Json]) -> String? {
 ///|
 fn acp_content_text(value : Json) -> String {
   match value {
-    Json::Object(fields) =>
+    Object(fields) =>
       match acp_json_string_field(fields, "type") {
         Some("text") => acp_json_string_field(fields, "text").unwrap_or("")
         _ => value.stringify()
@@ -270,7 +269,7 @@ fn acp_tool_content_text(values : Array[Json]) -> String {
   let parts : Array[String] = []
   for value in values {
     match value {
-      Json::Object(fields) =>
+      Object(fields) =>
         match fields.get("content") {
           Some(content) => parts.push(acp_content_text(content))
           None => parts.push(value.stringify())
@@ -283,14 +282,14 @@ fn acp_tool_content_text(values : Array[Json]) -> String {
 
 ///|
 fn acp_session_update_to_events(update : Json) -> Array[@app.AgentEvent] {
-  guard update is Json::Object(fields) else { return [] }
+  guard update is Object(fields) else { return [] }
   guard acp_json_string_field(fields, "sessionUpdate") is Some(kind) else {
     return []
   }
   match kind {
     "user_message_chunk" =>
       [
-        @app.AgentEvent::UserMessageChunk(
+        UserMessageChunk(
           acp_json_string_field(fields, "messageId"),
           match fields.get("content") {
             Some(content) => acp_content_text(content)
@@ -300,7 +299,7 @@ fn acp_session_update_to_events(update : Json) -> Array[@app.AgentEvent] {
       ]
     "agent_message_chunk" =>
       [
-        @app.AgentEvent::AssistantMessageChunk(
+        AssistantMessageChunk(
           acp_json_string_field(fields, "messageId"),
           match fields.get("content") {
             Some(content) => acp_content_text(content)
@@ -310,7 +309,7 @@ fn acp_session_update_to_events(update : Json) -> Array[@app.AgentEvent] {
       ]
     "agent_thought_chunk" =>
       [
-        @app.AgentEvent::ThoughtMessageChunk(
+        ThoughtMessageChunk(
           acp_json_string_field(fields, "messageId"),
           match fields.get("content") {
             Some(content) => acp_content_text(content)
@@ -320,10 +319,10 @@ fn acp_session_update_to_events(update : Json) -> Array[@app.AgentEvent] {
       ]
     "tool_call" =>
       [
-        @app.AgentEvent::ToolResultAdded(
+        ToolResultAdded(
           acp_json_string_field(fields, "title").unwrap_or("tool"),
           match fields.get("content") {
-            Some(Json::Array(values)) => acp_tool_content_text(values)
+            Some(Array(values)) => acp_tool_content_text(values)
             _ => acp_json_string_field(fields, "status").unwrap_or("pending")
           },
           false,
@@ -332,24 +331,23 @@ fn acp_session_update_to_events(update : Json) -> Array[@app.AgentEvent] {
       ]
     "tool_call_update" =>
       [
-        @app.AgentEvent::ToolResultAdded(
+        ToolResultAdded(
           acp_json_string_field(fields, "title").unwrap_or(
             acp_json_string_field(fields, "toolCallId").unwrap_or("tool"),
           ),
           match fields.get("content") {
-            Some(Json::Array(values)) => acp_tool_content_text(values)
+            Some(Array(values)) => acp_tool_content_text(values)
             _ => acp_json_string_field(fields, "status").unwrap_or("updated")
           },
           false,
           acp_json_string_field(fields, "status"),
         ),
       ]
-    "plan" => [@app.AgentEvent::ProgressNotice("ACP plan updated")]
-    "available_commands_update" =>
-      [@app.AgentEvent::ProgressNotice("ACP commands updated")]
+    "plan" => [ProgressNotice("ACP plan updated")]
+    "available_commands_update" => [ProgressNotice("ACP commands updated")]
     "current_mode_update" =>
       [
-        @app.AgentEvent::SessionModeStateChanged(
+        SessionModeStateChanged(
           @app.agent_session_mode_state(
             current_mode_id=acp_json_string_field(fields, "currentModeId").unwrap_or(
               "",
@@ -360,36 +358,32 @@ fn acp_session_update_to_events(update : Json) -> Array[@app.AgentEvent] {
       ]
     "config_option_update" =>
       match fields.get("configOptions") {
-        Some(Json::Array(values)) =>
-          [
-            @app.AgentEvent::SessionConfigOptionsChanged(
-              acp_parse_config_options(values),
-            ),
-          ]
+        Some(Array(values)) =>
+          [SessionConfigOptionsChanged(acp_parse_config_options(values))]
         _ => []
       }
     "session_info_update" =>
       [
-        @app.AgentEvent::SessionInfoUpdated(
+        SessionInfoUpdated(
           "",
           acp_json_string_field(fields, "title"),
           acp_json_string_field(fields, "updatedAt"),
         ),
       ]
-    "usage_update" => [@app.AgentEvent::ProgressNotice("ACP usage updated")]
-    _ => [@app.AgentEvent::RuntimeNoticeAdded("Unknown ACP update: " + kind)]
+    "usage_update" => [ProgressNotice("ACP usage updated")]
+    _ => [RuntimeNoticeAdded("Unknown ACP update: " + kind)]
   }
 }
 
 ///|
 fn acp_parse_modes(value : Json) -> @app.AgentSessionModeState? {
-  guard value is Json::Object(fields) else { return None }
+  guard value is Object(fields) else { return None }
   let current = acp_json_string_field(fields, "currentModeId").unwrap_or("")
   let modes : Array[@app.AgentSessionMode] = []
   match fields.get("availableModes") {
-    Some(Json::Array(values)) =>
+    Some(Array(values)) =>
       for item in values {
-        guard item is Json::Object(mode_fields) else { continue }
+        guard item is Object(mode_fields) else { continue }
         let id = acp_json_string_field(mode_fields, "id").unwrap_or("")
         if id.is_empty() {
           continue
@@ -418,7 +412,7 @@ fn acp_parse_permission_options(
 ) -> Array[@app.AgentPermissionOption] {
   let out : Array[@app.AgentPermissionOption] = []
   for item in values {
-    guard item is Json::Object(fields) else { continue }
+    guard item is Object(fields) else { continue }
     let id = acp_json_string_field(fields, "optionId").unwrap_or(
       acp_json_string_field(fields, "id").unwrap_or(""),
     )
@@ -442,11 +436,11 @@ fn acp_parse_config_option_values(
 ) -> Array[@app.AgentPermissionOption] {
   let out : Array[@app.AgentPermissionOption] = []
   match value {
-    Json::Array(items) =>
+    Array(items) =>
       for item in items {
-        guard item is Json::Object(fields) else { continue }
+        guard item is Object(fields) else { continue }
         match fields.get("options") {
-          Some(Json::Array(group_items)) =>
+          Some(Array(group_items)) =>
             for group_item in group_items {
               acp_push_config_option_value(out, group_item)
             }
@@ -463,7 +457,7 @@ fn acp_push_config_option_value(
   out : Array[@app.AgentPermissionOption],
   item : Json,
 ) -> Unit {
-  guard item is Json::Object(fields) else { return }
+  guard item is Object(fields) else { return }
   let id = acp_json_string_field(fields, "value").unwrap_or(
     acp_json_string_field(fields, "optionId").unwrap_or(
       acp_json_string_field(fields, "id").unwrap_or(""),
@@ -486,16 +480,13 @@ fn acp_config_current_value(
   fields : Map[String, Json],
 ) -> @app.AgentConfigValue {
   match fields.get("currentValue") {
-    Some(Json::True) => @app.AgentConfigValue::Boolean(true)
-    Some(Json::False) => @app.AgentConfigValue::Boolean(false)
-    Some(Json::String(text)) => @app.AgentConfigValue::ValueId(text)
+    Some(True) => Boolean(true)
+    Some(False) => Boolean(false)
+    Some(String(text)) => ValueId(text)
     _ =>
       match acp_json_bool_field(fields, "value") {
-        Some(v) => @app.AgentConfigValue::Boolean(v)
-        None =>
-          @app.AgentConfigValue::ValueId(
-            acp_json_string_field(fields, "value").unwrap_or(""),
-          )
+        Some(v) => Boolean(v)
+        None => ValueId(acp_json_string_field(fields, "value").unwrap_or(""))
       }
   }
 }
@@ -506,7 +497,7 @@ fn acp_parse_config_options(
 ) -> Array[@app.AgentSessionConfigOption] {
   let out : Array[@app.AgentSessionConfigOption] = []
   for item in values {
-    guard item is Json::Object(fields) else { continue }
+    guard item is Object(fields) else { continue }
     let id = acp_json_string_field(fields, "configId").unwrap_or(
       acp_json_string_field(fields, "id").unwrap_or(""),
     )
@@ -518,7 +509,7 @@ fn acp_parse_config_options(
       Some(items) => acp_parse_config_option_values(items)
       None =>
         match fields.get("values") {
-          Some(Json::Array(items)) => acp_parse_permission_options(items)
+          Some(Array(items)) => acp_parse_permission_options(items)
           _ => []
         }
     }
@@ -537,28 +528,23 @@ fn acp_parse_config_options(
 
 ///|
 fn acp_session_setup_events(result : Json) -> Array[@app.AgentEvent] {
-  guard result is Json::Object(fields) else { return [] }
+  guard result is Object(fields) else { return [] }
   let events : Array[@app.AgentEvent] = []
   match acp_json_string_field(fields, "sessionId") {
-    Some(id) => events.push(@app.AgentEvent::ActiveSessionChanged(id))
+    Some(id) => events.push(ActiveSessionChanged(id))
     None => ()
   }
   match fields.get("modes") {
     Some(value) =>
       match acp_parse_modes(value) {
-        Some(modes) =>
-          events.push(@app.AgentEvent::SessionModeStateChanged(modes))
+        Some(modes) => events.push(SessionModeStateChanged(modes))
         None => ()
       }
     None => ()
   }
   match fields.get("configOptions") {
-    Some(Json::Array(values)) =>
-      events.push(
-        @app.AgentEvent::SessionConfigOptionsChanged(
-          acp_parse_config_options(values),
-        ),
-      )
+    Some(Array(values)) =>
+      events.push(SessionConfigOptionsChanged(acp_parse_config_options(values)))
     _ => ()
   }
   events
@@ -566,22 +552,15 @@ fn acp_session_setup_events(result : Json) -> Array[@app.AgentEvent] {
 
 ///|
 fn acp_prompt_stop_event(result : Json) -> @app.AgentEvent {
-  guard result is Json::Object(fields) else {
-    return @app.AgentEvent::TurnTerminal(
-      @app.TurnStatus::Failed,
-      "Malformed ACP prompt response",
-    )
+  guard result is Object(fields) else {
+    return TurnTerminal(Failed, "Malformed ACP prompt response")
   }
   match acp_json_string_field(fields, "stopReason") {
-    Some("end_turn") =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Finished, "Done")
-    Some("cancelled") =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Aborted, "Cancelled")
-    Some("refusal") =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Interrupted, "Refused")
-    Some(reason) =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Interrupted, reason)
-    None => @app.AgentEvent::TurnTerminal(@app.TurnStatus::Finished, "Done")
+    Some("end_turn") => TurnTerminal(Finished, "Done")
+    Some("cancelled") => TurnTerminal(Aborted, "Cancelled")
+    Some("refusal") => TurnTerminal(Interrupted, "Refused")
+    Some(reason) => TurnTerminal(Interrupted, reason)
+    None => TurnTerminal(Finished, "Done")
   }
 }
 
@@ -590,10 +569,10 @@ fn acp_parse_permission_request(
   request_id : String,
   params : Json,
 ) -> @app.AgentPermissionRequest? {
-  guard params is Json::Object(fields) else { return None }
+  guard params is Object(fields) else { return None }
   let session_id = acp_json_string_field(fields, "sessionId").unwrap_or("")
   let (tool_call_id, title, kind) = match fields.get("toolCall") {
-    Some(Json::Object(tool)) =>
+    Some(Object(tool)) =>
       (
         acp_json_string_field(tool, "toolCallId").unwrap_or(""),
         acp_json_string_field(tool, "title").unwrap_or(""),
@@ -602,7 +581,7 @@ fn acp_parse_permission_request(
     _ => ("", "", "")
   }
   let options = match fields.get("options") {
-    Some(Json::Array(values)) => acp_parse_permission_options(values)
+    Some(Array(values)) => acp_parse_permission_options(values)
     _ => []
   }
   Some(
@@ -620,13 +599,13 @@ fn acp_parse_permission_request(
 ///|
 fn acp_parse_session_list(result : Json) -> Array[@app.SessionSummary] {
   let summaries : Array[@app.SessionSummary] = []
-  guard result is Json::Object(fields) else { return summaries }
+  guard result is Object(fields) else { return summaries }
   let values = match fields.get("sessions") {
-    Some(Json::Array(items)) => items
+    Some(Array(items)) => items
     _ => return summaries
   }
   for item in values {
-    guard item is Json::Object(session) else { continue }
+    guard item is Object(session) else { continue }
     let id = acp_json_string_field(session, "sessionId").unwrap_or(
       acp_json_string_field(session, "id").unwrap_or(""),
     )
@@ -657,10 +636,10 @@ pub fn acp_helper_args(value : String) -> Array[String] {
 ///|
 fn acp_helper_json_args(value : String) -> Array[String]? {
   let parsed = @json.parse(value) catch { _ => return None }
-  guard parsed is Json::Array(values) else { return None }
+  guard parsed is Array(values) else { return None }
   let args : Array[String] = []
   for item in values {
-    guard item is Json::String(arg) else { return None }
+    guard item is String(arg) else { return None }
     let clean = arg.trim().to_owned()
     if clean != "" {
       args.push(clean)

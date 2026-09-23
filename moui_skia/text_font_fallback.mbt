@@ -14,7 +14,7 @@ fn copy_non_empty_unique_bytes(
   values : Array[Bytes],
   skip? : Bytes = b"",
 ) -> Array[Bytes] {
-  let result : Array[Bytes] = Array::new(capacity=values.length())
+  let result : Array[Bytes] = Array(capacity=values.length())
   for value in values {
     if !value.is_empty() &&
       value != skip &&
@@ -117,14 +117,14 @@ pub fn FontFallbackChain::with_family(
   if family.is_empty() || self.contains_family(family) {
     self
   } else {
-    let fallbacks : Array[Bytes] = Array::new(
+    let fallbacks : Array[Bytes] = Array(
       capacity=self.fallback_families.length() + 1,
     )
     for value in self.fallback_families {
       fallbacks.push(value)
     }
     fallbacks.push(family)
-    { ..self, fallback_families: fallbacks }
+    { ..self, fallback_families: fallbacks, }
   }
 }
 
@@ -184,7 +184,7 @@ pub fn FontFallbackRequest::with_character(
   self : FontFallbackRequest,
   character : Int,
 ) -> FontFallbackRequest {
-  { ..self, character: Int::max(0, character) }
+  { ..self, character: Int::max(0, character), }
 }
 
 ///|

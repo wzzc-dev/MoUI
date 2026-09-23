@@ -28,7 +28,7 @@ pub struct RemoteImageOwner {
 
 ///|
 pub fn RemoteImageOwner::new() -> RemoteImageOwner {
-  { queue: @async.Queue(kind=Unbounded) }
+  { queue: Queue(kind=Unbounded), }
 }
 
 ///|

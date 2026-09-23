@@ -1,11 +1,7 @@
 ///|
 fn main {
   @runtime.run_app("MoUI Text Input Smoke", @fixture.runtime())
-  .render(
-    @render_skia.raster(
-      font_resolution=@render_skia.SkiaFontResolution::EmptyTypeface,
-    ),
-  )
+  .render(@render_skia.raster(font_resolution=EmptyTypeface))
   .backend(
     @macos.entry(
       smoke_options=@macos.MacosHostSmokeOptions::new(

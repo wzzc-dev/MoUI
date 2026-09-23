@@ -26,9 +26,8 @@ fn skia_glyph_run_for_resolution(
   resolution : SkiaFontResolution,
 ) -> SkiaGlyphRun {
   match resolution {
-    SkiaFontResolution::SystemFontMgr =>
-      skia_glyph_run_with_shaper(font, text, use_shaper=true)
-    SkiaFontResolution::EmptyTypeface => skia_draw_text_glyph_run(font, text)
+    SystemFontMgr => skia_glyph_run_with_shaper(font, text, use_shaper=true)
+    EmptyTypeface => skia_draw_text_glyph_run(font, text)
   }
 }
 
@@ -169,13 +168,13 @@ fn skia_emoji_fallback_draw_font(
   resolution : SkiaFontResolution,
 ) -> @skia_native.Font? {
   match resolution {
-    SkiaFontResolution::SystemFontMgr =>
+    SystemFontMgr =>
       if skia_text_contains_emoji_hint(text) {
         skia_system_emoji_font(font)
       } else {
         None
       }
-    SkiaFontResolution::EmptyTypeface => None
+    EmptyTypeface => None
   }
 }
 
@@ -184,7 +183,7 @@ fn skia_system_emoji_font(font : @core.FontSpec) -> @skia_native.Font? {
   match @skia_native.FontMgr::default() {
     Some(font_mgr) => {
       let emoji_font = @core.FontSpec::new(
-        families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+        families=@core.FontFamilyStack::new([Emoji]),
         size=font.size,
         weight=font.weight,
         style=font.style,
@@ -298,9 +297,9 @@ fn skia_font_with_resolution_for_text(
   resolution : SkiaFontResolution,
 ) -> @skia_native.Font? {
   match resolution {
-    SkiaFontResolution::EmptyTypeface =>
+    EmptyTypeface =>
       @skia_native.Font::empty(size=Float::from_double(font.size))
-    SkiaFontResolution::SystemFontMgr =>
+    SystemFontMgr =>
       match skia_typeface_for_text(font, text) {
         Some(typeface) => {
           let typeface = match
@@ -394,7 +393,7 @@ fn skia_cached_fallback_typeface(
     }
   }
   let typeface = font_mgr.match_fallback_request(request)
-  bucket.push({ request, typeface })
+  bucket.push({ request, typeface, })
   typeface
 }
 

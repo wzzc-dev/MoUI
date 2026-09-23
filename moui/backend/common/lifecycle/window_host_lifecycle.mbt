@@ -152,7 +152,7 @@ pub fn WindowLifecycle::attach_surface(
   if self.surface_actions(id) is Some(_) {
     return false
   }
-  self.surfaces.push({ id, actions })
+  self.surfaces.push({ id, actions, })
   self.surface_generation = self.surface_generation + 1
   true
 }

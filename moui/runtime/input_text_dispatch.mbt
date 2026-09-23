@@ -10,7 +10,7 @@ fn ElementNode::dispatch_text_input(
   if self.id == target {
     self.dispatch_view_event(
       self.view_node,
-      AppEvent::TextInput(event),
+      TextInput(event),
       RenderNode::empty(),
       text_system,
       environment~,

@@ -93,12 +93,7 @@ pub fn install_macos_3d_event_dispatcher(
       dispatch(
         raw_handle,
         id_string,
-        @core.PlatformViewEvent::Named(
-          name~,
-          value=value_string,
-          detail=detail_string,
-          flag=flag != 0,
-        ),
+        Named(name~, value=value_string, detail=detail_string, flag=flag != 0),
       )
     },
   )

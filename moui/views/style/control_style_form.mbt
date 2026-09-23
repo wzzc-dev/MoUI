@@ -8,7 +8,7 @@ pub fn FormValidationStyle::new(
   radius~ : Double,
   padding~ : Double,
 ) -> FormValidationStyle {
-  { foreground, background, border, radius, padding }
+  { foreground, background, border, radius, padding, }
 }
 
 ///|

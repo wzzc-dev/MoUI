@@ -7,10 +7,10 @@ fn declaration_change_tuple(
 
 ///|
 fn declaration_with_channel(
-  layout? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  paint? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  semantics? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  platform? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  layout? : @core.DeclarationChannel = Constant,
+  paint? : @core.DeclarationChannel = Constant,
+  semantics? : @core.DeclarationChannel = Constant,
+  platform? : @core.DeclarationChannel = Constant,
 ) -> @core.ViewDeclaration {
   @core.ViewDeclaration::channels(layout~, paint~, semantics~, platform~)
 }
@@ -130,25 +130,13 @@ test "DeclarationKey: equality checks the complete encoded bytes" {
 test "ViewDeclaration: channel accessors preserve exact declarations" {
   let key = @core.DeclarationKey::string("v1")
   let declaration = declaration_with_channel(
-    layout=@core.DeclarationChannel::Exact(key),
-    paint=@core.DeclarationChannel::Uncacheable,
+    layout=Exact(key),
+    paint=Uncacheable,
   )
-  inspect(
-    declaration.layout() == @core.DeclarationChannel::Exact(key),
-    content="true",
-  )
-  inspect(
-    declaration.paint() == @core.DeclarationChannel::Uncacheable,
-    content="true",
-  )
-  inspect(
-    declaration.semantics() == @core.DeclarationChannel::Constant,
-    content="true",
-  )
-  inspect(
-    declaration.platform() == @core.DeclarationChannel::Constant,
-    content="true",
-  )
+  inspect(declaration.layout() == Exact(key), content="true")
+  inspect(declaration.paint() == Uncacheable, content="true")
+  inspect(declaration.semantics() == Constant, content="true")
+  inspect(declaration.platform() == Constant, content="true")
 }
 
 ///|
@@ -162,9 +150,7 @@ test "ViewDeclaration: four channels classify independently" {
   debug_inspect(
     declaration_change_tuple(
       declaration_with_channel(
-        paint=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string("paint"),
-        ),
+        paint=Exact(@core.DeclarationKey::string("paint")),
       ).changes_from(old),
     ),
     content="(false, true, false, false)",
@@ -172,9 +158,7 @@ test "ViewDeclaration: four channels classify independently" {
   debug_inspect(
     declaration_change_tuple(
       declaration_with_channel(
-        semantics=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string("semantics"),
-        ),
+        semantics=Exact(@core.DeclarationKey::string("semantics")),
       ).changes_from(old),
     ),
     content="(false, false, true, false)",
@@ -182,9 +166,7 @@ test "ViewDeclaration: four channels classify independently" {
   debug_inspect(
     declaration_change_tuple(
       declaration_with_channel(
-        platform=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string("platform"),
-        ),
+        platform=Exact(@core.DeclarationKey::string("platform")),
       ).changes_from(old),
     ),
     content="(false, false, false, true)",
@@ -195,9 +177,7 @@ test "ViewDeclaration: four channels classify independently" {
 test "ViewDeclaration: layout invalidation implies all downstream channels" {
   let old = @core.ViewDeclaration::constant()
   let next = declaration_with_channel(
-    layout=@core.DeclarationChannel::Exact(
-      @core.DeclarationKey::string("layout"),
-    ),
+    layout=Exact(@core.DeclarationKey::string("layout")),
   )
   debug_inspect(
     declaration_change_tuple(next.changes_from(old)),
@@ -226,9 +206,7 @@ test "ViewDeclaration: exact and uncacheable channel matrix" {
     ),
     content="(false, true, false, false)",
   )
-  let uncacheable = declaration_with_channel(
-    semantics=@core.DeclarationChannel::Uncacheable,
-  )
+  let uncacheable = declaration_with_channel(semantics=Uncacheable)
   debug_inspect(
     declaration_change_tuple(uncacheable.changes_from(uncacheable)),
     content="(false, false, true, false)",
@@ -248,10 +226,10 @@ test "ViewDeclaration: every channel policy transition is explicit" {
   let key_a = @core.DeclarationKey::string("a")
   let key_b = @core.DeclarationKey::string("b")
   let policies : Array[@core.DeclarationChannel] = [
-    @core.DeclarationChannel::Constant,
-    @core.DeclarationChannel::Exact(key_a),
-    @core.DeclarationChannel::Exact(key_b),
-    @core.DeclarationChannel::Uncacheable,
+    Constant,
+    Exact(key_a),
+    Exact(key_b),
+    Uncacheable,
   ]
   let expected : Array[Array[Bool]] = [
     [false, true, true, true],

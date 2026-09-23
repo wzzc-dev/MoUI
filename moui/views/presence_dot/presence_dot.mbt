@@ -87,22 +87,16 @@ impl @core.ViewNode for PresenceDot with fn paint(self, ctx) {
     radius=(self.size + self.border_width * 2.0) / 2.0,
   )
   @core.ViewPaintPlan::commands([
-    @core.DrawCommand::FillRoundedRectBrush(
-      border,
-      @core.Brush::solid(self.border_color),
-    ),
-    @core.DrawCommand::FillRoundedRectBrush(
-      dot,
-      @core.Brush::solid(self.status_color),
-    ),
+    FillRoundedRectBrush(border, @core.Brush::solid(self.border_color)),
+    FillRoundedRectBrush(dot, @core.Brush::solid(self.status_color)),
   ])
 }
 
 ///|
 impl @core.ViewNode for PresenceDot with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::Group,
+    composition=Boundary,
+    role=Group,
     label="PresenceDot",
   )
 }

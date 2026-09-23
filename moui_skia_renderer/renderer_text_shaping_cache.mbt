@@ -43,8 +43,8 @@ fn skia_text_shaping_cache_key(
   resolution : SkiaFontResolution,
 ) -> String {
   let resolution_tag = match resolution {
-    SkiaFontResolution::SystemFontMgr => "system"
-    SkiaFontResolution::EmptyTypeface => "empty"
+    SystemFontMgr => "system"
+    EmptyTypeface => "empty"
   }
   font_spec.to_json().stringify() + "\{resolution_tag}\n" + text
 }
@@ -83,7 +83,7 @@ fn SkiaTextShapingCache::resolve(
       self.total_misses = self.total_misses + 1
       match shape() {
         Some(layout) => {
-          self.entries[key] = { layout, last_used: self.tick }
+          self.entries[key] = { layout, last_used: self.tick, }
           self.evict_if_needed()
           Some(layout)
         }

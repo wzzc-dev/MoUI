@@ -1,7 +1,6 @@
 import {
   "wzzc-dev/moui/views",
   "wzzc-dev/moui/services",
-  "moonbitlang/core/string",
   "examples/excel/cell",
   "examples/excel/formula",
   "examples/excel/sheet",

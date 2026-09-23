@@ -16,7 +16,7 @@ pub fn[Msg] navigation_destination(
   route~ : String,
   view~ : @core.View[Msg],
 ) -> NavigationDestination[Msg] {
-  { route, view }
+  { route, view, }
 }
 
 ///|
@@ -25,7 +25,7 @@ pub fn[Msg] tab_item(
   label~ : String,
   view~ : @core.View[Msg],
 ) -> TabItem[Msg] {
-  { route, label, view }
+  { route, label, view, }
 }
 
 ///|
@@ -74,15 +74,11 @@ pub fn[Msg] tab_view(
     let tab_button = @button.button(
         tab.label,
         on_click=on_select(tab.route),
-        variant=if tab.route == selected {
-          @style.ButtonVariant::Primary
-        } else {
-          @style.ButtonVariant::Tonal
-        },
+        variant=if tab.route == selected { Primary } else { Tonal },
         width=112.0,
         height=36.0,
       )
-      .semantics_role(@core.SemanticsRole::Tab)
+      .semantics_role(Tab)
       .semantics_selected(selected=tab.route == selected)
     buttons.push(tab_button)
   }

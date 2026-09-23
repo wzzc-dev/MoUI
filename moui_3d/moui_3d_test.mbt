@@ -12,7 +12,7 @@ test "GLB parser validates header, version and chunks" {
   while bytes.length() < total_length {
     bytes.push(32)
   }
-  let document = parse_glb(Bytes::from_array(bytes)) catch {
+  let document = @moui_3d.parse_glb(Bytes::from_array(bytes)) catch {
     _ => fail("valid GLB should parse")
   }
   assert_eq(document.mesh_count(), 0)
@@ -32,26 +32,26 @@ test "GLB parser rejects malformed input and unsupported asset versions" {
 
 ///|
 test "scene bounds and CPU picking choose the nearest primitive" {
-  let scene = Scene::empty()
-  let mesh = Mesh::new(primitives=[
-    Primitive::new(
+  let scene = @moui_3d.Scene::empty()
+  let mesh = @moui_3d.Mesh::new(primitives=[
+    @moui_3d.Primitive::new(
       vertices=[
-        Vertex::new(position=Vec3::new(x=-1.0, y=-1.0, z=0.0)),
-        Vertex::new(position=Vec3::new(x=1.0, y=-1.0, z=0.0)),
-        Vertex::new(position=Vec3::new(x=0.0, y=1.0, z=0.0)),
+        @moui_3d.Vertex::new(position=@moui_3d.Vec3::new(x=-1.0, y=-1.0, z=0.0)),
+        @moui_3d.Vertex::new(position=@moui_3d.Vec3::new(x=1.0, y=-1.0, z=0.0)),
+        @moui_3d.Vertex::new(position=@moui_3d.Vec3::new(x=0.0, y=1.0, z=0.0)),
       ],
       indices=[0, 1, 2],
     ),
   ])
   let mesh_id = scene.add_mesh(mesh)
-  let node_id = scene.add_node(Node::new(mesh=Some(mesh_id)))
+  let node_id = scene.add_node(@moui_3d.Node::new(mesh=Some(mesh_id)))
   let bounds = scene.bounds()
   assert_true(bounds.is_valid())
-  assert_eq(bounds.center(), Vec3::new(x=0.0, y=0.0, z=0.0))
+  assert_eq(bounds.center(), @moui_3d.Vec3::new(x=0.0, y=0.0, z=0.0))
   let hit = scene.pick(
-    Ray::new(
-      origin=Vec3::new(x=0.0, y=0.0, z=2.0),
-      direction=Vec3::new(x=0.0, y=0.0, z=-1.0),
+    @moui_3d.Ray::new(
+      origin=@moui_3d.Vec3::new(x=0.0, y=0.0, z=2.0),
+      direction=@moui_3d.Vec3::new(x=0.0, y=0.0, z=-1.0),
     ),
   )
   match hit {
@@ -66,23 +66,27 @@ test "scene bounds and CPU picking choose the nearest primitive" {
 
 ///|
 test "viewport binding rejects stale snapshots" {
-  let binding = ThreeDViewportBinding::new()
-  let camera = OrbitCamera::new()
-  let scene = Scene::empty()
+  let binding = @moui_3d.ThreeDViewportBinding::new()
+  let camera = @moui_3d.OrbitCamera::new()
+  let scene = @moui_3d.Scene::empty()
   assert_true(
-    binding.publish(ViewportSnapshot::new(scene_revision=2L, scene~, camera~)),
+    binding.publish(
+      @moui_3d.ViewportSnapshot::new(scene_revision=2L, scene~, camera~),
+    ),
   )
-  assert_eq(binding.status(), ViewportStatus::Loading)
+  assert_eq(binding.status(), Loading)
   assert_false(
-    binding.publish(ViewportSnapshot::new(scene_revision=1L, scene~, camera~)),
+    binding.publish(
+      @moui_3d.ViewportSnapshot::new(scene_revision=1L, scene~, camera~),
+    ),
   )
   assert_eq(binding.snapshot().unwrap().scene_revision(), 2L)
 }
 
 ///|
 test "perspective projection maps the camera target into clip depth" {
-  let camera = OrbitCamera::new(
-    target=Vec3::zero(),
+  let camera = @moui_3d.OrbitCamera::new(
+    target=@moui_3d.Vec3::zero(),
     radius=3.0,
     azimuth=0.0,
     polar=@math.PI / 2.0,
@@ -90,7 +94,7 @@ test "perspective projection maps the camera target into clip depth" {
   let clip = camera
     .projection()
     .mul(camera.view())
-    .transform_point(Vec3::zero())
+    .transform_point(@moui_3d.Vec3::zero())
   assert_true(clip.x().abs() < 1.0e-9)
   assert_true(clip.y().abs() < 1.0e-9)
   assert_true(clip.z() > -1.0 && clip.z() < 1.0)
@@ -104,8 +108,8 @@ test "viewport event decoder preserves pick node ids" {
     detail="",
     flag=false,
   )
-  match decode_viewport_event(event) {
-    Some(ViewportEvent::Pick(node)) => assert_eq(node, NodeId::new(7))
+  match @moui_3d.decode_viewport_event(event) {
+    Some(Pick(node)) => assert_eq(node, @moui_3d.NodeId::new(7))
     _ => assert_true(false)
   }
 }
@@ -118,9 +122,7 @@ test "viewport event decoder recognizes renderer status invalidation" {
     detail="",
     flag=false,
   )
-  assert_true(
-    decode_viewport_event(event) is Some(ViewportEvent::RendererStatus),
-  )
+  assert_true(@moui_3d.decode_viewport_event(event) is Some(RendererStatus))
 }
 
 ///|
@@ -137,24 +139,27 @@ test "glTF loader decodes positions into a scene" {
   append_f32(bytes, 1.0)
   append_f32(bytes, 0.0)
   bytes.append([0, 0, 2, 0, 1, 0])
-  let scene = load_gltf_scene(json, binary=Some(Bytes::from_array(bytes))) catch {
+  let scene = @moui_3d.load_gltf_scene(
+    json,
+    binary=Some(Bytes::from_array(bytes)),
+  ) catch {
     _ => fail("valid glTF scene should load")
   }
   assert_eq(scene.meshes().length(), 1)
   assert_eq(scene.nodes().length(), 1)
   assert_eq(scene.meshes()[0].primitives()[0].vertices().length(), 3)
   assert_eq(scene.meshes()[0].primitives()[0].indices(), [0, 2, 1])
-  assert_eq(scene.bounds().max(), Vec3::new(x=1.0, y=1.0, z=0.0))
+  assert_eq(scene.bounds().max(), @moui_3d.Vec3::new(x=1.0, y=1.0, z=0.0))
 }
 
 ///|
 test "glTF loader reports unsupported primitive mode" {
   let json = "{\"asset\":{\"version\":\"2.0\"},\"meshes\":[{\"primitives\":[{\"attributes\":{},\"mode\":1}]}]}"
   try {
-    ignore(load_gltf_scene(json))
+    ignore(@moui_3d.load_gltf_scene(json))
     assert_true(false)
   } catch {
-    GltfError::UnsupportedPrimitiveMode(mode) => assert_eq(mode, 1)
+    @moui_3d.GltfError::UnsupportedPrimitiveMode(mode) => assert_eq(mode, 1)
     _ => assert_true(false)
   } noraise {
     _ => fail("loader should raise a typed error")
@@ -164,7 +169,7 @@ test "glTF loader reports unsupported primitive mode" {
 ///|
 test "glTF material keeps material-level texture and alpha fields" {
   let json = "{\"asset\":{\"version\":\"2.0\"},\"images\":[{\"uri\":\"albedo.png\"},{\"uri\":\"normal.png\"},{\"uri\":\"occ.png\"},{\"uri\":\"emit.png\"}],\"textures\":[{\"source\":0},{\"source\":1},{\"source\":2},{\"source\":3}],\"materials\":[{\"pbrMetallicRoughness\":{\"baseColorFactor\":[0.2,0.3,0.4,0.5],\"baseColorTexture\":{\"index\":0}},\"normalTexture\":{\"index\":1},\"occlusionTexture\":{\"index\":2},\"emissiveTexture\":{\"index\":3},\"emissiveFactor\":[0.1,0.2,0.3],\"alphaMode\":\"MASK\",\"alphaCutoff\":0.25,\"doubleSided\":true}]}"
-  let scene = load_gltf_scene(json) catch {
+  let scene = @moui_3d.load_gltf_scene(json) catch {
     _ => fail("material-only glTF should load")
   }
   let material = scene.materials()[0]
@@ -172,23 +177,23 @@ test "glTF material keeps material-level texture and alpha fields" {
   assert_true(assert_texture_id(material.normal_texture(), 1))
   assert_true(assert_texture_id(material.occlusion_texture(), 2))
   assert_true(assert_texture_id(material.emissive_texture(), 3))
-  assert_eq(material.alpha_mode(), AlphaMode::Mask)
+  assert_eq(material.alpha_mode(), Mask)
   assert_eq(material.alpha_cutoff(), 0.25)
   assert_true(material.double_sided())
-  assert_eq(material.emissive_factor(), Vec3::new(x=0.1, y=0.2, z=0.3))
+  assert_eq(material.emissive_factor(), @moui_3d.Vec3::new(x=0.1, y=0.2, z=0.3))
 }
 
 ///|
 test "glTF sampler camera and scene metadata are preserved" {
   let json = "{\"asset\":{\"version\":\"2.0\"},\"images\":[{\"uri\":\"albedo.png\"}],\"textures\":[{\"source\":0,\"sampler\":0}],\"samplers\":[{\"magFilter\":9728,\"minFilter\":9987,\"wrapS\":33648,\"wrapT\":33071}],\"cameras\":[{\"name\":\"Main\",\"type\":\"perspective\",\"perspective\":{\"yfov\":1.0,\"znear\":0.1,\"zfar\":100.0}}],\"nodes\":[{\"camera\":0}],\"scenes\":[{\"name\":\"Root\",\"nodes\":[0]}],\"scene\":0}"
-  let scene = load_gltf_scene(json) catch {
+  let scene = @moui_3d.load_gltf_scene(json) catch {
     _ => fail("sampler and camera metadata should load")
   }
   assert_eq(scene.samplers().length(), 1)
-  assert_eq(scene.samplers()[0].mag_filter(), SamplerFilter::Nearest)
-  assert_eq(scene.samplers()[0].min_filter(), SamplerFilter::LinearMipmapLinear)
-  assert_eq(scene.samplers()[0].wrap_s(), SamplerWrap::MirroredRepeat)
-  assert_eq(scene.samplers()[0].wrap_t(), SamplerWrap::ClampToEdge)
+  assert_eq(scene.samplers()[0].mag_filter(), Nearest)
+  assert_eq(scene.samplers()[0].min_filter(), LinearMipmapLinear)
+  assert_eq(scene.samplers()[0].wrap_s(), MirroredRepeat)
+  assert_eq(scene.samplers()[0].wrap_t(), ClampToEdge)
   assert_eq(scene.cameras().length(), 1)
   assert_eq(scene.cameras()[0].name(), "Main")
   assert_eq(scene.scene_definitions().length(), 1)
@@ -203,24 +208,27 @@ test "glTF sparse accessor overlays values onto a zero base" {
   append_f32(bytes, 1.0)
   append_f32(bytes, 2.0)
   append_f32(bytes, 3.0)
-  let scene = load_gltf_scene(json, binary=Some(Bytes::from_array(bytes))) catch {
+  let scene = @moui_3d.load_gltf_scene(
+    json,
+    binary=Some(Bytes::from_array(bytes)),
+  ) catch {
     _ => fail("sparse accessor should load")
   }
   let positions = scene.meshes()[0].primitives()[0]
     .vertices()
     .map(vertex => vertex.position())
-  assert_eq(positions[0], Vec3::zero())
-  assert_eq(positions[1], Vec3::new(x=1.0, y=2.0, z=3.0))
+  assert_eq(positions[0], @moui_3d.Vec3::zero())
+  assert_eq(positions[1], @moui_3d.Vec3::new(x=1.0, y=2.0, z=3.0))
 }
 
 ///|
 test "glTF required extensions fail with a distinct diagnostic" {
   let json = "{\"asset\":{\"version\":\"2.0\"},\"extensionsRequired\":[\"KHR_draco_mesh_compression\"]}"
   try {
-    ignore(load_gltf_scene(json))
+    ignore(@moui_3d.load_gltf_scene(json))
     assert_true(false)
   } catch {
-    GltfError::UnsupportedRequiredExtension(value) =>
+    @moui_3d.GltfError::UnsupportedRequiredExtension(value) =>
       assert_eq(value, "KHR_draco_mesh_compression")
     _ => assert_true(false)
   } noraise {
@@ -243,18 +251,21 @@ test "glTF loader ingests skin joints weights and morph targets" {
     append_f32(bytes, value)
   }
   assert_eq(bytes.length(), 132)
-  let scene = load_gltf_scene(json, binary=Some(Bytes::from_array(bytes))) catch {
+  let scene = @moui_3d.load_gltf_scene(
+    json,
+    binary=Some(Bytes::from_array(bytes)),
+  ) catch {
     _ => fail("skin and morph glTF should load")
   }
   assert_eq(scene.skins().length(), 1)
-  assert_eq(scene.skins()[0].joints(), [NodeId::new(1)])
+  assert_eq(scene.skins()[0].joints(), [@moui_3d.NodeId::new(1)])
   let node = scene.nodes()[0]
   assert_eq(node.skin(), Some(0))
   let primitive = scene.meshes()[0].primitives()[0]
   assert_eq(primitive.vertices()[0].joints(), (0, 0, 0, 0))
   assert_eq(
     primitive.vertices()[1].weights(),
-    Vec4::new(x=1.0, y=0.0, z=0.0, w=0.0),
+    @moui_3d.Vec4::new(x=1.0, y=0.0, z=0.0, w=0.0),
   )
   assert_eq(primitive.morph_targets().length(), 1)
   let delta = primitive.morph_targets()[0][0].position()
@@ -273,7 +284,10 @@ test "glTF loader decodes animation channels from accessors" {
   append_f32(bytes, 2.0)
   append_f32(bytes, 0.0)
   append_f32(bytes, 0.0)
-  let scene = load_gltf_scene(json, binary=Some(Bytes::from_array(bytes))) catch {
+  let scene = @moui_3d.load_gltf_scene(
+    json,
+    binary=Some(Bytes::from_array(bytes)),
+  ) catch {
     _ => fail("valid animation glTF should load")
   }
   assert_eq(scene.animations().length(), 1)
@@ -281,37 +295,43 @@ test "glTF loader decodes animation channels from accessors" {
   assert_eq(clip.name(), "move")
   assert_eq(clip.duration(), 1.0)
   let channel = clip.channels()[0]
-  assert_eq(channel.node(), NodeId::new(0))
-  assert_eq(sample_animation_channel(channel, 0.5), [1.0, 0.0, 0.0])
+  assert_eq(channel.node(), @moui_3d.NodeId::new(0))
+  assert_eq(@moui_3d.sample_animation_channel(channel, 0.5), [1.0, 0.0, 0.0])
 }
 
 ///|
 test "scene applies sampled translation, rotation and scale without mutation" {
-  let scene = Scene::empty()
+  let scene = @moui_3d.Scene::empty()
   let node = scene.add_node(
-    Node::new(local_transform=Mat4::translation(Vec3::new(x=2.0, y=3.0, z=4.0))),
+    @moui_3d.Node::new(
+      local_transform=@moui_3d.Mat4::translation(
+        @moui_3d.Vec3::new(x=2.0, y=3.0, z=4.0),
+      ),
+    ),
   )
   let translated = scene.apply_animation_samples([
-    AnimationSample::new(node~, path=AnimationPath::Translation, value=[
-      7.0, 8.0, 9.0,
-    ]),
+    @moui_3d.AnimationSample::new(node~, path=Translation, value=[7.0, 8.0, 9.0]),
   ])
   assert_eq(
     translated
     .node(node)
     .unwrap()
     .local_transform()
-    .transform_point(Vec3::zero()),
-    Vec3::new(x=7.0, y=8.0, z=9.0),
+    .transform_point(@moui_3d.Vec3::zero()),
+    @moui_3d.Vec3::new(x=7.0, y=8.0, z=9.0),
   )
   assert_eq(
-    scene.node(node).unwrap().local_transform().transform_point(Vec3::zero()),
-    Vec3::new(x=2.0, y=3.0, z=4.0),
+    scene
+    .node(node)
+    .unwrap()
+    .local_transform()
+    .transform_point(@moui_3d.Vec3::zero()),
+    @moui_3d.Vec3::new(x=2.0, y=3.0, z=4.0),
   )
 }
 
 ///|
-fn assert_texture_id(value : TextureId?, expected : Int) -> Bool {
+fn assert_texture_id(value : @moui_3d.TextureId?, expected : Int) -> Bool {
   match value {
     Some(id) => id.value() == expected
     None => false
@@ -340,10 +360,10 @@ fn append_f32(out : Array[Byte], value : Double) -> Unit {
 ///|
 fn glb_short_input_fails() -> Bool {
   try {
-    ignore(parse_glb(b"bad"))
+    ignore(@moui_3d.parse_glb(b"bad"))
     false
   } catch {
-    GltfError::EmptyInput => true
+    EmptyInput => true
     _ => false
   } noraise {
     _ => false
@@ -353,10 +373,10 @@ fn glb_short_input_fails() -> Bool {
 ///|
 fn gltf_v1_fails(json : String) -> Bool {
   try {
-    ignore(parse_gltf_json(json))
+    ignore(@moui_3d.parse_gltf_json(json))
     false
   } catch {
-    GltfError::UnsupportedAssetVersion(version) => version == "1.0"
+    UnsupportedAssetVersion(version) => version == "1.0"
     _ => false
   } noraise {
     _ => false

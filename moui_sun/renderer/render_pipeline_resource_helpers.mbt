@@ -73,7 +73,7 @@ fn render_pipeline_make_bmp_bytes_image_dependency(
   render_pipeline_make_image_bytes_dependency(
     command_index,
     resource_key,
-    RenderPipelineImageBytes::Bmp(image_data),
+    Bmp(image_data),
   )
 }
 
@@ -86,7 +86,7 @@ fn render_pipeline_make_png_bytes_image_dependency(
   render_pipeline_make_image_bytes_dependency(
     command_index,
     resource_key,
-    RenderPipelineImageBytes::Png(image_data),
+    Png(image_data),
   )
 }
 
@@ -101,7 +101,7 @@ fn render_pipeline_make_rgba_bytes_image_dependency(
   render_pipeline_make_image_bytes_dependency(
     command_index,
     resource_key,
-    RenderPipelineImageBytes::Rgba(image_data, image_width, image_height),
+    Rgba(image_data, image_width, image_height),
   )
 }
 
@@ -115,7 +115,7 @@ fn render_pipeline_make_bmp_bytes_rect_image_dependency(
   render_pipeline_make_image_bytes_rect_dependency(
     command_index,
     resource_key,
-    RenderPipelineImageBytes::Bmp(image_data),
+    Bmp(image_data),
     src_rect,
   )
 }
@@ -130,7 +130,7 @@ fn render_pipeline_make_png_bytes_rect_image_dependency(
   render_pipeline_make_image_bytes_rect_dependency(
     command_index,
     resource_key,
-    RenderPipelineImageBytes::Png(image_data),
+    Png(image_data),
     src_rect,
   )
 }
@@ -147,7 +147,7 @@ fn render_pipeline_make_rgba_bytes_rect_image_dependency(
   render_pipeline_make_image_bytes_rect_dependency(
     command_index,
     resource_key,
-    RenderPipelineImageBytes::Rgba(image_data, image_width, image_height),
+    Rgba(image_data, image_width, image_height),
     src_rect,
   )
 }
@@ -158,7 +158,7 @@ fn render_pipeline_make_font_dependency(
   font_key : String,
   font_data : Bytes,
 ) -> RenderPipelineFontDependency {
-  { command_index, font_key, font_byte_count: font_data.length() }
+  { command_index, font_key, font_byte_count: font_data.length(), }
 }
 
 ///|
@@ -166,7 +166,7 @@ fn render_pipeline_make_loaded_font_dependency(
   command_index : Int,
   font_key : String,
 ) -> RenderPipelineFontDependency {
-  { command_index, font_key, font_byte_count: 0 }
+  { command_index, font_key, font_byte_count: 0, }
 }
 
 ///|

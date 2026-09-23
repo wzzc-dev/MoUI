@@ -38,13 +38,10 @@ pub fn PdfWorkbenchPdfliteServiceHandler::document_services(
   @app.PdfWorkbenchDocumentServices::new(
     load=(path, bytes) => {
       match self.handle_request(LoadDocument(path, bytes)) {
-        DocumentLoaded(document) =>
-          @app.PdfWorkbenchLoadResult::Loaded(document)
-        ServiceFailed(reason) => @app.PdfWorkbenchLoadResult::Failed(reason)
+        DocumentLoaded(document) => Loaded(document)
+        ServiceFailed(reason) => Failed(reason)
         WritebackReady(_, _) =>
-          @app.PdfWorkbenchLoadResult::Failed(
-            "pdflite service returned writeback response while loading",
-          )
+          Failed("pdflite service returned writeback response while loading")
       }
     },
     writeback=document => {
@@ -56,14 +53,10 @@ pub fn PdfWorkbenchPdfliteServiceHandler::document_services(
             document.edits,
           ),
         ) {
-        WritebackReady(bytes, diagnostics) =>
-          @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
-            bytes, diagnostics,
-          )
-        ServiceFailed(reason) =>
-          @app.PdfWorkbenchDocumentWritebackResult::WritebackFailed(reason)
+        WritebackReady(bytes, diagnostics) => WritebackReady(bytes, diagnostics)
+        ServiceFailed(reason) => WritebackFailed(reason)
         DocumentLoaded(_) =>
-          @app.PdfWorkbenchDocumentWritebackResult::WritebackFailed(
+          WritebackFailed(
             "pdflite service returned load response while writing",
           )
       }
@@ -101,7 +94,7 @@ pub fn PdfWorkbenchPdfliteServiceRequest::from_json_line(
   line : String,
 ) -> PdfWorkbenchPdfliteServiceRequest? {
   let parsed = @json.parse(line) catch { _ => return None }
-  guard parsed is Json::Object(fields) else { return None }
+  guard parsed is Object(fields) else { return None }
   guard pdf_workbench_pdflite_json_string(fields, "type") is Some(kind) else {
     return None
   }
@@ -171,7 +164,7 @@ pub fn PdfWorkbenchPdfliteServiceResponse::from_json_line(
   original_bytes~ : Bytes,
 ) -> PdfWorkbenchPdfliteServiceResponse? {
   let parsed = @json.parse(line) catch { _ => return None }
-  guard parsed is Json::Object(fields) else { return None }
+  guard parsed is Object(fields) else { return None }
   guard pdf_workbench_pdflite_json_string(fields, "type") is Some(kind) else {
     return None
   }
@@ -269,9 +262,8 @@ fn pdf_workbench_pdflite_loaded_response(
       outline_summary~,
       annotation_summary~,
     ) {
-    @app.PdfWorkbenchLoadResult::Loaded(document) =>
-      Some(DocumentLoaded(document))
-    @app.PdfWorkbenchLoadResult::Failed(reason) => Some(ServiceFailed(reason))
+    Loaded(document) => Some(DocumentLoaded(document))
+    Failed(reason) => Some(ServiceFailed(reason))
   }
 }
 
@@ -305,7 +297,7 @@ fn pdf_workbench_pdflite_json_string(
   key : String,
 ) -> String? {
   match fields.get(key) {
-    Some(Json::String(value)) => Some(value)
+    Some(String(value)) => Some(value)
     _ => None
   }
 }
@@ -339,8 +331,8 @@ fn pdf_workbench_pdflite_json_bool(
   key : String,
 ) -> Bool? {
   match fields.get(key) {
-    Some(Json::True) => Some(true)
-    Some(Json::False) => Some(false)
+    Some(True) => Some(true)
+    Some(False) => Some(false)
     _ => None
   }
 }
@@ -352,7 +344,7 @@ fn pdf_workbench_pdflite_json_string_array(
 ) -> Array[String]? {
   match fields.get(key) {
     None => Some([])
-    Some(Json::Array(values)) => {
+    Some(Array(values)) => {
       let strings : Array[String] = []
       for value in values {
         guard pdf_workbench_pdflite_json_value_string(value) is Some(text) else {
@@ -372,7 +364,7 @@ fn pdf_workbench_pdflite_json_page_summaries(
 ) -> Array[@app.PdfWorkbenchPageSummary]? {
   match fields.get("pageSummaries") {
     None => Some([])
-    Some(Json::Array(values)) => {
+    Some(Array(values)) => {
       let summaries : Array[@app.PdfWorkbenchPageSummary] = []
       for value in values {
         guard pdf_workbench_pdflite_json_page_summary(value) is Some(summary) else {
@@ -390,7 +382,7 @@ fn pdf_workbench_pdflite_json_page_summaries(
 fn pdf_workbench_pdflite_json_page_summary(
   value : Json,
 ) -> @app.PdfWorkbenchPageSummary? {
-  guard value is Json::Object(fields) else { return None }
+  guard value is Object(fields) else { return None }
   guard pdf_workbench_pdflite_json_int(fields, "pageNumber")
     is Some(page_number) else {
     return None
@@ -403,7 +395,7 @@ fn pdf_workbench_pdflite_json_page_summary(
     is Some(content_diagnostic) else {
     return None
   }
-  Some({ page_number, text_preview, content_diagnostic })
+  Some({ page_number, text_preview, content_diagnostic, })
 }
 
 ///|
@@ -411,7 +403,7 @@ fn pdf_workbench_pdflite_json_edits(
   fields : Map[String, Json],
 ) -> Array[@app.PdfWorkbenchEdit]? {
   match fields.get("edits") {
-    Some(Json::Array(values)) => {
+    Some(Array(values)) => {
       let edits : Array[@app.PdfWorkbenchEdit] = []
       for value in values {
         guard pdf_workbench_pdflite_json_edit(value) is Some(edit) else {
@@ -427,7 +419,7 @@ fn pdf_workbench_pdflite_json_edits(
 
 ///|
 fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
-  guard value is Json::Array(items) else { return None }
+  guard value is Array(items) else { return None }
   guard items.length() > 0 else { return None }
   guard pdf_workbench_pdflite_json_value_string(items[0]) is Some(kind) else {
     return None
@@ -440,8 +432,7 @@ fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
             pdf_workbench_pdflite_json_value_int(items[1]),
             pdf_workbench_pdflite_json_value_int(items[2]),
           ) {
-          (Some(page), Some(rotation)) =>
-            Some(@app.PdfWorkbenchEdit::RotatePage(page, rotation))
+          (Some(page), Some(rotation)) => Some(RotatePage(page, rotation))
           _ => None
         }
       } else {
@@ -454,8 +445,7 @@ fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
             pdf_workbench_pdflite_json_value_int(items[1]),
             pdf_workbench_pdflite_json_crop_box(items[2]),
           ) {
-          (Some(page), Some(box)) =>
-            Some(@app.PdfWorkbenchEdit::CropPage(page, box))
+          (Some(page), Some(box)) => Some(CropPage(page, box))
           _ => None
         }
       } else {
@@ -468,8 +458,7 @@ fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
             pdf_workbench_pdflite_json_value_int(items[1]),
             pdf_workbench_pdflite_json_value_string(items[2]),
           ) {
-          (Some(page), Some(text)) =>
-            Some(@app.PdfWorkbenchEdit::StampText(page, text))
+          (Some(page), Some(text)) => Some(StampText(page, text))
           _ => None
         }
       } else {
@@ -478,7 +467,7 @@ fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
     "SetMetadataTitle" =>
       if items.length() == 2 {
         match pdf_workbench_pdflite_json_value_string(items[1]) {
-          Some(title) => Some(@app.PdfWorkbenchEdit::SetMetadataTitle(title))
+          Some(title) => Some(SetMetadataTitle(title))
           None => None
         }
       } else {
@@ -491,8 +480,7 @@ fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
             pdf_workbench_pdflite_json_value_int(items[1]),
             pdf_workbench_pdflite_json_value_string(items[2]),
           ) {
-          (Some(page), Some(title)) =>
-            Some(@app.PdfWorkbenchEdit::AddBookmark(page, title))
+          (Some(page), Some(title)) => Some(AddBookmark(page, title))
           _ => None
         }
       } else {
@@ -505,8 +493,7 @@ fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
             pdf_workbench_pdflite_json_value_int(items[1]),
             pdf_workbench_pdflite_json_value_string(items[2]),
           ) {
-          (Some(page), Some(text)) =>
-            Some(@app.PdfWorkbenchEdit::AddTextAnnotation(page, text))
+          (Some(page), Some(text)) => Some(AddTextAnnotation(page, text))
           _ => None
         }
       } else {
@@ -520,7 +507,7 @@ fn pdf_workbench_pdflite_json_edit(value : Json) -> @app.PdfWorkbenchEdit? {
 fn pdf_workbench_pdflite_json_crop_box(
   value : Json,
 ) -> @app.PdfWorkbenchCropBox? {
-  guard value is Json::Object(fields) else { return None }
+  guard value is Object(fields) else { return None }
   match
     (
       pdf_workbench_pdflite_json_double(fields, "left"),
@@ -529,7 +516,7 @@ fn pdf_workbench_pdflite_json_crop_box(
       pdf_workbench_pdflite_json_double(fields, "top"),
     ) {
     (Some(left), Some(bottom), Some(right), Some(top)) =>
-      Some({ left, bottom, right, top })
+      Some({ left, bottom, right, top, })
     _ => None
   }
 }
@@ -548,7 +535,7 @@ fn pdf_workbench_pdflite_json_double(
 ///|
 fn pdf_workbench_pdflite_json_value_string(value : Json) -> String? {
   match value {
-    Json::String(text) => Some(text)
+    String(text) => Some(text)
     _ => None
   }
 }
@@ -564,7 +551,7 @@ fn pdf_workbench_pdflite_json_value_int(value : Json) -> Int? {
 ///|
 fn pdf_workbench_pdflite_json_value_double(value : Json) -> Double? {
   match value {
-    Json::Number(number, repr=_) => Some(number)
+    Number(number, repr=_) => Some(number)
     _ => None
   }
 }

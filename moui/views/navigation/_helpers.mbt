@@ -8,7 +8,7 @@ pub fn[Msg] overlay_marker(
   width~ : Double,
   height~ : Double,
 ) -> @core.View[Msg] {
-  @core.View::from_node(OverlayMarker::{ width, height })
+  @core.View::from_node(OverlayMarker::{ width, height, })
 }
 
 ///|
@@ -46,7 +46,7 @@ impl @core.ViewNode for OverlayMarker with fn paint(_self, ctx) {
   {
     ..@core.ViewPaintPlan::empty(),
     overlay_commands: [
-      @core.DrawCommand::FillRect(
+      FillRect(
         // Paint commands use the runtime's absolute frame. Keeping the marker
         // in local coordinates would expose the wrong native WebView region
         // whenever the marker is nested in an aligned/offset overlay.
@@ -59,5 +59,5 @@ impl @core.ViewNode for OverlayMarker with fn paint(_self, ctx) {
 
 ///|
 impl @core.ViewNode for OverlayMarker with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
+  @core.ViewSemanticsInfo::new(composition=Hidden)
 }

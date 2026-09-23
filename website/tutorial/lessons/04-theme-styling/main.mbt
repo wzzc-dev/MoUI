@@ -19,5 +19,9 @@ fn view(model : Model) -> @moui.View[Unit] {
 
 ///|
 pub fn program() -> @moui.Program[Model, Unit] {
-  @moui.Program::simple(init={ dark: false }, update=(model, _) => model, view~)
+  @moui.Program::simple(
+    init={ dark: false, },
+    update=(model, _) => model,
+    view~,
+  )
 }

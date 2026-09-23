@@ -15,7 +15,7 @@ pub struct Transform {
 ///|
 /// Create an identity transform
 pub fn Transform::identity() -> Transform {
-  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: 0.0, ty: 0.0 }
+  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: 0.0, ty: 0.0, }
 }
 
 ///|
@@ -28,19 +28,19 @@ pub fn Transform::affine(
   tx~ : Double,
   ty~ : Double,
 ) -> Transform {
-  { a, b, c, d, tx, ty }
+  { a, b, c, d, tx, ty, }
 }
 
 ///|
 /// Create a translation transform
 pub fn Transform::translate(tx~ : Double, ty~ : Double) -> Transform {
-  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx, ty }
+  { a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx, ty, }
 }
 
 ///|
 /// Create a scale transform
 pub fn Transform::scale(sx~ : Double, sy~ : Double) -> Transform {
-  { a: sx, b: 0.0, c: 0.0, d: sy, tx: 0.0, ty: 0.0 }
+  { a: sx, b: 0.0, c: 0.0, d: sy, tx: 0.0, ty: 0.0, }
 }
 
 ///|
@@ -48,7 +48,7 @@ pub fn Transform::scale(sx~ : Double, sy~ : Double) -> Transform {
 pub fn Transform::rotate(angle : Double) -> Transform {
   let cos_a = @math.cos(angle)
   let sin_a = @math.sin(angle)
-  { a: cos_a, b: -sin_a, c: sin_a, d: cos_a, tx: 0.0, ty: 0.0 }
+  { a: cos_a, b: -sin_a, c: sin_a, d: cos_a, tx: 0.0, ty: 0.0, }
 }
 
 ///|

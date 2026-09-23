@@ -32,7 +32,7 @@ fn[T, Msg] windowed_rows(
   let children : Array[@core.View[Msg]] = []
   match range {
     None => ()
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       if first_row > 0 {
         children.push(
           @container.spacer(

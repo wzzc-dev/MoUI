@@ -5,8 +5,8 @@
 pub fn descriptor() -> @render.ThreeDRendererDescriptor {
   @render.ThreeDRendererDescriptor::new(
     id="moui-3d-webgpu",
-    backend=@render.ThreeDRendererBackend::WebGpu,
-    status=@render.ThreeDRendererStatus::Available,
+    backend=WebGpu,
+    status=Available,
     description="WebGPU 3D host provider with depth testing; no Canvas2D fallback.",
   )
 }

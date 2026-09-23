@@ -177,16 +177,12 @@ test "data grid edit state commits a controlled draft" {
 
 ///|
 test "incremental data preserves keyed row order" {
-  let first = ComplexDataRow::{ id: "a", value: "one" }
-  let second = ComplexDataRow::{ id: "b", value: "two" }
-  let updated = ComplexDataRow::{ id: "b", value: "updated" }
-  let third = ComplexDataRow::{ id: "c", value: "three" }
+  let first = ComplexDataRow::{ id: "a", value: "one", }
+  let second = ComplexDataRow::{ id: "b", value: "two", }
+  let updated = ComplexDataRow::{ id: "b", value: "updated", }
+  let third = ComplexDataRow::{ id: "c", value: "three", }
   let data = @views.IncrementalData::new(items=[first, second]).apply(
-    [
-      @views.IncrementalDataChange::Upsert(updated),
-      @views.IncrementalDataChange::Append(third),
-      @views.IncrementalDataChange::Remove("a"),
-    ],
+    [Upsert(updated), Append(third), Remove("a")],
     row => row.id,
   )
   let rows = data.items()

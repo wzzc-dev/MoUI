@@ -28,16 +28,16 @@ pub fn append_control_background(
     shadow,
     ctx.environment.color_scheme(),
   )
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   let resolved_border = match ctx.environment.accessibility_contrast {
-    @core.AccessibilityContrast::High =>
+    High =>
       Some(
         @core.BorderStyle::new(
           brush=@core.Brush::solid(ctx.environment.theme.palette.foreground),
           width=2.0,
         ),
       )
-    @core.AccessibilityContrast::Standard =>
+    Standard =>
       match border {
         Some(b) => Some(b)
         None => None
@@ -46,9 +46,7 @@ pub fn append_control_background(
   match resolved_border {
     Some(b) =>
       if b.width > 0.0 {
-        commands.push(
-          @core.DrawCommand::StrokeRoundedRectBrush(rounded, b.brush, b.width),
-        )
+        commands.push(StrokeRoundedRectBrush(rounded, b.brush, b.width))
       }
     None => ()
   }

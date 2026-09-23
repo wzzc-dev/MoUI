@@ -23,10 +23,9 @@ pub fn FormFieldState::apply_action(
   action : FieldAction,
 ) -> FormFieldState {
   match action {
-    FieldAction::Text(value) => self.with_value(value)
-    FieldAction::Toggle(enabled) =>
-      self.with_value(if enabled { "true" } else { "false" })
-    FieldAction::Select(value) => self.with_value(value)
+    Text(value) => self.with_value(value)
+    Toggle(enabled) => self.with_value(if enabled { "true" } else { "false" })
+    Select(value) => self.with_value(value)
   }
 }
 
@@ -39,7 +38,11 @@ pub fn update_named_field(
   name : String,
   action : FieldAction,
 ) -> Array[FormFieldState] {
-  fields.map(field =>
-    if field.name == name { field.apply_action(action) } else { field }
-  )
+  fields.map(field => {
+    if field.name == name {
+      field.apply_action(action)
+    } else {
+      field
+    }
+  })
 }

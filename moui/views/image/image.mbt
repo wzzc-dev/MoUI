@@ -5,7 +5,7 @@ pub fn[Msg] image(
   height? : Double,
   opacity? : Double = 1.0,
   corner_radius? : Double = 0.0,
-  fit? : @core.ImageFit = @core.ImageFit::Contain,
+  fit? : @core.ImageFit = Contain,
   accessibility_label? : String = "",
 ) -> @core.View[Msg] {
   let size = match (width, height) {
@@ -41,12 +41,12 @@ impl @core.ViewNode for Image with fn identity(_self) {
 impl @core.ViewNode for Image with fn declaration(self) {
   let fit = @core.DeclarationKey::int(
     match self.fit {
-      @core.ImageFit::Contain => 0
-      @core.ImageFit::Cover => 1
-      @core.ImageFit::Stretch => 2
-      @core.ImageFit::ScaleDown => 3
-      @core.ImageFit::FitWidth => 4
-      @core.ImageFit::FitHeight => 5
+      Contain => 0
+      Cover => 1
+      Stretch => 2
+      ScaleDown => 3
+      FitWidth => 4
+      FitHeight => 5
     },
   )
   @common.view_declaration(
@@ -86,10 +86,10 @@ impl @core.ViewNode for Image with fn paint(self, context) {
   }
   let commands : Array[@core.DrawCommand] = []
   if self.corner_radius > 0.0 {
-    commands.push(@core.DrawCommand::PushClip(frame))
+    commands.push(PushClip(frame))
   }
   commands.push(
-    @core.DrawCommand::DrawImage({
+    DrawImage({
       source: self.source,
       frame,
       opacity: self.opacity,
@@ -97,7 +97,7 @@ impl @core.ViewNode for Image with fn paint(self, context) {
     }),
   )
   if self.corner_radius > 0.0 {
-    commands.push(@core.DrawCommand::PopClip)
+    commands.push(PopClip)
   }
   @core.ViewPaintPlan::commands(commands)
 }
@@ -105,11 +105,11 @@ impl @core.ViewNode for Image with fn paint(self, context) {
 ///|
 impl @core.ViewNode for Image with fn semantics(self) {
   if self.accessibility_label == "" {
-    @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
+    @core.ViewSemanticsInfo::new(composition=Hidden)
   } else {
     @core.ViewSemanticsInfo::new(
-      composition=@core.SemanticsComposition::Boundary,
-      role=@core.SemanticsRole::Image,
+      composition=Boundary,
+      role=Image,
       label=self.accessibility_label,
     )
   }

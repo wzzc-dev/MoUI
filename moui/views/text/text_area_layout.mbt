@@ -171,13 +171,13 @@ fn text_area_draw_line_text(
     height=glyph_h,
   )
   commands.push(
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text=line_text,
         frame=line_frame,
         font~,
         color~,
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   )

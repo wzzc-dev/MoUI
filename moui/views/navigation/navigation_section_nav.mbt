@@ -7,7 +7,7 @@ pub fn[Msg] section_nav(
   width? : Double = 520.0,
   item_width? : Double = 150.0,
   item_height? : Double = 76.0,
-  orientation? : @core.Axis = @core.Axis::Horizontal,
+  orientation? : @core.Axis = Horizontal,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let item_padding = resolved_theme.spacing_scale.sm
@@ -22,7 +22,7 @@ pub fn[Msg] section_nav(
     let variant = if selected_item {
       @style.ButtonVariant::Primary
     } else {
-      @style.ButtonVariant::Tonal
+      Tonal
     }
     let rows : Array[@core.View[Msg]] = [
       @button.button(
@@ -34,7 +34,7 @@ pub fn[Msg] section_nav(
         height=34.0,
       )
       .disabled(disabled=!item.enabled)
-      .semantics_role(@core.SemanticsRole::Tab)
+      .semantics_role(Tab)
       .semantics_selected(selected=selected_item)
       .key("section-nav-button-" + item.id),
     ]
@@ -42,7 +42,7 @@ pub fn[Msg] section_nav(
       rows.push(
         @text.text(
           item.summary,
-          role=@style.TextRole::Caption,
+          role=Caption,
           theme=resolved_theme,
           width=item_content_width,
           height=24.0,
@@ -54,30 +54,24 @@ pub fn[Msg] section_nav(
         @layout.column(
           rows,
           spacing=resolved_theme.spacing_scale.xs,
-          align=@style.CrossAlign::Start,
+          align=Start,
         ),
         width=item_width,
         height=item_height,
-        variant=if selected_item {
-          @style.ContainerVariant::Raised
-        } else {
-          @style.ContainerVariant::Base
-        },
+        variant=if selected_item { Raised } else { Base },
         theme=resolved_theme,
         padding=item_padding,
       )
       .disabled(disabled=!item.enabled)
-      .semantics_role(@core.SemanticsRole::ListItem)
+      .semantics_role(ListItem)
       .semantics_selected(selected=selected_item)
       .accessibility_label(section_nav_item_accessibility_label(item))
       .key("section-nav-item-" + item.id),
     )
   }
   let body = match orientation {
-    @core.Axis::Horizontal =>
-      @layout.row(item_views, spacing~, align=@style.CrossAlign::Start)
-    @core.Axis::Vertical =>
-      @layout.column(item_views, spacing~, align=@style.CrossAlign::Start)
+    Horizontal => @layout.row(item_views, spacing~, align=Start)
+    Vertical => @layout.column(item_views, spacing~, align=Start)
   }
   let rows : Array[@core.View[Msg]] = []
   let title_height = if title == "" {
@@ -86,7 +80,7 @@ pub fn[Msg] section_nav(
     rows.push(
       @text.text(
         title,
-        role=@style.TextRole::Control,
+        role=Control,
         theme=resolved_theme,
         width=@common.view_max_double(96.0, width - item_padding * 2.0),
         height=28.0,
@@ -97,19 +91,19 @@ pub fn[Msg] section_nav(
   rows.push(body)
   let gap_count = section_nav_max_int(0, item_views.length() - 1).to_double()
   let body_height = match orientation {
-    @core.Axis::Horizontal => item_height
-    @core.Axis::Vertical =>
+    Horizontal => item_height
+    Vertical =>
       item_height * item_views.length().to_double() + spacing * gap_count
   }
   @container.container(
-    @layout.column(rows, spacing~, align=@style.CrossAlign::Start),
+    @layout.column(rows, spacing~, align=Start),
     width~,
     height=title_height + body_height + item_padding * 2.0,
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=item_padding,
   )
-  .semantics_role(@core.SemanticsRole::List)
+  .semantics_role(List)
   .accessibility_label(if title == "" { "Section navigation" } else { title })
 }
 

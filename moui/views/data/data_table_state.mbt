@@ -11,7 +11,7 @@ pub fn table_column(
   label~ : String,
   width? : Double = 120.0,
 ) -> TableColumn {
-  { id, label, width }
+  { id, label, width, }
 }
 
 ///|

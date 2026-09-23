@@ -71,7 +71,7 @@ pub fn Model::new_with_binding(
 ///|
 pub fn update(model : Model, message : Msg) -> Model {
   match message {
-    TogglePlayback => { ..model, playing: !model.playing }
+    TogglePlayback => { ..model, playing: !model.playing, }
     Reset => reset_simulation(model)
     Step => if model.playing { model } else { simulate(model, fixed_step) }
     Advance(delta_seconds) =>
@@ -82,14 +82,14 @@ pub fn update(model : Model, message : Msg) -> Model {
       }
     Viewport(event) =>
       match event {
-        @moui_3d.ViewportEvent::PointerDown(point) =>
+        PointerDown(point) =>
           {
             ..model,
             dragging: true,
             last_pointer_x: point.x,
             last_pointer_y: point.y,
           }
-        @moui_3d.ViewportEvent::PointerMove(point) =>
+        PointerMove(point) =>
           if !model.dragging {
             model
           } else {
@@ -103,8 +103,8 @@ pub fn update(model : Model, message : Msg) -> Model {
               last_pointer_y: point.y,
             }
           }
-        @moui_3d.ViewportEvent::PointerUp(_) => { ..model, dragging: false }
-        @moui_3d.ViewportEvent::Wheel(amount) => {
+        PointerUp(_) => { ..model, dragging: false, }
+        Wheel(amount) => {
           let magnitude = amount.abs().min(100.0) * 0.01
           let factor = if amount >= 0.0 {
             1.0 + magnitude
@@ -113,11 +113,8 @@ pub fn update(model : Model, message : Msg) -> Model {
           }
           with_camera(model, model.snapshot.camera().zoom(factor))
         }
-        @moui_3d.ViewportEvent::Pick(node) =>
-          { ..model, picked_node: Some(node) }
-        @moui_3d.ViewportEvent::Resize(_)
-        | @moui_3d.ViewportEvent::Focus(_)
-        | @moui_3d.ViewportEvent::RendererStatus => model
+        Pick(node) => { ..model, picked_node: Some(node), }
+        Resize(_) | Focus(_) | RendererStatus => model
       }
   }
 }
@@ -144,11 +141,10 @@ pub fn view(model : Model) -> @moui.View[Msg] {
     Some(node) => "picked node \{node.value()}"
   }
   let renderer_status = match model.binding.status() {
-    @moui_3d.ViewportStatus::Loading => "GPU renderer status: loading"
-    @moui_3d.ViewportStatus::Ready => "GPU renderer status: host connected"
-    @moui_3d.ViewportStatus::Unavailable(reason) =>
-      "GPU renderer unavailable: \{reason}"
-    @moui_3d.ViewportStatus::Failed(reason) => "GPU renderer failed: \{reason}"
+    Loading => "GPU renderer status: loading"
+    Ready => "GPU renderer status: host connected"
+    Unavailable(reason) => "GPU renderer unavailable: \{reason}"
+    Failed(reason) => "GPU renderer failed: \{reason}"
   }
   center(
     card(
@@ -167,8 +163,8 @@ pub fn view(model : Model) -> @moui.View[Msg] {
               },
               on_click=TogglePlayback,
             ),
-            button("Step", on_click=Step, variant=@views.ButtonVariant::Tonal),
-            button("Reset", on_click=Reset, variant=@views.ButtonVariant::Tonal),
+            button("Step", on_click=Step, variant=Tonal),
+            button("Reset", on_click=Reset, variant=Tonal),
           ],
           spacing=6.0,
         ),
@@ -176,7 +172,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
           binding=model.binding,
           snapshot=model.snapshot,
           semantics_label="3D physics viewport",
-          on_event=Some(event => Msg::Viewport(event)),
+          on_event=Some(event => Viewport(event)),
         ),
         text(
           "sphere y=\{position.y().to_string()} | \{ray} | \{renderer_status}",
@@ -273,14 +269,15 @@ fn refresh(model : Model) -> Model {
   let scene = model.base_scene.apply_animation_samples([
     @moui_3d.AnimationSample::new(
       node=@moui_3d.NodeId::new(0),
-      path=@moui_3d.AnimationPath::Translation,
+      path=Translation,
       value=[position.x(), position.y(), position.z()],
     ),
-    @moui_3d.AnimationSample::new(
-      node=@moui_3d.NodeId::new(0),
-      path=@moui_3d.AnimationPath::Rotation,
-      value=[rotation.x(), rotation.y(), rotation.z(), rotation.w()],
-    ),
+    @moui_3d.AnimationSample::new(node=@moui_3d.NodeId::new(0), path=Rotation, value=[
+      rotation.x(),
+      rotation.y(),
+      rotation.z(),
+      rotation.w(),
+    ]),
   ])
   let snapshot = @moui_3d.ViewportSnapshot::new(
     scene_revision=model.snapshot.scene_revision() + 1L,
@@ -299,7 +296,7 @@ fn refresh(model : Model) -> Model {
     ),
     10.0,
   )
-  { ..model, snapshot, ray_hit: ray }
+  { ..model, snapshot, ray_hit: ray, }
 }
 
 ///|
@@ -313,16 +310,14 @@ fn new_world() -> (
   let world = @moui_3d_physics_rapier.RapierWorld::new()
   let ground_body = world.create_body(
     @moui_3d_physics.BodyDesc::new(
-      body_type=@moui_3d_physics.BodyType::Fixed,
+      body_type=Fixed,
       position=@moui_3d.Vec3::new(x=0.0, y=-0.5, z=0.0),
     ),
   )
   let ground_collider = world
     .create_collider(
       @moui_3d_physics.ColliderDesc::new(
-        shape=@moui_3d_physics.Shape::Cuboid(
-          @moui_3d.Vec3::new(x=2.8, y=0.5, z=2.8),
-        ),
+        shape=Cuboid(@moui_3d.Vec3::new(x=2.8, y=0.5, z=2.8)),
         body=Some(ground_body),
         friction=0.8,
       ),
@@ -340,7 +335,7 @@ fn new_world() -> (
   let dynamic_collider = world
     .create_collider(
       @moui_3d_physics.ColliderDesc::new(
-        shape=@moui_3d_physics.Shape::Ball(0.5),
+        shape=Ball(0.5),
         body=Some(dynamic_body),
         friction=0.7,
         restitution=0.85,

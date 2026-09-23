@@ -99,13 +99,11 @@ pub fn Pixmap::from_rgba_bytes(
   data : Bytes,
 ) -> Result[Pixmap, PixmapDecodeError] {
   guard width >= 0 && height >= 0 else {
-    return Err(PixmapDecodeError::InvalidRgbaDimensions(width, height))
+    return Err(InvalidRgbaDimensions(width, height))
   }
   let expected_len = width * height * 4
   guard data.length() == expected_len else {
-    return Err(
-      PixmapDecodeError::RgbaByteLengthMismatch(expected_len, data.length()),
-    )
+    return Err(RgbaByteLengthMismatch(expected_len, data.length()))
   }
   let pixmap = Pixmap::new(width, height)
   let pixels = pixmap.get_pixels()
@@ -228,32 +226,32 @@ struct BmpInfo {
 ///|
 fn decode_bmp_info(data : Bytes) -> Result[BmpInfo, PixmapDecodeError] {
   guard data.length() >= 54 else {
-    return Err(PixmapDecodeError::UnexpectedEndOfData(0, 54, data.length()))
+    return Err(UnexpectedEndOfData(0, 54, data.length()))
   }
   guard data[0] == 66 && data[1] == 77 else {
-    return Err(PixmapDecodeError::InvalidBmpSignature(data[0], data[1]))
+    return Err(InvalidBmpSignature(data[0], data[1]))
   }
   let pixel_offset = read_u32_le_at(data, 10)
   let header_size = read_u32_le_at(data, 14)
   guard header_size >= 40 else {
-    return Err(PixmapDecodeError::UnsupportedBmpHeaderSize(header_size))
+    return Err(UnsupportedBmpHeaderSize(header_size))
   }
   let width = read_i32_le_at(data, 18)
   let raw_height = read_i32_le_at(data, 22)
   guard width > 0 && raw_height != 0 else {
-    return Err(PixmapDecodeError::InvalidBmpDimensions(width, raw_height))
+    return Err(InvalidBmpDimensions(width, raw_height))
   }
   let color_planes = read_u16_le_at(data, 26)
   guard color_planes == 1 else {
-    return Err(PixmapDecodeError::UnsupportedBmpColorPlanes(color_planes))
+    return Err(UnsupportedBmpColorPlanes(color_planes))
   }
   let bits_per_pixel = read_u16_le_at(data, 28)
   guard bits_per_pixel == 24 || bits_per_pixel == 32 else {
-    return Err(PixmapDecodeError::UnsupportedBmpBitsPerPixel(bits_per_pixel))
+    return Err(UnsupportedBmpBitsPerPixel(bits_per_pixel))
   }
   let compression = read_u32_le_at(data, 30)
   guard compression == 0 else {
-    return Err(PixmapDecodeError::UnsupportedBmpCompression(compression))
+    return Err(UnsupportedBmpCompression(compression))
   }
   let height = raw_height.abs()
   let bytes_per_pixel = bits_per_pixel / 8
@@ -261,11 +259,7 @@ fn decode_bmp_info(data : Bytes) -> Result[BmpInfo, PixmapDecodeError] {
   let required_len = pixel_offset + source_row_bytes * height
   guard data.length() >= required_len else {
     return Err(
-      PixmapDecodeError::BmpPixelDataOutOfBounds(
-        pixel_offset,
-        required_len,
-        data.length(),
-      ),
+      BmpPixelDataOutOfBounds(pixel_offset, required_len, data.length()),
     )
   }
   Ok({

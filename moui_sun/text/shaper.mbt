@@ -8,13 +8,13 @@ pub enum TextDirection {
 ///|
 /// Left-to-right text direction.
 pub fn TextDirection::left_to_right() -> TextDirection {
-  TextDirection::LeftToRight
+  LeftToRight
 }
 
 ///|
 /// Right-to-left text direction.
 pub fn TextDirection::right_to_left() -> TextDirection {
-  TextDirection::RightToLeft
+  RightToLeft
 }
 
 ///|
@@ -26,17 +26,17 @@ struct Script {
 ///|
 /// Common scripts
 pub fn Script::latin() -> Script {
-  { tag: "Latn" }
+  { tag: "Latn", }
 }
 
 ///|
 pub fn Script::cyrillic() -> Script {
-  { tag: "Cyrl" }
+  { tag: "Cyrl", }
 }
 
 ///|
 pub fn Script::cjk() -> Script {
-  { tag: "Hani" }
+  { tag: "Hani", }
 }
 
 ///|
@@ -58,11 +58,11 @@ struct ShapingBuffer {
 /// Create a new shaping buffer
 pub fn ShapingBuffer::new(
   text : String,
-  direction? : TextDirection = TextDirection::LeftToRight,
+  direction? : TextDirection = LeftToRight,
   script? : Script = Script::latin(),
   font_size? : Double = 16.0,
 ) -> ShapingBuffer {
-  { text, direction, script, font_size }
+  { text, direction, script, font_size, }
 }
 
 ///|
@@ -103,8 +103,8 @@ pub fn ShapingBuffer::shape(
 
   for i in 0..<len {
     let cluster = match self.direction {
-      TextDirection::LeftToRight => i
-      TextDirection::RightToLeft => len - i - 1
+      LeftToRight => i
+      RightToLeft => len - i - 1
     }
     let glyph_id = GlyphId::new(cluster)
     let char_width = (self.font_size * 0.6).to_int()
@@ -122,5 +122,5 @@ pub fn ShapingBuffer::shape(
     total_width = total_width + char_width
   }
 
-  { glyphs, positions, width: total_width }
+  { glyphs, positions, width: total_width, }
 }

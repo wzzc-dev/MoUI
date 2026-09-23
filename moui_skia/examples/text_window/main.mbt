@@ -166,5 +166,5 @@ pub impl @windows.ApplicationHandler for App with fn window_event(
 ///|
 fn main {
   let event_loop = @windows.EventLoop::new()
-  event_loop.run_app({ window: None })
+  event_loop.run_app({ window: None, })
 }

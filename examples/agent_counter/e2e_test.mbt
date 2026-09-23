@@ -7,17 +7,17 @@ fn request(source : String) -> Json {
 
 ///|
 fn structured_value(response : Json) -> Map[String, Json] {
-  guard response is Json::Object(response_fields) else {
+  guard response is Object(response_fields) else {
     abort("expected JSON-RPC response object")
   }
-  guard response_fields.get("result") is Some(Json::Object(result_fields)) else {
+  guard response_fields.get("result") is Some(Object(result_fields)) else {
     abort("expected JSON-RPC result object")
   }
   guard result_fields.get("structuredContent")
-    is Some(Json::Object(structured_fields)) else {
+    is Some(Object(structured_fields)) else {
     abort("expected structuredContent object")
   }
-  guard structured_fields.get("value") is Some(Json::Object(value_fields)) else {
+  guard structured_fields.get("value") is Some(Object(value_fields)) else {
     abort("expected structured value object")
   }
   value_fields
@@ -25,7 +25,7 @@ fn structured_value(response : Json) -> Map[String, Json] {
 
 ///|
 fn json_string_field(fields : Map[String, Json], name : String) -> String {
-  guard fields.get(name) is Some(Json::String(value)) else {
+  guard fields.get(name) is Some(String(value)) else {
     abort("expected string field \{name}")
   }
   value
@@ -33,27 +33,27 @@ fn json_string_field(fields : Map[String, Json], name : String) -> String {
 
 ///|
 fn assert_semantics_wire_shape(value : Map[String, Json]) -> Unit {
-  guard value.get("root") is Some(Json::String(_root)) else {
+  guard value.get("root") is Some(String(_root)) else {
     abort("semantics root must be one decimal string")
   }
-  guard value.get("focused") is Some(Json::Null) else {
+  guard value.get("focused") is Some(Null) else {
     abort("absent semantics focus must be null")
   }
-  guard value.get("nodes") is Some(Json::Array(nodes)) else {
+  guard value.get("nodes") is Some(Array(nodes)) else {
     abort("semantics nodes must be an array")
   }
   for node in nodes {
     match node {
-      Json::Object(fields) =>
+      Object(fields) =>
         match fields.get("semantic_id") {
-          Some(Json::String("counter.increment")) => {
-            guard fields.get("role") is Some(Json::String("button")) else {
+          Some(String("counter.increment")) => {
+            guard fields.get("role") is Some(String("button")) else {
               abort("semantic role must use the stable lower-case wire code")
             }
-            guard fields.get("actions") is Some(Json::Array(actions)) else {
+            guard fields.get("actions") is Some(Array(actions)) else {
               abort("semantic actions must be an array")
             }
-            if !actions.any(action => action is Json::String("activate")) {
+            if !actions.any(action => action is String("activate")) {
               abort("semantic action must use the stable lower-case wire code")
             }
             return ()
@@ -75,7 +75,7 @@ fn draw_frame_contains_text(
   .draw_commands()
   .any(command => {
     match command {
-      @core.DrawCommand::DrawText(run) => run.text == expected
+      DrawText(run) => run.text == expected
       _ => false
     }
   })
@@ -91,7 +91,7 @@ fn perform_action_request(semantic_id : String, generation : String) -> Json {
 ///|
 test "E2E default MCP surface is semantic only" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@agent_counter.program(),
     width=240.0,
     height=260.0,
   )
@@ -100,11 +100,11 @@ test "E2E default MCP surface is semantic only" {
     host,
     request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   )
-  guard response is Json::Object(fields) else { fail("expected response") }
-  guard fields.get("result") is Some(Json::Object(result)) else {
+  guard response is Object(fields) else { fail("expected response") }
+  guard fields.get("result") is Some(Object(result)) else {
     fail("expected result")
   }
-  guard result.get("tools") is Some(Json::Array(tools)) else {
+  guard result.get("tools") is Some(Array(tools)) else {
     fail("expected tools")
   }
   assert_eq(tools.length(), 2)
@@ -117,7 +117,7 @@ test "E2E default MCP surface is semantic only" {
 ///|
 test "E2E semantic action updates model semantics and draw output" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(),
+    program=@agent_counter.program(),
     width=240.0,
     height=260.0,
   )

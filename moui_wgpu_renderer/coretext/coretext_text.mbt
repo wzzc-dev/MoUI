@@ -63,8 +63,8 @@ fn coretext_style_code(style : @core.FontStyle) -> Int {
 ///|
 fn coretext_style_from_code(code : Int) -> @core.FontStyle? {
   match code {
-    0 => Some(@core.FontStyle::Normal)
-    1 => Some(@core.FontStyle::Italic)
+    0 => Some(Normal)
+    1 => Some(Italic)
     _ => None
   }
 }

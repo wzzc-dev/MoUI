@@ -9,13 +9,11 @@ pub fn raster() -> @render.RendererProvider {
     capabilities=() => caps,
     bind=surface => {
       match @render_common.host_surface_metrics_error(surface) {
-        Some(message) => return @render.RendererBindResult::Rejected(message)
+        Some(message) => return Rejected(message)
         None => ()
       }
       guard surface.cpu_present() is Some(host) else {
-        return @render.RendererBindResult::Rejected(
-          "sun-raster requires a CPU presenter",
-        )
+        return Rejected("sun-raster requires a CPU presenter")
       }
       let target = SunPresentTarget::new(description=host.description(), present=frame => {
         host.present(
@@ -33,12 +31,9 @@ pub fn raster() -> @render.RendererProvider {
         target,
         async_image_loading=true,
       ) catch {
-        err =>
-          return @render.RendererBindResult::Rejected(
-            "sun-raster unavailable: " + err.message(),
-          )
+        err => return Rejected("sun-raster unavailable: " + err.message())
       }
-      @render.RendererBindResult::Bound(
+      Bound(
         renderer.to_renderer_session(
           image_source=surface
             .image_source()
@@ -76,7 +71,7 @@ pub fn SunRasterRenderer::to_renderer_session(
     render_frame=submission => self.render_frame(submission.frame()),
     text_system=() => self.text_system(),
     present_count=() => self.present_count(),
-    recover=_reason => @render.RecoveryResult::FallbackToCpu,
+    recover=_reason => FallbackToCpu,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),
     apply_image_load_completion=completion => {

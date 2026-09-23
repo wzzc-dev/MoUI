@@ -66,7 +66,7 @@ fn run_pdf_workbench_effect_chain(
   let model = Ref(update.model)
   let effect = Ref(update.effect)
   let mut turns = 0
-  while turns < 8 && !(effect.val is @moui.Effect::NoEffect) {
+  while turns < 8 && !(effect.val is NoEffect) {
     let current = effect.val
     effect.val = @moui.Effect::none()
     run_pdf_workbench_effect_value(
@@ -87,7 +87,7 @@ fn run_pdf_workbench_effect_value(
   document_services : PdfWorkbenchDocumentServices,
 ) -> Unit {
   match current {
-    @moui.Effect::Run(_descriptor, run) =>
+    Run(_descriptor, run) =>
       run(message => {
         let next = model.val.update_with_services(
           message,
@@ -98,7 +98,7 @@ fn run_pdf_workbench_effect_value(
         model.val = next.model
         effect.val = next.effect
       })
-    @moui.Effect::Task(_descriptor, start) =>
+    Task(_descriptor, start) =>
       ignore(
         start(message => {
           let next = model.val.update_with_services(
@@ -111,7 +111,7 @@ fn run_pdf_workbench_effect_value(
           effect.val = next.effect
         }),
       )
-    @moui.Effect::Dispatch(run) =>
+    Dispatch(run) =>
       run(message => {
         let next = model.val.update_with_services(
           message,
@@ -122,7 +122,7 @@ fn run_pdf_workbench_effect_value(
         model.val = next.model
         effect.val = next.effect
       })
-    @moui.Effect::Send(message) => {
+    Send(message) => {
       let next = model.val.update_with_services(
         message,
         services,
@@ -132,7 +132,7 @@ fn run_pdf_workbench_effect_value(
       model.val = next.model
       effect.val = next.effect
     }
-    @moui.Effect::Batch(effects) =>
+    Batch(effects) =>
       for nested in effects {
         run_pdf_workbench_effect_value(
           nested, model, effect, services, raster_services, document_services,
@@ -151,15 +151,10 @@ fn pdf_workbench_test_binary_services(bytes : Bytes) -> @services.AppServices {
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::FileDialog(_) =>
-          @host.HostServiceResponse::FileDialogSelection(["/tmp/minimum.pdf"])
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::ReadBytes(path)
-        ) => @host.HostServiceResponse::BinaryFileContent(path, bytes)
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(path, _)
-        ) => @host.HostServiceResponse::BinaryFileWritten(path)
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        FileDialog(_) => FileDialogSelection(["/tmp/minimum.pdf"])
+        BinaryFile(ReadBytes(path)) => BinaryFileContent(path, bytes)
+        BinaryFile(WriteBytes(path, _)) => BinaryFileWritten(path)
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -234,14 +229,10 @@ fn pdf_workbench_click_text(
     y=frame.origin.y + frame.size.height / 2.0,
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
-    ),
+    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
   )
 }
 
@@ -256,10 +247,10 @@ fn pdf_workbench_scroll_at(
     y=frame.origin.y + frame.size.height / 2.0,
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=point,
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@geometry.Point::new(x=0.0, y=dy),
       ),
     ),
@@ -272,8 +263,7 @@ fn pdf_workbench_draw_has_text_containing(
   needle : String,
 ) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) &&
-    value.contains(needle)
+    command is DrawText({ text: value, .. }) && value.contains(needle)
   })
 }
 
@@ -285,10 +275,7 @@ fn pdf_workbench_draw_text_count(
   let mut count = 0
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, .. }) =>
-        if value == text {
-          count = count + 1
-        }
+      DrawText({ text: value, .. }) => if value == text { count = count + 1 }
       _ => ()
     }
   }
@@ -297,7 +284,7 @@ fn pdf_workbench_draw_text_count(
 
 ///|
 fn pdf_workbench_draw_has_image(commands : Array[@core.DrawCommand]) -> Bool {
-  commands.any(command => command is @core.DrawCommand::DrawImage(_))
+  commands.any(command => command is DrawImage(_))
 }
 
 ///|
@@ -305,7 +292,7 @@ fn pdf_workbench_draw_image_count(commands : Array[@core.DrawCommand]) -> Int {
   let mut count = 0
   for command in commands {
     match command {
-      @core.DrawCommand::DrawImage(_) => count = count + 1
+      DrawImage(_) => count = count + 1
       _ => ()
     }
   }
@@ -320,7 +307,7 @@ fn pdf_workbench_image_frame(
   let mut best_area = 0.0
   for command in commands {
     match command {
-      @core.DrawCommand::DrawImage({ frame, .. }) => {
+      DrawImage({ frame, .. }) => {
         let area = frame.size.width * frame.size.height
         if area > best_area {
           best = Some(frame)
@@ -340,7 +327,7 @@ fn pdf_workbench_text_frame(
 ) -> @core.Rect? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+      DrawText({ text: value, frame, .. }) =>
         if value == text {
           return Some(frame)
         }

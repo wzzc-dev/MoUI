@@ -83,7 +83,7 @@ pub fn Paragraph::hit_test_utf8(
   ignore(self)
   ignore(x)
   ignore(y)
-  { offset: 0, downstream: true }
+  { offset: 0, downstream: true, }
 }
 
 ///|

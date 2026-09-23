@@ -24,7 +24,7 @@ pub struct PixmapCacheDecodeResult {
 ///|
 /// Create an empty pixmap cache.
 pub fn PixmapCache::new() -> PixmapCache {
-  { pixmaps: Map([]), access_order: [], capacity: 0, is_bounded: false }
+  { pixmaps: Map([]), access_order: [], capacity: 0, is_bounded: false, }
 }
 
 ///|
@@ -160,8 +160,8 @@ pub fn PixmapCache::get_or_insert_result(
   pixmap : Pixmap,
 ) -> PixmapCacheInsertResult {
   match self.get(key) {
-    Some(cached) => { pixmap: cached, did_insert: false }
-    None => { pixmap: self.insert(key, pixmap), did_insert: true }
+    Some(cached) => { pixmap: cached, did_insert: false, }
+    None => { pixmap: self.insert(key, pixmap), did_insert: true, }
   }
 }
 
@@ -186,12 +186,12 @@ pub fn PixmapCache::get_or_decode_bmp_result(
   data : Bytes,
 ) -> Result[PixmapCacheDecodeResult, PixmapDecodeError] {
   match self.get(key) {
-    Some(cached) => Ok({ pixmap: cached, did_decode: false })
+    Some(cached) => Ok({ pixmap: cached, did_decode: false, })
     None =>
       match Pixmap::from_bmp_bytes(data) {
         Ok(decoded) => {
           let pixmap = self.insert(key, decoded)
-          Ok({ pixmap, did_decode: true })
+          Ok({ pixmap, did_decode: true, })
         }
         Err(error) => Err(error)
       }
@@ -219,12 +219,12 @@ pub fn PixmapCache::get_or_decode_png_result(
   data : Bytes,
 ) -> Result[PixmapCacheDecodeResult, PixmapDecodeError] {
   match self.get(key) {
-    Some(cached) => Ok({ pixmap: cached, did_decode: false })
+    Some(cached) => Ok({ pixmap: cached, did_decode: false, })
     None =>
       match Pixmap::from_png_bytes(data) {
         Ok(decoded) => {
           let pixmap = self.insert(key, decoded)
-          Ok({ pixmap, did_decode: true })
+          Ok({ pixmap, did_decode: true, })
         }
         Err(error) => Err(error)
       }
@@ -256,12 +256,12 @@ pub fn PixmapCache::get_or_decode_rgba_result(
   data : Bytes,
 ) -> Result[PixmapCacheDecodeResult, PixmapDecodeError] {
   match self.get(key) {
-    Some(cached) => Ok({ pixmap: cached, did_decode: false })
+    Some(cached) => Ok({ pixmap: cached, did_decode: false, })
     None =>
       match Pixmap::from_rgba_bytes(width, height, data) {
         Ok(decoded) => {
           let pixmap = self.insert(key, decoded)
-          Ok({ pixmap, did_decode: true })
+          Ok({ pixmap, did_decode: true, })
         }
         Err(error) => Err(error)
       }

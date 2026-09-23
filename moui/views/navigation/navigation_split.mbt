@@ -13,8 +13,8 @@ pub fn[Msg] split_view(
       detail.frame(width=detail_width, height~),
     ],
     spacing~,
-    align=@style.CrossAlign::Start,
-  ).semantics_role(@core.SemanticsRole::Group)
+    align=Start,
+  ).semantics_role(Group)
 }
 
 ///|
@@ -61,8 +61,8 @@ pub fn[Msg] resizable_split_view(
       detail.frame(width=detail_width, height~),
     ],
     spacing~,
-    align=@style.CrossAlign::Start,
-  ).semantics_role(@core.SemanticsRole::Group)
+    align=Start,
+  ).semantics_role(Group)
 }
 
 ///|

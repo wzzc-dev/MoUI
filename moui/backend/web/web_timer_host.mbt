@@ -14,7 +14,7 @@ priv struct WebTimerRegistry {
 
 ///|
 fn WebTimerRegistry::new() -> WebTimerRegistry {
-  { next_token: 1, registrations: [] }
+  { next_token: 1, registrations: [], }
 }
 
 ///|
@@ -57,7 +57,7 @@ fn web_timer_dispatch_due_at(now_ms : Double) -> Unit {
       (registration.dispatch)(
         @core.Frame::new(time_ms=now_ms, delta_ms=elapsed),
       )
-      next.push({ ..registration, last_time_ms: now_ms })
+      next.push({ ..registration, last_time_ms: now_ms, })
     } else {
       next.push(registration)
     }

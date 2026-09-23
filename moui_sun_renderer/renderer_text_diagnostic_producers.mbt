@@ -62,7 +62,7 @@ pub fn SunRasterRenderer::emoji_font_fallback_diagnostic(
   self : SunRasterRenderer,
   text? : String = "\u{1F600}",
   font? : @core.FontSpec = @core.FontSpec::new(
-    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    families=@core.FontFamilyStack::new([Emoji]),
     size=32.0,
   ),
 ) -> SunEmojiFontFallbackDiagnostic {
@@ -321,7 +321,7 @@ fn sun_first_font_family_label(font : @core.FontSpec) -> String {
 ///|
 fn sun_font_family_label(family : @core.FontFamily) -> String {
   match family {
-    @core.FontFamily::Name(name) => name
+    Name(name) => name
     _ => family.css_name()
   }
 }

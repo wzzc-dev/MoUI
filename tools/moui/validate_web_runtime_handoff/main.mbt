@@ -433,7 +433,7 @@ fn validate_target(
     }
   }
   if failures.is_empty() {
-    Ok({ target, wasm_bytes: wasm_size, compiled_wasm_exports: exports })
+    Ok({ target, wasm_bytes: wasm_size, compiled_wasm_exports: exports, })
   } else {
     Err(failures)
   }

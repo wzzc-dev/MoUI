@@ -9,7 +9,7 @@ fn markdown_editor_complete_rule_on_space(
   }
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range(source, current)
   let line = String::from_array(chars[range.start:range.end])
   markdown_editor_complete_rule_on_enter(chars, range, line, caret)
@@ -26,7 +26,7 @@ fn markdown_editor_complete_setext_heading_on_space(
   }
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range(source, current)
   let line = String::from_array(chars[range.start:range.end])
   markdown_editor_complete_setext_heading_on_enter(chars, range, line, caret)
@@ -76,7 +76,7 @@ pub fn markdown_editor_insert_hard_break(
         insert +
         String::from_array(chars[replace_range.end:]),
       caret=replace_range.start + markdown_editor_text_length(insert),
-      edit_range=Some({ start: replace_range.start, end: replace_range.end }),
+      edit_range=Some({ start: replace_range.start, end: replace_range.end, }),
     ),
   )
 }
@@ -98,7 +98,7 @@ fn markdown_editor_complete_rule_on_enter(
     markdown_editor_transform_result(
       text~,
       caret=caret + 1,
-      edit_range=Some({ start: caret, end: caret }),
+      edit_range=Some({ start: caret, end: caret, }),
     ),
   )
 }
@@ -130,7 +130,7 @@ fn markdown_editor_complete_setext_heading_on_enter(
     markdown_editor_transform_result(
       text~,
       caret=caret + 1,
-      edit_range=Some({ start: caret, end: caret }),
+      edit_range=Some({ start: caret, end: caret, }),
     ),
   )
 }
@@ -189,7 +189,7 @@ fn markdown_editor_autocomplete_block_marker(
   }
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_current_line_range(source, current)
   let before = String::from_array(chars[range.start:caret])
   let marker = markdown_editor_typed_block_marker(before)
@@ -203,7 +203,7 @@ fn markdown_editor_autocomplete_block_marker(
     markdown_editor_transform_result(
       text~,
       caret=range.start + markdown_editor_text_length(marker),
-      edit_range=Some({ start: range.start, end: caret }),
+      edit_range=Some({ start: range.start, end: caret, }),
     ),
   )
 }
@@ -343,7 +343,7 @@ fn markdown_editor_shift_lines(
   selection : @core.TextRange?,
   indent~ : Bool,
 ) -> RichTextInputTransform? {
-  let current : MarkdownEditorSelection = { caret, selection }
+  let current : MarkdownEditorSelection = { caret, selection, }
   let range = markdown_editor_selected_line_range(source, current)
   let chars = source.to_array()
   let segment = String::from_array(chars[range.start:range.end])
@@ -381,7 +381,7 @@ fn markdown_editor_shift_lines(
       text~,
       caret=next_caret,
       selection=next_selection,
-      edit_range=Some({ start: range.start, end: range.end }),
+      edit_range=Some({ start: range.start, end: range.end, }),
     ),
   )
 }
@@ -441,7 +441,7 @@ fn markdown_editor_exit_empty_continuation(
             parent +
             String::from_array(chars[range.end:]),
           caret=range.start + markdown_editor_text_length(parent),
-          edit_range=Some({ start: range.start, end: range.end }),
+          edit_range=Some({ start: range.start, end: range.end, }),
         ),
       )
     None => ()
@@ -454,7 +454,7 @@ fn markdown_editor_exit_empty_continuation(
           outdented +
           String::from_array(chars[range.end:]),
         caret=range.start + markdown_editor_marker_prefix_length(outdented),
-        edit_range=Some({ start: range.start, end: range.end }),
+        edit_range=Some({ start: range.start, end: range.end, }),
       ),
     )
   }
@@ -463,7 +463,7 @@ fn markdown_editor_exit_empty_continuation(
       text=String::from_array(chars[:range.start]) +
         String::from_array(chars[range.end:]),
       caret=range.start,
-      edit_range=Some({ start: range.start, end: range.end }),
+      edit_range=Some({ start: range.start, end: range.end, }),
     ),
   )
 }
@@ -481,7 +481,7 @@ fn markdown_editor_backspace_empty_continuation(
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   let range = markdown_editor_current_line_range(
     source,
-    ({ caret, selection } : MarkdownEditorSelection),
+    ({ caret, selection, } : MarkdownEditorSelection),
   )
   if caret != range.end {
     return None
@@ -503,7 +503,7 @@ fn markdown_editor_delete_empty_continuation(
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   let range = markdown_editor_current_line_range(
     source,
-    ({ caret, selection } : MarkdownEditorSelection),
+    ({ caret, selection, } : MarkdownEditorSelection),
   )
   if caret != range.start {
     return None
@@ -530,7 +530,7 @@ fn markdown_editor_exit_empty_heading(
             prefix +
             String::from_array(chars[range.end:]),
           caret=range.start + markdown_editor_text_length(prefix),
-          edit_range=Some({ start: range.start, end: range.end }),
+          edit_range=Some({ start: range.start, end: range.end, }),
         ),
       )
     None => None

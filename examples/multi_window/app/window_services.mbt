@@ -22,7 +22,7 @@ pub fn WindowScene::new(
   scene_id~ : String,
   payload? : String = "",
 ) -> WindowScene {
-  { scene_id, payload }
+  { scene_id, payload, }
 }
 
 ///|
@@ -40,7 +40,7 @@ pub fn WindowOpenRequest::new(
   width~ : Double,
   height~ : Double,
 ) -> WindowOpenRequest {
-  { title, scene, width, height }
+  { title, scene, width, height, }
 }
 
 ///|
@@ -70,7 +70,7 @@ pub fn WindowActions::new(
   dispatch~ : (WindowRequest) -> Unit,
   subscribe? : ((WindowEvent) -> Unit) -> () -> Unit = _handle => () => (),
 ) -> WindowActions {
-  { dispatch, subscribe }
+  { dispatch, subscribe, }
 }
 
 ///|

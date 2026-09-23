@@ -32,10 +32,10 @@ pub fn feedback_tone_style(
   style : @style.FeedbackStyle,
 ) -> @style.ToneStyle {
   match tone {
-    @style.FeedbackTone::Neutral => style.neutral
-    @style.FeedbackTone::Info => style.info
-    @style.FeedbackTone::Success => style.success
-    @style.FeedbackTone::Warning => style.warning
-    @style.FeedbackTone::Danger => style.danger
+    Neutral => style.neutral
+    Info => style.info
+    Success => style.success
+    Warning => style.warning
+    Danger => style.danger
   }
 }

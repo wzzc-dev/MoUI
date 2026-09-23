@@ -14,7 +14,7 @@ pub fn MacosModalNativeHooks::new(
   present~ : (@host.HostModalRequest) -> @host.HostModalResult,
   close~ : (String) -> Unit,
 ) -> MacosModalNativeHooks {
-  { present, close }
+  { present, close, }
 }
 
 ///|
@@ -57,9 +57,9 @@ fn macos_native_present(
     ) ==
     1
   if accepted {
-    @host.HostModalResult::Accepted
+    Accepted
   } else {
-    @host.HostModalResult::Rejected("no native host window")
+    Rejected("no native host window")
   }
 }
 
@@ -73,7 +73,7 @@ fn macos_native_close(_presentation_id : String) -> Unit {
 pub fn macos_modal_presenter() -> MacosModalPresenter {
   {
     capabilities: macos_host_modal_capabilities(),
-    hooks: { present: macos_native_present, close: macos_native_close },
+    hooks: { present: macos_native_present, close: macos_native_close, },
   }
 }
 
@@ -83,7 +83,7 @@ pub fn MacosModalPresenter::with_hooks(
   capabilities? : @host.HostModalCapabilities = macos_host_modal_capabilities(),
   hooks~ : MacosModalNativeHooks,
 ) -> MacosModalPresenter {
-  { capabilities, hooks }
+  { capabilities, hooks, }
 }
 
 ///|
@@ -127,7 +127,7 @@ pub fn MacosModalPresenter::close(
 
 ///|
 pub fn MacosModalPresenter::attach_surface(
-  self : MacosModalPresenter,
+  _self : MacosModalPresenter,
   session : @host_modal.HostModalSession,
   token : String,
 ) -> @host.HostModalEvent? {
@@ -136,7 +136,7 @@ pub fn MacosModalPresenter::attach_surface(
 
 ///|
 pub fn MacosModalPresenter::detach_surface(
-  self : MacosModalPresenter,
+  _self : MacosModalPresenter,
   session : @host_modal.HostModalSession,
   token : String,
 ) -> @host.HostModalEvent? {
@@ -145,7 +145,7 @@ pub fn MacosModalPresenter::detach_surface(
 
 ///|
 pub fn MacosModalPresenter::route_input(
-  self : MacosModalPresenter,
+  _self : MacosModalPresenter,
   session : @host_modal.HostModalSession,
   event : @core.PointerEvent,
 ) -> @host.HostModalEvent? {

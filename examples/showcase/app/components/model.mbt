@@ -142,7 +142,7 @@ pub fn SessionRuntimeInfo::for_platform(
   platform : PlatformId,
 ) -> SessionRuntimeInfo {
   match platform {
-    PlatformId::MacOS =>
+    MacOS =>
       SessionRuntimeInfo::new(
         host="macOS",
         path="GPU",
@@ -153,7 +153,7 @@ pub fn SessionRuntimeInfo::for_platform(
         gpu_promoted=true,
         note="Product auto prefers Skia GPU (Metal) when the host surface is available; CPU raster is recovery fallback.",
       )
-    PlatformId::Linux =>
+    Linux =>
       SessionRuntimeInfo::new(
         host="Linux",
         path="GPU",
@@ -164,7 +164,7 @@ pub fn SessionRuntimeInfo::for_platform(
         gpu_promoted=true,
         note="Product auto prefers Skia GPU (Vulkan) when the host surface is available; CPU raster is recovery fallback.",
       )
-    PlatformId::Windows =>
+    Windows =>
       SessionRuntimeInfo::new(
         host="Windows",
         path="GPU",
@@ -175,7 +175,7 @@ pub fn SessionRuntimeInfo::for_platform(
         gpu_promoted=true,
         note="Product auto prefers Skia GPU (Direct3D) when the host surface is available; CPU raster is recovery fallback.",
       )
-    PlatformId::Android =>
+    Android =>
       SessionRuntimeInfo::new(
         host="Android",
         path="GPU",
@@ -186,7 +186,7 @@ pub fn SessionRuntimeInfo::for_platform(
         gpu_promoted=true,
         note="Mobile product default is Skia GPU when the host surface is available; SkiaRaster is explicit/recovery.",
       )
-    PlatformId::IOS =>
+    IOS =>
       SessionRuntimeInfo::new(
         host="iOS",
         path="GPU",
@@ -197,7 +197,7 @@ pub fn SessionRuntimeInfo::for_platform(
         gpu_promoted=true,
         note="Mobile product default is Skia GPU when the host surface is available; SkiaRaster is explicit/recovery.",
       )
-    PlatformId::HarmonyOS =>
+    HarmonyOS =>
       SessionRuntimeInfo::new(
         host="HarmonyOS",
         path="GPU",
@@ -208,7 +208,7 @@ pub fn SessionRuntimeInfo::for_platform(
         gpu_promoted=true,
         note="Mobile product default is Skia GPU when the host surface is available; SkiaRaster is explicit/recovery.",
       )
-    PlatformId::Web =>
+    Web =>
       SessionRuntimeInfo::new(
         host="Web",
         path="GPU",
@@ -226,7 +226,7 @@ pub fn SessionRuntimeInfo::for_platform(
 pub fn ComponentGalleryModel::new(
   active_platform~ : PlatformId,
   session_runtime? : SessionRuntimeInfo,
-  active_item? : ComponentGalleryItemId = ComponentGalleryItemId::Welcome,
+  active_item? : ComponentGalleryItemId = Welcome,
 ) -> ComponentGalleryModel {
   {
     active_platform,
@@ -319,20 +319,20 @@ pub fn update(
         selected_platform: platform_id_from_string(id).unwrap_or(
           model.selected_platform,
         ),
-        active_item: ComponentGalleryItemId::PlatformRoutes,
+        active_item: PlatformRoutes,
         page_scroll: @geometry.Point::new(x=0.0, y=0.0),
       }
-    SelectMode(id) => { ..model, selected_mode: id }
-    SelectDensity(id) => { ..model, selected_density: id }
-    SampleTextChanged(value) => { ..model, sample_text: value }
-    SampleNumberChanged(value) => { ..model, sample_number: value }
+    SelectMode(id) => { ..model, selected_mode: id, }
+    SelectDensity(id) => { ..model, selected_density: id, }
+    SampleTextChanged(value) => { ..model, sample_text: value, }
+    SampleNumberChanged(value) => { ..model, sample_number: value, }
     TogglePasswordReveal =>
-      { ..model, password_revealed: !model.password_revealed }
-    FeatureToggled(value) => { ..model, feature_enabled: value }
-    SliderChanged(value) => { ..model, slider_value: value }
-    Increment => { ..model, counter: model.counter + 1 }
-    Decrement => { ..model, counter: model.counter - 1 }
-    ProbeTextChanged(value) => { ..model, probe_text: value }
+      { ..model, password_revealed: !model.password_revealed, }
+    FeatureToggled(value) => { ..model, feature_enabled: value, }
+    SliderChanged(value) => { ..model, slider_value: value, }
+    Increment => { ..model, counter: model.counter + 1, }
+    Decrement => { ..model, counter: model.counter - 1, }
+    ProbeTextChanged(value) => { ..model, probe_text: value, }
     ProbeFeatureToggled(value) =>
       {
         ..model,
@@ -345,15 +345,17 @@ pub fn update(
         slider_value: value,
         probe_action_count: model.probe_action_count + 1,
       }
-    ProbeAction => { ..model, probe_action_count: model.probe_action_count + 1 }
-    ProbeSubmit => { ..model, probe_submit_count: model.probe_submit_count + 1 }
+    ProbeAction =>
+      { ..model, probe_action_count: model.probe_action_count + 1, }
+    ProbeSubmit =>
+      { ..model, probe_submit_count: model.probe_submit_count + 1, }
     ProbeDialogOpen =>
       {
         ..model,
         probe_dialog_open: true,
         probe_action_count: model.probe_action_count + 1,
       }
-    ProbeDialogClose => { ..model, probe_dialog_open: false }
+    ProbeDialogClose => { ..model, probe_dialog_open: false, }
     ToggleCheckboxGroupItem(id) => {
       let next : Array[String] = []
       for item in model.checkbox_group_selection {
@@ -364,9 +366,9 @@ pub fn update(
       if !model.checkbox_group_selection.contains(id) {
         next.push(id)
       }
-      { ..model, checkbox_group_selection: next }
+      { ..model, checkbox_group_selection: next, }
     }
-    PageScrolled(offset) => { ..model, page_scroll: offset }
+    PageScrolled(offset) => { ..model, page_scroll: offset, }
     Reset =>
       {
         ..model,

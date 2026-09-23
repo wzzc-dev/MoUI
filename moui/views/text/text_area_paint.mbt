@@ -22,7 +22,7 @@ fn append_text_area_commands(
 ) -> Unit {
   let border = if focused { focused_border } else { border }
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   append_border(commands, rounded, border)
   let display_text = text_with_composition(text, control, focused~)
   let text_frame = text_area_text_frame(frame)
@@ -38,7 +38,7 @@ fn append_text_area_commands(
     font,
     text_frame,
   )
-  commands.push(@core.DrawCommand::PushClip(text_frame))
+  commands.push(PushClip(text_frame))
   let wrapped = if is_placeholder {
     text_area_paragraph(text_system, placeholder, font, text_frame)
   } else {
@@ -92,9 +92,9 @@ fn append_text_area_commands(
       text_frame.size.width,
     )
   }
-  commands.push(@core.DrawCommand::PopClip)
+  commands.push(PopClip)
   if focused {
-    overlay_commands.push(@core.DrawCommand::PushClip(text_frame))
+    overlay_commands.push(PushClip(text_frame))
     if control.composition is None {
       let selection_color = theme.palette.primary.with_alpha(0.18)
       match active_text_selection(control.selection) {
@@ -103,9 +103,7 @@ fn append_text_area_commands(
             paragraph, text_system, font, sel, content_frame, line_height,
           )
           for rect in rects {
-            overlay_commands.push(
-              @core.DrawCommand::FillRect(rect, selection_color),
-            )
+            overlay_commands.push(FillRect(rect, selection_color))
           }
         }
         None => ()
@@ -134,7 +132,7 @@ fn append_text_area_commands(
             )
             if r1.origin.x > r0.origin.x {
               overlay_commands.push(
-                @core.DrawCommand::FillRect(
+                FillRect(
                   @core.Rect::new(
                     x=r0.origin.x,
                     y=r0.origin.y + r0.size.height - 2.0,
@@ -164,7 +162,7 @@ fn append_text_area_commands(
       )
     }
     overlay_commands.push(
-      @core.DrawCommand::FillRect(
+      FillRect(
         text_editing_visual_cursor_rect(
           cursor,
           visual_caret,
@@ -173,6 +171,6 @@ fn append_text_area_commands(
         cursor_color,
       ),
     )
-    overlay_commands.push(@core.DrawCommand::PopClip)
+    overlay_commands.push(PopClip)
   }
 }

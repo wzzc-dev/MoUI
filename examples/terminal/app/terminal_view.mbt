@@ -71,14 +71,14 @@ pub fn term_color_to_core(
   theme : @moui.Theme,
 ) -> @graphics.Color {
   match color {
-    TermColor::Default => terminal_foreground(theme)
-    TermColor::Indexed(n) =>
+    Default => terminal_foreground(theme)
+    Indexed(n) =>
       if n < 0 || n > 255 {
         terminal_foreground(theme)
       } else {
         ansi256_color(n)
       }
-    TermColor::Rgb(r, g, b) =>
+    Rgb(r, g, b) =>
       @graphics.Color::rgba(
         r=r.clamp(min=0, max=255).to_double() / 255.0,
         g=g.clamp(min=0, max=255).to_double() / 255.0,
@@ -127,7 +127,7 @@ fn[Msg] terminal_row_view(
     let fg = if selected { sel_fg } else { term_color_to_core(attrs.fg, theme) }
     let bg = if selected {
       sel_bg
-    } else if attrs.bg == TermColor::Default {
+    } else if attrs.bg == Default {
       terminal_background(theme)
     } else {
       term_color_to_core(attrs.bg, theme)
@@ -135,10 +135,10 @@ fn[Msg] terminal_row_view(
     segments.push(
       @views.text(
         text,
-        role=@views.TextRole::Mono,
+        role=Mono,
         width=width.to_double() * cell_width(theme),
         height=cell_height(theme),
-        align=@text.TextAlign::TextStart,
+        align=TextStart,
       )
       .foreground(fg)
       .background(bg),
@@ -157,13 +157,13 @@ fn[Msg] terminal_row_view(
     segments.push(
       @views.text(
         "",
-        role=@views.TextRole::Mono,
+        role=Mono,
         width=gap.to_double() * cell_width(theme),
         height=cell_height(theme),
       ).background(gap_bg),
     )
   }
-  @views.row(segments, spacing=0.0, align=@views.CrossAlign::Stretch)
+  @views.row(segments, spacing=0.0, align=Stretch)
 }
 
 ///|
@@ -185,5 +185,5 @@ pub fn[Msg] terminal_view(
     }
     rows.push(terminal_row_view(screen.line_at(row_idx), theme, cols, range))
   }
-  @views.column(rows, spacing=0.0, align=@views.CrossAlign::Stretch)
+  @views.column(rows, spacing=0.0, align=Stretch)
 }

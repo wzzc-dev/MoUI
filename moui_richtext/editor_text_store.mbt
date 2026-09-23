@@ -85,7 +85,7 @@ fn markdown_text_store_push_capped(
     return
   }
   if length <= MARKDOWN_TEXT_STORE_SEGMENT_CAP {
-    out.push({ start, end: start + length, text })
+    out.push({ start, end: start + length, text, })
     return
   }
   let mut chunk_char_start = 0
@@ -97,7 +97,7 @@ fn markdown_text_store_push_capped(
       out.push({
         start: start + chunk_char_start,
         end: start + chars,
-        text: text.sub(start=chunk_unit_start, end=units).to_owned(),
+        text: text.exact_view(start=chunk_unit_start, end=units).to_owned(),
       })
       chunk_char_start = chars
       chunk_unit_start = units
@@ -108,7 +108,7 @@ fn markdown_text_store_push_capped(
   out.push({
     start: start + chunk_char_start,
     end: start + chars,
-    text: text.sub(start=chunk_unit_start, end=units).to_owned(),
+    text: text.exact_view(start=chunk_unit_start, end=units).to_owned(),
   })
 }
 
@@ -169,7 +169,7 @@ fn markdown_text_store_cap_in_place(
     markdown_text_store_push_capped(next, segment.text, segment.start)
   }
   if next.length() == 0 {
-    next.push({ start: 0, end: 0, text: "" })
+    next.push({ start: 0, end: 0, text: "", })
   }
   next
 }
@@ -181,9 +181,9 @@ pub fn MarkdownDocumentTextStore::new(
   let segments : Array[MarkdownTextSegment] = []
   markdown_text_store_push_capped(segments, text, 0)
   if segments.length() == 0 {
-    segments.push({ start: 0, end: 0, text: "" })
+    segments.push({ start: 0, end: 0, text: "", })
   }
-  { segments: Ref(segments), revision: Ref(0), materialized: Ref((0, text)) }
+  { segments: Ref(segments), revision: Ref(0), materialized: Ref((0, text)), }
 }
 
 ///|
@@ -201,9 +201,9 @@ pub fn MarkdownDocumentTextStore::from_texts(
     offset = offset + length
   }
   if segments.length() == 0 {
-    segments.push({ start: 0, end: 0, text: "" })
+    segments.push({ start: 0, end: 0, text: "", })
   }
-  { segments: Ref(segments), revision: Ref(0), materialized: Ref((-1, "")) }
+  { segments: Ref(segments), revision: Ref(0), materialized: Ref((-1, "")), }
 }
 
 ///|
@@ -300,7 +300,7 @@ fn MarkdownDocumentTextStore::segmented_at_line_starts(
       start: segment_start,
       end: boundary,
       text: source
-      .sub(start=segment_unit_start, end=unit_starts[line_index])
+      .exact_view(start=segment_unit_start, end=unit_starts[line_index])
       .to_owned(),
     })
     segment_start = boundary
@@ -313,7 +313,9 @@ fn MarkdownDocumentTextStore::segmented_at_line_starts(
   segments.push({
     start: segment_start,
     end: markdown_editor_text_length(source),
-    text: source.sub(start=segment_unit_start, end=source.length()).to_owned(),
+    text: source
+    .exact_view(start=segment_unit_start, end=source.length())
+    .to_owned(),
   })
   Some({
     segments: Ref(markdown_text_store_cap_in_place(segments)),
@@ -332,7 +334,7 @@ pub fn MarkdownDocumentTextStore::replace_all(
   let segments : Array[MarkdownTextSegment] = []
   markdown_text_store_push_capped(segments, text, 0)
   if segments.length() == 0 {
-    segments.push({ start: 0, end: 0, text: "" })
+    segments.push({ start: 0, end: 0, text: "", })
   }
   self.segments.val = segments
   self.revision.val = self.revision.val + 1
@@ -469,7 +471,7 @@ fn markdown_text_segment_slice(
     units = units + ch.utf16_len()
     char_index = char_index + 1
   }
-  text.sub(start=unit_start, end=unit_end).to_owned()
+  text.exact_view(start=unit_start, end=unit_end).to_owned()
 }
 
 ///|
@@ -530,7 +532,7 @@ pub fn MarkdownDocumentTextStore::edit(
   let delta = replacement_length - (end - start)
   if segments.length() == 0 {
     self.segments.val = [
-      { start: 0, end: replacement_length, text: replacement },
+      { start: 0, end: replacement_length, text: replacement, },
     ]
   } else if start >= segments[segments.length() - 1].end {
     // Edit at (or past) the document end: extend the tail, re-capping it
@@ -589,7 +591,7 @@ pub fn MarkdownDocumentTextStore::edit(
       } else if chunks.length() == 0 {
         // The span emptied: drop the segment unless it is the only one.
         if segments.length() == 1 {
-          segments[0] = { start: 0, end: 0, text: "" }
+          segments[0] = { start: 0, end: 0, text: "", }
         } else {
           let next : Array[MarkdownTextSegment] = []
           for index in 0..<first {
@@ -647,7 +649,7 @@ pub fn MarkdownDocumentTextStore::edit(
         next.push(segment)
       }
       if next.length() == 0 {
-        next.push({ start: 0, end: 0, text: "" })
+        next.push({ start: 0, end: 0, text: "", })
       }
       self.segments.val = next
     }

@@ -135,7 +135,7 @@ fn skia_text_metrics(
   } else {
     fallback_height
   }
-  { baseline, height: height.max(baseline) }
+  { baseline, height: height.max(baseline), }
 }
 
 ///|
@@ -227,7 +227,7 @@ fn skia_shaped_caret_positions(
   if offsets.length() <= 1 {
     return Some([0.0])
   }
-  let carets : Array[Double] = Array::new(capacity=offsets.length())
+  let carets : Array[Double] = Array(capacity=offsets.length())
   for _ in offsets {
     carets.push(-1.0)
   }

@@ -124,13 +124,10 @@ fn Font::has_glyph_for_char(self : Font, char_code : Int) -> Bool {
 ///|
 /// Get glyph data, resolving composite glyphs
 fn Font::get_glyph(self : Font, glyph_id : Int) -> GlyphData {
-  guard glyph_id >= 0 && glyph_id < self.glyph_count else {
-    return GlyphData::Empty
-  }
+  guard glyph_id >= 0 && glyph_id < self.glyph_count else { return Empty }
   let data = self.glyphs[glyph_id]
   match data {
-    GlyphData::Composite(components) =>
-      resolve_composite_glyph(self, components)
+    Composite(components) => resolve_composite_glyph(self, components)
     _ => data
   }
 }
@@ -146,7 +143,7 @@ fn resolve_composite_glyph(
   for component in components {
     let glyph_data = font.get_glyph(component.glyph_index)
     match glyph_data {
-      GlyphData::Simple(simple) =>
+      Simple(simple) =>
         // Transform and add contours
         for contour in simple.contours {
           let transformed_points = []
@@ -163,13 +160,13 @@ fn resolve_composite_glyph(
               on_curve: point.on_curve,
             })
           }
-          all_contours.push({ points: transformed_points })
+          all_contours.push({ points: transformed_points, })
         }
       _ => () // Skip empty or unresolved composite glyphs
     }
   }
 
-  guard all_contours.length() > 0 else { return GlyphData::Empty }
+  guard all_contours.length() > 0 else { return Empty }
 
   // Calculate bounding box from contours
   let mut xmin = all_contours[0].points[0].x
@@ -193,7 +190,7 @@ fn resolve_composite_glyph(
     }
   }
 
-  GlyphData::Simple({ contours: all_contours, xmin, ymin, xmax, ymax })
+  Simple({ contours: all_contours, xmin, ymin, xmax, ymax, })
 }
 
 ///|

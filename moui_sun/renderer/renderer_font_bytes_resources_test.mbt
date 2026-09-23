@@ -2,8 +2,10 @@
 test "Renderer cached font bytes path uses RendererResources" {
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 1, 2, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 1, 2, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -62,8 +64,10 @@ test "Renderer cached font bytes path uses RendererResources" {
 test "Renderer cached font atlas path uses RendererResources" {
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 4, 4, 1,
+  )
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -127,8 +131,8 @@ test "Renderer cached font atlas path uses RendererResources" {
 test "Renderer cached font bytes path preserves parse errors" {
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::new(16, 16)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::new(16, 16)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -146,7 +150,7 @@ test "Renderer cached font bytes path preserves parse errors" {
       "label",
       @graphics.Paint::new().set_color(@graphics.Color::black()),
     ) {
-    Err(@text.FontParseError::UnexpectedEndOfData(0, 12, 10)) => ()
+    Err(UnexpectedEndOfData(0, 12, 10)) => ()
     _ => abort("expected checked parser error")
   }
   assert_true(resources.get_font_face_cache().is_empty())

@@ -2,12 +2,8 @@
 test "windows menu command payload records utf8 byte lengths" {
   let encoded = @utf8.decode_lossy(
     @host_services_desktop.encode_menu_commands([
-      @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
-      @core.ActionCommand::new(
-        intent=@core.CommandIntent::Paste,
-        label="粘贴",
-        enabled=false,
-      ),
+      @core.ActionCommand::new(intent=Copy, label="Copy"),
+      @core.ActionCommand::new(intent=Paste, label="粘贴", enabled=false),
     ])[:],
     ignore_bom=false,
   )
@@ -22,38 +18,25 @@ test "windows host decodes pointer movement and clicks in logical coordinates" {
   )
   let logical_position = @core.Point::new(x=100.0, y=80.0)
   let moved = windows_window_event_to_host(
-    @window_core.WindowEvent::PointerMoved(
-      None,
-      physical_position,
-      true,
-      @window_core.PointerSource::Mouse,
-    ),
+    PointerMoved(None, physical_position, true, Mouse),
     logical_position,
     @core.KeyModifiers::none(),
     scale_factor~,
   )
   match moved {
-    Some(
-      @host.Event::Pointer({ position, phase: @core.PointerPhase::Move, .. })
-    ) => assert_true(position == logical_position)
+    Some(Pointer({ position, phase: Move, .. })) =>
+      assert_true(position == logical_position)
     _ => fail("expected logical Windows pointer move")
   }
   let pressed = windows_window_event_to_host(
-    @window_core.WindowEvent::PointerButton(
-      None,
-      @window_core.ElementState::Pressed,
-      physical_position,
-      true,
-      @window_core.ButtonSource::Mouse(@window_core.MouseButton::Left),
-    ),
+    PointerButton(None, Pressed, physical_position, true, Mouse(Left)),
     logical_position,
     @core.KeyModifiers::none(),
     scale_factor~,
   )
   match pressed {
-    Some(
-      @host.Event::Pointer({ position, phase: @core.PointerPhase::Down, .. })
-    ) => assert_true(position == logical_position)
+    Some(Pointer({ position, phase: Down, .. })) =>
+      assert_true(position == logical_position)
     _ => fail("expected logical Windows pointer down")
   }
 }
@@ -68,13 +51,13 @@ test "windows host options carry optional scene resolver and smoke options stay 
     ),
   )
   match WindowsHostAppOptions::new().scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneRejected(message) =>
+    SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Windows scene resolver rejection")
   }
   assert_false(WindowsHostSmokeOptions::new().first_frame_smoke_auto_exit)
   let resolver = @window_lifecycle.WindowSceneResolver::new(resolve=request => {
-    @window_lifecycle.WindowSceneResolution::SceneResolved(
+    SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
@@ -100,7 +83,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
     None => fail("expected configured Windows platform event sources")
   }
   match options.scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Windows scene resolver")
   }
@@ -114,11 +97,9 @@ test "windows UIA actions preserve node generation and typed payload" {
   guard numeric
     is Some(
       {
-        target: @core.SemanticsTarget::ByNodeId(node_id),
-        action: @core.SemanticsAction::SetNumericValue(value),
-        precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-          generation
-        ),
+        target: ByNodeId(node_id),
+        action: SetNumericValue(value),
+        precondition: Exact(generation),
       }
     ) else {
     fail("expected decoded UIA numeric action")
@@ -130,8 +111,7 @@ test "windows UIA actions preserve node generation and typed payload" {
   let selection = windows_decode_accessibility_action(
     b"{\"node_id\":\"43\",\"generation\":\"8\",\"kind\":\"set_selection\",\"value\":\"3,9\"}",
   )
-  guard selection
-    is Some({ action: @core.SemanticsAction::SetSelection(range), .. }) else {
+  guard selection is Some({ action: SetSelection(range), .. }) else {
     fail("expected decoded UIA selection action")
   }
   inspect(range.start, content="3")

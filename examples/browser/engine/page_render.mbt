@@ -8,7 +8,7 @@ pub fn render_html_with_js(
 ) -> (String, ScriptRunResult) {
   let scripts = extract_scripts(source)
   if scripts.length() == 0 {
-    return (source, { outputs: [], errors: [] })
+    return (source, { outputs: [], errors: [], })
   }
   js.reset_dom(url)
   let run = js.run_scripts(scripts)

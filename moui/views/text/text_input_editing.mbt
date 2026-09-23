@@ -337,10 +337,10 @@ fn move_text_caret(
       Some(selection) => {
         let selection = @core.normalize_grapheme_range(boundaries, selection)
         match direction {
-          MoveLeft => { caret: selection.start, selection: None }
-          MoveRight => { caret: selection.end, selection: None }
-          MoveStart => { caret: 0, selection: None }
-          MoveEnd => { caret: length, selection: None }
+          MoveLeft => { caret: selection.start, selection: None, }
+          MoveRight => { caret: selection.end, selection: None, }
+          MoveStart => { caret: 0, selection: None, }
+          MoveEnd => { caret: length, selection: None, }
         }
       }
       None =>

@@ -19,7 +19,7 @@ pub fn TesterStepResult::pass(
   name~ : String,
   detail? : String = "",
 ) -> TesterStepResult {
-  { name, passed: true, detail }
+  { name, passed: true, detail, }
 }
 
 ///|
@@ -27,7 +27,7 @@ pub fn TesterStepResult::fail(
   name~ : String,
   detail? : String = "",
 ) -> TesterStepResult {
-  { name, passed: false, detail }
+  { name, passed: false, detail, }
 }
 
 ///|

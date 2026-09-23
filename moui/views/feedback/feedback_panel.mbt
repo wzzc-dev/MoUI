@@ -16,29 +16,13 @@ fn[Msg] feedback_panel(
   let rows : Array[@core.View[Msg]] = []
   if title != "" {
     rows.push(
-      @text.text(
-        title,
-        role=@style.TextRole::Control,
-        theme~,
-        width=text_width,
-        height=24.0,
-      ),
+      @text.text(title, role=Control, theme~, width=text_width, height=24.0),
     )
   }
   rows.push(
-    @text.text(
-      message,
-      role=@style.TextRole::Caption,
-      theme~,
-      width=text_width,
-      height=28.0,
-    ),
+    @text.text(message, role=Caption, theme~, width=text_width, height=28.0),
   )
-  let body = @layout.column(
-    rows,
-    spacing=theme.spacing_scale.xs,
-    align=@style.CrossAlign::Start,
-  )
+  let body = @layout.column(rows, spacing=theme.spacing_scale.xs, align=Start)
   let content : @core.View[Msg] = match action {
     Some(action) =>
       @layout.row(
@@ -47,14 +31,14 @@ fn[Msg] feedback_panel(
           @button.button(
             action.label,
             on_click=action.message,
-            variant=@style.ButtonVariant::Tonal,
+            variant=Tonal,
             theme~,
             width=92.0,
             height=36.0,
           ),
         ],
         spacing=theme.spacing_scale.sm,
-        align=@style.CrossAlign::Center,
+        align=Center,
       )
     None => body
   }

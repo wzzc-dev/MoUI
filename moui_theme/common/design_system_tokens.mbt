@@ -465,21 +465,21 @@ pub fn DesignTypographyTokens::core_typography(
 pub fn DesignSpacingTokens::core_spacing_scale(
   self : DesignSpacingTokens,
 ) -> @core.SpacingScale {
-  { xs: self.xs, sm: self.sm, md: self.md, lg: self.lg, xl: self.xl }
+  { xs: self.xs, sm: self.sm, md: self.md, lg: self.lg, xl: self.xl, }
 }
 
 ///|
 pub fn DesignRadiusTokens::core_radius_scale(
   self : DesignRadiusTokens,
 ) -> @core.RadiusScale {
-  { sm: self.sm, md: self.md, lg: self.lg, pill: self.pill }
+  { sm: self.sm, md: self.md, lg: self.lg, pill: self.pill, }
 }
 
 ///|
 pub fn DesignElevationTokens::core_shadow_scale(
   self : DesignElevationTokens,
 ) -> @core.ShadowScale {
-  { sm: self.sm, md: self.md, lg: self.lg }
+  { sm: self.sm, md: self.md, lg: self.lg, }
 }
 
 ///|
@@ -498,7 +498,7 @@ pub fn DesignMotionTokens::core_motion(
 pub fn DesignSurfaceTokens::core_surfaces(
   self : DesignSurfaceTokens,
 ) -> @core.SurfaceScale {
-  { base: self.base, raised: self.raised, overlay: self.overlay }
+  { base: self.base, raised: self.raised, overlay: self.overlay, }
 }
 
 ///|
@@ -593,7 +593,7 @@ pub fn DesignTextFieldTokens::core_styles(
   let plain = filled
     .with_normal(normal=plain_normal)
     .with_focused(focused=plain_normal)
-  { filled, outline: filled, plain }
+  { filled, outline: filled, plain, }
 }
 
 ///|
@@ -665,14 +665,14 @@ pub fn DesignSurfaceComponentTokens::core_styles(
     None => Some(theme.shadow_scale.sm)
   }
   let overlay = @views.SurfaceStyle::default(theme~)
-    .with_brush(brush=theme.surface_brush(@core.SurfaceLevel::Overlay))
+    .with_brush(brush=theme.surface_brush(Overlay))
     .with_padding(padding=@core.Insets::all(self.overlay_padding))
     .with_radius(radius=self.overlay_radius)
     // Fluent supplies a layered overlay shadow; otherwise fall back to the
     // neutral minimal faint shadow used before per-tier elevation existed.
     .with_shadow(shadow=overlay_shadow)
-    .with_level(level=@core.SurfaceLevel::Overlay)
-  { base, raised, overlay }
+    .with_level(level=Overlay)
+  { base, raised, overlay, }
 }
 
 ///|
@@ -867,9 +867,9 @@ fn core_text_field_appearance(
   appearance : DesignTextFieldAppearance,
 ) -> @views.TextFieldAppearance {
   match appearance {
-    Filled => @views.TextFieldAppearance::Filled
-    Outline => @views.TextFieldAppearance::Outline
-    Underline => @views.TextFieldAppearance::Underline
+    Filled => Filled
+    Outline => Outline
+    Underline => Underline
   }
 }
 
@@ -891,7 +891,7 @@ pub fn DesignSystemTokens::core_themes(
 ) -> @views.ControlThemeSet {
   let state_layer = self.state_layer.core_tokens()
   let base = self.components.core_themes(self.scheme)
-  { ..base, button: { ..base.button, state_layer, } }
+  { ..base, button: { ..base.button, state_layer, }, }
 }
 
 ///|
@@ -917,8 +917,8 @@ pub fn DesignSystemTokens::core_component_styles(
 ///|
 pub fn DesignSystemTokens::to_theme(self : DesignSystemTokens) -> @core.Theme {
   let base = match self.scheme {
-    @core.ColorScheme::Light => @views.light_theme()
-    @core.ColorScheme::Dark => @views.dark_theme()
+    Light => @views.light_theme()
+    Dark => @views.dark_theme()
   }
   base
   .with_palette(self.palette.core_palette(self.scheme))
@@ -947,7 +947,7 @@ pub fn DesignSystemTokens::with_palette(
     self.spacing,
     self.state_layer,
   )
-  { ..self, palette, surfaces, components }
+  { ..self, palette, surfaces, components, }
 }
 
 ///|
@@ -963,7 +963,7 @@ pub fn DesignSystemTokens::with_spacing(
     spacing,
     self.state_layer,
   )
-  { ..self, spacing, components }
+  { ..self, spacing, components, }
 }
 
 ///|
@@ -979,7 +979,7 @@ pub fn DesignSystemTokens::with_radius(
     self.spacing,
     self.state_layer,
   )
-  { ..self, radius, components }
+  { ..self, radius, components, }
 }
 
 ///|
@@ -995,14 +995,14 @@ pub fn DesignSystemTokens::with_state_layer(
     self.spacing,
     state_layer,
   )
-  { ..self, state_layer, components }
+  { ..self, state_layer, components, }
 }
 
 ///|
 pub fn DesignPreset::tokens(
   self : DesignPreset,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  density? : DesignDensity = DesignDensity::Standard,
+  scheme? : @core.ColorScheme = Light,
+  density? : DesignDensity = Standard,
 ) -> DesignSystemTokens {
   match self {
     Material =>
@@ -1019,12 +1019,12 @@ pub fn DesignPreset::tokens(
 ///|
 pub fn DesignPreset::tokens_for_variant(
   self : DesignPreset,
-  variant? : DesignSchemeVariant = DesignSchemeVariant::SchemeLight,
-  system_scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  density? : DesignDensity = DesignDensity::Standard,
+  variant? : DesignSchemeVariant = SchemeLight,
+  system_scheme? : @core.ColorScheme = Light,
+  density? : DesignDensity = Standard,
 ) -> DesignSystemTokens {
   let scheme = variant_core_scheme(variant, system_scheme)
-  if variant == DesignSchemeVariant::SchemeHighContrast {
+  if variant == SchemeHighContrast {
     high_contrast_design_tokens(self, scheme, density)
   } else {
     let tokens = self.tokens(scheme~, density~)
@@ -1049,44 +1049,44 @@ pub fn custom_tokens(
   let mut surfaces_overridden = false
   let mut components_overridden = false
   match palette {
-    Some(value) => tokens = { ..tokens, palette: value }
+    Some(value) => tokens = { ..tokens, palette: value, }
     None => ()
   }
   match typography {
-    Some(value) => tokens = { ..tokens, typography: value }
+    Some(value) => tokens = { ..tokens, typography: value, }
     None => ()
   }
   match spacing {
-    Some(value) => tokens = { ..tokens, spacing: value }
+    Some(value) => tokens = { ..tokens, spacing: value, }
     None => ()
   }
   match radius {
-    Some(value) => tokens = { ..tokens, radius: value }
+    Some(value) => tokens = { ..tokens, radius: value, }
     None => ()
   }
   match elevation {
-    Some(value) => tokens = { ..tokens, elevation: value }
+    Some(value) => tokens = { ..tokens, elevation: value, }
     None => ()
   }
   match motion {
-    Some(value) => tokens = { ..tokens, motion: value }
+    Some(value) => tokens = { ..tokens, motion: value, }
     None => ()
   }
   match surfaces {
     Some(value) => {
       surfaces_overridden = true
-      tokens = { ..tokens, surfaces: value }
+      tokens = { ..tokens, surfaces: value, }
     }
     None => ()
   }
   match state_layer {
-    Some(value) => tokens = { ..tokens, state_layer: value }
+    Some(value) => tokens = { ..tokens, state_layer: value, }
     None => ()
   }
   match components {
     Some(value) => {
       components_overridden = true
-      tokens = { ..tokens, components: value }
+      tokens = { ..tokens, components: value, }
     }
     None => ()
   }
@@ -1119,7 +1119,7 @@ fn material_design_tokens(
   variant~ : DesignSchemeVariant,
 ) -> DesignSystemTokens {
   let palette = match scheme {
-    @core.ColorScheme::Light =>
+    Light =>
       semantic_palette(
         foreground=color_byte(r=29, g=27, b=32),
         background=color_byte(r=254, g=247, b=255),
@@ -1135,7 +1135,7 @@ fn material_design_tokens(
         info=color(r=0.12, g=0.35, b=0.82),
         scrim=Some(color(r=0.0, g=0.0, b=0.0, a=1.0)),
       )
-    @core.ColorScheme::Dark =>
+    Dark =>
       semantic_palette(
         foreground=color(r=0.93, g=0.91, b=0.96),
         background=color(r=0.09, g=0.08, b=0.11),
@@ -1152,17 +1152,17 @@ fn material_design_tokens(
       )
   }
   let tokens = design_tokens(
-    preset=DesignPreset::Material,
+    preset=Material,
     scheme~,
     variant~,
     density~,
     source_family="Material Design 3 system tokens",
     palette~,
     spacing=spacing_tokens(
-      { xs: 4.0, sm: 8.0, md: 16.0, lg: 24.0, xl: 32.0 },
+      { xs: 4.0, sm: 8.0, md: 16.0, lg: 24.0, xl: 32.0, },
       density,
     ),
-    radius={ sm: 8.0, md: 12.0, lg: 22.0, pill: 999.0 },
+    radius={ sm: 8.0, md: 12.0, lg: 22.0, pill: 999.0, },
     typography=typography_tokens(
       title=24.0,
       body=14.0,
@@ -1174,18 +1174,18 @@ fn material_design_tokens(
       fast_ms: 200.0,
       normal_ms: 300.0,
       slow_ms: 400.0,
-      easing: @core.Easing::EaseOut,
+      easing: EaseOut,
     },
   )
   match scheme {
-    @core.ColorScheme::Light => {
+    Light => {
       let picker = {
         ..tokens.components.picker,
         background: @core.Brush::solid(color_byte(r=243, g=237, b=247)),
       }
-      { ..tokens, components: { ..tokens.components, picker, } }
+      { ..tokens, components: { ..tokens.components, picker, }, }
     }
-    @core.ColorScheme::Dark => tokens
+    Dark => tokens
   }
 }
 
@@ -1196,7 +1196,7 @@ fn carbon_design_tokens(
   variant~ : DesignSchemeVariant,
 ) -> DesignSystemTokens {
   let palette = match scheme {
-    @core.ColorScheme::Light =>
+    Light =>
       semantic_palette(
         foreground=color_byte(r=22, g=22, b=22),
         background=@core.Color::white(),
@@ -1212,7 +1212,7 @@ fn carbon_design_tokens(
         info=color_byte(r=0, g=67, b=206),
         scrim=Some(color(r=0.0, g=0.0, b=0.0, a=0.6)),
       )
-    @core.ColorScheme::Dark =>
+    Dark =>
       semantic_palette(
         foreground=color(r=0.96, g=0.96, b=0.96),
         background=color(r=0.08, g=0.08, b=0.08),
@@ -1229,17 +1229,17 @@ fn carbon_design_tokens(
       )
   }
   let tokens = design_tokens(
-    preset=DesignPreset::Carbon,
+    preset=Carbon,
     scheme~,
     variant~,
     density~,
     source_family="Carbon theme tokens",
     palette~,
     spacing=spacing_tokens(
-      { xs: 2.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0 },
+      { xs: 2.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0, },
       density,
     ),
-    radius={ sm: 0.0, md: 2.0, lg: 4.0, pill: 999.0 },
+    radius={ sm: 0.0, md: 2.0, lg: 4.0, pill: 999.0, },
     typography=typography_tokens(
       title=20.0,
       body=16.0,
@@ -1251,12 +1251,12 @@ fn carbon_design_tokens(
       fast_ms: 90.0,
       normal_ms: 150.0,
       slow_ms: 240.0,
-      easing: @core.Easing::EaseInOut,
+      easing: EaseInOut,
     },
   )
   match scheme {
-    @core.ColorScheme::Light => {
-      let state_layer = { ..tokens.state_layer, hover_alpha: 0.12 }
+    Light => {
+      let state_layer = { ..tokens.state_layer, hover_alpha: 0.12, }
       let components = component_tokens(
         tokens.scheme,
         tokens.palette,
@@ -1269,9 +1269,9 @@ fn carbon_design_tokens(
         ..components.slider,
         foreground: color_byte(r=22, g=22, b=22),
       }
-      { ..tokens, state_layer, components: { ..components, slider, } }
+      { ..tokens, state_layer, components: { ..components, slider, }, }
     }
-    @core.ColorScheme::Dark => tokens
+    Dark => tokens
   }
 }
 
@@ -1282,7 +1282,7 @@ fn primer_design_tokens(
   variant~ : DesignSchemeVariant,
 ) -> DesignSystemTokens {
   let palette = match scheme {
-    @core.ColorScheme::Light =>
+    Light =>
       semantic_palette(
         foreground=color_byte(r=31, g=35, b=40),
         background=@core.Color::white(),
@@ -1306,7 +1306,7 @@ fn primer_design_tokens(
           ),
         ),
       )
-    @core.ColorScheme::Dark =>
+    Dark =>
       semantic_palette(
         foreground=color(r=0.90, g=0.93, b=0.96),
         background=color(r=0.05, g=0.07, b=0.10),
@@ -1323,17 +1323,17 @@ fn primer_design_tokens(
       )
   }
   design_tokens(
-    preset=DesignPreset::Primer,
+    preset=Primer,
     scheme~,
     variant~,
     density~,
     source_family="Primer primitives",
     palette~,
     spacing=spacing_tokens(
-      { xs: 4.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0 },
+      { xs: 4.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0, },
       density,
     ),
-    radius={ sm: 4.0, md: 6.0, lg: 8.0, pill: 999.0 },
+    radius={ sm: 4.0, md: 6.0, lg: 8.0, pill: 999.0, },
     typography=typography_tokens(
       title=20.0,
       body=14.0,
@@ -1345,7 +1345,7 @@ fn primer_design_tokens(
       fast_ms: 100.0,
       normal_ms: 160.0,
       slow_ms: 260.0,
-      easing: @core.Easing::EaseOut,
+      easing: EaseOut,
     },
   )
 }
@@ -1363,7 +1363,7 @@ fn fluent_design_tokens(
   // (colorBrandStroke1 != colorBrandBackground). Status colors use the Fluent
   // 2 status ramp (green/yellow/red) rather than the legacy Office palette.
   let palette = match scheme {
-    @core.ColorScheme::Light =>
+    Light =>
       semantic_palette(
         // colorNeutralForeground1 / Background1
         foreground=color_byte(r=36, g=36, b=36),
@@ -1398,7 +1398,7 @@ fn fluent_design_tokens(
         focus=Some(@core.Color::black()),
         scrim=Some(color(r=0.0, g=0.0, b=0.0, a=0.4)),
       )
-    @core.ColorScheme::Dark =>
+    Dark =>
       semantic_palette(
         // colorNeutralForeground1 / Background1 (Fluent 2 dark: #292929).
         foreground=@core.Color::white(),
@@ -1431,19 +1431,19 @@ fn fluent_design_tokens(
       )
   }
   let tokens = design_tokens(
-    preset=DesignPreset::Fluent,
+    preset=Fluent,
     scheme~,
     variant~,
     density~,
     source_family="Fluent 2 alias tokens (@fluentui/tokens)",
     palette~,
     spacing=spacing_tokens(
-      { xs: 4.0, sm: 8.0, md: 12.0, lg: 20.0, xl: 32.0 },
+      { xs: 4.0, sm: 8.0, md: 12.0, lg: 20.0, xl: 32.0, },
       density,
     ),
     // Fluent 2 border-radius tiers: sm=2 (borderRadiusSmall), md=4
     // (borderRadiusMedium), lg=8 (borderRadiusXLarge), pill=circular.
-    radius={ sm: 2.0, md: 4.0, lg: 8.0, pill: 999.0 },
+    radius={ sm: 2.0, md: 4.0, lg: 8.0, pill: 999.0, },
     typography=typography_tokens(
       title=20.0,
       body=14.0,
@@ -1464,7 +1464,7 @@ fn fluent_design_tokens(
       fast_ms: 100.0,
       normal_ms: 150.0,
       slow_ms: 250.0,
-      easing: @core.Easing::EaseInOut,
+      easing: EaseInOut,
     },
   )
   fluent_component_overrides(tokens, palette, scheme)
@@ -1486,7 +1486,7 @@ fn fluent_component_overrides(
     // Primary button: Fluent 2 uses colorBrandBackground as fill and
     // colorBrandStroke1 as the rest border, separated from the fill color.
     .button,
-    primary: { ..base.button.primary, border: palette.brand_stroke },
+    primary: { ..base.button.primary, border: palette.brand_stroke, },
     // subtle: transparent background, foreground tint, hover reveals a faint
     // neutral wash (colorNeutralBackground1Hover semantics).
     subtle: control_state_tokens(
@@ -1530,7 +1530,7 @@ fn fluent_component_overrides(
       bottom_border_only: true,
       inner_focus_border: Some(palette.primary),
     },
-    appearance: DesignTextFieldAppearance::Underline,
+    appearance: Underline,
   }
   // Fluent 2 also uses neutral stroke1 (not outline) for picker borders and
   // brand stroke for choice-control selected state.
@@ -1546,7 +1546,7 @@ fn fluent_component_overrides(
     overlay_shadow: tokens.elevation.flyout,
   }
   ignore(scheme)
-  { ..tokens, components: { ..base, button, text_field, picker, surface } }
+  { ..tokens, components: { ..base, button, text_field, picker, surface, }, }
 }
 
 ///|
@@ -1556,7 +1556,7 @@ fn high_contrast_design_tokens(
   density : DesignDensity,
 ) -> DesignSystemTokens {
   let palette = match scheme {
-    @core.ColorScheme::Light =>
+    Light =>
       semantic_palette(
         foreground=@core.Color::black(),
         background=@core.Color::white(),
@@ -1571,7 +1571,7 @@ fn high_contrast_design_tokens(
         danger=color(r=0.75, g=0.00, b=0.00),
         info=color(r=0.00, g=0.24, b=0.86),
       )
-    @core.ColorScheme::Dark =>
+    Dark =>
       semantic_palette(
         foreground=@core.Color::white(),
         background=@core.Color::black(),
@@ -1590,15 +1590,15 @@ fn high_contrast_design_tokens(
   design_tokens(
     preset~,
     scheme~,
-    variant=DesignSchemeVariant::SchemeHighContrast,
+    variant=SchemeHighContrast,
     density~,
     source_family=preset.label() + " high-contrast adapter",
     palette~,
     spacing=spacing_tokens(
-      { xs: 4.0, sm: 8.0, md: 14.0, lg: 20.0, xl: 28.0 },
+      { xs: 4.0, sm: 8.0, md: 14.0, lg: 20.0, xl: 28.0, },
       density,
     ),
-    radius={ sm: 2.0, md: 4.0, lg: 8.0, pill: 999.0 },
+    radius={ sm: 2.0, md: 4.0, lg: 8.0, pill: 999.0, },
     typography=typography_tokens(
       title=22.0,
       body=16.0,
@@ -1606,12 +1606,7 @@ fn high_contrast_design_tokens(
       control=16.0,
     ),
     elevation=elevation_tokens(scheme, lift=0.24),
-    motion={
-      fast_ms: 0.0,
-      normal_ms: 0.0,
-      slow_ms: 0.0,
-      easing: @core.Easing::Linear,
-    },
+    motion={ fast_ms: 0.0, normal_ms: 0.0, slow_ms: 0.0, easing: Linear, },
   )
 }
 
@@ -1775,9 +1770,9 @@ fn material_elevation_tokens(
 ) -> DesignElevationTokens {
   let tokens = elevation_tokens(scheme, lift=1.14)
   {
-    sm: { ..tokens.sm, offset: @core.Point::new(x=0.0, y=1.0) },
-    md: { ..tokens.md, offset: @core.Point::new(x=0.0, y=6.0) },
-    lg: { ..tokens.lg, offset: @core.Point::new(x=0.0, y=12.0) },
+    sm: { ..tokens.sm, offset: @core.Point::new(x=0.0, y=1.0), },
+    md: { ..tokens.md, offset: @core.Point::new(x=0.0, y=6.0), },
+    lg: { ..tokens.lg, offset: @core.Point::new(x=0.0, y=12.0), },
     card: None,
     flyout: None,
     dialog: None,
@@ -1792,8 +1787,8 @@ fn material_elevation_tokens(
 /// layered surfaces separate cleanly without the heavy elevation Material uses.
 fn fluent_elevation_tokens(scheme : @core.ColorScheme) -> DesignElevationTokens {
   let base_alpha = match scheme {
-    @core.ColorScheme::Light => 0.10
-    @core.ColorScheme::Dark => 0.28
+    Light => 0.10
+    Dark => 0.28
   }
   // sm/md/lg stay on the neutral formula so generic controls (picker popup,
   // feedback) keep their existing depth. Only the Fluent-specific tiers carry
@@ -1839,7 +1834,7 @@ fn surface_tokens(
     palette.core_palette(scheme),
     scheme,
   )
-  { base: surfaces.base, raised: surfaces.raised, overlay: surfaces.overlay }
+  { base: surfaces.base, raised: surfaces.raised, overlay: surfaces.overlay, }
 }
 
 ///|
@@ -1867,8 +1862,8 @@ fn component_tokens(
   state_layer : DesignStateLayerTokens,
 ) -> DesignComponentTokens {
   let feedback_background_alpha = match scheme {
-    @core.ColorScheme::Light => 0.12
-    @core.ColorScheme::Dark => 0.22
+    Light => 0.12
+    Dark => 0.22
   }
   {
     button: {
@@ -1952,7 +1947,7 @@ fn component_tokens(
       placeholder: palette.muted,
       cursor: palette.focus,
       font: typography.body,
-      appearance: DesignTextFieldAppearance::Outline,
+      appearance: Outline,
     },
     surface: {
       base_padding: spacing.md,
@@ -1971,8 +1966,8 @@ fn component_tokens(
       disabled_foreground: palette.muted,
       disabled_selected_color: palette.primary.multiply_alpha(0.42),
       control_size: 20.0,
-      box_shape: @views.ChoiceControlShape::Square,
-      check_style: @views.CheckMarkStyle::Checkmark,
+      box_shape: Square,
+      check_style: Checkmark,
     },
     progress: {
       foreground: palette.primary,
@@ -1986,7 +1981,7 @@ fn component_tokens(
       track_height: 6.0,
       thumb_size: 20.0,
       radius: radius.pill,
-      thumb_shape: @views.ThumbShape::Circle,
+      thumb_shape: Circle,
     },
     picker: {
       font: typography.control,
@@ -2069,7 +2064,7 @@ fn tone_tokens(
 
 ///|
 fn badge_tone_tokens(background : @core.Color) -> DesignToneTokens {
-  { foreground: @core.Color::white(), background, border: background }
+  { foreground: @core.Color::white(), background, border: background, }
 }
 
 ///|
@@ -2209,8 +2204,8 @@ fn transparent() -> @core.Color {
 ///|
 fn scheme_variant(scheme : @core.ColorScheme) -> DesignSchemeVariant {
   match scheme {
-    @core.ColorScheme::Light => DesignSchemeVariant::SchemeLight
-    @core.ColorScheme::Dark => DesignSchemeVariant::SchemeDark
+    Light => SchemeLight
+    Dark => SchemeDark
   }
 }
 
@@ -2220,9 +2215,9 @@ fn variant_core_scheme(
   system_scheme : @core.ColorScheme,
 ) -> @core.ColorScheme {
   match variant {
-    DesignSchemeVariant::SchemeLight => @core.ColorScheme::Light
-    DesignSchemeVariant::SchemeDark => @core.ColorScheme::Dark
-    DesignSchemeVariant::SchemeHighContrast => system_scheme
-    DesignSchemeVariant::SchemeSystem => system_scheme
+    SchemeLight => Light
+    SchemeDark => Dark
+    SchemeHighContrast => system_scheme
+    SchemeSystem => system_scheme
   }
 }

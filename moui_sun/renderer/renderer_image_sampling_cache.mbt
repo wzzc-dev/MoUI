@@ -22,7 +22,7 @@ pub fn Renderer::draw_sampled_pixmap_cached(
     paint,
     sampling,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn Renderer::draw_sampled_pixmap_rect_cached(
     paint,
     sampling,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -137,7 +137,7 @@ pub fn Renderer::draw_sampled_bmp_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -196,7 +196,7 @@ pub fn Renderer::draw_sampled_png_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -260,7 +260,7 @@ pub fn Renderer::draw_sampled_rgba_bytes_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -326,7 +326,7 @@ pub fn Renderer::draw_sampled_bmp_bytes_rect_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -390,7 +390,7 @@ pub fn Renderer::draw_sampled_png_bytes_rect_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -459,7 +459,7 @@ pub fn Renderer::draw_sampled_rgba_bytes_rect_cached(
         paint,
         sampling,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -523,7 +523,7 @@ pub fn Renderer::draw_quality_pixmap_cached(
     paint,
     quality,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -579,7 +579,7 @@ pub fn Renderer::draw_quality_nine_patch_pixmap_cached(
     paint,
     quality,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -638,7 +638,7 @@ pub fn Renderer::draw_quality_pixmap_rect_cached(
     paint,
     quality,
   )
-  { did_insert_pixmap: result.did_insert() }
+  { did_insert_pixmap: result.did_insert(), }
 }
 
 ///|
@@ -698,7 +698,7 @@ pub fn Renderer::draw_quality_nine_patch_bmp_bytes_cached(
         paint,
         quality,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -762,7 +762,7 @@ pub fn Renderer::draw_quality_nine_patch_png_bytes_cached(
         paint,
         quality,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -831,7 +831,7 @@ pub fn Renderer::draw_quality_nine_patch_rgba_bytes_cached(
         paint,
         quality,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -896,7 +896,7 @@ pub fn Renderer::draw_quality_bmp_bytes_cached(
         paint,
         quality,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }
@@ -1076,7 +1076,7 @@ pub fn Renderer::draw_quality_bmp_bytes_rect_cached(
         paint,
         quality,
       )
-      Ok({ did_decode_pixmap: result.did_decode() })
+      Ok({ did_decode_pixmap: result.did_decode(), })
     }
     Err(error) => Err(error)
   }

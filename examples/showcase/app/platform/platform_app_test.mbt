@@ -1,22 +1,25 @@
 ///|
 test "timer toggle and tick update the model" {
-  let model = Model::new()
-  let (running, _) = update(model, ToggleTimer)
+  let model = @platform.Model::new()
+  let (running, _) = @platform.update(model, ToggleTimer)
   inspect(running.timer_running, content="true")
-  let (ticked, _) = update(running, TimerTick)
+  let (ticked, _) = @platform.update(running, TimerTick)
   inspect(ticked.ticks, content="1")
 }
 
 ///|
 test "window resize records logical size" {
-  let (model, _) = update(Model::new(), WindowResized(640.0, 480.0))
+  let (model, _) = @platform.update(
+    @platform.Model::new(),
+    WindowResized(640.0, 480.0),
+  )
   inspect(model.window_width, content="640")
   inspect(model.window_height, content="480")
 }
 
 ///|
 test "route open preserves timer state" {
-  let (running, _) = update(Model::new(), ToggleTimer)
+  let (running, _) = @platform.update(@platform.Model::new(), ToggleTimer)
   let opened = running.open("canvas")
   inspect(opened.route(), content="canvas")
   inspect(opened.timer_running, content="true")
@@ -27,27 +30,33 @@ test "route open preserves timer state" {
 
 ///|
 test "normalize platform route aliases" {
-  inspect(normalize_platform_route("overview"), content="host-services")
-  inspect(normalize_platform_route("timer"), content="host-services")
   inspect(
-    normalize_platform_route("mobile-service-probe"),
+    @platform.normalize_platform_route("overview"),
+    content="host-services",
+  )
+  inspect(@platform.normalize_platform_route("timer"), content="host-services")
+  inspect(
+    @platform.normalize_platform_route("mobile-service-probe"),
     content="mobile-service-probe",
   )
 }
 
 ///|
 test "subscriptions stay empty without host adapters" {
-  let model = Model::new()
-  let plan = @runtime.subscription_plan_summary(subscriptions(model))
+  let model = @platform.Model::new()
+  let plan = @runtime.subscription_plan_summary(@platform.subscriptions(model))
   inspect(plan.source_count(), content="0")
 }
 
 ///|
 test "timer source is declared while running on another route" {
   let source = @services.TimerSource::new(start=(_interval, _dispatch) => None)
-  let model = Model::new(timer_running=true, route="mobile-service-probe")
+  let model = @platform.Model::new(
+    timer_running=true,
+    route="mobile-service-probe",
+  )
   let plan = @runtime.subscription_plan_summary(
-    subscriptions(model, timer_source=Some(source)),
+    @platform.subscriptions(model, timer_source=Some(source)),
   )
   assert_true(plan.source_count() >= 1)
 }
@@ -55,8 +64,8 @@ test "timer source is declared while running on another route" {
 ///|
 test "clipboard write uses a typed service task" {
   let fake = @services.FakeAppServices::new()
-  let (_, effect) = update(
-    Model::new(),
+  let (_, effect) = @platform.update(
+    @platform.Model::new(),
     WriteClipboard,
     services=fake.services(),
   )
@@ -66,7 +75,7 @@ test "clipboard write uses a typed service task" {
 
 ///|
 test "action command map exposes a keyboard shortcut" {
-  let commands = program_commands()
+  let commands = @platform.program_commands()
   inspect(commands.length(), content="1")
   inspect(commands[0].command().label, content="Platform tick")
   assert_true(commands[0].command().shortcut is Some(_))
@@ -76,15 +85,19 @@ test "action command map exposes a keyboard shortcut" {
 ///|
 test "stale service completion cannot overwrite the active operation" {
   let fake = @services.FakeAppServices::new()
-  let (writing, _) = update(
-    Model::new(),
+  let (writing, _) = @platform.update(
+    @platform.Model::new(),
     WriteClipboard,
     services=fake.services(),
   )
-  let (reading, _) = update(writing, ReadClipboard, services=fake.services())
-  let (stale, _) = update(
+  let (reading, _) = @platform.update(
+    writing,
+    ReadClipboard,
+    services=fake.services(),
+  )
+  let (stale, _) = @platform.update(
     reading,
-    ClipboardWriteCompleted(1, @services.ServiceTaskResult::Success(())),
+    ClipboardWriteCompleted(1, Success(())),
   )
   assert_eq(stale.pending_service, Some(2))
   inspect(stale.last_event, content="Reading clipboard...")
@@ -92,9 +105,9 @@ test "stale service completion cannot overwrite the active operation" {
 
 ///|
 test "probe actions update counters" {
-  let model = Model::new(route="mobile-service-probe")
-  let (acted, _) = update(model, ProbeAction)
+  let model = @platform.Model::new(route="mobile-service-probe")
+  let (acted, _) = @platform.update(model, ProbeAction)
   inspect(acted.probe_action_count, content="1")
-  let (submitted, _) = update(acted, ProbeSubmit)
+  let (submitted, _) = @platform.update(acted, ProbeSubmit)
   inspect(submitted.probe_submit_count, content="1")
 }

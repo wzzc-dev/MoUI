@@ -7,32 +7,30 @@ test "text input session enables updates and disables ime requests" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let session = TextInputSession::new()
+  let session = @input.TextInputSession::new()
   match session.sync(runtime.focused_text_input()) {
     NoImeChange => ()
     _ => fail("unfocused runtime should not change ime")
   }
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=110.0, y=10.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   match session.sync(runtime.focused_text_input()) {
-    EnableIme(@window_core.ImeRequest::Enable(_)) => ()
+    EnableIme(Enable(_)) => ()
     _ => fail("focused text field should enable ime")
   }
   match session.sync(runtime.focused_text_input()) {
     NoImeChange => ()
     _ => fail("unchanged focused text field should not repeat ime updates")
   }
-  runtime.dispatch_event(
-    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("c")),
-  )
+  runtime.dispatch_event(TextInput(InsertText("c")))
   match session.sync(runtime.focused_text_input()) {
-    UpdateIme(@window_core.ImeRequest::Update(data)) => {
+    UpdateIme(Update(data)) => {
       match data.cursor_area() {
         Some((_, size)) => assert_true(size.to_logical(1.0).height() > 0.0)
         None => fail("expected cursor area")
@@ -45,15 +43,15 @@ test "text input session enables updates and disables ime requests" {
     _ => fail("changed focused text field should update active ime")
   }
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=230.0, y=55.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   match session.sync(runtime.focused_text_input()) {
-    DisableIme(@window_core.ImeRequest::Disable) => ()
+    DisableIme(Disable) => ()
     _ => fail("blur should disable ime")
   }
   match session.sync(runtime.focused_text_input()) {
@@ -64,7 +62,7 @@ test "text input session enables updates and disables ime requests" {
 
 ///|
 test "text input session enables ime with a truncated surrounding text window for oversized texts" {
-  let session = TextInputSession::new()
+  let session = @input.TextInputSession::new()
   let state = @core.TextInputState::{
     focused: true,
     text: "a".repeat(@window_core.ImeSurroundingText::max_text_bytes() + 1),
@@ -77,7 +75,7 @@ test "text input session enables ime with a truncated surrounding text window fo
   }
   let mut window_text = ""
   match session.sync(state) {
-    EnableIme(@window_core.ImeRequest::Enable(request)) => {
+    EnableIme(Enable(request)) => {
       // The whole text cannot fit the surrounding-text budget, so the IME
       // receives a bounded window around the cursor instead of nothing.
       assert_true(request.capabilities().surrounding_text())
@@ -130,7 +128,7 @@ test "text input ime diagnostics normalize grapheme cursor and candidate anchor"
     frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
     caret_rect: @core.Rect::new(x=12.0, y=18.0, width=0.0, height=-4.0),
   }
-  let diagnostics = text_input_ime_request_diagnostics(state)
+  let diagnostics = @input.text_input_ime_request_diagnostics(state)
   inspect(diagnostics.cursor, content="1")
   inspect(diagnostics.anchor, content="1")
   inspect(diagnostics.cursor_utf8, content="1")
@@ -143,7 +141,7 @@ test "text input ime diagnostics normalize grapheme cursor and candidate anchor"
   inspect(diagnostics.candidate_anchor.origin.y, content="18")
   inspect(diagnostics.candidate_anchor.size.width, content="1")
   inspect(diagnostics.candidate_anchor.size.height, content="1")
-  let request = text_input_ime_request_data(state)
+  let request = @input.text_input_ime_request_data(state)
   match request.surrounding_text() {
     Some(surrounding) => {
       inspect(surrounding.cursor(), content="1")
@@ -164,7 +162,7 @@ test "text input ime diagnostics normalize grapheme cursor and candidate anchor"
 
 ///|
 test "text input session preserves selection anchor in ime surrounding text" {
-  let session = TextInputSession::new()
+  let session = @input.TextInputSession::new()
   let state = @core.TextInputState::{
     focused: true,
     text: "你ab好",
@@ -176,7 +174,7 @@ test "text input session preserves selection anchor in ime surrounding text" {
     caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
   }
   match session.sync(state) {
-    EnableIme(@window_core.ImeRequest::Enable(request)) =>
+    EnableIme(Enable(request)) =>
       match request.request_data().surrounding_text() {
         Some(surrounding) => {
           inspect(surrounding.cursor(), content="5")
@@ -199,7 +197,7 @@ test "text input session preserves selection anchor in ime surrounding text" {
 
 ///|
 test "text input session preserves reverse selection anchor in ime surrounding text" {
-  let session = TextInputSession::new()
+  let session = @input.TextInputSession::new()
   let state = @core.TextInputState::{
     focused: true,
     text: "你ab好",
@@ -211,7 +209,7 @@ test "text input session preserves reverse selection anchor in ime surrounding t
     caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
   }
   match session.sync(state) {
-    EnableIme(@window_core.ImeRequest::Enable(request)) =>
+    EnableIme(Enable(request)) =>
       match request.request_data().surrounding_text() {
         Some(surrounding) => {
           inspect(surrounding.cursor(), content="3")
@@ -225,33 +223,24 @@ test "text input session preserves reverse selection anchor in ime surrounding t
 
 ///|
 test "host event converts to current core event model" {
-  let event = @backend_host.Event::TextInput(
-    @core.TextInputEvent::InsertText("x"),
-  ).to_core()
+  let event = @backend_host.Event::TextInput(InsertText("x")).to_core()
   match event {
-    Some(@core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text))) =>
-      inspect(text, content="x")
+    Some(TextInput(InsertText(text))) => inspect(text, content="x")
     _ => fail("expected text input event")
   }
-  let composition = @backend_host.Event::TextInput(
-    @core.TextInputEvent::CompositionEnd("你"),
-  ).to_core()
+  let composition = @backend_host.Event::TextInput(CompositionEnd("你")).to_core()
   match composition {
-    Some(@core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
-      inspect(text, content="你")
+    Some(TextInput(CompositionEnd(text))) => inspect(text, content="你")
     _ => fail("expected composition text input event")
   }
   let scroll = @backend_host.Event::Scroll(
     @backend_host.HostScrollEvent::new(
       position=@core.Point::new(x=8.0, y=9.0),
-      delta=@backend_host.HostScrollDelta::Lines(
-        @core.Point::new(x=1.0, y=-2.0),
-      ),
+      delta=Lines(@core.Point::new(x=1.0, y=-2.0)),
     ),
   ).to_core()
   match scroll {
-    Some(@core.AppEvent::Pointer({ wheel_delta: { x: 40.0, y: -80.0 }, .. })) =>
-      ()
+    Some(Pointer({ wheel_delta: { x: 40.0, y: -80.0, }, .. })) => ()
     _ => fail("expected scroll pointer event")
   }
   let blur = @backend_host.Event::Focus(
@@ -261,8 +250,7 @@ test "host event converts to current core event model" {
     ),
   ).to_core()
   match blur {
-    Some(@core.AppEvent::Pointer({ phase: @core.PointerPhase::Cancel, .. })) =>
-      ()
+    Some(Pointer({ phase: Cancel, .. })) => ()
     _ => fail("expected blur cancel pointer event")
   }
 }

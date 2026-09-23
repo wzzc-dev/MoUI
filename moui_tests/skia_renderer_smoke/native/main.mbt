@@ -457,24 +457,21 @@ fn missing_image_source() -> String {
 ///|
 fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] {
   [
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=4.0, y=4.0, width=10.0, height=10.0),
-      red(),
-    ),
-    @core.DrawCommand::StrokeRect(
+    Clear(@core.Color::white()),
+    FillRect(@core.Rect::new(x=4.0, y=4.0, width=10.0, height=10.0), red()),
+    StrokeRect(
       @core.Rect::new(x=18.0, y=4.0, width=12.0, height=12.0),
       green(),
       2.0,
     ),
-    @core.DrawCommand::FillRoundedRect(
+    FillRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=36.0, y=4.0, width=12.0, height=12.0),
         radius=3.0,
       ),
       blue(),
     ),
-    @core.DrawCommand::StrokeRoundedRect(
+    StrokeRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=52.0, y=4.0, width=12.0, height=12.0),
         radius=3.0,
@@ -482,7 +479,7 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
       magenta(),
       2.0,
     ),
-    @core.DrawCommand::FillRoundedRectBrush(
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=68.0, y=4.0, width=20.0, height=12.0),
         radius=2.0,
@@ -494,57 +491,47 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         end_color=blue(),
       ),
     ),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=4.0, y=22.0, width=8.0, height=12.0),
-    ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=4.0, y=22.0, width=16.0, height=12.0),
-      cyan(),
-    ),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PushRoundedClip(
+    PushClip(@core.Rect::new(x=4.0, y=22.0, width=8.0, height=12.0)),
+    FillRect(@core.Rect::new(x=4.0, y=22.0, width=16.0, height=12.0), cyan()),
+    PopClip,
+    PushRoundedClip(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=24.0, y=22.0, width=14.0, height=14.0),
         radius=5.0,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=24.0, y=22.0, width=14.0, height=14.0),
       magenta(),
     ),
-    @core.DrawCommand::PopRoundedClip,
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=40.0, dy=20.0),
-    ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=4.0, y=4.0, width=10.0, height=10.0),
-      yellow(),
-    ),
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PushOpacity(0.5),
-    @core.DrawCommand::FillRect(
+    PopRoundedClip,
+    PushTransform(@core.Transform2D::translation(dx=40.0, dy=20.0)),
+    FillRect(@core.Rect::new(x=4.0, y=4.0, width=10.0, height=10.0), yellow()),
+    PopTransform,
+    PushOpacity(0.5),
+    FillRect(
       @core.Rect::new(x=64.0, y=24.0, width=12.0, height=12.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::PopOpacity,
-    @core.DrawCommand::DrawPath(
+    PopOpacity,
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=56.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=56.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=40.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=4.0, y=56.0)),
+          LineTo(@core.Point::new(x=20.0, y=56.0)),
+          LineTo(@core.Point::new(x=12.0, y=40.0)),
+          Close,
         ],
         fill=Some(@core.Brush::solid(green())),
       ),
     ),
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=30.0, y=56.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=46.0, y=56.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=40.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=30.0, y=56.0)),
+          LineTo(@core.Point::new(x=46.0, y=56.0)),
+          LineTo(@core.Point::new(x=38.0, y=40.0)),
+          Close,
         ],
         fill=Some(
           @core.Brush::linear_gradient(
@@ -558,7 +545,7 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         stroke_width=1.0,
       ),
     ),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=54.0, y=42.0, width=16.0, height=16.0),
@@ -571,19 +558,19 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         ),
       ),
     ),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: one_pixel_red_png_data_uri(),
       frame: @core.Rect::new(x=76.0, y=42.0, width=12.0, height=12.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: local_png_path,
       frame: @core.Rect::new(x=90.0, y=42.0, width=5.0, height=5.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::StrokeRoundedRectBrush(
+    StrokeRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=96.0, y=42.0, width=24.0, height=14.0),
         radius=3.0,
@@ -596,11 +583,11 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
       ),
       4.0,
     ),
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=130.0, y=48.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=164.0, y=48.0)),
+          MoveTo(@core.Point::new(x=130.0, y=48.0)),
+          LineTo(@core.Point::new(x=164.0, y=48.0)),
         ],
         stroke=Some(
           @core.Brush::linear_gradient(
@@ -613,24 +600,24 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         stroke_width=4.0,
       ),
     ),
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=172.0, y=56.0)),
-          @core.PathVerb::QuadTo(
+          MoveTo(@core.Point::new(x=172.0, y=56.0)),
+          QuadTo(
             @core.Point::new(x=184.0, y=32.0),
             @core.Point::new(x=196.0, y=56.0),
           ),
-          @core.PathVerb::Close,
+          Close,
         ],
         fill=Some(@core.Brush::solid(cyan())),
       ),
     ),
-    @core.DrawCommand::DrawPath(
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=200.0, y=56.0)),
-          @core.PathVerb::CubicTo(
+          MoveTo(@core.Point::new(x=200.0, y=56.0)),
+          CubicTo(
             @core.Point::new(x=202.0, y=32.0),
             @core.Point::new(x=214.0, y=32.0),
             @core.Point::new(x=214.0, y=56.0),
@@ -640,16 +627,16 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         stroke_width=3.0,
       ),
     ),
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="Skia",
         frame=@core.Rect::new(x=4.0, y=68.0, width=48.0, height=20.0),
         font=@core.FontSpec::new(size=16.0),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::DrawShadow(
+    DrawShadow(
       @core.ShadowSpec::new(
         rect=@core.RoundedRect::new(
           rect=@core.Rect::new(x=62.0, y=70.0, width=14.0, height=10.0),
@@ -661,57 +648,49 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         spread=0.0,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=90.0, y=72.0, width=12.0, height=12.0),
       gray(0.25),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Screen),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Screen)),
+    FillRect(
       @core.Rect::new(x=90.0, y=72.0, width=12.0, height=12.0),
       gray(0.5),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::FillRect(
+    PopLayer,
+    FillRect(
       @core.Rect::new(x=108.0, y=72.0, width=12.0, height=12.0),
       gray(0.75),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Overlay),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Overlay)),
+    FillRect(
       @core.Rect::new(x=108.0, y=72.0, width=12.0, height=12.0),
       gray(0.25),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::FillRect(
+    PopLayer,
+    FillRect(
       @core.Rect::new(x=126.0, y=72.0, width=12.0, height=12.0),
       gray(0.25),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Darken),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Darken)),
+    FillRect(
       @core.Rect::new(x=126.0, y=72.0, width=12.0, height=12.0),
       gray(0.75),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::FillRect(
+    PopLayer,
+    FillRect(
       @core.Rect::new(x=144.0, y=72.0, width=12.0, height=12.0),
       gray(0.75),
     ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Lighten),
-    ),
-    @core.DrawCommand::FillRect(
+    PushLayer(@core.LayerSpec::new(blend_mode=Lighten)),
+    FillRect(
       @core.Rect::new(x=144.0, y=72.0, width=12.0, height=12.0),
       gray(0.25),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PushLayer(
+    PopLayer,
+    PushLayer(
       @core.LayerSpec::new(
-        mask=@core.LayerMask::RoundedMask(
+        mask=RoundedMask(
           @core.RoundedRect::new(
             rect=@core.Rect::new(x=178.0, y=72.0, width=12.0, height=12.0),
             radius=6.0,
@@ -719,78 +698,50 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         ),
       ),
     ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=174.0, y=68.0, width=20.0, height=20.0),
-      green(),
-    ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PushLayer(
+    FillRect(@core.Rect::new(x=174.0, y=68.0, width=20.0, height=20.0), green()),
+    PopLayer,
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=40.0, y=104.0, width=8.0, height=8.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=40.0, y=104.0, width=8.0, height=8.0)),
       ),
     ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=36.0, y=100.0, width=16.0, height=16.0),
-      blue(),
-    ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=60.0, y=104.0, width=12.0, height=12.0),
-      red(),
-    ),
-    @core.DrawCommand::PushLayer(
-      @core.LayerSpec::new(blend_mode=@core.BlendMode::Multiply),
-    ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=60.0, y=104.0, width=12.0, height=12.0),
-      cyan(),
-    ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.5)),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=82.0, y=104.0, width=10.0, height=10.0),
-      red(),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(0.0)),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=98.0, y=104.0, width=10.0, height=10.0),
-      red(),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Contrast(0.0)),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=114.0, y=104.0, width=10.0, height=10.0),
-      red(),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PushFilter(
-      @core.FilterEffect::ColorMatrix([
+    FillRect(@core.Rect::new(x=36.0, y=100.0, width=16.0, height=16.0), blue()),
+    PopLayer,
+    FillRect(@core.Rect::new(x=60.0, y=104.0, width=12.0, height=12.0), red()),
+    PushLayer(@core.LayerSpec::new(blend_mode=Multiply)),
+    FillRect(@core.Rect::new(x=60.0, y=104.0, width=12.0, height=12.0), cyan()),
+    PopLayer,
+    PushFilter(Brightness(0.5)),
+    FillRect(@core.Rect::new(x=82.0, y=104.0, width=10.0, height=10.0), red()),
+    PopFilter,
+    PushFilter(Saturate(0.0)),
+    FillRect(@core.Rect::new(x=98.0, y=104.0, width=10.0, height=10.0), red()),
+    PopFilter,
+    PushFilter(Contrast(0.0)),
+    FillRect(@core.Rect::new(x=114.0, y=104.0, width=10.0, height=10.0), red()),
+    PopFilter,
+    PushFilter(
+      ColorMatrix([
         0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 1.0, 0.0,
       ]),
     ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=130.0, y=104.0, width=10.0, height=10.0),
-      red(),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(3.0)),
-    @core.DrawCommand::FillRect(
+    FillRect(@core.Rect::new(x=130.0, y=104.0, width=10.0, height=10.0), red()),
+    PopFilter,
+    PushFilter(Blur(3.0)),
+    FillRect(
       @core.Rect::new(x=150.0, y=104.0, width=10.0, height=10.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    PopFilter,
+    DrawImage({
       source: missing_image_source(),
       frame: @core.Rect::new(x=164.0, y=88.0, width=14.0, height=8.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="vignette",
         frame=@core.Rect::new(x=164.0, y=100.0, width=18.0, height=18.0),
@@ -798,14 +749,14 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         fallback=@core.Brush::solid(green()),
       ),
     ),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="solid",
         frame=@core.Rect::new(x=84.0, y=132.0, width=12.0, height=10.0),
         fallback=@core.Brush::solid(magenta()),
       ),
     ),
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="linear-gradient-debug",
         frame=@core.Rect::new(x=102.0, y=132.0, width=24.0, height=10.0),
@@ -817,74 +768,47 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
         ),
       ),
     ),
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="MMMMMMMM",
         frame=@core.Rect::new(x=132.0, y=124.0, width=8.0, height=22.0),
         font=@core.FontSpec::new(size=18.0),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::PushLayer(
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
-        mask=@core.LayerMask::RectMask(
+        mask=RectMask(
           @core.Rect::new(x=194.0, y=104.0, width=10.0, height=10.0),
         ),
       ),
     ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.5)),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=194.0, y=104.0, width=10.0, height=10.0),
-      red(),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PushTransform(@core.Transform2D::{
-      a: 2.0,
-      b: 0.0,
-      c: 0.0,
-      d: 1.5,
-      tx: 4.0,
-      ty: 130.0,
-    }),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
-    ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=2.0, y=2.0, width=10.0, height=6.0),
-      red(),
-    ),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=34.0, dy=132.0),
-    ),
-    @core.DrawCommand::PushLayer(
+    PushFilter(Brightness(0.5)),
+    FillRect(@core.Rect::new(x=194.0, y=104.0, width=10.0, height=10.0), red()),
+    PopFilter,
+    PopLayer,
+    PushTransform({ a: 2.0, b: 0.0, c: 0.0, d: 1.5, tx: 4.0, ty: 130.0, }),
+    PushClip(@core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0)),
+    FillRect(@core.Rect::new(x=2.0, y=2.0, width=10.0, height=6.0), red()),
+    PopClip,
+    PopTransform,
+    PushTransform(@core.Transform2D::translation(dx=34.0, dy=132.0)),
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.5,
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=0.0, y=0.0, width=12.0, height=10.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=0.0, y=0.0, width=12.0, height=10.0)),
       ),
     ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=-4.0, y=-4.0, width=20.0, height=18.0),
-      blue(),
-    ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=58.0, dy=132.0),
-    ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.5)),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
-      red(),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopTransform,
+    FillRect(@core.Rect::new(x=-4.0, y=-4.0, width=20.0, height=18.0), blue()),
+    PopLayer,
+    PopTransform,
+    PushTransform(@core.Transform2D::translation(dx=58.0, dy=132.0)),
+    PushFilter(Brightness(0.5)),
+    FillRect(@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0), red()),
+    PopFilter,
+    PopTransform,
   ]
 }
 
@@ -921,8 +845,8 @@ fn assert_no_unexpected_unsupported_commands(
 ///|
 fn renderer_diagnostic_pixel_commands() -> Array[@core.DrawCommand] {
   [
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRoundedRectBrush(
+    Clear(@core.Color::white()),
+    FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=8.0, y=8.0, width=48.0, height=48.0),
         radius=24.0,
@@ -934,55 +858,46 @@ fn renderer_diagnostic_pixel_commands() -> Array[@core.DrawCommand] {
         edge_color=@core.Color::rgba(r=0.05, g=0.08, b=0.95),
       ),
     ),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=72.0, dy=8.0),
-    ),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0),
-    ),
-    @core.DrawCommand::PushLayer(
+    PushTransform(@core.Transform2D::translation(dx=72.0, dy=8.0)),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0)),
+    PushLayer(
       @core.LayerSpec::new(
         opacity=0.9,
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0)),
       ),
     ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.6)),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=4.0, y=4.0, width=14.0, height=14.0),
-      magenta(),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::DrawPath(
+    PushFilter(Brightness(0.6)),
+    FillRect(@core.Rect::new(x=4.0, y=4.0, width=14.0, height=14.0), magenta()),
+    PopFilter,
+    DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=22.0, y=4.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=18.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=22.0, y=18.0)),
-          @core.PathVerb::Close,
+          MoveTo(@core.Point::new(x=22.0, y=4.0)),
+          LineTo(@core.Point::new(x=38.0, y=18.0)),
+          LineTo(@core.Point::new(x=22.0, y=18.0)),
+          Close,
         ],
         fill=Some(@core.Brush::solid(cyan())),
       ),
     ),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: one_pixel_red_png_data_uri(),
       frame: @core.Rect::new(x=2.0, y=26.0, width=8.0, height=8.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::DrawText(
+    DrawText(
       @core.TextRun::new(
         text="A",
         frame=@core.Rect::new(x=32.0, y=22.0, width=20.0, height=24.0),
         font=@core.FontSpec::new(size=20.0, weight=600),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopTransform,
+    PopLayer,
+    PopClip,
+    PopTransform,
   ]
 }
 
@@ -1082,7 +997,7 @@ fn run_gpu_metal_renderer_smoke() -> Unit {
         scale_factor=1.0,
       ),
       target,
-      surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+      surface_route=MetalGpuSurfaceRoute,
     )
   catch {
     err => Err(err)
@@ -1150,18 +1065,18 @@ fn async_image_smoke_commands(
   local_png_path : String,
 ) -> Array[@core.DrawCommand] {
   [
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    Clear(@core.Color::white()),
+    DrawImage({
       source: one_pixel_red_png_data_uri(),
       frame: @core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
-    @core.DrawCommand::DrawImage(@core.ImageRun::{
+    DrawImage({
       source: local_png_path,
       frame: @core.Rect::new(x=12.0, y=2.0, width=6.0, height=6.0),
       opacity: 1.0,
-      fit: @core.ImageFit::Contain,
+      fit: Contain,
     }),
   ]
 }
@@ -1230,16 +1145,8 @@ fn run_async_image_second_frame_smoke() -> Unit {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not present the loading frame")
   }
-  assert_image_status(
-    renderer,
-    one_pixel_red_png_data_uri(),
-    @render.ImageResourceStatus::ImageLoading,
-  )
-  assert_image_status(
-    renderer,
-    local_png_path,
-    @render.ImageResourceStatus::ImageLoading,
-  )
+  assert_image_status(renderer, one_pixel_red_png_data_uri(), ImageLoading)
+  assert_image_status(renderer, local_png_path, ImageLoading)
 
   let host_renderer = @render.RendererSession::new(
     resize=metrics => {
@@ -1277,7 +1184,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
   let mut request_count = 0
   for event in host_renderer.drain_events() {
     match event {
-      @render.RendererEvent::ImageLoadRequested(request) => {
+      ImageLoadRequested(request) => {
         request_count = request_count + 1
         ignore(tasks.schedule(host_renderer, request))
       }
@@ -1292,16 +1199,8 @@ fn run_async_image_second_frame_smoke() -> Unit {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not request a repaint")
   }
-  assert_image_status(
-    renderer,
-    one_pixel_red_png_data_uri(),
-    @render.ImageResourceStatus::ImageReady,
-  )
-  assert_image_status(
-    renderer,
-    local_png_path,
-    @render.ImageResourceStatus::ImageReady,
-  )
+  assert_image_status(renderer, one_pixel_red_png_data_uri(), ImageReady)
+  assert_image_status(renderer, local_png_path, ImageReady)
 
   renderer.render(commands) catch {
     err => {
@@ -1383,16 +1282,8 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
       "Skia async image deferred-completion smoke did not present the loading frame",
     )
   }
-  assert_image_status(
-    renderer,
-    one_pixel_red_png_data_uri(),
-    @render.ImageResourceStatus::ImageLoading,
-  )
-  assert_image_status(
-    renderer,
-    local_png_path,
-    @render.ImageResourceStatus::ImageLoading,
-  )
+  assert_image_status(renderer, one_pixel_red_png_data_uri(), ImageLoading)
+  assert_image_status(renderer, local_png_path, ImageLoading)
 
   let host_renderer = @render.RendererSession::new(
     resize=metrics => {
@@ -1436,7 +1327,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
   )
   for event in host_renderer.drain_events() {
     match event {
-      @render.RendererEvent::ImageLoadRequested(request) =>
+      ImageLoadRequested(request) =>
         ignore(tasks.schedule(host_renderer, request))
       _ => ()
     }
@@ -1468,16 +1359,8 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
       "Skia async image deferred-completion smoke did not request a repaint after completion",
     )
   }
-  assert_image_status(
-    renderer,
-    one_pixel_red_png_data_uri(),
-    @render.ImageResourceStatus::ImageReady,
-  )
-  assert_image_status(
-    renderer,
-    local_png_path,
-    @render.ImageResourceStatus::ImageReady,
-  )
+  assert_image_status(renderer, one_pixel_red_png_data_uri(), ImageReady)
+  assert_image_status(renderer, local_png_path, ImageReady)
 
   renderer.render(commands) catch {
     err => {
@@ -1745,19 +1628,19 @@ fn assert_image_resources(
   let mut saw_missing_failed = false
   for record in resources {
     if record.source == one_pixel_red_png_data_uri() &&
-      record.status == @render.ImageResourceStatus::ImageReady &&
+      record.status == ImageReady &&
       record.width == 1 &&
       record.height == 1 {
       saw_data_uri_ready = true
     }
     if record.source == local_png_path &&
-      record.status == @render.ImageResourceStatus::ImageReady &&
+      record.status == ImageReady &&
       record.width == 1 &&
       record.height == 1 {
       saw_local_ready = true
     }
     if record.source == missing_image_source() &&
-      record.status == @render.ImageResourceStatus::ImageFailed &&
+      record.status == ImageFailed &&
       record.diagnostic.contains("unavailable") {
       saw_missing_failed = true
     }

@@ -25,7 +25,6 @@ import {
 
 import {
   "wzzc-dev/moui/views",
-  "wzzc-dev/window/dpi",
 } for "test"
 
 import {

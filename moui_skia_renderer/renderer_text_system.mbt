@@ -31,7 +31,7 @@ fn skia_cached_measure_text(
   if entries.length() >= skia_text_measure_cache_capacity() {
     ignore(entries.remove(0))
   }
-  entries.push({ input, result })
+  entries.push({ input, result, })
   result
 }
 
@@ -44,18 +44,17 @@ pub fn SkiaRasterRenderer::text_system(
 
 ///|
 pub fn skia_text_system(
-  resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  resolution? : SkiaFontResolution = SystemFontMgr,
 ) -> @core.TextSystem {
   let measure_cache : Ref[Array[SkiaTextMeasureCacheEntry]] = Ref([])
   match resolution {
-    SkiaFontResolution::EmptyTypeface =>
+    EmptyTypeface =>
       if skia_available() {
         skia_empty_typeface_text_system(measure_cache)
       } else {
         @core.TextSystem::fallback()
       }
-    SkiaFontResolution::SystemFontMgr =>
-      skia_system_font_mgr_text_system(measure_cache)
+    SystemFontMgr => skia_system_font_mgr_text_system(measure_cache)
   }
 }
 
@@ -66,16 +65,12 @@ fn skia_empty_typeface_text_system(
   @core.TextSystem::new(
     id="skia-raster-empty-typeface-text-system",
     measure=input => {
-      skia_cached_measure_text(
-        input,
-        SkiaFontResolution::EmptyTypeface,
-        measure_cache,
-      )
+      skia_cached_measure_text(input, EmptyTypeface, measure_cache)
     },
     paragraph_layout=Some(input => {
       skia_fallback_paragraph_layout_result(
         input,
-        SkiaFontResolution::EmptyTypeface,
+        EmptyTypeface,
         "skia-raster-empty-typeface-text-system",
       )
     }),
@@ -89,11 +84,7 @@ fn skia_system_font_mgr_text_system(
   @core.TextSystem::new(
     id="skia-raster-text-system",
     measure=input => {
-      skia_cached_measure_text(
-        input,
-        SkiaFontResolution::SystemFontMgr,
-        measure_cache,
-      )
+      skia_cached_measure_text(input, SystemFontMgr, measure_cache)
     },
     paragraph_layout=Some(input => {
       match skia_native_paragraph_layout_result(input) {
@@ -101,7 +92,7 @@ fn skia_system_font_mgr_text_system(
         None =>
           skia_fallback_paragraph_layout_result(
             input,
-            SkiaFontResolution::SystemFontMgr,
+            SystemFontMgr,
             "skia-raster-text-system",
           )
       }

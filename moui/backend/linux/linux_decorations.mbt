@@ -63,22 +63,22 @@ fn linux_client_decorated_commands_with_clear_color(
     let width = metrics.logical_size.width
     let height = metrics.logical_size.height
     let output : Array[@core.DrawCommand] = []
-    output.push(@core.DrawCommand::Clear(clear_color))
+    output.push(Clear(clear_color))
     output.push(
-      @core.DrawCommand::FillRect(
+      FillRect(
         @core.Rect::new(x=0.0, y=0.0, width~, height=titlebar),
         linux_titlebar_background_color(),
       ),
     )
     output.push(
-      @core.DrawCommand::StrokeRect(
+      StrokeRect(
         @core.Rect::new(x=0.0, y=titlebar - 1.0, width~, height=1.0),
         linux_titlebar_border_color(),
         1.0,
       ),
     )
     output.push(
-      @core.DrawCommand::DrawText(
+      DrawText(
         @core.TextRun::new(
           text=title,
           frame=@core.Rect::new(
@@ -89,7 +89,7 @@ fn linux_client_decorated_commands_with_clear_color(
           ),
           font=@core.FontSpec::new(size=14.0, weight=700),
           color=linux_titlebar_text_color(),
-          align=@core.TextAlign::TextStart,
+          align=TextStart,
         ),
       ),
     )
@@ -113,23 +113,21 @@ fn linux_client_decorated_commands_with_clear_color(
     )
     let content_height = (height - titlebar).max(1.0)
     output.push(
-      @core.DrawCommand::PushClip(
+      PushClip(
         @core.Rect::new(x=0.0, y=titlebar, width~, height=content_height),
       ),
     )
     output.push(
-      @core.DrawCommand::PushTransform(
-        @core.Transform2D::translation(dx=0.0, dy=titlebar),
-      ),
+      PushTransform(@core.Transform2D::translation(dx=0.0, dy=titlebar)),
     )
     for command in commands {
       match command {
-        @core.DrawCommand::Clear(_) => ()
+        Clear(_) => ()
         _ => output.push(command)
       }
     }
-    output.push(@core.DrawCommand::PopTransform)
-    output.push(@core.DrawCommand::PopClip)
+    output.push(PopTransform)
+    output.push(PopClip)
     output
   }
 }
@@ -213,7 +211,7 @@ fn linux_first_clear_color(commands : Array[@core.DrawCommand]) -> @core.Color {
   for command in commands {
     if !found {
       match command {
-        @core.DrawCommand::Clear(color) => {
+        Clear(color) => {
           clear = color
           found = true
         }
@@ -270,7 +268,7 @@ fn append_linux_titlebar_button(
     index_from_right.to_double() * gap +
     (slot - size) / 2.0
   commands.push(
-    @core.DrawCommand::FillRoundedRect(
+    FillRoundedRect(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=left, y=10.0, width=size, height=size),
         radius=6.0,

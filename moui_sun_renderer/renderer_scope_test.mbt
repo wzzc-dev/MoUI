@@ -1,11 +1,11 @@
 ///|
 test "sun renderer layer inherits 2x scale factor" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
@@ -13,13 +13,13 @@ test "sun renderer layer inherits 2x scale factor" {
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushLayer(@core.LayerSpec::new()),
+    FillRect(
       @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -38,11 +38,11 @@ test "sun renderer layer inherits 2x scale factor" {
 ///|
 test "sun renderer rectangular layer mask inherits 2x scale factor" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
@@ -50,19 +50,17 @@ test "sun renderer rectangular layer mask inherits 2x scale factor" {
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushLayer(
+    Clear(@core.Color::white()),
+    PushLayer(
       @core.LayerSpec::new(
-        mask=@core.LayerMask::RectMask(
-          @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
-        ),
+        mask=RectMask(@core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0)),
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopLayer,
+    PopLayer,
   ])
   match presented.val {
     Some(frame) => {
@@ -81,11 +79,11 @@ test "sun renderer rectangular layer mask inherits 2x scale factor" {
 ///|
 test "sun renderer rectangular clip inherits 2x scale factor" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
       scale_factor=2.0,
@@ -93,15 +91,13 @@ test "sun renderer rectangular clip inherits 2x scale factor" {
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
-    ),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushClip(@core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopClip,
+    PopClip,
   ])
   match presented.val {
     Some(frame) => {
@@ -120,11 +116,11 @@ test "sun renderer rectangular clip inherits 2x scale factor" {
 ///|
 test "sun renderer rounded clip inherits 2x scale factor" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
       scale_factor=2.0,
@@ -132,18 +128,18 @@ test "sun renderer rounded clip inherits 2x scale factor" {
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushRoundedClip(
+    Clear(@core.Color::white()),
+    PushRoundedClip(
       @core.RoundedRect::new(
         rect=@core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
         radius=2.0,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::PopRoundedClip,
+    PopRoundedClip,
   ])
   match presented.val {
     Some(frame) => {
@@ -162,26 +158,24 @@ test "sun renderer rounded clip inherits 2x scale factor" {
 ///|
 test "sun renderer transform scope translates drawing" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=4.0, dy=4.0),
-    ),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushTransform(@core.Transform2D::translation(dx=4.0, dy=4.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopTransform,
+    PopTransform,
   ])
   match presented.val {
     Some(frame) => {
@@ -199,28 +193,26 @@ test "sun renderer transform scope translates drawing" {
 ///|
 test "sun renderer layer inherits transform scope" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=3.0, dy=3.0),
-    ),
-    @core.DrawCommand::PushLayer(@core.LayerSpec::new()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
+    PushTransform(@core.Transform2D::translation(dx=3.0, dy=3.0)),
+    PushLayer(@core.LayerSpec::new()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=2.0, height=2.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PopTransform,
+    PopLayer,
+    PopTransform,
   ])
   match presented.val {
     Some(frame) => {
@@ -238,28 +230,26 @@ test "sun renderer layer inherits transform scope" {
 ///|
 test "sun renderer nested filter inside transform scope" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=2.0, dy=2.0),
-    ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(3.0)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=1.0)),
+    PushTransform(@core.Transform2D::translation(dx=2.0, dy=2.0)),
+    PushFilter(Brightness(3.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=0.3, g=0.3, b=0.3, a=1.0),
     ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopTransform,
+    PopFilter,
+    PopTransform,
   ])
   match presented.val {
     Some(frame) => {
@@ -275,22 +265,24 @@ test "sun renderer nested filter inside transform scope" {
 
 ///|
 test "sun unmatched scope pops are ignored and counted" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PopClip,
-    @core.DrawCommand::PopRoundedClip,
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::PopOpacity,
-    @core.DrawCommand::PopLayer,
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PopClip,
+    PopRoundedClip,
+    PopTransform,
+    PopOpacity,
+    PopLayer,
+    PopFilter,
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::black(),
     ),
@@ -309,24 +301,24 @@ test "sun unmatched scope pops are ignored and counted" {
 
 ///|
 test "sun mismatched scope pop preserves active clip" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
-    ),
-    @core.DrawCommand::PopTransform,
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0)),
+    PopTransform,
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::PopClip,
+    PopClip,
   ])
   inspect(renderer.unsupported_command_count(), content="1")
   let diagnostics = renderer.unsupported_command_diagnostics()
@@ -350,19 +342,19 @@ test "sun mismatched scope pop preserves active clip" {
 
 ///|
 test "sun unclosed scopes are counted and restored at frame boundary" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushClip(
-      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
-    ),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushClip(@core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
       @core.Color::black(),
     ),
@@ -389,8 +381,8 @@ test "sun unclosed scopes are counted and restored at frame boundary" {
   )
 
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
       @core.Color::black(),
     ),
@@ -411,15 +403,17 @@ test "sun unclosed scopes are counted and restored at frame boundary" {
 
 ///|
 test "sun unsupported command diagnostics reset per frame" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
     target,
   )
   renderer.render([
-    @core.DrawCommand::DrawShaderEffect(
+    DrawShaderEffect(
       @core.ShaderEffectSpec::new(
         name="missing-shader",
         frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
@@ -435,7 +429,7 @@ test "sun unsupported command diagnostics reset per frame" {
   assert_true(diagnostics[0].reason().contains("fallback brush"))
   inspect(renderer.present_count(), content="1")
 
-  renderer.render([@core.DrawCommand::Clear(@core.Color::white())])
+  renderer.render([Clear(@core.Color::white())])
   inspect(renderer.unsupported_command_count(), content="0")
   inspect(renderer.unsupported_command_diagnostics().length(), content="0")
   inspect(renderer.present_count(), content="2")
@@ -443,7 +437,7 @@ test "sun unsupported command diagnostics reset per frame" {
 
 ///|
 fn sun_test_frame_has_dark_pixel(
-  frame : SunPixelFrame,
+  frame : @moui_sun_renderer.SunPixelFrame,
   rect : @core.Rect,
 ) -> Bool {
   let start_x = rect.origin.x.floor().max(0.0).to_int()

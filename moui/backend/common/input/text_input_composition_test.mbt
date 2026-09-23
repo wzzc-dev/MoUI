@@ -13,26 +13,16 @@ test "host driver dispatches ime composition text input events" {
   })
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::CompositionStart),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::TextInput(
-        @core.TextInputEvent::CompositionEnd("你"),
-      ),
-    ),
-  )
+  ignore(driver.dispatch(TextInput(CompositionStart)))
+  ignore(driver.dispatch(TextInput(CompositionEnd("你"))))
   inspect(text.val, content="你")
 }
 
@@ -50,28 +40,20 @@ test "host driver keeps unicode composition update in focused text state" {
   })
   ignore(
     driver.dispatch(
-      @backend_host.Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
+  ignore(driver.dispatch(TextInput(InsertText("ab"))))
+  ignore(driver.dispatch(TextInput(CompositionStart)))
   ignore(
     driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::InsertText("ab")),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::TextInput(@core.TextInputEvent::CompositionStart),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::TextInput(
-        @core.TextInputEvent::CompositionUpdate(
+      TextInput(
+        CompositionUpdate(
           @core.CompositionUpdate::new(
             text="你☕️",
             cursor=Some(@core.TextRange::new(start=3, end=3)),
@@ -90,13 +72,7 @@ test "host driver keeps unicode composition update in focused text state" {
   }
   inspect(cursor.start, content="3")
   inspect(cursor.end, content="3")
-  ignore(
-    driver.dispatch(
-      @backend_host.Event::TextInput(
-        @core.TextInputEvent::CompositionEnd("你☕️"),
-      ),
-    ),
-  )
+  ignore(driver.dispatch(TextInput(CompositionEnd("你☕️"))))
   inspect(text.val, content="ab你☕️")
   inspect(driver.focused_text_input().caret, content="5")
 }

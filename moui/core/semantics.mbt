@@ -199,20 +199,20 @@ pub(all) enum SemanticsAction {
 ///|
 pub fn SemanticsAction::kind(self : SemanticsAction) -> SemanticsActionKind {
   match self {
-    Activate => SemanticsActionKind::Activate
-    Focus => SemanticsActionKind::Focus
-    SetText(_) => SemanticsActionKind::SetText
-    Submit => SemanticsActionKind::Submit
-    Scroll(_) => SemanticsActionKind::Scroll
-    Select => SemanticsActionKind::Select
-    Expand => SemanticsActionKind::Expand
-    Collapse => SemanticsActionKind::Collapse
-    Dismiss => SemanticsActionKind::Dismiss
-    Increment => SemanticsActionKind::Increment
-    Decrement => SemanticsActionKind::Decrement
-    SetNumericValue(_) => SemanticsActionKind::SetNumericValue
-    SetSelection(_) => SemanticsActionKind::SetSelection
-    ShowMenu => SemanticsActionKind::ShowMenu
+    Activate => Activate
+    Focus => Focus
+    SetText(_) => SetText
+    Submit => Submit
+    Scroll(_) => Scroll
+    Select => Select
+    Expand => Expand
+    Collapse => Collapse
+    Dismiss => Dismiss
+    Increment => Increment
+    Decrement => Decrement
+    SetNumericValue(_) => SetNumericValue
+    SetSelection(_) => SetSelection
+    ShowMenu => ShowMenu
   }
 }
 
@@ -247,7 +247,7 @@ pub fn SemanticsNumericValue::new(
   step? : Double,
   value_text? : String,
 ) -> SemanticsNumericValue {
-  { current, min, max, step, value_text }
+  { current, min, max, step, value_text, }
 }
 
 ///|
@@ -263,7 +263,7 @@ pub fn SemanticsTextValue::new(
   caret? : Int,
   editable? : Bool = false,
 ) -> SemanticsTextValue {
-  { selection, caret, editable }
+  { selection, caret, editable, }
 }
 
 ///|
@@ -319,7 +319,7 @@ pub fn SemanticsRelationsDeclaration::new(
   error_message? : Array[SemanticId] = [],
   active_descendant? : Array[SemanticId] = [],
 ) -> SemanticsRelationsDeclaration {
-  { labelled_by, described_by, controls, error_message, active_descendant }
+  { labelled_by, described_by, controls, error_message, active_descendant, }
 }
 
 ///|

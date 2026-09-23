@@ -9,12 +9,10 @@ fn runtime_platform_leaf(
     identity=() => @core.ViewIdentity::new(kind="PlatformLeaf", key=Some(id)),
     declaration=() => {
       @core.ViewDeclaration::channels(
-        layout=@core.DeclarationChannel::Constant,
-        paint=@core.DeclarationChannel::Constant,
-        semantics=@core.DeclarationChannel::Constant,
-        platform=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string(source),
-        ),
+        layout=Constant,
+        paint=Constant,
+        semantics=Constant,
+        platform=Exact(@core.DeclarationKey::string(source)),
       )
     },
     layout=context => {

@@ -15,24 +15,17 @@ pub fn runtime_and_host() -> (
         ),
       ) {
       Some(scene) =>
-        @backend_common.WindowSceneResolution::SceneResolved(
+        SceneResolved(
           @backend_common.WindowSceneInstance::new(
             request~,
             runtime=runtime_for(scene, windows, request.metrics.logical_size),
           ),
         )
-      None =>
-        @backend_common.WindowSceneResolution::SceneRejected(
-          "unknown sample scene",
-        )
+      None => SceneRejected("unknown sample scene")
     }
   })
   (
-    runtime_for(
-      @multi_window_app.Scene::Main,
-      windows,
-      @geometry.Size::new(width=640.0, height=420.0),
-    ),
+    runtime_for(Main, windows, @geometry.Size::new(width=640.0, height=420.0)),
     resolver,
     queue,
   )
@@ -59,7 +52,7 @@ fn window_actions(
   @multi_window_app.WindowActions::new(
     dispatch=request => {
       match request {
-        @multi_window_app.WindowRequest::Open(open) =>
+        Open(open) =>
           host.open(
             title=open.title,
             scene=@host.WindowScene::new(
@@ -70,29 +63,18 @@ fn window_actions(
               size=@geometry.Size::new(width=open.width, height=open.height),
             ),
           )
-        @multi_window_app.WindowRequest::Focus(id) =>
-          host.focus(@host.WindowId::new(id.value))
-        @multi_window_app.WindowRequest::Close(id) =>
-          host.close(@host.WindowId::new(id.value))
+        Focus(id) => host.focus(@host.WindowId::new(id.value))
+        Close(id) => host.close(@host.WindowId::new(id.value))
       }
     },
     subscribe=dispatch => {
       queue.subscribe_completed(completion => {
         match completion.result {
-          @host.WindowRequestResult::WindowOpened(id) =>
-            dispatch(
-              @multi_window_app.WindowEvent::Opened(
-                @multi_window_app.WindowId::new(id.value),
-              ),
-            )
-          @host.WindowRequestResult::WindowUpdated(id) =>
-            dispatch(
-              @multi_window_app.WindowEvent::Updated(
-                @multi_window_app.WindowId::new(id.value),
-              ),
-            )
-          @host.WindowRequestResult::WindowRejected(message) =>
-            dispatch(@multi_window_app.WindowEvent::Rejected(message))
+          WindowOpened(id) =>
+            dispatch(Opened(@multi_window_app.WindowId::new(id.value)))
+          WindowUpdated(id) =>
+            dispatch(Updated(@multi_window_app.WindowId::new(id.value)))
+          WindowRejected(message) => dispatch(Rejected(message))
         }
       })
     },

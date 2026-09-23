@@ -1,7 +1,7 @@
 ///|
 test "skia text baseline is centered in taller text frames" {
   let frame = @core.Rect::new(x=4.0, y=10.0, width=120.0, height=44.0)
-  let metrics = SkiaTextMetrics::{ baseline: 12.0, height: 20.0 }
+  let metrics = SkiaTextMetrics::{ baseline: 12.0, height: 20.0, }
   inspect(skia_text_baseline_y(frame, metrics), content="34")
 }
 
@@ -13,7 +13,7 @@ test "skia text placement clips to the TextRun frame" {
     frame~,
     font=@core.FontSpec::new(size=16.0),
     color=@core.Color::black(),
-    align=@core.TextAlign::TextEnd,
+    align=TextEnd,
   )
   let glyph_run = SkiaGlyphRun::{
     glyphs: [@skia_native.GlyphId::new(10)],
@@ -21,7 +21,7 @@ test "skia text placement clips to the TextRun frame" {
     clusters: [0],
     width: 70.0,
   }
-  let placement = skia_text_placement(run, glyph_run, SkiaTextMetrics::{
+  let placement = skia_text_placement(run, glyph_run, {
     baseline: 10.0,
     height: 20.0,
   })
@@ -55,7 +55,7 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
     text="你好 MoUI",
     font=@core.FontSpec::new(size=18.0, weight=400),
   )
-  let system = skia_text_system(resolution=SkiaFontResolution::EmptyTypeface)
+  let system = skia_text_system(resolution=EmptyTypeface)
   if !skia_available() {
     assert_true(system.id() == @core.TextSystem::fallback().id())
   } else {
@@ -64,7 +64,7 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
       skia_resolved_text_layout_for_resolution(
         input.font,
         input.text,
-        SkiaFontResolution::EmptyTypeface,
+        EmptyTypeface,
       ) {
       Some(layout) => {
         let measured = system.measure_text(input)
@@ -318,18 +318,11 @@ test "skia resolved mixed text layout accumulates segment carets" {
   guard skia_available() else { return () }
   let text = "A你\u{1F642}B"
   let font = @core.FontSpec::new(
-    families=@core.FontFamilyStack::system_ui().with_fallback(
-      @core.FontFamily::Emoji,
-    ),
+    families=@core.FontFamilyStack::system_ui().with_fallback(Emoji),
     size=18.0,
     weight=400,
   )
-  match
-    skia_resolved_text_layout_for_resolution(
-      font,
-      text,
-      SkiaFontResolution::SystemFontMgr,
-    ) {
+  match skia_resolved_text_layout_for_resolution(font, text, SystemFontMgr) {
     Some(layout) => {
       inspect(layout.segments.length(), content="4")
       assert_true(layout.width > 0.0)
@@ -389,12 +382,7 @@ test "skia draw payload keeps shaped width and carets together" {
   guard skia_available() else { return () }
   let text = "TaTaTaTaTaTaTaTa"
   let font_spec = @core.FontSpec::new(size=18.0, weight=400)
-  match
-    skia_draw_text_payload_for_resolution(
-      font_spec,
-      text,
-      SkiaFontResolution::SystemFontMgr,
-    ) {
+  match skia_draw_text_payload_for_resolution(font_spec, text, SystemFontMgr) {
     Some((draw_font, glyph_run)) => {
       if @skia_native.skia_shaper_available() {
         assert_true(glyph_run.clusters.length() == glyph_run.glyphs.length())
@@ -431,12 +419,7 @@ test "skia text segment draws shaped glyph pixels and falls back visibly" {
   guard skia_test_native_text_available() else { return () }
   let text = "TaTaTaTaTaTaTaTa"
   let font_spec = @core.FontSpec::new(size=24.0, weight=400)
-  match
-    skia_draw_text_payload_for_resolution(
-      font_spec,
-      text,
-      SkiaFontResolution::SystemFontMgr,
-    ) {
+  match skia_draw_text_payload_for_resolution(font_spec, text, SystemFontMgr) {
     None => fail("expected Skia draw text payload")
     Some((font, glyph_run)) => {
       let paint = skia_paint(@core.Color::black())
@@ -450,7 +433,7 @@ test "skia text segment draws shaped glyph pixels and falls back visibly" {
               canvas.clear(@moui_skia.Color::white())
               let used_glyph_run = skia_draw_text_segment(
                 canvas,
-                { text, font, glyph_run, x_offset: 0.0 },
+                { text, font, glyph_run, x_offset: 0.0, },
                 @moui_skia.Point::new(4, 32),
                 paint,
               )
@@ -492,7 +475,7 @@ test "skia text segment draws shaped glyph pixels and falls back visibly" {
               canvas.clear(@moui_skia.Color::white())
               let used_glyph_run = skia_draw_text_segment(
                 canvas,
-                { text, font, glyph_run: invalid_run, x_offset: 0.0 },
+                { text, font, glyph_run: invalid_run, x_offset: 0.0, },
                 @moui_skia.Point::new(4, 32),
                 paint,
               )
@@ -1348,7 +1331,7 @@ test "skia text system keeps unicode caret coverage" {
 
 ///|
 test "skia text system keeps representative emoji caret coverage" {
-  let system = skia_text_system(resolution=SkiaFontResolution::SystemFontMgr)
+  let system = skia_text_system(resolution=SystemFontMgr)
   for text in ["\u{1F642}", "\u{2615}\u{FE0F}", "\u{1F469}\u{200D}\u{1F373}"] {
     let input = @core.TextLayoutInput::new(
       text~,
@@ -1389,12 +1372,7 @@ test "skia cjk text payload draws with a typeface covering that text" {
   guard skia_test_native_text_available() else { return () }
   let font_spec = @core.FontSpec::new(size=16.0, weight=400)
   let text = "应用逻辑。原生宿主"
-  match
-    skia_draw_text_payload_for_resolution(
-      font_spec,
-      text,
-      SkiaFontResolution::SystemFontMgr,
-    ) {
+  match skia_draw_text_payload_for_resolution(font_spec, text, SystemFontMgr) {
     None => ()
     Some((font, _)) =>
       if !skia_font_covers_text(font, text) {

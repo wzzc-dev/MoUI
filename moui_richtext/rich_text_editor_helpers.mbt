@@ -51,7 +51,7 @@ fn restore_text_history(
   rich_text_history_reset_group()
   let source = if undo { control.undo_stack } else { control.redo_stack }
   if source.length() == 0 {
-    return { text: current, control, changed: false, edit: None }
+    return { text: current, control, changed: false, edit: None, }
   }
   let restored = source[source.length() - 1]
   let restored_text = if undo {
@@ -109,7 +109,7 @@ fn restore_text_history(
   } else {
     None
   }
-  { text: restored_text, control: next_control, changed, edit }
+  { text: restored_text, control: next_control, changed, edit, }
 }
 
 ///|
@@ -120,9 +120,9 @@ fn apply_text_input(
   record_history~ : Bool,
 ) -> TextInputApplyResult {
   match event {
-    @core.TextInputEvent::InsertText(inserted) => {
+    InsertText(inserted) => {
       if inserted == "" {
-        return { text, control, changed: false, edit: None }
+        return { text, control, changed: false, edit: None, }
       }
       let edit = replace_current_selection(
         text,
@@ -132,7 +132,7 @@ fn apply_text_input(
       )
       apply_text_edit(control, text, edit, record_history~)
     }
-    @core.TextInputEvent::ReplaceText(range, replacement) => {
+    ReplaceText(range, replacement) => {
       let (next_text, deleted, start) = @core.replace_text_range_edit(
         text~,
         range,
@@ -148,7 +148,7 @@ fn apply_text_input(
       }
       apply_text_edit(control, text, next_edit, record_history~)
     }
-    @core.TextInputEvent::SetSelection(range) => {
+    SetSelection(range) => {
       let normalized = @core.normalize_grapheme_range(
         @core.TextGraphemeBoundaries::new(text~),
         range,
@@ -175,15 +175,15 @@ fn apply_text_input(
         edit: None,
       }
     }
-    @core.TextInputEvent::CompositionStart => {
+    CompositionStart => {
       let next_control = {
         ..control,
         composition: Some(""),
         composition_cursor: None,
       }
-      { text, control: next_control, changed: true, edit: None }
+      { text, control: next_control, changed: true, edit: None, }
     }
-    @core.TextInputEvent::CompositionUpdate(update) => {
+    CompositionUpdate(update) => {
       let next_control = {
         ..control,
         composition: if update.text() == "" {
@@ -205,9 +205,9 @@ fn apply_text_input(
           None => None
         },
       }
-      { text, control: next_control, changed: true, edit: None }
+      { text, control: next_control, changed: true, edit: None, }
     }
-    @core.TextInputEvent::CompositionEnd(inserted) => {
+    CompositionEnd(inserted) => {
       let next_control = {
         ..control,
         composition: None,
@@ -216,7 +216,7 @@ fn apply_text_input(
       if inserted == "" {
         {
           text,
-          control: { ..next_control, selection: None },
+          control: { ..next_control, selection: None, },
           changed: true,
           edit: None,
         }
@@ -230,7 +230,7 @@ fn apply_text_input(
         apply_text_edit(next_control, text, edit, record_history~)
       }
     }
-    @core.TextInputEvent::DeleteRange(range) => {
+    DeleteRange(range) => {
       let next_text = @core.replace_text_range(text, range, "")
       let normalized = range.normalized()
       let chars = text.to_array()
@@ -244,7 +244,7 @@ fn apply_text_input(
       }
       apply_text_edit(control, text, edit, record_history~)
     }
-    @core.TextInputEvent::DeleteSurrounding(before, after) => {
+    DeleteSurrounding(before, after) => {
       let range = @core.surrounding_delete_range(
         text,
         control.caret,
@@ -384,7 +384,7 @@ fn apply_text_edit(
       }),
     }
   } else {
-    { text: previous, control, changed: false, edit: None }
+    { text: previous, control, changed: false, edit: None, }
   }
 }
 
@@ -531,15 +531,15 @@ fn[Msg] text_input_edit_messages(
 fn rich_text_exact_channel(
   key : @core.DeclarationKey,
 ) -> @core.DeclarationChannel {
-  @core.DeclarationChannel::Exact(key)
+  Exact(key)
 }
 
 ///|
 fn rich_text_declaration(
-  layout? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  paint? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  semantics? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
-  platform? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  layout? : @core.DeclarationChannel = Constant,
+  paint? : @core.DeclarationChannel = Constant,
+  semantics? : @core.DeclarationChannel = Constant,
+  platform? : @core.DeclarationChannel = Constant,
 ) -> @core.ViewDeclaration {
   @core.ViewDeclaration::channels(layout~, paint~, semantics~, platform~)
 }
@@ -581,18 +581,18 @@ fn declaration_color_key(color : @core.Color) -> @core.DeclarationKey {
 ///|
 fn declaration_brush_key(value : @core.Brush) -> @core.DeclarationKey {
   match value {
-    @core.Brush::Solid(color) =>
+    Solid(color) =>
       rich_text_record_key("Brush.Solid", [
         ("color", declaration_color_key(color)),
       ])
-    @core.Brush::LinearGradient(spec) =>
+    LinearGradient(spec) =>
       rich_text_record_key("Brush.LinearGradient", [
         ("start", declaration_point_key(spec.start)),
         ("end", declaration_point_key(spec.end)),
         ("start_color", declaration_color_key(spec.start_color)),
         ("end_color", declaration_color_key(spec.end_color)),
       ])
-    @core.Brush::RadialGradient(spec) =>
+    RadialGradient(spec) =>
       rich_text_record_key("Brush.RadialGradient", [
         ("center", declaration_point_key(spec.center)),
         ("radius", @core.DeclarationKey::double(spec.radius)),
@@ -637,20 +637,20 @@ fn declaration_font_family_key(
   family : @core.FontFamily,
 ) -> @core.DeclarationKey {
   match family {
-    @core.FontFamily::Name(name) =>
+    Name(name) =>
       rich_text_record_key("FontFamily.Name", [
         ("name", @core.DeclarationKey::string(name)),
       ])
-    @core.FontFamily::SystemUi => @core.DeclarationKey::int(1)
-    @core.FontFamily::UiSansSerif => @core.DeclarationKey::int(2)
-    @core.FontFamily::UiSerif => @core.DeclarationKey::int(3)
-    @core.FontFamily::UiMonospace => @core.DeclarationKey::int(4)
-    @core.FontFamily::SansSerif => @core.DeclarationKey::int(5)
-    @core.FontFamily::Serif => @core.DeclarationKey::int(6)
-    @core.FontFamily::Monospace => @core.DeclarationKey::int(7)
-    @core.FontFamily::Emoji => @core.DeclarationKey::int(8)
-    @core.FontFamily::Math => @core.DeclarationKey::int(9)
-    @core.FontFamily::FangSong => @core.DeclarationKey::int(10)
+    SystemUi => @core.DeclarationKey::int(1)
+    UiSansSerif => @core.DeclarationKey::int(2)
+    UiSerif => @core.DeclarationKey::int(3)
+    UiMonospace => @core.DeclarationKey::int(4)
+    SansSerif => @core.DeclarationKey::int(5)
+    Serif => @core.DeclarationKey::int(6)
+    Monospace => @core.DeclarationKey::int(7)
+    Emoji => @core.DeclarationKey::int(8)
+    Math => @core.DeclarationKey::int(9)
+    FangSong => @core.DeclarationKey::int(10)
   }
 }
 
@@ -669,8 +669,8 @@ fn declaration_font_key(font : @core.FontSpec) -> @core.DeclarationKey {
       "style",
       @core.DeclarationKey::int(
         match font.style {
-          @core.FontStyle::Normal => 0
-          @core.FontStyle::Italic => 1
+          Normal => 0
+          Italic => 1
         },
       ),
     ),
@@ -685,7 +685,7 @@ fn[Msg] view_event_result(
   captured? : Bool = false,
   state? : @core.ViewStateContext? = None,
   text_control? : @core.TextControlStateContext? = None,
-  dirty? : @core.ViewDirtyHint = @core.ViewDirtyHint::ViewClean,
+  dirty? : @core.ViewDirtyHint = ViewClean,
   messages? : Array[Msg] = [],
 ) -> @core.ViewEventResult[Msg] {
   {
@@ -1527,10 +1527,10 @@ fn rich_text_brush_optional_key(value : @core.Brush?) -> String {
 ///|
 fn rich_text_brush_key(brush : @core.Brush) -> String {
   match brush {
-    @core.Brush::Solid(color) => "solid:\{rich_text_color_key(color)}"
-    @core.Brush::LinearGradient(spec) =>
+    Solid(color) => "solid:\{rich_text_color_key(color)}"
+    LinearGradient(spec) =>
       "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{rich_text_color_key(spec.start_color)},\{rich_text_color_key(spec.end_color)}"
-    @core.Brush::RadialGradient(spec) =>
+    RadialGradient(spec) =>
       "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{rich_text_color_key(spec.center_color)},\{rich_text_color_key(spec.edge_color)}"
   }
 }
@@ -1551,19 +1551,19 @@ fn rich_text_insets_key(insets : @core.Insets) -> String {
 ///|
 fn rich_text_image_fit_key(fit : @core.ImageFit) -> String {
   match fit {
-    @core.ImageFit::Contain => "contain"
-    @core.ImageFit::Cover => "cover"
-    @core.ImageFit::Stretch => "stretch"
-    @core.ImageFit::ScaleDown => "scale-down"
-    @core.ImageFit::FitWidth => "fit-width"
-    @core.ImageFit::FitHeight => "fit-height"
+    Contain => "contain"
+    Cover => "cover"
+    Stretch => "stretch"
+    ScaleDown => "scale-down"
+    FitWidth => "fit-width"
+    FitHeight => "fit-height"
   }
 }
 
 ///|
 fn rich_text_decoration_key(value : RichTextDecoration?) -> String {
   match value {
-    Some(RichTextDecoration::Strikethrough) => "strikethrough"
+    Some(Strikethrough) => "strikethrough"
     None => "none"
   }
 }
@@ -1571,9 +1571,9 @@ fn rich_text_decoration_key(value : RichTextDecoration?) -> String {
 ///|
 fn rich_text_align_optional_key(value : @core.TextAlign?) -> String {
   match value {
-    Some(@core.TextAlign::TextStart) => "start"
-    Some(@core.TextAlign::TextCenter) => "center"
-    Some(@core.TextAlign::TextEnd) => "end"
+    Some(TextStart) => "start"
+    Some(TextCenter) => "center"
+    Some(TextEnd) => "end"
     None => "none"
   }
 }

@@ -6,7 +6,7 @@ test "RenderPipeline diff retains keyed point image commands by identity" {
   next_icon.set_pixel(0, 0, @graphics.Color::blue())
   let source = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let paint = @graphics.Paint::new()
-  let previous = RenderPipeline::new()
+  let previous = @renderer.RenderPipeline::new()
     .draw_pixmap_keyed("icon", previous_icon, 0, 0, paint)
     .draw_bmp_bytes_keyed("bmp", previous_icon.to_bmp_bytes(), 1, 0, paint)
     .draw_png_bytes_keyed(
@@ -51,7 +51,7 @@ test "RenderPipeline diff retains keyed point image commands by identity" {
       0,
       paint,
     )
-  let next = RenderPipeline::new()
+  let next = @renderer.RenderPipeline::new()
     .draw_pixmap_keyed("icon", next_icon, 0, 0, paint)
     .draw_bmp_bytes_keyed("bmp", next_icon.to_bmp_bytes(), 1, 0, paint)
     .draw_png_bytes_keyed(
@@ -89,7 +89,7 @@ test "RenderPipeline diff retains keyed point image commands by identity" {
       paint,
     )
 
-  let diff = RenderPipeline::diff(previous, next, 8, 4)
+  let diff = @renderer.RenderPipeline::diff(previous, next, 8, 4)
   assert_eq(diff.get_retained_command_count(), 7)
   assert_eq(diff.get_changed_command_count(), 0)
   assert_true(!diff.has_changes())
@@ -99,14 +99,14 @@ test "RenderPipeline diff retains keyed point image commands by identity" {
 ///|
 test "RenderPipeline diff uses canvas dirty fallback for placeholder full byte images" {
   let paint = @graphics.Paint::new()
-  let previous = RenderPipeline::new()
+  let previous = @renderer.RenderPipeline::new()
     .draw_bmp_bytes_keyed("bmp-full", Bytes::from_array([66, 77]), 1, 1, paint)
     .draw_png_bytes_keyed("png-full", Bytes::from_array([137, 80]), 2, 1, paint)
-  let next = RenderPipeline::new()
+  let next = @renderer.RenderPipeline::new()
     .draw_bmp_bytes_keyed("bmp-full", Bytes::from_array([66, 77]), 2, 1, paint)
     .draw_png_bytes_keyed("png-full", Bytes::from_array([137, 80]), 3, 1, paint)
 
-  let diff = RenderPipeline::diff(previous, next, 5, 4)
+  let diff = @renderer.RenderPipeline::diff(previous, next, 5, 4)
   assert_eq(diff.get_retained_command_count(), 0)
   assert_eq(diff.get_changed_command_count(), 2)
   assert_true(diff.has_dirty())
@@ -127,7 +127,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
   next_icon.set_pixel(0, 0, @graphics.Color::blue())
   let source = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let paint = @graphics.Paint::new()
-  let previous = RenderPipeline::new()
+  let previous = @renderer.RenderPipeline::new()
     .draw_sampled_bmp_bytes_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
@@ -136,7 +136,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_png_bytes_keyed(
       "png",
@@ -146,7 +146,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_sampled_rgba_bytes_keyed(
       "rgba",
@@ -158,7 +158,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -169,7 +169,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_sampled_png_bytes_rect_keyed(
       "png-rect",
@@ -180,7 +180,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -193,9 +193,9 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
-  let next = RenderPipeline::new()
+  let next = @renderer.RenderPipeline::new()
     .draw_sampled_bmp_bytes_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
@@ -204,7 +204,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_png_bytes_keyed(
       "png",
@@ -214,7 +214,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_sampled_rgba_bytes_keyed(
       "rgba",
@@ -226,7 +226,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -237,7 +237,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_sampled_png_bytes_rect_keyed(
       "png-rect",
@@ -248,7 +248,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -261,17 +261,17 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
 
-  let retained = RenderPipeline::diff(previous, next, 8, 7)
+  let retained = @renderer.RenderPipeline::diff(previous, next, 8, 7)
   assert_eq(retained.get_retained_command_count(), 6)
   assert_eq(retained.get_changed_command_count(), 0)
   assert_true(!retained.has_changes())
   assert_true(!retained.has_dirty())
 
-  let resampled = RenderPipeline::diff(
-    RenderPipeline::new().draw_sampled_bmp_bytes_keyed(
+  let resampled = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_sampled_bmp_bytes_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
       0,
@@ -279,9 +279,9 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
-    RenderPipeline::new().draw_sampled_bmp_bytes_keyed(
+    @renderer.RenderPipeline::new().draw_sampled_bmp_bytes_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
       0,
@@ -289,7 +289,7 @@ test "RenderPipeline diff retains keyed sampled image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     ),
     8,
     5,
@@ -307,7 +307,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
   next_icon.set_pixel(0, 0, @graphics.Color::blue())
   let source = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let paint = @graphics.Paint::new()
-  let previous = RenderPipeline::new()
+  let previous = @renderer.RenderPipeline::new()
     .draw_quality_bmp_bytes_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
@@ -316,7 +316,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_quality_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -327,7 +327,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_quality_png_bytes_keyed(
       "png",
@@ -337,7 +337,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     )
     .draw_quality_png_bytes_rect_keyed(
       "png-rect",
@@ -348,7 +348,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_quality_rgba_bytes_keyed(
       "rgba",
@@ -360,7 +360,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_quality_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -373,9 +373,9 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     )
-  let next = RenderPipeline::new()
+  let next = @renderer.RenderPipeline::new()
     .draw_quality_bmp_bytes_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
@@ -384,7 +384,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_quality_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -395,7 +395,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_quality_png_bytes_keyed(
       "png",
@@ -405,7 +405,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       3,
       2,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     )
     .draw_quality_png_bytes_rect_keyed(
       "png-rect",
@@ -416,7 +416,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_quality_rgba_bytes_keyed(
       "rgba",
@@ -428,7 +428,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_quality_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -441,17 +441,17 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     )
 
-  let retained = RenderPipeline::diff(previous, next, 8, 5)
+  let retained = @renderer.RenderPipeline::diff(previous, next, 8, 5)
   assert_eq(retained.get_retained_command_count(), 6)
   assert_eq(retained.get_changed_command_count(), 0)
   assert_true(!retained.has_changes())
   assert_true(!retained.has_dirty())
 
-  let quality_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_quality_png_bytes_rect_keyed(
+  let quality_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_quality_png_bytes_rect_keyed(
       "png-rect",
       must_renderer_test_png_bytes(previous_icon),
       source,
@@ -460,9 +460,9 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     ),
-    RenderPipeline::new().draw_quality_png_bytes_rect_keyed(
+    @renderer.RenderPipeline::new().draw_quality_png_bytes_rect_keyed(
       "png-rect",
       must_renderer_test_png_bytes(next_icon),
       source,
@@ -471,7 +471,7 @@ test "RenderPipeline diff retains keyed quality image commands by identity" {
       2,
       2,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     ),
     8,
     5,
@@ -489,7 +489,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
   next_icon.set_pixel(0, 0, @graphics.Color::blue())
   let source = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let paint = @graphics.Paint::new()
-  let previous = RenderPipeline::new()
+  let previous = @renderer.RenderPipeline::new()
     .draw_transformed_sampled_bmp_bytes_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
@@ -498,7 +498,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_transformed_sampled_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -509,7 +509,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_transformed_sampled_png_bytes_keyed(
       "png",
@@ -519,7 +519,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageSampling::Bicubic,
+      Bicubic,
     )
     .draw_transformed_sampled_png_bytes_rect_keyed(
       "png-rect",
@@ -530,7 +530,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_transformed_sampled_rgba_bytes_keyed(
       "rgba",
@@ -542,7 +542,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_transformed_sampled_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -555,9 +555,9 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Bicubic,
+      Bicubic,
     )
-  let next = RenderPipeline::new()
+  let next = @renderer.RenderPipeline::new()
     .draw_transformed_sampled_bmp_bytes_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
@@ -566,7 +566,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_transformed_sampled_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -577,7 +577,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_transformed_sampled_png_bytes_keyed(
       "png",
@@ -587,7 +587,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageSampling::Bicubic,
+      Bicubic,
     )
     .draw_transformed_sampled_png_bytes_rect_keyed(
       "png-rect",
@@ -598,7 +598,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_transformed_sampled_rgba_bytes_keyed(
       "rgba",
@@ -610,7 +610,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     )
     .draw_transformed_sampled_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -623,17 +623,17 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Bicubic,
+      Bicubic,
     )
 
-  let retained = RenderPipeline::diff(previous, next, 8, 5)
+  let retained = @renderer.RenderPipeline::diff(previous, next, 8, 5)
   assert_eq(retained.get_retained_command_count(), 6)
   assert_eq(retained.get_changed_command_count(), 0)
   assert_true(!retained.has_changes())
   assert_true(!retained.has_dirty())
 
-  let sampling_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_sampled_png_bytes_rect_keyed(
+  let sampling_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_sampled_png_bytes_rect_keyed(
       "png-rect",
       must_renderer_test_png_bytes(previous_icon),
       source,
@@ -642,9 +642,9 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
-    RenderPipeline::new().draw_transformed_sampled_png_bytes_rect_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_sampled_png_bytes_rect_keyed(
       "png-rect",
       must_renderer_test_png_bytes(next_icon),
       source,
@@ -653,7 +653,7 @@ test "RenderPipeline diff retains keyed transformed sampled image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageSampling::Bilinear,
+      Bilinear,
     ),
     8,
     5,
@@ -672,7 +672,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
   let source = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let changed_source = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
   let paint = @graphics.Paint::new()
-  let previous = RenderPipeline::new()
+  let previous = @renderer.RenderPipeline::new()
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
@@ -681,7 +681,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -692,7 +692,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_transformed_quality_png_bytes_keyed(
       "png",
@@ -702,7 +702,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-rect",
@@ -713,7 +713,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba",
@@ -725,7 +725,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -738,9 +738,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
-  let next = RenderPipeline::new()
+  let next = @renderer.RenderPipeline::new()
     .draw_transformed_quality_bmp_bytes_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
@@ -749,7 +749,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-rect",
@@ -760,7 +760,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_transformed_quality_png_bytes_keyed(
       "png",
@@ -770,7 +770,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-rect",
@@ -781,7 +781,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     )
     .draw_transformed_quality_rgba_bytes_keyed(
       "rgba",
@@ -793,7 +793,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-rect",
@@ -806,17 +806,17 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     )
 
-  let retained = RenderPipeline::diff(previous, next, 8, 5)
+  let retained = @renderer.RenderPipeline::diff(previous, next, 8, 5)
   assert_eq(retained.get_retained_command_count(), 6)
   assert_eq(retained.get_changed_command_count(), 0)
   assert_true(!retained.has_changes())
   assert_true(!retained.has_dirty())
 
-  let quality_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_png_bytes_rect_keyed(
+  let quality_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_png_bytes_rect_keyed(
       "png-rect",
       must_renderer_test_png_bytes(previous_icon),
       source,
@@ -825,9 +825,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     ),
-    RenderPipeline::new().draw_transformed_quality_png_bytes_rect_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_png_bytes_rect_keyed(
       "png-rect",
       must_renderer_test_png_bytes(next_icon),
       source,
@@ -836,7 +836,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     ),
     6,
     3,
@@ -853,8 +853,8 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
   assert_eq(quality_changed_present.get_rect_count(), 1)
   assert_eq(quality_changed_present.get_present_pixel_count(), 6)
 
-  let png_full_quality_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
+  let png_full_quality_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
       "png",
       must_renderer_test_png_bytes(previous_icon),
       1.0,
@@ -862,9 +862,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     ),
-    RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
       "png",
       must_renderer_test_png_bytes(next_icon),
       1.0,
@@ -872,7 +872,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     ),
     6,
     3,
@@ -890,8 +890,8 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
   assert_eq(png_full_quality_present.get_rect_count(), 1)
   assert_eq(png_full_quality_present.get_present_pixel_count(), 4)
 
-  let bmp_quality_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_bmp_bytes_keyed(
+  let bmp_quality_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_bmp_bytes_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
       0.0,
@@ -899,9 +899,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
-    RenderPipeline::new().draw_transformed_quality_bmp_bytes_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_bmp_bytes_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
       0.0,
@@ -909,7 +909,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.5,
       2.0,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     ),
     6,
     3,
@@ -926,8 +926,8 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
   assert_eq(bmp_quality_present.get_rect_count(), 1)
   assert_eq(bmp_quality_present.get_present_pixel_count(), 6)
 
-  let bmp_rect_source_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_bmp_bytes_rect_keyed(
+  let bmp_rect_source_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-rect",
       previous_icon.to_bmp_bytes(),
       source,
@@ -936,9 +936,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     ),
-    RenderPipeline::new().draw_transformed_quality_bmp_bytes_rect_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_bmp_bytes_rect_keyed(
       "bmp-rect",
       next_icon.to_bmp_bytes(),
       changed_source,
@@ -947,7 +947,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     ),
     6,
     4,
@@ -965,8 +965,8 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
   assert_eq(bmp_rect_source_present.get_rect_count(), 1)
   assert_eq(bmp_rect_source_present.get_present_pixel_count(), 4)
 
-  let rgba_dimensions_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_rgba_bytes_keyed(
+  let rgba_dimensions_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_rgba_bytes_keyed(
       "rgba",
       previous_icon.to_rgba_bytes(),
       2,
@@ -976,9 +976,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
-    RenderPipeline::new().draw_transformed_quality_rgba_bytes_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_rgba_bytes_keyed(
       "rgba",
       next_icon.to_rgba_bytes(),
       3,
@@ -988,7 +988,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
     6,
     4,
@@ -1006,8 +1006,8 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
   assert_eq(rgba_dimensions_present.get_rect_count(), 1)
   assert_eq(rgba_dimensions_present.get_present_pixel_count(), 4)
 
-  let rgba_quality_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_rgba_bytes_rect_keyed(
+  let rgba_quality_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-rect",
       previous_icon.to_rgba_bytes(),
       2,
@@ -1018,9 +1018,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Balanced,
+      Balanced,
     ),
-    RenderPipeline::new().draw_transformed_quality_rgba_bytes_rect_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_rgba_bytes_rect_keyed(
       "rgba-rect",
       next_icon.to_rgba_bytes(),
       2,
@@ -1031,7 +1031,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::High,
+      High,
     ),
     6,
     3,
@@ -1048,8 +1048,8 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
   assert_eq(rgba_quality_present.get_rect_count(), 1)
   assert_eq(rgba_quality_present.get_present_pixel_count(), 6)
 
-  let same_key_format_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_bmp_bytes_keyed(
+  let same_key_format_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_bmp_bytes_keyed(
       "shared-image",
       previous_icon.to_bmp_bytes(),
       0.0,
@@ -1057,9 +1057,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
-    RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
       "shared-image",
       must_renderer_test_png_bytes(next_icon),
       0.0,
@@ -1067,7 +1067,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
     5,
     3,
@@ -1080,8 +1080,8 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
     Some(@graphics.PixelRect::new(x=0, y=0, width=2, height=2)),
   )
 
-  let same_key_source_mode_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
+  let same_key_source_mode_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_transformed_quality_png_bytes_keyed(
       "shared-png",
       must_renderer_test_png_bytes(previous_icon),
       2.0,
@@ -1089,9 +1089,9 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
-    RenderPipeline::new().draw_transformed_quality_png_bytes_rect_keyed(
+    @renderer.RenderPipeline::new().draw_transformed_quality_png_bytes_rect_keyed(
       "shared-png",
       must_renderer_test_png_bytes(next_icon),
       source,
@@ -1100,7 +1100,7 @@ test "RenderPipeline diff retains keyed transformed quality image commands by id
       2.0,
       2.0,
       paint,
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
     5,
     3,
@@ -1123,7 +1123,7 @@ test "RenderPipeline diff retains keyed tiled image commands by identity" {
   let source = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let changed_source = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
   let paint = @graphics.Paint::new()
-  let previous = RenderPipeline::new()
+  let previous = @renderer.RenderPipeline::new()
     .draw_tiled_bmp_bytes_rect_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
@@ -1156,7 +1156,7 @@ test "RenderPipeline diff retains keyed tiled image commands by identity" {
       2,
       paint,
     )
-  let next = RenderPipeline::new()
+  let next = @renderer.RenderPipeline::new()
     .draw_tiled_bmp_bytes_rect_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
@@ -1190,14 +1190,14 @@ test "RenderPipeline diff retains keyed tiled image commands by identity" {
       paint,
     )
 
-  let retained = RenderPipeline::diff(previous, next, 8, 5)
+  let retained = @renderer.RenderPipeline::diff(previous, next, 8, 5)
   assert_eq(retained.get_retained_command_count(), 3)
   assert_eq(retained.get_changed_command_count(), 0)
   assert_true(!retained.has_changes())
   assert_true(!retained.has_dirty())
 
-  let source_changed = RenderPipeline::diff(
-    RenderPipeline::new().draw_tiled_bmp_bytes_rect_keyed(
+  let source_changed = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_tiled_bmp_bytes_rect_keyed(
       "bmp",
       previous_icon.to_bmp_bytes(),
       source,
@@ -1207,7 +1207,7 @@ test "RenderPipeline diff retains keyed tiled image commands by identity" {
       2,
       paint,
     ),
-    RenderPipeline::new().draw_tiled_bmp_bytes_rect_keyed(
+    @renderer.RenderPipeline::new().draw_tiled_bmp_bytes_rect_keyed(
       "bmp",
       next_icon.to_bmp_bytes(),
       changed_source,

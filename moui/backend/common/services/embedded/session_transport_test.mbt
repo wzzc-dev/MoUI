@@ -1,6 +1,6 @@
 ///|
 test "transport projects owner surface epochs and mints session generations" {
-  let transport = HostSessionTransport::new(initial_generation=11)
+  let transport = @embedded.HostSessionTransport::new(initial_generation=11)
   assert_true(transport.attach(surface_epoch=7))
   inspect(transport.surface_epoch(), content="7")
   inspect(transport.session_generation(), content="11")

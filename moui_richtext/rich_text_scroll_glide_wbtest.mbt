@@ -73,7 +73,7 @@ fn glide_test_paint_signature(runtime : @runtime.AppRuntime) -> String {
   let parts : Array[String] = []
   for command in runtime.draw_commands() {
     match command {
-      @core.DrawCommand::DrawText(run) =>
+      DrawText(run) =>
         parts.push(
           run.text +
           "@" +
@@ -90,7 +90,7 @@ fn glide_test_paint_signature(runtime : @runtime.AppRuntime) -> String {
 ///|
 fn glide_test_runtime(glide : MarkdownScrollGlide) -> @runtime.AppRuntime {
   let session = MarkdownDocumentSession::new(glide_test_source())
-  let selection : MarkdownEditorSelection = { caret: 0, selection: None }
+  let selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(init=(), update=(_model, _next) => (), view=_ => {
       controlled_markdown_session_editor(

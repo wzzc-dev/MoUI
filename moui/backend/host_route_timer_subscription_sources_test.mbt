@@ -45,8 +45,7 @@ test "host route source subscription dispatches mapped route events" {
     runtime
     .draw_commands()
     .any(command => {
-      command is @core.DrawCommand::DrawText({ text, .. }) &&
-      text == "route /docs?tab=api"
+      command is DrawText({ text, .. }) && text == "route /docs?tab=api"
     }),
   )
 }
@@ -141,10 +140,7 @@ test "host timer source subscription starts timer and dispatches mapped frames" 
   assert_true(
     runtime
     .draw_commands()
-    .any(command => {
-      command is @core.DrawCommand::DrawText({ text, .. }) &&
-      text == "timer 1000"
-    }),
+    .any(command => command is DrawText({ text, .. }) && text == "timer 1000"),
   )
 }
 

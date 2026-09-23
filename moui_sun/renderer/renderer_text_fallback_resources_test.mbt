@@ -8,7 +8,7 @@ test "Renderer::draw_text_fallback_line_cached reuses fallback span masks" {
   )
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -63,7 +63,7 @@ test "Renderer::draw_text_fallback_line_atlas reuses fallback glyph resources" {
   )
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -129,8 +129,8 @@ test "Renderer fallback atlas text path uses RendererResources" {
   )
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(24, 12, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(24, 12, 4, 4, 1)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -179,8 +179,8 @@ test "Renderer fallback cached text path uses RendererResources" {
   )
   let canvas = @graphics.Canvas::new(36, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 4, 4, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 4, 4, 1)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,

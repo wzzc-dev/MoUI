@@ -106,12 +106,8 @@ pub fn backend_info() -> @render.RendererBackendInfo {
   )
   let text_maturity = skia_text_maturity_preflight()
   @render.RendererBackendInfo::new(
-    backend=@render.RendererBackendKind::SkiaRasterNative,
-    status=if available {
-      @render.RendererCapabilityStatus::Supported
-    } else {
-      @render.RendererCapabilityStatus::Unavailable
-    },
+    backend=SkiaRasterNative,
+    status=if available { Supported } else { Unavailable },
     can_render=available,
     can_resize=available,
     owns_surface=true,
@@ -135,13 +131,13 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor {
 ///|
 pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor {
   @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::SkiaRasterNative,
-    family=@render.RendererFamily::Skia,
-    presentation=@render.RendererPresentationModel::CpuPixelFrame,
-    supported_targets=[@render.RendererTarget::Native],
+    backend=SkiaRasterNative,
+    family=Skia,
+    presentation=CpuPixelFrame,
+    supported_targets=[Native],
     capabilities=skia_provider_capabilities(
       provider_id="skia-raster",
-      backend=@render.RendererBackendKind::SkiaRasterNative,
+      backend=SkiaRasterNative,
     ),
     description="Native Skia raster renderer that presents copied RGBA premultiplied pixel frames to the host.",
   )
@@ -150,13 +146,13 @@ pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor {
 ///|
 pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
   @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::SkiaGpuNative,
-    family=@render.RendererFamily::Skia,
-    presentation=@render.RendererPresentationModel::HostGpuSurface,
-    supported_targets=[@render.RendererTarget::Native],
+    backend=SkiaGpuNative,
+    family=Skia,
+    presentation=HostGpuSurface,
+    supported_targets=[Native],
     capabilities=skia_provider_capabilities(
       provider_id="skia-hybrid",
-      backend=@render.RendererBackendKind::SkiaGpuNative,
+      backend=SkiaGpuNative,
     ),
     description="Native Skia GPU renderer identity for direct host GPU surfaces. Providers must prove a matching Metal, Vulkan, EGL/GLES, or Direct3D surface before selecting it; resolve_surface_route picks the platform-appropriate SurfaceRoute (metal/vulkan/egl/direct3d) and the matching HostGpuPresentTarget wiring. Auto prefers SkiaGpuNative when the host exposes a usable GPU surface; SkiaRasterNative remains the explicit mode and sticky recovery fallback.",
   )
@@ -166,7 +162,7 @@ pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
 pub fn create_with_present_target(
   metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
   async_image_loading? : Bool = false,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   create_with_present_target_and_route(
@@ -182,21 +178,19 @@ pub fn create_with_present_target(
 pub fn create_with_present_target_and_route(
   metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
-  surface_route? : SkiaSurfaceRoute = SkiaSurfaceRoute::RasterSurfaceRoute,
+  surface_route? : SkiaSurfaceRoute = RasterSurfaceRoute,
   gpu_target? : HostGpuPresentTarget? = None,
-  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  font_resolution? : SkiaFontResolution = SystemFontMgr,
   async_image_loading? : Bool = false,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   if !skia_available() {
-    raise SkiaRendererError::SkiaUnavailable
+    raise SkiaUnavailable
   }
   // The direct GPU present path requires a GPU surface route; pairing a
   // HostGpuPresentTarget with a RasterSurfaceRoute would silently present
   // a raster surface through a GPU presenter, which is a configuration error.
   if gpu_target is Some(_) && !surface_route.is_gpu() {
-    raise SkiaRendererError::GpuContextUnavailable(
-      "gpu-target-requires-gpu-surface-route",
-    )
+    raise GpuContextUnavailable("gpu-target-requires-gpu-surface-route")
   }
   let gpu_context = create_gpu_context(surface_route)
   // Window systems such as AppKit cannot supply a drawable until control has
@@ -269,7 +263,7 @@ pub fn SkiaRasterRenderer::render(
       }
       canvas.restore_to_count(saved)
       if !self.surface.flush_and_submit() {
-        raise SkiaRendererError::SurfaceUnavailable
+        raise SurfaceUnavailable
       }
       // Dispatch on the present target kind. When a HostGpuPresentTarget is
       // bound, the platform owns the drawable and Skia has already flushed;
@@ -287,7 +281,7 @@ pub fn SkiaRasterRenderer::render(
               None => ()
             }
           } else {
-            raise SkiaRendererError::PresentFailed(gpu_target.description)
+            raise PresentFailed(gpu_target.description)
           }
         }
         None => {
@@ -296,12 +290,12 @@ pub fn SkiaRasterRenderer::render(
           if (self.target.present)(frame) {
             self.present_count = self.present_count + 1
           } else {
-            raise SkiaRendererError::PresentFailed(self.target.description)
+            raise PresentFailed(self.target.description)
           }
         }
       }
     }
-    None => raise SkiaRendererError::CanvasUnavailable
+    None => raise CanvasUnavailable
   }
 }
 
@@ -421,9 +415,9 @@ fn SkiaRasterRenderer::apply_damage_clip(
 ) -> Unit {
   let _ = self
   match damage {
-    @core.DamageRegion::Rects([rect, ..]) => canvas.clip_rect(skia_rect(rect))
-    @core.DamageRegion::Empty | @core.DamageRegion::FullSurface(_) => ()
-    @core.DamageRegion::Rects([]) => ()
+    Rects([rect, ..]) => canvas.clip_rect(skia_rect(rect))
+    Empty | FullSurface(_) => ()
+    Rects([]) => ()
   }
 }
 
@@ -436,8 +430,8 @@ fn SkiaRasterRenderer::apply_damage_clear(
 ) -> Unit {
   let _ = self
   match damage {
-    @core.DamageRegion::FullSurface(_) => canvas.clear(skia_color(clear_color))
-    @core.DamageRegion::Rects(rects) =>
+    FullSurface(_) => canvas.clear(skia_color(clear_color))
+    Rects(rects) =>
       // Per-rect clip + clear ensures each dirty region is independently cleared.
       for rect in rects {
         let saved = canvas.save()
@@ -445,7 +439,7 @@ fn SkiaRasterRenderer::apply_damage_clear(
         canvas.clear(skia_color(clear_color))
         canvas.restore_to_count(saved)
       }
-    @core.DamageRegion::Empty => ()
+    Empty => ()
   }
 }
 
@@ -472,7 +466,7 @@ fn SkiaRasterRenderer::render_frame_inner(
         Some(stats) => {
           if !self.surface.flush_and_submit() {
             self.invalidate_gpu_backing_surface()
-            raise SkiaRendererError::SurfaceUnavailable
+            raise SurfaceUnavailable
           }
           stats
         }
@@ -491,11 +485,11 @@ fn SkiaRasterRenderer::render_frame_inner(
                 return self.render_frame_result(stats, presented=false)
               }
               if !self.surface.flush_and_submit() {
-                raise SkiaRendererError::SurfaceUnavailable
+                raise SurfaceUnavailable
               }
               stats
             }
-            None => raise SkiaRendererError::CanvasUnavailable
+            None => raise CanvasUnavailable
           }
         }
       }
@@ -510,7 +504,7 @@ fn SkiaRasterRenderer::render_frame_inner(
         self.render_frame_result(stats, presented=true)
       } else {
         self.invalidate_gpu_backing_surface()
-        raise SkiaRendererError::PresentFailed(gpu_target.description)
+        raise PresentFailed(gpu_target.description)
       }
     }
     None =>
@@ -525,7 +519,7 @@ fn SkiaRasterRenderer::render_frame_inner(
             return self.render_frame_result(stats, presented=false)
           }
           if !self.surface.flush_and_submit() {
-            raise SkiaRendererError::SurfaceUnavailable
+            raise SurfaceUnavailable
           }
           let skia_frame = self.read_frame()
           self.last_frame = Some(skia_frame)
@@ -533,10 +527,10 @@ fn SkiaRasterRenderer::render_frame_inner(
             self.present_count = self.present_count + 1
             self.render_frame_result(stats, presented=true)
           } else {
-            raise SkiaRendererError::PresentFailed(self.target.description)
+            raise PresentFailed(self.target.description)
           }
         }
-        None => raise SkiaRendererError::CanvasUnavailable
+        None => raise CanvasUnavailable
       }
   }
 }
@@ -637,7 +631,7 @@ pub fn SkiaRasterRenderer::backend_kind(
   self : SkiaRasterRenderer,
 ) -> @render.RendererBackendKind {
   let _ = self
-  @render.RendererBackendKind::SkiaRasterNative
+  SkiaRasterNative
 }
 
 ///|

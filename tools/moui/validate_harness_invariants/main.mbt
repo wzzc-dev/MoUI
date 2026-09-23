@@ -214,7 +214,7 @@ fn parse_matrix_entrypoint_routes(
     if result.any(item => item.suffix == suffix) {
       return Err(path + ": duplicate entrypoint suffix " + suffix)
     }
-    result.push({ suffix, mobile: kind == "mobile", line_budget })
+    result.push({ suffix, mobile: kind == "mobile", line_budget, })
   }
   if result.is_empty() {
     Err(path + ": routes must not be empty")
@@ -360,7 +360,7 @@ fn push_ok(
   rule : String,
   path : String,
 ) -> Unit {
-  results.push({ rule, ok: true, path, hint: "" })
+  results.push({ rule, ok: true, path, hint: "", })
 }
 
 ///|
@@ -370,7 +370,7 @@ fn push_fail(
   path : String,
   hint : String,
 ) -> Unit {
-  results.push({ rule, ok: false, path, hint })
+  results.push({ rule, ok: false, path, hint, })
 }
 
 ///|
@@ -713,7 +713,7 @@ fn check_r3_provider_text(path : String, text : String?) -> HarnessFinding {
           hint: "moui_skia_renderer must own MOUI_SKIA_RENDERER selection and expose raster/gpu/from_env providers with an explicit platform policy. See docs/invariants.md#R3",
         }
       } else {
-        { rule: "R3", ok: true, path, hint: "" }
+        { rule: "R3", ok: true, path, hint: "", }
       }
     }
   }
@@ -746,7 +746,7 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
           hint: "embedded-runtime main.mbt must explicitly compose renderer and backend entry; backend entry owns the window HostCmd ApplicationHandler/EventLoop. See docs/invariants.md#R3",
         }
       } else {
-        { rule: "R3", ok: true, path, hint: "" }
+        { rule: "R3", ok: true, path, hint: "", }
       }
     }
   }
@@ -1084,7 +1084,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ repo_root, json, help, skip_examples })
+  Ok({ repo_root, json, help, skip_examples, })
 }
 
 ///|

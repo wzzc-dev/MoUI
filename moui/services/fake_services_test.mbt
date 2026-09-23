@@ -52,9 +52,9 @@ test "FakeAppServices records deterministic file clipboard and settings work" {
 
 ///|
 test "FakeAppServices provides deterministic system appearance" {
-  let fake = FakeAppServices::new()
-  fake.set_system_color_scheme(@core.ColorScheme::Dark)
-  let result : Ref[ServiceTaskResult[@core.ColorScheme]?] = Ref(None)
+  let fake = @services.FakeAppServices::new()
+  fake.set_system_color_scheme(Dark)
+  let result : Ref[@services.ServiceTaskResult[@core.ColorScheme]?] = Ref(None)
   ignore(
     fake
     .services()
@@ -62,17 +62,14 @@ test "FakeAppServices provides deterministic system appearance" {
     .system_color_scheme()
     .start(value => result.val = Some(value)),
   )
-  assert_eq(result.val, Some(Success(@core.ColorScheme::Dark)))
+  assert_eq(result.val, Some(Success(Dark)))
   assert_eq(fake.calls(), ["appearance:system-color-scheme"])
 }
 
 ///|
 test "FakeAppServices covers platform services and lifecycle" {
   let fake = @services.FakeAppServices::new()
-  fake.set_permission_status(
-    @services.PermissionKind::Notifications,
-    @services.PermissionStatus::Granted,
-  )
+  fake.set_permission_status(Notifications, Granted)
   let notification = @services.NotificationRequest::new(
     id="build-finished",
     title="Build",
@@ -112,7 +109,7 @@ test "FakeAppServices covers platform services and lifecycle" {
     .services()
     .platform()
     .permissions()
-    .request(@services.PermissionKind::Notifications)
+    .request(Notifications)
     .start(result => permission.val = Some(result)),
   )
   ignore(
@@ -123,9 +120,9 @@ test "FakeAppServices covers platform services and lifecycle" {
     .write("main", "{\"x\":10}")
     .start(_ => ()),
   )
-  ignore(fake.publish_lifecycle(@services.AppLifecycleEvent::Background))
-  assert_eq(permission.val, Some(Success(@services.PermissionStatus::Granted)))
-  assert_eq(lifecycle_events, [@services.AppLifecycleEvent::Background])
+  ignore(fake.publish_lifecycle(Background))
+  assert_eq(permission.val, Some(Success(Granted)))
+  assert_eq(lifecycle_events, [Background])
   assert_true(fake.notification("build-finished") is Some(_))
   assert_true(fake.tray_item("moui") is Some(_))
   assert_eq(fake.calls(), [

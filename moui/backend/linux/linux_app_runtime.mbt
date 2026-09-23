@@ -58,8 +58,8 @@ fn linux_surface_binding(
     // Vulkan-Wayland only; forwarding an Xlib `Display*` there would be
     // misinterpreted as a `wl_display`.
     let display_handle = match window.windowing_backend() {
-      @window_linux.WindowingBackend::X11 => None
-      @window_linux.WindowingBackend::Wayland => Some(window.wl_display())
+      X11 => None
+      Wayland => Some(window.wl_display())
     }
     let native_surface = @render.NativeSurface::new(
       surface_handle=window.wl_surface(),
@@ -115,8 +115,8 @@ async fn launch_linux_app_async_pump(
   )
   while !event_loop.exiting() {
     match event_loop.pump_app_events(Some(0), app) {
-      @window_core.PumpStatus::Exit(_) => return ()
-      @window_core.PumpStatus::Continue => ()
+      Exit(_) => return ()
+      Continue => ()
     }
     @async.sleep(frame_interval_ms)
   }
@@ -178,8 +178,8 @@ fn linux_color_scheme_from_theme(
   theme : @window_core.Theme?,
 ) -> @core.ColorScheme {
   match theme {
-    Some(@window_core.Theme::Dark) => @core.ColorScheme::Dark
-    _ => @core.ColorScheme::Light
+    Some(Dark) => Dark
+    _ => Light
   }
 }
 
@@ -192,13 +192,13 @@ pub fn linux_adjust_host_event_for_client_decorations(
     Some(event)
   } else {
     match event {
-      @host.Event::Pointer(pointer) => {
+      Pointer(pointer) => {
         let y = pointer.position.y - decorations.titlebar_height
         if y < 0.0 {
           None
         } else {
           Some(
-            @host.Event::Pointer(
+            Pointer(
               @core.PointerEvent::new(
                 position=@core.Point::new(x=pointer.position.x, y~),
                 phase=pointer.phase,
@@ -210,13 +210,13 @@ pub fn linux_adjust_host_event_for_client_decorations(
           )
         }
       }
-      @host.Event::Scroll(scroll) => {
+      Scroll(scroll) => {
         let y = scroll.position.y - decorations.titlebar_height
         if y < 0.0 {
           None
         } else {
           Some(
-            @host.Event::Scroll(
+            Scroll(
               @host.HostScrollEvent::new(
                 position=@core.Point::new(x=scroll.position.x, y~),
                 delta=scroll.delta,
@@ -226,7 +226,7 @@ pub fn linux_adjust_host_event_for_client_decorations(
           )
         }
       }
-      @host.Event::DragDrop(drop) =>
+      DragDrop(drop) =>
         match drop.position {
           Some(position) => {
             let y = position.y - decorations.titlebar_height
@@ -235,7 +235,7 @@ pub fn linux_adjust_host_event_for_client_decorations(
               None
             } else {
               Some(
-                @host.Event::DragDrop(
+                DragDrop(
                   @core.DragDropEvent::new(
                     phase=drop.phase,
                     paths~,
@@ -247,7 +247,7 @@ pub fn linux_adjust_host_event_for_client_decorations(
           }
           None => Some(event)
         }
-      @host.Event::Resized(metrics) => Some(@host.Event::Resized(metrics))
+      Resized(metrics) => Some(Resized(metrics))
       _ => Some(event)
     }
   }

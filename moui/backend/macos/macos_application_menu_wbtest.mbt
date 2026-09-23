@@ -1,18 +1,12 @@
 ///|
 test "macOS application menus preserve typed command order" {
-  let first = @core.ActionCommand::new(
-    intent=@core.CommandIntent::Activate,
-    label="First",
-  )
-  let second = @core.ActionCommand::new(
-    intent=@core.CommandIntent::Submit,
-    label="Second",
-  )
+  let first = @core.ActionCommand::new(intent=Activate, label="First")
+  let second = @core.ActionCommand::new(intent=Submit, label="Second")
   let menus = [
     @services.ApplicationMenu::new(title="File", items=[
-      @services.ApplicationMenuItem::MenuCommand(first),
-      @services.ApplicationMenuItem::MenuSeparator,
-      @services.ApplicationMenuItem::MenuCommand(second),
+      MenuCommand(first),
+      MenuSeparator,
+      MenuCommand(second),
     ]),
   ]
   assert_eq(macos_application_menu_commands(menus), [first, second])
@@ -21,7 +15,7 @@ test "macOS application menus preserve typed command order" {
 ///|
 test "macOS application menu shortcuts use AppKit modifier masks" {
   let command = @core.ActionCommand::new(
-    intent=@core.CommandIntent::Activate,
+    intent=Activate,
     shortcut=Some(
       @core.KeyboardShortcut::new(
         key="s",
@@ -35,7 +29,7 @@ test "macOS application menu shortcuts use AppKit modifier masks" {
 ///|
 test "macOS application-menu placement keeps global command ids" {
   let settings = @core.ActionCommand::new(
-    intent=@core.CommandIntent::Activate,
+    intent=Activate,
     label="Settings\u{2026}",
     shortcut=Some(
       @core.KeyboardShortcut::new(
@@ -44,17 +38,10 @@ test "macOS application-menu placement keeps global command ids" {
       ),
     ),
   )
-  let open = @core.ActionCommand::new(
-    intent=@core.CommandIntent::Activate,
-    label="Open",
-  )
+  let open = @core.ActionCommand::new(intent=Activate, label="Open")
   let menus = [
-    @services.ApplicationMenu::application(items=[
-      @services.ApplicationMenuItem::MenuCommand(settings),
-    ]),
-    @services.ApplicationMenu::new(title="File", items=[
-      @services.ApplicationMenuItem::MenuCommand(open),
-    ]),
+    @services.ApplicationMenu::application(items=[MenuCommand(settings)]),
+    @services.ApplicationMenu::new(title="File", items=[MenuCommand(open)]),
   ]
   let top = macos_application_menu_descriptors(menus)
   let application = macos_application_menu_items(menus)
@@ -83,7 +70,7 @@ test "macOS application Edit commands reach focused MoUI text and clipboard" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=120.0, y=20.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
@@ -91,17 +78,17 @@ test "macOS application Edit commands reach focused MoUI text and clipboard" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=120.0, y=20.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
   dispatch_macos_application_command(
     runtime,
-    @core.ActionCommand::new(intent=@core.CommandIntent::SelectAll),
+    @core.ActionCommand::new(intent=SelectAll),
   )
   dispatch_macos_application_command(
     runtime,
-    @core.ActionCommand::new(intent=@core.CommandIntent::Copy),
+    @core.ActionCommand::new(intent=Copy),
   )
   debug_inspect(
     macos_clipboard_read_text(),
@@ -135,7 +122,7 @@ test "macOS physical Edit key equivalent reaches the first responder" {
 ///|
 test "macOS menu-bar items invoke the backend-owned action target" {
   let select_all = @core.ActionCommand::new(
-    intent=@core.CommandIntent::SelectAll,
+    intent=SelectAll,
     label="Select All",
     shortcut=Some(
       @core.KeyboardShortcut::new(
@@ -145,9 +132,7 @@ test "macOS menu-bar items invoke the backend-owned action target" {
     ),
   )
   let menus = [
-    @services.ApplicationMenu::new(title="Edit", items=[
-      @services.ApplicationMenuItem::MenuCommand(select_all),
-    ]),
+    @services.ApplicationMenu::new(title="Edit", items=[MenuCommand(select_all)]),
   ]
   @window_macos.set_system_menus(macos_application_menu_descriptors(menus))
   let selected_action = Ref(0)

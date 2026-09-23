@@ -10,11 +10,9 @@ fn RenderPipelineImageBytes::decode(
   self : RenderPipelineImageBytes,
 ) -> Result[@graphics.Pixmap, @graphics.PixmapDecodeError] {
   match self {
-    RenderPipelineImageBytes::Bmp(image_data) =>
-      @graphics.Pixmap::from_bmp_bytes(image_data)
-    RenderPipelineImageBytes::Png(image_data) =>
-      @graphics.Pixmap::from_png_bytes(image_data)
-    RenderPipelineImageBytes::Rgba(image_data, image_width, image_height) =>
+    Bmp(image_data) => @graphics.Pixmap::from_bmp_bytes(image_data)
+    Png(image_data) => @graphics.Pixmap::from_png_bytes(image_data)
+    Rgba(image_data, image_width, image_height) =>
       @graphics.Pixmap::from_rgba_bytes(image_width, image_height, image_data)
   }
 }
@@ -105,7 +103,7 @@ fn render_pipeline_make_image_bytes_dependency(
   image : RenderPipelineImageBytes,
 ) -> RenderPipelineImageDependency {
   match image {
-    RenderPipelineImageBytes::Rgba(_, image_width, image_height) =>
+    Rgba(_, image_width, image_height) =>
       render_pipeline_make_declared_image_dependency(
         command_index, resource_key, image_width, image_height,
       )
@@ -126,7 +124,7 @@ fn render_pipeline_make_image_bytes_rect_dependency(
   src_rect : @graphics.PixelRect,
 ) -> RenderPipelineImageDependency {
   match image {
-    RenderPipelineImageBytes::Rgba(_, image_width, image_height) =>
+    Rgba(_, image_width, image_height) =>
       render_pipeline_make_declared_rect_image_dependency(
         command_index, resource_key, image_width, image_height, src_rect,
       )
@@ -154,8 +152,7 @@ fn render_pipeline_decode_image_bytes(
 ) -> Result[@graphics.Pixmap, RenderPipelineReplayError] {
   match image.decode() {
     Ok(pixmap) => Ok(pixmap)
-    Err(error) =>
-      Err(RenderPipelineReplayError::ImageDecodeFailed(resource_key, error))
+    Err(error) => Err(ImageDecodeFailed(resource_key, error))
   }
 }
 
@@ -571,7 +568,7 @@ fn render_image_bytes_fallback_dirty_rect(
   canvas_height : Int,
 ) -> @graphics.PixelRect? {
   match image {
-    RenderPipelineImageBytes::Rgba(_, image_width, image_height) =>
+    Rgba(_, image_width, image_height) =>
       render_pixel_target_dirty_rect(x, y, image_width, image_height)
     _ => render_canvas_dirty_rect(canvas_width, canvas_height)
   }

@@ -30,7 +30,7 @@ pub fn XrView::new(
   viewport_width~ : Int,
   viewport_height~ : Int,
 ) -> XrView {
-  { view, projection, viewport_x, viewport_y, viewport_width, viewport_height }
+  { view, projection, viewport_x, viewport_y, viewport_width, viewport_height, }
 }
 
 ///|
@@ -64,7 +64,7 @@ pub fn XrPose::new(
   position~ : @moui_3d.Vec3,
   orientation~ : @moui_3d.Quat,
 ) -> XrPose {
-  { position, orientation }
+  { position, orientation, }
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn XrInputSource::new(
   grip? : XrPose? = None,
   target_ray? : XrPose? = None,
 ) -> XrInputSource {
-  { id, handedness, grip, target_ray }
+  { id, handedness, grip, target_ray, }
 }
 
 ///|
@@ -128,7 +128,7 @@ pub fn XrFrame::new(
   views~ : Array[XrView],
   input_sources? : Array[XrInputSource] = [],
 ) -> XrFrame {
-  { timestamp, views: views.copy(), input_sources: input_sources.copy() }
+  { timestamp, views: views.copy(), input_sources: input_sources.copy(), }
 }
 
 ///|
@@ -166,7 +166,7 @@ pub fn XrProviderDescriptor::new(
   id~ : String,
   status~ : String,
 ) -> XrProviderDescriptor {
-  { backend, id, status }
+  { backend, id, status, }
 }
 
 ///|

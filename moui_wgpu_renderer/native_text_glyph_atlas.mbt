@@ -99,7 +99,7 @@ fn GlyphAtlas::blit_glyph(
   raster : NativeRasterGlyph,
 ) -> Unit {
   match raster.format {
-    NativeRasterGlyphFormat::AlphaMask =>
+    AlphaMask =>
       for y in 0..<raster.height {
         for x in 0..<raster.width {
           let alpha = raster.pixels[y * raster.width + x]
@@ -112,7 +112,7 @@ fn GlyphAtlas::blit_glyph(
           }
         }
       }
-    NativeRasterGlyphFormat::ColorRgba =>
+    ColorRgba =>
       for y in 0..<raster.height {
         for x in 0..<raster.width {
           let src = (y * raster.width + x) * 4

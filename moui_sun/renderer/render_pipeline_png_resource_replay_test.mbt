@@ -2,9 +2,9 @@
 test "RenderPipeline PNG bytes replay uses RendererResources image cache" {
   let icon = @graphics.Pixmap::new(1, 1)
   icon.set_pixel(0, 0, @graphics.Color::green())
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 2)
-  let renderer = Renderer::new(@graphics.Canvas::new(3, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 2)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(3, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_png_bytes_keyed(
       "icon",
@@ -45,7 +45,7 @@ test "RenderPipeline PNG bytes replay uses RendererResources image cache" {
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_png_bytes_keyed(
       "icon",
@@ -78,11 +78,11 @@ test "RenderPipeline PNG bytes replay uses RendererResources image cache" {
 test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
   let canvas = @graphics.Canvas::new(7, 1)
   canvas.set_transform(@graphics.Transform::translate(tx=1.0, ty=0.0))
-  let renderer = Renderer::new(canvas)
-  let first_pipeline = RenderPipeline::new()
+  let renderer = @renderer.Renderer::new(canvas)
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_sampled_png_bytes_keyed(
       "png-transform",
@@ -92,7 +92,7 @@ test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_transformed_sampled_png_bytes_rect_keyed(
       "png-transform-sprite",
@@ -103,7 +103,7 @@ test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 3)
@@ -121,7 +121,7 @@ test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources
   assert_eq(images[1].get_source_height(), 1)
   let batches = first_pipeline.batch_plan(7, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_true(
     batches[1].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=5, height=1)),
@@ -164,7 +164,7 @@ test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_sampled_png_bytes_keyed(
       "png-transform",
@@ -174,7 +174,7 @@ test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_transformed_sampled_png_bytes_rect_keyed(
       "png-transform-sprite",
@@ -185,7 +185,7 @@ test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )
@@ -223,11 +223,11 @@ test "RenderPipeline PNG bytes transformed sampled replay uses RendererResources
 test "RenderPipeline PNG bytes transformed quality replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
   let canvas = @graphics.Canvas::new(7, 1)
   canvas.set_transform(@graphics.Transform::translate(tx=1.0, ty=0.0))
-  let renderer = Renderer::new(canvas)
-  let first_pipeline = RenderPipeline::new()
+  let renderer = @renderer.Renderer::new(canvas)
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_quality_png_bytes_keyed(
       "png-transform-quality",
@@ -237,7 +237,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-transform-quality-sprite",
@@ -248,7 +248,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 3)
@@ -270,7 +270,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
   assert_eq(images[1].get_source_height(), 1)
   let batches = first_pipeline.batch_plan(7, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_true(
     batches[1].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=5, height=1)),
@@ -315,7 +315,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
     @graphics.Color::green(),
   )
 
-  let second_pipeline = RenderPipeline::new()
+  let second_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_quality_png_bytes_keyed(
       "png-transform-quality",
@@ -325,7 +325,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-transform-quality-sprite",
@@ -336,7 +336,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
   let second = must_draw_pipeline_with_renderer_resources(
     renderer, second_pipeline, resources,
@@ -374,8 +374,8 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
     @graphics.Color::green(),
   )
 
-  let retained = RenderPipeline::diff(
-    RenderPipeline::new()
+  let retained = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new()
     .draw_transformed_quality_png_bytes_keyed(
       "png-transform-quality",
       must_renderer_test_png_bytes(sprite),
@@ -384,7 +384,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-transform-quality-sprite",
@@ -395,9 +395,9 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .draw_transformed_quality_png_bytes_keyed(
       "png-transform-quality",
       Bytes::from_array([137, 80]),
@@ -406,7 +406,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_transformed_quality_png_bytes_rect_keyed(
       "png-transform-quality-sprite",
@@ -417,7 +417,7 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
     7,
     1,
@@ -431,9 +431,9 @@ test "RenderPipeline PNG bytes transformed quality replay uses RendererResources
 test "RenderPipeline PNG bytes quality replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(7, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(7, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_quality_png_bytes_keyed(
       "png-quality",
@@ -443,7 +443,7 @@ test "RenderPipeline PNG bytes quality replay uses RendererResources image cache
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_quality_png_bytes_rect_keyed(
       "png-quality-sprite",
@@ -454,7 +454,7 @@ test "RenderPipeline PNG bytes quality replay uses RendererResources image cache
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 3)
@@ -472,7 +472,7 @@ test "RenderPipeline PNG bytes quality replay uses RendererResources image cache
   assert_eq(images[1].get_source_height(), 1)
   let batches = first_pipeline.batch_plan(7, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_true(
     batches[1].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=7, height=1)),
@@ -519,7 +519,7 @@ test "RenderPipeline PNG bytes quality replay uses RendererResources image cache
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_quality_png_bytes_keyed(
       "png-quality",
@@ -529,7 +529,7 @@ test "RenderPipeline PNG bytes quality replay uses RendererResources image cache
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
     .draw_quality_png_bytes_rect_keyed(
       "png-quality-sprite",
@@ -540,7 +540,7 @@ test "RenderPipeline PNG bytes quality replay uses RendererResources image cache
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
     resources,
   )

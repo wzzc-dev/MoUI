@@ -42,7 +42,7 @@ pub struct AppLifecycleSource {
 
 ///|
 pub fn AppLifecycleSource::new() -> AppLifecycleSource {
-  { next_token: 1, handlers: [] }
+  { next_token: 1, handlers: [], }
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn[Msg] AppLifecycleSource::subscription(
   @core.Subscription::listen(key~, label~, kind="app-lifecycle", start=dispatch => {
     let token = self.next_token
     self.next_token = self.next_token + 1
-    self.handlers.push({ token, handle: event => dispatch(map(event)) })
+    self.handlers.push({ token, handle: event => dispatch(map(event)), })
     Some(() => {
       self.handlers = self.handlers.filter(handler => handler.token != token)
     })
@@ -87,7 +87,7 @@ pub fn NotificationRequest::new(
   title~ : String,
   body~ : String,
 ) -> NotificationRequest {
-  { id, title, body }
+  { id, title, body, }
 }
 
 ///|
@@ -96,7 +96,7 @@ pub fn TrayItem::new(
   label~ : String,
   tooltip? : String = "",
 ) -> TrayItem {
-  { id, label, tooltip }
+  { id, label, tooltip, }
 }
 
 ///|
@@ -105,7 +105,7 @@ pub fn ShareRequest::new(
   text~ : String,
   url? : String? = None,
 ) -> ShareRequest {
-  { title, text, url }
+  { title, text, url, }
 }
 
 ///|
@@ -114,7 +114,7 @@ pub fn PrintRequest::new(
   text~ : String,
   mime_type? : String = "text/plain",
 ) -> PrintRequest {
-  { title, text, mime_type }
+  { title, text, mime_type, }
 }
 
 ///|
@@ -122,7 +122,7 @@ pub fn ProtocolRegistration::new(
   scheme~ : String,
   handler~ : String,
 ) -> ProtocolRegistration {
-  { scheme, handler }
+  { scheme, handler, }
 }
 
 ///|
@@ -131,7 +131,7 @@ pub fn FileAssociation::new(
   mime_type~ : String,
   handler~ : String,
 ) -> FileAssociation {
-  { extension, mime_type, handler }
+  { extension, mime_type, handler, }
 }
 
 ///|
@@ -190,7 +190,7 @@ pub fn NotificationServices::new(
     unavailable_task("notification:cancel", "notifications")
   },
 ) -> NotificationServices {
-  { notify_fn: notify, cancel_fn: cancel }
+  { notify_fn: notify, cancel_fn: cancel, }
 }
 
 ///|
@@ -224,7 +224,7 @@ pub fn TrayServices::new(
     unavailable_task("tray:remove", "system tray")
   },
 ) -> TrayServices {
-  { set_fn: set, remove_fn: remove }
+  { set_fn: set, remove_fn: remove, }
 }
 
 ///|
@@ -254,7 +254,7 @@ pub fn PermissionServices::new(
     unavailable_task("permission:request", "permission prompts")
   },
 ) -> PermissionServices {
-  { request_fn: request }
+  { request_fn: request, }
 }
 
 ///|
@@ -276,7 +276,7 @@ pub fn ShareServices::new(
     unavailable_task("share:open", "share sheet")
   },
 ) -> ShareServices {
-  { share_fn: share }
+  { share_fn: share, }
 }
 
 ///|
@@ -298,7 +298,7 @@ pub fn PrintServices::new(
     unavailable_task("print:document", "printing")
   },
 ) -> PrintServices {
-  { print_fn: print }
+  { print_fn: print, }
 }
 
 ///|
@@ -378,7 +378,7 @@ pub fn WindowStateServices::new(
     unavailable_task("window-state:remove", "window state persistence")
   },
 ) -> WindowStateServices {
-  { read_fn: read, write_fn: write, remove_fn: remove }
+  { read_fn: read, write_fn: write, remove_fn: remove, }
 }
 
 ///|

@@ -26,22 +26,22 @@ pub(all) struct Vec4 {
 
 ///|
 pub fn Vec2::new(x~ : Double, y~ : Double) -> Vec2 {
-  { x, y }
+  { x, y, }
 }
 
 ///|
 pub fn Vec3::new(x~ : Double, y~ : Double, z~ : Double) -> Vec3 {
-  { x, y, z }
+  { x, y, z, }
 }
 
 ///|
 pub fn Vec4::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Vec4 {
-  { x, y, z, w }
+  { x, y, z, w, }
 }
 
 ///|
 pub fn Vec2::zero() -> Vec2 {
-  { x: 0.0, y: 0.0 }
+  { x: 0.0, y: 0.0, }
 }
 
 ///|
@@ -56,7 +56,7 @@ pub fn Vec2::y(self : Vec2) -> Double {
 
 ///|
 pub fn Vec3::zero() -> Vec3 {
-  { x: 0.0, y: 0.0, z: 0.0 }
+  { x: 0.0, y: 0.0, z: 0.0, }
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn Vec3::z(self : Vec3) -> Double {
 
 ///|
 pub fn Vec4::zero() -> Vec4 {
-  { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }
+  { x: 0.0, y: 0.0, z: 0.0, w: 0.0, }
 }
 
 ///|
@@ -101,17 +101,17 @@ pub fn Vec4::w(self : Vec4) -> Double {
 
 ///|
 pub fn Vec3::add(self : Vec3, other : Vec3) -> Vec3 {
-  { x: self.x + other.x, y: self.y + other.y, z: self.z + other.z }
+  { x: self.x + other.x, y: self.y + other.y, z: self.z + other.z, }
 }
 
 ///|
 pub fn Vec3::sub(self : Vec3, other : Vec3) -> Vec3 {
-  { x: self.x - other.x, y: self.y - other.y, z: self.z - other.z }
+  { x: self.x - other.x, y: self.y - other.y, z: self.z - other.z, }
 }
 
 ///|
 pub fn Vec3::scale(self : Vec3, amount : Double) -> Vec3 {
-  { x: self.x * amount, y: self.y * amount, z: self.z * amount }
+  { x: self.x * amount, y: self.y * amount, z: self.z * amount, }
 }
 
 ///|
@@ -182,7 +182,7 @@ pub fn Mat4::identity() -> Mat4 {
 ///|
 pub fn Mat4::from_values(values : Array[Double]) -> Mat4 {
   if values.length() == 16 {
-    { values: values.copy() }
+    { values: values.copy(), }
   } else {
     Mat4::identity()
   }
@@ -336,7 +336,7 @@ pub(all) struct Quat {
 
 ///|
 pub fn Quat::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Quat {
-  { x, y, z, w }
+  { x, y, z, w, }
 }
 
 ///|
@@ -361,7 +361,7 @@ pub fn Quat::w(self : Quat) -> Double {
 
 ///|
 pub fn Quat::identity() -> Quat {
-  { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+  { x: 0.0, y: 0.0, z: 0.0, w: 1.0, }
 }
 
 ///|
@@ -369,7 +369,7 @@ pub fn Quat::from_axis_angle(axis~ : Vec3, angle~ : Double) -> Quat {
   let half = angle / 2.0
   let sine = @math.sin(half)
   let unit = axis.normalized()
-  { x: unit.x * sine, y: unit.y * sine, z: unit.z * sine, w: @math.cos(half) }
+  { x: unit.x * sine, y: unit.y * sine, z: unit.z * sine, w: @math.cos(half), }
 }
 
 ///|
@@ -384,8 +384,8 @@ pub fn Quat::mul(self : Quat, other : Quat) -> Quat {
 
 ///|
 pub fn Quat::rotate(self : Quat, vector : Vec3) -> Vec3 {
-  let q_vector = Quat::{ x: vector.x, y: vector.y, z: vector.z, w: 0.0 }
-  let inverse = Quat::{ x: -self.x, y: -self.y, z: -self.z, w: self.w }
+  let q_vector = Quat::{ x: vector.x, y: vector.y, z: vector.z, w: 0.0, }
+  let inverse = Quat::{ x: -self.x, y: -self.y, z: -self.z, w: self.w, }
   let rotated = self.mul(q_vector).mul(inverse)
   Vec3::new(x=rotated.x, y=rotated.y, z=rotated.z)
 }
@@ -430,7 +430,7 @@ pub(all) struct Aabb {
 
 ///|
 pub fn Aabb::empty() -> Aabb {
-  { min: Vec3::zero(), max: Vec3::zero(), valid: false }
+  { min: Vec3::zero(), max: Vec3::zero(), valid: false, }
 }
 
 ///|
@@ -445,7 +445,7 @@ pub fn Aabb::from_points(points : Array[Vec3]) -> Aabb {
 ///|
 pub fn Aabb::include_point(self : Aabb, point : Vec3) -> Aabb {
   if !self.valid {
-    { min: point, max: point, valid: true }
+    { min: point, max: point, valid: true, }
   } else {
     {
       min: Vec3::new(
@@ -530,7 +530,7 @@ pub(all) struct Ray {
 
 ///|
 pub fn Ray::new(origin~ : Vec3, direction~ : Vec3) -> Ray {
-  { origin, direction: direction.normalized() }
+  { origin, direction: direction.normalized(), }
 }
 
 ///|

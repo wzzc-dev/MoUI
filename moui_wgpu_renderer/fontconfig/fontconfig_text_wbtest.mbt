@@ -40,11 +40,11 @@ test "fontconfig native stub parses versioned font spec payload" {
   let font_spec = @text_protocol.native_font_spec_bytes(
     @core.FontSpec::new(
       families=@core.FontFamilyStack::named("Acme Sans")
-        .with_fallback(@core.FontFamily::UiSansSerif)
-        .with_fallback(@core.FontFamily::SansSerif),
+        .with_fallback(UiSansSerif)
+        .with_fallback(SansSerif),
       size=15.0,
       weight=500,
-      style=@core.FontStyle::Italic,
+      style=Italic,
     ),
   )
   inspect(linux_fontconfig_debug_font_spec_family_count(font_spec), content="3")
@@ -118,7 +118,7 @@ test "fontconfig raster delegates native stub to shared text protocol" {
 ///|
 test "fontconfig register font data reaches native stub" {
   fontconfig_register_font_data(
-    @core.FontFamily::Name("Acme"),
+    Name("Acme"),
     Bytes::from_array([b'\x01', b'\x02']),
   )
   inspect("ok", content="ok")

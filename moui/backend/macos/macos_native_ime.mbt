@@ -93,9 +93,7 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
   prefix~ : String,
 ) -> Bool {
   ignore(
-    runtime_slot.driver.dispatch(
-      @host.Event::Focus(@host.HostFocusEvent::new(focused=true)),
-    ),
+    runtime_slot.driver.dispatch(Focus(@host.HostFocusEvent::new(focused=true))),
   )
   let mut focused_probe = runtime_slot.driver.focused_text_input()
   for focus_point in macos_native_ime_focus_points(title) {
@@ -104,21 +102,12 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
     }
     ignore(
       runtime_slot.driver.dispatch(
-        @host.Event::Pointer(
-          @core.PointerEvent::new(
-            position=focus_point,
-            phase=@core.PointerPhase::Down,
-          ),
-        ),
+        Pointer(@core.PointerEvent::new(position=focus_point, phase=Down)),
       ),
     )
     focused_probe = runtime_slot.driver.focused_text_input()
   }
-  ignore(
-    runtime_slot.driver.dispatch(
-      @host.Event::TextInput(@core.TextInputEvent::InsertText("moui")),
-    ),
-  )
+  ignore(runtime_slot.driver.dispatch(TextInput(InsertText("moui"))))
   ignore(self.present_native_ime_smoke_frame(window_id, runtime_slot))
   self.sync_text_input_session()
   let initial_input = runtime_slot.driver.focused_text_input()
@@ -161,18 +150,10 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
       "appkit-setMarkedText=\{set_marked_text_ok} appkit-firstRectForCharacterRange=\{first_rect_ok}",
     )
   }
+  self.dispatch_window_event(window_id, Ime(Enabled))
   self.dispatch_window_event(
     window_id,
-    @window_core.WindowEvent::Ime(@window_core.Ime::Enabled),
-  )
-  self.dispatch_window_event(
-    window_id,
-    @window_core.WindowEvent::Ime(
-      @window_core.Ime::Preedit(
-        "ni",
-        Some(@window_core.ImeCursorRange::ImeCursorRange(0, 2)),
-      ),
-    ),
+    Ime(Preedit("ni", Some(ImeCursorRange(0, 2)))),
   )
   println(
     prefix +
@@ -210,14 +191,8 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
       window_id, prefix, "appkit-insertText=false",
     )
   }
-  self.dispatch_window_event(
-    window_id,
-    @window_core.WindowEvent::Ime(@window_core.Ime::Preedit("", None)),
-  )
-  self.dispatch_window_event(
-    window_id,
-    @window_core.WindowEvent::Ime(@window_core.Ime::Commit("你")),
-  )
+  self.dispatch_window_event(window_id, Ime(Preedit("", None)))
+  self.dispatch_window_event(window_id, Ime(Commit("你")))
   self.native_ime_runtime_smoke_phase = 2
   self.native_ime_runtime_smoke_wait_redraws = 0
   self.request_platform_redraw(window_id)
@@ -265,14 +240,8 @@ fn MacosNativeHostBackend::record_native_ime_composition_smoke(
       window_id, prefix, "appkit-insertText=false",
     )
   }
-  self.dispatch_window_event(
-    window_id,
-    @window_core.WindowEvent::Ime(@window_core.Ime::Preedit("", None)),
-  )
-  self.dispatch_window_event(
-    window_id,
-    @window_core.WindowEvent::Ime(@window_core.Ime::Commit("你")),
-  )
+  self.dispatch_window_event(window_id, Ime(Preedit("", None)))
+  self.dispatch_window_event(window_id, Ime(Commit("你")))
   self.native_ime_runtime_smoke_phase = 2
   self.native_ime_runtime_smoke_wait_redraws = 0
   self.request_platform_redraw(window_id)
@@ -295,10 +264,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
       window_id, prefix, "commit=false",
     )
   }
-  self.dispatch_window_event(
-    window_id,
-    @window_core.WindowEvent::Ime(@window_core.Ime::DeleteSurrounding(1, 0)),
-  )
+  self.dispatch_window_event(window_id, Ime(DeleteSurrounding(1, 0)))
   self.sync_text_input_session()
   let after_delete_input = runtime_slot.driver.focused_text_input()
   let commit_delete_ok = after_delete_input.text != after_commit_input.text
@@ -326,10 +292,10 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
   let focus_point = macos_native_ime_focus_point(title)
   ignore(
     runtime_slot.driver.dispatch(
-      @host.Event::Scroll(
+      Scroll(
         @host.HostScrollEvent::new(
           position=focus_point,
-          delta=@host.HostScrollDelta::Pixels(@core.Point::new(x=0.0, y=-48.0)),
+          delta=Pixels(@core.Point::new(x=0.0, y=-48.0)),
         ),
       ),
     ),
@@ -365,7 +331,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
     platform_slot.window.surface_size(),
     scale_factor=platform_slot.window.scale_factor(),
   )
-  ignore(runtime_slot.driver.dispatch(@host.Event::Resized(metrics)))
+  ignore(runtime_slot.driver.dispatch(Resized(metrics)))
   match self.frames.renderer(window_id) {
     Some(renderer) => renderer.resize(@window_host.to_render_metrics(metrics))
     None => ()

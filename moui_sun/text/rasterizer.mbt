@@ -39,7 +39,7 @@ pub fn CoverageMask::new(
   height : Int,
   pixels : FixedArray[Byte],
 ) -> CoverageMask {
-  { width, height, pixels }
+  { width, height, pixels, }
 }
 
 ///|
@@ -100,7 +100,7 @@ pub fn GlyphAtlasEntry::new(
   width~ : Int,
   height~ : Int,
 ) -> GlyphAtlasEntry {
-  { key, x, y, width, height }
+  { key, x, y, width, height, }
 }
 
 ///|
@@ -287,15 +287,15 @@ pub fn GlyphMaskAtlas::insert_or_clear(
   mask : CoverageMask,
 ) -> GlyphMaskAtlasInsertResult? {
   match self.get(key) {
-    Some(entry) => Some({ entry, did_clear: false, did_reuse: true })
+    Some(entry) => Some({ entry, did_clear: false, did_reuse: true, })
     None =>
       match self.place(key, mask) {
-        Some(entry) => Some({ entry, did_clear: false, did_reuse: false })
+        Some(entry) => Some({ entry, did_clear: false, did_reuse: false, })
         None => {
           guard self.can_fit_empty(mask) else { return None }
           self.clear()
           match self.place(key, mask) {
-            Some(entry) => Some({ entry, did_clear: true, did_reuse: false })
+            Some(entry) => Some({ entry, did_clear: true, did_reuse: false, })
             None => None
           }
         }
@@ -332,7 +332,7 @@ fn GlyphMaskAtlas::next_placement(
     (self.cursor_x, self.cursor_y, self.row_height)
   }
   guard entry_y + mask_height <= self.height else { return None }
-  Some({ x: entry_x, y: entry_y, row_height: current_row_height })
+  Some({ x: entry_x, y: entry_y, row_height: current_row_height, })
 }
 
 ///|
@@ -432,7 +432,7 @@ struct FaceGlyphMaskCacheResult {
 ///|
 /// Create an empty glyph mask cache.
 pub fn GlyphMaskCache::new() -> GlyphMaskCache {
-  { masks: Map([]), access_order: [], capacity: 0, is_bounded: false }
+  { masks: Map([]), access_order: [], capacity: 0, is_bounded: false, }
 }
 
 ///|
@@ -602,13 +602,13 @@ fn GlyphMaskCache::get_or_rasterize_glyph_result(
   scale : Double,
 ) -> GlyphMaskCacheRasterizeResult {
   match self.get(key) {
-    Some(mask) => { mask, did_rasterize: false }
+    Some(mask) => { mask, did_rasterize: false, }
     None => {
       let mask = self.insert(
         key,
         render_glyph_mask(glyph, width, height, x, y, scale),
       )
-      { mask, did_rasterize: true }
+      { mask, did_rasterize: true, }
     }
   }
 }
@@ -623,7 +623,7 @@ pub fn GlyphMaskCache::get_or_rasterize_face_glyph_result(
   scale : Double,
 ) -> FaceGlyphMaskCacheResult? {
   match face.get_glyph(glyph_id) {
-    GlyphData::Simple(simple_glyph) =>
+    Simple(simple_glyph) =>
       match make_face_glyph_mask_placement(simple_glyph, scale) {
         Some(placement) => {
           let result = self.get_or_rasterize_glyph_result(
@@ -731,7 +731,7 @@ struct TextMaskCacheRenderResult {
 ///|
 /// Create an empty text mask cache.
 pub fn TextMaskCache::new() -> TextMaskCache {
-  { masks: Map([]), access_order: [], capacity: 0, is_bounded: false }
+  { masks: Map([]), access_order: [], capacity: 0, is_bounded: false, }
 }
 
 ///|
@@ -849,13 +849,13 @@ pub fn TextMaskCache::get_or_render_face_result(
   config : LayoutConfig,
 ) -> TextMaskCacheRenderResult {
   match self.get(key) {
-    Some(mask) => { mask, did_render: false }
+    Some(mask) => { mask, did_render: false, }
     None => {
       let mask = self.insert(
         key,
         render_text_mask_face(face, text, width, height, x, y, config),
       )
-      { mask, did_render: true }
+      { mask, did_render: true, }
     }
   }
 }
@@ -988,7 +988,7 @@ pub fn Rasterizer::rasterize_text_face(
   for run in layout.get_runs() {
     for glyph in run.get_glyphs() {
       match font.get_glyph(glyph.glyph_id) {
-        GlyphData::Simple(simple_glyph) =>
+        Simple(simple_glyph) =>
           self.rasterize_glyph(
             simple_glyph,
             x + glyph.x,
@@ -1104,7 +1104,7 @@ fn transform_point(
 
 ///|
 fn midpoint(a : CurvePoint, b : CurvePoint) -> CurvePoint {
-  { cx: (a.cx + b.cx) / 2.0, cy: (a.cy + b.cy) / 2.0, curve_on: true }
+  { cx: (a.cx + b.cx) / 2.0, cy: (a.cy + b.cy) / 2.0, curve_on: true, }
 }
 
 ///|
@@ -1147,7 +1147,7 @@ fn flatten_quadratic_bezier(
     let mt = 1.0 - t
     let px = mt * mt * x0 + 2.0 * mt * t * x1 + t * t * x2
     let py = mt * mt * y0 + 2.0 * mt * t * y1 + t * t * y2
-    segments.push({ x0: prev_x, y0: prev_y, x1: px, y1: py })
+    segments.push({ x0: prev_x, y0: prev_y, x1: px, y1: py, })
     prev_x = px
     prev_y = py
   }

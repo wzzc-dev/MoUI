@@ -14,7 +14,7 @@ pub fn Translator::new(
   locale~ : Locale,
   default_locale~ : Locale,
 ) -> Translator {
-  { catalog, locale, default_locale }
+  { catalog, locale, default_locale, }
 }
 
 ///|

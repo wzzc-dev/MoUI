@@ -6,7 +6,7 @@ pub(all) struct PaintContext {
 
 ///|
 pub fn PaintContext::new() -> PaintContext {
-  { commands: [] }
+  { commands: [], }
 }
 
 ///|
@@ -18,7 +18,7 @@ pub fn PaintContext::finish(self : PaintContext) -> Array[@core.DrawCommand] {
 
 ///|
 pub fn clear(ctx : PaintContext, color : @core.Color) -> Unit {
-  ctx.commands.push(@core.DrawCommand::Clear(color))
+  ctx.commands.push(Clear(color))
 }
 
 ///|
@@ -27,7 +27,7 @@ pub fn fill_rect(
   rect : @core.Rect,
   color : @core.Color,
 ) -> Unit {
-  ctx.commands.push(@core.DrawCommand::FillRect(rect, color))
+  ctx.commands.push(FillRect(rect, color))
 }
 
 ///|
@@ -37,7 +37,7 @@ pub fn stroke_rect(
   color : @core.Color,
   width : Double,
 ) -> Unit {
-  ctx.commands.push(@core.DrawCommand::StrokeRect(rect, color, width))
+  ctx.commands.push(StrokeRect(rect, color, width))
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn fill_rounded_rect(
   rect : @core.RoundedRect,
   brush : @core.Brush,
 ) -> Unit {
-  ctx.commands.push(@core.DrawCommand::FillRoundedRectBrush(rect, brush))
+  ctx.commands.push(FillRoundedRectBrush(rect, brush))
 }
 
 ///|
@@ -56,29 +56,27 @@ pub fn stroke_rounded_rect(
   brush : @core.Brush,
   width : Double,
 ) -> Unit {
-  ctx.commands.push(
-    @core.DrawCommand::StrokeRoundedRectBrush(rect, brush, width),
-  )
+  ctx.commands.push(StrokeRoundedRectBrush(rect, brush, width))
 }
 
 ///|
 pub fn draw_shadow(ctx : PaintContext, spec : @core.ShadowSpec) -> Unit {
-  ctx.commands.push(@core.DrawCommand::DrawShadow(spec))
+  ctx.commands.push(DrawShadow(spec))
 }
 
 ///|
 pub fn draw_text(ctx : PaintContext, run : @core.TextRun) -> Unit {
-  ctx.commands.push(@core.DrawCommand::DrawText(run))
+  ctx.commands.push(DrawText(run))
 }
 
 ///|
 pub fn draw_image(ctx : PaintContext, image : @core.ImageRun) -> Unit {
-  ctx.commands.push(@core.DrawCommand::DrawImage(image))
+  ctx.commands.push(DrawImage(image))
 }
 
 ///|
 pub fn draw_path(ctx : PaintContext, spec : @core.PathSpec) -> Unit {
-  ctx.commands.push(@core.DrawCommand::DrawPath(spec))
+  ctx.commands.push(DrawPath(spec))
 }
 
 ///|
@@ -86,29 +84,29 @@ pub fn draw_shader_effect(
   ctx : PaintContext,
   spec : @core.ShaderEffectSpec,
 ) -> Unit {
-  ctx.commands.push(@core.DrawCommand::DrawShaderEffect(spec))
+  ctx.commands.push(DrawShaderEffect(spec))
 }
 
 // === Clip ===
 
 ///|
 pub fn push_clip(ctx : PaintContext, rect : @core.Rect) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PushClip(rect))
+  ctx.commands.push(PushClip(rect))
 }
 
 ///|
 pub fn pop_clip(ctx : PaintContext) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PopClip)
+  ctx.commands.push(PopClip)
 }
 
 ///|
 pub fn push_rounded_clip(ctx : PaintContext, rect : @core.RoundedRect) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PushRoundedClip(rect))
+  ctx.commands.push(PushRoundedClip(rect))
 }
 
 ///|
 pub fn pop_rounded_clip(ctx : PaintContext) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PopRoundedClip)
+  ctx.commands.push(PopRoundedClip)
 }
 
 // === Transform ===
@@ -118,44 +116,44 @@ pub fn push_transform(
   ctx : PaintContext,
   transform : @core.Transform2D,
 ) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PushTransform(transform))
+  ctx.commands.push(PushTransform(transform))
 }
 
 ///|
 pub fn pop_transform(ctx : PaintContext) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PopTransform)
+  ctx.commands.push(PopTransform)
 }
 
 ///|
 pub fn push_opacity(ctx : PaintContext, opacity : Double) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PushOpacity(opacity))
+  ctx.commands.push(PushOpacity(opacity))
 }
 
 ///|
 pub fn pop_opacity(ctx : PaintContext) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PopOpacity)
+  ctx.commands.push(PopOpacity)
 }
 
 // === Layer ===
 
 ///|
 pub fn push_layer(ctx : PaintContext, spec : @core.LayerSpec) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PushLayer(spec))
+  ctx.commands.push(PushLayer(spec))
 }
 
 ///|
 pub fn pop_layer(ctx : PaintContext) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PopLayer)
+  ctx.commands.push(PopLayer)
 }
 
 // === Filter ===
 
 ///|
 pub fn push_filter(ctx : PaintContext, effect : @core.FilterEffect) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PushFilter(effect))
+  ctx.commands.push(PushFilter(effect))
 }
 
 ///|
 pub fn pop_filter(ctx : PaintContext) -> Unit {
-  ctx.commands.push(@core.DrawCommand::PopFilter)
+  ctx.commands.push(PopFilter)
 }

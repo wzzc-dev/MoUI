@@ -111,7 +111,7 @@ test "nodes without a declaration override are safe by default" {
 ///|
 test "apply_waivers filters active violations and detects stale waivers" {
   let violations = [
-    { path: "moui/views/demo/demo.mbt", node: "Demo", field: "missed" },
+    { path: "moui/views/demo/demo.mbt", node: "Demo", field: "missed", },
   ]
   let waived = {
     waived: [

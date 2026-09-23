@@ -68,7 +68,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       other => return Err("unknown argument: " + other)
     }
   }
-  Ok({ repo_root: repo_root.val, native_dir: native_dir.val, help: help.val })
+  Ok({ repo_root: repo_root.val, native_dir: native_dir.val, help: help.val, })
 }
 
 ///|

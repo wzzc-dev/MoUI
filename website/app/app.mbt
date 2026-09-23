@@ -113,7 +113,7 @@ fn Model::new() -> Model {
 ///|
 fn Model::update(self : Model, message : Msg) -> Model {
   match message {
-    ToggleDark => { ..self, dark: !self.dark, copied_text: None }
+    ToggleDark => { ..self, dark: !self.dark, copied_text: None, }
     SelectLocale(locale) =>
       {
         ..self,
@@ -123,12 +123,12 @@ fn Model::update(self : Model, message : Msg) -> Model {
         copied_text: None,
       }
     CounterIncrement =>
-      { ..self, hero_count: self.hero_count + 1, copied_text: None }
-    CounterReset => { ..self, hero_count: 0, copied_text: None }
+      { ..self, hero_count: self.hero_count + 1, copied_text: None, }
+    CounterReset => { ..self, hero_count: 0, copied_text: None, }
     OpenRepository | OpenShowcaseSource(_) | OpenDocLink(_) =>
-      { ..self, copied_text: None }
-    CopyText(value) => { ..self, copied_text: Some(value) }
-    OpenHome => { ..self.with_route("home"), copied_text: None }
+      { ..self, copied_text: None, }
+    CopyText(value) => { ..self, copied_text: Some(value), }
+    OpenHome => { ..self.with_route("home"), copied_text: None, }
     OpenHomeAt(offset_y) =>
       {
         ..self.with_route("home"),
@@ -139,28 +139,31 @@ fn Model::update(self : Model, message : Msg) -> Model {
         copied_text: None,
       }
     OpenHomeAnchor(anchor) =>
-      { ..self.with_route("home?anchor=" + anchor), copied_text: None }
-    OpenTutorial => { ..self.with_route("tutorial"), copied_text: None }
-    OpenPlayground => { ..self, copied_text: None }
-    OpenPlaygroundLesson(_) => { ..self, copied_text: None }
+      { ..self.with_route("home?anchor=" + anchor), copied_text: None, }
+    OpenTutorial => { ..self.with_route("tutorial"), copied_text: None, }
+    OpenPlayground => { ..self, copied_text: None, }
+    OpenPlaygroundLesson(_) => { ..self, copied_text: None, }
     OpenDocs =>
-      { ..self.with_route("docs/" + self.selected_doc_slug), copied_text: None }
-    OpenShowcases => { ..self.with_route("showcases"), copied_text: None }
-    SelectDoc(slug) => { ..self.with_route("docs/" + slug), copied_text: None }
+      {
+        ..self.with_route("docs/" + self.selected_doc_slug),
+        copied_text: None,
+      }
+    OpenShowcases => { ..self.with_route("showcases"), copied_text: None, }
+    SelectDoc(slug) => { ..self.with_route("docs/" + slug), copied_text: None, }
     RetryCatalog =>
-      { ..self, catalog_state: CatalogNotLoaded, copied_text: None }
-    RetryDoc => { ..self, doc_state: DocNotLoaded, copied_text: None }
-    SearchDocs(value) => { ..self, docs_search: value, copied_text: None }
-    ToggleMobileMenu => { ..self, mobile_menu_open: !self.mobile_menu_open }
-    CloseMobileMenu => { ..self, mobile_menu_open: false }
-    ToggleDocsDrawer => { ..self, docs_drawer_open: !self.docs_drawer_open }
-    CloseDocsDrawer => { ..self, docs_drawer_open: false }
-    SelectCompactHeroTab(tab) => { ..self, compact_hero_tab: tab }
-    HomeScrolled(offset) => { ..self, home_scroll: offset }
-    DocsBodyScrolled(offset) => { ..self, docs_body_scroll: offset }
-    DocsScrolled(offset) => { ..self, docs_scroll: offset }
-    ShowcaseGridScrolled(offset) => { ..self, showcase_grid_scroll: offset }
-    TutorialScrolled(offset) => { ..self, tutorial_scroll: offset }
+      { ..self, catalog_state: CatalogNotLoaded, copied_text: None, }
+    RetryDoc => { ..self, doc_state: DocNotLoaded, copied_text: None, }
+    SearchDocs(value) => { ..self, docs_search: value, copied_text: None, }
+    ToggleMobileMenu => { ..self, mobile_menu_open: !self.mobile_menu_open, }
+    CloseMobileMenu => { ..self, mobile_menu_open: false, }
+    ToggleDocsDrawer => { ..self, docs_drawer_open: !self.docs_drawer_open, }
+    CloseDocsDrawer => { ..self, docs_drawer_open: false, }
+    SelectCompactHeroTab(tab) => { ..self, compact_hero_tab: tab, }
+    HomeScrolled(offset) => { ..self, home_scroll: offset, }
+    DocsBodyScrolled(offset) => { ..self, docs_body_scroll: offset, }
+    DocsScrolled(offset) => { ..self, docs_scroll: offset, }
+    ShowcaseGridScrolled(offset) => { ..self, showcase_grid_scroll: offset, }
+    TutorialScrolled(offset) => { ..self, tutorial_scroll: offset, }
     HostRouteChanged(event) => self.with_host_route(event)
     HostCatalogCompleted(token, result) =>
       self.apply_catalog_completion(token, result)
@@ -410,7 +413,7 @@ fn Model::update_with_services(
       let effect = if next.docs_drawer_open {
         WebsiteRouteCommand::ScrollToKey(
           "docs-nav-" + next.selected_doc_slug,
-          @core.ScrollAlignment::Center,
+          Center,
         ).effect(route_host, next.locale)
       } else {
         @moui.Effect::none()
@@ -445,10 +448,10 @@ fn Model::update_with_services(
       )
       let anchor_effect = match next.pending_anchor {
         Some(anchor) =>
-          WebsiteRouteCommand::ScrollToKey(
-            website_anchor_key(anchor),
-            @core.ScrollAlignment::Start,
-          ).effect(route_host, next.locale)
+          WebsiteRouteCommand::ScrollToKey(website_anchor_key(anchor), Start).effect(
+            route_host,
+            next.locale,
+          )
         None => @moui.Effect::none()
       }
       let (prepared, doc_effect) = if next.page is WebsiteDocs &&
@@ -472,10 +475,10 @@ fn Model::update_with_services(
       }
       let anchor_effect = match next.pending_anchor {
         Some(anchor) =>
-          WebsiteRouteCommand::ScrollToKey(
-            website_anchor_key(anchor),
-            @core.ScrollAlignment::Start,
-          ).effect(route_host, next.locale)
+          WebsiteRouteCommand::ScrollToKey(website_anchor_key(anchor), Start).effect(
+            route_host,
+            next.locale,
+          )
         None => @moui.Effect::none()
       }
       let locale_effect = match route_host {
@@ -627,10 +630,10 @@ fn Model::open_doc_link(
           route_host,
           next.locale,
         ),
-        WebsiteRouteCommand::ScrollToKey(
-          website_anchor_key(anchor),
-          @core.ScrollAlignment::Start,
-        ).effect(route_host, next.locale),
+        WebsiteRouteCommand::ScrollToKey(website_anchor_key(anchor), Start).effect(
+          route_host,
+          next.locale,
+        ),
       ]),
     )
   }
@@ -699,7 +702,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
         content,
         width=metrics.body_scroll_width,
         height=metrics.body_height,
-      ).semantics_role(@core.SemanticsRole::Main)
+      ).semantics_role(Main)
     WebsiteHome =>
       scroll_view(
         content,
@@ -708,7 +711,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
         offset=localized.home_scroll,
         on_scroll=Some(offset => HomeScrolled(offset)),
         shows_indicator=true,
-      ).semantics_role(@core.SemanticsRole::Main)
+      ).semantics_role(Main)
     WebsiteTutorial =>
       scroll_view(
         content,
@@ -717,14 +720,10 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
         offset=localized.tutorial_scroll,
         on_scroll=Some(offset => TutorialScrolled(offset)),
         shows_indicator=true,
-      ).semantics_role(@core.SemanticsRole::Main)
+      ).semantics_role(Main)
   }
   let shell = container(
-    column(
-      [localized.top_bar(theme, metrics), body],
-      spacing=0.0,
-      align=@views.CrossAlign::Start,
-    ),
+    column([localized.top_bar(theme, metrics), body], spacing=0.0, align=Start),
     width=metrics.viewport.width,
     height=metrics.viewport.height,
     background=theme.palette.background,
@@ -775,7 +774,7 @@ fn Model::home_content(
       self.quick_start_section(theme, metrics).key("home-quick-start"),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -853,7 +852,7 @@ fn Model::request_selected_doc(
       match self.catalog_state {
         CatalogLoaded(_) =>
           (
-            { ..self, doc_state: DocNotFound(self.selected_doc_slug) },
+            { ..self, doc_state: DocNotFound(self.selected_doc_slug), },
             @moui.Effect::none(),
           )
         _ => (self, @moui.Effect::none())
@@ -871,9 +870,9 @@ fn Model::apply_catalog_completion(
     return self
   }
   match result {
-    @services.ServiceTaskResult::Success(text) =>
+    Success(text) =>
       match website_parse_catalog(text) {
-        Some(catalog) => { ..self, catalog_state: CatalogLoaded(catalog) }
+        Some(catalog) => { ..self, catalog_state: CatalogLoaded(catalog), }
         None =>
           {
             ..self,
@@ -882,9 +881,8 @@ fn Model::apply_catalog_completion(
             ),
           }
       }
-    @services.ServiceTaskResult::Failure(error) =>
-      { ..self, catalog_state: CatalogFailed(error.message) }
-    @services.ServiceTaskResult::Cancelled =>
+    Failure(error) => { ..self, catalog_state: CatalogFailed(error.message), }
+    Cancelled =>
       {
         ..self,
         catalog_state: CatalogFailed(
@@ -913,14 +911,13 @@ fn Model::apply_docs_completion(
     return self
   }
   match result {
-    @services.ServiceTaskResult::Success(text) =>
+    Success(text) =>
       {
         ..self,
         doc_state: DocLoaded(path, website_parse_markdown_document(path, text)),
       }
-    @services.ServiceTaskResult::Failure(error) =>
-      { ..self, doc_state: DocFailed(path, error.message) }
-    @services.ServiceTaskResult::Cancelled =>
+    Failure(error) => { ..self, doc_state: DocFailed(path, error.message), }
+    Cancelled =>
       {
         ..self,
         doc_state: DocFailed(
@@ -1025,15 +1022,11 @@ fn website_metrics(viewport : @geometry.Size) -> Metrics {
 
 ///|
 fn website_theme(dark : Bool) -> @moui.Theme {
-  let scheme = if dark {
-    @state.ColorScheme::Dark
-  } else {
-    @state.ColorScheme::Light
-  }
+  let scheme = if dark { @state.ColorScheme::Dark } else { Light }
   let palette : @views.ColorPalette = if dark {
     @views.ColorPalette::from_seed(
       primary=@graphics.Color::rgba(r=0.18, g=0.83, b=0.75),
-      @state.ColorScheme::Dark,
+      Dark,
       foreground=@graphics.Color::rgba(r=0.91, g=0.92, b=0.96),
       background=@graphics.Color::rgba(r=0.06, g=0.06, b=0.08),
       surface=@graphics.Color::rgba(r=0.09, g=0.09, b=0.12),
@@ -1044,7 +1037,7 @@ fn website_theme(dark : Bool) -> @moui.Theme {
   } else {
     @views.ColorPalette::from_seed(
       primary=@graphics.Color::rgba(r=0.0, g=0.44, b=0.40),
-      @state.ColorScheme::Light,
+      Light,
       foreground=@graphics.Color::rgba(r=0.07, g=0.09, b=0.14),
       background=@graphics.Color::rgba(r=0.98, g=0.98, b=0.98),
       surface=@graphics.Color::white(),

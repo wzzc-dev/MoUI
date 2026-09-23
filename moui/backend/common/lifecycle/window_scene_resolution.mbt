@@ -33,7 +33,7 @@ pub fn WindowSceneInstance::new(
   request~ : @backend_host.WindowOpenRequest,
   runtime~ : @runtime.AppRuntime,
 ) -> WindowSceneInstance {
-  { request, runtime }
+  { request, runtime, }
 }
 
 ///|
@@ -47,9 +47,7 @@ pub fn WindowSceneResolver::new(
 pub fn WindowSceneResolver::unavailable(
   reason? : String = "window scene resolver is unavailable",
 ) -> WindowSceneResolver {
-  WindowSceneResolver::new(resolve=_request => {
-    WindowSceneResolution::SceneRejected(reason)
-  })
+  WindowSceneResolver::new(resolve=_request => SceneRejected(reason))
 }
 
 ///|
@@ -66,7 +64,7 @@ pub fn WindowResolvedOpen::new(
   record~ : @backend_host.WindowRecord,
   instance~ : WindowSceneInstance,
 ) -> WindowResolvedOpen {
-  { id, record, instance }
+  { id, record, instance, }
 }
 
 ///|
@@ -77,7 +75,7 @@ pub fn resolve_open_request(
   resolver : WindowSceneResolver,
 ) -> WindowOpenResolution {
   match resolver.resolve(request) {
-    WindowSceneResolution::SceneResolved(instance) => {
+    SceneResolved(instance) => {
       let id = registry.open(
         title=request.title,
         scene=request.scene,
@@ -86,16 +84,10 @@ pub fn resolve_open_request(
       )
       match registry.lookup(id) {
         Some(record) =>
-          WindowOpenResolution::OpenResolved(
-            WindowResolvedOpen::new(id~, record~, instance~),
-          )
-        None =>
-          WindowOpenResolution::OpenRejected(
-            "resolved window was not registered: \{id.value}",
-          )
+          OpenResolved(WindowResolvedOpen::new(id~, record~, instance~))
+        None => OpenRejected("resolved window was not registered: \{id.value}")
       }
     }
-    WindowSceneResolution::SceneRejected(message) =>
-      WindowOpenResolution::OpenRejected(message)
+    SceneRejected(message) => OpenRejected(message)
   }
 }

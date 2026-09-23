@@ -35,10 +35,8 @@ fn WebApp::open_window(
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
   match self.lifecycle.open_resolution(request) {
-    @window_lifecycle.WindowOpenResolution::OpenRejected(message) =>
-      @host.WindowRequestResult::WindowRejected(message)
-    @window_lifecycle.WindowOpenResolution::OpenResolved(resolved) =>
-      self.create_resolved_window(event_loop, resolved)
+    OpenRejected(message) => WindowRejected(message)
+    OpenResolved(resolved) => self.create_resolved_window(event_loop, resolved)
   }
 }
 
@@ -62,7 +60,7 @@ fn WebApp::create_resolved_window(
     Some(window) => self.attach_resolved_window(window, resolved)
     None => {
       self.lifecycle.rollback_window_record(resolved.id)
-      @host.WindowRequestResult::WindowRejected("failed to create Web window")
+      WindowRejected("failed to create Web window")
     }
   }
 }
@@ -86,7 +84,7 @@ fn WebApp::attach_resolved_window(
     None => {
       window.drop()
       self.lifecycle.rollback_window_record(resolved.id)
-      @host.WindowRequestResult::WindowRejected("failed to create Web renderer")
+      WindowRejected("failed to create Web renderer")
     }
     Some(resolution) => {
       let renderer = resolution
@@ -113,7 +111,7 @@ fn WebApp::attach_resolved_window(
         .environment_with_system_theme(driver.environment()),
       )
       driver.set_text_system(renderer.text_system())
-      ignore(driver.dispatch(@host.Event::Resized(metrics)))
+      ignore(driver.dispatch(Resized(metrics)))
       ignore(
         self.lifecycle.register_runtime_slot(
           @window_lifecycle.WindowRuntimeSlot::from_driver(record~, driver~),
@@ -135,14 +133,14 @@ fn WebApp::attach_resolved_window(
           self.web_surface_actions(window, renderer),
         ),
       )
-      ignore(self.platform_slots.insert({ host_id: resolved.id, window }))
+      ignore(self.platform_slots.insert({ host_id: resolved.id, window, }))
       register_web_semantics_runtime(
         window.id().into_raw(),
         window_web_default_canvas_id(window.id().into_raw()),
         driver,
       )
       @window_host.request_platform_redraw(self.lifecycle, resolved.id)
-      @host.WindowRequestResult::WindowOpened(resolved.id)
+      WindowOpened(resolved.id)
     }
   }
 }

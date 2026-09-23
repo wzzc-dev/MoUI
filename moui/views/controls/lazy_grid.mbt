@@ -33,7 +33,7 @@ pub fn[T, Msg] lazy_grid(
   let virtual_rows : Array[@core.View[Msg]] = []
   match range {
     None => ()
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       if first_row > 0 {
         virtual_rows.push(
           @container.spacer(

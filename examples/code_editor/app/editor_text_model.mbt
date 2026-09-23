@@ -60,14 +60,14 @@ pub fn code_editor_caret_position(
     if clamped >= line.start &&
       (clamped < line.end || (is_last && clamped <= line.end)) {
       let column = clamped - line.start + 1
-      return { line: line.number, column, offset: clamped }
+      return { line: line.number, column, offset: clamped, }
     }
   }
   if lines.length() > 0 {
     let last = lines[lines.length() - 1]
-    { line: last.number, column: last.text.length() + 1, offset: clamped }
+    { line: last.number, column: last.text.length() + 1, offset: clamped, }
   } else {
-    { line: 1, column: 1, offset: clamped }
+    { line: 1, column: 1, offset: clamped, }
   }
 }
 

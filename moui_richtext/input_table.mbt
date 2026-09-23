@@ -14,7 +14,7 @@ fn markdown_editor_table_cell_at_text_offset(
     markdown_editor_text_length(source),
   )
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       anchor < block.source_range.start ||
       anchor > block.source_range.end {
       continue
@@ -169,7 +169,7 @@ fn markdown_editor_table_cell_text_input(
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -213,7 +213,7 @@ fn markdown_editor_table_cell_matrix_paste(
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   for block in parse_markdown_editor_blocks(source) {
-    if !(block.block.kind is MarkdownBlockKind::Table) ||
+    if !(block.block.kind is Table) ||
       caret < block.source_range.start ||
       caret > block.source_range.end {
       continue
@@ -253,11 +253,11 @@ fn markdown_editor_table_matrix_paste(
       markdown_editor_table_paste_grid_column_count(grid) <= 1 {
       None
     } else {
-      Some({ grid, alignments: [] })
+      Some({ grid, alignments: [], })
     }
   } else {
     match markdown_editor_markdown_table_paste(input) {
-      Some(table) => Some({ grid: table.grid, alignments: table.alignments })
+      Some(table) => Some({ grid: table.grid, alignments: table.alignments, })
       None => None
     }
   }
@@ -776,12 +776,12 @@ fn markdown_editor_table_paste_last_target(
   grid : Array[Array[String]],
 ) -> MarkdownEditorTablePasteTarget {
   if grid.length() == 0 {
-    return { row: current.row, column: current.column }
+    return { row: current.row, column: current.column, }
   }
   let row = current.row + markdown_editor_max_int(0, grid.length() - 1)
   let last = grid[grid.length() - 1]
   let column = current.column + markdown_editor_max_int(0, last.length() - 1)
-  { row, column }
+  { row, column, }
 }
 
 ///|

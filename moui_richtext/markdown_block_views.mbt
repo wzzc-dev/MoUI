@@ -46,7 +46,7 @@ fn markdown_block_view_project(
   base : @core.FontSpec,
   base_dir~ : String?,
 ) -> MarkdownBlockViewProjection? {
-  let context : MarkdownBlockViewContext = { base, base_dir }
+  let context : MarkdownBlockViewContext = { base, base_dir, }
   for view in markdown_block_views {
     if (view.matches)(block) {
       match (view.project)(block, context) {

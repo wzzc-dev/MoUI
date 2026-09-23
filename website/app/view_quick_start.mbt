@@ -15,7 +15,7 @@ fn quick_start_header(
       .foreground(theme.palette.muted),
     ],
     spacing=10.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -57,7 +57,7 @@ fn Model::quick_start_steps(
       ),
     )
   }
-  column(rows, spacing=18.0, align=@views.CrossAlign::Start)
+  column(rows, spacing=18.0, align=Start)
 }
 
 ///|
@@ -96,27 +96,20 @@ fn Model::quick_start_step(
   }
   row(
     [
-      column(rail_children, spacing=8.0, align=@views.CrossAlign::Center).frame(
-        width=rail_width,
-      ),
+      column(rail_children, spacing=8.0, align=Center).frame(width=rail_width),
       column(
         [
-          text(
-            title,
-            width=content_width,
-            height=28.0,
-            align=@text.TextAlign::TextStart,
-          )
+          text(title, width=content_width, height=28.0, align=TextStart)
           .font(@text.FontSpec::new(size=17.0, weight=700))
           .foreground(theme.palette.foreground),
           self.quick_start_code_block(theme, content_width, lines),
         ],
         spacing=10.0,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
 }
 
@@ -146,7 +139,7 @@ fn quick_start_step_badge(
           frame~,
           font~,
           color=@graphics.Color::white(),
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ),
       )
     },
@@ -185,12 +178,7 @@ fn Model::quick_start_code_block(
   let line_views : Array[@moui.View[Msg]] = []
   for line in lines {
     line_views.push(
-      text(
-        line,
-        width=code_width,
-        height=line_height,
-        align=@text.TextAlign::TextStart,
-      )
+      text(line, width=code_width, height=line_height, align=TextStart)
       .font(mono_font)
       .foreground(quick_start_code_foreground(theme)),
     )
@@ -205,7 +193,7 @@ fn Model::quick_start_code_block(
   container(
     row(
       [
-        column(line_views, spacing=line_gap, align=@views.CrossAlign::Start).frame(
+        column(line_views, spacing=line_gap, align=Start).frame(
           width=code_width,
           height=code_height,
         ),
@@ -223,7 +211,7 @@ fn Model::quick_start_code_block(
         ),
       ],
       spacing=gap,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=content_height + pad * 2.0,
@@ -312,7 +300,7 @@ fn quick_start_actions(theme : @moui.Theme, locale : String) -> @moui.View[Msg] 
       button(
         website_message(locale, "action.read_docs"),
         on_click=OpenDocs,
-        variant=@views.ButtonVariant::Primary,
+        variant=Primary,
         theme~,
         width=148.0,
         height=42.0,
@@ -320,14 +308,14 @@ fn quick_start_actions(theme : @moui.Theme, locale : String) -> @moui.View[Msg] 
       button(
         website_message(locale, "action.open_playground"),
         on_click=OpenPlayground,
-        variant=@views.ButtonVariant::Outline,
+        variant=Outline,
         theme~,
         width=156.0,
         height=42.0,
       ).foreground(theme.palette.foreground),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -346,15 +334,15 @@ fn quick_start_join_lines(lines : Array[String]) -> String {
 ///|
 fn quick_start_code_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.05, g=0.09, b=0.09)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.07, g=0.12, b=0.11)
+    Dark => @graphics.Color::rgba(r=0.05, g=0.09, b=0.09)
+    Light => @graphics.Color::rgba(r=0.07, g=0.12, b=0.11)
   }
 }
 
 ///|
 fn quick_start_code_foreground(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.55, g=0.95, b=0.86)
-    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.45, g=0.92, b=0.82)
+    Dark => @graphics.Color::rgba(r=0.55, g=0.95, b=0.86)
+    Light => @graphics.Color::rgba(r=0.45, g=0.92, b=0.82)
   }
 }

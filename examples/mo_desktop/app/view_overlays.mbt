@@ -37,23 +37,23 @@ fn app_launcher(
       [
         @views.text(
           "No apps or actions found",
-          role=@views.TextRole::Title,
+          role=Title,
           theme~,
           width=inner_width,
           height=34.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.foreground),
         @views.button(
           "Clear Search",
           on_click=LauncherQueryChanged(""),
-          variant=@views.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=126.0,
           height=38.0,
         ),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   } else {
     @views.responsive_grid(
@@ -102,7 +102,7 @@ fn app_launcher(
         results,
       ],
       spacing=14.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width,
     height,
@@ -145,7 +145,7 @@ fn spotlight(
       [
         @views.row(
           [
-            desktop_icon(@views.IconName::Search, 18.0, palette.muted),
+            desktop_icon(Search, 18.0, palette.muted),
             @views.text_field(
               query,
               on_input=value => SpotlightQueryChanged(value),
@@ -157,13 +157,13 @@ fn spotlight(
             ),
           ],
           spacing=10.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         @views.divider(theme~, color=palette.outline.multiply_alpha(0.55)),
         results,
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width,
     360.0,
@@ -211,15 +211,15 @@ fn spotlight_results(
       [
         @views.text(
           "No results for \"\{query}\"",
-          role=@views.TextRole::Body,
+          role=Body,
           theme~,
           width~,
           height=28.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.muted),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     )
   } else {
     // Group hits by category in Spotlight's canonical order, then render each
@@ -238,7 +238,7 @@ fn spotlight_results(
         }
       }
     }
-    @views.column(children, spacing=2.0, align=@views.CrossAlign::Stretch)
+    @views.column(children, spacing=2.0, align=Stretch)
   }
 }
 
@@ -251,13 +251,7 @@ fn spotlight_category_header(
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  @views.text(
-    category,
-    role=@views.TextRole::Caption,
-    theme~,
-    width~,
-    height=16.0,
-  )
+  @views.text(category, role=Caption, theme~, width~, height=16.0)
   .font(@text.FontSpec::new(size=11.0, weight=700))
   .foreground(palette.muted)
 }
@@ -280,7 +274,7 @@ fn spotlight_entries() -> Array[SpotlightResult] {
       title: "System Settings",
       subtitle: "Application",
       category: "Applications",
-      icon: @views.IconName::Settings,
+      icon: Settings,
       color: rgba8(104, 112, 124),
       message: RunMenuCommand(ShowSystemSettings),
     },
@@ -288,7 +282,7 @@ fn spotlight_entries() -> Array[SpotlightResult] {
       title: "Documents",
       subtitle: "Folder",
       category: "Folders",
-      icon: @views.IconName::FileNew,
+      icon: FileNew,
       color: rgba8(91, 143, 249),
       message: RunMenuCommand(OpenDocuments),
     },
@@ -296,7 +290,7 @@ fn spotlight_entries() -> Array[SpotlightResult] {
       title: "Downloads",
       subtitle: "Folder",
       category: "Folders",
-      icon: @views.IconName::ArrowRight,
+      icon: ArrowRight,
       color: rgba8(38, 175, 129),
       message: RunMenuCommand(OpenDownloads),
     },
@@ -304,7 +298,7 @@ fn spotlight_entries() -> Array[SpotlightResult] {
       title: "About This Mac",
       subtitle: "System",
       category: "System",
-      icon: @views.IconName::Info,
+      icon: Info,
       color: rgba8(48, 132, 255),
       message: RunMenuCommand(ShowAboutThisMac),
     },
@@ -312,7 +306,7 @@ fn spotlight_entries() -> Array[SpotlightResult] {
       title: "Lock Screen",
       subtitle: "Session",
       category: "System",
-      icon: @views.IconName::Focus,
+      icon: Focus,
       color: rgba8(45, 166, 153),
       message: RunMenuCommand(LockSession),
     },
@@ -345,7 +339,7 @@ fn spotlight_row(
           [
             @views.text(
               entry.title,
-              role=@views.TextRole::Body,
+              role=Body,
               theme~,
               width=(width - 56.0).max(80.0),
               height=20.0,
@@ -354,18 +348,18 @@ fn spotlight_row(
             .foreground(palette.foreground),
             @views.text(
               entry.subtitle,
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=(width - 56.0).max(80.0),
               height=16.0,
             ).foreground(palette.muted),
           ],
           spacing=1.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=44.0,
@@ -387,7 +381,7 @@ fn about_this_mac(
     "About This Mac",
     "Mo Desktop",
     "Version 1.0 · MoonBit UI demo",
-    @views.IconName::Info,
+    Info,
     rgba8(48, 132, 255),
     palette,
     theme,
@@ -407,7 +401,7 @@ fn app_store(
     "App Store",
     "Discover apps for Mo Desktop",
     "The demo catalog is ready for you to explore.",
-    @views.IconName::Link,
+    Link,
     rgba8(40, 172, 224),
     palette,
     theme,
@@ -437,7 +431,7 @@ fn system_settings(
         ),
         @views.text(
           "Appearance",
-          role=@views.TextRole::Title,
+          role=Title,
           theme~,
           width=width - 32.0,
           height=28.0,
@@ -450,7 +444,7 @@ fn system_settings(
           } else {
             "Light appearance is active."
           },
-          role=@views.TextRole::Body,
+          role=Body,
           theme~,
           width=width - 32.0,
           height=22.0,
@@ -462,7 +456,7 @@ fn system_settings(
             "Use Dark Appearance"
           },
           on_click=ToggleDarkMode,
-          variant=@views.ButtonVariant::Tonal,
+          variant=Tonal,
           theme~,
           width=width - 32.0,
           height=38.0,
@@ -470,14 +464,14 @@ fn system_settings(
         @views.button(
           "Use System Appearance",
           on_click=UseSystemAppearance,
-          variant=@views.ButtonVariant::Ghost,
+          variant=Ghost,
           theme~,
           width=width - 32.0,
           height=34.0,
         ),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width,
     242.0,
@@ -515,25 +509,25 @@ fn desktop_dialog(
         ),
         @views.text(
           heading,
-          role=@views.TextRole::Title,
+          role=Title,
           theme~,
           width=width - 32.0,
           height=28.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=18.0, weight=650))
         .foreground(palette.foreground),
         @views.text(
           detail,
-          role=@views.TextRole::Body,
+          role=Body,
           theme~,
           width=width - 32.0,
           height=40.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.muted),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width,
     230.0,
@@ -571,28 +565,28 @@ fn launcher_entries(model : DesktopModel) -> Array[LauncherEntry] {
           "Dark Mode"
         },
         detail: "Appearance",
-        icon: @views.IconName::Eye,
+        icon: Eye,
         color: rgba8(104, 87, 214),
         message: ToggleDarkMode,
       },
       {
         label: "Lock Screen",
         detail: "Secure this session",
-        icon: @views.IconName::Focus,
+        icon: Focus,
         color: rgba8(45, 166, 153),
         message: LockDesktop,
       },
       {
         label: "Close Window",
         detail: "Return to desktop",
-        icon: @views.IconName::Close,
+        icon: Close,
         color: rgba8(238, 82, 83),
         message: CloseWindow,
       },
       {
         label: "Mark Read",
         detail: "Clear inbox badge",
-        icon: @views.IconName::Check,
+        icon: Check,
         color: rgba8(244, 137, 53),
         message: MarkNotificationsRead,
       },
@@ -612,14 +606,14 @@ fn launcher_entries(model : DesktopModel) -> Array[LauncherEntry] {
     entries.push({
       label: "Control Center",
       detail: "Display and sound",
-      icon: @views.IconName::Settings,
+      icon: Settings,
       color: rgba8(91, 99, 112),
       message: ToggleControlCenter,
     })
     entries.push({
       label: "Notifications",
       detail: "Messages and tasks",
-      icon: @views.IconName::Info,
+      icon: Info,
       color: rgba8(236, 72, 118),
       message: ToggleNotificationCenter,
     })
@@ -648,23 +642,23 @@ fn launcher_tile(
         ),
         @views.text(
           entry.label,
-          role=@views.TextRole::Label,
+          role=Label,
           theme~,
           width=width - 12.0,
           height=24.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.foreground),
         @views.text(
           entry.detail,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 12.0,
           height=20.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.muted),
       ],
       spacing=5.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=132.0,
@@ -704,7 +698,7 @@ fn control_center(
         connectivity_tile(
           "Wi-Fi",
           "Connected",
-          @views.IconName::Link,
+          Link,
           model.wifi_enabled,
           WifiChanged(!model.wifi_enabled),
           inner_width,
@@ -714,7 +708,7 @@ fn control_center(
         connectivity_tile(
           "Bluetooth",
           "On",
-          @views.IconName::Focus,
+          Focus,
           model.bluetooth_enabled,
           BluetoothChanged(!model.bluetooth_enabled),
           inner_width,
@@ -723,7 +717,7 @@ fn control_center(
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     )
   } else {
     @views.row(
@@ -731,7 +725,7 @@ fn control_center(
         connectivity_tile(
           "Wi-Fi",
           "Connected",
-          @views.IconName::Link,
+          Link,
           model.wifi_enabled,
           WifiChanged(!model.wifi_enabled),
           tile_w,
@@ -741,7 +735,7 @@ fn control_center(
         connectivity_tile(
           "Bluetooth",
           "On",
-          @views.IconName::Focus,
+          Focus,
           model.bluetooth_enabled,
           BluetoothChanged(!model.bluetooth_enabled),
           tile_w,
@@ -750,7 +744,7 @@ fn control_center(
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     )
   }
   let connectivity = overlay_group(
@@ -769,7 +763,7 @@ fn control_center(
           } else {
             "Dark Mode"
           },
-          @views.IconName::Eye,
+          Eye,
           model.dark_mode,
           ToggleDarkMode,
           tile_w,
@@ -778,7 +772,7 @@ fn control_center(
         ),
         control_action_tile(
           "Low Power",
-          @views.IconName::Settings,
+          Settings,
           model.low_power_mode,
           LowPowerModeChanged(!model.low_power_mode),
           tile_w,
@@ -787,7 +781,7 @@ fn control_center(
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     inner_width,
     78.0,
@@ -818,11 +812,11 @@ fn control_center(
       @views.container(
         @views.text(
           "Lock Screen",
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=inner_width - 16.0,
           height=18.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ).foreground(palette.muted),
         width=inner_width,
         height=28.0,
@@ -833,7 +827,7 @@ fn control_center(
       .accessibility_label("Lock Screen"),
     ],
     spacing=10.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   let panel = @views.container(
     @views.scroll_view(
@@ -923,7 +917,7 @@ fn connectivity_tile(
           [
             @views.text(
               label,
-              role=@views.TextRole::Label,
+              role=Label,
               theme~,
               width=(width - 58.0).max(70.0),
               height=18.0,
@@ -936,18 +930,18 @@ fn connectivity_tile(
               } else {
                 "Off"
               },
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=(width - 58.0).max(70.0),
               height=16.0,
             ).foreground(palette.muted),
           ],
           spacing=1.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=64.0,
@@ -995,17 +989,17 @@ fn control_action_tile(
         ),
         @views.text(
           label,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 20.0,
           height=18.0,
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         )
         .font(@text.FontSpec::new(size=12.0, weight=560))
         .foreground(palette.foreground),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=78.0,
@@ -1031,11 +1025,11 @@ fn control_system_status(
         @views.container(
           @views.text(
             desktop_clock_time(model.clock),
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=50.0,
             height=16.0,
-            align=@text.TextAlign::TextCenter,
+            align=TextCenter,
           )
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.foreground),
@@ -1055,7 +1049,7 @@ fn control_system_status(
           [
             @views.text(
               "System status",
-              role=@views.TextRole::Label,
+              role=Label,
               theme~,
               width=(width - 88.0).max(100.0),
               height=18.0,
@@ -1070,18 +1064,18 @@ fn control_system_status(
               } else {
                 "Manual light appearance"
               },
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=(width - 88.0).max(100.0),
               height=16.0,
             ).foreground(palette.muted),
           ],
           spacing=1.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=68.0,
@@ -1108,7 +1102,7 @@ fn control_slider_section(
           [
             @views.text(
               label,
-              role=@views.TextRole::Label,
+              role=Label,
               theme~,
               width=width - 86.0,
               height=20.0,
@@ -1117,15 +1111,15 @@ fn control_slider_section(
             .foreground(palette.foreground),
             @views.text(
               "\{(value * 100.0).to_int()}%",
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=44.0,
               height=20.0,
-              align=@text.TextAlign::TextEnd,
+              align=TextEnd,
             ).foreground(palette.muted),
           ],
           spacing=6.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         @views.slider(
           value,
@@ -1138,7 +1132,7 @@ fn control_slider_section(
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     height=72.0,

@@ -8,7 +8,7 @@ pub(all) struct ScrollRequest {
 
 ///|
 pub fn ScrollRequest::new(id~ : Int, offset~ : Point) -> ScrollRequest {
-  { id, offset }
+  { id, offset, }
 }
 
 ///|
@@ -21,5 +21,5 @@ pub(all) struct FocusRequest {
 
 ///|
 pub fn FocusRequest::new(id~ : Int, key~ : String) -> FocusRequest {
-  { id, key }
+  { id, key, }
 }

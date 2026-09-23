@@ -24,10 +24,7 @@ pub fn[Msg] BackgroundModifier::to_any_modifier(
     paint: fn(ctx) {
       let radius = ctx.style.corner_radius.unwrap_or(0.0)
       ViewPaintPlan::commands([
-        DrawCommand::FillRoundedRectBrush(
-          RoundedRect::new(rect=ctx.frame, radius~),
-          brush,
-        ),
+        FillRoundedRectBrush(RoundedRect::new(rect=ctx.frame, radius~), brush),
       ])
     },
   }
@@ -51,7 +48,7 @@ pub fn[Msg] ForegroundModifier::to_any_modifier(
       semantics=Constant,
       platform=Constant,
     ),
-    child_style: fn(s) { { ..s, foreground: Some(self.color) } },
+    child_style: fn(s) { { ..s, foreground: Some(self.color), } },
   }
 }
 
@@ -73,7 +70,7 @@ pub fn[Msg] FontModifier::to_any_modifier(
       semantics=Constant,
       platform=Constant,
     ),
-    child_style: fn(s) { { ..s, font: Some(self.font) } },
+    child_style: fn(s) { { ..s, font: Some(self.font), } },
   }
 }
 
@@ -95,7 +92,7 @@ pub fn[Msg] CornerRadiusModifier::to_any_modifier(
       semantics=Constant,
       platform=Constant,
     ),
-    child_style: fn(s) { { ..s, corner_radius: Some(self.radius) } },
+    child_style: fn(s) { { ..s, corner_radius: Some(self.radius), } },
   }
 }
 
@@ -120,9 +117,9 @@ pub fn[Msg] OpacityModifier::to_any_modifier(
     ),
     paint: fn(_ctx) {
       {
-        commands: [DrawCommand::PushOpacity(opacity)],
+        commands: [PushOpacity(opacity)],
         child_layers: [],
-        post_commands: [DrawCommand::PopOpacity],
+        post_commands: [PopOpacity],
         overlay_commands: [],
         repaint_boundary: false,
         animating: false,
@@ -152,7 +149,7 @@ pub fn[Msg] ShadowModifier::to_any_modifier(
     ),
     paint: fn(ctx) {
       ViewPaintPlan::commands([
-        DrawCommand::DrawShadow(
+        DrawShadow(
           ShadowSpec::new(
             rect=RoundedRect::new(rect=ctx.frame, radius=0.0),
             color=style.color,
@@ -189,7 +186,7 @@ pub fn[Msg] BorderModifier::to_any_modifier(
       if style.width > 0.0 {
         let radius = ctx.style.corner_radius.unwrap_or(0.0)
         ViewPaintPlan::commands([
-          DrawCommand::StrokeRoundedRectBrush(
+          StrokeRoundedRectBrush(
             RoundedRect::new(rect=ctx.frame, radius~),
             style.brush,
             style.width,
@@ -214,9 +211,9 @@ pub fn[Msg] ClipModifier::to_any_modifier(
     identity_kind: "Clip",
     paint: fn(ctx) {
       {
-        commands: [DrawCommand::PushClip(ctx.frame)],
+        commands: [PushClip(ctx.frame)],
         child_layers: [],
-        post_commands: [DrawCommand::PopClip],
+        post_commands: [PopClip],
         overlay_commands: [],
         repaint_boundary: false,
         animating: false,
@@ -253,9 +250,9 @@ pub fn[Msg] ScaleModifier::to_any_modifier(
     ),
     paint: fn(_ctx) {
       {
-        commands: [DrawCommand::PushTransform(Transform2D::scale(sx~, sy~))],
+        commands: [PushTransform(Transform2D::scale(sx~, sy~))],
         child_layers: [],
-        post_commands: [DrawCommand::PopTransform],
+        post_commands: [PopTransform],
         overlay_commands: [],
         repaint_boundary: false,
         animating: false,
@@ -274,6 +271,6 @@ pub fn[Msg] RepaintBoundaryModifier::to_any_modifier(
   {
     ..noop_modifier(),
     identity_kind: "RepaintBoundary",
-    paint: fn(_ctx) { { ..ViewPaintPlan::empty(), repaint_boundary: true } },
+    paint: fn(_ctx) { { ..ViewPaintPlan::empty(), repaint_boundary: true, } },
   }
 }

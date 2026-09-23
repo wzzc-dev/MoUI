@@ -25,40 +25,27 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
     None => ()
   }
   match (a, b) {
-    (RenderCommand::Clear(a_color), RenderCommand::Clear(b_color)) =>
-      a_color == b_color
-    (
-      RenderCommand::FillRect(ax, ay, aw, ah, a_paint),
-      RenderCommand::FillRect(bx, by, bw, bh, b_paint),
-    ) =>
+    (Clear(a_color), Clear(b_color)) => a_color == b_color
+    (FillRect(ax, ay, aw, ah, a_paint), FillRect(bx, by, bw, bh, b_paint)) =>
       ax == bx &&
       ay == by &&
       aw == bw &&
       ah == bh &&
       render_paint_is_same(a_paint, b_paint)
-    (
-      RenderCommand::StrokeRect(ax, ay, aw, ah, a_paint),
-      RenderCommand::StrokeRect(bx, by, bw, bh, b_paint),
-    ) =>
+    (StrokeRect(ax, ay, aw, ah, a_paint), StrokeRect(bx, by, bw, bh, b_paint)) =>
       ax == bx &&
       ay == by &&
       aw == bw &&
       ah == bh &&
       render_paint_is_same(a_paint, b_paint)
-    (
-      RenderCommand::FillPath(a_path, a_paint),
-      RenderCommand::FillPath(b_path, b_paint),
-    ) =>
+    (FillPath(a_path, a_paint), FillPath(b_path, b_paint)) =>
+      render_paths_are_same(a_path, b_path) &&
+      render_paint_is_same(a_paint, b_paint)
+    (StrokePath(a_path, a_paint), StrokePath(b_path, b_paint)) =>
       render_paths_are_same(a_path, b_path) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::StrokePath(a_path, a_paint),
-      RenderCommand::StrokePath(b_path, b_paint),
-    ) =>
-      render_paths_are_same(a_path, b_path) &&
-      render_paint_is_same(a_paint, b_paint)
-    (
-      RenderCommand::DrawNinePatchBmpBytesKeyed(
+      DrawNinePatchBmpBytesKeyed(
         a_key,
         _,
         ax,
@@ -69,7 +56,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawNinePatchBmpBytesKeyed(
+      DrawNinePatchBmpBytesKeyed(
         b_key,
         _,
         bx,
@@ -86,7 +73,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         b_paint, a_sampling, b_sampling,
       )
     (
-      RenderCommand::DrawNinePatchPngBytesKeyed(
+      DrawNinePatchPngBytesKeyed(
         a_key,
         _,
         ax,
@@ -97,7 +84,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawNinePatchPngBytesKeyed(
+      DrawNinePatchPngBytesKeyed(
         b_key,
         _,
         bx,
@@ -114,7 +101,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         b_paint, a_sampling, b_sampling,
       )
     (
-      RenderCommand::DrawNinePatchRgbaBytesKeyed(
+      DrawNinePatchRgbaBytesKeyed(
         a_key,
         _,
         a_image_width,
@@ -127,7 +114,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_paint,
         a_sampling
       ),
-      RenderCommand::DrawNinePatchRgbaBytesKeyed(
+      DrawNinePatchRgbaBytesKeyed(
         b_key,
         _,
         b_image_width,
@@ -146,40 +133,18 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax, ay, aw, ah, bx, by, bw, bh, a_insets, b_insets, a_paint, b_paint, a_sampling,
         b_sampling,
       )
+    (DrawPixmapRect(_, _, _, _, _), DrawPixmapRect(_, _, _, _, _)) => false
     (
-      RenderCommand::DrawPixmapRect(_, _, _, _, _),
-      RenderCommand::DrawPixmapRect(_, _, _, _, _),
-    ) => false
-    (
-      RenderCommand::DrawPixmapRectKeyed(a_key, _, a_src, ax, ay, a_paint),
-      RenderCommand::DrawPixmapRectKeyed(b_key, _, b_src, bx, by, b_paint),
+      DrawPixmapRectKeyed(a_key, _, a_src, ax, ay, a_paint),
+      DrawPixmapRectKeyed(b_key, _, b_src, bx, by, b_paint),
     ) =>
       render_keyed_image_source_point_is_same(
         a_key, b_key, a_src, b_src, ax, ay, bx, by, a_paint, b_paint,
       )
+    (DrawTextFace(_, _, _, _, _, _), DrawTextFace(_, _, _, _, _, _)) => false
     (
-      RenderCommand::DrawTextFace(_, _, _, _, _, _),
-      RenderCommand::DrawTextFace(_, _, _, _, _, _),
-    ) => false
-    (
-      RenderCommand::DrawTextFaceKeyed(
-        a_key,
-        _,
-        a_text,
-        ax,
-        ay,
-        a_config,
-        a_paint
-      ),
-      RenderCommand::DrawTextFaceKeyed(
-        b_key,
-        _,
-        b_text,
-        bx,
-        by,
-        b_config,
-        b_paint
-      ),
+      DrawTextFaceKeyed(a_key, _, a_text, ax, ay, a_config, a_paint),
+      DrawTextFaceKeyed(b_key, _, b_text, bx, by, b_config, b_paint),
     ) =>
       a_key == b_key &&
       a_text == b_text &&
@@ -188,7 +153,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawFontBytesKeyed(
+      DrawFontBytesKeyed(
         a_font_key,
         _,
         a_text_key,
@@ -198,7 +163,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawFontBytesKeyed(
+      DrawFontBytesKeyed(
         b_font_key,
         _,
         b_text_key,
@@ -217,7 +182,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawFontBytesAtlasKeyed(
+      DrawFontBytesAtlasKeyed(
         a_font_key,
         _,
         a_glyph_key_prefix,
@@ -227,7 +192,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawFontBytesAtlasKeyed(
+      DrawFontBytesAtlasKeyed(
         b_font_key,
         _,
         b_glyph_key_prefix,
@@ -246,7 +211,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawFontBytesFallbackKeyed(
+      DrawFontBytesFallbackKeyed(
         a_sources,
         a_text_key_prefix,
         a_text,
@@ -255,7 +220,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawFontBytesFallbackKeyed(
+      DrawFontBytesFallbackKeyed(
         b_sources,
         b_text_key_prefix,
         b_text,
@@ -273,7 +238,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+      DrawFontBytesFallbackAtlasKeyed(
         a_sources,
         a_glyph_key_prefix,
         a_text,
@@ -282,7 +247,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+      DrawFontBytesFallbackAtlasKeyed(
         b_sources,
         b_glyph_key_prefix,
         b_text,
@@ -300,7 +265,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawLoadedFontKeyed(
+      DrawLoadedFontKeyed(
         a_font_key,
         a_text_key,
         a_text,
@@ -309,7 +274,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawLoadedFontKeyed(
+      DrawLoadedFontKeyed(
         b_font_key,
         b_text_key,
         b_text,
@@ -327,7 +292,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawLoadedFontFallbackKeyed(
+      DrawLoadedFontFallbackKeyed(
         a_font_keys,
         a_text_key_prefix,
         a_text,
@@ -336,7 +301,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawLoadedFontFallbackKeyed(
+      DrawLoadedFontFallbackKeyed(
         b_font_keys,
         b_text_key_prefix,
         b_text,
@@ -354,7 +319,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
+      DrawLoadedFontFallbackAtlasKeyed(
         a_font_keys,
         a_glyph_key_prefix,
         a_text,
@@ -363,7 +328,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
+      DrawLoadedFontFallbackAtlasKeyed(
         b_font_keys,
         b_glyph_key_prefix,
         b_text,
@@ -381,7 +346,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
       render_layout_config_is_same(a_config, b_config) &&
       render_paint_is_same(a_paint, b_paint)
     (
-      RenderCommand::DrawLoadedFontAtlasKeyed(
+      DrawLoadedFontAtlasKeyed(
         a_font_key,
         a_glyph_key_prefix,
         a_text,
@@ -390,7 +355,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         a_config,
         a_paint
       ),
-      RenderCommand::DrawLoadedFontAtlasKeyed(
+      DrawLoadedFontAtlasKeyed(
         b_font_key,
         b_glyph_key_prefix,
         b_text,

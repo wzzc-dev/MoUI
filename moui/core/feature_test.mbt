@@ -35,7 +35,7 @@ fn child_write(child : ChildModel, parent : ParentModel) -> ParentModel {
 
 ///|
 fn child_message(message : ChildMsg) -> ParentMsg {
-  ParentMsg::Child(message)
+  Child(message)
 }
 
 ///|
@@ -51,50 +51,39 @@ impl @core.ViewNode for FeatureTestNode with fn identity(_self) {
 ///|
 impl @core.ViewNode for FeatureTestNode with fn layout(_self, context) {
   @core.ViewLayoutResult::new(
-    size=context.constraints.constrain(
-      @core.Size::new(width=4.0, height=4.0),
-    ),
+    size=context.constraints.constrain(@core.Size::new(width=4.0, height=4.0)),
   )
 }
 
 ///|
 fn feature_test_view(message : String) -> @core.View[ChildMsg] {
-  @core.View::from_node(
-    FeatureTestNode::{ message, },
-    event=(node, _context) =>
-      @core.ViewEventResult::message(ChildMsg::SetLabel(node.message)),
-  )
+  @core.View::from_node(FeatureTestNode::{ message, }, event=(node, _context) => {
+    @core.ViewEventResult::message(SetLabel(node.message))
+  })
 }
 
 ///|
 fn child_feature() -> @core.Feature[ChildModel, ChildMsg] {
   @core.Feature::new(
-    init=() => (
-      { count: 0, label: "init", },
-      @core.Effect::send(ChildMsg::Ping),
-    ),
-    update=(model, message) =>
+    init=() => ({ count: 0, label: "init", }, @core.Effect::send(Ping)),
+    update=(model, message) => {
       match message {
-        Inc => (
-          { ..model, count: model.count + 1, },
-          @core.Effect::none(),
-        )
-        SetLabel(label) => (
-          { ..model, label, },
-          @core.Effect::send(ChildMsg::Ping),
-        )
+        Inc => ({ ..model, count: model.count + 1, }, @core.Effect::none())
+        SetLabel(label) => ({ ..model, label, }, @core.Effect::send(Ping))
         Ping => (model, @core.Effect::none())
-      },
+      }
+    },
     view=model => feature_test_view(model.label),
-    subscriptions=model =>
+    subscriptions=model => {
       @core.Subscription::timer(
         key="child/tick",
         start=dispatch => {
-          dispatch(ChildMsg::Inc)
+          dispatch(Inc)
           None
         },
         label=model.label,
-      ),
+      )
+    },
   )
 }
 
@@ -105,10 +94,10 @@ fn title_feature() -> @core.Feature[String, String] {
     update=(_model, message) => (message, @core.Effect::none()),
     view=message => {
       let _ = message
-      @core.View::from_node(
-        FeatureTestNode::{ message: "title", },
-        event=(_node, _context) => @core.ViewEventResult::ignored(),
-      )
+      @core.View::from_node(FeatureTestNode::{ message: "title", }, event=(
+        _node,
+        _context,
+      ) => @core.ViewEventResult::ignored())
     },
   )
 }
@@ -120,11 +109,7 @@ fn child_scope() -> @core.ScopedFeature[
   ChildMsg,
   ParentMsg,
 ] {
-  child_feature().scope(
-    read=child_read,
-    write=child_write,
-    wrap=child_message,
-  )
+  child_feature().scope(read=child_read, write=child_write, wrap=child_message)
 }
 
 ///|
@@ -157,7 +142,7 @@ fn feature_test_event_context() -> @core.ViewEventContext {
   {
     frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
     child_frames: [],
-    event: @core.AppEvent::CloseRequested,
+    event: CloseRequested,
     focused: false,
     state: {
       focused: false,
@@ -191,19 +176,16 @@ test "ScopedFeature update honors lens laws over the parent model" {
   let scoped = child_scope()
   let parent = sample_parent()
   // GetSet: the child written through the lens is exactly what read returns.
-  let (after_label, _) = scoped.update(parent, ChildMsg::SetLabel("after"))
+  let (after_label, _) = scoped.update(parent, SetLabel("after"))
   assert_eq(child_read(after_label).label, "after")
   // SetGet: parent fields outside the lens are untouched.
   assert_eq(after_label.title, "shell")
   assert_eq(child_read(after_label).count, 1)
   // SetSet: a later write supersedes an earlier one.
-  let (after_second, _) = scoped.update(
-    after_label,
-    ChildMsg::SetLabel("second"),
-  )
+  let (after_second, _) = scoped.update(after_label, SetLabel("second"))
   assert_eq(child_read(after_second).label, "second")
   // No-op update writes the same child back: write(read(p), p) == p.
-  let (after_ping, _) = scoped.update(after_second, ChildMsg::Ping)
+  let (after_ping, _) = scoped.update(after_second, Ping)
   assert_eq(after_ping, after_second)
 }
 
@@ -219,11 +201,7 @@ fn hand_written(
 ///|
 test "ScopedFeature matches hand-written wrapper delegation" {
   let scoped = child_scope()
-  let messages : Array[ChildMsg] = [
-    ChildMsg::SetLabel("x"),
-    ChildMsg::Inc,
-    ChildMsg::Ping,
-  ]
+  let messages : Array[ChildMsg] = [SetLabel("x"), Inc, Ping]
   let mut scoped_model = sample_parent()
   let mut hand_model = sample_parent()
   for message in messages {
@@ -236,8 +214,8 @@ test "ScopedFeature matches hand-written wrapper delegation" {
   }
   assert_eq(scoped_model, hand_model)
   // The SetLabel effect lifts through the wrapper: child Ping arrives wrapped.
-  let (_, effect) = scoped.update(scoped_model, ChildMsg::SetLabel("lit"))
-  assert_eq(collected(effect), [ParentMsg::Child(ChildMsg::Ping)])
+  let (_, effect) = scoped.update(scoped_model, SetLabel("lit"))
+  assert_eq(collected(effect), [Child(Ping)])
 }
 
 ///|
@@ -245,7 +223,7 @@ test "ScopedFeature::init lifts the startup effect to the parent type" {
   let scoped = child_scope()
   let (child, effect) = scoped.init()
   assert_eq(child, { count: 0, label: "init", })
-  assert_eq(collected(effect), [ParentMsg::Child(ChildMsg::Ping)])
+  assert_eq(collected(effect), [Child(Ping)])
 }
 
 ///|
@@ -257,7 +235,7 @@ test "Two scoped features do not clobber each other" {
     wrap=message => ParentMsg::Other(message),
   )
   let parent = sample_parent()
-  let (child_next, _) = child.update(parent, ChildMsg::SetLabel("only-child"))
+  let (child_next, _) = child.update(parent, SetLabel("only-child"))
   assert_eq(child_next.title, "shell")
   let (title_next, _) = title.update(parent, "only-title")
   assert_eq(child_read(title_next), child_read(parent))
@@ -271,10 +249,7 @@ test "ScopedFeature::view lifts child messages through the wrapper" {
   assert_eq(view.identity().kind, "feature-test")
   // The child view emits its label back as SetLabel; the wrapper must retype it.
   let result = view.event(feature_test_event_context())
-  assert_eq(
-    result.messages,
-    [ParentMsg::Child(ChildMsg::SetLabel("before"))],
-  )
+  assert_eq(result.messages, [Child(SetLabel("before"))])
 }
 
 ///|
@@ -289,7 +264,7 @@ test "ScopedFeature::subscriptions lifts source messages" {
   assert_eq(sources.length(), 1)
   let out : Array[ParentMsg] = []
   let _stop = sources[0].start(message => out.push(message))
-  assert_eq(out, [ParentMsg::Child(ChildMsg::Inc)])
+  assert_eq(out, [Child(Inc)])
 }
 
 ///|
@@ -297,11 +272,8 @@ test "ScopedFeature::commands lifts command messages" {
   let feature = child_feature().with_commands(commands=model => {
     [
       @core.ProgramCommand::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Activate,
-          label="Ping child",
-        ),
-        message=ChildMsg::SetLabel("from-command-\{model.count}"),
+        command=@core.ActionCommand::new(intent=Activate, label="Ping child"),
+        message=SetLabel("from-command-\{model.count}"),
       ),
     ]
   })
@@ -313,10 +285,7 @@ test "ScopedFeature::commands lifts command messages" {
   let parent = sample_parent()
   let commands = scoped.commands(parent)
   assert_eq(commands.length(), 1)
-  assert_eq(
-    commands[0].message(),
-    ParentMsg::Child(ChildMsg::SetLabel("from-command-1")),
-  )
+  assert_eq(commands[0].message(), Child(SetLabel("from-command-1")))
 }
 
 ///|
@@ -324,26 +293,23 @@ test "Program::from_feature preserves init update view subscriptions commands" {
   let feature = child_feature().with_commands(commands=_model => {
     [
       @core.ProgramCommand::new(
-        command=@core.ActionCommand::new(
-          intent=@core.CommandIntent::Submit,
-          label="Save",
-        ),
-        message=ChildMsg::Ping,
+        command=@core.ActionCommand::new(intent=Submit, label="Save"),
+        message=Ping,
       ),
     ]
   })
-  let program = @core.Program::from_feature(feature=feature)
+  let program = @core.Program::from_feature(feature~)
   let (program_model, program_effect) = program.runtime_init()
   let (feature_model, feature_effect) = feature.runtime_init()
   assert_eq(program_model, feature_model)
   assert_eq(collected(program_effect), collected(feature_effect))
-  let (p1, e1) = program.runtime_update(program_model, ChildMsg::Inc)
-  let (f1, f_effect) = feature.runtime_update(feature_model, ChildMsg::Inc)
+  let (p1, e1) = program.runtime_update(program_model, Inc)
+  let (f1, f_effect) = feature.runtime_update(feature_model, Inc)
   assert_eq(p1, f1)
   assert_eq(collected(e1), collected(f_effect))
   assert_eq(
     program.runtime_view(p1, test_env()).identity() ==
-      feature.runtime_view(f1, test_env()).identity(),
+    feature.runtime_view(f1, test_env()).identity(),
     true,
   )
   assert_eq(

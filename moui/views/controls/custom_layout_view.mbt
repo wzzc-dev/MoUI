@@ -14,8 +14,8 @@ impl @core.ViewNode for CustomLayout with fn identity(_self) {
 ///|
 impl @core.ViewNode for CustomLayout with fn declaration(self) {
   @common.view_declaration(
-    layout=@core.DeclarationChannel::Uncacheable,
-    paint=@core.DeclarationChannel::Uncacheable,
+    layout=Uncacheable,
+    paint=Uncacheable,
     semantics=@common.view_exact_channel(
       @common.view_record_key("CustomLayout.semantics", [
         ("role", @common.view_semantics_role_key(self.semantics_role)),
@@ -40,11 +40,10 @@ impl @core.ViewNode for CustomLayout with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for CustomLayout with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
-    composition=if self.semantics_label == "" &&
-      self.semantics_role == @core.SemanticsRole::Group {
-      @core.SemanticsComposition::Transparent
+    composition=if self.semantics_label == "" && self.semantics_role == Group {
+      Transparent
     } else {
-      @core.SemanticsComposition::Boundary
+      Boundary
     },
     role=self.semantics_role,
     label=self.semantics_label,
@@ -56,7 +55,7 @@ impl @core.ViewNode for CustomLayout with fn semantics(self) {
 pub fn[Msg] custom_layout(
   measure~ : (@core.Constraints) -> @core.Size,
   paint~ : (@common.PaintContext, @core.Rect) -> Unit,
-  semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
+  semantics_role? : @core.SemanticsRole = Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
   @core.View::from_node(CustomLayout::{

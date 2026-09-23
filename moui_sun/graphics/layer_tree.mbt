@@ -8,7 +8,7 @@ pub struct LayerTree {
 
 ///|
 pub fn LayerTree::new() -> LayerTree {
-  { layers: [], invalidation: DirtyRegion::new() }
+  { layers: [], invalidation: DirtyRegion::new(), }
 }
 
 ///|
@@ -374,7 +374,7 @@ pub fn[S : Surface] LayerTree::submit_by_strategy_plan(
     surface.get_height(),
   )
   match strategy {
-    DirtyPresentStrategy::Full =>
+    Full =>
       render_frame_full_present_plan(
         dirty_plan,
         target.get_pixmap().get_width(),
@@ -413,12 +413,7 @@ pub fn[S : Surface] LayerTree::redraw_schedule(
   surface : S,
   max_rects : Int,
 ) -> RenderFrameSchedule {
-  self.submit_schedule_by_policy(
-    target,
-    surface,
-    max_rects,
-    RenderFrameSubmitPolicy::CachedRedraw,
-  )
+  self.submit_schedule_by_policy(target, surface, max_rects, CachedRedraw)
 }
 
 ///|
@@ -430,13 +425,10 @@ pub fn[S : Surface] LayerTree::submit_schedule_by_policy(
   policy : RenderFrameSubmitPolicy,
 ) -> RenderFrameSchedule {
   match policy {
-    RenderFrameSubmitPolicy::DirtyOnly =>
-      self.submit_schedule(target, surface, max_rects)
-    RenderFrameSubmitPolicy::CachedRedraw => {
+    DirtyOnly => self.submit_schedule(target, surface, max_rects)
+    CachedRedraw => {
       let schedule = self.submit_schedule(target, surface, max_rects)
-      guard schedule.get_action() == RenderFrameScheduleAction::Skip else {
-        return schedule
-      }
+      guard schedule.get_action() == Skip else { return schedule }
       guard !schedule.has_dirty() else { return schedule }
       layer_tree_full_present_schedule(
         target,
@@ -444,7 +436,7 @@ pub fn[S : Surface] LayerTree::submit_schedule_by_policy(
         schedule.get_submit_plan().get_dirty_submit_plan(),
       )
     }
-    RenderFrameSubmitPolicy::FullRedraw => {
+    FullRedraw => {
       let dirty_plan = self.dirty_submit_plan(target, surface, max_rects)
       layer_tree_full_present_schedule(target, surface, dirty_plan)
     }
@@ -501,7 +493,7 @@ fn[S : Surface] dirty_present_plan_for_region(
   )
   match target_bounds.intersection(surface_bounds) {
     Some(bounds) => region.present_plan(bounds, max_rects)
-    None => { mode: DirtyPresentPlanMode::Empty, rects: [] }
+    None => { mode: Empty, rects: [], }
   }
 }
 
@@ -605,7 +597,7 @@ pub fn[S : Surface] LayerTree::submit_dirty_to_with_limit(
 ) -> Result[DirtySubmitResult, PresentError] {
   let submit_plan = self.dirty_submit_plan(target, surface, max_rects)
   match self.present_dirty_to_with_limit(target, surface, max_rects) {
-    Ok(presented) => Ok({ submit_plan, presented_rect_count: presented })
+    Ok(presented) => Ok({ submit_plan, presented_rect_count: presented, })
     Err(error) => Err(error)
   }
 }
@@ -647,21 +639,18 @@ fn[S : Surface] LayerTree::current_submit_schedule_for_schedule(
   schedule : RenderFrameSchedule,
 ) -> RenderFrameSchedule {
   match schedule.get_action() {
-    RenderFrameScheduleAction::Skip =>
-      self.submit_schedule(target, surface, max_rects)
-    RenderFrameScheduleAction::SubmitWithoutPresent =>
-      self.submit_schedule(target, surface, max_rects)
-    RenderFrameScheduleAction::Present =>
+    Skip => self.submit_schedule(target, surface, max_rects)
+    SubmitWithoutPresent => self.submit_schedule(target, surface, max_rects)
+    Present =>
       match schedule.get_present_strategy() {
-        DirtyPresentStrategy::Full =>
+        Full =>
           layer_tree_full_present_schedule(
             target,
             surface,
             self.dirty_submit_plan(target, surface, max_rects),
           )
-        DirtyPresentStrategy::Partial =>
-          self.submit_schedule(target, surface, max_rects)
-        DirtyPresentStrategy::Skip => schedule
+        Partial => self.submit_schedule(target, surface, max_rects)
+        Skip => schedule
       }
   }
 }
@@ -675,9 +664,9 @@ fn[S : Surface] LayerTree::submit_current_schedule_to_with_limit(
   current_schedule : RenderFrameSchedule,
 ) -> Result[RenderFrameSubmitResult, PresentError] {
   match current_schedule.get_action() {
-    RenderFrameScheduleAction::Skip =>
+    Skip =>
       Ok(render_frame_submit_result(current_schedule.get_submit_plan(), 0))
-    RenderFrameScheduleAction::SubmitWithoutPresent =>
+    SubmitWithoutPresent =>
       match self.submit_dirty_to_with_limit(target, surface, max_rects) {
         Ok(result) =>
           Ok(
@@ -688,11 +677,10 @@ fn[S : Surface] LayerTree::submit_current_schedule_to_with_limit(
           )
         Err(error) => Err(error)
       }
-    RenderFrameScheduleAction::Present =>
+    Present =>
       match current_schedule.get_present_strategy() {
-        DirtyPresentStrategy::Full => {
-          let present_result = if current_schedule.get_state() ==
-            DirtySubmitState::Clean &&
+        Full => {
+          let present_result = if current_schedule.get_state() == Clean &&
             !current_schedule.has_dirty() {
             present_cached_target_all_to_with_limit(target, surface, max_rects)
           } else {
@@ -709,7 +697,7 @@ fn[S : Surface] LayerTree::submit_current_schedule_to_with_limit(
             Err(error) => Err(error)
           }
         }
-        DirtyPresentStrategy::Partial =>
+        Partial =>
           match self.submit_dirty_to_with_limit(target, surface, max_rects) {
             Ok(result) =>
               Ok(
@@ -720,7 +708,7 @@ fn[S : Surface] LayerTree::submit_current_schedule_to_with_limit(
               )
             Err(error) => Err(error)
           }
-        DirtyPresentStrategy::Skip =>
+        Skip =>
           Ok(render_frame_submit_result(current_schedule.get_submit_plan(), 0))
       }
   }
@@ -824,21 +812,21 @@ fn[S : Surface] LayerTree::current_submit_schedule_for_request(
 ) -> RenderFrameSchedule {
   let schedule = request.get_schedule()
   match schedule.get_action() {
-    RenderFrameScheduleAction::Skip =>
+    Skip =>
       self.submit_schedule_by_policy(
         target,
         surface,
         max_rects,
         request.get_policy(),
       )
-    RenderFrameScheduleAction::SubmitWithoutPresent =>
+    SubmitWithoutPresent =>
       self.submit_schedule_by_policy(
         target,
         surface,
         max_rects,
         request.get_policy(),
       )
-    RenderFrameScheduleAction::Present =>
+    Present =>
       self.current_submit_schedule_for_schedule(
         target, surface, max_rects, schedule,
       )
@@ -990,7 +978,7 @@ fn LayerTree::composite_rects_to(
 
 ///|
 fn snapshot_canvas_draw_state(target : Canvas) -> CanvasState {
-  { transform: target.get_transform(), clip_rect: target.get_clip_rect() }
+  { transform: target.get_transform(), clip_rect: target.get_clip_rect(), }
 }
 
 ///|

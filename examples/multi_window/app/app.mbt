@@ -39,7 +39,7 @@ pub fn scene_from_window(scene : WindowScene) -> Scene? {
 
 ///|
 pub fn Model::new(scene : Scene, shared_count? : Int = 0) -> Model {
-  { scene, count: 0, shared_count, inspector_window_id: None, status: "Ready" }
+  { scene, count: 0, shared_count, inspector_window_id: None, status: "Ready", }
 }
 
 ///|
@@ -53,7 +53,7 @@ pub fn program(
     update=(model, msg) => update(model, msg, windows~),
     view~,
     subscriptions=_model => {
-      windows.subscription(map=event => Msg::WindowCompleted(event))
+      windows.subscription(map=event => WindowCompleted(event))
     },
   )
 }
@@ -72,7 +72,7 @@ pub fn update(
           status: "Open inspector requested (independent AppRuntime per scene)",
         },
         windows.effect(
-          WindowRequest::Open(
+          Open(
             WindowOpenRequest::new(
               title="MoUI Inspector",
               scene=WindowScene::new(
@@ -97,14 +97,14 @@ pub fn update(
               status: "Close inspector requested for window \{id.value}",
             },
             windows.effect(
-              WindowRequest::Close(id),
+              Close(id),
               key="window:close-inspector",
               label="Close inspector window",
             ),
           )
         None =>
           (
-            { ..model, status: "Inspector window id is not available" },
+            { ..model, status: "Inspector window id is not available", },
             @moui.Effect::none(),
           )
       }
@@ -117,14 +117,14 @@ pub fn update(
               status: "Focus inspector requested for window \{id.value}",
             },
             windows.effect(
-              WindowRequest::Focus(id),
+              Focus(id),
               key="window:focus-inspector",
               label="Focus inspector window",
             ),
           )
         None =>
           (
-            { ..model, status: "Inspector window id is not available" },
+            { ..model, status: "Inspector window id is not available", },
             @moui.Effect::none(),
           )
       }
@@ -141,16 +141,16 @@ pub fn update(
           )
         Updated(id) =>
           (
-            { ..model, status: "Window \{id.value} updated" },
+            { ..model, status: "Window \{id.value} updated", },
             @moui.Effect::none(),
           )
         Rejected(message) =>
           (
-            { ..model, status: "Window request rejected: " + message },
+            { ..model, status: "Window request rejected: " + message, },
             @moui.Effect::none(),
           )
       }
-    Increment => ({ ..model, count: model.count + 1 }, @moui.Effect::none())
+    Increment => ({ ..model, count: model.count + 1, }, @moui.Effect::none())
     IncrementShared =>
       (
         {

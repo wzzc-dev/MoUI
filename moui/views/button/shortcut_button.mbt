@@ -3,7 +3,7 @@ pub fn[Msg] shortcut_button(
   label : String,
   on_click~ : Msg,
   shortcut~ : @core.KeyboardShortcut,
-  variant? : @style.ButtonVariant = @style.ButtonVariant::Primary,
+  variant? : @style.ButtonVariant = Primary,
   theme? : @core.Theme,
   width? : Double = 200.0,
   height? : Double = 44.0,
@@ -22,22 +22,22 @@ pub fn[Msg] shortcut_button(
       @container.container(
         @text.text(
           shortcut_label,
-          role=@style.TextRole::Mono,
+          role=Mono,
           theme?,
           width=@common.view_max_double(24.0, shortcut_width - 12.0),
           height=@common.view_max_double(16.0, height - 12.0),
         ).foreground(resolved_theme.palette.muted),
         width=shortcut_width,
         height~,
-        variant=@style.ContainerVariant::Base,
+        variant=Base,
         theme?,
         padding=6.0,
       )
-      .semantics_role(@core.SemanticsRole::Text)
+      .semantics_role(Text)
       .accessibility_label("Shortcut: " + shortcut_label),
     ],
     spacing~,
-    align=@style.CrossAlign::Center,
+    align=Center,
   )
   .keyboard_shortcut(shortcut)
   .semantics_description("Shortcut " + shortcut_label)

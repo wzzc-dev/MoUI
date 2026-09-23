@@ -52,7 +52,7 @@ test "validate_cli_config accepts schema_version 1" {
 
 ///|
 test "validate_cli_config rejects schema_version 2" {
-  let config = { ..default_cli_config(), schema_version: 2 }
+  let config = { ..default_cli_config(), schema_version: 2, }
   match validate_cli_config(config) {
     Err(message) => assert_true(message.contains("schemaVersion"))
     _ => fail("expected schema_version 2 to be rejected")
@@ -63,7 +63,7 @@ test "validate_cli_config rejects schema_version 2" {
 test "config_get resolves nested keys" {
   let config = {
     ..default_cli_config(),
-    harmonyos: { ..default_harmonyos_config(), sdk_home: Some("/sdk") },
+    harmonyos: { ..default_harmonyos_config(), sdk_home: Some("/sdk"), },
     android: {
       ..default_android_config(),
       compile_sdk: Some(34),
@@ -154,8 +154,8 @@ test "write_config then read_config roundtrips" {
       compile_sdk: Some(34),
       target_sdk: Some(34),
     },
-    ios: { ..default_ios_config(), sdk: Some("iphonesimulator") },
-    paths: { ..default_paths_config(), moui_root: Some("/Volumes/MoUI") },
+    ios: { ..default_ios_config(), sdk: Some("iphonesimulator"), },
+    paths: { ..default_paths_config(), moui_root: Some("/Volumes/MoUI"), },
   }
   match write_config(original, host) {
     Ok(_) => ()
@@ -225,7 +225,7 @@ test "cli_config_from_json rejects non-object root" {
 test "config_list_lines omits unset fields" {
   let config = {
     ..default_cli_config(),
-    harmonyos: { ..default_harmonyos_config(), sdk_home: Some("/sdk") },
+    harmonyos: { ..default_harmonyos_config(), sdk_home: Some("/sdk"), },
   }
   let lines = config_list_lines(config)
   let mut found = false

@@ -23,11 +23,8 @@ test "surface detach cancels pending host service exactly once" {
     channel="camera.control",
     operation="start",
   )
-  let id = match
-    core
-    .host_service_bridge()
-    .dispatch(@host.HostServiceRequest::PlatformChannel(request)) {
-    @host.HostServiceResponse::Pending(id) => id
+  let id = match core.host_service_bridge().dispatch(PlatformChannel(request)) {
+    Pending(id) => id
     _ => fail("expected pending platform channel request")
   }
   let completion_count = Ref(0)
@@ -40,8 +37,7 @@ test "surface detach cancels pending host service exactly once" {
     channel.services.on_completed(id, completion => {
       completion_count.val = completion_count.val + 1
       match completion.response {
-        @host.HostServiceResponse::Unavailable(reason) =>
-          cancellation_reason.val = reason
+        Unavailable(reason) => cancellation_reason.val = reason
         _ => unexpected_completion.val = true
       }
     }),
@@ -53,14 +49,7 @@ test "surface detach cancels pending host service exactly once" {
     cancellation_reason.val,
     content="embedded runtime surface epoch detached",
   )
-  assert_false(
-    channel.services.complete(
-      id,
-      @host.HostServiceResponse::PlatformChannel(
-        @host.PlatformChannelResponse::Ok("late"),
-      ),
-    ),
-  )
+  assert_false(channel.services.complete(id, PlatformChannel(Ok("late"))))
   inspect(completion_count.val, content="1")
   core.dispose()
 }
@@ -99,13 +88,13 @@ impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn layout(
 impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn semantics(self) {
   if self.visible {
     @core.ViewSemanticsInfo::new(
-      composition=@core.SemanticsComposition::Boundary,
+      composition=Boundary,
       semantic_id=@core.SemanticId::parse("embedded-runtime.remove").unwrap(),
-      role=@core.SemanticsRole::Button,
+      role=Button,
       label="Remove",
     )
   } else {
-    @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
+    @core.ViewSemanticsInfo::new(composition=Hidden)
   }
 }
 
@@ -141,7 +130,7 @@ test "mobile accessibility rejects stale session generation and removed node wit
   })
   let bridge = EmbeddedRuntimeHostBridge::new(session_generation=17)
   let (node_id, initial_generation) = match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) => {
+    Ok(Full(snapshot)) => {
       assert_eq(snapshot.nodes().length(), 1)
       (snapshot.nodes()[0].node_id, snapshot.generation())
     }
@@ -156,7 +145,7 @@ test "mobile accessibility rejects stale session generation and removed node wit
   let remove = embedded_accessibility_response(
     node_id,
     initial_generation,
-    @core.SemanticsAction::Activate,
+    Activate,
   )
   assert_true(
     bridge.dispatch_response_envelope(
@@ -165,7 +154,7 @@ test "mobile accessibility rejects stale session generation and removed node wit
     ),
   )
   let after_generation = match runtime.read_semantics() {
-    Ok(@runtime.SemanticsRead::Full(snapshot)) => {
+    Ok(Full(snapshot)) => {
       assert_eq(snapshot.nodes().length(), 0)
       snapshot.generation()
     }
@@ -176,21 +165,13 @@ test "mobile accessibility rejects stale session generation and removed node wit
 
   assert_false(
     bridge.dispatch_response(
-      embedded_accessibility_response(
-        node_id,
-        initial_generation,
-        @core.SemanticsAction::Activate,
-      ),
+      embedded_accessibility_response(node_id, initial_generation, Activate),
       driver,
     ),
   )
   assert_false(
     bridge.dispatch_response(
-      embedded_accessibility_response(
-        node_id,
-        after_generation,
-        @core.SemanticsAction::Activate,
-      ),
+      embedded_accessibility_response(node_id, after_generation, Activate),
       driver,
     ),
   )
@@ -201,7 +182,7 @@ test "mobile accessibility rejects stale session generation and removed node wit
         response=embedded_accessibility_response(
           node_id,
           after_generation,
-          @core.SemanticsAction::Activate,
+          Activate,
         ),
       ),
       driver,

@@ -19,7 +19,7 @@ fn rich_text_editor_paint(
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  commands.push(FillRoundedRectBrush(rounded, background))
   append_rich_text_border(
     commands,
     rounded,
@@ -42,17 +42,17 @@ fn rich_text_editor_paint(
     scroll_y~,
     visible_viewport_height~,
   )
-  commands.push(@core.DrawCommand::PushClip(content))
+  commands.push(PushClip(content))
   let child_layers : Array[@core.ViewPaintLayer] = []
   if display_text == "" {
     commands.push(
-      @core.DrawCommand::DrawText(
+      DrawText(
         @core.TextRun::new(
           text=placeholder,
           frame=content,
           font~,
           color=placeholder_color,
-          align=@core.TextAlign::TextStart,
+          align=TextStart,
         ),
       ),
     )
@@ -93,7 +93,7 @@ fn rich_text_editor_paint(
   {
     commands,
     child_layers,
-    post_commands: [@core.DrawCommand::PopClip],
+    post_commands: [PopClip],
     overlay_commands,
     repaint_boundary: false,
     animating: false,
@@ -110,11 +110,7 @@ fn append_rich_text_border(
     Some(border) =>
       if border.width > 0.0 {
         commands.push(
-          @core.DrawCommand::StrokeRoundedRectBrush(
-            rounded,
-            border.brush,
-            border.width,
-          ),
+          StrokeRoundedRectBrush(rounded, border.brush, border.width),
         )
       }
     None => ()
@@ -251,7 +247,7 @@ fn append_rich_text_block_commands(
   match block.background {
     Some(background) =>
       commands.push(
-        @core.DrawCommand::FillRoundedRectBrush(
+        FillRoundedRectBrush(
           @core.RoundedRect::new(rect=block_frame, radius=block.corner_radius),
           background,
         ),
@@ -262,7 +258,7 @@ fn append_rich_text_block_commands(
     Some(border) =>
       if border.width > 0.0 {
         commands.push(
-          @core.DrawCommand::FillRoundedRectBrush(
+          FillRoundedRectBrush(
             @core.RoundedRect::new(
               rect=@core.Rect::new(
                 x=block_frame.origin.x,
@@ -280,7 +276,7 @@ fn append_rich_text_block_commands(
   }
   if block.rule {
     commands.push(
-      @core.DrawCommand::FillRect(
+      FillRect(
         @core.Rect::new(
           x=block_frame.origin.x + block.inset.left,
           y=block_frame.origin.y + block_frame.size.height / 2.0,
@@ -401,13 +397,13 @@ fn append_rich_text_block_runs(
           font=block_font,
         )
         commands.push(
-          @core.DrawCommand::DrawText(
+          DrawText(
             @core.TextRun::new(
               text=block.prefix,
               frame=prefix_frame,
               font=block_font,
               color=block_color,
-              align=@core.TextAlign::TextStart,
+              align=TextStart,
             ),
           ),
         )
@@ -557,7 +553,7 @@ fn append_rich_text_run_segment(
   match run.background {
     Some(background) =>
       commands.push(
-        @core.DrawCommand::FillRoundedRectBrush(
+        FillRoundedRectBrush(
           @core.RoundedRect::new(
             rect=@core.Rect::new(
               x=run_frame.origin.x - 3.0,
@@ -575,7 +571,7 @@ fn append_rich_text_run_segment(
   match run.image_source {
     Some(source) =>
       commands.push(
-        @core.DrawCommand::DrawImage({
+        DrawImage({
           source,
           frame: run_frame,
           opacity: 1.0,
@@ -584,13 +580,13 @@ fn append_rich_text_run_segment(
       )
     None =>
       commands.push(
-        @core.DrawCommand::DrawText(
+        DrawText(
           @core.TextRun::new(
             text~,
             frame=run_frame,
             font~,
             color~,
-            align=@core.TextAlign::TextStart,
+            align=TextStart,
           ),
         ),
       )
@@ -608,10 +604,10 @@ fn append_rich_text_run_decoration(
   color : @core.Color,
 ) -> Unit {
   match run.decoration {
-    Some(RichTextDecoration::Strikethrough) => {
+    Some(Strikethrough) => {
       let thickness = max_double(1.0, font.size / 14.0)
       commands.push(
-        @core.DrawCommand::FillRect(
+        FillRect(
           @core.Rect::new(
             x=frame.origin.x,
             y=frame.origin.y + frame.size.height * 0.52,
@@ -654,7 +650,7 @@ fn append_rich_text_block_table(
           match table.header_background {
             Some(background) =>
               commands.push(
-                @core.DrawCommand::FillRoundedRectBrush(
+                FillRoundedRectBrush(
                   @core.RoundedRect::new(
                     rect=@core.Rect::new(
                       x=frame.origin.x,
@@ -679,12 +675,10 @@ fn append_rich_text_block_table(
             width=layout.column_width,
             height=row.height,
           )
-          commands.push(
-            @core.DrawCommand::StrokeRect(cell_frame, table.border, 1.0),
-          )
+          commands.push(StrokeRect(cell_frame, table.border, 1.0))
           if column_index < table_row.length() {
             let cell = table_row[column_index]
-            let align = cell.align.unwrap_or(@core.TextAlign::TextStart)
+            let align = cell.align.unwrap_or(TextStart)
             if cell_layout.segments.length() > 0 {
               // Styled cell: draw each run segment at its laid-out x with
               // its own font; the segment layout already skipped markers.
@@ -696,7 +690,7 @@ fn append_rich_text_block_table(
                   table.cell_padding.top +
                   layout.line_step * segment.line.to_double()
                 commands.push(
-                  @core.DrawCommand::DrawText(
+                  DrawText(
                     @core.TextRun::new(
                       text=segment.text,
                       frame=@core.Rect::new(
@@ -709,7 +703,7 @@ fn append_rich_text_block_table(
                       color=segment.run.color.unwrap_or(
                         rich_text_block_color(block, foreground),
                       ),
-                      align=@core.TextAlign::TextStart,
+                      align=TextStart,
                     ),
                   ),
                 )
@@ -724,7 +718,7 @@ fn append_rich_text_block_table(
                 table.cell_padding.top +
                 layout.line_step * line_index.to_double()
               commands.push(
-                @core.DrawCommand::DrawText(
+                DrawText(
                   @core.TextRun::new(
                     text=line.text,
                     frame=@core.Rect::new(
@@ -770,7 +764,7 @@ fn append_rich_text_editor_overlay(
     Some(r) => r
     None => content
   }
-  commands.push(@core.DrawCommand::PushClip(clip))
+  commands.push(PushClip(clip))
   if control.composition is None {
     append_rich_text_selection_commands(
       commands,
@@ -805,8 +799,8 @@ fn append_rich_text_editor_overlay(
         document, caret, content, font, text_system, display_text,
       )
   }
-  commands.push(@core.DrawCommand::FillRect(caret_rect, cursor_color))
-  commands.push(@core.DrawCommand::PopClip)
+  commands.push(FillRect(caret_rect, cursor_color))
+  commands.push(PopClip)
 }
 
 ///|
@@ -838,7 +832,7 @@ fn append_rich_text_composition_underline(
         )
         if end_rect.origin.x > start_rect.origin.x {
           commands.push(
-            @core.DrawCommand::FillRect(
+            FillRect(
               @core.Rect::new(
                 x=start_rect.origin.x,
                 y=start_rect.origin.y + start_rect.size.height - 5.0,

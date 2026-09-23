@@ -48,8 +48,8 @@ pub fn CompileRequest::new(model : Model) -> CompileRequest {
   {
     revision: model.revision,
     files: [
-      { path: "main.mbt", source: model.editor.active_document().text },
-      { path: "moon.pkg", source: model.moon_pkg },
+      { path: "main.mbt", source: model.editor.active_document().text, },
+      { path: "moon.pkg", source: model.moon_pkg, },
     ],
     lesson_id: model.lesson_id,
   }
@@ -60,8 +60,8 @@ pub fn PlaygroundProject::new(model : Model) -> PlaygroundProject {
   {
     schema_version: 1,
     files: [
-      { path: "main.mbt", source: model.editor.active_document().text },
-      { path: "moon.pkg", source: model.moon_pkg },
+      { path: "main.mbt", source: model.editor.active_document().text, },
+      { path: "moon.pkg", source: model.moon_pkg, },
     ],
     lesson_id: model.lesson_id,
   }

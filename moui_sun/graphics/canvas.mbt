@@ -96,7 +96,10 @@ pub fn Canvas::get_transform(self : Canvas) -> Transform {
 ///|
 /// Save the current transform and clip state.
 pub fn Canvas::save(self : Canvas) -> Unit {
-  self.state_stack.push({ transform: self.transform, clip_rect: self.clip_rect })
+  self.state_stack.push({
+    transform: self.transform,
+    clip_rect: self.clip_rect,
+  })
 }
 
 ///|

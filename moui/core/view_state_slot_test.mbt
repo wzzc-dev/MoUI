@@ -36,7 +36,7 @@ impl @core.ViewStateValue for DownstreamSlotValue with fn decode_view_state(
       bytes[4:12].to_owned(),
     )
     match (count, progress) {
-      (Some(count), Some(progress)) => Some({ count, progress })
+      (Some(count), Some(progress)) => Some({ count, progress, })
       _ => None
     }
   }
@@ -60,13 +60,10 @@ fn slot_test_state() -> @core.ViewStateContext {
 test "ViewStateSlot: typed values update immutably and reset" {
   let slot = @core.ViewStateSlot::new(
     key=@core.DeclarationKey::string("downstream.progress"),
-    initial=DownstreamSlotValue::{ count: 0, progress: 0.0 },
+    initial=DownstreamSlotValue::{ count: 0, progress: 0.0, },
   )
   let initial = slot_test_state()
-  let updated = initial.with_slot(slot, DownstreamSlotValue::{
-    count: 7,
-    progress: 0.625,
-  })
+  let updated = initial.with_slot(slot, { count: 7, progress: 0.625, })
   debug_inspect(initial.read_slot(slot), content="{ count: 0, progress: 0 }")
   debug_inspect(
     updated.read_slot(slot),

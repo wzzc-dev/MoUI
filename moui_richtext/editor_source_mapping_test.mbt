@@ -1,6 +1,6 @@
 ///|
 test "markdown_editor_format produces a RichTextDocument with blocks" {
-  let document = markdown_editor_format("# Title\n\nParagraph")
+  let document = @moui_richtext.markdown_editor_format("# Title\n\nParagraph")
   assert_true(document.blocks.length() >= 1)
   // The first block should have a source range.
   assert_true(document.blocks[0].source_range is Some(_))
@@ -10,11 +10,13 @@ test "markdown_editor_format produces a RichTextDocument with blocks" {
 test "markdown_editor_format_for_selection reveals inline markers when selection touches them" {
   // source = "**bold**", with selection inside the "bold" text [3, 5).
   // The revealed run should expand to include the "**" markers.
-  let selection : MarkdownEditorSelection = {
+  let selection : @moui_richtext.MarkdownEditorSelection = {
     caret: 4,
     selection: Some(@core.TextRange::new(start=3, end=5)),
   }
-  let document = markdown_editor_format_for_selection("**bold**", selection)
+  let document = @moui_richtext.markdown_editor_format_for_selection(
+    "**bold**", selection,
+  )
   // Find a run whose text contains the bold markers (i.e. was revealed).
   let has_revealed = document.blocks.any(block => {
     block.runs.any(run => run.text.contains("**"))
@@ -26,11 +28,11 @@ test "markdown_editor_format_for_selection reveals inline markers when selection
 test "markdown_editor_format_for_selection does not reveal markers outside selection" {
   // source = "plain **bold** plain", selection at [0, 5) (only "plain").
   // The bold markers should NOT be revealed because the selection does not touch them.
-  let selection : MarkdownEditorSelection = {
+  let selection : @moui_richtext.MarkdownEditorSelection = {
     caret: 5,
     selection: Some(@core.TextRange::new(start=0, end=5)),
   }
-  let document = markdown_editor_format_for_selection(
+  let document = @moui_richtext.markdown_editor_format_for_selection(
     "plain **bold** plain", selection,
   )
   // No run should contain the full "**bold**" marker pair as text.
@@ -45,9 +47,12 @@ test "markdown_editor_format_for_writing_mode with focus_mode dims inactive bloc
   // Two blocks: heading and paragraph. Focus on the paragraph.
   let source = "# Heading\n\nParagraph body"
   // Caret inside the paragraph block (after "# Heading\n\n" = offset 11).
-  let selection : MarkdownEditorSelection = { caret: 12, selection: None }
+  let selection : @moui_richtext.MarkdownEditorSelection = {
+    caret: 12,
+    selection: None,
+  }
   let font = @core.FontSpec::new(size=16.0)
-  let document = markdown_editor_format_for_writing_mode(
+  let document = @moui_richtext.markdown_editor_format_for_writing_mode(
     source,
     selection,
     base=font,
@@ -61,9 +66,12 @@ test "markdown_editor_format_for_writing_mode with focus_mode dims inactive bloc
 ///|
 test "markdown_editor_format_for_writing_mode without focus_mode does not dim" {
   let source = "# Heading\n\nParagraph body"
-  let selection : MarkdownEditorSelection = { caret: 12, selection: None }
+  let selection : @moui_richtext.MarkdownEditorSelection = {
+    caret: 12,
+    selection: None,
+  }
   let font = @core.FontSpec::new(size=16.0)
-  let document = markdown_editor_format_for_writing_mode(
+  let document = @moui_richtext.markdown_editor_format_for_writing_mode(
     source,
     selection,
     base=font,
@@ -76,7 +84,9 @@ test "markdown_editor_format_for_writing_mode without focus_mode does not dim" {
 
 ///|
 test "MarkdownEditorSnapshot::parse produces consistent metadata" {
-  let snapshot = MarkdownEditorSnapshot::parse("# Title\n\nParagraph text")
+  let snapshot = @moui_richtext.MarkdownEditorSnapshot::parse(
+    "# Title\n\nParagraph text",
+  )
   inspect(snapshot.source, content="# Title\n\nParagraph text")
   assert_true(snapshot.blocks.length() >= 1)
   assert_true(snapshot.line_count >= 2)
@@ -89,7 +99,7 @@ test "MarkdownEditorSnapshot::parse produces consistent metadata" {
 ///|
 test "MarkdownEditorSnapshot::parse_with_font produces rich text with font" {
   let font = @core.FontSpec::new(size=20.0)
-  let snapshot = MarkdownEditorSnapshot::parse_with_font(
+  let snapshot = @moui_richtext.MarkdownEditorSnapshot::parse_with_font(
     "# Title\n\nBody", font,
   )
   // The heading block should have a font with size 20.0 * heading_scale.
@@ -103,13 +113,16 @@ test "MarkdownEditorSnapshot::parse_with_font produces rich text with font" {
 ///|
 test "markdown_editor_active_selection returns None for collapsed range" {
   let collapsed = @core.TextRange::new(start=5, end=5)
-  assert_true(markdown_editor_active_selection(Some(collapsed)) is None)
+  assert_true(
+    @moui_richtext.markdown_editor_active_selection(Some(collapsed)) is None,
+  )
 }
 
 ///|
 test "markdown_editor_active_selection returns Some for non-collapsed range" {
   let range = @core.TextRange::new(start=2, end=8)
-  guard markdown_editor_active_selection(Some(range)) is Some(active) else {
+  guard @moui_richtext.markdown_editor_active_selection(Some(range))
+    is Some(active) else {
     fail("expected Some for non-collapsed range")
   }
   inspect(active.start, content="2")
@@ -118,14 +131,19 @@ test "markdown_editor_active_selection returns Some for non-collapsed range" {
 
 ///|
 test "markdown_editor_active_selection returns None for None input" {
-  assert_true(markdown_editor_active_selection(None) is None)
+  assert_true(@moui_richtext.markdown_editor_active_selection(None) is None)
 }
 
 ///|
 test "markdown_editor_active_block_label returns label for caret in heading" {
   let source = "# Heading\n\nParagraph"
-  let selection : MarkdownEditorSelection = { caret: 2, selection: None }
-  let label = markdown_editor_active_block_label(source, selection)
+  let selection : @moui_richtext.MarkdownEditorSelection = {
+    caret: 2,
+    selection: None,
+  }
+  let label = @moui_richtext.markdown_editor_active_block_label(
+    source, selection,
+  )
   // Caret at position 2 is inside "# Heading", which is a heading.
   assert_true(label.contains("Heading"))
 }
@@ -134,41 +152,49 @@ test "markdown_editor_active_block_label returns label for caret in heading" {
 test "markdown_editor_active_block_label returns Paragraph for caret in paragraph" {
   let source = "# Heading\n\nParagraph"
   // Caret at position 12 is inside "Paragraph" (after "# Heading\n\n").
-  let selection : MarkdownEditorSelection = { caret: 12, selection: None }
-  let label = markdown_editor_active_block_label(source, selection)
+  let selection : @moui_richtext.MarkdownEditorSelection = {
+    caret: 12,
+    selection: None,
+  }
+  let label = @moui_richtext.markdown_editor_active_block_label(
+    source, selection,
+  )
   inspect(label, content="Paragraph")
 }
 
 ///|
 test "markdown_editor_preview_text returns (empty) for empty string" {
-  inspect(markdown_editor_preview_text(""), content="(empty)")
+  inspect(@moui_richtext.markdown_editor_preview_text(""), content="(empty)")
 }
 
 ///|
 test "markdown_editor_preview_text returns source unchanged for short text" {
-  inspect(markdown_editor_preview_text("short text"), content="short text")
+  inspect(
+    @moui_richtext.markdown_editor_preview_text("short text"),
+    content="short text",
+  )
 }
 
 ///|
 test "markdown_editor_preview_text truncates long text with ellipsis" {
   let long_text = "a".repeat(800)
-  let preview = markdown_editor_preview_text(long_text)
+  let preview = @moui_richtext.markdown_editor_preview_text(long_text)
   assert_true(preview.contains("..."))
   // The preview should be shorter than the original.
-  assert_true(markdown_editor_text_length(preview) < 800)
+  assert_true(@moui_richtext.markdown_editor_text_length(preview) < 800)
 }
 
 ///|
 test "markdown_block_to_rich_text converts a heading block" {
-  let block : MarkdownBlock = {
+  let block : @moui_richtext.MarkdownBlock = {
     kind: Heading(1),
     text: "Title",
-    inlines: [{ text: "Title", kind: Plain, target: None }],
+    inlines: [{ text: "Title", kind: Plain, target: None, }],
     table_alignments: [],
     code_language: None,
   }
   let font = @core.FontSpec::new(size=16.0)
-  let rich_block = markdown_block_to_rich_text(block, font)
+  let rich_block = @moui_richtext.markdown_block_to_rich_text(block, font)
   assert_true(rich_block.runs.length() >= 1)
   guard rich_block.font is Some(heading_font) else {
     fail("expected a font on the heading rich block")
@@ -190,7 +216,7 @@ test "markdown editor maps structured html gallery tags without changing source"
     #|
     #|</div>
   let font = @core.FontSpec::new(size=16.0)
-  let snapshot = MarkdownEditorSnapshot::parse_with_font(
+  let snapshot = @moui_richtext.MarkdownEditorSnapshot::parse_with_font(
     source,
     font,
     base_dir=Some("/tmp/docs"),
@@ -200,7 +226,7 @@ test "markdown editor maps structured html gallery tags without changing source"
     is {
       line_align: Some(TextCenter),
       runs: [first, first_break, second_break, second],
-      ..,
+      ..
     } else {
     fail("expected structured gallery runs")
   }
@@ -208,19 +234,23 @@ test "markdown editor maps structured html gallery tags without changing source"
     is {
       image_source: Some("/tmp/docs/resource/a.png"),
       source_range: Some(first_range),
-      ..,
+      ..
     } else {
     fail("expected mapped first image")
   }
   inspect(
-    markdown_editor_substring(source, first_range.start, first_range.end),
+    @moui_richtext.markdown_editor_substring(
+      source,
+      first_range.start,
+      first_range.end,
+    ),
     content="<img src=\"resource/a.png\" width=\"48%\" alt=\"A\"/>",
   )
   guard first_break is { source_range: Some(first_break_range), .. } else {
     fail("expected mapped first br")
   }
   inspect(
-    markdown_editor_substring(
+    @moui_richtext.markdown_editor_substring(
       source,
       first_break_range.start,
       first_break_range.end,
@@ -231,7 +261,7 @@ test "markdown editor maps structured html gallery tags without changing source"
     fail("expected mapped second br")
   }
   inspect(
-    markdown_editor_substring(
+    @moui_richtext.markdown_editor_substring(
       source,
       second_break_range.start,
       second_break_range.end,
@@ -242,17 +272,21 @@ test "markdown editor maps structured html gallery tags without changing source"
     is {
       image_source: Some("/tmp/docs/resource/b.png"),
       source_range: Some(second_range),
-      ..,
+      ..
     } else {
     fail("expected mapped second image")
   }
   inspect(
-    markdown_editor_substring(source, second_range.start, second_range.end),
+    @moui_richtext.markdown_editor_substring(
+      source,
+      second_range.start,
+      second_range.end,
+    ),
     content="<img src=\"resource/b.png\" width=\"48%\" alt=\"B\"/>",
   )
 
-  let source_mode = MarkdownDocumentSession::new(source).rich_text(
-    { caret: 0, selection: None },
+  let source_mode = @moui_richtext.MarkdownDocumentSession::new(source).rich_text(
+    { caret: 0, selection: None, },
     base=font,
     source_mode=true,
   )
@@ -265,7 +299,7 @@ test "image reveal keeps raw source while the caret is in the target" {
   // The reveal anchor is the whole construct, so a caret anywhere between the
   // delimiters — here inside the `(...)` target — must keep the raw Markdown
   // and drop the image binding instead of drawing the picture.
-  let in_target = markdown_editor_format_for_selection(source, {
+  let in_target = @moui_richtext.markdown_editor_format_for_selection(source, {
     caret: 6,
     selection: None,
   })
@@ -274,13 +308,13 @@ test "image reveal keeps raw source while the caret is in the target" {
       text: "![xx](img.png)",
       visual_text: None,
       image_source: None,
-      source_range: Some({ start: 0, end: 14 }),
-      ..,
+      source_range: Some({ start: 0, end: 14, }),
+      ..
     } else {
     fail("expected raw source while the caret is in the image target")
   }
   // Leaving the span through the closing `)` restores the rendered image.
-  let after = markdown_editor_format_for_selection(source, {
+  let after = @moui_richtext.markdown_editor_format_for_selection(source, {
     caret: 14,
     selection: None,
   })
@@ -289,14 +323,14 @@ test "image reveal keeps raw source while the caret is in the target" {
       text: "xx",
       visual_text: Some("xx"),
       image_source: Some("img.png"),
-      source_range: Some({ start: 2, end: 4 }),
-      ..,
+      source_range: Some({ start: 2, end: 4, }),
+      ..
     } else {
     fail("expected the image to render once the caret leaves the target")
   }
   // A caret parked just before the opening `!` is outside the span and keeps
   // the rendered image, so an untouched image does not flip to source.
-  let before = markdown_editor_format_for_selection(source, {
+  let before = @moui_richtext.markdown_editor_format_for_selection(source, {
     caret: 0,
     selection: None,
   })
@@ -307,17 +341,17 @@ test "image reveal keeps raw source while the caret is in the target" {
 
 ///|
 test "auto-completed empty image target shows raw source, not a placeholder" {
-  let document = markdown_editor_format_for_selection("![xx]()", {
-    caret: 6,
-    selection: None,
-  })
+  let document = @moui_richtext.markdown_editor_format_for_selection(
+    "![xx]()",
+    { caret: 6, selection: None, },
+  )
   guard document.blocks[0].runs[0]
     is {
       text: "![xx]()",
       visual_text: None,
       image_source: None,
-      source_range: Some({ start: 0, end: 7 }),
-      ..,
+      source_range: Some({ start: 0, end: 7, }),
+      ..
     } else {
     fail("expected raw source for an auto-completed empty image target")
   }

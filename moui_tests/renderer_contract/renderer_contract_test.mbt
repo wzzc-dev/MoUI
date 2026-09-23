@@ -1,10 +1,10 @@
 ///|
 fn contract_descriptor() -> @render.RendererDescriptor {
   @render.RendererDescriptor::new(
-    backend=@render.RendererBackendKind::SkiaRasterNative,
-    family=@render.RendererFamily::Skia,
-    presentation=@render.RendererPresentationModel::CpuPixelFrame,
-    supported_targets=[@render.RendererTarget::Native],
+    backend=SkiaRasterNative,
+    family=Skia,
+    presentation=CpuPixelFrame,
+    supported_targets=[Native],
     capabilities=[],
     description="renderer contract test",
   )
@@ -32,9 +32,7 @@ fn contract_surface(
 ///|
 fn contract_session(
   present_count? : () -> Int = () => 0,
-  recover? : (String) -> @render.RecoveryResult = _ => {
-    @render.RecoveryResult::RecoverySucceeded
-  },
+  recover? : (String) -> @render.RecoveryResult = _ => RecoverySucceeded,
   drain? : () -> Array[@render.RendererEvent] = () => [],
   image_records? : () -> Array[@render.ImageResourceRecord] = () => [],
   apply_image_load_completion? : (@render.ImageResourceLoadCompletion) -> Bool = _ => {
@@ -71,7 +69,7 @@ test "renderer providers bind in order and rejection allocates no session" {
     capabilities=() => [],
     bind=_surface => {
       calls.push("rejecting")
-      @render.RendererBindResult::Rejected("policy mismatch")
+      Rejected("policy mismatch")
     },
   )
   let accepting = @render.RendererProvider::new(
@@ -81,7 +79,7 @@ test "renderer providers bind in order and rejection allocates no session" {
     bind=_surface => {
       calls.push("accepting")
       allocations.val = allocations.val + 1
-      @render.RendererBindResult::Bound(contract_session())
+      Bound(contract_session())
     },
   )
   let skipped = @render.RendererProvider::new(
@@ -90,7 +88,7 @@ test "renderer providers bind in order and rejection allocates no session" {
     capabilities=() => [],
     bind=_surface => {
       calls.push("skipped")
-      @render.RendererBindResult::Bound(contract_session())
+      Bound(contract_session())
     },
   )
   assert_true(
@@ -116,7 +114,7 @@ test "one provider creates independent renderer sessions per window" {
     bind=_surface => {
       next_id.val = next_id.val + 1
       let id = next_id.val
-      @render.RendererBindResult::Bound(
+      Bound(
         contract_session(present_count=() => id, dispose=() => {
           if id == 1 {
             first_disposals.val = first_disposals.val + 1
@@ -146,13 +144,13 @@ test "renderer session owns recovery image completion and present completion" {
   let recovered : Array[String] = []
   let applied : Array[String] = []
   let events : Ref[Array[@render.RendererEvent]] = Ref([
-    @render.RendererEvent::PresentCompleted(
+    PresentCompleted(
       @render.RenderPresentCompletion::new(
         token=@render.FrameToken::new(surface_generation=2, sequence=3),
         submitted_at_ms=1.0,
         completed_at_ms=2.0,
         presented_at_ms=2.0,
-        status=@render.RenderPresentStatus::Presented,
+        status=Presented,
         gpu_context_generation=1,
       ),
     ),
@@ -160,7 +158,7 @@ test "renderer session owns recovery image completion and present completion" {
   let session = contract_session(
     recover=reason => {
       recovered.push(reason)
-      @render.RecoveryResult::RecoverySucceeded
+      RecoverySucceeded
     },
     drain=() => {
       let drained = events.val
@@ -179,9 +177,7 @@ test "renderer session owns recovery image completion and present completion" {
       }),
     ),
   )
-  assert_true(
-    session.recover("device lost") is @render.RecoveryResult::RecoverySucceeded,
-  )
+  assert_true(session.recover("device lost") is RecoverySucceeded)
   assert_eq(recovered, ["device lost"])
   inspect(session.image_diagnostics().records().length(), content="1")
   let drained = session.drain_events()
@@ -190,10 +186,8 @@ test "renderer session owns recovery image completion and present completion" {
   let mut image_request : @render.RendererImageLoadRequest? = None
   for event in drained {
     match event {
-      @render.RendererEvent::PresentCompleted(completion) =>
-        present_completions.push(completion)
-      @render.RendererEvent::ImageLoadRequested(request) =>
-        image_request = Some(request)
+      PresentCompleted(completion) => present_completions.push(completion)
+      ImageLoadRequested(request) => image_request = Some(request)
     }
   }
   assert_true(
@@ -201,20 +195,11 @@ test "renderer session owns recovery image completion and present completion" {
   )
   guard image_request is Some(request) else { fail("expected image request") }
   let completion = request.load()
-  assert_true(
-    session.apply_image_load_completion(completion)
-    is @render.RendererImageCompletionResult::Applied(true),
-  )
-  assert_true(
-    session.apply_image_load_completion(completion)
-    is @render.RendererImageCompletionResult::Stale,
-  )
+  assert_true(session.apply_image_load_completion(completion) is Applied(true))
+  assert_true(session.apply_image_load_completion(completion) is Stale)
   assert_eq(applied, ["image.png"])
   session.dispose()
-  assert_true(
-    session.apply_image_load_completion(completion)
-    is @render.RendererImageCompletionResult::Disposed,
-  )
+  assert_true(session.apply_image_load_completion(completion) is Disposed)
 }
 
 ///|
@@ -256,9 +241,9 @@ test "renderer-owned native policy can reject an otherwise opaque surface" {
       match surface.native_surface() {
         Some(native) if native.display_handle() is Some(_) => {
           allocations.val = allocations.val + 1
-          @render.RendererBindResult::Bound(contract_session())
+          Bound(contract_session())
         }
-        _ => @render.RendererBindResult::Rejected("display handle required")
+        _ => Rejected("display handle required")
       }
     },
   )

@@ -60,7 +60,7 @@ pub fn ImageResourceLifecycle::evict_disposed(
   let mut removed = 0
   let kept : Map[String, @render.ImageResourceRecord] = Map([])
   for key, record in self.records {
-    if record.status == @render.ImageResourceStatus::ImageDisposed {
+    if record.status == ImageDisposed {
       removed = removed + 1
     } else {
       kept[key] = record

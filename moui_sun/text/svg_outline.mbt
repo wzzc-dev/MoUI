@@ -24,7 +24,7 @@ pub fn FontFace::text_run_outline(
   let layout = layout_text_face(
     self,
     text,
-    LayoutConfig::new(font_size~, alignment=TextAlign::Left),
+    LayoutConfig::new(font_size~, alignment=Left),
   )
   let font = self.get_font()
   let upem = self.get_units_per_em().to_double()
@@ -49,7 +49,7 @@ pub fn FontFace::text_run_outline(
     for glyph in run.get_glyphs() {
       let pen_x = origin_x + glyph.x * length_factor
       match font.get_glyph(glyph.glyph_id) {
-        GlyphData::Simple(simple) =>
+        Simple(simple) =>
           for contour in simple.contours {
             let polygon = flatten_contour_polygon(
               contour, pen_x, run_baseline, scale,
@@ -62,7 +62,7 @@ pub fn FontFace::text_run_outline(
       }
     }
   }
-  TextRunOutline::{
+  {
     width: match target_length {
       Some(target) if target > 0.0 => target
       _ => layout.get_width()
@@ -103,10 +103,10 @@ fn flatten_contour_polygon(
     for i in 0..<count {
       let a = points[i]
       let b = points[(i + 1) % count]
-      midpoints.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, on_curve: true })
+      midpoints.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, on_curve: true, })
     }
     return flatten_contour_polygon(
-      { points: midpoints },
+      { points: midpoints, },
       origin_x,
       baseline_y,
       scale,
@@ -152,7 +152,7 @@ fn flatten_contour_polygon(
   }
 
   fn midpoint(a : GlyphPoint, b : GlyphPoint) -> GlyphPoint {
-    { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, on_curve: true }
+    { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, on_curve: true, }
   }
 
   let anchor = points[start]

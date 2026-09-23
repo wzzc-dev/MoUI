@@ -10,7 +10,7 @@ pub fn FeedbackStyle::new(
   radius~ : Double,
   padding~ : Double,
 ) -> FeedbackStyle {
-  { neutral, info, success, warning, danger, radius, padding }
+  { neutral, info, success, warning, danger, radius, padding, }
 }
 
 ///|

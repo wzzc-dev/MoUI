@@ -13,7 +13,7 @@ fn key_sample_block(
   alignments? : Array[@core.TextAlign?] = [],
   code_language? : String? = None,
 ) -> MarkdownBlock {
-  { kind, text, inlines, table_alignments: alignments, code_language }
+  { kind, text, inlines, table_alignments: alignments, code_language, }
 }
 
 ///|
@@ -22,7 +22,7 @@ fn key_inline(
   kind? : MarkdownInlineKind = Plain,
   target? : String? = None,
 ) -> MarkdownInline {
-  { text, kind, target }
+  { text, kind, target, }
 }
 
 ///|
@@ -71,13 +71,13 @@ test "markdown_editor_block_key is injective on block content" {
       code_language=Some(""),
     ),
     key_sample_block(inlines=[key_inline(text="plain")], alignments=[
-      Some(@core.TextStart),
+      Some(TextStart),
     ]),
     key_sample_block(inlines=[key_inline(text="plain")], alignments=[
-      Some(@core.TextCenter),
+      Some(TextCenter),
     ]),
     key_sample_block(inlines=[key_inline(text="plain")], alignments=[
-      Some(@core.TextEnd),
+      Some(TextEnd),
     ]),
     key_sample_block(inlines=[key_inline(text="plain")], alignments=[None]),
     key_sample_block(inlines=[key_inline(text="plain")]),

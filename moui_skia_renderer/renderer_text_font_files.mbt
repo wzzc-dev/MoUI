@@ -41,7 +41,7 @@ fn skia_typeface_from_font_file_family(
     "/" +
     font.weight.to_string() +
     "/" +
-    (font.style is @core.FontStyle::Italic).to_string()
+    (font.style is Italic).to_string()
   match skia_font_file_typeface_cache.get(key) {
     Some(entry) => entry.typeface
     None => {
@@ -80,7 +80,7 @@ fn skia_open_sans_typeface_from_file(
 fn skia_open_sans_font_file_names(font : @core.FontSpec) -> Array[String] {
   let file_names : Array[String] = []
   let bold = font.weight >= 600
-  let italic = font.style == @core.FontStyle::Italic
+  let italic = font.style == Italic
   if bold && italic {
     skia_push_unique_string(
       file_names, "open-sans-v17-latin-ext_latin-700italic.woff2",

@@ -208,5 +208,5 @@ fn MacosSurfaceBinding::new(
     _metrics,
   ) => (),
 ) -> MacosSurfaceBinding {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, }
 }

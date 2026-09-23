@@ -1,25 +1,25 @@
 ///|
 test "svg_source_is_svg recognizes suffixes and root tags" {
   // Path suffix, independent of payload.
-  assert_true(svg_source_is_svg("assets/logo.svg", Bytes::make(0, 0)))
-  assert_true(svg_source_is_svg("assets/logo.SVG", Bytes::make(0, 0)))
-  assert_true(svg_source_is_svg("assets/logo.svgz", Bytes::make(0, 0)))
+  assert_true(@common.svg_source_is_svg("assets/logo.svg", Bytes::make(0, 0)))
+  assert_true(@common.svg_source_is_svg("assets/logo.SVG", Bytes::make(0, 0)))
+  assert_true(@common.svg_source_is_svg("assets/logo.svgz", Bytes::make(0, 0)))
   // Tag sniffing, for sources served without a useful extension.
   assert_true(
-    svg_source_is_svg(
+    @common.svg_source_is_svg(
       "https://example.com/asset", b"<?xml version=\"1.0\"?><svg xmlns=\"http://www.w3.org/2000/svg\"/>",
     ),
   )
   // A raster payload is not SVG.
-  assert_false(svg_source_is_svg("photo.png", b"\x89PNG\r\n\x1a\n"))
-  assert_false(svg_source_is_svg("photo.jpg", b"\xff\xd8\xff\xe0"))
+  assert_false(@common.svg_source_is_svg("photo.png", b"\x89PNG\r\n\x1a\n"))
+  assert_false(@common.svg_source_is_svg("photo.jpg", b"\xff\xd8\xff\xe0"))
 }
 
 ///|
 test "svg_intrinsic_size prefers viewBox and falls back to viewport" {
   let with_view_box = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 16\">" +
     "<rect width=\"32\" height=\"16\" fill=\"black\"/></svg>"
-  match svg_intrinsic_size(with_view_box) {
+  match @common.svg_intrinsic_size(with_view_box) {
     Some(size) => {
       inspect(size.width, content="32")
       inspect(size.height, content="16")
@@ -29,7 +29,7 @@ test "svg_intrinsic_size prefers viewBox and falls back to viewport" {
 
   let with_attributes = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"64\" height=\"48\">" +
     "<rect width=\"64\" height=\"48\" fill=\"black\"/></svg>"
-  match svg_intrinsic_size(with_attributes) {
+  match @common.svg_intrinsic_size(with_attributes) {
     Some(size) => {
       inspect(size.width, content="64")
       inspect(size.height, content="48")
@@ -37,12 +37,12 @@ test "svg_intrinsic_size prefers viewBox and falls back to viewport" {
     None => fail("expected a viewport-derived size")
   }
 
-  assert_true(svg_intrinsic_size("not an svg at all") is None)
+  assert_true(@common.svg_intrinsic_size("not an svg at all") is None)
 }
 
 ///|
 test "svg_raster_target_size preserves aspect ratio within the budget" {
-  let (wide_w, wide_h) = svg_raster_target_size(
+  let (wide_w, wide_h) = @common.svg_raster_target_size(
     @core.Size::new(width=20.0, height=10.0),
   )
   inspect(wide_w, content="40")
@@ -50,7 +50,7 @@ test "svg_raster_target_size preserves aspect ratio within the budget" {
 
   // Oversized inputs are clamped to the longest-edge bound instead of
   // allocating an unbounded bitmap.
-  let (big_w, big_h) = svg_raster_target_size(
+  let (big_w, big_h) = @common.svg_raster_target_size(
     @core.Size::new(width=20000.0, height=10000.0),
   )
   assert_true(big_w <= 2048)
@@ -62,7 +62,7 @@ test "svg_raster_target_size preserves aspect ratio within the budget" {
 test "svg_rasterize_rgba emits premultiplied rgba for a filled shape" {
   let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 10\">" +
     "<rect width=\"20\" height=\"10\" fill=\"#ff0000\"/></svg>"
-  match svg_rasterize_rgba(svg, 40, 20) {
+  match @common.svg_rasterize_rgba(svg, 40, 20) {
     Some(pixels) => {
       inspect(pixels.length(), content="3200")
       // Center pixel of an opaque red fill: premultiplication is a no-op.
@@ -75,12 +75,12 @@ test "svg_rasterize_rgba emits premultiplied rgba for a filled shape" {
     None => fail("expected rasterized pixels")
   }
 
-  assert_true(svg_rasterize_rgba("not svg", 8, 8) is None)
+  assert_true(@common.svg_rasterize_rgba("not svg", 8, 8) is None)
 }
 
 ///|
 test "svg image decoder produces a ready rgba completion for svg sources" {
-  let decoder = svg_image_decoder()
+  let decoder = @common.svg_image_decoder()
   let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 10\">" +
     "<rect width=\"20\" height=\"10\" fill=\"#3366cc\"/></svg>"
   let completion = decoder.decode(
@@ -88,10 +88,7 @@ test "svg image decoder produces a ready rgba completion for svg sources" {
     Some(@utf8.encode(svg, bom=false)),
   )
   assert_true(completion.has_decoded_rgba_payload())
-  assert_true(
-    completion.status ==
-    @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
-  )
+  assert_true(completion.status == ImageLoadReady)
   inspect(completion.width, content="40")
   inspect(completion.height, content="20")
   inspect(completion.decoded_row_bytes, content="160")
@@ -99,25 +96,21 @@ test "svg image decoder produces a ready rgba completion for svg sources" {
 
 ///|
 test "svg image decoder declines non-svg and missing bytes" {
-  let decoder = svg_image_decoder()
+  let decoder = @common.svg_image_decoder()
 
   let raster = decoder.decode("photo.png", Some(b"\x89PNG\r\n\x1a\n"))
-  assert_true(
-    raster.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-  )
+  assert_true(raster.status == ImageLoadFailed)
   assert_false(raster.has_decoded_rgba_payload())
 
   let missing = decoder.decode("assets/mark.svg", None)
-  assert_true(
-    missing.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
-  )
+  assert_true(missing.status == ImageLoadFailed)
 }
 
 ///|
 test "svg intrinsic size honors pixel units and rejects percentages" {
   let pixels = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"48px\" height=\"24px\">" +
     "<rect width=\"48\" height=\"24\" fill=\"black\"/></svg>"
-  match svg_intrinsic_size(pixels) {
+  match @common.svg_intrinsic_size(pixels) {
     Some(size) => {
       inspect(size.width, content="48")
       inspect(size.height, content="24")
@@ -127,7 +120,7 @@ test "svg intrinsic size honors pixel units and rejects percentages" {
 
   let fractional = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10.5\" height=\"5\">" +
     "<rect width=\"10\" height=\"5\" fill=\"black\"/></svg>"
-  match svg_intrinsic_size(fractional) {
+  match @common.svg_intrinsic_size(fractional) {
     Some(size) => inspect(size.width, content="10.5")
     None => fail("expected a fractional width to resolve")
   }
@@ -135,12 +128,12 @@ test "svg intrinsic size honors pixel units and rejects percentages" {
   // Percentages cannot be resolved without a containing viewport.
   let percent = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100%\" height=\"50%\">" +
     "<rect width=\"10\" height=\"10\" fill=\"black\"/></svg>"
-  assert_true(svg_intrinsic_size(percent) is None)
+  assert_true(@common.svg_intrinsic_size(percent) is None)
 }
 
 ///|
 test "svg decoder falls back to the default box when size is undeclared" {
-  let decoder = svg_image_decoder()
+  let decoder = @common.svg_image_decoder()
   // No viewBox and no root width/height: the document is still renderable.
   let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\">" +
     "<rect width=\"10\" height=\"10\" fill=\"black\"/></svg>"
@@ -160,7 +153,7 @@ test "svg rasterization scales documents that declare only width and height" {
   // viewBox their artwork lands shrunken in one corner.
   let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"120\" height=\"20\">" +
     "<rect width=\"120\" height=\"20\" fill=\"#555555\"/></svg>"
-  match svg_rasterize_rgba(svg, 240, 40) {
+  match @common.svg_rasterize_rgba(svg, 240, 40) {
     Some(pixels) => {
       inspect(pixels.length(), content="38400")
       // Bottom-right corner: painted only when the document is scaled to fit.
@@ -185,7 +178,7 @@ test "svg translucent overlay composites over the shapes beneath it" {
     "<rect x=\"47\" width=\"73\" height=\"20\" fill=\"#007ec6\"/>" +
     "<rect width=\"120\" height=\"20\" fill=\"url(#s)\"/>" +
     "</svg>"
-  match svg_rasterize_rgba(svg, 120, 20) {
+  match @common.svg_rasterize_rgba(svg, 120, 20) {
     Some(pixels) => {
       let row_bytes = 120 * 4
       // Left segment stays solid grey, only slightly lightened by the overlay.

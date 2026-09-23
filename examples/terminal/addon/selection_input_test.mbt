@@ -1,7 +1,7 @@
 ///|
 test "selection node cell mapping" {
   // 4 行可视,1 行回看,滚动 1:first_visible = 1+4-4-1 = 0
-  let node = TerminalSelectionNode::new(
+  let node = @addon.TerminalSelectionNode::new(
     cell_width=10.0,
     cell_height=20.0,
     scroll_offset=1,
@@ -30,7 +30,7 @@ test "selection node cell mapping" {
 ///|
 test "selection node mapping with scroll offset" {
   // 8 行可视,3 行回看,滚动 2:first_visible = 11-8-2 = 1
-  let node = TerminalSelectionNode::new(
+  let node = @addon.TerminalSelectionNode::new(
     cell_width=9.6,
     cell_height=20.0,
     scroll_offset=2,

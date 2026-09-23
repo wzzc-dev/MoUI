@@ -13,7 +13,7 @@ fn native_paint_state_default() -> NativePaintState {
 fn native_scoped_child_paint_state(
   state : NativePaintState,
 ) -> NativePaintState {
-  { ..state, opacity: 1.0 }
+  { ..state, opacity: 1.0, }
 }
 
 ///|
@@ -43,11 +43,11 @@ fn push_clip_state(
   rect : @core.Rect,
 ) -> NativePaintState {
   if state.clip_empty || rect.size.width <= 0.0 || rect.size.height <= 0.0 {
-    { ..state, clip: None, clip_empty: true }
+    { ..state, clip: None, clip_empty: true, }
   } else {
     match intersect_clip(state.clip, transform_rect(rect, state.transform)) {
-      Some(clip) => { ..state, clip: Some(clip), clip_empty: false }
-      None => { ..state, clip: None, clip_empty: true }
+      Some(clip) => { ..state, clip: Some(clip), clip_empty: false, }
+      None => { ..state, clip: None, clip_empty: true, }
     }
   }
 }
@@ -60,7 +60,7 @@ fn push_rounded_clip_state(
   if state.clip_empty ||
     rounded.rect.size.width <= 0.0 ||
     rounded.rect.size.height <= 0.0 {
-    { ..state, clip: None, clip_radius: 0.0, clip_empty: true }
+    { ..state, clip: None, clip_radius: 0.0, clip_empty: true, }
   } else {
     match
       intersect_clip(state.clip, transform_rect(rounded.rect, state.transform)) {
@@ -77,7 +77,7 @@ fn push_rounded_clip_state(
           clip_empty: false,
         }
       }
-      None => { ..state, clip: None, clip_radius: 0.0, clip_empty: true }
+      None => { ..state, clip: None, clip_radius: 0.0, clip_empty: true, }
     }
   }
 }
@@ -195,14 +195,14 @@ fn native_layer_mask_for_state(
   mask : @core.LayerMask,
 ) -> NativeLayerMask? {
   match mask {
-    @core.LayerMask::NoMask => None
-    @core.LayerMask::RectMask(rect) =>
+    NoMask => None
+    RectMask(rect) =>
       Some({
         rect: transform_rect(rect, state.transform),
         radius: 0.0,
         rounded: false,
       })
-    @core.LayerMask::RoundedMask(rounded) =>
+    RoundedMask(rounded) =>
       Some({
         rect: transform_rect(rounded.rect, state.transform),
         radius: rounded.radius.max(0.0),
@@ -219,7 +219,7 @@ fn native_scissor_for_optional_rect(
 ) -> NativeScissor? {
   match rect {
     Some(rect) => Some(native_scissor_for_rect(rect, size, scale_factor))
-    None => Some({ x: 0, y: 0, width: 0, height: 0 })
+    None => Some({ x: 0, y: 0, width: 0, height: 0, })
   }
 }
 

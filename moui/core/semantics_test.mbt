@@ -58,11 +58,9 @@ test "semantics node and generation IDs use lossless decimal wire strings" {
 ///|
 test "SemanticsAction: typed payloads map to payload-free capabilities" {
   let set_text = @core.SemanticsAction::SetText("Luna")
-  let scroll = @core.SemanticsAction::Scroll(
-    @core.SemanticsScrollDirection::Left,
-  )
-  inspect(set_text.kind() == @core.SemanticsActionKind::SetText, content="true")
-  inspect(scroll.kind() == @core.SemanticsActionKind::Scroll, content="true")
+  let scroll = @core.SemanticsAction::Scroll(Left)
+  inspect(set_text.kind() == SetText, content="true")
+  inspect(scroll.kind() == Scroll, content="true")
   match set_text {
     SetText(value) => inspect(value, content="Luna")
     _ => fail("expected SetText payload")
@@ -130,7 +128,7 @@ test "SemanticsNode advertises capability kinds and stable identity" {
   let node : @core.SemanticsNode = {
     node_id: @core.SemanticsNodeId::new(7UL),
     semantic_id: Some(semantic_id),
-    role: @core.SemanticsRole::Button,
+    role: Button,
     level: None,
     url: "",
     label: "Increment",
@@ -141,18 +139,14 @@ test "SemanticsNode advertises capability kinds and stable identity" {
     text: None,
     collection: None,
     relations: @core.SemanticsRelations::empty(),
-    live: @core.SemanticsLive::Off,
+    live: Off,
     live_atomic: false,
-    actions: [@core.SemanticsActionKind::Focus, Activate],
+    actions: [Focus, Activate],
     focus_order: Some(0),
     frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=32.0),
     children: [],
   }
   inspect(node.node_id == @core.SemanticsNodeId::new(7UL), content="true")
   inspect(node.semantic_id == Some(semantic_id), content="true")
-  inspect(
-    node.actions ==
-    [@core.SemanticsActionKind::Focus, @core.SemanticsActionKind::Activate],
-    content="true",
-  )
+  inspect(node.actions == [Focus, Activate], content="true")
 }

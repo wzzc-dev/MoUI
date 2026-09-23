@@ -17,18 +17,14 @@ fn runtime_semantics_cache_leaf(label : String) -> @core.View[Unit] {
       )
     },
     semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Boundary,
-        role=@core.SemanticsRole::Text,
-        label~,
-      )
+      @core.ViewSemanticsInfo::new(composition=Boundary, role=Text, label~)
     },
   )
 }
 
 ///|
 fn runtime_semantics_cache_tree(
-  composition? : @core.SemanticsComposition = @core.SemanticsComposition::Transparent,
+  composition? : @core.SemanticsComposition = Transparent,
 ) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="SemanticsCacheRoot"),
@@ -59,12 +55,10 @@ fn runtime_semantics_only_leaf(label : String) -> @core.View[Unit] {
     identity=() => @core.ViewIdentity::new(kind="SemanticsOnlyLeaf"),
     declaration=() => {
       @core.ViewDeclaration::channels(
-        layout=@core.DeclarationChannel::Constant,
-        paint=@core.DeclarationChannel::Constant,
-        semantics=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string(label),
-        ),
-        platform=@core.DeclarationChannel::Constant,
+        layout=Constant,
+        paint=Constant,
+        semantics=Exact(@core.DeclarationKey::string(label)),
+        platform=Constant,
       )
     },
     layout=context => {
@@ -75,11 +69,7 @@ fn runtime_semantics_only_leaf(label : String) -> @core.View[Unit] {
       )
     },
     semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Boundary,
-        role=@core.SemanticsRole::Text,
-        label~,
-      )
+      @core.ViewSemanticsInfo::new(composition=Boundary, role=Text, label~)
     },
   )
 }
@@ -100,9 +90,9 @@ fn runtime_semantics_deep_chain(
     },
     semantics=() => {
       @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Boundary,
+        composition=Boundary,
         semantic_id=leaf_id,
-        role=@core.SemanticsRole::Text,
+        role=Text,
         label="deep leaf",
       )
     },
@@ -122,11 +112,7 @@ fn runtime_semantics_deep_chain(
           @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
         ])
       },
-      semantics=() => {
-        @core.ViewSemanticsInfo::new(
-          composition=@core.SemanticsComposition::Transparent,
-        )
-      },
+      semantics=() => @core.ViewSemanticsInfo::new(composition=Transparent),
     )
   }
   current
@@ -147,18 +133,16 @@ fn runtime_semantics_action_leaf(
     },
     semantics=() => {
       @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Boundary,
+        composition=Boundary,
         semantic_id~,
-        role=@core.SemanticsRole::Button,
+        role=Button,
         label="action",
       )
     },
     semantics_actions=() => {
       [
         @core.ViewSemanticsActionHandler::activate(_context => {
-          @core.ViewSemanticsActionResult::accepted(
-            dirty=@core.ViewDirtyHint::ViewClean,
-          )
+          @core.ViewSemanticsActionResult::accepted(dirty=ViewClean)
         }),
       ]
     },
@@ -174,9 +158,9 @@ fn runtime_semantics_identified_leaf(
     identity=() => @core.ViewIdentity::new(kind="SemanticsIdentifiedLeaf"),
     declaration=() => {
       @core.ViewDeclaration::channels(
-        layout=@core.DeclarationChannel::Constant,
-        paint=@core.DeclarationChannel::Constant,
-        semantics=@core.DeclarationChannel::Exact(
+        layout=Constant,
+        paint=Constant,
+        semantics=Exact(
           @core.DeclarationKey::record(
             type_tag="SemanticsIdentifiedLeaf.semantics",
             fields=[
@@ -185,7 +169,7 @@ fn runtime_semantics_identified_leaf(
             ],
           ),
         ),
-        platform=@core.DeclarationChannel::Constant,
+        platform=Constant,
       )
     },
     layout=context => {
@@ -197,9 +181,9 @@ fn runtime_semantics_identified_leaf(
     },
     semantics=() => {
       @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Boundary,
+        composition=Boundary,
         semantic_id~,
-        role=@core.SemanticsRole::Text,
+        role=Text,
         label~,
       )
     },
@@ -229,11 +213,7 @@ fn runtime_semantics_dynamic_container(
         child_frames~,
       )
     },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::Transparent,
-      )
-    },
+    semantics=() => @core.ViewSemanticsInfo::new(composition=Transparent),
   )
 }
 
@@ -246,12 +226,10 @@ fn runtime_semantics_merge_container(
     identity=() => @core.ViewIdentity::new(kind="SemanticsMergeContainer"),
     declaration=() => {
       @core.ViewDeclaration::channels(
-        layout=@core.DeclarationChannel::Constant,
-        paint=@core.DeclarationChannel::Constant,
-        semantics=@core.DeclarationChannel::Exact(
-          @core.DeclarationKey::string(label),
-        ),
-        platform=@core.DeclarationChannel::Constant,
+        layout=Constant,
+        paint=Constant,
+        semantics=Exact(@core.DeclarationKey::string(label)),
+        platform=Constant,
       )
     },
     children=() => [child],
@@ -264,10 +242,7 @@ fn runtime_semantics_merge_container(
       ])
     },
     semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        composition=@core.SemanticsComposition::MergeDescendants,
-        label~,
-      )
+      @core.ViewSemanticsInfo::new(composition=MergeDescendants, label~)
     },
   )
 }
@@ -275,9 +250,7 @@ fn runtime_semantics_merge_container(
 ///|
 test "hidden semantics consumes descendant dirtiness without repeated work" {
   let runtime = RuntimeState::new_view(
-    root=runtime_semantics_cache_tree(
-      composition=@core.SemanticsComposition::Hidden,
-    ),
+    root=runtime_semantics_cache_tree(composition=Hidden),
     size=@core.Size::new(width=100.0, height=48.0),
   )
   ignore(runtime.cached_semantics())
@@ -399,13 +372,13 @@ test "clean semantics action lookup does not recompute the tree" {
   let recomputes = runtime.stats.semantics_recompute_count
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::BySemanticId(semantic_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(
+      target: BySemanticId(semantic_id),
+      action: Activate,
+      precondition: Exact(
         @core.SemanticsGeneration::new(snapshot.generation().value() + 1UL),
       ),
     }) {
-    Err(SemanticsActionDispatchError::StaleGeneration(_, _)) => ()
+    Err(StaleGeneration(_, _)) => ()
     _ => fail("expected stale action rejection")
   }
   assert_eq(runtime.stats.semantics_recompute_count, recomputes)
@@ -449,17 +422,17 @@ test "removed semantics nodes and action routes are pruned from the tree" {
     removed.nodes().any(node => node.node_id == initial_node.node_id),
   )
   match runtime.read_semantics(Some(initial.generation())) {
-    Ok(SemanticsRead::Delta(delta)) =>
+    Ok(Delta(delta)) =>
       assert_true(delta.removed().contains(initial_node.node_id))
     _ => fail("removed node id must be published in the delta")
   }
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::ByNodeId(initial_node.node_id),
-      action: @core.SemanticsAction::Activate,
-      precondition: SemanticsGenerationPrecondition::Exact(removed.generation()),
+      target: ByNodeId(initial_node.node_id),
+      action: Activate,
+      precondition: Exact(removed.generation()),
     }) {
-    Err(SemanticsActionDispatchError::TargetNotFound(_)) => ()
+    Err(TargetNotFound(_)) => ()
     _ => fail("removed node id must not retain an action route")
   }
   visible.val = true
@@ -494,7 +467,7 @@ test "one changed leaf publishes a one-node delta" {
   label.val = "after"
   runtime.request_root_rebuild(reason="test model changed")
   match runtime.read_semantics(Some(initial.generation())) {
-    Ok(SemanticsRead::Delta(delta)) => {
+    Ok(Delta(delta)) => {
       let upserted = delta.upserted()
       assert_eq(upserted.length(), 1)
       assert_eq(upserted[0].semantic_id, Some(changed_id))
@@ -543,7 +516,7 @@ test "semantics node identity exhaustion closes before publishing a wrapped id" 
   runtime.semantics.next_semantics_node_id = 18446744073709551615UL
   runtime.mark_semantics_dirty(runtime.element_tree.id())
   match runtime.read_semantics(None) {
-    Err(SemanticsReadError::RuntimeClosed) => ()
+    Err(RuntimeClosed) => ()
     _ => fail("identity exhaustion must close the semantics runtime")
   }
   assert_eq(
@@ -571,7 +544,7 @@ test "semantics generation exhaustion closes before wrapping to zero" {
   runtime.animfocus.focused_element = Some(runtime.element_tree.id())
   runtime.mark_semantics_dirty(runtime.element_tree.id())
   match runtime.read_semantics(None) {
-    Err(SemanticsReadError::RuntimeClosed) => ()
+    Err(RuntimeClosed) => ()
     _ => fail("generation exhaustion must close the semantics runtime")
   }
   assert_eq(

@@ -26,7 +26,7 @@ pub fn FocusScopeItem::new(
   enabled? : Bool = true,
   focusable? : Bool = true,
 ) -> FocusScopeItem {
-  { id, enabled, focusable }
+  { id, enabled, focusable, }
 }
 
 ///|
@@ -37,7 +37,7 @@ pub fn FocusScope::new(
   default_action? : String = "",
   dismiss_action? : String = "",
 ) -> FocusScope {
-  { items, current, wrap, default_action, dismiss_action }
+  { items, current, wrap, default_action, dismiss_action, }
 }
 
 ///|
@@ -62,12 +62,12 @@ pub fn FocusScope::last_focusable(self : FocusScope) -> String? {
 
 ///|
 pub fn FocusScope::next(self : FocusScope) -> String? {
-  self.traverse(FocusTraversalDirection::Next)
+  self.traverse(Next)
 }
 
 ///|
 pub fn FocusScope::previous(self : FocusScope) -> String? {
-  self.traverse(FocusTraversalDirection::Previous)
+  self.traverse(Previous)
 }
 
 ///|
@@ -160,9 +160,9 @@ pub fn focus_scope_command_intent(event : KeyboardEvent) -> CommandIntent? {
   if !event.pressed {
     None
   } else if event.key == "Enter" {
-    Some(CommandIntent::Submit)
+    Some(Submit)
   } else if event.key == "Escape" {
-    Some(CommandIntent::Cancel)
+    Some(Cancel)
   } else {
     None
   }

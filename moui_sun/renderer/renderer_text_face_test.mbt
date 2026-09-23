@@ -3,7 +3,7 @@ test "Renderer::draw_text_face renders parsed TTF bytes to pixmap" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -27,7 +27,7 @@ test "Renderer::draw_text_face_atlas renders parsed TTF bytes" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(12, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=20.0,
     font_size=10.0,
@@ -66,7 +66,7 @@ test "Renderer::draw_text_face_atlas reports atlas rotation" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(16, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,
@@ -105,7 +105,7 @@ test "Renderer::draw_text_face_atlas reports glyph cache hits" {
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
+  let renderer = @renderer.Renderer::new(canvas)
   let config = @text.LayoutConfig::new(
     max_width=40.0,
     font_size=10.0,

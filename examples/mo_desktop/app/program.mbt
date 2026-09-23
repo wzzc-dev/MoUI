@@ -51,7 +51,7 @@ fn update_with_services(
     @moui.Effect::none()
   }
   let combined = match effect {
-    @moui.Effect::NoEffect => save_effect
+    NoEffect => save_effect
     other => @moui.Effect::batch([other, save_effect])
   }
   (updated, combined)

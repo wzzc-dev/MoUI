@@ -12,8 +12,7 @@ fn ElementNode::find_scroll_target(
   layout : PlacedNode,
   nearest_scroll : (ElementId, Rect)?,
 ) -> ScrollTarget? {
-  let nearest_scroll = if self.view_node.semantics().role ==
-    Some(@core.SemanticsRole::ScrollView) {
+  let nearest_scroll = if self.view_node.semantics().role == Some(ScrollView) {
     Some((self.id, layout.frame))
   } else {
     nearest_scroll
@@ -21,7 +20,7 @@ fn ElementNode::find_scroll_target(
   if self.key == Some(Key::new(key)) {
     return match nearest_scroll {
       Some((scroll_id, viewport)) =>
-        Some({ scroll_id, viewport, target: layout.frame })
+        Some({ scroll_id, viewport, target: layout.frame, })
       None => None
     }
   }
@@ -183,7 +182,7 @@ fn RuntimeState::try_pending_scroll_from_current_layout(
                       y=found.viewport.origin.y +
                         found.viewport.size.height / 2.0,
                     ),
-                    phase=PointerPhase::Move,
+                    phase=Move,
                     wheel_delta=Point::new(x=-dx, y=-dy),
                   ),
                 ),
@@ -209,7 +208,7 @@ fn RuntimeState::scroll_to_key(
   key : String,
   alignment : ScrollAlignment,
 ) -> Bool {
-  self.pending_scroll_request = Some({ key, alignment })
+  self.pending_scroll_request = Some({ key, alignment, })
   self.ensure_layout_tree()
   if self.pending_scroll_request is None {
     true
@@ -222,7 +221,7 @@ fn RuntimeState::scroll_to_key(
 pub fn AppRuntime::scroll_to_key(
   self : AppRuntime,
   key : String,
-  alignment? : @core.ScrollAlignment = @core.ScrollAlignment::Nearest,
+  alignment? : @core.ScrollAlignment = Nearest,
 ) -> Bool {
   self.state.scroll_to_key(key, alignment)
 }

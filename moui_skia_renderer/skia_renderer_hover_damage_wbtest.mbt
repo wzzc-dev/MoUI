@@ -1,6 +1,6 @@
 ///|
 fn skia_hover_damage_cached_content() -> @core.View[Unit] {
-  @core.View::from_node(SkiaHoverCachedContentNode::{  })
+  @core.View::from_node(SkiaHoverCachedContentNode::{ })
 }
 
 ///|
@@ -26,7 +26,7 @@ impl @core.ViewNode for SkiaHoverCachedContentNode with fn layout(_self, ctx) {
 ///|
 impl @core.ViewNode for SkiaHoverCachedContentNode with fn paint(_self, ctx) {
   let commands : Array[@core.DrawCommand] = [
-    @core.DrawCommand::FillRect(ctx.frame, @core.Color::black()),
+    FillRect(ctx.frame, @core.Color::black()),
   ]
   {
     commands: [],
@@ -47,18 +47,17 @@ impl @core.ViewNode for SkiaHoverCachedContentNode with fn paint(_self, ctx) {
 
 ///|
 fn skia_hover_damage_control() -> @core.View[Unit] {
-  @core.View::from_node(SkiaHoverControlNode::{  }, event=(_node, ctx) => {
+  @core.View::from_node(SkiaHoverControlNode::{ }, event=(_node, ctx) => {
     match ctx.event {
-      @core.AppEvent::Pointer(event) => {
-        let hovered = event.phase == @core.PointerPhase::Move &&
-          ctx.frame.contains(event.position)
+      Pointer(event) => {
+        let hovered = event.phase == Move && ctx.frame.contains(event.position)
         if hovered != ctx.state.hovered {
           {
             ..@core.ViewEventResult::ignored(),
             changed: true,
             captured: true,
             state: Some({ ..ctx.state, hovered, }),
-            dirty: @core.ViewDirtyHint::ViewPaintDirty,
+            dirty: ViewPaintDirty,
           }
         } else {
           @core.ViewEventResult::ignored()
@@ -92,7 +91,7 @@ impl @core.ViewNode for SkiaHoverControlNode with fn layout(_self, ctx) {
 ///|
 impl @core.ViewNode for SkiaHoverControlNode with fn paint(_self, ctx) {
   @core.ViewPaintPlan::commands([
-    @core.DrawCommand::FillRect(
+    FillRect(
       ctx.frame,
       if ctx.state.hovered {
         @core.Color::black()
@@ -105,7 +104,7 @@ impl @core.ViewNode for SkiaHoverControlNode with fn paint(_self, ctx) {
 
 ///|
 fn skia_hover_damage_stage() -> @core.View[Unit] {
-  @core.View::from_node(SkiaHoverDamageStageNode::{  }, children=_node => {
+  @core.View::from_node(SkiaHoverDamageStageNode::{ }, children=_node => {
     [skia_hover_damage_cached_content(), skia_hover_damage_control()]
   })
 }
@@ -144,9 +143,7 @@ impl @core.ViewNode for SkiaHoverDamageStageNode with fn layout(_self, ctx) {
 
 ///|
 impl @core.ViewNode for SkiaHoverDamageStageNode with fn paint(_self, ctx) {
-  @core.ViewPaintPlan::commands([
-    @core.DrawCommand::FillRect(ctx.frame, @core.Color::white()),
-  ])
+  @core.ViewPaintPlan::commands([FillRect(ctx.frame, @core.Color::white())])
 }
 
 ///|
@@ -169,22 +166,18 @@ test "skia hover damage redraws cached sibling layers under rect damage" {
     assert_true(result.presented)
   }
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=4.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
   let hover_frame = runtime.draw_frame()
-  assert_true(hover_frame.damage is @core.DamageRegion::Rects(_))
-  assert_false(
-    hover_frame.commands.any(command => command is @core.DrawCommand::Clear(_)),
-  )
+  assert_true(hover_frame.damage is Rects(_))
+  assert_false(hover_frame.commands.any(command => command is Clear(_)))
   assert_true(
-    hover_frame.commands.any(command => {
-      command is @core.DrawCommand::BeginRetainedLayer(_)
-    }),
+    hover_frame.commands.any(command => command is BeginRetainedLayer(_)),
   )
   let hover_result = renderer.render_frame(hover_frame)
   assert_true(hover_result.presented)

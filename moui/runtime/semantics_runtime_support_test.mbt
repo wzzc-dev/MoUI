@@ -32,10 +32,10 @@ fn runtime_semantic_composition_key(
 ) -> @core.DeclarationKey {
   @core.DeclarationKey::int(
     match composition {
-      @core.SemanticsComposition::Transparent => 0
-      @core.SemanticsComposition::Boundary => 1
-      @core.SemanticsComposition::MergeDescendants => 2
-      @core.SemanticsComposition::Hidden => 3
+      Transparent => 0
+      Boundary => 1
+      MergeDescendants => 2
+      Hidden => 3
     },
   )
 }
@@ -46,43 +46,43 @@ fn runtime_semantic_role_key(
 ) -> @core.DeclarationKey {
   @core.DeclarationKey::int(
     match role {
-      @core.SemanticsRole::None => 0
-      @core.SemanticsRole::Text => 1
-      @core.SemanticsRole::Link => 2
-      @core.SemanticsRole::Heading => 3
-      @core.SemanticsRole::Navigation => 4
-      @core.SemanticsRole::Main => 5
-      @core.SemanticsRole::Button => 6
-      @core.SemanticsRole::Checkbox => 7
-      @core.SemanticsRole::TextField => 8
-      @core.SemanticsRole::List => 9
-      @core.SemanticsRole::ListItem => 10
-      @core.SemanticsRole::Grid => 11
-      @core.SemanticsRole::ScrollView => 12
-      @core.SemanticsRole::Switch => 13
-      @core.SemanticsRole::Radio => 14
-      @core.SemanticsRole::Slider => 15
-      @core.SemanticsRole::Progress => 16
-      @core.SemanticsRole::Tab => 17
-      @core.SemanticsRole::Dialog => 18
-      @core.SemanticsRole::Tooltip => 19
-      @core.SemanticsRole::Menu => 20
-      @core.SemanticsRole::ButtonGroup => 21
-      @core.SemanticsRole::Form => 22
-      @core.SemanticsRole::FormField => 23
-      @core.SemanticsRole::Tree => 24
-      @core.SemanticsRole::TreeItem => 25
-      @core.SemanticsRole::Group => 26
-      @core.SemanticsRole::WebView => 27
-      @core.SemanticsRole::Image => 28
-      @core.SemanticsRole::Alert => 29
-      @core.SemanticsRole::Status => 30
-      @core.SemanticsRole::ComboBox => 31
-      @core.SemanticsRole::Option => 32
-      @core.SemanticsRole::Table => 33
-      @core.SemanticsRole::Row => 34
-      @core.SemanticsRole::Cell => 35
-      @core.SemanticsRole::Separator => 36
+      None => 0
+      Text => 1
+      Link => 2
+      Heading => 3
+      Navigation => 4
+      Main => 5
+      Button => 6
+      Checkbox => 7
+      TextField => 8
+      List => 9
+      ListItem => 10
+      Grid => 11
+      ScrollView => 12
+      Switch => 13
+      Radio => 14
+      Slider => 15
+      Progress => 16
+      Tab => 17
+      Dialog => 18
+      Tooltip => 19
+      Menu => 20
+      ButtonGroup => 21
+      Form => 22
+      FormField => 23
+      Tree => 24
+      TreeItem => 25
+      Group => 26
+      WebView => 27
+      Image => 28
+      Alert => 29
+      Status => 30
+      ComboBox => 31
+      Option => 32
+      Table => 33
+      Row => 34
+      Cell => 35
+      Separator => 36
     },
   )
 }
@@ -101,9 +101,9 @@ fn runtime_semantic_test_declaration(
   focusable : Bool,
 ) -> @core.ViewDeclaration {
   @core.ViewDeclaration::channels(
-    layout=@core.DeclarationChannel::Constant,
-    paint=@core.DeclarationChannel::Constant,
-    semantics=@core.DeclarationChannel::Exact(
+    layout=Constant,
+    paint=Constant,
+    semantics=Exact(
       @core.DeclarationKey::record(type_tag="RuntimeSemanticTestNode", fields=[
         ("semantic_id", runtime_semantic_optional_id_key(semantic_id)),
         ("role", runtime_semantic_role_key(role)),
@@ -117,7 +117,7 @@ fn runtime_semantic_test_declaration(
         ("focusable", @core.DeclarationKey::bool(focusable)),
       ]),
     ),
-    platform=@core.DeclarationChannel::Constant,
+    platform=Constant,
   )
 }
 
@@ -165,14 +165,14 @@ impl @core.ViewNode for RuntimeSemanticTestNode with fn focusable(self) {
 fn[Msg] runtime_semantic_test_view(
   kind? : String = "RuntimeSemanticTestNode",
   semantic_id? : @core.SemanticId,
-  role? : @core.SemanticsRole = @core.SemanticsRole::Button,
+  role? : @core.SemanticsRole = Button,
   label? : String = "",
   value? : String = "",
   description? : String = "",
   disabled? : Bool = false,
   selected? : Bool = false,
   expanded? : Bool = false,
-  composition? : @core.SemanticsComposition = @core.SemanticsComposition::Boundary,
+  composition? : @core.SemanticsComposition = Boundary,
   focusable? : Bool = false,
   handlers? : Array[@core.ViewSemanticsActionHandler[Msg]] = [],
 ) -> @core.View[Msg] {
@@ -253,23 +253,23 @@ impl @core.ViewNode for RuntimeSemanticContainerNode with fn focus_trap(self) {
 fn[Msg] runtime_semantic_container(
   children : Array[@core.View[Msg]],
   kind? : String = "RuntimeSemanticContainer",
-  composition? : @core.SemanticsComposition = @core.SemanticsComposition::Transparent,
+  composition? : @core.SemanticsComposition = Transparent,
   semantic_id? : @core.SemanticId,
   focus_trap? : Bool = false,
 ) -> @core.View[Msg] {
   let node = RuntimeSemanticContainerNode::{
     kind,
     declaration: @core.ViewDeclaration::channels(
-      layout=@core.DeclarationChannel::Constant,
-      paint=@core.DeclarationChannel::Constant,
-      semantics=@core.DeclarationChannel::Exact(
+      layout=Constant,
+      paint=Constant,
+      semantics=Exact(
         @core.DeclarationKey::record(type_tag="RuntimeSemanticContainer", fields=[
           ("composition", runtime_semantic_composition_key(composition)),
           ("semantic_id", runtime_semantic_optional_id_key(semantic_id)),
           ("focus_trap", @core.DeclarationKey::bool(focus_trap)),
         ]),
       ),
-      platform=@core.DeclarationChannel::Constant,
+      platform=Constant,
     ),
     semantic_id,
     composition,
@@ -287,16 +287,18 @@ fn runtime_test_semantic_id(value : String) -> @core.SemanticId {
 }
 
 ///|
-fn runtime_expect_full_semantics(runtime : AppRuntime) -> SemanticsSnapshot {
+fn runtime_expect_full_semantics(
+  runtime : @runtime.AppRuntime,
+) -> @runtime.SemanticsSnapshot {
   match runtime.read_semantics() {
-    Ok(SemanticsRead::Full(snapshot)) => snapshot
+    Ok(Full(snapshot)) => snapshot
     _ => abort("expected full semantics snapshot")
   }
 }
 
 ///|
 fn runtime_semantic_node_by_id(
-  snapshot : SemanticsSnapshot,
+  snapshot : @runtime.SemanticsSnapshot,
   semantic_id : @core.SemanticId,
 ) -> @core.SemanticsNode? {
   for node in snapshot.nodes() {
@@ -309,16 +311,16 @@ fn runtime_semantic_node_by_id(
 
 ///|
 fn runtime_expect_semantics_action(
-  runtime : AppRuntime,
+  runtime : @runtime.AppRuntime,
   target : @core.SemanticsTarget,
   action : @core.SemanticsAction,
   generation : @core.SemanticsGeneration,
-) -> SemanticsActionReceipt {
+) -> @runtime.SemanticsActionReceipt {
   match
     runtime.perform_semantics_action({
       target,
       action,
-      precondition: SemanticsGenerationPrecondition::Exact(generation),
+      precondition: Exact(generation),
     }) {
     Ok(receipt) => receipt
     Err(error) => abort("unexpected semantics action error: \{Repr(error)}")

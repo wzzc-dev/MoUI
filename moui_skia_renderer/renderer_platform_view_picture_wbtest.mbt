@@ -26,7 +26,7 @@ test "skia picture producer records platform view pixels before handoff" {
     }),
   )
   let recorded = renderer.record_frame_picture(
-    skia_test_draw_frame([@core.DrawCommand::Clear(@core.Color::white())]),
+    skia_test_draw_frame([Clear(@core.Color::white())]),
   )
   renderer.set_platform_view_draw_fn(None)
   guard recorded is Some(picture) else {

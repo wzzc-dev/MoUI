@@ -1,10 +1,10 @@
 ///|
-fn provider_test_descriptor() -> RendererDescriptor {
-  RendererDescriptor::new(
-    backend=RendererBackendKind::SkiaRasterNative,
-    family=RendererFamily::Skia,
-    presentation=RendererPresentationModel::CpuPixelFrame,
-    supported_targets=[RendererTarget::Native],
+fn provider_test_descriptor() -> @render.RendererDescriptor {
+  @render.RendererDescriptor::new(
+    backend=SkiaRasterNative,
+    family=Skia,
+    presentation=CpuPixelFrame,
+    supported_targets=[Native],
     capabilities=[],
     description="provider test",
   )
@@ -12,12 +12,12 @@ fn provider_test_descriptor() -> RendererDescriptor {
 
 ///|
 fn provider_test_session(
-  native_surface? : NativeSurface? = None,
+  native_surface? : @render.NativeSurface? = None,
   dispose? : () -> Unit = () => (),
-) -> RendererSession {
-  RendererSession::new(
+) -> @render.RendererSession {
+  @render.RendererSession::new(
     resize=_metrics => (),
-    render_frame=_frame => RenderFrameResult::new(presented=true),
+    render_frame=_frame => @render.RenderFrameResult::new(presented=true),
     text_system=() => @core.TextSystem::fallback(),
     native_surface~,
     dispose~,
@@ -26,16 +26,16 @@ fn provider_test_session(
 
 ///|
 fn provider_test_surface(
-  native_surface? : NativeSurface? = None,
-) -> HostSurface {
-  HostSurface::new(
+  native_surface? : @render.NativeSurface? = None,
+) -> @render.HostSurface {
+  @render.HostSurface::new(
     surface_id="test-surface",
     metrics=@core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=100.0, height=50.0),
       scale_factor=2.0,
     ),
     cpu_present=Some(
-      PresentTarget::new(description="test", present=_frame => true),
+      @render.PresentTarget::new(description="test", present=_frame => true),
     ),
     native_surface~,
   )
@@ -47,21 +47,21 @@ fn provider_test_provider(
   accepts : Bool,
   bind_count : Ref[Int],
   allocation_count : Ref[Int],
-) -> RendererProvider {
-  RendererProvider::new(
+) -> @render.RendererProvider {
+  @render.RendererProvider::new(
     id~,
     descriptor=provider_test_descriptor(),
     capabilities=() => [],
     bind=surface => {
       bind_count.val = bind_count.val + 1
       if !accepts {
-        return RendererBindResult::Rejected("rejected by test")
+        return Rejected("rejected by test")
       }
       if surface.cpu_present() is None {
-        return RendererBindResult::Rejected("missing CPU presenter")
+        return Rejected("missing CPU presenter")
       }
       allocation_count.val = allocation_count.val + 1
-      RendererBindResult::Bound(provider_test_session())
+      Bound(provider_test_session())
     },
   )
 }
@@ -114,9 +114,10 @@ test "resolve_renderer advances after side-effect-free rejection" {
 
 ///|
 test "native surface rejects zero handles" {
-  assert_true(NativeSurface::new(surface_handle=0UL) is None)
+  assert_true(@render.NativeSurface::new(surface_handle=0UL) is None)
   assert_true(
-    NativeSurface::new(surface_handle=1UL, display_handle=Some(0UL)) is None,
+    @render.NativeSurface::new(surface_handle=1UL, display_handle=Some(0UL))
+    is None,
   )
 }
 
@@ -124,7 +125,7 @@ test "native surface rejects zero handles" {
 test "renderer session disposes renderer and native surface exactly once" {
   let renderer_disposals = Ref(0)
   let surface_disposals = Ref(0)
-  guard NativeSurface::new(surface_handle=7UL, dispose=() => {
+  guard @render.NativeSurface::new(surface_handle=7UL, dispose=() => {
       surface_disposals.val = surface_disposals.val + 1
     })
     is Some(native_surface) else {
@@ -137,8 +138,7 @@ test "renderer session disposes renderer and native surface exactly once" {
   session.dispose()
   inspect(renderer_disposals.val, content="1")
   inspect(surface_disposals.val, content="1")
-  guard session.recover("after dispose")
-    is RecoveryResult::RecoveryFailed(message) else {
+  guard session.recover("after dispose") is RecoveryFailed(message) else {
     fail("expected disposed recovery failure")
   }
   inspect(message, content="renderer session is disposed")

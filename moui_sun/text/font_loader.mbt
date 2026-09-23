@@ -37,7 +37,7 @@ pub fn FontFileSource::new(
   path : String,
   font_index? : Int = 0,
 ) -> FontFileSource {
-  { path, font_index }
+  { path, font_index, }
 }
 
 ///|
@@ -55,7 +55,7 @@ pub fn FontFileSource::get_font_index(self : FontFileSource) -> Int {
 ///|
 /// Create an empty in-memory font loader.
 pub fn MemoryFontLoader::new() -> MemoryFontLoader {
-  { fonts: Map([]) }
+  { fonts: Map([]), }
 }
 
 ///|
@@ -106,14 +106,14 @@ pub fn MemoryFontLoader::clear(self : MemoryFontLoader) -> Unit {
 pub impl FontLoader for MemoryFontLoader with fn load_font_data(self, key) {
   match self.fonts.get(key) {
     Some(data) => Ok(data)
-    None => Err(FontLoadError::MissingFontData(key))
+    None => Err(MissingFontData(key))
   }
 }
 
 ///|
 /// Create an empty file-backed font loader.
 pub fn FileFontLoader::new() -> FileFontLoader {
-  { sources: Map([]) }
+  { sources: Map([]), }
 }
 
 ///|
@@ -164,10 +164,10 @@ pub impl FontLoader for FileFontLoader with fn load_font_data(self, key) {
       let loaded : Bytes? = Some(read_file(source.path)) catch { _ => None }
       match loaded {
         Some(data) => Ok(FontData::new(data, font_index=source.font_index))
-        None => Err(FontLoadError::FontFileReadFailed(key, source.path))
+        None => Err(FontFileReadFailed(key, source.path))
       }
     }
-    None => Err(FontLoadError::MissingFontData(key))
+    None => Err(MissingFontData(key))
   }
 }
 
@@ -191,7 +191,7 @@ pub fn[L : FontLoader] load_font_face(
     Ok(data) =>
       match FontFace::from_data(data) {
         Ok(face) => Ok(face)
-        Err(error) => Err(FontLoadError::FontParseFailed(key, error))
+        Err(error) => Err(FontParseFailed(key, error))
       }
   }
 }
@@ -204,14 +204,14 @@ pub fn[L : FontLoader] FontFaceCache::get_or_load_result(
   loader : L,
 ) -> Result[FontFaceCacheParseResult, FontLoadError] {
   match self.get(key) {
-    Some(face) => Ok({ face, did_parse: false })
+    Some(face) => Ok({ face, did_parse: false, })
     None =>
       match loader.load_font_data(key) {
         Err(error) => Err(error)
         Ok(data) =>
           match FontFace::from_data(data) {
-            Ok(face) => Ok({ face: self.insert(key, face), did_parse: true })
-            Err(error) => Err(FontLoadError::FontParseFailed(key, error))
+            Ok(face) => Ok({ face: self.insert(key, face), did_parse: true, })
+            Err(error) => Err(FontParseFailed(key, error))
           }
       }
   }

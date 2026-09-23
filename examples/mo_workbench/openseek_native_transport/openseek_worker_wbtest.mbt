@@ -4,7 +4,7 @@ fn openseek_test_config() -> OpenSeekBackendConfig {
     api_key: "test-key",
     api_url: None,
     model: openseek_default_model(),
-    thinking: @deepseek.ThinkingMode::No,
+    thinking: No,
     workspace_root: ".",
     session_root: ".openseek-test",
   }
@@ -12,10 +12,7 @@ fn openseek_test_config() -> OpenSeekBackendConfig {
 
 ///|
 fn openseek_test_session(id : String) -> @agent_session.Session {
-  @agent_session.Session(
-    @agent_session.SessionId::SessionId(id),
-    system_prompt="system",
-  )
+  Session(SessionId(id), system_prompt="system")
 }
 
 ///|
@@ -35,7 +32,7 @@ async test "worker steer queues into active turn runtime" {
     inspect(steers.length(), content="1")
     guard steers[0] is Prompt(text) else { fail("expected prompt steer") }
     inspect(text, content="go left")
-    guard events[0] is @app.AgentEvent::RuntimeNoticeAdded(notice) else {
+    guard events[0] is RuntimeNoticeAdded(notice) else {
       fail("expected steer notice")
     }
     inspect(notice, content="Steer queued: go left")
@@ -52,7 +49,7 @@ async test "worker steer is rejected when no turn is running" {
   let events : Array[@app.AgentEvent] = []
   openseek_worker_steer(owner, "too late", event => events.push(event))
   inspect(state.runtime.drain_steers().length(), content="0")
-  guard events[0] is @app.AgentEvent::RuntimeNoticeAdded(notice) else {
+  guard events[0] is RuntimeNoticeAdded(notice) else {
     fail("expected idle steer notice")
   }
   inspect(notice, content="Steer ignored: no running turn")
@@ -74,7 +71,7 @@ async test "worker send task is rejected while a turn is running" {
       events.push(event)
     })
     inspect(events.length(), content="1")
-    guard events[0] is @app.AgentEvent::RuntimeNoticeAdded(notice) else {
+    guard events[0] is RuntimeNoticeAdded(notice) else {
       fail("expected duplicate turn notice")
     }
     inspect(

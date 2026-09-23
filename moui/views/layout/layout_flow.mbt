@@ -58,9 +58,7 @@ impl @core.ViewNode for Flow with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Flow with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }
 
 ///|
@@ -82,7 +80,7 @@ pub fn[Msg] flow(
 ) -> @core.View[Msg] {
   let static_children = (_node : Flow) => children
   @core.View::from_node(
-    Flow::{ width, spacing, row_spacing },
+    Flow::{ width, spacing, row_spacing, },
     children=static_children,
   )
 }
@@ -131,7 +129,7 @@ fn flow_rows(
       y = y + row_height + row_spacing
       row_height = 0.0
     }
-    items.push({ index, x, y })
+    items.push({ index, x, y, })
     x = x + size.width + spacing
     row_height = max_double(row_height, size.height)
   }

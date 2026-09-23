@@ -1,6 +1,8 @@
 ///|
 test "RendererResources configures bounded font text and image caches" {
-  let resources = RendererResources::with_font_capacity(16, 16, 1, 2, 3, 1)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 16, 1, 2, 3, 1,
+  )
   let font_cache = resources.get_font_face_cache()
   let text_resources = resources.get_text_resources()
   let text_cache = resources.get_text_mask_cache()
@@ -51,7 +53,7 @@ test "RendererResources configures bounded font text and image caches" {
 
 ///|
 test "RendererResources reports unified cache residency" {
-  let resources = RendererResources::new(16, 16)
+  let resources = @renderer.RendererResources::new(16, 16)
   let face = unwrap_font_face(@text.FontFace::from_bytes(make_minimal_ttf()))
   ignore(resources.get_font_face_cache().insert("ui-font", face))
   let text_pixels : FixedArray[Byte] = FixedArray::make(1, 32)
@@ -88,7 +90,9 @@ test "RendererResources reports unified cache residency" {
 
 ///|
 test "RendererResources snapshots unified resource telemetry" {
-  let resources = RendererResources::with_font_capacity(16, 8, 1, 2, 3, 4)
+  let resources = @renderer.RendererResources::with_font_capacity(
+    16, 8, 1, 2, 3, 4,
+  )
   let empty = resources.snapshot()
   assert_eq(empty.get_font_face_count(), 0)
   assert_eq(empty.get_font_face_capacity(), 1)

@@ -98,9 +98,9 @@ fn subscription_cancel_reason(
   next : Array[ActiveProgramSubscription],
 ) -> SubscriptionCancelReason {
   if next.any(subscription => subscription.key == active.key) {
-    SubscriptionCancelReason::SubscriptionKindChanged
+    SubscriptionKindChanged
   } else {
-    SubscriptionCancelReason::SubscriptionKeyChanged
+    SubscriptionKeyChanged
   }
 }
 
@@ -123,7 +123,7 @@ fn[Msg] ProgramRuntimeDiagnostics::start_subscription(
     key: source.key(),
     kind: source.kind(),
     label: source.label(),
-    status: SubscriptionLifecycleStatus::SubscriptionActive,
+    status: SubscriptionActive,
     cancel_reason: None,
   })
   {
@@ -153,7 +153,7 @@ fn ProgramRuntimeDiagnostics::cancel_subscription(
     key: active.key,
     kind: active.kind,
     label: active.label,
-    status: SubscriptionLifecycleStatus::SubscriptionCancelled,
+    status: SubscriptionCancelled,
     cancel_reason: Some(reason),
   })
 }
@@ -167,12 +167,12 @@ fn ProgramRuntimeDiagnostics::active_subscription_kind_counts(
     let mut found = false
     for index, count in counts {
       if count.kind == active.kind {
-        counts[index] = { ..count, count: count.count + 1 }
+        counts[index] = { ..count, count: count.count + 1, }
         found = true
       }
     }
     if !found {
-      counts.push({ kind: active.kind, count: 1 })
+      counts.push({ kind: active.kind, count: 1, })
     }
   }
   counts

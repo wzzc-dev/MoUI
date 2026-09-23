@@ -22,16 +22,11 @@ fn[Msg] runtime_test_rect(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
       )
     },
-    paint=ctx => {
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(ctx.frame, color),
-      ])
-    },
+    paint=ctx => @core.ViewPaintPlan::commands([FillRect(ctx.frame, color)]),
     event=ctx => {
       match (ctx.event, on_tap) {
-        (@core.AppEvent::Pointer(event), Some(message)) =>
-          if event.phase == @core.PointerPhase::Up &&
-            ctx.frame.contains(event.position) {
+        (Pointer(event), Some(message)) =>
+          if event.phase == Up && ctx.frame.contains(event.position) {
             @core.ViewEventResult::message(message)
           } else {
             @core.ViewEventResult::ignored()
@@ -88,7 +83,7 @@ fn runtime_test_first_child_size(sizes : Array[@core.Size]) -> @core.Size {
 ///|
 test "runtime dispatches messages from virtual node" {
   let received : Array[Int] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=runtime_test_rect(
       width=20.0,
       height=20.0,
@@ -99,11 +94,8 @@ test "runtime dispatches messages from virtual node" {
     on_message=Some(message => received.push(message)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=5.0, y=5.0),
-        phase=@core.PointerPhase::Up,
-      ),
+    Pointer(
+      @core.PointerEvent::new(position=@core.Point::new(x=5.0, y=5.0), phase=Up),
     ),
   )
   if received != [9] {
@@ -118,7 +110,7 @@ test "virtual node layout constrains children and inspector keeps identity" {
     insets=@core.Insets::all(4.0),
     key=Some("outer"),
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=28.0, height=18.0),
   )
@@ -149,7 +141,7 @@ test "virtual node layout constrains children and inspector keeps identity" {
 ///|
 test "runtime-slot scroll dispatches its resulting offset" {
   let received : Array[@core.Point] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.scroll_view(
       runtime_test_rect(width=20.0, height=200.0, color=@core.Color::blue()),
       width=20.0,
@@ -161,10 +153,10 @@ test "runtime-slot scroll dispatches its resulting offset" {
   )
   ignore(runtime.layout())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=5.0, y=5.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@core.Point::new(x=0.0, y=-12.0),
       ),
     ),
@@ -185,25 +177,22 @@ test "runtime-slot scroll dispatches its resulting offset" {
 ///|
 test "virtual node button dispatches click through runtime" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=8.0, y=8.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=8.0, y=8.0),
-        phase=@core.PointerPhase::Up,
-      ),
+    Pointer(
+      @core.PointerEvent::new(position=@core.Point::new(x=8.0, y=8.0), phase=Up),
     ),
   )
   if received != ["clicked"] {
@@ -214,7 +203,7 @@ test "virtual node button dispatches click through runtime" {
 ///|
 test "runtime dispatches declared accessibility activation by semantic node" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
@@ -222,7 +211,7 @@ test "runtime dispatches declared accessibility activation by semantic node" {
   let snapshot = runtime_expect_full_semantics(runtime)
   let mut target : @core.SemanticsNodeId? = None
   for node in snapshot.nodes() {
-    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+    if node.actions.any(action => action == Activate) {
       target = Some(node.node_id)
     }
   }
@@ -232,19 +221,19 @@ test "runtime dispatches declared accessibility activation by semantic node" {
   ignore(
     runtime_expect_semantics_action(
       runtime,
-      @core.SemanticsTarget::ByNodeId(target),
-      @core.SemanticsAction::Activate,
+      ByNodeId(target),
+      Activate,
       snapshot.generation(),
     ),
   )
   assert_true(received == ["clicked"])
   match
     runtime.perform_semantics_action({
-      target: @core.SemanticsTarget::ByNodeId(target),
-      action: @core.SemanticsAction::SetText("nope"),
-      precondition: SemanticsGenerationPrecondition::Latest,
+      target: ByNodeId(target),
+      action: SetText("nope"),
+      precondition: Latest,
     }) {
-    Err(ActionUnavailable(_, @core.SemanticsActionKind::SetText)) => ()
+    Err(ActionUnavailable(_, SetText)) => ()
     _ => fail("expected unavailable SetText action")
   }
 }
@@ -252,7 +241,7 @@ test "runtime dispatches declared accessibility activation by semantic node" {
 ///|
 test "virtual node checkbox controlled event dispatches without core primitive" {
   let received : Array[Bool] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.checkbox(
       "Enabled",
       checked=false,
@@ -264,11 +253,8 @@ test "virtual node checkbox controlled event dispatches without core primitive" 
     on_message=Some(message => received.push(message)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=8.0, y=8.0),
-        phase=@core.PointerPhase::Up,
-      ),
+    Pointer(
+      @core.PointerEvent::new(position=@core.Point::new(x=8.0, y=8.0), phase=Up),
     ),
   )
   if received != [true] {
@@ -279,7 +265,7 @@ test "virtual node checkbox controlled event dispatches without core primitive" 
 ///|
 test "virtual node picker dispatches overlay selection without core primitive" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     // Column wrapper: a root-level frame stretches to the window constraints,
     // which would put the picker's own frame under the click point.
     root=@views.column(
@@ -306,10 +292,10 @@ test "virtual node picker dispatches overlay selection without core primitive" {
   )
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -321,10 +307,10 @@ test "virtual node picker dispatches overlay selection without core primitive" {
   }
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=84.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -349,7 +335,7 @@ test "virtual node picker dispatches overlay selection without core primitive" {
 ///|
 test "picker overlay receives pointer events before covered siblings" {
   let received : Array[String] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.column(
       [
         @views.frame(
@@ -377,19 +363,19 @@ test "picker overlay receives pointer events before covered siblings" {
   )
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=84.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -405,7 +391,7 @@ test "picker overlay keeps focus off covered text field on pointer down" {
   // its caret), and selection Up must still hit the picker overlay.
   let received : Array[String] = []
   let mut field_value = "line one\nline two\nline three"
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.column(
       [
         @views.frame(
@@ -438,18 +424,18 @@ test "picker overlay keeps focus off covered text field on pointer down" {
   ignore(runtime.draw_frame())
   // Focus the text field first (click inside it while picker is closed).
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=100.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=100.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -459,10 +445,10 @@ test "picker overlay keeps focus off covered text field on pointer down" {
   let caret_before = runtime.focused_text_input().caret
   // Open picker.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -470,10 +456,10 @@ test "picker overlay keeps focus off covered text field on pointer down" {
   // Down on the popup (over the covered field). Focus must leave the field so
   // caret placement under the popup cannot run.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=84.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
@@ -481,10 +467,10 @@ test "picker overlay keeps focus off covered text field on pointer down" {
     fail("expected picker overlay Down to steal focus from covered text field")
   }
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=84.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -501,7 +487,7 @@ test "picker overlay keeps focus off covered text field on pointer down" {
 ///|
 test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     // Column wrapper: a root-level frame stretches to the window constraints,
     // which would put the datepicker's own frame under the click point.
     root=@views.column(
@@ -510,7 +496,7 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
           @views.datepicker(
             selected=@core.DateValue::new(year=2024, month=1, day=15),
             on_select=value => value,
-            mode=@views.DatePickerMode::Date,
+            mode=Date,
             placeholder="Select date",
           ),
           width=200.0,
@@ -528,19 +514,19 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
   )
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=100.0, y=148.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -561,7 +547,7 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
 ///|
 test "virtual node sheet handles outside dismiss and preserves child event" {
   let received : Array[Int] = []
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.sheet(
       content=runtime_test_rect(
         width=40.0,
@@ -578,19 +564,16 @@ test "virtual node sheet handles outside dismiss and preserves child event" {
   )
   ignore(runtime.layout())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=20.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=4.0, y=4.0),
-        phase=@core.PointerPhase::Up,
-      ),
+    Pointer(
+      @core.PointerEvent::new(position=@core.Point::new(x=4.0, y=4.0), phase=Up),
     ),
   )
   if received != [1, 2] {
@@ -605,21 +588,21 @@ test "virtual node sheet handles outside dismiss and preserves child event" {
 ///|
 test "runtime semantics includes declared state modifiers" {
   let root : @core.View[Unit] = @views.text("Stateful", width=80.0, height=24.0)
-    .semantics_role(@core.SemanticsRole::Checkbox)
-    .semantics_checked(checked=@core.SemanticsCheckedState::Checked)
+    .semantics_role(Checkbox)
+    .semantics_checked(checked=Checked)
     .semantics_selected(selected=true)
     .semantics_pressed(pressed=true)
     .semantics_expanded(expanded=true)
     .semantics_invalid(invalid=true)
     .semantics_required(required=true)
     .disabled(disabled=true)
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=100.0, height=32.0),
   )
   let snapshot = runtime_expect_full_semantics(runtime)
   let semantics = snapshot.nodes()[0]
-  assert_eq(semantics.state.checked, Some(@core.SemanticsCheckedState::Checked))
+  assert_eq(semantics.state.checked, Some(Checked))
   assert_true(semantics.state.selected)
   assert_true(semantics.state.pressed)
   assert_true(semantics.state.expanded)
@@ -631,15 +614,15 @@ test "runtime semantics includes declared state modifiers" {
 ///|
 test "runtime semantics preserves heading level and link url" {
   let root : @core.View[Unit] = @views.text("API", width=80.0, height=24.0)
-    .semantics_role(@core.SemanticsRole::Heading)
+    .semantics_role(Heading)
     .semantics_level(2)
     .semantics_url("https://example.test/api")
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=100.0, height=32.0),
   )
   let semantics = runtime_expect_full_semantics(runtime).nodes()[0]
-  assert_true(semantics.role == @core.SemanticsRole::Heading)
+  assert_true(semantics.role == Heading)
   assert_true(semantics.level == Some(2))
   assert_true(semantics.url == "https://example.test/api")
 }
@@ -649,9 +632,9 @@ test "runtime dispatches semantic activation through typed action route" {
   let received : Array[Int] = []
   let root = @views.text("Open", width=80.0, height=24.0)
     .on_tap(7)
-    .semantics_role(@core.SemanticsRole::Link)
+    .semantics_role(Link)
     .semantics_url("https://example.test")
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=100.0, height=32.0),
     on_message=Some(message => received.push(message)),
@@ -659,7 +642,7 @@ test "runtime dispatches semantic activation through typed action route" {
   let snapshot = runtime_expect_full_semantics(runtime)
   let mut target : @core.SemanticsNodeId? = None
   for node in snapshot.nodes() {
-    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+    if node.actions.any(action => action == Activate) {
       target = Some(node.node_id)
     }
   }
@@ -669,8 +652,8 @@ test "runtime dispatches semantic activation through typed action route" {
   ignore(
     runtime_expect_semantics_action(
       runtime,
-      @core.SemanticsTarget::ByNodeId(target),
-      @core.SemanticsAction::Activate,
+      ByNodeId(target),
+      Activate,
       snapshot.generation(),
     ),
   )
@@ -691,15 +674,13 @@ test "runtime scrolls nearest scroll view to keyed descendant" {
       @views.text("After", width=100.0, height=120.0),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Start,
+    align=Start,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.scroll_view(content, width=100.0, height=100.0),
     size=@core.Size::new(width=100.0, height=100.0),
   )
-  assert_true(
-    runtime.scroll_to_key("target", alignment=@core.ScrollAlignment::Start),
-  )
+  assert_true(runtime.scroll_to_key("target", alignment=Start))
   assert_true(runtime.layout().children[0].frame.origin.y == -240.0)
   assert_true(!runtime.scroll_to_key("missing"))
 }
@@ -711,7 +692,7 @@ test "runtime propagates text style modifiers into draw commands" {
   let root : @core.View[Unit] = @views.text("Styled", width=90.0, height=28.0)
     .font(font)
     .foreground(color)
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=120.0, height=40.0),
   )
@@ -730,7 +711,7 @@ test "runtime propagates theme modifier into default text color" {
   let root : @core.View[Unit] = @views.text("Themed", width=90.0, height=28.0).theme(
     theme,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=120.0, height=40.0),
   )
@@ -749,7 +730,7 @@ test "runtime propagates theme modifier into default text color" {
 /// view is constructed once below, then `set_environment` flips the scheme.
 test "ambient button recolors when environment scheme flips without rebuild" {
   let light_env = @core.Environment::neutral()
-  let dark_env = light_env.with_system_scheme(@core.ColorScheme::Dark)
+  let dark_env = light_env.with_system_scheme(Dark)
   let light_primary = light_env.theme.palette.primary
   let dark_primary = dark_env.theme.palette.primary
   // Sanity: the two schemes must actually differ, otherwise the test proves
@@ -763,7 +744,7 @@ test "ambient button recolors when environment scheme flips without rebuild" {
     width=120.0,
     height=40.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=120.0, height=40.0),
     environment=light_env,
@@ -791,8 +772,7 @@ fn runtime_test_solid_fill_color(
 ) -> @core.Color? {
   for command in commands {
     match command {
-      @core.DrawCommand::FillRoundedRectBrush(_, @core.Brush::Solid(color)) =>
-        return Some(color)
+      FillRoundedRectBrush(_, Solid(color)) => return Some(color)
       _ => ()
     }
   }
@@ -806,10 +786,7 @@ fn runtime_test_text_run(
 ) -> @core.TextRun? {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawText(run) =>
-        if run.text == text {
-          return Some(run)
-        }
+      DrawText(run) => if run.text == text { return Some(run) }
       _ => ()
     }
   }
@@ -843,19 +820,19 @@ fn[Msg] runtime_test_hover_tracker(
     paint=_ctx => @core.ViewPaintPlan::commands([]),
     event=ctx => {
       match ctx.event {
-        @core.AppEvent::Pointer(event) => {
+        Pointer(event) => {
           let inside = ctx.frame.contains(event.position)
           // Treat Exit like an out-of-bounds move: the pointer has left.
-          let effective_inside = if event.phase == @core.PointerPhase::Exit {
+          let effective_inside = if event.phase == Exit {
             false
           } else {
             inside
           }
           let next_hovered = match event.phase {
-            @core.PointerPhase::Down => ctx.state.hovered
-            @core.PointerPhase::Move => effective_inside
-            @core.PointerPhase::Up => effective_inside
-            @core.PointerPhase::Cancel | @core.PointerPhase::Exit => false
+            Down => ctx.state.hovered
+            Move => effective_inside
+            Up => effective_inside
+            Cancel | Exit => false
           }
           let changed = next_hovered != ctx.state.hovered
           if changed {
@@ -866,8 +843,8 @@ fn[Msg] runtime_test_hover_tracker(
               ..@core.ViewEventResult::ignored(),
               changed: true,
               captured: true,
-              state: Some({ ..ctx.state, hovered: next_hovered }),
-              dirty: @core.ViewDirtyHint::ViewPaintDirty,
+              state: Some({ ..ctx.state, hovered: next_hovered, }),
+              dirty: ViewPaintDirty,
             }
           } else {
             @core.ViewEventResult::ignored()
@@ -923,36 +900,36 @@ test "runtime delivers synthetic Exit to clear hover on pointer leave" {
     },
     paint=_ctx => @core.ViewPaintPlan::commands([]),
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=300.0, height=40.0),
   )
   ignore(runtime.layout())
   // Hover the left tracker.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
   // Move into the gap (x in [100,200)). No tracker is hit, so the left tracker
   // must receive a synthetic Exit and clear its hover.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=150.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
   // Move back onto the left tracker: it should hover again.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -995,24 +972,24 @@ test "runtime clears hover when moving between sibling controls" {
     },
     paint=_ctx => @core.ViewPaintPlan::commands([]),
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=40.0),
   )
   ignore(runtime.layout())
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=150.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -1062,18 +1039,18 @@ fn[Msg] runtime_test_hover_phase_tracker(
     paint=_ctx => @core.ViewPaintPlan::commands([]),
     event=ctx => {
       match ctx.event {
-        @core.AppEvent::Pointer(event) => {
+        Pointer(event) => {
           phases.push(event.phase)
-          let effective_inside = if event.phase == @core.PointerPhase::Exit {
+          let effective_inside = if event.phase == Exit {
             false
           } else {
             ctx.frame.contains(event.position)
           }
           let next_hovered = match event.phase {
-            @core.PointerPhase::Down => ctx.state.hovered
-            @core.PointerPhase::Move => effective_inside
-            @core.PointerPhase::Up => effective_inside
-            @core.PointerPhase::Cancel | @core.PointerPhase::Exit => false
+            Down => ctx.state.hovered
+            Move => effective_inside
+            Up => effective_inside
+            Cancel | Exit => false
           }
           let changed = next_hovered != ctx.state.hovered
           if changed {
@@ -1084,8 +1061,8 @@ fn[Msg] runtime_test_hover_phase_tracker(
               ..@core.ViewEventResult::ignored(),
               changed: true,
               captured: true,
-              state: Some({ ..ctx.state, hovered: next_hovered }),
-              dirty: @core.ViewDirtyHint::ViewPaintDirty,
+              state: Some({ ..ctx.state, hovered: next_hovered, }),
+              dirty: ViewPaintDirty,
             }
           } else {
             @core.ViewEventResult::ignored()
@@ -1133,27 +1110,27 @@ test "runtime Exit does not propagate to descendant being entered" {
     },
     paint=_ctx => @core.ViewPaintPlan::commands([]),
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=40.0),
   )
   ignore(runtime.layout())
   // Rest the pointer on empty parent space.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=10.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
   // Move onto the child button. The parent gets an Exit; the child must get
   // only the Move (no Exit) — otherwise its hover flickers.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=100.0, y=10.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -1164,7 +1141,7 @@ test "runtime Exit does not propagate to descendant being entered" {
       .join(", ")
     fail("expected child hover log [true] but got [\{rendered}]")
   }
-  let has_exit = child_phases.any(p => p == @core.PointerPhase::Exit)
+  let has_exit = child_phases.any(p => p == Exit)
   if has_exit {
     fail(
       "child must not receive Exit while being entered; phase count=\{child_phases.length()}",
@@ -1180,9 +1157,9 @@ fn runtime_test_hover_fill_count(commands : Array[@core.DrawCommand]) -> Int {
   let mut n = 0
   for cmd in commands {
     match cmd {
-      @core.DrawCommand::FillRoundedRectBrush(_, brush) =>
+      FillRoundedRectBrush(_, brush) =>
         match brush {
-          @core.Brush::Solid(color) => if color.a > 0.0 { n = n + 1 }
+          Solid(color) => if color.a > 0.0 { n = n + 1 }
           _ => ()
         }
       _ => ()
@@ -1204,7 +1181,7 @@ test "runtime clears hover on a button nested in an overlay" {
   let theme = @views.light_theme()
   let row : @core.View[Unit] = @views.button(
     "Row",
-    variant=@views.ButtonVariant::Ghost,
+    variant=Ghost,
     theme~,
     width=168.0,
     height=36.0,
@@ -1219,7 +1196,7 @@ test "runtime clears hover on a button nested in an overlay" {
     theme~,
     width=232.0,
     height=200.0,
-    variant=@views.ContainerVariant::Overlay,
+    variant=Overlay,
   ).align(alignment=@core.Alignment::top_trailing())
   let root : @core.View[Unit] = @views.stack([
     @views.container(
@@ -1229,7 +1206,7 @@ test "runtime clears hover on a button nested in an overlay" {
     ),
     overlay,
   ])
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=400.0, height=300.0),
   )
@@ -1239,10 +1216,10 @@ test "runtime clears hover on a button nested in an overlay" {
   // The overlay is top-trailing in a 400-wide canvas; the button sits inside it
   // near x≈300, y≈20.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=300.0, y=20.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -1255,10 +1232,10 @@ test "runtime clears hover on a button nested in an overlay" {
   }
   // Move the pointer off the overlay into the workspace center.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=200.0, y=150.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
       ),
     ),
   )
@@ -1314,25 +1291,25 @@ test "scroll_view child paint_bounds does not spill over earlier siblings" {
     ],
     spacing=8.0,
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=sidebar,
     size=@core.Size::new(width=200.0, height=280.0),
   )
   ignore(runtime.draw_frame())
   // Before scrolling, clicking the search field focuses it.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=20.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=20.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )
@@ -1341,10 +1318,10 @@ test "scroll_view child paint_bounds does not spill over earlier siblings" {
   }
   // Move focus off the field.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=120.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
@@ -1357,7 +1334,7 @@ test "scroll_view child paint_bounds does not spill over earlier siblings" {
     runtime.dispatch_pointer_input(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=160.0),
-        phase=@core.PointerPhase::Move,
+        phase=Move,
         wheel_delta=@core.Point::new(x=0.0, y=-300.0),
       ),
     ),
@@ -1366,18 +1343,18 @@ test "scroll_view child paint_bounds does not spill over earlier siblings" {
   // Click the search field again. Without the fix, the scroll list's
   // paint_bounds covers the field and the click lands on a story button.
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=20.0),
-        phase=@core.PointerPhase::Down,
+        phase=Down,
       ),
     ),
   )
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
+    Pointer(
       @core.PointerEvent::new(
         position=@core.Point::new(x=20.0, y=20.0),
-        phase=@core.PointerPhase::Up,
+        phase=Up,
       ),
     ),
   )

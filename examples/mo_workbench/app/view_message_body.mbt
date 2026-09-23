@@ -11,12 +11,9 @@ fn chat_message_body(
   let font_size = chat_message_text_role_font(role, theme).size
   let lines = chat_message_display_lines(display, width, font_size)
   if lines.is_empty() {
-    return chat_message_text(
-      "(empty)",
-      role=@views.TextRole::Caption,
-      theme~,
-      width~,
-    ).foreground(theme.palette.muted)
+    return chat_message_text("(empty)", role=Caption, theme~, width~).foreground(
+      theme.palette.muted,
+    )
   }
   let rows : Array[@moui.View[CodeMsg]] = []
   for line in lines {
@@ -30,25 +27,18 @@ fn chat_message_body(
       ),
     )
   }
-  @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start)
+  @views.column(rows, spacing=4.0, align=Start)
 }
 
 ///|
 fn chat_message_text(
   text : String,
-  role? : @views.TextRole = @views.TextRole::Body,
+  role? : @views.TextRole = Body,
   theme~ : @moui.Theme,
   width? : Double = 160.0,
   height? : Double = 32.0,
 ) -> @moui.View[CodeMsg] {
-  @views.text(
-    text,
-    role~,
-    theme~,
-    width~,
-    height~,
-    align=@text.TextAlign::TextStart,
-  )
+  @views.text(text, role~, theme~, width~, height~, align=TextStart)
 }
 
 ///|
@@ -57,17 +47,17 @@ fn chat_message_text_role_font(
   theme : @moui.Theme,
 ) -> @text.FontSpec {
   match role {
-    @views.TextRole::Body => theme.typography.body
-    @views.TextRole::Title => theme.typography.title
-    @views.TextRole::Caption => theme.typography.caption
-    @views.TextRole::Control => theme.typography.control
-    @views.TextRole::Mono =>
-      { ..theme.typography.body, families: @text.FontFamilyStack::monospace() }
-    @views.TextRole::Display => theme.typography.display
-    @views.TextRole::Headline => theme.typography.headline
-    @views.TextRole::Subtitle => theme.typography.subtitle
-    @views.TextRole::Label => theme.typography.label
-    @views.TextRole::Overline => theme.typography.overline
+    Body => theme.typography.body
+    Title => theme.typography.title
+    Caption => theme.typography.caption
+    Control => theme.typography.control
+    Mono =>
+      { ..theme.typography.body, families: @text.FontFamilyStack::monospace(), }
+    Display => theme.typography.display
+    Headline => theme.typography.headline
+    Subtitle => theme.typography.subtitle
+    Label => theme.typography.label
+    Overline => theme.typography.overline
   }
 }
 
@@ -194,7 +184,12 @@ fn cache_chat_message_display_lines(
     None => ()
   }
   let lines = chat_message_display_lines_compute(text_, width, font_size)
-  insert_message_lines_cache_entry(key, { text: text_, width, font_size, lines })
+  insert_message_lines_cache_entry(key, {
+    text: text_,
+    width,
+    font_size,
+    lines,
+  })
   lines
 }
 
@@ -281,7 +276,7 @@ fn throttled_assistant_message(
   theme : @moui.Theme,
   width : Double,
 ) -> ChatMessage {
-  let font_size = chat_message_text_role_font(@views.TextRole::Body, theme).size
+  let font_size = chat_message_text_role_font(Body, theme).size
   let reasoning_len = match reasoning {
     Some(r) => r.char_length()
     None => 0
@@ -294,7 +289,7 @@ fn throttled_assistant_message(
         snap.font_size == font_size &&
         total_len >= snap.total_len &&
         total_len - snap.total_len < stream_render_step {
-        return ChatMessage::Assistant(snap.content, snap.reasoning)
+        return Assistant(snap.content, snap.reasoning)
       }
     None => ()
   }
@@ -306,7 +301,7 @@ fn throttled_assistant_message(
     width,
     font_size,
   })
-  ChatMessage::Assistant(content, reasoning)
+  Assistant(content, reasoning)
 }
 
 ///|

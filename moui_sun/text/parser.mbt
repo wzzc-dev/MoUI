@@ -64,7 +64,7 @@ fn parse_font_checked(data : Bytes) -> Result[Font, FontParseError] {
     Err(error) => return Err(error)
     Ok(kern) => kern
   }
-  Ok({ head, hhea, hmtx, cmap, glyphs, glyph_count, kern })
+  Ok({ head, hhea, hmtx, cmap, glyphs, glyph_count, kern, })
 }
 
 ///|
@@ -72,19 +72,17 @@ fn parse_table_directory(
   data : Bytes,
 ) -> Result[Map[String, TableRecord], FontParseError] {
   guard data.length() >= 12 else {
-    return Err(FontParseError::UnexpectedEndOfData(0, 12, data.length()))
+    return Err(UnexpectedEndOfData(0, 12, data.length()))
   }
   let sf_version = read_u32_be_at(data, 0)
   guard sf_version == 0x00010000 else {
-    return Err(FontParseError::InvalidFontHeader(sf_version))
+    return Err(InvalidFontHeader(sf_version))
   }
 
   let num_tables = read_u16_be_at(data, 4).to_int()
   let directory_len = 12 + num_tables * 16
   guard data.length() >= directory_len else {
-    return Err(
-      FontParseError::UnexpectedEndOfData(12, num_tables * 16, data.length()),
-    )
+    return Err(UnexpectedEndOfData(12, num_tables * 16, data.length()))
   }
 
   let tables : Map[String, TableRecord] = Map([])
@@ -94,7 +92,7 @@ fn parse_table_directory(
     let checksum = read_u32_be_at(data, pos + 4)
     let offset = read_u32_be_at(data, pos + 8)
     let length = read_u32_be_at(data, pos + 12)
-    tables[tag] = { tag, checksum, offset, length }
+    tables[tag] = { tag, checksum, offset, length, }
   }
   Ok(tables)
 }
@@ -115,10 +113,10 @@ fn parse_head_checked(
   let head_offset = head.offset.reinterpret_as_int()
   let index_to_loc_format = read_i16_be_at(data, head_offset + 50)
   guard index_to_loc_format is 0 || index_to_loc_format is 1 else {
-    return Err(FontParseError::UnsupportedIndexToLocFormat(index_to_loc_format))
+    return Err(UnsupportedIndexToLocFormat(index_to_loc_format))
   }
   let units_per_em = read_u16_be_at(data, head_offset + 18).to_int()
-  Ok({ units_per_em, index_to_loc_format })
+  Ok({ units_per_em, index_to_loc_format, })
 }
 
 ///|
@@ -137,13 +135,11 @@ fn parse_hhea_checked(
 
   let hhea_offset = hhea.offset.reinterpret_as_int()
   let num_h_metrics = read_u16_be_at(data, hhea_offset + 34).to_int()
-  guard num_h_metrics > 0 else {
-    return Err(FontParseError::MissingHorizontalMetrics)
-  }
+  guard num_h_metrics > 0 else { return Err(MissingHorizontalMetrics) }
   let ascent = read_i16_be_at(data, hhea_offset + 4)
   let descent = read_i16_be_at(data, hhea_offset + 6)
   let line_gap = read_i16_be_at(data, hhea_offset + 8)
-  Ok({ ascent, descent, line_gap, num_h_metrics })
+  Ok({ ascent, descent, line_gap, num_h_metrics, })
 }
 
 ///|
@@ -166,7 +162,7 @@ fn parse_hmtx_checked(
     let pos = hmtx_offset + i * 4
     let advance_width = read_u16_be_at(data, pos).to_int()
     let lsb = read_i16_be_at(data, pos + 2)
-    metrics.push({ advance_width, lsb })
+    metrics.push({ advance_width, lsb, })
   }
   Ok(metrics)
 }
@@ -276,7 +272,7 @@ fn require_table(
 ) -> Result[TableRecord, FontParseError] {
   let table = match tables.get(tag) {
     Some(table) => table
-    None => return Err(FontParseError::MissingTable(tag))
+    None => return Err(MissingTable(tag))
   }
   match require_table_bounds(data, table) {
     Err(error) => Err(error)
@@ -295,9 +291,7 @@ fn require_table_bounds(
     length >= 0 &&
     offset <= data.length() &&
     length <= data.length() - offset else {
-    return Err(
-      FontParseError::TableOutOfBounds(table.tag, offset, length, data.length()),
-    )
+    return Err(TableOutOfBounds(table.tag, offset, length, data.length()))
   }
   Ok(())
 }
@@ -309,7 +303,7 @@ fn require_min_length(
 ) -> Result[Unit, FontParseError] {
   let length = table.length.reinterpret_as_int()
   guard length >= minimum else {
-    return Err(FontParseError::TableTooShort(table.tag, length, minimum))
+    return Err(TableTooShort(table.tag, length, minimum))
   }
   Ok(())
 }
@@ -333,12 +327,10 @@ fn validate_loca_offsets(
     } else {
       read_u32_be_at(data, entry_offset).reinterpret_as_int()
     }
-    guard glyph_offset >= previous else {
-      return Err(FontParseError::UnsortedLocaOffsets)
-    }
+    guard glyph_offset >= previous else { return Err(UnsortedLocaOffsets) }
     guard glyph_offset <= glyf_len else {
       return Err(
-        FontParseError::TableOutOfBounds(
+        TableOutOfBounds(
           "glyf",
           glyf.offset.reinterpret_as_int() + glyph_offset,
           0,
@@ -400,7 +392,7 @@ fn parse_glyf_data_checked(
     }
   }
   for _ in max_glyphs..<glyph_count {
-    glyphs.push(GlyphData::Empty)
+    glyphs.push(Empty)
   }
 
   Ok((glyphs, glyph_count))
@@ -422,7 +414,7 @@ fn parse_glyph_checked(
   let xmax = read_i16_be_at(data, offset + 6)
   let ymax = read_i16_be_at(data, offset + 8)
 
-  guard num_contours != 0 else { return Ok(GlyphData::Empty) }
+  guard num_contours != 0 else { return Ok(Empty) }
   if num_contours > 0 {
     parse_simple_glyph_checked(
       data, offset, length, num_contours, xmin, ymin, xmax, ymax,
@@ -454,7 +446,7 @@ fn parse_simple_glyph_checked(
   for i in 0..<num_contours {
     let end_point = read_u16_be_at(data, offset + pos + i * 2).to_int()
     guard end_point > previous_end_point else {
-      return Err(FontParseError::UnsortedGlyphContourEndpoints)
+      return Err(UnsortedGlyphContourEndpoints)
     }
     end_pts_of_contour.push(end_point)
     previous_end_point = end_point
@@ -493,7 +485,7 @@ fn parse_simple_glyph_checked(
         flags.push(flag)
       }
       guard flags.length() <= num_points else {
-        return Err(FontParseError::GlyphFlagRepeatOverflow)
+        return Err(GlyphFlagRepeatOverflow)
       }
     }
   }
@@ -567,13 +559,13 @@ fn parse_simple_glyph_checked(
     let points = []
     for pi in point_start..<point_end {
       let on_curve = flags[pi].land(0x01) != 0
-      points.push({ x: x_coords[pi], y: y_coords[pi], on_curve })
+      points.push({ x: x_coords[pi], y: y_coords[pi], on_curve, })
     }
     contours.push({ points, })
     point_start = point_end
   }
 
-  Ok(GlyphData::Simple({ contours, xmin, ymin, xmax, ymax }))
+  Ok(Simple({ contours, xmin, ymin, xmax, ymax, }))
 }
 
 ///|
@@ -672,7 +664,7 @@ fn parse_composite_glyph_checked(
     has_more = flags.land(more_components) != 0
   }
 
-  Ok(GlyphData::Composite(components))
+  Ok(Composite(components))
 }
 
 ///|
@@ -711,7 +703,7 @@ fn validate_simple_glyph_data(
   for i in 0..<num_contours {
     let end_point = read_u16_be_at(data, offset + pos + i * 2).to_int()
     guard end_point > previous_end_point else {
-      return Err(FontParseError::UnsortedGlyphContourEndpoints)
+      return Err(UnsortedGlyphContourEndpoints)
     }
     previous_end_point = end_point
   }
@@ -845,9 +837,7 @@ fn require_glyph_bytes(
     required >= 0 &&
     pos <= glyph_length &&
     required <= glyph_length - pos else {
-    return Err(
-      FontParseError::TableTooShort("glyf", glyph_length, pos + required),
-    )
+    return Err(TableTooShort("glyf", glyph_length, pos + required))
   }
   Ok(())
 }
@@ -863,7 +853,7 @@ fn require_table_bytes(
     required >= 0 &&
     pos <= table_length &&
     required <= table_length - pos else {
-    return Err(FontParseError::TableTooShort(tag, table_length, pos + required))
+    return Err(TableTooShort(tag, table_length, pos + required))
   }
   Ok(())
 }
@@ -877,7 +867,7 @@ fn require_cmap_subtable_offset(
   let table_length = table.length.reinterpret_as_int()
   guard subtable_offset >= 0 && subtable_offset < table_length else {
     return Err(
-      FontParseError::TableOutOfBounds(
+      TableOutOfBounds(
         table.tag,
         table.offset.reinterpret_as_int() + subtable_offset,
         0,
@@ -953,9 +943,7 @@ fn parse_cmap(
   let cmap : Map[Int, Int] = Map([])
 
   let version = read_u16_be_at(data, base_offset).to_int()
-  guard version is 0 else {
-    return Err(FontParseError::UnsupportedCmapVersion(version))
-  }
+  guard version is 0 else { return Err(UnsupportedCmapVersion(version)) }
   let num_tables = read_u16_be_at(data, base_offset + 2).to_int()
   match require_table_bytes("cmap", table_length, 0, 4 + num_tables * 8) {
     Err(error) => return Err(error)
@@ -1021,7 +1009,7 @@ fn parse_cmap_format4(
 
   let subtable_length = read_u16_be_at(data, offset + 2).to_int()
   guard subtable_length >= 16 else {
-    return Err(FontParseError::TableTooShort("cmap", subtable_length, 16))
+    return Err(TableTooShort("cmap", subtable_length, 16))
   }
   match
     require_table_bytes("cmap", table_length, subtable_offset, subtable_length) {
@@ -1031,14 +1019,12 @@ fn parse_cmap_format4(
 
   let seg_count_x2 = read_u16_be_at(data, offset + 6).to_int()
   guard (seg_count_x2 % 2) is 0 else {
-    return Err(FontParseError::InvalidCmapSegmentCount(seg_count_x2))
+    return Err(InvalidCmapSegmentCount(seg_count_x2))
   }
   let seg_count = seg_count_x2 / 2
   let required_length = 16 + seg_count * 8
   guard required_length <= subtable_length else {
-    return Err(
-      FontParseError::TableTooShort("cmap", subtable_length, required_length),
-    )
+    return Err(TableTooShort("cmap", subtable_length, required_length))
   }
 
   let end_codes_offset = 14
@@ -1067,9 +1053,7 @@ fn parse_cmap_format4(
     let end = end_codes[i]
     let delta = id_deltas[i]
     let range_offset = id_range_offsets[i]
-    guard start <= end else {
-      return Err(FontParseError::InvalidCmapSegmentRange(start, end))
-    }
+    guard start <= end else { return Err(InvalidCmapSegmentRange(start, end)) }
 
     for c in start..<=end {
       let glyph_id = if range_offset is 0 {
@@ -1117,7 +1101,7 @@ fn parse_cmap_format12(
 
   let subtable_length = read_u32_be_at(data, offset + 4).reinterpret_as_int()
   guard subtable_length >= 16 else {
-    return Err(FontParseError::TableTooShort("cmap", subtable_length, 16))
+    return Err(TableTooShort("cmap", subtable_length, 16))
   }
   match
     require_table_bytes("cmap", table_length, subtable_offset, subtable_length) {
@@ -1126,9 +1110,7 @@ fn parse_cmap_format12(
   }
   let n_groups = read_u32_be_at(data, offset + 12).reinterpret_as_int()
   guard n_groups >= 0 && n_groups <= (subtable_length - 16) / 12 else {
-    return Err(
-      FontParseError::TableTooShort("cmap", subtable_length, 16 + n_groups * 12),
-    )
+    return Err(TableTooShort("cmap", subtable_length, 16 + n_groups * 12))
   }
 
   for i in 0..<n_groups {
@@ -1139,9 +1121,7 @@ fn parse_cmap_format12(
     guard start_char_code >= 0 &&
       end_char_code >= start_char_code &&
       end_char_code <= 0x10FFFF else {
-      return Err(
-        FontParseError::InvalidCmapGroupRange(start_char_code, end_char_code),
-      )
+      return Err(InvalidCmapGroupRange(start_char_code, end_char_code))
     }
 
     for c in start_char_code..<=end_char_code {
@@ -1188,7 +1168,7 @@ fn parse_kern(
         let subtable_length = read_u16_be_at(data, offset + pos + 2).to_int()
         let coverage = read_u16_be_at(data, offset + pos + 4).to_int()
         guard subtable_length >= 6 else {
-          return Err(FontParseError::TableTooShort("kern", subtable_length, 6))
+          return Err(TableTooShort("kern", subtable_length, 6))
         }
         match require_table_bytes("kern", table_length, pos, subtable_length) {
           Err(error) => return Err(error)
@@ -1198,18 +1178,12 @@ fn parse_kern(
         let format = (coverage >> 8).land(0xFF)
         if format is 0 {
           guard subtable_length >= 14 else {
-            return Err(
-              FontParseError::TableTooShort("kern", subtable_length, 14),
-            )
+            return Err(TableTooShort("kern", subtable_length, 14))
           }
           let n_pairs = read_u16_be_at(data, offset + pos + 6).to_int()
           let required_length = 14 + n_pairs * 6
           guard required_length <= subtable_length else {
-            return Err(
-              FontParseError::TableTooShort(
-                "kern", subtable_length, required_length,
-              ),
-            )
+            return Err(TableTooShort("kern", subtable_length, required_length))
           }
           let pairs_offset = pos + 14
           for i in 0..<n_pairs {
@@ -1217,7 +1191,7 @@ fn parse_kern(
             let left = read_u16_be_at(data, offset + pair_pos).to_int()
             let right = read_u16_be_at(data, offset + pair_pos + 2).to_int()
             let value = read_i16_be_at(data, offset + pair_pos + 4)
-            kern.push({ left, right, value })
+            kern.push({ left, right, value, })
           }
         }
         pos = pos + subtable_length

@@ -23,7 +23,7 @@ fn skia_register_font_data(family : @core.FontFamily, data : Bytes) -> Unit {
       embedded_fonts.val = embedded_fonts.val.filter(fn(existing) {
         existing.family != family
       })
-      embedded_fonts.val.push({ family, typeface })
+      embedded_fonts.val.push({ family, typeface, })
     }
     None => ()
   }

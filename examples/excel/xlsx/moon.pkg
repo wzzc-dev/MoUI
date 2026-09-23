@@ -1,7 +1,6 @@
 import {
   "bobzhang/mbtexcel",
   "bobzhang/mbtexcel/xlsx" @mbtexcel_xlsx,
-  "examples/excel/cell",
   "examples/excel/sheet",
 }
 

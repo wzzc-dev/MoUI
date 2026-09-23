@@ -11,7 +11,7 @@ fn runtime_test_cached_layer_source(layer_index : Ref[Int]) -> @core.View[Unit] 
     paint=ctx => {
       let index = layer_index.val
       let commands : Array[@core.DrawCommand] = [
-        @core.DrawCommand::FillRect(ctx.frame, @core.Color::black()),
+        FillRect(ctx.frame, @core.Color::black()),
       ]
       {
         commands: [],
@@ -31,7 +31,7 @@ fn runtime_test_cached_layer_source(layer_index : Ref[Int]) -> @core.View[Unit] 
     },
     event=ctx => {
       match ctx.event {
-        @core.AppEvent::Pointer(event) =>
+        Pointer(event) =>
           if ctx.frame.contains(event.position) {
             layer_index.val = layer_index.val + 1
             @core.ViewEventResult::message(())
@@ -60,7 +60,7 @@ fn runtime_test_stable_cached_layer_source(
     },
     paint=ctx => {
       let commands : Array[@core.DrawCommand] = [
-        @core.DrawCommand::FillRect(ctx.frame, @core.Color::black()),
+        FillRect(ctx.frame, @core.Color::black()),
       ]
       {
         commands: [],
@@ -80,7 +80,7 @@ fn runtime_test_stable_cached_layer_source(
     },
     event=ctx => {
       match ctx.event {
-        @core.AppEvent::Pointer(event) =>
+        Pointer(event) =>
           if ctx.frame.contains(event.position) {
             revision.val = revision.val + 1
             @core.ViewEventResult::message(())
@@ -97,28 +97,21 @@ fn runtime_test_stable_cached_layer_source(
 fn runtime_test_begin_cached_layer_count(
   commands : Array[@core.DrawCommand],
 ) -> Int {
-  commands
-  .filter(command => command is @core.DrawCommand::BeginRetainedLayer(_))
-  .length()
+  commands.filter(command => command is BeginRetainedLayer(_)).length()
 }
 
 ///|
 fn runtime_test_retained_payload_count(
   commands : Array[@core.DrawCommand],
 ) -> Int {
-  commands
-  .filter(command => command is @core.DrawCommand::FillRect(_, _))
-  .length()
+  commands.filter(command => command is FillRect(_, _)).length()
 }
 
 ///|
 fn runtime_test_bump_cached_layer_revision(runtime : AppRuntime) -> Unit {
   runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=4.0, y=4.0),
-        phase=@core.PointerPhase::Up,
-      ),
+    Pointer(
+      @core.PointerEvent::new(position=@core.Point::new(x=4.0, y=4.0), phase=Up),
     ),
   )
 }

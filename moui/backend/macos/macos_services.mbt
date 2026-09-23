@@ -114,7 +114,7 @@ extern "C" fn macos_install_application_menu_key_equivalent_monitor() -> Int = "
 pub fn backend_info() -> MacosBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
-      backend=@host.HostBackendKind::Native,
+      backend=Native,
       description="macOS AppKit window host with renderer providers",
     ),
     renderer_available: true,
@@ -180,9 +180,9 @@ pub fn macos_capability_summary(
 ///|
 pub fn macos_system_theme() -> @core.ColorScheme {
   if macos_system_theme_is_dark() != 0 {
-    @core.ColorScheme::Dark
+    Dark
   } else {
-    @core.ColorScheme::Light
+    Light
   }
 }
 
@@ -193,7 +193,7 @@ fn macos_environment_with_accessibility_settings(
   let contrast = if macos_accessibility_increase_contrast() != 0 {
     @core.AccessibilityContrast::High
   } else {
-    @core.AccessibilityContrast::Standard
+    Standard
   }
   environment
   .with_accessibility_contrast(contrast)
@@ -243,9 +243,9 @@ fn dispatch_macos_settings(
     Read(key) => {
       let key_bytes = @utf8.encode(key[:], bom=false)
       if macos_settings_has_value(key_bytes) == 0 {
-        @host.HostServiceResponse::SettingValue(None)
+        SettingValue(None)
       } else {
-        @host.HostServiceResponse::SettingValue(
+        SettingValue(
           Some(
             @utf8.decode_lossy(
               macos_settings_read_bytes(key_bytes)[:],
@@ -259,17 +259,17 @@ fn dispatch_macos_settings(
       let key_bytes = @utf8.encode(key[:], bom=false)
       let value_bytes = @utf8.encode(value[:], bom=false)
       if macos_settings_write_bytes(key_bytes, value_bytes) != 0 {
-        @host.HostServiceResponse::SettingWritten
+        SettingWritten
       } else {
-        @host.HostServiceResponse::Unavailable("settings write failed")
+        Unavailable("settings write failed")
       }
     }
     Remove(key) => {
       let key_bytes = @utf8.encode(key[:], bom=false)
       if macos_settings_remove_bytes(key_bytes) != 0 {
-        @host.HostServiceResponse::SettingRemoved
+        SettingRemoved
       } else {
-        @host.HostServiceResponse::Unavailable("settings remove failed")
+        Unavailable("settings remove failed")
       }
     }
   }
@@ -329,7 +329,7 @@ fn dispatch_macos_application_command(
   }
   if focused_text {
     match command.intent {
-      @core.CommandIntent::Copy | @core.CommandIntent::Cut => {
+      Copy | Cut => {
         let result = runtime.dispatch_focused_text_command(command.intent)
         match result.clipboard_text {
           Some(text) => ignore(macos_clipboard_write_text(text))
@@ -337,12 +337,12 @@ fn dispatch_macos_application_command(
         }
         return ()
       }
-      @core.CommandIntent::Paste => {
+      Paste => {
         match macos_clipboard_read_text() {
           Some(text) =>
             ignore(
               runtime.dispatch_focused_text_command(
-                @core.CommandIntent::Paste,
+                Paste,
                 paste_text=Some(text),
               ),
             )
@@ -350,9 +350,7 @@ fn dispatch_macos_application_command(
         }
         return ()
       }
-      @core.CommandIntent::Undo
-      | @core.CommandIntent::Redo
-      | @core.CommandIntent::SelectAll => {
+      Undo | Redo | SelectAll => {
         ignore(runtime.dispatch_command(command.intent))
         return ()
       }
@@ -365,12 +363,12 @@ fn dispatch_macos_application_command(
 ///|
 fn dispatch_macos_native_edit_command(intent : @core.CommandIntent) -> Bool {
   let action = match intent {
-    @core.CommandIntent::Copy => Some(0)
-    @core.CommandIntent::Cut => Some(1)
-    @core.CommandIntent::Paste => Some(2)
-    @core.CommandIntent::Undo => Some(3)
-    @core.CommandIntent::Redo => Some(4)
-    @core.CommandIntent::SelectAll => Some(5)
+    Copy => Some(0)
+    Cut => Some(1)
+    Paste => Some(2)
+    Undo => Some(3)
+    Redo => Some(4)
+    SelectAll => Some(5)
     _ => None
   }
   match action {
@@ -387,9 +385,8 @@ fn macos_application_menu_commands(
   for menu in menus {
     for item in menu.items {
       match item {
-        @services.ApplicationMenuItem::MenuCommand(command) =>
-          commands.push(command)
-        @services.ApplicationMenuItem::MenuSeparator => ()
+        MenuCommand(command) => commands.push(command)
+        MenuSeparator => ()
       }
     }
   }
@@ -403,12 +400,11 @@ fn macos_application_menu_descriptors(
   let descriptors : Array[@window_macos.SystemMenuDescriptor] = []
   let next_action_id = Ref(1)
   for menu in menus {
-    let in_menu_bar = menu.placement
-      is @services.ApplicationMenuPlacement::MenuBar
+    let in_menu_bar = menu.placement is MenuBar
     let items : Array[@window_macos.SystemMenuItemDescriptor] = []
     for item in menu.items {
       match item {
-        @services.ApplicationMenuItem::MenuSeparator =>
+        MenuSeparator =>
           if in_menu_bar {
             items.push(
               @window_macos.SystemMenuItemDescriptor::new(
@@ -420,7 +416,7 @@ fn macos_application_menu_descriptors(
               ),
             )
           }
-        @services.ApplicationMenuItem::MenuCommand(command) => {
+        MenuCommand(command) => {
           let action_id = next_action_id.val
           next_action_id.val = action_id + 1
           if in_menu_bar {
@@ -454,15 +450,14 @@ fn macos_application_menu_items(
   let result : Array[@host.HostApplicationMenuItem] = []
   let next_action_id = Ref(1)
   for menu in menus {
-    let in_application_menu = menu.placement
-      is @services.ApplicationMenuPlacement::ApplicationMenu
+    let in_application_menu = menu.placement is ApplicationMenu
     for item in menu.items {
       match item {
-        @services.ApplicationMenuItem::MenuSeparator =>
+        MenuSeparator =>
           if in_application_menu {
             result.push(@host.HostApplicationMenuItem::separator())
           }
-        @services.ApplicationMenuItem::MenuCommand(command) => {
+        MenuCommand(command) => {
           let action_id = next_action_id.val
           next_action_id.val = action_id + 1
           if in_application_menu {
@@ -494,14 +489,14 @@ fn macos_application_menu_bar_items(
     let items : Array[@host.HostApplicationMenuItem] = []
     for item in menu.items {
       match item {
-        @services.ApplicationMenuItem::MenuSeparator =>
-          if menu.placement is @services.ApplicationMenuPlacement::MenuBar {
+        MenuSeparator =>
+          if menu.placement is MenuBar {
             items.push(@host.HostApplicationMenuItem::separator())
           }
-        @services.ApplicationMenuItem::MenuCommand(command) => {
+        MenuCommand(command) => {
           let action_id = next_action_id.val
           next_action_id.val = action_id + 1
-          if menu.placement is @services.ApplicationMenuPlacement::MenuBar {
+          if menu.placement is MenuBar {
             let (key, modifiers) = macos_application_menu_shortcut(command)
             items.push(
               @host.HostApplicationMenuItem::new(
@@ -516,12 +511,12 @@ fn macos_application_menu_bar_items(
         }
       }
     }
-    if menu.placement is @services.ApplicationMenuPlacement::MenuBar {
+    if menu.placement is MenuBar {
       result.push(
         @host.HostApplicationMenu::new(
           title=menu.title,
           items~,
-          placement=@host.HostApplicationMenuPlacement::MenuBar,
+          placement=MenuBar,
         ),
       )
     }
@@ -590,7 +585,7 @@ fn dispatch_macos_application_menu(
   let application_items : Array[@host.HostApplicationMenuItem] = []
   for menu in menus {
     match menu.placement {
-      @host.HostApplicationMenuPlacement::MenuBar => {
+      MenuBar => {
         let items : Array[@window_macos.SystemMenuItemDescriptor] = []
         for item in menu.items {
           items.push(
@@ -607,13 +602,12 @@ fn dispatch_macos_application_menu(
           @window_macos.SystemMenuDescriptor::new(title=menu.title, items~),
         )
       }
-      @host.HostApplicationMenuPlacement::ApplicationMenu =>
-        application_items.append(menu.items)
+      ApplicationMenu => application_items.append(menu.items)
     }
   }
   @window_macos.set_system_menus(descriptors)
   ignore(install_macos_application_menu_items(application_items, _ => ()))
-  @host.HostServiceResponse::ApplicationMenuInstalled
+  ApplicationMenuInstalled
 }
 
 ///|
@@ -648,42 +642,36 @@ fn dispatch_macos_clipboard(
   request : @host.HostClipboardRequest,
 ) -> @host.HostServiceResponse {
   match request {
-    @host.HostClipboardRequest::ReadText =>
+    ReadText =>
       if macos_clipboard_has_text() != 0 {
-        @host.HostServiceResponse::ClipboardText(
+        ClipboardText(
           @utf8.decode_lossy(
             macos_clipboard_read_text_bytes()[:],
             ignore_bom=false,
           ),
         )
       } else {
-        @host.HostServiceResponse::Unavailable(
-          "clipboard does not contain text",
-        )
+        Unavailable("clipboard does not contain text")
       }
-    @host.HostClipboardRequest::WriteText(text) => {
+    WriteText(text) => {
       let bytes = @utf8.encode(text[:], bom=false)
       if macos_clipboard_write_text_bytes(bytes) != 0 {
-        @host.HostServiceResponse::ClipboardWritten
+        ClipboardWritten
       } else {
-        @host.HostServiceResponse::Unavailable("clipboard write failed")
+        Unavailable("clipboard write failed")
       }
     }
-    @host.HostClipboardRequest::ReadImage =>
+    ReadImage =>
       if macos_clipboard_has_image() != 0 {
-        @host.HostServiceResponse::ClipboardImage(
-          macos_clipboard_read_image_bytes(),
-        )
+        ClipboardImage(macos_clipboard_read_image_bytes())
       } else {
-        @host.HostServiceResponse::Unavailable(
-          "clipboard does not contain image",
-        )
+        Unavailable("clipboard does not contain image")
       }
-    @host.HostClipboardRequest::WriteImage(_mime, bytes) =>
+    WriteImage(_mime, bytes) =>
       if macos_clipboard_write_image_bytes(bytes) != 0 {
-        @host.HostServiceResponse::ClipboardWritten
+        ClipboardWritten
       } else {
-        @host.HostServiceResponse::Unavailable("clipboard image write failed")
+        Unavailable("clipboard image write failed")
       }
   }
 }

@@ -11,12 +11,12 @@ pub(all) struct GraphemeRange {
 
 ///|
 pub fn GraphemeRange::new(start~ : Int, end~ : Int) -> GraphemeRange {
-  { start, end }
+  { start, end, }
 }
 
 ///|
 pub fn GraphemeRange::collapsed(index : Int) -> GraphemeRange {
-  { start: index, end: index }
+  { start: index, end: index, }
 }
 
 ///|
@@ -24,7 +24,7 @@ pub fn GraphemeRange::normalized(self : GraphemeRange) -> GraphemeRange {
   if self.start <= self.end {
     self
   } else {
-    { start: self.end, end: self.start }
+    { start: self.end, end: self.start, }
   }
 }
 
@@ -90,7 +90,7 @@ fn ascii_grapheme_boundaries(text : String) -> Array[Int]? {
 ///|
 pub fn TextGraphemeBoundaries::new(text~ : String) -> TextGraphemeBoundaries {
   match ascii_grapheme_boundaries(text) {
-    Some(boundaries) => return { text, boundaries }
+    Some(boundaries) => return { text, boundaries, }
     None => ()
   }
   let chars = text.to_array()
@@ -107,7 +107,7 @@ pub fn TextGraphemeBoundaries::new(text~ : String) -> TextGraphemeBoundaries {
   if chars.length() > 0 {
     boundaries.push(chars.length())
   }
-  { text, boundaries }
+  { text, boundaries, }
 }
 
 ///|

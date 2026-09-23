@@ -1,11 +1,11 @@
 ///|
 test "sun renderer retained layer respects surrounding opacity" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -17,24 +17,21 @@ test "sun renderer retained layer respects surrounding opacity" {
     content_revision=1,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(spec),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(spec),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer(spec.key),
+    EndRetainedLayer(spec.key),
   ])
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushOpacity(0.5),
-    @core.DrawCommand::BeginRetainedLayer(spec),
-    @core.DrawCommand::FillRect(
-      spec.frame,
-      @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
-    ),
-    @core.DrawCommand::EndRetainedLayer(spec.key),
-    @core.DrawCommand::PopOpacity,
+    Clear(@core.Color::white()),
+    PushOpacity(0.5),
+    BeginRetainedLayer(spec),
+    FillRect(spec.frame, @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0)),
+    EndRetainedLayer(spec.key),
+    PopOpacity,
   ])
   inspect(renderer.cached_layer_miss_count(), content="1")
   inspect(renderer.cached_layer_hit_count(), content="1")
@@ -54,8 +51,10 @@ test "sun renderer retained layer respects surrounding opacity" {
 
 ///|
 test "sun renderer cached layer restores filter blur stack after open child scope" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
     ),
@@ -67,20 +66,20 @@ test "sun renderer cached layer restores filter blur stack after open child scop
     content_revision=1,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(0.0)),
-    @core.DrawCommand::BeginRetainedLayer(spec),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(3.0)),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    PushFilter(Blur(0.0)),
+    BeginRetainedLayer(spec),
+    PushFilter(Blur(3.0)),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=2.0, height=2.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::EndRetainedLayer(spec.key),
-    @core.DrawCommand::FillRect(
+    EndRetainedLayer(spec.key),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::PopFilter,
+    PopFilter,
   ])
   inspect(renderer.unsupported_command_count(), content="1")
   guard renderer.last_frame() is Some(frame) else { fail("expected Sun frame") }
@@ -93,11 +92,11 @@ test "sun renderer cached layer restores filter blur stack after open child scop
 ///|
 test "sun renderer cached layer refreshes when physical size changes" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=6.0, height=6.0),
     ),
@@ -114,22 +113,22 @@ test "sun renderer cached layer refreshes when physical size changes" {
     content_revision=1,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(small),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(small),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=2.0, height=2.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer(small.key),
+    EndRetainedLayer(small.key),
   ])
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(large),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(large),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::blue(),
     ),
-    @core.DrawCommand::EndRetainedLayer(large.key),
+    EndRetainedLayer(large.key),
   ])
   inspect(renderer.cached_layer_miss_count(), content="2")
   inspect(renderer.cached_layer_hit_count(), content="0")
@@ -147,11 +146,11 @@ test "sun renderer cached layer refreshes when physical size changes" {
 ///|
 test "sun renderer cached layer reuses same-size moved frame" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
@@ -168,22 +167,19 @@ test "sun renderer cached layer reuses same-size moved frame" {
     content_revision=1,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(initial),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(initial),
+    FillRect(
       @core.Rect::new(x=1.0, y=1.0, width=3.0, height=3.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer(initial.key),
+    EndRetainedLayer(initial.key),
   ])
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(moved),
-    @core.DrawCommand::FillRect(
-      moved.frame,
-      @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
-    ),
-    @core.DrawCommand::EndRetainedLayer(moved.key),
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(moved),
+    FillRect(moved.frame, @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0)),
+    EndRetainedLayer(moved.key),
   ])
   inspect(renderer.cached_layer_miss_count(), content="1")
   inspect(renderer.cached_layer_hit_count(), content="1")
@@ -203,8 +199,10 @@ test "sun renderer cached layer reuses same-size moved frame" {
 
 ///|
 test "sun renderer repeated same-key refresh records churn without retaining latest cache entry" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -217,13 +215,13 @@ test "sun renderer repeated same-key refresh records churn without retaining lat
       content_revision=revision,
     )
     renderer.render([
-      @core.DrawCommand::Clear(@core.Color::white()),
-      @core.DrawCommand::BeginRetainedLayer(spec),
-      @core.DrawCommand::FillRect(
+      Clear(@core.Color::white()),
+      BeginRetainedLayer(spec),
+      FillRect(
         @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
       ),
-      @core.DrawCommand::EndRetainedLayer(spec.key),
+      EndRetainedLayer(spec.key),
     ])
   }
   inspect(renderer.cached_layer_miss_count(), content="2")
@@ -236,19 +234,19 @@ test "sun renderer repeated same-key refresh records churn without retaining lat
     content="churn-without-hit",
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(
       @core.RetainedLayerSpec::new(
         key="refresh-layer",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
         content_revision=39,
       ),
     ),
-    @core.DrawCommand::FillRect(
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
     ),
-    @core.DrawCommand::EndRetainedLayer("refresh-layer"),
+    EndRetainedLayer("refresh-layer"),
   ])
   inspect(renderer.cached_layer_hit_count(), content="0")
   inspect(renderer.unsupported_command_count(), content="0")
@@ -256,8 +254,10 @@ test "sun renderer repeated same-key refresh records churn without retaining lat
 
 ///|
 test "sun renderer skips churny cached layer admission" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
@@ -272,13 +272,13 @@ test "sun renderer skips churny cached layer admission" {
     let result = renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::Clear(@core.Color::white()),
-          @core.DrawCommand::BeginRetainedLayer(spec),
-          @core.DrawCommand::FillRect(
+          Clear(@core.Color::white()),
+          BeginRetainedLayer(spec),
+          FillRect(
             @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
             @core.Color::black(),
           ),
-          @core.DrawCommand::EndRetainedLayer(spec.key),
+          EndRetainedLayer(spec.key),
         ],
         damage=@core.DamageRegion::full("sun churn admission policy"),
       ),
@@ -307,8 +307,10 @@ test "sun renderer skips churny cached layer admission" {
 
 ///|
 test "sun renderer keeps hot cached layer admitted across revisions" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=16.0, height=16.0),
     ),
@@ -323,13 +325,13 @@ test "sun renderer keeps hot cached layer admitted across revisions" {
     renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::Clear(@core.Color::white()),
-          @core.DrawCommand::BeginRetainedLayer(first),
-          @core.DrawCommand::FillRect(
+          Clear(@core.Color::white()),
+          BeginRetainedLayer(first),
+          FillRect(
             @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
             @core.Color::black(),
           ),
-          @core.DrawCommand::EndRetainedLayer(first.key),
+          EndRetainedLayer(first.key),
         ],
         damage=@core.DamageRegion::full("sun hot admission first"),
       ),
@@ -338,10 +340,10 @@ test "sun renderer keeps hot cached layer admitted across revisions" {
   let hit = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(first),
-        @core.DrawCommand::FillRect(first.frame, @core.Color::black()),
-        @core.DrawCommand::EndRetainedLayer(first.key),
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(first),
+        FillRect(first.frame, @core.Color::black()),
+        EndRetainedLayer(first.key),
       ],
       damage=@core.DamageRegion::empty(),
     ),
@@ -356,13 +358,13 @@ test "sun renderer keeps hot cached layer admitted across revisions" {
     let update = renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::Clear(@core.Color::white()),
-          @core.DrawCommand::BeginRetainedLayer(spec),
-          @core.DrawCommand::FillRect(
+          Clear(@core.Color::white()),
+          BeginRetainedLayer(spec),
+          FillRect(
             @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
             @core.Color::black(),
           ),
-          @core.DrawCommand::EndRetainedLayer(spec.key),
+          EndRetainedLayer(spec.key),
         ],
         damage=@core.DamageRegion::full("sun hot admission update"),
       ),
@@ -380,31 +382,33 @@ test "sun renderer resize clears cached layers" {
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=8.0, height=8.0),
   )
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(metrics, target)
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(metrics, target)
   let spec = @core.RetainedLayerSpec::new(
     key="resize-layer",
     frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
     content_revision=1,
   )
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(spec),
-    @core.DrawCommand::FillRect(
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(spec),
+    FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::black(),
     ),
-    @core.DrawCommand::EndRetainedLayer(spec.key),
+    EndRetainedLayer(spec.key),
   ])
   inspect(renderer.cached_layer_miss_count(), content="1")
   renderer.resize(metrics)
   inspect(renderer.cached_layer_miss_count(), content="0")
   inspect(renderer.cached_layer_hit_count(), content="0")
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::BeginRetainedLayer(spec),
-    @core.DrawCommand::FillRect(spec.frame, @core.Color::black()),
-    @core.DrawCommand::EndRetainedLayer(spec.key),
+    Clear(@core.Color::white()),
+    BeginRetainedLayer(spec),
+    FillRect(spec.frame, @core.Color::black()),
+    EndRetainedLayer(spec.key),
   ])
   inspect(renderer.cached_layer_hit_count(), content="0")
   inspect(renderer.unsupported_command_count(), content="0")
@@ -412,8 +416,10 @@ test "sun renderer resize clears cached layers" {
 
 ///|
 test "sun renderer render_frame reports cached layer update and hit" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -427,13 +433,13 @@ test "sun renderer render_frame reports cached layer update and hit" {
   let update = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(spec),
-        @core.DrawCommand::FillRect(
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(spec),
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
           @core.Color::blue(),
         ),
-        @core.DrawCommand::EndRetainedLayer(spec.key),
+        EndRetainedLayer(spec.key),
       ],
       damage=@core.DamageRegion::full("sun render frame update"),
     ),
@@ -444,10 +450,10 @@ test "sun renderer render_frame reports cached layer update and hit" {
   let hit = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(spec),
-        @core.DrawCommand::FillRect(spec.frame, @core.Color::blue()),
-        @core.DrawCommand::EndRetainedLayer(spec.key),
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(spec),
+        FillRect(spec.frame, @core.Color::blue()),
+        EndRetainedLayer(spec.key),
       ],
       damage=@core.DamageRegion::empty(),
     ),
@@ -461,8 +467,10 @@ test "sun renderer render_frame reports cached layer update and hit" {
 
 ///|
 test "sun renderer cached layer diagnostic summary reports live entries and counters" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -477,13 +485,13 @@ test "sun renderer cached layer diagnostic summary reports live entries and coun
     renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::Clear(@core.Color::white()),
-          @core.DrawCommand::BeginRetainedLayer(spec),
-          @core.DrawCommand::FillRect(
+          Clear(@core.Color::white()),
+          BeginRetainedLayer(spec),
+          FillRect(
             @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
             @core.Color::blue(),
           ),
-          @core.DrawCommand::EndRetainedLayer(spec.key),
+          EndRetainedLayer(spec.key),
         ],
         damage=@core.DamageRegion::full("sun cache diagnostic update"),
       ),
@@ -493,10 +501,10 @@ test "sun renderer cached layer diagnostic summary reports live entries and coun
     renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::Clear(@core.Color::white()),
-          @core.DrawCommand::BeginRetainedLayer(spec),
-          @core.DrawCommand::FillRect(spec.frame, @core.Color::blue()),
-          @core.DrawCommand::EndRetainedLayer(spec.key),
+          Clear(@core.Color::white()),
+          BeginRetainedLayer(spec),
+          FillRect(spec.frame, @core.Color::blue()),
+          EndRetainedLayer(spec.key),
         ],
         damage=@core.DamageRegion::empty(),
       ),
@@ -517,8 +525,10 @@ test "sun renderer cached layer diagnostic summary reports live entries and coun
 
 ///|
 test "sun cached layer diagnostic reports update evict and churn records" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -534,13 +544,13 @@ test "sun cached layer diagnostic reports update evict and churn records" {
       renderer.render_frame(
         @core.DrawFrame::new(
           commands=[
-            @core.DrawCommand::Clear(@core.Color::white()),
-            @core.DrawCommand::BeginRetainedLayer(spec),
-            @core.DrawCommand::FillRect(
+            Clear(@core.Color::white()),
+            BeginRetainedLayer(spec),
+            FillRect(
               @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
               @core.Color::blue(),
             ),
-            @core.DrawCommand::EndRetainedLayer(spec.key),
+            EndRetainedLayer(spec.key),
           ],
           damage=@core.DamageRegion::full("sun cache churn diagnostic"),
         ),
@@ -572,8 +582,10 @@ test "sun cached layer diagnostic reports update evict and churn records" {
 
 ///|
 test "sun cached layer diagnostic accumulates FIFO evictions" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -588,13 +600,13 @@ test "sun cached layer diagnostic accumulates FIFO evictions" {
     let result = renderer.render_frame(
       @core.DrawFrame::new(
         commands=[
-          @core.DrawCommand::Clear(@core.Color::white()),
-          @core.DrawCommand::BeginRetainedLayer(spec),
-          @core.DrawCommand::FillRect(
+          Clear(@core.Color::white()),
+          BeginRetainedLayer(spec),
+          FillRect(
             @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
             @core.Color::blue(),
           ),
-          @core.DrawCommand::EndRetainedLayer(spec.key),
+          EndRetainedLayer(spec.key),
         ],
         damage=@core.DamageRegion::full("sun cache eviction diagnostic"),
       ),
@@ -612,8 +624,10 @@ test "sun cached layer diagnostic accumulates FIFO evictions" {
 
 ///|
 test "sun renderer render_frame rebuilds a cache miss from current payload" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=4.0, height=4.0),
     ),
@@ -622,8 +636,8 @@ test "sun renderer render_frame rebuilds a cache miss from current payload" {
   let baseline = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::FillRect(
+        Clear(@core.Color::white()),
+        FillRect(
           @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
           @core.Color::blue(),
         ),
@@ -643,10 +657,10 @@ test "sun renderer render_frame rebuilds a cache miss from current payload" {
   let miss = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(missing),
-        @core.DrawCommand::FillRect(missing.frame, @core.Color::blue()),
-        @core.DrawCommand::EndRetainedLayer(missing.key),
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(missing),
+        FillRect(missing.frame, @core.Color::blue()),
+        EndRetainedLayer(missing.key),
       ],
       damage=@core.DamageRegion::empty(),
     ),
@@ -667,8 +681,10 @@ test "sun renderer render_frame rebuilds a cache miss from current payload" {
 
 ///|
 test "sun renderer render_frame treats empty retained layer as no-op" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=8.0, height=8.0),
     ),
@@ -682,9 +698,9 @@ test "sun renderer render_frame treats empty retained layer as no-op" {
   let result = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::BeginRetainedLayer(spec),
-        @core.DrawCommand::EndRetainedLayer(spec.key),
+        Clear(@core.Color::white()),
+        BeginRetainedLayer(spec),
+        EndRetainedLayer(spec.key),
       ],
       damage=@core.DamageRegion::empty(),
     ),

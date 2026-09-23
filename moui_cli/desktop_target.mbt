@@ -78,7 +78,7 @@ fn resolve_desktop_target(
   for candidate in candidates {
     if desktop_entrypoint_exists(app_root, candidate) {
       let target = if platform == "web" { "wasm-gc" } else { "native" }
-      return Ok({ platform, package_path: candidate, target })
+      return Ok({ platform, package_path: candidate, target, })
     }
   }
   let expected = candidates.join(", ")
@@ -225,5 +225,5 @@ fn resolve_desktop_flow(
   let (build_base, package_path) = desktop_moon_invocation_for_root(
     app_root, target,
   )
-  Ok({ app_root, build_base, package_path, target })
+  Ok({ app_root, build_base, package_path, target, })
 }

@@ -132,7 +132,7 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
   self.host_bridge = Some(host_bridge)
   self.metrics = metrics
   self.driver.set_text_system(renderer.text_system())
-  ignore(self.driver.dispatch(@host.Event::Resized(metrics)))
+  ignore(self.driver.dispatch(Resized(metrics)))
   self.transport.request_frame()
   true
 }
@@ -212,7 +212,7 @@ pub fn EmbeddedRuntimeBackendCore::resize(
           scale_factor=metrics.scale_factor,
         ),
       )
-      let result = self.driver.dispatch(@host.Event::Resized(metrics))
+      let result = self.driver.dispatch(Resized(metrics))
       ignore(channel.sync(self.runtime))
       result
     }
@@ -282,9 +282,8 @@ fn drain_embedded_renderer_events(
   let completions : Array[@render.RenderPresentCompletion] = []
   for event in renderer.drain_events() {
     match event {
-      @render.RendererEvent::PresentCompleted(completion) =>
-        completions.push(completion)
-      @render.RendererEvent::ImageLoadRequested(request) =>
+      PresentCompleted(completion) => completions.push(completion)
+      ImageLoadRequested(request) =>
         ignore(image_tasks.schedule(renderer, request))
     }
   }

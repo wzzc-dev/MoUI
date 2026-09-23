@@ -39,7 +39,7 @@ pub(all) struct WindowBounds {
 
 ///|
 fn WindowBounds::default() -> WindowBounds {
-  { offset_x: 0.0, offset_y: 0.0, width: 0.0, height: 0.0 }
+  { offset_x: 0.0, offset_y: 0.0, width: 0.0, height: 0.0, }
 }
 
 ///|
@@ -183,7 +183,7 @@ fn DesktopModel::with_windows(
   self : DesktopModel,
   records : Array[WindowRecord],
 ) -> DesktopModel {
-  { ..self, windows: records.copy() }
+  { ..self, windows: records.copy(), }
 }
 
 ///|
@@ -196,7 +196,7 @@ fn DesktopModel::raise_window(
   let top_z = self.next_z_order
   for record in self.windows {
     if record.id == id && record.z_order < top_z {
-      updated.push({ ..record, z_order: top_z })
+      updated.push({ ..record, z_order: top_z, })
     } else {
       updated.push(record)
     }
@@ -206,7 +206,7 @@ fn DesktopModel::raise_window(
 
 ///|
 fn DesktopModel::bump_z_order(self : DesktopModel) -> DesktopModel {
-  { ..self, next_z_order: self.next_z_order + 1 }
+  { ..self, next_z_order: self.next_z_order + 1, }
 }
 
 ///|
@@ -252,7 +252,7 @@ fn DesktopModel::restore_record(
   let updated : Array[WindowRecord] = []
   for candidate in self.windows {
     if candidate.id == record.id {
-      updated.push({ ..candidate, state: NormalWindow })
+      updated.push({ ..candidate, state: NormalWindow, })
     } else {
       updated.push(candidate)
     }
@@ -275,7 +275,7 @@ fn DesktopModel::create_window(
   // the responsive default for that axis.
   let descriptor = app.descriptor()
   let record : WindowRecord = {
-    id: { app, serial },
+    id: { app, serial, },
     state: NormalWindow,
     bounds: {
       offset_x: clamp_window_offset_x(step_x),
@@ -333,7 +333,7 @@ pub fn DesktopModel::minimize_window(
   let updated : Array[WindowRecord] = []
   for record in self.windows {
     if record.id == id && record.state != MinimizedWindow {
-      updated.push({ ..record, state: MinimizedWindow })
+      updated.push({ ..record, state: MinimizedWindow, })
     } else {
       updated.push(record)
     }

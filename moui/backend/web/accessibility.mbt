@@ -93,7 +93,7 @@ pub fn aria_update_from_semantics_read(
   read : @runtime.SemanticsRead,
 ) -> AriaSemanticsUpdate? {
   match read {
-    @runtime.SemanticsRead::Full(snapshot) =>
+    Full(snapshot) =>
       Some({
         kind: "full",
         generation: snapshot.generation(),
@@ -103,7 +103,7 @@ pub fn aria_update_from_semantics_read(
         nodes: snapshot.nodes().map(semantics_to_aria),
         removed: [],
       })
-    @runtime.SemanticsRead::Delta(delta) =>
+    Delta(delta) =>
       Some({
         kind: "delta",
         generation: delta.to(),
@@ -113,7 +113,7 @@ pub fn aria_update_from_semantics_read(
         nodes: delta.upserted().map(semantics_to_aria),
         removed: delta.removed(),
       })
-    @runtime.SemanticsRead::Unchanged(_) => None
+    Unchanged(_) => None
   }
 }
 
@@ -239,13 +239,9 @@ pub fn web_dispatch_semantics_action(
       let kind = action.kind()
       match
         binding.driver.perform_semantics_action({
-          target: @core.SemanticsTarget::ByNodeId(
-            @core.SemanticsNodeId::new(node_id),
-          ),
+          target: ByNodeId(@core.SemanticsNodeId::new(node_id)),
           action,
-          precondition: @runtime.SemanticsGenerationPrecondition::Exact(
-            request_generation,
-          ),
+          precondition: Exact(request_generation),
         }) {
         Ok(receipt) =>
           record_web_semantics_action_evidence({
@@ -305,26 +301,23 @@ fn web_semantics_action(
   direction_code : Int,
 ) -> @core.SemanticsAction? {
   match code {
-    0 => Some(@core.SemanticsAction::Activate)
-    1 => Some(@core.SemanticsAction::Focus)
-    2 => Some(@core.SemanticsAction::SetText(value))
-    3 => Some(@core.SemanticsAction::Submit)
+    0 => Some(Activate)
+    1 => Some(Focus)
+    2 => Some(SetText(value))
+    3 => Some(Submit)
     4 =>
       match web_semantics_scroll_direction(direction_code) {
-        Some(direction) => Some(@core.SemanticsAction::Scroll(direction))
+        Some(direction) => Some(Scroll(direction))
         None => None
       }
-    5 => Some(@core.SemanticsAction::Select)
-    6 => Some(@core.SemanticsAction::Expand)
-    7 => Some(@core.SemanticsAction::Collapse)
-    8 => Some(@core.SemanticsAction::Dismiss)
-    9 => Some(@core.SemanticsAction::Increment)
-    10 => Some(@core.SemanticsAction::Decrement)
-    11 =>
-      Some(@core.SemanticsAction::SetNumericValue(@string.parse_double(value))) catch {
-        _ => None
-      }
-    12 => Some(@core.SemanticsAction::ShowMenu)
+    5 => Some(Select)
+    6 => Some(Expand)
+    7 => Some(Collapse)
+    8 => Some(Dismiss)
+    9 => Some(Increment)
+    10 => Some(Decrement)
+    11 => Some(SetNumericValue(@string.parse_double(value))) catch { _ => None }
+    12 => Some(ShowMenu)
     13 =>
       match value.split(",").to_array() {
         [start_text, end_text] =>
@@ -335,7 +328,7 @@ fn web_semantics_action(
             ) {
             (Some(start), Some(end)) =>
               Some(
-                @core.SemanticsAction::SetSelection(
+                SetSelection(
                   @core.TextRange::new(start=start.to_int(), end=end.to_int()),
                 ),
               )
@@ -352,12 +345,12 @@ fn web_semantics_scroll_direction(
   code : Int,
 ) -> @core.SemanticsScrollDirection? {
   match code {
-    0 => Some(@core.SemanticsScrollDirection::Forward)
-    1 => Some(@core.SemanticsScrollDirection::Backward)
-    2 => Some(@core.SemanticsScrollDirection::Up)
-    3 => Some(@core.SemanticsScrollDirection::Down)
-    4 => Some(@core.SemanticsScrollDirection::Left)
-    5 => Some(@core.SemanticsScrollDirection::Right)
+    0 => Some(Forward)
+    1 => Some(Backward)
+    2 => Some(Up)
+    3 => Some(Down)
+    4 => Some(Left)
+    5 => Some(Right)
     _ => None
   }
 }
@@ -378,55 +371,53 @@ fn web_record_semantics_action_host(raw_id : Int, json : WebHostString) -> Unit 
 ///|
 fn aria_role(role : @core.SemanticsRole) -> String {
   match role {
-    @core.SemanticsRole::None => "presentation"
-    @core.SemanticsRole::Text => ""
-    @core.SemanticsRole::Link => "link"
-    @core.SemanticsRole::Heading => "heading"
-    @core.SemanticsRole::Navigation => "navigation"
-    @core.SemanticsRole::Main => "main"
-    @core.SemanticsRole::Button => "button"
-    @core.SemanticsRole::Checkbox => "checkbox"
-    @core.SemanticsRole::TextField => "textbox"
-    @core.SemanticsRole::List => "list"
-    @core.SemanticsRole::ListItem => "listitem"
-    @core.SemanticsRole::Grid => "grid"
-    @core.SemanticsRole::ScrollView => "region"
-    @core.SemanticsRole::Switch => "switch"
-    @core.SemanticsRole::Radio => "radio"
-    @core.SemanticsRole::Slider => "slider"
-    @core.SemanticsRole::Progress => "progressbar"
-    @core.SemanticsRole::Tab => "tab"
-    @core.SemanticsRole::Dialog => "dialog"
-    @core.SemanticsRole::Tooltip => "tooltip"
-    @core.SemanticsRole::Menu => "menu"
-    @core.SemanticsRole::WebView => "document"
-    @core.SemanticsRole::ButtonGroup => "group"
-    @core.SemanticsRole::Form => "form"
-    @core.SemanticsRole::FormField => "group"
-    @core.SemanticsRole::Tree => "tree"
-    @core.SemanticsRole::TreeItem => "treeitem"
-    @core.SemanticsRole::Group => "group"
-    @core.SemanticsRole::Image => "img"
-    @core.SemanticsRole::Alert => "alert"
-    @core.SemanticsRole::Status => "status"
-    @core.SemanticsRole::ComboBox => "combobox"
-    @core.SemanticsRole::Option => "option"
-    @core.SemanticsRole::Table => "table"
-    @core.SemanticsRole::Row => "row"
-    @core.SemanticsRole::Cell => "cell"
-    @core.SemanticsRole::Separator => "separator"
+    None => "presentation"
+    Text => ""
+    Link => "link"
+    Heading => "heading"
+    Navigation => "navigation"
+    Main => "main"
+    Button => "button"
+    Checkbox => "checkbox"
+    TextField => "textbox"
+    List => "list"
+    ListItem => "listitem"
+    Grid => "grid"
+    ScrollView => "region"
+    Switch => "switch"
+    Radio => "radio"
+    Slider => "slider"
+    Progress => "progressbar"
+    Tab => "tab"
+    Dialog => "dialog"
+    Tooltip => "tooltip"
+    Menu => "menu"
+    WebView => "document"
+    ButtonGroup => "group"
+    Form => "form"
+    FormField => "group"
+    Tree => "tree"
+    TreeItem => "treeitem"
+    Group => "group"
+    Image => "img"
+    Alert => "alert"
+    Status => "status"
+    ComboBox => "combobox"
+    Option => "option"
+    Table => "table"
+    Row => "row"
+    Cell => "cell"
+    Separator => "separator"
   }
 }
 
 ///|
 fn aria_checked(node : @core.SemanticsNode) -> String? {
-  if node.role == @core.SemanticsRole::Checkbox ||
-    node.role == @core.SemanticsRole::Switch ||
-    node.role == @core.SemanticsRole::Radio {
+  if node.role == Checkbox || node.role == Switch || node.role == Radio {
     match node.state.checked {
-      Some(@core.SemanticsCheckedState::Unchecked) => Some("false")
-      Some(@core.SemanticsCheckedState::Checked) => Some("true")
-      Some(@core.SemanticsCheckedState::Mixed) => Some("mixed")
+      Some(Unchecked) => Some("false")
+      Some(Checked) => Some("true")
+      Some(Mixed) => Some("mixed")
       None => None
     }
   } else {
@@ -437,19 +428,19 @@ fn aria_checked(node : @core.SemanticsNode) -> String? {
 ///|
 fn aria_action(action : @core.SemanticsActionKind) -> String {
   match action {
-    @core.SemanticsActionKind::Activate => "activate"
-    @core.SemanticsActionKind::Focus => "focus"
-    @core.SemanticsActionKind::SetText => "set-text"
-    @core.SemanticsActionKind::Submit => "submit"
-    @core.SemanticsActionKind::Scroll => "scroll"
-    @core.SemanticsActionKind::Select => "select"
-    @core.SemanticsActionKind::Expand => "expand"
-    @core.SemanticsActionKind::Collapse => "collapse"
-    @core.SemanticsActionKind::Dismiss => "dismiss"
-    @core.SemanticsActionKind::Increment => "increment"
-    @core.SemanticsActionKind::Decrement => "decrement"
-    @core.SemanticsActionKind::SetNumericValue => "set-numeric-value"
-    @core.SemanticsActionKind::SetSelection => "set-selection"
-    @core.SemanticsActionKind::ShowMenu => "show-menu"
+    Activate => "activate"
+    Focus => "focus"
+    SetText => "set-text"
+    Submit => "submit"
+    Scroll => "scroll"
+    Select => "select"
+    Expand => "expand"
+    Collapse => "collapse"
+    Dismiss => "dismiss"
+    Increment => "increment"
+    Decrement => "decrement"
+    SetNumericValue => "set-numeric-value"
+    SetSelection => "set-selection"
+    ShowMenu => "show-menu"
   }
 }

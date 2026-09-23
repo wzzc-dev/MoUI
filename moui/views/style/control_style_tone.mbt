@@ -6,7 +6,7 @@ pub fn ToneStyle::new(
   background~ : @core.Color,
   border~ : @core.Color,
 ) -> ToneStyle {
-  { foreground, background, border }
+  { foreground, background, border, }
 }
 
 ///|

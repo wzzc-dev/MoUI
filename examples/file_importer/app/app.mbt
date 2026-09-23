@@ -55,19 +55,19 @@ pub(all) enum FileImporterMsg {
 
 ///|
 pub fn FileImporterApp::new() -> FileImporterApp {
-  { unit: () }
+  { unit: (), }
 }
 
 ///|
 pub fn ImportedFile::new(path~ : String, source~ : String) -> ImportedFile {
-  { path, source }
+  { path, source, }
 }
 
 ///|
 pub fn FileImporterModel::new() -> FileImporterModel {
   {
     files: [],
-    status: FileImporterStatus::Ready,
+    status: Ready,
     last_event: "Waiting for files",
     availability_reason: "",
   }
@@ -83,14 +83,12 @@ pub fn FileImporterModel::update(
     BrowseRequested =>
       {
         ..self,
-        status: FileImporterStatus::Unavailable(
-          "file dialog service is unavailable",
-        ),
+        status: Unavailable("file dialog service is unavailable"),
         last_event: "File dialog unavailable",
         availability_reason: "file dialog service is unavailable",
       }
     FileDialogCompleted(result) => self.apply_file_dialog_result(result)
-    ClearSelection => { ..self, files: [], last_event: "Selection cleared" }
+    ClearSelection => { ..self, files: [], last_event: "Selection cleared", }
   }
 }
 
@@ -111,7 +109,7 @@ pub fn FileImporterUpdate::new(
   model : FileImporterModel,
   effect? : @moui.Effect[FileImporterMsg] = @moui.Effect::none(),
 ) -> FileImporterUpdate {
-  { model, effect }
+  { model, effect, }
 }
 
 ///|
@@ -141,10 +139,9 @@ pub fn FileImporterModel::availability(
   self : FileImporterModel,
 ) -> @views.FileImportAvailability {
   match self.status {
-    FileImporterStatus::Ready => @views.FileImportAvailability::Available
-    FileImporterStatus::Requesting => @views.FileImportAvailability::Pending
-    FileImporterStatus::Unavailable(reason) =>
-      @views.FileImportAvailability::Unavailable(reason)
+    Ready => Available
+    Requesting => Pending
+    Unavailable(reason) => Unavailable(reason)
   }
 }
 
@@ -166,33 +163,33 @@ pub fn FileImporterModel::view(
             [
               text(
                 "File Importer",
-                role=@views.TextRole::Title,
+                role=Title,
                 theme~,
                 width=260.0,
                 height=34.0,
               ),
               text(
                 "Drop files or request a host file dialog.",
-                role=@views.TextRole::Caption,
+                role=Caption,
                 theme~,
                 width=360.0,
                 height=24.0,
               ),
             ],
             spacing=0.0,
-            align=@views.CrossAlign::Start,
+            align=Start,
           ),
           button(
             "Clear",
             on_click=ClearSelection,
-            variant=@views.ButtonVariant::Outline,
+            variant=Outline,
             theme~,
             width=82.0,
             height=36.0,
           ),
         ],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       row(
         [
@@ -210,19 +207,19 @@ pub fn FileImporterModel::view(
           self.import_summary(theme),
         ],
         spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       self.platform_note(theme),
       status_bar([self.last_event, self.status_label()], theme~, width=760.0),
     ],
     spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
   container(
     shell,
     width=820.0,
     height=560.0,
-    variant=@views.ContainerVariant::Base,
+    variant=Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -267,7 +264,7 @@ fn FileImporterModel::request_file_dialog(
   FileImporterUpdate::new(
     {
       ..self,
-      status: FileImporterStatus::Requesting,
+      status: Requesting,
       last_event: "Waiting for file picker",
       availability_reason: "",
     },
@@ -292,7 +289,7 @@ fn FileImporterModel::apply_file_dialog_result(
     Failure(error) =>
       {
         ..self,
-        status: FileImporterStatus::Unavailable(error.message),
+        status: Unavailable(error.message),
         last_event: "File dialog unavailable",
         availability_reason: error.message,
       }
@@ -307,15 +304,11 @@ fn FileImporterModel::with_paths(
   source~ : String,
 ) -> FileImporterModel {
   if paths.is_empty() {
-    {
-      ..self,
-      status: FileImporterStatus::Ready,
-      last_event: "No files selected",
-    }
+    { ..self, status: Ready, last_event: "No files selected", }
   } else {
     {
       files: paths.map(path => ImportedFile::new(path~, source~)),
-      status: FileImporterStatus::Ready,
+      status: Ready,
       last_event: "Imported \{paths.length()} file(s) from " + source,
       availability_reason: "",
     }
@@ -332,7 +325,7 @@ fn FileImporterModel::import_summary(
       "Selected files",
       self.files.length().to_string(),
       caption=self.status_label(),
-      tone=@views.FeedbackTone::Info,
+      tone=Info,
       theme~,
       width=340.0,
       height=116.0,
@@ -342,7 +335,7 @@ fn FileImporterModel::import_summary(
     rows.push(
       text(
         "Selection list is empty",
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=340.0,
         height=26.0,
@@ -359,10 +352,10 @@ fn FileImporterModel::import_summary(
     )
   }
   container(
-    column(rows, spacing=theme.spacing_scale.sm, align=@views.CrossAlign::Start),
+    column(rows, spacing=theme.spacing_scale.sm, align=Start),
     width=372.0,
     height=292.0,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -377,7 +370,7 @@ fn FileImporterModel::platform_note(
   banner(
     "Platform paths",
     "Web hosts normally expose file names while native hosts can expose paths.",
-    tone=@views.FeedbackTone::Info,
+    tone=Info,
     theme~,
     width=760.0,
   )
@@ -386,8 +379,8 @@ fn FileImporterModel::platform_note(
 ///|
 fn FileImporterModel::status_label(self : FileImporterModel) -> String {
   match self.status {
-    FileImporterStatus::Ready => "Ready"
-    FileImporterStatus::Requesting => "Pending"
-    FileImporterStatus::Unavailable(reason) => "Unavailable: " + reason
+    Ready => "Ready"
+    Requesting => "Pending"
+    Unavailable(reason) => "Unavailable: " + reason
   }
 }

@@ -17,7 +17,7 @@ pub fn CodeCompletionItem::new(
   insert_text~ : String,
   detail? : String = "",
 ) -> CodeCompletionItem {
-  { label, insert_text, detail }
+  { label, insert_text, detail, }
 }
 
 ///|
@@ -28,7 +28,7 @@ pub(all) struct CodeHover {
 
 ///|
 pub fn CodeHover::new(symbol~ : String, detail~ : String) -> CodeHover {
-  { symbol, detail }
+  { symbol, detail, }
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn CodeDefinition::new(
   line~ : Int,
   column~ : Int,
 ) -> CodeDefinition {
-  { symbol, file, line, column }
+  { symbol, file, line, column, }
 }
 
 ///|
@@ -116,7 +116,7 @@ pub struct CodeLanguageRegistry {
 
 ///|
 pub fn CodeLanguageRegistry::new() -> CodeLanguageRegistry {
-  { providers: [moonbit_provider(), moui_script_provider()] }
+  { providers: [moonbit_provider(), moui_script_provider()], }
 }
 
 ///|
@@ -217,7 +217,7 @@ fn CodeLanguageRegistry::find_provider(
 fn richtext_tokens_to_code_tokens(
   spans : Array[@moui_richtext.CodeHighlightSpan],
 ) -> Array[CodeEditorToken] {
-  spans.map(span => { text: span.text, kind: code_highlight_kind(span.kind) })
+  spans.map(span => { text: span.text, kind: code_highlight_kind(span.kind), })
 }
 
 ///|
@@ -394,7 +394,7 @@ fn custom_keyword_tokenizer(
         },
       })
     } else {
-      tokens.push({ text: String::from_array([ch]), kind: "plain" })
+      tokens.push({ text: String::from_array([ch]), kind: "plain", })
       i = i + 1
     }
   }

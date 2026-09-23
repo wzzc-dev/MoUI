@@ -1,7 +1,6 @@
 import {
   "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
   "wzzc-dev/moui_wgpu_renderer/fontconfig" @wgpu_fontconfig,
-  "Milky2018/wgpu_mbt",
 }
 
 supported_targets = "native"

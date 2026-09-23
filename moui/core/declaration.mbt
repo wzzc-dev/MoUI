@@ -44,7 +44,7 @@ fn declaration_key_frame(tag : Byte, payload : Bytes) -> DeclarationKey {
   output.write_byte(tag)
   output.write_uint64_be(payload.length().to_uint64())
   output.write_bytes(payload)
-  { bytes: output.to_bytes() }
+  { bytes: output.to_bytes(), }
 }
 
 ///|
@@ -181,7 +181,7 @@ pub fn ViewDeclaration::channels(
   semantics~ : DeclarationChannel,
   platform~ : DeclarationChannel,
 ) -> ViewDeclaration {
-  { layout, paint, semantics, platform }
+  { layout, paint, semantics, platform, }
 }
 
 ///|

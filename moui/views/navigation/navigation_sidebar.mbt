@@ -15,7 +15,7 @@ pub fn[Msg] sidebar(
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
-      role=@style.TextRole::Control,
+      role=Control,
       theme=resolved_theme,
       width=inner_width,
       height=28.0,
@@ -25,7 +25,7 @@ pub fn[Msg] sidebar(
     let variant = if item.id == selected {
       @style.ButtonVariant::Primary
     } else {
-      @style.ButtonVariant::Ghost
+      Ghost
     }
     rows.push(
       @button.button(
@@ -42,15 +42,11 @@ pub fn[Msg] sidebar(
     )
   }
   @container.container(
-    @layout.column(
-      rows,
-      spacing=resolved_theme.spacing_scale.sm,
-      align=@style.CrossAlign::Start,
-    ),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Start),
     width~,
     height~,
-    variant=@style.ContainerVariant::Base,
+    variant=Base,
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
-  ).semantics_role(@core.SemanticsRole::List)
+  ).semantics_role(List)
 }

@@ -46,7 +46,7 @@ pub fn FormFieldState::new(
 ) -> FormFieldState {
   let collected = rules.copy()
   collected.push(FormValidationRule::from_validator(validator))
-  { name, label, value: initial, rules: collected }
+  { name, label, value: initial, rules: collected, }
 }
 
 ///|
@@ -67,7 +67,7 @@ pub fn FormFieldState::validate(self : FormFieldState) -> FormFieldError? {
   let value = self.value
   for rule in self.rules {
     match (rule.validate)(value) {
-      Some(message) => return Some({ name: self.name, message })
+      Some(message) => return Some({ name: self.name, message, })
       None => ()
     }
   }
@@ -77,7 +77,7 @@ pub fn FormFieldState::validate(self : FormFieldState) -> FormFieldError? {
 ///|
 pub fn validate_form(fields : Array[FormFieldState]) -> FormValidationResult {
   let summary = FormValidationSummary::from_fields(fields)
-  { valid: summary.valid, errors: summary.errors, summary }
+  { valid: summary.valid, errors: summary.errors, summary, }
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn FormValidationRule::new(
   message~ : String,
   validate~ : (String) -> Bool,
 ) -> FormValidationRule {
-  { validate: value => if validate(value) { None } else { Some(message) } }
+  { validate: value => if validate(value) { None } else { Some(message) }, }
 }
 
 ///|
@@ -99,7 +99,7 @@ pub fn FormValidationRule::required(
 pub fn FormValidationRule::from_validator(
   validator : (String) -> String?,
 ) -> FormValidationRule {
-  { validate: validator }
+  { validate: validator, }
 }
 
 ///|
@@ -166,7 +166,7 @@ pub fn FormValidationResult::new(
   errors~ : Array[FormFieldError],
   summary~ : FormValidationSummary,
 ) -> FormValidationResult {
-  { valid, errors, summary }
+  { valid, errors, summary, }
 }
 
 ///|
@@ -190,7 +190,7 @@ pub fn FormValidationResult::summary(
 
 ///|
 pub fn FormFieldError::new(name~ : String, message~ : String) -> FormFieldError {
-  { name, message }
+  { name, message, }
 }
 
 ///|
@@ -209,7 +209,7 @@ pub fn FormValidationSummary::new(
   errors~ : Array[FormFieldError],
   first_invalid_id? : String? = None,
 ) -> FormValidationSummary {
-  { valid, errors, first_invalid_id }
+  { valid, errors, first_invalid_id, }
 }
 
 ///|

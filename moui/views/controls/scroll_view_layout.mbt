@@ -83,7 +83,7 @@ impl @core.ViewStateValue for ScrollRuntimeState with fn decode_view_state(
         @core.ViewStateValue::decode_view_state(0, bytes[16:20].to_owned()),
       ) {
       (Some(x), Some(y), Some(applied_request_id)) =>
-        Some({ offset: @core.Point::new(x~, y~), applied_request_id })
+        Some({ offset: @core.Point::new(x~, y~), applied_request_id, })
       _ => None
     }
   }
@@ -93,7 +93,7 @@ impl @core.ViewStateValue for ScrollRuntimeState with fn decode_view_state(
 fn scroll_runtime_state_slot() -> @core.ViewStateSlot[ScrollRuntimeState] {
   @core.ViewStateSlot::new(
     key=@core.DeclarationKey::string("moui.views.scroll.position"),
-    initial={ offset: @core.Point::new(x=0.0, y=0.0), applied_request_id: -1 },
+    initial={ offset: @core.Point::new(x=0.0, y=0.0), applied_request_id: -1, },
   )
 }
 
@@ -109,7 +109,7 @@ fn scroll_runtime_state(
   }
   match node.request {
     Some(request) if request.id > current.applied_request_id =>
-      { offset: request.offset, applied_request_id: request.id }
+      { offset: request.offset, applied_request_id: request.id, }
     _ => current
   }
 }
@@ -222,7 +222,7 @@ impl @core.ViewStateValue for ScrollDragState with fn decode_view_state(
 fn scroll_drag_state_slot() -> @core.ViewStateSlot[ScrollDragState] {
   @core.ViewStateSlot::new(
     key=@core.DeclarationKey::string("moui.views.scroll.drag"),
-    initial=ScrollDragState::{
+    initial={
       active: false,
       dragging: false,
       origin: @core.Point::new(x=0.0, y=0.0),
@@ -318,7 +318,7 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
   let offset = scroll_runtime_state(self, ctx.state).offset
   {
     commands: [
-      @core.DrawCommand::PushClip(
+      PushClip(
         @core.Rect::new(
           x=ctx.frame.origin.x,
           y=ctx.frame.origin.y,
@@ -328,7 +328,7 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
       ),
     ],
     child_layers: [],
-    post_commands: [@core.DrawCommand::PopClip],
+    post_commands: [PopClip],
     overlay_commands: if self.shows_indicator {
       scroll_indicator_commands(
         ctx.frame,
@@ -345,10 +345,7 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for ScrollContainer with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Boundary,
-    role=@core.SemanticsRole::ScrollView,
-  )
+  @core.ViewSemanticsInfo::new(composition=Boundary, role=ScrollView)
 }
 
 ///|
@@ -358,7 +355,7 @@ fn[Msg] scroll_container_event(
   on_scroll : ((@core.Point) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
-    @core.AppEvent::Pointer(event) =>
+    Pointer(event) =>
       if node.shows_indicator && scroll_indicator_handles_event(ctx, event) {
         scroll_indicator_event_result(
           ctx,
@@ -383,13 +380,13 @@ fn[Msg] scroll_container_event(
         if next_offset == current.offset {
           @core.ViewEventResult::ignored()
         } else {
-          let next = { ..current, offset: next_offset }
+          let next = { ..current, offset: next_offset, }
           @common.view_event_result(
             changed=true,
             activated=on_scroll is Some(_),
             captured=true,
             state=Some(ctx.state.with_slot(scroll_runtime_state_slot(), next)),
-            dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+            dirty=ViewLayoutDirty,
             messages=match on_scroll {
               Some(handler) => [handler(next_offset)]
               None => []
@@ -416,12 +413,8 @@ fn scroll_container_drag_handles_event(
   match event.phase {
     // Primary button only: right-button presses reach the view tree for
     // per-target context menus and must not start a scroll drag.
-    @core.PointerPhase::Down =>
-      event.button == 0 && ctx.frame.contains(event.position)
-    @core.PointerPhase::Move
-    | @core.PointerPhase::Up
-    | @core.PointerPhase::Cancel
-    | @core.PointerPhase::Exit => drag.active
+    Down => event.button == 0 && ctx.frame.contains(event.position)
+    Move | Up | Cancel | Exit => drag.active
   }
 }
 
@@ -435,7 +428,7 @@ fn[Msg] scroll_container_drag_event(
   let slot = scroll_drag_state_slot()
   let drag = ctx.state.read_slot(slot)
   match event.phase {
-    @core.PointerPhase::Down => {
+    Down => {
       let next = ScrollDragState::{
         active: true,
         dragging: false,
@@ -449,11 +442,11 @@ fn[Msg] scroll_container_drag_event(
         captured: true,
         state: Some(ctx.state.with_slot(slot, next)),
         text_control: None,
-        dirty: @core.ViewDirtyHint::ViewClean,
+        dirty: ViewClean,
         messages: [],
       }
     }
-    @core.PointerPhase::Move => {
+    Move => {
       if !drag.active {
         return @core.ViewEventResult::ignored()
       }
@@ -483,7 +476,7 @@ fn[Msg] scroll_container_drag_event(
           captured: false,
           state: Some(next_context),
           text_control: None,
-          dirty: @core.ViewDirtyHint::ViewClean,
+          dirty: ViewClean,
           messages: [],
         }
       }
@@ -514,9 +507,9 @@ fn[Msg] scroll_container_drag_event(
         state: Some(state_context),
         text_control: None,
         dirty: if moved {
-          @core.ViewDirtyHint::ViewLayoutDirty
+          ViewLayoutDirty
         } else {
-          @core.ViewDirtyHint::ViewClean
+          ViewClean
         },
         messages: match on_scroll {
           Some(handler) => if dispatch { [handler(next)] } else { [] }
@@ -524,9 +517,7 @@ fn[Msg] scroll_container_drag_event(
         },
       }
     }
-    @core.PointerPhase::Up
-    | @core.PointerPhase::Cancel
-    | @core.PointerPhase::Exit => {
+    Up | Cancel | Exit => {
       if !drag.active {
         return @core.ViewEventResult::ignored()
       }
@@ -537,7 +528,7 @@ fn[Msg] scroll_container_drag_event(
         captured: true,
         state: Some(ctx.state.without_slot(slot)),
         text_control: None,
-        dirty: @core.ViewDirtyHint::ViewClean,
+        dirty: ViewClean,
         messages: [],
       }
     }
@@ -552,16 +543,10 @@ fn semantics_scroll_wheel_delta(
   let horizontal_step = @common.view_max_double(40.0, viewport.width * 0.8)
   let vertical_step = @common.view_max_double(40.0, viewport.height * 0.8)
   match direction {
-    @core.SemanticsScrollDirection::Forward
-    | @core.SemanticsScrollDirection::Down =>
-      @core.Point::new(x=0.0, y=-vertical_step)
-    @core.SemanticsScrollDirection::Backward
-    | @core.SemanticsScrollDirection::Up =>
-      @core.Point::new(x=0.0, y=vertical_step)
-    @core.SemanticsScrollDirection::Left =>
-      @core.Point::new(x=horizontal_step, y=0.0)
-    @core.SemanticsScrollDirection::Right =>
-      @core.Point::new(x=-horizontal_step, y=0.0)
+    Forward | Down => @core.Point::new(x=0.0, y=-vertical_step)
+    Backward | Up => @core.Point::new(x=0.0, y=vertical_step)
+    Left => @core.Point::new(x=horizontal_step, y=0.0)
+    Right => @core.Point::new(x=-horizontal_step, y=0.0)
   }
 }
 
@@ -599,7 +584,7 @@ fn[Msg] scroll_container_semantics_action(
         offset: next,
       }),
     ),
-    dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+    dirty=ViewLayoutDirty,
     messages~,
   )
 }
@@ -645,7 +630,7 @@ fn scroll_indicator_commands(
   match scroll_indicator_thumb(frame, child_size, offset) {
     Some(thumb) =>
       [
-        @core.DrawCommand::FillRoundedRectBrush(
+        FillRoundedRectBrush(
           @core.RoundedRect::new(rect=thumb, radius=1.5),
           @core.Brush::solid(@core.Color::rgba(r=0.15, g=0.18, b=0.22, a=0.48)),
         ),
@@ -663,7 +648,7 @@ fn scroll_indicator_handles_event(
   (
     ctx.frame.contains(event.position) &&
     event.position.x >= ctx.frame.origin.x + ctx.frame.size.width - 16.0 &&
-    event.phase == @core.PointerPhase::Down
+    event.phase == Down
   )
 }
 
@@ -691,15 +676,13 @@ fn[Msg] scroll_indicator_event_result(
     viewport_size,
     child_size,
   )
-  let next_dragging = event.phase == @core.PointerPhase::Down ||
-    event.phase == @core.PointerPhase::Move
+  let next_dragging = event.phase == Down || event.phase == Move
   let next_state = if next_dragging {
     ctx.state.with_slot(scroll_indicator_drag_slot(), true)
   } else {
     ctx.state.without_slot(scroll_indicator_drag_slot())
   }
-  let should_move = event.phase == @core.PointerPhase::Down ||
-    event.phase == @core.PointerPhase::Move
+  let should_move = event.phase == Down || event.phase == Move
   let next_y = if should_move {
     let track_height = @common.view_max_double(1.0, viewport_size.height - 8.0)
     let thumb_height = @common.view_max_double(
@@ -732,7 +715,7 @@ fn[Msg] scroll_indicator_event_result(
     captured: true,
     state: Some(next_state),
     text_control: None,
-    dirty: @core.ViewDirtyHint::ViewLayoutDirty,
+    dirty: ViewLayoutDirty,
     messages: match on_scroll {
       Some(handler) => if should_move { [handler(next_offset)] } else { [] }
       None => []

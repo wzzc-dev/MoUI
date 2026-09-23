@@ -21,6 +21,6 @@ fn RuntimeState::dispatch_presentation_key(
   self : RuntimeState,
   key : String,
 ) -> Bool {
-  self.dispatch_event(@core.AppEvent::Keyboard(@core.KeyboardEvent::new(key~)))
+  self.dispatch_event(Keyboard(@core.KeyboardEvent::new(key~)))
   self.dirty.needs_rebuild || self.dirty.needs_paint
 }

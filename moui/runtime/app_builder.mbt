@@ -46,7 +46,7 @@ pub fn PlatformEntry::new(
   launch~ : (AppLaunchRequest) -> Unit,
   launch_async? : (async (AppLaunchRequest, Int) -> Unit)? = None,
 ) -> PlatformEntry {
-  { id, launch_fn: launch, launch_async_fn: launch_async }
+  { id, launch_fn: launch, launch_async_fn: launch_async, }
 }
 
 ///|
@@ -101,7 +101,7 @@ pub fn AppBuilder::render(
 ) -> AppBuilder {
   let providers = self.renderer_providers.copy()
   providers.push(provider)
-  { ..self, renderer_providers: providers }
+  { ..self, renderer_providers: providers, }
 }
 
 ///|
@@ -113,7 +113,7 @@ pub fn AppBuilder::render_all(
   for provider in providers {
     next.push(provider)
   }
-  { ..self, renderer_providers: next }
+  { ..self, renderer_providers: next, }
 }
 
 ///|
@@ -121,7 +121,7 @@ pub fn AppBuilder::backend(
   self : AppBuilder,
   backend : PlatformEntry,
 ) -> AppBuilder {
-  { ..self, backend: Some(backend) }
+  { ..self, backend: Some(backend), }
 }
 
 ///|

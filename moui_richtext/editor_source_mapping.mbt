@@ -263,12 +263,12 @@ fn markdown_editor_format_source_mode(
         RichTextRun::new(
           text=source,
           font=Some(font),
-          source_range=Some({ start: 0, end: length }),
+          source_range=Some({ start: 0, end: length, }),
         ),
       ],
       font=Some(font),
-      source_range=Some({ start: 0, end: length }),
-      content_range=Some({ start: 0, end: length }),
+      source_range=Some({ start: 0, end: length, }),
+      content_range=Some({ start: 0, end: length, }),
       line_height=Some(base.size * 1.42),
     ),
   ])
@@ -335,7 +335,8 @@ fn markdown_editor_dim_border(
   border : @core.BorderStyle?,
 ) -> @core.BorderStyle? {
   match border {
-    Some(border) => Some({ ..border, brush: border.brush.multiply_alpha(0.38) })
+    Some(border) =>
+      Some({ ..border, brush: border.brush.multiply_alpha(0.38), })
     None => None
   }
 }
@@ -370,7 +371,7 @@ fn markdown_editor_reveal_active_block_marker(
       if block.prefix != "" {
         // Revealing the editable marker text replaces the projected lane, so
         // the marker has to go with it: a task item shows its raw `- [x] `.
-        return { ..block, prefix, marker: None }
+        return { ..block, prefix, marker: None, }
       }
       let runs = block.runs.copy()
       let first = runs[0]
@@ -380,11 +381,11 @@ fn markdown_editor_reveal_active_block_marker(
         visual_text: None,
         source_range: match first.source_range {
           Some(run_range) =>
-            Some({ start: source_range.start, end: run_range.end })
-          None => Some({ start: source_range.start, end: content_range.start })
+            Some({ start: source_range.start, end: run_range.end, })
+          None => Some({ start: source_range.start, end: content_range.start, })
         },
       }
-      { ..block, prefix: "", runs }
+      { ..block, prefix: "", runs, }
     }
     _ => block
   }
@@ -566,7 +567,7 @@ fn MarkdownSourceChars::slice(
 
 ///|
 fn markdown_editor_source_chars_all(source : String) -> MarkdownSourceChars {
-  { chars: source.to_array(), offset: 0 }
+  { chars: source.to_array(), offset: 0, }
 }
 
 ///|
@@ -733,31 +734,31 @@ fn markdown_editor_inline_marker_source_range(
   }
   if markdown_editor_window_has_marker(chars, range.start - 2, "**") &&
     markdown_editor_window_has_marker(chars, range.end, "**") {
-    return Some({ start: range.start - 2, end: range.end + 2 })
+    return Some({ start: range.start - 2, end: range.end + 2, })
   }
   if markdown_editor_window_has_marker(chars, range.start - 2, "__") &&
     markdown_editor_window_has_marker(chars, range.end, "__") {
-    return Some({ start: range.start - 2, end: range.end + 2 })
+    return Some({ start: range.start - 2, end: range.end + 2, })
   }
   if markdown_editor_window_has_marker(chars, range.start - 2, "~~") &&
     markdown_editor_window_has_marker(chars, range.end, "~~") {
-    return Some({ start: range.start - 2, end: range.end + 2 })
+    return Some({ start: range.start - 2, end: range.end + 2, })
   }
   if markdown_editor_window_has_marker(chars, range.start - 2, "==") &&
     markdown_editor_window_has_marker(chars, range.end, "==") {
-    return Some({ start: range.start - 2, end: range.end + 2 })
+    return Some({ start: range.start - 2, end: range.end + 2, })
   }
   if markdown_editor_window_has_marker(chars, range.start - 1, "`") &&
     markdown_editor_window_has_marker(chars, range.end, "`") {
-    return Some({ start: range.start - 1, end: range.end + 1 })
+    return Some({ start: range.start - 1, end: range.end + 1, })
   }
   if markdown_editor_single_inline_marker_at_window(chars, range.start - 1, '*') &&
     markdown_editor_single_inline_marker_at_window(chars, range.end, '*') {
-    return Some({ start: range.start - 1, end: range.end + 1 })
+    return Some({ start: range.start - 1, end: range.end + 1, })
   }
   if markdown_editor_single_inline_marker_at_window(chars, range.start - 1, '_') &&
     markdown_editor_single_inline_marker_at_window(chars, range.end, '_') {
-    return Some({ start: range.start - 1, end: range.end + 1 })
+    return Some({ start: range.start - 1, end: range.end + 1, })
   }
   match markdown_editor_reference_source_range(source, chars~, range) {
     Some(reference_range) => return Some(reference_range)
@@ -775,12 +776,12 @@ fn markdown_editor_reference_source_range(
   let text_range = @core.TextRange::new(start=range.start, end=range.end)
   match markdown_editor_range_link_bounds_in(source, chars~, text_range) {
     Some(bounds) =>
-      return Some({ start: bounds.open_start, end: bounds.target_end + 1 })
+      return Some({ start: bounds.open_start, end: bounds.target_end + 1, })
     None => ()
   }
   match markdown_editor_range_image_bounds_in(source, chars~, text_range) {
     Some(bounds) =>
-      Some({ start: bounds.open_start, end: bounds.target_end + 1 })
+      Some({ start: bounds.open_start, end: bounds.target_end + 1, })
     None => None
   }
 }
@@ -917,8 +918,8 @@ fn parse_markdown_editor_blocks_with_definitions(
         let text = markdown_join_lines(code_lines)
         blocks.push({
           block: markdown_editor_code_block(text, code_language),
-          source_range: { start: code_start, end: line.end },
-          content_range: { start: code_content_start, end: line.start },
+          source_range: { start: code_start, end: line.end, },
+          content_range: { start: code_content_start, end: line.start, },
         })
         code_lines.clear()
         code_fence = ""
@@ -1050,8 +1051,8 @@ fn parse_markdown_editor_blocks_with_definitions(
     let end = markdown_editor_text_length(source)
     blocks.push({
       block: markdown_editor_code_block(text, code_language),
-      source_range: { start: code_start, end },
-      content_range: { start: code_content_start, end },
+      source_range: { start: code_start, end, },
+      content_range: { start: code_content_start, end, },
     })
   }
   blocks
@@ -1061,14 +1062,14 @@ fn parse_markdown_editor_blocks_with_definitions(
 fn markdown_editor_blank_line_block(line : MarkdownLine) -> MarkdownEditorBlock {
   {
     block: {
-      kind: MarkdownBlockKind::Paragraph,
+      kind: Paragraph,
       text: "",
       inlines: [],
       table_alignments: [],
       code_language: None,
     },
-    source_range: { start: line.start, end: line.end },
-    content_range: { start: line.start, end: line.end },
+    source_range: { start: line.start, end: line.end, },
+    content_range: { start: line.start, end: line.end, },
   }
 }
 
@@ -1092,8 +1093,8 @@ fn markdown_editor_front_matter_block_at(
       return Some({
         block: {
           block: markdown_block(FrontMatter, markdown_join_lines(content)),
-          source_range: { start: lines[0].start, end: lines[index].end },
-          content_range: { start: lines[0].end + 1, end: lines[index].start },
+          source_range: { start: lines[0].start, end: lines[index].end, },
+          content_range: { start: lines[0].end + 1, end: lines[index].start, },
         },
         next_index: index + 1,
       })
@@ -1279,8 +1280,8 @@ fn markdown_editor_html_block_result(
   {
     block: {
       block: markdown_block(HtmlBlock, markdown_join_lines(html_lines)),
-      source_range: { start: first.start, end: last.end },
-      content_range: { start: first.start, end: last.end },
+      source_range: { start: first.start, end: last.end, },
+      content_range: { start: first.start, end: last.end, },
     },
     end_index,
   }
@@ -1315,7 +1316,7 @@ fn markdown_editor_setext_heading_block_at(
           return Some({
             block: {
               block: {
-                kind: MarkdownBlockKind::Heading(level),
+                kind: Heading(level),
                 text,
                 inlines: if parse_inlines {
                   parse_markdown_inlines_with_definitions(text, definitions)
@@ -1325,8 +1326,8 @@ fn markdown_editor_setext_heading_block_at(
                 table_alignments: [],
                 code_language: None,
               },
-              source_range: { start: first.start, end: lines[next].end },
-              content_range: { start: first.start, end: last_content.end },
+              source_range: { start: first.start, end: lines[next].end, },
+              content_range: { start: first.start, end: last_content.end, },
             },
             end_index: next,
           })
@@ -1506,7 +1507,7 @@ fn markdown_editor_shell_structural_kind(
           }
         }
         if content < length {
-          return Some(MarkdownBlockKind::Heading(level))
+          return Some(Heading(level))
         }
       }
     }
@@ -1530,7 +1531,7 @@ fn markdown_editor_shell_structural_kind(
       text.get_char(close).unwrap_or(' ') == ']' &&
       text.get_char(close + 1).unwrap_or(' ') == ':' {
       let label = markdown_editor_shell_slice(text, start=cursor + 2, end=close)
-      return Some(MarkdownBlockKind::FootnoteDefinition(label))
+      return Some(FootnoteDefinition(label))
     }
     return None
   }
@@ -1547,19 +1548,19 @@ fn markdown_editor_shell_structural_kind(
     text.get_char(cursor + 4).unwrap_or(' ') == ']' &&
     text.get_char(cursor + 5).unwrap_or(' ') == ' ' {
     let checked = text.get_char(cursor + 3).unwrap_or(' ') != ' '
-    return Some(MarkdownBlockKind::TaskListItem(checked))
+    return Some(TaskListItem(checked))
   }
   // Unordered list item
   if (first == '-' || first == '*' || first == '+') &&
     cursor + 1 < length &&
     text.get_char(cursor + 1).unwrap_or(' ') == ' ' {
-    return Some(MarkdownBlockKind::UnorderedListItem)
+    return Some(UnorderedListItem)
   }
   // Quote
   if first == '>' &&
     cursor + 1 < length &&
     text.get_char(cursor + 1).unwrap_or(' ') == ' ' {
-    return Some(MarkdownBlockKind::Blockquote)
+    return Some(Blockquote)
   }
   // Thematic break: three or more of the same marker, spaces allowed
   // between them, nothing else on the line. `-` falls through to nothing
@@ -1582,7 +1583,7 @@ fn markdown_editor_shell_structural_kind(
       }
     }
     if structural && count >= 3 {
-      return Some(MarkdownBlockKind::HorizontalRule)
+      return Some(HorizontalRule)
     }
     return None
   }
@@ -1606,7 +1607,7 @@ fn markdown_editor_shell_structural_kind(
         text.get_char(index).unwrap_or(' ') == ')'
       ) &&
       text.get_char(index + 1).unwrap_or(' ') == ' ' {
-      return Some(MarkdownBlockKind::OrderedListItem(number))
+      return Some(OrderedListItem(number))
     }
   }
   None
@@ -1652,27 +1653,26 @@ fn markdown_editor_shell_content_text(
       break
     }
   }
-  text.sub(start=offset, end=length).to_owned()
+  text.exact_view(start=offset, end=length).to_owned()
 }
 
 ///|
 fn markdown_editor_shell_line_block(line : MarkdownLine) -> MarkdownEditorBlock {
   let kind = match markdown_editor_shell_structural_kind(line.text) {
     Some(kind) => kind
-    None => MarkdownBlockKind::Paragraph
+    None => Paragraph
   }
   let text = match kind {
-    MarkdownBlockKind::Heading(_) =>
-      markdown_heading_visible_source_text(line.text)
-    MarkdownBlockKind::HorizontalRule => ""
-    MarkdownBlockKind::FootnoteDefinition(_) =>
+    Heading(_) => markdown_heading_visible_source_text(line.text)
+    HorizontalRule => ""
+    FootnoteDefinition(_) =>
       markdown_editor_shell_content_text(
         line.text,
         skip_marker_length=markdown_editor_footnote_marker_prefix_length(
           line.text,
         ),
       )
-    MarkdownBlockKind::Paragraph => line.text.to_owned()
+    Paragraph => line.text.to_owned()
     _ =>
       markdown_editor_shell_content_text(
         line.text,
@@ -1687,7 +1687,7 @@ fn markdown_editor_shell_line_block(line : MarkdownLine) -> MarkdownEditorBlock 
       table_alignments: [],
       code_language: None,
     },
-    source_range: { start: line.start, end: line.end },
+    source_range: { start: line.start, end: line.end, },
     content_range: markdown_editor_content_range(line, kind),
   }
 }
@@ -1875,7 +1875,7 @@ fn markdown_editor_indented_code_block_at(
   Some({
     block: {
       block: markdown_editor_code_block(markdown_join_lines(code_lines), None),
-      source_range: { start: first.start, end: last.end },
+      source_range: { start: first.start, end: last.end, },
       content_range: {
         start: markdown_editor_min_int(content_start, last.end),
         end: last.end,
@@ -1964,7 +1964,7 @@ fn markdown_editor_soft_wrapped_paragraph_block_at(
   Some({
     block: {
       block: {
-        kind: MarkdownBlockKind::Paragraph,
+        kind: Paragraph,
         text,
         inlines: if parse_inlines {
           parse_markdown_inlines_with_definitions(text, definitions)
@@ -2033,7 +2033,7 @@ fn markdown_editor_soft_wrapped_paragraph_line(
     return false
   }
   match parse_markdown(line.text.to_owned()) {
-    [{ kind: MarkdownBlockKind::Paragraph, .. }] => true
+    [{ kind: Paragraph, .. }] => true
     _ => false
   }
 }
@@ -2069,14 +2069,14 @@ fn markdown_editor_table_block_at(
   }
   let segment = markdown_join_lines(segment_lines)
   match parse_markdown(segment) {
-    [{ kind: MarkdownBlockKind::Table, .. } as block] => {
+    [{ kind: Table, .. } as block] => {
       let source_start = table_lines[0].start
       let source_end = table_lines[table_lines.length() - 1].end
       Some({
         block: {
           block,
-          source_range: { start: source_start, end: source_end },
-          content_range: { start: source_start, end: source_end },
+          source_range: { start: source_start, end: source_end, },
+          content_range: { start: source_start, end: source_end, },
         },
         end_index: next - 1,
       })
@@ -2185,7 +2185,7 @@ fn markdown_editor_setext_heading_level_at(
 ///|
 fn markdown_editor_is_setext_paragraph_candidate(line : String) -> Bool {
   match parse_markdown(line) {
-    [{ kind: MarkdownBlockKind::Paragraph, .. }] => true
+    [{ kind: Paragraph, .. }] => true
     _ => false
   }
 }
@@ -2684,18 +2684,18 @@ fn markdown_editor_find_run_source_range(
   let run_chars = run_text.to_array()
   if run_chars.length() == 0 {
     let offset = markdown_editor_clamp_int(start, 0, content_chars.length())
-    return { start: offset, end: offset }
+    return { start: offset, end: offset, }
   }
   let mut index = markdown_editor_clamp_int(start, 0, content_chars.length())
   while index < content_chars.length() {
     match
       markdown_editor_match_run_source_end(content_chars, index, run_chars) {
-      Some(end) => return { start: index, end }
+      Some(end) => return { start: index, end, }
       None => index = index + 1
     }
   }
   let offset = markdown_editor_clamp_int(start, 0, content_chars.length())
-  { start: offset, end: offset + run_chars.length() }
+  { start: offset, end: offset + run_chars.length(), }
 }
 
 ///|
@@ -2735,7 +2735,7 @@ fn markdown_editor_match_run_source_end(
 
 ///|
 fn markdown_core_range(range : MarkdownSourceRange) -> RichTextSourceRange {
-  { start: range.start, end: range.end }
+  { start: range.start, end: range.end, }
 }
 
 ///|
@@ -2782,7 +2782,7 @@ fn markdown_editor_content_range(
       )
     _ => line.end
   }
-  { start, end: markdown_editor_max_int(start, end) }
+  { start, end: markdown_editor_max_int(start, end), }
 }
 
 ///|
@@ -2927,8 +2927,8 @@ fn markdown_editor_block_slice_to_source_lines(
               text,
               inlines: parse_markdown_inlines_with_definitions(text, []),
             },
-            source_range: { start: slice_start, end: slice_end },
-            content_range: { start: slice_start, end: slice_end },
+            source_range: { start: slice_start, end: slice_end, },
+            content_range: { start: slice_start, end: slice_end, },
           }
         }
         None => ()
@@ -2988,26 +2988,6 @@ fn markdown_editor_block_slice_to_source_lines(
       end: content_start + slice_end,
     },
   }
-}
-
-///|
-/// Keep every source line of `editor_block` from `first_line` on. The line
-/// window always clips a leading band and renders the rest, so this is the
-/// form `rich_text_window` uses.
-fn markdown_editor_block_slice_from_source_line(
-  source : String,
-  editor_block : MarkdownEditorBlock,
-  first_line : Int,
-) -> MarkdownEditorBlock {
-  // A line index far past any document: the range helper treats an end beyond
-  // the block as "to the end" and returns the block unchanged if the start is
-  // past the end too.
-  markdown_editor_block_slice_to_source_lines(
-    source,
-    editor_block,
-    first_line,
-    MARKDOWN_EDITOR_SLICE_TO_LAST_LINE,
-  )
 }
 
 ///|

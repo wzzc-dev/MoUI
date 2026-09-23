@@ -127,7 +127,7 @@ fn LinuxSurfaceBinding::new(
     _metrics,
   ) => (),
 ) -> LinuxSurfaceBinding {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, }
 }
 
 ///|
@@ -135,7 +135,7 @@ pub fn LinuxClientDecorationState::new(
   active~ : Bool,
   titlebar_height? : Double = linux_client_titlebar_height,
 ) -> LinuxClientDecorationState {
-  { active, titlebar_height: if active { titlebar_height } else { 0.0 } }
+  { active, titlebar_height: if active { titlebar_height } else { 0.0 }, }
 }
 
 ///|

@@ -5,7 +5,7 @@ fn LinuxNativeHostBackend::dispatch_window_event(
   event : @window_core.WindowEvent,
 ) -> Unit {
   match event {
-    @window_core.WindowEvent::ModifiersChanged(modifiers) =>
+    ModifiersChanged(modifiers) =>
       self.modifiers = @window_input.modifiers_to_core(modifiers)
     _ => ()
   }
@@ -79,10 +79,8 @@ fn LinuxNativeHostBackend::open_window(
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
   match self.lifecycle.open_resolution(request) {
-    @window_lifecycle.WindowOpenResolution::OpenRejected(message) =>
-      @host.WindowRequestResult::WindowRejected(message)
-    @window_lifecycle.WindowOpenResolution::OpenResolved(resolved) =>
-      self.create_resolved_window(event_loop, resolved)
+    OpenRejected(message) => WindowRejected(message)
+    OpenResolved(resolved) => self.create_resolved_window(event_loop, resolved)
   }
 }
 
@@ -118,7 +116,7 @@ fn LinuxNativeHostBackend::create_resolved_window(
     Some(window) => self.attach_resolved_window(window, resolved)
     None => {
       self.rollback_window_record(resolved.id)
-      @host.WindowRequestResult::WindowRejected("failed to create Linux window")
+      WindowRejected("failed to create Linux window")
     }
   }
 }
@@ -165,7 +163,7 @@ fn LinuxNativeHostBackend::attach_resolved_window(
         .environment_with_system_theme(driver.environment()),
       )
       driver.set_text_system(renderer.text_system())
-      ignore(driver.dispatch(@host.Event::Resized(metrics)))
+      ignore(driver.dispatch(Resized(metrics)))
       ignore(
         self.lifecycle.register_runtime_slot(
           @window_lifecycle.WindowRuntimeSlot::from_driver(record~, driver~),
@@ -197,14 +195,12 @@ fn LinuxNativeHostBackend::attach_resolved_window(
         ),
       )
       self.request_platform_redraw(resolved.id)
-      @host.WindowRequestResult::WindowOpened(resolved.id)
+      WindowOpened(resolved.id)
     }
     None => {
       window.drop()
       self.rollback_window_record(resolved.id)
-      @host.WindowRequestResult::WindowRejected(
-        "failed to create Linux renderer",
-      )
+      WindowRejected("failed to create Linux renderer")
     }
   }
 }
@@ -316,13 +312,11 @@ fn LinuxNativeHostBackend::linux_surface_actions(
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {
-        @window_input.TextInputSessionAction::EnableIme(request)
-        | @window_input.TextInputSessionAction::UpdateIme(request)
-        | @window_input.TextInputSessionAction::DisableIme(request) =>
+        EnableIme(request) | UpdateIme(request) | DisableIme(request) =>
           window.request_ime_update(request) catch {
             _ => ()
           }
-        @window_input.TextInputSessionAction::NoImeChange => ()
+        NoImeChange => ()
       }
     },
     drop=fn() { window.drop() },

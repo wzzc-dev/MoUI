@@ -1,11 +1,11 @@
 import {
   "wzzc-dev/moui_agent" @agent,
   "wzzc-dev/moui/core",
-  "moonbitlang/core/json",
 }
 
 import {
   "wzzc-dev/moui_agent" @agent,
+  "moonbitlang/core/json",
 } for "test"
 
 supported_targets = "+native+wasm-gc"

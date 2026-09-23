@@ -52,7 +52,7 @@ pub fn ResourceCache::cached_cacheable_resource_plan(
   self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
   plan : RendererResourcePlan,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   for descriptor in plan.descriptors {
     if descriptor.is_cacheable() &&
       self.contains_resource_descriptor(descriptor) {
@@ -67,7 +67,7 @@ pub fn ResourceCache::missing_cacheable_resource_plan(
   self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
   plan : RendererResourcePlan,
 ) -> RendererResourcePlan {
-  let descriptors : Array[RendererResourceDescriptor] = Array::new()
+  let descriptors : Array[RendererResourceDescriptor] = Array()
   for descriptor in plan.descriptors {
     if descriptor.is_cacheable() &&
       !self.contains_resource_descriptor(descriptor) {

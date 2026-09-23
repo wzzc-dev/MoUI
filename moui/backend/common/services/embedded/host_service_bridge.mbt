@@ -32,15 +32,11 @@ pub fn EmbeddedHostServices::bridge(
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(capabilities=self.capabilities, handle=request => {
     if self.disposed {
-      return @host.HostServiceResponse::Unavailable(
-        "embedded runtime host services are disposed",
-      )
+      return Unavailable("embedded runtime host services are disposed")
     }
     match request {
-      @host.HostServiceRequest::Clipboard(_)
-      | @host.HostServiceRequest::PlatformChannel(_) =>
-        self.queue.submit(request)
-      _ => @host.HostServiceResponse::Unavailable(request.unavailable_message())
+      Clipboard(_) | PlatformChannel(_) => self.queue.submit(request)
+      _ => Unavailable(request.unavailable_message())
     }
   })
 }

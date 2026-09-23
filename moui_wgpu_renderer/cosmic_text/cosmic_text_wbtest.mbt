@@ -89,10 +89,7 @@ test "cosmic text maps default font stack to ui fallback family" {
   inspect(
     cosmic_text_family_for_font(
       @core.FontSpec::new(
-        families=@core.FontFamilyStack::new([
-          @core.FontFamily::UiSansSerif,
-          @core.FontFamily::SansSerif,
-        ]),
+        families=@core.FontFamilyStack::new([UiSansSerif, SansSerif]),
       ),
     ),
     content="UiSansSerif",
@@ -109,7 +106,7 @@ test "cosmic text replaces missing glyph cache key with cjk fallback" {
       frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
       font=@core.FontSpec::new(size=18.0, weight=500),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     cache.ensure_fonts_for_font(run.font)
     let (missing_key, _, _) = @moon_cosmic.CacheKey::new(
@@ -142,7 +139,7 @@ test "cosmic text resolves cjk glyph from fallback face" {
       frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
       font=@core.FontSpec::new(size=18.0, weight=500),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     let runs = cosmic_text_layout_runs(cache, run)
     inspect(cache.has_loaded_fonts(), content="true")
@@ -162,7 +159,7 @@ test "cosmic text shaping produces glyphs when platform font is available" {
       frame=@core.Rect::new(x=0.0, y=0.0, width=160.0, height=32.0),
       font=@core.FontSpec::new(size=16.0, weight=500),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     let runs = cosmic_text_layout_runs(cache, run)
     inspect(cache.has_loaded_fonts(), content="true")
@@ -182,7 +179,7 @@ test "cosmic text provider skips whitespace glyphs without dropping words" {
       frame=@core.Rect::new(x=0.0, y=0.0, width=260.0, height=32.0),
       font=@core.FontSpec::new(size=16.0, weight=500),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     let raw_runs = cosmic_text_layout_runs(cache, run)
     let mut raw_glyph_count = 0
@@ -217,7 +214,7 @@ test "cosmic text rasterizes lowercase and digits with valid glyph bitmaps" {
       frame=@core.Rect::new(x=0.0, y=0.0, width=260.0, height=32.0),
       font=@core.FontSpec::new(size=16.0, weight=500),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     let mut upper_height = 0
     let mut letter_height = 0
@@ -233,10 +230,7 @@ test "cosmic text rasterizes lowercase and digits with valid glyph bitmaps" {
         )
         match cache.raster_cosmic_glyph(fallback) {
           Some(raster) => {
-            assert_true(
-              raster.format() ==
-              @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
-            )
+            assert_true(raster.format() == AlphaMask)
             match
               cosmic_text_char_at_index(
                 run.text,
@@ -274,7 +268,7 @@ test "cosmic text keeps cjk glyphs near requested font size" {
       frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=40.0),
       font=@core.FontSpec::new(size=16.0, weight=500),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     let mut cjk_height = 0
     for layout_run in cosmic_text_layout_runs(cache, run) {
@@ -307,7 +301,7 @@ test "cosmic text shaping handles multibyte punctuation" {
       frame=@core.Rect::new(x=0.0, y=0.0, width=112.0, height=32.0),
       font=@core.FontSpec::new(size=16.0, weight=500),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     let runs = cosmic_text_layout_runs(cache, run)
     inspect(cache.has_loaded_fonts(), content="true")
@@ -331,7 +325,7 @@ test "cosmic text shaping handles built-in control symbols" {
         frame=@core.Rect::new(x=0.0, y=0.0, width=60.0, height=32.0),
         font=@core.FontSpec::new(size=16.0, weight=500),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       )
       ignore(cosmic_text_layout_runs(cache, run))
     }
@@ -356,7 +350,7 @@ test "cosmic text maps control symbols before layout" {
 ///|
 test "cosmic text preserves source emoji for explicit emoji family" {
   let emoji_font = @core.FontSpec::new(
-    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    families=@core.FontFamilyStack::new([Emoji]),
   )
   inspect(cosmic_text_layout_text("🙂", emoji_font), content="🙂")
   inspect(cosmic_text_layout_text("🙂", @core.FontSpec::new()), content=":")
@@ -367,9 +361,7 @@ test "cosmic text records loaded emoji font ids" {
   if @fs.path_exists(cosmic_emoji_font_path()) {
     let cache = CosmicTextCache::new()
     cache.ensure_fonts_for_font(
-      @core.FontSpec::new(
-        families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
-      ),
+      @core.FontSpec::new(families=@core.FontFamilyStack::new([Emoji])),
     )
     inspect(cache.emoji_font_ids.length() > 0, content="true")
   } else {
@@ -392,7 +384,7 @@ test "cosmic explicit emoji measure folds zwj interior carets" {
   if @fs.path_exists(cosmic_emoji_font_path()) {
     let cache = CosmicTextCache::new()
     let font = @core.FontSpec::new(
-      families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+      families=@core.FontFamilyStack::new([Emoji]),
       size=26.0,
       weight=400,
     )
@@ -423,12 +415,12 @@ test "cosmic explicit emoji layout keeps source glyphs when available" {
       text="🙂",
       frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
       font=@core.FontSpec::new(
-        families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+        families=@core.FontFamilyStack::new([Emoji]),
         size=26.0,
         weight=400,
       ),
       color=@core.Color::black(),
-      align=@core.TextAlign::TextStart,
+      align=TextStart,
     )
     let mut glyphs = 0
     for layout_run in cosmic_text_layout_runs(cache, run) {
@@ -498,7 +490,7 @@ fn assert_cosmic_run_layout_contract_sample(text : String) -> Unit raise {
     frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=40.0),
     font~,
     color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
+    align=TextStart,
   )
   match cache.layout_for_run(run, 1.0) {
     Some(layout) => {

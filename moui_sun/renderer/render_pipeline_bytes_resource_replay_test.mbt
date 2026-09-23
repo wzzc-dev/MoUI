@@ -3,9 +3,9 @@ test "RenderPipeline bytes source-rect replay uses RendererResources image cache
   let atlas = make_renderer_test_tile_source()
   let src_left = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(5, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(5, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_bmp_bytes_rect_keyed(
       "bmp-atlas",
@@ -63,7 +63,7 @@ test "RenderPipeline bytes source-rect replay uses RendererResources image cache
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_bmp_bytes_rect_keyed(
       "bmp-atlas",
@@ -113,9 +113,9 @@ test "RenderPipeline bytes source-rect replay uses RendererResources image cache
 test "RenderPipeline bytes tiled source-rect replay uses RendererResources image cache" {
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(8, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(8, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_tiled_bmp_bytes_rect_keyed(
       "bmp-pattern",
@@ -193,7 +193,7 @@ test "RenderPipeline bytes tiled source-rect replay uses RendererResources image
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_tiled_bmp_bytes_rect_keyed(
       "bmp-pattern",
@@ -247,9 +247,9 @@ test "RenderPipeline bytes tiled source-rect replay uses RendererResources image
 test "RenderPipeline bytes nine-patch replay uses RendererResources image cache" {
   let panel = make_renderer_test_nine_patch_source()
   let insets = @graphics.NinePatchInsets::new(left=1, top=1, right=1, bottom=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(10, 5))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(10, 5))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_nine_patch_bmp_bytes_keyed(
       "bmp-panel",
@@ -260,7 +260,7 @@ test "RenderPipeline bytes nine-patch replay uses RendererResources image cache"
       5,
       insets,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_nine_patch_png_bytes_keyed(
       "png-panel",
@@ -271,7 +271,7 @@ test "RenderPipeline bytes nine-patch replay uses RendererResources image cache"
       5,
       insets,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 3)
@@ -313,7 +313,7 @@ test "RenderPipeline bytes nine-patch replay uses RendererResources image cache"
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_nine_patch_bmp_bytes_keyed(
       "bmp-panel",
@@ -324,7 +324,7 @@ test "RenderPipeline bytes nine-patch replay uses RendererResources image cache"
       5,
       insets,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_nine_patch_png_bytes_keyed(
       "png-panel",
@@ -335,7 +335,7 @@ test "RenderPipeline bytes nine-patch replay uses RendererResources image cache"
       5,
       insets,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )
@@ -361,9 +361,9 @@ test "RenderPipeline bytes nine-patch replay uses RendererResources image cache"
 test "RenderPipeline RGBA bytes nine-patch replay uses RendererResources image cache" {
   let panel = make_renderer_test_nine_patch_source()
   let insets = @graphics.NinePatchInsets::new(left=1, top=1, right=1, bottom=1)
-  let resources = RendererResources::with_capacities(16, 16, 1, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(10, 5))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(10, 5))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_nine_patch_rgba_bytes_keyed(
       "rgba-panel",
@@ -376,7 +376,7 @@ test "RenderPipeline RGBA bytes nine-patch replay uses RendererResources image c
       5,
       insets,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 2)
@@ -414,7 +414,7 @@ test "RenderPipeline RGBA bytes nine-patch replay uses RendererResources image c
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_nine_patch_rgba_bytes_keyed(
       "rgba-panel",
@@ -427,7 +427,7 @@ test "RenderPipeline RGBA bytes nine-patch replay uses RendererResources image c
       5,
       insets,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )
@@ -456,9 +456,9 @@ test "RenderPipeline RGBA bytes nine-patch replay uses RendererResources image c
 ///|
 test "RenderPipeline bytes sampled replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(8, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(8, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_sampled_bmp_bytes_keyed(
       "bmp-sampled",
@@ -468,7 +468,7 @@ test "RenderPipeline bytes sampled replay uses RendererResources image cache" {
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_png_bytes_keyed(
       "png-sampled",
@@ -478,7 +478,7 @@ test "RenderPipeline bytes sampled replay uses RendererResources image cache" {
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 3)
@@ -536,7 +536,7 @@ test "RenderPipeline bytes sampled replay uses RendererResources image cache" {
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_sampled_bmp_bytes_keyed(
       "bmp-sampled",
@@ -546,7 +546,7 @@ test "RenderPipeline bytes sampled replay uses RendererResources image cache" {
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_png_bytes_keyed(
       "png-sampled",
@@ -556,7 +556,7 @@ test "RenderPipeline bytes sampled replay uses RendererResources image cache" {
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )
@@ -591,9 +591,9 @@ test "RenderPipeline bytes sampled source-rect replay uses RendererResources ima
   let sprite = make_renderer_test_tile_source()
   let src_left = @graphics.PixelRect::new(x=0, y=0, width=1, height=1)
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(8, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(8, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_sampled_bmp_bytes_rect_keyed(
       "bmp-sampled-sprite",
@@ -604,7 +604,7 @@ test "RenderPipeline bytes sampled source-rect replay uses RendererResources ima
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_png_bytes_rect_keyed(
       "png-sampled-sprite",
@@ -615,7 +615,7 @@ test "RenderPipeline bytes sampled source-rect replay uses RendererResources ima
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 3)
@@ -665,7 +665,7 @@ test "RenderPipeline bytes sampled source-rect replay uses RendererResources ima
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_sampled_bmp_bytes_rect_keyed(
       "bmp-sampled-sprite",
@@ -676,7 +676,7 @@ test "RenderPipeline bytes sampled source-rect replay uses RendererResources ima
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_png_bytes_rect_keyed(
       "png-sampled-sprite",
@@ -687,7 +687,7 @@ test "RenderPipeline bytes sampled source-rect replay uses RendererResources ima
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )

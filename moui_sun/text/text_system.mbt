@@ -175,9 +175,9 @@ pub fn TextSystem::register_font_file_result(
       match
         self.register_font_data_result(key, FontData::new(data, font_index~)) {
         Ok(result) => Ok(result)
-        Err(error) => Err(FontLoadError::FontParseFailed(key, error))
+        Err(error) => Err(FontParseFailed(key, error))
       }
-    None => Err(FontLoadError::FontFileReadFailed(key, path))
+    None => Err(FontFileReadFailed(key, path))
   }
 }
 
@@ -714,7 +714,7 @@ fn empty_text_caret(
   config : LayoutConfig,
 ) -> TextCaret {
   let baseline_y = scaled_ascent(face, config)
-  { index, line: 0, x: 0.0, y: 0.0, height: config.line_height, baseline_y }
+  { index, line: 0, x: 0.0, y: 0.0, height: config.line_height, baseline_y, }
 }
 
 ///|
@@ -821,7 +821,7 @@ fn text_line_source_spans(
     let start_index = cursor
     cursor = consume_visible_text(text, cursor, run.glyph_count())
     cursor = consume_zero_width_text_before_line_boundary(text, cursor)
-    spans.push({ start_index, end_index: cursor })
+    spans.push({ start_index, end_index: cursor, })
     cursor = consume_line_break_at(text, cursor)
   }
   spans

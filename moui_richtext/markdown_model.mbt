@@ -607,7 +607,7 @@ fn markdown_setext_heading_block_at(
           let text = markdown_join_lines(heading_lines)
           return Some({
             block: {
-              kind: MarkdownBlockKind::Heading(level),
+              kind: Heading(level),
               text,
               inlines: parse_markdown_inlines_with_definitions(
                 text, definitions,
@@ -830,7 +830,7 @@ fn markdown_soft_wrapped_paragraph_block_at(
   let text = markdown_join_lines(paragraph_lines)
   Some({
     block: {
-      kind: MarkdownBlockKind::Paragraph,
+      kind: Paragraph,
       text,
       inlines: parse_markdown_inlines_with_definitions(text, definitions),
       table_alignments: [],
@@ -985,7 +985,7 @@ fn append_markdown_ast_block(
       }
       if level >= 1 && level <= 6 && is_real_heading {
         blocks.push({
-          kind: MarkdownBlockKind::Heading(level),
+          kind: Heading(level),
           text,
           inlines: parse_markdown_inlines_with_definitions(text, definitions),
           table_alignments: [],
@@ -997,7 +997,7 @@ fn append_markdown_ast_block(
           _ => markdown_heading_source(level, text)
         }
         blocks.push({
-          kind: MarkdownBlockKind::Paragraph,
+          kind: Paragraph,
           text: para_text,
           inlines: parse_markdown_inlines_with_definitions(
             para_text, definitions,
@@ -1013,15 +1013,14 @@ fn append_markdown_ast_block(
         None => markdown_inline_text(children)
       }
       blocks.push({
-        kind: MarkdownBlockKind::Paragraph,
+        kind: Paragraph,
         text,
         inlines: parse_markdown_inlines_with_definitions(text, definitions),
         table_alignments: [],
         code_language: None,
       })
     }
-    ThematicBreak(..) =>
-      blocks.push(markdown_block(MarkdownBlockKind::HorizontalRule, ""))
+    ThematicBreak(..) => blocks.push(markdown_block(HorizontalRule, ""))
     FencedCode(code~, info~, ..) =>
       blocks.push(
         markdown_code_block(
@@ -1036,7 +1035,7 @@ fn append_markdown_ast_block(
     Blockquote(children~, ..) => {
       let text = markdown_quote_block_text(children, source_text)
       blocks.push({
-        kind: MarkdownBlockKind::Blockquote,
+        kind: Blockquote,
         text,
         inlines: parse_markdown_inlines_with_definitions(text, definitions),
         table_alignments: [],
@@ -1049,7 +1048,7 @@ fn append_markdown_ast_block(
         match item.checked {
           Some(checked) =>
             blocks.push({
-              kind: MarkdownBlockKind::TaskListItem(checked),
+              kind: TaskListItem(checked),
               text,
               inlines: parse_markdown_inlines_with_definitions(
                 text, definitions,
@@ -1059,7 +1058,7 @@ fn append_markdown_ast_block(
             })
           None =>
             blocks.push({
-              kind: MarkdownBlockKind::UnorderedListItem,
+              kind: UnorderedListItem,
               text,
               inlines: parse_markdown_inlines_with_definitions(
                 text, definitions,
@@ -1074,7 +1073,7 @@ fn append_markdown_ast_block(
       for item in items {
         let text = markdown_list_item_text(item, source_text~)
         blocks.push({
-          kind: MarkdownBlockKind::OrderedListItem(number),
+          kind: OrderedListItem(number),
           text,
           inlines: parse_markdown_inlines_with_definitions(text, definitions),
           table_alignments: [],
@@ -1084,8 +1083,7 @@ fn append_markdown_ast_block(
       }
     }
     BlankLines(..) => ()
-    HtmlBlock(html~, ..) =>
-      blocks.push(markdown_block(MarkdownBlockKind::HtmlBlock, html))
+    HtmlBlock(html~, ..) => blocks.push(markdown_block(HtmlBlock, html))
     Table(header~, rows~, ..) => {
       let text = markdown_table_text(header, rows)
       blocks.push(markdown_table_block(text, []))
@@ -1093,7 +1091,7 @@ fn append_markdown_ast_block(
     FootnoteDefinition(label~, children~, ..) => {
       let text = markdown_blocks_text(children)
       blocks.push({
-        kind: MarkdownBlockKind::FootnoteDefinition(label),
+        kind: FootnoteDefinition(label),
         text,
         inlines: parse_markdown_inlines_with_definitions(text, definitions),
         table_alignments: [],
@@ -1142,18 +1140,12 @@ fn markdown_block(kind : MarkdownBlockKind, text : String) -> MarkdownBlock {
     CodeBlock | HorizontalRule | Table | FrontMatter => []
     _ => parse_markdown_inlines(text)
   }
-  { kind, text, inlines, table_alignments: [], code_language: None }
+  { kind, text, inlines, table_alignments: [], code_language: None, }
 }
 
 ///|
 fn markdown_code_block(text : String, code_language : String?) -> MarkdownBlock {
-  {
-    kind: MarkdownBlockKind::CodeBlock,
-    text,
-    inlines: [],
-    table_alignments: [],
-    code_language,
-  }
+  { kind: CodeBlock, text, inlines: [], table_alignments: [], code_language, }
 }
 
 ///|

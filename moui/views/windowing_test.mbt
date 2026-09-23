@@ -27,7 +27,7 @@ test "visible_row_window full list fits one viewport" {
   )
   match range {
     None => fail("expected a window")
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       inspect(first_row, content="0")
       inspect(last_row, content="4")
     }
@@ -47,7 +47,7 @@ test "visible_row_window mid-scroll window with overscan" {
   )
   match range {
     None => fail("expected a window")
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       inspect(first_row, content="10")
       // (460 + 240) / 46 = 15.217 -> floor 15
       inspect(last_row, content="15")
@@ -63,7 +63,7 @@ test "visible_row_window mid-scroll window with overscan" {
   )
   match with_scan {
     None => fail("expected a window")
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       inspect(first_row, content="8")
       inspect(last_row, content="17")
     }
@@ -113,7 +113,7 @@ test "visible_row_window clamps at both ends" {
   )
   match range {
     None => fail("expected a window")
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       inspect(first_row, content="99")
       inspect(last_row, content="99")
     }
@@ -145,7 +145,7 @@ test "visible_row_window single row always renders itself" {
   )
   match range {
     None => fail("expected a window")
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       inspect(first_row, content="0")
       inspect(last_row, content="0")
     }
@@ -164,7 +164,7 @@ test "visible_row_window negative overscan treated as zero" {
   )
   match range {
     None => fail("expected a window")
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       inspect(first_row, content="10")
       inspect(last_row, content="15")
     }
@@ -183,7 +183,7 @@ test "visible_row_window degenerate stride falls back to full list" {
   )
   match range {
     None => fail("expected a window")
-    Some({ first_row, last_row }) => {
+    Some({ first_row, last_row, }) => {
       inspect(first_row, content="0")
       inspect(last_row, content="6")
     }

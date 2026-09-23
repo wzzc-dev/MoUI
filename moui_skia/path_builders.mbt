@@ -52,7 +52,7 @@ fn Path::append_verb(
 ) -> Path {
   let verbs = self.verbs.copy()
   verbs.push(verb)
-  { ..self, verbs, current_point }
+  { ..self, verbs, current_point, }
 }
 
 ///|

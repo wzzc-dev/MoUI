@@ -9,9 +9,9 @@ fn Model::website_overlay_hosts(
   let with_mobile_menu = @views.overlay_host(shell, [
     @views.PresentationSpec::new(
       id="mobile-menu",
-      kind=@views.PresentationKind::Sheet,
+      kind=Sheet,
       content=mobile_menu,
-      modality=@views.PresentationModality::Modal,
+      modality=Modal,
       dismiss=@views.PresentationDismissPolicy::new(
         outside_tap=true,
         message=Some(CloseMobileMenu),
@@ -23,9 +23,9 @@ fn Model::website_overlay_hosts(
   @views.overlay_host(with_mobile_menu, [
     @views.PresentationSpec::new(
       id="docs-drawer",
-      kind=@views.PresentationKind::Sheet,
+      kind=Sheet,
       content=docs_sheet,
-      modality=@views.PresentationModality::Modal,
+      modality=Modal,
       dismiss=@views.PresentationDismissPolicy::new(
         outside_tap=true,
         message=Some(CloseDocsDrawer),
@@ -55,12 +55,12 @@ fn Model::mobile_menu_sheet(
               font=@text.FontSpec::new(size=20.0, weight=780),
               color=theme.palette.foreground,
             )
-            .semantics_role(@core.SemanticsRole::Heading)
+            .semantics_role(Heading)
             .semantics_level(2),
             button(
               message("nav.home"),
               on_click=OpenHome,
-              variant=@views.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=item_width,
               height=40.0,
@@ -68,7 +68,7 @@ fn Model::mobile_menu_sheet(
             button(
               message("nav.tutorial"),
               on_click=OpenTutorial,
-              variant=@views.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=item_width,
               height=40.0,
@@ -76,7 +76,7 @@ fn Model::mobile_menu_sheet(
             button(
               message("nav.quick_start"),
               on_click=OpenHomeAnchor("quick-start"),
-              variant=@views.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=item_width,
               height=40.0,
@@ -84,7 +84,7 @@ fn Model::mobile_menu_sheet(
             button(
               message("nav.showcases"),
               on_click=OpenShowcases,
-              variant=@views.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=item_width,
               height=40.0,
@@ -92,7 +92,7 @@ fn Model::mobile_menu_sheet(
             button(
               message("nav.docs"),
               on_click=OpenDocs,
-              variant=@views.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=item_width,
               height=40.0,
@@ -100,12 +100,12 @@ fn Model::mobile_menu_sheet(
             button(
               message("nav.github"),
               on_click=OpenRepository,
-              variant=@views.ButtonVariant::Ghost,
+              variant=Ghost,
               theme~,
               width=item_width,
               height=40.0,
             )
-            .semantics_role(@core.SemanticsRole::Link)
+            .semantics_role(Link)
             .semantics_url(moui_repository_url()),
             button(
               if self.dark {
@@ -114,7 +114,7 @@ fn Model::mobile_menu_sheet(
                 message("theme.dark")
               },
               on_click=ToggleDark,
-              variant=@views.ButtonVariant::Outline,
+              variant=Outline,
               theme~,
               width=item_width,
               height=40.0,
@@ -124,7 +124,7 @@ fn Model::mobile_menu_sheet(
                 button(
                   message("site.english"),
                   on_click=SelectLocale("en-US"),
-                  variant=@views.ButtonVariant::Ghost,
+                  variant=Ghost,
                   theme~,
                   width=(item_width - 8.0) / 2.0,
                   height=40.0,
@@ -132,18 +132,18 @@ fn Model::mobile_menu_sheet(
                 button(
                   message("site.chinese"),
                   on_click=SelectLocale("zh-Hans"),
-                  variant=@views.ButtonVariant::Ghost,
+                  variant=Ghost,
                   theme~,
                   width=(item_width - 8.0) / 2.0,
                   height=40.0,
                 ).accessibility_label(message("site.chinese")),
               ],
               spacing=8.0,
-              align=@views.CrossAlign::Center,
+              align=Center,
             ),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         width~,
         height=434.0,
@@ -152,9 +152,9 @@ fn Model::mobile_menu_sheet(
         theme~,
         padding=20.0,
       )
-      .semantics_role(@core.SemanticsRole::Navigation)
+      .semantics_role(Navigation)
       .accessibility_label(message("site.navigation")),
-    presentation_mode=@views.SheetPresentationMode::BottomSheet,
+    presentation_mode=BottomSheet,
     theme~,
     on_dismiss=Some(CloseMobileMenu),
   )
@@ -181,7 +181,7 @@ fn Model::docs_drawer_sheet(
       theme~,
       padding=12.0,
     ),
-    presentation_mode=@views.SheetPresentationMode::BottomSheet,
+    presentation_mode=BottomSheet,
     theme~,
     on_dismiss=Some(CloseDocsDrawer),
   )

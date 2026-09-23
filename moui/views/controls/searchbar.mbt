@@ -3,7 +3,7 @@ pub fn[Msg] searchbar(
   query~ : String,
   on_input~ : (String) -> Msg,
   placeholder? : String = "Search...",
-  variant? : @style.TextFieldVariant = @style.TextFieldVariant::Filled,
+  variant? : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
   on_submit? : Msg? = None,
   on_clear? : Msg? = None,

@@ -26,21 +26,24 @@ fn settings_feature() -> @moui.Feature[SettingsWorkspace, SettingsMsg] {
   @moui.Feature::new(
     init=() => (SettingsWorkspace::new(), @moui.Effect::none()),
     update=(section, message) => section.update(message),
-    view=_section =>
+    view=_section => {
       abort(
         "settings section view is composed by settings_overlay_view; scope is update/effect only",
-      ),
+      )
+    },
   )
 }
 
 ///|
-fn settings_scope(
-) -> @moui.ScopedFeature[WorkbenchModel, SettingsWorkspace, SettingsMsg, WorkbenchMsg] {
-  settings_feature().scope(
-    read=settings_read,
-    write=settings_write,
-    wrap=msg => WorkbenchMsg::SettingsMsg(msg),
-  )
+fn settings_scope() -> @moui.ScopedFeature[
+  WorkbenchModel,
+  SettingsWorkspace,
+  SettingsMsg,
+  WorkbenchMsg,
+] {
+  settings_feature().scope(read=settings_read, write=settings_write, wrap=msg => {
+    SettingsMsg(msg)
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -86,23 +89,15 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
   let tree : Array[TaskTreeNode] = []
   if !today_tasks.is_empty() {
     let expanded = folder_was_expanded(model.task_tree, "folder_today")
-    tree.push(
-      TaskTreeNode::Folder(
-        "folder_today",
-        "Today",
-        TaskGroup::Today,
-        today_tasks,
-        expanded,
-      ),
-    )
+    tree.push(Folder("folder_today", "Today", Today, today_tasks, expanded))
   }
   if !yesterday_tasks.is_empty() {
     let expanded = folder_was_expanded(model.task_tree, "folder_yesterday")
     tree.push(
-      TaskTreeNode::Folder(
+      Folder(
         "folder_yesterday",
         "Yesterday",
-        TaskGroup::Yesterday,
+        Yesterday,
         yesterday_tasks,
         expanded,
       ),
@@ -111,16 +106,10 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
   if !earlier_tasks.is_empty() {
     let expanded = folder_was_expanded(model.task_tree, "folder_earlier")
     tree.push(
-      TaskTreeNode::Folder(
-        "folder_earlier",
-        "Earlier",
-        TaskGroup::Earlier,
-        earlier_tasks,
-        expanded,
-      ),
+      Folder("folder_earlier", "Earlier", Earlier, earlier_tasks, expanded),
     )
   }
-  { ..model, task_tree: tree }
+  { ..model, task_tree: tree, }
 }
 
 ///|
@@ -185,8 +174,8 @@ fn task_matches_filter(
         Some(aid) => aid == id
         None => false
       }
-    RunningTasks => status == TaskStatus::Running
-    FailedTasks => status == TaskStatus::Failed
+    RunningTasks => status == Running
+    FailedTasks => status == Failed
   }
 }
 
@@ -206,7 +195,7 @@ fn task_matches_search(query : String, id : String, title : String) -> Bool {
 /// a time injection (e.g. via ViewEnvironment or a backend-provided "now"
 /// value) is wired in.
 fn derive_group(_last_active : Int64?) -> TaskGroup {
-  TaskGroup::Today
+  Today
 }
 
 ///|
@@ -225,19 +214,19 @@ fn derive_task_status(
     None => false
   }
   if is_active && streaming {
-    TaskStatus::Running
+    Running
   } else if is_active && messages.is_empty() {
-    TaskStatus::Pending
+    Pending
   } else if is_active {
     // Inspect the active session's message tail for a terminal status.
     let tail = messages[messages.length() - 1]
     match tail {
-      Terminal(TurnStatus::Failed, _) => TaskStatus::Failed
-      _ => TaskStatus::Completed
+      Terminal(Failed, _) => Failed
+      _ => Completed
     }
   } else {
     // Non-active sessions: assume completed (prior turns finished).
-    TaskStatus::Completed
+    Completed
   }
 }
 
@@ -282,28 +271,31 @@ fn WorkbenchModel::update(
   services? : @services.AppServices = @services.AppServices::unavailable(),
 ) -> (WorkbenchModel, @moui.Effect[WorkbenchMsg]) {
   match msg {
-    SwitchTab(tab) => ({ ..self, active_tab: tab }, @moui.Effect::none())
+    SwitchTab(tab) => ({ ..self, active_tab: tab, }, @moui.Effect::none())
     ToggleSidebar =>
-      ({ ..self, sidebar_visible: !self.sidebar_visible }, @moui.Effect::none())
+      (
+        { ..self, sidebar_visible: !self.sidebar_visible, },
+        @moui.Effect::none(),
+      )
     NewTask => {
       // Delegate to the code workspace's NewSession, switch to the Code tab
       // so the new task's chat surface is visible, and re-sync task tree.
-      let (code, eff) = self.code.update(CodeMsg::NewSession, self.backend)
-      let model = { ..self, code, active_tab: TopTab::Code }
-      (sync_task_tree(model), eff.map(m => WorkbenchMsg::CodeMsg(m)))
+      let (code, eff) = self.code.update(NewSession, self.backend)
+      let model = { ..self, code, active_tab: Code, }
+      (sync_task_tree(model), eff.map(m => CodeMsg(m)))
     }
     SelectTask(id) => {
       // Delegate to the code workspace's SelectSession, switch to Code, sync.
-      let (code, eff) = self.code.update(
-        CodeMsg::SelectSession(id),
-        self.backend,
-      )
-      let model = { ..self, code, active_tab: TopTab::Code }
-      (sync_task_tree(model), eff.map(m => WorkbenchMsg::CodeMsg(m)))
+      let (code, eff) = self.code.update(SelectSession(id), self.backend)
+      let model = { ..self, code, active_tab: Code, }
+      (sync_task_tree(model), eff.map(m => CodeMsg(m)))
     }
     ToggleFolder(folder_id) =>
       (
-        { ..self, task_tree: toggle_folder_expanded(self.task_tree, folder_id) },
+        {
+          ..self,
+          task_tree: toggle_folder_expanded(self.task_tree, folder_id),
+        },
         @moui.Effect::none(),
       )
     CycleTaskFilter =>
@@ -316,47 +308,35 @@ fn WorkbenchModel::update(
       )
     ShowAllTasks =>
       (
-        sync_task_tree({
-          ..self,
-          active_tab: TopTab::Code,
-          task_filter: TaskFilter::AllTasks,
-        }),
+        sync_task_tree({ ..self, active_tab: Code, task_filter: AllTasks, }),
         @moui.Effect::none(),
       )
     ShowRunningTasks =>
       (
-        sync_task_tree({
-          ..self,
-          active_tab: TopTab::Code,
-          task_filter: TaskFilter::RunningTasks,
-        }),
+        sync_task_tree({ ..self, active_tab: Code, task_filter: RunningTasks, }),
         @moui.Effect::none(),
       )
     ShowFailedTasks =>
       (
-        sync_task_tree({
-          ..self,
-          active_tab: TopTab::Code,
-          task_filter: TaskFilter::FailedTasks,
-        }),
+        sync_task_tree({ ..self, active_tab: Code, task_filter: FailedTasks, }),
         @moui.Effect::none(),
       )
     TaskSearchChanged(query) =>
       (
-        sync_task_tree({ ..self, task_search_query: query }),
+        sync_task_tree({ ..self, task_search_query: query, }),
         @moui.Effect::none(),
       )
     TaskListScrolled(offset) =>
-      ({ ..self, task_scroll_offset: offset }, @moui.Effect::none())
+      ({ ..self, task_scroll_offset: offset, }, @moui.Effect::none())
     ToggleSettings =>
-      ({ ..self, settings_open: !self.settings_open }, @moui.Effect::none())
+      ({ ..self, settings_open: !self.settings_open, }, @moui.Effect::none())
     ToggleAppearance => {
       let next = match self.appearance {
         System => Light
         Light => Dark
         Dark => System
       }
-      ({ ..self, appearance: next }, @moui.Effect::none())
+      ({ ..self, appearance: next, }, @moui.Effect::none())
     }
     CodeMsg(m) =>
       match m {
@@ -365,9 +345,7 @@ fn WorkbenchModel::update(
           // model OpenSeek can parse, select that model and re-point the
           // backend; otherwise keep the active backend model and leave the
           // picker open so the disabled rows remain visible.
-          let settings = self.settings.update(
-              SettingsMsg::SelectProvider(provider_id),
-            ).0
+          let settings = self.settings.update(SelectProvider(provider_id)).0
           let provider = settings.find_provider(provider_id)
           let (api_key, base_url) = match provider {
             Some(p) => (p.api_key, p.base_url)
@@ -399,8 +377,8 @@ fn WorkbenchModel::update(
                     event => CodeMsg::ReceiveAgentEvent(event),
                   )
                   (
-                    sync_task_tree({ ..self, settings, code }),
-                    eff.map(m => WorkbenchMsg::CodeMsg(m)),
+                    sync_task_tree({ ..self, settings, code, }),
+                    eff.map(m => CodeMsg(m)),
                   )
                 }
                 None =>
@@ -408,7 +386,7 @@ fn WorkbenchModel::update(
                     sync_task_tree({
                       ..self,
                       settings,
-                      code: { ..self.code, model_picker_open: true },
+                      code: { ..self.code, model_picker_open: true, },
                     }),
                     @moui.Effect::none(),
                   )
@@ -439,18 +417,10 @@ fn WorkbenchModel::update(
             [SetModel(model_id, api_key, base_url)],
             event => CodeMsg::ReceiveAgentEvent(event),
           )
-          (
-            sync_task_tree({ ..self, code, }),
-            eff.map(m => WorkbenchMsg::CodeMsg(m)),
-          )
+          (sync_task_tree({ ..self, code, }), eff.map(m => CodeMsg(m)))
         }
         PickWorkspaceFolder =>
-          (
-            self,
-            pick_workspace_folder_effect(services).map(m => {
-              WorkbenchMsg::CodeMsg(m)
-            }),
-          )
+          (self, pick_workspace_folder_effect(services).map(m => CodeMsg(m)))
         WorkspaceFolderSelected(path) =>
           match path {
             Some(raw) => {
@@ -475,7 +445,7 @@ fn WorkbenchModel::update(
                   None => ()
                 }
                 (
-                  { ..self, settings, code: { ..self.code, error: None } },
+                  { ..self, settings, code: { ..self.code, error: None, }, },
                   @moui.Effect::none(),
                 )
               }
@@ -504,7 +474,7 @@ fn WorkbenchModel::update(
             { ..self, code, }
           }
           // Lift `Effect[CodeMsg]` to `Effect[WorkbenchMsg]` via `Effect::map`.
-          (model, eff.map(m => WorkbenchMsg::CodeMsg(m)))
+          (model, eff.map(m => CodeMsg(m)))
         }
       }
     SettingsMsg(m) =>
@@ -515,7 +485,7 @@ fn WorkbenchModel::update(
           // no-op (appearance lives on the parent), and the parent mirror
           // write stays explicit beside the scope call.
           let (next, effect) = settings_scope().update(self, m)
-          ({ ..next, appearance: mode }, effect)
+          ({ ..next, appearance: mode, }, effect)
         }
         DetectModels(provider_id) => {
           let settings = {
@@ -533,11 +503,7 @@ fn WorkbenchModel::update(
           }
           let run_detect = fn(dispatch : (WorkbenchMsg) -> Unit) {
             let on_result = fn(result : Array[String]?) {
-              dispatch(
-                WorkbenchMsg::SettingsMsg(
-                  SettingsMsg::ModelsDetected(provider_id, result),
-                ),
-              )
+              dispatch(SettingsMsg(ModelsDetected(provider_id, result)))
             }
             match self.model_detect {
               Some(detect) => detect(base_url, api_key, on_result)
@@ -607,10 +573,7 @@ fn WorkbenchModel::update(
           }
         _ => {
           let (settings, eff) = self.settings.update(m)
-          (
-            { ..self, settings, },
-            eff.map(msg => WorkbenchMsg::SettingsMsg(msg)),
-          )
+          ({ ..self, settings, }, eff.map(msg => SettingsMsg(msg)))
         }
       }
   }

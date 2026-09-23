@@ -7,17 +7,17 @@ fn form_field_resolved_status(
   error : String,
 ) -> FormFieldStatus {
   if disabled {
-    FormFieldStatus::Disabled
+    Disabled
   } else if error != "" {
-    FormFieldStatus::Invalid
+    Invalid
   } else if read_only {
-    FormFieldStatus::ReadOnly
-  } else if status != FormFieldStatus::Normal {
+    ReadOnly
+  } else if status != Normal {
     status
   } else if required {
-    FormFieldStatus::Required
+    Required
   } else {
-    FormFieldStatus::Normal
+    Normal
   }
 }
 
@@ -30,13 +30,9 @@ fn[Msg] form_field_label(
   theme~ : @core.Theme,
 ) -> @core.View[Msg] {
   let label_text = if required { label + " *" } else { label }
-  @text.text(
-    label_text,
-    role=@style.TextRole::Control,
-    theme~,
-    width~,
-    height=26.0,
-  ).foreground(form_field_label_color(status, theme))
+  @text.text(label_text, role=Control, theme~, width~, height=26.0).foreground(
+    form_field_label_color(status, theme),
+  )
 }
 
 ///|
@@ -53,7 +49,7 @@ fn[Msg] form_field_support_text(
     Always =>
       if error != "" {
         Some(form_error(error, theme~, width~))
-      } else if status == FormFieldStatus::Validating {
+      } else if status == Validating {
         Some(
           form_helper_text(form_field_validating_text(helper), theme~, width~),
         )
@@ -63,9 +59,9 @@ fn[Msg] form_field_support_text(
         None
       }
     OnInvalid =>
-      if status == FormFieldStatus::Invalid && error != "" {
+      if status == Invalid && error != "" {
         Some(form_error(error, theme~, width~))
-      } else if status == FormFieldStatus::Validating {
+      } else if status == Validating {
         Some(
           form_helper_text(form_field_validating_text(helper), theme~, width~),
         )
@@ -108,7 +104,7 @@ fn form_field_semantics_description(
 ) -> String {
   if error != "" {
     error
-  } else if status == FormFieldStatus::Validating {
+  } else if status == Validating {
     form_field_validating_text(helper)
   } else {
     helper

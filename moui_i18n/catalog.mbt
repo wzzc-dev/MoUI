@@ -13,7 +13,7 @@ pub fn Message::new(
   key~ : String,
   value~ : String,
 ) -> Message {
-  { locale, key, value }
+  { locale, key, value, }
 }
 
 ///|

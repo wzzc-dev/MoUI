@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/string",
   "examples/excel/cell",
   "examples/excel/formula",
 }

@@ -255,7 +255,7 @@ test "on_tap identity focusable and button semantics role" {
   }).on_tap(42)
   assert_true(view.identity().kind.contains("OnTap"))
   assert_true(view.accepts_focus())
-  assert_true(view.semantics().role == Some(@core.SemanticsRole::Button))
+  assert_true(view.semantics().role == Some(Button))
 }
 
 ///|
@@ -322,21 +322,16 @@ test "accessibility_label identity and label" {
 
 ///|
 test "semantics_role identity and role" {
-  let view = test_leaf().semantics_role(@core.SemanticsRole::Button)
+  let view = test_leaf().semantics_role(Button)
   assert_true(view.identity().kind.contains("SemanticsRole"))
-  assert_eq(view.semantics().role, Some(@core.SemanticsRole::Button))
+  assert_eq(view.semantics().role, Some(Button))
 }
 
 ///|
 test "semantics_checked identity and value" {
-  let view = test_leaf().semantics_checked(
-    checked=@core.SemanticsCheckedState::Checked,
-  )
+  let view = test_leaf().semantics_checked(checked=Checked)
   assert_true(view.identity().kind.contains("SemanticsChecked"))
-  assert_eq(
-    view.semantics().checked,
-    Some(@core.SemanticsCheckedState::Checked),
-  )
+  assert_eq(view.semantics().checked, Some(Checked))
 }
 
 ///|
@@ -375,22 +370,19 @@ test "semantics_description identity and value" {
 ///|
 test "semantics_boundary identity and composition" {
   let view = test_leaf().semantics_boundary()
-  assert_eq(view.semantics().composition, @core.SemanticsComposition::Boundary)
+  assert_eq(view.semantics().composition, Boundary)
 }
 
 ///|
 test "merge_descendant_semantics identity and composition" {
   let view = test_leaf().merge_descendant_semantics()
-  assert_eq(
-    view.semantics().composition,
-    @core.SemanticsComposition::MergeDescendants,
-  )
+  assert_eq(view.semantics().composition, MergeDescendants)
 }
 
 ///|
 test "hide_semantics identity and composition" {
   let view = test_leaf().hide_semantics()
-  assert_eq(view.semantics().composition, @core.SemanticsComposition::Hidden)
+  assert_eq(view.semantics().composition, Hidden)
 }
 
 ///|
@@ -404,15 +396,10 @@ test "semantics modifiers declare exact semantics-only invalidation" {
     ),
     (test_leaf().semantic_id(first_id), test_leaf().semantic_id(second_id)),
     (
-      test_leaf().semantics_composition(@core.SemanticsComposition::Boundary),
-      test_leaf().semantics_composition(
-        @core.SemanticsComposition::MergeDescendants,
-      ),
+      test_leaf().semantics_composition(Boundary),
+      test_leaf().semantics_composition(MergeDescendants),
     ),
-    (
-      test_leaf().semantics_role(@core.SemanticsRole::Button),
-      test_leaf().semantics_role(@core.SemanticsRole::Checkbox),
-    ),
+    (test_leaf().semantics_role(Button), test_leaf().semantics_role(Checkbox)),
     (test_leaf().semantics_level(1), test_leaf().semantics_level(2)),
     (
       test_leaf().semantics_url("https://first.example"),
@@ -427,10 +414,8 @@ test "semantics modifiers declare exact semantics-only invalidation" {
       test_leaf().semantics_pressed(pressed=true),
     ),
     (
-      test_leaf().semantics_checked(
-        checked=@core.SemanticsCheckedState::Unchecked,
-      ),
-      test_leaf().semantics_checked(checked=@core.SemanticsCheckedState::Mixed),
+      test_leaf().semantics_checked(checked=Unchecked),
+      test_leaf().semantics_checked(checked=Mixed),
     ),
     (
       test_leaf().semantics_expanded(expanded=false),
@@ -523,13 +508,10 @@ test "chained semantics modifiers: outermost modifier contributes its semantics"
   // view.semantics() only returns the modifier node's own info (the outermost).
   // For semantics_checked(checked=true), the outermost modifier contributes checked.
   let view = test_leaf()
-    .semantics_role(@core.SemanticsRole::Checkbox)
+    .semantics_role(Checkbox)
     .accessibility_label("Agree")
-    .semantics_checked(checked=@core.SemanticsCheckedState::Checked)
-  assert_eq(
-    view.semantics().checked,
-    Some(@core.SemanticsCheckedState::Checked),
-  )
+    .semantics_checked(checked=Checked)
+  assert_eq(view.semantics().checked, Some(Checked))
   // The inner semantics_role modifier is wrapped deeper; view.semantics()
   // returns the outermost's info which is only about checked.
 }

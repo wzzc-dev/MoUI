@@ -67,7 +67,13 @@ fn parse_config_args(args : Array[String]) -> Result[ParsedConfig, String] {
     }
   }
   if help.val {
-    return Ok({ help: true, json: json.val, action: "", key: None, value: None })
+    return Ok({
+      help: true,
+      json: json.val,
+      action: "",
+      key: None,
+      value: None,
+    })
   }
   if positional.is_empty() {
     return Err("moui config requires an action")
@@ -100,7 +106,7 @@ fn parse_config_args(args : Array[String]) -> Result[ParsedConfig, String] {
     }
     "list" | "show-path" | "edit" =>
       if positional.length() == 1 {
-        Ok({ help: false, json: json.val, action, key: None, value: None })
+        Ok({ help: false, json: json.val, action, key: None, value: None, })
       } else {
         Err(action + " does not take arguments")
       }

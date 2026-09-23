@@ -5,8 +5,8 @@ fn retained_keyed_resource_previous_pipeline(
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
   insets : @graphics.NinePatchInsets,
-) -> RenderPipeline {
-  RenderPipeline::new()
+) -> @renderer.RenderPipeline {
+  @renderer.RenderPipeline::new()
   .draw_pixmap_keyed("icon", previous_icon, 1, 1, paint)
   .draw_bmp_bytes_keyed("bmp-icon", previous_icon.to_bmp_bytes(), 5, 1, paint)
   .draw_png_bytes_keyed(
@@ -43,7 +43,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_png_bytes_keyed(
     "png-sampled",
@@ -53,7 +53,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_rgba_bytes_keyed(
     "rgba-sampled",
@@ -65,7 +65,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_quality_bmp_bytes_keyed(
     "bmp-quality",
@@ -75,7 +75,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_bmp_bytes_rect_keyed(
     "bmp-quality-sprite",
@@ -86,7 +86,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_png_bytes_keyed(
     "png-quality",
@@ -96,7 +96,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_png_bytes_rect_keyed(
     "png-quality-sprite",
@@ -107,7 +107,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_rgba_bytes_keyed(
     "rgba-quality",
@@ -119,7 +119,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_rgba_bytes_rect_keyed(
     "rgba-quality-sprite",
@@ -132,7 +132,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_sampled_bmp_bytes_keyed(
     "bmp-transform",
@@ -142,7 +142,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_bmp_bytes_rect_keyed(
     "bmp-transform-sprite",
@@ -153,7 +153,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_png_bytes_keyed(
     "png-transform",
@@ -163,7 +163,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_png_bytes_rect_keyed(
     "png-transform-sprite",
@@ -174,7 +174,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_rgba_bytes_keyed(
     "rgba-transform",
@@ -186,7 +186,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_rgba_bytes_rect_keyed(
     "rgba-transform-sprite",
@@ -199,7 +199,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_quality_bmp_bytes_keyed(
     "bmp-transform-quality",
@@ -209,7 +209,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_bmp_bytes_rect_keyed(
     "bmp-transform-quality-sprite",
@@ -220,7 +220,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_png_bytes_keyed(
     "png-transform-quality",
@@ -230,7 +230,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_png_bytes_rect_keyed(
     "png-transform-quality-sprite",
@@ -241,7 +241,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_rgba_bytes_keyed(
     "rgba-transform-quality",
@@ -253,7 +253,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_rgba_bytes_rect_keyed(
     "rgba-transform-quality-sprite",
@@ -266,7 +266,7 @@ fn retained_keyed_resource_previous_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_sampled_bmp_bytes_rect_keyed(
     "bmp-sampled-sprite",
@@ -277,7 +277,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_png_bytes_rect_keyed(
     "png-sampled-sprite",
@@ -288,7 +288,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_rgba_bytes_rect_keyed(
     "rgba-sampled-sprite",
@@ -301,7 +301,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_bmp_bytes_rect_keyed(
     "bmp-sprite",
@@ -360,7 +360,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     insets,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_nine_patch_png_bytes_keyed(
     "png-panel",
@@ -371,7 +371,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     insets,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_nine_patch_rgba_bytes_keyed(
     "rgba-panel",
@@ -384,7 +384,7 @@ fn retained_keyed_resource_previous_pipeline(
     2,
     insets,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_pixmap_rect_keyed(
     "sprite",
@@ -407,8 +407,14 @@ fn retained_keyed_resource_previous_pipeline(
   )
   .draw_font_bytes_fallback_keyed(
     [
-      FontBytesFallbackSource::new("primary", make_ttf_for_codes([65])),
-      FontBytesFallbackSource::new("fallback", make_ttf_for_codes([66])),
+      @renderer.FontBytesFallbackSource::new(
+        "primary",
+        make_ttf_for_codes([65]),
+      ),
+      @renderer.FontBytesFallbackSource::new(
+        "fallback",
+        make_ttf_for_codes([66]),
+      ),
     ],
     "fallback-label",
     "AB",
@@ -419,8 +425,14 @@ fn retained_keyed_resource_previous_pipeline(
   )
   .draw_font_bytes_fallback_atlas_keyed(
     [
-      FontBytesFallbackSource::new("atlas-primary", make_ttf_for_codes([65])),
-      FontBytesFallbackSource::new("atlas-fallback", make_ttf_for_codes([66])),
+      @renderer.FontBytesFallbackSource::new(
+        "atlas-primary",
+        make_ttf_for_codes([65]),
+      ),
+      @renderer.FontBytesFallbackSource::new(
+        "atlas-fallback",
+        make_ttf_for_codes([66]),
+      ),
     ],
     "fallback-atlas-label",
     "AB",
@@ -462,8 +474,8 @@ fn retained_keyed_resource_next_pipeline(
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
   insets : @graphics.NinePatchInsets,
-) -> RenderPipeline {
-  RenderPipeline::new()
+) -> @renderer.RenderPipeline {
+  @renderer.RenderPipeline::new()
   .draw_pixmap_keyed("icon", next_icon, 1, 1, paint)
   .draw_bmp_bytes_keyed("bmp-icon", next_icon.to_bmp_bytes(), 5, 1, paint)
   .draw_png_bytes_keyed(
@@ -492,7 +504,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_png_bytes_keyed(
     "png-sampled",
@@ -502,7 +514,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_rgba_bytes_keyed(
     "rgba-sampled",
@@ -514,7 +526,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_quality_bmp_bytes_keyed(
     "bmp-quality",
@@ -524,7 +536,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_bmp_bytes_rect_keyed(
     "bmp-quality-sprite",
@@ -535,7 +547,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_png_bytes_keyed(
     "png-quality",
@@ -545,7 +557,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_png_bytes_rect_keyed(
     "png-quality-sprite",
@@ -556,7 +568,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_rgba_bytes_keyed(
     "rgba-quality",
@@ -568,7 +580,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_quality_rgba_bytes_rect_keyed(
     "rgba-quality-sprite",
@@ -581,7 +593,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_sampled_bmp_bytes_keyed(
     "bmp-transform",
@@ -591,7 +603,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_bmp_bytes_rect_keyed(
     "bmp-transform-sprite",
@@ -602,7 +614,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_png_bytes_keyed(
     "png-transform",
@@ -612,7 +624,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_png_bytes_rect_keyed(
     "png-transform-sprite",
@@ -623,7 +635,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_rgba_bytes_keyed(
     "rgba-transform",
@@ -635,7 +647,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_sampled_rgba_bytes_rect_keyed(
     "rgba-transform-sprite",
@@ -648,7 +660,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_transformed_quality_bmp_bytes_keyed(
     "bmp-transform-quality",
@@ -658,7 +670,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_bmp_bytes_rect_keyed(
     "bmp-transform-quality-sprite",
@@ -669,7 +681,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_png_bytes_keyed(
     "png-transform-quality",
@@ -679,7 +691,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_png_bytes_rect_keyed(
     "png-transform-quality-sprite",
@@ -690,7 +702,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_rgba_bytes_keyed(
     "rgba-transform-quality",
@@ -702,7 +714,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_transformed_quality_rgba_bytes_rect_keyed(
     "rgba-transform-quality-sprite",
@@ -715,7 +727,7 @@ fn retained_keyed_resource_next_pipeline(
     2.0,
     1.0,
     paint,
-    @graphics.ImageQuality::Fast,
+    Fast,
   )
   .draw_sampled_bmp_bytes_rect_keyed(
     "bmp-sampled-sprite",
@@ -726,7 +738,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_png_bytes_rect_keyed(
     "png-sampled-sprite",
@@ -737,7 +749,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_sampled_rgba_bytes_rect_keyed(
     "rgba-sampled-sprite",
@@ -750,7 +762,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     1,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_bmp_bytes_rect_keyed(
     "bmp-sprite",
@@ -809,7 +821,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     insets,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_nine_patch_png_bytes_keyed(
     "png-panel",
@@ -820,7 +832,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     insets,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_nine_patch_rgba_bytes_keyed(
     "rgba-panel",
@@ -833,7 +845,7 @@ fn retained_keyed_resource_next_pipeline(
     2,
     insets,
     paint,
-    @graphics.ImageSampling::Nearest,
+    Nearest,
   )
   .draw_pixmap_rect_keyed(
     "sprite",
@@ -849,8 +861,8 @@ fn retained_keyed_resource_next_pipeline(
   )
   .draw_font_bytes_fallback_keyed(
     [
-      FontBytesFallbackSource::new("primary", b"not a font"),
-      FontBytesFallbackSource::new("fallback", b"also not a font"),
+      @renderer.FontBytesFallbackSource::new("primary", b"not a font"),
+      @renderer.FontBytesFallbackSource::new("fallback", b"also not a font"),
     ],
     "fallback-label",
     "AB",
@@ -861,8 +873,10 @@ fn retained_keyed_resource_next_pipeline(
   )
   .draw_font_bytes_fallback_atlas_keyed(
     [
-      FontBytesFallbackSource::new("atlas-primary", b"not a font"),
-      FontBytesFallbackSource::new("atlas-fallback", b"also not a font"),
+      @renderer.FontBytesFallbackSource::new("atlas-primary", b"not a font"),
+      @renderer.FontBytesFallbackSource::new(
+        "atlas-fallback", b"also not a font",
+      ),
     ],
     "fallback-atlas-label",
     "AB",
@@ -916,15 +930,19 @@ test "RenderPipeline diff retains keyed resource commands" {
     next_icon, face, config, paint, insets,
   )
 
-  let retained = RenderPipeline::diff(previous, next, 8, 8)
+  let retained = @renderer.RenderPipeline::diff(previous, next, 8, 8)
   assert_eq(retained.get_retained_command_count(), 46)
   assert_eq(retained.get_changed_command_count(), 0)
   assert_true(!retained.has_changes())
   assert_true(!retained.has_dirty())
 
-  let moved = RenderPipeline::diff(
-    RenderPipeline::new().draw_pixmap_keyed("icon", previous_icon, 1, 1, paint),
-    RenderPipeline::new().draw_pixmap_keyed("icon", next_icon, 2, 1, paint),
+  let moved = @renderer.RenderPipeline::diff(
+    @renderer.RenderPipeline::new().draw_pixmap_keyed(
+      "icon", previous_icon, 1, 1, paint,
+    ),
+    @renderer.RenderPipeline::new().draw_pixmap_keyed(
+      "icon", next_icon, 2, 1, paint,
+    ),
     8,
     8,
   )

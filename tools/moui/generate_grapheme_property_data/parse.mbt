@@ -84,7 +84,7 @@ fn parse_range(
   match value.find("..") {
     None =>
       match parse_codepoint(value.trim().to_owned(), source, line_number) {
-        Ok(codepoint) => Ok({ start: codepoint, end: codepoint })
+        Ok(codepoint) => Ok({ start: codepoint, end: codepoint, })
         Err(message) => Err(message)
       }
     Some(offset) => {
@@ -104,7 +104,7 @@ fn parse_range(
                   ": range end precedes start",
                 )
               } else {
-                Ok({ start, end })
+                Ok({ start, end, })
               }
           }
       }
@@ -239,7 +239,7 @@ fn merge_ranges(ranges : Array[CodeRange]) -> Array[CodeRange] {
   let merged : Array[CodeRange] = []
   for range in sorted {
     if merged.is_empty() {
-      merged.push({ start: range.start, end: range.end })
+      merged.push({ start: range.start, end: range.end, })
     } else {
       let previous = merged[merged.length() - 1]
       if range.start <= previous.end + 1 {
@@ -248,9 +248,9 @@ fn merge_ranges(ranges : Array[CodeRange]) -> Array[CodeRange] {
         } else {
           previous.end
         }
-        merged[merged.length() - 1] = { start: previous.start, end }
+        merged[merged.length() - 1] = { start: previous.start, end, }
       } else {
-        merged.push({ start: range.start, end: range.end })
+        merged.push({ start: range.start, end: range.end, })
       }
     }
   }

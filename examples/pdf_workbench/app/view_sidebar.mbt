@@ -27,11 +27,7 @@ fn pdf_workbench_sidebar(
           "Pages",
           document.page_count.to_string(),
           caption=if document.dirty { "Unsaved edits" } else { "Saved state" },
-          tone=if document.dirty {
-            @views.FeedbackTone::Warning
-          } else {
-            @views.FeedbackTone::Success
-          },
+          tone=if document.dirty { Warning } else { Success },
           theme~,
           width=item_width,
           height=104.0,
@@ -57,7 +53,7 @@ fn pdf_workbench_sidebar(
         @views.banner(
           "No PDF loaded",
           "Use Open to load PDF bytes through the host binary file service.",
-          tone=@views.FeedbackTone::Info,
+          tone=Info,
           theme~,
           width=item_width,
         ),
@@ -65,11 +61,7 @@ fn pdf_workbench_sidebar(
   }
   @views.container(
     @views.scroll_view(
-      @views.column(
-        rows,
-        spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Stretch,
-      ),
+      @views.column(rows, spacing=theme.spacing_scale.sm, align=Stretch),
       width=metrics.sidebar_scroll_width,
       height=pdf_workbench_panel_scroll_height(metrics, theme),
       offset=model.sidebar_scroll,
@@ -77,7 +69,7 @@ fn pdf_workbench_sidebar(
     ),
     width=metrics.sidebar_width,
     height=metrics.body_height,
-    variant=@views.ContainerVariant::Raised,
+    variant=Raised,
     theme~,
     padding=theme.spacing_scale.sm,
   )
@@ -101,11 +93,7 @@ fn pdf_workbench_page_nav_item(
           @views.button(
             "Page " + summary.page_number.to_string(),
             on_click=SelectPage(summary.page_number),
-            variant=if selected {
-              @views.ButtonVariant::Primary
-            } else {
-              @views.ButtonVariant::Ghost
-            },
+            variant=if selected { Primary } else { Ghost },
             theme~,
             width=control_width,
             height=32.0,
@@ -118,18 +106,18 @@ fn pdf_workbench_page_nav_item(
             } else {
               ""
             },
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=control_width,
             height=18.0,
           ).foreground(theme.palette.muted),
         ],
         spacing=2.0,
-        align=@views.CrossAlign::Stretch,
+        align=Stretch,
       ),
     ],
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -159,11 +147,11 @@ fn pdf_workbench_page_thumbnail(
       fill_rect(ctx, page_rect, @graphics.Color::white())
       match thumbnail_raster {
         Some(raster) =>
-          draw_image(ctx, @graphics.ImageRun::{
+          draw_image(ctx, {
             source: raster.image_source,
             frame: page_rect,
             opacity: 1.0,
-            fit: @graphics.ImageFit::Contain,
+            fit: Contain,
           })
         None => ()
       }
@@ -228,7 +216,7 @@ fn pdf_workbench_page_thumbnail(
           } else {
             theme.palette.muted
           },
-          align=@text.TextAlign::TextCenter,
+          align=TextCenter,
         ),
       )
     },

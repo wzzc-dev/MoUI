@@ -2,9 +2,9 @@
 test "RenderPipeline RGBA bytes replay uses RendererResources image cache" {
   let atlas = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(5, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(5, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_rgba_bytes_keyed(
       "rgba-atlas",
@@ -69,7 +69,7 @@ test "RenderPipeline RGBA bytes replay uses RendererResources image cache" {
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_rgba_bytes_keyed(
       "rgba-atlas",
@@ -122,9 +122,9 @@ test "RenderPipeline RGBA bytes replay uses RendererResources image cache" {
 test "RenderPipeline RGBA bytes sampled replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(8, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(8, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_sampled_rgba_bytes_keyed(
       "rgba-sampled",
@@ -136,7 +136,7 @@ test "RenderPipeline RGBA bytes sampled replay uses RendererResources image cach
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_rgba_bytes_rect_keyed(
       "rgba-sampled-sprite",
@@ -149,7 +149,7 @@ test "RenderPipeline RGBA bytes sampled replay uses RendererResources image cach
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 3)
@@ -207,7 +207,7 @@ test "RenderPipeline RGBA bytes sampled replay uses RendererResources image cach
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_sampled_rgba_bytes_keyed(
       "rgba-sampled",
@@ -219,7 +219,7 @@ test "RenderPipeline RGBA bytes sampled replay uses RendererResources image cach
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
     .draw_sampled_rgba_bytes_rect_keyed(
       "rgba-sampled-sprite",
@@ -232,7 +232,7 @@ test "RenderPipeline RGBA bytes sampled replay uses RendererResources image cach
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )
@@ -269,9 +269,9 @@ test "RenderPipeline RGBA bytes sampled replay uses RendererResources image cach
 ///|
 test "RenderPipeline RGBA bytes quality replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
-  let resources = RendererResources::with_capacities(16, 16, 1, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(8, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(8, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_quality_rgba_bytes_keyed(
       "rgba-quality",
@@ -283,7 +283,7 @@ test "RenderPipeline RGBA bytes quality replay uses RendererResources image cach
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 2)
@@ -329,7 +329,7 @@ test "RenderPipeline RGBA bytes quality replay uses RendererResources image cach
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_quality_rgba_bytes_keyed(
       "rgba-quality",
@@ -341,7 +341,7 @@ test "RenderPipeline RGBA bytes quality replay uses RendererResources image cach
       4,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
     resources,
   )
@@ -379,9 +379,9 @@ test "RenderPipeline RGBA bytes quality replay uses RendererResources image cach
 test "RenderPipeline RGBA bytes quality source-rect replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 1, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(4, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(4, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_quality_rgba_bytes_rect_keyed(
       "rgba-quality-sprite",
@@ -394,7 +394,7 @@ test "RenderPipeline RGBA bytes quality source-rect replay uses RendererResource
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 2)
@@ -432,7 +432,7 @@ test "RenderPipeline RGBA bytes quality source-rect replay uses RendererResource
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_quality_rgba_bytes_rect_keyed(
       "rgba-quality-sprite",
@@ -445,7 +445,7 @@ test "RenderPipeline RGBA bytes quality source-rect replay uses RendererResource
       2,
       1,
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ),
     resources,
   )
@@ -474,11 +474,11 @@ test "RenderPipeline RGBA bytes quality source-rect replay uses RendererResource
 ///|
 test "RenderPipeline RGBA bytes transformed sampled replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
-  let resources = RendererResources::with_capacities(16, 16, 1, 4, 4)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 4, 4)
   let canvas = @graphics.Canvas::new(5, 1)
   canvas.set_transform(@graphics.Transform::translate(tx=1.0, ty=0.0))
-  let renderer = Renderer::new(canvas)
-  let first_pipeline = RenderPipeline::new()
+  let renderer = @renderer.Renderer::new(canvas)
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_sampled_rgba_bytes_keyed(
       "rgba-transform",
@@ -490,7 +490,7 @@ test "RenderPipeline RGBA bytes transformed sampled replay uses RendererResource
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 2)
@@ -505,7 +505,7 @@ test "RenderPipeline RGBA bytes transformed sampled replay uses RendererResource
   assert_eq(images[0].get_source_height(), 1)
   let batches = first_pipeline.batch_plan(5, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_true(
     batches[1].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=2, height=1)),
@@ -539,7 +539,7 @@ test "RenderPipeline RGBA bytes transformed sampled replay uses RendererResource
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_sampled_rgba_bytes_keyed(
       "rgba-transform",
@@ -551,7 +551,7 @@ test "RenderPipeline RGBA bytes transformed sampled replay uses RendererResource
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )
@@ -581,11 +581,11 @@ test "RenderPipeline RGBA bytes transformed sampled replay uses RendererResource
 test "RenderPipeline RGBA bytes transformed sampled source-rect replay uses RendererResources image cache" {
   let sprite = make_renderer_test_tile_source()
   let src_right = @graphics.PixelRect::new(x=1, y=0, width=1, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 1, 4, 4)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 4, 4)
   let canvas = @graphics.Canvas::new(5, 1)
   canvas.set_transform(@graphics.Transform::translate(tx=1.0, ty=0.0))
-  let renderer = Renderer::new(canvas)
-  let first_pipeline = RenderPipeline::new()
+  let renderer = @renderer.Renderer::new(canvas)
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_sampled_rgba_bytes_rect_keyed(
       "rgba-transform-sprite",
@@ -598,7 +598,7 @@ test "RenderPipeline RGBA bytes transformed sampled source-rect replay uses Rend
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     )
   let plan = first_pipeline.resource_plan()
   assert_eq(plan.get_command_count(), 2)
@@ -613,7 +613,7 @@ test "RenderPipeline RGBA bytes transformed sampled source-rect replay uses Rend
   assert_eq(images[0].get_source_height(), 1)
   let batches = first_pipeline.batch_plan(5, 1).get_batches()
   assert_eq(batches.length(), 2)
-  assert_true(batches[1].get_kind() == RenderPipelineBatchKind::Image)
+  assert_true(batches[1].get_kind() == Image)
   assert_true(
     batches[1].get_dirty_bounds() ==
     Some(@graphics.PixelRect::new(x=0, y=0, width=2, height=1)),
@@ -647,7 +647,7 @@ test "RenderPipeline RGBA bytes transformed sampled source-rect replay uses Rend
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_transformed_sampled_rgba_bytes_rect_keyed(
       "rgba-transform-sprite",
@@ -660,7 +660,7 @@ test "RenderPipeline RGBA bytes transformed sampled source-rect replay uses Rend
       2.0,
       1.0,
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ),
     resources,
   )
@@ -690,9 +690,9 @@ test "RenderPipeline RGBA bytes transformed sampled source-rect replay uses Rend
 test "RenderPipeline RGBA bytes tiled source-rect replay uses RendererResources image cache" {
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
-  let resources = RendererResources::with_capacities(16, 16, 2, 4, 4)
-  let renderer = Renderer::new(@graphics.Canvas::new(8, 1))
-  let first_pipeline = RenderPipeline::new()
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 2, 4, 4)
+  let renderer = @renderer.Renderer::new(@graphics.Canvas::new(8, 1))
+  let first_pipeline = @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_tiled_rgba_bytes_rect_keyed(
       "rgba-pattern",
@@ -750,7 +750,7 @@ test "RenderPipeline RGBA bytes tiled source-rect replay uses RendererResources 
 
   let second = must_draw_pipeline_with_renderer_resources(
     renderer,
-    RenderPipeline::new()
+    @renderer.RenderPipeline::new()
     .clear_canvas(@graphics.Color::white())
     .draw_tiled_rgba_bytes_rect_keyed(
       "rgba-pattern",

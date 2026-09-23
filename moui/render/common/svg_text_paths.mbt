@@ -59,7 +59,7 @@ priv struct SvgTextPathRegistry {
 }
 
 ///|
-let svg_text_path_registry : SvgTextPathRegistry = { resolver: None }
+let svg_text_path_registry : SvgTextPathRegistry = { resolver: None, }
 
 ///|
 /// Install (replace) the process-wide text resolver. Call once at application
@@ -245,7 +245,7 @@ fn svg_scan_text_anchors(svg_text : String) -> Array[SvgScannedText] {
       None
     }
     if name == "text" {
-      scanned.push({ anchor, font_size, text_length })
+      scanned.push({ anchor, font_size, text_length, })
     } else if (name == "g" || name == "svg") && !self_closing {
       stack.push((anchor, font_size))
     }
@@ -316,7 +316,7 @@ fn svg_apply_text_paths(
   cursor : SvgTextAnchorCursor,
 ) -> Int {
   let replaced = match node.shape {
-    @svg.Shape::Text(x~, y~, text~, font_size~) => {
+    Text(x~, y~, text~, font_size~) => {
       let anchor = if cursor.value < anchors.length() {
         anchors[cursor.value].anchor
       } else {
@@ -351,7 +351,7 @@ fn svg_apply_text_paths(
               Middle => x - outline.width / 2.0
               End => x - outline.width
             }
-            node.shape = @svg.Shape::Path(
+            node.shape = Path(
               commands=svg_text_polygons_to_commands(
                 outline.polygons,
                 start_x,
@@ -363,7 +363,7 @@ fn svg_apply_text_paths(
         None => 0
       }
     }
-    @svg.Shape::Group => {
+    Group => {
       let mut total = 0
       for child in node.children {
         total = total + svg_apply_text_paths(child, resolver, anchors, cursor)
@@ -390,21 +390,11 @@ fn svg_text_polygons_to_commands(
     if polygon.length() < 2 {
       continue
     }
-    commands.push(
-      @svg.PathCommand::MoveTo(
-        polygon[0].0 + start_x,
-        polygon[0].1 + baseline_y,
-      ),
-    )
+    commands.push(MoveTo(polygon[0].0 + start_x, polygon[0].1 + baseline_y))
     for i = 1; i < polygon.length(); i = i + 1 {
-      commands.push(
-        @svg.PathCommand::LineTo(
-          polygon[i].0 + start_x,
-          polygon[i].1 + baseline_y,
-        ),
-      )
+      commands.push(LineTo(polygon[i].0 + start_x, polygon[i].1 + baseline_y))
     }
-    commands.push(@svg.PathCommand::ClosePath)
+    commands.push(ClosePath)
   }
   commands
 }
@@ -419,7 +409,7 @@ fn svg_install_text_paths(
   match svg_current_text_path_resolver() {
     Some(resolver) => {
       let anchors = svg_scan_text_anchors(svg_text)
-      let cursor : SvgTextAnchorCursor = { value: 0 }
+      let cursor : SvgTextAnchorCursor = { value: 0, }
       let _ = svg_apply_text_paths(document.root(), resolver, anchors, cursor)
     }
     None => ()

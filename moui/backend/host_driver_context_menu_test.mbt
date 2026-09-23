@@ -5,26 +5,21 @@ test "host driver skips context menu without focused text input" {
   let runtime = host_test_runtime_with_commands(
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
-    commands=[
-      @core.ActionCommand::new(
-        intent=@core.CommandIntent::Submit,
-        label="Submit",
-      ),
-    ],
+    commands=[@core.ActionCommand::new(intent=Submit, label="Submit")],
     on_message=_ => submitted.val = submitted.val + 1,
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
-  let services = HostServiceBridge::new(
-    capabilities=HostServiceCapabilities::new(menus=true),
+  let services = @backend.HostServiceBridge::new(
+    capabilities=@backend.HostServiceCapabilities::new(menus=true),
     handle=request => {
       match request {
         ShowMenu(commands) => {
           saw_menu.val = true
-          HostServiceResponse::MenuCommand(commands[0].intent)
+          MenuCommand(commands[0].intent)
         }
-        _ => HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -42,7 +37,7 @@ test "host driver shows marked document context menu commands without text focus
     size=@core.Size::new(width=10.0, height=10.0),
     commands=[
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="New Document",
         context_menu=true,
         shortcut=Some(
@@ -53,7 +48,7 @@ test "host driver shows marked document context menu commands without text focus
         ),
       ),
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="New Document",
         context_menu=true,
         shortcut=Some(
@@ -64,7 +59,7 @@ test "host driver shows marked document context menu commands without text focus
         ),
       ),
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="Open Document",
         context_menu=true,
         shortcut=Some(
@@ -75,7 +70,7 @@ test "host driver shows marked document context menu commands without text focus
         ),
       ),
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="Open Document",
         context_menu=true,
         shortcut=Some(
@@ -98,17 +93,17 @@ test "host driver shows marked document context menu commands without text focus
     ()
   })
   let seen_labels : Array[String] = []
-  let services = HostServiceBridge::new(
-    capabilities=HostServiceCapabilities::new(menus=true),
+  let services = @backend.HostServiceBridge::new(
+    capabilities=@backend.HostServiceCapabilities::new(menus=true),
     handle=request => {
       match request {
         ShowMenu(commands) => {
           for command in commands {
             seen_labels.push(command.label)
           }
-          HostServiceResponse::MenuAction(commands[1])
+          MenuAction(commands[1])
         }
-        _ => HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -127,7 +122,7 @@ test "host driver merges the editing group into a focused text context menu" {
     size=@core.Size::new(width=240.0, height=60.0),
     commands=[
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="New Document",
         context_menu=true,
         shortcut=Some(
@@ -138,7 +133,7 @@ test "host driver merges the editing group into a focused text context menu" {
         ),
       ),
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="New Document",
         context_menu=true,
         shortcut=Some(
@@ -149,7 +144,7 @@ test "host driver merges the editing group into a focused text context menu" {
         ),
       ),
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="Open Document",
         context_menu=true,
         shortcut=Some(
@@ -160,7 +155,7 @@ test "host driver merges the editing group into a focused text context menu" {
         ),
       ),
       @core.ActionCommand::new(
-        intent=@core.CommandIntent::Activate,
+        intent=Activate,
         label="Open Document",
         context_menu=true,
         shortcut=Some(
@@ -178,8 +173,8 @@ test "host driver merges the editing group into a focused text context menu" {
   let seen_labels : Array[String] = []
   let copy_enabled = Ref(false)
   let cut_enabled = Ref(false)
-  let services = HostServiceBridge::new(
-    capabilities=HostServiceCapabilities::new(menus=true),
+  let services = @backend.HostServiceBridge::new(
+    capabilities=@backend.HostServiceCapabilities::new(menus=true),
     handle=request => {
       match request {
         ShowMenu(commands) => {
@@ -192,18 +187,18 @@ test "host driver merges the editing group into a focused text context menu" {
               cut_enabled.val = command.enabled
             }
           }
-          HostServiceResponse::Unavailable("cancelled")
+          Unavailable("cancelled")
         }
-        _ => HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
   ignore(
     driver.dispatch(
-      Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
@@ -233,8 +228,8 @@ test "host driver keeps document actions beside Cut and Copy with a selection" {
   let seen_labels : Array[String] = []
   let copy_enabled = Ref(false)
   let cut_enabled = Ref(false)
-  let services = HostServiceBridge::new(
-    capabilities=HostServiceCapabilities::new(menus=true),
+  let services = @backend.HostServiceBridge::new(
+    capabilities=@backend.HostServiceCapabilities::new(menus=true),
     handle=request => {
       match request {
         ShowMenu(commands) => {
@@ -247,39 +242,39 @@ test "host driver keeps document actions beside Cut and Copy with a selection" {
               cut_enabled.val = command.enabled
             }
           }
-          HostServiceResponse::Unavailable("cancelled")
+          Unavailable("cancelled")
         }
-        _ => HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
   // Press, drag across the text, release: the field now has a selection.
   ignore(
     driver.dispatch(
-      Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=10.0, y=10.0),
-          phase=@core.PointerPhase::Down,
+          phase=Down,
         ),
       ),
     ),
   )
   ignore(
     driver.dispatch(
-      Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=120.0, y=10.0),
-          phase=@core.PointerPhase::Move,
+          phase=Move,
         ),
       ),
     ),
   )
   ignore(
     driver.dispatch(
-      Event::Pointer(
+      Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(x=120.0, y=10.0),
-          phase=@core.PointerPhase::Up,
+          phase=Up,
         ),
       ),
     ),

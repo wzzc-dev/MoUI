@@ -101,7 +101,7 @@ pub fn Model::route(self : Model) -> String {
 
 ///|
 pub fn Model::open(self : Model, route : String) -> Model {
-  { ..self, route: normalize_platform_route(route) }
+  { ..self, route: normalize_platform_route(route), }
 }
 
 ///|
@@ -212,7 +212,7 @@ pub fn update(
           result,
           text => "Clipboard read: " + text,
           clipboard_text=match result {
-            @services.ServiceTaskResult::Success(text) => Some(text)
+            Success(text) => Some(text)
             _ => None
           },
         ),
@@ -237,7 +237,7 @@ pub fn update(
     }
     ClearCanvas =>
       (
-        { ..model, stroke_points: [], last_event: "Canvas cleared" },
+        { ..model, stroke_points: [], last_event: "Canvas cleared", },
         @moui.Effect::none(),
       )
     AnimTick =>
@@ -259,7 +259,7 @@ pub fn update(
         @moui.Effect::none(),
       )
     ProbeTextChanged(value) =>
-      ({ ..model, probe_text: value }, @moui.Effect::none())
+      ({ ..model, probe_text: value, }, @moui.Effect::none())
     ProbeAction =>
       (
         {
@@ -422,7 +422,7 @@ fn mobile_service_probe_page(model : Model) -> @moui.View[Msg] {
               on_input=value => ProbeTextChanged(value),
               on_submit=Some(ProbeSubmit),
               placeholder="Service probe text",
-              variant=@views.TextFieldVariant::Outline,
+              variant=Outline,
             ),
             text("IME value: " + model.probe_text).accessibility_label(
               "Service probe value " + model.probe_text,
@@ -442,7 +442,7 @@ fn mobile_service_probe_page(model : Model) -> @moui.View[Msg] {
               width=160.0,
               height=240.0,
               corner_radius=6.0,
-              fit=@graphics.ImageFit::Contain,
+              fit=Contain,
             ).accessibility_label("Service probe async image"),
             text("Service probe end"),
           ],
@@ -553,7 +553,7 @@ pub fn program(
 /// context menus, and application menus.
 pub fn program_commands() -> Array[@moui.ProgramCommand[Msg]] {
   let command = @views.ActionCommand::new(
-    intent=@views.CommandIntent::Activate,
+    intent=Activate,
     label="Platform tick",
     shortcut=Some(
       @views.KeyboardShortcut::new(
@@ -579,21 +579,21 @@ fn[T] Model::apply_service_result(
     self
   } else {
     match result {
-      @services.ServiceTaskResult::Success(value) =>
+      Success(value) =>
         {
           ..self,
           pending_service: None,
           clipboard_text: clipboard_text.unwrap_or(self.clipboard_text),
           last_event: success(value),
         }
-      @services.ServiceTaskResult::Failure(error) =>
+      Failure(error) =>
         {
           ..self,
           pending_service: None,
           last_event: "Unavailable: " + error.message,
         }
-      @services.ServiceTaskResult::Cancelled =>
-        { ..self, pending_service: None, last_event: "Service cancelled" }
+      Cancelled =>
+        { ..self, pending_service: None, last_event: "Service cancelled", }
     }
   }
 }

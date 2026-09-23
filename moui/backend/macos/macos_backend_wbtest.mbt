@@ -3,20 +3,16 @@ test "macos startup surface size preserves runtime logical dimensions" {
   let size = @window_input.core_size_to_window_surface_size(
     @core.Size::new(width=800.0, height=600.0),
   )
-  assert_eq(size.to_logical(2.0), @dpi.LogicalSize::LogicalSize(800.0, 600.0))
-  assert_eq(size.to_physical(2.0), @dpi.PhysicalSize::PhysicalSize(1600, 1200))
+  assert_eq(size.to_logical(2.0), LogicalSize(800.0, 600.0))
+  assert_eq(size.to_physical(2.0), PhysicalSize(1600, 1200))
 }
 
 ///|
 test "macos menu command payload records utf8 byte lengths" {
   let encoded = @utf8.decode_lossy(
     @host_services_desktop.encode_menu_commands([
-      @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
-      @core.ActionCommand::new(
-        intent=@core.CommandIntent::Paste,
-        label="粘贴",
-        enabled=false,
-      ),
+      @core.ActionCommand::new(intent=Copy, label="Copy"),
+      @core.ActionCommand::new(intent=Paste, label="粘贴", enabled=false),
     ])[:],
     ignore_bom=false,
   )
@@ -34,12 +30,12 @@ test "macos host options carry optional scene resolver and smoke options stay se
     ),
   )
   match MacosHostAppOptions::new().scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneRejected(message) =>
+    SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default macOS scene resolver rejection")
   }
   let resolver = @window_lifecycle.WindowSceneResolver::new(resolve=request => {
-    @window_lifecycle.WindowSceneResolution::SceneResolved(
+    SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
@@ -69,7 +65,7 @@ test "macos host options carry optional scene resolver and smoke options stay se
     None => fail("expected configured macOS platform event sources")
   }
   match options.scene_resolver.resolve(request) {
-    @window_lifecycle.WindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured macOS scene resolver")
   }

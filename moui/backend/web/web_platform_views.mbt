@@ -19,7 +19,7 @@ pub fn web_dispatch_platform_view_event(
             Some(slot) =>
               slot.driver.dispatch_platform_view(
                 web_host_string_from_id(id_text_id),
-                @core.PlatformViewEvent::Named(
+                Named(
                   name=web_host_string_from_id(name_text_id),
                   value=web_host_string_from_id(value_text_id),
                   detail=web_host_string_from_id(detail_text_id),

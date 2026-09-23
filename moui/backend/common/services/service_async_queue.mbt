@@ -54,8 +54,8 @@ pub fn ServiceAsyncQueue::submit(
 ) -> @backend_host.HostServiceResponse {
   let id = @backend_host.HostServiceRequestId::new(self.next_value)
   self.next_value = self.next_value + 1
-  self.pending.push({ id, request })
-  @backend_host.HostServiceResponse::Pending(id)
+  self.pending.push({ id, request, })
+  Pending(id)
 }
 
 ///|
@@ -151,7 +151,7 @@ fn ServiceAsyncQueue::on_completed_with_cleanup(
         let token = self.next_completion_handler_value
         self.next_completion_handler_value = self.next_completion_handler_value +
           1
-        self.completion_handlers.push({ token, id, handle })
+        self.completion_handlers.push({ token, id, handle, })
         (true, Some(() => ignore(self.cancel_completion_handler(token))))
       } else {
         (false, None)
@@ -213,7 +213,7 @@ pub fn ServiceAsyncQueue::reject(
   id : @backend_host.HostServiceRequestId,
   reason : String,
 ) -> Bool {
-  self.complete(id, @backend_host.HostServiceResponse::Unavailable(reason))
+  self.complete(id, Unavailable(reason))
 }
 
 ///|

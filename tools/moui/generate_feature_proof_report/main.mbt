@@ -39,18 +39,18 @@ fn usage() -> String {
 ///|
 fn l1_features() -> Array[L1Feature] {
   [
-    { feature: "Core API (View/Element/Layout/Animation)", job: "pr-profile" },
-    { feature: "Runtime lifecycle", job: "pr-profile" },
-    { feature: "Views controls", job: "pr-profile" },
-    { feature: "Host services protocol", job: "pr-profile" },
-    { feature: "Web wasm-gc build", job: "pr-profile" },
-    { feature: "Renderer capability report consistency", job: "pr-profile" },
-    { feature: "Text conformance", job: "pr-profile" },
-    { feature: "API surface stability", job: "api-surface" },
-    { feature: "Linux backend contracts", job: "linux-platform" },
-    { feature: "Windows backend contracts", job: "windows-native" },
-    { feature: "macOS packaging", job: "macos-packaging" },
-    { feature: "Benchmark scaffold", job: "benchmark-scaffold" },
+    { feature: "Core API (View/Element/Layout/Animation)", job: "pr-profile", },
+    { feature: "Runtime lifecycle", job: "pr-profile", },
+    { feature: "Views controls", job: "pr-profile", },
+    { feature: "Host services protocol", job: "pr-profile", },
+    { feature: "Web wasm-gc build", job: "pr-profile", },
+    { feature: "Renderer capability report consistency", job: "pr-profile", },
+    { feature: "Text conformance", job: "pr-profile", },
+    { feature: "API surface stability", job: "api-surface", },
+    { feature: "Linux backend contracts", job: "linux-platform", },
+    { feature: "Windows backend contracts", job: "windows-native", },
+    { feature: "macOS packaging", job: "macos-packaging", },
+    { feature: "Benchmark scaffold", job: "benchmark-scaffold", },
   ]
 }
 
@@ -180,7 +180,7 @@ fn build_report(
       gap += 1
     }
   }
-  { ci_run_url: run_url, timestamp, features, proven, gap, skipped }
+  { ci_run_url: run_url, timestamp, features, proven, gap, skipped, }
 }
 
 ///|
@@ -468,7 +468,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ status_json, run_url, output, timestamp, help })
+  Ok({ status_json, run_url, output, timestamp, help, })
 }
 
 ///|

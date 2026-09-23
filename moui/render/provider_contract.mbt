@@ -34,7 +34,7 @@ pub fn RendererProvider::new(
   capabilities~ : () -> Array[RendererBackendFeatureCapability],
   bind~ : (HostSurface) -> RendererBindResult,
 ) -> RendererProvider {
-  { id, descriptor, capabilities, bind }
+  { id, descriptor, capabilities, bind, }
 }
 
 ///|

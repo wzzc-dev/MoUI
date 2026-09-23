@@ -111,13 +111,13 @@ priv struct ShowcaseMetrics {
 
 ///|
 pub fn ShowcaseApp::new() -> ShowcaseApp {
-  { unit: () }
+  { unit: (), }
 }
 
 ///|
 pub fn ShowcaseModel::new() -> ShowcaseModel {
   {
-    scheme: @state.ColorScheme::Light,
+    scheme: Light,
     active: false,
     dialog_visible: false,
     sheet_visible: false,
@@ -211,7 +211,7 @@ pub fn subscriptions(_model : ShowcaseModel) -> @moui.Subscription[ShowcaseMsg] 
 
 ///|
 pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> ShowcaseTodoItem {
-  { id, text, completed: false }
+  { id, text, completed: false, }
 }
 
 ///|
@@ -219,7 +219,7 @@ pub fn ShowcaseRouteHost::new(
   route_source~ : @services.RouteSource,
   dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit,
 ) -> ShowcaseRouteHost {
-  { route_source, dispatch_command }
+  { route_source, dispatch_command, }
 }
 
 ///|
@@ -234,7 +234,7 @@ fn ShowcaseModel::with_todo_added(
 ) -> ShowcaseModel {
   let items = self.todo_items.copy()
   items.push(ShowcaseTodoItem::new(id=self.todo_next_id, text~))
-  { ..self, todo_items: items, todo_next_id: self.todo_next_id + 1 }
+  { ..self, todo_items: items, todo_next_id: self.todo_next_id + 1, }
 }
 
 ///|
@@ -243,12 +243,12 @@ pub fn ShowcaseModel::update(
   message : ShowcaseMsg,
 ) -> ShowcaseModel {
   match message {
-    ToggleScheme => { ..self, scheme: toggle_color_scheme(self.scheme) }
-    ToggleActive => { ..self, active: !self.active }
-    ShowDialog => { ..self, dialog_visible: true }
-    HideDialog => { ..self, dialog_visible: false }
-    ShowSheet => { ..self, dialog_visible: false, sheet_visible: true }
-    HideSheet => { ..self, sheet_visible: false }
+    ToggleScheme => { ..self, scheme: toggle_color_scheme(self.scheme), }
+    ToggleActive => { ..self, active: !self.active, }
+    ShowDialog => { ..self, dialog_visible: true, }
+    HideDialog => { ..self, dialog_visible: false, }
+    ShowSheet => { ..self, dialog_visible: false, sheet_visible: true, }
+    HideSheet => { ..self, sheet_visible: false, }
     SelectSection(route) => self.with_route_pushed(route)
     RouteBack => self.with_route_history(self.route_history.back())
     RouteForward => self.with_route_history(self.route_history.forward())
@@ -261,15 +261,15 @@ pub fn ShowcaseModel::update(
         ),
       )
     HostRouteChanged(event) => self.with_host_route_event(event)
-    TabSelected(route) => { ..self, tab: route }
-    ClearFilter => { ..self, filter: "" }
-    FilterChanged(value) => { ..self, filter: value }
+    TabSelected(route) => { ..self, tab: route, }
+    ClearFilter => { ..self, filter: "", }
+    FilterChanged(value) => { ..self, filter: value, }
     DataFilterQueryChanged(value) =>
-      { ..self, data_filter_query: value, data_page: 0 }
+      { ..self, data_filter_query: value, data_page: 0, }
     DataActiveFilterChanged(value) =>
-      { ..self, data_filter_active: value, data_page: 0 }
+      { ..self, data_filter_active: value, data_page: 0, }
     DataReviewFilterChanged(value) =>
-      { ..self, data_filter_review: value, data_page: 0 }
+      { ..self, data_filter_review: value, data_page: 0, }
     ClearDataFilters =>
       {
         ..self,
@@ -297,7 +297,7 @@ pub fn ShowcaseModel::update(
         )
         .previous()
         .page()
-      { ..self, data_page: page }
+      { ..self, data_page: page, }
     }
     DataNextPage => {
       let page = @views.PaginationState::new(
@@ -307,7 +307,7 @@ pub fn ShowcaseModel::update(
         )
         .next()
         .page()
-      { ..self, data_page: page }
+      { ..self, data_page: page, }
     }
     DataColumnVisibilityChanged(id, visible) =>
       if id == "name" {
@@ -331,19 +331,19 @@ pub fn ShowcaseModel::update(
           true,
         ),
       }
-    DraftChanged(value) => { ..self, draft: value }
-    SliderChanged(value) => { ..self, slider_value: value }
-    PickerSelected(value) => { ..self, picker_value: value }
-    DateSelected(value) => { ..self, date_value: value }
-    FeatureEnabledChanged(value) => { ..self, feature_enabled: value }
-    SecondaryEnabledChanged(value) => { ..self, secondary_enabled: value }
-    CounterIncrement => { ..self, counter_count: self.counter_count + 1 }
-    TodoDraftChanged(value) => { ..self, todo_draft: value }
+    DraftChanged(value) => { ..self, draft: value, }
+    SliderChanged(value) => { ..self, slider_value: value, }
+    PickerSelected(value) => { ..self, picker_value: value, }
+    DateSelected(value) => { ..self, date_value: value, }
+    FeatureEnabledChanged(value) => { ..self, feature_enabled: value, }
+    SecondaryEnabledChanged(value) => { ..self, secondary_enabled: value, }
+    CounterIncrement => { ..self, counter_count: self.counter_count + 1, }
+    TodoDraftChanged(value) => { ..self, todo_draft: value, }
     TodoSubmitDraft =>
       if self.todo_draft == "" {
         self
       } else {
-        { ..self.with_todo_added(self.todo_draft), todo_draft: "" }
+        { ..self.with_todo_added(self.todo_draft), todo_draft: "", }
       }
     TodoToggled(id, completed) => {
       let items = self.todo_items.map(item => {
@@ -353,16 +353,16 @@ pub fn ShowcaseModel::update(
           item
         }
       })
-      { ..self, todo_items: items }
+      { ..self, todo_items: items, }
     }
     TodoRemove(id) =>
-      { ..self, todo_items: self.todo_items.filter(item => item.id != id) }
+      { ..self, todo_items: self.todo_items.filter(item => item.id != id), }
     RecordFileDrop(paths) =>
-      { ..self, last_drop_label: "Dropped \{paths.length()} file(s)" }
-    RecordGesture(label) => { ..self, gesture_label: label }
-    ResizePanel(size) => { ..self, slider_value: size / 520.0 }
+      { ..self, last_drop_label: "Dropped \{paths.length()} file(s)", }
+    RecordGesture(label) => { ..self, gesture_label: label, }
+    ResizePanel(size) => { ..self, slider_value: size / 520.0, }
     DiagnosticsPanelScrolled(point) =>
-      { ..self, diagnostics_panel_scroll: point }
+      { ..self, diagnostics_panel_scroll: point, }
   }
 }
 
@@ -494,7 +494,7 @@ fn ShowcaseModel::with_route_history(
   self : ShowcaseModel,
   route_history : @views.RouteHistoryState,
 ) -> ShowcaseModel {
-  { ..self, route_history, selected_section: route_history.current().path }
+  { ..self, route_history, selected_section: route_history.current().path, }
 }
 
 ///|
@@ -524,8 +524,8 @@ pub fn ShowcaseModel::view_body(
   width? : Double = 0.0,
 ) -> @moui.View[ShowcaseMsg] {
   let theme = match self.scheme {
-    @state.ColorScheme::Light => @views.light_theme()
-    @state.ColorScheme::Dark => @views.dark_theme()
+    Light => @views.light_theme()
+    Dark => @views.dark_theme()
   }
   let metrics = if width > 0.0 {
     let panel_width = width.max(320.0)
@@ -556,7 +556,7 @@ pub fn ShowcaseModel::view_body(
     @views.overlay_host(content, [
       @views.PresentationSpec::new(
         id="showcase-dialog",
-        kind=@views.PresentationKind::Dialog,
+        kind=Dialog,
         content=@views.dialog(
           "Showcase dialog",
           content=text("Custom modal content here", width=300.0, height=48.0),
@@ -565,7 +565,7 @@ pub fn ShowcaseModel::view_body(
           ),
           theme~,
         ),
-        modality=@views.PresentationModality::Modal,
+        modality=Modal,
         presented=true,
       ),
     ])
@@ -577,8 +577,8 @@ pub fn ShowcaseModel::view_body(
 ///|
 fn toggle_color_scheme(scheme : @state.ColorScheme) -> @state.ColorScheme {
   match scheme {
-    @state.ColorScheme::Light => @state.ColorScheme::Dark
-    @state.ColorScheme::Dark => @state.ColorScheme::Light
+    Light => Dark
+    Dark => Light
   }
 }
 

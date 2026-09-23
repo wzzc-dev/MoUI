@@ -44,7 +44,7 @@ pub fn Locale::parse(raw : String) -> Locale? {
     }
     return None
   }
-  Some({ language, script, region })
+  Some({ language, script, region, })
 }
 
 ///|

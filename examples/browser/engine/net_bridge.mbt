@@ -63,7 +63,7 @@ pub fn fetch_resources(
   let out : Array[FetchedResource] = []
   for id in ids {
     if id < 0 {
-      out.push({ ok: false, body: "" })
+      out.push({ ok: false, body: "", })
       continue
     }
     let st = fetch_slot_state(id)
@@ -73,12 +73,12 @@ pub fn fetch_resources(
       let n = fetch_slot_take(id, buf, buf.length())
       out.push({
         ok: true,
-        body: @utf8.decode(buf.view(start=0, end=n)) catch {
+        body: @utf8.decode(buf.exact_view(start=0, end=n)) catch {
           _ => ""
         },
       })
     } else {
-      out.push({ ok: false, body: "" })
+      out.push({ ok: false, body: "", })
     }
     fetch_slot_clear(id)
   }
@@ -123,11 +123,11 @@ pub fn poll_fetch() -> FetchOutcome? {
       attempts = attempts + 1
       continue
     }
-    let text = @utf8.decode(buf.view(start=0, end=size)) catch { _ => "" }
+    let text = @utf8.decode(buf.exact_view(start=0, end=size)) catch { _ => "" }
     return if n > 0 {
-      Some(FetchOutcome::Fetched(html=text))
+      Some(Fetched(html=text))
     } else {
-      Some(FetchOutcome::FetchFailed(message=text))
+      Some(FetchFailed(message=text))
     }
   }
   None

@@ -10,7 +10,7 @@ pub fn[Msg] stack_layout(
     let captured_children = children
     captured_children
   }
-  @core.View::from_node(StackLayout::{ kind, key }, children=child_views)
+  @core.View::from_node(StackLayout::{ kind, key, }, children=child_views)
 }
 
 ///|
@@ -49,7 +49,5 @@ impl @core.ViewNode for StackLayout with fn layout(_self, ctx) {
 
 ///|
 impl @core.ViewNode for StackLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=@core.SemanticsComposition::Transparent,
-  )
+  @core.ViewSemanticsInfo::new(composition=Transparent)
 }

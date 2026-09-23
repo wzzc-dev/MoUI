@@ -1,30 +1,30 @@
 ///|
 test "initialize request advertises conservative client capabilities" {
   let line = acp_initialize_request_line("1")
-  guard acp_parse_rpc_line(line) is Some(Json::Object(fields)) else {
+  guard acp_parse_rpc_line(line) is Some(Object(fields)) else {
     fail("expected json object")
   }
   inspect(
     acp_json_string_field(fields, "method").unwrap(),
     content="initialize",
   )
-  guard fields.get("params") is Some(Json::Object(params)) else {
+  guard fields.get("params") is Some(Object(params)) else {
     fail("expected params")
   }
-  guard params.get("clientCapabilities") is Some(Json::Object(caps)) else {
+  guard params.get("clientCapabilities") is Some(Object(caps)) else {
     fail("expected client capabilities")
   }
   inspect(
     acp_json_bool_field(caps, "terminal").unwrap_or(true),
     content="false",
   )
-  guard caps.get("fs") is Some(Json::Object(fs)) else {
+  guard caps.get("fs") is Some(Object(fs)) else {
     fail("expected fs capabilities")
   }
-  guard caps.get("session") is Some(Json::Object(session_caps)) else {
+  guard caps.get("session") is Some(Object(session_caps)) else {
     fail("expected session capabilities")
   }
-  guard session_caps.get("configOptions") is Some(Json::Object(config_caps)) else {
+  guard session_caps.get("configOptions") is Some(Object(config_caps)) else {
     fail("expected config option capabilities")
   }
   inspect(config_caps.get("boolean") != None, content="true")
@@ -59,7 +59,7 @@ test "agent message chunk update maps to assistant chunk event" {
     } : Json)
   let events = acp_session_update_to_events(update)
   inspect(events.length(), content="1")
-  guard events[0] is @app.AgentEvent::AssistantMessageChunk(id, text) else {
+  guard events[0] is AssistantMessageChunk(id, text) else {
     fail("expected assistant chunk")
   }
   inspect(id.unwrap(), content="m1")
@@ -124,22 +124,19 @@ test "session setup response maps modes and config options" {
     } : Json)
   let events = acp_session_setup_events(result)
   inspect(events.length(), content="3")
-  guard events[0] is @app.AgentEvent::ActiveSessionChanged(id) else {
+  guard events[0] is ActiveSessionChanged(id) else {
     fail("expected active session")
   }
   inspect(id, content="s1")
-  guard events[1] is @app.AgentEvent::SessionModeStateChanged(modes) else {
+  guard events[1] is SessionModeStateChanged(modes) else {
     fail("expected modes")
   }
   inspect(modes.current_mode_id, content="ask")
-  guard events[2] is @app.AgentEvent::SessionConfigOptionsChanged(options) else {
+  guard events[2] is SessionConfigOptionsChanged(options) else {
     fail("expected config options")
   }
   inspect(options.length(), content="2")
-  inspect(
-    options[0].current_value == @app.AgentConfigValue::Boolean(true),
-    content="true",
-  )
+  inspect(options[0].current_value == Boolean(true), content="true")
   inspect(options[1].values.length(), content="2")
   inspect(options[1].values[0].id, content="fast")
 }
@@ -150,7 +147,7 @@ test "current mode update maps without losing available mode list" {
     { "sessionUpdate": "current_mode_update", "currentModeId": "code" } : Json)
   let events = acp_session_update_to_events(update)
   inspect(events.length(), content="1")
-  guard events[0] is @app.AgentEvent::SessionModeStateChanged(modes) else {
+  guard events[0] is SessionModeStateChanged(modes) else {
     fail("expected mode state")
   }
   inspect(modes.current_mode_id, content="code")

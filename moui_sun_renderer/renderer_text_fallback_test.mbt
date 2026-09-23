@@ -1,7 +1,9 @@
 ///|
 test "sun renderer text system measures mixed emoji through registered fallback faces" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -9,22 +11,17 @@ test "sun renderer text system measures mixed emoji through registered fallback 
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinOnly"),
+    Name("SunLatinOnly"),
     sun_test_ttf_for_codes([65]),
   )
-  text_system.register_font_data(
-    @core.FontFamily::Emoji,
-    sun_test_ttf_for_codes([0x1F600]),
-  )
+  text_system.register_font_data(Emoji, sun_test_ttf_for_codes([0x1F600]))
 
   let text = sun_test_string_from_codepoints([65, 0x1F600])
   let result = text_system.measure_text(
     @core.TextLayoutInput::new(
       text~,
       font=@core.FontSpec::new(
-        families=@core.FontFamilyStack::new([
-          @core.FontFamily::Name("SunLatinOnly"),
-        ]),
+        families=@core.FontFamilyStack::new([Name("SunLatinOnly")]),
         size=10.0,
       ),
       max_width=100.0,
@@ -40,8 +37,10 @@ test "sun renderer text system measures mixed emoji through registered fallback 
 
 ///|
 test "sun renderer draws mixed emoji text without missing fallback diagnostic" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -49,28 +48,23 @@ test "sun renderer draws mixed emoji text without missing fallback diagnostic" {
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinOnly"),
+    Name("SunLatinOnly"),
     sun_test_ttf_for_codes([65]),
   )
-  text_system.register_font_data(
-    @core.FontFamily::Emoji,
-    sun_test_ttf_for_codes([0x1F600]),
-  )
+  text_system.register_font_data(Emoji, sun_test_ttf_for_codes([0x1F600]))
 
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawText(
+    Clear(@core.Color::white()),
+    DrawText(
       @core.TextRun::new(
         text=sun_test_string_from_codepoints([65, 0x1F600]),
         frame=@core.Rect::new(x=0.0, y=0.0, width=48.0, height=16.0),
         font=@core.FontSpec::new(
-          families=@core.FontFamilyStack::new([
-            @core.FontFamily::Name("SunLatinOnly"),
-          ]),
+          families=@core.FontFamilyStack::new([Name("SunLatinOnly")]),
           size=10.0,
         ),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   ])
@@ -80,8 +74,10 @@ test "sun renderer draws mixed emoji text without missing fallback diagnostic" {
 
 ///|
 test "sun renderer registers font file for requested family" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -99,9 +95,7 @@ test "sun renderer registers font file for requested family" {
       @core.TextLayoutInput::new(
         text="AB",
         font=@core.FontSpec::new(
-          families=@core.FontFamilyStack::new([
-            @core.FontFamily::Name("sun-file-font"),
-          ]),
+          families=@core.FontFamilyStack::new([Name("sun-file-font")]),
           size=10.0,
         ),
         max_width=100.0,
@@ -115,11 +109,11 @@ test "sun renderer registers font file for requested family" {
 ///|
 test "sun renderer text drawing clips glyphs to the TextRun frame" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -127,24 +121,22 @@ test "sun renderer text drawing clips glyphs to the TextRun frame" {
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinOnly"),
+    Name("SunLatinOnly"),
     sun_test_ttf_for_codes([65]),
   )
 
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawText(
+    Clear(@core.Color::white()),
+    DrawText(
       @core.TextRun::new(
         text="AAAAAA",
         frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=16.0),
         font=@core.FontSpec::new(
-          families=@core.FontFamilyStack::new([
-            @core.FontFamily::Name("SunLatinOnly"),
-          ]),
+          families=@core.FontFamilyStack::new([Name("SunLatinOnly")]),
           size=10.0,
         ),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   ])
@@ -166,11 +158,11 @@ test "sun renderer text drawing clips glyphs to the TextRun frame" {
 ///|
 test "sun renderer text drawing scales nonzero 2x frame without hiding glyphs" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=64.0, height=32.0),
       scale_factor=2.0,
@@ -179,24 +171,22 @@ test "sun renderer text drawing scales nonzero 2x frame without hiding glyphs" {
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinOnly"),
+    Name("SunLatinOnly"),
     sun_test_ttf_for_codes([65]),
   )
 
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawText(
+    Clear(@core.Color::white()),
+    DrawText(
       @core.TextRun::new(
         text="A",
         frame=@core.Rect::new(x=20.0, y=8.0, width=24.0, height=16.0),
         font=@core.FontSpec::new(
-          families=@core.FontFamilyStack::new([
-            @core.FontFamily::Name("SunLatinOnly"),
-          ]),
+          families=@core.FontFamilyStack::new([Name("SunLatinOnly")]),
           size=10.0,
         ),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   ])
@@ -231,8 +221,10 @@ test "sun renderer text drawing scales nonzero 2x frame without hiding glyphs" {
 
 ///|
 test "sun renderer text system reports renderer paragraph metadata" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -241,16 +233,14 @@ test "sun renderer text system reports renderer paragraph metadata" {
   let text_system = renderer.text_system()
   inspect(text_system.id(), content="sun-raster-text-system")
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinOnly"),
+    Name("SunLatinOnly"),
     sun_test_ttf_for_codes([65]),
   )
   let paragraph = text_system.layout_paragraph(
     @core.TextLayoutInput::new(
       text="A",
       font=@core.FontSpec::new(
-        families=@core.FontFamilyStack::new([
-          @core.FontFamily::Name("SunLatinOnly"),
-        ]),
+        families=@core.FontFamilyStack::new([Name("SunLatinOnly")]),
         size=10.0,
       ),
       max_width=100.0,
@@ -262,8 +252,10 @@ test "sun renderer text system reports renderer paragraph metadata" {
 
 ///|
 test "sun renderer text maturity diagnostic separates geometry readiness from gaps" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -299,8 +291,10 @@ test "sun renderer text maturity diagnostic separates geometry readiness from ga
 
 ///|
 test "sun renderer text selection diagnostic records wrapped geometry" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -329,8 +323,10 @@ test "sun renderer text selection diagnostic records wrapped geometry" {
 
 ///|
 test "sun renderer text selection diagnostic observes rtl visual order" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=96.0, height=24.0),
     ),
@@ -354,8 +350,10 @@ test "sun renderer text selection diagnostic observes rtl visual order" {
 
 ///|
 test "sun renderer text visual order diagnostic records rtl metadata" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=96.0, height=24.0),
     ),
@@ -371,9 +369,7 @@ test "sun renderer text visual order diagnostic records rtl metadata" {
   guard renderer.text_visual_order_diagnostic(
       "ABC \u{05D0}\u{05D1}\u{05D2} 123",
       font=@core.FontSpec::new(
-        families=@core.FontFamilyStack::new([
-          @core.FontFamily::Name("sun-visual-order"),
-        ]),
+        families=@core.FontFamilyStack::new([Name("sun-visual-order")]),
         size=10.0,
       ),
     )
@@ -393,8 +389,10 @@ test "sun renderer text visual order diagnostic records rtl metadata" {
 
 ///|
 test "sun renderer text selection diagnostic defaults to wrapped line range" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -413,8 +411,10 @@ test "sun renderer text selection diagnostic defaults to wrapped line range" {
 
 ///|
 test "sun renderer text selection diagnostic normalizes grapheme range" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -438,8 +438,10 @@ test "sun renderer text selection diagnostic normalizes grapheme range" {
 
 ///|
 test "sun renderer emoji fallback diagnostic reports registered font fallback without color proof" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -447,19 +449,14 @@ test "sun renderer emoji fallback diagnostic reports registered font fallback wi
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinOnly"),
+    Name("SunLatinOnly"),
     sun_test_ttf_for_codes([65]),
   )
-  text_system.register_font_data(
-    @core.FontFamily::Emoji,
-    sun_test_ttf_for_codes([0x1F600]),
-  )
+  text_system.register_font_data(Emoji, sun_test_ttf_for_codes([0x1F600]))
   let diagnostic = renderer.emoji_font_fallback_diagnostic(
     text=sun_test_string_from_codepoints([65, 0x1F600]),
     font=@core.FontSpec::new(
-      families=@core.FontFamilyStack::new([
-        @core.FontFamily::Name("SunLatinOnly"),
-      ]),
+      families=@core.FontFamilyStack::new([Name("SunLatinOnly")]),
       size=10.0,
     ),
   )
@@ -515,8 +512,10 @@ test "sun renderer emoji fallback diagnostic reports registered font fallback wi
 
 ///|
 test "sun renderer fallback diagnostic prefers non ascii representative script metadata" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=48.0, height=16.0),
     ),
@@ -524,19 +523,17 @@ test "sun renderer fallback diagnostic prefers non ascii representative script m
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinOnly"),
+    Name("SunLatinOnly"),
     sun_test_ttf_for_codes([65]),
   )
   text_system.register_font_data(
-    @core.FontFamily::Name("SunCjk"),
+    Name("SunCjk"),
     sun_test_ttf_for_codes([0x4F60]),
   )
   let diagnostic = renderer.emoji_font_fallback_diagnostic(
     text=sun_test_string_from_codepoints([65, 0x4F60, 66]),
     font=@core.FontSpec::new(
-      families=@core.FontFamilyStack::new([
-        @core.FontFamily::Name("SunLatinOnly"),
-      ]),
+      families=@core.FontFamilyStack::new([Name("SunLatinOnly")]),
       size=10.0,
     ),
   )
@@ -554,8 +551,10 @@ test "sun renderer fallback diagnostic prefers non ascii representative script m
 
 ///|
 test "sun renderer text system wraps measured text to max width" {
-  let target = SunPresentTarget::new(description="test", present=_ => true)
-  let renderer = create_with_present_target(
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=_ => {
+    true
+  })
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=24.0, height=32.0),
     ),
@@ -563,7 +562,7 @@ test "sun renderer text system wraps measured text to max width" {
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinSpace"),
+    Name("SunLatinSpace"),
     sun_test_ttf_for_codes([65, 0x20]),
   )
 
@@ -571,9 +570,7 @@ test "sun renderer text system wraps measured text to max width" {
     @core.TextLayoutInput::new(
       text="A A",
       font=@core.FontSpec::new(
-        families=@core.FontFamilyStack::new([
-          @core.FontFamily::Name("SunLatinSpace"),
-        ]),
+        families=@core.FontFamilyStack::new([Name("SunLatinSpace")]),
         size=10.0,
       ),
       max_width=12.0,
@@ -592,11 +589,11 @@ test "sun renderer text system wraps measured text to max width" {
 ///|
 test "sun renderer draws wrapped fallback text on later visual lines" {
   let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
+  let target = @moui_sun_renderer.SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
     true
   })
-  let renderer = create_with_present_target(
+  let renderer = @moui_sun_renderer.create_with_present_target(
     @core.SurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=30.0),
     ),
@@ -604,24 +601,22 @@ test "sun renderer draws wrapped fallback text on later visual lines" {
   )
   let text_system = renderer.text_system()
   text_system.register_font_data(
-    @core.FontFamily::Name("SunLatinSpace"),
+    Name("SunLatinSpace"),
     sun_test_ttf_for_codes([65, 0x20]),
   )
 
   renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawText(
+    Clear(@core.Color::white()),
+    DrawText(
       @core.TextRun::new(
         text="A A",
         frame=@core.Rect::new(x=0.0, y=0.0, width=12.0, height=30.0),
         font=@core.FontSpec::new(
-          families=@core.FontFamilyStack::new([
-            @core.FontFamily::Name("SunLatinSpace"),
-          ]),
+          families=@core.FontFamilyStack::new([Name("SunLatinSpace")]),
           size=10.0,
         ),
         color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
+        align=TextStart,
       ),
     ),
   ])
@@ -745,7 +740,7 @@ fn sun_test_ttf_with_glyphs(glyphs : Array[SunTestGlyph]) -> Bytes {
 ///|
 fn sun_test_glyph_for_codepoint(codepoint : Int) -> SunTestGlyph {
   let bytes = if codepoint is 0x20 { [] } else { sun_test_box_glyph() }
-  { codepoint, advance: if codepoint is 0x20 { 5 } else { 10 }, bytes }
+  { codepoint, advance: if codepoint is 0x20 { 5 } else { 10 }, bytes, }
 }
 
 ///|
@@ -841,10 +836,10 @@ fn sun_test_box_glyph() -> Array[Byte] {
     contours: [
       {
         points: [
-          { x: 0, y: 10, on_curve: true },
-          { x: 10, y: 10, on_curve: true },
-          { x: 10, y: 0, on_curve: true },
-          { x: 0, y: 0, on_curve: true },
+          { x: 0, y: 10, on_curve: true, },
+          { x: 10, y: 10, on_curve: true, },
+          { x: 10, y: 0, on_curve: true, },
+          { x: 0, y: 0, on_curve: true, },
         ],
       },
     ],
@@ -1039,7 +1034,7 @@ fn sun_test_string_from_codepoints(codepoints : Array[Int]) -> String {
 
 ///|
 fn sun_test_dark_pixel_count(
-  frame : SunPixelFrame,
+  frame : @moui_sun_renderer.SunPixelFrame,
   row_start~ : Int,
   row_end~ : Int,
 ) -> Int {
@@ -1062,7 +1057,7 @@ fn sun_test_dark_pixel_count(
 
 ///|
 fn sun_text_test_region_has_dark_pixel(
-  frame : SunPixelFrame,
+  frame : @moui_sun_renderer.SunPixelFrame,
   rect : @core.Rect,
 ) -> Bool {
   let start_x = rect.origin.x.floor().max(0.0).to_int()

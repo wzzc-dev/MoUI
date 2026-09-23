@@ -169,9 +169,9 @@ pub fn source_import_golden_mismatch_count(
 pub fn source_imported_token_mapped_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
   for item in source_imported_tokens(preset) {
-    if item.status == DesignTokenStatus::ThemeMapped ||
-      item.status == DesignTokenStatus::ComponentMapped ||
-      item.status == DesignTokenStatus::OfficialComplete {
+    if item.status == ThemeMapped ||
+      item.status == ComponentMapped ||
+      item.status == OfficialComplete {
       count = count + 1
     }
   }
@@ -353,7 +353,7 @@ fn source_import_integrity_record(
     status: if integrity_ok {
       imported.status
     } else {
-      DesignTokenStatus::NotMapped
+      NotMapped
     },
     note: if integrity_ok {
       "Source import is tied to a stable manifest source lock, a compatible official anchor, and its golden mapping when one exists."
@@ -412,7 +412,7 @@ fn build_source_import_coverage(
           Some(mapping) => mapping.moui_token
           None => ""
         },
-        status: DesignTokenStatus::NotMapped,
+        status: NotMapped,
         note: "No pinned source-import token record covers this official token anchor yet.",
       }
   }
@@ -453,11 +453,11 @@ fn source_import_category_compatible(
 ) -> Bool {
   source_category == anchor_category ||
   (
-    source_category == DesignTokenCategory::Color &&
+    source_category == Color &&
     (
-      anchor_category == DesignTokenCategory::Surface ||
-      anchor_category == DesignTokenCategory::StateLayer ||
-      anchor_category == DesignTokenCategory::ComponentStyle
+      anchor_category == Surface ||
+      anchor_category == StateLayer ||
+      anchor_category == ComponentStyle
     )
   )
 }
@@ -469,17 +469,14 @@ fn source_import_layer_compatible(
 ) -> Bool {
   source_layer == anchor_layer ||
   (
-    source_layer == DesignTokenLayer::ReferenceToken &&
+    source_layer == ReferenceToken &&
     (
-      anchor_layer == DesignTokenLayer::AliasToken ||
-      anchor_layer == DesignTokenLayer::SystemToken ||
-      anchor_layer == DesignTokenLayer::ComponentToken
+      anchor_layer == AliasToken ||
+      anchor_layer == SystemToken ||
+      anchor_layer == ComponentToken
     )
   ) ||
-  (
-    source_layer == DesignTokenLayer::AliasToken &&
-    anchor_layer == DesignTokenLayer::ComponentToken
-  )
+  (source_layer == AliasToken && anchor_layer == ComponentToken)
 }
 
 ///|

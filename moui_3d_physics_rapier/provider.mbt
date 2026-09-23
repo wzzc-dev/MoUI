@@ -34,12 +34,12 @@ pub fn RapierWorld::new(
 ) -> RapierWorld {
   {
     gravity,
-    bodies: @rapier_dynamics.RigidBodySet3D::RigidBodySet3D(),
-    colliders: @rapier_collision.ColliderSet3D::ColliderSet3D(),
-    pipeline: @rapier_pipeline.PhysicsPipeline3DReal::PhysicsPipeline3DReal(),
-    islands: @rapier_dynamics.IslandManager3D::IslandManager3D(),
-    broad_phase: @rapier_collision.BroadPhase3D::BroadPhase3D(),
-    narrow_phase: @rapier_collision.NarrowPhase3D::NarrowPhase3D(),
+    bodies: RigidBodySet3D(),
+    colliders: ColliderSet3D(),
+    pipeline: PhysicsPipeline3DReal(),
+    islands: IslandManager3D(),
+    broad_phase: BroadPhase3D(),
+    narrow_phase: NarrowPhase3D(),
     body_handles: {},
     collider_handles: {},
     next_body: 1L,
@@ -58,12 +58,9 @@ pub fn RapierWorld::create_body(
   desc : @moui_3d_physics.BodyDesc,
 ) -> @moui_3d_physics.BodyId {
   let builder = match desc.body_type() {
-    @moui_3d_physics.BodyType::Dynamic =>
-      @rapier_dynamics.RigidBodyBuilder3D::dynamic()
-    @moui_3d_physics.BodyType::Fixed =>
-      @rapier_dynamics.RigidBodyBuilder3D::fixed()
-    @moui_3d_physics.BodyType::Kinematic =>
-      @rapier_dynamics.RigidBodyBuilder3D::kinematic_position_based()
+    Dynamic => @rapier_dynamics.RigidBodyBuilder3D::dynamic()
+    Fixed => @rapier_dynamics.RigidBodyBuilder3D::fixed()
+    Kinematic => @rapier_dynamics.RigidBodyBuilder3D::kinematic_position_based()
   }
   let rapier_body = builder
     .translation(to_rapier_vec3(desc.position()))
@@ -83,36 +80,36 @@ pub fn RapierWorld::create_collider(
   desc : @moui_3d_physics.ColliderDesc,
 ) -> @moui_3d_physics.ColliderId? {
   let builder = match desc.shape() {
-    @moui_3d_physics.Shape::Ball(radius) =>
+    Ball(radius) =>
       @rapier_collision.ColliderBuilder3D::ball(Float::from_double(radius))
-    @moui_3d_physics.Shape::Cuboid(half_extents) =>
+    Cuboid(half_extents) =>
       @rapier_collision.ColliderBuilder3D::cuboid(
         Float::from_double(half_extents.x()),
         Float::from_double(half_extents.y()),
         Float::from_double(half_extents.z()),
       )
-    @moui_3d_physics.Shape::CapsuleX(radius, half_height) =>
+    CapsuleX(radius, half_height) =>
       @rapier_collision.ColliderBuilder3D::capsule_x(
         Float::from_double(radius),
         Float::from_double(half_height),
       )
-    @moui_3d_physics.Shape::CapsuleY(radius, half_height) =>
+    CapsuleY(radius, half_height) =>
       @rapier_collision.ColliderBuilder3D::capsule_y(
         Float::from_double(radius),
         Float::from_double(half_height),
       )
-    @moui_3d_physics.Shape::CapsuleZ(radius, half_height) =>
+    CapsuleZ(radius, half_height) =>
       @rapier_collision.ColliderBuilder3D::capsule_z(
         Float::from_double(radius),
         Float::from_double(half_height),
       )
-    @moui_3d_physics.Shape::Triangle(a, b, c) =>
+    Triangle(a, b, c) =>
       @rapier_collision.ColliderBuilder3D::triangle(
         to_rapier_vec3(a),
         to_rapier_vec3(b),
         to_rapier_vec3(c),
       )
-    @moui_3d_physics.Shape::Trimesh(vertices, indices) =>
+    Trimesh(vertices, indices) =>
       match
         @rapier_collision.ColliderBuilder3D::trimesh(
           vertices.map(to_rapier_vec3),
@@ -196,7 +193,7 @@ pub fn RapierWorld::cast_ray(
     return None
   }
   let query = @rapier_collision.QueryPipeline3DReal::QueryPipeline3DReal(
-    @rapier_collision.QueryFilter3DReal::QueryFilter3DReal(),
+    QueryFilter3DReal(),
     self.bodies,
     self.colliders,
   )
@@ -235,7 +232,7 @@ pub fn RapierWorld::cast_ray(
 
 ///|
 fn to_rapier_vec3(value : @moui_3d.Vec3) -> @rapier_core.Vec3 {
-  @rapier_core.Vec3::Vec3(
+  Vec3(
     Float::from_double(value.x()),
     Float::from_double(value.y()),
     Float::from_double(value.z()),
@@ -253,7 +250,7 @@ fn from_rapier_vec3(value : @rapier_core.Vec3) -> @moui_3d.Vec3 {
 
 ///|
 fn to_rapier_quat(value : @moui_3d.Quat) -> @rapier_core.Quat {
-  @rapier_core.Quat::Quat(
+  Quat(
     Float::from_double(value.x),
     Float::from_double(value.y),
     Float::from_double(value.z),

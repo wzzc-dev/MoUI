@@ -1,7 +1,7 @@
 ///|
 /// Create an empty render pipeline.
 pub fn RenderPipeline::new() -> RenderPipeline {
-  { commands: [] }
+  { commands: [], }
 }
 
 ///|
@@ -38,7 +38,7 @@ fn copy_render_commands(
 ///|
 fn copy_render_command(command : RenderCommand) -> RenderCommand {
   match command {
-    RenderCommand::DrawFontBytesFallbackKeyed(
+    DrawFontBytesFallbackKeyed(
       sources,
       text_key_prefix,
       text,
@@ -47,7 +47,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       config,
       paint
     ) =>
-      RenderCommand::DrawFontBytesFallbackKeyed(
+      DrawFontBytesFallbackKeyed(
         copy_font_bytes_fallback_sources(sources),
         text_key_prefix,
         text,
@@ -56,7 +56,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
         config,
         paint,
       )
-    RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+    DrawFontBytesFallbackAtlasKeyed(
       sources,
       glyph_key_prefix,
       text,
@@ -65,7 +65,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       config,
       paint
     ) =>
-      RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+      DrawFontBytesFallbackAtlasKeyed(
         copy_font_bytes_fallback_sources(sources),
         glyph_key_prefix,
         text,
@@ -74,7 +74,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
         config,
         paint,
       )
-    RenderCommand::DrawLoadedFontFallbackKeyed(
+    DrawLoadedFontFallbackKeyed(
       font_keys,
       text_key_prefix,
       text,
@@ -83,7 +83,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       config,
       paint
     ) =>
-      RenderCommand::DrawLoadedFontFallbackKeyed(
+      DrawLoadedFontFallbackKeyed(
         copy_string_array(font_keys),
         text_key_prefix,
         text,
@@ -92,7 +92,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
         config,
         paint,
       )
-    RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
+    DrawLoadedFontFallbackAtlasKeyed(
       font_keys,
       glyph_key_prefix,
       text,
@@ -101,7 +101,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       config,
       paint
     ) =>
-      RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
+      DrawLoadedFontFallbackAtlasKeyed(
         copy_string_array(font_keys),
         glyph_key_prefix,
         text,
@@ -156,7 +156,7 @@ pub fn RenderPipeline::clear_canvas(
   self : RenderPipeline,
   color : @graphics.Color,
 ) -> RenderPipeline {
-  self.push(RenderCommand::Clear(color))
+  self.push(Clear(color))
 }
 
 ///|
@@ -169,7 +169,7 @@ pub fn RenderPipeline::fill_rect(
   height : Double,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::FillRect(x, y, width, height, paint))
+  self.push(FillRect(x, y, width, height, paint))
 }
 
 ///|
@@ -182,7 +182,7 @@ pub fn RenderPipeline::stroke_rect(
   height : Double,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::StrokeRect(x, y, width, height, paint))
+  self.push(StrokeRect(x, y, width, height, paint))
 }
 
 ///|
@@ -192,7 +192,7 @@ pub fn RenderPipeline::fill_path(
   path : @graphics.Path,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::FillPath(path, paint))
+  self.push(FillPath(path, paint))
 }
 
 ///|
@@ -202,7 +202,7 @@ pub fn RenderPipeline::stroke_path(
   path : @graphics.Path,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::StrokePath(path, paint))
+  self.push(StrokePath(path, paint))
 }
 
 ///|
@@ -214,7 +214,7 @@ pub fn RenderPipeline::draw_pixmap(
   y : Int,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::DrawPixmap(pixmap, x, y, paint))
+  self.push(DrawPixmap(pixmap, x, y, paint))
 }
 
 ///|
@@ -227,7 +227,7 @@ pub fn RenderPipeline::draw_pixmap_keyed(
   y : Int,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::DrawPixmapKeyed(resource_key, pixmap, x, y, paint))
+  self.push(DrawPixmapKeyed(resource_key, pixmap, x, y, paint))
 }
 
 ///|
@@ -240,9 +240,7 @@ pub fn RenderPipeline::draw_bmp_bytes_keyed(
   y : Int,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(
-    RenderCommand::DrawBmpBytesKeyed(resource_key, image_data, x, y, paint),
-  )
+  self.push(DrawBmpBytesKeyed(resource_key, image_data, x, y, paint))
 }
 
 ///|
@@ -255,9 +253,7 @@ pub fn RenderPipeline::draw_png_bytes_keyed(
   y : Int,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(
-    RenderCommand::DrawPngBytesKeyed(resource_key, image_data, x, y, paint),
-  )
+  self.push(DrawPngBytesKeyed(resource_key, image_data, x, y, paint))
 }
 
 ///|
@@ -273,7 +269,7 @@ pub fn RenderPipeline::draw_rgba_bytes_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawRgbaBytesKeyed(
+    DrawRgbaBytesKeyed(
       resource_key, image_data, image_width, image_height, x, y, paint,
     ),
   )
@@ -293,7 +289,7 @@ pub fn RenderPipeline::draw_sampled_bmp_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawSampledBmpBytesKeyed(
+    DrawSampledBmpBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, sampling,
     ),
   )
@@ -313,7 +309,7 @@ pub fn RenderPipeline::draw_sampled_png_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawSampledPngBytesKeyed(
+    DrawSampledPngBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, sampling,
     ),
   )
@@ -335,7 +331,7 @@ pub fn RenderPipeline::draw_sampled_rgba_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawSampledRgbaBytesKeyed(
+    DrawSampledRgbaBytesKeyed(
       resource_key, image_data, image_width, image_height, x, y, width, height, paint,
       sampling,
     ),
@@ -356,7 +352,7 @@ pub fn RenderPipeline::draw_quality_bmp_bytes_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawQualityBmpBytesKeyed(
+    DrawQualityBmpBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, quality,
     ),
   )
@@ -377,7 +373,7 @@ pub fn RenderPipeline::draw_quality_bmp_bytes_rect_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawQualityBmpBytesRectKeyed(
+    DrawQualityBmpBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, quality,
     ),
   )
@@ -397,7 +393,7 @@ pub fn RenderPipeline::draw_quality_png_bytes_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawQualityPngBytesKeyed(
+    DrawQualityPngBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, quality,
     ),
   )
@@ -418,7 +414,7 @@ pub fn RenderPipeline::draw_quality_png_bytes_rect_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawQualityPngBytesRectKeyed(
+    DrawQualityPngBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, quality,
     ),
   )
@@ -440,7 +436,7 @@ pub fn RenderPipeline::draw_quality_rgba_bytes_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawQualityRgbaBytesKeyed(
+    DrawQualityRgbaBytesKeyed(
       resource_key, image_data, image_width, image_height, x, y, width, height, paint,
       quality,
     ),
@@ -464,7 +460,7 @@ pub fn RenderPipeline::draw_quality_rgba_bytes_rect_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawQualityRgbaBytesRectKeyed(
+    DrawQualityRgbaBytesRectKeyed(
       resource_key, image_data, image_width, image_height, src_rect, x, y, width,
       height, paint, quality,
     ),
@@ -485,7 +481,7 @@ pub fn RenderPipeline::draw_transformed_sampled_bmp_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedSampledBmpBytesKeyed(
+    DrawTransformedSampledBmpBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, sampling,
     ),
   )
@@ -506,7 +502,7 @@ pub fn RenderPipeline::draw_transformed_sampled_bmp_bytes_rect_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedSampledBmpBytesRectKeyed(
+    DrawTransformedSampledBmpBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, sampling,
     ),
   )
@@ -526,7 +522,7 @@ pub fn RenderPipeline::draw_transformed_quality_bmp_bytes_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedQualityBmpBytesKeyed(
+    DrawTransformedQualityBmpBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, quality,
     ),
   )
@@ -547,7 +543,7 @@ pub fn RenderPipeline::draw_transformed_quality_bmp_bytes_rect_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedQualityBmpBytesRectKeyed(
+    DrawTransformedQualityBmpBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, quality,
     ),
   )
@@ -567,7 +563,7 @@ pub fn RenderPipeline::draw_transformed_sampled_png_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedSampledPngBytesKeyed(
+    DrawTransformedSampledPngBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, sampling,
     ),
   )
@@ -588,7 +584,7 @@ pub fn RenderPipeline::draw_transformed_sampled_png_bytes_rect_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedSampledPngBytesRectKeyed(
+    DrawTransformedSampledPngBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, sampling,
     ),
   )
@@ -608,7 +604,7 @@ pub fn RenderPipeline::draw_transformed_quality_png_bytes_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedQualityPngBytesKeyed(
+    DrawTransformedQualityPngBytesKeyed(
       resource_key, image_data, x, y, width, height, paint, quality,
     ),
   )
@@ -629,7 +625,7 @@ pub fn RenderPipeline::draw_transformed_quality_png_bytes_rect_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedQualityPngBytesRectKeyed(
+    DrawTransformedQualityPngBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, quality,
     ),
   )
@@ -651,7 +647,7 @@ pub fn RenderPipeline::draw_transformed_sampled_rgba_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedSampledRgbaBytesKeyed(
+    DrawTransformedSampledRgbaBytesKeyed(
       resource_key, image_data, image_width, image_height, x, y, width, height, paint,
       sampling,
     ),
@@ -675,7 +671,7 @@ pub fn RenderPipeline::draw_transformed_sampled_rgba_bytes_rect_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedSampledRgbaBytesRectKeyed(
+    DrawTransformedSampledRgbaBytesRectKeyed(
       resource_key, image_data, image_width, image_height, src_rect, x, y, width,
       height, paint, sampling,
     ),
@@ -698,7 +694,7 @@ pub fn RenderPipeline::draw_transformed_quality_rgba_bytes_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedQualityRgbaBytesKeyed(
+    DrawTransformedQualityRgbaBytesKeyed(
       resource_key, image_data, image_width, image_height, x, y, width, height, paint,
       quality,
     ),
@@ -722,7 +718,7 @@ pub fn RenderPipeline::draw_transformed_quality_rgba_bytes_rect_keyed(
   quality : @graphics.ImageQuality,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTransformedQualityRgbaBytesRectKeyed(
+    DrawTransformedQualityRgbaBytesRectKeyed(
       resource_key, image_data, image_width, image_height, src_rect, x, y, width,
       height, paint, quality,
     ),
@@ -744,7 +740,7 @@ pub fn RenderPipeline::draw_sampled_bmp_bytes_rect_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawSampledBmpBytesRectKeyed(
+    DrawSampledBmpBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, sampling,
     ),
   )
@@ -765,7 +761,7 @@ pub fn RenderPipeline::draw_sampled_png_bytes_rect_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawSampledPngBytesRectKeyed(
+    DrawSampledPngBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint, sampling,
     ),
   )
@@ -788,7 +784,7 @@ pub fn RenderPipeline::draw_sampled_rgba_bytes_rect_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawSampledRgbaBytesRectKeyed(
+    DrawSampledRgbaBytesRectKeyed(
       resource_key, image_data, image_width, image_height, src_rect, x, y, width,
       height, paint, sampling,
     ),
@@ -807,9 +803,7 @@ pub fn RenderPipeline::draw_bmp_bytes_rect_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawBmpBytesRectKeyed(
-      resource_key, image_data, src_rect, x, y, paint,
-    ),
+    DrawBmpBytesRectKeyed(resource_key, image_data, src_rect, x, y, paint),
   )
 }
 
@@ -825,9 +819,7 @@ pub fn RenderPipeline::draw_png_bytes_rect_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawPngBytesRectKeyed(
-      resource_key, image_data, src_rect, x, y, paint,
-    ),
+    DrawPngBytesRectKeyed(resource_key, image_data, src_rect, x, y, paint),
   )
 }
 
@@ -845,7 +837,7 @@ pub fn RenderPipeline::draw_rgba_bytes_rect_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawRgbaBytesRectKeyed(
+    DrawRgbaBytesRectKeyed(
       resource_key, image_data, image_width, image_height, src_rect, x, y, paint,
     ),
   )
@@ -865,7 +857,7 @@ pub fn RenderPipeline::draw_tiled_bmp_bytes_rect_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTiledBmpBytesRectKeyed(
+    DrawTiledBmpBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint,
     ),
   )
@@ -885,7 +877,7 @@ pub fn RenderPipeline::draw_tiled_png_bytes_rect_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTiledPngBytesRectKeyed(
+    DrawTiledPngBytesRectKeyed(
       resource_key, image_data, src_rect, x, y, width, height, paint,
     ),
   )
@@ -907,7 +899,7 @@ pub fn RenderPipeline::draw_tiled_rgba_bytes_rect_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawTiledRgbaBytesRectKeyed(
+    DrawTiledRgbaBytesRectKeyed(
       resource_key, image_data, image_width, image_height, src_rect, x, y, width,
       height, paint,
     ),
@@ -929,7 +921,7 @@ pub fn RenderPipeline::draw_nine_patch_bmp_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawNinePatchBmpBytesKeyed(
+    DrawNinePatchBmpBytesKeyed(
       resource_key, image_data, x, y, width, height, insets, paint, sampling,
     ),
   )
@@ -950,7 +942,7 @@ pub fn RenderPipeline::draw_nine_patch_png_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawNinePatchPngBytesKeyed(
+    DrawNinePatchPngBytesKeyed(
       resource_key, image_data, x, y, width, height, insets, paint, sampling,
     ),
   )
@@ -973,7 +965,7 @@ pub fn RenderPipeline::draw_nine_patch_rgba_bytes_keyed(
   sampling : @graphics.ImageSampling,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawNinePatchRgbaBytesKeyed(
+    DrawNinePatchRgbaBytesKeyed(
       resource_key, image_data, image_width, image_height, x, y, width, height, insets,
       paint, sampling,
     ),
@@ -990,7 +982,7 @@ pub fn RenderPipeline::draw_pixmap_rect(
   y : Int,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::DrawPixmapRect(pixmap, src_rect, x, y, paint))
+  self.push(DrawPixmapRect(pixmap, src_rect, x, y, paint))
 }
 
 ///|
@@ -1004,11 +996,7 @@ pub fn RenderPipeline::draw_pixmap_rect_keyed(
   y : Int,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(
-    RenderCommand::DrawPixmapRectKeyed(
-      resource_key, pixmap, src_rect, x, y, paint,
-    ),
-  )
+  self.push(DrawPixmapRectKeyed(resource_key, pixmap, src_rect, x, y, paint))
 }
 
 ///|
@@ -1022,7 +1010,7 @@ pub fn RenderPipeline::draw_text_face(
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(RenderCommand::DrawTextFace(face, text, x, y, config, paint))
+  self.push(DrawTextFace(face, text, x, y, config, paint))
 }
 
 ///|
@@ -1037,11 +1025,7 @@ pub fn RenderPipeline::draw_text_face_keyed(
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(
-    RenderCommand::DrawTextFaceKeyed(
-      resource_key, face, text, x, y, config, paint,
-    ),
-  )
+  self.push(DrawTextFaceKeyed(resource_key, face, text, x, y, config, paint))
 }
 
 ///|
@@ -1058,9 +1042,7 @@ pub fn RenderPipeline::draw_font_bytes_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawFontBytesKeyed(
-      font_key, font_data, text_key, text, x, y, config, paint,
-    ),
+    DrawFontBytesKeyed(font_key, font_data, text_key, text, x, y, config, paint),
   )
 }
 
@@ -1078,7 +1060,7 @@ pub fn RenderPipeline::draw_font_bytes_atlas_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawFontBytesAtlasKeyed(
+    DrawFontBytesAtlasKeyed(
       font_key, font_data, glyph_key_prefix, text, x, y, config, paint,
     ),
   )
@@ -1097,7 +1079,7 @@ pub fn RenderPipeline::draw_font_bytes_fallback_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawFontBytesFallbackKeyed(
+    DrawFontBytesFallbackKeyed(
       sources, text_key_prefix, text, x, y, config, paint,
     ),
   )
@@ -1116,7 +1098,7 @@ pub fn RenderPipeline::draw_font_bytes_fallback_atlas_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawFontBytesFallbackAtlasKeyed(
+    DrawFontBytesFallbackAtlasKeyed(
       sources, glyph_key_prefix, text, x, y, config, paint,
     ),
   )
@@ -1134,11 +1116,7 @@ pub fn RenderPipeline::draw_loaded_font_keyed(
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
 ) -> RenderPipeline {
-  self.push(
-    RenderCommand::DrawLoadedFontKeyed(
-      font_key, text_key, text, x, y, config, paint,
-    ),
-  )
+  self.push(DrawLoadedFontKeyed(font_key, text_key, text, x, y, config, paint))
 }
 
 ///|
@@ -1154,7 +1132,7 @@ pub fn RenderPipeline::draw_loaded_font_fallback_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawLoadedFontFallbackKeyed(
+    DrawLoadedFontFallbackKeyed(
       font_keys, text_key_prefix, text, x, y, config, paint,
     ),
   )
@@ -1173,7 +1151,7 @@ pub fn RenderPipeline::draw_loaded_font_fallback_atlas_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawLoadedFontFallbackAtlasKeyed(
+    DrawLoadedFontFallbackAtlasKeyed(
       font_keys, glyph_key_prefix, text, x, y, config, paint,
     ),
   )
@@ -1192,7 +1170,7 @@ pub fn RenderPipeline::draw_loaded_font_atlas_keyed(
   paint : @graphics.Paint,
 ) -> RenderPipeline {
   self.push(
-    RenderCommand::DrawLoadedFontAtlasKeyed(
+    DrawLoadedFontAtlasKeyed(
       font_key, glyph_key_prefix, text, x, y, config, paint,
     ),
   )

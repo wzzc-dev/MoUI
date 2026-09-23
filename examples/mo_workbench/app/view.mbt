@@ -27,7 +27,7 @@ fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
   let center_height = (viewport.height - topbar_height - app_margin * 2.0).max(
     262.0,
   )
-  { sidebar_width, topbar_height, center_height }
+  { sidebar_width, topbar_height, center_height, }
 }
 
 ///|
@@ -60,7 +60,7 @@ fn workbench_view(
         sidebar_view(model, sidebar_theme, left_width, main_height - 40.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width=left_width,
     height=main_height,
@@ -101,7 +101,7 @@ fn workbench_view(
         [right_column]
       },
       spacing=0.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width=viewport.width,
     height=viewport.height,
@@ -112,7 +112,7 @@ fn workbench_view(
   let toggle_icon_name = if model.sidebar_visible {
     @views.IconName::Sidebar
   } else {
-    @views.IconName::Columns
+    Columns
   }
   let toggle_background = if model.sidebar_visible {
     workbench_subtle_background(theme)
@@ -176,7 +176,7 @@ fn center_shell(
         main_surface(model, surface_theme, center_width, layout.center_height),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width=center_width,
     height=shell_height,
@@ -201,23 +201,17 @@ fn topbar_view(
   let inner_width = (width - horizontal_pad * 2.0).max(160.0)
   let title_block = @views.column(
     [
-      @views.text(
-        title,
-        role=@views.TextRole::Label,
-        theme~,
-        width=inner_width,
-        height=20.0,
-      ),
+      @views.text(title, role=Label, theme~, width=inner_width, height=20.0),
       @views.text(
         tab_subtitle(model),
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=inner_width,
         height=16.0,
       ).foreground(theme.palette.muted),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
   @views.container(
     @views.padding_edges(
@@ -253,7 +247,7 @@ fn sidebar_view(
     sidebar_footer(model, theme, width),
   ]
   @views.container(
-    @views.column(rows, spacing=0.0, align=@views.CrossAlign::Stretch),
+    @views.column(rows, spacing=0.0, align=Stretch),
     width~,
     height~,
     background=workbench_sidebar_background(theme),
@@ -271,14 +265,14 @@ fn workbench_tab_segment_button(
 ) -> @moui.View[WorkbenchMsg] {
   let tab = match item_id {
     "work" => TopTab::Work
-    "design" => TopTab::Design
-    _ => TopTab::Code
+    "design" => Design
+    _ => Code
   }
   if active {
     @views.button(
       label,
-      on_click=WorkbenchMsg::SwitchTab(tab),
-      variant=@views.ButtonVariant::Ghost,
+      on_click=SwitchTab(tab),
+      variant=Ghost,
       theme~,
       style=workbench_tab_selected_button_style(theme),
       width~,
@@ -287,8 +281,8 @@ fn workbench_tab_segment_button(
   } else {
     @views.button(
       label,
-      on_click=WorkbenchMsg::SwitchTab(tab),
-      variant=@views.ButtonVariant::Ghost,
+      on_click=SwitchTab(tab),
+      variant=Ghost,
       theme~,
       width~,
       height=32.0,
@@ -331,7 +325,7 @@ fn tab_segmented_control(
   }
   @views.padding_xy(
     @views.container(
-      @views.row(segments, spacing=0.0, align=@views.CrossAlign::Center),
+      @views.row(segments, spacing=0.0, align=Center),
       width=bar_width,
       height=32.0,
       background=workbench_subtle_background(theme),
@@ -355,10 +349,10 @@ fn new_task_section(
       [
         @views.button(
           "新建任务",
-          on_click=WorkbenchMsg::NewTask,
-          variant=@views.ButtonVariant::Tonal,
+          on_click=NewTask,
+          variant=Tonal,
           theme=sidebar_control_theme(theme, size_delta=-0.5, weight=300),
-          icon=Some(@views.IconName::Plus),
+          icon=Some(Plus),
           width=width - 32.0,
           height=36.0,
         ),
@@ -369,11 +363,11 @@ fn new_task_section(
             @views.spacer(),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     horizontal=16.0,
     vertical=10.0,
@@ -387,7 +381,7 @@ fn sidebar_fine_font(
   weight? : Int = 300,
 ) -> @text.FontSpec {
   let base = theme.typography.caption
-  { ..base, size: (base.size + size_delta).max(10.0), weight }
+  { ..base, size: (base.size + size_delta).max(10.0), weight, }
 }
 
 ///|
@@ -397,7 +391,7 @@ fn sidebar_control_font(
   weight? : Int = 300,
 ) -> @text.FontSpec {
   let base = theme.typography.control
-  { ..base, size: (base.size + size_delta).max(10.0), weight }
+  { ..base, size: (base.size + size_delta).max(10.0), weight, }
 }
 
 ///|
@@ -423,7 +417,7 @@ fn sidebar_secondary_chip(
     @views.center(
       @views.text(
         label,
-        role=@views.TextRole::Caption,
+        role=Caption,
         theme~,
         width=(width - 16.0).max(32.0),
         height=16.0,
@@ -468,7 +462,7 @@ fn task_tree_view(
           [
             @views.text(
               "任务列表",
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=title_width,
               height=20.0,
@@ -477,7 +471,7 @@ fn task_tree_view(
             .foreground(workbench_text_muted(theme)),
             @views.container(
               @views.icon(
-                @views.IconName::ListOrdered,
+                ListOrdered,
                 size=13.0,
                 color=workbench_text_muted(theme),
               ),
@@ -488,7 +482,7 @@ fn task_tree_view(
             task_filter_chip(model.task_filter, theme, filter_width),
           ],
           spacing=4.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         width=header_width,
         padding=0.0,
@@ -535,18 +529,14 @@ fn task_tree_view(
   @views.container(
     @views.scroll_view(
       @views.padding_xy(
-        @views.column(
-          body,
-          spacing=sidebar_task_row_spacing(),
-          align=@views.CrossAlign::Stretch,
-        ),
+        @views.column(body, spacing=sidebar_task_row_spacing(), align=Stretch),
         horizontal=16.0,
         vertical=12.0,
       ),
       width~,
       height~,
       offset=model.task_scroll_offset,
-      on_scroll=Some(offset => WorkbenchMsg::TaskListScrolled(offset)),
+      on_scroll=Some(offset => TaskListScrolled(offset)),
     ),
     width~,
     height~,
@@ -584,22 +574,22 @@ fn sidebar_task_entries(tree : Array[TaskTreeNode]) -> Array[SidebarTaskEntry] {
   for node in tree {
     match node {
       Folder(id, title, _, children, expanded) => {
-        entries.push(SidebarTaskEntry::Folder(id, title, expanded))
+        entries.push(Folder(id, title, expanded))
         if expanded {
           for child in children {
             match child {
               Task(id, title, _, status, _) =>
-                entries.push(SidebarTaskEntry::Task(id, title, status, true))
+                entries.push(Task(id, title, status, true))
               Folder(_, _, _, _, _) => ()
             }
           }
         }
       }
       Task(id, title, _, status, _) =>
-        entries.push(SidebarTaskEntry::Task(id, title, status, false))
+        entries.push(Task(id, title, status, false))
     }
   }
-  sidebar_task_entries_snapshot.val = Some({ tree, entries })
+  sidebar_task_entries_snapshot.val = Some({ tree, entries, })
   entries
 }
 
@@ -697,11 +687,7 @@ fn task_folder_header(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let icon = if expanded {
-    @views.IconName::ChevronDown
-  } else {
-    @views.IconName::ChevronRight
-  }
+  let icon = if expanded { @views.IconName::ChevronDown } else { ChevronRight }
   @views.container(
     @views.row(
       [
@@ -713,7 +699,7 @@ fn task_folder_header(
         ),
         @views.text(
           title,
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 26.0,
           height=18.0,
@@ -722,13 +708,13 @@ fn task_folder_header(
         .foreground(workbench_text_muted(theme)),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=sidebar_task_row_height(),
     corner_radius=4.0,
     padding=4.0,
-  ).on_tap(WorkbenchMsg::ToggleFolder(id))
+  ).on_tap(ToggleFolder(id))
 }
 
 ///|
@@ -739,9 +725,9 @@ fn task_search_field(
 ) -> @moui.View[WorkbenchMsg] {
   @views.text_field(
     model.task_search_query,
-    on_input=query => WorkbenchMsg::TaskSearchChanged(query),
+    on_input=query => TaskSearchChanged(query),
     placeholder="搜索任务或 session",
-    variant=@views.TextFieldVariant::Filled,
+    variant=Filled,
     theme~,
     style=sidebar_search_field_style(theme),
     width~,
@@ -765,13 +751,7 @@ fn task_filter_chip(
 ) -> @moui.View[WorkbenchMsg] {
   let label = task_filter_label(filter)
   @views.container(
-    @views.text(
-      label,
-      role=@views.TextRole::Caption,
-      theme~,
-      width=width - 6.0,
-      height=15.0,
-    )
+    @views.text(label, role=Caption, theme~, width=width - 6.0, height=15.0)
     .font(sidebar_fine_font(theme, size_delta=-1.5, weight=300))
     .foreground(workbench_accent(theme)),
     width~,
@@ -780,7 +760,7 @@ fn task_filter_chip(
     corner_radius=10.0,
     border=Some(hairline_border(theme)),
     padding=2.5,
-  ).on_tap(WorkbenchMsg::CycleTaskFilter)
+  ).on_tap(CycleTaskFilter)
 }
 
 ///|
@@ -827,7 +807,7 @@ fn task_row(
         ),
         @views.text(
           truncate_text(title, 22),
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 24.0,
           height=18.0,
@@ -836,13 +816,13 @@ fn task_row(
         .foreground(title_color),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     background=row_bg,
     corner_radius=6.0,
     padding=6.0,
-  ).on_tap(WorkbenchMsg::SelectTask(id))
+  ).on_tap(SelectTask(id))
 }
 
 ///|
@@ -861,33 +841,33 @@ fn sidebar_footer(
           [
             @views.container(
               @views.icon(
-                @views.IconName::Settings,
+                Settings,
                 size=18.0,
                 color=workbench_text_muted(theme),
               ),
               width=28.0,
               height=28.0,
               padding=0.0,
-            ).on_tap(WorkbenchMsg::ToggleSettings),
+            ).on_tap(ToggleSettings),
             @views.container(
               @views.row(
                 [
                   @views.text(
                     appearance_label(model.appearance),
-                    role=@views.TextRole::Caption,
+                    role=Caption,
                     theme~,
                     width=(appearance_width - 42.0).max(64.0),
                   ),
                   @views.text(
                     theme_label(theme),
-                    role=@views.TextRole::Caption,
+                    role=Caption,
                     theme~,
                     width=26.0,
-                    align=@text.TextAlign::TextCenter,
+                    align=TextCenter,
                   ),
                 ],
                 spacing=4.0,
-                align=@views.CrossAlign::Center,
+                align=Center,
               ),
               width=appearance_width,
               height=28.0,
@@ -901,11 +881,11 @@ fn sidebar_footer(
             ),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
       ],
       spacing=8.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     horizontal=16.0,
     vertical=12.0,
@@ -957,14 +937,14 @@ fn settings_overlay_view(
                   [
                     @views.text(
                       "Settings",
-                      role=@views.TextRole::Title,
+                      role=Title,
                       theme~,
                       width=card_inner_width - 48.0,
                     ),
                     @views.spacer(),
                     @views.container(
                       @views.icon(
-                        @views.IconName::Close,
+                        Close,
                         size=18.0,
                         color=workbench_text_muted(theme),
                       ),
@@ -974,7 +954,7 @@ fn settings_overlay_view(
                     ).on_tap(WorkbenchMsg::ToggleSettings),
                   ],
                   spacing=12.0,
-                  align=@views.CrossAlign::Center,
+                  align=Center,
                 ),
                 width=card_inner_width,
                 height=36.0,
@@ -987,10 +967,10 @@ fn settings_overlay_view(
                 theme,
                 card_inner_width,
                 settings_body_height,
-              ).map(m => WorkbenchMsg::SettingsMsg(m)),
+              ).map(m => SettingsMsg(m)),
             ],
             spacing=12.0,
-            align=@views.CrossAlign::Stretch,
+            align=Stretch,
           ),
           width=card_width,
           height=card_height,
@@ -1001,7 +981,7 @@ fn settings_overlay_view(
         @views.spacer(weight=1.0),
       ],
       spacing=0.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height~,
@@ -1024,7 +1004,7 @@ fn main_surface(
   match model.active_tab {
     Code =>
       code_workspace_view(model.code, model.settings, theme, width, height).map(m => {
-          WorkbenchMsg::CodeMsg(m)
+          CodeMsg(m)
         },
       )
     Work => work_tab_view(model, theme, width, height)
@@ -1038,7 +1018,7 @@ fn[Msg] sidebar_caption(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
-  @views.text(text_, role=@views.TextRole::Caption, theme~, width~).foreground(
+  @views.text(text_, role=Caption, theme~, width~).foreground(
     theme.palette.muted,
   )
 }
@@ -1090,9 +1070,9 @@ fn appearance_label(appearance : AppearanceMode) -> String {
 ///|
 fn next_thinking_choice(thinking : ThinkingChoice) -> ThinkingChoice {
   match thinking {
-    Normal => ThinkingChoice::High
-    High => ThinkingChoice::Max
-    Max => ThinkingChoice::Normal
+    Normal => High
+    High => Max
+    Max => Normal
   }
 }
 
@@ -1118,9 +1098,9 @@ fn approval_policy_id(policy : ApprovalPolicy) -> String {
 ///|
 fn approval_policy_from_id(id : String) -> ApprovalPolicy {
   match id {
-    "never" => ApprovalPolicy::NeverAsk
-    "command" => ApprovalPolicy::AskOnCommand
-    _ => ApprovalPolicy::AskOnWrite
+    "never" => NeverAsk
+    "command" => AskOnCommand
+    _ => AskOnWrite
   }
 }
 
@@ -1136,9 +1116,9 @@ fn sandbox_mode_id(mode : SandboxMode) -> String {
 ///|
 fn sandbox_mode_from_id(id : String) -> SandboxMode {
   match id {
-    "read-only" => SandboxMode::ReadOnly
-    "full" => SandboxMode::FullAccess
-    _ => SandboxMode::WorkspaceWritable
+    "read-only" => ReadOnly
+    "full" => FullAccess
+    _ => WorkspaceWritable
   }
 }
 

@@ -60,7 +60,7 @@ fn work_tab_summary(model : WorkbenchModel) -> WorkTabSummary {
       Failed => failed += 1
     }
   }
-  { total: model.code.sessions.length(), active, running, completed, failed }
+  { total: model.code.sessions.length(), active, running, completed, failed, }
 }
 
 ///|
@@ -72,9 +72,9 @@ fn work_next_actions(model : WorkbenchModel) -> Array[WorkAction] {
       title: "Review failed tasks",
       detail: "\{summary.failed} task needs attention",
       label: "Review",
-      icon: @views.IconName::Info,
-      action: WorkbenchMsg::ShowFailedTasks,
-      variant: @views.ButtonVariant::Primary,
+      icon: Info,
+      action: ShowFailedTasks,
+      variant: Primary,
     })
   }
   if summary.running > 0 {
@@ -82,9 +82,9 @@ fn work_next_actions(model : WorkbenchModel) -> Array[WorkAction] {
       title: "Watch running work",
       detail: "\{summary.running} agent turn in progress",
       label: "Running",
-      icon: @views.IconName::Focus,
-      action: WorkbenchMsg::ShowRunningTasks,
-      variant: @views.ButtonVariant::Tonal,
+      icon: Focus,
+      action: ShowRunningTasks,
+      variant: Tonal,
     })
   }
   match model.code.active_session_id {
@@ -93,9 +93,9 @@ fn work_next_actions(model : WorkbenchModel) -> Array[WorkAction] {
         title: "Continue active task",
         detail: "Open the current code timeline",
         label: "Open Code",
-        icon: @views.IconName::ArrowRight,
-        action: WorkbenchMsg::SwitchTab(TopTab::Code),
-        variant: @views.ButtonVariant::Tonal,
+        icon: ArrowRight,
+        action: SwitchTab(Code),
+        variant: Tonal,
       })
     None => ()
   }
@@ -104,26 +104,26 @@ fn work_next_actions(model : WorkbenchModel) -> Array[WorkAction] {
       title: "Show all tasks",
       detail: "\{summary.total} sessions in this workspace",
       label: "All tasks",
-      icon: @views.IconName::ListTask,
-      action: WorkbenchMsg::ShowAllTasks,
-      variant: @views.ButtonVariant::Ghost,
+      icon: ListTask,
+      action: ShowAllTasks,
+      variant: Ghost,
     })
   }
   actions.push({
     title: "Start a new task",
     detail: "Create a fresh agent session",
     label: "New task",
-    icon: @views.IconName::Plus,
-    action: WorkbenchMsg::NewTask,
-    variant: @views.ButtonVariant::Primary,
+    icon: Plus,
+    action: NewTask,
+    variant: Primary,
   })
   actions.push({
     title: "Agent settings",
     detail: "Model, approval, sandbox, and workspace",
     label: "Settings",
-    icon: @views.IconName::Settings,
-    action: WorkbenchMsg::ToggleSettings,
-    variant: @views.ButtonVariant::Ghost,
+    icon: Settings,
+    action: ToggleSettings,
+    variant: Ghost,
   })
   actions
 }
@@ -160,7 +160,7 @@ fn work_tab_view(
           work_recent_tasks(model, theme, inner_width),
         ],
         spacing=18.0,
-        align=@views.CrossAlign::Stretch,
+        align=Stretch,
       ),
       width=inner_width,
       height=(height - 64.0).max(260.0),
@@ -182,35 +182,30 @@ fn work_tab_header(
     [
       @views.column(
         [
-          @views.text(
-            "Work",
-            role=@views.TextRole::Title,
-            theme~,
-            width=width - 150.0,
-          ),
+          @views.text("Work", role=Title, theme~, width=width - 150.0),
           @views.text(
             "任务概览、运行状态和最近会话 · Active \{summary.active}",
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=width - 150.0,
           ).foreground(workbench_text_muted(theme)),
         ],
         spacing=4.0,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       @views.spacer(),
       @views.button(
         "新建任务",
-        on_click=WorkbenchMsg::NewTask,
-        variant=@views.ButtonVariant::Tonal,
+        on_click=NewTask,
+        variant=Tonal,
         theme~,
-        icon=Some(@views.IconName::Plus),
+        icon=Some(Plus),
         width=112.0,
         height=34.0,
       ),
     ],
     spacing=16.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -253,7 +248,7 @@ fn work_summary_cards(
       ),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -268,21 +263,15 @@ fn work_metric_card(
   @views.container(
     @views.column(
       [
-        @views.text(
-          value,
-          role=@views.TextRole::Title,
-          theme~,
-          width=width - 24.0,
-        ).foreground(color),
-        @views.text(
-          label,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 24.0,
-        ).foreground(workbench_text_muted(theme)),
+        @views.text(value, role=Title, theme~, width=width - 24.0).foreground(
+          color,
+        ),
+        @views.text(label, role=Caption, theme~, width=width - 24.0).foreground(
+          workbench_text_muted(theme),
+        ),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=82.0,
@@ -311,17 +300,12 @@ fn work_next_actions_section(
   let rows : Array[@moui.View[WorkbenchMsg]] = [
     @views.row(
       [
-        @views.text(
-          "Next actions",
-          role=@views.TextRole::Label,
-          theme~,
-          width=width - 120.0,
-        ),
+        @views.text("Next actions", role=Label, theme~, width=width - 120.0),
         @views.spacer(),
         @views.badge(badge, theme~, width=104.0, height=24.0),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
   ]
   if width < 560.0 {
@@ -340,13 +324,11 @@ fn work_next_actions_section(
       } else {
         row_items.push(@views.spacer(min_length=card_width))
       }
-      rows.push(
-        @views.row(row_items, spacing=12.0, align=@views.CrossAlign::Center),
-      )
+      rows.push(@views.row(row_items, spacing=12.0, align=Center))
       index += 2
     }
   }
-  @views.column(rows, spacing=8.0, align=@views.CrossAlign::Stretch)
+  @views.column(rows, spacing=8.0, align=Stretch)
 }
 
 ///|
@@ -361,22 +343,14 @@ fn work_action_card(
         @views.row(
           [
             @views.icon(action.icon, size=18.0, color=workbench_accent(theme)),
-            @views.text(
-              action.title,
-              role=@views.TextRole::Label,
-              theme~,
-              width=width - 54.0,
-            ),
+            @views.text(action.title, role=Label, theme~, width=width - 54.0),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
-        @views.text(
-          action.detail,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 28.0,
-        ).foreground(workbench_text_muted(theme)),
+        @views.text(action.detail, role=Caption, theme~, width=width - 28.0).foreground(
+          workbench_text_muted(theme),
+        ),
         @views.button(
           action.label,
           on_click=action.action,
@@ -388,7 +362,7 @@ fn work_action_card(
         ),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=132.0,
@@ -406,7 +380,7 @@ fn work_recent_tasks(
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let rows : Array[@moui.View[WorkbenchMsg]] = [
-    @views.text("Recent tasks", role=@views.TextRole::Label, theme~, width~),
+    @views.text("Recent tasks", role=Label, theme~, width~),
   ]
   if model.code.sessions.is_empty() {
     rows.push(work_empty_task_card(theme, width))
@@ -419,7 +393,7 @@ fn work_recent_tasks(
       }
     }
   }
-  @views.column(rows, spacing=8.0, align=@views.CrossAlign::Stretch)
+  @views.column(rows, spacing=8.0, align=Stretch)
 }
 
 ///|
@@ -430,21 +404,16 @@ fn work_empty_task_card(
   @views.container(
     @views.column(
       [
-        @views.text(
-          "暂无任务",
-          role=@views.TextRole::Label,
-          theme~,
-          width=width - 32.0,
-        ),
+        @views.text("暂无任务", role=Label, theme~, width=width - 32.0),
         @views.text(
           "点击新建任务开始一次 agent 工作流",
-          role=@views.TextRole::Caption,
+          role=Caption,
           theme~,
           width=width - 32.0,
         ).foreground(workbench_text_muted(theme)),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     background=workbench_card_background(theme),
@@ -483,32 +452,32 @@ fn work_task_row(
           [
             @views.text(
               truncate_text(title, 48),
-              role=@views.TextRole::Label,
+              role=Label,
               theme~,
               width=width - 160.0,
             ),
             @views.text(
               truncate_text(session.id, 28),
-              role=@views.TextRole::Caption,
+              role=Caption,
               theme~,
               width=width - 160.0,
             ).foreground(workbench_text_muted(theme)),
           ],
           spacing=2.0,
-          align=@views.CrossAlign::Start,
+          align=Start,
         ),
         @views.spacer(),
         @views.badge(task_status_label(status), theme~, width=78.0, height=24.0),
       ],
       spacing=12.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     background=workbench_card_background(theme),
     corner_radius=8.0,
     border=Some(hairline_border(theme)),
     padding=12.0,
-  ).on_tap(WorkbenchMsg::SelectTask(session.id))
+  ).on_tap(SelectTask(session.id))
 }
 
 ///|
@@ -587,7 +556,7 @@ fn design_tab_view(
           design_palette_preview(theme, inner_width),
         ],
         spacing=18.0,
-        align=@views.CrossAlign::Stretch,
+        align=Stretch,
       ),
       width=inner_width,
       height=(height - 64.0).max(260.0),
@@ -609,36 +578,31 @@ fn design_tab_header(
     [
       @views.column(
         [
-          @views.text(
-            "Design",
-            role=@views.TextRole::Title,
-            theme~,
-            width=width - 150.0,
-          ),
+          @views.text("Design", role=Title, theme~, width=width - 150.0),
           @views.text(
             "界面状态、控件样式和主题 token · " +
             summary.active_session,
-            role=@views.TextRole::Caption,
+            role=Caption,
             theme~,
             width=width - 150.0,
           ).foreground(workbench_text_muted(theme)),
         ],
         spacing=4.0,
-        align=@views.CrossAlign::Start,
+        align=Start,
       ),
       @views.spacer(),
       @views.button(
         "设置",
-        on_click=WorkbenchMsg::ToggleSettings,
-        variant=@views.ButtonVariant::Ghost,
+        on_click=ToggleSettings,
+        variant=Ghost,
         theme~,
-        icon=Some(@views.IconName::Settings),
+        icon=Some(Settings),
         width=104.0,
         height=34.0,
       ),
     ],
     spacing=16.0,
-    align=@views.CrossAlign::Center,
+    align=Center,
   )
 }
 
@@ -669,7 +633,7 @@ fn design_status_grid(
           ),
         ],
         spacing=12.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
       @views.row(
         [
@@ -689,11 +653,11 @@ fn design_status_grid(
           ),
         ],
         spacing=12.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
     ],
     spacing=12.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -708,21 +672,15 @@ fn design_fact_card(
   @views.container(
     @views.column(
       [
-        @views.text(
-          value,
-          role=@views.TextRole::Label,
-          theme~,
-          width=width - 28.0,
-        ).foreground(color),
-        @views.text(
-          label,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 28.0,
-        ).foreground(workbench_text_muted(theme)),
+        @views.text(value, role=Label, theme~, width=width - 28.0).foreground(
+          color,
+        ),
+        @views.text(label, role=Caption, theme~, width=width - 28.0).foreground(
+          workbench_text_muted(theme),
+        ),
       ],
       spacing=4.0,
-      align=@views.CrossAlign::Start,
+      align=Start,
     ),
     width~,
     height=74.0,
@@ -744,40 +702,35 @@ fn design_component_preview(
       [
         @views.row(
           [
-            @views.text(
-              "Controls",
-              role=@views.TextRole::Label,
-              theme~,
-              width=width - 128.0,
-            ),
+            @views.text("Controls", role=Label, theme~, width=width - 128.0),
             @views.badge(summary.font_size, theme~, width=74.0, height=24.0),
           ],
           spacing=12.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         @views.row(
           [
             @views.button(
               "New task",
-              on_click=WorkbenchMsg::NewTask,
-              variant=@views.ButtonVariant::Primary,
+              on_click=NewTask,
+              variant=Primary,
               theme~,
-              icon=Some(@views.IconName::Plus),
+              icon=Some(Plus),
               width=118.0,
               height=36.0,
             ),
             @views.button(
               "Review",
-              on_click=WorkbenchMsg::SwitchTab(TopTab::Work),
-              variant=@views.ButtonVariant::Tonal,
+              on_click=SwitchTab(Work),
+              variant=Tonal,
               theme~,
               width=98.0,
               height=36.0,
             ),
             @views.button(
               "Code",
-              on_click=WorkbenchMsg::SwitchTab(TopTab::Code),
-              variant=@views.ButtonVariant::Ghost,
+              on_click=SwitchTab(Code),
+              variant=Ghost,
               theme~,
               width=82.0,
               height=36.0,
@@ -785,7 +738,7 @@ fn design_component_preview(
             @views.spacer(),
           ],
           spacing=10.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
         @views.row(
           [
@@ -802,11 +755,11 @@ fn design_component_preview(
             @views.spacer(),
           ],
           spacing=8.0,
-          align=@views.CrossAlign::Center,
+          align=Center,
         ),
       ],
       spacing=14.0,
-      align=@views.CrossAlign::Stretch,
+      align=Stretch,
     ),
     width~,
     background=workbench_card_background(theme),
@@ -824,7 +777,7 @@ fn design_palette_preview(
   let swatch_width = (width - 32.0) / 5.0
   @views.column(
     [
-      @views.text("Palette", role=@views.TextRole::Label, theme~, width~),
+      @views.text("Palette", role=Label, theme~, width~),
       @views.row(
         [
           design_swatch(
@@ -844,11 +797,11 @@ fn design_palette_preview(
           design_swatch("Risk", workbench_danger(theme), theme, swatch_width),
         ],
         spacing=8.0,
-        align=@views.CrossAlign::Center,
+        align=Center,
       ),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Stretch,
+    align=Stretch,
   )
 }
 
@@ -871,15 +824,12 @@ fn design_swatch(
           border=Some(hairline_border(theme)),
           padding=0.0,
         ),
-        @views.text(
-          label,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 28.0,
-        ).foreground(workbench_text_muted(theme)),
+        @views.text(label, role=Caption, theme~, width=width - 28.0).foreground(
+          workbench_text_muted(theme),
+        ),
       ],
       spacing=6.0,
-      align=@views.CrossAlign::Center,
+      align=Center,
     ),
     width~,
     height=44.0,

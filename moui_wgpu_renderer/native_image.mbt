@@ -42,14 +42,14 @@ fn calculate_image_placement(
     image_size.height <= 0.0 ||
     frame.size.width <= 0.0 ||
     frame.size.height <= 0.0 {
-    return { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
+    return { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0, }
   }
   let image_ratio = image_size.width / image_size.height
   let frame_ratio = frame.size.width / frame.size.height
 
   match fit {
-    @core.ImageFit::Stretch => { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
-    @core.ImageFit::ScaleDown =>
+    Stretch => { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0, }
+    ScaleDown =>
       if image_size.width <= frame.size.width &&
         image_size.height <= frame.size.height {
         {
@@ -67,19 +67,18 @@ fn calculate_image_placement(
       } else {
         contain_image_placement(frame, image_ratio, frame_ratio)
       }
-    @core.ImageFit::FitWidth => fit_width_image_placement(frame, image_ratio)
-    @core.ImageFit::FitHeight => fit_height_image_placement(frame, image_ratio)
-    @core.ImageFit::Contain =>
-      contain_image_placement(frame, image_ratio, frame_ratio)
-    @core.ImageFit::Cover =>
+    FitWidth => fit_width_image_placement(frame, image_ratio)
+    FitHeight => fit_height_image_placement(frame, image_ratio)
+    Contain => contain_image_placement(frame, image_ratio, frame_ratio)
+    Cover =>
       if image_ratio > frame_ratio {
         let visible = frame_ratio / image_ratio
         let inset = (1.0 - visible) / 2.0
-        { frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
+        { frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0, }
       } else {
         let visible = image_ratio / frame_ratio
         let inset = (1.0 - visible) / 2.0
-        { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
+        { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset, }
       }
   }
 }
@@ -106,7 +105,7 @@ fn fit_width_image_placement(
   } else {
     let visible = frame.size.height / scaled_height
     let inset = (1.0 - visible) / 2.0
-    { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
+    { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset, }
   }
 }
 
@@ -132,7 +131,7 @@ fn fit_height_image_placement(
   } else {
     let visible = frame.size.width / scaled_width
     let inset = (1.0 - visible) / 2.0
-    { frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
+    { frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0, }
   }
 }
 
@@ -323,7 +322,7 @@ fn decode_native_image_bytes(bytes : Bytes) -> NativeDecodedImage? {
   }
   match decoded {
     Some(image) =>
-      Some({ width: image.width, height: image.height, data: image.data })
+      Some({ width: image.width, height: image.height, data: image.data, })
     None => None
   }
 }
@@ -464,7 +463,7 @@ fn RendererHandle::record_native_image_commands(
 ) -> Unit {
   for command in commands {
     match command {
-      @core.DrawCommand::DrawImage(run) =>
+      DrawImage(run) =>
         match self.image_cache.get(run.source) {
           Some(resource) =>
             ignore(
@@ -501,7 +500,7 @@ fn RendererHandle::prepare_native_image_items(
   self.image_vertices = []
   for item in self.draw_items {
     match item {
-      NativeDrawItem::NativeImage(_, _, scissor, run) =>
+      NativeImage(_, _, scissor, run) =>
         match self.ensure_native_image_resource(run.source, device, queue) {
           Some(resource) => {
             let start = self.image_vertices.length()
@@ -512,7 +511,7 @@ fn RendererHandle::prepare_native_image_items(
               self.size,
             )
             items.push(
-              NativeDrawItem::NativeImage(
+              NativeImage(
                 start,
                 self.image_vertices.length() - start,
                 scissor,
@@ -529,7 +528,7 @@ fn RendererHandle::prepare_native_image_items(
               self.size,
             )
             items.push(
-              NativeDrawItem::NativeVisual(
+              NativeVisual(
                 start,
                 self.visual_vertices.length() - start,
                 scissor,
@@ -537,11 +536,11 @@ fn RendererHandle::prepare_native_image_items(
             )
           }
         }
-      NativeDrawItem::NativeLayer(layer) => {
+      NativeLayer(layer) => {
         self.prepare_native_image_plan(layer.plan, device, queue)
-        items.push(NativeDrawItem::NativeLayer(layer))
+        items.push(NativeLayer(layer))
       }
-      NativeDrawItem::NativeShaderEffect(_) => items.push(item)
+      NativeShaderEffect(_) => items.push(item)
       _ => items.push(item)
     }
   }
@@ -559,7 +558,7 @@ fn RendererHandle::prepare_native_image_plan(
   plan.image_vertices.clear()
   for item in plan.items {
     match item {
-      NativeDrawItem::NativeImage(_, _, scissor, run) =>
+      NativeImage(_, _, scissor, run) =>
         match self.ensure_native_image_resource(run.source, device, queue) {
           Some(resource) => {
             let start = plan.image_vertices.length()
@@ -570,7 +569,7 @@ fn RendererHandle::prepare_native_image_plan(
               self.size,
             )
             items.push(
-              NativeDrawItem::NativeImage(
+              NativeImage(
                 start,
                 plan.image_vertices.length() - start,
                 scissor,
@@ -587,7 +586,7 @@ fn RendererHandle::prepare_native_image_plan(
               self.size,
             )
             items.push(
-              NativeDrawItem::NativeVisual(
+              NativeVisual(
                 start,
                 plan.visual_vertices.length() - start,
                 scissor,
@@ -595,9 +594,9 @@ fn RendererHandle::prepare_native_image_plan(
             )
           }
         }
-      NativeDrawItem::NativeLayer(layer) => {
+      NativeLayer(layer) => {
         self.prepare_native_image_plan(layer.plan, device, queue)
-        items.push(NativeDrawItem::NativeLayer(layer))
+        items.push(NativeLayer(layer))
       }
       _ => items.push(item)
     }
@@ -703,7 +702,7 @@ fn RendererHandle::native_image_placeholder_failed(
     return true
   }
   match self.image_lifecycle.lookup(source) {
-    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => true
+    Some({ status: ImageFailed, .. }) => true
     _ => false
   }
 }

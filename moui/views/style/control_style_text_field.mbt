@@ -9,7 +9,7 @@ pub fn TextFieldStyle::new(
   cursor_color~ : @core.Color,
   font~ : @core.FontSpec,
 ) -> TextFieldStyle {
-  { normal, focused, disabled, placeholder_color, cursor_color, font }
+  { normal, focused, disabled, placeholder_color, cursor_color, font, }
 }
 
 ///|

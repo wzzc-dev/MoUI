@@ -6,13 +6,11 @@ test "pdf workbench save writes original bytes when clean" {
     capabilities=@host.HostServiceCapabilities::new(file_access=true),
     handle=request => {
       match request {
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(path, out)
-        ) => {
+        BinaryFile(WriteBytes(path, out)) => {
           written.val = out.length()
-          @host.HostServiceResponse::BinaryFileWritten(path)
+          BinaryFileWritten(path)
         }
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -20,11 +18,7 @@ test "pdf workbench save writes original bytes when clean" {
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/minimum.pdf", bytes~) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let update = model.update_with_services(SaveRequested, services)
@@ -48,22 +42,18 @@ test "pdf workbench save as defaults to current PDF file name" {
     ),
     handle=request => {
       match request {
-        @host.HostServiceRequest::FileDialog(options) => {
+        FileDialog(options) => {
           match options.default_name {
             Some(name) => seen_default_name.val = name
             None => seen_default_name.val = "<none>"
           }
-          @host.HostServiceResponse::FileDialogSelection([
-            "/tmp/exported-report.pdf",
-          ])
+          FileDialogSelection(["/tmp/exported-report.pdf"])
         }
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(path, _)
-        ) => {
+        BinaryFile(WriteBytes(path, _)) => {
           written_path.val = path
-          @host.HostServiceResponse::BinaryFileWritten(path)
+          BinaryFileWritten(path)
         }
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -71,11 +61,7 @@ test "pdf workbench save as defaults to current PDF file name" {
   let model = match
     PdfWorkbenchDocument::from_bytes(path="/tmp/quarterly-review", bytes~) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let saved = run_pdf_workbench_effect_chain(
@@ -99,8 +85,8 @@ test "pdf workbench dirty save reports adapter requirement" {
     Loaded(document) =>
       {
         ..PdfWorkbenchModel::new(),
-        document: Some({ ..document, dirty: true }),
-        status: PdfWorkbenchStatus::Ready,
+        document: Some({ ..document, dirty: true, }),
+        status: Ready,
       }
     Failed(reason) => fail(reason)
   }
@@ -108,14 +94,13 @@ test "pdf workbench dirty save reports adapter requirement" {
     SaveRequested,
     @services.AppServices::unavailable(),
   )
-  assert_false(update.effect is @moui.Effect::NoEffect)
+  assert_false(update.effect is NoEffect)
   let failed = run_pdf_workbench_effect(
     update,
     @services.AppServices::unavailable(),
   )
   match failed.model.status {
-    PdfWorkbenchStatus::Failed(reason) =>
-      assert_true(reason.contains("pdflite adapter service"))
+    Failed(reason) => assert_true(reason.contains("pdflite adapter service"))
     _ => fail("expected dirty save failure")
   }
 }
@@ -131,13 +116,11 @@ test "pdf workbench dirty save uses document writeback service" {
     capabilities=@host.HostServiceCapabilities::new(file_access=true),
     handle=request => {
       match request {
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(path, out)
-        ) => {
+        BinaryFile(WriteBytes(path, out)) => {
           written.val = out.length()
-          @host.HostServiceResponse::BinaryFileWritten(path)
+          BinaryFileWritten(path)
         }
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -186,11 +169,7 @@ test "pdf workbench dirty save uses document writeback service" {
       writeback_available=true,
     ) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let dirty = model.update(RotateCurrentPage)
@@ -231,10 +210,8 @@ test "pdf workbench save keeps clean state when reload after writeback fails" {
     capabilities=@host.HostServiceCapabilities::new(file_access=true),
     handle=request => {
       match request {
-        @host.HostServiceRequest::BinaryFile(
-          @host.HostBinaryFileRequest::WriteBytes(path, _)
-        ) => @host.HostServiceResponse::BinaryFileWritten(path)
-        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+        BinaryFile(WriteBytes(path, _)) => BinaryFileWritten(path)
+        _ => Unavailable("unexpected request")
       }
     },
   )
@@ -254,11 +231,7 @@ test "pdf workbench save keeps clean state when reload after writeback fails" {
       writeback_available=true,
     ) {
     Loaded(document) =>
-      {
-        ..PdfWorkbenchModel::new(),
-        document: Some(document),
-        status: PdfWorkbenchStatus::Ready,
-      }
+      { ..PdfWorkbenchModel::new(), document: Some(document), status: Ready, }
     Failed(reason) => fail(reason)
   }
   let dirty = model.update(StampCurrentPage)

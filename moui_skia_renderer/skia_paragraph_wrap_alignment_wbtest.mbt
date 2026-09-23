@@ -40,7 +40,7 @@ fn skia_wrap_corpus_probe_native(system : @core.TextSystem) -> Bool {
 ///|
 test "core fallback algorithm and skia native paragraph break alike" {
   guard skia_test_native_text_available() else { return () }
-  let skia = skia_text_system(resolution=SkiaFontResolution::SystemFontMgr)
+  let skia = skia_text_system(resolution=SystemFontMgr)
   guard skia_wrap_corpus_probe_native(skia) else { return () }
   let fallback_algorithm = @core.TextSystem::new(
     id="fallback-algorithm-skia-measure",
@@ -79,7 +79,7 @@ test "core fallback algorithm and skia native paragraph break alike" {
 /// divergence so a *growing* gap still fails.
 test "mid-word hard breaks stay within one cluster across implementations" {
   guard skia_test_native_text_available() else { return () }
-  let skia = skia_text_system(resolution=SkiaFontResolution::SystemFontMgr)
+  let skia = skia_text_system(resolution=SystemFontMgr)
   guard skia_wrap_corpus_probe_native(skia) else { return () }
   let fallback_algorithm = @core.TextSystem::new(
     id="fallback-algorithm-skia-measure",
@@ -99,7 +99,7 @@ test "mid-word hard breaks stay within one cluster across implementations" {
 ///|
 test "skia native paragraph covers the corpus contiguously" {
   guard skia_test_native_text_available() else { return () }
-  let skia = skia_text_system(resolution=SkiaFontResolution::SystemFontMgr)
+  let skia = skia_text_system(resolution=SystemFontMgr)
   let font = @core.FontSpec::new(size=16.0, weight=400)
   for
     text in [

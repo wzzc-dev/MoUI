@@ -35,7 +35,7 @@ fn SunRasterRenderer::sun_sync_image_for_source(
   source : String,
 ) -> @sun_graphics.Pixmap? {
   match self.image_lifecycle.lookup(source) {
-    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) =>
+    Some({ status: ImageFailed, .. }) =>
       if !sun_image_failed_record_can_retry(source) {
         return None
       }
@@ -64,8 +64,8 @@ fn SunRasterRenderer::sun_async_image_for_source(
   source : String,
 ) -> @sun_graphics.Pixmap? {
   match self.image_lifecycle.lookup(source) {
-    Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) => None
-    Some({ status: @render.ImageResourceStatus::ImageReady, .. }) =>
+    Some({ status: ImageLoading, .. }) => None
+    Some({ status: ImageReady, .. }) =>
       match self.decode_image_source_with_cache(source) {
         Ok(pixmap) => Some(pixmap)
         Err(diagnostic) => {
@@ -74,7 +74,7 @@ fn SunRasterRenderer::sun_async_image_for_source(
           None
         }
       }
-    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) =>
+    Some({ status: ImageFailed, .. }) =>
       if sun_image_failed_record_can_retry(source) {
         self.mark_sun_image_loading_if_needed(source)
         None
@@ -94,7 +94,7 @@ fn SunRasterRenderer::mark_sun_image_loading_if_needed(
   source : String,
 ) -> Unit {
   match self.image_lifecycle.lookup(source) {
-    Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) => ()
+    Some({ status: ImageLoading, .. }) => ()
     _ => ignore(self.image_lifecycle.mark_loading(source))
   }
 }
@@ -165,7 +165,7 @@ fn SunRasterRenderer::draw_image_pixmap(
         dst_w,
         dst_h,
         paint,
-        @sun_graphics.ImageQuality::Balanced,
+        Balanced,
       )
     None =>
       self.canvas.draw_quality_pixmap(
@@ -175,7 +175,7 @@ fn SunRasterRenderer::draw_image_pixmap(
         dst_w,
         dst_h,
         paint,
-        @sun_graphics.ImageQuality::Balanced,
+        Balanced,
       )
   }
 }
@@ -302,7 +302,7 @@ fn SunRasterRenderer::sun_image_placeholder_failed(
   source : String,
 ) -> Bool {
   match self.image_lifecycle.lookup(source) {
-    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => true
+    Some({ status: ImageFailed, .. }) => true
     _ => false
   }
 }
@@ -398,7 +398,7 @@ fn sun_decode_image_source_with_cache(
     Some(pixmap) => Ok(pixmap)
     None =>
       match sun_image_source_bytes(source) {
-        Some({ format, data }) =>
+        Some({ format, data, }) =>
           sun_decode_image_data_with_fallback(
             cache,
             source,
@@ -475,7 +475,7 @@ fn sun_decode_image_data_as_format(
   failure_kind : String,
 ) -> Result[@sun_graphics.Pixmap, String] {
   match format {
-    SunImageFormat::Png =>
+    Png =>
       match cache.get_or_decode_png_result(source, data) {
         Ok(result) => Ok(result.get_pixmap())
         Err(_) =>
@@ -483,7 +483,7 @@ fn sun_decode_image_data_as_format(
             "Sun renderer could not decode PNG image \{failure_kind}: \{source}",
           )
       }
-    SunImageFormat::Bmp =>
+    Bmp =>
       match cache.get_or_decode_bmp_result(source, data) {
         Ok(result) => Ok(result.get_pixmap())
         Err(_) =>
@@ -491,7 +491,7 @@ fn sun_decode_image_data_as_format(
             "Sun renderer could not decode BMP image \{failure_kind}: \{source}",
           )
       }
-    SunImageFormat::Jpeg =>
+    Jpeg =>
       sun_decode_jpeg_image_with_cache(
         cache,
         source,
@@ -626,7 +626,7 @@ fn sun_parse_data_uri(uri : String) -> SunImageSourceBytes? {
   match decoded {
     Some(data) =>
       match sun_image_format_for_source_or_bytes("", meta, data) {
-        Some(format) => Some({ format, data })
+        Some(format) => Some({ format, data, })
         None => None
       }
     None => None
@@ -651,15 +651,15 @@ fn sun_image_format_for_source(
   let normalized_source = source.to_lower()
   if normalized_media_type.contains("png") ||
     normalized_source.has_suffix(".png") {
-    Some(SunImageFormat::Png)
+    Some(Png)
   } else if normalized_media_type.contains("bmp") ||
     normalized_source.has_suffix(".bmp") {
-    Some(SunImageFormat::Bmp)
+    Some(Bmp)
   } else if normalized_media_type.contains("jpeg") ||
     normalized_media_type.contains("jpg") ||
     normalized_source.has_suffix(".jpg") ||
     normalized_source.has_suffix(".jpeg") {
-    Some(SunImageFormat::Jpeg)
+    Some(Jpeg)
   } else {
     None
   }
@@ -683,19 +683,19 @@ fn sun_image_format_is_same(
   right : SunImageFormat,
 ) -> Bool {
   match left {
-    SunImageFormat::Png =>
+    Png =>
       match right {
-        SunImageFormat::Png => true
+        Png => true
         _ => false
       }
-    SunImageFormat::Bmp =>
+    Bmp =>
       match right {
-        SunImageFormat::Bmp => true
+        Bmp => true
         _ => false
       }
-    SunImageFormat::Jpeg =>
+    Jpeg =>
       match right {
-        SunImageFormat::Jpeg => true
+        Jpeg => true
         _ => false
       }
   }
@@ -712,11 +712,11 @@ fn sun_image_format_for_bytes(data : Bytes) -> SunImageFormat? {
     data[5] == 10 &&
     data[6] == 26 &&
     data[7] == 10 {
-    Some(SunImageFormat::Png)
+    Some(Png)
   } else if data.length() >= 2 && data[0] == 66 && data[1] == 77 {
-    Some(SunImageFormat::Bmp)
+    Some(Bmp)
   } else if data.length() >= 2 && data[0] == 255 && data[1] == 216 {
-    Some(SunImageFormat::Jpeg)
+    Some(Jpeg)
   } else {
     None
   }
@@ -730,9 +730,8 @@ fn sun_image_placement(
 ) -> SunImagePlacement {
   let placement = @render_common.image_placement(frame, image_size, fit)
   match placement.crop_axis {
-    @render_common.ImageCropAxis::None =>
-      { frame: placement.frame, src_rect: None }
-    @render_common.ImageCropAxis::Horizontal => {
+    None => { frame: placement.frame, src_rect: None, }
+    Horizontal => {
       let crop_width = (image_size.width * placement.visible).round().to_int()
       let left = ((image_size.width - crop_width.to_double()) * 0.5)
         .round()
@@ -749,7 +748,7 @@ fn sun_image_placement(
         ),
       }
     }
-    @render_common.ImageCropAxis::Vertical => {
+    Vertical => {
       let crop_height = (image_size.height * placement.visible).round().to_int()
       let top = ((image_size.height - crop_height.to_double()) * 0.5)
         .round()
@@ -777,7 +776,7 @@ fn sun_image_record_needs_ready_update(
 ) -> Bool {
   match record {
     Some(existing) =>
-      existing.status != @render.ImageResourceStatus::ImageReady ||
+      existing.status != ImageReady ||
       existing.width != width ||
       existing.height != height
     None => true
@@ -791,8 +790,7 @@ fn sun_image_record_needs_failed_update(
 ) -> Bool {
   match record {
     Some(existing) =>
-      existing.status != @render.ImageResourceStatus::ImageFailed ||
-      existing.diagnostic != diagnostic
+      existing.status != ImageFailed || existing.diagnostic != diagnostic
     None => true
   }
 }

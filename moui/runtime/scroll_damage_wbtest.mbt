@@ -7,11 +7,8 @@
 /// The frame must instead damage the scrolled area, or previous-frame image
 /// pixels survive outside the small rect.
 fn scroll_damage_pointer_event(x : Double, y : Double) -> @core.AppEvent {
-  @core.AppEvent::Pointer(
-    @core.PointerEvent::new(
-      position=@core.Point::new(x~, y~),
-      phase=@core.PointerPhase::Move,
-    ),
+  Pointer(
+    @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Move),
   )
 }
 
@@ -28,7 +25,7 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
     },
     paint=ctx => {
       let commands : Array[@core.DrawCommand] = [
-        @core.DrawCommand::FillRect(
+        FillRect(
           ctx.frame,
           if scroll.val % 2 == 0 {
             @core.Color::black()
@@ -58,14 +55,13 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
     },
     event=ctx => {
       match ctx.event {
-        @core.AppEvent::Pointer(event) =>
-          if event.phase == @core.PointerPhase::Move &&
-            ctx.frame.contains(event.position) {
+        Pointer(event) =>
+          if event.phase == Move && ctx.frame.contains(event.position) {
             scroll.val = scroll.val + 1
             {
               ..@core.ViewEventResult::ignored(),
               changed: true,
-              dirty: @core.ViewDirtyHint::ViewPaintDirty,
+              dirty: ViewPaintDirty,
             }
           } else {
             @core.ViewEventResult::ignored()
@@ -83,7 +79,7 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
     },
     paint=ctx => {
       @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(
+        FillRect(
           ctx.frame,
           if hovered.val {
             @core.Color::black()
@@ -95,14 +91,13 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
     },
     event=ctx => {
       match ctx.event {
-        @core.AppEvent::Pointer(event) =>
-          if event.phase == @core.PointerPhase::Move &&
-            ctx.frame.contains(event.position) {
+        Pointer(event) =>
+          if event.phase == Move && ctx.frame.contains(event.position) {
             hovered.val = !hovered.val
             {
               ..@core.ViewEventResult::ignored(),
               changed: true,
-              dirty: @core.ViewDirtyHint::ViewPaintDirty,
+              dirty: ViewPaintDirty,
             }
           } else {
             @core.ViewEventResult::ignored()
@@ -125,9 +120,7 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
       )
     },
     paint=ctx => {
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(ctx.frame, @core.Color::white()),
-      ])
+      @core.ViewPaintPlan::commands([FillRect(ctx.frame, @core.Color::white())])
     },
   )
   let runtime = AppRuntime::new_view(
@@ -135,7 +128,7 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
     size=@core.Size::new(width=40.0, height=40.0),
   )
   let first = runtime.draw_frame()
-  assert_true(first.damage is @core.DamageRegion::FullSurface(_))
+  assert_true(first.damage is FullSurface(_))
   // Scroll the editor and dirty the indicator in the same paint pass. The
   // combined surface union stays far below the full-surface threshold, so
   // the resolved damage must be explicit rects.
@@ -143,7 +136,7 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
   runtime.dispatch_event(scroll_damage_pointer_event(20.0, 4.0))
   let scrolled = runtime.draw_frame()
   match scrolled.damage {
-    @core.DamageRegion::Rects(rects) => {
+    Rects(rects) => {
       // The old ancestor-skip left only the indicator's rect. The editor
       // area must be covered by damage so previous-frame pixels there are
       // cleared (or fully overwritten by the frame contract).
@@ -154,7 +147,7 @@ test "damage covers a paint-dirty ancestor even with a dirty sibling" {
         rects.any(rect => rect.inflate(1.0).contains(indicator_point)),
       )
     }
-    @core.DamageRegion::FullSurface(_) => ()
-    @core.DamageRegion::Empty => fail("scroll frame must not be empty")
+    FullSurface(_) => ()
+    Empty => fail("scroll frame must not be empty")
   }
 }

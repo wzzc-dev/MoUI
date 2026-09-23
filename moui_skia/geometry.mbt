@@ -7,7 +7,7 @@ pub(all) struct IPoint {
 
 ///|
 pub fn IPoint::new(x : Int, y : Int) -> IPoint {
-  { x, y }
+  { x, y, }
 }
 
 ///|
@@ -49,7 +49,7 @@ pub(all) struct Point {
 
 ///|
 pub fn Point::new(x : Scalar, y : Scalar) -> Point {
-  { x, y }
+  { x, y, }
 }
 
 ///|
@@ -170,7 +170,7 @@ pub(all) struct ISize {
 
 ///|
 pub fn ISize::new(width : Int, height : Int) -> ISize {
-  { width, height }
+  { width, height, }
 }
 
 ///|
@@ -212,7 +212,7 @@ pub(all) struct Size {
 
 ///|
 pub fn Size::new(width : Scalar, height : Scalar) -> Size {
-  { width, height }
+  { width, height, }
 }
 
 ///|
@@ -267,7 +267,7 @@ pub(all) struct IRect {
 
 ///|
 pub fn IRect::new(left : Int, top : Int, right : Int, bottom : Int) -> IRect {
-  { left, top, right, bottom }
+  { left, top, right, bottom, }
 }
 
 ///|
@@ -527,7 +527,7 @@ pub fn Rect::new(
   right : Scalar,
   bottom : Scalar,
 ) -> Rect {
-  { left, top, right, bottom }
+  { left, top, right, bottom, }
 }
 
 ///|

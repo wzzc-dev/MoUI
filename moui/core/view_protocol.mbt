@@ -225,7 +225,7 @@ pub fn ViewLayoutResult::new(
   clips_children? : Bool = false,
   child_frames_tight? : Bool = false,
 ) -> ViewLayoutResult {
-  { size, child_frames, clips_children, child_frames_tight }
+  { size, child_frames, clips_children, child_frames_tight, }
 }
 
 ///|
@@ -260,7 +260,7 @@ pub fn ViewPaintPlan::commands(commands : Array[DrawCommand]) -> ViewPaintPlan {
 pub fn ViewPaintPlan::animating_commands(
   commands : Array[DrawCommand],
 ) -> ViewPaintPlan {
-  { ..ViewPaintPlan::commands(commands), animating: true }
+  { ..ViewPaintPlan::commands(commands), animating: true, }
 }
 
 ///|
@@ -271,7 +271,7 @@ pub fn ViewPaintLayer::new(
   commands? : Array[DrawCommand] = [],
   overlay_commands? : Array[DrawCommand] = [],
 ) -> ViewPaintLayer {
-  { frame, cache_key, content_revision, commands, overlay_commands }
+  { frame, cache_key, content_revision, commands, overlay_commands, }
 }
 
 ///|
@@ -304,7 +304,7 @@ pub fn[Msg] ViewEventResult::message(message : Msg) -> ViewEventResult[Msg] {
 
 ///|
 pub fn[Msg] ViewTextCommandResult::ignored() -> ViewTextCommandResult[Msg] {
-  { result: TextCommandResult::ignored(), text_control: None, messages: [] }
+  { result: TextCommandResult::ignored(), text_control: None, messages: [], }
 }
 
 ///|
@@ -313,12 +313,12 @@ pub fn[Msg] ViewTextCommandResult::new(
   text_control? : TextControlStateContext? = None,
   messages? : Array[Msg] = [],
 ) -> ViewTextCommandResult[Msg] {
-  { result, text_control, messages }
+  { result, text_control, messages, }
 }
 
 ///|
 pub fn ViewSemanticsInfo::new(
-  composition? : SemanticsComposition = SemanticsComposition::Transparent,
+  composition? : SemanticsComposition = Transparent,
   semantic_id? : SemanticId,
   role? : SemanticsRole,
   level? : Int,

@@ -116,11 +116,7 @@ fn skia_test_draw_frame_with_damage(
 
 ///|
 fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
-  skia_font_with_resolution_for_text(
-    font,
-    "",
-    SkiaFontResolution::SystemFontMgr,
-  )
+  skia_font_with_resolution_for_text(font, "", SystemFontMgr)
 }
 
 ///|

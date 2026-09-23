@@ -25,7 +25,7 @@ pub fn HostedWindow::new(
   request_redraw~ : () -> Unit,
   drop~ : () -> Unit,
 ) -> HostedWindow {
-  { scale_factor, inner_size, request_redraw, drop }
+  { scale_factor, inner_size, request_redraw, drop, }
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn HostSurfaceBinding::new(
   create_renderer~ : (UInt64, @core.SurfaceMetrics) -> @render.RendererSession?,
   sync~ : (UInt64, @core.SurfaceMetrics) -> Unit,
 ) -> HostSurfaceBinding {
-  { create_renderer, sync }
+  { create_renderer, sync, }
 }
 
 ///|
@@ -114,7 +114,7 @@ pub fn HostedRuntimeSession::create(
         surface_generation~,
       )
       (binding.sync)(raw_handle, metrics)
-      Some({ raw_handle, core })
+      Some({ raw_handle, core, })
     }
     None => None
   }
@@ -409,7 +409,7 @@ pub fn HostedWindowBackend::attach_session(
   )
   let runtime = match self.runtime {
     Some(runtime) => {
-      runtime.dispatch_event(@core.AppEvent::Resize(metrics.logical_size))
+      runtime.dispatch_event(Resize(metrics.logical_size))
       runtime
     }
     None => {
@@ -495,14 +495,14 @@ pub fn HostedWindowBackend::dispatch_host_event(
   host_event : @host.Event,
 ) -> Unit {
   match host_event {
-    @host.Event::Pointer(pointer) => {
+    Pointer(pointer) => {
       match self.session {
         Some(session) => ignore(session.dispatch(host_event))
         None => ()
       }
       self.last_pointer = pointer.position
     }
-    @host.Event::Resized(metrics) =>
+    Resized(metrics) =>
       match self.session {
         Some(session) => {
           ignore(self.lifecycle.resize_surface(metrics))
@@ -510,7 +510,7 @@ pub fn HostedWindowBackend::dispatch_host_event(
         }
         None => ()
       }
-    @host.Event::RedrawRequested =>
+    RedrawRequested =>
       match self.session {
         Some(session) => {
           let result = session.render_frame()
@@ -527,7 +527,7 @@ pub fn HostedWindowBackend::dispatch_host_event(
       }
   }
   match host_event {
-    @host.Event::Resized(_) | @host.Event::RedrawRequested => ()
+    Resized(_) | RedrawRequested => ()
     _ => self.pump_redraw_requested()
   }
   self.sync_ime()
@@ -575,16 +575,15 @@ pub fn HostedWindowBackend::handle_window_event(
       scale_factor~,
       surface_size~,
     ) {
-    @window_input.TransformedWindowEvent::CloseRequested => {
-      self.dispatch_host_event(@host.Event::CloseRequested)
+    CloseRequested => {
+      self.dispatch_host_event(CloseRequested)
       self.destroy_surfaces()
       ignore(self.lifecycle.request_exit(0))
       exit()
     }
-    @window_input.TransformedWindowEvent::DispatchHostEvent(host_event) =>
-      self.dispatch_host_event(host_event)
-    @window_input.TransformedWindowEvent::WindowRedrawRequired => {
-      self.dispatch_host_event(@host.Event::RedrawRequested)
+    DispatchHostEvent(host_event) => self.dispatch_host_event(host_event)
+    WindowRedrawRequired => {
+      self.dispatch_host_event(RedrawRequested)
       match self.auto_exit_after_frames {
         Some(limit) =>
           if self.frames_presented >= limit {

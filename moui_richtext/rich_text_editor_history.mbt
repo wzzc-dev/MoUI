@@ -259,11 +259,11 @@ fn rich_text_history_extend_stack(
         let top = undo_stack[top_index]
         let character_text = character.to_string()
         undo_stack[top_index] = if kind == 1 {
-          { ..top, after: top.after + character_text }
+          { ..top, after: top.after + character_text, }
         } else if kind == 2 {
-          { ..top, start: top.start - 1, before: character_text + top.before }
+          { ..top, start: top.start - 1, before: character_text + top.before, }
         } else {
-          { ..top, before: top.before + character_text }
+          { ..top, before: top.before + character_text, }
         }
       }
   }

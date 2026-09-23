@@ -342,7 +342,7 @@ pub fn VariableListMetrics::visible_range(
   let gap = if first > 0 { self.spacing } else { 0.0 }
   let before_extent = (self.prefix_at(first) - gap).max(0.0)
   let after_extent = (self.total_extent - self.prefix_at(last + 1)).max(0.0)
-  Some({ first_index: first, last_index: last, before_extent, after_extent })
+  Some({ first_index: first, last_index: last, before_extent, after_extent, })
 }
 
 ///|

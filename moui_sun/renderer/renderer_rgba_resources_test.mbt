@@ -2,8 +2,8 @@
 test "Renderer cached RGBA image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(3, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 2)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 2)
   let pixels = Bytes::from_array([0, 255, 0, 255])
 
   match
@@ -59,7 +59,7 @@ test "Renderer cached RGBA image path uses RendererResources" {
       "broken",
       @graphics.Paint::new(),
     ) {
-    Err(@graphics.PixmapDecodeError::RgbaByteLengthMismatch(8, 4)) => ()
+    Err(RgbaByteLengthMismatch(8, 4)) => ()
     _ => abort("expected cached RGBA draw decode error")
   }
   assert_true(!resources.contains_image("broken"))
@@ -70,8 +70,8 @@ test "Renderer cached RGBA image path uses RendererResources" {
 test "Renderer cached RGBA source rect path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let atlas = @graphics.Pixmap::new(3, 1)
   atlas.set_pixel(0, 0, @graphics.Color::red())
   atlas.set_pixel(1, 0, @graphics.Color::green())
@@ -131,7 +131,7 @@ test "Renderer cached RGBA source rect path uses RendererResources" {
       resources,
       "atlas",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(scaled) => assert_true(scaled.did_hit_cache())
     Err(_) => abort("expected cached quality RGBA source rect hit")
@@ -144,8 +144,8 @@ test "Renderer cached RGBA source rect path uses RendererResources" {
 test "Renderer cached RGBA tiled image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
 
@@ -217,7 +217,7 @@ test "Renderer cached RGBA tiled image path uses RendererResources" {
       "broken",
       @graphics.Paint::new(),
     ) {
-    Err(@graphics.PixmapDecodeError::RgbaByteLengthMismatch(8, 4)) => ()
+    Err(RgbaByteLengthMismatch(8, 4)) => ()
     _ => abort("expected cached RGBA tiled decode error")
   }
   assert_true(!resources.contains_image("broken"))
@@ -229,8 +229,8 @@ test "Renderer cached RGBA tiled image path uses RendererResources" {
 test "Renderer cached RGBA nine-patch image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(5, 5)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let panel = make_renderer_test_nine_patch_source()
   let insets = @graphics.NinePatchInsets::new(left=1, top=1, right=1, bottom=1)
 
@@ -247,7 +247,7 @@ test "Renderer cached RGBA nine-patch image path uses RendererResources" {
       resources,
       "panel",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -284,7 +284,7 @@ test "Renderer cached RGBA nine-patch image path uses RendererResources" {
       resources,
       "panel",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => {
       assert_true(!second.did_decode_pixmap())
@@ -315,9 +315,9 @@ test "Renderer cached RGBA nine-patch image path uses RendererResources" {
       resources,
       "broken",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
-    Err(@graphics.PixmapDecodeError::RgbaByteLengthMismatch(36, 4)) => ()
+    Err(RgbaByteLengthMismatch(36, 4)) => ()
     _ => abort("expected cached RGBA nine-patch decode error")
   }
   assert_true(!resources.contains_image("broken"))
@@ -328,8 +328,8 @@ test "Renderer cached RGBA nine-patch image path uses RendererResources" {
 test "Renderer sampled cached RGBA image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let sprite = @graphics.Pixmap::new(2, 1)
   sprite.set_pixel(0, 0, @graphics.Color::red())
   sprite.set_pixel(1, 0, @graphics.Color::blue())
@@ -346,7 +346,7 @@ test "Renderer sampled cached RGBA image path uses RendererResources" {
       resources,
       "sprite",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -370,7 +370,7 @@ test "Renderer sampled cached RGBA image path uses RendererResources" {
       resources,
       "sprite",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => assert_true(second.did_hit_cache())
     Err(_) => abort("expected cached quality RGBA hit")
@@ -392,7 +392,7 @@ test "Renderer sampled cached RGBA image path uses RendererResources" {
       resources,
       "sprite",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(rect) => assert_true(rect.did_hit_cache())
     Err(_) => abort("expected cached sampled RGBA source rect hit")
@@ -406,8 +406,8 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
   canvas.set_transform(@graphics.Transform::translate(tx=1.0, ty=0.0))
-  let renderer = Renderer::new(canvas)
-  let resources = RendererResources::with_capacities(16, 16, 1, 1, 1)
+  let renderer = @renderer.Renderer::new(canvas)
+  let resources = @renderer.RendererResources::with_capacities(16, 16, 1, 1, 1)
   let tile = make_renderer_test_tile_source()
   let src_rect = @graphics.PixelRect::new(x=0, y=0, width=2, height=1)
 
@@ -423,7 +423,7 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
       resources,
       "tile-transform-rgba",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
     Ok(first) => {
       assert_true(first.did_decode_pixmap())
@@ -449,7 +449,7 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
       resources,
       "tile-transform-rgba",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(full) => {
       assert_true(!full.did_decode_pixmap())
@@ -474,7 +474,7 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
       resources,
       "tile-transform-rgba",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(second) => {
       assert_true(!second.did_decode_pixmap())
@@ -498,9 +498,9 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
       resources,
       "broken-transform-rgba",
       @graphics.Paint::new(),
-      @graphics.ImageSampling::Nearest,
+      Nearest,
     ) {
-    Err(@graphics.PixmapDecodeError::RgbaByteLengthMismatch(8, 4)) => ()
+    Err(RgbaByteLengthMismatch(8, 4)) => ()
     _ => abort("expected cached transformed RGBA decode error")
   }
   assert_true(!resources.contains_image("broken-transform-rgba"))
@@ -519,9 +519,9 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
       resources,
       "broken-transform-quality-rgba",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
-    Err(@graphics.PixmapDecodeError::RgbaByteLengthMismatch(8, 4)) => ()
+    Err(RgbaByteLengthMismatch(8, 4)) => ()
     _ => abort("expected cached transformed quality RGBA decode error")
   }
   assert_true(!resources.contains_image("broken-transform-quality-rgba"))
@@ -541,9 +541,9 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
       resources,
       "broken-transform-quality-rgba-rect",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
-    Err(@graphics.PixmapDecodeError::RgbaByteLengthMismatch(8, 4)) => ()
+    Err(RgbaByteLengthMismatch(8, 4)) => ()
     _ => abort("expected cached transformed quality RGBA rect decode error")
   }
   assert_true(!resources.contains_image("broken-transform-quality-rgba-rect"))
@@ -562,7 +562,7 @@ test "Renderer cached RGBA transformed image path uses RendererResources" {
       resources,
       "tile-transform-quality-rgba",
       @graphics.Paint::new(),
-      @graphics.ImageQuality::Fast,
+      Fast,
     ) {
     Ok(quality) => {
       assert_true(quality.did_decode_pixmap())

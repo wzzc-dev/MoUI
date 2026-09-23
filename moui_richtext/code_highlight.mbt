@@ -170,7 +170,7 @@ pub fn code_highlight_tokenize(
   language : String,
 ) -> Array[CodeHighlightSpan] {
   if source == "" || !code_highlight_supports_language(language) {
-    return [{ text: source, kind: CodePlain }]
+    return [{ text: source, kind: CodePlain, }]
   }
   let lower = language.to_lower()
   let keywords = code_highlight_keywords(lower)
@@ -182,7 +182,7 @@ pub fn code_highlight_tokenize(
   // Flush the accumulated plain buffer as a single plain span.
   let flush_plain = () => {
     if buffer.length() > 0 {
-      spans.push({ text: String::from_array(buffer), kind: CodePlain })
+      spans.push({ text: String::from_array(buffer), kind: CodePlain, })
       buffer = []
     }
   }
@@ -200,7 +200,7 @@ pub fn code_highlight_tokenize(
             chars[j] != ')' {
         j = j + 1
       }
-      spans.push({ text: String::from_array(chars[i:j]), kind: CodeAnnotation })
+      spans.push({ text: String::from_array(chars[i:j]), kind: CodeAnnotation, })
       i = j
       continue
     }
@@ -210,7 +210,7 @@ pub fn code_highlight_tokenize(
       while j < n && chars[j] != '\n' {
         j = j + 1
       }
-      spans.push({ text: String::from_array(chars[i:j]), kind: CodeAnnotation })
+      spans.push({ text: String::from_array(chars[i:j]), kind: CodeAnnotation, })
       i = j
       continue
     }
@@ -221,7 +221,7 @@ pub fn code_highlight_tokenize(
       while j < n && chars[j] != '\n' {
         j = j + 1
       }
-      spans.push({ text: String::from_array(chars[i:j]), kind: CodeComment })
+      spans.push({ text: String::from_array(chars[i:j]), kind: CodeComment, })
       i = j
       continue
     }
@@ -248,7 +248,7 @@ pub fn code_highlight_tokenize(
       while j < n && chars[j] != '\n' {
         j = j + 1
       }
-      spans.push({ text: String::from_array(chars[i:j]), kind: CodeComment })
+      spans.push({ text: String::from_array(chars[i:j]), kind: CodeComment, })
       i = j
       continue
     }
@@ -327,7 +327,7 @@ pub fn code_highlight_tokenize(
           break
         }
       }
-      spans.push({ text: String::from_array(chars[i:j]), kind: CodeNumber })
+      spans.push({ text: String::from_array(chars[i:j]), kind: CodeNumber, })
       i = j
       continue
     }
@@ -368,7 +368,7 @@ pub fn code_highlight_tokenize(
           CodePlain
         }
       }
-      spans.push({ text: word, kind })
+      spans.push({ text: word, kind, })
       i = j
       continue
     }

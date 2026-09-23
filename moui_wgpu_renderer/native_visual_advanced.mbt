@@ -253,21 +253,21 @@ priv struct NativeFilterPayload {
 ///|
 fn native_filter_payload(filter : @core.FilterEffect?) -> NativeFilterPayload {
   match filter {
-    Some(@core.FilterEffect::Blur(radius)) =>
+    Some(Blur(radius)) =>
       {
         kind: 1.0,
         amount: radius.max(0.0),
         matrix: native_identity_color_matrix(),
       }
-    Some(@core.FilterEffect::Saturate(amount)) =>
-      { kind: 2.0, amount, matrix: native_identity_color_matrix() }
-    Some(@core.FilterEffect::Brightness(amount)) =>
-      { kind: 3.0, amount, matrix: native_identity_color_matrix() }
-    Some(@core.FilterEffect::Contrast(amount)) =>
-      { kind: 4.0, amount, matrix: native_identity_color_matrix() }
-    Some(@core.FilterEffect::ColorMatrix(values)) =>
-      { kind: 5.0, amount: 1.0, matrix: native_color_matrix(values) }
-    None => { kind: 0.0, amount: 0.0, matrix: native_identity_color_matrix() }
+    Some(Saturate(amount)) =>
+      { kind: 2.0, amount, matrix: native_identity_color_matrix(), }
+    Some(Brightness(amount)) =>
+      { kind: 3.0, amount, matrix: native_identity_color_matrix(), }
+    Some(Contrast(amount)) =>
+      { kind: 4.0, amount, matrix: native_identity_color_matrix(), }
+    Some(ColorMatrix(values)) =>
+      { kind: 5.0, amount: 1.0, matrix: native_color_matrix(values), }
+    None => { kind: 0.0, amount: 0.0, matrix: native_identity_color_matrix(), }
   }
 }
 
@@ -292,12 +292,12 @@ fn native_color_matrix(values : Array[Double]) -> Array[Double] {
 ///|
 fn native_blend_mode_code(mode : @core.BlendMode) -> Double {
   match mode {
-    @core.BlendMode::SourceOver => 0.0
-    @core.BlendMode::Multiply => 1.0
-    @core.BlendMode::Screen => 2.0
-    @core.BlendMode::Overlay => 3.0
-    @core.BlendMode::Darken => 4.0
-    @core.BlendMode::Lighten => 5.0
+    SourceOver => 0.0
+    Multiply => 1.0
+    Screen => 2.0
+    Overlay => 3.0
+    Darken => 4.0
+    Lighten => 5.0
   }
 }
 
@@ -325,10 +325,8 @@ fn native_shader_effect_colors(
   effect : NativeShaderEffectRun,
 ) -> (@core.Color, @core.Color) {
   match effect.fallback {
-    @core.Brush::Solid(color) => (color, color)
-    @core.Brush::LinearGradient(gradient) =>
-      (gradient.start_color, gradient.end_color)
-    @core.Brush::RadialGradient(gradient) =>
-      (gradient.center_color, gradient.edge_color)
+    Solid(color) => (color, color)
+    LinearGradient(gradient) => (gradient.start_color, gradient.end_color)
+    RadialGradient(gradient) => (gradient.center_color, gradient.edge_color)
   }
 }

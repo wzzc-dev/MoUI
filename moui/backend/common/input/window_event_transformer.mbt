@@ -34,14 +34,14 @@ pub(all) enum PlatformSurfaceLifecycle {
 pub fn PlatformSurfaceLifecycle::attach(
   metrics : @core.SurfaceMetrics,
 ) -> PlatformSurfaceLifecycle {
-  PlatformSurfaceLifecycle::Attached(metrics)
+  Attached(metrics)
 }
 
 ///|
 pub fn PlatformSurfaceLifecycle::detach(
   _self : PlatformSurfaceLifecycle,
 ) -> PlatformSurfaceLifecycle {
-  PlatformSurfaceLifecycle::Detached
+  Detached
 }
 
 ///|
@@ -72,31 +72,25 @@ pub fn transform_cross_platform_event(
 ) -> TransformedWindowEvent {
   ignore(surface_size)
   match event {
-    @window_core.WindowEvent::CloseRequested =>
-      TransformedWindowEvent::CloseRequested
-    @window_core.WindowEvent::SurfaceResized(size) =>
-      make_resized_event(scale_factor, Some(size))
-    @window_core.WindowEvent::ScaleFactorChanged(scale, writer) =>
+    CloseRequested => CloseRequested
+    SurfaceResized(size) => make_resized_event(scale_factor, Some(size))
+    ScaleFactorChanged(scale, writer) =>
       make_resized_event(scale, Some(writer.surface_size()))
-    @window_core.WindowEvent::Focused(focused) =>
-      TransformedWindowEvent::DispatchHostEvent(
-        @backend_host.Event::Focus(@backend_host.HostFocusEvent::new(focused~)),
-      )
-    @window_core.WindowEvent::RedrawRequested =>
-      TransformedWindowEvent::WindowRedrawRequired
+    Focused(focused) =>
+      DispatchHostEvent(Focus(@backend_host.HostFocusEvent::new(focused~)))
+    RedrawRequested => WindowRedrawRequired
     // Platform-specific events: the caller must dispatch via
     // `@backend_host.window_event_to_host_event` for proper handling.
-    @window_core.WindowEvent::PointerMoved(_)
-    | @window_core.WindowEvent::PointerButton(_)
-    | @window_core.WindowEvent::DragEntered(_)
-    | @window_core.WindowEvent::DragMoved(_)
-    | @window_core.WindowEvent::DragDropped(_)
-    | @window_core.WindowEvent::DragLeft(_)
-    | @window_core.WindowEvent::KeyboardInput(_)
-    | @window_core.WindowEvent::Ime(_)
-    | @window_core.WindowEvent::ModifiersChanged(_) =>
-      TransformedWindowEvent::PlatformSpecific
-    _ => TransformedWindowEvent::PlatformSpecific
+    PointerMoved(_)
+    | PointerButton(_)
+    | DragEntered(_)
+    | DragMoved(_)
+    | DragDropped(_)
+    | DragLeft(_)
+    | KeyboardInput(_)
+    | Ime(_)
+    | ModifiersChanged(_) => PlatformSpecific
+    _ => PlatformSpecific
   }
 }
 
@@ -107,12 +101,10 @@ fn make_resized_event(
 ) -> TransformedWindowEvent {
   match surface_size {
     Some(size) =>
-      TransformedWindowEvent::DispatchHostEvent(
-        @backend_host.Event::Resized(
-          surface_metrics_from_physical(size, scale_factor~),
-        ),
+      DispatchHostEvent(
+        Resized(surface_metrics_from_physical(size, scale_factor~)),
       )
-    None => TransformedWindowEvent::PlatformSpecific
+    None => PlatformSpecific
   }
 }
 

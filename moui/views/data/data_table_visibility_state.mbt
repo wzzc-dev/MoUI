@@ -9,7 +9,7 @@ pub fn ColumnVisibilityState::new(
   visible~ : Array[String],
   locked? : Array[String] = [],
 ) -> ColumnVisibilityState {
-  { visible: visible.copy(), locked: locked.copy() }
+  { visible: visible.copy(), locked: locked.copy(), }
 }
 
 ///|
@@ -51,6 +51,6 @@ pub fn ColumnVisibilityState::set_visible(
   if self.is_locked(id) {
     self
   } else {
-    { ..self, visible: set_string_selected(self.visible, id, visible) }
+    { ..self, visible: set_string_selected(self.visible, id, visible), }
   }
 }

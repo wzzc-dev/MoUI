@@ -10,13 +10,13 @@ fn[Msg] ProgramRuntimeDiagnostics::start_effect_task(
   self.next_effect_task_value = self.next_effect_task_value + 1
   let active = Ref(true)
   let cancel : Ref[(() -> Unit)?] = Ref(None)
-  self.active_effect_tasks.push({ token, descriptor, active, cancel })
+  self.active_effect_tasks.push({ token, descriptor, active, cancel, })
   self.started_effect_task_count = self.started_effect_task_count + 1
   self.effect_task_lifecycle.push({
     key: descriptor.key(),
     kind: descriptor.kind(),
     label: descriptor.label(),
-    status: EffectTaskLifecycleStatus::EffectTaskActive,
+    status: EffectTaskActive,
     cancel_reason: None,
   })
   let cleanup = start(message => {
@@ -61,7 +61,7 @@ fn ProgramRuntimeDiagnostics::complete_effect_task(
         key: task.descriptor.key(),
         kind: task.descriptor.kind(),
         label: task.descriptor.label(),
-        status: EffectTaskLifecycleStatus::EffectTaskCompleted,
+        status: EffectTaskCompleted,
         cancel_reason: None,
       })
       true
@@ -81,7 +81,7 @@ fn ProgramRuntimeDiagnostics::cancel_effect_tasks_replaced_by_descriptor(
       let reason = if task.descriptor.kind() == descriptor.kind() {
         EffectTaskCancelReason::EffectTaskKeyChanged
       } else {
-        EffectTaskCancelReason::EffectTaskKindChanged
+        EffectTaskKindChanged
       }
       if task.descriptor.kind() != descriptor.kind() ||
         task.descriptor.label() != descriptor.label() {
@@ -122,7 +122,7 @@ fn ProgramRuntimeDiagnostics::cancel_effect_task(
     key: task.descriptor.key(),
     kind: task.descriptor.kind(),
     label: task.descriptor.label(),
-    status: EffectTaskLifecycleStatus::EffectTaskCancelled,
+    status: EffectTaskCancelled,
     cancel_reason: Some(reason),
   })
 }

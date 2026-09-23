@@ -17,12 +17,12 @@ priv struct ComponentGalleryItemInfo {
 ///|
 fn component_gallery_groups() -> Array[GalleryGroup] {
   [
-    { id: "getting-started", name: "Getting Started" },
-    { id: "controls", name: "Controls" },
-    { id: "feedback", name: "Feedback" },
-    { id: "display", name: "Display" },
-    { id: "layout", name: "Layout" },
-    { id: "runtime", name: "Runtime" },
+    { id: "getting-started", name: "Getting Started", },
+    { id: "controls", name: "Controls", },
+    { id: "feedback", name: "Feedback", },
+    { id: "display", name: "Display", },
+    { id: "layout", name: "Layout", },
+    { id: "runtime", name: "Runtime", },
   ]
 }
 
@@ -30,300 +30,300 @@ fn component_gallery_groups() -> Array[GalleryGroup] {
 fn component_gallery_items() -> Array[ComponentGalleryItemInfo] {
   [
     {
-      id: ComponentGalleryItemId::Welcome,
+      id: Welcome,
       group: "getting-started",
       name: "Welcome",
       description: "Catalog overview with a live bouncing-ball canvas driven by the animated_canvas paint clock.",
       badge: "intro",
-      tone: @views.BadgeTone::Accent,
+      tone: Accent,
     },
     {
-      id: ComponentGalleryItemId::Button,
+      id: Button,
       group: "controls",
       name: "Button",
       description: "Action variants and a small counter state loop.",
       badge: "control",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::TextField,
+      id: TextField,
       group: "controls",
       name: "Text Field",
       description: "Single-line text input with outline styling.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::TextArea,
+      id: TextArea,
       group: "controls",
       name: "Text Area",
       description: "Multi-line text input for notes and longer values.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::ClearableTextField,
+      id: ClearableTextField,
       group: "controls",
       name: "Clearable Text Field",
       description: "A text field paired with an explicit clear action.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::PasswordField,
+      id: PasswordField,
       group: "controls",
       name: "Password Field",
       description: "Masked input with a reveal toggle.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::NumberField,
+      id: NumberField,
       group: "controls",
       name: "Number Field",
       description: "Numeric text entry with optional step controls.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Stepper,
+      id: Stepper,
       group: "controls",
       name: "Stepper",
       description: "Increment and decrement actions around a compact label.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Checkbox,
+      id: Checkbox,
       group: "controls",
       name: "Checkbox",
       description: "Boolean state toggles and label layout.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Toggle,
+      id: Toggle,
       group: "controls",
       name: "Toggle",
       description: "Switch-style boolean control for settings.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Radio,
+      id: Radio,
       group: "controls",
       name: "Radio",
       description: "Single option rendered with a circular choice mark.",
       badge: "choice",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::RadioGroup,
+      id: RadioGroup,
       group: "controls",
       name: "Radio Group",
       description: "A vertical set of mutually exclusive options.",
       badge: "choice",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::CheckboxGroup,
+      id: CheckboxGroup,
       group: "controls",
       name: "Checkbox Group",
       description: "A compact group for multiple boolean selections.",
       badge: "choice",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::SegmentedControl,
+      id: SegmentedControl,
       group: "controls",
       name: "Segmented Control",
       description: "Mutually exclusive options rendered as a compact control.",
       badge: "choice",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Picker,
+      id: Picker,
       group: "controls",
       name: "Picker",
       description: "A menu-style selector with stable app state.",
       badge: "choice",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Slider,
+      id: Slider,
       group: "controls",
       name: "Slider",
       description: "Continuous numeric input with live feedback.",
       badge: "input",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Chips,
+      id: Chips,
       group: "controls",
       name: "Chips",
       description: "Compact selection, filter, and metadata chips.",
       badge: "choice",
-      tone: @views.BadgeTone::Success,
+      tone: Success,
     },
     {
-      id: ComponentGalleryItemId::Badge,
+      id: Badge,
       group: "feedback",
       name: "Badge",
       description: "Small metadata chips and semantic status badges.",
       badge: "status",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::Progress,
+      id: Progress,
       group: "feedback",
       name: "Progress",
       description: "Task status with progress and optional actions.",
       badge: "status",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::Banner,
+      id: Banner,
       group: "feedback",
       name: "Banner",
       description: "A prominent inline message with an optional action.",
       badge: "guidance",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::Callout,
+      id: Callout,
       group: "feedback",
       name: "Callout",
       description: "Contextual guidance next to related content.",
       badge: "guidance",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::StatePanel,
+      id: StatePanel,
       group: "feedback",
       name: "State Panel",
       description: "Empty, loading, and error states for workflows.",
       badge: "state",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::InlineError,
+      id: InlineError,
       group: "feedback",
       name: "Inline Error",
       description: "Compact validation or workflow error row.",
       badge: "state",
-      tone: @views.BadgeTone::Danger,
+      tone: Danger,
     },
     {
-      id: ComponentGalleryItemId::Toast,
+      id: Toast,
       group: "feedback",
       name: "Toast",
       description: "Transient notification surfaces.",
       badge: "notice",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::Snackbar,
+      id: Snackbar,
       group: "feedback",
       name: "Snackbar",
       description: "Short message with an optional action.",
       badge: "notice",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::StatCard,
+      id: StatCard,
       group: "display",
       name: "Stat Card",
       description: "Compact metric cards for dashboards and summaries.",
       badge: "metric",
-      tone: @views.BadgeTone::Warning,
+      tone: Warning,
     },
     {
-      id: ComponentGalleryItemId::Avatar,
+      id: Avatar,
       group: "display",
       name: "Avatar",
       description: "Initials and groups for people or agents.",
       badge: "identity",
-      tone: @views.BadgeTone::Accent,
+      tone: Accent,
     },
     {
-      id: ComponentGalleryItemId::Divider,
+      id: Divider,
       group: "layout",
       name: "Divider",
       description: "A subtle separator for content sections.",
       badge: "layout",
-      tone: @views.BadgeTone::Neutral,
+      tone: Neutral,
     },
     {
-      id: ComponentGalleryItemId::Toolbar,
+      id: Toolbar,
       group: "layout",
       name: "Toolbar",
       description: "Horizontal action strips for command surfaces.",
       badge: "layout",
-      tone: @views.BadgeTone::Neutral,
+      tone: Neutral,
     },
     {
-      id: ComponentGalleryItemId::StatusBar,
+      id: StatusBar,
       group: "layout",
       name: "Status Bar",
       description: "Compact state and metadata at the edge of a surface.",
       badge: "layout",
-      tone: @views.BadgeTone::Neutral,
+      tone: Neutral,
     },
     {
-      id: ComponentGalleryItemId::Surface,
+      id: Surface,
       group: "layout",
       name: "Surface",
       description: "Raised and base containers used as component demo blocks.",
       badge: "layout",
-      tone: @views.BadgeTone::Neutral,
+      tone: Neutral,
     },
     {
-      id: ComponentGalleryItemId::RowColumn,
+      id: RowColumn,
       group: "layout",
       name: "Row & Column",
       description: "Basic horizontal and vertical composition primitives.",
       badge: "layout",
-      tone: @views.BadgeTone::Neutral,
+      tone: Neutral,
     },
     {
-      id: ComponentGalleryItemId::ResponsiveGrid,
+      id: ResponsiveGrid,
       group: "layout",
       name: "Responsive Grid",
       description: "Adaptive grid columns for desktop, mobile, and Web.",
       badge: "adaptive",
-      tone: @views.BadgeTone::Neutral,
+      tone: Neutral,
     },
     {
-      id: ComponentGalleryItemId::ScrollView,
+      id: ScrollView,
       group: "layout",
       name: "Scroll View",
       description: "A clipped viewport over larger content.",
       badge: "layout",
-      tone: @views.BadgeTone::Neutral,
+      tone: Neutral,
     },
     {
-      id: ComponentGalleryItemId::PlatformRoutes,
+      id: PlatformRoutes,
       group: "runtime",
       name: "Platform Routes",
       description: "macOS, Linux, Windows, Android, iOS, HarmonyOS, and Web launch routes.",
       badge: "seven hosts",
-      tone: @views.BadgeTone::Accent,
+      tone: Accent,
     },
     {
-      id: ComponentGalleryItemId::MobileServiceProbe,
+      id: MobileServiceProbe,
       group: "runtime",
       name: "Mobile Service Probe",
       description: "Matching-host probe for IME, clipboard, accessibility, async image, and resize evidence.",
       badge: "mobile host",
-      tone: @views.BadgeTone::Accent,
+      tone: Accent,
     },
     {
-      id: ComponentGalleryItemId::AccessibilityProbe,
+      id: AccessibilityProbe,
       group: "runtime",
       name: "Accessibility Probe",
       description: "Stable cross-platform semantics, native tree, action, focus, and live-region evidence fixture.",
       badge: "a11y probe",
-      tone: @views.BadgeTone::Accent,
+      tone: Accent,
     },
   ]
 }
@@ -331,86 +331,86 @@ fn component_gallery_items() -> Array[ComponentGalleryItemInfo] {
 ///|
 pub fn gallery_item_id_to_string(id : ComponentGalleryItemId) -> String {
   match id {
-    ComponentGalleryItemId::Welcome => "welcome"
-    ComponentGalleryItemId::Button => "button"
-    ComponentGalleryItemId::TextField => "text-field"
-    ComponentGalleryItemId::TextArea => "text-area"
-    ComponentGalleryItemId::ClearableTextField => "clearable-text-field"
-    ComponentGalleryItemId::PasswordField => "password-field"
-    ComponentGalleryItemId::NumberField => "number-field"
-    ComponentGalleryItemId::Stepper => "stepper"
-    ComponentGalleryItemId::Checkbox => "checkbox"
-    ComponentGalleryItemId::Toggle => "toggle"
-    ComponentGalleryItemId::Radio => "radio"
-    ComponentGalleryItemId::RadioGroup => "radio-group"
-    ComponentGalleryItemId::CheckboxGroup => "checkbox-group"
-    ComponentGalleryItemId::SegmentedControl => "segmented-control"
-    ComponentGalleryItemId::Picker => "picker"
-    ComponentGalleryItemId::Slider => "slider"
-    ComponentGalleryItemId::Chips => "chips"
-    ComponentGalleryItemId::Badge => "badge"
-    ComponentGalleryItemId::Progress => "progress"
-    ComponentGalleryItemId::Banner => "banner"
-    ComponentGalleryItemId::Callout => "callout"
-    ComponentGalleryItemId::StatePanel => "state-panel"
-    ComponentGalleryItemId::InlineError => "inline-error"
-    ComponentGalleryItemId::Toast => "toast"
-    ComponentGalleryItemId::Snackbar => "snackbar"
-    ComponentGalleryItemId::StatCard => "stat-card"
-    ComponentGalleryItemId::Avatar => "avatar"
-    ComponentGalleryItemId::Divider => "divider"
-    ComponentGalleryItemId::Toolbar => "toolbar"
-    ComponentGalleryItemId::StatusBar => "status-bar"
-    ComponentGalleryItemId::Surface => "surface"
-    ComponentGalleryItemId::RowColumn => "row-column"
-    ComponentGalleryItemId::ResponsiveGrid => "responsive-grid"
-    ComponentGalleryItemId::ScrollView => "scroll-view"
-    ComponentGalleryItemId::PlatformRoutes => "platform-routes"
-    ComponentGalleryItemId::MobileServiceProbe => "mobile-service-probe"
-    ComponentGalleryItemId::AccessibilityProbe => "accessibility-probe"
+    Welcome => "welcome"
+    Button => "button"
+    TextField => "text-field"
+    TextArea => "text-area"
+    ClearableTextField => "clearable-text-field"
+    PasswordField => "password-field"
+    NumberField => "number-field"
+    Stepper => "stepper"
+    Checkbox => "checkbox"
+    Toggle => "toggle"
+    Radio => "radio"
+    RadioGroup => "radio-group"
+    CheckboxGroup => "checkbox-group"
+    SegmentedControl => "segmented-control"
+    Picker => "picker"
+    Slider => "slider"
+    Chips => "chips"
+    Badge => "badge"
+    Progress => "progress"
+    Banner => "banner"
+    Callout => "callout"
+    StatePanel => "state-panel"
+    InlineError => "inline-error"
+    Toast => "toast"
+    Snackbar => "snackbar"
+    StatCard => "stat-card"
+    Avatar => "avatar"
+    Divider => "divider"
+    Toolbar => "toolbar"
+    StatusBar => "status-bar"
+    Surface => "surface"
+    RowColumn => "row-column"
+    ResponsiveGrid => "responsive-grid"
+    ScrollView => "scroll-view"
+    PlatformRoutes => "platform-routes"
+    MobileServiceProbe => "mobile-service-probe"
+    AccessibilityProbe => "accessibility-probe"
   }
 }
 
 ///|
 pub fn gallery_item_id_from_string(id : String) -> ComponentGalleryItemId? {
   match id {
-    "welcome" => Some(ComponentGalleryItemId::Welcome)
-    "button" => Some(ComponentGalleryItemId::Button)
-    "text-field" => Some(ComponentGalleryItemId::TextField)
-    "text-area" => Some(ComponentGalleryItemId::TextArea)
-    "clearable-text-field" => Some(ComponentGalleryItemId::ClearableTextField)
-    "password-field" => Some(ComponentGalleryItemId::PasswordField)
-    "number-field" => Some(ComponentGalleryItemId::NumberField)
-    "stepper" => Some(ComponentGalleryItemId::Stepper)
-    "checkbox" => Some(ComponentGalleryItemId::Checkbox)
-    "toggle" => Some(ComponentGalleryItemId::Toggle)
-    "radio" => Some(ComponentGalleryItemId::Radio)
-    "radio-group" => Some(ComponentGalleryItemId::RadioGroup)
-    "checkbox-group" => Some(ComponentGalleryItemId::CheckboxGroup)
-    "segmented-control" => Some(ComponentGalleryItemId::SegmentedControl)
-    "picker" => Some(ComponentGalleryItemId::Picker)
-    "slider" => Some(ComponentGalleryItemId::Slider)
-    "chips" => Some(ComponentGalleryItemId::Chips)
-    "badge" => Some(ComponentGalleryItemId::Badge)
-    "progress" => Some(ComponentGalleryItemId::Progress)
-    "banner" => Some(ComponentGalleryItemId::Banner)
-    "callout" => Some(ComponentGalleryItemId::Callout)
-    "state-panel" => Some(ComponentGalleryItemId::StatePanel)
-    "inline-error" => Some(ComponentGalleryItemId::InlineError)
-    "toast" => Some(ComponentGalleryItemId::Toast)
-    "snackbar" => Some(ComponentGalleryItemId::Snackbar)
-    "stat-card" => Some(ComponentGalleryItemId::StatCard)
-    "avatar" => Some(ComponentGalleryItemId::Avatar)
-    "divider" => Some(ComponentGalleryItemId::Divider)
-    "toolbar" => Some(ComponentGalleryItemId::Toolbar)
-    "status-bar" => Some(ComponentGalleryItemId::StatusBar)
-    "surface" => Some(ComponentGalleryItemId::Surface)
-    "row-column" => Some(ComponentGalleryItemId::RowColumn)
-    "responsive-grid" => Some(ComponentGalleryItemId::ResponsiveGrid)
-    "scroll-view" => Some(ComponentGalleryItemId::ScrollView)
-    "platform-routes" => Some(ComponentGalleryItemId::PlatformRoutes)
-    "mobile-service-probe" => Some(ComponentGalleryItemId::MobileServiceProbe)
-    "accessibility-probe" => Some(ComponentGalleryItemId::AccessibilityProbe)
+    "welcome" => Some(Welcome)
+    "button" => Some(Button)
+    "text-field" => Some(TextField)
+    "text-area" => Some(TextArea)
+    "clearable-text-field" => Some(ClearableTextField)
+    "password-field" => Some(PasswordField)
+    "number-field" => Some(NumberField)
+    "stepper" => Some(Stepper)
+    "checkbox" => Some(Checkbox)
+    "toggle" => Some(Toggle)
+    "radio" => Some(Radio)
+    "radio-group" => Some(RadioGroup)
+    "checkbox-group" => Some(CheckboxGroup)
+    "segmented-control" => Some(SegmentedControl)
+    "picker" => Some(Picker)
+    "slider" => Some(Slider)
+    "chips" => Some(Chips)
+    "badge" => Some(Badge)
+    "progress" => Some(Progress)
+    "banner" => Some(Banner)
+    "callout" => Some(Callout)
+    "state-panel" => Some(StatePanel)
+    "inline-error" => Some(InlineError)
+    "toast" => Some(Toast)
+    "snackbar" => Some(Snackbar)
+    "stat-card" => Some(StatCard)
+    "avatar" => Some(Avatar)
+    "divider" => Some(Divider)
+    "toolbar" => Some(Toolbar)
+    "status-bar" => Some(StatusBar)
+    "surface" => Some(Surface)
+    "row-column" => Some(RowColumn)
+    "responsive-grid" => Some(ResponsiveGrid)
+    "scroll-view" => Some(ScrollView)
+    "platform-routes" => Some(PlatformRoutes)
+    "mobile-service-probe" => Some(MobileServiceProbe)
+    "accessibility-probe" => Some(AccessibilityProbe)
     _ => None
   }
 }

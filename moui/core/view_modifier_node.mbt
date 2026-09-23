@@ -9,7 +9,7 @@ fn[Msg] modifier_view(
   child : View[Msg],
   modifier : AnyModifier[Msg],
 ) -> View[Msg] {
-  let node = ModifierViewNode::{ child, modifier }
+  let node = ModifierViewNode::{ child, modifier, }
   View::from_node(
     node,
     children=node => [node.child],
@@ -33,13 +33,13 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn identity(self) {
   let kind = self.modifier.identity_kind
   if kind == "Key" {
     match self.modifier.identity_key {
-      Some(key) => { kind: child_id.kind, key: Some(key) }
-      None => { kind: child_id.kind, key: child_id.key }
+      Some(key) => { kind: child_id.kind, key: Some(key), }
+      None => { kind: child_id.kind, key: child_id.key, }
     }
   } else if kind == "" {
     child_id
   } else {
-    { kind: "Modified<\{kind}>/\{child_id.kind}", key: child_id.key }
+    { kind: "Modified<\{kind}>/\{child_id.kind}", key: child_id.key, }
   }
 }
 
@@ -55,9 +55,9 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn declaration(self) {
 /// scope; all other modifiers pass keyboard policy through.
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn keyboard_policy(self) {
   if self.modifier.identity_kind == "KeyboardShortcut" {
-    KeyboardPolicy::ShortcutScope
+    ShortcutScope
   } else {
-    KeyboardPolicy::Passthrough
+    Passthrough
   }
 }
 

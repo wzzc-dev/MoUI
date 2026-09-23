@@ -13,7 +13,7 @@ pub fn[Msg] StateViewAction::new(
   label~ : String,
   message~ : Msg,
 ) -> StateViewAction[Msg] {
-  { label, message }
+  { label, message, }
 }
 
 ///|
@@ -54,7 +54,7 @@ pub fn[Msg] MenuItem::new(
   message~ : Msg,
   enabled? : Bool = true,
 ) -> MenuItem[Msg] {
-  { id, label, message, enabled }
+  { id, label, message, enabled, }
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn[Msg] ActionItem::new(
   message~ : Msg,
   enabled? : Bool = true,
 ) -> ActionItem[Msg] {
-  { id, label, message, enabled }
+  { id, label, message, enabled, }
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn CommandMenuSection::new(
   title~ : String,
   commands~ : Array[@core.ActionCommand],
 ) -> CommandMenuSection {
-  { title, commands }
+  { title, commands, }
 }
 
 ///|
@@ -111,5 +111,5 @@ pub fn[Msg] WizardStep::new(
   content~ : @core.View[Msg],
   enabled? : Bool = true,
 ) -> WizardStep[Msg] {
-  { id, title, subtitle, content, enabled }
+  { id, title, subtitle, content, enabled, }
 }
