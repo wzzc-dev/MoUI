@@ -419,7 +419,8 @@ fn markdown_editor_code_block_active_line_delta(
   source_text : String,
   block : RichTextBlock,
 ) -> Int {
-  (rich_text_text_newline_count(source_text) + 1) -
+  rich_text_text_newline_count(source_text) +
+  1 -
   rich_text_block_visual_line_count(block)
 }
 
@@ -490,7 +491,7 @@ fn markdown_editor_reveal_active_code_block(
             source_range=Some(source_range),
           ),
         ],
-        inset: inset,
+        inset,
         content_range: Some(source_range),
       }
     }
@@ -2336,7 +2337,9 @@ fn markdown_editor_block_to_rich_text_uncached(
         editor_block.source_range.end,
       )
       if markdown_editor_source_starts_with_code_fence(source_text) {
-        markdown_editor_reserve_code_block_active_height(source_text, rich_block)
+        markdown_editor_reserve_code_block_active_height(
+          source_text, rich_block,
+        )
       } else {
         rich_block
       }

@@ -184,24 +184,20 @@ let remote_image_fetch_timeout_ms : Int = 15000
 /// other status, timeout, or network error. Cancellation is re-raised.
 async fn remote_image_fetch_once(source : String) -> Bytes? {
   try {
-    match @async.with_timeout_opt(remote_image_fetch_timeout_ms, async fn() {
-      let (response, data) = @http.get(source)
-      if response.code >= 200 && response.code < 300 {
-        Some(data.binary())
-      } else {
-        None
-      }
-    }) {
+    match
+      @async.with_timeout_opt(remote_image_fetch_timeout_ms, async fn() {
+        let (response, data) = @http.get(source)
+        if response.code >= 200 && response.code < 300 {
+          Some(data.binary())
+        } else {
+          None
+        }
+      }) {
       Some(result) => result
       None => None
     }
   } catch {
-    err =>
-      if @async.is_cancellation_error(err) {
-        raise err
-      } else {
-        None
-      }
+    err => if @async.is_cancellation_error(err) { raise err } else { None }
   }
 }
 
