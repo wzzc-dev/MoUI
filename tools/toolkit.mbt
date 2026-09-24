@@ -111,7 +111,7 @@ pub fn file_names_with_suffix(
   if !directory_exists(directory) {
     return Err("directory is missing: " + directory)
   }
-  let entries : Array[String] = @fs.read_dir(directory) catch {
+  let entries : ArrayView[String] = @fs.read_dir(directory) catch {
     _ => return Err("directory could not be read: " + directory)
   }
   let names : Array[String] = []

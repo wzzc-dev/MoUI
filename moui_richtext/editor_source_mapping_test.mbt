@@ -356,3 +356,26 @@ test "auto-completed empty image target shows raw source, not a placeholder" {
     fail("expected raw source for an auto-completed empty image target")
   }
 }
+
+///|
+test "active code block raw source keeps the code run font" {
+  // The rendered projection leads with the language-label run (smaller bold
+  // face); the revealed raw source must use the code runs' font so both
+  // states shape and wrap identically.
+  let document = @moui_richtext.markdown_editor_format_for_selection(
+    "```sh\nmoon check\n```",
+    { caret: 10, selection: None, },
+  )
+  assert_true(document.blocks.length() == 1)
+  guard document.blocks[0].runs[0]
+    is { text: "```sh\nmoon check\n```", font: Some(font), .. } else {
+    fail("expected the fenced block revealed as raw source in one run")
+  }
+  let base = @core.FontSpec::new()
+  assert_true(
+    (font.size - base.size * 0.92).abs() < 0.0001 && font.weight == 400,
+  )
+  assert_true(
+    font.families == @core.FontFamilyStack::monospace(),
+  )
+}

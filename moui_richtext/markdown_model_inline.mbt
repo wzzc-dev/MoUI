@@ -307,11 +307,67 @@ fn markdown_append_parsed_inline_segment(
   if text == "" {
     return
   }
+  let before = spans.length()
   spans.append(
     markdown_normalize_html_inlines(
-      markdown_inlines_from_ast(@md.parse_inlines(text), definitions),
+      markdown_inlines_from_ast(
+        @md.parse_inlines(markdown_expand_reference_links(text, definitions)),
+        definitions,
+      ),
     ),
   )
+  markdown_restore_trailing_whitespace(spans, before, text)
+}
+
+///|
+/// mizchi/markdown 0.8 trims trailing blanks from the plain text it emits —
+/// its marker-free fast path trims the whole segment — but the editor maps
+/// runs back to source offsets by matching run text, so a dropped space
+/// shifts every later mapping one character left. Re-attach whatever part of
+/// the segment's trailing blank run the parse dropped.
+fn markdown_restore_trailing_whitespace(
+  spans : Array[MarkdownInline],
+  from : Int,
+  text : String,
+) -> Unit {
+  let chars = text.to_array()
+  let mut end = chars.length()
+  while end > 0 && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {
+    end = end - 1
+  }
+  if end == chars.length() {
+    return
+  }
+  if spans.length() == from {
+    // The segment was blank only and the parse dropped it entirely.
+    spans.push(markdown_inline(String::from_array(chars), Plain))
+    return
+  }
+  let last_index = spans.length() - 1
+  let last = spans[last_index]
+  let missing = match last.kind {
+    Plain => {
+      let produced = last.text.to_array()
+      let mut kept = 0
+      while kept < produced.length() &&
+            (produced[produced.length() - 1 - kept] == ' ' ||
+            produced[produced.length() - 1 - kept] == '\t') {
+        kept = kept + 1
+      }
+      let segment_blanks = chars.length() - end
+      if kept < segment_blanks {
+        Some(String::from_array(chars[end : end + segment_blanks - kept]))
+      } else {
+        None
+      }
+    }
+    _ => Some(String::from_array(chars[end:]))
+  }
+  match missing {
+    Some(restored) =>
+      spans[last_index] = { ..last, text: last.text + restored }
+    None => ()
+  }
 }
 
 ///|
@@ -321,17 +377,28 @@ fn markdown_resolve_reference_inlines(
 ) -> Array[MarkdownInline] {
   let resolved : Array[MarkdownInline] = []
   for inline in inlines {
-    match inline.target {
-      Some(target) =>
-        match inline.kind {
-          Link | Image =>
-            resolved.push({
-              ..inline,
-              target: Some(markdown_reference_target(definitions, target)),
-            })
-          _ => resolved.push(inline)
+    match inline.kind {
+      // The editor's per-line fallback parses with line-local definitions,
+      // and mizchi/markdown 0.8 keeps reference syntax as literal text when
+      // no definition is in scope at parse time. Re-parse plain spans that
+      // still carry brackets against the document-wide set.
+      Plain if inline.text.contains("[") =>
+        resolved.append(
+          parse_markdown_inlines_with_definitions(inline.text, definitions),
+        )
+      _ =>
+        match inline.target {
+          Some(target) =>
+            match inline.kind {
+              Link | Image =>
+                resolved.push({
+                  ..inline,
+                  target: Some(markdown_reference_target(definitions, target)),
+                })
+              _ => resolved.push(inline)
+            }
+          None => resolved.push(inline)
         }
-      None => resolved.push(inline)
     }
   }
   resolved
@@ -421,6 +488,30 @@ fn markdown_html_inline_source(html : String) -> String {
   } else {
     "<" + html + ">"
   }
+}
+
+///|
+/// Plain-text projection of an inline html tag: the bracket syntax is
+/// stripped so html inside flattened children (link text, preview text)
+/// reads as the tag's content — `[<kbd>](url)` flattens to `kbd` — while
+/// top-level spans keep the raw tag for the rich text view.
+fn markdown_html_inline_plain_text(html : String) -> String {
+  let chars = html.to_array()
+  let mut start = 0
+  let mut end = chars.length()
+  if start < end && chars[start] == '<' {
+    start = start + 1
+  }
+  if start < end && chars[start] == '/' {
+    start = start + 1
+  }
+  if end > start && chars[end - 1] == '>' {
+    end = end - 1
+  }
+  if end > start && chars[end - 1] == '/' {
+    end = end - 1
+  }
+  String::from_array(chars[start:end])
 }
 
 ///|
@@ -771,13 +862,28 @@ fn markdown_reference_target(
   definitions : Array[MarkdownReferenceDefinition],
   label : String,
 ) -> String {
+  match markdown_reference_definition_lookup(definitions, label) {
+    Some(url) => url
+    None => label
+  }
+}
+
+///|
+/// Case-insensitive lookup with collapsed internal whitespace, the matching
+/// rule CommonMark applies to link reference labels. Labels stored in
+/// `definitions` are already keyed through `markdown_reference_label_key`,
+/// which is idempotent, so normalizing both sides here stays correct.
+fn markdown_reference_definition_lookup(
+  definitions : Array[MarkdownReferenceDefinition],
+  label : String,
+) -> String? {
   let normalized = markdown_reference_label_key(label)
   for definition in definitions {
     if markdown_reference_label_key(definition.label) == normalized {
-      return definition.url
+      return Some(definition.url)
     }
   }
-  label
+  None
 }
 
 ///|
@@ -797,6 +903,146 @@ fn markdown_reference_label_key(label : String) -> String {
     }
   }
   String::from_array(normalized).to_lower()
+}
+
+///|
+/// `mizchi/markdown` 0.8 resolves reference links while it parses and emits
+/// literal text for any label it cannot see, and its inline entry point
+/// always parses with an empty definition set. The editor owns the
+/// document-wide definition set (with CommonMark label matching), so this
+/// pass rewrites every reference form that resolves against it into the
+/// equivalent inline link before the segment reaches `@md.parse_inlines`.
+/// Unresolvable constructs are copied verbatim, keeping their literal-text
+/// rendering. Segments reaching the inline parser never contain complete
+/// code spans or HTML tags, so the scan only has to honor backslash escapes
+/// and bracket nesting.
+fn markdown_expand_reference_links(
+  text : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> String {
+  if definitions.is_empty() || !text.contains("[") {
+    return text
+  }
+  let chars = text.to_array()
+  let output : Array[Char] = []
+  let append = chars => output.append(chars)
+  let mut index = 0
+  let length = chars.length()
+  while index < length {
+    let ch = chars[index]
+    if ch == '\\' && index + 1 < length {
+      append([ch, chars[index + 1]])
+      index = index + 2
+      continue
+    }
+    let image = ch == '!' &&
+      index + 1 < length &&
+      chars[index + 1] == '['
+    if !image && ch != '[' {
+      append([ch])
+      index = index + 1
+      continue
+    }
+    let bracket = if image { index + 1 } else { index }
+    guard markdown_scan_balanced_bracket(chars, bracket) is Some(close) else {
+      append([ch])
+      index = index + 1
+      continue
+    }
+    let inner = String::from_array(chars[bracket + 1:close])
+    let after = close + 1
+    // `](...)` is an inline destination or a failed one — either way the
+    // markdown parser owns it and the text must stay verbatim.
+    if after < length && chars[after] == '(' {
+      append(chars[index:after])
+      index = after
+      continue
+    }
+    // Full form `[text][label]` / `![alt][label]`, then collapsed `[]`
+    // reusing the link text as label.
+    if after < length && chars[after] == '[' {
+      if markdown_scan_balanced_bracket(chars, after) is Some(label_close) {
+        let label = String::from_array(chars[after + 1:label_close])
+        let resolved = if label == "" {
+          markdown_reference_definition_lookup(definitions, inner)
+        } else {
+          markdown_reference_definition_lookup(definitions, label)
+        }
+        append(
+          match resolved {
+            Some(url) if markdown_inline_destination_is_expansible(url) =>
+              markdown_reference_expansion(image, inner, url).to_array()
+            _ => chars[index:label_close + 1]
+          },
+        )
+        index = label_close + 1
+        continue
+      }
+    }
+    // Shortcut form `[label]` — only when a definition actually matches.
+    match markdown_reference_definition_lookup(definitions, inner) {
+      Some(url) if markdown_inline_destination_is_expansible(url) => {
+        append(markdown_reference_expansion(image, inner, url).to_array())
+        index = after
+      }
+      _ => {
+        append(chars[index:after])
+        index = after
+      }
+    }
+  }
+  String::from_array(output)
+}
+
+///|
+/// Index of the `]` matching the `[` at `start`, honoring backslash escapes
+/// and nested bracket pairs. `None` when the bracket never closes.
+fn markdown_scan_balanced_bracket(
+  chars : Array[Char],
+  start : Int,
+) -> Int? {
+  let mut depth = 0
+  let mut index = start
+  while index < chars.length() {
+    match chars[index] {
+      '\\' => index = index + 1
+      '[' => depth = depth + 1
+      ']' => {
+        depth = depth - 1
+        if depth == 0 {
+          return Some(index)
+        }
+      }
+      _ => ()
+    }
+    index = index + 1
+  }
+  None
+}
+
+///|
+/// Whether a definition URL can be re-emitted as an inline destination in
+/// angle-bracket form. `<`, `>` and newlines cannot appear unescaped there
+/// and a trailing backslash would escape the closing bracket, so those URLs
+/// keep their reference form instead.
+fn markdown_inline_destination_is_expansible(url : String) -> Bool {
+  let mut expansible = true
+  for ch in url {
+    if ch == '<' || ch == '>' || ch == '\n' || ch == '\\' {
+      expansible = false
+      break
+    }
+  }
+  expansible
+}
+
+///|
+fn markdown_reference_expansion(
+  image : Bool,
+  link_text : String,
+  url : String,
+) -> String {
+  (if image { "![" } else { "[" }) + link_text + "](<" + url + ">)"
 }
 
 ///|
@@ -826,7 +1072,7 @@ fn markdown_inline_plain_text(inline : @md.Inline) -> String {
     WikiLink(label~, target~, ..) => if label == "" { target } else { label }
     Autolink(url~, ..) => url
     Image(alt~, ..) | RefImage(alt~, ..) => markdown_decode_html_entities(alt)
-    HtmlInline(html~, ..) => markdown_html_inline_source(html)
+    HtmlInline(html~, ..) => markdown_html_inline_plain_text(html)
     FootnoteReference(label~, ..) => label
     Directive(name~, label~, ..) => if label == "" { name } else { label }
   }

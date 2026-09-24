@@ -462,7 +462,7 @@ fn markdown_editor_reveal_active_code_block(
         source_range.start,
         source_range.end,
       )
-      let font = markdown_editor_first_run_font(block)
+      let font = markdown_editor_code_run_font(block)
       let line_delta = markdown_editor_code_block_active_line_delta(
         source_text, block,
       )
@@ -501,11 +501,18 @@ fn markdown_editor_reveal_active_code_block(
 }
 
 ///|
-fn markdown_editor_first_run_font(block : RichTextBlock) -> @core.FontSpec? {
+/// Font for the active code block's raw source. The rendered projection
+/// leads with the language-label run, whose smaller bold face is not the
+/// face the code itself draws with; taking the last run keeps the raw
+/// source on the code font so both states shape and wrap identically and
+/// the fence-line height reservation stays exact.
+fn markdown_editor_code_run_font(block : RichTextBlock) -> @core.FontSpec? {
   if block.runs.length() == 0 {
-    None
-  } else {
-    block.runs[0].font
+    return None
+  }
+  match block.runs[block.runs.length() - 1].font {
+    Some(font) => Some(font)
+    None => block.runs[0].font
   }
 }
 
