@@ -5,7 +5,7 @@
 </div>
 
 Excel Viewer renders MoonBit Excel workbooks with MoUI data table components.
-It consumes `bobzhang/mbtexcel` workbooks, exposes a shell with a toolbar,
+It consumes `moonbitlang/mbtexcel` workbooks, exposes a shell with a toolbar,
 sheet tabs, cell grid, formula bar, status bar, context menu, and heat map
 mode; cell selection, editing, and formula entry flow through a single
 `Program[ExcelApp, ExcelMsg]`.
@@ -27,7 +27,7 @@ mode; cell selection, editing, and formula entry flow through a single
 ```toml
 import {
   "wzzc-dev/moui@0.1.12",
-  "bobzhang/mbtexcel@0.1.6",
+  "moonbitlang/mbtexcel@0.2.0",
 }
 ```
 

@@ -441,7 +441,7 @@ rotate, crop, stamp, undo, and discard so light editing stays available in the
 reader-first layout.
 
 `examples/pdf_workbench/pdflite_adapter` owns the direct
-`bobzhang/pdflite` dependency for real PDF parse/text/outline/annotation
+`moonbitlang/pdflite` dependency for real PDF parse/text/outline/annotation
 summary and rotate/crop/stamp/title/bookmark/note writeback checks. It is kept
 outside the default native Skia entrypoints for now because directly importing
 pdflite into the app executable triggers the same large native compile path the

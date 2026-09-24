@@ -46,7 +46,7 @@ Detailed notes live in:
 The example suite is intentionally small but covers the breadth of the
 runtime. Showcase is the visual component catalog; Markdown Editor is the
 large WYSIWYG editing demo; Mo Workbench is the native-Skia-first desktop
-agent dogfood app; Excel Viewer renders `bobzhang/mbtexcel` workbooks with
+agent dogfood app; Excel Viewer renders `moonbitlang/mbtexcel` workbooks with
 the MoUI data table surface; PDF Workbench exercises document reading/light
 editing on the native Skia route with a lightweight UI shell, a separate
 `pdflite` adapter package for real PDF model/writeback checks, and a

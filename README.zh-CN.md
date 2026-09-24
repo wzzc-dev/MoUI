@@ -207,7 +207,7 @@ moon run examples/mo_workbench/macos_skia --target native
 
 ### Excel Viewer
 
-基于 MoonBit Excel（`bobzhang/mbtexcel`）文件的渲染器，使用 MoUI 数据表组件。共享应用逻辑位于 `examples/excel/app`，保留 `macos_skia` 入口。
+基于 MoonBit Excel（`moonbitlang/mbtexcel`）文件的渲染器，使用 MoUI 数据表组件。共享应用逻辑位于 `examples/excel/app`，保留 `macos_skia` 入口。
 
 ```sh
 # macOS Skia

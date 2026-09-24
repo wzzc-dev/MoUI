@@ -198,7 +198,7 @@ moon run examples/mo_workbench/macos_skia --target native
 
 ### Excel Viewer
 
-MoonBit Excel (`bobzhang/mbtexcel`) file renderer using MoUI data table components. Shared app logic is in `examples/excel/app`; `macos_skia` is the retained entrypoint.
+MoonBit Excel (`moonbitlang/mbtexcel`) file renderer using MoUI data table components. Shared app logic is in `examples/excel/app`; `macos_skia` is the retained entrypoint.
 
 ```sh
 # macOS Skia

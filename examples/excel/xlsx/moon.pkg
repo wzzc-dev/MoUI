@@ -1,6 +1,6 @@
 import {
-  "bobzhang/mbtexcel",
-  "bobzhang/mbtexcel/xlsx" @mbtexcel_xlsx,
+  "moonbitlang/mbtexcel",
+  "moonbitlang/mbtexcel/xlsx" @mbtexcel_xlsx,
   "examples/excel/sheet",
 }
 

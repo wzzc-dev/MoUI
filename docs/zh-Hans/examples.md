@@ -383,7 +383,7 @@ previous/next hit controls 和紧凑的 active match-position label，例如 `Fi
 当 inspector 被隐藏时，page surface 会保留紧凑 edit strip，用于 rotate、crop、stamp、
 undo 和 discard，让轻量编辑在 reader-first layout 中仍可使用。
 
-`examples/pdf_workbench/pdflite_adapter` 拥有直接的 `bobzhang/pdflite` 依赖，用于真实
+`examples/pdf_workbench/pdflite_adapter` 拥有直接的 `moonbitlang/pdflite` 依赖，用于真实
 PDF parse/text/outline/annotation summary 和 rotate/crop/stamp/title/bookmark/note
 writeback checks。它目前保留在默认 native Skia 入口之外，因为把 pdflite 直接 import 到
 app executable 会触发 prototype 正在避免的同一个大型 native compile path。
