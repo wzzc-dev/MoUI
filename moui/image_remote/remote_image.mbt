@@ -126,8 +126,9 @@ pub async fn with_remote_images(
 /// Ordinary failures never escape: a task group cancels its siblings when a
 /// child raises, so a network error is converted into a `None` completion that
 /// surfaces through the renderer's image lifecycle instead of tearing down
-/// the worker. Cancellation is deliberately re-raised — swallowing it would
-/// leave the worker alive after the app asked it to stop.
+/// the worker. Cancellation is not an error in the current async runtime: it
+/// unwinds at the await points and never reaches `catch`, so the final
+/// `finish` call is naturally skipped when the app asks the worker to stop.
 ///
 /// A fetch retries with backoff before reporting failure. The renderer never
 /// re-requests a source once its lifecycle says failed, so a single transient
@@ -156,12 +157,7 @@ async fn remote_image_fetch(work : RemoteImageRequest) -> Unit {
       }
     }
   } catch {
-    err =>
-      if @async.is_cancellation_error(err) {
-        raise err
-      } else {
-        completed = false
-      }
+    _ => completed = false
   }
   if !completed {
     (work.finish)(None)
@@ -181,7 +177,9 @@ let remote_image_fetch_timeout_ms : Int = 15000
 
 ///|
 /// One bounded fetch attempt: `Some(bytes)` on a 2xx response, `None` on any
-/// other status, timeout, or network error. Cancellation is re-raised.
+/// other status, timeout, or network error. Cancellation is not an error in
+/// the current async runtime: it unwinds at the await point and never reaches
+/// `catch`, so `catch` only maps ordinary errors to `None`.
 async fn remote_image_fetch_once(source : String) -> Bytes? {
   try {
     match
@@ -197,7 +195,7 @@ async fn remote_image_fetch_once(source : String) -> Bytes? {
       None => None
     }
   } catch {
-    err => if @async.is_cancellation_error(err) { raise err } else { None }
+    _ => None
   }
 }
 

@@ -546,6 +546,10 @@ fn append_markdown_inline_ast(
       spans.push(markdown_inline(markdown_html_inline_source(html), HtmlInline))
     FootnoteReference(label~, ..) =>
       spans.push(markdown_inline(label, FootnoteReference))
+    // `mizchi/markdown` 0.8.x 新增的内联指令变体：编辑器暂按普通文本
+    // 呈现，取指令 label（为空时回退到指令名）。
+    Directive(name~, label~, ..) =>
+      spans.push(markdown_inline(if label == "" { name } else { label }, Plain))
   }
 }
 
@@ -824,6 +828,7 @@ fn markdown_inline_plain_text(inline : @md.Inline) -> String {
     Image(alt~, ..) | RefImage(alt~, ..) => markdown_decode_html_entities(alt)
     HtmlInline(html~, ..) => markdown_html_inline_source(html)
     FootnoteReference(label~, ..) => label
+    Directive(name~, label~, ..) => if label == "" { name } else { label }
   }
 }
 
@@ -831,21 +836,60 @@ fn markdown_inline_plain_text(inline : @md.Inline) -> String {
 fn markdown_blocks_text(blocks : Array[@md.Block]) -> String {
   let lines : Array[String] = []
   for block in blocks {
-    match block {
-      Paragraph(children~, ..) | Heading(children~, ..) =>
-        lines.push(markdown_inline_text(children))
-      FencedCode(code~, ..) | IndentedCode(code~, ..) => lines.push(code)
-      Blockquote(children~, ..) => lines.push(markdown_blocks_text(children))
-      BulletList(items~, ..) | OrderedList(items~, ..) =>
-        for item in items {
-          lines.push(markdown_list_item_text(item))
-        }
-      ThematicBreak(..) => lines.push("---")
-      HtmlBlock(html~, ..) => lines.push(html)
-      BlankLines(..) => ()
-      Table(..) => ()
-      FootnoteDefinition(label~, children~, ..) =>
-        lines.push("[^" + label + "]: " + markdown_blocks_text(children))
+    append_markdown_block_text(lines, block)
+  }
+  markdown_join_lines(lines)
+}
+
+///|
+/// 把单个块压平成纯文本行，追加到 `lines`。供 `markdown_blocks_text`
+/// 及嵌套块（引用/脚注/指令/属性注解）递归复用。
+fn append_markdown_block_text(lines : Array[String], block : @md.Block) -> Unit {
+  match block {
+    Paragraph(children~, ..) | Heading(children~, ..) =>
+      lines.push(markdown_inline_text(children))
+    FencedCode(code~, ..) | IndentedCode(code~, ..) => lines.push(code)
+    Blockquote(children~, ..) =>
+      for child in children {
+        append_markdown_block_text(lines, child)
+      }
+    BulletList(items~, ..) | OrderedList(items~, ..) =>
+      for item in items {
+        lines.push(markdown_list_item_text(item))
+      }
+    ThematicBreak(..) => lines.push("---")
+    HtmlBlock(html~, ..) => lines.push(html)
+    BlankLines(..) => ()
+    Table(..) => ()
+    FootnoteDefinition(label~, children~, ..) => {
+      lines.push("[^" + label + "]:")
+      for child in children {
+        append_markdown_block_text(lines, child)
+      }
+    }
+    MathBlock(value~, ..) => lines.push(value)
+    Directive(children~, ..) =>
+      for child in children {
+        append_markdown_block_text(lines, child)
+      }
+    DefinitionList(items~, ..) =>
+      lines.push(markdown_definition_list_text(items))
+    Alert(children~, ..) =>
+      for child in children {
+        append_markdown_block_text(lines, child)
+      }
+    Attributed(block~, ..) => append_markdown_block_text(lines, block)
+  }
+}
+
+///|
+/// 把定义列表条目压平成纯文本行：每条目的术语一行，其后各条描述各占一行。
+fn markdown_definition_list_text(items : Array[@md.DefinitionItem]) -> String {
+  let lines : Array[String] = []
+  for item in items {
+    lines.push(markdown_inline_text(item.term))
+    for definition in item.definitions {
+      lines.push(markdown_inline_text(definition))
     }
   }
   markdown_join_lines(lines)

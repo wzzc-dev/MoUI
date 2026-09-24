@@ -1098,6 +1098,49 @@ fn append_markdown_ast_block(
         code_language: None,
       })
     }
+    // `mizchi/markdown` 0.8.x 新增变体：编辑器尚无数学/指令/定义列表
+    // 专属块，按现有模型就近降级（数学 → 代码块，指令/定义列表 → 段落）。
+    MathBlock(value~, ..) =>
+      blocks.push(
+        markdown_code_block(
+          markdown_trim_single_trailing_newline(value),
+          None,
+        ),
+      )
+    Directive(children~, ..) => {
+      let text = markdown_blocks_text(children)
+      blocks.push({
+        kind: Paragraph,
+        text,
+        inlines: parse_markdown_inlines_with_definitions(text, definitions),
+        table_alignments: [],
+        code_language: None,
+      })
+    }
+    DefinitionList(items~, ..) => {
+      let text = markdown_definition_list_text(items)
+      blocks.push({
+        kind: Paragraph,
+        text,
+        inlines: parse_markdown_inlines_with_definitions(text, definitions),
+        table_alignments: [],
+        code_language: None,
+      })
+    }
+    // GitHub 风格提示块（`> [!NOTE]`）：编辑器无对应块，降级为引用块。
+    Alert(children~, ..) => {
+      let text = markdown_blocks_text(children)
+      blocks.push({
+        kind: Blockquote,
+        text,
+        inlines: parse_markdown_inlines_with_definitions(text, definitions),
+        table_alignments: [],
+        code_language: None,
+      })
+    }
+    // `{.class}` 块属性注解：编辑器不展示属性，直接渲染内部块。
+    Attributed(block~, ..) =>
+      append_markdown_ast_block(blocks, block, definitions, source_text~)
   }
 }
 

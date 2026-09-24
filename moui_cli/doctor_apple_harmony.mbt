@@ -31,7 +31,7 @@ fn has_valid_apple_sdk(root : String) -> Bool {
   if !path_is_dir(root) {
     return false
   }
-  let entries : Array[String] = @fs.read_dir(root) catch { _ => [] }
+  let entries : ArrayView[String] = @fs.read_dir(root) catch { _ => [] }
   entries.any(name => {
     path_is_nonempty_file(join_path(root, name + "/SDKSettings.json"))
   })

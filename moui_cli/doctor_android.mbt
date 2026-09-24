@@ -25,7 +25,7 @@ fn valid_android_ndk(root : String) -> Bool {
   if !path_is_dir(prebuilt) {
     return false
   }
-  let hosts : Array[String] = @fs.read_dir(prebuilt) catch { _ => [] }
+  let hosts : ArrayView[String] = @fs.read_dir(prebuilt) catch { _ => [] }
   hosts.any(name => {
     first_executable([
       join_path(prebuilt, name + "/bin/clang"),

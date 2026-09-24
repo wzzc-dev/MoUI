@@ -8,7 +8,7 @@ fn collect_template_files(
   relative? : String = "",
 ) -> Result[Array[PlannedFile], String] {
   let directory = if relative == "" { root } else { join_path(root, relative) }
-  let entries : Array[String] = @fs.read_dir(directory) catch {
+  let entries : Array[String] = @fs.read_dir(directory).to_owned() catch {
     _ => return Err("could not read mobile template directory: " + directory)
   }
   entries.sort_by((left, right) => left.lexical_compare(right))

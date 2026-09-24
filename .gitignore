@@ -47,3 +47,4 @@ examples/mo_workbench/macos_skia/.mo_workbench/settings.json
 .cache
 .box-agent/
 .zcodeignore
+competition-2026/*

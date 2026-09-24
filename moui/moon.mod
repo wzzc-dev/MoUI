@@ -9,8 +9,8 @@ import {
   "Milky2018/moon_accesskit@0.3.0",
   "Milky2018/moon_zeno@0.1.3",
   "Milky2018/svg@0.5.3",
-  "moonbitlang/async@0.21.0",
-  "moonbitlang/x@0.5.1",
+  "moonbitlang/async@0.22.1",
+  "moonbitlang/x@0.5.5",
 }
 
 readme = "README.mbt.md"

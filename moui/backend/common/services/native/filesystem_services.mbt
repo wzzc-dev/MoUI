@@ -47,7 +47,7 @@ pub fn dispatch_binary_file(
 
 ///|
 pub fn dispatch_list_directory(path : String) -> @host.HostServiceResponse {
-  let names : Array[String] = @fs.read_dir(path) catch { _ => [] }
+  let names : ArrayView[String] = @fs.read_dir(path) catch { _ => [] }
   let entries : Array[@host.HostDirectoryEntry] = []
   for name in names {
     if name.has_prefix(".") {

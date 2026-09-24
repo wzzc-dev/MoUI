@@ -131,7 +131,7 @@ fn android_libcxx_shared_path(ndk_home : String, abi : String) -> String {
     None => return ""
   }
   let prebuilt_root = join_path(ndk_home, "toolchains/llvm/prebuilt")
-  let hosts = @fs.read_dir(prebuilt_root) catch { _ => return "" }
+  let hosts = @fs.read_dir(prebuilt_root).to_owned() catch { _ => return "" }
   let sorted_hosts = hosts.copy()
   sorted_hosts.sort_by((a, b) => a.lexical_compare(b))
   for host in sorted_hosts {

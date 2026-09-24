@@ -323,7 +323,7 @@ fn versioned_android_executable(
   if !path_is_dir(root) {
     return None
   }
-  let entries : Array[String] = @fs.read_dir(root) catch { _ => [] }
+  let entries : ArrayView[String] = @fs.read_dir(root) catch { _ => [] }
   let best_version : Ref[Array[Int]?] = Ref(None)
   let best_path = Ref("")
   for entry in entries {
