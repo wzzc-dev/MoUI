@@ -552,5 +552,8 @@ pub extend SemanticsState with Debug::{to_repr}
 pub extend SemanticsTarget with Debug::{to_repr}
 
 ///|
+pub extend SemanticsPathSegment with Debug::{to_repr}
+
+///|
 #doc(hidden)
 pub extend SemanticsTextValue with Debug::{to_repr}

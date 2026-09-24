@@ -167,14 +167,170 @@ fn semantics_target_codec() -> JsonCodec[@core.SemanticsTarget] {
         ({ "kind": { "const": "node_id" }, "id": node_id.schema } : Json),
         required=["kind", "id"],
       ),
+      object_schema(
+        (
+          {
+            "kind": { "const": "path" },
+            "path": array_schema(semantics_path_segment_schema()),
+          } : Json),
+        required=["kind", "path"],
+      ),
     ]),
     decode: value => {
       match value {
         Object(fields) =>
-          decode_target_with_codecs(fields, semantic_id, node_id)
+          match json_string_field(fields, "kind") {
+            Some("path") => decode_semantics_path_target(fields, semantic_id)
+            _ => decode_target_with_codecs(fields, semantic_id, node_id)
+          }
         _ => Err("Missing tagged 'target' object.")
       }
     },
+  }
+}
+
+///|
+fn semantics_path_segment_schema() -> Json {
+  object_schema(
+    (
+      {
+        "index": { "type": "integer", "minimum": 0 },
+        "role": semantics_role_schema(),
+        "label": { "type": "string" },
+        "value": { "type": "string" },
+        "semantic_id": semantic_id_codec().schema,
+      } : Json),
+  )
+}
+
+///|
+fn decode_semantics_path_target(
+  fields : Map[String, Json],
+  semantic_id : JsonCodec[@core.SemanticId],
+) -> Result[@core.SemanticsTarget, String] {
+  if !fields_are_exact(fields, ["kind", "path"]) {
+    return Err("Target contains unknown fields.")
+  }
+  guard fields.get("path") is Some(Array(steps)) else {
+    return Err("path target requires an array of steps.")
+  }
+  if steps.length() == 0 {
+    return Err("path target requires at least one step.")
+  }
+  let segments : Array[@core.SemanticsPathSegment] = []
+  for step in steps {
+    match step {
+      Object(segment_fields) =>
+        match decode_semantics_path_segment(segment_fields, semantic_id) {
+          Ok(segment) => segments.push(segment)
+          Err(message) => return Err(message)
+        }
+      _ => return Err("Each path step must be an object.")
+    }
+  }
+  Ok(ByPath(segments))
+}
+
+///|
+fn decode_semantics_path_segment(
+  fields : Map[String, Json],
+  semantic_id : JsonCodec[@core.SemanticId],
+) -> Result[@core.SemanticsPathSegment, String] {
+  let allowed = ["index", "role", "label", "value", "semantic_id"]
+  if !fields_are_exact(fields, allowed) {
+    return Err("Path step contains unknown fields.")
+  }
+  let index = match fields.get("index") {
+    None => 0
+    Some(Number(value, repr=_)) if value >= 0.0 &&
+      value == value.to_int().to_double() => value.to_int()
+    Some(_) => return Err("Path step 'index' must be a non-negative integer.")
+  }
+  let role = match fields.get("role") {
+    None => None
+    Some(String(text)) =>
+      match decode_semantics_path_role(text) {
+        Some(value) => Some(value)
+        None =>
+          if text == "none" {
+            return Err(
+              "Path step cannot filter on the 'none' role; filter on 'label' or 'value' instead.",
+            )
+          } else {
+            return Err("Invalid path step role.")
+          }
+      }
+    Some(_) => return Err("Path step 'role' must be a string.")
+  }
+  let label = match fields.get("label") {
+    None => None
+    Some(String(value)) => Some(value)
+    Some(_) => return Err("Path step 'label' must be a string.")
+  }
+  let value = match fields.get("value") {
+    None => None
+    Some(String(value)) => Some(value)
+    Some(_) => return Err("Path step 'value' must be a string.")
+  }
+  let semantic_id_filter = match fields.get("semantic_id") {
+    None => None
+    Some(semantic_id_json) =>
+      match (semantic_id.decode)(semantic_id_json) {
+        Ok(id) => Some(id)
+        Err(message) => return Err(message)
+      }
+  }
+  if role is None &&
+    label is None &&
+    value is None &&
+    semantic_id_filter is None {
+    return Err(
+      "Path step must filter on at least one of 'role', 'label', 'value', or 'semantic_id'.",
+    )
+  }
+  Ok({ index, role, label, value, semantic_id: semantic_id_filter, })
+}
+
+///|
+fn decode_semantics_path_role(text : String) -> @core.SemanticsRole? {
+  match text {
+    "text" => Some(Text)
+    "link" => Some(Link)
+    "heading" => Some(Heading)
+    "navigation" => Some(Navigation)
+    "main" => Some(Main)
+    "button" => Some(Button)
+    "checkbox" => Some(Checkbox)
+    "text_field" => Some(TextField)
+    "list" => Some(List)
+    "list_item" => Some(ListItem)
+    "grid" => Some(Grid)
+    "scroll_view" => Some(ScrollView)
+    "switch" => Some(Switch)
+    "radio" => Some(Radio)
+    "slider" => Some(Slider)
+    "progress" => Some(Progress)
+    "tab" => Some(Tab)
+    "dialog" => Some(Dialog)
+    "tooltip" => Some(Tooltip)
+    "menu" => Some(Menu)
+    "button_group" => Some(ButtonGroup)
+    "form" => Some(Form)
+    "form_field" => Some(FormField)
+    "tree" => Some(Tree)
+    "tree_item" => Some(TreeItem)
+    "group" => Some(Group)
+    "web_view" => Some(WebView)
+    "image" => Some(Image)
+    "alert" => Some(Alert)
+    "status" => Some(Status)
+    "combo_box" => Some(ComboBox)
+    "option" => Some(Option)
+    "table" => Some(Table)
+    "row" => Some(Row)
+    "cell" => Some(Cell)
+    "separator" => Some(Separator)
+    _ => None
   }
 }
 

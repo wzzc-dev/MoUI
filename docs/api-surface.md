@@ -17,9 +17,12 @@ packages expose narrower contracts for platform and renderer integration.
   builders, and `SheetPresentationMode`.
 - **Agent integration API**: `moui_agent` and `moui_agent_mcp`. The default
   contract is the committed semantic surface (`read_semantics` and
-  `perform_action`) over runtime generations. Coordinate input, global
-  commands, runtime counters, and paint summaries are separate opt-in
-  diagnostics and are not inherited by `AgentHost`.
+  `perform_action`) over runtime generations. An action target is a declared
+  `SemanticId`, a committed `SemanticsNodeId`, or a `ByPath` hierarchy walk
+  whose steps must filter on at least one of role, label, value, or
+  `semantic_id`. Coordinate input, global commands, runtime counters, and paint
+  summaries are separate opt-in diagnostics and are not inherited by
+  `AgentHost`.
 - **Advanced core API**: `moui/core`. This owns `View[Msg]`, `Program`,
   `Effect`, `Subscription`, layout, input, semantics, draw-command protocols,
   renderer-neutral platform-view contracts, the public open `ViewNode` trait,

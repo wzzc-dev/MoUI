@@ -1106,6 +1106,7 @@ pub fn ScrollRequest::new(id~ : Int, offset~ : Point) -> Self
 pub struct SemanticId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
+pub fn SemanticId::new(String) -> Self
 pub fn SemanticId::parse(String) -> Self?
 pub fn SemanticId::value(Self) -> String
 pub impl ToJson for SemanticId
@@ -1263,6 +1264,18 @@ pub(all) struct SemanticsNumericValue {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsNumericValue::new(current? : Double, min? : Double, max? : Double, step? : Double, value_text? : String) -> Self
 
+pub(all) struct SemanticsPathSegment {
+  index : Int
+  role : SemanticsRole?
+  label : String?
+  value : String?
+  semantic_id : SemanticId?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsPathSegment::equal(Self, Self) -> Bool
+pub fn SemanticsPathSegment::not_equal(Self, Self) -> Bool
+pub fn SemanticsPathSegment::to_json(Self) -> Json
+pub fn SemanticsPathSegment::to_repr(Self) -> @debug.Repr
+
 pub(all) struct SemanticsPressedModifier {
   pressed : Bool
 }
@@ -1378,6 +1391,7 @@ pub fn SemanticsState::default() -> Self
 pub(all) enum SemanticsTarget {
   BySemanticId(SemanticId)
   ByNodeId(SemanticsNodeId)
+  ByPath(Array[SemanticsPathSegment])
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SemanticsTextValue {
@@ -1850,7 +1864,7 @@ pub fn[Msg] View::platform_views(Self[Msg], ViewPlatformContext) -> Array[Platfo
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
-pub fn[Msg] View::semantic_id(Self[Msg], SemanticId) -> Self[Msg]
+pub fn[Msg] View::semantic_id(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::semantics(Self[Msg]) -> ViewSemanticsInfo
 pub fn[Msg] View::semantics_action_kinds(Self[Msg]) -> Array[SemanticsActionKind]
 pub fn[Msg] View::semantics_boundary(Self[Msg]) -> Self[Msg]

@@ -280,10 +280,7 @@ fn[Msg] runtime_semantic_container(
 
 ///|
 fn runtime_test_semantic_id(value : String) -> @core.SemanticId {
-  match @core.SemanticId::parse(value) {
-    Some(id) => id
-    None => abort("invalid semantic test id")
-  }
+  @core.SemanticId::new(value)
 }
 
 ///|

@@ -328,9 +328,12 @@ fn package_budgets() -> Array[PackageBudget] {
       // Feature composition (feature-scope-composition plan) adds the
       // Feature five-tuple factories/runtime accessors, Feature::scope, the
       // ScopedFeature handle, and Program::from_feature: +19 lines, +12 pub.
-      max_lines: 2159,
-      max_pub_lines: 572,
-      max_pub_all_lines: 189,
+      // Semantic path targeting (semantic-id-ergonomics-and-path-targeting
+      // plan) adds SemanticsPathSegment, the SemanticsTarget::ByPath variant,
+      // and SemanticId::new: +14 lines, +5 pub, +1 pub(all).
+      max_lines: 2173,
+      max_pub_lines: 577,
+      max_pub_all_lines: 190,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",

@@ -22,7 +22,7 @@ impl @core.ViewNode for AgentFixtureNode with fn layout(_self, context) {
 impl @core.ViewNode for AgentFixtureNode with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
     composition=Boundary,
-    semantic_id=@core.SemanticId::parse("fixture.activate").unwrap(),
+    semantic_id=@core.SemanticId::new("fixture.activate"),
     role=Button,
     label="Activate fixture",
   )
@@ -56,7 +56,7 @@ test "RuntimeAgentHost reads committed semantics and performs typed actions" {
     Ok(_) => fail("first read must return a full snapshot")
     Err(error) => fail("unexpected read error: \{Repr(error)}")
   }
-  let semantic_id = @core.SemanticId::parse("fixture.activate").unwrap()
+  let semantic_id = @core.SemanticId::new("fixture.activate")
   match
     host.perform_action({
       target: BySemanticId(semantic_id),
@@ -77,7 +77,7 @@ test "RuntimeAgentHost returns HostClosed after runtime destruction" {
   let host = @moui_agent.RuntimeAgentHost::new(runtime)
   runtime.destroy()
   assert_true(host.read_semantics(None) == Err(HostClosed))
-  let semantic_id = @core.SemanticId::parse("fixture.activate").unwrap()
+  let semantic_id = @core.SemanticId::new("fixture.activate")
   assert_true(
     host.perform_action({
       target: BySemanticId(semantic_id),

@@ -1132,7 +1132,94 @@ fn RuntimeState::resolve_semantics_target(
       } else {
         Err(TargetNotFound(target))
       }
+    ByPath(segments) => {
+      if segments.length() == 0 {
+        return Err(TargetNotFound(target))
+      }
+      let mut current : SemanticsNodeId? = self.semantics.semantics_tree.root
+      for segment in segments {
+        match current {
+          None => return Err(TargetNotFound(target))
+          Some(parent) =>
+            match self.resolve_semantics_path_segment(parent, segment) {
+              Some(child) => current = Some(child)
+              None => return Err(TargetNotFound(target))
+            }
+        }
+      }
+      match current {
+        Some(node_id) => Ok(node_id)
+        None => Err(TargetNotFound(target))
+      }
+    }
   }
+}
+
+///|
+/// Resolves one path step against the children of `parent`. An out-of-range
+/// index finds nothing rather than silently wrapping or clamping.
+fn RuntimeState::resolve_semantics_path_segment(
+  self : RuntimeState,
+  parent : SemanticsNodeId,
+  segment : SemanticsPathSegment,
+) -> SemanticsNodeId? {
+  if !semantics_path_segment_has_filters(segment) {
+    return None
+  }
+  let node = match self.semantics.semantics_tree.nodes.get(parent) {
+    Some(node) => node
+    None => return None
+  }
+  let mut ordinal = 0
+  for child_id in node.children {
+    let child = match self.semantics.semantics_tree.nodes.get(child_id) {
+      Some(child) => child
+      None => continue
+    }
+    if semantics_path_segment_matches(segment, child) {
+      if ordinal == segment.index {
+        return Some(child_id)
+      }
+      ordinal += 1
+    }
+  }
+  None
+}
+
+///|
+/// A step that supplies no filter addresses a position rather than a node. The
+/// wire decoder already rejects one; runtime independently refuses it so no
+/// internal caller can reintroduce positional addressing.
+fn semantics_path_segment_has_filters(segment : SemanticsPathSegment) -> Bool {
+  segment.role is Some(_) ||
+  segment.label is Some(_) ||
+  segment.value is Some(_) ||
+  segment.semantic_id is Some(_)
+}
+
+///|
+/// An absent filter matches anything.
+fn semantics_path_segment_matches(
+  segment : SemanticsPathSegment,
+  node : SemanticsNode,
+) -> Bool {
+  let role_matches = match segment.role {
+    Some(role) => node.role == role
+    None => true
+  }
+  let label_matches = match segment.label {
+    Some(label) => node.label == label
+    None => true
+  }
+  let value_matches = match segment.value {
+    Some(value) => node.value == value
+    None => true
+  }
+  let semantic_id_matches = match segment.semantic_id {
+    Some(id) => node.semantic_id == Some(id)
+    None => true
+  }
+  role_matches && label_matches && value_matches && semantic_id_matches
 }
 
 ///|

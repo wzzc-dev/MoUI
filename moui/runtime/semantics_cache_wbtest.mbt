@@ -335,7 +335,7 @@ test "semantics cache recomputes only a dirty leaf and its ancestors" {
 
 ///|
 test "persistent semantics tree keeps cache node-local across a deep chain" {
-  let leaf_id = @core.SemanticId::parse("test.deep.leaf").unwrap()
+  let leaf_id = @core.SemanticId::new("test.deep.leaf")
   let depth = 48
   let runtime = RuntimeState::new_view(
     root=runtime_semantics_deep_chain(depth, leaf_id),
@@ -363,7 +363,7 @@ test "persistent semantics tree keeps cache node-local across a deep chain" {
 
 ///|
 test "clean semantics action lookup does not recompute the tree" {
-  let semantic_id = @core.SemanticId::parse("test.clean.action").unwrap()
+  let semantic_id = @core.SemanticId::new("test.clean.action")
   let runtime = RuntimeState::new_view(
     root=runtime_semantics_action_leaf(semantic_id),
     size=@core.Size::new(width=100.0, height=24.0),
@@ -387,7 +387,7 @@ test "clean semantics action lookup does not recompute the tree" {
 ///|
 test "removed semantics nodes and action routes are pruned from the tree" {
   let visible = Ref(true)
-  let semantic_id = @core.SemanticId::parse("test.removed.route").unwrap()
+  let semantic_id = @core.SemanticId::new("test.removed.route")
   let build = () => {
     let children = if visible.val {
       [runtime_semantics_action_leaf(semantic_id)]
@@ -449,8 +449,8 @@ test "removed semantics nodes and action routes are pruned from the tree" {
 
 ///|
 test "one changed leaf publishes a one-node delta" {
-  let changed_id = @core.SemanticId::parse("test.delta.changed").unwrap()
-  let stable_id = @core.SemanticId::parse("test.delta.stable").unwrap()
+  let changed_id = @core.SemanticId::new("test.delta.changed")
+  let stable_id = @core.SemanticId::new("test.delta.stable")
   let label = Ref("before")
   let build = () => {
     runtime_semantics_dynamic_container([
@@ -480,7 +480,7 @@ test "one changed leaf publishes a one-node delta" {
 
 ///|
 test "merged descendants rebuild after their internal nodes are pruned" {
-  let child_id = @core.SemanticId::parse("test.merge.child").unwrap()
+  let child_id = @core.SemanticId::new("test.merge.child")
   let parent_label = Ref("parent")
   let build = () => {
     runtime_semantics_merge_container(

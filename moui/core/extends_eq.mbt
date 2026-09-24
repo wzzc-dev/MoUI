@@ -576,5 +576,8 @@ pub extend SemanticsState with Eq::{not_equal, equal}
 pub extend SemanticsTarget with Eq::{not_equal, equal}
 
 ///|
+pub extend SemanticsPathSegment with Eq::{not_equal, equal}
+
+///|
 #doc(hidden)
 pub extend SemanticsTextValue with Eq::{not_equal, equal}

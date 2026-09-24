@@ -455,6 +455,29 @@ scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
 
+### Agent protocol smoke
+
+`smoke/gates.json` carries the `agent.mcp-counter-protocol` daily-tier suite,
+which drives the headless `examples/agent_counter` MCP server over stdio:
+read the committed semantics, activate a button the agent locates by walking
+the emitted hierarchy, and read the delta back. Package tests call the router
+in-process, so this is the only gate that covers the real process boundary —
+request framing, response ordering, and process exit.
+
+```sh
+python3 scripts/render-agent-counter-frames.py
+node scripts/smoke-gate.mjs --suite agent.mcp-counter-protocol --run
+```
+
+It fails on any non-exit-zero path: an unknown tool name, an unresolvable
+target, or a delta that disagrees with the action receipt. The smoke catalog
+validator runs in the `pr` profile, so a stale entry or a renamed artifact path
+fails the pull request rather than the gate quietly telling nobody.
+
+The `Agent MCP protocol smoke` job of `.github/workflows/ci.yml` runs the suite
+on every push, pull request, and manual dispatch, and uploads the two frames
+as the `moui-agent-mcp-protocol-smoke` artifact.
+
 ### Embedded runtime backends
 
 Android, iOS, and HarmonyOS all use `wzzc-dev/window` `HostCmd` → `EventLoop`

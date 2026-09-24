@@ -13,7 +13,8 @@ fn pub_all_budgets() -> Array[CountBudget] {
     // Neutral accessibility DTO expansion (roles, relations, ranges, text,
     // live announcements, and typed actions) is intentionally public because
     // it is the cross-runtime wire contract. Keep the new ratchet explicit.
-    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 190, },
+    // 191 = 190 + 1 SemanticsPathSegment (semantic-id-ergonomics-and-path-targeting).
+    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 191, },
     // 57 = 39 (ADR 0017 control theme tokens) + 17 control-theme/style
     // records + 1 externally constructed incremental-data change enum.
     // 66 = 65 + 1 FieldAction keyed-form enum (feature-scope-composition).

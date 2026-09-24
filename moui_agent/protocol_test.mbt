@@ -6,7 +6,7 @@ test "agent errors expose stable wire codes" {
     @moui_agent.AgentActionError::ReentrantDispatch.code(),
     "reentrant_dispatch",
   )
-  let id = @core.SemanticId::parse("missing").unwrap()
+  let id = @core.SemanticId::new("missing")
   assert_eq(
     @moui_agent.AgentActionError::TargetAmbiguous(id).code(),
     "target_ambiguous",

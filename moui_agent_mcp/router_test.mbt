@@ -27,7 +27,7 @@ pub impl @agent.AgentHost for SemanticsWireHost with fn read_semantics(
         MissingRelationTarget(
           @core.SemanticsNodeId::new(3UL),
           LabelledBy,
-          @core.SemanticId::parse("missing.label").unwrap(),
+          @core.SemanticId::new("missing.label"),
         ),
       ],
       announcements: [
@@ -715,4 +715,154 @@ test "diagnostics tools stay unavailable on the default router" {
   ).stringify()
   assert_true(response.contains("\"isError\":true"))
   assert_true(response.contains("unknown_tool"))
+}
+
+///|
+fn path_request(target : String) -> Json {
+  request(
+    "{\"target\":\{target},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"latest\"}}",
+  )
+}
+
+///|
+test "perform_action decodes a labeled path target" {
+  let host = RecordingHost::new()
+  let response = @moui_agent_mcp.route(
+    host,
+    tool_call(
+      "perform_action",
+      path_request(
+        "{\"kind\":\"path\",\"path\":[{\"role\":\"button\",\"label\":\"Increment\"}]}",
+      ),
+    ),
+  ).stringify()
+  assert_true(response.contains("\"isError\":false"))
+  guard host.last_action is Some(action) else {
+    fail("host did not receive action")
+  }
+  guard action.target is ByPath(segments) else {
+    fail("expected a path target")
+  }
+  assert_eq(segments.length(), 1)
+  assert_eq(segments[0].index, 0)
+  assert_true(segments[0].role == Some(Button))
+  assert_eq(segments[0].label.unwrap(), "Increment")
+}
+
+///|
+test "path target accepts an index and a semantic_id anchor" {
+  let host = RecordingHost::new()
+  let response = @moui_agent_mcp.route(
+    host,
+    tool_call(
+      "perform_action",
+      path_request(
+        "{\"kind\":\"path\",\"path\":[{\"label\":\"Delete\",\"index\":1},{\"semantic_id\":\"row.confirm\"}]}",
+      ),
+    ),
+  ).stringify()
+  assert_true(response.contains("\"isError\":false"))
+  guard host.last_action is Some(action) else {
+    fail("host did not receive action")
+  }
+  guard action.target is ByPath(segments) else {
+    fail("expected a path target")
+  }
+  assert_eq(segments.length(), 2)
+  assert_eq(segments[0].index, 1)
+  assert_true(segments[0].label == Some("Delete"))
+  assert_true(segments[0].semantic_id is None)
+  assert_eq(segments[1].semantic_id.unwrap().value(), "row.confirm")
+}
+
+///|
+test "path step without any filter is rejected as invalid arguments" {
+  let host = RecordingHost::new()
+  let response = @moui_agent_mcp.route(
+    host,
+    tool_call(
+      "perform_action",
+      path_request(
+        "{\"kind\":\"path\",\"path\":[{\"index\":2},{\"role\":\"button\"}]}",
+      ),
+    ),
+  ).stringify()
+  assert_true(response.contains("\"isError\":true"))
+  assert_true(response.contains("invalid_arguments"))
+  assert_true(response.contains("at least one of"))
+  assert_true(host.last_action is None)
+}
+
+///|
+test "path step rejects unknown fields an unfilterable role and bad indices" {
+  let targets = [
+    "{\"kind\":\"path\",\"path\":[{\"role\":\"button\",\"depth\":2}]}", "{\"kind\":\"path\",\"path\":[{\"role\":\"group\",\"focused\":true}]}",
+    "{\"kind\":\"path\",\"path\":[{\"role\":\"none\"}]}", "{\"kind\":\"path\",\"path\":[{\"role\":\"dialogue\"}]}",
+    "{\"kind\":\"path\",\"path\":[]}", "{\"kind\":\"path\",\"path\":[{\"index\":-1,\"role\":\"button\"}]}",
+  ]
+  for target in targets {
+    let response = @moui_agent_mcp.route(
+      RecordingHost::new(),
+      tool_call("perform_action", path_request(target)),
+    ).stringify()
+    assert_true(response.contains("\"isError\":true"))
+    assert_true(response.contains("invalid_arguments"))
+  }
+}
+
+///|
+struct PathNotFoundHost {
+  rejected_target : @core.SemanticsTarget
+}
+
+///|
+pub impl @agent.AgentHost for PathNotFoundHost with fn read_semantics(
+  _self,
+  _since,
+) {
+  Err(HostClosed)
+}
+
+///|
+pub impl @agent.AgentHost for PathNotFoundHost with fn perform_action(
+  self,
+  _request,
+) {
+  Err(TargetNotFound(self.rejected_target))
+}
+
+///|
+test "path target not found serializes the requested path into details" {
+  let host = PathNotFoundHost::{
+    rejected_target: ByPath([
+      {
+        index: 2,
+        role: Some(Button),
+        label: Some("Delete"),
+        value: None,
+        semantic_id: Some(@core.SemanticId::new("row.delete")),
+      },
+    ]),
+  }
+  let response = @moui_agent_mcp.route(
+    host,
+    tool_call(
+      "perform_action",
+      path_request(
+        "{\"kind\":\"path\",\"path\":[{\"role\":\"button\",\"label\":\"Delete\",\"index\":2,\"semantic_id\":\"row.delete\"}]}",
+      ),
+    ),
+  )
+  let details = tool_error_details(response)
+  guard details.get("target") is Some(Object(target)) else {
+    fail("missing target details")
+  }
+  assert_eq(required_string_field(target, "kind"), "path")
+  guard target.get("path") is Some(Array(steps)) else {
+    fail("missing path steps")
+  }
+  assert_eq(steps.length(), 1)
+  guard steps[0] is Object(step) else { fail("expected an object step") }
+  assert_eq(required_string_field(step, "role"), "button")
+  assert_eq(required_string_field(step, "label"), "Delete")
 }

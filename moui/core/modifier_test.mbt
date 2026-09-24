@@ -387,14 +387,15 @@ test "hide_semantics identity and composition" {
 
 ///|
 test "semantics modifiers declare exact semantics-only invalidation" {
-  let first_id = @core.SemanticId::parse("test.first").unwrap()
-  let second_id = @core.SemanticId::parse("test.second").unwrap()
   let pairs : Array[(@core.View[Unit], @core.View[Unit])] = [
     (
       test_leaf().accessibility_label("First"),
       test_leaf().accessibility_label("Second"),
     ),
-    (test_leaf().semantic_id(first_id), test_leaf().semantic_id(second_id)),
+    (
+      test_leaf().semantic_id("test.first"),
+      test_leaf().semantic_id("test.second"),
+    ),
     (
       test_leaf().semantics_composition(Boundary),
       test_leaf().semantics_composition(MergeDescendants),

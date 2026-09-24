@@ -150,3 +150,42 @@ test "SemanticsNode advertises capability kinds and stable identity" {
   inspect(node.semantic_id == Some(semantic_id), content="true")
   inspect(node.actions == [Focus, Activate], content="true")
 }
+
+///|
+test "SemanticId: new accepts the same values as parse" {
+  inspect(
+    @core.SemanticId::new("counter.increment") ==
+    expect_semantic_id("counter.increment"),
+    content="true",
+  )
+  inspect(
+    @core.SemanticId::new("Counter.Increment").value(),
+    content="Counter.Increment",
+  )
+  inspect(@core.SemanticId::new("\u{00E9}").value(), content="\u{00E9}")
+}
+
+///|
+test "SemanticsPathSegment: wire shape keeps exact filters and index" {
+  let segment : @core.SemanticsPathSegment = {
+    index: 2,
+    role: Some(Button),
+    label: Some("Delete"),
+    value: None,
+    semantic_id: Some(@core.SemanticId::new("row.delete")),
+  }
+  let text = segment.to_json().stringify()
+  // The derived projection keeps the variant name; the MCP wire code is
+  // produced separately by role-code serialization.
+  assert_true(text.contains("\"index\":2"))
+  assert_true(text.contains("\"role\":\"Button\""))
+  assert_true(text.contains("\"label\":\"Delete\""))
+  assert_true(text.contains("\"semantic_id\":\"row.delete\""))
+  assert_false(text.contains("\"role\":\"button\""))
+  inspect(segment == { index: 2, role: Some(Button), label: Some("Delete"),
+    value: None, semantic_id: Some(@core.SemanticId::new("row.delete")), },
+    content="true")
+  inspect(segment == { index: 3, role: Some(Button), label: Some("Delete"),
+    value: None, semantic_id: Some(@core.SemanticId::new("row.delete")), },
+    content="false")
+}

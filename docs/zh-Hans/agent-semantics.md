@@ -34,12 +34,26 @@ runtime 仅在 rebuild、layout、dirty semantics 重算、索引替换和 delta
 `SemanticId` 是可选、由应用拥有的稳定地址。它精确区分大小写，长度为 1 到
 255 个 UTF-8 byte，并拒绝空白和控制字符。`counter.increment` 这样的点分名称
 只是约定，不是 namespace。重复 ID 仍会作为 snapshot issue 暴露，但通过歧义
-ID 发起的所有操作都会被拒绝且不派发消息。
+ID 发起的所有操作都会被拒绝且不派发消息。UI 代码通过 `View::semantic_id`
+直接声明字符串；字面量非法时 `SemanticId::new` 会在第一次构造 view 时中止，
+`SemanticId::parse` 仍是应对程序外部输入的 fallible 形式。
 
 `SemanticsNodeId` 在单个 runtime session 内单调分配，并且在 element 生命周期
 结束后不复用。Web、原生无障碍和 mobile host 使用它作为传输身份。
 `SemanticsGeneration` 和 node ID 在 wire 边界使用十进制字符串，避免 JavaScript
 丢失 `UInt64` 精度。`ElementId` 只存在于 runtime 内部。
+
+`ByPath` target 改为沿已提交的语义层级逐级查找，而不是指名某个身份。每一级从
+当前节点的匹配子节点中取第 `index` 个，`role`、`label`、`value`、`semantic_id`
+都是可选过滤条件，缺省即匹配任意值。不带任何过滤条件的一级寻址的是位置而非节
+点：wire decoder 会以 `invalid_arguments` 拒绝它，runtime 解析同样不接受，因
+此 agent 无法请求「第 N 个子节点，不管它是什么」。路径解析与其他 target 共享
+disabled、capability 与 handler 校验链；某级未匹配或 index 越界时结果是
+`target_not_found`，不会回绕或截断。
+
+路径寻址用于在 agent 已经读到的这棵树里查找节点；可复用脚本仍应使用
+`SemanticId`。按位置派生的路径会在树变化时静默漂移，可能把动作指向另一个业务
+对象，却仍然报告成功。
 
 View 通过 `Transparent`、`Boundary`、`MergeDescendants` 或 `Hidden` 显式组合
 语义。semantics modifier 覆盖有效 logical boundary。它不会把第一个 child 的

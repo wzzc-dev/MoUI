@@ -39,15 +39,9 @@ pub fn view(model : Model) -> @moui.View[Msg] {
   column([
     text("Agent Counter"),
     text("Count: \{model.count}"),
-    button("Increment", on_click=Increment).semantic_id(
-      @moui.SemanticId::parse("counter.increment").unwrap(),
-    ),
-    button("Decrement", on_click=Decrement).semantic_id(
-      @moui.SemanticId::parse("counter.decrement").unwrap(),
-    ),
-    button("Reset", on_click=Reset).semantic_id(
-      @moui.SemanticId::parse("counter.reset").unwrap(),
-    ),
+    button("Increment", on_click=Increment).semantic_id("counter.increment"),
+    button("Decrement", on_click=Decrement).semantic_id("counter.decrement"),
+    button("Reset", on_click=Reset).semantic_id("counter.reset"),
   ])
 }
 

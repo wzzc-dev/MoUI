@@ -38,13 +38,31 @@ deltas are retained, so `read_semantics(since=...)` returns `Full`, `Delta`, or
 case-sensitive, contains 1 to 255 UTF-8 bytes, and rejects whitespace and
 control characters. Dotted names such as `counter.increment` are a convention,
 not a namespace. Duplicate IDs remain visible as snapshot issues, but every
-action through an ambiguous ID is rejected without dispatch.
+action through an ambiguous ID is rejected without dispatch. UI code declares
+the value inline through `View::semantic_id`; `SemanticId::new` aborts on an
+invalid literal at the first view construction, and `SemanticId::parse` stays
+the fallible form for values that originate outside the program.
 
 `SemanticsNodeId` is allocated monotonically for one runtime session and is not
 reused after an element lifetime ends. It is the transport identity used by
 Web, native accessibility, and mobile hosts. `SemanticsGeneration` and node IDs
 use decimal strings on wire boundaries so JavaScript cannot lose `UInt64`
 precision. `ElementId` remains runtime-internal.
+
+A `ByPath` target walks the committed semantics hierarchy instead of naming an
+identity. Each step selects the `index`-th matching child of the current node,
+and its `role`, `label`, `value`, and `semantic_id` fields are optional filters;
+an absent filter matches anything. A step that supplies no filter addresses a
+position rather than a node: the wire decoder rejects it as `invalid_arguments`
+and runtime resolution refuses it, so an agent cannot request the N-th child
+regardless of what it is. Path resolution shares the disabled, capability, and
+handler chain of every other target, and an unmatched step or an out-of-range
+index resolves to `target_not_found` rather than wrapping or clamping.
+
+Path addressing is for finding a node inside the tree the agent already reads;
+`SemanticId` remains the handle a reusable script addresses. Position-derived
+paths shift silently when the tree changes, and such a path can point an action
+at a different business object while still reporting success.
 
 Views compose semantics explicitly with `Transparent`, `Boundary`,
 `MergeDescendants`, or `Hidden`. A semantics modifier overlays the effective

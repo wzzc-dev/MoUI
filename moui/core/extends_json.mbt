@@ -512,5 +512,8 @@ pub extend SemanticsState with ToJson::{to_json}
 pub extend SemanticsTarget with ToJson::{to_json}
 
 ///|
+pub extend SemanticsPathSegment with ToJson::{to_json}
+
+///|
 #doc(hidden)
 pub extend SemanticsTextValue with ToJson::{to_json}

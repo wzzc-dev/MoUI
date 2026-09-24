@@ -32,6 +32,7 @@ using @core {
   type SemanticsGeneration,
   type SemanticsNode,
   type SemanticsNodeId,
+  type SemanticsPathSegment,
   type SemanticsRelations,
   type SemanticsRelationsDeclaration,
   type SemanticsRelationKind,

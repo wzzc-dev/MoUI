@@ -157,11 +157,17 @@ pub fn[Msg] View::accessibility_label(
 }
 
 ///|
+/// Declares the application-owned address of this effective semantic boundary.
+///
+/// The value is validated by `SemanticId::new`, so an invalid literal aborts
+/// the process at the first view construction.
 pub fn[Msg] View::semantic_id(
   self : View[Msg],
-  semantic_id : SemanticId,
+  semantic_id : String,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticIdModifier::{ semantic_id, }.to_any_modifier())
+  self.apply_modifier(
+    SemanticIdModifier::{ semantic_id: SemanticId::new(semantic_id), }.to_any_modifier(),
+  )
 }
 
 ///|

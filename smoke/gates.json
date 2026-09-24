@@ -39,6 +39,38 @@
       "artifacts": []
     },
     {
+      "id": "agent.mcp-counter-protocol",
+      "tier": "daily",
+      "kind": "agent-protocol-smoke",
+      "host": "any",
+      "purpose": "Drive the headless agent_counter MCP server over stdio and prove a typed semantic action changes committed semantics, so MCP tool-name and wire drift fails loudly instead of writing empty frames.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "python3",
+            "scripts/render-agent-counter-frames.py"
+          ],
+          "mode": "run"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/ci.yml",
+        "gate": "pull_request"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/agent-semantics.md"
+      ],
+      "artifacts": [
+        "artifacts/smoke/agent-mcp-counter-protocol/agent_counter_before.png",
+        "artifacts/smoke/agent-mcp-counter-protocol/agent_counter_after.png"
+      ]
+    },
+    {
       "id": "web.runtime-presentation",
       "tier": "nightly",
       "kind": "browser-runtime-smoke",

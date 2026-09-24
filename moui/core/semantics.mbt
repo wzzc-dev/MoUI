@@ -81,6 +81,24 @@ pub fn SemanticId::parse(value : String) -> SemanticId? {
 }
 
 ///|
+/// Parses and validates a stable semantic identifier declared in UI code,
+/// aborting the process when the value is not a legal `SemanticId`.
+///
+/// UI code declares these identifiers as literals, so an invalid literal is a
+/// programming error that must surface at the first view construction instead
+/// of being silently dropped. Use `SemanticId::parse` for values that
+/// originate outside the program.
+pub fn SemanticId::new(value : String) -> SemanticId {
+  match SemanticId::parse(value) {
+    Some(id) => id
+    None =>
+      abort(
+        "invalid semantic_id \{value}: expected 1-255 UTF-8 bytes without whitespace or control characters",
+      )
+  }
+}
+
+///|
 /// Returns the exact, non-normalized identifier value.
 pub fn SemanticId::value(self : SemanticId) -> String {
   self.value
@@ -363,11 +381,31 @@ pub(all) enum SemanticsComposition {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// Selects either an application-owned stable ID or a session-local committed
-/// node ID.
+/// Selects either an application-owned stable ID, a session-local committed
+/// node ID, or a stepwise walk of the committed semantics hierarchy.
 pub(all) enum SemanticsTarget {
   BySemanticId(SemanticId)
   ByNodeId(SemanticsNodeId)
+  ByPath(Array[SemanticsPathSegment])
+} derive(Eq, Debug, ToJson)
+
+///|
+/// One step of a `ByPath` walk, resolved from the committed semantics tree.
+///
+/// A step selects the `index`-th child of the current node whose effective
+/// values satisfy every supplied filter; an absent filter matches anything.
+/// `SemanticsRole::None` cannot be filtered on, because its absence already
+/// means "no role filter" — filter on `label` or `value` for those nodes.
+///
+/// A step that supplies no filter at all addresses a position rather than a
+/// node. The wire decoder rejects such a step, and runtime resolution treats
+/// it as no match, so an agent cannot request one.
+pub(all) struct SemanticsPathSegment {
+  index : Int
+  role : SemanticsRole?
+  label : String?
+  value : String?
+  semantic_id : SemanticId?
 } derive(Eq, Debug, ToJson)
 
 ///|

@@ -1219,3 +1219,166 @@ test "runtime semantics: expired delta cursor falls back to full snapshot" {
     _ => fail("expired cursor should recover with a full snapshot")
   }
 }
+
+///|
+fn path_segment(
+  index? : Int = 0,
+  role? : @core.SemanticsRole? = None,
+  label? : String? = None,
+  value? : String? = None,
+  semantic_id? : @core.SemanticId? = None,
+) -> @core.SemanticsPathSegment {
+  { index, role, label, value, semantic_id, }
+}
+
+///|
+fn runtime_path_activate_handler() -> @core.ViewSemanticsActionHandler[Unit] {
+  @core.ViewSemanticsActionHandler::activate(_ctx => {
+    @core.ViewSemanticsActionResult::accepted()
+  })
+}
+
+///|
+fn runtime_path_button(
+  label : String,
+  semantic_id? : @core.SemanticId,
+) -> @core.View[Unit] {
+  let handlers = [runtime_path_activate_handler()]
+  match semantic_id {
+    Some(id) =>
+      runtime_semantic_test_view(semantic_id=id, role=Button, label~, handlers~)
+    None => runtime_semantic_test_view(role=Button, label~, handlers~)
+  }
+}
+
+///|
+fn runtime_path_runtime() -> @runtime.AppRuntime {
+  let section_id = runtime_test_semantic_id("test.path.section")
+  let confirm_id = runtime_test_semantic_id("test.path.confirm")
+  let children : Array[@core.View[Unit]] = [
+    runtime_path_button(
+      "Increment",
+      semantic_id=runtime_test_semantic_id("test.path.increment"),
+    ),
+    runtime_path_button("Delete"),
+    runtime_path_button("Delete"),
+    runtime_semantic_container(
+      [runtime_path_button("Confirm", semantic_id=confirm_id)],
+      kind="RuntimeSemanticSection",
+      semantic_id=section_id,
+      composition=Boundary,
+    ),
+  ]
+  @runtime.AppRuntime::new_view(
+    root=runtime_semantic_container(children),
+    size=@core.Size::new(width=200.0, height=200.0),
+  )
+}
+
+///|
+fn runtime_path_root_child_count(runtime : @runtime.AppRuntime) -> Int raise {
+  let snapshot = runtime_expect_full_semantics(runtime)
+  guard snapshot.root() is Some(root_id) else { fail("missing synthetic root") }
+  for node in snapshot.nodes() {
+    if node.node_id == root_id {
+      return node.children.length()
+    }
+  }
+  fail("missing root node")
+}
+
+///|
+test "runtime semantics: a labeled path resolves the same node as its id" {
+  let runtime = runtime_path_runtime()
+  let generation = runtime_expect_full_semantics(runtime).generation()
+  let by_path = runtime.perform_semantics_action({
+    target: ByPath([path_segment(role=Some(Button), label=Some("Increment"))]),
+    action: Activate,
+    precondition: Exact(generation),
+  })
+  let by_id = runtime.perform_semantics_action({
+    target: BySemanticId(runtime_test_semantic_id("test.path.increment")),
+    action: Activate,
+    precondition: Exact(generation),
+  })
+  match (by_path, by_id) {
+    (Ok(path_receipt), Ok(id_receipt)) =>
+      assert_eq(path_receipt.after.value(), id_receipt.after.value())
+    _ => fail("path and semantic id must resolve to the same committed node")
+  }
+}
+
+///|
+test "runtime semantics: path index selects among equally labeled matches" {
+  let runtime = runtime_path_runtime()
+  let generation = runtime_expect_full_semantics(runtime).generation()
+  let second = runtime.perform_semantics_action({
+    target: ByPath([path_segment(label=Some("Delete"), index=1)]),
+    action: Activate,
+    precondition: Exact(generation),
+  })
+  match second {
+    Ok(_) => ()
+    Err(_) => fail("second Delete must resolve by index")
+  }
+  let out_of_range = runtime.perform_semantics_action({
+    target: ByPath([path_segment(label=Some("Delete"), index=2)]),
+    action: Activate,
+    precondition: Exact(generation),
+  })
+  match out_of_range {
+    Err(TargetNotFound(_)) => ()
+    _ => fail("an out-of-range index must report target_not_found")
+  }
+}
+
+///|
+test "runtime semantics: a multi-step path walks the committed tree" {
+  let runtime = runtime_path_runtime()
+  let generation = runtime_expect_full_semantics(runtime).generation()
+  let anchor = runtime.perform_semantics_action({
+    target: ByPath([
+      path_segment(
+        semantic_id=Some(runtime_test_semantic_id("test.path.section")),
+      ),
+      path_segment(role=Some(Button), label=Some("Confirm")),
+    ]),
+    action: Activate,
+    precondition: Exact(generation),
+  })
+  match anchor {
+    Ok(_) => ()
+    Err(_) => fail("a two-step path ending on a semantic id must resolve")
+  }
+}
+
+///|
+test "runtime semantics: a path step cannot address a position" {
+  let runtime = runtime_path_runtime()
+  let generation = runtime_expect_full_semantics(runtime).generation()
+  let positional = runtime.perform_semantics_action({
+    target: ByPath([path_segment(index=2)]),
+    action: Activate,
+    precondition: Exact(generation),
+  })
+  match positional {
+    Err(TargetNotFound(_)) => ()
+    _ => fail("a step without filters must not resolve to the Nth child")
+  }
+  assert_eq(runtime_path_root_child_count(runtime), 4)
+}
+
+///|
+test "runtime semantics: an unmatched path reports target_not_found" {
+  let runtime = runtime_path_runtime()
+  let generation = runtime_expect_full_semantics(runtime).generation()
+  let unknown = runtime.perform_semantics_action({
+    target: ByPath([path_segment(label=Some("Absent"))]),
+    action: Activate,
+    precondition: Exact(generation),
+  })
+  match unknown {
+    Err(TargetNotFound(_)) => ()
+    _ => fail("an unmatched step must report target_not_found")
+  }
+}

@@ -178,6 +178,39 @@ jobs:
           path: artifacts/performance/result.json
           if-no-files-found: error
 
+  agent-protocol-smoke:
+    name: Agent MCP protocol smoke
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
+      - name: Install Pillow
+        run: python3 -m pip install --quiet --upgrade Pillow
+
+      # Runs the gate declared in smoke/gates.json rather than the script
+      # directly, so the catalog stays the single source of truth for what CI
+      # executes. It covers the real process boundary: request framing,
+      # response ordering, and process exit.
+      - name: Run agent MCP protocol smoke
+        run: node scripts/smoke-gate.mjs --suite agent.mcp-counter-protocol --run
+
+      - name: Upload agent protocol smoke artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-agent-mcp-protocol-smoke
+          path: artifacts/smoke/agent-mcp-counter-protocol/
+          if-no-files-found: warn
+
   windows-native:
     name: Windows MSVC native smoke
     runs-on: windows-2022

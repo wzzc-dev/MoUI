@@ -1,6 +1,6 @@
 ///|
 test "agent action request is typed" {
-  let id = @core.SemanticId::parse("editor.body").unwrap()
+  let id = @core.SemanticId::new("editor.body")
   let request : @moui_agent.AgentActionRequest = {
     target: BySemanticId(id),
     action: SetText("next"),

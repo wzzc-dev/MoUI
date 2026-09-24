@@ -256,6 +256,33 @@ fn semantics_target_json(target : @core.SemanticsTarget) -> Json {
   match target {
     BySemanticId(id) => ({ "kind": "semantic_id", "id": id } : Json)
     ByNodeId(id) => ({ "kind": "node_id", "id": id } : Json)
+    ByPath(segments) =>
+      (
+        { "kind": "path", "path": segments.map(semantics_path_segment_json) } :
+        Json)
+  }
+}
+
+///|
+fn semantics_path_segment_json(segment : @core.SemanticsPathSegment) -> Json {
+  (
+    {
+      "index": segment.index,
+      "role": match segment.role {
+        Some(role) => semantics_role_code(role)
+        None => json_null()
+      },
+      "label": optional_string_json(segment.label),
+      "value": optional_string_json(segment.value),
+      "semantic_id": optional_semantic_id_json(segment.semantic_id),
+    } : Json)
+}
+
+///|
+fn optional_string_json(value : String?) -> Json {
+  match value {
+    Some(text) => text.to_json()
+    None => json_null()
   }
 }
 
