@@ -540,7 +540,11 @@ fn collect_mbt(
   if !@tools.directory_exists(absolute) {
     return
   }
-  let entries : Array[String] = @fs.read_dir(absolute) catch { _ => return }
+  let dir_view = @fs.read_dir(absolute) catch { _ => return }
+  let entries : Array[String] = []
+  for entry in dir_view {
+    entries.push(entry)
+  }
   entries.sort_by((left, right) => left.lexical_compare(right))
   for entry in entries {
     if skipped_directory(entry) {

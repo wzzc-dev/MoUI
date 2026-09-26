@@ -1102,10 +1102,7 @@ fn append_markdown_ast_block(
     // 专属块，按现有模型就近降级（数学 → 代码块，指令/定义列表 → 段落）。
     MathBlock(value~, ..) =>
       blocks.push(
-        markdown_code_block(
-          markdown_trim_single_trailing_newline(value),
-          None,
-        ),
+        markdown_code_block(markdown_trim_single_trailing_newline(value), None),
       )
     Directive(children~, ..) => {
       let text = markdown_blocks_text(children)

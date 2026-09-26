@@ -2,7 +2,8 @@
 test "pdflite adapter loads minimum document into workbench summary" {
   let bytes = @pdflite_adapter.pdflite_minimum_pdf_bytes()
   assert_true(bytes.length() > 0)
-  match @pdflite_adapter.load_document_from_bytes(path="/tmp/minimum.pdf", bytes~) {
+  match
+    @pdflite_adapter.load_document_from_bytes(path="/tmp/minimum.pdf", bytes~) {
     @app.PdfWorkbenchLoadResult::Loaded(document) => {
       inspect(document.page_count, content="1")
       inspect(document.selected_page, content="1")
@@ -17,7 +18,11 @@ test "pdflite adapter loads minimum document into workbench summary" {
 test "pdflite adapter loads generated three page document" {
   let bytes = @pdflite_adapter.pdflite_three_page_pdf_bytes()
   assert_true(bytes.length() > 0)
-  match @pdflite_adapter.load_document_from_bytes(path="/tmp/three-page.pdf", bytes~) {
+  match
+    @pdflite_adapter.load_document_from_bytes(
+      path="/tmp/three-page.pdf",
+      bytes~,
+    ) {
     @app.PdfWorkbenchLoadResult::Loaded(document) => {
       inspect(document.page_count, content="3")
       inspect(document.selected_page, content="1")
@@ -31,7 +36,11 @@ test "pdflite adapter loads generated three page document" {
 
 ///|
 test "pdflite adapter rejects malformed bytes" {
-  match @pdflite_adapter.load_document_from_bytes(path="/tmp/bad.pdf", bytes=b"not a pdf") {
+  match
+    @pdflite_adapter.load_document_from_bytes(
+      path="/tmp/bad.pdf",
+      bytes=b"not a pdf",
+    ) {
     @app.PdfWorkbenchLoadResult::Loaded(_) => fail("expected parse failure")
     @app.PdfWorkbenchLoadResult::Failed(reason) =>
       inspect(reason, content="PDF parse failed")
@@ -102,7 +111,11 @@ test "pdflite adapter writeback applies rotate and crop edits" {
     ) => {
       assert_true(output.length() > 0)
       inspect(diagnostics.length(), content="2")
-      match @pdflite_adapter.load_document_from_bytes(path="/tmp/output.pdf", bytes=output) {
+      match
+        @pdflite_adapter.load_document_from_bytes(
+          path="/tmp/output.pdf",
+          bytes=output,
+        ) {
         @app.PdfWorkbenchLoadResult::Loaded(reparsed) =>
           inspect(reparsed.page_count, content="1")
         @app.PdfWorkbenchLoadResult::Failed(reason) => fail(reason)
@@ -132,7 +145,11 @@ test "pdflite adapter writeback applies stamp edits" {
       assert_true(output.length() > bytes.length())
       inspect(diagnostics.length(), content="1")
       assert_true(diagnostics[0].contains("StampText"))
-      match @pdflite_adapter.load_document_from_bytes(path="/tmp/stamped.pdf", bytes=output) {
+      match
+        @pdflite_adapter.load_document_from_bytes(
+          path="/tmp/stamped.pdf",
+          bytes=output,
+        ) {
         @app.PdfWorkbenchLoadResult::Loaded(reparsed) => {
           inspect(reparsed.page_count, content="1")
           assert_true(reparsed.extracted_text.contains("REVIEWED"))
@@ -164,7 +181,11 @@ test "pdflite adapter writeback applies metadata title edits" {
       assert_true(output.length() > bytes.length())
       inspect(diagnostics.length(), content="1")
       assert_true(diagnostics[0].contains("SetMetadataTitle"))
-      match @pdflite_adapter.load_document_from_bytes(path="/tmp/titled.pdf", bytes=output) {
+      match
+        @pdflite_adapter.load_document_from_bytes(
+          path="/tmp/titled.pdf",
+          bytes=output,
+        ) {
         @app.PdfWorkbenchLoadResult::Loaded(reparsed) => {
           inspect(reparsed.page_count, content="1")
           inspect(reparsed.metadata_title, content="Quarterly Review")

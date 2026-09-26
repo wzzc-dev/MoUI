@@ -182,10 +182,26 @@ test "SemanticsPathSegment: wire shape keeps exact filters and index" {
   assert_true(text.contains("\"label\":\"Delete\""))
   assert_true(text.contains("\"semantic_id\":\"row.delete\""))
   assert_false(text.contains("\"role\":\"button\""))
-  inspect(segment == { index: 2, role: Some(Button), label: Some("Delete"),
-    value: None, semantic_id: Some(@core.SemanticId::new("row.delete")), },
-    content="true")
-  inspect(segment == { index: 3, role: Some(Button), label: Some("Delete"),
-    value: None, semantic_id: Some(@core.SemanticId::new("row.delete")), },
-    content="false")
+  inspect(
+    segment ==
+    {
+      index: 2,
+      role: Some(Button),
+      label: Some("Delete"),
+      value: None,
+      semantic_id: Some(@core.SemanticId::new("row.delete")),
+    },
+    content="true",
+  )
+  inspect(
+    segment ==
+    {
+      index: 3,
+      role: Some(Button),
+      label: Some("Delete"),
+      value: None,
+      semantic_id: Some(@core.SemanticId::new("row.delete")),
+    },
+    content="false",
+  )
 }

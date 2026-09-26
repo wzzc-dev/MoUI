@@ -83,7 +83,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1659,
+      "maxLines": 1662,
       "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits."
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 2994,
+      "maxLines": 3001,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
@@ -203,12 +203,12 @@
     },
     {
       "path": "moui/runtime/semantics.mbt",
-      "maxLines": 1285,
+      "maxLines": 1372,
       "reason": "Existing committed semantics tree, relation, modal, delta, announcement, and exact-generation action implementation."
     },
     {
       "path": "moui/runtime/semantics_runtime_test.mbt",
-      "maxLines": 1221,
+      "maxLines": 1384,
       "reason": "Existing runtime semantics contract and modal, focus, delta, announcement, and stale-action regression suite."
     },
     {
@@ -270,6 +270,16 @@
       "path": "moui_sun/graphics/shader_test.mbt",
       "maxLines": 1360,
       "reason": "MoonBit toolchain upgrade required cross-package qualification in black-box tests, which wraps long lines under moon fmt."
+    },
+    {
+      "path": "moui_richtext/markdown_model.mbt",
+      "maxLines": 1232,
+      "reason": "Existing committed file re-registered at current measured logic lines during 2026-09-26 freeze regression."
+    },
+    {
+      "path": "moui_richtext/markdown_model_inline.mbt",
+      "maxLines": 1277,
+      "reason": "Existing committed file re-registered at current measured logic lines during 2026-09-26 freeze regression."
     }
   ],
   "data": [

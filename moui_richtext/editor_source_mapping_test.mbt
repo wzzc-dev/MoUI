@@ -375,7 +375,5 @@ test "active code block raw source keeps the code run font" {
   assert_true(
     (font.size - base.size * 0.92).abs() < 0.0001 && font.weight == 400,
   )
-  assert_true(
-    font.families == @core.FontFamilyStack::monospace(),
-  )
+  assert_true(font.families == @core.FontFamilyStack::monospace())
 }

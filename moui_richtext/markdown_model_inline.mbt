@@ -350,13 +350,15 @@ fn markdown_restore_trailing_whitespace(
       let produced = last.text.to_array()
       let mut kept = 0
       while kept < produced.length() &&
-            (produced[produced.length() - 1 - kept] == ' ' ||
-            produced[produced.length() - 1 - kept] == '\t') {
+            (
+              produced[produced.length() - 1 - kept] == ' ' ||
+              produced[produced.length() - 1 - kept] == '\t'
+            ) {
         kept = kept + 1
       }
       let segment_blanks = chars.length() - end
       if kept < segment_blanks {
-        Some(String::from_array(chars[end : end + segment_blanks - kept]))
+        Some(String::from_array(chars[end:end + segment_blanks - kept]))
       } else {
         None
       }
@@ -365,7 +367,7 @@ fn markdown_restore_trailing_whitespace(
   }
   match missing {
     Some(restored) =>
-      spans[last_index] = { ..last, text: last.text + restored }
+      spans[last_index] = { ..last, text: last.text + restored, }
     None => ()
   }
 }
@@ -935,9 +937,7 @@ fn markdown_expand_reference_links(
       index = index + 2
       continue
     }
-    let image = ch == '!' &&
-      index + 1 < length &&
-      chars[index + 1] == '['
+    let image = ch == '!' && index + 1 < length && chars[index + 1] == '['
     if !image && ch != '[' {
       append([ch])
       index = index + 1
@@ -997,10 +997,7 @@ fn markdown_expand_reference_links(
 ///|
 /// Index of the `]` matching the `[` at `start`, honoring backslash escapes
 /// and nested bracket pairs. `None` when the bracket never closes.
-fn markdown_scan_balanced_bracket(
-  chars : Array[Char],
-  start : Int,
-) -> Int? {
+fn markdown_scan_balanced_bracket(chars : Array[Char], start : Int) -> Int? {
   let mut depth = 0
   let mut index = start
   while index < chars.length() {
