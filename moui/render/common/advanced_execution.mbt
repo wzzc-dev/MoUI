@@ -420,28 +420,173 @@ fn append_line_stroke_vertices(
 }
 
 ///|
+/// 把填充路径命令流展平为轮廓点集。QuadTo/CubicTo 的分段数与描边展平
+/// 保持同一精度约定；Close 后轮廓隐式闭合（填充语义不要求显式回加起点）。
+fn path_fill_contours(
+  path : Array[@zeno.Command],
+) -> Array[Array[@zeno.Vector]] {
+  let contours : Array[Array[@zeno.Vector]] = []
+  let mut current : Array[@zeno.Vector]? = None
+  for command in path {
+    match command {
+      MoveTo(point) => {
+        let contour : Array[@zeno.Vector] = []
+        contour.push(Vector(point.x, point.y))
+        contours.push(contour)
+        current = Some(contour)
+      }
+      LineTo(point) =>
+        match current {
+          Some(contour) => contour.push(Vector(point.x, point.y))
+          None => ()
+        }
+      QuadTo(control, point) =>
+        match current {
+          Some(contour) => {
+            let start = contour[contour.length() - 1]
+            let segments = 12
+            for step in 1..<(segments + 1) {
+              let t = step.to_double() / segments.to_double()
+              let mt = 1.0 - t
+              contour.push(
+                Vector(
+                  mt * mt * start.x + 2.0 * mt * t * control.x + t * t * point.x,
+                  mt * mt * start.y + 2.0 * mt * t * control.y + t * t * point.y,
+                ),
+              )
+            }
+          }
+          None => ()
+        }
+      CurveTo(c1, c2, point) =>
+        match current {
+          Some(contour) => {
+            let start = contour[contour.length() - 1]
+            let segments = 16
+            for step in 1..<(segments + 1) {
+              let t = step.to_double() / segments.to_double()
+              let mt = 1.0 - t
+              let mt2 = mt * mt
+              let t2 = t * t
+              contour.push(
+                Vector(
+                  mt2 * mt * start.x +
+                  3.0 * mt2 * t * c1.x +
+                  3.0 * mt * t2 * c2.x +
+                  t2 * t * point.x,
+                  mt2 * mt * start.y +
+                  3.0 * mt2 * t * c1.y +
+                  3.0 * mt * t2 * c2.y +
+                  t2 * t * point.y,
+                ),
+              )
+            }
+          }
+          None => ()
+        }
+      Close => current = None
+    }
+  }
+  contours
+}
+
+///|
+/// 耳切三角化：简单多边形（单轮廓、无洞）的填充三角化。
+/// NonZero 洞语义暂不支持——当前填充用例（图形路径、图标）均为单轮廓，
+/// 多轮廓按独立多边形分别处理。
+fn triangulate_contour(
+  contour : Array[@zeno.Vector],
+  emit : (Int, Int, Int) -> Unit,
+) -> Unit {
+  let n = contour.length()
+  if n < 3 {
+    return
+  }
+  let indices : Array[Int] = []
+  for i in 0..<n {
+    indices.push(i)
+  }
+  let mut area2 = 0.0
+  for i in 0..<n {
+    let a = contour[i]
+    let b = contour[(i + 1) % n]
+    area2 = area2 + (a.x * b.y - b.x * a.y)
+  }
+  let positive = area2 > 0.0
+  let eps = 1.0e-9
+  let clip_budget = n * n + 16
+  let mut clips = 0
+  while indices.length() > 2 && clips < clip_budget {
+    clips += 1
+    let mut clipped = false
+    let m = indices.length()
+    let mut i = 0
+    while i < m {
+      let i0 = indices[(i + m - 1) % m]
+      let i1 = indices[i]
+      let i2 = indices[(i + 1) % m]
+      let a = contour[i0]
+      let b = contour[i1]
+      let c = contour[i2]
+      let turn = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x)
+      let is_convex = if positive { turn > -eps } else { turn < eps }
+      if is_convex {
+        let mut contains_other = false
+        for j in indices {
+          if j != i0 && j != i1 && j != i2 {
+            let p = contour[j]
+            let d1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x)
+            let d2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x)
+            let d3 = (a.x - c.x) * (p.y - c.y) - (a.y - c.y) * (p.x - c.x)
+            let inside = if positive {
+              d1 > eps && d2 > eps && d3 > eps
+            } else {
+              d1 < -eps && d2 < -eps && d3 < -eps
+            }
+            if inside {
+              contains_other = true
+              break
+            }
+          }
+        }
+        if !contains_other {
+          emit(i0, i1, i2)
+          ignore(indices.remove(i))
+          clipped = true
+          break
+        }
+      }
+      i += 1
+    }
+    if !clipped {
+      // 数值兜底：剪不出耳朵时退化为扇形三角化，保证不丢轮廓不挂死
+      let last = indices.length()
+      for k in 1..<(last - 1) {
+        emit(indices[0], indices[k], indices[k + 1])
+      }
+      break
+    }
+  }
+}
+
+///|
 fn append_zeno_vertices(
   vertices : Array[PathVertex],
   path : Array[@zeno.Command],
   style : @zeno.Style,
   payload : PathBrushPayload,
 ) -> Unit {
-  let applied : Array[@zeno.Command] = []
-  ignore(@zeno.apply(path, style, None, applied))
-  let walker = @zeno.Vertices::Vertices(applied)
-  let points : Array[@zeno.Vector] = []
-  while walker.next() is Some(vertex) {
-    match vertex {
-      Start(point, _) => points.push(point)
-      Middle(point, _, _) => points.push(point)
-      End(point, _, _) => points.push(point)
-    }
-  }
-  for index in 0..<(points.length() / 3) {
-    let base = index * 3
-    push_path_vertex(vertices, points[base], payload)
-    push_path_vertex(vertices, points[base + 1], payload)
-    push_path_vertex(vertices, points[base + 2], payload)
+  // 仅 Fill 走此处；Stroke 由 append_flattened_stroke_mesh 处理。
+  match style {
+    Fill(_) =>
+      for contour in path_fill_contours(path) {
+        triangulate_contour(contour, fn(i0, i1, i2) {
+          push_path_vertex(vertices, contour[i0], payload)
+          push_path_vertex(vertices, contour[i1], payload)
+          push_path_vertex(vertices, contour[i2], payload)
+        })
+      }
+    _ => ()
   }
 }
 

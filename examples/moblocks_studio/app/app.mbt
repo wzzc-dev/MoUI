@@ -1,5 +1,4 @@
 ///|
-using @views {button, column, row, text, text_field, scroll_view}
 
 ///|
 pub(all) struct Model {
@@ -15,6 +14,9 @@ pub(all) struct Model {
   project_name : String
   dirty : Bool
   fake_provider : Bool
+  /// 当前入口是否具备真实 provider 通道（native async worker）。
+  /// Web 入口为 false：无 async HTTP，切换真实模式会被拒绝并提示。
+  real_provider_available : Bool
   provider_endpoint : String
   provider_key : String
   prompt_draft : String
@@ -130,6 +132,7 @@ fn sample_graph() -> BlockGraph {
   ]
   let specs = block_catalog()
   let mut graph = BlockGraph::empty()
+  let ids : Array[Int] = []
   let mut i = 0
   while i < kinds.length() {
     let kind = kinds[i]
@@ -139,27 +142,35 @@ fn sample_graph() -> BlockGraph {
     }
     let x = 60.0 + (i % 4).to_double() * 190.0
     let y = 60.0 + (i / 4).to_double() * 110.0
+    // 显式跟踪分配到的 id：不依赖 "id == 下标+1" 的隐式约定，
+    // kinds 列表调整时连线与批准关系不会静默错位。
+    let new_id = graph.next_id
     graph = graph.add_node(kind, title, x, y)
+    ids.push(new_id)
     if i > 0 {
-      graph = add_flow_edge(graph, i, i + 1)
+      graph = add_flow_edge(graph, ids[i - 1], ids[i])
     }
     i = i + 1
   }
-  // 外发积木（ModelCall ×2 / StructuredModelCall ×2）从人工确认节点取批准
-  let external_ids = [6, 7, 18, 19]
-  for target in external_ids {
-    graph = {
-      ..graph,
-      edges: [
-        ..graph.edges,
-        BlockEdge::{
-          from: 3,
-          from_port: "approved",
-          to: target,
-          to_port: "approved",
-        },
-      ],
+  // 外发积木（ModelCall / StructuredModelCall）从人工确认节点取批准直连
+  let confirm_id = ids[2]
+  let mut j = 0
+  while j < kinds.length() {
+    if kinds[j] == "ModelCall" || kinds[j] == "StructuredModelCall" {
+      graph = {
+        ..graph,
+        edges: [
+          ..graph.edges,
+          BlockEdge::{
+            from: confirm_id,
+            from_port: "approved",
+            to: ids[j],
+            to_port: "approved",
+          },
+        ],
+      }
     }
+    j = j + 1
   }
   graph
 }
@@ -179,6 +190,7 @@ pub fn Model::new() -> Model {
     project_name: "未命名项目",
     dirty: false,
     fake_provider: true,
+    real_provider_available: false,
     provider_endpoint: "https://api.example.com/v1/chat/completions",
     provider_key: "",
     prompt_draft: default_prompt(),
@@ -481,15 +493,25 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
     NewProject => no_effect(new_project(model))
     LoadTemplate(name) => no_effect(load_template_project(model, name))
     ToggleProviderMode =>
-      no_effect({
-        ..model,
-        fake_provider: !model.fake_provider,
-        notice: if !model.fake_provider {
-          "已切换到假模型（离线）"
-        } else {
-          "已切换到真实 provider：\{model.provider_endpoint}"
-        },
-      })
+      if !model.fake_provider {
+        no_effect({
+          ..model,
+          fake_provider: true,
+          notice: "已切换到假模型（离线）",
+        })
+      } else if !model.real_provider_available {
+        // 无 async worker 的入口（Web）拒绝进入真实模式，避免提交后静默挂起
+        no_effect({
+          ..model,
+          notice: "当前入口不支持真实 provider（无 async HTTP）；请使用 macOS 入口",
+        })
+      } else {
+        no_effect({
+          ..model,
+          fake_provider: false,
+          notice: "已切换到真实 provider：\{model.provider_endpoint}",
+        })
+      }
     ProviderEndpointInput(endpoint) =>
       no_effect({ ..model, provider_endpoint: endpoint, })
     ProviderKeyInput(key) => no_effect({ ..model, provider_key: key, })
@@ -752,18 +774,6 @@ fn validation_summary(errors : Array[ValidationError]) -> String {
 }
 
 ///|
-fn node_config_value(
-  node : BlockNode,
-  key : String,
-  fallback : String,
-) -> String {
-  match find_config_value(node, key) {
-    Some(value) => value
-    None => fallback
-  }
-}
-
-///|
 
 ///|
 fn new_project(model : Model) -> Model {
@@ -809,333 +819,6 @@ fn load_template_project(model : Model, name : String) -> Model {
 }
 
 ///|
-fn project_controls(model : Model) -> Array[@moui.View[Msg]] {
-  [
-    text("项目：\{model.project_name}").title(),
-    button("打开", on_click=OpenRequested),
-    button("保存", on_click=SaveRequested),
-    button("导出为 MoUI 项目", on_click=ExportRequested),
-    button("撤销", on_click=UndoEdit),
-    button("重做", on_click=RedoEdit),
-    button("放大", on_click=ZoomIn),
-    button("缩小", on_click=ZoomOut),
-    button("复位视图", on_click=ZoomReset),
-  ]
-}
-
-///|
-fn block_buttons() -> Array[@moui.View[Msg]] {
-  let items : Array[@moui.View[Msg]] = [text("工具箱").title()]
-  for spec in block_catalog() {
-    items.push(button(spec.title, on_click=AddBlock(spec.kind)))
-  }
-  items
-}
-
-///|
-/// 模型 provider 面板：fake/真实切换 + endpoint/key。
-/// key 仅存于会话内存，不写入项目文件（凭据脱敏红线）。
-fn provider_panel(model : Model) -> Array[@moui.View[Msg]] {
-  [
-    text("模型 Provider").title(),
-    text(
-      if model.fake_provider {
-        "当前：假模型（确定性，离线可演示）"
-      } else {
-        "当前：真实 provider（OpenAI 兼容）"
-      },
-    ),
-    button(
-      if model.fake_provider {
-        "切换到真实 provider"
-      } else {
-        "切换到假模型"
-      },
-      on_click=ToggleProviderMode,
-    ),
-    text_field(
-      model.provider_endpoint,
-      on_input=fn(endpoint) { ProviderEndpointInput(endpoint) },
-      placeholder="OpenAI 兼容 endpoint",
-    ),
-    text_field(
-      model.provider_key,
-      on_input=fn(key) { ProviderKeyInput(key) },
-      placeholder="API Key（不写入项目文件）",
-    ),
-  ]
-}
-
-///|
-fn proposal_panel(model : Model) -> Array[@moui.View[Msg]] {
-  match model.pending_proposal {
-    Some(proposal) =>
-      [
-        text("AI 提案预览").title(),
-        text(
-          "新图：\{proposal.nodes} 个积木 / \{proposal.edges} 条连线，校验通过",
-        ),
-        button("接受替换", on_click=AcceptProposal),
-        button("取消提案", on_click=CancelProposal),
-      ]
-    None =>
-      [
-        text("AI 生成").title(),
-        text_field(
-          model.prompt_draft,
-          on_input=fn(prompt) { PromptInput(prompt) },
-          placeholder="用一句话描述应用，例如：做个能记住我、有人设的聊天助手",
-        ),
-        button("生成", on_click=GenerateFromPrompt),
-        text(
-          "假模型按描述关键词路由到内置模板；切换到真实 provider 后同一段描述发给远端模型。",
-        ),
-      ]
-  }
-}
-
-///|
-fn edges_of(graph : BlockGraph, id : Int) -> Array[BlockEdge] {
-  graph.edges.filter(fn(edge) { edge.from == id || edge.to == id })
-}
-
-///|
-fn input_port_occupied(graph : BlockGraph, id : Int, port : String) -> Bool {
-  graph.edges.any(fn(edge) { edge.to == id && edge.to_port == port })
-}
-
-///|
-/// L0 按钮式连接：当前选中积木的每个输出端口 → 类型匹配且未被占用的输入端口。
-fn connect_candidates(
-  graph : BlockGraph,
-  node : BlockNode,
-  specs : Array[BlockSpec],
-) -> Array[(String, Int, String)] {
-  let from_spec = find_spec(specs, node.kind)
-  let candidates : Array[(String, Int, String)] = []
-  match from_spec {
-    Some(from_spec) =>
-      for out_port in from_spec.output_ports {
-        if candidates.length() >= 8 {
-          return candidates
-        }
-        for target in graph.nodes {
-          if candidates.length() >= 8 {
-            return candidates
-          }
-          if target.id == node.id {
-            continue
-          }
-          let target_spec = find_spec(specs, target.kind)
-          match target_spec {
-            Some(target_spec) =>
-              for in_port in target_spec.input_ports {
-                if candidates.length() >= 8 {
-                  return candidates
-                }
-                if port_types_equal(out_port.port_type, in_port.port_type) &&
-                  !input_port_occupied(graph, target.id, in_port.name) {
-                  candidates.push((out_port.name, target.id, in_port.name))
-                }
-              }
-            None => ()
-          }
-        }
-      }
-    None => ()
-  }
-  candidates
-}
-
-///|
-fn inspector_panel(model : Model) -> Array[@moui.View[Msg]] {
-  let graph = GraphEditor::graph(model.editor)
-  let specs = block_catalog()
-  let items : Array[@moui.View[Msg]] = [text("属性 / AI").title()]
-  for provider_view in provider_panel(model) {
-    items.push(provider_view)
-  }
-  for proposal_view in proposal_panel(model) {
-    items.push(proposal_view)
-  }
-  match model.selection {
-    None => items.push(text("未选中积木"))
-    Some(id) =>
-      match graph.find_node(id) {
-        None => items.push(text("选中：#\{id}（已删除）"))
-        Some(node) => {
-          items.push(text("\{node.title} · \{node.kind}"))
-          items.push(
-            text_field(
-              node.title,
-              on_input=fn(title) { TitleInput(node.id, title) },
-              placeholder="积木标题",
-            ),
-          )
-          let spec = find_spec(specs, node.kind)
-          match spec {
-            Some(spec) => {
-              items.push(
-                text(
-                  "效果：\{effect_kind_label(spec.effect_kind)} · 风险：\{risk_class_label(spec.risk_class)}",
-                ),
-              )
-              for entry in spec.config_schema {
-                let value = node_config_value(node, entry.key, entry.default)
-                items.push(
-                  text_field(
-                    value,
-                    on_input=fn(input) {
-                      ConfigInput(node.id, entry.key, input)
-                    },
-                    placeholder=entry.label,
-                  ),
-                )
-              }
-            }
-            None => items.push(text("未知积木类型"))
-          }
-          let config_errors = match spec {
-            Some(spec) => validate_node_config(node, spec)
-            None => []
-          }
-          for error in config_errors {
-            items.push(text("✗ \{validation_error_label(error)}"))
-          }
-          items.push(button("删除积木", on_click=DeleteSelected))
-          items.push(text("已连线").title())
-          for edge in edges_of(graph, node.id) {
-            items.push(
-              button(
-                "断开 #\{edge.from}.\{edge.from_port} → #\{edge.to}.\{edge.to_port}",
-                on_click=DropEdge(
-                  edge.from,
-                  edge.from_port,
-                  edge.to,
-                  edge.to_port,
-                ),
-              ),
-            )
-          }
-          items.push(text("连接到…").title())
-          for candidate in connect_candidates(graph, node, specs) {
-            let (from_port, target_id, to_port) = candidate
-            let target_title = match graph.find_node(target_id) {
-              Some(target) => target.title
-              None => "#\{target_id}"
-            }
-            items.push(
-              button(
-                "\{from_port} → \{target_title}.\{to_port}",
-                on_click=ConnectTo(node.id, from_port, target_id, to_port),
-              ),
-            )
-          }
-        }
-      }
-  }
-  items
-}
-
-///|
-fn effect_kind_label(kind : EffectKind) -> String {
-  match kind {
-    Pure => "纯计算"
-    Model => "模型调用"
-    UI => "界面"
-    Control => "控制流"
-  }
-}
-
-///|
-fn risk_class_label(risk : RiskClass) -> String {
-  match risk {
-    Read => "只读"
-    Write => "写入"
-    Execute => "执行"
-    ExternalSubmit => "数据外发"
-  }
-}
-
-///|
-fn run_controls_items() -> Array[@moui.View[Msg]] {
-  [
-    text("运行 / 调试").title(),
-    button("自动运行到阻塞点", on_click=AutoRunExecution),
-    button("运行（手动步进）", on_click=RunExecution),
-    button("前进一步", on_click=StepOk),
-    button("确认外发", on_click=ConfirmExecution),
-    button("拒绝", on_click=RejectExecution),
-    button("取消", on_click=CancelExecution),
-    button("重置", on_click=ResetExecution),
-  ]
-}
-
-///|
-
-///|
-/// 底部滚动面板：项目操作 + 工具箱 + 运行控制 + 时间线。
-/// 注：M2 版本框架中 row 直接子级控件（及其内嵌滚动容器）指针命中存在缺陷，
-/// 所有可交互控件集中在此顶层滚动面板内；画布与检查器保持扁平列。
-fn bottom_panel(model : Model) -> @moui.View[Msg] {
-  let items : Array[@moui.View[Msg]] = []
-  for control in run_controls_items() {
-    items.push(control)
-  }
-  items.push(
-    text("运行时间线 · \{run_status_label(model.execution.status)}").title(),
-  )
-  for step in model.execution.steps {
-    items.push(
-      text(
-        "\{step.node_id}. \{step.title} · \{step_status_label(step.status)} \{step.summary}（\{step.duration_ms}ms）",
-      ),
-    )
-  }
-  for entry in model.execution.audit {
-    items.push(text("· \{entry}"))
-  }
-  for control in project_controls(model) {
-    items.push(control)
-  }
-  for block_button in block_buttons() {
-    items.push(block_button)
-  }
-  items.push(text("项目模板").title())
-  items.push(button("新建空项目", on_click=NewProject))
-  items.push(button("对话机器人", on_click=LoadTemplate("chatbot")))
-  items.push(button("本地文档分析助手", on_click=LoadTemplate("doc")))
-  items.push(button("CSV 分析助手", on_click=LoadTemplate("csv")))
-  items.push(text("选择积木").title())
-  for node in GraphEditor::graph(model.editor).nodes {
-    let node_id = node.id
-    items.push(
-      button("#\{node_id} \{node.title}", on_click=SelectNode(Some(node_id))),
-    )
-  }
-  scroll_view(column(items), width=1240.0, height=170.0)
-}
-
-///|
-pub fn view(model : Model) -> @moui.View[Msg] {
-  column([
-    text(model.notice),
-    row([
-      block_canvas(
-        GraphEditor::graph(model.editor),
-        model.selection,
-        spotlight_node(model.execution),
-        model.viewport_x,
-        model.viewport_y,
-        model.viewport_zoom,
-      ).flexible(weight=2.2),
-      column(inspector_panel(model)).flexible(weight=1.0),
-    ]).flexible(),
-    bottom_panel(model),
-  ])
-}
-
-///|
 
 ///|
 /// no-op provider 提交（Web 等无 async worker 的入口使用：真实模式降级为提示）。
@@ -1152,11 +835,14 @@ fn noop_provider_submit(
 pub fn program(
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   provider_submit? : (String, String, String, (Result[String, String]) -> Unit) -> Unit = noop_provider_submit,
+  real_provider_available? : Bool = false,
 ) -> @moui.Program[Model, Msg] {
   // 服务句柄在 program 构造时捕获一次；update 里不再构造
   let services = environment.services()
   @moui.Program::new(
-    init=() => (Model::new(), @moui.Effect::none()),
+    init=() => {
+      ({ ..Model::new(), real_provider_available, }, @moui.Effect::none())
+    },
     update=(model, msg) => {
       match msg {
         GenerateFromPrompt =>
@@ -1179,5 +865,25 @@ pub fn program(
       }
     },
     view~,
+    // 执行运行中的定时驱动：Tick 是执行状态机唯一的时间来源，
+    // 让重试/超时预算在真实 UI 运行时生效（先例：three_d_physics_viewer）。
+    // 状态离开 Running/WaitingConfirmation 后返回 none，定时器自动取消。
+    subscriptions=model => {
+      match environment.timer() {
+        Some(timer) =>
+          if model.execution.status
+            is (RunStatus::Running | RunStatus::WaitingConfirmation) {
+            timer.subscription(
+              interval_ms=50.0,
+              key="moblocks:exec-tick",
+              label="MoBlocks execution tick",
+              map=frame => ExecTick(frame.delta_ms.to_int()),
+            )
+          } else {
+            @moui.Subscription::none()
+          }
+        None => @moui.Subscription::none()
+      }
+    },
   )
 }

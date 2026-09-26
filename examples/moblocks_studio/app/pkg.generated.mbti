@@ -73,7 +73,7 @@ pub fn port_type_label(PortType) -> String
 
 pub fn port_types_equal(PortType, PortType) -> Bool
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (String, String, String, (Result[String, String]) -> Unit) -> Unit) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (String, String, String, (Result[String, String]) -> Unit) -> Unit, real_provider_available? : Bool) -> @core.Program[Model, Msg]
 
 pub fn project_format() -> String
 
@@ -247,6 +247,7 @@ pub(all) struct Model {
   project_name : String
   dirty : Bool
   fake_provider : Bool
+  real_provider_available : Bool
   provider_endpoint : String
   provider_key : String
   prompt_draft : String

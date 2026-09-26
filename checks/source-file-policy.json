@@ -198,8 +198,8 @@
     },
     {
       "path": "scripts/record-web-runtime-presentation.mjs",
-      "maxLines": 1323,
-      "reason": "Existing browser presentation evidence orchestrator."
+      "maxLines": 1368,
+      "reason": "Existing browser presentation evidence orchestrator; grew by the drag-probe sequences and handled-move assertion (web drag regression evidence)."
     },
     {
       "path": "moui/runtime/semantics.mbt",

@@ -103,9 +103,10 @@ examples/moblocks_studio/
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | 页面白屏 | 静态服务器根目录不对（index.html 用相对路径找 wasm） | 以**仓库根**为服务器根目录 |
+| `moon build` 后页面仍加载旧逻辑/404 | index.html 直接引用仓库内 runtime.js 与 `_build/wasm-gc/debug/` 产物，release 构建或移动产物目录会失效 | 保留 debug 产物路径构建；发布请走导出 bundle（自包含目录结构） |
 | 画布积木选中/拖拽 | 画布内按下即可选中，按住拖动可移动积木（回归测试 `M2：画布积木可经拖拽移动`）；注意 draw 命令里的文本帧是画布局部坐标，指针事件是屏幕坐标，二者相差画布原点 | 也可用底部「选择积木」按钮列表选择；属性在检查器编辑 |
 | 提案被拒绝 | 模型输出 schema 不符/类型错连/缺确认节点 | notice 会给出中文校验错误；用模板起步或手动连线 |
-| 真实 provider 无响应 | Web 目标无 async HTTP（`moonbitlang/async/http` 仅 native） | Web 请用假模型；真实 provider 走 macOS 入口 |
+| 切换真实 provider 被拒绝 | Web 目标无 async HTTP（`moonbitlang/async/http` 仅 native），入口不支持真实模式 | Web 保持假模型；真实 provider 走 macOS 入口（页面会提示「当前入口不支持真实 provider」） |
 | 导出后不会运行 | 需要在导出目录按其 README 构建 | `moon build <name>/web_wasm --target wasm-gc`（以该目录为服务器根） |
 | 导出页面停在 Loading | 静态服务器根目录不对：宿主页从**导出项目自己的 `.mooncakes`** 加载运行时 JS（`moon build` 后生成），必须从项目根起服务 | 在导出项目根执行 `python3 -m http.server`，再打开 `/<name>/web_wasm/index.html` |
 | 导出应用点「运行」提示校验失败 | 项目图本身不合法（如缺确认闸门/类型错连）——导出应用内嵌与 Studio 同一套校验器，会原样阻止 | 回 Studio 修图或换合法模板再导出 |

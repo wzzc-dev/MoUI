@@ -81,6 +81,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [overlay-placement-portal-unification](active/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
 | [feature-scope-composition](active/feature-scope-composition.md) | Add `Feature[Model, Msg]` + `Feature::scope` lens composition to core, `FieldAction` keyed forms, and settings/workbench pilots |
 | [moblocks-studio](active/moblocks-studio.md) | Build an AI-generated visual app studio on MoUI for the 2026 Shanghai open-source AI tools competition (MCP integration deferred to post-contest) |
+| [moblocks-studio-v2](active/moblocks-studio-v2.md) | Post-freeze hardening: fix web drag regression, puzzle-piece blocks with category colors, four-zone IDE layout, ExecTick timer driver |
 
 ## Debt
 

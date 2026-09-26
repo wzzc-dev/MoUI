@@ -69,6 +69,23 @@ test "画布命中测试返回最上层节点" {
 }
 
 ///|
+test "榫卯命中：凹槽挖空不命中、凸头内命中、凸头外不命中" {
+  let mut graph = @app.BlockGraph::empty()
+  graph = graph.add_node("Sequence", "A", 60.0, 60.0)
+  // 节点 A：x 60..228, y 60..132；中心线 x=144，凹槽圆心 (144,60)、凸头圆心 (144,132)，半径 10
+  assert_true(@app.hit_test(graph, 144.0, 65.0) is None)
+  match @app.hit_test(graph, 144.0, 139.0) {
+    Some(node) => assert_eq(node.title, "A")
+    None => fail("凸头区域应命中")
+  }
+  assert_true(@app.hit_test(graph, 144.0, 148.0) is None)
+  match @app.hit_test(graph, 100.0, 70.0) {
+    Some(node) => assert_eq(node.title, "A")
+    None => fail("主体非凹槽区域应命中")
+  }
+}
+
+///|
 test "画布按下选中并拖动，经 typed Msg 回到 reducer" {
   let mut graph = @app.BlockGraph::empty()
   graph = graph.add_node("Sequence", "A", 60.0, 60.0)
@@ -172,7 +189,7 @@ test "绘制计划规模随节点数线性增长（帧基线结构代理）" {
   let counts = sizes.map(fn(n) {
     @app.canvas_draw_plan(chain_graph(n), None, None).length()
   })
-  // 每节点 FillNode + NodeText 两条 op，链边 n-1 条 EdgeLine：3n-1
+  // 每节点 FillBlock + NodeText 两条 op，链边 n-1 条 EdgeLine：3n-1
   assert_eq(counts[0], 59)
   assert_eq(counts[1], 149)
   assert_eq(counts[2], 299)
@@ -796,13 +813,21 @@ test "M2：绿旗时刻聚光灯为运行中/等待确认节点追加高亮" {
   let graph = chain_graph(6)
   let plain = @app.canvas_draw_plan(graph, None, None)
   let lit = @app.canvas_draw_plan(graph, None, Some(3))
-  // 选中与聚光灯各追加一条 StrokeNode
+  // 选中与聚光灯各追加一条 StrokeBlock
   assert_eq(lit.length(), plain.length() + 1)
 }
 
 ///|
 test "M2：provider 面板切换与字段输入" {
-  let model = step(@app.Model::new(), ToggleProviderMode)
+  // 默认入口（无 async worker）拒绝进入真实模式，避免 Web 提交后静默挂起
+  let web = @app.Model::new()
+  assert_true(web.real_provider_available is false)
+  let refused = step(web, ToggleProviderMode)
+  assert_true(refused.fake_provider)
+  assert_true(refused.notice.contains("不支持真实 provider"))
+  // 具备 worker 的入口（macOS）可切换：真实 ↔ 假模型
+  let native = { ..@app.Model::new(), real_provider_available: true, }
+  let model = step(native, ToggleProviderMode)
   assert_true(!model.fake_provider)
   assert_true(model.notice.contains("真实 provider"))
   let back = step(model, ToggleProviderMode)
@@ -937,4 +962,55 @@ test "M3：模板项目可导出再导回（fixtures 镜像闭环）" {
 test "M4：join_path 与导出路径拼接" {
   assert_eq(@app.join_path("/tmp/out", "x/moon.mod"), "/tmp/out/x/moon.mod")
   assert_eq(@app.join_path("/tmp/out/", "x/moon.mod"), "/tmp/out/x/moon.mod")
+}
+
+///|
+test "step_policy：预算只来自真正上游的 Retry/Timeout 配置" {
+  let node = fn(
+    id : Int,
+    kind : String,
+    config : Array[(String, String)],
+  ) -> @app.BlockNode {
+    { id, kind, title: kind, x: 0.0, y: 0.0, config, }
+  }
+  let graph : @app.BlockGraph = {
+    nodes: [
+      node(1, "AppStart", []),
+      node(2, "Retry", [("attempts", "2")]),
+      node(3, "Sequence", []),
+      node(4, "Timeout", [("budget_ms", "500")]),
+      node(5, "ParseJson", []),
+      node(6, "Timeout", [("budget_ms", "100")]),
+      node(7, "Retry", [("attempts", "9")]),
+    ],
+    edges: [
+      flow_edge(1, 2),
+      flow_edge(2, 3),
+      flow_edge(1, 4),
+      flow_edge(4, 5),
+      flow_edge(5, 7),
+    ],
+    next_id: 8,
+  }
+  // 入口自身：无任何策略
+  let (entry_attempts, entry_budget) = @app.step_policy(graph, 1)
+  assert_eq(entry_attempts, 1)
+  assert_eq(entry_budget, 0)
+  // Retry 下游：attempts=2 → 总尝试 3；无上游 Timeout → 预算 0
+  let (retried, no_budget) = @app.step_policy(graph, 3)
+  assert_eq(retried, 3)
+  assert_eq(no_budget, 0)
+  // Retry 约束自身步骤
+  let (self_attempts, _) = @app.step_policy(graph, 2)
+  assert_eq(self_attempts, 3)
+  // Timeout 下游：预算 500 生效；Retry 不在其上游 → 总尝试 1
+  let (no_retry, budget) = @app.step_policy(graph, 5)
+  assert_eq(no_retry, 1)
+  assert_eq(budget, 500)
+  // 无关的 Timeout(100) 不影响任何步骤（旧实现取全图最小值）
+  let (_, unrelated) = @app.step_policy(graph, 3)
+  assert_eq(unrelated, 0)
+  // attempts 超限被钳制到 3：总尝试上限 4
+  let (clamped, _) = @app.step_policy(graph, 7)
+  assert_eq(clamped, 4)
 }

@@ -162,3 +162,33 @@
   同包可见所以 app 测试全绿，导出 bundle 在 workspace 外 `moon build` 才报
   `auto_layout unbound`）。已把 `auto_layout` 移进 `block_graph.mbt`（内核成员）。
   改了内核或模板后必须重跑 `sync_kernel`，`--check` 漂移门已进 pr profile。
+
+## 2026-09-26 v2 完善：Web 指针 decode 契约 / zeno 填充三角化 / 布局固有高度
+
+- **Web 指针事件的 button 契约**：浏览器 pointermove/pointerexit/pointercancel 的
+  DOM `button = -1`（规范：无按钮变化），而手势修饰器（`moui/core/modifier_event.mbt`）
+  要求 Move 的 `button == 0`（ad513a290 起的主键过滤）；native decode 对 Move 不传
+  button（默认 0），Web decode 必须规范化——`moui/backend/web/web_pointer_input.mbt`
+  的 `web_pointer_button`：Move/Exit/Cancel → 0，Down/Up 做 DOM→core 码映射
+  （DOM 0左/1中/2右 → core 0左/1右/2中，镜像 `mouse_button_to_core`）。
+  JS 侧 `browser_runtime.js` 只在 Down/Up 透传 `event.button`。回归签名：smoke
+  `dragInput` 断言（pointer_move 观测事件 `flags & 1`）+ `web_pointer_input_wbtest`。
+- **`@zeno` 顶点枚举首字段方向陷阱**：`zeno` 的 `Vertex` 是
+  `Start(Point, Vector)` / `Middle(Vector, Point, Vector)` / `End(Vector, Point, Bool)`——
+  Middle/End 的**首字段是方向向量不是坐标**。曾经把首字段当坐标压进 mesh
+  （单位圆垃圾三角形），且把轮廓顶点按 3 个一组当三角形根本不是三角化。
+  现为 `moui/render/common/advanced_execution.mbt` 的 `path_fill_contours`（quad 12/
+  cubic 16 段展平）+ `triangulate_contour`（耳切，简单单轮廓多边形，洞语义不支持）
+  + 面积守恒 wbtest。任何新填充路径消费方都应复用这条链，别再直接吃 `Vertices` walker。
+- **`render_frame` 静默吞错**：`moui_web_renderer/adapter.mbt` 的
+  `self.render(commands) catch { _ => () }` 把整帧宿主调用错误吞掉——帧内某条
+  DrawPath 失败时，失败点**之前**的命令已提交（边线还在）、之后全部丢弃
+  （积木/文字消失），页面无任何报错。诊断这类"部分渲染"先怀疑帧内宿主调用失败。
+- **MoonBit 语言点**：`guard` 是关键字（不能当变量名）；`+=` 可用；`Array::fold`
+  参数顺序易错，测试里用显式 for 循环更稳；跨包结构体字面量需要类型标注。
+- **列布局固有高度陷阱**：无显式高度的 scroll_view（内容很高）在 column 里按内容
+  测量，会把 flexible 行撑出视口、把后续兄弟挤出屏幕——用 `frame(scroll_view(...),
+  height=...)` 封顶固有高度。UI 测试定位画布：别再手写屏幕偏移常量，用
+  `read_semantics` 找 `semantics_label` 节点的 `frame`（屏幕坐标）。
+- **源码行预算**：`app.mbt` 超过 1200 硬限后按产品架构拆出 `view.mbt`（视图层）；
+  UI 测试的画布同名文本（工具箱按钮 vs 积木标题）用 "+" 前缀消歧。

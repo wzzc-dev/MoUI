@@ -232,35 +232,76 @@ pub fn validate_node_config(
 }
 
 ///|
-/// 从图推导单步的执行策略：上游有 Retry → 最多 attempts 次重试；
-/// 上游有 Timeout → 单步预算（取上游所有 Timeout 配置的最小值）。
+/// 节点的上游闭包（含自身）：沿边反向可达的全体节点。
+/// Timeout 的预算约束其自身步骤，Retry 的重试预算同理，故闭包含 self。
+fn upstream_closure(graph : BlockGraph, node_id : Int) -> Array[Int] {
+  let incoming : Map[Int, Array[Int]] = Map([], capacity=16)
+  for edge in graph.edges {
+    let froms = match incoming.get(edge.to) {
+      Some(existing) => existing
+      None => {
+        let fresh : Array[Int] = []
+        incoming[edge.to] = fresh
+        fresh
+      }
+    }
+    froms.push(edge.from)
+  }
+  let seen : Array[Int] = [node_id]
+  let mut cursor = 0
+  while cursor < seen.length() {
+    let current = seen[cursor]
+    cursor += 1
+    match incoming.get(current) {
+      Some(froms) =>
+        for from in froms {
+          if !seen.contains(from) {
+            seen.push(from)
+          }
+        }
+      None => ()
+    }
+  }
+  seen
+}
+
+///|
+/// 从图推导单步的执行策略：真正上游（含自身）的 Retry → 总尝试上限
+/// attempts+1（attempts 为重试次数，钳制到 [0,3] 保证有界性，多级取最严）；
+/// 真正上游的 Timeout → 单步预算（取其配置最小值）。与图无关的
+/// Retry/Timeout 节点不再影响本步策略。
 pub fn step_policy(graph : BlockGraph, node_id : Int) -> (Int, Int) {
-  let retries = ["Retry"]
-  let timeouts = ["Timeout"]
-  let retry_sources = graph.nodes
-    .filter(fn(node) { retries.contains(node.kind) })
-    .map(fn(node) { node.id })
-  let retry_reach = reachable_from(graph, retry_sources)
-  let max_attempts = if retry_reach.contains(node_id) { 4 } else { 1 }
-  let timeout_sources = graph.nodes
-    .filter(fn(node) { timeouts.contains(node.kind) })
-    .map(fn(node) { node.id })
-  let timeout_reach = reachable_from(graph, timeout_sources)
+  let upstream = upstream_closure(graph, node_id)
+  let mut max_attempts = 1
   let mut budget = 0
-  if timeout_reach.contains(node_id) {
-    for node in graph.nodes {
-      if timeout_sources.contains(node.id) {
-        let value = match find_config_value(node, "budget_ms") {
-          Some(text) =>
-            match double_try_parse(text) {
-              Some(n) => n.to_int()
-              None => 3000
-            }
-          None => 3000
-        }
-        if budget == 0 || value < budget {
-          budget = value
-        }
+  for node in graph.nodes {
+    if !upstream.contains(node.id) {
+      continue
+    }
+    if node.kind == "Retry" {
+      let retries = match find_config_value(node, "attempts") {
+        Some(text) =>
+          match double_try_parse(text) {
+            Some(n) => n.to_int().max(0).min(3)
+            None => 3
+          }
+        None => 3
+      }
+      let total = retries + 1
+      if total > max_attempts {
+        max_attempts = total
+      }
+    } else if node.kind == "Timeout" {
+      let value = match find_config_value(node, "budget_ms") {
+        Some(text) =>
+          match double_try_parse(text) {
+            Some(n) => n.to_int()
+            None => 3000
+          }
+        None => 3000
+      }
+      if budget == 0 || value < budget {
+        budget = value
       }
     }
   }

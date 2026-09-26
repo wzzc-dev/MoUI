@@ -243,6 +243,22 @@ test "host maps touch button events to core pointer phases" {
 }
 
 ///|
+test "host decodes pointer moved with the default primary button" {
+  // PointerMoved never carries a button: core decoders leave it at the
+  // default 0 so the gesture modifiers see every Move as primary. The web
+  // decode layer must normalize to the same convention
+  // (moui/backend/web/web_pointer_input.mbt).
+  let moved = @input.window_event_to_host(
+    PointerMoved(None, PhysicalPositionF64(24.0, 48.0), true, Mouse),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match moved {
+    Some(Pointer({ phase: Move, button: 0, .. })) => ()
+    _ => fail("expected move with default primary button")
+  }
+}
+
+///|
 test "surface host resizes through host event" {
   let surface = @input.SurfaceState::new(
     metrics=@core.SurfaceMetrics::from_logical(

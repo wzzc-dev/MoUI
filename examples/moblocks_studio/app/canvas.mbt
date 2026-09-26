@@ -1,8 +1,6 @@
 ///|
 using @views {
   canvas,
-  fill_rounded_rect,
-  stroke_rounded_rect,
   draw_text,
   draw_path,
   push_clip,
@@ -18,11 +16,23 @@ let node_width = 168.0
 let node_height = 72.0
 
 ///|
+/// 榫卯半径：顶边凹槽与底边凸头共用同一半圆几何，上下积木可视觉咬合。
+let puzzle_tab_radius = 10.0
+
+///|
+/// 积木主体圆角半径。
+let block_corner_radius = 8.0
+
+///|
+/// 四分之一圆弧的 cubic 逼近系数。
+let arc_kappa = 0.5522847498
+
+///|
 /// 画布绘制计划：纯数据，视图闭包只负责解释执行。
 /// 测试可断言计划规模随节点数线性增长（帧基线的结构化代理）。
 enum CanvasDrawOp {
-  FillNode(@geometry.Rect, @graphics.Color)
-  StrokeNode(@geometry.Rect, @graphics.Color, Double)
+  FillBlock(Array[@graphics.PathVerb], @graphics.Color)
+  StrokeBlock(Array[@graphics.PathVerb], @graphics.Color, Double)
   NodeText(String, @geometry.Rect, @graphics.Color)
   EdgeLine(@geometry.Point, @geometry.Point, @graphics.Color)
 }
@@ -34,16 +44,154 @@ pub fn node_rect(node : BlockNode) -> @geometry.Rect {
 }
 
 ///|
+/// 下半圆弧从左到右（经过最低点）的 cubic 段，凹槽沿顶边左→右遍历时使用。
+fn puzzle_arc_left_to_right(
+  cx : Double,
+  cy : Double,
+  r : Double,
+) -> Array[@graphics.PathVerb] {
+  let k = arc_kappa * r
+  [
+    // (cx-r, cy) -> (cx, cy+r)
+    @graphics.PathVerb::CubicTo(
+      @geometry.Point::new(x=cx - r, y=cy + k),
+      @geometry.Point::new(x=cx - k, y=cy + r),
+      @geometry.Point::new(x=cx, y=cy + r),
+    ),
+    // (cx, cy+r) -> (cx+r, cy)
+    @graphics.PathVerb::CubicTo(
+      @geometry.Point::new(x=cx + k, y=cy + r),
+      @geometry.Point::new(x=cx + r, y=cy + k),
+      @geometry.Point::new(x=cx + r, y=cy),
+    ),
+  ]
+}
+
+///|
+/// 下半圆弧从右到左（经过最低点）的 cubic 段，凸头沿底边右→左遍历时使用。
+fn puzzle_arc_right_to_left(
+  cx : Double,
+  cy : Double,
+  r : Double,
+) -> Array[@graphics.PathVerb] {
+  let k = arc_kappa * r
+  [
+    // (cx+r, cy) -> (cx, cy+r)
+    @graphics.PathVerb::CubicTo(
+      @geometry.Point::new(x=cx + r, y=cy + k),
+      @geometry.Point::new(x=cx + k, y=cy + r),
+      @geometry.Point::new(x=cx, y=cy + r),
+    ),
+    // (cx, cy+r) -> (cx-r, cy)
+    @graphics.PathVerb::CubicTo(
+      @geometry.Point::new(x=cx - k, y=cy + r),
+      @geometry.Point::new(x=cx - r, y=cy + k),
+      @geometry.Point::new(x=cx - r, y=cy),
+    ),
+  ]
+}
+
+///|
+/// 积木榫卯外轮廓（图坐标）：圆角矩形主体 + 顶边凹槽 + 底边凸头。
+/// 框架没有路径 clip，凹槽必须画进外轮廓而非挖洞；inflate>0 生成外扩
+/// 轮廓供选中/聚光灯描边（凸头半径增大、凹槽半径相应收窄）。
+fn block_outline_verbs(
+  rect : @geometry.Rect,
+  inflate : Double,
+) -> Array[@graphics.PathVerb] {
+  let x0 = rect.origin.x - inflate
+  let y0 = rect.origin.y - inflate
+  let x1 = rect.origin.x + rect.size.width + inflate
+  let y1 = rect.origin.y + rect.size.height + inflate
+  let c = block_corner_radius + inflate
+  let cx = (x0 + x1) / 2.0
+  let tab_r = puzzle_tab_radius + inflate
+  let notch_r = puzzle_tab_radius - inflate
+  let verbs : Array[@graphics.PathVerb] = [
+    @graphics.PathVerb::MoveTo(@geometry.Point::new(x=x0 + c, y=y0)),
+  ]
+  // 顶边：左段 → 凹槽（挖进主体）→ 右段
+  if notch_r > 1.0 {
+    verbs.push(
+      @graphics.PathVerb::LineTo(@geometry.Point::new(x=cx - notch_r, y=y0)),
+    )
+    for verb in puzzle_arc_left_to_right(cx, y0, notch_r) {
+      verbs.push(verb)
+    }
+  }
+  verbs.push(@graphics.PathVerb::LineTo(@geometry.Point::new(x=x1 - c, y=y0)))
+  verbs.push(
+    @graphics.PathVerb::QuadTo(
+      @geometry.Point::new(x=x1, y=y0),
+      @geometry.Point::new(x=x1, y=y0 + c),
+    ),
+  )
+  verbs.push(@graphics.PathVerb::LineTo(@geometry.Point::new(x=x1, y=y1 - c)))
+  verbs.push(
+    @graphics.PathVerb::QuadTo(
+      @geometry.Point::new(x=x1, y=y1),
+      @geometry.Point::new(x=x1 - c, y=y1),
+    ),
+  )
+  // 底边：右段 → 凸头（凸出主体下缘）→ 左段
+  verbs.push(
+    @graphics.PathVerb::LineTo(@geometry.Point::new(x=cx + tab_r, y=y1)),
+  )
+  for verb in puzzle_arc_right_to_left(cx, y1, tab_r) {
+    verbs.push(verb)
+  }
+  verbs.push(@graphics.PathVerb::LineTo(@geometry.Point::new(x=x0 + c, y=y1)))
+  verbs.push(
+    @graphics.PathVerb::QuadTo(
+      @geometry.Point::new(x=x0, y=y1),
+      @geometry.Point::new(x=x0, y=y1 - c),
+    ),
+  )
+  verbs.push(@graphics.PathVerb::LineTo(@geometry.Point::new(x=x0, y=y0 + c)))
+  verbs.push(
+    @graphics.PathVerb::QuadTo(
+      @geometry.Point::new(x=x0, y=y0),
+      @geometry.Point::new(x=x0 + c, y=y0),
+    ),
+  )
+  verbs.push(@graphics.PathVerb::Close)
+  verbs
+}
+
+///|
+/// 榫卯形状命中（图坐标）：底边凸头半圆 ∪（主体矩形 − 顶边凹槽半圆）。
+fn block_contains(node : BlockNode, x : Double, y : Double) -> Bool {
+  let cx = node.x + node_width / 2.0
+  // 底边凸头凸出主体下缘
+  let tab_dx = x - cx
+  let tab_dy = y - (node.y + node_height)
+  if tab_dx * tab_dx + tab_dy * tab_dy <= puzzle_tab_radius * puzzle_tab_radius {
+    return true
+  }
+  if x < node.x ||
+    x > node.x + node_width ||
+    y < node.y ||
+    y > node.y + node_height {
+    return false
+  }
+  // 顶边凹槽挖空区域不命中
+  let notch_dx = x - cx
+  let notch_dy = y - node.y
+  if notch_dx * notch_dx + notch_dy * notch_dy <
+    puzzle_tab_radius * puzzle_tab_radius {
+    return false
+  }
+  true
+}
+
+///|
 /// 命中测试（图坐标）：后画的在上，倒序命中第一个包含点的节点。
 pub fn hit_test(graph : BlockGraph, x : Double, y : Double) -> BlockNode? {
   let mut i = graph.nodes.length()
   while i > 0 {
     i = i - 1
     let node = graph.nodes[i]
-    if x >= node.x &&
-      x <= node.x + node_width &&
-      y >= node.y &&
-      y <= node.y + node_height {
+    if block_contains(node, x, y) {
       return Some(node)
     }
   }
@@ -56,7 +204,7 @@ fn edge_line_color() -> @graphics.Color {
 }
 
 ///|
-/// 生成画布的纯数据绘制计划（图坐标）：先边后节点，选中节点追加描边，
+/// 生成画布的纯数据绘制计划（图坐标）：先边后节点，选中节点追加外扩描边，
 /// 聚光灯节点（当前执行/等待确认）追加高亮描边。
 pub fn canvas_draw_plan(
   graph : BlockGraph,
@@ -84,7 +232,7 @@ pub fn canvas_draw_plan(
       None => @graphics.Color::rgba(r=0.5, g=0.5, b=0.5)
     }
     let rect = node_rect(node)
-    ops.push(FillNode(rect, color))
+    ops.push(FillBlock(block_outline_verbs(rect, 0.0), color))
     ops.push(
       NodeText(node.title, rect, @graphics.Color::rgba(r=1.0, g=1.0, b=1.0)),
     )
@@ -92,13 +240,8 @@ pub fn canvas_draw_plan(
       Some(selected) =>
         if selected == node.id {
           ops.push(
-            StrokeNode(
-              @geometry.Rect::new(
-                x=rect.origin.x - 3.0,
-                y=rect.origin.y - 3.0,
-                width=rect.size.width + 6.0,
-                height=rect.size.height + 6.0,
-              ),
+            StrokeBlock(
+              block_outline_verbs(rect, 3.0),
               @graphics.Color::rgba(r=0.10, g=0.24, b=0.86),
               2.5,
             ),
@@ -110,13 +253,8 @@ pub fn canvas_draw_plan(
       Some(lit) =>
         if lit == node.id {
           ops.push(
-            StrokeNode(
-              @geometry.Rect::new(
-                x=rect.origin.x - 6.0,
-                y=rect.origin.y - 6.0,
-                width=rect.size.width + 12.0,
-                height=rect.size.height + 12.0,
-              ),
+            StrokeBlock(
+              block_outline_verbs(rect, 6.0),
               @graphics.Color::rgba(r=0.99, g=0.77, b=0.10),
               3.5,
             ),
@@ -157,18 +295,22 @@ pub fn block_canvas(
       })
       for op in canvas_draw_plan(graph, selection, spotlight) {
         match op {
-          FillNode(rect, color) =>
-            fill_rounded_rect(
+          FillBlock(verbs, color) =>
+            draw_path(
               ctx,
-              @graphics.RoundedRect::new(rect~, radius=10.0),
-              @graphics.Brush::solid(color),
+              @graphics.PathSpec::new(
+                verbs~,
+                fill=Some(@graphics.Brush::solid(color)),
+              ),
             )
-          StrokeNode(rect, color, width) =>
-            stroke_rounded_rect(
+          StrokeBlock(verbs, color, width) =>
+            draw_path(
               ctx,
-              @graphics.RoundedRect::new(rect~, radius=12.0),
-              @graphics.Brush::solid(color),
-              width,
+              @graphics.PathSpec::new(
+                verbs~,
+                stroke=Some(@graphics.Brush::solid(color)),
+                stroke_width=width,
+              ),
             )
           NodeText(content, rect, color) =>
             draw_text(

@@ -4,21 +4,20 @@
 async fn main {
   let owner = @provider.ProviderOwner::new()
   let runtime = @runtime.new_program_with_dimensions(
-    program=@moblocks_app.program(provider_submit=(
-      endpoint,
-      key,
-      prompt,
-      on_result,
-    ) => {
-      @provider.provider_submit_prompt(
-        owner,
-        endpoint,
-        key,
-        @moblocks_app.proposal_system_prompt(),
-        prompt,
-        on_result,
-      )
-    }),
+    program=@moblocks_app.program(
+      environment=@macos.app_environment(),
+      provider_submit=(endpoint, key, prompt, on_result) => {
+        @provider.provider_submit_prompt(
+          owner,
+          endpoint,
+          key,
+          @moblocks_app.proposal_system_prompt(),
+          prompt,
+          on_result,
+        )
+      },
+      real_provider_available=true,
+    ),
     width=1280.0,
     height=800.0,
   )

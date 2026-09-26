@@ -97,6 +97,7 @@ const failedObservations = () => ({
   resizeEvent: "no",
   resizedCanvas: "no",
   pointerInput: "no",
+  dragInput: "no",
   keyboardInput: "no",
   textInput: "no",
   radialGradient: "no",
@@ -608,6 +609,37 @@ const performInteractionProbe = async (session, target) => {
     windowsVirtualKeyCode: 39,
     nativeVirtualKeyCode: 39,
   });
+  await sleep(150);
+
+  // Drag probe: press, move past the gesture slop in distinct steps, release.
+  // Starting from the canvas center keeps the pointer inside the app content,
+  // where a scroll container or a captured view must consume the moves.
+  const dragX = Math.max(rect.left + 24, Math.round(rect.left + rect.width / 2));
+  const dragStartY = Math.max(rect.top + 24, Math.round(rect.top + rect.height / 2) - 40);
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x: dragX,
+    y: dragStartY,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+  });
+  for (const step of [1, 2, 3, 4]) {
+    await session.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x: dragX,
+      y: dragStartY + step * 8,
+      buttons: 1,
+    });
+  }
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x: dragX,
+    y: dragStartY + 32,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+  });
   await sleep(550);
 };
 
@@ -619,6 +651,14 @@ const runtimeSignalsFromLog = logText => ({
 });
 
 const hasEvent = (events, names) => events.some(event => names.includes(event?.name));
+
+// A drag only counts when the wasm side consumed a Move (flags & 1). The
+// pointer-move button decode regression made every Move a non-primary no-op,
+// so pointer events were observed but never handled.
+const hasHandledPointerMove = events =>
+  events.some(
+    event => event?.name === "pointer_move" && ((Number(event.flags) || 0) & 1) === 1,
+  );
 
 const colorGlyphEventReady = event =>
   event?.name === "text_color_glyph" &&
@@ -924,6 +964,7 @@ const deriveTargetStatus = (target, observations) => {
     "resizeEvent",
     "resizedCanvas",
     "pointerInput",
+    "dragInput",
     "keyboardInput",
     "targetClosed",
   ];
@@ -1096,6 +1137,7 @@ const probeTarget = async target => {
       resizeEvent: hasEvent(observationEvents, ["resize"]) ? "yes" : "no",
       resizedCanvas: state.canvas.clientWidth === 1120 && state.canvas.clientHeight === 720 ? "yes" : "no",
       pointerInput: hasEvent(observationEvents, ["pointer_down", "pointer_up", "pointer_move"]) ? "yes" : "no",
+      dragInput: hasHandledPointerMove(observationEvents) ? "yes" : "no",
       keyboardInput: hasEvent(observationEvents, ["key_down", "key_up"]) ? "yes" : "no",
       textInput: hasEvent(observationEvents, ["ime_commit"]) ? "yes" : "no",
       radialGradient: screenshot.radialGradient?.passed ? "yes" : "no",
@@ -1116,6 +1158,9 @@ const probeTarget = async target => {
     }
     if (observations.pointerInput !== "yes" || observations.keyboardInput !== "yes") {
       notes.push("representative input observation did not reach the wasm event bridge");
+    }
+    if (observations.dragInput !== "yes") {
+      notes.push("drag probe was not handled by any pointer-move consumer (drag recognizer never saw a primary move)");
     }
     if (observations.textInput !== "yes") {
       notes.push("text input commit was not observed for this target");

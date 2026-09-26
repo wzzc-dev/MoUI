@@ -12,6 +12,27 @@ fn web_pointer_phase(kind : Int) -> @core.PointerPhase? {
 }
 
 ///|
+/// Normalize the DOM button channel to the core pointer convention.
+///
+/// Browsers report `button = -1` on move/exit/cancel (no button changed since
+/// the last event); native window decoders never see that and leave Move's
+/// button at the default 0, and the gesture modifiers treat any Move without
+/// button 0 as a non-primary event, which would stall every drag on web.
+/// Press/release carry DOM codes (0 left / 1 middle / 2 right) while core uses
+/// the native mapping (0 left / 1 right / 2 middle), so swap middle/right here.
+fn web_pointer_button(kind : Int, dom_button : Int) -> Int {
+  match kind {
+    23 | 24 =>
+      match dom_button {
+        1 => 2 // middle
+        2 => 1 // right
+        other => other
+      }
+    _ => 0
+  }
+}
+
+///|
 fn web_pointer_modifiers(bits : Int) -> @core.KeyModifiers {
   @core.KeyModifiers::new(
     shift=(bits & 1) != 0,
@@ -45,7 +66,7 @@ fn WebApp::dispatch_web_pointer_input(
       let pointer = @core.PointerEvent::new(
         position~,
         phase~,
-        button~,
+        button=web_pointer_button(kind, button),
         wheel_delta=@window_input.physical_position_to_core(
           PhysicalPositionF64(delta_x_px, delta_y_px),
           scale_factor~,

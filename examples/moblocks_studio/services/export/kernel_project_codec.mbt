@@ -201,10 +201,9 @@ pub fn kernel_project_codec() -> String {
     #|    Some(Array(values)) => values
     #|    _ => return Err([InvalidProject])
     #|  }
-    #|  let next_id = match graph_fields.get("next_id") {
-    #|    Some(Number(n, ..)) => n.to_int()
-    #|    _ => 1
-    #|  }
+    #|  // next_id 缺省时回退 max_id+1（而不是 1）：文件缺字段时继续 add_node
+    #|  // 会与现存节点产生重复 id（校验器只能下游兜底，这里在上游修对）。
+    #|  let next_id_field = graph_fields.get("next_id")
     #|  let nodes : Array[BlockNode] = []
     #|  let mut max_id = 0
     #|  let mut has_coordinates = false
@@ -252,6 +251,10 @@ pub fn kernel_project_codec() -> String {
     #|      }
     #|      _ => return Err([InvalidProject])
     #|    }
+    #|  }
+    #|  let next_id = match next_id_field {
+    #|    Some(Number(n, ..)) => n.to_int()
+    #|    _ => max_id + 1
     #|  }
     #|  let edges : Array[BlockEdge] = []
     #|  for value in edge_values {

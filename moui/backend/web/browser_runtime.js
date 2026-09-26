@@ -74,6 +74,16 @@ export class CanvasInputRouter {
       | (event?.metaKey ? 8 : 0);
   }
 
+  // DOM reports button = -1 on move/exit/cancel (no button changed since the
+  // last event); the wasm gesture layer treats any Move without button 0 as
+  // non-primary and would stall every drag. Only press/release carry a button,
+  // and the decode layer maps DOM codes to the core convention
+  // (see web_pointer_input.mbt).
+  dispatchButton(kind, event) {
+    if (kind !== 23 && kind !== 24) return 0;
+    return Number(event?.button) || 0;
+  }
+
   dispatch(kind, event, delta = { x: 0, y: 0 }, point = this.position(this.canvas, event)) {
     const pointerId = Number(event?.pointerId) || 1;
     const flags = Number(this.dispatchPointer(
@@ -82,7 +92,7 @@ export class CanvasInputRouter {
       point.y,
       Number(delta.x) || 0,
       Number(delta.y) || 0,
-      Number(event?.button) || 0,
+      this.dispatchButton(kind, event),
       this.modifiers(event),
     )) || 0;
     if ((flags & WEB_INPUT_FLAGS.capturePointer) !== 0) {

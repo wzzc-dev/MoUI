@@ -112,15 +112,31 @@ test "M2：提示词输入驱动假模型关键词路由" {
 
 ///|
 /// 画布 draw 命令里的文本帧是**画布局部坐标**（画布 draw 回调里的 transform 不进
-/// 命令记录），而指针事件是屏幕坐标。画布位于 notice（32px 高）之下、根 column 的
-/// 默认间距 10px 处，故画布屏幕原点为 (0, 42)；把局部帧换算成屏幕点需加上该偏移。
-let canvas_top_offset = 42.0
+/// 命令记录），而指针事件是屏幕坐标。画布的屏幕原点从语义树读取
+/// （canvas 带 semantics_label="积木画布"，SemanticsNode.frame 即屏幕帧），
+/// 布局调整时无需再手改偏移常量。
+fn canvas_screen_origin(runtime : @runtime.AppRuntime) -> @geometry.Point raise {
+  match runtime.read_semantics() {
+    Ok(Full(snapshot)) =>
+      for node in snapshot.nodes() {
+        if node.label == "积木画布" {
+          return node.frame.origin
+        }
+      }
+    _ => ()
+  }
+  fail("expected canvas semantics node with label 积木画布")
+}
 
 ///|
-fn canvas_screen_point(rect : @geometry.Rect) -> @geometry.Point {
+fn canvas_screen_point(
+  runtime : @runtime.AppRuntime,
+  rect : @geometry.Rect,
+) -> @geometry.Point raise {
+  let origin = canvas_screen_origin(runtime)
   @geometry.Point::new(
-    x=rect.origin.x + rect.size.width / 2.0,
-    y=rect.origin.y + rect.size.height / 2.0 + canvas_top_offset,
+    x=rect.origin.x + rect.size.width / 2.0 + origin.x,
+    y=rect.origin.y + rect.size.height / 2.0 + origin.y,
   )
 }
 
@@ -138,7 +154,7 @@ fn canvas_drag_label(
     Some(rect) => rect
     None => fail("expected canvas text frame for \{label}")
   }
-  let start = canvas_screen_point(frame)
+  let start = canvas_screen_point(runtime, frame)
   runtime.dispatch_event(
     Pointer(@core.PointerEvent::new(position=start, phase=Down)),
   )
