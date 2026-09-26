@@ -2,13 +2,13 @@
 
 像搭积木一样构建应用，也可以让 AI 直接生成可视、可改、可验证的工作流。
 
-参赛作品：2026 上海开源软件应用创新大赛「开源 AI 工具」赛道。底座是 MoUI（跨平台 MoonBit 声明式 UI 框架 + TEA 运行时）；MoBlocks Studio 是构建在其上的完整产品。
+底座是 MoUI（跨平台 MoonBit 声明式 UI 框架 + TEA 运行时）；MoBlocks Studio 是构建在其上的完整产品。
 
 项目介绍（创新/可用/开源/案例四维口径）见 [PROJECT_INTRO.md](PROJECT_INTRO.md)。
 
 ## 5 分钟 Quick Start
 
-### Web（评审主路径）
+### Web
 
 ```sh
 # 在仓库根目录

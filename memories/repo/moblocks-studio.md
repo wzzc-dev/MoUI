@@ -2,7 +2,7 @@
 
 ## Package
 
-- `examples/moblocks_studio`（module `examples/moblocks_studio`）：AI 直接生成的可视化应用开发工具，2026 上海赛交付物。计划：`docs/plans/active/moblocks-studio.md`。
+- `examples/moblocks_studio`（module `examples/moblocks_studio`）：AI 直接生成的可视化应用开发工具，计划：`docs/plans/active/moblocks-studio.md`。
 - 结构：`app/`（平台中立 TEA + 领域模型）、`web_wasm/`（评审主路径）、`fixtures/`（离线样例，M1 起充实）。services/ 与 macos_skia/ 留待后续里程碑。
 - 最小循环：`moon test examples/moblocks_studio/app --target native|wasm-gc`、`moon build examples/moblocks_studio/web_wasm --target wasm-gc`。
 
