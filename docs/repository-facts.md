@@ -57,6 +57,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/momark |
 | ./examples/browser |
 | ./examples/terminal |
+| ./examples/moblocks_studio |
 | ./benchmarks/app_cached_layer |
 | ./benchmarks/full_cycle |
 | ./benchmarks/performance_budget |
@@ -117,6 +118,7 @@ This file is generated from repository manifests and validator reports.
 | MoMark | examples/momark | no |
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
+| MoBlocks Studio | examples/moblocks_studio | no |
 
 ## Platform Status
 

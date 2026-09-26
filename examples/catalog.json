@@ -138,6 +138,12 @@
       "path": "examples/terminal",
       "title": "Terminal",
       "featured": true
+    },
+    {
+      "id": "moblocks_studio",
+      "path": "examples/moblocks_studio",
+      "title": "MoBlocks Studio",
+      "featured": false
     }
   ]
 }

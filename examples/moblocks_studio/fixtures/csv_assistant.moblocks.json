@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "id": "csv-assistant",
+    "name": "CSV 分析助手",
+    "revision": 1
+  },
+  "format": "moblocks.project",
+  "graph": {
+    "next_id": 9,
+    "nodes": [
+      { "id": 1, "kind": "AppStart", "title": "应用启动", "x": 60.0, "y": 60.0, "config": [] },
+      { "id": 2, "kind": "UserPrompt", "title": "用户提问", "x": 280.0, "y": 60.0, "config": [] },
+      { "id": 3, "kind": "FileSelected", "title": "选择 CSV", "x": 500.0, "y": 60.0, "config": [] },
+      { "id": 4, "kind": "ForEach", "title": "有限遍历", "x": 720.0, "y": 60.0, "config": [["limit", "20"]] },
+      { "id": 5, "kind": "StructuredModelCall", "title": "逐行结构化", "x": 940.0, "y": 60.0, "config": [] },
+      { "id": 6, "kind": "UserConfirmation", "title": "外发确认", "x": 1160.0, "y": 60.0, "config": [] },
+      { "id": 7, "kind": "ShowTable", "title": "汇总表", "x": 1380.0, "y": 60.0, "config": [] },
+      { "id": 8, "kind": "PromptTemplate", "title": "汇总模板", "x": 1380.0, "y": 200.0, "config": [] }
+    ],
+    "edges": [
+      [1, "flow", 2, "trigger"],
+      [2, "flow", 3, "trigger"],
+      [3, "flow", 4, "trigger"],
+      [4, "flow", 6, "trigger"],
+      [6, "flow", 5, "trigger"],
+      [5, "flow", 7, "trigger"],
+      [2, "prompt", 8, "topic"],
+      [8, "rendered", 5, "prompt"],
+      [6, "approved", 5, "approved"],
+      [5, "result", 7, "data"]
+    ]
+  },
+  "policy": {
+    "allow_external_submit": false,
+    "allow_file_read": true,
+    "allow_file_write": false,
+    "require_confirmation": true
+  },
+  "template_origin": "csv-assistant",
+  "version": 1,
+  "viewport": { "x": 0.0, "y": 0.0, "zoom": 1.0 }
+}

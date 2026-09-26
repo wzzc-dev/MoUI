@@ -1,0 +1,22 @@
+import {
+  "moonbitlang/core/json",
+  "examples/moblocks_studio/services/export",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/text",
+}
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/geometry",
+} for "test"
+
+supported_targets = "native+wasm-gc"
+
+options(
+  targets: { },
+)

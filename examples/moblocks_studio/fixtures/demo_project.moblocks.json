@@ -1,0 +1,107 @@
+{
+  "metadata": {
+    "id": "demo",
+    "name": "对话机器人示例",
+    "revision": 1
+  },
+  "format": "moblocks.project",
+  "graph": {
+    "next_id": 9,
+    "nodes": [
+      {
+        "config": [],
+        "id": 1,
+        "title": "应用启动",
+        "kind": "AppStart",
+        "x": 60.0,
+        "y": 60.0
+      },
+      {
+        "config": [],
+        "id": 2,
+        "title": "用户提问",
+        "kind": "UserPrompt",
+        "x": 280.0,
+        "y": 60.0
+      },
+      {
+        "config": [],
+        "id": 3,
+        "title": "会话记忆",
+        "kind": "ConversationMemory",
+        "x": 500.0,
+        "y": 60.0
+      },
+      {
+        "config": [],
+        "id": 4,
+        "title": "人设模板",
+        "kind": "PromptTemplate",
+        "x": 720.0,
+        "y": 60.0
+      },
+      {
+        "config": [],
+        "id": 5,
+        "title": "确认信封解析",
+        "kind": "ParseJson",
+        "x": 940.0,
+        "y": 60.0
+      },
+      {
+        "config": [],
+        "id": 6,
+        "title": "外发确认",
+        "kind": "UserConfirmation",
+        "x": 1160.0,
+        "y": 60.0
+      },
+      {
+        "config": [["temperature", "0.5"]],
+        "id": 7,
+        "title": "模型调用",
+        "kind": "ModelCall",
+        "x": 1380.0,
+        "y": 60.0
+      },
+      {
+        "config": [],
+        "id": 8,
+        "title": "渲染回复",
+        "kind": "ShowMarkdown",
+        "x": 1600.0,
+        "y": 60.0
+      }
+    ],
+    "edges": [
+      [1, "flow", 2, "trigger"],
+      [2, "flow", 3, "trigger"],
+      [3, "flow", 4, "trigger"],
+      [4, "flow", 5, "trigger"],
+      [5, "flow", 6, "trigger"],
+      [6, "flow", 7, "trigger"],
+      [7, "flow", 8, "trigger"],
+      [2, "prompt", 4, "topic"],
+      [2, "prompt", 7, "prompt"],
+      [2, "message", 3, "append"],
+      [3, "history", 7, "context"],
+      [4, "rendered", 5, "text"],
+      [5, "value", 6, "action"],
+      [6, "approved", 7, "approved"],
+      [7, "reply", 8, "content"]
+    ]
+  },
+  "policy": {
+    "allow_external_submit": false,
+    "allow_file_read": true,
+    "allow_file_write": false,
+    "require_confirmation": true
+  },
+  "template_origin": "",
+  "version": 1,
+  "viewport": {
+    "x": 0.0,
+    "y": 0.0,
+    "zoom": 1.0
+  }
+}

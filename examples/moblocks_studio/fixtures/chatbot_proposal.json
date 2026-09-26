@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "nodes": [
+    { "id": 1, "kind": "AppStart", "title": "应用启动" },
+    { "id": 2, "kind": "UserPrompt", "title": "用户提问" },
+    { "id": 3, "kind": "ConversationMemory", "title": "会话记忆" },
+    { "id": 4, "kind": "PromptTemplate", "title": "人设模板" },
+    { "id": 5, "kind": "ParseJson", "title": "确认信封解析" },
+    { "id": 6, "kind": "UserConfirmation", "title": "外发确认" },
+    { "id": 7, "kind": "ModelCall", "title": "模型调用", "config": { "temperature": "0.5" } },
+    { "id": 8, "kind": "ShowMarkdown", "title": "渲染回复" }
+  ],
+  "edges": [
+    [1, "flow", 2, "trigger"],
+    [2, "flow", 3, "trigger"],
+    [3, "flow", 4, "trigger"],
+    [4, "flow", 5, "trigger"],
+    [5, "flow", 6, "trigger"],
+    [6, "flow", 7, "trigger"],
+    [7, "flow", 8, "trigger"],
+    [2, "prompt", 4, "topic"],
+    [2, "prompt", 7, "prompt"],
+    [2, "message", 3, "append"],
+    [3, "history", 7, "context"],
+    [4, "rendered", 5, "text"],
+    [5, "value", 6, "action"],
+    [6, "approved", 7, "approved"],
+    [7, "reply", 8, "content"]
+  ]
+}

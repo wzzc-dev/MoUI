@@ -1,0 +1,422 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moblocks_studio/app"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
+}
+
+// Values
+pub fn add_flow_edge(BlockGraph, Int, Int) -> BlockGraph
+
+pub fn apply_exec_event(ExecutionState, ExecEvent, Array[BlockSpec]) -> ExecutionState
+
+pub fn auto_layout(BlockGraph) -> BlockGraph
+
+pub fn block_canvas(BlockGraph, Int?, Int?, Double, Double, Double) -> @core.View[Msg]
+
+pub fn block_catalog() -> Array[BlockSpec]
+
+pub fn canvas_draw_plan(BlockGraph, Int?, Int?) -> Array[CanvasDrawOp]
+
+pub fn category_color(BlockCategory) -> @core.Color
+
+pub fn decode_project(String, Array[BlockSpec]) -> Result[Project, Array[ValidationError]]
+
+pub fn decode_proposal(String, Array[BlockSpec]) -> Result[BlockGraph, Array[ValidationError]]
+
+pub fn default_policy() -> ProjectPolicy
+
+pub fn default_prompt() -> String
+
+pub fn encode_project(Project) -> String
+
+pub fn export_audit_markdown(ExecutionState) -> String
+
+pub fn fake_generate_from_prompt(String, Array[BlockSpec]) -> Result[BlockGraph, Array[ValidationError]]
+
+pub fn fake_model_completion(String) -> Json
+
+pub fn find_config_spec(BlockSpec, String) -> ConfigSpec?
+
+pub fn find_config_value(BlockNode, String) -> String?
+
+pub fn find_input_port(BlockSpec, String) -> PortSpec?
+
+pub fn find_output_port(BlockSpec, String) -> PortSpec?
+
+pub fn find_spec(Array[BlockSpec], String) -> BlockSpec?
+
+pub fn finish_real_generation(String, Array[BlockSpec]) -> Result[BlockGraph, Array[ValidationError]]
+
+pub fn flow_in_port() -> String
+
+pub fn flow_out_port() -> String
+
+pub fn generate_from_prompt(String, Array[BlockSpec]) -> Result[BlockGraph, Array[ValidationError]]
+
+pub fn has_cycle(BlockGraph) -> Bool
+
+pub fn hit_test(BlockGraph, Double, Double) -> BlockNode?
+
+pub fn join_path(String, String) -> String
+
+pub fn max_edges() -> Int
+
+pub fn max_foreach_limit() -> Int
+
+pub fn max_nodes() -> Int
+
+pub fn node_rect(BlockNode) -> @core.Rect
+
+pub fn port_type_label(PortType) -> String
+
+pub fn port_types_equal(PortType, PortType) -> Bool
+
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (String, String, String, (Result[String, String]) -> Unit) -> Unit) -> @core.Program[Model, Msg]
+
+pub fn project_format() -> String
+
+pub fn proposal_system_prompt() -> String
+
+pub fn reachable_from(BlockGraph, Array[Int]) -> Array[Int]
+
+pub fn run_status_label(RunStatus) -> String
+
+pub fn start_execution(BlockGraph) -> ExecutionState
+
+pub fn step_needs_confirmation(Array[BlockSpec], String) -> Bool
+
+pub fn step_policy(BlockGraph, Int) -> (Int, Int)
+
+pub fn step_status_label(StepStatus) -> String
+
+pub fn step_summaries(BlockGraph, BlockNode) -> (String, String)
+
+pub fn summary_max_chars() -> Int
+
+pub fn topo_order(BlockGraph, Array[Int]) -> Array[Int]
+
+pub fn truncate_summary(String) -> String
+
+pub fn update_pure(Model, Msg) -> (Model, @core.Effect[Msg])
+
+pub fn update_with_services(Model, Msg, @services.AppServices) -> (Model, @core.Effect[Msg])
+
+pub fn validate_graph(BlockGraph, Array[BlockSpec]) -> Array[ValidationError]
+
+pub fn validate_node_config(BlockNode, BlockSpec) -> Array[ValidationError]
+
+pub fn validation_error_label(ValidationError) -> String
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) enum BlockCategory {
+  Event
+  AI
+  Safety
+  Control
+  DataUI
+}
+
+pub(all) struct BlockEdge {
+  from : Int
+  from_port : String
+  to : Int
+  to_port : String
+}
+
+pub(all) struct BlockGraph {
+  nodes : Array[BlockNode]
+  edges : Array[BlockEdge]
+  next_id : Int
+}
+pub fn BlockGraph::add_node(Self, String, String, Double, Double) -> Self
+pub fn BlockGraph::empty() -> Self
+pub fn BlockGraph::find_node(Self, Int) -> BlockNode?
+pub fn BlockGraph::move_node(Self, Int, Double, Double) -> Self
+
+pub(all) struct BlockNode {
+  id : Int
+  kind : String
+  title : String
+  x : Double
+  y : Double
+  config : Array[(String, String)]
+}
+
+pub(all) struct BlockSpec {
+  kind : String
+  category : BlockCategory
+  title : String
+  effect_kind : EffectKind
+  risk_class : RiskClass
+  summary : String
+  input_ports : Array[PortSpec]
+  output_ports : Array[PortSpec]
+  config_schema : Array[ConfigSpec]
+}
+
+type CanvasDrawOp
+
+pub(all) struct ConfigSpec {
+  key : String
+  label : String
+  value_type : ConfigType
+  default : String
+}
+
+pub(all) enum ConfigType {
+  CfgString
+  CfgNumber
+  CfgBool
+}
+
+pub(all) enum DragState {
+  DragIdle
+  DraggingNode(Int, Double, Double)
+  Panning(Double, Double, Double, Double)
+}
+
+pub(all) enum EffectKind {
+  Pure
+  Model
+  UI
+  Control
+}
+
+pub(all) enum ExecEvent {
+  Start
+  StepOk
+  StepFail(String)
+  Tick(Int)
+  Confirm
+  Reject
+  Cancel
+}
+
+pub(all) struct ExecutionState {
+  status : RunStatus
+  steps : Array[StepRecord]
+  cursor : Int
+  now_ms : Int
+  audit : Array[String]
+}
+pub fn ExecutionState::idle() -> Self
+
+pub(all) enum GraphEdit {
+  AddNode(String, Double, Double)
+  DeleteNode(Int)
+  AddEdge(Int, String, Int, String)
+  DeleteEdge(Int, String, Int, String)
+  AddFlowEdge(Int, Int)
+  MoveNode(Int, Double, Double)
+  SetNodeTitle(Int, String)
+  SetConfig(Int, String, String)
+  ClearConfig(Int, String)
+}
+
+pub(all) struct GraphEditor {
+  graph : BlockGraph
+  past : Array[BlockGraph]
+  future : Array[BlockGraph]
+  specs : Array[BlockSpec]
+}
+pub fn GraphEditor::apply(Self, GraphEdit) -> Self?
+pub fn GraphEditor::can_redo(Self) -> Bool
+pub fn GraphEditor::can_undo(Self) -> Bool
+pub fn GraphEditor::graph(Self) -> BlockGraph
+pub fn GraphEditor::new(Array[BlockSpec], BlockGraph) -> Self
+pub fn GraphEditor::redo(Self) -> Self
+pub fn GraphEditor::undo(Self) -> Self
+pub fn GraphEditor::undo_depth(Self) -> Int
+
+pub(all) struct Model {
+  editor : GraphEditor
+  selection : Int?
+  pending_proposal : PendingProposal?
+  viewport_x : Double
+  viewport_y : Double
+  viewport_zoom : Double
+  drag : DragState
+  execution : ExecutionState
+  notice : String
+  project_name : String
+  dirty : Bool
+  fake_provider : Bool
+  provider_endpoint : String
+  provider_key : String
+  prompt_draft : String
+}
+pub fn Model::new() -> Self
+
+pub(all) enum Msg {
+  CanvasPress(Double, Double)
+  CanvasDragTo(Double, Double)
+  CanvasRelease(Double, Double)
+  CanvasNop
+  AddBlock(String)
+  SelectNode(Int?)
+  ApplyEdit(GraphEdit)
+  UndoEdit
+  RedoEdit
+  DeleteSelected
+  TitleInput(Int, String)
+  ConfigInput(Int, String, String)
+  ConnectTo(Int, String, Int, String)
+  DropEdge(Int, String, Int, String)
+  GenerateFromPrompt
+  AcceptProposal
+  CancelProposal
+  RunExecution
+  AutoRunExecution
+  StepOk
+  StepFail(String)
+  ExecTick(Int)
+  ConfirmExecution
+  RejectExecution
+  CancelExecution
+  ResetExecution
+  PromptInput(String)
+  ZoomIn
+  ZoomOut
+  ZoomReset
+  ProjectNameInput(String)
+  NewProject
+  LoadTemplate(String)
+  ToggleProviderMode
+  ProviderEndpointInput(String)
+  ProviderKeyInput(String)
+  RealGenerationFinished(Result[String, String])
+  ExportRequested
+  ExportDirPicked(@services.ServiceTaskResult[String])
+  ExportFileWritten(@services.ServiceTaskResult[Unit])
+  SaveRequested
+  SavePathPicked(@services.ServiceTaskResult[String])
+  SaveCompleted(@services.ServiceTaskResult[Unit])
+  OpenRequested
+  OpenPathPicked(@services.ServiceTaskResult[String])
+  OpenReadCompleted(@services.ServiceTaskResult[String])
+}
+
+pub(all) struct PendingProposal {
+  graph : BlockGraph
+  nodes : Int
+  edges : Int
+}
+
+pub(all) struct PortSpec {
+  name : String
+  port_type : PortType
+}
+
+pub(all) enum PortType {
+  Text
+  Number
+  Bool
+  Json
+  FileRef
+  Table
+  ChatMessage
+  ToolResult
+  Unit
+}
+
+pub(all) struct Project {
+  metadata : ProjectMetadata
+  graph : BlockGraph
+  viewport : StudioViewport
+  policy : ProjectPolicy
+  template_origin : String
+}
+pub fn Project::new(String, BlockGraph) -> Self
+
+pub(all) struct ProjectMetadata {
+  id : String
+  name : String
+  revision : Int
+}
+
+pub(all) struct ProjectPolicy {
+  require_confirmation : Bool
+  allow_external_submit : Bool
+  allow_file_read : Bool
+  allow_file_write : Bool
+}
+
+pub(all) enum RiskClass {
+  Read
+  Write
+  Execute
+  ExternalSubmit
+}
+
+pub(all) enum RunStatus {
+  Idle
+  Running
+  WaitingConfirmation
+  Completed
+  Failed(String)
+  Cancelled
+}
+
+pub(all) struct StepRecord {
+  node_id : Int
+  kind : String
+  title : String
+  status : StepStatus
+  attempts : Int
+  max_attempts : Int
+  timeout_ms : Int
+  started_ms : Int
+  ended_ms : Int
+  duration_ms : Int
+  input_summary : String
+  output_summary : String
+  summary : String
+}
+
+pub(all) enum StepStatus {
+  Pending
+  Running
+  WaitingConfirmation
+  Completed
+  Failed(String)
+  Skipped
+}
+
+pub(all) struct StudioViewport {
+  x : Double
+  y : Double
+  zoom : Double
+}
+
+pub(all) enum ValidationError {
+  InvalidJson
+  InvalidProject
+  InvalidProposal
+  FormatMismatch(String)
+  UnsupportedVersion
+  UnknownKind(String)
+  DuplicateNodeId(Int)
+  EdgeMissingEndpoint(Int, Int)
+  UnknownPort(Int, String)
+  UnknownConfigKey(Int, String)
+  BadConfigValue(Int, String)
+  TypeMismatch(Int, String, Int, String, PortType, PortType)
+  InputOccupied(Int, String)
+  MissingEntrypoint
+  UnreachableNode(Int)
+  CycleDetected
+  NodeBudgetExceeded(Int)
+  EdgeBudgetExceeded(Int)
+  IterationBudgetExceeded(Int)
+  MissingConfirmation(Int)
+}
+
+// Type aliases
+
+// Traits

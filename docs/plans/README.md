@@ -80,6 +80,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [overlay-system-redesign](done/overlay-system-redesign.md) | Ordered `OverlayHost + PresentationSpec` with runtime placement/input/focus and neutral host-modal transport |
 | [overlay-placement-portal-unification](active/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
 | [feature-scope-composition](active/feature-scope-composition.md) | Add `Feature[Model, Msg]` + `Feature::scope` lens composition to core, `FieldAction` keyed forms, and settings/workbench pilots |
+| [moblocks-studio](active/moblocks-studio.md) | Build an AI-generated visual app studio on MoUI for the 2026 Shanghai open-source AI tools competition (MCP integration deferred to post-contest) |
 
 ## Debt
 
@@ -122,5 +123,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [harness-mechanize-invariants-batch1](done/harness-mechanize-invariants-batch1.md) | Map-style AGENTS/docs + P1/P2/A6/R3/M5/G1/G2 machine checks |
 | [website-scroll-performance](done/website-scroll-performance.md) | Remove Website scroll-path DOM churn and ship optimized showcase previews |
 | [markdown-html-image-gallery](done/markdown-html-image-gallery.md) | Render the safe HTML image-gallery subset in Markdown Editor |
+| [row-child-hit-testing](done/row-child-hit-testing.md) | 原报 `row` 子级按钮与 `on_drag` 不命中；2026-09-26 复核在 moon 0.1.20260920 下不再复现（8 形状探针 + canvas/按钮/普通 view 拖拽全部正常），行为由 `moui/runtime/row_child_pointer_input_test.mbt` 固定 |
+| [repo-format-and-ratchet-drift](done/repo-format-and-ratchet-drift.md) | 仓库级格式漂移与 ratchet 过期：2026-09-26 已修复（生成 facts 重写、6 个 ratchet 重登记、5 个漂移文件 `moon fmt`，`moon fmt --check` 全仓 0 差异） |
 
 Move finished plans to `done/` in the same PR that closes the work.

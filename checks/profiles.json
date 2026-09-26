@@ -187,6 +187,18 @@
           ]
         },
         {
+          "name": "export kernel sync",
+          "argv": [
+            "moon",
+            "run",
+            "examples/moblocks_studio/tools/sync_kernel",
+            "--target",
+            "native",
+            "--",
+            "--check"
+          ]
+        },
+        {
           "name": "website docs catalog",
           "argv": [
             "node",
