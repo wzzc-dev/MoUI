@@ -198,7 +198,23 @@ pub fn view(model : Model) -> @moui.View[Msg] {
       }
     }
   }
-  @views.scroll_view(@views.column(items), width=680.0, height=560.0)
+  @views
+  .scroll_view(@views.column(items), width=680.0, height=560.0)
+  // 品牌主题：与 MoMao Studio 同源朱砂色（印泥朱砂主色派生浅色全角色盘，
+  // 课堂/路演的确定性外观，不随系统深色漂移）
+  .theme(runner_theme())
+}
+
+///|
+/// 导出应用的品牌主题（与 Studio 的 momao_theme 同 seed 同 scheme；
+/// 内联在此避免 runner 依赖 app 包）。
+fn runner_theme() -> @core.Theme {
+  @views.theme(
+    palette=@core.ColorPalette::from_seed(
+      primary=@core.Color::rgba(r=0.78, g=0.26, b=0.20),
+      Light,
+    ),
+  )
 }
 
 ///|
