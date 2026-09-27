@@ -23,11 +23,17 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       label=text(t, "app.mode.code"),
       message=SetMode(ModeCode),
     ),
+    @views.action_item(
+      id="preview",
+      label=text(t, "app.mode.preview"),
+      message=SetMode(ModePreview),
+    ),
   ]
   let selected_mode = match model.mode {
     ModeDesign => "design"
     ModeBlocks => "blocks"
     ModeCode => "code"
+    ModePreview => "preview"
     ModeRun => ""
   }
   @views.container(
@@ -189,6 +195,7 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       )
     ModeBlocks => blocks_panel(model, t)
     ModeCode => code_panel(model, t)
+    ModePreview => preview_panel(model, t)
     ModeRun => run_form(model, t)
   }
 }
@@ -361,6 +368,26 @@ fn code_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     ),
     error_line,
   ])
+}
+
+///|
+/// MoonBit 预览视图：把当前程序渲染成可读 MoonBit 源码（毕业通道 v1.1）。
+/// 只读展示——生成的文本是审阅材料，不是编辑器输入。
+fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+  let source = @export.moonbit_preview(model.program)
+  let lines : Array[@moui.View[Msg]] = [
+    @views.text(text(t, "app.preview.title"), role=Subtitle),
+    @views.text(text(t, "app.preview.note"), role=Caption),
+  ]
+  for line in source.split("\n") {
+    lines.push(@views.text(line.to_string(), width=460.0))
+  }
+  @views.scroll_view(
+    @views.column(lines),
+    width=480.0,
+    height=560.0,
+    shows_indicator=true,
+  )
 }
 
 ///|

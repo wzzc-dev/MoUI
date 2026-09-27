@@ -103,6 +103,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_change", GeneratedI18nMessage::Text("on change")),
       ("app.block.delete", GeneratedI18nMessage::Text("Delete statement")),
       ("app.handler.none", GeneratedI18nMessage::Text("No handler selected")),
+      ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
+      (
+        "app.preview.note",
+        GeneratedI18nMessage::Text(
+          "Readable preview (graduation path) - not compilable output; the source of truth is the .momao.json IR",
+        ),
+      ),
       (
         "app.run.gate.ask",
         GeneratedI18nMessage::Text("The program asks: {prompt}"),
@@ -122,6 +129,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("err.unknown_name", GeneratedI18nMessage::Text("Unknown name: {a}")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("Change preview")),
       ("app.design.canvas", GeneratedI18nMessage::Text("Form design canvas")),
+      (
+        "app.preview.title",
+        GeneratedI18nMessage::Text("MoonBit source preview"),
+      ),
       ("app.run.variables", GeneratedI18nMessage::Text("Variables")),
       ("app.status.opened", GeneratedI18nMessage::Text("Project opened")),
       ("blocks.count_loop", GeneratedI18nMessage::Text("repeat")),
@@ -315,6 +326,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_change", GeneratedI18nMessage::Text("内容改变")),
       ("app.block.delete", GeneratedI18nMessage::Text("删除语句")),
       ("app.handler.none", GeneratedI18nMessage::Text("未选中子程序")),
+      ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
+      (
+        "app.preview.note",
+        GeneratedI18nMessage::Text(
+          "可读预览（毕业通道）——不是可编译产物；程序事实来源是 .momao.json",
+        ),
+      ),
       (
         "app.run.gate.ask",
         GeneratedI18nMessage::Text("程序在提问：{prompt}"),
@@ -334,6 +352,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("err.unknown_name", GeneratedI18nMessage::Text("未知名字：{a}")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("变更预览")),
       ("app.design.canvas", GeneratedI18nMessage::Text("表单设计画布")),
+      ("app.preview.title", GeneratedI18nMessage::Text("MoonBit 源码预览")),
       ("app.run.variables", GeneratedI18nMessage::Text("变量")),
       ("app.status.opened", GeneratedI18nMessage::Text("已打开项目")),
       ("blocks.count_loop", GeneratedI18nMessage::Text("计次循环")),
