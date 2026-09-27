@@ -8,6 +8,7 @@ pub(all) enum Mode {
   ModeBlocks
   ModeCode
   ModePreview
+  ModeHelp
   ModeRun
 }
 

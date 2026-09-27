@@ -34,6 +34,7 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     ModeBlocks => "blocks"
     ModeCode => "code"
     ModePreview => "preview"
+    ModeHelp => ""
     ModeRun => ""
   }
   @views.container(
@@ -53,6 +54,11 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         @views.button(
           text(t, "app.lang.switch"),
           on_click=SwitchLanguage,
+          variant=Ghost,
+        ),
+        @views.button(
+          text(t, "app.help.title"),
+          on_click=SetMode(ModeHelp),
           variant=Ghost,
         ),
       ]),
@@ -196,6 +202,7 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     ModeBlocks => blocks_panel(model, t)
     ModeCode => code_panel(model, t)
     ModePreview => preview_panel(model, t)
+    ModeHelp => help_panel(model, t)
     ModeRun => run_form(model, t)
   }
 }
@@ -384,6 +391,92 @@ fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   }
   @views.scroll_view(
     @views.column(lines),
+    width=480.0,
+    height=560.0,
+    shows_indicator=true,
+  )
+}
+
+///|
+/// 帮助视图：DSL 双语速查表——**从关键字表与内建目录数据生成**，
+/// 不手抄第二份（关键字表改了，帮助页自动跟随）。
+fn help_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+  let zh = @momao_lang.keywords_for(@momao_lang.ZhHans)
+  let en = @momao_lang.keywords_for(@momao_lang.En)
+  let rows : Array[@moui.View[Msg]] = [
+    @views.text(text(t, "app.help.title"), role=Title),
+    @views.text(text(t, "app.help.intro"), role=Caption),
+    @views.text(text(t, "app.help.keywords"), role=Subtitle),
+  ]
+  // (概念, 中文写法, 英文写法)
+  let keyword_rows : Array[(String, String, String)] = [
+    (
+      text(t, "blocks.declare"),
+      "\{zh.declare_kw} x = 1",
+      "\{en.declare_kw} x = 1",
+    ),
+    (
+      text(t, "blocks.if"),
+      "\{zh.if_kw} c \{zh.then_kw} … \{zh.else_kw} … \{zh.end_kw}",
+      "\{en.if_kw} c \{en.then_kw} … \{en.else_kw} … \{en.end_kw}",
+    ),
+    (
+      text(t, "blocks.else_if"),
+      "\{zh.else_if_kw} c \{zh.then_kw} …",
+      "\{en.else_if_kw} c \{en.then_kw} …",
+    ),
+    (
+      text(t, "blocks.count_loop"),
+      "\{zh.count_kw} 5 \{zh.times_kw} [\{zh.as_kw} i] … \{zh.end_kw}",
+      "\{en.count_kw} 5 \{en.times_kw} [\{en.as_kw} i] … \{en.end_kw}",
+    ),
+    (
+      text(t, "blocks.while"),
+      "\{zh.while_kw} c \{zh.do_kw} … \{zh.end_kw}",
+      "\{en.while_kw} c \{en.do_kw} … \{en.end_kw}",
+    ),
+    (text(t, "blocks.break"), zh.break_kw, en.break_kw),
+    (
+      text(t, "app.help.logic"),
+      "\{zh.and_kw} \{zh.or_kw} \{zh.not_kw}",
+      "\{en.and_kw} \{en.or_kw} \{en.not_kw}",
+    ),
+    (
+      text(t, "app.help.literals"),
+      "\{zh.true_kw} / \{zh.false_kw}",
+      "\{en.true_kw} / \{en.false_kw}",
+    ),
+  ]
+  for row in keyword_rows {
+    let (label, zh_text, en_text) = row
+    rows.push(
+      @views.row([
+        @views.text(label, width=90.0),
+        @views.text(zh_text, width=200.0),
+        @views.text(en_text, width=170.0),
+      ]),
+    )
+  }
+  rows.push(@views.text(text(t, "app.help.builtins"), role=Subtitle))
+  let kind_label = fn(kind : @momao_lang.BuiltinKind) -> String {
+    match kind {
+      @momao_lang.Command => text(t, "app.help.commands")
+      @momao_lang.Function => text(t, "app.help.functions")
+      @momao_lang.Gate => text(t, "app.help.gates")
+    }
+  }
+  for spec in @momao_lang.builtin_catalog() {
+    rows.push(
+      @views.row([
+        @views.text(kind_label(spec.kind), width=60.0),
+        @views.text("\{spec.zh}", width=100.0),
+        @views.text("\{spec.en}", width=120.0),
+        @views.text("\{spec.arity}", width=30.0),
+      ]),
+    )
+  }
+  @views.scroll_view(
+    @views.column(rows),
     width=480.0,
     height=560.0,
     shows_indicator=true,

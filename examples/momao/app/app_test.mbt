@@ -960,3 +960,15 @@ test "proposal history records accept and reject" {
   // 摘要非空（来自提案 summary）
   assert_true(rejected.proposal_history[1].summary != "")
 }
+
+///|
+test "help cheatsheet is generated from the keyword catalog" {
+  let model = @app.initial_model()
+  // 模式可切换且视图可构建（帮助页数据来自 momao_lang 关键字目录）
+  let helped = apply(model, SetMode(@app.ModeHelp))
+  assert_true(helped.mode is ModeHelp)
+  let view = @app.view(helped)
+  ignore(view)
+  // 内建目录条目数（14 个内建，含 2 个闸门）
+  assert_eq(@momao_lang.builtin_catalog().length(), 14)
+}
