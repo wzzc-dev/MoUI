@@ -66,14 +66,26 @@
 
 - `@views.canvas(measure, draw)` + `on_drag_with_frame` 足够做命中/拖拽，
   无需自定义 ViewNode；绘制逻辑拆纯数据 draw-plan 后可断言 op 数量做帧基线。
-- canvas draw 里必须 `push_clip(ctx, frame)`/`pop_clip`；canvas measure 不要
-  狮子大开口（column flex 会被撑爆，用 `frame(scroll_view(...), height=...)`
-  封顶）。Transform2D 组合用结构体字面量。
+- canvas measure 不要狮子大开口（column flex 会被撑爆）；Transform2D 组合用
+  结构体字面量。
 - **`AppServices::new()` 不能在 update 闭包里每次构造**：wasm-gc 下所有指针
   事件静默失效。在 `program()` 构造时捕获一次 `environment.services()`。
-- 坐标：canvas 的 `DrawText.frame` 是**画布局部坐标**，指针是屏幕坐标；旧
-  测试混用过（偏移 42px 的误判，见 `docs/plans/done/row-child-hit-testing.md`）。
-  UI 测试定位控件用 `read_semantics` 找 `semantics_label` 节点的 frame。
+- ~~canvas 的 `DrawText.frame` 是画布局部坐标~~ **2026-09-27 实测更正：MoUI
+  paint 命令是窗口全局坐标**——`collect_frame_commands`（moui/runtime/
+  render_tree.mbt）把各节点命令原样拼接、不做逐层平移，`draw(ctx, frame)`
+  的 `frame` 就是给应用自己偏移用的。自绘内容必须加 `frame.origin`，否则
+  内容画到窗口原点、被自己的 clip 裁掉（症状：画布空白）。
+- **`divider()` 默认 Horizontal 轴按 `constraints.max.width` 测量**（整宽
+  横线，为列布局设计）。直接放进 `row` 会占满剩余宽并 `FillRect` 盖住其后
+  所有兄弟（画布/右栏全部"消失"、出现大片 `outline_variant` 灰）。row 内
+  分隔线必须 `divider(axis=Vertical)`。此坑双端（Skia/web）一致。
+- **单击不产生 DragGestureEvent**：识别器 3px slop，Pending→Up 走 Cancelled
+  且无事件。画布点选用 `View::on_tap_with_frame`（2026-09-27 新增于
+  moui/core，OnTapWithFrameModifier：透明、无语义角色、Up 才触发、带
+  position+frame）；与 `on_drag_with_frame` 叠加时把 tap 放前面，app 侧用
+  `model.drag is Some(_)` 区分拖拽结束的 tap。
+- 受控 `text_field` 的显示值完全由 `value` 参数驱动：运行时输入必须把新值
+  写回状态（如 MoMao 的 `run.state.texts`），否则输入回跳、`取文本` 读旧值。
 - `DragGesturePhase::Started` 发生在第一次越过 3px 阈值的 Move，不是 Down；
   测试先发小步进再发完整位移。画布同名文本用 `+` 前缀消歧。
 - `text_field` 首参是当前值、`on_input` 带新值；`scroll_view(view, width~,
@@ -165,3 +177,25 @@
 - **测试陷阱**：`@ir.Call` 在 Stmt 数组里与 `@ir.Expr::Call` 歧义，写
   `@ir.Stmt::Call` 消歧；MoonBit for 循环里给 `on_click` 传下标要先
   `let row_index = index` 固定（闭包捕获）。
+
+## 2026-09-27 UI 评审修复（点击/拖拽/布局实测验证）
+
+- **web 入口启动 API**：`index.html` 用
+  `bootMouiWasmGcApp({ wasmUrl: new URL(...), canvasHost: "#root",
+  onStatus })`（具名导出，runtime.js **没有 default 导出**）；canvasHost 是
+  容器选择器（canvas 由运行时创建、parent 作测量基准）。打包器
+  `rewriteIndexForPackage` 会把 `.mooncakes` 引用与 `_build` wasm 路径改写
+  成 `./runtime.js` / `./web_wasm.wasm`。旧版 `import init from ...` 静默
+  卡在"正在加载"（模块级失败不进 catch）。
+- **主题**：入口跟随系统深浅色（web 走 prefers-color-scheme，native 走系统
+  主题）。深色系统 + 无背景的浅色布局 = 白字白底。MoMao 在根视图
+  `.theme(@views.light_theme())` 钉浅色（课堂演示确定性外观）。
+- **顶栏单行 13 个按钮在 1280 宽溢出**：拆两行 + `container(padding=10)`。
+- **布局调试法**：单控件二分（row 逐个换 `@views.text`）+ `screencapture -x
+  -l <window_id>` 截原生窗口（CUA 对 MoUI 自定义 surface 截图会失败但 AX
+  树可用：macOS 上语义树直接可读，模式切换/检查器字段都能断言）。
+- **web 交互测试**：IAB 的 `cua.drag` 不派发中间 pointermove（识别器收不到
+  Move，永远不 Started）——用 `playwright.evaluate` 在 canvas 上合成
+  `PointerEvent("pointerdown"/"pointermove"…/"pointerup")` 序列（bubbles,
+  pointerId, buttons=1）即可驱动完整拖拽链路。首次点击可能只做 webview
+  聚焦不派发（观察为"第一下没反应"）。

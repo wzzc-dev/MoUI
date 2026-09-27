@@ -3,33 +3,50 @@
 /// 右栏（属性 / AI 提案）+ 运行区。全部文案过 i18n 翻译器。
 
 ///|
-/// 顶栏：标题、语言切换、模式 tab、模板、文件操作、运行控制。
+/// 顶栏（两行，带内边距——单行 13 个按钮会在 1280 宽窗口溢出裁切）：
+/// 第一行 = 标题 + 语言 + 模式 tab + 运行控制；第二行 = 模板 + 文件操作。
 fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
-  @views.row([
-    @views.text(text(t, "app.title")),
-    @views.button(text(t, "app.lang.switch"), on_click=SwitchLanguage),
-    @views.button(text(t, "app.mode.design"), on_click=SetMode(ModeDesign)),
-    @views.button(text(t, "app.mode.blocks"), on_click=SetMode(ModeBlocks)),
-    @views.button(text(t, "app.mode.code"), on_click=SetMode(ModeCode)),
-    @views.button(text(t, "app.templates.hello"), on_click=SelectTemplate(0)),
-    @views.button(
-      text(t, "app.templates.roll_call"),
-      on_click=SelectTemplate(1),
-    ),
-    @views.button(text(t, "app.templates.drill"), on_click=SelectTemplate(2)),
-    @views.button(text(t, "app.templates.store"), on_click=SelectTemplate(3)),
-    @views.button(text(t, "app.file.save"), on_click=SaveRequested),
-    @views.button(text(t, "app.file.open"), on_click=OpenRequested),
-    @views.button(text(t, "app.file.export"), on_click=ExportRequested),
-    @views.button(
-      if model.run is Some(_) {
-        text(t, "app.run.stop")
-      } else {
-        text(t, "app.run.start")
-      },
-      on_click=if model.run is Some(_) { RunStop } else { RunStart },
-    ),
-  ])
+  @views.container(
+    @views.column([
+      @views.row([
+        @views.text(text(t, "app.title")),
+        @views.button(text(t, "app.lang.switch"), on_click=SwitchLanguage),
+        @views.button(text(t, "app.mode.design"), on_click=SetMode(ModeDesign)),
+        @views.button(text(t, "app.mode.blocks"), on_click=SetMode(ModeBlocks)),
+        @views.button(text(t, "app.mode.code"), on_click=SetMode(ModeCode)),
+        @views.button(
+          if model.run is Some(_) {
+            text(t, "app.run.stop")
+          } else {
+            text(t, "app.run.start")
+          },
+          on_click=if model.run is Some(_) { RunStop } else { RunStart },
+        ),
+      ]),
+      @views.row([
+        @views.button(
+          text(t, "app.templates.hello"),
+          on_click=SelectTemplate(0),
+        ),
+        @views.button(
+          text(t, "app.templates.roll_call"),
+          on_click=SelectTemplate(1),
+        ),
+        @views.button(
+          text(t, "app.templates.drill"),
+          on_click=SelectTemplate(2),
+        ),
+        @views.button(
+          text(t, "app.templates.store"),
+          on_click=SelectTemplate(3),
+        ),
+        @views.button(text(t, "app.file.save"), on_click=SaveRequested),
+        @views.button(text(t, "app.file.open"), on_click=OpenRequested),
+        @views.button(text(t, "app.file.export"), on_click=ExportRequested),
+      ]),
+    ]),
+    padding=10.0,
+  )
 }
 
 ///|
@@ -510,13 +527,18 @@ pub fn view(model : Model) -> @moui.View[Msg] {
     @views.divider(),
     @views.row([
       left_panel(model, t),
-      @views.divider(),
+      // 行内分隔线必须用 Vertical 轴：Horizontal divider 会测量成整行宽
+      // （它按约束最大宽填充），把后面的画布与右栏全部挤出窗口。
+      @views.divider(axis=Vertical),
       center_panel(model, t),
-      @views.divider(),
+      @views.divider(axis=Vertical),
       right_panel(model, t),
     ]),
     @views.text(model.notice),
   ])
+  // 固定浅色主题：课堂/路演场景要求确定的演示外观，不随系统深色模式漂移
+  // （深色系统 + 浅色底板会出现白字白底）。
+  .theme(@views.light_theme())
 }
 
 ///|

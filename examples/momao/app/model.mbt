@@ -76,6 +76,7 @@ pub(all) enum Msg {
   SetMode(Mode)
   SelectControl(String)
   CanvasPress(Double, Double)
+  CanvasTap(Double, Double)
   CanvasDragTo(Double, Double)
   CanvasRelease(Double, Double)
   SetControlText(String, String)

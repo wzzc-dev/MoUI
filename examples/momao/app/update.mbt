@@ -433,6 +433,23 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
         }
       }
     CanvasRelease(_x, _y) => ({ ..model, drag: None, }, @moui.Effect::none())
+    CanvasTap(x, y) =>
+      // 单击点选。拖拽松手也会触发 tap（同一 Up 事件）：drag 仍在时说明
+      // 这是一次拖拽结束，不要改动选中态。
+      match hit_test_control(model.program.controls, x, y) {
+        Some(control) =>
+          if model.drag is Some(_) {
+            (model, @moui.Effect::none())
+          } else {
+            ({ ..model, selected_control: control.name, }, @moui.Effect::none())
+          }
+        None =>
+          if model.drag is Some(_) {
+            (model, @moui.Effect::none())
+          } else {
+            ({ ..model, selected_control: "", }, @moui.Effect::none())
+          }
+      }
     SetControlText(name, value) => {
       let controls : Array[@ir.Control] = []
       for control in model.program.controls {

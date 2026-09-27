@@ -1,6 +1,6 @@
 ///|
 /// Event modifiers: OnTap, OnSecondaryTap, OnLongPress, OnDoubleTap, OnDrag,
-/// OnDragWithFrame, OnFileDrop, KeyboardShortcut.
+/// OnDragWithFrame, OnTapWithFrame, OnFileDrop, KeyboardShortcut.
 
 ///|
 pub(all) struct OnTapModifier[Msg] {
@@ -237,6 +237,69 @@ pub fn[Msg] OnDragModifier::to_any_modifier(
 ///|
 pub(all) struct OnDragWithFrameModifier[Msg] {
   handler : (DragGestureEvent, Rect) -> Msg
+}
+
+///|
+/// Tap-with-position modifier for canvas/custom-drawn surfaces: unlike
+/// `OnTapModifier` (fixed message, no geometry) this hands the tap position
+/// and the child frame to the handler so the app can hit-test in its own
+/// coordinate space (`position - frame.origin` = view-local point).
+///
+/// Deliberately transparent like `OnSecondaryTapModifier`: a canvas surface
+/// is an observer, not a control — a Button semantics role here would
+/// override the host view's role and pollute focus traversal.
+priv struct OnTapWithFrameModifier[Msg] {
+  handler : (Point, Rect) -> Msg
+}
+
+///|
+fn[Msg] OnTapWithFrameModifier::to_any_modifier(
+  self : OnTapWithFrameModifier[Msg],
+) -> AnyModifier[Msg] {
+  let handler = self.handler
+  {
+    ..noop_modifier(),
+    identity_kind: "OnTapWithFrame",
+    event: fn(ctx) {
+      // Primary button only: see OnTapModifier.
+      match ctx.event {
+        Pointer(event) if event.button == 0 => {
+          let inside = ctx.frame.contains(event.position)
+          let current = view_state_to_pressable_state(ctx.state)
+          let tap = recognize_press_tap(current, inside, event.phase)
+          let next_state = pressable_state_to_view_state(
+            ctx.state,
+            tap.next_state,
+          )
+          let activated = tap.activated
+          let changed = next_state != ctx.state || activated
+          let frame = match ctx.child_frames {
+            [cf, ..] => cf
+            [] => ctx.frame
+          }
+          {
+            changed,
+            activated,
+            focused: false,
+            captured: inside || current == Pressed,
+            state: Some(next_state),
+            text_control: None,
+            dirty: if changed {
+              ViewPaintDirty
+            } else {
+              ViewClean
+            },
+            messages: if activated {
+              [handler(event.position, frame)]
+            } else {
+              []
+            },
+          }
+        }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
 }
 
 ///|

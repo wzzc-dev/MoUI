@@ -11,9 +11,13 @@ MoMao 是一个**中英双语的可视化编程环境**：同一份程序有三�
 ## 五分钟上手（Web，零安装）
 
 ```sh
-moon build examples/momao/web_wasm --target wasm-gc
-# 用 scripts/package-web-app.mjs 打包后浏览器打开，即见 IDE
+node scripts/package-web-app.mjs examples/momao/web_wasm --out artifacts/web/momao
+# ES module 不能用 file:// 打开，需要起一个静态服务：
+python3 -m http.server 8766 --directory artifacts/web/momao
+# 浏览器打开 http://127.0.0.1:8766 即见 IDE
 ```
+
+macOS 原生入口：`moon run examples/momao/macos_skia --target native`
 
 - 切语言：顶栏 `English` / `中文`（代码与界面一起切换：`如果…则…结束` ↔ `if…then…end`）
 - 换模板：顶栏「班级点名册 / 口算训练营 / 班级小卖部」，打开即玩

@@ -436,3 +436,27 @@ test "inspector rect edits clamp and reject bad input" {
   let bad2 = apply(bad, SetControlRect("按钮", @ir.RectY, "99999"))
   assert_eq(@ir.find_control(bad2.program, "按钮").unwrap().y, 0)
 }
+
+///|
+test "canvas tap selects on click and stays quiet during drag release" {
+  let added = apply(initial_model(), AddControl(@ir.Button))
+  let control = added.program.controls[added.program.controls.length() - 1]
+  let cx = control.x.to_double() + 10.0
+  let cy = control.y.to_double() + 10.0
+  // 单击控件 → 选中
+  let tapped = apply(added, CanvasTap(cx, cy))
+  assert_true(tapped.selected_control == control.name)
+  // 拖拽中松手也会产生 tap：drag 态还在时不改选中（消息顺序无关）
+  let pressed = apply(tapped, CanvasPress(cx, cy))
+  let dragged = apply(pressed, CanvasDragTo(cx + 40.0, cy + 30.0))
+  let tap_during_drag = apply(dragged, CanvasTap(cx + 40.0, cy + 30.0))
+  assert_true(tap_during_drag.selected_control == control.name)
+  // 松开清除拖拽态；随后落在移动后控件上的 tap 选中同一控件
+  let released = apply(tap_during_drag, CanvasRelease(cx + 40.0, cy + 30.0))
+  assert_true(released.drag is None)
+  let tap_after_release = apply(released, CanvasTap(cx + 40.0, cy + 30.0))
+  assert_true(tap_after_release.selected_control == control.name)
+  // 单击空白处取消选中
+  let empty = apply(tap_after_release, CanvasTap(600.0, 450.0))
+  assert_true(empty.selected_control == "")
+}

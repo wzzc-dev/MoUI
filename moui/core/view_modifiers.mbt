@@ -408,6 +408,18 @@ pub fn[Msg] View::on_drag_with_frame(
 }
 
 ///|
+/// Tap with hit-test geometry: fires on a plain click (press+release inside
+/// the view) and hands the pointer position plus the child frame to the
+/// handler. Use for canvas/custom-drawn surfaces that need the tap point;
+/// pair with `on_drag_with_frame` for drag support on the same surface.
+pub fn[Msg] View::on_tap_with_frame(
+  self : View[Msg],
+  handler : (Point, Rect) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnTapWithFrameModifier::{ handler, }.to_any_modifier())
+}
+
+///|
 pub fn[Msg] View::on_file_drop(
   self : View[Msg],
   handler : (Array[String], Point) -> Msg,
