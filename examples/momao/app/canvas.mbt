@@ -92,7 +92,12 @@ fn design_draw_plan(
   let ops : Array[DesignDrawOp] = []
   ops.push(
     WindowFrame(
-      @geometry.Rect::new(x=0.0, y=0.0, width=design_width, height=design_height),
+      @geometry.Rect::new(
+        x=0.0,
+        y=0.0,
+        width=design_width,
+        height=design_height,
+      ),
     ),
   )
   for control in program.controls {

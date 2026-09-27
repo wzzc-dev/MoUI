@@ -1,9 +1,13 @@
 ///|
 /// IR 结构测试：标签往返、事件矩阵、命名语法、预算统计、签名确定性。
-
 test "control kind tags round-trip" {
   let kinds : Array[@ir.ControlKind] = [
-    @ir.Button, @ir.Label, @ir.TextField, @ir.CheckBox, @ir.ListBox, @ir.Table,
+    @ir.Button,
+    @ir.Label,
+    @ir.TextField,
+    @ir.CheckBox,
+    @ir.ListBox,
+    @ir.Table,
   ]
   for kind in kinds {
     match @ir.parse_control_kind(kind.tag()) {
@@ -14,6 +18,7 @@ test "control kind tags round-trip" {
   assert_true(@ir.parse_control_kind("checkbox") is None)
 }
 
+///|
 test "event kind tags round-trip" {
   match @ir.parse_event_kind(@ir.OnClick.tag()) {
     Some(parsed) => assert_true(parsed is @ir.OnClick)
@@ -26,6 +31,7 @@ test "event kind tags round-trip" {
   assert_true(@ir.parse_event_kind("click") is None)
 }
 
+///|
 test "control supports event matrix" {
   assert_true(@ir.Button.supports_event(@ir.OnClick))
   assert_true(!@ir.Button.supports_event(@ir.OnChange))
@@ -41,6 +47,7 @@ test "control supports event matrix" {
   assert_true(!@ir.Label.supports_event(@ir.OnChange))
 }
 
+///|
 test "name syntax rules" {
   assert_true(@ir.control_name_syntax_valid("确定按钮"))
   assert_true(@ir.control_name_syntax_valid("score_field"))
@@ -48,25 +55,21 @@ test "name syntax rules" {
   assert_true(!@ir.control_name_syntax_valid("1button"))
   assert_true(!@ir.control_name_syntax_valid(""))
   assert_true(!@ir.control_name_syntax_valid("has space"))
-  assert_true(!@ir.control_name_syntax_valid(
-    "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四",
-  ))
+  assert_true(
+    !@ir.control_name_syntax_valid(
+      "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四",
+    ),
+  )
   assert_true(@ir.variable_name_syntax_valid("姓名"))
   assert_true(@ir.variable_name_syntax_valid("total2"))
 }
 
+///|
 test "budgets count statements and depth" {
   let deep_body : Array[@ir.Stmt] = [
-    @ir.WhileLoop(
-      @ir.Var("flag"),
-      [
-        @ir.CountLoop(
-          @ir.NumLit(3.0),
-          Some("i"),
-          [@ir.Assign("x", @ir.Var("i"))],
-        ),
-      ],
-    ),
+    @ir.WhileLoop(@ir.Var("flag"), [
+      @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [@ir.Assign("x", @ir.Var("i"))]),
+    ]),
   ]
   assert_eq(@ir.count_stmts(deep_body), 3)
   assert_eq(@ir.stmt_loop_depth(deep_body), 2)
@@ -79,6 +82,7 @@ test "budgets count statements and depth" {
   assert_eq(@ir.expr_depth(@ir.NumLit(1.0)), 1)
 }
 
+///|
 test "validate_program reports structural errors" {
   let program : @ir.MomaoProgram = {
     version: 1,
@@ -107,7 +111,7 @@ test "validate_program reports structural errors" {
         items: [],
       },
     ],
-    variables: [@ir.Variable::{ name: "x", init: "0" }],
+    variables: [@ir.Variable::{ name: "x", init: "0", }],
     handlers: [
       @ir.Handler::{
         control_name: "不存在",
@@ -131,6 +135,7 @@ test "validate_program reports structural errors" {
   assert_true(errors.any(e => e is @ir.UnsupportedEvent(_, _)))
 }
 
+///|
 test "program signature is deterministic" {
   let build = () => @ir.MomaoProgram::{
     version: 1,
@@ -162,11 +167,7 @@ test "program signature is deterministic" {
             [],
             [@ir.Assign("x", @ir.NumLit(1.0))],
           ),
-          @ir.CountLoop(
-            @ir.NumLit(3.0),
-            Some("i"),
-            [@ir.Break],
-          ),
+          @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [@ir.Break]),
         ],
       },
     ],
@@ -178,6 +179,7 @@ test "program signature is deterministic" {
   assert_true(@ir.program_signature(a) != @ir.program_signature(b))
 }
 
+///|
 test "find helpers and next id" {
   let program : @ir.MomaoProgram = {
     version: 1,
@@ -205,4 +207,30 @@ test "find helpers and next id" {
   assert_true(@ir.find_control(program, "没有") is None)
   assert_eq(@ir.next_control_id(program), 8)
   assert_eq(@ir.next_control_id(@ir.empty_program()), 1)
+}
+
+///|
+test "rect field edits clamp into the design canvas" {
+  let control : @ir.Control = {
+    id: 1,
+    kind: @ir.Button,
+    name: "按钮",
+    text: "",
+    x: 600,
+    y: 400,
+    width: 100,
+    height: 32,
+    items: [],
+  }
+  // 拖出右/下边界 → 夹回画布内
+  let moved = control.with_rect_field(@ir.RectX, 900)
+  assert_eq(moved.x, @ir.DESIGN_WIDTH - control.width)
+  let dropped = control.with_rect_field(@ir.RectY, -40)
+  assert_eq(dropped.y, 0)
+  // 宽度收到最小；扩大到画布宽时 x 夹回 0
+  let narrow = control.with_rect_field(@ir.RectWidth, 1)
+  assert_eq(narrow.width, @ir.MIN_CONTROL_SIZE)
+  let wide = control.with_rect_field(@ir.RectWidth, 9999)
+  assert_eq(wide.width, @ir.DESIGN_WIDTH)
+  assert_eq(wide.x, 0)
 }

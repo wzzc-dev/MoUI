@@ -32,7 +32,7 @@ pub fn ui_language_from_tag(tag : String) -> UiLanguage {
 
 ///|
 /// DSL 语言（代码视图/关键字渲染用）。
-pub fn dsl_language(self : UiLanguage) -> @momao_lang.Language {
+pub fn UiLanguage::dsl_language(self : UiLanguage) -> @momao_lang.Language {
   match self {
     ZhHans => @momao_lang.ZhHans
     En => @momao_lang.En
@@ -41,7 +41,7 @@ pub fn dsl_language(self : UiLanguage) -> @momao_lang.Language {
 
 ///|
 /// 对方语言的显示名（切换按钮显示目标语言）。
-pub fn other_language_label(self : UiLanguage) -> String {
+pub fn UiLanguage::other_language_label(self : UiLanguage) -> String {
   match self {
     ZhHans => "English"
     En => "中文"
@@ -113,12 +113,15 @@ pub fn text_with(
   key : String,
   values : Array[(String, String)],
 ) -> String {
-  t.translate(key, values=values)
+  t.translate(key, values~)
 }
 
 ///|
 /// DSL 语言错误的本地化消息。
-pub fn error_message(t : @i18n.Translator, error : @momao_lang.LangError) -> String {
+pub fn error_message(
+  t : @i18n.Translator,
+  error : @momao_lang.LangError,
+) -> String {
   let kind = error.kind()
   let key = match kind {
     @momao_lang.UnterminatedString => "err.unterminated_string"

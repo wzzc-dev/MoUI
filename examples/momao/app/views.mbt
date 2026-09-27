@@ -7,15 +7,15 @@
 fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   @views.row([
     @views.text(text(t, "app.title")),
-    @views.button(
-      text(t, "app.lang.switch"),
-      on_click=SwitchLanguage,
-    ),
+    @views.button(text(t, "app.lang.switch"), on_click=SwitchLanguage),
     @views.button(text(t, "app.mode.design"), on_click=SetMode(ModeDesign)),
     @views.button(text(t, "app.mode.blocks"), on_click=SetMode(ModeBlocks)),
     @views.button(text(t, "app.mode.code"), on_click=SetMode(ModeCode)),
     @views.button(text(t, "app.templates.hello"), on_click=SelectTemplate(0)),
-    @views.button(text(t, "app.templates.roll_call"), on_click=SelectTemplate(1)),
+    @views.button(
+      text(t, "app.templates.roll_call"),
+      on_click=SelectTemplate(1),
+    ),
     @views.button(text(t, "app.templates.drill"), on_click=SelectTemplate(2)),
     @views.button(text(t, "app.templates.store"), on_click=SelectTemplate(3)),
     @views.button(text(t, "app.file.save"), on_click=SaveRequested),
@@ -35,27 +35,24 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 ///|
 /// 左栏：控件面板（设计模式）+ 事件子程序列表（全部模式可用）。
 fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
-  let palette : Array[@moui.View[Msg]] = [
-    @views.text(text(t, "app.palette")),
-  ]
-  for kind in [
-    @ir.Button, @ir.Label, @ir.TextField, @ir.CheckBox, @ir.ListBox, @ir.Table,
-  ] {
+  let palette : Array[@moui.View[Msg]] = [@views.text(text(t, "app.palette"))]
+  for
+    kind in [
+      @ir.Button,
+      @ir.Label,
+      @ir.TextField,
+      @ir.CheckBox,
+      @ir.ListBox,
+      @ir.Table,
+    ] {
     palette.push(
-      @views.button(
-        text(t, "control.\{kind.tag()}"),
-        on_click=AddControl(kind),
-      ),
+      @views.button(text(t, "control.\{kind.tag()}"), on_click=AddControl(kind)),
     )
   }
-  let handlers : Array[@moui.View[Msg]] = [
-    @views.text(text(t, "app.handlers")),
-  ]
+  let handlers : Array[@moui.View[Msg]] = [@views.text(text(t, "app.handlers"))]
   for handler in model.program.handlers {
     let key = handler_key(handler.control_name, handler.event.tag())
-    handlers.push(
-      @views.button(key, on_click=SelectHandler(key)),
-    )
+    handlers.push(@views.button(key, on_click=SelectHandler(key)))
   }
   let palette_items : Array[@moui.View[Msg]] = []
   for item in palette {
@@ -229,11 +226,10 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         Some(gate) => {
           let prompt = match gate.kind {
             @momao_lang.Submit =>
-              text_with(
-                t,
-                "app.run.gate.submit",
-                [("target", gate.prompt), ("payload", gate.payload)],
-              )
+              text_with(t, "app.run.gate.submit", [
+                ("target", gate.prompt),
+                ("payload", gate.payload),
+              ])
             @momao_lang.Ask =>
               text_with(t, "app.run.gate.ask", [("prompt", gate.prompt)])
           }
@@ -265,7 +261,9 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         messages_card.push(@views.column(messages))
       }
       // 审计
-      let audit : Array[@moui.View[Msg]] = [@views.text(text(t, "app.run.audit"))]
+      let audit : Array[@moui.View[Msg]] = [
+        @views.text(text(t, "app.run.audit")),
+      ]
       for record in run.state.audit {
         let op = match record.op {
           @momao_lang.OpAssign => "op.assign"
@@ -335,6 +333,32 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           on_input=new_value => SetControlText(control.name, new_value),
           width=240.0,
         ),
+        @views.text(text(t, "app.inspector.position")),
+        @views.row([
+          @views.text_field(
+            control.x.to_string(),
+            on_input=raw => SetControlRect(control.name, @ir.RectX, raw),
+            width=70.0,
+          ),
+          @views.text_field(
+            control.y.to_string(),
+            on_input=raw => SetControlRect(control.name, @ir.RectY, raw),
+            width=70.0,
+          ),
+        ]),
+        @views.text(text(t, "app.inspector.size")),
+        @views.row([
+          @views.text_field(
+            control.width.to_string(),
+            on_input=raw => SetControlRect(control.name, @ir.RectWidth, raw),
+            width=70.0,
+          ),
+          @views.text_field(
+            control.height.to_string(),
+            on_input=raw => SetControlRect(control.name, @ir.RectHeight, raw),
+            width=70.0,
+          ),
+        ]),
         if control.kind is @ir.ListBox || control.kind is @ir.Table {
           @views.column([
             @views.text(text(t, "app.inspector.items")),

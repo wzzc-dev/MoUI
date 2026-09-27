@@ -11,7 +11,7 @@ import {
   "examples/momao/domain/codec",
   "examples/momao/domain/proposals",
   "examples/momao/domain/blocks",
-  "examples/momao/services/export" @export,
+  "examples/momao/services/export",
 }
 
 import {

@@ -83,16 +83,18 @@ pub async fn provider_worker_loop(owner : ProviderOwner) -> Unit {
 }
 
 ///|
-/// 以提示词提交（入口侧便捷 API）：系统提示由调用方给出（app 的提案 schema）。
+/// 以提示词提交（入口侧便捷 API）：模型名与系统提示由调用方给出
+/// （app 组装 ProviderRequestSpec，入口原样转发）。
 pub fn provider_submit_prompt(
   owner : ProviderOwner,
   endpoint : String,
   key : String,
+  model : String,
   system : String,
   prompt : String,
   on_result : (Result[String, String]) -> Unit,
 ) -> Unit {
-  let request = @provider.CompletionRequest::new("momao-proposal", system).with_message(
+  let request = @provider.CompletionRequest::new(model, system).with_message(
     User,
     prompt,
   )

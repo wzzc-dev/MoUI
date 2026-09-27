@@ -68,7 +68,10 @@ examples/momao/
 ## 最小验证循环
 
 ```sh
-moon test examples/momao/domain --target native
+# domain 是多个包（不是单包路径），逐包跑
+for p in ir momao_lang codec blocks proposals; do
+  moon test examples/momao/domain/$p --target native
+done
 moon test examples/momao/app --target native
 moon test examples/momao/app --target wasm-gc
 moon run examples/momao/tools/sync_kernel --target native -- --check

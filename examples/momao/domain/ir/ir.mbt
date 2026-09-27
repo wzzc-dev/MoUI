@@ -159,12 +159,7 @@ pub(all) enum Expr {
 pub(all) enum Stmt {
   Declare(String, Expr) // 变量 x = expr / let x = expr（首次引入）
   Assign(String, Expr) // x = expr（必须已声明）
-  If(
-    Expr,
-    Array[Stmt],
-    Array[(Expr, Array[Stmt])],
-    Array[Stmt],
-  ) // cond, then, else-ifs, else
+  If(Expr, Array[Stmt], Array[(Expr, Array[Stmt])], Array[Stmt]) // cond, then, else-ifs, else
   CountLoop(Expr, String?, Array[Stmt]) // times, loop var, body
   WhileLoop(Expr, Array[Stmt])
   Break
@@ -281,11 +276,7 @@ fn name_syntax_valid_inner(name : String, max_length : Int) -> Bool {
   }
   let mut first = true
   for c in name {
-    let ok = if first {
-      is_name_start(c)
-    } else {
-      is_name_part(c)
-    }
+    let ok = if first { is_name_start(c) } else { is_name_part(c) }
     if !ok {
       return false
     }
@@ -313,4 +304,56 @@ fn is_name_part(c : Char) -> Bool {
 /// CJK 统一表意文字主区（覆盖常用汉字；扩展区罕见不做）。
 fn is_cjk(code : Int) -> Bool {
   code >= 0x4E00 && code <= 0x9FFF
+}
+
+///|
+/// 控件矩形分量（检查器属性编辑与画布拖拽共用）。
+pub(all) enum RectField {
+  RectX
+  RectY
+  RectWidth
+  RectHeight
+}
+
+///|
+fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
+  }
+}
+
+///|
+/// 控件最小边长（属性框误输入 0/负数的防线）。
+pub const MIN_CONTROL_SIZE : Int = 8
+
+///|
+/// 更新矩形分量并夹回设计画布：控件永远完整落在 640x480 内，
+/// 尺寸不小于 MIN_CONTROL_SIZE。拖拽与属性编辑共用同一夹取规则。
+pub fn Control::with_rect_field(
+  self : Control,
+  field : RectField,
+  value : Int,
+) -> Control {
+  match field {
+    RectWidth => {
+      let width = clamp_int(value, MIN_CONTROL_SIZE, DESIGN_WIDTH)
+      { ..self, width, x: clamp_int(self.x, 0, (DESIGN_WIDTH - width).max(0)), }
+    }
+    RectHeight => {
+      let height = clamp_int(value, MIN_CONTROL_SIZE, DESIGN_HEIGHT)
+      {
+        ..self,
+        height,
+        y: clamp_int(self.y, 0, (DESIGN_HEIGHT - height).max(0)),
+      }
+    }
+    RectX =>
+      { ..self, x: clamp_int(value, 0, (DESIGN_WIDTH - self.width).max(0)), }
+    RectY =>
+      { ..self, y: clamp_int(value, 0, (DESIGN_HEIGHT - self.height).max(0)), }
+  }
 }

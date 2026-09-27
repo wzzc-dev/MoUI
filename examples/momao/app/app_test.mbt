@@ -27,6 +27,7 @@ fn drain(model : Model) -> Model {
   stepped
 }
 
+///|
 test "initial model loads hello sample in chinese" {
   let model = initial_model()
   assert_true(model.language is ZhHans)
@@ -37,6 +38,7 @@ test "initial model loads hello sample in chinese" {
   assert_eq(text(t, "app.mode.design"), "设计")
 }
 
+///|
 test "english translation resolves" {
   let model = apply(initial_model(), SwitchLanguage)
   assert_true(model.language is En)
@@ -48,14 +50,19 @@ test "english translation resolves" {
   assert_eq(text(t, "app.templates.hello"), "Hello app")
 }
 
+///|
 test "language switch commits parseable draft and re-renders" {
   let model = initial_model()
   let switched = apply(model, SwitchLanguage)
   assert_true(switched.code_draft.contains("set_text"))
   let switched_back = apply(switched, SwitchLanguage)
-  assert_true(switched_back.code_draft.contains("变量") || switched_back.code_draft.contains("设置文本"))
+  assert_true(
+    switched_back.code_draft.contains("变量") ||
+    switched_back.code_draft.contains("设置文本"),
+  )
 }
 
+///|
 test "add and delete control keeps handlers consistent" {
   let model = apply(initial_model(), AddControl(@ir.Label))
   assert_eq(model.program.controls.length(), 3)
@@ -67,17 +74,18 @@ test "add and delete control keeps handlers consistent" {
   assert_eq(deleted.program.controls.length(), 2)
 }
 
+///|
 test "code edit commits into program" {
   let model = initial_model()
   let edited = apply(model, EditCode("设置文本(显示, \"新文本\")\n"))
   let committed = apply(edited, SelectHandler("按钮@on_click"))
   match current_handler(committed) {
-    Some(handler) =>
-      assert_eq(handler.body.length(), 1)
+    Some(handler) => assert_eq(handler.body.length(), 1)
     None => fail("提交后应仍有子程序")
   }
 }
 
+///|
 test "syntax error surfaces localized message" {
   let model = initial_model()
   let edited = apply(model, EditCode("如果 真的 则\n"))
@@ -94,6 +102,7 @@ test "syntax error surfaces localized message" {
   assert_eq(run.notice, "")
 }
 
+///|
 test "run start executes hello handler to completion" {
   let model = apply(initial_model(), RunStart)
   match model.run {
@@ -102,11 +111,15 @@ test "run start executes hello handler to completion" {
       let stepped = drain(model)
       let final_run = stepped.run.unwrap()
       assert_true(final_run.state.status is @momao_lang.Completed)
-      assert_eq(final_run.state.texts.get("显示").unwrap_or(""), "你好，MoMao！")
+      assert_eq(
+        final_run.state.texts.get("显示").unwrap_or(""),
+        "你好，MoMao！",
+      )
     }
   }
 }
 
+///|
 test "run gate pauses submit and confirm completes" {
   let model = apply(initial_model(), SelectTemplate(3))
   let started = apply(model, RunStart)
@@ -116,7 +129,9 @@ test "run gate pauses submit and confirm completes" {
       // 直接运行卖铅笔 handler：无闸门，营业额 +1
       let sold = drain(apply(started, ControlClicked("卖铅笔")))
       let final_run = sold.run.unwrap()
-      let revenue = final_run.state.vars.get("营业额").unwrap_or(@momao_lang.VUnit)
+      let revenue = final_run.state.vars
+        .get("营业额")
+        .unwrap_or(@momao_lang.VUnit)
       assert_eq(@momao_lang.value_to_text(revenue), "1")
       // 记账 handler：停在提交闸门
       let submitting = drain(apply(sold, ControlClicked("记账")))
@@ -134,6 +149,7 @@ test "run gate pauses submit and confirm completes" {
   }
 }
 
+///|
 test "fake model proposal validates, diffs and applies" {
   let model = apply(initial_model(), SetPrompt("帮我做一个随机点名"))
   let generated = apply(model, GenerateProposal)
@@ -151,6 +167,7 @@ test "fake model proposal validates, diffs and applies" {
   }
 }
 
+///|
 test "rejected proposal keeps program" {
   let model = apply(initial_model(), SetPrompt("口算练习"))
   let generated = apply(model, GenerateProposal)
@@ -159,6 +176,7 @@ test "rejected proposal keeps program" {
   assert_eq(rejected.program.window.title, "问候")
 }
 
+///|
 test "invalid proposal from real model is rejected wholesale" {
   let model = apply(initial_model(), SetPrompt("随便"))
   // 直接喂一个坏 JSON（绕过假模型）：整单拒绝
@@ -167,18 +185,22 @@ test "invalid proposal from real model is rejected wholesale" {
   assert_true(broken.prompt_error != "")
 }
 
+///|
 test "templates switch program and selection" {
   let model = apply(initial_model(), SelectTemplate(2))
   assert_eq(model.program.window.title, "口算训练营")
   assert_true(model.selected_handler != "")
 }
 
+///|
 test "split lines helper" {
   let lines = split_lines("铅笔 1元\n\n橡皮 2元\n  笔记本 5元  ")
   assert_eq(lines.length(), 3)
   assert_eq(lines[0], "铅笔 1元")
   assert_eq(lines[2], "笔记本 5元")
 }
+
+///|
 test "runtime state accumulates across events" {
   let model = apply(initial_model(), SelectTemplate(3))
   let once = drain(apply(model, ControlClicked("卖铅笔")))
@@ -188,13 +210,18 @@ test "runtime state accumulates across events" {
   assert_eq(@momao_lang.value_to_text(revenue), "2")
   // 活状态并回模型：下一次运行从 2 继续
   let thrice = drain(apply(twice, ControlClicked("卖铅笔")))
-  let three = thrice.run.unwrap().state.vars.get("营业额").unwrap_or(@momao_lang.VUnit)
+  let three = thrice.run.unwrap().state.vars
+    .get("营业额")
+    .unwrap_or(@momao_lang.VUnit)
   assert_eq(@momao_lang.value_to_text(three), "3")
   // 控件文本也跨事件保持
-  let label = thrice.run.unwrap().state.texts.get("营业额标签").unwrap_or("")
+  let label = thrice.run.unwrap().state.texts
+    .get("营业额标签")
+    .unwrap_or("")
   assert_eq(label, "营业额：3")
 }
 
+///|
 test "local explanation walks the handler steps" {
   let model = apply(initial_model(), SelectTemplate(2))
   let explained = apply(model, ExplainHandler)
@@ -204,6 +231,7 @@ test "local explanation walks the handler steps" {
   assert_true(drill.explanation.contains("set_text"))
 }
 
+///|
 test "exported bundle never carries the provider key" {
   let model = apply(initial_model(), SetProviderKey("SENTINEL-SECRET-KEY"))
   let encoded = @codec.encode_program(model.program)
@@ -214,10 +242,11 @@ test "exported bundle never carries the provider key" {
   }
 }
 
+///|
 test "language loaded message switches without doubling" {
   // LanguageLoaded 走服务流；这里至少验证 ui_language_from_tag 的映射
-  let model = { ..initial_model(), language: En }
-  let loaded = { ..model, language: ui_language_from_tag("zh-Hans") }
+  let model = { ..initial_model(), language: En, }
+  let loaded = { ..model, language: ui_language_from_tag("zh-Hans"), }
   assert_true(loaded.language is ZhHans)
   let bad = ui_language_from_tag("not-a-locale")
   assert_true(bad is ZhHans)
@@ -225,6 +254,7 @@ test "language loaded message switches without doubling" {
   assert_true(en is En)
 }
 
+///|
 test "every generated catalog key resolves in both locales" {
   // 生成器保证两语言 key 集合一致；这里保住言兜底：任何 key 在任一语言
   // 都不得回落到 [[key]] 缺失标记。
@@ -234,27 +264,39 @@ test "every generated catalog key resolves in both locales" {
     for pair in catalog.messages {
       let (key, _message) = pair
       let resolved = text(t, key)
-      assert_true(
-        !resolved.starts_with("[["),
-      )
+      assert_true(!resolved.starts_with("[["))
     }
   }
 }
 
+///|
 test "placeholder messages interpolate in both locales" {
   let zh = translator_for(ZhHans)
   let en = translator_for(En)
-  let zh_gate = text_with(zh, "app.run.gate.submit", [("target", "班级账本"), ("payload", "3")])
+  let zh_gate = text_with(zh, "app.run.gate.submit", [
+    ("target", "班级账本"),
+    ("payload", "3"),
+  ])
   assert_true(zh_gate.contains("班级账本"))
   assert_true(zh_gate.contains("3"))
-  let en_gate = text_with(en, "app.run.gate.submit", [("target", "ledger"), ("payload", "3")])
+  let en_gate = text_with(en, "app.run.gate.submit", [
+    ("target", "ledger"),
+    ("payload", "3"),
+  ])
   assert_true(en_gate.contains("ledger"))
-  let zh_err = error_message(zh, @momao_lang.LangError(@momao_lang.NotDeclared, 2, "得分", ""))
+  let zh_err = error_message(
+    zh,
+    @momao_lang.LangError(@momao_lang.NotDeclared, 2, "得分", ""),
+  )
   assert_true(zh_err.contains("得分"))
-  let en_err = error_message(en, @momao_lang.LangError(@momao_lang.NotDeclared, 2, "score", ""))
+  let en_err = error_message(
+    en,
+    @momao_lang.LangError(@momao_lang.NotDeclared, 2, "score", ""),
+  )
   assert_true(en_err.contains("score"))
 }
 
+///|
 test "block view edits write back to the ir" {
   let model = apply(initial_model(), SelectTemplate(1))
   // 点名册：handler 链 = [declare 人数, declare 序号, set_text]
@@ -289,6 +331,7 @@ test "block view edits write back to the ir" {
   assert_true(deleted.code_draft.contains("随机数") == false)
 }
 
+///|
 test "block edit rejects unparseable draft" {
   let model = apply(initial_model(), SelectTemplate(1))
   let selected = apply(model, SelectBlock(0))
@@ -303,6 +346,7 @@ test "block edit rejects unparseable draft" {
   assert_true(committed.notice != "")
 }
 
+///|
 test "block edit on nested statement path" {
   // 口算训练营：批改 handler = [If(cond, [set_text], [], [set_text])]
   let model = apply(initial_model(), SelectTemplate(2))
@@ -313,12 +357,15 @@ test "block edit on nested statement path" {
   // 选 then 体里的 set_text（path [0,0,0]）
   let selected = apply(picked, SelectBlock(1))
   assert_true(selected.block_draft.contains("设置文本"))
-  let edited = apply(selected, EditBlock("设置文本(判定, \"完全正确\")\n"))
+  let edited = apply(
+    selected,
+    EditBlock("设置文本(判定, \"完全正确\")\n"),
+  )
   let committed = apply(edited, CommitBlock)
   match current_handler(committed) {
     Some(handler) =>
       match @blocks.stmt_at(handler.body, [0, 0, 0]) {
-        Some(stmt) => {
+        Some(stmt) =>
           match stmt {
             @ir.Stmt::Call(name, args) => {
               assert_eq(name, "set_text")
@@ -326,10 +373,66 @@ test "block edit on nested statement path" {
             }
             _ => fail("应为 call")
           }
-        }
         None => fail("then 体第一条应在")
       }
     None => fail("子程序应仍在")
   }
   assert_true(committed.code_draft.contains("完全正确"))
+}
+
+///|
+test "text field input lands in run state and live texts" {
+  let added = apply(initial_model(), AddControl(@ir.TextField))
+  let field = added.program.controls[added.program.controls.length() - 1]
+  assert_true(field.kind is @ir.TextField)
+  // 无运行态：输入也进活状态（受控字段不回跳，取文本 可读到）
+  let typed = apply(added, ControlChanged(field.name, "张三"))
+  assert_eq(typed.runtime_texts.get(field.name).unwrap_or(""), "张三")
+  // 运行态存在：输入同时进运行态文本表
+  let running = apply(typed, RunStart)
+  assert_true(running.run is Some(_))
+  let typed_again = apply(running, ControlChanged(field.name, "李四"))
+  assert_eq(
+    typed_again.run.unwrap().state.texts.get(field.name).unwrap_or(""),
+    "李四",
+  )
+}
+
+///|
+test "design drag moves control and clamps to canvas" {
+  let added = apply(initial_model(), AddControl(@ir.Button))
+  let control = added.program.controls[added.program.controls.length() - 1]
+  let cx = control.x.to_double() + 5.0
+  let cy = control.y.to_double() + 5.0
+  // 命中即选中并建立拖拽态
+  let pressed = apply(added, CanvasPress(cx, cy))
+  assert_true(pressed.selected_control == control.name)
+  assert_true(pressed.drag is Some(_))
+  // 拖向画布外：夹取规则保证控件完整落在 640x480 内
+  let moved = apply(pressed, CanvasDragTo(cx + 5000.0, cy + 5000.0))
+  let after = @ir.find_control(moved.program, control.name).unwrap()
+  assert_eq(after.x, @ir.DESIGN_WIDTH - after.width)
+  assert_eq(after.y, @ir.DESIGN_HEIGHT - after.height)
+  // 松开清除拖拽态但保留选中
+  let released = apply(moved, CanvasRelease(cx, cy))
+  assert_true(released.drag is None)
+  assert_true(released.selected_control == control.name)
+}
+
+///|
+test "inspector rect edits clamp and reject bad input" {
+  let model = initial_model()
+  // 高度超界 → 夹到画布高，y 随之夹回
+  let resized = apply(model, SetControlRect("按钮", @ir.RectHeight, "9999"))
+  let tall = @ir.find_control(resized.program, "按钮").unwrap()
+  assert_eq(tall.height, @ir.DESIGN_HEIGHT)
+  assert_eq(tall.y, 0)
+  // 合法移动生效
+  let moved = apply(resized, SetControlRect("按钮", @ir.RectX, "300"))
+  assert_eq(@ir.find_control(moved.program, "按钮").unwrap().x, 300)
+  // 非法输入（非数字/超长）被忽略，保持原值
+  let bad = apply(moved, SetControlRect("按钮", @ir.RectY, "abc"))
+  assert_eq(@ir.find_control(bad.program, "按钮").unwrap().y, 0)
+  let bad2 = apply(bad, SetControlRect("按钮", @ir.RectY, "99999"))
+  assert_eq(@ir.find_control(bad2.program, "按钮").unwrap().y, 0)
 }

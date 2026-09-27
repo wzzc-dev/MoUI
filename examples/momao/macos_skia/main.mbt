@@ -10,8 +10,11 @@
 async fn main {
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let owner = @provider.ProviderOwner::new()
-  let config = @provider.load_provider_config("examples/momao/.config.json").unwrap_or(
-    @provider.ProviderConfig::{ endpoint: "", model: "", api_key: "" },
+  let config = @provider.load_provider_config("examples/momao/.config.json").unwrap_or(@provider.ProviderConfig::{
+      endpoint: "",
+      model: "",
+      api_key: "",
+    },
   )
   let provider_config : @momao_app.ProviderConfig = {
     endpoint: config.endpoint,
@@ -29,13 +32,14 @@ async fn main {
           None => ()
         }
       },
-      provider_submit=(endpoint, key, prompt, on_result) => {
+      provider_submit=(spec, on_result) => {
         @provider.provider_submit_prompt(
           owner,
-          endpoint,
-          key,
-          @momao_app.proposal_system_prompt(),
-          prompt,
+          spec.endpoint,
+          spec.key,
+          spec.model,
+          spec.system,
+          spec.prompt,
           on_result,
         )
       },
@@ -57,4 +61,3 @@ async fn main {
     err => println("MoMao Studio exited with error: \{err}")
   }
 }
-

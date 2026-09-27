@@ -117,7 +117,8 @@ fn write_expr(buf : StringBuilder, expr : Expr) -> Unit {
   match expr {
     NumLit(n) => buf.write_string("num(\{n})")
     StrLit(text) => buf.write_string("str(«\{text}»)")
-    BoolLit(flag) => buf.write_string(if flag { "bool(true)" } else { "bool(false)" })
+    BoolLit(flag) =>
+      buf.write_string(if flag { "bool(true)" } else { "bool(false)" })
     Var(name) => buf.write_string("var(\{name})")
     Not(inner) => {
       buf.write_string("not ")

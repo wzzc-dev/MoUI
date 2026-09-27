@@ -167,12 +167,7 @@ pub fn kernel_ir_mbt() -> String {
     #|pub(all) enum Stmt {
     #|  Declare(String, Expr) // 变量 x = expr / let x = expr（首次引入）
     #|  Assign(String, Expr) // x = expr（必须已声明）
-    #|  If(
-    #|    Expr,
-    #|    Array[Stmt],
-    #|    Array[(Expr, Array[Stmt])],
-    #|    Array[Stmt],
-    #|  ) // cond, then, else-ifs, else
+    #|  If(Expr, Array[Stmt], Array[(Expr, Array[Stmt])], Array[Stmt]) // cond, then, else-ifs, else
     #|  CountLoop(Expr, String?, Array[Stmt]) // times, loop var, body
     #|  WhileLoop(Expr, Array[Stmt])
     #|  Break
@@ -289,11 +284,7 @@ pub fn kernel_ir_mbt() -> String {
     #|  }
     #|  let mut first = true
     #|  for c in name {
-    #|    let ok = if first {
-    #|      is_name_start(c)
-    #|    } else {
-    #|      is_name_part(c)
-    #|    }
+    #|    let ok = if first { is_name_start(c) } else { is_name_part(c) }
     #|    if !ok {
     #|      return false
     #|    }
@@ -321,6 +312,58 @@ pub fn kernel_ir_mbt() -> String {
     #|/// CJK 统一表意文字主区（覆盖常用汉字；扩展区罕见不做）。
     #|fn is_cjk(code : Int) -> Bool {
     #|  code >= 0x4E00 && code <= 0x9FFF
+    #|}
+    #|
+    #|///|
+    #|/// 控件矩形分量（检查器属性编辑与画布拖拽共用）。
+    #|pub(all) enum RectField {
+    #|  RectX
+    #|  RectY
+    #|  RectWidth
+    #|  RectHeight
+    #|}
+    #|
+    #|///|
+    #|fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+    #|  if value < min {
+    #|    min
+    #|  } else if value > max {
+    #|    max
+    #|  } else {
+    #|    value
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 控件最小边长（属性框误输入 0/负数的防线）。
+    #|pub const MIN_CONTROL_SIZE : Int = 8
+    #|
+    #|///|
+    #|/// 更新矩形分量并夹回设计画布：控件永远完整落在 640x480 内，
+    #|/// 尺寸不小于 MIN_CONTROL_SIZE。拖拽与属性编辑共用同一夹取规则。
+    #|pub fn Control::with_rect_field(
+    #|  self : Control,
+    #|  field : RectField,
+    #|  value : Int,
+    #|) -> Control {
+    #|  match field {
+    #|    RectWidth => {
+    #|      let width = clamp_int(value, MIN_CONTROL_SIZE, DESIGN_WIDTH)
+    #|      { ..self, width, x: clamp_int(self.x, 0, (DESIGN_WIDTH - width).max(0)), }
+    #|    }
+    #|    RectHeight => {
+    #|      let height = clamp_int(value, MIN_CONTROL_SIZE, DESIGN_HEIGHT)
+    #|      {
+    #|        ..self,
+    #|        height,
+    #|        y: clamp_int(self.y, 0, (DESIGN_HEIGHT - height).max(0)),
+    #|      }
+    #|    }
+    #|    RectX =>
+    #|      { ..self, x: clamp_int(value, 0, (DESIGN_WIDTH - self.width).max(0)), }
+    #|    RectY =>
+    #|      { ..self, y: clamp_int(value, 0, (DESIGN_HEIGHT - self.height).max(0)), }
+    #|  }
     #|}
     #|
   source
@@ -423,7 +466,9 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|    match find_control(program, handler.control_name) {
     #|      Some(control) =>
     #|        if !control.kind.supports_event(handler.event) {
-    #|          errors.push(UnsupportedEvent(handler.control_name, handler.event.tag()))
+    #|          errors.push(
+    #|            UnsupportedEvent(handler.control_name, handler.event.tag()),
+    #|          )
     #|        }
     #|      None => errors.push(UnknownControlInHandler(handler.control_name))
     #|    }
@@ -465,9 +510,10 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|  match stmt {
     #|    Declare(_, _) | Assign(_, _) | Call(_, _) | Break => 1
     #|    If(_, then_body, else_ifs, else_body) =>
-    #|      1 + count_stmts(then_body) + count_stmts(else_body) + count_if_chain(
-    #|        else_ifs,
-    #|      )
+    #|      1 +
+    #|      count_stmts(then_body) +
+    #|      count_stmts(else_body) +
+    #|      count_if_chain(else_ifs)
     #|    CountLoop(_, _, body) | WhileLoop(_, body) => 1 + count_stmts(body)
     #|  }
     #|}
@@ -591,12 +637,20 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|    CountLoop(times, _, body) => {
     #|      let count_depth = expr_depth(times)
     #|      let body_depth = body_expr_depth(body)
-    #|      if count_depth > body_depth { count_depth } else { body_depth }
+    #|      if count_depth > body_depth {
+    #|        count_depth
+    #|      } else {
+    #|        body_depth
+    #|      }
     #|    }
     #|    WhileLoop(cond, body) => {
     #|      let cond_depth = expr_depth(cond)
     #|      let body_depth = body_expr_depth(body)
-    #|      if cond_depth > body_depth { cond_depth } else { body_depth }
+    #|      if cond_depth > body_depth {
+    #|        cond_depth
+    #|      } else {
+    #|        body_depth
+    #|      }
     #|    }
     #|  }
     #|}
@@ -726,7 +780,8 @@ pub fn kernel_ir_signature_mbt() -> String {
     #|  match expr {
     #|    NumLit(n) => buf.write_string("num(\{n})")
     #|    StrLit(text) => buf.write_string("str(«\{text}»)")
-    #|    BoolLit(flag) => buf.write_string(if flag { "bool(true)" } else { "bool(false)" })
+    #|    BoolLit(flag) =>
+    #|      buf.write_string(if flag { "bool(true)" } else { "bool(false)" })
     #|    Var(name) => buf.write_string("var(\{name})")
     #|    Not(inner) => {
     #|      buf.write_string("not ")

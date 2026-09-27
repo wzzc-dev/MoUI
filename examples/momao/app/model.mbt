@@ -34,6 +34,14 @@ pub(all) struct PendingProposal {
 }
 
 ///|
+/// 设计画布拖拽态：被拖控件 + 按下点相对控件原点的偏移（拖拽跟随不跳变）。
+pub(all) struct DragState {
+  control : String
+  offset_x : Int
+  offset_y : Int
+}
+
+///|
 pub(all) struct Model {
   program : @ir.MomaoProgram
   language : UiLanguage
@@ -55,6 +63,8 @@ pub(all) struct Model {
   // 积木视图编辑态：选中块（block_chain 下标，-1 = 无）与语句草稿
   selected_block : Int
   block_draft : String
+  // 设计画布拖拽态：按下命中控件时建立，松开清除
+  drag : DragState?
   // 运行期活状态：跨事件累积的变量值与控件文本（易语言式全局量）
   runtime_values : Map[String, @momao_lang.Value]
   runtime_texts : Map[String, String]
@@ -71,6 +81,7 @@ pub(all) enum Msg {
   SetControlText(String, String)
   SetControlName(String, String)
   SetControlItems(String, String)
+  SetControlRect(String, @ir.RectField, String)
   AddControl(@ir.ControlKind)
   DeleteControl(String)
   SelectHandler(String)
@@ -132,7 +143,7 @@ pub(all) struct ProviderConfig {
 
 ///|
 pub fn empty_provider_config() -> ProviderConfig {
-  { endpoint: "", model: "", api_key: "" }
+  { endpoint: "", model: "", api_key: "", }
 }
 
 ///|
@@ -174,6 +185,7 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     explanation: "",
     selected_block: -1,
     block_draft: "",
+    drag: None,
     runtime_values: @momao_lang.initial_values(program),
     runtime_texts: @momao_lang.initial_texts(program),
   }

@@ -92,7 +92,9 @@ pub fn validate_program(program : MomaoProgram) -> Array[IrError] {
     match find_control(program, handler.control_name) {
       Some(control) =>
         if !control.kind.supports_event(handler.event) {
-          errors.push(UnsupportedEvent(handler.control_name, handler.event.tag()))
+          errors.push(
+            UnsupportedEvent(handler.control_name, handler.event.tag()),
+          )
         }
       None => errors.push(UnknownControlInHandler(handler.control_name))
     }
@@ -134,9 +136,10 @@ fn count_stmt(stmt : Stmt) -> Int {
   match stmt {
     Declare(_, _) | Assign(_, _) | Call(_, _) | Break => 1
     If(_, then_body, else_ifs, else_body) =>
-      1 + count_stmts(then_body) + count_stmts(else_body) + count_if_chain(
-        else_ifs,
-      )
+      1 +
+      count_stmts(then_body) +
+      count_stmts(else_body) +
+      count_if_chain(else_ifs)
     CountLoop(_, _, body) | WhileLoop(_, body) => 1 + count_stmts(body)
   }
 }
@@ -260,12 +263,20 @@ fn stmt_expr_depth(stmt : Stmt) -> Int {
     CountLoop(times, _, body) => {
       let count_depth = expr_depth(times)
       let body_depth = body_expr_depth(body)
-      if count_depth > body_depth { count_depth } else { body_depth }
+      if count_depth > body_depth {
+        count_depth
+      } else {
+        body_depth
+      }
     }
     WhileLoop(cond, body) => {
       let cond_depth = expr_depth(cond)
       let body_depth = body_expr_depth(body)
-      if cond_depth > body_depth { cond_depth } else { body_depth }
+      if cond_depth > body_depth {
+        cond_depth
+      } else {
+        body_depth
+      }
     }
   }
 }

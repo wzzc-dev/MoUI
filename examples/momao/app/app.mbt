@@ -19,14 +19,26 @@ pub fn explanation_system_prompt() -> String {
 pub const LANGUAGE_SETTINGS_KEY : String = "momao.language"
 
 ///|
-/// 真流式 provider 提交签名：(endpoint, key, prompt, callback)。
-pub type ProviderSubmit = (String, String, String, (Result[String, String]) -> Unit) -> Unit
+/// 真实 provider 请求规格：由 app 组装（面板里的模型名 + 按请求类型
+/// 选择的 system 提示），平台入口只负责投递，不再自行拼提示。
+pub(all) struct ProviderRequestSpec {
+  endpoint : String
+  key : String
+  model : String
+  system : String
+  prompt : String
+}
+
+///|
+/// 真实 provider 提交签名：入口注入，UI 线程从不等待网络。
+pub type ProviderSubmit = (
+  ProviderRequestSpec,
+  (Result[String, String]) -> Unit,
+) -> Unit
 
 ///|
 fn noop_provider_submit(
-  _endpoint : String,
-  _key : String,
-  _prompt : String,
+  _spec : ProviderRequestSpec,
   callback : (Result[String, String]) -> Unit,
 ) -> Unit {
   callback(Err("真实 provider 未接入"))
@@ -55,30 +67,25 @@ pub fn update_with_services(
       match result {
         Success(path) =>
           (
-            { ..model, notice: path },
+            { ..model, notice: path, },
             services
-              .files()
-              .write_text(path, @codec.encode_program(model.program))
-              .effect(map=r => SaveCompleted(r)),
+            .files()
+            .write_text(path, @codec.encode_program(model.program))
+            .effect(map=r => SaveCompleted(r)),
           )
         Failure(error) =>
-          (
-            { ..model, notice: error.message },
-            @moui.Effect::none(),
-          )
+          ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     SaveCompleted(result) =>
       match result {
-        Success(_) => (
-          {
-            ..model,
-            notice: text(translator(model), "app.status.saved"),
-          },
-          @moui.Effect::none(),
-        )
+        Success(_) =>
+          (
+            { ..model, notice: text(translator(model), "app.status.saved"), },
+            @moui.Effect::none(),
+          )
         Failure(error) =>
-          ({ ..model, notice: error.message }, @moui.Effect::none())
+          ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     OpenRequested => {
@@ -95,14 +102,14 @@ pub fn update_with_services(
       match result {
         Success(path) =>
           (
-            { ..model, notice: path },
+            { ..model, notice: path, },
             services
-              .files()
-              .read_text(path)
-              .effect(map=r => OpenReadCompleted(r)),
+            .files()
+            .read_text(path)
+            .effect(map=r => OpenReadCompleted(r)),
           )
         Failure(error) =>
-          ({ ..model, notice: error.message }, @moui.Effect::none())
+          ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     OpenReadCompleted(result) =>
@@ -124,16 +131,17 @@ pub fn update_with_services(
               }
               (sync_code_draft(next), @moui.Effect::none())
             }
-            Err(_) => (
-              {
-                ..model,
-                notice: text(translator(model), "app.status.open_failed"),
-              },
-              @moui.Effect::none(),
-            )
+            Err(_) =>
+              (
+                {
+                  ..model,
+                  notice: text(translator(model), "app.status.open_failed"),
+                },
+                @moui.Effect::none(),
+              )
           }
         Failure(error) =>
-          ({ ..model, notice: error.message }, @moui.Effect::none())
+          ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     ExportRequested => {
@@ -144,9 +152,9 @@ pub fn update_with_services(
       (
         model,
         services
-          .files()
-          .pick_directory(options~)
-          .effect(map=r => ExportDirPicked(r)),
+        .files()
+        .pick_directory(options~)
+        .effect(map=r => ExportDirPicked(r)),
       )
     }
     ExportDirPicked(result) =>
@@ -161,31 +169,29 @@ pub fn update_with_services(
             let path = "\{dir}/\{pair.0}"
             effects.push(
               services
-                .files()
-                .write_text(path, pair.1)
-                .effect(map=r => ExportFileWritten(r)),
+              .files()
+              .write_text(path, pair.1)
+              .effect(map=r => ExportFileWritten(r)),
             )
           }
           (
-            { ..model, notice: path_hint(dir, bundle) },
+            { ..model, notice: path_hint(dir, bundle), },
             @moui.Effect::batch(effects),
           )
         }
         Failure(error) =>
-          ({ ..model, notice: error.message }, @moui.Effect::none())
+          ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     ExportFileWritten(result) =>
       match result {
-        Success(_) => (
-          {
-            ..model,
-            notice: text(translator(model), "app.status.exported"),
-          },
-          @moui.Effect::none(),
-        )
+        Success(_) =>
+          (
+            { ..model, notice: text(translator(model), "app.status.exported"), },
+            @moui.Effect::none(),
+          )
         Failure(error) =>
-          ({ ..model, notice: error.message }, @moui.Effect::none())
+          ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     _ => update_pure(model, msg)
@@ -234,7 +240,10 @@ fn sanitize_export_name(model : Model) -> String {
 
 ///|
 /// 导出 bundle 文件清单（services/export 的薄封装）。
-pub fn bundle_files(program_json : String, name : String) -> Array[(String, String)] {
+pub fn bundle_files(
+  program_json : String,
+  name : String,
+) -> Array[(String, String)] {
   @export.export_bundle(program_json, name)
 }
 
@@ -287,21 +296,32 @@ pub fn program(
   let submit = provider_submit
   let on_locale = apply_locale
   @moui.Program::new(
-    init=() => (
-      initial_model(provider_config?),
-      services
+    init=() => {
+      (
+        initial_model(provider_config?),
+        services
         .settings()
         .read(LANGUAGE_SETTINGS_KEY)
         .effect(map=result => LanguageLoaded(language_tag_of(result))),
-    ),
+      )
+    },
     update=(model, msg) => {
       match msg {
-        SaveRequested | SavePathPicked(_) | SaveCompleted(_) |
-        OpenRequested | OpenPathPicked(_) | OpenReadCompleted(_) |
-        ExportRequested | ExportDirPicked(_) | ExportFileWritten(_) |
-        GenerateProposal | RealGenerationFinished(_) |
-        ExplainHandler | RealExplanationFinished(_) |
-        SwitchLanguage | LanguageLoaded(_) =>
+        SaveRequested
+        | SavePathPicked(_)
+        | SaveCompleted(_)
+        | OpenRequested
+        | OpenPathPicked(_)
+        | OpenReadCompleted(_)
+        | ExportRequested
+        | ExportDirPicked(_)
+        | ExportFileWritten(_)
+        | GenerateProposal
+        | RealGenerationFinished(_)
+        | ExplainHandler
+        | RealExplanationFinished(_)
+        | SwitchLanguage
+        | LanguageLoaded(_) =>
           update_with_provider(model, msg, services, submit, on_locale)
         _ => update_pure(model, msg)
       }
@@ -330,15 +350,15 @@ fn update_with_provider(
         @moui.Effect::batch([
           effect,
           services
-            .settings()
-            .write(LANGUAGE_SETTINGS_KEY, tag)
-            .effect(map=_ => SetNotice("")),
+          .settings()
+          .write(LANGUAGE_SETTINGS_KEY, tag)
+          .effect(map=_ => SetNotice("")),
         ]),
       )
     }
     LanguageLoaded(tag) => {
       let wanted = ui_language_from_tag(tag)
-      let next = sync_code_draft({ ..model, language: wanted })
+      let next = sync_code_draft({ ..model, language: wanted, })
       apply_locale(next.language.tag())
       (next, @moui.Effect::none())
     }
@@ -348,48 +368,53 @@ fn update_with_provider(
       } else {
         match current_handler(model) {
           None => (model, @moui.Effect::none())
-          Some(handler) => (
-            { ..model, explanation: "" },
-            @moui.Effect::dispatch(emit => {
-              submit(
-                model.provider_endpoint,
-                model.provider_key,
-                explanation_system_prompt() +
-                "\n\n" +
-                @momao_lang.render_handler(
-                  handler,
-                  model.language.dsl_language(),
-                ),
-                result => emit(RealExplanationFinished(result)),
-              )
-            }),
-          )
+          Some(handler) =>
+            (
+              { ..model, explanation: "", },
+              @moui.Effect::dispatch(emit => {
+                submit(
+                  {
+                    endpoint: model.provider_endpoint,
+                    key: model.provider_key,
+                    model: model.provider_model,
+                    system: explanation_system_prompt(),
+                    prompt: @momao_lang.render_handler(
+                      handler,
+                      model.language.dsl_language(),
+                    ),
+                  },
+                  result => emit(RealExplanationFinished(result)),
+                )
+              }),
+            )
         }
       }
     RealExplanationFinished(result) =>
       match result {
-        Ok(explanation) => (
-          { ..model, explanation },
-          @moui.Effect::none(),
-        )
-        Err(message) => ({ ..model, explanation: message }, @moui.Effect::none())
+        Ok(explanation) => ({ ..model, explanation, }, @moui.Effect::none())
+        Err(message) =>
+          ({ ..model, explanation: message, }, @moui.Effect::none())
       }
     GenerateProposal =>
       if model.provider_mode is Fake {
         update_pure(model, GenerateProposal)
       } else if model.provider_key == "" {
         (
-          { ..model, prompt_error: text(translator(model), "app.ai.key") },
+          { ..model, prompt_error: text(translator(model), "app.ai.key"), },
           @moui.Effect::none(),
         )
       } else {
         (
-          { ..model, prompt_error: "" },
+          { ..model, prompt_error: "", },
           @moui.Effect::dispatch(emit => {
             submit(
-              model.provider_endpoint,
-              model.provider_key,
-              @proposals.proposal_system_prompt() + "\n\n" + model.prompt_draft,
+              {
+                endpoint: model.provider_endpoint,
+                key: model.provider_key,
+                model: model.provider_model,
+                system: @proposals.proposal_system_prompt(),
+                prompt: model.prompt_draft,
+              },
               result => emit(RealGenerationFinished(result)),
             )
           }),
