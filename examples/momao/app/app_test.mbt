@@ -885,3 +885,48 @@ test "template switch is undoable" {
     @ir.program_signature(model.program),
   )
 }
+
+///|
+test "single step pauses auto-advance and walks one instruction" {
+  let model = apply(@app.initial_model(), RunStart)
+  let started = match model.run {
+    Some(run) => run
+    None => fail("应进入运行态")
+  }
+  let steps_at_start = started.state.steps
+  // 单步：恰好走一条指令
+  let stepped = apply(model, RunStep)
+  let after_step = stepped.run.unwrap()
+  assert_eq(after_step.state.steps, steps_at_start + 1)
+  assert_true(after_step.single_step)
+  assert_true(after_step.state.status is @momao_lang.Running)
+  // 计时器 tick 在单步模式下不推进
+  let ticked = apply(stepped, RunTick)
+  assert_eq(ticked.run.unwrap().state.steps, steps_at_start + 1)
+  // 再走一步仍只 +1
+  let stepped_again = apply(ticked, RunStep)
+  assert_eq(stepped_again.run.unwrap().state.steps, steps_at_start + 2)
+  // 继续：恢复自动推进直至完成
+  let resumed = apply(stepped_again, RunResume)
+  assert_true(!resumed.run.unwrap().single_step)
+  let finished = drain(resumed)
+  assert_true(finished.run.unwrap().state.status is @momao_lang.Completed)
+}
+
+///|
+test "variables table data fills as the run declares variables" {
+  // 点名册样例声明了变量：运行到完成后 vars 非空
+  let model = apply(@app.initial_model(), SelectTemplate(1))
+  let started = apply(model, RunStart)
+  let finished = drain(started)
+  match finished.run {
+    None => fail("点名册应可运行")
+    Some(run) => {
+      let mut count = 0
+      for _name in run.state.vars.keys() {
+        count = count + 1
+      }
+      assert_true(count > 0)
+    }
+  }
+}

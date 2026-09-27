@@ -42,6 +42,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.model", GeneratedI18nMessage::Text("Model")),
       ("app.ai.title", GeneratedI18nMessage::Text("AI proposals")),
       ("app.handlers", GeneratedI18nMessage::Text("Event handlers")),
+      ("app.run.step", GeneratedI18nMessage::Text("Step")),
       ("app.run.stop", GeneratedI18nMessage::Text("Stop")),
       (
         "app.subtitle",
@@ -75,6 +76,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.explain", GeneratedI18nMessage::Text("Explain this program")),
       ("app.code.error", GeneratedI18nMessage::Text("Syntax error")),
       ("app.code.title", GeneratedI18nMessage::Text("MoMao code")),
+      ("app.run.resume", GeneratedI18nMessage::Text("Resume")),
       ("blocks.declare", GeneratedI18nMessage::Text("declare")),
       ("blocks.else_if", GeneratedI18nMessage::Text("elseif")),
       ("builtin.random", GeneratedI18nMessage::Text("random")),
@@ -251,6 +253,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.model", GeneratedI18nMessage::Text("模型名")),
       ("app.ai.title", GeneratedI18nMessage::Text("AI 提案")),
       ("app.handlers", GeneratedI18nMessage::Text("事件子程序")),
+      ("app.run.step", GeneratedI18nMessage::Text("单步")),
       ("app.run.stop", GeneratedI18nMessage::Text("停止")),
       (
         "app.subtitle",
@@ -284,6 +287,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.explain", GeneratedI18nMessage::Text("解释这个程序")),
       ("app.code.error", GeneratedI18nMessage::Text("语法错误")),
       ("app.code.title", GeneratedI18nMessage::Text("MoMao 代码")),
+      ("app.run.resume", GeneratedI18nMessage::Text("继续")),
       ("blocks.declare", GeneratedI18nMessage::Text("声明变量")),
       ("blocks.else_if", GeneratedI18nMessage::Text("否则如果")),
       ("builtin.random", GeneratedI18nMessage::Text("随机数")),

@@ -28,6 +28,7 @@ fn start_run(model : Model) -> Model {
         handler_label: "\{handler.control_name}@\{handler.event.tag()}",
         state,
         checks: Map([], capacity=8),
+        single_step: false,
       }
       { ..committed, run: Some(run), mode: ModeRun, notice: "", }
     }
@@ -40,7 +41,8 @@ fn run_tick(model : Model) -> Model {
   match model.run {
     None => model
     Some(run) => {
-      if run.state.status is @momao_lang.Running {
+      // 单步模式下计时器不自动推进（RunStep 负责走一条指令）
+      if run.state.status is @momao_lang.Running && !run.single_step {
         let mut i = 0
         while i < 6 && run.state.status is @momao_lang.Running {
           @momao_lang.step_once(run.state)
@@ -105,6 +107,7 @@ fn run_handler(
                 handler_label: handler_key(control, event_tag),
                 state,
                 checks: Map([], capacity=8),
+                single_step: false,
               }),
               mode: ModeRun,
             },
@@ -122,6 +125,37 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     RunStart => Some((start_run(model), @moui.Effect::none()))
     RunStop => Some(({ ..model, run: None, }, @moui.Effect::none()))
     RunTick => Some((run_tick(model), @moui.Effect::none()))
+    RunStep =>
+      // 单步：走一条指令并进入单步模式（自动推进停止，直到 继续）
+      match model.run {
+        None => Some((model, @moui.Effect::none()))
+        Some(run) => {
+          if run.state.status is @momao_lang.Running {
+            @momao_lang.step_once(run.state)
+          }
+          Some(
+            (
+              merge_run_back({
+                ..model,
+                run: Some({ ..run, single_step: true, }),
+              }),
+              @moui.Effect::none(),
+            ),
+          )
+        }
+      }
+    RunResume =>
+      // 继续：退出单步模式，恢复自动推进
+      match model.run {
+        None => Some((model, @moui.Effect::none()))
+        Some(run) =>
+          Some(
+            (
+              { ..model, run: Some({ ..run, single_step: false, }), },
+              @moui.Effect::none(),
+            ),
+          )
+      }
     RunToggle(name, value) =>
       // 勾选框是运行期 UI 态：就地写入当前 run 的 checks 表
       match model.run {

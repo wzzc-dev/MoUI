@@ -23,6 +23,8 @@ pub(all) struct RunModel {
   handler_label : String
   state : @momao_lang.RunState
   checks : Map[String, Bool]
+  // 单步模式：为真时 RunTick 不自动推进，仅 RunStep 走一条指令
+  single_step : Bool
 }
 
 ///|
@@ -139,6 +141,8 @@ pub(all) enum Msg {
   RunStart
   RunStop
   RunTick
+  RunStep
+  RunResume
   RunToggle(String, Bool)
   AnswerGate(Bool)
   ControlClicked(String)

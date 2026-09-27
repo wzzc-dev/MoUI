@@ -427,16 +427,50 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         }
         controls.push(widget)
       }
-      // 舞台标题条：正在运行 + 当前子程序 + 停止
+      // 舞台标题条：正在运行 + 当前子程序 + 单步/继续 + 停止
       let stage_head = @views.row([
         @views.text(text(t, "app.run.stage"), role=Caption),
         @views.text("\{run.handler_label}", role=Subtitle),
+        @views.button(
+          text(t, "app.run.step"),
+          on_click=RunStep,
+          variant=Outline,
+        ),
+        @views.button(
+          text(t, "app.run.resume"),
+          on_click=RunResume,
+          variant=Outline,
+        ),
         @views.button(
           text(t, "app.run.stop"),
           on_click=RunStop,
           variant=Outline,
         ),
       ])
+      // 变量表：当前变量 → 值，按键名稳定排序（运行即讲解的数据面）
+      let variables_card : Array[@moui.View[Msg]] = []
+      let variable_names : Array[String] = []
+      for name in run.state.vars.keys() {
+        variable_names.push(name)
+      }
+      variable_names.sort()
+      if variable_names.length() > 0 {
+        variables_card.push(
+          @views.text(text(t, "app.run.variables"), role=Subtitle),
+        )
+        for name in variable_names {
+          match run.state.vars.get(name) {
+            Some(value) =>
+              variables_card.push(
+                @views.row([
+                  @views.text(name, width=120.0),
+                  @views.text(@momao_lang.value_to_text(value), width=280.0),
+                ]),
+              )
+            None => ()
+          }
+        }
+      }
       let head : Array[@moui.View[Msg]] = [stage_head, @views.column(controls)]
       // 闸门卡：确认卡（Warning tone）+ 确认 Primary / 拒绝 Outline，
       // 确认前零真实动作
@@ -525,6 +559,9 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       }
       let panel : Array[@moui.View[Msg]] = []
       for item in head {
+        panel.push(item)
+      }
+      for item in variables_card {
         panel.push(item)
       }
       for item in gate_card {
