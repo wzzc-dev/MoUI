@@ -930,3 +930,33 @@ test "variables table data fills as the run declares variables" {
     }
   }
 }
+
+///|
+test "proposal history records accept and reject" {
+  let model = @app.initial_model()
+  assert_eq(model.proposal_history.length(), 0)
+  // 采纳一条
+  let accepted = apply(
+    apply(
+      apply(model, SetPrompt("做一个查询成绩的表单")),
+      GenerateProposal,
+    ),
+    AcceptProposal,
+  )
+  assert_eq(accepted.proposal_history.length(), 1)
+  assert_true(accepted.proposal_history[0].accepted)
+  assert_eq(accepted.proposal_history[0].seq, 1)
+  // 再生成并拒绝一条
+  let rejected = apply(
+    apply(
+      apply(accepted, SetPrompt("做一个借书登记的表单")),
+      GenerateProposal,
+    ),
+    RejectProposal,
+  )
+  assert_eq(rejected.proposal_history.length(), 2)
+  assert_true(!rejected.proposal_history[1].accepted)
+  assert_eq(rejected.proposal_history[1].seq, 2)
+  // 摘要非空（来自提案 summary）
+  assert_true(rejected.proposal_history[1].summary != "")
+}

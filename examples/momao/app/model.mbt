@@ -54,6 +54,15 @@ pub(all) struct UndoEntry {
 }
 
 ///|
+/// 提案历史条目：会话内回放「AI 干了什么」（采纳/拒绝 + 摘要 + diff）。
+pub(all) struct ProposalRecord {
+  summary : String
+  diff : Array[@proposals.DiffEntry]
+  accepted : Bool
+  seq : Int
+}
+
+///|
 /// 设计画布拖拽态：被拖控件 + 拖拽种类（移动/缩放）。
 pub(all) struct DragState {
   control : String
@@ -100,6 +109,8 @@ pub(all) struct Model {
   // 撤销/重做：变更前快照栈（深度 UNDO_DEPTH）与重做栈
   undo_stack : Array[UndoEntry]
   redo_stack : Array[UndoEntry]
+  // 会话内提案历史（不持久化）
+  proposal_history : Array[ProposalRecord]
 }
 
 ///|
@@ -231,6 +242,7 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     runtime_texts: @momao_lang.initial_texts(program),
     undo_stack: [],
     redo_stack: [],
+    proposal_history: [],
   }
   seed_code_draft(model)
 }

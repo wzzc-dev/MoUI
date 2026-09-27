@@ -25,7 +25,7 @@ fn accept_proposal(model : Model) -> Model {
           runtime_texts: @momao_lang.initial_texts(next),
         }
         {
-          ..cleared,
+          ..record_history(cleared, pending, true),
           notice: text(translator(cleared), "app.status.proposal_accepted"),
         }
       }
@@ -191,7 +191,10 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some(
         (
           {
-            ..model,
+            ..(match model.pending {
+              None => model
+              Some(pending) => record_history(model, pending, false)
+            }),
             pending: None,
             notice: text(translator(model), "app.status.proposal_rejected"),
           },
@@ -242,4 +245,24 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some(({ ..model, provider_key: value, }, @moui.Effect::none()))
     _ => None
   }
+}
+
+///|
+/// 记录提案历史（会话内）：采纳/拒绝各记一条，seq 单调递增。
+fn record_history(
+  model : Model,
+  pending : PendingProposal,
+  accepted : Bool,
+) -> Model {
+  let history : Array[ProposalRecord] = []
+  for record in model.proposal_history {
+    history.push(record)
+  }
+  history.push(ProposalRecord::{
+    summary: pending.summary,
+    diff: pending.diff,
+    accepted,
+    seq: history.length() + 1,
+  })
+  { ..model, proposal_history: history, }
 }

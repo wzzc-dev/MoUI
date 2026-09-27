@@ -851,6 +851,34 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   for item in proposal_card {
     panel.push(item)
   }
+  // 提案历史（会话内）：回放 AI 干了什么
+  if model.proposal_history.length() > 0 {
+    panel.push(@views.text(text(t, "app.ai.history"), role=Subtitle))
+    for record in model.proposal_history {
+      panel.push(
+        @views.row([
+          @views.badge(
+            text(
+              t,
+              if record.accepted {
+                "app.ai.hist_accepted"
+              } else {
+                "app.ai.hist_rejected"
+              },
+            ),
+            tone=if record.accepted {
+              @style.BadgeTone::Success
+            } else {
+              @style.BadgeTone::Danger
+            },
+            width=56.0,
+            height=20.0,
+          ),
+          @views.text("\{record.seq}. \{record.summary}", width=180.0),
+        ]),
+      )
+    }
+  }
   for item in explanation_card {
     panel.push(item)
   }
