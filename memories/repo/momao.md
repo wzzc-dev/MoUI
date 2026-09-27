@@ -245,3 +245,30 @@
   参考线全命中（测试按成员断言）。
 - app 包曾有 test-block `wzzc-dev/moui/core` 死导入（unused package
   警告），已移除并转入主导入块实际使用。
+
+## 2026-09-27 承诺兑现批次（缩放/吸附/新建子程序）
+
+- **拖拽态二分**：`DragState{control, kind}`，`DragKind.Move(offset_x, offset_y)`
+  / `Resize(@ir.DragCorner)`。缩放数学在 `@ir.Control::resize_from_corner`
+  （对角固定，四角各自推导，夹取与 with_rect_field 同纪律）；改 domain/ir
+  后必须重跑 sync_kernel（本次已同步，--check 零漂移，导出烟测重跑通过）。
+- **手柄优先于控件体**：CanvasPress 先对选中控件做 `hit_test_handle`
+  （角点 ±6px 命中，绘制是 8x8 方块），命中即 `Resize(corner)` 且不改选中；
+  落空才走 hit_test_control 建 Move。**测试按住点若取控件原点 +5px 会落进
+  手柄区触发缩放**——移动拖拽测试按下点要距角 >6px（+20/+15 已用）。
+- **吸附只在移动**：`snap_move_position`（canvas.mbt，pub）与
+  alignment_guides 共用同一目标集（画布三线 + 其他控件左/中/右、上/中/下）
+  与 4px 容差，从 (目标, 平移量) 候选取 |平移| 最小者；吸附后仍过
+  with_rect_field 夹取（目标全在画布内不会越界）。缩放时参考线仅显示不吸附。
+- **CreateHandler(control, event)**：设计域消息；守卫 = 控件存在 + 事件受
+  支持 + (控件,事件) 不重复 + MAX_HANDLERS 预算（超限设 notice
+  `app.status.handlers_limit`，AddControl 同理 `app.status.controls_limit`）。
+  UI 新建的 handler note 留空——双语 note 必填只约束 AI 提案。左栏入口 =
+  选中控件「支持但尚无 handler」的事件按钮（`app.handler.new` +
+  `event.on_click/on_change` 键早已在 catalog，本次首次接线）。
+- **DeleteControl 草稿语义**：仅当被删控件的子程序正是 selected_handler
+  时清空选中并 sync_code_draft；删别的控件不动草稿（保未提交编辑）。
+- 画布 `semantics_label` 改为 design_canvas 的参数（调用方经
+  `text(t, "app.design.canvas")` 传入）——自绘控件的语义标签不要硬编码。
+- 设计尺寸常量单一来源 `@ir.DESIGN_WIDTH/HEIGHT`（canvas.mbt 顶层 let
+  `.to_double()` 派生），不要再写 640.0/480.0 字面量。

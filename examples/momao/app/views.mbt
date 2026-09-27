@@ -125,6 +125,30 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     let key = handler_key(handler.control_name, handler.event.tag())
     handlers.push(@views.button(key, on_click=SelectHandler(key)))
   }
+  // 新建子程序入口：选中控件支持、但尚无 handler 的事件，点击即建空子程序
+  match find_selected_control(model) {
+    None => ()
+    Some(control) => {
+      let missing : Array[@moui.View[Msg]] = []
+      for event in control_events(control) {
+        if @ir.find_handler(model.program, control.name, event) is None {
+          missing.push(
+            @views.button(
+              "＋ \{control.name} · \{text(t, "event.\{event.tag()}")}",
+              on_click=CreateHandler(control.name, event),
+              variant=Tonal,
+            ),
+          )
+        }
+      }
+      if missing.length() > 0 {
+        handlers.push(@views.text(text(t, "app.handler.new"), role=Subtitle))
+        for item in missing {
+          handlers.push(item)
+        }
+      }
+    }
+  }
   let palette_items : Array[@moui.View[Msg]] = []
   for item in palette {
     palette_items.push(item)
@@ -158,6 +182,8 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           Some(drag) => Some(drag.control)
           None => None
         },
+        // 可读文案过翻译器：画布语义标签不烤进画布实现
+        text(t, "app.design.canvas"),
       )
     ModeBlocks => blocks_panel(model, t)
     ModeCode => code_panel(model, t)

@@ -234,3 +234,105 @@ test "rect field edits clamp into the design canvas" {
   assert_eq(wide.width, @ir.DESIGN_WIDTH)
   assert_eq(wide.x, 0)
 }
+
+///|
+test "resize from SE corner keeps top-left fixed and clamps" {
+  let control : @ir.Control = {
+    id: 1,
+    kind: @ir.Button,
+    name: "按钮",
+    text: "",
+    x: 600,
+    y: 400,
+    width: 30,
+    height: 30,
+    items: [],
+  }
+  // 正常生长：左上角不动
+  let grown = control.resize_from_corner(@ir.CornerSE, 635, 470)
+  assert_eq(grown.x, 600)
+  assert_eq(grown.y, 400)
+  assert_eq(grown.width, 35)
+  assert_eq(grown.height, 70)
+  // 拖出画布 → 夹回画布边界（左上角仍不动）
+  let beyond = control.resize_from_corner(@ir.CornerSE, 9999, 9999)
+  assert_eq(beyond.width, @ir.DESIGN_WIDTH - 600)
+  assert_eq(beyond.height, @ir.DESIGN_HEIGHT - 400)
+  // 收缩到最小边长
+  let tiny = control.resize_from_corner(@ir.CornerSE, -100, -100)
+  assert_eq(tiny.width, @ir.MIN_CONTROL_SIZE)
+  assert_eq(tiny.height, @ir.MIN_CONTROL_SIZE)
+  // 负向拽过头也不能越过左上角（保持最小）
+  assert_true(tiny.x == 600 && tiny.y == 400)
+}
+
+///|
+test "resize from NW corner keeps bottom-right fixed and clamps" {
+  let control : @ir.Control = {
+    id: 1,
+    kind: @ir.Button,
+    name: "按钮",
+    text: "",
+    x: 100,
+    y: 100,
+    width: 60,
+    height: 40,
+    items: [],
+  }
+  // 正常生长：右下角 (160, 140) 不动，左上角随指针
+  let grown = control.resize_from_corner(@ir.CornerNW, 80, 90)
+  assert_eq(grown.x, 80)
+  assert_eq(grown.y, 90)
+  assert_eq(grown.width, 80)
+  assert_eq(grown.height, 50)
+  // 拽过右下角 → 夹到最小边长，对角仍固定
+  let tiny = control.resize_from_corner(@ir.CornerNW, 5000, 5000)
+  assert_eq(tiny.x, 160 - @ir.MIN_CONTROL_SIZE)
+  assert_eq(tiny.y, 140 - @ir.MIN_CONTROL_SIZE)
+  assert_eq(tiny.width, @ir.MIN_CONTROL_SIZE)
+  assert_eq(tiny.height, @ir.MIN_CONTROL_SIZE)
+  assert_eq(tiny.x + tiny.width, 160)
+  assert_eq(tiny.y + tiny.height, 140)
+  // 拽出画布左/上 → 夹回画布原点，右下角仍固定
+  let beyond = control.resize_from_corner(@ir.CornerNW, -50, -50)
+  assert_eq(beyond.x, 0)
+  assert_eq(beyond.y, 0)
+  assert_eq(beyond.x + beyond.width, 160)
+  assert_eq(beyond.y + beyond.height, 140)
+}
+
+///|
+test "resize from NE/SW corners keeps opposite edges fixed" {
+  let control : @ir.Control = {
+    id: 1,
+    kind: @ir.Button,
+    name: "按钮",
+    text: "",
+    x: 100,
+    y: 100,
+    width: 60,
+    height: 40,
+    items: [],
+  }
+  // NE：左缘与下缘固定，右缘/上缘随指针
+  let ne = control.resize_from_corner(@ir.CornerNE, 200, 70)
+  assert_eq(ne.x, 100)
+  assert_eq(ne.y, 70)
+  assert_eq(ne.width, 100)
+  assert_eq(ne.height, 70)
+  assert_eq(ne.y + ne.height, 140)
+  // NE 拽出画布右缘 → 宽度夹到画布边界
+  let ne_wide = control.resize_from_corner(@ir.CornerNE, 9999, 100)
+  assert_eq(ne_wide.width, @ir.DESIGN_WIDTH - 100)
+  // SW：右缘与上缘固定，左缘/下缘随指针
+  let sw = control.resize_from_corner(@ir.CornerSW, 70, 200)
+  assert_eq(sw.x, 70)
+  assert_eq(sw.width, 90)
+  assert_eq(sw.y, 100)
+  assert_eq(sw.height, 100)
+  assert_eq(sw.x + sw.width, 160)
+  // SW 拽过右缘 → 夹到最小边长，右缘仍固定
+  let sw_tiny = control.resize_from_corner(@ir.CornerSW, 5000, 200)
+  assert_eq(sw_tiny.width, @ir.MIN_CONTROL_SIZE)
+  assert_eq(sw_tiny.x + sw_tiny.width, 160)
+}

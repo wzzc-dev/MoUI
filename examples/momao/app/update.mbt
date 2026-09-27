@@ -250,45 +250,124 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
     SelectControl(name) =>
       Some(({ ..model, selected_control: name, }, @moui.Effect::none()))
-    CanvasPress(x, y) => {
-      let hit = hit_test_control(model.program.controls, x, y)
-      match hit {
-        Some(control) => {
-          // 命中即选中并建立拖拽态：记录按下点相对控件原点的偏移
-          let drag = DragState::{
-            control: control.name,
-            offset_x: x.to_int() - control.x,
-            offset_y: y.to_int() - control.y,
+    CreateHandler(control_name, event) =>
+      // 新建子程序：控件存在 + 事件受支持 + 不重复 + 预算内，
+      // 建空子程序并选中（note 留空——可读性契约的必填约束针对 AI 提案）
+      match @ir.find_control(model.program, control_name) {
+        None => Some((model, @moui.Effect::none()))
+        Some(control) =>
+          if !control.kind.supports_event(event) {
+            Some((model, @moui.Effect::none()))
+          } else if @ir.find_handler(model.program, control_name, event)
+            is Some(_) {
+            Some((model, @moui.Effect::none()))
+          } else if model.program.handlers.length() >= @ir.MAX_HANDLERS {
+            Some(
+              (
+                {
+                  ..model,
+                  notice: text(translator(model), "app.status.handlers_limit"),
+                },
+                @moui.Effect::none(),
+              ),
+            )
+          } else {
+            let handlers : Array[@ir.Handler] = []
+            for existing in model.program.handlers {
+              handlers.push(existing)
+            }
+            handlers.push(@ir.Handler::{
+              control_name,
+              event,
+              note_zh: "",
+              note_en: "",
+              body: [],
+            })
+            let next = {
+              ..model,
+              program: { ..model.program, handlers, },
+              selected_handler: handler_key(control_name, event.tag()),
+            }
+            Some((sync_code_draft(next), @moui.Effect::none()))
           }
+      }
+    CanvasPress(x, y) => {
+      // 手柄优先：角手柄只画在选中控件上，按上手柄即进入缩放拖拽
+      let handle_hit : @ir.DragCorner? = match find_selected_control(model) {
+        Some(selected) => hit_test_handle(selected, x, y)
+        None => None
+      }
+      match handle_hit {
+        Some(corner) =>
           Some(
             (
-              { ..model, selected_control: control.name, drag: Some(drag), },
+              {
+                ..model,
+                drag: Some(DragState::{
+                  control: model.selected_control,
+                  kind: Resize(corner),
+                }),
+              },
               @moui.Effect::none(),
             ),
           )
-        }
         None =>
-          Some(
-            (
-              { ..model, selected_control: "", drag: None, },
-              @moui.Effect::none(),
-            ),
-          )
+          // 命中控件即选中并建立移动拖拽态：记录按下点相对控件原点的偏移
+          match hit_test_control(model.program.controls, x, y) {
+            Some(control) =>
+              Some(
+                (
+                  {
+                    ..model,
+                    selected_control: control.name,
+                    drag: Some(DragState::{
+                      control: control.name,
+                      kind: Move(x.to_int() - control.x, y.to_int() - control.y),
+                    }),
+                  },
+                  @moui.Effect::none(),
+                ),
+              )
+            None =>
+              Some(
+                (
+                  { ..model, selected_control: "", drag: None, },
+                  @moui.Effect::none(),
+                ),
+              )
+          }
       }
     }
     CanvasDragTo(x, y) =>
-      // 拖拽移动选中控件；夹取规则在 @ir（控件完整落在设计画布内）
+      // 拖拽移动/缩放控件；夹取规则在 @ir（控件完整落在设计画布内、最小边长）。
+      // 移动带吸附：靠近参考线目标 ≤4px 时原点平移到精确对齐（吸附后仍过夹取）。
       match model.drag {
         None => Some((model, @moui.Effect::none()))
         Some(drag) => {
           let controls : Array[@ir.Control] = []
           for control in model.program.controls {
             if control.name == drag.control {
-              controls.push(
-                control
-                .with_rect_field(@ir.RectX, x.to_int() - drag.offset_x)
-                .with_rect_field(@ir.RectY, y.to_int() - drag.offset_y),
-              )
+              match drag.kind {
+                Move(offset_x, offset_y) => {
+                  let (snapped_x, snapped_y) = snap_move_position(
+                    model.program.controls,
+                    drag.control,
+                    (x.to_int() - offset_x).to_double(),
+                    (y.to_int() - offset_y).to_double(),
+                    control.width.to_double(),
+                    control.height.to_double(),
+                  )
+                  controls.push(
+                    control
+                    .with_rect_field(@ir.RectX, snapped_x.to_int())
+                    .with_rect_field(@ir.RectY, snapped_y.to_int()),
+                  )
+                }
+                Resize(corner) =>
+                  controls.push(
+                    control.resize_from_corner(corner, x.to_int(), y.to_int()),
+                  )
+              }
             } else {
               controls.push(control)
             }
@@ -407,6 +486,18 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         }
       }
     AddControl(kind) => {
+      // 控件预算防呆：与 decode/提案/导出共用同一 MAX_CONTROLS 常量
+      if model.program.controls.length() >= @ir.MAX_CONTROLS {
+        return Some(
+          (
+            {
+              ..model,
+              notice: text(translator(model), "app.status.controls_limit"),
+            },
+            @moui.Effect::none(),
+          ),
+        )
+      }
       let id = @ir.next_control_id(model.program)
       let name = fresh_control_name(model.program, kind)
       let control = @ir.Control::{
@@ -461,25 +552,29 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           handlers.push(handler)
         }
       }
-      Some(
-        (
-          {
-            ..model,
-            program: { ..model.program, controls, handlers, },
-            selected_control: "",
-            selected_handler: match handler_control_of(model.selected_handler) {
-              Some(current) =>
-                if current == name {
-                  ""
-                } else {
-                  model.selected_handler
-                }
-              None => model.selected_handler
-            },
-          },
-          @moui.Effect::none(),
-        ),
-      )
+      // 被删控件的子程序正是当前选中时，清除选中并同步代码草稿；
+      // 其余情况不动草稿——代码视图里未提交的编辑不因删除别的控件而丢失
+      let next_handler = match handler_control_of(model.selected_handler) {
+        Some(current) =>
+          if current == name {
+            ""
+          } else {
+            model.selected_handler
+          }
+        None => model.selected_handler
+      }
+      let next = {
+        ..model,
+        program: { ..model.program, controls, handlers, },
+        selected_control: "",
+        selected_handler: next_handler,
+      }
+      let synced = if next_handler != model.selected_handler {
+        sync_code_draft(next)
+      } else {
+        next
+      }
+      Some((synced, @moui.Effect::none()))
     }
     _ => None
   }

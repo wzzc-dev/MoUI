@@ -117,6 +117,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("err.unknown_name", GeneratedI18nMessage::Text("Unknown name: {a}")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("Change preview")),
+      ("app.design.canvas", GeneratedI18nMessage::Text("Form design canvas")),
       ("app.run.variables", GeneratedI18nMessage::Text("Variables")),
       ("app.status.opened", GeneratedI18nMessage::Text("Project opened")),
       ("blocks.count_loop", GeneratedI18nMessage::Text("repeat")),
@@ -201,6 +202,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("String is missing its closing quote"),
+      ),
+      (
+        "app.status.controls_limit",
+        GeneratedI18nMessage::Text("Control limit reached (max 128)"),
+      ),
+      (
+        "app.status.handlers_limit",
+        GeneratedI18nMessage::Text("Handler limit reached (max 64)"),
       ),
       (
         "app.status.proposal_invalid",
@@ -315,6 +324,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("err.unknown_name", GeneratedI18nMessage::Text("未知名字：{a}")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("变更预览")),
+      ("app.design.canvas", GeneratedI18nMessage::Text("表单设计画布")),
       ("app.run.variables", GeneratedI18nMessage::Text("变量")),
       ("app.status.opened", GeneratedI18nMessage::Text("已打开项目")),
       ("blocks.count_loop", GeneratedI18nMessage::Text("计次循环")),
@@ -396,6 +406,18 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("字符串缺少结束引号"),
+      ),
+      (
+        "app.status.controls_limit",
+        GeneratedI18nMessage::Text(
+          "控件数量已达上限（最多 128 个）",
+        ),
+      ),
+      (
+        "app.status.handlers_limit",
+        GeneratedI18nMessage::Text(
+          "子程序数量已达上限（最多 64 个）",
+        ),
       ),
       (
         "app.status.proposal_invalid",

@@ -4,10 +4,11 @@
 using @views {canvas, draw_text, fill_rounded_rect, stroke_rounded_rect}
 
 ///|
-let design_width : Double = 640.0
+/// 设计坐标系尺寸单一来源是 @ir.DESIGN_WIDTH/HEIGHT（拖拽与属性编辑共用）。
+let design_width : Double = @ir.DESIGN_WIDTH.to_double()
 
 ///|
-let design_height : Double = 480.0
+let design_height : Double = @ir.DESIGN_HEIGHT.to_double()
 
 ///|
 fn kind_fill(kind : @ir.ControlKind) -> @graphics.Color {
@@ -61,6 +62,40 @@ pub fn hit_test_control(
       y >= rect.origin.y &&
       y <= rect.origin.y + rect.size.height {
       return Some(control)
+    }
+  }
+  None
+}
+
+///|
+/// 角手柄命中半径（设计坐标 px）：手柄绘制为角点为中心的 8x8 方块，
+/// 命中区放宽到 6px 半径，指针更好抓。
+let handle_hit_radius : Double = 6.0
+
+///|
+/// 角手柄命中测试（设计坐标）：手柄只画在选中控件的四角，
+/// 手柄中心即控件角点，按下点距角点 ≤ 命中半径即命中该角。
+pub fn hit_test_handle(
+  control : @ir.Control,
+  x : Double,
+  y : Double,
+) -> @ir.DragCorner? {
+  let rect = control_rect(control)
+  let corners : Array[(@ir.DragCorner, Double, Double)] = [
+    (@ir.CornerNW, rect.origin.x, rect.origin.y),
+    (@ir.CornerNE, rect.origin.x + rect.size.width, rect.origin.y),
+    (@ir.CornerSW, rect.origin.x, rect.origin.y + rect.size.height),
+    (
+      @ir.CornerSE,
+      rect.origin.x + rect.size.width,
+      rect.origin.y + rect.size.height,
+    ),
+  ]
+  for corner in corners {
+    let (tag, cx, cy) = corner
+    if (x - cx).abs() <= handle_hit_radius &&
+      (y - cy).abs() <= handle_hit_radius {
+      return Some(tag)
     }
   }
   None
@@ -175,6 +210,89 @@ fn alignment_guides(
 }
 
 ///|
+/// 单轴吸附：从候选 (参考线位置, 对应平移量) 里取平移量最小且 ≤ 容差的一条。
+fn best_snap_delta(deltas : Array[(Double, Double)]) -> Double? {
+  let tol = 4.0
+  let mut best : Double? = None
+  let mut best_abs = tol + 1.0
+  for candidate in deltas {
+    let delta = candidate.1
+    let abs = delta.abs()
+    if abs <= tol && abs < best_abs {
+      best = Some(delta)
+      best_abs = abs
+    }
+  }
+  best
+}
+
+///|
+/// 拖拽移动吸附（设计坐标）：候选控件原点 (x, y) 与控件尺寸给定后，
+/// 左/右/水平中心、上/下/垂直中心若与参考线目标（画布三线与其他控件边缘，
+/// 与 alignment_guides 同一集合）差 ≤ 4px，就把原点平移到精确对齐。
+/// 返回吸附后的原点。参考线目标全部落在画布内，吸附不会越界。
+pub fn snap_move_position(
+  controls : Array[@ir.Control],
+  drag_name : String,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+) -> (Double, Double) {
+  let tol = 4.0
+  let (verticals, horizontals) = alignment_guides(
+    controls,
+    drag_name,
+    @geometry.Rect::new(x~, y~, width~, height~),
+  )
+  let mut snap_x = x
+  match
+    best_snap_delta(
+      {
+        let deltas : Array[(Double, Double)] = []
+        for target in verticals {
+          if (x - target).abs() <= tol {
+            deltas.push((target, target - x))
+          }
+          if (x + width - target).abs() <= tol {
+            deltas.push((target, target - (x + width)))
+          }
+          if (x + width / 2.0 - target).abs() <= tol {
+            deltas.push((target, target - (x + width / 2.0)))
+          }
+        }
+        deltas
+      },
+    ) {
+    Some(delta) => snap_x = x + delta
+    None => ()
+  }
+  let mut snap_y = y
+  match
+    best_snap_delta(
+      {
+        let deltas : Array[(Double, Double)] = []
+        for target in horizontals {
+          if (y - target).abs() <= tol {
+            deltas.push((target, target - y))
+          }
+          if (y + height - target).abs() <= tol {
+            deltas.push((target, target - (y + height)))
+          }
+          if (y + height / 2.0 - target).abs() <= tol {
+            deltas.push((target, target - (y + height / 2.0)))
+          }
+        }
+        deltas
+      },
+    ) {
+    Some(delta) => snap_y = y + delta
+    None => ()
+  }
+  (snap_x, snap_y)
+}
+
+///|
 /// 设计画布绘制计划：窗口底板 → 网格点阵 → 控件（名字条 + 文本 + 行）→
 /// 选中描边与角手柄 → 拖拽对齐参考线。
 /// dx/dy 是画布 frame 在窗口中的原点——MoUI paint 契约是窗口全局坐标，
@@ -285,12 +403,14 @@ pub fn design_draw_plan(
 
 ///|
 /// 表单设计画布：canvas 绘制 + 点选/拖拽事件转 typed Msg（画布局部坐标）。
+/// semantics_label 由调用方经 i18n 翻译器传入（可读文案不烤进画布）。
 /// measure 忽略约束返回固定设计尺寸（640x480）——画布不能被行布局拉伸，
 /// 否则右侧检查器会被挤出窗口、设计坐标与命中测试失真。
 pub fn design_canvas(
   program : @ir.MomaoProgram,
   selection : String,
   drag_control : String?,
+  semantics_label : String,
 ) -> @moui.View[Msg] {
   @views.container(
     canvas(
@@ -463,7 +583,7 @@ pub fn design_canvas(
           }
         }
       },
-      semantics_label="表单设计画布",
+      semantics_label~,
     )
     // 点选在前：单击（无拖拽位移）只走 tap 识别器，拖拽结束的 tap 以
     // model.drag 是否仍存在区分（见 update 的 CanvasTap 处理）。

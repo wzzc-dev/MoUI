@@ -151,7 +151,10 @@ test "run gate pauses submit and confirm completes" {
 
 ///|
 test "fake model proposal validates, diffs and applies" {
-  let model = apply(@app.initial_model(), SetPrompt("帮我做一个随机点名"))
+  let model = apply(
+    @app.initial_model(),
+    SetPrompt("帮我做一个随机点名"),
+  )
   let generated = apply(model, GenerateProposal)
   match generated.pending {
     None => fail("应产生待采纳提案")
@@ -435,8 +438,9 @@ test "@app.text field input lands in run state and live texts" {
 test "design drag moves control and clamps to canvas" {
   let added = apply(@app.initial_model(), AddControl(@ir.Button))
   let control = added.program.controls[added.program.controls.length() - 1]
-  let cx = control.x.to_double() + 5.0
-  let cy = control.y.to_double() + 5.0
+  // 按下点在控件主体（距角 > 手柄命中半径），不触发角手柄缩放
+  let cx = control.x.to_double() + 20.0
+  let cy = control.y.to_double() + 15.0
   // 命中即选中并建立拖拽态
   let pressed = apply(added, CanvasPress(cx, cy))
   assert_true(pressed.selected_control == control.name)
@@ -543,6 +547,176 @@ test "design canvas plan draws grid, handles and alignment guides" {
     }
   }
   assert_eq(vertical_guides, 3)
+}
+
+///|
+test "handle hit test resolves corners within radius" {
+  let control : @ir.Control = {
+    id: 1,
+    kind: @ir.Button,
+    name: "按钮",
+    text: "",
+    x: 100,
+    y: 100,
+    width: 60,
+    height: 40,
+    items: [],
+  }
+  match @app.hit_test_handle(control, 100.0, 100.0) {
+    Some(corner) => assert_true(corner is @ir.CornerNW)
+    None => fail("左上角手柄应命中")
+  }
+  match @app.hit_test_handle(control, 160.0, 140.0) {
+    Some(corner) => assert_true(corner is @ir.CornerSE)
+    None => fail("右下角手柄应命中")
+  }
+  // 半径外（10px）与控件中心不命中
+  assert_true(@app.hit_test_handle(control, 110.0, 100.0) is None)
+  assert_true(@app.hit_test_handle(control, 130.0, 120.0) is None)
+}
+
+///|
+test "design handle press resizes with opposite corner fixed" {
+  let added = apply(@app.initial_model(), AddControl(@ir.Button))
+  let control = added.program.controls[added.program.controls.length() - 1]
+  let se_x = (control.x + control.width).to_double()
+  let se_y = (control.y + control.height).to_double()
+  // 按上右下角手柄 → 缩放拖拽态
+  let pressed = apply(added, CanvasPress(se_x, se_y))
+  match pressed.drag {
+    Some(drag) =>
+      match drag.kind {
+        Resize(corner) => assert_true(corner is @ir.CornerSE)
+        Move(_, _) => fail("按手柄应进入缩放而非移动")
+      }
+    None => fail("按上手柄应建立拖拽态")
+  }
+  // 向右下拖：左上角不动，宽高生长（不越界，无夹取触发）
+  let dragged = apply(pressed, CanvasDragTo(se_x + 60.0, se_y + 90.0))
+  let after = @ir.find_control(dragged.program, control.name).unwrap()
+  assert_eq(after.x, control.x)
+  assert_eq(after.y, control.y)
+  assert_eq(after.width, control.width + 60)
+  assert_eq(after.height, control.height + 90)
+  // 松手清除拖拽态但保留选中
+  let released = apply(dragged, CanvasRelease(se_x + 60.0, se_y + 90.0))
+  assert_true(released.drag is None)
+  assert_true(released.selected_control == control.name)
+}
+
+///|
+test "snap move position aligns near edges only within tolerance" {
+  let anchor : @ir.Control = {
+    id: 1,
+    kind: @ir.Label,
+    name: "锚点",
+    text: "",
+    x: 100,
+    y: 100,
+    width: 30,
+    height: 30,
+    items: [],
+  }
+  let dragged : @ir.Control = {
+    ..anchor,
+    id: 2,
+    name: "拖块",
+    x: 102,
+    y: 40,
+  }
+  let pair = [anchor, dragged]
+  // 左缘距锚点左缘 2px（≤4 容差）→ 吸附精确对齐；纵向无目标不动
+  let (sx, sy) = @app.snap_move_position(
+    pair, "拖块", 102.0, 40.0, 30.0, 30.0,
+  )
+  assert_eq(sx, 100.0)
+  assert_eq(sy, 40.0)
+  // 6px 超容差 → 不吸附
+  let (fx, fy) = @app.snap_move_position(
+    pair, "拖块", 106.0, 40.0, 30.0, 30.0,
+  )
+  assert_eq(fx, 106.0)
+  assert_eq(fy, 40.0)
+}
+
+///|
+test "design drag snaps onto alignment guide" {
+  let base = apply(@app.initial_model(), AddControl(@ir.Label))
+  let label = base.program.controls[base.program.controls.length() - 1]
+  // 固定几何：锚点按钮 x=100；标签 x=103（与锚点左缘差 3px ≤ 容差）
+  let anchored = apply(base, SetControlRect("按钮", @ir.RectX, "100"))
+  let placed = apply(anchored, SetControlRect(label.name, @ir.RectX, "103"))
+  let placed_label = @ir.find_control(placed.program, label.name).unwrap()
+  // 先点空白取消选中，避免按在选中控件手柄附近误入缩放
+  let deselected = apply(placed, CanvasTap(600.0, 450.0))
+  let press_x = placed_label.x.to_double() + 20.0
+  let press_y = placed_label.y.to_double() + 10.0
+  let pressed = apply(deselected, CanvasPress(press_x, press_y))
+  match pressed.drag {
+    Some(drag) =>
+      match drag.kind {
+        Move(_, _) => ()
+        Resize(_) => fail("按控件主体应进入移动而非缩放")
+      }
+    None => fail("按控件主体应建立拖拽态")
+  }
+  // 拖 1px：候选原点 x=102，距按钮左缘 100 差 2px → 吸附到 100
+  let dragged = apply(pressed, CanvasDragTo(press_x - 1.0, press_y))
+  let after = @ir.find_control(dragged.program, label.name).unwrap()
+  assert_eq(after.x, 100)
+  assert_eq(after.y, placed_label.y)
+}
+
+///|
+test "create handler builds empty body and selects it" {
+  let added = apply(@app.initial_model(), AddControl(@ir.TextField))
+  let field = added.program.controls[added.program.controls.length() - 1]
+  let created = apply(added, CreateHandler(field.name, @ir.OnChange))
+  assert_eq(created.selected_handler, @app.handler_key(field.name, "on_change"))
+  match @app.current_handler(created) {
+    Some(handler) => {
+      assert_eq(handler.control_name, field.name)
+      assert_eq(handler.body.length(), 0)
+    }
+    None => fail("新建子程序应被选中")
+  }
+  // 重复创建被忽略（(控件, 事件) 唯一）
+  let again = apply(created, CreateHandler(field.name, @ir.OnChange))
+  assert_eq(again.program.handlers.length(), created.program.handlers.length())
+  // 不支持的事件被忽略
+  let unsupported = apply(created, CreateHandler("按钮", @ir.OnChange))
+  assert_eq(
+    unsupported.program.handlers.length(),
+    created.program.handlers.length(),
+  )
+}
+
+///|
+test "add control enforces budget and surfaces notice" {
+  let model = apply(@app.initial_model(), AddControl(@ir.Label))
+  let mut iter = model
+  let mut safety = 0
+  while iter.program.controls.length() < @ir.MAX_CONTROLS && safety < 300 {
+    iter = apply(iter, AddControl(@ir.Label))
+    safety = safety + 1
+  }
+  assert_eq(iter.program.controls.length(), @ir.MAX_CONTROLS)
+  let over = apply(iter, AddControl(@ir.Label))
+  assert_eq(over.program.controls.length(), @ir.MAX_CONTROLS)
+  assert_true(over.notice != "")
+}
+
+///|
+test "delete control clears stale draft only for its own handler" {
+  let model = @app.initial_model()
+  // 选中子程序是 按钮@on_click：删除按钮 → 选中清空、草稿同步清空
+  assert_true(model.code_draft != "")
+  let deleted = apply(model, DeleteControl("按钮"))
+  assert_eq(deleted.selected_handler, "")
+  assert_eq(deleted.code_draft, "")
+  // 删除别的控件不动草稿（未提交的编辑不丢失）
+  let kept = apply(model, DeleteControl("显示"))
+  assert_true(kept.code_draft != "")
 }
 
 ///|

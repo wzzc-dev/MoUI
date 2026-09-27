@@ -36,11 +36,18 @@ pub(all) struct PendingProposal {
 }
 
 ///|
-/// 设计画布拖拽态：被拖控件 + 按下点相对控件原点的偏移（拖拽跟随不跳变）。
+/// 设计画布拖拽态：被拖控件 + 拖拽种类。
 pub(all) struct DragState {
   control : String
-  offset_x : Int
-  offset_y : Int
+  kind : DragKind
+}
+
+///|
+/// 拖拽种类：移动（带按下点相对控件原点的偏移，拖拽跟随不跳变）/
+/// 缩放（从该角拖拽，对角固定）。
+pub(all) enum DragKind {
+  Move(Int, Int)
+  Resize(@ir.DragCorner)
 }
 
 ///|
@@ -90,6 +97,7 @@ pub(all) enum Msg {
   AddControl(@ir.ControlKind)
   DeleteControl(String)
   SelectHandler(String)
+  CreateHandler(String, @ir.EventKind)
   EditCode(String)
   SetPrompt(String)
   RealGenerationFinished(Result[String, String])

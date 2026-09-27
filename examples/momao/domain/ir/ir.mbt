@@ -316,6 +316,15 @@ pub(all) enum RectField {
 }
 
 ///|
+/// 缩放角位（画布四角手柄拖拽缩放共用；对角在拖拽中保持不动）。
+pub(all) enum DragCorner {
+  CornerNW
+  CornerNE
+  CornerSW
+  CornerSE
+}
+
+///|
 fn clamp_int(value : Int, min : Int, max : Int) -> Int {
   if value < min {
     min
@@ -355,5 +364,70 @@ pub fn Control::with_rect_field(
       { ..self, x: clamp_int(value, 0, (DESIGN_WIDTH - self.width).max(0)), }
     RectY =>
       { ..self, y: clamp_int(value, 0, (DESIGN_HEIGHT - self.height).max(0)), }
+  }
+}
+
+///|
+/// 从指定角拖拽缩放：对角固定，指针点作为该角的新位置。
+/// 与 with_rect_field 共用同一夹取纪律——控件永远完整落在 640x480 内，
+/// 边长不小于 MIN_CONTROL_SIZE。
+pub fn Control::resize_from_corner(
+  self : Control,
+  corner : DragCorner,
+  to_x : Int,
+  to_y : Int,
+) -> Control {
+  match corner {
+    CornerSE =>
+      // 左上角固定：宽高朝指针方向生长
+      {
+        ..self,
+        width: clamp_int(to_x - self.x, MIN_CONTROL_SIZE, DESIGN_WIDTH - self.x),
+        height: clamp_int(
+          to_y - self.y,
+          MIN_CONTROL_SIZE,
+          DESIGN_HEIGHT - self.y,
+        ),
+      }
+    CornerNW => {
+      // 右下角固定：移动左上角，宽高由对角反推
+      let right = self.x + self.width
+      let bottom = self.y + self.height
+      let new_x = clamp_int(to_x, 0, right - MIN_CONTROL_SIZE)
+      let new_y = clamp_int(to_y, 0, bottom - MIN_CONTROL_SIZE)
+      {
+        ..self,
+        x: new_x,
+        y: new_y,
+        width: right - new_x,
+        height: bottom - new_y,
+      }
+    }
+    CornerNE => {
+      // 左缘/下缘固定：右缘朝指针生长，上缘随指针移动
+      let bottom = self.y + self.height
+      let new_y = clamp_int(to_y, 0, bottom - MIN_CONTROL_SIZE)
+      {
+        ..self,
+        width: clamp_int(to_x - self.x, MIN_CONTROL_SIZE, DESIGN_WIDTH - self.x),
+        y: new_y,
+        height: bottom - new_y,
+      }
+    }
+    CornerSW => {
+      // 右缘/上缘固定：左缘随指针移动，下缘朝指针生长
+      let right = self.x + self.width
+      let new_x = clamp_int(to_x, 0, right - MIN_CONTROL_SIZE)
+      {
+        ..self,
+        x: new_x,
+        width: right - new_x,
+        height: clamp_int(
+          to_y - self.y,
+          MIN_CONTROL_SIZE,
+          DESIGN_HEIGHT - self.y,
+        ),
+      }
+    }
   }
 }
