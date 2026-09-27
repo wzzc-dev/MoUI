@@ -272,3 +272,29 @@
   `text(t, "app.design.canvas")` 传入）——自绘控件的语义标签不要硬编码。
 - 设计尺寸常量单一来源 `@ir.DESIGN_WIDTH/HEIGHT`（canvas.mbt 顶层 let
   `.to_double()` 派生），不要再写 640.0/480.0 字面量。
+
+## 2026-09-28 参赛冲刺批次新增事实
+
+- **撤销/重做**：`with_undo_point(model, key, mutate)` 统一入口——先捕获
+  UndoEntry 再变更，`@ir.program_signature` 前后相等即视为 no-op 不入栈；
+  合并规则 = key 非空且与栈顶相同（连续同控件 text/rect 编辑、整段拖拽手势
+  共享一个还原点）。Undo/Redo 后 runtime_values/texts 按恢复的程序重置、
+  积木选择态清空。拖拽 key 用 "move:<名>"（同控件连续拖拽各成还原点，
+  因为栈顶 key 相同会合并——如需逐拖还原需换 unique key）。
+- **单步运行**：`RunModel.single_step` 冻结 RunTick（30ms/6 条自动推进），
+  RunStep 走一条、RunResume 恢复；子程序重跑（ControlClicked）重置为
+  false。**拍摄/演示技巧：闸门是天然暂停点**——闸门暂停时点单步冻结
+  计时器，确认后即可逐条走（短子程序自动推进太快，直接单步抢不过计时器）。
+- **MoonBit 预览**：`@export.moonbit_preview(program)` 逐字节稳定；
+  export 包因此真实 import domain/ir（工具侧依赖，内核快照无关）。
+  语句 JSON 编码字段是 `"op"`、表达式是 `"t"`（提案篡改测试靠这个）。
+- **DuplicateHandler 曾是死变体**：validate_program 原来不查 (控件,事件)
+  唯一性；修复后注意 apply_proposal 的 handlers_add 是**替换语义**
+  （提案造不出重复对，重复只能来自损坏基底）。
+- **momao_lang 关键字真身**：计次循环（计划文档里的「计次」是简写）。
+- **web 素材生产**：python-playwright + 合成指针事件可完整驱动 IDE
+  （1440x900 校准坐标见 moui-milestones/video/momao_shot*.py）；右栏是
+  内滚 scroll_view，点 AI 面板前先在面板上 wheel；@views.text 默认
+  TextCenter，代码语境要显式 align=TextStart。
+- **导出 runner 未接品牌主题**（独立应用控件是默认深色块）——功能正确
+  外观欠账，是下一个 UI 提升项（视频素材 README 已注明规避）。
