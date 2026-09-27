@@ -78,7 +78,12 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   for item in handlers {
     palette_items.push(item)
   }
-  @views.scroll_view(@views.column(palette_items), width=180.0, height=560.0)
+  // 内边距：按钮离窗口左缘留出呼吸距离，不贴边
+  @views.scroll_view(
+    @views.container(@views.column(palette_items), padding=10.0),
+    width=180.0,
+    height=560.0,
+  )
 }
 
 ///|
@@ -324,7 +329,10 @@ fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let inspector = inspector_panel(model, t)
   let ai = ai_panel(model, t)
   @views.scroll_view(
-    @views.column([inspector, @views.divider(), ai]),
+    @views.container(
+      @views.column([inspector, @views.divider(), ai]),
+      padding=10.0,
+    ),
     width=300.0,
     height=560.0,
   )
