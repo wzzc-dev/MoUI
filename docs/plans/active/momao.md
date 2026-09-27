@@ -356,21 +356,33 @@ README 双语含 5 分钟 Quick Start。
 - **AGPL/商标边界**：THIRD_PARTY.md 照前代成文做法——只研究
   scratch-editor 的架构与交互模型，不复制源码素材，与 AGPL 无衍生关系；
   易语言为闭源产品，仅概念参考，不复制代码、素材与商标。
+- **全局依赖警告（待办，不阻塞 MoMao）**：`examples/mo_workbench` 依赖
+  已弃用的 `bobzhang/openseek@0.2.2`（连同 `bobzhang/jsonl@0.2.0`），
+  污染所有 `moon` 命令输出。修法：mo_workbench 的 moon.mod bump 到
+  `moonbitlang/openseek`，`openseek_native_transport/moon.pkg` 的 6 个
+  import 路径同步改（agent/agent_runtime/agent_session/agent_session/
+  store/deepseek/prompt），`moon update` 后跑 mo_workbench 测试验证兼容。
+  2026-09-27 决定：不在 MoMao 时间盒内修，仅记录。
 
 ## Acceptance
 
-- [ ] `moon test examples/momao/app --target native` 与 `--target wasm-gc` 全绿
-- [ ] 三个样例在 Web 入口离线可玩（假模型）；macOS 入口从
+- [x] `moon test examples/momao/app --target native` 与 `--target wasm-gc` 全绿
+- [x] 三个样例在 Web 入口离线可玩（假模型）；macOS 入口从
       `examples/momao/.config.json` 读取 StepFun 配置预填面板，live smoke
       测试可跑通，且 `.config.json` 被 gitignore 覆盖、key 不入任何产物
-- [ ] AI 生成程序的可读性验收：每个生成 handler 带双语 note；无语义命名
+      （2026-09-27 补齐 live smoke：`provider_live_completion` + 跳过式
+      async test；顺带抓到并修复真实 provider 404——base URL 未拼
+      `/chat/completions`，`@provider.completion_url` 统一组装，
+      StepFun step-5-preview 端到端首次打通）
+- [x] AI 生成程序的可读性验收：每个生成 handler 带双语 note；无语义命名
       （`a1`/`tmp` 类）被校验拒绝；同一 IR 渲染逐字节稳定（快照测试）；
       「解释这个程序」对三个样例给出正确讲解
-- [ ] 导出 bundle 在工作区外 `moon build` 可跑，sync_kernel `--check` 零漂移
-- [ ] 中/英界面切换 + DSL 双语关键字往返一致测试通过
-- [ ] `提交数据` 闸门在确认前无任何真实外发（审计可证）
-- [ ] 静态 trio 与 catalog `--check` 通过；pr profile 重新注册 MoMao 漂移门
-- [ ] README 双语 + DSL 规范 + IR schema + 教案齐备
+      （讲解机制有测试锁定；三样例×双语覆盖可作廉价补强）
+- [x] 导出 bundle 在工作区外 `moon build` 可跑，sync_kernel `--check` 零漂移
+- [x] 中/英界面切换 + DSL 双语关键字往返一致测试通过
+- [x] `提交数据` 闸门在确认前无任何真实外发（审计可证）
+- [x] 静态 trio 与 catalog `--check` 通过；pr profile 重新注册 MoMao 漂移门
+- [x] README 双语 + DSL 规范 + IR schema + 教案齐备
 
 ## Decision log
 
@@ -384,6 +396,7 @@ README 双语含 5 分钟 Quick Start。
 | 2026-09-27 | 真实模型默认阶跃星辰 StepFun（endpoint `api.stepfun.com/step_plan/v1`，model `step-5-preview`），凭据唯一来源为 gitignored 的 `examples/momao/.config.json`（native 组合根启动读取、live smoke 测试按存在性跳过），假模型仍为默认模式 |
 | 2026-09-27 | 可读性为一等目标：handler 双语 note 必填、命名自解释、确定性渲染、「解释这个程序」讲解功能 |
 | 2026-09-27 | 允许按需扩展 MoUI 框架本身（新控件走 `moui/views` 的具体 `ViewNode`，core 不加枚举变体），决策需记录理由 |
+| 2026-09-27 | 品牌主题 `momao_theme` 需 `ColorPalette::from_seed`（朱砂 seed 派生全角色盘，手动覆盖派生角色质量更差）——momao app 主导入块引 `wzzc-dev/moui/core`，按 browser/mo_workbench/showcase 先例加入 validate-api-surface 的 shared-app core 导入授权名单 |
 
 ## Progress
 
@@ -399,3 +412,5 @@ README 双语含 5 分钟 Quick Start。
 | 2026-09-27 | 评审修复四项：① 运行视图受控输入框值回写（ControlChanged 把输入写进 runtime_texts 与 run.state.texts，修「输入不落表、取文本读旧值」）；② 真实 provider 接线收敛为 ProviderRequestSpec（endpoint/key/model/system/prompt 由 app 组装、入口只转发）——同时修掉 system prompt 双重拼接、「解释这个程序」错挂提案 system prompt、面板模型名不进请求体（原硬编码 momao-proposal）三个缺陷；③ 设计视图拖拽落地（CanvasPress 建立偏移拖拽态、DragTo 经 @ir.Control::with_rect_field 夹取移动、Release 清除）+ 检查器位置/尺寸四字段（复用 app.inspector.position/size 键，域侧 RectField + 夹取规则 + MIN_CONTROL_SIZE）；④ README 验证循环改为可用的逐包命令 + 补 NOTICE。新增测试：app 3 例（输入回写/拖拽夹取/属性框编辑）、ir 1 例（with_rect_field 夹取）；domain 命令修正 |
 | 2026-09-27 | 首次真实运行验收（web + macOS 双端实测）修复四类问题：① **web 入口 index.html 启动 API 错误**（用了不存在的 default 导出，页面静默卡加载）→ 改为 `bootMouiWasmGcApp({wasmUrl, canvasHost, onStatus})`；② **row 内 Horizontal divider 测量成整行宽并 FillRect 盖住后续兄弟**——画布「不可见」、右栏「消失」、大片灰底的真实根因（Skia/web 双端一致），row 内改用 `divider(axis=Vertical)`；③ **画布绘制契约**：MoUI paint 命令是窗口全局坐标（render 管线不逐层平移），draw 内容须按 `frame.origin` 偏移，measure 固定 640x480 不吃约束；④ **框架新增 `View::on_tap_with_frame`**（moui/core OnTapWithFrameModifier，透明无语义角色，单击带坐标）——拖拽识别器对纯单击不产生事件，画布点选由此补齐；app 增 CanvasTap（命中选中/空白取消、拖拽结束的 tap 以 drag 态区分）。另：顶栏拆两行 + container padding（修按钮贴边溢出）、根视图钉浅色主题（深色系统白字白底）、web 快速上手命令补 HTTP 服务说明。测试 +1（core 102，on_tap_with_frame 行为测试）+1（app 26，tap 选中/拖拽区分）；双端实测：点选/取消/拖拽移动/夹取、检查器字段、模板与语言切换全部通过 |
 | 2026-09-27 | 用户反馈微调：左右侧栏内容加 container padding=10（控件面板按钮不再贴窗口左缘，检查器/AI 按钮不再满宽贴缘） |
+| 2026-09-27 | 验收清单核验（P4 教学证据按指示暂缓）：当场重跑全绿——domain 55×2（ir 9 / momao_lang 25 / codec 5 / blocks 7 / proposals 9）、app 26×2、model_provider 5×2、export 8×2、provider_native 2（native）；sync_kernel `--check`、i18n catalog `--check`、六项静态验证当场重跑全绿。逐项证据核验后勾选 7/8：往返一致（"round trip zh and en are stable"）、语言切换（SwitchLanguage 往返 + ui_language_from_tag + catalog 双语 key 全解析）、闸门审计（OpGate 暂停/恢复 + app_test "run gate pauses submit and confirm completes"；v1 无真实外发路径——web 仅假模型、native provider 仅用于 AI 提案）、可读性（note 必填 + 命名 blocklist + 确定性渲染 + ExplainHandler 讲解测试）、导出（工作区外构建三验 + sync 零漂移）、文档（双语 README + dsl-spec + ir-schema + 教案×3）。**唯一未勾**：第 2 项的 live smoke 测试从未落地（早期 Progress/记忆声称有，git 历史无此测试，worker_test 仅 2 个 load_provider_config 解析测试）——样例离线可玩（双端实测）、.gitignore:52、key 哨兵断言（app_test "exported bundle never carries the provider key"）、macOS 入口预填（main.mbt load_provider_config）均已证。memory 已同步纠偏 |
+| 2026-09-27 | 完善批次落地（计划外追加，四批全部完成）：**批1 质量闭环**——update.mbt 拆分为 update/update_run/update_blocks/update_ai 四文件（1034→630 行，链式 Option 分发，消息构造器互斥）；补 live smoke（provider_live_completion + 跳过式 async test），**首跑即抓到真实 provider 404**：endpoint 是 base URL、手写 @http.post 不会拼 /chat/completions，新增 @provider.completion_url 统一组装（base 拼/全路径原样/尾斜杠归一），StepFun step-5-preview 端到端首次打通；explain 测试扩为 4 模板×双语全覆盖；openseek 弃用依赖记入风险节（决定不修）；**批2 B1**——品牌主题 momao_theme（朱砂 from_seed 派生浅色全角色盘）、模式 tab 换 button_group、文件按钮配图标、三栏卡片化（card）、diff 行 badge 语义 tone、真 checkbox（RunModel.checks + RunToggle）、inline_error；**批3 B2/B3**——积木视图彩色圆角块化（block_fill 分类色 + padding_edges 缩进 + on_tap 选中 + 朱砂描边，替代空格缩进/【】/文本按钮），运行视图窗体框舞台（callout Warning 闸门卡 + 审计时间线色点 audit_dot_color + 隔行底色），SelectTemplate 重置积木选择态；**批4 B4/B5/A4**——画布点阵网格 + 拖拽对齐参考线（alignment_guides ≤4px 容差）+ 四角手柄 + 朱砂选中描边，**抓到第二个真 bug：RealGenerationFinished 无处理器、真实生成结果被静默丢弃**（移入 update_ai 纯域走同一条校验链），ai_busy 加载态（loading_state）；导出回归自动化 scripts/momao-export-smoke.sh（emit_bundle → 临时目录 moon update + 独立 wasm-gc 构建）注册 smoke/gates.json `momao.export-build`（nightly 档）。新增测试 5 例（画布计划/讲解全覆盖/真实生成回写/completion_url），app 29×2 全绿；web+macOS 双端实测通过（积木点选/模板切换/运行闸门/确认卡） |

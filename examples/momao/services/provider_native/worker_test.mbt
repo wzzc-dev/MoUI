@@ -75,3 +75,27 @@ test "load_provider_config 拒绝残缺、非法与缺失" {
   }
   clean_config_dir(dir)
 }
+
+///|
+/// live smoke：配置存在时真实请求一次阶跃星辰（消耗少量 key 配额）；
+/// 配置缺失（本地/CI 未填 .config.json）静默跳过——验收语义是
+/// 「配置存在时可跑通」，不是「无凭据也必须联网」。
+/// 路径按 moon 工具的实际 cwd 候选解析：module 根（moon test，探针实测
+/// cwd = examples/momao/）与仓库根（moon run）各一个。
+async test "live smoke (skips without .config.json)" {
+  let config = match @provider_native.load_provider_config(".config.json") {
+    Some(config) => Some(config)
+    None => @provider_native.load_provider_config("examples/momao/.config.json")
+  }
+  match config {
+    None => ()
+    Some(config) =>
+      match
+        @provider_native.provider_live_completion(
+          config, "只回复一个词：ok",
+        ) {
+        Ok(content) => assert_true(content.length() > 0)
+        Err(reason) => fail("live smoke 失败：\{reason}")
+      }
+  }
+}

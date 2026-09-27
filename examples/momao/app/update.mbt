@@ -1,5 +1,7 @@
 ///|
-/// 纯状态转移：除文件对话框/读写外的一切。返回 (Model, Effect)。
+/// 纯状态转移骨架：共享助手 + 外壳/设计域消息。
+/// 运行 / 积木 / AI 三域分别在 update_run / update_blocks / update_ai，
+/// 由 update_pure 链式分发（消息构造器互斥，先后顺序不影响语义）。
 
 ///|
 /// 当前语言的翻译器（视图与状态消息共用）。
@@ -123,7 +125,7 @@ fn commit_code(model : Model) -> Model {
   match current_handler(model) {
     None => { ..model, code_error: "", }
     Some(handler) =>
-      if model.code_draft.trim().to_string() == "" {
+      if model.code_draft.trim().to_owned() == "" {
         { ..model, code_error: "", }
       } else {
         match
@@ -182,197 +184,8 @@ fn sync_code_draft(model : Model) -> Model {
 }
 
 ///|
-/// 启动运行：解析当前 handler 源码 → 指令机。
-fn start_run(model : Model) -> Model {
-  let committed = commit_code(model)
-  match current_handler(committed) {
-    None => { ..committed, notice: "", }
-    Some(handler) => {
-      let language = committed.language.dsl_language()
-      let body = match
-        @momao_lang.parse_handler_body(committed.code_draft, language) {
-        Ok(body) => body
-        Err(error) =>
-          return {
-            ..committed,
-            notice: error_message(translator(committed), error),
-          }
-      }
-      let state = @momao_lang.start_run(
-        body,
-        committed.runtime_texts,
-        committed.runtime_values,
-        @momao_lang.initial_rows(committed.program),
-      )
-      let run = RunModel::{
-        handler_label: "\{handler.control_name}@\{handler.event.tag()}",
-        state,
-      }
-      { ..committed, run: Some(run), mode: ModeRun, notice: "", }
-    }
-  }
-}
-
-///|
-/// 运行推进：每次 tick 执行若干条指令（聚光灯可跟随）。
-fn run_tick(model : Model) -> Model {
-  match model.run {
-    None => model
-    Some(run) => {
-      if run.state.status is @momao_lang.Running {
-        let mut i = 0
-        while i < 6 && run.state.status is @momao_lang.Running {
-          @momao_lang.step_once(run.state)
-          i = i + 1
-        }
-      }
-      merge_run_back(model)
-    }
-  }
-}
-
-///|
-/// 运行结束时把变量/控件文本并回活状态（下一次事件从这里继续）。
-fn merge_run_back(model : Model) -> Model {
-  match model.run {
-    None => model
-    Some(run) =>
-      if run.state.status is @momao_lang.Completed ||
-        run.state.status is @momao_lang.Failed {
-        for key in run.state.vars.keys() {
-          match run.state.vars.get(key) {
-            Some(value) => model.runtime_values[key] = value
-            None => ()
-          }
-        }
-        for key in run.state.texts.keys() {
-          match run.state.texts.get(key) {
-            Some(text) => model.runtime_texts[key] = text
-            None => ()
-          }
-        }
-        model
-      } else {
-        model
-      }
-  }
-}
-
-///|
-/// 采纳提案：校验链通过才应用；失败整单拒绝并展示全部原因。
-fn accept_proposal(model : Model) -> Model {
-  match model.pending {
-    None => model
-    Some(pending) =>
-      if !pending.valid {
-        {
-          ..model,
-          notice: text(translator(model), "app.status.proposal_invalid"),
-        }
-      } else {
-        let next = @proposals.apply_proposal(model.program, pending.proposal)
-        let cleared : Model = {
-          ..model,
-          program: next,
-          pending: None,
-          prompt_draft: "",
-          selected_control: first_control_name(next.controls),
-          run: None,
-          runtime_values: @momao_lang.initial_values(next),
-          runtime_texts: @momao_lang.initial_texts(next),
-        }
-        {
-          ..cleared,
-          notice: text(translator(cleared), "app.status.proposal_accepted"),
-        }
-      }
-  }
-}
-
-///|
-/// 生成提案：假模型（默认）或真实模型回填文案走同一条严格校验链。
-/// 真实 provider 的网络副作用在 update_with_services 中发起；
-/// 这里只负责把「已得到的补全文本」变成待采纳提案。
-pub fn proposal_from_completion(model : Model, completion : String) -> Model {
-  match @proposals.decode_proposal(completion) {
-    Err(_) =>
-      {
-        ..model,
-        prompt_error: text(translator(model), "app.status.proposal_invalid"),
-      }
-    Ok(proposal) => {
-      let errors = @proposals.validate_proposal(model.program, proposal)
-      let messages : Array[String] = []
-      for error in errors {
-        messages.push(proposal_error_text(translator(model), error))
-      }
-      let diff = @proposals.proposal_diff(model.program, proposal)
-      let summary = match model.language {
-        ZhHans => proposal.summary_zh
-        En => proposal.summary_en
-      }
-      let pending : PendingProposal = {
-        proposal,
-        diff,
-        summary,
-        errors: messages,
-        valid: errors.is_empty(),
-      }
-      { ..model, pending: Some(pending), prompt_error: "", }
-    }
-  }
-}
-
-///|
-/// 提案错误的本地化文本（可读性/结构/语言分层）。
-pub fn proposal_error_text(
-  t : @i18n.Translator,
-  error : @proposals.ProposalError,
-) -> String {
-  match error {
-    @proposals.Readability(target) => "可读性：\{target}"
-    @proposals.Structural(issue) => structural_error_text(t, issue)
-    @proposals.LanguageIssue(name) => "语言层：\{name}"
-    @proposals.UnknownControl(name) => "未知控件：\{name}"
-    @proposals.UnknownHandler(name) => "未知子程序：\{name}"
-    @proposals.DuplicateHandler(name) => "子程序重复：\{name}"
-    @proposals.InvalidJson => "JSON 不合法"
-    @proposals.BadVersion(_) => "提案版本不支持"
-    @proposals.MissingField(field) => "缺少字段：\{field}"
-    @proposals.BadControlKind(text) => "未知控件类型：\{text}"
-    @proposals.BadEventKind(text) => "未知事件类型：\{text}"
-    @proposals.BadStatement(text) => "语句不合法：\{text}"
-    @proposals.BadExpr(text) => "表达式不合法：\{text}"
-  }
-}
-
-///|
-/// 结构错误本地化（IR 层）。
-pub fn structural_error_text(
-  t : @i18n.Translator,
-  error : @ir.IrError,
-) -> String {
-  match error {
-    @ir.DuplicateControlName(name) => "控件重名：\{name}"
-    @ir.InvalidControlName(name) => "控件名不合法：\{name}"
-    @ir.DuplicateVariableName(name) => "变量重名：\{name}"
-    @ir.DuplicateHandler(name) => "子程序重复：\{name}"
-    @ir.UnknownControlInHandler(name) =>
-      "子程序指向不存在的控件：\{name}"
-    @ir.UnsupportedEvent(control, _event) =>
-      "控件 \{control} 不支持该事件"
-    @ir.TooManyControls => "控件超出预算"
-    @ir.TooManyVariables => "变量超出预算"
-    @ir.TooManyHandlers => "子程序超出预算"
-    @ir.TooManyStatements(_count) => "语句超出预算"
-    @ir.LoopTooDeep(_depth) => "循环嵌套过深"
-    @ir.ExprTooDeep(_depth) => "表达式过深"
-  }
-}
-
-///|
-/// 纯转移（文件与网络相关消息由 update_with_services 处理）。
-pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
+/// 外壳域消息处理：语言/模式/选择/代码草稿/模板。
+fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
     SwitchLanguage => {
       let committed = commit_code(model)
@@ -382,14 +195,61 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
       } else {
         switched
       }
-      (next, @moui.Effect::none())
+      Some((next, @moui.Effect::none()))
     }
     SetMode(mode) => {
       let switched = sync_code_draft({ ..model, mode, })
-      (switched, @moui.Effect::none())
+      Some((switched, @moui.Effect::none()))
     }
+    SelectHandler(key) =>
+      Some(
+        (
+          sync_code_draft({ ..model, selected_handler: key, }),
+          @moui.Effect::none(),
+        ),
+      )
+    EditCode(source) =>
+      Some(({ ..model, code_draft: source, }, @moui.Effect::none()))
+    SelectTemplate(index) => {
+      let samples = @proposals.all_samples()
+      let program = if index >= 0 && index < samples.length() {
+        samples[index]
+      } else {
+        model.program
+      }
+      let next = {
+        ..model,
+        program,
+        pending: None,
+        run: None,
+        // 积木选择态随模板重置：旧 handler 的语句草稿不再有效
+        selected_block: -1,
+        block_draft: "",
+        runtime_values: @momao_lang.initial_values(program),
+        runtime_texts: @momao_lang.initial_texts(program),
+      }
+      Some(
+        (
+          sync_code_draft({
+            ..next,
+            selected_control: first_control_name(program.controls),
+            selected_handler: first_handler_key(program.handlers),
+          }),
+          @moui.Effect::none(),
+        ),
+      )
+    }
+    SetNotice(notice) => Some(({ ..model, notice, }, @moui.Effect::none()))
+    _ => None
+  }
+}
+
+///|
+/// 设计域消息处理：画布点选/拖拽、属性检查器、控件增删。
+fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
+  match msg {
     SelectControl(name) =>
-      ({ ..model, selected_control: name, }, @moui.Effect::none())
+      Some(({ ..model, selected_control: name, }, @moui.Effect::none()))
     CanvasPress(x, y) => {
       let hit = hit_test_control(model.program.controls, x, y)
       match hit {
@@ -400,19 +260,26 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
             offset_x: x.to_int() - control.x,
             offset_y: y.to_int() - control.y,
           }
-          (
-            { ..model, selected_control: control.name, drag: Some(drag), },
-            @moui.Effect::none(),
+          Some(
+            (
+              { ..model, selected_control: control.name, drag: Some(drag), },
+              @moui.Effect::none(),
+            ),
           )
         }
         None =>
-          ({ ..model, selected_control: "", drag: None, }, @moui.Effect::none())
+          Some(
+            (
+              { ..model, selected_control: "", drag: None, },
+              @moui.Effect::none(),
+            ),
+          )
       }
     }
     CanvasDragTo(x, y) =>
       // 拖拽移动选中控件；夹取规则在 @ir（控件完整落在设计画布内）
       match model.drag {
-        None => (model, @moui.Effect::none())
+        None => Some((model, @moui.Effect::none()))
         Some(drag) => {
           let controls : Array[@ir.Control] = []
           for control in model.program.controls {
@@ -426,28 +293,36 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
               controls.push(control)
             }
           }
-          (
-            { ..model, program: { ..model.program, controls, }, },
-            @moui.Effect::none(),
+          Some(
+            (
+              { ..model, program: { ..model.program, controls, }, },
+              @moui.Effect::none(),
+            ),
           )
         }
       }
-    CanvasRelease(_x, _y) => ({ ..model, drag: None, }, @moui.Effect::none())
+    CanvasRelease(_x, _y) =>
+      Some(({ ..model, drag: None, }, @moui.Effect::none()))
     CanvasTap(x, y) =>
       // 单击点选。拖拽松手也会触发 tap（同一 Up 事件）：drag 仍在时说明
       // 这是一次拖拽结束，不要改动选中态。
       match hit_test_control(model.program.controls, x, y) {
         Some(control) =>
           if model.drag is Some(_) {
-            (model, @moui.Effect::none())
+            Some((model, @moui.Effect::none()))
           } else {
-            ({ ..model, selected_control: control.name, }, @moui.Effect::none())
+            Some(
+              (
+                { ..model, selected_control: control.name, },
+                @moui.Effect::none(),
+              ),
+            )
           }
         None =>
           if model.drag is Some(_) {
-            (model, @moui.Effect::none())
+            Some((model, @moui.Effect::none()))
           } else {
-            ({ ..model, selected_control: "", }, @moui.Effect::none())
+            Some(({ ..model, selected_control: "", }, @moui.Effect::none()))
           }
       }
     SetControlText(name, value) => {
@@ -459,17 +334,19 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
           controls.push(control)
         }
       }
-      (
-        { ..model, program: { ..model.program, controls, }, },
-        @moui.Effect::none(),
+      Some(
+        (
+          { ..model, program: { ..model.program, controls, }, },
+          @moui.Effect::none(),
+        ),
       )
     }
     SetControlName(name, value) => {
       if value == "" || @ir.find_control(model.program, value) is Some(_) {
-        return (model, @moui.Effect::none())
+        return Some((model, @moui.Effect::none()))
       }
       if !@ir.control_name_syntax_valid(value) {
-        return (model, @moui.Effect::none())
+        return Some((model, @moui.Effect::none()))
       }
       let program = rename_control_everywhere(model.program, name, value)
       let next = {
@@ -489,7 +366,7 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
           None => model.selected_handler
         },
       }
-      (sync_code_draft(next), @moui.Effect::none())
+      Some((sync_code_draft(next), @moui.Effect::none()))
     }
     SetControlItems(name, value) => {
       let items = split_lines(value)
@@ -501,15 +378,17 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
           controls.push(control)
         }
       }
-      (
-        { ..model, program: { ..model.program, controls, }, },
-        @moui.Effect::none(),
+      Some(
+        (
+          { ..model, program: { ..model.program, controls, }, },
+          @moui.Effect::none(),
+        ),
       )
     }
     SetControlRect(name, field, raw) =>
       // 属性框整数解析失败（空串/非数字）即忽略本次输入
       match parse_design_int(raw) {
-        None => (model, @moui.Effect::none())
+        None => Some((model, @moui.Effect::none()))
         Some(value) => {
           let controls : Array[@ir.Control] = []
           for control in model.program.controls {
@@ -519,9 +398,11 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
               controls.push(control)
             }
           }
-          (
-            { ..model, program: { ..model.program, controls, }, },
-            @moui.Effect::none(),
+          Some(
+            (
+              { ..model, program: { ..model.program, controls, }, },
+              @moui.Effect::none(),
+            ),
           )
         }
       }
@@ -553,16 +434,18 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
         },
         items: [],
       }
-      (
-        {
-          ..model,
-          program: {
-            ..model.program,
-            controls: append_control(model.program.controls, control),
+      Some(
+        (
+          {
+            ..model,
+            program: {
+              ..model.program,
+              controls: append_control(model.program.controls, control),
+            },
+            selected_control: name,
           },
-          selected_control: name,
-        },
-        @moui.Effect::none(),
+          @moui.Effect::none(),
+        ),
       )
     }
     DeleteControl(name) => {
@@ -578,185 +461,51 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
           handlers.push(handler)
         }
       }
-      (
-        {
-          ..model,
-          program: { ..model.program, controls, handlers, },
-          selected_control: "",
-          selected_handler: match handler_control_of(model.selected_handler) {
-            Some(current) =>
-              if current == name {
-                ""
-              } else {
-                model.selected_handler
-              }
-            None => model.selected_handler
-          },
-        },
-        @moui.Effect::none(),
-      )
-    }
-    SelectHandler(key) =>
-      (
-        sync_code_draft({ ..model, selected_handler: key, }),
-        @moui.Effect::none(),
-      )
-    EditCode(source) => ({ ..model, code_draft: source, }, @moui.Effect::none())
-    SetPrompt(value) =>
-      (
-        { ..model, prompt_draft: value, prompt_error: "", },
-        @moui.Effect::none(),
-      )
-    ExplainHandler =>
-      (
-        { ..model, explanation: local_explanation(model), },
-        @moui.Effect::none(),
-      )
-    SelectBlock(index) => {
-      let blocks = block_chain_of(model)
-      let draft = match block_at(blocks, index) {
-        Some(item) =>
-          if item.path.length() == 0 {
-            ""
-          } else {
-            match current_handler(model) {
-              None => ""
-              Some(handler) =>
-                match @blocks.stmt_at(handler.body, item.path) {
-                  Some(stmt) =>
-                    @momao_lang.render_stmts(
-                      [stmt],
-                      model.language.dsl_language(),
-                    )
-                    .trim_end()
-                    .to_string()
-                  None => ""
+      Some(
+        (
+          {
+            ..model,
+            program: { ..model.program, controls, handlers, },
+            selected_control: "",
+            selected_handler: match handler_control_of(model.selected_handler) {
+              Some(current) =>
+                if current == name {
+                  ""
+                } else {
+                  model.selected_handler
                 }
-            }
-          }
-        None => ""
-      }
-      (
-        { ..model, selected_block: index, block_draft: draft, },
-        @moui.Effect::none(),
+              None => model.selected_handler
+            },
+          },
+          @moui.Effect::none(),
+        ),
       )
     }
-    EditBlock(source) =>
-      ({ ..model, block_draft: source, }, @moui.Effect::none())
-    CommitBlock => (commit_block(model), @moui.Effect::none())
-    DeleteBlock => (delete_block(model), @moui.Effect::none())
-    GenerateProposal => {
-      let completion = @proposals.fake_model_completion(
-        model.prompt_draft,
-        model.program,
-      )
-      (proposal_from_completion(model, completion), @moui.Effect::none())
-    }
-    AcceptProposal => (accept_proposal(model), @moui.Effect::none())
-    RejectProposal =>
-      (
-        {
-          ..model,
-          pending: None,
-          notice: text(translator(model), "app.status.proposal_rejected"),
-        },
-        @moui.Effect::none(),
-      )
-    SetProviderMode(mode) =>
-      ({ ..model, provider_mode: mode, }, @moui.Effect::none())
-    SetProviderEndpoint(value) =>
-      ({ ..model, provider_endpoint: value, }, @moui.Effect::none())
-    SetProviderModel(value) =>
-      ({ ..model, provider_model: value, }, @moui.Effect::none())
-    SetProviderKey(value) =>
-      ({ ..model, provider_key: value, }, @moui.Effect::none())
-    RunStart => (start_run(model), @moui.Effect::none())
-    RunStop => ({ ..model, run: None, }, @moui.Effect::none())
-    RunTick => (run_tick(model), @moui.Effect::none())
-    AnswerGate(decision) =>
-      match model.run {
-        None => (model, @moui.Effect::none())
-        Some(run) => {
-          @momao_lang.answer_gate(run.state, decision)
-          (merge_run_back(model), @moui.Effect::none())
-        }
-      }
-    ControlClicked(name) => {
-      let committed = commit_code(model)
-      run_handler(committed, name, "on_click")
-    }
-    ControlChanged(name, value) => {
-      let committed = commit_code(model)
-      // 受控输入框：输入值必须先落进活状态文本表，否则字段显示回退、
-      // 取文本 读到旧值。run.state.texts 与 runtime_texts 同一张表，
-      // 双写使任一侧为真身时都成立。
-      committed.runtime_texts[name] = value
-      match committed.run {
-        Some(run) => run.state.texts[name] = value
-        None => ()
-      }
-      run_handler(committed, name, "on_change")
-    }
-    SelectTemplate(index) => {
-      let samples = @proposals.all_samples()
-      let program = if index >= 0 && index < samples.length() {
-        samples[index]
-      } else {
-        model.program
-      }
-      let next = {
-        ..model,
-        program,
-        pending: None,
-        run: None,
-        runtime_values: @momao_lang.initial_values(program),
-        runtime_texts: @momao_lang.initial_texts(program),
-      }
-      (
-        sync_code_draft({
-          ..next,
-          selected_control: first_control_name(program.controls),
-          selected_handler: first_handler_key(program.handlers),
-        }),
-        @moui.Effect::none(),
-      )
-    }
-    SetNotice(notice) => ({ ..model, notice, }, @moui.Effect::none())
-    _ => (model, @moui.Effect::none())
+    _ => None
   }
 }
 
 ///|
-/// 运行指定控件事件的子程序（运行态入口）。
-fn run_handler(
-  model : Model,
-  control : String,
-  event_tag : String,
-) -> (Model, @moui.Effect[Msg]) {
-  match @ir.parse_event_kind(event_tag) {
-    None => (model, @moui.Effect::none())
-    Some(event) =>
-      match @ir.find_handler(model.program, control, event) {
-        None => (model, @moui.Effect::none())
-        Some(handler) => {
-          let state = @momao_lang.start_run_stmts(
-            handler.body,
-            model.runtime_texts,
-            model.runtime_values,
-            @momao_lang.initial_rows(model.program),
-          )
-          (
-            {
-              ..model,
-              run: Some(RunModel::{
-                handler_label: handler_key(control, event_tag),
-                state,
-              }),
-              mode: ModeRun,
-            },
-            @moui.Effect::none(),
-          )
-        }
+/// 纯转移（文件与网络相关消息由 update_with_services 处理）。
+pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
+  match update_shell_msgs(model, msg) {
+    Some(result) => result
+    None =>
+      match update_design_msgs(model, msg) {
+        Some(result) => result
+        None =>
+          match update_run_msgs(model, msg) {
+            Some(result) => result
+            None =>
+              match update_blocks_msgs(model, msg) {
+                Some(result) => result
+                None =>
+                  match update_ai_msgs(model, msg) {
+                    Some(result) => result
+                    None => (model, @moui.Effect::none())
+                  }
+              }
+          }
       }
   }
 }
@@ -817,7 +566,7 @@ pub fn split_lines(value : String) -> Array[String] {
   }
   for c in chars {
     if c == '\n' {
-      let line = chars_to_string(current).trim().to_string()
+      let line = chars_to_string(current).trim().to_owned()
       if line != "" {
         lines.push(line)
       }
@@ -830,7 +579,7 @@ pub fn split_lines(value : String) -> Array[String] {
       current.push(c)
     }
   }
-  let tail = chars_to_string(current).trim().to_string()
+  let tail = chars_to_string(current).trim().to_owned()
   if tail != "" {
     lines.push(tail)
   }
@@ -881,154 +630,4 @@ pub fn first_handler_key(handlers : Array[@ir.Handler]) -> String {
   } else {
     ""
   }
-}
-
-///|
-/// 本地讲解（假模型路径）：note 作头 + 编号的规范步骤。
-/// 语言中立、确定性、离线可用；真实 provider 讲解走网络路径。
-pub fn local_explanation(model : Model) -> String {
-  match current_handler(model) {
-    None => ""
-    Some(handler) => {
-      let note = match model.language {
-        ZhHans =>
-          if handler.note_zh == "" {
-            handler.note_en
-          } else {
-            handler.note_zh
-          }
-        En =>
-          if handler.note_en == "" {
-            handler.note_zh
-          } else {
-            handler.note_en
-          }
-      }
-      let buf = StringBuilder()
-      if note != "" {
-        buf.write_string(note)
-        buf.write_string("\n")
-      }
-      let mut index = 1
-      for item in @blocks.block_chain(handler.body) {
-        if item.text == "" {
-          continue
-        }
-        buf.write_string("\{index}. ")
-        buf.write_string(item.text)
-        buf.write_string("\n")
-        index = index + 1
-      }
-      buf.to_string()
-    }
-  }
-}
-
-///|
-/// 当前选中 handler 的积木链（无选中子程序 = 空链）。
-pub fn block_chain_of(model : Model) -> Array[@blocks.BlockItem] {
-  match current_handler(model) {
-    None => []
-    Some(handler) => @blocks.block_chain(handler.body)
-  }
-}
-
-///|
-fn block_at(
-  blocks : Array[@blocks.BlockItem],
-  index : Int,
-) -> @blocks.BlockItem? {
-  if index < 0 || index >= blocks.length() {
-    None
-  } else {
-    Some(blocks[index])
-  }
-}
-
-///|
-/// 积木编辑回写：草稿解析成单条语句 → 按路径替换 → IR 更新 →
-/// 代码视图草稿与积木选择同步刷新（三视图同源）。
-fn commit_block(model : Model) -> Model {
-  match current_handler(model) {
-    None => model
-    Some(handler) => {
-      let blocks = block_chain_of(model)
-      match block_at(blocks, model.selected_block) {
-        None => model
-        Some(item) =>
-          if item.path.length() == 0 {
-            model
-          } else {
-            match
-              @momao_lang.parse_handler_body(
-                model.block_draft,
-                model.language.dsl_language(),
-              ) {
-              Err(_) =>
-                {
-                  ..model,
-                  notice: text(translator(model), "app.status.parse_error"),
-                }
-              Ok(body) =>
-                if body.length() == 0 {
-                  model
-                } else {
-                  let updated = @blocks.replace_stmt_at(
-                    handler.body,
-                    item.path,
-                    body[0].stmt,
-                  )
-                  let next = replace_handler_body(model, handler, updated)
-                  // 同步代码视图（同一份 IR 的另一种渲染）
-                  let synced = sync_code_draft(next)
-                  { ..synced, notice: "", }
-                }
-            }
-          }
-      }
-    }
-  }
-}
-
-///|
-/// 积木删除回写：按路径删除语句并同步其他视图。
-fn delete_block(model : Model) -> Model {
-  match current_handler(model) {
-    None => model
-    Some(handler) => {
-      let blocks = block_chain_of(model)
-      match block_at(blocks, model.selected_block) {
-        None => model
-        Some(item) =>
-          if item.path.length() == 0 {
-            model
-          } else {
-            let updated = @blocks.delete_stmt_at(handler.body, item.path)
-            let next = replace_handler_body(model, handler, updated)
-            let synced = sync_code_draft(next)
-            { ..synced, selected_block: -1, block_draft: "", }
-          }
-      }
-    }
-  }
-}
-
-///|
-/// 用新 body 替换选中 handler（其余 handler 原样）。
-fn replace_handler_body(
-  model : Model,
-  handler : @ir.Handler,
-  body : Array[@ir.Stmt],
-) -> Model {
-  let updated = @ir.Handler::{ ..handler, body, }
-  let handlers : Array[@ir.Handler] = []
-  for existing in model.program.handlers {
-    if existing.control_name == handler.control_name &&
-      existing.event.tag() == handler.event.tag() {
-      handlers.push(updated)
-    } else {
-      handlers.push(existing)
-    }
-  }
-  { ..model, program: { ..model.program, handlers, }, }
 }

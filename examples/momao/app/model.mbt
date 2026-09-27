@@ -17,10 +17,12 @@ pub(all) enum ProviderMode {
 }
 
 ///|
-/// 运行态：当前子程序 + 指令机状态。
+/// 运行态：当前子程序 + 指令机状态 + 勾选框 UI 态。
+/// checks 只在 app 层（运行期视觉状态，不进指令机语义）。
 pub(all) struct RunModel {
   handler_label : String
   state : @momao_lang.RunState
+  checks : Map[String, Bool]
 }
 
 ///|
@@ -60,6 +62,8 @@ pub(all) struct Model {
   provider_key : String
   notice : String
   explanation : String
+  // AI 请求进行中（真实 provider 生成/讲解）：面板显示加载态
+  ai_busy : Bool
   // 积木视图编辑态：选中块（block_chain 下标，-1 = 无）与语句草稿
   selected_block : Int
   block_draft : String
@@ -106,6 +110,7 @@ pub(all) enum Msg {
   RunStart
   RunStop
   RunTick
+  RunToggle(String, Bool)
   AnswerGate(Bool)
   ControlClicked(String)
   ControlChanged(String, String)
@@ -184,6 +189,7 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     provider_key: config.api_key,
     notice: "",
     explanation: "",
+    ai_busy: false,
     selected_block: -1,
     block_draft: "",
     drag: None,

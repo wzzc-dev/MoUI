@@ -32,7 +32,9 @@
   唯一来源是 gitignored 的 `examples/momao/.config.json`**
   （`{provider:{endpoint,model,api_key}}`，根 .gitignore 第 52 行登记）：
   native 组合根启动读取预填面板；`services/provider_native` 的
-  `load_provider_config` + live smoke 测试（配置缺失即跳过）。key 禁止进
+  `load_provider_config` 解析测试×2（**live smoke 测试从未落地**：
+  2026-09-27 验收核验发现早期记录失实，git 历史无此测试，计划验收项 2
+  因此留白）。key 禁止进
   源码/项目文件/导出 bundle（有测试断言）；endpoint/model 可改，默认模式
   仍是假模型。
 - 可读性是一等目标：AI 生成的每个 handler 必带双语 `note`（意图说明），
@@ -96,6 +98,16 @@
 - `moonbitlang/async/http` **只有 native 目标**：wasm-gc 下 `@http.post`
   解析不到 → app 只依赖 provider 包的纯函数部分，native 组合根把
   `provider_submit` 闭包传进 `program(provider_submit~)`。
+- **OpenAI 兼容 URL 必须自己拼 `/chat/completions`**：配置里的 endpoint 是
+  base URL（`https://api.stepfun.com/step_plan/v1`），SDK 用户自动拼接、
+  手写 `@http.post` 不会——2026-09-27 live smoke 首跑抓到 404，现统一走
+  `@provider.completion_url`（base 拼/全路径原样/尾斜杠归一）。
+- **live smoke**：`provider_native.provider_live_completion(config, prompt)`
+  + `worker_test` 跳过式 async test（配置缺失即跳过）。`moon test` 的
+  cwd = **module 根**（`examples/momao/`，探针实测），配置路径候选
+  `.config.json` + `examples/momao/.config.json`。live 调用会消耗 key
+  配额；测试期间出现工具链级 `warning: input verification failed`
+  （非仓库源码，异步 IO 时出现，无害）。
 - async 组合：`async fn main` + `@async.all([window_task, worker_task])`，
   窗口侧 `run_async_pump()`，worker 侧 `@async.with_task_group` +
   `queue.get()` + `group.spawn_bg`。HTTP：`@http.post(url, body, headers={
@@ -199,3 +211,37 @@
   `PointerEvent("pointerdown"/"pointermove"…/"pointerup")` 序列（bubbles,
   pointerId, buttons=1）即可驱动完整拖拽链路。首次点击可能只做 webview
   聚焦不派发（观察为"第一下没反应"）。
+
+## 2026-09-27 完善批次新增事实（质量闭环 + UI 全套）
+
+- **update 已拆四文件**：update.mbt（共享助手 + shell/design 域）+
+  update_run/update_blocks/update_ai；分发是 `update_pure` 里的链式
+  Option 匹配（各域 fn 返回 `(Model, Effect)?`，未命中传链）。消息构造器
+  互斥，顺序无关。
+- **真实 provider 两个连环 bug（都由补测抓到）**：① endpoint 是 base
+  URL，手写 `@http.post` 不会拼 `/chat/completions`（404）——统一走
+  `@provider.completion_url`；② `RealGenerationFinished` 原本没有处理器、
+  真实生成结果被静默丢弃——现已移入 update_ai 纯域（结果消息是纯状态
+  转移，与假模型同走 proposal_from_completion 校验链），并有回归测试。
+- **`moon test` 的 cwd = module 根**（`examples/momao/`，探针实测），
+  不是仓库根；`moon run` 才是仓库根。`.config.json` 路径候选要两者兼顾。
+- **UI 框架要点（B1-B4 实测）**：`@views` facade 的 `pub using` 转发会把
+  枚举构造器带进作用域（`variant=Ghost`/`role=Title` 裸写可用），但 match
+  臂里的裸构造器不行（BadgeTone 与 FeedbackTone 歧义，要
+  `@style.BadgeTone::Success`）；`ColorPalette::from_seed(primary~, scheme)`
+  的 **scheme 是位置参数**；`View::on_tap(msg)`（core）给彩色 container 行
+  加点击 + Semantics，积木行靠它替代文本按钮；现成控件直接用：card/
+  button_group+action_item/checkbox/progress/loading_state/inline_error/
+  badge(tone)；品牌主题 `momao_theme()` = 朱砂 `ColorPalette::from_seed`
+  + `@views.theme(palette=...)`（app 主导入块加 `wzzc-dev/moui/core` 是
+  示例 app 既有先例，pdf_workbench 等都这么干）。
+- **导出回归门**：`scripts/momao-export-smoke.sh`（emit_bundle → 临时目录
+  `moon update` + 独立 wasm-gc 构建），注册为 smoke/gates.json
+  `momao.export-build`（nightly 档，需网络不进 pr）。坑：emit_bundle 产物
+  在 `<target-dir>/<app-name>/` 且 app 名被模块名安全化（下划线→连字符），
+  用唯一子目录通配进入；脚本退出码会被管道 tail 吃掉，重定向到文件再取。
+- 设计画布绘制计划已 pub(all)（GridDot/GuideV/GuideH/SelectionHandle op），
+  alignment_guides 纯函数 ≤4px 容差；同宽控件偏移 ≤4px 时左/中/右三条
+  参考线全命中（测试按成员断言）。
+- app 包曾有 test-block `wzzc-dev/moui/core` 死导入（unused package
+  警告），已移除并转入主导入块实际使用。

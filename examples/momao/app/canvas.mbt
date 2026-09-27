@@ -67,13 +67,17 @@ pub fn hit_test_control(
 }
 
 ///|
-priv enum DesignDrawOp {
+pub(all) enum DesignDrawOp {
   FillControl(@geometry.Rect, @ir.ControlKind)
   ControlLabel(String, @geometry.Rect, @graphics.Color)
   ControlText(String, @geometry.Rect, @graphics.Color)
   ControlRows(@geometry.Rect)
   SelectionStroke(@geometry.Rect)
+  SelectionHandle(@geometry.Rect)
   WindowFrame(@geometry.Rect)
+  GridDot(@geometry.Rect)
+  GuideV(Double)
+  GuideH(Double)
 }
 
 ///|
@@ -92,12 +96,93 @@ fn place_rect(
 }
 
 ///|
-/// 设计画布绘制计划：窗口底板 → 控件（名字条 + 文本 + 行）→ 选中描边。
+/// 对齐容差（设计坐标 px）：拖拽边缘与其他边缘差 ≤ 4 即吸附显示参考线。
+fn near_edge(a : Double, b : Double) -> Bool {
+  (a - b).abs() <= 4.0
+}
+
+///|
+/// 拖拽对齐参考线（设计坐标）：被拖控件的左/右/水平中心、上/下/垂直中心
+/// 与画布三线（边/中心）及其他控件边缘对齐时，返回要画的参考线位置。
+fn alignment_guides(
+  program : Array[@ir.Control],
+  drag_name : String,
+  dragged : @geometry.Rect,
+) -> (Array[Double], Array[Double]) {
+  let tol = 4.0
+  let verticals : Array[Double] = []
+  let horizontals : Array[Double] = []
+  let d_left = dragged.origin.x
+  let d_right = dragged.origin.x + dragged.size.width
+  let d_cx = dragged.origin.x + dragged.size.width / 2.0
+  let d_top = dragged.origin.y
+  let d_bottom = dragged.origin.y + dragged.size.height
+  let d_cy = dragged.origin.y + dragged.size.height / 2.0
+  fn push_unique(arr : Array[Double], value : Double) -> Unit {
+    for existing in arr {
+      if (existing - value).abs() <= tol {
+        return
+      }
+    }
+    arr.push(value)
+  }
+
+  for target in [0.0, design_width / 2.0, design_width] {
+    if near_edge(d_left, target) ||
+      near_edge(d_right, target) ||
+      near_edge(d_cx, target) {
+      push_unique(verticals, target)
+    }
+  }
+  for target in [0.0, design_height / 2.0, design_height] {
+    if near_edge(d_top, target) ||
+      near_edge(d_bottom, target) ||
+      near_edge(d_cy, target) {
+      push_unique(horizontals, target)
+    }
+  }
+  for control in program {
+    if control.name == drag_name {
+      continue
+    }
+    let r = control_rect(control)
+    for
+      target in [
+        r.origin.x,
+        r.origin.x + r.size.width,
+        r.origin.x + r.size.width / 2.0,
+      ] {
+      if near_edge(d_left, target) ||
+        near_edge(d_right, target) ||
+        near_edge(d_cx, target) {
+        push_unique(verticals, target)
+      }
+    }
+    for
+      target in [
+        r.origin.y,
+        r.origin.y + r.size.height,
+        r.origin.y + r.size.height / 2.0,
+      ] {
+      if near_edge(d_top, target) ||
+        near_edge(d_bottom, target) ||
+        near_edge(d_cy, target) {
+        push_unique(horizontals, target)
+      }
+    }
+  }
+  (verticals, horizontals)
+}
+
+///|
+/// 设计画布绘制计划：窗口底板 → 网格点阵 → 控件（名字条 + 文本 + 行）→
+/// 选中描边与角手柄 → 拖拽对齐参考线。
 /// dx/dy 是画布 frame 在窗口中的原点——MoUI paint 契约是窗口全局坐标，
 /// 命令必须自带偏移（render 管线按原样收集命令，不做逐层平移）。
-fn design_draw_plan(
+pub fn design_draw_plan(
   program : @ir.MomaoProgram,
   selection : String,
+  drag_control : String?,
   dx : Double,
   dy : Double,
 ) -> Array[DesignDrawOp] {
@@ -116,6 +201,20 @@ fn design_draw_plan(
       ),
     ),
   )
+  // 网格点阵（32px 步进）：给画布「设计图纸」质感
+  let mut gx = 32.0
+  while gx < design_width {
+    let mut gy = 32.0
+    while gy < design_height {
+      ops.push(
+        GridDot(
+          @geometry.Rect::new(x=gx + dx, y=gy + dy, width=2.0, height=2.0),
+        ),
+      )
+      gy = gy + 32.0
+    }
+    gx = gx + 32.0
+  }
   for control in program.controls {
     let rect = place_rect(control_rect(control), dx, dy)
     ops.push(FillControl(rect, control.kind))
@@ -138,7 +237,48 @@ fn design_draw_plan(
     }
     if selection == control.name {
       ops.push(SelectionStroke(rect))
+      // 四角手柄：8x8 实心方块（选中即可拖拽缩放的暗示）
+      let h = 4.0
+      for
+        corner in [
+          (rect.origin.x, rect.origin.y),
+          (rect.origin.x + rect.size.width, rect.origin.y),
+          (rect.origin.x, rect.origin.y + rect.size.height),
+          (rect.origin.x + rect.size.width, rect.origin.y + rect.size.height),
+        ] {
+        ops.push(
+          SelectionHandle(
+            @geometry.Rect::new(
+              x=corner.0 - h,
+              y=corner.1 - h,
+              width=8.0,
+              height=8.0,
+            ),
+          ),
+        )
+      }
     }
+  }
+  // 拖拽中的对齐参考线（朱砂色，画布全高/全宽）
+  match drag_control {
+    None => ()
+    Some(name) =>
+      match @ir.find_control(program, name) {
+        None => ()
+        Some(dragged) => {
+          let (verticals, horizontals) = alignment_guides(
+            program.controls,
+            name,
+            control_rect(dragged),
+          )
+          for x in verticals {
+            ops.push(GuideV(x + dx))
+          }
+          for y in horizontals {
+            ops.push(GuideH(y + dy))
+          }
+        }
+      }
   }
   ops
 }
@@ -150,6 +290,7 @@ fn design_draw_plan(
 pub fn design_canvas(
   program : @ir.MomaoProgram,
   selection : String,
+  drag_control : String?,
 ) -> @moui.View[Msg] {
   @views.container(
     canvas(
@@ -162,7 +303,7 @@ pub fn design_canvas(
         // 画布层内嵌 clip/transform 栈会吞掉整层命令（已实测）。
         let dx = frame.origin.x
         let dy = frame.origin.y
-        for op in design_draw_plan(program, selection, dx, dy) {
+        for op in design_draw_plan(program, selection, drag_control, dx, dy) {
           match op {
             WindowFrame(rect) => {
               fill_rounded_rect(
@@ -262,11 +403,63 @@ pub fn design_canvas(
                   radius=8.0,
                 ),
                 @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.10, g=0.24, b=0.86),
+                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
                 ),
                 2.5,
               )
             }
+            SelectionHandle(rect) => {
+              let brush = @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
+              )
+              fill_rounded_rect(
+                ctx,
+                @graphics.RoundedRect::new(rect~, radius=2.0),
+                brush,
+              )
+            }
+            GridDot(rect) =>
+              fill_rounded_rect(
+                ctx,
+                @graphics.RoundedRect::new(rect~, radius=1.0),
+                @graphics.Brush::solid(
+                  @graphics.Color::rgba(r=0.85, g=0.86, b=0.90),
+                ),
+              )
+            GuideV(x) =>
+              stroke_rounded_rect(
+                ctx,
+                @graphics.RoundedRect::new(
+                  rect=@geometry.Rect::new(
+                    x=x - 0.75,
+                    y=dy,
+                    width=1.5,
+                    height=design_height,
+                  ),
+                  radius=0.0,
+                ),
+                @graphics.Brush::solid(
+                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
+                ),
+                1.5,
+              )
+            GuideH(y) =>
+              stroke_rounded_rect(
+                ctx,
+                @graphics.RoundedRect::new(
+                  rect=@geometry.Rect::new(
+                    x=dx,
+                    y=y - 0.75,
+                    width=design_width,
+                    height=1.5,
+                  ),
+                  radius=0.0,
+                ),
+                @graphics.Brush::solid(
+                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
+                ),
+                1.5,
+              )
           }
         }
       },

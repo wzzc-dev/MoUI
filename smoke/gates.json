@@ -375,6 +375,35 @@
       "artifacts": [
         "artifacts/macos-modal-smoke/modal.log"
       ]
+    },
+    {
+      "id": "momao.export-build",
+      "tier": "nightly",
+      "kind": "export-bundle-smoke",
+      "host": "any",
+      "purpose": "Emit a minimal MoMao project through tools/emit_bundle and independently build it outside the workspace (wasm-gc), so kernel snapshot, runtime closure, or ABI shim drift fails loudly instead of silently breaking exported apps.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "sh",
+            "scripts/momao-export-smoke.sh"
+          ],
+          "mode": "run"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/ci.yml",
+        "gate": "nightly"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/plans/active/momao.md"
+      ],
+      "artifacts": []
     }
   ]
 }

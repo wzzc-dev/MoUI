@@ -4,16 +4,37 @@
 
 ///|
 /// 顶栏（两行，带内边距——单行 13 个按钮会在 1280 宽窗口溢出裁切）：
-/// 第一行 = 标题 + 语言 + 模式 tab + 运行控制；第二行 = 模板 + 文件操作。
+/// 第一行 = 标题（Title）+ 模式 tab（button_group 选中态）+ 运行 + 语言；
+/// 第二行 = 模板（Tonal）+ 文件操作（Outline + 图标）。
 fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+  let mode_items = [
+    @views.action_item(
+      id="design",
+      label=text(t, "app.mode.design"),
+      message=SetMode(ModeDesign),
+    ),
+    @views.action_item(
+      id="blocks",
+      label=text(t, "app.mode.blocks"),
+      message=SetMode(ModeBlocks),
+    ),
+    @views.action_item(
+      id="code",
+      label=text(t, "app.mode.code"),
+      message=SetMode(ModeCode),
+    ),
+  ]
+  let selected_mode = match model.mode {
+    ModeDesign => "design"
+    ModeBlocks => "blocks"
+    ModeCode => "code"
+    ModeRun => ""
+  }
   @views.container(
     @views.column([
       @views.row([
-        @views.text(text(t, "app.title")),
-        @views.button(text(t, "app.lang.switch"), on_click=SwitchLanguage),
-        @views.button(text(t, "app.mode.design"), on_click=SetMode(ModeDesign)),
-        @views.button(text(t, "app.mode.blocks"), on_click=SetMode(ModeBlocks)),
-        @views.button(text(t, "app.mode.code"), on_click=SetMode(ModeCode)),
+        @views.text(text(t, "app.title"), role=Title),
+        @views.button_group(mode_items, selected=selected_mode),
         @views.button(
           if model.run is Some(_) {
             text(t, "app.run.stop")
@@ -21,28 +42,53 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
             text(t, "app.run.start")
           },
           on_click=if model.run is Some(_) { RunStop } else { RunStart },
+          variant=if model.run is Some(_) { Outline } else { Primary },
+        ),
+        @views.button(
+          text(t, "app.lang.switch"),
+          on_click=SwitchLanguage,
+          variant=Ghost,
         ),
       ]),
       @views.row([
         @views.button(
           text(t, "app.templates.hello"),
           on_click=SelectTemplate(0),
+          variant=Tonal,
         ),
         @views.button(
           text(t, "app.templates.roll_call"),
           on_click=SelectTemplate(1),
+          variant=Tonal,
         ),
         @views.button(
           text(t, "app.templates.drill"),
           on_click=SelectTemplate(2),
+          variant=Tonal,
         ),
         @views.button(
           text(t, "app.templates.store"),
           on_click=SelectTemplate(3),
+          variant=Tonal,
         ),
-        @views.button(text(t, "app.file.save"), on_click=SaveRequested),
-        @views.button(text(t, "app.file.open"), on_click=OpenRequested),
-        @views.button(text(t, "app.file.export"), on_click=ExportRequested),
+        @views.button(
+          text(t, "app.file.save"),
+          on_click=SaveRequested,
+          variant=Outline,
+          icon=Some(Save),
+        ),
+        @views.button(
+          text(t, "app.file.open"),
+          on_click=OpenRequested,
+          variant=Outline,
+          icon=Some(FolderOpen),
+        ),
+        @views.button(
+          text(t, "app.file.export"),
+          on_click=ExportRequested,
+          variant=Outline,
+          icon=Some(FileNew),
+        ),
       ]),
     ]),
     padding=10.0,
@@ -52,7 +98,9 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 ///|
 /// 左栏：控件面板（设计模式）+ 事件子程序列表（全部模式可用）。
 fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
-  let palette : Array[@moui.View[Msg]] = [@views.text(text(t, "app.palette"))]
+  let palette : Array[@moui.View[Msg]] = [
+    @views.text(text(t, "app.palette"), role=Subtitle),
+  ]
   for
     kind in [
       @ir.Button,
@@ -63,10 +111,16 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       @ir.Table,
     ] {
     palette.push(
-      @views.button(text(t, "control.\{kind.tag()}"), on_click=AddControl(kind)),
+      @views.button(
+        text(t, "control.\{kind.tag()}"),
+        on_click=AddControl(kind),
+        variant=Tonal,
+      ),
     )
   }
-  let handlers : Array[@moui.View[Msg]] = [@views.text(text(t, "app.handlers"))]
+  let handlers : Array[@moui.View[Msg]] = [
+    @views.text(text(t, "app.handlers"), role=Subtitle),
+  ]
   for handler in model.program.handlers {
     let key = handler_key(handler.control_name, handler.event.tag())
     handlers.push(@views.button(key, on_click=SelectHandler(key)))
@@ -78,11 +132,17 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   for item in handlers {
     palette_items.push(item)
   }
-  // 内边距：按钮离窗口左缘留出呼吸距离，不贴边
-  @views.scroll_view(
-    @views.container(@views.column(palette_items), padding=10.0),
+  // 卡片化 + 内边距：面板不贴窗口边缘，按钮有呼吸距离
+  @views.card(
+    @views.scroll_view(
+      @views.column(palette_items),
+      width=158.0,
+      height=532.0,
+      shows_indicator=true,
+    ),
     width=180.0,
     height=560.0,
+    padding=10.0,
   )
 }
 
@@ -90,10 +150,72 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 /// 中部：按模式切换（设计画布 / 积木链 / 代码编辑器）。
 fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match model.mode {
-    ModeDesign => design_canvas(model.program, model.selected_control)
+    ModeDesign =>
+      design_canvas(
+        model.program,
+        model.selected_control,
+        match model.drag {
+          Some(drag) => Some(drag.control)
+          None => None
+        },
+      )
     ModeBlocks => blocks_panel(model, t)
     ModeCode => code_panel(model, t)
     ModeRun => run_form(model, t)
+  }
+}
+
+///|
+/// 积木分类底色：与设计画布的控件色系呼应——存值蓝 / 分支橙 /
+/// 循环绿 / 跳出红 / 调用紫（浅阶 tint，深色文字可读）。
+fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
+  match kind {
+    @blocks.BkDeclare | @blocks.BkAssign =>
+      @graphics.Color::rgba(r=0.90, g=0.93, b=0.99)
+    @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkEnd =>
+      @graphics.Color::rgba(r=0.99, g=0.94, b=0.86)
+    @blocks.BkCountLoop | @blocks.BkWhile =>
+      @graphics.Color::rgba(r=0.89, g=0.96, b=0.90)
+    @blocks.BkBreak => @graphics.Color::rgba(r=0.99, g=0.90, b=0.89)
+    @blocks.BkCall => @graphics.Color::rgba(r=0.95, g=0.92, b=0.99)
+  }
+}
+
+///|
+/// 积木品牌描边（选中态）——朱砂色，与主题主色一致。
+fn block_selected_border() -> @graphics.BorderStyle {
+  @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(@graphics.Color::rgba(r=0.78, g=0.26, b=0.20)),
+    width=2.0,
+  )
+}
+
+///|
+/// 单块视觉：分类底色圆角块 + 深度缩进；可编辑块挂 tap 选中。
+fn block_row_view(
+  item : @blocks.BlockItem,
+  marker : String,
+  label : String,
+  selected : Bool,
+  row_index : Int,
+) -> @moui.View[Msg] {
+  let block = @views.container(
+    @views.text("\{marker}\{label}", width=380.0),
+    background=block_fill(item.kind),
+    corner_radius=6.0,
+    border=if selected { Some(block_selected_border()) } else { None },
+    padding=6.0,
+    width=400.0,
+  )
+  let indented = if item.depth > 0 {
+    @views.padding_edges(block, left=item.depth.to_double() * 18.0)
+  } else {
+    block
+  }
+  if item.path.length() > 0 {
+    indented.on_tap(SelectBlock(row_index))
+  } else {
+    indented
   }
 }
 
@@ -109,32 +231,22 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       let rows : Array[@moui.View[Msg]] = [
         @views.text(
           "\{text(t, "blocks.event")}：\{handler.control_name} . \{handler.event.tag()}",
+          role=Subtitle,
         ),
       ]
       let blocks = @blocks.block_chain(handler.body)
       let mut index = 0
       for item in blocks {
-        let label = text(t, @blocks.block_label_key(item.kind))
-        let text_part = if item.text == "" {
-          label
+        let label = if item.text == "" {
+          text(t, @blocks.block_label_key(item.kind))
         } else {
-          "\{label}  \{item.text}"
+          "\{text(t, @blocks.block_label_key(item.kind))}  \{item.text}"
         }
-        let indent = repeat_spaces(item.depth)
         let highlighted = item.text != "" && item.text == spotlight
         let marker = if highlighted { "▶ " } else { "" }
         let selected = index == model.selected_block
-        let row_text = if selected {
-          "\{marker}\{indent}【\{text_part}】"
-        } else {
-          "\{marker}\{indent}\{text_part}"
-        }
-        if item.path.length() > 0 {
-          let row_index = index
-          rows.push(@views.button(row_text, on_click=SelectBlock(row_index)))
-        } else {
-          rows.push(@views.text(row_text))
-        }
+        let row_index = index
+        rows.push(block_row_view(item, marker, label, selected, row_index))
         index = index + 1
       }
       let editor : Array[@moui.View[Msg]] = []
@@ -149,8 +261,16 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         )
         editor.push(
           @views.row([
-            @views.button(text(t, "app.block.apply"), on_click=CommitBlock),
-            @views.button(text(t, "app.block.delete"), on_click=DeleteBlock),
+            @views.button(
+              text(t, "app.block.apply"),
+              on_click=CommitBlock,
+              variant=Primary,
+            ),
+            @views.button(
+              text(t, "app.block.delete"),
+              on_click=DeleteBlock,
+              variant=Outline,
+            ),
           ]),
         )
       }
@@ -161,7 +281,12 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       for item_view in editor {
         panel.push(item_view)
       }
-      @views.scroll_view(@views.column(panel), width=480.0, height=560.0)
+      @views.scroll_view(
+        @views.column(panel),
+        width=480.0,
+        height=560.0,
+        shows_indicator=true,
+      )
     }
   }
 }
@@ -192,10 +317,13 @@ fn code_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let error_line = if model.code_error == "" {
     @views.text("")
   } else {
-    @views.text("\{text(t, "app.code.error")}：\{model.code_error}")
+    @views.inline_error(
+      "\{text(t, "app.code.error")}：\{model.code_error}",
+      width=440.0,
+    )
   }
   @views.column([
-    @views.text(text(t, "app.code.title")),
+    @views.text(text(t, "app.code.title"), role=Subtitle),
     @views.text_area(
       model.code_draft,
       on_input=source => EditCode(source),
@@ -208,7 +336,21 @@ fn code_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 }
 
 ///|
-/// 运行视图：真实渲染程序窗体 + 闸门卡 + 审计 + 变量。
+/// 审计时间线色点：操作类型 → 语义色（赋值蓝 / 信息框绿 / 闸门朱砂 /
+/// 命令紫 / 条件橙 / 循环青）。
+fn audit_dot_color(op : @momao_lang.StepOp) -> @graphics.Color {
+  match op {
+    @momao_lang.OpAssign => @graphics.Color::rgba(r=0.30, g=0.52, b=0.90)
+    @momao_lang.OpMessage => @graphics.Color::rgba(r=0.30, g=0.62, b=0.36)
+    @momao_lang.OpGate => @graphics.Color::rgba(r=0.78, g=0.26, b=0.20)
+    @momao_lang.OpCommand => @graphics.Color::rgba(r=0.55, g=0.40, b=0.75)
+    @momao_lang.OpCondition => @graphics.Color::rgba(r=0.85, g=0.55, b=0.16)
+    @momao_lang.OpLoop => @graphics.Color::rgba(r=0.20, g=0.55, b=0.58)
+  }
+}
+
+///|
+/// 运行视图：真实渲染程序窗体（窗体框舞台）+ 闸门确认卡 + 审计时间线。
 fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match model.run {
     None => @views.text("")
@@ -227,22 +369,49 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               on_input=new_value => ControlChanged(control.name, new_value),
               width=control.width.to_double(),
             )
-          @ir.CheckBox => @views.text("[ ] \{value}")
+          @ir.CheckBox =>
+            // 真勾选控件：勾选态在 app 层 RunModel.checks（指令机语义外）
+            @views.checkbox(
+              value,
+              checked=run.checks.get(control.name).unwrap_or(false),
+              on_change=checked => RunToggle(control.name, checked),
+            )
           @ir.ListBox | @ir.Table => {
             let rows : Array[@moui.View[Msg]] = []
+            let mut row_index = 0
             for item in run.state.rows.get(control.name).unwrap_or([]) {
-              rows.push(@views.text("· \{item}"))
+              let row = if row_index % 2 == 0 {
+                @views.container(
+                  @views.text(item, width=140.0),
+                  background=@graphics.Color::rgba(r=0.957, g=0.957, b=0.961),
+                  corner_radius=4.0,
+                  padding=2.0,
+                  width=160.0,
+                )
+              } else {
+                @views.text(item, width=160.0)
+              }
+              rows.push(row)
+              row_index = row_index + 1
             }
             @views.column(rows)
           }
         }
         controls.push(widget)
       }
-      let head : Array[@moui.View[Msg]] = [
-        @views.text("\{run.handler_label}"),
-        @views.column(controls),
-      ]
-      // 闸门卡：确认前零真实动作
+      // 舞台标题条：正在运行 + 当前子程序 + 停止
+      let stage_head = @views.row([
+        @views.text(text(t, "app.run.stage"), role=Caption),
+        @views.text("\{run.handler_label}", role=Subtitle),
+        @views.button(
+          text(t, "app.run.stop"),
+          on_click=RunStop,
+          variant=Outline,
+        ),
+      ])
+      let head : Array[@moui.View[Msg]] = [stage_head, @views.column(controls)]
+      // 闸门卡：确认卡（Warning tone）+ 确认 Primary / 拒绝 Outline，
+      // 确认前零真实动作
       let gate_card : Array[@moui.View[Msg]] = []
       match run.state.gate {
         Some(gate) => {
@@ -257,15 +426,24 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           }
           gate_card.push(
             @views.column([
-              @views.text(prompt),
-              @views.button(
-                text(t, "app.run.gate.confirm"),
-                on_click=AnswerGate(true),
+              @views.callout(
+                text(t, "app.run.gate.title"),
+                prompt,
+                tone=@style.Warning,
+                width=420.0,
               ),
-              @views.button(
-                text(t, "app.run.gate.reject"),
-                on_click=AnswerGate(false),
-              ),
+              @views.row([
+                @views.button(
+                  text(t, "app.run.gate.confirm"),
+                  on_click=AnswerGate(true),
+                  variant=Primary,
+                ),
+                @views.button(
+                  text(t, "app.run.gate.reject"),
+                  on_click=AnswerGate(false),
+                  variant=Outline,
+                ),
+              ]),
             ]),
           )
         }
@@ -275,16 +453,16 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       let messages_card : Array[@moui.View[Msg]] = []
       if run.state.messages.length() > 0 {
         let messages : Array[@moui.View[Msg]] = [
-          @views.text(text(t, "app.run.messages")),
+          @views.text(text(t, "app.run.messages"), role=Subtitle),
         ]
         for message in run.state.messages {
           messages.push(@views.text(message))
         }
         messages_card.push(@views.column(messages))
       }
-      // 审计
+      // 审计时间线：操作类型色点 + 本地化操作名 + 规范细节
       let audit : Array[@moui.View[Msg]] = [
-        @views.text(text(t, "app.run.audit")),
+        @views.text(text(t, "app.run.audit"), role=Subtitle),
       ]
       for record in run.state.audit {
         let op = match record.op {
@@ -295,11 +473,26 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           @momao_lang.OpCondition => "op.condition"
           @momao_lang.OpLoop => "op.loop"
         }
-        audit.push(@views.text("\{text(t, op)}  \{record.detail}"))
+        let dot = @views.container(
+          @views.empty(),
+          background=audit_dot_color(record.op),
+          corner_radius=4.0,
+          width=8.0,
+          height=8.0,
+        )
+        audit.push(
+          @views.row([
+            dot,
+            @views.text("\{text(t, op)}  \{record.detail}", width=400.0),
+          ]),
+        )
       }
       let error_card : Array[@moui.View[Msg]] = []
       match run.state.error {
-        Some(error) => error_card.push(@views.text(error_message(t, error)))
+        Some(error) =>
+          error_card.push(
+            @views.inline_error(error_message(t, error), width=440.0),
+          )
         None => ()
       }
       let panel : Array[@moui.View[Msg]] = []
@@ -313,12 +506,28 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         panel.push(item)
       }
       panel.push(
-        @views.scroll_view(@views.column(audit), width=460.0, height=180.0),
+        @views.scroll_view(
+          @views.column(audit),
+          width=460.0,
+          height=180.0,
+          shows_indicator=true,
+        ),
       )
       for item in error_card {
         panel.push(item)
       }
-      @views.scroll_view(@views.column(panel), width=480.0, height=560.0)
+      // 窗体框舞台：Raised 卡片承载整个运行区，与设计画布呼应
+      @views.card(
+        @views.scroll_view(
+          @views.column(panel),
+          width=436.0,
+          height=532.0,
+          shows_indicator=true,
+        ),
+        width=480.0,
+        height=560.0,
+        padding=10.0,
+      )
     }
   }
 }
@@ -328,13 +537,19 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let inspector = inspector_panel(model, t)
   let ai = ai_panel(model, t)
-  @views.scroll_view(
-    @views.container(
-      @views.column([inspector, @views.divider(), ai]),
-      padding=10.0,
+  @views.card(
+    @views.scroll_view(
+      @views.container(
+        @views.column([inspector, @views.divider(), ai]),
+        padding=2.0,
+      ),
+      width=272.0,
+      height=532.0,
+      shows_indicator=true,
     ),
     width=300.0,
     height=560.0,
+    padding=10.0,
   )
 }
 
@@ -418,7 +633,7 @@ fn find_selected_control(model : Model) -> @ir.Control? {
 /// AI 面板：prompt + 生成 + 提案 diff 预览 + 采纳/拒绝 + provider 设置。
 fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let head : Array[@moui.View[Msg]] = [
-    @views.text(text(t, "app.ai.title")),
+    @views.text(text(t, "app.ai.title"), role=Subtitle),
     @views.text_field(
       model.prompt_draft,
       on_input=value => SetPrompt(value),
@@ -430,7 +645,14 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   ]
   let prompt_error_card : Array[@moui.View[Msg]] = []
   if model.prompt_error != "" {
-    prompt_error_card.push(@views.text(model.prompt_error))
+    prompt_error_card.push(@views.inline_error(model.prompt_error, width=250.0))
+  }
+  // 真实 provider 请求进行中：加载态占位
+  let busy_card : Array[@moui.View[Msg]] = []
+  if model.ai_busy {
+    busy_card.push(
+      @views.loading_state(title=text(t, "app.ai.busy"), width=250.0),
+    )
   }
   // 待采纳提案
   let proposal_card : Array[@moui.View[Msg]] = []
@@ -441,7 +663,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         @views.text("\{text(t, "app.ai.reason")}：\{pending.summary}"),
       )
       let entries : Array[@moui.View[Msg]] = [
-        @views.text(text(t, "app.ai.diff.title")),
+        @views.text(text(t, "app.ai.diff.title"), role=Caption),
       ]
       for entry in pending.diff {
         let op = match entry.op {
@@ -449,10 +671,20 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           @proposals.Changed => "diff.changed"
           @proposals.Removed => "diff.removed"
         }
+        // 语义 tone 徽标：新增绿 / 修改强调 / 删除红，随主题解析
+        let tone = match entry.op {
+          @proposals.Added => @style.BadgeTone::Success
+          @proposals.Changed => @style.BadgeTone::Accent
+          @proposals.Removed => @style.BadgeTone::Danger
+        }
         entries.push(
-          @views.text(
-            "\{text(t, op)} \{entry.path}：\{entry.old_text} → \{entry.new_text}",
-          ),
+          @views.row([
+            @views.badge(text(t, op), tone~, width=52.0, height=20.0),
+            @views.text(
+              "\{entry.path}：\{entry.old_text} → \{entry.new_text}",
+              width=180.0,
+            ),
+          ]),
         )
       }
       proposal_card.push(
@@ -514,6 +746,9 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   for item in prompt_error_card {
     panel.push(item)
   }
+  for item in busy_card {
+    panel.push(item)
+  }
   for item in proposal_card {
     panel.push(item)
   }
@@ -546,7 +781,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
   ])
   // 固定浅色主题：课堂/路演场景要求确定的演示外观，不随系统深色模式漂移
   // （深色系统 + 浅色底板会出现白字白底）。
-  .theme(@views.light_theme())
+  .theme(momao_theme())
 }
 
 ///|
@@ -560,18 +795,6 @@ fn join_lines(items : Array[String]) -> String {
     }
     buf.write_string(item)
     first = false
-  }
-  buf.to_string()
-}
-
-///|
-/// 缩进空格（String 无重复运算）。
-fn repeat_spaces(depth : Int) -> String {
-  let buf = StringBuilder()
-  let mut i = 0
-  while i < depth {
-    buf.write_string("  ")
-    i = i + 1
   }
   buf.to_string()
 }

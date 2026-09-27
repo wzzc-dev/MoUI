@@ -370,7 +370,7 @@ fn update_with_provider(
           None => (model, @moui.Effect::none())
           Some(handler) =>
             (
-              { ..model, explanation: "", },
+              { ..model, explanation: "", ai_busy: true, },
               @moui.Effect::dispatch(emit => {
                 submit(
                   {
@@ -389,12 +389,6 @@ fn update_with_provider(
             )
         }
       }
-    RealExplanationFinished(result) =>
-      match result {
-        Ok(explanation) => ({ ..model, explanation, }, @moui.Effect::none())
-        Err(message) =>
-          ({ ..model, explanation: message, }, @moui.Effect::none())
-      }
     GenerateProposal =>
       if model.provider_mode is Fake {
         update_pure(model, GenerateProposal)
@@ -405,7 +399,7 @@ fn update_with_provider(
         )
       } else {
         (
-          { ..model, prompt_error: "", },
+          { ..model, prompt_error: "", ai_busy: true, },
           @moui.Effect::dispatch(emit => {
             submit(
               {

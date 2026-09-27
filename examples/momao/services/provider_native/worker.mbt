@@ -55,8 +55,9 @@ pub fn provider_submit(
 /// 抓取一个任务：OpenAI 兼容 chat/completions。
 async fn provider_fetch(job : ProviderJob) -> Unit {
   let body = @provider.build_request_body(job.request).stringify()
+  let url = @provider.completion_url(job.endpoint)
   let result = try {
-    let (response, data) = @http.post(job.endpoint, body, headers={
+    let (response, data) = @http.post(url, body, headers={
       "Content-Type": "application/json",
       "Authorization": "Bearer " + job.key,
     })
@@ -99,6 +100,39 @@ pub fn provider_submit_prompt(
     prompt,
   )
   provider_submit(owner, endpoint, key, request, on_result)
+}
+
+///|
+/// live smoke 通道：直接发起一次真实 chat/completions（native-only）。
+/// 仅供 live 测试 / 诊断工具调用——Studio 运行路径一律走队列 + worker 循环，
+/// UI 线程从不等待网络。响应经 parse_completion 提取首选文本。
+pub async fn provider_live_completion(
+  config : ProviderConfig,
+  prompt : String,
+) -> Result[String, String] {
+  let request = @provider.CompletionRequest::new(
+    config.model,
+    "You are a helpful assistant.",
+  ).with_message(User, prompt)
+  let body = @provider.build_request_body(request).stringify()
+  let url = @provider.completion_url(config.endpoint)
+  let result = try {
+    let (response, data) = @http.post(url, body, headers={
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + config.api_key,
+    })
+    if response.code >= 200 && response.code < 300 {
+      Ok(data.text())
+    } else {
+      Err("provider 返回 HTTP \{response.code}")
+    }
+  } catch {
+    err => Err("网络错误：\{err}")
+  }
+  match result {
+    Ok(text) => @provider.parse_completion(text)
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|

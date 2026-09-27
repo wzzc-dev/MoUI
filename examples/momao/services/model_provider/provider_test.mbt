@@ -68,3 +68,21 @@ test "请求预算守卫拒绝超长输入" {
   )
   assert_true(!@model_provider.request_within_budget(big, 4))
 }
+
+///|
+test "补全 URL：base 拼接 / 全路径原样 / 尾斜杠归一" {
+  assert_eq(
+    @model_provider.completion_url("https://api.stepfun.com/step_plan/v1"),
+    "https://api.stepfun.com/step_plan/v1/chat/completions",
+  )
+  assert_eq(
+    @model_provider.completion_url(
+      "https://api.stepfun.com/step_plan/v1/chat/completions",
+    ),
+    "https://api.stepfun.com/step_plan/v1/chat/completions",
+  )
+  assert_eq(
+    @model_provider.completion_url("https://api.example.com/v1/"),
+    "https://api.example.com/v1/chat/completions",
+  )
+}

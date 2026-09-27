@@ -2,6 +2,7 @@
   "locale": "en",
   "messages": {
     "app.ai.accept": "Accept",
+    "app.ai.busy": "Generating proposal…",
     "app.ai.diff.title": "Change preview",
     "app.ai.endpoint": "Endpoint",
     "app.ai.explain": "Explain this program",
@@ -15,6 +16,8 @@
     "app.ai.reason": "Summary",
     "app.ai.reject": "Reject",
     "app.ai.title": "AI proposals",
+    "app.block.apply": "Apply edit",
+    "app.block.delete": "Delete statement",
     "app.code.cheatsheet": "Keyword cheatsheet",
     "app.code.error": "Syntax error",
     "app.code.title": "MoMao code",
@@ -42,7 +45,9 @@
     "app.run.gate.confirm": "Confirm send",
     "app.run.gate.reject": "Reject",
     "app.run.gate.submit": "The program wants to send to \"{target}\": {payload}. Confirm?",
+    "app.run.gate.title": "Confirmation needed",
     "app.run.messages": "Messages",
+    "app.run.stage": "Now running",
     "app.run.start": "Run",
     "app.run.stop": "Stop",
     "app.run.variables": "Variables",
@@ -117,8 +122,6 @@
     "op.condition": "condition",
     "op.gate": "gate",
     "op.loop": "loop",
-    "op.message": "message",
-    "app.block.apply": "Apply edit",
-    "app.block.delete": "Delete statement"
+    "op.message": "message"
   }
 }

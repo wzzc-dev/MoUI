@@ -88,6 +88,30 @@ pub fn build_request_body(request : CompletionRequest) -> Json {
 }
 
 ///|
+/// OpenAI 兼容补全 URL 组装：配置里给的是 base URL（如
+/// `https://api.stepfun.com/step_plan/v1`）时拼接 `/chat/completions`
+/// （OpenAI SDK 用户得到的行为）；已写全路径的配置原样使用，
+/// 尾部斜杠归一，避免 base 以 `/` 结尾时出现双斜杠。
+pub fn completion_url(endpoint : String) -> String {
+  if endpoint.contains("/chat/completions") {
+    return endpoint
+  }
+  let chars : Array[Char] = []
+  for c in endpoint {
+    chars.push(c)
+  }
+  while chars.length() > 0 && chars[chars.length() - 1] == '/' {
+    ignore(chars.pop())
+  }
+  let buf = StringBuilder()
+  for c in chars {
+    buf.write_char(c)
+  }
+  buf.write_string("/chat/completions")
+  buf.to_string()
+}
+
+///|
 /// 从 OpenAI 兼容响应体提取首选文本。结构不符/错误体一律拒绝。
 pub fn parse_completion(text : String) -> Result[String, String] {
   let payload = @json.parse(text) catch {

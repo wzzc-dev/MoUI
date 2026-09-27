@@ -2,6 +2,7 @@
   "locale": "zh-Hans",
   "messages": {
     "app.ai.accept": "采纳",
+    "app.ai.busy": "正在生成提案…",
     "app.ai.diff.title": "变更预览",
     "app.ai.endpoint": "接口地址",
     "app.ai.explain": "解释这个程序",
@@ -15,6 +16,8 @@
     "app.ai.reason": "摘要",
     "app.ai.reject": "拒绝",
     "app.ai.title": "AI 提案",
+    "app.block.apply": "应用修改",
+    "app.block.delete": "删除语句",
     "app.code.cheatsheet": "关键字速查",
     "app.code.error": "语法错误",
     "app.code.title": "MoMao 代码",
@@ -42,7 +45,9 @@
     "app.run.gate.confirm": "确认送出",
     "app.run.gate.reject": "拒绝",
     "app.run.gate.submit": "程序想把数据送到「{target}」，要送出的内容：{payload}。确认吗？",
+    "app.run.gate.title": "需要你的确认",
     "app.run.messages": "消息",
+    "app.run.stage": "正在运行",
     "app.run.start": "运行",
     "app.run.stop": "停止",
     "app.run.variables": "变量",
@@ -117,8 +122,6 @@
     "op.condition": "条件",
     "op.gate": "闸门",
     "op.loop": "循环",
-    "op.message": "信息框",
-    "app.block.apply": "应用修改",
-    "app.block.delete": "删除语句"
+    "op.message": "信息框"
   }
 }
