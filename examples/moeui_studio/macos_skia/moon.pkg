@@ -1,0 +1,17 @@
+import {
+  "moonbitlang/async",
+  "wzzc-dev/moui/backend/macos",
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui/runtime",
+  "examples/moeui_studio/app" @moeui_app,
+  "examples/moeui_studio/services/provider_native" @provider,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)
