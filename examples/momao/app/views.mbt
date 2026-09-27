@@ -387,7 +387,9 @@ fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.text(text(t, "app.preview.note"), role=Caption),
   ]
   for line in source.split("\n") {
-    lines.push(@views.text(line.to_string(), width=460.0))
+    lines.push(
+      @views.text(line.to_string(), width=460.0, align=TextStart),
+    )
   }
   @views.scroll_view(
     @views.column(lines),
