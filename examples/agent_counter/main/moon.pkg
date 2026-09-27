@@ -2,10 +2,8 @@ import {
   "examples/agent_counter" @app,
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui_agent" @agent,
-  "wzzc-dev/moui_agent_mcp" @mcp,
-  "moonbitlang/core/json",
+  "wzzc-dev/moui_agent_mcp/stdio" @mcp_stdio,
   "moonbitlang/async",
-  "moonbitlang/async/stdio",
 }
 
 supported_targets = "native"

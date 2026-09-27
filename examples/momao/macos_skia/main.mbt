@@ -1,9 +1,11 @@
 ///|
 /// MoMao Studio macOS Skia 入口（组合根 + 真实 provider worker）。
-/// 与 Web 入口的差别只有两件事：
+/// 与 Web 入口的差别只有三件事：
 /// 1) 真实 provider worker（阶跃星辰 step-5-preview）在此起线程循环；
 /// 2) 凭据从 gitignored 的 `examples/momao/.config.json` 读取预填面板，
-///    缺文件时回退空配置（用户可在面板手填，key 只进会话内存）。
+///    缺文件时回退空配置（用户可在面板手填，key 只进会话内存）；
+/// 3) 附加 stdio MCP agent 传输：Agent 在正常开窗运行时上读写已提交语义树，
+///    无 Agent 附着（stdin 已关闭）时立即返回，不影响正常使用。
 /// UI 逻辑全部在 app 包，本文件只做接线。
 
 ///|
@@ -48,6 +50,7 @@ async fn main {
     height=800.0,
   )
   runtime_ref.val = Some(runtime)
+  let host = @agent.RuntimeAgentHost::new(runtime)
   let window_task : async () -> Unit = async fn() {
     @runtime.run_app("MoMao 墨卯", runtime)
     .render_all(@render_skia.from_env(platform=MacOS))
@@ -57,7 +60,8 @@ async fn main {
   let worker_task : async () -> Unit = async fn() {
     @provider.provider_worker_loop(owner)
   }
-  ignore(@async.all([window_task, worker_task])) catch {
+  let agent_task : async () -> Unit = async fn() { @mcp_stdio.serve(host) }
+  ignore(@async.all([window_task, worker_task, agent_task])) catch {
     err => println("MoMao Studio exited with error: \{err}")
   }
 }

@@ -109,5 +109,13 @@ text fallback, `isError`, and stable `{ "ok": true, "value": ... }` or
 `{ "ok": false, "error": ... }` envelopes. JSON-RPC errors are reserved for
 malformed JSON-RPC or `tools/call` envelopes.
 
+The shared stdio transport is the `wzzc-dev/moui_agent_mcp/stdio` package
+(native only). `serve` runs the NDJSON loop (one request per line; blank lines
+are skipped and malformed lines are answered with a parse error instead of
+aborting) over the default registry, and `serve_with_diagnostics` opts into the
+diagnostics registry. The router core stays transport-free and wasm-gc capable;
+composition roots run the loop alongside their window or worker tasks via
+`@async.all`, and headless entrypoints can make it their whole program.
+
 Stable addressing is not authorization. Applications still implement
 confirmation and high-risk business rules in their UI and TEA `update`.

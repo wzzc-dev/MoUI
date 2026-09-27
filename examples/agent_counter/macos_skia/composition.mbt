@@ -14,29 +14,10 @@ async fn run_agent_counter() -> Unit {
     .backend(@macos_backend.entry())
     .run_async_pump(frame_interval_ms=16)
   }
+  // The stdio MCP loop shares this runtime with the window; the agent
+  // protocol is identical with or without a window on screen.
   let mcp_task : async () -> Unit = async fn() -> Unit {
-    while true {
-      match @stdio.stdin.read_until("\n") {
-        None => return
-        Some(line) => {
-          let trimmed = line.trim().to_owned()
-          if trimmed == "" {
-            continue
-          }
-          let parsed = @json.parse(trimmed) catch {
-            _ => {
-              @stdio.stdout.write(
-                (@mcp.rpc_error_no_id(-32700, "Parse error") : Json).stringify() +
-                "\n",
-              )
-              continue
-            }
-          }
-          let response = @mcp.route(host, parsed)
-          @stdio.stdout.write((response : Json).stringify() + "\n")
-        }
-      }
-    }
+    @mcp_stdio.serve(host)
   }
   let _ = @async.all([window_task, mcp_task])
 }

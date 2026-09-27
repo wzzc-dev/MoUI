@@ -1,0 +1,8 @@
+import {
+  "wzzc-dev/moui_agent" @agent,
+  "wzzc-dev/moui_agent_mcp" @mcp,
+  "moonbitlang/core/json",
+  "moonbitlang/async/stdio" @async_stdio,
+}
+
+supported_targets = "native"

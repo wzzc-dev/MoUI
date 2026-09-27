@@ -93,5 +93,11 @@ tool result，包含 `structuredContent`、text fallback、`isError`，以及稳
 `{ "ok": true, "value": ... }` 或 `{ "ok": false, "error": ... }` envelope。
 JSON-RPC error 仅用于 malformed JSON-RPC 或 `tools/call` envelope。
 
+共享的 stdio 传输位于 `wzzc-dev/moui_agent_mcp/stdio` 包（仅 native）。`serve`
+在默认 registry 上运行 NDJSON 循环（每行一个请求；空行跳过，malformed 行返回
+parse error 而不中断），`serve_with_diagnostics` 启用 diagnostics registry。
+router 核心保持传输无关且支持 wasm-gc；组合根通过 `@async.all` 把该循环与
+window 或 worker task 并行运行，headless 入口也可以把它当作整个程序。
+
 稳定寻址不等于授权。应用仍需在 UI 和 TEA `update` 中实现确认流程与高风险业务
 规则。
