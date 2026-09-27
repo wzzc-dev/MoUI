@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MoMao 墨卯</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #101418; }
+    #momao-root { width: 100vw; height: 100vh; display: block; }
+    #status { position: fixed; left: 12px; bottom: 12px; color: #9aa4b0; font: 13px system-ui; }
+  </style>
+  <script type="module">
+    import init from "../.mooncakes/wzzc-dev/moui_web_renderer/runtime.js";
+    const status = document.getElementById("status");
+    init({
+      canvas: document.getElementById("momao-root"),
+      onStatus: (text) => { if (status) status.textContent = text; },
+    }).catch((error) => {
+      if (status) status.textContent = "加载失败: " + error;
+    });
+  </script>
+</head>
+<body>
+  <canvas id="momao-root"></canvas>
+  <div id="status">正在加载 MoMao…</div>
+</body>
+</html>

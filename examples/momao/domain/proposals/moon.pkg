@@ -1,0 +1,8 @@
+import {
+  "moonbitlang/core/json",
+  "examples/momao/domain/ir",
+  "examples/momao/domain/momao_lang",
+  "examples/momao/domain/codec",
+}
+
+supported_targets = "native+wasm-gc"

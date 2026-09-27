@@ -1,0 +1,757 @@
+///|
+/// kernel_codec：domain 下若干 .mbt 的逐字节副本。
+/// 由 tools/sync_kernel 生成，勿手改；与源文件不一致时
+/// `moon run examples/momao/tools/sync_kernel --target native -- --check` 会报 DRIFT。
+
+///|
+pub fn kernel_codec_mbt() -> String {
+  let source =
+    #|///|
+    #|/// `.momao.json` 项目编解码：format 门卫 + 严格字段检查。
+    #|/// 文件存的是 IR 本身（语言中立的语句树），不是任何一门前语言的源码；
+    #|/// 与 AI 提案（domain/proposals）共用同一套解码原语。
+    #|
+    #|///|
+    #|///| 格式标识与版本：不匹配整单拒绝（未来版本走显式迁移，不猜）。
+    #|pub const PROJECT_FORMAT : String = "momao.project"
+    #|
+    #|///|
+    #|pub const PROJECT_VERSION : Int = 1
+    #|
+    #|///|
+    #|/// 编码错误（界面层本地化）。
+    #|pub(all) enum CodecError {
+    #|  InvalidJson
+    #|  BadFormat
+    #|  UnsupportedVersion(Int)
+    #|  MissingField(String)
+    #|  BadControlKind(String)
+    #|  BadEventKind(String)
+    #|  BadStatement(String)
+    #|  BadExpr(String)
+    #|  LanguageIssue(String, Int)
+    #|  Structural(@ir.IrError)
+    #|}
+    #|
+    #|///|
+    #|fn json_string_field(fields : Map[String, Json], key : String) -> String? {
+    #|  match fields.get(key) {
+    #|    Some(String(text)) => Some(text)
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn json_int_field(fields : Map[String, Json], key : String) -> Int? {
+    #|  match fields.get(key) {
+    #|    Some(Number(n, ..)) => Some(n.to_int())
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn json_items_field(fields : Map[String, Json], key : String) -> Array[String] {
+    #|  let items : Array[String] = []
+    #|  match fields.get(key) {
+    #|    Some(Array(values)) =>
+    #|      for value in values {
+    #|        match value {
+    #|          String(text) => items.push(text)
+    #|          _ => ()
+    #|        }
+    #|      }
+    #|    _ => ()
+    #|  }
+    #|  items
+    #|}
+    #|
+    #|///|
+    #|fn encode_control(control : @ir.Control) -> Json {
+    #|  let fields : Map[String, Json] = Map([], capacity=10)
+    #|  fields["id"] = Json::number(control.id.to_double())
+    #|  fields["kind"] = Json::string(control.kind.tag())
+    #|  fields["name"] = Json::string(control.name)
+    #|  fields["text"] = Json::string(control.text)
+    #|  fields["x"] = Json::number(control.x.to_double())
+    #|  fields["y"] = Json::number(control.y.to_double())
+    #|  fields["width"] = Json::number(control.width.to_double())
+    #|  fields["height"] = Json::number(control.height.to_double())
+    #|  fields["items"] = Json::array(control.items.map(Json::string))
+    #|  Json::object(fields)
+    #|}
+    #|
+    #|///|
+    #|fn encode_handler(handler : @ir.Handler) -> Json {
+    #|  let fields : Map[String, Json] = Map([], capacity=5)
+    #|  fields["control"] = Json::string(handler.control_name)
+    #|  fields["event"] = Json::string(handler.event.tag())
+    #|  let note : Map[String, Json] = Map([], capacity=2)
+    #|  note["zh"] = Json::string(handler.note_zh)
+    #|  note["en"] = Json::string(handler.note_en)
+    #|  fields["note"] = Json::object(note)
+    #|  fields["body"] = Json::array(handler.body.map(encode_stmt))
+    #|  Json::object(fields)
+    #|}
+    #|
+    #|///|
+    #|fn encode_stmt(stmt : @ir.Stmt) -> Json {
+    #|  match stmt {
+    #|    @ir.Declare(name, expr) => encode_stmt_node(stmt, "declare", [
+    #|      ("name", Json::string(name)), ("expr", encode_expr(expr)),
+    #|    ])
+    #|    @ir.Assign(name, expr) => encode_stmt_node(stmt, "assign", [
+    #|      ("name", Json::string(name)), ("expr", encode_expr(expr)),
+    #|    ])
+    #|    @ir.Break => encode_stmt_node(stmt, "break", [])
+    #|    @ir.Call(name, args) => encode_stmt_node(stmt, "call", [
+    #|      ("name", Json::string(name)),
+    #|      ("args", Json::array(args.map(encode_expr))),
+    #|    ])
+    #|    @ir.If(cond, then_body, else_ifs, else_body) =>
+    #|      encode_stmt_node(stmt, "if", [
+    #|        ("cond", encode_expr(cond)),
+    #|        ("then", Json::array(then_body.map(encode_stmt))),
+    #|        (
+    #|          "else_ifs",
+    #|          Json::array(
+    #|            else_ifs.map(arm => {
+    #|              let arm_fields : Map[String, Json] = Map([], capacity=2)
+    #|              arm_fields["cond"] = encode_expr(arm.0)
+    #|              arm_fields["body"] = Json::array(arm.1.map(encode_stmt))
+    #|              Json::object(arm_fields)
+    #|            }),
+    #|          ),
+    #|        ),
+    #|        ("else", Json::array(else_body.map(encode_stmt))),
+    #|      ])
+    #|    @ir.CountLoop(times, loop_var, body) =>
+    #|      encode_stmt_node(stmt, "count_loop", [
+    #|        ("times", encode_expr(times)),
+    #|        (
+    #|          "as",
+    #|          match loop_var {
+    #|            Some(name) => Json::string(name)
+    #|            None => Json::null()
+    #|          },
+    #|        ),
+    #|        ("body", Json::array(body.map(encode_stmt))),
+    #|      ])
+    #|    @ir.WhileLoop(cond, body) =>
+    #|      encode_stmt_node(stmt, "while", [
+    #|        ("cond", encode_expr(cond)), ("body", Json::array(body.map(encode_stmt))),
+    #|      ])
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn encode_stmt_node(
+    #|  stmt : @ir.Stmt,
+    #|  op : String,
+    #|  extras : Array[(String, Json)],
+    #|) -> Json {
+    #|  let fields : Map[String, Json] = Map([], capacity=8)
+    #|  fields["op"] = Json::string(op)
+    #|  ignore(stmt)
+    #|  for pair in extras {
+    #|    fields[pair.0] = pair.1
+    #|  }
+    #|  Json::object(fields)
+    #|}
+    #|
+    #|///|
+    #|fn encode_expr(expr : @ir.Expr) -> Json {
+    #|  match expr {
+    #|    @ir.NumLit(n) => expr_node("num", [("v", Json::number(n))])
+    #|    @ir.StrLit(text) => expr_node("str", [("v", Json::string(text))])
+    #|    @ir.BoolLit(flag) => expr_node("bool", [("v", Json::boolean(flag))])
+    #|    @ir.Var(name) => expr_node("var", [("v", Json::string(name))])
+    #|    @ir.Not(inner) => expr_node("not", [("e", encode_expr(inner))])
+    #|    @ir.Neg(inner) => expr_node("neg", [("e", encode_expr(inner))])
+    #|    @ir.Binary(op, left, right) =>
+    #|      expr_node("bin", [
+    #|        ("op", Json::string(op.canonical())),
+    #|        ("l", encode_expr(left)),
+    #|        ("r", encode_expr(right)),
+    #|      ])
+    #|    @ir.Call(name, args) =>
+    #|      expr_node("call", [
+    #|        ("name", Json::string(name)),
+    #|        ("args", Json::array(args.map(encode_expr))),
+    #|      ])
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn expr_node(kind : String, extras : Array[(String, Json)]) -> Json {
+    #|  let fields : Map[String, Json] = Map([], capacity=6)
+    #|  fields["t"] = Json::string(kind)
+    #|  for pair in extras {
+    #|    fields[pair.0] = pair.1
+    #|  }
+    #|  Json::object(fields)
+    #|}
+    #|
+    #|///|
+    #|/// 程序 → `.momao.json` 文本（紧凑稳定输出；字段顺序固定）。
+    #|pub fn encode_program(program : @ir.MomaoProgram) -> String {
+    #|  let root : Map[String, Json] = Map([], capacity=6)
+    #|  root["format"] = Json::string(PROJECT_FORMAT)
+    #|  root["version"] = Json::number(PROJECT_VERSION.to_double())
+    #|  let window : Map[String, Json] = Map([], capacity=3)
+    #|  window["title"] = Json::string(program.window.title)
+    #|  window["width"] = Json::number(program.window.width.to_double())
+    #|  window["height"] = Json::number(program.window.height.to_double())
+    #|  root["window"] = Json::object(window)
+    #|  root["controls"] = Json::array(program.controls.map(encode_control))
+    #|  root["variables"] = Json::array(
+    #|    program.variables.map(variable => {
+    #|      let fields : Map[String, Json] = Map([], capacity=2)
+    #|      fields["name"] = Json::string(variable.name)
+    #|      fields["init"] = Json::string(variable.init)
+    #|      Json::object(fields)
+    #|    }),
+    #|  )
+    #|  root["handlers"] = Json::array(program.handlers.map(encode_handler))
+    #|  Json::object(root).stringify()
+    #|}
+    #|
+    #|///|
+    #|fn decode_control(
+    #|  fields : Map[String, Json],
+    #|  errors : Array[CodecError],
+    #|) -> @ir.Control? {
+    #|  let id = match json_int_field(fields, "id") {
+    #|    Some(value) => value
+    #|    None => {
+    #|      errors.push(MissingField("controls.id"))
+    #|      return None
+    #|    }
+    #|  }
+    #|  let name = match json_string_field(fields, "name") {
+    #|    Some(text) => text
+    #|    None => {
+    #|      errors.push(MissingField("controls.name"))
+    #|      return None
+    #|    }
+    #|  }
+    #|  let kind = match json_string_field(fields, "kind") {
+    #|    Some(text) =>
+    #|      match @ir.parse_control_kind(text) {
+    #|        Some(kind) => kind
+    #|        None => {
+    #|          errors.push(BadControlKind(text))
+    #|          return None
+    #|        }
+    #|      }
+    #|    None => {
+    #|      errors.push(MissingField("controls.kind"))
+    #|      return None
+    #|    }
+    #|  }
+    #|  Some(
+    #|    @ir.Control::{
+    #|      id,
+    #|      kind,
+    #|      name,
+    #|      text: json_string_field(fields, "text").unwrap_or(""),
+    #|      x: json_int_field(fields, "x").unwrap_or(40),
+    #|      y: json_int_field(fields, "y").unwrap_or(40),
+    #|      width: json_int_field(fields, "width").unwrap_or(120),
+    #|      height: json_int_field(fields, "height").unwrap_or(36),
+    #|      items: json_items_field(fields, "items"),
+    #|    },
+    #|  )
+    #|}
+    #|
+    #|///|
+    #|fn decode_handler(
+    #|  fields : Map[String, Json],
+    #|  errors : Array[CodecError],
+    #|) -> @ir.Handler? {
+    #|  let control = match json_string_field(fields, "control") {
+    #|    Some(text) => text
+    #|    None => {
+    #|      errors.push(MissingField("handlers.control"))
+    #|      return None
+    #|    }
+    #|  }
+    #|  let event = match json_string_field(fields, "event") {
+    #|    Some(text) =>
+    #|      match @ir.parse_event_kind(text) {
+    #|        Some(event) => event
+    #|        None => {
+    #|          errors.push(BadEventKind(text))
+    #|          return None
+    #|        }
+    #|      }
+    #|    None => {
+    #|      errors.push(MissingField("handlers.event"))
+    #|      return None
+    #|    }
+    #|  }
+    #|  let (note_zh, note_en) = match fields.get("note") {
+    #|    Some(Object(note)) => (
+    #|      json_string_field(note, "zh").unwrap_or(""),
+    #|      json_string_field(note, "en").unwrap_or(""),
+    #|    )
+    #|    _ => ("", "")
+    #|  }
+    #|  let body = match fields.get("body") {
+    #|    Some(Array(values)) => {
+    #|      let stmts : Array[@ir.Stmt] = []
+    #|      for value in values {
+    #|        match decode_stmt(value) {
+    #|          Ok(stmt) => stmts.push(stmt)
+    #|          Err(error) => {
+    #|            errors.push(error)
+    #|            return None
+    #|          }
+    #|        }
+    #|      }
+    #|      stmts
+    #|    }
+    #|    _ => {
+    #|      errors.push(MissingField("handlers.body"))
+    #|      return None
+    #|    }
+    #|  }
+    #|  Some(
+    #|    @ir.Handler::{
+    #|      control_name: control,
+    #|      event,
+    #|      note_zh,
+    #|      note_en,
+    #|      body,
+    #|    },
+    #|  )
+    #|}
+    #|
+    #|///|
+    #|fn decode_stmt(value : Json) -> Result[@ir.Stmt, CodecError] {
+    #|  match value {
+    #|    Object(fields) => {
+    #|      let op = match json_string_field(fields, "op") {
+    #|        Some(text) => text
+    #|        None => return Err(MissingField("stmt.op"))
+    #|      }
+    #|      match op {
+    #|        "declare" => {
+    #|          let name = match stmt_name(fields) {
+    #|            Ok(name) => name
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let expr = match stmt_expr(fields) {
+    #|            Ok(expr) => expr
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.Declare(name, expr))
+    #|        }
+    #|        "assign" => {
+    #|          let name = match stmt_name(fields) {
+    #|            Ok(name) => name
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let expr = match stmt_expr(fields) {
+    #|            Ok(expr) => expr
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.Assign(name, expr))
+    #|        }
+    #|        "break" => Ok(@ir.Break)
+    #|        "call" => {
+    #|          let name = match stmt_name(fields) {
+    #|            Ok(name) => name
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let args = match stmt_exprs(fields) {
+    #|            Ok(args) => args
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.Call(name, args))
+    #|        }
+    #|        "if" => {
+    #|          let cond = match stmt_expr(fields) {
+    #|            Ok(cond) => cond
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let then_body = match decode_stmt_array(fields, "then") {
+    #|            Ok(body) => body
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let else_ifs = match decode_if_arms(fields) {
+    #|            Ok(arms) => arms
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let else_body = match decode_stmt_array(fields, "else") {
+    #|            Ok(body) => body
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.If(cond, then_body, else_ifs, else_body))
+    #|        }
+    #|        "count_loop" => {
+    #|          let times = match stmt_expr(fields) {
+    #|            Ok(times) => times
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let body = match decode_stmt_array(fields, "body") {
+    #|            Ok(body) => body
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.CountLoop(times, stmt_loop_var(fields), body))
+    #|        }
+    #|        "while" => {
+    #|          let cond = match stmt_expr(fields) {
+    #|            Ok(cond) => cond
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let body = match decode_stmt_array(fields, "body") {
+    #|            Ok(body) => body
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.WhileLoop(cond, body))
+    #|        }
+    #|        other => Err(BadStatement(other))
+    #|      }
+    #|    }
+    #|    _ => Err(BadStatement("非对象"))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn stmt_name(fields : Map[String, Json]) -> Result[String, CodecError] {
+    #|  match json_string_field(fields, "name") {
+    #|    Some(text) => Ok(text)
+    #|    None => Err(MissingField("stmt.name"))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn stmt_expr(fields : Map[String, Json]) -> Result[@ir.Expr, CodecError] {
+    #|  let candidates : Array[String] = ["expr", "cond", "times"]
+    #|  let mut found : Json? = None
+    #|  for key in candidates {
+    #|    match fields.get(key) {
+    #|      Some(value) => {
+    #|        found = Some(value)
+    #|        break
+    #|      }
+    #|      None => ()
+    #|    }
+    #|  }
+    #|  match found {
+    #|    Some(value) => decode_expr(value)
+    #|    None => Err(MissingField("stmt.expr"))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn stmt_exprs(fields : Map[String, Json]) -> Result[Array[@ir.Expr], CodecError] {
+    #|  match fields.get("args") {
+    #|    Some(Array(values)) => {
+    #|      let exprs : Array[@ir.Expr] = []
+    #|      for value in values {
+    #|        match decode_expr(value) {
+    #|          Ok(expr) => exprs.push(expr)
+    #|          Err(error) => return Err(error)
+    #|        }
+    #|      }
+    #|      Ok(exprs)
+    #|    }
+    #|    _ => Err(MissingField("stmt.args"))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn stmt_loop_var(fields : Map[String, Json]) -> String? {
+    #|  match fields.get("as") {
+    #|    Some(String(text)) => Some(text)
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn decode_stmt_array(
+    #|  fields : Map[String, Json],
+    #|  key : String,
+    #|) -> Result[Array[@ir.Stmt], CodecError] {
+    #|  match fields.get(key) {
+    #|    Some(Array(values)) => {
+    #|      let stmts : Array[@ir.Stmt] = []
+    #|      for value in values {
+    #|        match decode_stmt(value) {
+    #|          Ok(stmt) => stmts.push(stmt)
+    #|          Err(error) => return Err(error)
+    #|        }
+    #|      }
+    #|      Ok(stmts)
+    #|    }
+    #|    _ => Ok([])
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn decode_if_arms(
+    #|  fields : Map[String, Json],
+    #|) -> Result[Array[(@ir.Expr, Array[@ir.Stmt])], CodecError] {
+    #|  match fields.get("else_ifs") {
+    #|    Some(Array(values)) => {
+    #|      let arms : Array[(@ir.Expr, Array[@ir.Stmt])] = []
+    #|      for value in values {
+    #|        match value {
+    #|          Object(arm_fields) => {
+    #|            let cond = match arm_fields.get("cond") {
+    #|              Some(cond_value) =>
+    #|                match decode_expr(cond_value) {
+    #|                  Ok(expr) => expr
+    #|                  Err(error) => return Err(error)
+    #|                }
+    #|              None => return Err(MissingField("if.else_ifs.cond"))
+    #|            }
+    #|            let body = match decode_stmt_array(arm_fields, "body") {
+    #|              Ok(stmts) => stmts
+    #|              Err(error) => return Err(error)
+    #|            }
+    #|            arms.push((cond, body))
+    #|          }
+    #|          _ => return Err(BadStatement("else_ifs 项必须是对象"))
+    #|        }
+    #|      }
+    #|      Ok(arms)
+    #|    }
+    #|    _ => Ok([])
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn decode_expr(value : Json) -> Result[@ir.Expr, CodecError] {
+    #|  match value {
+    #|    Object(fields) => {
+    #|      let kind = match json_string_field(fields, "t") {
+    #|        Some(text) => text
+    #|        None => return Err(MissingField("expr.t"))
+    #|      }
+    #|      match kind {
+    #|        "num" =>
+    #|          match fields.get("v") {
+    #|            Some(Number(n, ..)) => Ok(@ir.NumLit(n))
+    #|            _ => Err(BadExpr("num"))
+    #|          }
+    #|        "str" =>
+    #|          match fields.get("v") {
+    #|            Some(String(text)) => Ok(@ir.StrLit(text))
+    #|            _ => Err(BadExpr("str"))
+    #|          }
+    #|        "bool" =>
+    #|          match fields.get("v") {
+    #|            Some(True) => Ok(@ir.BoolLit(true))
+    #|            Some(False) => Ok(@ir.BoolLit(false))
+    #|            _ => Err(BadExpr("bool"))
+    #|          }
+    #|        "var" =>
+    #|          match fields.get("v") {
+    #|            Some(String(text)) => Ok(@ir.Var(text))
+    #|            _ => Err(BadExpr("var"))
+    #|          }
+    #|        "not" => {
+    #|          let inner = match inner_expr(fields) {
+    #|            Ok(inner) => inner
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.Not(inner))
+    #|        }
+    #|        "neg" => {
+    #|          let inner = match inner_expr(fields) {
+    #|            Ok(inner) => inner
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.Neg(inner))
+    #|        }
+    #|        "bin" => {
+    #|          let op = match json_string_field(fields, "op") {
+    #|            Some(text) =>
+    #|              match parse_bin_op(text) {
+    #|                Some(op) => op
+    #|                None => return Err(BadExpr("bin op " + text))
+    #|              }
+    #|            None => return Err(MissingField("expr.op"))
+    #|          }
+    #|          let left = match fields.get("l") {
+    #|            Some(left_value) =>
+    #|              match decode_expr(left_value) {
+    #|                Ok(expr) => expr
+    #|                Err(error) => return Err(error)
+    #|              }
+    #|            None => return Err(MissingField("expr.l"))
+    #|          }
+    #|          let right = match fields.get("r") {
+    #|            Some(right_value) =>
+    #|              match decode_expr(right_value) {
+    #|                Ok(expr) => expr
+    #|                Err(error) => return Err(error)
+    #|              }
+    #|            None => return Err(MissingField("expr.r"))
+    #|          }
+    #|          Ok(@ir.Binary(op, left, right))
+    #|        }
+    #|        "call" => {
+    #|          let name = match json_string_field(fields, "name") {
+    #|            Some(text) => text
+    #|            None => return Err(MissingField("expr.name"))
+    #|          }
+    #|          let args = match stmt_exprs(fields) {
+    #|            Ok(args) => args
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.Call(name, args))
+    #|        }
+    #|        other => Err(BadExpr(other))
+    #|      }
+    #|    }
+    #|    _ => Err(BadExpr("非对象"))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn inner_expr(fields : Map[String, Json]) -> Result[@ir.Expr, CodecError] {
+    #|  match fields.get("e") {
+    #|    Some(value) => decode_expr(value)
+    #|    None => Err(MissingField("expr.e"))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn parse_bin_op(text : String) -> @ir.BinOp? {
+    #|  match text {
+    #|    "+" => Some(@ir.Add)
+    #|    "-" => Some(@ir.Sub)
+    #|    "*" => Some(@ir.Mul)
+    #|    "/" => Some(@ir.Div)
+    #|    "=" => Some(@ir.Eq)
+    #|    "<>" => Some(@ir.Ne)
+    #|    "<" => Some(@ir.Lt)
+    #|    ">" => Some(@ir.Gt)
+    #|    "<=" => Some(@ir.Le)
+    #|    ">=" => Some(@ir.Ge)
+    #|    "and" => Some(@ir.And)
+    #|    "or" => Some(@ir.Or)
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 解码 `.momao.json`：结构检查 + IR 不变量 + 语言层校验。
+    #|pub fn decode_program(
+    #|  source : String,
+    #|) -> Result[@ir.MomaoProgram, Array[CodecError]] {
+    #|  let payload = @json.parse(source) catch { _ => return Err([InvalidJson]) }
+    #|  let fields = match payload {
+    #|    Object(fields) => fields
+    #|    _ => return Err([BadFormat])
+    #|  }
+    #|  match json_string_field(fields, "format") {
+    #|    Some(text) =>
+    #|      if text != PROJECT_FORMAT {
+    #|        return Err([BadFormat])
+    #|      }
+    #|    None => return Err([BadFormat])
+    #|  }
+    #|  let version = match json_int_field(fields, "version") {
+    #|    Some(value) => value
+    #|    None => return Err([UnsupportedVersion(-1)])
+    #|  }
+    #|  if version != PROJECT_VERSION {
+    #|    return Err([UnsupportedVersion(version)])
+    #|  }
+    #|  let window = match fields.get("window") {
+    #|    Some(Object(window_fields)) =>
+    #|      @ir.WindowSpec::{
+    #|        title: json_string_field(window_fields, "title").unwrap_or("MoMao 程序"),
+    #|        width: json_int_field(window_fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
+    #|        height: json_int_field(window_fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
+    #|      }
+    #|    _ => @ir.default_window()
+    #|  }
+    #|  let errors : Array[CodecError] = []
+    #|  let controls : Array[@ir.Control] = []
+    #|  match fields.get("controls") {
+    #|    Some(Array(values)) =>
+    #|      for value in values {
+    #|        match value {
+    #|          Object(item) =>
+    #|            match decode_control(item, errors) {
+    #|              Some(control) => controls.push(control)
+    #|              None => ()
+    #|            }
+    #|          _ => errors.push(MissingField("controls[]"))
+    #|        }
+    #|      }
+    #|    _ => errors.push(MissingField("controls"))
+    #|  }
+    #|  let variables : Array[@ir.Variable] = []
+    #|  match fields.get("variables") {
+    #|    Some(Array(values)) =>
+    #|      for value in values {
+    #|        match value {
+    #|          Object(item) =>
+    #|            match json_string_field(item, "name") {
+    #|              Some(name) =>
+    #|                variables.push(
+    #|                  @ir.Variable::{
+    #|                    name,
+    #|                    init: json_string_field(item, "init").unwrap_or(""),
+    #|                  },
+    #|                )
+    #|              None => errors.push(MissingField("variables.name"))
+    #|            }
+    #|          _ => errors.push(MissingField("variables[]"))
+    #|        }
+    #|      }
+    #|    _ => ()
+    #|  }
+    #|  let handlers : Array[@ir.Handler] = []
+    #|  match fields.get("handlers") {
+    #|    Some(Array(values)) =>
+    #|      for value in values {
+    #|        match value {
+    #|          Object(item) =>
+    #|            match decode_handler(item, errors) {
+    #|              Some(handler) => handlers.push(handler)
+    #|              None => ()
+    #|            }
+    #|          _ => errors.push(MissingField("handlers[]"))
+    #|        }
+    #|      }
+    #|    _ => errors.push(MissingField("handlers"))
+    #|  }
+    #|  if !errors.is_empty() {
+    #|    return Err(errors)
+    #|  }
+    #|  let program : @ir.MomaoProgram = {
+    #|    version,
+    #|    window,
+    #|    controls,
+    #|    variables,
+    #|    handlers,
+    #|  }
+    #|  for error in @ir.validate_program(program) {
+    #|    errors.push(Structural(error))
+    #|  }
+    #|  for error in @momao_lang.validate_program_language(program) {
+    #|    errors.push(LanguageIssue(error.a(), error.line()))
+    #|  }
+    #|  if errors.is_empty() {
+    #|    Ok(program)
+    #|  } else {
+    #|    Err(errors)
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 语句值解码的公开入口：AI 提案的 body 与 `.momao.json` 共用
+    #|/// 同一条严格路径（ proposals 包复用）。
+    #|pub fn decode_stmt_value(value : Json) -> Result[@ir.Stmt, CodecError] {
+    #|  decode_stmt(value)
+    #|}
+    #|
+  source
+}

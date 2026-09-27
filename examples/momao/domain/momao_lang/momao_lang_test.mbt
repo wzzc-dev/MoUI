@@ -1,0 +1,465 @@
+///|
+/// MoMao 语言测试：双语解析、往返一致、确定性渲染、指令机执行、
+/// 闸门语义、预算、随机数确定性与语言层校验。
+
+///|
+fn parse_ok(source : String, language : @momao_lang.Language) -> Array[@momao_lang.TracedStmt] {
+  match @momao_lang.parse_handler_body(source, language) {
+    Ok(body) => body
+    Err(error) => abort("解析失败: \{error.a()} @\{error.line()}")
+  }
+}
+
+///|
+fn parse_body_ir(
+  source : String,
+  language : @momao_lang.Language,
+) -> Array[@ir.Stmt] {
+  parse_ok(source, language).map(traced => traced.stmt)
+}
+
+///|
+fn parse_sig(source : String, language : @momao_lang.Language) -> String {
+  @ir.stmts_signature(parse_body_ir(source, language))
+}
+
+///|
+fn run_zh(
+  source : String,
+  texts : Map[String, String],
+  values : Map[String, @momao_lang.Value],
+  seed? : Int = 42,
+) -> @momao_lang.RunState {
+  let state = @momao_lang.start_run(
+    parse_ok(source, @momao_lang.ZhHans),
+    texts,
+    values,
+    Map([], capacity=4),
+    seed=seed,
+  )
+  @momao_lang.run_to_end(state)
+  state
+}
+
+test "zh parses all statement forms" {
+  let signature = parse_sig(
+    "变量 x = 1\nx = x + 2\n如果 x > 2 则\n  信息框(\"大\")\n否则如果 x = 2 则\n  信息框(\"等\")\n否则\n  信息框(\"小\")\n结束\n计次循环 3 次 为 i\n  跳出循环\n结束\n当 x < 100 循环\n  x = x + 1\n结束\n",
+    @momao_lang.ZhHans,
+  )
+  assert_true(signature.contains("declare x = num(1)"))
+  assert_true(signature.contains("if (var(x) > num(2))"))
+  assert_true(signature.contains("elseif (var(x) = num(2))"))
+  assert_true(signature.contains("else"))
+  assert_true(signature.contains("count num(3) as i"))
+  assert_true(signature.contains("break"))
+  assert_true(signature.contains("while (var(x) < num(100))"))
+}
+
+test "en parses the identical program" {
+  let zh = parse_sig(
+    "变量 x = 1\n如果 x > 2 则\n  信息框(\"hi\")\n结束\n",
+    @momao_lang.ZhHans,
+  )
+  let en = parse_sig(
+    "let x = 1\nif x > 2 then\n  message_box(\"hi\")\nend\n",
+    @momao_lang.En,
+  )
+  assert_eq(zh, en)
+}
+
+test "full width punctuation and mixed identifiers parse" {
+  let signature = parse_sig(
+    "变量 得分 ＝ ８５\n变量 姓名 ＝ \"张三\"\n",
+    @momao_lang.ZhHans,
+  )
+  assert_true(signature.contains("declare 得分 = num(85)"))
+  assert_true(signature.contains("declare 姓名 = str(«张三»)"))
+}
+
+test "syntax errors carry line numbers" {
+  match @momao_lang.check_syntax("变量 x = 1\n如果 x 变量\n", @momao_lang.ZhHans) {
+    Some(error) => {
+      assert_eq(error.line(), 2)
+      assert_true(error.a() == "则")
+    }
+    None => fail("应报语法错误")
+  }
+  match @momao_lang.check_syntax("变量 x = 1\n否则如果 x = 1 则\n", @momao_lang.ZhHans) {
+    Some(error) => assert_eq(error.line(), 2)
+    None => fail("保留字开头应报错")
+  }
+  match @momao_lang.check_syntax("let x = ", @momao_lang.En) {
+    Some(error) => assert_eq(error.line(), 1)
+    None => fail("应报语法错误")
+  }
+  assert_true(@momao_lang.check_syntax("变量 x = 1", @momao_lang.ZhHans) is None)
+}
+
+test "reserved words cannot be names" {
+  for word in ["变量", "如果", "结束", "真", "且", "if", "then", "end", "true", "and"] {
+    assert_true(@momao_lang.is_reserved(word))
+  }
+  assert_true(!@momao_lang.is_reserved("得分"))
+  assert_true(!@momao_lang.is_reserved("score"))
+}
+
+test "round trip zh and en are stable" {
+  let ir = parse_body_ir(
+    "变量 i = 0\n当 i < 3 循环\n  设置文本(标签, 转文本(i))\n  i = i + 1\n结束\n",
+    @momao_lang.ZhHans,
+  )
+  let zh_text = @momao_lang.render_stmts(ir, @momao_lang.ZhHans)
+  let en_text = @momao_lang.render_stmts(ir, @momao_lang.En)
+  assert_eq(@ir.stmts_signature(parse_body_ir(zh_text, @momao_lang.ZhHans)), @ir.stmts_signature(ir))
+  assert_eq(@ir.stmts_signature(parse_body_ir(en_text, @momao_lang.En)), @ir.stmts_signature(ir))
+  assert_eq(@momao_lang.render_stmts(ir, @momao_lang.ZhHans), zh_text)
+  assert_true(en_text.contains("while i < 3 do"))
+  assert_true(en_text.contains("let i = 0"))
+  assert_true(en_text.contains("\nend\n"))
+}
+
+test "printer parenthesizes by precedence" {
+  let ir = parse_body_ir("变量 x = (a + b) * 2\n变量 y = a - (b - c)\n变量 z = 非 (a = b)", @momao_lang.ZhHans)
+  let text = @momao_lang.render_stmts(ir, @momao_lang.ZhHans)
+  assert_true(text.contains("(a + b) * 2"))
+  assert_true(text.contains("a - (b - c)"))
+  assert_eq(@ir.stmts_signature(parse_body_ir(text, @momao_lang.ZhHans)), @ir.stmts_signature(ir))
+}
+
+test "keywords classify by table not literals" {
+  let zh = @momao_lang.keywords_for(@momao_lang.ZhHans)
+  let en = @momao_lang.keywords_for(@momao_lang.En)
+  assert_true(@momao_lang.classify_stmt_keyword(zh.if_kw, zh) is @momao_lang.KwIf)
+  assert_true(@momao_lang.classify_stmt_keyword(en.if_kw, en) is @momao_lang.KwIf)
+  assert_true(@momao_lang.classify_stmt_keyword("得分", zh) is @momao_lang.NoneKw)
+  assert_true(@momao_lang.classify_stmt_keyword("let", en) is @momao_lang.KwDeclare)
+}
+
+test "builtin catalog is bilingual and canonical" {
+  match @momao_lang.find_builtin("信息框") {
+    Some(spec) => assert_eq(spec.id, "message_box")
+    None => fail("中文名应命中")
+  }
+  match @momao_lang.find_builtin("message_box") {
+    Some(spec) => assert_eq(spec.id, "message_box")
+    None => fail("英文名应命中")
+  }
+  assert_eq(@momao_lang.builtin_display("message_box", @momao_lang.ZhHans), "信息框")
+  assert_eq(@momao_lang.builtin_display("message_box", @momao_lang.En), "message_box")
+  match @momao_lang.builtin_kind("submit_data") {
+    Some(kind) => assert_true(kind is @momao_lang.Gate)
+    None => fail("submit_data 应在目录中")
+  }
+  match @momao_lang.builtin_kind("get_text") {
+    Some(kind) => assert_true(kind is @momao_lang.Function)
+    None => fail("get_text 应在目录中")
+  }
+  assert_true(@momao_lang.find_builtin("不存在") is None)
+}
+
+test "interpreter runs assignments and branches" {
+  let texts : Map[String, String] = Map([], capacity=4)
+  let values : Map[String, @momao_lang.Value] = Map([], capacity=4)
+  let state = run_zh(
+    "变量 x = 1\n如果 x = 1 则\n  x = 10\n否则如果 x = 2 则\n  x = 20\n否则\n  x = 30\n结束\n",
+    texts,
+    values,
+  )
+  assert_true(state.status is @momao_lang.Completed)
+  match state.vars.get("x") {
+    Some(@momao_lang.VNum(n)) => assert_eq(n, 10.0)
+    _unused => fail("x 应为 10")
+  }
+  let last = state.audit[state.audit.length() - 1]
+  assert_true(last.op is @momao_lang.OpAssign)
+  assert_eq(last.detail, "x = 10")
+}
+
+test "count loop binds iteration variable" {
+  let values : Map[String, @momao_lang.Value] = Map([], capacity=4)
+  let state = run_zh(
+    "变量 合计 = 0\n计次循环 5 次 为 i\n  合计 = 合计 + i\n结束\n",
+    Map([], capacity=4),
+    values,
+  )
+  match state.vars.get("合计") {
+    Some(@momao_lang.VNum(n)) => assert_eq(n, 15.0)
+    _unused => fail("合计应为 15")
+  }
+}
+
+test "while loop with break stops early" {
+  let values : Map[String, @momao_lang.Value] = Map([], capacity=4)
+  let state = run_zh(
+    "变量 i = 0\n当 i < 100 循环\n  i = i + 1\n  如果 i >= 4 则\n    跳出循环\n  结束\n结束\n",
+    Map([], capacity=4),
+    values,
+  )
+  match state.vars.get("i") {
+    Some(@momao_lang.VNum(n)) => assert_eq(n, 4.0)
+    _unused => fail("i 应为 4")
+  }
+}
+
+test "message box and set text interplay" {
+  let texts : Map[String, String] = Map([], capacity=4)
+  texts["标签"] = "旧"
+  let state = run_zh(
+    "设置文本(标签, \"新\")\n信息框(取文本(标签))\n",
+    texts,
+    Map([], capacity=4),
+  )
+  assert_eq(state.messages.length(), 1)
+  assert_eq(state.messages[0], "新")
+  assert_eq(state.texts.get("标签").unwrap_or(""), "新")
+  assert_true(state.audit.any(r => r.op is @momao_lang.OpMessage))
+}
+
+test "submit_data gate pauses and confirm continues" {
+  let values : Map[String, @momao_lang.Value] = Map([], capacity=4)
+  values["成绩"] = @momao_lang.VNum(95.0)
+  let state = @momao_lang.start_run_stmts(
+    parse_body_ir("提交数据(成绩, \"成绩单\")\n信息框(\"之后\")\n", @momao_lang.ZhHans),
+    Map([], capacity=4),
+    values,
+    Map([], capacity=4),
+  )
+  // 起跑即停在闸门
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.WaitingGate)
+  match state.gate {
+    Some(gate) => {
+      assert_true(gate.kind is @momao_lang.Submit)
+      assert_eq(gate.payload, "95")
+      assert_eq(gate.prompt, "成绩单")
+    }
+    None => fail("应停在闸门")
+  }
+  assert_eq(state.messages.length(), 0)
+  @momao_lang.answer_gate(state, true)
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.Completed)
+  assert_eq(state.messages.length(), 1)
+  assert_eq(state.messages[0], "之后")
+  assert_true(state.audit.any(r => r.op is @momao_lang.OpGate))
+}
+
+test "submit_data gate reject skips but completes" {
+  let values : Map[String, @momao_lang.Value] = Map([], capacity=4)
+  values["成绩"] = @momao_lang.VNum(95.0)
+  let state = @momao_lang.start_run_stmts(
+    parse_body_ir("提交数据(成绩, \"成绩单\")\n", @momao_lang.ZhHans),
+    Map([], capacity=4),
+    values,
+    Map([], capacity=4),
+  )
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.WaitingGate)
+  @momao_lang.answer_gate(state, false)
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.Completed)
+  let mut gate_record : @momao_lang.StepRecord? = None
+  for record in state.audit {
+    if record.op is @momao_lang.OpGate {
+      gate_record = Some(record)
+    }
+  }
+  match gate_record {
+    Some(record) => assert_true(record.detail.contains("rejected"))
+    None => fail("应有闸门审计")
+  }
+}
+
+test "ask gate returns bool and short circuits" {
+  let state = @momao_lang.start_run_stmts(
+    parse_body_ir("变量 回答 = 询问(\"继续?\")\n信息框(转文本(回答))\n", @momao_lang.ZhHans),
+    Map([], capacity=4),
+    Map([], capacity=4),
+    Map([], capacity=4),
+  )
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.WaitingGate)
+  assert_true(state.gate.unwrap().kind is @momao_lang.Ask)
+  @momao_lang.answer_gate(state, true)
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.Completed)
+  assert_eq(state.messages[0], "true")
+}
+
+test "random is deterministic per seed and in range" {
+  let body = parse_body_ir("变量 a = 随机数(100)\n变量 b = 随机数(100)\n", @momao_lang.ZhHans)
+  let s1 = @momao_lang.start_run_stmts(body, Map([], capacity=4), Map([], capacity=4), Map([], capacity=4), seed=7)
+  @momao_lang.run_to_end(s1)
+  let s2 = @momao_lang.start_run_stmts(body, Map([], capacity=4), Map([], capacity=4), Map([], capacity=4), seed=7)
+  @momao_lang.run_to_end(s2)
+  let a1 = s1.vars.get("a").unwrap_or(@momao_lang.VUnit)
+  let a2 = s2.vars.get("a").unwrap_or(@momao_lang.VUnit)
+  assert_eq(@momao_lang.value_to_text(a1), @momao_lang.value_to_text(a2))
+  match a1 {
+    @momao_lang.VNum(n) => {
+      assert_true(n >= 1.0 && n <= 100.0)
+    }
+    _unused => fail("a 应为数值")
+  }
+}
+
+test "runtime errors are structured" {
+  let state = run_zh("变量 x = y\n", Map([], capacity=4), Map([], capacity=4))
+  assert_true(state.status is @momao_lang.Failed)
+  match state.error {
+    Some(error) => {
+      assert_true(error.kind() is @momao_lang.NotDeclared)
+      assert_eq(error.a(), "y")
+    }
+    None => fail("应有错误")
+  }
+  let div = run_zh("变量 x = 1 / 0\n", Map([], capacity=4), Map([], capacity=4))
+  assert_true(div.error.unwrap().kind() is @momao_lang.DivideByZero)
+  let wrong = run_zh("变量 x = 1 + \"a\" + 2\n", Map([], capacity=4), Map([], capacity=4))
+  assert_true(wrong.status is @momao_lang.Completed)
+  assert_eq(@momao_lang.value_to_text(wrong.vars.get("x").unwrap_or(@momao_lang.VUnit)), "1a2")
+  let boom = run_zh("变量 x = 不存在的函数(1)\n", Map([], capacity=4), Map([], capacity=4))
+  assert_true(boom.error.unwrap().kind() is @momao_lang.UnknownBuiltin)
+  let arity = run_zh("信息框(\"a\", \"b\")\n", Map([], capacity=4), Map([], capacity=4))
+  assert_true(arity.error.unwrap().kind() is @momao_lang.ArityMismatch)
+}
+
+test "step budget fails runaway loops" {
+  let state = @momao_lang.start_run_stmts(
+    parse_body_ir("当 真 循环\n结束\n", @momao_lang.ZhHans),
+    Map([], capacity=4),
+    Map([], capacity=4),
+    Map([], capacity=4),
+    max_steps=500,
+  )
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.Failed)
+  assert_true(state.error.unwrap().kind() is @momao_lang.StepBudget)
+}
+
+test "number text conversions" {
+  match @momao_lang.text_to_number("  -12.5 ") {
+    Some(n) => assert_eq(n, -12.5)
+    None => fail("应解析 -12.5")
+  }
+  assert_true(@momao_lang.text_to_number("abc") is None)
+  assert_eq(@momao_lang.number_to_text(3.0), "3")
+  assert_eq(@momao_lang.number_to_text(3.5), "3.5")
+}
+
+test "language validation catches break and command position" {
+  let program : @ir.MomaoProgram = {
+    version: 1,
+    window: @ir.default_window(),
+    controls: [],
+    variables: [],
+    handlers: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "",
+        note_en: "",
+        body: [
+          @ir.Break,
+          @ir.Assign("x", @ir.Call("message_box", [@ir.StrLit("hi")])),
+          @ir.Call("信息框", [@ir.StrLit("a"), @ir.StrLit("b")]),
+        ],
+      },
+    ],
+  }
+  let errors = @momao_lang.validate_program_language(program)
+  assert_true(errors.any(e => e.kind() is @momao_lang.BreakOutsideLoop))
+  assert_true(errors.any(e => e.kind() is @momao_lang.TypeMismatch && e.a() == "message_box"))
+  assert_true(errors.any(e => e.kind() is @momao_lang.ArityMismatch && e.a() == "message_box"))
+  let clean = @momao_lang.validate_program_language(
+    @ir.MomaoProgram::{
+      version: 1,
+      window: @ir.default_window(),
+      controls: [],
+      variables: [],
+      handlers: [
+        @ir.Handler::{
+          control_name: "按钮",
+          event: @ir.OnClick,
+          note_zh: "",
+          note_en: "",
+          body: [
+            @ir.CountLoop(
+              @ir.NumLit(2.0),
+              None,
+              [@ir.Call("message_box", [@ir.StrLit("hi")])],
+            ),
+          ],
+        },
+      ],
+    },
+  )
+  assert_true(clean.is_empty())
+}
+
+test "selected row and append row work on rows map" {
+  let rows : Map[String, Array[String]] = Map([], capacity=4)
+  rows["列表"] = ["a", "b", "c"]
+  let state = @momao_lang.start_run_stmts(
+    parse_body_ir("信息框(取所选行(列表))\n追加行(列表, \"d\")\n", @momao_lang.ZhHans),
+    Map([], capacity=4),
+    Map([], capacity=4),
+    rows,
+  )
+  @momao_lang.run_to_end(state)
+  match state.error {
+    Some(error) => fail("运行报错: \{error.a()} @\{error.line()}")
+    None => ()
+  }
+  assert_true(state.status is @momao_lang.Completed)
+  assert_eq(state.messages.length(), 1)
+  assert_eq(state.messages[0], "a")
+  assert_eq(state.rows.get("列表").unwrap_or([]).length(), 4)
+}
+
+test "cancel stops the run" {
+  let state = @momao_lang.start_run_stmts(
+    parse_body_ir("计次循环 10 次\n  信息框(\"x\")\n结束\n", @momao_lang.ZhHans),
+    Map([], capacity=4),
+    Map([], capacity=4),
+    Map([], capacity=4),
+  )
+  @momao_lang.step_once(state)
+  @momao_lang.cancel(state)
+  @momao_lang.run_to_end(state)
+  assert_true(state.status is @momao_lang.Failed)
+  assert_true(state.messages.length() == 0)
+}
+
+test "audit records loop iterations and conditions" {
+  let state = run_zh(
+    "计次循环 2 次\n  信息框(\"第\")\n结束\n当 假 循环\n结束\n",
+    Map([], capacity=4),
+    Map([], capacity=4),
+  )
+  assert_true(state.audit.any(r => r.op is @momao_lang.OpLoop && r.detail == "iteration 1"))
+  assert_true(state.audit.any(r => r.op is @momao_lang.OpLoop && r.detail == "iteration 2"))
+  assert_true(state.audit.any(r => r.op is @momao_lang.OpCondition))
+  assert_eq(state.messages.length(), 2)
+}
+
+test "declare form renders per language and guards assignment" {
+  let ir = parse_body_ir("变量 得分 = 60\n如果 得分 >= 60 则\n  信息框(\"过\")\n结束\n", @momao_lang.ZhHans)
+  let zh_text = @momao_lang.render_stmts(ir, @momao_lang.ZhHans)
+  let en_text = @momao_lang.render_stmts(ir, @momao_lang.En)
+  assert_true(zh_text.contains("变量 得分 = 60"))
+  assert_true(en_text.contains("let 得分 = 60"))
+  assert_eq(@ir.stmts_signature(parse_body_ir(zh_text, @momao_lang.ZhHans)), @ir.stmts_signature(ir))
+  assert_eq(@ir.stmts_signature(parse_body_ir(en_text, @momao_lang.En)), @ir.stmts_signature(ir))
+  let bad = run_zh("得分 = 60\n", Map([], capacity=4), Map([], capacity=4))
+  assert_true(bad.status is @momao_lang.Failed)
+  match bad.error {
+    Some(error) => {
+      assert_true(error.kind() is @momao_lang.NotDeclared)
+      assert_eq(error.a(), "得分")
+    }
+    None => fail("未声明赋值应报错")
+  }
+}
+
+

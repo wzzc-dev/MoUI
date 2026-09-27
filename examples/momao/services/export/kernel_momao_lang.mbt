@@ -1,0 +1,1148 @@
+///|
+/// kernel_momao_lang：domain 下若干 .mbt 的逐字节副本。
+/// 由 tools/sync_kernel 生成，勿手改；与源文件不一致时
+/// `moon run examples/momao/tools/sync_kernel --target native -- --check` 会报 DRIFT。
+
+///|
+pub fn kernel_momao_lang_aliases_mbt() -> String {
+  let source =
+    #|///|
+    #|/// IR 类型别名：momao_lang 内部统一使用短名书写；
+    #|/// 规范来源仍是 `examples/momao/domain/ir`（对外以 @ir 为唯一出处）。
+    #|/// 构造器仍带 @ir 限定（`@ir.Assign(..)`），与本地 Instr 变体区分。
+    #|
+    #|///|
+    #|type Expr = @ir.Expr
+    #|
+    #|///|
+    #|type Stmt = @ir.Stmt
+    #|
+    #|///|
+    #|type Handler = @ir.Handler
+    #|
+    #|///|
+    #|type MomaoProgram = @ir.MomaoProgram
+    #|
+    #|///|
+    #|type BinOp = @ir.BinOp
+    #|
+  source
+}
+
+///|
+pub fn kernel_momao_lang_errors_mbt() -> String {
+  let source =
+    #|///|
+    #|/// 结构化语言错误：内核语言中立，可读文案由界面层经 i18n catalog 渲染。
+    #|/// a/b 是数据槽（词、名字、规范 id 等），不含成品句子。
+    #|
+    #|///|
+    #|pub(all) enum LangErrorKind {
+    #|  UnterminatedString
+    #|  BadNumber
+    #|  ExpectKeyword // a=期望关键字, b=实际 token
+    #|  UnexpectedToken // a=实际 token
+    #|  ReservedWord // a=词
+    #|  MissingEnd // a=结束关键字
+    #|  UnknownName // a=名字
+    #|  NotDeclared // a=名字
+    #|  TypeMismatch // a=角色, b=期望/实际
+    #|  ArityMismatch // a=内建显示名, b=期望/实际
+    #|  StepBudget
+    #|  DivideByZero
+    #|  BadLoopCount
+    #|  UnknownBuiltin // a=名字
+    #|  BreakOutsideLoop
+    #|}
+    #|
+    #|///|
+    #|pub(all) suberror LangError {
+    #|  LangError(LangErrorKind, Int, String, String)
+    #|}
+    #|
+    #|///|
+    #|pub fn LangError::kind(self : LangError) -> LangErrorKind {
+    #|  match self {
+    #|    LangError(kind, _, _, _) => kind
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|pub fn LangError::line(self : LangError) -> Int {
+    #|  match self {
+    #|    LangError(_, line, _, _) => line
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|pub fn LangError::a(self : LangError) -> String {
+    #|  match self {
+    #|    LangError(_, _, a, _) => a
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|pub fn LangError::b(self : LangError) -> String {
+    #|  match self {
+    #|    LangError(_, _, _, b) => b
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// token 的中性标签（两种语言共用「」引用格式）。
+    #|fn token_label(kind : TokenKind) -> String {
+    #|  match kind {
+    #|    Ident(text) => "「\{text}」"
+    #|    Num(n) => "数字 \{n}"
+    #|    Str(_) => "字符串"
+    #|    Newline => "换行"
+    #|    LParen => "("
+    #|    RParen => ")"
+    #|    Comma => ","
+    #|    Plus => "+"
+    #|    Minus => "-"
+    #|    Star => "*"
+    #|    Slash => "/"
+    #|    Eq => "="
+    #|    Ne => "<>"
+    #|    Lt => "<"
+    #|    Gt => ">"
+    #|    Le => "<="
+    #|    Ge => ">="
+    #|    Eof => "结尾"
+    #|  }
+    #|}
+    #|
+  source
+}
+
+///|
+pub fn kernel_momao_lang_keywords_mbt() -> String {
+  let source =
+    #|///|
+    #|/// MoMao 语言：中英双语关键字表与内建命令目录。
+    #|/// 关键字/内建名是 catalog 数据（解释器禁止按字面量硬编码分支）；
+    #|/// IR 只存规范 id（英文名），界面按当前语言渲染。
+    #|
+    #|///|
+    #|pub(all) enum Language {
+    #|  ZhHans
+    #|  En
+    #|}
+    #|
+    #|///|
+    #|pub fn Language::tag(self : Language) -> String {
+    #|  match self {
+    #|    ZhHans => "zh-Hans"
+    #|    En => "en"
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|pub fn parse_language(text : String) -> Language? {
+    #|  match text {
+    #|    "zh-Hans" | "zh" | "zh_CN" | "zh-CN" => Some(ZhHans)
+    #|    "en" | "en-US" | "en_US" => Some(En)
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 一门语言的全部语句关键字。
+    #|pub(all) struct Keywords {
+    #|  declare_kw : String // 变量 / let
+    #|  if_kw : String // 如果 / if
+    #|  then_kw : String // 则 / then
+    #|  else_if_kw : String // 否则如果 / elseif
+    #|  else_kw : String // 否则 / else
+    #|  end_kw : String // 结束 / end
+    #|  count_kw : String // 计次循环 / repeat
+    #|  times_kw : String // 次 / times
+    #|  as_kw : String // 为 / as
+    #|  while_kw : String // 当 / while
+    #|  do_kw : String // 循环 / do
+    #|  break_kw : String // 跳出循环 / break
+    #|  true_kw : String // 真 / true
+    #|  false_kw : String // 假 / false
+    #|  and_kw : String // 且 / and
+    #|  or_kw : String // 或 / or
+    #|  not_kw : String // 非 / not
+    #|}
+    #|
+    #|///|
+    #|pub fn keywords_for(language : Language) -> Keywords {
+    #|  match language {
+    #|    ZhHans =>
+    #|      Keywords::{
+    #|        declare_kw: "变量",
+    #|        if_kw: "如果",
+    #|        then_kw: "则",
+    #|        else_if_kw: "否则如果",
+    #|        else_kw: "否则",
+    #|        end_kw: "结束",
+    #|        count_kw: "计次循环",
+    #|        times_kw: "次",
+    #|        as_kw: "为",
+    #|        while_kw: "当",
+    #|        do_kw: "循环",
+    #|        break_kw: "跳出循环",
+    #|        true_kw: "真",
+    #|        false_kw: "假",
+    #|        and_kw: "且",
+    #|        or_kw: "或",
+    #|        not_kw: "非",
+    #|      }
+    #|    En =>
+    #|      Keywords::{
+    #|        declare_kw: "let",
+    #|        if_kw: "if",
+    #|        then_kw: "then",
+    #|        else_if_kw: "elseif",
+    #|        else_kw: "else",
+    #|        end_kw: "end",
+    #|        count_kw: "repeat",
+    #|        times_kw: "times",
+    #|        as_kw: "as",
+    #|        while_kw: "while",
+    #|        do_kw: "do",
+    #|        break_kw: "break",
+    #|        true_kw: "true",
+    #|        false_kw: "false",
+    #|        and_kw: "and",
+    #|        or_kw: "or",
+    #|        not_kw: "not",
+    #|      }
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 内建种类：命令（语句位）、函数（表达式位）、闸门（暂停等人）。
+    #|pub(all) enum BuiltinKind {
+    #|  Command
+    #|  Function
+    #|  Gate
+    #|}
+    #|
+    #|///|
+    #|/// 内建目录项。id 是规范名（IR 与导出 bundle 用它），zh/en 是两种语言的显示名。
+    #|pub(all) struct BuiltinSpec {
+    #|  id : String
+    #|  zh : String
+    #|  en : String
+    #|  kind : BuiltinKind
+    #|  arity : Int
+    #|}
+    #|
+    #|///|
+    #|/// v1 内建目录：6 命令 + 2 闸门 + 4 函数 = 12 个。
+    #|pub fn builtin_catalog() -> Array[BuiltinSpec] {
+    #|  [
+    #|    BuiltinSpec::{ id: "message_box", zh: "信息框", en: "message_box", kind: Command, arity: 1, },
+    #|    BuiltinSpec::{ id: "set_text", zh: "设置文本", en: "set_text", kind: Command, arity: 2, },
+    #|    BuiltinSpec::{ id: "append_row", zh: "追加行", en: "append_row", kind: Command, arity: 2, },
+    #|    BuiltinSpec::{ id: "get_text", zh: "取文本", en: "get_text", kind: Function, arity: 1, },
+    #|    BuiltinSpec::{ id: "get_number", zh: "取数值", en: "get_number", kind: Function, arity: 1, },
+    #|    BuiltinSpec::{ id: "to_text", zh: "转文本", en: "to_text", kind: Function, arity: 1, },
+    #|    BuiltinSpec::{ id: "text_length", zh: "取长度", en: "text_length", kind: Function, arity: 1, },
+    #|    BuiltinSpec::{ id: "contains", zh: "文本包含", en: "contains", kind: Function, arity: 2, },
+    #|    BuiltinSpec::{ id: "random", zh: "随机数", en: "random", kind: Function, arity: 1, },
+    #|    BuiltinSpec::{ id: "row_count", zh: "取行数", en: "row_count", kind: Function, arity: 1, },
+    #|    BuiltinSpec::{ id: "row_at", zh: "取行", en: "row_at", kind: Function, arity: 2, },
+    #|    BuiltinSpec::{ id: "ask", zh: "询问", en: "ask", kind: Gate, arity: 1, },
+    #|    BuiltinSpec::{ id: "selected_row", zh: "取所选行", en: "selected_row", kind: Function, arity: 1, },
+    #|    BuiltinSpec::{ id: "submit_data", zh: "提交数据", en: "submit_data", kind: Gate, arity: 2, },
+    #|  ]
+    #|}
+    #|
+    #|///|
+    #|/// 中/英显示名 → 规范项（IR 存的总是 spec.id）。
+    #|pub fn find_builtin(name : String) -> BuiltinSpec? {
+    #|  for spec in builtin_catalog() {
+    #|    if spec.zh == name || spec.en == name || spec.id == name {
+    #|      return Some(spec)
+    #|    }
+    #|  }
+    #|  None
+    #|}
+    #|
+    #|///|
+    #|/// 规范 id → 当前语言显示名。
+    #|pub fn builtin_display(id : String, language : Language) -> String {
+    #|  for spec in builtin_catalog() {
+    #|    if spec.id == id {
+    #|      return match language {
+    #|        ZhHans => spec.zh
+    #|        En => spec.en
+    #|      }
+    #|    }
+    #|  }
+    #|  id
+    #|}
+    #|
+    #|///|
+    #|pub fn builtin_kind(id : String) -> BuiltinKind? {
+    #|  match find_builtin(id) {
+    #|    Some(spec) => Some(spec.kind)
+    #|    None => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 保留字 = 两门语言全部关键字的并集（任一种语言里都不能当变量名）。
+    #|pub fn is_reserved(text : String) -> Bool {
+    #|  let zh = keywords_for(ZhHans)
+    #|  let en = keywords_for(En)
+    #|  text == zh.declare_kw ||
+    #|  text == zh.if_kw ||
+    #|  text == zh.then_kw ||
+    #|  text == zh.else_if_kw ||
+    #|  text == zh.else_kw ||
+    #|  text == zh.end_kw ||
+    #|  text == zh.count_kw ||
+    #|  text == zh.times_kw ||
+    #|  text == zh.as_kw ||
+    #|  text == zh.while_kw ||
+    #|  text == zh.do_kw ||
+    #|  text == zh.break_kw ||
+    #|  text == zh.true_kw ||
+    #|  text == zh.false_kw ||
+    #|  text == zh.and_kw ||
+    #|  text == zh.or_kw ||
+    #|  text == zh.not_kw ||
+    #|  text == en.declare_kw ||
+    #|  text == en.if_kw ||
+    #|  text == en.then_kw ||
+    #|  text == en.else_if_kw ||
+    #|  text == en.else_kw ||
+    #|  text == en.end_kw ||
+    #|  text == en.count_kw ||
+    #|  text == en.times_kw ||
+    #|  text == en.as_kw ||
+    #|  text == en.while_kw ||
+    #|  text == en.do_kw ||
+    #|  text == en.break_kw ||
+    #|  text == en.true_kw ||
+    #|  text == en.false_kw ||
+    #|  text == en.and_kw ||
+    #|  text == en.or_kw ||
+    #|  text == en.not_kw
+    #|}
+    #|
+    #|///|
+    #|/// 语句关键字在某一门语言里的分类：解析器用它分派，避免字面量分支。
+    #|pub(all) enum StmtKeyword {
+    #|  KwDeclare
+    #|  KwIf
+    #|  KwCountLoop
+    #|  KwWhile
+    #|  KwBreak
+    #|  NoneKw
+    #|}
+    #|
+    #|///|
+    #|pub fn classify_stmt_keyword(text : String, keywords : Keywords) -> StmtKeyword {
+    #|  if text == keywords.declare_kw {
+    #|    KwDeclare
+    #|  } else if text == keywords.if_kw {
+    #|    KwIf
+    #|  } else if text == keywords.count_kw {
+    #|    KwCountLoop
+    #|  } else if text == keywords.while_kw {
+    #|    KwWhile
+    #|  } else if text == keywords.break_kw {
+    #|    KwBreak
+    #|  } else {
+    #|    NoneKw
+    #|  }
+    #|}
+    #|
+  source
+}
+
+///|
+pub fn kernel_momao_lang_lexer_mbt() -> String {
+  let source =
+    #|///|
+    #|/// 词法分析：语言无关（中英文关键字都是标识符 token，由解析器按表分派）。
+    #|/// 全角标点/数字/字母在词法层归一化为 ASCII，中文 IME 直接输入也能解析；
+    #|/// 字符串字面量内保留原文。
+    #|
+    #|///|
+    #|fn normalize_char(c : Char) -> Char {
+    #|  let code = c.to_int()
+    #|  if code >= 0xFF10 && code <= 0xFF19 {
+    #|    (code - 0xFF10 + 0x30).unsafe_to_char()
+    #|  } else if code >= 0xFF21 && code <= 0xFF3A {
+    #|    (code - 0xFF21 + 0x41).unsafe_to_char()
+    #|  } else if code >= 0xFF41 && code <= 0xFF5A {
+    #|    (code - 0xFF41 + 0x61).unsafe_to_char()
+    #|  } else {
+    #|    match code {
+    #|      0xFF08 => '(' // （
+    #|      0xFF09 => ')' // ）
+    #|      0xFF0C => ',' // ，
+    #|      0xFF0B => '+' // ＋
+    #|      0xFF0D => '-' // －
+    #|      0xFF0A => '*' // ＊
+    #|      0xFF0F => '/' // ／
+    #|      0xFF1D => '=' // ＝
+    #|      0xFF1C => '<' // ＜
+    #|      0xFF1E => '>' // ＞
+    #|      0x3002 => '.' // 。
+    #|      0x2260 => '#' // ≠ → 占位，双字符判定在下方还原为 <>
+    #|      0x2264 => '$' // ≤ → 占位
+    #|      0x2265 => '%' // ≥ → 占位
+    #|      _ => c
+    #|    }
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|priv enum TokenKind {
+    #|  Ident(String)
+    #|  Num(Double)
+    #|  Str(String)
+    #|  Newline
+    #|  LParen
+    #|  RParen
+    #|  Comma
+    #|  Plus
+    #|  Minus
+    #|  Star
+    #|  Slash
+    #|  Eq
+    #|  Ne
+    #|  Lt
+    #|  Gt
+    #|  Le
+    #|  Ge
+    #|  Eof
+    #|}
+    #|
+    #|///|
+    #|priv struct Token {
+    #|  kind : TokenKind
+    #|  line : Int
+    #|}
+    #|
+    #|///|
+    #|fn is_digit_char(c : Char) -> Bool {
+    #|  let code = c.to_int()
+    #|  code >= 0x30 && code <= 0x39
+    #|}
+    #|
+    #|///|
+    #|fn is_space_char(c : Char) -> Bool {
+    #|  c == ' ' || c == '\t' || c == '\r'
+    #|}
+    #|
+    #|///|
+    #|fn is_operator_char(c : Char) -> Bool {
+    #|  c == '(' ||
+    #|  c == ')' ||
+    #|  c == ',' ||
+    #|  c == '+' ||
+    #|  c == '-' ||
+    #|  c == '*' ||
+    #|  c == '/' ||
+    #|  c == '=' ||
+    #|  c == '<' ||
+    #|  c == '>' ||
+    #|  c == '"' ||
+    #|  c == '#' ||
+    #|  c == '$' ||
+    #|  c == '%'
+    #|}
+    #|
+    #|///|
+    #|fn lex(source : String) -> Result[Array[Token], LangError] {
+    #|  let chars : Array[Char] = []
+    #|  for c in source {
+    #|    chars.push(c)
+    #|  }
+    #|  let tokens : Array[Token] = []
+    #|  let n = chars.length()
+    #|  let mut i = 0
+    #|  let mut line = 1
+    #|  while i < n {
+    #|    let c = normalize_char(chars[i])
+    #|    if c == '\n' {
+    #|      tokens.push({ kind: Newline, line, })
+    #|      line = line + 1
+    #|      i = i + 1
+    #|    } else if is_space_char(c) {
+    #|      i = i + 1
+    #|    } else if c == '/' && i + 1 < n && normalize_char(chars[i + 1]) == '/' {
+    #|      // 行注释：跳到行尾（不含换行符本身）
+    #|      while i < n && chars[i] != '\n' {
+    #|        i = i + 1
+    #|      }
+    #|    } else if chars[i] == '"' || c == '"' {
+    #|      let buf = StringBuilder()
+    #|      let mut j = i + 1
+    #|      let mut closed = false
+    #|      while j < n {
+    #|        let cj = chars[j]
+    #|        if cj == '"' {
+    #|          closed = true
+    #|          break
+    #|        }
+    #|        if cj == '\n' {
+    #|          break
+    #|        }
+    #|        buf.write_char(cj)
+    #|        j = j + 1
+    #|      }
+    #|      if !closed {
+    #|        return Err(LangError(UnterminatedString, line, "", ""))
+    #|      }
+    #|      tokens.push({ kind: Str(buf.to_string()), line, })
+    #|      i = j + 1
+    #|    } else if is_digit_char(c) {
+    #|      let buf = StringBuilder()
+    #|      while i < n {
+    #|        let cn = normalize_char(chars[i])
+    #|        if is_digit_char(cn) || cn == '.' {
+    #|          buf.write_char(cn)
+    #|          i = i + 1
+    #|        } else {
+    #|          break
+    #|        }
+    #|      }
+    #|      let text = buf.to_string()
+    #|      match digits_to_double(text) {
+    #|        Some(v) => tokens.push({ kind: Num(v), line, })
+    #|        None => return Err(LangError(BadNumber, line, text, ""))
+    #|      }
+    #|    } else if is_operator_char(c) {
+    #|      // ≠ ≤ ≥ 由单字符归一化而来，只前进一格
+    #|      if c == '#' {
+    #|        tokens.push({ kind: Ne, line, })
+    #|        i = i + 1
+    #|      } else if c == '$' {
+    #|        tokens.push({ kind: Le, line, })
+    #|        i = i + 1
+    #|      } else if c == '%' {
+    #|        tokens.push({ kind: Ge, line, })
+    #|        i = i + 1
+    #|      } else {
+    #|        let next = if i + 1 < n { normalize_char(chars[i + 1]) } else { ' ' }
+    #|        let two_char =
+    #|          if c == '<' && next == '=' {
+    #|            Some(Le)
+    #|          } else if c == '<' && next == '>' {
+    #|            Some(Ne)
+    #|          } else if c == '>' && next == '=' {
+    #|            Some(Ge)
+    #|          } else {
+    #|            None
+    #|          }
+    #|        match two_char {
+    #|          Some(kind) => {
+    #|            tokens.push({ kind, line, })
+    #|            i = i + 2
+    #|          }
+    #|          None => {
+    #|            let kind = match c {
+    #|              '(' => LParen
+    #|              ')' => RParen
+    #|              ',' => Comma
+    #|              '+' => Plus
+    #|              '-' => Minus
+    #|              '*' => Star
+    #|              '/' => Slash
+    #|              '=' => Eq
+    #|              '<' => Lt
+    #|              _ => Gt
+    #|            }
+    #|            tokens.push({ kind, line, })
+    #|            i = i + 1
+    #|          }
+    #|        }
+    #|      }
+    #|    } else {
+    #|      let buf = StringBuilder()
+    #|      while i < n {
+    #|        let c2 = normalize_char(chars[i])
+    #|        if c2 == '\n' || is_space_char(c2) || is_operator_char(c2) {
+    #|          break
+    #|        }
+    #|        buf.write_char(c2)
+    #|        i = i + 1
+    #|      }
+    #|      tokens.push({ kind: Ident(buf.to_string()), line, })
+    #|    }
+    #|  }
+    #|  tokens.push({ kind: Eof, line, })
+    #|  Ok(tokens)
+    #|}
+    #|
+    #|///|
+    #|/// 手写 [0-9.]+ 解析（不依赖 strconv；空串/多 dot 返回 None）。
+    #|fn digits_to_double(text : String) -> Double? {
+    #|  let mut value = 0.0
+    #|  let mut frac = false
+    #|  let mut scale = 0.1
+    #|  let mut seen_digit = false
+    #|  let mut seen_dot = false
+    #|  for c in text {
+    #|    if c == '.' {
+    #|      if seen_dot {
+    #|        return None
+    #|      }
+    #|      seen_dot = true
+    #|      frac = true
+    #|    } else {
+    #|      let d = c.to_int() - 0x30
+    #|      seen_digit = true
+    #|      if frac {
+    #|        value = value + d.to_double() * scale
+    #|        scale = scale / 10.0
+    #|      } else {
+    #|        value = value * 10.0 + d.to_double()
+    #|      }
+    #|    }
+    #|  }
+    #|  if seen_digit {
+    #|    Some(value)
+    #|  } else {
+    #|    None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// IDE 属性面板与 `取数值` 共用的宽松文本转数字：容许正负号与全角数字。
+    #|pub fn text_to_number(text : String) -> Double? {
+    #|  let chars : Array[Char] = []
+    #|  for c in text {
+    #|    chars.push(normalize_char(c))
+    #|  }
+    #|  let n = chars.length()
+    #|  let mut i = 0
+    #|  let mut negative = false
+    #|  while i < n && is_space_char(chars[i]) {
+    #|    i = i + 1
+    #|  }
+    #|  if i < n && (chars[i] == '-' || chars[i] == '+') {
+    #|    negative = chars[i] == '-'
+    #|    i = i + 1
+    #|  }
+    #|  let buf = StringBuilder()
+    #|  while i < n {
+    #|    let c = chars[i]
+    #|    if is_digit_char(c) || c == '.' {
+    #|      buf.write_char(c)
+    #|      i = i + 1
+    #|    } else if is_space_char(c) {
+    #|      i = i + 1
+    #|    } else {
+    #|      return None
+    #|    }
+    #|  }
+    #|  match digits_to_double(buf.to_string()) {
+    #|    Some(value) => Some(if negative { -value } else { value })
+    #|    None => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 数值的文本形式：整数值不带小数点（DSL 与属性面板共用）。
+    #|pub fn number_to_text(n : Double) -> String {
+    #|  if n == n.floor() && n.abs() < 1.0e15 {
+    #|    n.to_int().to_string()
+    #|  } else {
+    #|    n.to_string()
+    #|  }
+    #|}
+    #|
+  source
+}
+
+///|
+pub fn kernel_momao_lang_parser_mbt() -> String {
+  let source =
+    #|///|
+    #|/// 递归下降解析器：源码 → IR（带行号 Trace）。
+    #|/// 关键字分派全部过 keywords 表；任一语言解析出的 IR 完全相同。
+    #|
+    #|///|
+    #|/// 语句与其首 token 行号：运行错误能报行号；从 JSON 加载的程序行号为 0。
+    #|pub(all) struct TracedStmt {
+    #|  stmt : Stmt
+    #|  line : Int
+    #|}
+    #|
+    #|///|
+    #|priv struct Parser {
+    #|  tokens : Array[Token]
+    #|  mut pos : Int
+    #|  keywords : Keywords
+    #|}
+    #|
+    #|///|
+    #|/// Trace 剥离：IR 的行号只服务于错误定位，不进程序树。
+    #|fn traced_to_stmts(body : Array[TracedStmt]) -> Array[Stmt] {
+    #|  body.map(traced => traced.stmt)
+    #|}
+    #|
+    #|///|
+    #|/// 内建名规范化：源码里写中文名或英文名，IR 一律存规范 id。
+    #|/// 非内建名原样保留（由语义校验报 UnknownBuiltin）。
+    #|fn canonical_call_name(name : String) -> String {
+    #|  match find_builtin(name) {
+    #|    Some(spec) => spec.id
+    #|    None => name
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 解析一段事件子程序体（语句序列）。
+    #|pub fn parse_handler_body(
+    #|  source : String,
+    #|  language : Language,
+    #|) -> Result[Array[TracedStmt], LangError] {
+    #|  let tokens = match lex(source) {
+    #|    Ok(tokens) => tokens
+    #|    Err(error) => return Err(error)
+    #|  }
+    #|  let parser = Parser::{
+    #|    tokens,
+    #|    pos: 0,
+    #|    keywords: keywords_for(language),
+    #|  }
+    #|  try {
+    #|    let stmts = parser.parse_stmts_until([])
+    #|    parser.skip_newlines()
+    #|    if parser.peek().kind is Eof {
+    #|      Ok(stmts)
+    #|    } else {
+    #|      parser.fail_unexpected()
+    #|    }
+    #|  } catch {
+    #|    error => Err(error)
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 只解析不运行：编辑器实时语法检查。
+    #|pub fn check_syntax(source : String, language : Language) -> LangError? {
+    #|  match parse_handler_body(source, language) {
+    #|    Ok(_) => None
+    #|    Err(error) => Some(error)
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn Parser::peek(self : Parser) -> Token {
+    #|  self.tokens[self.pos]
+    #|}
+    #|
+    #|///|
+    #|fn Parser::advance(self : Parser) -> Token {
+    #|  let token = self.tokens[self.pos]
+    #|  if self.pos + 1 < self.tokens.length() {
+    #|    self.pos = self.pos + 1
+    #|  }
+    #|  token
+    #|}
+    #|
+    #|///|
+    #|fn Parser::at_keyword(self : Parser, keyword : String) -> Bool {
+    #|  match self.peek().kind {
+    #|    Ident(text) => text == keyword
+    #|    _ => false
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn[T] Parser::fail(self : Parser, kind : LangErrorKind, a : String, b : String) -> T raise LangError {
+    #|  raise LangError(kind, self.peek().line, a, b)
+    #|}
+    #|
+    #|///|
+    #|fn[T] Parser::fail_unexpected(self : Parser) -> T raise LangError {
+    #|  self.fail(UnexpectedToken, token_label(self.peek().kind), "")
+    #|}
+    #|
+    #|///|
+    #|fn[T] Parser::fail_expect_keyword(
+    #|  self : Parser,
+    #|  keyword : String,
+    #|) -> T raise LangError {
+    #|  self.fail(
+    #|    ExpectKeyword,
+    #|    keyword,
+    #|    token_label(self.peek().kind),
+    #|  )
+    #|}
+    #|
+    #|///|
+    #|fn Parser::expect_keyword(self : Parser, keyword : String) -> Unit raise LangError {
+    #|  if !self.at_keyword(keyword) {
+    #|    self.fail_expect_keyword(keyword)
+    #|  }
+    #|  ignore(self.advance())
+    #|}
+    #|
+    #|///|
+    #|fn Parser::expect_eq(self : Parser) -> Unit raise LangError {
+    #|  if self.peek().kind is Eq {
+    #|    ignore(self.advance())
+    #|  } else {
+    #|    self.fail_expect_keyword("=")
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn Parser::skip_newlines(self : Parser) -> Unit {
+    #|  while self.peek().kind is Newline {
+    #|    ignore(self.advance())
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 解析语句序列直到 stop 里的关键字或结尾（不消耗终止符）。
+    #|fn Parser::parse_stmts_until(
+    #|  self : Parser,
+    #|  stop : Array[String],
+    #|) -> Array[TracedStmt] raise LangError {
+    #|  let stmts : Array[TracedStmt] = []
+    #|  while true {
+    #|    self.skip_newlines()
+    #|    let token = self.peek()
+    #|    match token.kind {
+    #|      Eof => return stmts
+    #|      Ident(text) =>
+    #|        if stop.contains(text) {
+    #|          return stmts
+    #|        } else {
+    #|          let stmt = self.parse_statement()
+    #|          stmts.push({ stmt, line: token.line, })
+    #|        }
+    #|      _ => self.fail_unexpected()
+    #|    }
+    #|  }
+    #|  stmts
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_statement(self : Parser) -> Stmt raise LangError {
+    #|  let token = self.peek()
+    #|  match token.kind {
+    #|    Ident(text) =>
+    #|      match classify_stmt_keyword(text, self.keywords) {
+    #|        KwDeclare => self.parse_declare()
+    #|        KwIf => self.parse_if()
+    #|        KwCountLoop => self.parse_count_loop()
+    #|        KwWhile => self.parse_while()
+    #|        KwBreak => {
+    #|          ignore(self.advance())
+    #|          @ir.Break
+    #|        }
+    #|        NoneKw =>
+    #|          if is_reserved(text) {
+    #|            self.fail(ReservedWord, text, "")
+    #|          } else {
+    #|            self.parse_assign_or_call()
+    #|          }
+    #|      }
+    #|    _ => self.fail_unexpected()
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_declare(self : Parser) -> Stmt raise LangError {
+    #|  ignore(self.advance()) // 变量 / let
+    #|  let name = self.parse_name("变量声明缺少名称")
+    #|  self.expect_eq()
+    #|  let value = self.parse_expr()
+    #|  @ir.Declare(name, value)
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_name(
+    #|  self : Parser,
+    #|  missing_message : String,
+    #|) -> String raise LangError {
+    #|  match self.peek().kind {
+    #|    Ident(text) =>
+    #|      if is_reserved(text) {
+    #|        self.fail(ReservedWord, text, "")
+    #|      } else {
+    #|        ignore(self.advance())
+    #|        text
+    #|      }
+    #|    _ => self.fail(UnexpectedToken, missing_message, "")
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 赋值 `x = expr`、括号调用 `命令(参数…)`、无括号单参调用 `信息框 "你好"`。
+    #|fn Parser::parse_assign_or_call(self : Parser) -> Stmt raise LangError {
+    #|  let name = match self.peek().kind {
+    #|    Ident(text) => text
+    #|    _ => self.fail_unexpected()
+    #|  }
+    #|  ignore(self.advance())
+    #|  if self.peek().kind is Eq {
+    #|    ignore(self.advance())
+    #|    let value = self.parse_expr()
+    #|    return @ir.Assign(name, value)
+    #|  }
+    #|  match self.peek().kind {
+    #|    LParen => {
+    #|      let args = self.parse_call_args()
+    #|      @ir.Call(canonical_call_name(name), args)
+    #|    }
+    #|    Ident(_) => {
+    #|      let arg = self.parse_primary()
+    #|      @ir.Call(canonical_call_name(name), [arg])
+    #|    }
+    #|    Newline | Eof => @ir.Call(canonical_call_name(name), [])
+    #|    _ => self.fail(UnexpectedToken, "「\{name}」后应为 =、参数或换行", "")
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_call_args(self : Parser) -> Array[Expr] raise LangError {
+    #|  ignore(self.advance()) // (
+    #|  let args : Array[Expr] = []
+    #|  if self.peek().kind is RParen {
+    #|    ignore(self.advance())
+    #|    return args
+    #|  }
+    #|  while true {
+    #|    args.push(self.parse_expr())
+    #|    match self.peek().kind {
+    #|      Comma => ignore(self.advance())
+    #|      RParen => {
+    #|        ignore(self.advance())
+    #|        return args
+    #|      }
+    #|      _ => self.fail(UnexpectedToken, "参数列表缺少 , 或 )", "")
+    #|    }
+    #|  }
+    #|  args
+    #|}
+    #|
+    #|///|
+    #|/// 如果 条件 则 … [否则如果 条件 则 …]* [否则 …] 结束
+    #|fn Parser::parse_if(self : Parser) -> Stmt raise LangError {
+    #|  ignore(self.advance()) // 如果 / if
+    #|  let condition = self.parse_expr()
+    #|  self.expect_keyword(self.keywords.then_kw)
+    #|  let then_body = self.parse_stmts_until(
+    #|    [self.keywords.else_if_kw, self.keywords.else_kw, self.keywords.end_kw],
+    #|  )
+    #|  let else_ifs : Array[(Expr, Array[TracedStmt])] = []
+    #|  while self.at_keyword(self.keywords.else_if_kw) {
+    #|    ignore(self.advance())
+    #|    let arm_cond = self.parse_expr()
+    #|    self.expect_keyword(self.keywords.then_kw)
+    #|    let arm_body = self.parse_stmts_until(
+    #|      [self.keywords.else_if_kw, self.keywords.else_kw, self.keywords.end_kw],
+    #|    )
+    #|    else_ifs.push((arm_cond, arm_body))
+    #|  }
+    #|  let else_body =
+    #|    if self.at_keyword(self.keywords.else_kw) {
+    #|      ignore(self.advance())
+    #|      self.parse_stmts_until([self.keywords.end_kw])
+    #|    } else {
+    #|      []
+    #|    }
+    #|  self.expect_keyword(self.keywords.end_kw)
+    #|  @ir.If(
+    #|    condition,
+    #|    traced_to_stmts(then_body),
+    #|    else_ifs.map(arm => (arm.0, traced_to_stmts(arm.1))),
+    #|    traced_to_stmts(else_body),
+    #|  )
+    #|}
+    #|
+    #|///|
+    #|/// 计次循环 次数 次 [为 循环变量] … 结束 / repeat 次数 times [as i] … end
+    #|fn Parser::parse_count_loop(self : Parser) -> Stmt raise LangError {
+    #|  ignore(self.advance()) // 计次循环 / repeat
+    #|  let count = self.parse_expr()
+    #|  self.expect_keyword(self.keywords.times_kw)
+    #|  let loop_var : String? = if self.at_keyword(self.keywords.as_kw) {
+    #|    ignore(self.advance())
+    #|    Some(self.parse_name("「\{self.keywords.as_kw}」后应跟循环变量名"))
+    #|  } else {
+    #|    None
+    #|  }
+    #|  let body = self.parse_stmts_until([self.keywords.end_kw])
+    #|  self.expect_keyword(self.keywords.end_kw)
+    #|  @ir.CountLoop(count, loop_var, traced_to_stmts(body))
+    #|}
+    #|
+    #|///|
+    #|/// 当 条件 循环 … 结束 / while 条件 do … end
+    #|fn Parser::parse_while(self : Parser) -> Stmt raise LangError {
+    #|  ignore(self.advance()) // 当 / while
+    #|  let condition = self.parse_expr()
+    #|  self.expect_keyword(self.keywords.do_kw)
+    #|  let body = self.parse_stmts_until([self.keywords.end_kw])
+    #|  self.expect_keyword(self.keywords.end_kw)
+    #|  @ir.WhileLoop(condition, traced_to_stmts(body))
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_expr(self : Parser) -> Expr raise LangError {
+    #|  self.parse_or()
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_or(self : Parser) -> Expr raise LangError {
+    #|  let mut left = self.parse_and()
+    #|  while self.at_keyword(self.keywords.or_kw) {
+    #|    ignore(self.advance())
+    #|    let right = self.parse_and()
+    #|    left = @ir.Binary(@ir.Or, left, right)
+    #|  }
+    #|  left
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_and(self : Parser) -> Expr raise LangError {
+    #|  let mut left = self.parse_not()
+    #|  while self.at_keyword(self.keywords.and_kw) {
+    #|    ignore(self.advance())
+    #|    let right = self.parse_not()
+    #|    left = @ir.Binary(@ir.And, left, right)
+    #|  }
+    #|  left
+    #|}
+    #|
+    #|///|
+    #|/// 非 绑定整个比较表达式：`非 x = 1` 等价于 `非 (x = 1)`。
+    #|fn Parser::parse_not(self : Parser) -> Expr raise LangError {
+    #|  if self.at_keyword(self.keywords.not_kw) {
+    #|    ignore(self.advance())
+    #|    @ir.Not(self.parse_not())
+    #|  } else {
+    #|    self.parse_comparison()
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn comparison_operator(kind : TokenKind) -> BinOp? {
+    #|  match kind {
+    #|    Eq => Some(@ir.Eq)
+    #|    Ne => Some(@ir.Ne)
+    #|    Lt => Some(@ir.Lt)
+    #|    Gt => Some(@ir.Gt)
+    #|    Le => Some(@ir.Le)
+    #|    Ge => Some(@ir.Ge)
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_comparison(self : Parser) -> Expr raise LangError {
+    #|  let left = self.parse_additive()
+    #|  match comparison_operator(self.peek().kind) {
+    #|    Some(op) => {
+    #|      ignore(self.advance())
+    #|      let right = self.parse_additive()
+    #|      @ir.Binary(op, left, right)
+    #|    }
+    #|    None => left
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_additive(self : Parser) -> Expr raise LangError {
+    #|  let mut left = self.parse_term()
+    #|  while true {
+    #|    match self.peek().kind {
+    #|      Plus => {
+    #|        ignore(self.advance())
+    #|        left = @ir.Binary(@ir.Add, left, self.parse_term())
+    #|      }
+    #|      Minus => {
+    #|        ignore(self.advance())
+    #|        left = @ir.Binary(@ir.Sub, left, self.parse_term())
+    #|      }
+    #|      _ => return left
+    #|    }
+    #|  }
+    #|  left
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_term(self : Parser) -> Expr raise LangError {
+    #|  let mut left = self.parse_unary()
+    #|  while true {
+    #|    match self.peek().kind {
+    #|      Star => {
+    #|        ignore(self.advance())
+    #|        left = @ir.Binary(@ir.Mul, left, self.parse_unary())
+    #|      }
+    #|      Slash => {
+    #|        ignore(self.advance())
+    #|        left = @ir.Binary(@ir.Div, left, self.parse_unary())
+    #|      }
+    #|      _ => return left
+    #|    }
+    #|  }
+    #|  left
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_unary(self : Parser) -> Expr raise LangError {
+    #|  if self.peek().kind is Minus {
+    #|    ignore(self.advance())
+    #|    @ir.Neg(self.parse_unary())
+    #|  } else {
+    #|    self.parse_primary()
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn Parser::parse_primary(self : Parser) -> Expr raise LangError {
+    #|  let token = self.peek()
+    #|  match token.kind {
+    #|    Num(v) => {
+    #|      ignore(self.advance())
+    #|      @ir.NumLit(v)
+    #|    }
+    #|    Str(s) => {
+    #|      ignore(self.advance())
+    #|      @ir.StrLit(s)
+    #|    }
+    #|    Ident(text) =>
+    #|      if text == self.keywords.true_kw {
+    #|        ignore(self.advance())
+    #|        @ir.BoolLit(true)
+    #|      } else if text == self.keywords.false_kw {
+    #|        ignore(self.advance())
+    #|        @ir.BoolLit(false)
+    #|      } else if is_reserved(text) {
+    #|        self.fail(ReservedWord, text, "")
+    #|      } else {
+    #|        ignore(self.advance())
+    #|        match self.peek().kind {
+    #|          LParen => {
+    #|            let args = self.parse_call_args()
+    #|            @ir.Call(canonical_call_name(text), args)
+    #|          }
+    #|          _ => @ir.Var(text)
+    #|        }
+    #|      }
+    #|    LParen => {
+    #|      ignore(self.advance())
+    #|      let inner = self.parse_expr()
+    #|      match self.peek().kind {
+    #|        RParen => ignore(self.advance())
+    #|        _ => self.fail(UnexpectedToken, "缺少右括号 )", "")
+    #|      }
+    #|      inner
+    #|    }
+    #|    _ => self.fail_unexpected()
+    #|  }
+    #|}
+    #|
+  source
+}

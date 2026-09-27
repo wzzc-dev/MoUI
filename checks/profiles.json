@@ -187,11 +187,23 @@
           ]
         },
         {
-          "name": "export kernel sync",
+          "name": "momao i18n catalogs",
+          "argv": [
+            "node",
+            "scripts/generate-i18n-catalogs.mjs",
+            "--input",
+            "examples/momao/app/i18n/catalogs.json",
+            "--out",
+            "examples/momao/app/i18n_catalog_generated.mbt",
+            "--check"
+          ]
+        },
+        {
+          "name": "momao export kernel sync",
           "argv": [
             "moon",
             "run",
-            "examples/moblocks_studio/tools/sync_kernel",
+            "examples/momao/tools/sync_kernel",
             "--target",
             "native",
             "--",

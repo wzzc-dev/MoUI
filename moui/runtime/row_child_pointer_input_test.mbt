@@ -3,7 +3,7 @@
 /// `on_drag` / `on_drag_with_frame` 手势（原债务 `row-child-hit-testing`，
 /// 2026-09-26 复核不再复现，转为行为回归固定）。
 ///
-/// 场景来自 `examples/moblocks_studio`：工具栏 row 内按钮、画布节点拖拽。
+/// 场景源自既往积木编辑器 IDE 实践：工具栏 row 内按钮、画布节点拖拽。
 /// 全部经 `AppRuntime` 真实布局 + 指针事件派发验证，不依赖具体 host。
 
 ///|

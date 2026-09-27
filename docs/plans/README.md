@@ -68,7 +68,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [backend-renderer-lifecycle-convergence](active/backend-renderer-lifecycle-convergence.md) | Split backend-common state owners and collapse renderer binding to provider/session |
 | [runtime-state-render-ownership-convergence](active/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
-| [moeui-studio](active/moeui-studio.md) | Mo易 Studio：AI 赋能的 MoUI/MoonBit 版易语言（中文 DSL + 表单设计器 + 事件驱动运行 + 提案式 AI 生成） |
+| [momao](active/momao.md) | MoMao（墨卯）：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
 | [view-node-trait-refactor](active/view-node-trait-refactor.md) | Complete the public ViewNode trait migration |
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
@@ -81,8 +81,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [overlay-system-redesign](done/overlay-system-redesign.md) | Ordered `OverlayHost + PresentationSpec` with runtime placement/input/focus and neutral host-modal transport |
 | [overlay-placement-portal-unification](active/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
 | [feature-scope-composition](active/feature-scope-composition.md) | Add `Feature[Model, Msg]` + `Feature::scope` lens composition to core, `FieldAction` keyed forms, and settings/workbench pilots |
-| [moblocks-studio](active/moblocks-studio.md) | Build an AI-generated visual app studio on MoUI for the 2026 Shanghai open-source AI tools competition (MCP integration deferred to post-contest) |
-| [moblocks-studio-v2](active/moblocks-studio-v2.md) | Post-freeze hardening: fix web drag regression, puzzle-piece blocks with category colors, four-zone IDE layout, ExecTick timer driver |
 
 ## Debt
 
@@ -127,5 +125,8 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [markdown-html-image-gallery](done/markdown-html-image-gallery.md) | Render the safe HTML image-gallery subset in Markdown Editor |
 | [row-child-hit-testing](done/row-child-hit-testing.md) | 原报 `row` 子级按钮与 `on_drag` 不命中；2026-09-26 复核在 moon 0.1.20260920 下不再复现（8 形状探针 + canvas/按钮/普通 view 拖拽全部正常），行为由 `moui/runtime/row_child_pointer_input_test.mbt` 固定 |
 | [repo-format-and-ratchet-drift](done/repo-format-and-ratchet-drift.md) | 仓库级格式漂移与 ratchet 过期：2026-09-26 已修复（生成 facts 重写、6 个 ratchet 重登记、5 个漂移文件 `moon fmt`，`moon fmt --check` 全仓 0 差异） |
+| [moblocks-studio](done/moblocks-studio.md) | MoBlocks Studio（积木工作流 + AI 提案 + 导出）——已完成，2026-09-27 归档：被 MoMao 取代，对应代码删除 |
+| [moblocks-studio-v2](done/moblocks-studio-v2.md) | MoBlocks Studio v2（Web 拖拽回归、拼图积木、四区布局）——已完成，2026-09-27 归档：被 MoMao 取代 |
+| [moeui-studio](done/moeui-studio.md) | Mo易 Studio（中文 DSL + 表单设计器 + 提案式 AI）——已完成，2026-09-27 归档：被 MoMao 取代，对应代码删除 |
 
 Move finished plans to `done/` in the same PR that closes the work.

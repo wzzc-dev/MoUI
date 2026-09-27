@@ -1,0 +1,25 @@
+import {
+  "wzzc-dev/moui",
+  "wzzc-dev/moui_i18n" @i18n,
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/text",
+  "examples/momao/domain/ir",
+  "examples/momao/domain/momao_lang",
+  "examples/momao/domain/codec",
+  "examples/momao/domain/proposals",
+  "examples/momao/domain/blocks",
+  "examples/momao/services/export" @export,
+}
+
+import {
+  "wzzc-dev/moui/core",
+} for "test"
+
+supported_targets = "native+wasm-gc"
+
+options(
+  targets: { },
+)

@@ -140,9 +140,9 @@
       "featured": true
     },
     {
-      "id": "moblocks_studio",
-      "path": "examples/moblocks_studio",
-      "title": "MoBlocks Studio",
+      "id": "momao",
+      "path": "examples/momao",
+      "title": "MoMao Studio",
       "featured": false
     }
   ]

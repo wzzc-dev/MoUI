@@ -1,7 +1,0 @@
-import {
-  "moonbitlang/async",
-  "moonbitlang/async/http",
-  "examples/moblocks_studio/services/model_provider" @provider,
-}
-
-supported_targets = "native"
