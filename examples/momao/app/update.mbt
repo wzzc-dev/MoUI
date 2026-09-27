@@ -184,6 +184,150 @@ fn sync_code_draft(model : Model) -> Model {
 }
 
 ///|
+/// 编辑快照（撤销条目）：程序 + 选中态 + 代码草稿。
+fn undo_entry_of(model : Model, key : String) -> UndoEntry {
+  {
+    program: model.program,
+    selected_control: model.selected_control,
+    selected_handler: model.selected_handler,
+    code_draft: model.code_draft,
+    coalesce_key: key,
+  }
+}
+
+///|
+/// 撤销栈追加（超 UNDO_DEPTH 丢弃最旧）。
+fn undo_stack_push(
+  stack : Array[UndoEntry],
+  entry : UndoEntry,
+) -> Array[UndoEntry] {
+  let copy : Array[UndoEntry] = []
+  for existing in stack {
+    copy.push(existing)
+  }
+  copy.push(entry)
+  if copy.length() > UNDO_DEPTH {
+    let trimmed : Array[UndoEntry] = []
+    let mut i = 1
+    while i < copy.length() {
+      trimmed.push(copy[i])
+      i = i + 1
+    }
+    trimmed
+  } else {
+    copy
+  }
+}
+
+///|
+/// 撤销栈弹出（返回 (栈顶, 余栈)），空栈返回 None。
+fn undo_stack_pop(stack : Array[UndoEntry]) -> (UndoEntry, Array[UndoEntry])? {
+  if stack.length() == 0 {
+    None
+  } else {
+    let rest : Array[UndoEntry] = []
+    let mut i = 0
+    while i < stack.length() - 1 {
+      rest.push(stack[i])
+      i = i + 1
+    }
+    Some((stack[stack.length() - 1], rest))
+  }
+}
+
+///|
+fn undo_stack_peek_key(stack : Array[UndoEntry]) -> String? {
+  if stack.length() == 0 {
+    None
+  } else {
+    Some(stack[stack.length() - 1].coalesce_key)
+  }
+}
+
+///|
+/// 把变更前快照压入 next 的撤销栈。合并规则：key 非空且与栈顶相同时
+/// 跳过（连续同类编辑共享一个还原点）；空 key 永不合并。任何新还原点清空重做栈。
+fn undo_commit(next : Model, entry : UndoEntry) -> Model {
+  let top_key = match undo_stack_peek_key(next.undo_stack) {
+    Some(key) => key
+    None => ""
+  }
+  if entry.coalesce_key != "" && top_key == entry.coalesce_key {
+    return next
+  }
+  {
+    ..next,
+    undo_stack: undo_stack_push(next.undo_stack, entry),
+    redo_stack: [],
+  }
+}
+
+///|
+/// 带撤销点的变更：捕获变更前快照 → 应用变更 → 仅当程序签名真的变化时入栈。
+/// no-op 变更（解析失败、非法输入、模板重选同一样例）不产生还原点。
+fn with_undo_point(
+  model : Model,
+  key : String,
+  mutate : (Model) -> Model,
+) -> Model {
+  let mark = undo_entry_of(model, key)
+  let next = mutate(model)
+  if @ir.program_signature(next.program) == @ir.program_signature(model.program) {
+    next
+  } else {
+    undo_commit(next, mark)
+  }
+}
+
+///|
+/// 撤销：弹栈恢复快照；运行期活状态按恢复后的程序重置；积木选择态清空。
+fn apply_undo(model : Model) -> Model {
+  match undo_stack_pop(model.undo_stack) {
+    None => model
+    Some((entry, rest)) =>
+      {
+        ..model,
+        program: entry.program,
+        selected_control: entry.selected_control,
+        selected_handler: entry.selected_handler,
+        code_draft: entry.code_draft,
+        code_error: "",
+        drag: None,
+        selected_block: -1,
+        block_draft: "",
+        runtime_values: @momao_lang.initial_values(entry.program),
+        runtime_texts: @momao_lang.initial_texts(entry.program),
+        undo_stack: rest,
+        redo_stack: undo_stack_push(model.redo_stack, undo_entry_of(model, "")),
+      }
+  }
+}
+
+///|
+/// 重做：弹重做栈恢复；撤销栈同步回填当前态。
+fn apply_redo(model : Model) -> Model {
+  match undo_stack_pop(model.redo_stack) {
+    None => model
+    Some((entry, rest)) =>
+      {
+        ..model,
+        program: entry.program,
+        selected_control: entry.selected_control,
+        selected_handler: entry.selected_handler,
+        code_draft: entry.code_draft,
+        code_error: "",
+        drag: None,
+        selected_block: -1,
+        block_draft: "",
+        runtime_values: @momao_lang.initial_values(entry.program),
+        runtime_texts: @momao_lang.initial_texts(entry.program),
+        undo_stack: undo_stack_push(model.undo_stack, undo_entry_of(model, "")),
+        redo_stack: rest,
+      }
+  }
+}
+
+///|
 /// 外壳域消息处理：语言/模式/选择/代码草稿/模板。
 fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
@@ -217,8 +361,8 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       } else {
         model.program
       }
-      let next = {
-        ..model,
+      let next = with_undo_point(model, "", m => {
+        ..m,
         program,
         pending: None,
         run: None,
@@ -227,7 +371,7 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         block_draft: "",
         runtime_values: @momao_lang.initial_values(program),
         runtime_texts: @momao_lang.initial_texts(program),
-      }
+      })
       Some(
         (
           sync_code_draft({
@@ -240,6 +384,8 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       )
     }
     SetNotice(notice) => Some(({ ..model, notice, }, @moui.Effect::none()))
+    Undo => Some((apply_undo(model), @moui.Effect::none()))
+    Redo => Some((apply_redo(model), @moui.Effect::none()))
     _ => None
   }
 }
@@ -272,23 +418,30 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
               ),
             )
           } else {
-            let handlers : Array[@ir.Handler] = []
-            for existing in model.program.handlers {
-              handlers.push(existing)
-            }
-            handlers.push(@ir.Handler::{
-              control_name,
-              event,
-              note_zh: "",
-              note_en: "",
-              body: [],
-            })
-            let next = {
-              ..model,
-              program: { ..model.program, handlers, },
-              selected_handler: handler_key(control_name, event.tag()),
-            }
-            Some((sync_code_draft(next), @moui.Effect::none()))
+            Some(
+              (
+                with_undo_point(model, "", m => {
+                  let handlers : Array[@ir.Handler] = []
+                  for existing in m.program.handlers {
+                    handlers.push(existing)
+                  }
+                  handlers.push(@ir.Handler::{
+                    control_name,
+                    event,
+                    note_zh: "",
+                    note_en: "",
+                    body: [],
+                  })
+                  let next = {
+                    ..m,
+                    program: { ..m.program, handlers, },
+                    selected_handler: handler_key(control_name, event.tag()),
+                  }
+                  sync_code_draft(next)
+                }),
+                @moui.Effect::none(),
+              ),
+            )
           }
       }
     CanvasPress(x, y) => {
@@ -341,44 +494,64 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     CanvasDragTo(x, y) =>
       // 拖拽移动/缩放控件；夹取规则在 @ir（控件完整落在设计画布内、最小边长）。
       // 移动带吸附：靠近参考线目标 ≤4px 时原点平移到精确对齐（吸附后仍过夹取）。
+      // 整段手势共享一个撤销还原点（coalesce key = move/resize + 控件名）。
       match model.drag {
         None => Some((model, @moui.Effect::none()))
-        Some(drag) => {
-          let controls : Array[@ir.Control] = []
-          for control in model.program.controls {
-            if control.name == drag.control {
-              match drag.kind {
-                Move(offset_x, offset_y) => {
-                  let (snapped_x, snapped_y) = snap_move_position(
-                    model.program.controls,
-                    drag.control,
-                    (x.to_int() - offset_x).to_double(),
-                    (y.to_int() - offset_y).to_double(),
-                    control.width.to_double(),
-                    control.height.to_double(),
-                  )
-                  controls.push(
-                    control
-                    .with_rect_field(@ir.RectX, snapped_x.to_int())
-                    .with_rect_field(@ir.RectY, snapped_y.to_int()),
-                  )
-                }
-                Resize(corner) =>
-                  controls.push(
-                    control.resize_from_corner(corner, x.to_int(), y.to_int()),
-                  )
-              }
-            } else {
-              controls.push(control)
-            }
+        Some(drag) =>
+          match drag.kind {
+            Move(offset_x, offset_y) =>
+              Some(
+                (
+                  with_undo_point(model, "move:\{drag.control}", m => {
+                    let controls : Array[@ir.Control] = []
+                    for control in m.program.controls {
+                      if control.name == drag.control {
+                        let (snapped_x, snapped_y) = snap_move_position(
+                          m.program.controls,
+                          drag.control,
+                          (x.to_int() - offset_x).to_double(),
+                          (y.to_int() - offset_y).to_double(),
+                          control.width.to_double(),
+                          control.height.to_double(),
+                        )
+                        controls.push(
+                          control
+                          .with_rect_field(@ir.RectX, snapped_x.to_int())
+                          .with_rect_field(@ir.RectY, snapped_y.to_int()),
+                        )
+                      } else {
+                        controls.push(control)
+                      }
+                    }
+                    { ..m, program: { ..m.program, controls, }, }
+                  }),
+                  @moui.Effect::none(),
+                ),
+              )
+            Resize(corner) =>
+              Some(
+                (
+                  with_undo_point(model, "resize:\{drag.control}", m => {
+                    let controls : Array[@ir.Control] = []
+                    for control in m.program.controls {
+                      if control.name == drag.control {
+                        controls.push(
+                          control.resize_from_corner(
+                            corner,
+                            x.to_int(),
+                            y.to_int(),
+                          ),
+                        )
+                      } else {
+                        controls.push(control)
+                      }
+                    }
+                    { ..m, program: { ..m.program, controls, }, }
+                  }),
+                  @moui.Effect::none(),
+                ),
+              )
           }
-          Some(
-            (
-              { ..model, program: { ..model.program, controls, }, },
-              @moui.Effect::none(),
-            ),
-          )
-        }
       }
     CanvasRelease(_x, _y) =>
       Some(({ ..model, drag: None, }, @moui.Effect::none()))
@@ -404,22 +577,23 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             Some(({ ..model, selected_control: "", }, @moui.Effect::none()))
           }
       }
-    SetControlText(name, value) => {
-      let controls : Array[@ir.Control] = []
-      for control in model.program.controls {
-        if control.name == name {
-          controls.push(@ir.Control::{ ..control, text: value, })
-        } else {
-          controls.push(control)
-        }
-      }
+    SetControlText(name, value) =>
       Some(
         (
-          { ..model, program: { ..model.program, controls, }, },
+          with_undo_point(model, "text:\{name}", m => {
+            let controls : Array[@ir.Control] = []
+            for control in m.program.controls {
+              if control.name == name {
+                controls.push(@ir.Control::{ ..control, text: value, })
+              } else {
+                controls.push(control)
+              }
+            }
+            { ..m, program: { ..m.program, controls, }, }
+          }),
           @moui.Effect::none(),
         ),
       )
-    }
     SetControlName(name, value) => {
       if value == "" || @ir.find_control(model.program, value) is Some(_) {
         return Some((model, @moui.Effect::none()))
@@ -427,39 +601,48 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       if !@ir.control_name_syntax_valid(value) {
         return Some((model, @moui.Effect::none()))
       }
-      let program = rename_control_everywhere(model.program, name, value)
-      let next = {
-        ..model,
-        program,
-        selected_control: value,
-        selected_handler: match handler_control_of(model.selected_handler) {
-          Some(current) =>
-            if current == name {
-              handler_key(
-                value,
-                handler_event_of(model.selected_handler).unwrap_or("on_click"),
-              )
-            } else {
-              model.selected_handler
+      Some(
+        (
+          with_undo_point(model, "", m => {
+            let program = rename_control_everywhere(m.program, name, value)
+            let next = {
+              ..m,
+              program,
+              selected_control: value,
+              selected_handler: match handler_control_of(m.selected_handler) {
+                Some(current) =>
+                  if current == name {
+                    handler_key(
+                      value,
+                      handler_event_of(m.selected_handler).unwrap_or("on_click"),
+                    )
+                  } else {
+                    m.selected_handler
+                  }
+                None => m.selected_handler
+              },
             }
-          None => model.selected_handler
-        },
-      }
-      Some((sync_code_draft(next), @moui.Effect::none()))
+            sync_code_draft(next)
+          }),
+          @moui.Effect::none(),
+        ),
+      )
     }
     SetControlItems(name, value) => {
       let items = split_lines(value)
-      let controls : Array[@ir.Control] = []
-      for control in model.program.controls {
-        if control.name == name {
-          controls.push(@ir.Control::{ ..control, items, })
-        } else {
-          controls.push(control)
-        }
-      }
       Some(
         (
-          { ..model, program: { ..model.program, controls, }, },
+          with_undo_point(model, "items:\{name}", m => {
+            let controls : Array[@ir.Control] = []
+            for control in m.program.controls {
+              if control.name == name {
+                controls.push(@ir.Control::{ ..control, items, })
+              } else {
+                controls.push(control)
+              }
+            }
+            { ..m, program: { ..m.program, controls, }, }
+          }),
           @moui.Effect::none(),
         ),
       )
@@ -468,22 +651,23 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       // 属性框整数解析失败（空串/非数字）即忽略本次输入
       match parse_design_int(raw) {
         None => Some((model, @moui.Effect::none()))
-        Some(value) => {
-          let controls : Array[@ir.Control] = []
-          for control in model.program.controls {
-            if control.name == name {
-              controls.push(control.with_rect_field(field, value))
-            } else {
-              controls.push(control)
-            }
-          }
+        Some(value) =>
           Some(
             (
-              { ..model, program: { ..model.program, controls, }, },
+              with_undo_point(model, "rect:\{name}", m => {
+                let controls : Array[@ir.Control] = []
+                for control in m.program.controls {
+                  if control.name == name {
+                    controls.push(control.with_rect_field(field, value))
+                  } else {
+                    controls.push(control)
+                  }
+                }
+                { ..m, program: { ..m.program, controls, }, }
+              }),
               @moui.Effect::none(),
             ),
           )
-        }
       }
     AddControl(kind) => {
       // 控件预算防呆：与 decode/提案/导出共用同一 MAX_CONTROLS 常量
@@ -498,84 +682,141 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           ),
         )
       }
-      let id = @ir.next_control_id(model.program)
-      let name = fresh_control_name(model.program, kind)
-      let control = @ir.Control::{
-        id,
-        kind,
-        name,
-        text: "",
-        x: 40 + id % 5 * 30,
-        y: 40 + id % 7 * 30,
-        width: match kind {
-          @ir.Button => 100
-          @ir.Label => 140
-          @ir.TextField => 160
-          @ir.CheckBox => 110
-          @ir.ListBox => 140
-          @ir.Table => 200
-        },
-        height: match kind {
-          @ir.Button => 32
-          @ir.Label => 30
-          @ir.TextField => 30
-          @ir.CheckBox => 26
-          @ir.ListBox => 110
-          @ir.Table => 120
-        },
-        items: [],
-      }
       Some(
         (
-          {
-            ..model,
-            program: {
-              ..model.program,
-              controls: append_control(model.program.controls, control),
-            },
-            selected_control: name,
-          },
+          with_undo_point(model, "", m => {
+            let id = @ir.next_control_id(m.program)
+            let name = fresh_control_name(m.program, kind)
+            let control = @ir.Control::{
+              id,
+              kind,
+              name,
+              text: "",
+              x: 40 + id % 5 * 30,
+              y: 40 + id % 7 * 30,
+              width: match kind {
+                @ir.Button => 100
+                @ir.Label => 140
+                @ir.TextField => 160
+                @ir.CheckBox => 110
+                @ir.ListBox => 140
+                @ir.Table => 200
+              },
+              height: match kind {
+                @ir.Button => 32
+                @ir.Label => 30
+                @ir.TextField => 30
+                @ir.CheckBox => 26
+                @ir.ListBox => 110
+                @ir.Table => 120
+              },
+              items: [],
+            }
+            {
+              ..m,
+              program: {
+                ..m.program,
+                controls: append_control(m.program.controls, control),
+              },
+              selected_control: name,
+            }
+          }),
           @moui.Effect::none(),
         ),
       )
     }
-    DeleteControl(name) => {
-      let controls : Array[@ir.Control] = []
-      for control in model.program.controls {
-        if control.name != name {
-          controls.push(control)
-        }
-      }
-      let handlers : Array[@ir.Handler] = []
-      for handler in model.program.handlers {
-        if handler.control_name != name {
-          handlers.push(handler)
-        }
-      }
-      // 被删控件的子程序正是当前选中时，清除选中并同步代码草稿；
-      // 其余情况不动草稿——代码视图里未提交的编辑不因删除别的控件而丢失
-      let next_handler = match handler_control_of(model.selected_handler) {
-        Some(current) =>
-          if current == name {
-            ""
+    DuplicateControl(name) =>
+      // 复制控件：新 id/新名字（类型+序号）、位置级联偏移 16px 后夹取、items 深拷贝
+      match @ir.find_control(model.program, name) {
+        None => Some((model, @moui.Effect::none()))
+        Some(source) =>
+          if model.program.controls.length() >= @ir.MAX_CONTROLS {
+            return Some(
+              (
+                {
+                  ..model,
+                  notice: text(translator(model), "app.status.controls_limit"),
+                },
+                @moui.Effect::none(),
+              ),
+            )
           } else {
-            model.selected_handler
+            Some(
+              (
+                with_undo_point(model, "", m => {
+                  let id = @ir.next_control_id(m.program)
+                  let copy_name = fresh_control_name(m.program, source.kind)
+                  let items : Array[String] = []
+                  for item in source.items {
+                    items.push(item)
+                  }
+                  let control = @ir.Control::{
+                    ..source,
+                    id,
+                    name: copy_name,
+                    x: source.x + 16,
+                    y: source.y + 16,
+                    items,
+                  }
+                  let control = control
+                    .with_rect_field(@ir.RectX, control.x)
+                    .with_rect_field(@ir.RectY, control.y)
+                  {
+                    ..m,
+                    program: {
+                      ..m.program,
+                      controls: append_control(m.program.controls, control),
+                    },
+                    selected_control: copy_name,
+                  }
+                }),
+                @moui.Effect::none(),
+              ),
+            )
           }
-        None => model.selected_handler
       }
-      let next = {
-        ..model,
-        program: { ..model.program, controls, handlers, },
-        selected_control: "",
-        selected_handler: next_handler,
-      }
-      let synced = if next_handler != model.selected_handler {
-        sync_code_draft(next)
-      } else {
-        next
-      }
-      Some((synced, @moui.Effect::none()))
-    }
+    DeleteControl(name) =>
+      Some(
+        (
+          with_undo_point(model, "", m => {
+            let controls : Array[@ir.Control] = []
+            for control in m.program.controls {
+              if control.name != name {
+                controls.push(control)
+              }
+            }
+            let handlers : Array[@ir.Handler] = []
+            for handler in m.program.handlers {
+              if handler.control_name != name {
+                handlers.push(handler)
+              }
+            }
+            // 被删控件的子程序正是当前选中时，清除选中并同步代码草稿；
+            // 其余情况不动草稿——代码视图里未提交的编辑不因删除别的控件而丢失
+            let next_handler = match handler_control_of(m.selected_handler) {
+              Some(current) =>
+                if current == name {
+                  ""
+                } else {
+                  m.selected_handler
+                }
+              None => m.selected_handler
+            }
+            let next = {
+              ..m,
+              program: { ..m.program, controls, handlers, },
+              selected_control: "",
+              selected_handler: next_handler,
+            }
+            if next_handler != m.selected_handler {
+              sync_code_draft(next)
+            } else {
+              next
+            }
+          }),
+          @moui.Effect::none(),
+        ),
+      )
     _ => None
   }
 }

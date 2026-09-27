@@ -739,3 +739,149 @@ test "real generation result becomes pending proposal, failure surfaces" {
   assert_true(failed.pending is None)
   assert_false(failed.ai_busy)
 }
+
+///|
+test "undo and redo revert and replay control add" {
+  let base = @app.initial_model()
+  let added = apply(base, AddControl(@ir.Button))
+  assert_eq(added.program.controls.length(), base.program.controls.length() + 1)
+  // 撤销 → 控件消失、选中清空
+  let undone = apply(added, Undo)
+  assert_eq(undone.program.controls.length(), base.program.controls.length())
+  assert_eq(undone.selected_control, base.selected_control)
+  // 重做 → 控件回来
+  let redone = apply(undone, Redo)
+  assert_eq(redone.program.controls.length(), added.program.controls.length())
+  assert_eq(redone.selected_control, added.selected_control)
+}
+
+///|
+test "drag gesture coalesces into one undo point" {
+  let base = apply(@app.initial_model(), AddControl(@ir.Button))
+  let control = base.program.controls[base.program.controls.length() - 1]
+  let stack_after_add = base.undo_stack.length()
+  let cx = control.x.to_double() + 20.0
+  let cy = control.y.to_double() + 15.0
+  let pressed = apply(base, CanvasPress(cx, cy))
+  // 一段手势内的多次 DragTo 合并：撤销栈只长 1
+  let dragged = apply(
+    apply(
+      apply(pressed, CanvasDragTo(cx + 30.0, cy + 10.0)),
+      CanvasDragTo(cx + 50.0, cy + 20.0),
+    ),
+    CanvasDragTo(cx + 70.0, cy + 30.0),
+  )
+  assert_eq(dragged.undo_stack.length(), stack_after_add + 1)
+  // 一次撤销回到拖拽前位置
+  let undone = apply(dragged, Undo)
+  let after = @ir.find_control(undone.program, control.name).unwrap()
+  assert_eq(after.x, control.x)
+  assert_eq(after.y, control.y)
+}
+
+///|
+test "consecutive text edits share one undo point" {
+  let base = apply(@app.initial_model(), AddControl(@ir.Label))
+  let label = base.program.controls[base.program.controls.length() - 1]
+  let stack_after_add = base.undo_stack.length()
+  let once = apply(base, SetControlText(label.name, "第一版"))
+  let twice = apply(once, SetControlText(label.name, "第二版"))
+  assert_eq(twice.undo_stack.length(), stack_after_add + 1)
+  // 一次撤销同时回到两版之前
+  let undone = apply(twice, Undo)
+  let after = @ir.find_control(undone.program, label.name).unwrap()
+  assert_eq(after.text, "")
+}
+
+///|
+test "undo restores selection and code draft" {
+  let model = @app.initial_model()
+  let draft = model.code_draft
+  // 删除「按钮」：选中子程序被清、草稿清空
+  let deleted = apply(model, DeleteControl("按钮"))
+  assert_eq(deleted.selected_handler, "")
+  assert_eq(deleted.code_draft, "")
+  // 撤销：子程序与草稿一起回来
+  let undone = apply(deleted, Undo)
+  assert_eq(undone.selected_handler, model.selected_handler)
+  assert_eq(undone.code_draft, draft)
+}
+
+///|
+test "new edit clears redo stack" {
+  let base = @app.initial_model()
+  let added = apply(base, AddControl(@ir.Button))
+  let undone = apply(added, Undo)
+  assert_true(undone.redo_stack.length() > 0)
+  // 新变更（非重做）清空重做栈
+  let edited = apply(undone, AddControl(@ir.Label))
+  assert_eq(edited.redo_stack.length(), 0)
+  assert_eq(
+    apply(edited, Redo).program.controls.length(),
+    edited.program.controls.length(),
+  )
+}
+
+///|
+test "undo depth is capped" {
+  let mut iter = @app.initial_model()
+  let mut i = 0
+  while i < @app.UNDO_DEPTH + 10 {
+    iter = apply(iter, AddControl(@ir.Label))
+    i = i + 1
+  }
+  assert_eq(iter.undo_stack.length(), @app.UNDO_DEPTH)
+}
+
+///|
+test "duplicate control copies props with offset and undo removes it" {
+  let added = apply(@app.initial_model(), AddControl(@ir.ListBox))
+  let source = added.program.controls[added.program.controls.length() - 1]
+  let with_items = apply(added, SetControlItems(source.name, "铅笔\n橡皮"))
+  let copied = apply(with_items, DuplicateControl(source.name))
+  assert_true(copied.selected_control != source.name)
+  let copy = @ir.find_control(copied.program, copied.selected_control).unwrap()
+  assert_eq(copy.kind.tag(), source.kind.tag())
+  assert_eq(copy.x, source.x + 16)
+  assert_eq(copy.y, source.y + 16)
+  assert_eq(copy.items.length(), 2)
+  // 撤销复制 → 控件消失、选中回到原件
+  let undone = apply(copied, Undo)
+  assert_true(@ir.find_control(undone.program, copy.name) is None)
+  assert_eq(undone.selected_control, source.name)
+}
+
+///|
+test "undo reverts accepted proposal" {
+  let model = @app.initial_model()
+  let prompted = apply(model, SetPrompt("做一个查询成绩的表单"))
+  let generated = apply(prompted, GenerateProposal)
+  // 假模型确定性：样例相关 prompt 应产出待采纳提案
+  match generated.pending {
+    None => fail("假模型应产出待采纳提案")
+    Some(_) => ()
+  }
+  let accepted = apply(generated, AcceptProposal)
+  assert_true(accepted.pending is None)
+  assert_true(accepted.undo_stack.length() > model.undo_stack.length())
+  let undone = apply(accepted, Undo)
+  assert_eq(
+    @ir.program_signature(undone.program),
+    @ir.program_signature(model.program),
+  )
+}
+
+///|
+test "template switch is undoable" {
+  let model = @app.initial_model()
+  let switched = apply(model, SelectTemplate(2))
+  assert_true(
+    @ir.program_signature(switched.program) !=
+    @ir.program_signature(model.program),
+  )
+  let undone = apply(switched, Undo)
+  assert_eq(
+    @ir.program_signature(undone.program),
+    @ir.program_signature(model.program),
+  )
+}

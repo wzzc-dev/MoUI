@@ -179,7 +179,14 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       )
       Some((proposal_from_completion(model, completion), @moui.Effect::none()))
     }
-    AcceptProposal => Some((accept_proposal(model), @moui.Effect::none()))
+    AcceptProposal =>
+      // 采纳是程序变更：过撤销点（提案未改变 IR 时为 no-op 不入栈）
+      Some(
+        (
+          with_undo_point(model, "", m => accept_proposal(m)),
+          @moui.Effect::none(),
+        ),
+      )
     RejectProposal =>
       Some(
         (

@@ -51,6 +51,8 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         ),
       ]),
       @views.row([
+        @views.button(text(t, "app.edit.undo"), on_click=Undo, variant=Ghost),
+        @views.button(text(t, "app.edit.redo"), on_click=Redo, variant=Ghost),
         @views.button(
           text(t, "app.templates.hello"),
           on_click=SelectTemplate(0),
@@ -638,10 +640,17 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         } else {
           @views.text("")
         },
-        @views.button(
-          text(t, "app.inspector.delete"),
-          on_click=DeleteControl(control.name),
-        ),
+        @views.row([
+          @views.button(
+            text(t, "app.inspector.duplicate"),
+            on_click=DuplicateControl(control.name),
+            variant=Outline,
+          ),
+          @views.button(
+            text(t, "app.inspector.delete"),
+            on_click=DeleteControl(control.name),
+          ),
+        ]),
       ])
   }
 }

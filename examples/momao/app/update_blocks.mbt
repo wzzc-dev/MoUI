@@ -144,8 +144,18 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some((select_block(model, index), @moui.Effect::none()))
     EditBlock(source) =>
       Some(({ ..model, block_draft: source, }, @moui.Effect::none()))
-    CommitBlock => Some((commit_block(model), @moui.Effect::none()))
-    DeleteBlock => Some((delete_block(model), @moui.Effect::none()))
+    CommitBlock =>
+      Some(
+        (
+          // 仅当语句真的写回 IR 时产生还原点（解析失败为 no-op）
+          with_undo_point(model, "", m => commit_block(m)),
+          @moui.Effect::none(),
+        ),
+      )
+    DeleteBlock =>
+      Some(
+        (with_undo_point(model, "", m => delete_block(m)), @moui.Effect::none()),
+      )
     _ => None
   }
 }

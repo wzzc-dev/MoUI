@@ -59,6 +59,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.prompt", GeneratedI18nMessage::Text("Describe the app you want")),
       ("app.ai.reason", GeneratedI18nMessage::Text("Summary")),
       ("app.ai.reject", GeneratedI18nMessage::Text("Reject")),
+      ("app.edit.redo", GeneratedI18nMessage::Text("Redo")),
+      ("app.edit.undo", GeneratedI18nMessage::Text("Undo")),
       ("app.file.open", GeneratedI18nMessage::Text("Open")),
       ("app.file.save", GeneratedI18nMessage::Text("Save")),
       ("app.inspector", GeneratedI18nMessage::Text("Properties")),
@@ -198,6 +200,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.break_outside_loop",
         GeneratedI18nMessage::Text("break only works inside a loop"),
       ),
+      ("app.inspector.duplicate", GeneratedI18nMessage::Text("Duplicate")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("Class roll call")),
       (
         "err.unterminated_string",
@@ -265,6 +268,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.prompt", GeneratedI18nMessage::Text("描述你想要的应用")),
       ("app.ai.reason", GeneratedI18nMessage::Text("摘要")),
       ("app.ai.reject", GeneratedI18nMessage::Text("拒绝")),
+      ("app.edit.redo", GeneratedI18nMessage::Text("重做")),
+      ("app.edit.undo", GeneratedI18nMessage::Text("撤销")),
       ("app.file.open", GeneratedI18nMessage::Text("打开")),
       ("app.file.save", GeneratedI18nMessage::Text("保存")),
       ("app.inspector", GeneratedI18nMessage::Text("属性")),
@@ -402,6 +407,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.break_outside_loop",
         GeneratedI18nMessage::Text("跳出循环 只能用在循环里"),
       ),
+      ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),
       (
         "err.unterminated_string",

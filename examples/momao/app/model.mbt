@@ -36,7 +36,22 @@ pub(all) struct PendingProposal {
 }
 
 ///|
-/// 设计画布拖拽态：被拖控件 + 拖拽种类。
+/// 撤销深度上限（快照式 undo 栈，超过丢弃最旧条目）。
+pub const UNDO_DEPTH : Int = 50
+
+///|
+/// 撤销条目：变更前的编辑快照（程序 + 选中态 + 代码草稿）。
+/// coalesce_key 非空且与栈顶相同时连续同类编辑合并为一个还原点。
+pub(all) struct UndoEntry {
+  program : @ir.MomaoProgram
+  selected_control : String
+  selected_handler : String
+  code_draft : String
+  coalesce_key : String
+}
+
+///|
+/// 设计画布拖拽态：被拖控件 + 拖拽种类（移动/缩放）。
 pub(all) struct DragState {
   control : String
   kind : DragKind
@@ -79,6 +94,9 @@ pub(all) struct Model {
   // 运行期活状态：跨事件累积的变量值与控件文本（易语言式全局量）
   runtime_values : Map[String, @momao_lang.Value]
   runtime_texts : Map[String, String]
+  // 撤销/重做：变更前快照栈（深度 UNDO_DEPTH）与重做栈
+  undo_stack : Array[UndoEntry]
+  redo_stack : Array[UndoEntry]
 }
 
 ///|
@@ -95,10 +113,13 @@ pub(all) enum Msg {
   SetControlItems(String, String)
   SetControlRect(String, @ir.RectField, String)
   AddControl(@ir.ControlKind)
+  DuplicateControl(String)
   DeleteControl(String)
   SelectHandler(String)
   CreateHandler(String, @ir.EventKind)
   EditCode(String)
+  Undo
+  Redo
   SetPrompt(String)
   RealGenerationFinished(Result[String, String])
   ExplainHandler
@@ -203,6 +224,8 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     drag: None,
     runtime_values: @momao_lang.initial_values(program),
     runtime_texts: @momao_lang.initial_texts(program),
+    undo_stack: [],
+    redo_stack: [],
   }
   seed_code_draft(model)
 }
