@@ -78,6 +78,16 @@ pub fn validate_program(program : MomaoProgram) -> Array[IrError] {
       var_names.push(variable.name)
     }
   }
+  // (控件, 事件) 对唯一（计划 §3 不变量）；重复对使 find_handler 语义不确定
+  let handler_pairs : Array[String] = []
+  for handler in program.handlers {
+    let pair = "\{handler.control_name}@\{handler.event.tag()}"
+    if handler_pairs.contains(pair) {
+      errors.push(DuplicateHandler(handler.control_name))
+    } else {
+      handler_pairs.push(pair)
+    }
+  }
   for handler in program.handlers {
     total_stmts = total_stmts + count_stmts(handler.body)
     if handler.body.length() > MAX_STMTS_PER_HANDLER {

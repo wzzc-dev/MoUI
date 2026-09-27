@@ -205,3 +205,53 @@ test "delete top level statement shifts chain" {
   assert_eq(deleted.length(), 2)
   assert_true(deleted[0] is @ir.If(_, _, _, _) || deleted[0] is @ir.CountLoop(_, _, _))
 }
+
+///|
+test "path surgery on else-if arms and else branch" {
+  // If 带一个 else-if 臂 + else 臂：三条路径分别替换/删除
+  let body : Array[@ir.Stmt] = [
+    @ir.If(
+      @ir.Var("开"),
+      [@ir.Assign("a", @ir.NumLit(1.0))],
+      [
+        (@ir.Var("中"), [@ir.Assign("b", @ir.NumLit(2.0))]),
+        (@ir.Var("关"), [@ir.Assign("c", @ir.NumLit(3.0))]),
+      ],
+      [@ir.Assign("d", @ir.NumLit(4.0))],
+    ),
+  ]
+  // then 臂 [0,0,0] / else-if 第二臂 [0,1,1,0] / else [0,2,0]
+  let replaced = @blocks.replace_stmt_at(
+    body,
+    [0, 1, 1, 0],
+    @ir.Assign("c2", @ir.NumLit(9.0)),
+  )
+  match @blocks.stmt_at(replaced, [0, 1, 1, 0]) {
+    Some(stmt) =>
+      assert_true(stmt is @ir.Assign("c2", _))
+    None => fail("else-if 臂内语句应可寻址")
+  }
+  // 注意：replace_stmt_at 是就地语义（同数组引用），原 body 同步可见变更
+  // 删除 else 臂内语句，其余臂不受影响
+  let deleted = @blocks.delete_stmt_at(body, [0, 2, 0])
+  match @blocks.stmt_at(deleted, [0, 2, 0]) {
+    Some(_) => fail("else 臂内语句应已删除")
+    None => ()
+  }
+  match @blocks.stmt_at(deleted, [0, 0, 0]) {
+    Some(_) => ()
+    None => fail("then 臂不受删除影响")
+  }
+}
+
+///|
+test "out-of-bounds paths are safe no-ops" {
+  let body : Array[@ir.Stmt] = [@ir.Assign("x", @ir.NumLit(1.0))]
+  assert_true(@blocks.stmt_at(body, [5, 1, 2]) is None)
+  assert_true(@blocks.stmt_at(body, []) is None)
+  // 越界替换/删除返回等价结构（不崩溃、不改原数组长度）
+  let same = @blocks.replace_stmt_at(body, [9], @ir.Break)
+  assert_eq(@ir.count_stmts(same), 1)
+  let same2 = @blocks.delete_stmt_at(body, [9])
+  assert_eq(@ir.count_stmts(same2), 1)
+}

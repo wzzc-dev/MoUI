@@ -336,3 +336,44 @@ test "resize from NE/SW corners keeps opposite edges fixed" {
   assert_eq(sw_tiny.width, @ir.MIN_CONTROL_SIZE)
   assert_eq(sw_tiny.x + sw_tiny.width, 160)
 }
+
+///|
+test "duplicate handler pair is rejected" {
+  let handler : @ir.Handler = {
+    control_name: "按钮",
+    event: @ir.OnClick,
+    note_zh: "点",
+    note_en: "click",
+    body: [],
+  }
+  let program : @ir.MomaoProgram = {
+    version: 1,
+    window: @ir.default_window(),
+    controls: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "按钮",
+        text: "",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+    variables: [],
+    handlers: [handler, { ..handler, note_zh: "重复", note_en: "dup" }],
+  }
+  assert_true(
+    @ir.validate_program(program).any(e => e is @ir.DuplicateHandler(_)),
+  )
+  // 同控件不同事件不冲突
+  let ok : @ir.MomaoProgram = {
+    ..program,
+    handlers: [handler, { ..handler, event: @ir.OnChange }],
+  }
+  assert_true(
+    !@ir.validate_program(ok).any(e => e is @ir.DuplicateHandler(_)),
+  )
+}

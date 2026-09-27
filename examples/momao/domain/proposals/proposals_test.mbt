@@ -206,3 +206,314 @@ test "system prompt mentions gates and notes" {
   assert_true(prompt.contains("note"))
   assert_true(prompt.contains("Never output source code"))
 }
+
+///|
+/// 拒绝矩阵：13 类 ProposalError 全覆盖（可直达的逐一触发；
+/// UnknownControl/UnknownHandler/DuplicateHandler 三个保留变体经
+/// Structural(IrError) 语义等价触发——校验链在合并程序上跑 @ir.validate_program）。
+
+///|
+fn encoded_hello() -> String {
+  @proposals.encode_proposal(
+    @proposals.proposal_from_program(
+      @proposals.sample_hello(),
+      "测试",
+      "test",
+    ),
+  )
+}
+
+///|
+fn decode_errors(text : String) -> Array[@proposals.ProposalError] {
+  match @proposals.decode_proposal(text) {
+    Err(errors) => errors
+    Ok(_) => []
+  }
+}
+
+///|
+test "reject: invalid json, missing version, bad version" {
+  assert_true(decode_errors("{ nope") is [InvalidJson, ..])
+  assert_true(decode_errors("{}") is [MissingField("version")])
+  assert_true(
+    decode_errors("{\"version\": 2}") is [BadVersion(2)],
+  )
+}
+
+///|
+test "reject: bad control kind via tampered encode" {
+  let tampered = encoded_hello().replace(
+    old="\"kind\":\"button\"",
+    new="\"kind\":\"slider\"",
+  )
+  let errors = decode_errors(tampered)
+  assert_true(errors.any(e => e is BadControlKind("slider")))
+}
+
+///|
+test "reject: bad event kind via tampered encode" {
+  let tampered = encoded_hello().replace(
+    old="\"event\":\"on_click\"",
+    new="\"event\":\"on_hover\"",
+  )
+  let errors = decode_errors(tampered)
+  assert_true(errors.any(e => e is BadEventKind("on_hover")))
+}
+
+///|
+test "reject: bad statement kind via tampered encode" {
+  let tampered = encoded_hello().replace(
+    old="\"op\":\"call\"",
+    new="\"op\":\"summon\"",
+  )
+  let errors = decode_errors(tampered)
+  assert_true(errors.any(e => e is BadStatement("summon")))
+}
+
+///|
+test "reject: bad expr kind via tampered encode" {
+  let tampered = encoded_hello().replace(
+    old="\"t\":\"str\"",
+    new="\"t\":\"num\"",
+  )
+  let errors = decode_errors(tampered)
+  assert_true(errors.any(e => e is BadExpr("num")))
+}
+
+///|
+/// 校验链层：结构 / 语言 / 可读性（struct 变异 + validate_proposal）。
+
+///|
+fn handler_ref_proposal(
+  control : String,
+  event : @ir.EventKind,
+) -> @proposals.ProposalV1 {
+  let base = @proposals.proposal_from_program(
+    @ir.empty_program(),
+    "加子程序",
+    "add handler",
+  )
+  {
+    ..base,
+    handlers_add: [
+      @ir.Handler::{
+        control_name: control,
+        event,
+        note_zh: "点击后打招呼",
+        note_en: "say hi on click",
+        body: [@ir.Call("set_text", [@ir.StrLit("显示"), @ir.StrLit("你好")])],
+      },
+    ],
+  }
+}
+
+///|
+test "reject: empty summary is a readability failure" {
+  let base = @proposals.proposal_from_program(
+    @proposals.sample_hello(),
+    "",
+    "",
+  )
+  let errors = @proposals.validate_proposal(@proposals.sample_hello(), base)
+  assert_true(errors.any(e => e is Readability("summary")))
+}
+
+///|
+test "reject: handler without bilingual note" {
+  let base = @proposals.proposal_from_program(
+    @ir.empty_program(),
+    "无说明",
+    "no note",
+  )
+  let proposal = {
+    ..handler_ref_proposal("按钮", @ir.OnClick),
+    handlers_add: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "",
+        note_en: "",
+        body: [],
+      },
+    ],
+    controls_add: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "按钮",
+        text: "",
+        x: 10,
+        y: 10,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+  }
+  let errors = @proposals.validate_proposal(@ir.empty_program(), proposal)
+  assert_true(
+    errors.any(e =>
+      e is Readability("handler.按钮.on_click.note"),
+    ),
+  )
+}
+
+///|
+test "reject: junk names a1/tmp" {
+  let base = @proposals.proposal_from_program(
+    @ir.empty_program(),
+    "命名",
+    "naming",
+  )
+  let with_junk_control = {
+    ..base,
+    controls_add: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "a1",
+        text: "",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+  }
+  let errors = @proposals.validate_proposal(
+    @ir.empty_program(),
+    with_junk_control,
+  )
+  assert_true(errors.any(e => e is Readability("control.a1")))
+  let with_junk_var = {
+    ..base,
+    variables_add: [@ir.Variable::{ name: "tmp", init: "0", }],
+  }
+  let errors2 = @proposals.validate_proposal(@ir.empty_program(), with_junk_var)
+  assert_true(errors2.any(e => e is Readability("variable.tmp")))
+}
+
+///|
+test "reject: structural issues surface as Structural(IrError)" {
+  let base = @proposals.proposal_from_program(
+    @proposals.sample_hello(),
+    "重复控件",
+    "dup control",
+  )
+  let hello = @proposals.sample_hello()
+  let existing = hello.controls[0]
+  // 同名控件 → DuplicateControlName
+  let dup = {
+    ..base,
+    controls_add: [{ ..existing, id: 999, }],
+  }
+  let errors = @proposals.validate_proposal(hello, dup)
+  assert_true(
+    errors.any(e =>
+      e is Structural(@ir.DuplicateControlName(_)),
+    ),
+  )
+  // 子程序引用不存在的控件 → UnknownControlInHandler
+  let orphan = {
+    ..handler_ref_proposal("不存在", @ir.OnClick),
+    controls_add: [],
+  }
+  let errors2 = @proposals.validate_proposal(@ir.empty_program(), orphan)
+  assert_true(
+    errors2.any(e => e is Structural(@ir.UnknownControlInHandler(_))),
+  )
+  // 按钮不支持 on_change → UnsupportedEvent（控件须真实存在才会查事件支持）
+  let wrong_event = {
+    ..handler_ref_proposal("按钮", @ir.OnChange),
+    controls_add: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "按钮",
+        text: "",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+  }
+  let errors3 = @proposals.validate_proposal(@ir.empty_program(), wrong_event)
+  assert_true(
+    errors3.any(e => e is Structural(@ir.UnsupportedEvent(_, _))),
+  )
+  // 重复 (控件, 事件) 子程序 → DuplicateHandler（提案的 add 是替换语义
+  // 造不出重复对；重复只能来自损坏的基底程序，校验链照样拦截）
+  let corrupt_base : @ir.MomaoProgram = {
+    ..@ir.empty_program(),
+    controls: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "按钮",
+        text: "",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+    handlers: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "一",
+        note_en: "one",
+        body: [],
+      },
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "二",
+        note_en: "two",
+        body: [],
+      },
+    ],
+  }
+  let benign = @proposals.proposal_from_program(
+    corrupt_base,
+    "什么也不改",
+    "change nothing",
+  )
+  let errors4 = @proposals.validate_proposal(corrupt_base, benign)
+  assert_true(errors4.any(e => e is Structural(@ir.DuplicateHandler(_))))
+}
+
+///|
+test "reject: unknown builtin in body is a language issue" {
+  let proposal = {
+    ..handler_ref_proposal("按钮", @ir.OnClick),
+    handlers_add: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "点",
+        note_en: "click",
+        body: [@ir.Call("魔法命令", [@ir.NumLit(1.0)])],
+      },
+    ],
+    controls_add: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "按钮",
+        text: "",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+  }
+  let errors = @proposals.validate_proposal(@ir.empty_program(), proposal)
+  assert_true(errors.any(e => e is LanguageIssue(_)))
+}
