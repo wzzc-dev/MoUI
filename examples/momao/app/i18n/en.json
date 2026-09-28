@@ -179,6 +179,8 @@
     "err.expr_too_deep": "Expression is too deep",
     "app.dialog.save": "Save MoMao project",
     "app.dialog.open": "Open MoMao project",
-    "app.dialog.export": "Choose export directory"
+    "app.dialog.export": "Choose export directory",
+    "app.design.empty": "The canvas is empty — add a control from the palette to begin",
+    "app.ai.settings": "Model settings"
   }
 }

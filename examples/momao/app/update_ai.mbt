@@ -264,8 +264,28 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some(({ ..model, provider_endpoint: value, }, @moui.Effect::none()))
     SetProviderModel(value) =>
       Some(({ ..model, provider_model: value, }, @moui.Effect::none()))
+    // 掩码态下 text_field 的 on_input 送来的是星号串，直接写会毁掉真值：
+    // 未展开时忽略编辑，用户点「显示」后再改。
     SetProviderKey(value) =>
-      Some(({ ..model, provider_key: value, }, @moui.Effect::none()))
+      if model.provider_key_revealed {
+        Some(({ ..model, provider_key: value, }, @moui.Effect::none()))
+      } else {
+        Some((model, @moui.Effect::none()))
+      }
+    ToggleProviderKeyReveal =>
+      Some(
+        (
+          { ..model, provider_key_revealed: !model.provider_key_revealed, },
+          @moui.Effect::none(),
+        ),
+      )
+    ToggleProviderSettings =>
+      Some(
+        (
+          { ..model, provider_settings_open: !model.provider_settings_open, },
+          @moui.Effect::none(),
+        ),
+      )
     _ => None
   }
 }

@@ -631,7 +631,7 @@ test "canvas tap selects on click and stays quiet during drag release" {
 test "design canvas plan draws grid, handles and alignment guides" {
   let program = @proposals.sample_hello()
   // 无拖拽：网格点阵 + 选中描边 + 4 角手柄，无参考线
-  let plan = @app.design_draw_plan(program, "按钮", None, 0.0, 0.0)
+  let plan = @app.design_draw_plan(program, "按钮", None)
   let mut grid_dots = 0
   let mut handles = 0
   let mut guides = 0
@@ -662,7 +662,7 @@ test "design canvas plan draws grid, handles and alignment guides" {
   }
   let dragged = @ir.Control::{ ..anchor, id: 2, name: "拖块", x: 103, y: 40, }
   let pair = @ir.MomaoProgram::{ ..base, controls: [anchor, dragged], }
-  let dragging = @app.design_draw_plan(pair, "拖块", Some("拖块"), 0.0, 0.0)
+  let dragging = @app.design_draw_plan(pair, "拖块", Some("拖块"))
   let mut vertical_guides = 0
   for op in dragging {
     match op {

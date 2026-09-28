@@ -104,6 +104,14 @@ pub(all) struct Model {
   provider_endpoint : String
   provider_model : String
   provider_key : String
+  // 密钥显隐（password_field 的展开态；掩码态下忽略输入防星号写穿）
+  provider_key_revealed : Bool
+  // AI 面板「模型设置」折叠态（默认收起，常驻三输入框太占面板）
+  provider_settings_open : Bool
+  // 未保存标记：程序编码 ≠ 最近一次保存/打开/还原基线时为真，标题旁显示 ●
+  dirty : Bool
+  saved_encoding : String
+  draft_encoding : String
   notice : String
   explanation : String
   // AI 请求进行中（真实 provider 生成/讲解）：面板显示加载态
@@ -164,6 +172,9 @@ pub(all) enum Msg {
   SetProviderEndpoint(String)
   SetProviderModel(String)
   SetProviderKey(String)
+  ToggleProviderKeyReveal
+  ToggleProviderSettings
+  DraftLoaded(@services.ServiceTaskResult[String?])
   RunStart
   RunStop
   RunTick
@@ -218,6 +229,10 @@ pub fn empty_provider_config() -> ProviderConfig {
 }
 
 ///|
+/// 草稿自动保存的 settings 键（编码后的程序 JSON；随会话持久化）。
+pub const DRAFT_SETTINGS_KEY : String = "momao.draft"
+
+///|
 /// 初始模型：问候样例 + 中文界面 + 假模型；代码草稿按当前语言播种。
 /// provider_config 非空时预填面板（key 仍只进会话内存）。
 pub fn initial_model(provider_config? : ProviderConfig) -> Model {
@@ -236,6 +251,7 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
   } else {
     config.model
   }
+  let encoding = @codec.encode_program(program)
   let model = {
     program,
     language: ZhHans,
@@ -252,6 +268,11 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     provider_endpoint: endpoint,
     provider_model: model_name,
     provider_key: config.api_key,
+    provider_key_revealed: false,
+    provider_settings_open: false,
+    dirty: false,
+    saved_encoding: encoding,
+    draft_encoding: encoding,
     notice: "",
     explanation: "",
     ai_busy: false,

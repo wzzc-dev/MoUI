@@ -179,6 +179,8 @@
     "err.expr_too_deep": "表达式过深",
     "app.dialog.save": "保存 MoMao 项目",
     "app.dialog.open": "打开 MoMao 项目",
-    "app.dialog.export": "选择导出目录"
+    "app.dialog.export": "选择导出目录",
+    "app.design.empty": "画布还是空的——点左侧「控件」开始搭建吧",
+    "app.ai.settings": "模型设置"
   }
 }

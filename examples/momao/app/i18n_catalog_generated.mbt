@@ -97,6 +97,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_click", GeneratedI18nMessage::Text("on click")),
       ("app.ai.endpoint", GeneratedI18nMessage::Text("Endpoint")),
       ("app.ai.generate", GeneratedI18nMessage::Text("Generate proposal")),
+      ("app.ai.settings", GeneratedI18nMessage::Text("Model settings")),
       ("app.block.apply", GeneratedI18nMessage::Text("Apply edit")),
       ("app.dialog.open", GeneratedI18nMessage::Text("Open MoMao project")),
       ("app.dialog.save", GeneratedI18nMessage::Text("Save MoMao project")),
@@ -115,6 +116,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("event.on_change", GeneratedI18nMessage::Text("on change")),
       ("app.block.delete", GeneratedI18nMessage::Text("Delete statement")),
+      (
+        "app.design.empty",
+        GeneratedI18nMessage::Text(
+          "The canvas is empty — add a control from the palette to begin",
+        ),
+      ),
       ("app.handler.none", GeneratedI18nMessage::Text("No handler selected")),
       ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
       (
@@ -471,6 +478,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_click", GeneratedI18nMessage::Text("被单击")),
       ("app.ai.endpoint", GeneratedI18nMessage::Text("接口地址")),
       ("app.ai.generate", GeneratedI18nMessage::Text("生成提案")),
+      ("app.ai.settings", GeneratedI18nMessage::Text("模型设置")),
       ("app.block.apply", GeneratedI18nMessage::Text("应用修改")),
       ("app.dialog.open", GeneratedI18nMessage::Text("打开 MoMao 项目")),
       ("app.dialog.save", GeneratedI18nMessage::Text("保存 MoMao 项目")),
@@ -487,6 +495,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("event.on_change", GeneratedI18nMessage::Text("内容改变")),
       ("app.block.delete", GeneratedI18nMessage::Text("删除语句")),
+      (
+        "app.design.empty",
+        GeneratedI18nMessage::Text(
+          "画布还是空的——点左侧「控件」开始搭建吧",
+        ),
+      ),
       ("app.handler.none", GeneratedI18nMessage::Text("未选中子程序")),
       ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
       (

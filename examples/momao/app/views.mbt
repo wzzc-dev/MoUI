@@ -41,7 +41,7 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.column(
       [
         // 品牌标记与标题保持稳定宽度；模式导航和运行操作各自成组，
-        // 路演时先看到 MoMao，再看到当前工作模式。
+        // 路演时先看到 MoMao，再看到当前工作模式。标题后的 ● = 有未保存修改。
         @views.row(
           [
             @views.row(
@@ -58,7 +58,10 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
                   height=26.0,
                   padding=0.0,
                 ),
-                @views.text(text(t, "app.title"), role=Title),
+                @views.text(
+                  text(t, "app.title") + (if model.dirty { " ●" } else { "" }),
+                  role=Title,
+                ),
               ],
               spacing=8.0,
             ),
@@ -85,11 +88,13 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           ],
           spacing=10.0,
         ),
+        // 单行工具栏：撤销/重做 + 模板 + 文件操作合并（原第三行整行省下，
+        // 把垂直空间还给主区）。固定 12pt 弹性隔离块分组；不用竖直 divider
+        // ——它按可用高度测量，会把行撑到窗口高。
         @views.row(
           [
             // 快捷键 chip 里的 mono 16px 文案是宽度大头：Ctrl+Shift+Z 实测
             // ~116px，chip 宽度必须 ≥ 文案+内边距，否则文字被左右裁切。
-            @views.text(text(t, "app.templates"), role=Caption, width=60.0),
             // 撤销/重做带键盘快捷键（Ctrl+Z / Ctrl+Shift+Z，链式追加 Cmd 变体
             // 兼容 macOS——shortcut modifier 按修饰键精确匹配，需各注册一份）
             @views.shortcut_button(
@@ -101,7 +106,7 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               ),
               variant=Ghost,
               width=160.0,
-              height=32.0,
+              height=40.0,
               shortcut_width=84.0,
             ).keyboard_shortcut(
               @core.KeyboardShortcut::new(
@@ -118,7 +123,7 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               ),
               variant=Ghost,
               width=216.0,
-              height=32.0,
+              height=40.0,
               shortcut_width=140.0,
             ).keyboard_shortcut(
               @core.KeyboardShortcut::new(
@@ -126,49 +131,55 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
                 modifiers=@core.KeyModifiers::new(meta=true, shift=true),
               ),
             ),
+            @views.spacer(min_length=12.0, weight=0.0),
             @views.button(
               text(t, "app.templates.hello"),
               on_click=SelectTemplate(0),
               variant=Tonal,
+              height=40.0,
             ),
             @views.button(
               text(t, "app.templates.roll_call"),
               on_click=SelectTemplate(1),
               variant=Tonal,
+              height=40.0,
             ),
             @views.button(
               text(t, "app.templates.drill"),
               on_click=SelectTemplate(2),
               variant=Tonal,
+              height=40.0,
             ),
             @views.button(
               text(t, "app.templates.store"),
               on_click=SelectTemplate(3),
               variant=Tonal,
+              height=40.0,
             ),
-          ],
-          spacing=6.0,
-        ),
-        // 文件动作单独成行，避免中文“导出应用”在窄窗口被裁切。
-        @views.row(
-          [
+            @views.spacer(min_length=12.0, weight=0.0),
             @views.button(
               text(t, "app.file.save"),
               on_click=SaveRequested,
               variant=Outline,
               icon=Some(Save),
+              width=90.0,
+              height=40.0,
             ),
             @views.button(
               text(t, "app.file.open"),
               on_click=OpenRequested,
               variant=Outline,
               icon=Some(FolderOpen),
+              width=90.0,
+              height=40.0,
             ),
             @views.button(
               text(t, "app.file.export"),
               on_click=ExportRequested,
               variant=Outline,
               icon=Some(FileNew),
+              width=120.0,
+              height=40.0,
             ),
           ],
           spacing=6.0,
@@ -211,22 +222,32 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         justify=Between,
       ),
     )
-    for
-      kind in [
-        @ir.Button,
-        @ir.Label,
-        @ir.TextField,
-        @ir.CheckBox,
-        @ir.ListBox,
-        @ir.Table,
-      ] {
-      palette.push(
-        @views.button(
-          text(t, "control.\{kind.tag()}"),
-          on_click=AddControl(kind),
-          variant=Tonal,
-        ),
-      )
+    // 控件两列网格：面板纵向预算省一半，事件子程序列表得以进入首屏
+    let kinds = [
+      @ir.Button,
+      @ir.Label,
+      @ir.TextField,
+      @ir.CheckBox,
+      @ir.ListBox,
+      @ir.Table,
+    ]
+    let mut kind_index = 0
+    while kind_index < kinds.length() {
+      let cells : Array[@moui.View[Msg]] = []
+      let mut cell = 0
+      while cell < 2 && kind_index + cell < kinds.length() {
+        cells.push(
+          @views.button(
+            text(t, "control.\{kinds[kind_index + cell].tag()}"),
+            on_click=AddControl(kinds[kind_index + cell]),
+            variant=Tonal,
+            width=84.0,
+          ),
+        )
+        cell = cell + 1
+      }
+      palette.push(@views.row(cells, spacing=8.0))
+      kind_index = kind_index + 2
     }
   }
   let handlers : Array[@moui.View[Msg]] = [
@@ -306,11 +327,11 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         padding=10.0,
       ),
       width=224.0,
-      height=560.0,
+      height=600.0,
       shows_indicator=true,
     ),
     width=224.0,
-    height=560.0,
+    height=600.0,
     padding=0.0,
   )
 }
@@ -329,6 +350,8 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         },
         // 可读文案过翻译器：画布语义标签不烤进画布实现
         text(t, "app.design.canvas"),
+        // 空画布引导（i18n）：没有控件时画布中央的提示
+        text(t, "app.design.empty"),
       )
     ModeBlocks => blocks_panel(model, t)
     ModeCode => code_panel(model, t)
@@ -436,7 +459,7 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       @views.scroll_view(
         @views.column(panel),
         width=480.0,
-        height=560.0,
+        height=600.0,
         shows_indicator=true,
       )
     }
@@ -502,7 +525,7 @@ fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   @views.scroll_view(
     @views.column(lines),
     width=480.0,
-    height=560.0,
+    height=600.0,
     shows_indicator=true,
   )
 }
@@ -588,7 +611,7 @@ fn help_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   @views.scroll_view(
     @views.column(rows),
     width=480.0,
-    height=560.0,
+    height=600.0,
     shows_indicator=true,
   )
 }
@@ -857,11 +880,11 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         @views.scroll_view(
           @views.column(panel),
           width=436.0,
-          height=532.0,
+          height=580.0,
           shows_indicator=true,
         ),
         width=480.0,
-        height=560.0,
+        height=600.0,
         padding=10.0,
       )
     }
@@ -890,12 +913,43 @@ fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         padding=10.0,
       ),
       width=300.0,
-      height=560.0,
+      height=600.0,
       shows_indicator=true,
     ),
     width=300.0,
-    height=560.0,
+    height=600.0,
     padding=0.0,
+  )
+}
+
+///|
+/// 危险按钮样式：朱砂前景 + 半透明朱砂描边，悬停淡红底——与中性
+/// Outline 区分破坏性操作（删除控件），不给实心主色。
+fn danger_button_style() -> @style.ButtonStyle {
+  let danger = @core.Color::rgba(r=0.78, g=0.26, b=0.20)
+  let border = @core.BorderStyle::new(
+    brush=@core.Brush::solid(danger.multiply_alpha(0.5)),
+    width=1.0,
+  )
+  fn state(foreground : @core.Color, background : @core.Color) -> @style.ControlStateStyle {
+    @style.ControlStateStyle::{
+      foreground,
+      background: @core.Brush::solid(background),
+      border: Some(border),
+      radius: 6.0,
+      shadow: None,
+      bottom_border_only: false,
+      inner_focus_border: None,
+    }
+  }
+  @style.ButtonStyle::new(
+    normal=state(danger, @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+    hovered=state(danger, @core.Color::rgba(r=0.99, g=0.90, b=0.89)),
+    pressed=state(danger, @core.Color::rgba(r=0.99, g=0.83, b=0.82)),
+    disabled=state(
+      @core.Color::rgba(r=0.78, g=0.26, b=0.20).multiply_alpha(0.4),
+      @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+    ),
   )
 }
 
@@ -903,23 +957,23 @@ fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 /// 属性检查器：名称 / 文本 / 选项 / 删除。
 fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match find_selected_control(model) {
-    None => @views.text(text(t, "app.inspector.none"))
+    None => @views.text(text(t, "app.inspector.none"), align=TextStart)
     Some(control) =>
       @views.column([
-        @views.text(text(t, "app.inspector")),
-        @views.text(text(t, "app.inspector.name")),
+        @views.text(text(t, "app.inspector"), align=TextStart),
+        @views.text(text(t, "app.inspector.name"), align=TextStart),
         @views.text_field(
           control.name,
           on_input=new_value => SetControlName(control.name, new_value),
           width=250.0,
         ),
-        @views.text(text(t, "app.inspector.text")),
+        @views.text(text(t, "app.inspector.text"), align=TextStart),
         @views.text_field(
           control.text,
           on_input=new_value => SetControlText(control.name, new_value),
           width=250.0,
         ),
-        @views.text(text(t, "app.inspector.position")),
+        @views.text(text(t, "app.inspector.position"), align=TextStart),
         @views.row([
           @views.text_field(
             control.x.to_string(),
@@ -932,7 +986,7 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
             width=70.0,
           ),
         ]),
-        @views.text(text(t, "app.inspector.size")),
+        @views.text(text(t, "app.inspector.size"), align=TextStart),
         @views.row([
           @views.text_field(
             control.width.to_string(),
@@ -947,7 +1001,7 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         ]),
         if control.kind is @ir.ListBox || control.kind is @ir.Table {
           @views.column([
-            @views.text(text(t, "app.inspector.items")),
+            @views.text(text(t, "app.inspector.items"), align=TextStart),
             @views.text_area(
               join_lines(control.items),
               on_input=new_value => SetControlItems(control.name, new_value),
@@ -964,11 +1018,11 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
             on_click=DuplicateControl(control.name),
             variant=Outline,
           ),
-          // 删除是破坏性操作，不该占用实心主色位
+          // 删除是破坏性操作：危险样式（朱砂描边/悬停淡红），不是实心主色
           @views.button(
             text(t, "app.inspector.delete"),
             on_click=DeleteControl(control.name),
-            variant=Outline,
+            style=danger_button_style(),
           ),
         ]),
       ])
@@ -991,7 +1045,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.row(
       [
         // 标题限宽：text 默认 160 会把这一行撑到 262，几乎吃满滚动视口
-        @views.text(text(t, "app.ai.title"), role=Subtitle, width=130.0),
+        @views.text(text(t, "app.ai.title"), role=Subtitle, width=130.0, align=TextStart),
         @views.badge(
           if model.provider_mode is Fake {
             text(t, "app.ai.fake")
@@ -1102,47 +1156,54 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   // 讲解
   let explanation_card : Array[@moui.View[Msg]] = []
   if model.explanation != "" {
-    explanation_card.push(@views.text(text(t, "app.ai.explanation")))
+    explanation_card.push(@views.text(text(t, "app.ai.explanation"), align=TextStart))
     explanation_card.push(@views.text(model.explanation))
   }
-  // provider 设置（key 只进会话内存）
-  let provider_card : Array[@moui.View[Msg]] = [
-    @views.text(
-      if model.provider_mode is Fake {
-        text(t, "app.ai.fake")
-      } else {
-        text(t, "app.ai.real")
-      },
+  // provider 设置收进折叠区：三输入框常驻占了近半面板，默认收起后
+  // 提案/讲解区获得首屏空间；需要时一键展开。
+  // 密钥用 password 掩码：语义树/读屏只能看到星号，点「显示」才暴露
+  // （掩码态下的编辑在 update 层忽略，防星号写穿真值）。
+  let provider_section = @views.disclosure(
+    text(t, "app.ai.settings"),
+    content=@views.column(
+      [
+        @views.button(
+          text(t, "app.ai.fake"),
+          on_click=SetProviderMode(Fake),
+          variant=Outline,
+        ),
+        @views.button(
+          text(t, "app.ai.real"),
+          on_click=SetProviderMode(Real),
+          variant=Outline,
+        ),
+        @views.text_field(
+          model.provider_endpoint,
+          on_input=value => SetProviderEndpoint(value),
+          placeholder=text(t, "app.ai.endpoint"),
+          width=220.0,
+        ),
+        @views.text_field(
+          model.provider_model,
+          on_input=value => SetProviderModel(value),
+          placeholder=text(t, "app.ai.model"),
+          width=220.0,
+        ),
+        @views.password_field(
+          model.provider_key,
+          on_input=value => SetProviderKey(value),
+          revealed=model.provider_key_revealed,
+          on_toggle_reveal=ToggleProviderKeyReveal,
+          placeholder=text(t, "app.ai.key"),
+          width=220.0,
+        ),
+      ],
+      spacing=8.0,
     ),
-    @views.button(
-      text(t, "app.ai.fake"),
-      on_click=SetProviderMode(Fake),
-      variant=Outline,
-    ),
-    @views.button(
-      text(t, "app.ai.real"),
-      on_click=SetProviderMode(Real),
-      variant=Outline,
-    ),
-    @views.text_field(
-      model.provider_endpoint,
-      on_input=value => SetProviderEndpoint(value),
-      placeholder=text(t, "app.ai.endpoint"),
-      width=250.0,
-    ),
-    @views.text_field(
-      model.provider_model,
-      on_input=value => SetProviderModel(value),
-      placeholder=text(t, "app.ai.model"),
-      width=250.0,
-    ),
-    @views.text_field(
-      model.provider_key,
-      on_input=value => SetProviderKey(value),
-      placeholder=text(t, "app.ai.key"),
-      width=250.0,
-    ),
-  ]
+    expanded=model.provider_settings_open,
+    on_toggle=ToggleProviderSettings,
+    width=250.0,
+  )
   let panel : Array[@moui.View[Msg]] = []
   for item in head {
     panel.push(item)
@@ -1158,7 +1219,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   }
   // 提案历史（会话内）：回放 AI 干了什么
   if model.proposal_history.length() > 0 {
-    panel.push(@views.text(text(t, "app.ai.history"), role=Subtitle))
+    panel.push(@views.text(text(t, "app.ai.history"), role=Subtitle, align=TextStart))
     for record in model.proposal_history {
       panel.push(
         @views.row([
@@ -1187,9 +1248,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   for item in explanation_card {
     panel.push(item)
   }
-  for item in provider_card {
-    panel.push(item)
-  }
+  panel.push(provider_section)
   @views.column(panel)
 }
 
@@ -1207,21 +1266,26 @@ pub fn view(model : Model) -> @moui.View[Msg] {
   let main_row = if show_panels {
     @views.row(
       [
-        @views.spacer(),
+        // 固定 24pt 端边距（弹性 spacer 会被弹性画布列吃掉 slack，面板又会
+        // 贴回窗口边缘）；剩余 slack 全给画布列等比放大。
+        @views.spacer(min_length=24.0, weight=0.0),
         left_panel(model, t),
         @views.divider(axis=Vertical),
-        center_panel(model, t),
+        // 画布列弹性伸缩：剩余宽度全部给画布，画布按约束等比铺满
+        // （缩放因子 = 帧宽/640，命中测试同比例换算），不再是固定 640
+        // 两侧吃留白。
+        center_panel(model, t).flexible(),
         @views.divider(axis=Vertical),
         right_panel(model, t),
-        @views.spacer(),
+        @views.spacer(min_length=24.0, weight=0.0),
       ],
       align=Start,
-    ).frame(height=560.0)
+    ).frame(height=600.0)
   } else {
     @views.row(
       [@views.spacer(), center_panel(model, t), @views.spacer()],
       align=Start,
-    ).frame(height=560.0)
+    ).frame(height=600.0)
   }
   @views.column([
     top_bar(model, t),
@@ -1229,9 +1293,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
     // 主行必须钳制高度：行内竖直 divider 按「可用高度」测量（和横 divider
     // 按可用宽度测量是同一约定），不钳制时把行撑到接近窗口高，画布再被
     // 容器垂直居中，顶部就空出一条大空白、底部 notice 被推出窗口。
-    // 560 与左右面板卡同高；align=Start 让 640x480 的画布与面板顶对齐，
-    // 不再被居中下移。两端弹性 spacer 让内容在窗口内水平居中（与顶栏的
-    // 居中节奏一致），左栏卡片不再贴窗口边缘；窗口变窄时自动收缩。
+    // 600 与左右面板卡同高；顶栏合并成两行后主区从 560 长到 600。
     main_row,
     @views.text(model.notice),
   ])

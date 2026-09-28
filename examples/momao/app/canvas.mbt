@@ -116,21 +116,6 @@ pub(all) enum DesignDrawOp {
 }
 
 ///|
-/// 把设计坐标矩形平移到窗口全局坐标。
-fn place_rect(
-  rect : @geometry.Rect,
-  dx : Double,
-  dy : Double,
-) -> @geometry.Rect {
-  @geometry.Rect::new(
-    x=rect.origin.x + dx,
-    y=rect.origin.y + dy,
-    width=rect.size.width,
-    height=rect.size.height,
-  )
-}
-
-///|
 /// 对齐容差（设计坐标 px）：拖拽边缘与其他边缘差 ≤ 4 即吸附显示参考线。
 fn near_edge(a : Double, b : Double) -> Bool {
   (a - b).abs() <= 4.0
@@ -369,28 +354,22 @@ pub fn snap_resize_position(
 
 ///|
 /// 设计画布绘制计划：窗口底板 → 网格点阵 → 控件（名字条 + 文本 + 行）→
-/// 选中描边与角手柄 → 拖拽对齐参考线。
-/// dx/dy 是画布 frame 在窗口中的原点——MoUI paint 契约是窗口全局坐标，
-/// 命令必须自带偏移（render 管线按原样收集命令，不做逐层平移）。
+/// 选中描边与角手柄 → 拖拽对齐参考线。全部是**设计坐标**（640×480）；
+/// 全局坐标变换（平移 + 等比缩放）在绘制闭包里按 frame 现算，缩放时
+/// 命中测试用同一个比例换算，二者永不失配。
 pub fn design_draw_plan(
   program : @ir.MomaoProgram,
   selection : String,
   drag_control : String?,
-  dx : Double,
-  dy : Double,
 ) -> Array[DesignDrawOp] {
   let ops : Array[DesignDrawOp] = []
   ops.push(
     WindowFrame(
-      place_rect(
-        @geometry.Rect::new(
-          x=0.0,
-          y=0.0,
-          width=design_width,
-          height=design_height,
-        ),
-        dx,
-        dy,
+      @geometry.Rect::new(
+        x=0.0,
+        y=0.0,
+        width=design_width,
+        height=design_height,
       ),
     ),
   )
@@ -399,17 +378,13 @@ pub fn design_draw_plan(
   while gx < design_width {
     let mut gy = 32.0
     while gy < design_height {
-      ops.push(
-        GridDot(
-          @geometry.Rect::new(x=gx + dx, y=gy + dy, width=2.0, height=2.0),
-        ),
-      )
+      ops.push(GridDot(@geometry.Rect::new(x=gx, y=gy, width=2.0, height=2.0)))
       gy = gy + 32.0
     }
     gx = gx + 32.0
   }
   for control in program.controls {
-    let rect = place_rect(control_rect(control), dx, dy)
+    let rect = control_rect(control)
     ops.push(FillControl(rect, control.kind))
     let name_rect = @geometry.Rect::new(
       x=rect.origin.x,
@@ -452,7 +427,7 @@ pub fn design_draw_plan(
       }
     }
   }
-  // 拖拽中的对齐参考线（朱砂色，画布全高/全宽）
+  // 拖拽中的对齐参考线（智能蓝——与朱砂选中描边区分，拖拽辅助不抢选中语义）
   match drag_control {
     None => ()
     Some(name) =>
@@ -465,10 +440,10 @@ pub fn design_draw_plan(
             control_rect(dragged),
           )
           for x in verticals {
-            ops.push(GuideV(x + dx))
+            ops.push(GuideV(x))
           }
           for y in horizontals {
-            ops.push(GuideH(y + dy))
+            ops.push(GuideH(y))
           }
         }
       }
@@ -477,40 +452,69 @@ pub fn design_draw_plan(
 }
 
 ///|
-/// 表单设计画布：canvas 绘制 + 点选/拖拽事件转 typed Msg（画布局部坐标）。
-/// semantics_label 由调用方经 i18n 翻译器传入（可读文案不烤进画布）。
-/// measure 忽略约束返回固定设计尺寸（640x480）——画布不能被行布局拉伸，
-/// 否则右侧检查器会被挤出窗口、设计坐标与命中测试失真。
+/// 智能参考线颜色：与选中描边的朱砂区分，拖拽辅助不抢选中语义。
+fn guide_color() -> @graphics.Color {
+  @graphics.Color::rgba(r=0.30, g=0.52, b=0.90)
+}
+
+///|
+/// 表单设计画布：canvas 绘制 + 点选/拖拽事件转 typed Msg（设计坐标）。
+/// semantics_label 与空态提示由调用方经 i18n 翻译器传入。
+/// 测量按约束**等比铺满**可用区域（缩放因子 = 帧宽 / 640），绘制与命中
+/// 测试都从各自收到的 frame 现算同一比例——画布列弹性伸缩时二者永不失配。
 pub fn design_canvas(
   program : @ir.MomaoProgram,
   selection : String,
   drag_control : String?,
   semantics_label : String,
+  empty_hint : String,
 ) -> @moui.View[Msg] {
   @views.container(
     canvas(
-      measure=fn(_constraints) {
-        @geometry.Size::new(width=design_width, height=design_height)
+      measure=fn(constraints) {
+        // 等比铺满：宽 = min(可用宽, 可用高 ÷ 3/4)；无界约束退回 1:1 基准
+        let ratio = design_height / design_width
+        let mut width = if constraints.max.width < constraints.max.height / ratio {
+          constraints.max.width
+        } else {
+          constraints.max.height / ratio
+        }
+        if width <= 0.0 || width > 1.0e8 {
+          width = design_width
+        }
+        @geometry.Size::new(width~, height=width * ratio)
       },
       draw=fn(ctx, frame) {
-        // MoUI paint 契约：命令是窗口全局坐标，绘制内容用 frame.origin 偏移
-        // 进自己的 frame。不用 PushClip/PushTransform——wasm 渲染管线里
-        // 画布层内嵌 clip/transform 栈会吞掉整层命令（已实测）。
-        let dx = frame.origin.x
-        let dy = frame.origin.y
-        for op in design_draw_plan(program, selection, drag_control, dx, dy) {
+        // MoUI paint 契约：命令是窗口全局坐标。缩放因子从分配到的帧现算，
+        // 绘制计划（设计坐标）统一做 平移×缩放 变换。不用 PushClip/
+        // PushTransform——wasm 渲染管线里画布层内嵌 clip/transform 栈会
+        // 吞掉整层命令（已实测）。
+        let scale = if frame.size.width > 0.0 {
+          frame.size.width / design_width
+        } else {
+          1.0
+        }
+        fn place(rect : @geometry.Rect) -> @geometry.Rect {
+          @geometry.Rect::new(
+            x=frame.origin.x + rect.origin.x * scale,
+            y=frame.origin.y + rect.origin.y * scale,
+            width=rect.size.width * scale,
+            height=rect.size.height * scale,
+          )
+        }
+        for op in design_draw_plan(program, selection, drag_control) {
           match op {
             WindowFrame(rect) => {
               fill_rounded_rect(
                 ctx,
-                @graphics.RoundedRect::new(rect~, radius=10.0),
+                @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
                 @graphics.Brush::solid(
                   @graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
                 ),
               )
               stroke_rounded_rect(
                 ctx,
-                @graphics.RoundedRect::new(rect~, radius=10.0),
+                @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
                 @graphics.Brush::solid(
                   @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
                 ),
@@ -520,13 +524,14 @@ pub fn design_canvas(
             FillControl(rect, kind) =>
               fill_rounded_rect(
                 ctx,
-                @graphics.RoundedRect::new(rect~, radius=6.0),
+                @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
                 @graphics.Brush::solid(kind_fill_light(kind)),
               )
             ControlLabel(name, rect, color) => {
+              let placed = place(rect)
               fill_rounded_rect(
                 ctx,
-                @graphics.RoundedRect::new(rect~, radius=4.0),
+                @graphics.RoundedRect::new(rect=placed, radius=4.0 * scale),
                 @graphics.Brush::solid(color),
               )
               draw_text(
@@ -534,29 +539,30 @@ pub fn design_canvas(
                 @text.TextRun::new(
                   text=name,
                   frame=@geometry.Rect::new(
-                    x=rect.origin.x + 6.0,
-                    y=rect.origin.y + 1.0,
-                    width=(rect.size.width - 8.0).max(0.0),
-                    height=rect.size.height,
+                    x=placed.origin.x + 6.0 * scale,
+                    y=placed.origin.y + 1.0 * scale,
+                    width=(placed.size.width - 8.0 * scale).max(0.0),
+                    height=placed.size.height,
                   ),
-                  font=@text.FontSpec::new(size=11.0),
+                  font=@text.FontSpec::new(size=11.0 * scale),
                   color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0),
                 ),
               )
             }
             ControlText(content, rect, color) =>
               if content != "" {
+                let placed = place(rect)
                 draw_text(
                   ctx,
                   @text.TextRun::new(
                     text=content,
                     frame=@geometry.Rect::new(
-                      x=rect.origin.x + 8.0,
-                      y=rect.origin.y + rect.size.height * 0.45,
-                      width=(rect.size.width - 12.0).max(0.0),
-                      height=rect.size.height * 0.5,
+                      x=placed.origin.x + 8.0 * scale,
+                      y=placed.origin.y + placed.size.height * 0.45,
+                      width=(placed.size.width - 12.0 * scale).max(0.0),
+                      height=placed.size.height * 0.5,
                     ),
-                    font=@text.FontSpec::new(size=13.0),
+                    font=@text.FontSpec::new(size=13.0 * scale),
                     color~,
                   ),
                 )
@@ -568,13 +574,15 @@ pub fn design_canvas(
                 stroke_rounded_rect(
                   ctx,
                   @graphics.RoundedRect::new(
-                    rect=@geometry.Rect::new(
-                      x=rect.origin.x + 6.0,
-                      y=row_y,
-                      width=(rect.size.width - 12.0).max(0.0),
-                      height=12.0,
+                    rect=place(
+                      @geometry.Rect::new(
+                        x=rect.origin.x + 6.0,
+                        y=row_y,
+                        width=(rect.size.width - 12.0).max(0.0),
+                        height=12.0,
+                      ),
                     ),
-                    radius=3.0,
+                    radius=3.0 * scale,
                   ),
                   @graphics.Brush::solid(
                     @graphics.Color::rgba(r=0.55, g=0.56, b=0.60),
@@ -589,13 +597,15 @@ pub fn design_canvas(
               stroke_rounded_rect(
                 ctx,
                 @graphics.RoundedRect::new(
-                  rect=@geometry.Rect::new(
-                    x=rect.origin.x - inflate,
-                    y=rect.origin.y - inflate,
-                    width=rect.size.width + inflate * 2.0,
-                    height=rect.size.height + inflate * 2.0,
+                  rect=place(
+                    @geometry.Rect::new(
+                      x=rect.origin.x - inflate,
+                      y=rect.origin.y - inflate,
+                      width=rect.size.width + inflate * 2.0,
+                      height=rect.size.height + inflate * 2.0,
+                    ),
                   ),
-                  radius=8.0,
+                  radius=8.0 * scale,
                 ),
                 @graphics.Brush::solid(
                   @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
@@ -609,14 +619,14 @@ pub fn design_canvas(
               )
               fill_rounded_rect(
                 ctx,
-                @graphics.RoundedRect::new(rect~, radius=2.0),
+                @graphics.RoundedRect::new(rect=place(rect), radius=2.0 * scale),
                 brush,
               )
             }
             GridDot(rect) =>
               fill_rounded_rect(
                 ctx,
-                @graphics.RoundedRect::new(rect~, radius=1.0),
+                @graphics.RoundedRect::new(rect=place(rect), radius=1.0 * scale),
                 @graphics.Brush::solid(
                   @graphics.Color::rgba(r=0.85, g=0.86, b=0.90),
                 ),
@@ -626,16 +636,14 @@ pub fn design_canvas(
                 ctx,
                 @graphics.RoundedRect::new(
                   rect=@geometry.Rect::new(
-                    x=x - 0.75,
-                    y=dy,
+                    x=frame.origin.x + x * scale - 0.75,
+                    y=frame.origin.y,
                     width=1.5,
-                    height=design_height,
+                    height=frame.size.height,
                   ),
                   radius=0.0,
                 ),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-                ),
+                @graphics.Brush::solid(guide_color()),
                 1.5,
               )
             GuideH(y) =>
@@ -643,31 +651,61 @@ pub fn design_canvas(
                 ctx,
                 @graphics.RoundedRect::new(
                   rect=@geometry.Rect::new(
-                    x=dx,
-                    y=y - 0.75,
-                    width=design_width,
+                    x=frame.origin.x,
+                    y=frame.origin.y + y * scale - 0.75,
+                    width=frame.size.width,
                     height=1.5,
                   ),
                   radius=0.0,
                 ),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-                ),
+                @graphics.Brush::solid(guide_color()),
                 1.5,
               )
           }
+        }
+        // 空画布引导：没有控件时给一句从哪开始的提示（i18n 由调用方传入）
+        if program.controls.length() == 0 {
+          draw_text(
+            ctx,
+            @text.TextRun::new(
+              text=empty_hint,
+              frame=@geometry.Rect::new(
+                x=frame.origin.x,
+                y=frame.origin.y,
+                width=frame.size.width,
+                height=frame.size.height,
+              ),
+              font=@text.FontSpec::new(size=15.0),
+              color=@graphics.Color::rgba(r=0.55, g=0.56, b=0.60),
+              align=TextCenter,
+            ),
+          )
         }
       },
       semantics_label~,
     )
     // 点选在前：单击（无拖拽位移）只走 tap 识别器，拖拽结束的 tap 以
     // model.drag 是否仍存在区分（见 update 的 CanvasTap 处理）。
+    // 帧 → 设计坐标：除以与绘制同一来源（帧宽/640）的缩放因子。
     .on_tap_with_frame(fn(position, frame) {
-      Msg::CanvasTap(position.x - frame.origin.x, position.y - frame.origin.y)
+      let scale = if frame.size.width > 0.0 {
+        frame.size.width / design_width
+      } else {
+        1.0
+      }
+      Msg::CanvasTap(
+        (position.x - frame.origin.x) / scale,
+        (position.y - frame.origin.y) / scale,
+      )
     })
     .on_drag_with_frame(fn(event, frame) {
-      let lx = event.position.x - frame.origin.x
-      let ly = event.position.y - frame.origin.y
+      let scale = if frame.size.width > 0.0 {
+        frame.size.width / design_width
+      } else {
+        1.0
+      }
+      let lx = (event.position.x - frame.origin.x) / scale
+      let ly = (event.position.y - frame.origin.y) / scale
       if event.phase == @views.DragGesturePhase::Started {
         Msg::CanvasPress(lx, ly)
       } else if event.phase == @views.DragGesturePhase::Changed {

@@ -1,5 +1,30 @@
 # MoMao UI layout traps (views.mbt)
 
+- **Verify layout via MCP, not pixels**: momao's macos entry serves MCP NDJSON
+  on its own stdin (`serve_with_diagnostics`, protocol 2024-11-05): 2 semantic
+  tools + 4 diagnostics (runtime counters, paint summary with ALL drawn texts,
+  raw pointer/keyboard event injection `{"kind":"Pointer","position":{x,y},
+  "phase":"Down|Up"}`, command intents). `read_semantics` frames are numeric
+  ground truth; `perform_action` drives the app (target node_id as decimal
+  STRING, action `{"kind":"activate"}`, precondition `{"kind":"latest"}`).
+  This closed the loop on: empty-canvas hint (paint texts), dirty marker,
+  draft restore, canvas zoom hit-testing.
+- Known leak (FIXED): text_field values are exposed verbatim in the semantics
+  tree. The provider key now uses `password_field` (masked display + reveal
+  toggle) and update ignores edits while masked (star-text would corrupt the
+  real value).
+- Design-canvas auto-fit: the canvas measure fills its constraints
+  (`width = min(max_w, max_h/0.75)`), scale = frame.width/640 computed in the
+  draw/tap/drag closures — the canvas column is `.flexible()` in the main row,
+  so the canvas grows with the window and hit-testing stays consistent without
+  model state. Drawing plan ops are pure design coords; transforms happen at
+  draw time.
+- Draft auto-save: `program()`'s update wrapper recomputes
+  `@codec.encode_program(program)` per message; dirty = encoding !=
+  `saved_encoding` (set on save/open), draft written to settings key
+  `momao.draft` only when the encoding changed since `draft_encoding` (RunTick
+  at 30fps doesn't rewrite). Restored drafts boot dirty (● next to the title).
+
 - `@views.text` defaults to `width=160` and the width is a **minimum** (grows with
   measured text). Inside a fixed-width panel it silently inflates the scroll
   content wider than the viewport; sibling buttons stretch to the inflated width

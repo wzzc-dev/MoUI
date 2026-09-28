@@ -60,7 +60,11 @@ async fn main {
   let worker_task : async () -> Unit = async fn() {
     @provider.provider_worker_loop(owner)
   }
-  let agent_task : async () -> Unit = async fn() { @mcp_stdio.serve(host) }
+  let agent_task : async () -> Unit = async fn() {
+    // serve_with_diagnostics：语义工具之外再暴露运行时计数/绘制摘要/
+    // 事件与命令注入（诊断面），供 Agent 做无头 E2E 与健康观测。
+    @mcp_stdio.serve_with_diagnostics(host)
+  }
   ignore(@async.all([window_task, worker_task, agent_task])) catch {
     err => println("MoMao Studio exited with error: \{err}")
   }

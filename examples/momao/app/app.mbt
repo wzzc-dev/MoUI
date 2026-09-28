@@ -81,7 +81,13 @@ pub fn update_with_services(
       match result {
         Success(_) =>
           (
-            { ..model, notice: text(translator(model), "app.status.saved"), },
+            // 保存成功：基线对齐当前程序，脏标记由 program() 的集中
+            // 包装按 saved_encoding 自动清除。
+            {
+              ..model,
+              notice: text(translator(model), "app.status.saved"),
+              saved_encoding: @codec.encode_program(model.program),
+            },
             @moui.Effect::none(),
           )
         Failure(error) =>
@@ -138,6 +144,8 @@ pub fn update_with_services(
                 undo_stack: [],
                 redo_stack: [],
                 proposal_history: [],
+                // 打开成功：基线对齐新程序（脏标记随之清除）
+                saved_encoding: @codec.encode_program(program),
                 selected_control: first_control_name(program.controls),
                 selected_handler: first_handler_key(program.handlers),
                 notice: text(translator(model), "app.status.opened"),
@@ -206,6 +214,35 @@ pub fn update_with_services(
         Failure(error) =>
           ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
+      }
+    // 草稿恢复：上次会话的自动保存内容。基线仍是初始样例，集中包装会把
+    // dirty 置真，提示用户保存一份正式文件。
+    DraftLoaded(result) =>
+      match result {
+        Success(Some(source)) =>
+          match @codec.decode_program(source) {
+            Ok(program) => {
+              let next = {
+                ..model,
+                program,
+                pending: None,
+                run: None,
+                drag: None,
+                block_drag: None,
+                selected_block: -1,
+                block_draft: "",
+                runtime_values: @momao_lang.initial_values(program),
+                runtime_texts: @momao_lang.initial_texts(program),
+                runtime_rows: @momao_lang.initial_rows(program),
+                runtime_selections: Map([], capacity=4),
+                selected_control: first_control_name(program.controls),
+                selected_handler: first_handler_key(program.handlers),
+              }
+              (sync_code_draft(next), @moui.Effect::none())
+            }
+            Err(_) => (model, @moui.Effect::none())
+          }
+        _ => (model, @moui.Effect::none())
       }
     _ => update_pure(model, msg)
   }
@@ -312,14 +349,20 @@ pub fn program(
     init=() => {
       (
         initial_model(provider_config?),
-        services
-        .settings()
-        .read(LANGUAGE_SETTINGS_KEY)
-        .effect(map=result => LanguageLoaded(language_tag_of(result))),
+        @moui.Effect::batch([
+          services
+          .settings()
+          .read(LANGUAGE_SETTINGS_KEY)
+          .effect(map=result => LanguageLoaded(language_tag_of(result))),
+          services
+          .settings()
+          .read(DRAFT_SETTINGS_KEY)
+          .effect(map=result => DraftLoaded(result)),
+        ]),
       )
     },
     update=(model, msg) => {
-      match msg {
+      let (next0, effect0) = match msg {
         SaveRequested
         | SavePathPicked(_)
         | SaveCompleted(_)
@@ -329,6 +372,7 @@ pub fn program(
         | ExportRequested
         | ExportDirPicked(_)
         | ExportFileWritten(_)
+        | DraftLoaded(_)
         | GenerateProposal
         | RealGenerationFinished(_)
         | ExplainHandler
@@ -338,6 +382,29 @@ pub fn program(
           update_with_provider(model, msg, services, submit, on_locale)
         _ => update_pure(model, msg)
       }
+      // 集中脏标记 + 草稿自动保存：程序编码偏离基线即标脏（标题旁 ●）；
+      // 内容相对上次草稿有变化才写 settings，运行期 30fps 的 RunTick
+      // 不改程序，不会反复写。
+      let encoding = @codec.encode_program(next0.program)
+      let dirty = encoding != next0.saved_encoding
+      let should_write = dirty && encoding != next0.draft_encoding
+      let next = {
+        ..next0,
+        dirty,
+        draft_encoding: if should_write { encoding } else { next0.draft_encoding },
+      }
+      let effect = if should_write {
+        @moui.Effect::batch([
+          effect0,
+          services
+          .settings()
+          .write(DRAFT_SETTINGS_KEY, encoding)
+          .effect(map=_ => SetNotice("")),
+        ])
+      } else {
+        effect0
+      }
+      (next, effect)
     },
     view~,
     subscriptions=model => run_subscription(model, timer),
