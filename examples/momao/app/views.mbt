@@ -87,7 +87,9 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         ),
         @views.row(
           [
-            @views.text(text(t, "app.templates"), role=Caption),
+            // 快捷键 chip 里的 mono 16px 文案是宽度大头：Ctrl+Shift+Z 实测
+            // ~116px，chip 宽度必须 ≥ 文案+内边距，否则文字被左右裁切。
+            @views.text(text(t, "app.templates"), role=Caption, width=60.0),
             // 撤销/重做带键盘快捷键（Ctrl+Z / Ctrl+Shift+Z，链式追加 Cmd 变体
             // 兼容 macOS——shortcut modifier 按修饰键精确匹配，需各注册一份）
             @views.shortcut_button(
@@ -98,9 +100,9 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
                 modifiers=@core.KeyModifiers::new(control=true),
               ),
               variant=Ghost,
-              width=136.0,
+              width=160.0,
               height=32.0,
-              shortcut_width=64.0,
+              shortcut_width=84.0,
             ).keyboard_shortcut(
               @core.KeyboardShortcut::new(
                 key="z",
@@ -115,9 +117,9 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
                 modifiers=@core.KeyModifiers::new(control=true, shift=true),
               ),
               variant=Ghost,
-              width=150.0,
+              width=216.0,
               height=32.0,
-              shortcut_width=86.0,
+              shortcut_width=140.0,
             ).keyboard_shortcut(
               @core.KeyboardShortcut::new(
                 key="z",
@@ -181,10 +183,13 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 ///|
 /// 左栏：控件面板（设计模式）+ 事件子程序列表（全部模式可用）。
 fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+  // 分节标题文字必须给显式宽度：text 默认宽 160，会把滚动内容撑到
+  // 视口（182）之外，按钮跟拉伸后被视口裁掉左右圆角与尾部文字。
+  // 140 = 182 视口 − 徽章 28 − 间距 10 的余量（英文 "Event handlers" 也放得下）。
   let palette : Array[@moui.View[Msg]] = [
     @views.row(
       [
-        @views.text(text(t, "app.palette"), role=Subtitle),
+        @views.text(text(t, "app.palette"), role=Subtitle, width=140.0),
         @views.badge(
           model.program.controls.length().to_string(),
           tone=@style.BadgeTone::Neutral,
@@ -216,7 +221,7 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.divider(),
     @views.row(
       [
-        @views.text(text(t, "app.handlers"), role=Subtitle),
+        @views.text(text(t, "app.handlers"), role=Subtitle, width=140.0),
         @views.badge(
           model.program.handlers.length().to_string(),
           tone=@style.BadgeTone::Neutral,
@@ -229,7 +234,10 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   ]
   for handler in model.program.handlers {
     let key = handler_key(handler.control_name, handler.event.tag())
-    handlers.push(@views.button(key, on_click=SelectHandler(key)))
+    // 子程序入口是列表项不是主操作，用 Tonal 避免一列实心红块
+    handlers.push(
+      @views.button(key, on_click=SelectHandler(key), variant=Tonal),
+    )
   }
   // 新建子程序入口：选中控件支持、但尚无 handler 的事件，点击即建空子程序
   match find_selected_control(model) {
@@ -248,7 +256,9 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         }
       }
       if missing.length() > 0 {
-        handlers.push(@views.text(text(t, "app.handler.new"), role=Subtitle))
+        handlers.push(
+          @views.text(text(t, "app.handler.new"), role=Subtitle, width=140.0),
+        )
         for item in missing {
           handlers.push(item)
         }
@@ -266,11 +276,11 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   @views.card(
     @views.scroll_view(
       @views.column(palette_items),
-      width=158.0,
+      width=182.0,
       height=532.0,
       shows_indicator=true,
     ),
-    width=180.0,
+    width=204.0,
     height=560.0,
     padding=10.0,
   )
@@ -605,11 +615,13 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
                 .unwrap_or(-1) ==
                 index
               let label = if selected { "▶ " + item } else { item }
+              // 列表行是可选项不是主操作：Tonal/Outline 斑马纹替代实心红
               let row = if index % 2 == 0 {
                 @views.button(
                   label,
                   on_click=ControlPicked(control.name, index),
                   width=160.0,
+                  variant=Tonal,
                 )
               } else {
                 @views.button(
@@ -832,19 +844,24 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let inspector = inspector_panel(model, t)
   let ai = ai_panel(model, t)
+  // 滚动指示器画在「视口右缘内缩 7pt」处：视口贴到卡片边（卡片 padding=0、
+  // 视口 300 全出血），指示器才落在面板最右侧。内容列会被视口宽紧约束
+  // 拉伸，用限宽 250 的居中容器吸收：输入框在面板内对称居中，右侧空出的
+  // 槽位正好给指示器。透明背景只要留白，不要 Base 底色。
   @views.card(
     @views.scroll_view(
       @views.container(
         @views.column([inspector, @views.divider(), ai]),
-        padding=2.0,
+        background=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.0),
+        padding=10.0,
       ),
-      width=272.0,
-      height=532.0,
+      width=300.0,
+      height=560.0,
       shows_indicator=true,
     ),
     width=300.0,
     height=560.0,
-    padding=10.0,
+    padding=0.0,
   )
 }
 
@@ -860,13 +877,13 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         @views.text_field(
           control.name,
           on_input=new_value => SetControlName(control.name, new_value),
-          width=240.0,
+          width=250.0,
         ),
         @views.text(text(t, "app.inspector.text")),
         @views.text_field(
           control.text,
           on_input=new_value => SetControlText(control.name, new_value),
-          width=240.0,
+          width=250.0,
         ),
         @views.text(text(t, "app.inspector.position")),
         @views.row([
@@ -901,7 +918,7 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               join_lines(control.items),
               on_input=new_value => SetControlItems(control.name, new_value),
               lines=4,
-              width=240.0,
+              width=250.0,
             ),
           ])
         } else {
@@ -913,9 +930,11 @@ fn inspector_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
             on_click=DuplicateControl(control.name),
             variant=Outline,
           ),
+          // 删除是破坏性操作，不该占用实心主色位
           @views.button(
             text(t, "app.inspector.delete"),
             on_click=DeleteControl(control.name),
+            variant=Outline,
           ),
         ]),
       ])
@@ -937,7 +956,8 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let head : Array[@moui.View[Msg]] = [
     @views.row(
       [
-        @views.text(text(t, "app.ai.title"), role=Subtitle),
+        // 标题限宽：text 默认 160 会把这一行撑到 262，几乎吃满滚动视口
+        @views.text(text(t, "app.ai.title"), role=Subtitle, width=130.0),
         @views.badge(
           if model.provider_mode is Fake {
             text(t, "app.ai.fake")
@@ -959,10 +979,16 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       model.prompt_draft,
       on_input=value => SetPrompt(value),
       placeholder=text(t, "app.ai.prompt"),
-      width=260.0,
+      width=250.0,
     ),
+    // 每组只保留一个实心主按钮（生成提案）；讲解/模型切换是次级操作，
+    // 用 Outline 避免右栏变成一堵红墙。
     @views.button(text(t, "app.ai.generate"), on_click=GenerateProposal),
-    @views.button(text(t, "app.ai.explain"), on_click=ExplainHandler),
+    @views.button(
+      text(t, "app.ai.explain"),
+      on_click=ExplainHandler,
+      variant=Outline,
+    ),
   ]
   let prompt_error_card : Array[@moui.View[Msg]] = []
   if model.prompt_error != "" {
@@ -1020,7 +1046,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         )
       }
       proposal_card.push(
-        @views.scroll_view(@views.column(entries), width=260.0, height=140.0),
+        @views.scroll_view(@views.column(entries), width=250.0, height=140.0),
       )
       if !pending.valid {
         for error in pending.errors {
@@ -1030,7 +1056,11 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       proposal_card.push(
         @views.row([
           @views.button(text(t, "app.ai.accept"), on_click=AcceptProposal),
-          @views.button(text(t, "app.ai.reject"), on_click=RejectProposal),
+          @views.button(
+            text(t, "app.ai.reject"),
+            on_click=RejectProposal,
+            variant=Outline,
+          ),
         ]),
       )
     }
@@ -1050,25 +1080,33 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         text(t, "app.ai.real")
       },
     ),
-    @views.button(text(t, "app.ai.fake"), on_click=SetProviderMode(Fake)),
-    @views.button(text(t, "app.ai.real"), on_click=SetProviderMode(Real)),
+    @views.button(
+      text(t, "app.ai.fake"),
+      on_click=SetProviderMode(Fake),
+      variant=Outline,
+    ),
+    @views.button(
+      text(t, "app.ai.real"),
+      on_click=SetProviderMode(Real),
+      variant=Outline,
+    ),
     @views.text_field(
       model.provider_endpoint,
       on_input=value => SetProviderEndpoint(value),
       placeholder=text(t, "app.ai.endpoint"),
-      width=260.0,
+      width=250.0,
     ),
     @views.text_field(
       model.provider_model,
       on_input=value => SetProviderModel(value),
       placeholder=text(t, "app.ai.model"),
-      width=260.0,
+      width=250.0,
     ),
     @views.text_field(
       model.provider_key,
       on_input=value => SetProviderKey(value),
       placeholder=text(t, "app.ai.key"),
-      width=260.0,
+      width=250.0,
     ),
   ]
   let panel : Array[@moui.View[Msg]] = []
@@ -1128,15 +1166,24 @@ pub fn view(model : Model) -> @moui.View[Msg] {
   @views.column([
     top_bar(model, t),
     @views.divider(),
-    @views.row([
-      left_panel(model, t),
-      // 行内分隔线必须用 Vertical 轴：Horizontal divider 会测量成整行宽
-      // （它按约束最大宽填充），把后面的画布与右栏全部挤出窗口。
-      @views.divider(axis=Vertical),
-      center_panel(model, t),
-      @views.divider(axis=Vertical),
-      right_panel(model, t),
-    ]),
+    // 主行必须钳制高度：行内竖直 divider 按「可用高度」测量（和横 divider
+    // 按可用宽度测量是同一约定），不钳制时把行撑到接近窗口高，画布再被
+    // 容器垂直居中，顶部就空出一条大空白、底部 notice 被推出窗口。
+    // 560 与左右面板卡同高；align=Start 让 640x480 的画布与面板顶对齐，
+    // 不再被居中下移。两端弹性 spacer 让内容在窗口内水平居中（与顶栏的
+    // 居中节奏一致），左栏卡片不再贴窗口边缘；窗口变窄时自动收缩。
+    @views.row(
+      [
+        @views.spacer(),
+        left_panel(model, t),
+        @views.divider(axis=Vertical),
+        center_panel(model, t),
+        @views.divider(axis=Vertical),
+        right_panel(model, t),
+        @views.spacer(),
+      ],
+      align=Start,
+    ).frame(height=560.0),
     @views.text(model.notice),
   ])
   // 固定浅色主题：课堂/路演场景要求确定的演示外观，不随系统深色模式漂移
