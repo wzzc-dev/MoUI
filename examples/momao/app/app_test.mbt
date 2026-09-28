@@ -991,3 +991,24 @@ test "audit jump lands on the matching block" {
   assert_true(safe.mode is ModeBlocks)
   assert_eq(safe.selected_block, -1)
 }
+
+///|
+test "redo on empty stack is a safe no-op" {
+  // 键盘快捷键（Ctrl/Cmd+Z）在无撤销历史时误触也必须无害
+  let model = @app.initial_model()
+  let redone = apply(model, Redo)
+  assert_eq(
+    @ir.program_signature(redone.program),
+    @ir.program_signature(model.program),
+  )
+  assert_true(redone.redo_stack.is_empty())
+  let undone_twice = apply(
+    apply(apply(model, AddControl(@ir.Label)), Undo),
+    Undo,
+  )
+  // 只有一条撤销历史时，第二次 Undo 也是 no-op
+  assert_eq(
+    @ir.program_signature(undone_twice.program),
+    @ir.program_signature(model.program),
+  )
+}

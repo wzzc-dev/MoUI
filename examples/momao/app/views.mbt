@@ -63,8 +63,42 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         ),
       ]),
       @views.row([
-        @views.button(text(t, "app.edit.undo"), on_click=Undo, variant=Ghost),
-        @views.button(text(t, "app.edit.redo"), on_click=Redo, variant=Ghost),
+        // 撤销/重做带键盘快捷键（Ctrl+Z / Ctrl+Shift+Z，链式追加 Cmd 变体
+        // 兼容 macOS——shortcut modifier 按修饰键精确匹配，需各注册一份）
+        @views.shortcut_button(
+          text(t, "app.edit.undo"),
+          on_click=Undo,
+          shortcut=@core.KeyboardShortcut::new(
+            key="z",
+            modifiers=@core.KeyModifiers::new(control=true),
+          ),
+          variant=Ghost,
+          width=136.0,
+          height=32.0,
+          shortcut_width=64.0,
+        ).keyboard_shortcut(
+          @core.KeyboardShortcut::new(
+            key="z",
+            modifiers=@core.KeyModifiers::new(meta=true),
+          ),
+        ),
+        @views.shortcut_button(
+          text(t, "app.edit.redo"),
+          on_click=Redo,
+          shortcut=@core.KeyboardShortcut::new(
+            key="z",
+            modifiers=@core.KeyModifiers::new(control=true, shift=true),
+          ),
+          variant=Ghost,
+          width=150.0,
+          height=32.0,
+          shortcut_width=86.0,
+        ).keyboard_shortcut(
+          @core.KeyboardShortcut::new(
+            key="z",
+            modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+          ),
+        ),
         @views.button(
           text(t, "app.templates.hello"),
           on_click=SelectTemplate(0),
