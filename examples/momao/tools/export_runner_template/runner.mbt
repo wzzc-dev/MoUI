@@ -149,20 +149,45 @@ fn control_view(model : Model, control : @ir.Control) -> @moui.View[Msg] {
 /// 闸门卡：确认前零真实动作；展示「将要送出什么、送到哪」。
 fn gate_card(gate : @momao_lang.Gate) -> @moui.View[Msg] {
   let prompt = match gate.kind {
-    @momao_lang.Submit => "确认送出「\{gate.payload}」到 \{gate.prompt}？"
+    @momao_lang.Submit => "程序想把数据送到「\{gate.prompt}」，要送出的内容：\{gate.payload}。确认吗？"
     @momao_lang.Ask => gate.prompt
   }
   @views.column([
-    @views.text(prompt),
-    @views.button("确认", on_click=Answer(true)),
-    @views.button("拒绝", on_click=Answer(false)),
+    @views.callout("需要你的确认", prompt, tone=@style.Warning, width=420.0),
+    @views.row([
+      @views.button("确认送出", on_click=Answer(true), variant=Primary),
+      @views.button("拒绝", on_click=Answer(false), variant=Outline),
+    ]),
   ])
+}
+
+///|
+/// 审计色点：与 Studio 同一套语义色（赋值蓝/信息框绿/闸门朱砂/命令紫/条件橙/循环青）。
+fn audit_dot(op : @momao_lang.StepOp) -> @moui.View[Msg] {
+  let color = match op {
+    @momao_lang.OpAssign => @graphics.Color::rgba(r=0.30, g=0.52, b=0.90)
+    @momao_lang.OpMessage => @graphics.Color::rgba(r=0.30, g=0.62, b=0.36)
+    @momao_lang.OpGate => @graphics.Color::rgba(r=0.78, g=0.26, b=0.20)
+    @momao_lang.OpCommand => @graphics.Color::rgba(r=0.55, g=0.40, b=0.75)
+    @momao_lang.OpCondition => @graphics.Color::rgba(r=0.85, g=0.55, b=0.16)
+    @momao_lang.OpLoop => @graphics.Color::rgba(r=0.20, g=0.55, b=0.58)
+  }
+  @views.container(
+    @views.empty(),
+    background=color,
+    corner_radius=4.0,
+    width=8.0,
+    height=8.0,
+  )
 }
 
 ///|
 pub fn view(model : Model) -> @moui.View[Msg] {
   let items : Array[@moui.View[Msg]] = [
-    @views.text(model.program.window.title).title(),
+    @views.row([
+      @views.text(model.program.window.title).title(),
+      @views.text("由 MoMao 导出", role=Caption),
+    ]),
   ]
   if model.notice != "" {
     items.push(@views.text(model.notice))
@@ -177,6 +202,27 @@ pub fn view(model : Model) -> @moui.View[Msg] {
         Some(gate) => items.push(gate_card(gate))
         None => ()
       }
+      // 变量表：与 Studio 同一承诺（运行即讲解的数据面）
+      let names : Array[String] = []
+      for name in run.vars.keys() {
+        names.push(name)
+      }
+      names.sort()
+      if names.length() > 0 {
+        items.push(@views.text("变量").title())
+        for name in names {
+          match run.vars.get(name) {
+            Some(value) =>
+              items.push(
+                @views.row([
+                  @views.text(name, width=140.0),
+                  @views.text(@momao_lang.value_to_text(value), width=260.0),
+                ]),
+              )
+            None => ()
+          }
+        }
+      }
       if run.messages.length() > 0 {
         items.push(@views.text("消息").title())
         for message in run.messages {
@@ -187,7 +233,9 @@ pub fn view(model : Model) -> @moui.View[Msg] {
         @views.text("审计日志 · \{model.run_label}").title(),
       )
       for record in run.audit {
-        items.push(@views.text(record.detail))
+        items.push(
+          @views.row([audit_dot(record.op), @views.text(record.detail, width=400.0)]),
+        )
       }
       match run.error {
         Some(error) =>
@@ -199,7 +247,12 @@ pub fn view(model : Model) -> @moui.View[Msg] {
     }
   }
   @views
-  .scroll_view(@views.column(items), width=680.0, height=560.0)
+  .card(
+    @views.scroll_view(@views.column(items), width=660.0, height=540.0, shows_indicator=true),
+    width=700.0,
+    height=580.0,
+    padding=10.0,
+  )
   // 品牌主题：与 MoMao Studio 同源朱砂色（印泥朱砂主色派生浅色全角色盘，
   // 课堂/路演的确定性外观，不随系统深色漂移）
   .theme(runner_theme())

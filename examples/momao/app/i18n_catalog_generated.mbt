@@ -185,7 +185,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.expect_keyword",
         GeneratedI18nMessage::Text("Expected {a} here, found {b}"),
       ),
-      ("app.code.cheatsheet", GeneratedI18nMessage::Text("Keyword cheatsheet")),
+      (
+        "app.code.cheatsheet",
+        GeneratedI18nMessage::Text(
+          "Write your program here; keyword cheatsheet lives under Help",
+        ),
+      ),
       (
         "app.inspector.items",
         GeneratedI18nMessage::Text("Options (one per line)"),
@@ -215,6 +220,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.hist_rejected", GeneratedI18nMessage::Text("Rejected")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("Delete control")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("Confirm send")),
+      ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("selected_row")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("Unrecognized: {a}")),
       ("app.inspector.position", GeneratedI18nMessage::Text("Position")),
@@ -419,7 +425,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.expect_keyword",
         GeneratedI18nMessage::Text("这里应是「{a}」，实际是 {b}"),
       ),
-      ("app.code.cheatsheet", GeneratedI18nMessage::Text("关键字速查")),
+      (
+        "app.code.cheatsheet",
+        GeneratedI18nMessage::Text(
+          "在此编写程序；关键字速查见顶栏「帮助」",
+        ),
+      ),
       (
         "app.inspector.items",
         GeneratedI18nMessage::Text("选项（每行一项）"),
@@ -449,6 +460,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.hist_rejected", GeneratedI18nMessage::Text("已拒绝")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("确认送出")),
+      ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("取所选行")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("无法识别：{a}")),
       ("app.inspector.position", GeneratedI18nMessage::Text("位置")),

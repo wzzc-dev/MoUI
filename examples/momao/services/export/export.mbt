@@ -106,7 +106,7 @@ pub fn codec_pkg(name : String) -> String {
 ///|
 /// app 包：组合根导入 moui + views + 本地领域内核（runner 只引用这些）。
 pub fn app_pkg(name : String) -> String {
-  "import {\n  \"\{name}/domain/ir\",\n  \"\{name}/domain/momao_lang\",\n  \"\{name}/domain/codec\",\n  \"wzzc-dev/moui\",\n  \"wzzc-dev/moui/views\",\n  \"wzzc-dev/moui/core\",\n}\n\nsupported_targets = \"native+wasm-gc\"\n"
+  "import {\n  \"\{name}/domain/ir\",\n  \"\{name}/domain/momao_lang\",\n  \"\{name}/domain/codec\",\n  \"wzzc-dev/moui\",\n  \"wzzc-dev/moui/views\",\n  \"wzzc-dev/moui/core\",\n  \"wzzc-dev/moui/graphics\",\n  \"wzzc-dev/moui/views/style\",\n}\n\nsupported_targets = \"native+wasm-gc\"\n"
 }
 
 ///|

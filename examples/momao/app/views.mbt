@@ -387,9 +387,7 @@ fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.text(text(t, "app.preview.note"), role=Caption),
   ]
   for line in source.split("\n") {
-    lines.push(
-      @views.text(line.to_string(), width=460.0, align=TextStart),
-    )
+    lines.push(@views.text(line.to_string(), width=460.0, align=TextStart))
   }
   @views.scroll_view(
     @views.column(lines),
@@ -549,25 +547,51 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         }
         controls.push(widget)
       }
-      // 舞台标题条：正在运行 + 当前子程序 + 单步/继续 + 停止
-      let stage_head = @views.row([
-        @views.text(text(t, "app.run.stage"), role=Caption),
-        @views.text("\{run.handler_label}", role=Subtitle),
-        @views.button(
-          text(t, "app.run.step"),
-          on_click=RunStep,
-          variant=Outline,
-        ),
-        @views.button(
-          text(t, "app.run.resume"),
-          on_click=RunResume,
-          variant=Outline,
-        ),
-        @views.button(
-          text(t, "app.run.stop"),
-          on_click=RunStop,
-          variant=Outline,
-        ),
+      // 舞台条两行：标题行（正在运行 + 子程序）+ 按钮行（单步/继续/停止）。
+      // 单行挤 436px 会把继续/停止裁掉（实测）；按钮仅在运行中显示，
+      // 闸门待确认时追加 Warning 徽标提醒（确认卡可能滚出视野）。
+      let stage_head = @views.column([
+        @views.row([
+          @views.text(text(t, "app.run.stage"), role=Caption),
+          @views.text("\{run.handler_label}", role=Subtitle),
+        ]),
+        @views.row([
+          // 单步/继续在活运行（含闸门暂停）时显示——闸门暂停正是
+          // 「单步冻结计时器再确认」教学手法的入口
+          match run.state.status {
+            @momao_lang.Completed | @momao_lang.Failed => @views.text("")
+            _ =>
+              @views.button(
+                text(t, "app.run.step"),
+                on_click=RunStep,
+                variant=Outline,
+              )
+          },
+          match run.state.status {
+            @momao_lang.Completed | @momao_lang.Failed => @views.text("")
+            _ =>
+              @views.button(
+                text(t, "app.run.resume"),
+                on_click=RunResume,
+                variant=Outline,
+              )
+          },
+          match run.state.gate {
+            Some(_) =>
+              @views.badge(
+                text(t, "app.run.gate_pending"),
+                tone=@style.BadgeTone::Warning,
+                width=64.0,
+                height=24.0,
+              )
+            None => @views.text("")
+          },
+          @views.button(
+            text(t, "app.run.stop"),
+            on_click=RunStop,
+            variant=Outline,
+          ),
+        ]),
       ])
       // 变量表：当前变量 → 值，按键名稳定排序（运行即讲解的数据面）
       let variables_card : Array[@moui.View[Msg]] = []
