@@ -298,3 +298,20 @@
   TextCenter，代码语境要显式 align=TextStart。
 - **导出 runner 未接品牌主题**（独立应用控件是默认深色块）——功能正确
   外观欠账，是下一个 UI 提升项（视频素材 README 已注明规避）。
+
+## 2026-09-28 完善批次（冻结前收尾）新增事实
+
+- **RunStatus 有 WaitingGate 变体**：闸门暂停时 status 是 WaitingGate 而非
+  Running——按 status 过滤运行中按钮时要把 WaitingGate 算作活运行
+  （单步/继续在闸门暂停时仍可用，是「闸门暂停→单步冻结→确认后逐步」
+  教学手法的入口）；终态（Completed/Failed）才隐藏。
+- **运行舞台条单行会裁按钮**：436px 内滚区一行放不下 caption+子程序名+
+  3 按钮——拆两行。运行面板内的横向空间按 436 预算。
+- **导出 runner 模板**在 `tools/export_runner_template/runner.mbt`（sync_kernel
+  同步为 services/export/kernel_runner.mbt 常量）；改模板必跑 sync_kernel
+  + 导出烟测。bundle app_pkg 现依赖 moui/core + graphics + views/style
+  （style 是 **views 的子包**，写成 moui/style 会被工作区外构建拦下）。
+  runner 已接朱砂主题 + 卡片容器 + 变量表 + 审计色点 + callout 闸门卡。
+- **后台会话截不到原生窗口**：`moon run macos_skia` 后台启动进程存活、
+  但 AX 报 0 窗口、screencapture 只有桌面——窗口级 native 验证需要
+  前台会话（此前会话成功过，环境差异）。
