@@ -591,15 +591,15 @@ test "design handle press resizes with opposite corner fixed" {
       }
     None => fail("按上手柄应建立拖拽态")
   }
-  // 向右下拖：左上角不动，宽高生长（不越界，无夹取触发）
-  let dragged = apply(pressed, CanvasDragTo(se_x + 60.0, se_y + 90.0))
+  // 向右下拖：左上角不动，移动边落 32px 网格（290→288，252→256）
+  let dragged = apply(pressed, CanvasDragTo(se_x + 60.0, se_y + 100.0))
   let after = @ir.find_control(dragged.program, control.name).unwrap()
   assert_eq(after.x, control.x)
   assert_eq(after.y, control.y)
-  assert_eq(after.width, control.width + 60)
-  assert_eq(after.height, control.height + 90)
+  assert_eq(after.width, 288 - control.x)
+  assert_eq(after.height, 256 - control.y)
   // 松手清除拖拽态但保留选中
-  let released = apply(dragged, CanvasRelease(se_x + 60.0, se_y + 90.0))
+  let released = apply(dragged, CanvasRelease(se_x + 60.0, se_y + 100.0))
   assert_true(released.drag is None)
   assert_true(released.selected_control == control.name)
 }
@@ -625,18 +625,18 @@ test "snap move position aligns near edges only within tolerance" {
     y: 40,
   }
   let pair = [anchor, dragged]
-  // 左缘距锚点左缘 2px（≤4 容差）→ 吸附精确对齐；纵向无目标不动
+  // 左缘距锚点左缘 2px（≤4 容差）→ 吸附精确对齐；y 无参考线命中 → 落网格
   let (sx, sy) = @app.snap_move_position(
     pair, "拖块", 102.0, 40.0, 30.0, 30.0,
   )
   assert_eq(sx, 100.0)
-  assert_eq(sy, 40.0)
-  // 6px 超容差 → 不吸附
+  assert_eq(sy, 32.0)
+  // 双轴均超参考线容差 → 双轴落网格（106 → 96，40 → 32）
   let (fx, fy) = @app.snap_move_position(
     pair, "拖块", 106.0, 40.0, 30.0, 30.0,
   )
-  assert_eq(fx, 106.0)
-  assert_eq(fy, 40.0)
+  assert_eq(fx, 96.0)
+  assert_eq(fy, 32.0)
 }
 
 ///|
@@ -645,7 +645,8 @@ test "design drag snaps onto alignment guide" {
   let label = base.program.controls[base.program.controls.length() - 1]
   // 固定几何：锚点按钮 x=100；标签 x=103（与锚点左缘差 3px ≤ 容差）
   let anchored = apply(base, SetControlRect("按钮", @ir.RectX, "100"))
-  let placed = apply(anchored, SetControlRect(label.name, @ir.RectX, "103"))
+  let placed_y = apply(anchored, SetControlRect(label.name, @ir.RectY, "200"))
+  let placed = apply(placed_y, SetControlRect(label.name, @ir.RectX, "103"))
   let placed_label = @ir.find_control(placed.program, label.name).unwrap()
   // 先点空白取消选中，避免按在选中控件手柄附近误入缩放
   let deselected = apply(placed, CanvasTap(600.0, 450.0))
@@ -664,7 +665,8 @@ test "design drag snaps onto alignment guide" {
   let dragged = apply(pressed, CanvasDragTo(press_x - 1.0, press_y))
   let after = @ir.find_control(dragged.program, label.name).unwrap()
   assert_eq(after.x, 100)
-  assert_eq(after.y, placed_label.y)
+  // y 无参考线命中 → 落 32px 网格（200 → 192）
+  assert_eq(after.y, 192)
 }
 
 ///|

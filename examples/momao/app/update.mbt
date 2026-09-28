@@ -535,11 +535,20 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                     let controls : Array[@ir.Control] = []
                     for control in m.program.controls {
                       if control.name == drag.control {
+                        // 缩放边缘吸附：移动边向参考线/网格钳制后再缩放
+                        let (snapped_x, snapped_y) = snap_resize_position(
+                          m.program.controls,
+                          drag.control,
+                          control,
+                          corner,
+                          x,
+                          y,
+                        )
                         controls.push(
                           control.resize_from_corner(
                             corner,
-                            x.to_int(),
-                            y.to_int(),
+                            snapped_x.to_int(),
+                            snapped_y.to_int(),
                           ),
                         )
                       } else {

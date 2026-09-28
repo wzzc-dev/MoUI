@@ -137,6 +137,16 @@ fn near_edge(a : Double, b : Double) -> Bool {
 }
 
 ///|
+/// 网格步长（与画布点阵一致的 32px 设计图纸网格）。
+let grid_step : Double = 32.0
+
+///|
+/// 网格量化：吸附到最近的 32px 网格线。
+fn grid_snap(value : Double) -> Double {
+  (value / grid_step).round() * grid_step
+}
+
+///|
 /// 拖拽对齐参考线（设计坐标）：被拖控件的左/右/水平中心、上/下/垂直中心
 /// 与画布三线（边/中心）及其他控件边缘对齐时，返回要画的参考线位置。
 fn alignment_guides(
@@ -265,7 +275,8 @@ pub fn snap_move_position(
       },
     ) {
     Some(delta) => snap_x = x + delta
-    None => ()
+    // 无参考线命中时落 32px 网格（设计图纸点阵的磁吸）
+    None => snap_x = grid_snap(x)
   }
   let mut snap_y = y
   match
@@ -287,9 +298,73 @@ pub fn snap_move_position(
       },
     ) {
     Some(delta) => snap_y = y + delta
-    None => ()
+    None => snap_y = grid_snap(y)
   }
   (snap_x, snap_y)
+}
+
+///|
+/// 缩放边缘吸附：先按角位算出提议矩形，再把**移动中的边**向参考线目标
+/// （≤4px）或 32px 网格钳制，最后用调整后的指针位重算缩放。
+/// 对角固定、夹取纪律仍由 resize_from_corner 保证。
+pub fn snap_resize_position(
+  controls : Array[@ir.Control],
+  drag_name : String,
+  control : @ir.Control,
+  corner : @ir.DragCorner,
+  to_x : Double,
+  to_y : Double,
+) -> (Double, Double) {
+  let tol = 4.0
+  let proposed = control.resize_from_corner(
+    corner,
+    to_x.to_int(),
+    to_y.to_int(),
+  )
+  let rect = control_rect(proposed)
+  let (verticals, horizontals) = alignment_guides(controls, drag_name, rect)
+  // 移动边：SE→右/下，NW→左/上，NE→右/上，SW→左/下
+  let moves_right = match corner {
+    @ir.CornerSE | @ir.CornerNE => true
+    @ir.CornerNW | @ir.CornerSW => false
+  }
+  let moves_bottom = match corner {
+    @ir.CornerSE | @ir.CornerSW => true
+    @ir.CornerNW | @ir.CornerNE => false
+  }
+  let right = rect.origin.x + rect.size.width
+  let bottom = rect.origin.y + rect.size.height
+  let mut new_x = to_x
+  let mut new_y = to_y
+  let x_candidates = {
+    let deltas : Array[(Double, Double)] = []
+    let edge = if moves_right { right } else { rect.origin.x }
+    for target in verticals {
+      if (edge - target).abs() <= tol {
+        deltas.push((target, target - edge))
+      }
+    }
+    deltas
+  }
+  let y_candidates = {
+    let deltas : Array[(Double, Double)] = []
+    let edge = if moves_bottom { bottom } else { rect.origin.y }
+    for target in horizontals {
+      if (edge - target).abs() <= tol {
+        deltas.push((target, target - edge))
+      }
+    }
+    deltas
+  }
+  match best_snap_delta(x_candidates) {
+    Some(delta) => new_x = to_x + delta
+    None => new_x = grid_snap(to_x)
+  }
+  match best_snap_delta(y_candidates) {
+    Some(delta) => new_y = to_y + delta
+    None => new_y = grid_snap(to_y)
+  }
+  (new_x, new_y)
 }
 
 ///|
