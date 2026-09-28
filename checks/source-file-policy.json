@@ -43,7 +43,7 @@
     },
     {
       "path": "examples/moui_studio/app/views.mbt",
-      "maxLines": 1738,
+      "maxLines": 1734,
       "reason": "Existing Studio views implementation after dual-track UI (compile track form, track switcher)."
     },
     {

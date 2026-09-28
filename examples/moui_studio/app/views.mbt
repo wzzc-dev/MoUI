@@ -485,15 +485,6 @@ fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
 }
 
 ///|
-/// 积木品牌描边（选中态）——朱砂色，与主题主色一致。
-fn block_selected_border() -> @graphics.BorderStyle {
-  @graphics.BorderStyle::new(
-    brush=@graphics.Brush::solid(@graphics.Color::rgba(r=0.78, g=0.26, b=0.20)),
-    width=2.0,
-  )
-}
-
-///|
 /// 积木视图：IR 语句的 Scratch 式投影 + 编辑回写。
 /// 点块选中 → 下方编辑器改这一条语句（DSL）→ 应用即写回 IR，
 /// 代码视图/设计视图随之刷新；运行中按审计细节高亮当前块。
@@ -625,6 +616,7 @@ fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let lines : Array[@moui.View[Msg]] = [
     @views.text(text(t, "app.preview.title"), role=Subtitle),
     @views.text(text(t, "app.preview.note"), role=Caption),
+    compiled_run_header(model, t),
   ]
   for line in source.split("\n") {
     lines.push(@views.text(line.to_owned(), width=460.0, align=TextStart))
@@ -883,7 +875,9 @@ fn run_stage(
 /// 因此隐藏单步/继续；闸门、审计跳积木、控件事件派发与解释轨同一套。
 fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match model.compiled_run {
-    None => @views.text("")
+    // 还没跑编译产物：报告 + 显式触发按钮仍要在运行视图可达
+    // （编译失败时停在这里看诊断，不静默退回解释轨）。
+    None => compiled_run_header(model, t)
     Some(run) => {
       let runtime = run.runtime
       let stage = run_stage(
@@ -1055,6 +1049,7 @@ fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       @views.scroll_view(
         @views.column(
           [
+            compiled_run_header(model, t),
             stage,
             @views.card(
               @views.container(@views.column(panel), padding=10.0),
@@ -1280,6 +1275,7 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       @views.scroll_view(
         @views.column(
           [
+            compiled_run_header(model, t),
             stage,
             @views.card(
               @views.container(@views.column(panel), padding=10.0),

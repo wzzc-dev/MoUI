@@ -117,6 +117,12 @@ pub fn parse_moon_diagnostics(output : String) -> Array[CompileDiagnostic] {
         }
         body = body + 1
       }
+      // 纯摘要行（无错误码、无位置，如末尾的
+      // `Error: failed to run check for target Native`）不是结构化诊断，跳过。
+      if code == "" && file == "" {
+        index = index + 1
+        continue
+      }
       diagnostics.push(CompileDiagnostic::{
         severity,
         code,

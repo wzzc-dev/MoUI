@@ -45,6 +45,27 @@ fn noop_provider_submit(
 }
 
 ///|
+/// 真编译提交签名：由平台入口注入（macOS 起 native worker；Web/测试用
+/// noop）。UI 线程同步返回、从不等待 moon 工具链；工具链进程全部在
+/// async worker 上跑，结果经回调回到 UI 线程（与 provider 同一模式）。
+pub type CompileSubmit = (
+  String,
+  String,
+  (Result[@export.CompileReport, String]) -> Unit,
+) -> Unit
+
+///|
+fn noop_compile_submit(
+  _project_json : String,
+  _app_name : String,
+  callback : (Result[@export.CompileReport, String]) -> Unit,
+) -> Unit {
+  callback(
+    Err("本端没有真编译执行器：编译轨仅在 native 入口可达"),
+  )
+}
+
+///|
 /// 文件服务流：保存 / 打开 / 导出独立应用。
 pub fn update_with_services(
   model : Model,
@@ -338,6 +359,7 @@ fn run_subscription(
 pub fn program(
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   provider_submit? : ProviderSubmit = noop_provider_submit,
+  compile_submit? : CompileSubmit = noop_compile_submit,
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
   apply_locale? : (String) -> Unit = _tag => (),
@@ -345,6 +367,7 @@ pub fn program(
   let services = environment.services()
   let timer = environment.timer()
   let submit = provider_submit
+  let submit_compile = compile_submit
   let on_locale = apply_locale
   @moui.Program::new(
     init=() => {
@@ -383,6 +406,23 @@ pub fn program(
           update_with_provider(model, msg, services, submit, on_locale)
         _ => update_pure(model, msg)
       }
+      // 真编译派发：只有「CompileRun 使 compile_busy 从假变真」这一次
+      // 转移才入队——重复点击/其它消息不会重复排队。项目 JSON 在此编码，
+      // 与导出 bundle 的输入是同一份（预览源码 = bundle 内实际编译源码）。
+      let compile_effect = if compile_submit_needed(model, next0) {
+        let json = @codec.encode_program(next0.program)
+        let name = sanitize_export_name(next0)
+        @moui.Effect::dispatch(emit => {
+          submit_compile(json, name, result => {
+            match result {
+              Ok(report) => emit(CompileRunFinished(report))
+              Err(message) => emit(CompileRunFailed(message))
+            }
+          })
+        })
+      } else {
+        @moui.Effect::none()
+      }
       // 集中脏标记 + 草稿自动保存：程序编码偏离基线即标脏（标题旁 ●）；
       // 内容相对上次草稿有变化才写 settings，运行期 30fps 的 RunTick
       // 不改程序，不会反复写。
@@ -401,13 +441,14 @@ pub fn program(
       let effect = if should_write {
         @moui.Effect::batch([
           effect0,
+          compile_effect,
           services
           .settings()
           .write(DRAFT_SETTINGS_KEY, encoding)
           .effect(map=_ => SetNotice("")),
         ])
       } else {
-        effect0
+        @moui.Effect::batch([effect0, compile_effect])
       }
       (next, effect)
     },

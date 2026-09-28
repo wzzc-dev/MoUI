@@ -126,6 +126,10 @@ pub(all) struct Model {
   compiled_run : CompiledRun?
   // 最近一次真编译（moon check/build）报告；失败诊断回渲染到代码/运行视图
   compile_report : @export.CompileReport?
+  // 真编译进行中（执行器已入队/运行）：防重复排队，视图显示加载态
+  compile_busy : Bool
+  // 工具链原始输出展开态（默认折叠：诊断优先，日志按需看）
+  compile_output_open : Bool
   pending : PendingProposal?
   prompt_draft : String
   prompt_error : String
@@ -213,6 +217,8 @@ pub(all) enum Msg {
   CompileRunFinished(@export.CompileReport)
   CompileRunFailed(String)
   CompileStopped
+  CompileJump(Int)
+  ToggleCompileOutput
   RunTick
   RunStep
   RunResume
@@ -305,6 +311,8 @@ pub fn initial_model(
     run: None,
     compiled_run: None,
     compile_report: None,
+    compile_busy: false,
+    compile_output_open: false,
     pending: None,
     prompt_draft: "",
     prompt_error: "",

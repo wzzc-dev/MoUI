@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs" @x/fs,
+  "examples/moui_studio/services/export",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

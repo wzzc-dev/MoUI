@@ -370,6 +370,98 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
     SetRunTrack(track) =>
       Some((set_run_track(model, track), @moui.Effect::none()))
+    // 真编译（moon check/build）是**显式动作**，与「切到运行视图」解耦：
+    // 切轨只切片执行面，不隐式触发真编译；点「真编译」才排队。
+    CompileRun =>
+      if !model.compile_track_available {
+        Some(
+          (
+            {
+              ..model,
+              notice: text(translator(model), "app.track.unavailable_web"),
+            },
+            @moui.Effect::none(),
+          ),
+        )
+      } else if model.compile_busy {
+        // 已在编译：忽略重复点击（一次显式动作只排一次真编译）。
+        Some((model, @moui.Effect::none()))
+      } else {
+        let committed = commit_code(model)
+        if committed.code_error != "" {
+          // 源码草稿不合法时不把坏程序送去真编译（先修，再编译）。
+          Some((committed, @moui.Effect::none()))
+        } else {
+          Some(
+            (
+              {
+                ..committed,
+                compile_report: None,
+                compile_busy: true,
+                run_track: Compile,
+                mode: ModeRun,
+                notice: text(translator(committed), "app.compile.running"),
+              },
+              @moui.Effect::none(),
+            ),
+          )
+        }
+      }
+    CompileRunFinished(report) =>
+      Some(
+        (
+          {
+            ..model,
+            compile_report: Some(report),
+            compile_busy: false,
+            notice: if report.ok {
+              text(translator(model), "app.compile.ok")
+            } else {
+              text(translator(model), "app.compile.failed")
+            },
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    CompileRunFailed(message) =>
+      // 执行器本身起不来（非工具链诊断）：如实进报告，不改路径。
+      Some(
+        (
+          {
+            ..model,
+            compile_report: Some(@export.CompileReport::{
+              ok: false,
+              exit_code: -1,
+              target: "native",
+              source_path: "",
+              output: message,
+              diagnostics: [],
+            }),
+            compile_busy: false,
+            notice: text(translator(model), "app.compile.failed"),
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    CompileStopped =>
+      // 停止真编译：只清当前报告/忙态，不切轨、不自动回退解释轨。
+      Some(
+        (
+          { ..model, compile_report: None, compile_busy: false, },
+          @moui.Effect::none(),
+        ),
+      )
+    // 编译诊断行号 → IR 语句路径 → 积木：先选中诊断所属子程序，
+    // 再按路径定位块（路径是稳定坐标，链下标随展开块变化）。
+    CompileJump(line) =>
+      Some((jump_to_compile_line(model, line), @moui.Effect::none()))
+    ToggleCompileOutput =>
+      Some(
+        (
+          { ..model, compile_output_open: !model.compile_output_open, },
+          @moui.Effect::none(),
+        ),
+      )
     RunStart =>
       if current_track(model) is Compile {
         Some((start_compiled_run(model), @moui.Effect::none()))
@@ -719,4 +811,35 @@ fn dispatch_compiled_event(
         }
       }
   }
+}
+
+///|
+/// 编译诊断行号 → 对应积木：在「预览即产物」的生成源码里按行号反查
+/// `stmt_lines`（同一 `generate_source` 调用，行号与 bundle 内文件一致），
+/// 命中则先切到该 handler 再选中块；未命中保持原模型（不瞎跳）。
+fn jump_to_compile_line(model : Model, line : Int) -> Model {
+  let generated = @export.moonbit_preview_with_lines(model.program)
+  for handler in generated.handlers {
+    for entry in handler.stmt_lines {
+      if entry.line == line {
+        let scoped = {
+          ..model,
+          selected_handler: handler_key(handler.control_name, handler.event_tag),
+        }
+        return select_block_by_path(scoped, entry.path)
+      }
+    }
+  }
+  model
+}
+
+///|
+/// 真编译是否应当在本次 `CompileRun` 转移后真正入队：轨道可达、草稿无
+/// 语法错、且刚从非忙态进入忙态（重复点击不重复排队）。副作用（入队）
+/// 由组合根注入的 `CompileSubmit` 承担，状态机本身保持纯函数。
+pub fn compile_submit_needed(before : Model, after : Model) -> Bool {
+  after.compile_track_available &&
+  after.code_error == "" &&
+  !before.compile_busy &&
+  after.compile_busy
 }

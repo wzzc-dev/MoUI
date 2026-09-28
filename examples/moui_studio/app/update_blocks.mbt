@@ -49,6 +49,30 @@ fn select_block(model : Model, index : Int) -> Model {
 }
 
 ///|
+/// 按语句路径选中积木（编译诊断行号 → 生成源码里的语句路径 → 此处）。
+/// 与 `SelectBlock` 的区别是入口按路径而非链下标，供「编译错误点击跳积木」
+/// 使用：路径是 IR 的稳定坐标，链下标随展开块（if/end）变化。
+pub fn select_block_by_path(model : Model, path : Array[Int]) -> Model {
+  if path.length() == 0 {
+    return model
+  }
+  let blocks = block_chain_of(model)
+  let mut index = -1
+  let mut i = 0
+  while i < blocks.length() {
+    if index == -1 && blocks_same_path(blocks[i].path, path) {
+      index = i
+    }
+    i = i + 1
+  }
+  if index == -1 {
+    model
+  } else {
+    select_block({ ..model, mode: ModeBlocks, }, index)
+  }
+}
+
+///|
 /// 积木编辑回写：草稿解析成单条语句 → 按路径替换 → IR 更新 →
 /// 代码视图草稿与积木选择同步刷新（三视图同源）。
 fn commit_block(model : Model) -> Model {
