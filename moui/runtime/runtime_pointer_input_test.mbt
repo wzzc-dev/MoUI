@@ -513,3 +513,136 @@ test "tree view secondary tap reports the row id" {
   )
   inspect(received.join(","), content="context:/tmp/project/notes.md")
 }
+
+///|
+/// 设计舞台回归：手势覆盖层叠在真实控件之上时，Down 必须由覆盖层认领
+/// （拦截指针输入），拖拽手势完整到达覆盖层，且下层按钮不被激活。
+/// （MoMao 设计舞台结构：stack([背景画布, 真控件层, 手势覆盖画布])。）
+test "设计舞台：覆盖层在真控件之上，拖拽消息完整、按钮不激活" {
+  let (received, capture) = pointer_capture_messages()
+  let backdrop = @views.canvas(
+    measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
+    draw=fn(_ctx, _frame) {},
+  )
+  let widgets = @views.container(
+    @views.button(
+      "RealBtn",
+      on_click="button-activated",
+      width=120.0,
+      height=32.0,
+    ),
+    width=400.0,
+    height=200.0,
+    padding=0.0,
+  )
+  let overlay = @views.canvas(
+    measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
+    draw=fn(_ctx, _frame) {},
+  )
+  .on_tap_with_frame(fn(_position, _frame) { "overlay-tap" })
+  .on_drag_with_frame(fn(event, _frame) {
+    match event.phase {
+      Started => "drag-started"
+      Changed => "drag-changed"
+      Ended => "drag-ended"
+      _ => ""
+    }
+  })
+  let runtime = @runtime.AppRuntime::new_view(
+    root=@views.stack([backdrop, widgets, overlay]),
+    size=@core.Size::new(width=400.0, height=200.0),
+    on_message=Some(capture),
+  )
+  // 按钮中心（容器内居中：(400-120)/2+60=200, (200-32)/2+16=100）
+  pointer_dispatch(runtime, @core.Point::new(x=200.0, y=100.0), Down)
+  pointer_dispatch(runtime, @core.Point::new(x=212.0, y=108.0), Move)
+  pointer_dispatch(runtime, @core.Point::new(x=228.0, y=120.0), Move)
+  pointer_dispatch(runtime, @core.Point::new(x=244.0, y=132.0), Up)
+  assert_true(received.contains("drag-started"))
+  assert_true(received.contains("drag-changed"))
+  assert_true(received.contains("drag-ended"))
+  assert_true(!received.contains("button-activated"))
+}
+
+///|
+/// 设计舞台回归（完整嵌套）：CrossStart 行 + frame(600) + flexible 列 +
+/// 缩放工具条 + 三层舞台——复刻 MoMao 设计模式的真实嵌套，验证拖拽仍达
+/// 手势覆盖层（2026-09 拖拽失效回归的实证夹具）。
+test "设计舞台：完整嵌套下拖拽消息仍达覆盖层" {
+  let (received, capture) = pointer_capture_messages()
+  let backdrop = @views.canvas(
+    measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
+    draw=fn(_ctx, _frame) {},
+  )
+  let widgets = @views.container(
+    @views.button(
+      "RealBtn",
+      on_click="button-activated",
+      width=100.0,
+      height=32.0,
+    ),
+    width=400.0,
+    height=200.0,
+    padding=0.0,
+  )
+  let overlay = @views.canvas(
+    measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
+    draw=fn(_ctx, _frame) {},
+  )
+  .on_tap_with_frame(fn(_position, _frame) { "overlay-tap" })
+  .on_drag_with_frame(fn(event, _frame) {
+    match event.phase {
+      Started => "drag-started"
+      Changed => "drag-changed"
+      Ended => "drag-ended"
+      _ => ""
+    }
+  })
+  // 注意：此处不能给 stage 再套 .flexible()——加权子树在 tight 重排下
+  // 丢指针手势（2026-09 拖拽失效回归的根因，设计舞台已改显式高度帧）。
+  let stage = @views.stack([backdrop, widgets, overlay]).frame(height=556.0)
+  let center = @views.column(
+    [
+      @views.button("适应窗口", on_click="fit", width=96.0, height=38.0),
+      stage,
+    ],
+    spacing=6.0,
+  )
+  let root = @views.column(
+    [
+      @views.row(
+        [
+          @views.spacer(min_length=24.0, weight=0.0),
+          @views.container(
+            @views.button("Left", width=200.0, height=560.0),
+            width=224.0,
+            height=600.0,
+            padding=0.0,
+          ),
+          center.flexible(),
+          @views.spacer(min_length=24.0, weight=0.0),
+        ],
+        align=Start,
+      ).frame(height=600.0),
+    ],
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=1280.0, height=800.0),
+    on_message=Some(capture),
+  )
+  // 真实按钮的中心：从绘制命令里取它的文本帧
+  let frame = pointer_frame_of(runtime.draw_commands(), "RealBtn")
+  let center = @core.Point::new(
+    x=frame.origin.x + frame.size.width / 2.0,
+    y=frame.origin.y + frame.size.height / 2.0,
+  )
+  pointer_dispatch(runtime, center, Down)
+  pointer_dispatch(runtime, @core.Point::new(x=center.x + 12.0, y=center.y + 8.0), Move)
+  pointer_dispatch(runtime, @core.Point::new(x=center.x + 28.0, y=center.y + 20.0), Move)
+  pointer_dispatch(runtime, @core.Point::new(x=center.x + 44.0, y=center.y + 32.0), Up)
+  assert_true(received.contains("drag-started"))
+  assert_true(received.contains("drag-changed"))
+  assert_true(received.contains("drag-ended"))
+  assert_true(!received.contains("button-activated"))
+}

@@ -12,6 +12,7 @@ pub(all) enum Msg {
   Trigger(String, @ir.EventKind) // （控件名，事件）被触发
   Pick(String, Int) // 列表/表格选中某行 → 内容改变
   EditText(String, String) // 输入框文本改变 → 内容改变
+  ToggleCheck(String) // 勾选框切换（视觉态，指令机语义外）
   Answer(Bool) // 闸门应答：true=确认，false=拒绝
 }
 
@@ -22,6 +23,7 @@ pub(all) struct Model {
   values : Map[String, @momao_lang.Value] // DSL 变量
   rows : Map[String, Array[String]] // 列表/表格行
   selections : Map[String, Int] // 列表/表格选中行
+  checks : Map[String, Bool] // 勾选框视觉态（与 Studio 同口径，指令机外）
   notice : String
   run_label : String
   run : @momao_lang.RunState?
@@ -40,6 +42,7 @@ pub fn Model::new() -> Model {
     values: @momao_lang.initial_values(program),
     rows: @momao_lang.initial_rows(program),
     selections: Map([], capacity=4),
+    checks: Map([], capacity=4),
     notice,
     run_label: "",
     run: None,
@@ -93,6 +96,11 @@ pub fn update(model : Model, msg : Msg) -> Model {
       model.texts[control] = new_text
       run_handler(model, control, @ir.OnChange)
     }
+    ToggleCheck(control) => {
+      // 勾选是视觉态（与 Studio 同口径）：切换不触发子程序
+      model.checks[control] = !model.checks.get(control).unwrap_or(false)
+      model
+    }
     Answer(decision) =>
       match model.run {
         None => model
@@ -106,41 +114,107 @@ pub fn update(model : Model, msg : Msg) -> Model {
 }
 
 ///|
-/// 单个控件的极简渲染（表单应用域 6 类）。
-fn control_view(model : Model, control : @ir.Control) -> @moui.View[Msg] {
+/// 运行舞台的绝对布局节点：按 IR 控件矩形给每个子控件分配帧。
+/// 放置管线会用「帧的 tight 约束」重排子树，子控件因此精确等于设计的
+/// 尺寸与位置——设计稿所见即所得。（与 Studio 的 StageLayout 同一手法，
+/// 内联在此保持导出产物自包含、不依赖 Studio 应用包。）
+priv struct StageLayout {
+  rects : Array[@core.Rect] // 与 children 一一对应（IR 控件 x/y/width/height）
+}
+
+///|
+impl @core.ViewNode for StageLayout with fn identity(_self) {
+  @core.ViewIdentity::new(kind="StageLayout")
+}
+
+///|
+impl @core.ViewNode for StageLayout with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
+}
+
+///|
+impl @core.ViewNode for StageLayout with fn layout(self, ctx) {
+  let size = ctx.constraints.constrain(
+    @core.Size::new(
+      width=@ir.DESIGN_WIDTH.to_double(),
+      height=@ir.DESIGN_HEIGHT.to_double(),
+    ),
+  )
+  let frames : Array[@core.Rect] = []
+  for rect in self.rects {
+    frames.push(
+      @core.Rect::new(
+        x=rect.origin.x,
+        y=rect.origin.y,
+        width=rect.size.width,
+        height=rect.size.height,
+      ),
+    )
+  }
+  @core.ViewLayoutResult::new(
+    size~,
+    child_frames=frames,
+    child_frames_tight=true,
+  )
+}
+
+///|
+impl @core.ViewNode for StageLayout with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(composition=Transparent)
+}
+
+///|
+fn stage_layout(
+  children : Array[@moui.View[Msg]],
+  rects : Array[@core.Rect],
+) -> @moui.View[Msg] {
+  @core.View::from_node(StageLayout::{ rects, }, children=_node => children)
+}
+
+///|
+/// 单个控件的舞台渲染（表单应用域 6 类）：尺寸/位置由舞台帧驱动，
+/// 与设计画布同款观感。
+fn stage_widget(model : Model, control : @ir.Control) -> @moui.View[Msg] {
   let value = model.texts.get(control.name).unwrap_or(control.text)
   match control.kind {
-    @ir.Label => @views.text(value)
+    @ir.Label => @views.text(value, align=TextStart)
     @ir.Button =>
-      @views.button(
-        value,
-        on_click=Trigger(control.name, @ir.OnClick),
-        width=control.width.to_double(),
-        height=control.height.to_double(),
-      )
+      @views.button(value, on_click=Trigger(control.name, @ir.OnClick))
     @ir.TextField =>
       @views.text_field(
         value,
         on_input=new_text => EditText(control.name, new_text),
-        width=control.width.to_double(),
       )
-    @ir.CheckBox => @views.text("[ ] \{value}")
+    @ir.CheckBox =>
+      @views.checkbox(
+        value,
+        checked=model.checks.get(control.name).unwrap_or(false),
+        on_change=_checked => ToggleCheck(control.name),
+      )
     @ir.ListBox | @ir.Table => {
+      // 列表框/表格是带视口的实物：行高 24，按设计高度截断可见行
+      let max_rows = if control.height < 24 {
+        1
+      } else {
+        control.height / 24
+      }
       let items = model.rows.get(control.name).unwrap_or([])
       let rows : Array[@moui.View[Msg]] = []
       let mut index = 0
-      while index < items.length() {
+      while index < items.length() && index < max_rows {
         let selected = model.selections.get(control.name).unwrap_or(0) == index
         let prefix = if selected { "▶ " } else { "· " }
         rows.push(
           @views.button(
             "\{prefix}\{items[index]}",
             on_click=Pick(control.name, index),
+            variant=Tonal,
+            height=24.0,
           ),
         )
         index = index + 1
       }
-      @views.column(rows)
+      @views.column(rows, spacing=0.0)
     }
   }
 }
@@ -183,6 +257,36 @@ fn audit_dot(op : @momao_lang.StepOp) -> @moui.View[Msg] {
 
 ///|
 pub fn view(model : Model) -> @moui.View[Msg] {
+  // 运行舞台：真实控件按设计坐标绝对布局（640×480，所见即所得）
+  let stage_widgets : Array[@moui.View[Msg]] = []
+  let stage_rects : Array[@core.Rect] = []
+  for control in model.program.controls {
+    stage_widgets.push(stage_widget(model, control))
+    stage_rects.push(
+      @core.Rect::new(
+        x=control.x.to_double(),
+        y=control.y.to_double(),
+        width=control.width.to_double(),
+        height=control.height.to_double(),
+      ),
+    )
+  }
+  let stage = @views.container(
+    stage_layout(stage_widgets, stage_rects),
+    width=@ir.DESIGN_WIDTH.to_double(),
+    height=@ir.DESIGN_HEIGHT.to_double(),
+    background=@graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
+    corner_radius=10.0,
+    border=Some(
+      @graphics.BorderStyle::new(
+        brush=@graphics.Brush::solid(
+          @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
+        ),
+        width=1.5,
+      ),
+    ),
+    padding=0.0,
+  )
   let items : Array[@moui.View[Msg]] = [
     @views.row([
       @views.text(model.program.window.title).title(),
@@ -192,9 +296,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
   if model.notice != "" {
     items.push(@views.text(model.notice))
   }
-  for control in model.program.controls {
-    items.push(control_view(model, control))
-  }
+  items.push(stage)
   match model.run {
     None => ()
     Some(run) => {
@@ -248,9 +350,9 @@ pub fn view(model : Model) -> @moui.View[Msg] {
   }
   @views
   .card(
-    @views.scroll_view(@views.column(items), width=660.0, height=540.0, shows_indicator=true),
-    width=700.0,
-    height=580.0,
+    @views.scroll_view(@views.column(items), width=920.0, height=560.0, shows_indicator=true),
+    width=960.0,
+    height=600.0,
     padding=10.0,
   )
   // 品牌主题：与 MoMao Studio 同源朱砂色（印泥朱砂主色派生浅色全角色盘，

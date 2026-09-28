@@ -463,8 +463,11 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       }
       Some((next, @moui.Effect::none()))
     }
-    SetDesignZoom(zoom) =>
+    SetDesignZoom(zoom) => {
+      println("dbg setzoom \{zoom}")
       Some(({ ..model, design_zoom: zoom, }, @moui.Effect::none()))
+    }
+    Noop => Some((model, @moui.Effect::none()))
     SelectHandler(key) => {
       let committed = commit_code(model)
       if committed.code_error != "" {
@@ -575,6 +578,7 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           }
       }
     CanvasPress(x, y) => {
+      println("dbg press x=\{x} y=\{y}")
       // 手柄优先：角手柄只画在选中控件上，按上手柄即进入缩放拖拽
       let handle_hit : @ir.DragCorner? = match find_selected_control(model) {
         Some(selected) => hit_test_handle(selected, x, y)
@@ -621,7 +625,8 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           }
       }
     }
-    CanvasDragTo(x, y) =>
+    CanvasDragTo(x, y) => {
+      println("dbg dragto x=\{x} y=\{y}")
       // 拖拽移动/缩放控件；夹取规则在 @ir（控件完整落在设计画布内、最小边长）。
       // 移动带吸附：靠近参考线目标 ≤4px 时原点平移到精确对齐（吸附后仍过夹取）。
       // 整段手势共享一个撤销还原点（coalesce key = move/resize + 控件名）。
@@ -692,9 +697,11 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
               )
           }
       }
+    }
     CanvasRelease(_x, _y) =>
       Some(({ ..model, drag: None, }, @moui.Effect::none()))
-    CanvasTap(x, y) =>
+    CanvasTap(x, y) => {
+      println("dbg tap x=\{x} y=\{y}")
       // 单击点选。拖拽松手也会触发 tap（同一 Up 事件）：drag 仍在时说明
       // 这是一次拖拽结束，不要改动选中态。
       match hit_test_control(model.program.controls, x, y) {
@@ -716,6 +723,7 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             Some(({ ..model, selected_control: "", }, @moui.Effect::none()))
           }
       }
+    }
     SetControlText(name, value) =>
       Some(
         (

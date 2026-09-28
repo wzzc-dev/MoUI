@@ -140,6 +140,7 @@ pub(all) struct Model {
 
 ///|
 pub(all) enum Msg {
+  Noop // 设计舞台展示态控件的兜底回调（输入被手势覆盖层拦截，正常不触发）
   SwitchLanguage
   SetMode(Mode)
   SetDesignZoom(Double)

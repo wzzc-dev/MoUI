@@ -1,7 +1,7 @@
 ///|
 /// 表单设计器画布：设计坐标系固定 640×480。
 /// 绘制计划是纯数据；命中测试与拖拽在 update 里转 typed Msg。
-using @views {canvas, draw_text, fill_rounded_rect, stroke_rounded_rect}
+using @views {canvas, draw_text, fill_rounded_rect, stroke_rounded_rect, stack}
 
 ///|
 /// 设计坐标系尺寸单一来源是 @ir.DESIGN_WIDTH/HEIGHT（拖拽与属性编辑共用）。
@@ -9,30 +9,6 @@ let design_width : Double = @ir.DESIGN_WIDTH.to_double()
 
 ///|
 let design_height : Double = @ir.DESIGN_HEIGHT.to_double()
-
-///|
-fn kind_fill(kind : @ir.ControlKind) -> @graphics.Color {
-  match kind {
-    @ir.Button => @graphics.Color::rgba(r=0.22, g=0.45, b=0.86)
-    @ir.Label => @graphics.Color::rgba(r=0.30, g=0.62, b=0.36)
-    @ir.TextField => @graphics.Color::rgba(r=0.80, g=0.55, b=0.16)
-    @ir.CheckBox => @graphics.Color::rgba(r=0.45, g=0.40, b=0.75)
-    @ir.ListBox => @graphics.Color::rgba(r=0.20, g=0.55, b=0.58)
-    @ir.Table => @graphics.Color::rgba(r=0.60, g=0.35, b=0.35)
-  }
-}
-
-///|
-fn kind_fill_light(kind : @ir.ControlKind) -> @graphics.Color {
-  match kind {
-    @ir.Button => @graphics.Color::rgba(r=0.55, g=0.70, b=0.93)
-    @ir.Label => @graphics.Color::rgba(r=0.62, g=0.80, b=0.66)
-    @ir.TextField => @graphics.Color::rgba(r=0.93, g=0.78, b=0.55)
-    @ir.CheckBox => @graphics.Color::rgba(r=0.74, g=0.70, b=0.90)
-    @ir.ListBox => @graphics.Color::rgba(r=0.60, g=0.82, b=0.84)
-    @ir.Table => @graphics.Color::rgba(r=0.86, g=0.68, b=0.68)
-  }
-}
 
 ///|
 /// 控件在设计坐标系中的矩形。
@@ -103,14 +79,15 @@ pub fn hit_test_handle(
 
 ///|
 pub(all) enum DesignDrawOp {
-  FillControl(@geometry.Rect, @ir.ControlKind)
-  ControlLabel(String, @geometry.Rect, @graphics.Color)
-  ControlText(String, @geometry.Rect, @graphics.Color)
-  ControlRows(@geometry.Rect)
-  SelectionStroke(@geometry.Rect)
-  SelectionHandle(@geometry.Rect)
   WindowFrame(@geometry.Rect)
   GridDot(@geometry.Rect)
+  // 设计期可视提示：每个控件的常驻边界框（真实控件可能是透明的一块，
+  // 空标签/空表格没有可见内容）+ 空内容控件的名字幽灵文字。
+  BoundsOutline(@geometry.Rect)
+  GhostName(@geometry.Rect, String)
+  SelectionStroke(@geometry.Rect)
+  SelectedNamePill(@geometry.Rect, String)
+  SelectionHandle(@geometry.Rect)
   GuideV(Double)
   GuideH(Double)
 }
@@ -353,15 +330,8 @@ pub fn snap_resize_position(
 }
 
 ///|
-/// 设计画布绘制计划：窗口底板 → 网格点阵 → 控件（名字条 + 文本 + 行）→
-/// 选中描边与角手柄 → 拖拽对齐参考线。全部是**设计坐标**（640×480）；
-/// 全局坐标变换（平移 + 等比缩放）在绘制闭包里按 frame 现算，缩放时
-/// 命中测试用同一个比例换算，二者永不失配。
-pub fn design_draw_plan(
-  program : @ir.MomaoProgram,
-  selection : String,
-  drag_control : String?,
-) -> Array[DesignDrawOp] {
+/// 背景绘制计划：窗体底板 + 网格点阵（设计坐标；全局变换在绘制闭包按 frame 现算）。
+pub fn design_backdrop_plan() -> Array[DesignDrawOp] {
   let ops : Array[DesignDrawOp] = []
   ops.push(
     WindowFrame(
@@ -383,28 +353,47 @@ pub fn design_draw_plan(
     }
     gx = gx + 32.0
   }
+  ops
+}
+
+///|
+/// 覆盖层绘制计划：选中描边 + 名牌 + 角手柄 + 拖拽对齐参考线（设计坐标）。
+/// 控件本体不在画布里画——设计舞台直接宿主真实控件（views 的 form_widget
+/// + stage_layout），「控件长什么样」只剩主题驱动的一个事实来源（治本）。
+pub fn design_overlay_plan(
+  program : @ir.MomaoProgram,
+  selection : String,
+  drag_control : String?,
+) -> Array[DesignDrawOp] {
+  let ops : Array[DesignDrawOp] = []
   for control in program.controls {
     let rect = control_rect(control)
-    ops.push(FillControl(rect, control.kind))
-    let name_rect = @geometry.Rect::new(
-      x=rect.origin.x,
-      y=rect.origin.y,
-      width=rect.size.width,
-      height=(rect.size.height * 0.38).min(18.0).max(14.0),
-    )
-    ops.push(ControlLabel(control.name, name_rect, kind_fill(control.kind)))
-    ops.push(
-      ControlText(
-        control.text,
-        rect,
-        @graphics.Color::rgba(r=0.12, g=0.13, b=0.16),
-      ),
-    )
-    if control.items.length() > 0 {
-      ops.push(ControlRows(rect))
+    // 常驻边界框：真实控件层是拟真的，空标签/无行表格是透明的一块，
+    // 没有边界就"不点击看不到"。浅色描边标出可编辑范围。
+    ops.push(BoundsOutline(rect))
+    // 空内容控件：叠加控件名幽灵文字（与事件子程序列表的名字对应）
+    let empty_content = match control.kind {
+      @ir.Label => control.text == ""
+      @ir.ListBox | @ir.Table => control.items.length() == 0
+      _ => false
+    }
+    if empty_content {
+      ops.push(GhostName(rect, control.name))
     }
     if selection == control.name {
       ops.push(SelectionStroke(rect))
+      // 名牌：选中控件左上角的小徽标（识别控件名用，平时不破坏拟真观感）
+      ops.push(
+        SelectedNamePill(
+          @geometry.Rect::new(
+            x=rect.origin.x,
+            y=(rect.origin.y - 18.0).max(2.0),
+            width=control.name.length().to_double() * 10.0 + 10.0,
+            height=14.0,
+          ),
+          control.name,
+        ),
+      )
       // 四角手柄：8x8 实心方块（选中即可拖拽缩放的暗示）
       let h = 4.0
       for
@@ -458,273 +447,272 @@ fn guide_color() -> @graphics.Color {
 }
 
 ///|
-/// 表单设计画布：canvas 绘制 + 点选/拖拽事件转 typed Msg（设计坐标）。
-/// semantics_label 与空态提示由调用方经 i18n 翻译器传入。
-/// 测量按约束**等比铺满**可用区域（缩放因子 = 帧宽 / 640），绘制与命中
-/// 测试都从各自收到的 frame 现算同一比例——画布列弹性伸缩时二者永不失配。
-/// zoom > 0 时改为固定逻辑尺寸 640×zoom（用户档位），超出视口由调用方的
-/// 滚动容器接管；比例仍从帧宽现算，指针换算无需额外分支。
-pub fn design_canvas(
+/// 设计舞台：三层结构，治本「设计≠运行」的双渲染器问题。
+/// 1) 背景画布：窗体框 + 点阵 + 空态提示（纯绘制）；
+/// 2) 控件层：真实控件（与运行舞台共用 form_widget 构造），StageLayout
+///    按 IR 矩形分配帧——设计态外观与运行态由构造保证一致；
+/// 3) 手势覆盖层：透明画布拦截全部指针事件（控件收不到输入），绘制
+///    选中描边/名牌/参考线，并把指针转成设计坐标的 typed Msg。
+/// 缩放：三个层都从各自帧现算同一比例 min(帧宽/640, 帧高/480)——
+/// zoom > 0 时舞台固定 640×zoom 由调用方的滚动容器接管，zoom = 0 时
+/// 等比铺满画布列；指针换算无需额外分支。
+pub fn design_stage(
   program : @ir.MomaoProgram,
   selection : String,
   drag_control : String?,
+  stage_widgets : Array[@moui.View[Msg]],
+  stage_rects : Array[@geometry.Rect],
   semantics_label : String,
   empty_hint : String,
-  zoom? : Double = 0.0,
 ) -> @moui.View[Msg] {
-  @views.container(
-    canvas(
-      measure=fn(constraints) {
-        // zoom > 0：固定逻辑尺寸（用户档位）；zoom = 0：等比铺满可用区域
-        if zoom > 0.0 {
-          @geometry.Size::new(
-            width=design_width * zoom,
-            height=design_height * zoom,
-          )
-        } else {
-          // 等比铺满：宽 = min(可用宽, 可用高 ÷ 3/4)；无界约束退回 1:1 基准
-          let ratio = design_height / design_width
-          let mut width = if constraints.max.width < constraints.max.height / ratio {
-            constraints.max.width
-          } else {
-            constraints.max.height / ratio
-          }
-          if width <= 0.0 || width > 1.0e8 {
-            width = design_width
-          }
-          @geometry.Size::new(width~, height=width * ratio)
-        }
-      },
-      draw=fn(ctx, frame) {
-        // MoUI paint 契约：命令是窗口全局坐标。缩放因子从分配到的帧现算，
-        // 绘制计划（设计坐标）统一做 平移×缩放 变换。不用 PushClip/
-        // PushTransform——wasm 渲染管线里画布层内嵌 clip/transform 栈会
-        // 吞掉整层命令（已实测）。
-        let scale = if frame.size.width > 0.0 {
-          frame.size.width / design_width
-        } else {
-          1.0
-        }
-        fn place(rect : @geometry.Rect) -> @geometry.Rect {
-          @geometry.Rect::new(
-            x=frame.origin.x + rect.origin.x * scale,
-            y=frame.origin.y + rect.origin.y * scale,
-            width=rect.size.width * scale,
-            height=rect.size.height * scale,
-          )
-        }
-        for op in design_draw_plan(program, selection, drag_control) {
-          match op {
-            WindowFrame(rect) => {
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
-                ),
-              )
-              stroke_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
-                ),
-                1.5,
-              )
-            }
-            FillControl(rect, kind) =>
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
-                @graphics.Brush::solid(kind_fill_light(kind)),
-              )
-            ControlLabel(name, rect, color) => {
-              let placed = place(rect)
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(rect=placed, radius=4.0 * scale),
-                @graphics.Brush::solid(color),
-              )
-              draw_text(
-                ctx,
-                @text.TextRun::new(
-                  text=name,
-                  frame=@geometry.Rect::new(
-                    x=placed.origin.x + 6.0 * scale,
-                    y=placed.origin.y + 1.0 * scale,
-                    width=(placed.size.width - 8.0 * scale).max(0.0),
-                    height=placed.size.height,
-                  ),
-                  font=@text.FontSpec::new(size=11.0 * scale),
-                  color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0),
-                ),
-              )
-            }
-            ControlText(content, rect, color) =>
-              if content != "" {
-                let placed = place(rect)
-                draw_text(
-                  ctx,
-                  @text.TextRun::new(
-                    text=content,
-                    frame=@geometry.Rect::new(
-                      x=placed.origin.x + 8.0 * scale,
-                      y=placed.origin.y + placed.size.height * 0.45,
-                      width=(placed.size.width - 12.0 * scale).max(0.0),
-                      height=placed.size.height * 0.5,
-                    ),
-                    font=@text.FontSpec::new(size=13.0 * scale),
-                    color~,
-                  ),
-                )
-              }
-            ControlRows(rect) => {
-              let mut row = 0
-              while row < 3 {
-                let row_y = rect.origin.y + 16.0 + row.to_double() * 14.0
-                stroke_rounded_rect(
-                  ctx,
-                  @graphics.RoundedRect::new(
-                    rect=place(
-                      @geometry.Rect::new(
-                        x=rect.origin.x + 6.0,
-                        y=row_y,
-                        width=(rect.size.width - 12.0).max(0.0),
-                        height=12.0,
-                      ),
-                    ),
-                    radius=3.0 * scale,
-                  ),
-                  @graphics.Brush::solid(
-                    @graphics.Color::rgba(r=0.55, g=0.56, b=0.60),
-                  ),
-                  1.0,
-                )
-                row = row + 1
-              }
-            }
-            SelectionStroke(rect) => {
-              let inflate = 3.0
-              stroke_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(
-                  rect=place(
-                    @geometry.Rect::new(
-                      x=rect.origin.x - inflate,
-                      y=rect.origin.y - inflate,
-                      width=rect.size.width + inflate * 2.0,
-                      height=rect.size.height + inflate * 2.0,
-                    ),
-                  ),
-                  radius=8.0 * scale,
-                ),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-                ),
-                2.5,
-              )
-            }
-            SelectionHandle(rect) => {
-              let brush = @graphics.Brush::solid(
-                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-              )
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(rect=place(rect), radius=2.0 * scale),
-                brush,
-              )
-            }
-            GridDot(rect) =>
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(rect=place(rect), radius=1.0 * scale),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.85, g=0.86, b=0.90),
-                ),
-              )
-            GuideV(x) =>
-              stroke_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(
-                  rect=@geometry.Rect::new(
-                    x=frame.origin.x + x * scale - 0.75,
-                    y=frame.origin.y,
-                    width=1.5,
-                    height=frame.size.height,
-                  ),
-                  radius=0.0,
-                ),
-                @graphics.Brush::solid(guide_color()),
-                1.5,
-              )
-            GuideH(y) =>
-              stroke_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(
-                  rect=@geometry.Rect::new(
-                    x=frame.origin.x,
-                    y=frame.origin.y + y * scale - 0.75,
-                    width=frame.size.width,
-                    height=1.5,
-                  ),
-                  radius=0.0,
-                ),
-                @graphics.Brush::solid(guide_color()),
-                1.5,
-              )
-          }
-        }
-        // 空画布引导：没有控件时给一句从哪开始的提示（i18n 由调用方传入）
-        if program.controls.length() == 0 {
-          draw_text(
-            ctx,
-            @text.TextRun::new(
-              text=empty_hint,
-              frame=@geometry.Rect::new(
-                x=frame.origin.x,
-                y=frame.origin.y,
-                width=frame.size.width,
-                height=frame.size.height,
+  fn auto_fit_measure(constraints : @core.Constraints) -> @geometry.Size {
+    // 等比铺满：宽 = min(可用宽, 可用高 ÷ 3/4)；无界约束退回 1:1 基准
+    let ratio = design_height / design_width
+    let mut width = if constraints.max.width < constraints.max.height / ratio {
+      constraints.max.width
+    } else {
+      constraints.max.height / ratio
+    }
+    if width <= 0.0 || width > 1.0e8 {
+      width = design_width
+    }
+    @geometry.Size::new(width~, height=width * ratio)
+  }
+  // 与 StageLayout 的帧缩放共用同一比例来源（min(帧宽/640, 帧高/480)）
+  fn frame_scale(frame : @core.Rect) -> Double {
+    let by_width = frame.size.width / design_width
+    let by_height = frame.size.height / design_height
+    if by_width > 0.0 &&
+      by_width < 1.0e8 &&
+      by_height > 0.0 &&
+      by_height < 1.0e8 {
+      by_width.min(by_height)
+    } else {
+      1.0
+    }
+  }
+  let backdrop = canvas(
+    measure=auto_fit_measure,
+    draw=fn(ctx, frame) {
+      // MoUI paint 契约：命令是窗口全局坐标，内容用 平移×缩放 进自己的 frame
+      let scale = frame_scale(frame)
+      fn place(rect : @geometry.Rect) -> @geometry.Rect {
+        @geometry.Rect::new(
+          x=frame.origin.x + rect.origin.x * scale,
+          y=frame.origin.y + rect.origin.y * scale,
+          width=rect.size.width * scale,
+          height=rect.size.height * scale,
+        )
+      }
+      for op in design_backdrop_plan() {
+        match op {
+          WindowFrame(rect) => {
+            fill_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
               ),
-              font=@text.FontSpec::new(size=15.0),
-              color=@graphics.Color::rgba(r=0.55, g=0.56, b=0.60),
-              align=TextCenter,
-            ),
-          )
+            )
+            stroke_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
+              ),
+              1.5,
+            )
+          }
+          GridDot(rect) =>
+            fill_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=1.0 * scale),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.85, g=0.86, b=0.90),
+              ),
+            )
+          _ => ()
         }
-      },
-      semantics_label~,
-    )
-    // 点选在前：单击（无拖拽位移）只走 tap 识别器，拖拽结束的 tap 以
-    // model.drag 是否仍存在区分（见 update 的 CanvasTap 处理）。
-    // 帧 → 设计坐标：除以与绘制同一来源（帧宽/640）的缩放因子。
-    .on_tap_with_frame(fn(position, frame) {
-      let scale = if frame.size.width > 0.0 {
-        frame.size.width / design_width
-      } else {
-        1.0
       }
-      Msg::CanvasTap(
-        (position.x - frame.origin.x) / scale,
-        (position.y - frame.origin.y) / scale,
-      )
-    })
-    .on_drag_with_frame(fn(event, frame) {
-      let scale = if frame.size.width > 0.0 {
-        frame.size.width / design_width
-      } else {
-        1.0
+      // 空画布引导：没有控件时给一句从哪开始的提示（i18n 由调用方传入）
+      if program.controls.length() == 0 {
+        draw_text(
+          ctx,
+          @text.TextRun::new(
+            text=empty_hint,
+            frame=frame,
+            font=@text.FontSpec::new(size=15.0),
+            color=@graphics.Color::rgba(r=0.55, g=0.56, b=0.60),
+            align=TextCenter,
+          ),
+        )
       }
-      let lx = (event.position.x - frame.origin.x) / scale
-      let ly = (event.position.y - frame.origin.y) / scale
-      if event.phase == @views.DragGesturePhase::Started {
-        Msg::CanvasPress(lx, ly)
-      } else if event.phase == @views.DragGesturePhase::Changed {
-        Msg::CanvasDragTo(lx, ly)
-      } else {
-        Msg::CanvasRelease(lx, ly)
-      }
-    }),
-    padding=0.0,
+    },
+    semantics_label~,
   )
+  let widget_layer = stage_layout(stage_widgets, stage_rects)
+  let overlay = canvas(
+    measure=auto_fit_measure,
+    draw=fn(ctx, frame) {
+      let scale = frame_scale(frame)
+      fn place(rect : @geometry.Rect) -> @geometry.Rect {
+        @geometry.Rect::new(
+          x=frame.origin.x + rect.origin.x * scale,
+          y=frame.origin.y + rect.origin.y * scale,
+          width=rect.size.width * scale,
+          height=rect.size.height * scale,
+        )
+      }
+      for op in design_overlay_plan(program, selection, drag_control) {
+        match op {
+          BoundsOutline(rect) =>
+            stroke_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=4.0 * scale),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.80, g=0.81, b=0.85),
+              ),
+              1.0 * scale,
+            )
+          GhostName(rect, name) => {
+            fill_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=4.0 * scale),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.55),
+              ),
+            )
+            draw_text(
+              ctx,
+              @text.TextRun::new(
+                text=name,
+                frame=place(
+                  @geometry.Rect::new(
+                    x=rect.origin.x,
+                    y=rect.origin.y + (rect.size.height - 15.0) / 2.0,
+                    width=rect.size.width,
+                    height=15.0,
+                  ),
+                ),
+                font=@text.FontSpec::new(size=12.0 * scale),
+                color=@graphics.Color::rgba(r=0.45, g=0.46, b=0.50),
+                align=TextCenter,
+              ),
+            )
+          }
+          SelectionStroke(rect) => {
+            let inflate = 3.0
+            stroke_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(
+                rect=place(
+                  @geometry.Rect::new(
+                    x=rect.origin.x - inflate,
+                    y=rect.origin.y - inflate,
+                    width=rect.size.width + inflate * 2.0,
+                    height=rect.size.height + inflate * 2.0,
+                  ),
+                ),
+                radius=8.0 * scale,
+              ),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
+              ),
+              2.5,
+            )
+          }
+          SelectedNamePill(rect, name) => {
+            fill_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=4.0 * scale),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
+              ),
+            )
+            draw_text(
+              ctx,
+              @text.TextRun::new(
+                text=name,
+                frame=place(
+                  @geometry.Rect::new(
+                    x=rect.origin.x,
+                    y=rect.origin.y + (rect.size.height - 12.5) / 2.0,
+                    width=rect.size.width,
+                    height=12.5,
+                  ),
+                ),
+                font=@text.FontSpec::new(size=10.0 * scale),
+                color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0),
+                align=TextCenter,
+              ),
+            )
+          }
+          SelectionHandle(rect) => {
+            fill_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=2.0 * scale),
+              @graphics.Brush::solid(
+                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
+              ),
+            )
+          }
+          GuideV(x) =>
+            stroke_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(
+                rect=@geometry.Rect::new(
+                  x=frame.origin.x + x * scale - 0.75,
+                  y=frame.origin.y,
+                  width=1.5,
+                  height=frame.size.height,
+                ),
+                radius=0.0,
+              ),
+              @graphics.Brush::solid(guide_color()),
+              1.5,
+            )
+          GuideH(y) =>
+            stroke_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(
+                rect=@geometry.Rect::new(
+                  x=frame.origin.x,
+                  y=frame.origin.y + y * scale - 0.75,
+                  width=frame.size.width,
+                  height=1.5,
+                ),
+                radius=0.0,
+              ),
+              @graphics.Brush::solid(guide_color()),
+              1.5,
+            )
+          _ => ()
+        }
+      }
+    },
+  )
+  // 覆盖层在最上：拦截全部指针事件（点选/拖拽在此转 typed Msg），
+  // 下层真实控件收不到输入，设计态不会误触运行行为。
+  .on_tap_with_frame(fn(position, frame) {
+    println("dbg overlay tap")
+    let scale = frame_scale(frame)
+    Msg::CanvasTap(
+      (position.x - frame.origin.x) / scale,
+      (position.y - frame.origin.y) / scale,
+    )
+  })
+  .on_drag_with_frame(fn(event, frame) {
+    println("dbg overlay drag")
+    let scale = frame_scale(frame)
+    let lx = (event.position.x - frame.origin.x) / scale
+    let ly = (event.position.y - frame.origin.y) / scale
+    if event.phase == @views.DragGesturePhase::Started {
+      Msg::CanvasPress(lx, ly)
+    } else if event.phase == @views.DragGesturePhase::Changed {
+      Msg::CanvasDragTo(lx, ly)
+    } else {
+      Msg::CanvasRelease(lx, ly)
+    }
+  })
+  stack([backdrop, widget_layer, overlay])
 }

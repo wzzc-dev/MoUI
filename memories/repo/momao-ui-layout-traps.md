@@ -61,3 +61,14 @@
 - Button variant discipline after the "red wall" feedback: one solid Primary per
   panel (运行 / 生成提案 / 闸门确认); list entries, mode toggles, delete/duplicate
   use Tonal / Outline.
+
+## 设计=运行 治本架构（2026-09）
+- 设计舞台不再用 canvas 画"控件效果图"（双渲染器必然漂移：拟真按钮
+  13px vs 真按钮 16px semibold 当场翻车）。改为三层：背景画布（窗体框+
+  点阵+空态提示）+ 真实控件层（StageLayout 按 IR 矩形分配帧）+ 透明手势
+  覆盖层（拦截全部指针，绘制选中描边/名牌/参考线，指针转设计坐标 Msg）。
+- `form_widget` 是表单控件唯一构造点：运行舞台传真实回调，设计舞台传
+  Noop（文本类回调必填，Noop 兜底防漏网点击）。
+- StageLayout/两层画布的缩放都现算 min(帧宽/640, 帧高/480)，三层永不
+  失配；导出 runner 模板内嵌同款 StageLayout（自包含副本）。
+- 已知代价：zoom 对真控件是"盒子缩放、字号常量"（文字不随 zoom 放大）。

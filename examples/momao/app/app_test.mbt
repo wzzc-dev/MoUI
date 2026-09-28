@@ -170,7 +170,7 @@ test "run start executes hello handler to completion" {
   let model = apply(@app.initial_model(), RunStart)
   match model.run {
     None => fail("应进入运行态")
-    Some(run) => {
+    Some(_run) => {
       let stepped = drain(model)
       let final_run = stepped.run.unwrap()
       assert_true(final_run.state.status is @momao_lang.Completed)
@@ -631,13 +631,20 @@ test "canvas tap selects on click and stays quiet during drag release" {
 test "design canvas plan draws grid, handles and alignment guides" {
   let program = @proposals.sample_hello()
   // 无拖拽：网格点阵 + 选中描边 + 4 角手柄，无参考线
-  let plan = @app.design_draw_plan(program, "按钮", None)
+  let plan = @app.design_backdrop_plan()
+  // 覆盖层：选中描边/名牌/手柄（无拖拽时无参考线）
+  let overlay = @app.design_overlay_plan(program, "按钮", None)
   let mut grid_dots = 0
   let mut handles = 0
   let mut guides = 0
   for op in plan {
     match op {
       @app.DesignDrawOp::GridDot(_) => grid_dots = grid_dots + 1
+      _ => ()
+    }
+  }
+  for op in overlay {
+    match op {
       @app.DesignDrawOp::SelectionHandle(_) => handles = handles + 1
       @app.DesignDrawOp::GuideV(_) | @app.DesignDrawOp::GuideH(_) =>
         guides = guides + 1
@@ -662,7 +669,7 @@ test "design canvas plan draws grid, handles and alignment guides" {
   }
   let dragged = @ir.Control::{ ..anchor, id: 2, name: "拖块", x: 103, y: 40, }
   let pair = @ir.MomaoProgram::{ ..base, controls: [anchor, dragged], }
-  let dragging = @app.design_draw_plan(pair, "拖块", Some("拖块"))
+  let dragging = @app.design_overlay_plan(pair, "拖块", Some("拖块"))
   let mut vertical_guides = 0
   for op in dragging {
     match op {

@@ -376,24 +376,47 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       } else {
         "z150"
       }
-      let canvas_view = design_canvas(
-        model.program,
-        model.selected_control,
-        match model.drag {
-          Some(drag) => Some(drag.control)
-          None => None
-        },
-        // 可读文案过翻译器：画布语义标签不烤进画布实现
-        text(t, "app.design.canvas"),
-        // 空画布引导（i18n）：没有控件时画布中央的提示
-        text(t, "app.design.empty"),
-        zoom=model.design_zoom,
-      )
+      let canvas_view = {
+        // 舞台控件：与运行舞台同一构造器（form_widget，无回调 = 纯展示，
+        // 手势覆盖层拦截指针输入）。外观与运行时由构造保证一致。
+        let stage_widgets : Array[@moui.View[Msg]] = []
+        let stage_rects : Array[@geometry.Rect] = []
+        for control in model.program.controls {
+          stage_widgets.push(
+            form_widget(control, control.text, false, control.items, -1),
+          )
+          stage_rects.push(
+            @geometry.Rect::new(
+              x=control.x.to_double(),
+              y=control.y.to_double(),
+              width=control.width.to_double(),
+              height=control.height.to_double(),
+            ),
+          )
+        }
+        design_stage(
+          model.program,
+          model.selected_control,
+          match model.drag {
+            Some(drag) => Some(drag.control)
+            None => None
+          },
+          stage_widgets,
+          stage_rects,
+          // 可读文案过翻译器：画布语义标签不烤进画布实现
+          text(t, "app.design.canvas"),
+          // 空画布引导（i18n）：没有控件时画布中央的提示
+          text(t, "app.design.empty"),
+        )
+      }
       let canvas_area = if model.design_zoom <= 0.0 {
-        // 适应窗口：画布直接铺满画布列（现状行为）
-        canvas_view
+        // 适应窗口：显式高度帧（556 = 列高 600 − 工具条 38 − 间距 6），
+        // 宽度由画布列拉伸提供，画布按 min(帧宽/640, 帧高/480) 等比缩放。
+        // 不用 .flexible()：加权子树的指针派发会在 tight 重排下丢手势
+        // （runtime_pointer_input_test 的设计舞台回归锁定此行为）。
+        canvas_view.frame(height=556.0)
       } else {
-        // 固定档位：逻辑尺寸 = 640×zoom，超出视口（画布列宽 × 554 高）
+        // 固定档位：舞台逻辑尺寸 = 640×zoom，超出视口（画布列宽 × 548 高）
         // 由滚动容器双向接管；指示器画在滚动视口右缘。
         @views.scroll_view(
           @views.container(
@@ -411,6 +434,11 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         [@views.button_group(zoom_items, selected=selected), canvas_area],
         spacing=6.0,
       )
+      // 锚定高度：设计列处于 CrossStart 行里，按「测量高度」布局，而
+      // 加权子级（flexible 舞台）不占测量基底——列会被压成 44pt
+      // （工具条+间距），舞台帧高度归零、命中区域为空，拖拽/点选全部
+      // 失效。显式 600 = 主行高度，flex 余量恢复给舞台。
+      .frame(height=600.0)
     }
     ModeBlocks => blocks_panel(model, t)
     ModeCode => code_panel(model, t)
@@ -690,6 +718,84 @@ fn audit_dot_color(op : @momao_lang.StepOp) -> @graphics.Color {
 }
 
 ///|
+/// 表单控件唯一构造点：运行舞台与设计舞台共用同一批 widget——设计态
+/// 外观与运行态由构造保证一致（治本：不再有"效果图 vs 真控件"两套渲染）。
+/// handlers 缺省 = 纯展示：设计舞台的手势覆盖层拦截全部指针输入，控件
+/// 收不到事件；文本类回调必填处给 Noop 兜底，防漏网点击改动状态。
+fn form_widget(
+  control : @ir.Control,
+  value : String,
+  checked : Bool,
+  rows : Array[String],
+  selected_row : Int,
+  on_click? : Msg,
+  on_change? : (String, String) -> Msg,
+  on_pick? : (String, Int) -> Msg,
+  on_toggle? : (String, Bool) -> Msg,
+) -> @moui.View[Msg] {
+  match control.kind {
+    @ir.Label => @views.text(value, align=TextStart)
+    @ir.Button =>
+      match on_click {
+        Some(click) => @views.button(value, on_click=click)
+        None => @views.button(value)
+      }
+    @ir.TextField =>
+      match on_change {
+        Some(change) =>
+          @views.text_field(
+            value,
+            on_input=new_value => change(control.name, new_value),
+          )
+        None => @views.text_field(value, on_input=_new_value => Msg::Noop)
+      }
+    @ir.CheckBox =>
+      match on_toggle {
+        Some(toggle) =>
+          @views.checkbox(
+            value,
+            checked~,
+            on_change=checked => toggle(control.name, checked),
+          )
+        None =>
+          @views.checkbox(value, checked~, on_change=_checked => Msg::Noop)
+      }
+    @ir.ListBox | @ir.Table => {
+      // 列表框/表格是带视口的实物：行高 24，按设计高度截断可见行
+      let max_rows = if control.height < 24 {
+        1
+      } else {
+        control.height / 24
+      }
+      let row_views : Array[@moui.View[Msg]] = []
+      let mut row_index = 0
+      for item in rows {
+        if row_index >= max_rows {
+          break
+        }
+        let index = row_index
+        let selected = selected_row == index
+        let label = if selected { "▶ " + item } else { item }
+        row_views.push(
+          match on_pick {
+            Some(pick) =>
+              @views.button(
+                label,
+                on_click=pick(control.name, index),
+                variant=Tonal,
+                height=24.0,
+              )
+            None => @views.button(label, variant=Tonal, height=24.0)
+          },
+        )
+        row_index = row_index + 1
+      }
+      @views.column(row_views, spacing=0.0)
+    }
+  }
+}
+
+///|
 /// 运行视图：真实渲染程序窗体（窗体框舞台）+ 闸门确认卡 + 审计时间线。
 fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match model.run {
@@ -702,56 +808,19 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       let stage_rects : Array[@geometry.Rect] = []
       for control in model.program.controls {
         let value = texts.get(control.name).unwrap_or(control.text)
-        let widget = match control.kind {
-          @ir.Label => @views.text(value, align=TextStart)
-          @ir.Button =>
-            @views.button(value, on_click=ControlClicked(control.name))
-          @ir.TextField =>
-            @views.text_field(
-              value,
-              on_input=new_value => ControlChanged(control.name, new_value),
-            )
-          @ir.CheckBox =>
-            // 真勾选控件：勾选态在 app 层 RunModel.checks（指令机语义外）
-            @views.checkbox(
-              value,
-              checked=run.checks.get(control.name).unwrap_or(false),
-              on_change=checked => RunToggle(control.name, checked),
-            )
-          @ir.ListBox | @ir.Table => {
-            // 列表框/表格是带视口的实物：行高 24，按设计高度截断可见行
-            let max_rows = if control.height < 24 {
-              1
-            } else {
-              control.height / 24
-            }
-            let rows : Array[@moui.View[Msg]] = []
-            let mut row_index = 0
-            for item in run.state.rows.get(control.name).unwrap_or([]) {
-              if row_index >= max_rows {
-                break
-              }
-              let index = row_index
-              let selected = run.state.selections
-                .get(control.name)
-                .unwrap_or(-1) ==
-                index
-              let label = if selected { "▶ " + item } else { item }
-              // 列表行是可选项不是主操作：Tonal 底色，不占实心主色
-              rows.push(
-                @views.button(
-                  label,
-                  on_click=ControlPicked(control.name, index),
-                  variant=Tonal,
-                  height=24.0,
-                ),
-              )
-              row_index = row_index + 1
-            }
-            @views.column(rows, spacing=0.0)
-          }
-        }
-        stage_widgets.push(widget)
+        stage_widgets.push(
+          form_widget(
+            control,
+            value,
+            run.checks.get(control.name).unwrap_or(false),
+            run.state.rows.get(control.name).unwrap_or([]),
+            run.state.selections.get(control.name).unwrap_or(-1),
+            on_click=ControlClicked(control.name),
+            on_change=(name, new_value) => ControlChanged(name, new_value),
+            on_pick=(name, index) => ControlPicked(name, index),
+            on_toggle=(name, checked) => RunToggle(name, checked),
+          ),
+        )
         stage_rects.push(
           @geometry.Rect::new(
             x=control.x.to_double(),

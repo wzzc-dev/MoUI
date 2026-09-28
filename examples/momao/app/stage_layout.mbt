@@ -22,19 +22,35 @@ impl @core.ViewNode for StageLayout with fn declaration(_self) {
 
 ///|
 impl @core.ViewNode for StageLayout with fn layout(self, ctx) {
-  // 舞台固定为设计坐标系尺寸（640×480）；父级 tight 帧与本征测量都得到
-  // 同一尺寸，绘制/命中/语义帧三者天然一致。
+  // 缩放从帧约束现算：min(帧宽/640, 帧高/480)。运行舞台（640×480 容器）
+  // 得 1.0；设计舞台「适应窗口」随画布列等比、固定档位得 zoom——与
+  // 背景/覆盖层画布的绘制比例同源，三层永不失配。无界约束（本征测量）
+  // 退回 1.0。放置管线以帧 tight 约束重排子树，子控件精确等于缩放后的
+  // 设计尺寸。
+  let by_width = ctx.constraints.min.width / design_width
+  let by_height = ctx.constraints.min.height / design_height
+  let scale = if by_width > 0.0 &&
+    by_width < 1.0e8 &&
+    by_height > 0.0 &&
+    by_height < 1.0e8 {
+    by_width.min(by_height)
+  } else {
+    1.0
+  }
   let size = ctx.constraints.constrain(
-    @core.Size::new(width=design_width, height=design_height),
+    @core.Size::new(
+      width=design_width * scale,
+      height=design_height * scale,
+    ),
   )
   let frames : Array[@core.Rect] = []
   for rect in self.rects {
     frames.push(
       @core.Rect::new(
-        x=rect.origin.x,
-        y=rect.origin.y,
-        width=rect.size.width,
-        height=rect.size.height,
+        x=rect.origin.x * scale,
+        y=rect.origin.y * scale,
+        width=rect.size.width * scale,
+        height=rect.size.height * scale,
       ),
     )
   }
