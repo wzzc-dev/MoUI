@@ -315,3 +315,27 @@
 - **后台会话截不到原生窗口**：`moon run macos_skia` 后台启动进程存活、
   但 AX 报 0 窗口、screencapture 只有桌面——窗口级 native 验证需要
   前台会话（此前会话成功过，环境差异）。
+
+## 2026-09-28 冻结后批次（积木画布/吸附/跳转/快捷键）新增事实
+
+- **RunStatus.WaitingGate**：闸门暂停时 status 是 WaitingGate——运行中按钮
+  的显隐要按「非终态」判断（Completed/Failed 才隐藏）。
+- **顶栏居中布局会随行宽平移**：top bar 列的行按内容宽度居中，行 2 变宽
+  （快捷键徽标）会让行 1 的 tab 整体左移——playwright 坐标不能跨布局版本
+  复用，每次改顶栏要重校准。
+- **KeyboardShortcut 通路（框架已有，勿重复造）**：@core.KeyboardShortcut::
+  new(key~, modifiers?) + View::keyboard_shortcut + @views.shortcut_button
+  （自带快捷键徽标与无障碍标注）；runtime 把 Keyboard 全窗口分发给
+  shortcut modifier；matches 是修饰键**精确相等**——Ctrl 与 Cmd 要各注册
+  一份（链式叠两个 keyboard_shortcut 即可）；空栈触发是安全 no-op 需测试。
+- **就地手术会污染撤销快照**：replace_stmt_at/delete_stmt_at 是就地语义，
+  快照（浅拷贝 struct）与活状态共享 body 数组——手术前必须
+  @blocks.clone_stmts（有 program_signature 回归测试锁定）。
+- **积木画布**：blocks_canvas.mbt（blocks_item_rects/hit_index/drop_slot/
+  draw_plan + canvas 视图）；榫头 = 非首块顶部 18x7 同色凸块、卯口 = 底部
+  挖画布底色；display_texts 由 panel 预渲染（draw 闭包无翻译器）；
+  reorder_stmt 克隆语义 + list_path 寻址（[]/[i,0]/[i,1,k]/[i,2]）；
+  否则/结束是**标记块非语句**，重排天然对它们无效（父路径不构成列表地址）。
+- **测试独立包无 aliases**：domain/blocks 的 `type Stmt` 别名只在主包可见，
+  *_test.mbt 里写 @ir.Stmt。
+- **@views.text 默认 TextCenter**；代码语境要 align=TextStart。
