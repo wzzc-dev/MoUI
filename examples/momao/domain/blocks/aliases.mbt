@@ -4,3 +4,6 @@
 
 ///|
 type Stmt = @ir.Stmt
+
+///|
+type Expr = @ir.Expr

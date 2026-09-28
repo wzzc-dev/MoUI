@@ -267,35 +267,6 @@ fn block_selected_border() -> @graphics.BorderStyle {
 }
 
 ///|
-/// 单块视觉：分类底色圆角块 + 深度缩进；可编辑块挂 tap 选中。
-fn block_row_view(
-  item : @blocks.BlockItem,
-  marker : String,
-  label : String,
-  selected : Bool,
-  row_index : Int,
-) -> @moui.View[Msg] {
-  let block = @views.container(
-    @views.text("\{marker}\{label}", width=380.0),
-    background=block_fill(item.kind),
-    corner_radius=6.0,
-    border=if selected { Some(block_selected_border()) } else { None },
-    padding=6.0,
-    width=400.0,
-  )
-  let indented = if item.depth > 0 {
-    @views.padding_edges(block, left=item.depth.to_double() * 18.0)
-  } else {
-    block
-  }
-  if item.path.length() > 0 {
-    indented.on_tap(SelectBlock(row_index))
-  } else {
-    indented
-  }
-}
-
-///|
 /// 积木视图：IR 语句的 Scratch 式投影 + 编辑回写。
 /// 点块选中 → 下方编辑器改这一条语句（DSL）→ 应用即写回 IR，
 /// 代码视图/设计视图随之刷新；运行中按审计细节高亮当前块。
@@ -304,27 +275,31 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     None => @views.text(text(t, "app.handler.none"))
     Some(handler) => {
       let spotlight = current_spotlight(model)
-      let rows : Array[@moui.View[Msg]] = [
-        @views.text(
-          "\{text(t, "blocks.event")}：\{handler.control_name} . \{handler.event.tag()}",
-          role=Subtitle,
-        ),
-      ]
       let blocks = @blocks.block_chain(handler.body)
-      let mut index = 0
+      // 展示名预渲染（画布 draw 闭包拿不到翻译器）：
+      // 有文本的语句 = 分类标签 + 语句文本；控制流块 = 分类标签
+      let display_texts : Array[String] = []
       for item in blocks {
-        let label = if item.text == "" {
-          text(t, @blocks.block_label_key(item.kind))
-        } else {
-          "\{text(t, @blocks.block_label_key(item.kind))}  \{item.text}"
-        }
-        let highlighted = item.text != "" && item.text == spotlight
-        let marker = if highlighted { "▶ " } else { "" }
-        let selected = index == model.selected_block
-        let row_index = index
-        rows.push(block_row_view(item, marker, label, selected, row_index))
-        index = index + 1
+        let label = text(t, @blocks.block_label_key(item.kind))
+        display_texts.push(
+          if item.text == "" {
+            label
+          } else {
+            "\{label}  \{item.text}"
+          },
+        )
       }
+      let rects = blocks_item_rects(blocks)
+      let canvas_height = rects.length().to_double() * 40.0 + 24.0
+      let blocks_view = blocks_canvas(
+        blocks,
+        display_texts,
+        model.selected_block,
+        spotlight,
+        model.block_drag,
+        canvas_height,
+        text(t, "app.blocks.canvas"),
+      )
       let editor : Array[@moui.View[Msg]] = []
       if model.selected_block >= 0 && model.selected_block < blocks.length() {
         editor.push(
@@ -350,10 +325,14 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           ]),
         )
       }
-      let panel : Array[@moui.View[Msg]] = []
-      for row in rows {
-        panel.push(row)
-      }
+      let panel : Array[@moui.View[Msg]] = [
+        @views.text(
+          "\{text(t, "blocks.event")}：\{handler.control_name} . \{handler.event.tag()}",
+          role=Subtitle,
+        ),
+        @views.text(text(t, "app.blocks.reorder_hint"), role=Caption),
+        blocks_view,
+      ]
       for item_view in editor {
         panel.push(item_view)
       }

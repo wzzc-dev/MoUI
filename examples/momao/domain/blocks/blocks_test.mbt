@@ -255,3 +255,103 @@ test "out-of-bounds paths are safe no-ops" {
   let same2 = @blocks.delete_stmt_at(body, [9])
   assert_eq(@ir.count_stmts(same2), 1)
 }
+
+///|
+test "reorder_stmt moves within a list without mutating input" {
+  let body : Array[@ir.Stmt] = [
+    @ir.Assign("a", @ir.NumLit(1.0)),
+    @ir.Assign("b", @ir.NumLit(2.0)),
+    @ir.Assign("c", @ir.NumLit(3.0)),
+  ]
+  // 顶层：把下标 0 移到落槽 2（落在原下标 2 之前）
+  let moved = @blocks.reorder_stmt(body, [], 0, 2).unwrap()
+  match (@blocks.stmt_at(moved, [0]), @blocks.stmt_at(moved, [1])) {
+    (Some(@ir.Assign("b", _)), Some(@ir.Assign("a", _))) => ()
+    _ => fail("重排后顺序应为 b, a, c")
+  }
+  match @blocks.stmt_at(moved, [2]) {
+    Some(@ir.Assign("c", _)) => ()
+    _ => fail("c 应仍在末尾")
+  }
+  // 传入数组不被修改（克隆语义，撤销快照安全）
+  match @blocks.stmt_at(body, [0]) {
+    Some(@ir.Assign("a", _)) => ()
+    _ => fail("原数组不应被就地修改")
+  }
+  // 落槽 == 原下标 → 无变化
+  let same = @blocks.reorder_stmt(body, [], 1, 1).unwrap()
+  match (@blocks.stmt_at(same, [0]), @blocks.stmt_at(same, [1])) {
+    (Some(@ir.Assign("a", _)), Some(@ir.Assign("b", _))) => ()
+    _ => fail("落槽等于原位应保持原序")
+  }
+}
+
+///|
+test "reorder_stmt addresses nested lists by list_path" {
+  let body : Array[@ir.Stmt] = [
+    @ir.If(
+      @ir.Var("开"),
+      [
+        @ir.Assign("t1", @ir.NumLit(1.0)),
+        @ir.Assign("t2", @ir.NumLit(2.0)),
+      ],
+      [],
+      [@ir.Assign("e1", @ir.NumLit(3.0))],
+    ),
+  ]
+  // then 列表 [0,0]：把 t2 移到最前
+  let moved = @blocks.reorder_stmt(body, [0, 0], 1, 0).unwrap()
+  match @blocks.stmt_at(moved, [0, 0, 0]) {
+    Some(@ir.Assign("t2", _)) => ()
+    _ => fail("then 内应重排为 t2, t1")
+  }
+  // else 列表 [0,2]：只有一条，移不动但应成功且等价
+  let same = @blocks.reorder_stmt(moved, [0, 2], 0, 0).unwrap()
+  match @blocks.stmt_at(same, [0, 2, 0]) {
+    Some(@ir.Assign("e1", _)) => ()
+    _ => fail("else 应保持原样")
+  }
+  // 循环体 [i,2] 同样寻址
+  let looped : Array[@ir.Stmt] = [
+    @ir.WhileLoop(@ir.Var("跑"), [
+      @ir.Assign("x", @ir.NumLit(1.0)),
+      @ir.Break,
+    ]),
+  ]
+  let swapped = @blocks.reorder_stmt(looped, [0, 2], 1, 0).unwrap()
+  match @blocks.stmt_at(swapped, [0, 2, 0]) {
+    Some(@ir.Break) => ()
+    _ => fail("循环体应重排为 Break 在前")
+  }
+}
+
+///|
+test "reorder_stmt rejects bad paths and indices" {
+  let body : Array[@ir.Stmt] = [@ir.Assign("a", @ir.NumLit(1.0))]
+  assert_true(@blocks.reorder_stmt(body, [0, 1], 0, 0) is None)
+  assert_true(@blocks.reorder_stmt(body, [], 5, 0) is None)
+  assert_true(@blocks.reorder_stmt(body, [], -1, 0) is None)
+}
+
+///|
+test "clone_stmts deep-copies nested structures" {
+  let body : Array[@ir.Stmt] = [
+    @ir.If(
+      @ir.Binary(@ir.Add, @ir.Var("a"), @ir.NumLit(1.0)),
+      [@ir.Assign("x", @ir.StrLit("hi"))],
+      [],
+      [],
+    ),
+  ]
+  let copy = @blocks.clone_stmts(body)
+  // 改副本不影响原件
+  let _ = @blocks.replace_stmt_at(
+    copy,
+    [0, 0, 0],
+    @ir.Assign("y", @ir.NumLit(2.0)),
+  )
+  match @blocks.stmt_at(body, [0, 0, 0]) {
+    Some(@ir.Assign("x", _)) => ()
+    _ => fail("克隆后原件不应被波及")
+  }
+}

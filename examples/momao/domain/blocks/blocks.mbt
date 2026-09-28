@@ -529,3 +529,152 @@ pub fn stmt_at(body : Array[Stmt], path : Array[Int]) -> Stmt? {
     _ => None
   }
 }
+
+///|
+/// 深拷贝语句数组（撤销快照安全：就地手术前先克隆，
+/// 避免快照与活状态共享数组引用被就地修改污染）。
+pub fn clone_stmts(body : Array[Stmt]) -> Array[Stmt] {
+  let copy : Array[Stmt] = []
+  for stmt in body {
+    copy.push(clone_stmt(stmt))
+  }
+  copy
+}
+
+///|
+pub fn clone_stmt(stmt : Stmt) -> Stmt {
+  match stmt {
+    @ir.Declare(name, expr) => @ir.Declare(name, clone_expr(expr))
+    @ir.Assign(name, expr) => @ir.Assign(name, clone_expr(expr))
+    @ir.If(cond, then_body, else_ifs, else_body) => {
+      let arms : Array[(Expr, Array[Stmt])] = []
+      for arm in else_ifs {
+        arms.push((clone_expr(arm.0), clone_stmts(arm.1)))
+      }
+      @ir.If(
+        clone_expr(cond),
+        clone_stmts(then_body),
+        arms,
+        clone_stmts(else_body),
+      )
+    }
+    @ir.CountLoop(times, iter, loop_body) =>
+      @ir.CountLoop(clone_expr(times), iter, clone_stmts(loop_body))
+    @ir.WhileLoop(cond, loop_body) =>
+      @ir.WhileLoop(clone_expr(cond), clone_stmts(loop_body))
+    @ir.Break => @ir.Break
+    @ir.Stmt::Call(name, args) => {
+      let copied : Array[Expr] = []
+      for arg in args {
+        copied.push(clone_expr(arg))
+      }
+      @ir.Stmt::Call(name, copied)
+    }
+  }
+}
+
+///|
+pub fn clone_expr(expr : Expr) -> Expr {
+  match expr {
+    @ir.NumLit(v) => @ir.NumLit(v)
+    @ir.StrLit(v) => @ir.StrLit(v)
+    @ir.BoolLit(v) => @ir.BoolLit(v)
+    @ir.Var(name) => @ir.Var(name)
+    @ir.Not(inner) => @ir.Not(clone_expr(inner))
+    @ir.Neg(inner) => @ir.Neg(clone_expr(inner))
+    @ir.Binary(op, left, right) =>
+      @ir.Binary(op, clone_expr(left), clone_expr(right))
+    @ir.Call(name, args) => {
+      let copied : Array[Expr] = []
+      for arg in args {
+        copied.push(clone_expr(arg))
+      }
+      @ir.Call(name, copied)
+    }
+  }
+}
+
+///|
+/// 语句列表寻址：list_path 指向一棵语句列表（[] = 顶层；
+/// [i,0] = If@i 的 then；[i,1,k] = If@i 的第 k 个 else-if 臂；
+/// [i,2] = If@i 的 else 或循环体）。返回活数组引用。
+pub fn stmt_list_at(
+  body : Array[Stmt],
+  list_path : Array[Int],
+) -> Array[Stmt]? {
+  if list_path.length() == 0 {
+    return Some(body)
+  }
+  let head = list_path[0]
+  if head < 0 || head >= body.length() {
+    return None
+  }
+  let rest_len = list_path.length() - 1
+  match body[head] {
+    @ir.If(_, then_body, arms, else_body) =>
+      if rest_len == 1 {
+        match list_path[1] {
+          0 => Some(then_body)
+          2 => Some(else_body)
+          _ => None
+        }
+      } else if rest_len == 2 {
+        let arm_index = list_path[2]
+        if list_path[1] != 1 || arm_index < 0 || arm_index >= arms.length() {
+          None
+        } else {
+          Some(arms[arm_index].1)
+        }
+      } else {
+        None
+      }
+    @ir.CountLoop(_, _, loop_body) =>
+      if rest_len == 1 && list_path[1] == 2 {
+        Some(loop_body)
+      } else {
+        None
+      }
+    @ir.WhileLoop(_, loop_body) =>
+      if rest_len == 1 && list_path[1] == 2 {
+        Some(loop_body)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+/// 同层重排：把 list_path 列表中下标 from 的语句移动到 drop_before 槽位
+/// （槽位语义 = 落在原下标 drop_before 的语句之前；先摘除再插入，
+/// drop_before > from 时自然左移一位）。克隆后手术，不改传入数组。
+/// from/to 越界或目标列表不存在返回 None。
+pub fn reorder_stmt(
+  body : Array[Stmt],
+  list_path : Array[Int],
+  from : Int,
+  drop_before : Int,
+) -> Array[Stmt]? {
+  let working = clone_stmts(body)
+  let list = match stmt_list_at(working, list_path) {
+    Some(list) => list
+    None => return None
+  }
+  if from < 0 || from >= list.length() {
+    return None
+  }
+  let stmt = list[from]
+  let _ = list.remove(from)
+  let mut insert_at = drop_before
+  if insert_at > from {
+    insert_at = insert_at - 1
+  }
+  if insert_at < 0 {
+    insert_at = 0
+  }
+  if insert_at > list.length() {
+    insert_at = list.length()
+  }
+  list.insert(insert_at, stmt)
+  Some(working)
+}

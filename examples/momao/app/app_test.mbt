@@ -1012,3 +1012,142 @@ test "redo on empty stack is a safe no-op" {
     @ir.program_signature(model.program),
   )
 }
+
+///|
+test "undo after block commit reverts the statement (snapshot not poisoned)" {
+  let model = @app.initial_model()
+  // 积木编辑：把唯一语句改成另一条并提交
+  let committed = apply(
+    apply(
+      apply(model, SelectBlock(0)),
+      EditBlock("设置文本(显示, \"改过\")"),
+    ),
+    CommitBlock,
+  )
+  match @app.current_handler(committed).unwrap().body[0] {
+    @ir.Call(_, args) =>
+      match args[1] {
+        @ir.StrLit(text) => assert_true(text.contains("改过"))
+        _ => fail("提交后应为新字符串字面量")
+      }
+    _ => fail("提交后应仍是 Call")
+  }
+  // 撤销：程序应与最初逐字段一致
+  // （若快照被就地手术污染，这里会拿到提交后的语句而失败）
+  let undone = apply(committed, Undo)
+  assert_eq(
+    @ir.program_signature(undone.program),
+    @ir.program_signature(model.program),
+  )
+}
+
+///|
+test "blocks canvas layout, hit test and drop slot" {
+  // 找一个选中子程序含嵌套语句的样例（深度 ≥ 1 才能断言缩进）
+  let samples = @proposals.all_samples()
+  let mut chosen : @app.Model? = None
+  let mut idx = 0
+  for sample in samples {
+    // 扫描该样例全部 handler，找到第一个有嵌套语句的
+    for handler in sample.handlers {
+      let keyed = @app.handler_key(handler.control_name, handler.event.tag())
+      let chain = @blocks.block_chain(handler.body)
+      let mut has_depth = false
+      for item in chain {
+        if item.depth >= 1 {
+          has_depth = true
+        }
+      }
+      if has_depth {
+        chosen = Some(
+          apply(
+            apply(@app.initial_model(), SelectTemplate(idx)),
+            SelectHandler(keyed),
+          ),
+        )
+        break
+      }
+    }
+    if chosen is Some(_) {
+      break
+    }
+    idx = idx + 1
+  }
+  let model = match chosen {
+    Some(m) => m
+    None => fail("样例里应存在含嵌套的子程序")
+  }
+  ignore(idx)
+  let blocks = @app.block_chain_of(model)
+  assert_true(blocks.length() > 3)
+  let rects = @app.blocks_item_rects(blocks)
+  // 布局：逐行 40px 步进，深度缩进
+  assert_eq(rects[0].origin.y, 10.0)
+  assert_eq(rects[1].origin.y, 50.0)
+  let mut deepest = 0
+  let mut deep_index = 0
+  let mut i = 0
+  for item in blocks {
+    if item.depth > deepest {
+      deepest = item.depth
+    }
+    if item.depth == deepest {
+      deep_index = i
+    }
+    i = i + 1
+  }
+  assert_true(rects[deep_index].origin.x > rects[0].origin.x)
+  // 命中：第一行中心命中 0；画布右上角空白命中 -1
+  assert_eq(
+    @app.blocks_hit_index(
+      blocks,
+      rects[0].origin.x + 10.0,
+      rects[0].origin.y + 10.0,
+    ),
+    0,
+  )
+  assert_eq(@app.blocks_hit_index(blocks, 460.0, 5.0), -1)
+  // 落槽：同层列表内按兄弟中心线计数
+  let first_path = blocks[0].path
+  let list_path = @app.blocks_parent_of(first_path)
+  assert_eq(
+    @app.blocks_drop_slot(blocks, list_path, rects[0].origin.y + 1.0, rects),
+    0,
+  )
+  assert_eq(
+    @app.blocks_drop_slot(blocks, list_path, rects[1].origin.y + 30.0, rects),
+    1,
+  )
+}
+
+///|
+test "blocks canvas drag reorders siblings and is undoable" {
+  // 口算训练营：取一个有 ≥2 条顶层语句的子程序
+  let model = apply(@app.initial_model(), SelectTemplate(2))
+  let blocks = @app.block_chain_of(model)
+  assert_true(blocks.length() >= 2)
+  let first_text = blocks[0].text
+  let second_text = blocks[1].text
+  // 按上第一块 → 拖到落槽 2（原下标 1 之后）→ 松手
+  let rects = @app.blocks_item_rects(blocks)
+  let pressed = apply(
+    model,
+    BlocksCanvasPress(rects[0].origin.x + 10.0, rects[0].origin.y + 10.0),
+  )
+  assert_true(pressed.block_drag is Some(_))
+  let dragged = apply(
+    pressed,
+    BlocksCanvasDragTo(rects[1].origin.x + 10.0, rects[1].origin.y + 38.0),
+  )
+  assert_eq(dragged.block_drag.unwrap().to, 2)
+  let released = apply(dragged, BlocksCanvasRelease)
+  // 重排生效：原第二块现在在最前
+  let after = @app.block_chain_of(released)
+  assert_eq(after[0].text, second_text)
+  assert_eq(after[1].text, first_text)
+  // 选中跟随被移动的语句（新链下标 1）
+  assert_eq(released.selected_block, 1)
+  // 撤销恢复原序
+  let undone = apply(released, Undo)
+  assert_eq(@app.block_chain_of(undone)[0].text, first_text)
+}

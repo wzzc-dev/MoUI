@@ -21,6 +21,8 @@
     "app.ai.title": "AI 提案",
     "app.block.apply": "应用修改",
     "app.block.delete": "删除语句",
+    "app.blocks.canvas": "积木画布",
+    "app.blocks.reorder_hint": "拖动积木可同层重排；点选积木在下方编辑语句",
     "app.code.cheatsheet": "在此编写程序；关键字速查见顶栏「帮助」",
     "app.code.error": "语法错误",
     "app.code.title": "MoMao 代码",

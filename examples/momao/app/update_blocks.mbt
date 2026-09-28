@@ -76,8 +76,11 @@ fn commit_block(model : Model) -> Model {
                 if body.length() == 0 {
                   model
                 } else {
+                  // 克隆后再手术：replace_stmt_at 是就地语义，
+                  // 直接改 handler.body 会污染撤销快照（共享数组引用）
+                  let working = @blocks.clone_stmts(handler.body)
                   let updated = @blocks.replace_stmt_at(
-                    handler.body,
+                    working,
                     item.path,
                     body[0].stmt,
                   )
@@ -106,7 +109,9 @@ fn delete_block(model : Model) -> Model {
           if item.path.length() == 0 {
             model
           } else {
-            let updated = @blocks.delete_stmt_at(handler.body, item.path)
+            // 同上：克隆后再手术（撤销快照安全）
+            let working = @blocks.clone_stmts(handler.body)
+            let updated = @blocks.delete_stmt_at(working, item.path)
             let next = replace_handler_body(model, handler, updated)
             let synced = sync_code_draft(next)
             { ..synced, selected_block: -1, block_draft: "", }
@@ -144,6 +149,119 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some((select_block(model, index), @moui.Effect::none()))
     EditBlock(source) =>
       Some(({ ..model, block_draft: source, }, @moui.Effect::none()))
+    BlocksCanvasTap(x, y) =>
+      // 点选积木（拖拽结束的 tap 以 block_drag 态区分，不重复选中）
+      if model.block_drag is Some(_) {
+        Some((model, @moui.Effect::none()))
+      } else {
+        let blocks = block_chain_of(model)
+        let hit = blocks_hit_index(blocks, x, y)
+        if hit >= 0 {
+          Some((select_block(model, hit), @moui.Effect::none()))
+        } else {
+          Some((model, @moui.Effect::none()))
+        }
+      }
+    BlocksCanvasPress(x, y) => {
+      // 按上积木：选中并建立同层拖拽态；落空清除
+      let blocks = block_chain_of(model)
+      let hit = blocks_hit_index(blocks, x, y)
+      if hit >= 0 && blocks[hit].path.length() > 0 {
+        let item = blocks[hit]
+        let list_path = blocks_parent_of(item.path)
+        let sibling_index = item.path[item.path.length() - 1]
+        let next = select_block(model, hit)
+        Some(
+          (
+            {
+              ..next,
+              block_drag: Some(BlocksDragState::{
+                list_path,
+                from: sibling_index,
+                to: sibling_index,
+              }),
+            },
+            @moui.Effect::none(),
+          ),
+        )
+      } else {
+        Some(({ ..model, block_drag: None, }, @moui.Effect::none()))
+      }
+    }
+    BlocksCanvasDragTo(x, y) =>
+      // 拖拽中：按指针 y 更新同层落槽
+      match model.block_drag {
+        None => Some((model, @moui.Effect::none()))
+        Some(drag) => {
+          let blocks = block_chain_of(model)
+          let rects = blocks_item_rects(blocks)
+          let slot = blocks_drop_slot(blocks, drag.list_path, y, rects)
+          Some(
+            (
+              { ..model, block_drag: Some({ ..drag, to: slot, }), },
+              @moui.Effect::none(),
+            ),
+          )
+        }
+      }
+    BlocksCanvasRelease =>
+      // 松手：落槽有效（非原位/原位下一位）才重排；过撤销点
+      match model.block_drag {
+        None => Some((model, @moui.Effect::none()))
+        Some(drag) => {
+          let moved = drag.to != drag.from && drag.to != drag.from + 1
+          let next = if moved {
+            with_undo_point(model, "", m => {
+              match current_handler(m) {
+                None => m
+                Some(handler) =>
+                  match
+                    @blocks.reorder_stmt(
+                      handler.body,
+                      drag.list_path,
+                      drag.from,
+                      drag.to,
+                    ) {
+                    Some(new_body) => replace_handler_body(m, handler, new_body)
+                    None => m
+                  }
+              }
+            })
+          } else {
+            model
+          }
+          // 重排后选中跟随被移动的语句（新链下标 = list_path ++ 新语句位）
+          let new_stmt_index = if drag.to > drag.from {
+            drag.to - 1
+          } else {
+            drag.to
+          }
+          let new_path = {
+            let path : Array[Int] = []
+            for part in drag.list_path {
+              path.push(part)
+            }
+            path.push(new_stmt_index)
+            path
+          }
+          let chain = block_chain_of(next)
+          let mut hit = -1
+          let mut i = 0
+          for item in chain {
+            if hit == -1 && blocks_same_path(item.path, new_path) {
+              hit = i
+            }
+            i = i + 1
+          }
+          let selected = if hit >= 0 { hit } else { next.selected_block }
+          Some(
+            (
+              { ..next, block_drag: None, selected_block: selected, },
+              @moui.Effect::none(),
+            ),
+          )
+        }
+      }
     CommitBlock =>
       Some(
         (

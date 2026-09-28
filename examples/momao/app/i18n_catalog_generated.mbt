@@ -138,6 +138,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("err.unknown_name", GeneratedI18nMessage::Text("Unknown name: {a}")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("Change preview")),
+      ("app.blocks.canvas", GeneratedI18nMessage::Text("Blocks canvas")),
       ("app.design.canvas", GeneratedI18nMessage::Text("Form design canvas")),
       ("app.help.builtins", GeneratedI18nMessage::Text("Commands & functions")),
       ("app.help.commands", GeneratedI18nMessage::Text("Command")),
@@ -239,6 +240,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.break_outside_loop",
         GeneratedI18nMessage::Text("break only works inside a loop"),
+      ),
+      (
+        "app.blocks.reorder_hint",
+        GeneratedI18nMessage::Text(
+          "Drag blocks to reorder within a level; tap one to edit it below",
+        ),
       ),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("Duplicate")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("Class roll call")),
@@ -388,6 +395,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("err.unknown_name", GeneratedI18nMessage::Text("未知名字：{a}")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("变更预览")),
+      ("app.blocks.canvas", GeneratedI18nMessage::Text("积木画布")),
       ("app.design.canvas", GeneratedI18nMessage::Text("表单设计画布")),
       ("app.help.builtins", GeneratedI18nMessage::Text("命令与函数")),
       ("app.help.commands", GeneratedI18nMessage::Text("命令")),
@@ -483,6 +491,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.break_outside_loop",
         GeneratedI18nMessage::Text("跳出循环 只能用在循环里"),
+      ),
+      (
+        "app.blocks.reorder_hint",
+        GeneratedI18nMessage::Text(
+          "拖动积木可同层重排；点选积木在下方编辑语句",
+        ),
       ),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),

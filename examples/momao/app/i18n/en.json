@@ -21,6 +21,8 @@
     "app.ai.title": "AI proposals",
     "app.block.apply": "Apply edit",
     "app.block.delete": "Delete statement",
+    "app.blocks.canvas": "Blocks canvas",
+    "app.blocks.reorder_hint": "Drag blocks to reorder within a level; tap one to edit it below",
     "app.code.cheatsheet": "Write your program here; keyword cheatsheet lives under Help",
     "app.code.error": "Syntax error",
     "app.code.title": "MoMao code",

@@ -71,6 +71,15 @@ pub(all) struct DragState {
 }
 
 ///|
+/// 积木拖拽态：同层重排——list_path 定位语句列表，from/to 是
+/// 兄弟下标与落槽（落槽 = 落在原下标 to 的语句之前）。
+pub(all) struct BlocksDragState {
+  list_path : Array[Int]
+  from : Int
+  to : Int
+}
+
+///|
 /// 拖拽种类：移动（带按下点相对控件原点的偏移，拖拽跟随不跳变）/
 /// 缩放（从该角拖拽，对角固定）。
 pub(all) enum DragKind {
@@ -112,6 +121,8 @@ pub(all) struct Model {
   redo_stack : Array[UndoEntry]
   // 会话内提案历史（不持久化）
   proposal_history : Array[ProposalRecord]
+  // 积木画布拖拽（同层重排）进行中
+  block_drag : BlocksDragState?
 }
 
 ///|
@@ -157,6 +168,10 @@ pub(all) enum Msg {
   RunStep
   RunResume
   AuditJump(Int)
+  BlocksCanvasTap(Double, Double)
+  BlocksCanvasPress(Double, Double)
+  BlocksCanvasDragTo(Double, Double)
+  BlocksCanvasRelease
   RunToggle(String, Bool)
   AnswerGate(Bool)
   ControlClicked(String)
@@ -245,6 +260,7 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     undo_stack: [],
     redo_stack: [],
     proposal_history: [],
+    block_drag: None,
   }
   seed_code_draft(model)
 }
