@@ -156,6 +156,7 @@ pub(all) enum Msg {
   RunTick
   RunStep
   RunResume
+  AuditJump(Int)
   RunToggle(String, Bool)
   AnswerGate(Bool)
   ControlClicked(String)

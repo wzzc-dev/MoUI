@@ -60,6 +60,7 @@
     "app.preview.note": "可读预览（毕业通道）——不是可编译产物；程序事实来源是 .momao.json",
     "app.preview.title": "MoonBit 源码预览",
     "app.run.audit": "执行记录",
+    "app.run.audit_hint": "点击条目可跳到积木",
     "app.run.gate.ask": "程序在提问：{prompt}",
     "app.run.gate.confirm": "确认送出",
     "app.run.gate.reject": "拒绝",

@@ -671,7 +671,9 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       // 审计时间线：操作类型色点 + 本地化操作名 + 规范细节
       let audit : Array[@moui.View[Msg]] = [
         @views.text(text(t, "app.run.audit"), role=Subtitle),
+        @views.text(text(t, "app.run.audit_hint"), role=Caption),
       ]
+      let mut audit_index = 0
       for record in run.state.audit {
         let op = match record.op {
           @momao_lang.OpAssign => "op.assign"
@@ -688,11 +690,13 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           width=8.0,
           height=8.0,
         )
+        let row_index = audit_index
+        audit_index = audit_index + 1
         audit.push(
           @views.row([
             dot,
             @views.text("\{text(t, op)}  \{record.detail}", width=400.0),
-          ]),
+          ]).on_tap(AuditJump(row_index)),
         )
       }
       let error_card : Array[@moui.View[Msg]] = []

@@ -156,6 +156,35 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             ),
           )
       }
+    AuditJump(index) =>
+      // 审计 → 积木：切到积木视图并选中该条目对应的语句。
+      // detail 是规范文本，与积木链 item.text 同一来源（聚光灯同款匹配）。
+      match model.run {
+        None => Some((model, @moui.Effect::none()))
+        Some(run) => {
+          let detail = match run.state.audit.get(index) {
+            Some(record) => record.detail
+            None => ""
+          }
+          let mut block_index = -1
+          if detail != "" {
+            let blocks = block_chain_of(model)
+            let mut i = 0
+            for item in blocks {
+              if block_index == -1 && item.text == detail {
+                block_index = i
+              }
+              i = i + 1
+            }
+          }
+          Some(
+            (
+              select_block({ ..model, mode: ModeBlocks, }, block_index),
+              @moui.Effect::none(),
+            ),
+          )
+        }
+      }
     RunToggle(name, value) =>
       // 勾选框是运行期 UI 态：就地写入当前 run 的 checks 表
       match model.run {

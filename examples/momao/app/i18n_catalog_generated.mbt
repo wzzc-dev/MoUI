@@ -166,6 +166,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.inspector.none", GeneratedI18nMessage::Text("No control selected")),
       ("app.inspector.size", GeneratedI18nMessage::Text("Size")),
       ("app.inspector.text", GeneratedI18nMessage::Text("Text")),
+      (
+        "app.run.audit_hint",
+        GeneratedI18nMessage::Text("Tap an entry to jump to its block"),
+      ),
       ("app.run.gate.title", GeneratedI18nMessage::Text("Confirmation needed")),
       ("builtin.append_row", GeneratedI18nMessage::Text("append_row")),
       ("builtin.get_number", GeneratedI18nMessage::Text("get_number")),
@@ -406,6 +410,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.inspector.none", GeneratedI18nMessage::Text("未选中控件")),
       ("app.inspector.size", GeneratedI18nMessage::Text("尺寸")),
       ("app.inspector.text", GeneratedI18nMessage::Text("文本")),
+      (
+        "app.run.audit_hint",
+        GeneratedI18nMessage::Text("点击条目可跳到积木"),
+      ),
       ("app.run.gate.title", GeneratedI18nMessage::Text("需要你的确认")),
       ("builtin.append_row", GeneratedI18nMessage::Text("追加行")),
       ("builtin.get_number", GeneratedI18nMessage::Text("取数值")),

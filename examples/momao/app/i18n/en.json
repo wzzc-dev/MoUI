@@ -60,6 +60,7 @@
     "app.preview.note": "Readable preview (graduation path) - not compilable output; the source of truth is the .momao.json IR",
     "app.preview.title": "MoonBit source preview",
     "app.run.audit": "Execution log",
+    "app.run.audit_hint": "Tap an entry to jump to its block",
     "app.run.gate.ask": "The program asks: {prompt}",
     "app.run.gate.confirm": "Confirm send",
     "app.run.gate.reject": "Reject",

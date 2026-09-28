@@ -974,3 +974,20 @@ test "help cheatsheet is generated from the keyword catalog" {
   // 内建目录条目数（14 个内建，含 2 个闸门）
   assert_eq(@momao_lang.builtin_catalog().length(), 14)
 }
+
+///|
+test "audit jump lands on the matching block" {
+  let model = apply(@app.initial_model(), RunStart)
+  let finished = drain(model)
+  // 运行完成后：点击第一条审计 → 积木视图 + 对应语句被选中
+  let jumped = apply(finished, AuditJump(0))
+  assert_true(jumped.mode is ModeBlocks)
+  // 链条即语句列表（事件头单独渲染）→ 应选中下标 0
+  assert_eq(jumped.selected_block, 0)
+  // 草稿预填该语句的 DSL
+  assert_true(jumped.block_draft.contains("设置文本"))
+  // 越界索引：切视图但不选中
+  let safe = apply(finished, AuditJump(99))
+  assert_true(safe.mode is ModeBlocks)
+  assert_eq(safe.selected_block, -1)
+}
