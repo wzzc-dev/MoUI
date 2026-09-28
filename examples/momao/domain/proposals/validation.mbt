@@ -7,9 +7,9 @@
 /// 无语义命名 blocklist：AI 提案禁止 `a1`/`tmp`/`x` 式命名（可读性契约）。
 fn junk_names() -> Array[String] {
   [
-    "a", "b", "c", "x", "y", "z", "i", "j", "k", "n", "m",
-    "tmp", "temp", "foo", "bar", "baz", "test", "data", "value", "obj",
-    "a1", "a2", "b1", "x1", "y1", "var1", "var2", "t1", "t2", "s1",
+    "a", "b", "c", "x", "y", "z", "i", "j", "k", "n", "m", "tmp", "temp", "foo",
+    "bar", "baz", "test", "data", "value", "obj", "a1", "a2", "b1", "x1", "y1", "var1",
+    "var2", "t1", "t2", "s1",
   ]
 }
 
@@ -20,21 +20,42 @@ fn is_junk_name(name : String) -> Bool {
 
 ///|
 /// 可读性：双语 note 必填；命名必须自解释。
-fn check_readability(program : @ir.MomaoProgram) -> Array[ProposalError] {
+fn check_readability(proposal : ProposalV1) -> Array[ProposalError] {
   let errors : Array[ProposalError] = []
-  for handler in program.handlers {
+  for handler in proposal.handlers_add {
     if handler.note_zh.trim() == "" || handler.note_en.trim() == "" {
       errors.push(
-        Readability("handler.\{handler.control_name}.\{handler.event.tag()}.note"),
+        Readability(
+          "handler.\{handler.control_name}.\{handler.event.tag()}.note",
+        ),
       )
     }
   }
-  for control in program.controls {
+  for handler in proposal.handlers_update {
+    if handler.note_zh.trim() == "" || handler.note_en.trim() == "" {
+      errors.push(
+        Readability(
+          "handler.\{handler.control_name}.\{handler.event.tag()}.note",
+        ),
+      )
+    }
+  }
+  for control in proposal.controls_add {
     if is_junk_name(control.name) {
       errors.push(Readability("control.\{control.name}"))
     }
   }
-  for variable in program.variables {
+  for control in proposal.controls_update {
+    if is_junk_name(control.name) {
+      errors.push(Readability("control.\{control.name}"))
+    }
+  }
+  for variable in proposal.variables_add {
+    if is_junk_name(variable.name) {
+      errors.push(Readability("variable.\{variable.name}"))
+    }
+  }
+  for variable in proposal.variables_update {
     if is_junk_name(variable.name) {
       errors.push(Readability("variable.\{variable.name}"))
     }
@@ -49,6 +70,9 @@ pub fn validate_proposal(
   proposal : ProposalV1,
 ) -> Array[ProposalError] {
   let errors : Array[ProposalError] = []
+  if proposal.version != PROPOSAL_VERSION {
+    errors.push(BadVersion(proposal.version))
+  }
   if proposal.summary_zh.trim() == "" || proposal.summary_en.trim() == "" {
     errors.push(Readability("summary"))
   }
@@ -59,7 +83,7 @@ pub fn validate_proposal(
   for issue in @momao_lang.validate_program_language(next) {
     errors.push(LanguageIssue(issue.a()))
   }
-  for issue in check_readability(next) {
+  for issue in check_readability(proposal) {
     errors.push(issue)
   }
   errors
@@ -106,7 +130,7 @@ pub fn apply_proposal(
       !next.controls.any(existing => existing.id == control.id) {
       control
     } else {
-      @ir.Control::{ ..control, id: @ir.next_control_id(next) }
+      @ir.Control::{ ..control, id: @ir.next_control_id(next), }
     }
     next.controls.push(assigned)
   }
@@ -135,7 +159,10 @@ pub fn apply_proposal(
 }
 
 ///|
-fn remove_control(program : @ir.MomaoProgram, name : String) -> @ir.MomaoProgram {
+fn remove_control(
+  program : @ir.MomaoProgram,
+  name : String,
+) -> @ir.MomaoProgram {
   let kept : Array[@ir.Control] = []
   for control in program.controls {
     if control.name != name {
@@ -148,11 +175,7 @@ fn remove_control(program : @ir.MomaoProgram, name : String) -> @ir.MomaoProgram
       handlers.push(handler)
     }
   }
-  @ir.MomaoProgram::{
-    ..program,
-    controls: kept,
-    handlers,
-  }
+  @ir.MomaoProgram::{ ..program, controls: kept, handlers, }
 }
 
 ///|
@@ -173,7 +196,7 @@ fn replace_control(
   if !found {
     controls.push(incoming)
   }
-  @ir.MomaoProgram::{ ..program, controls }
+  @ir.MomaoProgram::{ ..program, controls, }
 }
 
 ///|
@@ -187,7 +210,7 @@ fn remove_variable(
       kept.push(variable)
     }
   }
-  @ir.MomaoProgram::{ ..program, variables: kept }
+  @ir.MomaoProgram::{ ..program, variables: kept, }
 }
 
 ///|
@@ -208,7 +231,7 @@ fn replace_variable(
   if !found {
     variables.push(incoming)
   }
-  @ir.MomaoProgram::{ ..program, variables }
+  @ir.MomaoProgram::{ ..program, variables, }
 }
 
 ///|
@@ -224,7 +247,7 @@ fn remove_handler(
     }
     kept.push(handler)
   }
-  @ir.MomaoProgram::{ ..program, handlers: kept }
+  @ir.MomaoProgram::{ ..program, handlers: kept, }
 }
 
 ///|
@@ -246,7 +269,7 @@ fn replace_handler(
   if !found {
     handlers.push(incoming)
   }
-  @ir.MomaoProgram::{ ..program, handlers }
+  @ir.MomaoProgram::{ ..program, handlers, }
 }
 
 ///|
@@ -278,112 +301,97 @@ pub fn proposal_diff(
       if window.title != program.window.title ||
         window.width != program.window.width ||
         window.height != program.window.height {
-        entries.push(
-          DiffEntry::{
-            op: Changed,
-            path: "window",
-            old_text: program.window.title,
-            new_text: window.title,
-          },
-        )
+        entries.push(DiffEntry::{
+          op: Changed,
+          path: "window",
+          old_text: program.window.title,
+          new_text: window.title,
+        })
       }
     None => ()
   }
   for name in proposal.controls_remove {
-    entries.push(
-      DiffEntry::{ op: Removed, path: "control.\{name}", old_text: name, new_text: "" },
-    )
+    entries.push(DiffEntry::{
+      op: Removed,
+      path: "control.\{name}",
+      old_text: name,
+      new_text: "",
+    })
   }
   for control in proposal.controls_update {
     match @ir.find_control(program, control.name) {
       Some(old) => push_control_diff(entries, old, control)
       None =>
-        entries.push(
-          DiffEntry::{
-            op: Added,
-            path: "control.\{control.name}",
-            old_text: "",
-            new_text: control.name,
-          },
-        )
+        entries.push(DiffEntry::{
+          op: Added,
+          path: "control.\{control.name}",
+          old_text: "",
+          new_text: control.name,
+        })
     }
   }
   for control in proposal.controls_add {
-    entries.push(
-      DiffEntry::{
-        op: Added,
-        path: "control.\{control.name}",
-        old_text: "",
-        new_text: control.text,
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Added,
+      path: "control.\{control.name}",
+      old_text: "",
+      new_text: control.text,
+    })
   }
   for name in proposal.variables_remove {
-    entries.push(
-      DiffEntry::{
-        op: Removed,
-        path: "variable.\{name}",
-        old_text: name,
-        new_text: "",
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Removed,
+      path: "variable.\{name}",
+      old_text: name,
+      new_text: "",
+    })
   }
   for variable in proposal.variables_update {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "variable.\{variable.name}",
-        old_text: match @ir.find_variable(program, variable.name) {
-          Some(old) => old.init
-          None => ""
-        },
-        new_text: variable.init,
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "variable.\{variable.name}",
+      old_text: match @ir.find_variable(program, variable.name) {
+        Some(old) => old.init
+        None => ""
       },
-    )
+      new_text: variable.init,
+    })
   }
   for variable in proposal.variables_add {
-    entries.push(
-      DiffEntry::{
-        op: Added,
-        path: "variable.\{variable.name}",
-        old_text: "",
-        new_text: variable.init,
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Added,
+      path: "variable.\{variable.name}",
+      old_text: "",
+      new_text: variable.init,
+    })
   }
   for reference in proposal.handlers_remove {
-    entries.push(
-      DiffEntry::{
-        op: Removed,
-        path: "handler.\{reference.control}.\{reference.event}",
-        old_text: reference.control,
-        new_text: "",
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Removed,
+      path: "handler.\{reference.control}.\{reference.event}",
+      old_text: reference.control,
+      new_text: "",
+    })
   }
   for handler in proposal.handlers_update {
     match @ir.find_handler(program, handler.control_name, handler.event) {
       Some(old) => push_handler_diff(entries, old, handler)
       None =>
-        entries.push(
-          DiffEntry::{
-            op: Added,
-            path: "handler.\{handler.control_name}.\{handler.event.tag()}",
-            old_text: "",
-            new_text: handler.note_zh,
-          },
-        )
+        entries.push(DiffEntry::{
+          op: Added,
+          path: "handler.\{handler.control_name}.\{handler.event.tag()}",
+          old_text: "",
+          new_text: handler.note_zh,
+        })
     }
   }
   for handler in proposal.handlers_add {
-    entries.push(
-      DiffEntry::{
-        op: Added,
-        path: "handler.\{handler.control_name}.\{handler.event.tag()}",
-        old_text: "",
-        new_text: handler.note_zh,
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Added,
+      path: "handler.\{handler.control_name}.\{handler.event.tag()}",
+      old_text: "",
+      new_text: handler.note_zh,
+    })
   }
   entries
 }
@@ -395,44 +403,36 @@ fn push_control_diff(
   next : @ir.Control,
 ) -> Unit {
   if old.text != next.text {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "control.\{next.name}.text",
-        old_text: old.text,
-        new_text: next.text,
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "control.\{next.name}.text",
+      old_text: old.text,
+      new_text: next.text,
+    })
   }
   if old.x != next.x || old.y != next.y {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "control.\{next.name}.position",
-        old_text: "\{old.x},\{old.y}",
-        new_text: "\{next.x},\{next.y}",
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "control.\{next.name}.position",
+      old_text: "\{old.x},\{old.y}",
+      new_text: "\{next.x},\{next.y}",
+    })
   }
   if old.width != next.width || old.height != next.height {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "control.\{next.name}.size",
-        old_text: "\{old.width}x\{old.height}",
-        new_text: "\{next.width}x\{next.height}",
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "control.\{next.name}.size",
+      old_text: "\{old.width}x\{old.height}",
+      new_text: "\{next.width}x\{next.height}",
+    })
   }
   if old.items.length() != next.items.length() {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "control.\{next.name}.items",
-        old_text: "\{old.items.length()} 行",
-        new_text: "\{next.items.length()} 行",
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "control.\{next.name}.items",
+      old_text: "\{old.items.length()} 行",
+      new_text: "\{next.items.length()} 行",
+    })
   }
 }
 
@@ -443,35 +443,29 @@ fn push_handler_diff(
   next : @ir.Handler,
 ) -> Unit {
   if old.note_zh != next.note_zh {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "handler.\{next.control_name}.\{next.event.tag()}.note.zh",
-        old_text: old.note_zh,
-        new_text: next.note_zh,
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "handler.\{next.control_name}.\{next.event.tag()}.note.zh",
+      old_text: old.note_zh,
+      new_text: next.note_zh,
+    })
   }
   if old.note_en != next.note_en {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "handler.\{next.control_name}.\{next.event.tag()}.note.en",
-        old_text: old.note_en,
-        new_text: next.note_en,
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "handler.\{next.control_name}.\{next.event.tag()}.note.en",
+      old_text: old.note_en,
+      new_text: next.note_en,
+    })
   }
   let old_signature = @ir.stmts_signature(old.body)
   let next_signature = @ir.stmts_signature(next.body)
   if old_signature != next_signature {
-    entries.push(
-      DiffEntry::{
-        op: Changed,
-        path: "handler.\{next.control_name}.\{next.event.tag()}.body",
-        old_text: "\{old.body.length()} 条语句",
-        new_text: "\{next.body.length()} 条语句",
-      },
-    )
+    entries.push(DiffEntry::{
+      op: Changed,
+      path: "handler.\{next.control_name}.\{next.event.tag()}.body",
+      old_text: "\{old.body.length()} 条语句",
+      new_text: "\{next.body.length()} 条语句",
+    })
   }
 }

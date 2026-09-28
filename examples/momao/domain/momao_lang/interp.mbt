@@ -126,11 +126,11 @@ pub fn initial_texts(program : MomaoProgram) -> Map[String, String] {
 pub fn initial_rows(program : MomaoProgram) -> Map[String, Array[String]] {
   let rows : Map[String, Array[String]] = Map([], capacity=4)
   for control in program.controls {
-    if control.items.length() > 0 {
-      rows[control.name] = control.items
-    } else {
-      rows[control.name] = []
+    let copied : Array[String] = []
+    for item in control.items {
+      copied.push(item)
     }
+    rows[control.name] = copied
   }
   rows
 }
@@ -138,7 +138,7 @@ pub fn initial_rows(program : MomaoProgram) -> Map[String, Array[String]] {
 ///|
 /// 无 Trace 的语句（JSON 路径）：行号 0，界面显示语句序号。
 pub fn traced_from_stmts(body : Array[Stmt]) -> Array[TracedStmt] {
-  body.map(stmt => TracedStmt::{ stmt, line: 0 })
+  body.map(stmt => TracedStmt::{ stmt, line: 0, })
 }
 
 ///|
@@ -165,7 +165,11 @@ pub fn start_run(
     error: None,
     steps: 0,
     max_steps,
-    rng: if seed <= 0 { 1 } else { seed % 2147483647 },
+    rng: if seed <= 0 {
+      1
+    } else {
+      seed % 2147483647
+    },
     gate_answers: [],
     declared: [],
     gate_cursor: 0,
@@ -183,7 +187,7 @@ pub fn start_run_stmts(
   max_steps? : Int = DEFAULT_MAX_STEPS,
   seed? : Int = 20260927,
 ) -> RunState {
-  start_run(traced_from_stmts(body), texts, values, rows, max_steps=max_steps, seed=seed)
+  start_run(traced_from_stmts(body), texts, values, rows, max_steps~, seed~)
 }
 
 ///|
@@ -226,36 +230,27 @@ pub fn step_once(state : RunState) -> Unit {
         if !state.declared.contains(name) {
           state.declared.push(name)
         }
-        state.audit.push(
-          StepRecord::{
-            line,
-            op: OpAssign,
-            detail: "\{name} = \{canonical_expr(expr)}",
-          },
-        )
+        state.audit.push(StepRecord::{
+          line,
+          op: OpAssign,
+          detail: "\{name} = \{canonical_expr(expr)}",
+        })
         state.pc = state.pc + 1
       }
       Assign(name, expr) => {
         if !state.declared.contains(name) && state.vars.get(name) is None {
-          raise LangError(
-            NotDeclared,
-            line,
-            name,
-            "use declare first",
-          )
+          raise LangError(NotDeclared, line, name, "use declare first")
         }
         let value = state.eval(expr, line)
         if state.paused || !(state.status is Running) {
           return
         }
         state.vars[name] = value
-        state.audit.push(
-          StepRecord::{
-            line,
-            op: OpAssign,
-            detail: "\{name} = \{canonical_expr(expr)}",
-          },
-        )
+        state.audit.push(StepRecord::{
+          line,
+          op: OpAssign,
+          detail: "\{name} = \{canonical_expr(expr)}",
+        })
         state.pc = state.pc + 1
       }
       ExprStmt(expr) => {
@@ -273,9 +268,11 @@ pub fn step_once(state : RunState) -> Unit {
           _ => true
         }
         if !audited {
-          state.audit.push(
-            StepRecord::{ line, op: OpCommand, detail: canonical_expr(expr) },
-          )
+          state.audit.push(StepRecord::{
+            line,
+            op: OpCommand,
+            detail: canonical_expr(expr),
+          })
         }
         state.pc = state.pc + 1
       }
@@ -285,13 +282,11 @@ pub fn step_once(state : RunState) -> Unit {
           return
         }
         let flag = state.as_bool(value, "condition", line)
-        state.audit.push(
-          StepRecord::{
-            line,
-            op: OpCondition,
-            detail: "\{canonical_expr(expr)} -> \{flag}",
-          },
-        )
+        state.audit.push(StepRecord::{
+          line,
+          op: OpCondition,
+          detail: "\{canonical_expr(expr)} -> \{flag}",
+        })
         state.pc = if flag { state.pc + 1 } else { target }
       }
       Jump(target) => state.pc = target
@@ -324,9 +319,11 @@ pub fn step_once(state : RunState) -> Unit {
               state.declared.push(loop_var)
             }
           }
-          state.audit.push(
-            StepRecord::{ line, op: OpLoop, detail: "iteration \{index.to_int()}" },
-          )
+          state.audit.push(StepRecord::{
+            line,
+            op: OpLoop,
+            detail: "iteration \{index.to_int()}",
+          })
           state.pc = state.pc + 1
         }
       }
@@ -432,7 +429,11 @@ fn RunState::control_name(
 
 ///|
 /// 表达式求值。闸门触发时置 paused 并返回 VUnit（本指令作废重来）。
-fn RunState::eval(self : RunState, expr : Expr, line : Int) -> Value raise LangError {
+fn RunState::eval(
+  self : RunState,
+  expr : Expr,
+  line : Int,
+) -> Value raise LangError {
   match expr {
     @ir.NumLit(n) => VNum(n)
     @ir.StrLit(text) => VStr(text)
@@ -525,11 +526,27 @@ fn RunState::eval_binary(
       match (l, r) {
         (VNum(a), VNum(b)) =>
           VBool(
-            if op is @ir.Lt { a < b } else if op is @ir.Gt { a > b } else if op is @ir.Le { a <= b } else { a >= b },
+            if op is @ir.Lt {
+              a < b
+            } else if op is @ir.Gt {
+              a > b
+            } else if op is @ir.Le {
+              a <= b
+            } else {
+              a >= b
+            },
           )
         (VStr(a), VStr(b)) =>
           VBool(
-            if op is @ir.Lt { a < b } else if op is @ir.Gt { a > b } else if op is @ir.Le { a <= b } else { a >= b },
+            if op is @ir.Lt {
+              a < b
+            } else if op is @ir.Gt {
+              a > b
+            } else if op is @ir.Le {
+              a <= b
+            } else {
+              a >= b
+            },
           )
         _ => raise LangError(TypeMismatch, line, "compare", "same types")
       }
@@ -591,36 +608,32 @@ fn RunState::eval_gate(
   args : Array[Expr],
   line : Int,
 ) -> Value raise LangError {
-  let prompt =
-    if spec.id == "submit_data" {
-      self.control_name(args[1], line)
-    } else {
-      self.value_as_text(self.eval(args[0], line), spec.id, line)
-    }
+  let prompt = if spec.id == "submit_data" {
+    self.control_name(args[1], line)
+  } else {
+    self.value_as_text(self.eval(args[0], line), spec.id, line)
+  }
   if self.paused || !(self.status is Running) {
     return VUnit
   }
-  let payload =
-    if spec.id == "submit_data" {
-      let value = self.eval(args[0], line)
-      if self.paused || !(self.status is Running) {
-        return VUnit
-      }
-      self.value_as_text(value, spec.id, line)
-    } else {
-      ""
+  let payload = if spec.id == "submit_data" {
+    let value = self.eval(args[0], line)
+    if self.paused || !(self.status is Running) {
+      return VUnit
     }
+    self.value_as_text(value, spec.id, line)
+  } else {
+    ""
+  }
   if self.gate_cursor < self.gate_answers.length() {
     let decision = self.gate_answers[self.gate_cursor]
     self.gate_cursor = self.gate_cursor + 1
     let outcome = if decision { "confirmed" } else { "rejected" }
-    self.audit.push(
-      StepRecord::{
-        line,
-        op: OpGate,
-        detail: "\{canonical_call_text(spec.id, args)} -> \{outcome}",
-      },
-    )
+    self.audit.push(StepRecord::{
+      line,
+      op: OpGate,
+      detail: "\{canonical_call_text(spec.id, args)} -> \{outcome}",
+    })
     if spec.id == "ask" {
       VBool(decision)
     } else {
@@ -629,13 +642,15 @@ fn RunState::eval_gate(
   } else {
     self.status = WaitingGate
     self.paused = true
-    self.gate = Some(
-      Gate::{
-        kind: if spec.id == "ask" { Ask } else { Submit },
-        prompt,
-        payload,
+    self.gate = Some(Gate::{
+      kind: if spec.id == "ask" {
+        Ask
+      } else {
+        Submit
       },
-    )
+      prompt,
+      payload,
+    })
     VUnit
   }
 }
@@ -655,13 +670,11 @@ fn RunState::eval_command(
         return VUnit
       }
       self.messages.push(text)
-      self.audit.push(
-        StepRecord::{
-          line,
-          op: OpMessage,
-          detail: canonical_call_text(spec.id, args),
-        },
-      )
+      self.audit.push(StepRecord::{
+        line,
+        op: OpMessage,
+        detail: canonical_call_text(spec.id, args),
+      })
       VUnit
     }
     "set_text" => {
@@ -674,13 +687,11 @@ fn RunState::eval_command(
         return VUnit
       }
       self.texts[control] = text
-      self.audit.push(
-        StepRecord::{
-          line,
-          op: OpCommand,
-          detail: canonical_call_text(spec.id, args),
-        },
-      )
+      self.audit.push(StepRecord::{
+        line,
+        op: OpCommand,
+        detail: canonical_call_text(spec.id, args),
+      })
       VUnit
     }
     "append_row" => {
@@ -696,13 +707,11 @@ fn RunState::eval_command(
         Some(existing) => existing.push(text)
         None => self.rows[control] = [text]
       }
-      self.audit.push(
-        StepRecord::{
-          line,
-          op: OpCommand,
-          detail: canonical_call_text(spec.id, args),
-        },
-      )
+      self.audit.push(StepRecord::{
+        line,
+        op: OpCommand,
+        detail: canonical_call_text(spec.id, args),
+      })
       VUnit
     }
     _ => raise LangError(UnknownBuiltin, line, spec.id, "")
@@ -847,13 +856,12 @@ fn write_canonical_expr(buf : StringBuilder, expr : Expr) -> Unit {
       write_canonical_expr(buf, right)
       buf.write_string(")")
     }
-    @ir.Call(name, args) => {
-      buf.write_string(canonical_call_text(name, args))
-    }
+    @ir.Call(name, args) => buf.write_string(canonical_call_text(name, args))
   }
 }
 
 ///|
+
 ///|
 /// 编译：语句 → 指令流（含跳转目标回填）。
 /// 嵌套语句沿用外层 Trace 行号（IR 树本身不存行号）。
@@ -861,7 +869,7 @@ fn compile_body(body : Array[TracedStmt]) -> Plan {
   let instrs : Array[Instr] = []
   let lines : Array[Int] = []
   emit_stmts(instrs, lines, body, [])
-  Plan::{ instrs, lines }
+  Plan::{ instrs, lines, }
 }
 
 ///|
@@ -944,7 +952,8 @@ fn emit_stmt(
       emit_body(instrs, lines, else_body, line, break_patches)
       let else_start = then_jump + 1
       match instrs[cond_slot] {
-        JumpIfFalse(expr, _) => instrs[cond_slot] = JumpIfFalse(expr, else_start)
+        JumpIfFalse(expr, _) =>
+          instrs[cond_slot] = JumpIfFalse(expr, else_start)
         _ => ()
       }
       let mut index = 0

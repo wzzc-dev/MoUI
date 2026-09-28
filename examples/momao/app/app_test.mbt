@@ -72,6 +72,21 @@ test "add and delete control keeps handlers consistent" {
   assert_eq(renamed.selected_control, "标题")
   let deleted = apply(renamed, DeleteControl("标题"))
   assert_eq(deleted.program.controls.length(), 2)
+  // Removing a different control must not clear the current selection.
+  let keep_selection = apply(@app.initial_model(), DeleteControl("显示"))
+  assert_eq(keep_selection.selected_control, "按钮")
+  // Reserved DSL words cannot become control identifiers.
+  let reserved = apply(@app.initial_model(), SetControlName("按钮", "if"))
+  assert_true(@ir.find_control(reserved.program, "按钮") is Some(_))
+  // Renaming a control also rewrites control-name arguments in handler IR.
+  let renamed_label = apply(
+    @app.initial_model(),
+    SetControlName("显示", "标题"),
+  )
+  match @app.current_handler(renamed_label).unwrap().body[0] {
+    @ir.Call("set_text", args) => assert_true(args[0] is @ir.Var("标题"))
+    _ => fail("问候 handler 应保留 set_text")
+  }
 }
 
 ///|
@@ -80,8 +95,37 @@ test "code edit commits into program" {
   let edited = apply(model, EditCode("设置文本(显示, \"新文本\")\n"))
   let committed = apply(edited, SelectHandler("按钮@on_click"))
   match @app.current_handler(committed) {
-    Some(handler) => assert_eq(handler.body.length(), 1)
+    Some(handler) => {
+      assert_eq(handler.body.length(), 1)
+      match handler.body[0] {
+        @ir.Call("set_text", args) =>
+          match args[1] {
+            @ir.StrLit(text) => assert_eq(text, "新文本")
+            _ => fail("提交后第二个参数应为字符串")
+          }
+        _ => fail("切换 handler 前应提交代码草稿")
+      }
+    }
     None => fail("提交后应仍有子程序")
+  }
+}
+
+///|
+test "mode switch commits the current code draft" {
+  let edited = apply(
+    apply(
+      @app.initial_model(),
+      EditCode("设置文本(显示, \"模式切换后\")\n"),
+    ),
+    SetMode(@app.ModeDesign),
+  )
+  match @app.current_handler(edited).unwrap().body[0] {
+    @ir.Call("set_text", args) =>
+      match args[1] {
+        @ir.StrLit(text) => assert_eq(text, "模式切换后")
+        _ => fail("提交后第二个参数应为字符串")
+      }
+    _ => fail("切换模式前应提交代码草稿")
   }
 }
 
@@ -100,6 +144,25 @@ test "syntax error surfaces localized message" {
   let run = apply(fixed, RunStart)
   assert_true(run.run is Some(_))
   assert_eq(run.notice, "")
+}
+
+///|
+test "invalid draft never executes stale control handlers" {
+  let started = apply(@app.initial_model(), RunStart)
+  let broken = apply(started, EditCode("如果 真的 则\n"))
+  let clicked = apply(broken, ControlClicked("按钮"))
+  assert_true(clicked.code_error != "")
+  assert_eq(clicked.run.unwrap().state.texts.get("显示").unwrap_or(""), "")
+}
+
+///|
+test "invalid draft blocks runtime control events" {
+  let started = apply(@app.initial_model(), RunStart)
+  let before_steps = started.run.unwrap().state.steps
+  let broken = apply(started, EditCode("如果 真的 则\n"))
+  let clicked = apply(broken, ControlClicked("按钮"))
+  assert_true(clicked.code_error != "")
+  assert_eq(clicked.run.unwrap().state.steps, before_steps)
 }
 
 ///|
@@ -145,6 +208,17 @@ test "run gate pauses submit and confirm completes" {
         }
         None => fail("应停在闸门")
       }
+      // 闸门未回答前，其他控件事件不能绕过确认启动新 handler。
+      let blocked = apply(submitting, ControlClicked("卖铅笔"))
+      assert_true(blocked.run.unwrap().state.status is @momao_lang.WaitingGate)
+      assert_eq(
+        @momao_lang.value_to_text(
+          blocked.run.unwrap().state.vars
+          .get("营业额")
+          .unwrap_or(@momao_lang.VUnit),
+        ),
+        "1",
+      )
     }
   }
 }
@@ -222,6 +296,61 @@ test "runtime state accumulates across events" {
     .get("营业额标签")
     .unwrap_or("")
   assert_eq(label, "营业额：3")
+}
+
+///|
+test "list selection survives the next handler run" {
+  let started = apply(apply(@app.initial_model(), SelectTemplate(1)), RunStart)
+  let picked = apply(started, ControlPicked("名单", 2))
+  assert_eq(picked.runtime_selections.get("名单").unwrap_or(-1), 2)
+  assert_eq(picked.run.unwrap().state.selections.get("名单").unwrap_or(-1), 2)
+  let next = apply(picked, ControlClicked("点名按钮"))
+  assert_eq(next.run.unwrap().state.selections.get("名单").unwrap_or(-1), 2)
+}
+
+///|
+test "table row selection dispatches its supported click handler" {
+  let model = apply(@app.initial_model(), SelectTemplate(3))
+  let table = @ir.find_control(model.program, "商品表").unwrap()
+  let with_handler = apply(model, CreateHandler(table.name, @ir.OnClick))
+  let edited = apply(
+    with_handler,
+    EditCode("设置文本(营业额标签, \"点了商品\")\n"),
+  )
+  let started = apply(edited, RunStart)
+  let picked = drain(apply(started, ControlPicked(table.name, 1)))
+  assert_eq(
+    picked.run.unwrap().state.texts.get("营业额标签").unwrap_or(""),
+    "点了商品",
+  )
+}
+
+///|
+test "append row persists across handlers without changing the program" {
+  let model = apply(@app.initial_model(), SelectTemplate(1))
+  let edited = apply(model, EditCode("追加行(名单, \"新同学\")\n"))
+  let finished = drain(apply(edited, RunStart))
+  assert_eq(finished.run.unwrap().state.rows.get("名单").unwrap().length(), 6)
+  assert_eq(
+    @ir.find_control(finished.program, "名单").unwrap().items.length(),
+    5,
+  )
+  let next = drain(apply(finished, ControlClicked("点名按钮")))
+  assert_eq(next.run.unwrap().state.rows.get("名单").unwrap().length(), 7)
+  assert_eq(@ir.find_control(next.program, "名单").unwrap().items.length(), 5)
+}
+
+///|
+test "checkbox change keeps its checked state while running on_change" {
+  let added = apply(@app.initial_model(), AddControl(@ir.CheckBox))
+  let checkbox = added.program.controls[added.program.controls.length() - 1]
+  let handler = apply(added, CreateHandler(checkbox.name, @ir.OnChange))
+  let edited = apply(handler, EditCode("设置文本(显示, \"已勾选\")\n"))
+  let started = apply(edited, RunStart)
+  let finished = drain(apply(started, RunToggle(checkbox.name, true)))
+  let run = finished.run.unwrap()
+  assert_true(run.checks.get(checkbox.name).unwrap_or(false))
+  assert_eq(run.state.texts.get("显示").unwrap_or(""), "已勾选")
 }
 
 ///|
@@ -719,6 +848,13 @@ test "delete control clears stale draft only for its own handler" {
   // 删除别的控件不动草稿（未提交的编辑不丢失）
   let kept = apply(model, DeleteControl("显示"))
   assert_true(kept.code_draft != "")
+}
+
+///|
+test "deleting an unselected control preserves the current selection" {
+  let model = apply(@app.initial_model(), SelectControl("按钮"))
+  let deleted = apply(model, DeleteControl("显示"))
+  assert_eq(deleted.selected_control, "按钮")
 }
 
 ///|

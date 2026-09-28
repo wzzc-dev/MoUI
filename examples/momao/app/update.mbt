@@ -110,13 +110,121 @@ fn rename_control_everywhere(
   }
   let handlers : Array[@ir.Handler] = []
   for handler in program.handlers {
+    let body = handler.body.map(stmt => rename_control_in_stmt(stmt, from, to))
     if handler.control_name == from {
-      handlers.push(@ir.Handler::{ ..handler, control_name: to, })
+      handlers.push(@ir.Handler::{ ..handler, control_name: to, body, })
     } else {
-      handlers.push(handler)
+      handlers.push(@ir.Handler::{ ..handler, body, })
     }
   }
   @ir.MomaoProgram::{ ..program, controls, handlers, }
+}
+
+///|
+/// Rename control references inside handler bodies as part of a control rename.
+/// A bare Var/StrLit in a control-name slot is an identifier, while variables
+/// and strings in ordinary expression slots keep their original meaning.
+fn rename_control_in_stmt(
+  stmt : @ir.Stmt,
+  from : String,
+  to : String,
+) -> @ir.Stmt {
+  match stmt {
+    @ir.Declare(name, expr) =>
+      @ir.Declare(name, rename_control_in_expr(expr, from, to))
+    @ir.Assign(name, expr) =>
+      @ir.Assign(name, rename_control_in_expr(expr, from, to))
+    @ir.Call(name, args) =>
+      @ir.Call(name, rename_control_in_args(name, args, from, to))
+    @ir.If(cond, then_body, else_ifs, else_body) => {
+      let arms : Array[(@ir.Expr, Array[@ir.Stmt])] = []
+      for arm in else_ifs {
+        arms.push(
+          (
+            rename_control_in_expr(arm.0, from, to),
+            arm.1.map(stmt => rename_control_in_stmt(stmt, from, to)),
+          ),
+        )
+      }
+      @ir.If(
+        rename_control_in_expr(cond, from, to),
+        then_body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+        arms,
+        else_body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+      )
+    }
+    @ir.CountLoop(times, loop_var, body) =>
+      @ir.CountLoop(
+        rename_control_in_expr(times, from, to),
+        loop_var,
+        body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+      )
+    @ir.WhileLoop(cond, body) =>
+      @ir.WhileLoop(
+        rename_control_in_expr(cond, from, to),
+        body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+      )
+    @ir.Break => @ir.Break
+  }
+}
+
+///|
+fn rename_control_in_expr(
+  expr : @ir.Expr,
+  from : String,
+  to : String,
+) -> @ir.Expr {
+  match expr {
+    @ir.NumLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) | @ir.Var(_) => expr
+    @ir.Not(inner) => @ir.Not(rename_control_in_expr(inner, from, to))
+    @ir.Neg(inner) => @ir.Neg(rename_control_in_expr(inner, from, to))
+    @ir.Binary(op, left, right) =>
+      @ir.Binary(
+        op,
+        rename_control_in_expr(left, from, to),
+        rename_control_in_expr(right, from, to),
+      )
+    @ir.Call(name, args) =>
+      @ir.Call(name, rename_control_in_args(name, args, from, to))
+  }
+}
+
+///|
+fn rename_control_in_args(
+  name : String,
+  args : Array[@ir.Expr],
+  from : String,
+  to : String,
+) -> Array[@ir.Expr] {
+  let renamed : Array[@ir.Expr] = []
+  let mut index = 0
+  for arg in args {
+    let control_slot = (
+        index == 0 &&
+        (
+          name == "set_text" ||
+          name == "append_row" ||
+          name == "get_text" ||
+          name == "get_number" ||
+          name == "row_count" ||
+          name == "row_at" ||
+          name == "selected_row"
+        )
+      ) ||
+      (name == "submit_data" && index == 1)
+    let value = if control_slot {
+      match arg {
+        @ir.Var(value) => if value == from { @ir.Var(to) } else { arg }
+        @ir.StrLit(value) => if value == from { @ir.StrLit(to) } else { arg }
+        _ => rename_control_in_expr(arg, from, to)
+      }
+    } else {
+      rename_control_in_expr(arg, from, to)
+    }
+    renamed.push(value)
+    index = index + 1
+  }
+  renamed
 }
 
 ///|
@@ -297,6 +405,8 @@ fn apply_undo(model : Model) -> Model {
         block_draft: "",
         runtime_values: @momao_lang.initial_values(entry.program),
         runtime_texts: @momao_lang.initial_texts(entry.program),
+        runtime_rows: @momao_lang.initial_rows(entry.program),
+        runtime_selections: Map([], capacity=4),
         undo_stack: rest,
         redo_stack: undo_stack_push(model.redo_stack, undo_entry_of(model, "")),
       }
@@ -321,6 +431,8 @@ fn apply_redo(model : Model) -> Model {
         block_draft: "",
         runtime_values: @momao_lang.initial_values(entry.program),
         runtime_texts: @momao_lang.initial_texts(entry.program),
+        runtime_rows: @momao_lang.initial_rows(entry.program),
+        runtime_selections: Map([], capacity=4),
         undo_stack: undo_stack_push(model.undo_stack, undo_entry_of(model, "")),
         redo_stack: rest,
       }
@@ -342,16 +454,30 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some((next, @moui.Effect::none()))
     }
     SetMode(mode) => {
-      let switched = sync_code_draft({ ..model, mode, })
-      Some((switched, @moui.Effect::none()))
+      let committed = commit_code(model)
+      let switched = { ..committed, mode, }
+      let next = if committed.code_error == "" {
+        sync_code_draft(switched)
+      } else {
+        switched
+      }
+      Some((next, @moui.Effect::none()))
     }
-    SelectHandler(key) =>
-      Some(
-        (
-          sync_code_draft({ ..model, selected_handler: key, }),
-          @moui.Effect::none(),
-        ),
-      )
+    SelectHandler(key) => {
+      let committed = commit_code(model)
+      if committed.code_error != "" {
+        // Keep the invalid draft visible so the user can repair it; changing
+        // handlers must not silently discard unsaved source.
+        Some((committed, @moui.Effect::none()))
+      } else {
+        Some(
+          (
+            sync_code_draft({ ..committed, selected_handler: key, }),
+            @moui.Effect::none(),
+          ),
+        )
+      }
+    }
     EditCode(source) =>
       Some(({ ..model, code_draft: source, }, @moui.Effect::none()))
     SelectTemplate(index) => {
@@ -371,6 +497,8 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         block_draft: "",
         runtime_values: @momao_lang.initial_values(program),
         runtime_texts: @momao_lang.initial_texts(program),
+        runtime_rows: @momao_lang.initial_rows(program),
+        runtime_selections: Map([], capacity=4),
       })
       Some(
         (
@@ -604,7 +732,9 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         ),
       )
     SetControlName(name, value) => {
-      if value == "" || @ir.find_control(model.program, value) is Some(_) {
+      if value == "" ||
+        @momao_lang.is_reserved(value) ||
+        @ir.find_control(model.program, value) is Some(_) {
         return Some((model, @moui.Effect::none()))
       }
       if !@ir.control_name_syntax_valid(value) {
@@ -814,7 +944,11 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             let next = {
               ..m,
               program: { ..m.program, controls, handlers, },
-              selected_control: "",
+              selected_control: if m.selected_control == name {
+                ""
+              } else {
+                m.selected_control
+              },
               selected_handler: next_handler,
             }
             if next_handler != m.selected_handler {

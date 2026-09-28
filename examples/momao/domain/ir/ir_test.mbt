@@ -83,6 +83,85 @@ test "budgets count statements and depth" {
 }
 
 ///|
+test "budget checks count nested statements and independent branches" {
+  let branch : Array[@ir.Stmt] = [
+    @ir.If(
+      @ir.BoolLit(true),
+      [@ir.WhileLoop(@ir.BoolLit(true), [@ir.Break])],
+      [],
+      [@ir.CountLoop(@ir.NumLit(2.0), None, [@ir.Break])],
+    ),
+  ]
+  assert_eq(@ir.count_stmts(branch), 5)
+  assert_eq(@ir.stmt_loop_depth(branch), 1)
+
+  let body : Array[@ir.Stmt] = []
+  let mut i = 0
+  while i < @ir.MAX_STMTS_PER_HANDLER + 1 {
+    body.push(@ir.Call("message_box", [@ir.StrLit("x")]))
+    i = i + 1
+  }
+  let program : @ir.MomaoProgram = {
+    version: 1,
+    window: @ir.default_window(),
+    controls: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "按钮",
+        text: "",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+    variables: [],
+    handlers: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "",
+        note_en: "",
+        body,
+      },
+    ],
+  }
+  let expected = @ir.MAX_STMTS_PER_HANDLER + 1
+  assert_true(
+    @ir.validate_program(program).any(e => {
+      e is @ir.TooManyStatements(n) && n == expected
+    }),
+  )
+}
+
+///|
+test "invalid control rectangles are rejected at the input boundary" {
+  let control : @ir.Control = {
+    id: 1,
+    kind: @ir.Button,
+    name: "按钮",
+    text: "",
+    x: 639,
+    y: 0,
+    width: 8,
+    height: 8,
+    items: [],
+  }
+  let program : @ir.MomaoProgram = {
+    version: 1,
+    window: @ir.default_window(),
+    controls: [{ ..control, width: 9, }],
+    variables: [],
+    handlers: [],
+  }
+  assert_true(
+    @ir.validate_program(program).any(e => e is @ir.InvalidControlRect("按钮")),
+  )
+}
+
+///|
 test "validate_program reports structural errors" {
   let program : @ir.MomaoProgram = {
     version: 1,
@@ -363,7 +442,7 @@ test "duplicate handler pair is rejected" {
       },
     ],
     variables: [],
-    handlers: [handler, { ..handler, note_zh: "重复", note_en: "dup" }],
+    handlers: [handler, { ..handler, note_zh: "重复", note_en: "dup", }],
   }
   assert_true(
     @ir.validate_program(program).any(e => e is @ir.DuplicateHandler(_)),
@@ -371,9 +450,7 @@ test "duplicate handler pair is rejected" {
   // 同控件不同事件不冲突
   let ok : @ir.MomaoProgram = {
     ..program,
-    handlers: [handler, { ..handler, event: @ir.OnChange }],
+    handlers: [handler, { ..handler, event: @ir.OnChange, }],
   }
-  assert_true(
-    !@ir.validate_program(ok).any(e => e is @ir.DuplicateHandler(_)),
-  )
+  assert_true(!@ir.validate_program(ok).any(e => e is @ir.DuplicateHandler(_)))
 }

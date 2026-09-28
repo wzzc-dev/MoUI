@@ -116,6 +116,8 @@ pub(all) struct Model {
   // 运行期活状态：跨事件累积的变量值与控件文本（易语言式全局量）
   runtime_values : Map[String, @momao_lang.Value]
   runtime_texts : Map[String, String]
+  runtime_rows : Map[String, Array[String]]
+  runtime_selections : Map[String, Int]
   // 撤销/重做：变更前快照栈（深度 UNDO_DEPTH）与重做栈
   undo_stack : Array[UndoEntry]
   redo_stack : Array[UndoEntry]
@@ -175,6 +177,7 @@ pub(all) enum Msg {
   RunToggle(String, Bool)
   AnswerGate(Bool)
   ControlClicked(String)
+  ControlPicked(String, Int)
   ControlChanged(String, String)
   SelectTemplate(Int)
   SaveRequested
@@ -257,6 +260,8 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     drag: None,
     runtime_values: @momao_lang.initial_values(program),
     runtime_texts: @momao_lang.initial_texts(program),
+    runtime_rows: @momao_lang.initial_rows(program),
+    runtime_selections: Map([], capacity=4),
     undo_stack: [],
     redo_stack: [],
     proposal_history: [],

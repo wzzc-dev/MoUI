@@ -140,6 +140,10 @@ pub fn error_message(
     @momao_lang.UnknownBuiltin => "err.unknown_builtin"
     @momao_lang.BreakOutsideLoop => "err.break_outside_loop"
   }
-  let line = if error.line() > 0 { "（第 \{error.line()} 行）" } else { "" }
+  let line = if error.line() > 0 {
+    text_with(t, "err.line", [("line", "\{error.line()}")])
+  } else {
+    ""
+  }
   text_with(t, key, [("a", error.a()), ("b", error.b())]) + line
 }

@@ -54,7 +54,7 @@ pub fn update_with_services(
   match msg {
     SaveRequested => {
       let options = @services.FileDialogOptions::new(
-        title="保存 MoMao 项目",
+        title=text(translator(model), "app.dialog.save"),
         filters=["json"],
         default_name=Some("project.momao.json"),
       )
@@ -90,7 +90,7 @@ pub fn update_with_services(
       }
     OpenRequested => {
       let options = @services.FileDialogOptions::new(
-        title="打开 MoMao 项目",
+        title=text(translator(model), "app.dialog.open"),
         filters=["json"],
       )
       (
@@ -121,10 +121,23 @@ pub fn update_with_services(
                 ..model,
                 program,
                 pending: None,
+                prompt_draft: "",
+                prompt_error: "",
+                explanation: "",
+                ai_busy: false,
+                selected_block: -1,
+                block_draft: "",
+                drag: None,
+                block_drag: None,
                 run: None,
                 mode: ModeDesign,
                 runtime_values: @momao_lang.initial_values(program),
                 runtime_texts: @momao_lang.initial_texts(program),
+                runtime_rows: @momao_lang.initial_rows(program),
+                runtime_selections: Map([], capacity=4),
+                undo_stack: [],
+                redo_stack: [],
+                proposal_history: [],
                 selected_control: first_control_name(program.controls),
                 selected_handler: first_handler_key(program.handlers),
                 notice: text(translator(model), "app.status.opened"),
@@ -146,7 +159,7 @@ pub fn update_with_services(
       }
     ExportRequested => {
       let options = @services.FileDialogOptions::new(
-        title="选择导出目录",
+        title=text(translator(model), "app.dialog.export"),
         filters=[],
       )
       (

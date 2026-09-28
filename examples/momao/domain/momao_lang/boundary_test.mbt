@@ -2,7 +2,9 @@
 /// 词法/语法边界：全角归一化、比较符兼容、混合标识符、错误定位、深嵌套。
 
 ///|
-fn parse_body(source : String) -> Result[Array[@ir.Stmt], @momao_lang.LangError] {
+fn parse_body(
+  source : String,
+) -> Result[Array[@ir.Stmt], @momao_lang.LangError] {
   match @momao_lang.parse_handler_body(source, @momao_lang.ZhHans) {
     Ok(traced) => Ok(traced.map(t => t.stmt))
     Err(error) => Err(error)
@@ -12,14 +14,17 @@ fn parse_body(source : String) -> Result[Array[@ir.Stmt], @momao_lang.LangError]
 ///|
 test "full-width punctuation and digits normalize" {
   // 全角括号/逗号/等号/数字/加号直接解析（中文 IME 输入友好）
-  let with_fullwidth = parse_body("信息框（\"你好\"）\n变量 x ＝ １２ ＋ ３\n")
+  let with_fullwidth = parse_body(
+    "信息框（\"你好\"）\n变量 x ＝ １２ ＋ ３\n",
+  )
   match with_fullwidth {
     Ok(body) => {
       assert_eq(body.length(), 2)
       assert_true(body[0] is @ir.Call(_, _))
       assert_true(body[1] is @ir.Declare("x", _))
     }
-    Err(error) => fail("全角应可解析: line \{@momao_lang.LangError::line(error)}")
+    Err(error) =>
+      fail("全角应可解析: line \{@momao_lang.LangError::line(error)}")
   }
 }
 
@@ -28,7 +33,10 @@ test "compat comparison symbols ne/le/ge" {
   let source = "如果 1 ≠ 2 则\nx = 1\n结束\n如果 1 ≤ 2 则\nx = 2\n结束\n如果 1 ≥ 0 则\nx = 3\n结束\n"
   match parse_body(source) {
     Ok(body) => assert_eq(body.length(), 3)
-    Err(error) => fail("≠ ≤ ≥ 应可解析: line \{@momao_lang.LangError::line(error)}")
+    Err(error) =>
+      fail(
+        "≠ ≤ ≥ 应可解析: line \{@momao_lang.LangError::line(error)}",
+      )
   }
 }
 
@@ -39,7 +47,10 @@ test "mixed cjk/ascii identifiers with digits" {
       assert_true(body[0] is @ir.Declare("姓名2", _))
       assert_true(body[1] is @ir.Assign("姓名2", _))
     }
-    Err(error) => fail("混合标识符应可解析: line \{@momao_lang.LangError::line(error)}")
+    Err(error) =>
+      fail(
+        "混合标识符应可解析: line \{@momao_lang.LangError::line(error)}",
+      )
   }
 }
 
@@ -68,6 +79,54 @@ test "deep loop nesting parses (within budget)" {
   }
   match parse_body(buf.to_string()) {
     Ok(body) => assert_eq(@ir.stmt_loop_depth(body), depth)
-    Err(error) => fail("15 层嵌套应可解析: line \{@momao_lang.LangError::line(error)}")
+    Err(error) =>
+      fail(
+        "15 层嵌套应可解析: line \{@momao_lang.LangError::line(error)}",
+      )
   }
+}
+
+///|
+test "program validation rejects reserved names and undeclared assignments" {
+  let program : @ir.MomaoProgram = {
+    version: 1,
+    window: @ir.default_window(),
+    controls: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "按钮",
+        text: "",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 28,
+        items: [],
+      },
+    ],
+    variables: [],
+    handlers: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "",
+        note_en: "",
+        body: [
+          @ir.Declare("if", @ir.NumLit(1.0)),
+          @ir.Declare("value", @ir.Var("unknown")),
+          @ir.Declare("label_text", @ir.Call("get_text", [@ir.Var("按钮")])),
+          @ir.Assign("missing", @ir.NumLit(2.0)),
+        ],
+      },
+    ],
+  }
+  let errors = @momao_lang.validate_program_language(program)
+  assert_true(errors.any(e => e.kind() is @momao_lang.ReservedWord))
+  assert_true(errors.any(e => e.kind() is @momao_lang.NotDeclared))
+  assert_true(
+    errors.any(e => e.kind() is @momao_lang.NotDeclared && e.a() == "unknown"),
+  )
+  assert_true(
+    !errors.any(e => e.kind() is @momao_lang.NotDeclared && e.a() == "按钮"),
+  )
 }

@@ -56,8 +56,8 @@ if (checkIndex === -1) {
     const temporary = mkdtempSync(resolve(tmpdir(), "moui-i18n-catalog-"));
     const generated = resolve(temporary, "catalog.mbt");
     const writeArgs = args.filter((_, index) => index !== checkIndex);
-    writeArgs[outputIndex] = "--out";
-    writeArgs[outputIndex + 1] = generated;
+    const writeOutputIndex = writeArgs.indexOf("--out");
+    writeArgs[writeOutputIndex + 1] = generated;
     try {
       runMoonbitTool(
         "tools/moui/generate_i18n_catalogs",

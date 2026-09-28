@@ -22,8 +22,14 @@ fn start_run(model : Model) -> Model {
         body,
         committed.runtime_texts,
         committed.runtime_values,
-        @momao_lang.initial_rows(committed.program),
+        committed.runtime_rows,
       )
+      for key in committed.runtime_selections.keys() {
+        match committed.runtime_selections.get(key) {
+          Some(index) => state.selections[key] = index
+          None => ()
+        }
+      }
       let run = RunModel::{
         handler_label: "\{handler.control_name}@\{handler.event.tag()}",
         state,
@@ -74,10 +80,46 @@ fn merge_run_back(model : Model) -> Model {
             None => ()
           }
         }
+        for key in run.state.rows.keys() {
+          match run.state.rows.get(key) {
+            Some(rows) => {
+              let copied : Array[String] = []
+              for row in rows {
+                copied.push(row)
+              }
+              model.runtime_rows[key] = copied
+            }
+            None => ()
+          }
+        }
+        for key in run.state.selections.keys() {
+          match run.state.selections.get(key) {
+            Some(index) => model.runtime_selections[key] = index
+            None => ()
+          }
+        }
         model
       } else {
         model
       }
+  }
+}
+
+///|
+/// A pending gate owns the interaction until it is answered.
+fn gate_waiting(model : Model) -> Bool {
+  match model.run {
+    Some(run) => run.state.status is @momao_lang.WaitingGate
+    None => false
+  }
+}
+
+///|
+/// Table rows expose click semantics; list selection is a change event.
+fn picked_event_tag(model : Model, control : String) -> String {
+  match @ir.find_control(model.program, control) {
+    Some(item) => if item.kind is @ir.Table { "on_click" } else { "on_change" }
+    None => "on_change"
   }
 }
 
@@ -98,15 +140,36 @@ fn run_handler(
             handler.body,
             model.runtime_texts,
             model.runtime_values,
-            @momao_lang.initial_rows(model.program),
+            model.runtime_rows,
           )
+          for key in model.runtime_selections.keys() {
+            match model.runtime_selections.get(key) {
+              Some(index) => state.selections[key] = index
+              None => ()
+            }
+          }
+          // `checks` is presentation state owned by the app, not by the
+          // interpreter. Starting another event handler must keep current
+          // checkbox values; otherwise RunToggle's mutation is discarded
+          // when this fresh RunModel is installed.
+          let checks : Map[String, Bool] = Map([], capacity=8)
+          match model.run {
+            Some(previous) =>
+              for key in previous.checks.keys() {
+                match previous.checks.get(key) {
+                  Some(value) => checks[key] = value
+                  None => ()
+                }
+              }
+            None => ()
+          }
           (
             {
               ..model,
               run: Some(RunModel::{
                 handler_label: handler_key(control, event_tag),
                 state,
-                checks: Map([], capacity=8),
+                checks,
                 single_step: false,
               }),
               mode: ModeRun,
@@ -186,12 +249,25 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         }
       }
     RunToggle(name, value) =>
-      // 勾选框是运行期 UI 态：就地写入当前 run 的 checks 表
+      // 勾选框既更新视觉状态，也触发其 on_change 子程序。
       match model.run {
         None => Some((model, @moui.Effect::none()))
-        Some(run) => {
-          run.checks[name] = value
-          Some((model, @moui.Effect::none()))
+        Some(_run) => {
+          if gate_waiting(model) {
+            return Some((model, @moui.Effect::none()))
+          }
+          let committed = commit_code(model)
+          match committed.run {
+            None => Some((committed, @moui.Effect::none()))
+            Some(committed_run) => {
+              committed_run.checks[name] = value
+              if committed.code_error != "" {
+                Some((committed, @moui.Effect::none()))
+              } else {
+                Some(run_handler(committed, name, "on_change"))
+              }
+            }
+          }
         }
       }
     AnswerGate(decision) =>
@@ -203,20 +279,53 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         }
       }
     ControlClicked(name) => {
+      if gate_waiting(model) {
+        return Some((model, @moui.Effect::none()))
+      }
       let committed = commit_code(model)
-      Some(run_handler(committed, name, "on_click"))
+      if committed.code_error != "" {
+        // Never dispatch a runtime event against stale IR when the visible
+        // code draft failed to parse; keep the draft and its localized error
+        // in place for repair.
+        Some((committed, @moui.Effect::none()))
+      } else {
+        Some(run_handler(committed, name, "on_click"))
+      }
+    }
+    ControlPicked(name, index) => {
+      if gate_waiting(model) {
+        return Some((model, @moui.Effect::none()))
+      }
+      let committed = commit_code(model)
+      if committed.code_error != "" {
+        Some((committed, @moui.Effect::none()))
+      } else {
+        committed.runtime_selections[name] = index
+        match committed.run {
+          Some(run) => run.state.selections[name] = index
+          None => ()
+        }
+        Some(run_handler(committed, name, picked_event_tag(committed, name)))
+      }
     }
     ControlChanged(name, value) => {
-      let committed = commit_code(model)
-      // 受控输入框：输入值必须先落进活状态文本表，否则字段显示回退、
-      // 取文本 读到旧值。run.state.texts 与 runtime_texts 同一张表，
-      // 双写使任一侧为真身时都成立。
-      committed.runtime_texts[name] = value
-      match committed.run {
-        Some(run) => run.state.texts[name] = value
-        None => ()
+      if gate_waiting(model) {
+        return Some((model, @moui.Effect::none()))
       }
-      Some(run_handler(committed, name, "on_change"))
+      let committed = commit_code(model)
+      if committed.code_error != "" {
+        Some((committed, @moui.Effect::none()))
+      } else {
+        // 受控输入框：输入值必须先落进活状态文本表，否则字段显示回退、
+        // 取文本 读到旧值。run.state.texts 与 runtime_texts 同一张表，
+        // 双写使任一侧为真身时都成立。
+        committed.runtime_texts[name] = value
+        match committed.run {
+          Some(run) => run.state.texts[name] = value
+          None => ()
+        }
+        Some(run_handler(committed, name, "on_change"))
+      }
     }
     _ => None
   }

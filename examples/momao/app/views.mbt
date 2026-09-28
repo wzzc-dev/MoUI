@@ -327,7 +327,7 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       }
       let panel : Array[@moui.View[Msg]] = [
         @views.text(
-          "\{text(t, "blocks.event")}：\{handler.control_name} . \{handler.event.tag()}",
+          "\{text(t, "blocks.event")}：\{handler.control_name} . \{text(t, "event.\{handler.event.tag()}")}",
           role=Subtitle,
         ),
         @views.text(text(t, "app.blocks.reorder_hint"), role=Caption),
@@ -400,7 +400,7 @@ fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.text(text(t, "app.preview.note"), role=Caption),
   ]
   for line in source.split("\n") {
-    lines.push(@views.text(line.to_string(), width=460.0, align=TextStart))
+    lines.push(@views.text(line.to_owned(), width=460.0, align=TextStart))
   }
   @views.scroll_view(
     @views.column(lines),
@@ -541,16 +541,25 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
             let rows : Array[@moui.View[Msg]] = []
             let mut row_index = 0
             for item in run.state.rows.get(control.name).unwrap_or([]) {
-              let row = if row_index % 2 == 0 {
-                @views.container(
-                  @views.text(item, width=140.0),
-                  background=@graphics.Color::rgba(r=0.957, g=0.957, b=0.961),
-                  corner_radius=4.0,
-                  padding=2.0,
+              let index = row_index
+              let selected = run.state.selections
+                .get(control.name)
+                .unwrap_or(-1) ==
+                index
+              let label = if selected { "▶ " + item } else { item }
+              let row = if index % 2 == 0 {
+                @views.button(
+                  label,
+                  on_click=ControlPicked(control.name, index),
                   width=160.0,
                 )
               } else {
-                @views.text(item, width=160.0)
+                @views.button(
+                  label,
+                  on_click=ControlPicked(control.name, index),
+                  width=160.0,
+                  variant=Outline,
+                )
               }
               rows.push(row)
               row_index = row_index + 1

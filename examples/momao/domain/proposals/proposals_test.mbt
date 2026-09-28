@@ -6,6 +6,7 @@ fn apply_to_empty(proposal : @proposals.ProposalV1) -> @ir.MomaoProgram {
   @proposals.apply_proposal(@ir.empty_program(), proposal)
 }
 
+///|
 test "all samples are self-valid programs" {
   for sample in @proposals.all_samples() {
     let structural = @ir.validate_program(sample)
@@ -16,12 +17,11 @@ test "all samples are self-valid programs" {
   }
 }
 
+///|
 test "proposal round trip preserves sample signature" {
   for sample in @proposals.all_samples() {
     let proposal = @proposals.proposal_from_program(
-      sample,
-      "测试摘要",
-      "test summary",
+      sample, "测试摘要", "test summary",
     )
     let text = @proposals.encode_proposal(proposal)
     match @proposals.decode_proposal(text) {
@@ -40,9 +40,14 @@ test "proposal round trip preserves sample signature" {
   }
 }
 
+///|
 test "validation chain rejects junk names and missing notes" {
   let junk : @proposals.ProposalV1 = {
-    ..@proposals.proposal_from_program(@proposals.sample_hello(), "摘要", "summary"),
+    ..@proposals.proposal_from_program(
+      @proposals.sample_hello(),
+      "摘要",
+      "summary",
+    ),
     controls_add: [
       @ir.Control::{
         id: 1,
@@ -81,9 +86,45 @@ test "validation chain rejects junk names and missing notes" {
   assert_true(note_errors.any(e => e is @proposals.Readability(_)))
 }
 
+///|
+test "validation chain rejects unsupported proposal versions" {
+  let proposal : @proposals.ProposalV1 = {
+    ..@proposals.proposal_from_program(
+      @proposals.sample_hello(),
+      "摘要",
+      "summary",
+    ),
+    version: 2,
+  }
+  let errors = @proposals.validate_proposal(@proposals.sample_hello(), proposal)
+  assert_true(errors.any(e => e is @proposals.BadVersion(2)))
+}
+
+///|
+test "readability checks only AI-touched objects" {
+  let program = @proposals.sample_hello()
+  let existing = program.handlers[0]
+  program.handlers[0] = { ..existing, note_zh: "", note_en: "", }
+  let control = program.controls[0]
+  let proposal : @proposals.ProposalV1 = {
+    ..@proposals.proposal_from_program(program, "改按钮", "change button"),
+    controls_add: [],
+    controls_update: [{ ..control, text: "新文本", }],
+    variables_add: [],
+    handlers_add: [],
+  }
+  let errors = @proposals.validate_proposal(program, proposal)
+  assert_true(!errors.any(e => e is @proposals.Readability(_)))
+}
+
+///|
 test "validation chain rejects unknown controls and stray break" {
   let unknown : @proposals.ProposalV1 = {
-    ..@proposals.proposal_from_program(@proposals.sample_hello(), "摘要", "summary"),
+    ..@proposals.proposal_from_program(
+      @proposals.sample_hello(),
+      "摘要",
+      "summary",
+    ),
     handlers_add: [
       @ir.Handler::{
         control_name: "不存在",
@@ -97,13 +138,16 @@ test "validation chain rejects unknown controls and stray break" {
     variables_add: [],
   }
   assert_true(
-    @proposals.validate_proposal(
-      @ir.empty_program(),
-      unknown,
-    ).any(e => e is @proposals.Structural(_)),
+    @proposals.validate_proposal(@ir.empty_program(), unknown).any(e => {
+      e is @proposals.Structural(_)
+    }),
   )
   let stray : @proposals.ProposalV1 = {
-    ..@proposals.proposal_from_program(@proposals.sample_hello(), "摘要", "summary"),
+    ..@proposals.proposal_from_program(
+      @proposals.sample_hello(),
+      "摘要",
+      "summary",
+    ),
     handlers_add: [
       @ir.Handler::{
         control_name: "按钮",
@@ -117,20 +161,20 @@ test "validation chain rejects unknown controls and stray break" {
     variables_add: [],
   }
   assert_true(
-    @proposals.validate_proposal(
-      @ir.empty_program(),
-      stray,
-    ).any(e => e is @proposals.LanguageIssue(_)),
+    @proposals.validate_proposal(@ir.empty_program(), stray).any(e => {
+      e is @proposals.LanguageIssue(_)
+    }),
   )
 }
 
+///|
 test "control update produces field level diff" {
   let program = @proposals.sample_hello()
   let label = match @ir.find_control(program, "显示") {
     Some(control) => control
     None => fail("样例应有「显示」标签")
   }
-  let changed = @ir.Control::{ ..label, text: "新的欢迎语" }
+  let changed = @ir.Control::{ ..label, text: "新的欢迎语", }
   let proposal : @proposals.ProposalV1 = {
     ..@proposals.proposal_from_program(program, "改文案", "change text"),
     controls_add: [],
@@ -138,11 +182,12 @@ test "control update produces field level diff" {
   }
   let entries = @proposals.proposal_diff(program, proposal)
   assert_true(
-    entries.any(e =>
+    entries.any(e => {
       e.op is @proposals.Changed &&
       e.path == "control.显示.text" &&
       e.old_text == "" &&
-      e.new_text == "新的欢迎语"),
+      e.new_text == "新的欢迎语"
+    }),
   )
   let applied = @proposals.apply_proposal(program, proposal)
   match @ir.find_control(applied, "显示") {
@@ -151,6 +196,7 @@ test "control update produces field level diff" {
   }
 }
 
+///|
 test "handler removal cascades from control removal" {
   let program = @proposals.sample_hello()
   let proposal : @proposals.ProposalV1 = {
@@ -165,15 +211,25 @@ test "handler removal cascades from control removal" {
   assert_true(@ir.find_control(applied, "按钮") is None)
 }
 
+///|
 test "fake model routes prompts deterministically" {
-  assert_eq(@proposals.route_prompt("帮我做一个随机点名器"), "roll_call")
+  assert_eq(
+    @proposals.route_prompt("帮我做一个随机点名器"),
+    "roll_call",
+  )
   assert_eq(@proposals.route_prompt("roll call please"), "roll_call")
   assert_eq(@proposals.route_prompt("口算练习"), "drill")
   assert_eq(@proposals.route_prompt("班级小卖部记账"), "store")
   assert_eq(@proposals.route_prompt("做个小商店"), "store")
   assert_eq(@proposals.route_prompt("随便做点东西"), "generic")
-  let first = @proposals.fake_model_completion("随机点名", @ir.empty_program())
-  let second = @proposals.fake_model_completion("随机点名", @ir.empty_program())
+  let first = @proposals.fake_model_completion(
+    "随机点名",
+    @ir.empty_program(),
+  )
+  let second = @proposals.fake_model_completion(
+    "随机点名",
+    @ir.empty_program(),
+  )
   assert_eq(first, second)
   match @proposals.decode_proposal(first) {
     Ok(proposal) => {
@@ -183,16 +239,23 @@ test "fake model routes prompts deterministically" {
       assert_eq(applied.window.title, "班级点名册")
       assert_eq(applied.handlers.length(), 1)
     }
-    Err(errors) => fail("假模型产物应可解码: \{errors.length()} 个问题")
+    Err(errors) =>
+      fail("假模型产物应可解码: \{errors.length()} 个问题")
   }
 }
 
+///|
 test "decode tolerates fences and prose around json" {
-  let completion = @proposals.fake_model_completion("random roll call", @ir.empty_program())
+  let completion = @proposals.fake_model_completion(
+    "random roll call",
+    @ir.empty_program(),
+  )
   let wrapped = "好的，这是提案：\n```json\n\{completion}\n```\n希望对你有帮助"
   match @proposals.decode_proposal(wrapped) {
-    Ok(proposal) => assert_eq(proposal.summary_zh != "" || proposal.summary_en != "", true)
-    Err(errors) => fail("围栏+散文应可解码: \{errors.length()} 个问题")
+    Ok(proposal) =>
+      assert_eq(proposal.summary_zh != "" || proposal.summary_en != "", true)
+    Err(errors) =>
+      fail("围栏+散文应可解码: \{errors.length()} 个问题")
   }
   match @proposals.decode_proposal("完全是散文，没有 JSON") {
     Err(errors) => assert_true(errors.any(e => e is @proposals.InvalidJson))
@@ -200,6 +263,7 @@ test "decode tolerates fences and prose around json" {
   }
 }
 
+///|
 test "system prompt mentions gates and notes" {
   let prompt = @proposals.proposal_system_prompt()
   assert_true(prompt.contains("submit_data"))
@@ -235,9 +299,7 @@ fn decode_errors(text : String) -> Array[@proposals.ProposalError] {
 test "reject: invalid json, missing version, bad version" {
   assert_true(decode_errors("{ nope") is [InvalidJson, ..])
   assert_true(decode_errors("{}") is [MissingField("version")])
-  assert_true(
-    decode_errors("{\"version\": 2}") is [BadVersion(2)],
-  )
+  assert_true(decode_errors("{\"version\": 2}") is [BadVersion(2)])
 }
 
 ///|
@@ -301,7 +363,9 @@ fn handler_ref_proposal(
         event,
         note_zh: "点击后打招呼",
         note_en: "say hi on click",
-        body: [@ir.Call("set_text", [@ir.StrLit("显示"), @ir.StrLit("你好")])],
+        body: [
+          @ir.Call("set_text", [@ir.StrLit("显示"), @ir.StrLit("你好")]),
+        ],
       },
     ],
   }
@@ -309,11 +373,7 @@ fn handler_ref_proposal(
 
 ///|
 test "reject: empty summary is a readability failure" {
-  let base = @proposals.proposal_from_program(
-    @proposals.sample_hello(),
-    "",
-    "",
-  )
+  let base = @proposals.proposal_from_program(@proposals.sample_hello(), "", "")
   let errors = @proposals.validate_proposal(@proposals.sample_hello(), base)
   assert_true(errors.any(e => e is Readability("summary")))
 }
@@ -351,11 +411,7 @@ test "reject: handler without bilingual note" {
     ],
   }
   let errors = @proposals.validate_proposal(@ir.empty_program(), proposal)
-  assert_true(
-    errors.any(e =>
-      e is Readability("handler.按钮.on_click.note"),
-    ),
-  )
+  assert_true(errors.any(e => e is Readability("handler.按钮.on_click.note")))
 }
 
 ///|
@@ -404,25 +460,16 @@ test "reject: structural issues surface as Structural(IrError)" {
   let hello = @proposals.sample_hello()
   let existing = hello.controls[0]
   // 同名控件 → DuplicateControlName
-  let dup = {
-    ..base,
-    controls_add: [{ ..existing, id: 999, }],
-  }
+  let dup = { ..base, controls_add: [{ ..existing, id: 999, }], }
   let errors = @proposals.validate_proposal(hello, dup)
-  assert_true(
-    errors.any(e =>
-      e is Structural(@ir.DuplicateControlName(_)),
-    ),
-  )
+  assert_true(errors.any(e => e is Structural(@ir.DuplicateControlName(_))))
   // 子程序引用不存在的控件 → UnknownControlInHandler
   let orphan = {
     ..handler_ref_proposal("不存在", @ir.OnClick),
     controls_add: [],
   }
   let errors2 = @proposals.validate_proposal(@ir.empty_program(), orphan)
-  assert_true(
-    errors2.any(e => e is Structural(@ir.UnknownControlInHandler(_))),
-  )
+  assert_true(errors2.any(e => e is Structural(@ir.UnknownControlInHandler(_))))
   // 按钮不支持 on_change → UnsupportedEvent（控件须真实存在才会查事件支持）
   let wrong_event = {
     ..handler_ref_proposal("按钮", @ir.OnChange),
@@ -441,9 +488,7 @@ test "reject: structural issues surface as Structural(IrError)" {
     ],
   }
   let errors3 = @proposals.validate_proposal(@ir.empty_program(), wrong_event)
-  assert_true(
-    errors3.any(e => e is Structural(@ir.UnsupportedEvent(_, _))),
-  )
+  assert_true(errors3.any(e => e is Structural(@ir.UnsupportedEvent(_, _))))
   // 重复 (控件, 事件) 子程序 → DuplicateHandler（提案的 add 是替换语义
   // 造不出重复对；重复只能来自损坏的基底程序，校验链照样拦截）
   let corrupt_base : @ir.MomaoProgram = {
@@ -479,9 +524,7 @@ test "reject: structural issues surface as Structural(IrError)" {
     ],
   }
   let benign = @proposals.proposal_from_program(
-    corrupt_base,
-    "什么也不改",
-    "change nothing",
+    corrupt_base, "什么也不改", "change nothing",
   )
   let errors4 = @proposals.validate_proposal(corrupt_base, benign)
   assert_true(errors4.any(e => e is Structural(@ir.DuplicateHandler(_))))

@@ -62,7 +62,7 @@ async fn provider_fetch(job : ProviderJob) -> Unit {
       "Authorization": "Bearer " + job.key,
     })
     if response.code >= 200 && response.code < 300 {
-      Ok(data.text())
+      @provider.parse_completion(data.text())
     } else {
       Err("provider 返回 HTTP \{response.code}")
     }

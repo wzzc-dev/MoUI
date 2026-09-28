@@ -373,11 +373,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|pub fn initial_rows(program : MomaoProgram) -> Map[String, Array[String]] {
     #|  let rows : Map[String, Array[String]] = Map([], capacity=4)
     #|  for control in program.controls {
-    #|    if control.items.length() > 0 {
-    #|      rows[control.name] = control.items
-    #|    } else {
-    #|      rows[control.name] = []
+    #|    let copied : Array[String] = []
+    #|    for item in control.items {
+    #|      copied.push(item)
     #|    }
+    #|    rows[control.name] = copied
     #|  }
     #|  rows
     #|}
@@ -385,7 +385,7 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|///|
     #|/// 无 Trace 的语句（JSON 路径）：行号 0，界面显示语句序号。
     #|pub fn traced_from_stmts(body : Array[Stmt]) -> Array[TracedStmt] {
-    #|  body.map(stmt => TracedStmt::{ stmt, line: 0 })
+    #|  body.map(stmt => TracedStmt::{ stmt, line: 0, })
     #|}
     #|
     #|///|
@@ -412,7 +412,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|    error: None,
     #|    steps: 0,
     #|    max_steps,
-    #|    rng: if seed <= 0 { 1 } else { seed % 2147483647 },
+    #|    rng: if seed <= 0 {
+    #|      1
+    #|    } else {
+    #|      seed % 2147483647
+    #|    },
     #|    gate_answers: [],
     #|    declared: [],
     #|    gate_cursor: 0,
@@ -430,7 +434,7 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|  max_steps? : Int = DEFAULT_MAX_STEPS,
     #|  seed? : Int = 20260927,
     #|) -> RunState {
-    #|  start_run(traced_from_stmts(body), texts, values, rows, max_steps=max_steps, seed=seed)
+    #|  start_run(traced_from_stmts(body), texts, values, rows, max_steps~, seed~)
     #|}
     #|
     #|///|
@@ -473,36 +477,27 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|        if !state.declared.contains(name) {
     #|          state.declared.push(name)
     #|        }
-    #|        state.audit.push(
-    #|          StepRecord::{
-    #|            line,
-    #|            op: OpAssign,
-    #|            detail: "\{name} = \{canonical_expr(expr)}",
-    #|          },
-    #|        )
+    #|        state.audit.push(StepRecord::{
+    #|          line,
+    #|          op: OpAssign,
+    #|          detail: "\{name} = \{canonical_expr(expr)}",
+    #|        })
     #|        state.pc = state.pc + 1
     #|      }
     #|      Assign(name, expr) => {
     #|        if !state.declared.contains(name) && state.vars.get(name) is None {
-    #|          raise LangError(
-    #|            NotDeclared,
-    #|            line,
-    #|            name,
-    #|            "use declare first",
-    #|          )
+    #|          raise LangError(NotDeclared, line, name, "use declare first")
     #|        }
     #|        let value = state.eval(expr, line)
     #|        if state.paused || !(state.status is Running) {
     #|          return
     #|        }
     #|        state.vars[name] = value
-    #|        state.audit.push(
-    #|          StepRecord::{
-    #|            line,
-    #|            op: OpAssign,
-    #|            detail: "\{name} = \{canonical_expr(expr)}",
-    #|          },
-    #|        )
+    #|        state.audit.push(StepRecord::{
+    #|          line,
+    #|          op: OpAssign,
+    #|          detail: "\{name} = \{canonical_expr(expr)}",
+    #|        })
     #|        state.pc = state.pc + 1
     #|      }
     #|      ExprStmt(expr) => {
@@ -520,9 +515,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|          _ => true
     #|        }
     #|        if !audited {
-    #|          state.audit.push(
-    #|            StepRecord::{ line, op: OpCommand, detail: canonical_expr(expr) },
-    #|          )
+    #|          state.audit.push(StepRecord::{
+    #|            line,
+    #|            op: OpCommand,
+    #|            detail: canonical_expr(expr),
+    #|          })
     #|        }
     #|        state.pc = state.pc + 1
     #|      }
@@ -532,13 +529,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|          return
     #|        }
     #|        let flag = state.as_bool(value, "condition", line)
-    #|        state.audit.push(
-    #|          StepRecord::{
-    #|            line,
-    #|            op: OpCondition,
-    #|            detail: "\{canonical_expr(expr)} -> \{flag}",
-    #|          },
-    #|        )
+    #|        state.audit.push(StepRecord::{
+    #|          line,
+    #|          op: OpCondition,
+    #|          detail: "\{canonical_expr(expr)} -> \{flag}",
+    #|        })
     #|        state.pc = if flag { state.pc + 1 } else { target }
     #|      }
     #|      Jump(target) => state.pc = target
@@ -571,9 +566,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|              state.declared.push(loop_var)
     #|            }
     #|          }
-    #|          state.audit.push(
-    #|            StepRecord::{ line, op: OpLoop, detail: "iteration \{index.to_int()}" },
-    #|          )
+    #|          state.audit.push(StepRecord::{
+    #|            line,
+    #|            op: OpLoop,
+    #|            detail: "iteration \{index.to_int()}",
+    #|          })
     #|          state.pc = state.pc + 1
     #|        }
     #|      }
@@ -679,7 +676,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|
     #|///|
     #|/// 表达式求值。闸门触发时置 paused 并返回 VUnit（本指令作废重来）。
-    #|fn RunState::eval(self : RunState, expr : Expr, line : Int) -> Value raise LangError {
+    #|fn RunState::eval(
+    #|  self : RunState,
+    #|  expr : Expr,
+    #|  line : Int,
+    #|) -> Value raise LangError {
     #|  match expr {
     #|    @ir.NumLit(n) => VNum(n)
     #|    @ir.StrLit(text) => VStr(text)
@@ -772,11 +773,27 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|      match (l, r) {
     #|        (VNum(a), VNum(b)) =>
     #|          VBool(
-    #|            if op is @ir.Lt { a < b } else if op is @ir.Gt { a > b } else if op is @ir.Le { a <= b } else { a >= b },
+    #|            if op is @ir.Lt {
+    #|              a < b
+    #|            } else if op is @ir.Gt {
+    #|              a > b
+    #|            } else if op is @ir.Le {
+    #|              a <= b
+    #|            } else {
+    #|              a >= b
+    #|            },
     #|          )
     #|        (VStr(a), VStr(b)) =>
     #|          VBool(
-    #|            if op is @ir.Lt { a < b } else if op is @ir.Gt { a > b } else if op is @ir.Le { a <= b } else { a >= b },
+    #|            if op is @ir.Lt {
+    #|              a < b
+    #|            } else if op is @ir.Gt {
+    #|              a > b
+    #|            } else if op is @ir.Le {
+    #|              a <= b
+    #|            } else {
+    #|              a >= b
+    #|            },
     #|          )
     #|        _ => raise LangError(TypeMismatch, line, "compare", "same types")
     #|      }
@@ -838,36 +855,32 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|  args : Array[Expr],
     #|  line : Int,
     #|) -> Value raise LangError {
-    #|  let prompt =
-    #|    if spec.id == "submit_data" {
-    #|      self.control_name(args[1], line)
-    #|    } else {
-    #|      self.value_as_text(self.eval(args[0], line), spec.id, line)
-    #|    }
+    #|  let prompt = if spec.id == "submit_data" {
+    #|    self.control_name(args[1], line)
+    #|  } else {
+    #|    self.value_as_text(self.eval(args[0], line), spec.id, line)
+    #|  }
     #|  if self.paused || !(self.status is Running) {
     #|    return VUnit
     #|  }
-    #|  let payload =
-    #|    if spec.id == "submit_data" {
-    #|      let value = self.eval(args[0], line)
-    #|      if self.paused || !(self.status is Running) {
-    #|        return VUnit
-    #|      }
-    #|      self.value_as_text(value, spec.id, line)
-    #|    } else {
-    #|      ""
+    #|  let payload = if spec.id == "submit_data" {
+    #|    let value = self.eval(args[0], line)
+    #|    if self.paused || !(self.status is Running) {
+    #|      return VUnit
     #|    }
+    #|    self.value_as_text(value, spec.id, line)
+    #|  } else {
+    #|    ""
+    #|  }
     #|  if self.gate_cursor < self.gate_answers.length() {
     #|    let decision = self.gate_answers[self.gate_cursor]
     #|    self.gate_cursor = self.gate_cursor + 1
     #|    let outcome = if decision { "confirmed" } else { "rejected" }
-    #|    self.audit.push(
-    #|      StepRecord::{
-    #|        line,
-    #|        op: OpGate,
-    #|        detail: "\{canonical_call_text(spec.id, args)} -> \{outcome}",
-    #|      },
-    #|    )
+    #|    self.audit.push(StepRecord::{
+    #|      line,
+    #|      op: OpGate,
+    #|      detail: "\{canonical_call_text(spec.id, args)} -> \{outcome}",
+    #|    })
     #|    if spec.id == "ask" {
     #|      VBool(decision)
     #|    } else {
@@ -876,13 +889,15 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|  } else {
     #|    self.status = WaitingGate
     #|    self.paused = true
-    #|    self.gate = Some(
-    #|      Gate::{
-    #|        kind: if spec.id == "ask" { Ask } else { Submit },
-    #|        prompt,
-    #|        payload,
+    #|    self.gate = Some(Gate::{
+    #|      kind: if spec.id == "ask" {
+    #|        Ask
+    #|      } else {
+    #|        Submit
     #|      },
-    #|    )
+    #|      prompt,
+    #|      payload,
+    #|    })
     #|    VUnit
     #|  }
     #|}
@@ -902,13 +917,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|        return VUnit
     #|      }
     #|      self.messages.push(text)
-    #|      self.audit.push(
-    #|        StepRecord::{
-    #|          line,
-    #|          op: OpMessage,
-    #|          detail: canonical_call_text(spec.id, args),
-    #|        },
-    #|      )
+    #|      self.audit.push(StepRecord::{
+    #|        line,
+    #|        op: OpMessage,
+    #|        detail: canonical_call_text(spec.id, args),
+    #|      })
     #|      VUnit
     #|    }
     #|    "set_text" => {
@@ -921,13 +934,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|        return VUnit
     #|      }
     #|      self.texts[control] = text
-    #|      self.audit.push(
-    #|        StepRecord::{
-    #|          line,
-    #|          op: OpCommand,
-    #|          detail: canonical_call_text(spec.id, args),
-    #|        },
-    #|      )
+    #|      self.audit.push(StepRecord::{
+    #|        line,
+    #|        op: OpCommand,
+    #|        detail: canonical_call_text(spec.id, args),
+    #|      })
     #|      VUnit
     #|    }
     #|    "append_row" => {
@@ -943,13 +954,11 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|        Some(existing) => existing.push(text)
     #|        None => self.rows[control] = [text]
     #|      }
-    #|      self.audit.push(
-    #|        StepRecord::{
-    #|          line,
-    #|          op: OpCommand,
-    #|          detail: canonical_call_text(spec.id, args),
-    #|        },
-    #|      )
+    #|      self.audit.push(StepRecord::{
+    #|        line,
+    #|        op: OpCommand,
+    #|        detail: canonical_call_text(spec.id, args),
+    #|      })
     #|      VUnit
     #|    }
     #|    _ => raise LangError(UnknownBuiltin, line, spec.id, "")
@@ -1094,13 +1103,12 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|      write_canonical_expr(buf, right)
     #|      buf.write_string(")")
     #|    }
-    #|    @ir.Call(name, args) => {
-    #|      buf.write_string(canonical_call_text(name, args))
-    #|    }
+    #|    @ir.Call(name, args) => buf.write_string(canonical_call_text(name, args))
     #|  }
     #|}
     #|
     #|///|
+    #|
     #|///|
     #|/// 编译：语句 → 指令流（含跳转目标回填）。
     #|/// 嵌套语句沿用外层 Trace 行号（IR 树本身不存行号）。
@@ -1108,7 +1116,7 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|  let instrs : Array[Instr] = []
     #|  let lines : Array[Int] = []
     #|  emit_stmts(instrs, lines, body, [])
-    #|  Plan::{ instrs, lines }
+    #|  Plan::{ instrs, lines, }
     #|}
     #|
     #|///|
@@ -1191,7 +1199,8 @@ pub fn kernel_momao_lang_interp_mbt() -> String {
     #|      emit_body(instrs, lines, else_body, line, break_patches)
     #|      let else_start = then_jump + 1
     #|      match instrs[cond_slot] {
-    #|        JumpIfFalse(expr, _) => instrs[cond_slot] = JumpIfFalse(expr, else_start)
+    #|        JumpIfFalse(expr, _) =>
+    #|          instrs[cond_slot] = JumpIfFalse(expr, else_start)
     #|        _ => ()
     #|      }
     #|      let mut index = 0
@@ -1298,8 +1307,23 @@ pub fn kernel_momao_lang_semantics_mbt() -> String {
     #|/// 校验整个程序的语言层问题（IR 无行号，错误行号为 0）。
     #|pub fn validate_program_language(program : MomaoProgram) -> Array[LangError] {
     #|  let errors : Array[LangError] = []
+    #|  for control in program.controls {
+    #|    if is_reserved(control.name) {
+    #|      errors.push(LangError(ReservedWord, 0, control.name, ""))
+    #|    }
+    #|  }
+    #|  for variable in program.variables {
+    #|    if is_reserved(variable.name) {
+    #|      errors.push(LangError(ReservedWord, 0, variable.name, ""))
+    #|    }
+    #|  }
     #|  for handler in program.handlers {
-    #|    check_body(handler.body, errors, [])
+    #|    let declared : Array[String] = []
+    #|    for variable in program.variables {
+    #|      declared.push(variable.name)
+    #|    }
+    #|    check_body(handler.body, errors, [], declared)
+    #|    check_round_trip(handler.body, errors)
     #|  }
     #|  errors
     #|}
@@ -1309,6 +1333,7 @@ pub fn kernel_momao_lang_semantics_mbt() -> String {
     #|  body : Array[Stmt],
     #|  errors : Array[LangError],
     #|  in_loop : Array[Bool],
+    #|  declared : Array[String],
     #|) -> Unit {
     #|  for stmt in body {
     #|    match stmt {
@@ -1316,49 +1341,93 @@ pub fn kernel_momao_lang_semantics_mbt() -> String {
     #|        if in_loop.length() == 0 {
     #|          errors.push(LangError(BreakOutsideLoop, 0, "", ""))
     #|        }
-    #|      @ir.Declare(_, expr) | @ir.Assign(_, expr) => check_expr(expr, errors)
-    #|      @ir.Call(name, args) => {
-    #|        check_call(name, args, errors, true)
-    #|        for arg in args {
-    #|          check_expr(arg, errors)
+    #|      @ir.Declare(name, expr) => {
+    #|        check_name(name, errors)
+    #|        check_expr(expr, errors, declared)
+    #|        if !declared.contains(name) {
+    #|          declared.push(name)
     #|        }
     #|      }
+    #|      @ir.Assign(name, expr) => {
+    #|        if !declared.contains(name) {
+    #|          errors.push(LangError(NotDeclared, 0, name, ""))
+    #|        }
+    #|        check_expr(expr, errors, declared)
+    #|      }
+    #|      @ir.Call(name, args) => check_call(name, args, errors, true, declared)
     #|      @ir.If(cond, then_body, else_ifs, else_body) => {
-    #|        check_expr(cond, errors)
-    #|        check_body(then_body, errors, in_loop)
+    #|        check_expr(cond, errors, declared)
+    #|        check_body(then_body, errors, in_loop, declared)
     #|        for arm in else_ifs {
-    #|          check_expr(arm.0, errors)
-    #|          check_body(arm.1, errors, in_loop)
+    #|          check_expr(arm.0, errors, declared)
+    #|          check_body(arm.1, errors, in_loop, declared)
     #|        }
-    #|        check_body(else_body, errors, in_loop)
+    #|        check_body(else_body, errors, in_loop, declared)
     #|      }
-    #|      @ir.CountLoop(times, _, loop_body) => {
-    #|        check_expr(times, errors)
-    #|        check_body(loop_body, errors, in_loop_plus(in_loop))
+    #|      @ir.CountLoop(times, loop_var, loop_body) => {
+    #|        check_expr(times, errors, declared)
+    #|        match loop_var {
+    #|          Some(name) => {
+    #|            check_name(name, errors)
+    #|            if !declared.contains(name) {
+    #|              declared.push(name)
+    #|            }
+    #|          }
+    #|          None => ()
+    #|        }
+    #|        check_body(loop_body, errors, in_loop_plus(in_loop), declared)
     #|      }
     #|      @ir.WhileLoop(cond, loop_body) => {
-    #|        check_expr(cond, errors)
-    #|        check_body(loop_body, errors, in_loop_plus(in_loop))
+    #|        check_expr(cond, errors, declared)
+    #|        check_body(loop_body, errors, in_loop_plus(in_loop), declared)
     #|      }
     #|    }
     #|  }
     #|}
     #|
     #|///|
-    #|fn check_expr(expr : Expr, errors : Array[LangError]) -> Unit {
-    #|  match expr {
-    #|    @ir.NumLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) | @ir.Var(_) => ()
-    #|    @ir.Not(inner) | @ir.Neg(inner) => check_expr(inner, errors)
-    #|    @ir.Binary(_, left, right) => {
-    #|      check_expr(left, errors)
-    #|      check_expr(right, errors)
-    #|    }
-    #|    @ir.Call(name, args) => {
-    #|      check_call(name, args, errors, false)
-    #|      for arg in args {
-    #|        check_expr(arg, errors)
+    #|/// 标识符必须在两门 DSL 中都能作为普通名字使用。
+    #|fn check_name(name : String, errors : Array[LangError]) -> Unit {
+    #|  if is_reserved(name) {
+    #|    errors.push(LangError(ReservedWord, 0, name, ""))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// codec/提案入口也必须守住双语渲染闭环，不能只依赖样例测试。
+    #|fn check_round_trip(body : Array[Stmt], errors : Array[LangError]) -> Unit {
+    #|  for language in [ZhHans, En] {
+    #|    let rendered = render_stmts(body, language)
+    #|    match parse_handler_body(rendered, language) {
+    #|      Ok(traced) => {
+    #|        let parsed = traced.map(item => item.stmt)
+    #|        if @ir.stmts_signature(parsed) != @ir.stmts_signature(body) {
+    #|          errors.push(LangError(UnexpectedToken, 0, "round-trip", ""))
+    #|        }
     #|      }
+    #|      Err(error) => errors.push(error)
     #|    }
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn check_expr(
+    #|  expr : Expr,
+    #|  errors : Array[LangError],
+    #|  declared : Array[String],
+    #|) -> Unit {
+    #|  match expr {
+    #|    @ir.NumLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) => ()
+    #|    @ir.Var(name) =>
+    #|      if !declared.contains(name) {
+    #|        errors.push(LangError(NotDeclared, 0, name, ""))
+    #|      }
+    #|    @ir.Not(inner) | @ir.Neg(inner) => check_expr(inner, errors, declared)
+    #|    @ir.Binary(_, left, right) => {
+    #|      check_expr(left, errors, declared)
+    #|      check_expr(right, errors, declared)
+    #|    }
+    #|    @ir.Call(name, args) => check_call(name, args, errors, false, declared)
     #|  }
     #|}
     #|
@@ -1369,6 +1438,7 @@ pub fn kernel_momao_lang_semantics_mbt() -> String {
     #|  args : Array[Expr],
     #|  errors : Array[LangError],
     #|  statement : Bool,
+    #|  declared : Array[String],
     #|) -> Unit {
     #|  match find_builtin(name) {
     #|    None => errors.push(LangError(UnknownBuiltin, 0, name, ""))
@@ -1381,7 +1451,40 @@ pub fn kernel_momao_lang_semantics_mbt() -> String {
     #|          LangError(ArityMismatch, 0, spec.id, "\{spec.arity}/\{args.length()}"),
     #|        )
     #|      }
+    #|      // A bare Var in a control-name slot is a control identifier by DSL
+    #|      // convention (for example `set_text(Result, value)`), not a variable
+    #|      // lookup. Dynamic expressions in that slot still undergo normal checks.
+    #|      let mut index = 0
+    #|      while index < args.length() {
+    #|        let arg = args[index]
+    #|        if !is_control_name_arg(spec.id, index, arg) {
+    #|          check_expr(arg, errors, declared)
+    #|        }
+    #|        index = index + 1
+    #|      }
     #|    }
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn is_control_name_arg(name : String, index : Int, arg : Expr) -> Bool {
+    #|  let target_slot = index == 0 &&
+    #|    (
+    #|      name == "set_text" ||
+    #|      name == "append_row" ||
+    #|      name == "get_text" ||
+    #|      name == "get_number" ||
+    #|      name == "row_count" ||
+    #|      name == "row_at" ||
+    #|      name == "selected_row"
+    #|    )
+    #|  let submit_target_slot = name == "submit_data" && index == 1
+    #|  if !target_slot && !submit_target_slot {
+    #|    return false
+    #|  }
+    #|  match arg {
+    #|    @ir.Var(_) => true
+    #|    _ => false
     #|  }
     #|}
     #|

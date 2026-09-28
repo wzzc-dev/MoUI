@@ -477,7 +477,9 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|pub(all) enum IrError {
     #|  DuplicateControlName(String)
     #|  InvalidControlName(String)
+    #|  InvalidVariableName(String)
     #|  DuplicateVariableName(String)
+    #|  InvalidControlRect(String)
     #|  DuplicateHandler(String)
     #|  UnknownControlInHandler(String)
     #|  UnsupportedEvent(String, String)
@@ -513,12 +515,19 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|    } else {
     #|      names.push(control.name)
     #|    }
-    #|    total_stmts = total_stmts + stmts_in_control_events(program, control.name)
+    #|    if control.x < 0 ||
+    #|      control.y < 0 ||
+    #|      control.width < MIN_CONTROL_SIZE ||
+    #|      control.height < MIN_CONTROL_SIZE ||
+    #|      control.x + control.width > DESIGN_WIDTH ||
+    #|      control.y + control.height > DESIGN_HEIGHT {
+    #|      errors.push(InvalidControlRect(control.name))
+    #|    }
     #|  }
     #|  let var_names : Array[String] = []
     #|  for variable in program.variables {
     #|    if !variable_name_syntax_valid(variable.name) {
-    #|      errors.push(InvalidControlName(variable.name))
+    #|      errors.push(InvalidVariableName(variable.name))
     #|    }
     #|    if var_names.contains(variable.name) {
     #|      errors.push(DuplicateVariableName(variable.name))
@@ -537,9 +546,10 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|    }
     #|  }
     #|  for handler in program.handlers {
-    #|    total_stmts = total_stmts + count_stmts(handler.body)
-    #|    if handler.body.length() > MAX_STMTS_PER_HANDLER {
-    #|      errors.push(TooManyStatements(handler.body.length()))
+    #|    let handler_stmts = count_stmts(handler.body)
+    #|    total_stmts = total_stmts + handler_stmts
+    #|    if handler_stmts > MAX_STMTS_PER_HANDLER {
+    #|      errors.push(TooManyStatements(handler_stmts))
     #|    }
     #|    if stmt_loop_depth(handler.body) > MAX_LOOP_DEPTH {
     #|      errors.push(LoopTooDeep(stmt_loop_depth(handler.body)))
@@ -561,22 +571,6 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|    errors.push(TooManyStatements(total_stmts))
     #|  }
     #|  errors
-    #|}
-    #|
-    #|///|
-    #|/// 控件事件子程序不单独存储；handler 只记（控件, 事件）。
-    #|/// 该函数统计挂在该控件上的全部 handler 语句数。
-    #|fn stmts_in_control_events(
-    #|  program : MomaoProgram,
-    #|  control_name : String,
-    #|) -> Int {
-    #|  let mut total = 0
-    #|  for handler in program.handlers {
-    #|    if handler.control_name == control_name {
-    #|      total = total + count_stmts(handler.body)
-    #|    }
-    #|  }
-    #|  total
     #|}
     #|
     #|///|
@@ -624,11 +618,15 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|    let depth = match stmt {
     #|      Declare(_, _) | Assign(_, _) | Call(_, _) | Break => current
     #|      If(_, then_body, else_ifs, else_body) => {
-    #|        let inner = body_loop_depth(then_body, current)
-    #|        let inner2 = body_loop_depth(else_body, inner)
-    #|        let mut arms = inner2
+    #|        let then_depth = body_loop_depth(then_body, current)
+    #|        let else_depth = body_loop_depth(else_body, current)
+    #|        let mut arms = if then_depth > else_depth {
+    #|          then_depth
+    #|        } else {
+    #|          else_depth
+    #|        }
     #|        for arm in else_ifs {
-    #|          let inner3 = body_loop_depth(arm.1, inner2)
+    #|          let inner3 = body_loop_depth(arm.1, current)
     #|          if inner3 > arms {
     #|            arms = inner3
     #|          }

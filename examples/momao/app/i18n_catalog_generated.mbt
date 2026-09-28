@@ -21,6 +21,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
     messages: [
       ("op.gate", GeneratedI18nMessage::Text("gate")),
       ("op.loop", GeneratedI18nMessage::Text("loop")),
+      ("err.line", GeneratedI18nMessage::Text(" (line {line})")),
       ("app.title", GeneratedI18nMessage::Text("MoMao Studio")),
       ("blocks.if", GeneratedI18nMessage::Text("if")),
       ("op.assign", GeneratedI18nMessage::Text("assign")),
@@ -97,6 +98,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.endpoint", GeneratedI18nMessage::Text("Endpoint")),
       ("app.ai.generate", GeneratedI18nMessage::Text("Generate proposal")),
       ("app.block.apply", GeneratedI18nMessage::Text("Apply edit")),
+      ("app.dialog.open", GeneratedI18nMessage::Text("Open MoMao project")),
+      ("app.dialog.save", GeneratedI18nMessage::Text("Save MoMao project")),
       ("app.file.export", GeneratedI18nMessage::Text("Export app")),
       ("app.handler.new", GeneratedI18nMessage::Text("New handler")),
       ("app.lang.switch", GeneratedI18nMessage::Text("中文")),
@@ -140,6 +143,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.diff.title", GeneratedI18nMessage::Text("Change preview")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("Blocks canvas")),
       ("app.design.canvas", GeneratedI18nMessage::Text("Form design canvas")),
+      (
+        "app.dialog.export",
+        GeneratedI18nMessage::Text("Choose export directory"),
+      ),
       ("app.help.builtins", GeneratedI18nMessage::Text("Commands & functions")),
       ("app.help.commands", GeneratedI18nMessage::Text("Command")),
       ("app.help.keywords", GeneratedI18nMessage::Text("Statement keywords")),
@@ -153,6 +160,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("blocks.count_loop", GeneratedI18nMessage::Text("repeat")),
       ("builtin.row_count", GeneratedI18nMessage::Text("row_count")),
       ("control.check_box", GeneratedI18nMessage::Text("Check box")),
+      (
+        "err.expr_too_deep",
+        GeneratedI18nMessage::Text("Expression is too deep"),
+      ),
+      (
+        "err.loop_too_deep",
+        GeneratedI18nMessage::Text("Loop nesting is too deep"),
+      ),
       (
         "err.reserved_word",
         GeneratedI18nMessage::Text("{a} is a reserved word"),
@@ -228,6 +243,36 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("selected_row")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("Unrecognized: {a}")),
+      (
+        "err.duplicate_control",
+        GeneratedI18nMessage::Text("Duplicate control name: {name}"),
+      ),
+      (
+        "err.duplicate_handler",
+        GeneratedI18nMessage::Text("Duplicate handler: {name}"),
+      ),
+      (
+        "err.proposal_bad_expr",
+        GeneratedI18nMessage::Text("Invalid expression: {expr}"),
+      ),
+      (
+        "err.proposal_language",
+        GeneratedI18nMessage::Text("Language issue: {name}"),
+      ),
+      (
+        "err.too_many_controls",
+        GeneratedI18nMessage::Text("Control limit exceeded"),
+      ),
+      (
+        "err.too_many_handlers",
+        GeneratedI18nMessage::Text("Handler limit exceeded"),
+      ),
+      (
+        "err.unsupported_event",
+        GeneratedI18nMessage::Text(
+          "Control {control} does not support event {event}",
+        ),
+      ),
       ("app.inspector.position", GeneratedI18nMessage::Text("Position")),
       (
         "app.status.open_failed",
@@ -242,6 +287,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("break only works inside a loop"),
       ),
       (
+        "err.duplicate_variable",
+        GeneratedI18nMessage::Text("Duplicate variable name: {name}"),
+      ),
+      (
+        "err.too_many_variables",
+        GeneratedI18nMessage::Text("Variable limit exceeded"),
+      ),
+      (
         "app.blocks.reorder_hint",
         GeneratedI18nMessage::Text(
           "Drag blocks to reorder within a level; tap one to edit it below",
@@ -250,8 +303,30 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("Duplicate")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("Class roll call")),
       (
+        "err.too_many_statements",
+        GeneratedI18nMessage::Text("Statement budget exceeded"),
+      ),
+      (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("String is missing its closing quote"),
+      ),
+      (
+        "err.invalid_control_name",
+        GeneratedI18nMessage::Text("Invalid control name: {name}"),
+      ),
+      (
+        "err.invalid_control_rect",
+        GeneratedI18nMessage::Text(
+          "Invalid position or size for control: {name}",
+        ),
+      ),
+      (
+        "err.proposal_bad_version",
+        GeneratedI18nMessage::Text("Proposal version is unsupported"),
+      ),
+      (
+        "err.proposal_readability",
+        GeneratedI18nMessage::Text("Readability issue: {target}"),
       ),
       (
         "app.status.controls_limit",
@@ -262,8 +337,32 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Handler limit reached (max 64)"),
       ),
       (
+        "err.invalid_variable_name",
+        GeneratedI18nMessage::Text("Invalid variable name: {name}"),
+      ),
+      (
+        "err.proposal_invalid_json",
+        GeneratedI18nMessage::Text("Proposal JSON is invalid"),
+      ),
+      (
+        "err.proposal_bad_statement",
+        GeneratedI18nMessage::Text("Invalid statement: {statement}"),
+      ),
+      (
+        "err.proposal_missing_field",
+        GeneratedI18nMessage::Text("Missing field: {field}"),
+      ),
+      (
         "app.status.proposal_invalid",
         GeneratedI18nMessage::Text("Proposal rejected by validation"),
+      ),
+      (
+        "err.proposal_bad_event_kind",
+        GeneratedI18nMessage::Text("Unknown event kind: {kind}"),
+      ),
+      (
+        "err.unknown_handler_control",
+        GeneratedI18nMessage::Text("Handler points to missing control: {name}"),
       ),
       (
         "app.status.proposal_accepted",
@@ -273,6 +372,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.status.proposal_rejected",
         GeneratedI18nMessage::Text("Proposal rejected"),
       ),
+      (
+        "err.proposal_unknown_control",
+        GeneratedI18nMessage::Text("Unknown control: {name}"),
+      ),
+      (
+        "err.proposal_unknown_handler",
+        GeneratedI18nMessage::Text("Unknown handler: {name}"),
+      ),
+      (
+        "err.proposal_bad_control_kind",
+        GeneratedI18nMessage::Text("Unknown control kind: {kind}"),
+      ),
+      (
+        "err.proposal_duplicate_handler",
+        GeneratedI18nMessage::Text("Duplicate handler: {name}"),
+      ),
     ],
   },
   {
@@ -280,6 +395,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
     messages: [
       ("op.gate", GeneratedI18nMessage::Text("闸门")),
       ("op.loop", GeneratedI18nMessage::Text("循环")),
+      ("err.line", GeneratedI18nMessage::Text("（第 {line} 行）")),
       ("app.title", GeneratedI18nMessage::Text("MoMao 墨卯")),
       ("blocks.if", GeneratedI18nMessage::Text("如果")),
       ("op.assign", GeneratedI18nMessage::Text("赋值")),
@@ -356,6 +472,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.endpoint", GeneratedI18nMessage::Text("接口地址")),
       ("app.ai.generate", GeneratedI18nMessage::Text("生成提案")),
       ("app.block.apply", GeneratedI18nMessage::Text("应用修改")),
+      ("app.dialog.open", GeneratedI18nMessage::Text("打开 MoMao 项目")),
+      ("app.dialog.save", GeneratedI18nMessage::Text("保存 MoMao 项目")),
       ("app.file.export", GeneratedI18nMessage::Text("导出应用")),
       ("app.handler.new", GeneratedI18nMessage::Text("新建子程序")),
       ("app.lang.switch", GeneratedI18nMessage::Text("English")),
@@ -397,6 +515,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.diff.title", GeneratedI18nMessage::Text("变更预览")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("积木画布")),
       ("app.design.canvas", GeneratedI18nMessage::Text("表单设计画布")),
+      ("app.dialog.export", GeneratedI18nMessage::Text("选择导出目录")),
       ("app.help.builtins", GeneratedI18nMessage::Text("命令与函数")),
       ("app.help.commands", GeneratedI18nMessage::Text("命令")),
       ("app.help.keywords", GeneratedI18nMessage::Text("语句关键字")),
@@ -407,6 +526,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("blocks.count_loop", GeneratedI18nMessage::Text("计次循环")),
       ("builtin.row_count", GeneratedI18nMessage::Text("取行数")),
       ("control.check_box", GeneratedI18nMessage::Text("选择框")),
+      ("err.expr_too_deep", GeneratedI18nMessage::Text("表达式过深")),
+      ("err.loop_too_deep", GeneratedI18nMessage::Text("循环嵌套过深")),
       ("err.reserved_word", GeneratedI18nMessage::Text("「{a}」是保留字")),
       (
         "err.type_mismatch",
@@ -479,6 +600,36 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("取所选行")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("无法识别：{a}")),
+      (
+        "err.duplicate_control",
+        GeneratedI18nMessage::Text("控件重名：{name}"),
+      ),
+      (
+        "err.duplicate_handler",
+        GeneratedI18nMessage::Text("子程序重复：{name}"),
+      ),
+      (
+        "err.proposal_bad_expr",
+        GeneratedI18nMessage::Text("表达式不合法：{expr}"),
+      ),
+      (
+        "err.proposal_language",
+        GeneratedI18nMessage::Text("语言层问题：{name}"),
+      ),
+      (
+        "err.too_many_controls",
+        GeneratedI18nMessage::Text("控件超出预算"),
+      ),
+      (
+        "err.too_many_handlers",
+        GeneratedI18nMessage::Text("子程序超出预算"),
+      ),
+      (
+        "err.unsupported_event",
+        GeneratedI18nMessage::Text(
+          "控件「{control}」不支持事件「{event}」",
+        ),
+      ),
       ("app.inspector.position", GeneratedI18nMessage::Text("位置")),
       (
         "app.status.open_failed",
@@ -493,6 +644,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("跳出循环 只能用在循环里"),
       ),
       (
+        "err.duplicate_variable",
+        GeneratedI18nMessage::Text("变量重名：{name}"),
+      ),
+      (
+        "err.too_many_variables",
+        GeneratedI18nMessage::Text("变量超出预算"),
+      ),
+      (
         "app.blocks.reorder_hint",
         GeneratedI18nMessage::Text(
           "拖动积木可同层重排；点选积木在下方编辑语句",
@@ -501,8 +660,28 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),
       (
+        "err.too_many_statements",
+        GeneratedI18nMessage::Text("语句超出预算"),
+      ),
+      (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("字符串缺少结束引号"),
+      ),
+      (
+        "err.invalid_control_name",
+        GeneratedI18nMessage::Text("控件名不合法：{name}"),
+      ),
+      (
+        "err.invalid_control_rect",
+        GeneratedI18nMessage::Text("控件位置或尺寸不合法：{name}"),
+      ),
+      (
+        "err.proposal_bad_version",
+        GeneratedI18nMessage::Text("提案版本不支持"),
+      ),
+      (
+        "err.proposal_readability",
+        GeneratedI18nMessage::Text("可读性问题：{target}"),
       ),
       (
         "app.status.controls_limit",
@@ -517,8 +696,32 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "err.invalid_variable_name",
+        GeneratedI18nMessage::Text("变量名不合法：{name}"),
+      ),
+      (
+        "err.proposal_invalid_json",
+        GeneratedI18nMessage::Text("提案 JSON 不合法"),
+      ),
+      (
+        "err.proposal_bad_statement",
+        GeneratedI18nMessage::Text("语句不合法：{statement}"),
+      ),
+      (
+        "err.proposal_missing_field",
+        GeneratedI18nMessage::Text("缺少字段：{field}"),
+      ),
+      (
         "app.status.proposal_invalid",
         GeneratedI18nMessage::Text("提案未通过校验，已整单拒绝"),
+      ),
+      (
+        "err.proposal_bad_event_kind",
+        GeneratedI18nMessage::Text("未知事件类型：{kind}"),
+      ),
+      (
+        "err.unknown_handler_control",
+        GeneratedI18nMessage::Text("子程序指向不存在的控件：{name}"),
       ),
       (
         "app.status.proposal_accepted",
@@ -527,6 +730,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.status.proposal_rejected",
         GeneratedI18nMessage::Text("提案被拒绝"),
+      ),
+      (
+        "err.proposal_unknown_control",
+        GeneratedI18nMessage::Text("未知控件：{name}"),
+      ),
+      (
+        "err.proposal_unknown_handler",
+        GeneratedI18nMessage::Text("未知子程序：{name}"),
+      ),
+      (
+        "err.proposal_bad_control_kind",
+        GeneratedI18nMessage::Text("未知控件类型：{kind}"),
+      ),
+      (
+        "err.proposal_duplicate_handler",
+        GeneratedI18nMessage::Text("子程序重复：{name}"),
       ),
     ],
   },

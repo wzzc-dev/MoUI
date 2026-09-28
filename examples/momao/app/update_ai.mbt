@@ -23,6 +23,8 @@ fn accept_proposal(model : Model) -> Model {
           run: None,
           runtime_values: @momao_lang.initial_values(next),
           runtime_texts: @momao_lang.initial_texts(next),
+          runtime_rows: @momao_lang.initial_rows(next),
+          runtime_selections: Map([], capacity=4),
         }
         {
           ..record_history(cleared, pending, true),
@@ -73,19 +75,29 @@ pub fn proposal_error_text(
   error : @proposals.ProposalError,
 ) -> String {
   match error {
-    @proposals.Readability(target) => "可读性：\{target}"
+    @proposals.Readability(target) =>
+      text_with(t, "err.proposal_readability", [("target", target)])
     @proposals.Structural(issue) => structural_error_text(t, issue)
-    @proposals.LanguageIssue(name) => "语言层：\{name}"
-    @proposals.UnknownControl(name) => "未知控件：\{name}"
-    @proposals.UnknownHandler(name) => "未知子程序：\{name}"
-    @proposals.DuplicateHandler(name) => "子程序重复：\{name}"
-    @proposals.InvalidJson => "JSON 不合法"
-    @proposals.BadVersion(_) => "提案版本不支持"
-    @proposals.MissingField(field) => "缺少字段：\{field}"
-    @proposals.BadControlKind(text) => "未知控件类型：\{text}"
-    @proposals.BadEventKind(text) => "未知事件类型：\{text}"
-    @proposals.BadStatement(text) => "语句不合法：\{text}"
-    @proposals.BadExpr(text) => "表达式不合法：\{text}"
+    @proposals.LanguageIssue(name) =>
+      text_with(t, "err.proposal_language", [("name", name)])
+    @proposals.UnknownControl(name) =>
+      text_with(t, "err.proposal_unknown_control", [("name", name)])
+    @proposals.UnknownHandler(name) =>
+      text_with(t, "err.proposal_unknown_handler", [("name", name)])
+    @proposals.DuplicateHandler(name) =>
+      text_with(t, "err.proposal_duplicate_handler", [("name", name)])
+    @proposals.InvalidJson => text(t, "err.proposal_invalid_json")
+    @proposals.BadVersion(_) => text(t, "err.proposal_bad_version")
+    @proposals.MissingField(field) =>
+      text_with(t, "err.proposal_missing_field", [("field", field)])
+    @proposals.BadControlKind(kind) =>
+      text_with(t, "err.proposal_bad_control_kind", [("kind", kind)])
+    @proposals.BadEventKind(kind) =>
+      text_with(t, "err.proposal_bad_event_kind", [("kind", kind)])
+    @proposals.BadStatement(statement) =>
+      text_with(t, "err.proposal_bad_statement", [("statement", statement)])
+    @proposals.BadExpr(expr) =>
+      text_with(t, "err.proposal_bad_expr", [("expr", expr)])
   }
 }
 
@@ -96,20 +108,31 @@ pub fn structural_error_text(
   error : @ir.IrError,
 ) -> String {
   match error {
-    @ir.DuplicateControlName(name) => "控件重名：\{name}"
-    @ir.InvalidControlName(name) => "控件名不合法：\{name}"
-    @ir.DuplicateVariableName(name) => "变量重名：\{name}"
-    @ir.DuplicateHandler(name) => "子程序重复：\{name}"
+    @ir.DuplicateControlName(name) =>
+      text_with(t, "err.duplicate_control", [("name", name)])
+    @ir.InvalidControlName(name) =>
+      text_with(t, "err.invalid_control_name", [("name", name)])
+    @ir.InvalidVariableName(name) =>
+      text_with(t, "err.invalid_variable_name", [("name", name)])
+    @ir.DuplicateVariableName(name) =>
+      text_with(t, "err.duplicate_variable", [("name", name)])
+    @ir.InvalidControlRect(name) =>
+      text_with(t, "err.invalid_control_rect", [("name", name)])
+    @ir.DuplicateHandler(name) =>
+      text_with(t, "err.duplicate_handler", [("name", name)])
     @ir.UnknownControlInHandler(name) =>
-      "子程序指向不存在的控件：\{name}"
-    @ir.UnsupportedEvent(control, _event) =>
-      "控件 \{control} 不支持该事件"
-    @ir.TooManyControls => "控件超出预算"
-    @ir.TooManyVariables => "变量超出预算"
-    @ir.TooManyHandlers => "子程序超出预算"
-    @ir.TooManyStatements(_count) => "语句超出预算"
-    @ir.LoopTooDeep(_depth) => "循环嵌套过深"
-    @ir.ExprTooDeep(_depth) => "表达式过深"
+      text_with(t, "err.unknown_handler_control", [("name", name)])
+    @ir.UnsupportedEvent(control, event) =>
+      text_with(t, "err.unsupported_event", [
+        ("control", control),
+        ("event", event),
+      ])
+    @ir.TooManyControls => text(t, "err.too_many_controls")
+    @ir.TooManyVariables => text(t, "err.too_many_variables")
+    @ir.TooManyHandlers => text(t, "err.too_many_handlers")
+    @ir.TooManyStatements(_) => text(t, "err.too_many_statements")
+    @ir.LoopTooDeep(_) => text(t, "err.loop_too_deep")
+    @ir.ExprTooDeep(_) => text(t, "err.expr_too_deep")
   }
 }
 
