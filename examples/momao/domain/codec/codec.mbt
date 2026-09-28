@@ -4,7 +4,9 @@
 /// 与 AI 提案（domain/proposals）共用同一套解码原语。
 
 ///|
-///| 格式标识与版本：不匹配整单拒绝（未来版本走显式迁移，不猜）。
+
+///|
+/// 格式标识与版本：不匹配整单拒绝（未来版本走显式迁移，不猜）。
 pub const PROJECT_FORMAT : String = "momao.project"
 
 ///|
@@ -88,17 +90,22 @@ fn encode_handler(handler : @ir.Handler) -> Json {
 ///|
 fn encode_stmt(stmt : @ir.Stmt) -> Json {
   match stmt {
-    @ir.Declare(name, expr) => encode_stmt_node(stmt, "declare", [
-      ("name", Json::string(name)), ("expr", encode_expr(expr)),
-    ])
-    @ir.Assign(name, expr) => encode_stmt_node(stmt, "assign", [
-      ("name", Json::string(name)), ("expr", encode_expr(expr)),
-    ])
+    @ir.Declare(name, expr) =>
+      encode_stmt_node(stmt, "declare", [
+        ("name", Json::string(name)),
+        ("expr", encode_expr(expr)),
+      ])
+    @ir.Assign(name, expr) =>
+      encode_stmt_node(stmt, "assign", [
+        ("name", Json::string(name)),
+        ("expr", encode_expr(expr)),
+      ])
     @ir.Break => encode_stmt_node(stmt, "break", [])
-    @ir.Call(name, args) => encode_stmt_node(stmt, "call", [
-      ("name", Json::string(name)),
-      ("args", Json::array(args.map(encode_expr))),
-    ])
+    @ir.Call(name, args) =>
+      encode_stmt_node(stmt, "call", [
+        ("name", Json::string(name)),
+        ("args", Json::array(args.map(encode_expr))),
+      ])
     @ir.If(cond, then_body, else_ifs, else_body) =>
       encode_stmt_node(stmt, "if", [
         ("cond", encode_expr(cond)),
@@ -130,7 +137,8 @@ fn encode_stmt(stmt : @ir.Stmt) -> Json {
       ])
     @ir.WhileLoop(cond, body) =>
       encode_stmt_node(stmt, "while", [
-        ("cond", encode_expr(cond)), ("body", Json::array(body.map(encode_stmt))),
+        ("cond", encode_expr(cond)),
+        ("body", Json::array(body.map(encode_stmt))),
       ])
   }
 }
@@ -240,19 +248,17 @@ fn decode_control(
       return None
     }
   }
-  Some(
-    @ir.Control::{
-      id,
-      kind,
-      name,
-      text: json_string_field(fields, "text").unwrap_or(""),
-      x: json_int_field(fields, "x").unwrap_or(40),
-      y: json_int_field(fields, "y").unwrap_or(40),
-      width: json_int_field(fields, "width").unwrap_or(120),
-      height: json_int_field(fields, "height").unwrap_or(36),
-      items: json_items_field(fields, "items"),
-    },
-  )
+  Some(@ir.Control::{
+    id,
+    kind,
+    name,
+    text: json_string_field(fields, "text").unwrap_or(""),
+    x: json_int_field(fields, "x").unwrap_or(40),
+    y: json_int_field(fields, "y").unwrap_or(40),
+    width: json_int_field(fields, "width").unwrap_or(120),
+    height: json_int_field(fields, "height").unwrap_or(36),
+    items: json_items_field(fields, "items"),
+  })
 }
 
 ///|
@@ -282,10 +288,11 @@ fn decode_handler(
     }
   }
   let (note_zh, note_en) = match fields.get("note") {
-    Some(Object(note)) => (
-      json_string_field(note, "zh").unwrap_or(""),
-      json_string_field(note, "en").unwrap_or(""),
-    )
+    Some(Object(note)) =>
+      (
+        json_string_field(note, "zh").unwrap_or(""),
+        json_string_field(note, "en").unwrap_or(""),
+      )
     _ => ("", "")
   }
   let body = match fields.get("body") {
@@ -307,15 +314,7 @@ fn decode_handler(
       return None
     }
   }
-  Some(
-    @ir.Handler::{
-      control_name: control,
-      event,
-      note_zh,
-      note_en,
-      body,
-    },
-  )
+  Some(@ir.Handler::{ control_name: control, event, note_zh, note_en, body, })
 }
 
 ///|
@@ -437,7 +436,9 @@ fn stmt_expr(fields : Map[String, Json]) -> Result[@ir.Expr, CodecError] {
 }
 
 ///|
-fn stmt_exprs(fields : Map[String, Json]) -> Result[Array[@ir.Expr], CodecError] {
+fn stmt_exprs(
+  fields : Map[String, Json],
+) -> Result[Array[@ir.Expr], CodecError] {
   match fields.get("args") {
     Some(Array(values)) => {
       let exprs : Array[@ir.Expr] = []
@@ -641,10 +642,7 @@ pub fn decode_program(
     _ => return Err([BadFormat])
   }
   match json_string_field(fields, "format") {
-    Some(text) =>
-      if text != PROJECT_FORMAT {
-        return Err([BadFormat])
-      }
+    Some(text) => if text != PROJECT_FORMAT { return Err([BadFormat]) }
     None => return Err([BadFormat])
   }
   let version = match json_int_field(fields, "version") {
@@ -657,9 +655,15 @@ pub fn decode_program(
   let window = match fields.get("window") {
     Some(Object(window_fields)) =>
       @ir.WindowSpec::{
-        title: json_string_field(window_fields, "title").unwrap_or("MoMao 程序"),
-        width: json_int_field(window_fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
-        height: json_int_field(window_fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
+        title: json_string_field(window_fields, "title").unwrap_or(
+          "MoMao 程序",
+        ),
+        width: json_int_field(window_fields, "width").unwrap_or(
+          @ir.DESIGN_WIDTH,
+        ),
+        height: json_int_field(window_fields, "height").unwrap_or(
+          @ir.DESIGN_HEIGHT,
+        ),
       }
     _ => @ir.default_window()
   }
@@ -687,12 +691,10 @@ pub fn decode_program(
           Object(item) =>
             match json_string_field(item, "name") {
               Some(name) =>
-                variables.push(
-                  @ir.Variable::{
-                    name,
-                    init: json_string_field(item, "init").unwrap_or(""),
-                  },
-                )
+                variables.push(@ir.Variable::{
+                  name,
+                  init: json_string_field(item, "init").unwrap_or(""),
+                })
               None => errors.push(MissingField("variables.name"))
             }
           _ => errors.push(MissingField("variables[]"))

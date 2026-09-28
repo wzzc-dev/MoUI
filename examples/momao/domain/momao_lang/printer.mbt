@@ -15,15 +15,15 @@ pub fn render_stmts(body : Array[Stmt], language : Language) -> String {
 /// 渲染整个事件子程序：note 作为注释头 + 换行 + 体。
 pub fn render_handler(handler : Handler, language : Language) -> String {
   let note = match language {
-    ZhHans => if handler.note_zh == "" { handler.note_en } else { handler.note_zh }
+    ZhHans =>
+      if handler.note_zh == "" {
+        handler.note_en
+      } else {
+        handler.note_zh
+      }
     En => if handler.note_en == "" { handler.note_zh } else { handler.note_en }
   }
-  let header =
-    if note == "" {
-      ""
-    } else {
-      "// \{note}\n"
-    }
+  let header = if note == "" { "" } else { "// \{note}\n" }
   header + render_stmts(handler.body, language)
 }
 
@@ -131,12 +131,20 @@ fn expr_precedence(expr : Expr) -> Int {
   match expr {
     @ir.Binary(@ir.Or, _, _) => 1
     @ir.Binary(@ir.And, _, _) => 2
-    @ir.Binary(@ir.Eq, _, _) | @ir.Binary(@ir.Ne, _, _) | @ir.Binary(@ir.Lt, _, _) |
-    @ir.Binary(@ir.Gt, _, _) | @ir.Binary(@ir.Le, _, _) | @ir.Binary(@ir.Ge, _, _) => 3
+    @ir.Binary(@ir.Eq, _, _)
+    | @ir.Binary(@ir.Ne, _, _)
+    | @ir.Binary(@ir.Lt, _, _)
+    | @ir.Binary(@ir.Gt, _, _)
+    | @ir.Binary(@ir.Le, _, _)
+    | @ir.Binary(@ir.Ge, _, _) => 3
     @ir.Binary(@ir.Add, _, _) | @ir.Binary(@ir.Sub, _, _) => 4
     @ir.Binary(@ir.Mul, _, _) | @ir.Binary(@ir.Div, _, _) => 5
     @ir.Not(_) | @ir.Neg(_) => 6
-    @ir.NumLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) | @ir.Var(_) | @ir.Call(_, _) => 7
+    @ir.NumLit(_)
+    | @ir.StrLit(_)
+    | @ir.BoolLit(_)
+    | @ir.Var(_)
+    | @ir.Call(_, _) => 7
   }
 }
 

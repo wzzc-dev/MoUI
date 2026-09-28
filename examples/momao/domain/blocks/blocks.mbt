@@ -91,18 +91,16 @@ pub fn builtin_block_spec(id : String) -> BlockSpec? {
   match @momao_lang.find_builtin(id) {
     None => None
     Some(builtin) =>
-      Some(
-        BlockSpec::{
-          id,
-          category: match builtin.kind {
-            @momao_lang.Function => CatExpression
-            _ => CatCommand
-          },
-          value: builtin_result_type(id),
-          label_key: "builtin.\{id}",
-          arity: builtin.arity,
+      Some(BlockSpec::{
+        id,
+        category: match builtin.kind {
+          @momao_lang.Function => CatExpression
+          _ => CatCommand
         },
-      )
+        value: builtin_result_type(id),
+        label_key: "builtin.\{id}",
+        arity: builtin.arity,
+      })
   }
 }
 
@@ -194,114 +192,119 @@ fn emit_chain(
     let path = child_path(prefix, index)
     match stmt {
       @ir.Declare(name, expr) =>
-        items.push(
-          BlockItem::{
-            kind: BkDeclare,
-            depth,
-            text: "\{name} = \{@momao_lang.canonical_expr(expr)}",
-            builtin: "",
-            path,
-          },
-        )
+        items.push(BlockItem::{
+          kind: BkDeclare,
+          depth,
+          text: "\{name} = \{@momao_lang.canonical_expr(expr)}",
+          builtin: "",
+          path,
+        })
       @ir.Assign(name, expr) =>
-        items.push(
-          BlockItem::{
-            kind: BkAssign,
-            depth,
-            text: "\{name} = \{@momao_lang.canonical_expr(expr)}",
-            builtin: "",
-            path,
-          },
-        )
+        items.push(BlockItem::{
+          kind: BkAssign,
+          depth,
+          text: "\{name} = \{@momao_lang.canonical_expr(expr)}",
+          builtin: "",
+          path,
+        })
       @ir.If(cond, then_body, else_ifs, else_body) => {
-        items.push(
-          BlockItem::{
-            kind: BkIf,
-            depth,
-            text: @momao_lang.canonical_expr(cond),
-            builtin: "",
-            path,
-          },
-        )
+        items.push(BlockItem::{
+          kind: BkIf,
+          depth,
+          text: @momao_lang.canonical_expr(cond),
+          builtin: "",
+          path,
+        })
         emit_chain(items, then_body, depth + 1, child_path(path, 0))
         let mut arm_index = 0
         for arm in else_ifs {
-          items.push(
-            BlockItem::{
-              kind: BkElseIf,
-              depth,
-              text: @momao_lang.canonical_expr(arm.0),
-              builtin: "",
-              path,
-            },
+          items.push(BlockItem::{
+            kind: BkElseIf,
+            depth,
+            text: @momao_lang.canonical_expr(arm.0),
+            builtin: "",
+            path,
+          })
+          emit_chain(
+            items,
+            arm.1,
+            depth + 1,
+            child_path(child_path(path, 1), arm_index),
           )
-          emit_chain(items, arm.1, depth + 1, child_path(child_path(path, 1), arm_index))
           arm_index = arm_index + 1
         }
         if else_body.length() > 0 {
-          items.push(
-            BlockItem::{ kind: BkElse, depth, text: "", builtin: "", path: [] },
-          )
+          items.push(BlockItem::{
+            kind: BkElse,
+            depth,
+            text: "",
+            builtin: "",
+            path: [],
+          })
           emit_chain(items, else_body, depth + 1, child_path(path, 2))
         }
-        items.push(
-          BlockItem::{ kind: BkEnd, depth, text: "", builtin: "", path: [] },
-        )
+        items.push(BlockItem::{
+          kind: BkEnd,
+          depth,
+          text: "",
+          builtin: "",
+          path: [],
+        })
       }
       @ir.CountLoop(times, loop_var, loop_body) => {
         let name = match loop_var {
           Some(name) => name
           None => ""
         }
-        items.push(
-          BlockItem::{
-            kind: BkCountLoop,
-            depth,
-            text: "\{@momao_lang.canonical_expr(times)} / \{name}",
-            builtin: "",
-            path,
-          },
-        )
+        items.push(BlockItem::{
+          kind: BkCountLoop,
+          depth,
+          text: "\{@momao_lang.canonical_expr(times)} / \{name}",
+          builtin: "",
+          path,
+        })
         emit_chain(items, loop_body, depth + 1, child_path(path, 2))
-        items.push(
-          BlockItem::{ kind: BkEnd, depth, text: "", builtin: "", path: [] },
-        )
+        items.push(BlockItem::{
+          kind: BkEnd,
+          depth,
+          text: "",
+          builtin: "",
+          path: [],
+        })
       }
       @ir.WhileLoop(cond, loop_body) => {
-        items.push(
-          BlockItem::{
-            kind: BkWhile,
-            depth,
-            text: @momao_lang.canonical_expr(cond),
-            builtin: "",
-            path,
-          },
-        )
+        items.push(BlockItem::{
+          kind: BkWhile,
+          depth,
+          text: @momao_lang.canonical_expr(cond),
+          builtin: "",
+          path,
+        })
         emit_chain(items, loop_body, depth + 1, child_path(path, 2))
-        items.push(
-          BlockItem::{ kind: BkEnd, depth, text: "", builtin: "", path: [] },
-        )
+        items.push(BlockItem::{
+          kind: BkEnd,
+          depth,
+          text: "",
+          builtin: "",
+          path: [],
+        })
       }
       @ir.Break =>
-        items.push(
-          BlockItem::{
-            kind: BkBreak,
-            depth,
-            text: "",
-            builtin: "",
-            path,
-          },
-        )
+        items.push(BlockItem::{
+          kind: BkBreak,
+          depth,
+          text: "",
+          builtin: "",
+          path,
+        })
       @ir.Stmt::Call(name, args) =>
-        items.push(
-          BlockItem::{
-            kind: BkCall,
-            depth,
-            text: @momao_lang.canonical_call_text(name, args),
-            builtin: name,
-            path,
-          },
-        )
+        items.push(BlockItem::{
+          kind: BkCall,
+          depth,
+          text: @momao_lang.canonical_call_text(name, args),
+          builtin: name,
+          path,
+        })
     }
     index = index + 1
   }
@@ -387,10 +390,7 @@ pub fn replace_stmt_at(
 
 ///|
 /// 按路径删除语句（与 replace 同一套寻径规则）。
-pub fn delete_stmt_at(
-  body : Array[Stmt],
-  path : Array[Int],
-) -> Array[Stmt] {
+pub fn delete_stmt_at(body : Array[Stmt], path : Array[Int]) -> Array[Stmt] {
   if path.length() == 0 {
     return body
   }
@@ -598,10 +598,7 @@ pub fn clone_expr(expr : Expr) -> Expr {
 /// 语句列表寻址：list_path 指向一棵语句列表（[] = 顶层；
 /// [i,0] = If@i 的 then；[i,1,k] = If@i 的第 k 个 else-if 臂；
 /// [i,2] = If@i 的 else 或循环体）。返回活数组引用。
-pub fn stmt_list_at(
-  body : Array[Stmt],
-  list_path : Array[Int],
-) -> Array[Stmt]? {
+pub fn stmt_list_at(body : Array[Stmt], list_path : Array[Int]) -> Array[Stmt]? {
   if list_path.length() == 0 {
     return Some(body)
   }

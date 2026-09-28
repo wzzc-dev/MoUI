@@ -36,8 +36,8 @@ fn max_shared_app_core_imports() -> Int {
 fn allowed_shared_app_core_imports() -> Array[String] {
   [
     "examples/browser/app/moon.pkg", "examples/mo_workbench/app/moon.pkg", "examples/momao/app/moon.pkg",
-    "examples/pdf_workbench/app/moon.pkg",
-    "examples/showcase/app/moon.pkg", "examples/momark/app/moon.pkg", "website/app/moon.pkg",
+    "examples/pdf_workbench/app/moon.pkg", "examples/showcase/app/moon.pkg", "examples/momark/app/moon.pkg",
+    "website/app/moon.pkg",
   ]
 }
 

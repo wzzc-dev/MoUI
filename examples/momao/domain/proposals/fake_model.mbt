@@ -18,11 +18,17 @@ fn contains_any(text : String, keywords : Array[String]) -> Bool {
 /// 关键词 → 样例。中英文关键词都认；都不中走通用表单兜底。
 pub fn route_prompt(prompt : String) -> String {
   let text = prompt.to_lower()
-  if contains_any(text, ["点名", "随机抽", "抽签", "roll call", "attendance", "random student"]) {
+  if contains_any(text, [
+      "点名", "随机抽", "抽签", "roll call", "attendance", "random student",
+    ]) {
     "roll_call"
-  } else if contains_any(text, ["口算", "算术", "练习", "quiz", "arithmetic", "math drill"]) {
+  } else if contains_any(text, [
+      "口算", "算术", "练习", "quiz", "arithmetic", "math drill",
+    ]) {
     "drill"
-  } else if contains_any(text, ["小卖部", "商店", "小卖", "库存", "store", "shop", "inventory"]) {
+  } else if contains_any(text, [
+      "小卖部", "商店", "小卖", "库存", "store", "shop", "inventory",
+    ]) {
     "store"
   } else if contains_any(text, ["问候", "hello", "hi", "打招呼"]) {
     "hello"
@@ -36,7 +42,11 @@ pub fn route_prompt(prompt : String) -> String {
 fn generic_sample() -> @ir.MomaoProgram {
   {
     version: 1,
-    window: @ir.WindowSpec::{ title: "我的小程序", width: 640, height: 480 },
+    window: @ir.WindowSpec::{
+      title: "我的小程序",
+      width: 640,
+      height: 480,
+    },
     controls: [
       @ir.Control::{
         id: 1,
@@ -81,16 +91,9 @@ fn generic_sample() -> @ir.MomaoProgram {
         note_en: "read the name from the input box and greet the user",
         body: [
           @ir.Declare("姓名", @ir.Call("get_text", [@ir.Var("输入框")])),
-          @ir.Call(
-            "message_box",
-            [
-              @ir.Binary(
-                @ir.Add,
-                @ir.StrLit("你好，"),
-                @ir.Var("姓名"),
-              ),
-            ],
-          ),
+          @ir.Call("message_box", [
+            @ir.Binary(@ir.Add, @ir.StrLit("你好，"), @ir.Var("姓名")),
+          ]),
         ],
       },
     ],
@@ -111,11 +114,26 @@ fn sample_for_route(route : String) -> @ir.MomaoProgram {
 ///|
 fn summary_for_route(route : String) -> (String, String) {
   match route {
-    "roll_call" => ("随机点名：按名单行数抽一位同学", "random roll call over the name list")
-    "drill" => ("口算训练营：随机出题并批改", "arithmetic drill with random problems")
-    "store" => ("班级小卖部：记账并在提交前停下确认", "class store with confirmed submission")
-    "hello" => ("问候小程序：点击按钮显示问候语", "hello app greeting on button click")
-    _ => ("通用表单：输入名字并问候", "generic form greeting the input name")
+    "roll_call" =>
+      (
+        "随机点名：按名单行数抽一位同学", "random roll call over the name list",
+      )
+    "drill" =>
+      (
+        "口算训练营：随机出题并批改", "arithmetic drill with random problems",
+      )
+    "store" =>
+      (
+        "班级小卖部：记账并在提交前停下确认", "class store with confirmed submission",
+      )
+    "hello" =>
+      (
+        "问候小程序：点击按钮显示问候语", "hello app greeting on button click",
+      )
+    _ =>
+      (
+        "通用表单：输入名字并问候", "generic form greeting the input name",
+      )
   }
 }
 
@@ -135,8 +153,10 @@ pub fn fake_model_completion(
     ..proposal,
     controls_remove: current.controls.map(control => control.name),
     variables_remove: current.variables.map(variable => variable.name),
-    handlers_remove: current.handlers.map(handler =>
-      HandlerRef::{ control: handler.control_name, event: handler.event.tag() }),
+    handlers_remove: current.handlers.map(handler => HandlerRef::{
+      control: handler.control_name,
+      event: handler.event.tag(),
+    }),
   }
   encode_proposal(removes)
 }

@@ -42,11 +42,7 @@ pub fn parse_handler_body(
     Ok(tokens) => tokens
     Err(error) => return Err(error)
   }
-  let parser = Parser::{
-    tokens,
-    pos: 0,
-    keywords: keywords_for(language),
-  }
+  let parser = Parser::{ tokens, pos: 0, keywords: keywords_for(language), }
   try {
     let stmts = parser.parse_stmts_until([])
     parser.skip_newlines()
@@ -92,7 +88,12 @@ fn Parser::at_keyword(self : Parser, keyword : String) -> Bool {
 }
 
 ///|
-fn[T] Parser::fail(self : Parser, kind : LangErrorKind, a : String, b : String) -> T raise LangError {
+fn[T] Parser::fail(
+  self : Parser,
+  kind : LangErrorKind,
+  a : String,
+  b : String,
+) -> T raise LangError {
   raise LangError(kind, self.peek().line, a, b)
 }
 
@@ -106,15 +107,14 @@ fn[T] Parser::fail_expect_keyword(
   self : Parser,
   keyword : String,
 ) -> T raise LangError {
-  self.fail(
-    ExpectKeyword,
-    keyword,
-    token_label(self.peek().kind),
-  )
+  self.fail(ExpectKeyword, keyword, token_label(self.peek().kind))
 }
 
 ///|
-fn Parser::expect_keyword(self : Parser, keyword : String) -> Unit raise LangError {
+fn Parser::expect_keyword(
+  self : Parser,
+  keyword : String,
+) -> Unit raise LangError {
   if !self.at_keyword(keyword) {
     self.fail_expect_keyword(keyword)
   }
@@ -236,7 +236,12 @@ fn Parser::parse_assign_or_call(self : Parser) -> Stmt raise LangError {
       @ir.Call(canonical_call_name(name), [arg])
     }
     Newline | Eof => @ir.Call(canonical_call_name(name), [])
-    _ => self.fail(UnexpectedToken, "「\{name}」后应为 =、参数或换行", "")
+    _ =>
+      self.fail(
+        UnexpectedToken,
+        "「\{name}」后应为 =、参数或换行",
+        "",
+      )
   }
 }
 
@@ -268,26 +273,29 @@ fn Parser::parse_if(self : Parser) -> Stmt raise LangError {
   ignore(self.advance()) // 如果 / if
   let condition = self.parse_expr()
   self.expect_keyword(self.keywords.then_kw)
-  let then_body = self.parse_stmts_until(
-    [self.keywords.else_if_kw, self.keywords.else_kw, self.keywords.end_kw],
-  )
+  let then_body = self.parse_stmts_until([
+    self.keywords.else_if_kw,
+    self.keywords.else_kw,
+    self.keywords.end_kw,
+  ])
   let else_ifs : Array[(Expr, Array[TracedStmt])] = []
   while self.at_keyword(self.keywords.else_if_kw) {
     ignore(self.advance())
     let arm_cond = self.parse_expr()
     self.expect_keyword(self.keywords.then_kw)
-    let arm_body = self.parse_stmts_until(
-      [self.keywords.else_if_kw, self.keywords.else_kw, self.keywords.end_kw],
-    )
+    let arm_body = self.parse_stmts_until([
+      self.keywords.else_if_kw,
+      self.keywords.else_kw,
+      self.keywords.end_kw,
+    ])
     else_ifs.push((arm_cond, arm_body))
   }
-  let else_body =
-    if self.at_keyword(self.keywords.else_kw) {
-      ignore(self.advance())
-      self.parse_stmts_until([self.keywords.end_kw])
-    } else {
-      []
-    }
+  let else_body = if self.at_keyword(self.keywords.else_kw) {
+    ignore(self.advance())
+    self.parse_stmts_until([self.keywords.end_kw])
+  } else {
+    []
+  }
   self.expect_keyword(self.keywords.end_kw)
   @ir.If(
     condition,
@@ -305,7 +313,9 @@ fn Parser::parse_count_loop(self : Parser) -> Stmt raise LangError {
   self.expect_keyword(self.keywords.times_kw)
   let loop_var : String? = if self.at_keyword(self.keywords.as_kw) {
     ignore(self.advance())
-    Some(self.parse_name("「\{self.keywords.as_kw}」后应跟循环变量名"))
+    Some(
+      self.parse_name("「\{self.keywords.as_kw}」后应跟循环变量名"),
+    )
   } else {
     None
   }

@@ -8,7 +8,7 @@
 pub fn sample_hello() -> @ir.MomaoProgram {
   {
     version: 1,
-    window: @ir.WindowSpec::{ title: "问候", width: 640, height: 480 },
+    window: @ir.WindowSpec::{ title: "问候", width: 640, height: 480, },
     controls: [
       @ir.Control::{
         id: 1,
@@ -41,10 +41,10 @@ pub fn sample_hello() -> @ir.MomaoProgram {
         note_zh: "点击按钮后在标签上显示问候语",
         note_en: "show a greeting on the label when clicked",
         body: [
-          @ir.Call(
-            "set_text",
-            [@ir.Var("显示"), @ir.StrLit("你好，MoMao！")],
-          ),
+          @ir.Call("set_text", [
+            @ir.Var("显示"),
+            @ir.StrLit("你好，MoMao！"),
+          ]),
         ],
       },
     ],
@@ -56,7 +56,11 @@ pub fn sample_hello() -> @ir.MomaoProgram {
 pub fn sample_roll_call() -> @ir.MomaoProgram {
   {
     version: 1,
-    window: @ir.WindowSpec::{ title: "班级点名册", width: 640, height: 480 },
+    window: @ir.WindowSpec::{
+      title: "班级点名册",
+      width: 640,
+      height: 480,
+    },
     controls: [
       @ir.Control::{
         id: 1,
@@ -102,13 +106,10 @@ pub fn sample_roll_call() -> @ir.MomaoProgram {
         body: [
           @ir.Declare("人数", @ir.Call("row_count", [@ir.Var("名单")])),
           @ir.Declare("序号", @ir.Call("random", [@ir.Var("人数")])),
-          @ir.Call(
-            "set_text",
-            [
-              @ir.Var("结果"),
-              @ir.Call("row_at", [@ir.Var("名单"), @ir.Var("序号")]),
-            ],
-          ),
+          @ir.Call("set_text", [
+            @ir.Var("结果"),
+            @ir.Call("row_at", [@ir.Var("名单"), @ir.Var("序号")]),
+          ]),
         ],
       },
     ],
@@ -120,7 +121,11 @@ pub fn sample_roll_call() -> @ir.MomaoProgram {
 pub fn sample_drill() -> @ir.MomaoProgram {
   {
     version: 1,
-    window: @ir.WindowSpec::{ title: "口算训练营", width: 640, height: 480 },
+    window: @ir.WindowSpec::{
+      title: "口算训练营",
+      width: 640,
+      height: 480,
+    },
     controls: [
       @ir.Control::{
         id: 1,
@@ -179,8 +184,8 @@ pub fn sample_drill() -> @ir.MomaoProgram {
       },
     ],
     variables: [
-      @ir.Variable::{ name: "第一个数", init: "0" },
-      @ir.Variable::{ name: "第二个数", init: "0" },
+      @ir.Variable::{ name: "第一个数", init: "0", },
+      @ir.Variable::{ name: "第二个数", init: "0", },
     ],
     handlers: [
       @ir.Handler::{
@@ -191,25 +196,22 @@ pub fn sample_drill() -> @ir.MomaoProgram {
         body: [
           @ir.Assign("第一个数", @ir.Call("random", [@ir.NumLit(20.0)])),
           @ir.Assign("第二个数", @ir.Call("random", [@ir.NumLit(20.0)])),
-          @ir.Call(
-            "set_text",
-            [
-              @ir.Var("题目"),
+          @ir.Call("set_text", [
+            @ir.Var("题目"),
+            @ir.Binary(
+              @ir.Add,
               @ir.Binary(
                 @ir.Add,
-                @ir.Binary(
-                  @ir.Add,
-                  @ir.Call("to_text", [@ir.Var("第一个数")]),
-                  @ir.StrLit(" + "),
-                ),
-                @ir.Binary(
-                  @ir.Add,
-                  @ir.Call("to_text", [@ir.Var("第二个数")]),
-                  @ir.StrLit(" = ?"),
-                ),
+                @ir.Call("to_text", [@ir.Var("第一个数")]),
+                @ir.StrLit(" + "),
               ),
-            ],
-          ),
+              @ir.Binary(
+                @ir.Add,
+                @ir.Call("to_text", [@ir.Var("第二个数")]),
+                @ir.StrLit(" = ?"),
+              ),
+            ),
+          ]),
           @ir.Call("set_text", [@ir.Var("答案框"), @ir.StrLit("")]),
         ],
       },
@@ -229,7 +231,12 @@ pub fn sample_drill() -> @ir.MomaoProgram {
                 @ir.Var("第二个数"),
               ),
             ),
-            [@ir.Call("set_text", [@ir.Var("判定"), @ir.StrLit("答对了！")])],
+            [
+              @ir.Call("set_text", [
+                @ir.Var("判定"),
+                @ir.StrLit("答对了！"),
+              ]),
+            ],
             [],
             [@ir.Call("set_text", [@ir.Var("判定"), @ir.StrLit("再想想")])],
           ),
@@ -244,7 +251,11 @@ pub fn sample_drill() -> @ir.MomaoProgram {
 pub fn sample_store() -> @ir.MomaoProgram {
   {
     version: 1,
-    window: @ir.WindowSpec::{ title: "班级小卖部", width: 640, height: 480 },
+    window: @ir.WindowSpec::{
+      title: "班级小卖部",
+      width: 640,
+      height: 480,
+    },
     controls: [
       @ir.Control::{
         id: 1,
@@ -291,7 +302,7 @@ pub fn sample_store() -> @ir.MomaoProgram {
         items: [],
       },
     ],
-    variables: [@ir.Variable::{ name: "营业额", init: "0" }],
+    variables: [@ir.Variable::{ name: "营业额", init: "0", }],
     handlers: [
       @ir.Handler::{
         control_name: "卖铅笔",
@@ -303,17 +314,14 @@ pub fn sample_store() -> @ir.MomaoProgram {
             "营业额",
             @ir.Binary(@ir.Add, @ir.Var("营业额"), @ir.NumLit(1.0)),
           ),
-          @ir.Call(
-            "set_text",
-            [
-              @ir.Var("营业额标签"),
-              @ir.Binary(
-                @ir.Add,
-                @ir.StrLit("营业额："),
-                @ir.Call("to_text", [@ir.Var("营业额")]),
-              ),
-            ],
-          ),
+          @ir.Call("set_text", [
+            @ir.Var("营业额标签"),
+            @ir.Binary(
+              @ir.Add,
+              @ir.StrLit("营业额："),
+              @ir.Call("to_text", [@ir.Var("营业额")]),
+            ),
+          ]),
         ],
       },
       @ir.Handler::{
@@ -322,7 +330,10 @@ pub fn sample_store() -> @ir.MomaoProgram {
         note_zh: "把营业额提交到班级账本；提交前程序会停下等用户确认",
         note_en: "submit revenue to the class ledger; the program pauses for confirmation",
         body: [
-          @ir.Call("submit_data", [@ir.Var("营业额"), @ir.StrLit("班级账本")]),
+          @ir.Call("submit_data", [
+            @ir.Var("营业额"),
+            @ir.StrLit("班级账本"),
+          ]),
           @ir.Call("message_box", [@ir.StrLit("已提交，等待老师确认")]),
         ],
       },

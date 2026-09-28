@@ -39,9 +39,9 @@ pub async fn[Host : @agent.AgentHost] serve(host : Host) -> Unit {
 ///|
 /// Diagnostics opt-in variant of `serve`: requests additionally route through
 /// the diagnostics tool registry.
-pub async fn[
-  Host : @agent.AgentHost + @agent.AgentDiagnosticsHost,
-] serve_with_diagnostics(host : Host) -> Unit {
+pub async fn[Host : @agent.AgentHost + @agent.AgentDiagnosticsHost] serve_with_diagnostics(
+  host : Host,
+) -> Unit {
   while @async_stdio.stdin.read_until("\n") is Some(line) {
     match
       respond(host, line, fn(host, request) {

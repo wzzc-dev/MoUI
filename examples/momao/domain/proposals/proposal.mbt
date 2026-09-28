@@ -105,19 +105,17 @@ fn decode_control_object(
           }
         _ => ()
       }
-      Some(
-        @ir.Control::{
-          id: json_int_field(fields, "id").unwrap_or(0),
-          kind,
-          name,
-          text: json_string_field(fields, "text").unwrap_or(""),
-          x: json_int_field(fields, "x").unwrap_or(40),
-          y: json_int_field(fields, "y").unwrap_or(40),
-          width: json_int_field(fields, "width").unwrap_or(120),
-          height: json_int_field(fields, "height").unwrap_or(36),
-          items,
-        },
-      )
+      Some(@ir.Control::{
+        id: json_int_field(fields, "id").unwrap_or(0),
+        kind,
+        name,
+        text: json_string_field(fields, "text").unwrap_or(""),
+        x: json_int_field(fields, "x").unwrap_or(40),
+        y: json_int_field(fields, "y").unwrap_or(40),
+        width: json_int_field(fields, "width").unwrap_or(120),
+        height: json_int_field(fields, "height").unwrap_or(36),
+        items,
+      })
     }
     _ => {
       errors.push(MissingField("controls[]"))
@@ -162,10 +160,11 @@ fn decode_handler_object(
     }
   }
   let (note_zh, note_en) = match body_fields.get("note") {
-    Some(Object(note)) => (
-      json_string_field(note, "zh").unwrap_or(""),
-      json_string_field(note, "en").unwrap_or(""),
-    )
+    Some(Object(note)) =>
+      (
+        json_string_field(note, "zh").unwrap_or(""),
+        json_string_field(note, "en").unwrap_or(""),
+      )
     _ => ("", "")
   }
   // body 经项目编解码器解码：与 .momao.json 同一套严格路径
@@ -186,9 +185,13 @@ fn decode_handler_object(
       return None
     }
   }
-  Some(
-    @ir.Handler::{ control_name: control, event, note_zh, note_en, body: stmts },
-  )
+  Some(@ir.Handler::{
+    control_name: control,
+    event,
+    note_zh,
+    note_en,
+    body: stmts,
+  })
 }
 
 ///|
@@ -214,13 +217,11 @@ fn decode_window(
 ) -> @ir.WindowSpec? {
   match value {
     Object(fields) =>
-      Some(
-        @ir.WindowSpec::{
-          title: json_string_field(fields, "title").unwrap_or("MoMao 程序"),
-          width: json_int_field(fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
-          height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
-        },
-      )
+      Some(@ir.WindowSpec::{
+        title: json_string_field(fields, "title").unwrap_or("MoMao 程序"),
+        width: json_int_field(fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
+        height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
+      })
     _ => {
       errors.push(MissingField("window"))
       None
@@ -276,10 +277,11 @@ fn decode_controls_section(
 
 ///|
 /// 解码提案文本：容错 ```json 围栏与前后散文（真实模型常见输出）。
-pub fn decode_proposal(source : String) -> Result[ProposalV1, Array[ProposalError]] {
+pub fn decode_proposal(
+  source : String,
+) -> Result[ProposalV1, Array[ProposalError]] {
   let payload = match extract_json_object(source) {
-    Some(text) =>
-      @json.parse(text) catch { _ => return Err([InvalidJson]) }
+    Some(text) => @json.parse(text) catch { _ => return Err([InvalidJson]) }
     None => return Err([InvalidJson])
   }
   let fields = match payload {
@@ -294,10 +296,11 @@ pub fn decode_proposal(source : String) -> Result[ProposalV1, Array[ProposalErro
     return Err([BadVersion(version)])
   }
   let (summary_zh, summary_en) = match fields.get("summary") {
-    Some(Object(summary)) => (
-      json_string_field(summary, "zh").unwrap_or(""),
-      json_string_field(summary, "en").unwrap_or(""),
-    )
+    Some(Object(summary)) =>
+      (
+        json_string_field(summary, "zh").unwrap_or(""),
+        json_string_field(summary, "en").unwrap_or(""),
+      )
     _ => ("", "")
   }
   let window = match fields.get("window") {
@@ -313,12 +316,8 @@ pub fn decode_proposal(source : String) -> Result[ProposalV1, Array[ProposalErro
   let variables_remove : Array[String] = []
   match fields.get("variables") {
     Some(Object(sections)) => {
-      decode_variables_section(
-        sections, "add", variables_add, errors,
-      )
-      decode_variables_section(
-        sections, "update", variables_update, errors,
-      )
+      decode_variables_section(sections, "add", variables_add, errors)
+      decode_variables_section(sections, "update", variables_update, errors)
       match sections.get("remove") {
         Some(Array(values)) =>
           for value in values {
@@ -347,7 +346,8 @@ pub fn decode_proposal(source : String) -> Result[ProposalV1, Array[ProposalErro
                 match json_string_field(item, "control") {
                   Some(control) =>
                     match json_string_field(item, "event") {
-                      Some(event) => handlers_remove.push(HandlerRef::{ control, event })
+                      Some(event) =>
+                        handlers_remove.push(HandlerRef::{ control, event, })
                       None => errors.push(MissingField("handlers.remove.event"))
                     }
                   None => errors.push(MissingField("handlers.remove.control"))
@@ -362,11 +362,9 @@ pub fn decode_proposal(source : String) -> Result[ProposalV1, Array[ProposalErro
   }
   let open_handler = match fields.get("open_handler") {
     Some(Object(item)) =>
-      match (
-        json_string_field(item, "control"),
-        json_string_field(item, "event"),
-      ) {
-        (Some(control), Some(event)) => Some(HandlerRef::{ control, event })
+      match
+        (json_string_field(item, "control"), json_string_field(item, "event")) {
+        (Some(control), Some(event)) => Some(HandlerRef::{ control, event, })
         _ => None
       }
     _ => None
@@ -374,24 +372,22 @@ pub fn decode_proposal(source : String) -> Result[ProposalV1, Array[ProposalErro
   if !errors.is_empty() {
     return Err(errors)
   }
-  Ok(
-    ProposalV1::{
-      version,
-      summary_zh,
-      summary_en,
-      window,
-      controls_add,
-      controls_update,
-      controls_remove,
-      variables_add,
-      variables_update,
-      variables_remove,
-      handlers_add,
-      handlers_update,
-      handlers_remove,
-      open_handler,
-    },
-  )
+  Ok(ProposalV1::{
+    version,
+    summary_zh,
+    summary_en,
+    window,
+    controls_add,
+    controls_update,
+    controls_remove,
+    variables_add,
+    variables_update,
+    variables_remove,
+    handlers_add,
+    handlers_update,
+    handlers_remove,
+    open_handler,
+  })
 }
 
 ///|
@@ -408,12 +404,10 @@ fn decode_variables_section(
           Object(item) =>
             match json_string_field(item, "name") {
               Some(name) =>
-                out.push(
-                  @ir.Variable::{
-                    name,
-                    init: json_string_field(item, "init").unwrap_or(""),
-                  },
-                )
+                out.push(@ir.Variable::{
+                  name,
+                  init: json_string_field(item, "init").unwrap_or(""),
+                })
               None => errors.push(MissingField("variables.name"))
             }
           _ => errors.push(MissingField("variables[]"))
@@ -550,7 +544,9 @@ fn encode_controls_sections(proposal : ProposalV1) -> Json {
 fn encode_variables_sections(proposal : ProposalV1) -> Json {
   let add : Map[String, Json] = Map([], capacity=3)
   add["add"] = Json::array(proposal.variables_add.map(encode_variable_json))
-  add["update"] = Json::array(proposal.variables_update.map(encode_variable_json))
+  add["update"] = Json::array(
+    proposal.variables_update.map(encode_variable_json),
+  )
   add["remove"] = Json::array(proposal.variables_remove.map(Json::string))
   Json::object(add)
 }
@@ -612,11 +608,13 @@ fn encode_stmt_json(stmt : @ir.Stmt) -> Json {
   match stmt {
     @ir.Declare(name, expr) =>
       stmt_node("declare", [
-        ("name", Json::string(name)), ("expr", encode_expr_json(expr)),
+        ("name", Json::string(name)),
+        ("expr", encode_expr_json(expr)),
       ])
     @ir.Assign(name, expr) =>
       stmt_node("assign", [
-        ("name", Json::string(name)), ("expr", encode_expr_json(expr)),
+        ("name", Json::string(name)),
+        ("expr", encode_expr_json(expr)),
       ])
     @ir.Break => stmt_node("break", [])
     @ir.Call(name, args) =>

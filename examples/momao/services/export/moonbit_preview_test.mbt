@@ -28,13 +28,12 @@ fn preview_fixture() -> @ir.MomaoProgram {
         note_en: "tally the score on click",
         body: [
           @ir.Declare("总分", @ir.NumLit(0.0)),
-          @ir.CountLoop(
-            @ir.NumLit(3.0),
-            Some("i"),
-            [
-              @ir.Assign("总分", @ir.Binary(@ir.Add, @ir.Var("总分"), @ir.Var("i"))),
-            ],
-          ),
+          @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [
+            @ir.Assign(
+              "总分",
+              @ir.Binary(@ir.Add, @ir.Var("总分"), @ir.Var("i")),
+            ),
+          ]),
           @ir.WhileLoop(@ir.Var("没答完"), [@ir.Break]),
           @ir.If(
             @ir.Binary(@ir.Gt, @ir.Var("总分"), @ir.NumLit(60.0)),
@@ -58,10 +57,16 @@ test "moonbit preview is byte-stable and maps the program" {
   assert_true(once.contains("由 MoMao（墨卯）自动生成"))
   assert_true(once.contains("不是可编译产物"))
   // 控件与变量清单
-  assert_true(once.contains("///   [1] button「确定」 @ (40, 100) 100x32 文本=\"算\""))
+  assert_true(
+    once.contains(
+      "///   [1] button「确定」 @ (40, 100) 100x32 文本=\"算\"",
+    ),
+  )
   assert_true(once.contains("///   总分 = \"0\""))
   // 子程序头 + 双语意图说明
-  assert_true(once.contains("/// ── 事件子程序：确定 . on_click ──"))
+  assert_true(
+    once.contains("/// ── 事件子程序：确定 . on_click ──"),
+  )
   assert_true(once.contains("/// 意图：点击后统计得分"))
   assert_true(once.contains("/// 意图（EN）：tally the score on click"))
   assert_true(once.contains("fn handler_1_1_on_click() {"))

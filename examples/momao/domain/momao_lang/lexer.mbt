@@ -163,16 +163,15 @@ fn lex(source : String) -> Result[Array[Token], LangError] {
         i = i + 1
       } else {
         let next = if i + 1 < n { normalize_char(chars[i + 1]) } else { ' ' }
-        let two_char =
-          if c == '<' && next == '=' {
-            Some(Le)
-          } else if c == '<' && next == '>' {
-            Some(Ne)
-          } else if c == '>' && next == '=' {
-            Some(Ge)
-          } else {
-            None
-          }
+        let two_char = if c == '<' && next == '=' {
+          Some(Le)
+        } else if c == '<' && next == '>' {
+          Some(Ne)
+        } else if c == '>' && next == '=' {
+          Some(Ge)
+        } else {
+          None
+        }
         match two_char {
           Some(kind) => {
             tokens.push({ kind, line, })

@@ -11,26 +11,20 @@ fn nested_body() -> Array[@ir.Stmt] {
       [],
       [@ir.Call("message_box", [@ir.StrLit("没人")])],
     ),
-    @ir.CountLoop(
-      @ir.NumLit(3.0),
-      Some("i"),
-      [
-        @ir.Call("append_row", [@ir.Var("名单"), @ir.Var("i")]),
-        @ir.Break,
-      ],
-    ),
+    @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [
+      @ir.Call("append_row", [@ir.Var("名单"), @ir.Var("i")]),
+      @ir.Break,
+    ]),
   ]
 }
 
+///|
 test "every builtin has a block spec" {
   for spec in @momao_lang.builtin_catalog() {
     match @blocks.builtin_block_spec(spec.id) {
       Some(block) => {
         assert_eq(block.arity, spec.arity)
-        assert_eq(
-          @blocks.builtin_param_types(spec.id).length(),
-          spec.arity,
-        )
+        assert_eq(@blocks.builtin_param_types(spec.id).length(), spec.arity)
       }
       None => fail("内建 \{spec.id} 缺少积木 spec")
     }
@@ -43,6 +37,7 @@ test "every builtin has a block spec" {
   assert_true(@blocks.builtin_result_type("submit_data") is @blocks.VtAny)
 }
 
+///|
 test "block chain expands control flow with depth" {
   let items = @blocks.block_chain(nested_body())
   // declare + if(then/else 各一命令 + end) + count(两命令 + end) = 10
@@ -65,6 +60,7 @@ test "block chain expands control flow with depth" {
   assert_true(items[9].kind is @blocks.BkEnd)
 }
 
+///|
 test "block text matches interpreter audit detail for spotlight" {
   // 聚光灯对暗号：积木链文本 == 审计细节（同一 canonical_call_text）
   let program : @ir.MomaoProgram = {
@@ -135,17 +131,16 @@ test "block text matches interpreter audit detail for spotlight" {
   assert_true(chain_texts.contains("message_box(to_text(人数))"))
 }
 
+///|
 test "label keys and colors are stable" {
   assert_eq(@blocks.block_label_key(@blocks.BkCountLoop), "blocks.count_loop")
   assert_eq(@blocks.block_label_key(@blocks.BkElseIf), "blocks.else_if")
-  assert_eq(
-    @blocks.category_color_key(@blocks.CatFlow),
-    "block.flow",
-  )
+  assert_eq(@blocks.category_color_key(@blocks.CatFlow), "block.flow")
   let companions = @blocks.flow_companion_kinds(@blocks.BkIf)
   assert_eq(companions.length(), 3)
 }
 
+///|
 test "block chain paths address nested statements" {
   let items = @blocks.block_chain(nested_body())
   // 顶层 declare [0]，if [1]，then 内 message [1,0,0]，else 内 [1,2,0]，
@@ -163,6 +158,7 @@ test "block chain paths address nested statements" {
   assert_eq(items[9].path.length(), 0)
 }
 
+///|
 fn path_text(path : Array[Int]) -> String {
   let buf = StringBuilder()
   let mut first = true
@@ -176,6 +172,7 @@ fn path_text(path : Array[Int]) -> String {
   buf.to_string()
 }
 
+///|
 test "replace and delete by path keep siblings intact" {
   // 每次操作用新副本：路径手术是就地修改（数组引用语义）
   let replaced = @blocks.replace_stmt_at(
@@ -192,18 +189,25 @@ test "replace and delete by path keep siblings intact" {
   let deleted = @blocks.delete_stmt_at(replaced, [1, 0, 0])
   assert_eq(@ir.count_stmts(deleted), before_delete - 1)
   let deleted_chain = @blocks.block_chain(deleted)
-  assert_true(deleted_chain.any(item => item.text.contains("message_box(\"没人\")")))
-  assert_true(!deleted_chain.any(item => item.text.contains("message_box(\"有人\")")))
+  assert_true(
+    deleted_chain.any(item => item.text.contains("message_box(\"没人\")")),
+  )
+  assert_true(
+    !deleted_chain.any(item => item.text.contains("message_box(\"有人\")")),
+  )
   // 非法路径原样返回
   let untouched = @blocks.delete_stmt_at(nested_body(), [9, 9])
   assert_eq(@ir.stmts_signature(untouched), @ir.stmts_signature(nested_body()))
 }
 
+///|
 test "delete top level statement shifts chain" {
   let body = nested_body()
   let deleted = @blocks.delete_stmt_at(body, [0])
   assert_eq(deleted.length(), 2)
-  assert_true(deleted[0] is @ir.If(_, _, _, _) || deleted[0] is @ir.CountLoop(_, _, _))
+  assert_true(
+    deleted[0] is @ir.If(_, _, _, _) || deleted[0] is @ir.CountLoop(_, _, _),
+  )
 }
 
 ///|
@@ -227,8 +231,7 @@ test "path surgery on else-if arms and else branch" {
     @ir.Assign("c2", @ir.NumLit(9.0)),
   )
   match @blocks.stmt_at(replaced, [0, 1, 1, 0]) {
-    Some(stmt) =>
-      assert_true(stmt is @ir.Assign("c2", _))
+    Some(stmt) => assert_true(stmt is @ir.Assign("c2", _))
     None => fail("else-if 臂内语句应可寻址")
   }
   // 注意：replace_stmt_at 是就地语义（同数组引用），原 body 同步可见变更
@@ -291,10 +294,7 @@ test "reorder_stmt addresses nested lists by list_path" {
   let body : Array[@ir.Stmt] = [
     @ir.If(
       @ir.Var("开"),
-      [
-        @ir.Assign("t1", @ir.NumLit(1.0)),
-        @ir.Assign("t2", @ir.NumLit(2.0)),
-      ],
+      [@ir.Assign("t1", @ir.NumLit(1.0)), @ir.Assign("t2", @ir.NumLit(2.0))],
       [],
       [@ir.Assign("e1", @ir.NumLit(3.0))],
     ),
@@ -313,10 +313,7 @@ test "reorder_stmt addresses nested lists by list_path" {
   }
   // 循环体 [i,2] 同样寻址
   let looped : Array[@ir.Stmt] = [
-    @ir.WhileLoop(@ir.Var("跑"), [
-      @ir.Assign("x", @ir.NumLit(1.0)),
-      @ir.Break,
-    ]),
+    @ir.WhileLoop(@ir.Var("跑"), [@ir.Assign("x", @ir.NumLit(1.0)), @ir.Break]),
   ]
   let swapped = @blocks.reorder_stmt(looped, [0, 2], 1, 0).unwrap()
   match @blocks.stmt_at(swapped, [0, 2, 0]) {

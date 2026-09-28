@@ -38,107 +38,142 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     ModeRun => ""
   }
   @views.container(
-    @views.column([
-      @views.row([
-        @views.text(text(t, "app.title"), role=Title),
-        @views.button_group(mode_items, selected=selected_mode),
-        @views.button(
-          if model.run is Some(_) {
-            text(t, "app.run.stop")
-          } else {
-            text(t, "app.run.start")
-          },
-          on_click=if model.run is Some(_) { RunStop } else { RunStart },
-          variant=if model.run is Some(_) { Outline } else { Primary },
+    @views.column(
+      [
+        // 品牌标记与标题保持稳定宽度；模式导航和运行操作各自成组，
+        // 路演时先看到 MoMao，再看到当前工作模式。
+        @views.row(
+          [
+            @views.row(
+              [
+                @views.container(
+                  @views.center(
+                    @views.text("卯").foreground(@graphics.Color::white()),
+                    width=30.0,
+                    height=26.0,
+                  ),
+                  background=@graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
+                  corner_radius=8.0,
+                  width=30.0,
+                  height=26.0,
+                  padding=0.0,
+                ),
+                @views.text(text(t, "app.title"), role=Title),
+              ],
+              spacing=8.0,
+            ),
+            @views.button_group(mode_items, selected=selected_mode),
+            @views.button(
+              if model.run is Some(_) {
+                text(t, "app.run.stop")
+              } else {
+                text(t, "app.run.start")
+              },
+              on_click=if model.run is Some(_) { RunStop } else { RunStart },
+              variant=if model.run is Some(_) { Outline } else { Primary },
+            ),
+            @views.button(
+              text(t, "app.lang.switch"),
+              on_click=SwitchLanguage,
+              variant=Ghost,
+            ),
+            @views.button(
+              text(t, "app.help.title"),
+              on_click=SetMode(ModeHelp),
+              variant=Ghost,
+            ),
+          ],
+          spacing=10.0,
         ),
-        @views.button(
-          text(t, "app.lang.switch"),
-          on_click=SwitchLanguage,
-          variant=Ghost,
+        @views.row(
+          [
+            @views.text(text(t, "app.templates"), role=Caption),
+            // 撤销/重做带键盘快捷键（Ctrl+Z / Ctrl+Shift+Z，链式追加 Cmd 变体
+            // 兼容 macOS——shortcut modifier 按修饰键精确匹配，需各注册一份）
+            @views.shortcut_button(
+              text(t, "app.edit.undo"),
+              on_click=Undo,
+              shortcut=@core.KeyboardShortcut::new(
+                key="z",
+                modifiers=@core.KeyModifiers::new(control=true),
+              ),
+              variant=Ghost,
+              width=136.0,
+              height=32.0,
+              shortcut_width=64.0,
+            ).keyboard_shortcut(
+              @core.KeyboardShortcut::new(
+                key="z",
+                modifiers=@core.KeyModifiers::new(meta=true),
+              ),
+            ),
+            @views.shortcut_button(
+              text(t, "app.edit.redo"),
+              on_click=Redo,
+              shortcut=@core.KeyboardShortcut::new(
+                key="z",
+                modifiers=@core.KeyModifiers::new(control=true, shift=true),
+              ),
+              variant=Ghost,
+              width=150.0,
+              height=32.0,
+              shortcut_width=86.0,
+            ).keyboard_shortcut(
+              @core.KeyboardShortcut::new(
+                key="z",
+                modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+              ),
+            ),
+            @views.button(
+              text(t, "app.templates.hello"),
+              on_click=SelectTemplate(0),
+              variant=Tonal,
+            ),
+            @views.button(
+              text(t, "app.templates.roll_call"),
+              on_click=SelectTemplate(1),
+              variant=Tonal,
+            ),
+            @views.button(
+              text(t, "app.templates.drill"),
+              on_click=SelectTemplate(2),
+              variant=Tonal,
+            ),
+            @views.button(
+              text(t, "app.templates.store"),
+              on_click=SelectTemplate(3),
+              variant=Tonal,
+            ),
+          ],
+          spacing=6.0,
         ),
-        @views.button(
-          text(t, "app.help.title"),
-          on_click=SetMode(ModeHelp),
-          variant=Ghost,
+        // 文件动作单独成行，避免中文“导出应用”在窄窗口被裁切。
+        @views.row(
+          [
+            @views.button(
+              text(t, "app.file.save"),
+              on_click=SaveRequested,
+              variant=Outline,
+              icon=Some(Save),
+            ),
+            @views.button(
+              text(t, "app.file.open"),
+              on_click=OpenRequested,
+              variant=Outline,
+              icon=Some(FolderOpen),
+            ),
+            @views.button(
+              text(t, "app.file.export"),
+              on_click=ExportRequested,
+              variant=Outline,
+              icon=Some(FileNew),
+            ),
+          ],
+          spacing=6.0,
         ),
-      ]),
-      @views.row([
-        // 撤销/重做带键盘快捷键（Ctrl+Z / Ctrl+Shift+Z，链式追加 Cmd 变体
-        // 兼容 macOS——shortcut modifier 按修饰键精确匹配，需各注册一份）
-        @views.shortcut_button(
-          text(t, "app.edit.undo"),
-          on_click=Undo,
-          shortcut=@core.KeyboardShortcut::new(
-            key="z",
-            modifiers=@core.KeyModifiers::new(control=true),
-          ),
-          variant=Ghost,
-          width=136.0,
-          height=32.0,
-          shortcut_width=64.0,
-        ).keyboard_shortcut(
-          @core.KeyboardShortcut::new(
-            key="z",
-            modifiers=@core.KeyModifiers::new(meta=true),
-          ),
-        ),
-        @views.shortcut_button(
-          text(t, "app.edit.redo"),
-          on_click=Redo,
-          shortcut=@core.KeyboardShortcut::new(
-            key="z",
-            modifiers=@core.KeyModifiers::new(control=true, shift=true),
-          ),
-          variant=Ghost,
-          width=150.0,
-          height=32.0,
-          shortcut_width=86.0,
-        ).keyboard_shortcut(
-          @core.KeyboardShortcut::new(
-            key="z",
-            modifiers=@core.KeyModifiers::new(meta=true, shift=true),
-          ),
-        ),
-        @views.button(
-          text(t, "app.templates.hello"),
-          on_click=SelectTemplate(0),
-          variant=Tonal,
-        ),
-        @views.button(
-          text(t, "app.templates.roll_call"),
-          on_click=SelectTemplate(1),
-          variant=Tonal,
-        ),
-        @views.button(
-          text(t, "app.templates.drill"),
-          on_click=SelectTemplate(2),
-          variant=Tonal,
-        ),
-        @views.button(
-          text(t, "app.templates.store"),
-          on_click=SelectTemplate(3),
-          variant=Tonal,
-        ),
-        @views.button(
-          text(t, "app.file.save"),
-          on_click=SaveRequested,
-          variant=Outline,
-          icon=Some(Save),
-        ),
-        @views.button(
-          text(t, "app.file.open"),
-          on_click=OpenRequested,
-          variant=Outline,
-          icon=Some(FolderOpen),
-        ),
-        @views.button(
-          text(t, "app.file.export"),
-          on_click=ExportRequested,
-          variant=Outline,
-          icon=Some(FileNew),
-        ),
-      ]),
-    ]),
+      ],
+      spacing=8.0,
+    ),
     padding=10.0,
   )
 }
@@ -147,7 +182,18 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 /// 左栏：控件面板（设计模式）+ 事件子程序列表（全部模式可用）。
 fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let palette : Array[@moui.View[Msg]] = [
-    @views.text(text(t, "app.palette"), role=Subtitle),
+    @views.row(
+      [
+        @views.text(text(t, "app.palette"), role=Subtitle),
+        @views.badge(
+          model.program.controls.length().to_string(),
+          tone=@style.BadgeTone::Neutral,
+          width=28.0,
+          height=20.0,
+        ),
+      ],
+      justify=Between,
+    ),
   ]
   for
     kind in [
@@ -167,7 +213,19 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     )
   }
   let handlers : Array[@moui.View[Msg]] = [
-    @views.text(text(t, "app.handlers"), role=Subtitle),
+    @views.divider(),
+    @views.row(
+      [
+        @views.text(text(t, "app.handlers"), role=Subtitle),
+        @views.badge(
+          model.program.handlers.length().to_string(),
+          tone=@style.BadgeTone::Neutral,
+          width=28.0,
+          height=20.0,
+        ),
+      ],
+      justify=Between,
+    ),
   ]
   for handler in model.program.handlers {
     let key = handler_key(handler.control_name, handler.event.tag())
@@ -877,7 +935,26 @@ fn find_selected_control(model : Model) -> @ir.Control? {
 /// AI 面板：prompt + 生成 + 提案 diff 预览 + 采纳/拒绝 + provider 设置。
 fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let head : Array[@moui.View[Msg]] = [
-    @views.text(text(t, "app.ai.title"), role=Subtitle),
+    @views.row(
+      [
+        @views.text(text(t, "app.ai.title"), role=Subtitle),
+        @views.badge(
+          if model.provider_mode is Fake {
+            text(t, "app.ai.fake")
+          } else {
+            text(t, "app.ai.real")
+          },
+          tone=if model.provider_mode is Fake {
+            @style.BadgeTone::Neutral
+          } else {
+            @style.BadgeTone::Accent
+          },
+          width=92.0,
+          height=22.0,
+        ),
+      ],
+      justify=Between,
+    ),
     @views.text_field(
       model.prompt_draft,
       on_input=value => SetPrompt(value),
@@ -900,6 +977,17 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   }
   // 待采纳提案
   let proposal_card : Array[@moui.View[Msg]] = []
+  // 空态把 AI 的工作方式说清楚，避免右栏只剩一组输入框和按钮。
+  // 有提案/讲解时让结果替代空态，保持面板信息密度稳定。
+  if model.pending is None && !model.ai_busy && model.explanation == "" {
+    proposal_card.push(
+      @views.empty_state(
+        text(t, "app.ai.title"),
+        text(t, "app.ai.prompt"),
+        width=250.0,
+      ),
+    )
+  }
   match model.pending {
     None => ()
     Some(pending) => {

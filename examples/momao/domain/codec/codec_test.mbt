@@ -42,8 +42,8 @@ fn sample_program() -> @ir.MomaoProgram {
       },
     ],
     variables: [
-      @ir.Variable::{ name: "次数", init: "0" },
-      @ir.Variable::{ name: "问候", init: "" },
+      @ir.Variable::{ name: "次数", init: "0", },
+      @ir.Variable::{ name: "问候", init: "", },
     ],
     handlers: [
       @ir.Handler::{
@@ -52,32 +52,31 @@ fn sample_program() -> @ir.MomaoProgram {
         note_zh: "点击后打招呼",
         note_en: "greet on click",
         body: [
-          @ir.Declare(
-            "文本",
-            @ir.Call("get_text", [@ir.Var("姓名框")]),
-          ),
+          @ir.Declare("文本", @ir.Call("get_text", [@ir.Var("姓名框")])),
           @ir.If(
             @ir.Binary(@ir.Eq, @ir.Var("文本"), @ir.StrLit("")),
             [@ir.Call("message_box", [@ir.StrLit("先填写姓名")])],
-            [(@ir.BoolLit(false), [@ir.Call("message_box", [@ir.Var("文本")])])],
-            [@ir.Call("message_box", [@ir.StrLit("你好，")])],
-          ),
-          @ir.CountLoop(
-            @ir.NumLit(3.0),
-            Some("i"),
             [
-              @ir.Assign(
-                "次数",
-                @ir.Binary(@ir.Add, @ir.Var("次数"), @ir.NumLit(1.0)),
+              (
+                @ir.BoolLit(false),
+                [@ir.Call("message_box", [@ir.Var("文本")])],
               ),
             ],
+            [@ir.Call("message_box", [@ir.StrLit("你好，")])],
           ),
+          @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [
+            @ir.Assign(
+              "次数",
+              @ir.Binary(@ir.Add, @ir.Var("次数"), @ir.NumLit(1.0)),
+            ),
+          ]),
         ],
       },
     ],
   }
 }
 
+///|
 test "encode decode round trip preserves signature" {
   let program = sample_program()
   let text = @codec.encode_program(program)
@@ -88,6 +87,7 @@ test "encode decode round trip preserves signature" {
   }
 }
 
+///|
 test "encode output is stable" {
   let program = sample_program()
   assert_eq(@codec.encode_program(program), @codec.encode_program(program))
@@ -98,6 +98,7 @@ test "encode output is stable" {
   assert_true(text.contains("\"kind\":\"list_box\""))
 }
 
+///|
 test "decode rejects wrong format and version" {
   let program = sample_program()
   let text = @codec.encode_program(program)
@@ -108,7 +109,8 @@ test "decode rejects wrong format and version" {
   }
   let bad_version = text.replace(old="\"version\":1", new="\"version\":2")
   match @codec.decode_program(bad_version) {
-    Err(errors) => assert_true(errors.any(e => e is @codec.UnsupportedVersion(2)))
+    Err(errors) =>
+      assert_true(errors.any(e => e is @codec.UnsupportedVersion(2)))
     Ok(_) => fail("错误 version 应拒绝")
   }
   match @codec.decode_program("不是 json") {
@@ -117,6 +119,7 @@ test "decode rejects wrong format and version" {
   }
 }
 
+///|
 test "decode reports structural and language errors" {
   // 结构错误：handler 指向不存在的控件
   let program = sample_program()
@@ -158,6 +161,7 @@ test "decode reports structural and language errors" {
   }
 }
 
+///|
 test "decode fills control defaults" {
   let minimal = "{\"format\":\"momao.project\",\"version\":1,\"controls\":[{\"id\":1,\"kind\":\"label\",\"name\":\"标题\"}],\"handlers\":[]}"
   match @codec.decode_program(minimal) {
@@ -167,6 +171,7 @@ test "decode fills control defaults" {
       assert_eq(control.height, 36)
       assert_eq(program.window.title, "MoMao 程序")
     }
-    Err(errors) => fail("最小合法项目应可解码: \{errors.length()} 个错误")
+    Err(errors) =>
+      fail("最小合法项目应可解码: \{errors.length()} 个错误")
   }
 }

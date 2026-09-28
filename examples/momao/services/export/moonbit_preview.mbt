@@ -76,7 +76,9 @@ fn handler_preview(
     buf.write_string("/// 意图（EN）：\{handler.note_en}\n")
   }
   if handler.note_zh == "" && handler.note_en == "" {
-    buf.write_string("/// 意图：（未填写——可读性契约要求 AI 提案必填，手工创建可补）\n")
+    buf.write_string(
+      "/// 意图：（未填写——可读性契约要求 AI 提案必填，手工创建可补）\n",
+    )
   }
   // 函数名用 ASCII 安全形式（fn 名 + 控件 id），人类语义在注释行里
   let control_id = match @ir.find_control(program, handler.control_name) {
@@ -90,7 +92,9 @@ fn handler_preview(
     write_stmt(buf, stmt, 1)
   }
   if handler.body.length() == 0 {
-    buf.write_string("  // （空子程序——在积木或代码视图里给它加语句）\n")
+    buf.write_string(
+      "  // （空子程序——在积木或代码视图里给它加语句）\n",
+    )
   }
   buf.write_string("}\n")
   buf.to_string()

@@ -7,10 +7,7 @@ pub impl @agent.AgentHost for ClosedHost with fn read_semantics(_self, _since) {
 }
 
 ///|
-pub impl @agent.AgentHost for ClosedHost with fn perform_action(
-  _self,
-  _request,
-) {
+pub impl @agent.AgentHost for ClosedHost with fn perform_action(_self, _request) {
   Err(HostClosed)
 }
 

@@ -7,16 +7,13 @@
 fn main {
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let runtime = @runtime.new_program_with_dimensions(
-    program=@momao_app.program(
-      environment=@web.app_environment(),
-      apply_locale=tag => {
-        match runtime_ref.val {
-          Some(runtime) =>
-            runtime.set_environment(runtime.environment().with_locale(tag))
-          None => ()
-        }
-      },
-    ),
+    program=@momao_app.program(environment=@web.app_environment(), apply_locale=tag => {
+      match runtime_ref.val {
+        Some(runtime) =>
+          runtime.set_environment(runtime.environment().with_locale(tag))
+        None => ()
+      }
+    }),
     width=1280.0,
     height=800.0,
   )
