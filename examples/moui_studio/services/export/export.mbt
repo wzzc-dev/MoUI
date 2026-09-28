@@ -1,7 +1,9 @@
 ///|
 /// MoUI Studio 导出：把 StudioProgram 打包成自包含 MoUI 应用项目。
-/// 口径（计划）：比赛版允许模板化 runner——导出的应用内嵌 .studio.json 与
-/// 一个确定性运行器，不承诺任意程序编译为静态 MoonBit 源码。
+/// 编译轨口径：项目 IR 被真编译——`moonbit_codegen.generate_source` 生成的可读
+/// MoonBit 事件源码落进 bundle 的 `app/generated_handlers.mbt` 参与 `moon build`
+/// （Studio 预览展示的就是同一份字节）；`compiled_runtime` 提供生成源码唯一依赖的
+/// 执行面，bundle 内不含指令流解释器。
 
 ///|
 /// 领域内核源码根映射：bundle 相对路径 → 逐字节内核源码。
@@ -22,6 +24,7 @@ fn kernel_sources() -> Array[(String, String)] {
     ("domain/studio_lang/interp.mbt", kernel_studio_lang_interp_mbt()),
     ("domain/studio_lang/semantics.mbt", kernel_studio_lang_semantics_mbt()),
     ("domain/codec/codec.mbt", kernel_codec_mbt()),
+    ("compiled_runtime/runtime.mbt", kernel_compiled_runtime_mbt()),
     ("app/runner.mbt", runner_source()),
   ]
 }
@@ -42,7 +45,12 @@ pub fn export_bundle(
   files.push(("\{safe}/domain/codec/moon.pkg", codec_pkg(safe)))
   // app 包：组合根 moon.pkg + 内嵌项目数据 + 通用 runner + 内核快照
   files.push(("\{safe}/app/moon.pkg", app_pkg(safe)))
+  files.push(("\{safe}/compiled_runtime/moon.pkg", compiled_runtime_pkg(safe)))
   files.push(("\{safe}/app/project_data.mbt", project_data_mbt(project_json)))
+  // 编译轨的唯一事件源码：预览视图与 bundle 用同一个生成函数，逐字节同源。
+  files.push(
+    ("\{safe}/app/generated_handlers.mbt", generated_handlers_mbt(project_json)),
+  )
   for pair in kernel_sources() {
     files.push(("\{safe}/\{pair.0}", pair.1))
   }
@@ -51,6 +59,9 @@ pub fn export_bundle(
   files.push(("\{safe}/web_wasm/main.mbt", web_main()))
   files.push(("\{safe}/web_wasm/abi.mbt", abi_mbt()))
   files.push(("\{safe}/web_wasm/index.html", web_index_html(safe)))
+  // native 启动存活烟测：workspace 外构建可执行包并真跑一遍生成 handler。
+  files.push(("\{safe}/native_smoke/moon.pkg", native_smoke_pkg(safe)))
+  files.push(("\{safe}/native_smoke/main.mbt", native_smoke_main()))
   files.push(("\{safe}/README.md", readme(safe)))
   files.push(("\{safe}/deps.txt", deps_txt()))
   files
@@ -106,7 +117,23 @@ pub fn codec_pkg(name : String) -> String {
 ///|
 /// app 包：组合根导入 moui + views + 本地领域内核（runner 只引用这些）。
 pub fn app_pkg(name : String) -> String {
-  "import {\n  \"\{name}/domain/ir\",\n  \"\{name}/domain/studio_lang\",\n  \"\{name}/domain/codec\",\n  \"wzzc-dev/moui\",\n  \"wzzc-dev/moui/views\",\n  \"wzzc-dev/moui/core\",\n  \"wzzc-dev/moui/graphics\",\n  \"wzzc-dev/moui/views/style\",\n}\n\nsupported_targets = \"native+wasm-gc\"\n"
+  "import {\n  \"\{name}/domain/ir\",\n  \"\{name}/domain/codec\",\n  \"\{name}/compiled_runtime\",\n  \"wzzc-dev/moui\",\n  \"wzzc-dev/moui/views\",\n  \"wzzc-dev/moui/core\",\n  \"wzzc-dev/moui/graphics\",\n  \"wzzc-dev/moui/views/style\",\n}\n\nsupported_targets = \"native+wasm-gc\"\n"
+}
+
+///|
+/// 编译轨运行时包：只依赖 bundle 本地领域内核（ir/studio_lang）。
+pub fn compiled_runtime_pkg(name : String) -> String {
+  "import {\n  \"\{name}/domain/ir\",\n  \"\{name}/domain/studio_lang\",\n}\n\nsupported_targets = \"native+wasm-gc\"\n"
+}
+
+///|
+/// app 包里的生成事件源码：导出时从项目 IR 烘死，和 Studio 预览同一函数。
+pub fn generated_handlers_mbt(project_json : String) -> String {
+  match @codec.decode_program(project_json) {
+    Ok(program) => generate_source(program).source
+    Err(_) =>
+      "///|\npub fn studio_dispatch_handler(_control : String, _event_tag : String) -> @compiled_runtime.Handler? {\n  None\n}\n"
+  }
 }
 
 ///|
@@ -332,7 +359,19 @@ pub fn web_index_html(name : String) -> String {
 
 ///|
 pub fn readme(name : String) -> String {
-  "# \{name}\n\n由 MoUI Studio 导出的可运行 MoUI 应用。\n\n## 运行\n\n```sh\n# Web（wasm-gc）\nmoon build \{name}/web_wasm --target wasm-gc\n\n# 以项目根为静态服务器根目录\npython3 -m http.server 8792\n# 浏览器打开 /\{name}/web_wasm/index.html\n\n# macOS Skia（native，检查 app 包可编译）\nmoon check \{name}/app --target native\n```\n\n## 说明\n\n本应用**可直接运行**：内嵌导出的 `.studio.json` 项目数据（见 `app/project_data.mbt`）\n与和 MoUI Studio 逐字节同源的领域内核（`domain/ir`、`domain/studio_lang`、`domain/codec`\n共 11 个 .mbt 文件），由通用 TEA runner（`app/runner.mbt`）驱动：\n\n- 打开即加载项目并校验（非法项目会原样阻止并说明原因）；\n- 点击按钮 / 改变输入 / 选择列表项触发对应事件子程序，指令机执行到终止态；\n- 跑到 `提交数据`/`询问` 闸门会**暂停等待人工确认**（确认/拒绝是真实按钮，确认前零真实外发）；\n- 底部审计日志逐步留痕，`message_box` 消息集中展示。\n\n不确定的模型输出由执行器的确定性摘要承担，因此离线即可完整跑通。\n可视化编辑、积木编排、AI 生成等创作能力请使用 MoUI Studio。\n"
+  "# \{name}\n\n由 MoUI Studio 导出的可运行 MoUI 应用。\n\n## 运行\n\n```sh\n# Web（wasm-gc）\nmoon build \{name}/web_wasm --target wasm-gc\n\n# 以项目根为静态服务器根目录\npython3 -m http.server 8792\n# 浏览器打开 /\{name}/web_wasm/index.html\n\n# native（Skia 组合根可编译）\nmoon check \{name}/app --target native\n```\n\n## 说明\n\n本应用**可直接运行**，且走的是**编译轨**：项目 IR 在导出时被编译成\n`app/generated_handlers.mbt`（可由 MoUI Studio 的毕业通道预览逐字节查看），\n由 `compiled_runtime/runtime.mbt` 执行面直接执行——bundle 里没有指令流解释器。\n领域内核（`domain/ir`、`domain/studio_lang`、`domain/codec` 共 11 个 .mbt）与\nMoUI Studio 逐字节同源，两轨审计文本与运行语义可比。\n\n- 打开即加载项目并校验（非法项目会原样阻止并说明原因）；\n- 点击按钮 / 改变输入 / 选择列表项触发对应事件子程序，编译产物直接执行到终止态；\n- 跑到 `提交数据`/`询问` 闸门会**暂停等待人工确认**（确认/拒绝是真实按钮，确认前零真实外发）；\n- 底部审计日志逐步留痕，`message_box` 消息集中展示。\n\n离线即可完整跑通。可视化编辑、积木编排、AI 生成等创作能力请使用 MoUI Studio。\n"
+}
+
+///|
+/// native 启动烟测包：只依赖 bundle 的 app（生成源码分派）+ 编译轨运行时，
+/// 不依赖任何 renderer/窗口服务；`main` 真跑全部生成 handler 后打印标记退出 0。
+pub fn native_smoke_pkg(name : String) -> String {
+  "import {\n  \"\{name}/app\" @app,\n  \"\{name}/domain/codec\",\n  \"\{name}/domain/ir\",\n  \"\{name}/compiled_runtime\",\n  \"moonbitlang/x/sys\",\n}\n\nsupported_targets = \"native\"\n\npkgtype(kind: \"executable\")\n\noptions(\n  targets: { },\n)\n"
+}
+
+///|
+pub fn native_smoke_main() -> String {
+  "///|\n/// 导出 bundle 的 native 启动存活烟测：解码内嵌项目 → 逐 handler 走\n/// 编译轨分派与执行 → 闸门自动确认 → 打印可判定标记并退出 0。\nfn main {\n  let decoded = @codec.decode_program(@app.project_json())\n  if decoded is Err(errors) {\n    println(\"studio native export smoke: decode failed (\\{errors.length()})\")\n    @sys.exit(2)\n  }\n  let program = match decoded {\n    Ok(value) => value\n    Err(_) => @ir.empty_program()\n  }\n  let rt = @compiled_runtime.runtime_for_program(program)\n  let mut ran = 0\n  for handler in program.handlers {\n    match @app.studio_dispatch_handler(handler.control_name, handler.event.tag()) {\n      None => ()\n      Some(dispatch) => {\n        drain(rt, dispatch)\n        ran = ran + 1\n      }\n    }\n  }\n  if rt.status is @compiled_runtime.Failed {\n    println(\"studio native export smoke: runtime failed\")\n    @sys.exit(3)\n  }\n  println(\n    \"studio native export smoke: ok handlers=\\{program.handlers.length()} ran=\\{ran} audit=\\{rt.audit.length()}\"\n  )\n}\n\n///|\nfn drain(rt : @compiled_runtime.Runtime, handler : @compiled_runtime.Handler) -> Unit {\n  let mut status = @compiled_runtime.run_handler(rt, handler)\n  while status is @compiled_runtime.WaitingGate {\n    status = @compiled_runtime.answer_gate(rt, true)\n  }\n}\n"
 }
 
 ///|

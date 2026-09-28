@@ -1,10 +1,11 @@
 #!/bin/sh
-# MoUI Studio 导出回归 smoke：最小项目 → emit_bundle → 工作区外独立构建（wasm-gc）。
+# MoUI Studio 导出回归 smoke：最小项目 → emit_bundle → 工作区外真编译
+# （native 可执行 + wasm-gc 双端构建，native 产物真启动跑生成 handler）。
 #
-# 目的：导出内核快照、Web 运行时闭包或 ABI 垫片发生漂移时，工作区内的
-# moon test 发现不了「外部独立构建断裂」（内核互调泄漏到非内核文件、
-# moon.mod 版本约束漂移等只在 workspace 外构建才报错）。本门让这类
-# 漂移大声失败。
+# 目的：导出内核快照、编译轨 codegen、Web 运行时闭包或 ABI 垫片发生漂移时，
+# 工作区内的 moon test 发现不了「外部独立构建断裂」（内核互调泄漏到非内核
+# 文件、moon.mod 版本约束漂移、生成源码与编译轨运行时签名不一致等只在
+# workspace 外构建/运行时才报错）。本门让这类漂移大声失败。
 #
 # 项目 JSON 按 docs/ir-schema.md 手写最小问候样例——schema 漂移时本门
 # 同样大声失败，这是特性。
@@ -54,5 +55,18 @@ BUNDLE_DIR=$(echo "$TMP"/bundle/*/ | head -1)
 [ -f "$BUNDLE_DIR/moon.mod" ] || { echo "bundle layout unexpected"; exit 1; }
 cd "$BUNDLE_DIR"
 moon update
+
+# 1) wasm-gc：Web 入口 + 编译轨 app 包必须独立构建成功
 moon build --target wasm-gc
-echo "studio export smoke: ok ($BUNDLE_DIR)"
+WASM_ARTIFACT="_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm"
+[ -f "$WASM_ARTIFACT" ] || { echo "wasm-gc artifact missing: $WASM_ARTIFACT"; exit 1; }
+
+# 2) native：handlers 生成源码必须真参与编译，且产物可启动执行
+moon build ./native_smoke --target native
+SMOKE_OUT=$(moon run ./native_smoke --target native)
+case "$SMOKE_OUT" in
+  *"studio native export smoke: ok handlers=1 ran=1 audit=1"*) ;;
+  *) echo "native export smoke marker missing: $SMOKE_OUT"; exit 1 ;;
+esac
+
+echo "studio export smoke: ok native+wasm-gc ($BUNDLE_DIR)"

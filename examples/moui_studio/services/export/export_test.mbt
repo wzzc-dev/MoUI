@@ -10,6 +10,12 @@ test "导出的包包含全部必需文件" {
   assert_true(paths.any(fn(path) { path.has_suffix("/app/moon.pkg") }))
   assert_true(paths.any(fn(path) { path.has_suffix("/app/project_data.mbt") }))
   assert_true(paths.any(fn(path) { path.has_suffix("/app/runner.mbt") }))
+  assert_true(
+    paths.any(fn(path) { path.has_suffix("/app/generated_handlers.mbt") }),
+  )
+  assert_true(
+    paths.any(fn(path) { path.has_suffix("/compiled_runtime/moon.pkg") }),
+  )
   assert_true(paths.any(fn(path) { path.has_suffix("/domain/ir/moon.pkg") }))
   assert_true(
     paths.any(fn(path) { path.has_suffix("/domain/studio_lang/moon.pkg") }),
@@ -99,31 +105,39 @@ test "导出可执行包含 ABI 垫片（Moon 只导出可执行包自身定义�
 ///|
 test "导出应用是可执行的（含领域内核 + runner 驱动）" {
   let files = @export.export_bundle(SAMPLE_PROJECT, "demo")
-  // 领域内核 11 个 .mbt（ir 3 + studio_lang 8）+ runner + project_data
+  // 领域内核 11 个 .mbt（ir 3 + studio_lang 8）+ 编译轨运行时 + runner + project_data
   for
     rel in [
       "domain/ir/ir.mbt", "domain/ir/invariants.mbt", "domain/ir/signature.mbt",
       "domain/studio_lang/aliases.mbt", "domain/studio_lang/errors.mbt", "domain/studio_lang/keywords.mbt",
       "domain/studio_lang/lexer.mbt", "domain/studio_lang/parser.mbt", "domain/studio_lang/printer.mbt",
       "domain/studio_lang/interp.mbt", "domain/studio_lang/semantics.mbt", "domain/codec/codec.mbt",
+      "compiled_runtime/runtime.mbt",
     ] {
     let source = bundle_file(files, "/\{rel}")
     assert_true(source.length() > 100)
   }
   let runner = bundle_file(files, "/app/runner.mbt")
   let pkg = bundle_file(files, "/app/moon.pkg")
-  // runner 驱动内核执行的关键调用
+  let generated = bundle_file(files, "/app/generated_handlers.mbt")
+  // runner 走编译轨：分派到生成源码 + compiled_runtime 执行面，
+  // 不再有指令流解释器入口。
   assert_true(runner.contains("decode_program("))
-  assert_true(runner.contains("start_run_stmts("))
-  assert_true(runner.contains("run_to_end("))
-  assert_true(runner.contains("answer_gate("))
-  assert_true(runner.contains("initial_texts("))
-  assert_true(runner.contains("initial_values("))
-  assert_true(runner.contains("initial_rows("))
+  assert_true(runner.contains("studio_dispatch_handler("))
+  assert_true(runner.contains("@compiled_runtime.run_handler("))
+  assert_true(runner.contains("@compiled_runtime.answer_gate("))
+  assert_true(runner.contains("runtime_for_program("))
+  assert_false(runner.contains("start_run_stmts("))
+  assert_false(runner.contains("run_to_end("))
+  // 生成源码是本 bundle 真正编译的一份源码（预览同源）
+  assert_true(generated.contains("studio_dispatch_handler"))
+  assert_true(generated.contains("@compiled_runtime.Handler("))
+  assert_false(generated.contains("start_run_stmts"))
   // TEA 组合根与依赖导入
   assert_true(runner.contains("pub fn program("))
   assert_true(pkg.contains("domain/ir"))
   assert_true(pkg.contains("domain/codec"))
+  assert_true(pkg.contains("compiled_runtime"))
   assert_true(pkg.contains("wzzc-dev/moui/views"))
 }
 

@@ -199,6 +199,26 @@
           ]
         },
         {
+          "name": "studio compiled runtime tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/moui_studio/services/compiled_runtime",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "studio export tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/moui_studio/services/export",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "studio export kernel sync",
           "argv": [
             "moon",

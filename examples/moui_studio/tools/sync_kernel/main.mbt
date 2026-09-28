@@ -21,8 +21,12 @@ fn kernel_files() -> Array[(String, Array[(String, String)])] {
       "kernel_ir",
       [
         ("kernel_ir_mbt", "examples/moui_studio/domain/ir/ir.mbt"),
-        ("kernel_ir_invariants_mbt", "examples/moui_studio/domain/ir/invariants.mbt"),
-        ("kernel_ir_signature_mbt", "examples/moui_studio/domain/ir/signature.mbt"),
+        (
+          "kernel_ir_invariants_mbt", "examples/moui_studio/domain/ir/invariants.mbt",
+        ),
+        (
+          "kernel_ir_signature_mbt", "examples/moui_studio/domain/ir/signature.mbt",
+        ),
       ],
     ),
     (
@@ -62,6 +66,14 @@ fn kernel_files() -> Array[(String, Array[(String, String)])] {
     (
       "kernel_codec",
       [("kernel_codec_mbt", "examples/moui_studio/domain/codec/codec.mbt")],
+    ),
+    (
+      "kernel_compiled_runtime",
+      [
+        (
+          "kernel_compiled_runtime_mbt", "examples/moui_studio/services/compiled_runtime/runtime.mbt",
+        ),
+      ],
     ),
   ]
 }

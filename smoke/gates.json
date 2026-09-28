@@ -379,9 +379,9 @@
     {
       "id": "studio.export-build",
       "tier": "nightly",
-      "kind": "export-bundle-smoke",
+      "kind": "export-bundle-truthful-compile-smoke",
       "host": "any",
-      "purpose": "Emit a minimal MoUI Studio project through tools/emit_bundle and independently build it outside the workspace (wasm-gc), so kernel snapshot, runtime closure, or ABI shim drift fails loudly instead of silently breaking exported apps.",
+      "purpose": "Emit a minimal MoUI Studio project through tools/emit_bundle and independently build it outside the workspace: wasm-gc web entry and a native executable that really starts and runs the generated handlers, so kernel snapshot, codegen, runtime closure, or ABI shim drift fails loudly instead of silently breaking exported apps.",
       "defaultDevCheck": false,
       "commands": [
         {

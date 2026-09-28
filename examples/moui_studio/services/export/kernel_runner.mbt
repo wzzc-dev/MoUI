@@ -9,36 +9,33 @@ pub fn runner_source() -> String {
     #|///|
     #|/// MoUI Studio 导出的可执行应用（通用 TEA runner）。
     #|///
-    #|/// 领域内核（domain/ir、domain/studio_lang、domain/codec）与 Studio 逐字节同源，
-    #|/// 因此解码与执行语义完全一致：点击控件触发对应事件子程序，指令机按
-    #|/// start_run_stmts → run_to_end 推进；跑到 `提交数据`/`询问` 闸门会**暂停等
+    #|/// 领域内核（domain/ir、domain/studio_lang、domain/codec）与 Studio 逐字节同源。
+    #|/// 但事件执行走**编译轨**：`app/generated_handlers.mbt` 是由 MoUI Studio 从
+    #|/// 程序 IR 生成、真正参与 `moon build` 的 MoonBit 源码，由 `@compiled_runtime`
+    #|/// 执行面直接执行（无指令流解释器）。跑到 `提交数据`/`询问` 闸门会**暂停等
     #|/// 人工确认**（确认/拒绝是真实按钮），确认前零真实动作。审计日志逐步留痕。
-    #|/// 离线即可完整跑通（假模型/确定性执行，无网络、无服务依赖）。
+    #|/// 离线即可完整跑通（确定性执行，无网络、无服务依赖）。
     #|
     #|///|
     #|pub(all) enum Msg {
     #|  Trigger(String, @ir.EventKind) // （控件名，事件）被触发
     #|  Pick(String, Int) // 列表/表格选中某行 → 内容改变
     #|  EditText(String, String) // 输入框文本改变 → 内容改变
-    #|  ToggleCheck(String) // 勾选框切换（视觉态，指令机语义外）
+    #|  ToggleCheck(String) // 勾选框切换（视觉态，编译轨语义外）
     #|  Answer(Bool) // 闸门应答：true=确认，false=拒绝
     #|}
     #|
     #|///|
     #|pub(all) struct Model {
     #|  program : @ir.StudioProgram
-    #|  texts : Map[String, String] // 控件当前文本（label/button/text_field）
-    #|  values : Map[String, @studio_lang.Value] // DSL 变量
-    #|  rows : Map[String, Array[String]] // 列表/表格行
-    #|  selections : Map[String, Int] // 列表/表格选中行
-    #|  checks : Map[String, Bool] // 勾选框视觉态（与 Studio 同口径，指令机外）
+    #|  machine : @compiled_runtime.Runtime // 编译轨运行状态（文本/变量/行/审计/闸门）
+    #|  checks : Map[String, Bool] // 勾选框视觉态（与 Studio 同口径，执行面外）
     #|  notice : String
     #|  run_label : String
-    #|  run : @studio_lang.RunState?
     #|}
     #|
     #|///|
-    #|/// 初始模型：解码内嵌项目，按初始文本/变量/行播种。
+    #|/// 初始模型：解码内嵌项目，按程序初值播种编译轨运行时。
     #|pub fn Model::new() -> Model {
     #|  let (program, notice) = match @codec.decode_program(project_json()) {
     #|    Ok(decoded) => (decoded, "")
@@ -46,46 +43,28 @@ pub fn runner_source() -> String {
     #|  }
     #|  {
     #|    program,
-    #|    texts: @studio_lang.initial_texts(program),
-    #|    values: @studio_lang.initial_values(program),
-    #|    rows: @studio_lang.initial_rows(program),
-    #|    selections: Map([], capacity=4),
+    #|    machine: @compiled_runtime.runtime_for_program(program),
     #|    checks: Map([], capacity=4),
     #|    notice,
     #|    run_label: "",
-    #|    run: None,
     #|  }
     #|}
     #|
     #|///|
-    #|/// 触发某控件事件的子程序：启动指令机并一步运行到终止态（完成/闸门/失败）。
-    #|/// texts/values/rows 与运行态共享引用，set_text/append_row/声明即时回写。
-    #|fn run_handler(
+    #|/// 触发某控件事件的子程序：按 (控件, 事件) 分派到生成源码里的 handler，
+    #|/// 由编译轨运行时推进到终止态（完成/闸门/失败）。
+    #|fn run_event(
     #|  model : Model,
     #|  control : String,
     #|  event : @ir.EventKind,
     #|) -> Model {
-    #|  match @ir.find_handler(model.program, control, event) {
+    #|  match studio_dispatch_handler(control, event.tag()) {
     #|    None => model
     #|    Some(handler) => {
-    #|      let run = @studio_lang.start_run_stmts(
-    #|        handler.body,
-    #|        model.texts,
-    #|        model.values,
-    #|        model.rows,
-    #|      )
-    #|      // 列表/表格选中态：把当前选择灌进运行态（selected_row 读它）
-    #|      for item in model.program.controls {
-    #|        match model.selections.get(item.name) {
-    #|          Some(index) => run.selections[item.name] = index
-    #|          None => ()
-    #|        }
-    #|      }
-    #|      @studio_lang.run_to_end(run)
+    #|      ignore(@compiled_runtime.run_handler(model.machine, handler))
     #|      {
     #|        ..model,
-    #|        run: Some(run),
-    #|        run_label: "\{handler.control_name}@\{handler.event.tag()}",
+    #|        run_label: "\{control}@\{event.tag()}",
     #|        notice: "",
     #|      }
     #|    }
@@ -95,29 +74,24 @@ pub fn runner_source() -> String {
     #|///|
     #|pub fn update(model : Model, msg : Msg) -> Model {
     #|  match msg {
-    #|    Trigger(control, event) => run_handler(model, control, event)
+    #|    Trigger(control, event) => run_event(model, control, event)
     #|    Pick(control, index) => {
-    #|      model.selections[control] = index
-    #|      run_handler(model, control, @ir.OnChange)
+    #|      model.machine.selections[control] = index
+    #|      run_event(model, control, @ir.OnChange)
     #|    }
     #|    EditText(control, new_text) => {
-    #|      model.texts[control] = new_text
-    #|      run_handler(model, control, @ir.OnChange)
+    #|      model.machine.texts[control] = new_text
+    #|      run_event(model, control, @ir.OnChange)
     #|    }
     #|    ToggleCheck(control) => {
     #|      // 勾选是视觉态（与 Studio 同口径）：切换不触发子程序
     #|      model.checks[control] = !model.checks.get(control).unwrap_or(false)
     #|      model
     #|    }
-    #|    Answer(decision) =>
-    #|      match model.run {
-    #|        None => model
-    #|        Some(run) => {
-    #|          @studio_lang.answer_gate(run, decision)
-    #|          @studio_lang.run_to_end(run)
-    #|          model
-    #|        }
-    #|      }
+    #|    Answer(decision) => {
+    #|      ignore(@compiled_runtime.answer_gate(model.machine, decision))
+    #|      model
+    #|    }
     #|  }
     #|}
     #|
@@ -180,7 +154,7 @@ pub fn runner_source() -> String {
     #|/// 单个控件的舞台渲染（表单应用域 6 类）：尺寸/位置由舞台帧驱动，
     #|/// 与设计画布同款观感。
     #|fn stage_widget(model : Model, control : @ir.Control) -> @moui.View[Msg] {
-    #|  let value = model.texts.get(control.name).unwrap_or(control.text)
+    #|  let value = model.machine.texts.get(control.name).unwrap_or(control.text)
     #|  match control.kind {
     #|    @ir.Label => @views.text(value, align=TextStart)
     #|    @ir.Button =>
@@ -203,11 +177,11 @@ pub fn runner_source() -> String {
     #|      } else {
     #|        control.height / 24
     #|      }
-    #|      let items = model.rows.get(control.name).unwrap_or([])
+    #|      let items = model.machine.rows.get(control.name).unwrap_or([])
     #|      let rows : Array[@moui.View[Msg]] = []
     #|      let mut index = 0
     #|      while index < items.length() && index < max_rows {
-    #|        let selected = model.selections.get(control.name).unwrap_or(0) == index
+    #|        let selected = model.machine.selections.get(control.name).unwrap_or(0) == index
     #|        let prefix = if selected { "▶ " } else { "· " }
     #|        rows.push(
     #|          @views.button(
@@ -226,10 +200,10 @@ pub fn runner_source() -> String {
     #|
     #|///|
     #|/// 闸门卡：确认前零真实动作；展示「将要送出什么、送到哪」。
-    #|fn gate_card(gate : @studio_lang.Gate) -> @moui.View[Msg] {
+    #|fn gate_card(gate : @compiled_runtime.Gate) -> @moui.View[Msg] {
     #|  let prompt = match gate.kind {
-    #|    @studio_lang.Submit => "程序想把数据送到「\{gate.prompt}」，要送出的内容：\{gate.payload}。确认吗？"
-    #|    @studio_lang.Ask => gate.prompt
+    #|    @compiled_runtime.Submit => "程序想把数据送到「\{gate.prompt}」，要送出的内容：\{gate.payload}。确认吗？"
+    #|    @compiled_runtime.Ask => gate.prompt
     #|  }
     #|  @views.column([
     #|    @views.callout("需要你的确认", prompt, tone=@style.Warning, width=420.0),
@@ -242,14 +216,14 @@ pub fn runner_source() -> String {
     #|
     #|///|
     #|/// 审计色点：与 Studio 同一套语义色（赋值蓝/信息框绿/闸门朱砂/命令紫/条件橙/循环青）。
-    #|fn audit_dot(op : @studio_lang.StepOp) -> @moui.View[Msg] {
+    #|fn audit_dot(op : @compiled_runtime.StepOp) -> @moui.View[Msg] {
     #|  let color = match op {
-    #|    @studio_lang.OpAssign => @graphics.Color::rgba(r=0.30, g=0.52, b=0.90)
-    #|    @studio_lang.OpMessage => @graphics.Color::rgba(r=0.30, g=0.62, b=0.36)
-    #|    @studio_lang.OpGate => @graphics.Color::rgba(r=0.78, g=0.26, b=0.20)
-    #|    @studio_lang.OpCommand => @graphics.Color::rgba(r=0.55, g=0.40, b=0.75)
-    #|    @studio_lang.OpCondition => @graphics.Color::rgba(r=0.85, g=0.55, b=0.16)
-    #|    @studio_lang.OpLoop => @graphics.Color::rgba(r=0.20, g=0.55, b=0.58)
+    #|    @compiled_runtime.OpAssign => @graphics.Color::rgba(r=0.30, g=0.52, b=0.90)
+    #|    @compiled_runtime.OpMessage => @graphics.Color::rgba(r=0.30, g=0.62, b=0.36)
+    #|    @compiled_runtime.OpGate => @graphics.Color::rgba(r=0.78, g=0.26, b=0.20)
+    #|    @compiled_runtime.OpCommand => @graphics.Color::rgba(r=0.55, g=0.40, b=0.75)
+    #|    @compiled_runtime.OpCondition => @graphics.Color::rgba(r=0.85, g=0.55, b=0.16)
+    #|    @compiled_runtime.OpLoop => @graphics.Color::rgba(r=0.20, g=0.55, b=0.58)
     #|  }
     #|  @views.container(
     #|    @views.empty(),
@@ -302,63 +276,54 @@ pub fn runner_source() -> String {
     #|  let items : Array[@moui.View[Msg]] = [
     #|    @views.row([
     #|      @views.text(model.program.window.title).title(),
-    #|      @views.text("由 MoUI Studio 导出", role=Caption),
+    #|      @views.text("由 MoUI Studio 导出 · 编译轨", role=Caption),
     #|    ]),
     #|  ]
     #|  if model.notice != "" {
     #|    items.push(@views.text(model.notice))
     #|  }
     #|  items.push(stage)
-    #|  match model.run {
+    #|  match model.machine.gate {
+    #|    Some(gate) => items.push(gate_card(gate))
     #|    None => ()
-    #|    Some(run) => {
-    #|      match run.gate {
-    #|        Some(gate) => items.push(gate_card(gate))
-    #|        None => ()
-    #|      }
-    #|      // 变量表：与 Studio 同一承诺（运行即讲解的数据面）
-    #|      let names : Array[String] = []
-    #|      for name in run.vars.keys() {
-    #|        names.push(name)
-    #|      }
-    #|      names.sort()
-    #|      if names.length() > 0 {
-    #|        items.push(@views.text("变量").title())
-    #|        for name in names {
-    #|          match run.vars.get(name) {
-    #|            Some(value) =>
-    #|              items.push(
-    #|                @views.row([
-    #|                  @views.text(name, width=140.0),
-    #|                  @views.text(@studio_lang.value_to_text(value), width=260.0),
-    #|                ]),
-    #|              )
-    #|            None => ()
-    #|          }
-    #|        }
-    #|      }
-    #|      if run.messages.length() > 0 {
-    #|        items.push(@views.text("消息").title())
-    #|        for message in run.messages {
-    #|          items.push(@views.text(message))
-    #|        }
-    #|      }
-    #|      items.push(
-    #|        @views.text("审计日志 · \{model.run_label}").title(),
-    #|      )
-    #|      for record in run.audit {
-    #|        items.push(
-    #|          @views.row([audit_dot(record.op), @views.text(record.detail, width=400.0)]),
-    #|        )
-    #|      }
-    #|      match run.error {
-    #|        Some(error) =>
+    #|  }
+    #|  // 变量表：与 Studio 同一承诺（运行即讲解的数据面）
+    #|  let names : Array[String] = []
+    #|  for name in model.machine.vars.keys() {
+    #|    names.push(name)
+    #|  }
+    #|  names.sort()
+    #|  if names.length() > 0 {
+    #|    items.push(@views.text("变量").title())
+    #|    for name in names {
+    #|      match model.machine.vars.get(name) {
+    #|        Some(value) =>
     #|          items.push(
-    #|            @views.text("运行错误（行 \{error.line()}）：\{error.a()}"),
+    #|            @views.row([
+    #|              @views.text(name, width=140.0),
+    #|              @views.text(@compiled_runtime.value_to_text(value), width=260.0),
+    #|            ]),
     #|          )
     #|        None => ()
     #|      }
     #|    }
+    #|  }
+    #|  if model.machine.messages.length() > 0 {
+    #|    items.push(@views.text("消息").title())
+    #|    for message in model.machine.messages {
+    #|      items.push(@views.text(message))
+    #|    }
+    #|  }
+    #|  items.push(@views.text("审计日志 · \{model.run_label}").title())
+    #|  for record in model.machine.audit {
+    #|    items.push(
+    #|      @views.row([audit_dot(record.op), @views.text(record.detail, width=400.0)]),
+    #|    )
+    #|  }
+    #|  match model.machine.error {
+    #|    Some(error) =>
+    #|      items.push(@views.text("运行错误（行 \{error.line}）：\{error.a}"))
+    #|    None => ()
     #|  }
     #|  @views
     #|  .card(
