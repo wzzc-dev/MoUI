@@ -181,47 +181,64 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 }
 
 ///|
-/// 左栏：控件面板（设计模式）+ 事件子程序列表（全部模式可用）。
+/// 左栏：控件面板（仅设计模式——放控件是画布动作，积木/代码编辑的是
+/// 已选子程序，显示添加入口只会误导）+ 事件子程序列表（全部模式可用，
+/// 积木/代码靠它切换要编辑的子程序）。
 fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
-  // 分节标题文字必须给显式宽度：text 默认宽 160，会把滚动内容撑到
-  // 视口（182）之外，按钮跟拉伸后被视口裁掉左右圆角与尾部文字。
-  // 140 = 182 视口 − 徽章 28 − 间距 10 的余量（英文 "Event handlers" 也放得下）。
-  let palette : Array[@moui.View[Msg]] = [
-    @views.row(
-      [
-        @views.text(text(t, "app.palette"), role=Subtitle, width=140.0),
-        @views.badge(
-          model.program.controls.length().to_string(),
-          tone=@style.BadgeTone::Neutral,
-          width=28.0,
-          height=20.0,
-        ),
-      ],
-      justify=Between,
-    ),
-  ]
-  for
-    kind in [
-      @ir.Button,
-      @ir.Label,
-      @ir.TextField,
-      @ir.CheckBox,
-      @ir.ListBox,
-      @ir.Table,
-    ] {
+  // 分节标题文字必须给显式宽度：text 默认宽 160，加上徽章会把滚动内容
+  // 撑过内容预算（224 卡片 − 2×10 内垫 = 184），按钮跟拉伸后会被指示器
+  // 压住。140 = 184 内容宽 − 徽章 28 − 间距 10 − 6 余量（英文
+  // "Event handlers" 也放得下）。
+  // align=TextStart：text 默认在盒内居中，标题会悬在中间偏左，与下方按钮错位。
+  let palette : Array[@moui.View[Msg]] = []
+  if model.mode is ModeDesign {
     palette.push(
-      @views.button(
-        text(t, "control.\{kind.tag()}"),
-        on_click=AddControl(kind),
-        variant=Tonal,
+      @views.row(
+        [
+          @views.text(
+            text(t, "app.palette"),
+            role=Subtitle,
+            width=140.0,
+            align=TextStart,
+          ),
+          @views.badge(
+            model.program.controls.length().to_string(),
+            tone=@style.BadgeTone::Neutral,
+            width=28.0,
+            height=20.0,
+          ),
+        ],
+        justify=Between,
       ),
     )
+    for
+      kind in [
+        @ir.Button,
+        @ir.Label,
+        @ir.TextField,
+        @ir.CheckBox,
+        @ir.ListBox,
+        @ir.Table,
+      ] {
+      palette.push(
+        @views.button(
+          text(t, "control.\{kind.tag()}"),
+          on_click=AddControl(kind),
+          variant=Tonal,
+        ),
+      )
+    }
   }
   let handlers : Array[@moui.View[Msg]] = [
     @views.divider(),
     @views.row(
       [
-        @views.text(text(t, "app.handlers"), role=Subtitle, width=140.0),
+        @views.text(
+          text(t, "app.handlers"),
+          role=Subtitle,
+          width=140.0,
+          align=TextStart,
+        ),
         @views.badge(
           model.program.handlers.length().to_string(),
           tone=@style.BadgeTone::Neutral,
@@ -257,7 +274,12 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       }
       if missing.length() > 0 {
         handlers.push(
-          @views.text(text(t, "app.handler.new"), role=Subtitle, width=140.0),
+          @views.text(
+            text(t, "app.handler.new"),
+            role=Subtitle,
+            width=140.0,
+            align=TextStart,
+          ),
         )
         for item in missing {
           handlers.push(item)
@@ -272,17 +294,24 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   for item in handlers {
     palette_items.push(item)
   }
-  // 卡片化 + 内边距：面板不贴窗口边缘，按钮有呼吸距离
+  // 与右栏同一套滚动布局：视口全出血到卡片边（卡片 padding=0、视口 224），
+  // 指示器画在视口右缘内缩 7pt 处——贴住面板最右侧；内容列被视口宽紧约束
+  // 拉伸，用限宽容器居中吸收，右侧槽位留给指示器，不再压住按钮。
+  // 224 = 分节标题行 178（文字 140 + 徽章 28 + 间距 10）+ 两侧内垫 20 + 槽位余量。
   @views.card(
     @views.scroll_view(
-      @views.column(palette_items),
-      width=182.0,
-      height=532.0,
+      @views.container(
+        @views.column(palette_items),
+        background=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.0),
+        padding=10.0,
+      ),
+      width=224.0,
+      height=560.0,
       shows_indicator=true,
     ),
-    width=204.0,
+    width=224.0,
     height=560.0,
-    padding=10.0,
+    padding=0.0,
   )
 }
 
@@ -840,10 +869,15 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 }
 
 ///|
-/// 右栏：属性检查器（设计模式）+ AI 提案面板。
+/// 右栏：属性检查器（仅设计模式——位置/尺寸是画布概念）+ AI 提案面板
+/// （设计/积木/代码都可用：AI 改的是程序，不只是画布）。
 fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
-  let inspector = inspector_panel(model, t)
-  let ai = ai_panel(model, t)
+  let sections : Array[@moui.View[Msg]] = []
+  if model.mode is ModeDesign {
+    sections.push(inspector_panel(model, t))
+    sections.push(@views.divider())
+  }
+  sections.push(ai_panel(model, t))
   // 滚动指示器画在「视口右缘内缩 7pt」处：视口贴到卡片边（卡片 padding=0、
   // 视口 300 全出血），指示器才落在面板最右侧。内容列会被视口宽紧约束
   // 拉伸，用限宽 250 的居中容器吸收：输入框在面板内对称居中，右侧空出的
@@ -851,7 +885,7 @@ fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   @views.card(
     @views.scroll_view(
       @views.container(
-        @views.column([inspector, @views.divider(), ai]),
+        @views.column(sections),
         background=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.0),
         padding=10.0,
       ),
@@ -1163,15 +1197,14 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 /// 顶层组合。
 pub fn view(model : Model) -> @moui.View[Msg] {
   let t = translator(model)
-  @views.column([
-    top_bar(model, t),
-    @views.divider(),
-    // 主行必须钳制高度：行内竖直 divider 按「可用高度」测量（和横 divider
-    // 按可用宽度测量是同一约定），不钳制时把行撑到接近窗口高，画布再被
-    // 容器垂直居中，顶部就空出一条大空白、底部 notice 被推出窗口。
-    // 560 与左右面板卡同高；align=Start 让 640x480 的画布与面板顶对齐，
-    // 不再被居中下移。两端弹性 spacer 让内容在窗口内水平居中（与顶栏的
-    // 居中节奏一致），左栏卡片不再贴窗口边缘；窗口变窄时自动收缩。
+  // 侧栏按模式显隐：设计=控件+事件子程序+属性+AI；积木/代码=事件子程序
+  // （切换编辑目标）+AI（改程序）；MoonBit 预览/帮助/运行是只读或执行
+  // 场景，两侧面板都收起，内容在窗口内居中。
+  let show_panels = match model.mode {
+    ModeDesign | ModeBlocks | ModeCode => true
+    ModePreview | ModeHelp | ModeRun => false
+  }
+  let main_row = if show_panels {
     @views.row(
       [
         @views.spacer(),
@@ -1183,7 +1216,23 @@ pub fn view(model : Model) -> @moui.View[Msg] {
         @views.spacer(),
       ],
       align=Start,
-    ).frame(height=560.0),
+    ).frame(height=560.0)
+  } else {
+    @views.row(
+      [@views.spacer(), center_panel(model, t), @views.spacer()],
+      align=Start,
+    ).frame(height=560.0)
+  }
+  @views.column([
+    top_bar(model, t),
+    @views.divider(),
+    // 主行必须钳制高度：行内竖直 divider 按「可用高度」测量（和横 divider
+    // 按可用宽度测量是同一约定），不钳制时把行撑到接近窗口高，画布再被
+    // 容器垂直居中，顶部就空出一条大空白、底部 notice 被推出窗口。
+    // 560 与左右面板卡同高；align=Start 让 640x480 的画布与面板顶对齐，
+    // 不再被居中下移。两端弹性 spacer 让内容在窗口内水平居中（与顶栏的
+    // 居中节奏一致），左栏卡片不再贴窗口边缘；窗口变窄时自动收缩。
+    main_row,
     @views.text(model.notice),
   ])
   // 固定浅色主题：课堂/路演场景要求确定的演示外观，不随系统深色模式漂移
