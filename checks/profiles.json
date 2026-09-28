@@ -209,6 +209,16 @@
           ]
         },
         {
+          "name": "studio diff matrix tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/moui_studio/services/diff",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "studio export tests",
           "argv": [
             "moon",
