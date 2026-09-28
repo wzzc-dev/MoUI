@@ -92,6 +92,9 @@ pub(all) struct Model {
   program : @ir.MomaoProgram
   language : UiLanguage
   mode : Mode
+  // 设计画布缩放：0 = 适应窗口（画布等比铺满画布列，默认行为）；
+  // >0 = 固定比例（画布逻辑尺寸 640×zoom，超出视口由滚动接管）。
+  design_zoom : Double
   selected_control : String
   selected_handler : String
   code_draft : String
@@ -139,6 +142,7 @@ pub(all) struct Model {
 pub(all) enum Msg {
   SwitchLanguage
   SetMode(Mode)
+  SetDesignZoom(Double)
   SelectControl(String)
   CanvasPress(Double, Double)
   CanvasTap(Double, Double)
@@ -256,6 +260,7 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     program,
     language: ZhHans,
     mode: ModeDesign,
+    design_zoom: 0.0,
     selected_control: "按钮",
     selected_handler: handler_key("按钮", "on_click"),
     code_draft: "",

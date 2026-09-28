@@ -463,6 +463,8 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       }
       Some((next, @moui.Effect::none()))
     }
+    SetDesignZoom(zoom) =>
+      Some(({ ..model, design_zoom: zoom, }, @moui.Effect::none()))
     SelectHandler(key) => {
       let committed = commit_code(model)
       if committed.code_error != "" {

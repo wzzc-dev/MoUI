@@ -319,10 +319,12 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   // 指示器画在视口右缘内缩 7pt 处——贴住面板最右侧；内容列被视口宽紧约束
   // 拉伸，用限宽容器居中吸收，右侧槽位留给指示器，不再压住按钮。
   // 224 = 分节标题行 178（文字 140 + 徽章 28 + 间距 10）+ 两侧内垫 20 + 槽位余量。
+  // min_height=580（视口 600 − 内垫 20）：容器会把矮内容在帧内垂直居中，
+  // 内容列撑满视口高度后从顶部排布，与「面板从上往下用」的直觉一致。
   @views.card(
     @views.scroll_view(
       @views.container(
-        @views.column(palette_items),
+        @views.column(palette_items).frame(min_height=580.0),
         background=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.0),
         padding=10.0,
       ),
@@ -340,8 +342,41 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 /// 中部：按模式切换（设计画布 / 积木链 / 代码编辑器）。
 fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match model.mode {
-    ModeDesign =>
-      design_canvas(
+    ModeDesign => {
+      // 缩放工具条：适应窗口（0 = 画布等比铺满画布列）或固定档位
+      // （画布逻辑尺寸 = 640×zoom，超出视口由滚动接管）。绘制与命中
+      // 都按 帧宽/640 现算同一比例，指针换算无需额外分支。
+      let zoom_items = [
+        @views.action_item(
+          id="fit",
+          label=text(t, "app.design.zoom.fit"),
+          message=SetDesignZoom(0.0),
+        ),
+        @views.action_item(id="z50", label="50%", message=SetDesignZoom(0.5)),
+        @views.action_item(id="z75", label="75%", message=SetDesignZoom(0.75)),
+        @views.action_item(
+          id="z100",
+          label="100%",
+          message=SetDesignZoom(1.0),
+        ),
+        @views.action_item(
+          id="z150",
+          label="150%",
+          message=SetDesignZoom(1.5),
+        ),
+      ]
+      let selected = if model.design_zoom <= 0.0 {
+        "fit"
+      } else if model.design_zoom == 0.5 {
+        "z50"
+      } else if model.design_zoom == 0.75 {
+        "z75"
+      } else if model.design_zoom == 1.0 {
+        "z100"
+      } else {
+        "z150"
+      }
+      let canvas_view = design_canvas(
         model.program,
         model.selected_control,
         match model.drag {
@@ -352,7 +387,31 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         text(t, "app.design.canvas"),
         // 空画布引导（i18n）：没有控件时画布中央的提示
         text(t, "app.design.empty"),
+        zoom=model.design_zoom,
       )
+      let canvas_area = if model.design_zoom <= 0.0 {
+        // 适应窗口：画布直接铺满画布列（现状行为）
+        canvas_view
+      } else {
+        // 固定档位：逻辑尺寸 = 640×zoom，超出视口（画布列宽 × 554 高）
+        // 由滚动容器双向接管；指示器画在滚动视口右缘。
+        @views.scroll_view(
+          @views.container(
+            canvas_view,
+            width=@ir.DESIGN_WIDTH.to_double() * model.design_zoom,
+            height=@ir.DESIGN_HEIGHT.to_double() * model.design_zoom,
+            padding=0.0,
+          ),
+          width=640.0,
+          height=548.0,
+          shows_indicator=true,
+        )
+      }
+      @views.column(
+        [@views.button_group(zoom_items, selected=selected), canvas_area],
+        spacing=6.0,
+      )
+    }
     ModeBlocks => blocks_panel(model, t)
     ModeCode => code_panel(model, t)
     ModePreview => preview_panel(model, t)
@@ -637,18 +696,20 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     None => @views.text("")
     Some(run) => {
       let texts = run.state.texts
-      let controls : Array[@moui.View[Msg]] = []
+      // 运行舞台：真实控件按设计坐标绝对布局（StageLayout 按 IR 矩形分配
+      // 子帧，tight 重排让控件精确等于设计的尺寸与位置）——设计稿所见即所得。
+      let stage_widgets : Array[@moui.View[Msg]] = []
+      let stage_rects : Array[@geometry.Rect] = []
       for control in model.program.controls {
         let value = texts.get(control.name).unwrap_or(control.text)
         let widget = match control.kind {
-          @ir.Label => @views.text(value)
+          @ir.Label => @views.text(value, align=TextStart)
           @ir.Button =>
             @views.button(value, on_click=ControlClicked(control.name))
           @ir.TextField =>
             @views.text_field(
               value,
               on_input=new_value => ControlChanged(control.name, new_value),
-              width=control.width.to_double(),
             )
           @ir.CheckBox =>
             // 真勾选控件：勾选态在 app 层 RunModel.checks（指令机语义外）
@@ -658,39 +719,64 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               on_change=checked => RunToggle(control.name, checked),
             )
           @ir.ListBox | @ir.Table => {
+            // 列表框/表格是带视口的实物：行高 24，按设计高度截断可见行
+            let max_rows = if control.height < 24 {
+              1
+            } else {
+              control.height / 24
+            }
             let rows : Array[@moui.View[Msg]] = []
             let mut row_index = 0
             for item in run.state.rows.get(control.name).unwrap_or([]) {
+              if row_index >= max_rows {
+                break
+              }
               let index = row_index
               let selected = run.state.selections
                 .get(control.name)
                 .unwrap_or(-1) ==
                 index
               let label = if selected { "▶ " + item } else { item }
-              // 列表行是可选项不是主操作：Tonal/Outline 斑马纹替代实心红
-              let row = if index % 2 == 0 {
+              // 列表行是可选项不是主操作：Tonal 底色，不占实心主色
+              rows.push(
                 @views.button(
                   label,
                   on_click=ControlPicked(control.name, index),
-                  width=160.0,
                   variant=Tonal,
-                )
-              } else {
-                @views.button(
-                  label,
-                  on_click=ControlPicked(control.name, index),
-                  width=160.0,
-                  variant=Outline,
-                )
-              }
-              rows.push(row)
+                  height=24.0,
+                ),
+              )
               row_index = row_index + 1
             }
-            @views.column(rows)
+            @views.column(rows, spacing=0.0)
           }
         }
-        controls.push(widget)
+        stage_widgets.push(widget)
+        stage_rects.push(
+          @geometry.Rect::new(
+            x=control.x.to_double(),
+            y=control.y.to_double(),
+            width=control.width.to_double(),
+            height=control.height.to_double(),
+          ),
+        )
       }
+      let stage = @views.container(
+        stage_layout(stage_widgets, stage_rects),
+        width=@ir.DESIGN_WIDTH.to_double(),
+        height=@ir.DESIGN_HEIGHT.to_double(),
+        background=@graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
+        corner_radius=10.0,
+        border=Some(
+          @graphics.BorderStyle::new(
+            brush=@graphics.Brush::solid(
+              @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
+            ),
+            width=1.5,
+          ),
+        ),
+        padding=0.0,
+      )
       // 舞台条两行：标题行（正在运行 + 子程序）+ 按钮行（单步/继续/停止）。
       // 单行挤 436px 会把继续/停止裁掉（实测）；按钮仅在运行中显示，
       // 闸门待确认时追加 Warning 徽标提醒（确认卡可能滚出视野）。
@@ -761,7 +847,6 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           }
         }
       }
-      let head : Array[@moui.View[Msg]] = [stage_head, @views.column(controls)]
       // 闸门卡：确认卡（Warning tone）+ 确认 Primary / 拒绝 Outline，
       // 确认前零真实动作
       let gate_card : Array[@moui.View[Msg]] = []
@@ -839,7 +924,7 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         audit.push(
           @views.row([
             dot,
-            @views.text("\{text(t, op)}  \{record.detail}", width=400.0),
+            @views.text("\{text(t, op)}  \{record.detail}", width=560.0),
           ]).on_tap(AuditJump(row_index)),
         )
       }
@@ -851,10 +936,7 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           )
         None => ()
       }
-      let panel : Array[@moui.View[Msg]] = []
-      for item in head {
-        panel.push(item)
-      }
+      let panel : Array[@moui.View[Msg]] = [stage_head]
       for item in variables_card {
         panel.push(item)
       }
@@ -867,7 +949,7 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       panel.push(
         @views.scroll_view(
           @views.column(audit),
-          width=460.0,
+          width=600.0,
           height=180.0,
           shows_indicator=true,
         ),
@@ -875,17 +957,23 @@ fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       for item in error_card {
         panel.push(item)
       }
-      // 窗体框舞台：Raised 卡片承载整个运行区，与设计画布呼应
-      @views.card(
-        @views.scroll_view(
-          @views.column(panel),
-          width=436.0,
-          height=580.0,
-          shows_indicator=true,
+      // 运行界面 = 舞台在上（640×480，所见即所得）+ 数据面卡片在下，
+      // 装进同一个可滚动列——审计时间线较长时舞台滚出视野有停止按钮兜底。
+      @views.scroll_view(
+        @views.column(
+          [
+            stage,
+            @views.card(
+              @views.container(@views.column(panel), padding=10.0),
+              width=640.0,
+              padding=10.0,
+            ),
+          ],
+          spacing=8.0,
         ),
-        width=480.0,
-        height=600.0,
-        padding=10.0,
+        width=640.0,
+        height=576.0,
+        shows_indicator=true,
       )
     }
   }
@@ -905,10 +993,12 @@ fn right_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   // 视口 300 全出血），指示器才落在面板最右侧。内容列会被视口宽紧约束
   // 拉伸，用限宽 250 的居中容器吸收：输入框在面板内对称居中，右侧空出的
   // 槽位正好给指示器。透明背景只要留白，不要 Base 底色。
+  // min_height=580（视口 600 − 内垫 20）：积木/代码模式下 AI 面板内容可能
+  // 矮于视口，不撑满会被容器垂直居中——与左栏同一纪律。
   @views.card(
     @views.scroll_view(
       @views.container(
-        @views.column(sections),
+        @views.column(sections).frame(min_height=580.0),
         background=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.0),
         padding=10.0,
       ),

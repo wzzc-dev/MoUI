@@ -462,27 +462,38 @@ fn guide_color() -> @graphics.Color {
 /// semantics_label 与空态提示由调用方经 i18n 翻译器传入。
 /// 测量按约束**等比铺满**可用区域（缩放因子 = 帧宽 / 640），绘制与命中
 /// 测试都从各自收到的 frame 现算同一比例——画布列弹性伸缩时二者永不失配。
+/// zoom > 0 时改为固定逻辑尺寸 640×zoom（用户档位），超出视口由调用方的
+/// 滚动容器接管；比例仍从帧宽现算，指针换算无需额外分支。
 pub fn design_canvas(
   program : @ir.MomaoProgram,
   selection : String,
   drag_control : String?,
   semantics_label : String,
   empty_hint : String,
+  zoom? : Double = 0.0,
 ) -> @moui.View[Msg] {
   @views.container(
     canvas(
       measure=fn(constraints) {
-        // 等比铺满：宽 = min(可用宽, 可用高 ÷ 3/4)；无界约束退回 1:1 基准
-        let ratio = design_height / design_width
-        let mut width = if constraints.max.width < constraints.max.height / ratio {
-          constraints.max.width
+        // zoom > 0：固定逻辑尺寸（用户档位）；zoom = 0：等比铺满可用区域
+        if zoom > 0.0 {
+          @geometry.Size::new(
+            width=design_width * zoom,
+            height=design_height * zoom,
+          )
         } else {
-          constraints.max.height / ratio
+          // 等比铺满：宽 = min(可用宽, 可用高 ÷ 3/4)；无界约束退回 1:1 基准
+          let ratio = design_height / design_width
+          let mut width = if constraints.max.width < constraints.max.height / ratio {
+            constraints.max.width
+          } else {
+            constraints.max.height / ratio
+          }
+          if width <= 0.0 || width > 1.0e8 {
+            width = design_width
+          }
+          @geometry.Size::new(width~, height=width * ratio)
         }
-        if width <= 0.0 || width > 1.0e8 {
-          width = design_width
-        }
-        @geometry.Size::new(width~, height=width * ratio)
       },
       draw=fn(ctx, frame) {
         // MoUI paint 契约：命令是窗口全局坐标。缩放因子从分配到的帧现算，

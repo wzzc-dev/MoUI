@@ -218,6 +218,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Write your program here; keyword cheatsheet lives under Help",
         ),
       ),
+      ("app.design.zoom.fit", GeneratedI18nMessage::Text("Fit window")),
       (
         "app.inspector.items",
         GeneratedI18nMessage::Text("Options (one per line)"),
@@ -582,6 +583,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "在此编写程序；关键字速查见顶栏「帮助」",
         ),
       ),
+      ("app.design.zoom.fit", GeneratedI18nMessage::Text("适应窗口")),
       (
         "app.inspector.items",
         GeneratedI18nMessage::Text("选项（每行一项）"),

@@ -181,6 +181,7 @@
     "app.dialog.open": "Open MoMao project",
     "app.dialog.export": "Choose export directory",
     "app.design.empty": "The canvas is empty — add a control from the palette to begin",
-    "app.ai.settings": "Model settings"
+    "app.ai.settings": "Model settings",
+    "app.design.zoom.fit": "Fit window"
   }
 }
