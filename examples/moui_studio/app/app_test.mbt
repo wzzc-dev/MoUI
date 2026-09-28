@@ -183,6 +183,127 @@ test "run start executes hello handler to completion" {
 }
 
 ///|
+/// 推进编译轨运行直到非 Running（编译轨无 tick 语义，事件派发即跑到
+/// 完成或闸门；此循环只是防御性等价物）。
+fn drain_compiled(model : @app.Model) -> @app.Model {
+  let mut stepped = model
+  let mut i = 0
+  while i < 60 {
+    match stepped.compiled_run {
+      Some(run) =>
+        if run.runtime.status is @compiled_runtime.Running {
+          stepped = apply(stepped, RunTick)
+        } else {
+          break
+        }
+      None => break
+    }
+    i = i + 1
+  }
+  stepped
+}
+
+///|
+test "compiled track runs hello handler to completion" {
+  let model = @app.initial_model(compile_track_available=true)
+  assert_true(model.compile_track_available)
+  let switched = apply(model, SetRunTrack(Compile))
+  assert_true(switched.run_track is @app.Compile)
+  let started = apply(switched, RunStart)
+  match started.compiled_run {
+    None => fail("编译轨应进入运行态")
+    Some(run) => {
+      assert_true(run.runtime.status is @compiled_runtime.Completed)
+      assert_eq(
+        run.runtime.texts.get("显示").unwrap_or(""),
+        "你好，MoUI Studio！",
+      )
+    }
+  }
+}
+
+///|
+test "compiled track is unreachable on web and says so" {
+  let model = @app.initial_model()
+  assert_false(model.compile_track_available)
+  let switched = apply(model, SetRunTrack(Compile))
+  // 不隐藏事实：仍留在解释轨，并给出显式提示
+  assert_true(switched.run_track is @app.Interpret)
+  assert_true(switched.notice.contains("native"))
+  // 切到编译轨后启动运行，实际仍走解释轨（Web 边界）
+  let started = apply(switched, RunStart)
+  assert_true(started.run is Some(_))
+  assert_true(started.compiled_run is None)
+}
+
+///|
+test "two tracks keep independent run states across switches" {
+  let model = @app.initial_model(compile_track_available=true)
+  // 解释轨跑一次并停在完成态
+  let interpreted = drain(apply(model, RunStart))
+  assert_true(interpreted.run.unwrap().state.status is @studio_lang.Completed)
+  // 切到编译轨再跑一次
+  let compiled = drain_compiled(
+    apply(apply(interpreted, SetRunTrack(Compile)), RunStart),
+  )
+  assert_true(
+    compiled.compiled_run.unwrap().runtime.status is @compiled_runtime.Completed,
+  )
+  // 两轨运行态同时存在，切回解释轨不丢
+  assert_true(compiled.run is Some(_))
+  let back = apply(compiled, SetRunTrack(Interpret))
+  assert_true(back.run.unwrap().state.status is @studio_lang.Completed)
+  // 停止只停当前轨
+  let stopped = apply(back, RunStop)
+  assert_true(stopped.run is None)
+  assert_true(stopped.compiled_run is Some(_))
+}
+
+///|
+test "both tracks produce identical observable results for the same handler" {
+  let model = @app.initial_model(compile_track_available=true)
+  let interpreted = drain(apply(model, RunStart))
+  let compiled = drain_compiled(
+    apply(apply(model, SetRunTrack(Compile)), RunStart),
+  )
+  let run = interpreted.run.unwrap()
+  let crun = compiled.compiled_run.unwrap()
+  // 控件文本终态逐项相同
+  for control in model.program.controls {
+    assert_eq(
+      run.state.texts.get(control.name).unwrap_or(""),
+      crun.runtime.texts.get(control.name).unwrap_or(""),
+    )
+  }
+  // 变量终态逐项相同（排除解释轨的隐藏计数槽 @iN / #n）
+  for name in run.state.vars.keys() {
+    if !name.has_prefix("@i") && !name.contains("#") {
+      assert_eq(
+        @studio_lang.value_to_text(
+          run.state.vars.get(name).unwrap_or(@studio_lang.VUnit),
+        ),
+        @compiled_runtime.value_to_text(
+          crun.runtime.vars.get(name).unwrap_or(@compiled_runtime.VUnit),
+        ),
+      )
+    }
+  }
+  // 审计序列 (line, op, detail) 逐项相同——op 枚举同构，按序号比较
+  assert_eq(run.state.audit.length(), crun.runtime.audit.length())
+  let mut index = 0
+  for record in run.state.audit {
+    let other = crun.runtime.audit[index]
+    assert_eq(record.line, other.line)
+    assert_eq(record.detail, other.detail)
+    assert_eq(
+      @app.audit_op_rank(record.op),
+      @app.compiled_audit_op_rank(other.op),
+    )
+    index = index + 1
+  }
+}
+
+///|
 test "run gate pauses submit and confirm completes" {
   let model = apply(@app.initial_model(), SelectTemplate(3))
   let started = apply(model, RunStart)

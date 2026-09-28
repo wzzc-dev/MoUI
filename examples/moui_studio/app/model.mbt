@@ -19,6 +19,13 @@ pub(all) enum ProviderMode {
 }
 
 ///|
+/// 双轨：解释轨（沙箱指令机）与编译轨（真编译闭包执行面）。
+pub(all) enum RunTrack {
+  Interpret
+  Compile
+}
+
+///|
 /// 运行态：当前子程序 + 指令机状态 + 勾选框 UI 态。
 /// checks 只在 app 层（运行期视觉状态，不进指令机语义）。
 pub(all) struct RunModel {
@@ -27,6 +34,16 @@ pub(all) struct RunModel {
   checks : Map[String, Bool]
   // 单步模式：为真时 RunTick 不自动推进，仅 RunStep 走一条指令
   single_step : Bool
+}
+
+///|
+/// 编译轨运行态：`compiled_runtime` 的 Runtime 本身携带跨事件活状态
+/// （变量/文本/行/选中/审计/闸门），因此与解释轨的 RunModel 完全独立，
+/// 两轨可以各自停在各自的位置，互不干扰。
+pub(all) struct CompiledRun {
+  handler_label : String
+  runtime : @compiled_runtime.Runtime
+  checks : Map[String, Bool]
 }
 
 ///|
@@ -99,7 +116,16 @@ pub(all) struct Model {
   selected_handler : String
   code_draft : String
   code_error : String
+  // 当前运行轨：顶栏显式切换；两轨运行态各自独立保存
+  run_track : RunTrack
+  // 编译轨是否可达（native 入口为真；Web 端显式声明只有解释轨 + 源码预览）
+  compile_track_available : Bool
+  // 解释轨运行态
   run : RunModel?
+  // 编译轨运行态（native 入口可达；Web 恒为 None）
+  compiled_run : CompiledRun?
+  // 最近一次真编译（moon check/build）报告；失败诊断回渲染到代码/运行视图
+  compile_report : @export.CompileReport?
   pending : PendingProposal?
   prompt_draft : String
   prompt_error : String
@@ -182,6 +208,11 @@ pub(all) enum Msg {
   DraftLoaded(@services.ServiceTaskResult[String?])
   RunStart
   RunStop
+  SetRunTrack(RunTrack)
+  CompileRun
+  CompileRunFinished(@export.CompileReport)
+  CompileRunFailed(String)
+  CompileStopped
   RunTick
   RunStep
   RunResume
@@ -240,7 +271,10 @@ pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
 ///|
 /// 初始模型：问候样例 + 中文界面 + 假模型；代码草稿按当前语言播种。
 /// provider_config 非空时预填面板（key 仍只进会话内存）。
-pub fn initial_model(provider_config? : ProviderConfig) -> Model {
+pub fn initial_model(
+  provider_config? : ProviderConfig,
+  compile_track_available? : Bool = false,
+) -> Model {
   let program = @proposals.sample_hello()
   let config = match provider_config {
     Some(value) => value
@@ -266,7 +300,11 @@ pub fn initial_model(provider_config? : ProviderConfig) -> Model {
     selected_handler: handler_key("按钮", "on_click"),
     code_draft: "",
     code_error: "",
+    run_track: Interpret,
+    compile_track_available,
     run: None,
+    compiled_run: None,
+    compile_report: None,
     pending: None,
     prompt_draft: "",
     prompt_error: "",

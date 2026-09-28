@@ -147,3 +147,26 @@ pub fn error_message(
   }
   text_with(t, key, [("a", error.a()), ("b", error.b())]) + line
 }
+
+///|
+/// 编译轨运行期错误的本地化消息（`compiled_runtime.ErrorKind` 与
+/// 解释轨 `LangError` kind 是同一批语义，走同一组 err.* 键）。
+pub fn compiled_error_message(
+  t : @i18n.Translator,
+  error : @compiled_runtime.ErrorDetails,
+) -> String {
+  let key = match error.kind {
+    @compiled_runtime.TypeMismatch => "err.type_mismatch"
+    @compiled_runtime.NotDeclared => "err.not_declared"
+    @compiled_runtime.DivideByZero => "err.divide_by_zero"
+    @compiled_runtime.BadLoopCount => "err.bad_loop_count"
+    @compiled_runtime.UnknownBuiltin => "err.unknown_builtin"
+    @compiled_runtime.StepBudget => "err.step_budget"
+  }
+  let line = if error.line > 0 {
+    text_with(t, "err.line", [("line", "\{error.line}")])
+  } else {
+    ""
+  }
+  text_with(t, key, [("a", error.a), ("b", error.b)]) + line
+}

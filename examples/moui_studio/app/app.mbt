@@ -339,6 +339,7 @@ pub fn program(
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   provider_submit? : ProviderSubmit = noop_provider_submit,
   provider_config? : ProviderConfig,
+  compile_track_available? : Bool = false,
   apply_locale? : (String) -> Unit = _tag => (),
 ) -> @moui.Program[Model, Msg] {
   let services = environment.services()
@@ -348,7 +349,7 @@ pub fn program(
   @moui.Program::new(
     init=() => {
       (
-        initial_model(provider_config?),
+        initial_model(provider_config?, compile_track_available~),
         @moui.Effect::batch([
           services
           .settings()
@@ -391,7 +392,11 @@ pub fn program(
       let next = {
         ..next0,
         dirty,
-        draft_encoding: if should_write { encoding } else { next0.draft_encoding },
+        draft_encoding: if should_write {
+          encoding
+        } else {
+          next0.draft_encoding
+        },
       }
       let effect = if should_write {
         @moui.Effect::batch([

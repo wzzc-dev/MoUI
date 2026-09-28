@@ -37,6 +37,28 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     ModeHelp => ""
     ModeRun => ""
   }
+  // 双轨切换：解释轨（沙箱指令机）/ 编译轨（真编译闭包执行面）。
+  // Web 端不隐藏事实——编译轨按钮照常显示，切过去弹「本端不可达」提示。
+  let track_items = [
+    @views.action_item(
+      id="interpret",
+      label=text(t, "app.track.interpret"),
+      message=SetRunTrack(Interpret),
+    ),
+    @views.action_item(
+      id="compile",
+      label=text(t, "app.track.compile"),
+      message=SetRunTrack(Compile),
+    ),
+  ]
+  let selected_track = match current_track(model) {
+    Interpret => "interpret"
+    Compile => "compile"
+  }
+  let running = match current_track(model) {
+    Interpret => model.run is Some(_)
+    Compile => model.compiled_run is Some(_)
+  }
   @views.container(
     @views.column(
       [
@@ -66,14 +88,20 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               spacing=8.0,
             ),
             @views.button_group(mode_items, selected=selected_mode),
+            @views.button_group(
+              track_items,
+              selected=selected_track,
+              button_width=76.0,
+              height=36.0,
+            ),
             @views.button(
-              if model.run is Some(_) {
+              if running {
                 text(t, "app.run.stop")
               } else {
                 text(t, "app.run.start")
               },
-              on_click=if model.run is Some(_) { RunStop } else { RunStart },
-              variant=if model.run is Some(_) { Outline } else { Primary },
+              on_click=if running { RunStop } else { RunStart },
+              variant=if running { Outline } else { Primary },
             ),
             @views.button(
               text(t, "app.lang.switch"),
@@ -354,16 +382,8 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         ),
         @views.action_item(id="z50", label="50%", message=SetDesignZoom(0.5)),
         @views.action_item(id="z75", label="75%", message=SetDesignZoom(0.75)),
-        @views.action_item(
-          id="z100",
-          label="100%",
-          message=SetDesignZoom(1.0),
-        ),
-        @views.action_item(
-          id="z150",
-          label="150%",
-          message=SetDesignZoom(1.5),
-        ),
+        @views.action_item(id="z100", label="100%", message=SetDesignZoom(1.0)),
+        @views.action_item(id="z150", label="150%", message=SetDesignZoom(1.5)),
       ]
       let selected = if model.design_zoom <= 0.0 {
         "fit"
@@ -431,7 +451,7 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         )
       }
       @views.column(
-        [@views.button_group(zoom_items, selected=selected), canvas_area],
+        [@views.button_group(zoom_items, selected~), canvas_area],
         spacing=6.0,
       )
       // 锚定高度：设计列处于 CrossStart 行里，按「测量高度」布局，而
@@ -718,6 +738,20 @@ fn audit_dot_color(op : @studio_lang.StepOp) -> @graphics.Color {
 }
 
 ///|
+/// 编译轨审计色点：与解释轨逐类同色（两轨审计视图不应有色差）。
+fn compiled_audit_dot_color(op : @compiled_runtime.StepOp) -> @graphics.Color {
+  match op {
+    @compiled_runtime.OpAssign => @graphics.Color::rgba(r=0.30, g=0.52, b=0.90)
+    @compiled_runtime.OpMessage => @graphics.Color::rgba(r=0.30, g=0.62, b=0.36)
+    @compiled_runtime.OpGate => @graphics.Color::rgba(r=0.78, g=0.26, b=0.20)
+    @compiled_runtime.OpCommand => @graphics.Color::rgba(r=0.55, g=0.40, b=0.75)
+    @compiled_runtime.OpCondition =>
+      @graphics.Color::rgba(r=0.85, g=0.55, b=0.16)
+    @compiled_runtime.OpLoop => @graphics.Color::rgba(r=0.20, g=0.55, b=0.58)
+  }
+}
+
+///|
 /// 表单控件唯一构造点：运行舞台与设计舞台共用同一批 widget——设计态
 /// 外观与运行态由构造保证一致（治本：不再有"效果图 vs 真控件"两套渲染）。
 /// handlers 缺省 = 纯展示：设计舞台的手势覆盖层拦截全部指针输入，控件
@@ -743,30 +777,23 @@ fn form_widget(
     @ir.TextField =>
       match on_change {
         Some(change) =>
-          @views.text_field(
-            value,
-            on_input=new_value => change(control.name, new_value),
-          )
+          @views.text_field(value, on_input=new_value => {
+            change(control.name, new_value)
+          })
         None => @views.text_field(value, on_input=_new_value => Msg::Noop)
       }
     @ir.CheckBox =>
       match on_toggle {
         Some(toggle) =>
-          @views.checkbox(
-            value,
-            checked~,
-            on_change=checked => toggle(control.name, checked),
-          )
+          @views.checkbox(value, checked~, on_change=checked => {
+            toggle(control.name, checked)
+          })
         None =>
           @views.checkbox(value, checked~, on_change=_checked => Msg::Noop)
       }
     @ir.ListBox | @ir.Table => {
       // 列表框/表格是带视口的实物：行高 24，按设计高度截断可见行
-      let max_rows = if control.height < 24 {
-        1
-      } else {
-        control.height / 24
-      }
+      let max_rows = if control.height < 24 { 1 } else { control.height / 24 }
       let row_views : Array[@moui.View[Msg]] = []
       let mut row_index = 0
       for item in rows {
@@ -796,55 +823,277 @@ fn form_widget(
 }
 
 ///|
-/// 运行视图：真实渲染程序窗体（窗体框舞台）+ 闸门确认卡 + 审计时间线。
+/// 运行舞台唯一构造点：设计坐标绝对布局（StageLayout 按 IR 矩形分配子帧，
+/// tight 重排让控件精确等于设计的尺寸与位置）——两轨共用同一舞台，
+/// 只有数据源（解释轨 RunState / 编译轨 Runtime）不同。
+fn run_stage(
+  model : Model,
+  texts : Map[String, String],
+  checks : Map[String, Bool],
+  rows : Map[String, Array[String]],
+  selections : Map[String, Int],
+) -> @moui.View[Msg] {
+  let stage_widgets : Array[@moui.View[Msg]] = []
+  let stage_rects : Array[@geometry.Rect] = []
+  for control in model.program.controls {
+    let value = texts.get(control.name).unwrap_or(control.text)
+    stage_widgets.push(
+      form_widget(
+        control,
+        value,
+        checks.get(control.name).unwrap_or(false),
+        rows.get(control.name).unwrap_or([]),
+        selections.get(control.name).unwrap_or(-1),
+        on_click=ControlClicked(control.name),
+        on_change=(name, new_value) => ControlChanged(name, new_value),
+        on_pick=(name, index) => ControlPicked(name, index),
+        on_toggle=(name, checked) => RunToggle(name, checked),
+      ),
+    )
+    stage_rects.push(
+      @geometry.Rect::new(
+        x=control.x.to_double(),
+        y=control.y.to_double(),
+        width=control.width.to_double(),
+        height=control.height.to_double(),
+      ),
+    )
+  }
+  @views.container(
+    stage_layout(stage_widgets, stage_rects),
+    width=@ir.DESIGN_WIDTH.to_double(),
+    height=@ir.DESIGN_HEIGHT.to_double(),
+    background=@graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
+    corner_radius=10.0,
+    border=Some(
+      @graphics.BorderStyle::new(
+        brush=@graphics.Brush::solid(
+          @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
+        ),
+        width=1.5,
+      ),
+    ),
+    padding=0.0,
+  )
+}
+
+///|
+/// 编译轨运行视图：同一舞台 + 编译产物执行面读数（变量/消息/审计/闸门）。
+/// 与解释轨的可见差异只有事实差异：没有单步（真编译产物没有暂停指令），
+/// 因此隐藏单步/继续；闸门、审计跳积木、控件事件派发与解释轨同一套。
+fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+  match model.compiled_run {
+    None => @views.text("")
+    Some(run) => {
+      let runtime = run.runtime
+      let stage = run_stage(
+        model,
+        runtime.texts,
+        run.checks,
+        runtime.rows,
+        runtime.selections,
+      )
+      let stage_head = @views.column([
+        @views.row([
+          @views.text(text(t, "app.run.compile_stage"), role=Caption),
+          @views.text("\{run.handler_label}", role=Subtitle),
+        ]),
+        @views.row([
+          @views.button(
+            text(t, "app.run.stop"),
+            on_click=RunStop,
+            variant=Outline,
+          ),
+          match runtime.gate {
+            Some(_) =>
+              @views.badge(
+                text(t, "app.run.gate_pending"),
+                tone=@style.BadgeTone::Warning,
+                width=64.0,
+                height=24.0,
+              )
+            None => @views.text("")
+          },
+        ]),
+        @views.text(text(t, "app.run.compile_noskip"), role=Caption),
+      ])
+      // 变量表：编译轨 Runtime.vars，按键名稳定排序（与解释轨同一口径）
+      let variables_card : Array[@moui.View[Msg]] = []
+      let variable_names : Array[String] = []
+      for name in runtime.vars.keys() {
+        variable_names.push(name)
+      }
+      variable_names.sort()
+      if variable_names.length() > 0 {
+        variables_card.push(
+          @views.text(text(t, "app.run.variables"), role=Subtitle),
+        )
+        for name in variable_names {
+          match runtime.vars.get(name) {
+            Some(value) =>
+              variables_card.push(
+                @views.row([
+                  @views.text(name, width=120.0),
+                  @views.text(
+                    @compiled_runtime.value_to_text(value),
+                    width=280.0,
+                  ),
+                ]),
+              )
+            None => ()
+          }
+        }
+      }
+      // 闸门卡：与解释轨一致的确认/拒绝两键（闸门确认前零真实动作）
+      let gate_card : Array[@moui.View[Msg]] = []
+      match runtime.gate {
+        Some(gate) => {
+          let prompt = match gate.kind {
+            @compiled_runtime.Submit =>
+              text_with(t, "app.run.gate.submit", [
+                ("target", gate.prompt),
+                ("payload", gate.payload),
+              ])
+            @compiled_runtime.Ask =>
+              text_with(t, "app.run.gate.ask", [("prompt", gate.prompt)])
+          }
+          gate_card.push(
+            @views.column([
+              @views.callout(
+                text(t, "app.run.gate.title"),
+                prompt,
+                tone=@style.Warning,
+                width=420.0,
+              ),
+              @views.row([
+                @views.button(
+                  text(t, "app.run.gate.confirm"),
+                  on_click=AnswerGate(true),
+                  variant=Primary,
+                ),
+                @views.button(
+                  text(t, "app.run.gate.reject"),
+                  on_click=AnswerGate(false),
+                  variant=Outline,
+                ),
+              ]),
+            ]),
+          )
+        }
+        None => ()
+      }
+      let messages_card : Array[@moui.View[Msg]] = []
+      if runtime.messages.length() > 0 {
+        let messages : Array[@moui.View[Msg]] = [
+          @views.text(text(t, "app.run.messages"), role=Subtitle),
+        ]
+        for message in runtime.messages {
+          messages.push(@views.text(message))
+        }
+        messages_card.push(@views.column(messages))
+      }
+      // 审计时间线：与解释轨同一组 (line, op, detail)，按点跳积木
+      let audit : Array[@moui.View[Msg]] = [
+        @views.text(text(t, "app.run.audit"), role=Subtitle),
+        @views.text(text(t, "app.run.audit_hint"), role=Caption),
+      ]
+      let mut audit_index = 0
+      for record in runtime.audit {
+        let op = match record.op {
+          @compiled_runtime.OpAssign => "op.assign"
+          @compiled_runtime.OpMessage => "op.message"
+          @compiled_runtime.OpGate => "op.gate"
+          @compiled_runtime.OpCommand => "op.command"
+          @compiled_runtime.OpCondition => "op.condition"
+          @compiled_runtime.OpLoop => "op.loop"
+        }
+        let dot = @views.container(
+          @views.empty(),
+          background=compiled_audit_dot_color(record.op),
+          corner_radius=4.0,
+          width=8.0,
+          height=8.0,
+        )
+        let row_index = audit_index
+        audit_index = audit_index + 1
+        audit.push(
+          @views.row([
+            dot,
+            @views.text("\{text(t, op)}  \{record.detail}", width=560.0),
+          ]).on_tap(AuditJump(row_index)),
+        )
+      }
+      let error_card : Array[@moui.View[Msg]] = []
+      match runtime.error {
+        Some(error) =>
+          error_card.push(
+            @views.inline_error(compiled_error_message(t, error), width=440.0),
+          )
+        None => ()
+      }
+      let panel : Array[@moui.View[Msg]] = [stage_head]
+      for item in variables_card {
+        panel.push(item)
+      }
+      for item in gate_card {
+        panel.push(item)
+      }
+      for item in messages_card {
+        panel.push(item)
+      }
+      panel.push(
+        @views.scroll_view(
+          @views.column(audit),
+          width=600.0,
+          height=180.0,
+          shows_indicator=true,
+        ),
+      )
+      for item in error_card {
+        panel.push(item)
+      }
+      @views.scroll_view(
+        @views.column(
+          [
+            stage,
+            @views.card(
+              @views.container(@views.column(panel), padding=10.0),
+              width=640.0,
+              padding=10.0,
+            ),
+          ],
+          spacing=8.0,
+        ),
+        width=640.0,
+        height=576.0,
+        shows_indicator=true,
+      )
+    }
+  }
+}
+
+///|
+/// 运行视图：按当前轨分派。两轨运行态互相独立——切轨只换视图，
+/// 不销毁另一轨已跑到的位置（模型层保证，视图层如实投影）。
 fn run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+  match current_track(model) {
+    Interpret => interpret_run_form(model, t)
+    Compile => compiled_run_form(model, t)
+  }
+}
+
+///|
+/// 解释轨运行视图：真实渲染程序窗体（窗体框舞台）+ 闸门确认卡 + 审计时间线。
+fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match model.run {
     None => @views.text("")
     Some(run) => {
-      let texts = run.state.texts
-      // 运行舞台：真实控件按设计坐标绝对布局（StageLayout 按 IR 矩形分配
-      // 子帧，tight 重排让控件精确等于设计的尺寸与位置）——设计稿所见即所得。
-      let stage_widgets : Array[@moui.View[Msg]] = []
-      let stage_rects : Array[@geometry.Rect] = []
-      for control in model.program.controls {
-        let value = texts.get(control.name).unwrap_or(control.text)
-        stage_widgets.push(
-          form_widget(
-            control,
-            value,
-            run.checks.get(control.name).unwrap_or(false),
-            run.state.rows.get(control.name).unwrap_or([]),
-            run.state.selections.get(control.name).unwrap_or(-1),
-            on_click=ControlClicked(control.name),
-            on_change=(name, new_value) => ControlChanged(name, new_value),
-            on_pick=(name, index) => ControlPicked(name, index),
-            on_toggle=(name, checked) => RunToggle(name, checked),
-          ),
-        )
-        stage_rects.push(
-          @geometry.Rect::new(
-            x=control.x.to_double(),
-            y=control.y.to_double(),
-            width=control.width.to_double(),
-            height=control.height.to_double(),
-          ),
-        )
-      }
-      let stage = @views.container(
-        stage_layout(stage_widgets, stage_rects),
-        width=@ir.DESIGN_WIDTH.to_double(),
-        height=@ir.DESIGN_HEIGHT.to_double(),
-        background=@graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
-        corner_radius=10.0,
-        border=Some(
-          @graphics.BorderStyle::new(
-            brush=@graphics.Brush::solid(
-              @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
-            ),
-            width=1.5,
-          ),
-        ),
-        padding=0.0,
+      let stage = run_stage(
+        model,
+        run.state.texts,
+        run.checks,
+        run.state.rows,
+        run.state.selections,
       )
       // 舞台条两行：标题行（正在运行 + 子程序）+ 按钮行（单步/继续/停止）。
       // 单行挤 436px 会把继续/停止裁掉（实测）；按钮仅在运行中显示，
@@ -1090,7 +1339,10 @@ fn danger_button_style() -> @style.ButtonStyle {
     brush=@core.Brush::solid(danger.multiply_alpha(0.5)),
     width=1.0,
   )
-  fn state(foreground : @core.Color, background : @core.Color) -> @style.ControlStateStyle {
+  fn state(
+    foreground : @core.Color,
+    background : @core.Color,
+  ) -> @style.ControlStateStyle {
     @style.ControlStateStyle::{
       foreground,
       background: @core.Brush::solid(background),
@@ -1204,7 +1456,12 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.row(
       [
         // 标题限宽：text 默认 160 会把这一行撑到 262，几乎吃满滚动视口
-        @views.text(text(t, "app.ai.title"), role=Subtitle, width=130.0, align=TextStart),
+        @views.text(
+          text(t, "app.ai.title"),
+          role=Subtitle,
+          width=130.0,
+          align=TextStart,
+        ),
         @views.badge(
           if model.provider_mode is Fake {
             text(t, "app.ai.fake")
@@ -1315,7 +1572,9 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   // 讲解
   let explanation_card : Array[@moui.View[Msg]] = []
   if model.explanation != "" {
-    explanation_card.push(@views.text(text(t, "app.ai.explanation"), align=TextStart))
+    explanation_card.push(
+      @views.text(text(t, "app.ai.explanation"), align=TextStart),
+    )
     explanation_card.push(@views.text(model.explanation))
   }
   // provider 设置收进折叠区：三输入框常驻占了近半面板，默认收起后
@@ -1378,7 +1637,9 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   }
   // 提案历史（会话内）：回放 AI 干了什么
   if model.proposal_history.length() > 0 {
-    panel.push(@views.text(text(t, "app.ai.history"), role=Subtitle, align=TextStart))
+    panel.push(
+      @views.text(text(t, "app.ai.history"), role=Subtitle, align=TextStart),
+    )
     for record in model.proposal_history {
       panel.push(
         @views.row([

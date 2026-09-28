@@ -27,6 +27,9 @@ async fn main {
     program=@studio_app.program(
       environment=@macos.app_environment(),
       provider_config~,
+      // native 入口：编译轨可达（Web 入口保持默认 false =
+      // 只有解释轨 + 源码预览，边界在 docs 定位页写明）。
+      compile_track_available=true,
       apply_locale=tag => {
         match runtime_ref.val {
           Some(runtime) =>

@@ -78,6 +78,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.history", GeneratedI18nMessage::Text("Proposal history")),
       ("app.code.error", GeneratedI18nMessage::Text("Syntax error")),
       ("app.code.title", GeneratedI18nMessage::Text("MoUI Studio code")),
+      ("app.compile.ok", GeneratedI18nMessage::Text("Compile passed")),
       ("app.help.gates", GeneratedI18nMessage::Text("Gate")),
       (
         "app.help.intro",
@@ -112,6 +113,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.lang.switch", GeneratedI18nMessage::Text("中文")),
       ("app.mode.blocks", GeneratedI18nMessage::Text("Blocks")),
       ("app.mode.design", GeneratedI18nMessage::Text("Design")),
+      ("app.track.label", GeneratedI18nMessage::Text("Run track")),
       ("builtin.to_text", GeneratedI18nMessage::Text("to_text")),
       ("err.missing_end", GeneratedI18nMessage::Text("Missing the end keyword")),
       (
@@ -123,6 +125,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_change", GeneratedI18nMessage::Text("on change")),
       ("app.block.delete", GeneratedI18nMessage::Text("Delete statement")),
       (
+        "app.compile.jump",
+        GeneratedI18nMessage::Text("Tap to jump to the block"),
+      ),
+      (
         "app.design.empty",
         GeneratedI18nMessage::Text(
           "The canvas is empty — add a control from the palette to begin",
@@ -133,7 +139,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.preview.note",
         GeneratedI18nMessage::Text(
-          "Readable preview (graduation path) - not compilable output; the source of truth is the .studio.json IR",
+          "This preview is byte-identical to the single MoonBit source compiled by moon check/build in the exported bundle (real graduation path).",
         ),
       ),
       (
@@ -170,6 +176,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.run.variables", GeneratedI18nMessage::Text("Variables")),
       ("app.status.opened", GeneratedI18nMessage::Text("Project opened")),
+      ("app.track.compile", GeneratedI18nMessage::Text("Compiled")),
       ("blocks.count_loop", GeneratedI18nMessage::Text("repeat")),
       ("builtin.row_count", GeneratedI18nMessage::Text("row_count")),
       ("control.check_box", GeneratedI18nMessage::Text("Check box")),
@@ -190,6 +197,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("{a} type mismatch (expected {b})"),
       ),
       ("app.ai.explanation", GeneratedI18nMessage::Text("Explanation")),
+      ("app.compile.failed", GeneratedI18nMessage::Text("Compile failed")),
+      ("app.compile.output", GeneratedI18nMessage::Text("Toolchain output")),
+      ("app.compile.target", GeneratedI18nMessage::Text("Target")),
       ("app.help.functions", GeneratedI18nMessage::Text("Function")),
       ("app.inspector.name", GeneratedI18nMessage::Text("Name")),
       ("app.inspector.none", GeneratedI18nMessage::Text("No control selected")),
@@ -224,6 +234,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Write your program here; keyword cheatsheet lives under Help",
         ),
       ),
+      (
+        "app.compile.running",
+        GeneratedI18nMessage::Text("Compiling for real..."),
+      ),
       ("app.design.zoom.fit", GeneratedI18nMessage::Text("Fit window")),
       (
         "app.inspector.items",
@@ -243,6 +257,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.templates.drill", GeneratedI18nMessage::Text("Arithmetic drill")),
       ("app.templates.hello", GeneratedI18nMessage::Text("Hello app")),
       ("app.templates.store", GeneratedI18nMessage::Text("Class store")),
+      ("app.track.interpret", GeneratedI18nMessage::Text("Interpreter")),
       ("builtin.message_box", GeneratedI18nMessage::Text("message_box")),
       ("builtin.submit_data", GeneratedI18nMessage::Text("submit_data")),
       ("builtin.text_length", GeneratedI18nMessage::Text("text_length")),
@@ -257,6 +272,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("selected_row")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("Unrecognized: {a}")),
+      ("app.compile.exit_code", GeneratedI18nMessage::Text("Exit code")),
+      (
+        "app.run.compile_stage",
+        GeneratedI18nMessage::Text("Real compiled artifact run"),
+      ),
       (
         "err.duplicate_control",
         GeneratedI18nMessage::Text("Duplicate control name: {name}"),
@@ -289,12 +309,24 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.inspector.position", GeneratedI18nMessage::Text("Position")),
       (
+        "app.run.compile_noskip",
+        GeneratedI18nMessage::Text(
+          "The compiled track has no single-stepping: the artifact runs to completion or a gate.",
+        ),
+      ),
+      (
         "app.status.open_failed",
         GeneratedI18nMessage::Text("Project file is invalid"),
       ),
       (
         "app.status.parse_error",
         GeneratedI18nMessage::Text("Fix the syntax error before running"),
+      ),
+      (
+        "app.track.compile_note",
+        GeneratedI18nMessage::Text(
+          "Compiled track: the same IR is emitted as readable MoonBit and executed from a real compiled artifact (no interpreter).",
+        ),
       ),
       (
         "err.break_outside_loop",
@@ -313,6 +345,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "Drag blocks to reorder within a level; tap one to edit it below",
         ),
+      ),
+      (
+        "app.compile.diagnostics",
+        GeneratedI18nMessage::Text("Compile diagnostics"),
       ),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("Duplicate")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("Class roll call")),
@@ -349,6 +385,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.status.handlers_limit",
         GeneratedI18nMessage::Text("Handler limit reached (max 64)"),
+      ),
+      (
+        "app.track.unavailable_web",
+        GeneratedI18nMessage::Text(
+          "The web build ships the interpreter track plus source preview only; the compiled track is native-only.",
+        ),
       ),
       (
         "err.invalid_variable_name",
@@ -463,6 +505,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.history", GeneratedI18nMessage::Text("提案历史")),
       ("app.code.error", GeneratedI18nMessage::Text("语法错误")),
       ("app.code.title", GeneratedI18nMessage::Text("MoUI Studio 代码")),
+      ("app.compile.ok", GeneratedI18nMessage::Text("真编译通过")),
       ("app.help.gates", GeneratedI18nMessage::Text("闸门")),
       (
         "app.help.intro",
@@ -500,6 +543,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.lang.switch", GeneratedI18nMessage::Text("English")),
       ("app.mode.blocks", GeneratedI18nMessage::Text("积木")),
       ("app.mode.design", GeneratedI18nMessage::Text("设计")),
+      ("app.track.label", GeneratedI18nMessage::Text("运行轨")),
       ("builtin.to_text", GeneratedI18nMessage::Text("转文本")),
       ("err.missing_end", GeneratedI18nMessage::Text("缺少结束关键字")),
       (
@@ -508,6 +552,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("event.on_change", GeneratedI18nMessage::Text("内容改变")),
       ("app.block.delete", GeneratedI18nMessage::Text("删除语句")),
+      ("app.compile.jump", GeneratedI18nMessage::Text("点击跳转到积木")),
       (
         "app.design.empty",
         GeneratedI18nMessage::Text(
@@ -519,7 +564,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.preview.note",
         GeneratedI18nMessage::Text(
-          "可读预览（毕业通道）——不是可编译产物；程序事实来源是 .studio.json",
+          "预览源码就是导出 bundle 中唯一参与 moon check/build 的那份源码（真编译毕业通道）。",
         ),
       ),
       (
@@ -550,6 +595,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.preview.title", GeneratedI18nMessage::Text("MoonBit 源码预览")),
       ("app.run.variables", GeneratedI18nMessage::Text("变量")),
       ("app.status.opened", GeneratedI18nMessage::Text("已打开项目")),
+      ("app.track.compile", GeneratedI18nMessage::Text("编译轨")),
       ("blocks.count_loop", GeneratedI18nMessage::Text("计次循环")),
       ("builtin.row_count", GeneratedI18nMessage::Text("取行数")),
       ("control.check_box", GeneratedI18nMessage::Text("选择框")),
@@ -561,6 +607,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("{a} 类型不匹配（期望 {b}）"),
       ),
       ("app.ai.explanation", GeneratedI18nMessage::Text("讲解")),
+      ("app.compile.failed", GeneratedI18nMessage::Text("真编译失败")),
+      ("app.compile.output", GeneratedI18nMessage::Text("工具链输出")),
+      ("app.compile.target", GeneratedI18nMessage::Text("目标")),
       ("app.help.functions", GeneratedI18nMessage::Text("函数")),
       ("app.inspector.name", GeneratedI18nMessage::Text("名称")),
       ("app.inspector.none", GeneratedI18nMessage::Text("未选中控件")),
@@ -595,6 +644,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "在此编写程序；关键字速查见顶栏「帮助」",
         ),
       ),
+      ("app.compile.running", GeneratedI18nMessage::Text("正在真编译…")),
       ("app.design.zoom.fit", GeneratedI18nMessage::Text("适应窗口")),
       (
         "app.inspector.items",
@@ -614,6 +664,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.templates.drill", GeneratedI18nMessage::Text("口算训练营")),
       ("app.templates.hello", GeneratedI18nMessage::Text("问候小程序")),
       ("app.templates.store", GeneratedI18nMessage::Text("班级小卖部")),
+      ("app.track.interpret", GeneratedI18nMessage::Text("解释轨")),
       ("builtin.message_box", GeneratedI18nMessage::Text("信息框")),
       ("builtin.submit_data", GeneratedI18nMessage::Text("提交数据")),
       ("builtin.text_length", GeneratedI18nMessage::Text("取长度")),
@@ -628,6 +679,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("取所选行")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("无法识别：{a}")),
+      ("app.compile.exit_code", GeneratedI18nMessage::Text("退出码")),
+      (
+        "app.run.compile_stage",
+        GeneratedI18nMessage::Text("真编译产物运行"),
+      ),
       (
         "err.duplicate_control",
         GeneratedI18nMessage::Text("控件重名：{name}"),
@@ -660,12 +716,24 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.inspector.position", GeneratedI18nMessage::Text("位置")),
       (
+        "app.run.compile_noskip",
+        GeneratedI18nMessage::Text(
+          "编译轨不提供单步：真编译产物一次执行到完成或闸门。",
+        ),
+      ),
+      (
         "app.status.open_failed",
         GeneratedI18nMessage::Text("项目文件不合法"),
       ),
       (
         "app.status.parse_error",
         GeneratedI18nMessage::Text("代码有语法错误，先修复再运行"),
+      ),
+      (
+        "app.track.compile_note",
+        GeneratedI18nMessage::Text(
+          "编译轨：同一 IR 生成可读 MoonBit，由真编译产物执行（无解释器）。",
+        ),
       ),
       (
         "err.break_outside_loop",
@@ -685,6 +753,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "拖动积木可同层重排；点选积木在下方编辑语句",
         ),
       ),
+      ("app.compile.diagnostics", GeneratedI18nMessage::Text("编译诊断")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),
       (
@@ -721,6 +790,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.status.handlers_limit",
         GeneratedI18nMessage::Text(
           "子程序数量已达上限（最多 64 个）",
+        ),
+      ),
+      (
+        "app.track.unavailable_web",
+        GeneratedI18nMessage::Text(
+          "Web 端只有解释轨 + 源码预览；编译轨仅在 native 入口可达。",
         ),
       ),
       (
