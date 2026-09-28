@@ -48,7 +48,7 @@ members = [
   "./examples/momark",
   "./examples/browser",
   "./examples/terminal",
-  "./examples/momao",
+  "./examples/moui_studio",
   "./benchmarks/app_cached_layer",
   "./benchmarks/full_cycle",
   "./benchmarks/performance_budget",

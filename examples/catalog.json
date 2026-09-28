@@ -140,9 +140,9 @@
       "featured": true
     },
     {
-      "id": "momao",
-      "path": "examples/momao",
-      "title": "MoMao Studio",
+      "id": "studio",
+      "path": "examples/moui_studio",
+      "title": "MoUI Studio",
       "featured": false
     }
   ]

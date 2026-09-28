@@ -1,7 +1,7 @@
 # Mo易 Studio（AI 赋能的 MoUI/MoonBit 版易语言）
 
 - Status: done
-- Superseded by: ../active/momao.md（2026-09-27：MoMao 墨卯统一取代 Mo易/MoBlocks 双 Studio，本计划对应代码 `examples/moeui_studio` 已删除，salvage 映射见新计划第 11 节）
+- Superseded by: ../active/moui-studio.md（2026-09-27：MoUI Studio统一取代 Mo易/MoBlocks 双 Studio，本计划对应代码 `examples/moeui_studio` 已删除，salvage 映射见新计划第 11 节）
 - Goal: 在 MoUI 上构建一个易语言风格的中文可视化编程 IDE：表单设计器 +
   中文事件子程序 DSL + 一键运行 + AI 生成整个应用（窗体 + 中文代码）。
   产品名 Mo易 Studio，落位 `examples/moeui_studio`，项目格式 `.moeui.json`。

@@ -1,7 +1,7 @@
 # Plan: MoBlocks Studio v2 — Web 拖拽回归修复、榫卯积木与四区布局
 
 - **Status**: done
-- **Superseded by**: [momao.md](../active/momao.md)（2026-09-27：MoMao 墨卯统一取代 Mo易/MoBlocks 双 Studio，相关代码已删除，salvage 映射见新计划第 11 节）
+- **Superseded by**: [studio.md](../active/moui-studio.md)（2026-09-27：MoUI Studio统一取代 Mo易/MoBlocks 双 Studio，相关代码已删除，salvage 映射见新计划第 11 节）
 - **Goal**: 偿还 MoBlocks Studio 冻结后发现的产品完善项：修复 Web 端画布拖拽整体失效的框架回归（P0），把长方形积木升级为榫卯/拼图形状并按分类配色，把底部 35+ 控件的大滚动面板重构为四区 IDE 布局，并偿还 ExecTick 无驱动等高优功能债务。
 - **Non-goals**: 不改图模型语义（trigger/flow 端口图，不做 Scratch 栈式嵌套）；不改导出 bundle 格式；MCP 集成、minimap/框选/吸附仍留在赛后路线图。
 - **Supersedes**: 无（是 `moblocks-studio.md` M5 冻结之后的增量完善，不重开其里程碑）。

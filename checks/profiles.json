@@ -187,23 +187,23 @@
           ]
         },
         {
-          "name": "momao i18n catalogs",
+          "name": "studio i18n catalogs",
           "argv": [
             "node",
             "scripts/generate-i18n-catalogs.mjs",
             "--input",
-            "examples/momao/app/i18n/catalogs.json",
+            "examples/moui_studio/app/i18n/catalogs.json",
             "--out",
-            "examples/momao/app/i18n_catalog_generated.mbt",
+            "examples/moui_studio/app/i18n_catalog_generated.mbt",
             "--check"
           ]
         },
         {
-          "name": "momao export kernel sync",
+          "name": "studio export kernel sync",
           "argv": [
             "moon",
             "run",
-            "examples/momao/tools/sync_kernel",
+            "examples/moui_studio/tools/sync_kernel",
             "--target",
             "native",
             "--",

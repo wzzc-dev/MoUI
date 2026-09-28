@@ -517,7 +517,7 @@ test "tree view secondary tap reports the row id" {
 ///|
 /// 设计舞台回归：手势覆盖层叠在真实控件之上时，Down 必须由覆盖层认领
 /// （拦截指针输入），拖拽手势完整到达覆盖层，且下层按钮不被激活。
-/// （MoMao 设计舞台结构：stack([背景画布, 真控件层, 手势覆盖画布])。）
+/// （MoUI Studio 设计舞台结构：stack([背景画布, 真控件层, 手势覆盖画布])。）
 test "设计舞台：覆盖层在真控件之上，拖拽消息完整、按钮不激活" {
   let (received, capture) = pointer_capture_messages()
   let backdrop = @views.canvas(
@@ -566,7 +566,7 @@ test "设计舞台：覆盖层在真控件之上，拖拽消息完整、按钮�
 
 ///|
 /// 设计舞台回归（完整嵌套）：CrossStart 行 + frame(600) + flexible 列 +
-/// 缩放工具条 + 三层舞台——复刻 MoMao 设计模式的真实嵌套，验证拖拽仍达
+/// 缩放工具条 + 三层舞台——复刻 MoUI Studio 设计模式的真实嵌套，验证拖拽仍达
 /// 手势覆盖层（2026-09 拖拽失效回归的实证夹具）。
 test "设计舞台：完整嵌套下拖拽消息仍达覆盖层" {
   let (received, capture) = pointer_capture_messages()

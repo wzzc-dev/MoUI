@@ -1,0 +1,6 @@
+import {
+  "examples/moui_studio/domain/ir",
+  "examples/moui_studio/domain/studio_lang",
+}
+
+supported_targets = "native+wasm-gc"

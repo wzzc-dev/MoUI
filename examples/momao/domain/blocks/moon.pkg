@@ -1,6 +1,0 @@
-import {
-  "examples/momao/domain/ir",
-  "examples/momao/domain/momao_lang",
-}
-
-supported_targets = "native+wasm-gc"

@@ -68,7 +68,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [backend-renderer-lifecycle-convergence](active/backend-renderer-lifecycle-convergence.md) | Split backend-common state owners and collapse renderer binding to provider/session |
 | [runtime-state-render-ownership-convergence](active/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
-| [momao](active/momao.md) | MoMao（墨卯）：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
+| [moui-studio](active/moui-studio.md) | MoUI Studio：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
 | [view-node-trait-refactor](active/view-node-trait-refactor.md) | Complete the public ViewNode trait migration |
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
@@ -125,8 +125,8 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [markdown-html-image-gallery](done/markdown-html-image-gallery.md) | Render the safe HTML image-gallery subset in Markdown Editor |
 | [row-child-hit-testing](done/row-child-hit-testing.md) | 原报 `row` 子级按钮与 `on_drag` 不命中；2026-09-26 复核在 moon 0.1.20260920 下不再复现（8 形状探针 + canvas/按钮/普通 view 拖拽全部正常），行为由 `moui/runtime/row_child_pointer_input_test.mbt` 固定 |
 | [repo-format-and-ratchet-drift](done/repo-format-and-ratchet-drift.md) | 仓库级格式漂移与 ratchet 过期：2026-09-26 已修复（生成 facts 重写、6 个 ratchet 重登记、5 个漂移文件 `moon fmt`，`moon fmt --check` 全仓 0 差异） |
-| [moblocks-studio](done/moblocks-studio.md) | MoBlocks Studio（积木工作流 + AI 提案 + 导出）——已完成，2026-09-27 归档：被 MoMao 取代，对应代码删除 |
-| [moblocks-studio-v2](done/moblocks-studio-v2.md) | MoBlocks Studio v2（Web 拖拽回归、拼图积木、四区布局）——已完成，2026-09-27 归档：被 MoMao 取代 |
-| [moeui-studio](done/moeui-studio.md) | Mo易 Studio（中文 DSL + 表单设计器 + 提案式 AI）——已完成，2026-09-27 归档：被 MoMao 取代，对应代码删除 |
+| [moblocks-studio](done/moblocks-studio.md) | MoBlocks Studio（积木工作流 + AI 提案 + 导出）——已完成，2026-09-27 归档：被 MoUI Studio 取代，对应代码删除 |
+| [moblocks-studio-v2](done/moblocks-studio-v2.md) | MoBlocks Studio v2（Web 拖拽回归、拼图积木、四区布局）——已完成，2026-09-27 归档：被 MoUI Studio 取代 |
+| [moeui-studio](done/moeui-studio.md) | Mo易 Studio（中文 DSL + 表单设计器 + 提案式 AI）——已完成，2026-09-27 归档：被 MoUI Studio 取代，对应代码删除 |
 
 Move finished plans to `done/` in the same PR that closes the work.

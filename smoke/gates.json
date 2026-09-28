@@ -377,17 +377,17 @@
       ]
     },
     {
-      "id": "momao.export-build",
+      "id": "studio.export-build",
       "tier": "nightly",
       "kind": "export-bundle-smoke",
       "host": "any",
-      "purpose": "Emit a minimal MoMao project through tools/emit_bundle and independently build it outside the workspace (wasm-gc), so kernel snapshot, runtime closure, or ABI shim drift fails loudly instead of silently breaking exported apps.",
+      "purpose": "Emit a minimal MoUI Studio project through tools/emit_bundle and independently build it outside the workspace (wasm-gc), so kernel snapshot, runtime closure, or ABI shim drift fails loudly instead of silently breaking exported apps.",
       "defaultDevCheck": false,
       "commands": [
         {
           "argv": [
             "sh",
-            "scripts/momao-export-smoke.sh"
+            "scripts/studio-export-smoke.sh"
           ],
           "mode": "run"
         }
@@ -401,7 +401,7 @@
       },
       "docs": [
         "docs/testing.md",
-        "docs/plans/active/momao.md"
+        "docs/plans/active/moui-studio.md"
       ],
       "artifacts": []
     }

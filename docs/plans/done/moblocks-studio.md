@@ -1,7 +1,7 @@
 # Plan: MoBlocks Studio — AI 直接生成的可视化应用开发工具
 
 - **Status**: done
-- **Superseded by**: [momao.md](../active/momao.md)（2026-09-27：MoMao 墨卯统一取代 Mo易/MoBlocks 双 Studio，本计划对应代码 `examples/moblocks_studio` 已删除，salvage 映射见新计划第 11 节）
+- **Superseded by**: [studio.md](../active/moui-studio.md)（2026-09-27：MoUI Studio统一取代 Mo易/MoBlocks 双 Studio，本计划对应代码 `examples/moblocks_studio` 已删除，salvage 映射见新计划第 11 节）
 - **Goal**: 在上海 2026 开源软件应用创新大赛「开源 AI 工具」赛道交付一个可打开即用的产品：用户通过类 Scratch 积木与自然语言生成、验证、运行、调试应用工作流，并导出可运行的 MoUI 应用。
 - **Deadline**: 2026-10-11 报名截止；内部目标 2026-10-09 完成交付包，10-10 提交。
 - **Non-goals**: 不复刻 Scratch 的角色/舞台/动画系统；不复用或复制 Scratch AGPL 源码；比赛版不做 MCP 集成（client、server 管理与工具积木，已列入赛后路线图）；不做多人协作、云账户、多 Agent 编排、任意代码执行、移动端产品承诺或完整低代码平台。
