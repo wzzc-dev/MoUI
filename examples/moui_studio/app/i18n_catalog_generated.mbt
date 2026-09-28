@@ -125,6 +125,15 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_change", GeneratedI18nMessage::Text("on change")),
       ("app.block.delete", GeneratedI18nMessage::Text("Delete statement")),
       (
+        "app.command.hint",
+        GeneratedI18nMessage::Text("Ctrl/Cmd + K opens the command palette"),
+      ),
+      (
+        "app.command.lang",
+        GeneratedI18nMessage::Text("Switch interface language"),
+      ),
+      ("app.command.open", GeneratedI18nMessage::Text("Command palette")),
+      (
         "app.compile.jump",
         GeneratedI18nMessage::Text("Tap to jump to the block"),
       ),
@@ -267,11 +276,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ai.hist_accepted", GeneratedI18nMessage::Text("Accepted")),
       ("app.ai.hist_rejected", GeneratedI18nMessage::Text("Rejected")),
+      ("app.command.run.stop", GeneratedI18nMessage::Text("Stop current run")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("Delete control")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("Confirm send")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("selected_row")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("Unrecognized: {a}")),
+      ("app.command.file.save", GeneratedI18nMessage::Text("Save project")),
+      ("app.command.group.run", GeneratedI18nMessage::Text("Run")),
+      (
+        "app.command.mode.code",
+        GeneratedI18nMessage::Text("Switch to code view"),
+      ),
+      (
+        "app.command.run.start",
+        GeneratedI18nMessage::Text("Run current handler"),
+      ),
       ("app.compile.exit_code", GeneratedI18nMessage::Text("Exit code")),
       (
         "app.run.compile_stage",
@@ -307,6 +327,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Control {control} does not support event {event}",
         ),
       ),
+      ("app.command.group.file", GeneratedI18nMessage::Text("File")),
+      ("app.command.group.lang", GeneratedI18nMessage::Text("Interface")),
+      ("app.command.group.mode", GeneratedI18nMessage::Text("View")),
       ("app.inspector.position", GeneratedI18nMessage::Text("Position")),
       (
         "app.run.compile_noskip",
@@ -346,6 +369,21 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Drag blocks to reorder within a level; tap one to edit it below",
         ),
       ),
+      ("app.command.group.track", GeneratedI18nMessage::Text("Track")),
+      (
+        "app.command.mode.blocks",
+        GeneratedI18nMessage::Text("Switch to blocks view"),
+      ),
+      (
+        "app.command.mode.design",
+        GeneratedI18nMessage::Text("Switch to design view"),
+      ),
+      (
+        "app.command.placeholder",
+        GeneratedI18nMessage::Text(
+          "Type a command name, e.g. design, compile…",
+        ),
+      ),
       (
         "app.compile.diagnostics",
         GeneratedI18nMessage::Text("Compile diagnostics"),
@@ -359,6 +397,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("String is missing its closing quote"),
+      ),
+      (
+        "app.command.mode.preview",
+        GeneratedI18nMessage::Text("Switch to MoonBit source view"),
       ),
       (
         "err.invalid_control_name",
@@ -377,6 +419,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.proposal_readability",
         GeneratedI18nMessage::Text("Readability issue: {target}"),
+      ),
+      (
+        "app.command.track.compile",
+        GeneratedI18nMessage::Text("Switch to compile track"),
       ),
       (
         "app.status.controls_limit",
@@ -407,6 +453,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.proposal_missing_field",
         GeneratedI18nMessage::Text("Missing field: {field}"),
+      ),
+      (
+        "app.command.track.interpret",
+        GeneratedI18nMessage::Text("Switch to interpretation track"),
       ),
       (
         "app.status.proposal_invalid",
@@ -552,6 +602,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("event.on_change", GeneratedI18nMessage::Text("内容改变")),
       ("app.block.delete", GeneratedI18nMessage::Text("删除语句")),
+      (
+        "app.command.hint",
+        GeneratedI18nMessage::Text("Ctrl/Cmd + K 打开命令面板"),
+      ),
+      ("app.command.lang", GeneratedI18nMessage::Text("切换界面语言")),
+      ("app.command.open", GeneratedI18nMessage::Text("命令面板")),
       ("app.compile.jump", GeneratedI18nMessage::Text("点击跳转到积木")),
       (
         "app.design.empty",
@@ -674,11 +730,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ai.hist_accepted", GeneratedI18nMessage::Text("已采纳")),
       ("app.ai.hist_rejected", GeneratedI18nMessage::Text("已拒绝")),
+      ("app.command.run.stop", GeneratedI18nMessage::Text("停止当前运行")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("确认送出")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("builtin.selected_row", GeneratedI18nMessage::Text("取所选行")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("无法识别：{a}")),
+      ("app.command.file.save", GeneratedI18nMessage::Text("保存项目")),
+      ("app.command.group.run", GeneratedI18nMessage::Text("运行")),
+      (
+        "app.command.mode.code",
+        GeneratedI18nMessage::Text("切到代码视图"),
+      ),
+      (
+        "app.command.run.start",
+        GeneratedI18nMessage::Text("运行当前子程序"),
+      ),
       ("app.compile.exit_code", GeneratedI18nMessage::Text("退出码")),
       (
         "app.run.compile_stage",
@@ -714,6 +781,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "控件「{control}」不支持事件「{event}」",
         ),
       ),
+      ("app.command.group.file", GeneratedI18nMessage::Text("文件")),
+      ("app.command.group.lang", GeneratedI18nMessage::Text("界面")),
+      ("app.command.group.mode", GeneratedI18nMessage::Text("视图")),
       ("app.inspector.position", GeneratedI18nMessage::Text("位置")),
       (
         "app.run.compile_noskip",
@@ -753,6 +823,21 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "拖动积木可同层重排；点选积木在下方编辑语句",
         ),
       ),
+      ("app.command.group.track", GeneratedI18nMessage::Text("运行轨")),
+      (
+        "app.command.mode.blocks",
+        GeneratedI18nMessage::Text("切到积木视图"),
+      ),
+      (
+        "app.command.mode.design",
+        GeneratedI18nMessage::Text("切到设计视图"),
+      ),
+      (
+        "app.command.placeholder",
+        GeneratedI18nMessage::Text(
+          "输入命令名，例如「设计」「编译」…",
+        ),
+      ),
       ("app.compile.diagnostics", GeneratedI18nMessage::Text("编译诊断")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),
@@ -763,6 +848,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("字符串缺少结束引号"),
+      ),
+      (
+        "app.command.mode.preview",
+        GeneratedI18nMessage::Text("切到 MoonBit 源码视图"),
       ),
       (
         "err.invalid_control_name",
@@ -779,6 +868,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.proposal_readability",
         GeneratedI18nMessage::Text("可读性问题：{target}"),
+      ),
+      (
+        "app.command.track.compile",
+        GeneratedI18nMessage::Text("切到编译轨"),
       ),
       (
         "app.status.controls_limit",
@@ -813,6 +906,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.proposal_missing_field",
         GeneratedI18nMessage::Text("缺少字段：{field}"),
+      ),
+      (
+        "app.command.track.interpret",
+        GeneratedI18nMessage::Text("切到解释轨"),
       ),
       (
         "app.status.proposal_invalid",

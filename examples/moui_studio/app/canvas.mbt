@@ -507,29 +507,24 @@ pub fn design_stage(
       for op in design_backdrop_plan() {
         match op {
           WindowFrame(rect) => {
+            // 技术风画板：深色舞台 + 小圆角 + 发丝框线（不抢控件视觉）
             fill_rounded_rect(
               ctx,
-              @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
-              @graphics.Brush::solid(
-                @graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
-              ),
+              @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
+              @graphics.Brush::solid(studio_stage_background()),
             )
             stroke_rounded_rect(
               ctx,
-              @graphics.RoundedRect::new(rect=place(rect), radius=10.0 * scale),
-              @graphics.Brush::solid(
-                @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
-              ),
-              1.5,
+              @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
+              @graphics.Brush::solid(studio_stage_outline()),
+              1.0,
             )
           }
           GridDot(rect) =>
             fill_rounded_rect(
               ctx,
               @graphics.RoundedRect::new(rect=place(rect), radius=1.0 * scale),
-              @graphics.Brush::solid(
-                @graphics.Color::rgba(r=0.85, g=0.86, b=0.90),
-              ),
+              @graphics.Brush::solid(studio_grid_line()),
             )
           _ => ()
         }
@@ -540,9 +535,9 @@ pub fn design_stage(
           ctx,
           @text.TextRun::new(
             text=empty_hint,
-            frame=frame,
+            frame~,
             font=@text.FontSpec::new(size=15.0),
-            color=@graphics.Color::rgba(r=0.55, g=0.56, b=0.60),
+            color=@core.Color::rgba(r=0.553, g=0.580, b=0.620),
             align=TextCenter,
           ),
         )
@@ -551,9 +546,7 @@ pub fn design_stage(
     semantics_label~,
   )
   let widget_layer = stage_layout(stage_widgets, stage_rects)
-  let overlay = canvas(
-    measure=auto_fit_measure,
-    draw=fn(ctx, frame) {
+  let overlay = canvas(measure=auto_fit_measure, draw=fn(ctx, frame) {
       let scale = frame_scale(frame)
       fn place(rect : @geometry.Rect) -> @geometry.Rect {
         @geometry.Rect::new(
@@ -595,7 +588,7 @@ pub fn design_stage(
                   ),
                 ),
                 font=@text.FontSpec::new(size=12.0 * scale),
-                color=@graphics.Color::rgba(r=0.45, g=0.46, b=0.50),
+                color=@graphics.Color::rgba(r=0.553, g=0.580, b=0.620),
                 align=TextCenter,
               ),
             )
@@ -647,7 +640,7 @@ pub fn design_stage(
               ),
             )
           }
-          SelectionHandle(rect) => {
+          SelectionHandle(rect) =>
             fill_rounded_rect(
               ctx,
               @graphics.RoundedRect::new(rect=place(rect), radius=2.0 * scale),
@@ -655,7 +648,6 @@ pub fn design_stage(
                 @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
               ),
             )
-          }
           GuideV(x) =>
             stroke_rounded_rect(
               ctx,
@@ -689,30 +681,29 @@ pub fn design_stage(
           _ => ()
         }
       }
-    },
-  )
-  // 覆盖层在最上：拦截全部指针事件（点选/拖拽在此转 typed Msg），
-  // 下层真实控件收不到输入，设计态不会误触运行行为。
-  .on_tap_with_frame(fn(position, frame) {
-    println("dbg overlay tap")
-    let scale = frame_scale(frame)
-    Msg::CanvasTap(
-      (position.x - frame.origin.x) / scale,
-      (position.y - frame.origin.y) / scale,
-    )
-  })
-  .on_drag_with_frame(fn(event, frame) {
-    println("dbg overlay drag")
-    let scale = frame_scale(frame)
-    let lx = (event.position.x - frame.origin.x) / scale
-    let ly = (event.position.y - frame.origin.y) / scale
-    if event.phase == @views.DragGesturePhase::Started {
-      Msg::CanvasPress(lx, ly)
-    } else if event.phase == @views.DragGesturePhase::Changed {
-      Msg::CanvasDragTo(lx, ly)
-    } else {
-      Msg::CanvasRelease(lx, ly)
-    }
-  })
+    })
+    // 覆盖层在最上：拦截全部指针事件（点选/拖拽在此转 typed Msg），
+    // 下层真实控件收不到输入，设计态不会误触运行行为。
+    .on_tap_with_frame(fn(position, frame) {
+      println("dbg overlay tap")
+      let scale = frame_scale(frame)
+      Msg::CanvasTap(
+        (position.x - frame.origin.x) / scale,
+        (position.y - frame.origin.y) / scale,
+      )
+    })
+    .on_drag_with_frame(fn(event, frame) {
+      println("dbg overlay drag")
+      let scale = frame_scale(frame)
+      let lx = (event.position.x - frame.origin.x) / scale
+      let ly = (event.position.y - frame.origin.y) / scale
+      if event.phase == @views.DragGesturePhase::Started {
+        Msg::CanvasPress(lx, ly)
+      } else if event.phase == @views.DragGesturePhase::Changed {
+        Msg::CanvasDragTo(lx, ly)
+      } else {
+        Msg::CanvasRelease(lx, ly)
+      }
+    })
   stack([backdrop, widget_layer, overlay])
 }

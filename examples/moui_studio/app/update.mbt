@@ -468,6 +468,27 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some(({ ..model, design_zoom: zoom, }, @moui.Effect::none()))
     }
     Noop => Some((model, @moui.Effect::none()))
+    CommandPaletteOpen =>
+      Some(
+        (
+          { ..model, command_palette_open: true, command_palette_query: "", },
+          @moui.Effect::none(),
+        ),
+      )
+    CommandPaletteClose =>
+      Some(({ ..model, command_palette_open: false, }, @moui.Effect::none()))
+    CommandPaletteQuery(query) =>
+      Some(({ ..model, command_palette_query: query, }, @moui.Effect::none()))
+    CommandPaletteRun(intent) =>
+      // 面板只负责选命令；命令 → 消息的映射是唯一执行通道。这里发消息
+      // 而不是递归 update_pure：让映射出的消息重新走 Program 顶层，
+      // 文件/网络等副作用消息（保存/生成/编译）才能到达 service 流。
+      Some(
+        (
+          { ..model, command_palette_open: false, },
+          @moui.Effect::send(command_message(intent)),
+        ),
+      )
     SelectHandler(key) => {
       let committed = commit_code(model)
       if committed.code_error != "" {

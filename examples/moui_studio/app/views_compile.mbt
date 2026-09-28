@@ -116,15 +116,25 @@ pub fn compile_report_card(
         let output_views : Array[@moui.View[Msg]] = []
         for line in report.output.split("\n") {
           output_views.push(
-            @views.text(line.to_owned(), width=560.0, align=TextStart),
+            @views.text(
+              line.to_owned(),
+              role=Mono,
+              width=548.0,
+              align=TextStart,
+            ),
           )
         }
         output_lines.push(
-          @views.scroll_view(
-            @views.column(output_views),
-            width=580.0,
-            height=180.0,
-            shows_indicator=true,
+          @views.container(
+            @views.scroll_view(
+              @views.column(output_views),
+              width=564.0,
+              height=156.0,
+              shows_indicator=true,
+            ),
+            background=studio_console_background(),
+            corner_radius=4.0,
+            padding=8.0,
           ),
         )
       }
@@ -185,8 +195,8 @@ fn diagnostic_row(
         width=72.0,
         height=20.0,
       ),
-      @views.text(location, width=220.0),
-      @views.text("\{code}\{diagnostic.text}", width=280.0),
+      @views.text(location, role=Mono, width=220.0),
+      @views.text("\{code}\{diagnostic.text}", role=Mono, width=280.0),
     ],
     spacing=8.0,
     align=Center,

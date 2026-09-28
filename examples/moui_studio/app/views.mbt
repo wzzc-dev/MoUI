@@ -3,8 +3,8 @@
 /// 右栏（属性 / AI 提案）+ 运行区。全部文案过 i18n 翻译器。
 
 ///|
-/// 顶栏（两行，带内边距——单行 13 个按钮会在 1280 宽窗口溢出裁切）：
-/// 第一行 = 标题（Title）+ 模式 tab（button_group 选中态）+ 运行 + 语言；
+/// 顶栏（两行，带内边距——单行 14 个按钮会在 1280 宽窗口溢出裁切）：
+/// 第一行 = 标题 + 模式 tab + 双轨切换 + 命令面板 + 运行 + 语言；
 /// 第二行 = 模板（Tonal）+ 文件操作（Outline + 图标）。
 fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let mode_items = [
@@ -157,6 +157,29 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               @core.KeyboardShortcut::new(
                 key="z",
                 modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+              ),
+            ),
+            @views.spacer(min_length=12.0, weight=0.0),
+            // 命令面板入口：技术风 IDE 的键盘优先通道（Ctrl/Cmd+K）。
+            // 链式追加 Cmd 变体：shortcut modifier 精确匹配修饰键。
+            // 放在第二行工具栏：首行已贴近 1280 宽预算。
+            @views.button(
+              text(t, "app.command.open"),
+              on_click=CommandPaletteOpen,
+              variant=Ghost,
+              width=150.0,
+              height=40.0,
+            )
+            .keyboard_shortcut(
+              @core.KeyboardShortcut::new(
+                key="k",
+                modifiers=@core.KeyModifiers::new(control=true),
+              ),
+            )
+            .keyboard_shortcut(
+              @core.KeyboardShortcut::new(
+                key="k",
+                modifiers=@core.KeyModifiers::new(meta=true),
               ),
             ),
             @views.spacer(min_length=12.0, weight=0.0),
@@ -469,22 +492,6 @@ fn center_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 }
 
 ///|
-/// 积木分类底色：与设计画布的控件色系呼应——存值蓝 / 分支橙 /
-/// 循环绿 / 跳出红 / 调用紫（浅阶 tint，深色文字可读）。
-fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
-  match kind {
-    @blocks.BkDeclare | @blocks.BkAssign =>
-      @graphics.Color::rgba(r=0.90, g=0.93, b=0.99)
-    @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkEnd =>
-      @graphics.Color::rgba(r=0.99, g=0.94, b=0.86)
-    @blocks.BkCountLoop | @blocks.BkWhile =>
-      @graphics.Color::rgba(r=0.89, g=0.96, b=0.90)
-    @blocks.BkBreak => @graphics.Color::rgba(r=0.99, g=0.90, b=0.89)
-    @blocks.BkCall => @graphics.Color::rgba(r=0.95, g=0.92, b=0.99)
-  }
-}
-
-///|
 /// 积木视图：IR 语句的 Scratch 式投影 + 编辑回写。
 /// 点块选中 → 下方编辑器改这一条语句（DSL）→ 应用即写回 IR，
 /// 代码视图/设计视图随之刷新；运行中按审计细节高亮当前块。
@@ -619,7 +626,9 @@ fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     compiled_run_header(model, t),
   ]
   for line in source.split("\n") {
-    lines.push(@views.text(line.to_owned(), width=460.0, align=TextStart))
+    lines.push(
+      @views.text(line.to_owned(), role=Mono, width=460.0, align=TextStart),
+    )
   }
   @views.scroll_view(
     @views.column(lines),
@@ -855,14 +864,14 @@ fn run_stage(
     stage_layout(stage_widgets, stage_rects),
     width=@ir.DESIGN_WIDTH.to_double(),
     height=@ir.DESIGN_HEIGHT.to_double(),
-    background=@graphics.Color::rgba(r=0.97, g=0.97, b=0.98),
-    corner_radius=10.0,
+    // 运行舞台与设计画布同一底板：运行的就是设计出来的那一块，
+    // 两轨共用，不因「运行」切成另一套外观（技术风深色画板）。
+    background=studio_stage_background(),
+    corner_radius=6.0,
     border=Some(
       @graphics.BorderStyle::new(
-        brush=@graphics.Brush::solid(
-          @graphics.Color::rgba(r=0.75, g=0.77, b=0.82),
-        ),
-        width=1.5,
+        brush=@graphics.Brush::solid(studio_stage_outline()),
+        width=1.0,
       ),
     ),
     padding=0.0,
@@ -1351,8 +1360,8 @@ fn danger_button_style() -> @style.ButtonStyle {
   }
   @style.ButtonStyle::new(
     normal=state(danger, @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
-    hovered=state(danger, @core.Color::rgba(r=0.99, g=0.90, b=0.89)),
-    pressed=state(danger, @core.Color::rgba(r=0.99, g=0.83, b=0.82)),
+    hovered=state(danger, @core.Color::rgba(r=0.235, g=0.129, b=0.121)),
+    pressed=state(danger, @core.Color::rgba(r=0.318, g=0.157, b=0.145)),
     disabled=state(
       @core.Color::rgba(r=0.78, g=0.26, b=0.20).multiply_alpha(0.4),
       @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
@@ -1703,7 +1712,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
       align=Start,
     ).frame(height=600.0)
   }
-  @views.column([
+  let base = @views.column([
     top_bar(model, t),
     @views.divider(),
     // 主行必须钳制高度：行内竖直 divider 按「可用高度」测量（和横 divider
@@ -1713,22 +1722,6 @@ pub fn view(model : Model) -> @moui.View[Msg] {
     main_row,
     @views.text(model.notice),
   ])
-  // 固定浅色主题：课堂/路演场景要求确定的演示外观，不随系统深色模式漂移
-  // （深色系统 + 浅色底板会出现白字白底）。
-  .theme(studio_theme())
-}
-
-///|
-/// 行拼接（Array::join 不可用，显式拼接）。
-fn join_lines(items : Array[String]) -> String {
-  let buf = StringBuilder()
-  let mut first = true
-  for item in items {
-    if !first {
-      buf.write_string("\n")
-    }
-    buf.write_string(item)
-    first = false
-  }
-  buf.to_string()
+  // 技术风暗色主题：石墨工程面板 + 朱砂唯一强调色，不随系统深浅漂移。
+  command_palette_host(base, model, t).theme(studio_theme())
 }

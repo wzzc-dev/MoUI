@@ -254,9 +254,7 @@ pub fn blocks_canvas(
                   rect=@geometry.Rect::new(x~, y~, width=18.0, height=6.0),
                   radius=2.0,
                 ),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.977, g=0.977, b=0.98),
-                ),
+                @graphics.Brush::solid(block_notch_color()),
               )
             BlockLabel(text, x, y, maxw) =>
               draw_text(
@@ -265,7 +263,7 @@ pub fn blocks_canvas(
                   text~,
                   frame=@geometry.Rect::new(x~, y~, width=maxw, height=20.0),
                   font=@text.FontSpec::new(size=12.0),
-                  color=@graphics.Color::rgba(r=0.12, g=0.13, b=0.16),
+                  color=block_text_color(),
                 ),
               )
             BlockStroke(x, y, w, h) =>

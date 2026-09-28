@@ -130,6 +130,9 @@ pub(all) struct Model {
   compile_busy : Bool
   // 工具链原始输出展开态（默认折叠：诊断优先，日志按需看）
   compile_output_open : Bool
+  // 命令面板（技术风 IDE 的键盘优先入口）：显隐 + 过滤查询
+  command_palette_open : Bool
+  command_palette_query : String
   pending : PendingProposal?
   prompt_draft : String
   prompt_error : String
@@ -219,6 +222,10 @@ pub(all) enum Msg {
   CompileStopped
   CompileJump(Int)
   ToggleCompileOutput
+  CommandPaletteOpen
+  CommandPaletteClose
+  CommandPaletteQuery(String)
+  CommandPaletteRun(@core.CommandIntent)
   RunTick
   RunStep
   RunResume
@@ -313,6 +320,8 @@ pub fn initial_model(
     compile_report: None,
     compile_busy: false,
     compile_output_open: false,
+    command_palette_open: false,
+    command_palette_query: "",
     pending: None,
     prompt_draft: "",
     prompt_error: "",
