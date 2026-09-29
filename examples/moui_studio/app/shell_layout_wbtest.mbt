@@ -43,13 +43,23 @@ fn shell_texts(commands : Array[@core.DrawCommand]) -> Array[@core.TextRun] {
 }
 
 ///|
-/// 所有填充矩形。
+/// 所有填充矩形（含 brush 变体与描边盒子）。
+///
+/// **必须覆盖 brush 变体**：`@views.button` 画的是 `FillRoundedRectBrush` /
+/// `StrokeRoundedRectBrush`（不是纯色 `FillRoundedRect`），只收后者会让
+/// 「按钮盒在哪」这类断言全部落空——实测本会话因此把一个真实的「拖拽区压住
+/// 运行按钮」缺陷漏过去了（断言报的是「找不到按钮盒」而不是「拖拽区盖住
+/// 按钮」，症状被伪装成测试自身的问题）。
 fn shell_rects(commands : Array[@core.DrawCommand]) -> Array[@core.Rect] {
   let rects : Array[@core.Rect] = []
   for command in commands {
     match command {
       @core.FillRect(rect, _) => rects.push(rect)
       @core.FillRoundedRect(rounded, _) => rects.push(rounded.rect)
+      @core.FillRoundedRectBrush(rounded, _) => rects.push(rounded.rect)
+      @core.StrokeRect(rect, _, _) => rects.push(rect)
+      @core.StrokeRoundedRect(rounded, _, _) => rects.push(rounded.rect)
+      @core.StrokeRoundedRectBrush(rounded, _, _) => rects.push(rounded.rect)
       _ => ()
     }
   }

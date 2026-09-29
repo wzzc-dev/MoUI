@@ -562,18 +562,26 @@ pub fn topbar_brand(
 }
 
 ///|
-/// 沉浸式窗控条高度（设计稿 v4 的无边框标题带）。
-/// 放在顶栏**之上**：不该把品牌/按钮往下挤——那是 IDE 的操作面。
-pub const WINDOW_CHROME_HEIGHT : Double = 26.0
+/// 沉浸式标题带高度（无边框窗口的窗口控制面）。
+///
+/// **不是额外的一条带子**：沉浸态下这一带与顶栏合并成**同一条 56pt 标题栏**
+/// （IDEA 口径），所以它只描述「标题栏总高」，不再描述「顶栏之上额外加多少」。
+/// 旧实现是 26 + 40 两条：上一条只放一句居中提示文字、底色
+/// `studio_window_background()`（#16181c），下一条顶栏 `ide_panel()`（#2b2d30），
+/// 交界处出现一条明显的两截色缝，且标题栏区域一半是空的——这正是「最上面的
+/// 窗口边框不沉浸」的直接成因。
+pub const WINDOW_CHROME_HEIGHT : Double = 56.0
 
 ///|
 /// 左上角留给系统信号灯的宽度（三个 12pt 圆 + 间距 + 左右边距）。
-/// 与 momark / mo_workbench 用的 78 一致：这是 AppKit 的固定几何，不是
-/// 主题值，所以不跟着主题变。
+///
+/// 实测原生窗口：三灯直径 13pt，圆心 y = 15.8（窗口顶往下），最右一颗右缘
+/// 68pt。所以自绘内容的左边距取 78 才不会钻到绿灯底下——这是 AppKit 的固定
+/// 几何，不是主题值，所以不跟着主题变。
 pub const TRAFFIC_LIGHT_INSET : Double = 78.0
 
 ///|
-/// 拖拽区语义：整条顶带都是「按住可以拖窗口」。
+/// 拖拽区语义：沉浸态整条顶栏都是「按住可以拖窗口」。
 ///
 /// **这里不自绘三个信号点。** `transparent_titlebar` 只把标题栏变透明 +
 /// 内容延伸到顶端，系统信号灯（关闭/最小化/缩放）照常浮在左上角；再画三
@@ -581,41 +589,13 @@ pub const TRAFFIC_LIGHT_INSET : Double = 78.0
 /// （`WindowRequest` 没有 zoom 变体）——那就是死 UI。用系统的，三个都是
 /// 真的，还自带悬停反馈与键盘可达性。
 ///
-/// 所以这一带只做两件事：左侧让出 `TRAFFIC_LIGHT_INSET`（别让自绘内容钻
-/// 到信号灯底下），以及作为拖拽区被平台层识别（入口把这条矩形交给
-/// `WindowSurfaceActions.set_drag_region`）。
-pub fn window_chrome_bar(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-) -> @moui.View[Msg] {
-  ignore(model)
-  let inner = (width - TRAFFIC_LIGHT_INSET - 24.0).max(60.0)
-  @views.container(
-    @views.padding_edges(
-      fill_row(
-        [
-          @views.text(
-            text(t, "app.window.drag_hint"),
-            theme=studio_theme(),
-            width=inner,
-            height=14.0,
-            align=TextCenter,
-          ).foreground(ide_text_faint()),
-        ],
-        inner,
-        8.0,
-        Center,
-      ),
-      left=TRAFFIC_LIGHT_INSET,
-      right=12.0,
-    ),
-    background=studio_window_background(),
-    width~,
-    height=WINDOW_CHROME_HEIGHT,
-    padding=0.0,
-  )
-}
+/// 自绘内容只需让出左侧 `TRAFFIC_LIGHT_INSET`（别钻到信号灯底下）；
+/// 拖拽矩形由入口在视图构建期交给 `WindowDragRegionSource`，
+/// 宿主按 revision 去重后下发 AppKit。
+///
+/// **拖拽区必须避开右侧动作簇**（宽度见 `topbar_drag_width`）：AppKit 的
+/// presenter 命中拖拽区时直接 `performWindowDragWithEvent:`，不再把事件交给
+/// 运行时，所以落在动作簇上的按下会变成拖窗口而不是点按钮。
 
 // ============================================================================
 // 状态栏

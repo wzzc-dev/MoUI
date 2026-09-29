@@ -59,9 +59,15 @@ fn shell_view(
   } else {
     PANEL_HEAD_HEIGHT
   }
-  // 沉浸式：顶栏之上多一条窗控带（信号点 + 拖拽区）。它属于窗口外壳，
-  // 不占 IDE 的操作面高度——所以从内容高度里扣掉，顶栏本身保持 40。
-  let window_bar = if model.immersive { WINDOW_CHROME_HEIGHT } else { 0.0 }
+  // 沉浸式：顶栏**就是**窗口标题栏，合并成一条 56pt（IDEA 口径）。
+  // 旧实现是「26pt 窗控带 + 40pt 顶栏」两条：上一条只放一句居中提示文字、
+  // 底色比顶栏更深，交界处一条两截色缝加半条空带——这就是「顶上的边框不
+  // 沉浸」的直接成因。合并后不再有额外的带子，只是这一条变高。
+  let window_bar = if model.immersive {
+    WINDOW_CHROME_HEIGHT - TOPBAR_HEIGHT
+  } else {
+    0.0
+  }
   let chrome = TOPBAR_HEIGHT +
     STATUSBAR_HEIGHT +
     bottom_height +
@@ -82,9 +88,6 @@ fn shell_view(
   }
   let bottom = ide_bottom_bar(model, t, width)
   let bands : Array[@moui.View[Msg]] = []
-  if model.immersive {
-    bands.push(window_chrome_bar(model, t, width))
-  }
   bands.push(ide_top_bar(model, t, width))
   bands.push(hairline())
   bands.push(content)

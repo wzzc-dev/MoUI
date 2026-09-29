@@ -1077,7 +1077,20 @@ pub fn decision_bar_height(model : Model) -> Double {
 // ============================================================================
 
 ///|
-/// AI 药丸：收起态的唯一入口（固定右下，带待审计徽标）。
+/// AI 药丸：收起态的唯一入口（**居中贴底**，带待审计徽标）。
+///
+/// 设计稿口径 `#aiPill`：高 32、内垫 `0 16 0 12`、圆角 16、字号 12.5；
+/// `#aiLayer.pill` 只改宽度与贴底距离，**不改水平锚点**——`#aiLayer` 本身是
+/// `left:50%;transform:translateX(-50%)`，所以药丸是**水平居中**的。
+///
+/// 两个曾经踩中的坑，都在这里钉住：
+/// 1. 外层用**无背景 `container`** 定位 → 它回落到环境 Base 刷子（不透明
+///    面板色），整帧被刷成一块底板，中心工作区的内容（Live 画布、代码视图）
+///    整片盖掉：位置对、文字也在绘制流里，但屏幕上看不见。定位-only 必须用
+///    `@views.center`，它不带任何表面绘制。
+/// 2. 药丸宽度写死 180、水平只放右侧权重 spacer → 贴右而不是居中。
+///    宽度改为按内容累加（中英「待审计 / To review」宽度差近一倍，写死必然
+///    在一种语言下截断或留大片空白），水平用左右**对称权重 spacer** 居中。
 pub fn ai_pill_view(
   model : Model,
   t : @i18n.Translator,
@@ -1087,62 +1100,90 @@ pub fn ai_pill_view(
 ) -> @moui.View[Msg] {
   ignore(reserve)
   let pending = pending_ai_cards(model)
-  // 设计稿药丸形态：`<spark/> Agent <span>待审计</span> <b>N</b>`。
   // 「待审计 N」是**待办摘要**不是装饰：药丸收起后卡片全不可见，这是唯一
   // 还告诉你有多少条待采纳提案的地方。
+  // 文本宽度按 `text_estimate_width` 分配并乘 1.02 安全系数（实测估算偏窄
+  // 约 2%）；`@views.text` 只会涨不会缩，所以这里给够即可，无须担心截断。
+  let agent_label = "Agent"
+  let agent_w = (text_estimate_width(agent_label) * 1.02).max(36.0)
   let cells : Array[@moui.View[Msg]] = [
     @views.icon(Focus, size=13.0, color=ide_accent()),
-    @views.text("Agent", theme=studio_theme(), width=44.0, height=18.0).foreground(
+    @views.text(agent_label, theme=studio_theme(), width=agent_w, height=18.0).foreground(
       ide_text(),
     ),
   ]
+  let mut content_w = 13.0 + 6.0 + agent_w
   if pending > 0 {
+    let pending_label = text(t, "app.ai.pill_pending")
+    let pending_w = (text_estimate_width(pending_label) * 1.02).max(30.0)
+    let number_label = pending.to_string()
+    let number_w = (text_estimate_width(number_label) * 1.02).max(10.0)
     cells.push(
       @views.text(
-        text(t, "app.ai.pill_pending"),
+        pending_label,
         theme=studio_theme(),
-        width=40.0,
+        width=pending_w,
         height=18.0,
       ).foreground(ide_text_muted()),
     )
-    cells.push(count_badge(pending.to_string(), 2))
+    cells.push(
+      @views.text(
+        number_label,
+        theme=studio_theme(),
+        width=number_w,
+        height=18.0,
+      ).foreground(ide_warning()),
+    )
+    content_w = content_w + 6.0 + pending_w + 6.0 + number_w
   }
+  let pill_h = 32.0
+  let pill_w = (12.0 + content_w + 16.0).max(96.0)
   let pill_view = @views.container(
-    @views.padding_xy(
+    @views.padding_edges(
       @views.row(cells, spacing=6.0, align=Center),
-      horizontal=10.0,
-      vertical=0.0,
+      left=12.0,
+      right=16.0,
     ),
     background=ide_elevated(),
-    corner_radius=14.0,
+    corner_radius=16.0,
     border=Some(
       @graphics.BorderStyle::new(
         brush=@graphics.Brush::solid(ide_border()),
         width=1.0,
       ),
     ),
-    height=28.0,
+    width=pill_w,
+    height=pill_h,
     padding=0.0,
   ).on_tap(ToggleAiPill)
-  // 同 ai_floating：贴底靠「权重 spacer + 定高」而不是 align。
-  let usable = (height - 12.0).max(28.0)
-  @views.container(
+  // 贴底与居中都用**对称权重 spacer** 表达，不用 `align`：`AlignModifier`
+  // 把自己量成子节点尺寸，在更大的帧里永远拿不到 slack（见 ai_floating 的
+  // 同类注释）。竖直：上方权重 1 / 下方不加 → 贴底；水平：左右各权重 1 →
+  // 严格居中。
+  let usable = (height - 10.0).max(pill_h)
+  let col_w = width.max(pill_w)
+  @views.center(
     @views.column(
       [
         @views.spacer(min_length=0.0, weight=1.0),
         @views.row(
           [
             @views.spacer(min_length=0.0, weight=1.0),
-            @views.container(pill_view, width=180.0, height=28.0, padding=0.0),
+            @views.container(
+              pill_view,
+              width=pill_w,
+              height=pill_h,
+              padding=0.0,
+            ),
+            @views.spacer(min_length=0.0, weight=1.0),
           ],
           spacing=0.0,
           align=Center,
-        ).frame(width=(width - 16.0).max(200.0), height=28.0),
+        ).frame(width=col_w, height=pill_h),
       ],
       spacing=0.0,
-    ).frame(width=(width - 16.0).max(200.0), height=usable),
-    width=(width - 16.0).max(200.0),
+    ).frame(width=col_w, height=usable),
+    width=col_w,
     height=usable,
-    padding=0.0,
   )
 }

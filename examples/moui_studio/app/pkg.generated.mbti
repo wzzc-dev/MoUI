@@ -71,6 +71,8 @@ pub const STATUSBAR_HEIGHT : Double = 22.0
 
 pub const TOAST_LIMIT : Int = 3
 
+pub const TOPBAR_ACTION_GAP : Double = 6.0
+
 pub const TOPBAR_HEIGHT : Double = 40.0
 
 pub const TRAFFIC_LIGHT_INSET : Double = 78.0
@@ -81,7 +83,7 @@ pub const TREE_ROW_HEIGHT : Double = 24.0
 
 pub const UNDO_DEPTH : Int = 50
 
-pub const WINDOW_CHROME_HEIGHT : Double = 26.0
+pub const WINDOW_CHROME_HEIGHT : Double = 56.0
 
 pub fn ai_card_height(Model, Double) -> Double
 
@@ -429,7 +431,11 @@ pub let title_bar_height : Double
 
 pub fn toast_host(@core.View[Msg], Model) -> @core.View[Msg]
 
+pub fn topbar_actions_width(Model, @moui_i18n.Translator) -> Double
+
 pub fn topbar_brand(String, Bool, String) -> @core.View[Msg]
+
+pub fn topbar_drag_width(Model, @moui_i18n.Translator, Double) -> Double
 
 pub fn translator(Model) -> @moui_i18n.Translator
 
@@ -470,8 +476,6 @@ pub fn visible_groups(Array[TreeNode]) -> Array[String]
 pub fn visual_workspace(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn watch_rows(Model) -> Array[WatchRow]
-
-pub fn window_chrome_bar(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
 // Errors
 

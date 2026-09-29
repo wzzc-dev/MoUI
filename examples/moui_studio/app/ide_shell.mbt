@@ -15,8 +15,85 @@
 // ============================================================================
 
 ///|
+/// 顶栏右侧动作簇的簇内间隙。
+pub const TOPBAR_ACTION_GAP : Double = 6.0
+
+///|
+/// 单个动作按钮宽度的**保守上界**。
+///
+/// 为什么用上界而不是精确估算：这个宽度决定拖拽区在哪里收手（见
+/// `topbar_drag_width`），两种误差的代价**极不对称**——
+/// 高估只是拖拽区少几个点（无害，仍有一大片可拖），低估则拖拽区盖住按钮，
+/// 点击被 AppKit 的 `performWindowDragWithEvent:` 吃掉，表现成「按钮点了没
+/// 反应」（严重，且只在原生无框窗口复现）。
+///
+/// 实测教训：`text_estimate_width`（ASCII 7.9 / 全角 13）在**加粗 16pt** 的
+/// 按钮标签上明显偏窄——「编译 MoonBit」估 89.2，实际绘制 97.6（窄 9%），
+/// 按 1.02 补偿后算出的拖拽区右缘 883.0 仍然盖住了左缘 876.4 的运行按钮。
+/// 所以这里改用「ASCII 10 / 全角 16 + 两侧内垫 32」的宽松上界，宁可少拖。
+fn topbar_action_bound(label : String, declared : Double) -> Double {
+  let mut ascii = 0
+  let mut wide = 0
+  for c in label {
+    if c.to_int() < 0x80 {
+      ascii = ascii + 1
+    } else {
+      wide = wide + 1
+    }
+  }
+  (ascii.to_double() * 10.0 + wide.to_double() * 16.0 + 32.0).max(declared)
+}
+
+///|
+/// 顶栏右侧动作簇总宽的**保守上界**（含簇内间隙，不含容器右内垫）。
+///
+/// **渲染与拖拽区声明共用这一个函数**。两处各算一份就会出现「按钮被拖拽区
+/// 盖住」的漂移——本仓已经为同类「两处各算一份」付出过代价（浮动卡高度、
+/// 树行元信息宽度），所以这里只留一个计算源。
+pub fn topbar_actions_width(model : Model, t : @i18n.Translator) -> Double {
+  let running = app_running(model)
+  let run_label = if running {
+    text(t, "app.run.stop")
+  } else {
+    text(t, "app.run.start")
+  }
+  topbar_action_bound(run_label, 76.0) +
+  topbar_action_bound(text(t, "app.run.step"), 68.0) +
+  topbar_action_bound(text(t, "app.topbar.compile"), 104.0) +
+  34.0 +
+  28.0 +
+  28.0 +
+  TOPBAR_ACTION_GAP * 5.0
+}
+
+///|
+/// 沉浸式标题栏里**可拖拽**的宽度：从窗口左缘到动作簇左缘为止。
+///
+/// 为什么必须显式让开动作簇：AppKit presenter 命中拖拽区时直接
+/// `performWindowDragWithEvent:` 并 return，事件**不再进入运行时**——拖拽区
+/// 一旦盖住运行/单步/编译，点它们就会变成拖窗口，表现成「按钮点了没反应」。
+/// 这种缺陷只在原生无边框窗口里出现，绘制断言完全抓不到。
+///
+/// 这个函数是**唯一**计算源：视图布局（右内垫 10 + 动作簇贴右）与入口的
+/// 拖拽声明都走它，两边不会漂移。返回值恰好等于动作簇左缘的 x。
+pub fn topbar_drag_width(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> Double {
+  (width - 10.0 - topbar_actions_width(model, t)).max(TRAFFIC_LIGHT_INSET)
+}
+
+///|
 /// 顶栏：品牌 + 面包屑 | 运行/单步/编译 | 语言 | 命令面板 | 设置。
-/// 单行 40pt——设计稿口径；内容超出由窗口最小宽度承担（1280 起）。
+///
+/// **沉浸式下这一条就是窗口标题栏本身**：不再有额外的窗控带。旧实现是
+/// 「26pt 窗控带（只有一句居中提示文字、底色更深）+ 40pt 顶栏」两条，交界处
+/// 一条两截色缝加半条空带，看起来就是「顶上的边框没沉浸」。合并后：
+/// 左侧让出 `TRAFFIC_LIGHT_INSET` 给原生信号灯，其余照常放品牌与动作，
+/// 底色与内容区一致（`ide_panel()`），整条读起来是一个窗口头。
+///
+/// 非沉浸态（Web 入口没有窗口头可言）保持设计稿的 40pt 与 10pt 内垫。
 pub fn ide_top_bar(
   model : Model,
   t : @i18n.Translator,
@@ -29,6 +106,9 @@ pub fn ide_top_bar(
     WsEmpty => text(t, "app.crumb.empty")
   }
   let left = topbar_brand(text(t, "app.title"), model.dirty, crumb)
+  // 动作按钮高度：IDEA 标题栏工具条约 27-28pt，比内容区按钮略高一点，
+  // 在 40pt 带里上下各留 6pt。
+  let action_height = 28.0
   let right : Array[@moui.View[Msg]] = [
     // 运行/停止：运行中变停止（同一键位的心智：它是「运行」的总闸）
     @views.button(
@@ -40,7 +120,7 @@ pub fn ide_top_bar(
       on_click=if running { RunStop } else { RunStart },
       variant=if running { Outline } else { Primary },
       width=76.0,
-      height=26.0,
+      height=action_height,
     ),
     // 单步：仅在活运行（含闸门暂停）时可用——编译轨不支持单步，
     // 按钮仍显示但禁用（诚实反映「本轨没有单步」而不是藏起来）
@@ -50,14 +130,14 @@ pub fn ide_top_bar(
         on_click=RunStep,
         variant=Outline,
         width=68.0,
-        height=26.0,
+        height=action_height,
       )
     } else {
       @views.button(
         text(t, "app.run.step"),
         variant=Outline,
         width=68.0,
-        height=26.0,
+        height=action_height,
       )
     },
     @views.button(
@@ -65,7 +145,7 @@ pub fn ide_top_bar(
       on_click=CompileRun,
       variant=Outline,
       width=104.0,
-      height=26.0,
+      height=action_height,
     ),
     pill(
       if model.language is ZhHans {
@@ -82,7 +162,7 @@ pub fn ide_top_bar(
       false,
       CommandPaletteOpen,
       28.0,
-      26.0,
+      action_height,
       14.0,
     ),
     icon_button(
@@ -91,32 +171,50 @@ pub fn ide_top_bar(
       model.settings_open,
       ToggleSettings,
       28.0,
-      26.0,
+      action_height,
       14.0,
     ),
   ]
-  // 内垫 10/10 → 内部行宽 = width − 20；行必须显式定宽，
-  // 否则权重 spacer 拿不到 slack，顶栏内容会挤在中间（见 fill_row 注释）。
-  @views.container(
+  // 内垫：沉浸式左侧让出系统信号灯（78），否则常规 10。
+  // 内部行宽 = width − 左内垫 − 右内垫；行必须显式定宽，否则权重 spacer
+  // 拿不到 slack，顶栏内容会挤在中间（见 fill_row 注释）。
+  let inset = if model.immersive { TRAFFIC_LIGHT_INSET } else { 10.0 }
+  let inner = (width - inset - 10.0).max(120.0)
+  // 沉浸态这一条同时承担窗口标题栏，所以是 `WINDOW_CHROME_HEIGHT`（56）；
+  // 非沉浸态（Web）没有窗口头可言，保持设计稿的 40。
+  let bar_height = if model.immersive {
+    WINDOW_CHROME_HEIGHT
+  } else {
+    TOPBAR_HEIGHT
+  }
+  let bar = @views.container(
     @views.padding_edges(
       fill_row(
         [
           left,
           @views.spacer(min_length=8.0, weight=1.0),
-          @views.row(right, spacing=6.0, align=Center),
+          @views.row(right, spacing=TOPBAR_ACTION_GAP, align=Center),
         ],
-        (width - 20.0).max(120.0),
+        inner,
         8.0,
         Center,
       ),
-      left=10.0,
+      left=inset,
       right=10.0,
     ),
     background=ide_panel(),
     width~,
-    height=TOPBAR_HEIGHT,
+    height=bar_height,
     padding=0.0,
   )
+  if model.immersive {
+    // 整条带子是可拖拽的窗口头；视觉上不再画那句提示文字（IDEA 风格的
+    // 标题栏靠系统约定即可发现），但保留为可访问名，别让拖拽能力只对
+    // 鼠标用户可见。
+    bar.accessibility_label(text(t, "app.window.drag_hint"))
+  } else {
+    bar
+  }
 }
 
 ///|

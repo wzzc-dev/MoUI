@@ -457,12 +457,18 @@ pub fn program(
     // 顶栏/状态栏按窗口宽铺满、中心列吃剩余宽度、底栏按视口宽铺。
     view=(model, env) => {
       let viewport = env.viewport_size()
-      // 沉浸式窗控带：把顶部那条 `WINDOW_CHROME_HEIGHT` 声明成「按住可拖窗」
+      // 沉浸式标题栏：把顶部那一条 `WINDOW_CHROME_HEIGHT` 声明成「按住可拖窗」
       // 的区域。无边框窗口没有系统标题栏，不声明这块就**完全没法移动窗口**。
       //
       // 这里是唯一同时拿得到 `services`（组合根闭包）与真实视口（`env`）的
       // 地方，所以声明放在视图构建期。声明是**状态**不是命令：同一矩形重复
       // 声明不推进 revision，宿主按 revision 去重，逐帧重发开销为零。
+      //
+      // **必须把右侧动作簇排除掉**：AppKit 的 presenter 命中拖拽区时直接
+      // `performWindowDragWithEvent:`，事件不再进入运行时——若拖拽区覆盖了
+      // 运行/单步/编译，点它们会变成拖窗口（按钮「点了没反应」）。所以拖拽
+      // 矩形只覆盖到动作簇左缘为止，宽度由 `topbar_actions_width` 与**渲染**
+      // 共用同一个计算源，两侧不会漂移。
       //
       // 非沉浸式（Web 入口）必须清空——浏览器没有原生拖窗，
       // 留下一个「看起来能拖但拖不动」的区域只会误导。
@@ -475,7 +481,7 @@ pub fn program(
             @core.Rect::new(
               x=0.0,
               y=0.0,
-              width=viewport.width,
+              width=topbar_drag_width(model, translator(model), viewport.width),
               height=WINDOW_CHROME_HEIGHT,
             ),
           ),
