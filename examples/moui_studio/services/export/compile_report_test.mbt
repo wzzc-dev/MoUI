@@ -40,7 +40,9 @@ test "parse_moon_diagnostics 解析错误与警告" {
 
 ///|
 test "parse_moon_diagnostics 对无诊断输出返回空数组" {
-  let diagnostics = @export.parse_moon_diagnostics("Finished. moon: ran 3 tasks\n")
+  let diagnostics = @export.parse_moon_diagnostics(
+    "Finished. moon: ran 3 tasks\n",
+  )
   assert_eq(diagnostics.length(), 0)
 }
 

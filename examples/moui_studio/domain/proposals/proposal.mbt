@@ -218,7 +218,9 @@ fn decode_window(
   match value {
     Object(fields) =>
       Some(@ir.WindowSpec::{
-        title: json_string_field(fields, "title").unwrap_or("MoUI Studio 程序"),
+        title: json_string_field(fields, "title").unwrap_or(
+          "MoUI Studio 程序",
+        ),
         width: json_int_field(fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
         height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
       })

@@ -522,7 +522,7 @@ test "设计舞台：覆盖层在真控件之上，拖拽消息完整、按钮�
   let (received, capture) = pointer_capture_messages()
   let backdrop = @views.canvas(
     measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
-    draw=fn(_ctx, _frame) {},
+    draw=fn(_ctx, _frame) {  },
   )
   let widgets = @views.container(
     @views.button(
@@ -536,18 +536,18 @@ test "设计舞台：覆盖层在真控件之上，拖拽消息完整、按钮�
     padding=0.0,
   )
   let overlay = @views.canvas(
-    measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
-    draw=fn(_ctx, _frame) {},
-  )
-  .on_tap_with_frame(fn(_position, _frame) { "overlay-tap" })
-  .on_drag_with_frame(fn(event, _frame) {
-    match event.phase {
-      Started => "drag-started"
-      Changed => "drag-changed"
-      Ended => "drag-ended"
-      _ => ""
-    }
-  })
+      measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
+      draw=fn(_ctx, _frame) {  },
+    )
+    .on_tap_with_frame(fn(_position, _frame) { "overlay-tap" })
+    .on_drag_with_frame(fn(event, _frame) {
+      match event.phase {
+        Started => "drag-started"
+        Changed => "drag-changed"
+        Ended => "drag-ended"
+        _ => ""
+      }
+    })
   let runtime = @runtime.AppRuntime::new_view(
     root=@views.stack([backdrop, widgets, overlay]),
     size=@core.Size::new(width=400.0, height=200.0),
@@ -572,7 +572,7 @@ test "设计舞台：完整嵌套下拖拽消息仍达覆盖层" {
   let (received, capture) = pointer_capture_messages()
   let backdrop = @views.canvas(
     measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
-    draw=fn(_ctx, _frame) {},
+    draw=fn(_ctx, _frame) {  },
   )
   let widgets = @views.container(
     @views.button(
@@ -586,18 +586,18 @@ test "设计舞台：完整嵌套下拖拽消息仍达覆盖层" {
     padding=0.0,
   )
   let overlay = @views.canvas(
-    measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
-    draw=fn(_ctx, _frame) {},
-  )
-  .on_tap_with_frame(fn(_position, _frame) { "overlay-tap" })
-  .on_drag_with_frame(fn(event, _frame) {
-    match event.phase {
-      Started => "drag-started"
-      Changed => "drag-changed"
-      Ended => "drag-ended"
-      _ => ""
-    }
-  })
+      measure=fn(_constraints) { @core.Size::new(width=400.0, height=200.0) },
+      draw=fn(_ctx, _frame) {  },
+    )
+    .on_tap_with_frame(fn(_position, _frame) { "overlay-tap" })
+    .on_drag_with_frame(fn(event, _frame) {
+      match event.phase {
+        Started => "drag-started"
+        Changed => "drag-changed"
+        Ended => "drag-ended"
+        _ => ""
+      }
+    })
   // 注意：此处不能给 stage 再套 .flexible()——加权子树在 tight 重排下
   // 丢指针手势（2026-09 拖拽失效回归的根因，设计舞台已改显式高度帧）。
   let stage = @views.stack([backdrop, widgets, overlay]).frame(height=556.0)
@@ -608,24 +608,22 @@ test "设计舞台：完整嵌套下拖拽消息仍达覆盖层" {
     ],
     spacing=6.0,
   )
-  let root = @views.column(
-    [
-      @views.row(
-        [
-          @views.spacer(min_length=24.0, weight=0.0),
-          @views.container(
-            @views.button("Left", width=200.0, height=560.0),
-            width=224.0,
-            height=600.0,
-            padding=0.0,
-          ),
-          center.flexible(),
-          @views.spacer(min_length=24.0, weight=0.0),
-        ],
-        align=Start,
-      ).frame(height=600.0),
-    ],
-  )
+  let root = @views.column([
+    @views.row(
+      [
+        @views.spacer(min_length=24.0, weight=0.0),
+        @views.container(
+          @views.button("Left", width=200.0, height=560.0),
+          width=224.0,
+          height=600.0,
+          padding=0.0,
+        ),
+        center.flexible(),
+        @views.spacer(min_length=24.0, weight=0.0),
+      ],
+      align=Start,
+    ).frame(height=600.0),
+  ])
   let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=1280.0, height=800.0),
@@ -638,9 +636,21 @@ test "设计舞台：完整嵌套下拖拽消息仍达覆盖层" {
     y=frame.origin.y + frame.size.height / 2.0,
   )
   pointer_dispatch(runtime, center, Down)
-  pointer_dispatch(runtime, @core.Point::new(x=center.x + 12.0, y=center.y + 8.0), Move)
-  pointer_dispatch(runtime, @core.Point::new(x=center.x + 28.0, y=center.y + 20.0), Move)
-  pointer_dispatch(runtime, @core.Point::new(x=center.x + 44.0, y=center.y + 32.0), Up)
+  pointer_dispatch(
+    runtime,
+    @core.Point::new(x=center.x + 12.0, y=center.y + 8.0),
+    Move,
+  )
+  pointer_dispatch(
+    runtime,
+    @core.Point::new(x=center.x + 28.0, y=center.y + 20.0),
+    Move,
+  )
+  pointer_dispatch(
+    runtime,
+    @core.Point::new(x=center.x + 44.0, y=center.y + 32.0),
+    Up,
+  )
   assert_true(received.contains("drag-started"))
   assert_true(received.contains("drag-changed"))
   assert_true(received.contains("drag-ended"))

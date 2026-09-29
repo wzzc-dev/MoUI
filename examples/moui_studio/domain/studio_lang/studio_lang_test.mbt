@@ -404,7 +404,9 @@ test "runtime errors are structured" {
   )
   assert_true(wrong.status is @studio_lang.Completed)
   assert_eq(
-    @studio_lang.value_to_text(wrong.vars.get("x").unwrap_or(@studio_lang.VUnit)),
+    @studio_lang.value_to_text(
+      wrong.vars.get("x").unwrap_or(@studio_lang.VUnit),
+    ),
     "1a2",
   )
   let boom = run_zh(
@@ -551,10 +553,14 @@ test "audit records loop iterations and conditions" {
     Map([], capacity=4),
   )
   assert_true(
-    state.audit.any(r => r.op is @studio_lang.OpLoop && r.detail == "iteration 1"),
+    state.audit.any(r => {
+      r.op is @studio_lang.OpLoop && r.detail == "iteration 1"
+    }),
   )
   assert_true(
-    state.audit.any(r => r.op is @studio_lang.OpLoop && r.detail == "iteration 2"),
+    state.audit.any(r => {
+      r.op is @studio_lang.OpLoop && r.detail == "iteration 2"
+    }),
   )
   assert_true(state.audit.any(r => r.op is @studio_lang.OpCondition))
   assert_eq(state.messages.length(), 2)

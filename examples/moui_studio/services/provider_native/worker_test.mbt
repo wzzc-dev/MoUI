@@ -85,7 +85,8 @@ test "load_provider_config 拒绝残缺、非法与缺失" {
 async test "live smoke (skips without .config.json)" {
   let config = match @provider_native.load_provider_config(".config.json") {
     Some(config) => Some(config)
-    None => @provider_native.load_provider_config("examples/moui_studio/.config.json")
+    None =>
+      @provider_native.load_provider_config("examples/moui_studio/.config.json")
   }
   match config {
     None => ()

@@ -107,8 +107,10 @@ pub fn parse_moon_diagnostics(output : String) -> Array[CompileDiagnostic] {
       let mut body = cursor + 1
       while body < lines.length() {
         let probe = lines[body].trim(chars=" \t")
-        if probe.has_prefix("─") || probe.has_prefix("Error:") ||
-          probe.has_prefix("Warning:") || probe.has_prefix("Failed with") {
+        if probe.has_prefix("─") ||
+          probe.has_prefix("Error:") ||
+          probe.has_prefix("Warning:") ||
+          probe.has_prefix("Failed with") {
           break
         }
         let cleaned = clean_diagnostic_line(lines[body])
@@ -234,7 +236,11 @@ fn clean_diagnostic_line(raw : String) -> String {
   for c in raw {
     if c == '│' {
       out = ""
-    } else if c == '╭' || c == '╰' || c == '├' || c == '─' || c == '┆' ||
+    } else if c == '╭' ||
+      c == '╰' ||
+      c == '├' ||
+      c == '─' ||
+      c == '┆' ||
       c == '▶' {
       // 装饰线跳过
     } else {

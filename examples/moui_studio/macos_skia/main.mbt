@@ -14,12 +14,13 @@ async fn main {
   let owner = @provider.ProviderOwner::new()
   // 真编译执行器：与 provider 同一模式——UI 线程只入队，进程 IO 在 worker。
   let compile_owner = @compile.CompileOwner::new()
-  let config = @provider.load_provider_config("examples/moui_studio/.config.json").unwrap_or(@provider.ProviderConfig::{
-      endpoint: "",
-      model: "",
-      api_key: "",
-    },
-  )
+  let config = @provider.load_provider_config(
+    "examples/moui_studio/.config.json",
+  ).unwrap_or(@provider.ProviderConfig::{
+    endpoint: "",
+    model: "",
+    api_key: "",
+  })
   let provider_config : @studio_app.ProviderConfig = {
     endpoint: config.endpoint,
     model: config.model,

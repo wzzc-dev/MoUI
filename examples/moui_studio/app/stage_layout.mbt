@@ -38,10 +38,7 @@ impl @core.ViewNode for StageLayout with fn layout(self, ctx) {
     1.0
   }
   let size = ctx.constraints.constrain(
-    @core.Size::new(
-      width=design_width * scale,
-      height=design_height * scale,
-    ),
+    @core.Size::new(width=design_width * scale, height=design_height * scale),
   )
   let frames : Array[@core.Rect] = []
   for rect in self.rects {
