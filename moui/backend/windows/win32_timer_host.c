@@ -6,6 +6,11 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+// timeBeginPeriod/timeEndPeriod live in the multimedia headers, which
+// WIN32_LEAN_AND_MEAN removes from windows.h. Include them explicitly: MSVC
+// only warns on the implicit declaration, clang-cl (used for the MoonBit
+// stub builds on Windows) treats it as an error.
+#include <mmsystem.h>
 #include <moonbit.h>
 #include <stdint.h>
 #include <stdlib.h>
