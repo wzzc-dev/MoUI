@@ -204,6 +204,53 @@ function Get-MsvcClCompilerPath {
   return $cl.Trim()
 }
 
+# The MoonBit CLI unconditionally injects /std:c11 for every MSVC-classified
+# stub compile (moonutil compiler_flags/msvc.rs). cl.exe rejects /std:c11
+# combined with the /std:c++20 that the Skia stubs require (D8016), so the
+# Windows helpers pin an absolute clang-cl.exe instead. clang-cl is classified
+# as Msvc by the CLI, accepts both flags in one command line, and pairs with its
+# sibling llvm-lib.exe as the archiver (moon resolves llvm-lib next to the path
+# given in MOON_CC; MOON_AR is ignored for MSVC toolchains).
+function Get-MsvcClangClCompilerPath {
+  $candidates = @()
+
+  $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+  if (Test-Path -LiteralPath $vswhere) {
+    $installPath = (& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath) -join ""
+    if (-not [string]::IsNullOrWhiteSpace($installPath)) {
+      $candidates += (Join-Path $installPath "VC\Tools\Llvm\x64\bin\clang-cl.exe")
+      $llvmRoot = Join-Path $installPath "VC\Tools\Llvm"
+      if (Test-Path -LiteralPath $llvmRoot) {
+        $found = Get-ChildItem -LiteralPath $llvmRoot -Filter "clang-cl.exe" -Recurse -File -ErrorAction SilentlyContinue |
+          Sort-Object FullName -Descending |
+          Select-Object -First 1
+        if ($null -ne $found) {
+          $candidates += $found.FullName
+        }
+      }
+    }
+  }
+
+  $onPath = (& where.exe clang-cl.exe 2>$null | Select-Object -First 1)
+  if (-not [string]::IsNullOrWhiteSpace($onPath)) {
+    $candidates += $onPath.Trim()
+  }
+
+  foreach ($candidate in $candidates) {
+    if ([string]::IsNullOrWhiteSpace($candidate) -or -not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+      continue
+    }
+    $resolved = (Resolve-Path -LiteralPath $candidate).Path
+    $llvmLib = Join-Path (Split-Path -Parent $resolved) "llvm-lib.exe"
+    if (-not (Test-Path -LiteralPath $llvmLib -PathType Leaf)) {
+      continue
+    }
+    return $resolved
+  }
+
+  throw "clang-cl.exe with a sibling llvm-lib.exe was not found. Install Visual Studio's C++ Clang tools (Microsoft.VisualStudio.Component.VC.Llvm.Clang) or put clang-cl.exe and llvm-lib.exe on PATH."
+}
+
 function Get-WgpuNativeRoot {
   param(
     [string]$WorkspaceRoot,
@@ -258,22 +305,28 @@ function Enable-MsvcGlobalC11ModeForCOnlyStubs {
 function Set-MoonBitMsvcEnvironment {
   param(
     [string]$ClPath,
+    [string]$ClangClPath,
     [pscustomobject]$ZlibLayout,
     [string]$WgpuRoot
   )
 
   $zlibLib = $ZlibLayout.ImportLibName
+  # MOON_CC is the MoonBit CLI's native compiler override and must be an
+  # absolute, path-like path so the CLI skips its own VS discovery; MOON_AR is
+  # ignored for MSVC toolchains, so moon pairs the MOON_CC path with its sibling
+  # llvm-lib.exe automatically.
+  $env:MOON_CC = $ClangClPath
   $env:CC = $ClPath
   $env:CXX = $ClPath
   $env:MBT_WGPU_LINK_MODE = "dynamic"
   # /experimental:c11atomics alone does not define __STDC_VERSION__, so the
-  # wgpu_mbt C stubs (<stdatomic.h>) additionally need /std:c11. /std:c11 must
-  # NOT be set unconditionally here: only WGPU-targeting packages need it, and
-  # older moui_skia stub flag sets pinned a C++ standard that cl rejected on the
-  # same command line (MSVC D8016). WGPU-targeting
-  # consumers add it after sourcing this script via
-  # Enable-MsvcGlobalC11ModeForCOnlyStubs. /utf-8 keeps UTF-8 vendored sources
-  # from tripping C4819 on GBK code pages.
+  # wgpu_mbt C stubs (<stdatomic.h>) additionally need /std:c11. The MoonBit CLI
+  # also injects /std:c11 into every MSVC stub compile, while the Skia stub flag
+  # flags pin /std:c++20. cl.exe rejects that combination (D8016); MOON_CC points
+  # at clang-cl.exe, which accepts both. Consumers that need the C11 mode for
+  # direct cl invocations call Enable-MsvcGlobalC11ModeForCOnlyStubs after
+  # sourcing this script. /utf-8 keeps UTF-8 vendored sources from tripping
+  # C4819 on GBK code pages.
   $env:CL = "/DNOMINMAX /experimental:c11atomics /utf-8 /wd4005 /DMOONBIT_FFI_EXPORT="
   $env:LINK = "comdlg32.lib shell32.lib advapi32.lib ole32.lib user32.lib gdi32.lib dwrite.lib d2d1.lib $zlibLib /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
   $env:MOUI_MSVC_VCPKG_ROOT = $ZlibLayout.Root
@@ -308,6 +361,7 @@ function Write-MouiMsvcSummary {
   } else {
     Write-Host "==> WGPU native root: not set; bundle WGPU under .tools\wgpu-native or pass -WgpuNativeRoot"
   }
+  Write-Host "==> MOON_CC: $env:MOON_CC"
   Write-Host "==> CC: $env:CC"
   Write-Host "==> CXX: $env:CXX"
   Write-Host "==> MBT_WGPU_LINK_MODE: $env:MBT_WGPU_LINK_MODE"
@@ -330,8 +384,9 @@ if (-not $SkipZlibCheck) {
 Apply-ZlibProcessPaths -Layout $zlibLayout
 
 $clPath = Get-MsvcClCompilerPath
+$clangClPath = Get-MsvcClangClCompilerPath
 $wgpuRoot = Get-WgpuNativeRoot -WorkspaceRoot $workspaceRoot -ExplicitRoot $WgpuNativeRoot
-Set-MoonBitMsvcEnvironment -ClPath $clPath -ZlibLayout $zlibLayout -WgpuRoot $wgpuRoot
+Set-MoonBitMsvcEnvironment -ClPath $clPath -ClangClPath $clangClPath -ZlibLayout $zlibLayout -WgpuRoot $wgpuRoot
 Write-MouiMsvcSummary -WorkspaceRoot $workspaceRoot -VcVarsAll $vcvars -ZlibLayout $zlibLayout -WgpuRoot $wgpuRoot
 
 #endregion

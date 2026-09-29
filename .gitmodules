@@ -6,10 +6,6 @@
 	path = window
 	url = https://github.com/wzzc-dev/window.git
 	branch = moui-support
-[submodule "examples/deepseek_harness_desktop"]
-	path = examples/deepseek_harness_desktop
-	url = https://github.com/moui-mbt/deepseek-harness-desktop.git
-	branch = main
 [submodule "examples/momark"]
 	path = examples/momark
 	url = https://github.com/wzzc-dev/MoMark.git

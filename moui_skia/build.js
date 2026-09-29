@@ -647,7 +647,7 @@ function platformFlags(config, values) {
   let linkFlags = `-L${libPath} -l${skiaLib}`;
 
   if (platform === "windows") {
-    stubCcFlags = `/DMOUI_SKIA_HAS_SKIA /EHsc /I${includePath}`;
+    stubCcFlags = `/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I${includePath}`;
     const staticLib = path.join(libPath, `${skiaLib}.lib`);
     const dynamicImportLib = path.join(libPath, `${skiaLib}.dll.lib`);
     const dynamicDll = path.join(libPath, `${skiaLib}.dll`);
@@ -940,8 +940,11 @@ function fallbackNativeRuntimeLinkFlags(platform) {
 
 function fallbackStubCcFlags(platform) {
   if (platform === "windows") {
-    // MSVC defaults to C++14, which the native stubs already target.
-    return "";
+    // The MoonBit CLI injects /std:c11 for MSVC C stubs unconditionally, so
+    // cl.exe rejects any /std:c++* flag on the same command line (D8016). The
+    // Windows MSVC helpers force MOON_CC=clang-cl.exe, which accepts the C11
+    // default and this C++20 flag together; keep it so Skia headers compile.
+    return "/std:c++20";
   }
   // macOS (Xcode clang) and Linux default to pre-C++11 without this flag.
   return "-std=c++17";

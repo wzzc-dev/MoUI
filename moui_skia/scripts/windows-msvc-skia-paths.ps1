@@ -221,3 +221,53 @@ function Resolve-MouiSkiaMsvcPaths {
     LibDir = $resolvedLibDir
   }
 }
+
+function Get-MouiSkiaClangClCompilerPath {
+  param([string] $ExplicitPath)
+
+  # The MoonBit CLI injects /std:c11 into every MSVC-classified stub compile,
+  # and cl.exe rejects that together with the /std:c++20 the Skia stubs need
+  # (D8016). clang-cl.exe is also classified as MSVC by the CLI, accepts both
+  # flags, and pairs with its sibling llvm-lib.exe as the archiver, so the
+  # Windows Skia helpers always build through it.
+  $candidates = @()
+  if (![string]::IsNullOrWhiteSpace($ExplicitPath)) {
+    $candidates += $ExplicitPath
+  }
+
+  $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+  if (Test-Path -LiteralPath $vswhere -PathType Leaf) {
+    $installPath = (& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath) -join ""
+    if (![string]::IsNullOrWhiteSpace($installPath)) {
+      $candidates += (Join-Path $installPath "VC\Tools\Llvm\x64\bin\clang-cl.exe")
+      $llvmRoot = Join-Path $installPath "VC\Tools\Llvm"
+      if (Test-Path -LiteralPath $llvmRoot -PathType Container) {
+        $candidates += @(
+          Get-ChildItem -LiteralPath $llvmRoot -Filter "clang-cl.exe" -Recurse -File -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 |
+            ForEach-Object { $_.FullName }
+        )
+      }
+    }
+  }
+
+  $onPath = (& where.exe clang-cl.exe 2>$null | Select-Object -First 1)
+  if (![string]::IsNullOrWhiteSpace($onPath)) {
+    $candidates += $onPath.Trim()
+  }
+
+  foreach ($candidate in $candidates) {
+    if ([string]::IsNullOrWhiteSpace($candidate) -or !(Test-Path -LiteralPath $candidate -PathType Leaf)) {
+      continue
+    }
+    $resolved = (Resolve-Path -LiteralPath $candidate).Path
+    $llvmLib = Join-Path (Split-Path -Parent $resolved) "llvm-lib.exe"
+    if (!(Test-Path -LiteralPath $llvmLib -PathType Leaf)) {
+      continue
+    }
+    return $resolved
+  }
+
+  throw "clang-cl.exe with a sibling llvm-lib.exe was not found. Install the Visual Studio C++ Clang tools or pass -ClangClPath / set MOUI_SKIA_CLANG_CL."
+}

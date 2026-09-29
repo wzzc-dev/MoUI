@@ -1,0 +1,189 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/compiled_runtime"
+
+import {
+  "examples/moui_studio/domain/ir",
+  "examples/moui_studio/domain/studio_lang",
+}
+
+// Values
+pub const MAX_STEPS : Int = 100_000
+
+pub const RANDOM_SEED : Int = 20260927
+
+pub fn add_values(Value, Value, Int) -> Value
+
+pub fn and_values((Runtime) -> Value raise ExecError, (Runtime) -> Value raise ExecError, Runtime, Int) -> Value raise ExecError
+
+pub fn answer_gate(Runtime, Bool) -> RunStatus
+
+pub fn arity_error(String, Int, Int, Int) -> Value raise ExecError
+
+pub fn as_text(Value, String, Int) -> String raise ExecError
+
+pub fn audit_lines(Runtime) -> Array[String]
+
+pub fn bool_of(Value, String, Int) -> Bool raise ExecError
+
+pub fn bool_text(Bool) -> String
+
+pub fn compare_values(Value, Value, String, Int) -> Value raise ExecError
+
+pub fn contains(Value, Value, String, Int) -> Value raise ExecError
+
+pub fn div_values(Value, Value, Int) -> Value raise ExecError
+
+pub fn eq_values(Value, Value, Int) -> Value raise ExecError
+
+pub fn get_number(Runtime, String, Int) -> Value raise ExecError
+
+pub fn get_text(Runtime, String) -> Value
+
+pub fn handler_for(@ir.StudioProgram, String, String) -> Handler?
+
+pub fn lower_handler(Array[@ir.Stmt]) -> Handler
+
+pub fn lower_traced_handler(Array[@studio_lang.TracedStmt]) -> Handler
+
+pub fn mul_values(Value, Value, Int) -> Value raise ExecError
+
+pub fn neg_value(Value, Int) -> Value raise ExecError
+
+pub fn neq_values(Value, Value, Int) -> Value raise ExecError
+
+pub fn new_runtime(Map[String, String], Map[String, Array[String]], Array[(String, String)]) -> Runtime
+
+pub fn not_value(Value, Int) -> Value raise ExecError
+
+pub fn or_values((Runtime) -> Value raise ExecError, (Runtime) -> Value raise ExecError, Runtime, Int) -> Value raise ExecError
+
+pub fn random(Runtime, Value, Int) -> Value raise ExecError
+
+pub fn row_at(Runtime, String, Value, Int) -> Value raise ExecError
+
+pub fn row_count(Runtime, String) -> Value
+
+pub fn run_handler(Runtime, Handler) -> RunStatus
+
+pub fn runtime_for_program(@ir.StudioProgram) -> Runtime
+
+pub fn selected_row(Runtime, String) -> Value
+
+pub fn sub_values(Value, Value, Int) -> Value raise ExecError
+
+pub fn text_length(Value, String, Int) -> Value raise ExecError
+
+pub fn to_text(Value) -> Value
+
+pub fn unknown_builtin(String, Int) -> Value raise ExecError
+
+pub fn value_to_text(Value) -> String
+
+// Errors
+pub(all) suberror ExecError {
+  RuntimeError(ErrorDetails)
+  GateHalt
+  LoopBreak
+}
+
+// Types and methods
+pub(all) struct ErrorDetails {
+  kind : ErrorKind
+  line : Int
+  a : String
+  b : String
+}
+
+pub(all) enum ErrorKind {
+  TypeMismatch
+  NotDeclared
+  DivideByZero
+  BadLoopCount
+  UnknownBuiltin
+  StepBudget
+}
+
+pub(all) struct Gate {
+  kind : GateKind
+  prompt : String
+  payload : String
+}
+
+pub(all) enum GateKind {
+  Submit
+  Ask
+}
+
+pub(all) struct Handler((Runtime) -> Unit raise ExecError)
+
+pub(all) enum RunStatus {
+  Running
+  WaitingGate
+  Completed
+  Failed
+}
+
+pub(all) struct Runtime {
+  mut texts : Map[String, String]
+  mut vars : Map[String, Value]
+  mut rows : Map[String, Array[String]]
+  mut selections : Map[String, Int]
+  mut messages : Array[String]
+  mut audit : Array[StepRecord]
+  mut status : RunStatus
+  mut gate : Gate?
+  mut error : ErrorDetails?
+  mut steps : Int
+  max_steps : Int
+  mut rng : Int
+  mut gate_answers : Array[Bool]
+  mut gate_cursor : Int
+  mut declared : Array[String]
+  mut active_handler : Handler?
+  mut base_texts : Map[String, String]
+  mut base_vars : Map[String, Value]
+  mut base_rows : Map[String, Array[String]]
+  mut base_selections : Map[String, Int]
+  mut base_declared : Array[String]
+}
+pub fn Runtime::append_row(Self, String, Value, String, Int, String) -> Unit raise ExecError
+pub fn Runtime::ask(Self, Value, String, Int, String) -> Value raise ExecError
+pub fn Runtime::audit_assign(Self, String, Value, Int, String) -> Unit raise ExecError
+pub fn Runtime::break_loop(Self) -> Unit raise ExecError
+pub fn Runtime::count_loop(Self, Value, String, Int, (Self) -> Unit raise ExecError) -> Unit raise ExecError
+pub fn Runtime::get(Self, String, Int) -> Value raise ExecError
+pub fn Runtime::message_box(Self, Value, String, Int, String) -> Unit raise ExecError
+pub fn Runtime::record(Self, Int, StepOp, String) -> Unit raise ExecError
+pub fn Runtime::record_condition(Self, Bool, Int, String) -> Unit raise ExecError
+pub fn Runtime::record_iteration(Self, Int, Int) -> Unit raise ExecError
+pub fn Runtime::require_declared(Self, String, Int) -> Unit raise ExecError
+pub fn Runtime::set(Self, String, Value) -> Unit
+pub fn Runtime::set_text(Self, String, Value, String, Int, String) -> Unit raise ExecError
+pub fn Runtime::submit_data(Self, String, Value, String, Int, String) -> Value raise ExecError
+pub fn Runtime::while_loop(Self, Int, (Self) -> Value raise ExecError, (Self, Bool) -> Unit raise ExecError, (Self) -> Unit raise ExecError) -> Unit raise ExecError
+
+pub(all) enum StepOp {
+  OpAssign
+  OpMessage
+  OpGate
+  OpCommand
+  OpCondition
+  OpLoop
+}
+
+pub(all) struct StepRecord {
+  line : Int
+  op : StepOp
+  detail : String
+}
+
+pub(all) enum Value {
+  VNum(Double)
+  VStr(String)
+  VBool(Bool)
+  VUnit
+}
+
+// Type aliases
+
+// Traits

@@ -27,14 +27,16 @@
   `/experimental:c11atomics` alone does not define `__STDC_VERSION__`);
   it runs on Linux/macOS CI. On Windows, source
   `moui/scripts/windows/msvc_env.ps1` (shared CL carries
-  `/experimental:c11atomics /utf-8`) and call
-  `Enable-MsvcGlobalC11ModeForCOnlyStubs` before WGPU-native builds
-  (`moon run examples/showcase/windows_wgpu --target native` then builds end
-  to end). `/std:c11` must stay OUT of the shared CL default: only the WGPU
-  provider needs it. The MoonBit CLI (>= 0.10.14) injects `/std:c11` for MSVC
-  stubs, and `moui_skia` no longer passes `/std:c++20`, which is what caused
-  MSVC D8016; the build/package helpers add `/std:c11` only for packages that
-  import the WGPU provider.
+  `/experimental:c11atomics /utf-8` and `MOON_CC` points at an absolute
+  `clang-cl.exe`) and call `Enable-MsvcGlobalC11ModeForCOnlyStubs` before
+  WGPU-native builds (`moon run examples/showcase/windows_wgpu --target native`
+  then builds end to end). `/std:c11` must stay OUT of the shared CL default:
+  only the WGPU provider needs it. The MoonBit CLI (>= 0.10.14) injects
+  `/std:c11` for MSVC stubs and `moui_skia` passes `/std:c++20`; `cl.exe`
+  rejects that pair (D8016), so the helpers pin `MOON_CC` to `clang-cl.exe`,
+  which accepts both and is auto-paired with sibling `llvm-lib.exe`. The
+  build/package helpers add `/std:c11` only for packages that import the WGPU
+  provider.
 - `.local_repos/window` was a stale divergent checkout and is deleted; the
   `window` submodule (`moui-support`) is the only canonical window source.
   Toggle local resolution with `scripts/window-dev-mode.sh on|off`

@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/compile_native"
+
+import {
+  "examples/moui_studio/services/export",
+  "moonbitlang/async/aqueue",
+}
+
+// Values
+pub async fn compile_bundle_at(String) -> Result[@export.CompileReport, String]
+
+pub async fn compile_project(String, String, String) -> Result[@export.CompileReport, String]
+
+pub fn compile_submit(CompileOwner, CompileJob) -> Unit
+
+pub async fn compile_worker_loop(CompileOwner) -> Unit
+
+pub fn default_work_root() -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct CompileJob {
+  project_json : String
+  app_name : String
+  work_root : String
+  on_result : (Result[@export.CompileReport, String]) -> Unit
+}
+
+pub(all) struct CompileOwner {
+  queue : @aqueue.Queue[CompileJob]
+}
+pub fn CompileOwner::new() -> Self
+
+// Type aliases
+
+// Traits

@@ -491,6 +491,23 @@ fn path_fill_contours(
 }
 
 ///|
+fn emit_normalized_triangle(
+  emit : (Int, Int, Int) -> Unit,
+  i0 : Int,
+  i1 : Int,
+  i2 : Int,
+) -> Unit {
+  // 以最小原始索引为旋转基准，保持绕序不变并让三角形发射顺序稳定。
+  if i0 <= i1 && i0 <= i2 {
+    emit(i0, i1, i2)
+  } else if i1 <= i0 && i1 <= i2 {
+    emit(i1, i2, i0)
+  } else {
+    emit(i2, i0, i1)
+  }
+}
+
+///|
 /// 耳切三角化：简单多边形（单轮廓、无洞）的填充三角化。
 /// NonZero 洞语义暂不支持——当前填充用例（图形路径、图标）均为单轮廓，
 /// 多轮廓按独立多边形分别处理。
@@ -550,7 +567,7 @@ fn triangulate_contour(
           }
         }
         if !contains_other {
-          emit(i0, i1, i2)
+          emit_normalized_triangle(emit, i0, i1, i2)
           ignore(indices.remove(i))
           clipped = true
           break
@@ -562,7 +579,7 @@ fn triangulate_contour(
       // 数值兜底：剪不出耳朵时退化为扇形三角化，保证不丢轮廓不挂死
       let last = indices.length()
       for k in 1..<(last - 1) {
-        emit(indices[0], indices[k], indices[k + 1])
+        emit_normalized_triangle(emit, indices[0], indices[k], indices[k + 1])
       }
       break
     }

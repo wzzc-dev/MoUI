@@ -37,6 +37,6 @@
   requires matching-host smoke per repo policy; capability truth is on
   `HostCapabilitySummary.host_modal_available`.
 - Datepicker per-day cell semantics need composition-visible month state.
-- deepseek `settings dialog accepts pointer editing cancel and save` was
-  already broken at HEAD (layout fixpoint abort); re-verify after the
-  LayerStack rework.
+- The DSH Desktop `settings dialog accepts pointer editing cancel and save`
+  test was already broken at HEAD (layout fixpoint abort) before the sample
+  moved to its own repository; the fix was verified green before extraction.

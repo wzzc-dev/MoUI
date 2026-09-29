@@ -1,0 +1,92 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/domain/blocks"
+
+import {
+  "examples/moui_studio/domain/ir",
+}
+
+// Values
+pub fn block_chain(Array[@ir.Stmt]) -> Array[BlockItem]
+
+pub fn block_label_key(BlockKind) -> String
+
+pub fn builtin_block_spec(String) -> BlockSpec?
+
+pub fn builtin_param_types(String) -> Array[BlockValueType]
+
+pub fn builtin_result_type(String) -> BlockValueType
+
+pub fn category_color_key(BlockCategory) -> String
+
+pub fn clone_expr(@ir.Expr) -> @ir.Expr
+
+pub fn clone_stmt(@ir.Stmt) -> @ir.Stmt
+
+pub fn clone_stmts(Array[@ir.Stmt]) -> Array[@ir.Stmt]
+
+pub fn delete_stmt_at(Array[@ir.Stmt], Array[Int]) -> Array[@ir.Stmt]
+
+pub fn event_block(String, String) -> BlockSpec
+
+pub fn flow_companion_kinds(BlockKind) -> Array[BlockKind]
+
+pub fn reorder_stmt(Array[@ir.Stmt], Array[Int], Int, Int) -> Array[@ir.Stmt]?
+
+pub fn replace_stmt_at(Array[@ir.Stmt], Array[Int], @ir.Stmt) -> Array[@ir.Stmt]
+
+pub fn stmt_at(Array[@ir.Stmt], Array[Int]) -> @ir.Stmt?
+
+pub fn stmt_block_kind(@ir.Stmt) -> BlockKind
+
+pub fn stmt_list_at(Array[@ir.Stmt], Array[Int]) -> Array[@ir.Stmt]?
+
+// Errors
+
+// Types and methods
+pub(all) enum BlockCategory {
+  CatEvent
+  CatVariable
+  CatFlow
+  CatCommand
+  CatExpression
+}
+
+pub(all) struct BlockItem {
+  kind : BlockKind
+  depth : Int
+  text : String
+  builtin : String
+  path : Array[Int]
+}
+
+pub(all) enum BlockKind {
+  BkDeclare
+  BkAssign
+  BkIf
+  BkElseIf
+  BkElse
+  BkEnd
+  BkCountLoop
+  BkWhile
+  BkBreak
+  BkCall
+}
+
+pub(all) struct BlockSpec {
+  id : String
+  category : BlockCategory
+  value : BlockValueType
+  label_key : String
+  arity : Int
+}
+
+pub(all) enum BlockValueType {
+  VtText
+  VtNumber
+  VtBool
+  VtAny
+}
+
+// Type aliases
+
+// Traits

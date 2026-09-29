@@ -19,7 +19,8 @@
       origin and channel policies derived by the native host.
 - [ ] Versioned HostPatch bundles replace public arbitrary JavaScript
       evaluation and are installed before their target navigation.
-- [ ] DSH Desktop and WebView Demo use controller tasks through TEA effects;
+- [x] WebView Demo uses controller tasks through TEA effects (the extracted DSH Desktop
+  sample moved to its own repository and is no longer a workspace member);
       business models contain no host/controller handles.
 - [ ] The old queue, old event variants, placement URL navigation, and public
       `EvaluateJavaScript` API are removed in the same release.
@@ -40,7 +41,7 @@
 
 | Date | Note |
 |------|------|
-| 2026-08-20 | Plan and ADR created after auditing the addon host/views packages, all three native bridges, WebView Demo, and DSH Desktop. |
-| 2026-08-20 | Host/controller/codec/view migration, three desktop plugin adapters, DSH, and WebView Demo compile under the 0.1.10 contract; native callbacks retain the existing FFI envelope while bridge handling is upgraded inside each platform adapter. |
-| 2026-08-20 | Focused native tests cover FIFO IDs, stale generations, request timeout, HostPatch origin validation, placement appearance-only semantics, and DSH/WebView Demo TEA behavior. |
-| 2026-08-20 | DSH HostPatch CSS and MutationObserver sources are embedded in the composition root; the obsolete runtime `patch.js` file and old documentation examples were removed. |
+| 2026-08-20 | Plan and ADR created after auditing the addon host/views packages, all three native bridges, WebView Demo, and the DSH Desktop sample that has since moved out of this workspace. |
+| 2026-08-20 | Host/controller/codec/view migration, three desktop plugin adapters, and WebView Demo compile under the 0.1.10 contract; native callbacks retain the existing FFI envelope while bridge handling is upgraded inside each platform adapter. |
+| 2026-08-20 | Focused native tests cover FIFO IDs, stale generations, request timeout, HostPatch origin validation, placement appearance-only semantics, and WebView Demo TEA behavior. |
+| 2026-08-20 | HostPatch CSS and MutationObserver sources were embedded in the (since extracted) DSH composition root; the obsolete runtime `patch.js` file and old documentation examples were removed. |

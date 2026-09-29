@@ -1,0 +1,228 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/domain/studio_lang"
+
+import {
+  "examples/moui_studio/domain/ir",
+}
+
+// Values
+pub const DEFAULT_MAX_STEPS : Int = 100_000
+
+pub fn answer_gate(RunState, Bool) -> Unit
+
+pub fn builtin_catalog() -> Array[BuiltinSpec]
+
+pub fn builtin_display(String, Language) -> String
+
+pub fn builtin_kind(String) -> BuiltinKind?
+
+pub fn cancel(RunState) -> Unit
+
+pub fn canonical_call_text(String, Array[@ir.Expr]) -> String
+
+pub fn canonical_expr(@ir.Expr) -> String
+
+pub fn check_syntax(String, Language) -> LangError?
+
+pub fn classify_stmt_keyword(String, Keywords) -> StmtKeyword
+
+pub fn find_builtin(String) -> BuiltinSpec?
+
+pub fn initial_rows(@ir.StudioProgram) -> Map[String, Array[String]]
+
+pub fn initial_texts(@ir.StudioProgram) -> Map[String, String]
+
+pub fn initial_values(@ir.StudioProgram) -> Map[String, Value]
+
+pub fn is_reserved(String) -> Bool
+
+pub fn keywords_for(Language) -> Keywords
+
+pub fn number_to_text(Double) -> String
+
+pub fn parse_handler_body(String, Language) -> Result[Array[TracedStmt], LangError]
+
+pub fn parse_language(String) -> Language?
+
+pub fn render_handler(@ir.Handler, Language) -> String
+
+pub fn render_stmts(Array[@ir.Stmt], Language) -> String
+
+pub fn run_to_end(RunState) -> Unit
+
+pub fn start_run(Array[TracedStmt], Map[String, String], Map[String, Value], Map[String, Array[String]], max_steps? : Int, seed? : Int) -> RunState
+
+pub fn start_run_stmts(Array[@ir.Stmt], Map[String, String], Map[String, Value], Map[String, Array[String]], max_steps? : Int, seed? : Int) -> RunState
+
+pub fn step_once(RunState) -> Unit
+
+pub fn text_to_number(String) -> Double?
+
+pub fn traced_from_stmts(Array[@ir.Stmt]) -> Array[TracedStmt]
+
+pub fn validate_program_language(@ir.StudioProgram) -> Array[LangError]
+
+pub fn value_to_text(Value) -> String
+
+// Errors
+pub(all) suberror LangError {
+  LangError(LangErrorKind, Int, String, String)
+}
+pub fn LangError::a(Self) -> String
+pub fn LangError::b(Self) -> String
+pub fn LangError::kind(Self) -> LangErrorKind
+pub fn LangError::line(Self) -> Int
+
+// Types and methods
+pub(all) enum BuiltinKind {
+  Command
+  Function
+  Gate
+}
+
+pub(all) struct BuiltinSpec {
+  id : String
+  zh : String
+  en : String
+  kind : BuiltinKind
+  arity : Int
+}
+
+pub(all) struct Gate {
+  kind : GateKind
+  prompt : String
+  payload : String
+}
+
+pub(all) enum GateKind {
+  Submit
+  Ask
+}
+
+pub(all) enum Instr {
+  Declare(String, @ir.Expr)
+  Assign(String, @ir.Expr)
+  ExprStmt(@ir.Expr)
+  JumpIfFalse(@ir.Expr, Int)
+  Jump(Int)
+  LoopInit(@ir.Expr, String, Int)
+  LoopCheck(String, String, Int)
+  LoopNext(String, Int)
+}
+
+pub(all) struct Keywords {
+  declare_kw : String
+  if_kw : String
+  then_kw : String
+  else_if_kw : String
+  else_kw : String
+  end_kw : String
+  count_kw : String
+  times_kw : String
+  as_kw : String
+  while_kw : String
+  do_kw : String
+  break_kw : String
+  true_kw : String
+  false_kw : String
+  and_kw : String
+  or_kw : String
+  not_kw : String
+}
+
+pub(all) enum LangErrorKind {
+  UnterminatedString
+  BadNumber
+  ExpectKeyword
+  UnexpectedToken
+  ReservedWord
+  MissingEnd
+  UnknownName
+  NotDeclared
+  TypeMismatch
+  ArityMismatch
+  StepBudget
+  DivideByZero
+  BadLoopCount
+  UnknownBuiltin
+  BreakOutsideLoop
+}
+
+pub(all) enum Language {
+  ZhHans
+  En
+}
+pub fn Language::tag(Self) -> String
+
+pub(all) struct Plan {
+  instrs : Array[Instr]
+  lines : Array[Int]
+}
+
+pub(all) struct RunState {
+  plan : Plan
+  mut pc : Int
+  vars : Map[String, Value]
+  texts : Map[String, String]
+  rows : Map[String, Array[String]]
+  selections : Map[String, Int]
+  messages : Array[String]
+  audit : Array[StepRecord]
+  mut status : RunStatus
+  mut gate : Gate?
+  mut error : LangError?
+  mut steps : Int
+  max_steps : Int
+  mut rng : Int
+  gate_answers : Array[Bool]
+  mut declared : Array[String]
+  mut gate_cursor : Int
+  mut paused : Bool
+}
+
+pub(all) enum RunStatus {
+  Running
+  WaitingGate
+  Completed
+  Failed
+}
+
+pub(all) enum StepOp {
+  OpAssign
+  OpMessage
+  OpGate
+  OpCommand
+  OpCondition
+  OpLoop
+}
+
+pub(all) struct StepRecord {
+  line : Int
+  op : StepOp
+  detail : String
+}
+
+pub(all) enum StmtKeyword {
+  KwDeclare
+  KwIf
+  KwCountLoop
+  KwWhile
+  KwBreak
+  NoneKw
+}
+
+pub(all) struct TracedStmt {
+  stmt : @ir.Stmt
+  line : Int
+}
+
+pub(all) enum Value {
+  VNum(Double)
+  VStr(String)
+  VBool(Bool)
+  VUnit
+}
+
+// Type aliases
+
+// Traits

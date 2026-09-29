@@ -6,6 +6,7 @@ param(
   [string] $SkiaLinkMode = $(if ($env:MOUI_SKIA_LINK_MODE) { $env:MOUI_SKIA_LINK_MODE } else { "static" }),
   [string] $VcVarsAll = $(if ($env:VCVARSALL) { $env:VCVARSALL } else { "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" }),
   [string] $VcArch = "x64",
+  [string] $ClangClPath = $env:MOUI_SKIA_CLANG_CL,
   [string] $ExtraCcFlags = $env:MOUI_SKIA_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:MOUI_SKIA_EXTRA_LINK_FLAGS,
   [switch] $EnableSkParagraph,
@@ -80,6 +81,8 @@ function Resolve-SkiaMsvcLibrary {
 if (!(Test-Path -LiteralPath $VcVarsAll -PathType Leaf)) {
   throw "vcvarsall.bat was not found: $VcVarsAll"
 }
+
+$ClangClPath = Get-MouiSkiaClangClCompilerPath -ExplicitPath $ClangClPath
 
 $resolvedPaths = Resolve-MouiSkiaMsvcPaths `
   -RepoRoot $repoRoot `
@@ -253,6 +256,7 @@ options(
 setlocal
 call "$VcVarsAll" $VcArch
 if errorlevel 1 exit /b %errorlevel%
+set "MOON_CC=$ClangClPath"
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%

@@ -4,6 +4,7 @@ param(
   [string] $SkiaZip = $env:MOUI_SKIA_SKIA_ZIP,
   [string] $SkiaLibDir = $env:MOUI_SKIA_SKIA_LIB_DIR,
   [string] $VcVarsAll = $env:VCVARSALL,
+  [string] $ClangClPath = $env:MOUI_SKIA_CLANG_CL,
   [string] $VcArch = "x64",
   [string] $SkiaProvider = $env:MOUI_SKIA_SKIA_PROVIDER,
   [string] $SkiaLinkMode = $(if ($env:MOUI_SKIA_LINK_MODE) { $env:MOUI_SKIA_LINK_MODE } else { "static" }),
@@ -125,6 +126,8 @@ if (!(Test-Path -LiteralPath $VcVarsAll -PathType Leaf)) {
   throw "vcvarsall.bat was not found: $VcVarsAll"
 }
 
+$ClangClPath = Get-MouiSkiaClangClCompilerPath -ExplicitPath $ClangClPath
+
 $resolvedPaths = Resolve-MouiSkiaMsvcPaths `
   -RepoRoot $mouiSkiaRoot `
   -SkiaRoot $SkiaRoot `
@@ -244,7 +247,7 @@ if ($TextEmojiLog.Trim().Length -gt 0) {
 
 $includePath = $resolvedIncludeRoot -replace "\\", "/"
 $libPath = $resolvedLibDir -replace "\\", "/"
-$ccFlags = "/DMOUI_SKIA_HAS_SKIA /EHsc /I$includePath"
+$ccFlags = "/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I$includePath"
 if ($skparagraphEnabled) {
   $ccFlags = "$ccFlags /DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER"
 }
@@ -288,6 +291,7 @@ if (Get-Command moon -ErrorAction SilentlyContinue) {
 }
 Write-Output "  moon=$moonVersion"
 Write-Output "  vcvarsall=$VcVarsAll"
+Write-Output "  clang_cl=$ClangClPath"
 Write-Output "  vc_arch=$VcArch"
 Write-Output "  skia_root=$resolvedRoot"
 Write-Output "  skia_include=$includePath"
@@ -420,11 +424,13 @@ options(
     $logPath = $resolvedSmokeLog -replace '"', '""'
     $errPath = ($resolvedSmokeLog + ".err") -replace '"', '""'
     $vcPath = $VcVarsAll -replace '"', '""'
+    $clangClCmdPath = $ClangClPath -replace '"', '""'
     $cmdContent = @"
 @echo off
 setlocal
 call "$vcPath" $VcArch
 if errorlevel 1 exit /b %errorlevel%
+set "MOON_CC=$clangClCmdPath"
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
@@ -526,11 +532,13 @@ options(
         $rendererLogPath = $resolvedRendererLog -replace '"', '""'
         $rendererErrPath = ($resolvedRendererLog + ".err") -replace '"', '""'
         $vcPath = $VcVarsAll -replace '"', '""'
+        $clangClCmdPath = $ClangClPath -replace '"', '""'
         $rendererCmdContent = @"
 @echo off
 setlocal
 call "$vcPath" $VcArch
 if errorlevel 1 exit /b %errorlevel%
+set "MOON_CC=$clangClCmdPath"
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
@@ -641,11 +649,13 @@ options(
         $textEmojiLogPath = $resolvedTextEmojiLog -replace '"', '""'
         $textEmojiErrPath = ($resolvedTextEmojiLog + ".err") -replace '"', '""'
         $vcPath = $VcVarsAll -replace '"', '""'
+        $clangClCmdPath = $ClangClPath -replace '"', '""'
         $textEmojiCmdContent = @"
 @echo off
 setlocal
 call "$vcPath" $VcArch
 if errorlevel 1 exit /b %errorlevel%
+set "MOON_CC=$clangClCmdPath"
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%

@@ -1,0 +1,413 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/app"
+
+import {
+  "examples/moui_studio/domain/blocks",
+  "examples/moui_studio/domain/ir",
+  "examples/moui_studio/domain/proposals",
+  "examples/moui_studio/domain/studio_lang",
+  "examples/moui_studio/services/compiled_runtime",
+  "examples/moui_studio/services/export",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui_i18n",
+}
+
+// Values
+pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
+
+pub const LANGUAGE_SETTINGS_KEY : String = "studio.language"
+
+pub const UNDO_DEPTH : Int = 50
+
+pub fn audit_op_rank(@studio_lang.StepOp) -> Int
+
+pub fn block_chain_of(Model) -> Array[@blocks.BlockItem]
+
+pub fn block_fill(@blocks.BlockKind) -> @core.Color
+
+pub fn block_notch_color() -> @core.Color
+
+pub fn block_text_color() -> @core.Color
+
+pub fn blocks_canvas(Array[@blocks.BlockItem], Array[String], Int, String, BlocksDragState?, Double, String) -> @core.View[Msg]
+
+pub fn blocks_canvas_background() -> @core.Color
+
+pub fn blocks_draw_plan(Array[@blocks.BlockItem], Array[String], Array[@core.Rect], Int, String, BlocksDragState?, Double, Double) -> Array[BlocksDrawOp]
+
+pub fn blocks_drop_slot(Array[@blocks.BlockItem], Array[Int], Double, Array[@core.Rect]) -> Int
+
+pub fn blocks_hit_index(Array[@blocks.BlockItem], Double, Double) -> Int
+
+pub fn blocks_item_rects(Array[@blocks.BlockItem]) -> Array[@core.Rect]
+
+pub fn blocks_parent_of(Array[Int]) -> Array[Int]
+
+pub fn blocks_same_path(Array[Int], Array[Int]) -> Bool
+
+pub fn bundle_files(String, String) -> Array[(String, String)]
+
+pub fn command_message(@core.CommandIntent) -> Msg
+
+pub fn command_palette_commands(@moui_i18n.Translator) -> Array[@core.ActionCommand]
+
+pub fn command_palette_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn command_palette_host(@core.View[Msg], Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn compile_action_bar(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn compile_report_card(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn compile_submit_needed(Model, Model) -> Bool
+
+pub fn compiled_audit_op_rank(@compiled_runtime.StepOp) -> Int
+
+pub fn compiled_error_message(@moui_i18n.Translator, @compiled_runtime.ErrorDetails) -> String
+
+pub fn compiled_run_header(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn control_events(@ir.Control) -> Array[@ir.EventKind]
+
+pub fn control_rect(@ir.Control) -> @core.Rect
+
+pub fn current_handler(Model) -> @ir.Handler?
+
+pub fn design_backdrop_plan() -> Array[DesignDrawOp]
+
+pub fn design_overlay_plan(@ir.StudioProgram, String, String?) -> Array[DesignDrawOp]
+
+pub fn design_stage(@ir.StudioProgram, String, String?, Array[@core.View[Msg]], Array[@core.Rect], String, String) -> @core.View[Msg]
+
+pub fn empty_program() -> @ir.StudioProgram
+
+pub fn empty_provider_config() -> ProviderConfig
+
+pub fn error_message(@moui_i18n.Translator, @studio_lang.LangError) -> String
+
+pub fn explanation_system_prompt() -> String
+
+pub fn first_control_name(Array[@ir.Control]) -> String
+
+pub fn first_handler_key(Array[@ir.Handler]) -> String
+
+pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog]
+
+pub fn handler_key(String, String) -> String
+
+pub fn hit_test_control(Array[@ir.Control], Double, Double) -> @ir.Control?
+
+pub fn hit_test_handle(@ir.Control, Double, Double) -> @ir.DragCorner?
+
+pub fn initial_model(provider_config? : ProviderConfig, compile_track_available? : Bool) -> Model
+
+pub fn local_explanation(Model) -> String
+
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (Result[@export.CompileReport, String]) -> Unit) -> Unit, provider_config? : ProviderConfig, compile_track_available? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+
+pub fn proposal_error_text(@moui_i18n.Translator, @proposals.ProposalError) -> String
+
+pub fn proposal_from_completion(Model, String) -> Model
+
+pub fn proposal_system_prompt() -> String
+
+pub fn seed_code_draft(Model) -> Model
+
+pub fn select_block_by_path(Model, Array[Int]) -> Model
+
+pub fn snap_move_position(Array[@ir.Control], String, Double, Double, Double, Double) -> (Double, Double)
+
+pub fn snap_resize_position(Array[@ir.Control], String, @ir.Control, @ir.DragCorner, Double, Double) -> (Double, Double)
+
+pub fn split_lines(String) -> Array[String]
+
+pub fn[Msg] stage_layout(Array[@core.View[Msg]], Array[@core.Rect]) -> @core.View[Msg]
+
+pub fn structural_error_text(@moui_i18n.Translator, @ir.IrError) -> String
+
+pub fn studio_console_background() -> @core.Color
+
+pub fn studio_grid_line() -> @core.Color
+
+pub fn studio_stage_background() -> @core.Color
+
+pub fn studio_stage_outline() -> @core.Color
+
+pub fn studio_theme() -> @core.Theme
+
+pub fn text(@moui_i18n.Translator, String) -> String
+
+pub fn text_with(@moui_i18n.Translator, String, Array[(String, String)]) -> String
+
+pub fn translator(Model) -> @moui_i18n.Translator
+
+pub fn translator_for(UiLanguage) -> @moui_i18n.Translator
+
+pub fn ui_language_from_tag(String) -> UiLanguage
+
+pub fn update_pure(Model, Msg) -> (Model, @core.Effect[Msg])
+
+pub fn update_with_services(Model, Msg, @services.AppServices) -> (Model, @core.Effect[Msg])
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) struct BlocksDragState {
+  list_path : Array[Int]
+  from : Int
+  to : Int
+}
+
+pub(all) enum BlocksDrawOp {
+  BlockBody(Double, Double, Double, Double, @blocks.BlockKind)
+  BlockTab(Double, Double, Double, @blocks.BlockKind)
+  BlockNotchCut(Double, Double)
+  BlockLabel(String, Double, Double, Double)
+  BlockStroke(Double, Double, Double, Double)
+  InsertMark(Double, Double, Double)
+}
+
+pub(all) struct CompiledRun {
+  handler_label : String
+  runtime : @compiled_runtime.Runtime
+  checks : Map[String, Bool]
+}
+
+pub(all) enum DesignDrawOp {
+  WindowFrame(@core.Rect)
+  GridDot(@core.Rect)
+  BoundsOutline(@core.Rect)
+  GhostName(@core.Rect, String)
+  SelectionStroke(@core.Rect)
+  SelectedNamePill(@core.Rect, String)
+  SelectionHandle(@core.Rect)
+  GuideV(Double)
+  GuideH(Double)
+}
+
+pub(all) enum DragKind {
+  Move(Int, Int)
+  Resize(@ir.DragCorner)
+}
+
+pub(all) struct DragState {
+  control : String
+  kind : DragKind
+}
+
+pub(all) struct GeneratedI18nCatalog {
+  locale : String
+  messages : Array[(String, GeneratedI18nMessage)]
+}
+
+pub(all) enum GeneratedI18nMessage {
+  Text(String)
+  Plural(one~ : String, other~ : String)
+}
+
+pub(all) enum Mode {
+  ModeDesign
+  ModeBlocks
+  ModeCode
+  ModePreview
+  ModeHelp
+  ModeRun
+}
+
+pub(all) struct Model {
+  program : @ir.StudioProgram
+  language : UiLanguage
+  mode : Mode
+  design_zoom : Double
+  selected_control : String
+  selected_handler : String
+  code_draft : String
+  code_error : String
+  run_track : RunTrack
+  compile_track_available : Bool
+  run : RunModel?
+  compiled_run : CompiledRun?
+  compile_report : @export.CompileReport?
+  compile_busy : Bool
+  compile_output_open : Bool
+  command_palette_open : Bool
+  command_palette_query : String
+  pending : PendingProposal?
+  prompt_draft : String
+  prompt_error : String
+  provider_mode : ProviderMode
+  provider_endpoint : String
+  provider_model : String
+  provider_key : String
+  provider_key_revealed : Bool
+  provider_settings_open : Bool
+  dirty : Bool
+  saved_encoding : String
+  draft_encoding : String
+  notice : String
+  explanation : String
+  ai_busy : Bool
+  selected_block : Int
+  block_draft : String
+  drag : DragState?
+  runtime_values : Map[String, @studio_lang.Value]
+  runtime_texts : Map[String, String]
+  runtime_rows : Map[String, Array[String]]
+  runtime_selections : Map[String, Int]
+  undo_stack : Array[UndoEntry]
+  redo_stack : Array[UndoEntry]
+  proposal_history : Array[ProposalRecord]
+  block_drag : BlocksDragState?
+}
+
+pub(all) enum Msg {
+  Noop
+  SwitchLanguage
+  SetMode(Mode)
+  SetDesignZoom(Double)
+  SelectControl(String)
+  CanvasPress(Double, Double)
+  CanvasTap(Double, Double)
+  CanvasDragTo(Double, Double)
+  CanvasRelease(Double, Double)
+  SetControlText(String, String)
+  SetControlName(String, String)
+  SetControlItems(String, String)
+  SetControlRect(String, @ir.RectField, String)
+  AddControl(@ir.ControlKind)
+  DuplicateControl(String)
+  DeleteControl(String)
+  SelectHandler(String)
+  CreateHandler(String, @ir.EventKind)
+  EditCode(String)
+  Undo
+  Redo
+  SetPrompt(String)
+  RealGenerationFinished(Result[String, String])
+  ExplainHandler
+  RealExplanationFinished(Result[String, String])
+  LanguageLoaded(String)
+  SelectBlock(Int)
+  EditBlock(String)
+  CommitBlock
+  DeleteBlock
+  GenerateProposal
+  AcceptProposal
+  RejectProposal
+  SetProviderMode(ProviderMode)
+  SetProviderEndpoint(String)
+  SetProviderModel(String)
+  SetProviderKey(String)
+  ToggleProviderKeyReveal
+  ToggleProviderSettings
+  DraftLoaded(@services.ServiceTaskResult[String?])
+  RunStart
+  RunStop
+  SetRunTrack(RunTrack)
+  CompileRun
+  CompileRunFinished(@export.CompileReport)
+  CompileRunFailed(String)
+  CompileStopped
+  CompileJump(Int)
+  ToggleCompileOutput
+  CommandPaletteOpen
+  CommandPaletteClose
+  CommandPaletteQuery(String)
+  CommandPaletteRun(@core.CommandIntent)
+  RunTick
+  RunStep
+  RunResume
+  AuditJump(Int)
+  BlocksCanvasTap(Double, Double)
+  BlocksCanvasPress(Double, Double)
+  BlocksCanvasDragTo(Double, Double)
+  BlocksCanvasRelease
+  RunToggle(String, Bool)
+  AnswerGate(Bool)
+  ControlClicked(String)
+  ControlPicked(String, Int)
+  ControlChanged(String, String)
+  SelectTemplate(Int)
+  SaveRequested
+  SavePathPicked(@services.ServiceTaskResult[String])
+  SaveCompleted(@services.ServiceTaskResult[Unit])
+  OpenRequested
+  OpenPathPicked(@services.ServiceTaskResult[String])
+  OpenReadCompleted(@services.ServiceTaskResult[String])
+  ExportRequested
+  ExportDirPicked(@services.ServiceTaskResult[String])
+  ExportFileWritten(@services.ServiceTaskResult[Unit])
+  SetNotice(String)
+}
+
+pub(all) struct PendingProposal {
+  proposal : @proposals.ProposalV1
+  diff : Array[@proposals.DiffEntry]
+  summary : String
+  errors : Array[String]
+  valid : Bool
+}
+
+pub(all) struct ProposalRecord {
+  summary : String
+  diff : Array[@proposals.DiffEntry]
+  accepted : Bool
+  seq : Int
+}
+
+pub(all) struct ProviderConfig {
+  endpoint : String
+  model : String
+  api_key : String
+}
+
+pub(all) enum ProviderMode {
+  Fake
+  Real
+}
+
+pub(all) struct ProviderRequestSpec {
+  endpoint : String
+  key : String
+  model : String
+  system : String
+  prompt : String
+}
+
+pub(all) struct RunModel {
+  handler_label : String
+  state : @studio_lang.RunState
+  checks : Map[String, Bool]
+  single_step : Bool
+}
+
+pub(all) enum RunTrack {
+  Interpret
+  Compile
+}
+
+pub(all) enum UiLanguage {
+  ZhHans
+  En
+}
+pub fn UiLanguage::dsl_language(Self) -> @studio_lang.Language
+pub fn UiLanguage::other_language_label(Self) -> String
+pub fn UiLanguage::tag(Self) -> String
+
+pub(all) struct UndoEntry {
+  program : @ir.StudioProgram
+  selected_control : String
+  selected_handler : String
+  code_draft : String
+  coalesce_key : String
+}
+
+// Type aliases
+pub type CompileSubmit = (String, String, (Result[@export.CompileReport, String]) -> Unit) -> Unit
+
+pub type ProviderSubmit = (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit
+
+// Traits

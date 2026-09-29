@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/model_provider"
+
+// Values
+pub fn build_request_body(CompletionRequest) -> Json
+
+pub fn completion_url(String) -> String
+
+pub fn deterministic_completion(CompletionRequest) -> String
+
+pub fn parse_completion(String) -> Result[String, String]
+
+pub fn request_within_budget(CompletionRequest, Int) -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) struct ChatMessage {
+  role : ChatRole
+  content : String
+}
+
+pub(all) enum ChatRole {
+  System
+  User
+  Assistant
+}
+
+pub(all) struct CompletionRequest {
+  model : String
+  system : String
+  messages : Array[ChatMessage]
+  temperature : Double
+}
+pub fn CompletionRequest::new(String, String) -> Self
+pub fn CompletionRequest::with_message(Self, ChatRole, String) -> Self
+
+// Type aliases
+
+// Traits

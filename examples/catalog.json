@@ -104,12 +104,6 @@
       "featured": false
     },
     {
-      "id": "deepseek_harness_desktop",
-      "path": "examples/deepseek_harness_desktop",
-      "title": "DSH Desktop",
-      "featured": true
-    },
-    {
       "id": "momark",
       "path": "examples/momark",
       "title": "MoMark",

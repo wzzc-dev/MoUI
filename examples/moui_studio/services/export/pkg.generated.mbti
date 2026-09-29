@@ -1,0 +1,139 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/export"
+
+import {
+  "examples/moui_studio/domain/ir",
+}
+
+// Values
+pub fn abi_mbt() -> String
+
+pub fn app_pkg(String) -> String
+
+pub fn codec_pkg(String) -> String
+
+pub fn compiled_runtime_pkg(String) -> String
+
+pub fn deps_txt() -> String
+
+pub fn escape_mbt(String) -> String
+
+pub fn export_bundle(String, String) -> Array[(String, String)]
+
+pub fn generate_handler_source(@ir.Handler, Int) -> GeneratedHandler
+
+pub fn generate_source(@ir.StudioProgram) -> GeneratedSource
+
+pub fn generated_handlers_mbt(String) -> String
+
+pub fn ir_pkg() -> String
+
+pub fn kernel_codec_mbt() -> String
+
+pub fn kernel_compiled_runtime_mbt() -> String
+
+pub fn kernel_ir_invariants_mbt() -> String
+
+pub fn kernel_ir_mbt() -> String
+
+pub fn kernel_ir_signature_mbt() -> String
+
+pub fn kernel_studio_lang_aliases_mbt() -> String
+
+pub fn kernel_studio_lang_errors_mbt() -> String
+
+pub fn kernel_studio_lang_interp_mbt() -> String
+
+pub fn kernel_studio_lang_keywords_mbt() -> String
+
+pub fn kernel_studio_lang_lexer_mbt() -> String
+
+pub fn kernel_studio_lang_parser_mbt() -> String
+
+pub fn kernel_studio_lang_printer_mbt() -> String
+
+pub fn kernel_studio_lang_semantics_mbt() -> String
+
+pub fn mbt_quote(String) -> String
+
+pub fn moon_mod(String) -> String
+
+pub fn moonbit_preview(@ir.StudioProgram) -> String
+
+pub fn moonbit_preview_with_lines(@ir.StudioProgram) -> GeneratedSource
+
+pub fn native_smoke_main() -> String
+
+pub fn native_smoke_pkg(String) -> String
+
+pub fn parse_moon_diagnostics(String) -> Array[CompileDiagnostic]
+
+pub fn paths_equal(Array[Int], Array[Int]) -> Bool
+
+pub fn project_data_mbt(String) -> String
+
+pub fn readme(String) -> String
+
+pub fn runner_source() -> String
+
+pub fn sanitize_name(String) -> String
+
+pub fn studio_lang_pkg(String) -> String
+
+pub fn web_index_html(String) -> String
+
+pub fn web_main() -> String
+
+pub fn web_pkg(String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct CompileDiagnostic {
+  severity : String
+  code : String
+  file : String
+  line : Int
+  column : Int
+  text : String
+}
+
+pub(all) struct CompileReport {
+  ok : Bool
+  exit_code : Int
+  target : String
+  source_path : String
+  output : String
+  diagnostics : Array[CompileDiagnostic]
+}
+pub fn CompileReport::empty(String) -> Self
+pub fn CompileReport::errors(Self) -> Array[CompileDiagnostic]
+pub fn CompileReport::first_error(Self) -> CompileDiagnostic?
+
+pub(all) struct GeneratedHandler {
+  index : Int
+  function_name : String
+  control_name : String
+  event_tag : String
+  source : String
+  stmt_lines : Array[StmtLine]
+  start_line : Int
+  body_end_line : Int
+}
+pub fn GeneratedHandler::audit_line_for(Self, Array[Int]) -> Int?
+pub fn GeneratedHandler::line_for(Self, Array[Int]) -> Int?
+
+pub(all) struct GeneratedSource {
+  source : String
+  handlers : Array[GeneratedHandler]
+}
+
+pub(all) struct StmtLine {
+  path : Array[Int]
+  line : Int
+  audit_line : Int
+}
+
+// Type aliases
+
+// Traits

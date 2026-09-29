@@ -1,18 +1,22 @@
 # Windows Platform Notes
 
-Windows native examples use the MSVC toolchain with Visual Studio C++ build
-tools and vcpkg `zlib:x64-windows`. The Skia entrypoints are the recommended
-native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic mode
-with the official `wgpu-windows-x86_64-msvc-release.zip` release. The
+Windows native examples use the MSVC toolchain with Visual Studio C++
+build tools and vcpkg `zlib:x64-windows`. The Windows native helper sets
+`MOON_CC` to an absolute `clang-cl.exe` (from the Visual Studio LLVM tools,
+with a sibling `llvm-lib.exe`). The MoonBit CLI injects `/std:c11` into every
+MSVC-classified stub compile, and `cl.exe` rejects that together with the
+`/std:c++20` the Skia stubs require (D8016); `clang-cl.exe` is classified as
+MSVC by the CLI, accepts both flags, and is automatically paired with
+`llvm-lib.exe` as the archiver. The Skia entrypoints are the recommended
+native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic
+mode with the official `wgpu-windows-x86_64-msvc-release.zip` release. The
 `wgpu_mbt` C stubs include `<stdatomic.h>`, which on MSVC requires C11 mode:
 `scripts/windows/msvc_env.ps1` provides `/experimental:c11atomics /utf-8`
-through the shared `CL` environment, and the Windows build/package helpers add
-`/std:c11` for packages that import the WGPU provider. For a plain sourced
+through the shared `CL` environment, and the Windows build/package helpers
+add `/std:c11` for packages that import the WGPU provider. For a plain sourced
 shell, call `Enable-MsvcGlobalC11ModeForCOnlyStubs` before running WGPU
 entrypoints. `/std:c11` stays out of the shared `CL` default on purpose:
-only packages that import the WGPU provider need it. The `moui_skia` Skia
-stubs no longer pass a C++ standard flag, so they never collide with the
-C11 mode the MoonBit CLI injects for MSVC stubs (MSVC D8016).
+only packages that import the WGPU provider need it.
 Windows native WebView support is auto-detected by the `moui_webview`
 prebuild from the `.tools/webview2/` cache directory (set up by
 `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2`), matching how Linux
@@ -42,14 +46,14 @@ powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_ap
   -AppName MoUIShowcase
 ```
 
-The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC` and `CXX`
-to `cl.exe` on `PATH`, and applies shared `CL`/`LINK` flags for MoonBit native
-stubs. It detects whether the selected package imports the WGPU
-provider. Skia packages do not download or package `wgpu_native.dll`; WGPU
-diagnostic packages set `MBT_WGPU_LINK_MODE=dynamic` and point
-`MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `moui_skia` emits
-its Windows Skia C++ stub flags via the package prebuild without pinning a
-C++ language standard, so they stay compatible with the CLI's `/std:c11`. Packaged MSVC apps use the vcpkg
+The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `MOON_CC` to an
+absolute `clang-cl.exe` (with `CC`/`CXX` left on `cl.exe` for vcvars-based
+tools), and applies shared `CL`/`LINK` flags for MoonBit native stubs. It
+detects whether the selected package imports the WGPU provider. Skia packages
+do not download or package `wgpu_native.dll`; WGPU diagnostic packages set
+`MBT_WGPU_LINK_MODE=dynamic` and point `MBT_WGPU_NATIVE_ROOT` at the extracted
+MSVC WGPU release. `moui_skia` emits `/std:c++20` in its Windows Skia C++ stub
+flags; `clang-cl.exe` accepts that alongside the CLI's `/std:c11`. Packaged MSVC apps use the vcpkg
 `zlib:x64-windows` runtime for native image decoding. When the
 Visual Studio-bundled vcpkg rejects direct classic installs, run
 `setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an

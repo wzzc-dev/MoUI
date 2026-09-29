@@ -196,6 +196,31 @@ echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
 
 echo "=== Step 4: Build Showcase Windows Skia ===" | tee -a "$preflight_log"
 cd "$REPO_ROOT"
+# The MoonBit CLI injects /std:c11 for MSVC stub compiles while the Skia stubs
+# need /std:c++20; cl.exe rejects that pair (D8016). Build through clang-cl.exe
+# from the same Visual Studio install, which accepts both and is classified as
+# MSVC by the CLI (moon pairs the sibling llvm-lib.exe automatically).
+if [[ -z "${MOON_CC:-}" ]]; then
+  MOON_CC="$(powershell -NoProfile -ExecutionPolicy Bypass -Command "
+    \$vswhere = Join-Path \${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (-not (Test-Path -LiteralPath \$vswhere)) { exit 1 }
+    \$install = & \$vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+    if (-not \$install) { exit 1 }
+    \$candidate = Join-Path \$install 'VC\Tools\Llvm\x64\bin\clang-cl.exe'
+    if (Test-Path -LiteralPath \$candidate) { Write-Output \$candidate }
+  " 2>/dev/null | tr -d '\r')"
+fi
+if [[ -z "${MOON_CC:-}" ]]; then
+  echo "clang-cl.exe was not found; set MOON_CC to its absolute path before running this script" >&2
+  exit 1
+fi
+if [[ ! -f "$(cygpath -u "$MOON_CC" 2>/dev/null || printf '%s' "$MOON_CC")" ]]; then
+  echo "MOON_CC does not point at an existing compiler: $MOON_CC" >&2
+  exit 1
+fi
+export MOON_CC
+echo "  MOON_CC=$MOON_CC" | tee -a "$preflight_log"
+
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   moon build examples/showcase/windows_skia --target native 2>&1 \
