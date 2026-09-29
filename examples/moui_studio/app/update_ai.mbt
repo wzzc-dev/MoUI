@@ -1,4 +1,42 @@
 ///|
+/// 「发送」按当前模式分流到既有通道——模式只改**入口路由**，不新增
+/// 执行路径（提案仍走 proposals 校验链，讲解仍是确定性函数）。
+fn composer_run(model : Model) -> (Model, @moui.Effect[Msg]) {
+  match model.composer_mode {
+    // 解释需要「当前子程序」才有话说：没选中就先选第一个子程序
+    // （与左栏点选同一语义），否则讲解恒为空——点了没反应。
+    ComposeExplain => {
+      let targeted = if current_handler(model) is None &&
+        model.program.handlers.length() > 0 {
+        let first = model.program.handlers[0]
+        update_pure(
+          model,
+          SelectHandler(handler_key(first.control_name, first.event.tag())),
+        )
+      } else {
+        (model, @moui.Effect::none())
+      }
+      update_pure(targeted.0, ExplainHandler)
+    }
+    ComposeRepair => update_pure(model, RestoreCodeDraft)
+    // 生成 = 以空程序为基底的修改：清空控件与子程序让提案从零重建，
+    // 走的还是同一个 proposals 校验链（不是「另一条生成通道」）。
+    ComposeGenerate => {
+      let cleared = {
+        ..model,
+        program: @ir.StudioProgram::{
+          ..model.program,
+          controls: [],
+          handlers: [],
+        },
+      }
+      update_pure(cleared, GenerateProposal)
+    }
+    ComposeEdit => update_pure(model, GenerateProposal)
+  }
+}
+
+///|
 /// AI 提案域状态转移：生成/采纳/拒绝、provider 设置、本地讲解。
 
 ///|
@@ -26,9 +64,37 @@ fn accept_proposal(model : Model) -> Model {
           runtime_rows: @studio_lang.initial_rows(next),
           runtime_selections: Map([], capacity=4),
         }
+        let accepted = settle_newest_thread_card(
+          record_history(cleared, pending, true),
+          text(translator(model), "app.ai.card.applied"),
+        )
+        // 采纳是一条**大事实**：审计留痕 + 最近修改记「Agent」+ toast 回执，
+        // 三处都从这一条事件派生（教学上「Agent 改了什么」必须可追溯）。
+        let t = translator(accepted)
+        let logged = log_line(
+          accepted,
+          LogLevel::LogInfo,
+          text_with(t, "app.log.proposal_accepted", [
+            ("count", pending.diff.length().to_string()),
+          ]),
+        )
+        let audited = push_audit(
+          logged,
+          AuditOk,
+          text(t, "app.audit.proposal_accepted"),
+          text_with(t, "app.audit.proposal_accepted.detail", [
+            ("count", pending.diff.length().to_string()),
+          ]),
+        )
+        let tracked = push_recent(
+          audited,
+          pending.summary,
+          text(t, "app.recent.action.agent_accept"),
+          true,
+        )
         {
-          ..record_history(cleared, pending, true),
-          notice: text(translator(cleared), "app.status.proposal_accepted"),
+          ..push_toast(tracked, text(t, "app.toast.proposal_accepted"), false),
+          notice: text(t, "app.status.proposal_accepted"),
         }
       }
   }
@@ -63,9 +129,71 @@ pub fn proposal_from_completion(model : Model, completion : String) -> Model {
         errors: messages,
         valid: errors.is_empty(),
       }
-      { ..model, pending: Some(pending), prompt_error: "", }
+      {
+        ..push_proposal_thread_card(
+          { ..model, pending: Some(pending), prompt_error: "", },
+          pending,
+        ),
+        pending: Some(pending),
+        prompt_error: "",
+      }
     }
   }
+}
+
+///|
+/// 把**最新的未处理线程卡**标记为已处理（采纳/拒绝时调用），并写上回执。
+/// 只动最新一张：一次提案对应一张卡，标记更早的会把历史卡的语义搞混。
+fn settle_newest_thread_card(model : Model, note : String) -> Model {
+  let cards = model.ai_cards
+  let mut index = cards.length() - 1
+  while index >= 0 {
+    let card = cards[index]
+    if !card.settled && (card.kind is CardDiff || card.kind is CardSideEffect) {
+      cards[index] = AiCard::{ ..card, settled: true, settled_note: note, }
+      break
+    }
+    index = index - 1
+  }
+  { ..model, ai_cards: cards, }
+}
+
+///|
+/// 提案到位时把一张 **diff 线程卡**推进会话线程（设计稿 `threadStack`）。
+///
+/// 此前 `push_ai_card` 没有调用方，`ai_cards` 恒为空——于是线程区、折叠条、
+/// `#seeAll`、药丸的「待审计 N」全是永远不出现的死 UI。会话线程是设计稿 AI
+/// 层的核心（「Agent 干了什么」的可见记录），必须由真实事件驱动：
+/// 唯一的提案入口就是这里。
+fn push_proposal_thread_card(model : Model, pending : PendingProposal) -> Model {
+  let t = translator(model)
+  let lines : Array[(String, String)] = []
+  for entry in pending.diff {
+    lines.push(
+      (
+        match entry.op {
+          @proposals.Added => "+"
+          @proposals.Removed => "-"
+          @proposals.Changed => "~"
+        },
+        entry.path + "  " + entry.new_text,
+      ),
+    )
+  }
+  push_ai_card(model, AiCard::{
+    kind: CardDiff,
+    title: pending.summary,
+    body: text_with(t, "app.ai.card.diff", [
+      ("count", pending.diff.length().to_string()),
+    ]),
+    steps: [],
+    steps_done: 0,
+    progress: 100,
+    diff_lines: lines,
+    settled: false,
+    settled_note: "",
+    seq: 0,
+  })
 }
 
 ///|
@@ -195,6 +323,11 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
+    SetComposerMode(mode) =>
+      Some(({ ..model, composer_mode: mode, }, @moui.Effect::none()))
+    // 「发送」按当前模式分流到既有通道——模式只改**入口路由**，
+    // 不新增执行路径（提案仍走校验链，讲解仍是确定性函数）。
+    ComposerRun => Some(composer_run(model))
     GenerateProposal => {
       let completion = @proposals.fake_model_completion(
         model.prompt_draft,
@@ -213,13 +346,36 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     RejectProposal =>
       Some(
         (
-          {
-            ..(match model.pending {
-              None => model
-              Some(pending) => record_history(model, pending, false)
-            }),
-            pending: None,
-            notice: text(translator(model), "app.status.proposal_rejected"),
+          match model.pending {
+            None => model
+            Some(pending) => {
+              let t = translator(model)
+              let rejected = settle_newest_thread_card(
+                record_history(model, pending, false),
+                text(t, "app.ai.card.rejected"),
+              )
+              let logged = log_line(
+                rejected,
+                LogLevel::LogWarn,
+                text(t, "app.log.proposal_rejected"),
+              )
+              let tracked = push_recent(
+                logged,
+                pending.summary,
+                text(t, "app.recent.action.agent_reject"),
+                true,
+              )
+              let toasted = push_toast(
+                tracked,
+                text(t, "app.toast.proposal_rejected"),
+                true,
+              )
+              {
+                ..toasted,
+                pending: None,
+                notice: text(t, "app.status.proposal_rejected"),
+              }
+            }
           },
           @moui.Effect::none(),
         ),

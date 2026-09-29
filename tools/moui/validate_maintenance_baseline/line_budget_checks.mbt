@@ -50,9 +50,9 @@ fn record_untracked_oversized_files(
           continue
         }
       }
-      let lines = line_count(text)
-      if lines > oversized_file_threshold() {
-        overflows.push({ path, lines, })
+      if !generated_source_text(text) &&
+        line_count(text) > oversized_file_threshold() {
+        overflows.push({ path, lines: line_count(text), })
       }
     }
   }

@@ -430,3 +430,199 @@
   ~1s 稳定，否则拍到半透明中间帧误判。
 - ZCode IAB 截图实测：1280×832 视口与桌面截图同尺度，逐点取样对比度
   可复用 artifacts/studio-analysis/contrast.py 的模态背景+字形极值法。
+
+## v4 IDE 壳重写（2026-09-30 实测，五个布局陷阱 + 四路派生）
+
+### 布局陷阱（本次所有视觉缺陷的根因，改壳前先读）
+
+1. **`ContainerBox` 会把子节点居中并收缩到子节点尺寸**
+   （`moui/views/layout/layout_views.mbt:135-151` 用 `first_child_size`，
+   `:233-256` 做居中）。`container(column(...))` 只要内容比容器矮，整列就被
+   **垂直居中**——表现是「窗格头浮在面板中间」。**对策**：每个窗格/列容器
+   显式 `.frame(width=w, height=h)`。
+2. **带权重的 spacer 只有在 flex 父节点主轴尺寸确定时才拿得到 slack**。
+   `@views.row([a, spacer(weight=1.0), b])` 量出来只等于子节点之和，spacer
+   拿到 0 slack，随后整行被容器居中——顶栏内容因此挤在窗口中间。
+   **对策**：`.frame(width=W)` 钉住行宽。统一走 `app/ide_chrome.mbt` 的
+   `fill_row(cells, width, spacing, align)`（`panel_head` / `kv_row` /
+   `tree_row` / `status_cells` / `pane_head` / `pane_foot` / `category_bar`
+   / `context_*` 都已改用它）。**新增任何带权重 spacer 的行都必须定宽。**
+3. **`.align()` 必须写在 `.frame()` 之前**。`mod_aligned_rect`
+   （`moui/core/modifier_layout.mbt:190-197`）把 `w` 算成
+   `min(bounds.w, child.w)`，`AlignModifier::layout` 又把自己量成子节点尺寸，
+   所以 `.frame(...).align(...)` 里的 align **永远拿不到 slack，是静默空操作**
+   （部件会贴在左上角）。仓库既有正确写法见
+   `examples/mo_desktop/app/view_overlays.mbt:117-120`。
+   **但贴底/贴右更稳的写法是「权重 spacer + 定高子节点」**（AI 浮动层即此，
+   见 `app/ide_ai.mbt` 的 `ai_floating`）——不依赖 align 的尺寸语义。
+4. **`divider` 的轴向**：在 **row** 里用 `axis=Vertical`；在 **column** 里用
+   默认 Horizontal。column 里放 Vertical divider 会量成整列高并盖住兄弟
+   （图标栏曾因此被画成一条窄条）。
+5. **`scroll_view` 给子节点的是无界约束**，子节点量不到视口宽。
+   画布类子节点必须由调用方传显式宽度
+   （`blocks_canvas(..., width, height, ...)` 的 `width` 就是为此加的；
+   原先写死 470 会溢出到隔壁面板）。
+
+### 本次真实缺陷（不是风格问题，都是逻辑错）
+
+- `update_shell.mbt` 的 `set_workspace` 通配臂原先写
+  `(other, _) => other`，导致**任何工作区切换都静默返回当前工作区**。
+  正确写法 `(_, requested) => requested`。三处布局测试才暴露出来。
+- `console_pane` 直接渲染 `line.text`（i18n 键原文）而非 `text(t, line.text)`。
+- **撤销「合并」与「留痕」是两件事**：`with_undo_point` 的 key 既当
+  合并键又当留痕依据，会把连插两个控件粘成一步撤销（既有
+  `undo depth is capped` 测试抓到）。拆成两个入口：
+  `with_undo_point`（可合并的连续编辑：move/resize/text/items/rect/rename）
+  与 `with_recent_undo_point`（离散动作：insert/delete/duplicate/template/handler，
+  coalesce key 为空所以永不合并）。
+
+### 四路派生（事件 → 审计 / Console / 最近修改 / toast）
+
+- **接受/拒绝提案**：`audit + log + recent(by_agent=true) + toast` 四路都发。
+- **真编译**：启动记 Console；完成记审计（失败带诊断文本）。注意
+  `CompileDiagnostic` 字段是 `severity/code/file/line/column/text`
+  （**没有 `message`**）。
+- **运行**：启动在 `start_run` 记一条（带 handler 标签）；**终态只在
+  `merge_run_back` 记一次**——tick/单步/事件回灌都汇合到这里，散在各调用点
+  会重复计数刷屏。副作用闸门用 `AuditWarn` 卡，且要判重
+  （`already_gated`，否则每次 tick 压一条）。
+- **IR 编辑**：最近修改挂在 `with_undo_point*` 单一漏斗；判定与撤销点同源
+  （签名没变就不记），no-op 不入账。
+- `LogLevel` 构造子是 `LogInfo/LogWarn/LogError`（**不是** `Info/Warn`）。
+- `RunStatus` 是 `Running/WaitingGate/Completed/Failed`（**不是** `AwaitingGate`）；
+  `RunState.error : LangError?` 要经 `error_message(t, error)` 转文案；
+  `Gate` 字段是 `kind/prompt/payload`。
+
+### AI 避让带（对齐设计稿 `syncAIRes()`）
+
+中心列拆成**上下两段**（`app/ide_root.mbt`）：内容段拿 `row_height - band`，
+浮动卡段拿 `band`。**不能**在 `stack` 里给子节点改高度——stack 给每个子
+整帧，内容仍会被撑满。`ai_avoidance_band` 与 `ai_card_height` 同源计算，
+停靠/药丸态返回 0（它们不遮内容）；卡高超过行高 60% 时也返回 0（避让只会
+把内容压没）。
+
+### 测试基建
+
+- 壳布局测试在 `app/shell_layout_wbtest.mbt`（白盒，headless
+  `new_program_with_dimensions` → 从 draw_commands 读文本/矩形）。
+  新增覆盖：三列几何、工作区切换、底栏页签、避让带契约、空舞台、
+  上下文页签、命令面板过滤、模态宿主、对齐夹取、toast 上限、split 夹取、
+  树分组/过滤、IR↔行双向映射、最近修改计数。
+- **树分组行的 `label` 是空串**，真正的标签是 `node.group`
+  （`window`/`controls`/`handlers`/`variables`/`data`），渲染时才经
+  `tree_group_label_key` 翻译。测试别按中文名找分组。
+- **从 draw_commands 里按「宽度/高度」启发式反推区域不可靠**：中心列
+  （整行高）与内容段（行高 − 带高）是等宽矩形。断言结构契约（用
+  `ai_avoidance_band` 算出边界）比猜矩形稳。根容器是 1280×800，
+  任何「宽度 > N」的过滤器都会先命中它。
+- `println` 在通过的 MoonBit 测试里被吞掉——探针要 `fail("...")` 才看得见。
+  且 heredoc (`<<'EOF'`) 会原样写入 `\{...}`，字符串插值在测试文件里
+  要么用 `+` 拼接要么用 Python 写文件。
+- 测试里 `assert_eq(x.pending, None)` 不可用（`PendingProposal` 无
+  `Debug`/`Eq`）——写 `assert_true(x.pending is None)`。
+- `update.mbt` 已拆至 994 行 + `undo_history.mbt` 241 行（原 1226 越过
+  1200 行硬上限）；`i18n_catalog_generated.mbt` 的 generated 预算
+  从 1566 提到 1786。
+
+### 布局陷阱 4：`@views.button` 的 `width`/`height` 是**最小值**
+
+`moui/views/button/button.mbt:161-182` 里
+`content_height = max(self.min_size.height, measured.height + padding_vertical*2)`，
+`padding_horizontal = spacing_scale.lg (16.0)`、`padding_vertical = sm (8.0)`
+（`SpacingScale::default()`，`moui/core/theme.mbt:355`）。所以
+`button(width=72, height=26)` 实际渲染成**高 36**，文字比声明宽还会自己长大：
+实测「解释这个程序」量到 92.8 宽却塞在 72 的按钮里，顶出 AI 卡片边缘。
+**需要精确尺寸时手搓** `container(center(text(...)))`（见 `app/ide_chrome.mbt`
+的 `text_chip` / `icon_button`）。左栏「快速插入」按钮就是这么从 36px 缩回
+26px 的（原来被底栏裁掉）。
+
+### 布局陷阱 5：无 `background` 的 `@views.container` 会**刷一层不透明底板**
+
+`moui/views/container/container.mbt:14-60`：`background is None && theme is None`
+时走 `ambient = Some(variant)`，paint 期按环境主题的 Base 变体刷子填充。于是
+「纯定位用」的外层 `container(child, width~, height~, padding=0.0)` 会把整帧刷成
+面板色。**症状极具迷惑性**：布局全对、绘制流里文字都在、屏幕上却一片空——
+AI 浮动层的外层包装就这么把空舞台的引导语和三个模板按钮整片盖掉了
+（绘制流实测：`[119 TEXT 从零开始…]` 之后紧跟 `[128 RBRUSH y=41 h=694]`）。
+**对策**：纯定位/纯占位的外层用 `@views.center`（无 paint）或显式
+`background=transparent`；只有真的要底色时才用 `container`。
+回归测试：`"floating AI layer does not paint over the workspace"`
+（断言「舞台文字之后不得出现横跨中心列且高 > 400 的实心矩形」，已用回退验证
+过它确实能抓到）。
+
+### composer 模式段（设计稿 `#modeSeg`）赋予了真实语义
+
+设计稿第 1215 行的模式段只切 `.on` 高亮、没有行为。本实现让它真正分流
+「发送」（`ComposerRun` → `composer_run(model)`，`app/update_ai.mbt`）：
+`解释` → 既有 `ExplainHandler`（本地确定性讲解）、`修复` → 既有
+`RestoreCodeDraft`（草稿回到 IR 规范渲染）、`生成` → 清空控件与子程序后走
+**同一个** `GenerateProposal` 校验链、`修改` → `GenerateProposal`。
+**只改入口路由，不新增执行路径**。
+「解释」有个坑：`local_explanation` 依赖 `current_handler`，没选中子程序时恒为
+空（点了没反应）——所以先按左栏点选同一语义选中第一个子程序再讲解。
+
+### hero 态（空舞台）
+
+`ai_hero(model) = workspace is WsEmpty && !ai_pill && !(ai_anchor is AiDocked)`。
+卡宽 `min(width-20, 700)`、贴上方（权重 42:58 的两个 spacer）、多一行
+`HERO_HINT_HEIGHT = 30` 的示例指令芯片（点击只 `SetPrompt` 填入，不直接执行）。
+两个连带修正：
+- **带高为 0 时不能走「上下两段」**。浮动层原来被塞进 0 高的段里整块消失。
+  现在 `band > 0` 用两段式（内容段 + 卡段，给浮动卡让位），`band == 0`
+  （hero / 药丸 / 停靠）改用 `stack` 覆盖。回归测试
+  `"hero and pill overlays still render when the band is zero"`。
+- 空舞台引导语在 hero 时**顶部对齐**（定长 28px 前导 spacer，不用权重——权重
+  份数随窗口高变化，窄窗口会把引导语推回卡片底下），否则 hero 卡盖住三个
+  模板按钮＝「点了没反应」。回归测试
+  `"empty stage guidance sits above the hero card"`。
+
+### 维护基线工具：生成文件按内容标记豁免
+
+`i18n_catalog_generated.mbt` 涨到 1820 行越过了
+`validate_maintenance_baseline` 的 1800 行「手写文件」阈值。修法不是再抬常量，
+而是让 `repo_scan_helpers.mbt` 的 `generated_source_text(text)` 识别头部
+`DO NOT EDIT` 标记并跳过——生成文件体量已由 `checks/source-file-policy.json`
+的 `generated` 清单显式棘轮（含生成器与 `--check` 命令），按手写阈值再报一次
+是重复管辖。注意该工具自身的 `line_budget_catalog.mbt` 给
+`repo_scan_helpers.mbt` 定了 115 行、`line_budget_checks.mbt` 96 行的预算，
+改动要留在预算内（`skipped_directory_name` 已压成一行数组 `contains`）。
+
+### 死 UI 陷阱：渲染层齐了但**没有生产者**
+
+本次最值得记的一类缺陷。`AiCard` 结构、`ai_card_view` 渲染、`fold_bar`
+计数、`#seeAll`、药丸的「待审计 N」全都写好了，但 `push_ai_card`
+**一个调用方都没有**——`ai_cards` 恒为空，于是整条会话线程（设计稿 AI 层
+的核心）永远不会出现。这类「死 UI」不会被布局测试抓到（渲染函数本身是对的），
+也不会被现有测试抓到（没有测试断言卡片真的会产生）。
+
+**识别方法**：对每个 `pub fn` 在 `app/` 内做一次调用方检索
+（`grep -rn "<name>" app/*.mbt`），只出现在定义处 = 死代码。
+`CycleAiAnchor` 一度看起来也是死的，其实在 `update_shell.mbt:65` 有处理器
+——检索要覆盖 `update*.mbt`，别只看渲染文件。
+
+**修法**：把生产者接到**唯一真实漏斗**上。提案的唯一入口是
+`proposal_from_completion`（假模型与真实 provider 共用），线程卡的生成就
+挂在那里；采纳/拒绝时由 `settle_newest_thread_card` 把最新未处理卡标为已处理
+（只动最新一张——一次提案对应一张卡）。这样线程是**事件驱动**的可见记录，
+不是摆设。
+
+### 高度预算必须**单点计算**
+
+同一轮里踩到的第二个坑：线程区高度在视图层用「可用高度 − 常数」，在
+`ai_card_height` 里用「卡数 × 6 + 40」，两处各算一份。线程卡一多，视图层的
+预算就超过卡片自身帧高，把 composer 和决策行顶出可视区（实测**一张** diff 卡
+就够：`发送` 底边 846 vs 卡底 722）。
+
+**对策**：抽 `thread_area_height(model)` 作为唯一来源，`ai_card_height`
+= `card_chrome_height(model) + thread_area_height(model)`，视图层直接用它，
+并**去掉二次钳制**（`height=thread_height.min(280.0)` 这种重复 clamp 改了上限
+必漏一处）。回归测试：`"thread cards never push the composer out of the card"`
+（已用回退验证过能抓到，报 `发送 falls outside the card`）。
+
+### i18n `setdefault` 陷阱
+
+给已存在的 key 追加新值时用 `dict.setdefault` 会**静默保留旧值**：
+`app.ai.dock` 原值是「停靠右栏」，按设计稿想改成「侧栏」的意图不会生效，测试
+按新值断言就会假失败。加 key 前先查现值（`grep` 生成目录或直接读 JSON），
+要么显式赋值要么接受现值。
+

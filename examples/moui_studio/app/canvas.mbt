@@ -11,6 +11,31 @@ let design_width : Double = @ir.DESIGN_WIDTH.to_double()
 let design_height : Double = @ir.DESIGN_HEIGHT.to_double()
 
 ///|
+/// 指针位置 → 设计坐标：减去帧原点与标题条，再除以缩放。
+/// 三条消费路径（点选、拖拽、覆盖层绘制）必须共用这一个换算，
+/// 各写一份就会出现「看得到、点不到」的偏移。
+fn stage_point(
+  position : @geometry.Point,
+  frame : @geometry.Rect,
+  scale : Double,
+) -> (Double, Double) {
+  (
+    (position.x - frame.origin.x) / scale,
+    (position.y - frame.origin.y) / scale - title_bar_height,
+  )
+}
+
+///|
+/// 拟真窗口标题条高度（与设计稿 appwin 的 34px 一致）。控件坐标区从这条
+/// 之下开始——设计稿的 640×480 是**内容区**，标题条不占控件坐标。
+pub let title_bar_height : Double = 34.0
+
+///|
+/// 舞台总高 = 标题条 + 内容区。背景画布、覆盖层、控件层三者都按**总高**
+/// 算缩放并共用同一个原点，任何一层各算各的都会失配。
+pub let design_total_height : Double = title_bar_height + design_height
+
+///|
 /// 控件在设计坐标系中的矩形。
 pub fn control_rect(control : @ir.Control) -> @geometry.Rect {
   @geometry.Rect::new(
@@ -81,6 +106,10 @@ pub fn hit_test_handle(
 pub(all) enum DesignDrawOp {
   WindowFrame(@geometry.Rect)
   GridDot(@geometry.Rect)
+  // 拟真窗口：标题条（含红黄绿信号点）——设计稿的舞台是一个浅色 App
+  // 窗口，不是纯色画板；标题条让「这是运行中的应用」一眼可读。
+  WindowTitleBar(@geometry.Rect)
+  TrafficLight(@geometry.Rect, Int)
   // 设计期可视提示：每个控件的常驻边界框（真实控件可能是透明的一块，
   // 空标签/空表格没有可见内容）+ 空内容控件的名字幽灵文字。
   BoundsOutline(@geometry.Rect)
@@ -339,15 +368,41 @@ pub fn design_backdrop_plan() -> Array[DesignDrawOp] {
         x=0.0,
         y=0.0,
         width=design_width,
-        height=design_height,
+        height=design_total_height,
       ),
     ),
   )
-  // 网格点阵（32px 步进）：给画布「设计图纸」质感
+  // 标题条：设计稿 appwin 的 34px 高标题带 + 左侧三个信号点（12px，间距 8）。
+  ops.push(
+    WindowTitleBar(
+      @geometry.Rect::new(
+        x=0.0,
+        y=0.0,
+        width=design_width,
+        height=title_bar_height,
+      ),
+    ),
+  )
+  let mut index = 0
+  while index < 3 {
+    ops.push(
+      TrafficLight(
+        @geometry.Rect::new(
+          x=12.0 + index.to_double() * 12.0,
+          y=(title_bar_height - 10.0) / 2.0,
+          width=10.0,
+          height=10.0,
+        ),
+        index,
+      ),
+    )
+    index = index + 1
+  }
+  // 网格只铺内容区：标题条上画网格会把「窗口装饰」和「可编辑画布」混起来。
   let mut gx = 32.0
   while gx < design_width {
-    let mut gy = 32.0
-    while gy < design_height {
+    let mut gy = title_bar_height + 32.0
+    while gy < design_total_height {
       ops.push(GridDot(@geometry.Rect::new(x=gx, y=gy, width=2.0, height=2.0)))
       gy = gy + 32.0
     }
@@ -466,8 +521,8 @@ pub fn design_stage(
   empty_hint : String,
 ) -> @moui.View[Msg] {
   fn auto_fit_measure(constraints : @core.Constraints) -> @geometry.Size {
-    // 等比铺满：宽 = min(可用宽, 可用高 ÷ 3/4)；无界约束退回 1:1 基准
-    let ratio = design_height / design_width
+    // 等比铺满：宽 = min(可用宽, 可用高 ÷ 高宽比)；无界约束退回 1:1 基准
+    let ratio = design_total_height / design_width
     let mut width = if constraints.max.width < constraints.max.height / ratio {
       constraints.max.width
     } else {
@@ -481,7 +536,7 @@ pub fn design_stage(
   // 与 StageLayout 的帧缩放共用同一比例来源（min(帧宽/640, 帧高/480)）
   fn frame_scale(frame : @core.Rect) -> Double {
     let by_width = frame.size.width / design_width
-    let by_height = frame.size.height / design_height
+    let by_height = frame.size.height / design_total_height
     if by_width > 0.0 &&
       by_width < 1.0e8 &&
       by_height > 0.0 &&
@@ -526,6 +581,24 @@ pub fn design_stage(
               @graphics.RoundedRect::new(rect=place(rect), radius=1.0 * scale),
               @graphics.Brush::solid(studio_grid_line()),
             )
+          WindowTitleBar(rect) =>
+            fill_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
+              @graphics.Brush::solid(studio_stage_title_bar()),
+            )
+          TrafficLight(rect, index) =>
+            fill_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=4.0 * scale),
+              @graphics.Brush::solid(
+                match index {
+                  0 => @core.Color::rgba(r=0.976, g=0.490, b=0.361)
+                  1 => @core.Color::rgba(r=1.0, g=0.824, b=0.243)
+                  _ => @core.Color::rgba(r=0.412, g=0.831, b=0.494)
+                },
+              ),
+            )
           _ => ()
         }
       }
@@ -548,10 +621,12 @@ pub fn design_stage(
   let widget_layer = stage_layout(stage_widgets, stage_rects)
   let overlay = canvas(measure=auto_fit_measure, draw=fn(ctx, frame) {
       let scale = frame_scale(frame)
+      // 覆盖层与控件层共用同一原点：控件区在标题条之下，覆盖层不跟着下移
+      // 就会出现「框选到了、描边却没跟上」的错位。
       fn place(rect : @geometry.Rect) -> @geometry.Rect {
         @geometry.Rect::new(
           x=frame.origin.x + rect.origin.x * scale,
-          y=frame.origin.y + rect.origin.y * scale,
+          y=frame.origin.y + (title_bar_height + rect.origin.y) * scale,
           width=rect.size.width * scale,
           height=rect.size.height * scale,
         )
@@ -685,18 +760,13 @@ pub fn design_stage(
     // 覆盖层在最上：拦截全部指针事件（点选/拖拽在此转 typed Msg），
     // 下层真实控件收不到输入，设计态不会误触运行行为。
     .on_tap_with_frame(fn(position, frame) {
-      println("dbg overlay tap")
       let scale = frame_scale(frame)
-      Msg::CanvasTap(
-        (position.x - frame.origin.x) / scale,
-        (position.y - frame.origin.y) / scale,
-      )
+      let (lx, ly) = stage_point(position, frame, scale)
+      Msg::CanvasTap(lx, ly)
     })
     .on_drag_with_frame(fn(event, frame) {
-      println("dbg overlay drag")
       let scale = frame_scale(frame)
-      let lx = (event.position.x - frame.origin.x) / scale
-      let ly = (event.position.y - frame.origin.y) / scale
+      let (lx, ly) = stage_point(event.position, frame, scale)
       if event.phase == @views.DragGesturePhase::Started {
         Msg::CanvasPress(lx, ly)
       } else if event.phase == @views.DragGesturePhase::Changed {

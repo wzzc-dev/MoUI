@@ -139,26 +139,3 @@ pub fn command_palette_dialog(
     padding=12.0,
   )
 }
-
-///|
-/// 顶层 presentation 宿主：面板关闭时 overlay_host 不增加命中层，
-/// 打开时为 Modal（背景语义隐藏），Escape/点击外部发 CommandPaletteClose。
-pub fn command_palette_host(
-  base : @moui.View[Msg],
-  model : Model,
-  t : @i18n.Translator,
-) -> @moui.View[Msg] {
-  @views.overlay_host(base, [
-    @views.PresentationSpec::new(
-      id="studio-command-palette",
-      kind=@views.PresentationKind::Dialog,
-      content=command_palette_dialog(model, t),
-      modality=@views.PresentationModality::Modal,
-      dismiss=@views.PresentationDismissPolicy::new(
-        outside_tap=true,
-        message=Some(CommandPaletteClose),
-      ),
-      presented=model.command_palette_open,
-    ),
-  ])
-}

@@ -1,0 +1,732 @@
+///|
+/// v4 IDE 右栏：Context（属性/状态/数据/动作/依赖）+ 快速操作 + 运行时监视。
+/// 设计稿的右栏是「当前对象的全貌」：不只是属性编辑，还包括它现在是什么
+/// 状态、有哪些数据、能触发什么、被谁依赖。五页签就是这个全貌的五刀切面。
+
+// ============================================================================
+// 右栏
+// ============================================================================
+
+///|
+/// 右栏：Context 头（选中对象 + 类型徽标）+ 五页签 + 页签体 +
+/// 快速操作 + 运行时监视。
+pub fn ide_right_panel(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let ctx_head = context_head(model, t, width)
+  let tabs = context_tabs(model, t, width)
+  // 高度预算：头 30 + 页签 30 + 正文（可滚动）+ 快速操作 + 监视。
+  // 正文之外的块都定高，正文吃掉剩余——列也必须显式定尺，
+  // 否则容器盒会把整列居中（右栏头会掉到中间）。
+  let body_height = (height - 30.0 - 30.0 - 56.0 - 150.0).max(100.0)
+  let body = context_body(model, t, width, body_height)
+  @views.container(
+    @views.column(
+      [
+        ctx_head,
+        tabs,
+        body,
+        quick_actions(model, t, width),
+        watch_pane(model, t, width),
+      ],
+      spacing=0.0,
+    ).frame(width~, height~),
+    background=ide_panel(),
+    width~,
+    height~,
+    padding=0.0,
+  )
+}
+
+///|
+/// Context 头：选中对象名 + 种类徽标。没选中对象时显式说「未选中」——
+/// 不静默显示上一个对象的属性（那是误导）。
+fn context_head(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let (name, kind) = match find_selected_control(model) {
+    Some(control) => (control.name, text(t, control_kind_key(control.kind)))
+    None =>
+      match current_handler(model) {
+        Some(handler) =>
+          (
+            "\{handler.control_name}.\{handler.event.tag()}",
+            text(t, "app.ctx.handler"),
+          )
+        None => (text(t, "app.ctx.none"), "")
+      }
+  }
+  let cells : Array[@moui.View[Msg]] = [
+    @views.text(
+      name,
+      theme=studio_theme(),
+      width=(width - 110.0).max(60.0),
+      height=18.0,
+      align=TextStart,
+    ).foreground(ide_text()),
+  ]
+  if kind != "" {
+    cells.push(count_badge(kind, 4))
+  }
+  @views.container(
+    @views.padding_xy(
+      fill_row(cells, (width - 16.0).max(80.0), 6.0, Center),
+      horizontal=8.0,
+      vertical=0.0,
+    ),
+    background=ide_panel_alt(),
+    height=PANEL_HEAD_HEIGHT,
+    width~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 五页签条：属性/状态/数据/动作/依赖。每页签宽度均分。
+fn context_tabs(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let entries : Array[(ContextTab, String)] = [
+    (CtxProps, text(t, "app.ctx.props")),
+    (CtxState, text(t, "app.ctx.state")),
+    (CtxData, text(t, "app.ctx.data")),
+    (CtxActions, text(t, "app.ctx.actions")),
+    (CtxDeps, text(t, "app.ctx.deps")),
+  ]
+  let cell_width = (width - 12.0) / 5.0
+  let tabs : Array[@moui.View[Msg]] = []
+  for entry in entries {
+    let (tab, label) = entry
+    let selected = same_tab(model.ctx_tab, tab)
+    tabs.push(
+      @views.container(
+        @views.center(
+          @views.text(
+            label,
+            theme=studio_theme(),
+            width=cell_width - 4.0,
+            height=16.0,
+          ).foreground(if selected { ide_text() } else { ide_text_faint() }),
+          width=cell_width,
+          height=22.0,
+        ),
+        background=if selected { ide_selection() } else { ide_panel_alt() },
+        corner_radius=3.0,
+        width=cell_width,
+        height=22.0,
+        padding=0.0,
+      ).on_tap(SetContextTab(tab)),
+    )
+  }
+  @views.container(
+    @views.padding_xy(
+      fill_row(tabs, (width - 12.0).max(80.0), 3.0, Center),
+      horizontal=6.0,
+      vertical=0.0,
+    ),
+    background=ide_panel(),
+    height=PANEL_HEAD_HEIGHT,
+    width~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 页签同一性：ContextTab 无 Eq 派生，按 tag 比。
+fn same_tab(a : ContextTab, b : ContextTab) -> Bool {
+  match (a, b) {
+    (CtxProps, CtxProps) | (CtxState, CtxState) | (CtxData, CtxData) => true
+    (CtxActions, CtxActions) | (CtxDeps, CtxDeps) => true
+    _ => false
+  }
+}
+
+///|
+/// 页签体：五个切面各自的只读视图（编辑仍走属性页签的输入框）。
+fn context_body(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let content = match model.ctx_tab {
+    CtxProps => context_props(model, t, width)
+    CtxState => context_state(model, t, width)
+    CtxData => context_data(model, t, width)
+    CtxActions => context_actions(model, t, width)
+    CtxDeps => context_deps(model, t, width)
+  }
+  @views.container(
+    @views.scroll_view(content, width~, height~, shows_indicator=true),
+    background=ide_panel(),
+    width~,
+    height~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 属性页签：名称/文本/位置/尺寸 + 列表项（可编辑——这是检查器本体）。
+fn context_props(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  match find_selected_control(model) {
+    None => empty_hint(text(t, "app.inspector.none"), 120.0)
+    Some(control) => {
+      let field_width = (width - 90.0).max(80.0)
+      let rows : Array[@moui.View[Msg]] = [
+        field_label(t, "app.inspector.name", width),
+        @views.text_field(
+          control.name,
+          on_input=new_value => SetControlName(control.name, new_value),
+          width=field_width,
+          height=FIELD_HEIGHT,
+        ),
+        field_label(t, "app.inspector.text", width),
+        @views.text_field(
+          control.text,
+          on_input=new_value => SetControlText(control.name, new_value),
+          width=field_width,
+          height=FIELD_HEIGHT,
+        ),
+        field_label(t, "app.inspector.position", width),
+        @views.row(
+          [
+            @views.text_field(
+              control.x.to_string(),
+              on_input=raw => SetControlRect(control.name, @ir.RectX, raw),
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+            @views.text_field(
+              control.y.to_string(),
+              on_input=raw => SetControlRect(control.name, @ir.RectY, raw),
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+          ],
+          spacing=6.0,
+        ),
+        field_label(t, "app.inspector.size", width),
+        @views.row(
+          [
+            @views.text_field(
+              control.width.to_string(),
+              on_input=raw => SetControlRect(control.name, @ir.RectWidth, raw),
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+            @views.text_field(
+              control.height.to_string(),
+              on_input=raw => SetControlRect(control.name, @ir.RectHeight, raw),
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+          ],
+          spacing=6.0,
+        ),
+      ]
+      if control.kind is @ir.ListBox || control.kind is @ir.Table {
+        rows.push(field_label(t, "app.inspector.items", width))
+        rows.push(
+          @views.text_area(
+            join_lines(control.items),
+            on_input=new_value => SetControlItems(control.name, new_value),
+            lines=4,
+            width=field_width,
+            line_height=20.0,
+          ),
+        )
+      }
+      @views.padding_xy(
+        @views.column(rows, spacing=4.0),
+        horizontal=8.0,
+        vertical=6.0,
+      )
+    }
+  }
+}
+
+///|
+/// 字段标签：8pt 行，弱色（IDE 检查器的密度口径）。
+fn field_label(
+  t : @i18n.Translator,
+  key : String,
+  width : Double,
+) -> @moui.View[Msg] {
+  @views.text(
+    text(t, key),
+    theme=studio_theme(),
+    width=(width - 16.0).max(60.0),
+    height=16.0,
+    align=TextStart,
+  ).foreground(ide_text_faint())
+}
+
+///|
+/// 状态页签：运行态事实（是否运行、当前轨、闸门、单步、事件计数）。
+fn context_state(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let rows : Array[@moui.View[Msg]] = [
+    kv_row(
+      text(t, "app.ctx.state.running"),
+      if app_running(model) {
+        text(t, "app.yes")
+      } else {
+        text(t, "app.no")
+      },
+      width - 16.0,
+      false,
+    ),
+    kv_row(
+      text(t, "app.ctx.state.track"),
+      match current_track(model) {
+        Interpret => text(t, "app.track.interpret")
+        Compile => text(t, "app.track.compile")
+      },
+      width - 16.0,
+      false,
+    ),
+    kv_row(
+      text(t, "app.ctx.state.gate"),
+      if gate_pending(model) {
+        text(t, "app.run.gate_pending")
+      } else {
+        "—"
+      },
+      width - 16.0,
+      false,
+    ),
+    kv_row(
+      text(t, "app.ctx.state.steps"),
+      audit_step_count(model).to_string(),
+      width - 16.0,
+      true,
+    ),
+    kv_row(
+      text(t, "app.ctx.state.edited"),
+      if model.dirty {
+        text(t, "app.ctx.state.dirty")
+      } else {
+        text(t, "app.ctx.state.clean")
+      },
+      width - 16.0,
+      false,
+    ),
+  ]
+  @views.padding_xy(
+    @views.column(rows, spacing=2.0),
+    horizontal=8.0,
+    vertical=6.0,
+  )
+}
+
+///|
+/// 已执行指令数：解释轨读 step 计数，编译轨读审计条数（口径一致）。
+fn audit_step_count(model : Model) -> Int {
+  match current_track(model) {
+    Interpret =>
+      match model.run {
+        Some(run) => run.state.steps
+        None => 0
+      }
+    Compile =>
+      match model.compiled_run {
+        Some(run) => run.runtime.steps
+        None => 0
+      }
+  }
+}
+
+///|
+/// 数据页签：当前子程序涉及的变量（程序声明的 + handler 里出现的名字）。
+/// handler 没有独立的变量表——IR 里变量只有程序级声明；这里把 handler
+/// 语句文本里出现的变量名也列出来，让「这个子程序用到哪些数据」可见。
+fn context_data(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let rows : Array[@moui.View[Msg]] = []
+  for variable in model.program.variables {
+    rows.push(kv_row(variable.name, variable.init, width - 16.0, true))
+  }
+  match current_handler(model) {
+    None => ()
+    Some(handler) => {
+      let rendered = @studio_lang.render_stmts(
+        handler.body,
+        model.language.dsl_language(),
+      )
+      for variable in model.program.variables {
+        if rendered.contains(variable.name) {
+          rows.push(
+            kv_row(
+              "\{variable.name} · \{text(t, "app.ctx.data.used")}",
+              variable.init,
+              width - 16.0,
+              true,
+            ),
+          )
+        }
+      }
+    }
+  }
+  if rows.length() == 0 {
+    return empty_hint(text(t, "app.ctx.data.none"), 120.0)
+  }
+  @views.padding_xy(
+    @views.column(rows, spacing=2.0),
+    horizontal=8.0,
+    vertical=6.0,
+  )
+}
+
+///|
+/// 动作页签：当前对象能触发的事件（点一下建子程序 / 切到已有子程序）。
+fn context_actions(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let control = find_selected_control(model)
+  let control_name = match control {
+    Some(control) => control.name
+    None =>
+      match current_handler(model) {
+        Some(handler) => handler.control_name
+        None => return empty_hint(text(t, "app.ctx.actions.none"), 120.0)
+      }
+  }
+  // 事件集合由控件种类决定（按钮只有 onClick、输入框还有 onChange）——
+  // 用 IR 的支持表推导，不硬编码控件-事件矩阵。
+  let events : Array[@ir.EventKind] = match control {
+    Some(control) => control_events(control)
+    None =>
+      match @ir.parse_control_kind("button") {
+        Some(kind) => {
+          let all : Array[@ir.EventKind] = []
+          if kind.supports_event(@ir.OnClick) {
+            all.push(@ir.OnClick)
+          }
+          if kind.supports_event(@ir.OnChange) {
+            all.push(@ir.OnChange)
+          }
+          all
+        }
+        None => [@ir.OnClick]
+      }
+  }
+  let rows : Array[@moui.View[Msg]] = []
+  for event in events {
+    let key = handler_key(control_name, event.tag())
+    let exists = match @ir.find_handler(model.program, control_name, event) {
+      Some(_) => true
+      None => false
+    }
+    let selected = model.selected_handler == key
+    rows.push(
+      @views.container(
+        @views.padding_xy(
+          fill_row(
+            [
+              @views.text(
+                text(t, "event.\{event.tag()}"),
+                theme=studio_theme(),
+                width=(width - 100.0).max(60.0),
+                height=18.0,
+                align=TextStart,
+              ).foreground(if selected { ide_text() } else { ide_text_muted() }),
+              @views.spacer(min_length=4.0, weight=1.0),
+              if exists {
+                pill(text(t, "app.ctx.actions.ready"), ide_success(), 48.0)
+              } else {
+                pill(text(t, "app.ctx.actions.create"), ide_text_faint(), 48.0)
+              },
+            ],
+            (width - 16.0).max(80.0),
+            4.0,
+            Center,
+          ),
+          horizontal=8.0,
+          vertical=0.0,
+        ),
+        background=if selected { ide_selection() } else { ide_panel() },
+        height=TREE_ROW_HEIGHT,
+        width~,
+        padding=0.0,
+      ).on_tap(
+        if exists {
+          SelectHandler(key)
+        } else {
+          CreateHandler(control_name, event)
+        },
+      ),
+    )
+  }
+  @views.column(rows, spacing=0.0)
+}
+
+///|
+/// 依赖页签：谁引用了当前对象（控件被哪些子程序的事件绑定；
+/// 变量被哪些语句读写）。这是「改动会波及谁」的查询面。
+fn context_deps(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let target = match find_selected_control(model) {
+    Some(control) => control.name
+    None =>
+      match current_handler(model) {
+        Some(handler) => handler.control_name
+        None => return empty_hint(text(t, "app.ctx.deps.none"), 120.0)
+      }
+  }
+  let rows : Array[@moui.View[Msg]] = []
+  // 绑定依赖：哪些子程序挂在这个控件上
+  for handler in model.program.handlers {
+    if handler.control_name == target {
+      rows.push(
+        kv_row(
+          "\{text(t, "app.ctx.deps.bound")} · \{text(t, "event.\{handler.event.tag()}")}",
+          "×\{handler.body.length()}",
+          width - 16.0,
+          true,
+        ),
+      )
+    }
+  }
+  // 变量依赖：变量名在哪些 handler 的语句文本里出现（粗粒度文本匹配——
+  // 精确的作用域分析属于语言层，这里只做「可能相关」的提示）
+  for variable in model.program.variables {
+    let mut users = 0
+    for handler in model.program.handlers {
+      if @studio_lang.render_stmts(handler.body, model.language.dsl_language()).contains(
+          variable.name,
+        ) {
+        users = users + 1
+      }
+    }
+    if users > 0 {
+      rows.push(kv_row(variable.name, "×\{users}", width - 16.0, true))
+    }
+  }
+  if rows.length() == 0 {
+    return empty_hint(text(t, "app.ctx.deps.empty"), 120.0)
+  }
+  @views.padding_xy(
+    @views.column(rows, spacing=2.0),
+    horizontal=8.0,
+    vertical=6.0,
+  )
+}
+
+///|
+/// 快速操作条：左/中/右对齐 + 复制 + 删除 + AI 优化。
+/// 设计稿 qaBar：24pt 边距、居中 = (640 − w)/2。
+fn quick_actions(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let target = match find_selected_control(model) {
+    Some(control) => Some(control.name)
+    None => None
+  }
+  let head = panel_head(text(t, "app.qa.title"), "", [], width)
+  let buttons : Array[@moui.View[Msg]] = []
+  match target {
+    None =>
+      buttons.push(
+        @views.container(
+          @views.padding_xy(
+            @views.text(
+              text(t, "app.qa.none"),
+              theme=studio_theme(),
+              width=(width - 20.0).max(60.0),
+              height=18.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
+            horizontal=8.0,
+            vertical=0.0,
+          ),
+          height=TREE_ROW_HEIGHT,
+          width~,
+          padding=0.0,
+        ),
+      )
+    Some(name) =>
+      buttons.push(
+        @views.padding_xy(
+          // 行必须定宽：不定宽的 row 量不到 slack，六个按钮会挤成一段
+          // 并被容器居中（见 fill_row 注释）。
+          fill_row(
+            [
+              icon_button(
+                ChevronLeft,
+                text(t, "app.qa.align_left"),
+                false,
+                AlignControlLeft(name),
+                28.0,
+                24.0,
+                13.0,
+              ),
+              icon_button(
+                Columns,
+                text(t, "app.qa.align_center"),
+                false,
+                AlignControlCenter(name),
+                28.0,
+                24.0,
+                13.0,
+              ),
+              icon_button(
+                ChevronRight,
+                text(t, "app.qa.align_right"),
+                false,
+                AlignControlRight(name),
+                28.0,
+                24.0,
+                13.0,
+              ),
+              icon_button(
+                Clipboard,
+                text(t, "app.inspector.duplicate"),
+                false,
+                DuplicateControl(name),
+                28.0,
+                24.0,
+                13.0,
+              ),
+              icon_button(
+                Trash,
+                text(t, "app.inspector.delete"),
+                false,
+                DeleteControl(name),
+                28.0,
+                24.0,
+                13.0,
+              ),
+              @views.button(
+                text(t, "app.qa.ai"),
+                on_click=GenerateProposal,
+                variant=Tonal,
+                width=64.0,
+                height=24.0,
+              ),
+            ],
+            (width - 16.0).max(120.0),
+            4.0,
+            Center,
+          ),
+          horizontal=8.0,
+          vertical=0.0,
+        ),
+      )
+  }
+  @views.container(
+    @views.column([head, @views.column(buttons, spacing=0.0)], spacing=0.0).frame(
+      width~,
+    ),
+    background=ide_panel(),
+    width~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 运行时监视：变量名 + 值 + 类型。未运行时空态提示。
+fn watch_pane(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let head = panel_head(
+    text(t, "app.watch.title"),
+    "",
+    [count_badge(watch_rows(model).length().to_string(), 0)],
+    width,
+  )
+  let rows = watch_rows(model)
+  let body : Array[@moui.View[Msg]] = []
+  if rows.length() == 0 {
+    body.push(
+      @views.container(
+        @views.padding_xy(
+          @views.text(
+            text(t, "app.watch.empty"),
+            theme=studio_theme(),
+            width=(width - 20.0).max(60.0),
+            height=18.0,
+            align=TextStart,
+          ).foreground(ide_text_faint()),
+          horizontal=8.0,
+          vertical=4.0,
+        ),
+        width~,
+        padding=0.0,
+      ),
+    )
+  } else {
+    for row in rows {
+      body.push(
+        @views.container(
+          @views.padding_xy(
+            @views.row(
+              [
+                @views.text(
+                  row.name,
+                  theme=studio_theme(),
+                  width=72.0,
+                  height=18.0,
+                  align=TextStart,
+                ).foreground(ide_text_muted()),
+                @views.text(
+                  row.value,
+                  theme=studio_theme(),
+                  role=Mono,
+                  width=(width - 140.0).max(40.0),
+                  height=18.0,
+                  align=TextStart,
+                ).foreground(ide_text()),
+                @views.text(
+                  row.type_label,
+                  theme=studio_theme(),
+                  width=44.0,
+                  height=16.0,
+                  align=TextEnd,
+                ).foreground(ide_text_faint()),
+              ],
+              spacing=4.0,
+              align=Center,
+            ),
+            horizontal=8.0,
+            vertical=0.0,
+          ),
+          height=TREE_ROW_HEIGHT,
+          width~,
+          padding=0.0,
+        ),
+      )
+    }
+  }
+  @views.container(
+    @views.column([head, @views.column(body, spacing=0.0)], spacing=0.0),
+    background=ide_panel(),
+    width~,
+    padding=0.0,
+  )
+}

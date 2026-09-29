@@ -28,7 +28,7 @@ impl @core.ViewNode for StageLayout with fn layout(self, ctx) {
   // 退回 1.0。放置管线以帧 tight 约束重排子树，子控件精确等于缩放后的
   // 设计尺寸。
   let by_width = ctx.constraints.min.width / design_width
-  let by_height = ctx.constraints.min.height / design_height
+  let by_height = ctx.constraints.min.height / design_total_height
   let scale = if by_width > 0.0 &&
     by_width < 1.0e8 &&
     by_height > 0.0 &&
@@ -38,14 +38,18 @@ impl @core.ViewNode for StageLayout with fn layout(self, ctx) {
     1.0
   }
   let size = ctx.constraints.constrain(
-    @core.Size::new(width=design_width * scale, height=design_height * scale),
+    @core.Size::new(
+      width=design_width * scale,
+      height=design_total_height * scale,
+    ),
   )
   let frames : Array[@core.Rect] = []
   for rect in self.rects {
+    // 内容区从标题条之下开始：控件 y 要整体下移一条标题条。
     frames.push(
       @core.Rect::new(
         x=rect.origin.x * scale,
-        y=rect.origin.y * scale,
+        y=(title_bar_height + rect.origin.y) * scale,
         width=rect.size.width * scale,
         height=rect.size.height * scale,
       ),

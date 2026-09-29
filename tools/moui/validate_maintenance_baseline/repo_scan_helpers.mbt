@@ -5,11 +5,15 @@ fn generated_fixture_path(path : String) -> Bool {
 }
 
 ///|
+/// 生成文件的标记：头部带 `DO NOT EDIT`。生成文件体量已由
+/// source-file-policy 的 generated 清单棘轮，这里不按手写阈值再报一次。
+fn generated_source_text(text : String) -> Bool {
+  text.split("\n").take(3).any(line => line.contains("DO NOT EDIT"))
+}
+
+///|
 fn skipped_directory_name(name : String) -> Bool {
-  name == ".git" ||
-  name == ".mooncakes" ||
-  name == "_build" ||
-  name == "artifacts"
+  [".git", ".mooncakes", "_build", "artifacts"].contains(name)
 }
 
 ///|

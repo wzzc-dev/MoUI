@@ -61,6 +61,30 @@ pub(all) struct PendingProposal {
 pub const UNDO_DEPTH : Int = 50
 
 ///|
+/// 最近修改保留条数（设计稿列表可见 4 条；多留几条供滚动）。
+pub const RECENT_LIMIT : Int = 24
+
+///|
+/// 运行审计保留条数（会话内时间线，超出丢最旧）。
+pub const AUDIT_LIMIT : Int = 200
+
+///|
+/// Console 日志保留条数。
+pub const LOG_LIMIT : Int = 400
+
+///|
+/// 同屏 toast 上限（旧的在渲染层取最近 N 条）。
+pub const TOAST_LIMIT : Int = 3
+
+///|
+/// AI 会话卡保留条数。
+pub const AI_CARD_LIMIT : Int = 24
+
+///|
+/// 积木画布单块行高（分类条滚动定位与命中共用）。
+pub const BLOCK_ROW_HEIGHT : Double = 40.0
+
+///|
 /// 撤销条目：变更前的编辑快照（程序 + 选中态 + 代码草稿）。
 /// coalesce_key 非空且与栈顶相同时连续同类编辑合并为一个还原点。
 pub(all) struct UndoEntry {
@@ -105,6 +129,224 @@ pub(all) enum DragKind {
 }
 
 ///|
+/// 中心工作区：可视化工作区（Live App / 积木多窗格）/ 代码工作区 / 空舞台。
+/// 与旧 Mode 的关系：Mode 仍是「进入哪种工作台」的粗粒度路由（含运行、
+/// 帮助、MoonBit 预览三个全屏页），WorkSpace 是可视化/代码两个编辑工作区
+/// 内部的窗格编排状态——设计稿把三视图统一进一个可视工作区，切换成本从
+/// 「换模式」降为「点图标」。
+pub(all) enum WorkSpace {
+  WsVisual
+  WsCode
+  WsEmpty
+}
+
+///|
+/// 左栏视图：程序结构树 / 本地数据 / 收起。
+pub(all) enum LeftView {
+  LeftTree
+  LeftData
+  LeftHidden
+}
+
+///|
+/// 右栏 Context 页签：属性 / 状态 / 数据 / 动作 / 依赖。
+pub(all) enum ContextTab {
+  CtxProps
+  CtxState
+  CtxData
+  CtxActions
+  CtxDeps
+}
+
+///|
+/// 输入条模式（设计稿 `#modeSeg`：修改 / 生成 / 解释 / 修复）。
+/// 设计稿里它只是个高亮切换，没有行为；这里给它真语义——决定「发送」
+/// 走哪条既有通道，所以四个模式都不引入新的执行路径：
+/// - 修改/生成 → GenerateProposal（生成是「以空程序为基」的修改）
+/// - 解释      → ExplainHandler（本地确定性讲解，native 可走真实模型）
+/// - 修复      → RestoreCodeDraft（把代码草稿重置回 IR 的规范渲染）
+pub(all) enum ComposerMode {
+  ComposeEdit
+  ComposeGenerate
+  ComposeExplain
+  ComposeRepair
+} derive(Eq)
+
+///|
+/// AI 浮动层锚点：底部居中 / 左下 / 右下 / 停靠右栏。
+pub(all) enum AiAnchor {
+  AiCenter
+  AiLeft
+  AiRight
+  AiDocked
+}
+
+///|
+/// AI 会话卡的种类：Agent 计划 / diff 待审计 / 副作用确认 / 讲解 / 错误。
+/// 卡是「Agent 干了什么」的可审计投影，不承载执行语义——采纳仍走既有
+/// AcceptProposal / AnswerGate 通道。
+pub(all) enum AiCardKind {
+  CardPlan
+  CardDiff
+  CardSideEffect
+  CardExplanation
+  CardError
+}
+
+///|
+/// AI 会话卡：会话内的可见工作记录（设计稿 threadStack）。
+/// steps 只在计划卡非空；diff 行只在 diff 卡非空。
+pub(all) struct AiCard {
+  kind : AiCardKind
+  title : String
+  body : String
+  // 计划卡：步骤文本 + 已完成步数 + 进度百分比
+  steps : Array[String]
+  steps_done : Int
+  progress : Int
+  // diff 卡：逐行 ± 文本
+  diff_lines : Array[(String, String)]
+  // 卡是否已被用户处理（接受/拒绝/确认）：处理过的卡降透明度显示
+  settled : Bool
+  settled_note : String
+  // 单调递增序号：用于稳定 key 与「最新一张」判定
+  seq : Int
+}
+
+///|
+/// 运行审计条目种类：通过 / 运行 / 副作用待确认 / 错误。
+pub(all) enum AuditKind {
+  AuditOk
+  AuditRun
+  AuditWarn
+  AuditError
+}
+
+///|
+/// 运行审计条目：时间线上的一条事实（编译/启动/绑定/副作用/错误）。
+/// 副作用卡（AuditWarn）是**告知 + 跳转**，不是第二条外发通道——
+/// `提交数据` 的真实闸门仍在指令机里（AnswerGate）。
+pub(all) struct AuditEntry {
+  kind : AuditKind
+  // 会话内递增序号（时间戳在视图层生成，模型不读时钟）
+  seq : Int
+  text : String
+  // 副作用卡的补充描述（将写什么、目标当前几行）
+  detail : String
+  // 错误卡的调用栈文本
+  stack : String
+  // 是否已处理（确认/拒绝/已修复）：已处理条目降透明度
+  settled : Bool
+  settled_note : String
+}
+
+///|
+/// Console 日志级别：INFO / WARN / ERROR。
+pub(all) enum LogLevel {
+  LogInfo
+  LogWarn
+  LogError
+}
+
+///|
+/// Console 日志行：编译/运行/Agent 的原始痕迹（设计稿 consolePane）。
+pub(all) struct LogLine {
+  level : LogLevel
+  // 会话内递增序号：稳定 key + 追加顺序
+  seq : Int
+  text : String
+}
+
+///|
+/// 最近修改条目：谁在什么时候动了哪个对象（改属性/插控件/AI diff）。
+/// 会话内 UI 事实，不进 IR、不持久化——它是「人做过什么」的教学材料。
+pub(all) struct RecentChange {
+  target : String
+  // 作者标签（"你" / "Agent"）：i18n 在渲染层解析
+  by_agent : Bool
+  action : String
+  seq : Int
+}
+
+///|
+/// 被监视的运行时值：变量名 + 文本值 + 类型标签。
+pub(all) struct WatchRow {
+  name : String
+  value : String
+  type_label : String
+}
+
+///|
+/// 积木画布分类条的一项：分类 + 该分类在画布中的首个块下标
+/// （-1 = 当前子程序没有该分类的块，视图层灰显）。
+pub(all) struct BlockCategoryEntry {
+  category : @blocks.BlockCategory
+  first_index : Int
+}
+
+///|
+/// 本地数据文件（设计稿「本地数据」视图）：程序外挂数据面的只读投影。
+/// 当前 IR 没有真实文件系统——条目由程序里的列表/表格控件与变量推导，
+/// 让「数据从哪来」在界面上有落点，而不是假装有文件 IO。
+pub(all) struct DataFileEntry {
+  name : String
+  meta : String
+  locked : Bool
+  // 预览文本（等宽展示，逐行）
+  preview : String
+}
+
+///|
+/// 代码编辑器的一行：行号 + 高亮 token 序列。
+pub(all) struct CodeLine {
+  number : Int
+  tokens : Array[CodeToken]
+}
+
+///|
+/// 高亮 token 种类（渲染层取色，模型只带语义分类）。
+pub(all) enum CodeTokenKind {
+  TokKeyword
+  TokString
+  TokNumber
+  TokBuiltin
+  TokComment
+  TokPlain
+}
+
+///|
+/// 高亮 token：种类 + 原文。
+pub(all) struct CodeToken {
+  kind : CodeTokenKind
+  text : String
+}
+
+///|
+/// IR 语句 → 代码行的映射区段：语句路径 + 行区间（1 起的闭区间）。
+/// 由「顺序渲染每条语句并取行区间」推导——不把行号写进 IR，
+/// 映射是渲染的副产品（IR 仍是唯一事实来源）。
+pub(all) struct IrLineSpan {
+  path : Array[Int]
+  kind : @blocks.BlockKind
+  depth : Int
+  first_line : Int
+  last_line : Int
+}
+
+///|
+/// 命令面板命令：id + 本地化标签 + 分组 + 快捷键提示 + 选中后发出的消息。
+/// 设计稿的命令面包含「确认全部副作用 / 锚点循环 / 停靠 / 药丸 / 折叠底栏 /
+/// 打开设置」等 Studio 自有命令，比 moui 文本命令协议的 10 个 id 更宽，
+/// 所以这里用 Studio 自己的表（原 @core.ActionCommand 列表保留为视图控件
+/// 的输入，两者共用 command_message 之外的独立映射）。
+pub(all) struct StudioCommand {
+  id : String
+  label : String
+  group : String
+  hint : String
+}
+
+///|
 pub(all) struct Model {
   program : @ir.StudioProgram
   language : UiLanguage
@@ -135,6 +377,7 @@ pub(all) struct Model {
   command_palette_query : String
   pending : PendingProposal?
   prompt_draft : String
+  composer_mode : ComposerMode
   prompt_error : String
   provider_mode : ProviderMode
   provider_endpoint : String
@@ -169,6 +412,54 @@ pub(all) struct Model {
   proposal_history : Array[ProposalRecord]
   // 积木画布拖拽（同层重排）进行中
   block_drag : BlocksDragState?
+  // === v4 IDE 壳工作区状态（全部会话内，不持久化）===
+  // 中心工作区：可视化 / 代码 / 空舞台
+  workspace : WorkSpace
+  // Live App 窗格显隐（可视化工作区内的多窗格编排）
+  pane_live : Bool
+  // 积木窗格显隐
+  pane_blocks : Bool
+  // Live App 窗格占可视化工作区宽度的比例（分隔条拖拽，0.2–0.8）
+  split_ratio : Double
+  // 左栏视图（图标栏切换；收起时不占宽度）
+  left_view : LeftView
+  // 左栏结构树搜索查询
+  tree_query : String
+  // 结构树展开的分组集合（g 值文本；设计稿只在会话内记忆）
+  tree_collapsed : Array[String]
+  // 右栏 Context 页签
+  ctx_tab : ContextTab
+  // 底部横条展开态与高度（审计 + Console）
+  bottom_open : Bool
+  bottom_height : Double
+  // 底部横条当前页签：审计 / Console
+  bottom_audit : Bool
+  // 运行审计时间线（会话内）
+  audit_entries : Array[AuditEntry]
+  audit_seq : Int
+  // Console 日志（会话内）
+  log_lines : Array[LogLine]
+  log_seq : Int
+  // 最近修改（会话内，最多保留 RECENT_LIMIT 条）
+  recent_changes : Array[RecentChange]
+  recent_seq : Int
+  // AI 浮动层：锚点 / 是否药丸收起 / 线程卡是否折叠 / 上下文芯片
+  ai_anchor : AiAnchor
+  ai_pill : Bool
+  ai_cards_folded : Bool
+  ai_context_chips : Array[String]
+  // AI 会话卡（会话内）
+  ai_cards : Array[AiCard]
+  ai_card_seq : Int
+  // 设置对话框 / AI 历史对话框
+  settings_open : Bool
+  ai_history_open : Bool
+  // toast：文本 + 是否警告（会话内，最多 TOAST_LIMIT 条）
+  toasts : Array[(String, Bool)]
+  // 命令面板 Canvas（设计稿把积木分类条单独成条：选中的分类下标，-1 = 全部）
+  selected_category : Int
+  // IR↔代码行映射高亮：当前高亮的语句路径（空 = 无）
+  ir_highlight : Array[Int]
 }
 
 ///|
@@ -195,6 +486,8 @@ pub(all) enum Msg {
   Undo
   Redo
   SetPrompt(String)
+  SetComposerMode(ComposerMode)
+  ComposerRun
   RealGenerationFinished(Result[String, String])
   ExplainHandler
   RealExplanationFinished(Result[String, String])
@@ -250,6 +543,53 @@ pub(all) enum Msg {
   ExportDirPicked(@services.ServiceTaskResult[String])
   ExportFileWritten(@services.ServiceTaskResult[Unit])
   SetNotice(String)
+  // === v4 IDE 壳消息 ===
+  // 工作区编排：图标栏切换（同一工作区再点一次 = 空舞台）
+  SetWorkSpace(WorkSpace)
+  TogglePaneLive
+  TogglePaneBlocks
+  // 分隔条拖拽：比例（0.2–0.8，越界由 update 钳制）
+  SetSplitRatio(Double)
+  // 左栏：视图切换 / 关闭 / 搜索 / 分组展开折叠
+  SetLeftView(LeftView)
+  SetTreeQuery(String)
+  ToggleTreeGroup(String)
+  // 右栏 Context 页签
+  SetContextTab(ContextTab)
+  // 底栏：页签切换 / 展开折叠 / 高度拖拽
+  SetBottomTab(Bool)
+  ToggleBottom
+  SetBottomHeight(Double)
+  // 审计：点击条目（跳到对应积木）/ 处理副作用卡（settled 标记）
+  AuditOpen(Int)
+  AuditSettle(Int, String)
+  AuditSettleAll(String)
+  // 最近修改 / Console 清空
+  ClearConsole
+  // AI 浮动层：锚点循环 / 直接设置 / 药丸 / 折叠卡 / 上下文芯片
+  CycleAiAnchor
+  SetAiAnchor(AiAnchor)
+  ToggleAiPill
+  ToggleAiCardsFold
+  AddAiContextChip(String)
+  RemoveAiContextChip(Int)
+  // 快速操作：对齐左/居中/对齐右（设计稿 x=24 边距口径）
+  AlignControlLeft(String)
+  AlignControlCenter(String)
+  AlignControlRight(String)
+  // 对话框 / 历史 / toast
+  ToggleSettings
+  ToggleAiHistory
+  DismissToast(Int)
+  // 命令面板 Studio 命令（比 10 个文本命令更宽的自有表）
+  StudioCommandRun(String)
+  // 积木分类条：选中分类（-1 = 全部）
+  SelectBlockCategory(Int)
+  // IR↔代码行映射高亮：按语句路径
+  HighlightIrPath(Array[Int])
+  // 代码草稿回归 IR 渲染（丢弃手改）——高亮区永远来自 IR 投影，
+  // 草稿与 IR 分叉时由用户显式决定放弃哪边
+  RestoreCodeDraft
 }
 
 ///|
@@ -304,6 +644,7 @@ pub fn initial_model(
     config.model
   }
   let encoding = @codec.encode_program(program)
+  let initial_audit = boot_audit_entries(program)
   let model = {
     program,
     language: ZhHans,
@@ -324,6 +665,7 @@ pub fn initial_model(
     command_palette_query: "",
     pending: None,
     prompt_draft: "",
+    composer_mode: ComposeEdit,
     prompt_error: "",
     provider_mode: Fake,
     provider_endpoint: endpoint,
@@ -348,6 +690,82 @@ pub fn initial_model(
     redo_stack: [],
     proposal_history: [],
     block_drag: None,
+    workspace: WsVisual,
+    pane_live: true,
+    pane_blocks: true,
+    split_ratio: 0.55,
+    left_view: LeftTree,
+    tree_query: "",
+    tree_collapsed: [],
+    ctx_tab: CtxProps,
+    bottom_open: false,
+    bottom_height: 168.0,
+    bottom_audit: true,
+    audit_entries: initial_audit,
+    audit_seq: initial_audit.length(),
+    log_lines: boot_log_lines(program),
+    log_seq: 3,
+    recent_changes: [],
+    recent_seq: 0,
+    ai_anchor: AiCenter,
+    ai_pill: false,
+    ai_cards_folded: false,
+    ai_context_chips: [],
+    ai_cards: [],
+    ai_card_seq: 0,
+    settings_open: false,
+    ai_history_open: false,
+    toasts: [],
+    selected_category: -1,
+    ir_highlight: [],
   }
   seed_code_draft(model)
+}
+
+///|
+/// 启动审计：把「程序已就绪」这件事在时间线上如实说一遍（设计稿首屏三条）。
+/// 内容是程序事实的派生（窗体尺寸、控件数、子程序数），不写死演示文案。
+fn boot_audit_entries(program : @ir.StudioProgram) -> Array[AuditEntry] {
+  let entries : Array[AuditEntry] = [
+    AuditEntry::{
+      kind: AuditRun,
+      seq: 1,
+      text: "app.audit.boot",
+      detail: "",
+      stack: "",
+      settled: false,
+      settled_note: "",
+    },
+    AuditEntry::{
+      kind: AuditOk,
+      seq: 2,
+      text: "app.audit.controls",
+      detail: "",
+      stack: "",
+      settled: false,
+      settled_note: "",
+    },
+    AuditEntry::{
+      kind: AuditOk,
+      seq: 3,
+      text: "app.audit.handlers",
+      detail: "",
+      stack: "",
+      settled: false,
+      settled_note: "",
+    },
+  ]
+  ignore(program)
+  entries
+}
+
+///|
+/// 启动 Console：三条 INFO 说明当前会话的边界（轨、编译可达性、安全叙事）。
+fn boot_log_lines(program : @ir.StudioProgram) -> Array[LogLine] {
+  ignore(program)
+  [
+    LogLine::{ level: LogInfo, seq: 1, text: "app.log.ready", },
+    LogLine::{ level: LogInfo, seq: 2, text: "app.log.track", },
+    LogLine::{ level: LogWarn, seq: 3, text: "app.log.gate", },
+  ]
 }

@@ -212,13 +212,17 @@ pub fn blocks_canvas(
   selected : Int,
   spotlight : String,
   drag : BlocksDragState?,
+  width : Double,
   height : Double,
   semantics_label : String,
 ) -> @moui.View[Msg] {
   @views.container(
     canvas(
       measure=fn(_constraints) {
-        @geometry.Size::new(width=470.0, height=height.max(160.0))
+        // 宽度必须由调用方给定：scroll_view 给子节点的是无界约束
+        // （纵向滚动、横向不滚），画布自己量不出视口宽——写死 470 会
+        // 在窄窗格里溢出到隔壁面板。
+        @geometry.Size::new(width=width.max(160.0), height=height.max(160.0))
       },
       draw=fn(ctx, frame) {
         let dx = frame.origin.x

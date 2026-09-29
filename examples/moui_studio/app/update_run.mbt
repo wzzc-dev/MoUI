@@ -36,7 +36,21 @@ fn start_run(model : Model) -> Model {
         checks: Map([], capacity=8),
         single_step: false,
       }
-      { ..committed, run: Some(run), mode: ModeRun, notice: "", }
+      // 启动是一条审计事实（不是每次 tick）：时间线要能回答「跑的是哪个
+      // 子程序」，所以记子程序键而不是泛泛的「已启动」。
+      let t = translator(committed)
+      let logged = log_line(
+        committed,
+        LogLevel::LogInfo,
+        text_with(t, "app.log.run_start", [("handler", run.handler_label)]),
+      )
+      let audited = push_audit(
+        logged,
+        AuditRun,
+        text(t, "app.audit.run_start"),
+        run.handler_label,
+      )
+      { ..audited, run: Some(run), mode: ModeRun, notice: "", }
     }
   }
 }
@@ -276,11 +290,53 @@ fn merge_run_back(model : Model) -> Model {
             None => ()
           }
         }
-        model
+        // 运行收尾是**唯一**的终态汇合点（tick / 单步 / 事件回灌都经过
+        // 这里），所以审计只在这里记一次：失败记错误卡，成功记完成事实。
+        // 散在各调用点记会重复计数，每次 tick 都刷一条。
+        let t = translator(model)
+        let settled = match run.state.status {
+          @studio_lang.Failed => {
+            let reason = match run.state.error {
+              Some(error) => error_message(t, error)
+              None => text(t, "app.audit.run_failed.detail")
+            }
+            push_audit_error(model, text(t, "app.audit.run_failed"), reason)
+          }
+          _ =>
+            push_audit(
+              model,
+              AuditOk,
+              text(t, "app.audit.run_done"),
+              run.handler_label,
+            )
+        }
+        settled
+        // 停在副作用闸门：这一步会真的对外产生效果，必须先确认。
+        // 闸门用 AuditWarn 卡呈现（与「待确认副作用」同一语义色）。
+      } else if run.state.status is @studio_lang.WaitingGate &&
+        !already_gated(model, run) {
+        let t = translator(model)
+        let detail = match run.state.gate {
+          Some(gate) => gate.payload
+          None => text(t, "app.audit.gate.detail")
+        }
+        push_audit_side_effect(model, text(t, "app.audit.gate"), detail)
       } else {
         model
       }
   }
+}
+
+///|
+/// 该次运行是否已经记过闸门卡：同一 handler 的同一步只记一次，
+/// 否则每次 RunTick 都会再压一条（时间线会被同一条副作用刷屏）。
+fn already_gated(model : Model, run : RunModel) -> Bool {
+  for entry in model.audit_entries {
+    if entry.kind is AuditWarn && entry.detail == run.handler_label {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -392,37 +448,74 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           // 源码草稿不合法时不把坏程序送去真编译（先修，再编译）。
           Some((committed, @moui.Effect::none()))
         } else {
+          let t = translator(committed)
           Some(
             (
               {
-                ..committed,
+                ..log_line(
+                  committed,
+                  LogLevel::LogInfo,
+                  text(t, "app.log.compile_start"),
+                ),
                 compile_report: None,
                 compile_busy: true,
                 run_track: Compile,
                 mode: ModeRun,
-                notice: text(translator(committed), "app.compile.running"),
+                notice: text(t, "app.compile.running"),
               },
               @moui.Effect::none(),
             ),
           )
         }
       }
-    CompileRunFinished(report) =>
+    CompileRunFinished(report) => {
+      // 编译结果进审计 + Console：审计记「发生了什么」，Console 记原始诊断。
+      let t = translator(model)
+      let logged = log_line(
+        model,
+        if report.ok {
+          LogLevel::LogInfo
+        } else {
+          LogLevel::LogError
+        },
+        if report.ok {
+          text(t, "app.log.compile_ok")
+        } else {
+          text(t, "app.log.compile_failed")
+        },
+      )
+      let audited = if report.ok {
+        push_audit(
+          logged,
+          AuditOk,
+          text(t, "app.audit.compile_ok"),
+          report.target,
+        )
+      } else {
+        push_audit_error(
+          logged,
+          text(t, "app.audit.compile_failed"),
+          report.diagnostics
+          .map(d => "\{d.severity} \{d.file}:\{d.line}:\{d.column} \{d.text}")
+          .join("\n"),
+        )
+      }
       Some(
         (
           {
-            ..model,
+            ..audited,
             compile_report: Some(report),
             compile_busy: false,
             notice: if report.ok {
-              text(translator(model), "app.compile.ok")
+              text(t, "app.compile.ok")
             } else {
-              text(translator(model), "app.compile.failed")
+              text(t, "app.compile.failed")
             },
           },
           @moui.Effect::none(),
         ),
       )
+    }
     CompileRunFailed(message) =>
       // 执行器本身起不来（非工具链诊断）：如实进报告，不改路径。
       Some(

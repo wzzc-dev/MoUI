@@ -369,7 +369,7 @@ pub fn program(
   let submit = provider_submit
   let submit_compile = compile_submit
   let on_locale = apply_locale
-  @moui.Program::new(
+  @moui.Program::new_with_environment(
     init=() => {
       (
         initial_model(provider_config?, compile_track_available~),
@@ -452,7 +452,9 @@ pub fn program(
       }
       (next, effect)
     },
-    view~,
+    // 壳按真实视口自适应：ViewEnvironment 提供 viewport_size，
+    // 顶栏/状态栏按窗口宽铺满、中心列吃剩余宽度、底栏按视口宽铺。
+    view=(model, env) => view_with_viewport(model, env.viewport_size()),
     subscriptions=model => run_subscription(model, timer),
   )
 }
