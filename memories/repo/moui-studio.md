@@ -339,3 +339,56 @@
 - **测试独立包无 aliases**：domain/blocks 的 `type Stmt` 别名只在主包可见，
   *_test.mbt 里写 @ir.Stmt。
 - **@views.text 默认 TextCenter**；代码语境要 align=TextStart。
+
+## 2026-09-29 双轨真编译批次新增事实
+
+- **产品名零兼容**：唯一格式 `moui.studio.project` v1；旧 `format`/`version`
+  结构化拒绝，不读取、不迁移、不留解码路径；**旧产品名**（改名前的三个
+  写法）在仓库源码与文档零残留（grep 断言作提交门）。模块路径
+  `examples/moui_studio`，计划 `docs/plans/active/moui-studio.md`。
+- **双轨语义（v1 冻结）**：解释轨 = 课堂/Web 轨（沙箱即时执行，100_000 步
+  预算、提交数据外发闸门 + 确认卡、审计日志、积木/代码聚光灯，计次循环
+  槽 `@iN`/`@iN#n` 隐藏且差分排除）；编译轨 = 毕业通道（**仅 native**，
+  Web 显式 `app.track.unavailable_web`）。两轨 RunModel / CompiledRun
+  运行态彼此独立；显式切换，不静默降级、不隐式编译、编译轨无单步。
+- **真编译管线**：`services/compile_native` 执行 `moon update → moon check
+  → moon build --target wasm-gc → moon build --target native → native
+  启动存活`。`services/export/moonbit_codegen.mbt` 产出的文本同时用于
+  预览与 bundle 内 `app/generated_handlers.mbt`（逐字节同源，不再旁路）。
+  `compiled_runtime` 是编译产物的执行面。
+- **compile_bundle_at(root)**：root 必须是**含 `moon.mod` 的内层 bundle
+  目录**（不是工作区根）；探针耗时参考 update ~2.1s / check ~0.9s /
+  wasm-gc build ~1.4s / native smoke 冷启动 ~27.5s。
+- **差分硬门**：`services/diff` 三/四样例 × 每类语句（Assign/If/计次循环/
+  当循环/跳出/命令调用/函数调用）× zh-Hans/en-US 关键字渲染，逐项断言
+  控件文本、变量终态、审计序列完全一致；不一致按 P0，无「已知差异清单」。
+- **CompileReport**：`moon check/build` 输出解析为结构化诊断（文件/行/列/
+  错误码），本地化后回渲染代码视图与运行视图，并可跳回 IR 语句路径/积木；
+  失败绝不自动退回解释轨。控制器字段 `CompileJump`、控制台可重开。
+- **命令面板**：`command_palette.mbt`，Ctrl/Cmd+K；执行通道必须保持
+  `closing + @moui.Effect::send(command_message(intent))` 语义——直接写 model
+  会绕过 SaveRequested/CompileRun 的 service 流。
+- **技术风主题**：`studio_theme()` 钉 Dark，朱砂唯一强调色，发丝描边、
+  紧半径档、stage/grid/console 专项色；控制台与代码预览等宽。
+- **pr profile 新增**：`studio compile native tests`（插在 studio export
+  tests 之前）；pr 的 studio 段现有 i18n catalogs / compiled runtime /
+  diff matrix / compile native / export tests / export kernel sync。
+- **moon info 陷阱**：`scripts/check-generated-interfaces.mjs` 只快照**已
+  tracked** 的 `pkg.generated.mbti`，但 `moon info` 会在**未跟踪**的
+  package（含 `examples/moui_studio/**`）里生成新 mbti。跑完 `moon info`
+  后记得 `git clean -f examples/moui_studio` 清掉这些不该提交的生成物，
+  只提交 tracked 漂移（本轮是 `moui/core/pkg.generated.mbti` 的
+  `View::on_tap_with_frame`）。
+- **`moon fmt` 陷阱**：对 `examples/moui_studio/app/*.mbt` 通配会改写
+  无关既有文件（实测 `canvas.mbt`）；只对本次触碰的具体文件跑
+  `moon fmt <file>`。仓库多处既有文件有 format 漂移（proposal/main/
+  compile_report/studio_lang_test/worker_test/runtime_pointer_input_test），
+  `moon fmt --check` 必须全绿才能过 pr profile。
+- **仓库生成物**：`docs/repository-facts.md` 是生成物——改 docs catalog
+  后跑 `node scripts/generate-repo-docs.mjs --write`（会连带
+  `sync-website-docs.mjs`）；`website/web_wasm/docs/*` 与 `sitemap.xml`
+  是同步生成物（web_wasm/docs 被 gitignore，不入库）。**旧名 grep**：
+  新文档里别把旧产品名写回去（本轮踩过一次已清）；`git grep -in` 旧名
+  三种写法应零命中（`docs/plans/done`、`docs/ai-sessions` 的历史快照除外）。
+- **artifacts/ 与凭据**：`artifacts/` 不入库；`examples/moui_studio/.config.json`
+  （StepFun key）gitignored，绝不入源码/bundle。

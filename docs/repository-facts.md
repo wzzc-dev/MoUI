@@ -74,7 +74,7 @@ This file is generated from repository manifests and validator reports.
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 721 | 427 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2173 | 577 | 190 |
+| core (moui/core/pkg.generated.mbti) | 2174 | 578 | 190 |
 | views facade (moui/views/pkg.generated.mbti) | 677 | 326 | 0 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 467 | 84 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 476 | 151 | 31 |
@@ -135,13 +135,13 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 49.
+Published documents: 50.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
 | Guides (guides) | 9 |
-| Examples (examples) | 4 |
+| Examples (examples) | 5 |
 | Platforms (platforms) | 16 |
 | Architecture & API (architecture-api) | 6 |
 | Contributing (contributing) | 5 |

@@ -11,15 +11,37 @@
   「解释这个程序」的逐语句人话讲解；可读性是验收项，不是锦上添花。
 - Non-goals（v1 冻结范围）：游戏/动画/精灵系统；多窗体；作品内容本地化
   （项目内按钮文案等字符串）；移动端入口；真实网络外发（`提交数据` 是闸门化
-  模拟动作，只记录审计）；MoBlocks 式工作流重试/超时状态机；MoonBit 源码导出
-  （v1.1 路线图）；断点调试器；RTL。比赛版只做「表单类应用」域。
+  模拟动作，只记录审计）；MoBlocks 式工作流重试/超时状态机；断点调试器；
+  RTL。比赛版只做「表单类应用」域。**真编译毕业通道不是 non-goal**：
+  IR → 可读 MoonBit 源码 → `moon check/build` → 可执行产物是 v1 验收项（§8）。
 
 ## 1. 产品定位
 
-**名字**：MoUI Studio，MoUI Studio。墨 = 中文书写；卯 = 榫卯——一凸一卯、互相咬合的传统
+**名字**：MoUI Studio。墨 = 中文书写；卯 = 榫卯——一凸一卯、互相咬合的传统
 构件工艺，是积木的东方本源。产品形态 = MoUI Studio（Web 与 macOS 双入口）。
 
+**定位**：MoUI 的 IDE 工具——兼顾极客与入门教学，UI 走技术风（暗色工程面板、
+等宽字体、网格画布、终端式控制台、全键盘可达）；极客拿它做真代码毕业，
+课堂拿它讲清一行积木到底对应哪一行代码。
+
 **一句话**：用人话描述，用母语编程，用积木理解，做出真正能跑的跨平台应用。
+
+**市场对标**（各取其一，不拼贴）：
+
+| 竞品 | 它擅长 | MoUI Studio 的取与舍 |
+|------|--------|----------------------|
+| Lovable | 自然语言直接生成可部署应用 | 取「描述即产物」的入口；舍「生成任意代码直接执行」——AI 只产出结构化 IR 提案，校验 + 字段级 diff，可读、可拒、可讲解 |
+| Figma | 画布、吸附对齐、组件化编辑体验 | 取画布/吸附/参考线/检查器纪律；舍「只到设计稿」——画布上的每个控件同时是程序声明，直接进入运行 |
+| FlutterFlow | 可视化搭建 + 真代码导出 | 取「可视化 → 真代码 → 真产物」的毕业通道；舍只导出不落地的预览文本——本轮打通 `moon check/build`，生成源码就是编译输入 |
+| Power Apps | 表单类企业应用与数据流 | 取表单域建模与事件子程序驱动；舍闭源托管锁定——产物是独立 MoUI 工程，可离线构建、可 git 管理 |
+
+**差异三句**（对外固定口径）：
+
+1. 三视图同源 IR：设计 / 积木 / 代码消费同一棵语句级 IR，改哪边都不会分叉。
+2. 可读可讲解的 AI 提案：AI 只写结构化 IR 提案，带双语意图说明与字段级 diff，
+   人话讲解逐语句可投屏——不是黑箱吐代码。
+3. 能真编译的毕业通道：IR 生成可读 MoonBit 源码并真跑 `moon check/build`，
+   产出 native + wasm-gc 可执行产物，而不是「文本预览」。
 
 **参考综合**（各补一个缺口，不是拼贴）：
 
@@ -207,14 +229,38 @@ AI 产物默认人看不懂，是本产品要解决的核心矛盾。机制：
 `services/export`（salvage MoBlocks 导出引擎）+ `tools/sync_kernel` 漂移门
 + `tools/emit_bundle` 离线 CLI：把当前项目导出为独立 MoUI 应用
 （moon.mod + 内嵌项目的 app 包 + web_wasm 入口 + README + deps），
-导出的应用**自带解释器可跑**，与 IDE 共享逐字节相同的内核快照。
+导出的应用**走编译轨可跑**——项目 IR 在导出时被 codegen 成
+`app/generated_handlers.mbt`，由 `compiled_runtime` 执行面直接执行（bundle 里
+没有指令流解释器）；领域内核与 IDE 共享逐字节相同的快照，两轨审计文本与
+运行语义可比。
 - 内核集收缩为 3 个：`domain/ir`、`domain/studio_lang`、`domain/codec`
   （导出的应用不需要 IDE/积木/提案，MoBlocks 的 5+1 内核是自由图模型遗留）。
-- 漂移门重新注册进 `checks/profiles.json` 的 pr profile（P0 已随 MoBlocks
-  删除移除旧条目，新增条目在 P3 落地时补：`moon run
-  examples/moui_studio/tools/sync_kernel --target native -- --check`）。
-- v1.1 路线图：IR → 可读 MoonBit 源码的预览级导出（文本生成、不真编译），
-  即「毕业通道」叙事的产品化。
+- 漂移门已注册进 `checks/profiles.json` 的 pr profile（`studio export kernel
+  sync` = `moon run examples/moui_studio/tools/sync_kernel --target native --
+  --check`），并配 `studio export build` 夜间档烟测（`scripts/studio-export-smoke.sh`）。
+- **真编译毕业通道（v1 验收项）**：IR → 可读 MoonBit 源码
+  （`services/export/moonbit_codegen.mbt`）→ 本地 `moon check` →
+  `moon build --target native` 与 `--target wasm-gc` → 可执行产物。
+  代码视图的 MoonBit 预览与 bundle 里 `app/generated_handlers.mbt` 是
+  同一个 codegen 函数的同一份文本（有逐字节测试锁定），预览即编译输入，
+  不存在「展示一份、编译另一份」的旁路。
+- **编译执行器**（`services/compile_native`，native-only）：导出 bundle →
+  工作区外 `moon update` → `moon check` → wasm-gc 构建 → native 构建 →
+  native 产物启动存活；逐步产出结构化 `CompileReport`，失败立即停止。
+
+### 8.1 双轨语义定义（解释轨 / 编译轨）
+
+| | 解释轨（Interpret） | 编译轨（Compile） |
+|---|---|---|
+| 语义来源 | `domain/studio_lang` 指令机直接执行语句级 IR | IR → 可读 MoonBit 源码 → 真参加 `moon check/build` |
+| 执行方式 | 沙箱指令机：100_000 步预算 + 外发闸门 + 审计日志 | 生成 `app/generated_handlers.mbt`，由 `compiled_runtime` 执行面直接执行 |
+| 可用端 | native + Web（wasm-gc） | 仅 native；Web 显式声明「本端只有解释轨 + 源码预览」，不是缺陷 |
+| 运行态 | app 内 `RunModel`；单步/继续、聚光灯 | `CompiledRun` 独立状态；与解释轨产物、运行态互不影响 |
+| 一致性 | —— | 差分硬门：三样例 × 每类语句 × 双语，控件文本 / 变量终态 / 审计序列逐项相同（P0 处理，无已知差异清单） |
+| 失败行为 | 结构化错误 + 行号 | `moon check/build` 诊断解析为文件/行/列/错误码，本地化后回渲染，点击跳回 IR 语句；**绝不静默降级回解释轨** |
+
+**边界**：编译轨不提供单步（编译产物是原生执行）；解释轨的计次循环内部槽
+`@iN` / `@iN#n` 属实现细节，差分比较时排除，其余全部逐项比较。
 
 ## 9. 国际化（zh-Hans + en-US）
 
@@ -366,23 +412,28 @@ README 双语含 5 分钟 Quick Start。
 
 ## Acceptance
 
-- [x] `moon test examples/moui_studio/app --target native` 与 `--target wasm-gc` 全绿
-- [x] 三个样例在 Web 入口离线可玩（假模型）；macOS 入口从
-      `examples/moui_studio/.config.json` 读取 StepFun 配置预填面板，live smoke
-      测试可跑通，且 `.config.json` 被 gitignore 覆盖、key 不入任何产物
-      （2026-09-27 补齐 live smoke：`provider_live_completion` + 跳过式
-      async test；顺带抓到并修复真实 provider 404——base URL 未拼
-      `/chat/completions`，`@provider.completion_url` 统一组装，
-      StepFun step-5-preview 端到端首次打通）
-- [x] AI 生成程序的可读性验收：每个生成 handler 带双语 note；无语义命名
-      （`a1`/`tmp` 类）被校验拒绝；同一 IR 渲染逐字节稳定（快照测试）；
-      「解释这个程序」对三个样例给出正确讲解
-      （讲解机制有测试锁定；三样例×双语覆盖可作廉价补强）
-- [x] 导出 bundle 在工作区外 `moon build` 可跑，sync_kernel `--check` 零漂移
-- [x] 中/英界面切换 + DSL 双语关键字往返一致测试通过
-- [x] `提交数据` 闸门在确认前无任何真实外发（审计可证）
-- [x] 静态 trio 与 catalog `--check` 通过；pr profile 重新注册 MoUI Studio 漂移门
-- [x] README 双语 + DSL 规范 + IR schema + 教案齐备
+- [x] **1 改名零兼容**：模块路径、计划/记忆、README、website、i18n catalog、
+  checks 全量换轨到 MoUI Studio，旧产品名在仓库源码与文档零残留（grep 断言）；
+  项目格式唯一化 `moui.studio.project` v1，旧 `format`/`version` 结构化拒绝、
+  不读取不迁移（commit `f5cdfac6a`）。
+- [x] **2 双轨真编译**：IR → 可读 MoonBit 源码 → `moon check` →
+  `moon build --target native` / `--target wasm-gc` → 可执行产物；预览源码与
+  bundle 内 `app/generated_handlers.mbt` 逐字节同源（commit `e64ff3ffe`）。
+- [x] **3 解释轨 + 显式双轨切换**：100_000 步预算、提交数据闸门、审计日志、
+  聚光灯保留；顶栏显式切换并标示当前轨；两轨产物/运行态互相独立
+  （commit `36a2de9b7`）。
+- [x] **4 双轨差分硬门**：三/四样例 × 每类语句 × zh-Hans/en-US 关键字渲染，
+  控件文本、变量终态、审计序列逐项断言，无已知差异清单（commit `80d003420`）。
+- [x] **5 编译失败不静默降级**：诊断解析为结构化错误（文件/行/列/错误码），
+  本地化回渲染到代码与运行视图，点击跳到对应积木/控件（commit `ed4a7dd1c`）。
+- [x] **6 技术风 UI**：暗色工程面板 + 发丝分隔线 + 等宽优先 + 网格画布 +
+  终端式控制台 + 左节点树/右 Inspector；命令面板 Ctrl/Cmd+K 全键盘可达；
+  朱砂唯一强调色；复用 `moui/views` 既有控件（commit `102ebe578`）。
+- [x] **7 市场叙事**：docs 定位页 + website 双语页，对标 Lovable / Figma /
+  FlutterFlow / Power Apps，差异三句固定口径。
+- [x] **8 退出门**：app native/wasm-gc、domain/services 全绿；工作区外真编译
+  smoke 通过（native + wasm-gc 产物存在、native 启动存活）；差分矩阵全绿；
+  六静态 validator + sync_kernel `--check` + i18n `--check` 全绿。
 
 ## Decision log
 
@@ -397,6 +448,9 @@ README 双语含 5 分钟 Quick Start。
 | 2026-09-27 | 可读性为一等目标：handler 双语 note 必填、命名自解释、确定性渲染、「解释这个程序」讲解功能 |
 | 2026-09-27 | 允许按需扩展 MoUI 框架本身（新控件走 `moui/views` 的具体 `ViewNode`，core 不加枚举变体），决策需记录理由 |
 | 2026-09-27 | 品牌主题 `studio_theme` 需 `ColorPalette::from_seed`（朱砂 seed 派生全角色盘，手动覆盖派生角色质量更差）——studio app 主导入块引 `wzzc-dev/moui/core`，按 browser/mo_workbench/showcase 先例加入 validate-api-surface 的 shared-app core 导入授权名单 |
+| 2026-09-29 | 产品定位定为 MoUI 的 IDE 工具：兼顾极客与入门教学，UI 技术风化（暗色工程面板、等宽优先、网格画布、终端控制台、命令面板）；竞品对标 Lovable/Figma/FlutterFlow/Power Apps |
+| 2026-09-29 | 双轨定为显式产品语义：解释轨（沙箱指令机 100_000 步 + 闸门 + 审计）与编译轨（IR→可读 MoonBit→`moon check/build`→可执行产物）；两轨运行态独立，编译轨仅 native，Web 显式声明「只有解释轨 + 源码预览」 |
+| 2026-09-29 | 编译轨失败**不静默降级**：诊断结构化回渲染并提供 IR 语句跳转；禁止隐式编译、禁止单步（编译产物是原生执行） |
 | 2026-09-27 | 设计画布手柄优先于控件体命中（按中选中控件角点 ±6px 即缩放）；吸附只做移动（缩放时参考线仅显示）；UI 新建子程序 note 留空——可读性 note 必填是 AI 提案约束；控件/子程序预算（MAX_CONTROLS/MAX_HANDLERS）在 UI 层同样生效，超限设 notice 不静默 |
 
 ## Progress
@@ -418,4 +472,8 @@ README 双语含 5 分钟 Quick Start。
 | 2026-09-27 | 承诺兑现批次（清偿设计画布「画了但没实现」的债 + 教学闭环断点）：① **角手柄缩放落地**——IR 增 `DragCorner` + `Control::resize_from_corner`（对角固定、四角语义各异，夹取与 with_rect_field 同纪律：完整落画布内 + MIN_CONTROL_SIZE），DragState 拆 `Move(offset)/Resize(corner)`，CanvasPress 手柄优先（6px 命中半径）再控件体命中；② **移动拖拽吸附**——`snap_move_position` 复用 alignment_guides 同一目标集与 4px 容差（画线与吸附不分叉），取平移量最小者精确对齐，吸附后仍过夹取（参考线目标都在画布内，不会越界）；③ **新建子程序入口**——`CreateHandler(control, event)`（控件存在 + 事件受支持 + (控件,事件) 不重复 + MAX_HANDLERS 预算内建空子程序并选中），左栏对选中控件列出「支持但尚无 handler」的事件按钮（catalog 里 `app.handler.new`/`event.*` 键早已备好、首次接线）；④ **i18n 残账**——画布 `semantics_label` 改经翻译器（新键 `app.design.canvas`），全应用不再有绕过 catalog 的用户可见文案；⑤ 小账三笔——DeleteControl 仅在被删子程序正被选中时清草稿（其余情况保住未提交编辑）、AddControl 加 MAX_CONTROLS 防呆（超限设 notice `app.status.controls_limit`）、design 常量统一到 `@ir.DESIGN_WIDTH/HEIGHT`。内核 ir.mbt 变更已重同步（sync_kernel --check 零漂移）；测试 ir 12×2 目标、app 36×2 目标全绿（新增 8 例：resize_from_corner×3、手柄命中、手柄缩放流、吸附纯函数+集成、创建子程序、预算防呆、删除草稿）；六项静态验证全绿。教训：旧拖拽测试按下点取控件原点+5px，落进新手柄命中区触发缩放——手柄优先是设计工具标准语义，测试改按控件主体；新建 UI handler 的 note 留空（可读性必填约束只针对 AI 提案） |
 | 2026-09-28 | **参赛冲刺批次（上海赛=MoUI Studio 口径，材料换轨 + 教学完备六包）**：G' 材料——`moui-milestones` 新增 MoUI Studio 口径作品介绍（CONTENT_STUDIO.md → render_studio_pdf.py，7 页 PDF）、演示脚本（MoUI Studio 主线 7 分镜）、提交清单两赛分叉（上海=MoUI Studio / 北京=MoUI）；A 撤销重做——快照栈（深度 50，程序+选中+草稿）+ with_undo_point 签名守卫（no-op 不入栈）+ 同 key 合并（连续文本编辑/整段拖拽手势一个还原点）+ DuplicateControl（新名/+16px 级联/夹取）+ 顶栏撤销重做按钮；B 单步运行——RunModel.single_step 冻结 30ms 计时器、RunStep 走一条指令、RunResume 恢复，运行视图补计划承诺的变量表（run.state.vars 排序渲染）+ 单步/继续按钮；C MoonBit 毕业通道预览（v1.1 提前）——services/export 新增 moonbit_preview 纯函数（逐字节稳定快照锁定），第 4 模式 tab 只读展示，docs/moonbit-preview.md；D 提案历史——ProposalRecord（采纳/拒绝+摘要+diff+seq），AI 面板历史区；E 帮助页——从 keywords_for 双语表 + builtin_catalog **数据生成**速查表（零手抄）+ 问候教案（第 4 份）；F 回归加固——提案 13 类错误全覆盖（decode 篡改 + struct 变异两路）、studio_lang 边界（全角/≠≤≥/混合标识符/错误行号/15 层嵌套；实际关键字是「计次循环」）、blocks 路径手术（else-if 臂/越界安全）；**抓到真漏洞：IrError::DuplicateHandler 是死变体——计划声明的 (控件,事件) 唯一不变量从未被 validate_program 强制**，已补检查（内核重同步 + 导出烟测绿）；H 素材——playwright 合成指针事件驱动 web 入口，29 张分镜截图 + 3 张标题卡 + README 索引入库 moui-milestones/video/assets（闸门作天然暂停点解单步拍摄）。测试：app 49×2、ir 13×2、lang 30×2、blocks 9×2、proposals 19×2、codec 5×2、export 10×2 全绿；六静态门 + sync_kernel --check + 导出烟测绿。提交：main 上 20743ebe(A)→B/C/D/E/F 逐包 + moui-milestones 两笔。已发现待修：导出 runner 控件未接品牌主题（黑块按钮，视频素材已注明规避） |
 | 2026-09-28 | 完善批次（分析驱动，冻结前收尾）：① **运行舞台条溢出修复**——单行 436px 裁掉继续/停止（截图实证），拆两行（标题行 + 按钮行）；单步/继续在活运行（含 WaitingGate）时显示、终态隐藏；**闸门待确认 Warning 徽标**上舞台条（确认卡滚出视野后仍可发现）；② **导出 runner 排版**——卡片容器 + 「由 MoUI Studio 导出」标注 + 变量表（与 Studio 同承诺）+ 审计语义色点 + 闸门 Warning callout + Primary/Outline 确认按钮；bundle app_pkg 增 moui/core + graphics + views/style（style 是 views 子包，首写成 moui/style 被烟测拦下）；runner 模板已接朱砂 from_seed 主题（内核重同步 + 烟测绿）；③ 速查占位改为引导帮助页；④ macOS 入口实机验证：native 构建通过、进程启动存活超 30s 无崩溃；窗口级 AX/截图在本会话不可达（后台会话无 WindowServer 上下文，前台会话待补）。素材 05f/05f2/06a/06b 已重拍入库（moui-milestones） |
+| 2026-09-29 | **双轨真编译目标批次（1–6 落地）**：① 零兼容改名 MoUI Studio（模块/计划/记忆/i18n/checks/README/website 全换轨，旧产品名 grep 断言零残留；格式唯一 `moui.studio.project` v1，旧 format/version 结构化拒绝，不读取不迁移）——`f5cdfac6a`；② 真编译轨：`services/export/moonbit_codegen.mbt` 生成可读 MoonBit，预览与 bundle 内 `app/generated_handlers.mbt` 逐字节同源，`compiled_runtime` 执行面 + `services/compile_native` 执行器（moon update→check→wasm-gc build→native build→native 启动存活）——`e64ff3ffe`；③ 显式双轨切换 `RunTrack{Interpret,Compile}` + 独立运行态（`RunModel` vs `CompiledRun`），Web 显式声明 `app.track.unavailable_web`——`36a2de9b7`；④ `services/diff` 双轨差分矩阵硬门（样例×语句类×双语，控件文本/变量终态/审计序列逐项断言，无已知差异清单）——`80d003420`；⑤ `CompileReport` 结构化诊断（文件/行/列/错误码）+ 本地化回渲染 + `CompileJump` 跳回 IR 积木路径 + 控制台重开——`ed4a7dd1c`；⑥ 技术风 UI：`studio_theme()` 钉 Dark + 朱砂唯一强调色、发丝描边、紧半径档、stage/grid/console 专项色、控制台/预览等宽、`Ctrl/Cmd+K` 命令面板（`command_palette.mbt`，`Effect::send` 执行通道）——`102ebe578`。证据：app 76/76 native、`moon check` 0 error、i18n `--check` ok、source-file policy ok（files=1956 review=42 ratchets=62） |
+| 2026-09-29 | **双轨真编译目标批次（7 市场叙事 + 8 退出门，收官）**：⑦ 定位页双语文档 `docs/moui-studio.md` + `docs/zh-Hans/moui-studio.md`（三视图同源 IR / 双轨语义表 / 编译轨五步 / 差分门 / 技术风 / 四竞品对标表 + 固定差异三句），`docs/INDEX.md`、`docs/examples.md`、`docs/zh-Hans/examples.md`、`website/docs-catalog.json` 同步挂载（website sync 50 条）；⑧ 退出门证据：app 76/76 native + 76/76 wasm-gc、domain/services 全包绿（ir 15 / studio_lang 31 / codec 5 / proposals 21 / blocks 13 / export 22 / compiled_runtime 1 / diff 3 / model_provider 6 / provider_native 3 / compile_native 2）、web_wasm wasm-gc build ok、macos_skia native build ok、`sh scripts/studio-export-smoke.sh` ok（native+wasm-gc）、`sync_kernel --check` current、i18n `--check` ok、六项静态 validator 全绿，`studio compile native tests` 入 pr profile；`moon fmt --check` 收敛全部漂移，`moui/core/pkg.generated.mbti` 补 `on_tap_with_frame` 漂移 |
 | 2026-09-28 | 冻结后批次（分析清单落地）：① **吸附完善**——移动无参考线命中时落 32px 网格（与点阵一致，参考线 4px 优先、delta-0 精确对齐也算命中）；新增 snap_resize_position：缩放时**移动边**按角位向参考线/网格钳制后再缩放（对角固定与夹取不变）；② **审计↔积木双向跳转**——运行视图审计条目可点（AuditJump），切积木视图并选中 detail 匹配的语句（与聚光灯同款匹配），越界安全；③ **键盘快捷键**——调查确认 MoUI 已有 KeyboardShortcut modifier + runtime 全窗口分发（ADR 0033 键盘策略），无需新通路；撤销/重做换 @views.shortcut_button（Ctrl+Z / Ctrl+Shift+Z 徽标可见，链式追加 Cmd 变体兼容 macOS——shortcut 按修饰键精确匹配需各注册一份）；空栈撤销/重做 no-op 有测试；④ **积木画布（拼图视觉 + 同层拖拽重排）**——积木视图从 widget 行改为 canvas 绘制（设计画布同契约）：榫头/卯口拼图外形 + 分类配色 + 深度缩进 + 选中描边 + 聚光灯；按下抓取同层拖拽（朱砂落槽线随指针移动）、松手经 @blocks.reorder_stmt（克隆语义、list_path 寻址：顶层/then/else-if 臂/else/循环体）重排，选中跟随移动块；跨层移动不在 v1；⑤ **修复真 bug**：commit_block/delete_block 用就地 replace/delete 直接改共享 body 数组——**撤销快照被污染**（恢复的是改后语句），改为 clone_stmts 后手术并加 program_signature 回归测试；⑥ macOS 入口 native 构建通过 + 进程启动存活。测试：app 54×2、blocks 13×2 全绿；六静态门 + i18n --check 绿；积木画布/重排/快捷键徽标 web 实测截图验证 |
+
+

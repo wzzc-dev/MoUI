@@ -231,6 +231,22 @@
     },
     {
       "group": "examples",
+      "slug": "moui-studio",
+      "title": "MoUI Studio",
+      "path": "docs/moui-studio.md",
+      "summary": "MoUI's bilingual IDE: one statement-level IR behind design/blocks/code views, with an explicit interpret track and a compile track that really runs moon check/build.",
+      "keywords": [
+        "MoUI Studio",
+        "IDE",
+        "visual programming",
+        "dual track",
+        "compile",
+        "MoonBit",
+        "blocks"
+      ]
+    },
+    {
+      "group": "examples",
       "slug": "showcases",
       "title": "Showcases",
       "path": "docs/showcases.md",
@@ -916,6 +932,22 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/examples.md"
+        },
+        {
+          "group": "examples",
+          "slug": "moui-studio",
+          "title": "MoUI Studio",
+          "summary": "MoUI 的中英双语 IDE：一份语句级 IR 支撑设计/积木/代码三视图，显式双轨——解释轨沙箱执行，编译轨真跑 moon check/build。",
+          "keywords": [
+            "MoUI Studio",
+            "IDE",
+            "可视化编程",
+            "双轨",
+            "真编译",
+            "MoonBit",
+            "积木"
+          ],
+          "localizedPath": "docs/zh-Hans/moui-studio.md"
         },
         {
           "group": "examples",

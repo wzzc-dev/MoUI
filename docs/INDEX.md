@@ -69,6 +69,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | Doc | Status | Use when |
 |---|---|---|
 | [examples.md](examples.md) | `canonical` | Example commands and coverage |
+| [moui-studio.md](moui-studio.md) | `canonical` | MoUI Studio IDE positioning, dual-track semantics, market comparison |
 | [showcases.md](showcases.md) | `canonical` | Showcase routes |
 | [app-templates.md](app-templates.md) | `canonical` | Templates |
 | [release-readiness.md](release-readiness.md) | `canonical` | Release gates |

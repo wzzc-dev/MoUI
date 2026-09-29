@@ -219,6 +219,16 @@
           ]
         },
         {
+          "name": "studio compile native tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/moui_studio/services/compile_native",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "studio export tests",
           "argv": [
             "moon",
