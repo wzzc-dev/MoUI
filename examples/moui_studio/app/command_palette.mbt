@@ -116,6 +116,7 @@ pub fn command_palette_dialog(
           width=420.0,
         ),
         @views.command_palette(
+          theme=studio_theme(),
           command_palette_commands(t),
           query=model.command_palette_query,
           on_select=intent => CommandPaletteRun(intent),

@@ -11,7 +11,7 @@ pub fn available_width(Double, @core.Constraints) -> Double
 
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
-pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, ambient? : @style.ContainerVariant?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] flow(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
 

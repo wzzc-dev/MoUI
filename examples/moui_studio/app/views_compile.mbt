@@ -54,6 +54,7 @@ pub fn compile_report_card(
       @views.row(
         [
           @views.badge(
+            theme=studio_theme(),
             text(t, "app.compile.running"),
             tone=@style.BadgeTone::Warning,
             width=140.0,
@@ -71,6 +72,7 @@ pub fn compile_report_card(
     None => @views.text("")
     Some(report) => {
       let badge = @views.badge(
+        theme=studio_theme(),
         if report.ok {
           text(t, "app.compile.ok")
         } else {
@@ -151,6 +153,7 @@ pub fn compile_report_card(
                   width=140.0,
                 ),
                 @views.badge(
+                  theme=studio_theme(),
                   report.output.split("\n").length().to_string(),
                   tone=@style.BadgeTone::Neutral,
                   width=48.0,
@@ -186,6 +189,7 @@ fn diagnostic_row(
   let row = @views.row(
     [
       @views.badge(
+        theme=studio_theme(),
         diagnostic.severity,
         tone=if diagnostic.severity == "error" {
           @style.BadgeTone::Danger

@@ -342,6 +342,27 @@
 
 ## 2026-09-29 双轨真编译批次新增事实
 
+- **主题解析双轨（ADR 0036，白字白底事故的根因）**：框架组件取色有两条
+  路——button/text/text_field 在 **paint 期**读 `ctx.environment.theme`
+  （跟随 `.theme()` 子树）；container/card/divider 等声明期组件经
+  `views_ambient_theme(None)` 回退 `Theme::neutral()`（= minimal **浅色**）
+  烘焙颜色。暗色主题 app 里两组相遇 = 白字白底（实测 1.16:1），且所有
+  moon test 全绿——测试根本不覆盖这个矩阵。2026-09-29 起声明期表面组件
+  已改 ambient（paint 期解析），**但 badge/callout/inline_error/
+  empty_state/loading_state/disclosure 等声明期取色组件仍是钉定语义**：
+  暗色 app 必须在这些调用点显式传 `theme=<brand_theme>()`。判别法：组件
+  源码里出现 `views_ambient_theme(theme)` + `background=计算色` 就是钉定
+  语义，需要调用点钉主题。
+- **宿主窗口不铺主题底色**：macOS 浅色系统给白窗底、web 给 index.html
+  底色。暗色 app 根视图必须显式包一层 `container(background=<底色>,
+  padding=0.0)`，否则面板之间和未铺底区域透白。studio 的底色 = 
+  `studio_window_background()`（与 palette.background 同源）。
+- **1280 宽顶栏预算**：行 2 = 撤销 160 + 重做 216 + 命令面板 150 + 4 模板
+  ~440 + 保存/打开/导出 300 + 间距 ≈ 1380 > 1280，「导出应用」被裁。
+  命令面板入口已移至行 1（轨道组之后）；再往顶栏加东西前先按此预算算。
+
+## 2026-09-29 双轨真编译批次新增事实（原批次记录）
+
 - **产品名零兼容**：唯一格式 `moui.studio.project` v1；旧 `format`/`version`
   结构化拒绝，不读取、不迁移、不留解码路径；**旧产品名**（改名前的三个
   写法）在仓库源码与文档零残留（grep 断言作提交门）。模块路径
@@ -392,3 +413,20 @@
   三种写法应零命中（`docs/plans/done`、`docs/ai-sessions` 的历史快照除外）。
 - **artifacts/ 与凭据**：`artifacts/` 不入库；`examples/moui_studio/.config.json`
   （StepFun key）gitignored，绝不入源码/bundle。
+
+## web 入口实机验证工作流（2026-09-29 实测）
+
+- index.html 的相对路径假设：`../.mooncakes/wzzc-dev/moui_web_renderer/
+  runtime.js` 与 `../../../_build/wasm-gc/.../web_wasm.wasm` 均相对
+  `web_wasm/`。workspace 成员（wzzc-dev/*）**不在** `.mooncakes` 里（在
+  仓库根目录作为 workspace 成员），直接 `python3 -m http.server` 于
+  web_wasm/ 会 404。**staging 布局**：`/tmp/stage/examples/moui_studio/
+  web_wasm/index.html` + `.mooncakes/wzzc-dev/{moui,moui_web_renderer}`
+  符号链接到仓库对应目录 + `_build/.../web_wasm` 符号链接，于 stage 根起
+  服务，URL `/examples/moui_studio/web_wasm/index.html`。runtime.js 内部
+  引 `../moui/backend/web/browser_runtime.js` 与
+  `./canvas2d_runtime.js`，符号链接目录天然解析。
+- 命令面板/对话框类 presentation 打开瞬间有渐显动画：截图测对比度前先等
+  ~1s 稳定，否则拍到半透明中间帧误判。
+- ZCode IAB 截图实测：1280×832 视口与桌面截图同尺度，逐点取样对比度
+  可复用 artifacts/studio-analysis/contrast.py 的模态背景+字形极值法。

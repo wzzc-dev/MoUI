@@ -29,6 +29,14 @@ pub fn studio_stage_background() -> @core.Color {
 }
 
 ///|
+/// 窗口根底色：与 studio_theme 的 palette.background 同源。宿主窗口不铺
+/// 主题底色（macOS 浅色系统给白底），根容器必须显式铺满，否则暗色文字
+/// 落在透出的白底上（2026-09-29 白字白底事故的窗口侧修复）。
+pub fn studio_window_background() -> @core.Color {
+  @core.Color::rgba(r=0.086, g=0.094, b=0.110)
+}
+
+///|
 /// 画布网格线：比舞台底略亮一档的发丝线（1px 网格，不抢控件视觉）。
 pub fn studio_grid_line() -> @core.Color {
   @core.Color::rgba(r=0.208, g=0.227, b=0.259)

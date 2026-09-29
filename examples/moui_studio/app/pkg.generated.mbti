@@ -136,6 +136,8 @@ pub fn studio_stage_outline() -> @core.Color
 
 pub fn studio_theme() -> @core.Theme
 
+pub fn studio_window_background() -> @core.Color
+
 pub fn text(@moui_i18n.Translator, String) -> String
 
 pub fn text_with(@moui_i18n.Translator, String, Array[(String, String)]) -> String

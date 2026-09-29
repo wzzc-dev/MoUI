@@ -28,25 +28,41 @@ pub fn[Msg] container(
     Some(value) => @core.Insets::all(value)
     None => style.padding
   }
-  let (background, corner_radius) = match background {
-    Some(color) => (Some(@core.Brush::solid(color)), corner_radius)
-    None => (Some(style.brush), style.radius)
-  }
-  let resolved_border = match border {
-    Some(value) => Some(value)
-    None => style.border
-  }
   let framed_size = match (width, height) {
     (Some(w), Some(h)) => Some(@core.Size::new(width=w, height=h))
     _ => None
   }
+  // 声明期读不到环境主题:未钉 background/theme 的容器把表面 chrome 推迟到
+  // paint 期按 `ctx.environment.theme` 解析(与 button/text 同约定),
+  // 否则 `.theme()` 子树下的表面永远停留在中性主题的配色上。
+  let ambient : @style.ContainerVariant? = if background is None &&
+    theme is None {
+    Some(variant)
+  } else {
+    None
+  }
+  let (boxed_background, boxed_border, boxed_radius, boxed_shadow) = if ambient
+    is Some(_) {
+    (None, border, corner_radius, None)
+  } else {
+    let (bg, radius) = match background {
+      Some(color) => (Some(@core.Brush::solid(color)), corner_radius)
+      None => (Some(style.brush), style.radius)
+    }
+    let resolved_border = match border {
+      Some(value) => Some(value)
+      None => style.border
+    }
+    (bg, resolved_border, radius, style.shadow)
+  }
   let container = @layout.container_box(
     child=Some(@layout.padding_layout(child~, insets=child_padding)),
     size=framed_size,
-    background~,
-    border=resolved_border,
-    corner_radius~,
-    shadow=style.shadow,
+    background=boxed_background,
+    border=boxed_border,
+    corner_radius=boxed_radius,
+    shadow=boxed_shadow,
+    ambient~,
   )
   match (width, height) {
     (None, None) => container
@@ -62,15 +78,9 @@ pub fn[Msg] card(
   padding? : Double = 24.0,
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
-  container(
-    child,
-    width?,
-    height?,
-    variant=Raised,
-    theme=resolved_theme,
-    padding~,
-  )
+  // `theme` 保持 Option 原样转发:不显式指定时表面 chrome 在 paint 期取
+  // `ctx.environment.theme`,跟随宿主主题,不钉死调用时的中性配色。
+  container(child, width?, height?, variant=Raised, theme?, padding~)
 }
 
 ///|
@@ -81,7 +91,6 @@ pub fn[Msg] center(
   background? : @core.Color,
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
   let centered = @core.View::from_node(Center::{ width, height, }, children=_node => {
     [child]
   })
@@ -92,7 +101,7 @@ pub fn[Msg] center(
         width?,
         height?,
         background=color,
-        theme=resolved_theme,
+        theme?,
         padding=0.0,
       )
     None => centered

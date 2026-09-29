@@ -5,14 +5,16 @@ pub fn[Msg] toolbar(
   width? : Double = 520.0,
   height? : Double = 48.0,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  // 间距取默认主题的档位(方案无关);`theme?` 原样转发给容器,
+  // 未显式钉主题时表面在 paint 期跟随环境主题。
+  let spacing = @style.default_theme().spacing_scale
   @container.container(
-    @layout.row(children, spacing=resolved_theme.spacing_scale.sm, align=Center),
+    @layout.row(children, spacing=spacing.sm, align=Center),
     width~,
     height~,
     variant=Base,
-    theme=resolved_theme,
-    padding=resolved_theme.spacing_scale.xs,
+    theme?,
+    padding=spacing.xs,
   ).semantics_role(Group)
 }
 
@@ -57,7 +59,6 @@ pub fn[Msg] command_bar(
   width? : Double = 520.0,
   height? : Double = 48.0,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
   let commands : Array[@core.View[Msg]] = []
   for item in items {
     commands.push(
@@ -65,13 +66,13 @@ pub fn[Msg] command_bar(
         item.label,
         on_click=item.message,
         variant=Ghost,
-        theme=resolved_theme,
+        theme?,
         width=command_item_width(item.label),
         height=36.0,
       ).disabled(disabled=!item.enabled),
     )
   }
-  toolbar(commands, theme=resolved_theme, width~, height~)
+  toolbar(commands, theme?, width~, height~)
 }
 
 ///|

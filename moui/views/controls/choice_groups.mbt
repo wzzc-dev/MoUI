@@ -11,7 +11,7 @@ pub fn[Msg] radio_group(
   theme? : @core.Theme,
   spacing? : Double = @style.default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
+  // `theme` 保持 Option 原样转发:radio 在 paint 期取环境主题。
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     rows.push(
@@ -19,7 +19,7 @@ pub fn[Msg] radio_group(
         item.label,
         item.id == selected,
         on_change=_value => on_select(item.id),
-        theme=resolved_theme,
+        theme?,
       ).semantics_selected(selected=item.id == selected),
     )
   }
@@ -34,7 +34,6 @@ pub fn[Msg] checkbox_group(
   theme? : @core.Theme,
   spacing? : Double = @style.default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     let checked = string_array_contains(selected, item.id)
@@ -43,7 +42,7 @@ pub fn[Msg] checkbox_group(
         item.label,
         checked~,
         on_change=value => on_change(item.id, value),
-        theme=resolved_theme,
+        theme?,
       ).semantics_checked(checked=if checked { Checked } else { Unchecked }),
     )
   }

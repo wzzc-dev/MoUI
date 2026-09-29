@@ -13,7 +13,7 @@
 priv struct Divider {
   axis : @core.Axis
   thickness : Double
-  color : @core.Color
+  color : @core.Color?
   inset : Double
 }
 
@@ -40,7 +40,13 @@ impl @core.ViewNode for Divider with fn declaration(self) {
     paint=@common.view_exact_channel(
       @common.view_record_key("Divider.paint", [
         ("axis", axis),
-        ("color", @common.view_color_key(self.color)),
+        (
+          "color",
+          match self.color {
+            Some(value) => @common.view_color_key(value)
+            None => @core.DeclarationKey::string("ambient")
+          },
+        ),
         ("inset", @core.DeclarationKey::double(self.inset)),
       ]),
     ),
@@ -75,6 +81,11 @@ impl @core.ViewNode for Divider with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Divider with fn paint(self, ctx) {
+  // 未显式钉色的分隔线在 paint 期取环境主题的 outline_variant,
+  // 与 button/text 同约定:`.theme()` 子树即时生效。
+  let line_color = self.color.unwrap_or(
+    ctx.environment.theme.palette.outline_variant,
+  )
   let frame = ctx.frame
   let rect = if self.inset > 0.0 {
     match self.axis {
@@ -102,7 +113,7 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
   } else {
     frame
   }
-  @core.ViewPaintPlan::commands([FillRect(rect, self.color)])
+  @core.ViewPaintPlan::commands([FillRect(rect, line_color)])
 }
 
 ///|
@@ -118,10 +129,12 @@ pub fn[Msg] divider(
   color? : @core.Color,
   inset? : Double = 0.0,
 ) -> @core.View[Msg] {
-  let resolved_theme = @common.views_ambient_theme(theme)
-  let line_color = match color {
-    Some(value) => value
-    None => resolved_theme.palette.outline_variant
+  // 显式 color/theme 钉死取色;两者都缺省时保持 None,绘制期从
+  // 环境主题解析 outline_variant(`.theme()` 子树即时生效)。
+  let line_color : @core.Color? = match (color, theme) {
+    (Some(value), _) => Some(value)
+    (None, Some(t)) => Some(t.palette.outline_variant)
+    (None, None) => None
   }
   @core.View::from_node(Divider::{ axis, thickness, color: line_color, inset, })
 }

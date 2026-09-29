@@ -94,6 +94,29 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               button_width=76.0,
               height=36.0,
             ),
+            // 命令面板入口：技术风 IDE 的键盘优先通道（Ctrl/Cmd+K）。
+            // 放首行轨道组之后：第二行撤销/重做徽标 + 模板 + 文件操作在
+            // 1280 宽已贴满，再放 150px 入口会把「导出应用」挤出窗口。
+            // 链式追加 Cmd 变体：shortcut modifier 按修饰键精确匹配。
+            @views.button(
+              text(t, "app.command.open"),
+              on_click=CommandPaletteOpen,
+              variant=Ghost,
+              width=140.0,
+              height=40.0,
+            )
+            .keyboard_shortcut(
+              @core.KeyboardShortcut::new(
+                key="k",
+                modifiers=@core.KeyModifiers::new(control=true),
+              ),
+            )
+            .keyboard_shortcut(
+              @core.KeyboardShortcut::new(
+                key="k",
+                modifiers=@core.KeyModifiers::new(meta=true),
+              ),
+            ),
             @views.button(
               if running {
                 text(t, "app.run.stop")
@@ -157,29 +180,6 @@ fn top_bar(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
               @core.KeyboardShortcut::new(
                 key="z",
                 modifiers=@core.KeyModifiers::new(meta=true, shift=true),
-              ),
-            ),
-            @views.spacer(min_length=12.0, weight=0.0),
-            // 命令面板入口：技术风 IDE 的键盘优先通道（Ctrl/Cmd+K）。
-            // 链式追加 Cmd 变体：shortcut modifier 精确匹配修饰键。
-            // 放在第二行工具栏：首行已贴近 1280 宽预算。
-            @views.button(
-              text(t, "app.command.open"),
-              on_click=CommandPaletteOpen,
-              variant=Ghost,
-              width=150.0,
-              height=40.0,
-            )
-            .keyboard_shortcut(
-              @core.KeyboardShortcut::new(
-                key="k",
-                modifiers=@core.KeyModifiers::new(control=true),
-              ),
-            )
-            .keyboard_shortcut(
-              @core.KeyboardShortcut::new(
-                key="k",
-                modifiers=@core.KeyModifiers::new(meta=true),
               ),
             ),
             @views.spacer(min_length=12.0, weight=0.0),
@@ -264,6 +264,7 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
             align=TextStart,
           ),
           @views.badge(
+            theme=studio_theme(),
             model.program.controls.length().to_string(),
             tone=@style.BadgeTone::Neutral,
             width=28.0,
@@ -312,6 +313,7 @@ fn left_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           align=TextStart,
         ),
         @views.badge(
+          theme=studio_theme(),
           model.program.handlers.length().to_string(),
           tone=@style.BadgeTone::Neutral,
           width=28.0,
@@ -598,6 +600,7 @@ fn code_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.text("")
   } else {
     @views.inline_error(
+      theme=studio_theme(),
       "\{text(t, "app.code.error")}：\{model.code_error}",
       width=440.0,
     )
@@ -910,6 +913,7 @@ fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           match runtime.gate {
             Some(_) =>
               @views.badge(
+                theme=studio_theme(),
                 text(t, "app.run.gate_pending"),
                 tone=@style.BadgeTone::Warning,
                 width=64.0,
@@ -963,6 +967,7 @@ fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           gate_card.push(
             @views.column([
               @views.callout(
+                theme=studio_theme(),
                 text(t, "app.run.gate.title"),
                 prompt,
                 tone=@style.Warning,
@@ -1030,7 +1035,11 @@ fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       match runtime.error {
         Some(error) =>
           error_card.push(
-            @views.inline_error(compiled_error_message(t, error), width=440.0),
+            @views.inline_error(
+              compiled_error_message(t, error),
+              width=440.0,
+              theme=studio_theme(),
+            ),
           )
         None => ()
       }
@@ -1131,6 +1140,7 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           match run.state.gate {
             Some(_) =>
               @views.badge(
+                theme=studio_theme(),
                 text(t, "app.run.gate_pending"),
                 tone=@style.BadgeTone::Warning,
                 width=64.0,
@@ -1186,6 +1196,7 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           gate_card.push(
             @views.column([
               @views.callout(
+                theme=studio_theme(),
                 text(t, "app.run.gate.title"),
                 prompt,
                 tone=@style.Warning,
@@ -1254,7 +1265,11 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       match run.state.error {
         Some(error) =>
           error_card.push(
-            @views.inline_error(error_message(t, error), width=440.0),
+            @views.inline_error(
+              error_message(t, error),
+              width=440.0,
+              theme=studio_theme(),
+            ),
           )
         None => ()
       }
@@ -1468,6 +1483,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           align=TextStart,
         ),
         @views.badge(
+          theme=studio_theme(),
           if model.provider_mode is Fake {
             text(t, "app.ai.fake")
           } else {
@@ -1501,13 +1517,19 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   ]
   let prompt_error_card : Array[@moui.View[Msg]] = []
   if model.prompt_error != "" {
-    prompt_error_card.push(@views.inline_error(model.prompt_error, width=250.0))
+    prompt_error_card.push(
+      @views.inline_error(model.prompt_error, width=250.0, theme=studio_theme()),
+    )
   }
   // 真实 provider 请求进行中：加载态占位
   let busy_card : Array[@moui.View[Msg]] = []
   if model.ai_busy {
     busy_card.push(
-      @views.loading_state(title=text(t, "app.ai.busy"), width=250.0),
+      @views.loading_state(
+        title=text(t, "app.ai.busy"),
+        width=250.0,
+        theme=studio_theme(),
+      ),
     )
   }
   // 待采纳提案
@@ -1517,6 +1539,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   if model.pending is None && !model.ai_busy && model.explanation == "" {
     proposal_card.push(
       @views.empty_state(
+        theme=studio_theme(),
         text(t, "app.ai.title"),
         text(t, "app.ai.prompt"),
         width=250.0,
@@ -1546,7 +1569,13 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         }
         entries.push(
           @views.row([
-            @views.badge(text(t, op), tone~, width=52.0, height=20.0),
+            @views.badge(
+              text(t, op),
+              tone~,
+              width=52.0,
+              height=20.0,
+              theme=studio_theme(),
+            ),
             @views.text(
               "\{entry.path}：\{entry.old_text} → \{entry.new_text}",
               width=180.0,
@@ -1587,6 +1616,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   // 密钥用 password 掩码：语义树/读屏只能看到星号，点「显示」才暴露
   // （掩码态下的编辑在 update 层忽略，防星号写穿真值）。
   let provider_section = @views.disclosure(
+    theme=studio_theme(),
     text(t, "app.ai.settings"),
     content=@views.column(
       [
@@ -1649,6 +1679,7 @@ fn ai_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       panel.push(
         @views.row([
           @views.badge(
+            theme=studio_theme(),
             text(
               t,
               if record.accepted {
@@ -1712,16 +1743,20 @@ pub fn view(model : Model) -> @moui.View[Msg] {
       align=Start,
     ).frame(height=600.0)
   }
-  let base = @views.column([
-    top_bar(model, t),
-    @views.divider(),
-    // 主行必须钳制高度：行内竖直 divider 按「可用高度」测量（和横 divider
-    // 按可用宽度测量是同一约定），不钳制时把行撑到接近窗口高，画布再被
-    // 容器垂直居中，顶部就空出一条大空白、底部 notice 被推出窗口。
-    // 600 与左右面板卡同高；顶栏合并成两行后主区从 560 长到 600。
-    main_row,
-    @views.text(model.notice),
-  ])
+  let base = @views.container(
+    @views.column([
+      top_bar(model, t),
+      @views.divider(),
+      // 主行必须钳制高度：行内竖直 divider 按「可用高度」测量（和横 divider
+      // 按可用宽度测量是同一约定），不钳制时把行撑到接近窗口高，画布再被
+      // 容器垂直居中，顶部就空出一条大空白、底部 notice 被推出窗口。
+      // 600 与左右面板卡同高；顶栏合并成两行后主区从 560 长到 600。
+      main_row,
+      @views.text(model.notice),
+    ]),
+    background=studio_window_background(),
+    padding=0.0,
+  )
   // 技术风暗色主题：石墨工程面板 + 朱砂唯一强调色，不随系统深浅漂移。
   command_palette_host(base, model, t).theme(studio_theme())
 }

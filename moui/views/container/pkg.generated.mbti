@@ -13,7 +13,7 @@ pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, backgroun
 
 pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, border? : @core.BorderStyle?, variant? : @style.ContainerVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
 
-pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, ambient? : @style.ContainerVariant?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] empty() -> @core.View[Msg]
 

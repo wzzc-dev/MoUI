@@ -53,5 +53,6 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0033 | [Overlay placement pass, portal, and layer stack](0033-overlay-placement-and-portal.md) | 2026-09-03 | Accepted |
 | 0034 | [ViewNode declaration-key coverage gate](0034-viewnode-declaration-coverage-gate.md) | 2026-09-04 | Accepted |
 | 0035 | [Tight-fit child frames and place-time re-measure](0035-tight-fit-child-remeasure.md) | 2026-09-04 | Accepted |
+| 0036 | [Ambient theme resolution at paint time](0036-ambient-theme-resolution.md) | 2026-09-29 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

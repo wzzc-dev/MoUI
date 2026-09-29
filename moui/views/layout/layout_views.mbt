@@ -162,6 +162,7 @@ pub fn[Msg] container_box(
   border? : @core.BorderStyle? = None,
   corner_radius? : Double = 0.0,
   shadow? : @core.ShadowStyle? = None,
+  ambient? : @style.ContainerVariant? = None,
   kind? : String = "Container",
   key? : String? = None,
 ) -> @core.View[Msg] {
@@ -172,6 +173,7 @@ pub fn[Msg] container_box(
       border,
       corner_radius,
       shadow,
+      ambient,
       kind,
       key,
     },
@@ -191,6 +193,7 @@ priv struct ContainerBox {
   border : @core.BorderStyle?
   corner_radius : Double
   shadow : @core.ShadowStyle?
+  ambient : @style.ContainerVariant?
   kind : String
   key : String?
 }
@@ -210,6 +213,17 @@ impl @core.ViewNode for ContainerBox with fn declaration(self) {
         ("border", @common.view_border_option_key(self.border)),
         ("corner_radius", @core.DeclarationKey::double(self.corner_radius)),
         ("shadow", @common.view_shadow_option_key(self.shadow)),
+        (
+          "ambient",
+          @core.DeclarationKey::string(
+            match self.ambient {
+              Some(Base) => "base"
+              Some(Raised) => "raised"
+              Some(Overlay) => "overlay"
+              None => "none"
+            },
+          ),
+        ),
       ]),
     ),
   )
@@ -241,12 +255,41 @@ impl @core.ViewNode for ContainerBox with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for ContainerBox with fn paint(self, ctx) {
+  // Ambient containers defer surface chrome to paint time: the brush, border,
+  // radius and shadow resolve against `ctx.environment.theme`, matching the
+  // button/text contract so a `.theme()` subtree is honored without the
+  // caller rebuilding the view tree. Explicitly pinned values always win.
+  let (background, border, corner_radius, shadow) = match self.ambient {
+    Some(variant) => {
+      let style = variant.style(ctx.environment.theme)
+      (
+        match self.background {
+          Some(value) => Some(value)
+          None => Some(style.brush)
+        },
+        match self.border {
+          Some(value) => Some(value)
+          None => style.border
+        },
+        if self.corner_radius > 0.0 {
+          self.corner_radius
+        } else {
+          style.radius
+        },
+        match self.shadow {
+          Some(value) => Some(value)
+          None => style.shadow
+        },
+      )
+    }
+    None => (self.background, self.border, self.corner_radius, self.shadow)
+  }
   container_paint(
     ctx.frame,
-    background=self.background,
-    border=self.border,
-    corner_radius=self.corner_radius,
-    shadow=self.shadow,
+    background~,
+    border~,
+    corner_radius~,
+    shadow~,
     scheme=ctx.environment.color_scheme(),
   )
 }

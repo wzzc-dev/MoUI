@@ -278,3 +278,106 @@ test "center accepts an explicit theme override without changing layout" {
     @core.Rect::new(x=100.0, y=75.0, width=100.0, height=50.0),
   )
 }
+
+///|
+/// Paint context with an explicit environment, for ambient-resolution tests.
+fn themed_paint_context(
+  frame~ : @core.Rect,
+  theme~ : @core.Theme,
+) -> @core.ViewPaintContext {
+  {
+    frame,
+    child_frames: [],
+    focused: false,
+    state: center_test_state(),
+    text_control: center_test_text_control(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral().with_theme(theme),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  }
+}
+
+///|
+test "ambient container paints the environment theme's surface" {
+  // Neither background nor theme pinned: surface chrome must resolve at
+  // paint time from the environment theme (the button/text contract), so a
+  // `.theme()` subtree drives the resolved colors.
+  let child = center_test_rect(width=10.0, height=10.0)
+  let view : @core.View[Unit] = @container.container(
+    child,
+    variant=@style.ContainerVariant::Raised,
+  )
+  let dark = @style.dark_theme()
+  let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=40.0)
+  let plan = view.paint(themed_paint_context(frame~, theme=dark))
+  assert_eq(plan.commands.length(), 2)
+  assert_true(
+    plan.commands[0] ==
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(rect=frame, radius=dark.radius_scale.lg),
+      dark.surface_brush(@core.SurfaceLevel::Raised),
+    ),
+  )
+  // The dark raised border is the faint white edge from the theme rule.
+  assert_true(
+    plan.commands[1] is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 1.0),
+  )
+}
+
+///|
+test "ambient container tracks a light environment without rebuild" {
+  let child = center_test_rect(width=10.0, height=10.0)
+  let view : @core.View[Unit] = @container.container(
+    child,
+    variant=@style.ContainerVariant::Raised,
+  )
+  let light = @style.light_theme()
+  let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=40.0)
+  let plan = view.paint(themed_paint_context(frame~, theme=light))
+  assert_true(
+    plan.commands[0] ==
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(rect=frame, radius=light.radius_scale.lg),
+      light.surface_brush(@core.SurfaceLevel::Raised),
+    ),
+  )
+}
+
+///|
+test "pinned container background still wins over the environment" {
+  let child = center_test_rect(width=10.0, height=10.0)
+  let pinned : @core.View[Unit] = @container.container(
+    child,
+    background=@core.Color::blue(),
+  )
+  let dark = @style.dark_theme()
+  let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=40.0)
+  let plan = pinned.paint(themed_paint_context(frame~, theme=dark))
+  assert_eq(plan.commands.length(), 1)
+  assert_true(
+    plan.commands[0] ==
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(rect=frame, radius=0.0),
+      @core.Brush::Solid(@core.Color::blue()),
+    ),
+  )
+}
+
+///|
+test "ambient container without a theme modifier keeps the neutral surface" {
+  // Default environments carry the neutral light theme, so unthemed hosts
+  // render exactly as before the ambient contract.
+  let child = center_test_rect(width=10.0, height=10.0)
+  let view : @core.View[Unit] = @container.container(child)
+  let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=40.0)
+  let neutral = @core.Theme::neutral()
+  let plan = view.paint(themed_paint_context(frame~, theme=neutral))
+  assert_true(
+    plan.commands[0] ==
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(rect=frame, radius=neutral.radius_scale.md),
+      neutral.surface_brush(Base),
+    ),
+  )
+}

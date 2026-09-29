@@ -1,10 +1,10 @@
 name = "wzzc-dev/moui_skia"
 
-version = "0.1.10"
+version = "0.2.0"
 
 import {
   "Milky2018/windowing@0.1.0",
-  "wzzc-dev/window@0.5.4-0.1.7",
+  "wzzc-dev/window@0.5.4-0.2.0",
 }
 
 readme = "README.mbt.md"
