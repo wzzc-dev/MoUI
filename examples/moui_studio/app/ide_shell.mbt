@@ -639,10 +639,13 @@ fn quick_insert(
   // 所以 height=26 会渲染成 36，把底部的「快速插入」两行挤出面板下缘
   // （与右栏「快速操作」同一个坑，那里也是手搓的）。
   let cell_width = (width - 22.0) / 2.0
+  // 「+ 按钮」而不是「按钮」：这排按钮的语义是**插入动作**，不是分类标签
+  // （设计稿 #qaRow 的 .qabtn 同样带前缀）。前缀走 i18n，不写死 '+ '。
+  let label = text_with(t, "app.insert.chip", [("name", text(t, key))])
   @views.container(
     @views.center(
       @views.text(
-        text(t, key),
+        label,
         theme=studio_theme(),
         width=(cell_width - 10.0).max(20.0),
         height=16.0,

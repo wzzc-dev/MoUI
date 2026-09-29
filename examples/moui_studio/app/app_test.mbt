@@ -1415,3 +1415,80 @@ test "blocks canvas drag reorders siblings and is undoable" {
   let undone = apply(released, Undo)
   assert_eq(@app.block_chain_of(undone)[0].text, first_text)
 }
+
+///|
+/// 积木标签按块宽截断：宽够就原样，宽不够就「…」收尾且**不超宽**。
+test "fit_label truncates block labels to the block width" {
+  // 够宽：原样返回
+  assert_eq(@app.fit_label("命令", 200.0), "命令")
+  // 不够宽：以省略号收尾
+  let long = "命令  set_text(显示, \"你好，MoUI Studio！\")"
+  let fitted = @app.fit_label(long, 200.0)
+  assert_true(fitted.contains("…"))
+  assert_true(fitted.length() < long.length())
+  // 截断结果必须真的放得下（按 12pt 渲染口径）
+  let rendered = @app.text_estimate_width(fitted) * (12.0 / 13.0)
+  assert_true(rendered <= 200.0)
+  // 极窄也不能崩：至少给一个省略号
+  assert_eq(@app.fit_label(long, 4.0), "…")
+}
+
+///|
+/// 悬停联动：`HoverIrPath` 只改瞬态 `hover_path`，**不动**驻留的
+/// `ir_highlight`——两者共用一个高亮视觉，但语义不同（悬停离开即撤销，
+/// 点击驻留到再点一次）。混在一起会让「悬停走过的每一行」都被记住。
+test "hover path is transient and does not disturb the pinned highlight" {
+  let model = @app.initial_model()
+  let (pinned, _) = @app.update_pure(model, HighlightIrPath([0, 1]))
+  assert_eq(pinned.ir_highlight, [0, 1])
+  // 悬停一条别的路径：驻留高亮必须不变
+  let (hovered, _) = @app.update_pure(pinned, HoverIrPath(Some([2, 3])))
+  assert_eq(hovered.ir_highlight, [0, 1])
+  assert_eq(hovered.hover_path, Some([2, 3]))
+  // 离开：只清悬停
+  let (left, _) = @app.update_pure(hovered, HoverIrPath(None))
+  assert_eq(left.ir_highlight, [0, 1])
+  assert_eq(left.hover_path, None)
+}
+
+///|
+/// 沉浸式窗口必须把顶部窗控带**声明成可拖拽区域**，非沉浸式必须清空。
+///
+/// 回归意义：无边框窗口没有系统标题栏，不声明这块就**完全没法移动窗口**
+/// ——「看起来正常、实际用不了」，任何绘制断言都抓不到。
+///
+/// 注意这条测试**不**通过 `program(...)` 触发：`Program` 是不透明类型，
+/// 它的 view 闭包从测试里拿不到，写了也是装饰（本会话踩过这个坑）。
+/// 所以这里直接对**声明契约**本身断言：app 用的是
+/// `WindowDragRegionSource`，宿主按 `revision` 去重——把这个契约钉住，
+/// 再靠 `moon check` 保证 app 的调用点存在。
+test "window drag region declaration is idempotent and clearable" {
+  let source = @services.WindowDragRegionSource::new()
+  // 初始：无声明（非沉浸式路径会显式写 None，结果相同）
+  assert_eq(source.region(), None)
+  let band = @core.Rect::new(
+    x=0.0,
+    y=0.0,
+    width=1280.0,
+    height=WINDOW_CHROME_HEIGHT,
+  )
+  source.set_region(Some(band))
+  // 声明的必须是**顶部整条带**：原点贴左上角，高 = 窗控带高
+  let declared = match source.region() {
+    Some(rect) => rect
+    None => fail("declaring a drag region did not stick")
+  }
+  assert_eq(declared.origin.x, 0.0)
+  assert_eq(declared.origin.y, 0.0)
+  assert_eq(declared.size.height, WINDOW_CHROME_HEIGHT)
+  // 逐帧重复声明不得推进 revision —— 宿主据此跳过原生调用，
+  // 这是「声明是状态不是命令」的全部意义所在。
+  let revision = source.revision()
+  source.set_region(Some(band))
+  assert_eq(source.revision(), revision)
+  // 清空必须生效**且**推进 revision，否则宿主不会下发「取消拖拽区」，
+  // 非沉浸式切回来时会留下一块看不见但能拖窗的死区。
+  source.set_region(None)
+  assert_eq(source.region(), None)
+  assert_true(source.revision() > revision)
+}

@@ -113,6 +113,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn abo
     None => event_loop.set_control_flow(Wait)
   }
   self.drain_window_requests(event_loop)
+  self.sync_window_drag_region()
   self.sync_accessibility_environment()
   self.sync_accessibility_windows()
 }

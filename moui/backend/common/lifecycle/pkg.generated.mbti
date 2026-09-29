@@ -273,11 +273,12 @@ pub(all) struct WindowSurfaceActions {
   set_visible : (Bool) -> Unit
   request_redraw : () -> Unit
   request_ime_update : (@input.TextInputSessionAction) -> Unit
+  set_drag_region : (@wzzc-dev/moui/core.Rect?) -> Unit
   drop : () -> Unit
   native_view_handle : () -> UInt64?
   dispose_platform_views : () -> Unit
 }
-pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, sync_observed_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, set_minimized~ : (Bool) -> Unit, set_visible~ : (Bool) -> Unit, request_redraw~ : () -> Unit, request_ime_update~ : (@input.TextInputSessionAction) -> Unit, drop~ : () -> Unit, native_view_handle~ : () -> UInt64?, dispose_platform_views~ : () -> Unit) -> Self
+pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, sync_observed_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, set_minimized~ : (Bool) -> Unit, set_visible~ : (Bool) -> Unit, request_redraw~ : () -> Unit, request_ime_update~ : (@input.TextInputSessionAction) -> Unit, set_drag_region? : (@wzzc-dev/moui/core.Rect?) -> Unit, drop~ : () -> Unit, native_view_handle~ : () -> UInt64?, dispose_platform_views~ : () -> Unit) -> Self
 
 // Type aliases
 

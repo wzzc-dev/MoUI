@@ -420,6 +420,27 @@ pub fn[Msg] View::on_tap_with_frame(
 }
 
 ///|
+/// Hover observer: calls `handler` with `true` when the pointer enters this
+/// view and `false` when it leaves.
+///
+/// The handler runs only on transitions. The runtime delivers a `Move` for
+/// every pointer sample inside the view, so a per-`Move` callback would flood
+/// the app's update loop; continuous motion inside the view emits nothing.
+///
+/// Deliberately transparent, matching `on_secondary_tap`: hover feedback is an
+/// observer, not a control. It adds no semantics role, no semantics action, and
+/// no focus stop, and it never captures the pointer or alters press state, so
+/// wrapping a region does not turn a container into a Button or break clicking
+/// and dragging inside it. Pair it with an app-owned `Model` flag to restyle
+/// the region.
+pub fn[Msg] View::on_hover(
+  self : View[Msg],
+  handler : (Bool) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnHoverModifier::{ handler, }.to_any_modifier())
+}
+
+///|
 pub fn[Msg] View::on_file_drop(
   self : View[Msg],
   handler : (Array[String], Point) -> Msg,

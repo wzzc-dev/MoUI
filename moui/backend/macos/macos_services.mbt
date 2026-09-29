@@ -276,11 +276,19 @@ fn dispatch_macos_settings(
 }
 
 ///|
-pub fn app_environment() -> @services.AppEnvironment {
+/// Build the app-facing environment for the macOS host.
+///
+/// Pass the same `window_drag` source to `MacosHostAppOptions::new` so the
+/// host can apply the drag band the app declares for self-drawn window chrome.
+/// Declarations made through an unwired source are simply never applied.
+pub fn app_environment(
+  window_drag? : @services.WindowDragRegionSource? = None,
+) -> @services.AppEnvironment {
   @window_services.app_environment(
     bridge=macos_service_bridge(),
     timer=Some(macos_timer_source()),
     clock=Some(macos_perf_now_ms),
+    window_drag~,
   )
 }
 

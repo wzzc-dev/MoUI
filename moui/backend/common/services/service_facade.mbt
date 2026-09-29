@@ -2,6 +2,10 @@
 priv struct HostServicesAdapter {
   bridge : @backend_host.HostServiceBridge
   async_queue : ServiceAsyncQueue?
+  /// App-facing drag-region declarations. Optional so hosts that predate the
+  /// feature keep an unwired default instead of forcing every call site to
+  /// construct a source.
+  window_drag : @app_services.WindowDragRegionSource?
 }
 
 ///|
@@ -50,8 +54,9 @@ pub fn WindowServiceState::is_open(self : WindowServiceState) -> Bool {
 fn HostServicesAdapter::new(
   bridge~ : @backend_host.HostServiceBridge,
   async_queue? : ServiceAsyncQueue? = None,
+  window_drag? : @app_services.WindowDragRegionSource? = None,
 ) -> HostServicesAdapter {
-  { bridge, async_queue, }
+  { bridge, async_queue, window_drag, }
 }
 
 ///|

@@ -10,6 +10,7 @@ pub(all) struct WindowSurfaceActions {
   set_visible : (Bool) -> Unit
   request_redraw : () -> Unit
   request_ime_update : (@window_input.TextInputSessionAction) -> Unit
+  set_drag_region : (@core.Rect?) -> Unit
   drop : () -> Unit
   native_view_handle : () -> UInt64?
   dispose_platform_views : () -> Unit
@@ -24,6 +25,7 @@ pub fn WindowSurfaceActions::new(
   set_visible~ : (Bool) -> Unit,
   request_redraw~ : () -> Unit,
   request_ime_update~ : (@window_input.TextInputSessionAction) -> Unit,
+  set_drag_region? : (@core.Rect?) -> Unit = _ => (),
   drop~ : () -> Unit,
   native_view_handle~ : () -> UInt64?,
   dispose_platform_views~ : () -> Unit,
@@ -36,6 +38,7 @@ pub fn WindowSurfaceActions::new(
     set_visible,
     request_redraw,
     request_ime_update,
+    set_drag_region,
     drop,
     native_view_handle,
     dispose_platform_views,

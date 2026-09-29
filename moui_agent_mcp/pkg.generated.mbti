@@ -21,4 +21,3 @@ pub fn rpc_error_no_id(Int, String) -> Json
 // Type aliases
 
 // Traits
-

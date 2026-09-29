@@ -33,6 +33,10 @@ pub struct MacosHostAppOptions {
   /// Optional monotonic clock used to profile runtime frame phases. Native
   /// apps leave this disabled; benchmark/devtools hosts may opt in.
   priv frame_clock : (() -> Double)?
+  /// Optional app-declared drag band for self-drawn window chrome. Share the
+  /// same source handed to `app_environment`; leave unset when the app draws a
+  /// conventional title bar.
+  priv window_drag : @services.WindowDragRegionSource?
 }
 
 ///|
@@ -82,6 +86,14 @@ struct MacosNativeHostBackend {
   platform_attributes : @window_core.PlatformWindowAttributes
   on_ready : (() -> Unit)?
   min_window_size : @dpi.LogicalSize?
+  /// App-declared window drag band plus the revision already pushed to AppKit.
+  /// `None` keeps hosts without a drag region free of native calls.
+  window_drag : @services.WindowDragRegionSource?
+  mut window_drag_applied : Int?
+  /// Surface the revision was pushed to. A drag band is per-surface state, so
+  /// a different target window must receive its own push even when the
+  /// declared revision has not changed.
+  mut window_drag_window : @host.WindowId?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -135,6 +147,7 @@ pub fn MacosHostAppOptions::new(
   on_ready? : (() -> Unit)? = None,
   min_window_size? : @dpi.LogicalSize? = None,
   frame_clock? : (() -> Double)? = None,
+  window_drag? : @services.WindowDragRegionSource? = None,
 ) -> MacosHostAppOptions {
   {
     scene_resolver,
@@ -146,6 +159,7 @@ pub fn MacosHostAppOptions::new(
     on_ready,
     min_window_size,
     frame_clock,
+    window_drag,
   }
 }
 

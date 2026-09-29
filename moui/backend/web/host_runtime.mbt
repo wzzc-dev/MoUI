@@ -394,6 +394,16 @@ fn WebApp::web_surface_actions(
         NoImeChange => ()
       }
     },
+    set_drag_region=fn(_region) {
+      // The browser has no window-drag region primitive: `Window::drag_window`
+      // unconditionally raises `RequestError::not_supported` on this platform.
+      // Declaring a region is therefore a silent no-op rather than a surfaced
+      // error, matching the swallow-and-continue handling of
+      // `request_ime_update` above. It must not call `drag_window()` here,
+      // which would begin an actual drag at declaration time instead of on
+      // press.
+      ()
+    },
     drop=fn() { window.drop() },
     native_view_handle=fn() { None },
     dispose_platform_views=fn() {

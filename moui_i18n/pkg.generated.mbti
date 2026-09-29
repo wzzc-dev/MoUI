@@ -42,4 +42,3 @@ pub fn Translator::translate_count(Self, String, Int, values? : ArrayView[(Strin
 // Type aliases
 
 // Traits
-

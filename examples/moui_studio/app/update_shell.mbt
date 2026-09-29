@@ -112,6 +112,8 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         ),
       )
     }
+    HoverIrPath(path) =>
+      Some(({ ..model, hover_path: path, }, @moui.Effect::none()))
     RestoreCodeDraft => Some(restore_code_draft(model))
     _ => None
   }

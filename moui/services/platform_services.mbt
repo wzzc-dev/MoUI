@@ -416,6 +416,10 @@ pub struct PlatformServices {
   associations_value : AssociationServices
   window_state_value : WindowStateServices
   lifecycle_value : AppLifecycleSource?
+  /// Non-optional so app code stays unconditional: hosts without native
+  /// window dragging keep the unwired default, whose declarations are simply
+  /// never applied.
+  window_drag_value : WindowDragRegionSource
 }
 
 ///|
@@ -428,6 +432,7 @@ pub fn PlatformServices::new(
   associations? : AssociationServices = AssociationServices::new(),
   window_state? : WindowStateServices = WindowStateServices::new(),
   lifecycle? : AppLifecycleSource? = None,
+  window_drag? : WindowDragRegionSource = WindowDragRegionSource::new(),
 ) -> PlatformServices {
   {
     notifications_value: notifications,
@@ -438,6 +443,7 @@ pub fn PlatformServices::new(
     associations_value: associations,
     window_state_value: window_state,
     lifecycle_value: lifecycle,
+    window_drag_value: window_drag,
   }
 }
 
@@ -494,4 +500,13 @@ pub fn PlatformServices::lifecycle(
   self : PlatformServices,
 ) -> AppLifecycleSource? {
   self.lifecycle_value
+}
+
+///|
+/// Declare a native window-drag band for self-drawn window chrome. Hosts
+/// without native dragging ignore declarations.
+pub fn PlatformServices::window_drag(
+  self : PlatformServices,
+) -> WindowDragRegionSource {
+  self.window_drag_value
 }

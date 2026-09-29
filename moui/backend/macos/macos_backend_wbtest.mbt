@@ -78,6 +78,11 @@ extern "C" fn macos_gpu_surface_presenter_test() -> Int = "moui_macos_gpu_surfac
 extern "C" fn macos_gpu_surface_partial_overlay_hit_test() -> Int = "moui_macos_gpu_surface_partial_overlay_hit_test"
 
 ///|
+/// Exercises the presenter drag-region associated object, the `hitTest:` gate
+/// that lets `mouseDown:` run, and the set/clear FFI entry points.
+extern "C" fn macos_drag_region_test() -> Int = "moui_macos_drag_region_test"
+
+///|
 /// The CPU presenter must keep a stable layer-backed view and swap its image
 /// contents directly; replacing an NSImageView image causes AppKit flash-white
 /// frames while a neighboring scroll view is invalidating the host window.
@@ -94,6 +99,11 @@ test "macOS GPU surface uses a transparent reorderable presenter sibling" {
 ///|
 test "macOS GPU presenter hit-tests only the local overlay rectangle" {
   assert_eq(macos_gpu_surface_partial_overlay_hit_test(), 1)
+}
+
+///|
+test "macOS presenters gate drags to the declared region and clear safely" {
+  assert_eq(macos_drag_region_test(), 1)
 }
 
 ///|

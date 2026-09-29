@@ -246,6 +246,9 @@ fn HostServicesAdapter::app_platform_services(
       },
     ),
     lifecycle~,
+    window_drag=self.window_drag.unwrap_or(
+      @app_services.WindowDragRegionSource::new(),
+    ),
   )
 }
 
@@ -626,8 +629,11 @@ pub fn app_services(
   bridge~ : @backend_host.HostServiceBridge,
   async_queue? : ServiceAsyncQueue? = None,
   lifecycle? : @app_services.AppLifecycleSource? = None,
+  window_drag? : @app_services.WindowDragRegionSource? = None,
 ) -> @app_services.AppServices {
-  HostServicesAdapter::new(bridge~, async_queue~).as_app_services(lifecycle~)
+  HostServicesAdapter::new(bridge~, async_queue~, window_drag~).as_app_services(
+    lifecycle~,
+  )
 }
 
 ///|
@@ -639,8 +645,9 @@ pub fn app_environment(
   routes? : @app_services.RouteSource? = None,
   lifecycle? : @app_services.AppLifecycleSource? = None,
   clock? : (() -> Double)? = None,
+  window_drag? : @app_services.WindowDragRegionSource? = None,
 ) -> @app_services.AppEnvironment {
-  HostServicesAdapter::new(bridge~, async_queue~).app_environment(
+  HostServicesAdapter::new(bridge~, async_queue~, window_drag~).app_environment(
     timer~,
     routes~,
     lifecycle~,

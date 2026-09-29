@@ -330,9 +330,9 @@ fn package_budgets() -> Array[PackageBudget] {
       // ScopedFeature handle, and Program::from_feature: +19 lines, +12 pub.
       // Semantic path targeting (semantic-id-ergonomics-and-path-targeting
       // plan) adds SemanticsPathSegment, the SemanticsTarget::ByPath variant,
-      // and SemanticId::new: +14 lines, +5 pub, +1 pub(all); View::on_tap_with_frame +1 line, +1 pub.
-      max_lines: 2174,
-      max_pub_lines: 578,
+      // and SemanticId::new: +14 lines, +5 pub, +1 pub(all); View::on_tap_with_frame +1 line, +1 pub; View::on_hover +1 line, +1 pub.
+      max_lines: 2175,
+      max_pub_lines: 579,
       max_pub_all_lines: 190,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

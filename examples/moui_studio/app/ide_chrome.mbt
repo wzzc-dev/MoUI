@@ -561,18 +561,104 @@ pub fn topbar_brand(
   @views.row(cells, spacing=8.0, align=Center)
 }
 
+///|
+/// 沉浸式窗控条高度（设计稿 v4 的无边框标题带）。
+/// 放在顶栏**之上**：不该把品牌/按钮往下挤——那是 IDE 的操作面。
+pub const WINDOW_CHROME_HEIGHT : Double = 26.0
+
+///|
+/// 左上角留给系统信号灯的宽度（三个 12pt 圆 + 间距 + 左右边距）。
+/// 与 momark / mo_workbench 用的 78 一致：这是 AppKit 的固定几何，不是
+/// 主题值，所以不跟着主题变。
+pub const TRAFFIC_LIGHT_INSET : Double = 78.0
+
+///|
+/// 拖拽区语义：整条顶带都是「按住可以拖窗口」。
+///
+/// **这里不自绘三个信号点。** `transparent_titlebar` 只把标题栏变透明 +
+/// 内容延伸到顶端，系统信号灯（关闭/最小化/缩放）照常浮在左上角；再画三
+/// 个假点会叠成六个，而且自绘的缩放按钮没有可用的窗口请求
+/// （`WindowRequest` 没有 zoom 变体）——那就是死 UI。用系统的，三个都是
+/// 真的，还自带悬停反馈与键盘可达性。
+///
+/// 所以这一带只做两件事：左侧让出 `TRAFFIC_LIGHT_INSET`（别让自绘内容钻
+/// 到信号灯底下），以及作为拖拽区被平台层识别（入口把这条矩形交给
+/// `WindowSurfaceActions.set_drag_region`）。
+pub fn window_chrome_bar(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  ignore(model)
+  let inner = (width - TRAFFIC_LIGHT_INSET - 24.0).max(60.0)
+  @views.container(
+    @views.padding_edges(
+      fill_row(
+        [
+          @views.text(
+            text(t, "app.window.drag_hint"),
+            theme=studio_theme(),
+            width=inner,
+            height=14.0,
+            align=TextCenter,
+          ).foreground(ide_text_faint()),
+        ],
+        inner,
+        8.0,
+        Center,
+      ),
+      left=TRAFFIC_LIGHT_INSET,
+      right=12.0,
+    ),
+    background=studio_window_background(),
+    width~,
+    height=WINDOW_CHROME_HEIGHT,
+    padding=0.0,
+  )
+}
+
 // ============================================================================
 // 状态栏
 // ============================================================================
 
 ///|
+/// 文本宽度估算：ASCII 按 7.9、全角按 13.0（与 `token_width` 同一口径）。
+/// 状态栏这类「等宽读数条」必须按内容给宽度——固定 112 会让长标签越出
+/// 窗口右缘（实测 w=1000 时「空闲」右缘 1133）。
+pub fn text_estimate_width(label : String) -> Double {
+  let mut ascii = 0
+  let mut wide = 0
+  for c in label {
+    if c.to_int() < 0x80 {
+      ascii = ascii + 1
+    } else {
+      wide = wide + 1
+    }
+  }
+  (ascii.to_double() * 7.9 + wide.to_double() * 13.0).max(6.0)
+}
+
+///|
 /// 状态栏：等宽读数条。cells 为空时只留品牌段（不塌成 0 高）。
+/// 单元格宽度按内容算，并整体钳进可用宽度（窗口窄时截断而不是溢出）。
 pub fn status_cells(
   cells : Array[(String, Int)],
   width : Double,
 ) -> @moui.View[Msg] {
   let views : Array[@moui.View[Msg]] = []
+  // 先算「内容 + 分隔符」的总宽，超出可用宽度时按比例压缩每格。
+  let inner = (width - 20.0).max(120.0)
+  let mut needed = 0.0
   let mut index = 0
+  for cell in cells {
+    if index > 0 {
+      needed = needed + 8.0 + 6.0
+    }
+    needed = needed + text_estimate_width(cell.0) + 6.0
+    index = index + 1
+  }
+  let scale = if needed > inner { inner / needed } else { 1.0 }
+  index = 0
   for cell in cells {
     if index > 0 {
       views.push(
@@ -587,7 +673,7 @@ pub fn status_cells(
         label,
         theme=studio_theme(),
         role=Mono,
-        width=112.0,
+        width=(text_estimate_width(label) * scale).max(8.0),
         height=16.0,
         align=TextStart,
       ).foreground(

@@ -116,6 +116,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.mode.code", GeneratedI18nMessage::Text("Code")),
       ("app.pane.code", GeneratedI18nMessage::Text("Code")),
+      ("app.pane.hide", GeneratedI18nMessage::Text("Hide this pane")),
       ("app.pane.live", GeneratedI18nMessage::Text("Live App")),
       ("app.pane.solo", GeneratedI18nMessage::Text("Show live app only")),
       ("app.run.audit", GeneratedI18nMessage::Text("Execution log")),
@@ -209,6 +210,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.file.export", GeneratedI18nMessage::Text("Export app")),
       ("app.handler.new", GeneratedI18nMessage::Text("New handler")),
+      ("app.insert.chip", GeneratedI18nMessage::Text("+ {name}")),
       ("app.lang.switch", GeneratedI18nMessage::Text("中文")),
       ("app.left.search", GeneratedI18nMessage::Text("Search structure…")),
       (
@@ -373,6 +375,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.blocks.cat.all", GeneratedI18nMessage::Text("All")),
       ("app.bottom.console", GeneratedI18nMessage::Text("Console")),
+      (
+        "app.code.foot_hint",
+        GeneratedI18nMessage::Text(
+          "Line ↔ block highlights work both ways · hover a code line or a rail block",
+        ),
+      ),
       ("app.compile.failed", GeneratedI18nMessage::Text("Compile failed")),
       ("app.compile.output", GeneratedI18nMessage::Text("Toolchain output")),
       ("app.compile.target", GeneratedI18nMessage::Text("Target")),
@@ -393,7 +401,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.pane.hide_live", GeneratedI18nMessage::Text("Hide live app")),
       ("app.pane.live.idle", GeneratedI18nMessage::Text("design")),
-      ("app.pane.show_live", GeneratedI18nMessage::Text("Show live app")),
+      ("app.pane.show_live", GeneratedI18nMessage::Text("+ Live App")),
       ("app.qa.align_right", GeneratedI18nMessage::Text("Align right (24)")),
       (
         "app.run.audit_hint",
@@ -487,6 +495,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.log.settled_all",
         GeneratedI18nMessage::Text("All side-effect cards confirmed"),
       ),
+      (
+        "app.pane.blocks.sub",
+        GeneratedI18nMessage::Text("IR mapped · synced with code"),
+      ),
+      (
+        "app.pane.live.badge",
+        GeneratedI18nMessage::Text("Running · {percent}%"),
+      ),
       ("app.qa.align_center", GeneratedI18nMessage::Text("Center horizontally")),
       ("app.run.gate.reject", GeneratedI18nMessage::Text("Reject")),
       (
@@ -533,6 +549,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Interpreter run failed"),
       ),
       (
+        "app.blocks.foot_hint",
+        GeneratedI18nMessage::Text(
+          "The canvas floor is a reserved clearance lane for the AI layer · hover a block to see its ↔ line mapping",
+        ),
+      ),
+      (
         "app.code.ruler.empty",
         GeneratedI18nMessage::Text(
           "IR → line map: this handler has no statements",
@@ -551,9 +573,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ctx.state.edited", GeneratedI18nMessage::Text("Edit state")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("Delete control")),
+      ("app.pane.show_blocks", GeneratedI18nMessage::Text("+ Blocks pane")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("Confirm send")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("no handler")),
+      (
+        "app.window.drag_hint",
+        GeneratedI18nMessage::Text("Drag this bar to move the window"),
+      ),
       ("builtin.selected_row", GeneratedI18nMessage::Text("selected_row")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("Unrecognized: {a}")),
       (
@@ -757,6 +784,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.audit.compile_failed",
         GeneratedI18nMessage::Text("Real compile failed"),
+      ),
+      (
+        "app.code.ruler.semantics",
+        GeneratedI18nMessage::Text("IR mapping rail"),
       ),
       (
         "app.command.bottom.audit",
@@ -1057,6 +1088,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.mode.code", GeneratedI18nMessage::Text("代码")),
       ("app.pane.code", GeneratedI18nMessage::Text("代码")),
+      ("app.pane.hide", GeneratedI18nMessage::Text("隐藏此窗格")),
       ("app.pane.live", GeneratedI18nMessage::Text("实时应用")),
       ("app.pane.solo", GeneratedI18nMessage::Text("只看实时应用")),
       ("app.run.audit", GeneratedI18nMessage::Text("执行记录")),
@@ -1150,6 +1182,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.file.export", GeneratedI18nMessage::Text("导出应用")),
       ("app.handler.new", GeneratedI18nMessage::Text("新建子程序")),
+      ("app.insert.chip", GeneratedI18nMessage::Text("+ {name}")),
       ("app.lang.switch", GeneratedI18nMessage::Text("English")),
       ("app.left.search", GeneratedI18nMessage::Text("搜索结构…")),
       (
@@ -1293,6 +1326,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.blocks.cat.all", GeneratedI18nMessage::Text("全部")),
       ("app.bottom.console", GeneratedI18nMessage::Text("Console")),
+      (
+        "app.code.foot_hint",
+        GeneratedI18nMessage::Text(
+          "行号 ↔ 积木块 双向高亮 · 悬停代码行或右缘色块试试",
+        ),
+      ),
       ("app.compile.failed", GeneratedI18nMessage::Text("真编译失败")),
       ("app.compile.output", GeneratedI18nMessage::Text("工具链输出")),
       ("app.compile.target", GeneratedI18nMessage::Text("目标")),
@@ -1307,7 +1346,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.log.compile_ok", GeneratedI18nMessage::Text("真编译通过")),
       ("app.pane.hide_live", GeneratedI18nMessage::Text("隐藏实时应用")),
       ("app.pane.live.idle", GeneratedI18nMessage::Text("设计态")),
-      ("app.pane.show_live", GeneratedI18nMessage::Text("显示实时应用")),
+      ("app.pane.show_live", GeneratedI18nMessage::Text("+ 实时应用")),
       ("app.qa.align_right", GeneratedI18nMessage::Text("右对齐（24）")),
       (
         "app.run.audit_hint",
@@ -1394,6 +1433,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.log.settled_all",
         GeneratedI18nMessage::Text("已确认全部副作用卡"),
       ),
+      (
+        "app.pane.blocks.sub",
+        GeneratedI18nMessage::Text("IR 映射 · 与代码同步"),
+      ),
+      (
+        "app.pane.live.badge",
+        GeneratedI18nMessage::Text("运行中 · {percent}%"),
+      ),
       ("app.qa.align_center", GeneratedI18nMessage::Text("水平居中")),
       ("app.run.gate.reject", GeneratedI18nMessage::Text("拒绝")),
       (
@@ -1437,6 +1484,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("解释轨运行失败"),
       ),
       (
+        "app.blocks.foot_hint",
+        GeneratedI18nMessage::Text(
+          "画布底部已为 AI 层预留避让通道 · 悬停积木查看 ↔ 行映射",
+        ),
+      ),
+      (
         "app.code.ruler.empty",
         GeneratedI18nMessage::Text(
           "IR 到代码行的映射：当前子程序没有语句",
@@ -1452,9 +1505,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ctx.state.edited", GeneratedI18nMessage::Text("编辑状态")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("删除控件")),
+      ("app.pane.show_blocks", GeneratedI18nMessage::Text("+ 积木窗格")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("确认送出")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("未选中子程序")),
+      (
+        "app.window.drag_hint",
+        GeneratedI18nMessage::Text("按住此条拖动窗口"),
+      ),
       ("builtin.selected_row", GeneratedI18nMessage::Text("取所选行")),
       ("err.unexpected_token", GeneratedI18nMessage::Text("无法识别：{a}")),
       (
@@ -1655,6 +1713,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.audit.compile_failed",
         GeneratedI18nMessage::Text("真编译失败"),
+      ),
+      (
+        "app.code.ruler.semantics",
+        GeneratedI18nMessage::Text("IR 映射竖条"),
       ),
       (
         "app.command.bottom.audit",

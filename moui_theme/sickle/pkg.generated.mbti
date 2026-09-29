@@ -37,4 +37,3 @@ pub fn SickleStyleMode::label(Self) -> String
 // Type aliases
 
 // Traits
-

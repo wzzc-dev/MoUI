@@ -100,7 +100,10 @@ fn context_tabs(
     (CtxActions, text(t, "app.ctx.actions")),
     (CtxDeps, text(t, "app.ctx.deps")),
   ]
-  let cell_width = (width - 12.0) / 5.0
+  // 页签总宽 = 5×cell + 4×gap，必须**连同左右内垫**一起塞进 width。
+  // 原来只减了 12（内垫）却忘了 4 个 3px 间隙：5×52+12 = 272 = 面板宽，
+  // 于是「依赖」页签正好顶到右边缘被切掉半个字（实际截图可见）。
+  let cell_width = ((width - 12.0 - 4.0 * 3.0) / 5.0).max(28.0)
   let tabs : Array[@moui.View[Msg]] = []
   for entry in entries {
     let (tab, label) = entry
@@ -568,7 +571,25 @@ fn quick_actions(
           padding=0.0,
         ),
       )
-    Some(name) =>
+    Some(name) => {
+      // 行宽必须按面板宽算：6 格 + 5 个 4px 间隙 + 左右内垫 = 面板宽。
+      // 原来把「AI 优化」按 64 声明、实际 ~88，窄栏必溢出。
+      let icon_size = 28.0
+      let gap = 4.0
+      let inner = (width - 16.0).max(120.0)
+      let ai_min = 56.0
+      let fixed = icon_size * 5.0 + gap * 5.0 + ai_min
+      let qa_ai_width = if fixed <= inner {
+        (inner - icon_size * 5.0 - gap * 5.0).min(88.0)
+      } else {
+        // 极窄：优先保住图标按钮，AI 优化收到下限
+        ai_min
+      }
+      let icon_w = if fixed <= inner {
+        icon_size
+      } else {
+        ((inner - gap * 5.0 - ai_min) / 5.0).max(20.0)
+      }
       buttons.push(
         @views.padding_xy(
           // 行必须定宽：不定宽的 row 量不到 slack，六个按钮会挤成一段
@@ -580,8 +601,8 @@ fn quick_actions(
                 text(t, "app.qa.align_left"),
                 false,
                 AlignControlLeft(name),
-                28.0,
-                24.0,
+                icon_w,
+                AiActionHeight,
                 13.0,
               ),
               icon_button(
@@ -589,8 +610,8 @@ fn quick_actions(
                 text(t, "app.qa.align_center"),
                 false,
                 AlignControlCenter(name),
-                28.0,
-                24.0,
+                icon_w,
+                AiActionHeight,
                 13.0,
               ),
               icon_button(
@@ -598,8 +619,8 @@ fn quick_actions(
                 text(t, "app.qa.align_right"),
                 false,
                 AlignControlRight(name),
-                28.0,
-                24.0,
+                icon_w,
+                AiActionHeight,
                 13.0,
               ),
               icon_button(
@@ -607,8 +628,8 @@ fn quick_actions(
                 text(t, "app.inspector.duplicate"),
                 false,
                 DuplicateControl(name),
-                28.0,
-                24.0,
+                icon_w,
+                AiActionHeight,
                 13.0,
               ),
               icon_button(
@@ -616,17 +637,14 @@ fn quick_actions(
                 text(t, "app.inspector.delete"),
                 false,
                 DeleteControl(name),
-                28.0,
-                24.0,
+                icon_w,
+                AiActionHeight,
                 13.0,
               ),
-              @views.button(
-                text(t, "app.qa.ai"),
-                on_click=GenerateProposal,
-                variant=Tonal,
-                width=64.0,
-                height=24.0,
-              ),
+              // 手搓而不是 @views.button：button 的 width 是**最小值**，
+              // 内容加左右各 16 的内垫会把 64 撑成 ~88，右栏窄时整行溢出
+              // （实测 w=820 时「AI 优化」右缘 824 > 820）。
+              ai_action_chip(text(t, "app.qa.ai"), qa_ai_width, AiActionHeight),
             ],
             (width - 16.0).max(120.0),
             4.0,
@@ -636,6 +654,7 @@ fn quick_actions(
           vertical=0.0,
         ),
       )
+    }
   }
   @views.container(
     @views.column([head, @views.column(buttons, spacing=0.0)], spacing=0.0).frame(
@@ -729,4 +748,35 @@ fn watch_pane(
     width~,
     padding=0.0,
   )
+}
+
+///|
+/// 快速操作行高（与左栏树行同高，视觉上成一条）。
+const AiActionHeight : Double = 24.0
+
+///|
+/// 「AI 优化」小胶囊：手搓容器而不是 `@views.button`——button 的 width
+/// 是**最小值**，内容 + 左右各 16 内垫会把 64 撑成 ~88，窄右栏必溢出。
+fn ai_action_chip(
+  label : String,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.center(
+      @views.text(
+        label,
+        theme=studio_theme(),
+        width=(width - 10.0).max(20.0),
+        height=16.0,
+      ).foreground(ide_accent()),
+      width~,
+      height~,
+    ),
+    background=ide_accent_soft(),
+    corner_radius=4.0,
+    width~,
+    height~,
+    padding=0.0,
+  ).on_tap(GenerateProposal)
 }

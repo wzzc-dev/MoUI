@@ -8,6 +8,7 @@ import {
 }
 
 // Values
+pub fn apply_window_drag_region(WindowDragRegionSource, Int?, (@core.Rect?) -> Bool) -> Int?
 
 // Errors
 
@@ -237,16 +238,18 @@ pub struct PlatformServices {
   associations_value : AssociationServices
   window_state_value : WindowStateServices
   lifecycle_value : AppLifecycleSource?
+  window_drag_value : WindowDragRegionSource
 }
 pub fn PlatformServices::associations(Self) -> AssociationServices
 pub fn PlatformServices::lifecycle(Self) -> AppLifecycleSource?
-pub fn PlatformServices::new(notifications? : NotificationServices, tray? : TrayServices, permissions? : PermissionServices, sharing? : ShareServices, printing? : PrintServices, associations? : AssociationServices, window_state? : WindowStateServices, lifecycle? : AppLifecycleSource?) -> Self
+pub fn PlatformServices::new(notifications? : NotificationServices, tray? : TrayServices, permissions? : PermissionServices, sharing? : ShareServices, printing? : PrintServices, associations? : AssociationServices, window_state? : WindowStateServices, lifecycle? : AppLifecycleSource?, window_drag? : WindowDragRegionSource) -> Self
 pub fn PlatformServices::notifications(Self) -> NotificationServices
 pub fn PlatformServices::permissions(Self) -> PermissionServices
 pub fn PlatformServices::printing(Self) -> PrintServices
 pub fn PlatformServices::sharing(Self) -> ShareServices
 pub fn PlatformServices::tray(Self) -> TrayServices
 pub fn PlatformServices::unavailable() -> Self
+pub fn PlatformServices::window_drag(Self) -> WindowDragRegionSource
 pub fn PlatformServices::window_state(Self) -> WindowStateServices
 
 pub(all) struct PrintRequest {
@@ -378,6 +381,15 @@ pub struct UrlServices {
 }
 pub fn UrlServices::new(open? : (String) -> ServiceTask[Unit]) -> Self
 pub fn UrlServices::open(Self, String) -> ServiceTask[Unit]
+
+pub struct WindowDragRegionSource {
+  // private fields
+}
+pub fn WindowDragRegionSource::new() -> Self
+pub fn WindowDragRegionSource::region(Self) -> @core.Rect?
+pub fn WindowDragRegionSource::revision(Self) -> Int
+pub fn WindowDragRegionSource::set_region(Self, @core.Rect?) -> Unit
+pub fn WindowDragRegionSource::unavailable() -> Self
 
 pub struct WindowStateServices {
   read_fn : (String) -> ServiceTask[String?]

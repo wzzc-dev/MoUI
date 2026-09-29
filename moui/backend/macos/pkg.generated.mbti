@@ -13,7 +13,7 @@ import {
 }
 
 // Values
-pub fn app_environment() -> @services.AppEnvironment
+pub fn app_environment(window_drag? : @services.WindowDragRegionSource?) -> @services.AppEnvironment
 
 pub fn application_menu_on_ready(Array[@services.ApplicationMenu], @runtime.AppRuntime) -> () -> Unit
 
@@ -72,7 +72,7 @@ pub(all) struct MacosBackendInfo {
 pub struct MacosHostAppOptions {
   // private fields
 }
-pub fn MacosHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, show_after_first_present? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?, frame_clock? : (() -> Double)?) -> Self
+pub fn MacosHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, show_after_first_present? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?, frame_clock? : (() -> Double)?, window_drag? : @services.WindowDragRegionSource?) -> Self
 pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@backend.PlatformViewPlugin]
 
 pub struct MacosHostSmokeOptions {

@@ -40,6 +40,75 @@ fn MacosNativeHostBackend::dispatch_host_event(
 }
 
 ///|
+/// Push an app-declared drag band to one surface, skipping unchanged work.
+///
+/// Extracted from `MacosNativeHostBackend::sync_window_drag_region` so the
+/// target-selection and revision-gating rules are testable without a live
+/// AppKit window: `set_region` stands in for the native call.
+///
+/// `applied`/`applied_window` describe what the previous push covered. A
+/// different target surface always re-pushes, because the band is per-surface
+/// state. `available` reports whether the surface can accept a band yet; when
+/// it cannot, the previous `applied` is returned unchanged so the pending
+/// declaration is retried on a later tick instead of being recorded as done.
+fn push_window_drag_region_to_surface(
+  source : @services.WindowDragRegionSource,
+  window_id : @host.WindowId,
+  applied : Int?,
+  applied_window : @host.WindowId?,
+  available : Bool,
+  set_region : (@core.Rect?) -> Unit,
+) -> (Int?, @host.WindowId?) {
+  if !available {
+    return (applied, applied_window)
+  }
+  let effective = match applied_window {
+    Some(previous) => if previous == window_id { applied } else { None }
+    None => None
+  }
+  let next = @services.apply_window_drag_region(source, effective, region => {
+    set_region(region)
+    true
+  })
+  (next, Some(window_id))
+}
+
+///|
+/// Push the app-declared drag band to AppKit when, and only when, the declared
+/// geometry changed since the last successful push.
+///
+/// This runs on the host loop tick rather than at declaration time because the
+/// app may declare its band before any window exists.
+fn MacosNativeHostBackend::sync_window_drag_region(
+  self : MacosNativeHostBackend,
+) -> Unit {
+  let source = match self.window_drag {
+    Some(source) => source
+    None => return ()
+  }
+  let window_id = match self.lifecycle.active_runtime_slot() {
+    Some(slot) => slot.id
+    None => return ()
+  }
+  let actions = match self.lifecycle.surface_actions(window_id) {
+    Some(actions) => actions
+    None => return ()
+  }
+  // The presenter only accepts a band once it has a native view.
+  let available = (actions.native_view_handle)() is Some(_)
+  let (applied, applied_window) = push_window_drag_region_to_surface(
+    source,
+    window_id,
+    self.window_drag_applied,
+    self.window_drag_window,
+    available,
+    region => (actions.set_drag_region)(region),
+  )
+  self.window_drag_applied = applied
+  self.window_drag_window = applied_window
+}
+
+///|
 fn MacosNativeHostBackend::drain_window_requests(
   self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
@@ -304,6 +373,25 @@ fn MacosNativeHostBackend::macos_surface_actions(
             _ => ()
           }
         NoImeChange => ()
+      }
+    },
+    set_drag_region=fn(region) {
+      match macos_native_view_handle(window) {
+        Some(handle) =>
+          match region {
+            Some(rect) =>
+              // MoUI logical (top-left) rect; the AppKit side performs the
+              // conversion into its own coordinate space.
+              macos_set_drag_region(
+                handle,
+                rect.origin.x,
+                rect.origin.y,
+                rect.size.width,
+                rect.size.height,
+              )
+            None => macos_clear_drag_region(handle)
+          }
+        None => ()
       }
     },
     drop=fn() { window.drop() },

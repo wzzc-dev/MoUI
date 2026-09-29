@@ -626,3 +626,170 @@ AI 浮动层的外层包装就这么把空舞台的引导语和三个模板按�
 按新值断言就会假失败。加 key 前先查现值（`grep` 生成目录或直接读 JSON），
 要么显式赋值要么接受现值。
 
+
+### 无边框窗口：不要自绘信号灯
+`transparent_titlebar=true` 只做三件事：标题栏透明 + 标题隐藏 + fullsize content
+view。它**不隐藏系统信号灯**——关闭/最小化/缩放三个圆仍然浮在左上角。所以
+app 层再自绘三个点会叠成六个，必须让出 `TRAFFIC_LIGHT_INSET = 78.0`（与
+momark / mo_workbench 同一值，这是 AppKit 固定几何而非主题值）。
+
+推论：自绘窗口按钮是**死 UI 陷阱**。`WindowRequest` 没有 zoom/maximize 变体，
+自绘的缩放按钮没有任何可用的后端请求；而关闭/最小化虽然真能走通
+（`WindowRequestQueue` → `apply_window_request`），但既然系统信号灯已经提供
+且自带悬停/键盘可达性，就没有理由重造。**结论：用系统的三个灯，只保留拖拽区。**
+
+### 拖拽不能走 WindowRequest
+`Window::drag_window` 依赖 `NSApp.currentEvent`，而 `drain_window_requests` 只在
+`about_to_wait` / `window_event` 里跑，**不在 `mouseDown:` 内**——排队式拖拽拿到
+nil event，返回 -1 / `RequestError::Ignored`。拖拽必须在 AppKit 事件内同步执行
+（`performWindowDragWithEvent:`），见 `moui_webview/backend/macos/webview_host.m:311`。
+`docs/invariants.md` P10 亦明确 drag decode 属平台本地。
+
+### 校验：绘制命令级断言有盲区
+「顶带里不许有小圆角方块」这类断言抓不到自绘信号灯——圆点会和整条顶带合并成
+一次填充，`shell_rects` 里看不到独立方块（实测：故意加回圆点仍通过）。改用
+**可观测代理**：提示文字的 x 必须 >= `TRAFFIC_LIGHT_INSET`（把 inset 改成 0
+立即报 x=45）。写断言后必须**故意破坏一次**确认它会红，否则等于没写。
+
+### 「写死宽度 + 本地化文案变长」是本项目复发最多的缺陷族
+已复发：状态栏 112pt/格、代码页脚 62/68pt 按钮（截成「按 IR 重渲」）、
+面板脚注 90pt 计数（截「2 个控件」）、右栏 tab `(width-12)/5`（正好占满无内垫）、
+hero 示例句三等分。**逐点补宽治不了根**——用枚举式扫描：
+`app/shell_responsive_wbtest.mbt` 的 `"no drawn label is narrower than its own text"`
+扫过三工作区 × 三种宽度下**所有** `DrawText`，比 `frame.size.width` 与
+`text_estimate_width(text)`。新加任何带 `width=` 的文字都会被它覆盖。
+
+要点：`text_estimate_width` 比真实字形窄约 3%（实测估算 148.6 / 渲染 143.8 时
+反过来也会出现估算偏大），所以**断言**用它 1.0 倍（宁可漏报），而**分配空间**
+时需求侧乘 1.05。
+
+### 断言必须故意破坏一次
+本会话两次抓到「写了断言但抓不到回归」：
+1. 「顶带里不许有小圆角方块」——自绘圆点与顶带合并成一次填充，`shell_rects` 看不到；
+2. 圆形 `fill_row` 里等分时，按比例算出的 `cell` 根本没被用上（`fill_row` 自己等分）。
+两次都是**故意把代码改坏**才发现的。写完断言立刻改坏一次确认它会红。
+
+### 放不下就少放几条，不要压缩
+窄窗（卡片 ~460pt）里三条中文示例句放不下。等比压缩会把文字截成半个词——
+比不显示更糟。`hero_hints` 改为按自然宽**贪心放置**（一条都放不下则留空行，
+高度预算不变，排版不跳）。
+
+### 分类轨竖排（设计稿 #catbar）
+原来是画布上方的横排芯片条；改成画布**左侧** 86pt 竖排轨（色点 + 名称 +
+选中项 2pt 强调边）。两个理由：① 设计稿就是这个形态；② 横排白吃 30pt
+画布高——积木视图纵向最紧，把分类移到画布旁边的空白里等于白赚。
+分类轨**永远在**（没有选中子程序时全灰）：「今天没有块」本身就是要传达的信息。
+
+### 测试陷阱：SetWorkSpace 是**切换**不是设置
+`SetWorkSpace(WsVisual)` 在已经是 WsVisual 的模型上等于「点当前项」→
+收起成空舞台，画布整个消失。测试里想表达「可视化工作区」就直接用
+`initial_model()`（默认就是 WsVisual）。这个坑让本会话多花了两轮排查。
+
+### 测试陷阱：同名字符串会在多个面板出现
+「变量」「事件」既是积木分类名，也是左栏程序结构树的节点名。按文字找位置
+时必须同时按**面板 x 区间**过滤，否则树行会被算进分类轨，报「不在同一列」。
+
+### 文字宽度估算的真实标定：主题正文是 16pt，不是 13pt
+`text_estimate_width` 用 ASCII 7.9 / 全角 13.0。实测（w=1280 的积木脚注）
+声明宽 300.8 时实渲 300.8，估算 294.4 → **估算偏窄约 2%**。
+所以：
+- **分配**空间：需求 = `text_estimate_width(...) * 1.02`（或留固定余量）；
+- **截断**（`fit_label`）：预算乘 `LABEL_WIDTH_SAFETY = 0.98`。
+两个方向都要留余量，2% 在长中文句子上就是 5-6pt 的越界。
+
+### 别再按「以为的字号」折算
+`fit_label` 一度写 `scale = 12.0/13.0`（以为积木按 12pt 渲染），实际正文
+16pt——凭空折算让预算**虚高 8%**，结果是「明明截断了却还是溢出 5pt」。
+要用字号就**实测**（`run.font.size`），不要推理。
+
+### 扫描的第三个盲区：完全没有裁剪区的文字
+`PushClip` 配对的扫描只看得到**有**裁剪区的文字。窗格脚注那种直接画在
+容器里、外层没有 `PushClip` 的文字会被**整个跳过**——实测积木脚注右缘
+1013 越过窗格右缘 1008，扫描却是绿的。
+现在 `"no drawn label is clipped by its own container"` 三段互补：
+① 有裁剪区 → 比裁剪区；② 无裁剪区 → 比窗口（`overflow_report`）；
+③ 跨窗格 → 比窗格右缘（`width - RIGHTBAR_WIDTH`）。
+
+### `on_hover`（框架新增，2026-09-30）
+`View::on_hover(Self[Msg], (Bool) -> Msg) -> Self[Msg]`：进 `true`、出 `false`。
+透明观察者——不设 role、不进焦点、不抢指针捕获，只在**状态真的翻转**时发消息
+（runtime 每次指针移动都投递 `Move`，不做翻转判断会把 update 循环刷爆）。
+
+**实现要点（load-bearing，别改成 ViewStateSlots）**：必须把悬停态记在
+`ctx.state.hovered`。runtime 只对「已上报 hovered/pressed 的子树」合成离开用的
+`Exit`；用私有 slot 记录的话**永远收不到离开事件**，悬停会永久黏住。
+
+**已知既有缺陷（未修，不属本次范围）**：`ModifierViewNode` 的 `semantics()`
+会**替换**子节点的 role，所以 `.semantics_role(TreeItem).on_hover(...)` 读回来是
+`None`。`on_secondary_tap` / `on_file_drop` 同样如此，不是 `on_hover` 引入的。
+runtime 语义树本身不丢子节点（Transparent 节点会让子节点穿过），实际影响有限。
+要修得改所有 modifier 的既有行为，需要单独的 RFC。
+
+**给 core 写注释的坑**：`validate-api-surface` 会把 `moui/core` 下**所有**（含注释）
+文本按子串匹配内部标识符（`ElementNode`/`ElementTree`/`RenderNode`/`DirtyFlags`/
+`RuntimeState`/`AppRuntime`）。文档里描述行为即可，别把 runtime 内部符号写出来。
+
+### 沉浸式窗口的关闭/最小化方式（无需自绘按钮）
+`transparent_titlebar` 保留原生信号灯（红黄绿）→ 鼠标路径齐全。键盘路径也
+齐全：macOS 后端在窗口就绪后安装**默认菜单栏**
+（`macos_app_handler.mbt:83-88` 的注释），Cmd+W / Cmd+M 由此可达，不需要
+app 自己装菜单（`on_ready` 是给**替换**默认菜单用的，装早了会被覆盖）。
+所以「隐藏标题栏后怎么关窗」不需要框架新增能力——先确认原生路径是否已存在，
+再决定要不要动框架。
+
+### canvas 是**不可命中**的：需要悬停就必须用逐行单元
+`@views.canvas` 没有 `hit_test`，是纯绘制节点。想做「悬停某一条看详情」时，
+`on_hover` 只给 `Bool`（不给指针位置），所以「在 canvas 里按 y 反查」这条路
+**走不通**——只有点击方向能用 `on_tap_with_frame` 的 `position` 硬算。
+正确做法是把内容拆成**逐行/逐项的可命中单元**，每项各自 `on_hover`/`on_tap`，
+命中判断交给框架。附带好处：与相邻列的对齐变成天然（同一 `height` 即可）。
+
+### 只断言 update 状态是不够的
+「update 改了字段」和「视图读了字段」是两件事。本会话实测：把 `hover_path`
+从竖条与代码行的绘制里删掉，所有 update 断言仍然全绿，界面毫无反应。
+补一个**绘制指纹**（`paint_signature`，把每条 `DrawCommand` 压成短串再整体比较）
+就能抓住：悬停态与静止态的指纹必须不同，且悬停指纹必须**不同于**驻留指纹
+（否则说明瞬态被当成了驻留）。
+
+### 「隐藏」必须有对应的「显示」入口
+`pane_live` / `pane_blocks` 这类可见性开关，一旦单侧隐藏就走单窗格分支，
+**必须在该分支里留一条恢复入口**（设计稿的 `#btnAddLive`/`#btnAddBlocks`）。
+否则「隐藏此窗格」= 永久丢失，用户只能重启。这类缺陷不会让任何测试变红，
+只有真的点一遍才发现——所以每个「隐藏/关闭」控件都要问一句「怎么回来」。
+
+### 无边框拖窗：区域是**状态**，不是命令（2026-09-30 定案）
+最终走 **Option B**：`moui/services` 里的 `WindowDragRegionSource`，
+app 经 `environment.services().platform().window_drag()` 拿到（非可选，
+未接线时是空实现，所以 app 侧无需分支）。
+
+为什么**不**加 `WindowRequest` 变体（原以为是首选）：
+1. **泄漏（决定性）**：`drain_with_handler` 会为每个 request 往
+   `WindowRequestQueue.completed` 塞一条完成记录，而**没有任何生产代码
+   排空它**（只有测试和 service 内嵌队列调 `drain_completed`）。按布局帧
+   发一个 request 会无限增长。
+2. 队列在 `moui/backend/common/lifecycle`，app 碰不到（P9）。
+3. 队列文件 209/210，去重逻辑塞不进去。
+4. 语义：拖拽区是**声明式状态**（最新值获胜），不是命令。
+
+关键性质：`set_region` 只在几何**真的变化**时推进 `revision`，宿主按
+revision 去重 → 逐帧重复声明零原生调用（测试钉了 60 次重发 = 1 次调用）。
+两个易漏点：窗口还没建就声明 → 重试而非记为已完成；revision **按 surface**
+跟踪，否则第二个窗口收不到。
+
+**接线要点**：`WindowDragRegionSource` **同一个实例**必须同时给
+`program(environment=@macos.app_environment(window_drag=Some(src)))` 与
+`@macos.MacosHostAppOptions::new(window_drag=Some(src))` —— app 侧写、宿主侧读。
+两边各建一个的话永远拖不动（本会话踩过同类「建了但没传进去」两次）。
+
+**仍未自动验证**：没有测试能把真实 `NSEvent` 送进 `mouseDown:`（`moon test`
+里无法合成 AppKit 鼠标事件）。按下→`performWindowDragWithEvent:` 这段只有
+C 层自测 + 外部 AppKit 探针覆盖，**需要在真窗口上手拖一次确认**。
+
+### 截图脚本的坐标坑（别把脚本 bug 当成 app bug）
+用 CDP 点击时，`Input.dispatchMouseEvent` 收的是 **CSS 像素**，而
+`Emulation.setDeviceMetricsOverride(deviceScaleFactor: 2)` 之后截图是 **2×**
+设备像素。截图里量到的坐标必须 **÷2** 才能喂给 `dispatchMouseEvent`。
+本会话据此误判了两次「页签点不中」——实际是脚本坐标错，app 没问题。
+右栏 5 个页签的中心（1280 宽窗口）可由常量算出，别靠肉眼估：
+`start = 1280 - 272 + 6`，`cell = (272 - 12 - 4*3) / 5`，
+中心 `= start + i*(cell+3) + cell/2` → 1039 / 1091 / 1144 / 1197 / 1249。

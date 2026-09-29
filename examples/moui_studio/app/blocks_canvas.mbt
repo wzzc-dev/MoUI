@@ -21,14 +21,62 @@ let block_margin : Double = 10.0
 let block_width : Double = 430.0
 
 ///|
+/// 按可用宽度把标签截成「…」结尾（设计稿 `.blk` 的 `text-overflow: ellipsis`）。
+///
+/// 逐字符累加而不是按平均字宽估算：块标签是中英混排
+/// （`命令 set_text(显示, "你好，MoUI Studio！")`），中英字宽差近一倍，
+/// 用平均值会算出「刚好放下」然后仍然溢出几个字符。
+/// 口径与 `text_estimate_width` 一致（ASCII 7.9 / 全角 13.0），并留
+/// `WIDTH_SAFETY` 的余量：实测估算比实渲**偏窄约 2%**（「…悬停积木…」
+/// 估算 294.4、实渲 300.8），所以按 98% 预算截断，宁可早切一个字也不要
+/// 越界半个字。
+///
+/// 两个已踩过的坑：
+/// ① 曾按 `12/13` 折算字号（以为文字按 12pt 渲染）——实际主题正文是
+///    16pt，凭空折算让预算**虚高 8%**，截断了却仍然溢出；
+/// ② 只截断不预留余量，2% 的估算误差在长句上就是 5-6pt 的越界。
+pub const LABEL_WIDTH_SAFETY : Double = 0.98
+
+///|
+pub fn fit_label(label : String, max_width : Double) -> String {
+  let budget = max_width * LABEL_WIDTH_SAFETY
+  let full = text_estimate_width(label)
+  if full <= budget {
+    return label
+  }
+  // 省略号本身也要占位（全角，13.0 @13pt）
+  let ellipsis_cost = text_estimate_width("…")
+  let mut used = 0.0
+  let mut kept = ""
+  for c in label {
+    let cost = if c.to_int() < 0x80 { 7.9 } else { 13.0 }
+    if used + cost + ellipsis_cost > budget {
+      break
+    }
+    used = used + cost
+    kept = kept + c.to_string()
+  }
+  kept + "…"
+}
+
+///|
 /// 语句链逐项矩形（顺序即链条顺序；x 随深度缩进）。
+/// 积木行矩形。`avail_width` 是画布可用宽：**必须传**（默认值是历史常量，
+/// 只在没有视口信息的纯逻辑测试里用）。
+///
+/// 为什么要有这个参数：`block_width = 430` 是设计宽，而积木窗格在 1280 窗
+/// 口下只剩 ~370——不夹取的话块体与块文字会直接画到右栏上面去（实测块文字
+/// 右缘 1289 > 裁剪区右缘 1164）。这里的夹取和上层 `scroll_view` 的裁剪区
+/// 是两个层次的保护，缺一不可：夹取让块**长对了**，裁剪区只是兜底。
 pub fn blocks_item_rects(
   blocks : Array[@blocks.BlockItem],
+  avail_width? : Double = block_width,
 ) -> Array[@geometry.Rect] {
   let rects : Array[@geometry.Rect] = []
+  let budget = (avail_width - block_margin * 2.0).max(160.0)
   for item in blocks {
     let x = block_margin + item.depth.to_double() * block_indent
-    let width = (block_width - item.depth.to_double() * block_indent).max(180.0)
+    let width = (budget - item.depth.to_double() * block_indent).max(120.0)
     rects.push(
       @geometry.Rect::new(
         x~,
@@ -183,8 +231,17 @@ pub fn blocks_draw_plan(
       ops.push(BlockNotchCut(x + 20.0, y + h - 1.0))
     }
     let marker = if is_spotlight { "▶ " } else { "" }
+    // 标签按**块宽**截断（设计稿 .blk 是 `text-overflow: ellipsis` 口径）：
+    // 块体已经夹到画布宽，但长语句仍会顶到块右缘之外——用省略号收尾，
+    // 让「这里有更多内容」是**看得见**的，而不是被画布边缘硬切掉一半。
     ops.push(
-      BlockLabel("\{marker}\{display}", x + 10.0, y + 8.0, (w - 20.0).max(40.0)),
+      BlockLabel(
+        "\{marker}\{display}",
+        x + 10.0,
+        y + 8.0,
+        (w - 20.0).max(40.0),
+        fit_label("\{marker}\{display}", (w - 20.0).max(40.0)),
+      ),
     )
     if is_selected || is_spotlight {
       ops.push(BlockStroke(x, y, w, h))
@@ -199,7 +256,7 @@ pub(all) enum BlocksDrawOp {
   BlockBody(Double, Double, Double, Double, @blocks.BlockKind)
   BlockTab(Double, Double, Double, @blocks.BlockKind)
   BlockNotchCut(Double, Double)
-  BlockLabel(String, Double, Double, Double)
+  BlockLabel(String, Double, Double, Double, String)
   BlockStroke(Double, Double, Double, Double)
   InsertMark(Double, Double, Double)
 }
@@ -227,7 +284,7 @@ pub fn blocks_canvas(
       draw=fn(ctx, frame) {
         let dx = frame.origin.x
         let dy = frame.origin.y
-        let rects = blocks_item_rects(blocks)
+        let rects = blocks_item_rects(blocks, avail_width=width)
         let ops = blocks_draw_plan(
           blocks, display_texts, rects, selected, spotlight, drag, dx, dy,
         )
@@ -260,11 +317,11 @@ pub fn blocks_canvas(
                 ),
                 @graphics.Brush::solid(block_notch_color()),
               )
-            BlockLabel(text, x, y, maxw) =>
+            BlockLabel(_text, x, y, maxw, fitted) =>
               draw_text(
                 ctx,
                 @text.TextRun::new(
-                  text~,
+                  text=fitted,
                   frame=@geometry.Rect::new(x~, y~, width=maxw, height=20.0),
                   font=@text.FontSpec::new(size=12.0),
                   color=block_text_color(),

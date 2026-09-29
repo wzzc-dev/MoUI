@@ -352,4 +352,3 @@ pub fn DesignTypographyTokens::core_typography(Self) -> @core.TypographyScale
 // Type aliases
 
 // Traits
-

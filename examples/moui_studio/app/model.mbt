@@ -398,6 +398,8 @@ pub(all) struct Model {
   // 积木视图编辑态：选中块（block_chain 下标，-1 = 无）与语句草稿
   selected_block : Int
   block_draft : String
+  // 悬停中的 IR 路径（None = 没有悬停）。绘制时与 `ir_highlight` 取并集。
+  hover_path : Array[Int]?
   // 设计画布拖拽态：按下命中控件时建立，松开清除
   drag : DragState?
   // 运行期活状态：跨事件累积的变量值与控件文本（易语言式全局量）
@@ -423,6 +425,9 @@ pub(all) struct Model {
   split_ratio : Double
   // 左栏视图（图标栏切换；收起时不占宽度）
   left_view : LeftView
+  // 沉浸式无边框：true 时顶栏之上多一条窗控条（信号点 + 拖拽区）。
+  // 平台入口按自己有没有无边框窗口决定——Web 恒 false。
+  immersive : Bool
   // 左栏结构树搜索查询
   tree_query : String
   // 结构树展开的分组集合（g 值文本；设计稿只在会话内记忆）
@@ -567,6 +572,12 @@ pub(all) enum Msg {
   // 最近修改 / Console 清空
   ClearConsole
   // AI 浮动层：锚点循环 / 直接设置 / 药丸 / 折叠卡 / 上下文芯片
+  // 沉浸式无边框窗口：三个窗控件 + 拖拽。native 映射到真实窗口请求，
+  // Web/无边框未启用时是安全 no-op（不假装能关掉浏览器标签页）。
+  WindowClose
+  WindowMinimize
+  WindowZoom
+  WindowDragBy(Double)
   CycleAiAnchor
   SetAiAnchor(AiAnchor)
   ToggleAiPill
@@ -587,6 +598,11 @@ pub(all) enum Msg {
   SelectBlockCategory(Int)
   // IR↔代码行映射高亮：按语句路径
   HighlightIrPath(Array[Int])
+  // 悬停联动（设计稿 `irHl`）：指针进/出代码行或积木块时高亮对应路径。
+  // 与 `HighlightIrPath` 分开是因为语义不同——悬停是**瞬态**的（离开即
+  // 撤销），点击是**驻留**的（再点一次才取消）。两者共用一个高亮槽位，
+  // 悬停不写槽位，只在 `hover_path` 里记临时值。
+  HoverIrPath(Array[Int]?)
   // 代码草稿回归 IR 渲染（丢弃手改）——高亮区永远来自 IR 投影，
   // 草稿与 IR 分叉时由用户显式决定放弃哪边
   RestoreCodeDraft
@@ -627,6 +643,7 @@ pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
 pub fn initial_model(
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
+  immersive? : Bool = false,
 ) -> Model {
   let program = @proposals.sample_hello()
   let config = match provider_config {
@@ -680,6 +697,7 @@ pub fn initial_model(
     explanation: "",
     ai_busy: false,
     selected_block: -1,
+    hover_path: None,
     block_draft: "",
     drag: None,
     runtime_values: @studio_lang.initial_values(program),
@@ -695,6 +713,7 @@ pub fn initial_model(
     pane_blocks: true,
     split_ratio: 0.55,
     left_view: LeftTree,
+    immersive,
     tree_query: "",
     tree_collapsed: [],
     ctx_tab: CtxProps,

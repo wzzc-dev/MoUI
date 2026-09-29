@@ -10,17 +10,110 @@ import {
   "examples/moui_studio/services/export",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views/style",
   "wzzc-dev/moui_i18n",
 }
 
 // Values
+pub const AI_CARD_LIMIT : Int = 24
+
+pub const ALIGN_MARGIN : Int = 24
+
+pub const AUDIT_LIMIT : Int = 200
+
+pub const BLOCK_ROW_HEIGHT : Double = 40.0
+
+pub const CATEGORY_RAIL_WIDTH : Double = 86.0
+
+pub const CHIPS_HEIGHT : Double = 26.0
+
+pub const COMPOSER_HEIGHT : Double = 82.0
+
+pub const COMPOSER_TOOLS_HEIGHT : Double = 20.0
+
 pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
+
+pub const FIELD_HEIGHT : Double = 26.0
+
+pub const FOLD_BAR_HEIGHT : Double = 27.0
+
+pub const HERO_HINT_HEIGHT : Double = 30.0
+
+pub const ICONBAR_WIDTH : Double = 48.0
+
+pub const IR_RAIL_WIDTH : Double = 30.0
+
+pub const LABEL_WIDTH_SAFETY : Double = 0.98
 
 pub const LANGUAGE_SETTINGS_KEY : String = "studio.language"
 
+pub const LEFTBAR_MAX_WIDTH : Double = 260.0
+
+pub const LEFTBAR_MIN_WIDTH : Double = 200.0
+
+pub const LEFTBAR_WIDTH : Double = 232.0
+
+pub const LOG_LIMIT : Int = 400
+
+pub const PANEL_HEAD_HEIGHT : Double = 30.0
+
+pub const RECENT_LIMIT : Int = 24
+
+pub const RECENT_STRIP_ROWS : Int = 3
+
+pub const RESTORE_STRIP_HEIGHT : Double = 28.0
+
+pub const RIGHTBAR_WIDTH : Double = 272.0
+
+pub const SEE_ALL_HEIGHT : Double = 20.0
+
+pub const STATUSBAR_HEIGHT : Double = 22.0
+
+pub const TOAST_LIMIT : Int = 3
+
+pub const TOPBAR_HEIGHT : Double = 40.0
+
+pub const TRAFFIC_LIGHT_INSET : Double = 78.0
+
+pub const TREE_META_WIDTH : Double = 68.0
+
+pub const TREE_ROW_HEIGHT : Double = 24.0
+
 pub const UNDO_DEPTH : Int = 50
 
+pub const WINDOW_CHROME_HEIGHT : Double = 26.0
+
+pub fn ai_card_height(Model, Double) -> Double
+
+pub fn ai_hero(Model) -> Bool
+
+pub fn ai_history_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn ai_layer(Model, @moui_i18n.Translator, Double, Double, Double) -> @core.View[Msg]?
+
+pub fn ai_pill_view(Model, @moui_i18n.Translator, Double, Double, Double) -> @core.View[Msg]
+
+pub fn anchor_hint_key(AiAnchor) -> String
+
+pub fn app_running(Model) -> Bool
+
+pub fn audit_error_count(Model) -> Int
+
 pub fn audit_op_rank(@studio_lang.StepOp) -> Int
+
+pub fn audit_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn block_category(@blocks.BlockKind) -> @blocks.BlockCategory
+
+pub fn block_category_entries(Model) -> Array[BlockCategoryEntry]
+
+pub fn block_category_fill(@blocks.BlockCategory) -> @core.Color
+
+pub fn block_category_first(Array[BlockCategoryEntry], Int) -> Int
+
+pub fn block_category_label_key(@blocks.BlockCategory) -> String
+
+pub fn block_category_text() -> @core.Color
 
 pub fn block_chain_of(Model) -> Array[@blocks.BlockItem]
 
@@ -30,7 +123,7 @@ pub fn block_notch_color() -> @core.Color
 
 pub fn block_text_color() -> @core.Color
 
-pub fn blocks_canvas(Array[@blocks.BlockItem], Array[String], Int, String, BlocksDragState?, Double, String) -> @core.View[Msg]
+pub fn blocks_canvas(Array[@blocks.BlockItem], Array[String], Int, String, BlocksDragState?, Double, Double, String) -> @core.View[Msg]
 
 pub fn blocks_canvas_background() -> @core.Color
 
@@ -40,21 +133,51 @@ pub fn blocks_drop_slot(Array[@blocks.BlockItem], Array[Int], Double, Array[@cor
 
 pub fn blocks_hit_index(Array[@blocks.BlockItem], Double, Double) -> Int
 
-pub fn blocks_item_rects(Array[@blocks.BlockItem]) -> Array[@core.Rect]
+pub fn blocks_item_rects(Array[@blocks.BlockItem], avail_width? : Double) -> Array[@core.Rect]
+
+pub fn blocks_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn blocks_parent_of(Array[Int]) -> Array[Int]
 
 pub fn blocks_same_path(Array[Int], Array[Int]) -> Bool
 
+pub fn bottom_strip_height(Model) -> Double
+
+pub fn brand_mark() -> @core.View[Msg]
+
+pub fn builtin_words(@studio_lang.Language) -> Array[String]
+
 pub fn bundle_files(String, String) -> Array[(String, String)]
+
+pub fn category_rail(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
+
+pub fn center_width_of(Model, Double) -> Double
+
+pub fn clone_path(Array[Int]) -> Array[Int]
+
+pub fn code_comment_color() -> @core.Color
+
+pub fn code_function_color() -> @core.Color
+
+pub fn code_keyword_color() -> @core.Color
+
+pub fn code_lines(Model) -> Array[CodeLine]
+
+pub fn code_number_color() -> @core.Color
+
+pub fn code_plain_color() -> @core.Color
+
+pub fn code_string_color() -> @core.Color
+
+pub fn code_type_color() -> @core.Color
+
+pub fn code_workspace(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn command_message(@core.CommandIntent) -> Msg
 
 pub fn command_palette_commands(@moui_i18n.Translator) -> Array[@core.ActionCommand]
 
 pub fn command_palette_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
-
-pub fn command_palette_host(@core.View[Msg], Model, @moui_i18n.Translator) -> @core.View[Msg]
 
 pub fn compile_action_bar(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
@@ -68,11 +191,23 @@ pub fn compiled_error_message(@moui_i18n.Translator, @compiled_runtime.ErrorDeta
 
 pub fn compiled_run_header(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
+pub fn console_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
 pub fn control_events(@ir.Control) -> Array[@ir.EventKind]
+
+pub fn control_kind_key(@ir.ControlKind) -> String
 
 pub fn control_rect(@ir.Control) -> @core.Rect
 
+pub fn count_badge(String, Int) -> @core.View[Msg]
+
 pub fn current_handler(Model) -> @ir.Handler?
+
+pub fn data_file_entries(Model) -> Array[DataFileEntry]
+
+pub fn decision_bar_height(Model) -> Double
+
+pub fn default_viewport_size() -> @core.Size
 
 pub fn design_backdrop_plan() -> Array[DesignDrawOp]
 
@@ -80,19 +215,43 @@ pub fn design_overlay_plan(@ir.StudioProgram, String, String?) -> Array[DesignDr
 
 pub fn design_stage(@ir.StudioProgram, String, String?, Array[@core.View[Msg]], Array[@core.Rect], String, String) -> @core.View[Msg]
 
+pub let design_total_height : Double
+
+pub fn diff_row(String, String, Double) -> @core.View[Msg]
+
+pub fn empty_hint(String, Double) -> @core.View[Msg]
+
 pub fn empty_program() -> @ir.StudioProgram
 
 pub fn empty_provider_config() -> ProviderConfig
+
+pub fn empty_stage(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn error_message(@moui_i18n.Translator, @studio_lang.LangError) -> String
 
 pub fn explanation_system_prompt() -> String
 
+pub fn fill_row(Array[@core.View[Msg]], Double, Double, @style.CrossAlign) -> @core.View[Msg]
+
+pub fn filter_studio_commands(Array[StudioCommand], String) -> Array[StudioCommand]
+
 pub fn first_control_name(Array[@ir.Control]) -> String
 
 pub fn first_handler_key(Array[@ir.Handler]) -> String
 
+pub fn fit_label(String, Double) -> String
+
+pub fn fit_scale(Double, Double, Double, Double) -> Double
+
+pub fn gate_pending(Model) -> Bool
+
 pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog]
+
+pub fn group_children(Array[TreeNode], String) -> Array[TreeNode]
+
+pub fn hairline() -> @core.View[Msg]
+
+pub fn hairline_v() -> @core.View[Msg]
 
 pub fn handler_key(String, String) -> String
 
@@ -100,11 +259,99 @@ pub fn hit_test_control(Array[@ir.Control], Double, Double) -> @ir.Control?
 
 pub fn hit_test_handle(@ir.Control, Double, Double) -> @ir.DragCorner?
 
-pub fn initial_model(provider_config? : ProviderConfig, compile_track_available? : Bool) -> Model
+pub fn icon_button(@style.IconName, String, Bool, Msg, Double, Double, Double) -> @core.View[Msg]
+
+pub fn ide_accent() -> @core.Color
+
+pub fn ide_accent_soft() -> @core.Color
+
+pub fn ide_border() -> @core.Color
+
+pub fn ide_border_soft() -> @core.Color
+
+pub fn ide_bottom_bar(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
+
+pub fn ide_danger() -> @core.Color
+
+pub fn ide_danger_soft() -> @core.Color
+
+pub fn ide_editor_background() -> @core.Color
+
+pub fn ide_elevated() -> @core.Color
+
+pub fn ide_hover() -> @core.Color
+
+pub fn ide_hover_strong() -> @core.Color
+
+pub fn ide_icon_bar(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
+
+pub fn ide_ir_highlight() -> @core.Color
+
+pub fn ide_left_panel(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn ide_panel() -> @core.Color
+
+pub fn ide_panel_alt() -> @core.Color
+
+pub fn ide_right_panel(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn ide_selection() -> @core.Color
+
+pub fn ide_status_bar(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
+
+pub fn ide_success() -> @core.Color
+
+pub fn ide_success_soft() -> @core.Color
+
+pub fn ide_text() -> @core.Color
+
+pub fn ide_text_faint() -> @core.Color
+
+pub fn ide_text_muted() -> @core.Color
+
+pub fn ide_top_bar(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
+
+pub fn ide_warning() -> @core.Color
+
+pub fn ide_warning_soft() -> @core.Color
+
+pub fn initial_model(provider_config? : ProviderConfig, compile_track_available? : Bool, immersive? : Bool) -> Model
+
+pub fn inline_card(@core.Color, @core.View[Msg], Double, Bool) -> @core.View[Msg]
+
+pub fn ir_line_spans(Model) -> Array[IrLineSpan]
+
+pub fn ir_ruler(Model, @moui_i18n.Translator, Array[IrLineSpan], Double, Double) -> @core.View[Msg]
+
+pub fn ir_span_at(Array[IrLineSpan], Array[Int]) -> IrLineSpan?
+
+pub fn ir_span_for_line(Array[IrLineSpan], Int) -> IrLineSpan?
+
+pub fn kv_row(String, String, Double, Bool) -> @core.View[Msg]
+
+pub fn live_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn local_explanation(Model) -> String
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (Result[@export.CompileReport, String]) -> Unit) -> Unit, provider_config? : ProviderConfig, compile_track_available? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+pub fn log_line(Model, LogLevel, String) -> Model
+
+pub fn pane_foot(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
+
+pub fn pane_head(String, String, Double, Array[@core.View[Msg]]) -> @core.View[Msg]
+
+pub fn panel_head(String, String, Array[@core.View[Msg]], Double) -> @core.View[Msg]
+
+pub fn pending_ai_cards(Model) -> Int
+
+pub fn pending_side_effects(Model) -> Int
+
+pub fn pill(String, @core.Color, Double) -> @core.View[Msg]
+
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (Result[@export.CompileReport, String]) -> Unit) -> Unit, provider_config? : ProviderConfig, compile_track_available? : Bool, immersive? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+
+pub fn program_tree(Model) -> Array[TreeNode]
+
+pub fn progress_bar(Int, Double) -> @core.View[Msg]
 
 pub fn proposal_error_text(@moui_i18n.Translator, @proposals.ProposalError) -> String
 
@@ -112,19 +359,49 @@ pub fn proposal_from_completion(Model, String) -> Model
 
 pub fn proposal_system_prompt() -> String
 
+pub fn push_ai_card(Model, AiCard) -> Model
+
+pub fn push_audit(Model, AuditKind, String, String) -> Model
+
+pub fn push_audit_error(Model, String, String) -> Model
+
+pub fn push_audit_side_effect(Model, String, String) -> Model
+
+pub fn push_recent(Model, String, String, Bool) -> Model
+
+pub fn push_toast(Model, String, Bool) -> Model
+
+pub fn same_category(@blocks.BlockCategory, @blocks.BlockCategory) -> Bool
+
+pub fn same_path(Array[Int], Array[Int]) -> Bool
+
 pub fn seed_code_draft(Model) -> Model
 
 pub fn select_block_by_path(Model, Array[Int]) -> Model
+
+pub fn settings_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
 pub fn snap_move_position(Array[@ir.Control], String, Double, Double, Double, Double) -> (Double, Double)
 
 pub fn snap_resize_position(Array[@ir.Control], String, @ir.Control, @ir.DragCorner, Double, Double) -> (Double, Double)
 
+pub fn split_line_texts(String) -> Array[String]
+
 pub fn split_lines(String) -> Array[String]
+
+pub fn splitter(Double, Double) -> @core.View[Msg]
 
 pub fn[Msg] stage_layout(Array[@core.View[Msg]], Array[@core.Rect]) -> @core.View[Msg]
 
+pub fn status_build_label(Model) -> String
+
+pub fn status_cells(Array[(String, Int)], Double) -> @core.View[Msg]
+
+pub fn status_position(Model) -> String
+
 pub fn structural_error_text(@moui_i18n.Translator, @ir.IrError) -> String
+
+pub fn studio_commands(@moui_i18n.Translator) -> Array[StudioCommand]
 
 pub fn studio_console_background() -> @core.Color
 
@@ -134,19 +411,51 @@ pub fn studio_stage_background() -> @core.Color
 
 pub fn studio_stage_outline() -> @core.Color
 
+pub fn studio_stage_title_bar() -> @core.Color
+
 pub fn studio_theme() -> @core.Theme
 
 pub fn studio_window_background() -> @core.Color
 
 pub fn text(@moui_i18n.Translator, String) -> String
 
+pub fn text_chip(String, Msg, Double, Bool) -> @core.View[Msg]
+
+pub fn text_estimate_width(String) -> Double
+
 pub fn text_with(@moui_i18n.Translator, String, Array[(String, String)]) -> String
+
+pub let title_bar_height : Double
+
+pub fn toast_host(@core.View[Msg], Model) -> @core.View[Msg]
+
+pub fn topbar_brand(String, Bool, String) -> @core.View[Msg]
 
 pub fn translator(Model) -> @moui_i18n.Translator
 
 pub fn translator_for(UiLanguage) -> @moui_i18n.Translator
 
+pub fn tree_group_controls() -> String
+
+pub fn tree_group_data() -> String
+
+pub fn tree_group_expanded(Model, String) -> Bool
+
+pub fn tree_group_handlers() -> String
+
+pub fn tree_group_has_children(Array[TreeNode], String) -> Bool
+
+pub fn tree_group_label_key(String) -> String
+
+pub fn tree_group_variables() -> String
+
+pub fn tree_group_window() -> String
+
+pub fn tree_row(String, String, Int, Bool, Bool, Bool, Msg?, Msg?, Double) -> @core.View[Msg]
+
 pub fn ui_language_from_tag(String) -> UiLanguage
+
+pub fn update_ide_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
 pub fn update_pure(Model, Msg) -> (Model, @core.Effect[Msg])
 
@@ -154,9 +463,69 @@ pub fn update_with_services(Model, Msg, @services.AppServices) -> (Model, @core.
 
 pub fn view(Model) -> @core.View[Msg]
 
+pub fn view_with_viewport(Model, @core.Size) -> @core.View[Msg]
+
+pub fn visible_groups(Array[TreeNode]) -> Array[String]
+
+pub fn visual_workspace(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn watch_rows(Model) -> Array[WatchRow]
+
+pub fn window_chrome_bar(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
+
 // Errors
 
 // Types and methods
+pub(all) enum AiAnchor {
+  AiCenter
+  AiLeft
+  AiRight
+  AiDocked
+}
+
+pub(all) struct AiCard {
+  kind : AiCardKind
+  title : String
+  body : String
+  steps : Array[String]
+  steps_done : Int
+  progress : Int
+  diff_lines : Array[(String, String)]
+  settled : Bool
+  settled_note : String
+  seq : Int
+}
+
+pub(all) enum AiCardKind {
+  CardPlan
+  CardDiff
+  CardSideEffect
+  CardExplanation
+  CardError
+}
+
+pub(all) struct AuditEntry {
+  kind : AuditKind
+  seq : Int
+  text : String
+  detail : String
+  stack : String
+  settled : Bool
+  settled_note : String
+}
+
+pub(all) enum AuditKind {
+  AuditOk
+  AuditRun
+  AuditWarn
+  AuditError
+}
+
+pub(all) struct BlockCategoryEntry {
+  category : @blocks.BlockCategory
+  first_index : Int
+}
+
 pub(all) struct BlocksDragState {
   list_path : Array[Int]
   from : Int
@@ -167,9 +536,28 @@ pub(all) enum BlocksDrawOp {
   BlockBody(Double, Double, Double, Double, @blocks.BlockKind)
   BlockTab(Double, Double, Double, @blocks.BlockKind)
   BlockNotchCut(Double, Double)
-  BlockLabel(String, Double, Double, Double)
+  BlockLabel(String, Double, Double, Double, String)
   BlockStroke(Double, Double, Double, Double)
   InsertMark(Double, Double, Double)
+}
+
+pub(all) struct CodeLine {
+  number : Int
+  tokens : Array[CodeToken]
+}
+
+pub(all) struct CodeToken {
+  kind : CodeTokenKind
+  text : String
+}
+
+pub(all) enum CodeTokenKind {
+  TokKeyword
+  TokString
+  TokNumber
+  TokBuiltin
+  TokComment
+  TokPlain
 }
 
 pub(all) struct CompiledRun {
@@ -178,9 +566,33 @@ pub(all) struct CompiledRun {
   checks : Map[String, Bool]
 }
 
+pub(all) enum ComposerMode {
+  ComposeEdit
+  ComposeGenerate
+  ComposeExplain
+  ComposeRepair
+} derive(Eq)
+
+pub(all) enum ContextTab {
+  CtxProps
+  CtxState
+  CtxData
+  CtxActions
+  CtxDeps
+}
+
+pub(all) struct DataFileEntry {
+  name : String
+  meta : String
+  locked : Bool
+  preview : String
+}
+
 pub(all) enum DesignDrawOp {
   WindowFrame(@core.Rect)
   GridDot(@core.Rect)
+  WindowTitleBar(@core.Rect)
+  TrafficLight(@core.Rect, Int)
   BoundsOutline(@core.Rect)
   GhostName(@core.Rect, String)
   SelectionStroke(@core.Rect)
@@ -208,6 +620,32 @@ pub(all) struct GeneratedI18nCatalog {
 pub(all) enum GeneratedI18nMessage {
   Text(String)
   Plural(one~ : String, other~ : String)
+}
+
+pub(all) struct IrLineSpan {
+  path : Array[Int]
+  kind : @blocks.BlockKind
+  depth : Int
+  first_line : Int
+  last_line : Int
+}
+
+pub(all) enum LeftView {
+  LeftTree
+  LeftData
+  LeftHidden
+}
+
+pub(all) enum LogLevel {
+  LogInfo
+  LogWarn
+  LogError
+}
+
+pub(all) struct LogLine {
+  level : LogLevel
+  seq : Int
+  text : String
 }
 
 pub(all) enum Mode {
@@ -239,6 +677,7 @@ pub(all) struct Model {
   command_palette_query : String
   pending : PendingProposal?
   prompt_draft : String
+  composer_mode : ComposerMode
   prompt_error : String
   provider_mode : ProviderMode
   provider_endpoint : String
@@ -254,6 +693,7 @@ pub(all) struct Model {
   ai_busy : Bool
   selected_block : Int
   block_draft : String
+  hover_path : Array[Int]?
   drag : DragState?
   runtime_values : Map[String, @studio_lang.Value]
   runtime_texts : Map[String, String]
@@ -263,6 +703,35 @@ pub(all) struct Model {
   redo_stack : Array[UndoEntry]
   proposal_history : Array[ProposalRecord]
   block_drag : BlocksDragState?
+  workspace : WorkSpace
+  pane_live : Bool
+  pane_blocks : Bool
+  split_ratio : Double
+  left_view : LeftView
+  immersive : Bool
+  tree_query : String
+  tree_collapsed : Array[String]
+  ctx_tab : ContextTab
+  bottom_open : Bool
+  bottom_height : Double
+  bottom_audit : Bool
+  audit_entries : Array[AuditEntry]
+  audit_seq : Int
+  log_lines : Array[LogLine]
+  log_seq : Int
+  recent_changes : Array[RecentChange]
+  recent_seq : Int
+  ai_anchor : AiAnchor
+  ai_pill : Bool
+  ai_cards_folded : Bool
+  ai_context_chips : Array[String]
+  ai_cards : Array[AiCard]
+  ai_card_seq : Int
+  settings_open : Bool
+  ai_history_open : Bool
+  toasts : Array[(String, Bool)]
+  selected_category : Int
+  ir_highlight : Array[Int]
 }
 
 pub(all) enum Msg {
@@ -288,6 +757,8 @@ pub(all) enum Msg {
   Undo
   Redo
   SetPrompt(String)
+  SetComposerMode(ComposerMode)
+  ComposerRun
   RealGenerationFinished(Result[String, String])
   ExplainHandler
   RealExplanationFinished(Result[String, String])
@@ -343,6 +814,42 @@ pub(all) enum Msg {
   ExportDirPicked(@services.ServiceTaskResult[String])
   ExportFileWritten(@services.ServiceTaskResult[Unit])
   SetNotice(String)
+  SetWorkSpace(WorkSpace)
+  TogglePaneLive
+  TogglePaneBlocks
+  SetSplitRatio(Double)
+  SetLeftView(LeftView)
+  SetTreeQuery(String)
+  ToggleTreeGroup(String)
+  SetContextTab(ContextTab)
+  SetBottomTab(Bool)
+  ToggleBottom
+  SetBottomHeight(Double)
+  AuditOpen(Int)
+  AuditSettle(Int, String)
+  AuditSettleAll(String)
+  ClearConsole
+  WindowClose
+  WindowMinimize
+  WindowZoom
+  WindowDragBy(Double)
+  CycleAiAnchor
+  SetAiAnchor(AiAnchor)
+  ToggleAiPill
+  ToggleAiCardsFold
+  AddAiContextChip(String)
+  RemoveAiContextChip(Int)
+  AlignControlLeft(String)
+  AlignControlCenter(String)
+  AlignControlRight(String)
+  ToggleSettings
+  ToggleAiHistory
+  DismissToast(Int)
+  StudioCommandRun(String)
+  SelectBlockCategory(Int)
+  HighlightIrPath(Array[Int])
+  HoverIrPath(Array[Int]?)
+  RestoreCodeDraft
 }
 
 pub(all) struct PendingProposal {
@@ -379,6 +886,13 @@ pub(all) struct ProviderRequestSpec {
   prompt : String
 }
 
+pub(all) struct RecentChange {
+  target : String
+  by_agent : Bool
+  action : String
+  seq : Int
+}
+
 pub(all) struct RunModel {
   handler_label : String
   state : @studio_lang.RunState
@@ -389,6 +903,39 @@ pub(all) struct RunModel {
 pub(all) enum RunTrack {
   Interpret
   Compile
+}
+
+pub(all) struct ShellChromeWidths {
+  left : Double?
+  center : Double
+  right : Double
+}
+
+pub(all) struct StudioCommand {
+  id : String
+  label : String
+  group : String
+  hint : String
+}
+
+pub(all) struct TreeNode {
+  kind : TreeNodeKind
+  label : String
+  meta : String
+  group : String
+  depth : Int
+  locked : Bool
+  select_key : String
+  action : String
+}
+
+pub(all) enum TreeNodeKind {
+  TnGroup
+  TnWindow
+  TnControl
+  TnVariable
+  TnHandler
+  TnDataFile
 }
 
 pub(all) enum UiLanguage {
@@ -405,6 +952,18 @@ pub(all) struct UndoEntry {
   selected_handler : String
   code_draft : String
   coalesce_key : String
+}
+
+pub(all) struct WatchRow {
+  name : String
+  value : String
+  type_label : String
+}
+
+pub(all) enum WorkSpace {
+  WsVisual
+  WsCode
+  WsEmpty
 }
 
 // Type aliases

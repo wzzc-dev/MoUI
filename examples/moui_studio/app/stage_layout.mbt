@@ -22,21 +22,18 @@ impl @core.ViewNode for StageLayout with fn declaration(_self) {
 
 ///|
 impl @core.ViewNode for StageLayout with fn layout(self, ctx) {
-  // 缩放从帧约束现算：min(帧宽/640, 帧高/480)。运行舞台（640×480 容器）
-  // 得 1.0；设计舞台「适应窗口」随画布列等比、固定档位得 zoom——与
-  // 背景/覆盖层画布的绘制比例同源，三层永不失配。无界约束（本征测量）
-  // 退回 1.0。放置管线以帧 tight 约束重排子树，子控件精确等于缩放后的
-  // 设计尺寸。
-  let by_width = ctx.constraints.min.width / design_width
-  let by_height = ctx.constraints.min.height / design_total_height
-  let scale = if by_width > 0.0 &&
-    by_width < 1.0e8 &&
-    by_height > 0.0 &&
-    by_height < 1.0e8 {
-    by_width.min(by_height)
-  } else {
-    1.0
-  }
+  // 缩放比例必须与**背景/覆盖层画布**同源。画布用 constraints.max 算
+  // 「适应窗口」（见 canvas.mbt 的 auto_fit_measure），所以这里也必须用
+  // max——原先用 `constraints.min`（测量期恒为 0）会退回 1.0，三层当场
+  // 失配：实测 w=900 时底板按比例缩小、控件层却按 1.0 摆放，按钮文字被
+  // 压成 0 宽。放置管线以帧 tight 约束重排子树（此时 min == max == 帧），
+  // 重排后比例不变，子控件精确等于缩放后的设计尺寸。
+  let scale = fit_scale(
+    ctx.constraints.max.width,
+    ctx.constraints.max.height,
+    design_width,
+    design_total_height,
+  )
   let size = ctx.constraints.constrain(
     @core.Size::new(
       width=design_width * scale,
@@ -75,4 +72,24 @@ pub fn[Msg] stage_layout(
   rects : Array[@geometry.Rect],
 ) -> @moui.View[Msg] {
   @core.View::from_node(StageLayout::{ rects, }, children=_node => children)
+}
+
+///|
+/// 「适应窗口」比例：min(可用宽/设计宽, 可用高/设计高)，钳在 [0.5, 1]。
+/// 上限 1 是不放大——设计稿 640×480 在宽窗格里保持原尺寸（放大只会让
+/// 像素发虚）；下限 0.5 保证再窄也还能看清内容。
+pub fn fit_scale(
+  avail_width : Double,
+  avail_height : Double,
+  design_w : Double,
+  design_h : Double,
+) -> Double {
+  if avail_width <= 0.0 ||
+    avail_height <= 0.0 ||
+    design_w <= 0.0 ||
+    design_h <= 0.0 {
+    1.0
+  } else {
+    (avail_width / design_w).min(avail_height / design_h).max(0.5).min(1.0)
+  }
 }

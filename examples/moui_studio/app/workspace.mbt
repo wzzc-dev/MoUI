@@ -28,11 +28,28 @@ pub fn live_pane(
     },
     width,
     [
+      // 「运行中 · N%」：设计稿 runBadge。百分比就是舞台的适应比例——
+      // 它是「现在看到的是缩略还是原尺寸」的唯一读数（fit_scale 算得）。
+      if app_running(model) {
+        run_badge(model, t, width, height)
+      } else {
+        @views.text("", width=1.0, height=1.0)
+      },
       icon_button(
         Focus,
         text(t, "app.pane.solo"),
         false,
         TogglePaneBlocks,
+        24.0,
+        22.0,
+        13.0,
+      ),
+      // 设计稿每个窗格头都有「隐藏此窗格」（#btnHideLive / #btnHideBlocks）
+      icon_button(
+        Close,
+        text(t, "app.pane.hide"),
+        false,
+        TogglePaneLive,
         24.0,
         22.0,
         13.0,
@@ -50,6 +67,8 @@ pub fn live_pane(
             run.checks,
             run.state.rows,
             run.state.selections,
+            width - 2.0,
+            height - 62.0,
           )
         None => design_stage_view(model, t)
       }
@@ -62,6 +81,8 @@ pub fn live_pane(
             run.checks,
             run.runtime.rows,
             run.runtime.selections,
+            width - 2.0,
+            height - 62.0,
           )
         None => design_stage_view(model, t)
       }
@@ -165,6 +186,59 @@ pub fn pane_head(
 }
 
 ///|
+/// 「运行中 · N%」徽标（设计稿 `#runBadge`）：绿点 + 单行读数。
+/// 百分比是舞台当前的适应比例——`fit_scale` 同一个来源，不另算一份。
+fn run_badge(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let live_width = (width * model.split_ratio).max(200.0)
+  let percent = (fit_scale(
+    live_width - 2.0,
+    height - 62.0,
+    @ir.DESIGN_WIDTH.to_double(),
+    @ir.DESIGN_HEIGHT.to_double(),
+  ) *
+  100.0).round()
+  @views.container(
+    @views.padding_xy(
+      @views.row(
+        [
+          @views.container(
+            @views.text("", width=1.0, height=1.0),
+            background=ide_success(),
+            corner_radius=3.0,
+            width=6.0,
+            height=6.0,
+            padding=0.0,
+          ),
+          @views.text(
+            text_with(t, "app.pane.live.badge", [
+              ("percent", percent.to_int().to_string()),
+            ]),
+            theme=studio_theme(),
+            role=Mono,
+            width=84.0,
+            height=16.0,
+            align=TextStart,
+          ).foreground(ide_success()),
+        ],
+        spacing=5.0,
+        align=Center,
+      ),
+      horizontal=8.0,
+      vertical=0.0,
+    ),
+    background=ide_success_soft(),
+    corner_radius=9.0,
+    height=18.0,
+    padding=0.0,
+  )
+}
+
+///|
 /// 可视化工作区脚注：当前子程序 + 事件标签（设计稿的 foot 行）。
 pub fn pane_foot(
   model : Model,
@@ -176,6 +250,11 @@ pub fn pane_foot(
     Some(handler) =>
       "\{handler.control_name} . \{text(t, "event.\{handler.event.tag()}")}"
   }
+  // 右侧计数按**文字实测宽**给：写死 90 会把「2 个控件」截掉（实测需要 102）。
+  let count_label = text_with(t, "app.pane.foot_controls", [
+    ("count", model.program.controls.length().to_string()),
+  ])
+  let count_w = text_estimate_width(count_label) + 6.0
   @views.container(
     @views.padding_xy(
       fill_row(
@@ -183,18 +262,16 @@ pub fn pane_foot(
           @views.text(
             label,
             theme=studio_theme(),
-            width=(width - 120.0).max(60.0),
+            width=(width - count_w - 30.0).max(60.0),
             height=16.0,
             align=TextStart,
           ).foreground(ide_text_faint()),
           @views.spacer(min_length=4.0, weight=1.0),
           @views.text(
-            text_with(t, "app.pane.foot_controls", [
-              ("count", model.program.controls.length().to_string()),
-            ]),
+            count_label,
             theme=studio_theme(),
             role=Mono,
-            width=90.0,
+            width=count_w,
             height=16.0,
             align=TextEnd,
           ).foreground(ide_text_faint()),
@@ -214,194 +291,57 @@ pub fn pane_foot(
 }
 
 ///|
-/// 积木窗格：分类条 + 积木画布 + 语句编辑条。
-/// 分类条点分类滚动到该类首块（选中分类记忆在 model.selected_category）。
-pub fn blocks_pane(
-  model : Model,
+/// 单窗格恢复带高度（设计稿 `.addbtn` 所在那一行）。
+pub const RESTORE_STRIP_HEIGHT : Double = 28.0
+
+///|
+/// 单窗格布局 + 顶部「+ 另一个窗格」恢复带。
+///
+/// 判据：`pane` 占满剩余高度；恢复带贴顶。带内只有一个按钮，文案是
+/// **被隐藏的那个窗格**的名字（点它就把那个窗格加回来）。
+fn single_pane_with_restore(
+  pane : @moui.View[Msg],
+  label : String,
+  on_click : Msg,
   t : @i18n.Translator,
   width : Double,
   height : Double,
 ) -> @moui.View[Msg] {
-  let handler_label = match current_handler(model) {
-    None => text(t, "app.handler.none")
-    Some(handler) =>
-      "\{handler.control_name} . \{text(t, "event.\{handler.event.tag()}")}"
-  }
-  let head = pane_head(text(t, "app.pane.blocks"), handler_label, width, [
-    icon_button(
-      Columns,
-      if model.pane_live {
-        text(t, "app.pane.hide_live")
-      } else {
-        text(t, "app.pane.show_live")
-      },
-      model.pane_live,
-      TogglePaneLive,
-      24.0,
-      22.0,
-      13.0,
-    ),
-  ])
-  let catbar = category_bar(model, t, width)
-  let body = match current_handler(model) {
-    None => empty_hint(text(t, "app.handler.none"), (height - 100.0).max(80.0))
-    Some(handler) => {
-      let blocks = @blocks.block_chain(handler.body)
-      let display_texts : Array[String] = []
-      for item in blocks {
-        let label = text(t, @blocks.block_label_key(item.kind))
-        display_texts.push(
-          if item.text == "" {
-            label
-          } else {
-            "\{label}  \{item.text}"
-          },
-        )
-      }
-      let rects = blocks_item_rects(blocks)
-      let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT + 24.0).max(
-        120.0,
-      )
-      let spotlight = current_spotlight(model)
-      @views.scroll_view(
-        blocks_canvas(
-          blocks,
-          display_texts,
-          model.selected_block,
-          spotlight,
-          model.block_drag,
-          width - 2.0,
-          canvas_height,
-          text(t, "app.blocks.canvas"),
-        ),
-        width=width - 2.0,
-        height=(height - 130.0).max(80.0),
-        shows_indicator=true,
-      )
-    }
-  }
-  @views.container(
-    @views.column(
-      [head, catbar, body, block_editor_bar(model, t, width)],
-      spacing=0.0,
-    ).frame(width~, height~),
-    background=ide_editor_background(),
-    width~,
-    height~,
-    padding=0.0,
+  let label_width = (text_estimate_width(label) * 1.05 + 20.0).min(
+    (width - 40.0).max(60.0),
   )
-}
-
-///|
-/// 积木分类条：5 个语义分类 + 「全部」。命中分类给出该分类首块下标，
-/// 视图层只做高亮（滚动定位需要 viewport 反馈，当前 core 没有
-/// 「滚到某偏移」的消息回环，所以这里诚实地只做选中态）。
-pub fn category_bar(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-) -> @moui.View[Msg] {
-  let entries = block_category_entries(model)
-  let chips : Array[@moui.View[Msg]] = [
-    text_chip(
-      text(t, "app.blocks.cat.all"),
-      SelectBlockCategory(-1),
-      52.0,
-      model.selected_category < 0,
-    ),
-  ]
-  let mut index = 0
-  for entry in entries {
-    let has_blocks = entry.first_index >= 0
-    let label = text(t, block_category_label_key(entry.category))
-    let selected = model.selected_category == index
-    let chip = if has_blocks {
-      text_chip(label, SelectBlockCategory(index), 62.0, selected)
-    } else {
-      // 无块分类：灰显不可点（诚实反映「本子程序没有这类块」）
-      text_chip(label, SelectBlockCategory(index), 62.0, false)
-    }
-    chips.push(chip)
-    index = index + 1
-  }
-  chips.push(@views.spacer(min_length=4.0, weight=1.0))
-  @views.container(
-    @views.padding_xy(
-      fill_row(chips, (width - 16.0).max(80.0), 4.0, Center),
-      horizontal=8.0,
-      vertical=0.0,
+  let restore = @views.container(
+    fill_row(
+      [
+        @views.container(
+          @views.center(
+            @views.text(
+              label,
+              theme=studio_theme(),
+              width=(label_width - 16.0).max(40.0),
+              height=18.0,
+              align=TextCenter,
+            ).foreground(ide_text_muted()),
+            width=label_width,
+            height=22.0,
+          ),
+          background=ide_panel_alt(),
+          corner_radius=4.0,
+          width=label_width,
+          height=22.0,
+          padding=0.0,
+        ).on_tap(on_click),
+      ],
+      (width - 16.0).max(60.0),
+      6.0,
+      Start,
     ),
     background=ide_panel(),
-    height=30.0,
+    height=RESTORE_STRIP_HEIGHT,
     width~,
     padding=0.0,
   )
-}
-
-///|
-/// 积木编辑条：选中块的语句草稿 + 应用/删除（旧 blocks_panel 的编辑区，
-/// 移入窗格脚注以把纵向空间还给画布）。
-fn block_editor_bar(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-) -> @moui.View[Msg] {
-  let blocks = match current_handler(model) {
-    None => ([] : Array[@blocks.BlockItem])
-    Some(handler) => @blocks.block_chain(handler.body)
-  }
-  if model.selected_block < 0 || model.selected_block >= blocks.length() {
-    return @views.container(
-      @views.text(
-        text(t, "app.blocks.reorder_hint"),
-        theme=studio_theme(),
-        width=(width - 20.0).max(60.0),
-        height=26.0,
-        align=TextStart,
-      ).foreground(ide_text_faint()),
-      background=ide_panel(),
-      height=30.0,
-      width~,
-      padding=0.0,
-    )
-  }
-  @views.container(
-    @views.padding_xy(
-      @views.row(
-        [
-          @views.text_area(
-            model.block_draft,
-            on_input=source => EditBlock(source),
-            lines=1,
-            width=(width - 190.0).max(80.0),
-            line_height=24.0,
-          ),
-          @views.button(
-            text(t, "app.block.apply"),
-            on_click=CommitBlock,
-            variant=Primary,
-            width=64.0,
-            height=26.0,
-          ),
-          @views.button(
-            text(t, "app.block.delete"),
-            on_click=DeleteBlock,
-            variant=Outline,
-            width=64.0,
-            height=26.0,
-          ),
-        ],
-        spacing=6.0,
-        align=Center,
-      ),
-      horizontal=8.0,
-      vertical=0.0,
-    ),
-    background=ide_panel(),
-    height=34.0,
-    width~,
-    padding=0.0,
-  )
+  @views.column([restore, pane], spacing=0.0).frame(width~, height~)
 }
 
 ///|
@@ -416,14 +356,45 @@ pub fn visual_workspace(
   if !model.pane_live && !model.pane_blocks {
     return empty_stage(model, t, width, height)
   }
+  // 单窗格：占满中心列，**并在顶部给一条恢复入口**。
+  //
+  // 设计稿的 `#btnAddLive`/`#btnAddBlocks` 就是干这个的：隐藏窗格之后必须
+  // 还能把它加回来，否则「隐藏」等于永久丢失（只能去设置里找，或者重开）。
+  // 这条恢复带只在**恰好剩一个窗格**时出现——两个都在时它没有意义。
   if !model.pane_blocks {
-    return live_pane(model, t, width, height)
+    return single_pane_with_restore(
+      live_pane(model, t, width, (height - RESTORE_STRIP_HEIGHT).max(80.0)),
+      text(t, "app.pane.show_blocks"),
+      TogglePaneBlocks,
+      t,
+      width,
+      height,
+    )
   }
   if !model.pane_live {
-    return blocks_pane(model, t, width, height)
+    return single_pane_with_restore(
+      blocks_pane(model, t, width, (height - RESTORE_STRIP_HEIGHT).max(80.0)),
+      text(t, "app.pane.show_live"),
+      TogglePaneLive,
+      t,
+      width,
+      height,
+    )
   }
-  let live_width = (width * model.split_ratio).max(200.0)
-  let rest = (width - live_width - 5.0).max(160.0)
+  // 双窗格有最小可用宽度：640 设计宽按 fit_scale 的 0.5 下限缩放后仍需
+  // ~320pt 才放得下，积木画布同理。中心列窄到放不下两个窗格时**只显示
+  // Live App**——把积木窗格压到 160pt 只会让里面的积木文字被裁掉
+  // （实测 w=900 时积木窗格 160pt、块内文字 410pt 宽被切）。
+  let live_min = 320.0
+  let blocks_min = 240.0
+  let gap = 5.0
+  if width < live_min + blocks_min + gap {
+    return live_pane(model, t, width, height)
+  }
+  // 占比也要钳：拖拽后任一侧都不得小于各自下限。
+  let max_live = width - blocks_min - gap
+  let live_width = (width * model.split_ratio).max(live_min).min(max_live)
+  let rest = (width - live_width - gap).max(blocks_min)
   @views.row(
     [
       live_pane(model, t, live_width, height),
@@ -496,7 +467,9 @@ pub fn code_workspace(
   for line in lines {
     rows.push(code_line_row(model, line, spans, width - 2.0))
   }
-  let ruler = ir_ruler(model, t, spans, width - 2.0)
+  // 高度预算：头 30 + 错误条 + 代码区 + 说明条 30 + 脚注
+  let code_height = (height - 180.0).max(100.0)
+  let ruler = ir_ruler(model, t, spans, IR_RAIL_WIDTH, code_height)
   let error_bar = if model.code_error == "" {
     @views.text("", width=1.0, height=1.0)
   } else {
@@ -519,13 +492,22 @@ pub fn code_workspace(
       [
         head,
         error_bar,
-        @views.scroll_view(
-          @views.column(rows, spacing=0.0),
-          width=width - 2.0,
-          height=(height - 150.0).max(100.0),
-          shows_indicator=true,
-        ),
-        ruler,
+        // 代码区与 IR 竖条**并排**（设计稿：竖条贴右缘、色块对齐代码行），
+        // 不是上下堆叠。两者同高，行号→色块的对应关系才是空间上的。
+        @views.row(
+          [
+            @views.scroll_view(
+              @views.column(rows, spacing=0.0),
+              width=(width - 2.0 - IR_RAIL_WIDTH).max(80.0),
+              height=code_height,
+              shows_indicator=true,
+            ),
+            ruler,
+          ],
+          spacing=0.0,
+          align=Start,
+        ).frame(width=width - 2.0, height=code_height),
+        code_hint_bar(t, width),
         code_foot(model, t, width),
       ],
       spacing=0.0,
@@ -546,8 +528,15 @@ fn code_line_row(
   spans : Array[IrLineSpan],
   width : Double,
 ) -> @moui.View[Msg] {
-  let highlighted = ir_span_for_line(spans, line.number) is Some(span) &&
+  let span = ir_span_for_line(spans, line.number)
+  let highlighted = span is Some(span) &&
     same_path(span.path, model.ir_highlight)
+  // 悬停高亮：与点击高亮**取并集**，但用更轻的底色——点击是驻留选择，
+  // 悬停是瞬态预览，两者视觉上要能区分开（设计稿 irHl 也是加一层 tl 边）。
+  let hovered = match (span, model.hover_path) {
+    (Some(span), Some(path)) => same_path(span.path, path)
+    _ => false
+  }
   let cells : Array[@moui.View[Msg]] = [
     @views.text(
       line.number.to_string(),
@@ -557,7 +546,10 @@ fn code_line_row(
       height=20.0,
       align=TextEnd,
     ).foreground(
-      if highlighted {
+      // 行号是「这一行和某条 IR 语句有关系」最直接的指示器：点击与悬停
+      // 都要点亮它，否则悬停整行只有底色变化、左缘的行号还是灰的，
+      // 看上去像没反应（实测就是漏了 `hovered` 这一支）。
+      if highlighted || hovered {
         ide_ir_highlight()
       } else {
         ide_text_faint()
@@ -583,21 +575,30 @@ fn code_line_row(
     }
     cells.push(@views.row(token_views, spacing=0.0, align=Center))
   }
+  // 行必须显式钉宽：`row` 只量到子节点之和，容器（ContainerBox）会把
+  // 「比容器窄」的子节点**居中**——表现是行号贴左、代码却飘在中间
+  // （实测行号 x=205、代码 x=460）。这是本仓最常复发的布局陷阱。
   @views.container(
     @views.padding_edges(
-      @views.row(cells, spacing=6.0, align=Center),
+      @views.row(cells, spacing=6.0, align=Center).frame(
+        width=(width - 16.0).max(20.0),
+      ),
       left=8.0,
       right=8.0,
     ),
     background=if highlighted {
       ide_selection()
+    } else if hovered {
+      ide_panel_alt()
     } else {
       ide_editor_background()
     },
     height=20.0,
     width~,
     padding=0.0,
-  )
+  ).on_hover(active => {
+    HoverIrPath(if active { span.map(span => span.path) } else { None })
+  })
 }
 
 ///|
@@ -632,69 +633,122 @@ fn code_token_color(kind : CodeTokenKind) -> @graphics.Color {
 }
 
 ///|
-/// IR 行尺：30pt 高的暖色条带，按映射区段画出每条语句占的行区间。
-/// 点条带发 HighlightIrPath —— 「代码 → IR」方向；点击积木块发同一条消息
-/// 即得反向高亮（两向共用 ir_highlight 一个状态）。
+/// IR 映射竖条（设计稿 `#irRuler`）：30pt 宽的竖条，与右侧代码**逐行对齐**，
+/// 每条语句按其行号区间画成一个色块。
+///
+/// 实现方式：**逐行一个 20pt 单元**的列，而不是一块 canvas。原因是交互：
+/// canvas 是纯绘制节点，拿不到「悬停/点击了哪一条」；要按指针 y 反查就得
+/// 自己在 `on_tap_with_frame` 里算，而 `on_hover` 只给 Bool、拿不到位置，
+/// 悬停方向就永远做不出来。逐行单元让每行各自持有 `on_hover`/`on_tap`，
+/// 命中判断交给框架，同时**对齐是天然的**（两列同为 20pt 行高）。
+///
+/// 连续块的观感靠圆角区分：区间首行圆上角、末行圆下角、中间行不圆角，
+/// 相邻行贴在一起就还原了设计稿里一根长条的样子。
+///
+/// 交互（这是本窗格脚注「悬停代码行或右缘色块试试」的兑现）：
+/// 悬停 → `HoverIrPath`（瞬态预览，离开还原）；点击 → `HighlightIrPath`
+/// （驻留高亮，再点一次取消）。
 pub fn ir_ruler(
   model : Model,
   t : @i18n.Translator,
   spans : Array[IrLineSpan],
   width : Double,
+  height : Double,
 ) -> @moui.View[Msg] {
-  let segments : Array[@moui.View[Msg]] = []
-  if spans.length() == 0 {
-    segments.push(
-      @views.text(
-        text(t, "app.code.ruler.empty"),
-        theme=studio_theme(),
-        width=(width - 20.0).max(80.0),
-        height=18.0,
-        align=TextStart,
-      ).foreground(ide_text_faint()),
-    )
-  } else {
-    for span in spans {
-      let active = same_path(span.path, model.ir_highlight)
-      let label = "\{span.first_line}–\{span.last_line}"
-      let segment = @views.container(
-        @views.center(
-          @views.text(
-            label,
-            theme=studio_theme(),
-            role=Mono,
-            width=42.0,
-            height=16.0,
-          ).foreground(
-            if active {
-              ide_editor_background()
-            } else {
-              ide_ir_highlight()
-            },
-          ),
-          width=50.0,
-          height=20.0,
-        ),
-        background=if active { ide_ir_highlight() } else { ide_panel_alt() },
-        corner_radius=3.0,
-        width=50.0,
-        height=20.0,
-        padding=0.0,
-      )
-      segments.push(segment.on_tap(HighlightIrPath(clone_path(span.path))))
+  let line_count = code_lines(model).length()
+  // 只画放得下的行：竖条不滚动，超出的部分本来也看不见。
+  let visible = (height / IR_RAIL_LINE_HEIGHT).floor().to_int().min(line_count)
+  let highlight = model.ir_highlight
+  let cells : Array[@moui.View[Msg]] = []
+  for line in 1..<=visible {
+    let span = ir_span_for_line(spans, line)
+    let cell = match span {
+      None =>
+        // 无映射的行：留空白单元占位，保证与代码行不错位
+        @views.container(
+          @views.text("", width=1.0, height=1.0),
+          background=ide_panel(),
+          width=IR_RAIL_WIDTH,
+          height=IR_RAIL_LINE_HEIGHT,
+          padding=0.0,
+        )
+      Some(span) => {
+        let hovered_bar = match model.hover_path {
+          Some(hover) => same_path(span.path, hover)
+          None => false
+        }
+        let active = same_path(span.path, highlight) || hovered_bar
+        let is_first = line == span.first_line
+        let is_last = line == span.last_line
+        // 首/末行圆角，中间行方角 —— 相邻贴合成一根长条
+        let radius = if is_first && is_last {
+          3.0
+        } else if is_first {
+          3.0
+        } else if is_last {
+          3.0
+        } else {
+          0.0
+        }
+        // 中间行向上/下各溢出 1pt，盖住单元间隙，避免长条出现横向接缝
+        let bar_height = if is_first && is_last {
+          14.0
+        } else if is_first || is_last {
+          17.0
+        } else {
+          IR_RAIL_LINE_HEIGHT
+        }
+        let bar = @views.container(
+          @views.text("", width=1.0, height=1.0),
+          background=if active {
+            ide_ir_highlight()
+          } else {
+            block_category_fill(block_category(span.kind))
+          },
+          corner_radius=radius,
+          width=14.0,
+          height=bar_height,
+          padding=0.0,
+        )
+        @views.container(
+          @views.row(
+            [
+              @views.spacer(min_length=5.0, weight=0.0),
+              bar,
+              @views.spacer(min_length=0.0, weight=1.0),
+            ],
+            spacing=0.0,
+            align=Center,
+          ).frame(width=IR_RAIL_WIDTH, height=IR_RAIL_LINE_HEIGHT),
+          background=ide_panel(),
+          width=IR_RAIL_WIDTH,
+          height=IR_RAIL_LINE_HEIGHT,
+          padding=0.0,
+        )
+        .on_hover(active => {
+          HoverIrPath(if active { Some(span.path) } else { None })
+        })
+        .on_tap(HighlightIrPath(span.path))
+      }
     }
+    cells.push(cell)
   }
   @views.container(
-    @views.padding_xy(
-      @views.row(segments, spacing=4.0, align=Center),
-      horizontal=8.0,
-      vertical=0.0,
-    ),
+    @views.column(cells, spacing=0.0).frame(width=IR_RAIL_WIDTH, height~),
     background=ide_panel(),
-    height=30.0,
-    width~,
+    width=IR_RAIL_WIDTH,
+    height~,
     padding=0.0,
   )
 }
+
+///|
+/// IR 竖条宽度（设计稿 #irRuler 30pt）。
+pub const IR_RAIL_WIDTH : Double = 30.0
+
+///|
+/// 竖条行高：与代码行高一致，色块才能和行对齐。
+const IR_RAIL_LINE_HEIGHT : Double = 20.0
 
 ///|
 /// 代码脚注：草稿编辑入口 + 恢复渲染 + 编译轨入口。
@@ -717,33 +771,7 @@ fn code_foot(
             width=(width - 20.0).max(80.0),
             line_height=20.0,
           ),
-          @views.row(
-            [
-              @views.text(
-                text(t, "app.code.draft_hint"),
-                theme=studio_theme(),
-                width=(width - 240.0).max(60.0),
-                height=16.0,
-                align=TextStart,
-              ).foreground(ide_text_faint()),
-              @views.button(
-                text(t, "app.code.restore"),
-                on_click=RestoreCodeDraft,
-                variant=Outline,
-                width=84.0,
-                height=26.0,
-              ),
-              @views.button(
-                text(t, "app.code.compile"),
-                on_click=CompileRun,
-                variant=Tonal,
-                width=96.0,
-                height=26.0,
-              ),
-            ],
-            spacing=6.0,
-            align=Center,
-          ),
+          code_foot_row(model, t, (width - 16.0).max(120.0)),
         ],
         spacing=6.0,
       ),
@@ -754,6 +782,101 @@ fn code_foot(
     width~,
     padding=0.0,
   )
+}
+
+///|
+/// 代码视图的说明条（设计稿 `#codeFoot`）：一句话讲清「行号 ↔ 积木块」
+/// 是双向的，并提示怎么试。它替代不了竖条本身，但用户第一次看到右侧
+/// 色块时需要一个「那是什么」的答案。
+fn code_hint_bar(t : @i18n.Translator, width : Double) -> @moui.View[Msg] {
+  @views.container(
+    @views.padding_xy(
+      fill_row(
+        [
+          @views.icon(Info, size=12.0, color=ide_text_faint()),
+          @views.text(
+            text(t, "app.code.foot_hint"),
+            theme=studio_theme(),
+            width=(width - 40.0).max(80.0),
+            height=16.0,
+            align=TextStart,
+          ).foreground(ide_text_faint()),
+        ],
+        (width - 20.0).max(80.0),
+        8.0,
+        Center,
+      ),
+      horizontal=10.0,
+      vertical=0.0,
+    ),
+    background=ide_panel(),
+    height=30.0,
+    width~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 代码页脚的动作行：草稿提示 + 恢复 + 编译。宽度按可用宽分配，
+/// 按钮用定宽胶囊（`@views.button` 的 width 是最小值，会把行撑破）。
+fn code_foot_row(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  // 按钮宽**按标签实测宽**给（+左右各 10 内垫）：写死 62/68 会把
+  // 「按 IR 重渲染」「编译 MoonBit」截成「按 IR 重渲」「编译 MoonB」。
+  // 内垫取 34：`text_estimate_width` 是估算，中文 + 拉丁混排的真实字形
+  // 比估算宽 5-8px，取值要把这段差额也盖住（实测 26 仍差 2.7px）。
+  let restore_w = text_estimate_width(text(t, "app.code.restore")) + 34.0
+  let compile_w = text_estimate_width(text(t, "app.code.compile")) + 34.0
+  let gap = 6.0
+  let hint_w = (width - restore_w - compile_w - gap * 2.0).max(40.0)
+  fill_row(
+    [
+      @views.text(
+        text(t, "app.code.draft_hint"),
+        theme=studio_theme(),
+        width=hint_w,
+        height=16.0,
+        align=TextStart,
+      ).foreground(ide_text_faint()),
+      foot_chip(text(t, "app.code.restore"), restore_w, false, RestoreCodeDraft),
+      foot_chip(text(t, "app.code.compile"), compile_w, true, CompileRun),
+    ],
+    width,
+    gap,
+    Center,
+  )
+}
+
+///|
+/// 页脚小胶囊：手搓定宽（button 的 width 是最小值，撑不出精确宽度）。
+fn foot_chip(
+  label : String,
+  width : Double,
+  primary : Bool,
+  on_click : Msg,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.center(
+      // 文字宽 = 胶囊宽 − 左右内垫（各 4）。原来减 8 但内垫是 4+4，
+      // 再叠上字形比估算宽，长标签会被截。
+      @views.text(
+        label,
+        theme=studio_theme(),
+        width=(width - 6.0).max(20.0),
+        height=16.0,
+      ).foreground(if primary { ide_accent() } else { ide_text_muted() }),
+      width~,
+      height=24.0,
+    ),
+    background=if primary { ide_accent_soft() } else { ide_panel_alt() },
+    corner_radius=4.0,
+    width~,
+    height=24.0,
+    padding=0.0,
+  ).on_tap(on_click)
 }
 
 // ============================================================================

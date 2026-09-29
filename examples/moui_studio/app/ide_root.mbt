@@ -59,7 +59,14 @@ fn shell_view(
   } else {
     PANEL_HEAD_HEIGHT
   }
-  let chrome = TOPBAR_HEIGHT + STATUSBAR_HEIGHT + bottom_height + 2.0
+  // 沉浸式：顶栏之上多一条窗控带（信号点 + 拖拽区）。它属于窗口外壳，
+  // 不占 IDE 的操作面高度——所以从内容高度里扣掉，顶栏本身保持 40。
+  let window_bar = if model.immersive { WINDOW_CHROME_HEIGHT } else { 0.0 }
+  let chrome = TOPBAR_HEIGHT +
+    STATUSBAR_HEIGHT +
+    bottom_height +
+    window_bar +
+    2.0
   let content_height = (height - chrome).max(200.0)
   let content = if fullscreen {
     // 全屏页（预览/帮助/运行）：两侧栏与图标栏都收起，内容居中占满
@@ -74,18 +81,18 @@ fn shell_view(
     workspace_row(model, t, width, content_height)
   }
   let bottom = ide_bottom_bar(model, t, width)
+  let bands : Array[@moui.View[Msg]] = []
+  if model.immersive {
+    bands.push(window_chrome_bar(model, t, width))
+  }
+  bands.push(ide_top_bar(model, t, width))
+  bands.push(hairline())
+  bands.push(content)
+  bands.push(bottom)
+  bands.push(hairline())
+  bands.push(ide_status_bar(model, t, width))
   @views.container(
-    @views.column(
-      [
-        ide_top_bar(model, t, width),
-        hairline(),
-        content,
-        bottom,
-        hairline(),
-        ide_status_bar(model, t, width),
-      ],
-      spacing=0.0,
-    ),
+    @views.column(bands, spacing=0.0).frame(width~, height~),
     background=studio_window_background(),
     width~,
     height~,
@@ -108,16 +115,17 @@ fn workspace_row(
     ide_icon_bar(model, t, row_height),
     hairline_v(),
   ]
-  // 左栏：树/数据/收起（收起时整列不占宽）
-  match model.left_view {
-    LeftHidden => ()
-    _ => {
-      cells.push(ide_left_panel(model, t, LEFTBAR_WIDTH, row_height))
+  let chrome = shell_chrome_widths(model, width)
+  // 左栏：树/数据/收起（收起时整列不占宽；窗口过窄时自动让位给中心）
+  match chrome.left {
+    Some(left_width) => {
+      cells.push(ide_left_panel(model, t, left_width, row_height))
       cells.push(hairline_v())
     }
+    None => ()
   }
   // 中心：工作区内容 + AI 浮动层的叠放宿主
-  let center_width = center_width_of(model, width)
+  let center_width = chrome.center
   // 避让带：浮动卡（非停靠、非药丸）贴着中心列底部，把内容区按卡高让出来，
   // 卡片就不会压住窗格脚注或底栏。停靠态在右栏内联，不占中心高度。
   // stack 给每个子整帧，所以「让出高度」不能靠在 stack 里改子高度做
@@ -165,35 +173,87 @@ fn workspace_row(
       @views.column(
         [
           @views.container(
-            match ai_layer(model, t, RIGHTBAR_WIDTH, 340.0, 0.0) {
+            match ai_layer(model, t, chrome.right, 340.0, 0.0) {
               Some(layer) => layer
               None => @views.text("", width=1.0, height=1.0)
             },
-            width=RIGHTBAR_WIDTH,
+            width=chrome.right,
             height=340.0,
             padding=0.0,
           ),
-          ide_right_panel(model, t, RIGHTBAR_WIDTH, row_height - 340.0),
+          ide_right_panel(model, t, chrome.right, row_height - 340.0),
         ],
         spacing=0.0,
       ).frame(height=row_height),
     )
   } else {
-    cells.push(ide_right_panel(model, t, RIGHTBAR_WIDTH, row_height))
+    cells.push(ide_right_panel(model, t, chrome.right, row_height))
   }
   @views.row(cells, spacing=0.0, align=Start).frame(height=row_height)
 }
 
 ///|
-/// 中心列宽：窗口宽 − 图标栏 48 − 左栏 + 分隔 − 右栏 + 分隔。
-/// 1280 窗口下的确定值；窗口更窄时由外层容器裁切（core 没有
-/// 「测量剩余宽度」的回环，弹性列在含 divider 的行里会丢布局）。
-fn center_width_of(model : Model, width : Double) -> Double {
-  let left = match model.left_view {
-    LeftHidden => 0.0
-    _ => LEFTBAR_WIDTH + 1.0
+/// 三列宽度：窗口宽 − 图标栏后由左/中/右分配。
+pub(all) struct ShellChromeWidths {
+  left : Double?
+  center : Double
+  right : Double
+}
+
+///|
+/// 三列宽度分配。宽窗口用设计稿的确定值（左 232 / 右 272 / 中心吃剩余）；
+/// 窄窗口按比例收窄两侧并**优先保住中心**——否则固定宽的三列加起来超过
+/// 窗口宽，右栏会被挤出屏幕（实际截图里右栏贴边、页签被切就是这个形态）。
+///
+/// 中心列有 320 的下限（三工作区都在这个宽度下仍然可用）。当
+/// 图标栏 + 左 + 中心下限 + 右都放不下时，**左栏自动让位**（返回 None）：
+/// 设计师在窄窗口下最需要的是中心舞台，左栏可以从图标栏再点开。
+fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
+  let usable = (width - ICONBAR_WIDTH - 2.0).max(120.0)
+  let center_min = 320.0
+  let wants_left = !(model.left_view is LeftHidden)
+  let left_want = LEFTBAR_WIDTH
+  let right_want = RIGHTBAR_WIDTH
+  if usable >= left_want + right_want + center_min {
+    // 宽窗口：设计稿确定值
+    ShellChromeWidths::{
+      left: if wants_left {
+        Some(left_want)
+      } else {
+        None
+      },
+      center: usable -
+      (if wants_left { left_want + 1.0 } else { 0.0 }) -
+      right_want -
+      1.0,
+      right: right_want,
+    }
+  } else {
+    // 窄窗口：右栏收到 232（仍放得下 5 个页签与读数），中心吃剩下的。
+    let right_shrunk = 232.0
+    let needed_left = left_want + 1.0
+    let room = usable - right_shrunk - 1.0
+    if wants_left && room >= needed_left + center_min {
+      ShellChromeWidths::{
+        left: Some(left_want),
+        center: room - needed_left,
+        right: right_shrunk,
+      }
+    } else {
+      // 左栏让位：中心拿满「可用 − 右栏」
+      ShellChromeWidths::{
+        left: None,
+        center: (usable - right_shrunk - 1.0).max(center_min),
+        right: right_shrunk,
+      }
+    }
   }
-  (width - ICONBAR_WIDTH - 1.0 - left - RIGHTBAR_WIDTH - 1.0).max(320.0)
+}
+
+///|
+/// 中心列宽（只读快照，供避让带计算与测试使用）。
+pub fn center_width_of(model : Model, width : Double) -> Double {
+  shell_chrome_widths(model, width).center
 }
 
 ///|

@@ -840,8 +840,24 @@ fn hero_hints(
     "app.ai.hero.roll_call", "app.ai.hero.history", "app.ai.hero.explain",
   ]
   let chips : Array[@moui.View[Msg]] = []
-  let cell = ((width - 16.0) / 3.0).max(80.0)
+  // 三等分是错的：中文示例句比英文长得多，等分会把最长的那条截掉
+  // （实测 1000px 宽时「生成一个班级点名册 App」需要 148.6 只拿到 136）。
+  // 按每条**实测宽**的比例分配，间距先扣掉。
+  let gap = 4.0
+  let inner = (width - 16.0).max(120.0)
+  // 卡片在窄窗只有 ~460pt，三条中文示例句**放不下**。等比压缩会把文字截成
+  // 半个词——那比不显示更糟。所以按自然宽**贪心放得下几条就放几条**，
+  // 一条都放不下就留空行（高度预算不变，卡片的排版不会跳）。
+  //
+  // 需求侧乘 1.05：`text_estimate_width` 比真实字形窄约 3%。
+  let mut used = 0.0
   for key in keys {
+    let need = text_estimate_width(text(t, key)) * 1.05 + 20.0
+    let with_gap = if chips.length() == 0 { need } else { need + gap }
+    if used + with_gap > inner && chips.length() > 0 {
+      continue
+    }
+    let cell = need
     chips.push(
       @views.container(
         @views.center(
@@ -861,6 +877,7 @@ fn hero_hints(
         padding=0.0,
       ).on_tap(SetPrompt(text(t, key))),
     )
+    used = used + with_gap
   }
   @views.container(
     @views.padding_xy(

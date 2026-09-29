@@ -30,4 +30,3 @@ pub fn tokens_for_variant(variant? : @common.DesignSchemeVariant, system_scheme?
 // Type aliases
 
 // Traits
-

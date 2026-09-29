@@ -10,6 +10,10 @@
 - (NSValue *)mouiOverlayRect;
 @end
 
+@interface NSView (MOUIDragRegionKey)
+- (NSValue *)mouiDragRegion;
+@end
+
 static BOOL moui_host_presenter_overlay_contains(NSView *view, NSPoint point) {
   NSView *parent = view.superview;
   NSNumber *active = objc_getAssociatedObject(view, @selector(mouiOverlayActive));
@@ -21,6 +25,52 @@ static BOOL moui_host_presenter_overlay_contains(NSView *view, NSPoint point) {
   // overlay bounds in the parent content-view coordinate space.
   NSPoint parent_point = [view convertPoint:point toView:parent];
   return NSPointInRect(parent_point, value.rectValue);
+}
+
+// The window-drag region is stored on the presenter's parent (the window
+// content view) as a rect in that parent's top-left ("MoUI logical") space,
+// exactly like `mouiOverlayRect`.  `local_point` is supplied in the presenter's
+// own bottom-left AppKit coordinate system, which is what both `mouseDown:`
+// (`convertPoint:fromView:nil`) and `hitTest:` (`convertPoint:fromView:`) hand
+// us once normalized through the parent.  Routing through the parent keeps the
+// two callers on one code path: AppKit documents `hitTest:` points as living in
+// the *superview's* space, while mouse events arrive in *window* space, and the
+// parent content view converts either into its own space.  An unset, empty, or
+// non-positive region reports NO so the presenter behaves exactly as before.
+static BOOL moui_host_presenter_drag_region_contains(NSView *view,
+                                                     NSPoint local_point) {
+  NSView *parent = view.superview;
+  if (parent == nil) {
+    return NO;
+  }
+  NSValue *value = objc_getAssociatedObject(parent, @selector(mouiDragRegion));
+  if (value == nil) {
+    return NO;
+  }
+  NSRect region = value.rectValue;
+  if (region.size.width <= 0.0 || region.size.height <= 0.0) {
+    return NO;
+  }
+  // Presenter-local (bottom-left) -> parent content-view space.
+  NSPoint parent_point = [view convertPoint:local_point toView:parent];
+  // MoUI logical coordinates are top-left; AppKit's default content view is
+  // bottom-left.  `MBWContentView` is flipped (top-left), so only flip when the
+  // parent is not, keeping this correct for either host content view.
+  if (!parent.isFlipped) {
+    parent_point.y = NSHeight(parent.bounds) - parent_point.y;
+  }
+  return NSPointInRect(parent_point, region);
+}
+
+// Presenters decline every hit unless a drag region claims the point, so a
+// click inside the region must be routed back to the presenter for
+// `mouseDown:` to fire at all.
+static NSView *moui_host_presenter_hit_test(NSView *view, NSPoint point) {
+  NSPoint local_point = [view convertPoint:point fromView:view.superview];
+  if (moui_host_presenter_drag_region_contains(view, local_point)) {
+    return view;
+  }
+  return moui_host_presenter_overlay_contains(view, point) ? view.superview : nil;
 }
 
 // The CPU presenter used to be an NSImageView whose `image` property was
@@ -77,7 +127,22 @@ static BOOL moui_host_presenter_overlay_contains(NSView *view, NSPoint point) {
 }
 
 - (NSView *)hitTest:(NSPoint)point {
-  return moui_host_presenter_overlay_contains(self, point) ? self.superview : nil;
+  return moui_host_presenter_hit_test(self, point);
+}
+
+// Only a click inside the declared drag region reaches this override (the
+// `hitTest:` above returns `self` solely for those points); every other click
+// is routed elsewhere by hit testing and normal interaction is unaffected.
+// `performWindowDragWithEvent:` needs the live AppKit event, which is exactly
+// why this decode lives here and not behind a `WindowRequest` variant.
+- (void)mouseDown:(NSEvent *)event {
+  NSPoint local_point = [self convertPoint:event.locationInWindow fromView:nil];
+  if (moui_host_presenter_drag_region_contains(self, local_point) &&
+      self.window != nil) {
+    [self.window performWindowDragWithEvent:event];
+    return;
+  }
+  [super mouseDown:event];
 }
 @end
 
@@ -86,7 +151,17 @@ static BOOL moui_host_presenter_overlay_contains(NSView *view, NSPoint point) {
 
 @implementation MOUIHostGpuSurfaceView
 - (NSView *)hitTest:(NSPoint)point {
-  return moui_host_presenter_overlay_contains(self, point) ? self.superview : nil;
+  return moui_host_presenter_hit_test(self, point);
+}
+
+- (void)mouseDown:(NSEvent *)event {
+  NSPoint local_point = [self convertPoint:event.locationInWindow fromView:nil];
+  if (moui_host_presenter_drag_region_contains(self, local_point) &&
+      self.window != nil) {
+    [self.window performWindowDragWithEvent:event];
+    return;
+  }
+  [super mouseDown:event];
 }
 @end
 
@@ -320,6 +395,92 @@ int32_t moui_macos_gpu_surface_presenter_test(void) {
                    (uint64_t)(uintptr_t)(__bridge void *)presenter.layer
                ? 1
                : 0;
+  }
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+void moui_macos_set_drag_region(uint64_t raw_view, double x, double y, double width,
+                                double height) {
+  @autoreleasepool {
+    if (raw_view == 0) return;
+    NSView *view = (__bridge NSView *)(void *)raw_view;
+    if (view == nil) return;
+    // Stored in the content view's top-left logical space, matching the
+    // runtime's `Rect`; the presenter helpers convert into it on demand.  An
+    // empty or negative rect clears the region so the presenters fall back to
+    // their unmodified hit-testing behavior.
+    BOOL empty = width <= 0.0 || height <= 0.0;
+    objc_setAssociatedObject(
+        view, @selector(mouiDragRegion),
+        empty ? nil : [NSValue valueWithRect:NSMakeRect(x, y, width, height)],
+        OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  }
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+void moui_macos_clear_drag_region(uint64_t raw_view) {
+  @autoreleasepool {
+    if (raw_view == 0) return;
+    NSView *view = (__bridge NSView *)(void *)raw_view;
+    if (view == nil) return;
+    objc_setAssociatedObject(view, @selector(mouiDragRegion), nil,
+                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  }
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_macos_drag_region_test(void) {
+  @autoreleasepool {
+    // A flipped parent mirrors `MBWContentView`; the presenter spans it fully.
+    NSView *parent = [[[MOUITestFlippedView alloc]
+        initWithFrame:NSMakeRect(0.0, 0.0, 200.0, 120.0)] autorelease];
+    MOUIHostGpuSurfaceView *gpu =
+        [[[MOUIHostGpuSurfaceView alloc]
+            initWithFrame:NSMakeRect(0.0, 0.0, 200.0, 120.0)] autorelease];
+    MOUIHostPixelImageView *cpu =
+        [[[MOUIHostPixelImageView alloc]
+            initWithFrame:NSMakeRect(0.0, 0.0, 200.0, 120.0)] autorelease];
+    [parent addSubview:gpu];
+    [parent addSubview:cpu];
+    uint64_t raw_parent = (uint64_t)(uintptr_t)(__bridge void *)parent;
+    NSRect strip = NSMakeRect(0.0, 0.0, 200.0, 40.0);
+
+    // No region configured: presenters must keep declining every hit.
+    if ([gpu hitTest:NSMakePoint(100.0, 100.0)] != nil ||
+        [cpu hitTest:NSMakePoint(100.0, 100.0)] != nil) {
+      return 0;
+    }
+    moui_macos_set_drag_region(raw_parent, strip.origin.x, strip.origin.y,
+                               strip.size.width, strip.size.height);
+    // Inside the top strip: the presenter itself must claim the hit so that
+    // `mouseDown:` can run.  Direct `hitTest:` input is in the parent's space.
+    if ([gpu hitTest:NSMakePoint(100.0, 10.0)] != gpu ||
+        [cpu hitTest:NSMakePoint(100.0, 10.0)] != cpu) {
+      return 0;
+    }
+    // Outside the strip (and below the presenter's own frame): still declined.
+    if ([gpu hitTest:NSMakePoint(100.0, 80.0)] != nil ||
+        [cpu hitTest:NSMakePoint(100.0, 80.0)] != nil) {
+      return 0;
+    }
+    // A zero-sized region is treated as unset.
+    moui_macos_set_drag_region(raw_parent, 0.0, 0.0, 0.0, 0.0);
+    if ([gpu hitTest:NSMakePoint(100.0, 10.0)] != nil ||
+        [cpu hitTest:NSMakePoint(100.0, 10.0)] != nil) {
+      return 0;
+    }
+    // Clearing restores the original behavior.
+    moui_macos_set_drag_region(raw_parent, strip.origin.x, strip.origin.y,
+                               strip.size.width, strip.size.height);
+    moui_macos_clear_drag_region(raw_parent);
+    if ([gpu hitTest:NSMakePoint(100.0, 10.0)] != nil ||
+        [cpu hitTest:NSMakePoint(100.0, 10.0)] != nil) {
+      return 0;
+    }
+    // A null handle must be a safe no-op.
+    moui_macos_set_drag_region(0, 0.0, 0.0, 10.0, 10.0);
+    moui_macos_clear_drag_region(0);
+    return 1;
   }
 }
 

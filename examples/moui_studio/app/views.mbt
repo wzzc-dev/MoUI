@@ -449,6 +449,8 @@ fn run_stage(
   checks : Map[String, Bool],
   rows : Map[String, Array[String]],
   selections : Map[String, Int],
+  avail_width : Double,
+  avail_height : Double,
 ) -> @moui.View[Msg] {
   let stage_widgets : Array[@moui.View[Msg]] = []
   let stage_rects : Array[@geometry.Rect] = []
@@ -476,10 +478,18 @@ fn run_stage(
       ),
     )
   }
+  // 运行舞台与设计舞台同一套「适应窗口」缩放：窗格比 640×480 窄时
+  // 等比缩小，而不是把内容切掉（实测 w=900 时舞台里的标签文字被裁）。
+  let fit = fit_scale(
+    avail_width - 2.0,
+    avail_height,
+    @ir.DESIGN_WIDTH.to_double(),
+    @ir.DESIGN_HEIGHT.to_double(),
+  )
   @views.container(
     stage_layout(stage_widgets, stage_rects),
-    width=@ir.DESIGN_WIDTH.to_double(),
-    height=@ir.DESIGN_HEIGHT.to_double(),
+    width=@ir.DESIGN_WIDTH.to_double() * fit,
+    height=@ir.DESIGN_HEIGHT.to_double() * fit,
     // 运行舞台与设计画布同一底板：运行的就是设计出来的那一块，
     // 两轨共用，不因「运行」切成另一套外观（技术风深色画板）。
     background=studio_stage_background(),
@@ -505,12 +515,15 @@ fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     None => compiled_run_header(model, t)
     Some(run) => {
       let runtime = run.runtime
+      // 全屏运行视图：可用空间充足，给设计尺寸即 fit=1（不放大不缩小）。
       let stage = run_stage(
         model,
         runtime.texts,
         run.checks,
         runtime.rows,
         runtime.selections,
+        @ir.DESIGN_WIDTH.to_double(),
+        @ir.DESIGN_HEIGHT.to_double(),
       )
       let stage_head = @views.column([
         @views.row([
@@ -714,12 +727,15 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   match model.run {
     None => @views.text("")
     Some(run) => {
+      // 全屏运行视图：可用空间充足，给设计尺寸即 fit=1（不放大不缩小）。
       let stage = run_stage(
         model,
         run.state.texts,
         run.checks,
         run.state.rows,
         run.state.selections,
+        @ir.DESIGN_WIDTH.to_double(),
+        @ir.DESIGN_HEIGHT.to_double(),
       )
       // 舞台条两行：标题行（正在运行 + 子程序）+ 按钮行（单步/继续/停止）。
       // 单行挤 436px 会把继续/停止裁掉（实测）；按钮仅在运行中显示，

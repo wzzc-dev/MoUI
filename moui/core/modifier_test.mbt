@@ -300,6 +300,59 @@ test "on_drag identity" {
 }
 
 ///|
+test "on_hover is a transparent observer with no focus stop or role" {
+  let view : @core.View[Bool] = @core.View::from_node(ModTestNode::{
+    kind: "hoverable",
+    size: @core.Size::new(width=8.0, height=8.0),
+  }).on_hover(hovered => hovered)
+  assert_true(view.identity().kind.contains("OnHover"))
+  // Hover feedback is an observer, not a control. This is the requirement most
+  // likely to regress silently: a role here would override the host view's role
+  // (a plain container must not announce itself as a Button), a focus stop would
+  // insert it into focus traversal, and a semantics action would make assistive
+  // technology offer an activation that hover does not have.
+  assert_true(!view.accepts_focus())
+  assert_eq(view.semantics().role, None)
+  assert_true(view.semantics_action_kinds().is_empty())
+}
+
+///|
+test "on_hover contributes no semantics of its own" {
+  let plain : @core.View[Bool] = @core.View::from_node(ModTestNode::{
+    kind: "hoverable-plain",
+    size: @core.Size::new(width=8.0, height=8.0),
+  })
+  let view : @core.View[Bool] = @core.View::from_node(ModTestNode::{
+    kind: "hoverable",
+    size: @core.Size::new(width=8.0, height=8.0),
+  }).on_hover(hovered => hovered)
+  // The modifier must not add a role of its own: whatever the wrapped view
+  // reported without `on_hover`, it still reports with it (here, `None` — a
+  // plain container must not start announcing itself as a Button).
+  assert_eq(view.semantics().role, plain.semantics().role)
+  assert_eq(view.semantics().role, None)
+  assert_eq(view.semantics().composition, Transparent)
+  assert_true(view.semantics_action_kinds().is_empty())
+}
+
+///|
+/// A hover observer must be at least as transparent as the other observer
+/// modifiers: like `on_secondary_tap` and `on_file_drop` it neither takes a
+/// focus stop nor contributes a role or action.
+test "on_hover matches on_secondary_tap transparency" {
+  let base = @core.View::from_node(ModTestNode::{
+    kind: "transparent-compare",
+    size: @core.Size::new(width=8.0, height=8.0),
+  })
+  let hover : @core.View[Unit] = base.on_hover(_hovered => ())
+  let secondary : @core.View[Unit] = base.on_secondary_tap(())
+  assert_true(!hover.accepts_focus())
+  assert_eq(hover.accepts_focus(), secondary.accepts_focus())
+  assert_eq(hover.semantics().role, secondary.semantics().role)
+  assert_true(hover.semantics_action_kinds().is_empty())
+}
+
+///|
 test "keyboard_shortcut identity" {
   let view : @core.View[Unit] = test_leaf().keyboard_shortcut(
     @core.KeyboardShortcut::new(

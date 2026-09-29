@@ -12,6 +12,14 @@ import {
 // Errors
 
 // Types and methods
+pub(all) struct AgentAccessibilityAnnouncement {
+  node_id : @core.SemanticsNodeId
+  generation : @core.SemanticsGeneration
+  live : @core.SemanticsLive
+  is_atomic : Bool
+  text : String
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum AgentActionError {
   HostClosed
   StaleGeneration(@core.SemanticsGeneration, @core.SemanticsGeneration)
@@ -59,10 +67,13 @@ pub(all) struct AgentSemanticsDelta {
   upserted : Array[@core.SemanticsNode]
   removed : Array[@core.SemanticsNodeId]
   issues : Array[AgentSemanticsIssue]
+  announcements : Array[AgentAccessibilityAnnouncement]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum AgentSemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
+  MissingRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId)
+  AmbiguousRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId, Array[@core.SemanticsNodeId])
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum AgentSemanticsRead {
@@ -118,4 +129,3 @@ pub(open) trait AgentHost {
   fn read_semantics(Self, @core.SemanticsGeneration?) -> Result[AgentSemanticsRead, AgentReadError]
   fn perform_action(Self, AgentActionRequest) -> Result[AgentActionReceipt, AgentActionError]
 }
-

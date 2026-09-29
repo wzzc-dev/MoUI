@@ -11,6 +11,27 @@
 ///|
 async fn main {
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
+  // 沉浸式无边框：隐藏系统标题栏、内容延伸到窗口顶端，顶栏之上由 app 层
+  // 让出一条 26pt 的窗控带。这是 mainline 桌面形态——Studio 是产品级 IDE，
+  // 不该顶着一个系统标题栏。
+  //
+  // 注意：`transparent_titlebar` 只把标题栏变透明，**系统红黄绿三个信号灯
+  // 仍然存在**（浮在左上角）。所以 app 层**不**自绘信号点——自绘会出现六个，
+  // 而且自绘的「缩放」没有对应的窗口请求可发，是死 UI。窗控带左侧按
+  // `TRAFFIC_LIGHT_INSET` 让位给原生按钮，hover/点击/键盘可达性都由 AppKit
+  // 提供。Web 端没有这个选项，`immersive` 在 Web 入口保持 false。
+  let immersive = true
+  // 窗控带的拖拽通道：app 声明「顶部 26pt 可拖」，宿主在这块区域里按下时
+  // 调用原生 `performWindowDragWithEvent:`。**同一个实例必须同时交给 app
+  // 与宿主**——app 侧写、宿主侧读；给两边各建一个的话永远拖不动。
+  //
+  // 无边框窗口没有标题栏，不接这条通道就完全没法移动窗口。
+  let window_drag = @services.WindowDragRegionSource::new()
+  let app_options = @macos.MacosHostAppOptions::new(
+    transparent_titlebar=immersive,
+    min_window_size=Some(@dpi.LogicalSize::LogicalSize(900.0, 600.0)),
+    window_drag=Some(window_drag),
+  )
   let owner = @provider.ProviderOwner::new()
   // 真编译执行器：与 provider 同一模式——UI 线程只入队，进程 IO 在 worker。
   let compile_owner = @compile.CompileOwner::new()
@@ -28,11 +49,12 @@ async fn main {
   }
   let runtime = @runtime.new_program_with_dimensions(
     program=@studio_app.program(
-      environment=@macos.app_environment(),
+      environment=@macos.app_environment(window_drag=Some(window_drag)),
       provider_config~,
       // native 入口：编译轨可达（Web 入口保持默认 false =
       // 只有解释轨 + 源码预览，边界在 docs 定位页写明）。
       compile_track_available=true,
+      immersive~,
       apply_locale=tag => {
         match runtime_ref.val {
           Some(runtime) =>
@@ -68,7 +90,7 @@ async fn main {
   let window_task : async () -> Unit = async fn() {
     @runtime.run_app("MoUI Studio", runtime)
     .render_all(@render_skia.from_env(platform=MacOS))
-    .backend(@macos.entry())
+    .backend(@macos.entry(options=app_options))
     .run_async_pump()
   }
   let worker_task : async () -> Unit = async fn() {

@@ -362,6 +362,7 @@ pub fn program(
   compile_submit? : CompileSubmit = noop_compile_submit,
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
+  immersive? : Bool = false,
   apply_locale? : (String) -> Unit = _tag => (),
 ) -> @moui.Program[Model, Msg] {
   let services = environment.services()
@@ -372,7 +373,7 @@ pub fn program(
   @moui.Program::new_with_environment(
     init=() => {
       (
-        initial_model(provider_config?, compile_track_available~),
+        initial_model(provider_config?, compile_track_available~, immersive~),
         @moui.Effect::batch([
           services
           .settings()
@@ -454,7 +455,36 @@ pub fn program(
     },
     // 壳按真实视口自适应：ViewEnvironment 提供 viewport_size，
     // 顶栏/状态栏按窗口宽铺满、中心列吃剩余宽度、底栏按视口宽铺。
-    view=(model, env) => view_with_viewport(model, env.viewport_size()),
+    view=(model, env) => {
+      let viewport = env.viewport_size()
+      // 沉浸式窗控带：把顶部那条 `WINDOW_CHROME_HEIGHT` 声明成「按住可拖窗」
+      // 的区域。无边框窗口没有系统标题栏，不声明这块就**完全没法移动窗口**。
+      //
+      // 这里是唯一同时拿得到 `services`（组合根闭包）与真实视口（`env`）的
+      // 地方，所以声明放在视图构建期。声明是**状态**不是命令：同一矩形重复
+      // 声明不推进 revision，宿主按 revision 去重，逐帧重发开销为零。
+      //
+      // 非沉浸式（Web 入口）必须清空——浏览器没有原生拖窗，
+      // 留下一个「看起来能拖但拖不动」的区域只会误导。
+      if model.immersive {
+        services
+        .platform()
+        .window_drag()
+        .set_region(
+          Some(
+            @core.Rect::new(
+              x=0.0,
+              y=0.0,
+              width=viewport.width,
+              height=WINDOW_CHROME_HEIGHT,
+            ),
+          ),
+        )
+      } else {
+        services.platform().window_drag().set_region(None)
+      }
+      view_with_viewport(model, viewport)
+    },
     subscriptions=model => run_subscription(model, timer),
   )
 }
