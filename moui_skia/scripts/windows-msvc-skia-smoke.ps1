@@ -244,7 +244,7 @@ if ($TextEmojiLog.Trim().Length -gt 0) {
 
 $includePath = $resolvedIncludeRoot -replace "\\", "/"
 $libPath = $resolvedLibDir -replace "\\", "/"
-$ccFlags = "/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I$includePath"
+$ccFlags = "/DMOUI_SKIA_HAS_SKIA /EHsc /I$includePath"
 if ($skparagraphEnabled) {
   $ccFlags = "$ccFlags /DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER"
 }

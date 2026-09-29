@@ -168,7 +168,7 @@ node scripts/conformance-capture-scaffold.mjs --mode benchmark
 ```
 
 
-> 该脚本会为原生 Skia 链接步骤配置 MSVC 环境，并提供共享的 C11 atomics 基础选项（`/experimental:c11atomics`）。在 Windows 上执行 `moon run ... --target native` 之前，每个 shell 需运行一次。`windows_wgpu` 诊断路线的 `wgpu_mbt` C stub（`<stdatomic.h>`）还需要 C11 模式（`/std:c11`）：Windows 构建/打包辅助脚本会对 WGPU 包自动启用；直接 `moon run` 时请先点源脚本并调用 `Enable-MsvcGlobalC11ModeForCOnlyStubs`（共享默认的 `/std:c11` 会与 `moui_skia` 的 `/std:c++20` Skia stub 选项冲突）。
+> 该脚本会为原生 Skia 链接步骤配置 MSVC 环境，并提供共享的 C11 atomics 基础选项（`/experimental:c11atomics`）。在 Windows 上执行 `moon run ... --target native` 之前，每个 shell 需运行一次。`windows_wgpu` 诊断路线的 `wgpu_mbt` C stub（`<stdatomic.h>`）还需要 C11 模式（`/std:c11`）：Windows 构建/打包辅助脚本会对 WGPU 包自动启用；直接 `moon run` 时请先点源脚本并调用 `Enable-MsvcGlobalC11ModeForCOnlyStubs`。`moui_skia` 的 Skia stub 不再强制 C++ 语言标准：MoonBit CLI 会为 MSVC stub 注入 `/std:c11`，而 `cl` 拒绝把它与任何 `/std:c++*` 组合。
 
 ### Showcase
 

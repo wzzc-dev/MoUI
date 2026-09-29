@@ -88,7 +88,7 @@ fn collect_moon_mod_paths(
   } else {
     @tools.resolve_path(repo_root, relative_dir)
   }
-  let entries : Array[String] = @fs.read_dir(absolute_dir) catch {
+  let entries : Array[String] = @fs.read_dir(absolute_dir).to_owned() catch {
     _ => {
       errors.push(
         "directory could not be read while scanning moon.mod: " + absolute_dir,

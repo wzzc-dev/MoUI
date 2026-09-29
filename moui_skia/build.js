@@ -647,7 +647,7 @@ function platformFlags(config, values) {
   let linkFlags = `-L${libPath} -l${skiaLib}`;
 
   if (platform === "windows") {
-    stubCcFlags = `/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I${includePath}`;
+    stubCcFlags = `/DMOUI_SKIA_HAS_SKIA /EHsc /I${includePath}`;
     const staticLib = path.join(libPath, `${skiaLib}.lib`);
     const dynamicImportLib = path.join(libPath, `${skiaLib}.dll.lib`);
     const dynamicDll = path.join(libPath, `${skiaLib}.dll`);

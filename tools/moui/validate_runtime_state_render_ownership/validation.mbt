@@ -105,7 +105,9 @@ fn collect_files(
   if !@tools.directory_exists(absolute) {
     return
   }
-  let entries : Array[String] = @fs.read_dir(absolute) catch { _ => return }
+  let entries : Array[String] = @fs.read_dir(absolute).to_owned() catch {
+    _ => return
+  }
   entries.sort()
   for entry in entries {
     if entry == "_build" || entry == "node_modules" || entry.has_prefix(".") {

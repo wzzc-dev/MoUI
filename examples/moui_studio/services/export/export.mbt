@@ -93,7 +93,7 @@ pub fn sanitize_name(name : String) -> String {
 ///|
 /// 导出项目的 moon.mod（版本与 Studio 发布口径一致，锁定运行时闭包）。
 pub fn moon_mod(name : String) -> String {
-  "name = \"\{name}\"\n\nversion = \"0.1.0\"\n\npreferred_target = \"native\"\n\nimport {\n  \"wzzc-dev/moui@0.1.12\",\n  \"wzzc-dev/window@0.5.4-0.1.7\",\n  \"wzzc-dev/moui_skia_renderer@0.1.11\",\n  \"wzzc-dev/moui_web_renderer@0.1.10\",\n  \"moonbitlang/async@0.22.1\",\n  \"moonbitlang/x@0.5.5\",\n}\n"
+  "name = \"\{name}\"\n\nversion = \"0.1.0\"\n\npreferred_target = \"native\"\n\nimport {\n  \"wzzc-dev/moui@0.1.12\",\n  \"wzzc-dev/window@0.5.4-0.1.7\",\n  \"wzzc-dev/moui_skia_renderer@0.1.11\",\n  \"wzzc-dev/moui_web_renderer@0.1.10\",\n  \"moonbitlang/async@0.22.4\",\n  \"moonbitlang/x@0.5.5\",\n}\n"
 }
 
 ///|

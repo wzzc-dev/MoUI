@@ -43,7 +43,7 @@ test "moon.mod 固定版本（运行时闭包起点）" {
   assert_true(manifest.contains("wzzc-dev/window@0.5.4-0.1.7"))
   assert_true(manifest.contains("wzzc-dev/moui_skia_renderer@0.1.11"))
   assert_true(manifest.contains("wzzc-dev/moui_web_renderer@0.1.10"))
-  assert_true(manifest.contains("moonbitlang/async@0.22.1"))
+  assert_true(manifest.contains("moonbitlang/async@0.22.4"))
   assert_true(manifest.contains("moonbitlang/x@0.5.5"))
 }
 

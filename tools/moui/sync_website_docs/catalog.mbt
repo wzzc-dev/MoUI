@@ -607,7 +607,7 @@ fn validate_catalog_against_repo(
   let docs_dir = @tools.resolve_path(repo_root, "docs")
   let root_docs : Array[String] = []
   if @tools.directory_exists(docs_dir) {
-    let names : Array[String] = @fs.read_dir(docs_dir) catch {
+    let names : Array[String] = @fs.read_dir(docs_dir).to_owned() catch {
       _ => return Err("docs directory could not be read")
     }
     names.sort_by((left, right) => left.lexical_compare(right))

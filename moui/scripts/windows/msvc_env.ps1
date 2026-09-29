@@ -268,8 +268,9 @@ function Set-MoonBitMsvcEnvironment {
   $env:MBT_WGPU_LINK_MODE = "dynamic"
   # /experimental:c11atomics alone does not define __STDC_VERSION__, so the
   # wgpu_mbt C stubs (<stdatomic.h>) additionally need /std:c11. /std:c11 must
-  # NOT be set unconditionally here: cl rejects it on the same command line as
-  # moui_skia's /std:c++20 Windows Skia stub flags (D8016). WGPU-targeting
+  # NOT be set unconditionally here: only WGPU-targeting packages need it, and
+  # older moui_skia stub flag sets pinned a C++ standard that cl rejected on the
+  # same command line (MSVC D8016). WGPU-targeting
   # consumers add it after sourcing this script via
   # Enable-MsvcGlobalC11ModeForCOnlyStubs. /utf-8 keeps UTF-8 vendored sources
   # from tripping C4819 on GBK code pages.

@@ -1,6 +1,6 @@
 # Windows 平台说明
 
-Windows 原生示例使用 MSVC 工具链、Visual Studio C++ build tools 和 vcpkg `zlib:x64-windows`。Skia 入口点是推荐的原生主线。WGPU 诊断入口点仍使用 `wgpu_mbt` dynamic 模式和官方 `wgpu-windows-x86_64-msvc-release.zip` release。`wgpu_mbt` 的 C stub 使用 `<stdatomic.h>`，在 MSVC 上需要 C11 模式：`scripts/windows/msvc_env.ps1` 通过共享 `CL` 环境提供 `/experimental:c11atomics /utf-8`，Windows 构建/打包辅助脚本会对导入 WGPU provider 的包追加 `/std:c11`；在点源脚本后的普通 shell 中直接运行 WGPU 入口前，请先调用 `Enable-MsvcGlobalC11ModeForCOnlyStubs`。共享 `CL` 默认刻意不带 `/std:c11`：cl 拒绝它出现在与 `moui_skia` 的 `/std:c++20` Windows Skia stub 选项相同的命令行上（D8016），而 Skia 路线不编译 `wgpu_mbt` stub。
+Windows 原生示例使用 MSVC 工具链、Visual Studio C++ build tools 和 vcpkg `zlib:x64-windows`。Skia 入口点是推荐的原生主线。WGPU 诊断入口点仍使用 `wgpu_mbt` dynamic 模式和官方 `wgpu-windows-x86_64-msvc-release.zip` release。`wgpu_mbt` 的 C stub 使用 `<stdatomic.h>`，在 MSVC 上需要 C11 模式：`scripts/windows/msvc_env.ps1` 通过共享 `CL` 环境提供 `/experimental:c11atomics /utf-8`，Windows 构建/打包辅助脚本会对导入 WGPU provider 的包追加 `/std:c11`；在点源脚本后的普通 shell 中直接运行 WGPU 入口前，请先调用 `Enable-MsvcGlobalC11ModeForCOnlyStubs`。共享 `CL` 默认刻意不带 `/std:c11`，只有导入 WGPU provider 的包才需要它。`moui_skia` 的 Skia stub 不再传递 C++ 语言标准选项，因此不会与 MoonBit CLI 为 MSVC stub 注入的 C11 模式冲突（MSVC D8016）。
 Windows 原生 WebView 支持由 `moui_webview` prebuild 从 `.tools/webview2/` 缓存目录自动检测（通过 `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2` 设置），这与 Linux 通过 `pkg-config` 自动检测 WebKitGTK 的方式匹配。fallback 构建在没有 WebView2 SDK 时编译，并报告 `HostWebViewCapabilities.available=false`；带 SDK 的构建使用以应用 HWND 为父级的 WebView2 controller，同步 `DrawFrame.platform_views`，转发受控 navigation 和 title/history/bridge 事件，并在渲染器呈现后 drain `WebViewController` task。可通过设置环境变量覆盖自动检测，例如 `MOUI_WINDOWS_ENABLE_WEBVIEW2=1`、`MOUI_WINDOWS_WEBVIEW2_INCLUDE=<webview2-sdk-include>` 和 `MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS=\"<WebView2Loader link flags>\"`，或设置显式的 `MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS` / `MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS` 对。当 WebView2 标志解析成功时，prebuild 会添加 `-DMOUI_WINDOWS_ENABLE_WEBVIEW2`。
 
 ## MSVC 设置
@@ -16,7 +16,7 @@ powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_ap
   -AppName MoUIShowcase
 ```
 
-MSVC 辅助脚本通过 `vswhere` 导入 `vcvarsall.bat`，把 `CC` 和 `CXX` 设置为 `PATH` 上的 `cl.exe`，并为 MoonBit 原生 stub 应用共享 `CL`/`LINK` 标志。它检测所选包是否导入 WGPU provider。Skia 包不会下载或打包 `wgpu_native.dll`；WGPU 诊断包设置 `MBT_WGPU_LINK_MODE=dynamic`，并把 `MBT_WGPU_NATIVE_ROOT` 指向已解压的 MSVC WGPU release。`moui_skia` 通过包 prebuild 为其 Windows Skia C++ 绑定发出 `/std:c++20` stub 标志。打包后的 MSVC 应用使用 vcpkg `zlib:x64-windows` runtime 进行原生图片解码。当 Visual Studio 捆绑的 vcpkg 拒绝直接 classic install 时，运行 `setup_msvc_deps.ps1 -InstallZlib`，使依赖通过 `.tools\\vcpkg-msvc` 下被忽略的仓库本地 manifest workspace 安装。打包应用应通过生成的 `run.cmd` 启动；WGPU 诊断包使用该包装器，使捆绑 WGPU release 元数据对动态加载器可见。
+MSVC 辅助脚本通过 `vswhere` 导入 `vcvarsall.bat`，把 `CC` 和 `CXX` 设置为 `PATH` 上的 `cl.exe`，并为 MoonBit 原生 stub 应用共享 `CL`/`LINK` 标志。它检测所选包是否导入 WGPU provider。Skia 包不会下载或打包 `wgpu_native.dll`；WGPU 诊断包设置 `MBT_WGPU_LINK_MODE=dynamic`，并把 `MBT_WGPU_NATIVE_ROOT` 指向已解压的 MSVC WGPU release。`moui_skia` 通过包 prebuild 为其 Windows Skia C++ 绑定发出 stub 标志，但不锁定 C++ 语言标准，以兼容 CLI 注入的 `/std:c11`。打包后的 MSVC 应用使用 vcpkg `zlib:x64-windows` runtime 进行原生图片解码。当 Visual Studio 捆绑的 vcpkg 拒绝直接 classic install 时，运行 `setup_msvc_deps.ps1 -InstallZlib`，使依赖通过 `.tools\\vcpkg-msvc` 下被忽略的仓库本地 manifest workspace 安装。打包应用应通过生成的 `run.cmd` 启动；WGPU 诊断包使用该包装器，使捆绑 WGPU release 元数据对动态加载器可见。
 
 设置后要直接运行入口点：
 

@@ -9,10 +9,10 @@ with the official `wgpu-windows-x86_64-msvc-release.zip` release. The
 through the shared `CL` environment, and the Windows build/package helpers add
 `/std:c11` for packages that import the WGPU provider. For a plain sourced
 shell, call `Enable-MsvcGlobalC11ModeForCOnlyStubs` before running WGPU
-entrypoints. `/std:c11` stays out of the shared `CL` default on purpose: cl
-rejects `/std:c11` on the same command line as `moui_skia`'s `/std:c++20`
-Windows Skia stub flags (D8016), and the Skia route does not compile the
-`wgpu_mbt` stubs.
+entrypoints. `/std:c11` stays out of the shared `CL` default on purpose:
+only packages that import the WGPU provider need it. The `moui_skia` Skia
+stubs no longer pass a C++ standard flag, so they never collide with the
+C11 mode the MoonBit CLI injects for MSVC stubs (MSVC D8016).
 Windows native WebView support is auto-detected by the `moui_webview`
 prebuild from the `.tools/webview2/` cache directory (set up by
 `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2`), matching how Linux
@@ -48,8 +48,8 @@ stubs. It detects whether the selected package imports the WGPU
 provider. Skia packages do not download or package `wgpu_native.dll`; WGPU
 diagnostic packages set `MBT_WGPU_LINK_MODE=dynamic` and point
 `MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `moui_skia` emits
-`/std:c++20` stub flags for its Windows Skia C++ bindings via the package
-prebuild. Packaged MSVC apps use the vcpkg
+its Windows Skia C++ stub flags via the package prebuild without pinning a
+C++ language standard, so they stay compatible with the CLI's `/std:c11`. Packaged MSVC apps use the vcpkg
 `zlib:x64-windows` runtime for native image decoding. When the
 Visual Studio-bundled vcpkg rejects direct classic installs, run
 `setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an

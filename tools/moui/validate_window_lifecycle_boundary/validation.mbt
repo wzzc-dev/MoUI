@@ -34,7 +34,9 @@ fn reject_tokens_in_package(
     failures.push(package_path + " is missing")
     return
   }
-  let entries : Array[String] = @fs.read_dir(directory) catch { _ => [] }
+  let entries : Array[String] = @fs.read_dir(directory).to_owned() catch {
+    _ => []
+  }
   for entry in entries {
     if entry.has_suffix(".mbt") || entry.has_suffix(".mbti") {
       match read_text(root, package_path + "/" + entry) {
@@ -158,7 +160,7 @@ fn validate_platform_entries(root : String, failures : Array[String]) -> Unit {
   if @tools.directory_exists(@tools.resolve_path(root, "moui/runtime")) {
     let entries : Array[String] = @fs.read_dir(
       @tools.resolve_path(root, "moui/runtime"),
-    ) catch {
+    ).to_owned() catch {
       _ => []
     }
     for entry in entries {
@@ -209,7 +211,9 @@ fn validate_embedded_session(root : String, failures : Array[String]) -> Unit {
   }
   let embedded_dir = @tools.resolve_path(root, package_path)
   if @tools.directory_exists(embedded_dir) {
-    let entries : Array[String] = @fs.read_dir(embedded_dir) catch { _ => [] }
+    let entries : Array[String] = @fs.read_dir(embedded_dir).to_owned() catch {
+      _ => []
+    }
     for entry in entries {
       if entry.has_suffix(".mbt") {
         match read_text(root, package_path + "/" + entry) {

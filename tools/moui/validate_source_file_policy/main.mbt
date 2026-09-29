@@ -217,7 +217,7 @@ fn collect_source_files(
 ) -> Unit raise SourcePolicyError {
   let absolute = @tools.resolve_path(repo_root, relative_path)
   if @tools.directory_exists(absolute) {
-    let entries : Array[String] = @fs.read_dir(absolute) catch {
+    let entries : Array[String] = @fs.read_dir(absolute).to_owned() catch {
       _ =>
         raise SourcePolicyError::Invalid(relative_path + " could not be read")
     }

@@ -505,7 +505,7 @@ fn read_platform_rows(
 ) -> Result[Array[PlatformRow], String] raise RepoDocsError {
   let relative_dir = "checks/platforms"
   let directory = @tools.resolve_path(repo_root, relative_dir)
-  let entries : Array[String] = @fs.read_dir(directory) catch {
+  let entries : Array[String] = @fs.read_dir(directory).to_owned() catch {
     _ => return Err(relative_dir + " could not be read")
   }
   entries.sort_by((left, right) => left.lexical_compare(right))

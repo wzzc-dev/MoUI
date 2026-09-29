@@ -15,7 +15,7 @@ fn collect_contract_files(
     failures.push("source directory missing: " + relative_dir)
     return
   }
-  let entries : Array[String] = @fs.read_dir(absolute) catch {
+  let entries : Array[String] = @fs.read_dir(absolute).to_owned() catch {
     _ => {
       failures.push("source directory unreadable: " + relative_dir)
       return

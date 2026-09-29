@@ -352,7 +352,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
 To run a Windows entrypoint directly, import the MSVC environment in the same
 PowerShell process. The helper imports `vcvarsall.bat`, sets `CC` and `CXX` to
 `cl.exe`, and applies shared `CL`/`LINK` flags for MoonBit native stubs. Skia
-C++ stubs still use their own `/std:c++20` flags from the `moui_skia` prebuild.
+C++ stubs use their own stub flags from the `moui_skia` prebuild without
+pinning a C++ language standard.
 
 This package ships `scripts/windows/msvc_env.ps1` so it is available after
 `moon publish` / `moon add wzzc-dev/moui`. The script walks up from the current

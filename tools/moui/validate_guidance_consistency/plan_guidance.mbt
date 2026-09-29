@@ -72,7 +72,7 @@ fn plan_files(
 ) -> Array[String] {
   let relative_dir = "docs/plans/" + directory
   let absolute_dir = @tools.resolve_path(repo_root, relative_dir)
-  let entries : Array[String] = @fs.read_dir(absolute_dir) catch {
+  let entries : Array[String] = @fs.read_dir(absolute_dir).to_owned() catch {
     _ => {
       failures.push(relative_dir + ": directory could not be read")
       return []

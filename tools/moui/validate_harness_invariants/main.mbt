@@ -141,7 +141,9 @@ fn collect_files_with_suffix(
   if !@tools.directory_exists(absolute) {
     return
   }
-  let entries : Array[String] = @fs.read_dir(absolute) catch { _ => return }
+  let entries : Array[String] = @fs.read_dir(absolute).to_owned() catch {
+    _ => return
+  }
   entries.sort_by((left, right) => left.lexical_compare(right))
   for entry in entries {
     if skipped_directory(entry) {
@@ -258,7 +260,7 @@ fn validate_entrypoint_catalog(
   let results : Array[HarnessFinding] = []
   let ui_roots : Array[String] = []
   let examples_root = @tools.resolve_path(repo_root, "examples")
-  let examples : Array[String] = @fs.read_dir(examples_root) catch {
+  let examples : Array[String] = @fs.read_dir(examples_root).to_owned() catch {
     _ => return results
   }
   examples.sort_by((left, right) => left.lexical_compare(right))
@@ -267,7 +269,7 @@ fn validate_entrypoint_catalog(
     if !@tools.directory_exists(example_path) {
       continue
     }
-    let children : Array[String] = @fs.read_dir(example_path) catch {
+    let children : Array[String] = @fs.read_dir(example_path).to_owned() catch {
       _ => continue
     }
     children.sort_by((left, right) => left.lexical_compare(right))
@@ -330,7 +332,7 @@ fn list_example_entrypoints(
   if !@tools.directory_exists(examples_root) {
     return found
   }
-  let examples : Array[String] = @fs.read_dir(examples_root) catch {
+  let examples : Array[String] = @fs.read_dir(examples_root).to_owned() catch {
     _ => return found
   }
   examples.sort_by((left, right) => left.lexical_compare(right))

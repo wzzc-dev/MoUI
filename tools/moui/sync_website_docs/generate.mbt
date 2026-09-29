@@ -429,7 +429,7 @@ fn sync_locale_dir(
   failures : Array[String],
 ) -> Unit {
   if @tools.directory_exists(locale_dir) {
-    let names : Array[String] = @fs.read_dir(locale_dir) catch {
+    let names : Array[String] = @fs.read_dir(locale_dir).to_owned() catch {
       _ => {
         if check {
           failures.push(
@@ -514,7 +514,7 @@ fn sync_or_check(
     locale_names.push(locale.tag)
   }
   if @tools.directory_exists(out_dir) {
-    let entries : Array[String] = @fs.read_dir(out_dir) catch {
+    let entries : Array[String] = @fs.read_dir(out_dir).to_owned() catch {
       _ => {
         if check {
           failures.push(
@@ -549,7 +549,7 @@ fn sync_or_check(
             relative_to_repo(repo_root, target),
           )
         } else {
-          let stale_names : Array[String] = @fs.read_dir(target) catch {
+          let stale_names : Array[String] = @fs.read_dir(target).to_owned() catch {
             _ => []
           }
           let mut removable = true

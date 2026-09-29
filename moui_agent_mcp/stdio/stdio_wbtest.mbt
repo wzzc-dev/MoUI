@@ -81,52 +81,43 @@ test "respond skips blank lines" {
 test "respond answers malformed JSON with a parse error" {
   let host : ClosedHost = ClosedHost::{ }
   guard respond(host, "not json", route_default) is Some(response)
-  assert_eq!(response.contains("-32700"), true)
-  assert_eq!(response.ends_with("\n"), true)
+  assert_eq(response.contains("-32700"), true)
+  assert_eq(response.ends_with("\n"), true)
 }
 
 ///|
 test "respond routes well-formed requests and closes responses" {
   let host : ClosedHost = ClosedHost::{ }
-  guard
-    respond(
-      host,
-      "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"initialize\"}",
+  guard respond(
+      host, "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"initialize\"}", route_default,
+    )
+    is Some(initialize)
+  assert_eq(initialize.contains("moui-agent"), true)
+  guard respond(
+      host, "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":\"tools/list\"}", route_default,
+    )
+    is Some(tools)
+  assert_eq(tools.contains("\"read_semantics\""), true)
+  assert_eq(tools.contains("\"perform_action\""), true)
+  guard respond(
+      host, "{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"tools/call\",\"params\":{\"name\":\"read_semantics\",\"arguments\":{}}}",
       route_default,
-    ) is Some(initialize)
-  assert_eq!(initialize.contains("moui-agent"), true)
-  guard
-    respond(
-      host,
-      "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":\"tools/list\"}",
-      route_default,
-    ) is Some(tools)
-  assert_eq!(tools.contains("\"read_semantics\""), true)
-  assert_eq!(tools.contains("\"perform_action\""), true)
-  guard
-    respond(
-      host,
-      "{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"tools/call\",\"params\":{\"name\":\"read_semantics\",\"arguments\":{}}}",
-      route_default,
-    ) is Some(read)
-  assert_eq!(read.contains("\"ok\":false"), true)
-  guard
-    respond(
-      host,
-      "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"bogus\"}",
-      route_default,
-    ) is Some(unknown)
-  assert_eq!(unknown.contains("-32601"), true)
+    )
+    is Some(read)
+  assert_eq(read.contains("\"ok\":false"), true)
+  guard respond(
+      host, "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"bogus\"}", route_default,
+    )
+    is Some(unknown)
+  assert_eq(unknown.contains("-32601"), true)
 }
 
 ///|
 test "diagnostics routing stays available over stdio" {
   let host : DiagnosticsClosedHost = DiagnosticsClosedHost::{ }
-  guard
-    respond(
-      host,
-      "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}",
-      route_diagnostics,
-    ) is Some(tools)
-  assert_eq!(tools.contains("\"diagnostics_read_state\""), true)
+  guard respond(
+      host, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}", route_diagnostics,
+    )
+    is Some(tools)
+  assert_eq(tools.contains("\"diagnostics_read_state\""), true)
 }

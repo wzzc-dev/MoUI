@@ -67,7 +67,7 @@ fn read_dir_names(
   if !@tools.directory_exists(path) {
     return Err(label + " is missing: " + path)
   }
-  let entries : Array[String] = @fs.read_dir(path) catch {
+  let entries : Array[String] = @fs.read_dir(path).to_owned() catch {
     _ => return Err(label + " could not be read: " + path)
   }
   entries.sort()

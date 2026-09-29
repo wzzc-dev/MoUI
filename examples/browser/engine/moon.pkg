@@ -28,6 +28,7 @@ warnings = "-unused_package"
 options(
   "native-stub": [ "net_bridge.c" ],
   targets: {
+    "extends.mbt": [ "native", "llvm" ],
     "net_bridge.mbt": [ "native", "llvm" ],
     "net_bridge_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "net.mbt": [ "native", "llvm" ],
