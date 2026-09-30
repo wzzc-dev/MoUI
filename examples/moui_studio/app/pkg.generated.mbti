@@ -29,9 +29,7 @@ pub const CATEGORY_RAIL_WIDTH : Double = 86.0
 
 pub const CHIPS_HEIGHT : Double = 26.0
 
-pub const COMPOSER_HEIGHT : Double = 82.0
-
-pub const COMPOSER_TOOLS_HEIGHT : Double = 20.0
+pub const COMPOSER_HEIGHT : Double = 98.0
 
 pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
 
@@ -81,6 +79,8 @@ pub const TOPBAR_ACTION_HEIGHT : Double = 24.0
 
 pub const TOPBAR_HEIGHT : Double = 40.0
 
+pub const TRAFFIC_LIGHT_CENTER_Y : Double = 15.8
+
 pub const TRAFFIC_LIGHT_INSET : Double = 78.0
 
 pub const TREE_META_WIDTH : Double = 68.0
@@ -89,9 +89,11 @@ pub const TREE_ROW_HEIGHT : Double = 24.0
 
 pub const UNDO_DEPTH : Int = 50
 
-pub const WINDOW_CHROME_HEIGHT : Double = 56.0
+pub const WINDOW_CHROME_HEIGHT : Double = 32.0
 
 pub fn action_chip(String, Msg, ChipTone, Double) -> @core.View[Msg]
+
+pub fn ai_anchor_toggle_key(Model) -> String
 
 pub fn ai_card_height(Model, Double) -> Double
 
@@ -132,6 +134,8 @@ pub fn block_fill(@blocks.BlockKind) -> @core.Color
 pub fn block_notch_color() -> @core.Color
 
 pub fn block_text_color() -> @core.Color
+
+pub fn blocks_body_height(Model, Double) -> Double
 
 pub fn blocks_canvas(Array[@blocks.BlockItem], Array[String], Int, String, BlocksDragState?, Double, Double, String) -> @core.View[Msg]
 
@@ -205,6 +209,8 @@ pub fn compiled_error_message(@moui_i18n.Translator, @compiled_runtime.ErrorDeta
 
 pub fn compiled_run_header(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
+pub fn composer_height(Double) -> Double
+
 pub fn console_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn control_events(@ir.Control) -> Array[@ir.EventKind]
@@ -260,6 +266,8 @@ pub fn fit_scale(Double, Double, Double, Double) -> Double
 pub fn gate_pending(Model) -> Bool
 
 pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog]
+
+pub fn ghost_icon_button(@style.IconName, String, Bool, Msg, Double, Double, Double, @core.Color) -> @core.View[Msg]
 
 pub fn group_children(Array[TreeNode], String) -> Array[TreeNode]
 
@@ -388,6 +396,8 @@ pub fn push_audit_side_effect(Model, String, String) -> Model
 pub fn push_recent(Model, String, String, Bool) -> Model
 
 pub fn push_toast(Model, String, Bool) -> Model
+
+pub fn round_send_button(String, Msg, Bool, Double) -> @core.View[Msg]
 
 pub fn same_category(@blocks.BlockCategory, @blocks.BlockCategory) -> Bool
 

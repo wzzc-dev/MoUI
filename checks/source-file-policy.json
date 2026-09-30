@@ -98,7 +98,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1662,
+      "maxLines": 1664,
       "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits."
     },
     {
