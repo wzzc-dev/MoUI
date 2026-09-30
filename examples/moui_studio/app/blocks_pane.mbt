@@ -288,12 +288,18 @@ fn block_editor_bar(
     @views.padding_xy(
       @views.row(
         [
-          @views.text_area(
+          // 单行语句编辑用 text_field 而不是 text_area：text_area 内部有
+          // 8pt×2 垂直内垫，lines=1 × 24 的高度扣完只剩 8pt 可见文本窗，
+          // 16pt 字形被竖切一半（「有些字不显示」的根因）。text_field 是
+          // 原生单行控件（自带水平滚动），Enter 直接应用草稿。
+          @views.text_field(
             model.block_draft,
             on_input=source => EditBlock(source),
-            lines=1,
+            on_submit=Some(CommitBlock),
+            placeholder="",
+            variant=Outline,
             width=draft_w,
-            line_height=24.0,
+            height=FIELD_HEIGHT,
           ),
           @views.button(
             text(t, "app.block.apply"),

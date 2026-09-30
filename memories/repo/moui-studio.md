@@ -443,6 +443,18 @@
   上下留白对称 ±4）+ 晶格点出现在舞台上方、AI 卡预算上限、无常驻提示行；
   居中断言已破断验证（stage_mapping 改顶对齐 → 红 30 vs 230）。
 
+## 2026-09-30 积木编辑条输入框竖切字（text_area 单行误用）
+
+- **症状**：积木编辑条的语句草稿框里字形被竖切一半（「有些字不显示」）。
+- **根因**：用 `text_area(lines=1, line_height=24)` 当单行输入框——text_area
+  内部有 8pt×2 垂直内垫，高度 24 扣完只剩 8pt 可见文本窗，16pt 字形被切。
+  （与 composer 两行高度的坑同源：**text_area 的高度账必须含 16pt 内垫**；
+  单行编辑场景根本不该用它。）
+- **修法**：改 `@views.text_field(variant=Outline, height=FIELD_HEIGHT,
+  on_submit=Some(CommitBlock))`——原生单行控件自带水平滚动，Enter 直接
+  应用草稿（编辑条高度 34 不变）。现有溢出扫描抓不到这种「控件内部裁剪」
+  （文字确实在它自己的 clip 窗内），别指望扫描网兜住这类。
+
 ## 2026-09-30 框架修复：嵌套 overlay host 双派发（模态点击全失效）
 
 - **症状**：app 有两层 overlay host（如 toast_host 包住 modal overlay_host）
