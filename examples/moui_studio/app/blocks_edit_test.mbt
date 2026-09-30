@@ -41,7 +41,7 @@ test "blocks insert mark follows sibling slots in chain space" {
   let mark_top = @app.blocks_insert_mark(
     blocks,
     rects,
-    Some({ list_path, from: 0, to: 0 }),
+    Some({ list_path, from: 0, to: 0, }),
   )
   let (top_y, _) = mark_top.unwrap()
   assert_eq(top_y, rects[0].origin.y - 3.0)
@@ -49,7 +49,7 @@ test "blocks insert mark follows sibling slots in chain space" {
   let mark_bottom = @app.blocks_insert_mark(
     blocks,
     rects,
-    Some({ list_path, from: 0, to: blocks.length() }),
+    Some({ list_path, from: 0, to: blocks.length(), }),
   )
   let (bottom_y, _) = mark_bottom.unwrap()
   assert_eq(bottom_y, rects[blocks.length() - 1].max_y() + 3.0)

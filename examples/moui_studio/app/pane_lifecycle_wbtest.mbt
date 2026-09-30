@@ -388,7 +388,9 @@ test "block editor card fits inside the blocks pane" {
   let selected = apply_shell(base, SelectBlock(0))
   let cleared = apply_shell(selected, EditBlock(""))
   let blocks = block_chain_of(cleared)
-  assert_true(cleared.selected_block >= 0 && cleared.selected_block < blocks.length())
+  assert_true(
+    cleared.selected_block >= 0 && cleared.selected_block < blocks.length(),
+  )
   let chip_label = text(
     translator(cleared),
     @blocks.block_label_key(blocks[cleared.selected_block].kind),
@@ -423,10 +425,7 @@ test "block editor card fits inside the blocks pane" {
   }
   // 编辑卡嵌在链条里之后，画布视口高度不再随选中变化（旧版选中块会
   // 让窗格高度 -34，画布抖动一次）
-  assert_eq(
-    blocks_body_height(cleared, 800.0),
-    blocks_body_height(base, 800.0),
-  )
+  assert_eq(blocks_body_height(cleared, 800.0), blocks_body_height(base, 800.0))
 }
 
 ///|

@@ -91,7 +91,9 @@ pub fn blocks_pane(
       let mark = blocks_insert_mark(blocks, rects, model.block_drag)
       let spotlight = current_spotlight(model)
       let sel = model.selected_block
-      let editing = sel >= 0 && sel < blocks.length() && blocks[sel].path.length() > 0
+      let editing = sel >= 0 &&
+        sel < blocks.length() &&
+        blocks[sel].path.length() > 0
       if editing {
         // Scratch/Blockly 的就地编辑口径：编辑器**嵌在链条里**——画布在
         // 选中块处拆成上下两段，编辑卡夹在中间（真实视图行，全宽）。
@@ -203,7 +205,8 @@ pub fn blocks_pane(
         // 画布高度 = max(内容高, 视口高)：scroll_view 会把**短于视口**的子
         // 节点垂直居中——块链一短就悬浮在画布中段（Scratch 是顶对齐的）。
         // 让画布节点至少占满视口，块永远从顶部开始排。
-        let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT + 24.0)
+        let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT +
+          24.0)
           .max(body_height)
           .max(120.0)
         @views.scroll_view(
@@ -395,65 +398,68 @@ fn block_editor_row(
   let card = @views.container(
     @views.padding_xy(
       @views.row(
-      [
-        @views.container(
-          @views.center(
-            @views.text(label, theme=studio_theme(), width=chip_w - 8.0, height=16.0).foreground(
-              block_text_color(),
+        [
+          @views.container(
+            @views.center(
+              @views.text(
+                label,
+                theme=studio_theme(),
+                width=chip_w - 8.0,
+                height=16.0,
+              ).foreground(block_text_color()),
+              width=chip_w,
+              height=22.0,
             ),
+            background=block_fill(kind),
+            corner_radius=4.0,
             width=chip_w,
             height=22.0,
+            padding=0.0,
           ),
-          background=block_fill(kind),
-          corner_radius=4.0,
-          width=chip_w,
-          height=22.0,
-          padding=0.0,
-        ),
-        // 单行语句编辑用 text_field：原生单行控件（自带水平滚动），
-        // Enter 直接应用草稿（text_area 的 8pt×2 垂直内垫会竖切字形）。
-        @views.text_field(
-          model.block_draft,
-          on_input=source => EditBlock(source),
-          on_submit=Some(CommitBlock),
-          placeholder=text(t, "app.block.editor_hint"),
-          variant=Outline,
-          width=field_w,
-          height=FIELD_HEIGHT,
-        ),
-        ghost_icon_button(
-          Check,
-          text(t, "app.block.apply"),
-          false,
-          CommitBlock,
-          icon_w,
-          icon_w,
-          14.0,
-          ide_elevated(),
-        ),
-        ghost_icon_button(
-          Clipboard,
-          text(t, "app.block.duplicate"),
-          false,
-          DuplicateBlock,
-          icon_w,
-          icon_w,
-          14.0,
-          ide_elevated(),
-        ),
-        ghost_icon_button(
-          Trash,
-          text(t, "app.block.delete"),
-          false,
-          DeleteBlock,
-          icon_w,
-          icon_w,
-          14.0,
-          ide_elevated(),
-        ),
-      ],
-      spacing=8.0,
-      align=Center,
+          // 单行语句编辑用 text_field：原生单行控件（自带水平滚动），
+          // Enter 直接应用草稿（text_area 的 8pt×2 垂直内垫会竖切字形）。
+          @views.text_field(
+            model.block_draft,
+            on_input=source => EditBlock(source),
+            on_submit=Some(CommitBlock),
+            placeholder=text(t, "app.block.editor_hint"),
+            variant=Outline,
+            width=field_w,
+            height=FIELD_HEIGHT,
+          ),
+          ghost_icon_button(
+            Check,
+            text(t, "app.block.apply"),
+            false,
+            CommitBlock,
+            icon_w,
+            icon_w,
+            14.0,
+            ide_elevated(),
+          ),
+          ghost_icon_button(
+            Clipboard,
+            text(t, "app.block.duplicate"),
+            false,
+            DuplicateBlock,
+            icon_w,
+            icon_w,
+            14.0,
+            ide_elevated(),
+          ),
+          ghost_icon_button(
+            Trash,
+            text(t, "app.block.delete"),
+            false,
+            DeleteBlock,
+            icon_w,
+            icon_w,
+            14.0,
+            ide_elevated(),
+          ),
+        ],
+        spacing=8.0,
+        align=Center,
       ),
       horizontal=8.0,
       vertical=0.0,
