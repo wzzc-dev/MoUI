@@ -22,31 +22,27 @@ impl @core.ViewNode for StageLayout with fn declaration(_self) {
 
 ///|
 impl @core.ViewNode for StageLayout with fn layout(self, ctx) {
-  // 缩放比例必须与**背景/覆盖层画布**同源。画布用 constraints.max 算
-  // 「适应窗口」（见 canvas.mbt 的 auto_fit_measure），所以这里也必须用
-  // max——原先用 `constraints.min`（测量期恒为 0）会退回 1.0，三层当场
-  // 失配：实测 w=900 时底板按比例缩小、控件层却按 1.0 摆放，按钮文字被
-  // 压成 0 宽。放置管线以帧 tight 约束重排子树（此时 min == max == 帧），
+  // 满幅画布映射（canvas.mbt 的 stage_mapping 同一公式）：舞台按 fit_scale
+  // （[0.5,1] 钳制）缩放后**居中**在窗格里，控件层节点本身铺满窗格。
+  // 三层（背景/控件/覆盖）与指针换算共用同一映射，任何一层各算一份就会
+  // 失配（实测 w=900 时底板按比例缩小、控件层却按 1.0 摆放，按钮文字被
+  // 压成 0 宽）。放置管线以帧 tight 约束重排子树（此时 min == max == 帧），
   // 重排后比例不变，子控件精确等于缩放后的设计尺寸。
-  let scale = fit_scale(
-    ctx.constraints.max.width,
-    ctx.constraints.max.height,
-    design_width,
-    design_total_height,
-  )
+  let avail_w = ctx.constraints.max.width
+  let avail_h = ctx.constraints.max.height
+  let scale = fit_scale(avail_w, avail_h, design_width, design_total_height)
+  let ox = (avail_w - design_width * scale) / 2.0
+  let oy = (avail_h - design_total_height * scale) / 2.0
   let size = ctx.constraints.constrain(
-    @core.Size::new(
-      width=design_width * scale,
-      height=design_total_height * scale,
-    ),
+    @core.Size::new(width=avail_w, height=avail_h),
   )
   let frames : Array[@core.Rect] = []
   for rect in self.rects {
     // 内容区从标题条之下开始：控件 y 要整体下移一条标题条。
     frames.push(
       @core.Rect::new(
-        x=rect.origin.x * scale,
-        y=(title_bar_height + rect.origin.y) * scale,
+        x=ox + rect.origin.x * scale,
+        y=oy + (title_bar_height + rect.origin.y) * scale,
         width=rect.size.width * scale,
         height=rect.size.height * scale,
       ),

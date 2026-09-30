@@ -11,18 +11,37 @@ let design_width : Double = @ir.DESIGN_WIDTH.to_double()
 let design_height : Double = @ir.DESIGN_HEIGHT.to_double()
 
 ///|
-/// 指针位置 → 设计坐标：减去帧原点与标题条，再除以缩放。
+/// 指针位置 → 设计坐标：先取满幅画布的舞台映射（缩放 + 居中原点），
+/// 再减去原点与标题条、除以缩放。
 /// 三条消费路径（点选、拖拽、覆盖层绘制）必须共用这一个换算，
 /// 各写一份就会出现「看得到、点不到」的偏移。
 fn stage_point(
   position : @geometry.Point,
   frame : @geometry.Rect,
-  scale : Double,
 ) -> (Double, Double) {
-  (
-    (position.x - frame.origin.x) / scale,
-    (position.y - frame.origin.y) / scale - title_bar_height,
+  let (scale, ox, oy) = stage_mapping(frame)
+  ((position.x - ox) / scale, (position.y - oy) / scale - title_bar_height)
+}
+
+///|
+/// 满幅画布的舞台映射：画布节点铺满整个窗格，640×480 的拟真窗口按
+/// fit_scale 缩放后**居中**放在画布里（Figma 式——点阵晶格铺满窗格，
+/// 白色 App 窗口浮在画布上），返回（缩放，舞台原点 x/y，窗口全局坐标）。
+/// 背景 / 控件层（StageLayout）/ 覆盖层 / 指针换算四处共用这一个函数——
+/// 任何一层各算一份就会出现「框选到了、描边没跟上」或「看得到点不到」。
+/// 缩放用 fit_scale 的 [0.5, 1] 钳制：不放大（像素发虚），也不把舞台
+/// 缩到看不清；信箱式的留白由满幅点阵接管，不再是死黑。
+fn stage_mapping(frame : @geometry.Rect) -> (Double, Double, Double) {
+  let scale = fit_scale(
+    frame.size.width,
+    frame.size.height,
+    design_width,
+    design_total_height,
   )
+  let ox = frame.origin.x + (frame.size.width - design_width * scale) / 2.0
+  let oy = frame.origin.y +
+    (frame.size.height - design_total_height * scale) / 2.0
+  (scale, ox, oy)
 }
 
 ///|
@@ -503,26 +522,19 @@ fn guide_color() -> @graphics.Color {
 }
 
 ///|
-/// 设计舞台：三层结构，治本「设计≠运行」的双渲染器问题。
-/// 1) 背景画布：窗体框 + 点阵 + 空态提示（纯绘制）；
-/// 2) 控件层：真实控件（与运行舞台共用 form_widget 构造），StageLayout
-///    按 IR 矩形分配帧——设计态外观与运行态由构造保证一致；
-/// 3) 手势覆盖层：透明画布拦截全部指针事件（控件收不到输入），绘制
-///    选中描边/名牌/参考线，并把指针转成设计坐标的 typed Msg。
-/// 缩放：三个层都从各自帧现算同一比例 min(帧宽/640, 帧高/480)——
-/// zoom > 0 时舞台固定 640×zoom 由调用方的滚动容器接管，zoom = 0 时
-/// 等比铺满画布列；指针换算无需额外分支。
-pub fn design_stage(
-  program : @ir.StudioProgram,
-  selection : String,
-  drag_control : String?,
-  stage_widgets : Array[@moui.View[Msg]],
-  stage_rects : Array[@geometry.Rect],
-  semantics_label : String,
-  empty_hint : String,
-) -> @moui.View[Msg] {
-  fn auto_fit_measure(constraints : @core.Constraints) -> @geometry.Size {
-    // 等比铺满：宽 = min(可用宽, 可用高 ÷ 高宽比)；无界约束退回 1:1 基准
+/// 满幅测量的画布节点尺寸：铺满调用方给的窗格（有界约束），无界时退回
+/// 拟合尺寸（舞台 640×514）。三层画布/控件全部走这一个口径。
+fn pane_fill_measure(constraints : @core.Constraints) -> @geometry.Size {
+  let bounded = constraints.max.width > 0.0 &&
+    constraints.max.width < 1.0e8 &&
+    constraints.max.height > 0.0 &&
+    constraints.max.height < 1.0e8
+  if bounded {
+    @geometry.Size::new(
+      width=constraints.max.width,
+      height=constraints.max.height,
+    )
+  } else {
     let ratio = design_total_height / design_width
     let mut width = if constraints.max.width < constraints.max.height / ratio {
       constraints.max.width
@@ -534,48 +546,76 @@ pub fn design_stage(
     }
     @geometry.Size::new(width~, height=width * ratio)
   }
-  // 与 StageLayout 的帧缩放共用同一比例来源（min(帧宽/640, 帧高/480)）
-  fn frame_scale(frame : @core.Rect) -> Double {
-    let by_width = frame.size.width / design_width
-    let by_height = frame.size.height / design_total_height
-    if by_width > 0.0 &&
-      by_width < 1.0e8 &&
-      by_height > 0.0 &&
-      by_height < 1.0e8 {
-      by_width.min(by_height)
-    } else {
-      1.0
-    }
-  }
+}
+
+///|
+/// 设计舞台：三层结构，治本「设计≠运行」的双渲染器问题。
+/// 1) 背景画布：**铺满整个窗格**——点阵晶格从舞台内容区向四周延续
+///    （Figma 式画布），白色拟真 App 窗口浮在画布中央；信箱式的留白
+///    由晶格接管，不再是死黑；
+/// 2) 控件层：真实控件（与运行舞台共用 form_widget 构造），StageLayout
+///    按 IR 矩形分配帧——设计态外观与运行态由构造保证一致；
+/// 3) 手势覆盖层：透明画布拦截全部指针事件（控件收不到输入），绘制
+///    选中描边/名牌/参考线，并把指针转成设计坐标的 typed Msg。
+/// 三层与指针换算共用 stage_mapping 的同一映射（缩放 + 居中原点），
+/// 缩放钳在 [0.5, 1]：不放大（像素发虚），不缩到看不清。
+pub fn design_stage(
+  program : @ir.StudioProgram,
+  selection : String,
+  drag_control : String?,
+  stage_widgets : Array[@moui.View[Msg]],
+  stage_rects : Array[@geometry.Rect],
+  semantics_label : String,
+  empty_hint : String,
+) -> @moui.View[Msg] {
   let backdrop = canvas(
-    measure=auto_fit_measure,
+    measure=pane_fill_measure,
     draw=fn(ctx, frame) {
-      // MoUI paint 契约：命令是窗口全局坐标，内容用 平移×缩放 进自己的 frame
-      let scale = frame_scale(frame)
+      let (scale, ox, oy) = stage_mapping(frame)
+      // 1) 满幅点阵晶格：与舞台内容区同一 32px 设计网格，向四周延续。
+      //    先铺满幅点，舞台白底随后盖住自己内部的点，plan 再画内容区点。
+      let spacing = grid_step * scale
+      let dot = (2.0 * scale).max(1.0)
+      let right = frame.origin.x + frame.size.width
+      let bottom = frame.origin.y + frame.size.height
+      let mut mx = ((frame.origin.x - ox) / spacing).floor()
+      while ox + mx * spacing < right {
+        let mut ny = ((frame.origin.y - oy - title_bar_height * scale) / spacing).floor()
+        while oy + title_bar_height * scale + ny * spacing < bottom {
+          fill_rounded_rect(
+            ctx,
+            @graphics.RoundedRect::new(
+              rect=@geometry.Rect::new(
+                x=ox + mx * spacing,
+                y=oy + title_bar_height * scale + ny * spacing,
+                width=dot,
+                height=dot,
+              ),
+              radius=dot / 2.0,
+            ),
+            @graphics.Brush::solid(studio_stage_outline()),
+          )
+          ny = ny + 1.0
+        }
+        mx = mx + 1.0
+      }
+      // 2) 拟真窗口：白底 + 小圆角 + 发丝框线（浮在画布中央）
       fn place(rect : @geometry.Rect) -> @geometry.Rect {
         @geometry.Rect::new(
-          x=frame.origin.x + rect.origin.x * scale,
-          y=frame.origin.y + rect.origin.y * scale,
+          x=ox + rect.origin.x * scale,
+          y=oy + rect.origin.y * scale,
           width=rect.size.width * scale,
           height=rect.size.height * scale,
         )
       }
       for op in design_backdrop_plan() {
         match op {
-          WindowFrame(rect) => {
-            // 技术风画板：深色舞台 + 小圆角 + 发丝框线（不抢控件视觉）
+          WindowFrame(rect) =>
             fill_rounded_rect(
               ctx,
               @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
               @graphics.Brush::solid(studio_stage_background()),
             )
-            stroke_rounded_rect(
-              ctx,
-              @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
-              @graphics.Brush::solid(studio_stage_outline()),
-              1.0,
-            )
-          }
           GridDot(rect) =>
             fill_rounded_rect(
               ctx,
@@ -603,13 +643,33 @@ pub fn design_stage(
           _ => ()
         }
       }
-      // 空画布引导：没有控件时给一句从哪开始的提示（i18n 由调用方传入）
+      // 窗体框线画在最上（fill 之上才能看清边界）
+      for op in design_backdrop_plan() {
+        match op {
+          WindowFrame(rect) =>
+            stroke_rounded_rect(
+              ctx,
+              @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
+              @graphics.Brush::solid(studio_stage_outline()),
+              1.0,
+            )
+          _ => ()
+        }
+      }
+      // 3) 空画布引导：没有控件时在舞台中央给一句从哪开始的提示
       if program.controls.length() == 0 {
+        let cx = ox + design_width * scale / 2.0
+        let cy = oy + (title_bar_height + design_height * scale / 2.0)
         draw_text(
           ctx,
           @text.TextRun::new(
             text=empty_hint,
-            frame~,
+            frame=@geometry.Rect::new(
+              x=cx - 200.0,
+              y=cy - 10.0,
+              width=400.0,
+              height=20.0,
+            ),
             font=@text.FontSpec::new(size=15.0),
             color=@core.Color::rgba(r=0.553, g=0.580, b=0.620),
             align=TextCenter,
@@ -620,18 +680,23 @@ pub fn design_stage(
     semantics_label~,
   )
   let widget_layer = stage_layout(stage_widgets, stage_rects)
-  let overlay = canvas(measure=auto_fit_measure, draw=fn(ctx, frame) {
-      let scale = frame_scale(frame)
-      // 覆盖层与控件层共用同一原点：控件区在标题条之下，覆盖层不跟着下移
-      // 就会出现「框选到了、描边却没跟上」的错位。
+  let overlay = canvas(measure=pane_fill_measure, draw=fn(ctx, frame) {
+      let (scale, ox, oy) = stage_mapping(frame)
+      // 覆盖层与控件层共用同一映射：控件区在标题条之下，覆盖层不跟着
+      // 平移就会出现「框选到了、描边却没跟上」的错位。
       fn place(rect : @geometry.Rect) -> @geometry.Rect {
         @geometry.Rect::new(
-          x=frame.origin.x + rect.origin.x * scale,
-          y=frame.origin.y + (title_bar_height + rect.origin.y) * scale,
+          x=ox + rect.origin.x * scale,
+          y=oy + (title_bar_height + rect.origin.y) * scale,
           width=rect.size.width * scale,
           height=rect.size.height * scale,
         )
       }
+      // 参考线只画在舞台范围内（满幅画布里贯穿窗格的参考线会读成界面装饰）
+      let stage_left = ox
+      let stage_right = ox + design_width * scale
+      let stage_top = oy
+      let stage_bottom = oy + design_total_height * scale
       for op in design_overlay_plan(program, selection, drag_control) {
         match op {
           BoundsOutline(rect) =>
@@ -723,10 +788,10 @@ pub fn design_stage(
               ctx,
               @graphics.RoundedRect::new(
                 rect=@geometry.Rect::new(
-                  x=frame.origin.x + x * scale - 0.75,
-                  y=frame.origin.y,
+                  x=ox + x * scale - 0.75,
+                  y=stage_top,
                   width=1.5,
-                  height=frame.size.height,
+                  height=stage_bottom - stage_top,
                 ),
                 radius=0.0,
               ),
@@ -738,9 +803,9 @@ pub fn design_stage(
               ctx,
               @graphics.RoundedRect::new(
                 rect=@geometry.Rect::new(
-                  x=frame.origin.x,
-                  y=frame.origin.y + y * scale - 0.75,
-                  width=frame.size.width,
+                  x=stage_left,
+                  y=oy + (title_bar_height + y) * scale - 0.75,
+                  width=stage_right - stage_left,
                   height=1.5,
                 ),
                 radius=0.0,
@@ -755,13 +820,11 @@ pub fn design_stage(
     // 覆盖层在最上：拦截全部指针事件（点选/拖拽在此转 typed Msg），
     // 下层真实控件收不到输入，设计态不会误触运行行为。
     .on_tap_with_frame(fn(position, frame) {
-      let scale = frame_scale(frame)
-      let (lx, ly) = stage_point(position, frame, scale)
+      let (lx, ly) = stage_point(position, frame)
       Msg::CanvasTap(lx, ly)
     })
     .on_drag_with_frame(fn(event, frame) {
-      let scale = frame_scale(frame)
-      let (lx, ly) = stage_point(event.position, frame, scale)
+      let (lx, ly) = stage_point(event.position, frame)
       if event.phase == @views.DragGesturePhase::Started {
         Msg::CanvasPress(lx, ly)
       } else if event.phase == @views.DragGesturePhase::Changed {

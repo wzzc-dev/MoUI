@@ -24,12 +24,20 @@ pub const FOLD_BAR_HEIGHT : Double = 27.0
 pub const CHIPS_HEIGHT : Double = 26.0
 
 ///|
-/// 输入条高：字段 26 + 上下 4+4 内垫。
-pub const COMPOSER_HEIGHT : Double = 82.0
+/// 输入盒高：两行文本域 + 盒内脚注一行（模式胶囊 | ghost 操作 | 圆形发送）
+/// + 盒内垫。Codex/ZCode 口径——输入区是两行高的「书写区」，不是单行框。
+/// 高度必须给 `lines × line_height + 16`：text_area 内部有 8pt×2 垂直内垫，
+/// 只传 `lines=2` 时可见文本区只剩一行——这就是「输入区还是一行」的根因。
+/// 这里 lines=3 × 20 = 60 → 可见 44 = 两整行（长 prompt 折行可读）。
+pub const COMPOSER_HEIGHT : Double = 98.0
 
 ///|
-/// 输入条工具行高度（设计稿 `.ctools{height:24px}`，这里压到 20 更贴紧凑感）。
-pub const COMPOSER_TOOLS_HEIGHT : Double = 20.0
+/// 输入盒高度唯一计算源（视图层与 card_chrome_height 共用——两处各算
+/// 一份就会把 composer 顶出卡片）。
+pub fn composer_height(width : Double) -> Double {
+  ignore(width)
+  COMPOSER_HEIGHT
+}
 
 ///|
 /// AI 浮动层：停靠模式返回右栏内联视图（由调用方放进右栏）；
@@ -146,8 +154,7 @@ fn ai_floating(
 /// 卡片高度必须**统一算**——视图层与避让预留（ai_reserve）各算一份，
 /// 预留量就会和实际遮挡对不上。
 pub fn ai_card_height(model : Model, card_width : Double) -> Double {
-  ignore(card_width)
-  card_chrome_height(model) + thread_area_height(model)
+  card_chrome_height(model, card_width) + thread_area_height(model)
 }
 
 ///|
@@ -164,27 +171,10 @@ fn thread_area_height(model : Model) -> Double {
 }
 
 ///|
-/// 卡内除线程区以外的固定高度（头 + 折叠条 + #seeAll + 芯片 + 输入条 +
-/// 决策行 + 内边距）。线程区的预算是「卡高 − 这个数」。
-fn card_chrome_height(model : Model) -> Double {
-  // 芯片行恒占位（没有用户芯片时显示「+ @按钮」快捷建议，不是空行）。
-  let mut height = PANEL_HEAD_HEIGHT +
-    CHIPS_HEIGHT +
-    COMPOSER_HEIGHT +
-    decision_bar_height(model) +
-    12.0
-  if model.ai_cards.length() > 0 {
-    height = height + FOLD_BAR_HEIGHT
-    // 「查看全部会话 →」与线程区同条件出现（>3 条且未折叠）——
-    // 视图层加了行而这里不加高度，卡片就会把它裁掉。
-    if !model.ai_cards_folded && model.ai_cards.length() > 3 {
-      height = height + SEE_ALL_HEIGHT
-    }
-  }
-  if ai_hero(model) {
-    height = height + HERO_HINT_HEIGHT
-  }
-  height
+/// 卡内除线程区以外的固定高度（输入盒 + 决策行 + 内边距）。线程区的预算
+/// 是「卡高 − 这个数」。无头部——浮层输入盒不需要标题栏。
+fn card_chrome_height(model : Model, width : Double) -> Double {
+  composer_height(width) + decision_bar_height(model) + 12.0
 }
 
 ///|
@@ -225,86 +215,11 @@ fn ai_card_body(
   width : Double,
   thread_height : Double,
 ) -> @moui.View[Msg] {
-  let head = @views.container(
-    @views.padding_xy(
-      fill_row(
-        [
-          @views.text(
-            text(t, "app.ai.title"),
-            theme=studio_theme(),
-            width=120.0,
-            height=18.0,
-            align=TextStart,
-          ).foreground(ide_text()),
-          count_badge(
-            if model.provider_mode is Fake {
-              text(t, "app.ai.fake")
-            } else {
-              text(t, "app.ai.real")
-            },
-            if model.provider_mode is Fake {
-              0
-            } else {
-              4
-            },
-          ),
-          @views.spacer(min_length=4.0, weight=1.0),
-          icon_button(
-            Focus,
-            text(t, "app.ai.anchor"),
-            false,
-            CycleAiAnchor,
-            24.0,
-            22.0,
-            12.0,
-          ),
-          icon_button(
-            Minus,
-            text(t, "app.ai.pill"),
-            model.ai_pill,
-            ToggleAiPill,
-            24.0,
-            22.0,
-            12.0,
-          ),
-          icon_button(
-            Columns,
-            text(t, "app.ai.dock"),
-            model.ai_anchor is AiDocked,
-            SetAiAnchor(
-              if model.ai_anchor is AiDocked {
-                AiCenter
-              } else {
-                AiDocked
-              },
-            ),
-            24.0,
-            22.0,
-            12.0,
-          ),
-          icon_button(
-            Settings,
-            text(t, "app.ai.settings"),
-            model.provider_settings_open,
-            ToggleProviderSettings,
-            24.0,
-            22.0,
-            12.0,
-          ),
-        ],
-        (width - 16.0).max(80.0),
-        4.0,
-        Center,
-      ),
-      horizontal=8.0,
-      vertical=0.0,
-    ),
-    background=ide_panel_alt(),
-    height=PANEL_HEAD_HEIGHT,
-    width~,
-    padding=0.0,
-  )
-  let body : Array[@moui.View[Msg]] = [head]
+  // 无头部（Codex/ZCode 口径）：浮在画布上的输入盒不需要标题栏——
+  // 「AI 提案 / 底部居中 / 离线模型」与一排图标都是冗余 chrome。
+  // 卡片级操作收敛到输入盒脚注（收起/停靠/历史），锚点循环与 provider
+  // 设置走命令面板（⌘K）。
+  let body : Array[@moui.View[Msg]] = []
   // 折叠条：有待审计卡时显示计数并允许折叠线程
   let pending = pending_ai_cards(model)
   if model.ai_cards.length() > 0 {
@@ -328,8 +243,15 @@ fn ai_card_body(
       }
     }
   }
-  body.push(context_chips(model, t, width))
-  body.push(composer(model, t, width))
+  // 输入盒两侧留 8pt（盒与卡片边缘的呼吸感），高度预算已含（composer_height）
+  body.push(
+    @views.container(
+      composer(model, t, width),
+      width~,
+      height=composer_height(width),
+      padding=0.0,
+    ),
+  )
   if ai_hero(model) {
     body.push(hero_hints(model, t, width))
   }
@@ -337,7 +259,7 @@ fn ai_card_body(
   @views.container(
     @views.column(body, spacing=0.0),
     background=ide_elevated(),
-    corner_radius=6.0,
+    corner_radius=10.0,
     border=Some(
       @graphics.BorderStyle::new(
         brush=@graphics.Brush::solid(ide_border()),
@@ -571,184 +493,133 @@ fn ai_card_view(
 }
 
 ///|
-/// 上下文芯片行：`+ @选中对象` 快捷加芯片，已有芯片可点掉。
-fn context_chips(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-) -> @moui.View[Msg] {
-  let chips : Array[@moui.View[Msg]] = []
-  // 芯片宽按内容算：控件名（中文语义命名）与英文界面宽度差异大，写死
-  // 必然一侧截断。
-  let mut index = 0
-  for chip in model.ai_context_chips {
-    let chip_w = (text_estimate_width("\{chip} ×") * 1.05 + 20.0).max(56.0)
-    chips.push(
-      @views.container(
-        @views.center(
-          @views.text(
-            "\{chip} ×",
-            theme=studio_theme(),
-            width=(chip_w - 16.0).max(30.0),
-            height=16.0,
-          ).foreground(ide_accent()),
-          width=chip_w,
-          height=20.0,
-        ),
-        background=ide_selection(),
-        corner_radius=10.0,
-        width=chip_w,
-        height=20.0,
-        padding=0.0,
-      ).on_tap(RemoveAiContextChip(index)),
-    )
-    index = index + 1
+/// 输入条：单行 = 模式段 | 输入框 | 发送（成熟 AI 面板口径——旧版
+/// 工具行 + 输入行 + 按钮行三层 chrome 占 ~100pt，且工具行与头部图标
+/// 功能完全重复）。窄卡（放不下一行）折两行：输入独占一行。
+/// 手搓模式段与发送而不用 @views.button：button 的 `width`/`height` 进的
+/// 是 `min_size`，文字比声明的宽就会自己长大顶出卡片。
+
+///|
+/// 停靠态切换的动作名：停靠时这个 ghost 图标是「浮出」——可访问名要跟
+/// 实际行为一致（图标没有绘制文字，这是唯一的语义出口）。
+pub fn ai_anchor_toggle_key(model : Model) -> String {
+  if model.ai_anchor is AiDocked {
+    "app.ai.undock"
+  } else {
+    "app.ai.dock"
   }
-  // 快捷添加：当前选中对象（控件名或子程序键）
-  let suggestion = match find_selected_control(model) {
-    Some(control) => Some(control.name)
-    None =>
-      match current_handler(model) {
-        Some(handler) => Some(handler.control_name)
-        None => None
-      }
-  }
-  match suggestion {
-    Some(name) =>
-      if !model.ai_context_chips.contains(name) {
-        let add_w = (text_estimate_width("+ @\{name}") * 1.05 + 20.0).max(64.0)
-        chips.push(
-          @views.container(
-            @views.center(
-              @views.text(
-                "+ @\{name}",
-                theme=studio_theme(),
-                width=(add_w - 16.0).max(30.0),
-                height=16.0,
-              ).foreground(ide_text_muted()),
-              width=add_w,
-              height=20.0,
-            ),
-            background=ide_panel_alt(),
-            corner_radius=10.0,
-            width=add_w,
-            height=20.0,
-            padding=0.0,
-          ).on_tap(AddAiContextChip(name)),
-        )
-      }
-    None => ()
-  }
-  if chips.length() == 0 {
-    return @views.container(
-      @views.padding_xy(
-        @views.text(
-          fit_label(text(t, "app.ai.no_context"), (width - 24.0).max(60.0)),
-          theme=studio_theme(),
-          width=(width - 20.0).max(60.0),
-          height=16.0,
-          align=TextStart,
-        ).foreground(ide_text_faint()),
-        horizontal=8.0,
-        vertical=0.0,
-      ),
-      height=24.0,
-      width~,
-      padding=0.0,
-    )
-  }
-  @views.container(
-    @views.padding_xy(
-      @views.row(chips, spacing=4.0, align=Center),
-      horizontal=8.0,
-      vertical=0.0,
-    ),
-    height=26.0,
-    width~,
-    padding=0.0,
-  )
 }
 
 ///|
-/// 输入条：模式段（修改/生成/解释/修复）+ 输入框 + 发送。
-///
-/// 设计稿的 `.cfoot` 是「模式段 + 弹性空隙 + 发送」，不是两个宽按钮。
-/// 手搓模式段而不用 @views.button：button 的 `width`/`height` 进的是
-/// `min_size`，文字比声明的宽就会自己长大顶出卡片（「解释这个程序」
-/// 实测 92.8 > 声明的 72，就是这么溢出的）。
 fn composer(
   model : Model,
   t : @i18n.Translator,
   width : Double,
 ) -> @moui.View[Msg] {
-  // 模式段与发送都按内容算宽：写死 40/62 在英文界面（"Generate"/"Send"）
-  // 下会截掉半个词，中文下又留白。段宽是各芯片之和 + 间距，输入框拿剩余。
-  let mode_keys : Array[(ComposerMode, String)] = [
-    (ComposeEdit, "app.ai.mode.edit"),
-    (ComposeGenerate, "app.ai.mode.generate"),
-    (ComposeExplain, "app.ai.mode.explain"),
-    (ComposeRepair, "app.ai.mode.repair"),
+  let modes : Array[@moui.View[Msg]] = [
+    composer_mode_chip(model, t, ComposeEdit, "app.ai.mode.edit"),
+    composer_mode_chip(model, t, ComposeGenerate, "app.ai.mode.generate"),
+    composer_mode_chip(model, t, ComposeExplain, "app.ai.mode.explain"),
+    composer_mode_chip(model, t, ComposeRepair, "app.ai.mode.repair"),
   ]
-  let modes : Array[@moui.View[Msg]] = []
-  let mut seg_width = 0.0
-  for entry in mode_keys {
-    let chip = composer_mode_chip(model, t, entry.0, entry.1)
-    seg_width = seg_width + composer_chip_width(text(t, entry.1))
-    modes.push(chip)
-  }
-  seg_width = seg_width + 3.0 * 3.0
-  let send_label = text(t, "app.ai.send")
-  let send_width = (text_estimate_width(send_label) * 1.05 + 20.0).max(52.0)
-  let field_width = (width - 16.0 - seg_width - send_width - 12.0).max(70.0)
-  let foot = fill_row(
-    [
-      @views.row(modes, spacing=3.0, align=Center),
-      @views.spacer(min_length=6.0, weight=1.0),
-      // 发送按钮手搓：同上，避免按钮自撑宽顶出卡片。
-      @views.container(
-        @views.center(
-          @views.text(
-            send_label,
-            theme=studio_theme(),
-            width=(send_width - 20.0).max(20.0),
-            height=16.0,
-          ).foreground(studio_theme().palette.on_primary),
-          width=send_width,
-          height=22.0,
-        ),
-        background=ide_accent(),
-        corner_radius=4.0,
-        width=send_width,
-        height=22.0,
-        padding=0.0,
-      ).on_tap(ComposerRun),
-    ],
-    (width - 16.0).max(120.0),
-    6.0,
-    Center,
+  // 输入盒（Codex/ZCode 口径）：圆角容器内 = **两行**无边框文本域
+  // （Enter 直接发送）+ 盒内脚注（模式胶囊靠左，ghost 操作与圆形发送靠右）。
+  let box_width = (width - 16.0).max(120.0)
+  let inner_width = box_width - 16.0
+  let busy = model.ai_busy
+  let send_msg = if busy { Msg::Noop } else { ComposerRun }
+  let field = @views.text_area(
+    model.prompt_draft,
+    on_input=value => SetPrompt(value),
+    placeholder=text(t, "app.ai.prompt"),
+    lines=3,
+    variant=Plain,
+    width=inner_width,
+    line_height=20.0,
+    on_submit=Some(send_msg),
   )
-  @views.container(
-    @views.column(
-      [
-        composer_tools(model, t, width),
-        @views.padding_xy(
-          @views.text_field(
-            model.prompt_draft,
-            on_input=value => SetPrompt(value),
-            placeholder=text(t, "app.ai.prompt"),
-            variant=Outline,
-            width=(width - 16.0).max(80.0),
-            height=FIELD_HEIGHT,
-          ),
-          horizontal=8.0,
-          vertical=2.0,
+  // 盒内脚注的 ghost 操作：停靠态给「浮出」；浮动态给 停靠/历史/收起
+  // （窄卡只留收起）。锚点循环与 provider 设置走命令面板，不再占盒内空间。
+  let ghost_surface = ide_panel()
+  let foot_cells : Array[@moui.View[Msg]] = [
+    @views.row(modes, spacing=3.0, align=Center),
+    @views.spacer(min_length=6.0, weight=1.0),
+  ]
+  if model.ai_anchor is AiDocked {
+    foot_cells.push(
+      ghost_icon_button(
+        Columns,
+        text(t, ai_anchor_toggle_key(model)),
+        true,
+        SetAiAnchor(AiCenter),
+        22.0,
+        20.0,
+        11.0,
+        ghost_surface,
+      ),
+    )
+  } else {
+    if inner_width >= 320.0 {
+      foot_cells.push(
+        ghost_icon_button(
+          Columns,
+          text(t, "app.ai.dock"),
+          false,
+          SetAiAnchor(AiDocked),
+          22.0,
+          20.0,
+          11.0,
+          ghost_surface,
         ),
-        @views.padding_xy(foot, horizontal=8.0, vertical=2.0),
-      ],
-      spacing=0.0,
-    ).frame(width~, height=COMPOSER_HEIGHT),
-    width~,
-    height=COMPOSER_HEIGHT,
+      )
+      foot_cells.push(
+        ghost_icon_button(
+          Clipboard,
+          text(t, "app.ai.history"),
+          false,
+          ToggleAiHistory,
+          22.0,
+          20.0,
+          11.0,
+          ghost_surface,
+        ),
+      )
+    }
+    foot_cells.push(
+      ghost_icon_button(
+        Minus,
+        text(t, "app.ai.pill"),
+        false,
+        ToggleAiPill,
+        22.0,
+        20.0,
+        11.0,
+        ghost_surface,
+      ),
+    )
+  }
+  foot_cells.push(
+    round_send_button(text(t, "app.ai.send"), send_msg, !busy, 24.0),
+  )
+  let foot = fill_row(foot_cells, inner_width, 6.0, Center)
+  @views.container(
+    @views.padding_edges(
+      @views.column([field, foot], spacing=2.0),
+      left=8.0,
+      right=8.0,
+      top=5.0,
+      bottom=6.0,
+    ),
+    background=ide_panel(),
+    corner_radius=8.0,
+    border=Some(
+      @graphics.BorderStyle::new(
+        brush=@graphics.Brush::solid(ide_border()),
+        width=1.0,
+      ),
+    ),
+    width=box_width,
+    height=composer_height(width),
     padding=0.0,
   )
 }
@@ -762,86 +633,6 @@ pub fn anchor_hint_key(anchor : AiAnchor) -> String {
     AiRight => "app.ai.anchor.right"
     AiDocked => "app.ai.anchor.docked"
   }
-}
-
-///|
-/// 输入条工具行（设计稿 `.ctools`）：锚点图标 + 当前锚点读数 + 弹性空隙
-/// + 锚点/侧栏/收起三个**带名字**的按钮。
-///
-/// 设计稿这里靠 `:hover` 提亮（默认 `opacity:.4`），本实现没有 hover 回调
-/// （`ctx.state.hovered` 拿不到逐元素悬停），所以常亮显示——把「锚点循环」
-/// 和「收起」藏在一个要悬停才现形的地方，等于让人找不到这两个操作。
-fn composer_tools(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-) -> @moui.View[Msg] {
-  let docked = model.ai_anchor is AiDocked
-  let hint = text(t, anchor_hint_key(model.ai_anchor))
-  let cells : Array[@moui.View[Msg]] = [
-    @views.icon(Focus, size=11.0, color=ide_text_faint()),
-    @views.text(
-      hint,
-      theme=studio_theme(),
-      width=(text_estimate_width(hint) * 1.02 + 6.0).max(40.0),
-      height=16.0,
-    ).foreground(ide_text_faint()),
-    @views.spacer(min_length=4.0, weight=1.0),
-    composer_tool_chip(t, "app.ai.anchor", CycleAiAnchor),
-    composer_tool_chip(
-      t,
-      if docked {
-        "app.ai.undock"
-      } else {
-        "app.ai.dock"
-      },
-      if docked {
-        SetAiAnchor(AiCenter)
-      } else {
-        SetAiAnchor(AiDocked)
-      },
-    ),
-    composer_tool_chip(t, "app.ai.collapse", ToggleAiPill),
-  ]
-  @views.container(
-    @views.padding_xy(
-      fill_row(cells, (width - 16.0).max(120.0), 4.0, Center),
-      horizontal=8.0,
-      vertical=0.0,
-    ),
-    width~,
-    height=COMPOSER_TOOLS_HEIGHT,
-    padding=0.0,
-  )
-}
-
-///|
-/// 工具行按钮：手搓（`@views.button` 的宽高是最小值，见 composer 注释），
-/// 宽度按文案内容算（中英文案宽度差近半，写死 62 会截掉一侧）。
-fn composer_tool_chip(
-  t : @i18n.Translator,
-  key : String,
-  msg : Msg,
-) -> @moui.View[Msg] {
-  let label = text(t, key)
-  let chip_width = (text_estimate_width(label) * 1.05 + 16.0).max(44.0)
-  @views.container(
-    @views.center(
-      @views.text(
-        label,
-        theme=studio_theme(),
-        width=(chip_width - 14.0).max(20.0),
-        height=16.0,
-      ).foreground(ide_text_muted()),
-      width=chip_width,
-      height=18.0,
-    ),
-    background=ide_panel_alt(),
-    corner_radius=4.0,
-    width=chip_width,
-    height=18.0,
-    padding=0.0,
-  ).on_tap(msg)
 }
 
 ///|
@@ -890,7 +681,7 @@ fn hero_hints(
           height=24.0,
         ),
         background=ide_panel_alt(),
-        corner_radius=4.0,
+        corner_radius=10.0,
         width=cell,
         height=24.0,
         padding=0.0,
@@ -936,12 +727,12 @@ fn composer_mode_chip(
         theme=studio_theme(),
         width=(chip_width - 14.0).max(20.0),
         height=16.0,
-      ).foreground(if selected { ide_accent() } else { ide_text_faint() }),
+      ).foreground(if selected { ide_accent() } else { ide_text_muted() }),
       width=chip_width,
       height=20.0,
     ),
-    background=if selected { ide_selection() } else { ide_panel_alt() },
-    corner_radius=4.0,
+    background=if selected { ide_selection() } else { ide_panel() },
+    corner_radius=10.0,
     width=chip_width,
     height=20.0,
     padding=0.0,
@@ -949,12 +740,30 @@ fn composer_mode_chip(
 }
 
 ///|
-/// 决策条：待采纳提案摘要 + 采纳/拒绝 + 历史入口；无提案时显示讲解文本。
+/// 决策条是否该在场：只有真内容（待采纳提案 / 讲解 / 错误）才渲染——
+/// 旧版空闲态常驻一行「待命 | 提案历史」，是纯占位噪音（历史入口已在
+/// 卡片头部，忙碌态由发送芯片表态）。
+fn has_decision_content(model : Model) -> Bool {
+  model.pending is Some(_) ||
+  model.explanation != "" ||
+  model.prompt_error != ""
+}
+
+///|
+/// 决策条：待采纳提案摘要 + 采纳/拒绝；无提案时显示讲解/错误文本。
 fn decision_bar(
   model : Model,
   t : @i18n.Translator,
   width : Double,
 ) -> @moui.View[Msg] {
+  if !has_decision_content(model) {
+    return @views.container(
+      @views.text("", width=1.0, height=1.0),
+      width~,
+      height=0.0,
+      padding=0.0,
+    )
+  }
   let rows : Array[@moui.View[Msg]] = []
   match model.pending {
     Some(pending) => {
@@ -1019,26 +828,6 @@ fn decision_bar(
           ).foreground(ide_danger()),
         )
       }
-      rows.push(
-        @views.row(
-          [
-            @views.text(
-              if model.ai_busy {
-                text(t, "app.ai.busy")
-              } else {
-                text(t, "app.ai.idle")
-              },
-              theme=studio_theme(),
-              width=(width - 100.0).max(60.0),
-              height=16.0,
-              align=TextStart,
-            ).foreground(ide_text_faint()),
-            action_chip(text(t, "app.ai.history"), ToggleAiHistory, Ghost, 22.0),
-          ],
-          spacing=6.0,
-          align=Center,
-        ),
-      )
     }
   }
   @views.container(
@@ -1063,12 +852,14 @@ fn decision_bar(
 /// 视图层与 ai_card_height 共用这一个来源——两处各写一份，
 /// 避让预留就会和实际遮挡对不上。
 pub fn decision_bar_height(model : Model) -> Double {
+  if !has_decision_content(model) {
+    return 0.0
+  }
   match model.pending {
     // 两个 24pt 芯片行（采纳/拒绝/历史）。芯片严格等高，预算才准。
     Some(_) => 24.0 + 4.0 + 24.0
     None => {
-      // 状态行的高由「历史」芯片决定（22），不是文本的 16。
-      let mut height = 22.0
+      let mut height = 0.0
       if model.explanation != "" {
         height = height + 4.0 + 54.0
       }

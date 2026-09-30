@@ -414,7 +414,76 @@
 - **artifacts/ 与凭据**：`artifacts/` 不入库；`examples/moui_studio/.config.json`
   （StepFun key）gitignored，绝不入源码/bundle。
 
+## 2026-09-30 中心工作区重构（满幅画布 / AI 卡瘦身 / scroll_view 居中缺陷）
+
+- **scroll_view 把「短于视口」的内容垂直居中**（框架行为，坑）：积木画布
+  高度按内容算（块少 = 矮）就会被悬浮到滚动区中段。修法 = 画布节点高度
+  取 `max(内容高, 视口高)`，内容永远顶对齐。同类场景（列表/画布短内容）
+  都要警惕。
+- **满幅设计画布（Figma 式）**：`canvas.mbt` 的 `stage_mapping(frame)` 返回
+  （fit_scale [0.5,1] 缩放, 舞台居中原点 x/y），**背景画布 / StageLayout /
+  覆盖层 / stage_point 指针换算四处共用**；点阵晶格从舞台内容区向四周铺满
+  窗格（先铺满幅点 → 舞台白底盖住内部 → plan 再画内容区点），空态提示画在
+  舞台中心。画布 measure 用 `pane_fill_measure`（铺满有界约束）。旧
+  `auto_fit_measure` 不钳 1.0 与 StageLayout 钳 1.0 的失步只在 solo 窗格
+  暴露——统一走 fit_scale 后消除。**GuideH 曾漏加标题条偏移 34pt**（覆盖层
+  place 加了、guide 没加），重写时已修。
+- **AI 浮动卡瘦身（Copilot/Cursor 口径）**：常驻 = 头部（标题+锚点读数+徽标
+  +锚点/收起/停靠/历史/设置图标）+ 单行输入条（模式段｜输入｜发送）；
+  窄卡（<520，含停靠 272）输入条折两行（`composer_height` 单点）；上下文
+  芯片行/决策行按需出现（无内容 = 0 高，`decision_bar_height` 空返回 0）；
+  旧 `.ctools` 工具行与头部图标完全重复（已删），历史入口 = 头部 Clipboard
+  图标，忙碌态 = 发送芯片变灰。空闲卡高 102（band 126），测试钉 ≤140。
+  **左/右锚卡只有 ~304pt，头部不画锚点读数**（读数只在宽卡 ≥420）；
+  停靠图标的可访问名随锚点条件化（`ai_anchor_toggle_key`：停靠态 = 浮出）。
+- **画布填充命令是 `FillRoundedRectBrush`**（paint_context 的
+  fill_rounded_rect），不是 `FillRoundedRect`——绘制断言按颜色找矩形时
+  要 match Brush::Solid。
+- 回归测试在 `app/ui_regression_wbtest.mbt`：满幅画布居中（窗格底色矩形
+  上下留白对称 ±4）+ 晶格点出现在舞台上方、AI 卡预算上限、无常驻提示行；
+  居中断言已破断验证（stage_mapping 改顶对齐 → 红 30 vs 230）。
+
+## 2026-09-30 AI 卡二次精简（无头部 / 两行输入域）
+
+- **头部整个删除**：浮层输入盒不需要标题栏。原「AI 提案 + 锚点读数 +
+  假模型徽标 + 5 ghost 图标」→ 0 行。卡级操作进输入盒**脚注**：停靠态=
+  「浮出」ghost；浮动态= 停靠/历史/收起（窄卡 inner<320 只留收起）；
+  锚点循环与 provider 设置只走命令面板（studio.ai.anchor / studio.settings）。
+- **+@上下文芯片行删除**（用户判定多余）：`context_chips` /
+  `context_chips_height` 视图路径移除，model 消息保留未接线。若将来恢复，
+  从 git 历史找。
+- **输入区 = 两行文本域（高度必须含内垫！）**：`@views.text_area(
+  lines=3, line_height=20, variant=Plain, on_submit=Some(ComposerRun))`
+  ——Enter 直接发送（area 与 field 共用键盘处理器，on_submit 下 Enter
+  提交不插换行；长 prompt 自动折行到第二行）。**坑：text_area 内部有
+  8pt×2 垂直内垫，构造器高度 = lines×line_height 不含内垫——lines=2×18=36
+  扣掉 16 只剩 20，可见的仍是一行**（用户实测抓到）。正确账：高度要给
+  `期望可见行数×line_height + 16`，这里 3×20=60 → 可见 44 = 两整行，
+  `COMPOSER_HEIGHT = 98`。回归断言：占位文案顶到发送钮顶的垂直距离
+  ≥ 50pt（单行布局 ~30），已破断验证。
+- **测试锚点迁移**：卡定位从「AI 提案」标题改为占位文案「描述你想要的
+  应用」（app.ai.prompt 的 zh 值）——无头后它是卡片唯一的稳定文字锚点；
+  「底部居中」读数断言删除。app 150×2 全绿。
+
+## 2026-09-30 AI 卡现代化（Codex/ZCode 口径）
+
+- **composer 是「输入盒」**：圆角 8 容器（ide_panel 底 + 发丝边框，padding
+  8/5/8/6）内 = `@views.text_field(variant=Plain)` 无边框输入 + 盒内脚注
+  （模式胶囊芯片 + `round_send_button` 圆形强调钮 24×24，ArrowRight 图标，
+  accessibility_label="发送"，忙碌 = enabled=false 变灰 + Noop）。宽窄卡
+  同构，`composer_height` 恒 64（`COMPOSER_HEIGHT`），card_chrome_height
+  走同一函数。盒宽 = 卡宽 − 16（两侧呼吸感）。
+- **头部 ghost 化**：`ghost_icon_button(..., surface)` = 透明底（surface 同色）
+  + 选中才点亮 ide_selection——头部底色改 ide_elevated 与卡片无缝，不再有
+  panel_alt 色条。卡片圆角 10、inline_card（线程/审计卡）圆角 8、hero
+  示例芯片胶囊 10——圆角语言统一。
+- **测试**：发送是图标没有「发送」文字——`shell_find_send_button(commands)`
+  按「FillRoundedRectBrush + Solid(ide_accent) + w=h∈[18,34]」的绘制指纹找
+  圆钮（shell_layout_wbtest 共享助手），5 处旧文字断言已迁移；破断验证 =
+  发送恒禁用（无强调色圆）→ 3 测红。空闲卡预算仍钉 ≤140（实测 132）。
+
 ## 2026-09-30 六项 UI 批次（框架语义叠加/去朱砂/顶栏紧凑化/舞台产品主题）
+
 
 - **沉浸标题栏高度 = 信号灯圆心的两倍（32pt，不再是 56）**：AppKit 把三灯
   圆心固定在窗口顶往下 **15.8pt**（实测，`TRAFFIC_LIGHT_CENTER_Y` 常量），

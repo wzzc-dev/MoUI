@@ -232,9 +232,12 @@ test "AI layer anchors inside the centre column and never covers the status bar"
   let model = initial_model()
   // 默认居中锚点：卡片在中心列内
   let commands = shell_draw(model, 1280.0, 800.0)
-  assert_true(shell_has_text(commands, "AI 提案"))
-  // 输入条是设计稿的「模式段 + 发送」形态（不再是两个宽按钮）
-  assert_true(shell_has_text(commands, "发送"))
+  // 无头部：输入盒的占位文案是卡片的可观测锚点
+  assert_true(shell_has_text(commands, "描述你想要的应用"))
+  // 输入条是输入盒形态：模式段文字 + 圆形发送钮（图标，无文字）
+  guard shell_find_send_button(commands) is Some(_) else {
+    fail("round send button missing")
+  }
   assert_true(shell_has_text(commands, "修改"))
   assert_true(shell_has_text(commands, "修复"))
   // 药丸态：只留药丸，卡片内容消失
@@ -243,17 +246,17 @@ test "AI layer anchors inside the centre column and never covers the status bar"
   let pill_commands = shell_draw(pill, 1280.0, 800.0)
   // 设计稿药丸形态：「Agent 待审计 N」
   assert_true(shell_has_text(pill_commands, "Agent"))
-  assert_false(shell_has_text(pill_commands, "发送"))
-  // 停靠态：并入右栏（标题仍在），且不再是浮动层
+  assert_false(shell_has_text(pill_commands, "描述你想要的应用"))
+  // 停靠态：并入右栏（输入盒仍在），且不再是浮动层
   let docked = apply_shell(model, SetAiAnchor(AiDocked))
   assert_true(docked.ai_anchor is AiDocked)
   let docked_commands = shell_draw(docked, 1280.0, 800.0)
-  assert_true(shell_has_text(docked_commands, "AI 提案"))
+  assert_true(shell_has_text(docked_commands, "描述你想要的应用"))
   // 浮动层任何锚点都不得压到状态栏：AI 文本底边应在状态栏之上
   for anchor in [AiCenter, AiLeft, AiRight] {
     let anchored = apply_shell(model, SetAiAnchor(anchor))
     let anchored_commands = shell_draw(anchored, 1280.0, 800.0)
-    let title = shell_find_text(anchored_commands, "AI 提案")
+    let title = shell_find_text(anchored_commands, "描述你想要的应用")
     guard title is Some(run) else { fail("AI card missing") }
     assert_true(run.frame.origin.y + run.frame.size.height < 770.0)
   }
@@ -723,7 +726,9 @@ test "composer mode routes send to existing channels" {
   for label in ["修改", "生成", "解释", "修复"] {
     assert_true(shell_has_text(commands, label))
   }
-  assert_true(shell_has_text(commands, "发送"))
+  guard shell_find_send_button(commands) is Some(_) else {
+    fail("round send button missing")
+  }
   // 解释模式 → 本地确定性讲解（挂到 explanation）
   let explain = apply_shell(
     apply_shell(model, SetComposerMode(ComposeExplain)),
@@ -790,8 +795,10 @@ test "hero and pill overlays still render when the band is zero" {
   let empty = apply_shell(model, SetWorkSpace(WsEmpty))
   assert_eq(ai_avoidance_band(empty, 715.0, 706.0), 0.0)
   let hero_commands = shell_draw(empty, 1280.0, 800.0)
-  assert_true(shell_has_text(hero_commands, "AI 提案"))
-  assert_true(shell_has_text(hero_commands, "发送"))
+  assert_true(shell_has_text(hero_commands, "描述你想要的应用"))
+  guard shell_find_send_button(hero_commands) is Some(_) else {
+    fail("hero round send button missing")
+  }
   // 药丸：同样带高为 0
   let pill = apply_shell(model, ToggleAiPill)
   assert_eq(ai_avoidance_band(pill, 715.0, 706.0), 0.0)
@@ -807,7 +814,7 @@ test "empty stage guidance sits above the hero card" {
   let empty = apply_shell(initial_model(), SetWorkSpace(WsEmpty))
   let commands = shell_draw(empty, 1280.0, 800.0)
   let guide = shell_find_text(commands, "新建问候程序")
-  let card = shell_find_text(commands, "AI 提案")
+  let card = shell_find_text(commands, "描述你想要的应用")
   guard guide is Some(guide_run) else { fail("stage buttons missing") }
   guard card is Some(card_run) else { fail("hero card missing") }
   let guide_bottom = guide_run.frame.origin.y + guide_run.frame.size.height
@@ -874,63 +881,68 @@ test "floating AI layer does not paint over the workspace" {
 }
 
 ///|
-/// 输入条工具行（设计稿 `.ctools`）：锚点读数在，三个**带名字**的按钮
-/// 都在卡片内，且不越出右边界。
-test "composer tools row stays inside the AI card" {
+/// AI 卡常驻 chrome 瘦身后的契约：锚点读数进头部、旧工具行（与头部图标
+/// 完全重复的三个文本按钮）删除、发送芯片在卡内且不越界。
+test "ai composer box stays inside the card bounds" {
   let model = initial_model()
   let commands = shell_draw(model, 1280.0, 800.0)
-  assert_true(shell_has_text(commands, "底部居中"))
+  // 无头部（Codex 口径）：标题/读数/徽标都不再绘制
+  assert_false(shell_has_text(commands, "AI 提案"))
   for label in ["切换锚点", "停靠右栏", "收起"] {
-    assert_true(shell_has_text(commands, label))
+    assert_false(shell_has_text(commands, label))
   }
-  // 工具行标签不得越出卡片右边界（卡片是居中锚 680，右边界 = 卡右沿）
-  let card = shell_find_text(commands, "AI 提案")
+  // 圆形发送钮必须落在卡片内（占位文案 x ≈ 卡左 + 内垫，卡宽 680）
+  let card = shell_find_text(commands, "描述你想要的应用")
   guard card is Some(card_run) else { fail("AI card missing") }
-  let card_left = card_run.frame.origin.x
+  let card_left = card_run.frame.origin.x - 16.0
   let card_right = card_left + 680.0
-  for
-    label in [
-      "底部居中", "切换锚点", "停靠右栏", "收起", "发送",
-    ] {
-    guard shell_find_text(commands, label) is Some(run) else {
-      fail("missing label: " + label)
-    }
-    let right = run.frame.origin.x + run.frame.size.width
-    if right > card_right {
-      fail(
-        label +
-        " overflows the card: right=" +
-        right.to_string() +
-        " card_right=" +
-        card_right.to_string(),
-      )
-    }
+  guard shell_find_send_button(commands) is Some(send) else {
+    fail("round send button missing")
+  }
+  let send_right = send.origin.x + send.size.width
+  if send_right > card_right {
+    fail(
+      "send button overflows the card: right=" +
+      send_right.to_string() +
+      " card_right=" +
+      card_right.to_string(),
+    )
+  }
+  // 输入区必须真的是**两行**高：text_area 内部有 8pt×2 垂直内垫，高度
+  // 只给 lines×line_height 时可见的其实是一行（已实测踩过）。可观测判据：
+  // 占位文案顶到发送钮顶的距离 ≥ 50pt——单行布局只有 ~35。
+  let gap = send.origin.y - card_run.frame.origin.y
+  if gap < 50.0 {
+    fail(
+      "composer input is not two lines tall: placeholder→send gap=" +
+      gap.to_string(),
+    )
   }
 }
 
 ///|
-/// 锚点读数跟着锚点走——它是「这条会飘在哪」的唯一提示。
-test "anchor hint follows the current anchor" {
+/// 锚点映射是唯一的语义来源（读数已随头部一起删掉，锚点状态只能从
+/// model 与命令面板读）。
+test "anchor hint keys follow the current anchor" {
   let model = initial_model()
   assert_eq(anchor_hint_key(model.ai_anchor), "app.ai.anchor.center")
   assert_eq(anchor_hint_key(AiLeft), "app.ai.anchor.left")
   assert_eq(anchor_hint_key(AiRight), "app.ai.anchor.right")
   assert_eq(anchor_hint_key(AiDocked), "app.ai.anchor.docked")
-  // 循环锚点后读数要变（三个浮动锚依次轮转）
+  // 循环锚点后状态要变（三个浮动锚依次轮转）
   let cycled = apply_shell(model, CycleAiAnchor)
   assert_false(cycled.ai_anchor is AiCenter)
-  let left = apply_shell(model, SetAiAnchor(AiLeft))
-  let commands = shell_draw(left, 1280.0, 800.0)
-  assert_true(shell_has_text(commands, "左下角"))
+  // 无头部：任何锚点下都不再有「底部居中」读数
+  assert_false(shell_has_text(shell_draw(model, 1280.0, 800.0), "底部居中"))
 }
 
 ///|
-/// 停靠态下工具行的按钮换成「浮出」——否则点「侧栏」是空操作。
+/// 停靠态的头部锚点图标必须携带「浮出」语义——图标没有绘制文字，
+/// 可访问名是唯一语义出口；画成「停靠右栏」就是动作与语义相反。
 test "docked anchor offers undock instead of dock" {
   let docked = apply_shell(initial_model(), SetAiAnchor(AiDocked))
-  let commands = shell_draw(docked, 1280.0, 800.0)
-  assert_true(shell_has_text(commands, "停靠 · Context 侧栏"))
-  assert_true(shell_has_text(commands, "浮出"))
+  assert_eq(ai_anchor_toggle_key(docked), "app.ai.undock")
+  assert_eq(ai_anchor_toggle_key(initial_model()), "app.ai.dock")
 }
 
 ///|
@@ -1008,6 +1020,30 @@ test "proposal threads produce visible, settleable cards" {
 ///
 /// 曾经的 bug：线程区拿「可用高度 − 常数」当预算，线程卡一多就长过卡片
 /// 自身的帧高，把 composer 和决策行顶出可视区（实测一张 diff 卡就够）。
+
+///|
+/// 圆形发送钮的绘制指纹：强调色实心圆（宽=高≈24、圆角=半径）。
+/// 发送改为图标后没有「发送」文字，这是它唯一的可观测形态。
+fn shell_find_send_button(commands : Array[@core.DrawCommand]) -> @core.Rect? {
+  let accent = ide_accent()
+  let mut found : @core.Rect? = None
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @core.Brush::Solid(color)) =>
+        if (color.r - accent.r).abs() < 0.001 &&
+          (color.g - accent.g).abs() < 0.001 &&
+          (rounded.rect.size.width - rounded.rect.size.height).abs() < 0.5 &&
+          rounded.rect.size.width >= 18.0 &&
+          rounded.rect.size.width <= 34.0 {
+          found = Some(rounded.rect)
+        }
+      _ => ()
+    }
+  }
+  found
+}
+
+///|
 /// 现在线程区预算由 `ai_card_height − card_chrome_height` 反推。
 test "thread cards never push the composer out of the card" {
   let mut model = initial_model()
@@ -1019,13 +1055,25 @@ test "thread cards never push the composer out of the card" {
     fail("expected >3 cards, got " + model.ai_cards.length().to_string())
   }
   let commands = shell_draw(model, 1280.0, 800.0)
-  let card_top = match shell_find_text(commands, "AI 提案") {
+  let card_top = match shell_find_text(commands, "描述你想要的应用") {
     Some(run) => run.frame.origin.y
     None => fail("AI card missing")
   }
   // 卡片底边 = 卡顶 + 内容高度（含底边距）
   let card_bottom = card_top + ai_card_height(model, 680.0) - 12.0
-  for label in ["发送", "查看全部会话 →", "提案历史"] {
+  guard shell_find_send_button(commands) is Some(send) else {
+    fail("round send button missing after threads")
+  }
+  let send_bottom = send.origin.y + send.size.height
+  if send_bottom > card_bottom {
+    fail(
+      "send button falls outside the card: bottom=" +
+      send_bottom.to_string() +
+      " card_bottom=" +
+      card_bottom.to_string(),
+    )
+  }
+  for label in ["查看全部会话 →", "提案历史"] {
     guard shell_find_text(commands, label) is Some(run) else {
       fail("missing after threads: " + label)
     }

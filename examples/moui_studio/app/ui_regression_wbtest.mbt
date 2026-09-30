@@ -108,3 +108,112 @@ test "chip widths grow with their labels" {
     topbar_chip_bound("Run", 0.0) < topbar_chip_bound("编译 MoonBit", 0.0),
   )
 }
+
+///|
+/// 满幅设计画布（Figma 式）的两条契约：
+/// ① 白色拟真窗口在窗格里**垂直居中**——信箱式留白不再偏一侧死黑；
+/// ② 点阵晶格铺满窗格——舞台上方也要有点（旧版点阵只在舞台内部）。
+test "design stage fills the pane with a centered stage and full lattice" {
+  let model = initial_model()
+  let commands = shell_draw(model, 1280.0, 800.0)
+  // 舞台白底 = studio_stage_background 的实心圆角矩形；取最大的一块。
+  let stage_bg = studio_stage_background()
+  let mut stage : @core.Rect? = None
+  for command in commands {
+    match command {
+      // 画布填充走 Brush 变体（paint_context 的 fill_rounded_rect）
+      @core.FillRoundedRectBrush(rounded, @core.Brush::Solid(color)) =>
+        if (color.r - stage_bg.r).abs() < 0.001 &&
+          (color.g - stage_bg.g).abs() < 0.001 &&
+          (color.b - stage_bg.b).abs() < 0.001 {
+          match stage {
+            None => stage = Some(rounded.rect)
+            Some(existing) =>
+              if rounded.rect.size.width > existing.size.width {
+                stage = Some(rounded.rect)
+              }
+          }
+        }
+      _ => ()
+    }
+  }
+  guard stage is Some(stage_rect) else { fail("design stage frame not found") }
+  // 活动窗格的舞台区 = 编辑器底色（ide_editor_background）的大矩形
+  // （中心列内、比舞台白框大）。舞台必须在该区内**垂直居中**——
+  // 旧版信箱留白偏一侧的观感就是这条对称性被破坏。
+  let editor_bg = ide_editor_background()
+  let mut pane_rect : @core.Rect? = None
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @core.Brush::Solid(color)) =>
+        if (color.r - editor_bg.r).abs() < 0.001 &&
+          (color.g - editor_bg.g).abs() < 0.001 &&
+          rounded.rect.size.width > 200.0 &&
+          rounded.rect.size.width < 500.0 &&
+          rounded.rect.origin.x > 250.0 &&
+          rounded.rect.origin.x < 700.0 {
+          pane_rect = Some(rounded.rect)
+        }
+      _ => ()
+    }
+  }
+  guard pane_rect is Some(pane) else {
+    fail("live pane editor background not found")
+  }
+  let top_gap = stage_rect.origin.y - pane.origin.y
+  let bottom_gap = pane.origin.y +
+    pane.size.height -
+    (stage_rect.origin.y + stage_rect.size.height)
+  if (top_gap - bottom_gap).abs() > 4.0 {
+    fail(
+      "stage is not vertically centred in the pane: top_gap=" +
+      top_gap.to_string() +
+      " bottom_gap=" +
+      bottom_gap.to_string(),
+    )
+  }
+  // 晶格点必须出现在舞台**上方**（旧版点阵只存在于舞台内部）
+  let outline = studio_stage_outline()
+  let mut dots_above = 0
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @core.Brush::Solid(color)) =>
+        if (color.r - outline.r).abs() < 0.001 &&
+          (color.g - outline.g).abs() < 0.001 &&
+          (color.b - outline.b).abs() < 0.001 &&
+          rounded.rect.size.width <= 3.0 &&
+          rounded.rect.origin.y < stage_rect.origin.y - 4.0 &&
+          rounded.rect.origin.y > pane.origin.y {
+          dots_above = dots_above + 1
+        }
+      _ => ()
+    }
+  }
+  if dots_above == 0 {
+    fail("no lattice dots above the stage — canvas is not full-pane")
+  }
+}
+
+///|
+/// AI 卡常驻预算上限：瘦身后空闲卡（头 + 芯片行 + 单行输入）不得再回到
+/// 旧版 ~190pt 的三层 chrome。预算涨回去，避让带就会重新吃掉工作区。
+test "idle ai card stays compact" {
+  let model = initial_model()
+  let height = ai_card_height(model, 680.0)
+  if height > 140.0 {
+    fail(
+      "idle AI card grew too tall: " +
+      height.to_string() +
+      " (single-row composer budget is ~102)",
+    )
+  }
+}
+
+///|
+/// 画布上不允许常驻用法提示（旧版两条截断提示行是噪音，已删）。
+test "blocks and design canvases have no permanent hint rows" {
+  let model = initial_model()
+  let commands = shell_draw(model, 1280.0, 800.0)
+  assert_false(shell_has_text(commands, "拖动积木"))
+  assert_false(shell_has_text(commands, "预留避让通道"))
+}

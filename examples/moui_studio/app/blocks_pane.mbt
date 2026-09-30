@@ -58,7 +58,7 @@ pub fn blocks_pane(
   // 「今天没有块」本身就是分类轨要传达的信息之一。它并排在画布左侧
   // （设计稿 #catbar），而不是压在画布上方——积木视图纵向最紧，把分类
   // 移到画布旁边的空白里等于白赚 30pt 画布高。
-  let body_height = (height - 130.0).max(80.0)
+  let body_height = blocks_body_height(model, height)
   let catbar = category_rail(model, t, body_height)
   let canvas_width = (width - CATEGORY_RAIL_WIDTH - 2.0).max(120.0)
   let canvas = match current_handler(model) {
@@ -87,9 +87,12 @@ pub fn blocks_pane(
         )
       }
       let rects = blocks_item_rects(blocks)
-      let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT + 24.0).max(
-        120.0,
-      )
+      // 画布高度 = max(内容高, 视口高)：scroll_view 会把**短于视口**的子
+      // 节点垂直居中——块链一短就悬浮在画布中段（Scratch 是顶对齐的）。
+      // 让画布节点至少占满视口，块永远从顶部开始排。
+      let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT + 24.0)
+        .max(body_height)
+        .max(120.0)
       let spotlight = current_spotlight(model)
       @views.scroll_view(
         blocks_canvas(
@@ -111,21 +114,26 @@ pub fn blocks_pane(
   let body = @views.row([catbar, canvas], spacing=0.0, align=Start)
   @views.container(
     @views.column(
-      // 积木窗格脚注（设计稿 #blocksFoot，24pt）：灯泡 + 一句「画布底部已为
-      // AI 层预留避让通道 · 悬停积木查看 ↔ 行映射」。它同时解释了画布底部
-      // 那段留白是**有意的避让通道**，不是漏排。
-      [
-        head,
-        body,
-        blocks_foot_hint(t, width),
-        block_editor_bar(model, t, width),
-      ],
+      // 成熟画布工具（Scratch/Figma）不在画布上放常驻用法提示：旧版的
+      // 脚注提示与编辑条空态提示两条 24-30pt 的截断文字是纯噪音，删掉后
+      // 高度还给画布。交互说明留给空态提示与控件 tooltip。
+      [head, body, block_editor_bar(model, t, width)],
       spacing=0.0,
     ).frame(width~, height~),
     background=ide_editor_background(),
     width~,
     height~,
     padding=0.0,
+  )
+}
+
+///|
+/// 积木画布可用高度：头 + （选中语句时才有的）编辑条。单点计算——
+/// 视图层的 body_height 与编辑条的显隐共用这一个判据。
+pub fn blocks_body_height(model : Model, height : Double) -> Double {
+  let editor_selected = model.selected_block >= 0
+  (height - PANEL_HEAD_HEIGHT - (if editor_selected { 34.0 } else { 0.0 }) - 2.0).max(
+    80.0,
   )
 }
 
@@ -244,39 +252,6 @@ fn category_rail_row(
 }
 
 ///|
-/// 积木窗格脚注（设计稿 `#blocksFoot`）：11pt 图标 + 一句提示。
-///
-/// 文案用 `fit_label` 按可用宽截断：中文提示在窄窗格里放不下，直接画会
-/// **穿过窗格边界**到隔壁 Live App 窗格上（实测文字右缘 1013 > 窗格右缘
-/// 1004，被硬切在半个字上）。这里和积木块标签共用同一套省略号口径。
-fn blocks_foot_hint(t : @i18n.Translator, width : Double) -> @moui.View[Msg] {
-  // 让出图标(11) + 行内间距(6) + 左右内垫(20) + 估算误差余量(10)
-  let text_width = (width - 48.0).max(40.0)
-  let label = fit_label(text(t, "app.blocks.foot_hint"), text_width)
-  @views.container(
-    fill_row(
-      [
-        @views.icon(Info, size=11.0, color=ide_text_faint()),
-        @views.text(
-          label,
-          theme=studio_theme(),
-          width=text_width,
-          height=15.0,
-          align=TextStart,
-        ).foreground(ide_text_faint()),
-      ],
-      (width - 20.0).max(60.0),
-      6.0,
-      Start,
-    ),
-    background=ide_panel(),
-    height=24.0,
-    width~,
-    padding=0.0,
-  )
-}
-
-///|
 /// 积木编辑条：选中块的语句草稿 + 应用/删除（旧 blocks_panel 的编辑区，
 /// 移入窗格脚注以把纵向空间还给画布）。
 fn block_editor_bar(
@@ -289,17 +264,12 @@ fn block_editor_bar(
     Some(handler) => @blocks.block_chain(handler.body)
   }
   if model.selected_block < 0 || model.selected_block >= blocks.length() {
+    // 没选中语句时编辑条不占位（旧版常驻一行「拖动积木可同层重排…」
+    // 的截断提示，是噪音）。
     return @views.container(
-      @views.text(
-        text(t, "app.blocks.reorder_hint"),
-        theme=studio_theme(),
-        width=(width - 20.0).max(60.0),
-        height=26.0,
-        align=TextStart,
-      ).foreground(ide_text_faint()),
-      background=ide_panel(),
-      height=30.0,
+      @views.text("", width=1.0, height=1.0),
       width~,
+      height=0.0,
       padding=0.0,
     )
   }

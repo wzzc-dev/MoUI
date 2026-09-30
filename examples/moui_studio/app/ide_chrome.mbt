@@ -405,6 +405,79 @@ pub fn icon_button(
 }
 
 ///|
+/// Ghost 图标按钮：透明底（融入所在表面），选中态才点亮——现代 AI 面板
+/// 的头部口径（Codex/ZCode）：标题行不留一排「小方块」，操作都在安静处。
+/// `surface` 是所在表面的底色（ghost 态与它同色 = 视觉透明）。
+pub fn ghost_icon_button(
+  icon : @style.IconName,
+  tip : String,
+  selected : Bool,
+  on_click : Msg,
+  width : Double,
+  height : Double,
+  icon_size : Double,
+  surface : @core.Color,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.center(
+      @views.icon(
+        icon,
+        size=icon_size,
+        color=if selected {
+          ide_accent()
+        } else if tip == "" {
+          ide_text_faint()
+        } else {
+          ide_text_muted()
+        },
+      ),
+      width~,
+      height~,
+    ),
+    background=if selected { ide_selection() } else { surface },
+    corner_radius=6.0,
+    width~,
+    height~,
+    padding=0.0,
+  )
+  .accessibility_label(tip)
+  .on_tap(on_click)
+}
+
+///|
+/// 圆形主行动按钮（发送）：实心强调色圆 + 箭头图标——Codex/ZCode 输入盒
+/// 的收尾形态。`enabled=false` 时降为面板色 + 弱图标（忙碌态）。
+pub fn round_send_button(
+  tip : String,
+  on_click : Msg,
+  enabled : Bool,
+  size : Double,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.center(
+      @views.icon(
+        ArrowRight,
+        size=(size - 12.0).max(10.0),
+        color=if enabled {
+          studio_theme().palette.on_primary
+        } else {
+          ide_text_faint()
+        },
+      ),
+      width=size,
+      height=size,
+    ),
+    background=if enabled { ide_accent() } else { ide_elevated() },
+    corner_radius=size / 2.0,
+    width=size,
+    height=size,
+    padding=0.0,
+  )
+  .accessibility_label(tip)
+  .on_tap(on_click)
+}
+
+///|
 /// 文本芯片按钮：一眼可读的小动作（快速插入、快速操作、分类条）。
 pub fn text_chip(
   label : String,
@@ -710,7 +783,7 @@ pub fn inline_card(
   let content = @views.container(
     body,
     background=if settled { ide_panel() } else { ide_elevated() },
-    corner_radius=4.0,
+    corner_radius=8.0,
     width~,
     padding=8.0,
   )
