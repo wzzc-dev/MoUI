@@ -59,10 +59,10 @@ fn shell_view(
   } else {
     PANEL_HEAD_HEIGHT
   }
-  // 沉浸式：顶栏**就是**窗口标题栏，合并成一条 56pt（IDEA 口径）。
-  // 旧实现是「26pt 窗控带 + 40pt 顶栏」两条：上一条只放一句居中提示文字、
-  // 底色比顶栏更深，交界处一条两截色缝加半条空带——这就是「顶上的边框不
-  // 沉浸」的直接成因。合并后不再有额外的带子，只是这一条变高。
+  // 沉浸式：顶栏**就是**窗口标题栏（一条带，无色缝）。带高 32 由系统
+  // 信号灯的垂直位置决定（圆心 15.8pt，见 WINDOW_CHROME_HEIGHT 注释）——
+  // 内容居中即与灯共线； immersive 下 window_bar 只补差额（可为负，
+  // 代数仍然自洽：顶栏渲染 32，壳预算按 40-8 记）。
   let window_bar = if model.immersive {
     WINDOW_CHROME_HEIGHT - TOPBAR_HEIGHT
   } else {
@@ -169,28 +169,32 @@ fn workspace_row(
     ]).frame(width=center_width, height=row_height)
   }
   cells.push(center)
-  // 右栏：Context + 快速操作 + 监视（AI 停靠时并入右栏顶部）
-  cells.push(hairline_v())
-  if model.ai_anchor is AiDocked && !model.ai_pill {
-    cells.push(
-      @views.column(
-        [
-          @views.container(
-            match ai_layer(model, t, chrome.right, 340.0, 0.0) {
-              Some(layer) => layer
-              None => @views.text("", width=1.0, height=1.0)
-            },
-            width=chrome.right,
-            height=340.0,
-            padding=0.0,
-          ),
-          ide_right_panel(model, t, chrome.right, row_height - 340.0),
-        ],
-        spacing=0.0,
-      ).frame(height=row_height),
-    )
-  } else {
-    cells.push(ide_right_panel(model, t, chrome.right, row_height))
+  // 右栏：Context + 快速操作 + 监视（AI 停靠时并入右栏顶部）。
+  // `chrome.right == 0.0` = 用户收起了右栏 → **面板与它左侧的发丝线都不画**，
+  // 否则中心列右边会留一条没有内容的竖线。
+  if chrome.right > 0.0 {
+    cells.push(hairline_v())
+    if model.ai_anchor is AiDocked && !model.ai_pill {
+      cells.push(
+        @views.column(
+          [
+            @views.container(
+              match ai_layer(model, t, chrome.right, 340.0, 0.0) {
+                Some(layer) => layer
+                None => @views.text("", width=1.0, height=1.0)
+              },
+              width=chrome.right,
+              height=340.0,
+              padding=0.0,
+            ),
+            ide_right_panel(model, t, chrome.right, row_height - 340.0),
+          ],
+          spacing=0.0,
+        ).frame(height=row_height),
+      )
+    } else {
+      cells.push(ide_right_panel(model, t, chrome.right, row_height))
+    }
   }
   @views.row(cells, spacing=0.0, align=Start).frame(height=row_height)
 }
@@ -200,6 +204,7 @@ fn workspace_row(
 pub(all) struct ShellChromeWidths {
   left : Double?
   center : Double
+  /// 右栏宽。`0.0` 表示右栏收起（不占宽、不画分隔线）。
   right : Double
 }
 
@@ -211,12 +216,31 @@ pub(all) struct ShellChromeWidths {
 /// 中心列有 320 的下限（三工作区都在这个宽度下仍然可用）。当
 /// 图标栏 + 左 + 中心下限 + 右都放不下时，**左栏自动让位**（返回 None）：
 /// 设计师在窄窗口下最需要的是中心舞台，左栏可以从图标栏再点开。
+///
+/// `right` 返回 0.0 有两种来源，调用方**不必区分**（都是「不画右栏」）：
+/// 用户显式收起（`right_visible = false`），或窄窗口下让位。这里优先保住
+/// 右栏而不是让它让位——它是属性面板，收起了就没地方改属性；
+/// 真正需要腾空间时先让左栏（树可以从图标栏再点开）。
 fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
   let usable = (width - ICONBAR_WIDTH - 2.0).max(120.0)
   let center_min = 320.0
   let wants_left = !(model.left_view is LeftHidden)
+  let wants_right = model.right_visible
   let left_want = LEFTBAR_WIDTH
   let right_want = RIGHTBAR_WIDTH
+  if !wants_right {
+    // 右栏收起：中心吃满「可用 − 左栏」
+    let left_room = if wants_left { left_want + 1.0 } else { 0.0 }
+    return ShellChromeWidths::{
+      left: if wants_left {
+        Some(left_want)
+      } else {
+        None
+      },
+      center: (usable - left_room).max(center_min),
+      right: 0.0,
+    }
+  }
   if usable >= left_want + right_want + center_min {
     // 宽窗口：设计稿确定值
     ShellChromeWidths::{

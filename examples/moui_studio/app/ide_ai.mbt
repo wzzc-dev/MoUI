@@ -86,21 +86,34 @@ fn ai_floating(
   // 更大的帧里永远拿不到 slack，居中/贴底都是空操作。
   // 这里用「权重 spacer + 定高卡片」的列，把卡片确定性地压到带底。
   let usable = (height - 12.0).max(card_height)
-  // 左右锚点：水平方向同样用 spacer 推，而不是 align。
-  let (lead, trail) = match model.ai_anchor {
-    AiCenter => (0.0, 0.0)
-    AiLeft => (12.0, 0.0)
-    AiRight | AiDocked => (0.0, 12.0)
-  }
-  let row : Array[@moui.View[Msg]] = []
-  if lead > 0.0 {
-    row.push(@views.spacer(min_length=lead, weight=0.0))
-  }
-  row.push(
-    @views.container(card, width=card_width, height=card_height, padding=0.0),
+  // 水平定位（设计稿 `#aiLayer` 是 `left:50%` 平移居中，pill 态不改锚点）：
+  // 居中锚用**对称权重 spacer**——与药丸同一条纪律，`align` 在更大的帧里
+  // 拿不到 slack 是空操作；左右锚用固定边距 + 权重 spacer 推到对侧。
+  let card_cell = @views.container(
+    card,
+    width=card_width,
+    height=card_height,
+    padding=0.0,
   )
-  if trail > 0.0 {
-    row.push(@views.spacer(min_length=trail, weight=1.0))
+  let row : Array[@moui.View[Msg]] = match model.ai_anchor {
+    AiCenter =>
+      [
+        @views.spacer(min_length=0.0, weight=1.0),
+        card_cell,
+        @views.spacer(min_length=0.0, weight=1.0),
+      ]
+    AiLeft =>
+      [
+        @views.spacer(min_length=12.0, weight=0.0),
+        card_cell,
+        @views.spacer(min_length=0.0, weight=1.0),
+      ]
+    AiRight | AiDocked =>
+      [
+        @views.spacer(min_length=0.0, weight=1.0),
+        card_cell,
+        @views.spacer(min_length=12.0, weight=0.0),
+      ]
   }
   // hero 贴「上方 42%」而不是贴底：设计稿 `.hero{bottom:auto;top:42%}`。
   // 用两个权重 spacer 按 42:58 分配余量，等价于把卡放在 42% 处。
@@ -338,9 +351,10 @@ fn ai_card_body(
 
 ///|
 /// 「查看全部会话 →」：线程多了以后卡片区只能滚动看，给一个直达既有
-/// AI 历史对话框的出口（设计稿 `#seeAll`）。
+/// AI 历史对话框的出口（设计稿 `#seeAll`）。宽度按内容算（中英文案差近半）。
 fn see_all_row(t : @i18n.Translator, width : Double) -> @moui.View[Msg] {
-  let label_width = 110.0
+  let label = text(t, "app.ai.see_all")
+  let label_width = (text_estimate_width(label) * 1.05 + 20.0).max(64.0)
   @views.container(
     @views.padding_xy(
       fill_row(
@@ -349,17 +363,17 @@ fn see_all_row(t : @i18n.Translator, width : Double) -> @moui.View[Msg] {
           @views.container(
             @views.center(
               @views.text(
-                text(t, "app.ai.see_all"),
+                label,
                 theme=studio_theme(),
-                width=label_width,
+                width=(label_width - 20.0).max(40.0),
                 height=16.0,
               ).foreground(ide_accent()),
-              width=label_width + 12.0,
+              width=label_width,
               height=18.0,
             ),
             background=ide_panel_alt(),
             corner_radius=4.0,
-            width=label_width + 12.0,
+            width=label_width,
             height=18.0,
             padding=0.0,
           ).on_tap(ToggleAiHistory),
@@ -521,25 +535,14 @@ fn ai_card_view(
   for line in card.diff_lines {
     rows.push(diff_row(line.0, line.1, width))
   }
-  // 副作用卡 / diff 卡：待审计时给采纳/拒绝
+  // 副作用卡 / diff 卡：待审计时给采纳/拒绝。
+  // 芯片严格 22 高——线程区预算按内容行算，36pt 的 @views.button 会撑爆。
   if !card.settled && (card.kind is CardDiff || card.kind is CardSideEffect) {
     rows.push(
       @views.row(
         [
-          @views.button(
-            text(t, "app.ai.accept"),
-            on_click=AcceptProposal,
-            variant=Primary,
-            width=72.0,
-            height=24.0,
-          ),
-          @views.button(
-            text(t, "app.ai.reject"),
-            on_click=RejectProposal,
-            variant=Outline,
-            width=72.0,
-            height=24.0,
-          ),
+          action_chip(text(t, "app.ai.accept"), AcceptProposal, Primary, 22.0),
+          action_chip(text(t, "app.ai.reject"), RejectProposal, Quiet, 22.0),
           @views.text(
             "\{index + 1}",
             theme=studio_theme(),
@@ -575,23 +578,26 @@ fn context_chips(
   width : Double,
 ) -> @moui.View[Msg] {
   let chips : Array[@moui.View[Msg]] = []
+  // 芯片宽按内容算：控件名（中文语义命名）与英文界面宽度差异大，写死
+  // 必然一侧截断。
   let mut index = 0
   for chip in model.ai_context_chips {
+    let chip_w = (text_estimate_width("\{chip} ×") * 1.05 + 20.0).max(56.0)
     chips.push(
       @views.container(
         @views.center(
           @views.text(
             "\{chip} ×",
             theme=studio_theme(),
-            width=68.0,
+            width=(chip_w - 16.0).max(30.0),
             height=16.0,
           ).foreground(ide_accent()),
-          width=76.0,
+          width=chip_w,
           height=20.0,
         ),
         background=ide_selection(),
         corner_radius=10.0,
-        width=76.0,
+        width=chip_w,
         height=20.0,
         padding=0.0,
       ).on_tap(RemoveAiContextChip(index)),
@@ -610,21 +616,22 @@ fn context_chips(
   match suggestion {
     Some(name) =>
       if !model.ai_context_chips.contains(name) {
+        let add_w = (text_estimate_width("+ @\{name}") * 1.05 + 20.0).max(64.0)
         chips.push(
           @views.container(
             @views.center(
               @views.text(
                 "+ @\{name}",
                 theme=studio_theme(),
-                width=92.0,
+                width=(add_w - 16.0).max(30.0),
                 height=16.0,
               ).foreground(ide_text_muted()),
-              width=100.0,
+              width=add_w,
               height=20.0,
             ),
             background=ide_panel_alt(),
             corner_radius=10.0,
-            width=100.0,
+            width=add_w,
             height=20.0,
             padding=0.0,
           ).on_tap(AddAiContextChip(name)),
@@ -636,7 +643,7 @@ fn context_chips(
     return @views.container(
       @views.padding_xy(
         @views.text(
-          text(t, "app.ai.no_context"),
+          fit_label(text(t, "app.ai.no_context"), (width - 24.0).max(60.0)),
           theme=studio_theme(),
           width=(width - 20.0).max(60.0),
           height=16.0,
@@ -674,14 +681,24 @@ fn composer(
   t : @i18n.Translator,
   width : Double,
 ) -> @moui.View[Msg] {
-  let modes : Array[@moui.View[Msg]] = [
-    composer_mode_chip(model, t, ComposeEdit, "app.ai.mode.edit"),
-    composer_mode_chip(model, t, ComposeGenerate, "app.ai.mode.generate"),
-    composer_mode_chip(model, t, ComposeExplain, "app.ai.mode.explain"),
-    composer_mode_chip(model, t, ComposeRepair, "app.ai.mode.repair"),
+  // 模式段与发送都按内容算宽：写死 40/62 在英文界面（"Generate"/"Send"）
+  // 下会截掉半个词，中文下又留白。段宽是各芯片之和 + 间距，输入框拿剩余。
+  let mode_keys : Array[(ComposerMode, String)] = [
+    (ComposeEdit, "app.ai.mode.edit"),
+    (ComposeGenerate, "app.ai.mode.generate"),
+    (ComposeExplain, "app.ai.mode.explain"),
+    (ComposeRepair, "app.ai.mode.repair"),
   ]
-  let seg_width = 4.0 * 40.0 + 3.0 * 3.0
-  let send_width = 62.0
+  let modes : Array[@moui.View[Msg]] = []
+  let mut seg_width = 0.0
+  for entry in mode_keys {
+    let chip = composer_mode_chip(model, t, entry.0, entry.1)
+    seg_width = seg_width + composer_chip_width(text(t, entry.1))
+    modes.push(chip)
+  }
+  seg_width = seg_width + 3.0 * 3.0
+  let send_label = text(t, "app.ai.send")
+  let send_width = (text_estimate_width(send_label) * 1.05 + 20.0).max(52.0)
   let field_width = (width - 16.0 - seg_width - send_width - 12.0).max(70.0)
   let foot = fill_row(
     [
@@ -691,11 +708,11 @@ fn composer(
       @views.container(
         @views.center(
           @views.text(
-            text(t, "app.ai.send"),
+            send_label,
             theme=studio_theme(),
-            width=(send_width - 12.0).max(20.0),
+            width=(send_width - 20.0).max(20.0),
             height=16.0,
-          ).foreground(@core.Color::white()),
+          ).foreground(studio_theme().palette.on_primary),
           width=send_width,
           height=22.0,
         ),
@@ -760,16 +777,17 @@ fn composer_tools(
   width : Double,
 ) -> @moui.View[Msg] {
   let docked = model.ai_anchor is AiDocked
+  let hint = text(t, anchor_hint_key(model.ai_anchor))
   let cells : Array[@moui.View[Msg]] = [
     @views.icon(Focus, size=11.0, color=ide_text_faint()),
     @views.text(
-      text(t, anchor_hint_key(model.ai_anchor)),
+      hint,
       theme=studio_theme(),
-      width=72.0,
+      width=(text_estimate_width(hint) * 1.02 + 6.0).max(40.0),
       height=16.0,
     ).foreground(ide_text_faint()),
     @views.spacer(min_length=4.0, weight=1.0),
-    composer_tool_chip(t, "app.ai.anchor", 62.0, CycleAiAnchor),
+    composer_tool_chip(t, "app.ai.anchor", CycleAiAnchor),
     composer_tool_chip(
       t,
       if docked {
@@ -777,14 +795,13 @@ fn composer_tools(
       } else {
         "app.ai.dock"
       },
-      62.0,
       if docked {
         SetAiAnchor(AiCenter)
       } else {
         SetAiAnchor(AiDocked)
       },
     ),
-    composer_tool_chip(t, "app.ai.collapse", 54.0, ToggleAiPill),
+    composer_tool_chip(t, "app.ai.collapse", ToggleAiPill),
   ]
   @views.container(
     @views.padding_xy(
@@ -799,19 +816,21 @@ fn composer_tools(
 }
 
 ///|
-/// 工具行按钮：手搓（`@views.button` 的宽高是最小值，见 composer 注释）。
+/// 工具行按钮：手搓（`@views.button` 的宽高是最小值，见 composer 注释），
+/// 宽度按文案内容算（中英文案宽度差近半，写死 62 会截掉一侧）。
 fn composer_tool_chip(
   t : @i18n.Translator,
   key : String,
-  chip_width : Double,
   msg : Msg,
 ) -> @moui.View[Msg] {
+  let label = text(t, key)
+  let chip_width = (text_estimate_width(label) * 1.05 + 16.0).max(44.0)
   @views.container(
     @views.center(
       @views.text(
-        text(t, key),
+        label,
         theme=studio_theme(),
-        width=(chip_width - 10.0).max(20.0),
+        width=(chip_width - 14.0).max(20.0),
         height=16.0,
       ).foreground(ide_text_muted()),
       width=chip_width,
@@ -892,6 +911,14 @@ fn hero_hints(
 }
 
 ///|
+/// composer 模式芯片宽：文案实测 × 1.05 + 两侧内垫 14，下限 36。
+/// 段宽合计（composer）与芯片自身宽必须走同一函数——两处各算一份，
+/// 输入框的剩余宽就会算错。
+fn composer_chip_width(label : String) -> Double {
+  (text_estimate_width(label) * 1.05 + 14.0).max(36.0)
+}
+
+///|
 /// 模式芯片：手搓（理由同 composer），选中态用强调色 + 底色区分。
 fn composer_mode_chip(
   model : Model,
@@ -900,21 +927,22 @@ fn composer_mode_chip(
   key : String,
 ) -> @moui.View[Msg] {
   let selected = model.composer_mode == mode
+  let label = text(t, key)
+  let chip_width = composer_chip_width(label)
   @views.container(
     @views.center(
-      @views.text(text(t, key), theme=studio_theme(), width=34.0, height=16.0).foreground(
-        if selected {
-          ide_accent()
-        } else {
-          ide_text_faint()
-        },
-      ),
-      width=40.0,
+      @views.text(
+        label,
+        theme=studio_theme(),
+        width=(chip_width - 14.0).max(20.0),
+        height=16.0,
+      ).foreground(if selected { ide_accent() } else { ide_text_faint() }),
+      width=chip_width,
       height=20.0,
     ),
     background=if selected { ide_selection() } else { ide_panel_alt() },
     corner_radius=4.0,
-    width=40.0,
+    width=chip_width,
     height=20.0,
     padding=0.0,
   ).on_tap(SetComposerMode(mode))
@@ -939,12 +967,14 @@ fn decision_bar(
           align=TextStart,
         ).foreground(if pending.valid { ide_success() } else { ide_danger() }),
       )
-      // 校验失败时逐条列出原因（不静默丢弃，也不允许采纳）
+      // 校验失败时逐条列出原因（不静默丢弃，也不允许采纳）。
+      // 错误文案是长句（英文 400pt+），按行宽截断——决策条高度是单点预算，
+      // 折行会把预算撑爆。
       if !pending.valid {
         for error in pending.errors {
           rows.push(
             @views.text(
-              "· \{error}",
+              fit_label("· \{error}", (width - 24.0).max(60.0)),
               theme=studio_theme(),
               width=(width - 16.0).max(60.0),
               height=16.0,
@@ -956,27 +986,9 @@ fn decision_bar(
       rows.push(
         fill_row(
           [
-            @views.button(
-              text(t, "app.ai.accept"),
-              on_click=AcceptProposal,
-              variant=Primary,
-              width=72.0,
-              height=26.0,
-            ),
-            @views.button(
-              text(t, "app.ai.reject"),
-              on_click=RejectProposal,
-              variant=Outline,
-              width=72.0,
-              height=26.0,
-            ),
-            @views.button(
-              text(t, "app.ai.history"),
-              on_click=ToggleAiHistory,
-              variant=Ghost,
-              width=72.0,
-              height=26.0,
-            ),
+            action_chip(text(t, "app.ai.accept"), AcceptProposal, Primary, 24.0),
+            action_chip(text(t, "app.ai.reject"), RejectProposal, Quiet, 24.0),
+            action_chip(text(t, "app.ai.history"), ToggleAiHistory, Ghost, 24.0),
           ],
           (width - 16.0).max(80.0),
           6.0,
@@ -1021,13 +1033,7 @@ fn decision_bar(
               height=16.0,
               align=TextStart,
             ).foreground(ide_text_faint()),
-            @views.button(
-              text(t, "app.ai.history"),
-              on_click=ToggleAiHistory,
-              variant=Ghost,
-              width=72.0,
-              height=24.0,
-            ),
+            action_chip(text(t, "app.ai.history"), ToggleAiHistory, Ghost, 22.0),
           ],
           spacing=6.0,
           align=Center,
@@ -1058,9 +1064,11 @@ fn decision_bar(
 /// 避让预留就会和实际遮挡对不上。
 pub fn decision_bar_height(model : Model) -> Double {
   match model.pending {
-    Some(_) => 26.0 + 4.0 + 26.0
+    // 两个 24pt 芯片行（采纳/拒绝/历史）。芯片严格等高，预算才准。
+    Some(_) => 24.0 + 4.0 + 24.0
     None => {
-      let mut height = 16.0
+      // 状态行的高由「历史」芯片决定（22），不是文本的 16。
+      let mut height = 22.0
       if model.explanation != "" {
         height = height + 4.0 + 54.0
       }

@@ -23,6 +23,8 @@ pub const AUDIT_LIMIT : Int = 200
 
 pub const BLOCK_ROW_HEIGHT : Double = 40.0
 
+pub const BUTTON_LABEL_PADDING : Double = 32.0
+
 pub const CATEGORY_RAIL_WIDTH : Double = 86.0
 
 pub const CHIPS_HEIGHT : Double = 26.0
@@ -57,11 +59,13 @@ pub const LOG_LIMIT : Int = 400
 
 pub const PANEL_HEAD_HEIGHT : Double = 30.0
 
+pub const PANE_HEAD_GAP : Double = 6.0
+
+pub const PANE_HEAD_INSET : Double = 8.0
+
 pub const RECENT_LIMIT : Int = 24
 
 pub const RECENT_STRIP_ROWS : Int = 3
-
-pub const RESTORE_STRIP_HEIGHT : Double = 28.0
 
 pub const RIGHTBAR_WIDTH : Double = 272.0
 
@@ -72,6 +76,8 @@ pub const STATUSBAR_HEIGHT : Double = 22.0
 pub const TOAST_LIMIT : Int = 3
 
 pub const TOPBAR_ACTION_GAP : Double = 6.0
+
+pub const TOPBAR_ACTION_HEIGHT : Double = 24.0
 
 pub const TOPBAR_HEIGHT : Double = 40.0
 
@@ -84,6 +90,8 @@ pub const TREE_ROW_HEIGHT : Double = 24.0
 pub const UNDO_DEPTH : Int = 50
 
 pub const WINDOW_CHROME_HEIGHT : Double = 56.0
+
+pub fn action_chip(String, Msg, ChipTone, Double) -> @core.View[Msg]
 
 pub fn ai_card_height(Model, Double) -> Double
 
@@ -139,21 +147,25 @@ pub fn blocks_item_rects(Array[@blocks.BlockItem], avail_width? : Double) -> Arr
 
 pub fn blocks_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
+pub fn blocks_pane_wanted(Model) -> Bool
+
 pub fn blocks_parent_of(Array[Int]) -> Array[Int]
 
 pub fn blocks_same_path(Array[Int], Array[Int]) -> Bool
 
 pub fn bottom_strip_height(Model) -> Double
 
-pub fn brand_mark() -> @core.View[Msg]
-
 pub fn builtin_words(@studio_lang.Language) -> Array[String]
 
 pub fn bundle_files(String, String) -> Array[(String, String)]
 
+pub fn button_label_width(String) -> Double
+
 pub fn category_rail(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
 pub fn center_width_of(Model, Double) -> Double
+
+pub fn chip_label_width(String) -> Double
 
 pub fn clone_path(Array[Int]) -> Array[Int]
 
@@ -221,7 +233,7 @@ pub let design_total_height : Double
 
 pub fn diff_row(String, String, Double) -> @core.View[Msg]
 
-pub fn empty_hint(String, Double) -> @core.View[Msg]
+pub fn empty_hint(String, Double, Double) -> @core.View[Msg]
 
 pub fn empty_program() -> @ir.StudioProgram
 
@@ -256,6 +268,8 @@ pub fn hairline() -> @core.View[Msg]
 pub fn hairline_v() -> @core.View[Msg]
 
 pub fn handler_key(String, String) -> String
+
+pub fn hint_lines_view(String, Double, @core.Color, Int) -> @core.View[Msg]
 
 pub fn hit_test_control(Array[@ir.Control], Double, Double) -> @ir.Control?
 
@@ -339,9 +353,11 @@ pub fn log_line(Model, LogLevel, String) -> Model
 
 pub fn pane_foot(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
-pub fn pane_head(String, String, Double, Array[@core.View[Msg]]) -> @core.View[Msg]
+pub fn pane_head(String, String, Double, Array[@core.View[Msg]], tail? : String) -> @core.View[Msg]
 
-pub fn panel_head(String, String, Array[@core.View[Msg]], Double) -> @core.View[Msg]
+pub fn pane_head_layout(String, String, String, Double, Int) -> PaneHeadLayout
+
+pub fn panel_head(String, String, Array[@core.View[Msg]], Double, trailing_widths? : Array[Double]) -> @core.View[Msg]
 
 pub fn pending_ai_cards(Model) -> Int
 
@@ -409,6 +425,8 @@ pub fn studio_console_background() -> @core.Color
 
 pub fn studio_grid_line() -> @core.Color
 
+pub fn studio_product_theme() -> @core.Theme
+
 pub fn studio_stage_background() -> @core.Color
 
 pub fn studio_stage_outline() -> @core.Color
@@ -431,9 +449,13 @@ pub let title_bar_height : Double
 
 pub fn toast_host(@core.View[Msg], Model) -> @core.View[Msg]
 
+pub fn topbar_action(String, Msg?, Bool, Double) -> @core.View[Msg]
+
 pub fn topbar_actions_width(Model, @moui_i18n.Translator) -> Double
 
 pub fn topbar_brand(String, Bool, String) -> @core.View[Msg]
+
+pub fn topbar_chip_bound(String, Double) -> Double
 
 pub fn topbar_drag_width(Model, @moui_i18n.Translator, Double) -> Double
 
@@ -476,6 +498,10 @@ pub fn visible_groups(Array[TreeNode]) -> Array[String]
 pub fn visual_workspace(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn watch_rows(Model) -> Array[WatchRow]
+
+pub fn wrap_text_lines(String, Double) -> Array[String]
+
+pub fn wrapped_line_count(String, Double) -> Int
 
 // Errors
 
@@ -543,6 +569,12 @@ pub(all) enum BlocksDrawOp {
   BlockLabel(String, Double, Double, Double, String)
   BlockStroke(Double, Double, Double, Double)
   InsertMark(Double, Double, Double)
+}
+
+pub(all) enum ChipTone {
+  Quiet
+  Primary
+  Ghost
 }
 
 pub(all) struct CodeLine {
@@ -712,6 +744,7 @@ pub(all) struct Model {
   pane_blocks : Bool
   split_ratio : Double
   left_view : LeftView
+  right_visible : Bool
   immersive : Bool
   tree_query : String
   tree_collapsed : Array[String]
@@ -744,6 +777,7 @@ pub(all) enum Msg {
   SetMode(Mode)
   SetDesignZoom(Double)
   SelectControl(String)
+  ClearSelection
   CanvasPress(Double, Double)
   CanvasTap(Double, Double)
   CanvasDragTo(Double, Double)
@@ -821,10 +855,13 @@ pub(all) enum Msg {
   SetWorkSpace(WorkSpace)
   TogglePaneLive
   TogglePaneBlocks
+  ShowPaneLive
+  ShowPaneBlocks
   SetSplitRatio(Double)
   SetLeftView(LeftView)
   SetTreeQuery(String)
   ToggleTreeGroup(String)
+  SetRightVisible(Bool)
   SetContextTab(ContextTab)
   SetBottomTab(Bool)
   ToggleBottom
@@ -854,6 +891,12 @@ pub(all) enum Msg {
   HighlightIrPath(Array[Int])
   HoverIrPath(Array[Int]?)
   RestoreCodeDraft
+}
+
+pub(all) struct PaneHeadLayout {
+  title_width : Double
+  subtitle_width : Double
+  tail_width : Double
 }
 
 pub(all) struct PendingProposal {

@@ -12,9 +12,12 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
   match msg {
     SetWorkSpace(workspace) => Some(set_workspace(model, workspace))
     TogglePaneLive => Some(toggle_pane_live(model))
+    ShowPaneLive => Some(show_pane_live(model))
+    ShowPaneBlocks => Some(show_pane_blocks(model))
     TogglePaneBlocks => Some(toggle_pane_blocks(model))
     SetSplitRatio(ratio) => Some(set_split_ratio(model, ratio))
     SetLeftView(view) => Some(set_left_view(model, view))
+    SetRightVisible(visible) => Some(set_right_visible(model, visible))
     SetTreeQuery(query) =>
       Some(({ ..model, tree_query: query, }, @moui.Effect::none()))
     ToggleTreeGroup(group) => {
@@ -163,6 +166,50 @@ fn toggle_pane_blocks(model : Model) -> (Model, @moui.Effect[Msg]) {
 }
 
 ///|
+/// 幂等显示 Live App 窗格（空舞台的恢复入口）。
+///
+/// 必须用**赋值**而不是取反：空舞台只在两个窗格都关掉时出现，所以
+/// `ShowPaneLive` 执行时 `pane_live` 一定是 false——但用取反会让这条消息
+/// 在别处（比如命令面板）变成「关掉它」，语义不可预测。赋值才是
+/// 设计稿 `#btnAddLive` 的语义：`S.live=true`。
+///
+/// 同时把工作区切回可视化：空舞台可以是 `WsEmpty`（点图标栏收起）造成的，
+/// 那时只把 pane 打开、工作区还停在 `WsEmpty`，用户点了按钮却什么都没变。
+fn show_pane_live(model : Model) -> (Model, @moui.Effect[Msg]) {
+  (
+    { ..model, workspace: WsVisual, mode: ModeDesign, pane_live: true, },
+    @moui.Effect::none(),
+  )
+}
+
+///|
+/// 幂等显示积木窗格（空舞台的恢复入口）。
+///
+/// 积木窗格还要**有选中的子程序**才画得出来（`blocks_pane_wanted` 判据）。
+/// 从空舞台进来时如果没有选中的子程序，就顺手选上第一个——否则用户点了
+/// 「+ 积木窗格」而屏幕上只有 Live App，看起来就是按钮没反应。
+fn show_pane_blocks(model : Model) -> (Model, @moui.Effect[Msg]) {
+  let mut next = {
+    ..model,
+    workspace: WsVisual,
+    mode: ModeDesign,
+    pane_blocks: true,
+  }
+  if current_handler(next) is None {
+    match next.program.handlers {
+      [first, ..] =>
+        next = {
+          ..next,
+          selected_control: first.control_name,
+          selected_handler: handler_key(first.control_name, first.event.tag()),
+        }
+      [] => ()
+    }
+  }
+  (next, @moui.Effect::none())
+}
+
+///|
 /// 分隔条比例：钳在 0.2–0.8（两端都留得住内容，拖到底不会把窗格压没）。
 fn set_split_ratio(model : Model, ratio : Double) -> (Model, @moui.Effect[Msg]) {
   let clamped = if ratio.is_nan() { 0.55 } else { ratio.max(0.2).min(0.8) }
@@ -177,6 +224,17 @@ fn set_left_view(model : Model, view : LeftView) -> (Model, @moui.Effect[Msg]) {
     (_, wanted) => wanted
   }
   ({ ..model, left_view: target, }, @moui.Effect::none())
+}
+
+///|
+/// 右栏显隐（右栏头的 ✕ 关、图标栏的面板图标开）。幂等：重复设同一个值
+/// 不改变模型。打开时**顺带把左栏的收起考虑进去**——两者互不干涉，
+/// 各自吃各自的宽度（窄窗口下由 `shell_chrome_widths` 决定谁让位）。
+fn set_right_visible(
+  model : Model,
+  visible : Bool,
+) -> (Model, @moui.Effect[Msg]) {
+  ({ ..model, right_visible: visible, }, @moui.Effect::none())
 }
 
 // ============================================================================
@@ -497,6 +555,8 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.pane.blocks" => update_pure(model, TogglePaneBlocks)
     "studio.left.tree" => update_pure(model, SetLeftView(LeftTree))
     "studio.left.data" => update_pure(model, SetLeftView(LeftData))
+    "studio.right.toggle" =>
+      update_pure(model, SetRightVisible(!model.right_visible))
     "studio.bottom.audit" => update_pure(model, SetBottomTab(true))
     "studio.bottom.console" => update_pure(model, SetBottomTab(false))
     "studio.bottom.toggle" => update_pure(model, ToggleBottom)

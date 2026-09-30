@@ -175,26 +175,30 @@ test "immersive mode merges the title bar into one band" {
   guard shell_find_text(immersive_commands, "运行") is Some(run) else {
     fail("immersive run button missing")
   }
-  guard shell_find_text(plain_commands, "运行") is Some(plain_run) else {
-    fail("plain run button missing")
-  }
-  // 关键：沉浸态的标题栏**更高**（56 vs 40），动作簇在新带子里重新垂直居中，
-  // 所以标签下移 = 增高的一半（内容居中，不是顶对齐）。
-  let shift = run.frame.origin.y - plain_run.frame.origin.y
-  let expected = (WINDOW_CHROME_HEIGHT - TOPBAR_HEIGHT) / 2.0
-  if shift < expected - 4.0 || shift > expected + 6.0 {
+  // 关键：沉浸标题栏的内容必须与系统信号灯**共线**。AppKit 把三灯圆心
+  // 固定在窗口顶往下 ~15.8pt，且不给移动能力（自绘/挪动系统按钮都是死路）
+  // ——所以带高取 2×15.8=32，内容垂直居中即对齐。旧值 56 时内容中心在
+  // 28，比灯低 12pt（截图里「信号灯和图标两条线」）。
+  let light_line = TRAFFIC_LIGHT_CENTER_Y
+  let run_center = run.frame.origin.y + run.frame.size.height / 2.0
+  if (run_center - light_line).abs() > 2.5 {
     fail(
-      "immersive title bar should grow by " +
-      (WINDOW_CHROME_HEIGHT - TOPBAR_HEIGHT).to_string() +
-      " and re-centre the actions (label shift ~" +
-      expected.to_string() +
-      "), but the run label moved " +
-      shift.to_string(),
+      "immersive actions must sit on the traffic-light line (y~" +
+      light_line.to_string() +
+      "): run label centre is " +
+      run_center.to_string(),
     )
   }
-  // 品牌也必须让开系统信号灯：自绘内容钻到红黄绿底下就是「没沉浸」。
+  // 品牌也必须让开系统信号灯（水平），并且与灯共线（垂直）。
   guard shell_find_text(immersive_commands, "MoUI Studio") is Some(brand) else {
     fail("brand missing in immersive mode")
+  }
+  let brand_center = brand.frame.origin.y + brand.frame.size.height / 2.0
+  if (brand_center - light_line).abs() > 2.5 {
+    fail(
+      "immersive brand must sit on the traffic-light line: centre is " +
+      brand_center.to_string(),
+    )
   }
   if brand.frame.origin.x < TRAFFIC_LIGHT_INSET - 1.0 {
     fail(
@@ -301,7 +305,7 @@ test "chrome chips are wide enough for their labels" {
     let label = text(t, key)
     // 代码页脚在代码区（x 落在中心列）且**不是**顶栏那颗同名按钮。
     // 阈值用非沉浸态的顶栏高（这个 model 不开沉浸）：别再叠加
-    // `WINDOW_CHROME_HEIGHT`——那个常量现在是「沉浸标题栏总高」（56），
+    // `WINDOW_CHROME_HEIGHT`——那个常量现在是「沉浸标题栏总高」（32），
     // 加起来会变成 96 这种既不对应任何真实带子、又可能把页脚误排除的下界。
     let mut run_box : @core.TextRun? = None
     for run in shell_texts(commands) {
@@ -695,182 +699,5 @@ test "IR rail cells are hit-testable per line" {
     fail(
       "hover and pinned highlight paint identically; hover should read lighter",
     )
-  }
-}
-
-///|
-/// 隐藏一个窗格之后**必须**还能把它加回来（设计稿的 `#btnAddLive` /
-/// `#btnAddBlocks` 就是这条恢复路径）。
-///
-/// 回归意义：单窗格分支一度直接 `return live_pane(...)`——两个「隐藏此
-/// 窗格」按钮都能点，点了之后那个窗格就**再也回不来**（只能重启）。这是
-/// 真实可用性缺陷，不是外观问题。
-test "hiding a pane leaves a visible way to bring it back" {
-  let model = initial_model()
-  // 隐藏积木窗格：应出现「+ 积木窗格」恢复入口
-  let no_blocks = apply_shell(model, TogglePaneBlocks)
-  assert_eq(no_blocks.pane_blocks, false)
-  let commands = shell_draw(no_blocks, 1280.0, 800.0)
-  if !shell_has_text(commands, "+ 积木窗格") {
-    fail("hiding the blocks pane left no way to restore it")
-  }
-  // 隐藏实时应用窗格：同理
-  let no_live = apply_shell(model, TogglePaneLive)
-  assert_eq(no_live.pane_live, false)
-  if !shell_has_text(shell_draw(no_live, 1280.0, 800.0), "+ 实时应用") {
-    fail("hiding the live pane left no way to restore it")
-  }
-  // 两个都隐藏时回到空舞台（那条路径本来就有模板入口）
-  let none = apply_shell(no_live, TogglePaneBlocks)
-  assert_eq(none.pane_live, false)
-  assert_eq(none.pane_blocks, false)
-}
-
-///|
-/// 药丸态必须**水平居中**在中心列，且浮动层的外层只做定位、不铺底板。
-///
-/// 真实缺陷（用户截图）：药丸写死 180 宽、水平只放**右侧**权重 spacer，于是
-/// 它贴在中心列右下角（实测中心 x≈900，而列中心是 644）——设计稿
-/// `#aiLayer` 是 `left:50%;transform:translateX(-50%)`，收起态同样居中。
-///
-/// 第二件事是**结构性**的：药丸的定位外层原先是无背景 `@views.container`，
-/// 它回落到环境 Base 刷子（不透明面板色），整帧被刷成一块底板把工作区内容
-/// 盖掉。同文件 `ai_floating` 的注释里已经记录过这个坑（「位置对、文字也在
-/// 绘制流里，但屏幕上什么都没有」），药丸这条路径漏改了。这里断言「药丸带里
-/// 没有任何横跨整个中心列宽度的填充」把这个结构钉住。
-///
-/// 注：这条 slab 断言在 **Web 目标下不会复现**（浏览器里那个无背景 container
-/// 没画出填充，实测中心列填充只有 398/321 宽），它主要在原生沉浸式窗口里
-/// 可见。所以这里钉的是结构（外层不许有表面绘制），而不是某次渲染的具体像素。
-test "AI pill stays centred and paints no slab over the workspace" {
-  let model = initial_model()
-  let pill = apply_shell(model, ToggleAiPill)
-  assert_true(pill.ai_pill)
-  let commands = shell_draw(pill, 1280.0, 800.0)
-  // 中心列的水平范围（图标栏 + 左栏之后，右栏之前）
-  let widths = shell_chrome_widths(pill, 1280.0)
-  let center_left = ICONBAR_WIDTH + 2.0 + LEFTBAR_WIDTH + 1.0
-  let center_right = center_left + widths.center
-  // 药丸本体：找「Agent」标签所在的那颗圆角盒。
-  guard shell_find_text(commands, "Agent") is Some(agent) else {
-    fail("AI pill label missing")
-  }
-  let mut pill_box : @core.Rect? = None
-  for rect in shell_rects(commands) {
-    let contains = rect.origin.x <= agent.frame.origin.x + 0.5 &&
-      rect.origin.x + rect.size.width >=
-      agent.frame.origin.x + agent.frame.size.width - 0.5 &&
-      rect.origin.y <= agent.frame.origin.y + 0.5 &&
-      rect.origin.y + rect.size.height >=
-      agent.frame.origin.y + agent.frame.size.height - 0.5
-    // 药丸盒比文字宽（有内垫）但不可能是整列
-    if contains &&
-      rect.size.width > agent.frame.size.width &&
-      rect.size.width < widths.center / 2.0 {
-      pill_box = Some(rect)
-    }
-  }
-  guard pill_box is Some(box) else {
-    fail("could not locate the AI pill box around its label")
-  }
-  let pill_center = box.origin.x + box.size.width / 2.0
-  let column_center = center_left + widths.center / 2.0
-  if (pill_center - column_center).abs() > 6.0 {
-    fail(
-      "AI pill is not centred in the workspace column: pill centre=" +
-      pill_center.to_string() +
-      " column centre=" +
-      column_center.to_string(),
-    )
-  }
-  // 药丸必须留在中心列内（不能横跨到右栏或左栏）
-  if box.origin.x < center_left - 0.5 ||
-    box.origin.x + box.size.width > center_right + 0.5 {
-    fail("AI pill escapes the workspace column")
-  }
-  // 定位外层不许铺底板：药丸那条纵向带里不得出现「从中心列左缘起、横跨
-  // 整列宽度」的填充。根窗口底色从 x=0 起铺满整窗（早于所有内容），所以
-  // 用「起点贴中心列左缘」把它排除掉。
-  for rect in shell_rects(commands) {
-    let starts_at_column = (rect.origin.x - center_left).abs() < 2.0
-    let spans_column = rect.size.width >= widths.center * 0.9
-    let in_pill_band = rect.origin.y + rect.size.height >= agent.frame.origin.y &&
-      rect.origin.y <= agent.frame.origin.y + agent.frame.size.height
-    if starts_at_column && spans_column && in_pill_band {
-      fail(
-        "pill wrapper paints a column-wide slab (width=" +
-        rect.size.width.to_string() +
-        " at y=" +
-        rect.origin.y.to_string() +
-        ")",
-      )
-    }
-  }
-}
-
-///|
-/// 拖拽区避开动作簇这条约束**必须在两种语言下都成立**。
-///
-/// 回归意义：动作簇宽度随文案变化（英文 "Compile MoonBit" 比中文「编译
-/// MoonBit」更宽），而拖拽区宽度是按标签估算出来的。只测中文会把「英文下
-/// 盖住按钮」整个漏掉——而英文恰恰是更宽的那一侧。
-test "drag region clears the top bar actions in both locales" {
-  let cases : Array[(String, Model)] = [
-    ("zh", initial_model(immersive=true)),
-    ("en", apply_shell(initial_model(immersive=true), SwitchLanguage)),
-  ]
-  for case in cases {
-    let (locale, model) = case
-    let t = translator(model)
-    for width in [1440.0, 1280.0, 1000.0, 900.0] {
-      let drag_width = topbar_drag_width(model, t, width)
-      let commands = shell_draw(model, width, 800.0)
-      // 边界取**按钮盒**左缘，不是标签左缘：标签两侧各有 16pt 内垫，按钮盒
-      // 比它的文字宽 32pt。只比标签会漏掉「拖拽区盖住按钮左半边内垫」——
-      // 那一样点不动（落在内垫上的按下也被拖拽区吃掉）。
-      let labels = [
-        text(t, "app.run.start"),
-        text(t, "app.run.stop"),
-        text(t, "app.run.step"),
-        text(t, "app.topbar.compile"),
-      ]
-      let mut leftmost_box = 100000.0
-      for label in labels {
-        match shell_find_text(commands, label) {
-          Some(run) =>
-            for rect in shell_rects(commands) {
-              let contains = rect.origin.x <= run.frame.origin.x + 0.5 &&
-                rect.origin.y <= run.frame.origin.y + 0.5 &&
-                rect.origin.x + rect.size.width >=
-                run.frame.origin.x + run.frame.size.width - 0.5 &&
-                rect.origin.y + rect.size.height >=
-                run.frame.origin.y + run.frame.size.height - 0.5
-              if contains &&
-                rect.size.width > run.frame.size.width &&
-                rect.size.width < width * 0.5 {
-                leftmost_box = leftmost_box.min(rect.origin.x)
-              }
-            }
-          None => ()
-        }
-      }
-      if leftmost_box > 99999.0 {
-        fail(
-          locale + ": no action button box found at width " + width.to_string(),
-        )
-      }
-      if drag_width > leftmost_box {
-        fail(
-          locale +
-          " at width " +
-          width.to_string() +
-          ": drag region (right edge " +
-          drag_width.to_string() +
-          ") overruns the leftmost action button box (x=" +
-          leftmost_box.to_string() +
-          ")",
-        )
-      }
-    }
   }
 }

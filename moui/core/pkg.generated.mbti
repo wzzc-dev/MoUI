@@ -2088,6 +2088,7 @@ pub(all) struct ViewSemanticsInfo {
   live_atomic : Bool?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : SemanticsCheckedState, expanded? : Bool, invalid? : Bool, required? : Bool, read_only? : Bool, busy? : Bool, multiline? : Bool, password? : Bool, modal? : Bool, numeric? : SemanticsNumericValue, text? : SemanticsTextValue, collection? : SemanticsCollectionInfo, relations? : SemanticsRelationsDeclaration, live? : SemanticsLive, live_atomic? : Bool) -> Self
+pub fn ViewSemanticsInfo::overlaying(Self, Self) -> Self
 
 pub(all) struct ViewStateContext {
   focused : Bool

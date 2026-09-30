@@ -471,7 +471,8 @@ pub fn design_overlay_plan(
       }
     }
   }
-  // 拖拽中的对齐参考线（智能蓝——与朱砂选中描边区分，拖拽辅助不抢选中语义）
+  // 拖拽中的对齐参考线（智能蓝——与 IDE 蓝选中描边同族但更亮，拖拽辅助
+  // 不抢选中语义）
   match drag_control {
     None => ()
     Some(name) =>
@@ -496,7 +497,7 @@ pub fn design_overlay_plan(
 }
 
 ///|
-/// 智能参考线颜色：与选中描边的朱砂区分，拖拽辅助不抢选中语义。
+/// 智能参考线颜色：与选中描边的 IDE 蓝同族（更亮一档），拖拽辅助不抢选中语义。
 fn guide_color() -> @graphics.Color {
   @graphics.Color::rgba(r=0.30, g=0.52, b=0.90)
 }
@@ -683,9 +684,7 @@ pub fn design_stage(
                 ),
                 radius=8.0 * scale,
               ),
-              @graphics.Brush::solid(
-                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-              ),
+              @graphics.Brush::solid(ide_accent()),
               2.5,
             )
           }
@@ -693,9 +692,7 @@ pub fn design_stage(
             fill_rounded_rect(
               ctx,
               @graphics.RoundedRect::new(rect=place(rect), radius=4.0 * scale),
-              @graphics.Brush::solid(
-                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-              ),
+              @graphics.Brush::solid(ide_accent()),
             )
             draw_text(
               ctx,
@@ -719,9 +716,7 @@ pub fn design_stage(
             fill_rounded_rect(
               ctx,
               @graphics.RoundedRect::new(rect=place(rect), radius=2.0 * scale),
-              @graphics.Brush::solid(
-                @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-              ),
+              @graphics.Brush::solid(ide_accent()),
             )
           GuideV(x) =>
             stroke_rounded_rect(

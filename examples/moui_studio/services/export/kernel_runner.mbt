@@ -332,18 +332,19 @@ pub fn runner_source() -> String {
     #|    height=600.0,
     #|    padding=10.0,
     #|  )
-    #|  // 品牌主题：与 MoUI Studio 同源朱砂色（印泥朱砂主色派生浅色全角色盘，
-    #|  // 课堂/路演的确定性外观，不随系统深色漂移）
+    #|  // 产品主题：浅色 + IDE 蓝强调——与 Studio 的 studio_product_theme
+    #|  // （app/theme.mbt）同一组值（跨 bundle 不能 import，改动必须两处同步），
+    #|  // 课堂/路演的确定性外观，不随系统深色漂移
     #|  .theme(runner_theme())
     #|}
     #|
     #|///|
-    #|/// 导出应用的品牌主题（与 Studio 的 studio_theme 同 seed 同 scheme；
+    #|/// 导出应用的产品主题（与 Studio 的 studio_product_theme 同值同 scheme；
     #|/// 内联在此避免 runner 依赖 app 包）。
     #|fn runner_theme() -> @core.Theme {
     #|  @views.theme(
     #|    palette=@core.ColorPalette::from_seed(
-    #|      primary=@core.Color::rgba(r=0.78, g=0.26, b=0.20),
+    #|      primary=@core.Color::rgba(r=0.208, g=0.455, b=0.941),
     #|      Light,
     #|    ),
     #|  )

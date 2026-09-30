@@ -255,6 +255,125 @@ pub(all) struct SemanticsMetadataModifier {
 }
 
 ///|
+/// Merge this info (a modifier's contribution) over `base` (the wrapped
+/// child's info). Fields set explicitly on `self` win; unset fields pass
+/// through from `base`.
+///
+/// Two fields are deliberately not inherited from `base`:
+/// - `composition` keeps `self.composition`: composition is structural
+///   (how this node's subtree contributes), and inheriting a child's
+///   Boundary/MergeDescendants would re-wrap the child's own grouping.
+/// - `text` keeps `self.text`: it is element-instance-scoped state
+///   (caret/selection are injected by the owning element at overlay time),
+///   so re-inheriting it from a wrapper would clobber the text control's
+///   live state.
+pub fn ViewSemanticsInfo::overlaying(
+  self : ViewSemanticsInfo,
+  base : ViewSemanticsInfo,
+) -> ViewSemanticsInfo {
+  {
+    composition: self.composition,
+    semantic_id: match self.semantic_id {
+      Some(id) => Some(id)
+      None => base.semantic_id
+    },
+    role: match self.role {
+      Some(role) => Some(role)
+      None => base.role
+    },
+    level: match self.level {
+      Some(level) => Some(level)
+      None => base.level
+    },
+    url: match self.url {
+      Some(url) => Some(url)
+      None => base.url
+    },
+    label: match self.label {
+      Some(label) => Some(label)
+      None => base.label
+    },
+    value: match self.value {
+      Some(value) => Some(value)
+      None => base.value
+    },
+    description: match self.description {
+      Some(description) => Some(description)
+      None => base.description
+    },
+    disabled: match self.disabled {
+      Some(disabled) => Some(disabled)
+      None => base.disabled
+    },
+    selected: match self.selected {
+      Some(selected) => Some(selected)
+      None => base.selected
+    },
+    pressed: match self.pressed {
+      Some(pressed) => Some(pressed)
+      None => base.pressed
+    },
+    checked: match self.checked {
+      Some(checked) => Some(checked)
+      None => base.checked
+    },
+    expanded: match self.expanded {
+      Some(expanded) => Some(expanded)
+      None => base.expanded
+    },
+    invalid: match self.invalid {
+      Some(invalid) => Some(invalid)
+      None => base.invalid
+    },
+    required: match self.required {
+      Some(required) => Some(required)
+      None => base.required
+    },
+    read_only: match self.read_only {
+      Some(read_only) => Some(read_only)
+      None => base.read_only
+    },
+    busy: match self.busy {
+      Some(busy) => Some(busy)
+      None => base.busy
+    },
+    multiline: match self.multiline {
+      Some(multiline) => Some(multiline)
+      None => base.multiline
+    },
+    password: match self.password {
+      Some(password) => Some(password)
+      None => base.password
+    },
+    modal: match self.modal {
+      Some(modal) => Some(modal)
+      None => base.modal
+    },
+    numeric: match self.numeric {
+      Some(numeric) => Some(numeric)
+      None => base.numeric
+    },
+    text: self.text,
+    collection: match self.collection {
+      Some(collection) => Some(collection)
+      None => base.collection
+    },
+    relations: match self.relations {
+      Some(relations) => Some(relations)
+      None => base.relations
+    },
+    live: match self.live {
+      Some(live) => Some(live)
+      None => base.live
+    },
+    live_atomic: match self.live_atomic {
+      Some(live_atomic) => Some(live_atomic)
+      None => base.live_atomic
+    },
+  }
+}
+
+///|
 pub fn[Msg] SemanticsMetadataModifier::to_any_modifier(
   self : SemanticsMetadataModifier,
 ) -> AnyModifier[Msg] {

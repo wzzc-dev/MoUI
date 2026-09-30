@@ -71,7 +71,13 @@ pub fn[Msg] stage_layout(
   children : Array[@moui.View[Msg]],
   rects : Array[@geometry.Rect],
 ) -> @moui.View[Msg] {
-  @core.View::from_node(StageLayout::{ rects, }, children=_node => children)
+  // 控件套**产品主题**（导出应用的真实外观，浅色）：设计/运行舞台共用
+  // 这一个构造点，所以「设计所见 = 运行所见 = 导出应用所见」由构造保证。
+  // 舞台外的 IDE 覆盖层（选中描边/参考线/手柄）不受影响——它们是 IDE 的
+  // chrome，不是产品 UI。
+  @core.View::from_node(StageLayout::{ rects, }, children=_node => children).theme(
+    studio_product_theme(),
+  )
 }
 
 ///|

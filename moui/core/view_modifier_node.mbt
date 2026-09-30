@@ -93,7 +93,12 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn text_input_state(self, ctx)
 
 ///|
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn semantics(self) {
-  self.modifier.semantics
+  // A modifier contributes an overlay, not a replacement: fields it sets
+  // explicitly win, everything else passes through from the child. This keeps
+  // a direct semantics read consistent with how the runtime applies a
+  // Transparent modifier's info onto its single child node, so chains like
+  // `.semantics_role(TreeItem).on_hover(...)` keep reporting the role.
+  self.modifier.semantics.overlaying(self.child.semantics())
 }
 
 ///|

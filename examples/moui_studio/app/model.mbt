@@ -425,6 +425,9 @@ pub(all) struct Model {
   split_ratio : Double
   // 左栏视图（图标栏切换；收起时不占宽度）
   left_view : LeftView
+  // 右栏 Context 是否显示。左栏是「多视图 + 收起」所以用枚举；右栏只有
+  // 一个视图，收起/展开就是布尔。
+  right_visible : Bool
   // 沉浸式无边框：true 时顶栏之上多一条窗控条（信号点 + 拖拽区）。
   // 平台入口按自己有没有无边框窗口决定——Web 恒 false。
   immersive : Bool
@@ -474,6 +477,10 @@ pub(all) enum Msg {
   SetMode(Mode)
   SetDesignZoom(Double)
   SelectControl(String)
+  /// 清空选中（控件与事件子程序一起）。设计稿右栏 Context 的 `#clearSel`：
+  /// 不给出这个出口的话，选中只能被**另一个选中**覆盖——用户没法回到
+  /// 「什么都没选」的中性态，右栏会一直显示上一个对象的属性。
+  ClearSelection
   CanvasPress(Double, Double)
   CanvasTap(Double, Double)
   CanvasDragTo(Double, Double)
@@ -553,12 +560,21 @@ pub(all) enum Msg {
   SetWorkSpace(WorkSpace)
   TogglePaneLive
   TogglePaneBlocks
+  /// 幂等地**显示**窗格（设计稿 `#btnAddLive` / `#btnAddBlocks`）。
+  /// 空舞台用它们做恢复入口——那里必须是「打开」而不是「取反」，
+  /// 否则从空舞台点一次反而会把已经为真的开关关掉。
+  ShowPaneLive
+  ShowPaneBlocks
   // 分隔条拖拽：比例（0.2–0.8，越界由 update 钳制）
   SetSplitRatio(Double)
   // 左栏：视图切换 / 关闭 / 搜索 / 分组展开折叠
   SetLeftView(LeftView)
   SetTreeQuery(String)
   ToggleTreeGroup(String)
+  /// 显式设置右栏显隐。用**显式布尔**而不是 Toggle：关闭入口在右栏头的 ✕
+  /// （只可能关），打开入口在图标栏（只可能开）。共用一个 Toggle 会让
+  /// 「点击目标当前不可见」这类情况反向操作，语义不可预测。
+  SetRightVisible(Bool)
   // 右栏 Context 页签
   SetContextTab(ContextTab)
   // 底栏：页签切换 / 展开折叠 / 高度拖拽
@@ -713,6 +729,7 @@ pub fn initial_model(
     pane_blocks: true,
     split_ratio: 0.55,
     left_view: LeftTree,
+    right_visible: true,
     immersive,
     tree_query: "",
     tree_collapsed: [],

@@ -88,30 +88,63 @@ pub fn hairline_v() -> @moui.View[Msg] {
 }
 
 ///|
-/// 面板头：全大写小标题 + 右侧元信息（计数/徽标槽）。
-/// 30pt 高，左右各 8pt 内垫，底部 1px 边。
+/// 面板头：小标题 + 可选右侧元信息 + 尾部动作（30pt 高）。
+///
+/// **尾部动作必须贴右缘。** 旧实现里权重 spacer 写的是 `weight=0.0`——它
+/// 分不到任何 slack，于是行内容按「声明宽之和」靠左排，右端剩下的 40pt 空白
+/// 堆在动作**之后**。表现就是左栏的关闭 ✕ 停在离右缘 40pt 的地方（实测 ✕
+/// 中心 css x 221.8，而面板右缘 281），看起来「位置不对」。`fill_row` 的
+/// 注释里早写过这条纪律，这里是把 `weight` 真的给上。
+///
+/// 标题宽按「面板宽 − 内垫 − 尾部占位 − 间隙」算：写死 140 会在窄面板里把
+/// 动作挤出去，而尾部占位**按调用方声明的实际宽**给（见 `PanelHeadAction`）——
+/// 统一按 22 预留是错的：`count_badge` 是 56 宽，按 22 留会让它越出右缘
+/// （实测监视面板的计数徽标画到窗口外）。
 pub fn panel_head(
   label : String,
   meta : String,
   trailing : Array[@moui.View[Msg]],
   width : Double,
+  trailing_widths? : Array[Double] = [],
 ) -> @moui.View[Msg] {
+  // 先扣掉尾部动作与元信息，剩下的才给标题
+  let meta_w = (text_estimate_width(meta) * 1.02).max(28.0)
+  let mut reserved = if meta != "" { meta_w } else { 0.0 }
+  let mut i = 0
+  for item in trailing {
+    ignore(item)
+    reserved = reserved +
+      (if i < trailing_widths.length() { trailing_widths[i] } else { 22.0 })
+    i = i + 1
+  }
+  let gaps = 4.0 * (trailing.length() + 1).to_double()
+  // 标题按**内容**给宽，不把「面板宽 − 尾部」的剩余全部吃掉。
+  //
+  // 这一点是刻意的：标题一旦吃满剩余，权重 spacer 就永远拿不到余量，
+  // 「尾部贴右缘」便成了由标题宽度**碰巧**保证的结果——spacer 的 `weight`
+  // 写 0 还是 1 都看不出来。实测：标题吃满剩余时，故意把 weight 改回 0.0，
+  // 那条「尾部贴右缘」的测试**仍然通过**（断言等于失效）。让标题只占内容
+  // 宽，余量才真正交给 spacer，`weight` 才是起作用的那一环。
+  let title_w = (text_estimate_width(label) * 1.02 + 8.0)
+    .min((width - 16.0 - reserved - gaps).max(40.0))
+    .max(28.0)
   let cells : Array[@moui.View[Msg]] = [
     @views.text(
       label,
       theme=studio_theme(),
-      width=140.0,
+      width=title_w,
       height=18.0,
       align=TextStart,
     ).foreground(ide_text_faint()),
-    @views.spacer(min_length=6.0, weight=0.0),
+    // 权重 1：把后面的动作推到右缘。`min_length` 只保证最小间隙。
+    @views.spacer(min_length=6.0, weight=1.0),
   ]
   if meta != "" {
     cells.push(
       @views.text(
         meta,
         theme=studio_theme(),
-        width=48.0,
+        width=meta_w,
         height=18.0,
         align=TextEnd,
       ).foreground(ide_text_faint()),
@@ -129,16 +162,162 @@ pub fn panel_head(
 }
 
 ///|
-/// 面板空态提示：居中弱文字（整块区域无内容时用）。
-pub fn empty_hint(label : String, height : Double) -> @moui.View[Msg] {
-  @views.container(
-    @views.center(
-      @views.text(label, theme=studio_theme(), width=240.0, height=20.0).foreground(
-        ide_text_faint(),
+/// 提示文案的贪心换行：拉丁文按词断行（空格处），CJK 逐字断行。
+///
+/// `@views.text` 不折行（单 TextRun），而 `@views.text` 的布局又是
+/// `max(声明宽, 实测宽)`——声明窄了文字会**自己长出去**溢出容器。长提示
+/// （本地化文案动辄 500-800pt）必须在这里先切成能放下的行。
+/// 估算口径与 `text_estimate_width` 一致（ASCII 7.9 / 全角 13.0）。
+pub fn wrap_text_lines(label : String, max_width : Double) -> Array[String] {
+  let lines : Array[String] = []
+  let mut line = ""
+  let mut line_w = 0.0
+  let mut seg = ""
+  let mut seg_w = 0.0
+  let mut pending_gap = 0.0
+  for c in label {
+    if c == ' ' {
+      if seg_w > 0.0 {
+        // 先把攒着的拉丁段装进行
+        if line_w == 0.0 || line == "" {
+          line = seg
+          line_w = seg_w
+        } else if line_w + pending_gap + seg_w <= max_width {
+          line = line + " " + seg
+          line_w = line_w + pending_gap + seg_w
+        } else {
+          lines.push(line)
+          line = seg
+          line_w = seg_w
+        }
+        seg = ""
+        seg_w = 0.0
+        pending_gap = 0.0
+      }
+      if line_w > 0.0 {
+        pending_gap = 7.9
+      }
+    } else if c.to_int() < 0x80 {
+      seg = seg + c.to_string()
+      seg_w = seg_w + 7.9
+    } else {
+      // CJK：先冲刷拉丁段，再逐字装行（每个字都是断行点）
+      if seg_w > 0.0 {
+        if line_w == 0.0 || line == "" {
+          line = seg
+          line_w = seg_w
+        } else if line_w + pending_gap + seg_w <= max_width {
+          line = line + " " + seg
+          line_w = line_w + pending_gap + seg_w
+        } else {
+          lines.push(line)
+          line = seg
+          line_w = seg_w
+        }
+        seg = ""
+        seg_w = 0.0
+        pending_gap = 0.0
+      }
+      if line_w == 0.0 || line == "" {
+        line = c.to_string()
+        line_w = 13.0
+      } else if line_w + 13.0 <= max_width {
+        line = line + c.to_string()
+        line_w = line_w + 13.0
+      } else {
+        lines.push(line)
+        line = c.to_string()
+        line_w = 13.0
+      }
+    }
+  }
+  if seg_w > 0.0 {
+    if line_w == 0.0 || line == "" {
+      line = seg
+    } else if line_w + pending_gap + seg_w <= max_width {
+      line = line + " " + seg
+    } else {
+      lines.push(line)
+      line = seg
+    }
+  }
+  if line != "" {
+    lines.push(line)
+  }
+  lines
+}
+
+///|
+/// 换行后的行数（给需要提前预算高度的地方用）。
+pub fn wrapped_line_count(label : String, max_width : Double) -> Int {
+  wrap_text_lines(label, max_width).length()
+}
+
+///|
+/// 多行提示块：把长提示按可用宽折行后逐行渲染（每行 18pt + 2pt 间距）。
+/// 超出 max_lines 的行用省略号截断——宁可少一句，也不要溢出容器。
+pub fn hint_lines_view(
+  label : String,
+  width : Double,
+  color : @graphics.Color,
+  max_lines : Int,
+) -> @moui.View[Msg] {
+  let usable = (width - 4.0).max(60.0)
+  let all = wrap_text_lines(label, usable)
+  let views : Array[@moui.View[Msg]] = []
+  let mut index = 0
+  for line in all {
+    if index >= max_lines {
+      // 截断提示：把最后一行换成带省略号的版本
+      if index == max_lines {
+        let prev = all[max_lines - 1]
+        views[views.length() - 1] = @views.text(
+          fit_label(prev, usable),
+          theme=studio_theme(),
+          width=usable,
+          height=18.0,
+          align=TextStart,
+        ).foreground(color)
+      }
+      break
+    }
+    views.push(
+      @views.text(
+        line,
+        theme=studio_theme(),
+        width=usable,
+        height=18.0,
+        align=TextStart,
+      ).foreground(color),
+    )
+    index = index + 1
+  }
+  if views.length() == 0 {
+    views.push(
+      @views.text(
+        "",
+        theme=studio_theme(),
+        width=usable,
+        height=18.0,
+        align=TextStart,
       ),
-      width=260.0,
-      height~,
-    ),
+    )
+  }
+  @views.column(views, spacing=2.0)
+}
+
+///|
+/// 面板空态提示：居中弱文字（整块区域无内容时用）。
+/// 长提示按可用宽折行（最多 3 行）——写死一行宽在本地化长句上必然溢出。
+pub fn empty_hint(
+  label : String,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let usable = (width - 16.0).max(120.0).min(420.0)
+  let block = hint_lines_view(label, usable, ide_text_faint(), 3)
+  @views.container(
+    @views.center(block, width=usable, height~),
     height~,
     padding=0.0,
   )
@@ -146,6 +325,7 @@ pub fn empty_hint(label : String, height : Double) -> @moui.View[Msg] {
 
 ///|
 /// 计数徽标：中性灰底 + 弱文字（比 @views.badge 更小更淡，贴合 24pt 行高）。
+/// 宽度按内容算（「已处理」与「12」差一倍多，写死必然一侧截断或虚胖）。
 pub fn count_badge(label : String, tone : Int) -> @moui.View[Msg] {
   let color = match tone {
     1 => ide_success()
@@ -154,17 +334,18 @@ pub fn count_badge(label : String, tone : Int) -> @moui.View[Msg] {
     4 => ide_accent()
     _ => ide_text_faint()
   }
+  let width = (text_estimate_width(label) * 1.02 + 12.0).max(24.0)
   @views.container(
     @views.center(
-      @views.text(label, theme=studio_theme(), width=52.0, height=14.0).foreground(
+      @views.text(label, theme=studio_theme(), width~, height=14.0).foreground(
         color,
       ),
-      width=56.0,
+      width~,
       height=18.0,
     ),
     background=ide_panel_alt(),
     corner_radius=9.0,
-    width=56.0,
+    width~,
     height=18.0,
     padding=0.0,
   )
@@ -249,6 +430,131 @@ pub fn text_chip(
     height=22.0,
     padding=0.0,
   ).on_tap(on_click)
+}
+
+///|
+/// 顶栏动作芯片高度：IDEA/VSCode 标题栏口径。标题栏与系统信号灯同排，
+/// 36pt 的 `@views.button`（height 只是最小值，实测渲染 36+）和红黄绿
+/// 挤在一排非常突兀；成熟 IDE 的标题栏动作都是 22-26pt 的安静芯片。
+pub const TOPBAR_ACTION_HEIGHT : Double = 24.0
+
+///|
+/// 顶栏动作芯片的宽度**上界**（13pt caption 文本 + 两侧内垫 20）。
+///
+/// 拖拽区声明与渲染共用 `topbar_actions_width` → 这里，两处不会漂移。
+/// 取上界是刻意的：估宽只少几个可拖点（无害），估窄会让芯片自己长出去
+/// 把兄弟挤出动作簇左缘、被拖拽区盖住（严重，且只在原生窗口复现）。
+pub fn topbar_chip_bound(label : String, declared : Double) -> Double {
+  let mut ascii = 0
+  let mut wide = 0
+  for c in label {
+    if c.to_int() < 0x80 {
+      ascii = ascii + 1
+    } else {
+      wide = wide + 1
+    }
+  }
+  (ascii.to_double() * 8.0 + wide.to_double() * 13.0 + 20.0).max(declared)
+}
+
+///|
+/// 顶栏动作芯片：24pt 高、13pt 字。`primary` 是唯一主行动作（运行）——
+/// 强调色填充；其余保持安静的面板二档底。`on_click` 为 None 时是禁用态
+/// （弱文字、不可点）——诚实地表达「此动作当前不可用」而不是藏起来。
+pub fn topbar_action(
+  label : String,
+  on_click : Msg?,
+  primary : Bool,
+  width : Double,
+) -> @moui.View[Msg] {
+  let enabled = on_click is Some(_)
+  @views.container(
+    @views.center(
+      @views.text(
+        label,
+        theme=studio_theme(),
+        role=Caption,
+        width=(width - 20.0).max(20.0),
+        height=14.0,
+      ).foreground(
+        if primary {
+          studio_theme().palette.on_primary
+        } else if enabled {
+          ide_text()
+        } else {
+          ide_text_faint()
+        },
+      ),
+      width~,
+      height=TOPBAR_ACTION_HEIGHT,
+    ),
+    background=if primary && enabled { ide_accent() } else { ide_panel_alt() },
+    corner_radius=4.0,
+    width~,
+    height=TOPBAR_ACTION_HEIGHT,
+    padding=0.0,
+  )
+  .accessibility_label(label)
+  .on_tap_with_frame(fn(_point, _frame) {
+    match on_click {
+      Some(message) => message
+      None => Msg::Noop
+    }
+  })
+}
+
+///|
+/// 动作芯片的语气：安静（面板二档底）/ 主行动（强调色填充）/ 幽灵（透明）。
+pub(all) enum ChipTone {
+  Quiet
+  Primary
+  Ghost
+}
+
+///|
+/// 动作芯片的标签宽：16pt 正文字号口径 + 5% 安全系数 + 两侧内垫 20。
+/// 芯片宽**必须按内容算**——写死会把某种语言下的标签截掉半个词
+/// （本仓复发最多的缺陷族）。
+pub fn chip_label_width(label : String) -> Double {
+  text_estimate_width(label) * 1.05 + 20.0
+}
+
+///|
+/// 通用动作芯片：AI 卡决策行 / 线程卡 / 卡片内的小动作。
+/// 手搓而不用 `@views.button`：button 的宽高是**最小值**（实测声明 24
+/// 渲染 36），会把「高度预算按芯片算」的容器撑溢出——凡是高度预算
+/// 单点计算的容器，里面的动作必须用严格等高的芯片。
+pub fn action_chip(
+  label : String,
+  on_click : Msg,
+  tone : ChipTone,
+  height : Double,
+) -> @moui.View[Msg] {
+  let width = chip_label_width(label)
+  let (background, foreground) = match tone {
+    Primary => (ide_accent(), studio_theme().palette.on_primary)
+    Quiet => (ide_panel_alt(), ide_text())
+    Ghost => (ide_panel(), ide_text_muted())
+  }
+  @views.container(
+    @views.center(
+      @views.text(
+        label,
+        theme=studio_theme(),
+        width=(width - 20.0).max(20.0),
+        height=16.0,
+      ).foreground(foreground),
+      width~,
+      height~,
+    ),
+    background~,
+    corner_radius=4.0,
+    width~,
+    height~,
+    padding=0.0,
+  )
+  .accessibility_label(label)
+  .on_tap(on_click)
 }
 
 ///|
@@ -497,45 +803,24 @@ pub fn diff_row(
 // ============================================================================
 
 ///|
-/// 品牌标记：2×2 四色方块（设计稿的 logo）。
-pub fn brand_mark() -> @moui.View[Msg] {
-  let cell = fn(color : @graphics.Color) -> @moui.View[Msg] {
-    @views.container(
-      @views.text("", width=7.0, height=7.0),
-      background=color,
-      corner_radius=1.0,
-      width=7.0,
-      height=7.0,
-      padding=0.0,
-    )
-  }
-  @views.container(
-    @views.column(
-      [
-        @views.row([cell(ide_accent()), cell(ide_success())], spacing=2.0),
-        @views.row([cell(ide_warning()), cell(ide_danger())], spacing=2.0),
-      ],
-      spacing=2.0,
-    ),
-    width=18.0,
-    height=18.0,
-    padding=0.0,
-  )
-}
-
-///|
-/// 顶栏左侧：品牌 + 产品名 + 脏标 + 面包屑。
+/// 顶栏左侧：产品名 + 脏标 + 面包屑。
+///
+/// **不画 2×2 四色方块。** 那是设计稿的 `<div class="logo">` 占位 logo；
+/// 无边框窗口里它紧挨着系统信号灯，四个彩色小方块和红黄绿挤在一行视觉上
+/// 很吵，而且它不承载任何信息（产品名已经在旁边）。去掉后顶栏左端更干净，
+/// 也把「窗口控件」与「应用品牌」两件事分开。
 pub fn topbar_brand(
   title : String,
   dirty : Bool,
   crumb : String,
 ) -> @moui.View[Msg] {
+  // 品牌与面包屑按内容给宽——面包屑是「代码 › 按钮.被单击」这类组合串，
+  // 写死 220 会在长控件名（或英文界面）下被面板裁掉。
   let cells : Array[@moui.View[Msg]] = [
-    brand_mark(),
     @views.text(
       title,
       theme=studio_theme(),
-      width=110.0,
+      width=(text_estimate_width(title) * 1.02 + 8.0).min(220.0),
       height=20.0,
       align=TextStart,
     ).foreground(ide_text()),
@@ -552,7 +837,7 @@ pub fn topbar_brand(
       @views.text(
         crumb,
         theme=studio_theme(),
-        width=220.0,
+        width=(text_estimate_width(crumb) * 1.02 + 8.0).min(280.0),
         height=18.0,
         align=TextStart,
       ).foreground(ide_text_faint()),
@@ -564,13 +849,19 @@ pub fn topbar_brand(
 ///|
 /// 沉浸式标题带高度（无边框窗口的窗口控制面）。
 ///
-/// **不是额外的一条带子**：沉浸态下这一带与顶栏合并成**同一条 56pt 标题栏**
-/// （IDEA 口径），所以它只描述「标题栏总高」，不再描述「顶栏之上额外加多少」。
-/// 旧实现是 26 + 40 两条：上一条只放一句居中提示文字、底色
-/// `studio_window_background()`（#16181c），下一条顶栏 `ide_panel()`（#2b2d30），
-/// 交界处出现一条明显的两截色缝，且标题栏区域一半是空的——这正是「最上面的
-/// 窗口边框不沉浸」的直接成因。
-pub const WINDOW_CHROME_HEIGHT : Double = 56.0
+/// **这一条就是顶栏本身**（不是顶栏之上再加一条带子）。它的高度由
+/// **系统信号灯的垂直位置**决定：`transparent_titlebar` 不给移动信号灯的
+/// 能力（自绘是死 UI，挪系统按钮要碰私有视图层级），AppKit 把三灯圆心
+/// 固定在窗口顶往下 **15.8pt**（实测）。所以带高取 2 × 15.8 ≈ 32：内容在
+/// 带内垂直居中，中心正好落在灯的圆心上——标题、芯片与红黄绿读起来是
+/// **同一行**。旧值 56 把内容居中在 28pt，比灯低 12pt，截图里就是
+/// 「信号灯和图标两条线」。
+pub const WINDOW_CHROME_HEIGHT : Double = 32.0
+
+///|
+/// 系统信号灯的圆心 y（窗口顶往下，实测 15.8）。这是 AppKit 的固定几何，
+/// 不随主题或带高变——沉浸标题栏的内容对齐目标就是这条线。
+pub const TRAFFIC_LIGHT_CENTER_Y : Double = 15.8
 
 ///|
 /// 左上角留给系统信号灯的宽度（三个 12pt 圆 + 间距 + 左右边距）。

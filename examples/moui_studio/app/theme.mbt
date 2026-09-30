@@ -1,14 +1,15 @@
 ///|
-/// MoUI Studio 品牌主题：石墨工程面板 + 印泥朱砂唯一强调色。
-/// 「卯」取木工榫卯的朱印意象——from_seed 从朱砂主色派生完整角色盘；
-/// scheme 钉深色（Dark），让 IDE 更像工程终端而不是课堂幻灯片：
-/// 暗底、发丝分隔线、等宽信息密度。Deep-dark 基底是刻意选的中间层
-/// （不是纯黑），既有终端观感又保留面板/画布/卡片三级层次。
+/// MoUI Studio 编辑器壳主题：石墨工程面板 + IDE 蓝唯一强调色（IDEA/VSCode
+/// 口径——成熟 IDE 的强调色都是一套低饱和中性底 + 单一蓝交互色）。
+/// from_seed 从蓝主色派生完整角色盘；scheme 钉深色（Dark），让 IDE 更像
+/// 工程终端而不是课堂幻灯片：暗底、发丝分隔线、等宽信息密度。
+/// Deep-dark 基底是刻意选的中间层（不是纯黑），既有终端观感又保留
+/// 面板/画布/卡片三级层次。
 pub fn studio_theme() -> @core.Theme {
   @views.theme(
     scheme=Dark,
     palette=@core.ColorPalette::from_seed(
-      primary=@core.Color::rgba(r=0.86, g=0.32, b=0.24),
+      primary=ide_accent(),
       Dark,
       foreground=@core.Color::rgba(r=0.90, g=0.91, b=0.93),
       background=@core.Color::rgba(r=0.086, g=0.094, b=0.110),
@@ -18,6 +19,17 @@ pub fn studio_theme() -> @core.Theme {
       muted=@core.Color::rgba(r=0.553, g=0.580, b=0.620),
     ),
     radius_scale=@core.RadiusScale::{ sm: 2.0, md: 4.0, lg: 6.0, pill: 999.0, },
+  )
+}
+
+///|
+/// 产品主题：导出应用（真实运行态）的外观——浅色 + IDE 蓝强调。
+/// 设计/运行舞台的控件套这个主题渲染，设计所见即真实所得；
+/// runner 模板（tools/export_runner_template/runner.mbt 的 runner_theme）
+/// 内联同一组值——跨 bundle 不能 import，改动必须两处同步。
+pub fn studio_product_theme() -> @core.Theme {
+  @views.theme(
+    palette=@core.ColorPalette::from_seed(primary=ide_accent(), Light),
   )
 }
 
@@ -63,7 +75,7 @@ pub fn studio_console_background() -> @core.Color {
 ///|
 /// 积木分类底色：技术风暗色块——每个语义族一个低饱和深色 tint
 /// （存值蓝 / 分支橙 / 循环绿 / 跳出红 / 调用紫），亮色文字保证对比度；
-/// 选中态用朱砂描边（唯一强调色）。
+/// 选中态用 IDE 蓝描边（唯一强调色）。
 pub fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
   match kind {
     @blocks.BkDeclare | @blocks.BkAssign =>
@@ -179,7 +191,7 @@ pub fn ide_text_faint() -> @core.Color {
 }
 
 ///|
-/// 强调色：设计稿的 IDE 蓝（与朱砂品牌色并存——朱砂是品牌，蓝是交互）。
+/// 强调色：IDE 蓝（IDEA/VSCode 口径的单一交互强调色）。
 pub fn ide_accent() -> @core.Color {
   @core.Color::rgba(r=0.208, g=0.455, b=0.941)
 }

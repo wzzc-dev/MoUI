@@ -414,6 +414,53 @@
 - **artifacts/ 与凭据**：`artifacts/` 不入库；`examples/moui_studio/.config.json`
   （StepFun key）gitignored，绝不入源码/bundle。
 
+## 2026-09-30 六项 UI 批次（框架语义叠加/去朱砂/顶栏紧凑化/舞台产品主题）
+
+- **沉浸标题栏高度 = 信号灯圆心的两倍（32pt，不再是 56）**：AppKit 把三灯
+  圆心固定在窗口顶往下 **15.8pt**（实测，`TRAFFIC_LIGHT_CENTER_Y` 常量），
+  且 `transparent_titlebar` 不给移动能力——想对齐只能让内容去就灯。带高
+  取 2×15.8≈32，内容垂直居中即与灯共线；56 时内容中心 28，比灯低 12pt
+  （用户截图「信号灯和图标两条线」）。测试断言 run 标签/品牌中心落在灯线
+  ±2.5（`immersive mode merges the title bar into one band`），已故意破坏
+  验证会红。`ide_root` 的 window_bar = 32−40 = **−8 是刻意的代数**
+  （顶栏渲染 32，壳预算 40−8 记），别把它 clamp 成 0。
+
+- **modifier semantics 是叠加不再是替换（框架修复，load-bearing）**：
+  `ModifierViewNode::semantics()` = `modifier.semantics.overlaying(child.semantics())`
+  （`moui/core/modifier_semantics.mbt` 的 `ViewSemanticsInfo::overlaying`：
+  modifier 显式设置的 Option 字段获胜；`composition`/`text` **不从子节点继承**
+  ——composition 是结构性语义，text 的 caret/selection 是元素实例状态，
+  从包装元素继承会在 overlay 时清掉文本控件的光标）。
+  `.semantics_role(TreeItem).on_hover(...)` 读回 role 不再是 None；
+  runtime 的 overlay 路径本就按字段合并，直接读与提交树现在一致。
+- **去朱砂**：`studio_theme()` primary = `ide_accent()`（#3574F0）；画布/积木
+  选中描边等 5 处朱砂字面量改 `ide_accent()`。语义色点（闸门红等）不是主色，
+  保持不动。runner 模板 `runner_theme()` primary 同步为同一蓝（sync_kernel 门）。
+- **产品主题（stage 的真实样式）**：`studio_product_theme()`（theme.mbt，浅色+蓝）
+  在 `stage_layout` 单点 `.theme()` 套给舞台控件；runner 内联同值。**跨 bundle
+  不能 import，两处值必须人肉同步**（moon test 无法读文件做漂移断言）。
+- **顶栏动作 = `topbar_action` 芯片**（ide_chrome.mbt）：24pt 高 + Caption 13pt，
+  `on_click : Msg?`（None=禁用态弱文字）；宽由 `topbar_chip_bound`（ASCII 8.0/
+  全角 13.0 + 内垫 20）算，`topbar_actions_width` 与拖拽区共用。
+- **`action_chip(label, msg, ChipTone, height)`**（ide_chrome.mbt）：Quiet/
+  Primary/Ghost 三态，宽 = `chip_label_width`（估宽×1.05+20）。高度预算按
+  芯片算的容器（AI 决策条、审计卡）**必须**用它而不是 `@views.button`
+  （36 实渲 vs 24 预算）；`decision_bar_height` 已同步为 24+4+24 / 22。
+- **`wrap_text_lines`/`hint_lines_view`（ide_chrome.mbt）**：拉丁按词、CJK
+  逐字贪心换行（估宽口径同 text_estimate_width）。长提示（英文 500-800pt）
+  渲染必须折行——`@views.text` 会自己长宽溢出容器；`empty_hint` 签名改为
+  `(label, width, height)` 最多 3 行。紧凑条（决策条错误行/gate_hint/代码
+  脚注）走 `fit_label` 截断，不折行（高度预算单点）。设置对话框的 key_hint/
+  compile 可达性/草稿提示已接换行块。
+- **AI 浮动层居中**：`ai_floating` 的 AiCenter 锚 = 左右对称权重 spacer
+  （旧实现贴中心列左缘，破断实测偏 22pt）；与药丸同一纪律。
+- **回归网**：`app/ui_regression_wbtest.mbt`——AI 卡居中（按卡矩形宽匹配 +
+  中心对齐）、舞台产品主题（空文本标签填字后查舞台区深色文字）、换行器
+  单测、芯片宽单调性。两条关键断言已故意破坏验证会红。
+- **验证器陷阱（新）**：`moui/core` 加公共 API 后 `checks/api-surface-report.json`
+  与 `tools/moui/validate_api_surface/main.mbt` 的 max_lines/max_pub_lines
+  **都要 +**（generate-repo-docs --write 对超限是报错不是自动抬）。
+
 ## web 入口实机验证工作流（2026-09-29 实测）
 
 - index.html 的相对路径假设：`../.mooncakes/wzzc-dev/moui_web_renderer/
@@ -852,3 +899,162 @@ spacer → 贴在中心列右下角（实测中心 x≈958，列中心 645，偏
 
 ### `SwitchLanguage` 是切语言的消息名（不是 ToggleLanguage）
 写跨语言测试时先 `grep` 消息名，别猜。
+
+### 第四类扫描盲区：**未被裁剪 ≠ 没被遮挡**
+`overflow_report` 只查「未被裁剪的文字有没有越出窗口」，判据合理（滚动区内容
+越出视口是设计如此）。但它漏掉另一半：**窗格头根本不在裁剪区里**（实测
+`depth=0`），所以它的文字越出窗格后会被**后面的兄弟面板盖住**——看起来像被
+裁掉，实际是压在下面。窗口边界内、又有绘制命令，两道既有扫描都抓不到。
+修法：按「这段文字属于哪个窗格」直接比窗格的 x 范围（见
+`pane head text stays inside its own pane`）。
+
+### 同一行的几个格子**绝不能各自算预算**
+窗格头的宽度分配第一版拆成两处：`pane_head` 按 `trailing` 算一次动作占位，
+一个独立 helper 又按「窗格宽 − 内垫 − 动作 − 140」算尾巴预算。两处口径一
+不同就再次溢出——新测试立刻在 1440 宽度抓到尾巴画到 1253.2 而窗格右缘只有
+1166。**整行只能有一个分配函数**（现在是 `pane_head_layout`，纯函数、可直接
+断言），建视图的那一层不做任何算术。
+
+### 按钮宽度：`@views.button` 的 `width` 是**最小宽**（第三次踩）
+`content_width = max(declared, measured_text + padding_horizontal×2)`。
+写死 64 的「应用修改 / 删除语句」实际各要 92.8（标签 60.8 + 内垫 32）。
+配合 `draft_w = width - 190` 的写法，真实总宽 = `w + 22`，删除按钮盒实测
+`932..1028` 而窗格右缘 1006——**超出 22pt**，截图里「删除语句」只露出左半。
+修法：`button_label_width(label)` 统一算，输入框拿剩下的空间（顺序反过来一定
+挤掉按钮）。
+
+**估算口径要按字号分组**：`text_estimate_width`（ASCII 7.9 / 全角 13.0）是给
+**正文**标定的；加粗 16pt 的按钮标签上「应用修改」估 52 实际 60.8（窄 17%）、
+「编译 MoonBit」估 89.2 实际 97.6（窄 9%）。所以按钮专用 `8.4 / 16.0` 上界。
+**取上界是刻意的**：估宽只是内垫多几个点，估窄会让按钮自己长出去把兄弟挤出
+面板（且只在特定语言/宽度复现）。
+
+### 断言「按钮塞得下」要比**按钮盒**，不能比文字画框
+`@views.text` 只会涨不会缩，文字自己**永远**塞得下——拿文字画框断言「没溢出」
+是个不可能失败的断言。第一版就这么写的，故意破坏时一次都没红。必须比按钮盒
+（`shell_rects` 里包住文字、且比文字宽的那个）。
+
+### `workspace.mbt` 1162 行 → 拆成 `workspace.mbt`(593) + `code_view.mbt`(578)
+自然边界是「窗格外壳/宽度分配」与「代码视图/空舞台内容渲染」。
+
+### 面板头尾部动作贴右缘：**标题不能吃满剩余宽**
+`panel_head` 的权重 spacer 曾写 `weight=0.0`——它分不到 slack，右端剩下的
+40pt 空白堆在动作**之后**，左栏关闭 ✕ 停在离右缘 40pt 处（实测 ✕ 中心
+css x 221.8，面板右缘 281）。
+
+修的时候踩了一个更隐蔽的坑：第一版把标题宽设成「面板宽 − 尾部预留」，
+即**标题吃满剩余**。这样尾部确实贴右了，但那是标题宽度**碰巧**保证的——
+spacer 的 `weight` 写 0 还是 1 都看不出来。实测：故意把 weight 改回 0.0，
+那条「尾部贴右缘」的测试**仍然通过**，断言等于失效。
+
+正确做法：**标题只占内容宽**（`text_estimate_width * 1.02 + 8`，再按可用宽
+夹取），余量留给 spacer 去推。这样 `weight` 才是真正起作用的一环，改回 0
+测试立刻红（`right=154.04 expected ~273`）。
+
+教训一般化：**当一个约束由两处共同保证时，测试要能被每一处单独破坏。**
+改完先问「我这次修的到底是哪一处」，然后只破坏那一处看它红不红。
+
+### `panel_head` 的尾部预留宽必须按**实际控件宽**给
+统一按 22 预留是错的：`count_badge` 是 56 宽，按 22 留会让它越出右缘
+（实测监视面板的计数徽标画到窗口外，w=1440 时 x 1407 越出）。所以加了
+`trailing_widths?` 参数，调用方声明真实宽。
+
+### 去掉顶栏四色方块（用户要求）
+`brand_mark()` 整个删除。它是设计稿 `<div class="logo">` 的占位 logo：无边框
+窗口里紧挨系统红黄绿，四个彩色小方块挤在一行很吵，且不承载信息（产品名就在
+旁边）。**注意：这是纯删除，不要给它写绘制断言**——我试过「顶栏左端有没有
+成对小块」，但那个 logo 在绘制流里会合并成一次填充，断言抓不到（实测把 logo
+加回去测试照样通过），属于不可能失败的断言，已删除。
+
+### 清空选中：`ClearSelection` 必须同时清控件与子程序
+`context_head` 在无控件时回退到 `current_handler`——只清 `selected_control`
+的话右栏继续显示上一个子程序，用户点「清空选中」看到的是「内容没变」。
+设计稿对应 `#clearSel`。没这个出口时用户只能靠「选中别的对象」离开，
+回不到中性态。
+
+### 积木窗格**跟随选中**（用户要求「只有在需要的时候才出来」）
+判据是**选中态**不是「有没有块」：新建的空子程序也要显示窗格（用户正要在
+那里加块），但没选子程序时一块都不该显示。`blocks_pane_wanted(model) =
+pane_blocks && current_handler(model) is Some(_)`。
+
+关键连带改动：`SelectControl` 必须**清掉 `selected_handler`**。否则点了一个
+控件之后积木窗格还挂着（用户已经离开那段子程序了）。设计稿的树本来就是单选：
+控件与子程序互斥。
+
+`model.pane_blocks` 仍是用户显式开关，语义是「需要积木时把它关掉」，不能
+反向把不需要的窗格打开。
+
+**测试字符串坑又踩一次**：断言「积木窗格在不在」不能用「积木」二字——积木
+分类轨里也有一个叫「积木」的分类项，`shell_has_text` 会撞上。改用窗格独有的
+副标题前缀 `IR 映射`（整串会被 `fit_label` 截断成 `IR 映射 · …`，用前缀）。
+
+### 删掉我自己发明的「单窗格恢复带」（用户指出）
+之前为了让「隐藏窗格」可逆，我在只剩一个窗格时于它**头顶压了一条
+「+ 另一个窗格」按钮带**。那是**我自己加的、设计稿里没有的东西**，凭空多
+一条工具带还挤掉舞台高度。用户直接指出不要它。
+
+设计稿的真实规则更干净（`#btnHideLive`/`#btnHideBlocks`）：
+```js
+S.live=false; if(!S.blocks) S.ws='empty';
+```
+**关掉最后一个窗格就进空舞台**，而空舞台自带 `#btnAddLive` / `#btnAddBlocks`
+两个入口——恢复路径**只有这一条**，不在单窗格态另开一条。所以：
+- 单窗格 = 那个窗格占满整列，不加任何带子；
+- 两个都关 = 空舞台（`empty_stage`），它带恢复按钮。
+
+**恢复按钮必须幂等「显示」而不是「取反」。** 新增 `ShowPaneLive` /
+`ShowPaneBlocks`（赋值语义，对应设计稿 `S.live=true`）：空舞台出现时窗格一定
+是关的，用 `Toggle*` 会让这条消息在别处（命令面板）变成「关掉它」，语义不可
+预测。二者还顺带把 `workspace` 切回 `WsVisual`——空舞台可能是点图标栏
+`SetWorkSpace` 收起造成的，那时只打开 pane、工作区还停在 `WsEmpty`，
+用户点了按钮什么都看不到。
+
+`ShowPaneBlocks` 还要**顺手选上第一个子程序**：积木窗格要 `current_handler`
+非空才画得出来（`blocks_pane_wanted` 判据），否则用户点了「+ 积木窗格」
+屏幕上只有 Live App，看起来就是没反应。
+
+### 空舞台按钮宽度必须按内容算 + 折行
+模板 3 颗 + 恢复入口最多 2 颗，写死 150 时整行 `5×150+4×10 = 790` > 1280
+窗口下的中心列 724，最右那颗被面板裁掉（实测 `+ 积木窗格` 只露左半）。
+改用 `button_label_width` + `empty_stage_button_rows` 折行：放不下就分两行，
+不压缩（压到 ~140 会让「新建问候程序」6 个全角字贴边）。
+
+### `shell_responsive_wbtest.mbt` 1225 行 → 拆出 `pane_lifecycle_wbtest.mbt`
+自然边界是判据类型：前者是**响应式/溢出扫描**（视口 1440→1000，枚举所有
+绘制文字找越界，「画得下吗」），后者是**交互状态机**（点一下之后谁该出现/
+消失，「该不该画」）。9 + 9 个测试。
+
+### 右栏头的 ✕ 是「关闭整个右栏」，不是「清空选中」（用户报的 bug）
+上一轮我加 `ClearSelection` 时，把它放在了右栏头整行的**最右端**——而那里
+正是「关闭面板」按钮该在的位置（左栏的 `#btnCloseLeft` 就在那儿）。于是
+点它只是清了选中、面板纹丝不动，用户读到的语义就是「关闭右栏关错了东西」。
+
+**位置即语义**：一个 ✕ 放在面板头右端，用户只会读成「关闭面板」。设计稿里
+两者是分开的：
+- `#clearSel` 是**对象芯片内部**的小 ✕（`.objchip` 里紧挨着名字）；
+- 面板关闭按钮属于窗格头（`.pnhead` 右端）。
+
+所以右栏头现在是三段：`对象名 + 清除✕ | 权重 spacer | 种类徽标 + 关闭✕`。
+两个 ✕ 语义不同、位置不同，不能互换。
+
+### 右栏原本**没有**收起能力（这次补上）
+`right_visible : Bool`（左栏是「多视图 + 收起」所以用枚举，右栏只有一个视图，
+布尔足够）。`shell_chrome_widths` 的 `right` 返回 `0.0` 表示收起，调用方
+**不必区分**它是「用户收起」还是「窄窗口让位」——都是「不画右栏」。
+
+连带两处：
+1. `workspace_row` 里 `chrome.right == 0.0` 时**面板与它左侧的发丝线都不画**，
+   否则中心列右边会留一条没有内容的竖线；
+2. 重开入口在图标栏（`Columns` 图标）。它是**唯一**的重开入口，所以必须
+   始终在场——不像左栏那两个图标是「多视图」互斥关系。
+
+用 `SetRightVisible(Bool)` 显式布尔而不是 Toggle：关闭入口在右栏头（只可能
+关），打开入口在图标栏（只可能开）；共用一个 Toggle 会让「点击目标当前
+不可见」这类情况反向操作。
+
+### 浏览器点击验证的坐标坑（又一次）
+自动化点击两次打偏：一次点 `x=1272` 落在 ✕ 右侧空白，一次点 `y=234` 命中了
+**AI 锚点图标**（把锚点切成了「右下角」）。教训：**别靠肉眼估图标栏坐标**，
+先从截图里量出目标元素的实际中心（本次量到关闭 ✕ 中心 css x=1260.8，
+面板切换图标在 y≈265 而非 234）。icon 栏是纯图标、没有文字锚点，估错代价
+就是「测试看起来通过了但改的是别的东西」。

@@ -339,9 +339,7 @@ pub fn blocks_canvas(
                   ),
                   radius=8.0,
                 ),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-                ),
+                @graphics.Brush::solid(ide_accent()),
                 2.0,
               )
             InsertMark(x, y, w) =>
@@ -351,9 +349,7 @@ pub fn blocks_canvas(
                   rect=@geometry.Rect::new(x~, y~, width=w, height=3.0),
                   radius=1.5,
                 ),
-                @graphics.Brush::solid(
-                  @graphics.Color::rgba(r=0.78, g=0.26, b=0.20),
-                ),
+                @graphics.Brush::solid(ide_accent()),
               )
           }
         }

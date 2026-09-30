@@ -19,29 +19,13 @@
 pub const TOPBAR_ACTION_GAP : Double = 6.0
 
 ///|
-/// 单个动作按钮宽度的**保守上界**。
-///
-/// 为什么用上界而不是精确估算：这个宽度决定拖拽区在哪里收手（见
-/// `topbar_drag_width`），两种误差的代价**极不对称**——
-/// 高估只是拖拽区少几个点（无害，仍有一大片可拖），低估则拖拽区盖住按钮，
-/// 点击被 AppKit 的 `performWindowDragWithEvent:` 吃掉，表现成「按钮点了没
-/// 反应」（严重，且只在原生无框窗口复现）。
-///
-/// 实测教训：`text_estimate_width`（ASCII 7.9 / 全角 13）在**加粗 16pt** 的
-/// 按钮标签上明显偏窄——「编译 MoonBit」估 89.2，实际绘制 97.6（窄 9%），
-/// 按 1.02 补偿后算出的拖拽区右缘 883.0 仍然盖住了左缘 876.4 的运行按钮。
-/// 所以这里改用「ASCII 10 / 全角 16 + 两侧内垫 32」的宽松上界，宁可少拖。
-fn topbar_action_bound(label : String, declared : Double) -> Double {
-  let mut ascii = 0
-  let mut wide = 0
-  for c in label {
-    if c.to_int() < 0x80 {
-      ascii = ascii + 1
-    } else {
-      wide = wide + 1
-    }
+/// 运行/停止芯片标签：运行中变停止。宽度计算与渲染共用同一来源。
+fn run_label(model : Model, t : @i18n.Translator) -> String {
+  if app_running(model) {
+    text(t, "app.run.stop")
+  } else {
+    text(t, "app.run.start")
   }
-  (ascii.to_double() * 10.0 + wide.to_double() * 16.0 + 32.0).max(declared)
 }
 
 ///|
@@ -51,15 +35,9 @@ fn topbar_action_bound(label : String, declared : Double) -> Double {
 /// 盖住」的漂移——本仓已经为同类「两处各算一份」付出过代价（浮动卡高度、
 /// 树行元信息宽度），所以这里只留一个计算源。
 pub fn topbar_actions_width(model : Model, t : @i18n.Translator) -> Double {
-  let running = app_running(model)
-  let run_label = if running {
-    text(t, "app.run.stop")
-  } else {
-    text(t, "app.run.start")
-  }
-  topbar_action_bound(run_label, 76.0) +
-  topbar_action_bound(text(t, "app.run.step"), 68.0) +
-  topbar_action_bound(text(t, "app.topbar.compile"), 104.0) +
+  topbar_chip_bound(run_label(model, t), 56.0) +
+  topbar_chip_bound(text(t, "app.run.step"), 48.0) +
+  topbar_chip_bound(text(t, "app.topbar.compile"), 72.0) +
   34.0 +
   28.0 +
   28.0 +
@@ -106,46 +84,36 @@ pub fn ide_top_bar(
     WsEmpty => text(t, "app.crumb.empty")
   }
   let left = topbar_brand(text(t, "app.title"), model.dirty, crumb)
-  // 动作按钮高度：IDEA 标题栏工具条约 27-28pt，比内容区按钮略高一点，
-  // 在 40pt 带里上下各留 6pt。
-  let action_height = 28.0
+  // 动作簇：24pt 紧凑芯片（IDEA/VSCode 标题栏口径）。运行是唯一主行动作
+  // （强调色填充）；单步仅在活运行（含闸门暂停）时可用——编译轨不支持单步，
+  // 芯片仍显示但禁用（诚实反映「本轨没有单步」而不是藏起来）。
   let right : Array[@moui.View[Msg]] = [
     // 运行/停止：运行中变停止（同一键位的心智：它是「运行」的总闸）
-    @views.button(
+    topbar_action(
+      run_label(model, t),
       if running {
-        text(t, "app.run.stop")
+        Some(RunStop)
       } else {
-        text(t, "app.run.start")
+        Some(RunStart)
       },
-      on_click=if running { RunStop } else { RunStart },
-      variant=if running { Outline } else { Primary },
-      width=76.0,
-      height=action_height,
+      !running,
+      topbar_chip_bound(run_label(model, t), 56.0),
     ),
-    // 单步：仅在活运行（含闸门暂停）时可用——编译轨不支持单步，
-    // 按钮仍显示但禁用（诚实反映「本轨没有单步」而不是藏起来）
-    if running && current_track(model) is Interpret {
-      @views.button(
-        text(t, "app.run.step"),
-        on_click=RunStep,
-        variant=Outline,
-        width=68.0,
-        height=action_height,
-      )
-    } else {
-      @views.button(
-        text(t, "app.run.step"),
-        variant=Outline,
-        width=68.0,
-        height=action_height,
-      )
-    },
-    @views.button(
+    topbar_action(
+      text(t, "app.run.step"),
+      if running && current_track(model) is Interpret {
+        Some(RunStep)
+      } else {
+        None
+      },
+      false,
+      topbar_chip_bound(text(t, "app.run.step"), 48.0),
+    ),
+    topbar_action(
       text(t, "app.topbar.compile"),
-      on_click=CompileRun,
-      variant=Outline,
-      width=104.0,
-      height=action_height,
+      Some(CompileRun),
+      false,
+      topbar_chip_bound(text(t, "app.topbar.compile"), 72.0),
     ),
     pill(
       if model.language is ZhHans {
@@ -162,7 +130,7 @@ pub fn ide_top_bar(
       false,
       CommandPaletteOpen,
       28.0,
-      action_height,
+      26.0,
       14.0,
     ),
     icon_button(
@@ -171,7 +139,7 @@ pub fn ide_top_bar(
       model.settings_open,
       ToggleSettings,
       28.0,
-      action_height,
+      26.0,
       14.0,
     ),
   ]
@@ -180,8 +148,8 @@ pub fn ide_top_bar(
   // 拿不到 slack，顶栏内容会挤在中间（见 fill_row 注释）。
   let inset = if model.immersive { TRAFFIC_LIGHT_INSET } else { 10.0 }
   let inner = (width - inset - 10.0).max(120.0)
-  // 沉浸态这一条同时承担窗口标题栏，所以是 `WINDOW_CHROME_HEIGHT`（56）；
-  // 非沉浸态（Web）没有窗口头可言，保持设计稿的 40。
+  // 沉浸态这一条同时承担窗口标题栏，所以是 `WINDOW_CHROME_HEIGHT`（32，
+  // 与系统信号灯共线）；非沉浸态（Web）没有窗口头，保持设计稿的 40。
   let bar_height = if model.immersive {
     WINDOW_CHROME_HEIGHT
   } else {
@@ -283,6 +251,17 @@ pub fn ide_icon_bar(
       text(t, "app.ai.title"),
       model.ai_anchor is AiDocked && !model.ai_pill,
       CycleAiAnchor,
+      40.0,
+      36.0,
+      17.0,
+    ),
+    // 右栏开合。关掉之后唯一的重开入口就在这里——所以它必须始终在场
+    // （不像左栏两个图标那样是「多视图」关系）。
+    icon_button(
+      Columns,
+      text(t, "app.right.show"),
+      model.right_visible,
+      SetRightVisible(!model.right_visible),
       40.0,
       36.0,
       17.0,
@@ -429,7 +408,7 @@ fn tree_view_ide(
     }
   }
   if rows.length() == 0 {
-    return empty_hint(text(t, "app.left.no_match"), height)
+    return empty_hint(text(t, "app.left.no_match"), width, height)
   }
   // 结构树按内容自适应高度，超出交给滚动容器（避免行被压扁）
   @views.scroll_view(
@@ -482,7 +461,7 @@ fn data_view(
 ) -> @moui.View[Msg] {
   let files = data_file_entries(model)
   if files.length() == 0 {
-    return empty_hint(text(t, "app.data.none"), height)
+    return empty_hint(text(t, "app.data.none"), width, height)
   }
   let rows : Array[@moui.View[Msg]] = []
   for file in files {
@@ -789,24 +768,17 @@ pub fn ide_bottom_bar(
   ]
   if model.bottom_audit && pending > 0 {
     head_cells.push(
-      @views.button(
+      action_chip(
         text(t, "app.audit.confirm_all"),
-        on_click=AuditSettleAll("app.audit.confirmed"),
-        variant=Tonal,
-        width=110.0,
-        height=22.0,
+        AuditSettleAll("app.audit.confirmed"),
+        Quiet,
+        22.0,
       ),
     )
   }
   if !model.bottom_audit {
     head_cells.push(
-      @views.button(
-        text(t, "app.console.clear"),
-        on_click=ClearConsole,
-        variant=Ghost,
-        width=64.0,
-        height=22.0,
-      ),
+      action_chip(text(t, "app.console.clear"), ClearConsole, Ghost, 22.0),
     )
   }
   head_cells.push(
@@ -877,6 +849,7 @@ pub fn ide_bottom_bar(
 
 ///|
 /// 页签按钮：选中态用强调色下边框式的高亮（这里用底色 + 亮文字表达）。
+/// 标签宽按内容算——写死 88 会在长页签名（本地化）下截掉半边。
 fn tab_button(
   label : String,
   selected : Bool,
@@ -887,7 +860,7 @@ fn tab_button(
     @views.text(
       label,
       theme=studio_theme(),
-      width=88.0,
+      width=(text_estimate_width(label) * 1.02 + 8.0).max(40.0),
       height=18.0,
       align=TextStart,
     ).foreground(if selected { ide_text() } else { ide_text_faint() }),
@@ -918,7 +891,7 @@ pub fn audit_pane(
   height : Double,
 ) -> @moui.View[Msg] {
   if model.audit_entries.length() == 0 {
-    return empty_hint(text(t, "app.audit.empty"), height)
+    return empty_hint(text(t, "app.audit.empty"), width, height)
   }
   let cards : Array[@moui.View[Msg]] = []
   let mut index = 0
@@ -991,25 +964,25 @@ fn audit_card(
     )
   }
   if entry.kind is AuditWarn && !entry.settled {
+    // 芯片严格 22 高：审计卡在 scroll_view 里按内容排，36pt 的
+    // @views.button 会把确认行撑得忽高忽低。
     body.push(
       @views.row(
         [
-          @views.button(
+          action_chip(
             text(t, "app.audit.confirm"),
-            on_click=AuditSettle(index, "app.audit.confirmed"),
-            variant=Tonal,
-            width=72.0,
-            height=22.0,
+            AuditSettle(index, "app.audit.confirmed"),
+            Primary,
+            22.0,
           ),
-          @views.button(
+          action_chip(
             text(t, "app.audit.reject"),
-            on_click=AuditSettle(index, "app.audit.rejected"),
-            variant=Outline,
-            width=72.0,
-            height=22.0,
+            AuditSettle(index, "app.audit.rejected"),
+            Quiet,
+            22.0,
           ),
           @views.text(
-            text(t, "app.audit.gate_hint"),
+            fit_label(text(t, "app.audit.gate_hint"), (width - 220.0).max(60.0)),
             theme=studio_theme(),
             width=(width - 200.0).max(60.0),
             height=16.0,
@@ -1045,7 +1018,7 @@ pub fn console_pane(
   height : Double,
 ) -> @moui.View[Msg] {
   if model.log_lines.length() == 0 {
-    return empty_hint("", height)
+    return empty_hint("", width, height)
   }
   let rows : Array[@moui.View[Msg]] = []
   for line in model.log_lines {

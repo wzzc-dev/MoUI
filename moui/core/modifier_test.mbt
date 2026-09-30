@@ -556,16 +556,39 @@ test "chained layout and paint and event compose correctly" {
 }
 
 ///|
-test "chained semantics modifiers: outermost modifier contributes its semantics" {
-  // ModifierViewNode returns the outermost modifier's ViewSemanticsInfo.
-  // The runtime's element tree builder walks the chain and merges semantics;
-  // view.semantics() only returns the modifier node's own info (the outermost).
-  // For semantics_checked(checked=true), the outermost modifier contributes checked.
+test "chained semantics modifiers: every contribution survives the chain" {
+  // ModifierViewNode merges the modifier's info over the child's: fields a
+  // modifier sets explicitly win, everything else passes through. The runtime
+  // applies the same per-field merge when a Transparent modifier overlays its
+  // child node, so a direct semantics read now matches the committed tree.
   let view = test_leaf()
     .semantics_role(Checkbox)
     .accessibility_label("Agree")
     .semantics_checked(checked=Checked)
   assert_eq(view.semantics().checked, Some(Checked))
-  // The inner semantics_role modifier is wrapped deeper; view.semantics()
-  // returns the outermost's info which is only about checked.
+  assert_eq(view.semantics().role, Some(Checkbox))
+  assert_eq(view.semantics().label, Some("Agree"))
+}
+
+///|
+test "transparent observer does not replace the wrapped view's role" {
+  // The reported defect: `.semantics_role(TreeItem).on_hover(...)` used to
+  // read back `role: None` because the outermost modifier's info replaced
+  // the child's. An observer must be transparent, not opaque.
+  let view = test_leaf()
+    .accessibility_label("Controls")
+    .semantics_role(TreeItem)
+    .on_hover(_hovered => ())
+  assert_eq(view.semantics().role, Some(TreeItem))
+  assert_eq(view.semantics().label, Some("Controls"))
+  // The observer still contributes nothing of its own.
+  assert_true(view.semantics_action_kinds().is_empty())
+}
+
+///|
+test "an explicit outer field wins over the wrapped view's field" {
+  let view = test_leaf()
+    .accessibility_label("inner")
+    .accessibility_label("outer")
+  assert_eq(view.semantics().label, Some("outer"))
 }

@@ -89,6 +89,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.reject", GeneratedI18nMessage::Text("Reject")),
       ("app.ai.reveal", GeneratedI18nMessage::Text("Show/hide")),
       ("app.ai.undock", GeneratedI18nMessage::Text("Float")),
+      ("app.ctx.clear", GeneratedI18nMessage::Text("Clear selection")),
       ("app.ctx.props", GeneratedI18nMessage::Text("Properties")),
       ("app.ctx.state", GeneratedI18nMessage::Text("State")),
       ("app.data.live", GeneratedI18nMessage::Text("runtime")),
@@ -161,6 +162,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.help.logic", GeneratedI18nMessage::Text("Logic")),
       ("app.help.title", GeneratedI18nMessage::Text("Help")),
       ("app.recent.you", GeneratedI18nMessage::Text("you")),
+      ("app.right.hide", GeneratedI18nMessage::Text("Hide right panel")),
+      ("app.right.show", GeneratedI18nMessage::Text("Properties panel")),
       ("app.run.resume", GeneratedI18nMessage::Text("Resume")),
       (
         "app.watch.hint",
@@ -798,6 +801,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Switch to MoonBit source view"),
       ),
       (
+        "app.command.right.toggle",
+        GeneratedI18nMessage::Text("Toggle properties panel"),
+      ),
+      (
         "app.recent.action.delete",
         GeneratedI18nMessage::Text("Deleted control"),
       ),
@@ -1063,6 +1070,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.reject", GeneratedI18nMessage::Text("拒绝")),
       ("app.ai.reveal", GeneratedI18nMessage::Text("显示/隐藏")),
       ("app.ai.undock", GeneratedI18nMessage::Text("浮出")),
+      ("app.ctx.clear", GeneratedI18nMessage::Text("清空选中")),
       ("app.ctx.props", GeneratedI18nMessage::Text("属性")),
       ("app.ctx.state", GeneratedI18nMessage::Text("状态")),
       ("app.data.live", GeneratedI18nMessage::Text("运行时")),
@@ -1130,6 +1138,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.help.logic", GeneratedI18nMessage::Text("逻辑词")),
       ("app.help.title", GeneratedI18nMessage::Text("帮助")),
       ("app.recent.you", GeneratedI18nMessage::Text("你")),
+      ("app.right.hide", GeneratedI18nMessage::Text("收起右栏")),
+      ("app.right.show", GeneratedI18nMessage::Text("属性面板")),
       ("app.run.resume", GeneratedI18nMessage::Text("继续")),
       (
         "app.watch.hint",
@@ -1725,6 +1735,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.mode.preview",
         GeneratedI18nMessage::Text("切到 MoonBit 源码视图"),
+      ),
+      (
+        "app.command.right.toggle",
+        GeneratedI18nMessage::Text("显示 / 隐藏属性面板"),
       ),
       ("app.recent.action.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.recent.action.insert", GeneratedI18nMessage::Text("插入控件")),

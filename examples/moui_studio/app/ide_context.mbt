@@ -61,21 +61,64 @@ fn context_head(
         None => (text(t, "app.ctx.none"), "")
       }
   }
-  let cells : Array[@moui.View[Msg]] = [
+  // 行内布局（对齐设计稿 `.ctxsel`）：`对象名 + 清除 ✕` 靠左成组，
+  // 然后权重 spacer，右边是种类徽标与**收起整个右栏**的 ✕。
+  //
+  // 为什么两个 ✕ 必须分开：设计稿的 `#clearSel` 是**对象芯片内部**的小 ✕
+  // （`.objchip` 里紧挨着名字），而面板关闭按钮属于窗格头。之前把
+  // `ClearSelection` 放在整行的最右端——那正是「关闭面板」按钮该在的位置，
+  // 于是点它只是清了选中、面板纹丝不动，用户读到的语义就是「关闭右栏
+  // 关错了东西」。位置即语义，两者不能互换。
+  let has_selection = name != text(t, "app.ctx.none")
+  let lead : Array[@moui.View[Msg]] = [
     @views.text(
       name,
       theme=studio_theme(),
-      width=(width - 110.0).max(60.0),
+      width=(width - 130.0).max(60.0),
       height=18.0,
       align=TextStart,
     ).foreground(ide_text()),
   ]
-  if kind != "" {
-    cells.push(count_badge(kind, 4))
+  if has_selection {
+    lead.push(
+      icon_button(
+        Close,
+        text(t, "app.ctx.clear"),
+        false,
+        ClearSelection,
+        18.0,
+        18.0,
+        10.0,
+      ),
+    )
   }
+  let trail : Array[@moui.View[Msg]] = []
+  if kind != "" {
+    trail.push(count_badge(kind, 4))
+  }
+  trail.push(
+    icon_button(
+      Close,
+      text(t, "app.right.hide"),
+      false,
+      SetRightVisible(false),
+      20.0,
+      20.0,
+      12.0,
+    ),
+  )
   @views.container(
     @views.padding_xy(
-      fill_row(cells, (width - 16.0).max(80.0), 6.0, Center),
+      fill_row(
+        [
+          @views.row(lead, spacing=4.0, align=Center),
+          @views.spacer(min_length=4.0, weight=1.0),
+          @views.row(trail, spacing=4.0, align=Center),
+        ],
+        (width - 16.0).max(80.0),
+        4.0,
+        Center,
+      ),
       horizontal=8.0,
       vertical=0.0,
     ),
@@ -183,7 +226,7 @@ fn context_props(
   width : Double,
 ) -> @moui.View[Msg] {
   match find_selected_control(model) {
-    None => empty_hint(text(t, "app.inspector.none"), 120.0)
+    None => empty_hint(text(t, "app.inspector.none"), width, 120.0)
     Some(control) => {
       let field_width = (width - 90.0).max(80.0)
       let rows : Array[@moui.View[Msg]] = [
@@ -388,7 +431,7 @@ fn context_data(
     }
   }
   if rows.length() == 0 {
-    return empty_hint(text(t, "app.ctx.data.none"), 120.0)
+    return empty_hint(text(t, "app.ctx.data.none"), width, 120.0)
   }
   @views.padding_xy(
     @views.column(rows, spacing=2.0),
@@ -410,7 +453,7 @@ fn context_actions(
     None =>
       match current_handler(model) {
         Some(handler) => handler.control_name
-        None => return empty_hint(text(t, "app.ctx.actions.none"), 120.0)
+        None => return empty_hint(text(t, "app.ctx.actions.none"), width, 120.0)
       }
   }
   // 事件集合由控件种类决定（按钮只有 onClick、输入框还有 onChange）——
@@ -495,7 +538,7 @@ fn context_deps(
     None =>
       match current_handler(model) {
         Some(handler) => handler.control_name
-        None => return empty_hint(text(t, "app.ctx.deps.none"), 120.0)
+        None => return empty_hint(text(t, "app.ctx.deps.none"), width, 120.0)
       }
   }
   let rows : Array[@moui.View[Msg]] = []
@@ -528,7 +571,7 @@ fn context_deps(
     }
   }
   if rows.length() == 0 {
-    return empty_hint(text(t, "app.ctx.deps.empty"), 120.0)
+    return empty_hint(text(t, "app.ctx.deps.empty"), width, 120.0)
   }
   @views.padding_xy(
     @views.column(rows, spacing=2.0),
@@ -678,6 +721,7 @@ fn watch_pane(
     "",
     [count_badge(watch_rows(model).length().to_string(), 0)],
     width,
+    trailing_widths=[56.0],
   )
   let rows = watch_rows(model)
   let body : Array[@moui.View[Msg]] = []
@@ -701,6 +745,10 @@ fn watch_pane(
     )
   } else {
     for row in rows {
+      // 名称/类型按内容算宽（变量允许中文语义命名，写死 72 会截断），
+      // 值列拿剩余；类型标签用 TextEnd 贴齐。
+      let name_w = (text_estimate_width(row.name) * 1.02 + 8.0).max(48.0)
+      let type_w = (text_estimate_width(row.type_label) * 1.02 + 8.0).max(36.0)
       body.push(
         @views.container(
           @views.padding_xy(
@@ -709,7 +757,7 @@ fn watch_pane(
                 @views.text(
                   row.name,
                   theme=studio_theme(),
-                  width=72.0,
+                  width=name_w,
                   height=18.0,
                   align=TextStart,
                 ).foreground(ide_text_muted()),
@@ -717,14 +765,14 @@ fn watch_pane(
                   row.value,
                   theme=studio_theme(),
                   role=Mono,
-                  width=(width - 140.0).max(40.0),
+                  width=(width - 32.0 - name_w - type_w).max(40.0),
                   height=18.0,
                   align=TextStart,
                 ).foreground(ide_text()),
                 @views.text(
                   row.type_label,
                   theme=studio_theme(),
-                  width=44.0,
+                  width=type_w,
                   height=16.0,
                   align=TextEnd,
                 ).foreground(ide_text_faint()),

@@ -100,17 +100,17 @@ pub fn settings_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       ],
       spacing=8.0,
     ),
-    @views.text(
+    // 编译轨可达性说明：英文版 687/893pt，同样折行。
+    hint_lines_view(
       if model.compile_track_available {
         text(t, "app.settings.compile.available")
       } else {
         text(t, "app.settings.compile.unavailable")
       },
-      theme=studio_theme(),
-      width=392.0,
-      height=20.0,
-      align=TextStart,
-    ).foreground(ide_text_faint()),
+      392.0,
+      ide_text_faint(),
+      3,
+    ),
     group_label(t, "app.settings.group.provider"),
     @views.row(
       [
@@ -158,39 +158,32 @@ pub fn settings_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
           width=320.0,
           height=FIELD_HEIGHT,
         ),
-        @views.button(
+        action_chip(
           text(t, "app.ai.reveal"),
-          on_click=ToggleProviderKeyReveal,
-          variant=Outline,
-          width=64.0,
-          height=FIELD_HEIGHT,
+          ToggleProviderKeyReveal,
+          Quiet,
+          FIELD_HEIGHT,
         ),
       ],
       spacing=8.0,
     ),
-    @views.text(
-      text(t, "app.ai.key_hint"),
-      theme=studio_theme(),
-      width=392.0,
-      height=20.0,
-      align=TextStart,
-    ).foreground(ide_warning()),
+    // 提示按可用宽折行——英文版这句话 766pt，392pt 的单行必然溢出。
+    hint_lines_view(text(t, "app.ai.key_hint"), 392.0, ide_warning(), 3),
     @views.divider(color=ide_border()),
+    hint_lines_view(
+      text(t, "app.settings.draft_hint"),
+      392.0,
+      ide_text_faint(),
+      2,
+    ),
     fill_row(
       [
-        @views.text(
-          text(t, "app.settings.draft_hint"),
-          theme=studio_theme(),
-          width=252.0,
-          height=20.0,
-          align=TextStart,
-        ).foreground(ide_text_faint()),
-        @views.button(
+        @views.spacer(min_length=4.0, weight=1.0),
+        action_chip(
           text(t, "app.settings.close"),
-          on_click=ToggleSettings,
-          variant=Primary,
-          width=88.0,
-          height=30.0,
+          ToggleSettings,
+          Primary,
+          28.0,
         ),
       ],
       392.0,
@@ -330,12 +323,11 @@ pub fn ai_history_dialog(
     @views.row(
       [
         @views.spacer(min_length=4.0, weight=1.0),
-        @views.button(
+        action_chip(
           text(t, "app.settings.close"),
-          on_click=ToggleAiHistory,
-          variant=Primary,
-          width=88.0,
-          height=30.0,
+          ToggleAiHistory,
+          Primary,
+          28.0,
         ),
       ],
       spacing=8.0,
@@ -589,6 +581,12 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
     StudioCommand::{
       id: "studio.left.data",
       label: text(t, "app.command.left.data"),
+      group: group_pane,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.right.toggle",
+      label: text(t, "app.command.right.toggle"),
       group: group_pane,
       hint: "",
     },

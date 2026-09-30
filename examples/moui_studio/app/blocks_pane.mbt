@@ -19,39 +19,41 @@ pub fn blocks_pane(
     Some(handler) =>
       "\{handler.control_name} . \{text(t, "event.\{handler.event.tag()}")}"
   }
-  let head = pane_head(text(t, "app.pane.blocks"), handler_label, width, [
-    // 「IR 映射 · 与代码同步」：设计稿副标题说清了这一栏和什么对齐
-    @views.text(
-      text(t, "app.pane.blocks.sub"),
-      theme=studio_theme(),
-      width=140.0,
-      height=16.0,
-      align=TextStart,
-    ).foreground(ide_text_faint()),
-    icon_button(
-      Columns,
-      if model.pane_live {
-        text(t, "app.pane.hide_live")
-      } else {
-        text(t, "app.pane.show_live")
-      },
-      model.pane_live,
-      TogglePaneLive,
-      24.0,
-      22.0,
-      13.0,
-    ),
-    // 隐藏此窗格（设计稿 #btnHideBlocks）
-    icon_button(
-      Close,
-      text(t, "app.pane.hide"),
-      false,
-      TogglePaneBlocks,
-      24.0,
-      22.0,
-      13.0,
-    ),
-  ])
+  // 「IR 映射 · 与代码同步」走 `tail` 槽：它的宽度由 `pane_head_layout` 与
+  // 标题/副标题/两个动作一起分配。**不要在这里自己算宽度**——同一行两处
+  // 各算一份预算，口径一不同就会溢出（实测第一版在 1440 宽度上尾巴画到
+  // 1253.2，而窗格右缘只有 1166）。
+  let head = pane_head(
+    text(t, "app.pane.blocks"),
+    handler_label,
+    width,
+    [
+      icon_button(
+        Columns,
+        if model.pane_live {
+          text(t, "app.pane.hide_live")
+        } else {
+          text(t, "app.pane.show_live")
+        },
+        model.pane_live,
+        TogglePaneLive,
+        24.0,
+        22.0,
+        13.0,
+      ),
+      // 隐藏此窗格（设计稿 #btnHideBlocks）
+      icon_button(
+        Close,
+        text(t, "app.pane.hide"),
+        false,
+        TogglePaneBlocks,
+        24.0,
+        22.0,
+        13.0,
+      ),
+    ],
+    tail=text(t, "app.pane.blocks.sub"),
+  )
   // 分类轨**永远**在（没有选中子程序时全灰）：它是画布左侧的固定列，
   // 「今天没有块」本身就是分类轨要传达的信息之一。它并排在画布左侧
   // （设计稿 #catbar），而不是压在画布上方——积木视图纵向最紧，把分类
@@ -62,7 +64,11 @@ pub fn blocks_pane(
   let canvas = match current_handler(model) {
     None =>
       @views.container(
-        empty_hint(text(t, "app.handler.none"), body_height - 20.0),
+        empty_hint(
+          text(t, "app.handler.none"),
+          canvas_width,
+          body_height - 20.0,
+        ),
         width=canvas_width,
         height=body_height,
         padding=0.0,
@@ -297,6 +303,17 @@ fn block_editor_bar(
       padding=0.0,
     )
   }
+  // 按钮宽度**必须按标签算**，不能写死 64：`@views.button` 的 `width` 是
+  // **最小宽**，内容超了它会自己长大（内垫 `padding_horizontal×2 = 32`）。
+  // 「应用修改 / 删除语句」各需 ~84pt，写死 64 时真实总宽 =
+  // `16 + (w−190) + 84 + 84 + 12 = w + 6`——超出 6pt，最右那颗按钮被面板
+  // 裁掉半个词（实际截图里「删除语句」只露出左边一半）。
+  //
+  // 这里把两个按钮的真实宽度算出来，再用剩余空间给输入框——顺序反过来
+  // （先给输入框固定的 w−190）就一定会挤掉按钮。
+  let apply_w = button_label_width(text(t, "app.block.apply"))
+  let delete_w = button_label_width(text(t, "app.block.delete"))
+  let draft_w = (width - 16.0 - apply_w - delete_w - 12.0).max(60.0)
   @views.container(
     @views.padding_xy(
       @views.row(
@@ -305,21 +322,21 @@ fn block_editor_bar(
             model.block_draft,
             on_input=source => EditBlock(source),
             lines=1,
-            width=(width - 190.0).max(80.0),
+            width=draft_w,
             line_height=24.0,
           ),
           @views.button(
             text(t, "app.block.apply"),
             on_click=CommitBlock,
             variant=Primary,
-            width=64.0,
+            width=apply_w,
             height=26.0,
           ),
           @views.button(
             text(t, "app.block.delete"),
             on_click=DeleteBlock,
             variant=Outline,
-            width=64.0,
+            width=delete_w,
             height=26.0,
           ),
         ],
