@@ -27,6 +27,16 @@ fn ElementNode::find_focusable_at(
   }
   let mut regular_index = self.children.length() - 1
   while regular_index >= 0 {
+    // Skip subtree-overlay owners already enqueued by the prepass (see the
+    // pointer dispatch twin of this loop): a nested overlay host is not
+    // itself `is_overlay_child`, and a duplicate entry would let in-flow
+    // pickup race the popup for the same point.
+    if regular_index < render.children.length() &&
+      !render.children[regular_index].is_overlay_child &&
+      search_order.contains(regular_index) {
+      regular_index = regular_index - 1
+      continue
+    }
     if regular_index < render.children.length() &&
       !render.children[regular_index].is_overlay_child {
       search_order.push(regular_index)

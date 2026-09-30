@@ -443,6 +443,30 @@
   上下留白对称 ±4）+ 晶格点出现在舞台上方、AI 卡预算上限、无常驻提示行；
   居中断言已破断验证（stage_mapping 改顶对齐 → 红 30 vs 230）。
 
+## 2026-09-30 框架修复：嵌套 overlay host 双派发（模态点击全失效）
+
+- **症状**：app 有两层 overlay host（如 toast_host 包住 modal overlay_host）
+  时，模态对话框内容**看得见点不着**（单层宿主正常）。设置对话框关闭芯片
+  是被报告的案例。
+- **根因**：`input_pointer.mbt` 的 `dispatch_pointer_to_children` 派发序
+  双入队——overlay prepass 经 `subtree_overlay_contains` 把「子树含 overlay
+  的宿主」（如嵌套的内层 host，它自身 `is_overlay_child=false`）入队并置
+  `is_overlay_owner`，紧随的 in-flow 循环只检查 render 节点的
+  `is_overlay_child` 又把它推了一次。同一 child 派发两遍：第一遍 Down 使
+  目标 pressed+captured；第二遍 `delivered_main_event` 已置位 → 走
+  stale-hover else 分支 → 对**刚按压的同一子树**合成 Exit → 按压态被清 →
+  Up 经 capture 回到目标但永不激活。`input_focus.mbt` 的焦点拾取循环同构，
+  一并修。
+- **修法**：in-flow 循环跳过 `is_overlay_owner[regular_index]` 已入队的
+  child（两处）。回归：`moui/runtime/overlay_runtime_test.mbt` 的
+  "modal dialog inside a nested overlay host receives taps"（嵌套 host +
+  居中 Dialog + on_tap 芯片真实 `dispatch_pointer_input`，断言激活**恰好
+  一次**），已破断验证。
+- **排查方法论**：绘制级白盒测试看不到事件路径；建临时 harness 包
+  （app+runtime 组合根）用 `AppRuntime::new_view + dispatch_pointer_input`
+  真实点击是最短复现路径；框架内先加 PREPASS/EXIT-DISPATCH 打印锁定双派发，
+  修复后删除。
+
 ## 2026-09-30 AI 卡二次精简（无头部 / 两行输入域）
 
 - **头部整个删除**：浮层输入盒不需要标题栏。原「AI 提案 + 锚点读数 +

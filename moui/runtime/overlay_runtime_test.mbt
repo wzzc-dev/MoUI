@@ -582,3 +582,76 @@ test "portal popup covering a text field blocks focus until dismissed" {
   ignore(runtime.draw_frame())
   assert_true(runtime.focused_text_input().focused)
 }
+
+///|
+/// A modal dialog inside a **nested** overlay host (e.g. an app-level modal
+/// host wrapped by a control/toast host) must stay clickable.
+///
+/// Regression: the dispatch prepass enqueued a subtree-overlay owner (the
+/// inner host) and the in-flow loop enqueued the same child again — the
+/// duplicate delivery pressed the target on the first pass and then ran the
+/// stale-hover branch against it on the second, synthesizing an Exit that
+/// cancelled the fresh press. Every tap inside such a dialog died silently
+/// while the dialog still painted at the right place (settings' close button
+/// in the studio app was the reported case).
+test "modal dialog inside a nested overlay host receives taps" {
+  let received : Array[String] = []
+  let chip = @views.container(
+    @views.center(
+      @views.text("关闭", width=40.0, height=16.0),
+      width=60.0,
+      height=24.0,
+    ),
+    width=60.0,
+    height=24.0,
+    padding=0.0,
+  ).on_tap("close-click")
+  let content = @views.column(
+    [@views.text("Body", width=300.0, height=400.0), chip],
+    spacing=8.0,
+  )
+  let inner = @views.overlay_host(@views.text("Base"), [
+    @views.PresentationSpec::new(
+      id="dialog",
+      kind=Dialog,
+      content~,
+      modality=Modal,
+      dismiss=@views.PresentationDismissPolicy::new(outside_tap=false),
+    ),
+  ])
+  // The outer host wraps the modal host exactly like an app toast layer.
+  let root = @views.overlay_host(inner, [])
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=1280.0, height=800.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.layout())
+  // Dialog content (~316x436) centers at (490,184); the chip row sits at
+  // y≈592..616 with the chip text starting at x≈500.
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=520.0, y=610.0),
+        phase=Down,
+      ),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=520.0, y=610.0),
+        phase=Up,
+      ),
+    ),
+  )
+  assert_true(received.contains("close-click"))
+  // 恰好一次：重复派发会把第二次变成 Exit 取消（旧缺陷的双派发痕迹）
+  let mut count = 0
+  for message in received {
+    if message == "close-click" {
+      count = count + 1
+    }
+  }
+  assert_eq(count, 1)
+}

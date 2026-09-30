@@ -206,8 +206,15 @@ fn ElementNode::dispatch_pointer_to_children(
   }
   let mut regular_index = self.children.length() - 1
   while regular_index >= 0 {
+    // Skip children the overlay prepass already enqueued (subtree overlay
+    // owners): a nested overlay host is not itself `is_overlay_child`, so
+    // without this guard it would be dispatched twice — the second pass ran
+    // the stale-hover branch against the subtree the first pass just pressed
+    // and synthesized an Exit that cancelled the fresh press (dialogs inside
+    // a nested host — settings inside a toast host — never received taps).
     if regular_index < render.children.length() &&
-      !render.children[regular_index].is_overlay_child {
+      !render.children[regular_index].is_overlay_child &&
+      !is_overlay_owner[regular_index] {
       dispatch_order.push(regular_index)
     }
     regular_index = regular_index - 1
