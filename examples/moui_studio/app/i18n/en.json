@@ -80,7 +80,7 @@
     "app.blocks.cat.block.expression": "Operators",
     "app.blocks.cat.block.flow": "Flow",
     "app.blocks.cat.block.variable": "Variables",
-    "app.blocks.reorder_hint": "Drag blocks to reorder within a level; tap one to edit it below",
+    "app.blocks.reorder_hint": "Drag blocks to reorder within a level; tap one to edit it in place",
     "app.bottom.audit": "Run audit",
     "app.bottom.collapse": "Collapse bottom bar",
     "app.bottom.console": "Console",
@@ -438,6 +438,8 @@
     "op.loop": "loop",
     "op.message": "message",
     "app.blocks.foot_hint": "The canvas floor is a reserved clearance lane for the AI layer · hover a block to see its ↔ line mapping",
-    "app.pane.show_blocks": "+ Blocks pane"
+    "app.pane.show_blocks": "+ Blocks pane",
+    "app.block.duplicate": "Duplicate statement",
+    "app.block.editor_hint": "Edit statement · Enter applies"
   }
 }

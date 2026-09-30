@@ -21,6 +21,8 @@ pub const ALIGN_MARGIN : Int = 24
 
 pub const AUDIT_LIMIT : Int = 200
 
+pub const BLOCK_EDITOR_ROW_HEIGHT : Double = 46.0
+
 pub const BLOCK_ROW_HEIGHT : Double = 40.0
 
 pub const BUTTON_LABEL_PADDING : Double = 32.0
@@ -137,15 +139,17 @@ pub fn block_text_color() -> @core.Color
 
 pub fn blocks_body_height(Model, Double) -> Double
 
-pub fn blocks_canvas(Array[@blocks.BlockItem], Array[String], Int, String, BlocksDragState?, Double, Double, String) -> @core.View[Msg]
+pub fn blocks_canvas(Array[@blocks.BlockItem], Array[String], Int, String, (Double, Double)?, Double, Double, String, y_offset? : Double) -> @core.View[Msg]
 
 pub fn blocks_canvas_background() -> @core.Color
 
-pub fn blocks_draw_plan(Array[@blocks.BlockItem], Array[String], Array[@core.Rect], Int, String, BlocksDragState?, Double, Double) -> Array[BlocksDrawOp]
+pub fn blocks_draw_plan(Array[@blocks.BlockItem], Array[String], Array[@core.Rect], Int, String, (Double, Double)?, Double, Double) -> Array[BlocksDrawOp]
 
 pub fn blocks_drop_slot(Array[@blocks.BlockItem], Array[Int], Double, Array[@core.Rect]) -> Int
 
 pub fn blocks_hit_index(Array[@blocks.BlockItem], Double, Double) -> Int
+
+pub fn blocks_insert_mark(Array[@blocks.BlockItem], Array[@core.Rect], BlocksDragState?) -> (Double, Double)?
 
 pub fn blocks_item_rects(Array[@blocks.BlockItem], avail_width? : Double) -> Array[@core.Rect]
 
@@ -814,6 +818,7 @@ pub(all) enum Msg {
   SelectBlock(Int)
   EditBlock(String)
   CommitBlock
+  DuplicateBlock
   DeleteBlock
   GenerateProposal
   AcceptProposal

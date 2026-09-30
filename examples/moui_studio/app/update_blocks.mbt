@@ -146,6 +146,50 @@ fn delete_block(model : Model) -> Model {
 }
 
 ///|
+/// 积木复制回写（Scratch/Blockly 的 Duplicate）：克隆选中语句插入其
+/// 同层下一位，选中新副本。编辑卡上的复制图标与拖拽并列的第三条编辑路径。
+fn duplicate_block(model : Model) -> Model {
+  match current_handler(model) {
+    None => model
+    Some(handler) => {
+      let blocks = block_chain_of(model)
+      match block_at(blocks, model.selected_block) {
+        None => model
+        Some(item) =>
+          if item.path.length() == 0 {
+            model
+          } else {
+            // 克隆后再手术（撤销快照安全，同 commit/delete）
+            let working = @blocks.clone_stmts(handler.body)
+            let stmt = match @blocks.stmt_at(working, item.path) {
+              Some(stmt) => stmt
+              None => return model
+            }
+            let parent = blocks_parent_of(item.path)
+            let index = item.path[item.path.length() - 1]
+            match @blocks.stmt_list_at(working, parent) {
+              // 插入到原语句之后：IR 列表与积木链同序，链下标即列表下标
+              Some(list) => list.insert(index + 1, @blocks.clone_stmt(stmt))
+              None => return model
+            }
+            let next = replace_handler_body(model, handler, working)
+            let synced = sync_code_draft(next)
+            let new_path = {
+              let path : Array[Int] = []
+              for part in parent {
+                path.push(part)
+              }
+              path.push(index + 1)
+              path
+            }
+            select_block_by_path(synced, new_path)
+          }
+      }
+    }
+  }
+}
+
+///|
 /// 用新 body 替换选中 handler（其余 handler 原样）。
 fn replace_handler_body(
   model : Model,
@@ -187,18 +231,20 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         }
       }
     BlocksCanvasPress(x, y) => {
-      // 按上积木：选中并建立同层拖拽态；落空清除
+      // 按上积木：建立同层拖拽态；落空清除。**按下不换选中**——选中决定
+      // 编辑卡的拆分位置，手势中途换选中会让画布在手势进行时重构（上下段
+      // 重新分配），指针捕获随元素重建而丢失，拖拽断在第一帧。选中交给
+      // 松手后的 tap / 选中跟随。
       let blocks = block_chain_of(model)
       let hit = blocks_hit_index(blocks, x, y)
       if hit >= 0 && blocks[hit].path.length() > 0 {
         let item = blocks[hit]
         let list_path = blocks_parent_of(item.path)
         let sibling_index = item.path[item.path.length() - 1]
-        let next = select_block(model, hit)
         Some(
           (
             {
-              ..next,
+              ..model,
               block_drag: Some(BlocksDragState::{
                 list_path,
                 from: sibling_index,
@@ -277,13 +323,15 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             }
             i = i + 1
           }
-          let selected = if hit >= 0 { hit } else { next.selected_block }
-          Some(
-            (
-              { ..next, block_drag: None, selected_block: selected, },
-              @moui.Effect::none(),
-            ),
-          )
+          // 选中走 select_block：草稿与新选中同步（按下已不再即时选中，
+          // 拖拽别的块时草稿还停留在旧选中上，直接改下标会错配）
+          let cleared = { ..next, block_drag: None, }
+          let result = if hit >= 0 {
+            select_block(cleared, hit)
+          } else {
+            cleared
+          }
+          Some((result, @moui.Effect::none()))
         }
       }
     CommitBlock =>
@@ -291,6 +339,14 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         (
           // 仅当语句真的写回 IR 时产生还原点（解析失败为 no-op）
           with_undo_point(model, "", m => commit_block(m)),
+          @moui.Effect::none(),
+        ),
+      )
+    DuplicateBlock =>
+      Some(
+        (
+          // 与 commit/delete 同一口径：写回 IR 才产生还原点（no-op 不入栈）
+          with_undo_point(model, "", m => duplicate_block(m)),
           @moui.Effect::none(),
         ),
       )

@@ -1399,6 +1399,8 @@ test "blocks canvas drag reorders siblings and is undoable" {
     BlocksCanvasPress(rects[0].origin.x + 10.0, rects[0].origin.y + 10.0),
   )
   assert_true(pressed.block_drag is Some(_))
+  // 按下不再即时选中（选中决定编辑卡拆分位置，手势中途换选中会重构画布）
+  assert_eq(pressed.selected_block, -1)
   let dragged = apply(
     pressed,
     BlocksCanvasDragTo(rects[1].origin.x + 10.0, rects[1].origin.y + 38.0),
@@ -1409,8 +1411,9 @@ test "blocks canvas drag reorders siblings and is undoable" {
   let after = @app.block_chain_of(released)
   assert_eq(after[0].text, second_text)
   assert_eq(after[1].text, first_text)
-  // 选中跟随被移动的语句（新链下标 1）
+  // 选中跟随被移动的语句（新链下标 1），草稿与新选中同步（非旧选中遗留）
   assert_eq(released.selected_block, 1)
+  assert_true(released.block_draft != "")
   // 撤销恢复原序
   let undone = apply(released, Undo)
   assert_eq(@app.block_chain_of(undone)[0].text, first_text)

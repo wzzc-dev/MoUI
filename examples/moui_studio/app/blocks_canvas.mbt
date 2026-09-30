@@ -161,23 +161,18 @@ pub fn blocks_drop_slot(
 }
 
 ///|
-/// 拼图块绘制计划：逐块 = 体 + 文本 +（同层连续时）顶部榫头与底部卯口 +
-/// 选中/聚光灯描边 + 拖拽落槽指示线。display_texts 与 blocks 一一对应
-/// （控制流块的本地化标签由 blocks_panel 预渲染，draw 闭包拿不到翻译器）。
-pub fn blocks_draw_plan(
+/// 落槽指示线（**链条坐标**）：拖拽中按同层兄弟中心线算出插入位置，
+/// 返回 (y, 宽)。从绘制计划里提出来——画布在选中块处拆成两段后，「插在
+/// 哪里」是链条坐标的事实，由调用方一次性算好、再按段换算成本地坐标
+/// 下发；绘制层只画，不再自己解释拖拽态（两段各自用子集矩形推槽位，
+/// 跨段的兄弟列表会算错位置）。
+pub fn blocks_insert_mark(
   blocks : Array[@blocks.BlockItem],
-  display_texts : Array[String],
   rects : Array[@geometry.Rect],
-  selected : Int,
-  spotlight : String,
   drag : BlocksDragState?,
-  dx : Double,
-  dy : Double,
-) -> Array[BlocksDrawOp] {
-  let ops : Array[BlocksDrawOp] = []
-  // 拖拽落槽指示线：同层兄弟的第 to 槽位
+) -> (Double, Double)? {
   match drag {
-    None => ()
+    None => None
     Some(d) => {
       let mut mark_y : Double? = None
       let mut mark_w : Double = 300.0
@@ -206,10 +201,32 @@ pub fn blocks_draw_plan(
         }
       }
       match mark_y {
-        Some(y) => ops.push(InsertMark(dx + 10.0, dy + y, mark_w))
-        None => ()
+        Some(y) => Some((y, mark_w))
+        None => None
       }
     }
+  }
+}
+
+///|
+/// 拼图块绘制计划：逐块 = 体 + 文本 +（同层连续时）顶部榫头与底部卯口 +
+/// 选中/聚光灯描边 + 落槽指示线。display_texts 与 blocks 一一对应
+/// （控制流块的本地化标签由调用方预渲染，draw 闭包拿不到翻译器）。
+/// `insert_mark` 是**本画布本地坐标**的指示线（调用方已按段换算）。
+pub fn blocks_draw_plan(
+  blocks : Array[@blocks.BlockItem],
+  display_texts : Array[String],
+  rects : Array[@geometry.Rect],
+  selected : Int,
+  spotlight : String,
+  insert_mark : (Double, Double)?,
+  dx : Double,
+  dy : Double,
+) -> Array[BlocksDrawOp] {
+  let ops : Array[BlocksDrawOp] = []
+  match insert_mark {
+    Some((y, w)) => ops.push(InsertMark(dx + 10.0, dy + y, w))
+    None => ()
   }
   let mut i = 0
   for item in blocks {
@@ -262,31 +279,37 @@ pub(all) enum BlocksDrawOp {
 }
 
 ///|
-/// 画布视图：绘制 + 点选/拖拽事件转 typed Msg（画布局部坐标）。
+/// 画布视图：绘制 + 点选/拖拽事件转 typed Msg。
+/// `y_offset`：本段画布在**链条坐标**里的纵向原点。编辑卡把链条拆成
+/// 上下两段后，下段画布的本地 y 要加上偏移才能与 update 里的链条矩形
+/// （命中/落槽计算空间）对齐；整链画布传 0 即可。
 pub fn blocks_canvas(
   blocks : Array[@blocks.BlockItem],
   display_texts : Array[String],
   selected : Int,
   spotlight : String,
-  drag : BlocksDragState?,
+  insert_mark : (Double, Double)?,
   width : Double,
   height : Double,
   semantics_label : String,
+  y_offset? : Double = 0.0,
 ) -> @moui.View[Msg] {
   @views.container(
     canvas(
       measure=fn(_constraints) {
         // 宽度必须由调用方给定：scroll_view 给子节点的是无界约束
         // （纵向滚动、横向不滚），画布自己量不出视口宽——写死 470 会
-        // 在窄窗格里溢出到隔壁面板。
-        @geometry.Size::new(width=width.max(160.0), height=height.max(160.0))
+        // 在窄窗格里溢出到隔壁面板。高度不设下限（旧的 160pt 下限是给
+        // 整链画布的；编辑卡拆段后上段只有 ~50pt，下限会在块与编辑卡
+        // 之间凭空垫出一段空白），调用方传的高度就是段的真实高度。
+        @geometry.Size::new(width=width.max(160.0), height=height.max(1.0))
       },
       draw=fn(ctx, frame) {
         let dx = frame.origin.x
         let dy = frame.origin.y
         let rects = blocks_item_rects(blocks, avail_width=width)
         let ops = blocks_draw_plan(
-          blocks, display_texts, rects, selected, spotlight, drag, dx, dy,
+          blocks, display_texts, rects, selected, spotlight, insert_mark, dx, dy,
         )
         for op in ops {
           match op {
@@ -359,12 +382,12 @@ pub fn blocks_canvas(
     .on_tap_with_frame(fn(position, frame) {
       Msg::BlocksCanvasTap(
         position.x - frame.origin.x,
-        position.y - frame.origin.y,
+        position.y - frame.origin.y + y_offset,
       )
     })
     .on_drag_with_frame(fn(event, frame) {
       let lx = event.position.x - frame.origin.x
-      let ly = event.position.y - frame.origin.y
+      let ly = event.position.y - frame.origin.y + y_offset
       if event.phase == @views.DragGesturePhase::Started {
         Msg::BlocksCanvasPress(lx, ly)
       } else if event.phase == @views.DragGesturePhase::Changed {

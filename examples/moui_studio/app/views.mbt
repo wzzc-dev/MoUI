@@ -134,7 +134,7 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         display_texts,
         model.selected_block,
         spotlight,
-        model.block_drag,
+        blocks_insert_mark(blocks, rects, model.block_drag),
         420.0,
         canvas_height,
         text(t, "app.blocks.canvas"),

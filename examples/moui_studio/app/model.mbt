@@ -507,6 +507,7 @@ pub(all) enum Msg {
   SelectBlock(Int)
   EditBlock(String)
   CommitBlock
+  DuplicateBlock
   DeleteBlock
   GenerateProposal
   AcceptProposal

@@ -371,74 +371,62 @@ test "text never escapes its own clip region" {
 }
 
 ///|
-/// 积木编辑条的三个格子（草稿输入框 + 应用 + 删除）必须一起塞进窗格。
+/// 积木编辑卡（选中块下方就地展开的那张卡）必须完整塞进窗格。
 ///
-/// 回归意义：按钮宽度原先写死 64，但 `@views.button` 的 `width` 是**最小
-/// 宽**——「应用修改 / 删除语句」各需 ~84pt（标签 + 32 内垫），于是真实
-/// 总宽 = `16 + (w−190) + 84 + 84 + 12 = w + 6`，超出 6pt，最右那颗按钮被
-/// 面板裁掉（实际截图里「删除语句」只露出左边一半）。
+/// 回归意义：旧版编辑条把「应用修改 / 删除语句」两颗文字按钮和输入框挤在
+/// 同一行，按钮宽度写死 64 时（`@views.button` 的 width 是**最小宽**，会随
+/// 标签自己长大）真实总宽超出窗格 6pt，最右按钮被面板裁掉半个词（实际
+/// 截图里「删除语句」只露出左边一半）。编辑卡改成图标动作后同一口径仍然
+/// 成立：卡内全部可见内容都不得越过窗格右缘。
 ///
-/// 判据用**按钮盒**而不是文字画框：`@views.text` 只会涨不会缩，文字自己
-/// 永远塞得下——真正溢出的是按钮盒（实测删除按钮盒 920.72..1013.52，窗格
-/// 右缘 1006，超出 7.5pt）。第一版拿文字画框断言，故意破坏时**不会失败**。
-test "block editor bar fits inside the blocks pane" {
+/// 判据用**文字画框**在窗格 x 范围内的位置：种类徽章与输入框占位提示是
+/// 编辑卡仅有的两处可见文字，越界即说明卡片内容溢出。
+test "block editor card fits inside the blocks pane" {
   let base = initial_model()
-  // 选中一个块才会出现编辑条（未选中时是「拖动积木可同层重排」提示行）
+  // 选中一个块才会出现编辑卡（未选中时画布是整链，没有卡片）。
+  // 再把草稿清空：占位提示只在空草稿下渲染（有草稿时显示的是语句源码）。
   let selected = apply_shell(base, SelectBlock(0))
-  let chrome = shell_chrome_widths(selected, 1280.0)
+  let cleared = apply_shell(selected, EditBlock(""))
+  let blocks = block_chain_of(cleared)
+  assert_true(cleared.selected_block >= 0 && cleared.selected_block < blocks.length())
+  let chip_label = text(
+    translator(cleared),
+    @blocks.block_label_key(blocks[cleared.selected_block].kind),
+  )
+  let placeholder = text(translator(cleared), "app.block.editor_hint")
+  let chrome = shell_chrome_widths(cleared, 1280.0)
   let pane_left = ICONBAR_WIDTH + 1.0 + LEFTBAR_WIDTH + 1.0
   let pane_right = pane_left + chrome.center
-  let commands = shell_draw(selected, 1280.0, 800.0)
-  let t = translator(selected)
-  let mut found = 0
-  for key in ["app.block.apply", "app.block.delete"] {
-    let label = text(t, key)
-    match shell_find_text(commands, label) {
+  let commands = shell_draw(cleared, 1280.0, 800.0)
+  for needle in [chip_label, placeholder] {
+    match shell_find_text(commands, needle) {
       Some(run) => {
-        found = found + 1
-        // 找包住这段文字、且比它宽的按钮盒（文字两侧各有内垫）
-        let mut box_right = 0.0
-        let mut box_left = 0.0
-        for rect in shell_rects(commands) {
-          let contains = rect.origin.x <= run.frame.origin.x + 0.5 &&
-            rect.origin.y <= run.frame.origin.y + 0.5 &&
-            rect.origin.x + rect.size.width >=
-            run.frame.origin.x + run.frame.size.width - 0.5 &&
-            rect.origin.y + rect.size.height >=
-            run.frame.origin.y + run.frame.size.height - 0.5 &&
-            rect.origin.x >= pane_left - 1.0
-          if contains && rect.size.width > run.frame.size.width {
-            box_right = box_right.max(rect.origin.x + rect.size.width)
-            box_left = rect.origin.x
-          }
-        }
-        if box_right == 0.0 {
-          fail("could not locate the button box for '" + label + "'")
-        }
-        if box_right > pane_right {
+        let left = run.frame.origin.x
+        let right = run.frame.origin.x + run.frame.size.width
+        if left < pane_left - 0.5 || right > pane_right + 0.5 {
           fail(
-            "block editor button box for '" +
-            label +
-            "' overflows the pane: box " +
-            box_left.to_string() +
+            "block editor card text '" +
+            needle +
+            "' escapes the blocks pane: " +
+            left.to_string() +
             ".." +
-            box_right.to_string() +
-            " pane_right=" +
+            right.to_string() +
+            " pane=" +
+            pane_left.to_string() +
+            ".." +
             pane_right.to_string(),
           )
         }
       }
-      None =>
-        fail(
-          "block editor bar is missing the '" +
-          label +
-          "' button (is a block selected?)",
-        )
+      None => fail("block editor card is missing visible text '" + needle + "'")
     }
   }
-  if found != 2 {
-    fail("expected both block editor buttons, found " + found.to_string())
-  }
+  // 编辑卡嵌在链条里之后，画布视口高度不再随选中变化（旧版选中块会
+  // 让窗格高度 -34，画布抖动一次）
+  assert_eq(
+    blocks_body_height(cleared, 800.0),
+    blocks_body_height(base, 800.0),
+  )
 }
 
 ///|

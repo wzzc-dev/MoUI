@@ -455,6 +455,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Real submission still needs the run gate"),
       ),
       ("app.audit.run_start", GeneratedI18nMessage::Text("Interpreter started")),
+      ("app.block.duplicate", GeneratedI18nMessage::Text("Duplicate statement")),
       ("app.bottom.collapse", GeneratedI18nMessage::Text("Collapse bottom bar")),
       (
         "app.code.cheatsheet",
@@ -599,6 +600,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("This step produces an external effect"),
       ),
       (
+        "app.block.editor_hint",
+        GeneratedI18nMessage::Text("Edit statement · Enter applies"),
+      ),
+      (
         "app.command.ai.anchor",
         GeneratedI18nMessage::Text("Cycle AI layer anchor"),
       ),
@@ -732,7 +737,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.blocks.reorder_hint",
         GeneratedI18nMessage::Text(
-          "Drag blocks to reorder within a level; tap one to edit it below",
+          "Drag blocks to reorder within a level; tap one to edit it in place",
         ),
       ),
       (
@@ -1409,6 +1414,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.audit.run_start", GeneratedI18nMessage::Text("解释轨启动")),
+      ("app.block.duplicate", GeneratedI18nMessage::Text("复制语句")),
       ("app.bottom.collapse", GeneratedI18nMessage::Text("收起底栏")),
       (
         "app.code.cheatsheet",
@@ -1536,6 +1542,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.audit.gate.detail",
         GeneratedI18nMessage::Text("该步骤会对外产生效果"),
+      ),
+      (
+        "app.block.editor_hint",
+        GeneratedI18nMessage::Text("编辑语句 · Enter 应用"),
       ),
       (
         "app.command.ai.anchor",
@@ -1668,7 +1678,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.blocks.reorder_hint",
         GeneratedI18nMessage::Text(
-          "拖动积木可同层重排；点选积木在下方编辑语句",
+          "拖动积木可同层重排；点选积木就地编辑语句",
         ),
       ),
       (
