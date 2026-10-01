@@ -456,6 +456,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.audit.run_start", GeneratedI18nMessage::Text("Interpreter started")),
       ("app.block.duplicate", GeneratedI18nMessage::Text("Duplicate statement")),
+      (
+        "app.block.edit_hint",
+        GeneratedI18nMessage::Text(
+          "Select a block to edit its statement here (Enter to apply).",
+        ),
+      ),
       ("app.bottom.collapse", GeneratedI18nMessage::Text("Collapse bottom bar")),
       (
         "app.code.cheatsheet",
@@ -552,6 +558,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.audit.run_failed",
         GeneratedI18nMessage::Text("Interpreter run failed"),
       ),
+      ("app.block.edit_title", GeneratedI18nMessage::Text("Edit block")),
       (
         "app.blocks.foot_hint",
         GeneratedI18nMessage::Text(
@@ -634,7 +641,15 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.ws.visual",
         GeneratedI18nMessage::Text("Switch to visual workspace"),
       ),
+      ("app.compile.artifacts", GeneratedI18nMessage::Text("Artifacts")),
       ("app.compile.exit_code", GeneratedI18nMessage::Text("Exit code")),
+      (
+        "app.compile.open_hint",
+        GeneratedI18nMessage::Text(
+          "Artifacts are real files on disk; run them in a terminal or copy the path.",
+        ),
+      ),
+      ("app.compile.work_root", GeneratedI18nMessage::Text("Work root")),
       ("app.ctx.actions.ready", GeneratedI18nMessage::Text("ready")),
       ("app.ctx.state.running", GeneratedI18nMessage::Text("Running")),
       (
@@ -733,6 +748,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.too_many_variables",
         GeneratedI18nMessage::Text("Variable limit exceeded"),
+      ),
+      (
+        "app.block.selected_none",
+        GeneratedI18nMessage::Text("No block selected"),
       ),
       (
         "app.blocks.reorder_hint",
@@ -851,6 +870,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.track.compile",
         GeneratedI18nMessage::Text("Switch to compile track"),
       ),
+      ("app.compile.artifact.copy", GeneratedI18nMessage::Text("Copy path")),
       (
         "app.log.proposal_accepted",
         GeneratedI18nMessage::Text("Proposal accepted · {count} changes"),
@@ -889,6 +909,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.bottom.console",
         GeneratedI18nMessage::Text("Bottom bar: console"),
+      ),
+      (
+        "app.compile.artifacts.none",
+        GeneratedI18nMessage::Text(
+          "This compile produced no files (the toolchain stopped at a check step).",
+        ),
       ),
       (
         "app.recent.action.template",
@@ -1415,6 +1441,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.audit.run_start", GeneratedI18nMessage::Text("解释轨启动")),
       ("app.block.duplicate", GeneratedI18nMessage::Text("复制语句")),
+      (
+        "app.block.edit_hint",
+        GeneratedI18nMessage::Text(
+          "选中一块积木后在这里改它的语句（Enter 提交）。",
+        ),
+      ),
       ("app.bottom.collapse", GeneratedI18nMessage::Text("收起底栏")),
       (
         "app.code.cheatsheet",
@@ -1499,6 +1531,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.audit.run_failed",
         GeneratedI18nMessage::Text("解释轨运行失败"),
       ),
+      ("app.block.edit_title", GeneratedI18nMessage::Text("编辑积木")),
       (
         "app.blocks.foot_hint",
         GeneratedI18nMessage::Text(
@@ -1578,7 +1611,15 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.ws.visual",
         GeneratedI18nMessage::Text("切到可视化工作区"),
       ),
+      ("app.compile.artifacts", GeneratedI18nMessage::Text("产物")),
       ("app.compile.exit_code", GeneratedI18nMessage::Text("退出码")),
+      (
+        "app.compile.open_hint",
+        GeneratedI18nMessage::Text(
+          "产物真实落在磁盘上，可直接在终端运行或复制。",
+        ),
+      ),
+      ("app.compile.work_root", GeneratedI18nMessage::Text("工作目录")),
       ("app.ctx.actions.ready", GeneratedI18nMessage::Text("已建")),
       ("app.ctx.state.running", GeneratedI18nMessage::Text("运行中")),
       (
@@ -1675,6 +1716,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.too_many_variables",
         GeneratedI18nMessage::Text("变量超出预算"),
       ),
+      ("app.block.selected_none", GeneratedI18nMessage::Text("未选中积木")),
       (
         "app.blocks.reorder_hint",
         GeneratedI18nMessage::Text(
@@ -1781,6 +1823,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.track.compile",
         GeneratedI18nMessage::Text("切到编译轨"),
       ),
+      ("app.compile.artifact.copy", GeneratedI18nMessage::Text("复制路径")),
       (
         "app.log.proposal_accepted",
         GeneratedI18nMessage::Text("提案已采纳 · {count} 处变更"),
@@ -1823,6 +1866,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.bottom.console",
         GeneratedI18nMessage::Text("底栏：Console"),
+      ),
+      (
+        "app.compile.artifacts.none",
+        GeneratedI18nMessage::Text(
+          "本次编译没有产出文件（失败停在工具链检查阶段）。",
+        ),
       ),
       ("app.recent.action.template", GeneratedI18nMessage::Text("换模板")),
       ("app.statusbar.build_failed", GeneratedI18nMessage::Text("构建失败")),

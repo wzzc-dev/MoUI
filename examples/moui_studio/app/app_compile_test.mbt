@@ -78,6 +78,8 @@ test "compile failure surfaces diagnostics and does not fall back" {
         text: "Type mismatch",
       },
     ],
+    artifacts: [],
+    work_root: "/tmp/x",
   }
   let failed = compile_apply(model, CompileRunFinished(report))
   assert_false(failed.compile_busy)

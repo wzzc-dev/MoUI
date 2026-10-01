@@ -135,6 +135,9 @@ pub(all) struct Runtime {
   mut base_rows : Map[String, Array[String]]
   mut base_selections : Map[String, Int]
   mut base_declared : Array[String]
+  // 闸门重放要还原随机序列：不还原的话「确认一次」会把整段子程序里的
+  // `随机数` 再抽一遍，同一个副作用算出两个结果。
+  mut base_rng : Int
 }
 
 ///|
@@ -176,6 +179,7 @@ pub fn new_runtime(
     base_rows: Map([], capacity=4),
     base_selections: Map([], capacity=4),
     base_declared: [],
+    base_rng: seed_rng(RANDOM_SEED),
   }
 }
 
@@ -189,8 +193,32 @@ fn seed_rng(seed : Int) -> Int {
 }
 
 ///|
+/// 推进一格 xorshift 种子（与 `random` 内建同一递推）。
+///
+/// 宿主在**每次事件前**调用它并把结果写回 `Runtime.rng` / 解释轨的
+/// `start_run(seed=…)`：随机序列因此跨事件连续，同一个按钮点十次给出十个
+/// 不同结果。事件的起点会被 `snapshot` 记下，闸门重放仍逐位可复现。
+pub fn next_seed(rng : Int) -> Int {
+  let mut next = if rng <= 0 { seed_rng(RANDOM_SEED) } else { rng }
+  next = next ^ ((next << 13) & 2147483647)
+  next = next ^ (next >> 17)
+  next = next ^ ((next << 5) & 2147483647)
+  if next <= 0 {
+    1
+  } else {
+    next
+  }
+}
+
+///|
 /// 开始一次子程序运行：快照当前状态、清运行留痕，推进到终止态。
 /// 快照让每次闸门应答后可以完整重放，避免 append_row/随机数等副作用翻倍。
+///
+/// **随机种子由调用方提供**（`rt.rng` 的当前值），本函数不自行重置：
+/// 宿主在每次事件前把种子推进一格，两轨（解释轨 `start_run` 的 seed 参数、
+/// 编译轨 `rt.rng`）因此从同一个种子起算，差分门逐位可比。反过来若在这里
+/// 重置成 RANDOM_SEED，同一个按钮点十次会得到十个相同的「随机」结果——
+/// 用户读到的现象就是「运行之后点按钮没反应」。
 pub fn run_handler(rt : Runtime, handler : Handler) -> RunStatus {
   rt.active_handler = Some(handler)
   rt.gate_answers = []
@@ -234,6 +262,7 @@ fn snapshot(rt : Runtime) -> Unit {
     declared.push(name)
   }
   rt.base_declared = declared
+  rt.base_rng = rt.rng
 }
 
 ///|
@@ -247,6 +276,7 @@ fn restore(rt : Runtime) -> Unit {
     declared.push(name)
   }
   rt.declared = declared
+  rt.rng = rt.base_rng
 }
 
 ///|
@@ -308,7 +338,6 @@ fn attempt(rt : Runtime) -> Unit {
       rt.gate = None
       rt.error = None
       rt.steps = 0
-      rt.rng = seed_rng(RANDOM_SEED)
       rt.gate_cursor = 0
       try {
         drive(rt, handler)

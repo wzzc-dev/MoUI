@@ -21,6 +21,20 @@ pub(all) struct CompileDiagnostic {
 }
 
 ///|
+/// 一次真编译的**产物**：构建真正落在磁盘上的文件。
+///
+/// 为什么必须回传：用户点「编译」要的是**二进制产物**。工具链输出里只有
+/// 进度与告警，产物路径一个都不出现，于是「编译到底编出了什么、在哪」在
+/// 界面上完全不可见——读起来就像「编译没编译出二进制产物」。
+/// 这里把产物作为报告的一等字段回传，视图直接列出可复制/可打开的路径。
+pub(all) struct CompileArtifact {
+  kind : String // "native-exe" | "wasm" | "source"
+  label : String // 人类可读名（"native 可执行" / "Web wasm 模块" …）
+  path : String // 绝对路径
+  bytes : Int // 文件大小（0 = 未知/不存在）
+}
+
+///|
 /// 一次真编译的结果。
 pub(all) struct CompileReport {
   ok : Bool
@@ -29,6 +43,10 @@ pub(all) struct CompileReport {
   source_path : String // 被检查的生成源码路径（可为空）
   output : String // 原始工具链输出（视图可展开）
   diagnostics : Array[CompileDiagnostic]
+  /// 构建产物（本地产物路径 + 字节数）。空数组 = 尚未产出/编译失败。
+  artifacts : Array[CompileArtifact]
+  /// 本次编译的工作根目录（bundle 落地处）。用户要接着跑产物就得知道它。
+  work_root : String
 }
 
 ///|
@@ -40,6 +58,8 @@ pub fn CompileReport::empty(target : String) -> CompileReport {
     source_path: "",
     output: "",
     diagnostics: [],
+    artifacts: [],
+    work_root: "",
   }
 }
 

@@ -57,6 +57,13 @@ pub fn live_pane(
     ],
   )
   // 舞台：运行中显示运行态（解释轨），否则显示设计态。
+  //
+  // 舞台盒 = 窗格内容区 − 四周呼吸缝（`live_stage_box` 是唯一计算源，
+  // `run_badge` 的百分比读数读同一个盒子）。两个分支各自把 box 传给
+  // run_stage / 外层 padding，所以「应用窗口」永远浮在一块底板上，
+  // 而不是顶满窗格四边。
+  let stage_area_height = (height - LIVE_PANE_HEAD_FOOT).max(120.0)
+  let (box_w, box_h) = live_stage_box(width - 2.0, stage_area_height)
   let stage = match current_track(model) {
     Interpret =>
       match model.run {
@@ -67,8 +74,8 @@ pub fn live_pane(
             run.checks,
             run.state.rows,
             run.state.selections,
-            width - 2.0,
-            height - 62.0,
+            box_w,
+            box_h,
           )
         None => design_stage_view(model, t)
       }
@@ -81,8 +88,8 @@ pub fn live_pane(
             run.checks,
             run.runtime.rows,
             run.runtime.selections,
-            width - 2.0,
-            height - 62.0,
+            box_w,
+            box_h,
           )
         None => design_stage_view(model, t)
       }
@@ -94,9 +101,15 @@ pub fn live_pane(
       [
         head,
         @views.container(
-          @views.center(stage, width=width - 2.0, height=height - 62.0),
+          // `center` 在更大的帧里拿不到 slack 是空操作，所以呼吸缝用
+          // **内垫**表达：帧仍是整格，内容被推进到留白之内。
+          @views.padding_xy(
+            @views.center(stage, width=box_w, height=box_h),
+            horizontal=LIVE_STAGE_INSET_H,
+            vertical=LIVE_STAGE_INSET_V,
+          ),
           background=ide_editor_background(),
-          height=height - 62.0,
+          height=stage_area_height,
           width~,
           padding=0.0,
         ),
@@ -108,6 +121,40 @@ pub fn live_pane(
     width~,
     height~,
     padding=0.0,
+  )
+}
+
+///|
+/// Live App 窗格的「头 + 脚」合计高度（舞台盒从这里扣）。
+/// 头 `PANEL_HEAD_HEIGHT`(30) + 脚 24 + 发丝线 2 + 余量 6 = 62。
+/// 单独成常量：舞台盒的计算与 `fit_scale` 读数必须同源。
+pub const LIVE_PANE_HEAD_FOOT : Double = PANEL_HEAD_HEIGHT + 24.0 + 8.0
+
+///|
+/// 舞台四周的呼吸缝（设计稿口径的「画布留白」）。
+///
+/// 为什么必须有：舞台原本按**整格**可用空间算 fit——640×480 的应用窗口
+/// 顶到窗格左右两边，视觉上像「被撑满了」，而不是一块浮在画布上的应用。
+/// 成熟设计工具（Figma/IDEA 的预览、Xcode 的 Preview）都在舞台四周留一圈
+/// 底板色，既区分「画布」与「应用」，也让缩放比例不至于贴着边缘。
+///
+/// 16/14 是折中：再大就明显吃掉可用高度（舞台本来就受高度约束）。
+pub const LIVE_STAGE_INSET_H : Double = 16.0
+
+///|
+/// 舞台上下呼吸缝（见 `LIVE_STAGE_INSET_H`）。
+pub const LIVE_STAGE_INSET_V : Double = 14.0
+
+///|
+/// 舞台可用盒（**唯一**计算源）：窗格内容区减去四周呼吸缝。
+///
+/// `live_pane` 的舞台与 `run_badge` 的适应比例读数必须用同一个盒子，
+/// 否则徽标上的百分比与实际渲染的缩放对不上（本仓反复踩的「两处各算
+/// 一份」）。
+pub fn live_stage_box(width : Double, height : Double) -> (Double, Double) {
+  (
+    (width - LIVE_STAGE_INSET_H * 2.0).max(80.0),
+    (height - LIVE_STAGE_INSET_V * 2.0).max(80.0),
   )
 }
 
@@ -356,10 +403,16 @@ fn run_badge(
   width : Double,
   height : Double,
 ) -> @moui.View[Msg] {
+  // 读数必须来自**舞台盒**（与 live_pane 同一个 live_stage_box），
+  // 否则徽标上的百分比与实际渲染的缩放对不上。
   let live_width = (width * model.split_ratio).max(200.0)
-  let percent = (fit_scale(
+  let (box_w, box_h) = live_stage_box(
     live_width - 2.0,
-    height - 62.0,
+    (height - LIVE_PANE_HEAD_FOOT).max(120.0),
+  )
+  let percent = (fit_scale(
+    box_w,
+    box_h,
     @ir.DESIGN_WIDTH.to_double(),
     @ir.DESIGN_HEIGHT.to_double(),
   ) *

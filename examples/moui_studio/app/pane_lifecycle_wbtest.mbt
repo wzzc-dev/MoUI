@@ -373,18 +373,20 @@ test "text never escapes its own clip region" {
 ///|
 /// 积木编辑卡（选中块下方就地展开的那张卡）必须完整塞进窗格。
 ///
-/// 回归意义：旧版编辑条把「应用修改 / 删除语句」两颗文字按钮和输入框挤在
-/// 同一行，按钮宽度写死 64 时（`@views.button` 的 width 是**最小宽**，会随
-/// 标签自己长大）真实总宽超出窗格 6pt，最右按钮被面板裁掉半个词（实际
-/// 截图里「删除语句」只露出左边一半）。编辑卡改成图标动作后同一口径仍然
-/// 成立：卡内全部可见内容都不得越过窗格右缘。
+/// 回归意义：编辑面曾在积木链条里就地展开（Scratch 口径），把画布切成
+/// 三段——块一多，上下两段各只剩几行，用户读到的是「点积木后下面内容
+/// 显示不全」。现在编辑面在**右栏**（成熟 IDE 的「选中在画布、编辑在
+/// 检查器」分工），本用例锁定三件事：
 ///
-/// 判据用**文字画框**在窗格 x 范围内的位置：种类徽章与输入框占位提示是
-/// 编辑卡仅有的两处可见文字，越界即说明卡片内容溢出。
-test "block editor card fits inside the blocks pane" {
+/// 1. 编辑卡的文字落在**右栏**里，不再出现在积木窗格；
+/// 2. 卡内可见文字不越过右栏左右缘（旧版编辑条把两颗文字按钮挤在一行，
+///    真实总宽超出窗格 6pt，最右按钮被裁掉半个词）；
+/// 3. 画布高度**不随选中变化**——这是「链条不再被切开」的可判定证据
+///    （旧版选中会让画布高度 -34，滚动位置跟着跳一次）。
+test "block editor lives in the right panel and fits it" {
   let base = initial_model()
-  // 选中一个块才会出现编辑卡（未选中时画布是整链，没有卡片）。
-  // 再把草稿清空：占位提示只在空草稿下渲染（有草稿时显示的是语句源码）。
+  // 选中一个块才会出现编辑卡（未选中时右栏没有这一段），再把草稿清空：
+  // 占位提示只在空草稿下渲染（有草稿时显示的是语句源码）。
   let selected = apply_shell(base, SelectBlock(0))
   let cleared = apply_shell(selected, EditBlock(""))
   let blocks = block_chain_of(cleared)
@@ -395,36 +397,58 @@ test "block editor card fits inside the blocks pane" {
     translator(cleared),
     @blocks.block_label_key(blocks[cleared.selected_block].kind),
   )
+  // 编辑卡的**唯一**文案（种类徽章的文字与分类轨重名，不能单独当判据）：
+  // 卡标题 + 输入框占位提示。两者都只在右栏编辑卡里出现。
+  let title_label = text(translator(cleared), "app.block.edit_title")
   let placeholder = text(translator(cleared), "app.block.editor_hint")
   let chrome = shell_chrome_widths(cleared, 1280.0)
-  let pane_left = ICONBAR_WIDTH + 1.0 + LEFTBAR_WIDTH + 1.0
-  let pane_right = pane_left + chrome.center
+  // 右栏左缘 = 图标栏 + 左栏 + 中心列 + 两条发丝线；右缘 = 窗口右缘。
+  let right_left = ICONBAR_WIDTH +
+    1.0 +
+    LEFTBAR_WIDTH +
+    1.0 +
+    chrome.center +
+    1.0
+  let right_right = 1280.0
   let commands = shell_draw(cleared, 1280.0, 800.0)
-  for needle in [chip_label, placeholder] {
-    match shell_find_text(commands, needle) {
-      Some(run) => {
-        let left = run.frame.origin.x
-        let right = run.frame.origin.x + run.frame.size.width
-        if left < pane_left - 0.5 || right > pane_right + 0.5 {
-          fail(
-            "block editor card text '" +
-            needle +
-            "' escapes the blocks pane: " +
-            left.to_string() +
-            ".." +
-            right.to_string() +
-            " pane=" +
-            pane_left.to_string() +
-            ".." +
-            pane_right.to_string(),
-          )
-        }
+  for needle in [title_label, placeholder] {
+    let mut hits = 0
+    for run in shell_texts(commands) {
+      if !run.text.contains(needle) {
+        continue
       }
-      None => fail("block editor card is missing visible text '" + needle + "'")
+      hits = hits + 1
+      let left = run.frame.origin.x
+      let right = run.frame.origin.x + run.frame.size.width
+      if left < right_left - 0.5 || right > right_right + 0.5 {
+        fail(
+          "block editor text '" +
+          needle +
+          "' is not inside the right panel: " +
+          left.to_string() +
+          ".." +
+          right.to_string() +
+          " panel=" +
+          right_left.to_string() +
+          ".." +
+          right_right.to_string(),
+        )
+      }
+    }
+    if hits == 0 {
+      fail("block editor is missing visible text '" + needle + "'")
     }
   }
-  // 编辑卡嵌在链条里之后，画布视口高度不再随选中变化（旧版选中块会
-  // 让窗格高度 -34，画布抖动一次）
+  // 种类徽章确实在右栏编辑卡里（同一文字在分类轨也有一份，所以判据是
+  // 「右栏内至少出现一次」而不是「唯一出现」）。
+  let mut chip_in_panel = false
+  for run in shell_texts(commands) {
+    if run.text.contains(chip_label) && run.frame.origin.x >= right_left - 0.5 {
+      chip_in_panel = true
+    }
+  }
+  assert_true(chip_in_panel)
+  // 编辑面搬出链条之后，画布高度与选中无关（链条永远是一条连续链）。
   assert_eq(blocks_body_height(cleared, 800.0), blocks_body_height(base, 800.0))
 }
 

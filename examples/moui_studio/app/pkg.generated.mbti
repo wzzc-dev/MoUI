@@ -21,8 +21,6 @@ pub const ALIGN_MARGIN : Int = 24
 
 pub const AUDIT_LIMIT : Int = 200
 
-pub const BLOCK_EDITOR_ROW_HEIGHT : Double = 46.0
-
 pub const BLOCK_ROW_HEIGHT : Double = 40.0
 
 pub const BUTTON_LABEL_PADDING : Double = 32.0
@@ -54,6 +52,12 @@ pub const LEFTBAR_MAX_WIDTH : Double = 260.0
 pub const LEFTBAR_MIN_WIDTH : Double = 200.0
 
 pub const LEFTBAR_WIDTH : Double = 232.0
+
+pub const LIVE_PANE_HEAD_FOOT : Double = 62.
+
+pub const LIVE_STAGE_INSET_H : Double = 16.0
+
+pub const LIVE_STAGE_INSET_V : Double = 14.0
 
 pub const LOG_LIMIT : Int = 400
 
@@ -359,6 +363,8 @@ pub fn kv_row(String, String, Double, Bool) -> @core.View[Msg]
 
 pub fn live_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
+pub fn live_stage_box(Double, Double) -> (Double, Double)
+
 pub fn local_explanation(Model) -> String
 
 pub fn log_line(Model, LogLevel, String) -> Model
@@ -448,6 +454,8 @@ pub fn studio_stage_outline() -> @core.Color
 pub fn studio_stage_title_bar() -> @core.Color
 
 pub fn studio_theme() -> @core.Theme
+
+pub fn studio_typography() -> @core.TypographyScale
 
 pub fn studio_window_background() -> @core.Color
 
@@ -749,6 +757,7 @@ pub(all) struct Model {
   runtime_texts : Map[String, String]
   runtime_rows : Map[String, Array[String]]
   runtime_selections : Map[String, Int]
+  runtime_seed : Int
   undo_stack : Array[UndoEntry]
   redo_stack : Array[UndoEntry]
   proposal_history : Array[ProposalRecord]

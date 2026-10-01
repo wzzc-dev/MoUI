@@ -5,6 +5,15 @@
 /// 工程终端而不是课堂幻灯片：暗底、发丝分隔线、等宽信息密度。
 /// Deep-dark 基底是刻意选的中间层（不是纯黑），既有终端观感又保留
 /// 面板/画布/卡片三级层次。
+///
+/// **字阶按 IDE 密度单独给**（`studio_typography`）：core 的默认字阶是
+/// 移动端/通用水准（body 16 / title 21），放进 24pt 的树行里就是「字比行
+/// 还高」——面板头、树行、状态栏全部顶着字，读起来又挤又土。IDEA/VSCode
+/// 的界面字阶在 11–13pt 区间，本仓的行高常量（顶栏 40 / 面板头 30 /
+/// 树行 24 / 状态栏 22）本来就是照那个密度定的，字阶必须跟上，
+/// 否则「行是 IDE 的行、字是移动端的字」，两边互相打架。
+/// **只改编辑器壳**：舞台控件走 `studio_product_theme`，导出应用的字阶
+/// 不变（产品 UI 的观感不因编辑器密度调整而漂移）。
 pub fn studio_theme() -> @core.Theme {
   @views.theme(
     scheme=Dark,
@@ -19,7 +28,32 @@ pub fn studio_theme() -> @core.Theme {
       muted=@core.Color::rgba(r=0.553, g=0.580, b=0.620),
     ),
     radius_scale=@core.RadiusScale::{ sm: 2.0, md: 4.0, lg: 6.0, pill: 999.0, },
+    typography=studio_typography(),
   )
+}
+
+///|
+/// 编辑器壳字阶（IDEA/VSCode 密度：界面 11–13pt，代码 13pt 等宽）。
+///
+/// 与壳的行高常量配套：24pt 树行装 13pt 正文（上下各 ~5.5pt 呼吸），
+/// 30pt 面板头装 13pt 标题，40pt 顶栏装 13pt 芯片字。
+///
+/// `display/headline/title` 保留较大的档位（空舞台 hero、对话框标题要用），
+/// 但都比 core 默认收一档——默认 38/27/21 在 IDE 里是「海报字号」。
+pub fn studio_typography() -> @core.TypographyScale {
+  let label = @core.FontSpec::new(size=13.0, weight=600)
+  {
+    display: @core.FontSpec::new(size=24.0, weight=600),
+    headline: @core.FontSpec::new(size=18.0, weight=600),
+    title: @core.FontSpec::new(size=15.0, weight=600),
+    subtitle: @core.FontSpec::new(size=13.0, weight=600),
+    body: @core.FontSpec::new(size=13.0, weight=400),
+    label,
+    caption: @core.FontSpec::new(size=12.0, weight=400),
+    overline: @core.FontSpec::new(size=10.0, weight=600),
+    // `control` 是 `label` 的历史别名（按钮/页签的强调字），保持同一档。
+    control: label,
+  }
 }
 
 ///|

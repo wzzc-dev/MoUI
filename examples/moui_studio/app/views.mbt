@@ -925,10 +925,15 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       }
       // 运行界面 = 舞台在上（640×480，所见即所得）+ 数据面卡片在下，
       // 装进同一个可滚动列——审计时间线较长时舞台滚出视野有停止按钮兜底。
+      //
+      // **不挂 `compiled_run_header`**：那是编译轨的动作条与报告卡
+      // （「真编译通过 / 目标 / 退出码」）。解释轨的运行视图挂上它，用户
+      // 点「运行」后第一眼看到的是「真编译通过」＋「编译轨…（无解释器）」
+      // ——那是上一轮编译的残留读数，既不属于本次运行，也解释了为什么
+      // 看起来「点了运行没反应」。解释轨的运行头由 `stage_head` 自己给。
       @views.scroll_view(
         @views.column(
           [
-            compiled_run_header(model, t),
             stage,
             @views.card(
               @views.container(@views.column(panel), padding=10.0),

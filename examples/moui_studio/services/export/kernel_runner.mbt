@@ -53,6 +53,11 @@ pub fn runner_source() -> String {
     #|///|
     #|/// 触发某控件事件的子程序：按 (控件, 事件) 分派到生成源码里的 handler，
     #|/// 由编译轨运行时推进到终止态（完成/闸门/失败）。
+    #|///
+    #|/// **事件起点推进随机种子**：`run_handler` 本身不重置 `rng`（那是宿主的
+    #|/// 责任），所以这里必须显式接续——否则同一个按钮点十次都从同一个种子起算，
+    #|/// `随机数` 给出十个相同结果，用户读到的是「点了没反应」。推进一格后
+    #|/// `run_handler` 的快照记下这个起点，闸门重放仍逐位可复现。
     #|fn run_event(
     #|  model : Model,
     #|  control : String,
@@ -61,6 +66,7 @@ pub fn runner_source() -> String {
     #|  match studio_dispatch_handler(control, event.tag()) {
     #|    None => model
     #|    Some(handler) => {
+    #|      model.machine.rng = @compiled_runtime.next_seed(model.machine.rng)
     #|      ignore(@compiled_runtime.run_handler(model.machine, handler))
     #|      {
     #|        ..model,

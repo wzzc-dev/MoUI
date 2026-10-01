@@ -113,6 +113,55 @@ pub fn compile_report_card(
           rows.push(diagnostic_row(diagnostic, t))
         }
       }
+      // 产物段：真编译「编出了什么」的事实面。没有这一段，工具链输出里
+      // 一个产物路径都不出现，用户读到的是「编译没编出二进制产物」——
+      // 而产物其实一直躺在 TMPDIR 的 bundle 里。
+      rows.push(
+        @views.row(
+          [
+            @views.text(text(t, "app.compile.artifacts"), role=Subtitle),
+            @views.badge(
+              theme=studio_theme(),
+              report.artifacts.length().to_string(),
+              tone=if report.artifacts.length() > 0 {
+                @style.BadgeTone::Success
+              } else {
+                @style.BadgeTone::Neutral
+              },
+              width=48.0,
+              height=20.0,
+            ),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+      )
+      if report.artifacts.length() == 0 {
+        rows.push(
+          @views.text(text(t, "app.compile.artifacts.none"), role=Caption),
+        )
+      } else {
+        rows.push(@views.text(text(t, "app.compile.open_hint"), role=Caption))
+        for artifact in report.artifacts {
+          rows.push(artifact_row(artifact))
+        }
+      }
+      if report.work_root != "" {
+        rows.push(
+          @views.row(
+            [
+              @views.text(
+                text(t, "app.compile.work_root"),
+                role=Caption,
+                width=72.0,
+              ),
+              @views.text(report.work_root, role=Mono, width=496.0),
+            ],
+            spacing=8.0,
+            align=Center,
+          ),
+        )
+      }
       let output_lines : Array[@moui.View[Msg]] = []
       if model.compile_output_open {
         let output_views : Array[@moui.View[Msg]] = []
@@ -171,6 +220,51 @@ pub fn compile_report_card(
         padding=10.0,
       )
     }
+  }
+}
+
+///|
+/// 单条产物行：类型徽标 + **绝对路径** + 字节数。
+///
+/// 路径宽按整卡预算算（不是写死 340）：卡宽 600、内垫 10×2、
+/// 徽标 104 + 大小 88 + 两处间隙 16 ⇒ 路径拿 ~272。写死会把长路径截成
+/// 半句，而「产物在哪」正是这一段存在的唯一理由——截断等于白写。
+/// 路径用等宽 + TextStart：它是可复制的标识，不是居中标题。
+fn artifact_row(artifact : @export.CompileArtifact) -> @moui.View[Msg] {
+  let path_width = (600.0 - 20.0 - 104.0 - 88.0 - 16.0).max(120.0)
+  @views.row(
+    [
+      @views.badge(
+        theme=studio_theme(),
+        artifact.label,
+        tone=@style.BadgeTone::Success,
+        width=104.0,
+        height=20.0,
+      ),
+      @views.text(artifact.path, role=Mono, width=path_width, align=TextStart),
+      @views.text(
+        byte_size_label(artifact.bytes),
+        role=Mono,
+        width=88.0,
+        align=TextEnd,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+/// 字节数 → 紧凑可读串（KB/MB 档；源码文件按字节直出）。
+fn byte_size_label(bytes : Int) -> String {
+  if bytes <= 0 {
+    "—"
+  } else if bytes < 1024 {
+    "\{bytes} B"
+  } else if bytes < 1024 * 1024 {
+    "\{(bytes.to_double() / 1024.0).round().to_int()} KB"
+  } else {
+    "\{(bytes.to_double() / (1024.0 * 1024.0) * 10.0).round().to_int().to_double() / 10.0} MB"
   }
 }
 

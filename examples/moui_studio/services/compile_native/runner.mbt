@@ -167,7 +167,68 @@ pub async fn compile_bundle_at(
       update_output, check_output, wasm_output, native_output, smoke_output,
     ),
     diagnostics: @export.parse_moon_diagnostics(native_output),
+    artifacts: collect_artifacts(root),
+    work_root: root,
   })
+}
+
+///|
+/// 收集真实构建产物（本地磁盘上的二进制 + 生成源码）。
+///
+/// 顺序即展示顺序：native 可执行在前（用户点「编译」最想拿到的东西），
+/// 其次 Web wasm，最后生成源码（可读的编译输入）。
+/// 不存在的产物不入列表——空文件比一条指向空气的路径诚实。
+pub fn collect_artifacts(root : String) -> Array[@export.CompileArtifact] {
+  let items : Array[@export.CompileArtifact] = []
+  push_artifact(
+    items,
+    "native-exe",
+    "native 可执行",
+    "\{root}/_build/native/debug/build/native_smoke/native_smoke.exe",
+  )
+  push_artifact(
+    items,
+    "wasm",
+    "Web wasm 模块",
+    "\{root}/_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm",
+  )
+  push_artifact(
+    items,
+    "source",
+    "生成事件源码",
+    "\{root}/app/generated_handlers.mbt",
+  )
+  items
+}
+
+///|
+/// 存在才收（带字节数）：产物列表是「这次真编出了什么」的事实陈述。
+fn push_artifact(
+  items : Array[@export.CompileArtifact],
+  kind : String,
+  label : String,
+  path : String,
+) -> Unit {
+  if !@x/fs.path_exists(path) {
+    return
+  }
+  items.push(@export.CompileArtifact::{
+    kind,
+    label,
+    path,
+    bytes: file_size_of(path),
+  })
+}
+
+///|
+/// 文件字节数（读取失败按 0 计：大小是读数，不是判据）。
+///
+/// 必须走 `read_file_to_bytes`：`read_file_to_string(...).length()` 给的是
+/// **字符数**，UTF-8 中文一行就少算两倍，二进制产物更是完全对不上——
+/// 实测一个 724 KB 的 native 可执行被显示成「1 KB」。
+fn file_size_of(path : String) -> Int {
+  let data = @x/fs.read_file_to_bytes(path) catch { _ => b"" }
+  data.length()
 }
 
 ///|
@@ -193,6 +254,10 @@ fn failed_report(
     source_path: source_path_of(root, output),
     output: build_output_summary(prefix_output, output, "", "", ""),
     diagnostics: @export.parse_moon_diagnostics(output),
+    // 失败也可能已经产出了部分产物（如 native 通过、wasm 失败）——
+    // 如实列出比一律清空更有用，用户能看到「哪一步没过去」。
+    artifacts: collect_artifacts(root),
+    work_root: root,
   }
 }
 

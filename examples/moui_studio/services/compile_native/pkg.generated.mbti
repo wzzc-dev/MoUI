@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn collect_artifacts(String) -> Array[@export.CompileArtifact]
+
 pub async fn compile_bundle_at(String) -> Result[@export.CompileReport, String]
 
 pub async fn compile_project(String, String, String) -> Result[@export.CompileReport, String]

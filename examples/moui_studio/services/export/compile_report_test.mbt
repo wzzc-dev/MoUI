@@ -72,6 +72,8 @@ test "CompileReport 错误筛选只返回 error" {
         text: "boom",
       },
     ],
+    artifacts: [],
+    work_root: "/tmp/x",
   }
   assert_eq(report.errors().length(), 1)
   match report.first_error() {

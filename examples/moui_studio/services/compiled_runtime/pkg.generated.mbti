@@ -53,6 +53,8 @@ pub fn neq_values(Value, Value, Int) -> Value raise ExecError
 
 pub fn new_runtime(Map[String, String], Map[String, Array[String]], Array[(String, String)]) -> Runtime
 
+pub fn next_seed(Int) -> Int
+
 pub fn not_value(Value, Int) -> Value raise ExecError
 
 pub fn or_values((Runtime) -> Value raise ExecError, (Runtime) -> Value raise ExecError, Runtime, Int) -> Value raise ExecError
@@ -145,6 +147,7 @@ pub(all) struct Runtime {
   mut base_rows : Map[String, Array[String]]
   mut base_selections : Map[String, Int]
   mut base_declared : Array[String]
+  mut base_rng : Int
 }
 pub fn Runtime::append_row(Self, String, Value, String, Int, String) -> Unit raise ExecError
 pub fn Runtime::ask(Self, Value, String, Int, String) -> Value raise ExecError

@@ -18,11 +18,16 @@ fn start_run(model : Model) -> Model {
             notice: error_message(translator(committed), error),
           }
       }
+      // 每次启动/派发都推进一格种子（与编译轨 run_handler 同一手法）：
+      // 反复点同一个按钮要能看见不同的随机结果，否则「运行之后点按钮
+      // 没反应」——那其实是有反应但每次都一样。
+      let seed = @studio_lang.next_seed(committed.runtime_seed)
       let state = @studio_lang.start_run(
         body,
         committed.runtime_texts,
         committed.runtime_values,
         committed.runtime_rows,
+        seed~,
       )
       for key in committed.runtime_selections.keys() {
         match committed.runtime_selections.get(key) {
@@ -50,7 +55,13 @@ fn start_run(model : Model) -> Model {
         text(t, "app.audit.run_start"),
         run.handler_label,
       )
-      { ..audited, run: Some(run), mode: ModeRun, notice: "", }
+      {
+        ..audited,
+        run: Some(run),
+        mode: ModeRun,
+        notice: "",
+        runtime_seed: seed,
+      }
     }
   }
 }
@@ -81,6 +92,10 @@ fn start_compiled_run(model : Model) -> Model {
             }
           }
           seed_compiled_runtime(runtime, committed)
+          // 采样事件起点：编译轨的 Runtime 每次事件都重建，种子必须由 app
+          // 显式接续（否则每次都从 RANDOM_SEED 起算 = 点十次同一个结果）。
+          let seed = @compiled_runtime.next_seed(committed.runtime_seed)
+          runtime.rng = seed
           // 勾选框视觉状态是 app 层私有：切轨/重开事件时保留现值，
           // 不因启动一次新运行而丢弃。
           let checks : Map[String, Bool] = Map([], capacity=8)
@@ -104,6 +119,7 @@ fn start_compiled_run(model : Model) -> Model {
             }),
             mode: ModeRun,
             notice: "",
+            runtime_seed: seed,
           }
         }
       }
@@ -374,11 +390,14 @@ fn run_handler(
       match @ir.find_handler(model.program, control, event) {
         None => (model, @moui.Effect::none())
         Some(handler) => {
+          // 事件派发同样推进随机种子：这是「点按钮有反应」的主要路径。
+          let seed = @studio_lang.next_seed(model.runtime_seed)
           let state = @studio_lang.start_run_stmts(
             handler.body,
             model.runtime_texts,
             model.runtime_values,
             model.runtime_rows,
+            seed~,
           )
           for key in model.runtime_selections.keys() {
             match model.runtime_selections.get(key) {
@@ -411,6 +430,7 @@ fn run_handler(
                 single_step: false,
               }),
               mode: ModeRun,
+              runtime_seed: seed,
             },
             @moui.Effect::none(),
           )
@@ -529,6 +549,8 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
               source_path: "",
               output: message,
               diagnostics: [],
+              artifacts: [],
+              work_root: "",
             }),
             compile_busy: false,
             notice: text(translator(model), "app.compile.failed"),
@@ -563,10 +585,38 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       }
     RunStop =>
       // 停止只停当前轨；另一轨的运行态原样保留。
+      //
+      // **必须同时离开全屏运行页**：`ModeRun` 是「运行/预览/帮助」三个
+      // 全屏页之一（ide_root 的 fullscreen 分支），运行态一旦清空，
+      // `run_form` 就渲染成空视图——整个中心区（含两侧栏）变成一片空白。
+      // 实测点「停止」后窗口只剩顶栏与状态栏，用户读到的是「界面坏了」。
+      // 回到可视化工作区是「停止 = 回到编辑」的自然语义。
       if current_track(model) is Compile {
-        Some(({ ..model, compiled_run: None, }, @moui.Effect::none()))
+        Some(
+          (
+            {
+              ..model,
+              compiled_run: None,
+              mode: ModeDesign,
+              workspace: WsVisual,
+              pane_live: true,
+            },
+            @moui.Effect::none(),
+          ),
+        )
       } else {
-        Some(({ ..model, run: None, }, @moui.Effect::none()))
+        Some(
+          (
+            {
+              ..model,
+              run: None,
+              mode: ModeDesign,
+              workspace: WsVisual,
+              pane_live: true,
+            },
+            @moui.Effect::none(),
+          ),
+        )
       }
     RunTick =>
       if current_track(model) is Compile {
@@ -880,6 +930,9 @@ fn dispatch_compiled_event(
         Some(handler) => {
           let runtime = @compiled_runtime.runtime_for_program(model.program)
           seed_compiled_runtime(runtime, model)
+          // 同 start_compiled_run：事件起点显式接续（Runtime 每次重建）。
+          let seed = @compiled_runtime.next_seed(model.runtime_seed)
+          runtime.rng = seed
           let checks : Map[String, Bool] = Map([], capacity=8)
           match model.compiled_run {
             Some(previous) =>
@@ -900,6 +953,7 @@ fn dispatch_compiled_event(
               checks,
             }),
             mode: ModeRun,
+            runtime_seed: seed,
           }
         }
       }

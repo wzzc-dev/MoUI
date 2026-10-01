@@ -89,6 +89,13 @@ pub fn web_pkg(String) -> String
 // Errors
 
 // Types and methods
+pub(all) struct CompileArtifact {
+  kind : String
+  label : String
+  path : String
+  bytes : Int
+}
+
 pub(all) struct CompileDiagnostic {
   severity : String
   code : String
@@ -105,6 +112,8 @@ pub(all) struct CompileReport {
   source_path : String
   output : String
   diagnostics : Array[CompileDiagnostic]
+  artifacts : Array[CompileArtifact]
+  work_root : String
 }
 pub fn CompileReport::empty(String) -> Self
 pub fn CompileReport::errors(Self) -> Array[CompileDiagnostic]

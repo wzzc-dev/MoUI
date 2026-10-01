@@ -8,6 +8,8 @@ import {
 // Values
 pub const DEFAULT_MAX_STEPS : Int = 100_000
 
+pub const DEFAULT_SEED : Int = 20260927
+
 pub fn answer_gate(RunState, Bool) -> Unit
 
 pub fn builtin_catalog() -> Array[BuiltinSpec]
@@ -37,6 +39,8 @@ pub fn initial_values(@ir.StudioProgram) -> Map[String, Value]
 pub fn is_reserved(String) -> Bool
 
 pub fn keywords_for(Language) -> Keywords
+
+pub fn next_seed(Int) -> Int
 
 pub fn number_to_text(Double) -> String
 

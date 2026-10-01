@@ -112,7 +112,59 @@ async test "注入类型错误 → moon check 失败 → 结构化诊断可映�
       assert_true(first.file.has_suffix("injected_error.mbt"))
       assert_eq(first.line, 3)
       assert_true(first.column > 0)
+      // 失败报告也必须给出工作目录：用户要接着查「产物为什么没出来」，
+      // 得先知道 bundle 落在哪（曾经连成功报告都不给路径）。
+      assert_eq(report.work_root, "\{root}/probe")
     }
   }
+  clean_test_tree(root)
+}
+
+///|
+/// 产物收集：真实存在的文件才入列表，且字节数是**二进制字节数**。
+///
+/// 回归意义：报告里原本只有工具链输出，一个产物路径都不出现——用户读到
+/// 的是「编译没编出二进制产物」，而产物其实一直躺在 bundle 里。本用例
+/// 用**手工摆好的假产物**验证收集逻辑（不跑真工具链：那是数十秒的重活，
+/// 由 studio-export-smoke 覆盖）：存在性过滤、字节数口径、顺序都锁住。
+test "collect_artifacts lists real binaries with true byte sizes" {
+  let root = test_root("artifacts")
+  clean_test_tree(root)
+  write_bundle(root, TEST_PROJECT, "probe")
+  // 摆出两个产物：一个 native 可执行、一个 wasm（内容无所谓，只验大小口径）
+  ensure_test_dir("\{root}/probe/_build/native/debug/build/native_smoke")
+  ensure_test_dir("\{root}/probe/_build/wasm-gc/debug/build/web_wasm")
+  @x/fs.write_string_to_file(
+    "\{root}/probe/_build/native/debug/build/native_smoke/native_smoke.exe",
+    "0123456789",
+  ) catch {
+    _ => ()
+  }
+  @x/fs.write_string_to_file(
+    "\{root}/probe/_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm",
+    "abcdefghijklmno",
+  ) catch {
+    _ => ()
+  }
+  let artifacts = @compile_native.collect_artifacts("\{root}/probe")
+  // 三件产物都在：native 可执行 / Web wasm / 生成源码（bundle 自带）。
+  assert_eq(artifacts.length(), 3)
+  assert_eq(artifacts[0].kind, "native-exe")
+  assert_eq(artifacts[0].bytes, 10)
+  assert_eq(artifacts[1].kind, "wasm")
+  assert_eq(artifacts[1].bytes, 15)
+  assert_eq(artifacts[2].kind, "source")
+  assert_true(artifacts[2].bytes > 0)
+  // 路径是绝对（带 root）的：用户要能直接复制去终端跑。
+  assert_true(artifacts[0].path.has_prefix(root))
+  // 删掉 native 产物后它不再出现在列表里（空文件比指向空气的路径诚实）。
+  @x/fs.remove_file(
+    "\{root}/probe/_build/native/debug/build/native_smoke/native_smoke.exe",
+  ) catch {
+    _ => ()
+  }
+  let after = @compile_native.collect_artifacts("\{root}/probe")
+  assert_eq(after.length(), 2)
+  assert_true(after[0].kind != "native-exe")
   clean_test_tree(root)
 }

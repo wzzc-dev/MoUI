@@ -99,6 +99,30 @@ pub(all) struct RunState {
 pub const DEFAULT_MAX_STEPS : Int = 100_000
 
 ///|
+/// 默认随机种子（两轨同口径：编译轨的 RANDOM_SEED 是同一个数）。
+pub const DEFAULT_SEED : Int = 20260927
+
+///|
+/// 推进一格 xorshift 种子（与 `random` 内建同一递推）。
+///
+/// **为什么需要它**：解释轨每次事件都新建一个 `RunState`，如果每次都从
+/// 同一个 seed 起算，同一个按钮点十次会得到十个完全相同的「随机」结果
+/// （实测点名册每次都是「王五」），用户读到的现象就是「运行之后点按钮
+/// 没反应」。宿主把上次的种子推进一格再交给下一次事件，随机序列因此跨
+/// 事件连续；事件内部的多次 `random` 照常各自推进。
+pub fn next_seed(seed : Int) -> Int {
+  let mut next = if seed <= 0 { DEFAULT_SEED } else { seed % 2147483647 }
+  next = next ^ ((next << 13) & 2147483647)
+  next = next ^ (next >> 17)
+  next = next ^ ((next << 5) & 2147483647)
+  if next <= 0 {
+    1
+  } else {
+    next
+  }
+}
+
+///|
 /// 从程序提取初始变量值（init 文本：像数字就按数字，否则按文本）。
 pub fn initial_values(program : StudioProgram) -> Map[String, Value] {
   let values : Map[String, Value] = Map([], capacity=8)
@@ -149,7 +173,7 @@ pub fn start_run(
   values : Map[String, Value],
   rows : Map[String, Array[String]],
   max_steps? : Int = DEFAULT_MAX_STEPS,
-  seed? : Int = 20260927,
+  seed? : Int = DEFAULT_SEED,
 ) -> RunState {
   RunState::{
     plan: compile_body(body),
@@ -185,7 +209,7 @@ pub fn start_run_stmts(
   values : Map[String, Value],
   rows : Map[String, Array[String]],
   max_steps? : Int = DEFAULT_MAX_STEPS,
-  seed? : Int = 20260927,
+  seed? : Int = DEFAULT_SEED,
 ) -> RunState {
   start_run(traced_from_stmts(body), texts, values, rows, max_steps~, seed~)
 }

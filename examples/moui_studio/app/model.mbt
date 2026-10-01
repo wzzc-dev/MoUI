@@ -407,6 +407,11 @@ pub(all) struct Model {
   runtime_texts : Map[String, String]
   runtime_rows : Map[String, Array[String]]
   runtime_selections : Map[String, Int]
+  // 解释轨随机种子：每次事件推进一格后交给新的 RunState。
+  // **必须跨事件保留**——每次事件都从同一个种子起算的话，同一个按钮点
+  // 十次会得到十个相同的「随机」结果（点名册每次都是「王五」），用户读到
+  // 的现象就是「运行之后点按钮没反应」。编译轨的种子在 Runtime.rng 里。
+  runtime_seed : Int
   // 撤销/重做：变更前快照栈（深度 UNDO_DEPTH）与重做栈
   undo_stack : Array[UndoEntry]
   redo_stack : Array[UndoEntry]
@@ -721,6 +726,7 @@ pub fn initial_model(
     runtime_texts: @studio_lang.initial_texts(program),
     runtime_rows: @studio_lang.initial_rows(program),
     runtime_selections: Map([], capacity=4),
+    runtime_seed: @studio_lang.DEFAULT_SEED,
     undo_stack: [],
     redo_stack: [],
     proposal_history: [],

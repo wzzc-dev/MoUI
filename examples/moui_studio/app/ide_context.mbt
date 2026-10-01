@@ -10,6 +10,11 @@
 ///|
 /// 右栏：Context 头（选中对象 + 类型徽标）+ 五页签 + 页签体 +
 /// 快速操作 + 运行时监视。
+///
+/// 选中积木时，页签体**顶部**多一段「编辑积木」卡（见 `context_block_editor`）：
+/// 语句编辑从积木画布搬到了这里。旧版把编辑卡夹在链条中间，把画布切成
+/// 三段，块一多就挤得看不全——用户读到的是「点积木后下面内容显示不全」。
+/// 侧栏是滚动容器，编辑面在这里永远完整可见。
 pub fn ide_right_panel(
   model : Model,
   t : @i18n.Translator,
@@ -38,6 +43,183 @@ pub fn ide_right_panel(
     width~,
     height~,
     padding=0.0,
+  )
+}
+
+///|
+/// 页签体：五个切面各自的只读视图（编辑仍走属性页签的输入框）。
+///
+/// **积木编辑卡在最上面**：它是「当前选中积木」的编辑面，与下面五个
+/// 「当前选中控件」的切面是两个对象，所以不做成第六个页签（页签是同一
+/// 对象的不同切面），而是常驻在正文顶部——选中积木时立刻可见、无需再点。
+fn context_body(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let content = match model.ctx_tab {
+    CtxProps => context_props(model, t, width)
+    CtxState => context_state(model, t, width)
+    CtxData => context_data(model, t, width)
+    CtxActions => context_actions(model, t, width)
+    CtxDeps => context_deps(model, t, width)
+  }
+  let sections : Array[@moui.View[Msg]] = []
+  match context_block_editor(model, t, width) {
+    Some(editor) => sections.push(editor)
+    None => ()
+  }
+  sections.push(content)
+  @views.container(
+    @views.scroll_view(
+      @views.column(sections, spacing=0.0),
+      width~,
+      height~,
+      shows_indicator=true,
+    ),
+    background=ide_panel(),
+    width~,
+    height~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 积木编辑卡（右栏版）：分类色徽章 + 语句文本 + 三个动作。
+///
+/// 这是旧版「链条内编辑卡」的搬迁目标——画布不再为编辑让位，侧栏负责
+/// 承载输入。返回 None = 没有选中积木（不画空卡，也不显示上一个块的草稿）。
+///
+/// 布局按侧栏宽度**从上到下**排（不是旧版的一行四格）：右栏只有 272pt，
+/// 徽章 + 输入框 + 三颗图标挤在一行时输入框只剩 ~90pt，中文语句两三个字
+/// 就被截断——那正是「内容显示不全」的另一半成因。竖排让输入框吃满整宽。
+fn context_block_editor(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg]? {
+  let blocks = block_chain_of(model)
+  let sel = model.selected_block
+  if sel < 0 || sel >= blocks.length() || blocks[sel].path.length() == 0 {
+    return None
+  }
+  let kind = blocks[sel].kind
+  let label = text(t, @blocks.block_label_key(kind))
+  // 徽章宽按标签算（中英混排，同 `button_label_width` 口径），不写死：
+  // 「否则如果」比「否则」宽一倍，写死会截字。
+  let chip_w = button_label_width(label).max(56.0)
+  let inner = (width - 16.0).max(120.0)
+  let icon_size = 28.0
+  let head = @views.row(
+    [
+      @views.container(
+        @views.center(
+          @views.text(
+            label,
+            theme=studio_theme(),
+            width=chip_w - 10.0,
+            height=16.0,
+          ).foreground(block_text_color()),
+          width=chip_w,
+          height=22.0,
+        ),
+        background=block_fill(kind),
+        corner_radius=4.0,
+        width=chip_w,
+        height=22.0,
+        padding=0.0,
+      ),
+      @views.spacer(min_length=4.0, weight=1.0),
+      // 三个动作挤在徽章右侧（图标 28 + 间隙 4×2 = 92pt，侧栏放得下）。
+      ghost_icon_button(
+        Check,
+        text(t, "app.block.apply"),
+        false,
+        CommitBlock,
+        icon_size,
+        22.0,
+        13.0,
+        ide_elevated(),
+      ),
+      ghost_icon_button(
+        Clipboard,
+        text(t, "app.block.duplicate"),
+        false,
+        DuplicateBlock,
+        icon_size,
+        22.0,
+        13.0,
+        ide_elevated(),
+      ),
+      ghost_icon_button(
+        Trash,
+        text(t, "app.block.delete"),
+        false,
+        DeleteBlock,
+        icon_size,
+        22.0,
+        13.0,
+        ide_elevated(),
+      ),
+    ],
+    spacing=4.0,
+    align=Center,
+  )
+  Some(
+    @views.container(
+      @views.padding_xy(
+        @views.column(
+          [
+            @views.padding_xy(
+              @views.text(
+                text(t, "app.block.edit_title"),
+                theme=studio_theme(),
+                width=inner,
+                height=18.0,
+                align=TextStart,
+              ).foreground(ide_text()),
+              horizontal=8.0,
+              vertical=0.0,
+            ),
+            @views.padding_xy(head, horizontal=8.0, vertical=0.0),
+            // 单行语句编辑用 text_field：原生单行控件（自带水平滚动），
+            // Enter 直接应用草稿（text_area 的 8pt×2 垂直内垫会竖切字形）。
+            @views.padding_xy(
+              @views.text_field(
+                model.block_draft,
+                on_input=source => EditBlock(source),
+                on_submit=Some(CommitBlock),
+                placeholder=text(t, "app.block.editor_hint"),
+                variant=Outline,
+                width=inner,
+                height=FIELD_HEIGHT,
+              ),
+              horizontal=8.0,
+              vertical=0.0,
+            ),
+            @views.padding_xy(
+              @views.text(
+                text(t, "app.block.edit_hint"),
+                theme=studio_theme(),
+                width=inner,
+                height=16.0,
+                align=TextStart,
+              ).foreground(ide_text_faint()),
+              horizontal=8.0,
+              vertical=0.0,
+            ),
+          ],
+          spacing=6.0,
+        ),
+        horizontal=0.0,
+        vertical=6.0,
+      ),
+      background=ide_elevated(),
+      corner_radius=6.0,
+      width~,
+      padding=0.0,
+    ),
   )
 }
 
@@ -192,30 +374,6 @@ fn same_tab(a : ContextTab, b : ContextTab) -> Bool {
     (CtxActions, CtxActions) | (CtxDeps, CtxDeps) => true
     _ => false
   }
-}
-
-///|
-/// 页签体：五个切面各自的只读视图（编辑仍走属性页签的输入框）。
-fn context_body(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-  height : Double,
-) -> @moui.View[Msg] {
-  let content = match model.ctx_tab {
-    CtxProps => context_props(model, t, width)
-    CtxState => context_state(model, t, width)
-    CtxData => context_data(model, t, width)
-    CtxActions => context_actions(model, t, width)
-    CtxDeps => context_deps(model, t, width)
-  }
-  @views.container(
-    @views.scroll_view(content, width~, height~, shows_indicator=true),
-    background=ide_panel(),
-    width~,
-    height~,
-    padding=0.0,
-  )
 }
 
 ///|
