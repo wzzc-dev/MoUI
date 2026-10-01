@@ -38,6 +38,12 @@ pub(all) struct RendererResourcePlan {
 } derive(Debug, Eq)
 
 ///|
+pub extend RendererResourcePlan with Debug::{to_repr}
+
+///|
+pub extend RendererResourcePlan with Eq::{not_equal, equal}
+
+///|
 pub fn RendererResourcePlan::new(
   descriptors : Array[RendererResourceDescriptor],
 ) -> RendererResourcePlan {

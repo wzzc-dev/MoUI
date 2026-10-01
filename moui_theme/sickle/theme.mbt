@@ -6,6 +6,15 @@ pub(all) enum SickleStyleMode {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SickleStyleMode with Debug::{to_repr}
+
+///|
+pub extend SickleStyleMode with Eq::{not_equal, equal}
+
+///|
+pub extend SickleStyleMode with ToJson::{to_json}
+
+///|
 pub fn SickleStyleMode::label(self : SickleStyleMode) -> String {
   match self {
     Skeuo => "skeuomorphic"

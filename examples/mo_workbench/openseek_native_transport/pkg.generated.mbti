@@ -31,8 +31,10 @@ pub async fn openseek_worker_loop(OpenSeekBackendOwner) -> Unit
 
 // Types and methods
 type ModelEntry derive(@json.FromJson)
+pub fn ModelEntry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 
 type ModelsResponse derive(@json.FromJson)
+pub fn ModelsResponse::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 
 pub struct OpenSeekBackendBundle {
   runtime : @app.AgentBackendRuntime

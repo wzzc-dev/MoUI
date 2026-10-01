@@ -32,13 +32,21 @@ pub(all) enum EmbeddedHostResponse {
   PlatformView(Int, String, String, @wzzc-dev/moui/core.PlatformViewEvent)
   PlatformChannel(@backend.HostServiceRequestId, @backend.PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedHostResponse::equal(Self, Self) -> Bool
+pub fn EmbeddedHostResponse::not_equal(Self, Self) -> Bool
+pub fn EmbeddedHostResponse::to_json(Self) -> Json
+pub fn EmbeddedHostResponse::to_repr(Self) -> @debug.Repr
 
 pub(all) struct EmbeddedHostResponseEnvelope {
   schema_version : Int
   session_generation : Int
   response : EmbeddedHostResponse
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedHostResponseEnvelope::equal(Self, Self) -> Bool
 pub fn EmbeddedHostResponseEnvelope::new(session_generation~ : Int, response~ : EmbeddedHostResponse) -> Self
+pub fn EmbeddedHostResponseEnvelope::not_equal(Self, Self) -> Bool
+pub fn EmbeddedHostResponseEnvelope::to_json(Self) -> Json
+pub fn EmbeddedHostResponseEnvelope::to_repr(Self) -> @debug.Repr
 
 pub(all) enum EmbeddedHostUpdate {
   Ime(EmbeddedImeRequest)
@@ -48,12 +56,20 @@ pub(all) enum EmbeddedHostUpdate {
   PlatformViews(EmbeddedPlatformViewSnapshot)
   PlatformChannel(@backend.HostPendingServiceRequest)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedHostUpdate::equal(Self, Self) -> Bool
+pub fn EmbeddedHostUpdate::not_equal(Self, Self) -> Bool
+pub fn EmbeddedHostUpdate::to_json(Self) -> Json
+pub fn EmbeddedHostUpdate::to_repr(Self) -> @debug.Repr
 
 pub(all) struct EmbeddedHostUpdateEnvelope {
   schema_version : Int
   session_generation : Int
   updates : Array[EmbeddedHostUpdate]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedHostUpdateEnvelope::equal(Self, Self) -> Bool
+pub fn EmbeddedHostUpdateEnvelope::not_equal(Self, Self) -> Bool
+pub fn EmbeddedHostUpdateEnvelope::to_json(Self) -> Json
+pub fn EmbeddedHostUpdateEnvelope::to_repr(Self) -> @debug.Repr
 
 pub(all) struct EmbeddedImeRequest {
   revision : Int
@@ -66,12 +82,20 @@ pub(all) struct EmbeddedImeRequest {
   frame : @wzzc-dev/moui/core.Rect
   candidate_anchor : @wzzc-dev/moui/core.Rect
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedImeRequest::equal(Self, Self) -> Bool
 pub fn EmbeddedImeRequest::from_state(revision~ : Int, @wzzc-dev/moui/core.TextInputState) -> Self
+pub fn EmbeddedImeRequest::not_equal(Self, Self) -> Bool
+pub fn EmbeddedImeRequest::to_json(Self) -> Json
+pub fn EmbeddedImeRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct EmbeddedPlatformViewSnapshot {
   revision : Int
   placements : Array[@wzzc-dev/moui/core.PlatformViewPlacement]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedPlatformViewSnapshot::equal(Self, Self) -> Bool
+pub fn EmbeddedPlatformViewSnapshot::not_equal(Self, Self) -> Bool
+pub fn EmbeddedPlatformViewSnapshot::to_json(Self) -> Json
+pub fn EmbeddedPlatformViewSnapshot::to_repr(Self) -> @debug.Repr
 
 pub struct EmbeddedRuntimeBackendCore {
   // private fields
@@ -149,6 +173,10 @@ pub(all) struct EmbeddedSemanticsNode {
   frame : @wzzc-dev/moui/core.Rect
   children : Array[@wzzc-dev/moui/core.SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedSemanticsNode::equal(Self, Self) -> Bool
+pub fn EmbeddedSemanticsNode::not_equal(Self, Self) -> Bool
+pub fn EmbeddedSemanticsNode::to_json(Self) -> Json
+pub fn EmbeddedSemanticsNode::to_repr(Self) -> @debug.Repr
 
 pub(all) struct EmbeddedSemanticsUpdate {
   kind : String
@@ -161,6 +189,10 @@ pub(all) struct EmbeddedSemanticsUpdate {
   issues : Array[@runtime.SemanticsIssue]
   announcements : Array[@runtime.AccessibilityAnnouncement]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EmbeddedSemanticsUpdate::equal(Self, Self) -> Bool
+pub fn EmbeddedSemanticsUpdate::not_equal(Self, Self) -> Bool
+pub fn EmbeddedSemanticsUpdate::to_json(Self) -> Json
+pub fn EmbeddedSemanticsUpdate::to_repr(Self) -> @debug.Repr
 
 pub struct HostSurfaceBinding {
   create_renderer : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?

@@ -27,6 +27,10 @@ pub(all) struct PdfWorkbenchCropBox {
   right : Double
   top : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PdfWorkbenchCropBox::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchCropBox::not_equal(Self, Self) -> Bool
+pub fn PdfWorkbenchCropBox::to_json(Self) -> Json
+pub fn PdfWorkbenchCropBox::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PdfWorkbenchDocument {
   path : String
@@ -83,6 +87,10 @@ pub(all) enum PdfWorkbenchEdit {
   AddBookmark(Int, String)
   AddTextAnnotation(Int, String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PdfWorkbenchEdit::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchEdit::not_equal(Self, Self) -> Bool
+pub fn PdfWorkbenchEdit::to_json(Self) -> Json
+pub fn PdfWorkbenchEdit::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PdfWorkbenchLoadResult {
   Loaded(PdfWorkbenchDocument)
@@ -159,12 +167,18 @@ pub enum PdfWorkbenchOperation {
   PrepareSave(String)
   WritePdf(String)
 } derive(Eq)
+pub fn PdfWorkbenchOperation::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchOperation::not_equal(Self, Self) -> Bool
 
 pub(all) struct PdfWorkbenchPageSummary {
   page_number : Int
   text_preview : String
   content_diagnostic : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PdfWorkbenchPageSummary::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchPageSummary::not_equal(Self, Self) -> Bool
+pub fn PdfWorkbenchPageSummary::to_json(Self) -> Json
+pub fn PdfWorkbenchPageSummary::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PdfWorkbenchRasterPage {
   cache_key : String
@@ -176,6 +190,10 @@ pub(all) struct PdfWorkbenchRasterPage {
   image_source : String
   diagnostic : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PdfWorkbenchRasterPage::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchRasterPage::not_equal(Self, Self) -> Bool
+pub fn PdfWorkbenchRasterPage::to_json(Self) -> Json
+pub fn PdfWorkbenchRasterPage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PdfWorkbenchRasterRequest {
   path : String
@@ -192,6 +210,10 @@ pub(all) enum PdfWorkbenchRasterResponse {
   RasterPageUnavailable(String)
   RasterPageFailed(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PdfWorkbenchRasterResponse::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchRasterResponse::not_equal(Self, Self) -> Bool
+pub fn PdfWorkbenchRasterResponse::to_json(Self) -> Json
+pub fn PdfWorkbenchRasterResponse::to_repr(Self) -> @debug.Repr
 
 pub struct PdfWorkbenchRasterServices {
   render : (PdfWorkbenchRasterRequest) -> PdfWorkbenchRasterResponse
@@ -207,6 +229,10 @@ pub(all) enum PdfWorkbenchRasterStatus {
   RasterUnavailable(String)
   RasterFailed(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PdfWorkbenchRasterStatus::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchRasterStatus::not_equal(Self, Self) -> Bool
+pub fn PdfWorkbenchRasterStatus::to_json(Self) -> Json
+pub fn PdfWorkbenchRasterStatus::to_repr(Self) -> @debug.Repr
 
 pub enum PdfWorkbenchStatus {
   Empty
@@ -214,6 +240,10 @@ pub enum PdfWorkbenchStatus {
   Ready
   Failed(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PdfWorkbenchStatus::equal(Self, Self) -> Bool
+pub fn PdfWorkbenchStatus::not_equal(Self, Self) -> Bool
+pub fn PdfWorkbenchStatus::to_json(Self) -> Json
+pub fn PdfWorkbenchStatus::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

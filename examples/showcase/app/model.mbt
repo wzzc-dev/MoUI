@@ -50,6 +50,15 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ShowcaseRouteHistoryCommand with Debug::{to_repr}
+
+///|
+pub extend ShowcaseRouteHistoryCommand with Eq::{not_equal, equal}
+
+///|
+pub extend ShowcaseRouteHistoryCommand with ToJson::{to_json}
+
+///|
 pub struct ShowcaseRouteHost {
   route_source : @services.RouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit

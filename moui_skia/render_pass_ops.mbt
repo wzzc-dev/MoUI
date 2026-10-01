@@ -7,6 +7,15 @@ pub(all) enum RenderPassLoadOp {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderPassLoadOp with Debug::{to_repr}
+
+///|
+pub extend RenderPassLoadOp with Default::{default}
+
+///|
+pub extend RenderPassLoadOp with Eq::{not_equal, equal}
+
+///|
 pub impl Default for RenderPassLoadOp with fn default() {
   LoadExisting
 }
@@ -30,6 +39,15 @@ pub(all) enum RenderPassStoreOp {
   DiscardPixels
   PresentPixels
 } derive(Debug, Eq)
+
+///|
+pub extend RenderPassStoreOp with Debug::{to_repr}
+
+///|
+pub extend RenderPassStoreOp with Default::{default}
+
+///|
+pub extend RenderPassStoreOp with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for RenderPassStoreOp with fn default() {

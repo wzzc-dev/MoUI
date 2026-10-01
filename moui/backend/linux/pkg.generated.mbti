@@ -70,6 +70,10 @@ pub(all) struct LinuxATSPIBindingDiagnostics {
   action_dispatch_count : Int
   disposed : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LinuxATSPIBindingDiagnostics::equal(Self, Self) -> Bool
+pub fn LinuxATSPIBindingDiagnostics::not_equal(Self, Self) -> Bool
+pub fn LinuxATSPIBindingDiagnostics::to_json(Self) -> Json
+pub fn LinuxATSPIBindingDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : String
@@ -78,6 +82,10 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
   action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LinuxAccessibilityBridgeInfo::equal(Self, Self) -> Bool
+pub fn LinuxAccessibilityBridgeInfo::not_equal(Self, Self) -> Bool
+pub fn LinuxAccessibilityBridgeInfo::to_json(Self) -> Json
+pub fn LinuxAccessibilityBridgeInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
@@ -92,6 +100,10 @@ pub(all) struct LinuxBackendCapabilities {
   accessibility : Bool
   scale_factor : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LinuxBackendCapabilities::equal(Self, Self) -> Bool
+pub fn LinuxBackendCapabilities::not_equal(Self, Self) -> Bool
+pub fn LinuxBackendCapabilities::to_json(Self) -> Json
+pub fn LinuxBackendCapabilities::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LinuxBackendInfo {
   host_info : @backend.HostAppInfo
@@ -103,18 +115,30 @@ pub(all) struct LinuxBackendInfo {
   readiness : LinuxBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LinuxBackendInfo::equal(Self, Self) -> Bool
+pub fn LinuxBackendInfo::not_equal(Self, Self) -> Bool
+pub fn LinuxBackendInfo::to_json(Self) -> Json
+pub fn LinuxBackendInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LinuxBackendReadiness {
   ready : Bool
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LinuxBackendReadiness::equal(Self, Self) -> Bool
+pub fn LinuxBackendReadiness::not_equal(Self, Self) -> Bool
+pub fn LinuxBackendReadiness::to_json(Self) -> Json
+pub fn LinuxBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LinuxClientDecorationState {
   active : Bool
   titlebar_height : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LinuxClientDecorationState::equal(Self, Self) -> Bool
 pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double) -> Self
+pub fn LinuxClientDecorationState::not_equal(Self, Self) -> Bool
+pub fn LinuxClientDecorationState::to_json(Self) -> Json
+pub fn LinuxClientDecorationState::to_repr(Self) -> @debug.Repr
 
 pub struct LinuxHostAppOptions {
   // private fields
@@ -127,6 +151,17 @@ pub struct LinuxHostSmokeOptions {
 pub fn LinuxHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
 type LinuxNativeHostBackend
+pub fn LinuxNativeHostBackend::about_to_wait(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
+pub fn LinuxNativeHostBackend::can_create_surfaces(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
+pub fn LinuxNativeHostBackend::destroy_surfaces(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
+pub fn LinuxNativeHostBackend::device_event(Self, @wzzc-dev/window/linux.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
+pub fn LinuxNativeHostBackend::memory_warning(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
+pub fn LinuxNativeHostBackend::new_events(Self, @wzzc-dev/window/linux.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
+pub fn LinuxNativeHostBackend::proxy_wake_up(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
+pub fn LinuxNativeHostBackend::resumed(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
+pub fn LinuxNativeHostBackend::standard_key_binding(Self, @wzzc-dev/window/linux.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
+pub fn LinuxNativeHostBackend::suspended(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
+pub fn LinuxNativeHostBackend::window_event(Self, @wzzc-dev/window/linux.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxNativeHostBackend
 
 // Type aliases

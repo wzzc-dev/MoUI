@@ -29,6 +29,12 @@ pub(all) struct RenderCommandStats {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderCommandStats with Debug::{to_repr}
+
+///|
+pub extend RenderCommandStats with Eq::{not_equal, equal}
+
+///|
 pub fn RenderCommandStats::empty() -> RenderCommandStats {
   {
     command_count: 0,

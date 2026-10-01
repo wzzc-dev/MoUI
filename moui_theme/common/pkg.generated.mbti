@@ -33,6 +33,10 @@ pub(all) struct DesignBadgeTokens {
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignBadgeTokens::core_style(Self) -> @style.BadgeStyle
+pub fn DesignBadgeTokens::equal(Self, Self) -> Bool
+pub fn DesignBadgeTokens::not_equal(Self, Self) -> Bool
+pub fn DesignBadgeTokens::to_json(Self) -> Json
+pub fn DesignBadgeTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignButtonCoreStyles {
   primary : @style.ButtonStyle
@@ -42,6 +46,10 @@ pub(all) struct DesignButtonCoreStyles {
   subtle : @style.ButtonStyle
   subtle_brand : @style.ButtonStyle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignButtonCoreStyles::equal(Self, Self) -> Bool
+pub fn DesignButtonCoreStyles::not_equal(Self, Self) -> Bool
+pub fn DesignButtonCoreStyles::to_json(Self) -> Json
+pub fn DesignButtonCoreStyles::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignButtonTokens {
   primary : DesignControlStateTokens
@@ -52,6 +60,10 @@ pub(all) struct DesignButtonTokens {
   subtle_brand : DesignControlStateTokens
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignButtonTokens::core_styles(Self, DesignStateLayerTokens) -> DesignButtonCoreStyles
+pub fn DesignButtonTokens::equal(Self, Self) -> Bool
+pub fn DesignButtonTokens::not_equal(Self, Self) -> Bool
+pub fn DesignButtonTokens::to_json(Self) -> Json
+pub fn DesignButtonTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignChoiceControlTokens {
   foreground : @core.Color
@@ -63,6 +75,10 @@ pub(all) struct DesignChoiceControlTokens {
   check_style : @style.CheckMarkStyle
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignChoiceControlTokens::core_style(Self) -> @style.ChoiceControlStyle
+pub fn DesignChoiceControlTokens::equal(Self, Self) -> Bool
+pub fn DesignChoiceControlTokens::not_equal(Self, Self) -> Bool
+pub fn DesignChoiceControlTokens::to_json(Self) -> Json
+pub fn DesignChoiceControlTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignComponentTokens {
   button : DesignButtonTokens
@@ -78,6 +94,10 @@ pub(all) struct DesignComponentTokens {
   form_validation : DesignFormValidationTokens
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignComponentTokens::core_themes(Self, @core.ColorScheme) -> @style.ControlThemeSet
+pub fn DesignComponentTokens::equal(Self, Self) -> Bool
+pub fn DesignComponentTokens::not_equal(Self, Self) -> Bool
+pub fn DesignComponentTokens::to_json(Self) -> Json
+pub fn DesignComponentTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignControlStateTokens {
   foreground : @core.Color
@@ -91,6 +111,10 @@ pub(all) struct DesignControlStateTokens {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignControlStateTokens::core_style(Self) -> @style.ControlStateStyle
 pub fn DesignControlStateTokens::core_tokens(Self) -> @style.ControlStateTokens
+pub fn DesignControlStateTokens::equal(Self, Self) -> Bool
+pub fn DesignControlStateTokens::not_equal(Self, Self) -> Bool
+pub fn DesignControlStateTokens::to_json(Self) -> Json
+pub fn DesignControlStateTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignCoreComponentStyles {
   button : DesignButtonCoreStyles
@@ -105,14 +129,22 @@ pub(all) struct DesignCoreComponentStyles {
   badge : @style.BadgeStyle
   form_validation : @style.FormValidationStyle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignCoreComponentStyles::equal(Self, Self) -> Bool
+pub fn DesignCoreComponentStyles::not_equal(Self, Self) -> Bool
+pub fn DesignCoreComponentStyles::to_json(Self) -> Json
+pub fn DesignCoreComponentStyles::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignDensity {
   Compact
   Standard
   Comfortable
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignDensity::equal(Self, Self) -> Bool
 pub fn DesignDensity::label(Self) -> String
 pub fn DesignDensity::multiplier(Self) -> Double
+pub fn DesignDensity::not_equal(Self, Self) -> Bool
+pub fn DesignDensity::to_json(Self) -> Json
+pub fn DesignDensity::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignElevationTokens {
   sm : @core.ShadowStyle
@@ -123,6 +155,10 @@ pub(all) struct DesignElevationTokens {
   dialog : @core.ShadowStyle?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignElevationTokens::core_shadow_scale(Self) -> @core.ShadowScale
+pub fn DesignElevationTokens::equal(Self, Self) -> Bool
+pub fn DesignElevationTokens::not_equal(Self, Self) -> Bool
+pub fn DesignElevationTokens::to_json(Self) -> Json
+pub fn DesignElevationTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignFeedbackTokens {
   neutral : DesignToneTokens
@@ -134,6 +170,10 @@ pub(all) struct DesignFeedbackTokens {
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignFeedbackTokens::core_style(Self) -> @style.FeedbackStyle
+pub fn DesignFeedbackTokens::equal(Self, Self) -> Bool
+pub fn DesignFeedbackTokens::not_equal(Self, Self) -> Bool
+pub fn DesignFeedbackTokens::to_json(Self) -> Json
+pub fn DesignFeedbackTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignFormValidationTokens {
   foreground : @core.Color
@@ -143,6 +183,10 @@ pub(all) struct DesignFormValidationTokens {
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignFormValidationTokens::core_style(Self) -> @style.FormValidationStyle
+pub fn DesignFormValidationTokens::equal(Self, Self) -> Bool
+pub fn DesignFormValidationTokens::not_equal(Self, Self) -> Bool
+pub fn DesignFormValidationTokens::to_json(Self) -> Json
+pub fn DesignFormValidationTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignMotionTokens {
   fast_ms : Double
@@ -151,6 +195,10 @@ pub(all) struct DesignMotionTokens {
   easing : @core.Easing
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignMotionTokens::core_motion(Self) -> @core.MotionScale
+pub fn DesignMotionTokens::equal(Self, Self) -> Bool
+pub fn DesignMotionTokens::not_equal(Self, Self) -> Bool
+pub fn DesignMotionTokens::to_json(Self) -> Json
+pub fn DesignMotionTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignPickerTokens {
   font : @core.FontSpec
@@ -160,6 +208,10 @@ pub(all) struct DesignPickerTokens {
   popup_max_height : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignPickerTokens::core_style(Self) -> @style.PickerStyle
+pub fn DesignPickerTokens::equal(Self, Self) -> Bool
+pub fn DesignPickerTokens::not_equal(Self, Self) -> Bool
+pub fn DesignPickerTokens::to_json(Self) -> Json
+pub fn DesignPickerTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignPreset {
   Material
@@ -167,10 +219,14 @@ pub(all) enum DesignPreset {
   Primer
   Fluent
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignPreset::equal(Self, Self) -> Bool
 pub fn DesignPreset::label(Self) -> String
+pub fn DesignPreset::not_equal(Self, Self) -> Bool
 pub fn DesignPreset::summary(Self) -> String
 pub fn DesignPreset::theme(Self, scheme? : @core.ColorScheme, density? : DesignDensity) -> @core.Theme
 pub fn DesignPreset::theme_for_variant(Self, variant? : DesignSchemeVariant, system_scheme? : @core.ColorScheme, density? : DesignDensity) -> @core.Theme
+pub fn DesignPreset::to_json(Self) -> Json
+pub fn DesignPreset::to_repr(Self) -> @debug.Repr
 pub fn DesignPreset::tokens(Self, scheme? : @core.ColorScheme, density? : DesignDensity) -> DesignSystemTokens
 pub fn DesignPreset::tokens_for_variant(Self, variant? : DesignSchemeVariant, system_scheme? : @core.ColorScheme, density? : DesignDensity) -> DesignSystemTokens
 
@@ -180,6 +236,10 @@ pub(all) struct DesignProgressTokens {
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignProgressTokens::core_style(Self) -> @style.ProgressStyle
+pub fn DesignProgressTokens::equal(Self, Self) -> Bool
+pub fn DesignProgressTokens::not_equal(Self, Self) -> Bool
+pub fn DesignProgressTokens::to_json(Self) -> Json
+pub fn DesignProgressTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignRadiusTokens {
   sm : Double
@@ -188,6 +248,10 @@ pub(all) struct DesignRadiusTokens {
   pill : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignRadiusTokens::core_radius_scale(Self) -> @core.RadiusScale
+pub fn DesignRadiusTokens::equal(Self, Self) -> Bool
+pub fn DesignRadiusTokens::not_equal(Self, Self) -> Bool
+pub fn DesignRadiusTokens::to_json(Self) -> Json
+pub fn DesignRadiusTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignSchemeVariant {
   SchemeLight
@@ -195,7 +259,11 @@ pub(all) enum DesignSchemeVariant {
   SchemeHighContrast
   SchemeSystem
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSchemeVariant::equal(Self, Self) -> Bool
 pub fn DesignSchemeVariant::label(Self) -> String
+pub fn DesignSchemeVariant::not_equal(Self, Self) -> Bool
+pub fn DesignSchemeVariant::to_json(Self) -> Json
+pub fn DesignSchemeVariant::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSemanticPalette {
   foreground : @core.Color
@@ -222,6 +290,10 @@ pub(all) struct DesignSemanticPalette {
   scrim : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSemanticPalette::core_palette(Self, @core.ColorScheme) -> @core.ColorPalette
+pub fn DesignSemanticPalette::equal(Self, Self) -> Bool
+pub fn DesignSemanticPalette::not_equal(Self, Self) -> Bool
+pub fn DesignSemanticPalette::to_json(Self) -> Json
+pub fn DesignSemanticPalette::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSliderTokens {
   foreground : @core.Color
@@ -233,6 +305,10 @@ pub(all) struct DesignSliderTokens {
   thumb_shape : @style.ThumbShape
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSliderTokens::core_style(Self) -> @style.SliderStyle
+pub fn DesignSliderTokens::equal(Self, Self) -> Bool
+pub fn DesignSliderTokens::not_equal(Self, Self) -> Bool
+pub fn DesignSliderTokens::to_json(Self) -> Json
+pub fn DesignSliderTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSpacingTokens {
   xs : Double
@@ -243,6 +319,10 @@ pub(all) struct DesignSpacingTokens {
   density_multiplier : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSpacingTokens::core_spacing_scale(Self) -> @core.SpacingScale
+pub fn DesignSpacingTokens::equal(Self, Self) -> Bool
+pub fn DesignSpacingTokens::not_equal(Self, Self) -> Bool
+pub fn DesignSpacingTokens::to_json(Self) -> Json
+pub fn DesignSpacingTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignStateLayerTokens {
   color : @core.Color
@@ -254,6 +334,10 @@ pub(all) struct DesignStateLayerTokens {
   disabled_alpha : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignStateLayerTokens::core_tokens(Self) -> @style.StateLayerTokens
+pub fn DesignStateLayerTokens::equal(Self, Self) -> Bool
+pub fn DesignStateLayerTokens::not_equal(Self, Self) -> Bool
+pub fn DesignStateLayerTokens::to_json(Self) -> Json
+pub fn DesignStateLayerTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSurfaceComponentTokens {
   base_padding : Double
@@ -267,12 +351,20 @@ pub(all) struct DesignSurfaceComponentTokens {
   overlay_shadow : @core.ShadowStyle?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSurfaceComponentTokens::core_styles(Self, @core.Theme) -> DesignSurfaceCoreStyles
+pub fn DesignSurfaceComponentTokens::equal(Self, Self) -> Bool
+pub fn DesignSurfaceComponentTokens::not_equal(Self, Self) -> Bool
+pub fn DesignSurfaceComponentTokens::to_json(Self) -> Json
+pub fn DesignSurfaceComponentTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSurfaceCoreStyles {
   base : @style.SurfaceStyle
   raised : @style.SurfaceStyle
   overlay : @style.SurfaceStyle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSurfaceCoreStyles::equal(Self, Self) -> Bool
+pub fn DesignSurfaceCoreStyles::not_equal(Self, Self) -> Bool
+pub fn DesignSurfaceCoreStyles::to_json(Self) -> Json
+pub fn DesignSurfaceCoreStyles::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSurfaceTokens {
   base : @core.Brush
@@ -280,6 +372,10 @@ pub(all) struct DesignSurfaceTokens {
   overlay : @core.Brush
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSurfaceTokens::core_surfaces(Self) -> @core.SurfaceScale
+pub fn DesignSurfaceTokens::equal(Self, Self) -> Bool
+pub fn DesignSurfaceTokens::not_equal(Self, Self) -> Bool
+pub fn DesignSurfaceTokens::to_json(Self) -> Json
+pub fn DesignSurfaceTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSystemTokens {
   preset : DesignPreset
@@ -299,6 +395,10 @@ pub(all) struct DesignSystemTokens {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSystemTokens::core_component_styles(Self) -> DesignCoreComponentStyles
 pub fn DesignSystemTokens::core_themes(Self) -> @style.ControlThemeSet
+pub fn DesignSystemTokens::equal(Self, Self) -> Bool
+pub fn DesignSystemTokens::not_equal(Self, Self) -> Bool
+pub fn DesignSystemTokens::to_json(Self) -> Json
+pub fn DesignSystemTokens::to_repr(Self) -> @debug.Repr
 pub fn DesignSystemTokens::to_theme(Self) -> @core.Theme
 pub fn DesignSystemTokens::with_palette(Self, DesignSemanticPalette) -> Self
 pub fn DesignSystemTokens::with_radius(Self, DesignRadiusTokens) -> Self
@@ -310,12 +410,20 @@ pub(all) enum DesignTextFieldAppearance {
   Outline
   Underline
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTextFieldAppearance::equal(Self, Self) -> Bool
+pub fn DesignTextFieldAppearance::not_equal(Self, Self) -> Bool
+pub fn DesignTextFieldAppearance::to_json(Self) -> Json
+pub fn DesignTextFieldAppearance::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTextFieldCoreStyles {
   filled : @style.TextFieldStyle
   outline : @style.TextFieldStyle
   plain : @style.TextFieldStyle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTextFieldCoreStyles::equal(Self, Self) -> Bool
+pub fn DesignTextFieldCoreStyles::not_equal(Self, Self) -> Bool
+pub fn DesignTextFieldCoreStyles::to_json(Self) -> Json
+pub fn DesignTextFieldCoreStyles::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTextFieldTokens {
   normal : DesignControlStateTokens
@@ -328,6 +436,10 @@ pub(all) struct DesignTextFieldTokens {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignTextFieldTokens::core_style(Self) -> @style.TextFieldStyle
 pub fn DesignTextFieldTokens::core_styles(Self) -> DesignTextFieldCoreStyles
+pub fn DesignTextFieldTokens::equal(Self, Self) -> Bool
+pub fn DesignTextFieldTokens::not_equal(Self, Self) -> Bool
+pub fn DesignTextFieldTokens::to_json(Self) -> Json
+pub fn DesignTextFieldTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignToneTokens {
   foreground : @core.Color
@@ -335,6 +447,10 @@ pub(all) struct DesignToneTokens {
   border : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignToneTokens::core_style(Self) -> @style.ToneStyle
+pub fn DesignToneTokens::equal(Self, Self) -> Bool
+pub fn DesignToneTokens::not_equal(Self, Self) -> Bool
+pub fn DesignToneTokens::to_json(Self) -> Json
+pub fn DesignToneTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTypographyTokens {
   body : @core.FontSpec
@@ -348,6 +464,10 @@ pub(all) struct DesignTypographyTokens {
   caption_strong : @core.FontSpec?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignTypographyTokens::core_typography(Self) -> @core.TypographyScale
+pub fn DesignTypographyTokens::equal(Self, Self) -> Bool
+pub fn DesignTypographyTokens::not_equal(Self, Self) -> Bool
+pub fn DesignTypographyTokens::to_json(Self) -> Json
+pub fn DesignTypographyTokens::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

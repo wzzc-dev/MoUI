@@ -3,6 +3,15 @@
 pub(all) struct Color(UInt) derive(Debug, Eq)
 
 ///|
+pub extend Color with Debug::{to_repr}
+
+///|
+pub extend Color with Default::{default}
+
+///|
+pub extend Color with Eq::{not_equal, equal}
+
+///|
 pub fn Color::new(argb : UInt) -> Color {
   Color(argb)
 }
@@ -139,6 +148,15 @@ pub(all) struct Color4f {
   b : Scalar
   a : Scalar
 } derive(Debug, Eq)
+
+///|
+pub extend Color4f with Debug::{to_repr}
+
+///|
+pub extend Color4f with Default::{default}
+
+///|
+pub extend Color4f with Eq::{not_equal, equal}
 
 ///|
 pub fn Color4f::new(r : Scalar, g : Scalar, b : Scalar, a : Scalar) -> Color4f {

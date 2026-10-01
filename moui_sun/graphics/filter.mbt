@@ -5,6 +5,12 @@ struct PaintFilter {
 } derive(Eq, Debug)
 
 ///|
+pub extend PaintFilter with Debug::{to_repr}
+
+///|
+pub extend PaintFilter with Eq::{not_equal, equal}
+
+///|
 /// Public filter stage family used for inspection and paint pipeline planning.
 pub(all) enum PaintFilterType {
   Modulate
@@ -16,6 +22,12 @@ pub(all) enum PaintFilterType {
   Sepia
   ColorMatrix
 } derive(Eq, Debug)
+
+///|
+pub extend PaintFilterType with Debug::{to_repr}
+
+///|
+pub extend PaintFilterType with Eq::{not_equal, equal}
 
 ///|
 priv enum PaintFilterKind {

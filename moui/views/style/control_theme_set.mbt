@@ -17,6 +17,15 @@ pub(all) struct ControlThemeSet {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ControlThemeSet with Debug::{to_repr}
+
+///|
+pub extend ControlThemeSet with Eq::{not_equal, equal}
+
+///|
+pub extend ControlThemeSet with ToJson::{to_json}
+
+///|
 /// Derive the default neutral `ControlThemeSet` for the Minimal preset from a
 /// resolved neutral `core.Theme`. This mirrors the neutral control styles the
 /// legacy `@views.ButtonStyle::filled/tonal/outline/ghost` helpers produced,

@@ -11,6 +11,12 @@ pub(all) enum PopoverPlacement {
 } derive(Eq, Debug)
 
 ///|
+pub extend PopoverPlacement with Debug::{to_repr}
+
+///|
+pub extend PopoverPlacement with Eq::{not_equal, equal}
+
+///|
 pub struct DropdownState {
   expanded : Bool
   selected : String

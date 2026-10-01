@@ -30,6 +30,15 @@ pub(all) enum NativeTextEngineSetting {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend NativeTextEngineSetting with Debug::{to_repr}
+
+///|
+pub extend NativeTextEngineSetting with Eq::{not_equal, equal}
+
+///|
+pub extend NativeTextEngineSetting with ToJson::{to_json}
+
+///|
 // Callback bundle implemented by a platform text engine such as CoreText,
 // DirectWrite, or fontconfig/HarfBuzz/FreeType.
 pub struct NativePlatformTextProvider {
@@ -65,6 +74,15 @@ pub(all) enum NativeRasterGlyphFormat {
   AlphaMask
   ColorRgba
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend NativeRasterGlyphFormat with Debug::{to_repr}
+
+///|
+pub extend NativeRasterGlyphFormat with Eq::{not_equal, equal}
+
+///|
+pub extend NativeRasterGlyphFormat with ToJson::{to_json}
 
 ///|
 // Positioned glyph produced by platform text layout. Coordinates are logical

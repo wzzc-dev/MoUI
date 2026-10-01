@@ -39,6 +39,12 @@ pub(all) struct SurfacePresentDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend SurfacePresentDescriptor with Debug::{to_repr}
+
+///|
+pub extend SurfacePresentDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn SurfacePresentDescriptor::new(
   target : SurfaceTargetDescriptor,
   frame_index? : Int = 0,
@@ -74,6 +80,12 @@ pub(all) struct SurfaceFinalizationDescriptor {
   target : SurfaceTargetDescriptor
   frame_index : Int
 } derive(Debug, Eq)
+
+///|
+pub extend SurfaceFinalizationDescriptor with Debug::{to_repr}
+
+///|
+pub extend SurfaceFinalizationDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn SurfaceFinalizationDescriptor::new(

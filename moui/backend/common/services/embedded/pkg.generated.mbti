@@ -42,6 +42,8 @@ pub fn HostChannel::enqueue_update(Self, kind~ : String, payload~ : Json, reques
 pub fn HostChannel::new() -> Self
 pub fn HostChannel::pending_count(Self) -> Int
 pub fn HostChannel::reset(Self) -> Unit
+pub fn HostChannel::to_json(Self) -> Json
+pub fn HostChannel::to_repr(Self) -> @debug.Repr
 pub fn HostChannel::track_request(Self, id~ : Int) -> HostRequestId?
 
 pub struct HostFrameScheduler {
@@ -55,10 +57,16 @@ pub fn HostFrameScheduler::new() -> Self
 pub fn HostFrameScheduler::request(Self) -> Unit
 pub fn HostFrameScheduler::requested(Self) -> Bool
 pub fn HostFrameScheduler::reset(Self) -> Unit
+pub fn HostFrameScheduler::to_json(Self) -> Json
+pub fn HostFrameScheduler::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostRequestId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostRequestId::equal(Self, Self) -> Bool
+pub fn HostRequestId::not_equal(Self, Self) -> Bool
+pub fn HostRequestId::to_json(Self) -> Json
+pub fn HostRequestId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostSession {
   mut generation : Int
@@ -73,12 +81,18 @@ pub fn HostSession::generation(Self) -> Int
 pub fn HostSession::new(generation~ : Int) -> Self
 pub fn HostSession::state(Self) -> HostSessionState
 pub fn HostSession::surface_epoch(Self) -> Int
+pub fn HostSession::to_json(Self) -> Json
+pub fn HostSession::to_repr(Self) -> @debug.Repr
 
 pub(all) enum HostSessionState {
   Detached
   Attached
   Destroyed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostSessionState::equal(Self, Self) -> Bool
+pub fn HostSessionState::not_equal(Self, Self) -> Bool
+pub fn HostSessionState::to_json(Self) -> Json
+pub fn HostSessionState::to_repr(Self) -> @debug.Repr
 
 pub struct HostSessionTransport {
   session : HostSession
@@ -109,14 +123,22 @@ pub(all) struct HostWireEnvelope {
   surface_epoch : Int
   updates : Array[HostWireUpdate]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostWireEnvelope::equal(Self, Self) -> Bool
 pub fn HostWireEnvelope::new(session_generation~ : Int, surface_epoch~ : Int, updates~ : Array[HostWireUpdate]) -> Self
+pub fn HostWireEnvelope::not_equal(Self, Self) -> Bool
+pub fn HostWireEnvelope::to_json(Self) -> Json
 pub fn HostWireEnvelope::to_json_string(Self) -> String
+pub fn HostWireEnvelope::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostWireUpdate {
   kind : String
   request_id : HostRequestId?
   payload : Json
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostWireUpdate::equal(Self, Self) -> Bool
+pub fn HostWireUpdate::not_equal(Self, Self) -> Bool
+pub fn HostWireUpdate::to_json(Self) -> Json
+pub fn HostWireUpdate::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

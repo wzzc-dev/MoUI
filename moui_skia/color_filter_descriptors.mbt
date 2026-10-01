@@ -8,6 +8,12 @@ pub(all) enum ColorFilterDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend ColorFilterDescriptor with Debug::{to_repr}
+
+///|
+pub extend ColorFilterDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn ColorFilterDescriptor::matrix(
   values : Array[Float],
 ) -> ColorFilterDescriptor? {

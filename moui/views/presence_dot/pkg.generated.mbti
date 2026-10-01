@@ -19,7 +19,11 @@ pub(all) enum PresenceStatus {
   Offline
   Unknown
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PresenceStatus::equal(Self, Self) -> Bool
 pub fn PresenceStatus::label(Self) -> String
+pub fn PresenceStatus::not_equal(Self, Self) -> Bool
+pub fn PresenceStatus::to_json(Self) -> Json
+pub fn PresenceStatus::to_repr(Self) -> @debug.Repr
 pub fn PresenceStatus::to_string(Self) -> String
 
 // Type aliases

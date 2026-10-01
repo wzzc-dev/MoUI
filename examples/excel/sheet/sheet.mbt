@@ -11,10 +11,22 @@ pub(all) struct Selection {
 } derive(Eq, Debug)
 
 ///|
+pub extend Selection with Debug::{to_repr}
+
+///|
+pub extend Selection with Eq::{not_equal, equal}
+
+///|
 pub(all) struct Clipboard {
   cells : Array[Array[@cell.Cell]]
   origin : Selection
 } derive(Eq, Debug)
+
+///|
+pub extend Clipboard with Debug::{to_repr}
+
+///|
+pub extend Clipboard with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct IndexedCell {
@@ -23,12 +35,24 @@ pub(all) struct IndexedCell {
 } derive(Eq, Debug)
 
 ///|
+pub extend IndexedCell with Debug::{to_repr}
+
+///|
+pub extend IndexedCell with Eq::{not_equal, equal}
+
+///|
 pub(all) struct CellChange {
   row : Int
   col : Int
   old_cell : @cell.Cell
   new_cell : @cell.Cell
 } derive(Eq, Debug)
+
+///|
+pub extend CellChange with Debug::{to_repr}
+
+///|
+pub extend CellChange with Eq::{not_equal, equal}
 
 ///|
 priv struct SortRow {
@@ -55,12 +79,21 @@ pub(all) enum UndoOp {
 } derive(Eq, Debug)
 
 ///|
+pub extend UndoOp with Debug::{to_repr}
+
+///|
+pub extend UndoOp with Eq::{not_equal, equal}
+
+///|
 pub(all) struct Sheet {
   name : String
   row_count : Int
   col_count : Int
   cells : Map[String, @cell.Cell]
 } derive(Debug)
+
+///|
+pub extend Sheet with Debug::{to_repr}
 
 ///|
 pub(all) struct Workbook {
@@ -72,6 +105,9 @@ pub(all) struct Workbook {
   undo_stack : Array[UndoOp]
   redo_stack : Array[UndoOp]
 } derive(Debug)
+
+///|
+pub extend Workbook with Debug::{to_repr}
 
 ///|
 pub fn Selection::new(row~ : Int, col~ : Int) -> Selection {

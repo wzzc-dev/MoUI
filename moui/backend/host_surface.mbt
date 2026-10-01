@@ -5,12 +5,30 @@ pub(all) enum HostCoordinateSpace {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostCoordinateSpace with Debug::{to_repr}
+
+///|
+pub extend HostCoordinateSpace with Eq::{not_equal, equal}
+
+///|
+pub extend HostCoordinateSpace with ToJson::{to_json}
+
+///|
 pub(all) struct HostCoordinatePolicy {
   input_space : HostCoordinateSpace
   surface_space : HostCoordinateSpace
   scale_factor_applied : Bool
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostCoordinatePolicy with Debug::{to_repr}
+
+///|
+pub extend HostCoordinatePolicy with Eq::{not_equal, equal}
+
+///|
+pub extend HostCoordinatePolicy with ToJson::{to_json}
 
 ///|
 pub(all) enum HostBackendKind {
@@ -21,6 +39,15 @@ pub(all) enum HostBackendKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostBackendKind with Debug::{to_repr}
+
+///|
+pub extend HostBackendKind with Eq::{not_equal, equal}
+
+///|
+pub extend HostBackendKind with ToJson::{to_json}
+
+///|
 pub(all) struct HostAppInfo {
   backend : HostBackendKind
   uses_shared_event_model : Bool
@@ -28,6 +55,15 @@ pub(all) struct HostAppInfo {
   uses_shared_input_model : Bool
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostAppInfo with Debug::{to_repr}
+
+///|
+pub extend HostAppInfo with Eq::{not_equal, equal}
+
+///|
+pub extend HostAppInfo with ToJson::{to_json}
 
 ///|
 pub(all) struct HostInputCapabilities {
@@ -42,6 +78,15 @@ pub(all) struct HostInputCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostInputCapabilities with Debug::{to_repr}
+
+///|
+pub extend HostInputCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend HostInputCapabilities with ToJson::{to_json}
+
+///|
 pub(all) struct HostServiceCapabilities {
   clipboard : Bool
   menus : Bool
@@ -51,6 +96,15 @@ pub(all) struct HostServiceCapabilities {
   system_theme : Bool
   settings : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostServiceCapabilities with Debug::{to_repr}
+
+///|
+pub extend HostServiceCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend HostServiceCapabilities with ToJson::{to_json}
 
 ///|
 pub fn HostCoordinatePolicy::logical(

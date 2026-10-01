@@ -4,6 +4,12 @@ pub(all) struct ElementId {
 } derive(Eq, Debug)
 
 ///|
+pub extend ElementId with Debug::{to_repr}
+
+///|
+pub extend ElementId with Eq::{not_equal, equal}
+
+///|
 fn ElementId::new(value : Int) -> ElementId {
   { value, }
 }

@@ -86,7 +86,10 @@ pub(all) enum PlatformSurfaceLifecycle {
 } derive(Eq, @debug.Debug)
 pub fn PlatformSurfaceLifecycle::attach(@wzzc-dev/moui/core.SurfaceMetrics) -> Self
 pub fn PlatformSurfaceLifecycle::detach(Self) -> Self
+pub fn PlatformSurfaceLifecycle::equal(Self, Self) -> Bool
 pub fn PlatformSurfaceLifecycle::metrics(Self) -> @wzzc-dev/moui/core.SurfaceMetrics?
+pub fn PlatformSurfaceLifecycle::not_equal(Self, Self) -> Bool
+pub fn PlatformSurfaceLifecycle::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SurfaceState {
   mut metrics : @wzzc-dev/moui/core.SurfaceMetrics
@@ -112,6 +115,10 @@ pub(all) struct TextInputImeRequestDiagnostics {
   surrounding_text_utf8_length : Int
   surrounding_text : String?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextInputImeRequestDiagnostics::equal(Self, Self) -> Bool
+pub fn TextInputImeRequestDiagnostics::not_equal(Self, Self) -> Bool
+pub fn TextInputImeRequestDiagnostics::to_json(Self) -> Json
+pub fn TextInputImeRequestDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub struct TextInputImeStateKey {
   focused : Bool
@@ -140,6 +147,9 @@ pub(all) enum TextInputSessionAction {
   UpdateIme(@wzzc-dev/window/core.ImeRequest)
   DisableIme(@wzzc-dev/window/core.ImeRequest)
 } derive(Eq, @debug.Debug)
+pub fn TextInputSessionAction::equal(Self, Self) -> Bool
+pub fn TextInputSessionAction::not_equal(Self, Self) -> Bool
+pub fn TextInputSessionAction::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TransformedWindowEvent {
   DispatchHostEvent(@backend.Event)

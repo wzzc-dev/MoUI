@@ -33,6 +33,15 @@ pub(all) enum BlendMode {
 } derive(Debug, Eq)
 
 ///|
+pub extend BlendMode with Debug::{to_repr}
+
+///|
+pub extend BlendMode with Default::{default}
+
+///|
+pub extend BlendMode with Eq::{not_equal, equal}
+
+///|
 pub impl Default for BlendMode with fn default() {
   SrcOver
 }
@@ -81,6 +90,15 @@ pub(all) enum PaintStyle {
 } derive(Debug, Eq)
 
 ///|
+pub extend PaintStyle with Debug::{to_repr}
+
+///|
+pub extend PaintStyle with Default::{default}
+
+///|
+pub extend PaintStyle with Eq::{not_equal, equal}
+
+///|
 pub impl Default for PaintStyle with fn default() {
   Fill
 }
@@ -101,6 +119,15 @@ pub(all) enum StrokeCap {
   Round
   Square
 } derive(Debug, Eq)
+
+///|
+pub extend StrokeCap with Debug::{to_repr}
+
+///|
+pub extend StrokeCap with Default::{default}
+
+///|
+pub extend StrokeCap with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for StrokeCap with fn default() {
@@ -125,6 +152,15 @@ pub(all) enum StrokeJoin {
 } derive(Debug, Eq)
 
 ///|
+pub extend StrokeJoin with Debug::{to_repr}
+
+///|
+pub extend StrokeJoin with Default::{default}
+
+///|
+pub extend StrokeJoin with Eq::{not_equal, equal}
+
+///|
 pub impl Default for StrokeJoin with fn default() {
   Miter
 }
@@ -145,6 +181,15 @@ pub(all) enum PointMode {
   Lines
   Polygon
 } derive(Debug, Eq)
+
+///|
+pub extend PointMode with Debug::{to_repr}
+
+///|
+pub extend PointMode with Default::{default}
+
+///|
+pub extend PointMode with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for PointMode with fn default() {
@@ -170,6 +215,15 @@ pub(all) enum AlphaType {
 } derive(Debug, Eq)
 
 ///|
+pub extend AlphaType with Debug::{to_repr}
+
+///|
+pub extend AlphaType with Default::{default}
+
+///|
+pub extend AlphaType with Eq::{not_equal, equal}
+
+///|
 pub impl Default for AlphaType with fn default() {
   Unknown
 }
@@ -192,6 +246,15 @@ pub(all) enum ColorType {
 } derive(Debug, Eq)
 
 ///|
+pub extend ColorType with Debug::{to_repr}
+
+///|
+pub extend ColorType with Default::{default}
+
+///|
+pub extend ColorType with Eq::{not_equal, equal}
+
+///|
 pub impl Default for ColorType with fn default() {
   Unknown
 }
@@ -204,6 +267,15 @@ pub(all) enum TileMode {
   Mirror
   Decal
 } derive(Debug, Eq)
+
+///|
+pub extend TileMode with Debug::{to_repr}
+
+///|
+pub extend TileMode with Default::{default}
+
+///|
+pub extend TileMode with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for TileMode with fn default() {
@@ -238,6 +310,15 @@ pub(all) enum EncodedImageFormat {
   AVIF
   JPEGXL
 } derive(Debug, Eq)
+
+///|
+pub extend EncodedImageFormat with Debug::{to_repr}
+
+///|
+pub extend EncodedImageFormat with Default::{default}
+
+///|
+pub extend EncodedImageFormat with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for EncodedImageFormat with fn default() {
@@ -295,6 +376,15 @@ pub(all) enum ClipOp {
 } derive(Debug, Eq)
 
 ///|
+pub extend ClipOp with Debug::{to_repr}
+
+///|
+pub extend ClipOp with Default::{default}
+
+///|
+pub extend ClipOp with Eq::{not_equal, equal}
+
+///|
 pub impl Default for ClipOp with fn default() {
   Intersect
 }
@@ -313,6 +403,15 @@ pub(all) enum FilterMode {
   Nearest
   Linear
 } derive(Debug, Eq)
+
+///|
+pub extend FilterMode with Debug::{to_repr}
+
+///|
+pub extend FilterMode with Default::{default}
+
+///|
+pub extend FilterMode with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for FilterMode with fn default() {
@@ -334,6 +433,15 @@ pub(all) enum MipmapMode {
   Nearest
   Linear
 } derive(Debug, Eq)
+
+///|
+pub extend MipmapMode with Debug::{to_repr}
+
+///|
+pub extend MipmapMode with Default::{default}
+
+///|
+pub extend MipmapMode with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for MipmapMode with fn default() {

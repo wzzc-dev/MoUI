@@ -18,6 +18,15 @@ pub(all) struct HostCapabilitySummary {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostCapabilitySummary with Debug::{to_repr}
+
+///|
+pub extend HostCapabilitySummary with Eq::{not_equal, equal}
+
+///|
+pub extend HostCapabilitySummary with ToJson::{to_json}
+
+///|
 pub fn HostCapabilitySummary::new(
   backend~ : HostBackendKind,
   label? : String = "Host",

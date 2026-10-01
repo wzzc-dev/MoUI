@@ -27,6 +27,12 @@ pub(all) struct MarkdownReferenceContext {
 } derive(Eq, Debug)
 
 ///|
+pub extend MarkdownReferenceContext with Debug::{to_repr}
+
+///|
+pub extend MarkdownReferenceContext with Eq::{not_equal, equal}
+
+///|
 pub fn markdown_editor_link_context(
   source : String,
   selection : MarkdownEditorSelection,
@@ -353,6 +359,12 @@ pub(all) struct MarkdownLinkBounds {
   definition_target_end : Int
   reference_label : String
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownLinkBounds with Debug::{to_repr}
+
+///|
+pub extend MarkdownLinkBounds with Eq::{not_equal, equal}
 
 ///|
 /// Whole-source entry for the command and hit-test paths, which run once

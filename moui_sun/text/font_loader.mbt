@@ -7,6 +7,12 @@ pub(all) enum FontLoadError {
 } derive(Eq, Debug)
 
 ///|
+pub extend FontLoadError with Debug::{to_repr}
+
+///|
+pub extend FontLoadError with Eq::{not_equal, equal}
+
+///|
 /// Pluggable source of keyed font bytes.
 pub(open) trait FontLoader {
   fn load_font_data(Self, String) -> Result[FontData, FontLoadError]
@@ -20,16 +26,34 @@ struct FontFileSource {
 } derive(Eq, Debug)
 
 ///|
+pub extend FontFileSource with Debug::{to_repr}
+
+///|
+pub extend FontFileSource with Eq::{not_equal, equal}
+
+///|
 /// In-memory font loader for tests, embedded assets, and caller-owned bytes.
 struct MemoryFontLoader {
   mut fonts : Map[String, FontData]
 } derive(Debug)
 
 ///|
+pub extend MemoryFontLoader with Debug::{to_repr}
+
+///|
+pub extend MemoryFontLoader with FontLoader::{load_font_data}
+
+///|
 /// File-backed font loader keyed by caller-provided resource names.
 struct FileFontLoader {
   mut sources : Map[String, FontFileSource]
 } derive(Debug)
+
+///|
+pub extend FileFontLoader with Debug::{to_repr}
+
+///|
+pub extend FileFontLoader with FontLoader::{load_font_data}
 
 ///|
 /// Create a file-backed font source.

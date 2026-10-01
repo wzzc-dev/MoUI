@@ -5,11 +5,29 @@ pub struct DataGridEditCommit {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DataGridEditCommit with Debug::{to_repr}
+
+///|
+pub extend DataGridEditCommit with Eq::{not_equal, equal}
+
+///|
+pub extend DataGridEditCommit with ToJson::{to_json}
+
+///|
 pub struct DataGridEditState {
   active : DataGridCell?
   original : String
   draft : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DataGridEditState with Debug::{to_repr}
+
+///|
+pub extend DataGridEditState with Eq::{not_equal, equal}
+
+///|
+pub extend DataGridEditState with ToJson::{to_json}
 
 ///|
 pub fn DataGridEditState::idle() -> DataGridEditState {

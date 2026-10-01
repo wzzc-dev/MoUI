@@ -41,6 +41,15 @@ pub(all) enum PlanOp {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PlanOp with Debug::{to_repr}
+
+///|
+pub extend PlanOp with Eq::{not_equal, equal}
+
+///|
+pub extend PlanOp with ToJson::{to_json}
+
+///|
 /// A lowered draw stream: neutral ops plus diagnostics for structural
 /// problems found during lowering (unbalanced clip/transform/opacity/layer/
 /// filter scopes). Renderers execute `ops`; `diagnostics` is an additional
@@ -57,6 +66,12 @@ pub(all) struct DrawPlanDiagnostic {
 } derive(Eq, Debug)
 
 ///|
+pub extend DrawPlanDiagnostic with Debug::{to_repr}
+
+///|
+pub extend DrawPlanDiagnostic with Eq::{not_equal, equal}
+
+///|
 /// The scope kinds tracked for balance validation. Mirrors the state stacks
 /// every renderer used to maintain independently.
 pub(all) enum PlanScopeKind {
@@ -67,6 +82,9 @@ pub(all) enum PlanScopeKind {
   Layer
   Filter
 } derive(Eq)
+
+///|
+pub extend PlanScopeKind with Eq::{not_equal, equal}
 
 ///|
 pub fn plan_scope_name(kind : PlanScopeKind) -> String {

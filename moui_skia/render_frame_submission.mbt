@@ -29,6 +29,12 @@ pub(all) struct RenderFrameSubmissionDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderFrameSubmissionDescriptor with Debug::{to_repr}
+
+///|
+pub extend RenderFrameSubmissionDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn RenderFrameSubmissionDescriptor::new(
   frame : RenderFrameDescriptor,
   frame_index? : Int = 0,

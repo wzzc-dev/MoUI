@@ -19,6 +19,15 @@ pub(all) struct DesignRuntimeTokenAlignmentRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignRuntimeTokenAlignmentRecord with Debug::{to_repr}
+
+///|
+pub extend DesignRuntimeTokenAlignmentRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignRuntimeTokenAlignmentRecord with ToJson::{to_json}
+
+///|
 pub fn runtime_token_alignment_report(
   preset : @common.DesignPreset,
 ) -> Array[DesignRuntimeTokenAlignmentRecord] {
@@ -164,6 +173,15 @@ struct RuntimeTokenValue {
   available : Bool
   value : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RuntimeTokenValue with Debug::{to_repr}
+
+///|
+pub extend RuntimeTokenValue with Eq::{not_equal, equal}
+
+///|
+pub extend RuntimeTokenValue with ToJson::{to_json}
 
 ///|
 fn expected_runtime_token_value(

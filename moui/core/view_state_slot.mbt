@@ -28,6 +28,12 @@ pub struct ViewStateSlots {
 } derive(Eq, Debug)
 
 ///|
+pub extend ViewStateSlots with Debug::{to_repr}
+
+///|
+pub extend ViewStateSlots with Eq::{not_equal, equal}
+
+///|
 pub fn[T : ViewStateValue] ViewStateSlot::new(
   key~ : DeclarationKey,
   initial~ : T,

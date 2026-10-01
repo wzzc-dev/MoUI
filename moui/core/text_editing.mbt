@@ -6,6 +6,15 @@ pub(all) struct TextCommandResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextCommandResult with Debug::{to_repr}
+
+///|
+pub extend TextCommandResult with Eq::{not_equal, equal}
+
+///|
+pub extend TextCommandResult with ToJson::{to_json}
+
+///|
 pub fn TextCommandResult::ignored() -> TextCommandResult {
   { handled: false, changed: false, clipboard_text: None, }
 }

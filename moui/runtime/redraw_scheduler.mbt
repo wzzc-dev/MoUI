@@ -7,6 +7,15 @@ pub(all) enum RedrawSchedulerState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RedrawSchedulerState with Debug::{to_repr}
+
+///|
+pub extend RedrawSchedulerState with Eq::{not_equal, equal}
+
+///|
+pub extend RedrawSchedulerState with ToJson::{to_json}
+
+///|
 pub(all) struct RedrawScheduler {
   mut state : RedrawSchedulerState
   mut schedule : () -> Unit

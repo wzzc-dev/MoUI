@@ -9,6 +9,15 @@ pub(all) enum FormFieldStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FormFieldStatus with Debug::{to_repr}
+
+///|
+pub extend FormFieldStatus with Eq::{not_equal, equal}
+
+///|
+pub extend FormFieldStatus with ToJson::{to_json}
+
+///|
 pub fn FormFieldStatus::to_string(self : FormFieldStatus) -> String {
   match self {
     Normal => "normal"
@@ -27,6 +36,15 @@ pub(all) enum FormFieldLayout {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FormFieldLayout with Debug::{to_repr}
+
+///|
+pub extend FormFieldLayout with Eq::{not_equal, equal}
+
+///|
+pub extend FormFieldLayout with ToJson::{to_json}
+
+///|
 pub fn FormFieldLayout::to_string(self : FormFieldLayout) -> String {
   match self {
     Vertical => "vertical"
@@ -40,6 +58,15 @@ pub(all) enum FormValidationDisplay {
   OnInvalid
   Hidden
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FormValidationDisplay with Debug::{to_repr}
+
+///|
+pub extend FormValidationDisplay with Eq::{not_equal, equal}
+
+///|
+pub extend FormValidationDisplay with ToJson::{to_json}
 
 ///|
 pub fn FormValidationDisplay::to_string(self : FormValidationDisplay) -> String {

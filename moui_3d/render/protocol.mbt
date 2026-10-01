@@ -8,10 +8,28 @@ pub(all) enum ThreeDRendererStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ThreeDRendererStatus with Debug::{to_repr}
+
+///|
+pub extend ThreeDRendererStatus with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDRendererStatus with ToJson::{to_json}
+
+///|
 pub(all) enum ThreeDRendererBackend {
   NativeWgpu
   WebGpu
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThreeDRendererBackend with Debug::{to_repr}
+
+///|
+pub extend ThreeDRendererBackend with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDRendererBackend with ToJson::{to_json}
 
 ///|
 pub(all) struct ThreeDRendererDescriptor {
@@ -20,6 +38,15 @@ pub(all) struct ThreeDRendererDescriptor {
   status : ThreeDRendererStatus
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThreeDRendererDescriptor with Debug::{to_repr}
+
+///|
+pub extend ThreeDRendererDescriptor with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDRendererDescriptor with ToJson::{to_json}
 
 ///|
 pub fn ThreeDRendererDescriptor::new(
@@ -63,6 +90,15 @@ pub(all) struct ThreeDViewportSize {
   height : Int
   scale_factor : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThreeDViewportSize with Debug::{to_repr}
+
+///|
+pub extend ThreeDViewportSize with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDViewportSize with ToJson::{to_json}
 
 ///|
 pub fn ThreeDViewportSize::new(
@@ -117,10 +153,28 @@ pub(all) enum ThreeDResourceKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ThreeDResourceKind with Debug::{to_repr}
+
+///|
+pub extend ThreeDResourceKind with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDResourceKind with ToJson::{to_json}
+
+///|
 pub(all) struct ThreeDResourceKey {
   kind : ThreeDResourceKind
   value : Int64
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThreeDResourceKey with Debug::{to_repr}
+
+///|
+pub extend ThreeDResourceKey with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDResourceKey with ToJson::{to_json}
 
 ///|
 pub fn ThreeDResourceKey::new(
@@ -148,10 +202,22 @@ pub(all) enum ThreeDResourceChange {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ThreeDResourceChange with Debug::{to_repr}
+
+///|
+pub extend ThreeDResourceChange with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDResourceChange with ToJson::{to_json}
+
+///|
 pub(all) struct ThreeDResourceDiff {
   revision : Int64
   changes : Array[ThreeDResourceChange]
 } derive(Debug)
+
+///|
+pub extend ThreeDResourceDiff with Debug::{to_repr}
 
 ///|
 pub fn ThreeDResourceDiff::new(
@@ -291,6 +357,9 @@ pub(all) struct ThreeDRenderItem {
 } derive(Debug)
 
 ///|
+pub extend ThreeDRenderItem with Debug::{to_repr}
+
+///|
 pub fn ThreeDRenderItem::node(self : ThreeDRenderItem) -> @moui_3d.NodeId {
   self.node
 }
@@ -353,6 +422,9 @@ pub(all) struct ThreeDRenderPacket {
   items : Array[ThreeDRenderItem]
   resources : ThreeDResourceDiff
 } derive(Debug)
+
+///|
+pub extend ThreeDRenderPacket with Debug::{to_repr}
 
 ///|
 pub fn ThreeDRenderPacket::new(
@@ -748,6 +820,9 @@ pub(all) struct ThreeDFrame {
 } derive(Debug)
 
 ///|
+pub extend ThreeDFrame with Debug::{to_repr}
+
+///|
 pub fn ThreeDFrame::new(
   revision~ : Int64,
   snapshot~ : @moui_3d.ViewportSnapshot,
@@ -802,6 +877,15 @@ pub(all) enum ThreeDRenderResult {
   Unavailable(String)
   Failed(String)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThreeDRenderResult with Debug::{to_repr}
+
+///|
+pub extend ThreeDRenderResult with Eq::{not_equal, equal}
+
+///|
+pub extend ThreeDRenderResult with ToJson::{to_json}
 
 ///|
 pub struct ThreeDRendererSession {

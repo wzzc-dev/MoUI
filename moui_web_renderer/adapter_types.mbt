@@ -19,11 +19,29 @@ pub(all) suberror WebGpuHostError {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebGpuHostError with Debug::{to_repr}
+
+///|
+pub extend WebGpuHostError with Eq::{not_equal, equal}
+
+///|
+pub extend WebGpuHostError with ToJson::{to_json}
+
+///|
 pub struct WebGpuHostCapabilities {
   priv webgpu_available : Bool
   priv adapter_ready : Bool
   priv can_render : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WebGpuHostCapabilities with Debug::{to_repr}
+
+///|
+pub extend WebGpuHostCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend WebGpuHostCapabilities with ToJson::{to_json}
 
 ///|
 pub struct WebGpuHostImportInfo {
@@ -35,6 +53,15 @@ pub struct WebGpuHostImportInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebGpuHostImportInfo with Debug::{to_repr}
+
+///|
+pub extend WebGpuHostImportInfo with Eq::{not_equal, equal}
+
+///|
+pub extend WebGpuHostImportInfo with ToJson::{to_json}
+
+///|
 pub struct WebGpuHostAdapterInfo {
   priv renderer : @render.RendererBackendInfo
   priv surface_contract : @render.WgpuSurfaceContract
@@ -42,6 +69,15 @@ pub struct WebGpuHostAdapterInfo {
   priv capabilities : WebGpuHostCapabilities
   priv description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WebGpuHostAdapterInfo with Debug::{to_repr}
+
+///|
+pub extend WebGpuHostAdapterInfo with Eq::{not_equal, equal}
+
+///|
+pub extend WebGpuHostAdapterInfo with ToJson::{to_json}
 
 ///|
 pub(all) enum WebGpuHostCall {
@@ -74,6 +110,15 @@ pub(all) enum WebGpuHostCall {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebGpuHostCall with Debug::{to_repr}
+
+///|
+pub extend WebGpuHostCall with Eq::{not_equal, equal}
+
+///|
+pub extend WebGpuHostCall with ToJson::{to_json}
+
+///|
 priv struct HostBrushPayload {
   start : @core.Point
   end : @core.Point
@@ -101,6 +146,15 @@ pub struct WebGpuHostSurface {
   priv canvas_id : String
   priv mut metrics : @core.SurfaceMetrics
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WebGpuHostSurface with Debug::{to_repr}
+
+///|
+pub extend WebGpuHostSurface with Eq::{not_equal, equal}
+
+///|
+pub extend WebGpuHostSurface with ToJson::{to_json}
 
 ///|
 pub struct WebGpuHostRendererPort {

@@ -9,6 +9,15 @@ pub(all) enum ButtonVariant {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ButtonVariant with Debug::{to_repr}
+
+///|
+pub extend ButtonVariant with Eq::{not_equal, equal}
+
+///|
+pub extend ButtonVariant with ToJson::{to_json}
+
+///|
 pub(all) enum TextFieldVariant {
   Filled
   Outline
@@ -16,11 +25,35 @@ pub(all) enum TextFieldVariant {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextFieldVariant with Debug::{to_repr}
+
+///|
+pub extend TextFieldVariant with Eq::{not_equal, equal}
+
+///|
+pub extend TextFieldVariant with Show::{to_string, output}
+
+///|
+pub extend TextFieldVariant with ToJson::{to_json}
+
+///|
 pub(all) enum ContainerVariant {
   Base
   Raised
   Overlay
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ContainerVariant with Debug::{to_repr}
+
+///|
+pub extend ContainerVariant with Eq::{not_equal, equal}
+
+///|
+pub extend ContainerVariant with Show::{to_string, output}
+
+///|
+pub extend ContainerVariant with ToJson::{to_json}
 
 ///|
 pub(all) enum TextRole {
@@ -37,6 +70,18 @@ pub(all) enum TextRole {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextRole with Debug::{to_repr}
+
+///|
+pub extend TextRole with Eq::{not_equal, equal}
+
+///|
+pub extend TextRole with Show::{to_string, output}
+
+///|
+pub extend TextRole with ToJson::{to_json}
+
+///|
 pub(all) enum MainAlign {
   Start
   Center
@@ -47,12 +92,36 @@ pub(all) enum MainAlign {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MainAlign with Debug::{to_repr}
+
+///|
+pub extend MainAlign with Eq::{not_equal, equal}
+
+///|
+pub extend MainAlign with Show::{to_string, output}
+
+///|
+pub extend MainAlign with ToJson::{to_json}
+
+///|
 pub(all) enum CrossAlign {
   Start
   Center
   End
   Stretch
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend CrossAlign with Debug::{to_repr}
+
+///|
+pub extend CrossAlign with Eq::{not_equal, equal}
+
+///|
+pub extend CrossAlign with Show::{to_string, output}
+
+///|
+pub extend CrossAlign with ToJson::{to_json}
 
 ///|
 pub(all) enum ChipVariant {
@@ -62,10 +131,34 @@ pub(all) enum ChipVariant {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ChipVariant with Debug::{to_repr}
+
+///|
+pub extend ChipVariant with Eq::{not_equal, equal}
+
+///|
+pub extend ChipVariant with Show::{to_string, output}
+
+///|
+pub extend ChipVariant with ToJson::{to_json}
+
+///|
 pub(all) enum SegmentedControlSize {
   Compact
   Regular
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SegmentedControlSize with Debug::{to_repr}
+
+///|
+pub extend SegmentedControlSize with Eq::{not_equal, equal}
+
+///|
+pub extend SegmentedControlSize with Show::{to_string, output}
+
+///|
+pub extend SegmentedControlSize with ToJson::{to_json}
 
 ///|
 pub(all) enum FeedbackTone {
@@ -77,6 +170,18 @@ pub(all) enum FeedbackTone {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FeedbackTone with Debug::{to_repr}
+
+///|
+pub extend FeedbackTone with Eq::{not_equal, equal}
+
+///|
+pub extend FeedbackTone with Show::{to_string, output}
+
+///|
+pub extend FeedbackTone with ToJson::{to_json}
+
+///|
 pub(all) enum BadgeTone {
   Neutral
   Accent
@@ -86,10 +191,34 @@ pub(all) enum BadgeTone {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend BadgeTone with Debug::{to_repr}
+
+///|
+pub extend BadgeTone with Eq::{not_equal, equal}
+
+///|
+pub extend BadgeTone with Show::{to_string, output}
+
+///|
+pub extend BadgeTone with ToJson::{to_json}
+
+///|
 pub(all) enum SheetPresentationMode {
   Modal
   BottomSheet
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SheetPresentationMode with Debug::{to_repr}
+
+///|
+pub extend SheetPresentationMode with Eq::{not_equal, equal}
+
+///|
+pub extend SheetPresentationMode with Show::{to_string, output}
+
+///|
+pub extend SheetPresentationMode with ToJson::{to_json}
 
 ///|
 pub(all) enum IconName {
@@ -126,11 +255,32 @@ pub(all) enum IconName {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend IconName with Debug::{to_repr}
+
+///|
+pub extend IconName with Eq::{not_equal, equal}
+
+///|
+pub extend IconName with ToJson::{to_json}
+
+///|
 pub(all) enum DatePickerMode {
   Date
   DateAndTime
   Time
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DatePickerMode with Debug::{to_repr}
+
+///|
+pub extend DatePickerMode with Eq::{not_equal, equal}
+
+///|
+pub extend DatePickerMode with Show::{to_string, output}
+
+///|
+pub extend DatePickerMode with ToJson::{to_json}
 
 ///|
 pub fn ButtonVariant::style(

@@ -65,6 +65,15 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WindowsAccessibilityBridgeInfo with Debug::{to_repr}
+
+///|
+pub extend WindowsAccessibilityBridgeInfo with Eq::{not_equal, equal}
+
+///|
+pub extend WindowsAccessibilityBridgeInfo with ToJson::{to_json}
+
+///|
 pub struct WindowsHostAppOptions {
   priv scene_resolver : @window_lifecycle.WindowSceneResolver
   priv event_sources : @runtime.HostPlatformEventSources?
@@ -116,6 +125,21 @@ struct WindowsNativeHostBackend {
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
+}
+
+///|
+pub extend WindowsNativeHostBackend with @wzzc-dev/window/windows.ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
 }
 
 ///|

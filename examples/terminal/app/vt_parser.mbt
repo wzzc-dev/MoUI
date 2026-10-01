@@ -9,6 +9,12 @@ pub(all) enum ParseState {
 } derive(Eq, Debug)
 
 ///|
+pub extend ParseState with Debug::{to_repr}
+
+///|
+pub extend ParseState with Eq::{not_equal, equal}
+
+///|
 /// VT/ANSI 转义序列解析器(参考 xterm.js 状态机简化版)。
 /// 输出直接作用到 TermScreen。
 pub(all) struct VtParser {

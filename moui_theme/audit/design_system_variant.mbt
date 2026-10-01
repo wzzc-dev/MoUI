@@ -22,6 +22,15 @@ pub(all) struct DesignVariantResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignVariantResolverRecord with Debug::{to_repr}
+
+///|
+pub extend DesignVariantResolverRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignVariantResolverRecord with ToJson::{to_json}
+
+///|
 pub fn variant_resolver_report(
   preset : @common.DesignPreset,
   system_scheme? : @core.ColorScheme = Dark,

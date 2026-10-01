@@ -143,6 +143,10 @@ pub struct ChoiceItem {
   id : String
   label : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceItem::equal(Self, Self) -> Bool
+pub fn ChoiceItem::not_equal(Self, Self) -> Bool
+pub fn ChoiceItem::to_json(Self) -> Json
+pub fn ChoiceItem::to_repr(Self) -> @debug.Repr
 
 pub struct CommandMenuSection {
   title : String

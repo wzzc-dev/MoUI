@@ -9,6 +9,15 @@ pub(all) enum GpuContextBackend {
 } derive(Debug, Eq)
 
 ///|
+pub extend GpuContextBackend with Debug::{to_repr}
+
+///|
+pub extend GpuContextBackend with Default::{default}
+
+///|
+pub extend GpuContextBackend with Eq::{not_equal, equal}
+
+///|
 pub impl Default for GpuContextBackend with fn default() {
   MockGpuContext
 }
@@ -40,6 +49,12 @@ pub(all) struct GpuContextDescriptor {
   queue_family_index : Int
   protected_context : Bool
 } derive(Debug, Eq)
+
+///|
+pub extend GpuContextDescriptor with Debug::{to_repr}
+
+///|
+pub extend GpuContextDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn GpuContextDescriptor::new(

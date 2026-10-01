@@ -5,6 +5,15 @@ pub(all) struct AndroidSurfaceHandle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend AndroidSurfaceHandle with Debug::{to_repr}
+
+///|
+pub extend AndroidSurfaceHandle with Eq::{not_equal, equal}
+
+///|
+pub extend AndroidSurfaceHandle with ToJson::{to_json}
+
+///|
 pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> AndroidSurfaceHandle {
   { raw, }
 }
@@ -36,6 +45,15 @@ pub(all) struct AndroidBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend AndroidBackendCapabilities with Debug::{to_repr}
+
+///|
+pub extend AndroidBackendCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend AndroidBackendCapabilities with ToJson::{to_json}
+
+///|
 /// `ready` means the window-hosted path is **experimental**: it compiles and
 /// host-sim tests pass, but no development/demonstration usability or product
 /// commitment is made without matching-device evidence. It does **not** mean
@@ -51,6 +69,15 @@ pub(all) struct AndroidBackendReadiness {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend AndroidBackendReadiness with Debug::{to_repr}
+
+///|
+pub extend AndroidBackendReadiness with Eq::{not_equal, equal}
+
+///|
+pub extend AndroidBackendReadiness with ToJson::{to_json}
+
+///|
 pub(all) struct AndroidBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : AndroidBackendCapabilities
@@ -59,6 +86,15 @@ pub(all) struct AndroidBackendInfo {
   readiness : AndroidBackendReadiness
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend AndroidBackendInfo with Debug::{to_repr}
+
+///|
+pub extend AndroidBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend AndroidBackendInfo with ToJson::{to_json}
 
 ///|
 pub struct AndroidSurfaceBinding {

@@ -13,6 +13,15 @@ pub(all) struct DirectoryEntry {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DirectoryEntry with Debug::{to_repr}
+
+///|
+pub extend DirectoryEntry with Eq::{not_equal, equal}
+
+///|
+pub extend DirectoryEntry with ToJson::{to_json}
+
+///|
 pub struct FileServices {
   open_file_fn : (FileDialogOptions) -> ServiceTask[String]
   save_file_fn : (FileDialogOptions) -> ServiceTask[String]

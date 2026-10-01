@@ -7,6 +7,15 @@ pub(all) struct Color {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Color with Debug::{to_repr}
+
+///|
+pub extend Color with Eq::{not_equal, equal}
+
+///|
+pub extend Color with ToJson::{to_json}
+
+///|
 pub(all) enum FontFamily {
   Name(String)
   SystemUi
@@ -22,9 +31,27 @@ pub(all) enum FontFamily {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FontFamily with Debug::{to_repr}
+
+///|
+pub extend FontFamily with Eq::{not_equal, equal}
+
+///|
+pub extend FontFamily with ToJson::{to_json}
+
+///|
 pub(all) struct FontFamilyStack {
   families : Array[FontFamily]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FontFamilyStack with Debug::{to_repr}
+
+///|
+pub extend FontFamilyStack with Eq::{not_equal, equal}
+
+///|
+pub extend FontFamilyStack with ToJson::{to_json}
 
 ///|
 pub(all) enum FontStyle {
@@ -33,12 +60,30 @@ pub(all) enum FontStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FontStyle with Debug::{to_repr}
+
+///|
+pub extend FontStyle with Eq::{not_equal, equal}
+
+///|
+pub extend FontStyle with ToJson::{to_json}
+
+///|
 /// A single variation axis of a variable font. `axis` is the 4-character
 /// OpenType tag (e.g. "wght", "wdth", "ital", "opsz", "slnt").
 pub struct FontVariation {
   axis : String
   value : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FontVariation with Debug::{to_repr}
+
+///|
+pub extend FontVariation with Eq::{not_equal, equal}
+
+///|
+pub extend FontVariation with ToJson::{to_json}
 
 ///|
 pub(all) struct FontSpec {
@@ -50,11 +95,29 @@ pub(all) struct FontSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FontSpec with Debug::{to_repr}
+
+///|
+pub extend FontSpec with Eq::{not_equal, equal}
+
+///|
+pub extend FontSpec with ToJson::{to_json}
+
+///|
 pub(all) enum TextAlign {
   TextStart
   TextCenter
   TextEnd
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextAlign with Debug::{to_repr}
+
+///|
+pub extend TextAlign with Eq::{not_equal, equal}
+
+///|
+pub extend TextAlign with ToJson::{to_json}
 
 ///|
 pub(all) struct TextRun {
@@ -66,10 +129,28 @@ pub(all) struct TextRun {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextRun with Debug::{to_repr}
+
+///|
+pub extend TextRun with Eq::{not_equal, equal}
+
+///|
+pub extend TextRun with ToJson::{to_json}
+
+///|
 pub(all) struct RoundedRect {
   rect : Rect
   radius : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RoundedRect with Debug::{to_repr}
+
+///|
+pub extend RoundedRect with Eq::{not_equal, equal}
+
+///|
+pub extend RoundedRect with ToJson::{to_json}
 
 ///|
 pub(all) struct LinearGradientSpec {
@@ -80,6 +161,15 @@ pub(all) struct LinearGradientSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend LinearGradientSpec with Debug::{to_repr}
+
+///|
+pub extend LinearGradientSpec with Eq::{not_equal, equal}
+
+///|
+pub extend LinearGradientSpec with ToJson::{to_json}
+
+///|
 pub(all) struct RadialGradientSpec {
   center : Point
   radius : Double
@@ -88,11 +178,29 @@ pub(all) struct RadialGradientSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RadialGradientSpec with Debug::{to_repr}
+
+///|
+pub extend RadialGradientSpec with Eq::{not_equal, equal}
+
+///|
+pub extend RadialGradientSpec with ToJson::{to_json}
+
+///|
 pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
   RadialGradient(RadialGradientSpec)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend Brush with Debug::{to_repr}
+
+///|
+pub extend Brush with Eq::{not_equal, equal}
+
+///|
+pub extend Brush with ToJson::{to_json}
 
 ///|
 pub(all) struct ShadowSpec {
@@ -104,12 +212,30 @@ pub(all) struct ShadowSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ShadowSpec with Debug::{to_repr}
+
+///|
+pub extend ShadowSpec with Eq::{not_equal, equal}
+
+///|
+pub extend ShadowSpec with ToJson::{to_json}
+
+///|
 pub(all) struct ImageRun {
   source : String
   frame : Rect
   opacity : Double
   fit : ImageFit
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ImageRun with Debug::{to_repr}
+
+///|
+pub extend ImageRun with Eq::{not_equal, equal}
+
+///|
+pub extend ImageRun with ToJson::{to_json}
 
 ///|
 pub(all) struct Transform2D {
@@ -122,6 +248,15 @@ pub(all) struct Transform2D {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Transform2D with Debug::{to_repr}
+
+///|
+pub extend Transform2D with Eq::{not_equal, equal}
+
+///|
+pub extend Transform2D with ToJson::{to_json}
+
+///|
 pub(all) enum BlendMode {
   SourceOver
   Multiply
@@ -132,11 +267,29 @@ pub(all) enum BlendMode {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend BlendMode with Debug::{to_repr}
+
+///|
+pub extend BlendMode with Eq::{not_equal, equal}
+
+///|
+pub extend BlendMode with ToJson::{to_json}
+
+///|
 pub(all) enum LayerMask {
   NoMask
   RectMask(Rect)
   RoundedMask(RoundedRect)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend LayerMask with Debug::{to_repr}
+
+///|
+pub extend LayerMask with Eq::{not_equal, equal}
+
+///|
+pub extend LayerMask with ToJson::{to_json}
 
 ///|
 pub(all) struct LayerSpec {
@@ -147,12 +300,30 @@ pub(all) struct LayerSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend LayerSpec with Debug::{to_repr}
+
+///|
+pub extend LayerSpec with Eq::{not_equal, equal}
+
+///|
+pub extend LayerSpec with ToJson::{to_json}
+
+///|
 pub(all) struct RetainedLayerSpec {
   key : String
   frame : Rect
   content_revision : Int
   scale_factor : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RetainedLayerSpec with Debug::{to_repr}
+
+///|
+pub extend RetainedLayerSpec with Eq::{not_equal, equal}
+
+///|
+pub extend RetainedLayerSpec with ToJson::{to_json}
 
 ///|
 pub(all) enum FilterEffect {
@@ -164,6 +335,15 @@ pub(all) enum FilterEffect {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FilterEffect with Debug::{to_repr}
+
+///|
+pub extend FilterEffect with Eq::{not_equal, equal}
+
+///|
+pub extend FilterEffect with ToJson::{to_json}
+
+///|
 pub(all) enum PathVerb {
   MoveTo(Point)
   LineTo(Point)
@@ -171,6 +351,15 @@ pub(all) enum PathVerb {
   CubicTo(Point, Point, Point)
   Close
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend PathVerb with Debug::{to_repr}
+
+///|
+pub extend PathVerb with Eq::{not_equal, equal}
+
+///|
+pub extend PathVerb with ToJson::{to_json}
 
 ///|
 pub(all) struct PathSpec {
@@ -181,12 +370,30 @@ pub(all) struct PathSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PathSpec with Debug::{to_repr}
+
+///|
+pub extend PathSpec with Eq::{not_equal, equal}
+
+///|
+pub extend PathSpec with ToJson::{to_json}
+
+///|
 pub(all) struct ShaderEffectSpec {
   name : String
   frame : Rect
   uniforms : Array[Double]
   fallback : Brush
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ShaderEffectSpec with Debug::{to_repr}
+
+///|
+pub extend ShaderEffectSpec with Eq::{not_equal, equal}
+
+///|
+pub extend ShaderEffectSpec with ToJson::{to_json}
 
 ///|
 pub(all) enum DrawCommand {
@@ -217,6 +424,15 @@ pub(all) enum DrawCommand {
   DrawPath(PathSpec)
   DrawShaderEffect(ShaderEffectSpec)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DrawCommand with Debug::{to_repr}
+
+///|
+pub extend DrawCommand with Eq::{not_equal, equal}
+
+///|
+pub extend DrawCommand with ToJson::{to_json}
 
 ///|
 pub fn Color::rgba(

@@ -8,10 +8,28 @@ pub(all) enum Workspace {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Workspace with Debug::{to_repr}
+
+///|
+pub extend Workspace with Eq::{not_equal, equal}
+
+///|
+pub extend Workspace with ToJson::{to_json}
+
+///|
 pub(all) struct ShowcaseRoute {
   workspace : Workspace
   id : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ShowcaseRoute with Debug::{to_repr}
+
+///|
+pub extend ShowcaseRoute with Eq::{not_equal, equal}
+
+///|
+pub extend ShowcaseRoute with ToJson::{to_json}
 
 ///|
 pub fn Workspace::slug(self : Workspace) -> String {

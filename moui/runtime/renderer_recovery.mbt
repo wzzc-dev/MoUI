@@ -39,6 +39,15 @@ pub(all) enum RendererRecoveryState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererRecoveryState with Debug::{to_repr}
+
+///|
+pub extend RendererRecoveryState with Eq::{not_equal, equal}
+
+///|
+pub extend RendererRecoveryState with ToJson::{to_json}
+
+///|
 /// Tunable recovery budget. Per ADR 0006, context-loss recovery must
 /// complete within 3 VSyncs. Repeated failure above
 /// `max_consecutive_recovery_failures` triggers the raster fallback.
@@ -53,6 +62,15 @@ pub(all) struct RendererRecoveryBudget {
   /// falls back).
   max_consecutive_recovery_failures : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererRecoveryBudget with Debug::{to_repr}
+
+///|
+pub extend RendererRecoveryBudget with Eq::{not_equal, equal}
+
+///|
+pub extend RendererRecoveryBudget with ToJson::{to_json}
 
 ///|
 pub struct RendererRecovery {
@@ -331,3 +349,12 @@ pub(all) struct RendererRecoverySnapshot {
   consecutive_failures : Int
   fallback_reason : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererRecoverySnapshot with Debug::{to_repr}
+
+///|
+pub extend RendererRecoverySnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend RendererRecoverySnapshot with ToJson::{to_json}

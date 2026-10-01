@@ -6,6 +6,12 @@ pub(all) struct TodoItem {
 } derive(Eq, Debug)
 
 ///|
+pub extend TodoItem with Debug::{to_repr}
+
+///|
+pub extend TodoItem with Eq::{not_equal, equal}
+
+///|
 pub struct Model {
   route : String
   counter : Int

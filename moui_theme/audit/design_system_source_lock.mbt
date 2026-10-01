@@ -8,6 +8,15 @@ pub(all) enum DesignSourceRefKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignSourceRefKind with Debug::{to_repr}
+
+///|
+pub extend DesignSourceRefKind with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSourceRefKind with ToJson::{to_json}
+
+///|
 pub(all) struct DesignSourceLockRecord {
   preset : @common.DesignPreset
   source_label : String
@@ -22,6 +31,15 @@ pub(all) struct DesignSourceLockRecord {
   status : DesignTokenStatus
   note : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignSourceLockRecord with Debug::{to_repr}
+
+///|
+pub extend DesignSourceLockRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSourceLockRecord with ToJson::{to_json}
 
 ///|
 pub fn DesignSourceRefKind::label(preset : DesignSourceRefKind) -> String {

@@ -6,10 +6,28 @@ pub(all) enum XrSessionMode {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend XrSessionMode with Debug::{to_repr}
+
+///|
+pub extend XrSessionMode with Eq::{not_equal, equal}
+
+///|
+pub extend XrSessionMode with ToJson::{to_json}
+
+///|
 pub(all) enum XrBackend {
   WebXr
   OpenXr
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend XrBackend with Debug::{to_repr}
+
+///|
+pub extend XrBackend with Eq::{not_equal, equal}
+
+///|
+pub extend XrBackend with ToJson::{to_json}
 
 ///|
 pub(all) struct XrView {
@@ -20,6 +38,9 @@ pub(all) struct XrView {
   viewport_width : Int
   viewport_height : Int
 } derive(Debug)
+
+///|
+pub extend XrView with Debug::{to_repr}
 
 ///|
 pub fn XrView::new(
@@ -60,6 +81,15 @@ pub(all) struct XrPose {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend XrPose with Debug::{to_repr}
+
+///|
+pub extend XrPose with Eq::{not_equal, equal}
+
+///|
+pub extend XrPose with ToJson::{to_json}
+
+///|
 pub fn XrPose::new(
   position~ : @moui_3d.Vec3,
   orientation~ : @moui_3d.Quat,
@@ -84,6 +114,9 @@ pub(all) struct XrInputSource {
   grip : XrPose?
   target_ray : XrPose?
 } derive(Debug)
+
+///|
+pub extend XrInputSource with Debug::{to_repr}
 
 ///|
 pub fn XrInputSource::new(
@@ -123,6 +156,9 @@ pub(all) struct XrFrame {
 } derive(Debug)
 
 ///|
+pub extend XrFrame with Debug::{to_repr}
+
+///|
 pub fn XrFrame::new(
   timestamp~ : Double,
   views~ : Array[XrView],
@@ -154,11 +190,29 @@ pub(all) enum XrResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend XrResult with Debug::{to_repr}
+
+///|
+pub extend XrResult with Eq::{not_equal, equal}
+
+///|
+pub extend XrResult with ToJson::{to_json}
+
+///|
 pub(all) struct XrProviderDescriptor {
   backend : XrBackend
   id : String
   status : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend XrProviderDescriptor with Debug::{to_repr}
+
+///|
+pub extend XrProviderDescriptor with Eq::{not_equal, equal}
+
+///|
+pub extend XrProviderDescriptor with ToJson::{to_json}
 
 ///|
 pub fn XrProviderDescriptor::new(

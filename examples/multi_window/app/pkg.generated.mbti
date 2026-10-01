@@ -40,6 +40,8 @@ pub(all) enum Scene {
   Main
   Inspector(String)
 } derive(Eq)
+pub fn Scene::equal(Self, Self) -> Bool
+pub fn Scene::not_equal(Self, Self) -> Bool
 
 pub struct WindowActions {
   dispatch : (WindowRequest) -> Unit
@@ -56,11 +58,19 @@ pub(all) enum WindowEvent {
   Updated(WindowId)
   Rejected(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WindowEvent::equal(Self, Self) -> Bool
+pub fn WindowEvent::not_equal(Self, Self) -> Bool
+pub fn WindowEvent::to_json(Self) -> Json
+pub fn WindowEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WindowId::equal(Self, Self) -> Bool
 pub fn WindowId::new(Int) -> Self
+pub fn WindowId::not_equal(Self, Self) -> Bool
+pub fn WindowId::to_json(Self) -> Json
+pub fn WindowId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowOpenRequest {
   title : String
@@ -68,19 +78,31 @@ pub(all) struct WindowOpenRequest {
   width : Double
   height : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WindowOpenRequest::equal(Self, Self) -> Bool
 pub fn WindowOpenRequest::new(title~ : String, scene~ : WindowScene, width~ : Double, height~ : Double) -> Self
+pub fn WindowOpenRequest::not_equal(Self, Self) -> Bool
+pub fn WindowOpenRequest::to_json(Self) -> Json
+pub fn WindowOpenRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WindowRequest {
   Open(WindowOpenRequest)
   Focus(WindowId)
   Close(WindowId)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WindowRequest::equal(Self, Self) -> Bool
+pub fn WindowRequest::not_equal(Self, Self) -> Bool
+pub fn WindowRequest::to_json(Self) -> Json
+pub fn WindowRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowScene {
   scene_id : String
   payload : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WindowScene::equal(Self, Self) -> Bool
 pub fn WindowScene::new(scene_id~ : String, payload? : String) -> Self
+pub fn WindowScene::not_equal(Self, Self) -> Bool
+pub fn WindowScene::to_json(Self) -> Json
+pub fn WindowScene::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

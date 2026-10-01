@@ -5,6 +5,12 @@ pub(all) struct ClipboardImage {
 } derive(Eq, Debug)
 
 ///|
+pub extend ClipboardImage with Debug::{to_repr}
+
+///|
+pub extend ClipboardImage with Eq::{not_equal, equal}
+
+///|
 pub struct ClipboardServices {
   read_text_fn : () -> ServiceTask[String]
   write_text_fn : (String) -> ServiceTask[Unit]
@@ -40,6 +46,12 @@ pub(all) enum ApplicationMenuPlacement {
   MenuBar
   ApplicationMenu
 } derive(Eq, Debug)
+
+///|
+pub extend ApplicationMenuPlacement with Debug::{to_repr}
+
+///|
+pub extend ApplicationMenuPlacement with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct ApplicationMenu {

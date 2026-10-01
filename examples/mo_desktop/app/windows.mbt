@@ -10,6 +10,18 @@ pub(all) enum AppKind {
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|
+pub extend AppKind with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend AppKind with Debug::{to_repr}
+
+///|
+pub extend AppKind with Eq::{not_equal, equal}
+
+///|
+pub extend AppKind with ToJson::{to_json}
+
+///|
 /// Stable identity for one window instance. `serial` comes from a
 /// monotonically increasing counter on the model, so ids are never reused
 /// within a session.
@@ -19,12 +31,36 @@ pub(all) struct WindowId {
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|
+pub extend WindowId with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend WindowId with Debug::{to_repr}
+
+///|
+pub extend WindowId with Eq::{not_equal, equal}
+
+///|
+pub extend WindowId with ToJson::{to_json}
+
+///|
 /// Lifecycle of a single window, mirroring macOS zoom/minimize semantics.
 pub(all) enum WindowState {
   NormalWindow
   MinimizedWindow
   MaximizedWindow
 } derive(Eq, Debug, ToJson, FromJson)
+
+///|
+pub extend WindowState with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend WindowState with Debug::{to_repr}
+
+///|
+pub extend WindowState with Eq::{not_equal, equal}
+
+///|
+pub extend WindowState with ToJson::{to_json}
 
 ///|
 /// Persisted geometry of one window. Offsets are relative to the centered
@@ -36,6 +72,18 @@ pub(all) struct WindowBounds {
   width : Double
   height : Double
 } derive(Eq, Debug, ToJson, FromJson)
+
+///|
+pub extend WindowBounds with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend WindowBounds with Debug::{to_repr}
+
+///|
+pub extend WindowBounds with Eq::{not_equal, equal}
+
+///|
+pub extend WindowBounds with ToJson::{to_json}
 
 ///|
 fn WindowBounds::default() -> WindowBounds {
@@ -52,6 +100,18 @@ pub(all) struct WindowRecord {
   bounds : WindowBounds
   z_order : Int
 } derive(Eq, Debug, ToJson, FromJson)
+
+///|
+pub extend WindowRecord with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend WindowRecord with Debug::{to_repr}
+
+///|
+pub extend WindowRecord with Eq::{not_equal, equal}
+
+///|
+pub extend WindowRecord with ToJson::{to_json}
 
 ///|
 let window_offset_limit_x : Double = 360.0

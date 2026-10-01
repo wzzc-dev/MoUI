@@ -8,6 +8,15 @@ pub struct RuntimeFrameTiming {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RuntimeFrameTiming with Debug::{to_repr}
+
+///|
+pub extend RuntimeFrameTiming with Eq::{not_equal, equal}
+
+///|
+pub extend RuntimeFrameTiming with ToJson::{to_json}
+
+///|
 pub struct ProfiledDrawFrame {
   priv frame : @core.DrawFrame
   priv timing : RuntimeFrameTiming

@@ -25,6 +25,12 @@ pub(all) struct ChildLayoutInfo {
 } derive(Eq, Debug)
 
 ///|
+pub extend ChildLayoutInfo with Debug::{to_repr}
+
+///|
+pub extend ChildLayoutInfo with Eq::{not_equal, equal}
+
+///|
 /// Construct a `ChildLayoutInfo` from measured child data. The runtime uses
 /// this when assembling `CustomLayoutContext.children`; downstream packages
 /// use it when building tests for custom layout delegates.
@@ -60,6 +66,15 @@ pub(all) struct AlignmentGuideSet {
   trailing : Double
   first_baseline : Double?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend AlignmentGuideSet with Debug::{to_repr}
+
+///|
+pub extend AlignmentGuideSet with Eq::{not_equal, equal}
+
+///|
+pub extend AlignmentGuideSet with ToJson::{to_json}
 
 ///|
 /// Layout context for a custom children-layout delegate. The runtime measures

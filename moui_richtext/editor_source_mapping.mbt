@@ -1119,6 +1119,12 @@ struct MarkdownEditorHtmlBlockParseResult {
 } derive(Eq, Debug)
 
 ///|
+pub extend MarkdownEditorHtmlBlockParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorHtmlBlockParseResult with Eq::{not_equal, equal}
+
+///|
 fn markdown_editor_html_block_at(
   lines : Array[MarkdownLine],
   index : Int,
@@ -1299,6 +1305,12 @@ struct MarkdownEditorSetextHeadingParseResult {
   block : MarkdownEditorBlock
   end_index : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownEditorSetextHeadingParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorSetextHeadingParseResult with Eq::{not_equal, equal}
 
 ///|
 fn markdown_editor_setext_heading_block_at(
@@ -1847,6 +1859,12 @@ struct MarkdownEditorIndentedCodeParseResult {
 } derive(Eq, Debug)
 
 ///|
+pub extend MarkdownEditorIndentedCodeParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorIndentedCodeParseResult with Eq::{not_equal, equal}
+
+///|
 fn markdown_editor_indented_code_block_at(
   lines : Array[MarkdownLine],
   index : Int,
@@ -1941,6 +1959,12 @@ struct MarkdownEditorParagraphParseResult {
   block : MarkdownEditorBlock
   end_index : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownEditorParagraphParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorParagraphParseResult with Eq::{not_equal, equal}
 
 ///|
 fn markdown_editor_soft_wrapped_paragraph_block_at(
@@ -2681,6 +2705,12 @@ struct MarkdownEditorRunSourceRange {
   start : Int
   end : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownEditorRunSourceRange with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorRunSourceRange with Eq::{not_equal, equal}
 
 ///|
 fn markdown_editor_find_run_source_range(

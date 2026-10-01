@@ -5,6 +5,15 @@ pub(all) struct HarmonyOSSurfaceHandle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HarmonyOSSurfaceHandle with Debug::{to_repr}
+
+///|
+pub extend HarmonyOSSurfaceHandle with Eq::{not_equal, equal}
+
+///|
+pub extend HarmonyOSSurfaceHandle with ToJson::{to_json}
+
+///|
 pub fn HarmonyOSSurfaceHandle::new(raw~ : UInt64) -> HarmonyOSSurfaceHandle {
   { raw, }
 }
@@ -36,6 +45,15 @@ pub(all) struct HarmonyOSBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HarmonyOSBackendCapabilities with Debug::{to_repr}
+
+///|
+pub extend HarmonyOSBackendCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend HarmonyOSBackendCapabilities with ToJson::{to_json}
+
+///|
 /// `ready` means the window-hosted path is **experimental**: it compiles and
 /// host-sim tests pass, but no development/demonstration usability or product
 /// commitment is made without signed-device evidence. It does **not** mean
@@ -51,6 +69,15 @@ pub(all) struct HarmonyOSBackendReadiness {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HarmonyOSBackendReadiness with Debug::{to_repr}
+
+///|
+pub extend HarmonyOSBackendReadiness with Eq::{not_equal, equal}
+
+///|
+pub extend HarmonyOSBackendReadiness with ToJson::{to_json}
+
+///|
 pub(all) struct HarmonyOSBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : HarmonyOSBackendCapabilities
@@ -59,6 +86,15 @@ pub(all) struct HarmonyOSBackendInfo {
   readiness : HarmonyOSBackendReadiness
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HarmonyOSBackendInfo with Debug::{to_repr}
+
+///|
+pub extend HarmonyOSBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend HarmonyOSBackendInfo with ToJson::{to_json}
 
 ///|
 pub struct HarmonyOSSurfaceBinding {

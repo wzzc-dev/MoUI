@@ -6,6 +6,15 @@ pub(all) struct TesterStepResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TesterStepResult with Debug::{to_repr}
+
+///|
+pub extend TesterStepResult with Eq::{not_equal, equal}
+
+///|
+pub extend TesterStepResult with ToJson::{to_json}
+
+///|
 pub(all) struct RuntimeSmokeSnapshot {
   title : String
   draw_command_count : Int
@@ -13,6 +22,15 @@ pub(all) struct RuntimeSmokeSnapshot {
   text_input_text : String
   inspector : @runtime.InspectorSnapshot
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RuntimeSmokeSnapshot with Debug::{to_repr}
+
+///|
+pub extend RuntimeSmokeSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend RuntimeSmokeSnapshot with ToJson::{to_json}
 
 ///|
 pub fn TesterStepResult::pass(

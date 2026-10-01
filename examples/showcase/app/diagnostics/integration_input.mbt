@@ -20,6 +20,12 @@ pub(all) enum ShowcaseCapabilityPriority {
 } derive(Eq, Debug)
 
 ///|
+pub extend ShowcaseCapabilityPriority with Debug::{to_repr}
+
+///|
+pub extend ShowcaseCapabilityPriority with Eq::{not_equal, equal}
+
+///|
 pub(all) struct ShowcaseRendererProviderDiagnostic {
   provider_id : String
   status_label : String

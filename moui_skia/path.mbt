@@ -8,6 +8,15 @@ pub(all) enum PathFillType {
 } derive(Debug, Eq)
 
 ///|
+pub extend PathFillType with Debug::{to_repr}
+
+///|
+pub extend PathFillType with Default::{default}
+
+///|
+pub extend PathFillType with Eq::{not_equal, equal}
+
+///|
 pub impl Default for PathFillType with fn default() {
   Winding
 }
@@ -35,6 +44,15 @@ pub(all) enum PathDirection {
 } derive(Debug, Eq)
 
 ///|
+pub extend PathDirection with Debug::{to_repr}
+
+///|
+pub extend PathDirection with Default::{default}
+
+///|
+pub extend PathDirection with Eq::{not_equal, equal}
+
+///|
 pub impl Default for PathDirection with fn default() {
   CW
 }
@@ -55,6 +73,15 @@ pub(all) enum AddPathMode {
 } derive(Debug, Eq)
 
 ///|
+pub extend AddPathMode with Debug::{to_repr}
+
+///|
+pub extend AddPathMode with Default::{default}
+
+///|
+pub extend AddPathMode with Eq::{not_equal, equal}
+
+///|
 pub impl Default for AddPathMode with fn default() {
   Append
 }
@@ -71,11 +98,23 @@ pub(all) enum PathVerb {
 } derive(Debug, Eq)
 
 ///|
+pub extend PathVerb with Debug::{to_repr}
+
+///|
+pub extend PathVerb with Eq::{not_equal, equal}
+
+///|
 /// A single line segment recognized from a path.
 pub(all) struct PathLine {
   start : Point
   end : Point
 } derive(Debug, Eq)
+
+///|
+pub extend PathLine with Debug::{to_repr}
+
+///|
+pub extend PathLine with Eq::{not_equal, equal}
 
 ///|
 pub fn PathLine::new(start : Point, end : Point) -> PathLine {
@@ -91,6 +130,12 @@ pub(all) struct PathRect {
 } derive(Debug, Eq)
 
 ///|
+pub extend PathRect with Debug::{to_repr}
+
+///|
+pub extend PathRect with Eq::{not_equal, equal}
+
+///|
 pub fn PathRect::new(
   rect : Rect,
   is_closed : Bool,
@@ -102,6 +147,12 @@ pub fn PathRect::new(
 ///|
 /// Bitmask of path segment kinds, matching Skia's public segment-mask values.
 pub(all) struct PathSegmentMask(Int) derive(Debug, Eq)
+
+///|
+pub extend PathSegmentMask with Debug::{to_repr}
+
+///|
+pub extend PathSegmentMask with Eq::{not_equal, equal}
 
 ///|
 pub fn PathSegmentMask::new(value : Int) -> PathSegmentMask {
@@ -166,6 +217,15 @@ pub(all) struct Path {
   verbs : Array[PathVerb]
   current_point : Point?
 } derive(Debug, Eq)
+
+///|
+pub extend Path with Debug::{to_repr}
+
+///|
+pub extend Path with Default::{default}
+
+///|
+pub extend Path with Eq::{not_equal, equal}
 
 ///|
 pub fn Path::new(fill_type? : PathFillType = Winding) -> Path {

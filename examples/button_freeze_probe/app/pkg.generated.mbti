@@ -36,6 +36,10 @@ pub(all) enum Msg {
   PrimaryPulse
   TonalPulse
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Msg::equal(Self, Self) -> Bool
+pub fn Msg::not_equal(Self, Self) -> Bool
+pub fn Msg::to_json(Self) -> Json
+pub fn Msg::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

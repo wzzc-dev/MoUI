@@ -24,6 +24,10 @@ pub(all) enum DesignSystemChoice {
   Fluent
   Sickle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSystemChoice::equal(Self, Self) -> Bool
+pub fn DesignSystemChoice::not_equal(Self, Self) -> Bool
+pub fn DesignSystemChoice::to_json(Self) -> Json
+pub fn DesignSystemChoice::to_repr(Self) -> @debug.Repr
 
 pub struct DesignSystemsApp {
   unit : Unit

@@ -27,6 +27,7 @@ pub fn ThreeDFrame::packet(Self) -> ThreeDRenderPacket
 pub fn ThreeDFrame::revision(Self) -> Int64
 pub fn ThreeDFrame::size(Self) -> ThreeDViewportSize
 pub fn ThreeDFrame::snapshot(Self) -> @moui_3d.ViewportSnapshot
+pub fn ThreeDFrame::to_repr(Self) -> @debug.Repr
 pub fn ThreeDFrame::with_packet(Self, ThreeDRenderPacket) -> Self
 
 pub(all) struct ThreeDRenderItem {
@@ -50,6 +51,7 @@ pub fn ThreeDRenderItem::node(Self) -> @moui_3d.NodeId
 pub fn ThreeDRenderItem::primitive_index(Self) -> Int
 pub fn ThreeDRenderItem::roughness(Self) -> Double
 pub fn ThreeDRenderItem::skin(Self) -> Int?
+pub fn ThreeDRenderItem::to_repr(Self) -> @debug.Repr
 pub fn ThreeDRenderItem::vertices(Self) -> Array[@moui_3d.Vertex]
 
 pub(all) struct ThreeDRenderPacket {
@@ -68,6 +70,7 @@ pub fn ThreeDRenderPacket::projection(Self) -> @moui_3d.Mat4
 pub fn ThreeDRenderPacket::resource_payload(Self) -> String
 pub fn ThreeDRenderPacket::resources(Self) -> ThreeDResourceDiff
 pub fn ThreeDRenderPacket::revision(Self) -> Int64
+pub fn ThreeDRenderPacket::to_repr(Self) -> @debug.Repr
 pub fn ThreeDRenderPacket::vertex_payload(Self) -> String
 pub fn ThreeDRenderPacket::vertex_payload_bytes(Self) -> Bytes
 pub fn ThreeDRenderPacket::view(Self) -> @moui_3d.Mat4
@@ -79,11 +82,19 @@ pub(all) enum ThreeDRenderResult {
   Unavailable(String)
   Failed(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDRenderResult::equal(Self, Self) -> Bool
+pub fn ThreeDRenderResult::not_equal(Self, Self) -> Bool
+pub fn ThreeDRenderResult::to_json(Self) -> Json
+pub fn ThreeDRenderResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ThreeDRendererBackend {
   NativeWgpu
   WebGpu
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDRendererBackend::equal(Self, Self) -> Bool
+pub fn ThreeDRendererBackend::not_equal(Self, Self) -> Bool
+pub fn ThreeDRendererBackend::to_json(Self) -> Json
+pub fn ThreeDRendererBackend::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ThreeDRendererDescriptor {
   id : String
@@ -93,9 +104,13 @@ pub(all) struct ThreeDRendererDescriptor {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ThreeDRendererDescriptor::backend(Self) -> ThreeDRendererBackend
 pub fn ThreeDRendererDescriptor::description(Self) -> String
+pub fn ThreeDRendererDescriptor::equal(Self, Self) -> Bool
 pub fn ThreeDRendererDescriptor::id(Self) -> String
 pub fn ThreeDRendererDescriptor::new(id~ : String, backend~ : ThreeDRendererBackend, status~ : ThreeDRendererStatus, description? : String) -> Self
+pub fn ThreeDRendererDescriptor::not_equal(Self, Self) -> Bool
 pub fn ThreeDRendererDescriptor::status(Self) -> ThreeDRendererStatus
+pub fn ThreeDRendererDescriptor::to_json(Self) -> Json
+pub fn ThreeDRendererDescriptor::to_repr(Self) -> @debug.Repr
 
 pub struct ThreeDRendererProvider {
   descriptor : ThreeDRendererDescriptor
@@ -127,12 +142,20 @@ pub(all) enum ThreeDRendererStatus {
   Unavailable(String)
   Failed(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDRendererStatus::equal(Self, Self) -> Bool
+pub fn ThreeDRendererStatus::not_equal(Self, Self) -> Bool
+pub fn ThreeDRendererStatus::to_json(Self) -> Json
+pub fn ThreeDRendererStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ThreeDResourceChange {
   Create(ThreeDResourceKey)
   Update(ThreeDResourceKey)
   Remove(ThreeDResourceKey)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDResourceChange::equal(Self, Self) -> Bool
+pub fn ThreeDResourceChange::not_equal(Self, Self) -> Bool
+pub fn ThreeDResourceChange::to_json(Self) -> Json
+pub fn ThreeDResourceChange::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ThreeDResourceDiff {
   revision : Int64
@@ -141,6 +164,7 @@ pub(all) struct ThreeDResourceDiff {
 pub fn ThreeDResourceDiff::changes(Self) -> Array[ThreeDResourceChange]
 pub fn ThreeDResourceDiff::new(revision~ : Int64, changes~ : Array[ThreeDResourceChange]) -> Self
 pub fn ThreeDResourceDiff::revision(Self) -> Int64
+pub fn ThreeDResourceDiff::to_repr(Self) -> @debug.Repr
 
 pub struct ThreeDResourceGraph {
   resident : @ref.Ref[Array[ThreeDResourceKey]]
@@ -154,8 +178,12 @@ pub(all) struct ThreeDResourceKey {
   kind : ThreeDResourceKind
   value : Int64
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDResourceKey::equal(Self, Self) -> Bool
 pub fn ThreeDResourceKey::kind(Self) -> ThreeDResourceKind
 pub fn ThreeDResourceKey::new(kind~ : ThreeDResourceKind, value~ : Int64) -> Self
+pub fn ThreeDResourceKey::not_equal(Self, Self) -> Bool
+pub fn ThreeDResourceKey::to_json(Self) -> Json
+pub fn ThreeDResourceKey::to_repr(Self) -> @debug.Repr
 pub fn ThreeDResourceKey::value(Self) -> Int64
 
 pub(all) enum ThreeDResourceKind {
@@ -166,15 +194,23 @@ pub(all) enum ThreeDResourceKind {
   Skin
   Pipeline
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDResourceKind::equal(Self, Self) -> Bool
+pub fn ThreeDResourceKind::not_equal(Self, Self) -> Bool
+pub fn ThreeDResourceKind::to_json(Self) -> Json
+pub fn ThreeDResourceKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ThreeDViewportSize {
   width : Int
   height : Int
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThreeDViewportSize::equal(Self, Self) -> Bool
 pub fn ThreeDViewportSize::height(Self) -> Int
 pub fn ThreeDViewportSize::new(width~ : Int, height~ : Int, scale_factor? : Double) -> Self
+pub fn ThreeDViewportSize::not_equal(Self, Self) -> Bool
 pub fn ThreeDViewportSize::scale_factor(Self) -> Double
+pub fn ThreeDViewportSize::to_json(Self) -> Json
+pub fn ThreeDViewportSize::to_repr(Self) -> @debug.Repr
 pub fn ThreeDViewportSize::width(Self) -> Int
 
 // Type aliases

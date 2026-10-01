@@ -559,6 +559,15 @@ pub(all) suberror GltfError {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend GltfError with Debug::{to_repr}
+
+///|
+pub extend GltfError with Eq::{not_equal, equal}
+
+///|
+pub extend GltfError with ToJson::{to_json}
+
+///|
 /// Resolves a URI referenced by a JSON `.gltf` document.
 pub type GltfResourceResolver = (String) -> Bytes?
 
@@ -574,6 +583,9 @@ pub(all) struct GltfDocument {
   camera_count : Int
   scene_count : Int
 } derive(Debug)
+
+///|
+pub extend GltfDocument with Debug::{to_repr}
 
 ///|
 pub fn GltfDocument::json(self : GltfDocument) -> String {

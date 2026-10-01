@@ -76,6 +76,10 @@ pub(all) enum AccessibilityContrast {
   Standard
   High
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AccessibilityContrast::equal(Self, Self) -> Bool
+pub fn AccessibilityContrast::not_equal(Self, Self) -> Bool
+pub fn AccessibilityContrast::to_json(Self) -> Json
+pub fn AccessibilityContrast::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AccessibilityLabelModifier {
   label : String
@@ -92,9 +96,13 @@ pub(all) struct ActionCommand {
   context_menu : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ActionCommand::display_label(Self) -> String
+pub fn ActionCommand::equal(Self, Self) -> Bool
 pub fn ActionCommand::matches(Self, KeyboardEvent) -> Bool
 pub fn ActionCommand::new(intent~ : CommandIntent, label? : String, shortcut? : KeyboardShortcut?, enabled? : Bool, group? : String, description? : String, context_menu? : Bool) -> Self
+pub fn ActionCommand::not_equal(Self, Self) -> Bool
 pub fn ActionCommand::shortcut_label(Self) -> String
+pub fn ActionCommand::to_json(Self) -> Json
+pub fn ActionCommand::to_repr(Self) -> @debug.Repr
 
 type ActionCommandMap
 pub fn ActionCommandMap::commands(Self) -> Array[ActionCommand]
@@ -116,7 +124,11 @@ pub(all) struct Alignment {
 pub fn Alignment::bottom_leading() -> Self
 pub fn Alignment::bottom_trailing() -> Self
 pub fn Alignment::center() -> Self
+pub fn Alignment::equal(Self, Self) -> Bool
 pub fn Alignment::new(x~ : Double, y~ : Double) -> Self
+pub fn Alignment::not_equal(Self, Self) -> Bool
+pub fn Alignment::to_json(Self) -> Json
+pub fn Alignment::to_repr(Self) -> @debug.Repr
 pub fn Alignment::top_leading() -> Self
 pub fn Alignment::top_trailing() -> Self
 
@@ -126,13 +138,21 @@ pub(all) struct AlignmentGuideSet {
   trailing : Double
   first_baseline : Double?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AlignmentGuideSet::equal(Self, Self) -> Bool
 pub fn AlignmentGuideSet::from_size(Size, first_baseline? : Double?) -> Self
+pub fn AlignmentGuideSet::not_equal(Self, Self) -> Bool
+pub fn AlignmentGuideSet::to_json(Self) -> Json
+pub fn AlignmentGuideSet::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AnimationStatus {
   Idle
   Running
   Completed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AnimationStatus::equal(Self, Self) -> Bool
+pub fn AnimationStatus::not_equal(Self, Self) -> Bool
+pub fn AnimationStatus::to_json(Self) -> Json
+pub fn AnimationStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AnyModifier[Msg] {
   identity_kind : String
@@ -162,6 +182,10 @@ pub(all) enum AppEvent {
   Redraw(RedrawReason)
   CloseRequested
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AppEvent::equal(Self, Self) -> Bool
+pub fn AppEvent::not_equal(Self, Self) -> Bool
+pub fn AppEvent::to_json(Self) -> Json
+pub fn AppEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AspectRatioModifier {
   ratio : Double
@@ -172,6 +196,10 @@ pub(all) enum Axis {
   Horizontal
   Vertical
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Axis::equal(Self, Self) -> Bool
+pub fn Axis::not_equal(Self, Self) -> Bool
+pub fn Axis::to_json(Self) -> Json
+pub fn Axis::to_repr(Self) -> @debug.Repr
 
 pub(all) struct BackgroundModifier {
   brush : Brush
@@ -186,6 +214,10 @@ pub(all) enum BlendMode {
   Darken
   Lighten
 } derive(Eq, ToJson, @debug.Debug)
+pub fn BlendMode::equal(Self, Self) -> Bool
+pub fn BlendMode::not_equal(Self, Self) -> Bool
+pub fn BlendMode::to_json(Self) -> Json
+pub fn BlendMode::to_repr(Self) -> @debug.Repr
 
 pub(all) struct BorderModifier {
   style : BorderStyle
@@ -196,18 +228,26 @@ pub(all) struct BorderStyle {
   brush : Brush
   width : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn BorderStyle::equal(Self, Self) -> Bool
 pub fn BorderStyle::new(brush~ : Brush, width? : Double) -> Self
+pub fn BorderStyle::not_equal(Self, Self) -> Bool
+pub fn BorderStyle::to_json(Self) -> Json
+pub fn BorderStyle::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
   RadialGradient(RadialGradientSpec)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Brush::equal(Self, Self) -> Bool
 pub fn Brush::fallback_color(Self) -> Color
 pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
 pub fn Brush::multiply_alpha(Self, Double) -> Self
+pub fn Brush::not_equal(Self, Self) -> Bool
 pub fn Brush::radial_gradient(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
 pub fn Brush::solid(Color) -> Self
+pub fn Brush::to_json(Self) -> Json
+pub fn Brush::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ChildLayoutInfo {
   size : Size
@@ -217,7 +257,10 @@ pub(all) struct ChildLayoutInfo {
   flex_weight : Double
 } derive(Eq, @debug.Debug)
 pub fn ChildLayoutInfo::baseline_or_estimate(Self) -> Double
+pub fn ChildLayoutInfo::equal(Self, Self) -> Bool
 pub fn ChildLayoutInfo::new(size~ : Size, first_baseline? : Double?, priority? : Double, flex_weight? : Double) -> Self
+pub fn ChildLayoutInfo::not_equal(Self, Self) -> Bool
+pub fn ChildLayoutInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ClipModifier {
 }
@@ -232,12 +275,16 @@ pub(all) struct Color {
 pub fn Color::black() -> Self
 pub fn Color::blue() -> Self
 pub fn Color::darken(Self, Double) -> Self
+pub fn Color::equal(Self, Self) -> Bool
 pub fn Color::gray() -> Self
 pub fn Color::lerp(Self, Self, Double) -> Self
 pub fn Color::lighten(Self, Double) -> Self
 pub fn Color::mix(Self, Self, Double) -> Self
 pub fn Color::multiply_alpha(Self, Double) -> Self
+pub fn Color::not_equal(Self, Self) -> Bool
 pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
+pub fn Color::to_json(Self) -> Json
+pub fn Color::to_repr(Self) -> @debug.Repr
 pub fn Color::white() -> Self
 pub fn Color::with_alpha(Self, Double) -> Self
 
@@ -246,6 +293,10 @@ pub(all) enum ColorMode {
   Dark
   System
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ColorMode::equal(Self, Self) -> Bool
+pub fn ColorMode::not_equal(Self, Self) -> Bool
+pub fn ColorMode::to_json(Self) -> Json
+pub fn ColorMode::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ColorPalette {
   foreground : Color
@@ -286,13 +337,21 @@ pub(all) struct ColorPalette {
   scrim : Color
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ColorPalette::dark() -> Self
+pub fn ColorPalette::equal(Self, Self) -> Bool
 pub fn ColorPalette::from_seed(primary~ : Color, ColorScheme, foreground? : Color, background? : Color, surface? : Color, surface_variant? : Color, outline? : Color, muted? : Color) -> Self
 pub fn ColorPalette::light() -> Self
+pub fn ColorPalette::not_equal(Self, Self) -> Bool
+pub fn ColorPalette::to_json(Self) -> Json
+pub fn ColorPalette::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ColorScheme {
   Light
   Dark
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ColorScheme::equal(Self, Self) -> Bool
+pub fn ColorScheme::not_equal(Self, Self) -> Bool
+pub fn ColorScheme::to_json(Self) -> Json
+pub fn ColorScheme::to_repr(Self) -> @debug.Repr
 
 type CommandBinding
 pub fn CommandBinding::new(command~ : ActionCommand, handle~ : () -> Unit) -> Self
@@ -310,11 +369,19 @@ pub(all) enum CommandIntent {
   OpenContextMenu
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CommandIntent::display_label(Self) -> String
+pub fn CommandIntent::equal(Self, Self) -> Bool
+pub fn CommandIntent::not_equal(Self, Self) -> Bool
+pub fn CommandIntent::to_json(Self) -> Json
+pub fn CommandIntent::to_repr(Self) -> @debug.Repr
 
 type CompositionUpdate derive(Eq, ToJson, @debug.Debug)
 pub fn CompositionUpdate::cursor(Self) -> TextRange?
+pub fn CompositionUpdate::equal(Self, Self) -> Bool
 pub fn CompositionUpdate::new(text~ : String, cursor? : TextRange?) -> Self
+pub fn CompositionUpdate::not_equal(Self, Self) -> Bool
 pub fn CompositionUpdate::text(Self) -> String
+pub fn CompositionUpdate::to_json(Self) -> Json
+pub fn CompositionUpdate::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Constraints {
   min : Size
@@ -322,11 +389,15 @@ pub(all) struct Constraints {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Constraints::constrain(Self, Size) -> Size
 pub fn Constraints::deflate(Self, Insets) -> Self
+pub fn Constraints::equal(Self, Self) -> Bool
 pub fn Constraints::is_tight(Self) -> Bool
 pub fn Constraints::loose(Size) -> Self
 pub fn Constraints::loosen(Self) -> Self
+pub fn Constraints::not_equal(Self, Self) -> Bool
 pub fn Constraints::tight(Size) -> Self
 pub fn Constraints::tighten(Self, width? : Double, height? : Double) -> Self
+pub fn Constraints::to_json(Self) -> Json
+pub fn Constraints::to_repr(Self) -> @debug.Repr
 pub fn Constraints::unbounded() -> Self
 
 pub(all) enum ContentSizeCategory {
@@ -336,7 +407,11 @@ pub(all) enum ContentSizeCategory {
   ExtraLarge
   Accessibility
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ContentSizeCategory::equal(Self, Self) -> Bool
+pub fn ContentSizeCategory::not_equal(Self, Self) -> Bool
 pub fn ContentSizeCategory::text_scale(Self) -> Double
+pub fn ContentSizeCategory::to_json(Self) -> Json
+pub fn ContentSizeCategory::to_repr(Self) -> @debug.Repr
 
 pub struct ControlledValue[T, Msg] {
   // private fields
@@ -356,6 +431,10 @@ pub(all) enum CrossAxisAlignment {
   CrossEnd
   CrossStretch
 } derive(Eq, ToJson, @debug.Debug)
+pub fn CrossAxisAlignment::equal(Self, Self) -> Bool
+pub fn CrossAxisAlignment::not_equal(Self, Self) -> Bool
+pub fn CrossAxisAlignment::to_json(Self) -> Json
+pub fn CrossAxisAlignment::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CrossAxisAlignmentModifier {
   alignment : CrossAxisAlignment
@@ -386,11 +465,15 @@ pub(all) enum DamageRegion {
   Rects(Array[Rect])
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DamageRegion::empty() -> Self
+pub fn DamageRegion::equal(Self, Self) -> Bool
 pub fn DamageRegion::from_rects(Array[Rect], Rect) -> Self
 pub fn DamageRegion::full(String) -> Self
 pub fn DamageRegion::full_reason(Self) -> String
 pub fn DamageRegion::kind(Self) -> String
+pub fn DamageRegion::not_equal(Self, Self) -> Bool
 pub fn DamageRegion::rect_count(Self) -> Int
+pub fn DamageRegion::to_json(Self) -> Json
+pub fn DamageRegion::to_repr(Self) -> @debug.Repr
 pub fn DamageRegion::union_with(Self, Self, surface~ : Rect) -> Self
 
 pub(all) struct DateValue {
@@ -401,10 +484,14 @@ pub(all) struct DateValue {
   minute : Int
   second : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DateValue::equal(Self, Self) -> Bool
 pub fn DateValue::format_date(Self) -> String
 pub fn DateValue::format_date_time(Self) -> String
 pub fn DateValue::format_time(Self) -> String
 pub fn DateValue::new(year~ : Int, month~ : Int, day~ : Int, hour? : Int, minute? : Int, second? : Int) -> Self
+pub fn DateValue::not_equal(Self, Self) -> Bool
+pub fn DateValue::to_json(Self) -> Json
+pub fn DateValue::to_repr(Self) -> @debug.Repr
 
 pub struct DeclarationChanges {
   layout : Bool
@@ -412,17 +499,22 @@ pub struct DeclarationChanges {
   semantics : Bool
   platform : Bool
 } derive(Eq, @debug.Debug)
+pub fn DeclarationChanges::equal(Self, Self) -> Bool
 pub fn DeclarationChanges::is_clean(Self) -> Bool
 pub fn DeclarationChanges::layout(Self) -> Bool
+pub fn DeclarationChanges::not_equal(Self, Self) -> Bool
 pub fn DeclarationChanges::paint(Self) -> Bool
 pub fn DeclarationChanges::platform(Self) -> Bool
 pub fn DeclarationChanges::semantics(Self) -> Bool
+pub fn DeclarationChanges::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DeclarationChannel {
   Constant
   Exact(DeclarationKey)
   Uncacheable
 } derive(Eq)
+pub fn DeclarationChannel::equal(Self, Self) -> Bool
+pub fn DeclarationChannel::not_equal(Self, Self) -> Bool
 
 pub struct DeclarationKey {
   // private fields
@@ -431,11 +523,16 @@ pub fn DeclarationKey::array(Array[Self]) -> Self
 pub fn DeclarationKey::bool(Bool) -> Self
 pub fn DeclarationKey::bytes(Bytes) -> Self
 pub fn DeclarationKey::double(Double) -> Self
+pub fn DeclarationKey::equal(Self, Self) -> Bool
+pub fn DeclarationKey::hash(Self) -> Int
+pub fn DeclarationKey::hash_combine(Self, Hasher) -> Unit
 pub fn DeclarationKey::int(Int) -> Self
 pub fn DeclarationKey::int64(Int64) -> Self
+pub fn DeclarationKey::not_equal(Self, Self) -> Bool
 pub fn DeclarationKey::option(Self?) -> Self
 pub fn DeclarationKey::record(type_tag~ : String, fields~ : Array[(String, Self)]) -> Self
 pub fn DeclarationKey::string(String) -> Self
+pub fn DeclarationKey::to_repr(Self) -> @debug.Repr
 pub fn DeclarationKey::uint(UInt) -> Self
 pub fn DeclarationKey::uint64(UInt64) -> Self
 
@@ -449,7 +546,11 @@ pub(all) struct DragDropEvent {
   paths : Array[String]
   position : Point?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DragDropEvent::equal(Self, Self) -> Bool
 pub fn DragDropEvent::new(phase~ : DragDropPhase, paths? : Array[String], position? : Point?) -> Self
+pub fn DragDropEvent::not_equal(Self, Self) -> Bool
+pub fn DragDropEvent::to_json(Self) -> Json
+pub fn DragDropEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DragDropPhase {
   Entered
@@ -457,6 +558,10 @@ pub(all) enum DragDropPhase {
   Dropped
   Left
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DragDropPhase::equal(Self, Self) -> Bool
+pub fn DragDropPhase::not_equal(Self, Self) -> Bool
+pub fn DragDropPhase::to_json(Self) -> Json
+pub fn DragDropPhase::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DragGestureEvent {
   phase : DragGesturePhase
@@ -465,7 +570,11 @@ pub(all) struct DragGestureEvent {
   delta : Point
   translation : Point
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DragGestureEvent::equal(Self, Self) -> Bool
 pub fn DragGestureEvent::new(phase~ : DragGesturePhase, start~ : Point, position~ : Point, delta~ : Point, translation~ : Point) -> Self
+pub fn DragGestureEvent::not_equal(Self, Self) -> Bool
+pub fn DragGestureEvent::to_json(Self) -> Json
+pub fn DragGestureEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DragGesturePhase {
   Idle
@@ -475,7 +584,11 @@ pub(all) enum DragGesturePhase {
   Ended
   Cancelled
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DragGesturePhase::equal(Self, Self) -> Bool
 pub fn DragGesturePhase::label(Self) -> String
+pub fn DragGesturePhase::not_equal(Self, Self) -> Bool
+pub fn DragGesturePhase::to_json(Self) -> Json
+pub fn DragGesturePhase::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DrawCommand {
   Clear(Color)
@@ -506,6 +619,10 @@ pub(all) enum DrawCommand {
   DrawShaderEffect(ShaderEffectSpec)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DrawCommand::bounds(Self) -> Rect?
+pub fn DrawCommand::equal(Self, Self) -> Bool
+pub fn DrawCommand::not_equal(Self, Self) -> Bool
+pub fn DrawCommand::to_json(Self) -> Json
+pub fn DrawCommand::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DrawFrame {
   commands : Array[DrawCommand]
@@ -514,7 +631,11 @@ pub(all) struct DrawFrame {
   damage : DamageRegion
   clear_color : Color
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DrawFrame::equal(Self, Self) -> Bool
 pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], overlay_bounds? : Rect?, damage~ : DamageRegion, clear_color? : Color) -> Self
+pub fn DrawFrame::not_equal(Self, Self) -> Bool
+pub fn DrawFrame::to_json(Self) -> Json
+pub fn DrawFrame::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Easing {
   Linear
@@ -522,7 +643,11 @@ pub(all) enum Easing {
   EaseOut
   EaseInOut
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Easing::equal(Self, Self) -> Bool
+pub fn Easing::not_equal(Self, Self) -> Bool
 pub fn Easing::sample(Self, Double) -> Double
+pub fn Easing::to_json(Self) -> Json
+pub fn Easing::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Effect[Msg] {
   NoEffect
@@ -543,9 +668,13 @@ pub fn[Msg] Effect::service_task(key~ : String, start~ : ((Msg) -> Unit) -> (() 
 pub fn[Msg] Effect::task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 
 type EffectDescriptor derive(Eq, ToJson, @debug.Debug)
+pub fn EffectDescriptor::equal(Self, Self) -> Bool
 pub fn EffectDescriptor::key(Self) -> String
 pub fn EffectDescriptor::kind(Self) -> String
 pub fn EffectDescriptor::label(Self) -> String
+pub fn EffectDescriptor::not_equal(Self, Self) -> Bool
+pub fn EffectDescriptor::to_json(Self) -> Json
+pub fn EffectDescriptor::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Environment {
   theme_spec : ThemeSpec
@@ -561,7 +690,11 @@ pub(all) struct Environment {
   enabled : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Environment::color_scheme(Self) -> ColorScheme
+pub fn Environment::equal(Self, Self) -> Bool
 pub fn Environment::neutral() -> Self
+pub fn Environment::not_equal(Self, Self) -> Bool
+pub fn Environment::to_json(Self) -> Json
+pub fn Environment::to_repr(Self) -> @debug.Repr
 pub fn Environment::with_accessibility_contrast(Self, AccessibilityContrast) -> Self
 pub fn Environment::with_content_size_category(Self, ContentSizeCategory) -> Self
 pub fn Environment::with_enabled(Self, Bool) -> Self
@@ -598,6 +731,10 @@ pub(all) enum FilterEffect {
   ColorMatrix(Array[Double])
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FilterEffect::blur(Double) -> Self
+pub fn FilterEffect::equal(Self, Self) -> Bool
+pub fn FilterEffect::not_equal(Self, Self) -> Bool
+pub fn FilterEffect::to_json(Self) -> Json
+pub fn FilterEffect::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FlexibleModifier {
   weight : Double
@@ -608,20 +745,28 @@ pub(all) struct FocusRequest {
   id : Int
   key : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FocusRequest::equal(Self, Self) -> Bool
 pub fn FocusRequest::new(id~ : Int, key~ : String) -> Self
+pub fn FocusRequest::not_equal(Self, Self) -> Bool
+pub fn FocusRequest::to_json(Self) -> Json
+pub fn FocusRequest::to_repr(Self) -> @debug.Repr
 
 type FocusScope derive(Eq)
 pub fn FocusScope::command_target(Self, CommandIntent) -> String?
+pub fn FocusScope::equal(Self, Self) -> Bool
 pub fn FocusScope::first_focusable(Self) -> String?
 pub fn FocusScope::focus_target_or_first(Self, String?) -> String?
 pub fn FocusScope::last_focusable(Self) -> String?
 pub fn FocusScope::new(items~ : Array[FocusScopeItem], current? : String?, wrap? : Bool, default_action? : String, dismiss_action? : String) -> Self
 pub fn FocusScope::next(Self) -> String?
+pub fn FocusScope::not_equal(Self, Self) -> Bool
 pub fn FocusScope::previous(Self) -> String?
 pub fn FocusScope::traverse(Self, FocusTraversalDirection) -> String?
 
 type FocusScopeItem derive(Eq)
+pub fn FocusScopeItem::equal(Self, Self) -> Bool
 pub fn FocusScopeItem::new(id~ : String, enabled? : Bool, focusable? : Bool) -> Self
+pub fn FocusScopeItem::not_equal(Self, Self) -> Bool
 
 pub(all) struct FocusTrapModifier {
   trap : Bool
@@ -632,6 +777,10 @@ pub(all) enum FocusTraversalDirection {
   Next
   Previous
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FocusTraversalDirection::equal(Self, Self) -> Bool
+pub fn FocusTraversalDirection::not_equal(Self, Self) -> Bool
+pub fn FocusTraversalDirection::to_json(Self) -> Json
+pub fn FocusTraversalDirection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FocusableModifier {
   focusable : Bool
@@ -653,17 +802,25 @@ pub(all) enum FontFamily {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontFamily::css_name(Self) -> String
 pub fn FontFamily::css_token(Self) -> String
+pub fn FontFamily::equal(Self, Self) -> Bool
+pub fn FontFamily::not_equal(Self, Self) -> Bool
+pub fn FontFamily::to_json(Self) -> Json
+pub fn FontFamily::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FontFamilyStack {
   families : Array[FontFamily]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontFamilyStack::css(Self) -> String
+pub fn FontFamilyStack::equal(Self, Self) -> Bool
 pub fn FontFamilyStack::monospace() -> Self
 pub fn FontFamilyStack::named(String) -> Self
 pub fn FontFamilyStack::new(Array[FontFamily]) -> Self
+pub fn FontFamilyStack::not_equal(Self, Self) -> Bool
 pub fn FontFamilyStack::sans_serif() -> Self
 pub fn FontFamilyStack::serif() -> Self
 pub fn FontFamilyStack::system_ui() -> Self
+pub fn FontFamilyStack::to_json(Self) -> Json
+pub fn FontFamilyStack::to_repr(Self) -> @debug.Repr
 pub fn FontFamilyStack::with_fallback(Self, FontFamily) -> Self
 
 pub(all) struct FontModifier {
@@ -680,7 +837,11 @@ pub(all) struct FontSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontSpec::css_family(Self) -> String
 pub fn FontSpec::css_style(Self) -> String
+pub fn FontSpec::equal(Self, Self) -> Bool
 pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int, style? : FontStyle, variations? : Array[FontVariation]) -> Self
+pub fn FontSpec::not_equal(Self, Self) -> Bool
+pub fn FontSpec::to_json(Self) -> Json
+pub fn FontSpec::to_repr(Self) -> @debug.Repr
 pub fn FontSpec::variation_value(Self, String) -> Double?
 pub fn FontSpec::with_variation(Self, axis~ : String, value~ : Double) -> Self
 
@@ -688,13 +849,21 @@ pub(all) enum FontStyle {
   Normal
   Italic
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FontStyle::equal(Self, Self) -> Bool
+pub fn FontStyle::not_equal(Self, Self) -> Bool
+pub fn FontStyle::to_json(Self) -> Json
+pub fn FontStyle::to_repr(Self) -> @debug.Repr
 
 pub struct FontVariation {
   axis : String
   value : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontVariation::axis(Self) -> String
+pub fn FontVariation::equal(Self, Self) -> Bool
 pub fn FontVariation::new(axis~ : String, value~ : Double) -> Self
+pub fn FontVariation::not_equal(Self, Self) -> Bool
+pub fn FontVariation::to_json(Self) -> Json
+pub fn FontVariation::to_repr(Self) -> @debug.Repr
 pub fn FontVariation::value(Self) -> Double
 
 pub(all) struct ForegroundModifier {
@@ -706,7 +875,11 @@ pub(all) struct Frame {
   time_ms : Double
   delta_ms : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Frame::equal(Self, Self) -> Bool
 pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Self
+pub fn Frame::not_equal(Self, Self) -> Bool
+pub fn Frame::to_json(Self) -> Json
+pub fn Frame::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FrameModifier {
   width : Double?
@@ -726,6 +899,10 @@ pub(all) enum ImageFit {
   FitWidth
   FitHeight
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ImageFit::equal(Self, Self) -> Bool
+pub fn ImageFit::not_equal(Self, Self) -> Bool
+pub fn ImageFit::to_json(Self) -> Json
+pub fn ImageFit::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ImageRun {
   source : String
@@ -733,6 +910,10 @@ pub(all) struct ImageRun {
   opacity : Double
   fit : ImageFit
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ImageRun::equal(Self, Self) -> Bool
+pub fn ImageRun::not_equal(Self, Self) -> Bool
+pub fn ImageRun::to_json(Self) -> Json
+pub fn ImageRun::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Insets {
   top : Double
@@ -741,7 +922,11 @@ pub(all) struct Insets {
   left : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Insets::all(Double) -> Self
+pub fn Insets::equal(Self, Self) -> Bool
+pub fn Insets::not_equal(Self, Self) -> Bool
 pub fn Insets::symmetric(horizontal? : Double, vertical? : Double) -> Self
+pub fn Insets::to_json(Self) -> Json
+pub fn Insets::to_repr(Self) -> @debug.Repr
 
 pub(all) enum InteractionState {
   Normal
@@ -752,6 +937,10 @@ pub(all) enum InteractionState {
   Selected
   Invalid
 } derive(Eq, ToJson, @debug.Debug)
+pub fn InteractionState::equal(Self, Self) -> Bool
+pub fn InteractionState::not_equal(Self, Self) -> Bool
+pub fn InteractionState::to_json(Self) -> Json
+pub fn InteractionState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct IntrinsicHeightModifier {
 }
@@ -762,7 +951,9 @@ pub(all) struct IntrinsicWidthModifier {
 pub fn[Msg] IntrinsicWidthModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 type Key derive(Eq)
+pub fn Key::equal(Self, Self) -> Bool
 pub fn Key::new(String) -> Self
+pub fn Key::not_equal(Self, Self) -> Bool
 pub fn Key::value(Self) -> String
 
 pub(all) struct KeyModifier {
@@ -776,8 +967,12 @@ pub(all) struct KeyModifiers {
   alt : Bool
   meta : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn KeyModifiers::equal(Self, Self) -> Bool
 pub fn KeyModifiers::new(shift? : Bool, control? : Bool, alt? : Bool, meta? : Bool) -> Self
 pub fn KeyModifiers::none() -> Self
+pub fn KeyModifiers::not_equal(Self, Self) -> Bool
+pub fn KeyModifiers::to_json(Self) -> Json
+pub fn KeyModifiers::to_repr(Self) -> @debug.Repr
 
 pub(all) struct KeyboardEvent {
   key : String
@@ -786,7 +981,11 @@ pub(all) struct KeyboardEvent {
   repeat : Bool
   modifiers : KeyModifiers
 } derive(Eq, ToJson, @debug.Debug)
+pub fn KeyboardEvent::equal(Self, Self) -> Bool
 pub fn KeyboardEvent::new(key~ : String, pressed? : Bool, text? : String?, repeat? : Bool, modifiers? : KeyModifiers) -> Self
+pub fn KeyboardEvent::not_equal(Self, Self) -> Bool
+pub fn KeyboardEvent::to_json(Self) -> Json
+pub fn KeyboardEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) enum KeyboardPolicy {
   Passthrough
@@ -799,8 +998,12 @@ pub(all) struct KeyboardShortcut {
   modifiers : KeyModifiers
 } derive(Eq, ToJson, @debug.Debug)
 pub fn KeyboardShortcut::display_label(Self) -> String
+pub fn KeyboardShortcut::equal(Self, Self) -> Bool
 pub fn KeyboardShortcut::matches(Self, KeyboardEvent) -> Bool
 pub fn KeyboardShortcut::new(key~ : String, modifiers? : KeyModifiers) -> Self
+pub fn KeyboardShortcut::not_equal(Self, Self) -> Bool
+pub fn KeyboardShortcut::to_json(Self) -> Json
+pub fn KeyboardShortcut::to_repr(Self) -> @debug.Repr
 
 pub(all) struct KeyboardShortcutModifier {
   shortcut : KeyboardShortcut
@@ -812,6 +1015,10 @@ pub(all) enum LayerMask {
   RectMask(Rect)
   RoundedMask(RoundedRect)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LayerMask::equal(Self, Self) -> Bool
+pub fn LayerMask::not_equal(Self, Self) -> Bool
+pub fn LayerMask::to_json(Self) -> Json
+pub fn LayerMask::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LayerSpec {
   opacity : Double
@@ -819,12 +1026,20 @@ pub(all) struct LayerSpec {
   mask : LayerMask
   offscreen : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LayerSpec::equal(Self, Self) -> Bool
 pub fn LayerSpec::new(opacity? : Double, blend_mode? : BlendMode, mask? : LayerMask, offscreen? : Bool) -> Self
+pub fn LayerSpec::not_equal(Self, Self) -> Bool
+pub fn LayerSpec::to_json(Self) -> Json
+pub fn LayerSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) enum LayoutDirection {
   LeftToRight
   RightToLeft
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LayoutDirection::equal(Self, Self) -> Bool
+pub fn LayoutDirection::not_equal(Self, Self) -> Bool
+pub fn LayoutDirection::to_json(Self) -> Json
+pub fn LayoutDirection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LayoutPriorityModifier {
   priority : Double
@@ -835,6 +1050,10 @@ pub(all) struct LayoutResult {
   frame : Rect
   children : Array[LayoutResult]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LayoutResult::equal(Self, Self) -> Bool
+pub fn LayoutResult::not_equal(Self, Self) -> Bool
+pub fn LayoutResult::to_json(Self) -> Json
+pub fn LayoutResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct LinearGradientSpec {
   start : Point
@@ -842,7 +1061,11 @@ pub(all) struct LinearGradientSpec {
   start_color : Color
   end_color : Color
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LinearGradientSpec::equal(Self, Self) -> Bool
 pub fn LinearGradientSpec::new(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
+pub fn LinearGradientSpec::not_equal(Self, Self) -> Bool
+pub fn LinearGradientSpec::to_json(Self) -> Json
+pub fn LinearGradientSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MainAxisAlignment {
   MainStart
@@ -852,6 +1075,10 @@ pub(all) enum MainAxisAlignment {
   SpaceAround
   SpaceEvenly
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MainAxisAlignment::equal(Self, Self) -> Bool
+pub fn MainAxisAlignment::not_equal(Self, Self) -> Bool
+pub fn MainAxisAlignment::to_json(Self) -> Json
+pub fn MainAxisAlignment::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MainAxisAlignmentModifier {
   alignment : MainAxisAlignment
@@ -865,6 +1092,10 @@ pub(all) struct MotionScale {
   easing : Easing
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MotionScale::default() -> Self
+pub fn MotionScale::equal(Self, Self) -> Bool
+pub fn MotionScale::not_equal(Self, Self) -> Bool
+pub fn MotionScale::to_json(Self) -> Json
+pub fn MotionScale::to_repr(Self) -> @debug.Repr
 
 pub(all) struct OffsetModifier {
   dx : Double
@@ -927,7 +1158,11 @@ pub(all) struct PathSpec {
   stroke_width : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PathSpec::bounds(Self) -> Rect?
+pub fn PathSpec::equal(Self, Self) -> Bool
 pub fn PathSpec::new(verbs~ : Array[PathVerb], fill? : Brush?, stroke? : Brush?, stroke_width? : Double) -> Self
+pub fn PathSpec::not_equal(Self, Self) -> Bool
+pub fn PathSpec::to_json(Self) -> Json
+pub fn PathSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PathVerb {
   MoveTo(Point)
@@ -936,10 +1171,18 @@ pub(all) enum PathVerb {
   CubicTo(Point, Point, Point)
   Close
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PathVerb::equal(Self, Self) -> Bool
+pub fn PathVerb::not_equal(Self, Self) -> Bool
+pub fn PathVerb::to_json(Self) -> Json
+pub fn PathVerb::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PlatformViewEvent {
   Named(name~ : String, value~ : String, detail~ : String, flag~ : Bool)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformViewEvent::equal(Self, Self) -> Bool
+pub fn PlatformViewEvent::not_equal(Self, Self) -> Bool
+pub fn PlatformViewEvent::to_json(Self) -> Json
+pub fn PlatformViewEvent::to_repr(Self) -> @debug.Repr
 
 pub struct PlatformViewPixelSink {
   // private fields
@@ -954,21 +1197,33 @@ pub(all) struct PlatformViewPlacement {
   clip : Rect?
   properties : Array[PlatformViewProperty]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformViewPlacement::equal(Self, Self) -> Bool
 pub fn PlatformViewPlacement::new(id~ : String, kind~ : String, frame~ : Rect, clip? : Rect?, properties? : Array[PlatformViewProperty]) -> Self
+pub fn PlatformViewPlacement::not_equal(Self, Self) -> Bool
 pub fn PlatformViewPlacement::property(Self, String) -> String?
 pub fn PlatformViewPlacement::property_or(Self, String, String) -> String
+pub fn PlatformViewPlacement::to_json(Self) -> Json
+pub fn PlatformViewPlacement::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PlatformViewProperty {
   key : String
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformViewProperty::equal(Self, Self) -> Bool
 pub fn PlatformViewProperty::new(key~ : String, value~ : String) -> Self
+pub fn PlatformViewProperty::not_equal(Self, Self) -> Bool
+pub fn PlatformViewProperty::to_json(Self) -> Json
+pub fn PlatformViewProperty::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Point {
   x : Double
   y : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Point::equal(Self, Self) -> Bool
 pub fn Point::new(x~ : Double, y~ : Double) -> Self
+pub fn Point::not_equal(Self, Self) -> Bool
+pub fn Point::to_json(Self) -> Json
+pub fn Point::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PointerEvent {
   position : Point
@@ -978,7 +1233,11 @@ pub(all) struct PointerEvent {
   time_ms : Double
   modifiers : KeyModifiers
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PointerEvent::equal(Self, Self) -> Bool
 pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int, wheel_delta? : Point, time_ms? : Double, modifiers? : KeyModifiers) -> Self
+pub fn PointerEvent::not_equal(Self, Self) -> Bool
+pub fn PointerEvent::to_json(Self) -> Json
+pub fn PointerEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PointerPhase {
   Move
@@ -987,13 +1246,21 @@ pub(all) enum PointerPhase {
   Cancel
   Exit
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PointerPhase::equal(Self, Self) -> Bool
+pub fn PointerPhase::not_equal(Self, Self) -> Bool
+pub fn PointerPhase::to_json(Self) -> Json
+pub fn PointerPhase::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PressableState {
   Normal
   Hovered
   Pressed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PressableState::equal(Self, Self) -> Bool
+pub fn PressableState::not_equal(Self, Self) -> Bool
 pub fn PressableState::to_interaction(Self) -> InteractionState
+pub fn PressableState::to_json(Self) -> Json
+pub fn PressableState::to_repr(Self) -> @debug.Repr
 
 type Program[Model, Msg]
 pub fn[Model, Msg] Program::from_feature(feature~ : Feature[Model, Msg]) -> Self[Model, Msg]
@@ -1023,7 +1290,11 @@ pub(all) struct RadialGradientSpec {
   center_color : Color
   edge_color : Color
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RadialGradientSpec::equal(Self, Self) -> Bool
 pub fn RadialGradientSpec::new(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
+pub fn RadialGradientSpec::not_equal(Self, Self) -> Bool
+pub fn RadialGradientSpec::to_json(Self) -> Json
+pub fn RadialGradientSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RadiusScale {
   sm : Double
@@ -1032,6 +1303,10 @@ pub(all) struct RadiusScale {
   pill : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RadiusScale::default() -> Self
+pub fn RadiusScale::equal(Self, Self) -> Bool
+pub fn RadiusScale::not_equal(Self, Self) -> Bool
+pub fn RadiusScale::to_json(Self) -> Json
+pub fn RadiusScale::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Rect {
   origin : Point
@@ -1040,6 +1315,7 @@ pub(all) struct Rect {
 pub fn Rect::area(Self) -> Double
 pub fn Rect::clamp_to(Self, Self) -> Self?
 pub fn Rect::contains(Self, Point) -> Bool
+pub fn Rect::equal(Self, Self) -> Bool
 pub fn Rect::inflate(Self, Double) -> Self
 pub fn Rect::inset(Self, Insets) -> Self
 pub fn Rect::intersection(Self, Self) -> Self?
@@ -1047,7 +1323,10 @@ pub fn Rect::is_empty(Self) -> Bool
 pub fn Rect::max_x(Self) -> Double
 pub fn Rect::max_y(Self) -> Double
 pub fn Rect::new(x~ : Double, y~ : Double, width~ : Double, height~ : Double) -> Self
+pub fn Rect::not_equal(Self, Self) -> Bool
 pub fn Rect::offset(Self, dx? : Double, dy? : Double) -> Self
+pub fn Rect::to_json(Self) -> Json
+pub fn Rect::to_repr(Self) -> @debug.Repr
 pub fn Rect::union(Self, Self) -> Self
 
 pub(all) enum RedrawReason {
@@ -1056,6 +1335,10 @@ pub(all) enum RedrawReason {
   Resize
   Explicit
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RedrawReason::equal(Self, Self) -> Bool
+pub fn RedrawReason::not_equal(Self, Self) -> Bool
+pub fn RedrawReason::to_json(Self) -> Json
+pub fn RedrawReason::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RepaintBoundaryModifier {
 }
@@ -1067,13 +1350,21 @@ pub(all) struct RetainedLayerSpec {
   content_revision : Int
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RetainedLayerSpec::equal(Self, Self) -> Bool
 pub fn RetainedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
+pub fn RetainedLayerSpec::not_equal(Self, Self) -> Bool
+pub fn RetainedLayerSpec::to_json(Self) -> Json
+pub fn RetainedLayerSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RoundedRect {
   rect : Rect
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RoundedRect::equal(Self, Self) -> Bool
 pub fn RoundedRect::new(rect~ : Rect, radius? : Double) -> Self
+pub fn RoundedRect::not_equal(Self, Self) -> Bool
+pub fn RoundedRect::to_json(Self) -> Json
+pub fn RoundedRect::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ScaleModifier {
   sx : Double
@@ -1096,18 +1387,37 @@ pub(all) enum ScrollAlignment {
   End
   Nearest
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ScrollAlignment::equal(Self, Self) -> Bool
+pub fn ScrollAlignment::not_equal(Self, Self) -> Bool
+pub fn ScrollAlignment::to_json(Self) -> Json
+pub fn ScrollAlignment::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ScrollRequest {
   id : Int
   offset : Point
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ScrollRequest::equal(Self, Self) -> Bool
 pub fn ScrollRequest::new(id~ : Int, offset~ : Point) -> Self
+pub fn ScrollRequest::not_equal(Self, Self) -> Bool
+pub fn ScrollRequest::to_json(Self) -> Json
+pub fn ScrollRequest::to_repr(Self) -> @debug.Repr
 
 pub struct SemanticId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
+pub fn SemanticId::compare(Self, Self) -> Int
+pub fn SemanticId::equal(Self, Self) -> Bool
+pub fn SemanticId::hash(Self) -> Int
+pub fn SemanticId::hash_combine(Self, Hasher) -> Unit
 pub fn SemanticId::new(String) -> Self
+pub fn SemanticId::not_equal(Self, Self) -> Bool
+pub fn SemanticId::op_ge(Self, Self) -> Bool
+pub fn SemanticId::op_gt(Self, Self) -> Bool
+pub fn SemanticId::op_le(Self, Self) -> Bool
+pub fn SemanticId::op_lt(Self, Self) -> Bool
 pub fn SemanticId::parse(String) -> Self?
+pub fn SemanticId::to_json(Self) -> Json
+pub fn SemanticId::to_repr(Self) -> @debug.Repr
 pub fn SemanticId::value(Self) -> String
 pub impl ToJson for SemanticId
 
@@ -1132,7 +1442,11 @@ pub(all) enum SemanticsAction {
   SetSelection(TextRange)
   ShowMenu
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsAction::equal(Self, Self) -> Bool
 pub fn SemanticsAction::kind(Self) -> SemanticsActionKind
+pub fn SemanticsAction::not_equal(Self, Self) -> Bool
+pub fn SemanticsAction::to_json(Self) -> Json
+pub fn SemanticsAction::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SemanticsActionKind {
   Activate
@@ -1150,6 +1464,10 @@ pub(all) enum SemanticsActionKind {
   SetSelection
   ShowMenu
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsActionKind::equal(Self, Self) -> Bool
+pub fn SemanticsActionKind::not_equal(Self, Self) -> Bool
+pub fn SemanticsActionKind::to_json(Self) -> Json
+pub fn SemanticsActionKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsCheckedModifier {
   checked : SemanticsCheckedState
@@ -1161,6 +1479,10 @@ pub(all) enum SemanticsCheckedState {
   Checked
   Mixed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsCheckedState::equal(Self, Self) -> Bool
+pub fn SemanticsCheckedState::not_equal(Self, Self) -> Bool
+pub fn SemanticsCheckedState::to_json(Self) -> Json
+pub fn SemanticsCheckedState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsCollectionInfo {
   row_index : Int?
@@ -1172,7 +1494,11 @@ pub(all) struct SemanticsCollectionInfo {
   set_size : Int?
   set_position : Int?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsCollectionInfo::equal(Self, Self) -> Bool
 pub fn SemanticsCollectionInfo::new(row_index? : Int, row_count? : Int, row_span? : Int, column_index? : Int, column_count? : Int, column_span? : Int, set_size? : Int, set_position? : Int) -> Self
+pub fn SemanticsCollectionInfo::not_equal(Self, Self) -> Bool
+pub fn SemanticsCollectionInfo::to_json(Self) -> Json
+pub fn SemanticsCollectionInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SemanticsComposition {
   Transparent
@@ -1180,6 +1506,10 @@ pub(all) enum SemanticsComposition {
   MergeDescendants
   Hidden
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsComposition::equal(Self, Self) -> Bool
+pub fn SemanticsComposition::not_equal(Self, Self) -> Bool
+pub fn SemanticsComposition::to_json(Self) -> Json
+pub fn SemanticsComposition::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsCompositionModifier {
   composition : SemanticsComposition
@@ -1199,7 +1529,18 @@ pub fn[Msg] SemanticsExpandedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 pub struct SemanticsGeneration {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
+pub fn SemanticsGeneration::compare(Self, Self) -> Int
+pub fn SemanticsGeneration::equal(Self, Self) -> Bool
+pub fn SemanticsGeneration::hash(Self) -> Int
+pub fn SemanticsGeneration::hash_combine(Self, Hasher) -> Unit
 pub fn SemanticsGeneration::new(UInt64) -> Self
+pub fn SemanticsGeneration::not_equal(Self, Self) -> Bool
+pub fn SemanticsGeneration::op_ge(Self, Self) -> Bool
+pub fn SemanticsGeneration::op_gt(Self, Self) -> Bool
+pub fn SemanticsGeneration::op_le(Self, Self) -> Bool
+pub fn SemanticsGeneration::op_lt(Self, Self) -> Bool
+pub fn SemanticsGeneration::to_json(Self) -> Json
+pub fn SemanticsGeneration::to_repr(Self) -> @debug.Repr
 pub fn SemanticsGeneration::to_wire(Self) -> String
 pub fn SemanticsGeneration::value(Self) -> UInt64
 pub impl ToJson for SemanticsGeneration
@@ -1219,6 +1560,10 @@ pub(all) enum SemanticsLive {
   Polite
   Assertive
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsLive::equal(Self, Self) -> Bool
+pub fn SemanticsLive::not_equal(Self, Self) -> Bool
+pub fn SemanticsLive::to_json(Self) -> Json
+pub fn SemanticsLive::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsMetadataModifier {
   info : ViewSemanticsInfo
@@ -1246,11 +1591,26 @@ pub(all) struct SemanticsNode {
   frame : Rect
   children : Array[SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsNode::equal(Self, Self) -> Bool
+pub fn SemanticsNode::not_equal(Self, Self) -> Bool
+pub fn SemanticsNode::to_json(Self) -> Json
+pub fn SemanticsNode::to_repr(Self) -> @debug.Repr
 
 pub struct SemanticsNodeId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
+pub fn SemanticsNodeId::compare(Self, Self) -> Int
+pub fn SemanticsNodeId::equal(Self, Self) -> Bool
+pub fn SemanticsNodeId::hash(Self) -> Int
+pub fn SemanticsNodeId::hash_combine(Self, Hasher) -> Unit
 pub fn SemanticsNodeId::new(UInt64) -> Self
+pub fn SemanticsNodeId::not_equal(Self, Self) -> Bool
+pub fn SemanticsNodeId::op_ge(Self, Self) -> Bool
+pub fn SemanticsNodeId::op_gt(Self, Self) -> Bool
+pub fn SemanticsNodeId::op_le(Self, Self) -> Bool
+pub fn SemanticsNodeId::op_lt(Self, Self) -> Bool
+pub fn SemanticsNodeId::to_json(Self) -> Json
+pub fn SemanticsNodeId::to_repr(Self) -> @debug.Repr
 pub fn SemanticsNodeId::to_wire(Self) -> String
 pub fn SemanticsNodeId::value(Self) -> UInt64
 pub impl ToJson for SemanticsNodeId
@@ -1262,7 +1622,11 @@ pub(all) struct SemanticsNumericValue {
   step : Double?
   value_text : String?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsNumericValue::equal(Self, Self) -> Bool
 pub fn SemanticsNumericValue::new(current? : Double, min? : Double, max? : Double, step? : Double, value_text? : String) -> Self
+pub fn SemanticsNumericValue::not_equal(Self, Self) -> Bool
+pub fn SemanticsNumericValue::to_json(Self) -> Json
+pub fn SemanticsNumericValue::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsPathSegment {
   index : Int
@@ -1288,6 +1652,10 @@ pub(all) enum SemanticsRelationKind {
   ErrorMessage
   ActiveDescendant
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsRelationKind::equal(Self, Self) -> Bool
+pub fn SemanticsRelationKind::not_equal(Self, Self) -> Bool
+pub fn SemanticsRelationKind::to_json(Self) -> Json
+pub fn SemanticsRelationKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsRelations {
   labelled_by : Array[SemanticsNodeId]
@@ -1297,6 +1665,10 @@ pub(all) struct SemanticsRelations {
   active_descendant : Array[SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsRelations::empty() -> Self
+pub fn SemanticsRelations::equal(Self, Self) -> Bool
+pub fn SemanticsRelations::not_equal(Self, Self) -> Bool
+pub fn SemanticsRelations::to_json(Self) -> Json
+pub fn SemanticsRelations::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsRelationsDeclaration {
   labelled_by : Array[SemanticId]
@@ -1305,7 +1677,11 @@ pub(all) struct SemanticsRelationsDeclaration {
   error_message : Array[SemanticId]
   active_descendant : Array[SemanticId]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsRelationsDeclaration::equal(Self, Self) -> Bool
 pub fn SemanticsRelationsDeclaration::new(labelled_by? : Array[SemanticId], described_by? : Array[SemanticId], controls? : Array[SemanticId], error_message? : Array[SemanticId], active_descendant? : Array[SemanticId]) -> Self
+pub fn SemanticsRelationsDeclaration::not_equal(Self, Self) -> Bool
+pub fn SemanticsRelationsDeclaration::to_json(Self) -> Json
+pub fn SemanticsRelationsDeclaration::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsRequiredModifier {
   required : Bool
@@ -1351,6 +1727,10 @@ pub(all) enum SemanticsRole {
   Cell
   Separator
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsRole::equal(Self, Self) -> Bool
+pub fn SemanticsRole::not_equal(Self, Self) -> Bool
+pub fn SemanticsRole::to_json(Self) -> Json
+pub fn SemanticsRole::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsRoleModifier {
   role : SemanticsRole
@@ -1365,6 +1745,10 @@ pub(all) enum SemanticsScrollDirection {
   Left
   Right
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsScrollDirection::equal(Self, Self) -> Bool
+pub fn SemanticsScrollDirection::not_equal(Self, Self) -> Bool
+pub fn SemanticsScrollDirection::to_json(Self) -> Json
+pub fn SemanticsScrollDirection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsSelectedModifier {
   selected : Bool
@@ -1387,19 +1771,31 @@ pub(all) struct SemanticsState {
   modal : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsState::default() -> Self
+pub fn SemanticsState::equal(Self, Self) -> Bool
+pub fn SemanticsState::not_equal(Self, Self) -> Bool
+pub fn SemanticsState::to_json(Self) -> Json
+pub fn SemanticsState::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SemanticsTarget {
   BySemanticId(SemanticId)
   ByNodeId(SemanticsNodeId)
   ByPath(Array[SemanticsPathSegment])
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsTarget::equal(Self, Self) -> Bool
+pub fn SemanticsTarget::not_equal(Self, Self) -> Bool
+pub fn SemanticsTarget::to_json(Self) -> Json
+pub fn SemanticsTarget::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsTextValue {
   selection : TextRange?
   caret : Int?
   editable : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsTextValue::equal(Self, Self) -> Bool
 pub fn SemanticsTextValue::new(selection? : TextRange, caret? : Int, editable? : Bool) -> Self
+pub fn SemanticsTextValue::not_equal(Self, Self) -> Bool
+pub fn SemanticsTextValue::to_json(Self) -> Json
+pub fn SemanticsTextValue::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsUrlModifier {
   url : String
@@ -1412,7 +1808,11 @@ pub(all) struct ShaderEffectSpec {
   uniforms : Array[Double]
   fallback : Brush
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ShaderEffectSpec::equal(Self, Self) -> Bool
 pub fn ShaderEffectSpec::new(name~ : String, frame~ : Rect, uniforms? : Array[Double], fallback? : Brush) -> Self
+pub fn ShaderEffectSpec::not_equal(Self, Self) -> Bool
+pub fn ShaderEffectSpec::to_json(Self) -> Json
+pub fn ShaderEffectSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ShadowModifier {
   style : ShadowStyle
@@ -1425,6 +1825,10 @@ pub(all) struct ShadowScale {
   lg : ShadowStyle
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ShadowScale::default(scheme? : ColorScheme) -> Self
+pub fn ShadowScale::equal(Self, Self) -> Bool
+pub fn ShadowScale::not_equal(Self, Self) -> Bool
+pub fn ShadowScale::to_json(Self) -> Json
+pub fn ShadowScale::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ShadowSpec {
   rect : RoundedRect
@@ -1433,7 +1837,11 @@ pub(all) struct ShadowSpec {
   blur_radius : Double
   spread : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ShadowSpec::equal(Self, Self) -> Bool
 pub fn ShadowSpec::new(rect~ : RoundedRect, color~ : Color, offset? : Point, blur_radius? : Double, spread? : Double) -> Self
+pub fn ShadowSpec::not_equal(Self, Self) -> Bool
+pub fn ShadowSpec::to_json(Self) -> Json
+pub fn ShadowSpec::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ShadowStyle {
   color : Color
@@ -1441,15 +1849,23 @@ pub(all) struct ShadowStyle {
   blur_radius : Double
   spread : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ShadowStyle::equal(Self, Self) -> Bool
 pub fn ShadowStyle::new(color~ : Color, offset? : Point, blur_radius? : Double, spread? : Double) -> Self
+pub fn ShadowStyle::not_equal(Self, Self) -> Bool
+pub fn ShadowStyle::to_json(Self) -> Json
+pub fn ShadowStyle::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Size {
   width : Double
   height : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Size::clamp(Self, Constraints) -> Self
+pub fn Size::equal(Self, Self) -> Bool
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
+pub fn Size::not_equal(Self, Self) -> Bool
+pub fn Size::to_json(Self) -> Json
+pub fn Size::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SpacingModifier {
   spacing : Double
@@ -1464,6 +1880,10 @@ pub(all) struct SpacingScale {
   xl : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SpacingScale::default() -> Self
+pub fn SpacingScale::equal(Self, Self) -> Bool
+pub fn SpacingScale::not_equal(Self, Self) -> Bool
+pub fn SpacingScale::to_json(Self) -> Json
+pub fn SpacingScale::to_repr(Self) -> @debug.Repr
 
 pub struct Subscription[Msg] {
   // private fields
@@ -1483,9 +1903,13 @@ pub fn[Msg] Subscription::timer(key~ : String, start~ : ((Msg) -> Unit) -> (() -
 pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 
 type SubscriptionDescriptor derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionDescriptor::equal(Self, Self) -> Bool
 pub fn SubscriptionDescriptor::key(Self) -> String
 pub fn SubscriptionDescriptor::kind(Self) -> String
 pub fn SubscriptionDescriptor::label(Self) -> String
+pub fn SubscriptionDescriptor::not_equal(Self, Self) -> Bool
+pub fn SubscriptionDescriptor::to_json(Self) -> Json
+pub fn SubscriptionDescriptor::to_repr(Self) -> @debug.Repr
 
 pub struct SubscriptionRuntimeSource[Msg] {
   // private fields
@@ -1501,17 +1925,25 @@ pub(all) enum SurfaceLevel {
   Raised
   Overlay
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceLevel::equal(Self, Self) -> Bool
+pub fn SurfaceLevel::not_equal(Self, Self) -> Bool
+pub fn SurfaceLevel::to_json(Self) -> Json
+pub fn SurfaceLevel::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SurfaceMetrics {
   logical_size : Size
   physical_size : Size
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceMetrics::equal(Self, Self) -> Bool
 pub fn SurfaceMetrics::from_logical(size~ : Size, scale_factor? : Double) -> Self
 pub fn SurfaceMetrics::logical_size(Self) -> Size
 pub fn SurfaceMetrics::new(logical_size~ : Size, physical_size~ : Size, scale_factor? : Double) -> Self
+pub fn SurfaceMetrics::not_equal(Self, Self) -> Bool
 pub fn SurfaceMetrics::physical_size(Self) -> Size
 pub fn SurfaceMetrics::scale_factor(Self) -> Double
+pub fn SurfaceMetrics::to_json(Self) -> Json
+pub fn SurfaceMetrics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SurfaceScale {
   base : Brush
@@ -1519,12 +1951,20 @@ pub(all) struct SurfaceScale {
   overlay : Brush
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SurfaceScale::default(ColorPalette, ColorScheme) -> Self
+pub fn SurfaceScale::equal(Self, Self) -> Bool
+pub fn SurfaceScale::not_equal(Self, Self) -> Bool
+pub fn SurfaceScale::to_json(Self) -> Json
+pub fn SurfaceScale::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TextAlign {
   TextStart
   TextCenter
   TextEnd
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextAlign::equal(Self, Self) -> Bool
+pub fn TextAlign::not_equal(Self, Self) -> Bool
+pub fn TextAlign::to_json(Self) -> Json
+pub fn TextAlign::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TextCaretDirection {
   MoveLeft
@@ -1543,8 +1983,12 @@ pub(all) struct TextCommandResult {
   changed : Bool
   clipboard_text : String?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextCommandResult::equal(Self, Self) -> Bool
 pub fn TextCommandResult::handled(changed? : Bool, clipboard_text? : String?) -> Self
 pub fn TextCommandResult::ignored() -> Self
+pub fn TextCommandResult::not_equal(Self, Self) -> Bool
+pub fn TextCommandResult::to_json(Self) -> Json
+pub fn TextCommandResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextControlStateContext {
   caret : Int
@@ -1556,6 +2000,10 @@ pub(all) struct TextControlStateContext {
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextControlStateContext::equal(Self, Self) -> Bool
+pub fn TextControlStateContext::not_equal(Self, Self) -> Bool
+pub fn TextControlStateContext::to_json(Self) -> Json
+pub fn TextControlStateContext::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextHistoryEntryContext {
   start : Int
@@ -1564,7 +2012,11 @@ pub(all) struct TextHistoryEntryContext {
   caret : Int
   selection : TextRange?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextHistoryEntryContext::equal(Self, Self) -> Bool
+pub fn TextHistoryEntryContext::not_equal(Self, Self) -> Bool
 pub fn TextHistoryEntryContext::redo_text(Self, String) -> String
+pub fn TextHistoryEntryContext::to_json(Self) -> Json
+pub fn TextHistoryEntryContext::to_repr(Self) -> @debug.Repr
 pub fn TextHistoryEntryContext::undo_text(Self, String) -> String
 
 pub(all) enum TextInputEvent {
@@ -1577,6 +2029,10 @@ pub(all) enum TextInputEvent {
   DeleteRange(TextRange)
   DeleteSurrounding(Int, Int)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextInputEvent::equal(Self, Self) -> Bool
+pub fn TextInputEvent::not_equal(Self, Self) -> Bool
+pub fn TextInputEvent::to_json(Self) -> Json
+pub fn TextInputEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextInputState {
   focused : Bool
@@ -1588,20 +2044,32 @@ pub(all) struct TextInputState {
   frame : Rect
   caret_rect : Rect
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextInputState::equal(Self, Self) -> Bool
 pub fn TextInputState::none() -> Self
+pub fn TextInputState::not_equal(Self, Self) -> Bool
+pub fn TextInputState::to_json(Self) -> Json
+pub fn TextInputState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextLayoutInput {
   text : String
   font : FontSpec
   max_width : Double?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextLayoutInput::equal(Self, Self) -> Bool
 pub fn TextLayoutInput::new(text~ : String, font~ : FontSpec, max_width? : Double) -> Self
+pub fn TextLayoutInput::not_equal(Self, Self) -> Bool
+pub fn TextLayoutInput::to_json(Self) -> Json
+pub fn TextLayoutInput::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextLayoutResult {
   size : Size
   baseline : Double
   caret_positions : Array[Double]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextLayoutResult::equal(Self, Self) -> Bool
+pub fn TextLayoutResult::not_equal(Self, Self) -> Bool
+pub fn TextLayoutResult::to_json(Self) -> Json
+pub fn TextLayoutResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextParagraphHitTestResult {
   offset : Int
@@ -1609,6 +2077,10 @@ pub(all) struct TextParagraphHitTestResult {
   caret_rect : Rect
   is_inside : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextParagraphHitTestResult::equal(Self, Self) -> Bool
+pub fn TextParagraphHitTestResult::not_equal(Self, Self) -> Bool
+pub fn TextParagraphHitTestResult::to_json(Self) -> Json
+pub fn TextParagraphHitTestResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextParagraphLayoutMetadata {
   text_system_id : String
@@ -1619,6 +2091,10 @@ pub(all) struct TextParagraphLayoutMetadata {
   native_paragraph_ready : Bool
   bidi_visual_order_ready : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextParagraphLayoutMetadata::equal(Self, Self) -> Bool
+pub fn TextParagraphLayoutMetadata::not_equal(Self, Self) -> Bool
+pub fn TextParagraphLayoutMetadata::to_json(Self) -> Json
+pub fn TextParagraphLayoutMetadata::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextParagraphLayoutResult {
   text : String
@@ -1630,9 +2106,13 @@ pub(all) struct TextParagraphLayoutResult {
   metadata : TextParagraphLayoutMetadata
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextParagraphLayoutResult::caret_rect_at(Self, Int) -> Rect
+pub fn TextParagraphLayoutResult::equal(Self, Self) -> Bool
 pub fn TextParagraphLayoutResult::hit_test(Self, Point) -> TextParagraphHitTestResult
 pub fn TextParagraphLayoutResult::line_count(Self) -> Int
+pub fn TextParagraphLayoutResult::not_equal(Self, Self) -> Bool
 pub fn TextParagraphLayoutResult::selection_rects(Self, TextRange) -> Array[Rect]
+pub fn TextParagraphLayoutResult::to_json(Self) -> Json
+pub fn TextParagraphLayoutResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextParagraphLineMetrics {
   line_index : Int
@@ -1641,6 +2121,10 @@ pub(all) struct TextParagraphLineMetrics {
   size : Size
   baseline : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextParagraphLineMetrics::equal(Self, Self) -> Bool
+pub fn TextParagraphLineMetrics::not_equal(Self, Self) -> Bool
+pub fn TextParagraphLineMetrics::to_json(Self) -> Json
+pub fn TextParagraphLineMetrics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextParagraphVisualOrderMetadata {
   logical_text : String
@@ -1652,15 +2136,23 @@ pub(all) struct TextParagraphVisualOrderMetadata {
   visual_order_differs : Bool
   bidi_visual_order_ready : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextParagraphVisualOrderMetadata::equal(Self, Self) -> Bool
+pub fn TextParagraphVisualOrderMetadata::not_equal(Self, Self) -> Bool
+pub fn TextParagraphVisualOrderMetadata::to_json(Self) -> Json
+pub fn TextParagraphVisualOrderMetadata::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextRange {
   start : Int
   end : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextRange::collapsed(Int) -> Self
+pub fn TextRange::equal(Self, Self) -> Bool
 pub fn TextRange::is_collapsed(Self) -> Bool
 pub fn TextRange::new(start~ : Int, end~ : Int) -> Self
 pub fn TextRange::normalized(Self) -> Self
+pub fn TextRange::not_equal(Self, Self) -> Bool
+pub fn TextRange::to_json(Self) -> Json
+pub fn TextRange::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextRun {
   text : String
@@ -1669,7 +2161,11 @@ pub(all) struct TextRun {
   color : Color
   align : TextAlign
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextRun::equal(Self, Self) -> Bool
 pub fn TextRun::new(text~ : String, frame~ : Rect, font~ : FontSpec, color~ : Color, align? : TextAlign) -> Self
+pub fn TextRun::not_equal(Self, Self) -> Bool
+pub fn TextRun::to_json(Self) -> Json
+pub fn TextRun::to_repr(Self) -> @debug.Repr
 
 pub struct TextSystem {
   id : String
@@ -1694,8 +2190,12 @@ pub(all) struct Theme {
   motion : MotionScale
   surfaces : SurfaceScale
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Theme::equal(Self, Self) -> Bool
 pub fn Theme::neutral() -> Self
+pub fn Theme::not_equal(Self, Self) -> Bool
 pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
+pub fn Theme::to_json(Self) -> Json
+pub fn Theme::to_repr(Self) -> @debug.Repr
 pub fn Theme::with_motion(Self, MotionScale) -> Self
 pub fn Theme::with_palette(Self, ColorPalette) -> Self
 pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
@@ -1709,8 +2209,12 @@ pub(all) enum ThemeDensity {
   Standard
   Comfortable
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThemeDensity::equal(Self, Self) -> Bool
 pub fn ThemeDensity::label(Self) -> String
 pub fn ThemeDensity::multiplier(Self) -> Double
+pub fn ThemeDensity::not_equal(Self, Self) -> Bool
+pub fn ThemeDensity::to_json(Self) -> Json
+pub fn ThemeDensity::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ThemeModifier {
   theme : Theme
@@ -1724,6 +2228,10 @@ pub(all) enum ThemePreset {
   Primer
   Fluent
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThemePreset::equal(Self, Self) -> Bool
+pub fn ThemePreset::not_equal(Self, Self) -> Bool
+pub fn ThemePreset::to_json(Self) -> Json
+pub fn ThemePreset::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ThemeSpec {
   preset : ThemePreset
@@ -1734,9 +2242,13 @@ pub(all) struct ThemeSpec {
   reduced_motion : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ThemeSpec::default() -> Self
+pub fn ThemeSpec::equal(Self, Self) -> Bool
 pub fn ThemeSpec::minimal_dark() -> Self
 pub fn ThemeSpec::minimal_light() -> Self
+pub fn ThemeSpec::not_equal(Self, Self) -> Bool
 pub fn ThemeSpec::resolve_scheme(Self, ColorScheme) -> ColorScheme
+pub fn ThemeSpec::to_json(Self) -> Json
+pub fn ThemeSpec::to_repr(Self) -> @debug.Repr
 pub fn ThemeSpec::with_color_mode(Self, ColorMode) -> Self
 pub fn ThemeSpec::with_contrast(Self, AccessibilityContrast) -> Self
 pub fn ThemeSpec::with_density(Self, ThemeDensity) -> Self
@@ -1752,8 +2264,12 @@ pub(all) struct Transform2D {
   tx : Double
   ty : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Transform2D::equal(Self, Self) -> Bool
 pub fn Transform2D::identity() -> Self
+pub fn Transform2D::not_equal(Self, Self) -> Bool
 pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Self
+pub fn Transform2D::to_json(Self) -> Json
+pub fn Transform2D::to_repr(Self) -> @debug.Repr
 pub fn Transform2D::translation(dx~ : Double, dy~ : Double) -> Self
 
 pub struct TransitionSample {
@@ -1761,6 +2277,10 @@ pub struct TransitionSample {
   style : TransitionStyle
   present : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TransitionSample::equal(Self, Self) -> Bool
+pub fn TransitionSample::not_equal(Self, Self) -> Bool
+pub fn TransitionSample::to_json(Self) -> Json
+pub fn TransitionSample::to_repr(Self) -> @debug.Repr
 
 pub struct TransitionSpec {
   from : TransitionStyle
@@ -1768,13 +2288,17 @@ pub struct TransitionSpec {
   duration_ms : Double
   easing : Easing
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TransitionSpec::equal(Self, Self) -> Bool
 pub fn TransitionSpec::fade(from_opacity? : Double, to_opacity? : Double, duration_ms? : Double, easing? : Easing) -> Self
 pub fn TransitionSpec::new(from? : TransitionStyle, to? : TransitionStyle, duration_ms? : Double, easing? : Easing) -> Self
+pub fn TransitionSpec::not_equal(Self, Self) -> Bool
 pub fn TransitionSpec::presence(Self, present~ : Bool, progress~ : Double, reduced_motion? : Bool) -> TransitionSample
 pub fn TransitionSpec::sample(Self, Double, reduced_motion? : Bool) -> TransitionSample
 pub fn TransitionSpec::sample_elapsed(Self, Double, reduced_motion? : Bool) -> TransitionSample
 pub fn TransitionSpec::scale(from_scale? : Double, to_scale? : Double, duration_ms? : Double, easing? : Easing) -> Self
 pub fn TransitionSpec::slide(from_offset~ : Point, to_offset? : Point, duration_ms? : Double, easing? : Easing) -> Self
+pub fn TransitionSpec::to_json(Self) -> Json
+pub fn TransitionSpec::to_repr(Self) -> @debug.Repr
 
 pub struct TransitionStyle {
   opacity : Double
@@ -1782,9 +2306,13 @@ pub struct TransitionStyle {
   scale : Point
   foreground : Color?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TransitionStyle::equal(Self, Self) -> Bool
 pub fn TransitionStyle::identity() -> Self
 pub fn TransitionStyle::interpolate(Self, Self, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Self
 pub fn TransitionStyle::new(opacity? : Double, offset? : Point, scale? : Point, foreground? : Color?) -> Self
+pub fn TransitionStyle::not_equal(Self, Self) -> Bool
+pub fn TransitionStyle::to_json(Self) -> Json
+pub fn TransitionStyle::to_repr(Self) -> @debug.Repr
 pub fn TransitionStyle::with_foreground(Self, Color) -> Self
 pub fn TransitionStyle::with_offset(Self, dx? : Double, dy? : Double) -> Self
 pub fn TransitionStyle::with_opacity(Self, Double) -> Self
@@ -1802,6 +2330,10 @@ pub(all) struct TypographyScale {
   control : FontSpec
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TypographyScale::default() -> Self
+pub fn TypographyScale::equal(Self, Self) -> Bool
+pub fn TypographyScale::not_equal(Self, Self) -> Bool
+pub fn TypographyScale::to_json(Self) -> Json
+pub fn TypographyScale::to_repr(Self) -> @debug.Repr
 
 pub struct View[Msg] {
   // private fields
@@ -1906,7 +2438,9 @@ pub struct ViewDeclaration {
 pub fn ViewDeclaration::changes_from(Self, Self) -> DeclarationChanges
 pub fn ViewDeclaration::channels(layout~ : DeclarationChannel, paint~ : DeclarationChannel, semantics~ : DeclarationChannel, platform~ : DeclarationChannel) -> Self
 pub fn ViewDeclaration::constant() -> Self
+pub fn ViewDeclaration::equal(Self, Self) -> Bool
 pub fn ViewDeclaration::layout(Self) -> DeclarationChannel
+pub fn ViewDeclaration::not_equal(Self, Self) -> Bool
 pub fn ViewDeclaration::paint(Self) -> DeclarationChannel
 pub fn ViewDeclaration::platform(Self) -> DeclarationChannel
 pub fn ViewDeclaration::semantics(Self) -> DeclarationChannel
@@ -1918,6 +2452,9 @@ pub(all) enum ViewDirtyHint {
   ViewLayoutDirty
   ViewBuildDirty
 } derive(Eq, @debug.Debug)
+pub fn ViewDirtyHint::equal(Self, Self) -> Bool
+pub fn ViewDirtyHint::not_equal(Self, Self) -> Bool
+pub fn ViewDirtyHint::to_repr(Self) -> @debug.Repr
 
 pub struct ViewEnvironment {
   viewport_size : Size
@@ -1950,14 +2487,19 @@ pub(all) struct ViewEventResult[Msg] {
   dirty : ViewDirtyHint
   messages : Array[Msg]
 } derive(Eq, @debug.Debug)
+pub fn[Msg : Eq] ViewEventResult::equal(Self[Msg], Self[Msg]) -> Bool
 pub fn[Msg] ViewEventResult::ignored() -> Self[Msg]
 pub fn[Msg] ViewEventResult::message(Msg) -> Self[Msg]
+pub fn[Msg : Eq] ViewEventResult::not_equal(Self[Msg], Self[Msg]) -> Bool
+pub fn[Msg : @debug.Debug] ViewEventResult::to_repr(Self[Msg]) -> @debug.Repr
 
 pub(all) struct ViewIdentity {
   kind : String
   key : Key?
 } derive(Eq)
+pub fn ViewIdentity::equal(Self, Self) -> Bool
 pub fn ViewIdentity::new(kind~ : String, key? : String?) -> Self
+pub fn ViewIdentity::not_equal(Self, Self) -> Bool
 
 pub(all) struct ViewLayoutContext {
   constraints : Constraints
@@ -1975,7 +2517,11 @@ pub(all) struct ViewLayoutResult {
   clips_children : Bool
   child_frames_tight : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ViewLayoutResult::equal(Self, Self) -> Bool
 pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect], clips_children? : Bool, child_frames_tight? : Bool) -> Self
+pub fn ViewLayoutResult::not_equal(Self, Self) -> Bool
+pub fn ViewLayoutResult::to_json(Self) -> Json
+pub fn ViewLayoutResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewPaintContext {
   frame : Rect
@@ -1996,7 +2542,10 @@ pub(all) struct ViewPaintLayer {
   commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
 } derive(Eq, @debug.Debug)
+pub fn ViewPaintLayer::equal(Self, Self) -> Bool
 pub fn ViewPaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand]) -> Self
+pub fn ViewPaintLayer::not_equal(Self, Self) -> Bool
+pub fn ViewPaintLayer::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewPaintPlan {
   commands : Array[DrawCommand]
@@ -2009,6 +2558,9 @@ pub(all) struct ViewPaintPlan {
 pub fn ViewPaintPlan::animating_commands(Array[DrawCommand]) -> Self
 pub fn ViewPaintPlan::commands(Array[DrawCommand]) -> Self
 pub fn ViewPaintPlan::empty() -> Self
+pub fn ViewPaintPlan::equal(Self, Self) -> Bool
+pub fn ViewPaintPlan::not_equal(Self, Self) -> Bool
+pub fn ViewPaintPlan::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewPlatformContext {
   frame : Rect
@@ -2087,8 +2639,12 @@ pub(all) struct ViewSemanticsInfo {
   live : SemanticsLive?
   live_atomic : Bool?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ViewSemanticsInfo::equal(Self, Self) -> Bool
 pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : SemanticsCheckedState, expanded? : Bool, invalid? : Bool, required? : Bool, read_only? : Bool, busy? : Bool, multiline? : Bool, password? : Bool, modal? : Bool, numeric? : SemanticsNumericValue, text? : SemanticsTextValue, collection? : SemanticsCollectionInfo, relations? : SemanticsRelationsDeclaration, live? : SemanticsLive, live_atomic? : Bool) -> Self
+pub fn ViewSemanticsInfo::not_equal(Self, Self) -> Bool
 pub fn ViewSemanticsInfo::overlaying(Self, Self) -> Self
+pub fn ViewSemanticsInfo::to_json(Self) -> Json
+pub fn ViewSemanticsInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewStateContext {
   focused : Bool
@@ -2100,7 +2656,10 @@ pub(all) struct ViewStateContext {
   disabled : Bool
   slots : ViewStateSlots
 } derive(Eq, @debug.Debug)
+pub fn ViewStateContext::equal(Self, Self) -> Bool
+pub fn ViewStateContext::not_equal(Self, Self) -> Bool
 pub fn[T : ViewStateValue] ViewStateContext::read_slot(Self, ViewStateSlot[T]) -> T
+pub fn ViewStateContext::to_repr(Self) -> @debug.Repr
 pub fn[T : ViewStateValue] ViewStateContext::with_slot(Self, ViewStateSlot[T], T) -> Self
 pub fn[T] ViewStateContext::without_slot(Self, ViewStateSlot[T]) -> Self
 
@@ -2113,6 +2672,9 @@ pub struct ViewStateSlots {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn ViewStateSlots::empty() -> Self
+pub fn ViewStateSlots::equal(Self, Self) -> Bool
+pub fn ViewStateSlots::not_equal(Self, Self) -> Bool
+pub fn ViewStateSlots::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewStyle {
   font : FontSpec?
@@ -2121,16 +2683,23 @@ pub(all) struct ViewStyle {
   corner_radius : Double?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ViewStyle::empty() -> Self
+pub fn ViewStyle::equal(Self, Self) -> Bool
 pub fn ViewStyle::from_theme(Theme) -> Self
 pub fn ViewStyle::merge(Self, Self) -> Self
+pub fn ViewStyle::not_equal(Self, Self) -> Bool
+pub fn ViewStyle::to_json(Self) -> Json
+pub fn ViewStyle::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewTextCommandResult[Msg] {
   result : TextCommandResult
   text_control : TextControlStateContext?
   messages : Array[Msg]
 } derive(Eq, @debug.Debug)
+pub fn[Msg : Eq] ViewTextCommandResult::equal(Self[Msg], Self[Msg]) -> Bool
 pub fn[Msg] ViewTextCommandResult::ignored() -> Self[Msg]
 pub fn[Msg] ViewTextCommandResult::new(result~ : TextCommandResult, text_control? : TextControlStateContext?, messages? : Array[Msg]) -> Self[Msg]
+pub fn[Msg : Eq] ViewTextCommandResult::not_equal(Self[Msg], Self[Msg]) -> Bool
+pub fn[Msg : @debug.Debug] ViewTextCommandResult::to_repr(Self[Msg]) -> @debug.Repr
 
 pub(all) struct VisualStyle {
   background : Brush?
@@ -2141,6 +2710,10 @@ pub(all) struct VisualStyle {
   opacity : Double?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn VisualStyle::empty() -> Self
+pub fn VisualStyle::equal(Self, Self) -> Bool
+pub fn VisualStyle::not_equal(Self, Self) -> Bool
+pub fn VisualStyle::to_json(Self) -> Json
+pub fn VisualStyle::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 pub using @unicode {type TextGraphemeBoundaries}

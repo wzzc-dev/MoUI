@@ -9,11 +9,36 @@ pub(all) enum NativeGpuPlatform {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend NativeGpuPlatform with Debug::{to_repr}
+
+///|
+pub extend NativeGpuPlatform with Eq::{not_equal, equal}
+
+///|
+pub extend NativeGpuPlatform with NativePlatformSurface::{
+  gpu_promoted,
+  platform_label,
+  surface_route,
+}
+
+///|
+pub extend NativeGpuPlatform with ToJson::{to_json}
+
+///|
 pub(all) enum NativeRendererMode {
   Auto
   SkiaGpu
   SkiaRaster
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend NativeRendererMode with Debug::{to_repr}
+
+///|
+pub extend NativeRendererMode with Eq::{not_equal, equal}
+
+///|
+pub extend NativeRendererMode with ToJson::{to_json}
 
 ///|
 /// Renderer-local route used to select the concrete Skia GPU API. Platform
@@ -25,6 +50,15 @@ pub(all) enum SkiaSurfaceRoute {
   EglGpuSurfaceRoute
   Direct3DGpuSurfaceRoute
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SkiaSurfaceRoute with Debug::{to_repr}
+
+///|
+pub extend SkiaSurfaceRoute with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaSurfaceRoute with ToJson::{to_json}
 
 ///|
 pub fn SkiaSurfaceRoute::is_gpu(self : SkiaSurfaceRoute) -> Bool {

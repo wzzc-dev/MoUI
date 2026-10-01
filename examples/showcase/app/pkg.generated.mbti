@@ -25,7 +25,10 @@ pub(all) struct CatalogGroup {
   id : String
   title : String
 } derive(Eq, @debug.Debug)
+pub fn CatalogGroup::equal(Self, Self) -> Bool
 pub fn CatalogGroup::new(id~ : String, title~ : String) -> Self
+pub fn CatalogGroup::not_equal(Self, Self) -> Bool
+pub fn CatalogGroup::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CatalogItem {
   workspace : String
@@ -36,8 +39,11 @@ pub(all) struct CatalogItem {
   badge : String
   tone : @style.BadgeTone
 } derive(Eq, @debug.Debug)
+pub fn CatalogItem::equal(Self, Self) -> Bool
 pub fn CatalogItem::new(workspace~ : String, id~ : String, group_id~ : String, title~ : String, summary~ : String, badge? : String, tone? : @style.BadgeTone) -> Self
+pub fn CatalogItem::not_equal(Self, Self) -> Bool
 pub fn CatalogItem::route(Self) -> String
+pub fn CatalogItem::to_repr(Self) -> @debug.Repr
 
 pub struct ShowcaseApp {
   unit : Unit
@@ -99,11 +105,15 @@ pub(all) struct ShowcaseRoute {
   id : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ShowcaseRoute::default() -> Self
+pub fn ShowcaseRoute::equal(Self, Self) -> Bool
 pub fn ShowcaseRoute::format(Self) -> String
 pub fn ShowcaseRoute::mobile_default() -> Self
 pub fn ShowcaseRoute::new(workspace~ : Workspace, id~ : String) -> Self
+pub fn ShowcaseRoute::not_equal(Self, Self) -> Bool
 pub fn ShowcaseRoute::parse(String) -> Self
 pub fn ShowcaseRoute::title(Self) -> String
+pub fn ShowcaseRoute::to_json(Self) -> Json
+pub fn ShowcaseRoute::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ShowcaseRouteHistoryCommand {
   PushRoute(String)
@@ -111,6 +121,10 @@ pub(all) enum ShowcaseRouteHistoryCommand {
   BackRoute
   ForwardRoute
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ShowcaseRouteHistoryCommand::equal(Self, Self) -> Bool
+pub fn ShowcaseRouteHistoryCommand::not_equal(Self, Self) -> Bool
+pub fn ShowcaseRouteHistoryCommand::to_json(Self) -> Json
+pub fn ShowcaseRouteHistoryCommand::to_repr(Self) -> @debug.Repr
 
 pub struct ShowcaseRouteHost {
   route_source : @services.RouteSource
@@ -125,9 +139,13 @@ pub(all) enum Workspace {
   Diagnostics
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Workspace::default_id(Self) -> String
+pub fn Workspace::equal(Self, Self) -> Bool
 pub fn Workspace::from_slug(String) -> Self?
+pub fn Workspace::not_equal(Self, Self) -> Bool
 pub fn Workspace::slug(Self) -> String
 pub fn Workspace::title(Self) -> String
+pub fn Workspace::to_json(Self) -> Json
+pub fn Workspace::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

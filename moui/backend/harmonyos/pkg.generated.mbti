@@ -50,6 +50,10 @@ pub(all) struct HarmonyOSBackendCapabilities {
   accessibility : Bool
   async_image : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HarmonyOSBackendCapabilities::equal(Self, Self) -> Bool
+pub fn HarmonyOSBackendCapabilities::not_equal(Self, Self) -> Bool
+pub fn HarmonyOSBackendCapabilities::to_json(Self) -> Json
+pub fn HarmonyOSBackendCapabilities::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HarmonyOSBackendInfo {
   host_info : @backend.HostAppInfo
@@ -59,6 +63,10 @@ pub(all) struct HarmonyOSBackendInfo {
   readiness : HarmonyOSBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HarmonyOSBackendInfo::equal(Self, Self) -> Bool
+pub fn HarmonyOSBackendInfo::not_equal(Self, Self) -> Bool
+pub fn HarmonyOSBackendInfo::to_json(Self) -> Json
+pub fn HarmonyOSBackendInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HarmonyOSBackendReadiness {
   ready : Bool
@@ -66,15 +74,30 @@ pub(all) struct HarmonyOSBackendReadiness {
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HarmonyOSBackendReadiness::equal(Self, Self) -> Bool
+pub fn HarmonyOSBackendReadiness::not_equal(Self, Self) -> Bool
+pub fn HarmonyOSBackendReadiness::to_json(Self) -> Json
+pub fn HarmonyOSBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct HarmonyOSEmbeddedRuntimeBackend {
   backend : @embedded.HostedWindowBackend
 }
+pub fn HarmonyOSEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::destroy_surfaces(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::device_event(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn HarmonyOSEmbeddedRuntimeBackend::has_session(Self) -> Bool
+pub fn HarmonyOSEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
+pub fn HarmonyOSEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::session_attached(Self) -> Bool
+pub fn HarmonyOSEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::surface_generation(Self) -> Int
+pub fn HarmonyOSEmbeddedRuntimeBackend::suspended(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::window_event(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend
 
 pub struct HarmonyOSSurfaceBinding {
@@ -85,9 +108,13 @@ pub fn HarmonyOSSurfaceBinding::new(create_renderer~ : (HarmonyOSSurfaceHandle, 
 pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HarmonyOSSurfaceHandle::equal(Self, Self) -> Bool
 pub fn HarmonyOSSurfaceHandle::new(raw~ : UInt64) -> Self
 pub fn HarmonyOSSurfaceHandle::none() -> Self
+pub fn HarmonyOSSurfaceHandle::not_equal(Self, Self) -> Bool
 pub fn HarmonyOSSurfaceHandle::raw(Self) -> UInt64
+pub fn HarmonyOSSurfaceHandle::to_json(Self) -> Json
+pub fn HarmonyOSSurfaceHandle::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

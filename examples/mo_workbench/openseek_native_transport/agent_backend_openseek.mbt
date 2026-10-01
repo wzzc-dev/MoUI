@@ -117,9 +117,15 @@ struct ModelsResponse {
 } derive(FromJson)
 
 ///|
+pub extend ModelsResponse with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
 struct ModelEntry {
   id : String
 } derive(FromJson)
+
+///|
+pub extend ModelEntry with @moonbitlang/core/json.FromJson::{from_json}
 
 ///|
 /// Build the chat-completions `v1/models` URL from a provider base URL.

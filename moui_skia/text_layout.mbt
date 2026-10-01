@@ -6,6 +6,15 @@ pub(all) enum TextDirection {
 } derive(Debug, Eq)
 
 ///|
+pub extend TextDirection with Debug::{to_repr}
+
+///|
+pub extend TextDirection with Default::{default}
+
+///|
+pub extend TextDirection with Eq::{not_equal, equal}
+
+///|
 pub impl Default for TextDirection with fn default() {
   LeftToRight
 }
@@ -26,6 +35,12 @@ pub(all) struct TextRange {
   start : Int
   end : Int
 } derive(Debug, Eq)
+
+///|
+pub extend TextRange with Debug::{to_repr}
+
+///|
+pub extend TextRange with Eq::{not_equal, equal}
 
 ///|
 pub fn TextRange::new(start : Int, end : Int) -> TextRange {
@@ -55,6 +70,12 @@ pub(all) struct TextRunDescriptor {
   direction : TextDirection
   fallback : FontFallbackRequest
 } derive(Debug, Eq)
+
+///|
+pub extend TextRunDescriptor with Debug::{to_repr}
+
+///|
+pub extend TextRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn TextRunDescriptor::new(

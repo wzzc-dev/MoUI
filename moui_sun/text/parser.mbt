@@ -19,6 +19,12 @@ pub(all) enum FontParseError {
 } derive(Eq, Debug)
 
 ///|
+pub extend FontParseError with Debug::{to_repr}
+
+///|
+pub extend FontParseError with Eq::{not_equal, equal}
+
+///|
 /// Parse a TTF font file and report structural errors as Result values.
 fn parse_font_result(data : Bytes) -> Result[Font, FontParseError] {
   parse_font_checked(data)

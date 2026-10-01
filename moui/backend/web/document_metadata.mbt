@@ -9,6 +9,15 @@ pub(all) struct WebDocumentMetadata {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebDocumentMetadata with Debug::{to_repr}
+
+///|
+pub extend WebDocumentMetadata with Eq::{not_equal, equal}
+
+///|
+pub extend WebDocumentMetadata with ToJson::{to_json}
+
+///|
 pub fn WebDocumentMetadata::new(
   title~ : String,
   description? : String = "",

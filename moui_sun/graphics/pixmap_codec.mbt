@@ -37,10 +37,22 @@ pub(all) enum PixmapDecodeError {
 } derive(Eq, Debug)
 
 ///|
+pub extend PixmapDecodeError with Debug::{to_repr}
+
+///|
+pub extend PixmapDecodeError with Eq::{not_equal, equal}
+
+///|
 /// Error returned when encoding pixmap bytes.
 pub(all) enum PixmapEncodeError {
   InvalidPngDimensions(Int, Int)
 } derive(Eq, Debug)
+
+///|
+pub extend PixmapEncodeError with Debug::{to_repr}
+
+///|
+pub extend PixmapEncodeError with Eq::{not_equal, equal}
 
 ///|
 /// Return an isolated copy of the raw RGBA pixel bytes in row-major order.
@@ -222,6 +234,9 @@ struct BmpInfo {
   bytes_per_pixel : Int
   source_row_bytes : Int
 } derive(Debug)
+
+///|
+pub extend BmpInfo with Debug::{to_repr}
 
 ///|
 fn decode_bmp_info(data : Bytes) -> Result[BmpInfo, PixmapDecodeError] {

@@ -20,6 +20,15 @@ pub(all) enum RendererFeature {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererFeature with Debug::{to_repr}
+
+///|
+pub extend RendererFeature with Eq::{not_equal, equal}
+
+///|
+pub extend RendererFeature with ToJson::{to_json}
+
+///|
 pub(all) enum RendererFeatureStatus {
   Supported
   Partial
@@ -27,6 +36,15 @@ pub(all) enum RendererFeatureStatus {
   HostForwarded
   Unavailable
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererFeatureStatus with Debug::{to_repr}
+
+///|
+pub extend RendererFeatureStatus with Eq::{not_equal, equal}
+
+///|
+pub extend RendererFeatureStatus with ToJson::{to_json}
 
 ///|
 pub(all) struct RendererBackendFeatureCapability {
@@ -40,10 +58,28 @@ pub(all) struct RendererBackendFeatureCapability {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererBackendFeatureCapability with Debug::{to_repr}
+
+///|
+pub extend RendererBackendFeatureCapability with Eq::{not_equal, equal}
+
+///|
+pub extend RendererBackendFeatureCapability with ToJson::{to_json}
+
+///|
 pub(all) struct RendererFeatureCapability {
   feature : RendererFeature
   providers : Array[RendererBackendFeatureCapability]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererFeatureCapability with Debug::{to_repr}
+
+///|
+pub extend RendererFeatureCapability with Eq::{not_equal, equal}
+
+///|
+pub extend RendererFeatureCapability with ToJson::{to_json}
 
 ///|
 pub(all) enum RendererCommandFallbackKind {
@@ -51,6 +87,15 @@ pub(all) enum RendererCommandFallbackKind {
   UnbalancedPop
   UnclosedScope
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererCommandFallbackKind with Debug::{to_repr}
+
+///|
+pub extend RendererCommandFallbackKind with Eq::{not_equal, equal}
+
+///|
+pub extend RendererCommandFallbackKind with ToJson::{to_json}
 
 ///|
 pub struct RendererCommandFallback {
@@ -62,6 +107,15 @@ pub struct RendererCommandFallback {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererCommandFallback with Debug::{to_repr}
+
+///|
+pub extend RendererCommandFallback with Eq::{not_equal, equal}
+
+///|
+pub extend RendererCommandFallback with ToJson::{to_json}
+
+///|
 pub struct RendererCommandPlan {
   priv total_commands : Int
   priv fallback_count : Int
@@ -69,6 +123,15 @@ pub struct RendererCommandPlan {
   priv final_filter_depth : Int
   priv fallbacks : Array[RendererCommandFallback]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererCommandPlan with Debug::{to_repr}
+
+///|
+pub extend RendererCommandPlan with Eq::{not_equal, equal}
+
+///|
+pub extend RendererCommandPlan with ToJson::{to_json}
 
 ///|
 pub fn RendererCommandFallback::index(self : RendererCommandFallback) -> Int {

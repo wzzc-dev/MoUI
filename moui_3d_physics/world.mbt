@@ -6,9 +6,30 @@ pub(all) enum BodyType {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend BodyType with Debug::{to_repr}
+
+///|
+pub extend BodyType with Eq::{not_equal, equal}
+
+///|
+pub extend BodyType with ToJson::{to_json}
+
+///|
 pub(all) struct BodyId {
   value : Int64
 } derive(Eq, Debug, Hash, ToJson)
+
+///|
+pub extend BodyId with Debug::{to_repr}
+
+///|
+pub extend BodyId with Eq::{not_equal, equal}
+
+///|
+pub extend BodyId with Hash::{hash, hash_combine}
+
+///|
+pub extend BodyId with ToJson::{to_json}
 
 ///|
 pub fn BodyId::new(value : Int64) -> BodyId {
@@ -24,6 +45,18 @@ pub fn BodyId::value(self : BodyId) -> Int64 {
 pub(all) struct ColliderId {
   value : Int64
 } derive(Eq, Debug, Hash, ToJson)
+
+///|
+pub extend ColliderId with Debug::{to_repr}
+
+///|
+pub extend ColliderId with Eq::{not_equal, equal}
+
+///|
+pub extend ColliderId with Hash::{hash, hash_combine}
+
+///|
+pub extend ColliderId with ToJson::{to_json}
 
 ///|
 pub fn ColliderId::new(value : Int64) -> ColliderId {
@@ -47,12 +80,30 @@ pub(all) enum Shape {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Shape with Debug::{to_repr}
+
+///|
+pub extend Shape with Eq::{not_equal, equal}
+
+///|
+pub extend Shape with ToJson::{to_json}
+
+///|
 pub(all) struct BodyDesc {
   body_type : BodyType
   position : @moui_3d.Vec3
   rotation : @moui_3d.Quat
   gravity_scale : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend BodyDesc with Debug::{to_repr}
+
+///|
+pub extend BodyDesc with Eq::{not_equal, equal}
+
+///|
+pub extend BodyDesc with ToJson::{to_json}
 
 ///|
 pub fn BodyDesc::new(
@@ -92,6 +143,15 @@ pub(all) struct ColliderDesc {
   friction : Double
   restitution : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ColliderDesc with Debug::{to_repr}
+
+///|
+pub extend ColliderDesc with Eq::{not_equal, equal}
+
+///|
+pub extend ColliderDesc with ToJson::{to_json}
 
 ///|
 pub fn ColliderDesc::new(
@@ -144,6 +204,9 @@ pub(all) struct RayHit {
 } derive(Debug)
 
 ///|
+pub extend RayHit with Debug::{to_repr}
+
+///|
 pub fn RayHit::collider(self : RayHit) -> ColliderId {
   self.collider
 }
@@ -181,6 +244,9 @@ pub(all) struct PhysicsWorld {
   bodies : Map[BodyId, BodyDesc]
   colliders : Map[ColliderId, ColliderDesc]
 } derive(Debug)
+
+///|
+pub extend PhysicsWorld with Debug::{to_repr}
 
 ///|
 pub fn PhysicsWorld::new(

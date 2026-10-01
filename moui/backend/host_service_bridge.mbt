@@ -7,11 +7,29 @@ pub(all) enum HostClipboardRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostClipboardRequest with Debug::{to_repr}
+
+///|
+pub extend HostClipboardRequest with Eq::{not_equal, equal}
+
+///|
+pub extend HostClipboardRequest with ToJson::{to_json}
+
+///|
 pub(all) enum HostFileDialogKind {
   OpenFile
   SaveFile
   PickDirectory
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostFileDialogKind with Debug::{to_repr}
+
+///|
+pub extend HostFileDialogKind with Eq::{not_equal, equal}
+
+///|
+pub extend HostFileDialogKind with ToJson::{to_json}
 
 ///|
 pub(all) struct HostFileDialogOptions {
@@ -22,16 +40,43 @@ pub(all) struct HostFileDialogOptions {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostFileDialogOptions with Debug::{to_repr}
+
+///|
+pub extend HostFileDialogOptions with Eq::{not_equal, equal}
+
+///|
+pub extend HostFileDialogOptions with ToJson::{to_json}
+
+///|
 pub(all) enum HostTextFileRequest {
   ReadText(String)
   WriteText(String, String)
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostTextFileRequest with Debug::{to_repr}
+
+///|
+pub extend HostTextFileRequest with Eq::{not_equal, equal}
+
+///|
+pub extend HostTextFileRequest with ToJson::{to_json}
+
+///|
 pub(all) enum HostBinaryFileRequest {
   ReadBytes(String)
   WriteBytes(String, Bytes)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostBinaryFileRequest with Debug::{to_repr}
+
+///|
+pub extend HostBinaryFileRequest with Eq::{not_equal, equal}
+
+///|
+pub extend HostBinaryFileRequest with ToJson::{to_json}
 
 ///|
 pub(all) enum HostSettingsRequest {
@@ -41,11 +86,29 @@ pub(all) enum HostSettingsRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostSettingsRequest with Debug::{to_repr}
+
+///|
+pub extend HostSettingsRequest with Eq::{not_equal, equal}
+
+///|
+pub extend HostSettingsRequest with ToJson::{to_json}
+
+///|
 pub struct HostDirectoryEntry {
   priv name : String
   priv path : String
   priv is_directory : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostDirectoryEntry with Debug::{to_repr}
+
+///|
+pub extend HostDirectoryEntry with Eq::{not_equal, equal}
+
+///|
+pub extend HostDirectoryEntry with ToJson::{to_json}
 
 ///|
 pub fn HostDirectoryEntry::new(
@@ -79,6 +142,15 @@ pub struct HostBinaryFileDiagnostic {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostBinaryFileDiagnostic with Debug::{to_repr}
+
+///|
+pub extend HostBinaryFileDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend HostBinaryFileDiagnostic with ToJson::{to_json}
+
+///|
 pub(all) enum HostServiceRequest {
   Clipboard(HostClipboardRequest)
   ShowMenu(Array[@core.ActionCommand])
@@ -96,10 +168,28 @@ pub(all) enum HostServiceRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostServiceRequest with Debug::{to_repr}
+
+///|
+pub extend HostServiceRequest with Eq::{not_equal, equal}
+
+///|
+pub extend HostServiceRequest with ToJson::{to_json}
+
+///|
 pub(all) enum HostApplicationMenuPlacement {
   MenuBar
   ApplicationMenu
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostApplicationMenuPlacement with Debug::{to_repr}
+
+///|
+pub extend HostApplicationMenuPlacement with Eq::{not_equal, equal}
+
+///|
+pub extend HostApplicationMenuPlacement with ToJson::{to_json}
 
 ///|
 /// One application menu group. `MenuBar` creates a top-level menu; hosts with
@@ -109,6 +199,15 @@ pub(all) struct HostApplicationMenu {
   items : Array[HostApplicationMenuItem]
   placement : HostApplicationMenuPlacement
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostApplicationMenu with Debug::{to_repr}
+
+///|
+pub extend HostApplicationMenu with Eq::{not_equal, equal}
+
+///|
+pub extend HostApplicationMenu with ToJson::{to_json}
 
 ///|
 /// One item in a host application menu bar.
@@ -125,6 +224,15 @@ pub(all) struct HostApplicationMenuItem {
   separator : Bool
   enabled : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostApplicationMenuItem with Debug::{to_repr}
+
+///|
+pub extend HostApplicationMenuItem with Eq::{not_equal, equal}
+
+///|
+pub extend HostApplicationMenuItem with ToJson::{to_json}
 
 ///|
 pub fn HostApplicationMenu::new(
@@ -184,6 +292,15 @@ pub(all) enum HostServiceResponse {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostServiceResponse with Debug::{to_repr}
+
+///|
+pub extend HostServiceResponse with Eq::{not_equal, equal}
+
+///|
+pub extend HostServiceResponse with ToJson::{to_json}
+
+///|
 pub(all) enum HostServiceKind {
   ClipboardService
   MenuService
@@ -196,6 +313,15 @@ pub(all) enum HostServiceKind {
   DirectoryListingService
   PlatformChannelService
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostServiceKind with Debug::{to_repr}
+
+///|
+pub extend HostServiceKind with Eq::{not_equal, equal}
+
+///|
+pub extend HostServiceKind with ToJson::{to_json}
 
 ///|
 pub struct HostServiceBridge {

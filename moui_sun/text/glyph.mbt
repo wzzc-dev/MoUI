@@ -5,6 +5,12 @@ struct GlyphId {
 } derive(Eq, Debug)
 
 ///|
+pub extend GlyphId with Debug::{to_repr}
+
+///|
+pub extend GlyphId with Eq::{not_equal, equal}
+
+///|
 /// Create a glyph ID
 pub fn GlyphId::new(id : Int) -> GlyphId {
   { id, }
@@ -25,6 +31,12 @@ struct GlyphPosition {
   x_offset : Int
   y_offset : Int
 } derive(Eq, Debug)
+
+///|
+pub extend GlyphPosition with Debug::{to_repr}
+
+///|
+pub extend GlyphPosition with Eq::{not_equal, equal}
 
 ///|
 /// Create a glyph position
@@ -76,6 +88,12 @@ struct GlyphInfo {
 } derive(Eq, Debug)
 
 ///|
+pub extend GlyphInfo with Debug::{to_repr}
+
+///|
+pub extend GlyphInfo with Eq::{not_equal, equal}
+
+///|
 /// Create glyph info
 pub fn GlyphInfo::new(glyph_id~ : GlyphId, cluster~ : Int) -> GlyphInfo {
   { glyph_id, cluster, }
@@ -100,6 +118,9 @@ struct ShapedText {
   positions : Array[GlyphPosition]
   width : Int
 } derive(Debug)
+
+///|
+pub extend ShapedText with Debug::{to_repr}
 
 ///|
 /// Get the total width of the shaped text

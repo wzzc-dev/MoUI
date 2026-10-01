@@ -39,6 +39,9 @@ pub(all) struct AppDescriptor {
   default_height : Double
   dock_priority : Int
 } derive(Eq, @debug.Debug)
+pub fn AppDescriptor::equal(Self, Self) -> Bool
+pub fn AppDescriptor::not_equal(Self, Self) -> Bool
+pub fn AppDescriptor::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AppKind {
   FinderApp
@@ -47,13 +50,21 @@ pub(all) enum AppKind {
   TerminalApp
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn AppKind::descriptor(Self) -> AppDescriptor
+pub fn AppKind::equal(Self, Self) -> Bool
+pub fn AppKind::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn AppKind::label(Self) -> String
+pub fn AppKind::not_equal(Self, Self) -> Bool
+pub fn AppKind::to_json(Self) -> Json
+pub fn AppKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AppLanguage {
   EnglishLanguage
   ChineseLanguage
 } derive(Eq, @debug.Debug)
+pub fn AppLanguage::equal(Self, Self) -> Bool
+pub fn AppLanguage::not_equal(Self, Self) -> Bool
 pub fn AppLanguage::text(Self, String) -> String
+pub fn AppLanguage::to_repr(Self) -> @debug.Repr
 pub fn AppLanguage::translate(Self, String, values? : ArrayView[(String, String)]) -> String
 
 pub(all) enum AppearanceMode {
@@ -61,11 +72,17 @@ pub(all) enum AppearanceMode {
   LightAppearance
   DarkAppearance
 } derive(Eq, @debug.Debug)
+pub fn AppearanceMode::equal(Self, Self) -> Bool
+pub fn AppearanceMode::not_equal(Self, Self) -> Bool
+pub fn AppearanceMode::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BrowserPage {
   StartPage
   SearchResults(String)
 } derive(Eq, @debug.Debug)
+pub fn BrowserPage::equal(Self, Self) -> Bool
+pub fn BrowserPage::not_equal(Self, Self) -> Bool
+pub fn BrowserPage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopClock {
   year : Int
@@ -76,13 +93,21 @@ pub(all) struct DesktopClock {
   minute : Int
   second : Int
 } derive(Eq, @debug.Debug)
+pub fn DesktopClock::equal(Self, Self) -> Bool
 pub fn DesktopClock::new(Int, Int, Int, Int, Int, Int, second? : Int) -> Self
+pub fn DesktopClock::not_equal(Self, Self) -> Bool
+pub fn DesktopClock::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopIconPlacement {
   name : String
   offset_x : Double
   offset_y : Double
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DesktopIconPlacement::equal(Self, Self) -> Bool
+pub fn DesktopIconPlacement::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopIconPlacement::not_equal(Self, Self) -> Bool
+pub fn DesktopIconPlacement::to_json(Self) -> Json
+pub fn DesktopIconPlacement::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesktopMenu {
   SystemMenu
@@ -94,6 +119,9 @@ pub(all) enum DesktopMenu {
   WindowMenu
   HelpMenu
 } derive(Eq, @debug.Debug)
+pub fn DesktopMenu::equal(Self, Self) -> Bool
+pub fn DesktopMenu::not_equal(Self, Self) -> Bool
+pub fn DesktopMenu::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopModel {
   wallpaper_source : String
@@ -172,12 +200,18 @@ pub(all) enum DesktopOverlay {
   SystemSettings
   AppStore
 } derive(Eq, @debug.Debug)
+pub fn DesktopOverlay::equal(Self, Self) -> Bool
+pub fn DesktopOverlay::not_equal(Self, Self) -> Bool
+pub fn DesktopOverlay::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesktopService {
   SystemAppearanceService
   FileImportService
   UrlOpenService
 } derive(Eq, @debug.Debug)
+pub fn DesktopService::equal(Self, Self) -> Bool
+pub fn DesktopService::not_equal(Self, Self) -> Bool
+pub fn DesktopService::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopSnapshot {
   schema_version : Int
@@ -194,34 +228,54 @@ pub(all) struct DesktopSnapshot {
   language : String
   icon_placements : Array[DesktopIconPlacement]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DesktopSnapshot::equal(Self, Self) -> Bool
+pub fn DesktopSnapshot::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopSnapshot::not_equal(Self, Self) -> Bool
+pub fn DesktopSnapshot::to_json(Self) -> Json
+pub fn DesktopSnapshot::to_repr(Self) -> @debug.Repr
 
 type DesktopSnapshotV1 derive(@json.FromJson)
+pub fn DesktopSnapshotV1::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 
 type DesktopSnapshotV2 derive(@json.FromJson)
+pub fn DesktopSnapshotV2::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 
 type DesktopSnapshotV3 derive(@json.FromJson)
+pub fn DesktopSnapshotV3::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 
 pub(all) enum DesktopTask {
   ReviewDesktop
   ReplyToMaya
   PlanTahoePhotos
 } derive(Eq, @debug.Debug)
+pub fn DesktopTask::equal(Self, Self) -> Bool
+pub fn DesktopTask::not_equal(Self, Self) -> Bool
+pub fn DesktopTask::to_repr(Self) -> @debug.Repr
 
 pub(all) enum FinderLocation {
   Documents
   Applications
   Downloads
 } derive(Eq, @debug.Debug)
+pub fn FinderLocation::equal(Self, Self) -> Bool
+pub fn FinderLocation::not_equal(Self, Self) -> Bool
+pub fn FinderLocation::to_repr(Self) -> @debug.Repr
 
 pub(all) enum FinderViewMode {
   IconView
   ListView
 } derive(Eq, @debug.Debug)
+pub fn FinderViewMode::equal(Self, Self) -> Bool
+pub fn FinderViewMode::not_equal(Self, Self) -> Bool
+pub fn FinderViewMode::to_repr(Self) -> @debug.Repr
 
 pub(all) enum LauncherTab {
   Apps
   Actions
 } derive(Eq, @debug.Debug)
+pub fn LauncherTab::equal(Self, Self) -> Bool
+pub fn LauncherTab::not_equal(Self, Self) -> Bool
+pub fn LauncherTab::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MenuCommand {
   ToggleAppearance
@@ -246,6 +300,9 @@ pub(all) enum MenuCommand {
   LogOutSession
   ToggleLanguageCommand
 } derive(Eq, @debug.Debug)
+pub fn MenuCommand::equal(Self, Self) -> Bool
+pub fn MenuCommand::not_equal(Self, Self) -> Bool
+pub fn MenuCommand::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Msg {
   AdvanceBoot
@@ -324,6 +381,9 @@ pub(all) enum SessionPhase {
   Login
   Unlocked
 } derive(Eq, @debug.Debug)
+pub fn SessionPhase::equal(Self, Self) -> Bool
+pub fn SessionPhase::not_equal(Self, Self) -> Bool
+pub fn SessionPhase::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowBounds {
   offset_x : Double
@@ -331,11 +391,21 @@ pub(all) struct WindowBounds {
   width : Double
   height : Double
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WindowBounds::equal(Self, Self) -> Bool
+pub fn WindowBounds::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowBounds::not_equal(Self, Self) -> Bool
+pub fn WindowBounds::to_json(Self) -> Json
+pub fn WindowBounds::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowId {
   app : AppKind
   serial : Int
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WindowId::equal(Self, Self) -> Bool
+pub fn WindowId::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowId::not_equal(Self, Self) -> Bool
+pub fn WindowId::to_json(Self) -> Json
+pub fn WindowId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowRecord {
   id : WindowId
@@ -343,12 +413,22 @@ pub(all) struct WindowRecord {
   bounds : WindowBounds
   z_order : Int
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WindowRecord::equal(Self, Self) -> Bool
+pub fn WindowRecord::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowRecord::not_equal(Self, Self) -> Bool
+pub fn WindowRecord::to_json(Self) -> Json
+pub fn WindowRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WindowState {
   NormalWindow
   MinimizedWindow
   MaximizedWindow
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WindowState::equal(Self, Self) -> Bool
+pub fn WindowState::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowState::not_equal(Self, Self) -> Bool
+pub fn WindowState::to_json(Self) -> Json
+pub fn WindowState::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

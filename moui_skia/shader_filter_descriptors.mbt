@@ -8,6 +8,12 @@ pub(all) enum ShaderDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend ShaderDescriptor with Debug::{to_repr}
+
+///|
+pub extend ShaderDescriptor with Eq::{not_equal, equal}
+
+///|
 fn shader_filter_scalar_is_finite(value : Float) -> Bool {
   value == value && value - value == 0.0
 }

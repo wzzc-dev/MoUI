@@ -8,15 +8,42 @@ pub(all) struct PlatformViewPlacement {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PlatformViewPlacement with Debug::{to_repr}
+
+///|
+pub extend PlatformViewPlacement with Eq::{not_equal, equal}
+
+///|
+pub extend PlatformViewPlacement with ToJson::{to_json}
+
+///|
 pub(all) struct PlatformViewProperty {
   key : String
   value : String
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PlatformViewProperty with Debug::{to_repr}
+
+///|
+pub extend PlatformViewProperty with Eq::{not_equal, equal}
+
+///|
+pub extend PlatformViewProperty with ToJson::{to_json}
+
+///|
 pub(all) enum PlatformViewEvent {
   Named(name~ : String, value~ : String, detail~ : String, flag~ : Bool)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend PlatformViewEvent with Debug::{to_repr}
+
+///|
+pub extend PlatformViewEvent with Eq::{not_equal, equal}
+
+///|
+pub extend PlatformViewEvent with ToJson::{to_json}
 
 ///|
 pub fn PlatformViewProperty::new(

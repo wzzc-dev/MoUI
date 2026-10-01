@@ -54,6 +54,12 @@ pub(all) enum RenderCommand {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderCommand with Debug::{to_repr}
+
+///|
+pub extend RenderCommand with Eq::{not_equal, equal}
+
+///|
 pub fn RenderCommand::clear(color : Color) -> RenderCommand {
   ClearCanvas(color)
 }

@@ -14,11 +14,29 @@ pub(all) enum MarkdownInlineKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownInlineKind with Debug::{to_repr}
+
+///|
+pub extend MarkdownInlineKind with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownInlineKind with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
   target : String?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownInline with Debug::{to_repr}
+
+///|
+pub extend MarkdownInline with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownInline with ToJson::{to_json}
 
 ///|
 priv struct MarkdownReferenceDefinition {
@@ -40,6 +58,12 @@ struct MarkdownHtmlEntityDecodeResult {
   ch : Char
   end : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownHtmlEntityDecodeResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownHtmlEntityDecodeResult with Eq::{not_equal, equal}
 
 ///|
 fn markdown_decode_html_entities(text : String) -> String {

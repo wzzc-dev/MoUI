@@ -81,6 +81,10 @@ pub(all) enum NativeRasterGlyphFormat {
   AlphaMask
   ColorRgba
 } derive(Eq, ToJson, @debug.Debug)
+pub fn NativeRasterGlyphFormat::equal(Self, Self) -> Bool
+pub fn NativeRasterGlyphFormat::not_equal(Self, Self) -> Bool
+pub fn NativeRasterGlyphFormat::to_json(Self) -> Json
+pub fn NativeRasterGlyphFormat::to_repr(Self) -> @debug.Repr
 
 pub struct NativeRendererSmokeFrame {
   // private fields
@@ -102,6 +106,10 @@ pub(all) enum NativeTextEngineSetting {
   MoonCosmic
   PlatformDefault
 } derive(Eq, ToJson, @debug.Debug)
+pub fn NativeTextEngineSetting::equal(Self, Self) -> Bool
+pub fn NativeTextEngineSetting::not_equal(Self, Self) -> Bool
+pub fn NativeTextEngineSetting::to_json(Self) -> Json
+pub fn NativeTextEngineSetting::to_repr(Self) -> @debug.Repr
 
 pub struct NativeTextLayout {
   // private fields
@@ -119,7 +127,11 @@ pub(all) enum WgpuNativePlatform {
   Windows
   Linux
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WgpuNativePlatform::equal(Self, Self) -> Bool
 pub fn WgpuNativePlatform::label(Self) -> String
+pub fn WgpuNativePlatform::not_equal(Self, Self) -> Bool
+pub fn WgpuNativePlatform::to_json(Self) -> Json
+pub fn WgpuNativePlatform::to_repr(Self) -> @debug.Repr
 
 pub struct WgpuRenderer {
   // private fields

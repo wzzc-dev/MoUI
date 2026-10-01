@@ -7,6 +7,9 @@ struct GlyphRun {
 } derive(Debug)
 
 ///|
+pub extend GlyphRun with Debug::{to_repr}
+
+///|
 /// Create a glyph run from positioned glyphs.
 fn GlyphRun::new(
   glyphs : Array[PositionedGlyph],
@@ -46,6 +49,9 @@ struct TextLayout {
   runs : Array[GlyphRun]
   metrics : LayoutMetrics
 } derive(Debug)
+
+///|
+pub extend TextLayout with Debug::{to_repr}
 
 ///|
 /// Create a text layout from glyph runs and metrics.

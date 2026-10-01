@@ -5,6 +5,15 @@ pub struct SvgImportResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SvgImportResult with Debug::{to_repr}
+
+///|
+pub extend SvgImportResult with Eq::{not_equal, equal}
+
+///|
+pub extend SvgImportResult with ToJson::{to_json}
+
+///|
 pub fn SvgImportResult::commands(
   self : SvgImportResult,
 ) -> Array[@core.DrawCommand] {

@@ -26,6 +26,15 @@ pub(all) struct MarkdownTextSegment {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownTextSegment with Debug::{to_repr}
+
+///|
+pub extend MarkdownTextSegment with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownTextSegment with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownDocumentTextStore {
   // Contiguous, ascending segments covering the document: the first
   // starts at 0, each next starts where its predecessor ended. A segment
@@ -35,6 +44,15 @@ pub(all) struct MarkdownDocumentTextStore {
   // (revision at which the joined text was cached, joined text).
   materialized : Ref[(Int, String)]
 }
+
+///|
+pub extend MarkdownDocumentTextStore with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentTextStore with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentTextStore with ToJson::{to_json}
 
 ///|
 /// Value semantics despite the shared mutable core: two stores are equal

@@ -37,11 +37,29 @@ pub(all) enum DataStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DataStatus with Debug::{to_repr}
+
+///|
+pub extend DataStatus with Eq::{not_equal, equal}
+
+///|
+pub extend DataStatus with ToJson::{to_json}
+
+///|
 pub(all) enum DataSortKey {
   Project
   Owner
   Status
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DataSortKey with Debug::{to_repr}
+
+///|
+pub extend DataSortKey with Eq::{not_equal, equal}
+
+///|
+pub extend DataSortKey with ToJson::{to_json}
 
 ///|
 pub(all) struct DataRecord {
@@ -52,6 +70,15 @@ pub(all) struct DataRecord {
   team : String
   priority : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DataRecord with Debug::{to_repr}
+
+///|
+pub extend DataRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DataRecord with ToJson::{to_json}
 
 ///|
 pub(all) struct DataTableModel {

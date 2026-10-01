@@ -12,6 +12,12 @@ pub(all) enum PresentationKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend PresentationKind with Debug::{to_repr}
+
+///|
+pub extend PresentationKind with Eq::{not_equal, equal}
+
+///|
 /// An anchor is a stable view key, a viewport point, or — inside
 /// `popup_host` — the host node's own base frame.
 pub(all) enum PresentationAnchor {
@@ -19,6 +25,12 @@ pub(all) enum PresentationAnchor {
   Viewport(@core.Point)
   HostBase
 } derive(Eq, Debug)
+
+///|
+pub extend PresentationAnchor with Debug::{to_repr}
+
+///|
+pub extend PresentationAnchor with Eq::{not_equal, equal}
 
 ///|
 /// Candidate placement around an anchor. Candidates are tried in order.
@@ -39,6 +51,12 @@ pub(all) enum PresentationPlacementCandidate {
 } derive(Eq, Debug)
 
 ///|
+pub extend PresentationPlacementCandidate with Debug::{to_repr}
+
+///|
+pub extend PresentationPlacementCandidate with Eq::{not_equal, equal}
+
+///|
 /// Placement policy shared by view-level and host presentations. The anchor
 /// itself lives on `PresentationSpec`; a placement only describes where around
 /// that anchor the surface may land.
@@ -49,11 +67,23 @@ pub(all) struct PresentationPlacement {
 } derive(Eq, Debug)
 
 ///|
+pub extend PresentationPlacement with Debug::{to_repr}
+
+///|
+pub extend PresentationPlacement with Eq::{not_equal, equal}
+
+///|
 /// Whether a presentation blocks background interaction and semantics.
 pub(all) enum PresentationModality {
   NonModal
   Modal
 } derive(Eq, Debug)
+
+///|
+pub extend PresentationModality with Debug::{to_repr}
+
+///|
+pub extend PresentationModality with Eq::{not_equal, equal}
 
 ///|
 /// System and pointer dismissal policy. Sending a message is intentionally
@@ -75,6 +105,12 @@ pub(all) enum PresentationHostPolicy {
   PreferNative
   NativeRequired
 } derive(Eq, Debug)
+
+///|
+pub extend PresentationHostPolicy with Debug::{to_repr}
+
+///|
+pub extend PresentationHostPolicy with Eq::{not_equal, equal}
 
 ///|
 /// Whether this policy should issue a host request when the platform reports
@@ -116,6 +152,12 @@ pub(all) enum PresentationTransition {
   Slide
   None
 } derive(Eq, Debug)
+
+///|
+pub extend PresentationTransition with Debug::{to_repr}
+
+///|
+pub extend PresentationTransition with Eq::{not_equal, equal}
 
 ///|
 /// Convert the presentation-level vocabulary to the shared motion primitive.

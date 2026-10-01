@@ -6,6 +6,15 @@ pub(all) struct IPoint {
 } derive(Debug, Eq)
 
 ///|
+pub extend IPoint with Debug::{to_repr}
+
+///|
+pub extend IPoint with Default::{default}
+
+///|
+pub extend IPoint with Eq::{not_equal, equal}
+
+///|
 pub fn IPoint::new(x : Int, y : Int) -> IPoint {
   { x, y, }
 }
@@ -46,6 +55,15 @@ pub(all) struct Point {
   x : Scalar
   y : Scalar
 } derive(Debug, Eq)
+
+///|
+pub extend Point with Debug::{to_repr}
+
+///|
+pub extend Point with Default::{default}
+
+///|
+pub extend Point with Eq::{not_equal, equal}
 
 ///|
 pub fn Point::new(x : Scalar, y : Scalar) -> Point {
@@ -169,6 +187,15 @@ pub(all) struct ISize {
 } derive(Debug, Eq)
 
 ///|
+pub extend ISize with Debug::{to_repr}
+
+///|
+pub extend ISize with Default::{default}
+
+///|
+pub extend ISize with Eq::{not_equal, equal}
+
+///|
 pub fn ISize::new(width : Int, height : Int) -> ISize {
   { width, height, }
 }
@@ -209,6 +236,15 @@ pub(all) struct Size {
   width : Scalar
   height : Scalar
 } derive(Debug, Eq)
+
+///|
+pub extend Size with Debug::{to_repr}
+
+///|
+pub extend Size with Default::{default}
+
+///|
+pub extend Size with Eq::{not_equal, equal}
 
 ///|
 pub fn Size::new(width : Scalar, height : Scalar) -> Size {
@@ -264,6 +300,15 @@ pub(all) struct IRect {
   right : Int
   bottom : Int
 } derive(Debug, Eq)
+
+///|
+pub extend IRect with Debug::{to_repr}
+
+///|
+pub extend IRect with Default::{default}
+
+///|
+pub extend IRect with Eq::{not_equal, equal}
 
 ///|
 pub fn IRect::new(left : Int, top : Int, right : Int, bottom : Int) -> IRect {
@@ -519,6 +564,15 @@ pub(all) struct Rect {
   right : Scalar
   bottom : Scalar
 } derive(Debug, Eq)
+
+///|
+pub extend Rect with Debug::{to_repr}
+
+///|
+pub extend Rect with Default::{default}
+
+///|
+pub extend Rect with Eq::{not_equal, equal}
 
 ///|
 pub fn Rect::new(
@@ -906,6 +960,15 @@ pub(all) struct RRect {
   lower_right : Size
   lower_left : Size
 } derive(Debug, Eq)
+
+///|
+pub extend RRect with Debug::{to_repr}
+
+///|
+pub extend RRect with Default::{default}
+
+///|
+pub extend RRect with Eq::{not_equal, equal}
 
 ///|
 fn normalize_rrect_radius(radius : Size) -> Size {

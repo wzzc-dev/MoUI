@@ -29,11 +29,15 @@ pub(all) struct InspectorReport {
   render : @runtime.RenderInspectorSnapshot
   semantics : @runtime.SemanticsInspectorSnapshot
 } derive(Eq, ToJson, @debug.Debug)
+pub fn InspectorReport::equal(Self, Self) -> Bool
 pub fn InspectorReport::from_snapshot(@runtime.InspectorSnapshot) -> Self
 pub fn InspectorReport::layout(Self) -> @runtime.LayoutInspectorSnapshot
+pub fn InspectorReport::not_equal(Self, Self) -> Bool
 pub fn InspectorReport::render(Self) -> @runtime.RenderInspectorSnapshot
 pub fn InspectorReport::runtime(Self) -> @runtime.RuntimeInspectorSnapshot
 pub fn InspectorReport::semantics(Self) -> @runtime.SemanticsInspectorSnapshot
+pub fn InspectorReport::to_json(Self) -> Json
+pub fn InspectorReport::to_repr(Self) -> @debug.Repr
 pub fn InspectorReport::view_tree(Self) -> @runtime.ViewTreeInspectorSnapshot
 
 pub struct SnapshotHistory {
@@ -56,8 +60,12 @@ pub(all) struct SnapshotSummary {
   active_effect_task_count : Int
   active_subscription_count : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SnapshotSummary::equal(Self, Self) -> Bool
 pub fn SnapshotSummary::from_snapshot(@runtime.InspectorSnapshot) -> Self
+pub fn SnapshotSummary::not_equal(Self, Self) -> Bool
 pub fn SnapshotSummary::text(Self) -> String
+pub fn SnapshotSummary::to_json(Self) -> Json
+pub fn SnapshotSummary::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

@@ -7,6 +7,12 @@ pub(all) struct CatalogGroup {
 } derive(Eq, Debug)
 
 ///|
+pub extend CatalogGroup with Debug::{to_repr}
+
+///|
+pub extend CatalogGroup with Eq::{not_equal, equal}
+
+///|
 pub(all) struct CatalogItem {
   workspace : String
   id : String
@@ -16,6 +22,12 @@ pub(all) struct CatalogItem {
   badge : String
   tone : @views.BadgeTone
 } derive(Eq, Debug)
+
+///|
+pub extend CatalogItem with Debug::{to_repr}
+
+///|
+pub extend CatalogItem with Eq::{not_equal, equal}
 
 ///|
 pub fn CatalogGroup::new(id~ : String, title~ : String) -> CatalogGroup {

@@ -33,6 +33,12 @@ pub(all) struct FontFallbackChain {
 } derive(Debug, Eq)
 
 ///|
+pub extend FontFallbackChain with Debug::{to_repr}
+
+///|
+pub extend FontFallbackChain with Eq::{not_equal, equal}
+
+///|
 pub fn FontFallbackChain::new(
   primary_family? : Bytes = b"",
   fallback_families? : Array[Bytes] = [],
@@ -138,6 +144,12 @@ pub(all) struct FontFallbackRequest {
 } derive(Debug, Eq)
 
 ///|
+pub extend FontFallbackRequest with Debug::{to_repr}
+
+///|
+pub extend FontFallbackRequest with Eq::{not_equal, equal}
+
+///|
 pub fn FontFallbackRequest::new(
   families? : FontFallbackChain = FontFallbackChain::new(),
   bcp47? : Array[Bytes] = [],
@@ -203,6 +215,12 @@ pub(all) struct FontFallbackMatchDescriptor {
   fallback_index : Int
   synthetic : Bool
 } derive(Debug, Eq)
+
+///|
+pub extend FontFallbackMatchDescriptor with Debug::{to_repr}
+
+///|
+pub extend FontFallbackMatchDescriptor with Eq::{not_equal, equal}
 
 ///|
 fn normalized_font_fallback_index(
@@ -457,6 +475,12 @@ pub(all) struct FontFallbackResolutionDescriptor {
   request : FontFallbackRequest
   resolved_match : FontFallbackMatchDescriptor
 } derive(Debug, Eq)
+
+///|
+pub extend FontFallbackResolutionDescriptor with Debug::{to_repr}
+
+///|
+pub extend FontFallbackResolutionDescriptor with Eq::{not_equal, equal}
 
 ///|
 fn font_fallback_resolution_normalized_match(

@@ -7,12 +7,18 @@ struct FontFallbackSpan {
 } derive(Debug)
 
 ///|
+pub extend FontFallbackSpan with Debug::{to_repr}
+
+///|
 /// A font fallback plan for a text string.
 struct FontFallbackPlan {
   spans : Array[FontFallbackSpan]
   char_count : Int
   missing_char_count : Int
 } derive(Debug)
+
+///|
+pub extend FontFallbackPlan with Debug::{to_repr}
 
 ///|
 /// Get the index of the selected face, or -1 when no face covers this span.

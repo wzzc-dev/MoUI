@@ -8,6 +8,9 @@ pub(all) enum Scene {
 } derive(Eq)
 
 ///|
+pub extend Scene with Eq::{not_equal, equal}
+
+///|
 pub struct Model {
   scene : Scene
   count : Int

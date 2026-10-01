@@ -63,6 +63,10 @@ pub(all) struct MacosAccessibilityBridgeInfo {
   action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MacosAccessibilityBridgeInfo::equal(Self, Self) -> Bool
+pub fn MacosAccessibilityBridgeInfo::not_equal(Self, Self) -> Bool
+pub fn MacosAccessibilityBridgeInfo::to_json(Self) -> Json
+pub fn MacosAccessibilityBridgeInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MacosBackendInfo {
   host_info : @backend.HostAppInfo
@@ -70,6 +74,10 @@ pub(all) struct MacosBackendInfo {
   accessibility : MacosAccessibilityBridgeInfo
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MacosBackendInfo::equal(Self, Self) -> Bool
+pub fn MacosBackendInfo::not_equal(Self, Self) -> Bool
+pub fn MacosBackendInfo::to_json(Self) -> Json
+pub fn MacosBackendInfo::to_repr(Self) -> @debug.Repr
 
 pub struct MacosHostAppOptions {
   // private fields
@@ -101,6 +109,17 @@ pub fn MacosModalPresenter::route_input(Self, @host_modal.HostModalSession, @wzz
 pub fn MacosModalPresenter::with_hooks(capabilities? : @backend.HostModalCapabilities, hooks~ : MacosModalNativeHooks) -> Self
 
 type MacosNativeHostBackend
+pub fn MacosNativeHostBackend::about_to_wait(Self, @wzzc-dev/window/macos.ActiveEventLoop) -> Unit
+pub fn MacosNativeHostBackend::can_create_surfaces(Self, @wzzc-dev/window/macos.ActiveEventLoop) -> Unit
+pub fn MacosNativeHostBackend::destroy_surfaces(Self, @wzzc-dev/window/macos.ActiveEventLoop) -> Unit
+pub fn MacosNativeHostBackend::device_event(Self, @wzzc-dev/window/macos.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
+pub fn MacosNativeHostBackend::memory_warning(Self, @wzzc-dev/window/macos.ActiveEventLoop) -> Unit
+pub fn MacosNativeHostBackend::new_events(Self, @wzzc-dev/window/macos.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
+pub fn MacosNativeHostBackend::proxy_wake_up(Self, @wzzc-dev/window/macos.ActiveEventLoop) -> Unit
+pub fn MacosNativeHostBackend::resumed(Self, @wzzc-dev/window/macos.ActiveEventLoop) -> Unit
+pub fn MacosNativeHostBackend::standard_key_binding(Self, @wzzc-dev/window/macos.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
+pub fn MacosNativeHostBackend::suspended(Self, @wzzc-dev/window/macos.ActiveEventLoop) -> Unit
+pub fn MacosNativeHostBackend::window_event(Self, @wzzc-dev/window/macos.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosNativeHostBackend
 
 // Type aliases

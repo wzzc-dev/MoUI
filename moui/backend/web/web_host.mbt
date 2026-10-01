@@ -8,6 +8,15 @@ pub(all) struct CanvasHostConstraints {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend CanvasHostConstraints with Debug::{to_repr}
+
+///|
+pub extend CanvasHostConstraints with Eq::{not_equal, equal}
+
+///|
+pub extend CanvasHostConstraints with ToJson::{to_json}
+
+///|
 #external
 priv type WebHostString
 

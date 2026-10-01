@@ -39,6 +39,15 @@ pub enum LineBreakClass {
 } derive(Eq, Debug)
 
 ///|
+pub extend LineBreakClass with Debug::{to_repr}
+
+///|
+pub extend LineBreakClass with Eq::{not_equal, equal}
+
+///|
+pub extend LineBreakClass with Show::{output}
+
+///|
 pub impl Show for LineBreakClass with fn output(self, logger) {
   logger.write_string(self.to_string())
 }

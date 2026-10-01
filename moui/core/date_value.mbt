@@ -9,6 +9,15 @@ pub(all) struct DateValue {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DateValue with Debug::{to_repr}
+
+///|
+pub extend DateValue with Eq::{not_equal, equal}
+
+///|
+pub extend DateValue with ToJson::{to_json}
+
+///|
 pub fn DateValue::new(
   year~ : Int,
   month~ : Int,

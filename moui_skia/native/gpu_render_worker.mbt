@@ -9,6 +9,12 @@ pub(all) enum GpuRenderWorkerState {
 } derive(Eq, Debug)
 
 ///|
+pub extend GpuRenderWorkerState with Debug::{to_repr}
+
+///|
+pub extend GpuRenderWorkerState with Eq::{not_equal, equal}
+
+///|
 pub(all) enum GpuRenderWorkerControl {
   Attach(UInt64)
   AttachSurface(UInt64, UInt64)
@@ -19,12 +25,24 @@ pub(all) enum GpuRenderWorkerControl {
 } derive(Eq, Debug)
 
 ///|
+pub extend GpuRenderWorkerControl with Debug::{to_repr}
+
+///|
+pub extend GpuRenderWorkerControl with Eq::{not_equal, equal}
+
+///|
 pub(all) enum GpuRenderCompletionStatus {
   PictureRecorded
   Presented
   Dropped
   FallbackToRaster
 } derive(Eq, Debug)
+
+///|
+pub extend GpuRenderCompletionStatus with Debug::{to_repr}
+
+///|
+pub extend GpuRenderCompletionStatus with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct GpuRenderCompletion {
@@ -37,6 +55,12 @@ pub(all) struct GpuRenderCompletion {
   status : GpuRenderCompletionStatus
   context_generation : Int
 } derive(Eq, Debug)
+
+///|
+pub extend GpuRenderCompletion with Debug::{to_repr}
+
+///|
+pub extend GpuRenderCompletion with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct GpuRenderWorkerDiagnostics {
@@ -58,6 +82,12 @@ pub(all) struct GpuRenderWorkerDiagnostics {
   pending : Bool
   worker_thread_id : Int64
 } derive(Eq, Debug)
+
+///|
+pub extend GpuRenderWorkerDiagnostics with Debug::{to_repr}
+
+///|
+pub extend GpuRenderWorkerDiagnostics with Eq::{not_equal, equal}
 
 ///|
 struct GpuRenderPictureFrame {

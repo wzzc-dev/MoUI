@@ -106,15 +106,21 @@ pub(all) struct CanvasReplayStats {
   text_resource_count : Int
 } derive(Eq, @debug.Debug)
 pub fn CanvasReplayStats::empty() -> Self
+pub fn CanvasReplayStats::equal(Self, Self) -> Bool
 pub fn CanvasReplayStats::is_complete(Self) -> Bool
+pub fn CanvasReplayStats::not_equal(Self, Self) -> Bool
 pub fn CanvasReplayStats::status(Self) -> CanvasReplayStatus
+pub fn CanvasReplayStats::to_repr(Self) -> @debug.Repr
 
 pub(all) enum CanvasReplayStatus {
   CanvasReplayComplete
   CanvasReplayDeferredPresent
   CanvasReplaySkippedCommands
 } derive(Eq, @debug.Debug)
+pub fn CanvasReplayStatus::equal(Self, Self) -> Bool
 pub fn CanvasReplayStatus::is_complete(Self) -> Bool
+pub fn CanvasReplayStatus::not_equal(Self, Self) -> Bool
+pub fn CanvasReplayStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Codec {
   // private fields
@@ -191,6 +197,9 @@ pub(all) struct FontMetrics {
   strikeout_position : Float?
   has_bounds : Bool
 } derive(Eq, @debug.Debug)
+pub fn FontMetrics::equal(Self, Self) -> Bool
+pub fn FontMetrics::not_equal(Self, Self) -> Bool
+pub fn FontMetrics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FontMgr {
   // private fields
@@ -206,8 +215,11 @@ pub fn FontMgr::match_family_style_request(Self, Bytes, @moui_skia.FontStyleRequ
 pub fn FontMgr::resolve_fallback_request(Self, @moui_skia.FontFallbackRequest) -> ResolvedTypeface?
 
 pub(all) struct GlyphId(UInt16) derive(Eq, @debug.Debug)
+pub fn GlyphId::equal(Self, Self) -> Bool
 pub fn GlyphId::new(UInt16) -> Self
+pub fn GlyphId::not_equal(Self, Self) -> Bool
 pub fn GlyphId::to_int(Self) -> Int
+pub fn GlyphId::to_repr(Self) -> @debug.Repr
 pub fn GlyphId::to_uint16(Self) -> UInt16
 
 pub(all) struct GpuContext {
@@ -232,6 +244,9 @@ pub(all) struct GpuRenderCompletion {
   status : GpuRenderCompletionStatus
   context_generation : Int
 } derive(Eq, @debug.Debug)
+pub fn GpuRenderCompletion::equal(Self, Self) -> Bool
+pub fn GpuRenderCompletion::not_equal(Self, Self) -> Bool
+pub fn GpuRenderCompletion::to_repr(Self) -> @debug.Repr
 
 pub(all) enum GpuRenderCompletionStatus {
   PictureRecorded
@@ -239,6 +254,9 @@ pub(all) enum GpuRenderCompletionStatus {
   Dropped
   FallbackToRaster
 } derive(Eq, @debug.Debug)
+pub fn GpuRenderCompletionStatus::equal(Self, Self) -> Bool
+pub fn GpuRenderCompletionStatus::not_equal(Self, Self) -> Bool
+pub fn GpuRenderCompletionStatus::to_repr(Self) -> @debug.Repr
 
 type GpuRenderPictureFrame
 
@@ -279,6 +297,9 @@ pub(all) enum GpuRenderWorkerControl {
   ContextLoss(String)
   Shutdown
 } derive(Eq, @debug.Debug)
+pub fn GpuRenderWorkerControl::equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerControl::not_equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerControl::to_repr(Self) -> @debug.Repr
 
 pub(all) struct GpuRenderWorkerDiagnostics {
   state : GpuRenderWorkerState
@@ -299,6 +320,9 @@ pub(all) struct GpuRenderWorkerDiagnostics {
   pending : Bool
   worker_thread_id : Int64
 } derive(Eq, @debug.Debug)
+pub fn GpuRenderWorkerDiagnostics::equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerDiagnostics::not_equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub(all) enum GpuRenderWorkerState {
   Idle
@@ -308,6 +332,9 @@ pub(all) enum GpuRenderWorkerState {
   FallbackToRaster
   Shutdown
 } derive(Eq, @debug.Debug)
+pub fn GpuRenderWorkerState::equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerState::not_equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Image {
   // private fields
@@ -356,6 +383,9 @@ pub(all) struct NativeGpuWorkerCompletion {
   presented_at_ms : Double
   status : NativeGpuWorkerCompletionStatus
 } derive(Eq, @debug.Debug)
+pub fn NativeGpuWorkerCompletion::equal(Self, Self) -> Bool
+pub fn NativeGpuWorkerCompletion::not_equal(Self, Self) -> Bool
+pub fn NativeGpuWorkerCompletion::to_repr(Self) -> @debug.Repr
 
 pub(all) enum NativeGpuWorkerCompletionStatus {
   PictureRecorded
@@ -365,6 +395,9 @@ pub(all) enum NativeGpuWorkerCompletionStatus {
   Presented
   Unknown(Int)
 } derive(Eq, @debug.Debug)
+pub fn NativeGpuWorkerCompletionStatus::equal(Self, Self) -> Bool
+pub fn NativeGpuWorkerCompletionStatus::not_equal(Self, Self) -> Bool
+pub fn NativeGpuWorkerCompletionStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct NativeGpuWorkerDiagnostics {
   worker_thread_id : Int64
@@ -380,6 +413,9 @@ pub(all) struct NativeGpuWorkerDiagnostics {
   control_pending : Int
   completion_pending : Int
 } derive(Eq, @debug.Debug)
+pub fn NativeGpuWorkerDiagnostics::equal(Self, Self) -> Bool
+pub fn NativeGpuWorkerDiagnostics::not_equal(Self, Self) -> Bool
+pub fn NativeGpuWorkerDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct NativeReplayResourceStats {
   cache_count : Int
@@ -390,6 +426,9 @@ pub(all) struct NativeReplayResourceStats {
   misses : Int
   evictions : Int
 } derive(Eq, @debug.Debug)
+pub fn NativeReplayResourceStats::equal(Self, Self) -> Bool
+pub fn NativeReplayResourceStats::not_equal(Self, Self) -> Bool
+pub fn NativeReplayResourceStats::to_repr(Self) -> @debug.Repr
 
 pub(all) struct NativeReplayResources {
   image_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, Image]
@@ -427,6 +466,9 @@ pub(all) struct ParagraphHitTestResult {
   offset : Int
   downstream : Bool
 } derive(Eq, @debug.Debug)
+pub fn ParagraphHitTestResult::equal(Self, Self) -> Bool
+pub fn ParagraphHitTestResult::not_equal(Self, Self) -> Bool
+pub fn ParagraphHitTestResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ParagraphLineMetric {
   start : Int
@@ -442,8 +484,11 @@ pub(all) struct ParagraphLineMetric {
   descent : Float
   height : Float
 } derive(Eq, @debug.Debug)
+pub fn ParagraphLineMetric::equal(Self, Self) -> Bool
 pub fn ParagraphLineMetric::is_valid(Self) -> Bool
+pub fn ParagraphLineMetric::not_equal(Self, Self) -> Bool
 pub fn ParagraphLineMetric::right(Self) -> Float
+pub fn ParagraphLineMetric::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Path {
   // private fields
@@ -547,7 +592,10 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextEglHeadersUnavailable
   SkiaGpuContextEglRuntimeUnavailable
 } derive(Eq, @debug.Debug)
+pub fn SkiaGpuContextSupportStatus::equal(Self, Self) -> Bool
 pub fn SkiaGpuContextSupportStatus::is_available(Self) -> Bool
+pub fn SkiaGpuContextSupportStatus::not_equal(Self, Self) -> Bool
+pub fn SkiaGpuContextSupportStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Surface {
   descriptor : @moui_skia.SurfaceDescriptor
@@ -602,10 +650,13 @@ pub(all) struct SurfaceFrameReplayStats {
   finalization : @moui_skia.RenderFrameFinalizationDescriptor
   finalized : Bool
 } derive(Eq, @debug.Debug)
+pub fn SurfaceFrameReplayStats::equal(Self, Self) -> Bool
 pub fn SurfaceFrameReplayStats::finalization_is_ready(Self) -> Bool
 pub fn SurfaceFrameReplayStats::finalization_resource_plan(Self) -> @moui_skia.RendererResourcePlan
 pub fn SurfaceFrameReplayStats::is_complete(Self) -> Bool
+pub fn SurfaceFrameReplayStats::not_equal(Self, Self) -> Bool
 pub fn SurfaceFrameReplayStats::status(Self) -> SurfaceFrameReplayStatus
+pub fn SurfaceFrameReplayStats::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SurfaceFrameReplayStatus {
   SurfaceFrameReplayComplete
@@ -614,7 +665,10 @@ pub(all) enum SurfaceFrameReplayStatus {
   SurfaceFrameReplaySkippedCommands
   SurfaceFrameReplayFinalizationFailed
 } derive(Eq, @debug.Debug)
+pub fn SurfaceFrameReplayStatus::equal(Self, Self) -> Bool
 pub fn SurfaceFrameReplayStatus::is_complete(Self) -> Bool
+pub fn SurfaceFrameReplayStatus::not_equal(Self, Self) -> Bool
+pub fn SurfaceFrameReplayStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SurfaceTargetSupportStatus {
   SurfaceTargetSupported
@@ -626,7 +680,10 @@ pub(all) enum SurfaceTargetSupportStatus {
   SurfaceTargetGpuContextMismatch
   SurfaceTargetGpuContextUnsupported
 } derive(Eq, @debug.Debug)
+pub fn SurfaceTargetSupportStatus::equal(Self, Self) -> Bool
 pub fn SurfaceTargetSupportStatus::is_supported(Self) -> Bool
+pub fn SurfaceTargetSupportStatus::not_equal(Self, Self) -> Bool
+pub fn SurfaceTargetSupportStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Typeface {
   // private fields

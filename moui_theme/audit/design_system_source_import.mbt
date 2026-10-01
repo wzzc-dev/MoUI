@@ -18,6 +18,15 @@ pub(all) struct DesignSourceImportedToken {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignSourceImportedToken with Debug::{to_repr}
+
+///|
+pub extend DesignSourceImportedToken with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSourceImportedToken with ToJson::{to_json}
+
+///|
 pub(all) struct DesignSourceImportCoverage {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -34,6 +43,15 @@ pub(all) struct DesignSourceImportCoverage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignSourceImportCoverage with Debug::{to_repr}
+
+///|
+pub extend DesignSourceImportCoverage with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSourceImportCoverage with ToJson::{to_json}
 
 ///|
 pub(all) struct DesignSourceImportIntegrityRecord {
@@ -60,6 +78,15 @@ pub(all) struct DesignSourceImportIntegrityRecord {
   status : DesignTokenStatus
   note : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignSourceImportIntegrityRecord with Debug::{to_repr}
+
+///|
+pub extend DesignSourceImportIntegrityRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSourceImportIntegrityRecord with ToJson::{to_json}
 
 ///|
 pub fn source_imported_tokens(

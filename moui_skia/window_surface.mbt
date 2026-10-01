@@ -65,6 +65,12 @@ pub(all) struct WindowSurfaceDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend WindowSurfaceDescriptor with Debug::{to_repr}
+
+///|
+pub extend WindowSurfaceDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn WindowSurfaceDescriptor::new(
   window_id? : Bytes = b"",
   logical_size? : Size = Size::empty(),

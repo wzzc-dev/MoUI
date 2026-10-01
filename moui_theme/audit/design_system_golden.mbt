@@ -11,6 +11,15 @@ pub(all) struct DesignTokenMapping {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignTokenMapping with Debug::{to_repr}
+
+///|
+pub extend DesignTokenMapping with Eq::{not_equal, equal}
+
+///|
+pub extend DesignTokenMapping with ToJson::{to_json}
+
+///|
 pub(all) struct DesignSourceUsage {
   preset : @common.DesignPreset
   source_label : String
@@ -23,6 +32,15 @@ pub(all) struct DesignSourceUsage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignSourceUsage with Debug::{to_repr}
+
+///|
+pub extend DesignSourceUsage with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSourceUsage with ToJson::{to_json}
 
 ///|
 pub fn golden_mappings(

@@ -103,13 +103,21 @@ pub struct DataGridCell {
   column : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataGridCell::column(Self) -> Int
+pub fn DataGridCell::equal(Self, Self) -> Bool
+pub fn DataGridCell::not_equal(Self, Self) -> Bool
 pub fn DataGridCell::row(Self) -> Int
+pub fn DataGridCell::to_json(Self) -> Json
+pub fn DataGridCell::to_repr(Self) -> @debug.Repr
 
 pub struct DataGridEditCommit {
   cell : DataGridCell
   value : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataGridEditCommit::cell(Self) -> DataGridCell
+pub fn DataGridEditCommit::equal(Self, Self) -> Bool
+pub fn DataGridEditCommit::not_equal(Self, Self) -> Bool
+pub fn DataGridEditCommit::to_json(Self) -> Json
+pub fn DataGridEditCommit::to_repr(Self) -> @debug.Repr
 pub fn DataGridEditCommit::value(Self) -> String
 
 pub struct DataGridEditState {
@@ -122,8 +130,12 @@ pub fn DataGridEditState::begin(Self, DataGridCell, String) -> Self
 pub fn DataGridEditState::cancel(Self) -> Self
 pub fn DataGridEditState::commit(Self) -> DataGridEditCommit?
 pub fn DataGridEditState::draft(Self) -> String
+pub fn DataGridEditState::equal(Self, Self) -> Bool
 pub fn DataGridEditState::idle() -> Self
 pub fn DataGridEditState::is_dirty(Self) -> Bool
+pub fn DataGridEditState::not_equal(Self, Self) -> Bool
+pub fn DataGridEditState::to_json(Self) -> Json
+pub fn DataGridEditState::to_repr(Self) -> @debug.Repr
 pub fn DataGridEditState::update(Self, String) -> Self
 
 pub struct DataGridFreezePanes {
@@ -131,7 +143,11 @@ pub struct DataGridFreezePanes {
   columns : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataGridFreezePanes::columns(Self) -> Int
+pub fn DataGridFreezePanes::equal(Self, Self) -> Bool
+pub fn DataGridFreezePanes::not_equal(Self, Self) -> Bool
 pub fn DataGridFreezePanes::rows(Self) -> Int
+pub fn DataGridFreezePanes::to_json(Self) -> Json
+pub fn DataGridFreezePanes::to_repr(Self) -> @debug.Repr
 
 pub struct DataGridSelectionRange {
   first : DataGridCell
@@ -139,20 +155,28 @@ pub struct DataGridSelectionRange {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataGridSelectionRange::cell_count(Self) -> Int
 pub fn DataGridSelectionRange::contains(Self, DataGridCell) -> Bool
+pub fn DataGridSelectionRange::equal(Self, Self) -> Bool
 pub fn DataGridSelectionRange::first(Self) -> DataGridCell
 pub fn DataGridSelectionRange::last(Self) -> DataGridCell
+pub fn DataGridSelectionRange::not_equal(Self, Self) -> Bool
+pub fn DataGridSelectionRange::to_json(Self) -> Json
+pub fn DataGridSelectionRange::to_repr(Self) -> @debug.Repr
 
 pub struct DataGridSelectionState {
   anchor : DataGridCell
   focus : DataGridCell
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataGridSelectionState::anchor(Self) -> DataGridCell
+pub fn DataGridSelectionState::equal(Self, Self) -> Bool
 pub fn DataGridSelectionState::focus(Self) -> DataGridCell
 pub fn DataGridSelectionState::handle_key(Self, @core.KeyboardEvent, row_count~ : Int, column_count~ : Int, page_rows? : Int) -> Self
 pub fn DataGridSelectionState::move_by(Self, row_delta~ : Int, column_delta~ : Int, row_count~ : Int, column_count~ : Int, extending? : Bool) -> Self
 pub fn DataGridSelectionState::new(row? : Int, column? : Int) -> Self
+pub fn DataGridSelectionState::not_equal(Self, Self) -> Bool
 pub fn DataGridSelectionState::range(Self) -> DataGridSelectionRange
 pub fn DataGridSelectionState::select(Self, DataGridCell, extending? : Bool) -> Self
+pub fn DataGridSelectionState::to_json(Self) -> Json
+pub fn DataGridSelectionState::to_repr(Self) -> @debug.Repr
 
 pub struct DataGridViewport {
   first_row : Int
@@ -165,6 +189,10 @@ pub struct DataGridViewport {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataGridViewport::cells(Self) -> Array[DataGridCell]
 pub fn DataGridViewport::contains(Self, DataGridCell) -> Bool
+pub fn DataGridViewport::equal(Self, Self) -> Bool
+pub fn DataGridViewport::not_equal(Self, Self) -> Bool
+pub fn DataGridViewport::to_json(Self) -> Json
+pub fn DataGridViewport::to_repr(Self) -> @debug.Repr
 
 pub struct DataSortState {
   column : String

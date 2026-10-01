@@ -4,6 +4,9 @@ struct Key {
 } derive(Eq)
 
 ///|
+pub extend Key with Eq::{not_equal, equal}
+
+///|
 pub fn Key::new(value : String) -> Key {
   { value, }
 }

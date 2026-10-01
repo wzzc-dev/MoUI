@@ -12,6 +12,15 @@ pub(all) struct CanvasHostConstraints {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend CanvasHostConstraints with Debug::{to_repr}
+
+///|
+pub extend CanvasHostConstraints with Eq::{not_equal, equal}
+
+///|
+pub extend CanvasHostConstraints with ToJson::{to_json}
+
+///|
 pub fn canvas_host_constraints() -> CanvasHostConstraints {
   {
     requires_focusable_canvas: true,

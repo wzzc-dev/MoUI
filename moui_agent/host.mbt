@@ -5,6 +5,17 @@ pub struct RuntimeAgentHost {
 }
 
 ///|
+pub extend RuntimeAgentHost with AgentDiagnosticsHost::{
+  dispatch_event,
+  runtime_state,
+  dispatch_command,
+  paint_summary,
+}
+
+///|
+pub extend RuntimeAgentHost with AgentHost::{read_semantics, perform_action}
+
+///|
 pub fn RuntimeAgentHost::new(runtime : @runtime.AppRuntime) -> RuntimeAgentHost {
   { runtime, }
 }

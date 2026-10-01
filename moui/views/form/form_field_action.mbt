@@ -17,6 +17,15 @@ pub(all) enum FieldAction {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FieldAction with Debug::{to_repr}
+
+///|
+pub extend FieldAction with Eq::{not_equal, equal}
+
+///|
+pub extend FieldAction with ToJson::{to_json}
+
+///|
 /// Apply a keyed action to this field, producing the updated field state.
 pub fn FormFieldState::apply_action(
   self : FormFieldState,

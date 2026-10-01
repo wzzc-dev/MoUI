@@ -8,6 +8,12 @@ pub enum EmbeddedHostLifecyclePhase {
 } derive(Eq, Debug)
 
 ///|
+pub extend EmbeddedHostLifecyclePhase with Debug::{to_repr}
+
+///|
+pub extend EmbeddedHostLifecyclePhase with Eq::{not_equal, equal}
+
+///|
 /// Surface identity crossing the physical window adapter boundary. The
 /// generation is created here; embedded transport has its own session
 /// generation and must never mint a surface epoch.
@@ -16,6 +22,12 @@ pub struct EmbeddedHostSurface {
   metrics : @core.SurfaceMetrics
   generation : Int
 } derive(Eq, Debug)
+
+///|
+pub extend EmbeddedHostSurface with Debug::{to_repr}
+
+///|
+pub extend EmbeddedHostSurface with Eq::{not_equal, equal}
 
 ///|
 pub enum EmbeddedWindowHostAction {
@@ -27,6 +39,12 @@ pub enum EmbeddedWindowHostAction {
   Suspended
   Exit(Int)
 } derive(Eq, Debug)
+
+///|
+pub extend EmbeddedWindowHostAction with Debug::{to_repr}
+
+///|
+pub extend EmbeddedWindowHostAction with Eq::{not_equal, equal}
 
 ///|
 /// The embedded lifecycle adapter shared by Android, iOS, and HarmonyOS.

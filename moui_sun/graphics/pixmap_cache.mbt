@@ -8,6 +8,9 @@ pub struct PixmapCache {
 } derive(Debug)
 
 ///|
+pub extend PixmapCache with Debug::{to_repr}
+
+///|
 /// Result of reading a pixmap from cache or inserting it on miss.
 pub struct PixmapCacheInsertResult {
   pixmap : Pixmap
@@ -15,11 +18,17 @@ pub struct PixmapCacheInsertResult {
 } derive(Debug)
 
 ///|
+pub extend PixmapCacheInsertResult with Debug::{to_repr}
+
+///|
 /// Result of reading a pixmap from cache or decoding bytes on miss.
 pub struct PixmapCacheDecodeResult {
   pixmap : Pixmap
   did_decode : Bool
 } derive(Debug)
+
+///|
+pub extend PixmapCacheDecodeResult with Debug::{to_repr}
 
 ///|
 /// Create an empty pixmap cache.

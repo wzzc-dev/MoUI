@@ -14,6 +14,15 @@ pub(all) enum PointerPhase {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PointerPhase with Debug::{to_repr}
+
+///|
+pub extend PointerPhase with Eq::{not_equal, equal}
+
+///|
+pub extend PointerPhase with ToJson::{to_json}
+
+///|
 pub(all) struct PointerEvent {
   position : Point
   phase : PointerPhase
@@ -24,12 +33,30 @@ pub(all) struct PointerEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PointerEvent with Debug::{to_repr}
+
+///|
+pub extend PointerEvent with Eq::{not_equal, equal}
+
+///|
+pub extend PointerEvent with ToJson::{to_json}
+
+///|
 pub(all) struct KeyModifiers {
   shift : Bool
   control : Bool
   alt : Bool
   meta : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend KeyModifiers with Debug::{to_repr}
+
+///|
+pub extend KeyModifiers with Eq::{not_equal, equal}
+
+///|
+pub extend KeyModifiers with ToJson::{to_json}
 
 ///|
 pub(all) struct KeyboardEvent {
@@ -41,16 +68,43 @@ pub(all) struct KeyboardEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend KeyboardEvent with Debug::{to_repr}
+
+///|
+pub extend KeyboardEvent with Eq::{not_equal, equal}
+
+///|
+pub extend KeyboardEvent with ToJson::{to_json}
+
+///|
 pub(all) struct TextRange {
   start : Int
   end : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextRange with Debug::{to_repr}
+
+///|
+pub extend TextRange with Eq::{not_equal, equal}
+
+///|
+pub extend TextRange with ToJson::{to_json}
+
+///|
 struct CompositionUpdate {
   text : String
   cursor : TextRange?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend CompositionUpdate with Debug::{to_repr}
+
+///|
+pub extend CompositionUpdate with Eq::{not_equal, equal}
+
+///|
+pub extend CompositionUpdate with ToJson::{to_json}
 
 ///|
 pub(all) enum TextInputEvent {
@@ -65,12 +119,30 @@ pub(all) enum TextInputEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextInputEvent with Debug::{to_repr}
+
+///|
+pub extend TextInputEvent with Eq::{not_equal, equal}
+
+///|
+pub extend TextInputEvent with ToJson::{to_json}
+
+///|
 pub(all) enum DragDropPhase {
   Entered
   Moved
   Dropped
   Left
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DragDropPhase with Debug::{to_repr}
+
+///|
+pub extend DragDropPhase with Eq::{not_equal, equal}
+
+///|
+pub extend DragDropPhase with ToJson::{to_json}
 
 ///|
 pub(all) struct DragDropEvent {
@@ -80,12 +152,30 @@ pub(all) struct DragDropEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DragDropEvent with Debug::{to_repr}
+
+///|
+pub extend DragDropEvent with Eq::{not_equal, equal}
+
+///|
+pub extend DragDropEvent with ToJson::{to_json}
+
+///|
 pub(all) enum RedrawReason {
   Initial
   Input
   Resize
   Explicit
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RedrawReason with Debug::{to_repr}
+
+///|
+pub extend RedrawReason with Eq::{not_equal, equal}
+
+///|
+pub extend RedrawReason with ToJson::{to_json}
 
 ///|
 pub(all) enum AppEvent {
@@ -99,6 +189,15 @@ pub(all) enum AppEvent {
   Redraw(RedrawReason)
   CloseRequested
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend AppEvent with Debug::{to_repr}
+
+///|
+pub extend AppEvent with Eq::{not_equal, equal}
+
+///|
+pub extend AppEvent with ToJson::{to_json}
 
 ///|
 pub fn PointerEvent::new(

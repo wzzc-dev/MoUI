@@ -15,6 +15,15 @@ pub(all) struct WechatBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WechatBackendCapabilities with Debug::{to_repr}
+
+///|
+pub extend WechatBackendCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend WechatBackendCapabilities with ToJson::{to_json}
+
+///|
 /// `ready` means the wasm-gc host path is **experimental**: it compiles, but
 /// no development/demonstration usability or product commitment is made
 /// without real Mini Program pixel smoke and touch event verification.
@@ -28,6 +37,15 @@ pub(all) struct WechatBackendReadiness {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WechatBackendReadiness with Debug::{to_repr}
+
+///|
+pub extend WechatBackendReadiness with Eq::{not_equal, equal}
+
+///|
+pub extend WechatBackendReadiness with ToJson::{to_json}
+
+///|
 pub(all) struct WechatBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : WechatBackendCapabilities
@@ -36,6 +54,15 @@ pub(all) struct WechatBackendInfo {
   readiness : WechatBackendReadiness
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WechatBackendInfo with Debug::{to_repr}
+
+///|
+pub extend WechatBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend WechatBackendInfo with ToJson::{to_json}
 
 ///|
 pub fn wechat_backend_info() -> @host.HostAppInfo {

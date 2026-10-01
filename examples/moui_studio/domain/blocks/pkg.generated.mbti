@@ -30,6 +30,8 @@ pub fn event_block(String, String) -> BlockSpec
 
 pub fn flow_companion_kinds(BlockKind) -> Array[BlockKind]
 
+pub fn insert_stmt_at(Array[@ir.Stmt], Array[Int], Int, @ir.Stmt) -> Array[@ir.Stmt]?
+
 pub fn reorder_stmt(Array[@ir.Stmt], Array[Int], Int, Int) -> Array[@ir.Stmt]?
 
 pub fn replace_stmt_at(Array[@ir.Stmt], Array[Int], @ir.Stmt) -> Array[@ir.Stmt]

@@ -5,6 +5,12 @@ pub(all) struct PlatformWindowBinding {
 } derive(Eq, Debug)
 
 ///|
+pub extend PlatformWindowBinding with Debug::{to_repr}
+
+///|
+pub extend PlatformWindowBinding with Eq::{not_equal, equal}
+
+///|
 pub struct PlatformWindowMap {
   mut bindings : Array[PlatformWindowBinding]
 }

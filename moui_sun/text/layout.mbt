@@ -7,6 +7,12 @@ pub struct LayoutMetrics {
 } derive(Eq, Debug)
 
 ///|
+pub extend LayoutMetrics with Debug::{to_repr}
+
+///|
+pub extend LayoutMetrics with Eq::{not_equal, equal}
+
+///|
 /// Create layout metrics
 pub fn LayoutMetrics::new(
   width~ : Double,
@@ -26,6 +32,12 @@ pub(all) enum TextAlign {
 } derive(Eq, Debug)
 
 ///|
+pub extend TextAlign with Debug::{to_repr}
+
+///|
+pub extend TextAlign with Eq::{not_equal, equal}
+
+///|
 /// Text layout configuration
 pub struct LayoutConfig {
   max_width : Double
@@ -35,6 +47,9 @@ pub struct LayoutConfig {
   letter_spacing : Double
   word_spacing : Double
 } derive(Debug)
+
+///|
+pub extend LayoutConfig with Debug::{to_repr}
 
 ///|
 /// Create a layout config with default values
@@ -65,6 +80,9 @@ struct PositionedGlyph {
   y : Double
   advance_width : Double
 } derive(Debug)
+
+///|
+pub extend PositionedGlyph with Debug::{to_repr}
 
 ///|
 /// Get this positioned glyph's glyph id.
@@ -99,12 +117,18 @@ struct LayoutLine {
 } derive(Debug)
 
 ///|
+pub extend LayoutLine with Debug::{to_repr}
+
+///|
 /// Layout result containing positioned glyphs
 struct LayoutResult {
   lines : Array[LayoutLine]
   total_width : Double
   total_height : Double
 } derive(Debug)
+
+///|
+pub extend LayoutResult with Debug::{to_repr}
 
 ///|
 priv enum LayoutToken {

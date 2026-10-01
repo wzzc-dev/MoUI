@@ -4,14 +4,56 @@ pub struct WebViewCommandId {
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
+pub extend WebViewCommandId with Compare::{op_lt, op_le, op_ge, compare, op_gt}
+
+///|
+pub extend WebViewCommandId with Debug::{to_repr}
+
+///|
+pub extend WebViewCommandId with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewCommandId with Hash::{hash, hash_combine}
+
+///|
 pub struct WebViewNavigationId {
   priv value : UInt64
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
+pub extend WebViewNavigationId with Compare::{
+  op_lt,
+  op_le,
+  op_ge,
+  compare,
+  op_gt,
+}
+
+///|
+pub extend WebViewNavigationId with Debug::{to_repr}
+
+///|
+pub extend WebViewNavigationId with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewNavigationId with Hash::{hash, hash_combine}
+
+///|
 pub struct WebViewRequestId {
   priv value : UInt64
 } derive(Eq, Compare, Hash, Debug)
+
+///|
+pub extend WebViewRequestId with Compare::{op_lt, op_le, op_ge, compare, op_gt}
+
+///|
+pub extend WebViewRequestId with Debug::{to_repr}
+
+///|
+pub extend WebViewRequestId with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewRequestId with Hash::{hash, hash_combine}
 
 ///|
 pub fn WebViewCommandId::to_wire(self : WebViewCommandId) -> String {
@@ -49,6 +91,18 @@ pub struct WebViewOrigin {
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
+pub extend WebViewOrigin with Compare::{op_lt, op_le, op_ge, compare, op_gt}
+
+///|
+pub extend WebViewOrigin with Debug::{to_repr}
+
+///|
+pub extend WebViewOrigin with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewOrigin with Hash::{hash, hash_combine}
+
+///|
 pub fn WebViewOrigin::parse(url_or_origin : String) -> WebViewOrigin? {
   webview_parse_origin(url_or_origin).map(value => { value, })
 }
@@ -66,10 +120,28 @@ pub(all) enum WebViewChannelDirection {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebViewChannelDirection with Debug::{to_repr}
+
+///|
+pub extend WebViewChannelDirection with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewChannelDirection with ToJson::{to_json}
+
+///|
 pub(all) struct WebViewChannelPolicy {
   name : String
   direction : WebViewChannelDirection
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WebViewChannelPolicy with Debug::{to_repr}
+
+///|
+pub extend WebViewChannelPolicy with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewChannelPolicy with ToJson::{to_json}
 
 ///|
 pub fn WebViewChannelPolicy::new(
@@ -87,6 +159,12 @@ pub(all) struct WebViewSecurityPolicy {
   max_message_bytes : Int
   max_pending_requests : Int
 } derive(Eq, Debug)
+
+///|
+pub extend WebViewSecurityPolicy with Debug::{to_repr}
+
+///|
+pub extend WebViewSecurityPolicy with Eq::{not_equal, equal}
 
 ///|
 pub fn WebViewSecurityPolicy::deny_all() -> WebViewSecurityPolicy {
@@ -127,6 +205,12 @@ pub(all) struct HostPatchBundle {
 } derive(Eq, Debug)
 
 ///|
+pub extend HostPatchBundle with Debug::{to_repr}
+
+///|
+pub extend HostPatchBundle with Eq::{not_equal, equal}
+
+///|
 pub fn HostPatchBundle::new(
   id~ : String,
   version~ : String,
@@ -153,6 +237,12 @@ pub(all) struct WebViewControllerConfig {
 } derive(Eq, Debug)
 
 ///|
+pub extend WebViewControllerConfig with Debug::{to_repr}
+
+///|
+pub extend WebViewControllerConfig with Eq::{not_equal, equal}
+
+///|
 pub fn WebViewControllerConfig::new(
   security? : WebViewSecurityPolicy = WebViewSecurityPolicy::deny_all(),
   capabilities? : Array[String] = [],
@@ -168,6 +258,15 @@ pub(all) struct WebViewError {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebViewError with Debug::{to_repr}
+
+///|
+pub extend WebViewError with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewError with ToJson::{to_json}
+
+///|
 pub fn WebViewError::new(code~ : String, message~ : String) -> WebViewError {
   { code, message, }
 }
@@ -178,6 +277,12 @@ pub(all) enum WebViewTaskResult[T] {
   Failure(WebViewError)
   Cancelled
 } derive(Eq, Debug)
+
+///|
+pub extend WebViewTaskResult with Debug::{to_repr}
+
+///|
+pub extend WebViewTaskResult with Eq::{not_equal, equal}
 
 ///|
 pub struct WebViewTask[T] {
@@ -220,11 +325,23 @@ pub(all) struct WebViewCommandReceipt {
 } derive(Eq, Debug)
 
 ///|
+pub extend WebViewCommandReceipt with Debug::{to_repr}
+
+///|
+pub extend WebViewCommandReceipt with Eq::{not_equal, equal}
+
+///|
 pub(all) struct WebViewNavigation {
   id : WebViewNavigationId
   url : String
   redirected : Bool
 } derive(Eq, Debug)
+
+///|
+pub extend WebViewNavigation with Debug::{to_repr}
+
+///|
+pub extend WebViewNavigation with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct WebViewBridgeMessage {
@@ -233,6 +350,12 @@ pub(all) struct WebViewBridgeMessage {
   navigation_id : WebViewNavigationId
   payload : Json
 } derive(Eq, Debug)
+
+///|
+pub extend WebViewBridgeMessage with Debug::{to_repr}
+
+///|
+pub extend WebViewBridgeMessage with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct WebViewPageRequest {
@@ -244,6 +367,12 @@ pub(all) struct WebViewPageRequest {
 } derive(Eq, Debug)
 
 ///|
+pub extend WebViewPageRequest with Debug::{to_repr}
+
+///|
+pub extend WebViewPageRequest with Eq::{not_equal, equal}
+
+///|
 pub(all) struct HostPatchReport {
   bundle_id : String
   version : String
@@ -253,10 +382,25 @@ pub(all) struct HostPatchReport {
 } derive(Eq, Debug)
 
 ///|
+pub extend HostPatchReport with Debug::{to_repr}
+
+///|
+pub extend HostPatchReport with Eq::{not_equal, equal}
+
+///|
 pub(all) struct WebViewDiagnostic {
   code : String
   message : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WebViewDiagnostic with Debug::{to_repr}
+
+///|
+pub extend WebViewDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewDiagnostic with ToJson::{to_json}
 
 ///|
 pub(all) enum WebViewEvent {
@@ -277,6 +421,12 @@ pub(all) enum WebViewEvent {
 } derive(Eq, Debug)
 
 ///|
+pub extend WebViewEvent with Debug::{to_repr}
+
+///|
+pub extend WebViewEvent with Eq::{not_equal, equal}
+
+///|
 pub(all) struct HostWebViewCapabilities {
   available : Bool
   controlled_navigation : Bool
@@ -286,6 +436,15 @@ pub(all) struct HostWebViewCapabilities {
   native_embedding : Bool
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostWebViewCapabilities with Debug::{to_repr}
+
+///|
+pub extend HostWebViewCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend HostWebViewCapabilities with ToJson::{to_json}
 
 ///|
 pub fn HostWebViewCapabilities::unavailable(
@@ -329,6 +488,12 @@ pub(all) enum HostWebViewCommand {
 } derive(Eq, Debug)
 
 ///|
+pub extend HostWebViewCommand with Debug::{to_repr}
+
+///|
+pub extend HostWebViewCommand with Eq::{not_equal, equal}
+
+///|
 pub(all) struct HostWebViewQueuedCommand {
   controller_id : String
   command_id : WebViewCommandId
@@ -337,12 +502,24 @@ pub(all) struct HostWebViewQueuedCommand {
 } derive(Eq, Debug)
 
 ///|
+pub extend HostWebViewQueuedCommand with Debug::{to_repr}
+
+///|
+pub extend HostWebViewQueuedCommand with Eq::{not_equal, equal}
+
+///|
 pub(all) struct HostWebViewNativeConfig {
   revision : UInt64
   allowed_origins : String
   document_start_script : String
   document_end_script : String
 } derive(Eq, Debug)
+
+///|
+pub extend HostWebViewNativeConfig with Debug::{to_repr}
+
+///|
+pub extend HostWebViewNativeConfig with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct WebViewSpec {
@@ -365,6 +542,15 @@ pub(all) struct WebViewNoDragRegion {
   right : Double
   bottom : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WebViewNoDragRegion with Debug::{to_repr}
+
+///|
+pub extend WebViewNoDragRegion with Eq::{not_equal, equal}
+
+///|
+pub extend WebViewNoDragRegion with ToJson::{to_json}
 
 ///|
 pub fn WebViewNoDragRegion::new(

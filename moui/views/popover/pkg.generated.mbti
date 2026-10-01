@@ -35,6 +35,9 @@ pub(all) enum PopoverPlacement {
   TopStart
   TopEnd
 } derive(Eq, @debug.Debug)
+pub fn PopoverPlacement::equal(Self, Self) -> Bool
+pub fn PopoverPlacement::not_equal(Self, Self) -> Bool
+pub fn PopoverPlacement::to_repr(Self) -> @debug.Repr
 pub fn PopoverPlacement::to_string(Self) -> String
 
 // Type aliases

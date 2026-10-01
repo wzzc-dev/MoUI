@@ -45,6 +45,15 @@ pub(all) struct ShowcaseTodoItem {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ShowcaseTodoItem with Debug::{to_repr}
+
+///|
+pub extend ShowcaseTodoItem with Eq::{not_equal, equal}
+
+///|
+pub extend ShowcaseTodoItem with ToJson::{to_json}
+
+///|
 pub(all) enum ShowcaseMsg {
   ToggleScheme
   ToggleActive
@@ -93,6 +102,15 @@ pub(all) enum ShowcaseRouteHistoryCommand {
   BackRoute
   ForwardRoute
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ShowcaseRouteHistoryCommand with Debug::{to_repr}
+
+///|
+pub extend ShowcaseRouteHistoryCommand with Eq::{not_equal, equal}
+
+///|
+pub extend ShowcaseRouteHistoryCommand with ToJson::{to_json}
 
 ///|
 pub struct ShowcaseRouteHost {

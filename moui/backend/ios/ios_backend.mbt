@@ -5,6 +5,15 @@ pub(all) struct IosSurfaceHandle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend IosSurfaceHandle with Debug::{to_repr}
+
+///|
+pub extend IosSurfaceHandle with Eq::{not_equal, equal}
+
+///|
+pub extend IosSurfaceHandle with ToJson::{to_json}
+
+///|
 pub fn IosSurfaceHandle::new(raw~ : UInt64) -> IosSurfaceHandle {
   { raw, }
 }
@@ -36,6 +45,15 @@ pub(all) struct IosBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend IosBackendCapabilities with Debug::{to_repr}
+
+///|
+pub extend IosBackendCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend IosBackendCapabilities with ToJson::{to_json}
+
+///|
 /// `ready` means the window-hosted path is **experimental**: it compiles and
 /// host-sim tests pass, but no development/demonstration usability or product
 /// commitment is made without matching-simulator/device evidence. It does
@@ -51,6 +69,15 @@ pub(all) struct IosBackendReadiness {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend IosBackendReadiness with Debug::{to_repr}
+
+///|
+pub extend IosBackendReadiness with Eq::{not_equal, equal}
+
+///|
+pub extend IosBackendReadiness with ToJson::{to_json}
+
+///|
 pub(all) struct IosBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : IosBackendCapabilities
@@ -59,6 +86,15 @@ pub(all) struct IosBackendInfo {
   readiness : IosBackendReadiness
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend IosBackendInfo with Debug::{to_repr}
+
+///|
+pub extend IosBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend IosBackendInfo with ToJson::{to_json}
 
 ///|
 pub struct IosSurfaceBinding {

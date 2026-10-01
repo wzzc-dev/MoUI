@@ -9,6 +9,21 @@ pub struct AndroidEmbeddedRuntimeBackend {
 }
 
 ///|
+pub extend AndroidEmbeddedRuntimeBackend with @wzzc-dev/window/android.ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
+}
+
+///|
 /// Android host options captured by the platform entrypoint.
 ///
 /// `status_bar_immersive` enables edge-to-edge content behind the visible

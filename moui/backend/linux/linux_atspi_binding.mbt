@@ -15,6 +15,15 @@ pub(all) struct LinuxATSPIBindingDiagnostics {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend LinuxATSPIBindingDiagnostics with Debug::{to_repr}
+
+///|
+pub extend LinuxATSPIBindingDiagnostics with Eq::{not_equal, equal}
+
+///|
+pub extend LinuxATSPIBindingDiagnostics with ToJson::{to_json}
+
+///|
 pub fn LinuxATSPIBinding::new(
   dispatch~ : (@runtime.PerformSemanticsActionRequest) -> @accesskit_bridge.AccessKitActionResult,
 ) -> LinuxATSPIBinding {

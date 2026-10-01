@@ -21,12 +21,30 @@ pub(all) enum ThemePreset {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ThemePreset with Debug::{to_repr}
+
+///|
+pub extend ThemePreset with Eq::{not_equal, equal}
+
+///|
+pub extend ThemePreset with ToJson::{to_json}
+
+///|
 /// Color mode: force light, force dark, or follow the system.
 pub(all) enum ColorMode {
   Light
   Dark
   System
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ColorMode with Debug::{to_repr}
+
+///|
+pub extend ColorMode with Eq::{not_equal, equal}
+
+///|
+pub extend ColorMode with ToJson::{to_json}
 
 ///|
 /// Density tier. `Compact` shrinks spacing by ~18%, `Comfortable` grows it by
@@ -36,6 +54,15 @@ pub(all) enum ThemeDensity {
   Standard
   Comfortable
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThemeDensity with Debug::{to_repr}
+
+///|
+pub extend ThemeDensity with Eq::{not_equal, equal}
+
+///|
+pub extend ThemeDensity with ToJson::{to_json}
 
 ///|
 pub fn ThemeDensity::label(self : ThemeDensity) -> String {
@@ -70,6 +97,15 @@ pub(all) struct ThemeSpec {
   seed : Color?
   reduced_motion : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThemeSpec with Debug::{to_repr}
+
+///|
+pub extend ThemeSpec with Eq::{not_equal, equal}
+
+///|
+pub extend ThemeSpec with ToJson::{to_json}
 
 ///|
 /// Default spec: MoUI Minimal, follow the system, standard density, standard

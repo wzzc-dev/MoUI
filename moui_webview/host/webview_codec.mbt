@@ -8,6 +8,12 @@ pub(all) enum WebViewBridgeKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend WebViewBridgeKind with Debug::{to_repr}
+
+///|
+pub extend WebViewBridgeKind with Eq::{not_equal, equal}
+
+///|
 pub(all) struct WebViewBridgeEnvelope {
   kind : WebViewBridgeKind
   channel : String
@@ -16,6 +22,12 @@ pub(all) struct WebViewBridgeEnvelope {
   payload : Json
   error : WebViewError?
 } derive(Eq, Debug)
+
+///|
+pub extend WebViewBridgeEnvelope with Debug::{to_repr}
+
+///|
+pub extend WebViewBridgeEnvelope with Eq::{not_equal, equal}
 
 ///|
 pub fn WebViewBridgeEnvelope::event(

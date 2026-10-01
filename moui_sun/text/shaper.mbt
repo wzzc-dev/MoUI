@@ -6,6 +6,12 @@ pub enum TextDirection {
 } derive(Eq, Debug)
 
 ///|
+pub extend TextDirection with Debug::{to_repr}
+
+///|
+pub extend TextDirection with Eq::{not_equal, equal}
+
+///|
 /// Left-to-right text direction.
 pub fn TextDirection::left_to_right() -> TextDirection {
   LeftToRight
@@ -22,6 +28,12 @@ pub fn TextDirection::right_to_left() -> TextDirection {
 struct Script {
   tag : String
 } derive(Eq, Debug)
+
+///|
+pub extend Script with Debug::{to_repr}
+
+///|
+pub extend Script with Eq::{not_equal, equal}
 
 ///|
 /// Common scripts
@@ -53,6 +65,9 @@ struct ShapingBuffer {
   script : Script
   font_size : Double
 } derive(Debug)
+
+///|
+pub extend ShapingBuffer with Debug::{to_repr}
 
 ///|
 /// Create a new shaping buffer

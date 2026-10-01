@@ -115,7 +115,9 @@ pub(all) enum CodeEditorMode {
   DiffEditor
   ProviderLab
 } derive(Eq)
+pub fn CodeEditorMode::equal(Self, Self) -> Bool
 pub fn CodeEditorMode::label(Self) -> String
+pub fn CodeEditorMode::not_equal(Self, Self) -> Bool
 
 pub(all) struct CodeEditorModel {
   source : String

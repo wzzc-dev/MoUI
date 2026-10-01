@@ -9,12 +9,24 @@ pub(all) enum PresentError {
 } derive(Eq, Debug)
 
 ///|
+pub extend PresentError with Debug::{to_repr}
+
+///|
+pub extend PresentError with Eq::{not_equal, equal}
+
+///|
 /// Validated geometry for a rectangle present call. Backends can use this to
 /// share row-stride and buffer-size checks with the reference MemorySurface.
 pub(all) struct PresentRectInfo {
   required_row_bytes : Int
   required_len : Int
 } derive(Eq, Debug)
+
+///|
+pub extend PresentRectInfo with Debug::{to_repr}
+
+///|
+pub extend PresentRectInfo with Eq::{not_equal, equal}
 
 ///|
 /// Packed source pixels for one rectangle present operation.
@@ -25,12 +37,18 @@ pub struct PresentRectPayload {
 } derive(Debug)
 
 ///|
+pub extend PresentRectPayload with Debug::{to_repr}
+
+///|
 /// A materialized batch of packed rectangle present payloads.
 pub struct PresentBatch {
   payloads : Array[PresentRectPayload]
   present_pixel_count : Int
   present_byte_count : Int
 } derive(Debug)
+
+///|
+pub extend PresentBatch with Debug::{to_repr}
 
 ///|
 /// Validated dry-run plan for submitting a materialized present batch to a
@@ -42,6 +60,9 @@ pub struct PresentBatchSubmitPlan {
 } derive(Debug)
 
 ///|
+pub extend PresentBatchSubmitPlan with Debug::{to_repr}
+
+///|
 /// Result of submitting a materialized present batch to a concrete surface.
 pub struct PresentBatchSubmitResult {
   submit_plan : PresentBatchSubmitPlan
@@ -49,11 +70,20 @@ pub struct PresentBatchSubmitResult {
 } derive(Debug)
 
 ///|
+pub extend PresentBatchSubmitResult with Debug::{to_repr}
+
+///|
 /// One validated present operation recorded by MemorySurface.
 pub struct MemoryPresentRecord {
   rect : PixelRect
   row_bytes : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MemoryPresentRecord with Debug::{to_repr}
+
+///|
+pub extend MemoryPresentRecord with Eq::{not_equal, equal}
 
 ///|
 pub fn PresentRectInfo::required_row_bytes(self : PresentRectInfo) -> Int {
@@ -705,6 +735,9 @@ pub struct MemorySurface {
   mut present_count : Int
   present_records : Array[MemoryPresentRecord]
 } derive(Debug)
+
+///|
+pub extend MemorySurface with Debug::{to_repr}
 
 ///|
 pub fn MemorySurface::new(width : Int, height : Int) -> MemorySurface {

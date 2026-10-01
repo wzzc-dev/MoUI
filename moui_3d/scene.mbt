@@ -4,9 +4,27 @@ pub(all) struct MeshId {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MeshId with Debug::{to_repr}
+
+///|
+pub extend MeshId with Eq::{not_equal, equal}
+
+///|
+pub extend MeshId with ToJson::{to_json}
+
+///|
 pub(all) struct MaterialId {
   value : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MaterialId with Debug::{to_repr}
+
+///|
+pub extend MaterialId with Eq::{not_equal, equal}
+
+///|
+pub extend MaterialId with ToJson::{to_json}
 
 ///|
 pub(all) struct TextureId {
@@ -14,14 +32,41 @@ pub(all) struct TextureId {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextureId with Debug::{to_repr}
+
+///|
+pub extend TextureId with Eq::{not_equal, equal}
+
+///|
+pub extend TextureId with ToJson::{to_json}
+
+///|
 pub(all) struct SamplerId {
   value : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SamplerId with Debug::{to_repr}
+
+///|
+pub extend SamplerId with Eq::{not_equal, equal}
+
+///|
+pub extend SamplerId with ToJson::{to_json}
+
+///|
 pub(all) struct NodeId {
   value : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend NodeId with Debug::{to_repr}
+
+///|
+pub extend NodeId with Eq::{not_equal, equal}
+
+///|
+pub extend NodeId with ToJson::{to_json}
 
 ///|
 pub fn MeshId::new(value : Int) -> MeshId {
@@ -83,6 +128,15 @@ pub(all) struct Vertex {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Vertex with Debug::{to_repr}
+
+///|
+pub extend Vertex with Eq::{not_equal, equal}
+
+///|
+pub extend Vertex with ToJson::{to_json}
+
+///|
 pub fn Vertex::new(
   position~ : Vec3,
   normal? : Vec3 = Vec3::new(x=0.0, y=1.0, z=0.0),
@@ -125,6 +179,9 @@ pub(all) enum TextureSource {
 } derive(Debug)
 
 ///|
+pub extend TextureSource with Debug::{to_repr}
+
+///|
 pub(all) enum SamplerFilter {
   Nearest
   Linear
@@ -135,11 +192,29 @@ pub(all) enum SamplerFilter {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SamplerFilter with Debug::{to_repr}
+
+///|
+pub extend SamplerFilter with Eq::{not_equal, equal}
+
+///|
+pub extend SamplerFilter with ToJson::{to_json}
+
+///|
 pub(all) enum SamplerWrap {
   Repeat
   MirroredRepeat
   ClampToEdge
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SamplerWrap with Debug::{to_repr}
+
+///|
+pub extend SamplerWrap with Eq::{not_equal, equal}
+
+///|
+pub extend SamplerWrap with ToJson::{to_json}
 
 ///|
 pub(all) struct Sampler {
@@ -148,6 +223,15 @@ pub(all) struct Sampler {
   wrap_s : SamplerWrap
   wrap_t : SamplerWrap
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend Sampler with Debug::{to_repr}
+
+///|
+pub extend Sampler with Eq::{not_equal, equal}
+
+///|
+pub extend Sampler with ToJson::{to_json}
 
 ///|
 pub fn Sampler::new(
@@ -185,6 +269,9 @@ pub(all) struct Texture {
   mime_type : String?
   sampler : SamplerId?
 } derive(Debug)
+
+///|
+pub extend Texture with Debug::{to_repr}
 
 ///|
 pub fn Texture::uri(
@@ -235,16 +322,43 @@ pub(all) struct Material {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Material with Debug::{to_repr}
+
+///|
+pub extend Material with Eq::{not_equal, equal}
+
+///|
+pub extend Material with ToJson::{to_json}
+
+///|
 pub(all) enum CameraProjection {
   Perspective(Double, Double, Double, Double)
   Orthographic(Double, Double, Double, Double)
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend CameraProjection with Debug::{to_repr}
+
+///|
+pub extend CameraProjection with Eq::{not_equal, equal}
+
+///|
+pub extend CameraProjection with ToJson::{to_json}
+
+///|
 pub(all) struct Camera {
   name : String
   projection : CameraProjection
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend Camera with Debug::{to_repr}
+
+///|
+pub extend Camera with Eq::{not_equal, equal}
+
+///|
+pub extend Camera with ToJson::{to_json}
 
 ///|
 pub fn Camera::new(
@@ -271,6 +385,15 @@ pub(all) struct SceneDefinition {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SceneDefinition with Debug::{to_repr}
+
+///|
+pub extend SceneDefinition with Eq::{not_equal, equal}
+
+///|
+pub extend SceneDefinition with ToJson::{to_json}
+
+///|
 pub fn SceneDefinition::new(
   name? : String = "",
   roots~ : Array[NodeId],
@@ -294,6 +417,15 @@ pub(all) struct VertexDelta {
   normal : Vec3
   tangent : Vec3
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend VertexDelta with Debug::{to_repr}
+
+///|
+pub extend VertexDelta with Eq::{not_equal, equal}
+
+///|
+pub extend VertexDelta with ToJson::{to_json}
 
 ///|
 pub fn VertexDelta::new(
@@ -326,6 +458,9 @@ pub(all) struct Skin {
   inverse_bind_matrices : Array[Mat4]
   skeleton : NodeId?
 } derive(Debug)
+
+///|
+pub extend Skin with Debug::{to_repr}
 
 ///|
 pub fn Skin::new(
@@ -368,6 +503,15 @@ pub(all) enum AlphaMode {
   Mask
   Blend
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend AlphaMode with Debug::{to_repr}
+
+///|
+pub extend AlphaMode with Eq::{not_equal, equal}
+
+///|
+pub extend AlphaMode with ToJson::{to_json}
 
 ///|
 pub fn Material::pbr(
@@ -463,6 +607,9 @@ pub(all) struct Primitive {
 } derive(Debug)
 
 ///|
+pub extend Primitive with Debug::{to_repr}
+
+///|
 pub fn Primitive::new(
   vertices~ : Array[Vertex],
   indices~ : Array[Int],
@@ -513,6 +660,9 @@ pub(all) struct Mesh {
 } derive(Debug)
 
 ///|
+pub extend Mesh with Debug::{to_repr}
+
+///|
 pub fn Mesh::new(
   name? : String = "",
   primitives~ : Array[Primitive],
@@ -556,6 +706,9 @@ pub(all) struct Node {
   skin : Int?
   weights : Array[Double]?
 } derive(Debug)
+
+///|
+pub extend Node with Debug::{to_repr}
 
 ///|
 pub fn Node::new(
@@ -632,6 +785,15 @@ pub(all) struct PickHit {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PickHit with Debug::{to_repr}
+
+///|
+pub extend PickHit with Eq::{not_equal, equal}
+
+///|
+pub extend PickHit with ToJson::{to_json}
+
+///|
 pub fn PickHit::node(self : PickHit) -> NodeId {
   self.node
 }
@@ -664,6 +826,9 @@ pub(all) struct Scene {
   nodes : Array[Node]
   animations : Array[AnimationClip]
 } derive(Debug)
+
+///|
+pub extend Scene with Debug::{to_repr}
 
 ///|
 pub fn Scene::empty() -> Scene {

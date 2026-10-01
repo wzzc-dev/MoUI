@@ -20,6 +20,20 @@ pub(all) struct DesktopIconPlacement {
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|
+pub extend DesktopIconPlacement with @moonbitlang/core/json.FromJson::{
+  from_json,
+}
+
+///|
+pub extend DesktopIconPlacement with Debug::{to_repr}
+
+///|
+pub extend DesktopIconPlacement with Eq::{not_equal, equal}
+
+///|
+pub extend DesktopIconPlacement with ToJson::{to_json}
+
+///|
 /// Versioned, serializable projection of everything the desktop restores on
 /// launch: appearance, media levels, icon layout, window geometry, and the
 /// recently imported files.
@@ -38,6 +52,18 @@ pub(all) struct DesktopSnapshot {
   language : String
   icon_placements : Array[DesktopIconPlacement]
 } derive(Eq, Debug, ToJson, FromJson)
+
+///|
+pub extend DesktopSnapshot with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend DesktopSnapshot with Debug::{to_repr}
+
+///|
+pub extend DesktopSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend DesktopSnapshot with ToJson::{to_json}
 
 ///|
 fn DesktopSnapshot::of(
@@ -84,6 +110,9 @@ struct DesktopSnapshotV1 {
   window_offset_y : Double
   window_maximized : Bool
 } derive(FromJson)
+
+///|
+pub extend DesktopSnapshotV1 with @moonbitlang/core/json.FromJson::{from_json}
 
 ///|
 fn DesktopSnapshotV1::migrate(self : DesktopSnapshotV1) -> DesktopSnapshot {
@@ -136,6 +165,9 @@ struct DesktopSnapshotV2 {
 } derive(FromJson)
 
 ///|
+pub extend DesktopSnapshotV2 with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
 fn DesktopSnapshotV2::migrate(self : DesktopSnapshotV2) -> DesktopSnapshot {
   {
     schema_version: SNAPSHOT_SCHEMA_VERSION,
@@ -169,6 +201,9 @@ struct DesktopSnapshotV3 {
   notes : Array[String]
   icon_placements : Array[DesktopIconPlacement]
 } derive(FromJson)
+
+///|
+pub extend DesktopSnapshotV3 with @moonbitlang/core/json.FromJson::{from_json}
 
 ///|
 fn DesktopSnapshotV3::migrate(self : DesktopSnapshotV3) -> DesktopSnapshot {

@@ -10,6 +10,15 @@ pub(all) struct DesignOfficialTokenAnchor {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignOfficialTokenAnchor with Debug::{to_repr}
+
+///|
+pub extend DesignOfficialTokenAnchor with Eq::{not_equal, equal}
+
+///|
+pub extend DesignOfficialTokenAnchor with ToJson::{to_json}
+
+///|
 pub(all) struct DesignOfficialTokenCoverage {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -30,6 +39,15 @@ pub(all) struct DesignOfficialTokenCoverage {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignOfficialTokenCoverage with Debug::{to_repr}
+
+///|
+pub extend DesignOfficialTokenCoverage with Eq::{not_equal, equal}
+
+///|
+pub extend DesignOfficialTokenCoverage with ToJson::{to_json}
+
+///|
 pub(all) struct DesignOfficialTokenSourceUsage {
   preset : @common.DesignPreset
   source_label : String
@@ -44,6 +62,15 @@ pub(all) struct DesignOfficialTokenSourceUsage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignOfficialTokenSourceUsage with Debug::{to_repr}
+
+///|
+pub extend DesignOfficialTokenSourceUsage with Eq::{not_equal, equal}
+
+///|
+pub extend DesignOfficialTokenSourceUsage with ToJson::{to_json}
 
 ///|
 pub fn official_token_anchors(

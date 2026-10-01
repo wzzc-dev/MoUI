@@ -16,6 +16,15 @@ pub(all) enum RendererResourceKind {
 } derive(Debug, Eq, Hash)
 
 ///|
+pub extend RendererResourceKind with Debug::{to_repr}
+
+///|
+pub extend RendererResourceKind with Eq::{not_equal, equal}
+
+///|
+pub extend RendererResourceKind with Hash::{hash, hash_combine}
+
+///|
 pub fn RendererResourceKind::is_filter(self : RendererResourceKind) -> Bool {
   self is (ColorFilterResource | ImageFilterResource | MaskFilterResource)
 }
@@ -42,6 +51,15 @@ pub(all) struct RendererResourceKey {
   kind : RendererResourceKind
   id : Bytes
 } derive(Debug, Eq, Hash)
+
+///|
+pub extend RendererResourceKey with Debug::{to_repr}
+
+///|
+pub extend RendererResourceKey with Eq::{not_equal, equal}
+
+///|
+pub extend RendererResourceKey with Hash::{hash, hash_combine}
 
 ///|
 pub fn RendererResourceKey::new(

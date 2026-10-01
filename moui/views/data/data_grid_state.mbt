@@ -5,6 +5,15 @@ pub struct DataGridCell {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DataGridCell with Debug::{to_repr}
+
+///|
+pub extend DataGridCell with Eq::{not_equal, equal}
+
+///|
+pub extend DataGridCell with ToJson::{to_json}
+
+///|
 pub fn data_grid_cell(row~ : Int, column~ : Int) -> DataGridCell {
   { row: row.max(0), column: column.max(0), }
 }
@@ -29,6 +38,15 @@ pub struct DataGridSelectionRange {
   first : DataGridCell
   last : DataGridCell
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DataGridSelectionRange with Debug::{to_repr}
+
+///|
+pub extend DataGridSelectionRange with Eq::{not_equal, equal}
+
+///|
+pub extend DataGridSelectionRange with ToJson::{to_json}
 
 ///|
 fn data_grid_selection_range(
@@ -83,6 +101,15 @@ pub struct DataGridSelectionState {
   anchor : DataGridCell
   focus : DataGridCell
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DataGridSelectionState with Debug::{to_repr}
+
+///|
+pub extend DataGridSelectionState with Eq::{not_equal, equal}
+
+///|
+pub extend DataGridSelectionState with ToJson::{to_json}
 
 ///|
 pub fn DataGridSelectionState::new(

@@ -8,6 +8,9 @@ pub struct RenderFrame {
 } derive(Debug)
 
 ///|
+pub extend RenderFrame with Debug::{to_repr}
+
+///|
 /// Strategy-aware dry-run plan for submitting a RenderFrame to a Surface.
 pub struct RenderFrameSubmitPlan {
   dirty_submit_plan : DirtySubmitPlan
@@ -19,11 +22,17 @@ pub struct RenderFrameSubmitPlan {
 } derive(Debug)
 
 ///|
+pub extend RenderFrameSubmitPlan with Debug::{to_repr}
+
+///|
 /// Result of submitting a RenderFrame through the strategy-aware scheduler.
 pub struct RenderFrameSubmitResult {
   submit_plan : RenderFrameSubmitPlan
   presented_rect_count : Int
 } derive(Debug)
+
+///|
+pub extend RenderFrameSubmitResult with Debug::{to_repr}
 
 ///|
 /// Event-loop-facing action selected from a dry-run RenderFrame submit plan.
@@ -32,6 +41,12 @@ pub(all) enum RenderFrameScheduleAction {
   SubmitWithoutPresent
   Present
 } derive(Eq, Debug)
+
+///|
+pub extend RenderFrameScheduleAction with Debug::{to_repr}
+
+///|
+pub extend RenderFrameScheduleAction with Eq::{not_equal, equal}
 
 ///|
 /// Event-loop-facing submit policy for choosing between dirty-only work,
@@ -43,11 +58,20 @@ pub(all) enum RenderFrameSubmitPolicy {
 } derive(Eq, Debug)
 
 ///|
+pub extend RenderFrameSubmitPolicy with Debug::{to_repr}
+
+///|
+pub extend RenderFrameSubmitPolicy with Eq::{not_equal, equal}
+
+///|
 /// Dry-run scheduling decision for submitting a RenderFrame to a Surface.
 pub struct RenderFrameSchedule {
   submit_plan : RenderFrameSubmitPlan
   action : RenderFrameScheduleAction
 } derive(Debug)
+
+///|
+pub extend RenderFrameSchedule with Debug::{to_repr}
 
 ///|
 /// Policy intent paired with the dry-run schedule selected for one frame
@@ -59,6 +83,9 @@ pub struct RenderFrameSubmitRequest {
 } derive(Debug)
 
 ///|
+pub extend RenderFrameSubmitRequest with Debug::{to_repr}
+
+///|
 /// Request to resize one frame-owned layer cache and clear it to a color.
 pub struct RenderFrameLayerClearRequest {
   layer_index : Int
@@ -66,11 +93,20 @@ pub struct RenderFrameLayerClearRequest {
 } derive(Eq, Debug)
 
 ///|
+pub extend RenderFrameLayerClearRequest with Debug::{to_repr}
+
+///|
+pub extend RenderFrameLayerClearRequest with Eq::{not_equal, equal}
+
+///|
 /// Request to replace one frame-owned layer cache.
 pub struct RenderFrameLayerReplacementRequest {
   layer_index : Int
   layer : Layer
 } derive(Debug)
+
+///|
+pub extend RenderFrameLayerReplacementRequest with Debug::{to_repr}
 
 ///|
 /// Create a layer clear request for a RenderFrame resize lifecycle operation.

@@ -172,10 +172,16 @@ struct PngInfo {
 } derive(Debug)
 
 ///|
+pub extend PngInfo with Debug::{to_repr}
+
+///|
 struct PngHeader {
   width : Int
   height : Int
 } derive(Debug)
+
+///|
+pub extend PngHeader with Debug::{to_repr}
 
 ///|
 struct PngDeflateBitReader {
@@ -186,11 +192,17 @@ struct PngDeflateBitReader {
 } derive(Debug)
 
 ///|
+pub extend PngDeflateBitReader with Debug::{to_repr}
+
+///|
 struct PngDeflateHuffmanEntry {
   symbol : Int
   length : Int
   code : Int
 } derive(Debug)
+
+///|
+pub extend PngDeflateHuffmanEntry with Debug::{to_repr}
 
 ///|
 struct PngDeflateHuffman {
@@ -199,10 +211,16 @@ struct PngDeflateHuffman {
 } derive(Debug)
 
 ///|
+pub extend PngDeflateHuffman with Debug::{to_repr}
+
+///|
 struct PngDeflateTables {
   literal_lengths : PngDeflateHuffman
   distances : PngDeflateHuffman
 } derive(Debug)
+
+///|
+pub extend PngDeflateTables with Debug::{to_repr}
 
 ///|
 fn decode_png_info(data : Bytes) -> Result[PngInfo, PixmapDecodeError] {

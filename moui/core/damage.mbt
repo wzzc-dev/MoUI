@@ -6,6 +6,15 @@ pub(all) enum DamageRegion {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DamageRegion with Debug::{to_repr}
+
+///|
+pub extend DamageRegion with Eq::{not_equal, equal}
+
+///|
+pub extend DamageRegion with ToJson::{to_json}
+
+///|
 /// Renderer-facing frame payload. `clear_color` owns frame initialization;
 /// `commands` contains view content and does not need a leading `Clear`.
 /// Adapters for legacy command-only renderers must materialize that clear when
@@ -20,6 +29,15 @@ pub(all) struct DrawFrame {
   damage : DamageRegion
   clear_color : Color
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DrawFrame with Debug::{to_repr}
+
+///|
+pub extend DrawFrame with Eq::{not_equal, equal}
+
+///|
+pub extend DrawFrame with ToJson::{to_json}
 
 ///|
 fn damage_region_max_rects() -> Int {

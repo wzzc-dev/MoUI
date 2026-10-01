@@ -7,6 +7,15 @@ pub(all) struct Vec2 {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Vec2 with Debug::{to_repr}
+
+///|
+pub extend Vec2 with Eq::{not_equal, equal}
+
+///|
+pub extend Vec2 with ToJson::{to_json}
+
+///|
 /// A three-dimensional vector. Public scene coordinates use `Double` so
 /// camera and picking calculations stay deterministic before GPU packing.
 pub(all) struct Vec3 {
@@ -16,6 +25,15 @@ pub(all) struct Vec3 {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Vec3 with Debug::{to_repr}
+
+///|
+pub extend Vec3 with Eq::{not_equal, equal}
+
+///|
+pub extend Vec3 with ToJson::{to_json}
+
+///|
 /// A four-dimensional vector used for colors and homogeneous coordinates.
 pub(all) struct Vec4 {
   x : Double
@@ -23,6 +41,15 @@ pub(all) struct Vec4 {
   z : Double
   w : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend Vec4 with Debug::{to_repr}
+
+///|
+pub extend Vec4 with Eq::{not_equal, equal}
+
+///|
+pub extend Vec4 with ToJson::{to_json}
 
 ///|
 pub fn Vec2::new(x~ : Double, y~ : Double) -> Vec2 {
@@ -168,6 +195,9 @@ pub fn Vec4::scale(self : Vec4, amount : Double) -> Vec4 {
 pub(all) struct Mat4 {
   values : Array[Double]
 } derive(Debug)
+
+///|
+pub extend Mat4 with Debug::{to_repr}
 
 ///|
 pub fn Mat4::identity() -> Mat4 {
@@ -335,6 +365,15 @@ pub(all) struct Quat {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Quat with Debug::{to_repr}
+
+///|
+pub extend Quat with Eq::{not_equal, equal}
+
+///|
+pub extend Quat with ToJson::{to_json}
+
+///|
 pub fn Quat::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Quat {
   { x, y, z, w, }
 }
@@ -427,6 +466,15 @@ pub(all) struct Aabb {
   max : Vec3
   valid : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend Aabb with Debug::{to_repr}
+
+///|
+pub extend Aabb with Eq::{not_equal, equal}
+
+///|
+pub extend Aabb with ToJson::{to_json}
 
 ///|
 pub fn Aabb::empty() -> Aabb {
@@ -527,6 +575,15 @@ pub(all) struct Ray {
   origin : Vec3
   direction : Vec3
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend Ray with Debug::{to_repr}
+
+///|
+pub extend Ray with Eq::{not_equal, equal}
+
+///|
+pub extend Ray with ToJson::{to_json}
 
 ///|
 pub fn Ray::new(origin~ : Vec3, direction~ : Vec3) -> Ray {

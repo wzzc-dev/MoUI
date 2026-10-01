@@ -9,6 +9,15 @@ pub(all) struct ColorInfo {
 } derive(Debug, Eq)
 
 ///|
+pub extend ColorInfo with Debug::{to_repr}
+
+///|
+pub extend ColorInfo with Default::{default}
+
+///|
+pub extend ColorInfo with Eq::{not_equal, equal}
+
+///|
 pub fn ColorInfo::new(
   color_type? : ColorType = Unknown,
   alpha_type? : AlphaType = Unknown,
@@ -92,6 +101,15 @@ pub(all) struct ImageInfo {
   dimensions : ISize
   color_info : ColorInfo
 } derive(Debug, Eq)
+
+///|
+pub extend ImageInfo with Debug::{to_repr}
+
+///|
+pub extend ImageInfo with Default::{default}
+
+///|
+pub extend ImageInfo with Eq::{not_equal, equal}
 
 ///|
 pub fn ImageInfo::new(

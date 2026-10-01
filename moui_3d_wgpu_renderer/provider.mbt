@@ -18,6 +18,12 @@ pub enum WgpuNative3DPlatform {
 } derive(Eq, Debug)
 
 ///|
+pub extend WgpuNative3DPlatform with Debug::{to_repr}
+
+///|
+pub extend WgpuNative3DPlatform with Eq::{not_equal, equal}
+
+///|
 pub fn create_provider(
   platform? : WgpuNative3DPlatform = MacOS,
 ) -> @render.ThreeDRendererProvider {

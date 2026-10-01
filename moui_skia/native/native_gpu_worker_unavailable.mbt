@@ -42,6 +42,24 @@ pub(all) struct NativeGpuWorkerDiagnostics {
 } derive(Eq, Debug)
 
 ///|
+pub extend NativeGpuWorkerCompletion with Debug::{to_repr}
+
+///|
+pub extend NativeGpuWorkerCompletion with Eq::{not_equal, equal}
+
+///|
+pub extend NativeGpuWorkerCompletionStatus with Debug::{to_repr}
+
+///|
+pub extend NativeGpuWorkerCompletionStatus with Eq::{not_equal, equal}
+
+///|
+pub extend NativeGpuWorkerDiagnostics with Debug::{to_repr}
+
+///|
+pub extend NativeGpuWorkerDiagnostics with Eq::{not_equal, equal}
+
+///|
 pub fn NativeGpuRenderWorker::new() -> NativeGpuRenderWorker? {
   None
 }

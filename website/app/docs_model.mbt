@@ -7,10 +7,28 @@ pub enum WebsitePage {
 } derive(Eq, Debug)
 
 ///|
+pub extend WebsitePage with Debug::{to_repr}
+
+///|
+pub extend WebsitePage with Eq::{not_equal, equal}
+
+///|
 pub struct WebsiteDocGroup {
   id : String
   title : String
 } derive(Eq, Debug, ToJson, FromJson)
+
+///|
+pub extend WebsiteDocGroup with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend WebsiteDocGroup with Debug::{to_repr}
+
+///|
+pub extend WebsiteDocGroup with Eq::{not_equal, equal}
+
+///|
+pub extend WebsiteDocGroup with ToJson::{to_json}
 
 ///|
 pub struct WebsiteDocEntry {
@@ -23,12 +41,36 @@ pub struct WebsiteDocEntry {
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|
+pub extend WebsiteDocEntry with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend WebsiteDocEntry with Debug::{to_repr}
+
+///|
+pub extend WebsiteDocEntry with Eq::{not_equal, equal}
+
+///|
+pub extend WebsiteDocEntry with ToJson::{to_json}
+
+///|
 pub struct WebsiteDocsCatalog {
   schemaVersion : Int
   siteUrl : String
   groups : Array[WebsiteDocGroup]
   entries : Array[WebsiteDocEntry]
 } derive(Eq, Debug, ToJson, FromJson)
+
+///|
+pub extend WebsiteDocsCatalog with @moonbitlang/core/json.FromJson::{from_json}
+
+///|
+pub extend WebsiteDocsCatalog with Debug::{to_repr}
+
+///|
+pub extend WebsiteDocsCatalog with Eq::{not_equal, equal}
+
+///|
+pub extend WebsiteDocsCatalog with ToJson::{to_json}
 
 ///|
 pub enum WebsiteCatalogLoadState {

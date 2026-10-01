@@ -21,15 +21,23 @@ pub(all) struct RuntimeSmokeSnapshot {
   text_input_text : String
   inspector : @runtime.InspectorSnapshot
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RuntimeSmokeSnapshot::equal(Self, Self) -> Bool
+pub fn RuntimeSmokeSnapshot::not_equal(Self, Self) -> Bool
+pub fn RuntimeSmokeSnapshot::to_json(Self) -> Json
+pub fn RuntimeSmokeSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TesterStepResult {
   name : String
   passed : Bool
   detail : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TesterStepResult::equal(Self, Self) -> Bool
 pub fn TesterStepResult::fail(name~ : String, detail? : String) -> Self
 pub fn TesterStepResult::label(Self) -> String
+pub fn TesterStepResult::not_equal(Self, Self) -> Bool
 pub fn TesterStepResult::pass(name~ : String, detail? : String) -> Self
+pub fn TesterStepResult::to_json(Self) -> Json
+pub fn TesterStepResult::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

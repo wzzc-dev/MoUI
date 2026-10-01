@@ -5,6 +5,9 @@ pub struct Renderer {
 } derive(Debug)
 
 ///|
+pub extend Renderer with Debug::{to_repr}
+
+///|
 /// Create a renderer around an existing canvas.
 pub fn Renderer::new(canvas : @graphics.Canvas) -> Renderer {
   { canvas, }

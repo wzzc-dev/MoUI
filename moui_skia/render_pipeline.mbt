@@ -10,6 +10,12 @@ pub(all) struct RenderPassDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderPassDescriptor with Debug::{to_repr}
+
+///|
+pub extend RenderPassDescriptor with Eq::{not_equal, equal}
+
+///|
 fn normalized_render_pass_bounds(
   surface : SurfaceDescriptor,
   bounds : IRect?,

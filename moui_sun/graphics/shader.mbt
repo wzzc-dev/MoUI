@@ -7,11 +7,23 @@ struct PaintShader {
 } derive(Eq, Debug)
 
 ///|
+pub extend PaintShader with Debug::{to_repr}
+
+///|
+pub extend PaintShader with Eq::{not_equal, equal}
+
+///|
 /// One color stop in a gradient shader.
 struct PaintGradientStop {
   offset : Double
   color : Color
 } derive(Eq, Debug)
+
+///|
+pub extend PaintGradientStop with Debug::{to_repr}
+
+///|
+pub extend PaintGradientStop with Eq::{not_equal, equal}
 
 ///|
 /// Spread mode applied to gradient coordinates outside the unit interval.
@@ -23,12 +35,24 @@ pub(all) enum PaintShaderSpread {
 } derive(Eq, Debug)
 
 ///|
+pub extend PaintShaderSpread with Debug::{to_repr}
+
+///|
+pub extend PaintShaderSpread with Eq::{not_equal, equal}
+
+///|
 /// Public shader family used for inspection and paint pipeline planning.
 pub(all) enum PaintShaderType {
   LinearGradient
   RadialGradient
   SweepGradient
 } derive(Eq, Debug)
+
+///|
+pub extend PaintShaderType with Debug::{to_repr}
+
+///|
+pub extend PaintShaderType with Eq::{not_equal, equal}
 
 ///|
 priv enum PaintShaderKind {

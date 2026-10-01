@@ -7,6 +7,12 @@ pub(all) struct RenderCommandList {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderCommandList with Debug::{to_repr}
+
+///|
+pub extend RenderCommandList with Eq::{not_equal, equal}
+
+///|
 pub fn RenderCommandList::new(pass : RenderPassDescriptor) -> RenderCommandList {
   { pass, commands: Array(), }
 }

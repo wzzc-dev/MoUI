@@ -7,6 +7,12 @@ pub(all) enum SessionPhase {
 } derive(Eq, Debug)
 
 ///|
+pub extend SessionPhase with Debug::{to_repr}
+
+///|
+pub extend SessionPhase with Eq::{not_equal, equal}
+
+///|
 pub(all) enum DesktopOverlay {
   OverlayNone
   MenuBarMenu(DesktopMenu)
@@ -20,6 +26,12 @@ pub(all) enum DesktopOverlay {
 } derive(Eq, Debug)
 
 ///|
+pub extend DesktopOverlay with Debug::{to_repr}
+
+///|
+pub extend DesktopOverlay with Eq::{not_equal, equal}
+
+///|
 pub(all) enum DesktopMenu {
   SystemMenu
   AppMenu
@@ -30,6 +42,12 @@ pub(all) enum DesktopMenu {
   WindowMenu
   HelpMenu
 } derive(Eq, Debug)
+
+///|
+pub extend DesktopMenu with Debug::{to_repr}
+
+///|
+pub extend DesktopMenu with Eq::{not_equal, equal}
 
 ///|
 pub(all) enum MenuCommand {
@@ -57,11 +75,23 @@ pub(all) enum MenuCommand {
 } derive(Eq, Debug)
 
 ///|
+pub extend MenuCommand with Debug::{to_repr}
+
+///|
+pub extend MenuCommand with Eq::{not_equal, equal}
+
+///|
 pub(all) enum FinderLocation {
   Documents
   Applications
   Downloads
 } derive(Eq, Debug)
+
+///|
+pub extend FinderLocation with Debug::{to_repr}
+
+///|
+pub extend FinderLocation with Eq::{not_equal, equal}
 
 ///|
 pub(all) enum FinderViewMode {
@@ -70,10 +100,22 @@ pub(all) enum FinderViewMode {
 } derive(Eq, Debug)
 
 ///|
+pub extend FinderViewMode with Debug::{to_repr}
+
+///|
+pub extend FinderViewMode with Eq::{not_equal, equal}
+
+///|
 pub(all) enum LauncherTab {
   Apps
   Actions
 } derive(Eq, Debug)
+
+///|
+pub extend LauncherTab with Debug::{to_repr}
+
+///|
+pub extend LauncherTab with Eq::{not_equal, equal}
 
 ///|
 pub(all) enum DesktopTask {
@@ -83,11 +125,23 @@ pub(all) enum DesktopTask {
 } derive(Eq, Debug)
 
 ///|
+pub extend DesktopTask with Debug::{to_repr}
+
+///|
+pub extend DesktopTask with Eq::{not_equal, equal}
+
+///|
 pub(all) enum AppearanceMode {
   SystemAppearance
   LightAppearance
   DarkAppearance
 } derive(Eq, Debug)
+
+///|
+pub extend AppearanceMode with Debug::{to_repr}
+
+///|
+pub extend AppearanceMode with Eq::{not_equal, equal}
 
 ///|
 pub(all) enum BrowserPage {
@@ -96,11 +150,23 @@ pub(all) enum BrowserPage {
 } derive(Eq, Debug)
 
 ///|
+pub extend BrowserPage with Debug::{to_repr}
+
+///|
+pub extend BrowserPage with Eq::{not_equal, equal}
+
+///|
 pub(all) enum DesktopService {
   SystemAppearanceService
   FileImportService
   UrlOpenService
 } derive(Eq, Debug)
+
+///|
+pub extend DesktopService with Debug::{to_repr}
+
+///|
+pub extend DesktopService with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct DesktopClock {
@@ -112,6 +178,12 @@ pub(all) struct DesktopClock {
   minute : Int
   second : Int
 } derive(Eq, Debug)
+
+///|
+pub extend DesktopClock with Debug::{to_repr}
+
+///|
+pub extend DesktopClock with Eq::{not_equal, equal}
 
 ///|
 pub fn DesktopClock::new(

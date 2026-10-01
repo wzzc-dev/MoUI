@@ -8,6 +8,15 @@ pub(all) struct Color {
 } derive(Eq, Debug)
 
 ///|
+pub extend Color with Debug::{to_repr}
+
+///|
+pub extend Color with Eq::{not_equal, equal}
+
+///|
+pub extend Color with Show::{to_string, output}
+
+///|
 pub impl Show for Color with fn output(self, logger) {
   logger.write_string("Color::new(r=")
   logger.write_object(self.r)

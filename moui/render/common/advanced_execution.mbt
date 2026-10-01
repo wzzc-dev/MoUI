@@ -5,12 +5,30 @@ pub(all) enum ShaderRegistryStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ShaderRegistryStatus with Debug::{to_repr}
+
+///|
+pub extend ShaderRegistryStatus with Eq::{not_equal, equal}
+
+///|
+pub extend ShaderRegistryStatus with ToJson::{to_json}
+
+///|
 pub struct ShaderRegistryResult {
   priv name : String
   priv status : ShaderRegistryStatus
   priv fallback : @core.Brush
   priv diagnostic : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ShaderRegistryResult with Debug::{to_repr}
+
+///|
+pub extend ShaderRegistryResult with Eq::{not_equal, equal}
+
+///|
+pub extend ShaderRegistryResult with ToJson::{to_json}
 
 ///|
 pub struct PathVertex {
@@ -32,10 +50,28 @@ pub struct PathVertex {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PathVertex with Debug::{to_repr}
+
+///|
+pub extend PathVertex with Eq::{not_equal, equal}
+
+///|
+pub extend PathVertex with ToJson::{to_json}
+
+///|
 pub struct PathMesh {
   priv vertices : Array[PathVertex]
   priv diagnostics : Array[String]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend PathMesh with Debug::{to_repr}
+
+///|
+pub extend PathMesh with Eq::{not_equal, equal}
+
+///|
+pub extend PathMesh with ToJson::{to_json}
 
 ///|
 priv struct PathBrushPayload {

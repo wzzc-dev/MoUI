@@ -11,6 +11,15 @@ pub(all) struct TextStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextStyle with Debug::{to_repr}
+
+///|
+pub extend TextStyle with Eq::{not_equal, equal}
+
+///|
+pub extend TextStyle with ToJson::{to_json}
+
+///|
 pub(all) struct SurfaceStyle {
   brush : @core.Brush
   border : @core.BorderStyle?
@@ -19,6 +28,15 @@ pub(all) struct SurfaceStyle {
   padding : @core.Insets
   level : @core.SurfaceLevel
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SurfaceStyle with Debug::{to_repr}
+
+///|
+pub extend SurfaceStyle with Eq::{not_equal, equal}
+
+///|
+pub extend SurfaceStyle with ToJson::{to_json}
 
 ///|
 /// Resolved per-state control style. Lives in `moui/views`
@@ -35,6 +53,15 @@ pub(all) struct ButtonStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ButtonStyle with Debug::{to_repr}
+
+///|
+pub extend ButtonStyle with Eq::{not_equal, equal}
+
+///|
+pub extend ButtonStyle with ToJson::{to_json}
+
+///|
 pub(all) struct TextFieldStyle {
   normal : ControlStateStyle
   focused : ControlStateStyle
@@ -43,6 +70,15 @@ pub(all) struct TextFieldStyle {
   cursor_color : @core.Color
   font : @core.FontSpec
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextFieldStyle with Debug::{to_repr}
+
+///|
+pub extend TextFieldStyle with Eq::{not_equal, equal}
+
+///|
+pub extend TextFieldStyle with ToJson::{to_json}
 
 ///|
 pub(all) struct ChoiceControlStyle {
@@ -54,11 +90,29 @@ pub(all) struct ChoiceControlStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ChoiceControlStyle with Debug::{to_repr}
+
+///|
+pub extend ChoiceControlStyle with Eq::{not_equal, equal}
+
+///|
+pub extend ChoiceControlStyle with ToJson::{to_json}
+
+///|
 pub(all) struct ProgressStyle {
   foreground : @core.Color
   background : @core.Color
   radius : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ProgressStyle with Debug::{to_repr}
+
+///|
+pub extend ProgressStyle with Eq::{not_equal, equal}
+
+///|
+pub extend ProgressStyle with ToJson::{to_json}
 
 ///|
 pub(all) struct SliderStyle {
@@ -71,6 +125,15 @@ pub(all) struct SliderStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SliderStyle with Debug::{to_repr}
+
+///|
+pub extend SliderStyle with Eq::{not_equal, equal}
+
+///|
+pub extend SliderStyle with ToJson::{to_json}
+
+///|
 pub(all) struct PickerStyle {
   font : @core.FontSpec
   foreground : @core.Color
@@ -80,11 +143,29 @@ pub(all) struct PickerStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PickerStyle with Debug::{to_repr}
+
+///|
+pub extend PickerStyle with Eq::{not_equal, equal}
+
+///|
+pub extend PickerStyle with ToJson::{to_json}
+
+///|
 pub(all) struct ToneStyle {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ToneStyle with Debug::{to_repr}
+
+///|
+pub extend ToneStyle with Eq::{not_equal, equal}
+
+///|
+pub extend ToneStyle with ToJson::{to_json}
 
 ///|
 pub(all) struct FeedbackStyle {
@@ -98,6 +179,15 @@ pub(all) struct FeedbackStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FeedbackStyle with Debug::{to_repr}
+
+///|
+pub extend FeedbackStyle with Eq::{not_equal, equal}
+
+///|
+pub extend FeedbackStyle with ToJson::{to_json}
+
+///|
 pub(all) struct BadgeStyle {
   neutral : ToneStyle
   accent : ToneStyle
@@ -109,6 +199,15 @@ pub(all) struct BadgeStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend BadgeStyle with Debug::{to_repr}
+
+///|
+pub extend BadgeStyle with Eq::{not_equal, equal}
+
+///|
+pub extend BadgeStyle with ToJson::{to_json}
+
+///|
 pub(all) struct FormValidationStyle {
   foreground : @core.Color
   background : @core.Color
@@ -116,6 +215,15 @@ pub(all) struct FormValidationStyle {
   radius : Double
   padding : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FormValidationStyle with Debug::{to_repr}
+
+///|
+pub extend FormValidationStyle with Eq::{not_equal, equal}
+
+///|
+pub extend FormValidationStyle with ToJson::{to_json}
 
 ///|
 pub fn TextStyle::body(theme? : @core.Theme) -> TextStyle {

@@ -26,6 +26,12 @@ pub(all) enum SvgTextAnchor {
 } derive(Eq, Debug)
 
 ///|
+pub extend SvgTextAnchor with Debug::{to_repr}
+
+///|
+pub extend SvgTextAnchor with Eq::{not_equal, equal}
+
+///|
 /// One SVG `<text>` run, in the node's own user space. `x`/`baseline_y` carry
 /// the anchor point and baseline; `text` and `font_size` are the element's
 /// literal content.
@@ -40,6 +46,9 @@ pub(all) struct SvgTextRun {
 } derive(Debug)
 
 ///|
+pub extend SvgTextRun with Debug::{to_repr}
+
+///|
 /// Glyph outlines for one `SvgTextRun`, in text-local space: the origin is
 /// the run's left edge on the baseline (Start anchoring), `width` is the
 /// laid-out advance, and polygons are closed contours ready for a nonzero
@@ -48,6 +57,9 @@ pub(all) struct SvgTextRunOutline {
   width : Double
   polygons : Array[Array[(Double, Double)]]
 } derive(Debug)
+
+///|
+pub extend SvgTextRunOutline with Debug::{to_repr}
 
 ///|
 /// Host-supplied conversion from an SVG text run to glyph outline polygons.

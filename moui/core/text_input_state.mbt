@@ -11,6 +11,15 @@ pub(all) struct TextInputState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextInputState with Debug::{to_repr}
+
+///|
+pub extend TextInputState with Eq::{not_equal, equal}
+
+///|
+pub extend TextInputState with ToJson::{to_json}
+
+///|
 pub fn TextInputState::none() -> TextInputState {
   {
     focused: false,

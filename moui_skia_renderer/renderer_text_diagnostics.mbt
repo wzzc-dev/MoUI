@@ -11,6 +11,15 @@ pub struct SkiaTextVisualOrderDiagnostic {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SkiaTextVisualOrderDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SkiaTextVisualOrderDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaTextVisualOrderDiagnostic with ToJson::{to_json}
+
+///|
 pub struct SkiaTextSelectionGeometryDiagnostic {
   priv text : String
   priv selection_range : @core.TextRange
@@ -24,6 +33,15 @@ pub struct SkiaTextSelectionGeometryDiagnostic {
   priv visual_segment_count : Int
   priv bidi_visual_order_observed : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SkiaTextSelectionGeometryDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SkiaTextSelectionGeometryDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaTextSelectionGeometryDiagnostic with ToJson::{to_json}
 
 ///|
 pub struct SkiaEmojiFontFallbackDiagnostic {
@@ -51,6 +69,15 @@ pub struct SkiaEmojiFontFallbackDiagnostic {
   priv missing_glyph_recovery_ready : Bool
   priv deterministic_color_emoji_ready : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SkiaEmojiFontFallbackDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SkiaEmojiFontFallbackDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaEmojiFontFallbackDiagnostic with ToJson::{to_json}
 
 ///|
 pub fn SkiaTextVisualOrderDiagnostic::logical_text(

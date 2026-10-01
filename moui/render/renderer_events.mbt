@@ -6,6 +6,15 @@ pub struct FrameToken {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FrameToken with Debug::{to_repr}
+
+///|
+pub extend FrameToken with Eq::{not_equal, equal}
+
+///|
+pub extend FrameToken with ToJson::{to_json}
+
+///|
 pub fn FrameToken::new(
   surface_generation~ : Int,
   sequence~ : Int,
@@ -55,6 +64,15 @@ pub fn RenderFrameSubmission::frame(
 pub struct RendererImageLoadToken {
   priv value : Int64
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererImageLoadToken with Debug::{to_repr}
+
+///|
+pub extend RendererImageLoadToken with Eq::{not_equal, equal}
+
+///|
+pub extend RendererImageLoadToken with ToJson::{to_json}
 
 ///|
 fn RendererImageLoadToken::new(value : Int64) -> RendererImageLoadToken {
@@ -159,6 +177,15 @@ pub(all) enum RendererImageCompletionResult {
   Stale
   Disposed
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererImageCompletionResult with Debug::{to_repr}
+
+///|
+pub extend RendererImageCompletionResult with Eq::{not_equal, equal}
+
+///|
+pub extend RendererImageCompletionResult with ToJson::{to_json}
 
 ///|
 pub struct RendererImageDiagnostics {

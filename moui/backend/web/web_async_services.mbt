@@ -11,6 +11,15 @@ enum WebAsyncHostServiceKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebAsyncHostServiceKind with Debug::{to_repr}
+
+///|
+pub extend WebAsyncHostServiceKind with Eq::{not_equal, equal}
+
+///|
+pub extend WebAsyncHostServiceKind with ToJson::{to_json}
+
+///|
 struct WebAsyncHostServiceRequest {
   id : @host.HostServiceRequestId
   kind : WebAsyncHostServiceKind
@@ -20,6 +29,15 @@ struct WebAsyncHostServiceRequest {
   path : String
   text : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WebAsyncHostServiceRequest with Debug::{to_repr}
+
+///|
+pub extend WebAsyncHostServiceRequest with Eq::{not_equal, equal}
+
+///|
+pub extend WebAsyncHostServiceRequest with ToJson::{to_json}
 
 ///|
 priv struct WebTextFileCacheEntry {

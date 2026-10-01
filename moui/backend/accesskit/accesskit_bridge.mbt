@@ -15,6 +15,12 @@ pub(all) enum AccessKitActionResult {
 } derive(Eq, Debug)
 
 ///|
+pub extend AccessKitActionResult with Debug::{to_repr}
+
+///|
+pub extend AccessKitActionResult with Eq::{not_equal, equal}
+
+///|
 /// AccessKit translation and dispatch boundary. Platform identity and native
 /// binding availability remain owned by each concrete backend.
 pub(all) struct AccessKitBridge {

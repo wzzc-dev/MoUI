@@ -39,6 +39,12 @@ pub(all) enum RenderFrameValidationStatus {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderFrameValidationStatus with Debug::{to_repr}
+
+///|
+pub extend RenderFrameValidationStatus with Eq::{not_equal, equal}
+
+///|
 pub fn RenderFrameValidationStatus::is_ready(
   self : RenderFrameValidationStatus,
 ) -> Bool {
@@ -54,6 +60,12 @@ pub(all) struct RenderFrameDescriptor {
   stats : RenderCommandStats
   touched_bounds : Rect?
 } derive(Debug, Eq)
+
+///|
+pub extend RenderFrameDescriptor with Debug::{to_repr}
+
+///|
+pub extend RenderFrameDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn RenderFrameDescriptor::new(

@@ -45,6 +45,8 @@ pub suberror NetError {
   Network(String)
   Redirect(String)
 }
+pub fn NetError::output(Self, &Logger) -> Unit
+pub fn NetError::to_string(Self) -> String
 pub impl Show for NetError
 
 // Types and methods

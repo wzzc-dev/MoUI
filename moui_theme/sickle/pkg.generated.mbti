@@ -32,7 +32,11 @@ pub(all) enum SickleStyleMode {
   Flat
   Hybrid
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SickleStyleMode::equal(Self, Self) -> Bool
 pub fn SickleStyleMode::label(Self) -> String
+pub fn SickleStyleMode::not_equal(Self, Self) -> Bool
+pub fn SickleStyleMode::to_json(Self) -> Json
+pub fn SickleStyleMode::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

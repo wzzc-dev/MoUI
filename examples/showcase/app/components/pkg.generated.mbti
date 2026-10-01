@@ -41,6 +41,9 @@ pub(all) struct CatalogGroup {
   id : String
   title : String
 } derive(Eq, @debug.Debug)
+pub fn CatalogGroup::equal(Self, Self) -> Bool
+pub fn CatalogGroup::not_equal(Self, Self) -> Bool
+pub fn CatalogGroup::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CatalogItem {
   id : String
@@ -50,6 +53,9 @@ pub(all) struct CatalogItem {
   badge : String
   tone : @style.BadgeTone
 } derive(Eq, @debug.Debug)
+pub fn CatalogItem::equal(Self, Self) -> Bool
+pub fn CatalogItem::not_equal(Self, Self) -> Bool
+pub fn CatalogItem::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ComponentGalleryItemId {
   Welcome
@@ -90,6 +96,10 @@ pub(all) enum ComponentGalleryItemId {
   MobileServiceProbe
   AccessibilityProbe
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ComponentGalleryItemId::equal(Self, Self) -> Bool
+pub fn ComponentGalleryItemId::not_equal(Self, Self) -> Bool
+pub fn ComponentGalleryItemId::to_json(Self) -> Json
+pub fn ComponentGalleryItemId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ComponentGalleryModel {
   active_platform : PlatformId
@@ -140,6 +150,10 @@ pub(all) enum ComponentGalleryMsg {
   ToggleCheckboxGroupItem(String)
   PageScrolled(@core.Point)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ComponentGalleryMsg::equal(Self, Self) -> Bool
+pub fn ComponentGalleryMsg::not_equal(Self, Self) -> Bool
+pub fn ComponentGalleryMsg::to_json(Self) -> Json
+pub fn ComponentGalleryMsg::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PlatformId {
   MacOS
@@ -150,6 +164,10 @@ pub(all) enum PlatformId {
   HarmonyOS
   Web
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformId::equal(Self, Self) -> Bool
+pub fn PlatformId::not_equal(Self, Self) -> Bool
+pub fn PlatformId::to_json(Self) -> Json
+pub fn PlatformId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SessionRuntimeInfo {
   host : String
@@ -161,8 +179,12 @@ pub(all) struct SessionRuntimeInfo {
   gpu_promoted : Bool
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SessionRuntimeInfo::equal(Self, Self) -> Bool
 pub fn SessionRuntimeInfo::for_platform(PlatformId) -> Self
 pub fn SessionRuntimeInfo::new(host~ : String, path~ : String, backend~ : String, surface_route~ : String, requested~ : String, gpu_available~ : Bool, gpu_promoted~ : Bool, note? : String) -> Self
+pub fn SessionRuntimeInfo::not_equal(Self, Self) -> Bool
+pub fn SessionRuntimeInfo::to_json(Self) -> Json
+pub fn SessionRuntimeInfo::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

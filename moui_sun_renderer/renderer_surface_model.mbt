@@ -9,6 +9,9 @@ pub struct SunPixelFrame {
 } derive(Debug)
 
 ///|
+pub extend SunPixelFrame with Debug::{to_repr}
+
+///|
 pub struct SunPresentTarget {
   description : String
   present : (SunPixelFrame) -> Bool
@@ -19,6 +22,15 @@ pub struct SunUnsupportedCommandDiagnostic {
   priv command : String
   priv reason : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SunUnsupportedCommandDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SunUnsupportedCommandDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SunUnsupportedCommandDiagnostic with ToJson::{to_json}
 
 ///|
 pub fn SunPresentTarget::new(

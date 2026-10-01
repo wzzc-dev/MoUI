@@ -303,7 +303,11 @@ pub(all) enum DesignAdaptationKind {
   UnsupportedOfficialFeature
   CustomizableOverride
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignAdaptationKind::equal(Self, Self) -> Bool
 pub fn DesignAdaptationKind::label(Self) -> String
+pub fn DesignAdaptationKind::not_equal(Self, Self) -> Bool
+pub fn DesignAdaptationKind::to_json(Self) -> Json
+pub fn DesignAdaptationKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignAdaptationRecord {
   preset : @common.DesignPreset
@@ -322,6 +326,10 @@ pub(all) struct DesignAdaptationRecord {
   difference : String
   remaining_gap : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignAdaptationRecord::equal(Self, Self) -> Bool
+pub fn DesignAdaptationRecord::not_equal(Self, Self) -> Bool
+pub fn DesignAdaptationRecord::to_json(Self) -> Json
+pub fn DesignAdaptationRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignComponentCoverage {
   component : String
@@ -330,6 +338,10 @@ pub(all) struct DesignComponentCoverage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignComponentCoverage::equal(Self, Self) -> Bool
+pub fn DesignComponentCoverage::not_equal(Self, Self) -> Bool
+pub fn DesignComponentCoverage::to_json(Self) -> Json
+pub fn DesignComponentCoverage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignComponentStyleResolverRecord {
   preset : @common.DesignPreset
@@ -352,6 +364,10 @@ pub(all) struct DesignComponentStyleResolverRecord {
   status : DesignTokenStatus
   remaining_gap : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignComponentStyleResolverRecord::equal(Self, Self) -> Bool
+pub fn DesignComponentStyleResolverRecord::not_equal(Self, Self) -> Bool
+pub fn DesignComponentStyleResolverRecord::to_json(Self) -> Json
+pub fn DesignComponentStyleResolverRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignComponentTokenMatrixRecord {
   preset : @common.DesignPreset
@@ -373,6 +389,10 @@ pub(all) struct DesignComponentTokenMatrixRecord {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignComponentTokenMatrixRecord::equal(Self, Self) -> Bool
+pub fn DesignComponentTokenMatrixRecord::not_equal(Self, Self) -> Bool
+pub fn DesignComponentTokenMatrixRecord::to_json(Self) -> Json
+pub fn DesignComponentTokenMatrixRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignCustomizationCapabilityRecord {
   preset : @common.DesignPreset
@@ -386,6 +406,10 @@ pub(all) struct DesignCustomizationCapabilityRecord {
   status : DesignTokenStatus
   remaining_gap : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignCustomizationCapabilityRecord::equal(Self, Self) -> Bool
+pub fn DesignCustomizationCapabilityRecord::not_equal(Self, Self) -> Bool
+pub fn DesignCustomizationCapabilityRecord::to_json(Self) -> Json
+pub fn DesignCustomizationCapabilityRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignCustomizationCoverage {
   capability : String
@@ -393,6 +417,10 @@ pub(all) struct DesignCustomizationCoverage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignCustomizationCoverage::equal(Self, Self) -> Bool
+pub fn DesignCustomizationCoverage::not_equal(Self, Self) -> Bool
+pub fn DesignCustomizationCoverage::to_json(Self) -> Json
+pub fn DesignCustomizationCoverage::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignCustomizationKind {
   ThemeInheritance
@@ -402,7 +430,11 @@ pub(all) enum DesignCustomizationKind {
   ComponentTokenOverride
   VariantThemeResolution
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignCustomizationKind::equal(Self, Self) -> Bool
 pub fn DesignCustomizationKind::label(Self) -> String
+pub fn DesignCustomizationKind::not_equal(Self, Self) -> Bool
+pub fn DesignCustomizationKind::to_json(Self) -> Json
+pub fn DesignCustomizationKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignDensityResolverRecord {
   preset : @common.DesignPreset
@@ -431,6 +463,10 @@ pub(all) struct DesignDensityResolverRecord {
   status : DesignTokenStatus
   remaining_gap : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignDensityResolverRecord::equal(Self, Self) -> Bool
+pub fn DesignDensityResolverRecord::not_equal(Self, Self) -> Bool
+pub fn DesignDensityResolverRecord::to_json(Self) -> Json
+pub fn DesignDensityResolverRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignOfficialTokenAnchor {
   preset : @common.DesignPreset
@@ -441,6 +477,10 @@ pub(all) struct DesignOfficialTokenAnchor {
   required : Bool
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignOfficialTokenAnchor::equal(Self, Self) -> Bool
+pub fn DesignOfficialTokenAnchor::not_equal(Self, Self) -> Bool
+pub fn DesignOfficialTokenAnchor::to_json(Self) -> Json
+pub fn DesignOfficialTokenAnchor::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignOfficialTokenCoverage {
   preset : @common.DesignPreset
@@ -460,6 +500,10 @@ pub(all) struct DesignOfficialTokenCoverage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignOfficialTokenCoverage::equal(Self, Self) -> Bool
+pub fn DesignOfficialTokenCoverage::not_equal(Self, Self) -> Bool
+pub fn DesignOfficialTokenCoverage::to_json(Self) -> Json
+pub fn DesignOfficialTokenCoverage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignOfficialTokenSourceUsage {
   preset : @common.DesignPreset
@@ -475,6 +519,10 @@ pub(all) struct DesignOfficialTokenSourceUsage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignOfficialTokenSourceUsage::equal(Self, Self) -> Bool
+pub fn DesignOfficialTokenSourceUsage::not_equal(Self, Self) -> Bool
+pub fn DesignOfficialTokenSourceUsage::to_json(Self) -> Json
+pub fn DesignOfficialTokenSourceUsage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignRuntimeTokenAlignmentRecord {
   preset : @common.DesignPreset
@@ -494,6 +542,10 @@ pub(all) struct DesignRuntimeTokenAlignmentRecord {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignRuntimeTokenAlignmentRecord::equal(Self, Self) -> Bool
+pub fn DesignRuntimeTokenAlignmentRecord::not_equal(Self, Self) -> Bool
+pub fn DesignRuntimeTokenAlignmentRecord::to_json(Self) -> Json
+pub fn DesignRuntimeTokenAlignmentRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignSemanticPaletteRole {
   PaletteForeground
@@ -511,7 +563,11 @@ pub(all) enum DesignSemanticPaletteRole {
   PaletteFocus
   PaletteScrim
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSemanticPaletteRole::equal(Self, Self) -> Bool
 pub fn DesignSemanticPaletteRole::label(Self) -> String
+pub fn DesignSemanticPaletteRole::not_equal(Self, Self) -> Bool
+pub fn DesignSemanticPaletteRole::to_json(Self) -> Json
+pub fn DesignSemanticPaletteRole::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSemanticPaletteRoleRecord {
   preset : @common.DesignPreset
@@ -538,6 +594,10 @@ pub(all) struct DesignSemanticPaletteRoleRecord {
   remaining_gap : String
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSemanticPaletteRoleRecord::equal(Self, Self) -> Bool
+pub fn DesignSemanticPaletteRoleRecord::not_equal(Self, Self) -> Bool
+pub fn DesignSemanticPaletteRoleRecord::to_json(Self) -> Json
+pub fn DesignSemanticPaletteRoleRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSourceImportCoverage {
   preset : @common.DesignPreset
@@ -555,6 +615,10 @@ pub(all) struct DesignSourceImportCoverage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSourceImportCoverage::equal(Self, Self) -> Bool
+pub fn DesignSourceImportCoverage::not_equal(Self, Self) -> Bool
+pub fn DesignSourceImportCoverage::to_json(Self) -> Json
+pub fn DesignSourceImportCoverage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSourceImportIntegrityRecord {
   preset : @common.DesignPreset
@@ -580,6 +644,10 @@ pub(all) struct DesignSourceImportIntegrityRecord {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSourceImportIntegrityRecord::equal(Self, Self) -> Bool
+pub fn DesignSourceImportIntegrityRecord::not_equal(Self, Self) -> Bool
+pub fn DesignSourceImportIntegrityRecord::to_json(Self) -> Json
+pub fn DesignSourceImportIntegrityRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSourceImportedToken {
   preset : @common.DesignPreset
@@ -598,6 +666,10 @@ pub(all) struct DesignSourceImportedToken {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSourceImportedToken::equal(Self, Self) -> Bool
+pub fn DesignSourceImportedToken::not_equal(Self, Self) -> Bool
+pub fn DesignSourceImportedToken::to_json(Self) -> Json
+pub fn DesignSourceImportedToken::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSourceLockRecord {
   preset : @common.DesignPreset
@@ -613,6 +685,10 @@ pub(all) struct DesignSourceLockRecord {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSourceLockRecord::equal(Self, Self) -> Bool
+pub fn DesignSourceLockRecord::not_equal(Self, Self) -> Bool
+pub fn DesignSourceLockRecord::to_json(Self) -> Json
+pub fn DesignSourceLockRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSourcePackageRecord {
   preset : @common.DesignPreset
@@ -632,6 +708,10 @@ pub(all) struct DesignSourcePackageRecord {
   pending_gap : String
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSourcePackageRecord::equal(Self, Self) -> Bool
+pub fn DesignSourcePackageRecord::not_equal(Self, Self) -> Bool
+pub fn DesignSourcePackageRecord::to_json(Self) -> Json
+pub fn DesignSourcePackageRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignSourceRefKind {
   WorkspaceRef
@@ -640,7 +720,11 @@ pub(all) enum DesignSourceRefKind {
   StableSnapshotRef
   MissingRef
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSourceRefKind::equal(Self, Self) -> Bool
 pub fn DesignSourceRefKind::label(Self) -> String
+pub fn DesignSourceRefKind::not_equal(Self, Self) -> Bool
+pub fn DesignSourceRefKind::to_json(Self) -> Json
+pub fn DesignSourceRefKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSourceUsage {
   preset : @common.DesignPreset
@@ -654,6 +738,10 @@ pub(all) struct DesignSourceUsage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSourceUsage::equal(Self, Self) -> Bool
+pub fn DesignSourceUsage::not_equal(Self, Self) -> Bool
+pub fn DesignSourceUsage::to_json(Self) -> Json
+pub fn DesignSourceUsage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSystemManifest {
   preset : @common.DesignPreset
@@ -666,13 +754,17 @@ pub(all) struct DesignSystemManifest {
   customization_coverage : Array[DesignCustomizationCoverage]
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSystemManifest::equal(Self, Self) -> Bool
 pub fn DesignSystemManifest::has_component(Self, String) -> Bool
 pub fn DesignSystemManifest::has_official_source_locks(Self) -> Bool
 pub fn DesignSystemManifest::has_token_category(Self, DesignTokenCategory) -> Bool
 pub fn DesignSystemManifest::has_variant(Self, @common.DesignSchemeVariant) -> Bool
 pub fn DesignSystemManifest::is_official_complete(Self) -> Bool
+pub fn DesignSystemManifest::not_equal(Self, Self) -> Bool
 pub fn DesignSystemManifest::official_source_count(Self) -> Int
 pub fn DesignSystemManifest::source_lock_count(Self) -> Int
+pub fn DesignSystemManifest::to_json(Self) -> Json
+pub fn DesignSystemManifest::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSystemReport {
   preset : @common.DesignPreset
@@ -706,11 +798,15 @@ pub(all) struct DesignSystemReport {
   unanchored_golden_mappings : Array[DesignTokenMapping]
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSystemReport::equal(Self, Self) -> Bool
 pub fn DesignSystemReport::evidence_row_count(Self) -> Int
 pub fn DesignSystemReport::gap_count(Self) -> Int
 pub fn DesignSystemReport::has_official_completion_claim(Self) -> Bool
+pub fn DesignSystemReport::not_equal(Self, Self) -> Bool
 pub fn DesignSystemReport::semantic_palette_gap_count(Self) -> Int
 pub fn DesignSystemReport::taxonomy_gap_count(Self) -> Int
+pub fn DesignSystemReport::to_json(Self) -> Json
+pub fn DesignSystemReport::to_repr(Self) -> @debug.Repr
 pub fn DesignSystemReport::typography_gap_count(Self) -> Int
 
 pub(all) enum DesignSystemRequirement {
@@ -736,7 +832,11 @@ pub(all) enum DesignSystemRequirement {
   GoldenMappings
   AdaptationDifferences
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSystemRequirement::equal(Self, Self) -> Bool
 pub fn DesignSystemRequirement::label(Self) -> String
+pub fn DesignSystemRequirement::not_equal(Self, Self) -> Bool
+pub fn DesignSystemRequirement::to_json(Self) -> Json
+pub fn DesignSystemRequirement::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSystemRequirementAudit {
   preset : @common.DesignPreset
@@ -745,6 +845,10 @@ pub(all) struct DesignSystemRequirementAudit {
   evidence : String
   remaining_gap : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSystemRequirementAudit::equal(Self, Self) -> Bool
+pub fn DesignSystemRequirementAudit::not_equal(Self, Self) -> Bool
+pub fn DesignSystemRequirementAudit::to_json(Self) -> Json
+pub fn DesignSystemRequirementAudit::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignSystemSource {
   label : String
@@ -755,6 +859,10 @@ pub(all) struct DesignSystemSource {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignSystemSource::equal(Self, Self) -> Bool
+pub fn DesignSystemSource::not_equal(Self, Self) -> Bool
+pub fn DesignSystemSource::to_json(Self) -> Json
+pub fn DesignSystemSource::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignTokenCategory {
   Color
@@ -770,6 +878,10 @@ pub(all) enum DesignTokenCategory {
   ComponentStyle
   Customization
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTokenCategory::equal(Self, Self) -> Bool
+pub fn DesignTokenCategory::not_equal(Self, Self) -> Bool
+pub fn DesignTokenCategory::to_json(Self) -> Json
+pub fn DesignTokenCategory::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTokenCoverage {
   category : DesignTokenCategory
@@ -779,6 +891,10 @@ pub(all) struct DesignTokenCoverage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTokenCoverage::equal(Self, Self) -> Bool
+pub fn DesignTokenCoverage::not_equal(Self, Self) -> Bool
+pub fn DesignTokenCoverage::to_json(Self) -> Json
+pub fn DesignTokenCoverage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTokenGroupResolverRecord {
   preset : @common.DesignPreset
@@ -801,6 +917,10 @@ pub(all) struct DesignTokenGroupResolverRecord {
   status : DesignTokenStatus
   remaining_gap : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTokenGroupResolverRecord::equal(Self, Self) -> Bool
+pub fn DesignTokenGroupResolverRecord::not_equal(Self, Self) -> Bool
+pub fn DesignTokenGroupResolverRecord::to_json(Self) -> Json
+pub fn DesignTokenGroupResolverRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignTokenLayer {
   ReferenceToken
@@ -809,6 +929,10 @@ pub(all) enum DesignTokenLayer {
   ComponentToken
   MoUIAdapter
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTokenLayer::equal(Self, Self) -> Bool
+pub fn DesignTokenLayer::not_equal(Self, Self) -> Bool
+pub fn DesignTokenLayer::to_json(Self) -> Json
+pub fn DesignTokenLayer::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTokenMapping {
   preset : @common.DesignPreset
@@ -820,6 +944,10 @@ pub(all) struct DesignTokenMapping {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTokenMapping::equal(Self, Self) -> Bool
+pub fn DesignTokenMapping::not_equal(Self, Self) -> Bool
+pub fn DesignTokenMapping::to_json(Self) -> Json
+pub fn DesignTokenMapping::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignTokenStatus {
   NotMapped
@@ -829,6 +957,10 @@ pub(all) enum DesignTokenStatus {
   ComponentMapped
   OfficialComplete
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTokenStatus::equal(Self, Self) -> Bool
+pub fn DesignTokenStatus::not_equal(Self, Self) -> Bool
+pub fn DesignTokenStatus::to_json(Self) -> Json
+pub fn DesignTokenStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTokenTaxonomyRecord {
   preset : @common.DesignPreset
@@ -849,6 +981,10 @@ pub(all) struct DesignTokenTaxonomyRecord {
   remaining_gap : String
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTokenTaxonomyRecord::equal(Self, Self) -> Bool
+pub fn DesignTokenTaxonomyRecord::not_equal(Self, Self) -> Bool
+pub fn DesignTokenTaxonomyRecord::to_json(Self) -> Json
+pub fn DesignTokenTaxonomyRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DesignTypographyRole {
   TypographyBody
@@ -856,7 +992,11 @@ pub(all) enum DesignTypographyRole {
   TypographyCaption
   TypographyControl
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTypographyRole::equal(Self, Self) -> Bool
 pub fn DesignTypographyRole::label(Self) -> String
+pub fn DesignTypographyRole::not_equal(Self, Self) -> Bool
+pub fn DesignTypographyRole::to_json(Self) -> Json
+pub fn DesignTypographyRole::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignTypographyRoleRecord {
   preset : @common.DesignPreset
@@ -888,6 +1028,10 @@ pub(all) struct DesignTypographyRoleRecord {
   remaining_gap : String
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignTypographyRoleRecord::equal(Self, Self) -> Bool
+pub fn DesignTypographyRoleRecord::not_equal(Self, Self) -> Bool
+pub fn DesignTypographyRoleRecord::to_json(Self) -> Json
+pub fn DesignTypographyRoleRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignVariantCoverage {
   variant : @common.DesignSchemeVariant
@@ -895,6 +1039,10 @@ pub(all) struct DesignVariantCoverage {
   status : DesignTokenStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignVariantCoverage::equal(Self, Self) -> Bool
+pub fn DesignVariantCoverage::not_equal(Self, Self) -> Bool
+pub fn DesignVariantCoverage::to_json(Self) -> Json
+pub fn DesignVariantCoverage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesignVariantResolverRecord {
   preset : @common.DesignPreset
@@ -917,8 +1065,16 @@ pub(all) struct DesignVariantResolverRecord {
   status : DesignTokenStatus
   remaining_gap : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignVariantResolverRecord::equal(Self, Self) -> Bool
+pub fn DesignVariantResolverRecord::not_equal(Self, Self) -> Bool
+pub fn DesignVariantResolverRecord::to_json(Self) -> Json
+pub fn DesignVariantResolverRecord::to_repr(Self) -> @debug.Repr
 
 type RuntimeTokenValue derive(Eq, ToJson, @debug.Debug)
+pub fn RuntimeTokenValue::equal(Self, Self) -> Bool
+pub fn RuntimeTokenValue::not_equal(Self, Self) -> Bool
+pub fn RuntimeTokenValue::to_json(Self) -> Json
+pub fn RuntimeTokenValue::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

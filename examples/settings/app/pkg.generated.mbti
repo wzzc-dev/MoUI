@@ -75,6 +75,9 @@ pub struct SettingsSnapshot {
   telemetry : Bool
   saved_label : String
 } derive(Eq, @debug.Debug)
+pub fn SettingsSnapshot::equal(Self, Self) -> Bool
+pub fn SettingsSnapshot::not_equal(Self, Self) -> Bool
+pub fn SettingsSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ShellSection {
   selected_section : String

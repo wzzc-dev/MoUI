@@ -5,6 +5,12 @@ pub(all) enum ImageFilterDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend ImageFilterDescriptor with Debug::{to_repr}
+
+///|
+pub extend ImageFilterDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn ImageFilterDescriptor::blur(
   sigma_x : Float,
   sigma_y : Float,

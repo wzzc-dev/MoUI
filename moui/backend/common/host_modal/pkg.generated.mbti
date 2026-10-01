@@ -16,6 +16,10 @@ pub(all) struct HostModalInputTransform {
   offset : @core.Point
   scale : @core.Point
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostModalInputTransform::equal(Self, Self) -> Bool
+pub fn HostModalInputTransform::not_equal(Self, Self) -> Bool
+pub fn HostModalInputTransform::to_json(Self) -> Json
+pub fn HostModalInputTransform::to_repr(Self) -> @debug.Repr
 
 pub struct HostModalSession {
   request : @backend.HostModalRequest
@@ -49,11 +53,19 @@ pub(all) enum HostModalSessionState {
   Rejected
   Closed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostModalSessionState::equal(Self, Self) -> Bool
+pub fn HostModalSessionState::not_equal(Self, Self) -> Bool
+pub fn HostModalSessionState::to_json(Self) -> Json
+pub fn HostModalSessionState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostModalSurface {
   token : String
   generation : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostModalSurface::equal(Self, Self) -> Bool
+pub fn HostModalSurface::not_equal(Self, Self) -> Bool
+pub fn HostModalSurface::to_json(Self) -> Json
+pub fn HostModalSurface::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

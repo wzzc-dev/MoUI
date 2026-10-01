@@ -17,6 +17,12 @@ pub(all) struct RendererResourceDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend RendererResourceDescriptor with Debug::{to_repr}
+
+///|
+pub extend RendererResourceDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn RendererResourceDescriptor::new(
   key : RendererResourceKey,
   byte_size? : Int64 = 0L,

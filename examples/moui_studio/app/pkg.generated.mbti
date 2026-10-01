@@ -25,6 +25,8 @@ pub const BLOCK_ROW_HEIGHT : Double = 40.0
 
 pub const BUTTON_LABEL_PADDING : Double = 32.0
 
+pub const CANVAS_MIN_WIDTH : Double = 120.0
+
 pub const CATEGORY_RAIL_WIDTH : Double = 86.0
 
 pub const CHIPS_HEIGHT : Double = 26.0
@@ -75,15 +77,21 @@ pub const RIGHTBAR_WIDTH : Double = 272.0
 
 pub const SEE_ALL_HEIGHT : Double = 20.0
 
+pub const STATEMENT_PALETTE_MIN_WIDTH : Double = 132.0
+
 pub const STATUSBAR_HEIGHT : Double = 22.0
 
 pub const TOAST_LIMIT : Int = 3
+
+pub const TOPBAR_ACTIONS_SAFETY : Double = 8.0
 
 pub const TOPBAR_ACTION_GAP : Double = 6.0
 
 pub const TOPBAR_ACTION_HEIGHT : Double = 24.0
 
 pub const TOPBAR_HEIGHT : Double = 40.0
+
+pub const TOPBAR_ICON_BUTTON_WIDTH : Double = 32.0
 
 pub const TRAFFIC_LIGHT_CENTER_Y : Double = 15.8
 
@@ -175,11 +183,15 @@ pub fn bundle_files(String, String) -> Array[(String, String)]
 
 pub fn button_label_width(String) -> Double
 
+pub fn category_at(Int) -> @blocks.BlockCategory?
+
 pub fn category_rail(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
 pub fn center_width_of(Model, Double) -> Double
 
 pub fn chip_label_width(String) -> Double
+
+pub fn clear_selection(Model) -> Model
 
 pub fn clone_path(Array[Int]) -> Array[Int]
 
@@ -200,10 +212,6 @@ pub fn code_string_color() -> @core.Color
 pub fn code_type_color() -> @core.Color
 
 pub fn code_workspace(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
-
-pub fn command_message(@core.CommandIntent) -> Msg
-
-pub fn command_palette_commands(@moui_i18n.Translator) -> Array[@core.ActionCommand]
 
 pub fn command_palette_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
@@ -286,6 +294,8 @@ pub fn gate_pending(Model) -> Bool
 pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog]
 
 pub fn ghost_icon_button(@style.IconName, String, Bool, Msg, Double, Double, Double, @core.Color) -> @core.View[Msg]
+
+pub fn group_can_create(String) -> Bool
 
 pub fn group_children(Array[TreeNode], String) -> Array[TreeNode]
 
@@ -429,7 +439,19 @@ pub fn seed_code_draft(Model) -> Model
 
 pub fn select_block_by_path(Model, Array[Int]) -> Model
 
+pub fn select_control_by_name(Model, String) -> Model
+
+pub fn select_handler_key(Model, String) -> Model
+
+pub fn select_target(Model, SideTarget) -> Model
+
+pub fn selected_data_file(Model) -> DataFileEntry?
+
+pub fn selected_variable(Model) -> @ir.Variable?
+
 pub fn settings_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn shortcut_icon_button(@style.IconName, String, Msg, @core.KeyboardShortcut, Double, Double, Double, alt_shortcut? : @core.KeyboardShortcut?) -> @core.View[Msg]
 
 pub fn snap_move_position(Array[@ir.Control], String, Double, Double, Double, Double) -> (Double, Double)
 
@@ -442,6 +464,12 @@ pub fn split_lines(String) -> Array[String]
 pub fn splitter(Double, Double) -> @core.View[Msg]
 
 pub fn[Msg] stage_layout(Array[@core.View[Msg]], Array[@core.Rect]) -> @core.View[Msg]
+
+pub fn statement_palette_panel(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn statement_palette_title(@moui_i18n.Translator) -> String
+
+pub fn statement_templates() -> Array[StatementTemplate]
 
 pub fn status_build_label(Model) -> String
 
@@ -470,6 +498,8 @@ pub fn studio_theme() -> @core.Theme
 pub fn studio_typography() -> @core.TypographyScale
 
 pub fn studio_window_background() -> @core.Color
+
+pub fn templates_for_category(@blocks.BlockCategory) -> Array[StatementTemplate]
 
 pub fn text(@moui_i18n.Translator, String) -> String
 
@@ -513,13 +543,17 @@ pub fn tree_group_variables() -> String
 
 pub fn tree_group_window() -> String
 
-pub fn tree_row(String, String, Int, Bool, Bool, Bool, Msg?, Msg?, Double) -> @core.View[Msg]
+pub fn tree_node_selected(Model, TreeNodeKind, String) -> Bool
+
+pub fn tree_row(String, String, Int, Bool, Bool, Bool, Msg?, Msg?, Double, trailing? : @core.View[Msg]?, trailing_width? : Double) -> @core.View[Msg]
 
 pub fn ui_language_from_tag(String) -> UiLanguage
 
 pub fn update_ide_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
 pub fn update_pure(Model, Msg) -> (Model, @core.Effect[Msg])
+
+pub fn update_selection_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
 pub fn update_with_launch_for_test(Model, Msg, @services.AppServices, (String, (Result[Unit, String]) -> Unit) -> Unit) -> (Model, @core.Effect[Msg])
 
@@ -650,6 +684,8 @@ pub(all) enum ComposerMode {
   ComposeExplain
   ComposeRepair
 } derive(Eq)
+pub fn ComposerMode::equal(Self, Self) -> Bool
+pub fn ComposerMode::not_equal(Self, Self) -> Bool
 
 pub(all) enum ContextTab {
   CtxProps
@@ -742,6 +778,7 @@ pub(all) struct Model {
   design_zoom : Double
   selected_control : String
   selected_handler : String
+  side_target : SideTarget?
   code_draft : String
   code_error : String
   run_track : RunTrack
@@ -754,6 +791,8 @@ pub(all) struct Model {
   compile_output_open : Bool
   command_palette_open : Bool
   command_palette_query : String
+  hover_studio_command : String
+  hover_hint : String
   pending : PendingProposal?
   prompt_draft : String
   composer_mode : ComposerMode
@@ -763,7 +802,6 @@ pub(all) struct Model {
   provider_model : String
   provider_key : String
   provider_key_revealed : Bool
-  provider_settings_open : Bool
   dirty : Bool
   saved_encoding : String
   draft_encoding : String
@@ -812,6 +850,8 @@ pub(all) struct Model {
   ai_history_open : Bool
   toasts : Array[(String, Bool)]
   selected_category : Int
+  statement_palette_open : Bool
+  tree_create_group : String
   ir_highlight : Array[Int]
 }
 
@@ -821,6 +861,13 @@ pub(all) enum Msg {
   SetMode(Mode)
   SetDesignZoom(Double)
   SelectControl(String)
+  SelectSide(SideTarget)
+  SetWindowTitle(String)
+  ToggleTreeCreate(String)
+  AddVariable
+  RenameVariable(String, String)
+  SetVariableInit(String, String)
+  DeleteVariable(String)
   ClearSelection
   CanvasPress(Double, Double)
   CanvasTap(Double, Double)
@@ -845,11 +892,12 @@ pub(all) enum Msg {
   ExplainHandler
   RealExplanationFinished(Result[String, String])
   LanguageLoaded(String)
-  SelectBlock(Int)
   EditBlock(String)
   CommitBlock
   DuplicateBlock
   DeleteBlock
+  ToggleStatementPalette(Int)
+  InsertStatement(Int, Int)
   GenerateProposal
   AcceptProposal
   RejectProposal
@@ -858,7 +906,6 @@ pub(all) enum Msg {
   SetProviderModel(String)
   SetProviderKey(String)
   ToggleProviderKeyReveal
-  ToggleProviderSettings
   DraftLoaded(@services.ServiceTaskResult[String?])
   RunStart
   RunStop
@@ -877,7 +924,8 @@ pub(all) enum Msg {
   CommandPaletteOpen
   CommandPaletteClose
   CommandPaletteQuery(String)
-  CommandPaletteRun(@core.CommandIntent)
+  HoverStudioCommand(String)
+  HoverHint(String)
   RunTick
   RunStep
   RunResume
@@ -915,7 +963,6 @@ pub(all) enum Msg {
   SetContextTab(ContextTab)
   SetBottomTab(Bool)
   ToggleBottom
-  SetBottomHeight(Double)
   AuditOpen(Int)
   AuditSettle(Int, String)
   AuditSettleAll(String)
@@ -928,8 +975,6 @@ pub(all) enum Msg {
   SetAiAnchor(AiAnchor)
   ToggleAiPill
   ToggleAiCardsFold
-  AddAiContextChip(String)
-  RemoveAiContextChip(Int)
   AlignControlLeft(String)
   AlignControlCenter(String)
   AlignControlRight(String)
@@ -1007,6 +1052,20 @@ pub(all) struct ShellChromeWidths {
   center : Double
   right : Double
 }
+
+pub(all) enum SideTarget {
+  SideWindow
+  SideVariable(String)
+  SideData(String)
+}
+
+pub(all) struct StatementTemplate {
+  category : @blocks.BlockCategory
+  label_key : String
+  skeleton_zh : String
+  skeleton_en : String
+}
+pub fn StatementTemplate::skeleton(Self, @studio_lang.Language) -> String
 
 pub(all) struct StudioCommand {
   id : String

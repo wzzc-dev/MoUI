@@ -19,6 +19,12 @@ pub(all) enum ThinkingChoice {
 } derive(Eq, Debug)
 
 ///|
+pub extend ThinkingChoice with Debug::{to_repr}
+
+///|
+pub extend ThinkingChoice with Eq::{not_equal, equal}
+
+///|
 /// Terminal status of an agent turn. Mirrors openseek's `TurnTerminal`.
 pub(all) enum TurnStatus {
   Finished
@@ -28,11 +34,23 @@ pub(all) enum TurnStatus {
 } derive(Eq, Debug)
 
 ///|
+pub extend TurnStatus with Debug::{to_repr}
+
+///|
+pub extend TurnStatus with Eq::{not_equal, equal}
+
+///|
 /// Agent backend selected by the workbench.
 pub(all) enum AgentBackendKind {
   OpenSeek
   Acp
 } derive(Eq, Debug)
+
+///|
+pub extend AgentBackendKind with Debug::{to_repr}
+
+///|
+pub extend AgentBackendKind with Eq::{not_equal, equal}
 
 ///|
 pub fn agent_backend_kind_id(kind : AgentBackendKind) -> String {
@@ -57,10 +75,22 @@ pub(all) enum AgentConfigValue {
 } derive(Eq, Debug)
 
 ///|
+pub extend AgentConfigValue with Debug::{to_repr}
+
+///|
+pub extend AgentConfigValue with Eq::{not_equal, equal}
+
+///|
 pub(all) enum PermissionOutcome {
   Selected(String)
   Cancelled
 } derive(Eq, Debug)
+
+///|
+pub extend PermissionOutcome with Debug::{to_repr}
+
+///|
+pub extend PermissionOutcome with Eq::{not_equal, equal}
 
 ///|
 pub struct AgentPermissionOption {
@@ -68,6 +98,12 @@ pub struct AgentPermissionOption {
   name : String
   kind : String
 } derive(Eq, Debug)
+
+///|
+pub extend AgentPermissionOption with Debug::{to_repr}
+
+///|
+pub extend AgentPermissionOption with Eq::{not_equal, equal}
 
 ///|
 pub fn agent_permission_option(
@@ -89,6 +125,12 @@ pub struct AgentPermissionRequest {
 } derive(Eq, Debug)
 
 ///|
+pub extend AgentPermissionRequest with Debug::{to_repr}
+
+///|
+pub extend AgentPermissionRequest with Eq::{not_equal, equal}
+
+///|
 pub fn agent_permission_request(
   request_id~ : String,
   session_id~ : String,
@@ -108,6 +150,12 @@ pub struct AgentSessionMode {
 } derive(Eq, Debug)
 
 ///|
+pub extend AgentSessionMode with Debug::{to_repr}
+
+///|
+pub extend AgentSessionMode with Eq::{not_equal, equal}
+
+///|
 pub fn agent_session_mode(
   id~ : String,
   name~ : String,
@@ -121,6 +169,12 @@ pub struct AgentSessionModeState {
   current_mode_id : String
   available_modes : Array[AgentSessionMode]
 } derive(Eq, Debug)
+
+///|
+pub extend AgentSessionModeState with Debug::{to_repr}
+
+///|
+pub extend AgentSessionModeState with Eq::{not_equal, equal}
 
 ///|
 pub fn agent_session_mode_state(
@@ -138,6 +192,12 @@ pub struct AgentSessionConfigOption {
   current_value : AgentConfigValue
   values : Array[AgentPermissionOption]
 } derive(Eq, Debug)
+
+///|
+pub extend AgentSessionConfigOption with Debug::{to_repr}
+
+///|
+pub extend AgentSessionConfigOption with Eq::{not_equal, equal}
 
 ///|
 pub fn agent_session_config_option(
@@ -197,6 +257,12 @@ pub struct SessionSummary {
   first_prompt : String
   last_active_unix_seconds : Int64?
 } derive(Eq, Debug)
+
+///|
+pub extend SessionSummary with Debug::{to_repr}
+
+///|
+pub extend SessionSummary with Eq::{not_equal, equal}
 
 ///|
 fn SessionSummary::new(

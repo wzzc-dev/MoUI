@@ -24,6 +24,12 @@ pub enum CodeHighlightToken {
 } derive(Eq, Debug)
 
 ///|
+pub extend CodeHighlightToken with Debug::{to_repr}
+
+///|
+pub extend CodeHighlightToken with Eq::{not_equal, equal}
+
+///|
 /// A highlighted slice: a piece of source text and the token kind it belongs to.
 pub struct CodeHighlightSpan {
   text : String

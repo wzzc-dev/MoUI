@@ -8,6 +8,15 @@ pub struct DeclarationKey {
 } derive(Eq, Hash, Debug)
 
 ///|
+pub extend DeclarationKey with Debug::{to_repr}
+
+///|
+pub extend DeclarationKey with Eq::{not_equal, equal}
+
+///|
+pub extend DeclarationKey with Hash::{hash, hash_combine}
+
+///|
 /// Cache behavior for one declaration channel.
 pub(all) enum DeclarationChannel {
   /// The channel never changes for a reused view identity.
@@ -19,6 +28,9 @@ pub(all) enum DeclarationChannel {
 } derive(Eq)
 
 ///|
+pub extend DeclarationChannel with Eq::{not_equal, equal}
+
+///|
 /// The four independently declared invalidation channels for a view node.
 pub struct ViewDeclaration {
   layout : DeclarationChannel
@@ -26,6 +38,9 @@ pub struct ViewDeclaration {
   semantics : DeclarationChannel
   platform : DeclarationChannel
 } derive(Eq)
+
+///|
+pub extend ViewDeclaration with Eq::{not_equal, equal}
 
 ///|
 /// Effective changes between two declarations.
@@ -37,6 +52,12 @@ pub struct DeclarationChanges {
   semantics : Bool
   platform : Bool
 } derive(Eq, Debug)
+
+///|
+pub extend DeclarationChanges with Debug::{to_repr}
+
+///|
+pub extend DeclarationChanges with Eq::{not_equal, equal}
 
 ///|
 fn declaration_key_frame(tag : Byte, payload : Bytes) -> DeclarationKey {

@@ -6,6 +6,15 @@ pub(all) struct RenderFramePacket {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RenderFramePacket with Debug::{to_repr}
+
+///|
+pub extend RenderFramePacket with Eq::{not_equal, equal}
+
+///|
+pub extend RenderFramePacket with ToJson::{to_json}
+
+///|
 pub(all) struct RenderFrameMailboxDiagnostics {
   submitted : Int
   started : Int
@@ -19,6 +28,15 @@ pub(all) struct RenderFrameMailboxDiagnostics {
   control_submitted : Int
   control_drained : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RenderFrameMailboxDiagnostics with Debug::{to_repr}
+
+///|
+pub extend RenderFrameMailboxDiagnostics with Eq::{not_equal, equal}
+
+///|
+pub extend RenderFrameMailboxDiagnostics with ToJson::{to_json}
 
 ///|
 pub struct RenderFrameMailbox {

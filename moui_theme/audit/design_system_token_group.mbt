@@ -22,6 +22,15 @@ pub(all) struct DesignTokenGroupResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignTokenGroupResolverRecord with Debug::{to_repr}
+
+///|
+pub extend DesignTokenGroupResolverRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignTokenGroupResolverRecord with ToJson::{to_json}
+
+///|
 pub fn token_group_resolver_report(
   preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = Light,

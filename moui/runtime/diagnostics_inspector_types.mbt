@@ -70,6 +70,15 @@ pub struct RuntimeInspectorSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RuntimeInspectorSnapshot with Debug::{to_repr}
+
+///|
+pub extend RuntimeInspectorSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend RuntimeInspectorSnapshot with ToJson::{to_json}
+
+///|
 pub struct RuntimeDirtyStateSummary {
   priv dirty_count : Int
   priv dirty_element_ids : Array[Int]
@@ -92,6 +101,15 @@ pub struct RuntimeDirtyStateSummary {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RuntimeDirtyStateSummary with Debug::{to_repr}
+
+///|
+pub extend RuntimeDirtyStateSummary with Eq::{not_equal, equal}
+
+///|
+pub extend RuntimeDirtyStateSummary with ToJson::{to_json}
+
+///|
 pub struct ViewInspectorSummary {
   priv element_id : Int
   priv kind : String
@@ -102,6 +120,15 @@ pub struct ViewInspectorSummary {
   priv needs_layout : Bool
   priv needs_paint : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ViewInspectorSummary with Debug::{to_repr}
+
+///|
+pub extend ViewInspectorSummary with Eq::{not_equal, equal}
+
+///|
+pub extend ViewInspectorSummary with ToJson::{to_json}
 
 ///|
 pub struct ViewTreeInspectorSnapshot {
@@ -116,6 +143,15 @@ pub struct ViewTreeInspectorSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ViewTreeInspectorSnapshot with Debug::{to_repr}
+
+///|
+pub extend ViewTreeInspectorSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend ViewTreeInspectorSnapshot with ToJson::{to_json}
+
+///|
 pub struct LayoutBoundsInspectorEntry {
   priv element_id : Int
   priv frame : @core.Rect
@@ -125,6 +161,15 @@ pub struct LayoutBoundsInspectorEntry {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend LayoutBoundsInspectorEntry with Debug::{to_repr}
+
+///|
+pub extend LayoutBoundsInspectorEntry with Eq::{not_equal, equal}
+
+///|
+pub extend LayoutBoundsInspectorEntry with ToJson::{to_json}
+
+///|
 pub struct LayoutInspectorSnapshot {
   priv root_frame : @core.Rect
   priv node_count : Int
@@ -132,6 +177,15 @@ pub struct LayoutInspectorSnapshot {
   priv max_depth : Int
   priv bounds : Array[LayoutBoundsInspectorEntry]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend LayoutInspectorSnapshot with Debug::{to_repr}
+
+///|
+pub extend LayoutInspectorSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend LayoutInspectorSnapshot with ToJson::{to_json}
 
 ///|
 pub struct RenderInspectorEntry {
@@ -145,6 +199,15 @@ pub struct RenderInspectorEntry {
   priv repaint_boundary : Bool
   priv cache_key : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RenderInspectorEntry with Debug::{to_repr}
+
+///|
+pub extend RenderInspectorEntry with Eq::{not_equal, equal}
+
+///|
+pub extend RenderInspectorEntry with ToJson::{to_json}
 
 ///|
 pub struct RenderInspectorSnapshot {
@@ -164,6 +227,15 @@ pub struct RenderInspectorSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RenderInspectorSnapshot with Debug::{to_repr}
+
+///|
+pub extend RenderInspectorSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend RenderInspectorSnapshot with ToJson::{to_json}
+
+///|
 pub struct SemanticsInspectorEntry {
   priv node_id : String
   priv role : @core.SemanticsRole
@@ -179,6 +251,15 @@ pub struct SemanticsInspectorEntry {
   priv expanded : Bool
   priv disabled : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsInspectorEntry with Debug::{to_repr}
+
+///|
+pub extend SemanticsInspectorEntry with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsInspectorEntry with ToJson::{to_json}
 
 ///|
 pub struct SemanticsInspectorSnapshot {
@@ -197,6 +278,15 @@ pub struct SemanticsInspectorSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsInspectorSnapshot with Debug::{to_repr}
+
+///|
+pub extend SemanticsInspectorSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsInspectorSnapshot with ToJson::{to_json}
+
+///|
 pub struct InspectorSnapshot {
   priv runtime : RuntimeInspectorSnapshot
   priv view_tree : ViewTreeInspectorSnapshot
@@ -204,3 +294,12 @@ pub struct InspectorSnapshot {
   priv render : RenderInspectorSnapshot
   priv semantics : SemanticsInspectorSnapshot
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend InspectorSnapshot with Debug::{to_repr}
+
+///|
+pub extend InspectorSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend InspectorSnapshot with ToJson::{to_json}

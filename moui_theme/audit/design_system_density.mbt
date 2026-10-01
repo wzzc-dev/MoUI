@@ -28,6 +28,15 @@ pub(all) struct DesignDensityResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignDensityResolverRecord with Debug::{to_repr}
+
+///|
+pub extend DesignDensityResolverRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignDensityResolverRecord with ToJson::{to_json}
+
+///|
 pub fn density_resolver_report(
   preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = Light,

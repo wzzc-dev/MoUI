@@ -14,6 +14,9 @@ pub struct Layer {
 } derive(Debug)
 
 ///|
+pub extend Layer with Debug::{to_repr}
+
+///|
 /// Telemetry for a dirty layer composite attempt.
 pub struct LayerCompositeResult {
   composited_rect_count : Int
@@ -23,6 +26,9 @@ pub struct LayerCompositeResult {
   did_composite : Bool
   did_clear_dirty : Bool
 } derive(Debug)
+
+///|
+pub extend LayerCompositeResult with Debug::{to_repr}
 
 ///|
 pub fn Layer::new(width : Int, height : Int) -> Layer {

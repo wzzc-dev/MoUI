@@ -21,6 +21,12 @@ pub(all) struct AppDescriptor {
 } derive(Eq, Debug)
 
 ///|
+pub extend AppDescriptor with Debug::{to_repr}
+
+///|
+pub extend AppDescriptor with Eq::{not_equal, equal}
+
+///|
 fn app_descriptor(
   id : AppKind,
   label : String,

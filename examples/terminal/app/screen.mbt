@@ -7,6 +7,12 @@ pub(all) enum TermColor {
 } derive(Eq, Debug)
 
 ///|
+pub extend TermColor with Debug::{to_repr}
+
+///|
+pub extend TermColor with Eq::{not_equal, equal}
+
+///|
 /// 单元格属性(SGR 状态)。
 pub(all) struct CellAttrs {
   fg : TermColor
@@ -17,6 +23,12 @@ pub(all) struct CellAttrs {
   underline : Bool
   reverse : Bool
 } derive(Eq, Debug)
+
+///|
+pub extend CellAttrs with Debug::{to_repr}
+
+///|
+pub extend CellAttrs with Eq::{not_equal, equal}
 
 ///|
 pub fn CellAttrs::default() -> CellAttrs {
@@ -88,6 +100,12 @@ pub(all) struct Cell {
   width : Int
   attrs : CellAttrs
 } derive(Eq, Debug)
+
+///|
+pub extend Cell with Debug::{to_repr}
+
+///|
+pub extend Cell with Eq::{not_equal, equal}
 
 ///|
 pub fn blank_cell(attrs : CellAttrs) -> Cell {

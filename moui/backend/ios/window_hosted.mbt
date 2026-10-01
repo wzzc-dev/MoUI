@@ -9,6 +9,21 @@ pub struct IosEmbeddedRuntimeBackend {
 }
 
 ///|
+pub extend IosEmbeddedRuntimeBackend with @wzzc-dev/window/ios.ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
+}
+
+///|
 pub fn IosEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,

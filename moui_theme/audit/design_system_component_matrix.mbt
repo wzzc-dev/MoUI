@@ -21,6 +21,15 @@ pub(all) struct DesignComponentTokenMatrixRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignComponentTokenMatrixRecord with Debug::{to_repr}
+
+///|
+pub extend DesignComponentTokenMatrixRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignComponentTokenMatrixRecord with ToJson::{to_json}
+
+///|
 pub fn component_token_matrix(
   preset : @common.DesignPreset,
 ) -> Array[DesignComponentTokenMatrixRecord] {

@@ -56,6 +56,10 @@ pub(all) suberror WebGpuHostError {
   InvalidResource
   HostError(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WebGpuHostError::equal(Self, Self) -> Bool
+pub fn WebGpuHostError::not_equal(Self, Self) -> Bool
+pub fn WebGpuHostError::to_json(Self) -> Json
+pub fn WebGpuHostError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct WebGpuHostAdapterInfo {
@@ -63,10 +67,14 @@ pub struct WebGpuHostAdapterInfo {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn WebGpuHostAdapterInfo::capabilities(Self) -> WebGpuHostCapabilities
 pub fn WebGpuHostAdapterInfo::description(Self) -> String
+pub fn WebGpuHostAdapterInfo::equal(Self, Self) -> Bool
 pub fn WebGpuHostAdapterInfo::imports(Self) -> WebGpuHostImportInfo
 pub fn WebGpuHostAdapterInfo::new(renderer~ : @render.RendererBackendInfo, surface_contract~ : @render.WgpuSurfaceContract, imports~ : WebGpuHostImportInfo, capabilities~ : WebGpuHostCapabilities, description? : String) -> Self
+pub fn WebGpuHostAdapterInfo::not_equal(Self, Self) -> Bool
 pub fn WebGpuHostAdapterInfo::renderer(Self) -> @render.RendererBackendInfo
 pub fn WebGpuHostAdapterInfo::surface_contract(Self) -> @render.WgpuSurfaceContract
+pub fn WebGpuHostAdapterInfo::to_json(Self) -> Json
+pub fn WebGpuHostAdapterInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WebGpuHostCall {
   BeginFrame(@core.Size)
@@ -96,24 +104,36 @@ pub(all) enum WebGpuHostCall {
   DrawShaderEffect(@core.ShaderEffectSpec)
   Present
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WebGpuHostCall::equal(Self, Self) -> Bool
+pub fn WebGpuHostCall::not_equal(Self, Self) -> Bool
+pub fn WebGpuHostCall::to_json(Self) -> Json
+pub fn WebGpuHostCall::to_repr(Self) -> @debug.Repr
 
 pub struct WebGpuHostCapabilities {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn WebGpuHostCapabilities::adapter_ready(Self) -> Bool
 pub fn WebGpuHostCapabilities::can_render(Self) -> Bool
+pub fn WebGpuHostCapabilities::equal(Self, Self) -> Bool
 pub fn WebGpuHostCapabilities::new(webgpu_available? : Bool, adapter_ready? : Bool, can_render? : Bool) -> Self
+pub fn WebGpuHostCapabilities::not_equal(Self, Self) -> Bool
+pub fn WebGpuHostCapabilities::to_json(Self) -> Json
+pub fn WebGpuHostCapabilities::to_repr(Self) -> @debug.Repr
 pub fn WebGpuHostCapabilities::webgpu_available(Self) -> Bool
 
 pub struct WebGpuHostImportInfo {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn WebGpuHostImportInfo::description(Self) -> String
+pub fn WebGpuHostImportInfo::equal(Self, Self) -> Bool
 pub fn WebGpuHostImportInfo::import_module(Self) -> String
 pub fn WebGpuHostImportInfo::new(import_module~ : String, target~ : String, surface_resource~ : String, renderer_resource~ : String, description? : String) -> Self
+pub fn WebGpuHostImportInfo::not_equal(Self, Self) -> Bool
 pub fn WebGpuHostImportInfo::renderer_resource(Self) -> String
 pub fn WebGpuHostImportInfo::surface_resource(Self) -> String
 pub fn WebGpuHostImportInfo::target(Self) -> String
+pub fn WebGpuHostImportInfo::to_json(Self) -> Json
+pub fn WebGpuHostImportInfo::to_repr(Self) -> @debug.Repr
 
 pub struct WebGpuHostRendererPort {
   // private fields
@@ -133,8 +153,12 @@ pub struct WebGpuHostSurface {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn WebGpuHostSurface::canvas_id(Self) -> String
+pub fn WebGpuHostSurface::equal(Self, Self) -> Bool
 pub fn WebGpuHostSurface::metrics(Self) -> @core.SurfaceMetrics
 pub fn WebGpuHostSurface::new(canvas_id~ : String, metrics~ : @core.SurfaceMetrics) -> Self
+pub fn WebGpuHostSurface::not_equal(Self, Self) -> Bool
+pub fn WebGpuHostSurface::to_json(Self) -> Json
+pub fn WebGpuHostSurface::to_repr(Self) -> @debug.Repr
 
 pub struct WebGpuWasmRenderer {
   // private fields

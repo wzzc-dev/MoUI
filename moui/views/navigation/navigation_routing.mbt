@@ -5,16 +5,43 @@ pub struct RouteLocation {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RouteLocation with Debug::{to_repr}
+
+///|
+pub extend RouteLocation with Eq::{not_equal, equal}
+
+///|
+pub extend RouteLocation with ToJson::{to_json}
+
+///|
 pub struct RouteQueryParam {
   key : String
   value : String
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RouteQueryParam with Debug::{to_repr}
+
+///|
+pub extend RouteQueryParam with Eq::{not_equal, equal}
+
+///|
+pub extend RouteQueryParam with ToJson::{to_json}
+
+///|
 pub struct RouteParam {
   key : String
   value : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RouteParam with Debug::{to_repr}
+
+///|
+pub extend RouteParam with Eq::{not_equal, equal}
+
+///|
+pub extend RouteParam with ToJson::{to_json}
 
 ///|
 pub struct RouteDescriptor {
@@ -25,9 +52,27 @@ pub struct RouteDescriptor {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RouteDescriptor with Debug::{to_repr}
+
+///|
+pub extend RouteDescriptor with Eq::{not_equal, equal}
+
+///|
+pub extend RouteDescriptor with ToJson::{to_json}
+
+///|
 pub struct RouterSnapshot {
   routes : Array[String]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RouterSnapshot with Debug::{to_repr}
+
+///|
+pub extend RouterSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend RouterSnapshot with ToJson::{to_json}
 
 ///|
 pub struct RouteHistoryEntry {
@@ -37,10 +82,28 @@ pub struct RouteHistoryEntry {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RouteHistoryEntry with Debug::{to_repr}
+
+///|
+pub extend RouteHistoryEntry with Eq::{not_equal, equal}
+
+///|
+pub extend RouteHistoryEntry with ToJson::{to_json}
+
+///|
 pub struct RouteHistoryState {
   entries : Array[RouteHistoryEntry]
   cursor : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RouteHistoryState with Debug::{to_repr}
+
+///|
+pub extend RouteHistoryState with Eq::{not_equal, equal}
+
+///|
+pub extend RouteHistoryState with ToJson::{to_json}
 
 ///|
 priv struct RouteFocusEntry {

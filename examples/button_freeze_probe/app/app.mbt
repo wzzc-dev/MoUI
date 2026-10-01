@@ -33,6 +33,15 @@ pub(all) enum Msg {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Msg with Debug::{to_repr}
+
+///|
+pub extend Msg with Eq::{not_equal, equal}
+
+///|
+pub extend Msg with ToJson::{to_json}
+
+///|
 pub fn Model::new() -> Model {
   {
     query: "",

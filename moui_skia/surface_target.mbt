@@ -7,6 +7,15 @@ pub(all) enum SurfacePresentMode {
 } derive(Debug, Eq)
 
 ///|
+pub extend SurfacePresentMode with Debug::{to_repr}
+
+///|
+pub extend SurfacePresentMode with Default::{default}
+
+///|
+pub extend SurfacePresentMode with Eq::{not_equal, equal}
+
+///|
 pub impl Default for SurfacePresentMode with fn default() {
   FifoPresent
 }
@@ -31,6 +40,12 @@ pub(all) struct SurfaceTargetDescriptor {
   max_frames_in_flight : Int
   gpu_context_key : RendererResourceKey?
 } derive(Debug, Eq)
+
+///|
+pub extend SurfaceTargetDescriptor with Debug::{to_repr}
+
+///|
+pub extend SurfaceTargetDescriptor with Eq::{not_equal, equal}
 
 ///|
 fn normalized_surface_present_mode(

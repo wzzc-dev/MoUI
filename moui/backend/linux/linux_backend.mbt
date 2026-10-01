@@ -11,6 +11,15 @@ pub(all) struct LinuxBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend LinuxBackendInfo with Debug::{to_repr}
+
+///|
+pub extend LinuxBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend LinuxBackendInfo with ToJson::{to_json}
+
+///|
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
@@ -26,11 +35,29 @@ pub(all) struct LinuxBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend LinuxBackendCapabilities with Debug::{to_repr}
+
+///|
+pub extend LinuxBackendCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend LinuxBackendCapabilities with ToJson::{to_json}
+
+///|
 pub(all) struct LinuxBackendReadiness {
   ready : Bool
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend LinuxBackendReadiness with Debug::{to_repr}
+
+///|
+pub extend LinuxBackendReadiness with Eq::{not_equal, equal}
+
+///|
+pub extend LinuxBackendReadiness with ToJson::{to_json}
 
 ///|
 pub(all) struct LinuxAccessibilityBridgeInfo {
@@ -40,6 +67,15 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
   action_dispatch_available : Bool
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend LinuxAccessibilityBridgeInfo with Debug::{to_repr}
+
+///|
+pub extend LinuxAccessibilityBridgeInfo with Eq::{not_equal, equal}
+
+///|
+pub extend LinuxAccessibilityBridgeInfo with ToJson::{to_json}
 
 ///|
 pub struct LinuxHostAppOptions {
@@ -68,6 +104,15 @@ pub(all) struct LinuxClientDecorationState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend LinuxClientDecorationState with Debug::{to_repr}
+
+///|
+pub extend LinuxClientDecorationState with Eq::{not_equal, equal}
+
+///|
+pub extend LinuxClientDecorationState with ToJson::{to_json}
+
+///|
 /// Native host backend: owns the Linux host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
 /// Shared lifecycle, frame, image, input, and service state is held through
@@ -93,6 +138,21 @@ struct LinuxNativeHostBackend {
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
+}
+
+///|
+pub extend LinuxNativeHostBackend with @wzzc-dev/window/linux.ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
 }
 
 ///|

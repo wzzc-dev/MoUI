@@ -5,6 +5,12 @@ pub(all) struct CatalogGroup {
 } derive(Eq, Debug)
 
 ///|
+pub extend CatalogGroup with Debug::{to_repr}
+
+///|
+pub extend CatalogGroup with Eq::{not_equal, equal}
+
+///|
 pub(all) struct CatalogItem {
   id : String
   group_id : String
@@ -12,6 +18,12 @@ pub(all) struct CatalogItem {
   summary : String
   badge : String
 } derive(Eq, Debug)
+
+///|
+pub extend CatalogItem with Debug::{to_repr}
+
+///|
+pub extend CatalogItem with Eq::{not_equal, equal}
 
 ///|
 pub fn catalog_groups() -> Array[CatalogGroup] {

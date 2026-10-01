@@ -8,12 +8,24 @@ pub struct PixelRect {
 } derive(Eq, Debug)
 
 ///|
+pub extend PixelRect with Debug::{to_repr}
+
+///|
+pub extend PixelRect with Eq::{not_equal, equal}
+
+///|
 /// Strategy selected for submitting a dirty region to a Surface.
 pub(all) enum DirtyPresentPlanMode {
   Empty
   Rects
   Bounds
 } derive(Eq, Debug)
+
+///|
+pub extend DirtyPresentPlanMode with Debug::{to_repr}
+
+///|
+pub extend DirtyPresentPlanMode with Eq::{not_equal, equal}
 
 ///|
 /// Scheduler-facing present strategy chosen from a dirty present plan and the
@@ -25,12 +37,24 @@ pub(all) enum DirtyPresentStrategy {
 } derive(Eq, Debug)
 
 ///|
+pub extend DirtyPresentStrategy with Debug::{to_repr}
+
+///|
+pub extend DirtyPresentStrategy with Eq::{not_equal, equal}
+
+///|
 /// Scheduler-facing state for a dirty submit snapshot.
 pub(all) enum DirtySubmitState {
   Clean
   Present
   DirtyClippedAway
 } derive(Eq, Debug)
+
+///|
+pub extend DirtySubmitState with Debug::{to_repr}
+
+///|
+pub extend DirtySubmitState with Eq::{not_equal, equal}
 
 ///|
 /// A concrete dirty-present plan after clipping to the target bounds and
@@ -41,6 +65,9 @@ pub struct DirtyPresentPlan {
 } derive(Debug)
 
 ///|
+pub extend DirtyPresentPlan with Debug::{to_repr}
+
+///|
 /// Dirty state snapshot for schedulers: logical dirty bounds plus the clipped
 /// present plan that would be submitted to the current surface.
 pub struct DirtySubmitPlan {
@@ -49,12 +76,18 @@ pub struct DirtySubmitPlan {
 } derive(Debug)
 
 ///|
+pub extend DirtySubmitPlan with Debug::{to_repr}
+
+///|
 /// Result of submitting a dirty frame: the scheduler-visible plan snapshot plus
 /// the number of rectangles actually presented to the surface.
 pub struct DirtySubmitResult {
   submit_plan : DirtySubmitPlan
   presented_rect_count : Int
 } derive(Debug)
+
+///|
+pub extend DirtySubmitResult with Debug::{to_repr}
 
 ///|
 pub fn DirtyPresentPlan::get_mode(
@@ -450,6 +483,9 @@ fn ranges_overlap(
 pub struct DirtyRegion {
   mut rects : Array[PixelRect]
 } derive(Debug)
+
+///|
+pub extend DirtyRegion with Debug::{to_repr}
 
 ///|
 pub fn DirtyRegion::new() -> DirtyRegion {

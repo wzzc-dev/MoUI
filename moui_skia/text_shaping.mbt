@@ -8,6 +8,12 @@ pub(all) struct TextShapingDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend TextShapingDescriptor with Debug::{to_repr}
+
+///|
+pub extend TextShapingDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn TextShapingDescriptor::new(
   run? : TextRunDescriptor = TextRunDescriptor::new(),
   font_key? : RendererResourceKey = RendererResourceKey::font(b""),
@@ -121,6 +127,12 @@ pub(all) struct ShapedTextRunDescriptor {
   cluster_count : Int
   advance : Point
 } derive(Debug, Eq)
+
+///|
+pub extend ShapedTextRunDescriptor with Debug::{to_repr}
+
+///|
+pub extend ShapedTextRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn ShapedTextRunDescriptor::new(
@@ -317,6 +329,12 @@ pub(all) struct ShapedGlyphRunDescriptor {
   positions : Array[Point]
   clusters : Array[Int]
 } derive(Debug, Eq)
+
+///|
+pub extend ShapedGlyphRunDescriptor with Debug::{to_repr}
+
+///|
+pub extend ShapedGlyphRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn ShapedGlyphRunDescriptor::new(

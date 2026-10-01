@@ -6,6 +6,12 @@ struct FontHead {
 } derive(Eq, Debug)
 
 ///|
+pub extend FontHead with Debug::{to_repr}
+
+///|
+pub extend FontHead with Eq::{not_equal, equal}
+
+///|
 /// Horizontal header (hhea table)
 struct FontHhea {
   ascent : Int
@@ -15,11 +21,23 @@ struct FontHhea {
 } derive(Eq, Debug)
 
 ///|
+pub extend FontHhea with Debug::{to_repr}
+
+///|
+pub extend FontHhea with Eq::{not_equal, equal}
+
+///|
 /// Horizontal metrics
 struct LongHorMetric {
   advance_width : Int
   lsb : Int // left side bearing
 } derive(Eq, Debug)
+
+///|
+pub extend LongHorMetric with Debug::{to_repr}
+
+///|
+pub extend LongHorMetric with Eq::{not_equal, equal}
 
 ///|
 /// Simple glyph point
@@ -30,10 +48,19 @@ struct GlyphPoint {
 } derive(Eq, Debug)
 
 ///|
+pub extend GlyphPoint with Debug::{to_repr}
+
+///|
+pub extend GlyphPoint with Eq::{not_equal, equal}
+
+///|
 /// Glyph contour
 struct GlyphContour {
   points : Array[GlyphPoint]
 } derive(Debug)
+
+///|
+pub extend GlyphContour with Debug::{to_repr}
 
 ///|
 /// Simple glyph data
@@ -44,6 +71,9 @@ struct SimpleGlyph {
   xmax : Int
   ymax : Int
 } derive(Debug)
+
+///|
+pub extend SimpleGlyph with Debug::{to_repr}
 
 ///|
 /// A component of a composite glyph
@@ -58,12 +88,18 @@ struct GlyphComponent {
 } derive(Debug)
 
 ///|
+pub extend GlyphComponent with Debug::{to_repr}
+
+///|
 /// Glyph data (simple or composite)
 enum GlyphData {
   Simple(SimpleGlyph)
   Composite(Array[GlyphComponent])
   Empty
 } derive(Debug)
+
+///|
+pub extend GlyphData with Debug::{to_repr}
 
 ///|
 /// Table record in font file
@@ -75,12 +111,24 @@ struct TableRecord {
 } derive(Eq, Debug)
 
 ///|
+pub extend TableRecord with Debug::{to_repr}
+
+///|
+pub extend TableRecord with Eq::{not_equal, equal}
+
+///|
 /// Kerning pair
 struct KernPair {
   left : Int
   right : Int
   value : Int
 } derive(Eq, Debug)
+
+///|
+pub extend KernPair with Debug::{to_repr}
+
+///|
+pub extend KernPair with Eq::{not_equal, equal}
 
 ///|
 /// Parsed font data
@@ -93,6 +141,9 @@ struct Font {
   glyph_count : Int
   kern : Array[KernPair] // kerning pairs
 } derive(Debug)
+
+///|
+pub extend Font with Debug::{to_repr}
 
 ///|
 /// Get font metrics

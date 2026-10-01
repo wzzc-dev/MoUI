@@ -9,6 +9,9 @@ pub(all) struct TextRunOutline {
 } derive(Debug)
 
 ///|
+pub extend TextRunOutline with Debug::{to_repr}
+
+///|
 /// Flatten every glyph contour of `text` laid out with `font_size` so that the
 /// run starts at `origin_x` and sits on the baseline `baseline_y`. Composite
 /// glyphs fall back to nothing (matching the rasterizer), so callers pairing

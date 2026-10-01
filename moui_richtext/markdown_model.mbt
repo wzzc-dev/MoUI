@@ -15,6 +15,15 @@ pub(all) enum MarkdownBlockKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownBlockKind with Debug::{to_repr}
+
+///|
+pub extend MarkdownBlockKind with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownBlockKind with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownBlock {
   kind : MarkdownBlockKind
   text : String
@@ -22,6 +31,15 @@ pub(all) struct MarkdownBlock {
   table_alignments : Array[@core.TextAlign?]
   code_language : String?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownBlock with Debug::{to_repr}
+
+///|
+pub extend MarkdownBlock with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownBlock with ToJson::{to_json}
 
 ///|
 priv struct MarkdownFrontMatterParseResult {
@@ -172,6 +190,12 @@ struct MarkdownHtmlBlockParseResult {
   block : MarkdownBlock
   end_index : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownHtmlBlockParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownHtmlBlockParseResult with Eq::{not_equal, equal}
 
 ///|
 fn markdown_html_block_at(
@@ -593,6 +617,12 @@ struct MarkdownSetextHeadingParseResult {
 } derive(Eq, Debug)
 
 ///|
+pub extend MarkdownSetextHeadingParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownSetextHeadingParseResult with Eq::{not_equal, equal}
+
+///|
 fn markdown_setext_heading_block_at(
   lines : Array[String],
   index : Int,
@@ -694,6 +724,12 @@ struct MarkdownIndentedCodeParseResult {
   block : MarkdownBlock
   end_index : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownIndentedCodeParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownIndentedCodeParseResult with Eq::{not_equal, equal}
 
 ///|
 fn markdown_indented_code_block_at(
@@ -806,6 +842,12 @@ struct MarkdownParagraphParseResult {
   block : MarkdownBlock
   end_index : Int
 } derive(Eq, Debug)
+
+///|
+pub extend MarkdownParagraphParseResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownParagraphParseResult with Eq::{not_equal, equal}
 
 ///|
 fn markdown_soft_wrapped_paragraph_block_at(

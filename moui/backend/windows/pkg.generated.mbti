@@ -41,6 +41,10 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
   action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WindowsAccessibilityBridgeInfo::equal(Self, Self) -> Bool
+pub fn WindowsAccessibilityBridgeInfo::not_equal(Self, Self) -> Bool
+pub fn WindowsAccessibilityBridgeInfo::to_json(Self) -> Json
+pub fn WindowsAccessibilityBridgeInfo::to_repr(Self) -> @debug.Repr
 
 pub struct WindowsHostAppOptions {
   // private fields
@@ -53,6 +57,17 @@ pub struct WindowsHostSmokeOptions {
 pub fn WindowsHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
 type WindowsNativeHostBackend
+pub fn WindowsNativeHostBackend::about_to_wait(Self, @wzzc-dev/window/windows.ActiveEventLoop) -> Unit
+pub fn WindowsNativeHostBackend::can_create_surfaces(Self, @wzzc-dev/window/windows.ActiveEventLoop) -> Unit
+pub fn WindowsNativeHostBackend::destroy_surfaces(Self, @wzzc-dev/window/windows.ActiveEventLoop) -> Unit
+pub fn WindowsNativeHostBackend::device_event(Self, @wzzc-dev/window/windows.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
+pub fn WindowsNativeHostBackend::memory_warning(Self, @wzzc-dev/window/windows.ActiveEventLoop) -> Unit
+pub fn WindowsNativeHostBackend::new_events(Self, @wzzc-dev/window/windows.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
+pub fn WindowsNativeHostBackend::proxy_wake_up(Self, @wzzc-dev/window/windows.ActiveEventLoop) -> Unit
+pub fn WindowsNativeHostBackend::resumed(Self, @wzzc-dev/window/windows.ActiveEventLoop) -> Unit
+pub fn WindowsNativeHostBackend::standard_key_binding(Self, @wzzc-dev/window/windows.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
+pub fn WindowsNativeHostBackend::suspended(Self, @wzzc-dev/window/windows.ActiveEventLoop) -> Unit
+pub fn WindowsNativeHostBackend::window_event(Self, @wzzc-dev/window/windows.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/windows.ApplicationHandler for WindowsNativeHostBackend
 
 // Type aliases

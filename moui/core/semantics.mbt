@@ -40,6 +40,15 @@ pub(all) enum SemanticsRole {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsRole with Debug::{to_repr}
+
+///|
+pub extend SemanticsRole with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsRole with ToJson::{to_json}
+
+///|
 /// A stable application-owned identifier for one effective semantic boundary.
 ///
 /// Values are exact and case-sensitive. Parsing rejects empty values, values
@@ -48,6 +57,21 @@ pub(all) enum SemanticsRole {
 pub struct SemanticId {
   priv value : String
 } derive(Eq, Compare, Hash, Debug)
+
+///|
+pub extend SemanticId with Debug::{to_repr}
+
+///|
+pub extend SemanticId with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticId with ToJson::{to_json}
+
+///|
+pub extend SemanticId with Compare::{op_lt, op_le, op_ge, compare, op_gt}
+
+///|
+pub extend SemanticId with Hash::{hash, hash_combine}
 
 ///|
 fn semantic_id_code_unit_is_forbidden(code_unit : UInt16) -> Bool {
@@ -116,6 +140,21 @@ pub struct SemanticsNodeId {
 } derive(Eq, Compare, Hash, Debug)
 
 ///|
+pub extend SemanticsNodeId with Debug::{to_repr}
+
+///|
+pub extend SemanticsNodeId with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsNodeId with ToJson::{to_json}
+
+///|
+pub extend SemanticsNodeId with Compare::{op_lt, op_le, op_ge, compare, op_gt}
+
+///|
+pub extend SemanticsNodeId with Hash::{hash, hash_combine}
+
+///|
 pub fn SemanticsNodeId::new(value : UInt64) -> SemanticsNodeId {
   { value, }
 }
@@ -141,6 +180,27 @@ pub impl ToJson for SemanticsNodeId with fn to_json(self : SemanticsNodeId) -> J
 pub struct SemanticsGeneration {
   priv value : UInt64
 } derive(Eq, Compare, Hash, Debug)
+
+///|
+pub extend SemanticsGeneration with Debug::{to_repr}
+
+///|
+pub extend SemanticsGeneration with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsGeneration with ToJson::{to_json}
+
+///|
+pub extend SemanticsGeneration with Compare::{
+  op_lt,
+  op_le,
+  op_ge,
+  compare,
+  op_gt,
+}
+
+///|
+pub extend SemanticsGeneration with Hash::{hash, hash_combine}
 
 ///|
 pub fn SemanticsGeneration::new(value : UInt64) -> SemanticsGeneration {
@@ -185,6 +245,15 @@ pub(all) enum SemanticsActionKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsActionKind with Debug::{to_repr}
+
+///|
+pub extend SemanticsActionKind with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsActionKind with ToJson::{to_json}
+
+///|
 pub(all) enum SemanticsScrollDirection {
   Forward
   Backward
@@ -193,6 +262,15 @@ pub(all) enum SemanticsScrollDirection {
   Left
   Right
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsScrollDirection with Debug::{to_repr}
+
+///|
+pub extend SemanticsScrollDirection with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsScrollDirection with ToJson::{to_json}
 
 ///|
 /// A typed semantic invocation. Payload requirements are encoded by the
@@ -213,6 +291,15 @@ pub(all) enum SemanticsAction {
   SetSelection(TextRange)
   ShowMenu
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsAction with Debug::{to_repr}
+
+///|
+pub extend SemanticsAction with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsAction with ToJson::{to_json}
 
 ///|
 pub fn SemanticsAction::kind(self : SemanticsAction) -> SemanticsActionKind {
@@ -242,11 +329,29 @@ pub(all) enum SemanticsCheckedState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsCheckedState with Debug::{to_repr}
+
+///|
+pub extend SemanticsCheckedState with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsCheckedState with ToJson::{to_json}
+
+///|
 pub(all) enum SemanticsLive {
   Off
   Polite
   Assertive
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsLive with Debug::{to_repr}
+
+///|
+pub extend SemanticsLive with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsLive with ToJson::{to_json}
 
 ///|
 pub(all) struct SemanticsNumericValue {
@@ -256,6 +361,15 @@ pub(all) struct SemanticsNumericValue {
   step : Double?
   value_text : String?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsNumericValue with Debug::{to_repr}
+
+///|
+pub extend SemanticsNumericValue with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsNumericValue with ToJson::{to_json}
 
 ///|
 pub fn SemanticsNumericValue::new(
@@ -274,6 +388,15 @@ pub(all) struct SemanticsTextValue {
   caret : Int?
   editable : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsTextValue with Debug::{to_repr}
+
+///|
+pub extend SemanticsTextValue with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsTextValue with ToJson::{to_json}
 
 ///|
 pub fn SemanticsTextValue::new(
@@ -295,6 +418,15 @@ pub(all) struct SemanticsCollectionInfo {
   set_size : Int?
   set_position : Int?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsCollectionInfo with Debug::{to_repr}
+
+///|
+pub extend SemanticsCollectionInfo with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsCollectionInfo with ToJson::{to_json}
 
 ///|
 pub fn SemanticsCollectionInfo::new(
@@ -330,6 +462,15 @@ pub(all) struct SemanticsRelationsDeclaration {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsRelationsDeclaration with Debug::{to_repr}
+
+///|
+pub extend SemanticsRelationsDeclaration with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsRelationsDeclaration with ToJson::{to_json}
+
+///|
 pub fn SemanticsRelationsDeclaration::new(
   labelled_by? : Array[SemanticId] = [],
   described_by? : Array[SemanticId] = [],
@@ -350,6 +491,15 @@ pub(all) enum SemanticsRelationKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsRelationKind with Debug::{to_repr}
+
+///|
+pub extend SemanticsRelationKind with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsRelationKind with ToJson::{to_json}
+
+///|
 /// Relations in a committed snapshot contain only resolved runtime node IDs.
 pub(all) struct SemanticsRelations {
   labelled_by : Array[SemanticsNodeId]
@@ -358,6 +508,15 @@ pub(all) struct SemanticsRelations {
   error_message : Array[SemanticsNodeId]
   active_descendant : Array[SemanticsNodeId]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsRelations with Debug::{to_repr}
+
+///|
+pub extend SemanticsRelations with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsRelations with ToJson::{to_json}
 
 ///|
 pub fn SemanticsRelations::empty() -> SemanticsRelations {
@@ -381,6 +540,15 @@ pub(all) enum SemanticsComposition {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsComposition with Debug::{to_repr}
+
+///|
+pub extend SemanticsComposition with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsComposition with ToJson::{to_json}
+
+///|
 /// Selects either an application-owned stable ID, a session-local committed
 /// node ID, or a stepwise walk of the committed semantics hierarchy.
 pub(all) enum SemanticsTarget {
@@ -388,6 +556,15 @@ pub(all) enum SemanticsTarget {
   ByNodeId(SemanticsNodeId)
   ByPath(Array[SemanticsPathSegment])
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsTarget with Debug::{to_repr}
+
+///|
+pub extend SemanticsTarget with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsTarget with ToJson::{to_json}
 
 ///|
 /// One step of a `ByPath` walk, resolved from the committed semantics tree.
@@ -409,6 +586,15 @@ pub(all) struct SemanticsPathSegment {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsPathSegment with Debug::{to_repr}
+
+///|
+pub extend SemanticsPathSegment with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsPathSegment with ToJson::{to_json}
+
+///|
 pub(all) struct SemanticsState {
   focused : Bool
   disabled : Bool
@@ -424,6 +610,15 @@ pub(all) struct SemanticsState {
   password : Bool
   modal : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsState with Debug::{to_repr}
+
+///|
+pub extend SemanticsState with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsState with ToJson::{to_json}
 
 ///|
 pub(all) struct SemanticsNode {
@@ -447,6 +642,15 @@ pub(all) struct SemanticsNode {
   frame : Rect
   children : Array[SemanticsNodeId]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsNode with Debug::{to_repr}
+
+///|
+pub extend SemanticsNode with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsNode with ToJson::{to_json}
 
 ///|
 pub fn SemanticsState::default() -> SemanticsState {
@@ -474,3 +678,12 @@ pub(all) enum ScrollAlignment {
   End
   Nearest
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ScrollAlignment with Debug::{to_repr}
+
+///|
+pub extend ScrollAlignment with Eq::{not_equal, equal}
+
+///|
+pub extend ScrollAlignment with ToJson::{to_json}

@@ -11,11 +11,23 @@ pub(all) enum GpuRenderWorkerState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend GpuRenderWorkerState with Debug::{to_repr}
+
+///|
+pub extend GpuRenderWorkerState with Eq::{not_equal, equal}
+
+///|
+pub extend GpuRenderWorkerState with ToJson::{to_json}
+
+///|
 pub(all) struct GpuRenderWorkerFrame {
   token : @render.FrameToken
   submitted_at_ms : Double
   input : @render.RenderFrameInput
 } derive(Debug)
+
+///|
+pub extend GpuRenderWorkerFrame with Debug::{to_repr}
 
 ///|
 pub(all) struct GpuRenderWorkerDiagnostics {
@@ -37,6 +49,15 @@ pub(all) struct GpuRenderWorkerDiagnostics {
   control_pending : Int
   worker_thread_id : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend GpuRenderWorkerDiagnostics with Debug::{to_repr}
+
+///|
+pub extend GpuRenderWorkerDiagnostics with Eq::{not_equal, equal}
+
+///|
+pub extend GpuRenderWorkerDiagnostics with ToJson::{to_json}
 
 ///|
 pub struct GpuRenderWorker {

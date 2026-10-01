@@ -19,7 +19,10 @@ pub(all) enum PresentationAnchor {
   Viewport(@core.Point)
   HostBase
 } derive(Eq, @debug.Debug)
+pub fn PresentationAnchor::equal(Self, Self) -> Bool
+pub fn PresentationAnchor::not_equal(Self, Self) -> Bool
 pub fn PresentationAnchor::stable_key(String) -> Self
+pub fn PresentationAnchor::to_repr(Self) -> @debug.Repr
 pub fn PresentationAnchor::viewport_point(@core.Point) -> Self
 
 pub(all) struct PresentationDismissPolicy[Msg] {
@@ -42,8 +45,11 @@ pub(all) enum PresentationHostPolicy {
   PreferNative
   NativeRequired
 } derive(Eq, @debug.Debug)
+pub fn PresentationHostPolicy::equal(Self, Self) -> Bool
+pub fn PresentationHostPolicy::not_equal(Self, Self) -> Bool
 pub fn PresentationHostPolicy::requests_native(Self, Bool) -> Bool
 pub fn PresentationHostPolicy::shows_view_surface(Self, Bool) -> Bool
+pub fn PresentationHostPolicy::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PresentationKind {
   Popover
@@ -53,19 +59,28 @@ pub(all) enum PresentationKind {
   ContextMenu
   Toast
 } derive(Eq, @debug.Debug)
+pub fn PresentationKind::equal(Self, Self) -> Bool
+pub fn PresentationKind::not_equal(Self, Self) -> Bool
+pub fn PresentationKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PresentationModality {
   NonModal
   Modal
 } derive(Eq, @debug.Debug)
+pub fn PresentationModality::equal(Self, Self) -> Bool
+pub fn PresentationModality::not_equal(Self, Self) -> Bool
+pub fn PresentationModality::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PresentationPlacement {
   candidates : Array[PresentationPlacementCandidate]
   viewport_insets : @core.Insets
   clamp_to_viewport : Bool
 } derive(Eq, @debug.Debug)
+pub fn PresentationPlacement::equal(Self, Self) -> Bool
 pub fn PresentationPlacement::new(candidates? : Array[PresentationPlacementCandidate], viewport_insets? : @core.Insets, clamp_to_viewport? : Bool) -> Self
+pub fn PresentationPlacement::not_equal(Self, Self) -> Bool
 pub fn PresentationPlacement::resolve(Self, @core.Rect, @core.Rect, @core.Size) -> @core.Rect
+pub fn PresentationPlacement::to_repr(Self) -> @debug.Repr
 pub fn PresentationPlacement::viewport(candidates? : Array[PresentationPlacementCandidate], viewport_insets? : @core.Insets) -> Self
 
 pub(all) enum PresentationPlacementCandidate {
@@ -83,6 +98,9 @@ pub(all) enum PresentationPlacementCandidate {
   RightEnd
   Center
 } derive(Eq, @debug.Debug)
+pub fn PresentationPlacementCandidate::equal(Self, Self) -> Bool
+pub fn PresentationPlacementCandidate::not_equal(Self, Self) -> Bool
+pub fn PresentationPlacementCandidate::to_repr(Self) -> @debug.Repr
 
 pub struct PresentationSpec[Msg] {
   id : String
@@ -114,7 +132,10 @@ pub(all) enum PresentationTransition {
   Slide
   None
 } derive(Eq, @debug.Debug)
+pub fn PresentationTransition::equal(Self, Self) -> Bool
+pub fn PresentationTransition::not_equal(Self, Self) -> Bool
 pub fn PresentationTransition::spec(Self) -> @core.TransitionSpec
+pub fn PresentationTransition::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

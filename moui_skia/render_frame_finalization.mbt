@@ -29,6 +29,12 @@ pub(all) struct RenderFrameFinalizationDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend RenderFrameFinalizationDescriptor with Debug::{to_repr}
+
+///|
+pub extend RenderFrameFinalizationDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn RenderFrameFinalizationDescriptor::new(
   frame : RenderFrameDescriptor,
   frame_index? : Int = 0,

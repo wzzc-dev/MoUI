@@ -26,6 +26,12 @@ pub(all) enum TopTab {
 } derive(Eq, Debug)
 
 ///|
+pub extend TopTab with Debug::{to_repr}
+
+///|
+pub extend TopTab with Eq::{not_equal, equal}
+
+///|
 /// A single rendered chat message (UI projection of `AgentEvent`).
 pub(all) enum ChatMessage {
   User(String)
@@ -45,6 +51,12 @@ pub(all) enum AppearanceMode {
 } derive(Eq, Debug)
 
 ///|
+pub extend AppearanceMode with Debug::{to_repr}
+
+///|
+pub extend AppearanceMode with Eq::{not_equal, equal}
+
+///|
 /// Tool-call approval policy (UI-only in this prototype).
 pub(all) enum ApprovalPolicy {
   NeverAsk
@@ -53,12 +65,24 @@ pub(all) enum ApprovalPolicy {
 } derive(Eq, Debug)
 
 ///|
+pub extend ApprovalPolicy with Debug::{to_repr}
+
+///|
+pub extend ApprovalPolicy with Eq::{not_equal, equal}
+
+///|
 /// File-system access scope (UI-only in this prototype).
 pub(all) enum SandboxMode {
   ReadOnly
   WorkspaceWritable
   FullAccess
 } derive(Eq, Debug)
+
+///|
+pub extend SandboxMode with Debug::{to_repr}
+
+///|
+pub extend SandboxMode with Eq::{not_equal, equal}
 
 // ---------------------------------------------------------------------------
 // Providers (multi-vendor, OpenAI-compatible)
@@ -75,6 +99,12 @@ pub struct ProviderConfig {
   api_key : String
   models : Array[String]
 } derive(Eq, Debug)
+
+///|
+pub extend ProviderConfig with Debug::{to_repr}
+
+///|
+pub extend ProviderConfig with Eq::{not_equal, equal}
 
 ///|
 pub fn ProviderConfig::new(
@@ -295,6 +325,12 @@ enum TaskStatus {
 } derive(Eq, Debug)
 
 ///|
+pub extend TaskStatus with Debug::{to_repr}
+
+///|
+pub extend TaskStatus with Eq::{not_equal, equal}
+
+///|
 /// Sidebar task filter. Kept app-local; it only changes the projected task
 /// tree, not the backend session list.
 enum TaskFilter {
@@ -305,6 +341,12 @@ enum TaskFilter {
 } derive(Eq, Debug)
 
 ///|
+pub extend TaskFilter with Debug::{to_repr}
+
+///|
+pub extend TaskFilter with Eq::{not_equal, equal}
+
+///|
 /// Time-based grouping for the task list.
 enum TaskGroup {
   Today
@@ -313,12 +355,24 @@ enum TaskGroup {
 } derive(Eq, Debug)
 
 ///|
+pub extend TaskGroup with Debug::{to_repr}
+
+///|
+pub extend TaskGroup with Eq::{not_equal, equal}
+
+///|
 /// A node in the sidebar task tree. Can be a folder (group header) or a leaf
 /// (session-backed task). Folder nodes can be expanded/collapsed.
 enum TaskTreeNode {
   Folder(String, String, TaskGroup, Array[TaskTreeNode], Bool)
   Task(String, String, TaskGroup, TaskStatus, Int)
 } derive(Eq, Debug)
+
+///|
+pub extend TaskTreeNode with Debug::{to_repr}
+
+///|
+pub extend TaskTreeNode with Eq::{not_equal, equal}
 
 ///|
 /// Code workspace sub-model: the coding-agent chat surface.
@@ -413,6 +467,12 @@ pub(all) enum SettingsSection {
   Agent
   Editor
 } derive(Eq, Debug)
+
+///|
+pub extend SettingsSection with Debug::{to_repr}
+
+///|
+pub extend SettingsSection with Eq::{not_equal, equal}
 
 ///|
 fn SettingsWorkspace::new() -> SettingsWorkspace {
@@ -618,6 +678,12 @@ pub(all) enum ProviderField {
   BaseUrl
   ApiKey
 } derive(Eq, Debug)
+
+///|
+pub extend ProviderField with Debug::{to_repr}
+
+///|
+pub extend ProviderField with Eq::{not_equal, equal}
 
 ///|
 /// Injected model auto-detection. Calls `v1/models` for `(base_url, api_key)`

@@ -39,6 +39,15 @@ pub(all) struct ControlStateTokens {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ControlStateTokens with Debug::{to_repr}
+
+///|
+pub extend ControlStateTokens with Eq::{not_equal, equal}
+
+///|
+pub extend ControlStateTokens with ToJson::{to_json}
+
+///|
 /// Resolved per-state style. Paint layer: `background` is a `Brush`, `border`
 /// is `None` when `border_width == 0.0`. This is the type controls actually
 /// consume when emitting `DrawCommand`s.
@@ -51,6 +60,15 @@ pub(all) struct ControlStateStyle {
   bottom_border_only : Bool
   inner_focus_border : @core.Color?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ControlStateStyle with Debug::{to_repr}
+
+///|
+pub extend ControlStateStyle with Eq::{not_equal, equal}
+
+///|
+pub extend ControlStateStyle with ToJson::{to_json}
 
 ///|
 /// Convenience constructor for `ControlStateTokens`.
@@ -128,6 +146,15 @@ pub(all) struct ButtonTheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ButtonTheme with Debug::{to_repr}
+
+///|
+pub extend ButtonTheme with Eq::{not_equal, equal}
+
+///|
+pub extend ButtonTheme with ToJson::{to_json}
+
+///|
 pub(all) enum ButtonVariantToken {
   Primary
   Tonal
@@ -136,6 +163,15 @@ pub(all) enum ButtonVariantToken {
   Subtle
   SubtleBrand
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ButtonVariantToken with Debug::{to_repr}
+
+///|
+pub extend ButtonVariantToken with Eq::{not_equal, equal}
+
+///|
+pub extend ButtonVariantToken with ToJson::{to_json}
 
 ///|
 /// State-layer tokens. Shared by all controls that use the state-layer model
@@ -151,6 +187,15 @@ pub(all) struct StateLayerTokens {
   selected_alpha : Double
   disabled_alpha : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend StateLayerTokens with Debug::{to_repr}
+
+///|
+pub extend StateLayerTokens with Eq::{not_equal, equal}
+
+///|
+pub extend StateLayerTokens with ToJson::{to_json}
 
 ///|
 /// Resolve a button variant + interaction state into a paint-ready
@@ -292,6 +337,15 @@ pub(all) enum TextFieldAppearance {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextFieldAppearance with Debug::{to_repr}
+
+///|
+pub extend TextFieldAppearance with Eq::{not_equal, equal}
+
+///|
+pub extend TextFieldAppearance with ToJson::{to_json}
+
+///|
 pub(all) struct TextFieldTheme {
   normal : ControlStateTokens
   focused : ControlStateTokens
@@ -301,6 +355,15 @@ pub(all) struct TextFieldTheme {
   font : @core.FontSpec
   appearance : TextFieldAppearance
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextFieldTheme with Debug::{to_repr}
+
+///|
+pub extend TextFieldTheme with Eq::{not_equal, equal}
+
+///|
+pub extend TextFieldTheme with ToJson::{to_json}
 
 ///|
 pub fn TextFieldTheme::resolve(
@@ -334,6 +397,15 @@ pub(all) struct SurfaceTheme {
   overlay_shadow : @core.ShadowStyle?
 } derive(Eq, Debug, ToJson)
 
+///|
+pub extend SurfaceTheme with Debug::{to_repr}
+
+///|
+pub extend SurfaceTheme with Eq::{not_equal, equal}
+
+///|
+pub extend SurfaceTheme with ToJson::{to_json}
+
 // ---------------------------------------------------------------------------
 // Choice / progress / slider / picker / feedback / badge / form validation
 // ---------------------------------------------------------------------------
@@ -346,6 +418,15 @@ pub(all) enum ChoiceControlShape {
   Square
   Circle
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ChoiceControlShape with Debug::{to_repr}
+
+///|
+pub extend ChoiceControlShape with Eq::{not_equal, equal}
+
+///|
+pub extend ChoiceControlShape with ToJson::{to_json}
 
 ///|
 /// Short label for revision/identity strings.
@@ -365,6 +446,15 @@ pub(all) enum CheckMarkStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend CheckMarkStyle with Debug::{to_repr}
+
+///|
+pub extend CheckMarkStyle with Eq::{not_equal, equal}
+
+///|
+pub extend CheckMarkStyle with ToJson::{to_json}
+
+///|
 pub fn CheckMarkStyle::label(self : CheckMarkStyle) -> String {
   match self {
     Checkmark => "checkmark"
@@ -379,6 +469,15 @@ pub(all) enum ThumbShape {
   Rounded
   Circle
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ThumbShape with Debug::{to_repr}
+
+///|
+pub extend ThumbShape with Eq::{not_equal, equal}
+
+///|
+pub extend ThumbShape with ToJson::{to_json}
 
 ///|
 pub fn ThumbShape::label(self : ThumbShape) -> String {
@@ -403,11 +502,29 @@ pub(all) struct ChoiceControlTheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ChoiceControlTheme with Debug::{to_repr}
+
+///|
+pub extend ChoiceControlTheme with Eq::{not_equal, equal}
+
+///|
+pub extend ChoiceControlTheme with ToJson::{to_json}
+
+///|
 pub(all) struct ProgressTheme {
   foreground : @core.Color
   background : @core.Color
   radius : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ProgressTheme with Debug::{to_repr}
+
+///|
+pub extend ProgressTheme with Eq::{not_equal, equal}
+
+///|
+pub extend ProgressTheme with ToJson::{to_json}
 
 ///|
 pub(all) struct SliderTheme {
@@ -422,6 +539,15 @@ pub(all) struct SliderTheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SliderTheme with Debug::{to_repr}
+
+///|
+pub extend SliderTheme with Eq::{not_equal, equal}
+
+///|
+pub extend SliderTheme with ToJson::{to_json}
+
+///|
 pub(all) struct PickerTheme {
   font : @core.FontSpec
   foreground : @core.Color
@@ -431,11 +557,29 @@ pub(all) struct PickerTheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PickerTheme with Debug::{to_repr}
+
+///|
+pub extend PickerTheme with Eq::{not_equal, equal}
+
+///|
+pub extend PickerTheme with ToJson::{to_json}
+
+///|
 pub(all) struct ToneTokens {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ToneTokens with Debug::{to_repr}
+
+///|
+pub extend ToneTokens with Eq::{not_equal, equal}
+
+///|
+pub extend ToneTokens with ToJson::{to_json}
 
 ///|
 pub(all) struct FeedbackTheme {
@@ -449,6 +593,15 @@ pub(all) struct FeedbackTheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FeedbackTheme with Debug::{to_repr}
+
+///|
+pub extend FeedbackTheme with Eq::{not_equal, equal}
+
+///|
+pub extend FeedbackTheme with ToJson::{to_json}
+
+///|
 pub(all) struct BadgeTheme {
   neutral : ToneTokens
   accent : ToneTokens
@@ -460,6 +613,15 @@ pub(all) struct BadgeTheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend BadgeTheme with Debug::{to_repr}
+
+///|
+pub extend BadgeTheme with Eq::{not_equal, equal}
+
+///|
+pub extend BadgeTheme with ToJson::{to_json}
+
+///|
 pub(all) struct FormValidationTheme {
   foreground : @core.Color
   background : @core.Color
@@ -467,3 +629,12 @@ pub(all) struct FormValidationTheme {
   radius : Double
   padding : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FormValidationTheme with Debug::{to_repr}
+
+///|
+pub extend FormValidationTheme with Eq::{not_equal, equal}
+
+///|
+pub extend FormValidationTheme with ToJson::{to_json}

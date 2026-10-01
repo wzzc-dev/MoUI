@@ -20,11 +20,19 @@ pub fn view(TextInputSmokeModel) -> @core.View[TextInputSmokeMsg]
 pub(all) struct TextInputSmokeModel {
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextInputSmokeModel::equal(Self, Self) -> Bool
 pub fn TextInputSmokeModel::new(value? : String) -> Self
+pub fn TextInputSmokeModel::not_equal(Self, Self) -> Bool
+pub fn TextInputSmokeModel::to_json(Self) -> Json
+pub fn TextInputSmokeModel::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TextInputSmokeMsg {
   ValueChanged(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextInputSmokeMsg::equal(Self, Self) -> Bool
+pub fn TextInputSmokeMsg::not_equal(Self, Self) -> Bool
+pub fn TextInputSmokeMsg::to_json(Self) -> Json
+pub fn TextInputSmokeMsg::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

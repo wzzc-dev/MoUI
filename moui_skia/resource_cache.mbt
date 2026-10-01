@@ -17,6 +17,12 @@ pub(all) struct ResourceCacheStats {
 } derive(Debug, Eq)
 
 ///|
+pub extend ResourceCacheStats with Debug::{to_repr}
+
+///|
+pub extend ResourceCacheStats with Eq::{not_equal, equal}
+
+///|
 /// Small deterministic LRU cache for renderer-owned resources.
 pub(all) struct ResourceCache[K, V] {
   priv entries : Map[K, ResourceCacheItem[V]]

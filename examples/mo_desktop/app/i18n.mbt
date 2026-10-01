@@ -10,6 +10,12 @@ pub(all) enum AppLanguage {
 } derive(Eq, Debug)
 
 ///|
+pub extend AppLanguage with Debug::{to_repr}
+
+///|
+pub extend AppLanguage with Eq::{not_equal, equal}
+
+///|
 fn AppLanguage::tag(self : AppLanguage) -> String {
   match self {
     EnglishLanguage => "en-US"

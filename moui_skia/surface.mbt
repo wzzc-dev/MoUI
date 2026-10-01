@@ -7,6 +7,15 @@ pub(all) enum SurfaceBackend {
 } derive(Debug, Eq)
 
 ///|
+pub extend SurfaceBackend with Debug::{to_repr}
+
+///|
+pub extend SurfaceBackend with Default::{default}
+
+///|
+pub extend SurfaceBackend with Eq::{not_equal, equal}
+
+///|
 pub impl Default for SurfaceBackend with fn default() {
   Raster
 }
@@ -39,6 +48,15 @@ pub(all) enum SurfaceOrigin {
 } derive(Debug, Eq)
 
 ///|
+pub extend SurfaceOrigin with Debug::{to_repr}
+
+///|
+pub extend SurfaceOrigin with Default::{default}
+
+///|
+pub extend SurfaceOrigin with Eq::{not_equal, equal}
+
+///|
 pub impl Default for SurfaceOrigin with fn default() {
   TopLeft
 }
@@ -49,6 +67,15 @@ pub(all) enum SurfaceBudget {
   Budgeted
   Unbudgeted
 } derive(Debug, Eq)
+
+///|
+pub extend SurfaceBudget with Debug::{to_repr}
+
+///|
+pub extend SurfaceBudget with Default::{default}
+
+///|
+pub extend SurfaceBudget with Eq::{not_equal, equal}
 
 ///|
 pub impl Default for SurfaceBudget with fn default() {
@@ -70,6 +97,12 @@ pub(all) struct SurfaceDescriptor {
   stencil_bits : Int
   budget : SurfaceBudget
 } derive(Debug, Eq)
+
+///|
+pub extend SurfaceDescriptor with Debug::{to_repr}
+
+///|
+pub extend SurfaceDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn SurfaceDescriptor::new(

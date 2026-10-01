@@ -29,6 +29,10 @@ pub(all) enum AppLifecycleEvent {
   Foreground
   Background
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AppLifecycleEvent::equal(Self, Self) -> Bool
+pub fn AppLifecycleEvent::not_equal(Self, Self) -> Bool
+pub fn AppLifecycleEvent::to_json(Self) -> Json
+pub fn AppLifecycleEvent::to_repr(Self) -> @debug.Repr
 
 pub struct AppLifecycleSource {
   // private fields
@@ -80,6 +84,9 @@ pub(all) enum ApplicationMenuPlacement {
   MenuBar
   ApplicationMenu
 } derive(Eq, @debug.Debug)
+pub fn ApplicationMenuPlacement::equal(Self, Self) -> Bool
+pub fn ApplicationMenuPlacement::not_equal(Self, Self) -> Bool
+pub fn ApplicationMenuPlacement::to_repr(Self) -> @debug.Repr
 
 pub struct AssociationServices {
   register_protocol_fn : (ProtocolRegistration) -> ServiceTask[Unit]
@@ -95,6 +102,9 @@ pub(all) struct ClipboardImage {
   mime_type : String
   bytes : Bytes
 } derive(Eq, @debug.Debug)
+pub fn ClipboardImage::equal(Self, Self) -> Bool
+pub fn ClipboardImage::not_equal(Self, Self) -> Bool
+pub fn ClipboardImage::to_repr(Self) -> @debug.Repr
 
 pub struct ClipboardServices {
   read_text_fn : () -> ServiceTask[String]
@@ -113,6 +123,10 @@ pub(all) struct DirectoryEntry {
   path : String
   is_directory : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DirectoryEntry::equal(Self, Self) -> Bool
+pub fn DirectoryEntry::not_equal(Self, Self) -> Bool
+pub fn DirectoryEntry::to_json(Self) -> Json
+pub fn DirectoryEntry::to_repr(Self) -> @debug.Repr
 
 pub struct FakeAppServices {
   services_value : AppServices
@@ -155,7 +169,11 @@ pub(all) struct FileAssociation {
   mime_type : String
   handler : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FileAssociation::equal(Self, Self) -> Bool
 pub fn FileAssociation::new(extension~ : String, mime_type~ : String, handler~ : String) -> Self
+pub fn FileAssociation::not_equal(Self, Self) -> Bool
+pub fn FileAssociation::to_json(Self) -> Json
+pub fn FileAssociation::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FileDialogOptions {
   title : String
@@ -198,7 +216,11 @@ pub(all) struct NotificationRequest {
   title : String
   body : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn NotificationRequest::equal(Self, Self) -> Bool
 pub fn NotificationRequest::new(id~ : String, title~ : String, body~ : String) -> Self
+pub fn NotificationRequest::not_equal(Self, Self) -> Bool
+pub fn NotificationRequest::to_json(Self) -> Json
+pub fn NotificationRequest::to_repr(Self) -> @debug.Repr
 
 pub struct NotificationServices {
   notify_fn : (NotificationRequest) -> ServiceTask[Unit]
@@ -216,6 +238,12 @@ pub(all) enum PermissionKind {
   Photos
   Files
 } derive(Eq, Hash, ToJson, @debug.Debug)
+pub fn PermissionKind::equal(Self, Self) -> Bool
+pub fn PermissionKind::hash(Self) -> Int
+pub fn PermissionKind::hash_combine(Self, Hasher) -> Unit
+pub fn PermissionKind::not_equal(Self, Self) -> Bool
+pub fn PermissionKind::to_json(Self) -> Json
+pub fn PermissionKind::to_repr(Self) -> @debug.Repr
 
 pub struct PermissionServices {
   request_fn : (PermissionKind) -> ServiceTask[PermissionStatus]
@@ -228,6 +256,10 @@ pub(all) enum PermissionStatus {
   Denied
   Restricted
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PermissionStatus::equal(Self, Self) -> Bool
+pub fn PermissionStatus::not_equal(Self, Self) -> Bool
+pub fn PermissionStatus::to_json(Self) -> Json
+pub fn PermissionStatus::to_repr(Self) -> @debug.Repr
 
 pub struct PlatformServices {
   notifications_value : NotificationServices
@@ -257,7 +289,11 @@ pub(all) struct PrintRequest {
   text : String
   mime_type : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PrintRequest::equal(Self, Self) -> Bool
 pub fn PrintRequest::new(title~ : String, text~ : String, mime_type? : String) -> Self
+pub fn PrintRequest::not_equal(Self, Self) -> Bool
+pub fn PrintRequest::to_json(Self) -> Json
+pub fn PrintRequest::to_repr(Self) -> @debug.Repr
 
 pub struct PrintServices {
   print_fn : (PrintRequest) -> ServiceTask[Unit]
@@ -269,31 +305,47 @@ pub(all) struct ProtocolRegistration {
   scheme : String
   handler : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ProtocolRegistration::equal(Self, Self) -> Bool
 pub fn ProtocolRegistration::new(scheme~ : String, handler~ : String) -> Self
+pub fn ProtocolRegistration::not_equal(Self, Self) -> Bool
+pub fn ProtocolRegistration::to_json(Self) -> Json
+pub fn ProtocolRegistration::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RouteEvent {
   location : RouteLocation
   source : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteEvent::equal(Self, Self) -> Bool
 pub fn RouteEvent::from_path(String, source? : String) -> Self
 pub fn RouteEvent::from_route(route~ : String, source? : String) -> Self
 pub fn RouteEvent::new(location~ : RouteLocation, source? : String) -> Self
+pub fn RouteEvent::not_equal(Self, Self) -> Bool
 pub fn RouteEvent::route(Self) -> String
+pub fn RouteEvent::to_json(Self) -> Json
+pub fn RouteEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteLocation::equal(Self, Self) -> Bool
 pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
+pub fn RouteLocation::not_equal(Self, Self) -> Bool
 pub fn RouteLocation::parse(String) -> Self
 pub fn RouteLocation::query_value(Self, String) -> String?
+pub fn RouteLocation::to_json(Self) -> Json
+pub fn RouteLocation::to_repr(Self) -> @debug.Repr
 pub fn RouteLocation::to_route(Self) -> String
 
 pub(all) struct RouteQueryParam {
   key : String
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteQueryParam::equal(Self, Self) -> Bool
 pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
+pub fn RouteQueryParam::not_equal(Self, Self) -> Bool
+pub fn RouteQueryParam::to_json(Self) -> Json
+pub fn RouteQueryParam::to_repr(Self) -> @debug.Repr
 
 pub struct RouteSource {
   // private fields
@@ -307,7 +359,11 @@ pub(all) struct ServiceError {
   code : String
   message : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ServiceError::equal(Self, Self) -> Bool
 pub fn ServiceError::new(code~ : String, message~ : String) -> Self
+pub fn ServiceError::not_equal(Self, Self) -> Bool
+pub fn ServiceError::to_json(Self) -> Json
+pub fn ServiceError::to_repr(Self) -> @debug.Repr
 pub fn ServiceError::unavailable(String) -> Self
 
 pub struct ServiceTask[T] {
@@ -330,6 +386,9 @@ pub(all) enum ServiceTaskResult[T] {
   Failure(ServiceError)
   Cancelled
 } derive(Eq, @debug.Debug)
+pub fn[T : Eq] ServiceTaskResult::equal(Self[T], Self[T]) -> Bool
+pub fn[T : Eq] ServiceTaskResult::not_equal(Self[T], Self[T]) -> Bool
+pub fn[T : @debug.Debug] ServiceTaskResult::to_repr(Self[T]) -> @debug.Repr
 
 pub struct SettingsServices {
   read_fn : (String) -> ServiceTask[String?]
@@ -346,7 +405,11 @@ pub(all) struct ShareRequest {
   text : String
   url : String?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ShareRequest::equal(Self, Self) -> Bool
 pub fn ShareRequest::new(title~ : String, text~ : String, url? : String?) -> Self
+pub fn ShareRequest::not_equal(Self, Self) -> Bool
+pub fn ShareRequest::to_json(Self) -> Json
+pub fn ShareRequest::to_repr(Self) -> @debug.Repr
 
 pub struct ShareServices {
   share_fn : (ShareRequest) -> ServiceTask[Unit]
@@ -366,7 +429,11 @@ pub(all) struct TrayItem {
   label : String
   tooltip : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TrayItem::equal(Self, Self) -> Bool
 pub fn TrayItem::new(id~ : String, label~ : String, tooltip? : String) -> Self
+pub fn TrayItem::not_equal(Self, Self) -> Bool
+pub fn TrayItem::to_json(Self) -> Json
+pub fn TrayItem::to_repr(Self) -> @debug.Repr
 
 pub struct TrayServices {
   set_fn : (TrayItem) -> ServiceTask[Unit]

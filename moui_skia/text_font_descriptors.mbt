@@ -7,6 +7,15 @@ pub(all) struct FontStyleRequest {
 } derive(Debug, Eq)
 
 ///|
+pub extend FontStyleRequest with Debug::{to_repr}
+
+///|
+pub extend FontStyleRequest with Default::{default}
+
+///|
+pub extend FontStyleRequest with Eq::{not_equal, equal}
+
+///|
 pub impl Default for FontStyleRequest with fn default() {
   FontStyleRequest::new()
 }
@@ -80,6 +89,12 @@ pub(all) struct FontDescriptor {
   scale_x : Float
   skew_x : Float
 } derive(Debug, Eq)
+
+///|
+pub extend FontDescriptor with Debug::{to_repr}
+
+///|
+pub extend FontDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn FontDescriptor::new(

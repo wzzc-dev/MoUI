@@ -13,15 +13,42 @@ pub(all) struct RichTextInputTransform {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RichTextInputTransform with Debug::{to_repr}
+
+///|
+pub extend RichTextInputTransform with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextInputTransform with ToJson::{to_json}
+
+///|
 pub(all) struct RichTextSourceRange {
   start : Int
   end : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RichTextSourceRange with Debug::{to_repr}
+
+///|
+pub extend RichTextSourceRange with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextSourceRange with ToJson::{to_json}
+
+///|
 pub(all) enum RichTextDecoration {
   Strikethrough
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RichTextDecoration with Debug::{to_repr}
+
+///|
+pub extend RichTextDecoration with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextDecoration with ToJson::{to_json}
 
 ///|
 /// Shape-and-state marker drawn in a block's prefix lane instead of a glyph.
@@ -34,6 +61,15 @@ pub(all) enum RichTextDecoration {
 pub(all) enum RichTextMarker {
   TaskCheckbox(Bool)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RichTextMarker with Debug::{to_repr}
+
+///|
+pub extend RichTextMarker with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextMarker with ToJson::{to_json}
 
 ///|
 pub(all) struct RichTextRun {
@@ -52,6 +88,15 @@ pub(all) struct RichTextRun {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RichTextRun with Debug::{to_repr}
+
+///|
+pub extend RichTextRun with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextRun with ToJson::{to_json}
+
+///|
 /// One table cell. `text` is the cell's raw source (markers included);
 /// `runs` is the styled projection (markers hidden, one run per inline
 /// span) used by paint/geometry. Empty `runs` means "render `text` plain",
@@ -66,6 +111,15 @@ pub(all) struct RichTextTableCell {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RichTextTableCell with Debug::{to_repr}
+
+///|
+pub extend RichTextTableCell with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextTableCell with ToJson::{to_json}
+
+///|
 pub(all) struct RichTextTable {
   rows : Array[Array[RichTextTableCell]]
   row_height : Double
@@ -73,6 +127,15 @@ pub(all) struct RichTextTable {
   border : @core.Color
   header_background : @core.Brush?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RichTextTable with Debug::{to_repr}
+
+///|
+pub extend RichTextTable with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextTable with ToJson::{to_json}
 
 ///|
 pub(all) struct RichTextBlock {
@@ -94,9 +157,27 @@ pub(all) struct RichTextBlock {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RichTextBlock with Debug::{to_repr}
+
+///|
+pub extend RichTextBlock with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextBlock with ToJson::{to_json}
+
+///|
 pub(all) struct RichTextDocument {
   blocks : Array[RichTextBlock]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RichTextDocument with Debug::{to_repr}
+
+///|
+pub extend RichTextDocument with Eq::{not_equal, equal}
+
+///|
+pub extend RichTextDocument with ToJson::{to_json}
 
 ///|
 pub fn RichTextRun::new(

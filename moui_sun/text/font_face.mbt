@@ -5,6 +5,9 @@ struct FontFace {
 } derive(Debug)
 
 ///|
+pub extend FontFace with Debug::{to_repr}
+
+///|
 /// Wrap an already parsed font as a face.
 fn FontFace::from_font(font : Font) -> FontFace {
   { font, }
@@ -45,11 +48,17 @@ struct FontFaceCache {
 } derive(Debug)
 
 ///|
+pub extend FontFaceCache with Debug::{to_repr}
+
+///|
 /// Result of reading a checked font face from cache or parsing it on miss.
 struct FontFaceCacheParseResult {
   face : FontFace
   did_parse : Bool
 } derive(Debug)
+
+///|
+pub extend FontFaceCacheParseResult with Debug::{to_repr}
 
 ///|
 /// Create an empty font-face cache.

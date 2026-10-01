@@ -7,6 +7,9 @@ pub struct LayerTree {
 } derive(Debug)
 
 ///|
+pub extend LayerTree with Debug::{to_repr}
+
+///|
 pub fn LayerTree::new() -> LayerTree {
   { layers: [], invalidation: DirtyRegion::new(), }
 }

@@ -81,11 +81,15 @@ pub struct RouteDescriptor {
   title : String
   fallback : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteDescriptor::equal(Self, Self) -> Bool
 pub fn RouteDescriptor::fallback(Self) -> Bool
 pub fn RouteDescriptor::id(Self) -> String
 pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
+pub fn RouteDescriptor::not_equal(Self, Self) -> Bool
 pub fn RouteDescriptor::path(Self) -> String
 pub fn RouteDescriptor::title(Self) -> String
+pub fn RouteDescriptor::to_json(Self) -> Json
+pub fn RouteDescriptor::to_repr(Self) -> @debug.Repr
 
 type RouteFocusStore
 pub fn RouteFocusStore::focus_key(Self, String) -> String?
@@ -99,11 +103,15 @@ pub struct RouteHistoryEntry {
   title : String
   source : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteHistoryEntry::equal(Self, Self) -> Bool
 pub fn RouteHistoryEntry::location(Self) -> RouteLocation
 pub fn RouteHistoryEntry::new(route~ : String, title? : String, source? : String) -> Self
+pub fn RouteHistoryEntry::not_equal(Self, Self) -> Bool
 pub fn RouteHistoryEntry::route(Self) -> String
 pub fn RouteHistoryEntry::source(Self) -> String
 pub fn RouteHistoryEntry::title(Self) -> String
+pub fn RouteHistoryEntry::to_json(Self) -> Json
+pub fn RouteHistoryEntry::to_repr(Self) -> @debug.Repr
 
 pub struct RouteHistoryState {
   entries : Array[RouteHistoryEntry]
@@ -117,50 +125,70 @@ pub fn RouteHistoryState::current_entry(Self) -> RouteHistoryEntry?
 pub fn RouteHistoryState::current_route(Self) -> String
 pub fn RouteHistoryState::cursor(Self) -> Int
 pub fn RouteHistoryState::entries(Self) -> Array[RouteHistoryEntry]
+pub fn RouteHistoryState::equal(Self, Self) -> Bool
 pub fn RouteHistoryState::forward(Self) -> Self
 pub fn RouteHistoryState::from_deep_link(String, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::from_snapshot(RouterSnapshot, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::new(initial? : RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::not_equal(Self, Self) -> Bool
 pub fn RouteHistoryState::push(Self, RouteLocation, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::replace(Self, RouteLocation, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::restore_router(Self) -> RouterState
 pub fn RouteHistoryState::router_snapshot(Self) -> RouterSnapshot
+pub fn RouteHistoryState::to_json(Self) -> Json
+pub fn RouteHistoryState::to_repr(Self) -> @debug.Repr
 
 pub struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteLocation::equal(Self, Self) -> Bool
 pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
+pub fn RouteLocation::not_equal(Self, Self) -> Bool
 pub fn RouteLocation::param_value(Self, String) -> String?
 pub fn RouteLocation::params(Self) -> Array[RouteParam]
 pub fn RouteLocation::parse(String) -> Self
 pub fn RouteLocation::path(Self) -> String
 pub fn RouteLocation::query(Self) -> Array[RouteQueryParam]
 pub fn RouteLocation::query_value(Self, String) -> String?
+pub fn RouteLocation::to_json(Self) -> Json
+pub fn RouteLocation::to_repr(Self) -> @debug.Repr
 pub fn RouteLocation::to_route(Self) -> String
 
 pub struct RouteParam {
   key : String
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteParam::equal(Self, Self) -> Bool
 pub fn RouteParam::key(Self) -> String
 pub fn RouteParam::new(key~ : String, value~ : String) -> Self
+pub fn RouteParam::not_equal(Self, Self) -> Bool
+pub fn RouteParam::to_json(Self) -> Json
+pub fn RouteParam::to_repr(Self) -> @debug.Repr
 pub fn RouteParam::value(Self) -> String
 
 pub struct RouteQueryParam {
   key : String
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteQueryParam::equal(Self, Self) -> Bool
 pub fn RouteQueryParam::key(Self) -> String
 pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
+pub fn RouteQueryParam::not_equal(Self, Self) -> Bool
+pub fn RouteQueryParam::to_json(Self) -> Json
+pub fn RouteQueryParam::to_repr(Self) -> @debug.Repr
 pub fn RouteQueryParam::value(Self) -> String
 
 pub struct RouterSnapshot {
   routes : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouterSnapshot::equal(Self, Self) -> Bool
 pub fn RouterSnapshot::new(routes~ : Array[String]) -> Self
+pub fn RouterSnapshot::not_equal(Self, Self) -> Bool
 pub fn RouterSnapshot::routes(Self) -> Array[String]
+pub fn RouterSnapshot::to_json(Self) -> Json
+pub fn RouterSnapshot::to_repr(Self) -> @debug.Repr
 
 type RouterState
 pub fn RouterState::current(Self) -> RouteLocation

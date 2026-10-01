@@ -7,3 +7,12 @@ pub(all) enum RendererControlMessage {
   ContextLoss(String)
   Shutdown
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererControlMessage with Debug::{to_repr}
+
+///|
+pub extend RendererControlMessage with Eq::{not_equal, equal}
+
+///|
+pub extend RendererControlMessage with ToJson::{to_json}

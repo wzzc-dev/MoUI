@@ -28,18 +28,24 @@ pub(all) struct CompileDiagnostic {
   end_line : Int
   end_column : Int
 } derive(ToJson, @json.FromJson)
+pub fn CompileDiagnostic::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileDiagnostic::to_json(Self) -> Json
 
 pub(all) struct CompileFile {
   path : String
   source : String
 } derive(ToJson, @json.FromJson)
+pub fn CompileFile::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileFile::to_json(Self) -> Json
 
 pub(all) struct CompileRequest {
   revision : Int
   files : Array[CompileFile]
   lesson_id : String
 } derive(ToJson, @json.FromJson)
+pub fn CompileRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn CompileRequest::new(Model) -> Self
+pub fn CompileRequest::to_json(Self) -> Json
 pub fn CompileRequest::to_json_line(Self) -> String
 
 pub(all) struct CompileResult {
@@ -47,12 +53,18 @@ pub(all) struct CompileResult {
   status : CompileStatus
   diagnostics : Array[CompileDiagnostic]
 } derive(ToJson, @json.FromJson)
+pub fn CompileResult::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileResult::to_json(Self) -> Json
 
 pub(all) enum CompileStatus {
   Success
   Failed
   Unavailable
 } derive(Eq, ToJson, @json.FromJson)
+pub fn CompileStatus::equal(Self, Self) -> Bool
+pub fn CompileStatus::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileStatus::not_equal(Self, Self) -> Bool
+pub fn CompileStatus::to_json(Self) -> Json
 
 pub(all) struct Model {
   editor : @code_editor.EditorState
@@ -93,13 +105,17 @@ pub(all) enum PlaygroundFile {
   Main
   Package
 } derive(Eq)
+pub fn PlaygroundFile::equal(Self, Self) -> Bool
+pub fn PlaygroundFile::not_equal(Self, Self) -> Bool
 
 pub(all) struct PlaygroundProject {
   schema_version : Int
   files : Array[CompileFile]
   lesson_id : String
 } derive(ToJson, @json.FromJson)
+pub fn PlaygroundProject::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn PlaygroundProject::new(Model) -> Self
+pub fn PlaygroundProject::to_json(Self) -> Json
 pub fn PlaygroundProject::to_json_line(Self) -> String
 
 // Type aliases

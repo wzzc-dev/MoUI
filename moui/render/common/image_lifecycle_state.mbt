@@ -4,6 +4,12 @@ pub struct ImageResourceLifecycle {
 } derive(Eq, Debug)
 
 ///|
+pub extend ImageResourceLifecycle with Debug::{to_repr}
+
+///|
+pub extend ImageResourceLifecycle with Eq::{not_equal, equal}
+
+///|
 pub fn ImageResourceLifecycle::new() -> ImageResourceLifecycle {
   { records: Map([]), }
 }

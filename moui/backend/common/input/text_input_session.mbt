@@ -7,6 +7,12 @@ pub(all) enum TextInputSessionAction {
 } derive(Eq, Debug)
 
 ///|
+pub extend TextInputSessionAction with Debug::{to_repr}
+
+///|
+pub extend TextInputSessionAction with Eq::{not_equal, equal}
+
+///|
 pub(all) struct TextInputImeRequestDiagnostics {
   focused : Bool
   text_length : Int
@@ -26,6 +32,15 @@ pub(all) struct TextInputImeRequestDiagnostics {
   // cursor instead (see `text_input_ime_request_diagnostics_windowed`).
   surrounding_text : String?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextInputImeRequestDiagnostics with Debug::{to_repr}
+
+///|
+pub extend TextInputImeRequestDiagnostics with Eq::{not_equal, equal}
+
+///|
+pub extend TextInputImeRequestDiagnostics with ToJson::{to_json}
 
 ///|
 /// Identity of the text-input state the cached IME diagnostics describe.

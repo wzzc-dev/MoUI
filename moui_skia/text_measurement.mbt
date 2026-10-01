@@ -19,6 +19,12 @@ pub(all) struct TextMeasurementDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend TextMeasurementDescriptor with Debug::{to_repr}
+
+///|
+pub extend TextMeasurementDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn TextMeasurementDescriptor::new(
   run? : TextRunDescriptor = TextRunDescriptor::new(),
   font_key? : RendererResourceKey = RendererResourceKey::font(b""),
@@ -179,6 +185,12 @@ pub(all) struct MeasuredTextRunDescriptor {
   advance : Float
   bounds : Rect?
 } derive(Debug, Eq)
+
+///|
+pub extend MeasuredTextRunDescriptor with Debug::{to_repr}
+
+///|
+pub extend MeasuredTextRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn MeasuredTextRunDescriptor::new(

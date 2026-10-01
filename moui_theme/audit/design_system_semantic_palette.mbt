@@ -17,6 +17,15 @@ pub(all) enum DesignSemanticPaletteRole {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignSemanticPaletteRole with Debug::{to_repr}
+
+///|
+pub extend DesignSemanticPaletteRole with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSemanticPaletteRole with ToJson::{to_json}
+
+///|
 pub(all) struct DesignSemanticPaletteRoleRecord {
   preset : @common.DesignPreset
   role : DesignSemanticPaletteRole
@@ -42,6 +51,15 @@ pub(all) struct DesignSemanticPaletteRoleRecord {
   remaining_gap : String
   note : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignSemanticPaletteRoleRecord with Debug::{to_repr}
+
+///|
+pub extend DesignSemanticPaletteRoleRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSemanticPaletteRoleRecord with ToJson::{to_json}
 
 ///|
 priv struct SemanticPaletteSourceEvidence {

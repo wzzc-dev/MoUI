@@ -27,6 +27,15 @@ pub(all) struct EmbeddedImeRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EmbeddedImeRequest with Debug::{to_repr}
+
+///|
+pub extend EmbeddedImeRequest with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedImeRequest with ToJson::{to_json}
+
+///|
 pub(all) struct EmbeddedSemanticsNode {
   node_id : @core.SemanticsNodeId
   semantic_id : @core.SemanticId?
@@ -50,6 +59,15 @@ pub(all) struct EmbeddedSemanticsNode {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EmbeddedSemanticsNode with Debug::{to_repr}
+
+///|
+pub extend EmbeddedSemanticsNode with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedSemanticsNode with ToJson::{to_json}
+
+///|
 pub(all) struct EmbeddedSemanticsUpdate {
   kind : String
   generation : @core.SemanticsGeneration
@@ -63,10 +81,28 @@ pub(all) struct EmbeddedSemanticsUpdate {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EmbeddedSemanticsUpdate with Debug::{to_repr}
+
+///|
+pub extend EmbeddedSemanticsUpdate with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedSemanticsUpdate with ToJson::{to_json}
+
+///|
 pub(all) struct EmbeddedPlatformViewSnapshot {
   revision : Int
   placements : Array[@core.PlatformViewPlacement]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend EmbeddedPlatformViewSnapshot with Debug::{to_repr}
+
+///|
+pub extend EmbeddedPlatformViewSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedPlatformViewSnapshot with ToJson::{to_json}
 
 ///|
 pub(all) enum EmbeddedHostUpdate {
@@ -79,6 +115,15 @@ pub(all) enum EmbeddedHostUpdate {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EmbeddedHostUpdate with Debug::{to_repr}
+
+///|
+pub extend EmbeddedHostUpdate with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedHostUpdate with ToJson::{to_json}
+
+///|
 pub(all) enum EmbeddedHostResponse {
   TextInput(@core.TextInputEvent)
   Command(@core.CommandIntent)
@@ -89,6 +134,15 @@ pub(all) enum EmbeddedHostResponse {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EmbeddedHostResponse with Debug::{to_repr}
+
+///|
+pub extend EmbeddedHostResponse with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedHostResponse with ToJson::{to_json}
+
+///|
 pub(all) struct EmbeddedHostUpdateEnvelope {
   schema_version : Int
   session_generation : Int
@@ -96,11 +150,29 @@ pub(all) struct EmbeddedHostUpdateEnvelope {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EmbeddedHostUpdateEnvelope with Debug::{to_repr}
+
+///|
+pub extend EmbeddedHostUpdateEnvelope with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedHostUpdateEnvelope with ToJson::{to_json}
+
+///|
 pub(all) struct EmbeddedHostResponseEnvelope {
   schema_version : Int
   session_generation : Int
   response : EmbeddedHostResponse
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend EmbeddedHostResponseEnvelope with Debug::{to_repr}
+
+///|
+pub extend EmbeddedHostResponseEnvelope with Eq::{not_equal, equal}
+
+///|
+pub extend EmbeddedHostResponseEnvelope with ToJson::{to_json}
 
 ///|
 pub fn embedded_text_input_response(

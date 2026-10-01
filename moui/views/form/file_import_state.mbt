@@ -6,6 +6,12 @@ pub(all) enum FileImportAvailability {
 } derive(Eq, Debug)
 
 ///|
+pub extend FileImportAvailability with Debug::{to_repr}
+
+///|
+pub extend FileImportAvailability with Eq::{not_equal, equal}
+
+///|
 pub fn FileImportAvailability::to_string(
   self : FileImportAvailability,
 ) -> String {

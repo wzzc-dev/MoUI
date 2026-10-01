@@ -8,6 +8,9 @@ struct LineSegment {
 } derive(Debug)
 
 ///|
+pub extend LineSegment with Debug::{to_repr}
+
+///|
 priv struct CurvePoint {
   cx : Double
   cy : Double
@@ -31,6 +34,9 @@ struct CoverageMask {
   height : Int
   pixels : FixedArray[Byte]
 } derive(Debug)
+
+///|
+pub extend CoverageMask with Debug::{to_repr}
 
 ///|
 /// Create a coverage mask from grayscale pixels
@@ -77,12 +83,18 @@ struct GlyphAtlasEntry {
 } derive(Debug)
 
 ///|
+pub extend GlyphAtlasEntry with Debug::{to_repr}
+
+///|
 /// Result of inserting a glyph mask into an atlas with lifecycle policy.
 struct GlyphMaskAtlasInsertResult {
   entry : GlyphAtlasEntry
   did_clear : Bool
   did_reuse : Bool
 } derive(Debug)
+
+///|
+pub extend GlyphMaskAtlasInsertResult with Debug::{to_repr}
 
 ///|
 priv struct GlyphAtlasPlacement {
@@ -169,6 +181,9 @@ struct GlyphMaskAtlas {
   mut row_height : Int
   mut used_pixel_count : Int
 } derive(Debug)
+
+///|
+pub extend GlyphMaskAtlas with Debug::{to_repr}
 
 ///|
 /// Create an empty glyph mask atlas.
@@ -404,11 +419,17 @@ struct GlyphMaskCache {
 } derive(Debug)
 
 ///|
+pub extend GlyphMaskCache with Debug::{to_repr}
+
+///|
 /// Result of reading a glyph mask from cache or rasterizing it on miss.
 struct GlyphMaskCacheRasterizeResult {
   mask : CoverageMask
   did_rasterize : Bool
 } derive(Debug)
+
+///|
+pub extend GlyphMaskCacheRasterizeResult with Debug::{to_repr}
 
 ///|
 /// Placement data for a glyph mask rendered from a font face.
@@ -422,12 +443,18 @@ struct FaceGlyphMaskPlacement {
 } derive(Debug)
 
 ///|
+pub extend FaceGlyphMaskPlacement with Debug::{to_repr}
+
+///|
 /// Result of reading a face glyph mask from cache or rasterizing it on miss.
 struct FaceGlyphMaskCacheResult {
   mask : CoverageMask
   placement : FaceGlyphMaskPlacement
   did_rasterize : Bool
 } derive(Debug)
+
+///|
+pub extend FaceGlyphMaskCacheResult with Debug::{to_repr}
 
 ///|
 /// Create an empty glyph mask cache.
@@ -722,11 +749,17 @@ struct TextMaskCache {
 } derive(Debug)
 
 ///|
+pub extend TextMaskCache with Debug::{to_repr}
+
+///|
 /// Result of reading a rendered text mask from cache or rendering it on miss.
 struct TextMaskCacheRenderResult {
   mask : CoverageMask
   did_render : Bool
 } derive(Debug)
+
+///|
+pub extend TextMaskCacheRenderResult with Debug::{to_repr}
 
 ///|
 /// Create an empty text mask cache.

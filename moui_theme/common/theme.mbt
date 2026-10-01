@@ -7,6 +7,15 @@ pub(all) enum DesignPreset {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignPreset with Debug::{to_repr}
+
+///|
+pub extend DesignPreset with Eq::{not_equal, equal}
+
+///|
+pub extend DesignPreset with ToJson::{to_json}
+
+///|
 pub fn DesignPreset::label(self : DesignPreset) -> String {
   match self {
     Material => "Material"

@@ -36,6 +36,15 @@ pub(all) struct AriaNode {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend AriaNode with Debug::{to_repr}
+
+///|
+pub extend AriaNode with Eq::{not_equal, equal}
+
+///|
+pub extend AriaNode with ToJson::{to_json}
+
+///|
 pub(all) struct AriaSemanticsUpdate {
   kind : String
   generation : @core.SemanticsGeneration
@@ -45,6 +54,15 @@ pub(all) struct AriaSemanticsUpdate {
   nodes : Array[AriaNode]
   removed : Array[@core.SemanticsNodeId]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend AriaSemanticsUpdate with Debug::{to_repr}
+
+///|
+pub extend AriaSemanticsUpdate with Eq::{not_equal, equal}
+
+///|
+pub extend AriaSemanticsUpdate with ToJson::{to_json}
 
 ///|
 pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {

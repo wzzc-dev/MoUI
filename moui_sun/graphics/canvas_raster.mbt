@@ -7,12 +7,18 @@ struct CanvasEdge {
 } derive(Debug)
 
 ///|
+pub extend CanvasEdge with Debug::{to_repr}
+
+///|
 struct StrokeEndpoint {
   x : Double
   y : Double
   dir_x : Double
   dir_y : Double
 } derive(Debug)
+
+///|
+pub extend StrokeEndpoint with Debug::{to_repr}
 
 ///|
 struct StrokeJoinPoint {
@@ -25,6 +31,9 @@ struct StrokeJoinPoint {
 } derive(Debug)
 
 ///|
+pub extend StrokeJoinPoint with Debug::{to_repr}
+
+///|
 struct StrokePathData {
   edges : Array[CanvasEdge]
   endpoints : Array[StrokeEndpoint]
@@ -33,12 +42,18 @@ struct StrokePathData {
 } derive(Debug)
 
 ///|
+pub extend StrokePathData with Debug::{to_repr}
+
+///|
 struct DashCursor {
   pattern : Array[Double]
   mut index : Int
   mut remaining : Double
   mut is_drawing : Bool
 } derive(Debug)
+
+///|
+pub extend DashCursor with Debug::{to_repr}
 
 ///|
 fn path_to_edges(path : Path, transform : Transform) -> Array[CanvasEdge] {

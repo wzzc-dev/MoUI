@@ -6,11 +6,29 @@ pub(all) struct TextLayoutInput {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextLayoutInput with Debug::{to_repr}
+
+///|
+pub extend TextLayoutInput with Eq::{not_equal, equal}
+
+///|
+pub extend TextLayoutInput with ToJson::{to_json}
+
+///|
 pub(all) struct TextLayoutResult {
   size : Size
   baseline : Double
   caret_positions : Array[Double]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextLayoutResult with Debug::{to_repr}
+
+///|
+pub extend TextLayoutResult with Eq::{not_equal, equal}
+
+///|
+pub extend TextLayoutResult with ToJson::{to_json}
 
 ///|
 pub(all) struct TextParagraphLineMetrics {
@@ -20,6 +38,15 @@ pub(all) struct TextParagraphLineMetrics {
   size : Size
   baseline : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextParagraphLineMetrics with Debug::{to_repr}
+
+///|
+pub extend TextParagraphLineMetrics with Eq::{not_equal, equal}
+
+///|
+pub extend TextParagraphLineMetrics with ToJson::{to_json}
 
 ///|
 pub(all) struct TextParagraphVisualOrderMetadata {
@@ -34,6 +61,15 @@ pub(all) struct TextParagraphVisualOrderMetadata {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextParagraphVisualOrderMetadata with Debug::{to_repr}
+
+///|
+pub extend TextParagraphVisualOrderMetadata with Eq::{not_equal, equal}
+
+///|
+pub extend TextParagraphVisualOrderMetadata with ToJson::{to_json}
+
+///|
 pub(all) struct TextParagraphLayoutMetadata {
   text_system_id : String
   paragraph_layout_available : Bool
@@ -45,12 +81,30 @@ pub(all) struct TextParagraphLayoutMetadata {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextParagraphLayoutMetadata with Debug::{to_repr}
+
+///|
+pub extend TextParagraphLayoutMetadata with Eq::{not_equal, equal}
+
+///|
+pub extend TextParagraphLayoutMetadata with ToJson::{to_json}
+
+///|
 pub(all) struct TextParagraphHitTestResult {
   offset : Int
   line_index : Int
   caret_rect : Rect
   is_inside : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextParagraphHitTestResult with Debug::{to_repr}
+
+///|
+pub extend TextParagraphHitTestResult with Eq::{not_equal, equal}
+
+///|
+pub extend TextParagraphHitTestResult with ToJson::{to_json}
 
 ///|
 pub(all) struct TextParagraphLayoutResult {
@@ -62,6 +116,15 @@ pub(all) struct TextParagraphLayoutResult {
   visual_order : TextParagraphVisualOrderMetadata
   metadata : TextParagraphLayoutMetadata
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextParagraphLayoutResult with Debug::{to_repr}
+
+///|
+pub extend TextParagraphLayoutResult with Eq::{not_equal, equal}
+
+///|
+pub extend TextParagraphLayoutResult with ToJson::{to_json}
 
 ///|
 pub struct TextSystem {

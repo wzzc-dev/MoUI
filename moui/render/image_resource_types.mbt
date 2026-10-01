@@ -7,6 +7,15 @@ pub(all) enum ImageResourceStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ImageResourceStatus with Debug::{to_repr}
+
+///|
+pub extend ImageResourceStatus with Eq::{not_equal, equal}
+
+///|
+pub extend ImageResourceStatus with ToJson::{to_json}
+
+///|
 pub(all) struct ImageResourceRecord {
   source : String
   status : ImageResourceStatus
@@ -16,10 +25,28 @@ pub(all) struct ImageResourceRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ImageResourceRecord with Debug::{to_repr}
+
+///|
+pub extend ImageResourceRecord with Eq::{not_equal, equal}
+
+///|
+pub extend ImageResourceRecord with ToJson::{to_json}
+
+///|
 pub(all) enum ImageResourceLoadCompletionStatus {
   ImageLoadReady
   ImageLoadFailed
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ImageResourceLoadCompletionStatus with Debug::{to_repr}
+
+///|
+pub extend ImageResourceLoadCompletionStatus with Eq::{not_equal, equal}
+
+///|
+pub extend ImageResourceLoadCompletionStatus with ToJson::{to_json}
 
 ///|
 pub(all) struct ImageResourceLoadCompletion {
@@ -33,3 +60,12 @@ pub(all) struct ImageResourceLoadCompletion {
   decoded_row_bytes : Int
   background_decode : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ImageResourceLoadCompletion with Debug::{to_repr}
+
+///|
+pub extend ImageResourceLoadCompletion with Eq::{not_equal, equal}
+
+///|
+pub extend ImageResourceLoadCompletion with ToJson::{to_json}

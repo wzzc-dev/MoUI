@@ -7,6 +7,15 @@ pub(all) struct MacosBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MacosBackendInfo with Debug::{to_repr}
+
+///|
+pub extend MacosBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend MacosBackendInfo with ToJson::{to_json}
+
+///|
 pub(all) struct MacosAccessibilityBridgeInfo {
   kind : String
   semantics_bridge_available : Bool
@@ -14,6 +23,15 @@ pub(all) struct MacosAccessibilityBridgeInfo {
   action_dispatch_available : Bool
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MacosAccessibilityBridgeInfo with Debug::{to_repr}
+
+///|
+pub extend MacosAccessibilityBridgeInfo with Eq::{not_equal, equal}
+
+///|
+pub extend MacosAccessibilityBridgeInfo with ToJson::{to_json}
 
 ///|
 pub struct MacosHostAppOptions {
@@ -129,6 +147,21 @@ struct MacosNativeHostBackend {
   mut promotion_recovered_within_vsyncs : Int
   mut promotion_recovery_count_before : Int
   mut promotion_fallback_count : Int
+}
+
+///|
+pub extend MacosNativeHostBackend with @wzzc-dev/window/macos.ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
 }
 
 ///|

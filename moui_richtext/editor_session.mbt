@@ -9,6 +9,15 @@ pub(all) enum MarkdownEditReason {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownEditReason with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditReason with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditReason with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownEditTransaction {
   previous_source : String
   source : String
@@ -24,12 +33,30 @@ pub(all) struct MarkdownEditTransaction {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownEditTransaction with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditTransaction with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditTransaction with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownDocumentDirtyRange {
   start_block : Int
   end_block : Int
   source_start : Int
   source_end : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownDocumentDirtyRange with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentDirtyRange with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentDirtyRange with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentBlock {
@@ -51,6 +78,15 @@ pub(all) struct MarkdownDocumentBlock {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownDocumentBlock with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentBlock with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentBlock with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownDocumentLayoutBlock {
   block_id : Int
   block_index : Int
@@ -59,6 +95,15 @@ pub(all) struct MarkdownDocumentLayoutBlock {
   height : Double
   source_range : MarkdownSourceRange
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownDocumentLayoutBlock with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentLayoutBlock with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentLayoutBlock with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentBlockHeightMetric {
@@ -75,11 +120,29 @@ pub(all) struct MarkdownDocumentBlockHeightMetric {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownDocumentBlockHeightMetric with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentBlockHeightMetric with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentBlockHeightMetric with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownDocumentHeightIndex {
   visual_content_units : Double
   source_content_units : Double
   blocks : Array[MarkdownDocumentBlockHeightMetric]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownDocumentHeightIndex with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentHeightIndex with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentHeightIndex with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentLayoutCache {
@@ -93,6 +156,15 @@ pub(all) struct MarkdownDocumentLayoutCache {
   visible_end : Int
   blocks : Array[MarkdownDocumentLayoutBlock]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownDocumentLayoutCache with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentLayoutCache with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentLayoutCache with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentRichTextWindow {
@@ -112,6 +184,15 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   // this. It is exposed for assertions and diagnostics.
   clip_lines : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownDocumentRichTextWindow with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentRichTextWindow with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentRichTextWindow with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentSession {
@@ -141,6 +222,15 @@ pub(all) struct MarkdownDocumentSession {
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownDocumentSession with Debug::{to_repr}
+
+///|
+pub extend MarkdownDocumentSession with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownDocumentSession with ToJson::{to_json}
 
 ///|
 /// Process-local identity allocator for document-scoped layout caches.

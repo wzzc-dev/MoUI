@@ -23,6 +23,9 @@ pub(all) enum AssetLoadResult {
 } derive(Debug)
 
 ///|
+pub extend AssetLoadResult with Debug::{to_repr}
+
+///|
 /// Resolve an embedded asset directly or delegate URI lookup to the injected
 /// source. This small helper is deterministic and easy to test.
 pub fn load_asset(

@@ -7,6 +7,9 @@ pub(all) struct ViewportSnapshot {
 } derive(Debug)
 
 ///|
+pub extend ViewportSnapshot with Debug::{to_repr}
+
+///|
 pub fn ViewportSnapshot::new(
   scene_revision~ : Int64,
   scene~ : Scene,
@@ -50,6 +53,15 @@ pub(all) enum ViewportStatus {
   Unavailable(String)
   Failed(String)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ViewportStatus with Debug::{to_repr}
+
+///|
+pub extend ViewportStatus with Eq::{not_equal, equal}
+
+///|
+pub extend ViewportStatus with ToJson::{to_json}
 
 ///|
 pub fn ThreeDViewportBinding::new() -> ThreeDViewportBinding {
@@ -327,6 +339,12 @@ pub(all) enum ViewportEvent {
   Pick(NodeId)
   RendererStatus
 } derive(Eq, Debug)
+
+///|
+pub extend ViewportEvent with Debug::{to_repr}
+
+///|
+pub extend ViewportEvent with Eq::{not_equal, equal}
 
 ///|
 /// Decode the stable, human-readable platform event names used by the addon

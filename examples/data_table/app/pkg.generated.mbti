@@ -25,19 +25,31 @@ pub(all) struct DataRecord {
   team : String
   priority : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DataRecord::equal(Self, Self) -> Bool
 pub fn DataRecord::new(id~ : Int, project~ : String, status~ : String, owner~ : String, team~ : String, priority~ : String) -> Self
+pub fn DataRecord::not_equal(Self, Self) -> Bool
+pub fn DataRecord::to_json(Self) -> Json
+pub fn DataRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DataSortKey {
   Project
   Owner
   Status
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DataSortKey::equal(Self, Self) -> Bool
+pub fn DataSortKey::not_equal(Self, Self) -> Bool
+pub fn DataSortKey::to_json(Self) -> Json
+pub fn DataSortKey::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DataStatus {
   Ready
   Loading
   Failed(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DataStatus::equal(Self, Self) -> Bool
+pub fn DataStatus::not_equal(Self, Self) -> Bool
+pub fn DataStatus::to_json(Self) -> Json
+pub fn DataStatus::to_repr(Self) -> @debug.Repr
 
 pub struct DataTableApp {
   unit : Unit

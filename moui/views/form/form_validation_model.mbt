@@ -14,10 +14,28 @@ pub struct FormValidationResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FormValidationResult with Debug::{to_repr}
+
+///|
+pub extend FormValidationResult with Eq::{not_equal, equal}
+
+///|
+pub extend FormValidationResult with ToJson::{to_json}
+
+///|
 pub struct FormFieldError {
   name : String
   message : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FormFieldError with Debug::{to_repr}
+
+///|
+pub extend FormFieldError with Eq::{not_equal, equal}
+
+///|
+pub extend FormFieldError with ToJson::{to_json}
 
 ///|
 struct FormValidationRule {
@@ -30,6 +48,15 @@ pub struct FormValidationSummary {
   errors : Array[FormFieldError]
   first_invalid_id : String?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FormValidationSummary with Debug::{to_repr}
+
+///|
+pub extend FormValidationSummary with Eq::{not_equal, equal}
+
+///|
+pub extend FormValidationSummary with ToJson::{to_json}
 
 ///|
 struct FormController {

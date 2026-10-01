@@ -31,9 +31,13 @@ pub fn size_dim_to_uint(Double) -> UInt
 pub struct FrameToken {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FrameToken::equal(Self, Self) -> Bool
 pub fn FrameToken::new(surface_generation~ : Int, sequence~ : Int) -> Self
+pub fn FrameToken::not_equal(Self, Self) -> Bool
 pub fn FrameToken::sequence(Self) -> Int
 pub fn FrameToken::surface_generation(Self) -> Int
+pub fn FrameToken::to_json(Self) -> Json
+pub fn FrameToken::to_repr(Self) -> @debug.Repr
 
 pub struct HostImageSource {
   read_fn : (String) -> Bytes?
@@ -64,15 +68,23 @@ pub(all) struct ImageResourceLoadCompletion {
   decoded_row_bytes : Int
   background_decode : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ImageResourceLoadCompletion::equal(Self, Self) -> Bool
 pub fn ImageResourceLoadCompletion::failed(String, diagnostic~ : String, background_io? : Bool) -> Self
 pub fn ImageResourceLoadCompletion::has_decoded_rgba_payload(Self) -> Bool
+pub fn ImageResourceLoadCompletion::not_equal(Self, Self) -> Bool
 pub fn ImageResourceLoadCompletion::ready(String, width~ : Int, height~ : Int, background_io? : Bool) -> Self
 pub fn ImageResourceLoadCompletion::ready_decoded_rgba(String, width~ : Int, height~ : Int, row_bytes~ : Int, Bytes, background_io? : Bool, background_decode? : Bool) -> Self
+pub fn ImageResourceLoadCompletion::to_json(Self) -> Json
+pub fn ImageResourceLoadCompletion::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ImageResourceLoadCompletionStatus {
   ImageLoadReady
   ImageLoadFailed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ImageResourceLoadCompletionStatus::equal(Self, Self) -> Bool
+pub fn ImageResourceLoadCompletionStatus::not_equal(Self, Self) -> Bool
+pub fn ImageResourceLoadCompletionStatus::to_json(Self) -> Json
+pub fn ImageResourceLoadCompletionStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ImageResourceRecord {
   source : String
@@ -82,9 +94,13 @@ pub(all) struct ImageResourceRecord {
   diagnostic : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ImageResourceRecord::disposed(String) -> Self
+pub fn ImageResourceRecord::equal(Self, Self) -> Bool
 pub fn ImageResourceRecord::failed(String, diagnostic~ : String) -> Self
 pub fn ImageResourceRecord::loading(String) -> Self
+pub fn ImageResourceRecord::not_equal(Self, Self) -> Bool
 pub fn ImageResourceRecord::ready(String, width~ : Int, height~ : Int) -> Self
+pub fn ImageResourceRecord::to_json(Self) -> Json
+pub fn ImageResourceRecord::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ImageResourceStatus {
   ImageLoading
@@ -92,6 +108,10 @@ pub(all) enum ImageResourceStatus {
   ImageFailed
   ImageDisposed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ImageResourceStatus::equal(Self, Self) -> Bool
+pub fn ImageResourceStatus::not_equal(Self, Self) -> Bool
+pub fn ImageResourceStatus::to_json(Self) -> Json
+pub fn ImageResourceStatus::to_repr(Self) -> @debug.Repr
 
 pub struct NativeSurface {
   capability : &NativeSurfaceCapability
@@ -136,16 +156,24 @@ pub struct RectBatch {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RectBatch::color(Self) -> @core.Color
+pub fn RectBatch::equal(Self, Self) -> Bool
 pub fn RectBatch::new(rect~ : @core.Rect, color~ : @core.Color) -> Self
+pub fn RectBatch::not_equal(Self, Self) -> Bool
 pub fn RectBatch::rect(Self) -> @core.Rect
+pub fn RectBatch::to_json(Self) -> Json
+pub fn RectBatch::to_repr(Self) -> @debug.Repr
 
 pub struct RectVertex {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RectVertex::a(Self) -> Double
 pub fn RectVertex::b(Self) -> Double
+pub fn RectVertex::equal(Self, Self) -> Bool
 pub fn RectVertex::g(Self) -> Double
+pub fn RectVertex::not_equal(Self, Self) -> Bool
 pub fn RectVertex::r(Self) -> Double
+pub fn RectVertex::to_json(Self) -> Json
+pub fn RectVertex::to_repr(Self) -> @debug.Repr
 pub fn RectVertex::x(Self) -> Double
 pub fn RectVertex::y(Self) -> Double
 
@@ -155,7 +183,11 @@ pub(all) struct RenderFrameInput {
   damage : @core.DamageRegion
   clear_color : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderFrameInput::equal(Self, Self) -> Bool
 pub fn RenderFrameInput::new(metrics~ : @core.SurfaceMetrics, commands~ : Array[@core.DrawCommand], damage? : @core.DamageRegion, clear_color? : @core.Color?) -> Self
+pub fn RenderFrameInput::not_equal(Self, Self) -> Bool
+pub fn RenderFrameInput::to_json(Self) -> Json
+pub fn RenderFrameInput::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RenderFrameResult {
   presented : Bool
@@ -165,7 +197,11 @@ pub(all) struct RenderFrameResult {
   cache_update_count : Int
   cache_evict_count : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderFrameResult::equal(Self, Self) -> Bool
 pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int, cache_miss_count? : Int, cache_update_count? : Int, cache_evict_count? : Int) -> Self
+pub fn RenderFrameResult::not_equal(Self, Self) -> Bool
+pub fn RenderFrameResult::to_json(Self) -> Json
+pub fn RenderFrameResult::to_repr(Self) -> @debug.Repr
 
 pub struct RenderFrameSubmission {
   // private fields
@@ -183,11 +219,15 @@ pub(all) struct RenderPresentCompletion {
   gpu_context_generation : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderPresentCompletion::completed_at_ms(Self) -> Double
+pub fn RenderPresentCompletion::equal(Self, Self) -> Bool
 pub fn RenderPresentCompletion::gpu_context_generation(Self) -> Int
 pub fn RenderPresentCompletion::new(token~ : FrameToken, submitted_at_ms~ : Double, completed_at_ms~ : Double, presented_at_ms~ : Double, status~ : RenderPresentStatus, gpu_context_generation~ : Int) -> Self
+pub fn RenderPresentCompletion::not_equal(Self, Self) -> Bool
 pub fn RenderPresentCompletion::presented_at_ms(Self) -> Double
 pub fn RenderPresentCompletion::status(Self) -> RenderPresentStatus
 pub fn RenderPresentCompletion::submitted_at_ms(Self) -> Double
+pub fn RenderPresentCompletion::to_json(Self) -> Json
+pub fn RenderPresentCompletion::to_repr(Self) -> @debug.Repr
 pub fn RenderPresentCompletion::token(Self) -> FrameToken
 
 pub(all) enum RenderPresentStatus {
@@ -196,11 +236,19 @@ pub(all) enum RenderPresentStatus {
   Dropped
   FallbackToRaster
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderPresentStatus::equal(Self, Self) -> Bool
+pub fn RenderPresentStatus::not_equal(Self, Self) -> Bool
+pub fn RenderPresentStatus::to_json(Self) -> Json
+pub fn RenderPresentStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RenderWindowId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderWindowId::equal(Self, Self) -> Bool
 pub fn RenderWindowId::new(Int) -> Self
+pub fn RenderWindowId::not_equal(Self, Self) -> Bool
+pub fn RenderWindowId::to_json(Self) -> Json
+pub fn RenderWindowId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RendererBackendFeatureCapability {
   provider_id : String
@@ -209,7 +257,11 @@ pub(all) struct RendererBackendFeatureCapability {
   status : RendererFeatureStatus
   note : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererBackendFeatureCapability::equal(Self, Self) -> Bool
 pub fn RendererBackendFeatureCapability::new(provider_id~ : String, feature~ : RendererFeature, backend~ : RendererBackendKind, status~ : RendererFeatureStatus, note? : String) -> Self
+pub fn RendererBackendFeatureCapability::not_equal(Self, Self) -> Bool
+pub fn RendererBackendFeatureCapability::to_json(Self) -> Json
+pub fn RendererBackendFeatureCapability::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RendererBackendInfo {
   backend : RendererBackendKind
@@ -219,7 +271,11 @@ pub(all) struct RendererBackendInfo {
   owns_surface : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererBackendInfo::equal(Self, Self) -> Bool
 pub fn RendererBackendInfo::new(backend~ : RendererBackendKind, status~ : RendererCapabilityStatus, can_render~ : Bool, can_resize~ : Bool, owns_surface~ : Bool, description? : String) -> Self
+pub fn RendererBackendInfo::not_equal(Self, Self) -> Bool
+pub fn RendererBackendInfo::to_json(Self) -> Json
+pub fn RendererBackendInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RendererBackendKind {
   NativeWgpu
@@ -229,9 +285,13 @@ pub(all) enum RendererBackendKind {
   SunRasterNative
   Canvas2DWasm
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererBackendKind::equal(Self, Self) -> Bool
 pub fn RendererBackendKind::family(Self) -> RendererFamily
 pub fn RendererBackendKind::label(Self) -> String
+pub fn RendererBackendKind::not_equal(Self, Self) -> Bool
 pub fn RendererBackendKind::short_label(Self) -> String
+pub fn RendererBackendKind::to_json(Self) -> Json
+pub fn RendererBackendKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RendererBindResult {
   Bound(RendererSession)
@@ -242,31 +302,47 @@ pub(all) enum RendererCapabilityStatus {
   Supported
   Unavailable
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererCapabilityStatus::equal(Self, Self) -> Bool
+pub fn RendererCapabilityStatus::not_equal(Self, Self) -> Bool
+pub fn RendererCapabilityStatus::to_json(Self) -> Json
+pub fn RendererCapabilityStatus::to_repr(Self) -> @debug.Repr
 
 pub struct RendererCommandFallback {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererCommandFallback::command(Self) -> String
+pub fn RendererCommandFallback::equal(Self, Self) -> Bool
 pub fn RendererCommandFallback::feature(Self) -> RendererFeature
 pub fn RendererCommandFallback::index(Self) -> Int
 pub fn RendererCommandFallback::kind(Self) -> RendererCommandFallbackKind
 pub fn RendererCommandFallback::new(index~ : Int, feature~ : RendererFeature, command~ : String, kind? : RendererCommandFallbackKind, reason~ : String) -> Self
+pub fn RendererCommandFallback::not_equal(Self, Self) -> Bool
 pub fn RendererCommandFallback::reason(Self) -> String
+pub fn RendererCommandFallback::to_json(Self) -> Json
+pub fn RendererCommandFallback::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RendererCommandFallbackKind {
   PlannedFallback
   UnbalancedPop
   UnclosedScope
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererCommandFallbackKind::equal(Self, Self) -> Bool
+pub fn RendererCommandFallbackKind::not_equal(Self, Self) -> Bool
+pub fn RendererCommandFallbackKind::to_json(Self) -> Json
+pub fn RendererCommandFallbackKind::to_repr(Self) -> @debug.Repr
 
 pub struct RendererCommandPlan {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererCommandPlan::equal(Self, Self) -> Bool
 pub fn RendererCommandPlan::fallback_count(Self) -> Int
 pub fn RendererCommandPlan::fallbacks(Self) -> Array[RendererCommandFallback]
 pub fn RendererCommandPlan::final_filter_depth(Self) -> Int
 pub fn RendererCommandPlan::final_layer_depth(Self) -> Int
 pub fn RendererCommandPlan::new(total_commands~ : Int, fallback_count~ : Int, final_layer_depth~ : Int, final_filter_depth~ : Int, fallbacks~ : Array[RendererCommandFallback]) -> Self
+pub fn RendererCommandPlan::not_equal(Self, Self) -> Bool
+pub fn RendererCommandPlan::to_json(Self) -> Json
+pub fn RendererCommandPlan::to_repr(Self) -> @debug.Repr
 pub fn RendererCommandPlan::total_commands(Self) -> Int
 
 pub(all) enum RendererControlMessage {
@@ -275,6 +351,10 @@ pub(all) enum RendererControlMessage {
   ContextLoss(String)
   Shutdown
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererControlMessage::equal(Self, Self) -> Bool
+pub fn RendererControlMessage::not_equal(Self, Self) -> Bool
+pub fn RendererControlMessage::to_json(Self) -> Json
+pub fn RendererControlMessage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RendererDescriptor {
   backend : RendererBackendKind
@@ -284,7 +364,11 @@ pub(all) struct RendererDescriptor {
   capabilities : Array[RendererBackendFeatureCapability]
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererDescriptor::equal(Self, Self) -> Bool
 pub fn RendererDescriptor::new(backend~ : RendererBackendKind, family~ : RendererFamily, presentation~ : RendererPresentationModel, supported_targets~ : Array[RendererTarget], capabilities~ : Array[RendererBackendFeatureCapability], description? : String) -> Self
+pub fn RendererDescriptor::not_equal(Self, Self) -> Bool
+pub fn RendererDescriptor::to_json(Self) -> Json
+pub fn RendererDescriptor::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RendererEvent {
   PresentCompleted(RenderPresentCompletion)
@@ -298,7 +382,11 @@ pub(all) enum RendererFamily {
   Sun
   Canvas2D
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFamily::equal(Self, Self) -> Bool
 pub fn RendererFamily::label(Self) -> String
+pub fn RendererFamily::not_equal(Self, Self) -> Bool
+pub fn RendererFamily::to_json(Self) -> Json
+pub fn RendererFamily::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RendererFeature {
   Rect
@@ -319,17 +407,25 @@ pub(all) enum RendererFeature {
   EmojiText
   AsyncImage
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFeature::equal(Self, Self) -> Bool
 pub fn RendererFeature::label(Self) -> String
+pub fn RendererFeature::not_equal(Self, Self) -> Bool
+pub fn RendererFeature::to_json(Self) -> Json
+pub fn RendererFeature::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RendererFeatureCapability {
   feature : RendererFeature
   providers : Array[RendererBackendFeatureCapability]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFeatureCapability::equal(Self, Self) -> Bool
 pub fn RendererFeatureCapability::needs_follow_up(Self) -> Bool
 pub fn RendererFeatureCapability::new(feature~ : RendererFeature, providers~ : Array[RendererBackendFeatureCapability]) -> Self
+pub fn RendererFeatureCapability::not_equal(Self, Self) -> Bool
 pub fn RendererFeatureCapability::note_for_provider(Self, String) -> String
 pub fn RendererFeatureCapability::provider_capability(Self, String) -> RendererBackendFeatureCapability?
 pub fn RendererFeatureCapability::status_for_provider(Self, String) -> RendererFeatureStatus
+pub fn RendererFeatureCapability::to_json(Self) -> Json
+pub fn RendererFeatureCapability::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RendererFeatureStatus {
   Supported
@@ -338,8 +434,12 @@ pub(all) enum RendererFeatureStatus {
   HostForwarded
   Unavailable
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererFeatureStatus::equal(Self, Self) -> Bool
 pub fn RendererFeatureStatus::label(Self) -> String
 pub fn RendererFeatureStatus::needs_follow_up(Self) -> Bool
+pub fn RendererFeatureStatus::not_equal(Self, Self) -> Bool
+pub fn RendererFeatureStatus::to_json(Self) -> Json
+pub fn RendererFeatureStatus::to_repr(Self) -> @debug.Repr
 
 pub struct RendererGpuRecoveryCapability {
   // private fields
@@ -351,6 +451,10 @@ pub(all) enum RendererImageCompletionResult {
   Stale
   Disposed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererImageCompletionResult::equal(Self, Self) -> Bool
+pub fn RendererImageCompletionResult::not_equal(Self, Self) -> Bool
+pub fn RendererImageCompletionResult::to_json(Self) -> Json
+pub fn RendererImageCompletionResult::to_repr(Self) -> @debug.Repr
 
 pub struct RendererImageDecoder {
   decode_fn : (String, Bytes?) -> ImageResourceLoadCompletion
@@ -382,6 +486,10 @@ pub fn RendererImageLoadRequest::token(Self) -> RendererImageLoadToken
 pub struct RendererImageLoadToken {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererImageLoadToken::equal(Self, Self) -> Bool
+pub fn RendererImageLoadToken::not_equal(Self, Self) -> Bool
+pub fn RendererImageLoadToken::to_json(Self) -> Json
+pub fn RendererImageLoadToken::to_repr(Self) -> @debug.Repr
 
 pub struct RendererPlatformViewCapability {
   // private fields
@@ -394,7 +502,11 @@ pub(all) enum RendererPresentationModel {
   CpuPixelFrame
   ExternalSurface
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererPresentationModel::equal(Self, Self) -> Bool
 pub fn RendererPresentationModel::label(Self) -> String
+pub fn RendererPresentationModel::not_equal(Self, Self) -> Bool
+pub fn RendererPresentationModel::to_json(Self) -> Json
+pub fn RendererPresentationModel::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RendererProvider {
   id : String
@@ -413,8 +525,12 @@ pub(all) enum RendererSelection {
   Backend(RendererBackendKind)
   Family(RendererFamily)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererSelection::equal(Self, Self) -> Bool
 pub fn RendererSelection::matches_backend(Self, RendererBackendKind) -> Bool
 pub fn RendererSelection::native_default() -> Self
+pub fn RendererSelection::not_equal(Self, Self) -> Bool
+pub fn RendererSelection::to_json(Self) -> Json
+pub fn RendererSelection::to_repr(Self) -> @debug.Repr
 pub fn RendererSelection::web_default() -> Self
 
 pub struct RendererSession {
@@ -441,6 +557,10 @@ pub(all) enum RendererTarget {
   WasmGc
   Web
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererTarget::equal(Self, Self) -> Bool
+pub fn RendererTarget::not_equal(Self, Self) -> Bool
+pub fn RendererTarget::to_json(Self) -> Json
+pub fn RendererTarget::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WgpuSurfaceContract {
   source : WgpuSurfaceSourceKind
@@ -448,12 +568,20 @@ pub(all) struct WgpuSurfaceContract {
   ready : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WgpuSurfaceContract::equal(Self, Self) -> Bool
 pub fn WgpuSurfaceContract::new(source~ : WgpuSurfaceSourceKind, backend~ : RendererBackendKind, ready~ : Bool, description? : String) -> Self
+pub fn WgpuSurfaceContract::not_equal(Self, Self) -> Bool
+pub fn WgpuSurfaceContract::to_json(Self) -> Json
+pub fn WgpuSurfaceContract::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WgpuSurfaceSourceKind {
   NativeHostSurface
   WebCanvasSurface
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WgpuSurfaceSourceKind::equal(Self, Self) -> Bool
+pub fn WgpuSurfaceSourceKind::not_equal(Self, Self) -> Bool
+pub fn WgpuSurfaceSourceKind::to_json(Self) -> Json
+pub fn WgpuSurfaceSourceKind::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

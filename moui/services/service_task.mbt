@@ -5,11 +5,26 @@ pub(all) struct ServiceError {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ServiceError with Debug::{to_repr}
+
+///|
+pub extend ServiceError with Eq::{not_equal, equal}
+
+///|
+pub extend ServiceError with ToJson::{to_json}
+
+///|
 pub(all) enum ServiceTaskResult[T] {
   Success(T)
   Failure(ServiceError)
   Cancelled
 } derive(Eq, Debug)
+
+///|
+pub extend ServiceTaskResult with Debug::{to_repr}
+
+///|
+pub extend ServiceTaskResult with Eq::{not_equal, equal}
 
 ///|
 pub struct ServiceTask[T] {

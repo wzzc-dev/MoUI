@@ -9,6 +9,15 @@ pub(all) enum DesignCustomizationKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignCustomizationKind with Debug::{to_repr}
+
+///|
+pub extend DesignCustomizationKind with Eq::{not_equal, equal}
+
+///|
+pub extend DesignCustomizationKind with ToJson::{to_json}
+
+///|
 pub(all) struct DesignCustomizationCapabilityRecord {
   preset : @common.DesignPreset
   kind : DesignCustomizationKind
@@ -21,6 +30,15 @@ pub(all) struct DesignCustomizationCapabilityRecord {
   status : DesignTokenStatus
   remaining_gap : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignCustomizationCapabilityRecord with Debug::{to_repr}
+
+///|
+pub extend DesignCustomizationCapabilityRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignCustomizationCapabilityRecord with ToJson::{to_json}
 
 ///|
 pub fn DesignCustomizationKind::label(

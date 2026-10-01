@@ -22,6 +22,15 @@ pub(all) enum InteractionState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend InteractionState with Debug::{to_repr}
+
+///|
+pub extend InteractionState with Eq::{not_equal, equal}
+
+///|
+pub extend InteractionState with ToJson::{to_json}
+
+///|
 /// Convert a runtime `PressableState` (gesture-driven three-state, defined in
 /// `view_style.mbt`) into the token-layer `InteractionState` for component
 /// theme resolution. Kept in `core` because both sides are neutral core

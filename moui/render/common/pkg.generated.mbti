@@ -132,6 +132,9 @@ pub(all) struct DrawPlanDiagnostic {
   command : String
   reason : String
 } derive(Eq, @debug.Debug)
+pub fn DrawPlanDiagnostic::equal(Self, Self) -> Bool
+pub fn DrawPlanDiagnostic::not_equal(Self, Self) -> Bool
+pub fn DrawPlanDiagnostic::to_repr(Self) -> @debug.Repr
 
 pub struct GpuRenderWorker {
   mut state : GpuRenderWorkerState
@@ -185,12 +188,17 @@ pub(all) struct GpuRenderWorkerDiagnostics {
   control_pending : Int
   worker_thread_id : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn GpuRenderWorkerDiagnostics::equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerDiagnostics::not_equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerDiagnostics::to_json(Self) -> Json
+pub fn GpuRenderWorkerDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct GpuRenderWorkerFrame {
   token : @render.FrameToken
   submitted_at_ms : Double
   input : @render.RenderFrameInput
 } derive(@debug.Debug)
+pub fn GpuRenderWorkerFrame::to_repr(Self) -> @debug.Repr
 
 pub(all) enum GpuRenderWorkerState {
   Idle
@@ -200,6 +208,10 @@ pub(all) enum GpuRenderWorkerState {
   FallbackToRaster
   Shutdown
 } derive(Eq, ToJson, @debug.Debug)
+pub fn GpuRenderWorkerState::equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerState::not_equal(Self, Self) -> Bool
+pub fn GpuRenderWorkerState::to_json(Self) -> Json
+pub fn GpuRenderWorkerState::to_repr(Self) -> @debug.Repr
 
 pub enum ImageCropAxis {
   None
@@ -218,24 +230,35 @@ pub struct ImageResourceLifecycle {
 } derive(Eq, @debug.Debug)
 pub fn ImageResourceLifecycle::apply_load_completion(Self, @render.ImageResourceLoadCompletion) -> Bool
 pub fn ImageResourceLifecycle::dispose(Self, String) -> Bool
+pub fn ImageResourceLifecycle::equal(Self, Self) -> Bool
 pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int
 pub fn ImageResourceLifecycle::lookup(Self, String) -> @render.ImageResourceRecord?
 pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -> Bool
 pub fn ImageResourceLifecycle::mark_loading(Self, String) -> Bool
 pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> Bool
 pub fn ImageResourceLifecycle::new() -> Self
+pub fn ImageResourceLifecycle::not_equal(Self, Self) -> Bool
 pub fn ImageResourceLifecycle::snapshot(Self) -> Array[@render.ImageResourceRecord]
+pub fn ImageResourceLifecycle::to_repr(Self) -> @debug.Repr
 
 pub struct PathMesh {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PathMesh::diagnostics(Self) -> Array[String]
+pub fn PathMesh::equal(Self, Self) -> Bool
+pub fn PathMesh::not_equal(Self, Self) -> Bool
+pub fn PathMesh::to_json(Self) -> Json
+pub fn PathMesh::to_repr(Self) -> @debug.Repr
 pub fn PathMesh::vertices(Self) -> Array[PathVertex]
 
 pub struct PathVertex {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PathVertex::components(Self) -> Array[Double]
+pub fn PathVertex::equal(Self, Self) -> Bool
+pub fn PathVertex::not_equal(Self, Self) -> Bool
+pub fn PathVertex::to_json(Self) -> Json
+pub fn PathVertex::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PlanOp {
   Clear(@core.Color)
@@ -265,6 +288,10 @@ pub(all) enum PlanOp {
   DrawPath(@core.PathSpec)
   DrawShaderEffect(@core.ShaderEffectSpec)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PlanOp::equal(Self, Self) -> Bool
+pub fn PlanOp::not_equal(Self, Self) -> Bool
+pub fn PlanOp::to_json(Self) -> Json
+pub fn PlanOp::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PlanScopeKind {
   Clip
@@ -274,6 +301,8 @@ pub(all) enum PlanScopeKind {
   Layer
   Filter
 } derive(Eq)
+pub fn PlanScopeKind::equal(Self, Self) -> Bool
+pub fn PlanScopeKind::not_equal(Self, Self) -> Bool
 
 pub struct RenderFrameMailbox {
   mut surface_generation : Int
@@ -313,13 +342,21 @@ pub(all) struct RenderFrameMailboxDiagnostics {
   control_submitted : Int
   control_drained : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderFrameMailboxDiagnostics::equal(Self, Self) -> Bool
+pub fn RenderFrameMailboxDiagnostics::not_equal(Self, Self) -> Bool
+pub fn RenderFrameMailboxDiagnostics::to_json(Self) -> Json
+pub fn RenderFrameMailboxDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RenderFramePacket {
   sequence : Int
   surface_generation : Int
   input : @render.RenderFrameInput
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderFramePacket::equal(Self, Self) -> Bool
 pub fn RenderFramePacket::new(sequence~ : Int, surface_generation~ : Int, @render.RenderFrameInput) -> Self
+pub fn RenderFramePacket::not_equal(Self, Self) -> Bool
+pub fn RenderFramePacket::to_json(Self) -> Json
+pub fn RenderFramePacket::to_repr(Self) -> @debug.Repr
 
 pub struct RendererProviderRegistry {
   // private fields
@@ -335,26 +372,41 @@ pub struct ShaderRegistryResult {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ShaderRegistryResult::diagnostic(Self) -> String
+pub fn ShaderRegistryResult::equal(Self, Self) -> Bool
 pub fn ShaderRegistryResult::fallback(Self) -> @core.Brush
 pub fn ShaderRegistryResult::name(Self) -> String
+pub fn ShaderRegistryResult::not_equal(Self, Self) -> Bool
 pub fn ShaderRegistryResult::status(Self) -> ShaderRegistryStatus
+pub fn ShaderRegistryResult::to_json(Self) -> Json
+pub fn ShaderRegistryResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ShaderRegistryStatus {
   ShaderReady
   ShaderFallback
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ShaderRegistryStatus::equal(Self, Self) -> Bool
+pub fn ShaderRegistryStatus::not_equal(Self, Self) -> Bool
+pub fn ShaderRegistryStatus::to_json(Self) -> Json
+pub fn ShaderRegistryStatus::to_repr(Self) -> @debug.Repr
 
 pub struct SvgImportResult {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SvgImportResult::commands(Self) -> Array[@core.DrawCommand]
 pub fn SvgImportResult::diagnostics(Self) -> Array[String]
+pub fn SvgImportResult::equal(Self, Self) -> Bool
+pub fn SvgImportResult::not_equal(Self, Self) -> Bool
+pub fn SvgImportResult::to_json(Self) -> Json
+pub fn SvgImportResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SvgTextAnchor {
   Start
   Middle
   End
 } derive(Eq, @debug.Debug)
+pub fn SvgTextAnchor::equal(Self, Self) -> Bool
+pub fn SvgTextAnchor::not_equal(Self, Self) -> Bool
+pub fn SvgTextAnchor::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SvgTextRun {
   text : String
@@ -364,11 +416,13 @@ pub(all) struct SvgTextRun {
   anchor : SvgTextAnchor
   text_length : Double
 } derive(@debug.Debug)
+pub fn SvgTextRun::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SvgTextRunOutline {
   width : Double
   polygons : Array[Array[(Double, Double)]]
 } derive(@debug.Debug)
+pub fn SvgTextRunOutline::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 pub type SvgTextPathResolver = (SvgTextRun) -> SvgTextRunOutline?

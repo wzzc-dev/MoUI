@@ -9,10 +9,16 @@ pub struct Canvas {
 } derive(Debug)
 
 ///|
+pub extend Canvas with Debug::{to_repr}
+
+///|
 struct CanvasState {
   transform : Transform
   clip_rect : Rect?
 } derive(Debug)
+
+///|
+pub extend CanvasState with Debug::{to_repr}
 
 ///|
 /// Create a new canvas with the given dimensions

@@ -16,6 +16,15 @@ pub(all) struct HostWallClock {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostWallClock with Debug::{to_repr}
+
+///|
+pub extend HostWallClock with Eq::{not_equal, equal}
+
+///|
+pub extend HostWallClock with ToJson::{to_json}
+
+///|
 pub fn HostWallClock::new(
   year : Int,
   month : Int,

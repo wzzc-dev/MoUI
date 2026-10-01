@@ -6,6 +6,15 @@ pub(all) struct WebBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend WebBackendInfo with Debug::{to_repr}
+
+///|
+pub extend WebBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend WebBackendInfo with ToJson::{to_json}
+
+///|
 struct WebApp {
   title : String
   runtime : @runtime.AppRuntime
@@ -21,6 +30,21 @@ struct WebApp {
   platform_slots : WebWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
+}
+
+///|
+pub extend WebApp with @wzzc-dev/window/web.ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
 }
 
 ///|

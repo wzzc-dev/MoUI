@@ -7,12 +7,21 @@ pub struct Pixmap {
 } derive(Debug)
 
 ///|
+pub extend Pixmap with Debug::{to_repr}
+
+///|
 /// Sampling mode used when scaling source pixmaps.
 pub(all) enum ImageSampling {
   Nearest
   Bilinear
   Bicubic
 } derive(Eq, Debug)
+
+///|
+pub extend ImageSampling with Debug::{to_repr}
+
+///|
+pub extend ImageSampling with Eq::{not_equal, equal}
 
 ///|
 /// Image quality strategy for callers that prefer intent over a concrete
@@ -22,6 +31,12 @@ pub(all) enum ImageQuality {
   Balanced
   High
 } derive(Eq, Debug)
+
+///|
+pub extend ImageQuality with Debug::{to_repr}
+
+///|
+pub extend ImageQuality with Eq::{not_equal, equal}
 
 ///|
 /// Return the concrete sampling mode selected by this quality strategy.
@@ -41,6 +56,12 @@ pub struct NinePatchInsets {
   right : Int
   bottom : Int
 } derive(Eq, Debug)
+
+///|
+pub extend NinePatchInsets with Debug::{to_repr}
+
+///|
+pub extend NinePatchInsets with Eq::{not_equal, equal}
 
 ///|
 pub fn NinePatchInsets::new(
@@ -63,6 +84,9 @@ struct NinePatchSlices {
   dst_top : Int
   dst_bottom : Int
 } derive(Debug)
+
+///|
+pub extend NinePatchSlices with Debug::{to_repr}
 
 ///|
 /// Create a new pixmap filled with transparent pixels

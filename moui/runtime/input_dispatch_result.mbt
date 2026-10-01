@@ -9,6 +9,15 @@ pub struct InputDispatchResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend InputDispatchResult with Debug::{to_repr}
+
+///|
+pub extend InputDispatchResult with Eq::{not_equal, equal}
+
+///|
+pub extend InputDispatchResult with ToJson::{to_json}
+
+///|
 pub fn InputDispatchResult::host_flags(self : InputDispatchResult) -> Int {
   (if self.handled { 1 } else { 0 }) |
   (if self.capture_pointer { 2 } else { 0 }) |

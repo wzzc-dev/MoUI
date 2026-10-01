@@ -40,11 +40,15 @@ pub(all) struct BadgeStyle {
 pub fn BadgeStyle::accent(Self) -> ToneStyle
 pub fn BadgeStyle::danger(Self) -> ToneStyle
 pub fn BadgeStyle::default(theme? : @core.Theme) -> Self
+pub fn BadgeStyle::equal(Self, Self) -> Bool
 pub fn BadgeStyle::neutral(Self) -> ToneStyle
 pub fn BadgeStyle::new(neutral~ : ToneStyle, accent~ : ToneStyle, success~ : ToneStyle, warning~ : ToneStyle, danger~ : ToneStyle, radius~ : Double, padding~ : Double) -> Self
+pub fn BadgeStyle::not_equal(Self, Self) -> Bool
 pub fn BadgeStyle::padding(Self) -> Double
 pub fn BadgeStyle::radius(Self) -> Double
 pub fn BadgeStyle::success(Self) -> ToneStyle
+pub fn BadgeStyle::to_json(Self) -> Json
+pub fn BadgeStyle::to_repr(Self) -> @debug.Repr
 pub fn BadgeStyle::warning(Self) -> ToneStyle
 pub fn BadgeStyle::with_accent(Self, accent~ : ToneStyle) -> Self
 pub fn BadgeStyle::with_danger(Self, danger~ : ToneStyle) -> Self
@@ -63,6 +67,10 @@ pub(all) struct BadgeTheme {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn BadgeTheme::equal(Self, Self) -> Bool
+pub fn BadgeTheme::not_equal(Self, Self) -> Bool
+pub fn BadgeTheme::to_json(Self) -> Json
+pub fn BadgeTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BadgeTone {
   Neutral
@@ -71,6 +79,12 @@ pub(all) enum BadgeTone {
   Warning
   Danger
 } derive(Eq, ToJson, @debug.Debug)
+pub fn BadgeTone::equal(Self, Self) -> Bool
+pub fn BadgeTone::not_equal(Self, Self) -> Bool
+pub fn BadgeTone::output(Self, &Logger) -> Unit
+pub fn BadgeTone::to_json(Self) -> Json
+pub fn BadgeTone::to_repr(Self) -> @debug.Repr
+pub fn BadgeTone::to_string(Self) -> String
 pub impl Show for BadgeTone
 
 pub(all) struct ButtonStyle {
@@ -80,13 +94,17 @@ pub(all) struct ButtonStyle {
   disabled : ControlStateStyle
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ButtonStyle::disabled(Self) -> ControlStateStyle
+pub fn ButtonStyle::equal(Self, Self) -> Bool
 pub fn ButtonStyle::filled(theme? : @core.Theme) -> Self
 pub fn ButtonStyle::ghost(theme? : @core.Theme) -> Self
 pub fn ButtonStyle::hovered(Self) -> ControlStateStyle
 pub fn ButtonStyle::new(normal~ : ControlStateStyle, hovered~ : ControlStateStyle, pressed~ : ControlStateStyle, disabled~ : ControlStateStyle) -> Self
 pub fn ButtonStyle::normal(Self) -> ControlStateStyle
+pub fn ButtonStyle::not_equal(Self, Self) -> Bool
 pub fn ButtonStyle::outline(theme? : @core.Theme) -> Self
 pub fn ButtonStyle::pressed(Self) -> ControlStateStyle
+pub fn ButtonStyle::to_json(Self) -> Json
+pub fn ButtonStyle::to_repr(Self) -> @debug.Repr
 pub fn ButtonStyle::tonal(theme? : @core.Theme) -> Self
 pub fn ButtonStyle::with_disabled(Self, disabled~ : ControlStateStyle) -> Self
 pub fn ButtonStyle::with_hovered(Self, hovered~ : ControlStateStyle) -> Self
@@ -102,7 +120,11 @@ pub(all) struct ButtonTheme {
   subtle_brand : ControlStateTokens
   state_layer : StateLayerTokens
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonTheme::equal(Self, Self) -> Bool
+pub fn ButtonTheme::not_equal(Self, Self) -> Bool
 pub fn ButtonTheme::resolve(Self, ButtonVariantToken, @core.InteractionState) -> ControlStateStyle
+pub fn ButtonTheme::to_json(Self) -> Json
+pub fn ButtonTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ButtonVariant {
   Primary
@@ -112,7 +134,11 @@ pub(all) enum ButtonVariant {
   Subtle
   SubtleBrand
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonVariant::equal(Self, Self) -> Bool
+pub fn ButtonVariant::not_equal(Self, Self) -> Bool
 pub fn ButtonVariant::style(Self, ControlThemeSet) -> ButtonStyle
+pub fn ButtonVariant::to_json(Self) -> Json
+pub fn ButtonVariant::to_repr(Self) -> @debug.Repr
 pub fn ButtonVariant::to_token(Self) -> ButtonVariantToken
 
 pub(all) enum ButtonVariantToken {
@@ -123,25 +149,43 @@ pub(all) enum ButtonVariantToken {
   Subtle
   SubtleBrand
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonVariantToken::equal(Self, Self) -> Bool
+pub fn ButtonVariantToken::not_equal(Self, Self) -> Bool
+pub fn ButtonVariantToken::to_json(Self) -> Json
+pub fn ButtonVariantToken::to_repr(Self) -> @debug.Repr
 
 pub(all) enum CheckMarkStyle {
   Checkmark
   Dot
 } derive(Eq, ToJson, @debug.Debug)
+pub fn CheckMarkStyle::equal(Self, Self) -> Bool
 pub fn CheckMarkStyle::label(Self) -> String
+pub fn CheckMarkStyle::not_equal(Self, Self) -> Bool
+pub fn CheckMarkStyle::to_json(Self) -> Json
+pub fn CheckMarkStyle::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ChipVariant {
   Filled
   Outline
   Soft
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ChipVariant::equal(Self, Self) -> Bool
+pub fn ChipVariant::not_equal(Self, Self) -> Bool
+pub fn ChipVariant::output(Self, &Logger) -> Unit
+pub fn ChipVariant::to_json(Self) -> Json
+pub fn ChipVariant::to_repr(Self) -> @debug.Repr
+pub fn ChipVariant::to_string(Self) -> String
 pub impl Show for ChipVariant
 
 pub(all) enum ChoiceControlShape {
   Square
   Circle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlShape::equal(Self, Self) -> Bool
 pub fn ChoiceControlShape::label(Self) -> String
+pub fn ChoiceControlShape::not_equal(Self, Self) -> Bool
+pub fn ChoiceControlShape::to_json(Self) -> Json
+pub fn ChoiceControlShape::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ChoiceControlStyle {
   foreground : @core.Color
@@ -154,9 +198,13 @@ pub fn ChoiceControlStyle::control_size(Self) -> Double
 pub fn ChoiceControlStyle::default(theme? : @core.Theme) -> Self
 pub fn ChoiceControlStyle::disabled_foreground(Self) -> @core.Color
 pub fn ChoiceControlStyle::disabled_selected_color(Self) -> @core.Color
+pub fn ChoiceControlStyle::equal(Self, Self) -> Bool
 pub fn ChoiceControlStyle::foreground(Self) -> @core.Color
 pub fn ChoiceControlStyle::new(foreground~ : @core.Color, selected_color~ : @core.Color, disabled_foreground~ : @core.Color, disabled_selected_color~ : @core.Color, control_size~ : Double) -> Self
+pub fn ChoiceControlStyle::not_equal(Self, Self) -> Bool
 pub fn ChoiceControlStyle::selected_color(Self) -> @core.Color
+pub fn ChoiceControlStyle::to_json(Self) -> Json
+pub fn ChoiceControlStyle::to_repr(Self) -> @debug.Repr
 pub fn ChoiceControlStyle::with_control_size(Self, control_size~ : Double) -> Self
 pub fn ChoiceControlStyle::with_disabled_foreground(Self, disabled_foreground~ : @core.Color) -> Self
 pub fn ChoiceControlStyle::with_disabled_selected_color(Self, disabled_selected_color~ : @core.Color) -> Self
@@ -172,13 +220,23 @@ pub(all) struct ChoiceControlTheme {
   box_shape : ChoiceControlShape
   check_style : CheckMarkStyle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlTheme::equal(Self, Self) -> Bool
+pub fn ChoiceControlTheme::not_equal(Self, Self) -> Bool
+pub fn ChoiceControlTheme::to_json(Self) -> Json
+pub fn ChoiceControlTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ContainerVariant {
   Base
   Raised
   Overlay
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ContainerVariant::equal(Self, Self) -> Bool
+pub fn ContainerVariant::not_equal(Self, Self) -> Bool
+pub fn ContainerVariant::output(Self, &Logger) -> Unit
 pub fn ContainerVariant::style(Self, @core.Theme) -> SurfaceStyle
+pub fn ContainerVariant::to_json(Self) -> Json
+pub fn ContainerVariant::to_repr(Self) -> @debug.Repr
+pub fn ContainerVariant::to_string(Self) -> String
 pub impl Show for ContainerVariant
 
 pub(all) struct ControlStateStyle {
@@ -190,6 +248,10 @@ pub(all) struct ControlStateStyle {
   bottom_border_only : Bool
   inner_focus_border : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ControlStateStyle::equal(Self, Self) -> Bool
+pub fn ControlStateStyle::not_equal(Self, Self) -> Bool
+pub fn ControlStateStyle::to_json(Self) -> Json
+pub fn ControlStateStyle::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ControlStateTokens {
   foreground : @core.Color
@@ -200,8 +262,12 @@ pub(all) struct ControlStateTokens {
   bottom_border_only : Bool
   inner_focus_border : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ControlStateTokens::equal(Self, Self) -> Bool
 pub fn ControlStateTokens::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color, border_width~ : Double, radius~ : Double, bottom_border_only? : Bool, inner_focus_border? : @core.Color?) -> Self
+pub fn ControlStateTokens::not_equal(Self, Self) -> Bool
 pub fn ControlStateTokens::resolve(Self) -> ControlStateStyle
+pub fn ControlStateTokens::to_json(Self) -> Json
+pub fn ControlStateTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ControlThemeSet {
   button : ButtonTheme
@@ -215,6 +281,10 @@ pub(all) struct ControlThemeSet {
   badge : BadgeTheme
   form_validation : FormValidationTheme
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ControlThemeSet::equal(Self, Self) -> Bool
+pub fn ControlThemeSet::not_equal(Self, Self) -> Bool
+pub fn ControlThemeSet::to_json(Self) -> Json
+pub fn ControlThemeSet::to_repr(Self) -> @debug.Repr
 
 pub(all) enum CrossAlign {
   Start
@@ -223,6 +293,12 @@ pub(all) enum CrossAlign {
   Stretch
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CrossAlign::core(Self) -> @core.CrossAxisAlignment
+pub fn CrossAlign::equal(Self, Self) -> Bool
+pub fn CrossAlign::not_equal(Self, Self) -> Bool
+pub fn CrossAlign::output(Self, &Logger) -> Unit
+pub fn CrossAlign::to_json(Self) -> Json
+pub fn CrossAlign::to_repr(Self) -> @debug.Repr
+pub fn CrossAlign::to_string(Self) -> String
 pub impl Show for CrossAlign
 
 pub(all) enum DatePickerMode {
@@ -230,6 +306,12 @@ pub(all) enum DatePickerMode {
   DateAndTime
   Time
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DatePickerMode::equal(Self, Self) -> Bool
+pub fn DatePickerMode::not_equal(Self, Self) -> Bool
+pub fn DatePickerMode::output(Self, &Logger) -> Unit
+pub fn DatePickerMode::to_json(Self) -> Json
+pub fn DatePickerMode::to_repr(Self) -> @debug.Repr
+pub fn DatePickerMode::to_string(Self) -> String
 pub impl Show for DatePickerMode
 
 pub(all) struct FeedbackStyle {
@@ -243,12 +325,16 @@ pub(all) struct FeedbackStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FeedbackStyle::danger(Self) -> ToneStyle
 pub fn FeedbackStyle::default(theme? : @core.Theme) -> Self
+pub fn FeedbackStyle::equal(Self, Self) -> Bool
 pub fn FeedbackStyle::info(Self) -> ToneStyle
 pub fn FeedbackStyle::neutral(Self) -> ToneStyle
 pub fn FeedbackStyle::new(neutral~ : ToneStyle, info~ : ToneStyle, success~ : ToneStyle, warning~ : ToneStyle, danger~ : ToneStyle, radius~ : Double, padding~ : Double) -> Self
+pub fn FeedbackStyle::not_equal(Self, Self) -> Bool
 pub fn FeedbackStyle::padding(Self) -> Double
 pub fn FeedbackStyle::radius(Self) -> Double
 pub fn FeedbackStyle::success(Self) -> ToneStyle
+pub fn FeedbackStyle::to_json(Self) -> Json
+pub fn FeedbackStyle::to_repr(Self) -> @debug.Repr
 pub fn FeedbackStyle::warning(Self) -> ToneStyle
 pub fn FeedbackStyle::with_danger(Self, danger~ : ToneStyle) -> Self
 pub fn FeedbackStyle::with_info(Self, info~ : ToneStyle) -> Self
@@ -267,6 +353,10 @@ pub(all) struct FeedbackTheme {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FeedbackTheme::equal(Self, Self) -> Bool
+pub fn FeedbackTheme::not_equal(Self, Self) -> Bool
+pub fn FeedbackTheme::to_json(Self) -> Json
+pub fn FeedbackTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum FeedbackTone {
   Neutral
@@ -275,6 +365,12 @@ pub(all) enum FeedbackTone {
   Danger
   Info
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FeedbackTone::equal(Self, Self) -> Bool
+pub fn FeedbackTone::not_equal(Self, Self) -> Bool
+pub fn FeedbackTone::output(Self, &Logger) -> Unit
+pub fn FeedbackTone::to_json(Self) -> Json
+pub fn FeedbackTone::to_repr(Self) -> @debug.Repr
+pub fn FeedbackTone::to_string(Self) -> String
 pub impl Show for FeedbackTone
 
 pub(all) struct FormValidationStyle {
@@ -287,10 +383,14 @@ pub(all) struct FormValidationStyle {
 pub fn FormValidationStyle::background(Self) -> @core.Color
 pub fn FormValidationStyle::border(Self) -> @core.Color
 pub fn FormValidationStyle::default(theme? : @core.Theme) -> Self
+pub fn FormValidationStyle::equal(Self, Self) -> Bool
 pub fn FormValidationStyle::foreground(Self) -> @core.Color
 pub fn FormValidationStyle::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color, radius~ : Double, padding~ : Double) -> Self
+pub fn FormValidationStyle::not_equal(Self, Self) -> Bool
 pub fn FormValidationStyle::padding(Self) -> Double
 pub fn FormValidationStyle::radius(Self) -> Double
+pub fn FormValidationStyle::to_json(Self) -> Json
+pub fn FormValidationStyle::to_repr(Self) -> @debug.Repr
 pub fn FormValidationStyle::with_background(Self, background~ : @core.Color) -> Self
 pub fn FormValidationStyle::with_border(Self, border~ : @core.Color) -> Self
 pub fn FormValidationStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
@@ -304,6 +404,10 @@ pub(all) struct FormValidationTheme {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationTheme::equal(Self, Self) -> Bool
+pub fn FormValidationTheme::not_equal(Self, Self) -> Bool
+pub fn FormValidationTheme::to_json(Self) -> Json
+pub fn FormValidationTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum IconName {
   Check
@@ -337,6 +441,10 @@ pub(all) enum IconName {
   Columns
   Sidebar
 } derive(Eq, ToJson, @debug.Debug)
+pub fn IconName::equal(Self, Self) -> Bool
+pub fn IconName::not_equal(Self, Self) -> Bool
+pub fn IconName::to_json(Self) -> Json
+pub fn IconName::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MainAlign {
   Start
@@ -347,6 +455,12 @@ pub(all) enum MainAlign {
   Evenly
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MainAlign::core(Self) -> @core.MainAxisAlignment
+pub fn MainAlign::equal(Self, Self) -> Bool
+pub fn MainAlign::not_equal(Self, Self) -> Bool
+pub fn MainAlign::output(Self, &Logger) -> Unit
+pub fn MainAlign::to_json(Self) -> Json
+pub fn MainAlign::to_repr(Self) -> @debug.Repr
+pub fn MainAlign::to_string(Self) -> String
 pub impl Show for MainAlign
 
 pub(all) struct PickerItem {
@@ -366,11 +480,15 @@ pub(all) struct PickerStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PickerStyle::background(Self) -> @core.Brush
 pub fn PickerStyle::default(theme? : @core.Theme) -> Self
+pub fn PickerStyle::equal(Self, Self) -> Bool
 pub fn PickerStyle::font(Self) -> @core.FontSpec
 pub fn PickerStyle::foreground(Self) -> @core.Color
 pub fn PickerStyle::new(font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, radius~ : Double, popup_max_height~ : Double) -> Self
+pub fn PickerStyle::not_equal(Self, Self) -> Bool
 pub fn PickerStyle::popup_max_height(Self) -> Double
 pub fn PickerStyle::radius(Self) -> Double
+pub fn PickerStyle::to_json(Self) -> Json
+pub fn PickerStyle::to_repr(Self) -> @debug.Repr
 pub fn PickerStyle::with_background(Self, background~ : @core.Brush) -> Self
 pub fn PickerStyle::with_font(Self, font~ : @core.FontSpec) -> Self
 pub fn PickerStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
@@ -384,6 +502,10 @@ pub(all) struct PickerTheme {
   radius : Double
   popup_max_height : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PickerTheme::equal(Self, Self) -> Bool
+pub fn PickerTheme::not_equal(Self, Self) -> Bool
+pub fn PickerTheme::to_json(Self) -> Json
+pub fn PickerTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ProgressStyle {
   foreground : @core.Color
@@ -392,9 +514,13 @@ pub(all) struct ProgressStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ProgressStyle::background(Self) -> @core.Color
 pub fn ProgressStyle::default(theme? : @core.Theme) -> Self
+pub fn ProgressStyle::equal(Self, Self) -> Bool
 pub fn ProgressStyle::foreground(Self) -> @core.Color
 pub fn ProgressStyle::new(foreground~ : @core.Color, background~ : @core.Color, radius~ : Double) -> Self
+pub fn ProgressStyle::not_equal(Self, Self) -> Bool
 pub fn ProgressStyle::radius(Self) -> Double
+pub fn ProgressStyle::to_json(Self) -> Json
+pub fn ProgressStyle::to_repr(Self) -> @debug.Repr
 pub fn ProgressStyle::with_background(Self, background~ : @core.Color) -> Self
 pub fn ProgressStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
 pub fn ProgressStyle::with_radius(Self, radius~ : Double) -> Self
@@ -404,17 +530,33 @@ pub(all) struct ProgressTheme {
   background : @core.Color
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ProgressTheme::equal(Self, Self) -> Bool
+pub fn ProgressTheme::not_equal(Self, Self) -> Bool
+pub fn ProgressTheme::to_json(Self) -> Json
+pub fn ProgressTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SegmentedControlSize {
   Compact
   Regular
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SegmentedControlSize::equal(Self, Self) -> Bool
+pub fn SegmentedControlSize::not_equal(Self, Self) -> Bool
+pub fn SegmentedControlSize::output(Self, &Logger) -> Unit
+pub fn SegmentedControlSize::to_json(Self) -> Json
+pub fn SegmentedControlSize::to_repr(Self) -> @debug.Repr
+pub fn SegmentedControlSize::to_string(Self) -> String
 pub impl Show for SegmentedControlSize
 
 pub(all) enum SheetPresentationMode {
   Modal
   BottomSheet
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SheetPresentationMode::equal(Self, Self) -> Bool
+pub fn SheetPresentationMode::not_equal(Self, Self) -> Bool
+pub fn SheetPresentationMode::output(Self, &Logger) -> Unit
+pub fn SheetPresentationMode::to_json(Self) -> Json
+pub fn SheetPresentationMode::to_repr(Self) -> @debug.Repr
+pub fn SheetPresentationMode::to_string(Self) -> String
 pub impl Show for SheetPresentationMode
 
 pub(all) struct SliderStyle {
@@ -427,11 +569,15 @@ pub(all) struct SliderStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SliderStyle::background(Self) -> @core.Color
 pub fn SliderStyle::default(theme? : @core.Theme) -> Self
+pub fn SliderStyle::equal(Self, Self) -> Bool
 pub fn SliderStyle::foreground(Self) -> @core.Color
 pub fn SliderStyle::new(foreground~ : @core.Color, background~ : @core.Color, thumb_color~ : @core.Color, track_height~ : Double, thumb_size~ : Double, radius~ : Double) -> Self
+pub fn SliderStyle::not_equal(Self, Self) -> Bool
 pub fn SliderStyle::radius(Self) -> Double
 pub fn SliderStyle::thumb_color(Self) -> @core.Color
 pub fn SliderStyle::thumb_size(Self) -> Double
+pub fn SliderStyle::to_json(Self) -> Json
+pub fn SliderStyle::to_repr(Self) -> @debug.Repr
 pub fn SliderStyle::track_height(Self) -> Double
 pub fn SliderStyle::with_background(Self, background~ : @core.Color) -> Self
 pub fn SliderStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
@@ -449,6 +595,10 @@ pub(all) struct SliderTheme {
   radius : Double
   thumb_shape : ThumbShape
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SliderTheme::equal(Self, Self) -> Bool
+pub fn SliderTheme::not_equal(Self, Self) -> Bool
+pub fn SliderTheme::to_json(Self) -> Json
+pub fn SliderTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) struct StateLayerTokens {
   color : @core.Color
@@ -459,6 +609,10 @@ pub(all) struct StateLayerTokens {
   selected_alpha : Double
   disabled_alpha : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn StateLayerTokens::equal(Self, Self) -> Bool
+pub fn StateLayerTokens::not_equal(Self, Self) -> Bool
+pub fn StateLayerTokens::to_json(Self) -> Json
+pub fn StateLayerTokens::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SurfaceStyle {
   brush : @core.Brush
@@ -471,12 +625,16 @@ pub(all) struct SurfaceStyle {
 pub fn SurfaceStyle::border(Self) -> @core.BorderStyle?
 pub fn SurfaceStyle::brush(Self) -> @core.Brush
 pub fn SurfaceStyle::default(theme? : @core.Theme) -> Self
+pub fn SurfaceStyle::equal(Self, Self) -> Bool
 pub fn SurfaceStyle::level(Self) -> @core.SurfaceLevel
 pub fn SurfaceStyle::new(brush~ : @core.Brush, border? : @core.BorderStyle?, radius~ : Double, shadow? : @core.ShadowStyle?, padding~ : @core.Insets, level~ : @core.SurfaceLevel) -> Self
+pub fn SurfaceStyle::not_equal(Self, Self) -> Bool
 pub fn SurfaceStyle::padding(Self) -> @core.Insets
 pub fn SurfaceStyle::radius(Self) -> Double
 pub fn SurfaceStyle::raised(theme? : @core.Theme) -> Self
 pub fn SurfaceStyle::shadow(Self) -> @core.ShadowStyle?
+pub fn SurfaceStyle::to_json(Self) -> Json
+pub fn SurfaceStyle::to_repr(Self) -> @debug.Repr
 pub fn SurfaceStyle::with_border(Self, border~ : @core.BorderStyle?) -> Self
 pub fn SurfaceStyle::with_brush(Self, brush~ : @core.Brush) -> Self
 pub fn SurfaceStyle::with_level(Self, level~ : @core.SurfaceLevel) -> Self
@@ -495,12 +653,20 @@ pub(all) struct SurfaceTheme {
   raised_shadow : @core.ShadowStyle?
   overlay_shadow : @core.ShadowStyle?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceTheme::equal(Self, Self) -> Bool
+pub fn SurfaceTheme::not_equal(Self, Self) -> Bool
+pub fn SurfaceTheme::to_json(Self) -> Json
+pub fn SurfaceTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TextFieldAppearance {
   Filled
   Outline
   Underline
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldAppearance::equal(Self, Self) -> Bool
+pub fn TextFieldAppearance::not_equal(Self, Self) -> Bool
+pub fn TextFieldAppearance::to_json(Self) -> Json
+pub fn TextFieldAppearance::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextFieldStyle {
   normal : ControlStateStyle
@@ -512,13 +678,17 @@ pub(all) struct TextFieldStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextFieldStyle::cursor_color(Self) -> @core.Color
 pub fn TextFieldStyle::disabled(Self) -> ControlStateStyle
+pub fn TextFieldStyle::equal(Self, Self) -> Bool
 pub fn TextFieldStyle::filled(theme? : @core.Theme) -> Self
 pub fn TextFieldStyle::focused(Self) -> ControlStateStyle
 pub fn TextFieldStyle::font(Self) -> @core.FontSpec
 pub fn TextFieldStyle::new(normal~ : ControlStateStyle, focused~ : ControlStateStyle, disabled~ : ControlStateStyle, placeholder_color~ : @core.Color, cursor_color~ : @core.Color, font~ : @core.FontSpec) -> Self
 pub fn TextFieldStyle::normal(Self) -> ControlStateStyle
+pub fn TextFieldStyle::not_equal(Self, Self) -> Bool
 pub fn TextFieldStyle::outline(theme? : @core.Theme) -> Self
 pub fn TextFieldStyle::placeholder_color(Self) -> @core.Color
+pub fn TextFieldStyle::to_json(Self) -> Json
+pub fn TextFieldStyle::to_repr(Self) -> @debug.Repr
 pub fn TextFieldStyle::with_cursor_color(Self, cursor_color~ : @core.Color) -> Self
 pub fn TextFieldStyle::with_disabled(Self, disabled~ : ControlStateStyle) -> Self
 pub fn TextFieldStyle::with_focused(Self, focused~ : ControlStateStyle) -> Self
@@ -535,14 +705,24 @@ pub(all) struct TextFieldTheme {
   font : @core.FontSpec
   appearance : TextFieldAppearance
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldTheme::equal(Self, Self) -> Bool
+pub fn TextFieldTheme::not_equal(Self, Self) -> Bool
 pub fn TextFieldTheme::resolve(Self, @core.InteractionState) -> ControlStateStyle
+pub fn TextFieldTheme::to_json(Self) -> Json
+pub fn TextFieldTheme::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TextFieldVariant {
   Filled
   Outline
   Plain
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldVariant::equal(Self, Self) -> Bool
+pub fn TextFieldVariant::not_equal(Self, Self) -> Bool
+pub fn TextFieldVariant::output(Self, &Logger) -> Unit
 pub fn TextFieldVariant::style(Self, @core.Theme) -> TextFieldStyle
+pub fn TextFieldVariant::to_json(Self) -> Json
+pub fn TextFieldVariant::to_repr(Self) -> @debug.Repr
+pub fn TextFieldVariant::to_string(Self) -> String
 pub impl Show for TextFieldVariant
 
 pub(all) enum TextRole {
@@ -558,7 +738,13 @@ pub(all) enum TextRole {
   Overline
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextRole::color(Self, @core.Theme) -> @core.Color
+pub fn TextRole::equal(Self, Self) -> Bool
 pub fn TextRole::font(Self, @core.Theme) -> @core.FontSpec
+pub fn TextRole::not_equal(Self, Self) -> Bool
+pub fn TextRole::output(Self, &Logger) -> Unit
+pub fn TextRole::to_json(Self) -> Json
+pub fn TextRole::to_repr(Self) -> @debug.Repr
+pub fn TextRole::to_string(Self) -> String
 pub impl Show for TextRole
 
 pub(all) struct TextStyle {
@@ -567,9 +753,13 @@ pub(all) struct TextStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextStyle::body(theme? : @core.Theme) -> Self
 pub fn TextStyle::color(Self) -> @core.Color
+pub fn TextStyle::equal(Self, Self) -> Bool
 pub fn TextStyle::font(Self) -> @core.FontSpec
 pub fn TextStyle::new(font~ : @core.FontSpec, color~ : @core.Color) -> Self
+pub fn TextStyle::not_equal(Self, Self) -> Bool
 pub fn TextStyle::title(theme? : @core.Theme) -> Self
+pub fn TextStyle::to_json(Self) -> Json
+pub fn TextStyle::to_repr(Self) -> @debug.Repr
 pub fn TextStyle::with_color(Self, color~ : @core.Color) -> Self
 pub fn TextStyle::with_font(Self, font~ : @core.FontSpec) -> Self
 
@@ -577,7 +767,11 @@ pub(all) enum ThumbShape {
   Rounded
   Circle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ThumbShape::equal(Self, Self) -> Bool
 pub fn ThumbShape::label(Self) -> String
+pub fn ThumbShape::not_equal(Self, Self) -> Bool
+pub fn ThumbShape::to_json(Self) -> Json
+pub fn ThumbShape::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ToneStyle {
   foreground : @core.Color
@@ -586,8 +780,12 @@ pub(all) struct ToneStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ToneStyle::background(Self) -> @core.Color
 pub fn ToneStyle::border(Self) -> @core.Color
+pub fn ToneStyle::equal(Self, Self) -> Bool
 pub fn ToneStyle::foreground(Self) -> @core.Color
 pub fn ToneStyle::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color) -> Self
+pub fn ToneStyle::not_equal(Self, Self) -> Bool
+pub fn ToneStyle::to_json(Self) -> Json
+pub fn ToneStyle::to_repr(Self) -> @debug.Repr
 pub fn ToneStyle::with_background(Self, background~ : @core.Color) -> Self
 pub fn ToneStyle::with_border(Self, border~ : @core.Color) -> Self
 pub fn ToneStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
@@ -597,6 +795,10 @@ pub(all) struct ToneTokens {
   background : @core.Color
   border : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ToneTokens::equal(Self, Self) -> Bool
+pub fn ToneTokens::not_equal(Self, Self) -> Bool
+pub fn ToneTokens::to_json(Self) -> Json
+pub fn ToneTokens::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 pub using @core {type ColorPalette}

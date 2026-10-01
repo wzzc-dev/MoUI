@@ -21,6 +21,15 @@ pub(all) struct TextHistoryEntryContext {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TextHistoryEntryContext with Debug::{to_repr}
+
+///|
+pub extend TextHistoryEntryContext with Eq::{not_equal, equal}
+
+///|
+pub extend TextHistoryEntryContext with ToJson::{to_json}
+
+///|
 /// Current text -> text with the entry's edit applied forward (redo).
 pub fn TextHistoryEntryContext::redo_text(
   self : TextHistoryEntryContext,

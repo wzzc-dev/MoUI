@@ -20,9 +20,12 @@ pub(all) struct GraphemeRange {
   end : Int
 } derive(Eq, @debug.Debug)
 pub fn GraphemeRange::collapsed(Int) -> Self
+pub fn GraphemeRange::equal(Self, Self) -> Bool
 pub fn GraphemeRange::is_collapsed(Self) -> Bool
 pub fn GraphemeRange::new(start~ : Int, end~ : Int) -> Self
 pub fn GraphemeRange::normalized(Self) -> Self
+pub fn GraphemeRange::not_equal(Self, Self) -> Bool
+pub fn GraphemeRange::to_repr(Self) -> @debug.Repr
 
 pub struct TextGraphemeBoundaries {
   // private fields
@@ -32,6 +35,7 @@ pub fn TextGraphemeBoundaries::ceil_boundary(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::clamp_index(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::cluster_count(Self) -> Int
 pub fn TextGraphemeBoundaries::delete_range(Self, Int, Int, Int) -> GraphemeRange
+pub fn TextGraphemeBoundaries::equal(Self, Self) -> Bool
 pub fn TextGraphemeBoundaries::floor_boundary(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::is_boundary(Self, Int) -> Bool
 pub fn TextGraphemeBoundaries::length(Self) -> Int
@@ -40,8 +44,10 @@ pub fn TextGraphemeBoundaries::nearest_boundary_utf8_offset(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::new(text~ : String) -> Self
 pub fn TextGraphemeBoundaries::next_boundary(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::normalize_range(Self, GraphemeRange) -> GraphemeRange
+pub fn TextGraphemeBoundaries::not_equal(Self, Self) -> Bool
 pub fn TextGraphemeBoundaries::previous_boundary(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::text(Self) -> String
+pub fn TextGraphemeBoundaries::to_repr(Self) -> @debug.Repr
 pub fn TextGraphemeBoundaries::utf8_offset(Self, Int) -> Int
 
 // Type aliases

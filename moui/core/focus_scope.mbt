@@ -5,11 +5,23 @@ pub(all) enum FocusTraversalDirection {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FocusTraversalDirection with Debug::{to_repr}
+
+///|
+pub extend FocusTraversalDirection with Eq::{not_equal, equal}
+
+///|
+pub extend FocusTraversalDirection with ToJson::{to_json}
+
+///|
 struct FocusScopeItem {
   id : String
   enabled : Bool
   focusable : Bool
 } derive(Eq)
+
+///|
+pub extend FocusScopeItem with Eq::{not_equal, equal}
 
 ///|
 struct FocusScope {
@@ -19,6 +31,9 @@ struct FocusScope {
   default_action : String
   dismiss_action : String
 } derive(Eq)
+
+///|
+pub extend FocusScope with Eq::{not_equal, equal}
 
 ///|
 pub fn FocusScopeItem::new(

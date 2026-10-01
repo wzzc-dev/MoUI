@@ -8,6 +8,15 @@ pub(all) struct PerspectiveCamera {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PerspectiveCamera with Debug::{to_repr}
+
+///|
+pub extend PerspectiveCamera with Eq::{not_equal, equal}
+
+///|
+pub extend PerspectiveCamera with ToJson::{to_json}
+
+///|
 pub fn PerspectiveCamera::new(
   fov_y_radians? : Double = 0.7853981633974483,
   aspect? : Double = 1.0,
@@ -77,6 +86,15 @@ pub(all) struct OrbitCamera {
   polar : Double
   perspective : PerspectiveCamera
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend OrbitCamera with Debug::{to_repr}
+
+///|
+pub extend OrbitCamera with Eq::{not_equal, equal}
+
+///|
+pub extend OrbitCamera with ToJson::{to_json}
 
 ///|
 pub fn OrbitCamera::new(

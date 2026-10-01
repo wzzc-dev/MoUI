@@ -19,6 +19,10 @@ pub(all) struct AgentAccessibilityAnnouncement {
   is_atomic : Bool
   text : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentAccessibilityAnnouncement::equal(Self, Self) -> Bool
+pub fn AgentAccessibilityAnnouncement::not_equal(Self, Self) -> Bool
+pub fn AgentAccessibilityAnnouncement::to_json(Self) -> Json
+pub fn AgentAccessibilityAnnouncement::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AgentActionError {
   HostClosed
@@ -31,33 +35,57 @@ pub(all) enum AgentActionError {
   ReentrantDispatch
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AgentActionError::code(Self) -> String
+pub fn AgentActionError::equal(Self, Self) -> Bool
+pub fn AgentActionError::not_equal(Self, Self) -> Bool
+pub fn AgentActionError::to_json(Self) -> Json
+pub fn AgentActionError::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AgentActionReceipt {
   before : @core.SemanticsGeneration
   after : @core.SemanticsGeneration
   pending_work : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentActionReceipt::equal(Self, Self) -> Bool
+pub fn AgentActionReceipt::not_equal(Self, Self) -> Bool
+pub fn AgentActionReceipt::to_json(Self) -> Json
+pub fn AgentActionReceipt::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AgentActionRequest {
   target : @core.SemanticsTarget
   action : @core.SemanticsAction
   precondition : AgentGenerationPrecondition
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentActionRequest::equal(Self, Self) -> Bool
+pub fn AgentActionRequest::not_equal(Self, Self) -> Bool
+pub fn AgentActionRequest::to_json(Self) -> Json
+pub fn AgentActionRequest::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AgentDiagnosticsError {
   HostClosed
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AgentDiagnosticsError::code(Self) -> String
+pub fn AgentDiagnosticsError::equal(Self, Self) -> Bool
+pub fn AgentDiagnosticsError::not_equal(Self, Self) -> Bool
+pub fn AgentDiagnosticsError::to_json(Self) -> Json
+pub fn AgentDiagnosticsError::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AgentGenerationPrecondition {
   Exact(@core.SemanticsGeneration)
   Latest
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentGenerationPrecondition::equal(Self, Self) -> Bool
+pub fn AgentGenerationPrecondition::not_equal(Self, Self) -> Bool
+pub fn AgentGenerationPrecondition::to_json(Self) -> Json
+pub fn AgentGenerationPrecondition::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AgentReadError {
   HostClosed
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AgentReadError::code(Self) -> String
+pub fn AgentReadError::equal(Self, Self) -> Bool
+pub fn AgentReadError::not_equal(Self, Self) -> Bool
+pub fn AgentReadError::to_json(Self) -> Json
+pub fn AgentReadError::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AgentSemanticsDelta {
   from : @core.SemanticsGeneration
@@ -69,18 +97,30 @@ pub(all) struct AgentSemanticsDelta {
   issues : Array[AgentSemanticsIssue]
   announcements : Array[AgentAccessibilityAnnouncement]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSemanticsDelta::equal(Self, Self) -> Bool
+pub fn AgentSemanticsDelta::not_equal(Self, Self) -> Bool
+pub fn AgentSemanticsDelta::to_json(Self) -> Json
+pub fn AgentSemanticsDelta::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AgentSemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
   MissingRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId)
   AmbiguousRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId, Array[@core.SemanticsNodeId])
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSemanticsIssue::equal(Self, Self) -> Bool
+pub fn AgentSemanticsIssue::not_equal(Self, Self) -> Bool
+pub fn AgentSemanticsIssue::to_json(Self) -> Json
+pub fn AgentSemanticsIssue::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AgentSemanticsRead {
   Full(AgentSemanticsSnapshot)
   Delta(AgentSemanticsDelta)
   Unchanged(@core.SemanticsGeneration)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSemanticsRead::equal(Self, Self) -> Bool
+pub fn AgentSemanticsRead::not_equal(Self, Self) -> Bool
+pub fn AgentSemanticsRead::to_json(Self) -> Json
+pub fn AgentSemanticsRead::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AgentSemanticsSnapshot {
   generation : @core.SemanticsGeneration
@@ -89,21 +129,39 @@ pub(all) struct AgentSemanticsSnapshot {
   nodes : Array[@core.SemanticsNode]
   issues : Array[AgentSemanticsIssue]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AgentSemanticsSnapshot::equal(Self, Self) -> Bool
+pub fn AgentSemanticsSnapshot::not_equal(Self, Self) -> Bool
+pub fn AgentSemanticsSnapshot::to_json(Self) -> Json
+pub fn AgentSemanticsSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DiagnosticsDispatchResult {
   accepted : Bool
   reason : String?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DiagnosticsDispatchResult::equal(Self, Self) -> Bool
+pub fn DiagnosticsDispatchResult::not_equal(Self, Self) -> Bool
+pub fn DiagnosticsDispatchResult::to_json(Self) -> Json
+pub fn DiagnosticsDispatchResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PaintSummary {
   texts : Array[String]
   draw_command_count : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PaintSummary::equal(Self, Self) -> Bool
+pub fn PaintSummary::not_equal(Self, Self) -> Bool
+pub fn PaintSummary::to_json(Self) -> Json
+pub fn PaintSummary::to_repr(Self) -> @debug.Repr
 
 pub struct RuntimeAgentHost {
   runtime : @runtime.AppRuntime
 }
+pub fn RuntimeAgentHost::dispatch_command(Self, @core.CommandIntent) -> Result[DiagnosticsDispatchResult, AgentDiagnosticsError]
+pub fn RuntimeAgentHost::dispatch_event(Self, @core.AppEvent) -> Result[DiagnosticsDispatchResult, AgentDiagnosticsError]
 pub fn RuntimeAgentHost::new(@runtime.AppRuntime) -> Self
+pub fn RuntimeAgentHost::paint_summary(Self) -> Result[PaintSummary, AgentDiagnosticsError]
+pub fn RuntimeAgentHost::perform_action(Self, AgentActionRequest) -> Result[AgentActionReceipt, AgentActionError]
+pub fn RuntimeAgentHost::read_semantics(Self, @core.SemanticsGeneration?) -> Result[AgentSemanticsRead, AgentReadError]
+pub fn RuntimeAgentHost::runtime_state(Self) -> Result[RuntimeStateSnapshot, AgentDiagnosticsError]
 pub impl AgentDiagnosticsHost for RuntimeAgentHost
 pub impl AgentHost for RuntimeAgentHost
 
@@ -114,6 +172,10 @@ pub(all) struct RuntimeStateSnapshot {
   active_subscription_count : Int
   active_effect_task_count : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RuntimeStateSnapshot::equal(Self, Self) -> Bool
+pub fn RuntimeStateSnapshot::not_equal(Self, Self) -> Bool
+pub fn RuntimeStateSnapshot::to_json(Self) -> Json
+pub fn RuntimeStateSnapshot::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

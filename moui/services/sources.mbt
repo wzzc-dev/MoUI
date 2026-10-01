@@ -10,16 +10,43 @@ pub(all) struct RouteQueryParam {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RouteQueryParam with Debug::{to_repr}
+
+///|
+pub extend RouteQueryParam with Eq::{not_equal, equal}
+
+///|
+pub extend RouteQueryParam with ToJson::{to_json}
+
+///|
 pub(all) struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RouteLocation with Debug::{to_repr}
+
+///|
+pub extend RouteLocation with Eq::{not_equal, equal}
+
+///|
+pub extend RouteLocation with ToJson::{to_json}
+
+///|
 pub(all) struct RouteEvent {
   location : RouteLocation
   source : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RouteEvent with Debug::{to_repr}
+
+///|
+pub extend RouteEvent with Eq::{not_equal, equal}
+
+///|
+pub extend RouteEvent with ToJson::{to_json}
 
 ///|
 priv struct RouteHandler {

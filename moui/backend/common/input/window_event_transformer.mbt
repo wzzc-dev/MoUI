@@ -31,6 +31,12 @@ pub(all) enum PlatformSurfaceLifecycle {
 } derive(Eq, Debug)
 
 ///|
+pub extend PlatformSurfaceLifecycle with Debug::{to_repr}
+
+///|
+pub extend PlatformSurfaceLifecycle with Eq::{not_equal, equal}
+
+///|
 pub fn PlatformSurfaceLifecycle::attach(
   metrics : @core.SurfaceMetrics,
 ) -> PlatformSurfaceLifecycle {

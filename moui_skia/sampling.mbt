@@ -6,6 +6,12 @@ pub(all) struct CubicResampler {
 } derive(Debug, Eq)
 
 ///|
+pub extend CubicResampler with Debug::{to_repr}
+
+///|
+pub extend CubicResampler with Eq::{not_equal, equal}
+
+///|
 pub fn CubicResampler::new(b : Scalar, c : Scalar) -> CubicResampler {
   { b, c, }
 }
@@ -29,6 +35,15 @@ pub(all) struct SamplingOptions {
   mipmap : MipmapMode
   cubic : CubicResampler?
 } derive(Debug, Eq)
+
+///|
+pub extend SamplingOptions with Debug::{to_repr}
+
+///|
+pub extend SamplingOptions with Default::{default}
+
+///|
+pub extend SamplingOptions with Eq::{not_equal, equal}
 
 ///|
 pub fn SamplingOptions::new(

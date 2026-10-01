@@ -8,6 +8,15 @@ pub(all) enum HostModalSessionState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostModalSessionState with Debug::{to_repr}
+
+///|
+pub extend HostModalSessionState with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalSessionState with ToJson::{to_json}
+
+///|
 /// A host surface token is opaque to the contract. The concrete platform
 /// chooses its native surface id; the session only validates attach/detach.
 pub(all) struct HostModalSurface {
@@ -16,10 +25,28 @@ pub(all) struct HostModalSurface {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostModalSurface with Debug::{to_repr}
+
+///|
+pub extend HostModalSurface with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalSurface with ToJson::{to_json}
+
+///|
 pub(all) struct HostModalInputTransform {
   offset : @core.Point
   scale : @core.Point
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostModalInputTransform with Debug::{to_repr}
+
+///|
+pub extend HostModalInputTransform with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalInputTransform with ToJson::{to_json}
 
 ///|
 /// Exactly-once lifecycle and generation gate for one presentation request.

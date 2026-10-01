@@ -50,6 +50,10 @@ pub(all) struct IosBackendCapabilities {
   accessibility : Bool
   async_image : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn IosBackendCapabilities::equal(Self, Self) -> Bool
+pub fn IosBackendCapabilities::not_equal(Self, Self) -> Bool
+pub fn IosBackendCapabilities::to_json(Self) -> Json
+pub fn IosBackendCapabilities::to_repr(Self) -> @debug.Repr
 
 pub(all) struct IosBackendInfo {
   host_info : @backend.HostAppInfo
@@ -59,6 +63,10 @@ pub(all) struct IosBackendInfo {
   readiness : IosBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn IosBackendInfo::equal(Self, Self) -> Bool
+pub fn IosBackendInfo::not_equal(Self, Self) -> Bool
+pub fn IosBackendInfo::to_json(Self) -> Json
+pub fn IosBackendInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct IosBackendReadiness {
   ready : Bool
@@ -66,15 +74,30 @@ pub(all) struct IosBackendReadiness {
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn IosBackendReadiness::equal(Self, Self) -> Bool
+pub fn IosBackendReadiness::not_equal(Self, Self) -> Bool
+pub fn IosBackendReadiness::to_json(Self) -> Json
+pub fn IosBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct IosEmbeddedRuntimeBackend {
   backend : @embedded.HostedWindowBackend
 }
+pub fn IosEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
+pub fn IosEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
+pub fn IosEmbeddedRuntimeBackend::destroy_surfaces(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
+pub fn IosEmbeddedRuntimeBackend::device_event(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
 pub fn IosEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn IosEmbeddedRuntimeBackend::has_session(Self) -> Bool
+pub fn IosEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
+pub fn IosEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
+pub fn IosEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
+pub fn IosEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::session_attached(Self) -> Bool
+pub fn IosEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
 pub fn IosEmbeddedRuntimeBackend::surface_generation(Self) -> Int
+pub fn IosEmbeddedRuntimeBackend::suspended(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
+pub fn IosEmbeddedRuntimeBackend::window_event(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/ios.ApplicationHandler for IosEmbeddedRuntimeBackend
 
 pub struct IosImeSink {
@@ -91,9 +114,13 @@ pub fn IosSurfaceBinding::new(create_renderer~ : (IosSurfaceHandle, @wzzc-dev/mo
 pub(all) struct IosSurfaceHandle {
   raw : UInt64
 } derive(Eq, ToJson, @debug.Debug)
+pub fn IosSurfaceHandle::equal(Self, Self) -> Bool
 pub fn IosSurfaceHandle::new(raw~ : UInt64) -> Self
 pub fn IosSurfaceHandle::none() -> Self
+pub fn IosSurfaceHandle::not_equal(Self, Self) -> Bool
 pub fn IosSurfaceHandle::raw(Self) -> UInt64
+pub fn IosSurfaceHandle::to_json(Self) -> Json
+pub fn IosSurfaceHandle::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

@@ -5,6 +5,9 @@ pub(all) struct ViewIdentity {
 } derive(Eq)
 
 ///|
+pub extend ViewIdentity with Eq::{not_equal, equal}
+
+///|
 pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
@@ -34,6 +37,15 @@ pub(all) struct ViewLayoutResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ViewLayoutResult with Debug::{to_repr}
+
+///|
+pub extend ViewLayoutResult with Eq::{not_equal, equal}
+
+///|
+pub extend ViewLayoutResult with ToJson::{to_json}
+
+///|
 /// Recursive layout tree produced by the layout pass. Unlike
 /// `ViewLayoutResult` (a single node's measured size + child frames),
 /// `LayoutResult` is the fully-nested tree emitted by `AppRuntime::layout`.
@@ -41,6 +53,15 @@ pub(all) struct LayoutResult {
   frame : Rect
   children : Array[LayoutResult]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend LayoutResult with Debug::{to_repr}
+
+///|
+pub extend LayoutResult with Eq::{not_equal, equal}
+
+///|
+pub extend LayoutResult with ToJson::{to_json}
 
 ///|
 pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
@@ -97,6 +118,12 @@ pub(all) struct ViewPaintPlan {
 } derive(Eq, Debug)
 
 ///|
+pub extend ViewPaintPlan with Debug::{to_repr}
+
+///|
+pub extend ViewPaintPlan with Eq::{not_equal, equal}
+
+///|
 pub(all) struct ViewPaintLayer {
   frame : Rect
   cache_key : String
@@ -104,6 +131,12 @@ pub(all) struct ViewPaintLayer {
   commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
 } derive(Eq, Debug)
+
+///|
+pub extend ViewPaintLayer with Debug::{to_repr}
+
+///|
+pub extend ViewPaintLayer with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct ViewEventContext {
@@ -131,6 +164,12 @@ pub(all) enum ViewDirtyHint {
 } derive(Eq, Debug)
 
 ///|
+pub extend ViewDirtyHint with Debug::{to_repr}
+
+///|
+pub extend ViewDirtyHint with Eq::{not_equal, equal}
+
+///|
 pub(all) struct ViewEventResult[Msg] {
   changed : Bool
   activated : Bool
@@ -143,11 +182,23 @@ pub(all) struct ViewEventResult[Msg] {
 } derive(Eq, Debug)
 
 ///|
+pub extend ViewEventResult with Debug::{to_repr}
+
+///|
+pub extend ViewEventResult with Eq::{not_equal, equal}
+
+///|
 pub(all) struct ViewTextCommandResult[Msg] {
   result : TextCommandResult
   text_control : TextControlStateContext?
   messages : Array[Msg]
 } derive(Eq, Debug)
+
+///|
+pub extend ViewTextCommandResult with Debug::{to_repr}
+
+///|
+pub extend ViewTextCommandResult with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct ViewSemanticsInfo {
@@ -180,6 +231,15 @@ pub(all) struct ViewSemanticsInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ViewSemanticsInfo with Debug::{to_repr}
+
+///|
+pub extend ViewSemanticsInfo with Eq::{not_equal, equal}
+
+///|
+pub extend ViewSemanticsInfo with ToJson::{to_json}
+
+///|
 pub(all) struct ViewStateContext {
   focused : Bool
   hovered : Bool
@@ -190,6 +250,12 @@ pub(all) struct ViewStateContext {
   disabled : Bool
   slots : ViewStateSlots
 } derive(Eq, Debug)
+
+///|
+pub extend ViewStateContext with Debug::{to_repr}
+
+///|
+pub extend ViewStateContext with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct TextControlStateContext {
@@ -206,6 +272,15 @@ pub(all) struct TextControlStateContext {
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TextControlStateContext with Debug::{to_repr}
+
+///|
+pub extend TextControlStateContext with Eq::{not_equal, equal}
+
+///|
+pub extend TextControlStateContext with ToJson::{to_json}
 
 ///|
 pub fn ViewIdentity::new(kind~ : String, key? : String? = None) -> ViewIdentity {

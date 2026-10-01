@@ -5,6 +5,12 @@ pub(all) enum MaskFilterDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend MaskFilterDescriptor with Debug::{to_repr}
+
+///|
+pub extend MaskFilterDescriptor with Eq::{not_equal, equal}
+
+///|
 pub fn MaskFilterDescriptor::blur(sigma : Float) -> MaskFilterDescriptor? {
   if shader_filter_scalar_is_finite(sigma) && sigma > 0.0 {
     Some(BlurMaskFilter(sigma))

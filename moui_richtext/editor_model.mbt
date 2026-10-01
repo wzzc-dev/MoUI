@@ -8,6 +8,15 @@ pub(all) struct MarkdownSourceRange {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownSourceRange with Debug::{to_repr}
+
+///|
+pub extend MarkdownSourceRange with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownSourceRange with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownEditorBlock {
   block : MarkdownBlock
   // Absolute source offsets are shifted in place by the incremental apply;
@@ -17,6 +26,15 @@ pub(all) struct MarkdownEditorBlock {
   mut source_range : MarkdownSourceRange
   mut content_range : MarkdownSourceRange
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownEditorBlock with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorBlock with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditorBlock with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownEditorSnapshot {
@@ -33,6 +51,15 @@ pub(all) struct MarkdownEditorSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownEditorSnapshot with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorSnapshot with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditorSnapshot with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownEditorOutlineItem {
   level : Int
   title : String
@@ -42,10 +69,28 @@ pub(all) struct MarkdownEditorOutlineItem {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownEditorOutlineItem with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorOutlineItem with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditorOutlineItem with ToJson::{to_json}
+
+///|
 pub(all) struct MarkdownEditorSelection {
   caret : Int
   selection : @core.TextRange?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownEditorSelection with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorSelection with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditorSelection with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownEditorEditResult {
@@ -57,6 +102,15 @@ pub(all) struct MarkdownEditorEditResult {
   // diff in from_sources).
   edit_range : MarkdownSourceRange?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownEditorEditResult with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorEditResult with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditorEditResult with ToJson::{to_json}
 
 ///|
 pub(all) enum MarkdownEditorCommand {
@@ -92,6 +146,15 @@ pub(all) enum MarkdownEditorCommand {
   DeleteTableColumn
   SetTableColumnAlignment(@core.TextAlign?)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend MarkdownEditorCommand with Debug::{to_repr}
+
+///|
+pub extend MarkdownEditorCommand with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownEditorCommand with ToJson::{to_json}
 
 ///|
 priv struct MarkdownLine {

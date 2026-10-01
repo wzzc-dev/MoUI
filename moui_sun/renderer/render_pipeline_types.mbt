@@ -481,10 +481,16 @@ pub enum RenderCommand {
 } derive(Debug)
 
 ///|
+pub extend RenderCommand with Debug::{to_repr}
+
+///|
 /// Ordered list of CPU render commands.
 pub struct RenderPipeline {
   commands : Array[RenderCommand]
 } derive(Debug)
+
+///|
+pub extend RenderPipeline with Debug::{to_repr}
 
 ///|
 /// Telemetry returned after replaying a render pipeline.
@@ -498,12 +504,24 @@ pub struct RenderPipelineReplayResult {
 } derive(Eq, Debug)
 
 ///|
+pub extend RenderPipelineReplayResult with Debug::{to_repr}
+
+///|
+pub extend RenderPipelineReplayResult with Eq::{not_equal, equal}
+
+///|
 /// Error returned by checked plain render-pipeline replay.
 pub(all) enum RenderPipelineReplayError {
   ImageDecodeFailed(String, @graphics.PixmapDecodeError)
   FontParseFailed(String, @text.FontParseError)
   FontLoaderRequired(String)
 } derive(Eq, Debug)
+
+///|
+pub extend RenderPipelineReplayError with Debug::{to_repr}
+
+///|
+pub extend RenderPipelineReplayError with Eq::{not_equal, equal}
 
 ///|
 /// Telemetry returned after replaying a pipeline through RendererResources.
@@ -527,6 +545,12 @@ pub struct RenderPipelineResourceReplayResult {
 } derive(Eq, Debug)
 
 ///|
+pub extend RenderPipelineResourceReplayResult with Debug::{to_repr}
+
+///|
+pub extend RenderPipelineResourceReplayResult with Eq::{not_equal, equal}
+
+///|
 /// Error returned by checked RendererResources pipeline replay.
 pub(all) enum RenderPipelineResourceReplayError {
   ImageDecodeFailed(String, @graphics.PixmapDecodeError)
@@ -535,6 +559,12 @@ pub(all) enum RenderPipelineResourceReplayError {
   FontParseFailed(String, @text.FontParseError)
   FontLoaderRequired(String)
 } derive(Eq, Debug)
+
+///|
+pub extend RenderPipelineResourceReplayError with Debug::{to_repr}
+
+///|
+pub extend RenderPipelineResourceReplayError with Eq::{not_equal, equal}
 
 ///|
 /// Conservative CPU-side analysis of a render pipeline before replay.
@@ -549,6 +579,9 @@ pub struct RenderPipelineAnalysis {
 } derive(Debug)
 
 ///|
+pub extend RenderPipelineAnalysis with Debug::{to_repr}
+
+///|
 /// Conservative diff between two retained render pipelines.
 pub struct RenderPipelineDiffResult {
   previous_command_count : Int
@@ -561,6 +594,9 @@ pub struct RenderPipelineDiffResult {
 } derive(Debug)
 
 ///|
+pub extend RenderPipelineDiffResult with Debug::{to_repr}
+
+///|
 /// Coarse command category used by CPU batch scheduling.
 pub(all) enum RenderPipelineBatchKind {
   Clear
@@ -569,6 +605,12 @@ pub(all) enum RenderPipelineBatchKind {
   Image
   Text
 } derive(Eq, Debug)
+
+///|
+pub extend RenderPipelineBatchKind with Debug::{to_repr}
+
+///|
+pub extend RenderPipelineBatchKind with Eq::{not_equal, equal}
 
 ///|
 /// One contiguous run of commands with the same scheduling category.
@@ -580,12 +622,18 @@ pub struct RenderPipelineBatch {
 } derive(Debug)
 
 ///|
+pub extend RenderPipelineBatch with Debug::{to_repr}
+
+///|
 /// Scheduler-facing grouping of a render pipeline into contiguous CPU batches.
 pub struct RenderPipelineBatchPlan {
   command_count : Int
   batches : Array[RenderPipelineBatch]
   dirty_region : @graphics.DirtyRegion
 } derive(Debug)
+
+///|
+pub extend RenderPipelineBatchPlan with Debug::{to_repr}
 
 ///|
 /// One image resource use discovered before replaying a render pipeline.
@@ -596,6 +644,9 @@ pub struct RenderPipelineImageDependency {
   source_height : Int
   source_pixel_count : Int
 } derive(Debug)
+
+///|
+pub extend RenderPipelineImageDependency with Debug::{to_repr}
 
 ///|
 /// One parsed-font text resource use discovered before replaying a pipeline.
@@ -610,12 +661,18 @@ pub struct RenderPipelineTextDependency {
 } derive(Debug)
 
 ///|
+pub extend RenderPipelineTextDependency with Debug::{to_repr}
+
+///|
 /// One keyed font resource use discovered before replaying a pipeline.
 pub struct RenderPipelineFontDependency {
   command_index : Int
   font_key : String
   font_byte_count : Int
 } derive(Debug)
+
+///|
+pub extend RenderPipelineFontDependency with Debug::{to_repr}
 
 ///|
 /// Resource dependencies that can be pre-resolved from existing commands.
@@ -625,3 +682,6 @@ pub struct RenderPipelineResourcePlan {
   image_dependencies : Array[RenderPipelineImageDependency]
   text_dependencies : Array[RenderPipelineTextDependency]
 } derive(Debug)
+
+///|
+pub extend RenderPipelineResourcePlan with Debug::{to_repr}

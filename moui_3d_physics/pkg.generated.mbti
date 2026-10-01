@@ -18,15 +18,25 @@ pub(all) struct BodyDesc {
   gravity_scale : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn BodyDesc::body_type(Self) -> BodyType
+pub fn BodyDesc::equal(Self, Self) -> Bool
 pub fn BodyDesc::gravity_scale(Self) -> Double
 pub fn BodyDesc::new(body_type? : BodyType, position? : @moui_3d.Vec3, rotation? : @moui_3d.Quat, gravity_scale? : Double) -> Self
+pub fn BodyDesc::not_equal(Self, Self) -> Bool
 pub fn BodyDesc::position(Self) -> @moui_3d.Vec3
 pub fn BodyDesc::rotation(Self) -> @moui_3d.Quat
+pub fn BodyDesc::to_json(Self) -> Json
+pub fn BodyDesc::to_repr(Self) -> @debug.Repr
 
 pub(all) struct BodyId {
   value : Int64
 } derive(Eq, Hash, ToJson, @debug.Debug)
+pub fn BodyId::equal(Self, Self) -> Bool
+pub fn BodyId::hash(Self) -> Int
+pub fn BodyId::hash_combine(Self, Hasher) -> Unit
 pub fn BodyId::new(Int64) -> Self
+pub fn BodyId::not_equal(Self, Self) -> Bool
+pub fn BodyId::to_json(Self) -> Json
+pub fn BodyId::to_repr(Self) -> @debug.Repr
 pub fn BodyId::value(Self) -> Int64
 
 pub(all) enum BodyType {
@@ -34,6 +44,10 @@ pub(all) enum BodyType {
   Fixed
   Kinematic
 } derive(Eq, ToJson, @debug.Debug)
+pub fn BodyType::equal(Self, Self) -> Bool
+pub fn BodyType::not_equal(Self, Self) -> Bool
+pub fn BodyType::to_json(Self) -> Json
+pub fn BodyType::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ColliderDesc {
   shape : Shape
@@ -43,16 +57,26 @@ pub(all) struct ColliderDesc {
   restitution : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ColliderDesc::body(Self) -> BodyId?
+pub fn ColliderDesc::equal(Self, Self) -> Bool
 pub fn ColliderDesc::friction(Self) -> Double
 pub fn ColliderDesc::new(shape~ : Shape, body? : BodyId?, sensor? : Bool, friction? : Double, restitution? : Double) -> Self
+pub fn ColliderDesc::not_equal(Self, Self) -> Bool
 pub fn ColliderDesc::restitution(Self) -> Double
 pub fn ColliderDesc::sensor(Self) -> Bool
 pub fn ColliderDesc::shape(Self) -> Shape
+pub fn ColliderDesc::to_json(Self) -> Json
+pub fn ColliderDesc::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ColliderId {
   value : Int64
 } derive(Eq, Hash, ToJson, @debug.Debug)
+pub fn ColliderId::equal(Self, Self) -> Bool
+pub fn ColliderId::hash(Self) -> Int
+pub fn ColliderId::hash_combine(Self, Hasher) -> Unit
 pub fn ColliderId::new(Int64) -> Self
+pub fn ColliderId::not_equal(Self, Self) -> Bool
+pub fn ColliderId::to_json(Self) -> Json
+pub fn ColliderId::to_repr(Self) -> @debug.Repr
 pub fn ColliderId::value(Self) -> Int64
 
 pub(all) struct PhysicsWorld {
@@ -69,6 +93,7 @@ pub fn PhysicsWorld::create_collider(Self, ColliderDesc) -> ColliderId
 pub fn PhysicsWorld::gravity(Self) -> @moui_3d.Vec3
 pub fn PhysicsWorld::new(gravity? : @moui_3d.Vec3) -> Self
 pub fn PhysicsWorld::step(Self, Double) -> Int
+pub fn PhysicsWorld::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RayHit {
   collider : ColliderId
@@ -81,6 +106,7 @@ pub fn RayHit::distance(Self) -> Double
 pub fn RayHit::new(collider~ : ColliderId, distance~ : Double, position~ : @moui_3d.Vec3, normal~ : @moui_3d.Vec3) -> Self
 pub fn RayHit::normal(Self) -> @moui_3d.Vec3
 pub fn RayHit::position(Self) -> @moui_3d.Vec3
+pub fn RayHit::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Shape {
   Ball(Double)
@@ -91,6 +117,10 @@ pub(all) enum Shape {
   Triangle(@moui_3d.Vec3, @moui_3d.Vec3, @moui_3d.Vec3)
   Trimesh(Array[@moui_3d.Vec3], Array[(Int, Int, Int)])
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Shape::equal(Self, Self) -> Bool
+pub fn Shape::not_equal(Self, Self) -> Bool
+pub fn Shape::to_json(Self) -> Json
+pub fn Shape::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

@@ -6,6 +6,15 @@ struct EffectDescriptor {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EffectDescriptor with Debug::{to_repr}
+
+///|
+pub extend EffectDescriptor with Eq::{not_equal, equal}
+
+///|
+pub extend EffectDescriptor with ToJson::{to_json}
+
+///|
 pub fn EffectDescriptor::key(self : EffectDescriptor) -> String {
   self.key
 }

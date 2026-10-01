@@ -18,6 +18,15 @@ pub struct SunTextMaturityDiagnostic {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SunTextMaturityDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SunTextMaturityDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SunTextMaturityDiagnostic with ToJson::{to_json}
+
+///|
 pub struct SunTextVisualOrderDiagnostic {
   priv logical_text : String
   priv visual_text : String
@@ -29,6 +38,15 @@ pub struct SunTextVisualOrderDiagnostic {
   priv visual_order_differs : Bool
   priv bidi_visual_order_ready : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SunTextVisualOrderDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SunTextVisualOrderDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SunTextVisualOrderDiagnostic with ToJson::{to_json}
 
 ///|
 pub struct SunTextSelectionGeometryDiagnostic {
@@ -45,6 +63,15 @@ pub struct SunTextSelectionGeometryDiagnostic {
   priv visual_segment_count : Int
   priv bidi_visual_order_observed : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SunTextSelectionGeometryDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SunTextSelectionGeometryDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SunTextSelectionGeometryDiagnostic with ToJson::{to_json}
 
 ///|
 pub struct SunEmojiFontFallbackDiagnostic {
@@ -80,6 +107,15 @@ pub struct SunEmojiFontFallbackDiagnostic {
   priv emoji_fallback_attempted : Bool
   priv fallback_request_ready : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SunEmojiFontFallbackDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SunEmojiFontFallbackDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SunEmojiFontFallbackDiagnostic with ToJson::{to_json}
 
 ///|
 pub fn SunTextMaturityDiagnostic::text_system_id(

@@ -41,6 +41,9 @@ pub(all) struct Cell {
   width : Int
   attrs : CellAttrs
 } derive(Eq, @debug.Debug)
+pub fn Cell::equal(Self, Self) -> Bool
+pub fn Cell::not_equal(Self, Self) -> Bool
+pub fn Cell::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CellAttrs {
   fg : TermColor
@@ -52,6 +55,9 @@ pub(all) struct CellAttrs {
   reverse : Bool
 } derive(Eq, @debug.Debug)
 pub fn CellAttrs::default() -> Self
+pub fn CellAttrs::equal(Self, Self) -> Bool
+pub fn CellAttrs::not_equal(Self, Self) -> Bool
+pub fn CellAttrs::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Model {
   screen : TermScreen
@@ -86,6 +92,9 @@ pub(all) enum ParseState {
   Osc
   OscEscape
 } derive(Eq, @debug.Debug)
+pub fn ParseState::equal(Self, Self) -> Bool
+pub fn ParseState::not_equal(Self, Self) -> Bool
+pub fn ParseState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Selection {
   anchor_row : Int
@@ -103,6 +112,9 @@ pub(all) enum TermColor {
   Indexed(Int)
   Rgb(Int, Int, Int)
 } derive(Eq, @debug.Debug)
+pub fn TermColor::equal(Self, Self) -> Bool
+pub fn TermColor::not_equal(Self, Self) -> Bool
+pub fn TermColor::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TermRow {
   mut cells : Array[Cell]

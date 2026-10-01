@@ -8,6 +8,12 @@ pub struct SkiaPixelFrame {
 } derive(Eq, Debug)
 
 ///|
+pub extend SkiaPixelFrame with Debug::{to_repr}
+
+///|
+pub extend SkiaPixelFrame with Eq::{not_equal, equal}
+
+///|
 pub struct SkiaPresentTarget {
   priv description : String
   priv present : (SkiaPixelFrame) -> Bool
@@ -28,6 +34,15 @@ pub(all) enum SkiaPresentKind {
   CpuPixelFrame
   HostGpuSurface
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SkiaPresentKind with Debug::{to_repr}
+
+///|
+pub extend SkiaPresentKind with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaPresentKind with ToJson::{to_json}
 
 ///|
 /// Present target for the direct host-GPU-surface route. The presenter takes a

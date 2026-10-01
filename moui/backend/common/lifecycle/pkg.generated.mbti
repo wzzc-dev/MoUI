@@ -22,12 +22,18 @@ pub enum EmbeddedHostLifecyclePhase {
   SurfaceAttached
   Exited
 } derive(Eq, @debug.Debug)
+pub fn EmbeddedHostLifecyclePhase::equal(Self, Self) -> Bool
+pub fn EmbeddedHostLifecyclePhase::not_equal(Self, Self) -> Bool
+pub fn EmbeddedHostLifecyclePhase::to_repr(Self) -> @debug.Repr
 
 pub struct EmbeddedHostSurface {
   handle : UInt64
   metrics : @wzzc-dev/moui/core.SurfaceMetrics
   generation : Int
 } derive(Eq, @debug.Debug)
+pub fn EmbeddedHostSurface::equal(Self, Self) -> Bool
+pub fn EmbeddedHostSurface::not_equal(Self, Self) -> Bool
+pub fn EmbeddedHostSurface::to_repr(Self) -> @debug.Repr
 
 pub struct EmbeddedLifecycle {
   mut phase : EmbeddedHostLifecyclePhase
@@ -60,11 +66,17 @@ pub enum EmbeddedWindowHostAction {
   Suspended
   Exit(Int)
 } derive(Eq, @debug.Debug)
+pub fn EmbeddedWindowHostAction::equal(Self, Self) -> Bool
+pub fn EmbeddedWindowHostAction::not_equal(Self, Self) -> Bool
+pub fn EmbeddedWindowHostAction::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PlatformWindowBinding {
   platform_id : @wzzc-dev/window/core.WindowId
   host_id : @backend.WindowId
 } derive(Eq, @debug.Debug)
+pub fn PlatformWindowBinding::equal(Self, Self) -> Bool
+pub fn PlatformWindowBinding::not_equal(Self, Self) -> Bool
+pub fn PlatformWindowBinding::to_repr(Self) -> @debug.Repr
 
 pub struct PlatformWindowMap {
   mut bindings : Array[PlatformWindowBinding]

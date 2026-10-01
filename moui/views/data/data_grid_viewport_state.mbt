@@ -5,6 +5,15 @@ pub struct DataGridFreezePanes {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DataGridFreezePanes with Debug::{to_repr}
+
+///|
+pub extend DataGridFreezePanes with Eq::{not_equal, equal}
+
+///|
+pub extend DataGridFreezePanes with ToJson::{to_json}
+
+///|
 pub fn data_grid_freeze_panes(
   rows? : Int = 0,
   columns? : Int = 0,
@@ -32,6 +41,15 @@ pub struct DataGridViewport {
   column_count : Int
   freeze : DataGridFreezePanes
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DataGridViewport with Debug::{to_repr}
+
+///|
+pub extend DataGridViewport with Eq::{not_equal, equal}
+
+///|
+pub extend DataGridViewport with ToJson::{to_json}
 
 ///|
 pub fn data_grid_viewport(

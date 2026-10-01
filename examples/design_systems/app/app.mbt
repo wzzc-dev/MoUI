@@ -29,6 +29,15 @@ pub(all) enum DesignSystemChoice {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignSystemChoice with Debug::{to_repr}
+
+///|
+pub extend DesignSystemChoice with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSystemChoice with ToJson::{to_json}
+
+///|
 pub(all) struct DesignSystemsModel {
   preset : DesignSystemChoice
   scheme : @state.ColorScheme

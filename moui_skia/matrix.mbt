@@ -13,6 +13,12 @@ pub(all) enum MatrixMember {
 } derive(Debug, Eq)
 
 ///|
+pub extend MatrixMember with Debug::{to_repr}
+
+///|
+pub extend MatrixMember with Eq::{not_equal, equal}
+
+///|
 /// Row-major 3x3 transform matrix matching Skia's public member layout.
 pub(all) struct Matrix {
   scale_x : Scalar
@@ -25,6 +31,15 @@ pub(all) struct Matrix {
   persp_1 : Scalar
   persp_2 : Scalar
 } derive(Debug, Eq)
+
+///|
+pub extend Matrix with Debug::{to_repr}
+
+///|
+pub extend Matrix with Default::{default}
+
+///|
+pub extend Matrix with Eq::{not_equal, equal}
 
 ///|
 pub fn Matrix::new_all(

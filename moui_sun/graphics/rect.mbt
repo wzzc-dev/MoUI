@@ -8,6 +8,12 @@ pub struct Rect {
 } derive(Eq, Debug)
 
 ///|
+pub extend Rect with Debug::{to_repr}
+
+///|
+pub extend Rect with Eq::{not_equal, equal}
+
+///|
 /// Create a rectangle
 pub fn Rect::new(
   x~ : Double,
@@ -65,6 +71,12 @@ pub struct Size {
   width : Double
   height : Double
 } derive(Eq, Debug)
+
+///|
+pub extend Size with Debug::{to_repr}
+
+///|
+pub extend Size with Eq::{not_equal, equal}
 
 ///|
 pub fn Size::new(width~ : Double, height~ : Double) -> Size {

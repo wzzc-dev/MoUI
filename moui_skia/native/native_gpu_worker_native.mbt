@@ -197,6 +197,12 @@ pub(all) enum NativeGpuWorkerCompletionStatus {
 } derive(Eq, Debug)
 
 ///|
+pub extend NativeGpuWorkerCompletionStatus with Debug::{to_repr}
+
+///|
+pub extend NativeGpuWorkerCompletionStatus with Eq::{not_equal, equal}
+
+///|
 pub(all) struct NativeGpuWorkerCompletion {
   sequence : Int64
   control_token : Int64
@@ -208,6 +214,12 @@ pub(all) struct NativeGpuWorkerCompletion {
   presented_at_ms : Double
   status : NativeGpuWorkerCompletionStatus
 } derive(Eq, Debug)
+
+///|
+pub extend NativeGpuWorkerCompletion with Debug::{to_repr}
+
+///|
+pub extend NativeGpuWorkerCompletion with Eq::{not_equal, equal}
 
 ///|
 fn native_gpu_worker_completion_status_from_int(
@@ -238,6 +250,12 @@ pub(all) struct NativeGpuWorkerDiagnostics {
   control_pending : Int
   completion_pending : Int
 } derive(Eq, Debug)
+
+///|
+pub extend NativeGpuWorkerDiagnostics with Debug::{to_repr}
+
+///|
+pub extend NativeGpuWorkerDiagnostics with Eq::{not_equal, equal}
 
 ///|
 pub fn NativeGpuRenderWorker::new() -> NativeGpuRenderWorker? {

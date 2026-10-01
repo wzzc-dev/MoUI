@@ -12,12 +12,27 @@ pub(all) enum HostSessionState {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostSessionState with Debug::{to_repr}
+
+///|
+pub extend HostSessionState with Eq::{not_equal, equal}
+
+///|
+pub extend HostSessionState with ToJson::{to_json}
+
+///|
 pub(all) struct HostSession {
   mut generation : Int
   mut surface_epoch : Int
   mut state : HostSessionState
   mut attached_once : Bool
 } derive(Debug, ToJson)
+
+///|
+pub extend HostSession with Debug::{to_repr}
+
+///|
+pub extend HostSession with ToJson::{to_json}
 
 ///|
 pub fn HostSession::new(generation~ : Int) -> HostSession {
@@ -100,6 +115,12 @@ pub struct HostFrameScheduler {
 } derive(Debug, ToJson)
 
 ///|
+pub extend HostFrameScheduler with Debug::{to_repr}
+
+///|
+pub extend HostFrameScheduler with ToJson::{to_json}
+
+///|
 pub fn HostFrameScheduler::new() -> HostFrameScheduler {
   { requested: false, in_frame: false, follow_up: false, }
 }
@@ -158,11 +179,26 @@ pub(all) struct HostRequestId {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostRequestId with Debug::{to_repr}
+
+///|
+pub extend HostRequestId with Eq::{not_equal, equal}
+
+///|
+pub extend HostRequestId with ToJson::{to_json}
+
+///|
 pub struct HostChannel {
   mut next_request_id : Int
   mut pending : Array[HostRequestId]
   mut updates : Array[HostWireUpdate]
 } derive(Debug, ToJson)
+
+///|
+pub extend HostChannel with Debug::{to_repr}
+
+///|
+pub extend HostChannel with ToJson::{to_json}
 
 ///|
 pub fn HostChannel::new() -> HostChannel {
@@ -237,6 +273,15 @@ pub(all) struct HostWireUpdate {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostWireUpdate with Debug::{to_repr}
+
+///|
+pub extend HostWireUpdate with Eq::{not_equal, equal}
+
+///|
+pub extend HostWireUpdate with ToJson::{to_json}
+
+///|
 pub fn HostChannel::enqueue_update(
   self : HostChannel,
   kind~ : String,
@@ -264,6 +309,15 @@ pub(all) struct HostWireEnvelope {
   surface_epoch : Int
   updates : Array[HostWireUpdate]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostWireEnvelope with Debug::{to_repr}
+
+///|
+pub extend HostWireEnvelope with Eq::{not_equal, equal}
+
+///|
+pub extend HostWireEnvelope with ToJson::{to_json}
 
 ///|
 pub fn HostWireEnvelope::new(

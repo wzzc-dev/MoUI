@@ -53,6 +53,10 @@ pub(all) suberror GltfError {
   InvalidNode(Int)
   InvalidNodeCycle(Int)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn GltfError::equal(Self, Self) -> Bool
+pub fn GltfError::not_equal(Self, Self) -> Bool
+pub fn GltfError::to_json(Self) -> Json
+pub fn GltfError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) struct Aabb {
@@ -62,13 +66,17 @@ pub(all) struct Aabb {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Aabb::center(Self) -> Vec3
 pub fn Aabb::empty() -> Self
+pub fn Aabb::equal(Self, Self) -> Bool
 pub fn Aabb::extent(Self) -> Vec3
 pub fn Aabb::from_points(Array[Vec3]) -> Self
 pub fn Aabb::include_point(Self, Vec3) -> Self
 pub fn Aabb::is_valid(Self) -> Bool
 pub fn Aabb::max(Self) -> Vec3
 pub fn Aabb::min(Self) -> Vec3
+pub fn Aabb::not_equal(Self, Self) -> Bool
 pub fn Aabb::radius(Self) -> Double
+pub fn Aabb::to_json(Self) -> Json
+pub fn Aabb::to_repr(Self) -> @debug.Repr
 pub fn Aabb::transformed(Self, Mat4) -> Self
 pub fn Aabb::union(Self, Self) -> Self
 
@@ -77,6 +85,10 @@ pub(all) enum AlphaMode {
   Mask
   Blend
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AlphaMode::equal(Self, Self) -> Bool
+pub fn AlphaMode::not_equal(Self, Self) -> Bool
+pub fn AlphaMode::to_json(Self) -> Json
+pub fn AlphaMode::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AnimationChannel {
   node : NodeId
@@ -89,6 +101,7 @@ pub fn AnimationChannel::keyframes(Self) -> Array[AnimationKeyframe]
 pub fn AnimationChannel::new(node~ : NodeId, path~ : AnimationPath, interpolation~ : AnimationInterpolation, keyframes~ : Array[AnimationKeyframe]) -> Self
 pub fn AnimationChannel::node(Self) -> NodeId
 pub fn AnimationChannel::path(Self) -> AnimationPath
+pub fn AnimationChannel::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AnimationClip {
   name : String
@@ -99,12 +112,17 @@ pub fn AnimationClip::channels(Self) -> Array[AnimationChannel]
 pub fn AnimationClip::duration(Self) -> Double
 pub fn AnimationClip::name(Self) -> String
 pub fn AnimationClip::new(name? : String, channels~ : Array[AnimationChannel]) -> Self
+pub fn AnimationClip::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AnimationInterpolation {
   Step
   Linear
   CubicSpline
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AnimationInterpolation::equal(Self, Self) -> Bool
+pub fn AnimationInterpolation::not_equal(Self, Self) -> Bool
+pub fn AnimationInterpolation::to_json(Self) -> Json
+pub fn AnimationInterpolation::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AnimationKeyframe {
   time : Double
@@ -116,6 +134,7 @@ pub fn AnimationKeyframe::in_tangent(Self) -> Array[Double]
 pub fn AnimationKeyframe::new(time~ : Double, value~ : Array[Double], in_tangent? : Array[Double], out_tangent? : Array[Double]) -> Self
 pub fn AnimationKeyframe::out_tangent(Self) -> Array[Double]
 pub fn AnimationKeyframe::time(Self) -> Double
+pub fn AnimationKeyframe::to_repr(Self) -> @debug.Repr
 pub fn AnimationKeyframe::value(Self) -> Array[Double]
 
 pub(all) enum AnimationPath {
@@ -124,6 +143,10 @@ pub(all) enum AnimationPath {
   Scale
   Weights
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AnimationPath::equal(Self, Self) -> Bool
+pub fn AnimationPath::not_equal(Self, Self) -> Bool
+pub fn AnimationPath::to_json(Self) -> Json
+pub fn AnimationPath::to_repr(Self) -> @debug.Repr
 
 pub struct AnimationPlayer {
   mut clip : AnimationClip?
@@ -149,6 +172,7 @@ pub(all) struct AnimationSample {
 pub fn AnimationSample::new(node~ : NodeId, path~ : AnimationPath, value~ : Array[Double]) -> Self
 pub fn AnimationSample::node(Self) -> NodeId
 pub fn AnimationSample::path(Self) -> AnimationPath
+pub fn AnimationSample::to_repr(Self) -> @debug.Repr
 pub fn AnimationSample::value(Self) -> Array[Double]
 
 pub(all) struct AssetByteSource {
@@ -162,19 +186,28 @@ pub(all) enum AssetLoadResult {
   Missing(String)
   Invalid(String)
 } derive(@debug.Debug)
+pub fn AssetLoadResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Camera {
   name : String
   projection : CameraProjection
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Camera::equal(Self, Self) -> Bool
 pub fn Camera::name(Self) -> String
 pub fn Camera::new(name? : String, projection~ : CameraProjection) -> Self
+pub fn Camera::not_equal(Self, Self) -> Bool
 pub fn Camera::projection(Self) -> CameraProjection
+pub fn Camera::to_json(Self) -> Json
+pub fn Camera::to_repr(Self) -> @debug.Repr
 
 pub(all) enum CameraProjection {
   Perspective(Double, Double, Double, Double)
   Orthographic(Double, Double, Double, Double)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn CameraProjection::equal(Self, Self) -> Bool
+pub fn CameraProjection::not_equal(Self, Self) -> Bool
+pub fn CameraProjection::to_json(Self) -> Json
+pub fn CameraProjection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct GltfDocument {
   json : String
@@ -196,6 +229,7 @@ pub fn GltfDocument::node_count(Self) -> Int
 pub fn GltfDocument::sampler_count(Self) -> Int
 pub fn GltfDocument::scene_count(Self) -> Int
 pub fn GltfDocument::texture_count(Self) -> Int
+pub fn GltfDocument::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Mat4 {
   values : Array[Double]
@@ -207,6 +241,7 @@ pub fn Mat4::look_at(eye~ : Vec3, target~ : Vec3, up~ : Vec3) -> Self
 pub fn Mat4::mul(Self, Self) -> Self
 pub fn Mat4::perspective(fov_y_radians~ : Double, aspect~ : Double, near~ : Double, far~ : Double) -> Self
 pub fn Mat4::scale_uniform(Double) -> Self
+pub fn Mat4::to_repr(Self) -> @debug.Repr
 pub fn Mat4::transform_homogeneous(Self, Vec3) -> Vec4
 pub fn Mat4::transform_point(Self, Vec3) -> Vec3
 pub fn Mat4::transform_vec4(Self, Vec4) -> Vec4
@@ -233,16 +268,24 @@ pub fn Material::base_color_texture(Self) -> TextureId?
 pub fn Material::double_sided(Self) -> Bool
 pub fn Material::emissive_factor(Self) -> Vec3
 pub fn Material::emissive_texture(Self) -> TextureId?
+pub fn Material::equal(Self, Self) -> Bool
 pub fn Material::metallic(Self) -> Double
 pub fn Material::normal_texture(Self) -> TextureId?
+pub fn Material::not_equal(Self, Self) -> Bool
 pub fn Material::occlusion_texture(Self) -> TextureId?
 pub fn Material::pbr(base_color? : Vec4, metallic? : Double, roughness? : Double, base_color_texture? : TextureId?, normal_texture? : TextureId?, occlusion_texture? : TextureId?, emissive_texture? : TextureId?, emissive_factor? : Vec3, alpha_mode? : AlphaMode, alpha_cutoff? : Double, double_sided? : Bool) -> Self
 pub fn Material::roughness(Self) -> Double
+pub fn Material::to_json(Self) -> Json
+pub fn Material::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MaterialId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MaterialId::equal(Self, Self) -> Bool
 pub fn MaterialId::new(Int) -> Self
+pub fn MaterialId::not_equal(Self, Self) -> Bool
+pub fn MaterialId::to_json(Self) -> Json
+pub fn MaterialId::to_repr(Self) -> @debug.Repr
 pub fn MaterialId::value(Self) -> Int
 
 pub(all) struct Mesh {
@@ -255,12 +298,17 @@ pub fn Mesh::bounds(Self) -> Aabb
 pub fn Mesh::name(Self) -> String
 pub fn Mesh::new(name? : String, primitives~ : Array[Primitive], weights? : Array[Double]) -> Self
 pub fn Mesh::primitives(Self) -> Array[Primitive]
+pub fn Mesh::to_repr(Self) -> @debug.Repr
 pub fn Mesh::weights(Self) -> Array[Double]
 
 pub(all) struct MeshId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MeshId::equal(Self, Self) -> Bool
 pub fn MeshId::new(Int) -> Self
+pub fn MeshId::not_equal(Self, Self) -> Bool
+pub fn MeshId::to_json(Self) -> Json
+pub fn MeshId::to_repr(Self) -> @debug.Repr
 pub fn MeshId::value(Self) -> Int
 
 pub(all) struct Node {
@@ -281,6 +329,7 @@ pub fn Node::name(Self) -> String
 pub fn Node::new(name? : String, parent? : NodeId?, local_transform? : Mat4, mesh? : MeshId?, camera? : Int?, skin? : Int?, weights? : Array[Double]?) -> Self
 pub fn Node::parent(Self) -> NodeId?
 pub fn Node::skin(Self) -> Int?
+pub fn Node::to_repr(Self) -> @debug.Repr
 pub fn Node::weights(Self) -> Array[Double]?
 pub fn Node::with_child(Self, NodeId) -> Self
 pub fn Node::with_local_transform(Self, Mat4) -> Self
@@ -288,7 +337,11 @@ pub fn Node::with_local_transform(Self, Mat4) -> Self
 pub(all) struct NodeId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn NodeId::equal(Self, Self) -> Bool
 pub fn NodeId::new(Int) -> Self
+pub fn NodeId::not_equal(Self, Self) -> Bool
+pub fn NodeId::to_json(Self) -> Json
+pub fn NodeId::to_repr(Self) -> @debug.Repr
 pub fn NodeId::value(Self) -> Int
 
 pub(all) struct OrbitCamera {
@@ -299,8 +352,10 @@ pub(all) struct OrbitCamera {
   perspective : PerspectiveCamera
 } derive(Eq, ToJson, @debug.Debug)
 pub fn OrbitCamera::azimuth(Self) -> Double
+pub fn OrbitCamera::equal(Self, Self) -> Bool
 pub fn OrbitCamera::fit(Self, Aabb, padding? : Double) -> Self
 pub fn OrbitCamera::new(target? : Vec3, radius? : Double, azimuth? : Double, polar? : Double, perspective? : PerspectiveCamera) -> Self
+pub fn OrbitCamera::not_equal(Self, Self) -> Bool
 pub fn OrbitCamera::orbit(Self, Double, Double) -> Self
 pub fn OrbitCamera::pan(Self, Vec2) -> Self
 pub fn OrbitCamera::perspective(Self) -> PerspectiveCamera
@@ -310,6 +365,8 @@ pub fn OrbitCamera::projection(Self) -> Mat4
 pub fn OrbitCamera::radius(Self) -> Double
 pub fn OrbitCamera::ray_for_viewport(Self, Vec2, Vec2) -> Ray
 pub fn OrbitCamera::target(Self) -> Vec3
+pub fn OrbitCamera::to_json(Self) -> Json
+pub fn OrbitCamera::to_repr(Self) -> @debug.Repr
 pub fn OrbitCamera::view(Self) -> Mat4
 pub fn OrbitCamera::with_aspect(Self, Double) -> Self
 pub fn OrbitCamera::zoom(Self, Double) -> Self
@@ -320,11 +377,15 @@ pub(all) struct PerspectiveCamera {
   near : Double
   far : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PerspectiveCamera::equal(Self, Self) -> Bool
 pub fn PerspectiveCamera::far(Self) -> Double
 pub fn PerspectiveCamera::fov_y_radians(Self) -> Double
 pub fn PerspectiveCamera::near(Self) -> Double
 pub fn PerspectiveCamera::new(fov_y_radians? : Double, aspect? : Double, near? : Double, far? : Double) -> Self
+pub fn PerspectiveCamera::not_equal(Self, Self) -> Bool
 pub fn PerspectiveCamera::projection(Self) -> Mat4
+pub fn PerspectiveCamera::to_json(Self) -> Json
+pub fn PerspectiveCamera::to_repr(Self) -> @debug.Repr
 pub fn PerspectiveCamera::with_aspect(Self, Double) -> Self
 
 pub(all) struct PickHit {
@@ -334,9 +395,13 @@ pub(all) struct PickHit {
   position : Vec3
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PickHit::distance(Self) -> Double
+pub fn PickHit::equal(Self, Self) -> Bool
 pub fn PickHit::node(Self) -> NodeId
+pub fn PickHit::not_equal(Self, Self) -> Bool
 pub fn PickHit::position(Self) -> Vec3
 pub fn PickHit::primitive_index(Self) -> Int
+pub fn PickHit::to_json(Self) -> Json
+pub fn PickHit::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Primitive {
   vertices : Array[Vertex]
@@ -350,6 +415,7 @@ pub fn Primitive::indices(Self) -> Array[Int]
 pub fn Primitive::material(Self) -> MaterialId?
 pub fn Primitive::morph_targets(Self) -> Array[Array[VertexDelta]]
 pub fn Primitive::new(vertices~ : Array[Vertex], indices~ : Array[Int], material? : MaterialId?, morph_targets? : Array[Array[VertexDelta]]) -> Self
+pub fn Primitive::to_repr(Self) -> @debug.Repr
 pub fn Primitive::vertices(Self) -> Array[Vertex]
 
 pub(all) struct Quat {
@@ -358,12 +424,16 @@ pub(all) struct Quat {
   z : Double
   w : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Quat::equal(Self, Self) -> Bool
 pub fn Quat::from_axis_angle(axis~ : Vec3, angle~ : Double) -> Self
 pub fn Quat::identity() -> Self
 pub fn Quat::mul(Self, Self) -> Self
 pub fn Quat::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Self
+pub fn Quat::not_equal(Self, Self) -> Bool
 pub fn Quat::rotate(Self, Vec3) -> Vec3
+pub fn Quat::to_json(Self) -> Json
 pub fn Quat::to_mat4(Self) -> Mat4
+pub fn Quat::to_repr(Self) -> @debug.Repr
 pub fn Quat::w(Self) -> Double
 pub fn Quat::x(Self) -> Double
 pub fn Quat::y(Self) -> Double
@@ -375,10 +445,14 @@ pub(all) struct Ray {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Ray::at(Self, Double) -> Vec3
 pub fn Ray::direction(Self) -> Vec3
+pub fn Ray::equal(Self, Self) -> Bool
 pub fn Ray::intersect_aabb(Self, Aabb) -> Bool
 pub fn Ray::intersect_triangle(Self, Vec3, Vec3, Vec3) -> Double?
 pub fn Ray::new(origin~ : Vec3, direction~ : Vec3) -> Self
+pub fn Ray::not_equal(Self, Self) -> Bool
 pub fn Ray::origin(Self) -> Vec3
+pub fn Ray::to_json(Self) -> Json
+pub fn Ray::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Sampler {
   mag_filter : SamplerFilter
@@ -386,9 +460,13 @@ pub(all) struct Sampler {
   wrap_s : SamplerWrap
   wrap_t : SamplerWrap
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Sampler::equal(Self, Self) -> Bool
 pub fn Sampler::mag_filter(Self) -> SamplerFilter
 pub fn Sampler::min_filter(Self) -> SamplerFilter
 pub fn Sampler::new(mag_filter? : SamplerFilter, min_filter? : SamplerFilter, wrap_s? : SamplerWrap, wrap_t? : SamplerWrap) -> Self
+pub fn Sampler::not_equal(Self, Self) -> Bool
+pub fn Sampler::to_json(Self) -> Json
+pub fn Sampler::to_repr(Self) -> @debug.Repr
 pub fn Sampler::wrap_s(Self) -> SamplerWrap
 pub fn Sampler::wrap_t(Self) -> SamplerWrap
 
@@ -400,11 +478,19 @@ pub(all) enum SamplerFilter {
   NearestMipmapLinear
   LinearMipmapLinear
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SamplerFilter::equal(Self, Self) -> Bool
+pub fn SamplerFilter::not_equal(Self, Self) -> Bool
+pub fn SamplerFilter::to_json(Self) -> Json
+pub fn SamplerFilter::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SamplerId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SamplerId::equal(Self, Self) -> Bool
 pub fn SamplerId::new(Int) -> Self
+pub fn SamplerId::not_equal(Self, Self) -> Bool
+pub fn SamplerId::to_json(Self) -> Json
+pub fn SamplerId::to_repr(Self) -> @debug.Repr
 pub fn SamplerId::value(Self) -> Int
 
 pub(all) enum SamplerWrap {
@@ -412,6 +498,10 @@ pub(all) enum SamplerWrap {
   MirroredRepeat
   ClampToEdge
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SamplerWrap::equal(Self, Self) -> Bool
+pub fn SamplerWrap::not_equal(Self, Self) -> Bool
+pub fn SamplerWrap::to_json(Self) -> Json
+pub fn SamplerWrap::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Scene {
   meshes : Array[Mesh]
@@ -452,15 +542,20 @@ pub fn Scene::scene_definitions(Self) -> Array[SceneDefinition]
 pub fn Scene::set_default_scene(Self, Int?) -> Unit
 pub fn Scene::skins(Self) -> Array[Skin]
 pub fn Scene::textures(Self) -> Array[Texture]
+pub fn Scene::to_repr(Self) -> @debug.Repr
 pub fn Scene::world_transform(Self, NodeId) -> Mat4
 
 pub(all) struct SceneDefinition {
   name : String
   roots : Array[NodeId]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SceneDefinition::equal(Self, Self) -> Bool
 pub fn SceneDefinition::name(Self) -> String
 pub fn SceneDefinition::new(name? : String, roots~ : Array[NodeId]) -> Self
+pub fn SceneDefinition::not_equal(Self, Self) -> Bool
 pub fn SceneDefinition::roots(Self) -> Array[NodeId]
+pub fn SceneDefinition::to_json(Self) -> Json
+pub fn SceneDefinition::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Skin {
   name : String
@@ -473,6 +568,7 @@ pub fn Skin::joints(Self) -> Array[NodeId]
 pub fn Skin::name(Self) -> String
 pub fn Skin::new(name? : String, joints~ : Array[NodeId], inverse_bind_matrices? : Array[Mat4], skeleton? : NodeId?) -> Self
 pub fn Skin::skeleton(Self) -> NodeId?
+pub fn Skin::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Texture {
   source : TextureSource
@@ -483,18 +579,24 @@ pub fn Texture::embedded(Bytes, mime_type? : String?, sampler? : SamplerId?) -> 
 pub fn Texture::mime_type(Self) -> String?
 pub fn Texture::sampler(Self) -> SamplerId?
 pub fn Texture::source(Self) -> TextureSource
+pub fn Texture::to_repr(Self) -> @debug.Repr
 pub fn Texture::uri(String, mime_type? : String?, sampler? : SamplerId?) -> Self
 
 pub(all) struct TextureId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextureId::equal(Self, Self) -> Bool
 pub fn TextureId::new(Int) -> Self
+pub fn TextureId::not_equal(Self, Self) -> Bool
+pub fn TextureId::to_json(Self) -> Json
+pub fn TextureId::to_repr(Self) -> @debug.Repr
 pub fn TextureId::value(Self) -> Int
 
 pub(all) enum TextureSource {
   Uri(String)
   Embedded(Bytes)
 } derive(@debug.Debug)
+pub fn TextureSource::to_repr(Self) -> @debug.Repr
 
 pub struct ThreeDViewportBinding {
   latest : @ref.Ref[ViewportSnapshot?]
@@ -528,7 +630,11 @@ pub(all) struct Vec2 {
   x : Double
   y : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Vec2::equal(Self, Self) -> Bool
 pub fn Vec2::new(x~ : Double, y~ : Double) -> Self
+pub fn Vec2::not_equal(Self, Self) -> Bool
+pub fn Vec2::to_json(Self) -> Json
+pub fn Vec2::to_repr(Self) -> @debug.Repr
 pub fn Vec2::x(Self) -> Double
 pub fn Vec2::y(Self) -> Double
 pub fn Vec2::zero() -> Self
@@ -541,13 +647,17 @@ pub(all) struct Vec3 {
 pub fn Vec3::add(Self, Self) -> Self
 pub fn Vec3::cross(Self, Self) -> Self
 pub fn Vec3::dot(Self, Self) -> Double
+pub fn Vec3::equal(Self, Self) -> Bool
 pub fn Vec3::length(Self) -> Double
 pub fn Vec3::length_squared(Self) -> Double
 pub fn Vec3::lerp(Self, Self, Double) -> Self
 pub fn Vec3::new(x~ : Double, y~ : Double, z~ : Double) -> Self
 pub fn Vec3::normalized(Self) -> Self
+pub fn Vec3::not_equal(Self, Self) -> Bool
 pub fn Vec3::scale(Self, Double) -> Self
 pub fn Vec3::sub(Self, Self) -> Self
+pub fn Vec3::to_json(Self) -> Json
+pub fn Vec3::to_repr(Self) -> @debug.Repr
 pub fn Vec3::x(Self) -> Double
 pub fn Vec3::y(Self) -> Double
 pub fn Vec3::z(Self) -> Double
@@ -559,8 +669,12 @@ pub(all) struct Vec4 {
   z : Double
   w : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Vec4::equal(Self, Self) -> Bool
 pub fn Vec4::new(x~ : Double, y~ : Double, z~ : Double, w~ : Double) -> Self
+pub fn Vec4::not_equal(Self, Self) -> Bool
 pub fn Vec4::scale(Self, Double) -> Self
+pub fn Vec4::to_json(Self) -> Json
+pub fn Vec4::to_repr(Self) -> @debug.Repr
 pub fn Vec4::w(Self) -> Double
 pub fn Vec4::x(Self) -> Double
 pub fn Vec4::y(Self) -> Double
@@ -574,11 +688,15 @@ pub(all) struct Vertex {
   joints : (Int, Int, Int, Int)
   weights : Vec4
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Vertex::equal(Self, Self) -> Bool
 pub fn Vertex::joints(Self) -> (Int, Int, Int, Int)
 pub fn Vertex::new(position~ : Vec3, normal? : Vec3, texcoord? : Vec2, joints? : (Int, Int, Int, Int), weights? : Vec4) -> Self
 pub fn Vertex::normal(Self) -> Vec3
+pub fn Vertex::not_equal(Self, Self) -> Bool
 pub fn Vertex::position(Self) -> Vec3
 pub fn Vertex::texcoord(Self) -> Vec2
+pub fn Vertex::to_json(Self) -> Json
+pub fn Vertex::to_repr(Self) -> @debug.Repr
 pub fn Vertex::weights(Self) -> Vec4
 
 pub(all) struct VertexDelta {
@@ -586,10 +704,14 @@ pub(all) struct VertexDelta {
   normal : Vec3
   tangent : Vec3
 } derive(Eq, ToJson, @debug.Debug)
+pub fn VertexDelta::equal(Self, Self) -> Bool
 pub fn VertexDelta::new(position? : Vec3, normal? : Vec3, tangent? : Vec3) -> Self
 pub fn VertexDelta::normal(Self) -> Vec3
+pub fn VertexDelta::not_equal(Self, Self) -> Bool
 pub fn VertexDelta::position(Self) -> Vec3
 pub fn VertexDelta::tangent(Self) -> Vec3
+pub fn VertexDelta::to_json(Self) -> Json
+pub fn VertexDelta::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ViewportEvent {
   PointerDown(@core.Point)
@@ -601,6 +723,9 @@ pub(all) enum ViewportEvent {
   Pick(NodeId)
   RendererStatus
 } derive(Eq, @debug.Debug)
+pub fn ViewportEvent::equal(Self, Self) -> Bool
+pub fn ViewportEvent::not_equal(Self, Self) -> Bool
+pub fn ViewportEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewportSnapshot {
   scene_revision : Int64
@@ -613,6 +738,7 @@ pub fn ViewportSnapshot::camera(Self) -> OrbitCamera
 pub fn ViewportSnapshot::new(scene_revision~ : Int64, scene~ : Scene, camera~ : OrbitCamera) -> Self
 pub fn ViewportSnapshot::scene(Self) -> Scene
 pub fn ViewportSnapshot::scene_revision(Self) -> Int64
+pub fn ViewportSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ViewportStatus {
   Loading
@@ -620,6 +746,10 @@ pub(all) enum ViewportStatus {
   Unavailable(String)
   Failed(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ViewportStatus::equal(Self, Self) -> Bool
+pub fn ViewportStatus::not_equal(Self, Self) -> Bool
+pub fn ViewportStatus::to_json(Self) -> Json
+pub fn ViewportStatus::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 pub type GltfResourceResolver = (String) -> Bytes?

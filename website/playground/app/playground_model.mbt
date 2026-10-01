@@ -5,6 +5,9 @@ pub(all) enum PlaygroundFile {
 } derive(Eq)
 
 ///|
+pub extend PlaygroundFile with Eq::{not_equal, equal}
+
+///|
 pub(all) enum Msg {
   SourceChanged(String)
   PackageChanged(String)

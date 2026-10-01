@@ -24,6 +24,15 @@ pub(all) enum DesignSystemRequirement {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignSystemRequirement with Debug::{to_repr}
+
+///|
+pub extend DesignSystemRequirement with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSystemRequirement with ToJson::{to_json}
+
+///|
 pub(all) struct DesignSystemRequirementAudit {
   preset : @common.DesignPreset
   requirement : DesignSystemRequirement
@@ -31,6 +40,15 @@ pub(all) struct DesignSystemRequirementAudit {
   evidence : String
   remaining_gap : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignSystemRequirementAudit with Debug::{to_repr}
+
+///|
+pub extend DesignSystemRequirementAudit with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSystemRequirementAudit with ToJson::{to_json}
 
 ///|
 pub fn DesignSystemRequirement::label(

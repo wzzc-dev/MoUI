@@ -28,10 +28,28 @@ pub(all) enum RendererBackendKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererBackendKind with Debug::{to_repr}
+
+///|
+pub extend RendererBackendKind with Eq::{not_equal, equal}
+
+///|
+pub extend RendererBackendKind with ToJson::{to_json}
+
+///|
 pub(all) enum RendererCapabilityStatus {
   Supported
   Unavailable
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererCapabilityStatus with Debug::{to_repr}
+
+///|
+pub extend RendererCapabilityStatus with Eq::{not_equal, equal}
+
+///|
+pub extend RendererCapabilityStatus with ToJson::{to_json}
 
 ///|
 pub(all) enum RendererFamily {
@@ -43,12 +61,30 @@ pub(all) enum RendererFamily {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererFamily with Debug::{to_repr}
+
+///|
+pub extend RendererFamily with Eq::{not_equal, equal}
+
+///|
+pub extend RendererFamily with ToJson::{to_json}
+
+///|
 pub(all) enum RendererPresentationModel {
   HostGpuSurface
   WebCanvas
   CpuPixelFrame
   ExternalSurface
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererPresentationModel with Debug::{to_repr}
+
+///|
+pub extend RendererPresentationModel with Eq::{not_equal, equal}
+
+///|
+pub extend RendererPresentationModel with ToJson::{to_json}
 
 ///|
 pub(all) enum RendererTarget {
@@ -58,11 +94,29 @@ pub(all) enum RendererTarget {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererTarget with Debug::{to_repr}
+
+///|
+pub extend RendererTarget with Eq::{not_equal, equal}
+
+///|
+pub extend RendererTarget with ToJson::{to_json}
+
+///|
 pub(all) enum RendererSelection {
   Default
   Backend(RendererBackendKind)
   Family(RendererFamily)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RendererSelection with Debug::{to_repr}
+
+///|
+pub extend RendererSelection with Eq::{not_equal, equal}
+
+///|
+pub extend RendererSelection with ToJson::{to_json}
 
 ///|
 /// Renderer-level window identifier. Mirror of `WindowId` in the host
@@ -71,6 +125,15 @@ pub(all) enum RendererSelection {
 pub(all) struct RenderWindowId {
   value : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RenderWindowId with Debug::{to_repr}
+
+///|
+pub extend RenderWindowId with Eq::{not_equal, equal}
+
+///|
+pub extend RenderWindowId with ToJson::{to_json}
 
 ///|
 pub fn RenderWindowId::new(value : Int) -> RenderWindowId {
@@ -88,6 +151,15 @@ pub(all) struct RendererBackendInfo {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererBackendInfo with Debug::{to_repr}
+
+///|
+pub extend RendererBackendInfo with Eq::{not_equal, equal}
+
+///|
+pub extend RendererBackendInfo with ToJson::{to_json}
+
+///|
 pub(all) struct RendererDescriptor {
   backend : RendererBackendKind
   family : RendererFamily
@@ -98,12 +170,30 @@ pub(all) struct RendererDescriptor {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RendererDescriptor with Debug::{to_repr}
+
+///|
+pub extend RendererDescriptor with Eq::{not_equal, equal}
+
+///|
+pub extend RendererDescriptor with ToJson::{to_json}
+
+///|
 pub(all) struct RenderFrameInput {
   metrics : @core.SurfaceMetrics
   commands : Array[@core.DrawCommand]
   damage : @core.DamageRegion
   clear_color : @core.Color?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RenderFrameInput with Debug::{to_repr}
+
+///|
+pub extend RenderFrameInput with Eq::{not_equal, equal}
+
+///|
+pub extend RenderFrameInput with ToJson::{to_json}
 
 ///|
 pub(all) struct RenderFrameResult {
@@ -116,6 +206,15 @@ pub(all) struct RenderFrameResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RenderFrameResult with Debug::{to_repr}
+
+///|
+pub extend RenderFrameResult with Eq::{not_equal, equal}
+
+///|
+pub extend RenderFrameResult with ToJson::{to_json}
+
+///|
 /// Completion emitted by an asynchronous renderer worker. A queued frame is
 /// not considered presented until the host drains this record.
 pub(all) enum RenderPresentStatus {
@@ -124,6 +223,15 @@ pub(all) enum RenderPresentStatus {
   Dropped
   FallbackToRaster
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RenderPresentStatus with Debug::{to_repr}
+
+///|
+pub extend RenderPresentStatus with Eq::{not_equal, equal}
+
+///|
+pub extend RenderPresentStatus with ToJson::{to_json}
 
 ///|
 /// Renderer-worker completion metadata. The frame token is the only identity
@@ -138,10 +246,28 @@ pub(all) struct RenderPresentCompletion {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RenderPresentCompletion with Debug::{to_repr}
+
+///|
+pub extend RenderPresentCompletion with Eq::{not_equal, equal}
+
+///|
+pub extend RenderPresentCompletion with ToJson::{to_json}
+
+///|
 pub(all) enum WgpuSurfaceSourceKind {
   NativeHostSurface
   WebCanvasSurface
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WgpuSurfaceSourceKind with Debug::{to_repr}
+
+///|
+pub extend WgpuSurfaceSourceKind with Eq::{not_equal, equal}
+
+///|
+pub extend WgpuSurfaceSourceKind with ToJson::{to_json}
 
 ///|
 pub(all) struct WgpuSurfaceContract {
@@ -150,6 +276,15 @@ pub(all) struct WgpuSurfaceContract {
   ready : Bool
   description : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend WgpuSurfaceContract with Debug::{to_repr}
+
+///|
+pub extend WgpuSurfaceContract with Eq::{not_equal, equal}
+
+///|
+pub extend WgpuSurfaceContract with ToJson::{to_json}
 
 ///|
 pub fn RendererBackendInfo::new(
@@ -373,6 +508,15 @@ pub struct RectBatch {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend RectBatch with Debug::{to_repr}
+
+///|
+pub extend RectBatch with Eq::{not_equal, equal}
+
+///|
+pub extend RectBatch with ToJson::{to_json}
+
+///|
 pub struct RectVertex {
   priv x : Double
   priv y : Double
@@ -381,6 +525,15 @@ pub struct RectVertex {
   priv b : Double
   priv a : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend RectVertex with Debug::{to_repr}
+
+///|
+pub extend RectVertex with Eq::{not_equal, equal}
+
+///|
+pub extend RectVertex with ToJson::{to_json}
 
 ///|
 pub fn RectBatch::new(rect~ : @core.Rect, color~ : @core.Color) -> RectBatch {

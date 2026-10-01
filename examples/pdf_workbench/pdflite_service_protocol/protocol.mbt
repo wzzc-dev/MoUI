@@ -5,6 +5,12 @@ pub(all) enum PdfWorkbenchPdfliteServiceRequest {
 } derive(Eq, Debug)
 
 ///|
+pub extend PdfWorkbenchPdfliteServiceRequest with Debug::{to_repr}
+
+///|
+pub extend PdfWorkbenchPdfliteServiceRequest with Eq::{not_equal, equal}
+
+///|
 pub(all) enum PdfWorkbenchPdfliteServiceResponse {
   DocumentLoaded(@app.PdfWorkbenchDocument)
   WritebackReady(Bytes, Array[String])

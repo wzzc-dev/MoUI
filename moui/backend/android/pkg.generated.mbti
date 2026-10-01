@@ -50,6 +50,10 @@ pub(all) struct AndroidBackendCapabilities {
   accessibility : Bool
   async_image : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AndroidBackendCapabilities::equal(Self, Self) -> Bool
+pub fn AndroidBackendCapabilities::not_equal(Self, Self) -> Bool
+pub fn AndroidBackendCapabilities::to_json(Self) -> Json
+pub fn AndroidBackendCapabilities::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AndroidBackendInfo {
   host_info : @backend.HostAppInfo
@@ -59,6 +63,10 @@ pub(all) struct AndroidBackendInfo {
   readiness : AndroidBackendReadiness
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AndroidBackendInfo::equal(Self, Self) -> Bool
+pub fn AndroidBackendInfo::not_equal(Self, Self) -> Bool
+pub fn AndroidBackendInfo::to_json(Self) -> Json
+pub fn AndroidBackendInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct AndroidBackendReadiness {
   ready : Bool
@@ -66,15 +74,30 @@ pub(all) struct AndroidBackendReadiness {
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AndroidBackendReadiness::equal(Self, Self) -> Bool
+pub fn AndroidBackendReadiness::not_equal(Self, Self) -> Bool
+pub fn AndroidBackendReadiness::to_json(Self) -> Json
+pub fn AndroidBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct AndroidEmbeddedRuntimeBackend {
   backend : @embedded.HostedWindowBackend
 }
+pub fn AndroidEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
+pub fn AndroidEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
+pub fn AndroidEmbeddedRuntimeBackend::destroy_surfaces(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
+pub fn AndroidEmbeddedRuntimeBackend::device_event(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::frames_presented(Self) -> Int
 pub fn AndroidEmbeddedRuntimeBackend::has_session(Self) -> Bool
+pub fn AndroidEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
+pub fn AndroidEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
+pub fn AndroidEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
+pub fn AndroidEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::session_attached(Self) -> Bool
+pub fn AndroidEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::surface_generation(Self) -> Int
+pub fn AndroidEmbeddedRuntimeBackend::suspended(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
+pub fn AndroidEmbeddedRuntimeBackend::window_event(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/android.ApplicationHandler for AndroidEmbeddedRuntimeBackend
 
 pub struct AndroidHostAppOptions {
@@ -92,9 +115,13 @@ pub fn AndroidSurfaceBinding::new(create_renderer~ : (AndroidSurfaceHandle, @wzz
 pub(all) struct AndroidSurfaceHandle {
   raw : UInt64
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AndroidSurfaceHandle::equal(Self, Self) -> Bool
 pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> Self
 pub fn AndroidSurfaceHandle::none() -> Self
+pub fn AndroidSurfaceHandle::not_equal(Self, Self) -> Bool
 pub fn AndroidSurfaceHandle::raw(Self) -> UInt64
+pub fn AndroidSurfaceHandle::to_json(Self) -> Json
+pub fn AndroidSurfaceHandle::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

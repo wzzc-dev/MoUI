@@ -50,6 +50,10 @@ pub(all) enum FileImporterStatus {
   Requesting
   Unavailable(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FileImporterStatus::equal(Self, Self) -> Bool
+pub fn FileImporterStatus::not_equal(Self, Self) -> Bool
+pub fn FileImporterStatus::to_json(Self) -> Json
+pub fn FileImporterStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FileImporterUpdate {
   model : FileImporterModel
@@ -62,7 +66,11 @@ pub(all) struct ImportedFile {
   path : String
   source : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ImportedFile::equal(Self, Self) -> Bool
 pub fn ImportedFile::new(path~ : String, source~ : String) -> Self
+pub fn ImportedFile::not_equal(Self, Self) -> Bool
+pub fn ImportedFile::to_json(Self) -> Json
+pub fn ImportedFile::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

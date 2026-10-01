@@ -7,6 +7,15 @@ pub(all) enum AnimationInterpolation {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend AnimationInterpolation with Debug::{to_repr}
+
+///|
+pub extend AnimationInterpolation with Eq::{not_equal, equal}
+
+///|
+pub extend AnimationInterpolation with ToJson::{to_json}
+
+///|
 pub(all) enum AnimationPath {
   Translation
   Rotation
@@ -15,12 +24,24 @@ pub(all) enum AnimationPath {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend AnimationPath with Debug::{to_repr}
+
+///|
+pub extend AnimationPath with Eq::{not_equal, equal}
+
+///|
+pub extend AnimationPath with ToJson::{to_json}
+
+///|
 pub(all) struct AnimationKeyframe {
   time : Double
   value : Array[Double]
   in_tangent : Array[Double]
   out_tangent : Array[Double]
 } derive(Debug)
+
+///|
+pub extend AnimationKeyframe with Debug::{to_repr}
 
 ///|
 pub fn AnimationKeyframe::new(
@@ -68,6 +89,9 @@ pub(all) struct AnimationChannel {
 } derive(Debug)
 
 ///|
+pub extend AnimationChannel with Debug::{to_repr}
+
+///|
 pub fn AnimationChannel::new(
   node~ : NodeId,
   path~ : AnimationPath,
@@ -112,6 +136,9 @@ pub(all) struct AnimationClip {
 } derive(Debug)
 
 ///|
+pub extend AnimationClip with Debug::{to_repr}
+
+///|
 pub fn AnimationClip::new(
   name? : String = "",
   channels~ : Array[AnimationChannel],
@@ -146,6 +173,9 @@ pub(all) struct AnimationSample {
   path : AnimationPath
   value : Array[Double]
 } derive(Debug)
+
+///|
+pub extend AnimationSample with Debug::{to_repr}
 
 ///|
 pub fn AnimationSample::new(

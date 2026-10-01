@@ -54,6 +54,9 @@ pub(all) enum AgentBackendKind {
   OpenSeek
   Acp
 } derive(Eq, @debug.Debug)
+pub fn AgentBackendKind::equal(Self, Self) -> Bool
+pub fn AgentBackendKind::not_equal(Self, Self) -> Bool
+pub fn AgentBackendKind::to_repr(Self) -> @debug.Repr
 
 pub struct AgentBackendRuntime {
   run : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit
@@ -80,6 +83,9 @@ pub(all) enum AgentConfigValue {
   Boolean(Bool)
   ValueId(String)
 } derive(Eq, @debug.Debug)
+pub fn AgentConfigValue::equal(Self, Self) -> Bool
+pub fn AgentConfigValue::not_equal(Self, Self) -> Bool
+pub fn AgentConfigValue::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AgentEvent {
   UserMessageAdded(String)
@@ -105,6 +111,9 @@ pub struct AgentPermissionOption {
   name : String
   kind : String
 } derive(Eq, @debug.Debug)
+pub fn AgentPermissionOption::equal(Self, Self) -> Bool
+pub fn AgentPermissionOption::not_equal(Self, Self) -> Bool
+pub fn AgentPermissionOption::to_repr(Self) -> @debug.Repr
 
 pub struct AgentPermissionRequest {
   request_id : String
@@ -114,6 +123,9 @@ pub struct AgentPermissionRequest {
   kind : String
   options : Array[AgentPermissionOption]
 } derive(Eq, @debug.Debug)
+pub fn AgentPermissionRequest::equal(Self, Self) -> Bool
+pub fn AgentPermissionRequest::not_equal(Self, Self) -> Bool
+pub fn AgentPermissionRequest::to_repr(Self) -> @debug.Repr
 
 pub struct AgentSessionConfigOption {
   id : String
@@ -122,29 +134,44 @@ pub struct AgentSessionConfigOption {
   current_value : AgentConfigValue
   values : Array[AgentPermissionOption]
 } derive(Eq, @debug.Debug)
+pub fn AgentSessionConfigOption::equal(Self, Self) -> Bool
+pub fn AgentSessionConfigOption::not_equal(Self, Self) -> Bool
+pub fn AgentSessionConfigOption::to_repr(Self) -> @debug.Repr
 
 pub struct AgentSessionMode {
   id : String
   name : String
   description : String?
 } derive(Eq, @debug.Debug)
+pub fn AgentSessionMode::equal(Self, Self) -> Bool
+pub fn AgentSessionMode::not_equal(Self, Self) -> Bool
+pub fn AgentSessionMode::to_repr(Self) -> @debug.Repr
 
 pub struct AgentSessionModeState {
   current_mode_id : String
   available_modes : Array[AgentSessionMode]
 } derive(Eq, @debug.Debug)
+pub fn AgentSessionModeState::equal(Self, Self) -> Bool
+pub fn AgentSessionModeState::not_equal(Self, Self) -> Bool
+pub fn AgentSessionModeState::to_repr(Self) -> @debug.Repr
 
 pub(all) enum AppearanceMode {
   System
   Light
   Dark
 } derive(Eq, @debug.Debug)
+pub fn AppearanceMode::equal(Self, Self) -> Bool
+pub fn AppearanceMode::not_equal(Self, Self) -> Bool
+pub fn AppearanceMode::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ApprovalPolicy {
   NeverAsk
   AskOnWrite
   AskOnCommand
 } derive(Eq, @debug.Debug)
+pub fn ApprovalPolicy::equal(Self, Self) -> Bool
+pub fn ApprovalPolicy::not_equal(Self, Self) -> Bool
+pub fn ApprovalPolicy::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ChatMessage {
   User(String)
@@ -209,6 +236,11 @@ pub struct MoProviderFile {
   api_key : String
   models : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoProviderFile::equal(Self, Self) -> Bool
+pub fn MoProviderFile::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoProviderFile::not_equal(Self, Self) -> Bool
+pub fn MoProviderFile::to_json(Self) -> Json
+pub fn MoProviderFile::to_repr(Self) -> @debug.Repr
 
 pub struct MoWorkbenchApp {
   // private fields
@@ -230,13 +262,26 @@ pub struct MoWorkbenchSettingsFile {
   font_size : Int
   appearance : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoWorkbenchSettingsFile::equal(Self, Self) -> Bool
+pub fn MoWorkbenchSettingsFile::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoWorkbenchSettingsFile::not_equal(Self, Self) -> Bool
+pub fn MoWorkbenchSettingsFile::to_json(Self) -> Json
+pub fn MoWorkbenchSettingsFile::to_repr(Self) -> @debug.Repr
 
 type MoWorkbenchSettingsFileLegacy derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoWorkbenchSettingsFileLegacy::equal(Self, Self) -> Bool
+pub fn MoWorkbenchSettingsFileLegacy::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoWorkbenchSettingsFileLegacy::not_equal(Self, Self) -> Bool
+pub fn MoWorkbenchSettingsFileLegacy::to_json(Self) -> Json
+pub fn MoWorkbenchSettingsFileLegacy::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PermissionOutcome {
   Selected(String)
   Cancelled
 } derive(Eq, @debug.Debug)
+pub fn PermissionOutcome::equal(Self, Self) -> Bool
+pub fn PermissionOutcome::not_equal(Self, Self) -> Bool
+pub fn PermissionOutcome::to_repr(Self) -> @debug.Repr
 
 pub struct ProviderConfig {
   id : String
@@ -245,25 +290,37 @@ pub struct ProviderConfig {
   api_key : String
   models : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn ProviderConfig::equal(Self, Self) -> Bool
 pub fn ProviderConfig::new(id~ : String, name~ : String, base_url~ : String, api_key~ : String, models? : Array[String]) -> Self
+pub fn ProviderConfig::not_equal(Self, Self) -> Bool
+pub fn ProviderConfig::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ProviderField {
   Name
   BaseUrl
   ApiKey
 } derive(Eq, @debug.Debug)
+pub fn ProviderField::equal(Self, Self) -> Bool
+pub fn ProviderField::not_equal(Self, Self) -> Bool
+pub fn ProviderField::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SandboxMode {
   ReadOnly
   WorkspaceWritable
   FullAccess
 } derive(Eq, @debug.Debug)
+pub fn SandboxMode::equal(Self, Self) -> Bool
+pub fn SandboxMode::not_equal(Self, Self) -> Bool
+pub fn SandboxMode::to_repr(Self) -> @debug.Repr
 
 pub struct SessionSummary {
   id : String
   first_prompt : String
   last_active_unix_seconds : Int64?
 } derive(Eq, @debug.Debug)
+pub fn SessionSummary::equal(Self, Self) -> Bool
+pub fn SessionSummary::not_equal(Self, Self) -> Bool
+pub fn SessionSummary::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SettingsMsg {
   SelectSection(SettingsSection)
@@ -295,6 +352,9 @@ pub(all) enum SettingsSection {
   Agent
   Editor
 } derive(Eq, @debug.Debug)
+pub fn SettingsSection::equal(Self, Self) -> Bool
+pub fn SettingsSection::not_equal(Self, Self) -> Bool
+pub fn SettingsSection::to_repr(Self) -> @debug.Repr
 
 pub struct SettingsWorkspace {
   agent_backend : AgentBackendKind
@@ -321,24 +381,42 @@ pub fn SettingsWorkspace::find_provider(Self, String) -> ProviderConfig?
 pub fn SettingsWorkspace::provider_index(Self, String) -> Int?
 
 type TaskFilter derive(Eq, @debug.Debug)
+pub fn TaskFilter::equal(Self, Self) -> Bool
+pub fn TaskFilter::not_equal(Self, Self) -> Bool
+pub fn TaskFilter::to_repr(Self) -> @debug.Repr
 
 type TaskGroup derive(Eq, @debug.Debug)
+pub fn TaskGroup::equal(Self, Self) -> Bool
+pub fn TaskGroup::not_equal(Self, Self) -> Bool
+pub fn TaskGroup::to_repr(Self) -> @debug.Repr
 
 type TaskStatus derive(Eq, @debug.Debug)
+pub fn TaskStatus::equal(Self, Self) -> Bool
+pub fn TaskStatus::not_equal(Self, Self) -> Bool
+pub fn TaskStatus::to_repr(Self) -> @debug.Repr
 
 type TaskTreeNode derive(Eq, @debug.Debug)
+pub fn TaskTreeNode::equal(Self, Self) -> Bool
+pub fn TaskTreeNode::not_equal(Self, Self) -> Bool
+pub fn TaskTreeNode::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ThinkingChoice {
   Normal
   High
   Max
 } derive(Eq, @debug.Debug)
+pub fn ThinkingChoice::equal(Self, Self) -> Bool
+pub fn ThinkingChoice::not_equal(Self, Self) -> Bool
+pub fn ThinkingChoice::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TopTab {
   Work
   Code
   Design
 } derive(Eq, @debug.Debug)
+pub fn TopTab::equal(Self, Self) -> Bool
+pub fn TopTab::not_equal(Self, Self) -> Bool
+pub fn TopTab::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TurnStatus {
   Finished
@@ -346,6 +424,9 @@ pub(all) enum TurnStatus {
   Interrupted
   Failed
 } derive(Eq, @debug.Debug)
+pub fn TurnStatus::equal(Self, Self) -> Bool
+pub fn TurnStatus::not_equal(Self, Self) -> Bool
+pub fn TurnStatus::to_repr(Self) -> @debug.Repr
 
 pub struct WorkbenchModel {
   active_tab : TopTab

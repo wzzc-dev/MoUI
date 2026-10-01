@@ -9,6 +9,15 @@ pub(all) enum DesignAdaptationKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignAdaptationKind with Debug::{to_repr}
+
+///|
+pub extend DesignAdaptationKind with Eq::{not_equal, equal}
+
+///|
+pub extend DesignAdaptationKind with ToJson::{to_json}
+
+///|
 pub(all) struct DesignAdaptationRecord {
   preset : @common.DesignPreset
   kind : DesignAdaptationKind
@@ -26,6 +35,15 @@ pub(all) struct DesignAdaptationRecord {
   difference : String
   remaining_gap : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DesignAdaptationRecord with Debug::{to_repr}
+
+///|
+pub extend DesignAdaptationRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignAdaptationRecord with ToJson::{to_json}
 
 ///|
 pub fn DesignAdaptationKind::label(preset : DesignAdaptationKind) -> String {

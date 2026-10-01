@@ -65,6 +65,12 @@ pub(all) struct ParagraphLineMetric {
 } derive(Debug, Eq)
 
 ///|
+pub extend ParagraphLineMetric with Debug::{to_repr}
+
+///|
+pub extend ParagraphLineMetric with Eq::{not_equal, equal}
+
+///|
 pub fn ParagraphLineMetric::right(self : ParagraphLineMetric) -> Float {
   self.left + self.width
 }
@@ -86,8 +92,20 @@ pub(all) struct ParagraphHitTestResult {
 } derive(Debug, Eq)
 
 ///|
+pub extend ParagraphHitTestResult with Debug::{to_repr}
+
+///|
+pub extend ParagraphHitTestResult with Eq::{not_equal, equal}
+
+///|
 /// Native Skia glyph identifier.
 pub(all) struct GlyphId(UInt16) derive(Debug, Eq)
+
+///|
+pub extend GlyphId with Debug::{to_repr}
+
+///|
+pub extend GlyphId with Eq::{not_equal, equal}
 
 ///|
 pub fn GlyphId::new(value : UInt16) -> GlyphId {
@@ -125,6 +143,12 @@ pub(all) struct FontMetrics {
   strikeout_position : Float?
   has_bounds : Bool
 } derive(Debug, Eq)
+
+///|
+pub extend FontMetrics with Debug::{to_repr}
+
+///|
+pub extend FontMetrics with Eq::{not_equal, equal}
 
 ///|
 /// Native Skia typeface.
@@ -265,6 +289,12 @@ pub(all) enum SurfaceTargetSupportStatus {
 } derive(Debug, Eq)
 
 ///|
+pub extend SurfaceTargetSupportStatus with Debug::{to_repr}
+
+///|
+pub extend SurfaceTargetSupportStatus with Eq::{not_equal, equal}
+
+///|
 pub fn SurfaceTargetSupportStatus::is_supported(
   self : SurfaceTargetSupportStatus,
 ) -> Bool {
@@ -292,6 +322,12 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextEglHeadersUnavailable
   SkiaGpuContextEglRuntimeUnavailable
 } derive(Debug, Eq)
+
+///|
+pub extend SkiaGpuContextSupportStatus with Debug::{to_repr}
+
+///|
+pub extend SkiaGpuContextSupportStatus with Eq::{not_equal, equal}
 
 ///|
 pub fn SkiaGpuContextSupportStatus::is_available(
@@ -331,12 +367,24 @@ pub(all) struct CanvasReplayStats {
 } derive(Debug, Eq)
 
 ///|
+pub extend CanvasReplayStats with Debug::{to_repr}
+
+///|
+pub extend CanvasReplayStats with Eq::{not_equal, equal}
+
+///|
 /// Coarse outcome for replaying commands into a native Canvas.
 pub(all) enum CanvasReplayStatus {
   CanvasReplayComplete
   CanvasReplayDeferredPresent
   CanvasReplaySkippedCommands
 } derive(Debug, Eq)
+
+///|
+pub extend CanvasReplayStatus with Debug::{to_repr}
+
+///|
+pub extend CanvasReplayStatus with Eq::{not_equal, equal}
 
 ///|
 pub fn CanvasReplayStatus::is_complete(self : CanvasReplayStatus) -> Bool {
@@ -507,6 +555,12 @@ pub(all) struct SurfaceFrameReplayStats {
 } derive(Debug, Eq)
 
 ///|
+pub extend SurfaceFrameReplayStats with Debug::{to_repr}
+
+///|
+pub extend SurfaceFrameReplayStats with Eq::{not_equal, equal}
+
+///|
 /// Coarse outcome for rendering a value-layer frame through a native surface.
 pub(all) enum SurfaceFrameReplayStatus {
   SurfaceFrameReplayComplete
@@ -515,6 +569,12 @@ pub(all) enum SurfaceFrameReplayStatus {
   SurfaceFrameReplaySkippedCommands
   SurfaceFrameReplayFinalizationFailed
 } derive(Debug, Eq)
+
+///|
+pub extend SurfaceFrameReplayStatus with Debug::{to_repr}
+
+///|
+pub extend SurfaceFrameReplayStatus with Eq::{not_equal, equal}
 
 ///|
 pub fn SurfaceFrameReplayStatus::is_complete(
@@ -572,6 +632,12 @@ pub(all) struct NativeReplayResourceStats {
   misses : Int
   evictions : Int
 } derive(Debug, Eq)
+
+///|
+pub extend NativeReplayResourceStats with Debug::{to_repr}
+
+///|
+pub extend NativeReplayResourceStats with Eq::{not_equal, equal}
 
 ///|
 fn native_replay_resource_stats_empty() -> NativeReplayResourceStats {

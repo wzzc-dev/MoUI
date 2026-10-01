@@ -10,6 +10,12 @@ pub(all) struct Pixmap {
 } derive(Debug, Eq)
 
 ///|
+pub extend Pixmap with Debug::{to_repr}
+
+///|
+pub extend Pixmap with Eq::{not_equal, equal}
+
+///|
 pub fn Pixmap::new(
   image_info : ImageInfo,
   row_bytes : Int,

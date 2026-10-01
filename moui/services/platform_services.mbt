@@ -11,11 +11,32 @@ pub(all) enum PermissionKind {
 } derive(Eq, Hash, Debug, ToJson)
 
 ///|
+pub extend PermissionKind with Debug::{to_repr}
+
+///|
+pub extend PermissionKind with Eq::{not_equal, equal}
+
+///|
+pub extend PermissionKind with Hash::{hash, hash_combine}
+
+///|
+pub extend PermissionKind with ToJson::{to_json}
+
+///|
 pub(all) enum PermissionStatus {
   Granted
   Denied
   Restricted
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend PermissionStatus with Debug::{to_repr}
+
+///|
+pub extend PermissionStatus with Eq::{not_equal, equal}
+
+///|
+pub extend PermissionStatus with ToJson::{to_json}
 
 ///|
 /// Host lifecycle events describe whether the application is visible to the
@@ -25,6 +46,15 @@ pub(all) enum AppLifecycleEvent {
   Foreground
   Background
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend AppLifecycleEvent with Debug::{to_repr}
+
+///|
+pub extend AppLifecycleEvent with Eq::{not_equal, equal}
+
+///|
+pub extend AppLifecycleEvent with ToJson::{to_json}
 
 ///|
 priv struct AppLifecycleHandler {
@@ -142,11 +172,29 @@ pub(all) struct NotificationRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend NotificationRequest with Debug::{to_repr}
+
+///|
+pub extend NotificationRequest with Eq::{not_equal, equal}
+
+///|
+pub extend NotificationRequest with ToJson::{to_json}
+
+///|
 pub(all) struct TrayItem {
   id : String
   label : String
   tooltip : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TrayItem with Debug::{to_repr}
+
+///|
+pub extend TrayItem with Eq::{not_equal, equal}
+
+///|
+pub extend TrayItem with ToJson::{to_json}
 
 ///|
 pub(all) struct ShareRequest {
@@ -156,11 +204,29 @@ pub(all) struct ShareRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ShareRequest with Debug::{to_repr}
+
+///|
+pub extend ShareRequest with Eq::{not_equal, equal}
+
+///|
+pub extend ShareRequest with ToJson::{to_json}
+
+///|
 pub(all) struct PrintRequest {
   title : String
   text : String
   mime_type : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend PrintRequest with Debug::{to_repr}
+
+///|
+pub extend PrintRequest with Eq::{not_equal, equal}
+
+///|
+pub extend PrintRequest with ToJson::{to_json}
 
 ///|
 pub(all) struct ProtocolRegistration {
@@ -169,11 +235,29 @@ pub(all) struct ProtocolRegistration {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend ProtocolRegistration with Debug::{to_repr}
+
+///|
+pub extend ProtocolRegistration with Eq::{not_equal, equal}
+
+///|
+pub extend ProtocolRegistration with ToJson::{to_json}
+
+///|
 pub(all) struct FileAssociation {
   extension : String
   mime_type : String
   handler : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend FileAssociation with Debug::{to_repr}
+
+///|
+pub extend FileAssociation with Eq::{not_equal, equal}
+
+///|
+pub extend FileAssociation with ToJson::{to_json}
 
 ///|
 pub struct NotificationServices {

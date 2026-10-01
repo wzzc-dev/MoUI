@@ -6,6 +6,9 @@ struct FontData {
 } derive(Debug)
 
 ///|
+pub extend FontData with Debug::{to_repr}
+
+///|
 /// Create font data from bytes
 pub fn FontData::new(data : Bytes, font_index? : Int = 0) -> FontData {
   { data, font_index, }
@@ -31,6 +34,12 @@ pub struct FontMetrics {
   descent : Int
   line_gap : Int
 } derive(Eq, Debug)
+
+///|
+pub extend FontMetrics with Debug::{to_repr}
+
+///|
+pub extend FontMetrics with Eq::{not_equal, equal}
 
 ///|
 /// Create font metrics

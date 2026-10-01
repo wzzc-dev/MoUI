@@ -5,11 +5,29 @@ pub(all) struct Frame {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Frame with Debug::{to_repr}
+
+///|
+pub extend Frame with Eq::{not_equal, equal}
+
+///|
+pub extend Frame with ToJson::{to_json}
+
+///|
 pub(all) enum AnimationStatus {
   Idle
   Running
   Completed
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend AnimationStatus with Debug::{to_repr}
+
+///|
+pub extend AnimationStatus with Eq::{not_equal, equal}
+
+///|
+pub extend AnimationStatus with ToJson::{to_json}
 
 ///|
 pub(all) enum Easing {
@@ -18,6 +36,15 @@ pub(all) enum Easing {
   EaseOut
   EaseInOut
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend Easing with Debug::{to_repr}
+
+///|
+pub extend Easing with Eq::{not_equal, equal}
+
+///|
+pub extend Easing with ToJson::{to_json}
 
 ///|
 priv struct Tween {
@@ -35,6 +62,15 @@ pub struct TransitionStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TransitionStyle with Debug::{to_repr}
+
+///|
+pub extend TransitionStyle with Eq::{not_equal, equal}
+
+///|
+pub extend TransitionStyle with ToJson::{to_json}
+
+///|
 pub struct TransitionSpec {
   from : TransitionStyle
   to : TransitionStyle
@@ -43,11 +79,29 @@ pub struct TransitionSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend TransitionSpec with Debug::{to_repr}
+
+///|
+pub extend TransitionSpec with Eq::{not_equal, equal}
+
+///|
+pub extend TransitionSpec with ToJson::{to_json}
+
+///|
 pub struct TransitionSample {
   progress : Double
   style : TransitionStyle
   present : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend TransitionSample with Debug::{to_repr}
+
+///|
+pub extend TransitionSample with Eq::{not_equal, equal}
+
+///|
+pub extend TransitionSample with ToJson::{to_json}
 
 ///|
 pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Frame {

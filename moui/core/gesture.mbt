@@ -74,6 +74,15 @@ pub(all) enum DragGesturePhase {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DragGesturePhase with Debug::{to_repr}
+
+///|
+pub extend DragGesturePhase with Eq::{not_equal, equal}
+
+///|
+pub extend DragGesturePhase with ToJson::{to_json}
+
+///|
 pub(all) struct DragGestureEvent {
   phase : DragGesturePhase
   start : Point
@@ -81,6 +90,15 @@ pub(all) struct DragGestureEvent {
   delta : Point
   translation : Point
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend DragGestureEvent with Debug::{to_repr}
+
+///|
+pub extend DragGestureEvent with Eq::{not_equal, equal}
+
+///|
+pub extend DragGestureEvent with ToJson::{to_json}
 
 ///|
 priv struct DragGestureState {
@@ -225,6 +243,15 @@ pub(all) enum CommandIntent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend CommandIntent with Debug::{to_repr}
+
+///|
+pub extend CommandIntent with Eq::{not_equal, equal}
+
+///|
+pub extend CommandIntent with ToJson::{to_json}
+
+///|
 pub(all) struct ActionCommand {
   intent : CommandIntent
   shortcut : KeyboardShortcut?
@@ -234,6 +261,15 @@ pub(all) struct ActionCommand {
   description : String
   context_menu : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ActionCommand with Debug::{to_repr}
+
+///|
+pub extend ActionCommand with Eq::{not_equal, equal}
+
+///|
+pub extend ActionCommand with ToJson::{to_json}
 
 ///|
 struct CommandBinding {

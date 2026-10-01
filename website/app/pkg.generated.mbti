@@ -109,11 +109,21 @@ pub struct WebsiteDocEntry {
   summary : String
   keywords : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WebsiteDocEntry::equal(Self, Self) -> Bool
+pub fn WebsiteDocEntry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocEntry::not_equal(Self, Self) -> Bool
+pub fn WebsiteDocEntry::to_json(Self) -> Json
+pub fn WebsiteDocEntry::to_repr(Self) -> @debug.Repr
 
 pub struct WebsiteDocGroup {
   id : String
   title : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WebsiteDocGroup::equal(Self, Self) -> Bool
+pub fn WebsiteDocGroup::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocGroup::not_equal(Self, Self) -> Bool
+pub fn WebsiteDocGroup::to_json(Self) -> Json
+pub fn WebsiteDocGroup::to_repr(Self) -> @debug.Repr
 
 pub enum WebsiteDocLoadState {
   DocNotLoaded
@@ -129,6 +139,11 @@ pub struct WebsiteDocsCatalog {
   groups : Array[WebsiteDocGroup]
   entries : Array[WebsiteDocEntry]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn WebsiteDocsCatalog::equal(Self, Self) -> Bool
+pub fn WebsiteDocsCatalog::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocsCatalog::not_equal(Self, Self) -> Bool
+pub fn WebsiteDocsCatalog::to_json(Self) -> Json
+pub fn WebsiteDocsCatalog::to_repr(Self) -> @debug.Repr
 
 pub enum WebsitePage {
   WebsiteHome
@@ -136,6 +151,9 @@ pub enum WebsitePage {
   WebsiteDocs
   WebsiteShowcases
 } derive(Eq, @debug.Debug)
+pub fn WebsitePage::equal(Self, Self) -> Bool
+pub fn WebsitePage::not_equal(Self, Self) -> Bool
+pub fn WebsitePage::to_repr(Self) -> @debug.Repr
 
 pub struct WebsiteRouteHost {
   route_source : @services.RouteSource

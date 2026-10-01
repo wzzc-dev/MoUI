@@ -6,6 +6,12 @@ pub(all) enum ImageDescriptor {
 } derive(Debug, Eq)
 
 ///|
+pub extend ImageDescriptor with Debug::{to_repr}
+
+///|
+pub extend ImageDescriptor with Eq::{not_equal, equal}
+
+///|
 fn image_descriptor_resource_u64(value : Int) -> Bytes {
   Int::max(0, value).to_uint64().to_be_bytes()
 }

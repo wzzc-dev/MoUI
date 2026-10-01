@@ -78,6 +78,12 @@ pub struct SettingsSnapshot {
 } derive(Eq, Debug)
 
 ///|
+pub extend SettingsSnapshot with Debug::{to_repr}
+
+///|
+pub extend SettingsSnapshot with Eq::{not_equal, equal}
+
+///|
 /// Profile section messages. Field edits are keyed by field name so one
 /// variant covers every text field (`views.FieldAction`).
 pub(all) enum ProfileMsg {

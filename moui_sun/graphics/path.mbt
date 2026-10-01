@@ -9,6 +9,12 @@ pub enum PathSegment {
 } derive(Eq, Debug)
 
 ///|
+pub extend PathSegment with Debug::{to_repr}
+
+///|
+pub extend PathSegment with Eq::{not_equal, equal}
+
+///|
 /// Boolean operation for supported path operands.
 pub(all) enum PathBooleanOp {
   Union
@@ -16,6 +22,12 @@ pub(all) enum PathBooleanOp {
   Difference
   Xor
 } derive(Eq, Debug)
+
+///|
+pub extend PathBooleanOp with Debug::{to_repr}
+
+///|
+pub extend PathBooleanOp with Eq::{not_equal, equal}
 
 ///|
 /// 2D path builder for constructing vector shapes
@@ -26,6 +38,9 @@ pub struct Path {
   mut start_x : Double
   mut start_y : Double
 } derive(Debug)
+
+///|
+pub extend Path with Debug::{to_repr}
 
 ///|
 priv struct PathControlBounds {

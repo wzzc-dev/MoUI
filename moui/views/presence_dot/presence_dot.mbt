@@ -10,6 +10,15 @@ pub(all) enum PresenceStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PresenceStatus with Debug::{to_repr}
+
+///|
+pub extend PresenceStatus with Eq::{not_equal, equal}
+
+///|
+pub extend PresenceStatus with ToJson::{to_json}
+
+///|
 pub fn PresenceStatus::label(self : PresenceStatus) -> String {
   match self {
     Available => "available"

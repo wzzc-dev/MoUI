@@ -5,10 +5,22 @@ pub(all) struct CellAddress {
 } derive(Eq, Debug)
 
 ///|
+pub extend CellAddress with Debug::{to_repr}
+
+///|
+pub extend CellAddress with Eq::{not_equal, equal}
+
+///|
 pub(all) struct CellRange {
   start : CellAddress
   end : CellAddress
 } derive(Eq, Debug)
+
+///|
+pub extend CellRange with Debug::{to_repr}
+
+///|
+pub extend CellRange with Eq::{not_equal, equal}
 
 ///|
 pub(all) enum CellAlign {
@@ -19,6 +31,12 @@ pub(all) enum CellAlign {
 } derive(Eq, Debug)
 
 ///|
+pub extend CellAlign with Debug::{to_repr}
+
+///|
+pub extend CellAlign with Eq::{not_equal, equal}
+
+///|
 pub(all) enum NumFormat {
   General
   Currency
@@ -27,12 +45,24 @@ pub(all) enum NumFormat {
 } derive(Eq, Debug)
 
 ///|
+pub extend NumFormat with Debug::{to_repr}
+
+///|
+pub extend NumFormat with Eq::{not_equal, equal}
+
+///|
 pub(all) enum CellValue {
   Empty
   Number(Double)
   Text(String)
   Error(String)
 } derive(Eq, Debug)
+
+///|
+pub extend CellValue with Debug::{to_repr}
+
+///|
+pub extend CellValue with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct CellFormat {
@@ -46,11 +76,23 @@ pub(all) struct CellFormat {
 } derive(Eq, Debug)
 
 ///|
+pub extend CellFormat with Debug::{to_repr}
+
+///|
+pub extend CellFormat with Eq::{not_equal, equal}
+
+///|
 pub(all) struct Cell {
   raw : String
   value : CellValue
   format : CellFormat
 } derive(Eq, Debug)
+
+///|
+pub extend Cell with Debug::{to_repr}
+
+///|
+pub extend Cell with Eq::{not_equal, equal}
 
 ///|
 pub fn CellAddress::new(row~ : Int, col~ : Int) -> CellAddress {

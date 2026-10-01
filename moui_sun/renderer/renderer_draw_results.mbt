@@ -12,6 +12,9 @@ pub struct TextAtlasDrawResult {
 } derive(Debug)
 
 ///|
+pub extend TextAtlasDrawResult with Debug::{to_repr}
+
+///|
 /// Result of drawing one fallback line through glyph-mask cache and atlas
 /// resources.
 pub struct TextFallbackAtlasDrawResult {
@@ -23,10 +26,16 @@ pub struct TextFallbackAtlasDrawResult {
 } derive(Debug)
 
 ///|
+pub extend TextFallbackAtlasDrawResult with Debug::{to_repr}
+
+///|
 /// Result of drawing text through a caller-owned rendered text-mask cache.
 pub struct TextMaskDrawResult {
   did_render_mask : Bool
 } derive(Debug)
+
+///|
+pub extend TextMaskDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of drawing a single line through an ordered font fallback stack.
@@ -40,11 +49,17 @@ pub struct TextFallbackDrawResult {
 } derive(Debug)
 
 ///|
+pub extend TextFallbackDrawResult with Debug::{to_repr}
+
+///|
 /// Result of parsing font bytes through renderer resources and drawing text.
 pub struct CachedFontTextDrawResult {
   did_parse_font : Bool
   text_result : TextMaskDrawResult
 } derive(Debug)
+
+///|
+pub extend CachedFontTextDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of parsing font bytes through renderer resources and drawing atlas
@@ -53,6 +68,9 @@ pub struct CachedFontAtlasDrawResult {
   did_parse_font : Bool
   atlas_result : TextAtlasDrawResult
 } derive(Debug)
+
+///|
+pub extend CachedFontAtlasDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of parsing a font-byte fallback stack and drawing cached fallback
@@ -64,6 +82,9 @@ pub struct CachedFontFallbackDrawResult {
 } derive(Debug)
 
 ///|
+pub extend CachedFontFallbackDrawResult with Debug::{to_repr}
+
+///|
 /// Result of parsing a font-byte fallback stack and drawing atlas fallback
 /// text.
 pub struct CachedFontFallbackAtlasDrawResult {
@@ -73,10 +94,16 @@ pub struct CachedFontFallbackAtlasDrawResult {
 } derive(Debug)
 
 ///|
+pub extend CachedFontFallbackAtlasDrawResult with Debug::{to_repr}
+
+///|
 /// Result of drawing through a caller-owned pixmap cache.
 pub struct CachedPixmapDrawResult {
   did_insert_pixmap : Bool
 } derive(Debug)
+
+///|
+pub extend CachedPixmapDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of decoding BMP bytes through a pixmap cache and drawing them.
@@ -85,16 +112,25 @@ pub struct CachedBmpPixmapDrawResult {
 } derive(Debug)
 
 ///|
+pub extend CachedBmpPixmapDrawResult with Debug::{to_repr}
+
+///|
 /// Result of decoding PNG bytes through a pixmap cache and drawing them.
 pub struct CachedPngPixmapDrawResult {
   did_decode_pixmap : Bool
 } derive(Debug)
 
 ///|
+pub extend CachedPngPixmapDrawResult with Debug::{to_repr}
+
+///|
 /// Result of decoding raw RGBA bytes through a pixmap cache and drawing them.
 pub struct CachedRgbaPixmapDrawResult {
   did_decode_pixmap : Bool
 } derive(Debug)
+
+///|
+pub extend CachedRgbaPixmapDrawResult with Debug::{to_repr}
 
 ///|
 /// Return the number of layout glyphs visited by an atlas text draw.

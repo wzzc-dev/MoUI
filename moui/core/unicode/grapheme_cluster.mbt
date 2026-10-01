@@ -10,6 +10,12 @@ pub(all) struct GraphemeRange {
 } derive(Eq, Debug)
 
 ///|
+pub extend GraphemeRange with Debug::{to_repr}
+
+///|
+pub extend GraphemeRange with Eq::{not_equal, equal}
+
+///|
 pub fn GraphemeRange::new(start~ : Int, end~ : Int) -> GraphemeRange {
   { start, end, }
 }
@@ -58,6 +64,12 @@ pub struct TextGraphemeBoundaries {
   priv text : String
   priv boundaries : Array[Int]
 } derive(Eq, Debug)
+
+///|
+pub extend TextGraphemeBoundaries with Debug::{to_repr}
+
+///|
+pub extend TextGraphemeBoundaries with Eq::{not_equal, equal}
 
 ///|
 /// All-ASCII text has a trivial grapheme segmentation: every codepoint is

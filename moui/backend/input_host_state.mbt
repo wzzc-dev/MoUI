@@ -5,6 +5,15 @@ pub(all) struct HostInputContract {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostInputContract with Debug::{to_repr}
+
+///|
+pub extend HostInputContract with Eq::{not_equal, equal}
+
+///|
+pub extend HostInputContract with ToJson::{to_json}
+
+///|
 pub(all) enum HostScrollPhase {
   Started
   Moved
@@ -13,10 +22,28 @@ pub(all) enum HostScrollPhase {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostScrollPhase with Debug::{to_repr}
+
+///|
+pub extend HostScrollPhase with Eq::{not_equal, equal}
+
+///|
+pub extend HostScrollPhase with ToJson::{to_json}
+
+///|
 pub(all) enum HostScrollDelta {
   Lines(@core.Point)
   Pixels(@core.Point)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostScrollDelta with Debug::{to_repr}
+
+///|
+pub extend HostScrollDelta with Eq::{not_equal, equal}
+
+///|
+pub extend HostScrollDelta with ToJson::{to_json}
 
 ///|
 pub(all) struct HostScrollEvent {
@@ -26,10 +53,28 @@ pub(all) struct HostScrollEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostScrollEvent with Debug::{to_repr}
+
+///|
+pub extend HostScrollEvent with Eq::{not_equal, equal}
+
+///|
+pub extend HostScrollEvent with ToJson::{to_json}
+
+///|
 pub(all) struct HostFocusEvent {
   focused : Bool
   pointer_cancel_position : @core.Point?
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostFocusEvent with Debug::{to_repr}
+
+///|
+pub extend HostFocusEvent with Eq::{not_equal, equal}
+
+///|
+pub extend HostFocusEvent with ToJson::{to_json}
 
 ///|
 pub(all) enum Event {
@@ -47,12 +92,30 @@ pub(all) enum Event {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend Event with Debug::{to_repr}
+
+///|
+pub extend Event with Eq::{not_equal, equal}
+
+///|
+pub extend Event with ToJson::{to_json}
+
+///|
 pub(all) struct EventResult {
   needs_rebuild : Bool
   needs_redraw : Bool
   redraw_requested : Bool
   close_requested : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend EventResult with Debug::{to_repr}
+
+///|
+pub extend EventResult with Eq::{not_equal, equal}
+
+///|
+pub extend EventResult with ToJson::{to_json}
 
 ///|
 pub fn HostInputContract::new(

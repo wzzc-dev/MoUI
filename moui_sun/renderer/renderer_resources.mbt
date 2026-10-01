@@ -7,12 +7,18 @@ pub struct RendererTextResources {
 } derive(Debug)
 
 ///|
+pub extend RendererTextResources with Debug::{to_repr}
+
+///|
 /// Caller-owned renderer resources shared across GUI text and image draws.
 pub struct RendererResources {
   font_cache : @text.FontFaceCache
   text : RendererTextResources
   image_cache : @graphics.PixmapCache
 } derive(Debug)
+
+///|
+pub extend RendererResources with Debug::{to_repr}
 
 ///|
 /// Snapshot of renderer text resource cache and atlas state.
@@ -33,6 +39,9 @@ pub struct RendererTextResourcesSnapshot {
 } derive(Debug)
 
 ///|
+pub extend RendererTextResourcesSnapshot with Debug::{to_repr}
+
+///|
 /// Snapshot of renderer-wide resource cache state.
 pub struct RendererResourcesSnapshot {
   font_face_count : Int
@@ -45,11 +54,17 @@ pub struct RendererResourcesSnapshot {
 } derive(Debug)
 
 ///|
+pub extend RendererResourcesSnapshot with Debug::{to_repr}
+
+///|
 /// One keyed font-byte source in an ordered fallback stack.
 pub struct FontBytesFallbackSource {
   font_key : String
   font_data : Bytes
 } derive(Debug)
+
+///|
+pub extend FontBytesFallbackSource with Debug::{to_repr}
 
 ///|
 /// Create text resources with unbounded text/glyph caches and a glyph atlas.

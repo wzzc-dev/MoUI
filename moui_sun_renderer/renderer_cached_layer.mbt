@@ -14,6 +14,15 @@ pub struct SunCachedLayerAdmissionDiagnostic {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SunCachedLayerAdmissionDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SunCachedLayerAdmissionDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SunCachedLayerAdmissionDiagnostic with ToJson::{to_json}
+
+///|
 pub struct SunCachedLayerDiagnostic {
   priv cached_layer_count : Int
   priv max_cached_layer_count : Int
@@ -27,6 +36,15 @@ pub struct SunCachedLayerDiagnostic {
   priv admission_records : Array[SunCachedLayerAdmissionDiagnostic]
   priv cache_ready : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SunCachedLayerDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SunCachedLayerDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SunCachedLayerDiagnostic with ToJson::{to_json}
 
 ///|
 pub fn SunCachedLayerAdmissionDiagnostic::identity_key(

@@ -9,6 +9,21 @@ pub struct HarmonyOSEmbeddedRuntimeBackend {
 }
 
 ///|
+pub extend HarmonyOSEmbeddedRuntimeBackend with @wzzc-dev/window/harmonyos.ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
+}
+
+///|
 pub fn HarmonyOSEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,

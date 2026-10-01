@@ -8,6 +8,12 @@ struct TextSystem {
 } derive(Debug)
 
 ///|
+pub extend TextSystem with Debug::{to_repr}
+
+///|
+pub extend TextSystem with FontLoader::{load_font_data}
+
+///|
 /// Caret geometry in layout-local coordinates for one text insertion point.
 struct TextCaret {
   index : Int
@@ -17,6 +23,12 @@ struct TextCaret {
   height : Double
   baseline_y : Double
 } derive(Eq, Debug)
+
+///|
+pub extend TextCaret with Debug::{to_repr}
+
+///|
+pub extend TextCaret with Eq::{not_equal, equal}
 
 ///|
 /// Highlight geometry for one visual line of a text selection.
@@ -32,6 +44,12 @@ struct TextSelectionRect {
 } derive(Eq, Debug)
 
 ///|
+pub extend TextSelectionRect with Debug::{to_repr}
+
+///|
+pub extend TextSelectionRect with Eq::{not_equal, equal}
+
+///|
 /// Result of registering checked font data in a TextSystem.
 struct TextSystemFontRegistration {
   key : String
@@ -43,6 +61,9 @@ struct TextSystemFontRegistration {
 } derive(Debug)
 
 ///|
+pub extend TextSystemFontRegistration with Debug::{to_repr}
+
+///|
 /// Prepared text layout for GUI/editor code that needs several geometry
 /// queries from the same registered font, text, and layout config.
 struct TextSystemLayout {
@@ -52,6 +73,9 @@ struct TextSystemLayout {
   face : FontFace
   layout : TextLayout
 } derive(Debug)
+
+///|
+pub extend TextSystemLayout with Debug::{to_repr}
 
 ///|
 priv struct TextLineSourceSpan {

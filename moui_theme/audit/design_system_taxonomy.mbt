@@ -20,6 +20,15 @@ pub(all) struct DesignTokenTaxonomyRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignTokenTaxonomyRecord with Debug::{to_repr}
+
+///|
+pub extend DesignTokenTaxonomyRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignTokenTaxonomyRecord with ToJson::{to_json}
+
+///|
 priv struct DesignTokenTaxonomySourceEvidence {
   source_declared : Bool
   source_label : String

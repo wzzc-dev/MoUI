@@ -33,6 +33,15 @@ pub(all) struct DesignSystemReport {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignSystemReport with Debug::{to_repr}
+
+///|
+pub extend DesignSystemReport with Eq::{not_equal, equal}
+
+///|
+pub extend DesignSystemReport with ToJson::{to_json}
+
+///|
 pub fn design_system_report(
   preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = Light,

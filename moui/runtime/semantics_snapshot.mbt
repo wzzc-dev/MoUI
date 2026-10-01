@@ -15,6 +15,15 @@ pub(all) enum SemanticsIssue {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SemanticsIssue with Debug::{to_repr}
+
+///|
+pub extend SemanticsIssue with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsIssue with ToJson::{to_json}
+
+///|
 /// One atomically committed, flat semantics tree.
 ///
 /// Mutable arrays are kept private. Every accessor returns a fresh projection
@@ -27,6 +36,12 @@ pub struct SemanticsSnapshot {
   priv nodes : Array[@core.SemanticsNode]
   priv issues : Array[SemanticsIssue]
 } derive(Eq, Debug)
+
+///|
+pub extend SemanticsSnapshot with Debug::{to_repr}
+
+///|
+pub extend SemanticsSnapshot with Eq::{not_equal, equal}
 
 ///|
 pub struct SemanticsDelta {
@@ -42,6 +57,12 @@ pub struct SemanticsDelta {
 } derive(Eq, Debug)
 
 ///|
+pub extend SemanticsDelta with Debug::{to_repr}
+
+///|
+pub extend SemanticsDelta with Eq::{not_equal, equal}
+
+///|
 /// A live-region change for platform adapters to publish without moving focus.
 pub(all) struct AccessibilityAnnouncement {
   node_id : @core.SemanticsNodeId
@@ -52,6 +73,15 @@ pub(all) struct AccessibilityAnnouncement {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend AccessibilityAnnouncement with Debug::{to_repr}
+
+///|
+pub extend AccessibilityAnnouncement with Eq::{not_equal, equal}
+
+///|
+pub extend AccessibilityAnnouncement with ToJson::{to_json}
+
+///|
 pub(all) enum SemanticsRead {
   Full(SemanticsSnapshot)
   Delta(SemanticsDelta)
@@ -59,15 +89,39 @@ pub(all) enum SemanticsRead {
 } derive(Eq, Debug)
 
 ///|
+pub extend SemanticsRead with Debug::{to_repr}
+
+///|
+pub extend SemanticsRead with Eq::{not_equal, equal}
+
+///|
 pub(all) enum SemanticsReadError {
   RuntimeClosed
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsReadError with Debug::{to_repr}
+
+///|
+pub extend SemanticsReadError with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsReadError with ToJson::{to_json}
 
 ///|
 pub(all) enum SemanticsGenerationPrecondition {
   Exact(@core.SemanticsGeneration)
   Latest
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsGenerationPrecondition with Debug::{to_repr}
+
+///|
+pub extend SemanticsGenerationPrecondition with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsGenerationPrecondition with ToJson::{to_json}
 
 ///|
 pub(all) struct PerformSemanticsActionRequest {
@@ -77,11 +131,29 @@ pub(all) struct PerformSemanticsActionRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PerformSemanticsActionRequest with Debug::{to_repr}
+
+///|
+pub extend PerformSemanticsActionRequest with Eq::{not_equal, equal}
+
+///|
+pub extend PerformSemanticsActionRequest with ToJson::{to_json}
+
+///|
 pub(all) struct SemanticsActionReceipt {
   before : @core.SemanticsGeneration
   after : @core.SemanticsGeneration
   pending_work : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsActionReceipt with Debug::{to_repr}
+
+///|
+pub extend SemanticsActionReceipt with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsActionReceipt with ToJson::{to_json}
 
 ///|
 pub(all) enum SemanticsActionDispatchError {
@@ -94,6 +166,15 @@ pub(all) enum SemanticsActionDispatchError {
   HandlerRejected(@core.SemanticsTarget, @core.SemanticsActionKind)
   ReentrantDispatch
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsActionDispatchError with Debug::{to_repr}
+
+///|
+pub extend SemanticsActionDispatchError with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsActionDispatchError with ToJson::{to_json}
 
 ///|
 priv enum SemanticIdIndexEntry {

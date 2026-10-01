@@ -16,6 +16,15 @@ pub(all) struct Paint {
 } derive(Debug, Eq)
 
 ///|
+pub extend Paint with Debug::{to_repr}
+
+///|
+pub extend Paint with Default::{default}
+
+///|
+pub extend Paint with Eq::{not_equal, equal}
+
+///|
 pub fn Paint::new(
   color? : Color = Color::black(),
   anti_alias? : Bool = false,

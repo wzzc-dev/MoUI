@@ -27,6 +27,9 @@ pub(all) enum CodeEditorMode {
 } derive(Eq)
 
 ///|
+pub extend CodeEditorMode with Eq::{not_equal, equal}
+
+///|
 pub fn CodeEditorMode::label(self : CodeEditorMode) -> String {
   match self {
     SourceEditor => "Source Editor"

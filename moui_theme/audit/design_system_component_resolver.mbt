@@ -22,6 +22,15 @@ pub(all) struct DesignComponentStyleResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend DesignComponentStyleResolverRecord with Debug::{to_repr}
+
+///|
+pub extend DesignComponentStyleResolverRecord with Eq::{not_equal, equal}
+
+///|
+pub extend DesignComponentStyleResolverRecord with ToJson::{to_json}
+
+///|
 pub fn component_style_resolver_report(
   preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = Light,

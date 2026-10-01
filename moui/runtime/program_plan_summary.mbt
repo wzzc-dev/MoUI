@@ -9,6 +9,15 @@ pub(all) enum EffectPlanKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EffectPlanKind with Debug::{to_repr}
+
+///|
+pub extend EffectPlanKind with Eq::{not_equal, equal}
+
+///|
+pub extend EffectPlanKind with ToJson::{to_json}
+
+///|
 pub struct EffectPlanSummary {
   priv root_kind : EffectPlanKind
   priv none_count : Int
@@ -25,11 +34,29 @@ pub struct EffectPlanSummary {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend EffectPlanSummary with Debug::{to_repr}
+
+///|
+pub extend EffectPlanSummary with Eq::{not_equal, equal}
+
+///|
+pub extend EffectPlanSummary with ToJson::{to_json}
+
+///|
 pub(all) enum SubscriptionPlanKind {
   SubscriptionPlanNone
   SubscriptionPlanBatch
   SubscriptionPlanSource
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SubscriptionPlanKind with Debug::{to_repr}
+
+///|
+pub extend SubscriptionPlanKind with Eq::{not_equal, equal}
+
+///|
+pub extend SubscriptionPlanKind with ToJson::{to_json}
 
 ///|
 pub struct SubscriptionPlanSummary {
@@ -42,6 +69,15 @@ pub struct SubscriptionPlanSummary {
   priv max_depth : Int
   priv descriptors : Array[@core.SubscriptionDescriptor]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SubscriptionPlanSummary with Debug::{to_repr}
+
+///|
+pub extend SubscriptionPlanSummary with Eq::{not_equal, equal}
+
+///|
+pub extend SubscriptionPlanSummary with ToJson::{to_json}
 
 ///|
 pub fn EffectPlanSummary::root_kind(self : EffectPlanSummary) -> EffectPlanKind {

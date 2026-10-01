@@ -37,6 +37,10 @@ pub(all) struct AccessibilityAnnouncement {
   is_atomic : Bool
   text : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn AccessibilityAnnouncement::equal(Self, Self) -> Bool
+pub fn AccessibilityAnnouncement::not_equal(Self, Self) -> Bool
+pub fn AccessibilityAnnouncement::to_json(Self) -> Json
+pub fn AccessibilityAnnouncement::to_repr(Self) -> @debug.Repr
 
 pub struct AnchorFrameRegistry {
   entries : Array[(String, @core.Rect)]
@@ -128,6 +132,10 @@ pub(all) enum EffectPlanKind {
   EffectPlanRun
   EffectPlanTask
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EffectPlanKind::equal(Self, Self) -> Bool
+pub fn EffectPlanKind::not_equal(Self, Self) -> Bool
+pub fn EffectPlanKind::to_json(Self) -> Json
+pub fn EffectPlanKind::to_repr(Self) -> @debug.Repr
 
 pub struct EffectPlanSummary {
   // private fields
@@ -138,38 +146,57 @@ pub fn EffectPlanSummary::dispatch_count(Self) -> Int
 pub fn EffectPlanSummary::duplicate_descriptor_key_count(Self) -> Int
 pub fn EffectPlanSummary::duplicate_descriptor_keys(Self) -> Array[String]
 pub fn EffectPlanSummary::empty() -> Self
+pub fn EffectPlanSummary::equal(Self, Self) -> Bool
 pub fn EffectPlanSummary::max_depth(Self) -> Int
 pub fn EffectPlanSummary::none_count(Self) -> Int
+pub fn EffectPlanSummary::not_equal(Self, Self) -> Bool
 pub fn EffectPlanSummary::root_kind(Self) -> EffectPlanKind
 pub fn EffectPlanSummary::run_count(Self) -> Int
 pub fn EffectPlanSummary::scheduled_count(Self) -> Int
 pub fn EffectPlanSummary::send_count(Self) -> Int
 pub fn EffectPlanSummary::task_count(Self) -> Int
+pub fn EffectPlanSummary::to_json(Self) -> Json
+pub fn EffectPlanSummary::to_repr(Self) -> @debug.Repr
 
 pub(all) enum EffectTaskCancelReason {
   EffectTaskKeyChanged
   EffectTaskKindChanged
   EffectTaskRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EffectTaskCancelReason::equal(Self, Self) -> Bool
+pub fn EffectTaskCancelReason::not_equal(Self, Self) -> Bool
+pub fn EffectTaskCancelReason::to_json(Self) -> Json
+pub fn EffectTaskCancelReason::to_repr(Self) -> @debug.Repr
 
 pub struct EffectTaskLifecycleSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn EffectTaskLifecycleSnapshot::cancel_reason(Self) -> EffectTaskCancelReason?
+pub fn EffectTaskLifecycleSnapshot::equal(Self, Self) -> Bool
 pub fn EffectTaskLifecycleSnapshot::key(Self) -> String
 pub fn EffectTaskLifecycleSnapshot::kind(Self) -> String
 pub fn EffectTaskLifecycleSnapshot::label(Self) -> String
+pub fn EffectTaskLifecycleSnapshot::not_equal(Self, Self) -> Bool
 pub fn EffectTaskLifecycleSnapshot::status(Self) -> EffectTaskLifecycleStatus
+pub fn EffectTaskLifecycleSnapshot::to_json(Self) -> Json
+pub fn EffectTaskLifecycleSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskActive
   EffectTaskCompleted
   EffectTaskCancelled
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EffectTaskLifecycleStatus::equal(Self, Self) -> Bool
+pub fn EffectTaskLifecycleStatus::not_equal(Self, Self) -> Bool
+pub fn EffectTaskLifecycleStatus::to_json(Self) -> Json
+pub fn EffectTaskLifecycleStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ElementId {
   value : Int
 } derive(Eq, @debug.Debug)
+pub fn ElementId::equal(Self, Self) -> Bool
+pub fn ElementId::not_equal(Self, Self) -> Bool
+pub fn ElementId::to_repr(Self) -> @debug.Repr
 
 pub struct HostEventSource {
   // private fields
@@ -183,6 +210,10 @@ pub(all) struct HostPlatformEventPublishResult {
   host_event_count : Int
   window_event_count : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostPlatformEventPublishResult::equal(Self, Self) -> Bool
+pub fn HostPlatformEventPublishResult::not_equal(Self, Self) -> Bool
+pub fn HostPlatformEventPublishResult::to_json(Self) -> Json
+pub fn HostPlatformEventPublishResult::to_repr(Self) -> @debug.Repr
 
 pub struct HostPlatformEventSources {
   // private fields
@@ -234,13 +265,21 @@ pub(all) struct HostWallClock {
   minute : Int
   second : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostWallClock::equal(Self, Self) -> Bool
 pub fn HostWallClock::new(Int, Int, Int, Int, Int, Int, second? : Int) -> Self
+pub fn HostWallClock::not_equal(Self, Self) -> Bool
+pub fn HostWallClock::to_json(Self) -> Json
+pub fn HostWallClock::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostWindowEvent {
   window_id : @backend.WindowId
   event : @backend.Event
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostWindowEvent::equal(Self, Self) -> Bool
 pub fn HostWindowEvent::new(window_id~ : @backend.WindowId, event~ : @backend.Event) -> Self
+pub fn HostWindowEvent::not_equal(Self, Self) -> Bool
+pub fn HostWindowEvent::to_json(Self) -> Json
+pub fn HostWindowEvent::to_repr(Self) -> @debug.Repr
 
 pub struct HostWindowEventSource {
   // private fields
@@ -255,15 +294,23 @@ pub struct InputDispatchResult {
   capture_pointer : Bool
   release_pointer : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn InputDispatchResult::equal(Self, Self) -> Bool
 pub fn InputDispatchResult::host_flags(Self) -> Int
+pub fn InputDispatchResult::not_equal(Self, Self) -> Bool
+pub fn InputDispatchResult::to_json(Self) -> Json
+pub fn InputDispatchResult::to_repr(Self) -> @debug.Repr
 
 pub struct InspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn InspectorSnapshot::equal(Self, Self) -> Bool
 pub fn InspectorSnapshot::layout(Self) -> LayoutInspectorSnapshot
+pub fn InspectorSnapshot::not_equal(Self, Self) -> Bool
 pub fn InspectorSnapshot::render(Self) -> RenderInspectorSnapshot
 pub fn InspectorSnapshot::runtime(Self) -> RuntimeInspectorSnapshot
 pub fn InspectorSnapshot::semantics(Self) -> SemanticsInspectorSnapshot
+pub fn InspectorSnapshot::to_json(Self) -> Json
+pub fn InspectorSnapshot::to_repr(Self) -> @debug.Repr
 pub fn InspectorSnapshot::view_tree(Self) -> ViewTreeInspectorSnapshot
 
 pub struct LayoutBoundsInspectorEntry {
@@ -273,22 +320,34 @@ pub fn LayoutBoundsInspectorEntry::child_count(Self) -> Int
 pub fn LayoutBoundsInspectorEntry::constraints(Self) -> @core.Constraints
 pub fn LayoutBoundsInspectorEntry::depth(Self) -> Int
 pub fn LayoutBoundsInspectorEntry::element_id(Self) -> Int
+pub fn LayoutBoundsInspectorEntry::equal(Self, Self) -> Bool
 pub fn LayoutBoundsInspectorEntry::frame(Self) -> @core.Rect
+pub fn LayoutBoundsInspectorEntry::not_equal(Self, Self) -> Bool
+pub fn LayoutBoundsInspectorEntry::to_json(Self) -> Json
+pub fn LayoutBoundsInspectorEntry::to_repr(Self) -> @debug.Repr
 
 pub struct LayoutInspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LayoutInspectorSnapshot::bounds(Self) -> Array[LayoutBoundsInspectorEntry]
+pub fn LayoutInspectorSnapshot::equal(Self, Self) -> Bool
 pub fn LayoutInspectorSnapshot::leaf_count(Self) -> Int
 pub fn LayoutInspectorSnapshot::max_depth(Self) -> Int
 pub fn LayoutInspectorSnapshot::node_count(Self) -> Int
+pub fn LayoutInspectorSnapshot::not_equal(Self, Self) -> Bool
 pub fn LayoutInspectorSnapshot::root_frame(Self) -> @core.Rect
+pub fn LayoutInspectorSnapshot::to_json(Self) -> Json
+pub fn LayoutInspectorSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PerformSemanticsActionRequest {
   target : @core.SemanticsTarget
   action : @core.SemanticsAction
   precondition : SemanticsGenerationPrecondition
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PerformSemanticsActionRequest::equal(Self, Self) -> Bool
+pub fn PerformSemanticsActionRequest::not_equal(Self, Self) -> Bool
+pub fn PerformSemanticsActionRequest::to_json(Self) -> Json
+pub fn PerformSemanticsActionRequest::to_repr(Self) -> @debug.Repr
 
 pub struct PlatformEntry {
   id : String
@@ -331,6 +390,7 @@ pub fn ProgramRuntimeSnapshot::effect_run_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::effect_send_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::effect_task_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::effect_task_lifecycle(Self) -> Array[EffectTaskLifecycleSnapshot]
+pub fn ProgramRuntimeSnapshot::equal(Self, Self) -> Bool
 pub fn ProgramRuntimeSnapshot::ignored_effect_task_dispatch_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::ignored_program_dispatch_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::ignored_subscription_dispatch_count(Self) -> Int
@@ -340,6 +400,7 @@ pub fn ProgramRuntimeSnapshot::last_subscription_plan_summary(Self) -> Subscript
 pub fn ProgramRuntimeSnapshot::max_pending_message_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::message_drain_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::message_enqueue_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::not_equal(Self, Self) -> Bool
 pub fn ProgramRuntimeSnapshot::pending_message_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::reused_subscription_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::started_effect_task_count(Self) -> Int
@@ -348,6 +409,8 @@ pub fn ProgramRuntimeSnapshot::subscription_lifecycle(Self) -> Array[Subscriptio
 pub fn ProgramRuntimeSnapshot::subscription_plan_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::superseded_effect_task_key_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::superseded_effect_task_keys(Self) -> Array[String]
+pub fn ProgramRuntimeSnapshot::to_json(Self) -> Json
+pub fn ProgramRuntimeSnapshot::to_repr(Self) -> @debug.Repr
 pub fn ProgramRuntimeSnapshot::update_count(Self) -> Int
 
 pub(all) struct RedrawScheduler {
@@ -368,6 +431,10 @@ pub(all) enum RedrawSchedulerState {
   RedrawInFrame
   RedrawFollowUpScheduled
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RedrawSchedulerState::equal(Self, Self) -> Bool
+pub fn RedrawSchedulerState::not_equal(Self, Self) -> Bool
+pub fn RedrawSchedulerState::to_json(Self) -> Json
+pub fn RedrawSchedulerState::to_repr(Self) -> @debug.Repr
 
 pub struct RenderInspectorEntry {
   // private fields
@@ -377,27 +444,35 @@ pub fn RenderInspectorEntry::child_count(Self) -> Int
 pub fn RenderInspectorEntry::command_count(Self) -> Int
 pub fn RenderInspectorEntry::depth(Self) -> Int
 pub fn RenderInspectorEntry::element_id(Self) -> Int
+pub fn RenderInspectorEntry::equal(Self, Self) -> Bool
 pub fn RenderInspectorEntry::frame(Self) -> @core.Rect
+pub fn RenderInspectorEntry::not_equal(Self, Self) -> Bool
 pub fn RenderInspectorEntry::overlay_command_count(Self) -> Int
 pub fn RenderInspectorEntry::paint_bounds(Self) -> @core.Rect
 pub fn RenderInspectorEntry::repaint_boundary(Self) -> Bool
+pub fn RenderInspectorEntry::to_json(Self) -> Json
+pub fn RenderInspectorEntry::to_repr(Self) -> @debug.Repr
 
 pub struct RenderInspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderInspectorSnapshot::clip_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::command_count(Self) -> Int
+pub fn RenderInspectorSnapshot::equal(Self, Self) -> Bool
 pub fn RenderInspectorSnapshot::filter_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::from_commands(Array[@core.DrawCommand]) -> Self
 pub fn RenderInspectorSnapshot::image_count(Self) -> Int
 pub fn RenderInspectorSnapshot::layer_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::nodes(Self) -> Array[RenderInspectorEntry]
+pub fn RenderInspectorSnapshot::not_equal(Self, Self) -> Bool
 pub fn RenderInspectorSnapshot::open_clip_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::open_filter_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::open_layer_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::path_count(Self) -> Int
 pub fn RenderInspectorSnapshot::shader_count(Self) -> Int
 pub fn RenderInspectorSnapshot::text_count(Self) -> Int
+pub fn RenderInspectorSnapshot::to_json(Self) -> Json
+pub fn RenderInspectorSnapshot::to_repr(Self) -> @debug.Repr
 pub fn RenderInspectorSnapshot::unbalanced_pop_count(Self) -> Int
 
 pub struct RendererRecovery {
@@ -430,8 +505,12 @@ pub(all) struct RendererRecoveryBudget {
   max_consecutive_recovery_failures : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererRecoveryBudget::default() -> Self
+pub fn RendererRecoveryBudget::equal(Self, Self) -> Bool
 pub fn RendererRecoveryBudget::new(vsync_ms~ : Double, recovery_vsync_budget~ : Int, max_consecutive_recovery_failures~ : Int) -> Self
+pub fn RendererRecoveryBudget::not_equal(Self, Self) -> Bool
 pub fn RendererRecoveryBudget::recovery_deadline_ms(Self, Double) -> Double
+pub fn RendererRecoveryBudget::to_json(Self) -> Json
+pub fn RendererRecoveryBudget::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RendererRecoverySnapshot {
   state : String
@@ -442,6 +521,10 @@ pub(all) struct RendererRecoverySnapshot {
   consecutive_failures : Int
   fallback_reason : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererRecoverySnapshot::equal(Self, Self) -> Bool
+pub fn RendererRecoverySnapshot::not_equal(Self, Self) -> Bool
+pub fn RendererRecoverySnapshot::to_json(Self) -> Json
+pub fn RendererRecoverySnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) enum RendererRecoveryState {
   Idle
@@ -450,6 +533,10 @@ pub(all) enum RendererRecoveryState {
   Recovered
   FallbackToRaster(String)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererRecoveryState::equal(Self, Self) -> Bool
+pub fn RendererRecoveryState::not_equal(Self, Self) -> Bool
+pub fn RendererRecoveryState::to_json(Self) -> Json
+pub fn RendererRecoveryState::to_repr(Self) -> @debug.Repr
 
 pub struct RuntimeDirtyStateSummary {
   // private fields
@@ -465,21 +552,29 @@ pub fn RuntimeDirtyStateSummary::dirty_layout_count(Self) -> Int
 pub fn RuntimeDirtyStateSummary::dirty_layout_element_ids(Self) -> Array[Int]
 pub fn RuntimeDirtyStateSummary::dirty_paint_count(Self) -> Int
 pub fn RuntimeDirtyStateSummary::dirty_paint_element_ids(Self) -> Array[Int]
+pub fn RuntimeDirtyStateSummary::equal(Self, Self) -> Bool
 pub fn RuntimeDirtyStateSummary::has_pending_work(Self) -> Bool
 pub fn RuntimeDirtyStateSummary::needs_layout(Self) -> Bool
 pub fn RuntimeDirtyStateSummary::needs_paint(Self) -> Bool
 pub fn RuntimeDirtyStateSummary::needs_rebuild(Self) -> Bool
 pub fn RuntimeDirtyStateSummary::needs_redraw(Self) -> Bool
+pub fn RuntimeDirtyStateSummary::not_equal(Self, Self) -> Bool
 pub fn RuntimeDirtyStateSummary::reason(Self) -> String
 pub fn RuntimeDirtyStateSummary::reasons(Self) -> Array[String]
+pub fn RuntimeDirtyStateSummary::to_json(Self) -> Json
+pub fn RuntimeDirtyStateSummary::to_repr(Self) -> @debug.Repr
 
 pub struct RuntimeFrameTiming {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RuntimeFrameTiming::build_ms(Self) -> Double
 pub fn RuntimeFrameTiming::draw_ms(Self) -> Double
+pub fn RuntimeFrameTiming::equal(Self, Self) -> Bool
 pub fn RuntimeFrameTiming::layout_ms(Self) -> Double
+pub fn RuntimeFrameTiming::not_equal(Self, Self) -> Bool
 pub fn RuntimeFrameTiming::paint_ms(Self) -> Double
+pub fn RuntimeFrameTiming::to_json(Self) -> Json
+pub fn RuntimeFrameTiming::to_repr(Self) -> @debug.Repr
 pub fn RuntimeFrameTiming::total_ms(Self) -> Double
 
 pub struct RuntimeInspectorSnapshot {
@@ -510,6 +605,7 @@ pub fn RuntimeInspectorSnapshot::duplicate_effect_descriptor_keys(Self) -> Array
 pub fn RuntimeInspectorSnapshot::duplicate_subscription_key_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::duplicate_subscription_keys(Self) -> Array[String]
 pub fn RuntimeInspectorSnapshot::effect_task_lifecycle(Self) -> Array[EffectTaskLifecycleSnapshot]
+pub fn RuntimeInspectorSnapshot::equal(Self, Self) -> Bool
 pub fn RuntimeInspectorSnapshot::ignored_effect_task_dispatch_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::ignored_program_dispatch_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::ignored_subscription_dispatch_count(Self) -> Int
@@ -525,6 +621,7 @@ pub fn RuntimeInspectorSnapshot::needs_layout(Self) -> Bool
 pub fn RuntimeInspectorSnapshot::needs_paint(Self) -> Bool
 pub fn RuntimeInspectorSnapshot::needs_rebuild(Self) -> Bool
 pub fn RuntimeInspectorSnapshot::needs_redraw(Self) -> Bool
+pub fn RuntimeInspectorSnapshot::not_equal(Self, Self) -> Bool
 pub fn RuntimeInspectorSnapshot::paint_pass_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::program_dispatched_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::program_effect_batch_count(Self) -> Int
@@ -552,6 +649,8 @@ pub fn RuntimeInspectorSnapshot::started_subscription_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::subscription_lifecycle(Self) -> Array[SubscriptionLifecycleSnapshot]
 pub fn RuntimeInspectorSnapshot::superseded_effect_task_key_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::superseded_effect_task_keys(Self) -> Array[String]
+pub fn RuntimeInspectorSnapshot::to_json(Self) -> Json
+pub fn RuntimeInspectorSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SemanticsActionDispatchError {
   RuntimeClosed
@@ -563,30 +662,45 @@ pub(all) enum SemanticsActionDispatchError {
   HandlerRejected(@core.SemanticsTarget, @core.SemanticsActionKind)
   ReentrantDispatch
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsActionDispatchError::equal(Self, Self) -> Bool
+pub fn SemanticsActionDispatchError::not_equal(Self, Self) -> Bool
+pub fn SemanticsActionDispatchError::to_json(Self) -> Json
+pub fn SemanticsActionDispatchError::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsActionReceipt {
   before : @core.SemanticsGeneration
   after : @core.SemanticsGeneration
   pending_work : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsActionReceipt::equal(Self, Self) -> Bool
+pub fn SemanticsActionReceipt::not_equal(Self, Self) -> Bool
+pub fn SemanticsActionReceipt::to_json(Self) -> Json
+pub fn SemanticsActionReceipt::to_repr(Self) -> @debug.Repr
 
 pub struct SemanticsDelta {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn SemanticsDelta::announcements(Self) -> Array[AccessibilityAnnouncement]
+pub fn SemanticsDelta::equal(Self, Self) -> Bool
 pub fn SemanticsDelta::focused(Self) -> @core.SemanticsNodeId?
 pub fn SemanticsDelta::from(Self) -> @core.SemanticsGeneration
 pub fn SemanticsDelta::issues(Self) -> Array[SemanticsIssue]
+pub fn SemanticsDelta::not_equal(Self, Self) -> Bool
 pub fn SemanticsDelta::removed(Self) -> Array[@core.SemanticsNodeId]
 pub fn SemanticsDelta::root(Self) -> @core.SemanticsNodeId?
 pub fn SemanticsDelta::semantic_focused(Self) -> @core.SemanticsNodeId?
 pub fn SemanticsDelta::to(Self) -> @core.SemanticsGeneration
+pub fn SemanticsDelta::to_repr(Self) -> @debug.Repr
 pub fn SemanticsDelta::upserted(Self) -> Array[@core.SemanticsNode]
 
 pub(all) enum SemanticsGenerationPrecondition {
   Exact(@core.SemanticsGeneration)
   Latest
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsGenerationPrecondition::equal(Self, Self) -> Bool
+pub fn SemanticsGenerationPrecondition::not_equal(Self, Self) -> Bool
+pub fn SemanticsGenerationPrecondition::to_json(Self) -> Json
+pub fn SemanticsGenerationPrecondition::to_repr(Self) -> @debug.Repr
 
 pub struct SemanticsInspectorEntry {
   // private fields
@@ -596,13 +710,17 @@ pub fn SemanticsInspectorEntry::checked(Self) -> Bool
 pub fn SemanticsInspectorEntry::child_count(Self) -> Int
 pub fn SemanticsInspectorEntry::depth(Self) -> Int
 pub fn SemanticsInspectorEntry::disabled(Self) -> Bool
+pub fn SemanticsInspectorEntry::equal(Self, Self) -> Bool
 pub fn SemanticsInspectorEntry::expanded(Self) -> Bool
 pub fn SemanticsInspectorEntry::focusable(Self) -> Bool
 pub fn SemanticsInspectorEntry::frame(Self) -> @core.Rect
 pub fn SemanticsInspectorEntry::label(Self) -> String
 pub fn SemanticsInspectorEntry::node_id(Self) -> String
+pub fn SemanticsInspectorEntry::not_equal(Self, Self) -> Bool
 pub fn SemanticsInspectorEntry::role(Self) -> @core.SemanticsRole
 pub fn SemanticsInspectorEntry::selected(Self) -> Bool
+pub fn SemanticsInspectorEntry::to_json(Self) -> Json
+pub fn SemanticsInspectorEntry::to_repr(Self) -> @debug.Repr
 pub fn SemanticsInspectorEntry::value(Self) -> String
 
 pub struct SemanticsInspectorSnapshot {
@@ -611,73 +729,111 @@ pub struct SemanticsInspectorSnapshot {
 pub fn SemanticsInspectorSnapshot::action_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::checked_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::described_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::equal(Self, Self) -> Bool
 pub fn SemanticsInspectorSnapshot::expanded_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::focusable_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::invalid_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::max_depth(Self) -> Int
 pub fn SemanticsInspectorSnapshot::node_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::nodes(Self) -> Array[SemanticsInspectorEntry]
+pub fn SemanticsInspectorSnapshot::not_equal(Self, Self) -> Bool
 pub fn SemanticsInspectorSnapshot::required_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::root_role(Self) -> @core.SemanticsRole
 pub fn SemanticsInspectorSnapshot::selected_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::to_json(Self) -> Json
+pub fn SemanticsInspectorSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
   MissingRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId)
   AmbiguousRelationTarget(@core.SemanticsNodeId, @core.SemanticsRelationKind, @core.SemanticId, Array[@core.SemanticsNodeId])
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsIssue::equal(Self, Self) -> Bool
+pub fn SemanticsIssue::not_equal(Self, Self) -> Bool
+pub fn SemanticsIssue::to_json(Self) -> Json
+pub fn SemanticsIssue::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SemanticsRead {
   Full(SemanticsSnapshot)
   Delta(SemanticsDelta)
   Unchanged(@core.SemanticsGeneration)
 } derive(Eq, @debug.Debug)
+pub fn SemanticsRead::equal(Self, Self) -> Bool
+pub fn SemanticsRead::not_equal(Self, Self) -> Bool
+pub fn SemanticsRead::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SemanticsReadError {
   RuntimeClosed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsReadError::equal(Self, Self) -> Bool
+pub fn SemanticsReadError::not_equal(Self, Self) -> Bool
+pub fn SemanticsReadError::to_json(Self) -> Json
+pub fn SemanticsReadError::to_repr(Self) -> @debug.Repr
 
 pub struct SemanticsSnapshot {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn SemanticsSnapshot::equal(Self, Self) -> Bool
 pub fn SemanticsSnapshot::focused(Self) -> @core.SemanticsNodeId?
 pub fn SemanticsSnapshot::generation(Self) -> @core.SemanticsGeneration
 pub fn SemanticsSnapshot::issues(Self) -> Array[SemanticsIssue]
 pub fn SemanticsSnapshot::nodes(Self) -> Array[@core.SemanticsNode]
+pub fn SemanticsSnapshot::not_equal(Self, Self) -> Bool
 pub fn SemanticsSnapshot::root(Self) -> @core.SemanticsNodeId?
 pub fn SemanticsSnapshot::semantic_focused(Self) -> @core.SemanticsNodeId?
+pub fn SemanticsSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged
   SubscriptionKindChanged
   SubscriptionRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionCancelReason::equal(Self, Self) -> Bool
+pub fn SubscriptionCancelReason::not_equal(Self, Self) -> Bool
+pub fn SubscriptionCancelReason::to_json(Self) -> Json
+pub fn SubscriptionCancelReason::to_repr(Self) -> @debug.Repr
 
 pub struct SubscriptionKindCount {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SubscriptionKindCount::count(Self) -> Int
+pub fn SubscriptionKindCount::equal(Self, Self) -> Bool
 pub fn SubscriptionKindCount::kind(Self) -> String
+pub fn SubscriptionKindCount::not_equal(Self, Self) -> Bool
+pub fn SubscriptionKindCount::to_json(Self) -> Json
+pub fn SubscriptionKindCount::to_repr(Self) -> @debug.Repr
 
 pub struct SubscriptionLifecycleSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SubscriptionLifecycleSnapshot::cancel_reason(Self) -> SubscriptionCancelReason?
+pub fn SubscriptionLifecycleSnapshot::equal(Self, Self) -> Bool
 pub fn SubscriptionLifecycleSnapshot::key(Self) -> String
 pub fn SubscriptionLifecycleSnapshot::kind(Self) -> String
 pub fn SubscriptionLifecycleSnapshot::label(Self) -> String
+pub fn SubscriptionLifecycleSnapshot::not_equal(Self, Self) -> Bool
 pub fn SubscriptionLifecycleSnapshot::status(Self) -> SubscriptionLifecycleStatus
+pub fn SubscriptionLifecycleSnapshot::to_json(Self) -> Json
+pub fn SubscriptionLifecycleSnapshot::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SubscriptionLifecycleStatus {
   SubscriptionActive
   SubscriptionCancelled
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionLifecycleStatus::equal(Self, Self) -> Bool
+pub fn SubscriptionLifecycleStatus::not_equal(Self, Self) -> Bool
+pub fn SubscriptionLifecycleStatus::to_json(Self) -> Json
+pub fn SubscriptionLifecycleStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SubscriptionPlanKind {
   SubscriptionPlanNone
   SubscriptionPlanBatch
   SubscriptionPlanSource
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionPlanKind::equal(Self, Self) -> Bool
+pub fn SubscriptionPlanKind::not_equal(Self, Self) -> Bool
+pub fn SubscriptionPlanKind::to_json(Self) -> Json
+pub fn SubscriptionPlanKind::to_repr(Self) -> @debug.Repr
 
 pub struct SubscriptionPlanSummary {
   // private fields
@@ -687,10 +843,14 @@ pub fn SubscriptionPlanSummary::descriptors(Self) -> Array[@core.SubscriptionDes
 pub fn SubscriptionPlanSummary::duplicate_key_count(Self) -> Int
 pub fn SubscriptionPlanSummary::duplicate_keys(Self) -> Array[String]
 pub fn SubscriptionPlanSummary::empty() -> Self
+pub fn SubscriptionPlanSummary::equal(Self, Self) -> Bool
 pub fn SubscriptionPlanSummary::max_depth(Self) -> Int
 pub fn SubscriptionPlanSummary::none_count(Self) -> Int
+pub fn SubscriptionPlanSummary::not_equal(Self, Self) -> Bool
 pub fn SubscriptionPlanSummary::root_kind(Self) -> SubscriptionPlanKind
 pub fn SubscriptionPlanSummary::source_count(Self) -> Int
+pub fn SubscriptionPlanSummary::to_json(Self) -> Json
+pub fn SubscriptionPlanSummary::to_repr(Self) -> @debug.Repr
 
 pub struct ViewInspectorSummary {
   // private fields
@@ -698,11 +858,15 @@ pub struct ViewInspectorSummary {
 pub fn ViewInspectorSummary::child_count(Self) -> Int
 pub fn ViewInspectorSummary::depth(Self) -> Int
 pub fn ViewInspectorSummary::element_id(Self) -> Int
+pub fn ViewInspectorSummary::equal(Self, Self) -> Bool
 pub fn ViewInspectorSummary::key(Self) -> String
 pub fn ViewInspectorSummary::kind(Self) -> String
 pub fn ViewInspectorSummary::needs_build(Self) -> Bool
 pub fn ViewInspectorSummary::needs_layout(Self) -> Bool
 pub fn ViewInspectorSummary::needs_paint(Self) -> Bool
+pub fn ViewInspectorSummary::not_equal(Self, Self) -> Bool
+pub fn ViewInspectorSummary::to_json(Self) -> Json
+pub fn ViewInspectorSummary::to_repr(Self) -> @debug.Repr
 
 pub struct ViewTreeInspectorSnapshot {
   // private fields
@@ -711,10 +875,14 @@ pub fn ViewTreeInspectorSnapshot::control_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::dirty_build_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::dirty_layout_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::dirty_paint_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::equal(Self, Self) -> Bool
 pub fn ViewTreeInspectorSnapshot::modified_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::node_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::nodes(Self) -> Array[ViewInspectorSummary]
+pub fn ViewTreeInspectorSnapshot::not_equal(Self, Self) -> Bool
 pub fn ViewTreeInspectorSnapshot::root_kind(Self) -> String
+pub fn ViewTreeInspectorSnapshot::to_json(Self) -> Json
+pub fn ViewTreeInspectorSnapshot::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

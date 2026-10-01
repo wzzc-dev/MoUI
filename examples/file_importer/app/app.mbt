@@ -26,10 +26,28 @@ pub(all) enum FileImporterStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend FileImporterStatus with Debug::{to_repr}
+
+///|
+pub extend FileImporterStatus with Eq::{not_equal, equal}
+
+///|
+pub extend FileImporterStatus with ToJson::{to_json}
+
+///|
 pub(all) struct ImportedFile {
   path : String
   source : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ImportedFile with Debug::{to_repr}
+
+///|
+pub extend ImportedFile with Eq::{not_equal, equal}
+
+///|
+pub extend ImportedFile with ToJson::{to_json}
 
 ///|
 pub(all) struct FileImporterModel {

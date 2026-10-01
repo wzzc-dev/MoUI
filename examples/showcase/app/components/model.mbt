@@ -10,6 +10,15 @@ pub(all) enum PlatformId {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend PlatformId with Debug::{to_repr}
+
+///|
+pub extend PlatformId with Eq::{not_equal, equal}
+
+///|
+pub extend PlatformId with ToJson::{to_json}
+
+///|
 /// Live or default session renderer facts for the active host. Entrypoints can
 /// inject measured GPU/CPU selection; tests and desktop defaults fall back to
 /// product mainline expectations for the platform.
@@ -23,6 +32,15 @@ pub(all) struct SessionRuntimeInfo {
   gpu_promoted : Bool
   note : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SessionRuntimeInfo with Debug::{to_repr}
+
+///|
+pub extend SessionRuntimeInfo with Eq::{not_equal, equal}
+
+///|
+pub extend SessionRuntimeInfo with ToJson::{to_json}
 
 ///|
 pub(all) enum ComponentGalleryItemId {
@@ -64,6 +82,15 @@ pub(all) enum ComponentGalleryItemId {
   MobileServiceProbe
   AccessibilityProbe
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ComponentGalleryItemId with Debug::{to_repr}
+
+///|
+pub extend ComponentGalleryItemId with Eq::{not_equal, equal}
+
+///|
+pub extend ComponentGalleryItemId with ToJson::{to_json}
 
 ///|
 pub(all) struct ComponentGalleryModel {
@@ -113,6 +140,15 @@ pub(all) enum ComponentGalleryMsg {
   ToggleCheckboxGroupItem(String)
   PageScrolled(@geometry.Point)
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend ComponentGalleryMsg with Debug::{to_repr}
+
+///|
+pub extend ComponentGalleryMsg with Eq::{not_equal, equal}
+
+///|
+pub extend ComponentGalleryMsg with ToJson::{to_json}
 
 ///|
 pub fn SessionRuntimeInfo::new(

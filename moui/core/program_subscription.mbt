@@ -31,6 +31,15 @@ struct SubscriptionDescriptor {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SubscriptionDescriptor with Debug::{to_repr}
+
+///|
+pub extend SubscriptionDescriptor with Eq::{not_equal, equal}
+
+///|
+pub extend SubscriptionDescriptor with ToJson::{to_json}
+
+///|
 pub fn SubscriptionDescriptor::key(self : SubscriptionDescriptor) -> String {
   self.key
 }

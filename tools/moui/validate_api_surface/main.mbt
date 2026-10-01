@@ -291,8 +291,8 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/runtime\"",
       // AppBuilder, PlatformEntry, and AppLaunchRequest are the public
       // application/platform composition contract.
-      max_lines: 745,
-      max_pub_lines: 460,
+      max_lines: 889,
+      max_pub_lines: 595,
       max_pub_all_lines: 28,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
@@ -333,8 +333,8 @@ fn package_budgets() -> Array[PackageBudget] {
       // and SemanticId::new: +14 lines, +5 pub, +1 pub(all); View::on_tap_with_frame +1 line, +1 pub; View::on_hover +1 line, +1 pub.
       // ViewSemanticsInfo::overlaying (modifier semantics overlay merge)
       // adds +1 line, +1 pub.
-      max_lines: 2176,
-      max_pub_lines: 580,
+      max_lines: 2749,
+      max_pub_lines: 1153,
       max_pub_all_lines: 190,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -424,8 +424,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "backend protocols",
       path: "moui/backend/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend\"",
-      max_lines: 500,
-      max_pub_lines: 95,
+      max_lines: 651,
+      max_pub_lines: 268,
       max_pub_all_lines: 55,
       required_tokens: [
         "pub(all) enum Event", "pub(all) struct WindowId", "pub struct WindowRequests",
@@ -442,8 +442,8 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/render\"",
       // HostSurface erases native handle meaning; RendererProvider binds one
       // per-window RendererSession at the composition boundary.
-      max_lines: 500,
-      max_pub_lines: 155,
+      max_lines: 604,
+      max_pub_lines: 279,
       max_pub_all_lines: 31,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RendererProvider", "RendererBindResult",
@@ -461,8 +461,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "render common",
       path: "moui/render/common/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/common\"",
-      max_lines: 380,
-      max_pub_lines: 115,
+      max_lines: 430,
+      max_pub_lines: 166,
       max_pub_all_lines: 15,
       required_tokens: [
         "pub struct ImageResourceLifecycle", "pub fn resolve_renderer", "pub fn renderer_feature_capability",
@@ -474,8 +474,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "skia renderer",
       path: "moui_skia_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_skia_renderer\"",
-      max_lines: 235,
-      max_pub_lines: 121,
+      max_lines: 279,
+      max_pub_lines: 165,
       max_pub_all_lines: 7,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
@@ -486,8 +486,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "sun renderer",
       path: "moui_sun_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_sun_renderer\"",
-      max_lines: 242,
-      max_pub_lines: 144,
+      max_lines: 272,
+      max_pub_lines: 175,
       max_pub_all_lines: 1,
       required_tokens: [
         "SunRasterRenderer", "SunRendererError", "SunPixelFrame",
@@ -500,8 +500,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "webgpu adapter",
       path: "moui_web_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_web_renderer\"",
-      max_lines: 160,
-      max_pub_lines: 69,
+      max_lines: 183,
+      max_pub_lines: 92,
       max_pub_all_lines: 2,
       required_tokens: [
         "WebGpuHostCall", "WebGpuHostError", "WebGpuWasmRenderer",
@@ -514,8 +514,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "native wgpu renderer",
       path: "moui_wgpu_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_wgpu_renderer\"",
-      max_lines: 150,
-      max_pub_lines: 66,
+      max_lines: 154,
+      max_pub_lines: 77,
       max_pub_all_lines: 3,
       required_tokens: [
         "NativeTextEngine", "HostWgpuSurface", "NativeTextLayout",

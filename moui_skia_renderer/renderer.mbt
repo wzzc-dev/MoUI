@@ -9,6 +9,15 @@ pub(all) suberror SkiaRendererError {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SkiaRendererError with Debug::{to_repr}
+
+///|
+pub extend SkiaRendererError with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaRendererError with ToJson::{to_json}
+
+///|
 pub fn SkiaRendererError::message(self : SkiaRendererError) -> String {
   match self {
     SkiaUnavailable => "moui_skia/native is unavailable"
@@ -28,10 +37,28 @@ pub struct SkiaUnsupportedCommandDiagnostic {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend SkiaUnsupportedCommandDiagnostic with Debug::{to_repr}
+
+///|
+pub extend SkiaUnsupportedCommandDiagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaUnsupportedCommandDiagnostic with ToJson::{to_json}
+
+///|
 pub(all) enum SkiaFontResolution {
   SystemFontMgr
   EmptyTypeface
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend SkiaFontResolution with Debug::{to_repr}
+
+///|
+pub extend SkiaFontResolution with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaFontResolution with ToJson::{to_json}
 
 ///|
 pub fn SkiaUnsupportedCommandDiagnostic::command(

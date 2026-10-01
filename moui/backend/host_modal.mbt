@@ -11,10 +11,28 @@ pub(all) struct HostModalRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostModalRequest with Debug::{to_repr}
+
+///|
+pub extend HostModalRequest with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalRequest with ToJson::{to_json}
+
+///|
 pub(all) enum HostModalModality {
   NonModal
   Modal
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostModalModality with Debug::{to_repr}
+
+///|
+pub extend HostModalModality with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalModality with ToJson::{to_json}
 
 ///|
 /// Result of accepting or rejecting a request. `Pending` is represented by
@@ -24,6 +42,15 @@ pub(all) enum HostModalResult {
   Rejected(String)
   Closed
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostModalResult with Debug::{to_repr}
+
+///|
+pub extend HostModalResult with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalResult with ToJson::{to_json}
 
 ///|
 /// Typed host lifecycle facts returned to the runtime/TEA boundary.
@@ -38,6 +65,15 @@ pub(all) enum HostModalEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend HostModalEvent with Debug::{to_repr}
+
+///|
+pub extend HostModalEvent with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalEvent with ToJson::{to_json}
+
+///|
 /// Capabilities are declarative; a missing capability must transparently use
 /// the view-level presentation path.
 pub(all) struct HostModalCapabilities {
@@ -46,6 +82,15 @@ pub(all) struct HostModalCapabilities {
   input_transform : Bool
   semantics_bridge : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub extend HostModalCapabilities with Debug::{to_repr}
+
+///|
+pub extend HostModalCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend HostModalCapabilities with ToJson::{to_json}
 
 ///|
 pub fn HostModalCapabilities::unavailable() -> HostModalCapabilities {

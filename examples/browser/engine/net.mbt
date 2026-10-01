@@ -21,6 +21,9 @@ pub suberror NetError {
 }
 
 ///|
+pub extend NetError with Show::{to_string, output}
+
+///|
 pub impl Show for NetError with fn output(self, logger) {
   match self {
     InvalidUrl(msg) => logger.write_string("InvalidUrl(" + msg + ")")

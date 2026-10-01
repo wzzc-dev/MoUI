@@ -31,6 +31,15 @@ pub(all) struct MarkdownScrollGlide {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub extend MarkdownScrollGlide with Debug::{to_repr}
+
+///|
+pub extend MarkdownScrollGlide with Eq::{not_equal, equal}
+
+///|
+pub extend MarkdownScrollGlide with ToJson::{to_json}
+
+///|
 let markdown_scroll_geometry_compensation : Ref[Double] = Ref(0.0)
 
 ///|
