@@ -43,6 +43,28 @@ pub fn Model::new() -> Model {
 }
 
 ///|
+/// 窗口标题：项目里写的那一个（native 组合根用它当窗口名）。
+/// 空标题回退产品名，避免出现一个没有标题的窗口。
+pub fn window_title() -> String {
+  let model = Model::new()
+  if model.program.window.title == "" {
+    "MoUI App"
+  } else {
+    model.program.window.title
+  }
+}
+
+///|
+/// 窗口尺寸：项目的设计尺寸（native 窗口按它开，与 Web 宿主页同口径）。
+pub fn window_size() -> (Double, Double) {
+  let model = Model::new()
+  (
+    model.program.window.width.to_double(),
+    model.program.window.height.to_double(),
+  )
+}
+
+///|
 /// 触发某控件事件的子程序：按 (控件, 事件) 分派到生成源码里的 handler，
 /// 由编译轨运行时推进到终止态（完成/闸门/失败）。
 ///

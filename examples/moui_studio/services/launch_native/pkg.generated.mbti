@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/launch_native"
+
+import {
+  "moonbitlang/async/aqueue",
+}
+
+// Values
+pub async fn launch_detached(String) -> Result[Unit, String]
+
+pub fn launch_submit(LaunchOwner, LaunchJob) -> Unit
+
+pub async fn launch_worker_loop(LaunchOwner) -> Unit
+
+pub fn work_dir_of(String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct LaunchJob {
+  path : String
+  on_result : (Result[Unit, String]) -> Unit
+}
+
+pub(all) struct LaunchOwner {
+  queue : @aqueue.Queue[LaunchJob]
+}
+pub fn LaunchOwner::new() -> Self
+
+// Type aliases
+
+// Traits

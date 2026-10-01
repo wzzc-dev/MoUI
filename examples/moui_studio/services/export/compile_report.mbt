@@ -21,6 +21,90 @@ pub(all) struct CompileDiagnostic {
 }
 
 ///|
+/// 真编译的一个**阶段**：工具链五步 + 落盘准备。
+///
+/// 为什么是枚举而不是裸字符串：阶段既驱动进度条（第几步 / 共几步），
+/// 也驱动审计与 Console 文案（i18n 按 tag 查表）。裸字符串会让
+/// 「加一步忘了改一处」变成静默的界面缺行。
+///
+/// 顺序即真实执行顺序（`compile_bundle_at` 逐个走），进度条的「已完成
+/// 步数」直接取序号，不另存一份计数。
+pub(all) enum CompilePhase {
+  /// 清目录 + 落 bundle（`compile_project` 的准备段）
+  CompilePrepare
+  /// `moon update`：解析/锁定依赖
+  CompileUpdate
+  /// `moon check --target native`：编译诊断的第一现场
+  CompileCheck
+  /// `moon build --target wasm-gc`：Web 产物
+  CompileWasm
+  /// `moon build ./native_smoke --target native`：native 可执行产物
+  CompileNative
+  /// 启动 native 产物跑一遍生成 handler（可判定存活）
+  CompileSmoke
+  /// 收尾：收集产物、组装报告
+  CompileCollect
+}
+
+///|
+/// 阶段 → 稳定 tag（i18n 键尾 + 审计 detail；不随中英文变化）。
+pub fn CompilePhase::tag(self : CompilePhase) -> String {
+  match self {
+    CompilePrepare => "prepare"
+    CompileUpdate => "update"
+    CompileCheck => "check"
+    CompileWasm => "wasm"
+    CompileNative => "native"
+    CompileSmoke => "smoke"
+    CompileCollect => "collect"
+  }
+}
+
+///|
+/// 全部阶段的规范顺序（进度条总步数的**唯一**来源）。
+pub fn compile_phases() -> Array[CompilePhase] {
+  [
+    CompilePrepare,
+    CompileUpdate,
+    CompileCheck,
+    CompileWasm,
+    CompileNative,
+    CompileSmoke,
+    CompileCollect,
+  ]
+}
+
+///|
+/// 阶段序号（1-based）：进度读数「第 N 步 / 共 M 步」。
+pub fn CompilePhase::ordinal(self : CompilePhase) -> Int {
+  let mut index = 0
+  for phase in compile_phases() {
+    index = index + 1
+    if phase.tag() == self.tag() {
+      return index
+    }
+  }
+  index
+}
+
+///|
+/// 阶段总数（进度条分母）。
+pub fn compile_phase_total() -> Int {
+  compile_phases().length()
+}
+
+///|
+/// 一次编译进度事件：worker 在**每一步开始前**推一条。
+///
+/// `started=true` 表示该步刚开始（进度条点亮该格），`false` 表示已结束
+/// （点满）。两者都要发：只发「开始」的话，界面永远显示「正在做第 N 步」，
+/// 最后一步的完成态没有落点。
+pub(all) struct CompileProgress {
+  phase : CompilePhase
+  started : Bool
+}
+
+///|
 /// 一次真编译的**产物**：构建真正落在磁盘上的文件。
 ///
 /// 为什么必须回传：用户点「编译」要的是**二进制产物**。工具链输出里只有

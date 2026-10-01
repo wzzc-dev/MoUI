@@ -47,10 +47,14 @@ fn noop_provider_submit(
 ///|
 /// 真编译提交签名：由平台入口注入（macOS 起 native worker；Web/测试用
 /// noop）。UI 线程同步返回、从不等待 moon 工具链；工具链进程全部在
-/// async worker 上跑，结果经回调回到 UI 线程（与 provider 同一模式）。
+/// async worker 上跑，进度与结果都经回调回到 UI 线程（与 provider 同一模式）。
+///
+/// `on_progress` 让界面在编译过程中就能显示「正在做第 N 步」——没有它，
+/// 用户点完编译只能看着一个静态徽标等十几秒，读起来像「卡住了」。
 pub type CompileSubmit = (
   String,
   String,
+  (@export.CompileProgress) -> Unit,
   (Result[@export.CompileReport, String]) -> Unit,
 ) -> Unit
 
@@ -58,6 +62,7 @@ pub type CompileSubmit = (
 fn noop_compile_submit(
   _project_json : String,
   _app_name : String,
+  _on_progress : (@export.CompileProgress) -> Unit,
   callback : (Result[@export.CompileReport, String]) -> Unit,
 ) -> Unit {
   callback(
@@ -66,13 +71,104 @@ fn noop_compile_submit(
 }
 
 ///|
-/// 文件服务流：保存 / 打开 / 导出独立应用。
+/// 产物启动提交签名：由平台入口注入（macOS 起 native worker；Web/测试用
+/// noop）。与编译同一模式——UI 线程同步返回，`spawn` 在 worker 上做。
+///
+/// 启动是**脱离式**的：进程 reparent 到系统 init，Studio 退出不带走它。
+/// 所以回调只报「起没起来」，不含退出码（见 services/launch_native）。
+pub type LaunchSubmit = (String, (Result[Unit, String]) -> Unit) -> Unit
+
+///|
+fn noop_launch_submit(
+  _path : String,
+  callback : (Result[Unit, String]) -> Unit,
+) -> Unit {
+  callback(Err("本端没有产物启动执行器：仅 native 入口可达"))
+}
+
+///|
+/// 产物旁路动作 → 成功 toast 的 i18n 键（三种动作各说各的事实）。
+pub fn artifact_done_key(what : ArtifactAction) -> String {
+  match what {
+    ArtifactCopy => "app.compile.path_copied"
+    ArtifactReveal => "app.compile.revealed"
+    ArtifactLaunch => "app.compile.launched"
+  }
+}
+
+///|
+/// 服务流入口（**供组合根与测试共用**）：把启动执行器也一并接进来。
+///
+/// 为什么单独一层：`update_with_provider` 是内部实现，签名会随服务增长而
+/// 变；测试要验证「RunArtifact 真的走到启动通道」就得有个稳定入口。
+/// 这层不做任何转换，只是把 `LaunchSubmit` 显式传进去。
+pub fn update_with_launch_for_test(
+  model : Model,
+  msg : Msg,
+  services : @services.AppServices,
+  launch_submit : LaunchSubmit,
+) -> (Model, @moui.Effect[Msg]) {
+  update_with_provider(
+    model,
+    msg,
+    services,
+    noop_provider_submit,
+    launch_submit,
+    _tag => (),
+  )
+}
+
+///|
+/// 文件服务流：保存 / 打开 / 导出独立应用 / 产物旁路动作。
 pub fn update_with_services(
   model : Model,
   msg : Msg,
   services : @services.AppServices,
 ) -> (Model, @moui.Effect[Msg]) {
   match msg {
+    // 复制产物路径：走系统剪贴板（native 是 NSPasteboard，Web 是可用的
+    // navigator.clipboard 垫片）。成功/失败都回一条 ArtifactActionDone，
+    // 让 notice 如实说话——静默失败会让用户以为「复制了」。
+    CopyArtifactPath(path) =>
+      (
+        model,
+        services
+        .clipboard()
+        .write_text(path)
+        .effect(map=r => ArtifactActionDone(ArtifactCopy, r)),
+      )
+    // 在文件夹中打开：把产物**所在目录**交给系统文件管理器。
+    //
+    // 为什么传目录而不是文件：`file:///…/app` 这类 URL 在 macOS 上会按
+    // 默认关联程序「打开」它（.mbt 没有关联时会弹选择器或什么都不做），
+    // 而目录 URL 会被 Finder 直接打开——这正是「在文件夹中查看产物」
+    // 要的效果，且不需要任何新的平台能力（`UrlServices` 已在三端接好）。
+    RevealArtifact(path) =>
+      (
+        model,
+        services
+        .urls()
+        .open(folder_url_of(path))
+        .effect(map=r => ArtifactActionDone(ArtifactReveal, r)),
+      )
+    ArtifactActionDone(what, result) =>
+      // 反馈走 **toast**（唯一真正被渲染的瞬时通道）：`notice` 在本仓
+      // 只写不画（状态栏没接它），用它等于把成功/失败静默吞掉——
+      // 用户点了「复制路径」看不到任何回应。
+      match result {
+        Success(_) =>
+          (
+            push_toast(
+              model,
+              text(translator(model), artifact_done_key(what)),
+              false,
+            ),
+            @moui.Effect::none(),
+          )
+        Failure(error) =>
+          (push_toast(model, error.message, true), @moui.Effect::none())
+        Cancelled => (model, @moui.Effect::none())
+      }
     SaveRequested => {
       let options = @services.FileDialogOptions::new(
         title=text(translator(model), "app.dialog.save"),
@@ -324,6 +420,75 @@ fn path_hint(dir : String, bundle : Array[(String, String)]) -> String {
 }
 
 ///|
+/// 产物路径 → 其**所在目录**的 `file://` URL（「在文件夹中打开」用）。
+///
+/// 传目录而不是文件：文件 URL 会被系统按关联程序「打开」，而目录 URL
+/// 由文件管理器直接打开——用户点「在文件夹中打开」要的是定位，不是执行。
+///
+/// 路径按 URL 规则转义（空格 → `%20` 等）。不做转义的话，TMPDIR 里带
+/// 空格的用户名会让 `NSURL` 解析失败，按钮点了没反应。
+pub fn folder_url_of(path : String) -> String {
+  let dir = match path.rev_find("/") {
+    Some(index) => if index == 0 { "/" } else { path[:index].to_owned() }
+    None => path
+  }
+  "file://" + percent_encode_path(dir)
+}
+
+///|
+/// 文件路径 → URL 路径段转义：保留 `/` 与 URL 非保留字符，其余百分号编码。
+///
+/// 按 **UTF-8 字节**编码：直接对 `Char` 编码会把非 ASCII 字符的码点当字节
+/// 写进 URL（`中` → `%4E2D` 而不是 `%E4%B8%AD`），`NSURL` 解析出来的路径
+/// 与磁盘上的目录对不上——用户名或目录名带中文时「在文件夹中打开」会失败。
+/// 这里手写 UTF-8 展开，避免为一个转义函数给 app 包引入新的依赖。
+fn percent_encode_path(path : String) -> String {
+  let buf = StringBuilder()
+  let hex = "0123456789ABCDEF"
+  for c in path {
+    let value = c.to_int()
+    // 非保留字符与 `/` 原样保留
+    let unreserved = (value >= 0x41 && value <= 0x5A) ||
+      (value >= 0x61 && value <= 0x7A) ||
+      (value >= 0x30 && value <= 0x39) ||
+      value == 0x2D ||
+      value == 0x2E ||
+      value == 0x5F ||
+      value == 0x7E ||
+      value == 0x2F
+    if unreserved {
+      buf.write_char(c)
+    } else {
+      for byte in utf8_bytes(value) {
+        buf.write_char('%')
+        buf.write_char(hex[(byte >> 4) & 0xF].unsafe_to_char())
+        buf.write_char(hex[byte & 0xF].unsafe_to_char())
+      }
+    }
+  }
+  buf.to_string()
+}
+
+///|
+/// 码点 → UTF-8 字节序列（1–4 字节），逐字节百分号编码用。
+fn utf8_bytes(code : Int) -> Array[Int] {
+  if code < 0x80 {
+    [code]
+  } else if code < 0x800 {
+    [0xC0 | (code >> 6), 0x80 | (code & 0x3F)]
+  } else if code < 0x10000 {
+    [0xE0 | (code >> 12), 0x80 | ((code >> 6) & 0x3F), 0x80 | (code & 0x3F)]
+  } else {
+    [
+      0xF0 | (code >> 18),
+      0x80 | ((code >> 12) & 0x3F),
+      0x80 | ((code >> 6) & 0x3F),
+      0x80 | (code & 0x3F),
+    ]
+  }
+}
+
+///|
 /// 设置读取结果 → 语言 tag（无值/失败 = 空串 → 回退中文）。
 fn language_tag_of(result : @services.ServiceTaskResult[String?]) -> String {
   match result {
@@ -360,6 +525,7 @@ pub fn program(
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
   provider_submit? : ProviderSubmit = noop_provider_submit,
   compile_submit? : CompileSubmit = noop_compile_submit,
+  launch_submit? : LaunchSubmit = noop_launch_submit,
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
   immersive? : Bool = false,
@@ -369,6 +535,7 @@ pub fn program(
   let timer = environment.timer()
   let submit = provider_submit
   let submit_compile = compile_submit
+  let submit_launch = launch_submit
   let on_locale = apply_locale
   @moui.Program::new_with_environment(
     init=() => {
@@ -398,13 +565,23 @@ pub fn program(
         | ExportDirPicked(_)
         | ExportFileWritten(_)
         | DraftLoaded(_)
+        // 产物旁路动作（复制路径 / 在文件夹中打开 / **一键启动**）也必须走
+        // **这一条**分支：它们要碰剪贴板、文件管理器与进程，属于服务流；
+        // 纯转移链遇到它们返回 None（见 update_run_msgs），不在这里接住
+        // 就会被静默丢弃——按钮点了没反应。
+        | CopyArtifactPath(_)
+        | RevealArtifact(_)
+        | RunArtifact(_)
+        | ArtifactActionDone(_)
         | GenerateProposal
         | RealGenerationFinished(_)
         | ExplainHandler
         | RealExplanationFinished(_)
         | SwitchLanguage
         | LanguageLoaded(_) =>
-          update_with_provider(model, msg, services, submit, on_locale)
+          update_with_provider(
+            model, msg, services, submit, submit_launch, on_locale,
+          )
         _ => update_pure(model, msg)
       }
       // 真编译派发：只有「CompileRun 使 compile_busy 从假变真」这一次
@@ -414,12 +591,17 @@ pub fn program(
         let json = @codec.encode_program(next0.program)
         let name = sanitize_export_name(next0)
         @moui.Effect::dispatch(emit => {
-          submit_compile(json, name, result => {
-            match result {
-              Ok(report) => emit(CompileRunFinished(report))
-              Err(message) => emit(CompileRunFailed(message))
-            }
-          })
+          submit_compile(
+            json,
+            name,
+            progress => emit(CompileProgress(progress)),
+            result => {
+              match result {
+                Ok(report) => emit(CompileRunFinished(report))
+                Err(message) => emit(CompileRunFailed(message))
+              }
+            },
+          )
         })
       } else {
         @moui.Effect::none()
@@ -502,9 +684,38 @@ fn update_with_provider(
   msg : Msg,
   services : @services.AppServices,
   submit : ProviderSubmit,
+  submit_launch : LaunchSubmit,
   apply_locale : (String) -> Unit,
 ) -> (Model, @moui.Effect[Msg]) {
   match msg {
+    // **一键启动产物**：脱离 Studio 生命周期起进程（见 services/launch_native）。
+    //
+    // 为什么走 effect 而不是直接调：`spawn` 是阻塞式系统调用 + 可能触发的
+    // 首次执行校验，放在 UI 线程会让点击卡顿。effect 把它交给 worker，UI
+    // 立刻拿到「正在启动」的反馈。
+    RunArtifact(path) =>
+      (
+        push_toast(
+          model,
+          text(translator(model), "app.compile.launching"),
+          false,
+        ),
+        @moui.Effect::dispatch(emit => {
+          submit_launch(path, result => {
+            // 启动执行器回的是裸 `Result`（它不起服务任务），在这里抬成
+            // `ServiceTaskResult`——回执消息只认一种结果词汇，视图层因此
+            // 不必为「哪条路来的」分叉。
+            let outcome = match result {
+              Ok(_) => @services.ServiceTaskResult::Success(())
+              Err(message) =>
+                @services.ServiceTaskResult::Failure(
+                  @services.ServiceError::unavailable(message),
+                )
+            }
+            emit(ArtifactActionDone(ArtifactLaunch, outcome))
+          })
+        }),
+      )
     SwitchLanguage => {
       let (switched, effect) = update_pure(model, SwitchLanguage)
       let tag = switched.language.tag()

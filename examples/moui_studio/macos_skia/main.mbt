@@ -40,6 +40,8 @@ async fn main {
   let owner = @provider.ProviderOwner::new()
   // 真编译执行器：与 provider 同一模式——UI 线程只入队，进程 IO 在 worker。
   let compile_owner = @compile.CompileOwner::new()
+  // 产物启动执行器：同一模式。`spawn` 在 worker 上做，UI 不阻塞。
+  let launch_owner = @launch.LaunchOwner::new()
   let config = @provider.load_provider_config(
     "examples/moui_studio/.config.json",
   ).unwrap_or(@provider.ProviderConfig::{
@@ -78,11 +80,19 @@ async fn main {
           on_result,
         )
       },
-      compile_submit=(project_json, app_name, on_result) => {
+      compile_submit=(project_json, app_name, on_progress, on_result) => {
         @compile.compile_submit(compile_owner, @compile.CompileJob::{
           project_json,
           app_name,
           work_root: @compile.default_work_root(),
+          on_progress,
+          on_result,
+        })
+      },
+      // 「运行产物」：脱离式启动（进程 reparent，Studio 退出不带走它）。
+      launch_submit=(path, on_result) => {
+        @launch.launch_submit(launch_owner, @launch.LaunchJob::{
+          path,
           on_result,
         })
       },
@@ -104,12 +114,17 @@ async fn main {
   let compile_task : async () -> Unit = async fn() {
     @compile.compile_worker_loop(compile_owner)
   }
+  let launch_task : async () -> Unit = async fn() {
+    @launch.launch_worker_loop(launch_owner)
+  }
   let agent_task : async () -> Unit = async fn() {
     // serve_with_diagnostics：语义工具之外再暴露运行时计数/绘制摘要/
     // 事件与命令注入（诊断面），供 Agent 做无头 E2E 与健康观测。
     @mcp_stdio.serve_with_diagnostics(host)
   }
-  ignore(@async.all([window_task, worker_task, compile_task, agent_task])) catch {
+  ignore(
+    @async.all([window_task, worker_task, compile_task, launch_task, agent_task]),
+  ) catch {
     err => println("MoUI Studio exited with error: \{err}")
   }
 }

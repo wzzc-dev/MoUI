@@ -115,6 +115,8 @@ pub fn anchor_hint_key(AiAnchor) -> String
 
 pub fn app_running(Model) -> Bool
 
+pub fn artifact_done_key(ArtifactAction) -> String
+
 pub fn audit_error_count(Model) -> Int
 
 pub fn audit_op_rank(@studio_lang.StepOp) -> Int
@@ -207,7 +209,13 @@ pub fn command_palette_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
 pub fn compile_action_bar(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
+pub fn compile_active_phase(Array[@export.CompileProgress]) -> @export.CompilePhase?
+
+pub fn compile_progress_counts(Array[@export.CompileProgress]) -> (Int, Int)
+
 pub fn compile_report_card(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn compile_step_state(Array[@export.CompileProgress], @export.CompilePhase) -> Bool?
 
 pub fn compile_submit_needed(Model, Model) -> Bool
 
@@ -270,6 +278,8 @@ pub fn first_handler_key(Array[@ir.Handler]) -> String
 pub fn fit_label(String, Double) -> String
 
 pub fn fit_scale(Double, Double, Double, Double) -> Double
+
+pub fn folder_url_of(String) -> String
 
 pub fn gate_pending(Model) -> Bool
 
@@ -369,6 +379,8 @@ pub fn local_explanation(Model) -> String
 
 pub fn log_line(Model, LogLevel, String) -> Model
 
+pub fn middle_ellipsis(String, Double) -> String
+
 pub fn pane_foot(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
 pub fn pane_head(String, String, Double, Array[@core.View[Msg]], tail? : String) -> @core.View[Msg]
@@ -383,7 +395,7 @@ pub fn pending_side_effects(Model) -> Int
 
 pub fn pill(String, @core.Color, Double) -> @core.View[Msg]
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (Result[@export.CompileReport, String]) -> Unit) -> Unit, provider_config? : ProviderConfig, compile_track_available? : Bool, immersive? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, provider_config? : ProviderConfig, compile_track_available? : Bool, immersive? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
 
 pub fn program_tree(Model) -> Array[TreeNode]
 
@@ -509,6 +521,8 @@ pub fn update_ide_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
 pub fn update_pure(Model, Msg) -> (Model, @core.Effect[Msg])
 
+pub fn update_with_launch_for_test(Model, Msg, @services.AppServices, (String, (Result[Unit, String]) -> Unit) -> Unit) -> (Model, @core.Effect[Msg])
+
 pub fn update_with_services(Model, Msg, @services.AppServices) -> (Model, @core.Effect[Msg])
 
 pub fn view(Model) -> @core.View[Msg]
@@ -554,6 +568,12 @@ pub(all) enum AiCardKind {
   CardSideEffect
   CardExplanation
   CardError
+}
+
+pub(all) enum ArtifactAction {
+  ArtifactCopy
+  ArtifactReveal
+  ArtifactLaunch
 }
 
 pub(all) struct AuditEntry {
@@ -730,6 +750,7 @@ pub(all) struct Model {
   compiled_run : CompiledRun?
   compile_report : @export.CompileReport?
   compile_busy : Bool
+  compile_progress : Array[@export.CompileProgress]
   compile_output_open : Bool
   command_palette_open : Bool
   command_palette_query : String
@@ -848,6 +869,11 @@ pub(all) enum Msg {
   CompileStopped
   CompileJump(Int)
   ToggleCompileOutput
+  CompileProgress(@export.CompileProgress)
+  CopyArtifactPath(String)
+  RevealArtifact(String)
+  RunArtifact(String)
+  ArtifactActionDone(ArtifactAction, @services.ServiceTaskResult[Unit])
   CommandPaletteOpen
   CommandPaletteClose
   CommandPaletteQuery(String)
@@ -1038,7 +1064,9 @@ pub(all) enum WorkSpace {
 }
 
 // Type aliases
-pub type CompileSubmit = (String, String, (Result[@export.CompileReport, String]) -> Unit) -> Unit
+pub type CompileSubmit = (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit
+
+pub type LaunchSubmit = (String, (Result[Unit, String]) -> Unit) -> Unit
 
 pub type ProviderSubmit = (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit
 

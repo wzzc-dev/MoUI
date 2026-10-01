@@ -10,6 +10,7 @@ import {
   "examples/moui_studio/app" @studio_app,
   "examples/moui_studio/services/provider_native" @provider,
   "examples/moui_studio/services/compile_native" @compile,
+  "examples/moui_studio/services/launch_native" @launch,
 }
 
 supported_targets = "native"

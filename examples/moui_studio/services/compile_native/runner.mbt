@@ -12,11 +12,17 @@
 ///   结果经回调回到 UI 线程（与 provider worker 同一模式）。
 
 ///|
+/// 进度回调：worker 在每步开始/结束各推一条（UI 线程经 emit 收到）。
+/// 默认空实现——单测与不需要进度的调用方不必传。
+pub type CompileProgressSink = (@export.CompileProgress) -> Unit
+
+///|
 /// 一次真编译任务：项目 JSON + 应用名 + 工作根目录（临时目录）。
 pub(all) struct CompileJob {
   project_json : String
   app_name : String
   work_root : String
+  on_progress : CompileProgressSink
   on_result : (Result[@export.CompileReport, String]) -> Unit
 }
 
@@ -65,10 +71,25 @@ pub async fn compile_worker_loop(owner : CompileOwner) -> Unit {
 ///|
 /// 执行一个编译任务；任何异常都转成结构化失败（不静默吞掉）。
 async fn run_compile_job(job : CompileJob) -> Unit {
-  let result = compile_project(job.project_json, job.app_name, job.work_root) catch {
+  let result = compile_project(
+    job.project_json,
+    job.app_name,
+    job.work_root,
+    on_progress=job.on_progress,
+  ) catch {
     err => Err("编译执行器错误：\{err}")
   }
   (job.on_result)(result)
+}
+
+///|
+/// 推送一条进度（开始/结束两态）。回调由 UI 线程注入的 emit 承担，本身不做 IO。
+fn report_progress(
+  on_progress : CompileProgressSink,
+  phase : @export.CompilePhase,
+  started : Bool,
+) -> Unit {
+  on_progress(@export.CompileProgress::{ phase, started, })
 }
 
 ///|
@@ -78,9 +99,11 @@ pub async fn compile_project(
   project_json : String,
   app_name : String,
   work_root : String,
+  on_progress? : CompileProgressSink = _progress => (),
 ) -> Result[@export.CompileReport, String] {
   let safe = @export.sanitize_name(app_name)
   let root = "\{work_root}/\{safe}"
+  report_progress(on_progress, @export.CompilePrepare, true)
   prepare_target_dir(root) catch {
     _ => return Err("无法准备工作目录 \{root}")
   }
@@ -92,24 +115,32 @@ pub async fn compile_project(
       _ => return Err("无法写入 \{path}")
     }
   }
-  compile_bundle_at(root)
+  report_progress(on_progress, @export.CompilePrepare, false)
+  compile_bundle_at(root, on_progress~)
 }
 
 ///|
 /// 在已落盘的 bundle 目录里执行工具链（可独立单测：注入一个坏源码即可
 /// 验证「moon check 失败 → 结构化诊断」）。
+///
+/// 每一步**开始与结束各推一条进度**：界面因此能显示「正在做第 N 步」并
+/// 把已完成的步点满。只推开始的话，最后一步永远停在「进行中」。
 pub async fn compile_bundle_at(
   root : String,
+  on_progress? : CompileProgressSink = _progress => (),
 ) -> Result[@export.CompileReport, String] {
   let moon = moon_bin()
   // 1) moon update：解析/锁定依赖（离线缓存命中时很快）
+  report_progress(on_progress, @export.CompileUpdate, true)
   let (update_code, update_output) = run_tool(moon, ["update"], root) catch {
     err => return Err("无法运行 moon update：\{err}")
   }
   if update_code != 0 {
     return Ok(failed_report("update", update_code, update_output, root, ""))
   }
+  report_progress(on_progress, @export.CompileUpdate, false)
   // 2) moon check --target native：编译诊断的第一现场
+  report_progress(on_progress, @export.CompileCheck, true)
   let (check_code, check_output) = run_tool(
     moon,
     ["check", "--target", "native"],
@@ -122,7 +153,9 @@ pub async fn compile_bundle_at(
       failed_report("native", check_code, check_output, root, update_output),
     )
   }
+  report_progress(on_progress, @export.CompileCheck, false)
   // 3) moon build --target wasm-gc：Web 产物真实存在
+  report_progress(on_progress, @export.CompileWasm, true)
   let (wasm_code, wasm_output) = run_tool(
     moon,
     ["build", "--target", "wasm-gc"],
@@ -135,20 +168,48 @@ pub async fn compile_bundle_at(
       failed_report("wasm-gc", wasm_code, wasm_output, root, update_output),
     )
   }
-  // 4) moon build ./native_smoke --target native：native 可执行产物
+  report_progress(on_progress, @export.CompileWasm, false)
+  // 4) moon build ./native_app --target native：**真窗口应用**可执行产物
+  //
+  // 这一步构建的是用户真正要运行的东西。旧版只建 native_smoke（无头存活
+  // 探针，打印标记就退出），产物列表把它当 native 产物交出去，于是「编译
+  // 出来的运行之后没有显示 GUI」。GUI 入口在 bundle 里与 Studio 自己的
+  // macos_skia 同构（Skia + macOS 窗口后端）。
+  report_progress(on_progress, @export.CompileNative, true)
   let (native_code, native_output) = run_tool(
     moon,
-    ["build", "./native_smoke", "--target", "native"],
+    ["build", "./native_app", "--target", "native"],
     root,
   ) catch {
-    err => return Err("无法运行 moon build (native)：\{err}")
+    err => return Err("无法运行 moon build (native GUI)：\{err}")
   }
   if native_code != 0 {
     return Ok(
       failed_report("native", native_code, native_output, root, update_output),
     )
   }
-  // 5) native 产物启动存活：跑一遍生成 handler，标记可判定
+  report_progress(on_progress, @export.CompileNative, false)
+  // 4b) moon build ./native_smoke --target native：无头存活探针（可判定）
+  report_progress(on_progress, @export.CompileSmoke, true)
+  let (smoke_build_code, smoke_build_output) = run_tool(
+    moon,
+    ["build", "./native_smoke", "--target", "native"],
+    root,
+  ) catch {
+    err => return Err("无法运行 moon build (native smoke)：\{err}")
+  }
+  if smoke_build_code != 0 {
+    return Ok(
+      failed_report(
+        "native", smoke_build_code, smoke_build_output, root, update_output,
+      ),
+    )
+  }
+  // 5) 无头探针跑一遍生成 handler：证明**产物真的能启动并执行事件**
+  //
+  // 为什么探针仍要跑：GUI 应用起来会阻塞在事件循环上，CI/编译轨没法用它
+  // 判定「产物是否可用」。探针与 GUI 共用同一份 `app` 包（同一份生成源码、
+  // 同一个执行面），所以探针跑通 = 生成源码与运行时确实被链接进产物。
   let smoke_exe = "\{root}/_build/native/debug/build/native_smoke/native_smoke.exe"
   let (smoke_code, smoke_output) = run_tool(smoke_exe, [], root) catch {
     err => return Err("无法启动 native 产物：\{err}")
@@ -158,18 +219,24 @@ pub async fn compile_bundle_at(
       failed_report("native", smoke_code, smoke_output, root, update_output),
     )
   }
-  Ok(@export.CompileReport::{
+  report_progress(on_progress, @export.CompileSmoke, false)
+  // 6) 收尾：收集产物 + 组装报告（也报进度——产物列表正是这一步的产物）
+  report_progress(on_progress, @export.CompileCollect, true)
+  let report = @export.CompileReport::{
     ok: true,
     exit_code: 0,
     target: "native",
     source_path: "\{root}/app/generated_handlers.mbt",
     output: build_output_summary(
-      update_output, check_output, wasm_output, native_output, smoke_output,
+      update_output, check_output, wasm_output, native_output, smoke_build_output,
+      smoke_output,
     ),
     diagnostics: @export.parse_moon_diagnostics(native_output),
     artifacts: collect_artifacts(root),
     work_root: root,
-  })
+  }
+  report_progress(on_progress, @export.CompileCollect, false)
+  Ok(report)
 }
 
 ///|
@@ -180,11 +247,13 @@ pub async fn compile_bundle_at(
 /// 不存在的产物不入列表——空文件比一条指向空气的路径诚实。
 pub fn collect_artifacts(root : String) -> Array[@export.CompileArtifact] {
   let items : Array[@export.CompileArtifact] = []
+  // 顺序 = 用户真正想要的顺序：**能双击运行的 GUI 应用**排第一，
+  // 其次 Web 产物（浏览器打开 index.html），再次生成源码。
   push_artifact(
     items,
-    "native-exe",
-    "native 可执行",
-    "\{root}/_build/native/debug/build/native_smoke/native_smoke.exe",
+    "native-app",
+    "native 应用（GUI）",
+    "\{root}/_build/native/debug/build/native_app/native_app.exe",
   )
   push_artifact(
     items,
@@ -197,6 +266,15 @@ pub fn collect_artifacts(root : String) -> Array[@export.CompileArtifact] {
     "source",
     "生成事件源码",
     "\{root}/app/generated_handlers.mbt",
+  )
+  // 无头自检探针排最后：它是**证据**（生成源码与运行时确实链接进产物），
+  // 不是给用户运行的应用。列在这里是为了「产物列表 = 这次编出的全部文件」
+  // 这句事实完整，标签里也写明它无窗口。
+  push_artifact(
+    items,
+    "native-smoke",
+    "启动自检（无窗口）",
+    "\{root}/_build/native/debug/build/native_smoke/native_smoke.exe",
   )
   items
 }
@@ -252,7 +330,7 @@ fn failed_report(
     exit_code,
     target,
     source_path: source_path_of(root, output),
-    output: build_output_summary(prefix_output, output, "", "", ""),
+    output: build_output_summary(prefix_output, output, "", "", "", ""),
     diagnostics: @export.parse_moon_diagnostics(output),
     // 失败也可能已经产出了部分产物（如 native 通过、wasm 失败）——
     // 如实列出比一律清空更有用，用户能看到「哪一步没过去」。
@@ -290,9 +368,10 @@ fn build_output_summary(
   third : String,
   fourth : String,
   fifth : String,
+  sixth : String,
 ) -> String {
   let buf = StringBuilder()
-  for chunk in [fifth, fourth, third, second, first] {
+  for chunk in [sixth, fifth, fourth, third, second, first] {
     if chunk.trim().to_owned() != "" {
       if !buf.is_empty() {
         buf.write_string("\n")

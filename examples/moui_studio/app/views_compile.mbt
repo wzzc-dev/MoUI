@@ -50,23 +50,7 @@ pub fn compile_report_card(
   t : @i18n.Translator,
 ) -> @moui.View[Msg] {
   if model.compile_busy {
-    return @views.card(
-      @views.row(
-        [
-          @views.badge(
-            theme=studio_theme(),
-            text(t, "app.compile.running"),
-            tone=@style.BadgeTone::Warning,
-            width=140.0,
-            height=24.0,
-          ),
-          @views.text(text(t, "app.track.compile_note"), role=Caption),
-        ],
-        spacing=8.0,
-      ),
-      width=600.0,
-      padding=10.0,
-    )
+    return compile_progress_card(model, t)
   }
   match model.compile_report {
     None => @views.text("")
@@ -143,10 +127,12 @@ pub fn compile_report_card(
       } else {
         rows.push(@views.text(text(t, "app.compile.open_hint"), role=Caption))
         for artifact in report.artifacts {
-          rows.push(artifact_row(artifact))
+          rows.push(artifact_row(artifact, t))
         }
       }
       if report.work_root != "" {
+        // 工作目录同样给完整读数（中间省略，与产物行同一把尺子）——它是
+        // 「接着去哪找」的第二个入口，截一半同样等于没给。
         rows.push(
           @views.row(
             [
@@ -155,9 +141,34 @@ pub fn compile_report_card(
                 role=Caption,
                 width=72.0,
               ),
-              @views.text(report.work_root, role=Mono, width=496.0),
+              @views.text(
+                middle_ellipsis(report.work_root, 480.0),
+                role=Mono,
+                width=480.0,
+                align=TextStart,
+              ),
+              ghost_icon_button(
+                Clipboard,
+                text(t, "app.compile.artifact.copy"),
+                false,
+                CopyArtifactPath(report.work_root),
+                28.0,
+                22.0,
+                13.0,
+                ide_elevated(),
+              ),
+              ghost_icon_button(
+                FolderOpen,
+                text(t, "app.compile.artifact.reveal"),
+                false,
+                RevealArtifact(report.work_root),
+                28.0,
+                22.0,
+                13.0,
+                ide_elevated(),
+              ),
             ],
-            spacing=8.0,
+            spacing=6.0,
             align=Center,
           ),
         )
@@ -224,34 +235,303 @@ pub fn compile_report_card(
 }
 
 ///|
-/// 单条产物行：类型徽标 + **绝对路径** + 字节数。
+/// 编译进度卡：忙态下代替报告卡（两个读数不同时在场）。
 ///
-/// 路径宽按整卡预算算（不是写死 340）：卡宽 600、内垫 10×2、
-/// 徽标 104 + 大小 88 + 两处间隙 16 ⇒ 路径拿 ~272。写死会把长路径截成
-/// 半句，而「产物在哪」正是这一段存在的唯一理由——截断等于白写。
-/// 路径用等宽 + TextStart：它是可复制的标识，不是居中标题。
-fn artifact_row(artifact : @export.CompileArtifact) -> @moui.View[Msg] {
-  let path_width = (600.0 - 20.0 - 104.0 - 88.0 - 16.0).max(120.0)
+/// 为什么要它：真编译要跑 `moon update/check/build ×2` + 产物自检，实测
+/// 十几秒。旧版忙态只显示一个静态「正在真编译…」徽标——用户读到的现象是
+/// 「点了编译之后什么都没发生（或者卡住了）」。这里把七个**真实步骤**逐格
+/// 画出来：已完成的点满、进行中的高亮、未开始的暗色。
+///
+/// 步骤列表来自 `@export.compile_phases()`（与 worker 推进度用同一张表），
+/// 因此界面永远不会出现「多画一格 / 少画一格」。
+fn compile_progress_card(
+  model : Model,
+  t : @i18n.Translator,
+) -> @moui.View[Msg] {
+  let (done, total) = compile_progress_counts(model.compile_progress)
+  let active = compile_active_phase(model.compile_progress)
+  let steps : Array[@moui.View[Msg]] = []
+  for phase in @export.compile_phases() {
+    steps.push(compile_step_row(phase, model.compile_progress, t))
+  }
+  // 当前读数：进行中显式点名（比只点亮一格更好读——用户能读到「正在做什么」）
+  let status = match active {
+    Some(phase) => text(t, "app.compile.phase.\{phase.tag()}")
+    None => text(t, "app.compile.running")
+  }
+  @views.card(
+    @views.column(
+      [
+        @views.row(
+          [
+            @views.badge(
+              theme=studio_theme(),
+              text_with(t, "app.compile.step", [
+                ("done", done.to_string()),
+                ("total", total.to_string()),
+              ]),
+              tone=@style.BadgeTone::Warning,
+              width=140.0,
+              height=24.0,
+            ),
+            @views.text(status, role=Subtitle),
+          ],
+          spacing=8.0,
+          align=Center,
+        ),
+        @views.column(steps, spacing=4.0),
+        @views.text(text(t, "app.track.compile_note"), role=Caption),
+      ],
+      spacing=8.0,
+    ),
+    width=600.0,
+    padding=10.0,
+  )
+}
+
+///|
+/// 进度里的一步：状态点（完成/进行中/未开始）+ 步骤名 + 状态字。
+fn compile_step_row(
+  phase : @export.CompilePhase,
+  progress : Array[@export.CompileProgress],
+  t : @i18n.Translator,
+) -> @moui.View[Msg] {
+  let (dot_color, label_color, state_text) = match
+    compile_step_state(progress, phase) {
+    Some(false) => (ide_success(), ide_text(), text(t, "app.compile.step_done"))
+    Some(true) => (ide_accent(), ide_text(), text(t, "app.compile.step_active"))
+    None => (ide_border(), ide_text_faint(), "")
+  }
   @views.row(
     [
-      @views.badge(
-        theme=studio_theme(),
-        artifact.label,
-        tone=@style.BadgeTone::Success,
-        width=104.0,
-        height=20.0,
+      @views.container(
+        @views.text("", width=1.0, height=1.0),
+        background=dot_color,
+        corner_radius=4.0,
+        width=8.0,
+        height=8.0,
+        padding=0.0,
       ),
-      @views.text(artifact.path, role=Mono, width=path_width, align=TextStart),
       @views.text(
-        byte_size_label(artifact.bytes),
-        role=Mono,
-        width=88.0,
+        text(t, "app.compile.phase.\{phase.tag()}"),
+        theme=studio_theme(),
+        width=380.0,
+        height=18.0,
+        align=TextStart,
+      ).foreground(label_color),
+      @views.text(
+        state_text,
+        theme=studio_theme(),
+        width=80.0,
+        height=18.0,
         align=TextEnd,
+      ).foreground(
+        if dot_color == ide_success() {
+          ide_success()
+        } else {
+          ide_accent()
+        },
       ),
     ],
     spacing=8.0,
     align=Center,
   )
+}
+
+///|
+/// 单条产物行：类型徽标 + **完整路径** + 字节数 + 动作。
+///
+/// 四个历史缺陷都在这一行里：
+/// 1. **路径显示不全**：core 的 `Text` 把声明宽度当**最小值**，实测宽于
+///    声明时盒子会长出去被父容器裁掉——于是 `/var/folders/…/moui-studio-`
+///    这样从中间硬切。修法是主动做**中间省略**（保头保尾，`…` 居中），
+///    让它在声明宽度内本来就放得下：首尾两段才是「哪个盘、哪个文件」的
+///    识别信息，中段（那串随机 TMPDIR）删掉最不伤读。
+/// 2. **没有复制入口**：路径写在界面里却选不中、复制不了，用户只能照着
+///    抄——一个字的错就找不到文件。给「复制路径」按钮。
+/// 3. **没有打开入口**：给「在文件夹中打开」（把产物所在目录交给系统
+///    文件管理器）。
+/// 4. **GUI 应用与无头探针分不清**：旧版把 `native_smoke`（打印标记就退出
+///    的无头探针）标成「native 可执行」，用户运行后没有任何窗口。现在
+///    GUI 应用用强调色徽标 + **运行产物**按钮（直接启动它），无头探针用
+///    中性徽标并写明「不开窗」。
+///
+/// 路径单独占一行（整卡宽），动作与字节数在下一行：路径本身常 80–110
+/// 字符，和徽章/按钮挤一行必然要截断——那正是问题 2 的成因。
+fn artifact_row(
+  artifact : @export.CompileArtifact,
+  t : @i18n.Translator,
+) -> @moui.View[Msg] {
+  // 卡宽 600 − 内垫 10×2 = 580 可用；路径整行吃满。
+  let path_width = 580.0
+  // GUI 应用 = 用户真正要跑的东西：强调色徽标 + 多一个「运行产物」。
+  let is_gui = artifact.kind == "native-app"
+  let badge_label = if is_gui {
+    text(t, "app.compile.artifact.gui")
+  } else if artifact.kind == "native-smoke" {
+    text(t, "app.compile.artifact.headless")
+  } else {
+    artifact.label
+  }
+  let badge_width = if is_gui || artifact.kind == "native-smoke" {
+    132.0
+  } else {
+    104.0
+  }
+  let actions : Array[@moui.View[Msg]] = []
+  if is_gui {
+    // 「运行产物」= **一键启动**：直接起进程开窗，不再要求用户先去文件夹里
+    // 自己双击。启动是脱离式的（见 services/launch_native）——进程 reparent
+    // 到系统 init，Studio 退出/被关掉都不会带走正在用的导出应用。
+    // 用**带文字的按钮**而不是图标：它是这一行唯一的主行动作，值得占宽度。
+    actions.push(
+      @views.button(
+        text(t, "app.compile.run_artifact"),
+        on_click=RunArtifact(artifact.path),
+        variant=Primary,
+        width=104.0,
+        height=22.0,
+      ),
+    )
+  }
+  actions.push(
+    ghost_icon_button(
+      Clipboard,
+      text(t, "app.compile.artifact.copy"),
+      false,
+      CopyArtifactPath(artifact.path),
+      28.0,
+      22.0,
+      13.0,
+      ide_elevated(),
+    ),
+  )
+  actions.push(
+    ghost_icon_button(
+      FolderOpen,
+      text(t, "app.compile.artifact.reveal"),
+      false,
+      RevealArtifact(artifact.path),
+      28.0,
+      22.0,
+      13.0,
+      ide_elevated(),
+    ),
+  )
+  @views.column(
+    [
+      @views.row(
+        [
+          @views.badge(
+            theme=studio_theme(),
+            badge_label,
+            tone=if is_gui {
+              @style.BadgeTone::Success
+            } else if artifact.kind == "native-smoke" {
+              @style.BadgeTone::Neutral
+            } else {
+              @style.BadgeTone::Success
+            },
+            width=badge_width,
+            height=20.0,
+          ),
+          @views.text(
+            middle_ellipsis(artifact.path, path_width - 8.0 - badge_width),
+            role=Mono,
+            width=path_width - 8.0 - badge_width,
+            height=20.0,
+            align=TextStart,
+          ),
+        ],
+        spacing=8.0,
+        align=Center,
+      ),
+      @views.row(
+        // 动作行：字节数靠左，动作靠右。数组直接拼装（`@views.row` 收
+        // 数组），这样「GUI 多一颗运行按钮」不必复制两套收尾代码。
+        {
+          let cells : Array[@moui.View[Msg]] = [
+            @views.text(
+              byte_size_label(artifact.bytes),
+              role=Mono,
+              width=72.0,
+              height=18.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
+            @views.spacer(min_length=4.0, weight=1.0),
+          ]
+          for action in actions {
+            cells.push(action)
+          }
+          cells
+        },
+        spacing=4.0,
+        align=Center,
+      ),
+    ],
+    spacing=2.0,
+  )
+}
+
+///|
+/// 中间省略：保头保尾，中段折叠成 `…`。
+///
+/// **为什么不是尾部省略**：产物路径的信息分布是「头（哪个卷）+ 尾（哪个
+/// 文件）」，中段是 TMPDIR 那一长串随机目录名。尾部省略会把最关键的
+/// 文件名切掉，留下最没信息量的随机串——正好读反。
+///
+/// 宽度口径走 `text_estimate_width`（ASCII 7.9 / 全角 13.0），与壳里
+/// 其他「按文字实测算宽」的地方同一把尺子。
+pub fn middle_ellipsis(label : String, max_width : Double) -> String {
+  if text_estimate_width(label) <= max_width {
+    return label
+  }
+  let chars : Array[Char] = []
+  for c in label {
+    chars.push(c)
+  }
+  let ellipsis_cost = text_estimate_width("…")
+  // 预算连省略号都放不下时输出空串：这是唯一不撒谎的读数（「这里什么都
+  // 显示不了」比硬塞一个必然被裁的串诚实）。
+  if max_width < ellipsis_cost {
+    return ""
+  }
+  let budget = max_width - ellipsis_cost
+  // 两侧**交替**取字符，因此 head 与 tail 的宽度天然接近——避免预算偏紧
+  // 时一侧把另一侧挤成 0（那样剩下的是纯前缀，又退化成尾部省略的反面）。
+  let mut head = 0
+  let mut tail = 0
+  let mut used = 0.0
+  let mut take_head = true
+  while head + tail < chars.length() {
+    let index = if take_head { head } else { chars.length() - 1 - tail }
+    let cost = if chars[index].to_int() < 0x80 { 7.9 } else { 13.0 }
+    if used + cost > budget {
+      break
+    }
+    used = used + cost
+    if take_head {
+      head = head + 1
+    } else {
+      tail = tail + 1
+    }
+    take_head = !take_head
+  }
+  // 头段正序 + `…` + 尾段正序（尾段从 `chars.length() - tail` 起**顺序**
+  // 写出：逐字符从末尾倒着追加会把文件名写成镜像串）。
+  let buf = StringBuilder()
+  let mut i = 0
+  while i < head {
+    buf.write_char(chars[i])
+    i = i + 1
+  }
+  buf.write_string("…")
+  let mut j = chars.length() - tail
+  while j < chars.length() {
+    buf.write_char(chars[j])
+    j = j + 1
+  }
+  buf.to_string()
 }
 
 ///|

@@ -479,6 +479,8 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                 ),
                 compile_report: None,
                 compile_busy: true,
+                // 进度清空重来：上一轮的步骤点不能残留在新一转里。
+                compile_progress: [],
                 run_track: Compile,
                 mode: ModeRun,
                 notice: text(t, "app.compile.running"),
@@ -526,6 +528,8 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             ..audited,
             compile_report: Some(report),
             compile_busy: false,
+            // 报告接手显示：进度条退场（两个读数同时在场会互相打架）。
+            compile_progress: [],
             notice: if report.ok {
               text(t, "app.compile.ok")
             } else {
@@ -553,6 +557,7 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
               work_root: "",
             }),
             compile_busy: false,
+            compile_progress: [],
             notice: text(translator(model), "app.compile.failed"),
           },
           @moui.Effect::none(),
@@ -562,7 +567,12 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       // 停止真编译：只清当前报告/忙态，不切轨、不自动回退解释轨。
       Some(
         (
-          { ..model, compile_report: None, compile_busy: false, },
+          {
+            ..model,
+            compile_report: None,
+            compile_busy: false,
+            compile_progress: [],
+          },
           @moui.Effect::none(),
         ),
       )
@@ -577,6 +587,27 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
+    // 进度累加：同一步的 started 会被后来的 finished 覆盖掉（见
+    // `compile_step_states` 的归并规则），所以这里只做无脑追加——
+    // 归并是纯函数，视图与测试读同一份结果。
+    CompileProgress(progress) =>
+      Some(
+        (
+          {
+            ..model,
+            compile_progress: append_progress(model.compile_progress, progress),
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    // 侧路动作（复制路径 / 在文件夹中打开 / 一键启动）落在 **service 流**
+    // （`update_with_services`）：状态机不碰剪贴板、文件管理器与进程。
+    // 这里显式返回 None 让链式分发把它交出去——自己 handle 再 send 回
+    // 同一条消息会变成死循环。
+    CopyArtifactPath(_)
+    | RevealArtifact(_)
+    | RunArtifact(_)
+    | ArtifactActionDone(_, _) => None
     RunStart =>
       if current_track(model) is Compile {
         Some((start_compiled_run(model), @moui.Effect::none()))
@@ -989,4 +1020,72 @@ pub fn compile_submit_needed(before : Model, after : Model) -> Bool {
   after.code_error == "" &&
   !before.compile_busy &&
   after.compile_busy
+}
+
+///|
+/// 进度追加：同一步的最后一条状态生效（started=false 覆盖 started=true）。
+///
+/// 为什么不在 `CompileProgress` 处理时原地覆盖：worker 的两条消息可能
+/// 在同一帧里到达，视图可能在中间态渲染一次；保留追加语义让「归并」是
+/// 纯函数，视图/测试/审计读同一份结果，不必各自实现一遍覆盖规则。
+fn append_progress(
+  existing : Array[@export.CompileProgress],
+  progress : @export.CompileProgress,
+) -> Array[@export.CompileProgress] {
+  let next : Array[@export.CompileProgress] = []
+  for item in existing {
+    next.push(item)
+  }
+  next.push(progress)
+  next
+}
+
+///|
+/// 单步状态：`None` 未开始 / `Some(true)` 进行中 / `Some(false)` 已完成。
+///
+/// 编译进度条的唯一读取口径——视图与测试都走这里，避免「两处各算一份」
+/// 让进度格与真实执行错位。
+pub fn compile_step_state(
+  progress : Array[@export.CompileProgress],
+  phase : @export.CompilePhase,
+) -> Bool? {
+  let mut state : Bool? = None
+  for item in progress {
+    if item.phase.tag() == phase.tag() {
+      // 后到的覆盖先到的：finished(false) 最终胜出
+      state = Some(item.started)
+    }
+  }
+  state
+}
+
+///|
+/// 已**完成**的步数（进度条点满的格数）与总步数。
+pub fn compile_progress_counts(
+  progress : Array[@export.CompileProgress],
+) -> (Int, Int) {
+  let mut done = 0
+  for phase in @export.compile_phases() {
+    match compile_step_state(progress, phase) {
+      Some(false) => done = done + 1
+      _ => ()
+    }
+  }
+  (done, @export.compile_phase_total())
+}
+
+///|
+/// 当前正在执行的步（最后一条 started=true 且尚未 finished 的步）。
+/// 全部未开始或全部结束时返回 None。
+pub fn compile_active_phase(
+  progress : Array[@export.CompileProgress],
+) -> @export.CompilePhase? {
+  let mut active : @export.CompilePhase? = None
+  for phase in @export.compile_phases() {
+    match compile_step_state(progress, phase) {
+      Some(true) => active = Some(phase)
+      _ => ()
+    }
+  }
+  active
 }

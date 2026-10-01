@@ -19,6 +19,15 @@ pub(all) enum ProviderMode {
 }
 
 ///|
+/// 产物旁路动作的种类：决定成功 toast 的文案。
+/// 三个动作共用一条回执消息（`ArtifactActionDone`），来源必须显式带上。
+pub(all) enum ArtifactAction {
+  ArtifactCopy
+  ArtifactReveal
+  ArtifactLaunch
+}
+
+///|
 /// 双轨：解释轨（沙箱指令机）与编译轨（真编译闭包执行面）。
 pub(all) enum RunTrack {
   Interpret
@@ -370,6 +379,9 @@ pub(all) struct Model {
   compile_report : @export.CompileReport?
   // 真编译进行中（执行器已入队/运行）：防重复排队，视图显示加载态
   compile_busy : Bool
+  // 真编译进度（每一步开始/结束各推一条）：空 = 尚未开始或已收尾。
+  // 只 busy 期间有内容——完成/失败后进度条让位给报告，避免两个读数打架。
+  compile_progress : Array[@export.CompileProgress]
   // 工具链原始输出展开态（默认折叠：诊断优先，日志按需看）
   compile_output_open : Bool
   // 命令面板（技术风 IDE 的键盘优先入口）：显隐 + 过滤查询
@@ -533,6 +545,18 @@ pub(all) enum Msg {
   CompileStopped
   CompileJump(Int)
   ToggleCompileOutput
+  /// worker 推来的一条编译进度（步开始/步结束）
+  CompileProgress(@export.CompileProgress)
+  /// 复制某条产物的绝对路径到剪贴板
+  CopyArtifactPath(String)
+  /// 在系统文件管理器里定位某条产物（macOS=Finder）
+  RevealArtifact(String)
+  /// **一键启动**某条产物（GUI 应用）：脱离 Studio 生命周期起进程
+  RunArtifact(String)
+  /// 旁路动作的结果回来了。`what` 标明是哪一种（复制/打开/启动）——
+  /// 成功文案各不相同，共用一个消息就必须带上来源，否则三种成功
+  /// 只能显示同一句话（或再拆三个消息，那是同一件事的三份拷贝）。
+  ArtifactActionDone(ArtifactAction, @services.ServiceTaskResult[Unit])
   CommandPaletteOpen
   CommandPaletteClose
   CommandPaletteQuery(String)
@@ -699,6 +723,7 @@ pub fn initial_model(
     compiled_run: None,
     compile_report: None,
     compile_busy: false,
+    compile_progress: [],
     compile_output_open: false,
     command_palette_open: false,
     command_palette_query: "",

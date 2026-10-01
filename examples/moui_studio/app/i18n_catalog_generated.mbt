@@ -266,6 +266,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.jump",
         GeneratedI18nMessage::Text("Tap to jump to the block"),
       ),
+      ("app.compile.step", GeneratedI18nMessage::Text("Step {done} of {total}")),
       ("app.crumb.visual", GeneratedI18nMessage::Text("Visual workspace")),
       (
         "app.design.empty",
@@ -384,6 +385,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Line ↔ block highlights work both ways · hover a code line or a rail block",
         ),
       ),
+      ("app.compile.cancel", GeneratedI18nMessage::Text("Stop build")),
       ("app.compile.failed", GeneratedI18nMessage::Text("Compile failed")),
       ("app.compile.output", GeneratedI18nMessage::Text("Toolchain output")),
       ("app.compile.target", GeneratedI18nMessage::Text("Target")),
@@ -487,6 +489,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.ws.code",
         GeneratedI18nMessage::Text("Switch to code workspace"),
       ),
+      ("app.compile.elapsed", GeneratedI18nMessage::Text("{seconds}s elapsed")),
       (
         "app.compile.running",
         GeneratedI18nMessage::Text("Compiling for real..."),
@@ -579,6 +582,17 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Switch to empty stage"),
       ),
       (
+        "app.compile.launched",
+        GeneratedI18nMessage::Text(
+          "Artifact launched (a window should be open)",
+        ),
+      ),
+      ("app.compile.progress", GeneratedI18nMessage::Text("Build progress")),
+      (
+        "app.compile.revealed",
+        GeneratedI18nMessage::Text("Revealed in the file manager"),
+      ),
+      (
         "app.ctx.actions.none",
         GeneratedI18nMessage::Text("No control or handler selected"),
       ),
@@ -643,12 +657,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.compile.artifacts", GeneratedI18nMessage::Text("Artifacts")),
       ("app.compile.exit_code", GeneratedI18nMessage::Text("Exit code")),
+      ("app.compile.launching", GeneratedI18nMessage::Text("Launching…")),
       (
         "app.compile.open_hint",
         GeneratedI18nMessage::Text(
-          "Artifacts are real files on disk; run them in a terminal or copy the path.",
+          "Artifacts are real files: double-click the GUI app, or open index.html for the Web build.",
         ),
       ),
+      ("app.compile.step_done", GeneratedI18nMessage::Text("done")),
       ("app.compile.work_root", GeneratedI18nMessage::Text("Work root")),
       ("app.ctx.actions.ready", GeneratedI18nMessage::Text("ready")),
       ("app.ctx.state.running", GeneratedI18nMessage::Text("Running")),
@@ -704,6 +720,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.pane.split",
         GeneratedI18nMessage::Text("Reset pane split ratio"),
+      ),
+      (
+        "app.compile.phase.wasm",
+        GeneratedI18nMessage::Text("Building Web artifact"),
       ),
       ("app.ctx.actions.create", GeneratedI18nMessage::Text("create")),
       ("app.inspector.position", GeneratedI18nMessage::Text("Position")),
@@ -788,6 +808,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.diagnostics",
         GeneratedI18nMessage::Text("Compile diagnostics"),
       ),
+      (
+        "app.compile.launch_hint",
+        GeneratedI18nMessage::Text(
+          "Artifacts are real files on disk: click Run artifact to open the window directly, or reveal it in the folder and double-click.",
+        ),
+      ),
+      (
+        "app.compile.path_copied",
+        GeneratedI18nMessage::Text("Path copied to clipboard"),
+      ),
+      ("app.compile.phase.check", GeneratedI18nMessage::Text("Type checking")),
+      (
+        "app.compile.phase.smoke",
+        GeneratedI18nMessage::Text("Smoke-running the artifact"),
+      ),
+      ("app.compile.step_active", GeneratedI18nMessage::Text("running")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("Duplicate")),
       ("app.recent.action.align", GeneratedI18nMessage::Text("Aligned control")),
       ("app.recent.action.items", GeneratedI18nMessage::Text("Changed items")),
@@ -828,6 +864,16 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.right.toggle",
         GeneratedI18nMessage::Text("Toggle properties panel"),
       ),
+      ("app.compile.artifact.gui", GeneratedI18nMessage::Text("GUI app")),
+      (
+        "app.compile.phase.native",
+        GeneratedI18nMessage::Text("Building native artifact"),
+      ),
+      (
+        "app.compile.phase.update",
+        GeneratedI18nMessage::Text("Resolving dependencies"),
+      ),
+      ("app.compile.run_artifact", GeneratedI18nMessage::Text("Run artifact")),
       (
         "app.recent.action.delete",
         GeneratedI18nMessage::Text("Deleted control"),
@@ -871,6 +917,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Switch to compile track"),
       ),
       ("app.compile.artifact.copy", GeneratedI18nMessage::Text("Copy path")),
+      (
+        "app.compile.phase.collect",
+        GeneratedI18nMessage::Text("Collecting artifacts"),
+      ),
+      (
+        "app.compile.phase.prepare",
+        GeneratedI18nMessage::Text("Preparing workspace"),
+      ),
       (
         "app.log.proposal_accepted",
         GeneratedI18nMessage::Text("Proposal accepted · {count} changes"),
@@ -940,6 +994,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Switch to interpretation track"),
       ),
       (
+        "app.compile.artifact.reveal",
+        GeneratedI18nMessage::Text("Reveal in folder"),
+      ),
+      (
         "app.recent.action.duplicate",
         GeneratedI18nMessage::Text("Duplicated control"),
       ),
@@ -973,6 +1031,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.audit.settle_all",
         GeneratedI18nMessage::Text("Confirm all side effects"),
       ),
+      ("app.compile.reveal_directory", GeneratedI18nMessage::Text("Folder")),
       ("app.settings.group.workspace", GeneratedI18nMessage::Text("Workspace")),
       (
         "app.status.proposal_accepted",
@@ -991,6 +1050,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Unknown handler: {name}"),
       ),
       ("app.blocks.cat.block.variable", GeneratedI18nMessage::Text("Variables")),
+      (
+        "app.compile.artifact.headless",
+        GeneratedI18nMessage::Text("Headless self-check (no window)"),
+      ),
       (
         "err.proposal_bad_control_kind",
         GeneratedI18nMessage::Text("Unknown control kind: {kind}"),
@@ -1267,6 +1330,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.command.lang", GeneratedI18nMessage::Text("切换界面语言")),
       ("app.command.open", GeneratedI18nMessage::Text("命令面板")),
       ("app.compile.jump", GeneratedI18nMessage::Text("点击跳转到积木")),
+      (
+        "app.compile.step",
+        GeneratedI18nMessage::Text("第 {done} / {total} 步"),
+      ),
       ("app.crumb.visual", GeneratedI18nMessage::Text("可视化工作区")),
       (
         "app.design.empty",
@@ -1373,6 +1440,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "行号 ↔ 积木块 双向高亮 · 悬停代码行或右缘色块试试",
         ),
       ),
+      ("app.compile.cancel", GeneratedI18nMessage::Text("停止编译")),
       ("app.compile.failed", GeneratedI18nMessage::Text("真编译失败")),
       ("app.compile.output", GeneratedI18nMessage::Text("工具链输出")),
       ("app.compile.target", GeneratedI18nMessage::Text("目标")),
@@ -1466,6 +1534,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.ws.code",
         GeneratedI18nMessage::Text("切到代码工作区"),
       ),
+      (
+        "app.compile.elapsed",
+        GeneratedI18nMessage::Text("已用时 {seconds} 秒"),
+      ),
       ("app.compile.running", GeneratedI18nMessage::Text("正在真编译…")),
       ("app.ctx.state.clean", GeneratedI18nMessage::Text("与磁盘一致")),
       ("app.ctx.state.dirty", GeneratedI18nMessage::Text("有未应用修改")),
@@ -1549,6 +1621,15 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.command.settings", GeneratedI18nMessage::Text("打开设置")),
       ("app.command.ws.empty", GeneratedI18nMessage::Text("切到空舞台")),
       (
+        "app.compile.launched",
+        GeneratedI18nMessage::Text("已启动产物（窗口应已打开）"),
+      ),
+      ("app.compile.progress", GeneratedI18nMessage::Text("编译进度")),
+      (
+        "app.compile.revealed",
+        GeneratedI18nMessage::Text("已在文件夹中打开"),
+      ),
+      (
         "app.ctx.actions.none",
         GeneratedI18nMessage::Text("未选中控件或子程序"),
       ),
@@ -1613,12 +1694,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.compile.artifacts", GeneratedI18nMessage::Text("产物")),
       ("app.compile.exit_code", GeneratedI18nMessage::Text("退出码")),
+      ("app.compile.launching", GeneratedI18nMessage::Text("正在启动…")),
       (
         "app.compile.open_hint",
         GeneratedI18nMessage::Text(
-          "产物真实落在磁盘上，可直接在终端运行或复制。",
+          "产物真实落在磁盘上：GUI 应用可直接双击运行，Web 产物用浏览器打开 index.html。",
         ),
       ),
+      ("app.compile.step_done", GeneratedI18nMessage::Text("完成")),
       ("app.compile.work_root", GeneratedI18nMessage::Text("工作目录")),
       ("app.ctx.actions.ready", GeneratedI18nMessage::Text("已建")),
       ("app.ctx.state.running", GeneratedI18nMessage::Text("运行中")),
@@ -1671,6 +1754,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.pane.split",
         GeneratedI18nMessage::Text("重置窗格分割比例"),
+      ),
+      (
+        "app.compile.phase.wasm",
+        GeneratedI18nMessage::Text("构建 Web 产物"),
       ),
       ("app.ctx.actions.create", GeneratedI18nMessage::Text("新建")),
       ("app.inspector.position", GeneratedI18nMessage::Text("位置")),
@@ -1752,6 +1839,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.compile.diagnostics", GeneratedI18nMessage::Text("编译诊断")),
+      (
+        "app.compile.launch_hint",
+        GeneratedI18nMessage::Text(
+          "产物真实落在磁盘上：点「运行产物」直接开窗，或用「在文件夹中打开」定位后双击。",
+        ),
+      ),
+      (
+        "app.compile.path_copied",
+        GeneratedI18nMessage::Text("路径已复制到剪贴板"),
+      ),
+      ("app.compile.phase.check", GeneratedI18nMessage::Text("类型检查")),
+      (
+        "app.compile.phase.smoke",
+        GeneratedI18nMessage::Text("启动产物自检"),
+      ),
+      ("app.compile.step_active", GeneratedI18nMessage::Text("进行中")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
       ("app.recent.action.align", GeneratedI18nMessage::Text("对齐控件")),
       ("app.recent.action.items", GeneratedI18nMessage::Text("改列表项")),
@@ -1792,6 +1895,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.right.toggle",
         GeneratedI18nMessage::Text("显示 / 隐藏属性面板"),
       ),
+      ("app.compile.artifact.gui", GeneratedI18nMessage::Text("GUI 应用")),
+      (
+        "app.compile.phase.native",
+        GeneratedI18nMessage::Text("构建 native 产物"),
+      ),
+      ("app.compile.phase.update", GeneratedI18nMessage::Text("解析依赖")),
+      ("app.compile.run_artifact", GeneratedI18nMessage::Text("运行产物")),
       ("app.recent.action.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.recent.action.insert", GeneratedI18nMessage::Text("插入控件")),
       ("app.recent.action.rename", GeneratedI18nMessage::Text("重命名")),
@@ -1824,6 +1934,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("切到编译轨"),
       ),
       ("app.compile.artifact.copy", GeneratedI18nMessage::Text("复制路径")),
+      ("app.compile.phase.collect", GeneratedI18nMessage::Text("收集产物")),
+      (
+        "app.compile.phase.prepare",
+        GeneratedI18nMessage::Text("准备工作目录"),
+      ),
       (
         "app.log.proposal_accepted",
         GeneratedI18nMessage::Text("提案已采纳 · {count} 处变更"),
@@ -1897,6 +2012,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("切到解释轨"),
       ),
       (
+        "app.compile.artifact.reveal",
+        GeneratedI18nMessage::Text("在文件夹中打开"),
+      ),
+      (
         "app.recent.action.duplicate",
         GeneratedI18nMessage::Text("复制控件"),
       ),
@@ -1933,6 +2052,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.audit.settle_all",
         GeneratedI18nMessage::Text("确认全部副作用"),
       ),
+      (
+        "app.compile.reveal_directory",
+        GeneratedI18nMessage::Text("所在目录"),
+      ),
       ("app.settings.group.workspace", GeneratedI18nMessage::Text("工作区")),
       (
         "app.status.proposal_accepted",
@@ -1951,6 +2074,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("未知子程序：{name}"),
       ),
       ("app.blocks.cat.block.variable", GeneratedI18nMessage::Text("变量")),
+      (
+        "app.compile.artifact.headless",
+        GeneratedI18nMessage::Text("无头自检（不开窗）"),
+      ),
       (
         "err.proposal_bad_control_kind",
         GeneratedI18nMessage::Text("未知控件类型：{kind}"),

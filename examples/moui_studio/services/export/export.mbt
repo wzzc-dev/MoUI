@@ -59,7 +59,15 @@ pub fn export_bundle(
   files.push(("\{safe}/web_wasm/main.mbt", web_main()))
   files.push(("\{safe}/web_wasm/abi.mbt", abi_mbt()))
   files.push(("\{safe}/web_wasm/index.html", web_index_html(safe)))
-  // native 启动存活烟测：workspace 外构建可执行包并真跑一遍生成 handler。
+  // native **GUI** 入口：与 Studio 自己的 macos_skia 同一套组合根
+  // （Skia 渲染 + macOS 窗口后端），构建出来的是一个真窗口应用。
+  //
+  // 这是导出产物里唯一「双击即见界面」的东西。旧 bundle 只有 native_smoke
+  // ——那是个**无头存活探针**（打印标记就退出），编译轨把它当 native 产物
+  // 交给用户，于是「编译出来的运行之后没有显示 GUI」（用户实际现象）。
+  files.push(("\{safe}/native_app/moon.pkg", native_app_pkg(safe)))
+  files.push(("\{safe}/native_app/main.mbt", native_app_main()))
+  // native 启动存活烟测：无头、可在 CI 判定；**不是**给用户运行的应用。
   files.push(("\{safe}/native_smoke/moon.pkg", native_smoke_pkg(safe)))
   files.push(("\{safe}/native_smoke/main.mbt", native_smoke_main()))
   files.push(("\{safe}/README.md", readme(safe)))
@@ -91,9 +99,20 @@ pub fn sanitize_name(name : String) -> String {
 }
 
 ///|
-/// 导出项目的 moon.mod（版本与 Studio 发布口径一致，锁定运行时闭包）。
+/// 导出项目的 moon.mod：**与 Studio 自己的 moon.mod 同一组版本**。
+///
+/// 为什么必须同版本：bundle 里所有代码（内核快照、生成源码、GUI 组合根）
+/// 都从 Studio 的 workspace 里拷出来，只有依赖是去注册表拉的。两边版本一
+/// 错开就会出现「Studio 里编得过、导出项目编不过」——实测导出 pin 在
+/// `moui@0.1.12`（旧线）时，那一版自己的
+/// `backend/common/services/native/filesystem_services.mbt` 在新工具链下就
+/// 过不了类型检查（`@fs.read_dir` 现在返回 `ArrayView`），于是**整个 native
+/// GUI 构建失败**。0.2.0 线才是与 Studio 同步的那条。
+///
+/// 版本号在本仓是**两份事实**（Studio moon.mod + 这里），
+/// `export_test` 的同源断言保证它们不会悄悄漂开。
 pub fn moon_mod(name : String) -> String {
-  "name = \"\{name}\"\n\nversion = \"0.1.0\"\n\npreferred_target = \"native\"\n\nimport {\n  \"wzzc-dev/moui@0.1.12\",\n  \"wzzc-dev/window@0.5.4-0.1.7\",\n  \"wzzc-dev/moui_skia_renderer@0.1.11\",\n  \"wzzc-dev/moui_web_renderer@0.1.10\",\n  \"moonbitlang/async@0.22.4\",\n  \"moonbitlang/x@0.5.5\",\n}\n"
+  "name = \"\{name}\"\n\nversion = \"0.1.0\"\n\npreferred_target = \"native\"\n\nimport {\n  \"wzzc-dev/moui@0.2.0\",\n  \"wzzc-dev/window@0.5.4-0.2.0\",\n  \"wzzc-dev/moui_skia_renderer@0.2.0\",\n  \"wzzc-dev/moui_web_renderer@0.2.0\",\n  \"moonbitlang/async@0.22.4\",\n  \"moonbitlang/x@0.5.5\",\n}\n"
 }
 
 ///|
@@ -359,12 +378,36 @@ pub fn web_index_html(name : String) -> String {
 
 ///|
 pub fn readme(name : String) -> String {
-  "# \{name}\n\n由 MoUI Studio 导出的可运行 MoUI 应用。\n\n## 运行\n\n```sh\n# Web（wasm-gc）\nmoon build \{name}/web_wasm --target wasm-gc\n\n# 以项目根为静态服务器根目录\npython3 -m http.server 8792\n# 浏览器打开 /\{name}/web_wasm/index.html\n\n# native（Skia 组合根可编译）\nmoon check \{name}/app --target native\n```\n\n## 说明\n\n本应用**可直接运行**，且走的是**编译轨**：项目 IR 在导出时被编译成\n`app/generated_handlers.mbt`（可由 MoUI Studio 的毕业通道预览逐字节查看），\n由 `compiled_runtime/runtime.mbt` 执行面直接执行——bundle 里没有指令流解释器。\n领域内核（`domain/ir`、`domain/studio_lang`、`domain/codec` 共 11 个 .mbt）与\nMoUI Studio 逐字节同源，两轨审计文本与运行语义可比。\n\n- 打开即加载项目并校验（非法项目会原样阻止并说明原因）；\n- 点击按钮 / 改变输入 / 选择列表项触发对应事件子程序，编译产物直接执行到终止态；\n- 跑到 `提交数据`/`询问` 闸门会**暂停等待人工确认**（确认/拒绝是真实按钮，确认前零真实外发）；\n- 底部审计日志逐步留痕，`message_box` 消息集中展示。\n\n离线即可完整跑通。可视化编辑、积木编排、AI 生成等创作能力请使用 MoUI Studio。\n"
+  "# \{name}\n\n由 MoUI Studio 导出的可运行 MoUI 应用。\n\n## 运行\n\n### native 桌面应用（GUI）\n\n```sh\nmoon build \{name}/native_app --target native\n# 产物：_build/native/debug/build/native_app/native_app.exe\n# 直接双击 / 在终端运行它即可开窗\n./_build/native/debug/build/native_app/native_app.exe\n```\n\n### Web（wasm-gc）\n\n```sh\nmoon build \{name}/web_wasm --target wasm-gc\n# 以项目根为静态服务器根目录\npython3 -m http.server 8792\n# 浏览器打开 /\{name}/web_wasm/index.html\n```\n\n> `native_smoke` 是**无头启动自检**（打印标记就退出，不开窗），用于 CI 判定\n> 「生成源码与运行时确实被链接进产物」。要看界面请运行 `native_app`。\n\n## 说明\n\n本应用**可直接运行**，且走的是**编译轨**：项目 IR 在导出时被编译成\n`app/generated_handlers.mbt`（可由 MoUI Studio 的毕业通道预览逐字节查看），\n由 `compiled_runtime/runtime.mbt` 执行面直接执行——bundle 里没有指令流解释器。\n领域内核（`domain/ir`、`domain/studio_lang`、`domain/codec` 共 11 个 .mbt）与\nMoUI Studio 逐字节同源，两轨审计文本与运行语义可比。\n\n- 打开即加载项目并校验（非法项目会原样阻止并说明原因）；\n- 点击按钮 / 改变输入 / 选择列表项触发对应事件子程序，编译产物直接执行到终止态；\n- 跑到 `提交数据`/`询问` 闸门会**暂停等待人工确认**（确认/拒绝是真实按钮，确认前零真实外发）；\n- 底部审计日志逐步留痕，`message_box` 消息集中展示。\n\n离线即可完整跑通。可视化编辑、积木编排、AI 生成等创作能力请使用 MoUI Studio。\n"
+}
+
+///|
+/// native **GUI** 入口包：真窗口应用（Skia 渲染 + macOS 窗口后端）。
+///
+/// 依赖面与 `examples/*/macos_skia` 一致：`moui/backend/macos` 提供 AppKit
+/// 窗口，`moui_skia_renderer` 提供像素，`moui/runtime` 提供 TEA 泵；三者都
+/// 是 bundle `moon.mod` 已锁定的发布模块，不需要任何 Studio 侧代码。
+pub fn native_app_pkg(name : String) -> String {
+  "import {\n  \"wzzc-dev/moui/backend/macos\",\n  \"wzzc-dev/moui_skia_renderer\" @render_skia,\n  \"wzzc-dev/moui/runtime\",\n  \"\{name}/app\" @app,\n}\n\nsupported_targets = \"native\"\n\npkgtype(kind: \"executable\")\n\noptions(\n  targets: { \"main.mbt\": [ \"native\" ] },\n)\n"
+}
+
+///|
+/// native GUI 组合根：与 `examples/moui_studio/macos_skia/main.mbt` 同构
+/// （同一后端、同一渲染器、同一 `run_app` 协议），只是标题与尺寸取自项目。
+///
+/// `run()`（同步事件循环）而非 `run_async_pump()`：导出应用没有 provider /
+/// 编译 worker 这类后台任务，同步泵就是最短路径。
+pub fn native_app_main() -> String {
+  "///|\n/// 导出的 MoUI 应用（native GUI 入口）。\n///\n/// 事件执行走**编译轨**：`app/generated_handlers.mbt` 由 MoUI Studio 从项目\n/// IR 生成、真正参与本次 `moon build`，由 `@compiled_runtime` 执行面直接执行\n/// （bundle 里没有指令流解释器）。窗口、渲染、事件泵全部复用已发布模块，\n/// 本文件只做接线。\nfn main {\n  let title = @app.window_title()\n  let (width, height) = @app.window_size()\n  @runtime.run_app(\n    title,\n    @runtime.new_program_with_dimensions(\n      program=@app.program(),\n      width~,\n      height~,\n    ),\n  )\n  .render_all(@render_skia.from_env(platform=MacOS))\n  .backend(@macos.entry())\n  .run()\n}\n"
 }
 
 ///|
 /// native 启动烟测包：只依赖 bundle 的 app（生成源码分派）+ 编译轨运行时，
 /// 不依赖任何 renderer/窗口服务；`main` 真跑全部生成 handler 后打印标记退出 0。
+///
+/// **这是无头探针，不是给用户运行的应用**：它开不了窗口（没有渲染器/后端），
+/// 打印完标记就退出。编译轨的产物列表里它是「启动自检」，GUI 产物是
+/// `native_app`。
 pub fn native_smoke_pkg(name : String) -> String {
   "import {\n  \"\{name}/app\" @app,\n  \"\{name}/domain/codec\",\n  \"\{name}/domain/ir\",\n  \"\{name}/compiled_runtime\",\n  \"moonbitlang/x/sys\",\n}\n\nsupported_targets = \"native\"\n\npkgtype(kind: \"executable\")\n\noptions(\n  targets: { },\n)\n"
 }
@@ -376,5 +419,5 @@ pub fn native_smoke_main() -> String {
 
 ///|
 pub fn deps_txt() -> String {
-  "wzzc-dev/moui@0.1.12\nwzzc-dev/moui_web_renderer@0.1.10\nwzzc-dev/moui_skia_renderer@0.1.11\n"
+  "wzzc-dev/moui@0.2.0\nwzzc-dev/moui_web_renderer@0.2.0\nwzzc-dev/moui_skia_renderer@0.2.0\n"
 }

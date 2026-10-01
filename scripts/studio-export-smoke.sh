@@ -61,7 +61,20 @@ moon build --target wasm-gc
 WASM_ARTIFACT="_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm"
 [ -f "$WASM_ARTIFACT" ] || { echo "wasm-gc artifact missing: $WASM_ARTIFACT"; exit 1; }
 
-# 2) native：handlers 生成源码必须真参与编译，且产物可启动执行
+# 2) native GUI 应用：必须真的构建出一个窗口二进制
+#
+# 这是「编译出来的东西能不能当应用跑」的唯一硬证据。旧 bundle 只有
+# native_smoke（无头探针，打印标记就退出），用户运行后看不到任何界面——
+# 本步失败即代表那个缺陷复发。
+moon build ./native_app --target native
+GUI_ARTIFACT="_build/native/debug/build/native_app/native_app.exe"
+[ -f "$GUI_ARTIFACT" ] || { echo "native GUI artifact missing: $GUI_ARTIFACT"; exit 1; }
+# GUI 组合根必须链进真实窗口后端与渲染器（不能退化成无头）
+if ! strings "$GUI_ARTIFACT" | grep -q "Skia"; then
+  echo "native GUI artifact does not look like a Skia-linked app"; exit 1
+fi
+
+# 3) native 无头自检：生成源码必须真参与编译，且产物可启动执行
 moon build ./native_smoke --target native
 SMOKE_OUT=$(moon run ./native_smoke --target native)
 case "$SMOKE_OUT" in
@@ -69,4 +82,4 @@ case "$SMOKE_OUT" in
   *) echo "native export smoke marker missing: $SMOKE_OUT"; exit 1 ;;
 esac
 
-echo "studio export smoke: ok native+wasm-gc ($BUNDLE_DIR)"
+echo "studio export smoke: ok native-gui+native-smoke+wasm-gc ($BUNDLE_DIR)"

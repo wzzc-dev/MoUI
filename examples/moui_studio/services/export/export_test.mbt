@@ -36,15 +36,58 @@ test "模块名安全化" {
 }
 
 ///|
-test "moon.mod 固定版本（运行时闭包起点）" {
+/// 导出 moon.mod 必须与 Studio 自己的 moon.mod **同版本**。
+///
+/// 回归意义：bundle 里的代码全部从 Studio workspace 拷出，只有依赖去注册表
+/// 拉。两边版本一错开就会「Studio 编得过、导出项目编不过」——实测 pin 在
+/// `moui@0.1.12` 时，那一版自己在新工具链下就过不了类型检查，整条 native
+/// GUI 构建失败（用户看到的是「编译成功但运行没有界面」）。
+/// 这里逐项钉住版本，漂开即失败。
+test "moon.mod 与 Studio 同版本（导出可构建的前提）" {
   let files = @export.export_bundle(SAMPLE_PROJECT, "demo")
   let manifest = bundle_file(files, "/moon.mod")
-  assert_true(manifest.contains("wzzc-dev/moui@0.1.12"))
-  assert_true(manifest.contains("wzzc-dev/window@0.5.4-0.1.7"))
-  assert_true(manifest.contains("wzzc-dev/moui_skia_renderer@0.1.11"))
-  assert_true(manifest.contains("wzzc-dev/moui_web_renderer@0.1.10"))
+  assert_true(manifest.contains("wzzc-dev/moui@0.2.0"))
+  assert_true(manifest.contains("wzzc-dev/window@0.5.4-0.2.0"))
+  assert_true(manifest.contains("wzzc-dev/moui_skia_renderer@0.2.0"))
+  assert_true(manifest.contains("wzzc-dev/moui_web_renderer@0.2.0"))
   assert_true(manifest.contains("moonbitlang/async@0.22.4"))
   assert_true(manifest.contains("moonbitlang/x@0.5.5"))
+  // 旧线不得回归：0.1.x 自己的源码在新工具链下过不了检查
+  assert_false(manifest.contains("moui@0.1"))
+  // deps.txt 与 moon.mod 是同一组事实，不能一处新一处旧
+  let deps = bundle_file(files, "/deps.txt")
+  assert_true(deps.contains("wzzc-dev/moui@0.2.0"))
+  assert_true(deps.contains("wzzc-dev/moui_skia_renderer@0.2.0"))
+  assert_true(deps.contains("wzzc-dev/moui_web_renderer@0.2.0"))
+}
+
+///|
+/// 导出 bundle 必须带 **native GUI 入口**（`native_app/`）。
+///
+/// 回归意义：旧 bundle 只有 `native_smoke`（无头存活探针：打印标记就退出），
+/// 编译轨把它当 native 产物交出去，用户运行后**看不到任何窗口**。GUI 入口
+/// 是「编译出来的东西能当应用跑」的唯一凭据。
+test "bundle ships a native GUI entrypoint, not just a headless probe" {
+  let files = @export.export_bundle(SAMPLE_PROJECT, "demo")
+  let pkg = bundle_file(files, "/native_app/moon.pkg")
+  let main = bundle_file(files, "/native_app/main.mbt")
+  // GUI 组合根必须接真实窗口后端 + 渲染器 + 运行时
+  assert_true(pkg.contains("wzzc-dev/moui/backend/macos"))
+  assert_true(pkg.contains("wzzc-dev/moui_skia_renderer"))
+  assert_true(pkg.contains("wzzc-dev/moui/runtime"))
+  assert_true(pkg.contains("pkgtype(kind: \"executable\")"))
+  // main 用 run_app 开窗（不是打印标记退出）
+  assert_true(main.contains("@runtime.run_app"))
+  assert_true(main.contains("@macos.entry()"))
+  assert_true(main.contains("@render_skia.from_env"))
+  assert_false(main.contains("@sys.exit"))
+  // 标题与尺寸取自项目，而不是写死
+  assert_true(main.contains("@app.window_title()"))
+  assert_true(main.contains("@app.window_size()"))
+  // 无头探针仍在（它是启动自检的证据），但它是**另一个**包
+  assert_true(
+    bundle_file(files, "/native_smoke/main.mbt").contains("@sys.exit"),
+  )
 }
 
 ///|

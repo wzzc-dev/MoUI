@@ -9,9 +9,9 @@ import {
 // Values
 pub fn collect_artifacts(String) -> Array[@export.CompileArtifact]
 
-pub async fn compile_bundle_at(String) -> Result[@export.CompileReport, String]
+pub async fn compile_bundle_at(String, on_progress? : (@export.CompileProgress) -> Unit) -> Result[@export.CompileReport, String]
 
-pub async fn compile_project(String, String, String) -> Result[@export.CompileReport, String]
+pub async fn compile_project(String, String, String, on_progress? : (@export.CompileProgress) -> Unit) -> Result[@export.CompileReport, String]
 
 pub fn compile_submit(CompileOwner, CompileJob) -> Unit
 
@@ -26,6 +26,7 @@ pub(all) struct CompileJob {
   project_json : String
   app_name : String
   work_root : String
+  on_progress : (@export.CompileProgress) -> Unit
   on_result : (Result[@export.CompileReport, String]) -> Unit
 }
 
@@ -35,5 +36,6 @@ pub(all) struct CompileOwner {
 pub fn CompileOwner::new() -> Self
 
 // Type aliases
+pub type CompileProgressSink = (@export.CompileProgress) -> Unit
 
 // Traits

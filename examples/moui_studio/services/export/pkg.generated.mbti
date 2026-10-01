@@ -12,6 +12,10 @@ pub fn app_pkg(String) -> String
 
 pub fn codec_pkg(String) -> String
 
+pub fn compile_phase_total() -> Int
+
+pub fn compile_phases() -> Array[CompilePhase]
+
 pub fn compiled_runtime_pkg(String) -> String
 
 pub fn deps_txt() -> String
@@ -62,6 +66,10 @@ pub fn moonbit_preview(@ir.StudioProgram) -> String
 
 pub fn moonbit_preview_with_lines(@ir.StudioProgram) -> GeneratedSource
 
+pub fn native_app_main() -> String
+
+pub fn native_app_pkg(String) -> String
+
 pub fn native_smoke_main() -> String
 
 pub fn native_smoke_pkg(String) -> String
@@ -103,6 +111,23 @@ pub(all) struct CompileDiagnostic {
   line : Int
   column : Int
   text : String
+}
+
+pub(all) enum CompilePhase {
+  CompilePrepare
+  CompileUpdate
+  CompileCheck
+  CompileWasm
+  CompileNative
+  CompileSmoke
+  CompileCollect
+}
+pub fn CompilePhase::ordinal(Self) -> Int
+pub fn CompilePhase::tag(Self) -> String
+
+pub(all) struct CompileProgress {
+  phase : CompilePhase
+  started : Bool
 }
 
 pub(all) struct CompileReport {

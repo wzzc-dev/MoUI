@@ -127,16 +127,26 @@ async test "注入类型错误 → moon check 失败 → 结构化诊断可映�
 /// 的是「编译没编出二进制产物」，而产物其实一直躺在 bundle 里。本用例
 /// 用**手工摆好的假产物**验证收集逻辑（不跑真工具链：那是数十秒的重活，
 /// 由 studio-export-smoke 覆盖）：存在性过滤、字节数口径、顺序都锁住。
+///
+/// **顺序契约**：GUI 应用排第一（用户双击要跑的就是它），然后是 wasm、
+/// 生成源码，无头自检探针排最后（它是证据，不是给人运行的应用）。
 test "collect_artifacts lists real binaries with true byte sizes" {
   let root = test_root("artifacts")
   clean_test_tree(root)
   write_bundle(root, TEST_PROJECT, "probe")
-  // 摆出两个产物：一个 native 可执行、一个 wasm（内容无所谓，只验大小口径）
+  // 摆出三个产物（内容无所谓，只验存在性/大小/顺序口径）
+  ensure_test_dir("\{root}/probe/_build/native/debug/build/native_app")
   ensure_test_dir("\{root}/probe/_build/native/debug/build/native_smoke")
   ensure_test_dir("\{root}/probe/_build/wasm-gc/debug/build/web_wasm")
   @x/fs.write_string_to_file(
-    "\{root}/probe/_build/native/debug/build/native_smoke/native_smoke.exe",
+    "\{root}/probe/_build/native/debug/build/native_app/native_app.exe",
     "0123456789",
+  ) catch {
+    _ => ()
+  }
+  @x/fs.write_string_to_file(
+    "\{root}/probe/_build/native/debug/build/native_smoke/native_smoke.exe",
+    "smoke",
   ) catch {
     _ => ()
   }
@@ -147,24 +157,89 @@ test "collect_artifacts lists real binaries with true byte sizes" {
     _ => ()
   }
   let artifacts = @compile_native.collect_artifacts("\{root}/probe")
-  // 三件产物都在：native 可执行 / Web wasm / 生成源码（bundle 自带）。
-  assert_eq(artifacts.length(), 3)
-  assert_eq(artifacts[0].kind, "native-exe")
+  // 四件产物：GUI 应用 / Web wasm / 生成源码 / 无头自检
+  assert_eq(artifacts.length(), 4)
+  // GUI 应用排第一，且字节数是二进制口径（10 字节的 "0123456789"）
+  assert_eq(artifacts[0].kind, "native-app")
   assert_eq(artifacts[0].bytes, 10)
+  assert_true(artifacts[0].path.has_suffix("native_app/native_app.exe"))
   assert_eq(artifacts[1].kind, "wasm")
   assert_eq(artifacts[1].bytes, 15)
   assert_eq(artifacts[2].kind, "source")
   assert_true(artifacts[2].bytes > 0)
+  // 无头探针排最后，标签明说它没有窗口（不能再被当成「要运行的应用」）
+  assert_eq(artifacts[3].kind, "native-smoke")
+  assert_true(artifacts[3].label.contains("无窗口"))
   // 路径是绝对（带 root）的：用户要能直接复制去终端跑。
   assert_true(artifacts[0].path.has_prefix(root))
-  // 删掉 native 产物后它不再出现在列表里（空文件比指向空气的路径诚实）。
+  // 删掉 GUI 产物后它不再出现在列表里（空文件比指向空气的路径诚实），
+  // 剩下的第一项顺势变成 wasm。
   @x/fs.remove_file(
-    "\{root}/probe/_build/native/debug/build/native_smoke/native_smoke.exe",
+    "\{root}/probe/_build/native/debug/build/native_app/native_app.exe",
   ) catch {
     _ => ()
   }
   let after = @compile_native.collect_artifacts("\{root}/probe")
-  assert_eq(after.length(), 2)
-  assert_true(after[0].kind != "native-exe")
+  assert_eq(after.length(), 3)
+  assert_eq(after[0].kind, "wasm")
+  clean_test_tree(root)
+}
+
+///|
+/// 进度推送：工具链的每一步都必须发开始与结束各一条，且顺序单调。
+///
+/// 回归意义：旧版忙态只有一个静态徽标，用户读不到「现在做到哪了」。
+/// 进度是界面唯一的「过程」证据，所以推送的完整性要在这里锁住。
+///
+/// 注意 `prepare`（落 bundle）由 `compile_project` 发出，本用例直接调
+/// `compile_bundle_at`（已落盘的目录），因此它**不在**期望集合里——
+/// 断言按「工具链六步」而不是「全部七步」。
+async test "compile_bundle_at reports every step it starts" {
+  let root = test_root("progress")
+  clean_test_tree(root)
+  write_bundle(root, TEST_PROJECT, "probe")
+  @x/fs.write_string_to_file(
+    "\{root}/probe/app/injected_error.mbt",
+    "///|\nfn injected_broken() -> Unit {\n  let x : Int = 1\n  ignore(x)\n}\n",
+  ) catch {
+    _ => ()
+  }
+  let events : Array[@export.CompileProgress] = []
+  let report = @compile_native.compile_bundle_at("\{root}/probe", on_progress=progress => {
+    events.push(progress)
+  })
+  match report {
+    Err(error) => fail("执行器不应自行失败：\{error}")
+    Ok(report) => assert_true(report.ok)
+  }
+  // 每一步都成对出现（started=true 在前，false 在后）
+  for phase in @export.compile_phases() {
+    let mut seen_start = false
+    let mut seen_end = false
+    for event in events {
+      if event.phase.tag() == phase.tag() {
+        if event.started {
+          seen_start = true
+        } else {
+          seen_end = true
+        }
+      }
+    }
+    // prepare 属于 compile_project 的职责，本入口不推
+    if phase.tag() != "prepare" {
+      assert_true(seen_start)
+      assert_true(seen_end)
+    }
+  }
+  if events.length() == 0 {
+    fail("进度必须至少推一条")
+  }
+  // 事件按阶段顺序推进（不是乱序）
+  let mut last_ordinal = 0
+  for event in events {
+    let ordinal = event.phase.ordinal()
+    assert_true(ordinal >= last_ordinal)
+    last_ordinal = ordinal
+  }
   clean_test_tree(root)
 }
