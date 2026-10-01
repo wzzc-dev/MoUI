@@ -101,6 +101,13 @@
           ]
         },
         {
+          "name": "dead message gate",
+          "argv": [
+            "node",
+            "scripts/validate-dead-messages.mjs"
+          ]
+        },
+        {
           "name": "root facade dependency boundary",
           "argv": [
             "node",
@@ -196,6 +203,16 @@
             "--out",
             "examples/moui_studio/app/i18n_catalog_generated.mbt",
             "--check"
+          ]
+        },
+        {
+          "name": "studio app tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/moui_studio/app",
+            "--target",
+            "native"
           ]
         },
         {

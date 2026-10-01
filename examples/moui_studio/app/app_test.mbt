@@ -589,7 +589,7 @@ test "block view edits write back to the ir" {
   let blocks = @app.block_chain_of(model)
   assert_eq(blocks.length(), 3)
   // 选中第一条（declare 人数 = row_count(名单)）
-  let selected = apply(model, SelectBlock(0))
+  let selected = select_block_index(model, 0)
   assert_true(selected.block_draft.contains("变量 人数"))
   assert_eq(selected.selected_block, 0)
   // 改成字符串字面量并应用
@@ -607,7 +607,7 @@ test "block view edits write back to the ir" {
     None => fail("子程序应仍在")
   }
   // 删除第二条（declare 序号）→ 语句数 -1，代码视图同步
-  let picked = apply(committed, SelectBlock(1))
+  let picked = select_block_index(committed, 1)
   let deleted = apply(picked, DeleteBlock)
   match @app.current_handler(deleted) {
     Some(handler) => assert_eq(handler.body.length(), 2)
@@ -620,7 +620,7 @@ test "block view edits write back to the ir" {
 ///|
 test "block edit rejects unparseable draft" {
   let model = apply(@app.initial_model(), SelectTemplate(1))
-  let selected = apply(model, SelectBlock(0))
+  let selected = select_block_index(model, 0)
   let broken = apply(selected, EditBlock("如果 真的 则\n"))
   let committed = apply(broken, CommitBlock)
   match @app.current_handler(committed) {
@@ -641,7 +641,7 @@ test "block edit on nested statement path" {
   // if / then-set_text / else / else-set_text / end
   assert_eq(blocks.length(), 5)
   // 选 then 体里的 set_text（path [0,0,0]）
-  let selected = apply(picked, SelectBlock(1))
+  let selected = select_block_index(picked, 1)
   assert_true(selected.block_draft.contains("设置文本"))
   let edited = apply(
     selected,
@@ -1281,13 +1281,9 @@ test "redo on empty stack is a safe no-op" {
 test "undo after block commit reverts the statement (snapshot not poisoned)" {
   let model = @app.initial_model()
   // 积木编辑：把唯一语句改成另一条并提交
-  let committed = apply(
-    apply(
-      apply(model, SelectBlock(0)),
-      EditBlock("设置文本(显示, \"改过\")"),
-    ),
-    CommitBlock,
-  )
+  let selected = select_block_index(model, 0)
+  let edited = apply(selected, EditBlock("设置文本(显示, \"改过\")"))
+  let committed = apply(edited, CommitBlock)
   match @app.current_handler(committed).unwrap().body[0] {
     @ir.Call(_, args) =>
       match args[1] {
@@ -1473,7 +1469,7 @@ test "window drag region declaration is idempotent and clearable" {
     x=0.0,
     y=0.0,
     width=1280.0,
-    height=WINDOW_CHROME_HEIGHT,
+    height=@app.WINDOW_CHROME_HEIGHT,
   )
   source.set_region(Some(band))
   // 声明的必须是**顶部整条带**：原点贴左上角，高 = 窗控带高
@@ -1483,7 +1479,7 @@ test "window drag region declaration is idempotent and clearable" {
   }
   assert_eq(declared.origin.x, 0.0)
   assert_eq(declared.origin.y, 0.0)
-  assert_eq(declared.size.height, WINDOW_CHROME_HEIGHT)
+  assert_eq(declared.size.height, @app.WINDOW_CHROME_HEIGHT)
   // 逐帧重复声明不得推进 revision —— 宿主据此跳过原生调用，
   // 这是「声明是状态不是命令」的全部意义所在。
   let revision = source.revision()

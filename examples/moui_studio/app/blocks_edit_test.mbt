@@ -12,7 +12,7 @@ test "duplicate block inserts a copy after the original" {
   assert_true(blocks.length() >= 2)
   let original_text = blocks[0].text
   let count = blocks.length()
-  let selected = apply(model, SelectBlock(0))
+  let selected = select_block_index(model, 0)
   let duplicated = apply(selected, DuplicateBlock)
   // 链上多了一条，且新块紧随原块、文本一致
   let after = @app.block_chain_of(duplicated)

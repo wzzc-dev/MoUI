@@ -171,8 +171,10 @@ pub fn program_tree(model : Model) -> Array[TreeNode] {
         group: tree_group_variables(),
         depth: 1,
         locked: false,
-        select_key: "",
-        action: "",
+        // 变量行必须携带名字：点击要按名字选中（`SelectSide(SideVariable(name))`），
+        // 留空会让整棵树所有变量行都指向同一个空目标。
+        select_key: variable.name,
+        action: "variable",
       })
     }
   }
@@ -224,7 +226,8 @@ pub fn program_tree(model : Model) -> Array[TreeNode] {
         group: tree_group_data(),
         depth: 1,
         locked: file.locked,
-        select_key: "",
+        // 同上：数据条目按名字选中（条目是从程序派生的，名字是唯一键）。
+        select_key: file.name,
         action: "data",
       })
     }

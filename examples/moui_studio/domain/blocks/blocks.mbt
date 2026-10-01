@@ -595,6 +595,32 @@ pub fn clone_expr(expr : Expr) -> Expr {
 }
 
 ///|
+/// 插入一条语句：在 `list_path` 列表的 `at` 位置插入 `stmt`（`at` 为
+/// 列表长度时追加到末尾；`list_path` 为空数组时是顶层）。返回**新数组**
+/// （克隆后手术，不改传入的 body——与 replace/delete/reorder 同一纪律：
+/// 就地修改会污染撤销快照，它们共享同一份 body 引用）。
+///
+/// 这是「从零写程序」的落地手术：此前只有 replace/delete/reorder，三条都
+/// 要求语句已存在，所以积木视图加不出一行逻辑（见 `statement_palette.mbt`）。
+pub fn insert_stmt_at(
+  body : Array[Stmt],
+  list_path : Array[Int],
+  at : Int,
+  stmt : Stmt,
+) -> Array[Stmt]? {
+  let working = clone_stmts(body)
+  let list = match stmt_list_at(working, list_path) {
+    Some(list) => list
+    None => return None
+  }
+  if at < 0 || at > list.length() {
+    return None
+  }
+  list.insert(at, clone_stmt(stmt))
+  Some(working)
+}
+
+///|
 /// 语句列表寻址：list_path 指向一棵语句列表（[] = 顶层；
 /// [i,0] = If@i 的 then；[i,1,k] = If@i 的第 k 个 else-if 臂；
 /// [i,2] = If@i 的 else 或循环体）。返回活数组引用。

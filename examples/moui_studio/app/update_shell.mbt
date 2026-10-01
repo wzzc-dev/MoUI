@@ -48,13 +48,6 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
       Some(
         ({ ..model, bottom_open: !model.bottom_open, }, @moui.Effect::none()),
       )
-    SetBottomHeight(height) =>
-      Some(
-        (
-          { ..model, bottom_height: height.max(80.0).min(400.0), },
-          @moui.Effect::none(),
-        ),
-      )
     AuditOpen(index) =>
       Some(
         (
@@ -83,8 +76,6 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
           @moui.Effect::none(),
         ),
       )
-    AddAiContextChip(label) => Some(add_context_chip(model, label))
-    RemoveAiContextChip(index) => Some(remove_context_chip(model, index))
     AlignControlLeft(name) => Some(align_control(model, name, AlignLeft))
     AlignControlCenter(name) => Some(align_control(model, name, AlignCenter))
     AlignControlRight(name) => Some(align_control(model, name, AlignRight))

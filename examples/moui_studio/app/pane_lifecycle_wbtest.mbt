@@ -1,4 +1,16 @@
 ///|
+/// 按链下标选中积木（测试助手）：生产代码用位置命中（`BlocksCanvasTap`）与
+/// 路径寻址（`select_block_by_path`），`Msg::SelectBlock` 已删除——它没有
+/// 生产者（由 `scripts/validate-dead-messages.mjs` 抓出）。测试改走同一寻址。
+fn select_block_index(model : Model, index : Int) -> Model {
+  let chain = block_chain_of(model)
+  if index < 0 || index >= chain.length() {
+    return model
+  }
+  select_block_by_path(model, chain[index].path)
+}
+
+///|
 /// 窗格与选中的**生命周期**验证：隐藏/恢复路径、AI 药丸态、面板头对齐、
 /// 窗格内容不越界、积木窗格的出场条件。
 ///
@@ -387,7 +399,7 @@ test "block editor lives in the right panel and fits it" {
   let base = initial_model()
   // 选中一个块才会出现编辑卡（未选中时右栏没有这一段），再把草稿清空：
   // 占位提示只在空草稿下渲染（有草稿时显示的是语句源码）。
-  let selected = apply_shell(base, SelectBlock(0))
+  let selected = select_block_index(base, 0)
   let cleared = apply_shell(selected, EditBlock(""))
   let blocks = block_chain_of(cleared)
   assert_true(

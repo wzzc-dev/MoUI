@@ -58,6 +58,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.title", GeneratedI18nMessage::Text("AI proposals")),
       ("app.ctx.data", GeneratedI18nMessage::Text("Data")),
       ("app.ctx.deps", GeneratedI18nMessage::Text("Dependencies")),
+      ("app.ctx.gone", GeneratedI18nMessage::Text("missing")),
       ("app.ctx.none", GeneratedI18nMessage::Text("Nothing selected")),
       ("app.handlers", GeneratedI18nMessage::Text("Event handlers")),
       (
@@ -144,6 +145,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.code.title", GeneratedI18nMessage::Text("MoUI Studio code")),
       ("app.compile.ok", GeneratedI18nMessage::Text("Compile passed")),
       ("app.crumb.code", GeneratedI18nMessage::Text("Code workspace")),
+      ("app.ctx.window", GeneratedI18nMessage::Text("Window")),
       ("app.data.empty", GeneratedI18nMessage::Text("(empty)")),
       (
         "app.empty.body",
@@ -213,7 +215,6 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.file.export", GeneratedI18nMessage::Text("Export app")),
       ("app.handler.new", GeneratedI18nMessage::Text("New handler")),
-      ("app.insert.chip", GeneratedI18nMessage::Text("+ {name}")),
       ("app.lang.switch", GeneratedI18nMessage::Text("中文")),
       ("app.left.search", GeneratedI18nMessage::Text("Search structure…")),
       (
@@ -227,6 +228,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.mode.blocks", GeneratedI18nMessage::Text("Blocks")),
       ("app.mode.design", GeneratedI18nMessage::Text("Design")),
       ("app.pane.blocks", GeneratedI18nMessage::Text("Blocks")),
+      ("app.stmt.tpl.if", GeneratedI18nMessage::Text("if … then … end")),
       ("app.track.label", GeneratedI18nMessage::Text("Run track")),
       (
         "app.watch.empty",
@@ -268,6 +270,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.compile.step", GeneratedI18nMessage::Text("Step {done} of {total}")),
       ("app.crumb.visual", GeneratedI18nMessage::Text("Visual workspace")),
+      ("app.ctx.variable", GeneratedI18nMessage::Text("Variable")),
       (
         "app.design.empty",
         GeneratedI18nMessage::Text(
@@ -275,7 +278,6 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.handler.none", GeneratedI18nMessage::Text("No handler selected")),
-      ("app.insert.title", GeneratedI18nMessage::Text("Quick insert")),
       ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
       (
         "app.preview.note",
@@ -293,6 +295,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.run.messages", GeneratedI18nMessage::Text("Messages")),
       ("app.status.saved", GeneratedI18nMessage::Text("Project saved")),
+      ("app.variable.new", GeneratedI18nMessage::Text("New variable")),
       ("builtin.contains", GeneratedI18nMessage::Text("contains")),
       ("builtin.get_text", GeneratedI18nMessage::Text("get_text")),
       ("builtin.set_text", GeneratedI18nMessage::Text("set_text")),
@@ -315,6 +318,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.audit.confirm", GeneratedI18nMessage::Text("Confirm")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("Blocks canvas")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("Expand bottom bar")),
+      ("app.command.empty", GeneratedI18nMessage::Text("No matching commands")),
       ("app.console.clear", GeneratedI18nMessage::Text("Clear")),
       (
         "app.ctx.data.none",
@@ -396,6 +400,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ctx.state.gate", GeneratedI18nMessage::Text("Gate")),
       ("app.help.functions", GeneratedI18nMessage::Text("Function")),
+      (
+        "app.inspector.gone",
+        GeneratedI18nMessage::Text("The selected object no longer exists"),
+      ),
+      ("app.inspector.init", GeneratedI18nMessage::Text("Initial value")),
       ("app.inspector.name", GeneratedI18nMessage::Text("Name")),
       ("app.inspector.none", GeneratedI18nMessage::Text("No control selected")),
       ("app.inspector.size", GeneratedI18nMessage::Text("Size")),
@@ -416,6 +425,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.settings.close", GeneratedI18nMessage::Text("Close")),
       ("app.settings.title", GeneratedI18nMessage::Text("Settings")),
       ("app.statusbar.idle", GeneratedI18nMessage::Text("idle")),
+      ("app.stmt.tpl.break", GeneratedI18nMessage::Text("break")),
+      ("app.stmt.tpl.while", GeneratedI18nMessage::Text("while … do … end")),
       ("app.topbar.compile", GeneratedI18nMessage::Text("Compile MoonBit")),
       ("builtin.append_row", GeneratedI18nMessage::Text("append_row")),
       ("builtin.get_number", GeneratedI18nMessage::Text("get_number")),
@@ -528,6 +539,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.status.exported",
         GeneratedI18nMessage::Text("Standalone app exported"),
       ),
+      ("app.stmt.tpl.assign", GeneratedI18nMessage::Text("count = 1")),
+      ("app.stmt.tpl.repeat", GeneratedI18nMessage::Text("repeat … times")),
+      ("app.stmt.tpl.submit", GeneratedI18nMessage::Text("submit_data (gate)")),
       ("app.templates.drill", GeneratedI18nMessage::Text("Arithmetic drill")),
       ("app.templates.hello", GeneratedI18nMessage::Text("Hello app")),
       ("app.templates.store", GeneratedI18nMessage::Text("Class store")),
@@ -569,6 +583,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "app.blocks.rail.hint",
+        GeneratedI18nMessage::Text("Click a category to insert a statement"),
+      ),
+      (
         "app.code.ruler.empty",
         GeneratedI18nMessage::Text(
           "IR → line map: this handler has no statements",
@@ -602,6 +620,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("Confirm send")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("no handler")),
+      ("app.stmt.tpl.declare", GeneratedI18nMessage::Text("let count = 0")),
+      ("app.stmt.tpl.message", GeneratedI18nMessage::Text("message_box")),
       (
         "app.window.drag_hint",
         GeneratedI18nMessage::Text("Drag this bar to move the window"),
@@ -678,6 +698,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Real compiled artifact run"),
       ),
       ("app.statusbar.running", GeneratedI18nMessage::Text("running")),
+      (
+        "app.stmt.palette.hint",
+        GeneratedI18nMessage::Text(
+          "Click one to insert after the selected block",
+        ),
+      ),
+      ("app.stmt.tpl.set_text", GeneratedI18nMessage::Text("set_text")),
       ("app.tree.group.window", GeneratedI18nMessage::Text("Window")),
       (
         "err.duplicate_control",
@@ -752,11 +779,17 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.statusbar.build_ok", GeneratedI18nMessage::Text("build ok")),
       (
+        "app.stmt.palette.empty",
+        GeneratedI18nMessage::Text("No statements available in this category"),
+      ),
+      ("app.stmt.palette.title", GeneratedI18nMessage::Text("Insert statement")),
+      (
         "app.track.compile_note",
         GeneratedI18nMessage::Text(
           "Compiled track: the same IR is emitted as readable MoonBit and executed from a real compiled artifact (no interpreter).",
         ),
       ),
+      ("app.tree.create.window", GeneratedI18nMessage::Text("Window settings")),
       (
         "err.break_outside_loop",
         GeneratedI18nMessage::Text("break only works inside a loop"),
@@ -824,6 +857,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Smoke-running the artifact"),
       ),
       ("app.compile.step_active", GeneratedI18nMessage::Text("running")),
+      (
+        "app.inspector.data_hint",
+        GeneratedI18nMessage::Text(
+          "Derived from list/table control rows or the variable set (not stored separately). Edit the source control or append rows in a statement.",
+        ),
+      ),
+      ("app.inspector.data_meta", GeneratedI18nMessage::Text("Size")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("Duplicate")),
       ("app.recent.action.align", GeneratedI18nMessage::Text("Aligned control")),
       ("app.recent.action.items", GeneratedI18nMessage::Text("Changed items")),
@@ -833,7 +873,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Drafts are auto-saved to local settings (studio.draft).",
         ),
       ),
+      ("app.stmt.tpl.append_row", GeneratedI18nMessage::Text("append_row")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("Class roll call")),
+      ("app.tree.create.control", GeneratedI18nMessage::Text("New control")),
+      (
+        "app.tree.create.handler",
+        GeneratedI18nMessage::Text("New event handler"),
+      ),
       ("app.tree.group.controls", GeneratedI18nMessage::Text("Controls")),
       ("app.tree.group.handlers", GeneratedI18nMessage::Text("Event handlers")),
       (
@@ -888,6 +934,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Resized control"),
       ),
       ("app.settings.group.track", GeneratedI18nMessage::Text("Run track")),
+      (
+        "app.stmt.tpl.assign_expr",
+        GeneratedI18nMessage::Text("assign + arithmetic"),
+      ),
+      ("app.tree.create.variable", GeneratedI18nMessage::Text("New variable")),
       ("app.tree.group.variables", GeneratedI18nMessage::Text("Variables")),
       (
         "err.invalid_control_name",
@@ -925,6 +976,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.phase.prepare",
         GeneratedI18nMessage::Text("Preparing workspace"),
       ),
+      ("app.inspector.data_access", GeneratedI18nMessage::Text("Access")),
+      ("app.inspector.data_source", GeneratedI18nMessage::Text("Data source")),
+      ("app.inspector.design_size", GeneratedI18nMessage::Text("Design space")),
+      ("app.inspector.window_size", GeneratedI18nMessage::Text("Window size")),
       (
         "app.log.proposal_accepted",
         GeneratedI18nMessage::Text("Proposal accepted · {count} changes"),
@@ -970,9 +1025,16 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "This compile produced no files (the toolchain stopped at a check step).",
         ),
       ),
+      ("app.inspector.data_preview", GeneratedI18nMessage::Text("Preview")),
+      ("app.inspector.window_title", GeneratedI18nMessage::Text("Window title")),
       (
         "app.recent.action.template",
         GeneratedI18nMessage::Text("Switched template"),
+      ),
+      ("app.recent.action.variable", GeneratedI18nMessage::Text("New variable")),
+      (
+        "app.status.variables_limit",
+        GeneratedI18nMessage::Text("Variable limit reached (64)"),
       ),
       ("app.statusbar.build_failed", GeneratedI18nMessage::Text("build failed")),
       (
@@ -998,6 +1060,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Reveal in folder"),
       ),
       (
+        "app.inspector.variable_hint",
+        GeneratedI18nMessage::Text(
+          "Renaming rewrites every statement that references this variable.",
+        ),
+      ),
+      (
         "app.recent.action.duplicate",
         GeneratedI18nMessage::Text("Duplicated control"),
       ),
@@ -1009,6 +1077,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.status.proposal_invalid",
         GeneratedI18nMessage::Text("Proposal rejected by validation"),
+      ),
+      (
+        "app.stmt.palette.no_handler",
+        GeneratedI18nMessage::Text("Select an event handler first"),
       ),
       (
         "app.toast.proposal_accepted",
@@ -1042,6 +1114,16 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Proposal rejected"),
       ),
       (
+        "app.stmt.palette.parse_error",
+        GeneratedI18nMessage::Text(
+          "This statement skeleton failed to parse (internal error)",
+        ),
+      ),
+      (
+        "app.tree.create.window_title",
+        GeneratedI18nMessage::Text("Window title"),
+      ),
+      (
         "err.proposal_unknown_control",
         GeneratedI18nMessage::Text("Unknown control: {name}"),
       ),
@@ -1055,8 +1137,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Headless self-check (no window)"),
       ),
       (
+        "app.inspector.delete_variable",
+        GeneratedI18nMessage::Text("Delete variable"),
+      ),
+      (
+        "app.recent.action.insert_stmt",
+        GeneratedI18nMessage::Text("Insert statement"),
+      ),
+      (
         "err.proposal_bad_control_kind",
         GeneratedI18nMessage::Text("Unknown control kind: {kind}"),
+      ),
+      (
+        "app.inspector.window_size_hint",
+        GeneratedI18nMessage::Text(
+          "The 640×480 design space is a global constant: the run stage scales by it and control bounds are validated against it. Changing it means touching the canvas mapping and the invariants together, so it stays read-only for now.",
+        ),
       ),
       (
         "app.recent.action.agent_accept",
@@ -1085,6 +1181,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "This platform only offers the interpret track plus source preview; the compile track needs the native entrypoint.",
         ),
+      ),
+      (
+        "app.recent.action.variable_delete",
+        GeneratedI18nMessage::Text("Delete variable"),
       ),
       (
         "app.audit.proposal_accepted.detail",
@@ -1133,6 +1233,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.title", GeneratedI18nMessage::Text("AI 提案")),
       ("app.ctx.data", GeneratedI18nMessage::Text("数据")),
       ("app.ctx.deps", GeneratedI18nMessage::Text("依赖")),
+      ("app.ctx.gone", GeneratedI18nMessage::Text("已不存在")),
       ("app.ctx.none", GeneratedI18nMessage::Text("未选中对象")),
       ("app.handlers", GeneratedI18nMessage::Text("事件子程序")),
       (
@@ -1214,6 +1315,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.code.title", GeneratedI18nMessage::Text("MoUI Studio 代码")),
       ("app.compile.ok", GeneratedI18nMessage::Text("真编译通过")),
       ("app.crumb.code", GeneratedI18nMessage::Text("代码工作区")),
+      ("app.ctx.window", GeneratedI18nMessage::Text("窗体")),
       ("app.data.empty", GeneratedI18nMessage::Text("（空）")),
       (
         "app.empty.body",
@@ -1286,7 +1388,6 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.file.export", GeneratedI18nMessage::Text("导出应用")),
       ("app.handler.new", GeneratedI18nMessage::Text("新建子程序")),
-      ("app.insert.chip", GeneratedI18nMessage::Text("+ {name}")),
       ("app.lang.switch", GeneratedI18nMessage::Text("English")),
       ("app.left.search", GeneratedI18nMessage::Text("搜索结构…")),
       (
@@ -1297,6 +1398,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.mode.blocks", GeneratedI18nMessage::Text("积木")),
       ("app.mode.design", GeneratedI18nMessage::Text("设计")),
       ("app.pane.blocks", GeneratedI18nMessage::Text("积木")),
+      ("app.stmt.tpl.if", GeneratedI18nMessage::Text("如果…则…结束")),
       ("app.track.label", GeneratedI18nMessage::Text("运行轨")),
       (
         "app.watch.empty",
@@ -1335,6 +1437,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("第 {done} / {total} 步"),
       ),
       ("app.crumb.visual", GeneratedI18nMessage::Text("可视化工作区")),
+      ("app.ctx.variable", GeneratedI18nMessage::Text("变量")),
       (
         "app.design.empty",
         GeneratedI18nMessage::Text(
@@ -1342,7 +1445,6 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.handler.none", GeneratedI18nMessage::Text("未选中子程序")),
-      ("app.insert.title", GeneratedI18nMessage::Text("快速插入")),
       ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
       (
         "app.preview.note",
@@ -1360,6 +1462,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.run.messages", GeneratedI18nMessage::Text("消息")),
       ("app.status.saved", GeneratedI18nMessage::Text("已保存项目")),
+      ("app.variable.new", GeneratedI18nMessage::Text("新建变量")),
       ("builtin.contains", GeneratedI18nMessage::Text("文本包含")),
       ("builtin.get_text", GeneratedI18nMessage::Text("取文本")),
       ("builtin.set_text", GeneratedI18nMessage::Text("设置文本")),
@@ -1382,6 +1485,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.audit.confirm", GeneratedI18nMessage::Text("确认")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("积木画布")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("展开底栏")),
+      ("app.command.empty", GeneratedI18nMessage::Text("没有匹配的命令")),
       ("app.console.clear", GeneratedI18nMessage::Text("清空")),
       (
         "app.ctx.data.none",
@@ -1448,6 +1552,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ctx.deps.empty", GeneratedI18nMessage::Text("没有发现依赖")),
       ("app.ctx.state.gate", GeneratedI18nMessage::Text("闸门")),
       ("app.help.functions", GeneratedI18nMessage::Text("函数")),
+      (
+        "app.inspector.gone",
+        GeneratedI18nMessage::Text("选中的对象已不存在"),
+      ),
+      ("app.inspector.init", GeneratedI18nMessage::Text("初值")),
       ("app.inspector.name", GeneratedI18nMessage::Text("名称")),
       ("app.inspector.none", GeneratedI18nMessage::Text("未选中控件")),
       ("app.inspector.size", GeneratedI18nMessage::Text("尺寸")),
@@ -1465,6 +1574,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.settings.close", GeneratedI18nMessage::Text("关闭")),
       ("app.settings.title", GeneratedI18nMessage::Text("设置")),
       ("app.statusbar.idle", GeneratedI18nMessage::Text("空闲")),
+      ("app.stmt.tpl.break", GeneratedI18nMessage::Text("跳出循环")),
+      (
+        "app.stmt.tpl.while",
+        GeneratedI18nMessage::Text("当…循环…结束"),
+      ),
       ("app.topbar.compile", GeneratedI18nMessage::Text("编译 MoonBit")),
       ("builtin.append_row", GeneratedI18nMessage::Text("追加行")),
       ("builtin.get_number", GeneratedI18nMessage::Text("取数值")),
@@ -1573,6 +1687,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.status.exported",
         GeneratedI18nMessage::Text("已导出独立应用"),
       ),
+      ("app.stmt.tpl.assign", GeneratedI18nMessage::Text("计数 = 1")),
+      ("app.stmt.tpl.repeat", GeneratedI18nMessage::Text("计次循环…次")),
+      (
+        "app.stmt.tpl.submit",
+        GeneratedI18nMessage::Text("提交数据（闸门）"),
+      ),
       ("app.templates.drill", GeneratedI18nMessage::Text("口算训练营")),
       ("app.templates.hello", GeneratedI18nMessage::Text("问候小程序")),
       ("app.templates.store", GeneratedI18nMessage::Text("班级小卖部")),
@@ -1611,6 +1731,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "app.blocks.rail.hint",
+        GeneratedI18nMessage::Text("点分类插入语句"),
+      ),
+      (
         "app.code.ruler.empty",
         GeneratedI18nMessage::Text(
           "IR 到代码行的映射：当前子程序没有语句",
@@ -1639,6 +1763,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("确认送出")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("未选中子程序")),
+      ("app.stmt.tpl.declare", GeneratedI18nMessage::Text("变量 计数 = 0")),
+      ("app.stmt.tpl.message", GeneratedI18nMessage::Text("信息框")),
       (
         "app.window.drag_hint",
         GeneratedI18nMessage::Text("按住此条拖动窗口"),
@@ -1715,6 +1841,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("真编译产物运行"),
       ),
       ("app.statusbar.running", GeneratedI18nMessage::Text("运行中")),
+      (
+        "app.stmt.palette.hint",
+        GeneratedI18nMessage::Text("点一条插入到选中块之后"),
+      ),
+      ("app.stmt.tpl.set_text", GeneratedI18nMessage::Text("设置文本")),
       ("app.tree.group.window", GeneratedI18nMessage::Text("窗体")),
       (
         "err.duplicate_control",
@@ -1786,11 +1917,17 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.statusbar.build_ok", GeneratedI18nMessage::Text("构建通过")),
       (
+        "app.stmt.palette.empty",
+        GeneratedI18nMessage::Text("这个分类没有可插入的语句"),
+      ),
+      ("app.stmt.palette.title", GeneratedI18nMessage::Text("插入语句")),
+      (
         "app.track.compile_note",
         GeneratedI18nMessage::Text(
           "编译轨：同一 IR 生成可读 MoonBit，由真编译产物执行（无解释器）。",
         ),
       ),
+      ("app.tree.create.window", GeneratedI18nMessage::Text("窗体设置")),
       (
         "err.break_outside_loop",
         GeneratedI18nMessage::Text("跳出循环 只能用在循环里"),
@@ -1855,6 +1992,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("启动产物自检"),
       ),
       ("app.compile.step_active", GeneratedI18nMessage::Text("进行中")),
+      (
+        "app.inspector.data_hint",
+        GeneratedI18nMessage::Text(
+          "数据来自列表/表格控件的行或变量集合（派生视图，不独立存储）。改内容请选中来源控件，或在程序语句里追加行。",
+        ),
+      ),
+      ("app.inspector.data_meta", GeneratedI18nMessage::Text("规模")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
       ("app.recent.action.align", GeneratedI18nMessage::Text("对齐控件")),
       ("app.recent.action.items", GeneratedI18nMessage::Text("改列表项")),
@@ -1864,7 +2008,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "草稿会自动保存到本机设置（studio.draft）。",
         ),
       ),
+      ("app.stmt.tpl.append_row", GeneratedI18nMessage::Text("追加行")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),
+      ("app.tree.create.control", GeneratedI18nMessage::Text("新建控件")),
+      (
+        "app.tree.create.handler",
+        GeneratedI18nMessage::Text("新建事件子程序"),
+      ),
       ("app.tree.group.controls", GeneratedI18nMessage::Text("控件")),
       ("app.tree.group.handlers", GeneratedI18nMessage::Text("事件子程序")),
       (
@@ -1907,6 +2057,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.recent.action.rename", GeneratedI18nMessage::Text("重命名")),
       ("app.recent.action.resize", GeneratedI18nMessage::Text("调整尺寸")),
       ("app.settings.group.track", GeneratedI18nMessage::Text("运行轨")),
+      (
+        "app.stmt.tpl.assign_expr",
+        GeneratedI18nMessage::Text("赋值 + 运算"),
+      ),
+      ("app.tree.create.variable", GeneratedI18nMessage::Text("新建变量")),
       ("app.tree.group.variables", GeneratedI18nMessage::Text("变量")),
       (
         "err.invalid_control_name",
@@ -1939,6 +2094,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.phase.prepare",
         GeneratedI18nMessage::Text("准备工作目录"),
       ),
+      ("app.inspector.data_access", GeneratedI18nMessage::Text("访问")),
+      ("app.inspector.data_source", GeneratedI18nMessage::Text("数据来源")),
+      (
+        "app.inspector.design_size",
+        GeneratedI18nMessage::Text("设计坐标系"),
+      ),
+      ("app.inspector.window_size", GeneratedI18nMessage::Text("窗口尺寸")),
       (
         "app.log.proposal_accepted",
         GeneratedI18nMessage::Text("提案已采纳 · {count} 处变更"),
@@ -1988,7 +2150,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "本次编译没有产出文件（失败停在工具链检查阶段）。",
         ),
       ),
+      ("app.inspector.data_preview", GeneratedI18nMessage::Text("内容预览")),
+      ("app.inspector.window_title", GeneratedI18nMessage::Text("窗体标题")),
       ("app.recent.action.template", GeneratedI18nMessage::Text("换模板")),
+      ("app.recent.action.variable", GeneratedI18nMessage::Text("新建变量")),
+      (
+        "app.status.variables_limit",
+        GeneratedI18nMessage::Text("变量数已达上限（64）"),
+      ),
       ("app.statusbar.build_failed", GeneratedI18nMessage::Text("构建失败")),
       (
         "err.proposal_bad_statement",
@@ -2016,6 +2185,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("在文件夹中打开"),
       ),
       (
+        "app.inspector.variable_hint",
+        GeneratedI18nMessage::Text(
+          "改名会同步改写所有引用该变量的语句。",
+        ),
+      ),
+      (
         "app.recent.action.duplicate",
         GeneratedI18nMessage::Text("复制控件"),
       ),
@@ -2030,6 +2205,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.status.proposal_invalid",
         GeneratedI18nMessage::Text("提案未通过校验，已整单拒绝"),
+      ),
+      (
+        "app.stmt.palette.no_handler",
+        GeneratedI18nMessage::Text("请先选中一个事件子程序"),
       ),
       (
         "app.toast.proposal_accepted",
@@ -2066,6 +2245,16 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("提案被拒绝"),
       ),
       (
+        "app.stmt.palette.parse_error",
+        GeneratedI18nMessage::Text(
+          "这条语句骨架无法解析（内部错误）",
+        ),
+      ),
+      (
+        "app.tree.create.window_title",
+        GeneratedI18nMessage::Text("窗体标题"),
+      ),
+      (
         "err.proposal_unknown_control",
         GeneratedI18nMessage::Text("未知控件：{name}"),
       ),
@@ -2079,8 +2268,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("无头自检（不开窗）"),
       ),
       (
+        "app.inspector.delete_variable",
+        GeneratedI18nMessage::Text("删除变量"),
+      ),
+      (
+        "app.recent.action.insert_stmt",
+        GeneratedI18nMessage::Text("插入语句"),
+      ),
+      (
         "err.proposal_bad_control_kind",
         GeneratedI18nMessage::Text("未知控件类型：{kind}"),
+      ),
+      (
+        "app.inspector.window_size_hint",
+        GeneratedI18nMessage::Text(
+          "设计坐标系 640×480 是全局常量：运行舞台按它等比缩放，控件的越界校验也按它判定。改尺寸需要同时调整画布换算与不变量，暂不开放编辑。",
+        ),
       ),
       (
         "app.recent.action.agent_accept",
@@ -2106,6 +2309,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "本端只有解释轨与源码预览；编译轨仅在 native 入口可达。",
         ),
+      ),
+      (
+        "app.recent.action.variable_delete",
+        GeneratedI18nMessage::Text("删除变量"),
       ),
       (
         "app.audit.proposal_accepted.detail",

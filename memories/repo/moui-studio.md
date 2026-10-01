@@ -1190,3 +1190,211 @@ S.live=false; if(!S.blocks) S.ws='empty';
 已知遗留：text_field 的 DrawText 在 frame 内不裁剪（`moui/views/text/
 text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡片右缘露出
 （web 渲染器实测；属控件层裁剪缺陷，修复应在框架层做 clip）。
+
+## 2026-10-01 产品完善批次（死 UI 根治 / 语句插入 / 键位 / CI）
+
+### 「死 UI」缺陷族的机制性根治（本轮最重要的方法论）
+
+- **症状族**：`update` 分支写好了、视图也渲染了，但**全仓库没有任何地方构造
+  过这条消息**——功能在运行时完全不可达。本轮实测确认 3 个：
+  `Msg::Undo`/`Msg::Redo`（顶栏按钮在 v4 壳重写时删掉了，没人补入口）、
+  `studio_commands()`（30 条 v4 命令表，零调用者）、
+  `ToggleProviderSettings`/`CompileStopped`/`SelectBlock`/`SetBottomHeight`。
+- **为什么 165 个测试全绿也抓不到**：测试直接 `apply(model, Undo)` **绕过 UI
+  入口**构造消息，处理器逻辑正确 → 测试绿。**测「消息处理对不对」和测
+  「消息有没有生产者」是两件事**，前者永远抓不到后者。
+- **对策（已落地）**：`tools/moui/validate_dead_messages` +
+  `checks/dead-message-catalog.json` + `scripts/validate-dead-messages.mjs`，
+  注册为 pr profile 的 `dead message gate`。规则：受管辖枚举的每个变体必须在
+  声明文件**之外**有构造点；排除 match 臂（`X =>` / `X(..) =>`）、限定引用
+  （`@pkg.X`）、模式位（`is X` / `| X`）。白名单带 `reason` 且**会 stale**
+  （变体一旦有构造点就报错要求删白名单）。
+- **上线即再抓 4 个**（手工扫描漏掉的）：`SelectBlock` / `SetBottomHeight`
+  （真死码，删）、`ToggleProviderSettings` / `CompileStopped`（**接线成真功能**
+  ——后者接上早已存在却没人用的 `app.compile.cancel` 文案）。
+- **结论**：这类缺陷不能靠「多写测试」兜住，只能靠「每个变体至少一个构造点」
+  的结构性断言。
+
+### 语句插入：从零写程序的断点（最致命的一条）
+
+- **根因**：积木三条写回路径 `commit_block`（替换）/`duplicate_block`（克隆）/
+  `delete_block`（删除）**都要求语句已存在**，`CreateHandler` 建的是空 body。
+  分类轨**可点**（`on_tap(SelectBlockCategory)`）但处理器只改
+  `selected_category` 一个高亮标志位，注释声称的「滚动到该类首块」从未实现
+  （`scroll_view` 没有命令式滚动 API）。于是没有 AI、没有模板就**加不出一行逻辑**。
+- **修法**：`app/statement_palette.mbt`（分类 → 骨架 → 插入）+
+  `@blocks.insert_stmt_at`（**克隆后插入**，与 replace/delete 同一快照纪律——
+  就地改会污染撤销快照）。骨架先过 `parse_handler_body` 同一校验链，
+  失败 no-op + 提示，绝不把非法语句塞进 IR。
+- **骨架必须中英各一份**：关键字表按语言**互斥**
+  （`keywords_for(ZhHans)` 只有「变量/如果/结束」），同一段文本不可能两边都
+  解析。内建命令名反而中立（`find_builtin` 同时认 `spec.zh`/`spec.en`/`spec.id`），
+  统一写规范 id。
+- **面板宽度必须自适应**：积木窗格常是中心列两个窗格之一（1280 窗口下实测
+  ~374pt），固定 240pt 把画布挤到 ~44pt（内容全被裁）。取可用宽一半并双向夹取。
+- **顺序陷阱**：`canvas_width` 必须**先**扣掉面板宽再建画布。第一版把重算写在
+  画布构造**之后**——`let` 遮蔽看着像改对了，实际是死代码（编译器不报错）。
+
+### 键位：两个必踩的坑
+
+- **`KeyboardShortcut::matches` 是修饰键精确相等**（`event.modifiers ==
+  self.modifiers`）：macOS 发 `meta`、Windows/Linux 发 `control`，**必须各注册
+  一条**（`shortcut_icon_button` 的 `alt_shortcut`），只注册一个会有一整端
+  失灵，且**本机测不出来**。
+- **快捷键载体必须是 `@views.button`，不能是 `on_tap` 外壳**：runtime 的
+  快捷键通路（`input_keyboard.mbt`）匹配后走 `activate_primary` → 给第一个
+  子节点合成一个 **Enter 键盘事件**；而 `OnTapModifier` 只认 `Pointer` 事件。
+  所以 `icon_button`（`on_tap`）+ `.keyboard_shortcut(...)` **永远不会触发**。
+  `views/button/button.mbt` 显式处理 `Enter`/`Space`，是唯一对合成事件有反应的载体。
+- **顶栏宽度预算的实数**：`@views.button` 的 `content_width =
+  max(declared, measured_text + padding_horizontal×2)`，Studio 主题
+  `spacing_scale.lg = 16` → 空标签按钮**硬下限 32**（声明 26 渲染 32）。
+  拖拽区预算按声明值算就会低估，直接盖住按钮（只在原生无框窗口复现：
+  点运行变成拖窗口）。加按钮后**必须重跑** `shell_responsive_wbtest` 的
+  「drag region stops before the top bar actions」——本轮它一次就抓到了。
+- **`topbar_actions_width` 要与渲染同源**：既有实现把 `34.0 / 28.0 / 28.0`
+  写死，而 `topbar_chip_bound("编译 MoonBit")` 实算 110（不是声明的 72）。
+  加按钮时把图标按钮统一到 `TOPBAR_ICON_BUTTON_WIDTH` 并留
+  `TOPBAR_ACTIONS_SAFETY` 余量（高估只少几个点可拖，低估直接废掉按钮）。
+
+### CI 盲区
+
+- `checks/profiles.json` 的 studio 步骤原先**全在 `services/`**，
+  `moon test examples/moui_studio/app`（172 个用例，含全部 UI 回归白盒）
+  **从不进 CI**。已加 `studio app tests` 到 pr profile。
+- 改动 `domain/blocks` 后 `sync_kernel --check` 仍报 current（内核集只有
+  ir/studio_lang/codec，blocks 不在其中）——但**仍要跑**，因为 codegen 与
+  bundle 依赖内核快照。
+
+### 悬停提示（框架能力边界）
+
+- **更正（2026-10-01 复核）**：我先前记的「框架 tooltip 没有视觉浮层、需要
+  portal」是**错的**——`moui/views/controls/control_focus_overlay.mbt:67` 的
+  `@views.tooltip(child, message, visible?)` 就是可用的定位浮层（走
+  `presentation.popup_host` + 四向 placement），`examples/excel/app/view_toolbar.mbt:162`
+  在用。**教训：下「框架没有 X 能力」的结论前先 grep 一遍**——这句话我写进了
+  代码注释、计划 Decision log 和本文件三处，全部要回改。
+- 状态栏提示仍是当前选择（图标簇共用一格状态已够用，键盘可达），但理由从
+  「框架没有浮层」改为「不需要逐元素 hover 状态」——**是取舍不是缺失**。
+- **`on_hover` 必须确认真的插进去了**：本轮第一次 `str.replace` 因为目标串
+  在文件里出现多次而静默未命中，编译照过、测试照绿、实机毫无反应——
+  改视图层后**务必实机验证**（像素差 0 就是没生效）。
+
+## 2026-10-01 左栏结构树批次（用户报「点不动」+「没有新增结构的地方」）
+
+### 树行「画了但不可交互」——与死 UI 同族，但表现是「点了没反应」
+
+- **缺陷**：`tree_node_row` 只为 `TnControl`/`TnHandler` 生成 `on_tap`；
+  窗体（`TnWindow`）、变量（`TnVariable`）、数据（`TnDataFile`）三类行的
+  `on_click` 是 `None`（`match` 的 `_ => None`）。**用户看到树上有行、点了
+  毫无反应**。更隐蔽的一半：变量行与数据行的 `select_key` 是**空串**——
+  即便接上点击，所有变量行也会指向同一个空目标。
+- **修法**：`tree_node_row` 按 kind 分派 `SelectSide(SideWindow |
+  SideVariable(name) | SideData(name))`；`ide_state.mbt` 的
+  `program_tree` 补上变量/数据行的 `select_key`。
+- **教训**：给树加新节点种类时，**同时**要给它 `select_key`（可寻址）与
+  `on_click`（可交互）。只加 `nodes.push` 会造出一行装饰品。
+- 新增 `TreeView` 节点种类时，检查清单：① `TreeNodeKind` 加变体；
+  ② `program_tree` 填 `select_key`；③ `tree_node_row` 给 `on_click`；
+  ④ `tree_node_selected` 给选中判据；⑤ 右栏 `context_props` 给属性面。
+
+### 选中必须是单一漏斗（三条槽互斥）
+
+- **背景**：选中是三条并存的槽——`selected_control`（控件名）、
+  `selected_handler`（`控件@事件`）、新增的 `side_target`。
+- **既有不一致（本批次顺带修掉）**：`SelectHandler` **忘了清
+  `selected_control`**，而 `context_head` 优先读控件 → 点左栏的子程序行之后，
+  右栏继续显示上一个**控件**的属性。用户读到的现象同样是「点了没反应」。
+- **纪律**：任何改选中的代码都走 `app/update_selection.mbt` 的
+  `select_control_by_name` / `select_handler_key` / `select_target` /
+  `clear_selection`。清字段的动作只写一遍，新入口就不可能漏清。
+- 视图层的选中判据也收敛到 `tree_node_selected(model, kind, key)`，
+  不要在各处重写 `model.selected_control == node.select_key`。
+
+### 新建入口必须与枚举等长
+
+- 「快速插入」原来只有 4 个（按钮/标签/列表框/输入框）：**选择框与表格没有
+  任何入口**（只能靠 AI 提案或模板才会出现），而且**没有新建变量的地方**。
+- 现在 7 格 = 6 种 `ControlKind` + 变量，**与枚举等长**是这个区域的验收口径。
+- **高度预算单点**：`INSERT_ROWS`（=4，7 格 2 列）被 `bottom_strip_height`
+  与视图共读。旧常量写死 `2.0 * 26.0`，格子加到 7 个会把最后两行挤出面板
+  下缘——这类「加了内容没改预算」是本仓复发最多的一族。
+
+### 变量语义（易错点）
+
+- **改名必须同步改写引用**：引用只在代码视图可见，改名不同步会让程序静默
+  变成「引用未声明变量」。递归覆盖 `If`/`ElseIf`/`CountLoop`/`WhileLoop`
+  的 body（`rename_var_in_stmts`）。
+- **删除不清理引用**：自动删语句是静默改写程序语义，比留下显式错误更糟，
+  交给 `validate_program` 在编译/导出时如实报。
+- **`Var(name)` 有歧义**：控件名在 IR 里也以 `Var` 形态出现在命令实参位
+  （`取文本(姓名框)`）。变量改名只动 `Var`，不做位置语义推断——推错了会静默
+  改写行为。控件改名走的是「命令实参位」专用规则（既有实现）。
+- 名称去重 `变量1`/`变量2`…（`validate_program` 把重名当致命错误）；
+  预算 `MAX_VARIABLES = 64`，超限设 notice 不静默。
+
+### 只读 vs 可编辑的判断口径
+
+窗体设计尺寸（640×480）**刻意只读**：它是全局常量，运行舞台等比缩放与控件
+越界校验都按它判定；放开编辑要同时改画布换算与不变量三处。**宁可如实展示
+加一句说明，也不要给一个会破坏不变量的输入框**。同理数据条目是**派生**
+视图（控件 items / 变量集合），给可编辑输入框会让人以为数据有独立存储。
+
+## 2026-10-01 创建入口上移（用户质疑「新建都在快速插入里合理吗」）
+
+### 判断口径：创建入口应该贴着什么？
+
+- **底部全局块的问题不是丑，是三层不合理**：
+  ① 它已是从零开始的**唯一**创建通道，标签却叫「快速插入」（暗示还有正门）；
+  ② 常驻占左栏 **约 35% 高度**（800pt 窗口实测 256/736），而结构树才是那个
+  会长、会滚动的区域；③ **它是全局的**，而本 App 另外两处创建都是上下文相关
+  的（右栏「动作」页签建事件子程序、积木分类轨建语句）——同类操作两套范式。
+- **改法**：`group_create_action` 给分组头加 `+`，点开内联候选菜单。
+  **用过已有的 30pt 分组头行 = 零额外空间**。
+- **哪些组有「+」由 `group_can_create` 单点判定**：窗体/控件/变量/事件子程序
+  有；**本地数据没有**——条目从列表/表格控件的行**派生**，没有独立创建语义。
+  **宁可没有按钮，也不给一个点了没用的按钮。**
+
+### 内联展开 vs `@views.dropdown`
+
+- 框架的 `@views.dropdown(label, items, state~, on_toggle~, ...)` 自带一个
+  `@button.button` 锚点 + `DropdownState`——塞进 24pt 的树行会撑破行高。
+- 用**内联候选行**（与积木的语句插入面板同一手法）：展开时在该组子节点之后
+  插入若干与树行同高的行，读起来是「这一组可以加什么」的清单。
+
+### `tree_row` 加尾部动作的宽度纪律
+
+- 新参数 `trailing` / `trailing_width`；**尾宽必须计进宽度账**
+  （`gaps` 加一条、`label_width` 减 `trailing_width`）。
+- 这个文件已有**两次**同类教训：meta 写死 52 时「640×480」被裁成「64」；
+  尾宽漏算会让 meta 或「+」挤出面板右缘。
+
+### 测试边界陷阱（本轮又踩一次）
+
+- 断言「不越出左栏」时，**`LEFTBAR_WIDTH` 是宽度不是坐标**。左栏的绝对范围是
+  `[ICONBAR_WIDTH, ICONBAR_WIDTH + LEFTBAR_WIDTH]`。我第一版直接拿文字右缘
+  （265）与 `LEFTBAR_WIDTH`（232）比，把**正确布局判成了溢出**。
+  判之前先量一次实际值（探针实测 right=265 vs 面板右缘 280 = 合法）。
+
+### 更正：框架 tooltip 是可用的
+
+- **我先前记的「框架 Tooltip 没有视觉浮层、需要 portal」是错的**——
+  `moui/views/controls/control_focus_overlay.mbt:67` 的
+  `@views.tooltip(child, message, visible?)` 就是可用的定位浮层
+  （走 `presentation.popup_host` + 四向 `placement`），
+  `examples/excel/app/view_toolbar.mbt:162` 在用。
+- 状态栏提示仍是当前选择，但理由从「框架没有浮层」改成「图标簇共用一格状态
+  已够用，不必逐元素管 hover 状态」——**是取舍不是缺失**。
+- **教训：下「框架没有 X 能力」的结论前，先 grep 一遍 `moui/views/pkg.generated.mbti`
+  与 `examples/`**。这句话我写进了代码注释、计划 Decision log 和本文件三处，
+  全部回改了。
+
+### 危险的批量删除（本轮教训）
+
+- 用 `re.search(r"///\|\n(?:///.*\n)*fn NAME\(.*?\n\}\n\n", s, re.S)` 删函数时，
+  `.*?` 跨过了后续内容，**一次删掉 840 行**（文件 1166 → 326）。
+- 教训：**批量正则删除后立刻 `wc -l` 与 `git diff --stat` 核对行数**；
+  多行删除改用「先定位函数起点 + 找下一个顶层分隔标记」的显式边界，
+  并打印删掉的行数确认。所幸当时未提交，`git checkout` 可恢复——但那次恢复
+  也带走了本会话在**同一文件**里的未暂存改动（树行 SelectSide 接线），
+  必须重做。**跨会话的未提交改动要尽早 commit 或至少暂存。**

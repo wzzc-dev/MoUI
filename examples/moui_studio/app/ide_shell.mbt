@@ -19,6 +19,79 @@
 pub const TOPBAR_ACTION_GAP : Double = 6.0
 
 ///|
+/// 顶栏图标按钮的**实际渲染宽**。
+///
+/// 不能用更小的声明值：`@views.button` 的 `content_width` 是
+/// `max(declared, measured_text + padding_horizontal × 2)`，而
+/// `studio_theme` 的 `spacing_scale.lg = 16`，所以空标签按钮的**硬下限是
+/// 32**（实测：声明 26 渲染 32）。拖拽区预算按 26 算就会少算 6pt/个，
+/// 三个按钮少算 16pt，拖拽区直接盖住最左侧的运行按钮——只在原生无框窗口
+/// 复现，点运行变成拖窗口。这条正是既有回归测试抓到的。
+pub const TOPBAR_ICON_BUTTON_WIDTH : Double = 32.0
+
+///|
+/// 动作簇预算的安全余量。渲染宽与预算**恰好相等**时，任何文案变长或内垫
+/// 微调都会立刻让拖拽区盖住按钮；留一点余量让「低估」不可能发生
+/// （高估只少几个点可拖，低估直接废掉按钮——两种误差代价极不对称）。
+pub const TOPBAR_ACTIONS_SAFETY : Double = 8.0
+
+///|
+/// 撤销/重做快捷键。**必须两个修饰键各注册一份**：
+/// `KeyboardShortcut::matches` 是 `event.modifiers == self.modifiers` 的
+/// 精确相等比较，macOS 发 meta、Windows/Linux 发 control——只注册一个
+/// 就会有一整端按不动，而且本机测不出来。
+///
+/// 重做在 macOS 的主流口径是 `Cmd+Shift+Z`（`Cmd+Y` 是 Windows 习惯），
+/// 这里跟随平台习惯；两者都注册会让 Shift 组合与单 Shift 判别变复杂，
+/// 收益不抵成本。
+fn undo_shortcut(primary : Bool) -> @core.KeyboardShortcut {
+  if primary {
+    @core.KeyboardShortcut::new(
+      key="z",
+      modifiers=@core.KeyModifiers::new(meta=true),
+    )
+  } else {
+    @core.KeyboardShortcut::new(
+      key="z",
+      modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+    )
+  }
+}
+
+///|
+/// 命令面板快捷键（`Cmd+K` / `Ctrl+K`）。同样两个修饰键各一份。
+fn palette_shortcut(meta : Bool) -> @core.KeyboardShortcut {
+  if meta {
+    @core.KeyboardShortcut::new(
+      key="k",
+      modifiers=@core.KeyModifiers::new(meta=true),
+    )
+  } else {
+    @core.KeyboardShortcut::new(
+      key="k",
+      modifiers=@core.KeyModifiers::new(control=true),
+    )
+  }
+}
+
+///|
+/// `Ctrl` 变体（Windows/Linux）。与 `undo_shortcut` 成对使用：
+/// 同一个动作注册两条 shortcut 链，覆盖两个平台的修饰键。
+fn undo_shortcut_ctrl(primary : Bool) -> @core.KeyboardShortcut {
+  if primary {
+    @core.KeyboardShortcut::new(
+      key="z",
+      modifiers=@core.KeyModifiers::new(control=true),
+    )
+  } else {
+    @core.KeyboardShortcut::new(
+      key="z",
+      modifiers=@core.KeyModifiers::new(control=true, shift=true),
+    )
+  }
+}
+
+///|
 /// 运行/停止芯片标签：运行中变停止。宽度计算与渲染共用同一来源。
 fn run_label(model : Model, t : @i18n.Translator) -> String {
   if app_running(model) {
@@ -38,10 +111,11 @@ pub fn topbar_actions_width(model : Model, t : @i18n.Translator) -> Double {
   topbar_chip_bound(run_label(model, t), 56.0) +
   topbar_chip_bound(text(t, "app.run.step"), 48.0) +
   topbar_chip_bound(text(t, "app.topbar.compile"), 72.0) +
+  TOPBAR_ICON_BUTTON_WIDTH * 3.0 +
   34.0 +
   28.0 +
-  28.0 +
-  TOPBAR_ACTION_GAP * 5.0
+  TOPBAR_ACTION_GAP * 7.0 +
+  TOPBAR_ACTIONS_SAFETY
 }
 
 ///|
@@ -115,6 +189,29 @@ pub fn ide_top_bar(
       false,
       topbar_chip_bound(text(t, "app.topbar.compile"), 72.0),
     ),
+    // 撤销/重做：必须有键位（Ctrl/Cmd+Z、Ctrl/Cmd+Shift+Z），且两个修饰键
+    // 各注册一份——`KeyboardShortcut::matches` 是修饰键**精确相等**，
+    // macOS 走 meta、Windows/Linux 走 control，只注册一个就会有一端失灵。
+    shortcut_icon_button(
+      ChevronLeft,
+      text(t, "app.edit.undo"),
+      Undo,
+      undo_shortcut(true),
+      TOPBAR_ICON_BUTTON_WIDTH,
+      TOPBAR_ACTION_HEIGHT,
+      14.0,
+      alt_shortcut=Some(undo_shortcut_ctrl(true)),
+    ),
+    shortcut_icon_button(
+      ChevronRight,
+      text(t, "app.edit.redo"),
+      Redo,
+      undo_shortcut(false),
+      TOPBAR_ICON_BUTTON_WIDTH,
+      TOPBAR_ACTION_HEIGHT,
+      14.0,
+      alt_shortcut=Some(undo_shortcut_ctrl(false)),
+    ),
     pill(
       if model.language is ZhHans {
         "中"
@@ -124,14 +221,17 @@ pub fn ide_top_bar(
       ide_text_muted(),
       34.0,
     ),
-    icon_button(
+    // 命令面板：Ctrl/Cmd+K。面板底部那句「Ctrl/Cmd + K 打开命令面板」
+    // 此前是**教了一个没绑的键**——现在这条通路真的接上了。
+    shortcut_icon_button(
       Search,
       text(t, "app.command.open"),
-      false,
       CommandPaletteOpen,
-      28.0,
-      26.0,
+      palette_shortcut(true),
+      TOPBAR_ICON_BUTTON_WIDTH,
+      TOPBAR_ACTION_HEIGHT,
       14.0,
+      alt_shortcut=Some(palette_shortcut(false)),
     ),
     icon_button(
       Settings,
@@ -375,6 +475,124 @@ pub fn ide_left_panel(
 }
 
 ///|
+/// 分组头的「+」动作：返回（视图, 占宽）。视图为 `None` 表示该组没有可
+/// 创建的对象——本地数据是从列表/表格控件的行**派生**的，没有独立创建
+/// 语义，所以不给「+」，而不是给一个点了没用的按钮。
+///
+/// **为什么放在分组头**：创建入口应该贴着它创建的东西。本 App 另外两处
+/// 创建都是上下文相关的——右栏「动作」页签建事件子程序、积木分类轨建语句
+/// ——只有控件/变量曾经挤在面板底部一个全局按钮块里（占掉左栏约 35% 高度，
+/// 而树才是那个会长、会滚动的区域）。
+///
+/// 展开态用内联菜单（与积木的语句插入面板同一手法），不用 `@views.dropdown`：
+/// 后者自带按钮锚点与 `DropdownState`，塞进 24pt 的树行会撑破行高。
+fn group_create_action(
+  group : String,
+  t : @i18n.Translator,
+) -> (@moui.View[Msg]?, Double) {
+  if !group_can_create(group) {
+    return (None, 0.0)
+  }
+  let action = @views.container(
+      @views.center(
+        @views.text(
+          "+",
+          theme=studio_theme(),
+          role=Caption,
+          width=14.0,
+          height=14.0,
+        ).foreground(ide_accent()),
+        width=18.0,
+        height=16.0,
+      ),
+      background=ide_panel(),
+      corner_radius=3.0,
+      width=18.0,
+      height=16.0,
+      padding=0.0,
+    )
+    .on_tap(ToggleTreeCreate(group))
+    .accessibility_label(
+      if group == tree_group_variables() {
+        text(t, "app.tree.create.variable")
+      } else if group == tree_group_controls() {
+        text(t, "app.tree.create.control")
+      } else if group == tree_group_handlers() {
+        text(t, "app.tree.create.handler")
+      } else {
+        text(t, "app.tree.create.window")
+      },
+    )
+  (Some(action), 18.0)
+}
+
+///|
+/// 该分组是否有「新建」语义。本地数据没有（派生视图）。
+pub fn group_can_create(group : String) -> Bool {
+  group == tree_group_window() ||
+  group == tree_group_controls() ||
+  group == tree_group_variables() ||
+  group == tree_group_handlers()
+}
+
+///|
+/// 分组头菜单展开时，在该组子节点**之后**插入的候选行。
+/// 返回空数组 = 该组菜单没展开（不占高度）。
+fn group_create_menu(
+  model : Model,
+  group : String,
+  t : @i18n.Translator,
+  width : Double,
+) -> Array[@moui.View[Msg]] {
+  if model.tree_create_group != group {
+    return []
+  }
+  let rows : Array[@moui.View[Msg]] = []
+  let add = fn(label : String, message : Msg) {
+    rows.push(
+      @views.container(
+        @views.padding_edges(
+          @views.text(
+            "+ " + label,
+            theme=studio_theme(),
+            width=(width - 44.0).max(60.0),
+            height=18.0,
+            align=TextStart,
+          ).foreground(ide_accent()),
+          left=20.0,
+          right=8.0,
+        ),
+        background=ide_panel_alt(),
+        height=TREE_ROW_HEIGHT,
+        width~,
+        padding=0.0,
+      ).on_tap(message),
+    )
+  }
+  if group == tree_group_controls() {
+    // 6 种控件**全部**列出：与 `ControlKind` 枚举等长。曾经只有 4 种，
+    // 选择框与表格只能靠 AI 提案或打开模板才会出现。
+    add(text(t, "control.button"), AddControl(@ir.Button))
+    add(text(t, "control.label"), AddControl(@ir.Label))
+    add(text(t, "control.text_field"), AddControl(@ir.TextField))
+    add(text(t, "control.check_box"), AddControl(@ir.CheckBox))
+    add(text(t, "control.list_box"), AddControl(@ir.ListBox))
+    add(text(t, "control.table"), AddControl(@ir.Table))
+  } else if group == tree_group_variables() {
+    add(text(t, "app.tree.create.variable"), AddVariable)
+  } else if group == tree_group_handlers() {
+    // 子程序挂在（控件, 事件）对上：先选一个控件，右栏「动作」页签里
+    // 列出该控件支持的事件，点未建的那个即建。这里给一条直达引导。
+    add(text(t, "app.tree.create.handler"), SelectSide(SideWindow))
+  } else if group == tree_group_window() {
+    // 窗体只有「标题」一处可改，已经在右栏属性面里——给一条直达入口，
+    // 避免「分组头有 + 但点开是空的」。
+    add(text(t, "app.tree.create.window_title"), SelectSide(SideWindow))
+  }
+  rows
+}
+
+///|
 /// 程序结构树：分组头 + 行。搜索非空时全部展开。
 fn tree_view_ide(
   model : Model,
@@ -388,6 +606,7 @@ fn tree_view_ide(
   for group in groups {
     let children = group_children(nodes, group)
     let expanded = tree_group_expanded(model, group)
+    let action = group_create_action(group, t)
     rows.push(
       tree_row(
         text(t, tree_group_label_key(group)),
@@ -399,12 +618,18 @@ fn tree_view_ide(
         None,
         Some(ToggleTreeGroup(group)),
         width,
+        trailing=action.0,
+        trailing_width=action.1,
       ),
     )
     if expanded {
       for child in children {
         rows.push(tree_node_row(model, child, width))
       }
+    }
+    // 分组头的「+」菜单：展开时紧跟该组子节点之后（贴着它创建的东西）。
+    for extra in group_create_menu(model, group, t, width) {
+      rows.push(extra)
     }
   }
   if rows.length() == 0 {
@@ -426,17 +651,18 @@ fn tree_node_row(
   node : TreeNode,
   width : Double,
 ) -> @moui.View[Msg] {
-  let selected = match node.kind {
-    TnControl => model.selected_control == node.select_key
-    TnHandler => model.selected_handler == node.select_key
-    _ => false
-  }
+  // 选中态与点击动作都按节点种类分派。**窗体 / 变量 / 数据文件此前没有
+  // `on_tap`，点了完全没反应**；变量与数据行的 `select_key` 还曾是空串。
+  // 选中判据集中在 `tree_node_selected`，避免视图层与右栏各写一份漂移。
+  let selected = tree_node_selected(model, node.kind, node.select_key)
   let on_click = match node.kind {
     TnControl => Some(SelectControl(node.select_key))
     TnHandler => Some(SelectHandler(node.select_key))
-    _ => None
+    TnWindow => Some(SelectSide(SideWindow))
+    TnVariable => Some(SelectSide(SideVariable(node.select_key)))
+    TnDataFile => Some(SelectSide(SideData(node.select_key)))
+    TnGroup => None
   }
-  ignore(model)
   tree_row(
     node.label,
     node.meta,
@@ -565,12 +791,7 @@ fn preview_height(preview : String) -> Int {
 pub fn bottom_strip_height(model : Model) -> Double {
   let rows = recent_tail(model.recent_changes, RECENT_STRIP_ROWS).length()
   let row_count = if rows == 0 { 1 } else { rows }
-  PANEL_HEAD_HEIGHT +
-  row_count.to_double() * TREE_ROW_HEIGHT +
-  PANEL_HEAD_HEIGHT +
-  2.0 * 26.0 +
-  4.0 +
-  8.0
+  PANEL_HEAD_HEIGHT + row_count.to_double() * TREE_ROW_HEIGHT + 4.0
 }
 
 ///|
@@ -649,30 +870,16 @@ fn bottom_strip(
       )
     }
   }
-  // 快速插入：选中控件为空时这四个按钮是唯一的「从零开始」通道，
-  // 所以恒显示（不做选中态判断），点击即 AddControl（落到默认槽位）。
-  let insert_head = panel_head(text(t, "app.insert.title"), "", [], width)
-  let inserts : Array[@moui.View[Msg]] = [
-    quick_insert(t, @ir.Button, "control.button", width),
-    quick_insert(t, @ir.Label, "control.label", width),
-    quick_insert(t, @ir.ListBox, "control.list_box", width),
-    quick_insert(t, @ir.TextField, "control.text_field", width),
-  ]
+  // 创建入口已上移到**分组头**（见 `group_create_action`）——底部不再有
+  // 全局按钮块。这是有意的：底部块占掉左栏约 35% 高度，而结构树才是那个
+  // 会长、会滚动的区域；创建入口贴着它创建的东西，也与本 App 另外两处
+  // 创建入口（右栏「动作」页签建子程序、积木分类轨建语句）保持同一范式。
   let strip_height = bottom_strip_height(model)
   @views.container(
-    @views.column(
-      [
-        header,
-        @views.column(rows, spacing=0.0),
-        insert_head,
-        @views.padding_xy(
-          @views.grid(inserts, columns=2, row_spacing=4.0, column_spacing=4.0),
-          horizontal=8.0,
-          vertical=4.0,
-        ),
-      ],
-      spacing=0.0,
-    ).frame(width~, height=strip_height),
+    @views.column([header, @views.column(rows, spacing=0.0)], spacing=0.0).frame(
+      width~,
+      height=strip_height,
+    ),
     background=ide_panel(),
     width~,
     height=strip_height,
@@ -702,40 +909,6 @@ fn recent_tail(
     index = index - 1
   }
   tail
-}
-
-///|
-fn quick_insert(
-  t : @i18n.Translator,
-  kind : @ir.ControlKind,
-  key : String,
-  width : Double,
-) -> @moui.View[Msg] {
-  // 手搓而不用 @views.button：button 的 `height` 进的是 `min_size`，
-  // 真实高度 = max(min_size.height, 文本高 + spacing_scale.sm × 2)，
-  // 所以 height=26 会渲染成 36，把底部的「快速插入」两行挤出面板下缘
-  // （与右栏「快速操作」同一个坑，那里也是手搓的）。
-  let cell_width = (width - 22.0) / 2.0
-  // 「+ 按钮」而不是「按钮」：这排按钮的语义是**插入动作**，不是分类标签
-  // （设计稿 #qaRow 的 .qabtn 同样带前缀）。前缀走 i18n，不写死 '+ '。
-  let label = text_with(t, "app.insert.chip", [("name", text(t, key))])
-  @views.container(
-    @views.center(
-      @views.text(
-        label,
-        theme=studio_theme(),
-        width=(cell_width - 10.0).max(20.0),
-        height=16.0,
-      ).foreground(ide_accent()),
-      width=cell_width,
-      height=26.0,
-    ),
-    background=ide_panel_alt(),
-    corner_radius=4.0,
-    width=cell_width,
-    height=26.0,
-    padding=0.0,
-  ).on_tap(AddControl(kind))
 }
 
 // ============================================================================

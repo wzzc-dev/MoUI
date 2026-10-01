@@ -108,9 +108,14 @@ test "shell lays out all seven chrome bands at 1280x800" {
   assert_true(shell_has_text(commands, "变量"))
   assert_true(shell_has_text(commands, "事件子程序"))
   assert_true(shell_has_text(commands, "本地数据"))
-  // 左栏底部
+  // 左栏底部：只剩「最近修改」（创建入口已上移到分组头）
   assert_true(shell_has_text(commands, "最近修改"))
-  assert_true(shell_has_text(commands, "快速插入"))
+  // 分组头「+」的可创建性：本地数据没有（派生视图）
+  assert_true(group_can_create(tree_group_controls()))
+  assert_true(group_can_create(tree_group_variables()))
+  assert_true(group_can_create(tree_group_window()))
+  assert_true(group_can_create(tree_group_handlers()))
+  assert_false(group_can_create(tree_group_data()))
   // 中心：实时应用 + 积木
   assert_true(shell_has_text(commands, "实时应用"))
   assert_true(shell_has_text(commands, "积木"))
@@ -668,36 +673,65 @@ test "tree row meta stays inside the panel" {
 }
 
 ///|
-/// 左栏底部的快速插入两行必须落在窗格内（不被底栏压住）。
-/// 曾经的 bug：@views.button 的 height 是**最小**高度，26 实际渲染 36，
-/// 两行溢出到面板外。
-test "quick insert buttons fit inside the left panel" {
+/// 分组头「+」菜单：展开后列出该组可创建的对象，且**与枚举等长**
+/// （控件 6 种全在）、候选行不越出左栏。
+///
+/// 这条替代了旧的「快速插入格子必须落在窗格内」：创建入口从面板底部的
+/// 全局按钮块上移到分组头之后，要守的性质变成「菜单项齐 + 不溢出」。
+test "group create menu lists every control kind inside the panel" {
   let model = initial_model()
-  let commands = shell_draw(model, 1280.0, 800.0)
-  let mut lowest = 0.0
-  let mut seen = 0
+  let expanded = { ..model, tree_create_group: tree_group_controls(), }
+  let commands = shell_draw(expanded, 1280.0, 800.0)
+  let t = translator(expanded)
+  for
+    key in [
+      "control.button", "control.label", "control.text_field", "control.check_box",
+      "control.list_box", "control.table",
+    ] {
+    assert_true(shell_has_text(commands, "+ " + text(t, key)))
+  }
+  // 候选行不得越出左栏右缘。左栏的**绝对**范围是
+  // [ICONBAR_WIDTH, ICONBAR_WIDTH + LEFTBAR_WIDTH]——`LEFTBAR_WIDTH` 是宽度
+  // 不是坐标，直接拿 x 与它比会把正确布局判成溢出（实测文字右缘 265 对
+  // 面板右缘 280，是合法的）。这个陷阱在本仓已有先例（面板头/树行）。
+  let panel_right = ICONBAR_WIDTH + LEFTBAR_WIDTH
   for command in commands {
-    let rect = match command {
-      @core.FillRect(r, _) => Some(r)
-      @core.FillRoundedRect(r, _) => Some(r.rect)
-      @core.FillRoundedRectBrush(r, _) => Some(r.rect)
-      _ => None
-    }
-    match rect {
-      Some(r) =>
-        // 快速插入按钮：宽 105、高 26、在左栏内
-        if (r.size.width - 105.0).abs() < 1.0 &&
-          (r.size.height - 26.0).abs() < 1.0 {
-          lowest = (r.origin.y + r.size.height).max(lowest)
-          seen = seen + 1
+    match command {
+      @core.DrawCommand::DrawText(run) =>
+        if run.text.has_prefix("+ ") {
+          assert_true(run.frame.origin.x + run.frame.size.width <= panel_right)
         }
-      None => ()
+      _ => ()
     }
   }
-  assert_eq(seen, 4)
-  // 工作区底边（内容行结束处）
-  let row_bottom = 800.0 - STATUSBAR_HEIGHT - PANEL_HEAD_HEIGHT - 2.0
-  assert_true(lowest <= row_bottom)
+}
+
+///|
+/// 变量组菜单必须给出「新建变量」入口（此前没有任何地方能建变量）。
+test "variable group menu offers the new-variable entry" {
+  let model = initial_model()
+  let expanded = { ..model, tree_create_group: tree_group_variables(), }
+  let commands = shell_draw(expanded, 1280.0, 800.0)
+  let t = translator(expanded)
+  assert_true(
+    shell_has_text(commands, "+ " + text(t, "app.tree.create.variable")),
+  )
+}
+
+///|
+/// 本地数据组**没有**「+」：条目从列表/表格控件的行派生，没有独立创建
+/// 语义——不给一个点了没用的按钮，菜单也不该冒出候选行。
+test "data group offers no create menu" {
+  let model = initial_model()
+  let expanded = { ..model, tree_create_group: tree_group_data(), }
+  let commands = shell_draw(expanded, 1280.0, 800.0)
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText(run) =>
+        assert_false(run.text.has_prefix("+ "))
+      _ => ()
+    }
+  }
 }
 
 ///|
@@ -1088,4 +1122,32 @@ test "thread cards never push the composer out of the card" {
       )
     }
   }
+}
+
+///|
+/// 悬停提示：图标按钮没有文字，说明必须能到达状态栏（否则 6 个纯图标
+/// 对新手完全不可发现）。这条锁定「HoverHint 写进 model → 状态栏渲染它」
+/// 这条件，而不是只锁 update 的字段赋值——仓库栽过「update 断言全绿、
+/// 视图根本没读字段」的跟头（见 memories 的 `paint_signature` 一课）。
+test "hover hint reaches the status bar" {
+  let base = initial_model()
+  assert_eq(base.hover_hint, "")
+  let hovering = apply_shell(base, HoverHint("程序结构"))
+  assert_eq(hovering.hover_hint, "程序结构")
+  // 视图层必须真的渲染它：在状态栏区域找得到这段文字
+  let commands = shell_draw(hovering, 1440.0, 900.0)
+  let mut found = false
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText(run) =>
+        if run.text.contains("程序结构") {
+          found = true
+        }
+      _ => ()
+    }
+  }
+  assert_true(found)
+  // 离开即还原（悬停是瞬态）
+  let left = apply_shell(hovering, HoverHint(""))
+  assert_eq(left.hover_hint, "")
 }

@@ -401,6 +401,14 @@ pub fn icon_button(
     padding=0.0,
   )
   .accessibility_label(tip)
+  // 悬停把说明写进状态栏：图标按钮没有文字，状态栏提示是 IDE 的成熟口径
+  // （VS Code/IDEA 的图标悬停解释区），且对键盘用户同样可达。
+  //
+  // 注：框架**有**可用的 `@views.tooltip`（见 controls/control_focus_overlay.mbt，
+  // 走 presentation 定位浮层，`examples/excel` 在用）。这里不用它，是因为
+  // tooltip 需要调用方自己持有 `visible` 状态与逐元素的 hover 追踪，而顶栏
+  // 图标簇共用一处状态栏格已经够用；换成浮层是可选优化，不是能力缺失。
+  .on_hover(active => HoverHint(if active { tip } else { "" }))
   .on_tap(on_click)
 }
 
@@ -441,7 +449,77 @@ pub fn ghost_icon_button(
     padding=0.0,
   )
   .accessibility_label(tip)
+  // 悬停把说明写进状态栏：图标按钮没有文字，状态栏提示是 IDE 的成熟口径
+  // （VS Code/IDEA 的图标悬停解释区），且键盘用户同样可达。
+  // 框架另有可用的 `@views.tooltip`（定位浮层，`examples/excel` 在用）——
+  // 这里不用它是因为整簇图标共用一处状态栏格已经够用，不是能力缺失。
+  .on_hover(active => HoverHint(if active { tip } else { "" }))
   .on_tap(on_click)
+}
+
+///|
+/// 带键盘快捷键的图标按钮（撤销/重做这类「必须有键位」的动作）。
+///
+/// **为什么不用 `icon_button` + `.keyboard_shortcut(...)`**：runtime 的
+/// 快捷键通路匹配后走的是 `activate_primary` → 给第一个子节点合成一个
+/// **Enter 键盘事件**（`input_keyboard.mbt`），而 `on_tap` 只认 Pointer
+/// 事件（`modifier_event.mbt` 的 `OnTapModifier` 分支）。所以
+/// `keyboard_shortcut` 套在 `on_tap` 外壳上**永远不会触发**。
+/// 这里改用真正的 `@views.button`——它的 event 分支显式处理
+/// `Enter`/`Space`（`views/button/button.mbt`），是唯一对合成事件有反应的载体；
+/// 图标盒由外层容器画，视觉与 `icon_button` 一致。
+///
+/// 快捷键徽标不进顶栏（24pt 高度放不下），键位在命令面板与快捷键表可见
+/// ——IDEA 的口径也是标题栏图标不挂徽标。
+pub fn shortcut_icon_button(
+  icon : @style.IconName,
+  tip : String,
+  on_click : Msg,
+  shortcut : @core.KeyboardShortcut,
+  width : Double,
+  height : Double,
+  icon_size : Double,
+  alt_shortcut? : @core.KeyboardShortcut? = None,
+) -> @moui.View[Msg] {
+  @views.stack([
+    @views.container(
+      @views.center(
+        @views.icon(icon, size=icon_size, color=ide_text_muted()),
+        width~,
+        height~,
+      ),
+      background=ide_panel_alt(),
+      corner_radius=4.0,
+      width~,
+      height~,
+      padding=0.0,
+    ),
+    shortcut_button_shell(on_click, shortcut, alt_shortcut, width, height),
+  ]).accessibility_label(tip)
+}
+
+///|
+/// 快捷键按钮的载体：`@views.button`（唯一对合成 Enter 有反应的控件）+
+/// 一条或两条 shortcut 链。两条覆盖 meta（macOS）与 control（Windows/Linux）。
+fn shortcut_button_shell(
+  on_click : Msg,
+  shortcut : @core.KeyboardShortcut,
+  alt_shortcut : @core.KeyboardShortcut?,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let base = @views.button(
+    "",
+    on_click~,
+    variant=Ghost,
+    theme=studio_theme(),
+    width~,
+    height~,
+  ).keyboard_shortcut(shortcut)
+  match alt_shortcut {
+    Some(alt) => base.keyboard_shortcut(alt)
+    None => base
+  }
 }
 
 ///|
@@ -644,6 +722,8 @@ pub fn tree_row(
   on_click : Msg?,
   on_toggle : Msg?,
   width : Double,
+  trailing? : @moui.View[Msg]? = None,
+  trailing_width? : Double = 0.0,
 ) -> @moui.View[Msg] {
   let cells : Array[@moui.View[Msg]] = []
   // 展开箭头：只有分组行有；叶子占位保持缩进对齐
@@ -692,10 +772,16 @@ pub fn tree_row(
   // 52 装不下「640×480」（实测 68），元信息会溢出到面板外被裁成「64」。
   let meta_width = TREE_META_WIDTH
   let gap = 2.0
-  let gaps = if meta != "" { 2.0 } else { 1.0 }
+  // 尾部动作（分组头的「+」）也占一格加一条间距——**必须进宽度账**，
+  // 漏算会让 meta 溢出到面板外被裁（这个文件里已有两次同类教训：
+  // meta 写死 52 时「640×480」被裁成「64」，尾部动作漏算同源）。
+  let has_trailing = trailing is Some(_)
+  let gaps = (if meta != "" { 2.0 } else { 1.0 }) +
+    (if has_trailing { 1.0 } else { 0.0 })
   let label_width = (available -
   arrow_width -
   meta_width * (if meta != "" { 1.0 } else { 0.0 }) -
+  trailing_width -
   gap * gaps).max(40.0)
   cells.push(
     @views.text(
@@ -716,6 +802,10 @@ pub fn tree_row(
         align=TextEnd,
       ).foreground(ide_text_faint()),
     )
+  }
+  match trailing {
+    Some(action) => cells.push(action)
+    None => ()
   }
   let row = @views.container(
     @views.padding_edges(

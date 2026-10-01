@@ -565,6 +565,11 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       )
     CompileStopped =>
       // 停止真编译：只清当前报告/忙态，不切轨、不自动回退解释轨。
+      //
+      // 注意这**不终止 worker 进程**——编译轨的 `moon` 工具链进程在 worker
+      // 上跑，UI 侧只放弃等待与展示。真正的取消需要执行器支持，本版不做；
+      // 按钮的语义是「不再等这次编译」。完成后到达的结果会被
+      // `compile_submit_needed` 之外的回执路径正常处理（报告照旧落库）。
       Some(
         (
           {
@@ -576,6 +581,7 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
+
     // 编译诊断行号 → IR 语句路径 → 积木：先选中诊断所属子程序，
     // 再按路径定位块（路径是稳定坐标，链下标随展开块变化）。
     CompileJump(line) =>

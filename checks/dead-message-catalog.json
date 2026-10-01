@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "description": "Dead-UI gate catalog: TEA Msg enums whose variants must each have a construction site outside the declaration file. Waivers carry a reason and ratchet down. See tools/moui/validate_dead_messages.",
+  "enums": [
+    {
+      "name": "Msg",
+      "path": "examples/moui_studio/app/model.mbt",
+      "scanRoots": [
+        "examples/moui_studio/app"
+      ],
+      "waivers": [
+        {
+          "variant": "WindowClose",
+          "reason": "Platform-owned window request kept in the message protocol for native hosts; the immersive shell uses the system traffic lights instead of self-drawn buttons (see memories/repo/moui-studio.md), so no view constructs it."
+        },
+        {
+          "variant": "WindowMinimize",
+          "reason": "Same as WindowClose: reserved for the platform window-request protocol, deliberately not self-drawn."
+        },
+        {
+          "variant": "WindowZoom",
+          "reason": "WindowRequest has no zoom/maximize variant, so a self-drawn zoom button would be dead UI; the variant stays declared for protocol symmetry."
+        },
+        {
+          "variant": "WindowDragBy",
+          "reason": "Window dragging is a platform-local concern (docs/invariants.md P10) routed through WindowDragRegionSource, not a queued WindowRequest."
+        }
+      ]
+    }
+  ]
+}

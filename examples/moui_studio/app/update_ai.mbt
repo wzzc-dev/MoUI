@@ -435,13 +435,6 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
-    ToggleProviderSettings =>
-      Some(
-        (
-          { ..model, provider_settings_open: !model.provider_settings_open, },
-          @moui.Effect::none(),
-        ),
-      )
     _ => None
   }
 }

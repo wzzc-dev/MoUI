@@ -10,9 +10,15 @@ pub fn compile_action_bar(
   t : @i18n.Translator,
 ) -> @moui.View[Msg] {
   let trigger = if model.compile_busy {
+    // 编译进行中 = **停止**（不是再点一次编译）：旧实现把忙碌态的按钮也接到
+    // `CompileRun`，点它只会被 `compile_submit_needed` 去重挡掉——按钮看起来
+    // 是活的，实际什么都不做。`CompileStopped` 早已有处理器却无人触发
+    // （死消息，由 validate-dead-messages 抓出），`app.compile.cancel` 文案
+    // 也早已在 catalog 里没被使用。这里把两端接起来：清报告与忙态、
+    // 不切轨、不自动回退解释轨（与既有语义一致）。
     @views.button(
-      text(t, "app.compile.running"),
-      on_click=CompileRun,
+      text(t, "app.compile.cancel"),
+      on_click=CompileStopped,
       variant=Tonal,
       width=140.0,
     )

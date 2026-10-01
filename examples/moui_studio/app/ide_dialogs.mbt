@@ -514,8 +514,19 @@ pub fn ide_status_bar(
   }
   let all = cells_final
   all.push(run_cell)
+  // 悬停提示优先占位：图标悬停时状态栏左端显示该图标的说明，离开即还原。
+  // 放在最前而不是最后：状态栏尾格在窄窗被裁，提示不能被裁掉。
+  let cells_with_hint = if model.hover_hint == "" {
+    all
+  } else {
+    let hinted : Array[(String, Int)] = [(model.hover_hint, 0)]
+    for cell in all {
+      hinted.push(cell)
+    }
+    hinted
+  }
   @views.container(
-    status_cells(all, width),
+    status_cells(cells_with_hint, width),
     background=ide_panel_alt(),
     height=STATUSBAR_HEIGHT,
     padding=0.0,

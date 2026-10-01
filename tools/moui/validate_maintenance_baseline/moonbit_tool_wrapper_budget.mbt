@@ -38,6 +38,7 @@ fn moonbit_tool_wrapper_budgets() -> Array[WrapperBudget] {
       path: "scripts/validate-viewnode-declaration-coverage.mjs",
       max_lines: 9,
     },
+    { path: "scripts/validate-dead-messages.mjs", max_lines: 9, },
     {
       path: "scripts/validate-web-runtime-handoff-manifest.mjs",
       max_lines: 28,

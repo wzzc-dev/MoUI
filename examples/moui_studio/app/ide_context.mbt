@@ -231,16 +231,42 @@ fn context_head(
   t : @i18n.Translator,
   width : Double,
 ) -> @moui.View[Msg] {
-  let (name, kind) = match find_selected_control(model) {
-    Some(control) => (control.name, text(t, control_kind_key(control.kind)))
+  // 四条槽的优先级：非控件对象 → 控件 → 子程序 → 无。
+  // `side_target` 排在最前是因为它只在「用户点了窗体/变量/数据行」时被
+  // 设置，而那三条入口已经清掉了控件与子程序槽（`select_target` 漏斗），
+  // 所以这里不会出现「同时有效」的歧义。
+  let (name, kind) = match model.side_target {
+    Some(SideWindow) => (model.program.window.title, text(t, "app.ctx.window"))
+    Some(SideVariable(variable_name)) =>
+      (
+        variable_name,
+        match selected_variable(model) {
+          Some(_) => text(t, "app.ctx.variable")
+          // 变量被删掉后槽还指着旧名字：如实显示「已不存在」而不是
+          // 继续显示一个幽灵对象。
+          None => text(t, "app.ctx.gone")
+        },
+      )
+    Some(SideData(file_name)) =>
+      (
+        file_name,
+        match selected_data_file(model) {
+          Some(_) => text(t, "app.ctx.data")
+          None => text(t, "app.ctx.gone")
+        },
+      )
     None =>
-      match current_handler(model) {
-        Some(handler) =>
-          (
-            "\{handler.control_name}.\{handler.event.tag()}",
-            text(t, "app.ctx.handler"),
-          )
-        None => (text(t, "app.ctx.none"), "")
+      match find_selected_control(model) {
+        Some(control) => (control.name, text(t, control_kind_key(control.kind)))
+        None =>
+          match current_handler(model) {
+            Some(handler) =>
+              (
+                "\{handler.control_name}.\{handler.event.tag()}",
+                text(t, "app.ctx.handler"),
+              )
+            None => (text(t, "app.ctx.none"), "")
+          }
       }
   }
   // 行内布局（对齐设计稿 `.ctxsel`）：`对象名 + 清除 ✕` 靠左成组，
@@ -383,6 +409,14 @@ fn context_props(
   t : @i18n.Translator,
   width : Double,
 ) -> @moui.View[Msg] {
+  // 非控件对象（窗体/变量/数据）没有「名称/文本/位置/尺寸」四件套，
+  // 各给一套贴身的属性。这三类此前点了树行**完全没反应**，属性面是空的。
+  match model.side_target {
+    Some(SideWindow) => return window_props(model, t, width)
+    Some(SideVariable(_)) => return variable_props(model, t, width)
+    Some(SideData(_)) => return data_props(model, t, width)
+    None => ()
+  }
   match find_selected_control(model) {
     None => empty_hint(text(t, "app.inspector.none"), width, 120.0)
     Some(control) => {
@@ -985,4 +1019,160 @@ fn ai_action_chip(
     height~,
     padding=0.0,
   ).on_tap(GenerateProposal)
+}
+
+// ============================================================================
+// 非控件对象的属性面板（窗体 / 变量 / 数据）
+// ============================================================================
+
+///|
+/// 窗体属性：标题 + 设计尺寸。尺寸用**只读**文本：设计坐标系（640×480）
+/// 目前是全局常量 `@ir.DESIGN_WIDTH/HEIGHT`，运行舞台按它等比缩放；
+/// 允许编辑会与画布/舞台换算、控件越界校验（`InvalidControlRect` 按同一
+/// 常量判定）三处脱节。v1 先如实展示，不给一个会破坏不变量的输入框。
+fn window_props(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let field_width = (width - 90.0).max(80.0)
+  @views.column(
+    [
+      field_label(t, "app.inspector.window_title", width),
+      @views.text_field(
+        model.program.window.title,
+        on_input=value => SetWindowTitle(value),
+        width=field_width,
+        height=FIELD_HEIGHT,
+      ),
+      field_label(t, "app.inspector.window_size", width),
+      kv_row(
+        text(t, "app.inspector.design_size"),
+        "\{@ir.DESIGN_WIDTH} × \{@ir.DESIGN_HEIGHT}",
+        width,
+        true,
+      ),
+      hint_lines_view(
+        text(t, "app.inspector.window_size_hint"),
+        width,
+        ide_text_faint(),
+        3,
+      ),
+    ],
+    spacing=6.0,
+    align=Start,
+  )
+}
+
+///|
+/// 变量属性：名称 + 初值 + 删除。名称与初值都即时写回 IR，改名会同步
+/// 改写所有引用（见 `rename_variable`）。
+fn variable_props(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let variable = match selected_variable(model) {
+    Some(variable) => variable
+    None => return empty_hint(text(t, "app.inspector.gone"), width, 120.0)
+  }
+  let field_width = (width - 90.0).max(80.0)
+  @views.column(
+    [
+      field_label(t, "app.inspector.name", width),
+      @views.text_field(
+        variable.name,
+        on_input=value => RenameVariable(variable.name, value),
+        width=field_width,
+        height=FIELD_HEIGHT,
+      ),
+      field_label(t, "app.inspector.init", width),
+      @views.text_field(
+        variable.init,
+        on_input=value => SetVariableInit(variable.name, value),
+        width=field_width,
+        height=FIELD_HEIGHT,
+      ),
+      hint_lines_view(
+        text(t, "app.inspector.variable_hint"),
+        width,
+        ide_text_faint(),
+        2,
+      ),
+      action_chip(
+        text(t, "app.inspector.delete_variable"),
+        DeleteVariable(variable.name),
+        Quiet,
+        28.0,
+      ),
+    ],
+    spacing=6.0,
+    align=Start,
+  )
+}
+
+///|
+/// 数据条目属性：来源 + 只读预览。
+///
+/// 数据条目是从程序**派生**的（列表/表格控件的 `items`，或变量集合），
+/// 不是独立实体——所以这里是**只读**视图，编辑入口回到来源控件本身
+/// （选中该控件后在同一个属性页签改 items，或改程序语句）。
+/// 给一个能改的输入框会让人以为数据有独立存储。
+fn data_props(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let entry = match selected_data_file(model) {
+    Some(entry) => entry
+    None => return empty_hint(text(t, "app.inspector.gone"), width, 120.0)
+  }
+  @views.column(
+    [
+      field_label(t, "app.inspector.data_source", width),
+      kv_row(text(t, "app.inspector.name"), entry.name, width, false),
+      kv_row(text(t, "app.inspector.data_meta"), entry.meta, width, true),
+      kv_row(
+        text(t, "app.inspector.data_access"),
+        if entry.locked {
+          text(t, "app.data.readonly")
+        } else {
+          text(t, "app.data.live")
+        },
+        width,
+        false,
+      ),
+      field_label(t, "app.inspector.data_preview", width),
+      @views.container(
+        @views.padding_xy(
+          @views.text(
+            if entry.preview == "" {
+              text(t, "app.data.empty")
+            } else {
+              entry.preview
+            },
+            theme=studio_theme(),
+            role=Mono,
+            width=(width - 12.0).max(60.0),
+            height=120.0,
+            align=TextStart,
+          ).foreground(ide_text_muted()),
+          horizontal=4.0,
+          vertical=4.0,
+        ),
+        background=ide_editor_background(),
+        corner_radius=4.0,
+        width~,
+        padding=0.0,
+      ),
+      hint_lines_view(
+        text(t, "app.inspector.data_hint"),
+        width,
+        ide_text_faint(),
+        3,
+      ),
+    ],
+    spacing=6.0,
+    align=Start,
+  )
 }

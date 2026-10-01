@@ -213,8 +213,6 @@ fn replace_handler_body(
 /// 积木域消息处理：未命中的消息返回 None 交还链式分发。
 fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
-    SelectBlock(index) =>
-      Some((select_block(model, index), @moui.Effect::none()))
     EditBlock(source) =>
       Some(({ ..model, block_draft: source, }, @moui.Effect::none()))
     BlocksCanvasTap(x, y) =>
@@ -354,6 +352,127 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some(
         (with_undo_point(model, "", m => delete_block(m)), @moui.Effect::none()),
       )
+    ToggleStatementPalette(index) =>
+      // 再点同一个分类 = 收起（与图标栏「再点当前项」同一心智）。
+      Some(
+        (
+          {
+            ..model,
+            selected_category: index,
+            statement_palette_open: if model.statement_palette_open &&
+              model.selected_category == index {
+              false
+            } else {
+              true
+            },
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    InsertStatement(category_index, template_index) =>
+      Some(
+        (
+          // 与 commit/delete 同一口径：写回 IR 才产生还原点
+          with_recent_undo_point(
+            model,
+            text(translator(model), "app.recent.action.insert_stmt"),
+            "app.recent.action.insert_stmt",
+            m => insert_statement(m, category_index, template_index),
+          ),
+          @moui.Effect::none(),
+        ),
+      )
     _ => None
   }
+}
+
+///|
+/// 插入一条语句骨架（语句面板的唯一落地路径）。
+///
+/// 插入位置：**选中块之后**（同层）；没有选中块则插到顶层末尾。
+/// 新语句成为新的选中块，右栏编辑卡随之出现——用户可以立刻改写参数，
+/// 与「插入 → 微调」的自然节奏一致。
+///
+/// 骨架先过 `parse_handler_body`（与手打草稿、AI 提案同一条校验链），
+/// 解析失败就什么都不做并给出提示——绝不把非法语句塞进 IR。
+fn insert_statement(
+  model : Model,
+  category_index : Int,
+  template_index : Int,
+) -> Model {
+  let handler = match current_handler(model) {
+    None =>
+      return {
+        ..model,
+        notice: text(translator(model), "app.stmt.palette.no_handler"),
+      }
+    Some(handler) => handler
+  }
+  let category = match category_at(category_index) {
+    None => return model
+    Some(category) => category
+  }
+  let templates = templates_for_category(category)
+  if template_index < 0 || template_index >= templates.length() {
+    return model
+  }
+  let template = templates[template_index]
+  let parsed = match
+    @studio_lang.parse_handler_body(
+      template.skeleton(model.language.dsl_language()),
+      model.language.dsl_language(),
+    ) {
+    Err(_) =>
+      return {
+        ..model,
+        notice: text(translator(model), "app.stmt.palette.parse_error"),
+      }
+    Ok(body) => body
+  }
+  if parsed.length() == 0 {
+    return model
+  }
+  // 插入位置：选中块的下一行（同层）；无选中 → 顶层末尾。
+  let chain = block_chain_of(model)
+  let (list_path, at) = match block_at(chain, model.selected_block) {
+    Some(item) if item.path.length() > 0 => {
+      let parent = blocks_parent_of(item.path)
+      (parent, item.path[item.path.length() - 1] + 1)
+    }
+    _ => {
+      let top : Array[Int] = []
+      (top, handler.body.length())
+    }
+  }
+  // 一条骨架可能解析出多条语句（如「如果…结束」内部已有内容）——
+  // 逐条按序插入，保持骨架内部的相对顺序。
+  let mut working = @blocks.clone_stmts(handler.body)
+  let mut insert_at = at
+  let mut inserted = 0
+  for traced in parsed {
+    match @blocks.insert_stmt_at(working, list_path, insert_at, traced.stmt) {
+      Some(next) => {
+        working = next
+        insert_at = insert_at + 1
+        inserted = inserted + 1
+      }
+      None => ()
+    }
+  }
+  if inserted == 0 {
+    return model
+  }
+  let next = replace_handler_body(model, handler, working)
+  let synced = sync_code_draft(next)
+  // 选中新插入的第一条语句（按路径定位，链下标随展开块变化）。
+  let new_path : Array[Int] = []
+  for part in list_path {
+    new_path.push(part)
+  }
+  new_path.push(at)
+  let selected = select_block_by_path(
+    { ..synced, statement_palette_open: false, },
+    new_path,
+  )
+  { ..selected, notice: "", }
 }

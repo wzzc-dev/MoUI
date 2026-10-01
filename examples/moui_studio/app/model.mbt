@@ -168,6 +168,28 @@ pub(all) enum ContextTab {
 }
 
 ///|
+/// 树上的「非控件」选中目标：窗体 / 变量 / 数据文件。
+///
+/// 为什么单列一个类型：`selected_control` 与 `selected_handler` 是两条
+/// 正交的字符串槽（控件用名字、子程序用 `控件@事件`），但窗体、变量、
+/// 数据文件**没有可寻址的控件实体**——硬塞进 `selected_control` 会让
+/// `find_selected_control` 查不到（右栏退化成「什么都没选」），还与控件名
+/// 有撞名风险。用一个显式枚举表达「选中的是哪一个非控件对象」。
+///
+/// **互斥纪律**：任一时刻只有一条槽有效，所有入口经 `select_target` 与
+/// `select_control_by_name` 单一漏斗（见 `update_selection.mbt`）。此前
+/// `SelectHandler` 忘了清 `selected_control`，于是「点了子程序、右栏还显示
+/// 上一个控件的属性」——正是缺少漏斗的直接后果。
+pub(all) enum SideTarget {
+  /// 窗体本身（标题 / 设计尺寸）。
+  SideWindow
+  /// 程序变量（名称 / 初值）。
+  SideVariable(String)
+  /// 本地数据条目（列表/表格控件的行，或变量集合）。
+  SideData(String)
+}
+
+///|
 /// 输入条模式（设计稿 `#modeSeg`：修改 / 生成 / 解释 / 修复）。
 /// 设计稿里它只是个高亮切换，没有行为；这里给它真语义——决定「发送」
 /// 走哪条既有通道，所以四个模式都不引入新的执行路径：
@@ -180,6 +202,9 @@ pub(all) enum ComposerMode {
   ComposeExplain
   ComposeRepair
 } derive(Eq)
+
+///|
+pub extend ComposerMode with Eq::{not_equal, equal}
 
 ///|
 /// AI 浮动层锚点：底部居中 / 左下 / 右下 / 停靠右栏。
@@ -365,6 +390,9 @@ pub(all) struct Model {
   design_zoom : Double
   selected_control : String
   selected_handler : String
+  /// 非控件选中（窗体 / 变量 / 数据文件）。`None` = 选中落在控件或子程序上。
+  /// 三条槽互斥，由 `select_target` / `select_control_by_name` 单一漏斗保证。
+  side_target : SideTarget?
   code_draft : String
   code_error : String
   // 当前运行轨：顶栏显式切换；两轨运行态各自独立保存
@@ -387,6 +415,13 @@ pub(all) struct Model {
   // 命令面板（技术风 IDE 的键盘优先入口）：显隐 + 过滤查询
   command_palette_open : Bool
   command_palette_query : String
+  /// 命令面板中悬停的命令 id（"" = 无）。悬停是瞬态，与 IR 悬停同纪律。
+  hover_studio_command : String
+  /// 图标栏/动作簇的悬停提示（"" = 无）。图标按钮只有图形没有文字，
+  /// 需要一条说明通路。采用 IDE 的成熟口径：**悬停时把说明写进状态栏**
+  /// （VS Code / IDEA 都这么做），一处状态即可覆盖整簇图标，且键盘用户
+  /// 同样可达。框架的 `@views.tooltip` 是可选替代（需逐元素 hover 状态）。
+  hover_hint : String
   pending : PendingProposal?
   prompt_draft : String
   composer_mode : ComposerMode
@@ -397,8 +432,6 @@ pub(all) struct Model {
   provider_key : String
   // 密钥显隐（password_field 的展开态；掩码态下忽略输入防星号写穿）
   provider_key_revealed : Bool
-  // AI 面板「模型设置」折叠态（默认收起，常驻三输入框太占面板）
-  provider_settings_open : Bool
   // 未保存标记：程序编码 ≠ 最近一次保存/打开/还原基线时为真，标题旁显示 ●
   dirty : Bool
   saved_encoding : String
@@ -483,6 +516,12 @@ pub(all) struct Model {
   toasts : Array[(String, Bool)]
   // 命令面板 Canvas（设计稿把积木分类条单独成条：选中的分类下标，-1 = 全部）
   selected_category : Int
+  // 语句插入面板：是否展开（分类轨点击）。展开时列出该分类可插入的语句骨架。
+  statement_palette_open : Bool
+  // 结构树里展开着「新建」菜单的分组（"" = 没有）。分组头的「+」点开它，
+  // 列出该组可创建的对象——创建入口贴着它创建的东西，而不是面板底部
+  // 一个与上下文无关的按钮块。
+  tree_create_group : String
   // IR↔代码行映射高亮：当前高亮的语句路径（空 = 无）
   ir_highlight : Array[Int]
 }
@@ -494,6 +533,24 @@ pub(all) enum Msg {
   SetMode(Mode)
   SetDesignZoom(Double)
   SelectControl(String)
+  /// 选中一个**非控件**对象（窗体 / 变量 / 数据文件）——左栏结构树中
+  /// 这三类行此前没有 `on_tap`，点了完全没反应。
+  SelectSide(SideTarget)
+  /// 修改窗体标题（右栏窗体属性）。运行舞台的拟真标题条与导出应用的
+  /// 窗口标题都读它。
+  SetWindowTitle(String)
+  /// 点开/收起某个分组头的新建菜单（"" = 全部收起；同一组再点 = 收起）。
+  ToggleTreeCreate(String)
+  /// 新建一个程序变量（分组头「变量 +」）。名称自动去重（`变量1`、`变量2`…），
+  /// 初值取空串——与 `Declare` 语句的空文本初值同一口径。
+  AddVariable
+  /// 重命名变量（右栏属性）。所有引用该变量的表达式同步改名。
+  RenameVariable(String, String)
+  /// 修改变量初值（右栏属性）。
+  SetVariableInit(String, String)
+  /// 删除变量（右栏属性）。引用它的语句**不**自动清理（那会静默改写程序
+  /// 语义）——由 `validate_program` 在编译/导出时如实报未声明变量。
+  DeleteVariable(String)
   /// 清空选中（控件与事件子程序一起）。设计稿右栏 Context 的 `#clearSel`：
   /// 不给出这个出口的话，选中只能被**另一个选中**覆盖——用户没法回到
   /// 「什么都没选」的中性态，右栏会一直显示上一个对象的属性。
@@ -521,11 +578,17 @@ pub(all) enum Msg {
   ExplainHandler
   RealExplanationFinished(Result[String, String])
   LanguageLoaded(String)
-  SelectBlock(Int)
   EditBlock(String)
   CommitBlock
   DuplicateBlock
   DeleteBlock
+  /// 打开/关闭语句插入面板（分类轨点击；Scratch 积木调色板口径）。
+  /// 面板给出该分类可插入的**语句骨架**，点一条即插入到当前选中块之后
+  /// （没有选中则插到末尾）。这是「无 AI 也能写程序」的核心入口——
+  /// 此前 `commit_block` 只能**替换**已有语句，用户从零写不出任何逻辑。
+  ToggleStatementPalette(Int)
+  /// 插入一条语句骨架：参数是分类下标与分类内模板下标。
+  InsertStatement(Int, Int)
   GenerateProposal
   AcceptProposal
   RejectProposal
@@ -534,7 +597,6 @@ pub(all) enum Msg {
   SetProviderModel(String)
   SetProviderKey(String)
   ToggleProviderKeyReveal
-  ToggleProviderSettings
   DraftLoaded(@services.ServiceTaskResult[String?])
   RunStart
   RunStop
@@ -542,6 +604,7 @@ pub(all) enum Msg {
   CompileRun
   CompileRunFinished(@export.CompileReport)
   CompileRunFailed(String)
+  /// 停止真编译：清报告与忙态，不切轨、不自动回退解释轨。
   CompileStopped
   CompileJump(Int)
   ToggleCompileOutput
@@ -560,7 +623,13 @@ pub(all) enum Msg {
   CommandPaletteOpen
   CommandPaletteClose
   CommandPaletteQuery(String)
-  CommandPaletteRun(@core.CommandIntent)
+  /// 命令面板行悬停（瞬态）：高亮当前行。与 IR 悬停同纪律——离开即还原。
+  /// 面板选中直接产 `StudioCommandRun(id)`（见 command_palette.mbt），
+  /// 不再需要一条中转消息。
+  HoverStudioCommand(String)
+  /// 图标/动作悬停提示（瞬态）：指针进入时给出说明文案，离开清空。
+  /// 说明文案由视图层解析好（i18n 只在这一层做），状态栏直接显示。
+  HoverHint(String)
   RunTick
   RunStep
   RunResume
@@ -610,7 +679,6 @@ pub(all) enum Msg {
   // 底栏：页签切换 / 展开折叠 / 高度拖拽
   SetBottomTab(Bool)
   ToggleBottom
-  SetBottomHeight(Double)
   // 审计：点击条目（跳到对应积木）/ 处理副作用卡（settled 标记）
   AuditOpen(Int)
   AuditSettle(Int, String)
@@ -628,8 +696,6 @@ pub(all) enum Msg {
   SetAiAnchor(AiAnchor)
   ToggleAiPill
   ToggleAiCardsFold
-  AddAiContextChip(String)
-  RemoveAiContextChip(Int)
   // 快速操作：对齐左/居中/对齐右（设计稿 x=24 边距口径）
   AlignControlLeft(String)
   AlignControlCenter(String)
@@ -715,6 +781,7 @@ pub fn initial_model(
     design_zoom: 0.0,
     selected_control: "按钮",
     selected_handler: handler_key("按钮", "on_click"),
+    side_target: None,
     code_draft: "",
     code_error: "",
     run_track: Interpret,
@@ -727,6 +794,8 @@ pub fn initial_model(
     compile_output_open: false,
     command_palette_open: false,
     command_palette_query: "",
+    hover_studio_command: "",
+    hover_hint: "",
     pending: None,
     prompt_draft: "",
     composer_mode: ComposeEdit,
@@ -736,7 +805,6 @@ pub fn initial_model(
     provider_model: model_name,
     provider_key: config.api_key,
     provider_key_revealed: false,
-    provider_settings_open: false,
     dirty: false,
     saved_encoding: encoding,
     draft_encoding: encoding,
@@ -785,6 +853,8 @@ pub fn initial_model(
     ai_history_open: false,
     toasts: [],
     selected_category: -1,
+    statement_palette_open: false,
+    tree_create_group: "",
     ir_highlight: [],
   }
   seed_code_draft(model)

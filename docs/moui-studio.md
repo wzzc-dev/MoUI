@@ -89,14 +89,22 @@ gate is registered in the `pr` profile as `studio diff matrix tests`.
 
 ## Look and feel
 
-- `studio_theme()` pins Dark with cinnabar as the only accent color; graphite
-  surfaces, hairline outlines, and a tight radius scale (`sm 2 / md 4 / lg 6`).
+- `studio_theme()` pins Dark with IDE blue (`#3574F0`) as the only accent color;
+  graphite surfaces, hairline outlines, and a tight radius scale
+  (`sm 2 / md 4 / lg 6`). Semantic status colors (gate/error dots) stay
+  independent of the accent.
 - Canvas: stage plate, dot grid, alignment guides and selection handles read from
   the same palette.
 - Console and generated-code previews use the Mono role; compile reports are
   terminal-style.
-- Keyboard-first: `Ctrl+K` / `Cmd+K` opens a filterable command palette; undo/redo,
-  track switch and the main actions are reachable without a mouse.
+- Keyboard: `Cmd+K` / `Ctrl+K` opens the filterable command palette
+  (30 Studio commands), `Cmd+Z` / `Ctrl+Z` undo and `Cmd+Shift+Z` /
+  `Ctrl+Shift+Z` redo — every shortcut registers both the macOS (`meta`) and
+  Windows/Linux (`control`) modifier, because `KeyboardShortcut::matches`
+  compares modifiers for exact equality. The top bar carries undo/redo buttons
+  with the same shortcuts. Icon-bar buttons are textless, so hovering one writes
+  its name into the status bar (the framework's `Tooltip` semantic role has no
+  visual overlay yet; a portal-based tooltip would be a framework addition).
 - Composition uses existing `moui/views` controls only — no new built-in controls
   and no new core view enum variants.
 

@@ -329,16 +329,10 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some(({ ..model, command_palette_open: false, }, @moui.Effect::none()))
     CommandPaletteQuery(query) =>
       Some(({ ..model, command_palette_query: query, }, @moui.Effect::none()))
-    CommandPaletteRun(intent) =>
-      // 面板只负责选命令；命令 → 消息的映射是唯一执行通道。这里发消息
-      // 而不是递归 update_pure：让映射出的消息重新走 Program 顶层，
-      // 文件/网络等副作用消息（保存/生成/编译）才能到达 service 流。
-      Some(
-        (
-          { ..model, command_palette_open: false, },
-          @moui.Effect::send(command_message(intent)),
-        ),
-      )
+    HoverStudioCommand(id) =>
+      Some(({ ..model, hover_studio_command: id, }, @moui.Effect::none()))
+    HoverHint(hint) =>
+      Some(({ ..model, hover_hint: hint, }, @moui.Effect::none()))
     SelectHandler(key) => {
       let committed = commit_code(model)
       if committed.code_error != "" {
@@ -348,7 +342,7 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       } else {
         Some(
           (
-            sync_code_draft({ ..committed, selected_handler: key, }),
+            sync_code_draft(select_handler_key(committed, key)),
             @moui.Effect::none(),
           ),
         )
@@ -404,39 +398,14 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
 fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
     SelectControl(name) =>
-      // 选中控件时**清掉事件子程序的选中**：积木窗格是否在场由
-      // `blocks_pane_wanted` 按「有没有选中的子程序」判定，两者若同时保留，
-      // 点了一个控件之后积木窗格还会挂着（用户已经离开那段子程序了）。
-      // 设计稿的树也是单选：控件与子程序互斥。
-      Some(
-        (
-          {
-            ..model,
-            selected_control: name,
-            selected_handler: "",
-            selected_block: -1,
-            block_draft: "",
-          },
-          @moui.Effect::none(),
-        ),
-      )
+      // 三条选中槽的互斥由 `select_control_by_name` 单一漏斗保证
+      // （见 update_selection.mbt）。
+      Some((select_control_by_name(model, name), @moui.Effect::none()))
     ClearSelection =>
-      // 与 `SelectControl("")` 等价，但**同时**清掉事件子程序的选中：
-      // 只清控件的话右栏会退回显示上一个 handler 的属性（`context_head`
-      // 在无控件时回退到 `current_handler`），用户看到的是「点了清除但内容
-      // 没变」。清干净才是设计稿 `#clearSel` 的语义。
-      Some(
-        (
-          {
-            ..model,
-            selected_control: "",
-            selected_handler: "",
-            selected_block: -1,
-            block_draft: "",
-          },
-          @moui.Effect::none(),
-        ),
-      )
+      // 三条槽一起清（`clear_selection`）。只清控件的话右栏会退回显示上一个
+      // handler 的属性（`context_head` 在无控件时回退到 `current_handler`），
+      // 用户看到的是「点了清除但内容没变」。清干净才是 `#clearSel` 的语义。
+      Some((clear_selection(model), @moui.Effect::none()))
     CreateHandler(control_name, event) =>
       // 新建子程序：控件存在 + 事件受支持 + 不重复 + 预算内，
       // 建空子程序并选中（note 留空——可读性契约的必填约束针对 AI 提案）
@@ -912,7 +881,11 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
                     None =>
                       match update_ai_msgs(model, msg) {
                         Some(result) => result
-                        None => (model, @moui.Effect::none())
+                        None =>
+                          match update_selection_msgs(model, msg) {
+                            Some(result) => result
+                            None => (model, @moui.Effect::none())
+                          }
                       }
                   }
               }

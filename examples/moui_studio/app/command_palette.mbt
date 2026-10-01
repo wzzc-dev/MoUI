@@ -1,85 +1,138 @@
 ///|
 /// MoUI Studio 命令面板：技术风 IDE 的键盘优先入口（Ctrl/Cmd+K）。
-/// 命令表、命令→消息映射、面板内容与 presentation 宿主集中在本文件；
-/// 视图层只把顶层内容包一层 overlay_host，保持 views.mbt 的行数预算。
+///
+/// **命令表是 Studio 原生的 `StudioCommand`**（`ide_dialogs.mbt`），不是
+/// moui 的 `@core.ActionCommand`。原因：`@core.CommandIntent` 只有 10 个
+/// 稳定 id（Activate/Submit/Undo/…），而 Studio 的壳操作用 30 条；
+/// 早期版本把命令硬塞进那 10 个 intent，结果「撤销」槽位被映射成了
+/// `RunStart`（撤销变成了运行）、四个模板只剩两个、v4 的工作区命令整表
+/// 不可达——一套借来的 id 空间承担不了自己的命令集。
+///
+/// 现在面板直接产 `StudioCommandRun(id)`，`run_studio_command` 是唯一
+/// 执行通道；副作用消息（保存/生成/编译）经 `Effect::send` 重新走
+/// Program 顶层，与点按钮完全同一条状态转移。
 
 ///|
-/// 命令面板命令表（视图与纯转移共用同一份）：@core.CommandIntent 是
-/// moui 文本命令协议的 10 个稳定 id；Studio 借它承载自己的命令，
-/// label/group 全部走 i18n，选中后由 command_message 收敛回既有 Msg。
-pub fn command_palette_commands(
+/// 命令面板内容：标题 + 过滤输入 + 命令列表 + 快捷键提示。
+pub fn command_palette_dialog(
+  model : Model,
   t : @i18n.Translator,
-) -> Array[@core.ActionCommand] {
-  [
-    @core.ActionCommand::new(
-      intent=@core.Activate,
-      label=text(t, "app.command.mode.design"),
-      group=text(t, "app.command.group.mode"),
+) -> @moui.View[Msg] {
+  let commands = filter_studio_commands(
+    studio_commands(t),
+    model.command_palette_query,
+  )
+  @views.container(
+    @views.column(
+      [
+        @views.text(text(t, "app.command.open"), role=Subtitle, align=TextStart),
+        @views.text_field(
+          model.command_palette_query,
+          on_input=query => CommandPaletteQuery(query),
+          placeholder=text(t, "app.command.placeholder"),
+          width=420.0,
+        ),
+        command_palette_list(model, commands, t),
+        @views.text(text(t, "app.command.hint"), role=Caption, align=TextStart),
+      ],
+      spacing=8.0,
     ),
-    @core.ActionCommand::new(
-      intent=@core.Submit,
-      label=text(t, "app.command.mode.blocks"),
-      group=text(t, "app.command.group.mode"),
+    width=444.0,
+    background=studio_console_background(),
+    corner_radius=6.0,
+    border=Some(
+      @graphics.BorderStyle::new(
+        brush=@graphics.Brush::solid(studio_stage_outline()),
+        width=1.0,
+      ),
     ),
-    @core.ActionCommand::new(
-      intent=@core.Cancel,
-      label=text(t, "app.command.mode.code"),
-      group=text(t, "app.command.group.mode"),
-    ),
-    @core.ActionCommand::new(
-      intent=@core.Copy,
-      label=text(t, "app.command.mode.preview"),
-      group=text(t, "app.command.group.mode"),
-    ),
-    @core.ActionCommand::new(
-      intent=@core.Cut,
-      label=text(t, "app.command.track.interpret"),
-      group=text(t, "app.command.group.track"),
-    ),
-    @core.ActionCommand::new(
-      intent=@core.Paste,
-      label=text(t, "app.command.track.compile"),
-      group=text(t, "app.command.group.track"),
-    ),
-    @core.ActionCommand::new(
-      intent=@core.Undo,
-      label=text(t, "app.command.run.start"),
-      group=text(t, "app.command.group.run"),
-    ),
-    @core.ActionCommand::new(
-      intent=@core.Redo,
-      label=text(t, "app.command.run.stop"),
-      group=text(t, "app.command.group.run"),
-    ),
-    @core.ActionCommand::new(
-      intent=@core.SelectAll,
-      label=text(t, "app.command.file.save"),
-      group=text(t, "app.command.group.file"),
-    ),
-    @core.ActionCommand::new(
-      intent=@core.OpenContextMenu,
-      label=text(t, "app.command.lang"),
-      group=text(t, "app.command.group.lang"),
-    ),
-  ]
+    padding=12.0,
+  )
 }
 
 ///|
-/// 命令 id → 既有 Msg 的唯一映射：不新增第二条执行通道，
-/// 选中命令与点按钮走同一条状态转移（副作用消息由外层 service 流接管）。
-pub fn command_message(intent : @core.CommandIntent) -> Msg {
-  match intent {
-    @core.Activate => SetMode(ModeDesign)
-    @core.Submit => SetMode(ModeBlocks)
-    @core.Cancel => SetMode(ModeCode)
-    @core.Copy => SetMode(ModePreview)
-    @core.Cut => SetRunTrack(Interpret)
-    @core.Paste => SetRunTrack(Compile)
-    @core.Undo => RunStart
-    @core.Redo => RunStop
-    @core.SelectAll => SaveRequested
-    @core.OpenContextMenu => SwitchLanguage
+/// 命令列表：每个命令一行（标签 + 分组），点击即运行。
+/// 空结果给一条本地化提示，不留空白框（用户会以为面板坏了）。
+fn command_palette_list(
+  model : Model,
+  commands : Array[StudioCommand],
+  t : @i18n.Translator,
+) -> @moui.View[Msg] {
+  let rows : Array[@moui.View[Msg]] = []
+  if commands.length() == 0 {
+    rows.push(
+      @views.container(
+        @views.text(
+          text(t, "app.command.empty"),
+          theme=studio_theme(),
+          width=396.0,
+          height=24.0,
+          align=TextStart,
+        ).foreground(ide_text_faint()),
+        width=420.0,
+        height=36.0,
+        padding=0.0,
+      ),
+    )
+  } else {
+    for command in commands {
+      rows.push(command_palette_row(command, model.hover_studio_command, t))
+    }
   }
+  @views.scroll_view(
+    @views.column(rows, spacing=0.0),
+    width=420.0,
+    height=260.0,
+  )
+}
+
+///|
+/// 单条命令行：标签左、分组右，整行可点（`on_tap` 带 Semantics 角色，
+/// 与左栏树行同一纪律——面板行不是按钮，不该有按钮盒）。
+fn command_palette_row(
+  command : StudioCommand,
+  hovered_id : String,
+  t : @i18n.Translator,
+) -> @moui.View[Msg] {
+  // 悬停反馈：与左栏树行同一口径（ide_selection 底）。
+  let hovered = hovered_id != "" && hovered_id == command.id
+  let row_width = 420.0
+  let group_width = 96.0
+  @views.container(
+    @views.padding_xy(
+      fill_row(
+        [
+          @views.text(
+            fit_label(command.label, row_width - group_width - 28.0),
+            theme=studio_theme(),
+            width=(row_width - group_width - 24.0).max(80.0),
+            height=20.0,
+            align=TextStart,
+          ).foreground(ide_text()),
+          @views.spacer(min_length=4.0, weight=1.0),
+          @views.text(
+            fit_label(command.group, group_width - 4.0),
+            theme=studio_theme(),
+            width=group_width,
+            height=18.0,
+            align=TextEnd,
+          ).foreground(ide_text_faint()),
+        ],
+        row_width - 16.0,
+        6.0,
+        Center,
+      ),
+      horizontal=8.0,
+      vertical=0.0,
+    ),
+    background=if hovered { ide_selection() } else { ide_panel() },
+    height=30.0,
+    width=row_width,
+    padding=0.0,
+  )
+  .on_hover(active => HoverStudioCommand(if active { command.id } else { "" }))
+  .on_tap(StudioCommandRun(command.id))
+  .accessibility_label(command.label)
 }
 
 ///|
@@ -96,46 +149,4 @@ fn join_lines(items : Array[String]) -> String {
     first = false
   }
   buf.to_string()
-}
-
-///|
-/// 命令面板内容：标题 + 过滤输入 + 命令列表 + 快捷键提示。
-/// 列表行由 @views.command_palette 渲染，本函数只负责对话框外壳。
-pub fn command_palette_dialog(
-  model : Model,
-  t : @i18n.Translator,
-) -> @moui.View[Msg] {
-  @views.container(
-    @views.column(
-      [
-        @views.text(text(t, "app.command.open"), role=Subtitle, align=TextStart),
-        @views.text_field(
-          model.command_palette_query,
-          on_input=query => CommandPaletteQuery(query),
-          placeholder=text(t, "app.command.placeholder"),
-          width=420.0,
-        ),
-        @views.command_palette(
-          theme=studio_theme(),
-          command_palette_commands(t),
-          query=model.command_palette_query,
-          on_select=intent => CommandPaletteRun(intent),
-          width=420.0,
-          max_height=260.0,
-        ),
-        @views.text(text(t, "app.command.hint"), role=Caption, align=TextStart),
-      ],
-      spacing=8.0,
-    ),
-    width=444.0,
-    background=studio_console_background(),
-    corner_radius=6.0,
-    border=Some(
-      @graphics.BorderStyle::new(
-        brush=@graphics.Brush::solid(studio_stage_outline()),
-        width=1.0,
-      ),
-    ),
-    padding=12.0,
-  )
 }
