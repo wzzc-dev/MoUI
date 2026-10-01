@@ -201,3 +201,36 @@ fn parse_or_fail(source : String) -> Json raise {
     _ => fail("fixture JSON 应可解析")
   }
 }
+
+///|
+/// 导出应用的 runner 必须**视口自适应**，不得写死大于项目窗口的尺寸。
+///
+/// 回归意义（用户现象：「运行的产物 UI 窗口显示不全」）：旧 runner 把整棵树
+/// 塞进一张写死 **960×600** 的卡片，而窗口只有项目声明的 640×480——实测内容
+/// 包围盒 1090×634，右溢出 450pt、下溢出 154pt（名单右半边、审计标题都在
+/// 窗口外）。修法是三件事，本用例逐条钉住：
+///
+/// 1. 组合根用 `new_with_environment` 拿真实视口（用 `new` 只能猜尺寸）；
+/// 2. 视图走 `view_with_viewport`，根节点按视口定尺；
+/// 3. 舞台在 `StageLayout` 里等比缩放（`fit_scale` + `child_frames_tight`），
+///    所以窗口比设计小也不裁内容。
+///
+/// 只要有人把硬编码尺寸改回来，这几条断言立刻失败。
+test "导出的 runner 视口自适应，不写死大尺寸" {
+  let files = @export.export_bundle(SAMPLE_PROJECT, "demo")
+  let runner = bundle_file(files, "/app/runner.mbt")
+  // 1) 组合根拿真实视口
+  assert_true(runner.contains("@moui.Program::new_with_environment"))
+  assert_true(runner.contains("env.viewport_size()"))
+  // 2) 视口入口存在且被 view 委托
+  assert_true(runner.contains("pub fn view_with_viewport"))
+  assert_true(runner.contains("pub fn default_viewport_size"))
+  // 3) 舞台等比缩放
+  assert_true(runner.contains("pub fn fit_scale"))
+  assert_true(runner.contains("child_frames_tight=true"))
+  // 不得残留「比项目窗口大」的写死尺寸（960/600/920/560 都是旧卡的尺寸）
+  assert_false(runner.contains("width=960.0"))
+  assert_false(runner.contains("height=600.0"))
+  assert_false(runner.contains("width=920.0"))
+  assert_false(runner.contains("height=560.0"))
+}
