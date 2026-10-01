@@ -262,9 +262,7 @@ pub async fn run_terminal() -> Unit {
       }
     })
   }
-  try {
-    let _ = @async.all([window_task, worker_task])
-  } catch {
-    err => println("App exited with error: \{err}")
-  }
+  // The PTY worker parks on `input_queue` until Shutdown arrives; the window
+  // is primary, so closing it must cancel the worker instead of waiting.
+  @macos_host.run_window_with_workers(window=window_task, workers=[worker_task])
 }

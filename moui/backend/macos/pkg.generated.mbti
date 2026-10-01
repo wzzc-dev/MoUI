@@ -51,6 +51,8 @@ pub fn macos_timer_sub_frame_active() -> Bool
 
 pub fn macos_wall_clock() -> @runtime.HostWallClock
 
+pub async fn run_window_with_workers(window~ : async () -> Unit, workers~ : Array[async () -> Unit]) -> Unit
+
 // Errors
 
 // Types and methods

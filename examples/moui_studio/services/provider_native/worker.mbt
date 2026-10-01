@@ -73,7 +73,8 @@ async fn provider_fetch(job : ProviderJob) -> Unit {
 }
 
 ///|
-/// 工作循环：与窗口泵成对运行（`@async.all([window_task, worker_task])`）。
+/// 工作循环：作为**随从**与窗口泵成对运行
+/// （经 `@macos.run_window_with_workers`：窗口一返回就取消本循环）。
 pub async fn provider_worker_loop(owner : ProviderOwner) -> Unit {
   @async.with_task_group(group => {
     while true {

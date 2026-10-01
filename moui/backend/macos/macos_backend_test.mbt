@@ -449,3 +449,41 @@ test "macos backend keeps ime composition separate at host layer" {
 }
 
 ///|
+
+///|
+/// `run_window_with_workers` must return as soon as the window task finishes,
+/// even when the workers never finish on their own.
+///
+/// Regression (user report: "点击系统信号灯关闭不了窗口，会卡住"): every GUI
+/// entrypoint used `@async.all([window_task, worker_1, ...])` where each worker
+/// is a `while true { queue.get() }` loop. `@async.all` waits for **every**
+/// sibling, so a closed window left the process alive forever — the window
+/// disappeared but the app could only be force-quit.
+///
+/// The deadline below is the assertion: with the old shape this test would hang
+/// (the group would wait on the endless workers) instead of completing.
+async test "run_window_with_workers returns when the window loop finishes" {
+  let workers_cancelled : Ref[Bool] = Ref(false)
+  let window_done : Ref[Bool] = Ref(false)
+  // An endless worker, exactly like provider/compile/launch/agent loops.
+  let endless : async () -> Unit = async fn() {
+    while true {
+      @async.sleep(10)
+    }
+  }
+  let worker_that_should_be_cancelled : async () -> Unit = async fn() {
+    endless() catch {
+      // Cancellation surfaces here; record that teardown reached the worker.
+      _ => workers_cancelled.val = true
+    }
+  }
+  let window : async () -> Unit = async fn() {
+    @async.sleep(30)
+    window_done.val = true
+  }
+  @macos.run_window_with_workers(window~, workers=[
+    worker_that_should_be_cancelled, endless,
+  ])
+  // Reaching this line at all proves the helper did not wait for `endless`.
+  assert_true(window_done.val)
+}

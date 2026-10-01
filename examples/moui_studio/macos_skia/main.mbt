@@ -122,9 +122,17 @@ async fn main {
     // 事件与命令注入（诊断面），供 Agent 做无头 E2E 与健康观测。
     @mcp_stdio.serve_with_diagnostics(host)
   }
-  ignore(
-    @async.all([window_task, worker_task, compile_task, launch_task, agent_task]),
-  ) catch {
-    err => println("MoUI Studio exited with error: \{err}")
-  }
+  // **窗口是主任务，其余四个是随从**：交给 `@macos.run_window_with_workers`。
+  //
+  // 不能用 `@async.all([...])`（旧写法，本仓 4 个入口都踩过）：`all` 要等
+  // **每一个**兄弟任务结束才返回，而这四个 worker 都是
+  // `while true { queue.get() }` 的常驻循环——窗口关掉后 window_task 返回，
+  // 另外四个永远不返回，于是 `all` 永不返回、进程永不退出。用户看到的就是
+  // 「点系统信号灯关不掉窗口 / 卡住」：窗口没了、Dock 图标还在、只能强杀。
+  //
+  // 框架里那个 helper 用 `return_immediately`（交出主结果 + 取消所有子任务），
+  // 窗口一返回就取消 worker，进程随即收敛。
+  @macos.run_window_with_workers(window=window_task, workers=[
+    worker_task, compile_task, launch_task, agent_task,
+  ])
 }

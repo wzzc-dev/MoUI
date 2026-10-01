@@ -40,7 +40,8 @@ pub fn launch_submit(owner : LaunchOwner, job : LaunchJob) -> Unit {
 }
 
 ///|
-/// 工作循环：与窗口泵成对运行（`@async.all([...])`）。
+/// 工作循环：作为**随从**与窗口泵成对运行
+/// （经 `@macos.run_window_with_workers`：窗口一返回就取消本循环）。
 pub async fn launch_worker_loop(owner : LaunchOwner) -> Unit {
   @async.with_task_group(group => {
     while true {

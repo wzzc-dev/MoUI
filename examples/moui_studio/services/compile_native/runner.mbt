@@ -58,7 +58,8 @@ pub fn default_work_root() -> String {
 }
 
 ///|
-/// 工作循环：与窗口泵成对运行（`@async.all([window_task, worker_task])`）。
+/// 工作循环：作为**随从**与窗口泵成对运行
+/// （经 `@macos.run_window_with_workers`：窗口一返回就取消本循环）。
 pub async fn compile_worker_loop(owner : CompileOwner) -> Unit {
   @async.with_task_group(group => {
     while true {

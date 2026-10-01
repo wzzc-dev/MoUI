@@ -136,6 +136,50 @@ fn launch_macos_app(
 }
 
 ///|
+/// Run a window loop alongside background workers; when the window exits,
+/// cancel the workers and return.
+///
+/// **为什么需要这个函数（而不是让各入口自己写 `@async.all`）**：
+/// `@async.all([...])` 要等**每一个**兄弟任务结束才返回。而 GUI 应用的
+/// worker 几乎都是 `while true { queue.get() }` 的常驻循环——窗口关掉后
+/// window_task 返回，其它 worker 永远不返回，于是 `all` 永不返回、进程
+/// 永不退出。用户看到的现象是「点系统信号灯关不掉窗口 / 卡住」：窗口没了、
+/// Dock 图标还在、进程只能强杀。
+///
+/// 这个陷阱在本仓至少复现过 4 次（studio / agent_counter / terminal /
+/// mo_workbench 的入口都是同一个写法），所以正确的组合方式必须由**框架**
+/// 提供，而不是指望每个入口作者都记得。
+///
+/// 语义：
+/// - `window` 是**主任务**：它返回即代表应用该退出了；
+/// - `workers` 是随从：主任务一返回就被取消（`return_immediately`），
+///   不阻塞进程退出；
+/// - 主任务抛错也照样收敛（错误打印后取消 worker），避免「报错反而卡死」。
+///
+/// 典型用法（`main` 里）：
+/// ```mbt nocheck
+/// @macos.run_window_with_workers(
+///   window=fn() { ...run_async_pump() },
+///   workers=[provider_loop, compile_loop],
+/// )
+/// ```
+pub async fn run_window_with_workers(
+  window~ : async () -> Unit,
+  workers~ : Array[async () -> Unit],
+) -> Unit {
+  @async.with_task_group(group => {
+    for worker in workers {
+      group.spawn_bg(worker)
+    }
+    window() catch {
+      err => println("window loop exited with error: \{err}")
+    }
+    // 主任务结束 = 应用退出：取消所有常驻 worker，进程随即收敛。
+    group.return_immediately(())
+  })
+}
+
+///|
 async fn launch_macos_app_async_pump(
   title : String,
   runtime : @runtime.AppRuntime,

@@ -66,11 +66,12 @@ async fn run_workbench() -> Unit {
       let worker_task : async () -> Unit = async fn() {
         @acp_transport.acp_worker_loop(value.owner)
       }
-      try {
-        let _ = @async.all([window_task, worker_task])
-      } catch {
-        err => println("App exited with error: \{err}")
-      }
+      // The ACP worker loops forever; a plain `@async.all` would wait for it
+      // after the window closes and keep the process alive. The helper treats
+      // the window as primary and cancels the worker on exit.
+      @macos_host.run_window_with_workers(window=window_task, workers=[
+        worker_task,
+      ])
     }
     None =>
       match bundle {
@@ -95,11 +96,10 @@ async fn run_workbench() -> Unit {
           let worker_task : async () -> Unit = async fn() {
             @openseek_transport.openseek_worker_loop(value.owner)
           }
-          try {
-            let _ = @async.all([window_task, worker_task])
-          } catch {
-            err => println("App exited with error: \{err}")
-          }
+          // Same lifetime rule as the ACP branch above: the window is primary.
+          @macos_host.run_window_with_workers(window=window_task, workers=[
+            worker_task,
+          ])
         }
         None => {
           println(

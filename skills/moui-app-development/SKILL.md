@@ -65,6 +65,15 @@ examples/<name>/harmonyos_window_hosted/
 Mobile entrypoints use `wzzc-dev/window`; its platform template owns lifecycle,
 surface, and input callbacks. App code remains in `examples/<name>/app`.
 
+Desktop entrypoints that run `moonbitlang/async` side work alongside the window
+pump must join them with
+`@macos.run_window_with_workers(window=..., workers=[...])`, never with
+`@async.all([window, ...workers])`. `@async.all` waits for every sibling, and
+worker loops are `while true { queue.get() }`, so `all` never returns after the
+window closes and the process outlives its own window — the traffic lights look
+dead and the app can only be force-quit. The helper treats the window as primary
+and cancels the workers on exit.
+
 The Moon wasm linker exports executable-owned definitions, not `pub using`
 aliases. Keep Web/WeChat `abi.mbt` as the only permitted second production file:
 it contains the fixed direct backend delegations enforced by P1 and no app or

@@ -19,5 +19,9 @@ async fn run_agent_counter() -> Unit {
   let mcp_task : async () -> Unit = async fn() -> Unit {
     @mcp_stdio.serve(host)
   }
-  let _ = @async.all([window_task, mcp_task])
+  // The MCP loop never returns on its own, so it must be a *worker*: when the
+  // window closes, `run_window_with_workers` cancels it and the process exits.
+  // Plain `@async.all([window_task, mcp_task])` waits for every sibling, which
+  // leaves the process alive after the window is gone ("close does nothing").
+  @macos_backend.run_window_with_workers(window=window_task, workers=[mcp_task])
 }

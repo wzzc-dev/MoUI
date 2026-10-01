@@ -77,6 +77,19 @@ side work on the same thread as the AppKit event pump. It lets
 `examples/mo_workbench/macos_skia` interleave the Skia window pump with its
 owned Pi JSONL transport worker.
 
+**Never join the window pump with `@async.all([window, ...workers])`.**
+`@async.all` waits for *every* sibling, and entrypoint workers are almost always
+`while true { queue.get() }` loops. Closing the window then returns only the
+window task while the workers stay parked forever, so `all` never returns and
+the process outlives its window: the traffic lights appear to do nothing, the
+Dock icon stays, and the app can only be force-quit. Use
+`@macos.run_window_with_workers(window=..., workers=[...])` instead — it treats
+the window as primary and cancels the workers via
+`TaskGroup::return_immediately` as soon as the window loop returns. The same
+shape was present in four entrypoints (`moui_studio`, `agent_counter`,
+`terminal`, `mo_workbench`); the helper exists so the correct composition is the
+only one worth writing.
+
 Select the native mainline Skia renderer by importing
 `wzzc-dev/moui_skia_renderer`, adding
 `@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS)` to the app
