@@ -31,13 +31,14 @@ fn fresh_variable_name(program : @ir.StudioProgram) -> String {
 
 ///|
 /// 新建变量：名称自动去重、初值空串（与 `Declare` 的空文本初值同口径）。
-/// 预算防呆与 `AddControl` 一致（超限设 notice，不静默）。
+/// 预算防呆与 `AddControl` 一致（超限经 with_notice 提示，不静默）。
 fn add_variable(model : Model) -> Model {
   if model.program.variables.length() >= @ir.MAX_VARIABLES {
-    return {
-      ..model,
-      notice: text(translator(model), "app.status.variables_limit"),
-    }
+    return with_notice(
+      model,
+      text(translator(model), "app.status.variables_limit"),
+      true,
+    )
   }
   let name = fresh_variable_name(model.program)
   let variables = model.program.variables

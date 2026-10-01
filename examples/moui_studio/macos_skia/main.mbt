@@ -61,6 +61,10 @@ async fn main {
       // native 入口：编译轨可达（Web 入口保持默认 false =
       // 只有解释轨 + 源码预览，边界在 docs 定位页写明）。
       compile_track_available=true,
+      // native 入口有系统目录选择（NSOpenPanel canChooseDirectories）
+      // 与逐文件写盘，导出独立应用可达；Web 端点「导出」会显式声明
+      // 不可用（app.export.unavailable_web），不弹一个必然失败的目录框。
+      export_available=true,
       immersive~,
       apply_locale=tag => {
         match runtime_ref.val {

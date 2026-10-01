@@ -546,6 +546,8 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
   let group_ai = text(t, "app.command.group.ai")
   let group_run = text(t, "app.command.group.run")
   let group_file = text(t, "app.command.group.file")
+  let group_view = text(t, "app.command.group.mode")
+  let group_template = text(t, "app.templates")
   [
     StudioCommand::{
       id: "studio.workspace.visual",
@@ -667,6 +669,39 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
       group: group_run,
       hint: "",
     },
+    // 模板四件套必须进表：run_studio_command 早有处理器，但表里没有——
+    // 「口算训练营 / 班级小卖部」（提交数据闸门的核心教案）此前没有任何
+    // UI 入口，是死命令。表与处理器必须成对出现。
+    StudioCommand::{
+      id: "studio.template.hello",
+      label: text(t, "app.templates.hello"),
+      group: group_template,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.template.roll_call",
+      label: text(t, "app.templates.roll_call"),
+      group: group_template,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.template.drill",
+      label: text(t, "app.templates.drill"),
+      group: group_template,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.template.store",
+      label: text(t, "app.templates.store"),
+      group: group_template,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.file.new",
+      label: text(t, "app.command.file.new"),
+      group: group_file,
+      hint: "",
+    },
     StudioCommand::{
       id: "studio.file.save",
       label: text(t, "app.command.file.save"),
@@ -683,6 +718,18 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
       id: "studio.file.export",
       label: text(t, "app.command.file.export"),
       group: group_file,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.preview",
+      label: text(t, "app.preview.title"),
+      group: group_view,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.help",
+      label: text(t, "app.help.title"),
+      group: group_view,
       hint: "",
     },
     StudioCommand::{

@@ -46,10 +46,11 @@ fn accept_proposal(model : Model) -> Model {
     None => model
     Some(pending) =>
       if !pending.valid {
-        {
-          ..model,
-          notice: text(translator(model), "app.status.proposal_invalid"),
-        }
+        with_notice(
+          model,
+          text(translator(model), "app.status.proposal_invalid"),
+          true,
+        )
       } else {
         let next = @proposals.apply_proposal(model.program, pending.proposal)
         let cleared : Model = {
@@ -92,10 +93,9 @@ fn accept_proposal(model : Model) -> Model {
           text(t, "app.recent.action.agent_accept"),
           true,
         )
-        {
-          ..push_toast(tracked, text(t, "app.toast.proposal_accepted"), false),
-          notice: text(t, "app.status.proposal_accepted"),
-        }
+        // 采纳回执走 with_notice 单一漏斗（notice 字段 + toast 一处搞定，
+        // 不再 push_toast 与 notice 各写一份）。
+        with_notice(tracked, text(t, "app.toast.proposal_accepted"), false)
       }
   }
 }
@@ -370,11 +370,7 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                 text(t, "app.toast.proposal_rejected"),
                 true,
               )
-              {
-                ..toasted,
-                pending: None,
-                notice: text(t, "app.status.proposal_rejected"),
-              }
+              { ..toasted, pending: None, }
             }
           },
           @moui.Effect::none(),

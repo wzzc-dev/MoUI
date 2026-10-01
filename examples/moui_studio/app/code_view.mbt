@@ -521,6 +521,9 @@ pub fn empty_stage(
   let specs : Array[(String, Msg, @style.ButtonVariant)] = [
     (text(t, "app.empty.hello"), SelectTemplate(0), Primary),
     (text(t, "app.empty.roll_call"), SelectTemplate(1), Tonal),
+    // 从真正的空白开始：empty_program 此前没有任何 UI 入口——「无 AI
+    // 也能从零写程序」缺的就是这个原点（配合语句插入面板）。
+    (text(t, "app.empty.blank"), NewBlankProgram, Tonal),
     (text(t, "app.empty.open"), OpenRequested, Outline),
   ]
   // 窗格都被关掉时，空舞台就是**唯一的恢复入口**（设计稿 `#btnAddLive` /

@@ -534,6 +534,22 @@ pub fn push_toast(model : Model, text : String, warning : Bool) -> Model {
 }
 
 ///|
+/// notice 的唯一写入漏斗：写 `model.notice` 的同时补推一条 toast。
+///
+/// 为什么必须有这个漏斗：`notice` 在视图层**没有任何渲染点**（状态栏不画
+/// 它），直接写结构体字段等于把成功/失败静默吞掉——保存失败、解析失败、
+/// 预算超限、Web 端编译轨不可达，用户全都看不到。所有 notice 写入必须
+/// 走这里；警告类（warning=true）用暖色条。空串（settings 写入的哑回调
+/// `SetNotice("")`）只清字段，不产生 toast。长文本按 toast 文案宽度截断
+/// （toast 视图是定宽 300 的单行）。
+pub fn with_notice(model : Model, notice : String, warning : Bool) -> Model {
+  if notice == "" {
+    return { ..model, notice: "", }
+  }
+  push_toast({ ..model, notice, }, fit_label(notice, 280.0), warning)
+}
+
+///|
 /// Studio 自有命令：比 moui 文本命令协议的 10 个 intent 更宽的壳操作。
 /// 每条命令都是既有消息的封装——命令面板不引入新的状态通道。
 fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) {
@@ -571,6 +587,7 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.run.start" => update_pure(model, RunStart)
     "studio.run.stop" => update_pure(model, RunStop)
     "studio.compile.run" => update_pure(model, CompileRun)
+    "studio.file.new" => update_pure(model, NewBlankProgram)
     "studio.file.save" => update_pure(model, SaveRequested)
     "studio.file.open" => update_pure(model, OpenRequested)
     "studio.file.export" => update_pure(model, ExportRequested)

@@ -13,10 +13,11 @@ fn start_run(model : Model) -> Model {
         @studio_lang.parse_handler_body(committed.code_draft, language) {
         Ok(body) => body
         Err(error) =>
-          return {
-            ..committed,
-            notice: error_message(translator(committed), error),
-          }
+          return with_notice(
+            committed,
+            error_message(translator(committed), error),
+            true,
+          )
       }
       // 每次启动/派发都推进一格种子（与编译轨 run_handler 同一手法）：
       // 反复点同一个按钮要能看见不同的随机结果，否则「运行之后点按钮
@@ -452,10 +453,11 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       if !model.compile_track_available {
         Some(
           (
-            {
-              ..model,
-              notice: text(translator(model), "app.track.unavailable_web"),
-            },
+            with_notice(
+              model,
+              text(translator(model), "app.track.unavailable_web"),
+              true,
+            ),
             @moui.Effect::none(),
           ),
         )
@@ -471,20 +473,23 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           let t = translator(committed)
           Some(
             (
-              {
-                ..log_line(
-                  committed,
-                  LogLevel::LogInfo,
-                  text(t, "app.log.compile_start"),
-                ),
-                compile_report: None,
-                compile_busy: true,
-                // 进度清空重来：上一轮的步骤点不能残留在新一转里。
-                compile_progress: [],
-                run_track: Compile,
-                mode: ModeRun,
-                notice: text(t, "app.compile.running"),
-              },
+              with_notice(
+                {
+                  ..log_line(
+                    committed,
+                    LogLevel::LogInfo,
+                    text(t, "app.log.compile_start"),
+                  ),
+                  compile_report: None,
+                  compile_busy: true,
+                  // 进度清空重来：上一轮的步骤点不能残留在新一转里。
+                  compile_progress: [],
+                  run_track: Compile,
+                  mode: ModeRun,
+                },
+                text(t, "app.compile.running"),
+                false,
+              ),
               @moui.Effect::none(),
             ),
           )
@@ -524,18 +529,21 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       }
       Some(
         (
-          {
-            ..audited,
-            compile_report: Some(report),
-            compile_busy: false,
-            // 报告接手显示：进度条退场（两个读数同时在场会互相打架）。
-            compile_progress: [],
-            notice: if report.ok {
+          with_notice(
+            {
+              ..audited,
+              compile_report: Some(report),
+              compile_busy: false,
+              // 报告接手显示：进度条退场（两个读数同时在场会互相打架）。
+              compile_progress: [],
+            },
+            if report.ok {
               text(t, "app.compile.ok")
             } else {
               text(t, "app.compile.failed")
             },
-          },
+            !report.ok,
+          ),
           @moui.Effect::none(),
         ),
       )
@@ -544,22 +552,25 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       // 执行器本身起不来（非工具链诊断）：如实进报告，不改路径。
       Some(
         (
-          {
-            ..model,
-            compile_report: Some(@export.CompileReport::{
-              ok: false,
-              exit_code: -1,
-              target: "native",
-              source_path: "",
-              output: message,
-              diagnostics: [],
-              artifacts: [],
-              work_root: "",
-            }),
-            compile_busy: false,
-            compile_progress: [],
-            notice: text(translator(model), "app.compile.failed"),
-          },
+          with_notice(
+            {
+              ..model,
+              compile_report: Some(@export.CompileReport::{
+                ok: false,
+                exit_code: -1,
+                target: "native",
+                source_path: "",
+                output: message,
+                diagnostics: [],
+                artifacts: [],
+                work_root: "",
+              }),
+              compile_busy: false,
+              compile_progress: [],
+            },
+            text(translator(model), "app.compile.failed"),
+            true,
+          ),
           @moui.Effect::none(),
         ),
       )
@@ -850,10 +861,11 @@ fn set_run_track(model : Model, track : RunTrack) -> Model {
   match track {
     Compile =>
       if !model.compile_track_available {
-        {
-          ..model,
-          notice: text(translator(model), "app.track.unavailable_web"),
-        }
+        with_notice(
+          model,
+          text(translator(model), "app.track.unavailable_web"),
+          true,
+        )
       } else {
         { ..model, run_track: Compile, }
       }

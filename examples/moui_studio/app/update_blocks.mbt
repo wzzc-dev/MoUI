@@ -92,10 +92,11 @@ fn commit_block(model : Model) -> Model {
                 model.language.dsl_language(),
               ) {
               Err(_) =>
-                {
-                  ..model,
-                  notice: text(translator(model), "app.status.parse_error"),
-                }
+                with_notice(
+                  model,
+                  text(translator(model), "app.status.parse_error"),
+                  true,
+                )
               Ok(body) =>
                 if body.length() == 0 {
                   model
@@ -402,10 +403,11 @@ fn insert_statement(
 ) -> Model {
   let handler = match current_handler(model) {
     None =>
-      return {
-        ..model,
-        notice: text(translator(model), "app.stmt.palette.no_handler"),
-      }
+      return with_notice(
+        model,
+        text(translator(model), "app.stmt.palette.no_handler"),
+        true,
+      )
     Some(handler) => handler
   }
   let category = match category_at(category_index) {
@@ -423,10 +425,11 @@ fn insert_statement(
       model.language.dsl_language(),
     ) {
     Err(_) =>
-      return {
-        ..model,
-        notice: text(translator(model), "app.stmt.palette.parse_error"),
-      }
+      return with_notice(
+        model,
+        text(translator(model), "app.stmt.palette.parse_error"),
+        true,
+      )
     Ok(body) => body
   }
   if parsed.length() == 0 {

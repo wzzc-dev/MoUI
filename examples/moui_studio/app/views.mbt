@@ -231,11 +231,28 @@ fn code_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
 }
 
 ///|
+/// 全屏页（预览/帮助）顶部的返回行：这两页此前没有任何 UI 入口可达，
+/// 命令面板接通入口的同时必须有出口——没有返回行，进来就是死胡同。
+/// `SetMode(ModeDesign)` 保留当前工作区（从哪里来回哪里去）。
+fn fullscreen_back_row(t : @i18n.Translator) -> @moui.View[Msg] {
+  @views.row([
+    @views.button(
+      text(t, "app.back.edit"),
+      on_click=SetMode(ModeDesign),
+      variant=Outline,
+      width=button_label_width(text(t, "app.back.edit")) + 32.0,
+      height=30.0,
+    ),
+  ])
+}
+
+///|
 /// MoonBit 预览视图：把当前程序渲染成可读 MoonBit 源码（毕业通道 v1.1）。
 /// 只读展示——生成的文本是审阅材料，不是编辑器输入。
 fn preview_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let source = @export.moonbit_preview(model.program)
   let lines : Array[@moui.View[Msg]] = [
+    fullscreen_back_row(t),
     @views.text(text(t, "app.preview.title"), role=Subtitle),
     @views.text(text(t, "app.preview.note"), role=Caption),
     compiled_run_header(model, t),
@@ -261,6 +278,7 @@ fn help_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let zh = @studio_lang.keywords_for(@studio_lang.ZhHans)
   let en = @studio_lang.keywords_for(@studio_lang.En)
   let rows : Array[@moui.View[Msg]] = [
+    fullscreen_back_row(t),
     @views.text(text(t, "app.help.title"), role=Title),
     @views.text(text(t, "app.help.intro"), role=Caption),
     @views.text(text(t, "app.help.keywords"), role=Subtitle),

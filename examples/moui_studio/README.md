@@ -40,7 +40,9 @@ macOS 原生入口：`moon run examples/moui_studio/macos_skia --target native`
 ```
 
 - 切语言：顶栏 `English` / `中文`（代码与界面一起切换：`如果…则…结束` ↔ `if…then…end`）
-- 换模板：顶栏「班级点名册 / 口算训练营 / 班级小卖部」，打开即玩
+- 换模板：空舞台按钮（问候 / 点名册 / 空白程序）或 `⌘K` 命令面板
+  （四模板 + 新建空白程序 + 打开/保存/导出）——教案里的口算训练营、
+  班级小卖部从命令面板可达
 - 工作区：图标栏切换**可视化 / 代码 / 空舞台**；再点当前项收起成空舞台
 - 积木视图：画布**左侧**是竖排分类轨（色点 + 名称，选中项带强调边）——分类
   不占画布纵向空间；画布支持同层拖拽重排；窗格脚注说明画布底部是**为 AI 层
@@ -191,7 +193,8 @@ moon build examples/moui_studio/web_wasm --target wasm-gc
 
 - Switch language from the top bar (`English` / `中文`); the DSL keywords
   switch with it.
-- Open a template (class roll call / arithmetic drill / class store).
+- Open a template from the empty stage or the `⌘K` command palette
+  (all four samples plus a blank program).
 - In the AI panel type "random roll call" → review the field-level diff →
   accept or reject.
 - Run: buttons really work, and `submit_data` **pauses the program until you

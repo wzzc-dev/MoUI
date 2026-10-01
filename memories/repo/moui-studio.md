@@ -1398,3 +1398,23 @@ text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡�
   并打印删掉的行数确认。所幸当时未提交，`git checkout` 可恢复——但那次恢复
   也带走了本会话在**同一文件**里的未暂存改动（树行 SelectSide 接线），
   必须重做。**跨会话的未提交改动要尽早 commit 或至少暂存。**
+
+### notice 漏斗与命令表纪律（2026-10-02）
+
+- **`model.notice` 曾是只写不画的死通道**（全仓无任何视图渲染它）：保存/打开/
+  导出成败、积木解析失败、预算超限、Web 编译轨不可达等十几条路径静默吞掉。
+  已根治：**所有 notice 写入必须走 `update_shell.mbt` 的 `with_notice`**
+  （写字段 + 补推 toast，错误 warning=true，长文本 fit_label 截断），禁止
+  直接写结构体字段。唯一例外：导出 `ExportDirPicked` 的目录回显是中间态
+  （完成/失败马上 toast），注释声明。
+- **导出回执计数 `export_pending`**：bundle 几十文件逐文件回执，全部落盘
+  才报一次「已导出」；单文件失败告警一次并归零。逐文件报成功 = 刷屏。
+- **命令面板的死命令盲区**：死消息门（validate_dead_messages）只看 Msg
+  变体构造点，管不住「`StudioCommandRun("studio.xxx")` 的 id 在
+  `studio_commands()` 表里缺席」——`studio.template.drill/store`、
+  `studio.help/preview` 曾是有处理器无表项的死命令（样例/帮助/预览零入口）。
+  **加 run_studio_command 分支必须同步加表项**，测试钉住表内容与执行链。
+- **`export_available`（macOS true，Web 默认 false）**：Web 目录「选择」
+  返回文件名列表，逐文件 write_text 必然失败——不可达就显式声明
+  （`app.export.unavailable_web`），与 compile_track_available 同口径。
+  给页面入口必须配出口（全屏页「返回编辑」行）。

@@ -386,7 +386,42 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         ),
       )
     }
-    SetNotice(notice) => Some(({ ..model, notice, }, @moui.Effect::none()))
+    // notice 的消费入口也走同一漏斗（非空文本补推 toast）——settings
+    // 写入的哑回调传空串，只清字段不弹 toast。
+    SetNotice(notice) =>
+      Some((with_notice(model, notice, false), @moui.Effect::none()))
+    // 新建空白程序：与切模板同一纪律——旧程序进撤销栈可找回，运行态、
+    // 选中态、积木草稿全部重置；空程序没有控件与子程序，选中清空。
+    NewBlankProgram => {
+      let program = empty_program()
+      let next = with_recent_undo_point(
+        model,
+        text(translator(model), "app.recent.action.new"),
+        "app.recent.action.new",
+        m => {
+          ..m,
+          program,
+          pending: None,
+          run: None,
+          selected_block: -1,
+          block_draft: "",
+          runtime_values: @studio_lang.initial_values(program),
+          runtime_texts: @studio_lang.initial_texts(program),
+          runtime_rows: @studio_lang.initial_rows(program),
+          runtime_selections: Map([], capacity=4),
+        },
+      )
+      Some(
+        (
+          sync_code_draft({
+            ..next,
+            selected_control: first_control_name(program.controls),
+            selected_handler: first_handler_key(program.handlers),
+          }),
+          @moui.Effect::none(),
+        ),
+      )
+    }
     Undo => Some((apply_undo(model), @moui.Effect::none()))
     Redo => Some((apply_redo(model), @moui.Effect::none()))
     _ => None
@@ -420,10 +455,11 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           } else if model.program.handlers.length() >= @ir.MAX_HANDLERS {
             Some(
               (
-                {
-                  ..model,
-                  notice: text(translator(model), "app.status.handlers_limit"),
-                },
+                with_notice(
+                  model,
+                  text(translator(model), "app.status.handlers_limit"),
+                  true,
+                ),
                 @moui.Effect::none(),
               ),
             )
@@ -700,10 +736,11 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       if model.program.controls.length() >= @ir.MAX_CONTROLS {
         return Some(
           (
-            {
-              ..model,
-              notice: text(translator(model), "app.status.controls_limit"),
-            },
+            with_notice(
+              model,
+              text(translator(model), "app.status.controls_limit"),
+              true,
+            ),
             @moui.Effect::none(),
           ),
         )
@@ -764,10 +801,11 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           if model.program.controls.length() >= @ir.MAX_CONTROLS {
             return Some(
               (
-                {
-                  ..model,
-                  notice: text(translator(model), "app.status.controls_limit"),
-                },
+                with_notice(
+                  model,
+                  text(translator(model), "app.status.controls_limit"),
+                  true,
+                ),
                 @moui.Effect::none(),
               ),
             )

@@ -90,6 +90,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.reject", GeneratedI18nMessage::Text("Reject")),
       ("app.ai.reveal", GeneratedI18nMessage::Text("Show/hide")),
       ("app.ai.undock", GeneratedI18nMessage::Text("Float")),
+      ("app.back.edit", GeneratedI18nMessage::Text("Back to editing")),
       ("app.ctx.clear", GeneratedI18nMessage::Text("Clear selection")),
       ("app.ctx.props", GeneratedI18nMessage::Text("Properties")),
       ("app.ctx.state", GeneratedI18nMessage::Text("State")),
@@ -208,6 +209,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.dialog.save",
         GeneratedI18nMessage::Text("Save MoUI Studio project"),
       ),
+      ("app.empty.blank", GeneratedI18nMessage::Text("New blank program")),
       ("app.empty.hello", GeneratedI18nMessage::Text("New hello app")),
       (
         "app.empty.title",
@@ -592,6 +594,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "IR → line map: this handler has no statements",
         ),
       ),
+      ("app.command.file.new", GeneratedI18nMessage::Text("New blank program")),
       ("app.command.group.ai", GeneratedI18nMessage::Text("AI layer")),
       ("app.command.run.stop", GeneratedI18nMessage::Text("Stop current run")),
       ("app.command.settings", GeneratedI18nMessage::Text("Open settings")),
@@ -693,6 +696,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Starting real compile (moon check)"),
       ),
       ("app.pane.live.running", GeneratedI18nMessage::Text("running")),
+      ("app.recent.action.new", GeneratedI18nMessage::Text("New program")),
       (
         "app.run.compile_stage",
         GeneratedI18nMessage::Text("Real compiled artifact run"),
@@ -1025,6 +1029,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "This compile produced no files (the toolchain stopped at a check step).",
         ),
       ),
+      (
+        "app.export.unavailable_web",
+        GeneratedI18nMessage::Text(
+          "Exporting a standalone app needs a native directory picker and disk writes; unavailable on the web entry — export from the macOS entry instead.",
+        ),
+      ),
       ("app.inspector.data_preview", GeneratedI18nMessage::Text("Preview")),
       ("app.inspector.window_title", GeneratedI18nMessage::Text("Window title")),
       (
@@ -1265,6 +1275,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.reject", GeneratedI18nMessage::Text("拒绝")),
       ("app.ai.reveal", GeneratedI18nMessage::Text("显示/隐藏")),
       ("app.ai.undock", GeneratedI18nMessage::Text("浮出")),
+      ("app.back.edit", GeneratedI18nMessage::Text("返回编辑")),
       ("app.ctx.clear", GeneratedI18nMessage::Text("清空选中")),
       ("app.ctx.props", GeneratedI18nMessage::Text("属性")),
       ("app.ctx.state", GeneratedI18nMessage::Text("状态")),
@@ -1381,6 +1392,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.dialog.save",
         GeneratedI18nMessage::Text("保存 MoUI Studio 项目"),
       ),
+      ("app.empty.blank", GeneratedI18nMessage::Text("新建空白程序")),
       ("app.empty.hello", GeneratedI18nMessage::Text("新建问候程序")),
       (
         "app.empty.title",
@@ -1740,6 +1752,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "IR 到代码行的映射：当前子程序没有语句",
         ),
       ),
+      ("app.command.file.new", GeneratedI18nMessage::Text("新建空白程序")),
       ("app.command.group.ai", GeneratedI18nMessage::Text("AI 层")),
       ("app.command.run.stop", GeneratedI18nMessage::Text("停止当前运行")),
       ("app.command.settings", GeneratedI18nMessage::Text("打开设置")),
@@ -1836,6 +1849,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("开始真编译（moon check）"),
       ),
       ("app.pane.live.running", GeneratedI18nMessage::Text("运行中")),
+      ("app.recent.action.new", GeneratedI18nMessage::Text("新建程序")),
       (
         "app.run.compile_stage",
         GeneratedI18nMessage::Text("真编译产物运行"),
@@ -2148,6 +2162,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.artifacts.none",
         GeneratedI18nMessage::Text(
           "本次编译没有产出文件（失败停在工具链检查阶段）。",
+        ),
+      ),
+      (
+        "app.export.unavailable_web",
+        GeneratedI18nMessage::Text(
+          "导出独立应用需要系统目录选择与写盘：Web 端不可用，请在 macOS 入口导出。",
         ),
       ),
       ("app.inspector.data_preview", GeneratedI18nMessage::Text("内容预览")),

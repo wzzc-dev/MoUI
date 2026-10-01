@@ -437,6 +437,13 @@ pub(all) struct Model {
   saved_encoding : String
   draft_encoding : String
   notice : String
+  // 导出独立应用是否可达：native 有系统目录选择 + 写盘（NSOpenPanel）；
+  // Web 的目录「选择」返回的是文件名列表而非可写路径，写盘必然失败——
+  // 与 compile_track_available 同一口径：不可达就显式声明，不假装能导。
+  export_available : Bool
+  // 导出 bundle 剩余未落盘的文件数（>0 = 导出进行中；归零时才报「已导出」，
+  // 否则 25 个文件各回一条完成消息，会把过程误报成 25 次成功）。
+  export_pending : Int
   explanation : String
   // AI 请求进行中（真实 provider 生成/讲解）：面板显示加载态
   ai_busy : Bool
@@ -644,6 +651,9 @@ pub(all) enum Msg {
   ControlPicked(String, Int)
   ControlChanged(String, String)
   SelectTemplate(Int)
+  /// 新建空白程序（`empty_program`）。与打开文件/切模板同纪律：旧程序
+  /// 进撤销栈可找回，运行态与选中态全部重置。
+  NewBlankProgram
   SaveRequested
   SavePathPicked(@services.ServiceTaskResult[String])
   SaveCompleted(@services.ServiceTaskResult[Unit])
@@ -755,6 +765,7 @@ pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
 pub fn initial_model(
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
+  export_available? : Bool = false,
   immersive? : Bool = false,
 ) -> Model {
   let program = @proposals.sample_hello()
@@ -809,6 +820,8 @@ pub fn initial_model(
     saved_encoding: encoding,
     draft_encoding: encoding,
     notice: "",
+    export_available,
+    export_pending: 0,
     explanation: "",
     ai_busy: false,
     selected_block: -1,

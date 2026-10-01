@@ -152,9 +152,8 @@ pub fn update_with_services(
         .effect(map=r => ArtifactActionDone(ArtifactReveal, r)),
       )
     ArtifactActionDone(what, result) =>
-      // 反馈走 **toast**（唯一真正被渲染的瞬时通道）：`notice` 在本仓
-      // 只写不画（状态栏没接它），用它等于把成功/失败静默吞掉——
-      // 用户点了「复制路径」看不到任何回应。
+      // 反馈走 toast（`with_notice` 同一通道）：成功/失败都必须可见——
+      // 静默失败会让用户以为「复制了」。
       match result {
         Success(_) =>
           (
@@ -183,15 +182,17 @@ pub fn update_with_services(
     SavePathPicked(result) =>
       match result {
         Success(path) =>
+          // 选中路径本身不是要给用户看的事实（完成/失败马上会说话），
+          // 不写 notice 不弹 toast，直接落盘。
           (
-            { ..model, notice: path, },
+            model,
             services
             .files()
             .write_text(path, @codec.encode_program(model.program))
             .effect(map=r => SaveCompleted(r)),
           )
         Failure(error) =>
-          ({ ..model, notice: error.message, }, @moui.Effect::none())
+          (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     SaveCompleted(result) =>
@@ -200,15 +201,15 @@ pub fn update_with_services(
           (
             // 保存成功：基线对齐当前程序，脏标记由 program() 的集中
             // 包装按 saved_encoding 自动清除。
-            {
-              ..model,
-              notice: text(translator(model), "app.status.saved"),
-              saved_encoding: @codec.encode_program(model.program),
-            },
+            with_notice(
+              { ..model, saved_encoding: @codec.encode_program(model.program), },
+              text(translator(model), "app.status.saved"),
+              false,
+            ),
             @moui.Effect::none(),
           )
         Failure(error) =>
-          ({ ..model, notice: error.message, }, @moui.Effect::none())
+          (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     OpenRequested => {
@@ -225,14 +226,14 @@ pub fn update_with_services(
       match result {
         Success(path) =>
           (
-            { ..model, notice: path, },
+            model,
             services
             .files()
             .read_text(path)
             .effect(map=r => OpenReadCompleted(r)),
           )
         Failure(error) =>
-          ({ ..model, notice: error.message, }, @moui.Effect::none())
+          (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     OpenReadCompleted(result) =>
@@ -265,36 +266,56 @@ pub fn update_with_services(
                 saved_encoding: @codec.encode_program(program),
                 selected_control: first_control_name(program.controls),
                 selected_handler: first_handler_key(program.handlers),
-                notice: text(translator(model), "app.status.opened"),
               }
-              (sync_code_draft(next), @moui.Effect::none())
+              (
+                with_notice(
+                  sync_code_draft(next),
+                  text(translator(model), "app.status.opened"),
+                  false,
+                ),
+                @moui.Effect::none(),
+              )
             }
             Err(_) =>
               (
-                {
-                  ..model,
-                  notice: text(translator(model), "app.status.open_failed"),
-                },
+                with_notice(
+                  model,
+                  text(translator(model), "app.status.open_failed"),
+                  true,
+                ),
                 @moui.Effect::none(),
               )
           }
         Failure(error) =>
-          ({ ..model, notice: error.message, }, @moui.Effect::none())
+          (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
-    ExportRequested => {
-      let options = @services.FileDialogOptions::new(
-        title=text(translator(model), "app.dialog.export"),
-        filters=[],
-      )
-      (
-        model,
-        services
-        .files()
-        .pick_directory(options~)
-        .effect(map=r => ExportDirPicked(r)),
-      )
-    }
+    // 导出独立应用：native 有系统目录选择 + 逐文件写盘；Web 端的目录
+    // 「选择」返回的是文件名列表而非可写路径，25 个文件全部写不进去——
+    // 与编译轨同一口径：**不可达就显式声明**，不弹一个必然失败的目录框。
+    ExportRequested =>
+      if !model.export_available {
+        (
+          with_notice(
+            model,
+            text(translator(model), "app.export.unavailable_web"),
+            true,
+          ),
+          @moui.Effect::none(),
+        )
+      } else {
+        let options = @services.FileDialogOptions::new(
+          title=text(translator(model), "app.dialog.export"),
+          filters=[],
+        )
+        (
+          model,
+          services
+          .files()
+          .pick_directory(options~)
+          .effect(map=r => ExportDirPicked(r)),
+        )
+      }
     ExportDirPicked(result) =>
       match result {
         Success(dir) => {
@@ -312,24 +333,46 @@ pub fn update_with_services(
               .effect(map=r => ExportFileWritten(r)),
             )
           }
+          // 中间态直写字段（目录回显），**不走 with_notice**——每个文件
+          // 完成时都会回到 ExportFileWritten，真正的「已导出/失败」在
+          // 那里 toast 一次；这里再弹就是 25 条同样的 toast。
           (
-            { ..model, notice: path_hint(dir, bundle), },
+            {
+              ..model,
+              notice: path_hint(dir, bundle),
+              export_pending: bundle.length(),
+            },
             @moui.Effect::batch(effects),
           )
         }
         Failure(error) =>
-          ({ ..model, notice: error.message, }, @moui.Effect::none())
+          (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     ExportFileWritten(result) =>
       match result {
-        Success(_) =>
+        Success(_) => {
+          // bundle 有几十个文件，全部落盘才说「已导出」——逐文件报成功
+          // 会把一次导出说成 25 次。
+          let remaining = model.export_pending - 1
+          if remaining <= 0 {
+            (
+              with_notice(
+                { ..model, export_pending: 0, },
+                text(translator(model), "app.status.exported"),
+                false,
+              ),
+              @moui.Effect::none(),
+            )
+          } else {
+            ({ ..model, export_pending: remaining, }, @moui.Effect::none())
+          }
+        }
+        Failure(error) =>
           (
-            { ..model, notice: text(translator(model), "app.status.exported"), },
+            with_notice({ ..model, export_pending: 0, }, error.message, true),
             @moui.Effect::none(),
           )
-        Failure(error) =>
-          ({ ..model, notice: error.message, }, @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
     // 草稿恢复：上次会话的自动保存内容。基线仍是初始样例，集中包装会把
@@ -528,6 +571,7 @@ pub fn program(
   launch_submit? : LaunchSubmit = noop_launch_submit,
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
+  export_available? : Bool = false,
   immersive? : Bool = false,
   apply_locale? : (String) -> Unit = _tag => (),
 ) -> @moui.Program[Model, Msg] {
@@ -540,7 +584,12 @@ pub fn program(
   @moui.Program::new_with_environment(
     init=() => {
       (
-        initial_model(provider_config?, compile_track_available~, immersive~),
+        initial_model(
+          provider_config?,
+          compile_track_available~,
+          export_available~,
+          immersive~,
+        ),
         @moui.Effect::batch([
           services
           .settings()

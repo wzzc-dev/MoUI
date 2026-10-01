@@ -63,6 +63,14 @@ diagnostic jumps back to the IR statement (block or control) that produced it.
 The compile track offers no single-step (the artifact is native execution) and
 never falls back to the interpret track without telling you.
 
+Exporting a standalone app follows the same "never pretend" rule: it needs a
+native directory picker plus real disk writes, so `export_available` is true
+only on the macOS entry. On the web entry, choosing "Export app" states the
+limitation explicitly (`app.export.unavailable_web`) instead of opening a
+directory dialog that cannot write. Every user-facing failure path — save,
+open, export, budget limits, parse errors — reports through one
+`with_notice` funnel that also raises a visible toast.
+
 ### Interpret track: sandbox and gate
 
 The instruction machine enforces a 100_000 step budget, keeps a teaching-grade
