@@ -382,7 +382,8 @@ pub fn toast_host(base : @moui.View[Msg], model : Model) -> @moui.View[Msg] {
   let toasts = recent_toasts(model.toasts)
   let mut index = 0
   for toast in toasts {
-    let (label, warning) = toast
+    let label = toast.text
+    let warning = toast.warning
     specs.push(
       @views.PresentationSpec::new(
         id="studio-toast-\{index}",
@@ -408,8 +409,8 @@ pub fn toast_host(base : @moui.View[Msg], model : Model) -> @moui.View[Msg] {
 
 ///|
 /// 最近的 toast（最多 TOAST_LIMIT 条，新的在前——视觉上最新在最上）。
-fn recent_toasts(toasts : Array[(String, Bool)]) -> Array[(String, Bool)] {
-  let out : Array[(String, Bool)] = []
+fn recent_toasts(toasts : Array[ToastEntry]) -> Array[ToastEntry] {
+  let out : Array[ToastEntry] = []
   let mut index = toasts.length() - 1
   while index >= 0 && out.length() < TOAST_LIMIT {
     out.push(toasts[index])
@@ -525,8 +526,32 @@ pub fn ide_status_bar(
     }
     hinted
   }
+  // VS Code 状态栏口径：**左组**（应用/工作区/文件标识）+ **右组**
+  // （行号/编码/警告错误/运行状态），中间 weight spacer 撑开。
+  let split = cells_with_hint.length().clamp(min=3, max=99).min(4)
+  let left_cells : Array[(String, Int)] = []
+  let right_cells : Array[(String, Int)] = []
+  let mut cursor = 0
+  for cell in cells_with_hint {
+    if cursor < split {
+      left_cells.push(cell)
+    } else {
+      right_cells.push(cell)
+    }
+    cursor = cursor + 1
+  }
+  let left_width = (width * 0.45).max(300.0)
+  let right_width = (width - left_width).max(200.0)
   @views.container(
-    status_cells(cells_with_hint, width),
+    @views.row(
+      [
+        status_cells(left_cells, left_width, false),
+        @views.spacer(min_length=8.0, weight=1.0),
+        status_cells(right_cells, right_width, true),
+      ],
+      spacing=0.0,
+      align=Center,
+    ).frame(width~),
     background=ide_panel_alt(),
     height=STATUSBAR_HEIGHT,
     padding=0.0,

@@ -221,7 +221,7 @@ test "RunArtifact dispatches to the launcher and reports immediately" {
   )
   // 即时反馈：还没启动完就先告诉用户「正在启动」
   assert_eq(running.toasts.length(), baseline + 1)
-  assert_true(running.toasts[baseline].0.contains("启动"))
+  assert_true(running.toasts[baseline].text.contains("启动"))
   // 副作用经 effect 表达（不在纯转移里直接 spawn）
   ignore(effect)
 }

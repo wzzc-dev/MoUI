@@ -41,7 +41,7 @@ pub fn ide_right_panel(
     ).frame(width~, height~),
     background=ide_panel(),
     width~,
-    height~,
+    height=height,
     padding=0.0,
   )
 }

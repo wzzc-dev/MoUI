@@ -58,6 +58,12 @@ pub fn studio_program_commands(
     ExportRequested,
   )
   bind("Enter", false, "app.command.run.start", Submit, true, RunStart)
+  // 撤销/重做：从按钮载体迁移到全局表（按钮壳的 stack 顶对齐导致图标
+  // 偏上；全局表接管快捷键后按钮恢复与芯片对齐的 icon_button）
+  bind("z", false, "app.edit.undo", Undo, true, Undo)
+  bind("z", true, "app.edit.redo", Undo, true, Redo)
+  // 命令面板：Ctrl/Cmd+K
+  bind("k", false, "app.command.open", Activate, true, CommandPaletteOpen)
   // Ctrl+Space：补全候选（编辑器情报）
   bind(" ", false, "app.command.code.complete", Activate, true, TriggerCompletion)
   bind(

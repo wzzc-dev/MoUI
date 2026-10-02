@@ -567,7 +567,14 @@ fn run_subscription(
   // 定时器开着且编译轨活时，解释轨的 30ms 订阅也要标出秒帧——
   // 虚拟时钟在两轨上的步进口径一致。
   let timer_on = model.program.window.timer_interval > 0 && app_running(model)
-  match timer {
+  // toast 老化订阅：只要有 toast 在屏上，每秒发一次 ToastTick。
+  // 与运行订阅 batch 合并——运行中 toast 也会照常过期。
+  let toast_subscription = match (timer, model.toasts.length() > 0) {
+    (Some(source), true) =>
+      source.subscription(interval_ms=1000.0, map=_frame => ToastTick)
+    _ => @moui.Subscription::none()
+  }
+  let run_subscription_plan = match timer {
     Some(source) =>
       if interpret_live {
         if timer_on {
@@ -588,6 +595,7 @@ fn run_subscription(
       }
     None => @moui.Subscription::none()
   }
+  @moui.Subscription::batch([run_subscription_plan, toast_subscription])
 }
 
 ///|

@@ -113,7 +113,7 @@ test "AI pill stays centred and paints no slab over the workspace" {
   assert_true(pill.ai_pill)
   let commands = shell_draw(pill, 1280.0, 800.0)
   // 中心列的水平范围（图标栏 + 左栏之后，右栏之前）
-  let widths = shell_chrome_widths(pill, 1280.0)
+  let widths = shell_chrome_widths(pill, 1280.0 - ICONBAR_WIDTH)
   let center_left = ICONBAR_WIDTH + 2.0 + LEFTBAR_WIDTH + 1.0
   let center_right = center_left + widths.center
   // 药丸本体：找「Agent」标签所在的那颗圆角盒。
@@ -255,7 +255,7 @@ test "drag region clears the top bar actions in both locales" {
 test "pane head text stays inside its own pane" {
   let base = initial_model()
   for width in [1440.0, 1280.0, 1100.0, 1000.0] {
-    let chrome = shell_chrome_widths(base, width)
+    let chrome = shell_chrome_widths(base, width - ICONBAR_WIDTH)
     let iconbar = ICONBAR_WIDTH
     let left_edge = iconbar + 1.0
     let left_right = left_edge + LEFTBAR_WIDTH
@@ -413,7 +413,7 @@ test "block editor lives in the right panel and fits it" {
   // 卡标题 + 输入框占位提示。两者都只在右栏编辑卡里出现。
   let title_label = text(translator(cleared), "app.block.edit_title")
   let placeholder = text(translator(cleared), "app.block.editor_hint")
-  let chrome = shell_chrome_widths(cleared, 1280.0)
+  let chrome = shell_chrome_widths(cleared, 1280.0 - ICONBAR_WIDTH)
   // 右栏左缘 = 图标栏 + 左栏 + 中心列 + 两条发丝线；右缘 = 窗口右缘。
   let right_left = ICONBAR_WIDTH +
     1.0 +
@@ -473,7 +473,7 @@ test "block editor lives in the right panel and fits it" {
 /// 「位置不对」。这正是用户报的那条。
 test "panel head trailing actions hug the panel right edge" {
   let model = initial_model()
-  let _chrome = shell_chrome_widths(model, 1280.0)
+  let _chrome = shell_chrome_widths(model, 1280.0 - ICONBAR_WIDTH)
   let left_edge = ICONBAR_WIDTH + 1.0
   let left_right = left_edge + LEFTBAR_WIDTH
   let commands = shell_draw(model, 1280.0, 800.0)
@@ -578,7 +578,7 @@ test "the right panel head closes the panel, not the selection" {
   // 收起：右栏宽度归零，中心列吃掉这份宽度
   let hidden = apply_shell(model, SetRightVisible(false))
   assert_eq(hidden.right_visible, false)
-  let widths = shell_chrome_widths(model, 1280.0)
+  let widths = shell_chrome_widths(model, 1280.0 - ICONBAR_WIDTH)
   let hidden_widths = shell_chrome_widths(hidden, 1280.0)
   assert_eq(hidden_widths.right, 0.0)
   if hidden_widths.center <= widths.center {

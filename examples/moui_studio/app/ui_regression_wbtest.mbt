@@ -12,7 +12,7 @@ test "ai floating card is horizontally centered at the center anchor" {
   let width = 1280.0
   let commands = shell_draw(model, width, 800.0)
   let column_left = ICONBAR_WIDTH + 1.0 + LEFTBAR_WIDTH + 1.0
-  let chrome = shell_chrome_widths(model, width)
+  let chrome = shell_chrome_widths(model, width - ICONBAR_WIDTH)
   let column_center = column_left + chrome.center / 2.0
   let card_width = (chrome.center - 20.0).max(320.0).min(680.0)
   let mut found = false
@@ -47,7 +47,7 @@ test "design stage widgets render with the product (light) theme" {
   let width = 1280.0
   let commands = shell_draw(model, width, 800.0)
   let column_left = ICONBAR_WIDTH + 1.0 + LEFTBAR_WIDTH + 1.0
-  let right_edge = column_left + shell_chrome_widths(model, width).center
+  let right_edge = column_left + shell_chrome_widths(model, width - ICONBAR_WIDTH).center
   let stage_top = TOPBAR_HEIGHT + ICONBAR_WIDTH
   let mut dark_texts = 0
   for run in shell_texts(commands) {

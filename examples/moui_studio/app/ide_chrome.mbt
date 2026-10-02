@@ -387,15 +387,18 @@ pub fn icon_button(
   height : Double,
   icon_size : Double,
 ) -> @moui.View[Msg] {
-  let tint = if selected { ide_accent() } else { ide_text_muted() }
+  // VS Code 活动栏口径：选中 = **深灰微高亮底 + 白色字形**（不是蓝底蓝字
+  // ——蓝色块连排是「不协调」的主因）；未选中 = 灰字形裸露（底色与所在
+  // 表面同色，即视觉透明）。
+  let tint = if selected { ide_text() } else { ide_text_muted() }
   @views.container(
     @views.center(
       @views.icon(icon, size=icon_size, color=tint),
       width=width - 8.0,
       height=height - 8.0,
     ),
-    background=if selected { ide_selection() } else { ide_panel() },
-    corner_radius=6.0,
+    background=if selected { ide_hover() } else { ide_panel() },
+    corner_radius=4.0,
     width~,
     height~,
     padding=0.0,
@@ -1078,8 +1081,14 @@ pub fn text_estimate_width(label : String) -> Double {
 pub fn status_cells(
   cells : Array[(String, Int)],
   width : Double,
+  right_align : Bool,
 ) -> @moui.View[Msg] {
   let views : Array[@moui.View[Msg]] = []
+  // 右组**贴右**：前缀 weight spacer；左组贴左（VS Code 状态栏口径：
+  // 左组顶格、右组顶右，中间由外层 weight spacer 撑开）。
+  if right_align {
+    views.push(@views.spacer(min_length=0.0, weight=1.0))
+  }
   // 先算「内容 + 分隔符」的总宽，超出可用宽度时按比例压缩每格。
   let inner = (width - 20.0).max(120.0)
   let mut needed = 0.0
@@ -1122,7 +1131,6 @@ pub fn status_cells(
     )
     index = index + 1
   }
-  views.push(@views.spacer(min_length=0.0, weight=1.0))
   @views.padding_xy(
     fill_row(views, (width - 20.0).max(120.0), 6.0, Center),
     horizontal=10.0,

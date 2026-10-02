@@ -28,14 +28,15 @@ let block_width : Double = 430.0
 /// 用平均值会算出「刚好放下」然后仍然溢出几个字符。
 /// 口径与 `text_estimate_width` 一致（ASCII 7.9 / 全角 13.0），并留
 /// `WIDTH_SAFETY` 的余量：实测估算比实渲**偏窄约 2%**（「…悬停积木…」
-/// 估算 294.4、实渲 300.8），所以按 98% 预算截断，宁可早切一个字也不要
-/// 越界半个字。
+/// 估算 294.4、实渲 300.8）。曾按 98% 截断——2% 余量被估算误差吃穿后
+/// 仍会越界（1100 宽窗格实测超出裁剪区 5px），收紧到 95%：宁可早切
+/// 一到两个字，也不要越界半个字。
 ///
 /// 两个已踩过的坑：
 /// ① 曾按 `12/13` 折算字号（以为文字按 12pt 渲染）——实际主题正文是
 ///    16pt，凭空折算让预算**虚高 8%**，截断了却仍然溢出；
 /// ② 只截断不预留余量，2% 的估算误差在长句上就是 5-6pt 的越界。
-pub const LABEL_WIDTH_SAFETY : Double = 0.98
+pub const LABEL_WIDTH_SAFETY : Double = 0.95
 
 ///|
 pub fn fit_label(label : String, max_width : Double) -> String {
@@ -73,10 +74,17 @@ pub fn blocks_item_rects(
   avail_width? : Double = block_width,
 ) -> Array[@geometry.Rect] {
   let rects : Array[@geometry.Rect] = []
-  let budget = (avail_width - block_margin * 2.0).max(160.0)
+  // 预算下限必须**不超过可用宽**：下限高于画布可用宽时块体本身就越出
+  // 画布（实测 1100 窗口下画布 155、下限 160，块文字越出裁剪区 5px）。
+  // 下限只防「画布极窄时块缩成 0」——取可用宽与 160 的较小者，再兜底 80。
+  let budget = (avail_width - block_margin * 2.0).max(
+    (avail_width * 0.5).max(80.0).min(160.0),
+  )
   for item in blocks {
     let x = block_margin + item.depth.to_double() * block_indent
-    let width = (budget - item.depth.to_double() * block_indent).max(120.0)
+    let width = (budget - item.depth.to_double() * block_indent).max(
+      (budget * 0.5).max(60.0),
+    )
     rects.push(
       @geometry.Rect::new(
         x~,

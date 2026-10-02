@@ -44,52 +44,8 @@ pub const TOPBAR_ACTIONS_SAFETY : Double = 8.0
 /// 重做在 macOS 的主流口径是 `Cmd+Shift+Z`（`Cmd+Y` 是 Windows 习惯），
 /// 这里跟随平台习惯；两者都注册会让 Shift 组合与单 Shift 判别变复杂，
 /// 收益不抵成本。
-fn undo_shortcut(primary : Bool) -> @core.KeyboardShortcut {
-  if primary {
-    @core.KeyboardShortcut::new(
-      key="z",
-      modifiers=@core.KeyModifiers::new(meta=true),
-    )
-  } else {
-    @core.KeyboardShortcut::new(
-      key="z",
-      modifiers=@core.KeyModifiers::new(meta=true, shift=true),
-    )
-  }
-}
 
-///|
-/// 命令面板快捷键（`Cmd+K` / `Ctrl+K`）。同样两个修饰键各一份。
-fn palette_shortcut(meta : Bool) -> @core.KeyboardShortcut {
-  if meta {
-    @core.KeyboardShortcut::new(
-      key="k",
-      modifiers=@core.KeyModifiers::new(meta=true),
-    )
-  } else {
-    @core.KeyboardShortcut::new(
-      key="k",
-      modifiers=@core.KeyModifiers::new(control=true),
-    )
-  }
-}
 
-///|
-/// `Ctrl` 变体（Windows/Linux）。与 `undo_shortcut` 成对使用：
-/// 同一个动作注册两条 shortcut 链，覆盖两个平台的修饰键。
-fn undo_shortcut_ctrl(primary : Bool) -> @core.KeyboardShortcut {
-  if primary {
-    @core.KeyboardShortcut::new(
-      key="z",
-      modifiers=@core.KeyModifiers::new(control=true),
-    )
-  } else {
-    @core.KeyboardShortcut::new(
-      key="z",
-      modifiers=@core.KeyModifiers::new(control=true, shift=true),
-    )
-  }
-}
 
 ///|
 /// 运行/停止芯片标签：运行中变停止。宽度计算与渲染共用同一来源。
@@ -112,9 +68,8 @@ pub fn topbar_actions_width(model : Model, t : @i18n.Translator) -> Double {
   topbar_chip_bound(text(t, "app.run.step"), 48.0) +
   topbar_chip_bound(text(t, "app.topbar.compile"), 72.0) +
   TOPBAR_ICON_BUTTON_WIDTH * 3.0 +
-  34.0 +
   28.0 +
-  TOPBAR_ACTION_GAP * 7.0 +
+  TOPBAR_ACTION_GAP * 6.0 +
   TOPBAR_ACTIONS_SAFETY
 }
 
@@ -192,46 +147,33 @@ pub fn ide_top_bar(
     // 撤销/重做：必须有键位（Ctrl/Cmd+Z、Ctrl/Cmd+Shift+Z），且两个修饰键
     // 各注册一份——`KeyboardShortcut::matches` 是修饰键**精确相等**，
     // macOS 走 meta、Windows/Linux 走 control，只注册一个就会有一端失灵。
-    shortcut_icon_button(
+    icon_button(
       ChevronLeft,
       text(t, "app.edit.undo"),
+      false,
       Undo,
-      undo_shortcut(true),
-      TOPBAR_ICON_BUTTON_WIDTH,
-      TOPBAR_ACTION_HEIGHT,
+      32.0,
+      26.0,
       14.0,
-      alt_shortcut=Some(undo_shortcut_ctrl(true)),
     ),
-    shortcut_icon_button(
+    icon_button(
       ChevronRight,
       text(t, "app.edit.redo"),
+      false,
       Redo,
-      undo_shortcut(false),
-      TOPBAR_ICON_BUTTON_WIDTH,
-      TOPBAR_ACTION_HEIGHT,
+      32.0,
+      26.0,
       14.0,
-      alt_shortcut=Some(undo_shortcut_ctrl(false)),
     ),
-    pill(
-      if model.language is ZhHans {
-        "中"
-      } else {
-        "EN"
-      },
-      ide_text_muted(),
-      34.0,
-    ),
-    // 命令面板：Ctrl/Cmd+K。面板底部那句「Ctrl/Cmd + K 打开命令面板」
-    // 此前是**教了一个没绑的键**——现在这条通路真的接上了。
-    shortcut_icon_button(
+    // 命令面板：Ctrl/Cmd+K（快捷键走全局命令表；设置面板负责语言切换）
+    icon_button(
       Search,
       text(t, "app.command.open"),
+      model.command_palette_open,
       CommandPaletteOpen,
-      palette_shortcut(true),
-      TOPBAR_ICON_BUTTON_WIDTH,
-      TOPBAR_ACTION_HEIGHT,
+      32.0,
+      26.0,
       14.0,
-      alt_shortcut=Some(palette_shortcut(false)),
     ),
     icon_button(
       Settings,
@@ -246,7 +188,12 @@ pub fn ide_top_bar(
   // 内垫：沉浸式左侧让出系统信号灯（78），否则常规 10。
   // 内部行宽 = width − 左内垫 − 右内垫；行必须显式定宽，否则权重 spacer
   // 拿不到 slack，顶栏内容会挤在中间（见 fill_row 注释）。
-  let inset = if model.immersive { TRAFFIC_LIGHT_INSET } else { 10.0 }
+  // 顶栏起点在活动栏（48）右侧：信号灯避让量相应收窄 48。
+  let inset = if model.immersive {
+    TRAFFIC_LIGHT_INSET - ICONBAR_WIDTH
+  } else {
+    10.0
+  }
   let inner = (width - inset - 10.0).max(120.0)
   // 沉浸态这一条同时承担窗口标题栏，所以是 `WINDOW_CHROME_HEIGHT`（32，
   // 与系统信号灯共线）；非沉浸态（Web）没有窗口头，保持设计稿的 40。
@@ -306,54 +253,61 @@ pub fn ide_icon_bar(
   t : @i18n.Translator,
   height : Double,
 ) -> @moui.View[Msg] {
+  // VS Code 活动栏口径：**全高贯通**（从窗口顶直抵窗口底边，状态栏在它
+  // 右侧铺开、不穿过活动栏），图标从信号灯带之下开始；等尺寸（32×32）、
+  // 等节奏（spacing=0）；设置钉在最底（贴窗口底边框）。
+  // 无选中条纹——选中态由背景高亮表达。
+  let top_clearance = if model.immersive {
+    WINDOW_CHROME_HEIGHT
+  } else {
+    TOPBAR_HEIGHT
+  }
   let items : Array[@moui.View[Msg]] = [
+    @views.spacer(min_length=0.0, weight=0.0).frame(width=1.0, height=top_clearance),
     icon_button(
       Eye,
       text(t, "app.ws.visual"),
       model.workspace is WsVisual,
       SetWorkSpace(WsVisual),
-      40.0,
-      36.0,
-      17.0,
+      32.0,
+      32.0,
+      15.0,
     ),
     icon_button(
       CodeInline,
       text(t, "app.ws.code"),
       model.workspace is WsCode,
       SetWorkSpace(WsCode),
-      40.0,
-      36.0,
-      17.0,
+      32.0,
+      32.0,
+      15.0,
     ),
-    // 分隔线在 column 里必须是横线：竖线按「可用高度」测量，放进列里会
-    // 量到整列高并盖住后面的兄弟（与 row 里必须用竖线是同一条约定）。
-    @views.divider(thickness=1.0, color=ide_border(), inset=8.0),
     icon_button(
       Sidebar,
       text(t, "app.left.tree"),
       model.left_view is LeftTree,
       SetLeftView(LeftTree),
-      40.0,
-      36.0,
-      17.0,
+      32.0,
+      32.0,
+      15.0,
     ),
     icon_button(
       Table,
       text(t, "app.left.data"),
       model.left_view is LeftData,
       SetLeftView(LeftData),
-      40.0,
-      36.0,
-      17.0,
+      32.0,
+      32.0,
+      15.0,
     ),
     icon_button(
       Focus,
       text(t, "app.ai.title"),
       model.ai_anchor is AiDocked && !model.ai_pill,
       CycleAiAnchor,
-      40.0,
-      36.0,
-      17.0,
+      32.0,
+      32.0,
+      15.0,
     ),
     // 右栏开合。关掉之后唯一的重开入口就在这里——所以它必须始终在场
     // （不像左栏两个图标那样是「多视图」关系）。
@@ -362,25 +316,27 @@ pub fn ide_icon_bar(
       text(t, "app.right.show"),
       model.right_visible,
       SetRightVisible(!model.right_visible),
-      40.0,
-      36.0,
-      17.0,
+      32.0,
+      32.0,
+      15.0,
     ),
     @views.spacer(min_length=4.0, weight=1.0),
-    @views.divider(thickness=1.0, color=ide_border(), inset=8.0),
+    // 设置钉在最底：按钮与字形**与其余栏目同规格**（32×32/15）——
+    // VS Code 的齿轮也是同一槽位节奏，缩小一号反而显得孤立。按钮贴
+    // 窗口底边框，字形居中自带 ~8px 自然留白，与 VS Code 的贴底观感一致。
     icon_button(
-      Settings,
+      Gear,
       text(t, "app.settings.title"),
       model.settings_open,
       ToggleSettings,
-      40.0,
-      36.0,
-      17.0,
+      32.0,
+      32.0,
+      15.0,
     ),
   ]
   @views.container(
     // 列必须显式定宽高：权重 spacer 只有在确定了主轴尺寸后才拿得到 slack。
-    @views.column(items, spacing=4.0, align=Center).frame(
+    @views.column(items, spacing=0.0, align=Center).frame(
       width=ICONBAR_WIDTH,
       height~,
     ),
@@ -469,7 +425,7 @@ pub fn ide_left_panel(
     ),
     background=ide_panel(),
     width~,
-    height~,
+    height=height,
     padding=0.0,
   )
 }
@@ -947,7 +903,6 @@ pub fn ide_bottom_bar(
       SetBottomTab(BtProblems),
       problems,
     ),
-    @views.spacer(min_length=6.0, weight=1.0),
   ]
   if model.bottom_tab is BtAudit && pending > 0 {
     head_cells.push(
@@ -979,6 +934,8 @@ pub fn ide_bottom_bar(
       30.0,
     ),
   )
+  // 收起/展开按钮贴页签行最右端（右缘即右栏左缘）——VS Code 面板口径。
+  head_cells.push(@views.spacer(min_length=8.0, weight=1.0))
   head_cells.push(
     icon_button(
       if model.bottom_open {
@@ -1006,14 +963,14 @@ pub fn ide_bottom_bar(
     ),
     background=ide_panel_alt(),
     height=PANEL_HEAD_HEIGHT,
-    width~,
+    width=width,
     padding=0.0,
   )
   if !model.bottom_open {
     return @views.container(
       @views.column([hairline(), head], spacing=0.0),
       background=ide_panel(),
-      width~,
+      width=width,
       padding=0.0,
     )
   }
@@ -1025,7 +982,7 @@ pub fn ide_bottom_bar(
   @views.container(
     @views.column([hairline(), head, body], spacing=0.0),
     background=ide_panel(),
-    width~,
+    width=width,
     padding=0.0,
   )
 }

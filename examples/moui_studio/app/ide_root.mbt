@@ -52,50 +52,136 @@ fn shell_view(
     ModePreview | ModeHelp | ModeRun => true
     _ => false
   }
-  // 壳高分配：顶栏 40 + 状态栏 22 + 两条发丝线 + 底栏（展开态 bottom_height，
-  // 否则 30 的页签头）。内容行吃掉剩下的全部高度。
   let bottom_height = if model.bottom_open {
     model.bottom_height
   } else {
     PANEL_HEAD_HEIGHT
   }
-  // 沉浸式：顶栏**就是**窗口标题栏（一条带，无色缝）。带高 32 由系统
-  // 信号灯的垂直位置决定（圆心 15.8pt，见 WINDOW_CHROME_HEIGHT 注释）——
-  // 内容居中即与灯共线； immersive 下 window_bar 只补差额（可为负，
-  // 代数仍然自洽：顶栏渲染 32，壳预算按 40-8 记）。
   let window_bar = if model.immersive {
     WINDOW_CHROME_HEIGHT - TOPBAR_HEIGHT
   } else {
     0.0
   }
+  // VS Code 骨架：**活动栏全高贯通左侧**（从窗口顶到状态栏），状态栏
+  // 横贯整个底边。右列（顶栏+内容+底栏面板）在活动栏右侧。
+  let body_height = (height - STATUSBAR_HEIGHT - 1.0).max(200.0)
   let chrome = TOPBAR_HEIGHT +
-    STATUSBAR_HEIGHT +
     bottom_height +
     window_bar +
     2.0
-  let content_height = (height - chrome).max(200.0)
+  let content_height = (body_height - chrome).max(200.0)
   let content = if fullscreen {
-    // 全屏页（预览/帮助/运行）：两侧栏与图标栏都收起，内容居中占满
+    // 全屏页（预览/帮助/运行）：两侧栏收起，内容居中占满
     @views.container(
       center_panel(model, t),
       background=ide_editor_background(),
-      width~,
+      width=(width - ICONBAR_WIDTH).max(120.0),
       height=content_height,
       padding=0.0,
     )
   } else {
-    workspace_row(model, t, width, content_height)
+    // 非全屏的正文在下方 main_col 里装配（工作区 + 底栏面板 + 全高右栏）；
+    // 这里只放一个占位，保持 content 类型完整。
+    @views.text("", width=1.0, height=1.0)
   }
-  let bottom = ide_bottom_bar(model, t, width)
-  let bands : Array[@moui.View[Msg]] = []
-  bands.push(ide_top_bar(model, t, width))
-  bands.push(hairline())
-  bands.push(content)
-  bands.push(bottom)
-  bands.push(hairline())
-  bands.push(ide_status_bar(model, t, width))
+  // 右列各段高度**全部显式**：顶栏带（沉浸 32 / 普通 40）+ 发丝线 +
+  // 内容段 + 底栏面板。`height~` 在这套嵌套里不按剩余空间填充——
+  // 实测它会撑到外层 body 高，把底栏面板推出窗口（「点运行没反应」轮次
+  // 的 12 个布局回归全是它）。
+  let topbar_height = if model.immersive {
+    WINDOW_CHROME_HEIGHT
+  } else {
+    TOPBAR_HEIGHT
+  }
+  let side_width = (width - ICONBAR_WIDTH).max(120.0)
+  let lower_height = (body_height - topbar_height - 1.0).max(200.0)
+  let pane_height = (lower_height - bottom_height).max(200.0)
+  // VS Code 骨架第三轮：**左栏也全高**（顶栏之下直抵状态栏），底栏面板
+  // 只铺中心列（左缘 = 左栏右缘，右缘 = 右栏左缘）。lower_row 从左到右：
+  // [左栏全高段 | 竖发丝线 | 中心列(工作区+底栏面板) | 竖发丝线 | 右栏全高段]。
+  // AI 停靠时右栏段顶上 340 是 AI 卡。
+  let chrome_widths = shell_chrome_widths(model, side_width)
+  let center_width = chrome_widths.center
+  let workspace_seg = if fullscreen {
+    content
+  } else {
+    @views.container(
+      center_workspace(model, t, center_width, pane_height),
+      background=ide_editor_background(),
+      width=center_width,
+      height=pane_height,
+      padding=0.0,
+    )
+  }
+  let main_col = @views.column(
+    [workspace_seg, ide_bottom_bar(model, t, center_width)],
+    spacing=0.0,
+  ).frame(width=center_width, height=lower_height)
+  let lower_cells : Array[@moui.View[Msg]] = []
+  if !fullscreen {
+    match chrome_widths.left {
+      Some(left_width) => {
+        lower_cells.push(ide_left_panel(model, t, left_width, lower_height))
+        lower_cells.push(hairline_v())
+      }
+      None => ()
+    }
+  }
+  lower_cells.push(main_col)
+  if !fullscreen && chrome_widths.right > 0.0 {
+    lower_cells.push(hairline_v())
+    if model.ai_anchor is AiDocked && !model.ai_pill {
+      lower_cells.push(
+        @views.column(
+          [
+            @views.container(
+              match ai_layer(model, t, chrome_widths.right, 340.0) {
+                Some(layer) => layer
+                None => @views.text("", width=1.0, height=1.0)
+              },
+              width=chrome_widths.right,
+              height=340.0,
+              padding=0.0,
+            ),
+            ide_right_panel(
+              model,
+              t,
+              chrome_widths.right,
+              lower_height - 340.0,
+            ),
+          ],
+          spacing=0.0,
+        ).frame(width=chrome_widths.right, height=lower_height),
+      )
+    } else {
+      lower_cells.push(
+        ide_right_panel(model, t, chrome_widths.right, lower_height),
+      )
+    }
+  }
+  let lower_row = @views.row(lower_cells, spacing=0.0, align=Stretch).frame(
+    width=side_width,
+    height=lower_height,
+  )
+  let right_side = @views.column(
+    [ide_top_bar(model, t, side_width), hairline(), lower_row],
+    spacing=0.0,
+  ).frame(width=side_width, height=body_height)
+  // VS Code 骨架终稿：**活动栏通到窗口最底边**（状态栏不再从它下方穿过，
+  // 设置图标随之贴住窗口底边）；**状态栏从活动栏右缘铺到窗口右缘**，
+  // 其上发丝线同样止于活动栏右缘——左缘即活动栏，无空隙。
   @views.container(
-    @views.column(bands, spacing=0.0).frame(width~, height~),
+    @views.row(
+      [
+        ide_icon_bar(model, t, height),
+        @views.column(
+          [right_side, hairline(), ide_status_bar(model, t, side_width)],
+          spacing=0.0,
+        ).frame(width=side_width, height=height),
+      ],
+      spacing=0.0,
+      align=Stretch,
+    ).frame(width~, height~),
     background=studio_window_background(),
     width~,
     height~,
@@ -104,47 +190,30 @@ fn shell_view(
 }
 
 ///|
-/// 内容行：图标栏 | 左栏 | 中心工作区 | 右栏。
-/// 高度不写死——由窗口高度决定；但含竖直分隔线的 row 必须有确定高度，
-/// 所以这里用固定 640（1280×800 窗口减去顶栏 40 + 状态栏 22 + 底栏 30 +
-/// 两条发丝线），与旧实现 600 的口径一致（多了图标栏与底栏折叠态）。
-fn workspace_row(
+/// 中心列的工作区段：工作区内容 + AI 浮动层的叠放宿主。
+/// 避让带：浮动卡（非停靠、非药丸）贴着中心列底部，把内容区按卡高让出来，
+/// 卡片就不会压住窗格脚注或底栏。停靠态在右栏内联，不占中心高度。
+/// stack 给每个子整帧，所以「让出高度」不能靠在 stack 里改子高度做
+/// ——内容仍会被撑满整帧。正确做法是把中心列拆成**上下两段**：
+/// 内容段拿 row_height − 带高，浮动卡段拿带高（卡片在段内贴底）。
+///
+/// 两种叠放形态，按「要不要让位」选：
+///
+/// - band > 0（浮动卡贴底）：**上下两段**。内容段拿 row_height − band，
+///   浮动卡段拿 band。stack 做不到这件事——stack 给每个子整帧，内容仍会
+///   被撑满，卡片就压在内容上。
+/// - band == 0（hero / 药丸 / 停靠）：**stack 覆盖**。此时浮动层本就该叠在
+///   工作区之上（药丸是角标、hero 是空舞台主角）。若仍用两段式，两段各要
+///   整行高，第二段会被列框裁掉——hero 输入框与药丸会整块消失。
+fn center_workspace(
   model : Model,
   t : @i18n.Translator,
-  width : Double,
+  center_width : Double,
   row_height : Double,
 ) -> @moui.View[Msg] {
-  let cells : Array[@moui.View[Msg]] = [
-    ide_icon_bar(model, t, row_height),
-    hairline_v(),
-  ]
-  let chrome = shell_chrome_widths(model, width)
-  // 左栏：树/数据/收起（收起时整列不占宽；窗口过窄时自动让位给中心）
-  match chrome.left {
-    Some(left_width) => {
-      cells.push(ide_left_panel(model, t, left_width, row_height))
-      cells.push(hairline_v())
-    }
-    None => ()
-  }
-  // 中心：工作区内容 + AI 浮动层的叠放宿主
-  let center_width = chrome.center
-  // 避让带：浮动卡（非停靠、非药丸）贴着中心列底部，把内容区按卡高让出来，
-  // 卡片就不会压住窗格脚注或底栏。停靠态在右栏内联，不占中心高度。
-  // stack 给每个子整帧，所以「让出高度」不能靠在 stack 里改子高度做
-  // ——内容仍会被撑满整帧。正确做法是把中心列拆成**上下两段**：
-  // 内容段拿 row_height − 带高，浮动卡段拿带高（卡片在段内贴底）。
   let band = ai_avoidance_band(model, center_width, row_height)
-  // 两种叠放形态，按「要不要让位」选：
-  //
-  // - band > 0（浮动卡贴底）：**上下两段**。内容段拿 row_height − band，
-  //   浮动卡段拿 band。stack 做不到这件事——stack 给每个子整帧，内容仍会
-  //   被撑满，卡片就压在内容上。
-  // - band == 0（hero / 药丸 / 停靠）：**stack 覆盖**。此时浮动层本就该叠在
-  //   工作区之上（药丸是角标、hero 是空舞台主角）。若仍用两段式，两段各要
-  //   整行高，第二段会被列框裁掉——hero 输入框与药丸会整块消失。
   let content_height = row_height - band
-  let center = if band > 0.0 {
+  if band > 0.0 {
     @views.column(
       [
         @views.container(
@@ -168,35 +237,6 @@ fn workspace_row(
       ai_overlay_layer(model, t, center_width, row_height),
     ]).frame(width=center_width, height=row_height)
   }
-  cells.push(center)
-  // 右栏：Context + 快速操作 + 监视（AI 停靠时并入右栏顶部）。
-  // `chrome.right == 0.0` = 用户收起了右栏 → **面板与它左侧的发丝线都不画**，
-  // 否则中心列右边会留一条没有内容的竖线。
-  if chrome.right > 0.0 {
-    cells.push(hairline_v())
-    if model.ai_anchor is AiDocked && !model.ai_pill {
-      cells.push(
-        @views.column(
-          [
-            @views.container(
-              match ai_layer(model, t, chrome.right, 340.0) {
-                Some(layer) => layer
-                None => @views.text("", width=1.0, height=1.0)
-              },
-              width=chrome.right,
-              height=340.0,
-              padding=0.0,
-            ),
-            ide_right_panel(model, t, chrome.right, row_height - 340.0),
-          ],
-          spacing=0.0,
-        ).frame(height=row_height),
-      )
-    } else {
-      cells.push(ide_right_panel(model, t, chrome.right, row_height))
-    }
-  }
-  @views.row(cells, spacing=0.0, align=Start).frame(height=row_height)
 }
 
 ///|
@@ -222,7 +262,8 @@ pub(all) struct ShellChromeWidths {
 /// 右栏而不是让它让位——它是属性面板，收起了就没地方改属性；
 /// 真正需要腾空间时先让左栏（树可以从图标栏再点开）。
 fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
-  let usable = (width - ICONBAR_WIDTH - 2.0).max(120.0)
+  // `width` = 活动栏右侧的可用宽（调用方已扣除 48 的活动栏）。
+  let usable = (width - 2.0).max(120.0)
   let center_min = 320.0
   let wants_left = !(model.left_view is LeftHidden)
   let wants_right = model.right_visible

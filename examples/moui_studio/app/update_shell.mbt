@@ -134,6 +134,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         ),
       )
     DismissToast(index) => Some(dismiss_toast(model, index))
+    ToastTick => Some((age_toasts(model), @moui.Effect::none()))
     StudioCommandRun(id) => Some(run_studio_command(model, id))
     SelectBlockCategory(index) =>
       Some(({ ..model, selected_category: index, }, @moui.Effect::none()))
@@ -519,7 +520,7 @@ fn dismiss_toast(model : Model, index : Int) -> (Model, @moui.Effect[Msg]) {
   if index < 0 || index >= model.toasts.length() {
     return (model, @moui.Effect::none())
   }
-  let toasts : Array[(String, Bool)] = []
+  let toasts : Array[ToastEntry] = []
   let mut cursor = 0
   for toast in model.toasts {
     if cursor != index {
@@ -534,7 +535,7 @@ fn dismiss_toast(model : Model, index : Int) -> (Model, @moui.Effect[Msg]) {
 /// 追加 toast（超 TOAST_LIMIT 丢最旧）。
 pub fn push_toast(model : Model, text : String, warning : Bool) -> Model {
   let toasts = model.toasts
-  toasts.push((text, warning))
+  toasts.push(ToastEntry::{ text, warning, age: 0, })
   while toasts.length() > TOAST_LIMIT {
     ignore(toasts.remove(0))
   }
@@ -634,4 +635,16 @@ fn restore_code_draft(model : Model) -> (Model, @moui.Effect[Msg]) {
       )
     }
   }
+}
+
+///|
+/// toast 老化：每秒 +1，满 TOAST_SECONDS 秒即消失（自动，无需手点）。
+fn age_toasts(model : Model) -> Model {
+  let kept : Array[ToastEntry] = []
+  for toast in model.toasts {
+    if toast.age + 1 < TOAST_SECONDS {
+      kept.push(ToastEntry::{ text: toast.text, warning: toast.warning, age: toast.age + 1, })
+    }
+  }
+  { ..model, toasts: kept, }
 }

@@ -286,6 +286,7 @@ test "immersive drag region stops before the top bar actions" {
         run.frame.origin.y + run.frame.size.height - 0.5
       // 按钮盒必须比文字宽（有内垫），且不是整条带子的底色
       if contains_vertically &&
+        rect.size.height < 40.0 &&
         rect.origin.x < run.frame.origin.x &&
         rect.size.width > run.frame.size.width &&
         rect.size.width < width * 0.5 {

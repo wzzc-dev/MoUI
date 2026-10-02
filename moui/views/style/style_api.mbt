@@ -232,6 +232,7 @@ pub(all) enum IconName {
   Search
   ArrowRight
   Settings
+  Gear
   Trash
   Info
   FileNew

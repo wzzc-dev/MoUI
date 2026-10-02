@@ -86,6 +86,18 @@ pub const LOG_LIMIT : Int = 400
 pub const TOAST_LIMIT : Int = 3
 
 ///|
+/// toast 自动消失秒数（ToastTick 每秒老化一次）。
+pub const TOAST_SECONDS : Int = 4
+
+///|
+/// 一条 toast：文案 + 是否警告色 + 已存活秒数。
+pub(all) struct ToastEntry {
+  text : String
+  warning : Bool
+  age : Int
+}
+
+///|
 /// AI 会话卡保留条数。
 pub const AI_CARD_LIMIT : Int = 24
 
@@ -562,7 +574,7 @@ pub(all) struct Model {
   settings_open : Bool
   ai_history_open : Bool
   // toast：文本 + 是否警告（会话内，最多 TOAST_LIMIT 条）
-  toasts : Array[(String, Bool)]
+  toasts : Array[ToastEntry]
   // 命令面板 Canvas（设计稿把积木分类条单独成条：选中的分类下标，-1 = 全部）
   selected_category : Int
   // 语句插入面板：是否展开（分类轨点击）。展开时列出该分类可插入的语句骨架。
@@ -695,6 +707,8 @@ pub(all) enum Msg {
   HoverHint(String)
   RunTick
   TimerTick
+  // toast 老化节拍（每秒一次；有 toast 时订阅才活跃）
+  ToastTick
   ControlInputDone(String)
   RunStep
   RunResume
