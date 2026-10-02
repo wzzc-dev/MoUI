@@ -8,7 +8,7 @@ pub fn program_signature(program : StudioProgram) -> String {
   let buf = StringBuilder()
   buf.write_string("program v\{program.version}\n")
   buf.write_string(
-    "window «\{program.window.title}» \{program.window.width} \{program.window.height}\n",
+    "window «\{program.window.title}» \{program.window.width} \{program.window.height} timer=\{program.window.timer_interval}\n",
   )
   for control in program.controls {
     buf.write_string(
@@ -31,6 +31,14 @@ pub fn program_signature(program : StudioProgram) -> String {
       "handler «\{handler.control_name}» \{handler.event.tag()} note(«\{handler.note_zh}»|«\{handler.note_en}»)\n",
     )
     buf.write_string(handler_signature(handler))
+  }
+  for func in program.functions {
+    buf.write_string("func «\{func.name}» params[")
+    for param in func.params {
+      buf.write_string("«\{param}» ")
+    }
+    buf.write_string("]\n")
+    write_stmts(buf, func.body, 1)
   }
   buf.to_string()
 }
@@ -102,6 +110,22 @@ fn write_stmt(buf : StringBuilder, stmt : Stmt, indent : Int) -> Unit {
       write_stmts(buf, body, indent + 1)
     }
     Break => buf.write_string("break")
+    Return(expr) => {
+      buf.write_string("return")
+      match expr {
+        Some(value) => {
+          buf.write_string(" ")
+          write_expr(buf, value)
+        }
+        None => ()
+      }
+    }
+    SetIndex(name, index, value) => {
+      buf.write_string("setindex \{name} ")
+      write_expr(buf, index)
+      buf.write_string(" = ")
+      write_expr(buf, value)
+    }
     Call(name, args) => {
       buf.write_string("call \{name}")
       for arg in args {
@@ -116,6 +140,24 @@ fn write_stmt(buf : StringBuilder, stmt : Stmt, indent : Int) -> Unit {
 fn write_expr(buf : StringBuilder, expr : Expr) -> Unit {
   match expr {
     NumLit(n) => buf.write_string("num(\{n})")
+    IntLit(n) => buf.write_string("int(\{n})")
+    ListLit(items) => {
+      buf.write_string("list(")
+      for index, item in items {
+        if index > 0 {
+          buf.write_string(",")
+        }
+        write_expr(buf, item)
+      }
+      buf.write_string(")")
+    }
+    Index(base, index) => {
+      buf.write_string("index(")
+      write_expr(buf, base)
+      buf.write_string(",")
+      write_expr(buf, index)
+      buf.write_string(")")
+    }
     StrLit(text) => buf.write_string("str(«\{text}»)")
     BoolLit(flag) =>
       buf.write_string(if flag { "bool(true)" } else { "bool(false)" })

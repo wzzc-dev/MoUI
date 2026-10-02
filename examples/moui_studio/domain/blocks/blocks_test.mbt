@@ -6,12 +6,12 @@ fn nested_body() -> Array[@ir.Stmt] {
   [
     @ir.Declare("人数", @ir.Call("row_count", [@ir.Var("名单")])),
     @ir.If(
-      @ir.Binary(@ir.Gt, @ir.Var("人数"), @ir.NumLit(0.0)),
+      @ir.Binary(@ir.Gt, @ir.Var("人数"), @ir.IntLit(0)),
       [@ir.Call("message_box", [@ir.StrLit("有人")])],
       [],
       [@ir.Call("message_box", [@ir.StrLit("没人")])],
     ),
-    @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [
+    @ir.CountLoop(@ir.IntLit(3), Some("i"), [
       @ir.Call("append_row", [@ir.Var("名单"), @ir.Var("i")]),
       @ir.Break,
     ]),
@@ -103,6 +103,7 @@ test "block text matches interpreter audit detail for spotlight" {
         ],
       },
     ],
+    functions: [],
   }
   let texts = @studio_lang.initial_texts(program)
   let rows = @studio_lang.initial_rows(program)
@@ -216,19 +217,19 @@ test "path surgery on else-if arms and else branch" {
   let body : Array[@ir.Stmt] = [
     @ir.If(
       @ir.Var("开"),
-      [@ir.Assign("a", @ir.NumLit(1.0))],
+      [@ir.Assign("a", @ir.IntLit(1))],
       [
-        (@ir.Var("中"), [@ir.Assign("b", @ir.NumLit(2.0))]),
-        (@ir.Var("关"), [@ir.Assign("c", @ir.NumLit(3.0))]),
+        (@ir.Var("中"), [@ir.Assign("b", @ir.IntLit(2))]),
+        (@ir.Var("关"), [@ir.Assign("c", @ir.IntLit(3))]),
       ],
-      [@ir.Assign("d", @ir.NumLit(4.0))],
+      [@ir.Assign("d", @ir.IntLit(4))],
     ),
   ]
   // then 臂 [0,0,0] / else-if 第二臂 [0,1,1,0] / else [0,2,0]
   let replaced = @blocks.replace_stmt_at(
     body,
     [0, 1, 1, 0],
-    @ir.Assign("c2", @ir.NumLit(9.0)),
+    @ir.Assign("c2", @ir.IntLit(9)),
   )
   match @blocks.stmt_at(replaced, [0, 1, 1, 0]) {
     Some(stmt) => assert_true(stmt is @ir.Assign("c2", _))
@@ -249,7 +250,7 @@ test "path surgery on else-if arms and else branch" {
 
 ///|
 test "out-of-bounds paths are safe no-ops" {
-  let body : Array[@ir.Stmt] = [@ir.Assign("x", @ir.NumLit(1.0))]
+  let body : Array[@ir.Stmt] = [@ir.Assign("x", @ir.IntLit(1))]
   assert_true(@blocks.stmt_at(body, [5, 1, 2]) is None)
   assert_true(@blocks.stmt_at(body, []) is None)
   // 越界替换/删除返回等价结构（不崩溃、不改原数组长度）
@@ -262,9 +263,9 @@ test "out-of-bounds paths are safe no-ops" {
 ///|
 test "reorder_stmt moves within a list without mutating input" {
   let body : Array[@ir.Stmt] = [
-    @ir.Assign("a", @ir.NumLit(1.0)),
-    @ir.Assign("b", @ir.NumLit(2.0)),
-    @ir.Assign("c", @ir.NumLit(3.0)),
+    @ir.Assign("a", @ir.IntLit(1)),
+    @ir.Assign("b", @ir.IntLit(2)),
+    @ir.Assign("c", @ir.IntLit(3)),
   ]
   // 顶层：把下标 0 移到落槽 2（落在原下标 2 之前）
   let moved = @blocks.reorder_stmt(body, [], 0, 2).unwrap()
@@ -294,9 +295,9 @@ test "reorder_stmt addresses nested lists by list_path" {
   let body : Array[@ir.Stmt] = [
     @ir.If(
       @ir.Var("开"),
-      [@ir.Assign("t1", @ir.NumLit(1.0)), @ir.Assign("t2", @ir.NumLit(2.0))],
+      [@ir.Assign("t1", @ir.IntLit(1)), @ir.Assign("t2", @ir.IntLit(2))],
       [],
-      [@ir.Assign("e1", @ir.NumLit(3.0))],
+      [@ir.Assign("e1", @ir.IntLit(3))],
     ),
   ]
   // then 列表 [0,0]：把 t2 移到最前
@@ -313,7 +314,7 @@ test "reorder_stmt addresses nested lists by list_path" {
   }
   // 循环体 [i,2] 同样寻址
   let looped : Array[@ir.Stmt] = [
-    @ir.WhileLoop(@ir.Var("跑"), [@ir.Assign("x", @ir.NumLit(1.0)), @ir.Break]),
+    @ir.WhileLoop(@ir.Var("跑"), [@ir.Assign("x", @ir.IntLit(1)), @ir.Break]),
   ]
   let swapped = @blocks.reorder_stmt(looped, [0, 2], 1, 0).unwrap()
   match @blocks.stmt_at(swapped, [0, 2, 0]) {
@@ -324,7 +325,7 @@ test "reorder_stmt addresses nested lists by list_path" {
 
 ///|
 test "reorder_stmt rejects bad paths and indices" {
-  let body : Array[@ir.Stmt] = [@ir.Assign("a", @ir.NumLit(1.0))]
+  let body : Array[@ir.Stmt] = [@ir.Assign("a", @ir.IntLit(1))]
   assert_true(@blocks.reorder_stmt(body, [0, 1], 0, 0) is None)
   assert_true(@blocks.reorder_stmt(body, [], 5, 0) is None)
   assert_true(@blocks.reorder_stmt(body, [], -1, 0) is None)
@@ -334,7 +335,7 @@ test "reorder_stmt rejects bad paths and indices" {
 test "clone_stmts deep-copies nested structures" {
   let body : Array[@ir.Stmt] = [
     @ir.If(
-      @ir.Binary(@ir.Add, @ir.Var("a"), @ir.NumLit(1.0)),
+      @ir.Binary(@ir.Add, @ir.Var("a"), @ir.IntLit(1)),
       [@ir.Assign("x", @ir.StrLit("hi"))],
       [],
       [],
@@ -345,7 +346,7 @@ test "clone_stmts deep-copies nested structures" {
   let _ = @blocks.replace_stmt_at(
     copy,
     [0, 0, 0],
-    @ir.Assign("y", @ir.NumLit(2.0)),
+    @ir.Assign("y", @ir.IntLit(2)),
   )
   match @blocks.stmt_at(body, [0, 0, 0]) {
     Some(@ir.Assign("x", _)) => ()

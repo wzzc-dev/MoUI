@@ -380,7 +380,7 @@ test "reject: empty summary is a readability failure" {
 
 ///|
 test "reject: handler without bilingual note" {
-  let base = @proposals.proposal_from_program(
+  let _base = @proposals.proposal_from_program(
     @ir.empty_program(),
     "无说明",
     "no note",
@@ -522,6 +522,7 @@ test "reject: structural issues surface as Structural(IrError)" {
         body: [],
       },
     ],
+    functions: [],
   }
   let benign = @proposals.proposal_from_program(
     corrupt_base, "什么也不改", "change nothing",
@@ -540,7 +541,7 @@ test "reject: unknown builtin in body is a language issue" {
         event: @ir.OnClick,
         note_zh: "点",
         note_en: "click",
-        body: [@ir.Call("魔法命令", [@ir.NumLit(1.0)])],
+        body: [@ir.Call("魔法命令", [@ir.IntLit(1)])],
       },
     ],
     controls_add: [

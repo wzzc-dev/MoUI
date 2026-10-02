@@ -194,7 +194,7 @@ test "deleting a variable clears its selection" {
     Some(@app.SideVariable(name)) => name
     _ => fail("expected a selected variable")
   }
-  let deleted = apply(model, DeleteVariable(name))
+  let deleted = apply(apply(model, DeleteVariable(name)), ConfirmAccepted)
   assert_eq(deleted.program.variables.length(), count - 1)
   assert_true(deleted.side_target is None)
 }

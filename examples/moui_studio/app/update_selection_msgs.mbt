@@ -169,6 +169,23 @@ fn rename_var_in_stmt(stmt : @ir.Stmt, from : String, to : String) -> @ir.Stmt {
         },
         rename_var_in_expr(expr, from, to),
       )
+    @ir.SetIndex(name, index, value) =>
+      @ir.SetIndex(
+        if name == from {
+          to
+        } else {
+          name
+        },
+        rename_var_in_expr(index, from, to),
+        rename_var_in_expr(value, from, to),
+      )
+    @ir.Return(expr) =>
+      @ir.Return(
+        match expr {
+          Some(value) => Some(rename_var_in_expr(value, from, to))
+          None => None
+        },
+      )
     @ir.If(cond, then_body, arms, else_body) => {
       let new_arms : Array[(@ir.Expr, Array[@ir.Stmt])] = []
       for arm in arms {
@@ -224,6 +241,18 @@ fn rename_var_in_expr(expr : @ir.Expr, from : String, to : String) -> @ir.Expr {
     @ir.Var(name) => @ir.Var(if name == from { to } else { name })
     @ir.Not(inner) => @ir.Not(rename_var_in_expr(inner, from, to))
     @ir.Neg(inner) => @ir.Neg(rename_var_in_expr(inner, from, to))
+    @ir.ListLit(items) => {
+      let copy : Array[@ir.Expr] = []
+      for item in items {
+        copy.push(rename_var_in_expr(item, from, to))
+      }
+      @ir.ListLit(copy)
+    }
+    @ir.Index(base, index) =>
+      @ir.Index(
+        rename_var_in_expr(base, from, to),
+        rename_var_in_expr(index, from, to),
+      )
     @ir.Binary(op, left, right) =>
       @ir.Binary(
         op,
@@ -279,6 +308,23 @@ pub fn update_selection_msgs(
           @moui.Effect::none(),
         ),
       )
+    SetTimerInterval(raw) =>
+      // 0..=3600 秒；非法输入回落 0（关闭定时器）——属性框整数解析同口径
+      Some(
+        (
+          with_undo_point(model, "window:timer", m => {
+            ..m,
+            program: {
+              ..m.program,
+              window: {
+                ..m.program.window,
+                timer_interval: parse_window_timer(raw),
+              },
+            },
+          }),
+          @moui.Effect::none(),
+        ),
+      )
     AddVariable =>
       Some(
         (
@@ -323,4 +369,21 @@ pub fn update_selection_msgs(
       )
     _ => None
   }
+}
+
+///|
+/// 窗体定时器间隔解析：纯数字秒（0..=3600）；其余回落 0（关闭）。
+fn parse_window_timer(raw : String) -> Int {
+  if raw.length() == 0 || raw.length() > 4 {
+    return 0
+  }
+  let mut value = 0
+  for c in raw {
+    let code = c.to_int()
+    if code < 0x30 || code > 0x39 {
+      return 0
+    }
+    value = value * 10 + (code - 0x30)
+  }
+  value.min(3600)
 }

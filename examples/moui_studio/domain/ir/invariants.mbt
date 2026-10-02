@@ -13,6 +13,12 @@ pub const MAX_VARIABLES : Int = 64
 pub const MAX_HANDLERS : Int = 64
 
 ///|
+pub const MAX_FUNCS : Int = 16
+
+///|
+pub const MAX_PARAMS : Int = 8
+
+///|
 pub const MAX_STMTS_PER_HANDLER : Int = 512
 
 ///|
@@ -41,6 +47,9 @@ pub(all) enum IrError {
   TooManyStatements(Int)
   LoopTooDeep(Int)
   ExprTooDeep(Int)
+  DuplicateFunctionName(String)
+  InvalidFunctionName(String)
+  DuplicateParam(String, String)
 }
 
 ///|
@@ -109,14 +118,56 @@ pub fn validate_program(program : StudioProgram) -> Array[IrError] {
     if body_expr_depth(handler.body) > MAX_EXPR_DEPTH {
       errors.push(ExprTooDeep(body_expr_depth(handler.body)))
     }
-    match find_control(program, handler.control_name) {
-      Some(control) =>
-        if !control.kind.supports_event(handler.event) {
-          errors.push(
-            UnsupportedEvent(handler.control_name, handler.event.tag()),
-          )
-        }
-      None => errors.push(UnknownControlInHandler(handler.control_name))
+    // 窗体级事件（control_name = ""）：仅定时器/广播——虚拟时钟与
+    // 广播总线不属于任何控件
+    if handler.control_name == "" {
+      if !(handler.event is OnTimer) && !(handler.event is OnBroadcast) {
+        errors.push(UnsupportedEvent("", handler.event.tag()))
+      }
+    } else {
+      match find_control(program, handler.control_name) {
+        Some(control) =>
+          if !control.kind.supports_event(handler.event) {
+            errors.push(
+              UnsupportedEvent(handler.control_name, handler.event.tag()),
+            )
+          }
+        None => errors.push(UnknownControlInHandler(handler.control_name))
+      }
+    }
+  }
+  // 用户函数：数量 / 命名 / 重名 / 参数重名 / 体预算
+  if program.functions.length() > MAX_FUNCS {
+    errors.push(TooManyStatements(program.functions.length()))
+  }
+  let func_names : Array[String] = []
+  for func in program.functions {
+    if !variable_name_syntax_valid(func.name) {
+      errors.push(InvalidFunctionName(func.name))
+    }
+    if func_names.contains(func.name) {
+      errors.push(DuplicateFunctionName(func.name))
+    } else {
+      func_names.push(func.name)
+    }
+    let param_names : Array[String] = []
+    for param in func.params {
+      if param_names.contains(param) {
+        errors.push(DuplicateParam(func.name, param))
+      } else {
+        param_names.push(param)
+      }
+    }
+    if func.params.length() > MAX_PARAMS {
+      errors.push(DuplicateParam(func.name, "…"))
+    }
+    let func_stmts = count_stmts(func.body)
+    total_stmts = total_stmts + func_stmts
+    if stmt_loop_depth(func.body) > MAX_LOOP_DEPTH {
+      errors.push(LoopTooDeep(stmt_loop_depth(func.body)))
+    }
+    if body_expr_depth(func.body) > MAX_EXPR_DEPTH {
+      errors.push(ExprTooDeep(body_expr_depth(func.body)))
     }
   }
   if total_stmts > MAX_TOTAL_STMTS {
@@ -138,7 +189,12 @@ pub fn count_stmts(body : Array[Stmt]) -> Int {
 ///|
 fn count_stmt(stmt : Stmt) -> Int {
   match stmt {
-    Declare(_, _) | Assign(_, _) | Call(_, _) | Break => 1
+    Declare(_, _)
+    | Assign(_, _)
+    | Call(_, _)
+    | Break
+    | SetIndex(_, _, _)
+    | Return(_) => 1
     If(_, then_body, else_ifs, else_body) =>
       1 +
       count_stmts(then_body) +
@@ -168,7 +224,12 @@ fn body_loop_depth(body : Array[Stmt], current : Int) -> Int {
   let mut deepest = current
   for stmt in body {
     let depth = match stmt {
-      Declare(_, _) | Assign(_, _) | Call(_, _) | Break => current
+      Declare(_, _)
+      | Assign(_, _)
+      | Call(_, _)
+      | Break
+      | SetIndex(_, _, _)
+      | Return(_) => current
       If(_, then_body, else_ifs, else_body) => {
         let then_depth = body_loop_depth(then_body, current)
         let else_depth = body_loop_depth(else_body, current)
@@ -199,8 +260,23 @@ fn body_loop_depth(body : Array[Stmt], current : Int) -> Int {
 /// 表达式最大深度（防栈爆与不可读的巨型单行）。
 pub fn expr_depth(expr : Expr) -> Int {
   match expr {
-    NumLit(_) | StrLit(_) | BoolLit(_) | Var(_) => 1
+    NumLit(_) | IntLit(_) | StrLit(_) | BoolLit(_) | Var(_) => 1
     Not(inner) | Neg(inner) => 1 + expr_depth(inner)
+    Index(base, index) => {
+      let b = expr_depth(base)
+      let i = expr_depth(index)
+      (if b > i { b } else { i }) + 1
+    }
+    ListLit(items) => {
+      let mut deepest = 0
+      for item in items {
+        let d = expr_depth(item)
+        if d > deepest {
+          deepest = d
+        }
+      }
+      deepest + 1
+    }
     Binary(_, left, right) => {
       let l = expr_depth(left)
       let r = expr_depth(right)
@@ -235,6 +311,20 @@ fn body_expr_depth(body : Array[Stmt]) -> Int {
 fn stmt_expr_depth(stmt : Stmt) -> Int {
   match stmt {
     Declare(_, expr) | Assign(_, expr) => expr_depth(expr)
+    Return(expr) =>
+      match expr {
+        Some(value) => expr_depth(value)
+        None => 0
+      }
+    SetIndex(_, index, value) => {
+      let i = expr_depth(index)
+      let v = expr_depth(value)
+      if i > v {
+        i
+      } else {
+        v
+      }
+    }
     Call(_, args) => {
       let mut deepest = 0
       for arg in args {

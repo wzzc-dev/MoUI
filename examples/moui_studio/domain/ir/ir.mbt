@@ -13,6 +13,9 @@ pub(all) enum ControlKind {
   CheckBox
   ListBox
   Table
+  Dropdown
+  ProgressBar
+  Image
 }
 
 ///|
@@ -24,6 +27,9 @@ pub fn ControlKind::tag(self : ControlKind) -> String {
     CheckBox => "check_box"
     ListBox => "list_box"
     Table => "table"
+    Dropdown => "dropdown"
+    ProgressBar => "progress_bar"
+    Image => "image"
   }
 }
 
@@ -36,6 +42,9 @@ pub fn parse_control_kind(text : String) -> ControlKind? {
     "check_box" => Some(CheckBox)
     "list_box" => Some(ListBox)
     "table" => Some(Table)
+    "dropdown" => Some(Dropdown)
+    "progress_bar" => Some(ProgressBar)
+    "image" => Some(Image)
     _ => None
   }
 }
@@ -45,6 +54,9 @@ pub fn parse_control_kind(text : String) -> ControlKind? {
 pub(all) enum EventKind {
   OnClick
   OnChange
+  OnInputDone
+  OnTimer
+  OnBroadcast
 }
 
 ///|
@@ -52,6 +64,9 @@ pub fn EventKind::tag(self : EventKind) -> String {
   match self {
     OnClick => "on_click"
     OnChange => "on_change"
+    OnInputDone => "on_input_done"
+    OnTimer => "on_timer"
+    OnBroadcast => "on_broadcast"
   }
 }
 
@@ -60,6 +75,9 @@ pub fn parse_event_kind(text : String) -> EventKind? {
   match text {
     "on_click" => Some(OnClick)
     "on_change" => Some(OnChange)
+    "on_input_done" => Some(OnInputDone)
+    "on_timer" => Some(OnTimer)
+    "on_broadcast" => Some(OnBroadcast)
     _ => None
   }
 }
@@ -74,6 +92,11 @@ pub fn ControlKind::supports_event(
     (ListBox, OnClick) | (ListBox, OnChange) => true
     (Table, OnClick) => true
     (TextField, OnChange) | (CheckBox, OnChange) => true
+    // 切片 G 新控件
+    (Dropdown, OnChange) | (Dropdown, OnInputDone) => true
+    (ProgressBar, OnChange) => true
+    (Image, OnClick) => true
+    (TextField, OnInputDone) => true
     _ => false
   }
 }
@@ -86,7 +109,9 @@ pub const DESIGN_WIDTH : Int = 640
 pub const DESIGN_HEIGHT : Int = 480
 
 ///|
-/// 控件：表单上的一件实物。items 承载列表框选项/表格初始行。
+/// 控件：表单上的一件实物。items 按种类承载不同载荷（属性 schema 的
+/// 数据面）：列表框/下拉框=选项、表格=初始行、进度条=[绑定变量名]、
+/// 图片=[资源路径]。
 pub(all) struct Control {
   id : Int
   kind : ControlKind
@@ -145,11 +170,14 @@ pub fn BinOp::canonical(self : BinOp) -> String {
 /// 表达式。
 pub(all) enum Expr {
   NumLit(Double)
+  IntLit(Int)
   StrLit(String)
+  ListLit(Array[Expr])
   BoolLit(Bool)
   Var(String)
   Not(Expr)
   Neg(Expr)
+  Index(Expr, Expr)
   Binary(BinOp, Expr, Expr)
   Call(String, Array[Expr]) // 内建命令/函数（规范名见 studio_lang 目录）
 }
@@ -164,6 +192,8 @@ pub(all) enum Stmt {
   WhileLoop(Expr, Array[Stmt])
   Break
   Call(String, Array[Expr]) // 内建命令
+  SetIndex(String, Expr, Expr) // 名单[i] = 值
+  Return(Expr?) // 返回 expr（仅函数体内合法）
 }
 
 ///|
@@ -182,6 +212,20 @@ pub(all) struct WindowSpec {
   title : String
   width : Int
   height : Int
+  // 定时器间隔（秒；0 = 关闭）——OnTimer 虚拟时钟只在运行期间步进
+  timer_interval : Int
+}
+
+///|
+/// 用户自定义函数：带参子程序（切片 F 语言层）。
+/// 返回值经 `Return` 语句给出；无 Return 的函数返回 VUnit。
+/// note 延续 Handler 的双语「意图说明」可读性契约。
+pub(all) struct FuncDef {
+  name : String
+  params : Array[String]
+  body : Array[Stmt]
+  note_zh : String
+  note_en : String
 }
 
 ///|
@@ -192,11 +236,17 @@ pub(all) struct StudioProgram {
   controls : Array[Control]
   variables : Array[Variable]
   handlers : Array[Handler]
+  functions : Array[FuncDef]
 }
 
 ///|
 pub fn default_window() -> WindowSpec {
-  { title: "MoUI Studio 程序", width: DESIGN_WIDTH, height: DESIGN_HEIGHT, }
+  {
+    title: "MoUI Studio 程序",
+    width: DESIGN_WIDTH,
+    height: DESIGN_HEIGHT,
+    timer_interval: 0,
+  }
 }
 
 ///|
@@ -207,7 +257,19 @@ pub fn empty_program() -> StudioProgram {
     controls: [],
     variables: [],
     handlers: [],
+    functions: [],
   }
+}
+
+///|
+/// 按名找用户函数（调用解析：先内建、后自定义）。
+pub fn find_function(program : StudioProgram, name : String) -> FuncDef? {
+  for func in program.functions {
+    if func.name == name {
+      return Some(func)
+    }
+  }
+  None
 }
 
 ///|

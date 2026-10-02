@@ -179,7 +179,7 @@ fn workspace_row(
         @views.column(
           [
             @views.container(
-              match ai_layer(model, t, chrome.right, 340.0, 0.0) {
+              match ai_layer(model, t, chrome.right, 340.0) {
                 Some(layer) => layer
                 None => @views.text("", width=1.0, height=1.0)
               },
@@ -345,7 +345,7 @@ fn ai_overlay_layer(
   if model.ai_pill {
     return ai_pill_view(model, t, width, height, reserve)
   }
-  match ai_layer(model, t, width, height, reserve) {
+  match ai_layer(model, t, width, height) {
     Some(layer) => layer
     None => @views.text("", width=1.0, height=1.0)
   }
@@ -393,6 +393,18 @@ fn studio_overlay_host(
         message=Some(ToggleAiHistory),
       ),
       presented=model.ai_history_open,
+    ),
+    // 破坏性操作确认卡：Escape / 点外部 = 取消（confirm.mbt 纪律）。
+    @views.PresentationSpec::new(
+      id="studio-confirm",
+      kind=@views.PresentationKind::Dialog,
+      content=confirm_dialog(model, t),
+      modality=@views.PresentationModality::Modal,
+      dismiss=@views.PresentationDismissPolicy::new(
+        outside_tap=true,
+        message=Some(ConfirmDismissed),
+      ),
+      presented=model.pending_confirm is Some(_),
     ),
   ]
   // toast 单独一层（非模态，最上层）：它不该拦输入，也不参与 Escape 顺序

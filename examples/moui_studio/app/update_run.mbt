@@ -29,6 +29,7 @@ fn start_run(model : Model) -> Model {
         committed.runtime_values,
         committed.runtime_rows,
         seed~,
+        functions=committed.program.functions,
       )
       for key in committed.runtime_selections.keys() {
         match committed.runtime_selections.get(key) {
@@ -85,7 +86,10 @@ fn start_compiled_run(model : Model) -> Model {
       match compiled_handler_for(committed, control, event) {
         None => { ..committed, notice: "", }
         Some(handler) => {
-          let runtime = @compiled_runtime.runtime_for_program(committed.program)
+          let runtime = @compiled_runtime.runtime_for_program(
+            committed.program,
+            lower=Some(@compiled_runtime.lower_user_function),
+          )
           for key in committed.runtime_selections.keys() {
             match committed.runtime_selections.get(key) {
               Some(index) => runtime.selections[key] = index
@@ -189,6 +193,14 @@ fn seed_compiled_runtime(
 fn compiled_value(value : @studio_lang.Value) -> @compiled_runtime.Value {
   match value {
     @studio_lang.VNum(n) => @compiled_runtime.VNum(n)
+    @studio_lang.VInt(n) => @compiled_runtime.VInt(n)
+    @studio_lang.VArr(items) => {
+      let copy : Array[@compiled_runtime.Value] = []
+      for item in items {
+        copy.push(compiled_value(item))
+      }
+      @compiled_runtime.VArr(copy)
+    }
     @studio_lang.VStr(text) => @compiled_runtime.VStr(text)
     @studio_lang.VBool(flag) => @compiled_runtime.VBool(flag)
     @studio_lang.VUnit => @compiled_runtime.VUnit
@@ -244,6 +256,14 @@ fn merge_compiled_run_back(model : Model) -> Model {
 fn interpreted_value(value : @compiled_runtime.Value) -> @studio_lang.Value {
   match value {
     @compiled_runtime.VNum(n) => @studio_lang.VNum(n)
+    @compiled_runtime.VInt(n) => @studio_lang.VInt(n)
+    @compiled_runtime.VArr(items) => {
+      let copy : Array[@studio_lang.Value] = []
+      for item in items {
+        copy.push(interpreted_value(item))
+      }
+      @studio_lang.VArr(copy)
+    }
     @compiled_runtime.VStr(text) => @studio_lang.VStr(text)
     @compiled_runtime.VBool(flag) => @studio_lang.VBool(flag)
     @compiled_runtime.VUnit => @studio_lang.VUnit
@@ -264,7 +284,7 @@ fn run_tick(model : Model) -> Model {
           i = i + 1
         }
       }
-      merge_run_back(model)
+      drain_broadcasts_interpret(merge_run_back(model))
     }
   }
 }
@@ -399,6 +419,7 @@ fn run_handler(
             model.runtime_values,
             model.runtime_rows,
             seed~,
+            functions=model.program.functions,
           )
           for key in model.runtime_selections.keys() {
             match model.runtime_selections.get(key) {
@@ -674,6 +695,21 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       } else {
         Some((run_tick(model), @moui.Effect::none()))
       }
+    TimerTick => Some((timer_tick(model), @moui.Effect::none()))
+    ControlInputDone(name) => {
+      // 完成输入（切片 G）：提交（Enter）即派发 on_input_done 处理器
+      if gate_waiting(model) {
+        Some((model, @moui.Effect::none()))
+      } else {
+        let committed = commit_code(model)
+        if committed.code_error != "" {
+          Some((committed, @moui.Effect::none()))
+        } else {
+          let (next, effect) = run_handler(committed, name, "on_input_done")
+          Some((next, effect))
+        }
+      }
+    }
     RunStep =>
       if current_track(model) is Compile {
         Some((model, @moui.Effect::none()))
@@ -686,10 +722,12 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             }
             Some(
               (
-                merge_run_back({
-                  ..model,
-                  run: Some({ ..run, single_step: true, }),
-                }),
+                drain_broadcasts_interpret(
+                  merge_run_back({
+                    ..model,
+                    run: Some({ ..run, single_step: true, }),
+                  }),
+                ),
                 @moui.Effect::none(),
               ),
             )
@@ -755,7 +793,7 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           None => Some((model, @moui.Effect::none()))
           Some(run) => {
             ignore(@compiled_runtime.answer_gate(run.runtime, decision))
-            Some((merge_compiled_run_back(model), @moui.Effect::none()))
+            Some((drain_broadcasts_compiled(merge_compiled_run_back(model)), @moui.Effect::none()))
           }
         }
       } else {
@@ -763,7 +801,9 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           None => Some((model, @moui.Effect::none()))
           Some(run) => {
             @studio_lang.answer_gate(run.state, decision)
-            Some((merge_run_back(model), @moui.Effect::none()))
+            Some(
+              (drain_broadcasts_interpret(merge_run_back(model)), @moui.Effect::none()),
+            )
           }
         }
       }
@@ -977,7 +1017,10 @@ fn dispatch_compiled_event(
           model
         }
         Some(handler) => {
-          let runtime = @compiled_runtime.runtime_for_program(model.program)
+          let runtime = @compiled_runtime.runtime_for_program(
+            model.program,
+            lower=Some(@compiled_runtime.lower_user_function),
+          )
           seed_compiled_runtime(runtime, model)
           // 同 start_compiled_run：事件起点显式接续（Runtime 每次重建）。
           let seed = @compiled_runtime.next_seed(model.runtime_seed)
@@ -1106,4 +1149,100 @@ pub fn compile_active_phase(
     }
   }
   active
+}
+
+///|
+/// 广播总线（切片 G）：事件收尾时排空——每条广播文案依次投递给
+/// 全部 `@广播消息` 窗体级处理器；文案经伪变量 `消息文本` 传递。
+/// 解释轨：子 RunState 以活状态播种、跑完并回（与事件同口径）。
+fn drain_broadcasts_interpret(model : Model) -> Model {
+  match model.run {
+    None => model
+    Some(run) => {
+      let mut budget = 0
+      while run.state.broadcasts.length() > 0 && budget < 32 {
+        budget = budget + 1
+        let text = run.state.broadcasts.remove(0)
+        for handler in model.program.handlers {
+          if handler.control_name == "" && handler.event is @ir.OnBroadcast {
+            let texts = Map([], capacity=8)
+            for key in run.state.texts.keys() {
+              match run.state.texts.get(key) {
+                Some(value) => texts[key] = value
+                None => ()
+              }
+            }
+            texts["消息文本"] = text
+            let sub = @studio_lang.start_run_stmts(
+              handler.body,
+              texts,
+              run.state.vars,
+              run.state.rows,
+              functions=model.program.functions,
+            )
+            @studio_lang.run_to_end(sub)
+            for key in sub.vars.keys() {
+              match sub.vars.get(key) {
+                Some(value) => run.state.vars[key] = value
+                None => ()
+              }
+            }
+            for key in sub.texts.keys() {
+              match sub.texts.get(key) {
+                Some(value) => run.state.texts[key] = value
+                None => ()
+              }
+            }
+          }
+        }
+      }
+      model
+    }
+  }
+}
+
+///|
+/// 编译轨广播排空：同一 Runtime 上逐条投递（文案经 `消息文本` 文本槽）。
+fn drain_broadcasts_compiled(model : Model) -> Model {
+  match model.compiled_run {
+    None => model
+    Some(run) => {
+      let mut budget = 0
+      while run.runtime.broadcasts.length() > 0 && budget < 32 {
+        budget = budget + 1
+        let text = run.runtime.broadcasts.remove(0)
+        run.runtime.texts["消息文本"] = text
+        for handler in model.program.handlers {
+          if handler.control_name == "" && handler.event is @ir.OnBroadcast {
+            let compiled_handler = @compiled_runtime.lower_handler(handler.body)
+            let _ = @compiled_runtime.run_handler(run.runtime, compiled_handler)
+          }
+        }
+      }
+      model
+    }
+  }
+}
+
+///|
+/// 虚拟时钟（切片 G）：每秒步进一次；累计满窗体 timer_interval 秒即
+/// 触发一次 @定时器 窗体级处理器（两轨按当前轨道派发）。
+/// 只在运行期间累加——设计态订阅不活跃，这就是「虚拟」。
+fn timer_tick(model : Model) -> Model {
+  let interval = model.program.window.timer_interval
+  if interval <= 0 || !app_running(model) {
+    return model
+  }
+  let elapsed = model.timer_elapsed + 1
+  if elapsed < interval {
+    return { ..model, timer_elapsed: elapsed, }
+  }
+  let reset = { ..model, timer_elapsed: 0, }
+  // 触发 @定时器：与点击事件同一套纪律（先提交草稿）
+  let committed = commit_code(reset)
+  if committed.code_error != "" {
+    return committed
+  }
+  let (fired, _) = run_handler(committed, "", "on_timer")
+  fired
 }

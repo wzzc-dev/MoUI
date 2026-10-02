@@ -75,6 +75,9 @@ pub fn control_kind_key(kind : @ir.ControlKind) -> String {
     @ir.CheckBox => "control.check_box"
     @ir.ListBox => "control.list_box"
     @ir.Table => "control.table"
+    @ir.Dropdown => "control.dropdown"
+    @ir.ProgressBar => "control.progress_bar"
+    @ir.Image => "control.image"
   }
 }
 
@@ -137,6 +140,9 @@ pub fn program_tree(model : Model) -> Array[TreeNode] {
       @ir.CheckBox => "check_box"
       @ir.ListBox => "list_box"
       @ir.Table => "table"
+      @ir.Dropdown => "dropdown"
+      @ir.ProgressBar => "progress"
+      @ir.Image => "image"
     }
     if matches(query, control.name, meta) {
       nodes.push(TreeNode::{
@@ -408,29 +414,56 @@ fn highlight_line(
   builtins : Array[String],
 ) -> Array[CodeToken] {
   let tokens : Array[CodeToken] = []
+  for token in highlight_line_ranged(text, 0, keywords, builtins) {
+    tokens.push(CodeToken::{ kind: token.kind, text: token.text, })
+  }
+  tokens
+}
+
+///|
+/// 单行高亮（带源内偏移）：编辑器着色需要每个 token 的 `source_range`，
+/// 扫描逻辑与 `highlight_line` 同一份；`line_start` 是本行在完整源码里的
+/// 起始偏移，产出的 start/end 是**全文绝对偏移**。
+fn highlight_line_ranged(
+  text : String,
+  line_start : Int,
+  keywords : @studio_lang.Keywords,
+  builtins : Array[String],
+) -> Array[RangedToken] {
+  let tokens : Array[RangedToken] = []
   let chars : Array[Char] = []
   for c in text {
     chars.push(c)
   }
   let mut index = 0
+  // 已产出 token 覆盖的字符数：每个 token 的起点 = line_start + consumed
+  let mut consumed = 0
   let length = chars.length()
   let buf = StringBuilder()
+  let flush = fn(buf : StringBuilder, kind : CodeTokenKind) {
+    let value = buf.to_string()
+    if value != "" {
+      tokens.push(RangedToken::{ start: line_start + consumed, text: value, kind, })
+      consumed = consumed + value.length()
+    }
+    buf.reset()
+  }
   while index < length {
     let c = chars[index]
     // 注释：// 到行尾（归属前一段普通文本要先冲出去）
     if c == '/' && index + 1 < length && chars[index + 1] == '/' {
-      flush_token(tokens, buf, TokPlain)
+      flush(buf, TokPlain)
       let tail = StringBuilder()
       while index < length {
         tail.write_char(chars[index])
         index = index + 1
       }
-      flush_token(tokens, tail, TokComment)
+      flush(tail, TokComment)
       break
     }
     // 字符串：双引号成对（不处理转义——DSL 字符串内不设转义符）
     if c == '"' {
-      flush_token(tokens, buf, TokPlain)
+      flush(buf, TokPlain)
       let literal = StringBuilder()
       literal.write_char(c)
       index = index + 1
@@ -442,23 +475,23 @@ fn highlight_line(
         }
         index = index + 1
       }
-      flush_token(tokens, literal, TokString)
+      flush(literal, TokString)
       continue
     }
     // 数字
     if is_digit_char(c) {
-      flush_token(tokens, buf, TokPlain)
+      flush(buf, TokPlain)
       let number = StringBuilder()
       while index < length && is_number_char(chars[index]) {
         number.write_char(chars[index])
         index = index + 1
       }
-      flush_token(tokens, number, TokNumber)
+      flush(number, TokNumber)
       continue
     }
     // 标识符 / 关键字 / 内建
     if is_word_char(c) {
-      flush_token(tokens, buf, TokPlain)
+      flush(buf, TokPlain)
       let word = StringBuilder()
       while index < length && is_word_char(chars[index]) {
         word.write_char(chars[index])
@@ -472,29 +505,15 @@ fn highlight_line(
       } else {
         TokPlain
       }
-      flush_token(tokens, word, kind)
+      flush(word, kind)
       continue
     }
     // 其余（运算符/标点/空白）留在普通缓冲里
     buf.write_char(c)
     index = index + 1
   }
-  flush_token(tokens, buf, TokPlain)
+  flush(buf, TokPlain)
   tokens
-}
-
-///|
-/// 冲出一段 token（空串不产出，避免渲染层画空 run）。
-fn flush_token(
-  tokens : Array[CodeToken],
-  buf : StringBuilder,
-  kind : CodeTokenKind,
-) -> Unit {
-  let value = buf.to_string()
-  if value != "" {
-    tokens.push(CodeToken::{ kind, text: value, })
-  }
-  buf.reset()
 }
 
 ///|
@@ -687,7 +706,9 @@ pub fn block_category_label_key(category : @blocks.BlockCategory) -> String {
 /// 而控制流/声明这些由 IR 语句结构决定的块没有 spec 条目。
 pub fn block_category(kind : @blocks.BlockKind) -> @blocks.BlockCategory {
   match kind {
-    @blocks.BkDeclare | @blocks.BkAssign => @blocks.CatVariable
+    @blocks.BkDeclare | @blocks.BkAssign | @blocks.BkSetIndex =>
+      @blocks.CatVariable
+    @blocks.BkReturn => @blocks.CatFlow
     @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkEnd =>
       @blocks.CatFlow
     @blocks.BkCountLoop | @blocks.BkWhile => @blocks.CatFlow
@@ -759,7 +780,8 @@ pub fn watch_rows(model : Model) -> Array[WatchRow] {
 fn value_type_label(value : @studio_lang.Value) -> String {
   match value {
     @studio_lang.VStr(_) => "text"
-    @studio_lang.VNum(_) => "number"
+    @studio_lang.VNum(_) | @studio_lang.VInt(_) => "number"
+    @studio_lang.VArr(_) => "list"
     @studio_lang.VBool(_) => "bool"
     @studio_lang.VUnit => "unit"
   }
@@ -769,7 +791,8 @@ fn value_type_label(value : @studio_lang.Value) -> String {
 fn compiled_value_type_label(value : @compiled_runtime.Value) -> String {
   match value {
     @compiled_runtime.VStr(_) => "text"
-    @compiled_runtime.VNum(_) => "number"
+    @compiled_runtime.VNum(_) | @compiled_runtime.VInt(_) => "number"
+    @compiled_runtime.VArr(_) => "list"
     @compiled_runtime.VBool(_) => "bool"
     @compiled_runtime.VUnit => "unit"
   }

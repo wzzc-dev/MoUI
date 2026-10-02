@@ -66,6 +66,12 @@ pub fn statement_templates() -> Array[StatementTemplate] {
       skeleton_zh: "计数 = 1",
       skeleton_en: "count = 1",
     },
+    StatementTemplate::{
+      category: @blocks.CatVariable,
+      label_key: "app.stmt.tpl.set_index",
+      skeleton_zh: "名单[1] = \"张三\"",
+      skeleton_en: "roster[1] = \"alice\"",
+    },
     // 流程
     StatementTemplate::{
       category: @blocks.CatFlow,

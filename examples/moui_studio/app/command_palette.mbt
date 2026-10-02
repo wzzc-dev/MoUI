@@ -76,7 +76,7 @@ fn command_palette_list(
     )
   } else {
     for command in commands {
-      rows.push(command_palette_row(command, model.hover_studio_command, t))
+      rows.push(command_palette_row(command, model.hover_studio_command))
     }
   }
   @views.scroll_view(
@@ -92,7 +92,6 @@ fn command_palette_list(
 fn command_palette_row(
   command : StudioCommand,
   hovered_id : String,
-  t : @i18n.Translator,
 ) -> @moui.View[Msg] {
   // 悬停反馈：与左栏树行同一口径（ide_selection 底）。
   let hovered = hovered_id != "" && hovered_id == command.id

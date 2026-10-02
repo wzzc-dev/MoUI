@@ -47,9 +47,23 @@ pub(all) struct StepRecord {
 ///|
 pub(all) enum Value {
   VNum(Double)
+  VInt(Int)
   VStr(String)
+  VArr(Array[Value])
   VBool(Bool)
   VUnit
+}
+
+///|
+/// 数值归一：无小数部分（且在精确整数范围内）的数值一律落成 VInt——
+/// 教学语义：计数器 `计数 = 计数 + 1` 保持整数身份；带小数才升级为
+/// VNum。字面量求值、取数内建、初始值共用这一条规则（编译轨同款）。
+pub fn int_value(n : Double) -> Value {
+  if n == n.floor() && n.abs() < 1.0e15 {
+    VInt(n.to_int())
+  } else {
+    VNum(n)
+  }
 }
 
 ///|
@@ -58,6 +72,8 @@ pub(all) enum Value {
 pub(all) enum Instr {
   Declare(String, Expr)
   Assign(String, Expr)
+  SetIndexVar(String, Expr, Expr)
+  ReturnInstr(Expr?)
   ExprStmt(Expr)
   JumpIfFalse(Expr, Int)
   Jump(Int)
@@ -74,9 +90,9 @@ pub(all) struct Plan {
 
 ///|
 pub(all) struct RunState {
-  plan : Plan
+  mut plan : Plan
   mut pc : Int
-  vars : Map[String, Value]
+  mut vars : Map[String, Value]
   texts : Map[String, String]
   rows : Map[String, Array[String]]
   selections : Map[String, Int]
@@ -92,11 +108,22 @@ pub(all) struct RunState {
   mut declared : Array[String]
   mut gate_cursor : Int
   mut paused : Bool
+  // 广播总线（切片 G）：`广播(文案)` 入队，宿主事件收尾时排空——
+  // 每个 on_broadcast 窗体级处理器依次收到一条
+  mut broadcasts : Array[String]
+  // 用户自定义函数（切片 F）：调用解析与帧执行
+  functions : Array[@ir.FuncDef]
+  mut call_depth : Int
+  mut return_slot : Value?
 }
 
 ///|
 /// 默认步数预算：防死循环冻结 UI。
 pub const DEFAULT_MAX_STEPS : Int = 100_000
+
+///|
+/// 用户函数调用深度上限（防失控递归；步数预算之外的第二道闸）。
+pub const MAX_CALL_DEPTH : Int = 16
 
 ///|
 /// 默认随机种子（两轨同口径：编译轨的 RANDOM_SEED 是同一个数）。
@@ -128,11 +155,51 @@ pub fn initial_values(program : StudioProgram) -> Map[String, Value] {
   let values : Map[String, Value] = Map([], capacity=8)
   for variable in program.variables {
     match text_to_number(variable.init) {
-      Some(n) => values[variable.name] = VNum(n)
-      None => values[variable.name] = VStr(variable.init)
+      Some(n) => values[variable.name] = int_value(n)
+      None =>
+        // 列表字面量初始值：`[]` / `[1, 2, 3]`（全局变量存列表）
+        match constant_value(variable.init) {
+          Some(value) => values[variable.name] = value
+          None => values[variable.name] = VStr(variable.init)
+        }
     }
   }
   values
+}
+
+///|
+/// 文本 → 常量值：仅列表字面量与其中的字面量元素（无变量、无调用）。
+/// 非列表文本返回 None（走原 number/str 路径）。
+pub fn constant_value(text : String) -> Value? {
+  let trimmed = text.trim().to_owned()
+  if !trimmed.has_prefix("[") || !trimmed.has_suffix("]") {
+    return None
+  }
+  match parse_expression_text(trimmed, ZhHans) {
+    Err(_) => None
+    Ok(expr) => constant_of_expr(expr)
+  }
+}
+
+///|
+fn constant_of_expr(expr : Expr) -> Value? {
+  match expr {
+    @ir.NumLit(n) => Some(VNum(n))
+    @ir.IntLit(n) => Some(VInt(n))
+    @ir.StrLit(text) => Some(VStr(text))
+    @ir.BoolLit(flag) => Some(VBool(flag))
+    @ir.ListLit(items) => {
+      let values : Array[Value] = []
+      for item in items {
+        match constant_of_expr(item) {
+          Some(value) => values.push(value)
+          None => return None
+        }
+      }
+      Some(VArr(values))
+    }
+    _ => None
+  }
 }
 
 ///|
@@ -174,6 +241,7 @@ pub fn start_run(
   rows : Map[String, Array[String]],
   max_steps? : Int = DEFAULT_MAX_STEPS,
   seed? : Int = DEFAULT_SEED,
+  functions? : Array[@ir.FuncDef] = [],
 ) -> RunState {
   RunState::{
     plan: compile_body(body),
@@ -198,6 +266,10 @@ pub fn start_run(
     declared: [],
     gate_cursor: 0,
     paused: false,
+    broadcasts: [],
+    functions: functions,
+    call_depth: 0,
+    return_slot: None,
   }
 }
 
@@ -210,8 +282,17 @@ pub fn start_run_stmts(
   rows : Map[String, Array[String]],
   max_steps? : Int = DEFAULT_MAX_STEPS,
   seed? : Int = DEFAULT_SEED,
+  functions? : Array[@ir.FuncDef] = [],
 ) -> RunState {
-  start_run(traced_from_stmts(body), texts, values, rows, max_steps~, seed~)
+  start_run(
+    traced_from_stmts(body),
+    texts,
+    values,
+    rows,
+    max_steps~,
+    seed~,
+    functions~,
+  )
 }
 
 ///|
@@ -277,6 +358,41 @@ pub fn step_once(state : RunState) -> Unit {
         })
         state.pc = state.pc + 1
       }
+      SetIndexVar(name, index, value) => {
+        let existing = match state.vars.get(name) {
+          Some(v) => v
+          None => raise LangError(NotDeclared, line, name, "use declare first")
+        }
+        let index_value = state.eval(index, line)
+        if state.paused || !(state.status is Running) {
+          return
+        }
+        let value_value = state.eval(value, line)
+        if state.paused || !(state.status is Running) {
+          return
+        }
+        set_index_value(existing, index_value, value_value, line)
+        state.audit.push(StepRecord::{
+          line,
+          op: OpAssign,
+          detail: "\{name}[\{canonical_expr(index)}] = \{canonical_expr(value)}",
+        })
+        state.pc = state.pc + 1
+      }
+      ReturnInstr(expr) => {
+        // 返回 = 跳到计划末尾；值暂存 return_slot 供 call_user_function 取
+        match expr {
+          Some(value) => {
+            let result = state.eval(value, line)
+            if state.paused || !(state.status is Running) {
+              return
+            }
+            state.return_slot = Some(result)
+          }
+          None => state.return_slot = Some(VUnit)
+        }
+        state.pc = state.plan.instrs.length()
+      }
       ExprStmt(expr) => {
         let _value = state.eval(expr, line)
         if state.paused || !(state.status is Running) {
@@ -321,10 +437,11 @@ pub fn step_once(state : RunState) -> Unit {
         }
         let count = match value {
           VNum(n) => n.to_int()
+          VInt(n) => n
           _ => raise LangError(BadLoopCount, line, "", "")
         }
-        state.vars["\{counter}#n"] = VNum(count.to_double())
-        state.vars[counter] = VNum(1.0)
+        state.vars["\{counter}#n"] = VInt(count)
+        state.vars[counter] = VInt(1)
         if count < 1 {
           state.pc = end
         } else {
@@ -338,7 +455,7 @@ pub fn step_once(state : RunState) -> Unit {
           state.pc = end
         } else {
           if loop_var != "" {
-            state.vars[loop_var] = VNum(index)
+            state.vars[loop_var] = VInt(index.to_int())
             if !state.declared.contains(loop_var) {
               state.declared.push(loop_var)
             }
@@ -353,7 +470,7 @@ pub fn step_once(state : RunState) -> Unit {
       }
       LoopNext(counter, start) => {
         let index = state.lookup_number(counter, line)
-        state.vars[counter] = VNum(index + 1.0)
+        state.vars[counter] = VInt(index.to_int() + 1)
         state.pc = start
       }
     }
@@ -393,6 +510,7 @@ fn RunState::lookup_number(
 ) -> Double raise LangError {
   match self.vars.get(name) {
     Some(VNum(n)) => n
+    Some(VInt(n)) => n.to_double()
     Some(_) => raise LangError(TypeMismatch, line, name, "number")
     None => raise LangError(NotDeclared, line, name, "")
   }
@@ -400,7 +518,7 @@ fn RunState::lookup_number(
 
 ///|
 fn RunState::as_bool(
-  self : RunState,
+  _self : RunState,
   value : Value,
   role : String,
   line : Int,
@@ -412,11 +530,90 @@ fn RunState::as_bool(
 }
 
 ///|
+/// 调用用户函数：整帧隔离（vars/declared 全量保存恢复），参数按位绑定；
+/// 体以行号 0 编译（函数体没有用户源码行号，两轨审计口径一致）；
+/// Return 落 return_slot，体跑完无 Return 即 VUnit。
+/// 步数沿用全局预算（step_once 内累加），深度有独立上限。
+fn RunState::call_user_function(
+  self : RunState,
+  func : @ir.FuncDef,
+  arg_values : Array[Value],
+  line : Int,
+) -> Value raise LangError {
+  if self.call_depth >= MAX_CALL_DEPTH {
+    raise LangError(StepBudget, line, "call depth", "\{MAX_CALL_DEPTH}")
+  }
+  if arg_values.length() != func.params.length() {
+    raise LangError(ArityMismatch, line, func.name, "\{func.params.length()}/\{arg_values.length()}")
+  }
+  // 帧：全量快照 vars/declared（教学规模下 Map 拷贝可忽略）
+  let saved_vars : Map[String, Value] = Map([], capacity=16)
+  for key in self.vars.keys() {
+    match self.vars.get(key) {
+      Some(value) => saved_vars[key] = value
+      None => ()
+    }
+  }
+  let saved_declared : Array[String] = []
+  for name in self.declared {
+    saved_declared.push(name)
+  }
+  let index : Array[Value] = arg_values
+  for param_index, param in func.params {
+    if param_index < index.length() {
+      self.vars[param] = index[param_index]
+      if !self.declared.contains(param) {
+        self.declared.push(param)
+      }
+    }
+  }
+  self.call_depth = self.call_depth + 1
+  self.return_slot = None
+  // 子帧直接在主状态上执行：把 plan/pc 换成子计划，Return/体末还原。
+  // 审计/步数/随机数/闸门全部沿用主状态——两轨口径天然一致。
+  let saved_plan = self.plan
+  let saved_pc = self.pc
+  self.plan = compile_body(traced_from_stmts(func.body))
+  self.pc = 0
+  while self.status is Running && self.pc < self.plan.instrs.length() {
+    step_once(self)
+  }
+  let result = match self.return_slot {
+    Some(value) => value
+    None => VUnit
+  }
+  self.return_slot = None
+  self.plan = saved_plan
+  self.pc = saved_pc
+  self.call_depth = self.call_depth - 1
+  // 恢复帧（vars/declared 已原地变动；status/gate/paused 的变化
+  // 留在主状态上——闸门暂停语义与命令一致）
+  self.vars = saved_vars
+  self.declared = saved_declared
+  result
+}
+
+///|
 /// 值 → 文本（属性面板/内建参数共用；逻辑值渲染为真/假由界面本地化）。
 pub fn value_to_text(value : Value) -> String {
   match value {
     VNum(n) => number_to_text(n)
+    VInt(n) => n.to_string()
     VStr(text) => text
+    VArr(items) => {
+      let buf = StringBuilder()
+      buf.write_string("[")
+      let mut first = true
+      for item in items {
+        if !first {
+          buf.write_string(", ")
+        }
+        buf.write_string(value_to_text(item))
+        first = false
+      }
+      buf.write_string("]")
+      buf.to_string()
+    }
     VBool(true) => "true"
     VBool(false) => "false"
     VUnit => ""
@@ -425,7 +622,7 @@ pub fn value_to_text(value : Value) -> String {
 
 ///|
 fn RunState::value_as_text(
-  self : RunState,
+  _self : RunState,
   value : Value,
   role : String,
   line : Int,
@@ -460,8 +657,30 @@ fn RunState::eval(
 ) -> Value raise LangError {
   match expr {
     @ir.NumLit(n) => VNum(n)
+    @ir.IntLit(n) => VInt(n)
     @ir.StrLit(text) => VStr(text)
     @ir.BoolLit(flag) => VBool(flag)
+    @ir.ListLit(items) => {
+      let values : Array[Value] = []
+      for item in items {
+        values.push(self.eval(item, line))
+        if self.paused || !(self.status is Running) {
+          return VUnit
+        }
+      }
+      VArr(values)
+    }
+    @ir.Index(base, index) => {
+      let base_value = self.eval(base, line)
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      let index_value = self.eval(index, line)
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      self.index_value(base_value, index_value, line)
+    }
     @ir.Var(name) =>
       match self.vars.get(name) {
         Some(value) => value
@@ -471,10 +690,18 @@ fn RunState::eval(
       let flag = self.as_bool(self.eval(inner, line), "not operand", line)
       VBool(!flag)
     }
-    @ir.Neg(inner) => {
-      let n = self.eval_number(inner, "negation operand", line)
-      VNum(-n)
-    }
+    @ir.Neg(inner) =>
+      match self.eval(inner, line) {
+        VInt(n) => VInt(-n)
+        VNum(n) => VNum(-n)
+        other =>
+          raise LangError(
+            TypeMismatch,
+            line,
+            "negation operand",
+            value_to_text(other),
+          )
+      }
     @ir.Binary(op, left, right) => self.eval_binary(op, left, right, line)
     @ir.Call(name, args) => self.eval_call(name, args, line)
   }
@@ -489,6 +716,7 @@ fn RunState::eval_number(
 ) -> Double raise LangError {
   match self.eval(expr, line) {
     VNum(n) => n
+    VInt(n) => n.to_double()
     _ => raise LangError(TypeMismatch, line, role, "number")
   }
 }
@@ -518,27 +746,55 @@ fn RunState::eval_binary(
   match op {
     @ir.Add =>
       match (l, r) {
+        (VInt(a), VInt(b)) => VInt(a + b)
         (VNum(a), VNum(b)) => VNum(a + b)
+        (VInt(a), VNum(b)) => VNum(a.to_double() + b)
+        (VNum(a), VInt(b)) => VNum(a + b.to_double())
         (VStr(_), _) | (_, VStr(_)) => VStr(value_to_text(l) + value_to_text(r))
         _ => raise LangError(TypeMismatch, line, "+", "same types")
       }
     @ir.Sub =>
       match (l, r) {
+        (VInt(a), VInt(b)) => VInt(a - b)
         (VNum(a), VNum(b)) => VNum(a - b)
+        (VInt(a), VNum(b)) => VNum(a.to_double() - b)
+        (VNum(a), VInt(b)) => VNum(a - b.to_double())
         _ => raise LangError(TypeMismatch, line, "-", "numbers")
       }
     @ir.Mul =>
       match (l, r) {
+        (VInt(a), VInt(b)) => VInt(a * b)
         (VNum(a), VNum(b)) => VNum(a * b)
+        (VInt(a), VNum(b)) => VNum(a.to_double() * b)
+        (VNum(a), VInt(b)) => VNum(a * b.to_double())
         _ => raise LangError(TypeMismatch, line, "*", "numbers")
       }
     @ir.Div =>
       match (l, r) {
+        // 整数 ÷ 整数 = 整数（向零截断）：教学语义，除零与浮点同报错
+        (VInt(a), VInt(b)) =>
+          if b == 0 {
+            raise LangError(DivideByZero, line, "", "")
+          } else {
+            VInt(a / b)
+          }
         (VNum(a), VNum(b)) =>
           if b == 0.0 {
             raise LangError(DivideByZero, line, "", "")
           } else {
             VNum(a / b)
+          }
+        (VInt(a), VNum(b)) =>
+          if b == 0.0 {
+            raise LangError(DivideByZero, line, "", "")
+          } else {
+            VNum(a.to_double() / b)
+          }
+        (VNum(a), VInt(b)) =>
+          if b == 0 {
+            raise LangError(DivideByZero, line, "", "")
+          } else {
+            VNum(a / b.to_double())
           }
         _ => raise LangError(TypeMismatch, line, "/", "numbers")
       }
@@ -548,6 +804,18 @@ fn RunState::eval_binary(
     }
     @ir.Lt | @ir.Gt | @ir.Le | @ir.Ge =>
       match (l, r) {
+        (VInt(a), VInt(b)) =>
+          VBool(
+            if op is @ir.Lt {
+              a < b
+            } else if op is @ir.Gt {
+              a > b
+            } else if op is @ir.Le {
+              a <= b
+            } else {
+              a >= b
+            },
+          )
         (VNum(a), VNum(b)) =>
           VBool(
             if op is @ir.Lt {
@@ -560,6 +828,9 @@ fn RunState::eval_binary(
               a >= b
             },
           )
+        (VInt(a), VNum(b)) =>
+          VBool(compare_mixed(op, a.to_double(), b))
+        (VNum(a), VInt(b)) => VBool(compare_mixed(op, a, b.to_double()))
         (VStr(a), VStr(b)) =>
           VBool(
             if op is @ir.Lt {
@@ -579,14 +850,79 @@ fn RunState::eval_binary(
 }
 
 ///|
+/// 混合整型/浮点比较：统一升到 Double 再比（VInt 与 VNum 同为"数"，
+/// 比较不因存储形态而异）。
+fn compare_mixed(op : @ir.BinOp, a : Double, b : Double) -> Bool {
+  if op is @ir.Lt {
+    a < b
+  } else if op is @ir.Gt {
+    a > b
+  } else if op is @ir.Le {
+    a <= b
+  } else {
+    a >= b
+  }
+}
+
+///|
+/// 元素赋值：变量须持有列表；1 起、越界报错。列表按引用共享——
+/// 两轨的 Map 里存的是同一个 Array 句柄，语义一致。
+fn set_index_value(
+  base : Value,
+  index : Value,
+  value : Value,
+  line : Int,
+) -> Unit raise LangError {
+  let items = match base {
+    VArr(items) => items
+    _ => raise LangError(TypeMismatch, line, "index", "list")
+  }
+  let position = match index {
+    VInt(n) => n
+    VNum(n) => n.to_int()
+    _ => raise LangError(TypeMismatch, line, "index", "number")
+  }
+  if position < 1 || position > items.length() {
+    raise LangError(TypeMismatch, line, "index", "1..\{items.length()}")
+  }
+  items[position - 1] = value
+}
+
+///|
+/// 下标取值：1 起（与取行 row_at 同口径）；越界/非列表报 TypeMismatch。
+fn RunState::index_value(
+  _self : RunState,
+  base : Value,
+  index : Value,
+  line : Int,
+) -> Value raise LangError {
+  let items = match base {
+    VArr(items) => items
+    _ => raise LangError(TypeMismatch, line, "index", "list")
+  }
+  let position = match index {
+    VInt(n) => n
+    VNum(n) => n.to_int()
+    _ => raise LangError(TypeMismatch, line, "index", "number")
+  }
+  if position < 1 || position > items.length() {
+    raise LangError(TypeMismatch, line, "index", "1..\{items.length()}")
+  }
+  items[position - 1]
+}
+
+///|
 fn RunState::values_equal(
-  self : RunState,
+  _self : RunState,
   l : Value,
   r : Value,
   line : Int,
 ) -> Bool raise LangError {
   match (l, r) {
     (VNum(a), VNum(b)) => a == b
+    (VInt(a), VInt(b)) => a == b
+    (VInt(a), VNum(b)) => a.to_double() == b
+    (VNum(a), VInt(b)) => a == b.to_double()
     (VStr(a), VStr(b)) => a == b
     (VBool(a), VBool(b)) => a == b
     (VUnit, VUnit) => true
@@ -603,7 +939,28 @@ fn RunState::eval_call(
   line : Int,
 ) -> Value raise LangError {
   match find_builtin(name) {
-    None => raise LangError(UnknownBuiltin, line, name, "")
+    None => {
+      // 内建没有 → 用户自定义函数（调用解析：先内建、后自定义）
+      let mut found : @ir.FuncDef? = None
+      for func in self.functions {
+        if func.name == name {
+          found = Some(func)
+        }
+      }
+      match found {
+        None => raise LangError(UnknownBuiltin, line, name, "")
+        Some(func) => {
+          let arg_values : Array[Value] = []
+          for arg in args {
+            arg_values.push(self.eval(arg, line))
+            if self.paused || !(self.status is Running) {
+              return VUnit
+            }
+          }
+          self.call_user_function(func, arg_values, line)
+        }
+      }
+    }
     Some(spec) => {
       if args.length() != spec.arity {
         raise LangError(
@@ -718,6 +1075,45 @@ fn RunState::eval_command(
       })
       VUnit
     }
+    "broadcast" => {
+      let text = self.value_as_text(self.eval(args[0], line), spec.id, line)
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      self.broadcasts.push(text)
+      self.audit.push(StepRecord::{
+        line,
+        op: OpCommand,
+        detail: canonical_call_text(spec.id, args),
+      })
+      VUnit
+    }
+    "append_list" => {
+      // 命令：第一个参数是**变量名**（裸标识符），列表按引用修改
+      let name = match args[0] {
+        @ir.Var(name) => name
+        _ =>
+          raise LangError(TypeMismatch, line, "append_list", "variable")
+      }
+      let items = match self.vars.get(name) {
+        Some(VArr(items)) => items
+        Some(_) =>
+          raise LangError(TypeMismatch, line, name, "list")
+        None =>
+          raise LangError(NotDeclared, line, name, "use declare first")
+      }
+      let value = self.eval(args[1], line)
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      items.push(value)
+      self.audit.push(StepRecord::{
+        line,
+        op: OpCommand,
+        detail: canonical_call_text(spec.id, args),
+      })
+      VUnit
+    }
     "append_row" => {
       let control = self.control_name(args[0], line)
       if self.paused || !(self.status is Running) {
@@ -759,7 +1155,7 @@ fn RunState::eval_function(
       let control = self.control_name(args[0], line)
       let text = self.texts.get(control).unwrap_or("")
       match text_to_number(text) {
-        Some(n) => VNum(n)
+        Some(n) => int_value(n)
         None => raise LangError(TypeMismatch, line, control, "number text")
       }
     }
@@ -769,7 +1165,7 @@ fn RunState::eval_function(
     }
     "text_length" => {
       let text = self.value_as_text(self.eval(args[0], line), spec.id, line)
-      VNum(text.length().to_double())
+      VInt(text.length())
     }
     "contains" => {
       let text = self.value_as_text(self.eval(args[0], line), spec.id, line)
@@ -779,6 +1175,16 @@ fn RunState::eval_function(
       let sub = self.value_as_text(self.eval(args[1], line), spec.id, line)
       VBool(text.contains(sub))
     }
+    "list_length" => {
+      let value = self.eval(args[0], line)
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      match value {
+        VArr(items) => VInt(items.length())
+        _ => raise LangError(TypeMismatch, line, "list_length", "list")
+      }
+    }
     "random" => {
       let max = self.eval_number(args[0], "random bound", line)
       self.rng = self.rng ^ ((self.rng << 13) & 2147483647)
@@ -786,9 +1192,9 @@ fn RunState::eval_function(
       self.rng = self.rng ^ ((self.rng << 5) & 2147483647)
       let span = max.to_int()
       if span <= 1 {
-        VNum(1.0)
+        VInt(1)
       } else {
-        VNum((self.rng % span).to_double() + 1.0)
+        VInt(self.rng % span + 1)
       }
     }
     "selected_row" => {
@@ -807,8 +1213,8 @@ fn RunState::eval_function(
     "row_count" => {
       let control = self.control_name(args[0], line)
       match self.rows.get(control) {
-        Some(items) => VNum(items.length().to_double())
-        None => VNum(0.0)
+        Some(items) => VInt(items.length())
+        None => VInt(0)
       }
     }
     "row_at" => {
@@ -816,6 +1222,7 @@ fn RunState::eval_function(
       let index_value = self.eval(args[1], line)
       let index = match index_value {
         VNum(n) => n.to_int()
+        VInt(n) => n
         _ => raise LangError(TypeMismatch, line, "row_at index", "number")
       }
       match self.rows.get(control) {
@@ -862,6 +1269,7 @@ pub fn canonical_call_text(name : String, args : Array[Expr]) -> String {
 fn write_canonical_expr(buf : StringBuilder, expr : Expr) -> Unit {
   match expr {
     @ir.NumLit(n) => buf.write_string(number_to_text(n))
+    @ir.IntLit(n) => buf.write_string(n.to_string())
     @ir.StrLit(text) => buf.write_string("\"\{text}\"")
     @ir.BoolLit(flag) => buf.write_string(if flag { "true" } else { "false" })
     @ir.Var(name) => buf.write_string(name)
@@ -879,6 +1287,24 @@ fn write_canonical_expr(buf : StringBuilder, expr : Expr) -> Unit {
       buf.write_string(" \{op.canonical()} ")
       write_canonical_expr(buf, right)
       buf.write_string(")")
+    }
+    @ir.ListLit(items) => {
+      buf.write_string("[")
+      let mut first = true
+      for item in items {
+        if !first {
+          buf.write_string(", ")
+        }
+        write_canonical_expr(buf, item)
+        first = false
+      }
+      buf.write_string("]")
+    }
+    @ir.Index(base, index) => {
+      write_canonical_expr(buf, base)
+      buf.write_string("[")
+      write_canonical_expr(buf, index)
+      buf.write_string("]")
     }
     @ir.Call(name, args) => buf.write_string(canonical_call_text(name, args))
   }
@@ -937,6 +1363,14 @@ fn emit_stmt(
     }
     @ir.Assign(name, expr) => {
       instrs.push(Assign(name, expr))
+      lines.push(line)
+    }
+    @ir.SetIndex(name, index, value) => {
+      instrs.push(SetIndexVar(name, index, value))
+      lines.push(line)
+    }
+    @ir.Return(expr) => {
+      instrs.push(ReturnInstr(expr))
       lines.push(line)
     }
     @ir.Call(name, args) => {

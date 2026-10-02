@@ -35,14 +35,54 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
       }
       Some(({ ..model, tree_collapsed: collapsed, }, @moui.Effect::none()))
     }
-    SetContextTab(tab) =>
-      Some(({ ..model, ctx_tab: tab, }, @moui.Effect::none()))
-    SetBottomTab(audit) =>
+    TriggerCompletion => {
+      let (word, _) = word_at_caret(model.code_draft, model.code_caret)
+      let candidates = completions_for(model, word)
+      if candidates.length() > 0 {
+        Some(
+          (
+            {
+              ..model,
+              completions: candidates,
+              completion_open: true,
+            },
+            @moui.Effect::none(),
+          ),
+        )
+      } else {
+        Some((model, @moui.Effect::none()))
+      }
+    }
+    ApplyCompletion(word) => {
+      let (text, caret) = apply_completion(model.code_draft, model.code_caret, word)
       Some(
         (
-          { ..model, bottom_audit: audit, bottom_open: true, },
+          with_draft_diagnostics({
+            ..model,
+            code_draft: text,
+            code_caret: caret,
+            code_selection: None,
+            completion_open: false,
+          }),
           @moui.Effect::none(),
         ),
+      )
+    }
+    JumpToDeclaration => {
+      let line = declaration_line_of(model, model.code_caret)
+      if line > 0 {
+        Some((goto_line(model, line), @moui.Effect::none()))
+      } else {
+        Some((model, @moui.Effect::none()))
+      }
+    }
+    DismissCompletion =>
+      Some(({ ..model, completion_open: false, }, @moui.Effect::none()))
+    SetContextTab(tab) =>
+      Some(({ ..model, ctx_tab: tab, }, @moui.Effect::none()))
+    SetBottomTab(tab) =>
+      Some(
+        ({ ..model, bottom_tab: tab, bottom_open: true, }, @moui.Effect::none()),
       )
     ToggleBottom =>
       Some(
@@ -51,7 +91,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     AuditOpen(index) =>
       Some(
         (
-          { ..model, bottom_open: true, bottom_audit: true, },
+          { ..model, bottom_open: true, bottom_tab: BtAudit, },
           jump_audit(model, index),
         ),
       )
@@ -399,38 +439,6 @@ fn next_anchor(anchor : AiAnchor) -> AiAnchor {
 }
 
 ///|
-fn add_context_chip(
-  model : Model,
-  label : String,
-) -> (Model, @moui.Effect[Msg]) {
-  if label == "" || model.ai_context_chips.contains(label) {
-    return (model, @moui.Effect::none())
-  }
-  let chips = model.ai_context_chips
-  chips.push(label)
-  ({ ..model, ai_context_chips: chips, }, @moui.Effect::none())
-}
-
-///|
-fn remove_context_chip(
-  model : Model,
-  index : Int,
-) -> (Model, @moui.Effect[Msg]) {
-  if index < 0 || index >= model.ai_context_chips.length() {
-    return (model, @moui.Effect::none())
-  }
-  let chips : Array[String] = []
-  let mut cursor = 0
-  for chip in model.ai_context_chips {
-    if cursor != index {
-      chips.push(chip)
-    }
-    cursor = cursor + 1
-  }
-  ({ ..model, ai_context_chips: chips, }, @moui.Effect::none())
-}
-
-///|
 /// 追加 AI 会话卡（超 AI_CARD_LIMIT 丢最旧）。
 pub fn push_ai_card(model : Model, card : AiCard) -> Model {
   let cards = model.ai_cards
@@ -564,8 +572,12 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.left.data" => update_pure(model, SetLeftView(LeftData))
     "studio.right.toggle" =>
       update_pure(model, SetRightVisible(!model.right_visible))
-    "studio.bottom.audit" => update_pure(model, SetBottomTab(true))
-    "studio.bottom.console" => update_pure(model, SetBottomTab(false))
+    "studio.ctx.runtime" => update_pure(model, SetContextTab(CtxRuntime))
+    "studio.code.complete" => update_pure(model, TriggerCompletion)
+    "studio.code.jump" => update_pure(model, JumpToDeclaration)
+    "studio.bottom.audit" => update_pure(model, SetBottomTab(BtAudit))
+    "studio.bottom.console" => update_pure(model, SetBottomTab(BtConsole))
+    "studio.bottom.problems" => update_pure(model, SetBottomTab(BtProblems))
     "studio.bottom.toggle" => update_pure(model, ToggleBottom)
     "studio.audit.settle_all" =>
       update_pure(model, AuditSettleAll("app.audit.confirmed"))

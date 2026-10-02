@@ -79,6 +79,53 @@ statement spotlighting, and pauses on the `提交数据` (`submit_data`) gate: t
 gate is a simulated action that only writes to the audit log and shows a
 confirmation card. No real network request is made, on either platform.
 
+## Capability upgrade (2026-10)
+
+The capability-upgrade plan (`docs/plans/active/moui-studio-capability-upgrade.md`)
+closed the largest gaps to a mature IDE:
+
+- **Real code editor.** The Code view is a `moui_richtext` controlled rich-text
+  editor: cursor, selection, framework-side undo/clipboard, DSL token coloring,
+  DSL-aware newline indentation, and a scroll-synced gutter + IR rail (hover is
+  translucent amber; pinned highlight is full amber).
+- **Diagnostics.** Editing validates live (`check_syntax`): structured
+  diagnostics drive gutter dots, red run backgrounds on offending lines, a red
+  error bar, and a bottom **Problems** tab (handler-attributed rows jump via
+  `GotoProblem`). The bottom bar is now an enum: audit / console / problems.
+- **Runtime inspector.** The right panel gained a sixth tab backed by
+  `moui_devtools`: on-demand snapshots (tab open or refresh only — sampling is
+  O(nodes)) rendered as summary + sectioned report + a deduplicated, capped
+  history. Both native and web entries inject the snapshot callback; the app
+  package never imports `moui/runtime` (formatted strings cross the boundary).
+- **Hygiene.** Global keyboard commands via `Program::with_commands` (S/O/E/
+  Enter/1/2/J/D, meta+control variants); destructive actions (delete control/
+  variable, template apply, new blank, open-over-dirty) require a confirm
+  dialog (`update_confirm_msgs` guards the pure chain; ConfirmAccepted re-runs
+  the original message through `update_pure_inner`); "stop compile" now kills
+  the running `moon` process (`CompileOwner.active` + `Process::cancel`).
+- **Language layer.** Three new constructs flow through the full chain
+  (parser/printer/interp/codegen/compiled_runtime/blocks/codec/signature +
+  `sync_kernel` + the two-track differential gate): **integers** (int literals
+  are `IntLit`; whole-number values keep `VInt` identity; int ÷ int truncates;
+  mixed arithmetic promotes), **arrays** (`[a, b, c]` literals, 1-based
+  `名单[i]` read/write, `列表长度`/`加入列表` builtins), and **user-defined
+  functions** (`FuncDef` with params, `返回`/`return`, full-frame calls with a
+  depth budget of 16, program-level codec section). A dedicated two-track test
+  proves interpret and compiled audit sequences agree on functions, including
+  recursion.
+- **Blocks.** Shapes encode semantics: variable-family capsules (large corner
+  radius), condition gems on 如果/否则如果/当, and `↩` arrows on 返回.
+- **Domain expansion.** New controls 下拉框/进度条/图片 (items carry the
+  per-kind payload: options / bound variable / resource path), new events
+  完成输入 (submit), 定时器 (window-level, virtual clock that only advances
+  while running, interval on the window spec), 广播消息 (the `广播` builtin
+  queues text; the host drains it after each event into every window-level
+  broadcast handler via the `消息文本` pseudo-variable), and a property schema
+  data face (items semantics per control kind) in the inspector.
+- **Code intelligence.** Ctrl+Space completion (keywords + builtins + declared
+  names, prefix-filtered) and jump-to-declaration, computed in-process from the
+  DSL's own tables — the DSL is its own language server.
+
 ## Dual-track differential gate
 
 `services/diff` is a hard gate, not a report. It runs the four built-in samples

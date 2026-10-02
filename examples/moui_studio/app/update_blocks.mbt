@@ -257,8 +257,8 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         Some(({ ..model, block_drag: None, }, @moui.Effect::none()))
       }
     }
-    BlocksCanvasDragTo(x, y) =>
-      // 拖拽中：按指针 y 更新同层落槽
+    BlocksCanvasDragTo(_, y) =>
+      // 拖拽中：按指针 y 更新同层落槽（x 不参与纵向落槽判定）
       match model.block_drag {
         None => Some((model, @moui.Effect::none()))
         Some(drag) => {

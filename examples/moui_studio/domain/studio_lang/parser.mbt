@@ -58,6 +58,30 @@ pub fn parse_handler_body(
 
 ///|
 /// 只解析不运行：编辑器实时语法检查。
+///|
+/// 解析单表达式文本（全局变量初始值用）：失败给结构化错误。
+pub fn parse_expression_text(
+  source : String,
+  language : Language,
+) -> Result[Expr, LangError] {
+  let tokens = match lex(source) {
+    Ok(tokens) => tokens
+    Err(error) => return Err(error)
+  }
+  let parser = Parser::{ tokens, pos: 0, keywords: keywords_for(language), }
+  try {
+    let expr = parser.parse_expr()
+    if parser.peek().kind is Eof {
+      Ok(expr)
+    } else {
+      parser.fail(UnexpectedToken, "表达式后有多余内容", "")
+    }
+  } catch {
+    error => Err(error)
+  }
+}
+
+///|
 pub fn check_syntax(source : String, language : Language) -> LangError? {
   match parse_handler_body(source, language) {
     Ok(_) => None
@@ -176,6 +200,14 @@ fn Parser::parse_statement(self : Parser) -> Stmt raise LangError {
           ignore(self.advance())
           @ir.Break
         }
+        KwReturn => {
+          ignore(self.advance())
+          // 返回 [表达式]：换行/结尾 = 无返回值（返回 VUnit）
+          match self.peek().kind {
+            Newline | Eof => @ir.Return(None)
+            _ => @ir.Return(Some(self.parse_expr()))
+          }
+        }
         NoneKw =>
           if is_reserved(text) {
             self.fail(ReservedWord, text, "")
@@ -221,6 +253,21 @@ fn Parser::parse_assign_or_call(self : Parser) -> Stmt raise LangError {
     _ => self.fail_unexpected()
   }
   ignore(self.advance())
+  // 名单[i] = 值：元素赋值（下标 1 起，与取行口径一致）
+  if self.peek().kind is LBracket {
+    ignore(self.advance())
+    let index = self.parse_expr()
+    match self.peek().kind {
+      RBracket => ignore(self.advance())
+      _ => self.fail(UnexpectedToken, "下标后应为 ]", "")
+    }
+    match self.peek().kind {
+      Eq => ignore(self.advance())
+      _ => self.fail(UnexpectedToken, "「]」后应为 =", "")
+    }
+    let value = self.parse_expr()
+    return @ir.SetIndex(name, index, value)
+  }
   if self.peek().kind is Eq {
     ignore(self.advance())
     let value = self.parse_expr()
@@ -450,10 +497,35 @@ fn Parser::parse_unary(self : Parser) -> Expr raise LangError {
 ///|
 fn Parser::parse_primary(self : Parser) -> Expr raise LangError {
   let token = self.peek()
-  match token.kind {
+  let atom : Expr = match token.kind {
     Num(v) => {
       ignore(self.advance())
       @ir.NumLit(v)
+    }
+    Int(v) => {
+      ignore(self.advance())
+      @ir.IntLit(v)
+    }
+    LBracket => {
+      // 列表字面量：[元素, …]（元素可为任意表达式，含嵌套列表）
+      ignore(self.advance())
+      let items : Array[Expr] = []
+      if self.peek().kind is RBracket {
+        ignore(self.advance())
+      } else {
+        while true {
+          items.push(self.parse_expr())
+          match self.peek().kind {
+            Comma => ignore(self.advance())
+            RBracket => {
+              ignore(self.advance())
+              break
+            }
+            _ => self.fail(UnexpectedToken, "列表缺少 , 或 ]", "")
+          }
+        }
+      }
+      @ir.ListLit(items)
     }
     Str(s) => {
       ignore(self.advance())
@@ -489,4 +561,16 @@ fn Parser::parse_primary(self : Parser) -> Expr raise LangError {
     }
     _ => self.fail_unexpected()
   }
+  // 后缀下标：名单[2]、矩阵[i][j]（1 起，与取行一致）
+  let mut result = atom
+  while self.peek().kind is LBracket {
+    ignore(self.advance())
+    let index = self.parse_expr()
+    match self.peek().kind {
+      RBracket => ignore(self.advance())
+      _ => self.fail(UnexpectedToken, "下标后应为 ]", "")
+    }
+    result = @ir.Index(result, index)
+  }
+  result
 }

@@ -50,13 +50,13 @@ test "zh parses all statement forms" {
     "变量 x = 1\nx = x + 2\n如果 x > 2 则\n  信息框(\"大\")\n否则如果 x = 2 则\n  信息框(\"等\")\n否则\n  信息框(\"小\")\n结束\n计次循环 3 次 为 i\n  跳出循环\n结束\n当 x < 100 循环\n  x = x + 1\n结束\n",
     @studio_lang.ZhHans,
   )
-  assert_true(signature.contains("declare x = num(1)"))
-  assert_true(signature.contains("if (var(x) > num(2))"))
-  assert_true(signature.contains("elseif (var(x) = num(2))"))
+  assert_true(signature.contains("declare x = int(1)"))
+  assert_true(signature.contains("if (var(x) > int(2))"))
+  assert_true(signature.contains("elseif (var(x) = int(2))"))
   assert_true(signature.contains("else"))
-  assert_true(signature.contains("count num(3) as i"))
+  assert_true(signature.contains("count int(3) as i"))
   assert_true(signature.contains("break"))
-  assert_true(signature.contains("while (var(x) < num(100))"))
+  assert_true(signature.contains("while (var(x) < int(100))"))
 }
 
 ///|
@@ -78,7 +78,7 @@ test "full width punctuation and mixed identifiers parse" {
     "变量 得分 ＝ ８５\n变量 姓名 ＝ \"张三\"\n",
     @studio_lang.ZhHans,
   )
-  assert_true(signature.contains("declare 得分 = num(85)"))
+  assert_true(signature.contains("declare 得分 = int(85)"))
   assert_true(signature.contains("declare 姓名 = str(«张三»)"))
 }
 
@@ -218,6 +218,8 @@ test "interpreter runs assignments and branches" {
   )
   assert_true(state.status is @studio_lang.Completed)
   match state.vars.get("x") {
+    // 整数语义：整数字面量与整型算术保持 VInt 身份
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 10)
     Some(@studio_lang.VNum(n)) => assert_eq(n, 10.0)
     _unused => fail("x 应为 10")
   }
@@ -235,6 +237,7 @@ test "count loop binds iteration variable" {
     values,
   )
   match state.vars.get("合计") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 15)
     Some(@studio_lang.VNum(n)) => assert_eq(n, 15.0)
     _unused => fail("合计应为 15")
   }
@@ -249,6 +252,7 @@ test "while loop with break stops early" {
     values,
   )
   match state.vars.get("i") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 4)
     Some(@studio_lang.VNum(n)) => assert_eq(n, 4.0)
     _unused => fail("i 应为 4")
   }
@@ -375,6 +379,8 @@ test "random is deterministic per seed and in range" {
   let a2 = s2.vars.get("a").unwrap_or(@studio_lang.VUnit)
   assert_eq(@studio_lang.value_to_text(a1), @studio_lang.value_to_text(a2))
   match a1 {
+    // 随机结果现在是整数身份（范围语义不变）
+    @studio_lang.VInt(n) => assert_true(n >= 1 && n <= 100)
     @studio_lang.VNum(n) => assert_true(n >= 1.0 && n <= 100.0)
     _unused => fail("a 应为数值")
   }
@@ -468,6 +474,7 @@ test "language validation catches break and command position" {
         ],
       },
     ],
+    functions: [],
   }
   let errors = @studio_lang.validate_program_language(program)
   assert_true(errors.any(e => e.kind() is @studio_lang.BreakOutsideLoop))
@@ -493,12 +500,13 @@ test "language validation catches break and command position" {
         note_zh: "",
         note_en: "",
         body: [
-          @ir.CountLoop(@ir.NumLit(2.0), None, [
+          @ir.CountLoop(@ir.IntLit(2), None, [
             @ir.Call("message_box", [@ir.StrLit("hi")]),
           ]),
         ],
       },
     ],
+    functions: [],
   })
   assert_true(clean.is_empty())
 }
@@ -593,4 +601,111 @@ test "declare form renders per language and guards assignment" {
     }
     None => fail("未声明赋值应报错")
   }
+}
+
+///|
+/// 整数类型（切片 F）：
+/// - 整数 ÷ 整数向零截断，除零报错
+/// - 混合运算提升为浮点
+/// - 整数身份跨赋值保留（计数器不再有 3.0000001 类漂移的观感）
+/// - 显示与审计文本：VInt 与等值 VNum 同串（两轨差分门依赖这一点）
+test "integer semantics: truncation, promotion, identity" {
+  let values : Map[String, @studio_lang.Value] = Map([], capacity=8)
+  let state = run_zh(
+    "变量 整除 = 7 / 2\n变量 浮除 = 7.0 / 2\n变量 提升 = 7 / 2.0\n变量 计数 = 0\n计数 = 计数 + 1\n",
+    Map([], capacity=4),
+    values,
+  )
+  assert_true(state.status is @studio_lang.Completed)
+  match state.vars.get("整除") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 3)
+    _other => fail("7 / 2 应为整数 3")
+  }
+  match state.vars.get("浮除") {
+    Some(@studio_lang.VNum(n)) => assert_true(n > 3.4 && n < 3.6)
+    _other => fail("7.0 / 2 应为浮点 3.5")
+  }
+  match state.vars.get("提升") {
+    Some(@studio_lang.VNum(n)) => assert_true(n > 3.4 && n < 3.6)
+    Some(@studio_lang.VInt(_)) => fail("混合运算不应保持整数身份")
+    _other => fail("7 / 2.0 应为浮点 3.5")
+  }
+  match state.vars.get("计数") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 1)
+    _other => fail("计数应为整数 1")
+  }
+  // 审计文本与等值浮点同串（value_to_text 口径）
+  assert_eq(@studio_lang.value_to_text(@studio_lang.VInt(3)), "3")
+  assert_eq(
+    @studio_lang.value_to_text(@studio_lang.VInt(3)),
+    @studio_lang.value_to_text(@studio_lang.VNum(3.0)),
+  )
+}
+
+///|
+/// 数组（切片 F）：字面量、下标读写（1 起）、越界报错、列表内建、
+/// 双语往返与两轨一致。
+test "arrays: literal, index, append, length" {
+  let values : Map[String, @studio_lang.Value] = Map([], capacity=8)
+  let state = run_zh(
+    "变量 名单 = [\"张三\", \"李四\"]\n名单[2] = \"王五\"\n变量 第二 = 名单[2]\n加入列表(名单, \"赵六\")\n变量 数量 = 列表长度(名单)\n",
+    Map([], capacity=4),
+    values,
+  )
+  assert_true(state.status is @studio_lang.Completed)
+  match state.vars.get("第二") {
+    Some(@studio_lang.VStr(text)) => assert_eq(text, "王五")
+    _other => fail("名单[2] 应为 王五")
+  }
+  match state.vars.get("数量") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 3)
+    _other => fail("列表长度应为 3")
+  }
+  match state.vars.get("名单") {
+    Some(@studio_lang.VArr(items)) => {
+      assert_eq(items.length(), 3)
+      assert_eq(@studio_lang.value_to_text(items[0]), "张三")
+      assert_eq(@studio_lang.value_to_text(items[2]), "赵六")
+    }
+    _other => fail("名单应为列表")
+  }
+  // 越界：结构化错误
+  let bad = run_zh("变量 表 = [1, 2]\n变量 爆 = 表[5]\n", Map([], capacity=4), Map([], capacity=4))
+  assert_true(bad.status is @studio_lang.Failed)
+  assert_true(bad.error is Some(_))
+  // 双语往返
+  let zh_source = "变量 表 = [1, 2]\n表[1] = 9\n"
+  match @studio_lang.parse_handler_body(zh_source, @studio_lang.ZhHans) {
+    Err(_) => fail("数组语句应可解析")
+    Ok(body) => {
+      let rendered = @studio_lang.render_stmts(
+        body.map(t => t.stmt),
+        @studio_lang.En,
+      )
+      match @studio_lang.parse_handler_body(rendered, @studio_lang.En) {
+        Err(_) => fail("英文渲染应可回析")
+        Ok(round) =>
+          assert_eq(
+            @ir.stmts_signature(body.map(t => t.stmt)),
+            @ir.stmts_signature(round.map(t => t.stmt)),
+          )
+      }
+    }
+  }
+}
+
+///|
+/// 广播消息（切片 G）：`广播(文案)` 入总线队列，宿主排空后投递给
+/// @广播消息 窗体级处理器（文案经伪变量 `消息文本` 传递）。
+test "broadcast queues text for window handlers" {
+  let values : Map[String, @studio_lang.Value] = Map([], capacity=4)
+  let state = run_zh(
+    "广播(\"下课了\")\n广播(\"集合\")\n",
+    Map([], capacity=4),
+    values,
+  )
+  assert_true(state.status is @studio_lang.Completed)
+  assert_eq(state.broadcasts.length(), 2)
+  assert_eq(state.broadcasts[0], "下课了")
+  assert_eq(state.broadcasts[1], "集合")
 }

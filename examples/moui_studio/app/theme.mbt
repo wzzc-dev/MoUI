@@ -112,15 +112,31 @@ pub fn studio_console_background() -> @core.Color {
 /// 选中态用 IDE 蓝描边（唯一强调色）。
 pub fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
   match kind {
-    @blocks.BkDeclare | @blocks.BkAssign =>
+    @blocks.BkDeclare | @blocks.BkAssign | @blocks.BkSetIndex =>
       @graphics.Color::rgba(r=0.157, g=0.208, b=0.318)
     @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkEnd =>
       @graphics.Color::rgba(r=0.298, g=0.235, b=0.145)
-    @blocks.BkCountLoop | @blocks.BkWhile =>
+    @blocks.BkCountLoop | @blocks.BkWhile | @blocks.BkReturn =>
       @graphics.Color::rgba(r=0.145, g=0.271, b=0.196)
     @blocks.BkBreak => @graphics.Color::rgba(r=0.318, g=0.165, b=0.157)
     @blocks.BkCall => @graphics.Color::rgba(r=0.243, g=0.192, b=0.333)
   }
+}
+
+///|
+/// 积木块圆角半径：变量族（声明/赋值/元素赋值）用大圆角「胶囊」，
+/// 控制流/命令保持小圆角矩形——形状本身参与语义编码（切片 E）。
+pub fn block_corner_radius(kind : @blocks.BlockKind) -> Double {
+  match kind {
+    @blocks.BkDeclare | @blocks.BkAssign | @blocks.BkSetIndex => 14.0
+    _ => 6.0
+  }
+}
+
+///|
+/// 条件徽标色：比块体亮一档的暖白半透明——「这里是一个取值判断」。
+pub fn block_badge_color(_kind : @blocks.BlockKind) -> @graphics.Color {
+  @graphics.Color::rgba(r=0.95, g=0.95, b=0.92, a=0.32)
 }
 
 ///|
@@ -319,6 +335,21 @@ pub fn code_plain_color() -> @core.Color {
 /// 选中是状态）。
 pub fn ide_ir_highlight() -> @core.Color {
   @core.Color::rgba(r=0.941, g=0.776, b=0.353)
+}
+
+///|
+/// 诊断行的行内底色：淡红半透明（richtext run background），
+/// 与错误条/行号红点同色系。
+pub fn code_error_line_tint() -> @core.Color {
+  @core.Color::rgba(r=0.937, g=0.325, b=0.313, a=0.16)
+}
+
+///|
+/// IR 行映射**悬停**色：同一暖黄的半透明版。竖尺成为映射交互的
+/// 唯一载体后，悬停（瞬态预览）与点击（驻留选择）必须有可区分的
+/// 视觉——驻留用全亮暖黄，悬停用半透明。
+pub fn ide_ir_hover() -> @core.Color {
+  @core.Color::rgba(r=0.941, g=0.776, b=0.353, a=0.38)
 }
 
 ///|

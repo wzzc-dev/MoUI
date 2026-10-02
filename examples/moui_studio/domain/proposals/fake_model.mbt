@@ -45,8 +45,7 @@ fn generic_sample() -> @ir.StudioProgram {
     window: @ir.WindowSpec::{
       title: "我的小程序",
       width: 640,
-      height: 480,
-    },
+      height: 480, timer_interval: 0 },
     controls: [
       @ir.Control::{
         id: 1,
@@ -97,6 +96,7 @@ fn generic_sample() -> @ir.StudioProgram {
         ],
       },
     ],
+    functions: [],
   }
 }
 

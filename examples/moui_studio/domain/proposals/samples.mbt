@@ -8,7 +8,7 @@
 pub fn sample_hello() -> @ir.StudioProgram {
   {
     version: 1,
-    window: @ir.WindowSpec::{ title: "问候", width: 640, height: 480, },
+    window: @ir.WindowSpec::{ title: "问候", width: 640, height: 480, timer_interval: 0 },
     controls: [
       @ir.Control::{
         id: 1,
@@ -48,6 +48,7 @@ pub fn sample_hello() -> @ir.StudioProgram {
         ],
       },
     ],
+    functions: [],
   }
 }
 
@@ -59,8 +60,7 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
     window: @ir.WindowSpec::{
       title: "班级点名册",
       width: 640,
-      height: 480,
-    },
+      height: 480, timer_interval: 0 },
     controls: [
       @ir.Control::{
         id: 1,
@@ -113,6 +113,7 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
         ],
       },
     ],
+    functions: [],
   }
 }
 
@@ -124,8 +125,7 @@ pub fn sample_drill() -> @ir.StudioProgram {
     window: @ir.WindowSpec::{
       title: "口算训练营",
       width: 640,
-      height: 480,
-    },
+      height: 480, timer_interval: 0 },
     controls: [
       @ir.Control::{
         id: 1,
@@ -194,8 +194,8 @@ pub fn sample_drill() -> @ir.StudioProgram {
         note_zh: "随机出两个 20 以内的数，拼成加法题目并清空答案框",
         note_en: "roll two numbers under 20, render an addition problem, clear the answer",
         body: [
-          @ir.Assign("第一个数", @ir.Call("random", [@ir.NumLit(20.0)])),
-          @ir.Assign("第二个数", @ir.Call("random", [@ir.NumLit(20.0)])),
+          @ir.Assign("第一个数", @ir.Call("random", [@ir.IntLit(20)])),
+          @ir.Assign("第二个数", @ir.Call("random", [@ir.IntLit(20)])),
           @ir.Call("set_text", [
             @ir.Var("题目"),
             @ir.Binary(
@@ -243,6 +243,7 @@ pub fn sample_drill() -> @ir.StudioProgram {
         ],
       },
     ],
+    functions: [],
   }
 }
 
@@ -254,8 +255,7 @@ pub fn sample_store() -> @ir.StudioProgram {
     window: @ir.WindowSpec::{
       title: "班级小卖部",
       width: 640,
-      height: 480,
-    },
+      height: 480, timer_interval: 0 },
     controls: [
       @ir.Control::{
         id: 1,
@@ -312,7 +312,7 @@ pub fn sample_store() -> @ir.StudioProgram {
         body: [
           @ir.Assign(
             "营业额",
-            @ir.Binary(@ir.Add, @ir.Var("营业额"), @ir.NumLit(1.0)),
+            @ir.Binary(@ir.Add, @ir.Var("营业额"), @ir.IntLit(1)),
           ),
           @ir.Call("set_text", [
             @ir.Var("营业额标签"),
@@ -338,6 +338,7 @@ pub fn sample_store() -> @ir.StudioProgram {
         ],
       },
     ],
+    functions: [],
   }
 }
 

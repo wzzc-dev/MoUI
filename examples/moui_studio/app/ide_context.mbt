@@ -64,6 +64,7 @@ fn context_body(
     CtxData => context_data(model, t, width)
     CtxActions => context_actions(model, t, width)
     CtxDeps => context_deps(model, t, width)
+    CtxRuntime => context_runtime(model, t, width)
   }
   let sections : Array[@moui.View[Msg]] = []
   match context_block_editor(model, t, width) {
@@ -350,11 +351,13 @@ fn context_tabs(
     (CtxData, text(t, "app.ctx.data")),
     (CtxActions, text(t, "app.ctx.actions")),
     (CtxDeps, text(t, "app.ctx.deps")),
+    (CtxRuntime, text(t, "app.ctx.runtime")),
   ]
-  // 页签总宽 = 5×cell + 4×gap，必须**连同左右内垫**一起塞进 width。
+  // 页签总宽 = 6×cell + 5×gap，必须**连同左右内垫**一起塞进 width。
   // 原来只减了 12（内垫）却忘了 4 个 3px 间隙：5×52+12 = 272 = 面板宽，
   // 于是「依赖」页签正好顶到右边缘被切掉半个字（实际截图可见）。
-  let cell_width = ((width - 12.0 - 4.0 * 3.0) / 5.0).max(28.0)
+  // 加到六页签后同一纪律继续成立：cell 宽把 5 个间隙也算进去。
+  let cell_width = ((width - 12.0 - 5.0 * 3.0) / 6.0).max(28.0)
   let tabs : Array[@moui.View[Msg]] = []
   for entry in entries {
     let (tab, label) = entry
@@ -376,7 +379,9 @@ fn context_tabs(
         width=cell_width,
         height=22.0,
         padding=0.0,
-      ).on_tap(SetContextTab(tab)),
+      )
+      .accessibility_label(label)
+      .on_tap(SetContextTab(tab)),
     )
   }
   @views.container(
@@ -396,8 +401,12 @@ fn context_tabs(
 /// 页签同一性：ContextTab 无 Eq 派生，按 tag 比。
 fn same_tab(a : ContextTab, b : ContextTab) -> Bool {
   match (a, b) {
-    (CtxProps, CtxProps) | (CtxState, CtxState) | (CtxData, CtxData) => true
-    (CtxActions, CtxActions) | (CtxDeps, CtxDeps) => true
+    (CtxProps, CtxProps)
+    | (CtxState, CtxState)
+    | (CtxData, CtxData)
+    | (CtxActions, CtxActions)
+    | (CtxDeps, CtxDeps)
+    | (CtxRuntime, CtxRuntime) => true
     _ => false
   }
 }
@@ -473,7 +482,11 @@ fn context_props(
           spacing=6.0,
         ),
       ]
-      if control.kind is @ir.ListBox || control.kind is @ir.Table {
+      // 属性 schema 的数据面（切片 G）：items 按种类承载不同载荷——
+      // 列表框/表格/下拉框 = 多行选项；进度条 = 绑定变量名；图片 = 资源路径
+      if control.kind is @ir.ListBox ||
+        control.kind is @ir.Table ||
+        control.kind is @ir.Dropdown {
         rows.push(field_label(t, "app.inspector.items", width))
         rows.push(
           @views.text_area(
@@ -482,6 +495,36 @@ fn context_props(
             lines=4,
             width=field_width,
             line_height=20.0,
+          ),
+        )
+      }
+      if control.kind is @ir.ProgressBar {
+        rows.push(field_label(t, "app.inspector.progress_var", width))
+        rows.push(
+          @views.text_field(
+            match control.items {
+              [name, ..] => name
+              [] => ""
+            },
+            on_input=new_value =>
+              SetControlItems(control.name, new_value),
+            width=field_width,
+            height=FIELD_HEIGHT,
+          ),
+        )
+      }
+      if control.kind is @ir.Image {
+        rows.push(field_label(t, "app.inspector.image_path", width))
+        rows.push(
+          @views.text_field(
+            match control.items {
+              [path, ..] => path
+              [] => ""
+            },
+            on_input=new_value =>
+              SetControlItems(control.name, new_value),
+            width=field_width,
+            height=FIELD_HEIGHT,
           ),
         )
       }
@@ -1052,16 +1095,101 @@ fn window_props(
         width,
         true,
       ),
+      field_label(t, "app.inspector.timer_interval", width),
+      @views.text_field(
+        model.program.window.timer_interval.to_string(),
+        on_input=value => SetTimerInterval(value),
+        width=field_width,
+        height=FIELD_HEIGHT,
+      ),
       hint_lines_view(
         text(t, "app.inspector.window_size_hint"),
         width,
         ide_text_faint(),
         3,
       ),
+      hint_lines_view(
+        text(t, "app.inspector.timer_hint"),
+        width,
+        ide_text_faint(),
+        2,
+      ),
+      // 窗体级处理器（切片 G）：定时器 / 广播——不属于任何控件
+      window_event_rows(model, t, width),
     ],
     spacing=6.0,
     align=Start,
   )
+}
+
+///|
+/// 窗体级事件行：定时器 / 广播消息——存在即选中（跳到对应草稿），
+/// 不存在给创建按钮。
+fn window_event_rows(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let rows : Array[@moui.View[Msg]] = []
+  for event in [@ir.OnTimer, @ir.OnBroadcast] {
+    let exists = @ir.find_handler(model.program, "", event) is Some(_)
+    let selected = model.selected_handler == handler_key("", event.tag())
+    let action = if exists {
+      SelectHandler(handler_key("", event.tag()))
+    } else {
+      CreateHandler("", event)
+    }
+    let label = text(t, "event.\{event.tag()}")
+    let action_w = text_estimate_width(
+      text(
+        t,
+        if exists {
+          "app.inspector.window_event_edit"
+        } else {
+          "app.inspector.window_event_create"
+        },
+      ),
+    ) + 34.0
+    rows.push(
+      @views.container(
+        @views.padding_xy(
+          fill_row(
+            [
+              @views.text(
+                label,
+                theme=studio_theme(),
+                width=(width - action_w - 40.0).max(60.0),
+                height=18.0,
+                align=TextStart,
+              ).foreground(if selected { ide_text() } else { ide_text_muted() }),
+              foot_chip_like(
+                text(
+                  t,
+                  if exists {
+                    "app.inspector.window_event_edit"
+                  } else {
+                    "app.inspector.window_event_create"
+                  },
+                ),
+                action_w,
+                action,
+              ),
+            ],
+            (width - 20.0).max(80.0),
+            6.0,
+            Center,
+          ),
+          horizontal=8.0,
+          vertical=2.0,
+        ),
+        background=if selected { ide_selection() } else { ide_panel() },
+        width~,
+        height=26.0,
+        padding=0.0,
+      ),
+    )
+  }
+  @views.column(rows, spacing=0.0)
 }
 
 ///|
@@ -1175,4 +1303,175 @@ fn data_props(
     spacing=6.0,
     align=Start,
   )
+}
+
+///|
+/// 运行时页签：`moui_devtools` 快照的呈现层。
+/// 报告是入口注入回调格式化的纯文本——这里只做三件事：单行摘要、
+/// 刷新按钮（RuntimeRefresh，采样是 O(节点数)，绝不自动连刷）、
+/// 分节报告滚动 + 摘要历史条。
+fn context_runtime(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let refresh_w = text_estimate_width(text(t, "app.runtime.refresh")) + 34.0
+  let head = fill_row(
+    [
+      @views.text(
+        text(t, "app.runtime.title"),
+        theme=studio_theme(),
+        width=(width - refresh_w - 30.0).max(60.0),
+        height=18.0,
+        align=TextStart,
+      ).foreground(ide_text_faint()),
+      foot_chip_like(text(t, "app.runtime.refresh"), refresh_w, RuntimeRefresh),
+    ],
+    (width - 16.0).max(80.0),
+    6.0,
+    Center,
+  )
+  let sections : Array[@moui.View[Msg]] = [head]
+  match model.runtime_report {
+    Some(sample) => {
+      sections.push(
+        @views.container(
+          @views.padding_xy(
+            @views.text(
+              sample.summary,
+              theme=studio_theme(),
+              role=Mono,
+              width=(width - 24.0).max(80.0),
+              height=16.0,
+              align=TextStart,
+            ).foreground(ide_ir_highlight()),
+            horizontal=8.0,
+            vertical=4.0,
+          ),
+          background=ide_panel_alt(),
+          width~,
+          padding=0.0,
+        ),
+      )
+      for line in sample.report.split("\n") {
+        sections.push(
+          @views.container(
+            @views.padding_xy(
+              @views.text(
+                if line == "" { " " } else { line.to_owned() },
+                theme=studio_theme(),
+                role=Mono,
+                width=(width - 24.0).max(80.0),
+                height=16.0,
+                align=TextStart,
+              ).foreground(ide_text_muted()),
+              horizontal=8.0,
+              vertical=1.0,
+            ),
+            background=ide_panel(),
+            width~,
+            padding=0.0,
+          ),
+        )
+      }
+    }
+    None =>
+      sections.push(
+        @views.container(
+          @views.padding_xy(
+            @views.text(
+              text(
+                t,
+                if model.runtime_missing {
+                  "app.runtime.unavailable"
+                } else {
+                  "app.runtime.hint"
+                },
+              ),
+              theme=studio_theme(),
+              width=(width - 24.0).max(80.0),
+              height=16.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
+            horizontal=8.0,
+            vertical=6.0,
+          ),
+          background=ide_panel(),
+          width~,
+          padding=0.0,
+        ),
+      )
+  }
+  // 摘要历史条（新到旧，去重，封顶 24 条）
+  if model.runtime_history.length() > 1 {
+    sections.push(
+      @views.container(
+        @views.padding_xy(
+          @views.text(
+            text(t, "app.runtime.history"),
+            theme=studio_theme(),
+            width=(width - 24.0).max(80.0),
+            height=16.0,
+            align=TextStart,
+          ).foreground(ide_text_faint()),
+          horizontal=8.0,
+          vertical=4.0,
+        ),
+        background=ide_panel(),
+        width~,
+        padding=0.0,
+      ),
+    )
+    for summary in model.runtime_history {
+      sections.push(
+        @views.container(
+          @views.padding_xy(
+            @views.text(
+              summary,
+              theme=studio_theme(),
+              role=Mono,
+              width=(width - 24.0).max(80.0),
+              height=16.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
+            horizontal=8.0,
+            vertical=1.0,
+          ),
+          background=ide_panel(),
+          width~,
+          padding=0.0,
+        ),
+      )
+    }
+  }
+  @views.column(sections, spacing=0.0)
+}
+
+///|
+/// 右栏小胶囊：与代码页脚 foot_chip 同款（foot_chip 在 code_view.mbt，
+/// 未导出；此处按同一做法本地实现，避免为一个小胶囊扩大导出面）。
+fn foot_chip_like(
+  label : String,
+  width : Double,
+  on_click : Msg,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.center(
+      @views.text(
+        label,
+        theme=studio_theme(),
+        width=(width - 6.0).max(20.0),
+        height=16.0,
+      ).foreground(ide_accent()),
+      width~,
+      height=22.0,
+    ),
+    background=ide_accent_soft(),
+    corner_radius=4.0,
+    width~,
+    height=22.0,
+    padding=0.0,
+  )
+  .accessibility_label(label)
+  .on_tap(on_click)
 }

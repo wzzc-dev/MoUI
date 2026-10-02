@@ -112,13 +112,14 @@ test "program validation rejects reserved names and undeclared assignments" {
         note_zh: "",
         note_en: "",
         body: [
-          @ir.Declare("if", @ir.NumLit(1.0)),
+          @ir.Declare("if", @ir.IntLit(1)),
           @ir.Declare("value", @ir.Var("unknown")),
           @ir.Declare("label_text", @ir.Call("get_text", [@ir.Var("按钮")])),
-          @ir.Assign("missing", @ir.NumLit(2.0)),
+          @ir.Assign("missing", @ir.IntLit(2)),
         ],
       },
     ],
+    functions: [],
   }
   let errors = @studio_lang.validate_program_language(program)
   assert_true(errors.any(e => e.kind() is @studio_lang.ReservedWord))

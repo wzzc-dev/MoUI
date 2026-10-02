@@ -222,8 +222,7 @@ fn decode_window(
           "MoUI Studio 程序",
         ),
         width: json_int_field(fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
-        height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
-      })
+        height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT), timer_interval: 0 })
     _ => {
       errors.push(MissingField("window"))
       None
@@ -618,6 +617,17 @@ fn encode_stmt_json(stmt : @ir.Stmt) -> Json {
         ("name", Json::string(name)),
         ("expr", encode_expr_json(expr)),
       ])
+    @ir.SetIndex(name, index, value) =>
+      stmt_node("set_index", [
+        ("name", Json::string(name)),
+        ("index", encode_expr_json(index)),
+        ("value", encode_expr_json(value)),
+      ])
+    @ir.Return(expr) =>
+      stmt_node("return", match expr {
+        Some(value) => [("expr", encode_expr_json(value))]
+        None => []
+      })
     @ir.Break => stmt_node("break", [])
     @ir.Call(name, args) =>
       stmt_node("call", [
@@ -675,9 +685,17 @@ fn stmt_node(op : String, extras : Array[(String, Json)]) -> Json {
 fn encode_expr_json(expr : @ir.Expr) -> Json {
   match expr {
     @ir.NumLit(n) => expr_node("num", [("v", Json::number(n))])
+    @ir.IntLit(n) => expr_node("int", [("v", Json::number(n.to_double()))])
     @ir.StrLit(text) => expr_node("str", [("v", Json::string(text))])
     @ir.BoolLit(flag) => expr_node("bool", [("v", Json::boolean(flag))])
     @ir.Var(name) => expr_node("var", [("v", Json::string(name))])
+    @ir.ListLit(items) =>
+      expr_node("list", [("items", Json::array(items.map(encode_expr_json)))])
+    @ir.Index(base, index) =>
+      expr_node("index", [
+        ("base", encode_expr_json(base)),
+        ("at", encode_expr_json(index)),
+      ])
     @ir.Not(inner) => expr_node("not", [("e", encode_expr_json(inner))])
     @ir.Neg(inner) => expr_node("neg", [("e", encode_expr_json(inner))])
     @ir.Binary(op, left, right) =>

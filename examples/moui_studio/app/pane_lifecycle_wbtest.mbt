@@ -473,7 +473,7 @@ test "block editor lives in the right panel and fits it" {
 /// 「位置不对」。这正是用户报的那条。
 test "panel head trailing actions hug the panel right edge" {
   let model = initial_model()
-  let chrome = shell_chrome_widths(model, 1280.0)
+  let _chrome = shell_chrome_widths(model, 1280.0)
   let left_edge = ICONBAR_WIDTH + 1.0
   let left_right = left_edge + LEFTBAR_WIDTH
   let commands = shell_draw(model, 1280.0, 800.0)

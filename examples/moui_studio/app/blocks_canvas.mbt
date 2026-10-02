@@ -247,17 +247,29 @@ pub fn blocks_draw_plan(
     if item.path.length() > 0 {
       ops.push(BlockNotchCut(x + 20.0, y + h - 1.0))
     }
+    // 条件块（如果/否则如果/当）：标签前一枚「六角宝石」徽标——
+    // 取值分支的视觉锚点（真实六角需要多边形绘制，圆角近似同位）。
+    let badge = match item.kind {
+      @blocks.BkIf | @blocks.BkElseIf | @blocks.BkWhile => {
+        ops.push(BlockBadge(x + 8.0, y + 10.0, item.kind))
+        true
+      }
+      _ => false
+    }
+    let label_x = if badge { x + 28.0 } else { x + 10.0 }
+    // 返回块：箭头前缀——「离开子程序」的方向感
+    let arrow = if item.kind is @blocks.BkReturn { "↩ " } else { "" }
     let marker = if is_spotlight { "▶ " } else { "" }
     // 标签按**块宽**截断（设计稿 .blk 是 `text-overflow: ellipsis` 口径）：
     // 块体已经夹到画布宽，但长语句仍会顶到块右缘之外——用省略号收尾，
     // 让「这里有更多内容」是**看得见**的，而不是被画布边缘硬切掉一半。
     ops.push(
       BlockLabel(
-        "\{marker}\{display}",
-        x + 10.0,
+        "\{marker}\{arrow}\{display}",
+        label_x,
         y + 8.0,
-        (w - 20.0).max(40.0),
-        fit_label("\{marker}\{display}", (w - 20.0).max(40.0)),
+        (w - (label_x - x) - 10.0).max(40.0),
+        fit_label("\{marker}\{arrow}\{display}", (w - (label_x - x) - 10.0).max(40.0)),
       ),
     )
     if is_selected || is_spotlight {
@@ -271,6 +283,7 @@ pub fn blocks_draw_plan(
 ///|
 pub(all) enum BlocksDrawOp {
   BlockBody(Double, Double, Double, Double, @blocks.BlockKind)
+  BlockBadge(Double, Double, @blocks.BlockKind)
   BlockTab(Double, Double, Double, @blocks.BlockKind)
   BlockNotchCut(Double, Double)
   BlockLabel(String, Double, Double, Double, String)
@@ -318,9 +331,18 @@ pub fn blocks_canvas(
                 ctx,
                 @graphics.RoundedRect::new(
                   rect=@geometry.Rect::new(x~, y~, width=w, height=h),
-                  radius=6.0,
+                  radius=block_corner_radius(kind),
                 ),
                 @graphics.Brush::solid(block_fill(kind)),
+              )
+            BlockBadge(x, y, kind) =>
+              fill_rounded_rect(
+                ctx,
+                @graphics.RoundedRect::new(
+                  rect=@geometry.Rect::new(x~, y~, width=14.0, height=14.0),
+                  radius=4.0,
+                ),
+                @graphics.Brush::solid(block_badge_color(kind)),
               )
             BlockTab(x, y, w, kind) =>
               fill_rounded_rect(

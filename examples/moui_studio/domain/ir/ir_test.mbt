@@ -68,18 +68,18 @@ test "name syntax rules" {
 test "budgets count statements and depth" {
   let deep_body : Array[@ir.Stmt] = [
     @ir.WhileLoop(@ir.Var("flag"), [
-      @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [@ir.Assign("x", @ir.Var("i"))]),
+      @ir.CountLoop(@ir.IntLit(3), Some("i"), [@ir.Assign("x", @ir.Var("i"))]),
     ]),
   ]
   assert_eq(@ir.count_stmts(deep_body), 3)
   assert_eq(@ir.stmt_loop_depth(deep_body), 2)
   let nested_expr = @ir.Binary(
     @ir.Add,
-    @ir.Binary(@ir.Add, @ir.NumLit(1.0), @ir.NumLit(2.0)),
-    @ir.Binary(@ir.Add, @ir.NumLit(3.0), @ir.NumLit(4.0)),
+    @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2)),
+    @ir.Binary(@ir.Add, @ir.IntLit(3), @ir.IntLit(4)),
   )
   assert_eq(@ir.expr_depth(nested_expr), 3)
-  assert_eq(@ir.expr_depth(@ir.NumLit(1.0)), 1)
+  assert_eq(@ir.expr_depth(@ir.IntLit(1)), 1)
 }
 
 ///|
@@ -89,7 +89,7 @@ test "budget checks count nested statements and independent branches" {
       @ir.BoolLit(true),
       [@ir.WhileLoop(@ir.BoolLit(true), [@ir.Break])],
       [],
-      [@ir.CountLoop(@ir.NumLit(2.0), None, [@ir.Break])],
+      [@ir.CountLoop(@ir.IntLit(2), None, [@ir.Break])],
     ),
   ]
   assert_eq(@ir.count_stmts(branch), 5)
@@ -127,6 +127,7 @@ test "budget checks count nested statements and independent branches" {
         body,
       },
     ],
+    functions: [],
   }
   let expected = @ir.MAX_STMTS_PER_HANDLER + 1
   assert_true(
@@ -155,6 +156,7 @@ test "invalid control rectangles are rejected at the input boundary" {
     controls: [{ ..control, width: 9, }],
     variables: [],
     handlers: [],
+    functions: [],
   }
   assert_true(
     @ir.validate_program(program).any(e => e is @ir.InvalidControlRect("按钮")),
@@ -207,6 +209,7 @@ test "validate_program reports structural errors" {
         body: [],
       },
     ],
+    functions: [],
   }
   let errors = @ir.validate_program(program)
   assert_true(errors.any(e => e is @ir.DuplicateControlName(_)))
@@ -244,12 +247,13 @@ test "program signature is deterministic" {
             @ir.Var("开"),
             [@ir.Call("message_box", [@ir.StrLit("你好")])],
             [],
-            [@ir.Assign("x", @ir.NumLit(1.0))],
+            [@ir.Assign("x", @ir.IntLit(1))],
           ),
-          @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [@ir.Break]),
+          @ir.CountLoop(@ir.IntLit(3), Some("i"), [@ir.Break]),
         ],
       },
     ],
+    functions: [],
   }
   assert_eq(@ir.program_signature(build()), @ir.program_signature(build()))
   let a = build()
@@ -278,6 +282,7 @@ test "find helpers and next id" {
     ],
     variables: [],
     handlers: [],
+    functions: [],
   }
   match @ir.find_control(program, "按钮") {
     Some(control) => assert_eq(control.id, 7)
@@ -443,6 +448,7 @@ test "duplicate handler pair is rejected" {
     ],
     variables: [],
     handlers: [handler, { ..handler, note_zh: "重复", note_en: "dup", }],
+    functions: [],
   }
   assert_true(
     @ir.validate_program(program).any(e => e is @ir.DuplicateHandler(_)),
@@ -451,6 +457,7 @@ test "duplicate handler pair is rejected" {
   let ok : @ir.StudioProgram = {
     ..program,
     handlers: [handler, { ..handler, event: @ir.OnChange, }],
+    functions: [],
   }
   assert_true(!@ir.validate_program(ok).any(e => e is @ir.DuplicateHandler(_)))
 }

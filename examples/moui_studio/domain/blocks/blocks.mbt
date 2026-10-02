@@ -24,6 +24,8 @@ pub(all) enum BlockValueType {
 pub(all) enum BlockKind {
   BkDeclare
   BkAssign
+  BkSetIndex
+  BkReturn
   BkIf
   BkElseIf
   BkElse
@@ -50,6 +52,8 @@ pub fn stmt_block_kind(stmt : Stmt) -> BlockKind {
   match stmt {
     @ir.Declare(_, _) => BkDeclare
     @ir.Assign(_, _) => BkAssign
+    @ir.SetIndex(_, _, _) => BkSetIndex
+    @ir.Return(_) => BkReturn
     @ir.If(_, _, _, _) => BkIf
     @ir.CountLoop(_, _, _) => BkCountLoop
     @ir.WhileLoop(_, _) => BkWhile
@@ -64,6 +68,8 @@ pub fn block_label_key(kind : BlockKind) -> String {
   match kind {
     BkDeclare => "blocks.declare"
     BkAssign => "blocks.assign"
+    BkSetIndex => "blocks.set_index"
+    BkReturn => "blocks.return"
     BkIf => "blocks.if"
     BkElseIf => "blocks.else_if"
     BkElse => "blocks.else"
@@ -109,7 +115,8 @@ pub fn builtin_block_spec(id : String) -> BlockSpec? {
 pub fn builtin_result_type(id : String) -> BlockValueType {
   match id {
     "get_text" | "row_at" | "selected_row" | "to_text" => VtText
-    "get_number" | "text_length" | "random" | "row_count" => VtNumber
+    "get_number" | "text_length" | "random" | "row_count" | "list_length" =>
+      VtNumber
     "contains" | "ask" => VtBool
     _ => VtAny
   }
@@ -127,6 +134,9 @@ pub fn builtin_param_types(id : String) -> Array[BlockValueType] {
     "text_length" => [VtText]
     "contains" => [VtText, VtText]
     "random" => [VtNumber]
+    "list_length" => [VtAny]
+    "append_list" => [VtAny, VtAny]
+    "broadcast" => [VtText]
     "row_at" => [VtAny, VtNumber]
     "ask" => [VtText]
     "submit_data" => [VtAny, VtAny]
@@ -204,6 +214,25 @@ fn emit_chain(
           kind: BkAssign,
           depth,
           text: "\{name} = \{@studio_lang.canonical_expr(expr)}",
+          builtin: "",
+          path,
+        })
+      @ir.SetIndex(name, index, value) =>
+        items.push(BlockItem::{
+          kind: BkSetIndex,
+          depth,
+          text: "\{name}[\{@studio_lang.canonical_expr(index)}] = \{@studio_lang.canonical_expr(value)}",
+          builtin: "",
+          path,
+        })
+      @ir.Return(expr) =>
+        items.push(BlockItem::{
+          kind: BkReturn,
+          depth,
+          text: match expr {
+            Some(value) => @studio_lang.canonical_expr(value)
+            None => ""
+          },
           builtin: "",
           path,
         })
@@ -546,6 +575,13 @@ pub fn clone_stmt(stmt : Stmt) -> Stmt {
   match stmt {
     @ir.Declare(name, expr) => @ir.Declare(name, clone_expr(expr))
     @ir.Assign(name, expr) => @ir.Assign(name, clone_expr(expr))
+    @ir.SetIndex(name, index, value) =>
+      @ir.SetIndex(name, clone_expr(index), clone_expr(value))
+    @ir.Return(expr) =>
+      @ir.Return(match expr {
+        Some(value) => Some(clone_expr(value))
+        None => None
+      })
     @ir.If(cond, then_body, else_ifs, else_body) => {
       let arms : Array[(Expr, Array[Stmt])] = []
       for arm in else_ifs {
@@ -577,6 +613,15 @@ pub fn clone_stmt(stmt : Stmt) -> Stmt {
 pub fn clone_expr(expr : Expr) -> Expr {
   match expr {
     @ir.NumLit(v) => @ir.NumLit(v)
+    @ir.IntLit(v) => @ir.IntLit(v)
+    @ir.ListLit(items) => {
+      let copy : Array[Expr] = []
+      for item in items {
+        copy.push(clone_expr(item))
+      }
+      @ir.ListLit(copy)
+    }
+    @ir.Index(base, index) => @ir.Index(clone_expr(base), clone_expr(index))
     @ir.StrLit(v) => @ir.StrLit(v)
     @ir.BoolLit(v) => @ir.BoolLit(v)
     @ir.Var(name) => @ir.Var(name)

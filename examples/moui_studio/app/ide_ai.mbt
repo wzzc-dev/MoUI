@@ -48,7 +48,6 @@ pub fn ai_layer(
   t : @i18n.Translator,
   width : Double,
   height : Double,
-  reserve : Double,
 ) -> @moui.View[Msg]? {
   if model.ai_pill {
     return None
@@ -56,7 +55,7 @@ pub fn ai_layer(
   if model.ai_anchor is AiDocked {
     return Some(ai_docked(model, t, width, height))
   }
-  Some(ai_floating(model, t, width, height, reserve))
+  Some(ai_floating(model, t, width, height))
 }
 
 ///|
@@ -67,7 +66,6 @@ fn ai_floating(
   t : @i18n.Translator,
   width : Double,
   height : Double,
-  reserve : Double,
 ) -> @moui.View[Msg] {
   // 设计稿：底部居中 680（窄窗口按容器收），左右锚 360，hero 700。
   let hero = ai_hero(model)

@@ -29,8 +29,8 @@ fn preview_fixture() -> @ir.StudioProgram {
         note_zh: "点击后统计得分",
         note_en: "tally the score on click",
         body: [
-          @ir.Declare("总分", @ir.NumLit(0.0)),
-          @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [
+          @ir.Declare("总分", @ir.IntLit(0)),
+          @ir.CountLoop(@ir.IntLit(3), Some("i"), [
             @ir.Assign(
               "总分",
               @ir.Binary(@ir.Add, @ir.Var("总分"), @ir.Var("i")),
@@ -38,7 +38,7 @@ fn preview_fixture() -> @ir.StudioProgram {
           ]),
           @ir.WhileLoop(@ir.Var("没答完"), [@ir.Break]),
           @ir.If(
-            @ir.Binary(@ir.Gt, @ir.Var("总分"), @ir.NumLit(60.0)),
+            @ir.Binary(@ir.Gt, @ir.Var("总分"), @ir.IntLit(60)),
             [@ir.Call("set_text", [@ir.StrLit("显示"), @ir.StrLit("你好")])],
             [],
             [@ir.Assign("总分", @ir.NumLit(60.5))],
@@ -46,6 +46,7 @@ fn preview_fixture() -> @ir.StudioProgram {
         ],
       },
     ],
+    functions: [],
   }
 }
 

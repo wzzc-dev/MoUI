@@ -16,6 +16,8 @@ fn normalize_char(c : Char) -> Char {
     match code {
       0xFF08 => '(' // （
       0xFF09 => ')' // ）
+      0xFF3B => '[' // ［
+      0xFF3D => ']' // ］
       0xFF0C => ',' // ，
       0xFF0B => '+' // ＋
       0xFF0D => '-' // －
@@ -37,6 +39,9 @@ fn normalize_char(c : Char) -> Char {
 priv enum TokenKind {
   Ident(String)
   Num(Double)
+  Int(Int)
+  LBracket
+  RBracket
   Str(String)
   Newline
   LParen
@@ -76,6 +81,8 @@ fn is_space_char(c : Char) -> Bool {
 fn is_operator_char(c : Char) -> Bool {
   c == '(' ||
   c == ')' ||
+  c == '[' ||
+  c == ']' ||
   c == ',' ||
   c == '+' ||
   c == '-' ||
@@ -146,8 +153,15 @@ fn lex(source : String) -> Result[Array[Token], LangError] {
         }
       }
       let text = buf.to_string()
+      // 整数字面量（无小数点）用独立 token：IR 层 IntLit 才能区分
+      // 「7」与「7.0」——整数除法/整数身份的语义源头在这里。
       match digits_to_double(text) {
-        Some(v) => tokens.push({ kind: Num(v), line, })
+        Some(v) =>
+          if text.contains(".") {
+            tokens.push({ kind: Num(v), line, })
+          } else {
+            tokens.push({ kind: Int(v.to_int()), line, })
+          }
         None => return Err(LangError(BadNumber, line, text, ""))
       }
     } else if is_operator_char(c) {
@@ -181,6 +195,8 @@ fn lex(source : String) -> Result[Array[Token], LangError] {
             let kind = match c {
               '(' => LParen
               ')' => RParen
+              '[' => LBracket
+              ']' => RBracket
               ',' => Comma
               '+' => Plus
               '-' => Minus

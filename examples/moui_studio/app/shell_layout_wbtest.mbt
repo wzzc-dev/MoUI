@@ -226,7 +226,7 @@ test "bottom bar expands to the audit timeline and console stays switchable" {
   assert_true(shell_has_text(open_commands, "程序已载入 IR"))
   assert_true(shell_has_text(open_commands, "控件层已就绪"))
   // 切到 Console
-  let console = apply_shell(open, SetBottomTab(false))
+  let console = apply_shell(open, SetBottomTab(BtConsole))
   let console_commands = shell_draw(console, 1280.0, 800.0)
   assert_true(shell_has_text(console_commands, "MoUI Studio 已就绪"))
   assert_false(shell_has_text(console_commands, "控件层已就绪"))

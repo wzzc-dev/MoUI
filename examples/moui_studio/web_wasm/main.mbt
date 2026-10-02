@@ -7,13 +7,29 @@
 fn main {
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let runtime = @runtime.new_program_with_dimensions(
-    program=@studio_app.program(environment=@web.app_environment(), apply_locale=tag => {
-      match runtime_ref.val {
-        Some(runtime) =>
-          runtime.set_environment(runtime.environment().with_locale(tag))
-        None => ()
-      }
-    }),
+    program=@studio_app.program(
+      environment=@web.app_environment(),
+      apply_locale=tag => {
+        match runtime_ref.val {
+          Some(runtime) =>
+            runtime.set_environment(runtime.environment().with_locale(tag))
+          None => ()
+        }
+      },
+      // 运行时检查器：Web 与 native 同权（moui_devtools wasm-gc 安全）。
+      runtime_snapshot=() => {
+        match runtime_ref.val {
+          Some(runtime) => {
+            let snapshot = runtime.inspector_snapshot()
+            Some({
+              summary: @devtools.snapshot_summary(snapshot).text(),
+              report: @devtools.inspector_report_text(snapshot),
+            })
+          }
+          None => None
+        }
+      },
+    ),
     width=1280.0,
     height=800.0,
   )

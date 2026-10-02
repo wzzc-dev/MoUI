@@ -28,13 +28,28 @@ pub(all) struct CompileJob {
 
 ///|
 /// App 私有的编译队列与工作者句柄。
+/// `active` 是**正在运行的 moon 子进程**句柄：UI 线程的「停止编译」经
+/// `compile_cancel` 同步取消它——旧实现只清 UI 状态，moon 工具链继续
+/// 在后台跑完十几秒（实测进程表可见），用户以为停了其实没停。
 pub(all) struct CompileOwner {
   queue : @async.Queue[CompileJob]
+  active : Ref[@process.Process?]
 }
 
 ///|
 pub fn CompileOwner::new() -> CompileOwner {
-  { queue: Queue(kind=Unbounded), }
+  { queue: Queue(kind=Unbounded), active: Ref(None), }
+}
+
+///|
+/// 取消当前正在执行的 moon 子进程（同步、可在 UI 线程调用）。
+/// 没有在跑的编译时是空操作。被取消的步骤以非零码返回，管线按既有
+/// 契约落成结构化失败报告（不静默、不回退解释轨）。
+pub fn compile_cancel(owner : CompileOwner) -> Unit {
+  match owner.active.val {
+    Some(process) => process.cancel()
+    None => ()
+  }
 }
 
 ///|
@@ -64,19 +79,20 @@ pub async fn compile_worker_loop(owner : CompileOwner) -> Unit {
   @async.with_task_group(group => {
     while true {
       let job = owner.queue.get()
-      group.spawn_bg(async fn() { run_compile_job(job) })
+      group.spawn_bg(async fn() { run_compile_job(owner, job) })
     }
   })
 }
 
 ///|
 /// 执行一个编译任务；任何异常都转成结构化失败（不静默吞掉）。
-async fn run_compile_job(job : CompileJob) -> Unit {
+async fn run_compile_job(owner : CompileOwner, job : CompileJob) -> Unit {
   let result = compile_project(
     job.project_json,
     job.app_name,
     job.work_root,
     on_progress=job.on_progress,
+    owner~,
   ) catch {
     err => Err("编译执行器错误：\{err}")
   }
@@ -101,6 +117,7 @@ pub async fn compile_project(
   app_name : String,
   work_root : String,
   on_progress? : CompileProgressSink = _progress => (),
+  owner? : CompileOwner = CompileOwner::new(),
 ) -> Result[@export.CompileReport, String] {
   let safe = @export.sanitize_name(app_name)
   let root = "\{work_root}/\{safe}"
@@ -117,7 +134,7 @@ pub async fn compile_project(
     }
   }
   report_progress(on_progress, @export.CompilePrepare, false)
-  compile_bundle_at(root, on_progress~)
+  compile_bundle_at(root, on_progress~, owner~)
 }
 
 ///|
@@ -129,11 +146,12 @@ pub async fn compile_project(
 pub async fn compile_bundle_at(
   root : String,
   on_progress? : CompileProgressSink = _progress => (),
+  owner? : CompileOwner = CompileOwner::new(),
 ) -> Result[@export.CompileReport, String] {
   let moon = moon_bin()
   // 1) moon update：解析/锁定依赖（离线缓存命中时很快）
   report_progress(on_progress, @export.CompileUpdate, true)
-  let (update_code, update_output) = run_tool(moon, ["update"], root) catch {
+  let (update_code, update_output) = run_tool(owner, moon, ["update"], root) catch {
     err => return Err("无法运行 moon update：\{err}")
   }
   if update_code != 0 {
@@ -143,6 +161,7 @@ pub async fn compile_bundle_at(
   // 2) moon check --target native：编译诊断的第一现场
   report_progress(on_progress, @export.CompileCheck, true)
   let (check_code, check_output) = run_tool(
+    owner,
     moon,
     ["check", "--target", "native"],
     root,
@@ -158,6 +177,7 @@ pub async fn compile_bundle_at(
   // 3) moon build --target wasm-gc：Web 产物真实存在
   report_progress(on_progress, @export.CompileWasm, true)
   let (wasm_code, wasm_output) = run_tool(
+    owner,
     moon,
     ["build", "--target", "wasm-gc"],
     root,
@@ -178,6 +198,7 @@ pub async fn compile_bundle_at(
   // macos_skia 同构（Skia + macOS 窗口后端）。
   report_progress(on_progress, @export.CompileNative, true)
   let (native_code, native_output) = run_tool(
+    owner,
     moon,
     ["build", "./native_app", "--target", "native"],
     root,
@@ -193,6 +214,7 @@ pub async fn compile_bundle_at(
   // 4b) moon build ./native_smoke --target native：无头存活探针（可判定）
   report_progress(on_progress, @export.CompileSmoke, true)
   let (smoke_build_code, smoke_build_output) = run_tool(
+    owner,
     moon,
     ["build", "./native_smoke", "--target", "native"],
     root,
@@ -212,7 +234,7 @@ pub async fn compile_bundle_at(
   // 判定「产物是否可用」。探针与 GUI 共用同一份 `app` 包（同一份生成源码、
   // 同一个执行面），所以探针跑通 = 生成源码与运行时确实被链接进产物。
   let smoke_exe = "\{root}/_build/native/debug/build/native_smoke/native_smoke.exe"
-  let (smoke_code, smoke_output) = run_tool(smoke_exe, [], root) catch {
+  let (smoke_code, smoke_output) = run_tool(owner, smoke_exe, [], root) catch {
     err => return Err("无法启动 native 产物：\{err}")
   }
   if smoke_code != 0 || !smoke_output.contains("studio native export smoke: ok") {
@@ -393,19 +415,47 @@ fn truncate_tail(text : String, limit : Int) -> String {
 }
 
 ///|
-/// 起一个子进程并收齐 stdout+stderr（合并流，保持原始相对顺序）。
+/// 起一个子进程并分别收齐 stdout 与 stderr。
+/// 与旧 `collect_output_merged` 的差别:(1) 进程句柄登记到 `owner.active`,
+/// 「停止编译」才有东西可杀,结束(含被杀)后清槽;(2) stdout/stderr 用
+/// **两根管道**、两个并发读任务——同享一根管道(shared=true)再同时接
+/// stdout+stderr 会在事件循环上死锁(最小复现验证过),跨流顺序因此
+/// 不再保留,但诊断解析按行扫描,不依赖跨流顺序。
 async fn run_tool(
+  owner : CompileOwner,
   command : String,
   args : Array[String],
   cwd : String,
-) -> (Int, String) {
-  let (code, data) = @process.collect_output_merged(
-    command,
-    args,
-    cwd~,
-    no_console_window=true,
-  )
-  (code, data.text() catch { _ => "" })
+) -> (Int, String) raise {
+  let (out_reader, out_w) = @process.read_from_process()
+  let (err_reader, err_w) = @process.read_from_process()
+  let out_box = Ref("")
+  let err_box = Ref("")
+  let code_box = Ref(0)
+  @async.with_task_group(async fn(group) {
+    group.spawn_bg(async fn() {
+      defer out_reader.close()
+      out_box.val = out_reader.read_all().text() catch { _ => "" }
+    })
+    group.spawn_bg(async fn() {
+      defer err_reader.close()
+      err_box.val = err_reader.read_all().text() catch { _ => "" }
+    })
+    let process = @process.spawn(
+      group,
+      command,
+      args,
+      stdout=out_w,
+      stderr=err_w,
+      cwd~,
+      no_console_window=true,
+    )
+    owner.active.val = Some(process)
+    // 先等进程退出(输出流关闭由读任务各自等待),再收退出码。
+    code_box.val = process.wait()
+    owner.active.val = None
+  })
+  (code_box.val, err_box.val + out_box.val)
 }
 
 ///|

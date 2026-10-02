@@ -74,6 +74,7 @@ pub fn live_pane(
             run.checks,
             run.state.rows,
             run.state.selections,
+            run.state.vars,
             box_w,
             box_h,
           )
@@ -88,6 +89,7 @@ pub fn live_pane(
             run.checks,
             run.runtime.rows,
             run.runtime.selections,
+            compiled_values_map(run.runtime),
             box_w,
             box_h,
           )

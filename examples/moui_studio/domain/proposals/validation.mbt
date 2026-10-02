@@ -117,6 +117,7 @@ pub fn apply_proposal(
     controls,
     variables,
     handlers,
+    functions: program.functions,
   }
   // 先删后改再增：remove → update → add
   for name in proposal.controls_remove {

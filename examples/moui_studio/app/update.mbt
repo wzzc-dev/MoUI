@@ -90,6 +90,9 @@ pub fn control_events(control : @ir.Control) -> Array[@ir.EventKind] {
   if control.kind.supports_event(@ir.OnChange) {
     events.push(@ir.OnChange)
   }
+  if control.kind.supports_event(@ir.OnInputDone) {
+    events.push(@ir.OnInputDone)
+  }
   events
 }
 
@@ -134,6 +137,12 @@ fn rename_control_in_stmt(
       @ir.Declare(name, rename_control_in_expr(expr, from, to))
     @ir.Assign(name, expr) =>
       @ir.Assign(name, rename_control_in_expr(expr, from, to))
+    @ir.SetIndex(name, index, value) =>
+      @ir.SetIndex(
+        name,
+        rename_control_in_expr(index, from, to),
+        rename_control_in_expr(value, from, to),
+      )
     @ir.Call(name, args) =>
       @ir.Call(name, rename_control_in_args(name, args, from, to))
     @ir.If(cond, then_body, else_ifs, else_body) => {
@@ -165,6 +174,13 @@ fn rename_control_in_stmt(
         body.map(stmt => rename_control_in_stmt(stmt, from, to)),
       )
     @ir.Break => @ir.Break
+    @ir.Return(expr) =>
+      @ir.Return(
+        match expr {
+          Some(value) => Some(rename_control_in_expr(value, from, to))
+          None => None
+        },
+      )
   }
 }
 
@@ -175,9 +191,21 @@ fn rename_control_in_expr(
   to : String,
 ) -> @ir.Expr {
   match expr {
-    @ir.NumLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) | @ir.Var(_) => expr
+    @ir.NumLit(_) | @ir.IntLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) | @ir.Var(_) => expr
     @ir.Not(inner) => @ir.Not(rename_control_in_expr(inner, from, to))
     @ir.Neg(inner) => @ir.Neg(rename_control_in_expr(inner, from, to))
+    @ir.ListLit(items) => {
+      let copy : Array[@ir.Expr] = []
+      for item in items {
+        copy.push(rename_control_in_expr(item, from, to))
+      }
+      @ir.ListLit(copy)
+    }
+    @ir.Index(base, index) =>
+      @ir.Index(
+        rename_control_in_expr(base, from, to),
+        rename_control_in_expr(index, from, to),
+      )
     @ir.Binary(op, left, right) =>
       @ir.Binary(
         op,
@@ -231,18 +259,17 @@ fn rename_control_in_args(
 /// 用当前语言的规范源码替换某 handler 的 body（代码视图提交）。
 fn commit_code(model : Model) -> Model {
   match current_handler(model) {
-    None => { ..model, code_error: "", }
+    None => with_draft_diagnostics(model)
     Some(handler) =>
       if model.code_draft.trim().to_owned() == "" {
-        { ..model, code_error: "", }
+        with_draft_diagnostics(model)
       } else {
         match
           @studio_lang.parse_handler_body(
             model.code_draft,
             model.language.dsl_language(),
           ) {
-          Err(error) =>
-            { ..model, code_error: error_message(translator(model), error), }
+          Err(_) => with_draft_diagnostics(model)
           Ok(body) => {
             let updated = @ir.Handler::{
               ..handler,
@@ -257,15 +284,51 @@ fn commit_code(model : Model) -> Model {
                 handlers.push(existing)
               }
             }
-            {
+            with_draft_diagnostics({
               ..model,
               program: { ..model.program, handlers, },
-              code_error: "",
-            }
+            })
           }
         }
       }
   }
+}
+
+///|
+/// 草稿诊断重算：编辑即校验——`code_error`（单条错误条文案）与
+/// `code_diagnostics`（结构化、行内标记 + 问题面板用）来自同一次
+/// `check_syntax`，不会互相矛盾。
+fn with_draft_diagnostics(model : Model) -> Model {
+  match
+    @studio_lang.check_syntax(model.code_draft, model.language.dsl_language()) {
+    None => { ..model, code_error: "", code_diagnostics: [], }
+    Some(error) => {
+      let diagnostics : Array[@code_editor.CodeDiagnostic] = [
+        {
+          range: lang_error_line_range(model.code_draft, error),
+          severity: @code_editor.Error,
+          message: error_message(translator(model), error),
+        },
+      ]
+      { ..model, code_error: diagnostics[0].message, code_diagnostics: diagnostics, }
+    }
+  }
+}
+
+///|
+/// LangError 的行号 → 源码内的偏移区间（整行）。行号越界或为 0 时
+/// 退化为整段源码。
+fn lang_error_line_range(source : String, error : @studio_lang.LangError) -> @core.TextRange {
+  let line = error.line()
+  let lines = split_line_texts(source)
+  if line <= 0 || line > lines.length() {
+    return { start: 0, end: source.length() }
+  }
+  let mut start = 0
+  for index in 0..<(line - 1) {
+    start = start + lines[index].length() + 1
+  }
+  { start, end: start + lines[line - 1].length() }
 }
 
 ///|
@@ -278,7 +341,7 @@ pub fn seed_code_draft(model : Model) -> Model {
 /// 选中 handler 变化时刷新代码草稿（用当前语言渲染）。
 fn sync_code_draft(model : Model) -> Model {
   match current_handler(model) {
-    None => { ..model, code_draft: "", code_error: "", }
+    None => { ..model, code_draft: "", code_error: "", code_diagnostics: [], }
     Some(handler) =>
       {
         ..model,
@@ -287,6 +350,7 @@ fn sync_code_draft(model : Model) -> Model {
           model.language.dsl_language(),
         ),
         code_error: "",
+        code_diagnostics: [],
       }
   }
 }
@@ -348,8 +412,49 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         )
       }
     }
+    GotoProblem(key, line) => {
+      // 问题面板的跳转：先提交当前草稿（与 SelectHandler 同一纪律），
+      // 再切到目标 handler，把光标钉到目标行行首、滚动对齐（行号槽 /
+      // 编辑面 / 竖尺共享 code_scroll，一次设置三方齐动）。
+      let committed = commit_code(model)
+      let next = sync_code_draft(select_handler_key(committed, key))
+      let lines = split_line_texts(next.code_draft)
+      let target = if line >= 1 && line <= lines.length() { line } else { 1 }
+      let mut caret = 0
+      for index in 0..<(target - 1) {
+        caret = caret + lines[index].length() + 1
+      }
+      let scroll_y = ((target - 3).to_double() * 20.0).max(0.0)
+      Some(
+        (
+          {
+            ..next,
+            code_caret: caret,
+            code_selection: None,
+            code_scroll: @geometry.Point::new(x=0.0, y=scroll_y),
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    }
     EditCode(source) =>
-      Some(({ ..model, code_draft: source, }, @moui.Effect::none()))
+      Some(
+        (with_draft_diagnostics({ ..model, code_draft: source, }), @moui.Effect::none()),
+      )
+    EditorCaretMoved(caret, selection) =>
+      Some(
+        (
+          { ..model, code_caret: caret, code_selection: selection, },
+          @moui.Effect::none(),
+        ),
+      )
+    EditorScrolled(y) =>
+      Some(
+        (
+          { ..model, code_scroll: @geometry.Point::new(x=0.0, y~), },
+          @moui.Effect::none(),
+        ),
+      )
     SelectTemplate(index) => {
       let samples = @proposals.all_samples()
       let program = if index >= 0 && index < samples.length() {
@@ -444,56 +549,57 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     CreateHandler(control_name, event) =>
       // 新建子程序：控件存在 + 事件受支持 + 不重复 + 预算内，
       // 建空子程序并选中（note 留空——可读性契约的必填约束针对 AI 提案）
-      match @ir.find_control(model.program, control_name) {
-        None => Some((model, @moui.Effect::none()))
-        Some(control) =>
-          if !control.kind.supports_event(event) {
-            Some((model, @moui.Effect::none()))
-          } else if @ir.find_handler(model.program, control_name, event)
-            is Some(_) {
-            Some((model, @moui.Effect::none()))
-          } else if model.program.handlers.length() >= @ir.MAX_HANDLERS {
-            Some(
-              (
-                with_notice(
-                  model,
-                  text(translator(model), "app.status.handlers_limit"),
-                  true,
-                ),
-                @moui.Effect::none(),
+      // 窗体级事件（control_name = ""）：仅定时器/广播（切片 G）
+      if control_name == "" {
+        if !(event is @ir.OnTimer) && !(event is @ir.OnBroadcast) {
+          Some((model, @moui.Effect::none()))
+        } else if @ir.find_handler(model.program, control_name, event)
+          is Some(_) {
+          Some((model, @moui.Effect::none()))
+        } else if model.program.handlers.length() >= @ir.MAX_HANDLERS {
+          Some(
+            (
+              with_notice(
+                model,
+                text(translator(model), "app.status.handlers_limit"),
+                true,
               ),
-            )
-          } else {
-            Some(
-              (
-                with_recent_undo_point(
-                  model,
-                  control_name,
-                  "app.recent.action.handler",
-                  m => {
-                    let handlers : Array[@ir.Handler] = []
-                    for existing in m.program.handlers {
-                      handlers.push(existing)
-                    }
-                    handlers.push(@ir.Handler::{
-                      control_name,
-                      event,
-                      note_zh: "",
-                      note_en: "",
-                      body: [],
-                    })
-                    let next = {
-                      ..m,
-                      program: { ..m.program, handlers, },
-                      selected_handler: handler_key(control_name, event.tag()),
-                    }
-                    sync_code_draft(next)
-                  },
-                ),
-                @moui.Effect::none(),
+              @moui.Effect::none(),
+            ),
+          )
+        } else {
+          Some(
+            (
+              with_recent_undo_point(
+                model,
+                "窗体",
+                "app.recent.action.handler",
+                m => {
+                  let handlers : Array[@ir.Handler] = []
+                  for existing in m.program.handlers {
+                    handlers.push(existing)
+                  }
+                  handlers.push(@ir.Handler::{
+                    control_name: "",
+                    event,
+                    note_zh: "",
+                    note_en: "",
+                    body: [],
+                  })
+                  let next = {
+                    ..m,
+                    program: { ..m.program, handlers, },
+                    selected_handler: handler_key("", event.tag()),
+                  }
+                  sync_code_draft(next)
+                },
               ),
-            )
-          }
+              @moui.Effect::none(),
+            ),
+          )
+        }
+      } else {
+        create_control_handler(model, control_name, event)
       }
     CanvasPress(x, y) => {
       // 手柄优先：角手柄只画在选中控件上，按上手柄即进入缩放拖拽
@@ -768,6 +874,9 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                   @ir.CheckBox => 110
                   @ir.ListBox => 140
                   @ir.Table => 200
+                  @ir.Dropdown => 140
+                  @ir.ProgressBar => 160
+                  @ir.Image => 120
                 },
                 height: match kind {
                   @ir.Button => 32
@@ -776,6 +885,9 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                   @ir.CheckBox => 26
                   @ir.ListBox => 110
                   @ir.Table => 120
+                  @ir.Dropdown => 30
+                  @ir.ProgressBar => 18
+                  @ir.Image => 90
                 },
                 items: [],
               }
@@ -902,6 +1014,19 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
 ///|
 /// 纯转移（文件与网络相关消息由 update_with_services 处理）。
 pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
+  match update_confirm_msgs(model, msg) {
+    Some(result) => result
+    None => update_pure_inner(model, msg)
+  }
+}
+
+///|
+/// 纯转移内层链（不含确认守卫层）：ConfirmAccepted 续行原消息时走这里，
+/// 避免守卫把续行消息再次拦成确认请求。
+fn update_pure_inner(
+  model : Model,
+  msg : Msg,
+) -> (Model, @moui.Effect[Msg]) {
   match update_shell_msgs(model, msg) {
     Some(result) => result
     None =>
@@ -953,6 +1078,9 @@ fn fresh_control_name(
     @ir.CheckBox => "选择框"
     @ir.ListBox => "列表框"
     @ir.Table => "表格"
+    @ir.Dropdown => "下拉框"
+    @ir.ProgressBar => "进度条"
+    @ir.Image => "图片"
   }
   let mut index = 1
   let mut name = base
@@ -1051,5 +1179,83 @@ pub fn first_handler_key(handlers : Array[@ir.Handler]) -> String {
     handler_key(handlers[0].control_name, handlers[0].event.tag())
   } else {
     ""
+  }
+}
+
+///|
+/// 控件级子程序创建（原 CreateHandler 主体；窗体级事件走独立分支）。
+fn create_control_handler(
+  model : Model,
+  control_name : String,
+  event : @ir.EventKind,
+) -> (Model, @moui.Effect[Msg])? {
+  match @ir.find_control(model.program, control_name) {
+      None => Some((model, @moui.Effect::none()))
+      Some(control) =>
+        if !control.kind.supports_event(event) {
+          Some((model, @moui.Effect::none()))
+        } else if @ir.find_handler(model.program, control_name, event)
+          is Some(_) {
+          Some((model, @moui.Effect::none()))
+        } else if model.program.handlers.length() >= @ir.MAX_HANDLERS {
+          Some(
+            (
+              with_notice(
+                model,
+                text(translator(model), "app.status.handlers_limit"),
+                true,
+              ),
+              @moui.Effect::none(),
+            ),
+          )
+        } else {
+          Some(
+            (
+              with_recent_undo_point(
+                model,
+                control_name,
+                "app.recent.action.handler",
+                m => {
+                  let handlers : Array[@ir.Handler] = []
+                  for existing in m.program.handlers {
+                    handlers.push(existing)
+                  }
+                  handlers.push(@ir.Handler::{
+                    control_name,
+                    event,
+                    note_zh: "",
+                    note_en: "",
+                    body: [],
+                  })
+                  let next = {
+                    ..m,
+                    program: { ..m.program, handlers, },
+                    selected_handler: handler_key(control_name, event.tag()),
+                  }
+                  sync_code_draft(next)
+                },
+              ),
+              @moui.Effect::none(),
+            ),
+          )
+        }
+  }
+}
+
+///|
+/// 把光标钉到目标行行首并滚动对齐（GotoProblem 的共用核心）。
+fn goto_line(model : Model, line : Int) -> Model {
+  let lines = split_line_texts(model.code_draft)
+  let target = if line >= 1 && line <= lines.length() { line } else { 1 }
+  let mut caret = 0
+  for index in 0..<(target - 1) {
+    caret = caret + lines[index].length() + 1
+  }
+  let scroll_y = ((target - 3).to_double() * 20.0).max(0.0)
+  {
+    ..model,
+    code_caret: caret,
+    code_selection: None,
+    code_scroll: @geometry.Point::new(x=0.0, y=scroll_y),
   }
 }

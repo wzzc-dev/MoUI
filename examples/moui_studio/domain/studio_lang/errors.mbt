@@ -60,6 +60,9 @@ fn token_label(kind : TokenKind) -> String {
   match kind {
     Ident(text) => "「\{text}」"
     Num(n) => "数字 \{n}"
+    Int(n) => "数字 \{n}"
+    LBracket => "["
+    RBracket => "]"
     Str(_) => "字符串"
     Newline => "换行"
     LParen => "("

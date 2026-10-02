@@ -66,6 +66,17 @@ fn write_stmt(
       buf.write_string("\{name} = ")
       write_expr(buf, expr, 0, false, keywords, language)
     }
+    @ir.SetIndex(name, index, value) => {
+      buf.write_string("\{name}[")
+      write_expr(buf, index, 0, false, keywords, language)
+      buf.write_string("] = ")
+      write_expr(buf, value, 0, false, keywords, language)
+    }
+    @ir.Return(None) => buf.write_string(keywords.return_kw)
+    @ir.Return(Some(expr)) => {
+      buf.write_string("\{keywords.return_kw} ")
+      write_expr(buf, expr, 0, false, keywords, language)
+    }
     @ir.If(cond, then_body, else_ifs, else_body) => {
       buf.write_string("\{keywords.if_kw} ")
       write_expr(buf, cond, 0, false, keywords, language)
@@ -141,9 +152,12 @@ fn expr_precedence(expr : Expr) -> Int {
     @ir.Binary(@ir.Mul, _, _) | @ir.Binary(@ir.Div, _, _) => 5
     @ir.Not(_) | @ir.Neg(_) => 6
     @ir.NumLit(_)
+    | @ir.IntLit(_)
     | @ir.StrLit(_)
     | @ir.BoolLit(_)
     | @ir.Var(_)
+    | @ir.ListLit(_)
+    | @ir.Index(_, _)
     | @ir.Call(_, _) => 7
   }
 }
@@ -187,6 +201,32 @@ fn write_expr_inner(
 ) -> Unit {
   match expr {
     @ir.NumLit(n) => buf.write_string(number_to_text(n))
+    @ir.IntLit(n) => buf.write_string(n.to_string())
+    @ir.ListLit(items) => {
+      buf.write_string("[")
+      let mut first = true
+      for item in items {
+        if !first {
+          buf.write_string(", ")
+        }
+        write_expr(buf, item, 0, false, keywords, language)
+        first = false
+      }
+      buf.write_string("]")
+    }
+    @ir.Index(base, index) => {
+      // 基底非主级（二元/一元）时加括号：a + b[i] 与 (a + b)[i] 可区分
+      if expr_precedence(base) < 7 {
+        buf.write_string("(")
+        write_expr(buf, base, 0, false, keywords, language)
+        buf.write_string(")")
+      } else {
+        write_expr(buf, base, 7, false, keywords, language)
+      }
+      buf.write_string("[")
+      write_expr(buf, index, 0, false, keywords, language)
+      buf.write_string("]")
+    }
     @ir.StrLit(text) => buf.write_string("\"\{text}\"")
     @ir.BoolLit(flag) =>
       buf.write_string(if flag { keywords.true_kw } else { keywords.false_kw })

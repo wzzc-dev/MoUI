@@ -3,6 +3,11 @@
 /// + 真实 provider 派发。平台入口只负责把 provider_submit 与 timer 接上。
 
 ///|
+fn noop_compile_cancel() -> Unit {
+  ()
+}
+
+///|
 /// 提案 system prompt（真实 provider 用；从领域包转出，入口只认 app）。
 pub fn proposal_system_prompt() -> String {
   @proposals.proposal_system_prompt()
@@ -550,14 +555,38 @@ fn run_subscription(
   model : Model,
   timer : @services.TimerSource?,
 ) -> @moui.Subscription[Msg] {
-  match (model.run, timer) {
-    (Some(run), Some(source)) =>
-      if run.state.status is @studio_lang.Running {
-        source.subscription(interval_ms=30.0, map=_frame => RunTick)
+  // 虚拟时钟（切片 G）：窗体定时器开启且运行中时，用帧时间把每秒一帧
+  // 标成 TimerTick——设计态订阅不活跃，时钟不走，这就是「虚拟」。
+  let interpret_live = match model.run {
+    Some(run) => run.state.status is @studio_lang.Running
+    None => false
+  }
+  let compiled_live = model.compiled_run is Some(_) &&
+    model.program.window.timer_interval > 0 &&
+    app_running(model)
+  // 定时器开着且编译轨活时，解释轨的 30ms 订阅也要标出秒帧——
+  // 虚拟时钟在两轨上的步进口径一致。
+  let timer_on = model.program.window.timer_interval > 0 && app_running(model)
+  match timer {
+    Some(source) =>
+      if interpret_live {
+        if timer_on {
+          source.subscription(interval_ms=30.0, map=frame => {
+            if frame.time_ms % 1000.0 < 30.0 {
+              TimerTick
+            } else {
+              RunTick
+            }
+          })
+        } else {
+          source.subscription(interval_ms=30.0, map=_frame => RunTick)
+        }
+      } else if compiled_live {
+        source.subscription(interval_ms=1000.0, map=_frame => TimerTick)
       } else {
         @moui.Subscription::none()
       }
-    _ => @moui.Subscription::none()
+    None => @moui.Subscription::none()
   }
 }
 
@@ -569,6 +598,8 @@ pub fn program(
   provider_submit? : ProviderSubmit = noop_provider_submit,
   compile_submit? : CompileSubmit = noop_compile_submit,
   launch_submit? : LaunchSubmit = noop_launch_submit,
+  runtime_snapshot? : RuntimeSnapshotFn = noop_runtime_snapshot,
+  compile_cancel? : () -> Unit = noop_compile_cancel,
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
   export_available? : Bool = false,
@@ -580,6 +611,8 @@ pub fn program(
   let submit = provider_submit
   let submit_compile = compile_submit
   let submit_launch = launch_submit
+  let take_snapshot = runtime_snapshot
+  let cancel_compile = compile_cancel
   let on_locale = apply_locale
   @moui.Program::new_with_environment(
     init=() => {
@@ -604,10 +637,29 @@ pub fn program(
     },
     update=(model, msg) => {
       let (next0, effect0) = match msg {
+        // 「停止编译」= 真终止：清 UI 状态之外还要杀掉正在跑的 moon
+        // 子进程（旧实现只清状态，工具链继续后台跑完，进程表可见）。
+        CompileStopped => {
+          cancel_compile()
+          update_pure(model, msg)
+        }
+        // 打开项目是覆盖性动作：有未保存修改时先要确认（破坏性操作
+        // 确认纪律）。确认续行带 `open_confirmed` 一次性放行标记——
+        // 放行即复位，标记不会泄漏到下一次打开。
+        OpenRequested =>
+          if model.dirty &&
+            model.pending_confirm is None &&
+            !model.open_confirmed {
+            update_pure(model, RequestConfirm(CkOpen))
+          } else {
+            let (next, effect) = update_with_provider(
+              model, msg, services, submit, submit_launch, on_locale,
+            )
+            ({ ..next, open_confirmed: false }, effect)
+          }
         SaveRequested
         | SavePathPicked(_)
         | SaveCompleted(_)
-        | OpenRequested
         | OpenPathPicked(_)
         | OpenReadCompleted(_)
         | ExportRequested
@@ -631,7 +683,19 @@ pub fn program(
           update_with_provider(
             model, msg, services, submit, submit_launch, on_locale,
           )
-        _ => update_pure(model, msg)
+        _ => {
+          let (next, effect) = update_pure(model, msg)
+          // 运行时检查器挂载：只有「打开 Runtime 页签 / 显式刷新」两条
+          // 路径会真正采样（O(节点数) 的全树遍历），其余消息零开销通过。
+          // effect 必须与原 effect 合并——确认卡的打开续行（CkOpen 的
+          // Effect::dispatch(OpenRequested)）就走在 update_pure 里。
+          let (next2, refresh_effect) = runtime_refresh_attached(
+            next,
+            msg,
+            take_snapshot,
+          )
+          (next2, @moui.Effect::batch([effect, refresh_effect]))
+        }
       }
       // 真编译派发：只有「CompileRun 使 compile_busy 从假变真」这一次
       // 转移才入队——重复点击/其它消息不会重复排队。项目 JSON 在此编码，
@@ -704,6 +768,7 @@ pub fn program(
       // 非沉浸式（Web 入口）必须清空——浏览器没有原生拖窗，
       // 留下一个「看起来能拖但拖不动」的区域只会误导。
       if model.immersive {
+        let __drag_w = topbar_drag_width(model, translator(model), viewport.width)
         services
         .platform()
         .window_drag()
@@ -712,7 +777,7 @@ pub fn program(
             @core.Rect::new(
               x=0.0,
               y=0.0,
-              width=topbar_drag_width(model, translator(model), viewport.width),
+              width=__drag_w,
               height=WINDOW_CHROME_HEIGHT,
             ),
           ),
@@ -724,6 +789,7 @@ pub fn program(
     },
     subscriptions=model => run_subscription(model, timer),
   )
+  .with_commands(commands=studio_program_commands)
 }
 
 ///|

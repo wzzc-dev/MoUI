@@ -95,10 +95,10 @@ fn statement_kind_handlers(
     (
       "declare+assign",
       synthetic_handler(program, [
-        @ir.Declare("差分计数", @ir.NumLit(1.0)),
+        @ir.Declare("差分计数", @ir.IntLit(1)),
         @ir.Assign(
           "差分计数",
-          @ir.Binary(@ir.Add, @ir.Var("差分计数"), @ir.NumLit(2.0)),
+          @ir.Binary(@ir.Add, @ir.Var("差分计数"), @ir.IntLit(2)),
         ),
         @ir.Call("set_text", [
           @ir.Var(label),
@@ -112,13 +112,13 @@ fn statement_kind_handlers(
     (
       "if-branches",
       synthetic_handler(program, [
-        @ir.Declare("差分分支", @ir.NumLit(2.0)),
+        @ir.Declare("差分分支", @ir.IntLit(2)),
         @ir.If(
-          @ir.Binary(@ir.Eq, @ir.Var("差分分支"), @ir.NumLit(1.0)),
+          @ir.Binary(@ir.Eq, @ir.Var("差分分支"), @ir.IntLit(1)),
           [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("一")])],
           [
             (
-              @ir.Binary(@ir.Eq, @ir.Var("差分分支"), @ir.NumLit(2.0)),
+              @ir.Binary(@ir.Eq, @ir.Var("差分分支"), @ir.IntLit(2)),
               [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("二")])],
             ),
           ],
@@ -132,8 +132,8 @@ fn statement_kind_handlers(
     (
       "count-loop",
       synthetic_handler(program, [
-        @ir.Declare("差分累加", @ir.NumLit(0.0)),
-        @ir.CountLoop(@ir.NumLit(4.0), Some("差分序号"), [
+        @ir.Declare("差分累加", @ir.IntLit(0)),
+        @ir.CountLoop(@ir.IntLit(4), Some("差分序号"), [
           @ir.Assign(
             "差分累加",
             @ir.Binary(
@@ -155,14 +155,14 @@ fn statement_kind_handlers(
     (
       "count-loop+break",
       synthetic_handler(program, [
-        @ir.Declare("差分中断", @ir.NumLit(0.0)),
-        @ir.CountLoop(@ir.NumLit(5.0), None, [
+        @ir.Declare("差分中断", @ir.IntLit(0)),
+        @ir.CountLoop(@ir.IntLit(5), None, [
           @ir.Assign(
             "差分中断",
-            @ir.Binary(@ir.Add, @ir.Var("差分中断"), @ir.NumLit(1.0)),
+            @ir.Binary(@ir.Add, @ir.Var("差分中断"), @ir.IntLit(1)),
           ),
           @ir.If(
-            @ir.Binary(@ir.Ge, @ir.Var("差分中断"), @ir.NumLit(2.0)),
+            @ir.Binary(@ir.Ge, @ir.Var("差分中断"), @ir.IntLit(2)),
             [@ir.Break],
             [],
             [],
@@ -180,13 +180,13 @@ fn statement_kind_handlers(
     (
       "while-loop",
       synthetic_handler(program, [
-        @ir.Declare("差分倒计时", @ir.NumLit(3.0)),
+        @ir.Declare("差分倒计时", @ir.IntLit(3)),
         @ir.WhileLoop(
-          @ir.Binary(@ir.Gt, @ir.Var("差分倒计时"), @ir.NumLit(0.0)),
+          @ir.Binary(@ir.Gt, @ir.Var("差分倒计时"), @ir.IntLit(0)),
           [
             @ir.Assign(
               "差分倒计时",
-              @ir.Binary(@ir.Sub, @ir.Var("差分倒计时"), @ir.NumLit(1.0)),
+              @ir.Binary(@ir.Sub, @ir.Var("差分倒计时"), @ir.IntLit(1)),
             ),
           ],
         ),
@@ -212,7 +212,7 @@ fn statement_kind_handlers(
     (
       "function-calls",
       synthetic_handler(program, [
-        @ir.Declare("差分文本", @ir.Call("to_text", [@ir.NumLit(42.0)])),
+        @ir.Declare("差分文本", @ir.Call("to_text", [@ir.IntLit(42)])),
         @ir.Declare(
           "差分长度",
           @ir.Call("text_length", [@ir.Var("差分文本")]),
@@ -221,7 +221,7 @@ fn statement_kind_handlers(
           "差分包含",
           @ir.Call("contains", [@ir.Var("差分文本"), @ir.StrLit("4")]),
         ),
-        @ir.Declare("差分上限", @ir.Call("random", [@ir.NumLit(9.0)])),
+        @ir.Declare("差分上限", @ir.Call("random", [@ir.IntLit(9)])),
         @ir.Call("set_text", [
           @ir.Var(label),
           @ir.Binary(
@@ -273,7 +273,7 @@ fn statement_kind_handlers(
     (
       "append-row",
       synthetic_handler(program, [
-        @ir.Declare("差分行", @ir.Call("to_text", [@ir.NumLit(7.0)])),
+        @ir.Declare("差分行", @ir.Call("to_text", [@ir.IntLit(7)])),
         @ir.Call("append_row", [@ir.Var(label), @ir.Var("差分行")]),
       ]),
     ),
@@ -283,7 +283,7 @@ fn statement_kind_handlers(
     (
       "error-not-declared",
       synthetic_handler(program, [
-        @ir.Assign("差分未声明", @ir.NumLit(1.0)),
+        @ir.Assign("差分未声明", @ir.IntLit(1)),
       ]),
     ),
   )
@@ -294,7 +294,7 @@ fn statement_kind_handlers(
       synthetic_handler(program, [
         @ir.Declare(
           "差分除零",
-          @ir.Binary(@ir.Div, @ir.NumLit(1.0), @ir.NumLit(0.0)),
+          @ir.Binary(@ir.Div, @ir.IntLit(1), @ir.IntLit(0)),
         ),
       ]),
     ),
@@ -304,7 +304,7 @@ fn statement_kind_handlers(
     (
       "error-unknown-builtin",
       synthetic_handler(program, [
-        @ir.Call("差分不存在的内建", [@ir.NumLit(1.0)]),
+        @ir.Call("差分不存在的内建", [@ir.IntLit(1)]),
       ]),
     ),
   )

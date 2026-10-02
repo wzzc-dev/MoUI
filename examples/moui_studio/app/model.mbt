@@ -158,13 +158,23 @@ pub(all) enum LeftView {
 }
 
 ///|
-/// 右栏 Context 页签：属性 / 状态 / 数据 / 动作 / 依赖。
+/// 右栏 Context 页签：属性 / 状态 / 数据 / 动作 / 依赖 / 运行时。
 pub(all) enum ContextTab {
   CtxProps
   CtxState
   CtxData
   CtxActions
   CtxDeps
+  CtxRuntime
+}
+
+///|
+/// 底栏页签：运行审计 / Console / 问题（诊断汇总）。
+/// 原来是 `bottom_audit : Bool` 两态开关，问题面板加入后升级为枚举。
+pub(all) enum BottomTab {
+  BtAudit
+  BtConsole
+  BtProblems
 }
 
 ///|
@@ -356,6 +366,15 @@ pub(all) struct CodeToken {
 }
 
 ///|
+/// 带源内偏移的高亮 token：`start` 是全文绝对偏移（编辑器 run 的
+/// `source_range` 需要全文坐标，行内坐标会在换行处错位）。
+pub(all) struct RangedToken {
+  start : Int
+  text : String
+  kind : CodeTokenKind
+}
+
+///|
 /// IR 语句 → 代码行的映射区段：语句路径 + 行区间（1 起的闭区间）。
 /// 由「顺序渲染每条语句并取行区间」推导——不把行号写进 IR，
 /// 映射是渲染的副产品（IR 仍是唯一事实来源）。
@@ -395,6 +414,26 @@ pub(all) struct Model {
   side_target : SideTarget?
   code_draft : String
   code_error : String
+  // 代码编辑器（richtext 受控面）的光标/选区/滚动：光标驱动脚注的行列
+  // 读数与后续补全锚点；滚动是「行号槽 / IR 竖尺 ↔ 编辑面」同步的唯一事实。
+  code_caret : Int
+  code_selection : @core.TextRange?
+  code_scroll : @geometry.Point
+  // 当前草稿的实时语法诊断（编辑即校验；提交/切换时重算）
+  code_diagnostics : Array[@code_editor.CodeDiagnostic]
+  // 补全弹层（切片 H）：候选词与开关
+  completions : Array[String]
+  completion_open : Bool
+  // 破坏性操作待确认卡（None = 无）。见 confirm.mbt 的纪律说明。
+  pending_confirm : ConfirmKind?
+  // 「打开项目」覆盖确认后的一次性放行标记（确认 → Effect 重投时绕过
+  // dirty 守卫；OpenRequested 放行即复位）。
+  open_confirmed : Bool
+  // 运行时检查器：最近一次快照（入口注入的格式化文本）+ 摘要历史 +
+  // 「回调不可用」标记（未注入快照通道的入口，如裸测试组合根）
+  runtime_report : RuntimeInspectSample?
+  runtime_missing : Bool
+  runtime_history : Array[String]
   // 当前运行轨：顶栏显式切换；两轨运行态各自独立保存
   run_track : RunTrack
   // 编译轨是否可达（native 入口为真；Web 端显式声明只有解释轨 + 源码预览）
@@ -464,6 +503,9 @@ pub(all) struct Model {
   // 十次会得到十个相同的「随机」结果（点名册每次都是「王五」），用户读到
   // 的现象就是「运行之后点按钮没反应」。编译轨的种子在 Runtime.rng 里。
   runtime_seed : Int
+  // 虚拟时钟（切片 G）：只在运行期间步进（TimerTick 每秒一次），
+  // 累计到窗体 timer_interval 秒即触发一次 @定时器 处理器
+  timer_elapsed : Int
   // 撤销/重做：变更前快照栈（深度 UNDO_DEPTH）与重做栈
   undo_stack : Array[UndoEntry]
   redo_stack : Array[UndoEntry]
@@ -497,8 +539,8 @@ pub(all) struct Model {
   // 底部横条展开态与高度（审计 + Console）
   bottom_open : Bool
   bottom_height : Double
-  // 底部横条当前页签：审计 / Console
-  bottom_audit : Bool
+  // 底部横条当前页签：审计 / Console / 问题
+  bottom_tab : BottomTab
   // 运行审计时间线（会话内）
   audit_entries : Array[AuditEntry]
   audit_seq : Int
@@ -546,6 +588,7 @@ pub(all) enum Msg {
   /// 修改窗体标题（右栏窗体属性）。运行舞台的拟真标题条与导出应用的
   /// 窗口标题都读它。
   SetWindowTitle(String)
+  SetTimerInterval(String)
   /// 点开/收起某个分组头的新建菜单（"" = 全部收起；同一组再点 = 收起）。
   ToggleTreeCreate(String)
   /// 新建一个程序变量（分组头「变量 +」）。名称自动去重（`变量1`、`变量2`…），
@@ -576,6 +619,19 @@ pub(all) enum Msg {
   SelectHandler(String)
   CreateHandler(String, @ir.EventKind)
   EditCode(String)
+  EditorCaretMoved(Int, @core.TextRange?)
+  EditorScrolled(Double)
+  // 运行时检查器：按需采样（打开页签 / 点击刷新）
+  RuntimeRefresh
+  // 代码情报（切片 H）：补全 / 应用补全 / 跳到声明
+  TriggerCompletion
+  ApplyCompletion(String)
+  JumpToDeclaration
+  DismissCompletion
+  // 破坏性操作确认流：请求 / 接受（续行原消息）/ 取消
+  RequestConfirm(ConfirmKind)
+  ConfirmAccepted
+  ConfirmDismissed
   Undo
   Redo
   SetPrompt(String)
@@ -638,6 +694,8 @@ pub(all) enum Msg {
   /// 说明文案由视图层解析好（i18n 只在这一层做），状态栏直接显示。
   HoverHint(String)
   RunTick
+  TimerTick
+  ControlInputDone(String)
   RunStep
   RunResume
   AuditJump(Int)
@@ -687,7 +745,9 @@ pub(all) enum Msg {
   // 右栏 Context 页签
   SetContextTab(ContextTab)
   // 底栏：页签切换 / 展开折叠 / 高度拖拽
-  SetBottomTab(Bool)
+  SetBottomTab(BottomTab)
+  // 问题面板：跳到某子程序草稿的某行（选中 handler + 光标 + 滚动对齐）
+  GotoProblem(String, Int)
   ToggleBottom
   // 审计：点击条目（跳到对应积木）/ 处理副作用卡（settled 标记）
   AuditOpen(Int)
@@ -795,6 +855,17 @@ pub fn initial_model(
     side_target: None,
     code_draft: "",
     code_error: "",
+    code_caret: 0,
+    code_selection: None,
+    code_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    code_diagnostics: [],
+    completions: [],
+    completion_open: false,
+    pending_confirm: None,
+    open_confirmed: false,
+    runtime_report: None,
+    runtime_missing: false,
+    runtime_history: [],
     run_track: Interpret,
     compile_track_available,
     run: None,
@@ -833,6 +904,7 @@ pub fn initial_model(
     runtime_rows: @studio_lang.initial_rows(program),
     runtime_selections: Map([], capacity=4),
     runtime_seed: @studio_lang.DEFAULT_SEED,
+    timer_elapsed: 0,
     undo_stack: [],
     redo_stack: [],
     proposal_history: [],
@@ -849,7 +921,7 @@ pub fn initial_model(
     ctx_tab: CtxProps,
     bottom_open: false,
     bottom_height: 168.0,
-    bottom_audit: true,
+    bottom_tab: BtAudit,
     audit_entries: initial_audit,
     audit_seq: initial_audit.length(),
     log_lines: boot_log_lines(program),

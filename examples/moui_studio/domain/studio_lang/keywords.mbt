@@ -46,6 +46,7 @@ pub(all) struct Keywords {
   and_kw : String // 且 / and
   or_kw : String // 或 / or
   not_kw : String // 非 / not
+  return_kw : String // 返回 / return
 }
 
 ///|
@@ -70,6 +71,7 @@ pub fn keywords_for(language : Language) -> Keywords {
         and_kw: "且",
         or_kw: "或",
         not_kw: "非",
+        return_kw: "返回",
       }
     En =>
       Keywords::{
@@ -90,6 +92,7 @@ pub fn keywords_for(language : Language) -> Keywords {
         and_kw: "and",
         or_kw: "or",
         not_kw: "not",
+        return_kw: "return",
       }
   }
 }
@@ -124,6 +127,20 @@ pub fn builtin_catalog() -> Array[BuiltinSpec] {
       arity: 1,
     },
     BuiltinSpec::{
+      id: "broadcast",
+      zh: "广播",
+      en: "broadcast",
+      kind: Command,
+      arity: 1,
+    },
+    BuiltinSpec::{
+      id: "append_list",
+      zh: "加入列表",
+      en: "append_list",
+      kind: Command,
+      arity: 2,
+    },
+    BuiltinSpec::{
       id: "set_text",
       zh: "设置文本",
       en: "set_text",
@@ -148,6 +165,13 @@ pub fn builtin_catalog() -> Array[BuiltinSpec] {
       id: "get_number",
       zh: "取数值",
       en: "get_number",
+      kind: Function,
+      arity: 1,
+    },
+    BuiltinSpec::{
+      id: "list_length",
+      zh: "列表长度",
+      en: "list_length",
       kind: Function,
       arity: 1,
     },
@@ -266,6 +290,7 @@ pub fn is_reserved(text : String) -> Bool {
   text == zh.and_kw ||
   text == zh.or_kw ||
   text == zh.not_kw ||
+  text == zh.return_kw ||
   text == en.declare_kw ||
   text == en.if_kw ||
   text == en.then_kw ||
@@ -282,7 +307,8 @@ pub fn is_reserved(text : String) -> Bool {
   text == en.false_kw ||
   text == en.and_kw ||
   text == en.or_kw ||
-  text == en.not_kw
+  text == en.not_kw ||
+  text == en.return_kw
 }
 
 ///|
@@ -293,6 +319,7 @@ pub(all) enum StmtKeyword {
   KwCountLoop
   KwWhile
   KwBreak
+  KwReturn
   NoneKw
 }
 
@@ -308,6 +335,8 @@ pub fn classify_stmt_keyword(text : String, keywords : Keywords) -> StmtKeyword 
     KwWhile
   } else if text == keywords.break_kw {
     KwBreak
+  } else if text == keywords.return_kw {
+    KwReturn
   } else {
     NoneKw
   }

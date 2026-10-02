@@ -8,6 +8,8 @@ import {
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",
   "wzzc-dev/moui/text",
+  "wzzc-dev/moui_richtext",
+  "wzzc-dev/moui_richtext/code_editor",
   "examples/moui_studio/domain/ir",
   "examples/moui_studio/domain/studio_lang",
   "examples/moui_studio/domain/codec",

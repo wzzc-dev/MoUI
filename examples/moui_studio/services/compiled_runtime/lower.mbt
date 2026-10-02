@@ -29,6 +29,30 @@ pub fn lower_traced_handler(body : Array[@studio_lang.TracedStmt]) -> Handler {
 }
 
 ///|
+/// 用户函数 → 注册闭包：参数名来自 IR（闭包持有），Return 的
+/// LoopReturn 控制信号在此边界捕获成返回值；体行号统一 0
+/// （与解释轨 call_user_function 的 compile_body(traced_from_stmts) 同口径）。
+pub fn lower_user_function(func : @ir.FuncDef) -> UserFunction {
+  fn(rt : Runtime, arg_values : Array[Value]) -> Value raise ExecError {
+    for index, param in func.params {
+      if index < arg_values.length() {
+        rt.vars[param] = arg_values[index]
+        if !rt.declared.contains(param) {
+          rt.declared.push(param)
+        }
+      }
+    }
+    try {
+      exec_nested(rt, func.body, 0)
+      VUnit
+    } catch {
+      LoopReturn(value) => value
+      error => raise error
+    }
+  }
+}
+
+///|
 /// (控件名, 事件) → Handler：与生成代码的 `studio_dispatch_handler` 同口径，
 /// 找不到返回 None（Studio 不去猜、不静默兜底）。
 pub fn handler_for(
@@ -86,6 +110,17 @@ fn exec_stmt(rt : Runtime, stmt : @ir.Stmt, line : Int) -> Unit raise ExecError 
         "\{name} = \{@studio_lang.canonical_expr(expr)}",
       )
     }
+    @ir.SetIndex(name, index, value) => {
+      let existing = rt.get(name, line)
+      let index_value = eval_expr(rt, index, line)
+      let value_value = eval_expr(rt, value, line)
+      set_index_values(existing, index_value, value_value, line)
+      rt.record(
+        line,
+        OpCommand,
+        "\{name}[\{@studio_lang.canonical_expr(index)}] = \{@studio_lang.canonical_expr(value)}",
+      )
+    }
     @ir.If(cond, then_body, else_ifs, else_body) => {
       let flag = bool_of(eval_expr(rt, cond, line), "condition", line)
       rt.record_condition(flag, line, @studio_lang.canonical_expr(cond))
@@ -141,6 +176,13 @@ fn exec_stmt(rt : Runtime, stmt : @ir.Stmt, line : Int) -> Unit raise ExecError 
         },
       )
     @ir.Break => rt.break_loop()
+    @ir.Return(expr) => {
+      // 返回 = LoopReturn 控制信号；函数调用边界（注册闭包）捕获
+      match expr {
+        Some(value) => raise LoopReturn(eval_expr(rt, value, line))
+        None => raise LoopReturn(VUnit)
+      }
+    }
     @ir.Stmt::Call(name, args) =>
       match @studio_lang.builtin_kind(name) {
         Some(@studio_lang.Command) => exec_command(rt, name, args, line)
@@ -150,7 +192,12 @@ fn exec_stmt(rt : Runtime, stmt : @ir.Stmt, line : Int) -> Unit raise ExecError 
           ignore(eval_expr(rt, call, line))
           rt.record(line, OpCommand, @studio_lang.canonical_expr(call))
         }
-        None => ignore(unknown_builtin(name, line))
+        // 用户自定义函数：语句位调用同样记账（与解释轨 ExprStmt 同口径）
+        None => {
+          let call : @ir.Expr = @ir.Expr::Call(name, args)
+          ignore(eval_expr(rt, call, line))
+          rt.record(line, OpCommand, @studio_lang.canonical_expr(call))
+        }
       }
   }
 }
@@ -183,6 +230,27 @@ fn exec_command(
         line,
         detail,
       )
+    "broadcast" =>
+      rt.broadcast(eval_expr(rt, args[0], line), line)
+    "append_list" => {
+      let list_name = match args[0] {
+        @ir.Var(name) => name
+        _ =>
+          raise ExecError::RuntimeError(ErrorDetails::{
+            kind: TypeMismatch,
+            line,
+            a: "append_list",
+            b: "variable",
+          })
+      }
+      rt.append_list(
+        list_name,
+        eval_expr(rt, args[1], line),
+        name,
+        line,
+        detail,
+      )
+    }
     _ => ignore(unknown_builtin(name, line))
   }
 }
@@ -206,7 +274,18 @@ fn exec_gate(
         detail,
       )
     "ask" => rt.ask(eval_expr(rt, args[0], line), name, line, detail)
-    _ => unknown_builtin(name, line)
+    _ => {
+      // 内建没有 → 用户自定义函数（先内建、后自定义，与解释轨同口径）
+      if rt.has_user_function(name) {
+        let arg_values : Array[Value] = []
+        for arg in args {
+          arg_values.push(eval_expr(rt, arg, line))
+        }
+        rt.call_user_function(name, arg_values, line)
+      } else {
+        unknown_builtin(name, line)
+      }
+    }
   }
 }
 
@@ -234,6 +313,7 @@ fn eval_expr(
 ) -> Value raise ExecError {
   match expr {
     @ir.NumLit(n) => VNum(n)
+    @ir.IntLit(n) => VInt(n)
     @ir.StrLit(text) => VStr(text)
     @ir.BoolLit(flag) => VBool(flag)
     @ir.Var(name) =>
@@ -246,6 +326,19 @@ fn eval_expr(
       }
     @ir.Not(inner) => not_value(eval_expr(rt, inner, line), line)
     @ir.Neg(inner) => neg_value(eval_expr(rt, inner, line), line)
+    @ir.ListLit(items) => {
+      let values : Array[Value] = []
+      for item in items {
+        values.push(eval_expr(rt, item, line))
+      }
+      VArr(values)
+    }
+    @ir.Index(base, index) =>
+      index_values(
+        eval_expr(rt, base, line),
+        eval_expr(rt, index, line),
+        line,
+      )
     @ir.Binary(op, left, right) => eval_binary(rt, op, left, right, line)
     @ir.Expr::Call(name, args) => eval_call(rt, name, args, line)
   }
@@ -347,6 +440,8 @@ fn eval_call(
         name,
         line,
       )
+    "list_length" =>
+      list_length(rt, eval_expr(rt, args[0], line), line)
     "random" => random(rt, eval_expr(rt, args[0], line), line)
     "row_count" => row_count(rt, control_name_of(rt, args[0], line))
     "row_at" =>
@@ -372,6 +467,17 @@ fn eval_call(
         line,
         @studio_lang.canonical_call_text(name, args),
       )
-    _ => unknown_builtin(name, line)
+    // 内建没有 → 用户自定义函数（先内建、后自定义，与解释轨同口径）
+    _ => {
+      if rt.has_user_function(name) {
+        let arg_values : Array[Value] = []
+        for arg in args {
+          arg_values.push(eval_expr(rt, arg, line))
+        }
+        rt.call_user_function(name, arg_values, line)
+      } else {
+        unknown_builtin(name, line)
+      }
+    }
   }
 }

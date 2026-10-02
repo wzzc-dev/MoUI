@@ -74,6 +74,8 @@ pub(all) suberror ExecError {
   GateHalt
   // 跳出最近一层循环
   LoopBreak
+  // 从用户函数返回（携带返回值；调用边界捕获成返回值）
+  LoopReturn(Value)
 }
 
 ///|
@@ -88,9 +90,22 @@ pub const RANDOM_SEED : Int = 20260927
 /// 值：编译轨保持 DSL 的动态类型（数字/文本/逻辑三选一）。
 pub(all) enum Value {
   VNum(Double)
+  VInt(Int)
   VStr(String)
+  VArr(Array[Value])
   VBool(Bool)
   VUnit
+}
+
+///|
+/// 数值归一：与解释轨 `@studio_lang.int_value` 同一条规则——无小数部分
+/// 的数值落成 VInt。字面量求值、取数内建、初始值共用。
+pub fn int_value(n : Double) -> Value {
+  if n == n.floor() && n.abs() < 1.0e15 {
+    VInt(n.to_int())
+  } else {
+    VNum(n)
+  }
 }
 
 ///|
@@ -98,7 +113,22 @@ pub(all) enum Value {
 pub fn value_to_text(value : Value) -> String {
   match value {
     VNum(n) => @studio_lang.number_to_text(n)
+    VInt(n) => n.to_string()
     VStr(text) => text
+    VArr(items) => {
+      let buf = StringBuilder()
+      buf.write_string("[")
+      let mut first = true
+      for item in items {
+        if !first {
+          buf.write_string(", ")
+        }
+        buf.write_string(value_to_text(item))
+        first = false
+      }
+      buf.write_string("]")
+      buf.to_string()
+    }
     VBool(true) => "true"
     VBool(false) => "false"
     VUnit => ""
@@ -138,7 +168,22 @@ pub(all) struct Runtime {
   // 闸门重放要还原随机序列：不还原的话「确认一次」会把整段子程序里的
   // `随机数` 再抽一遍，同一个副作用算出两个结果。
   mut base_rng : Int
+  // 用户自定义函数（切片 F）：生成代码/内置 lowering 注册，帧在
+  // call_user_function 里整帧隔离。
+  mut user_functions : Map[String, UserFunction]
+  mut call_depth : Int
+  // 广播总线（切片 G）：`广播(文案)` 入队，宿主事件收尾时排空
+  mut broadcasts : Array[String]
 }
+
+///|
+/// 用户函数闭包：运行时 + 已求值实参 → 返回值。Return 经 LoopReturn
+/// 控制信号传回，边界处捕获。
+pub type UserFunction = (Runtime, Array[Value]) -> Value raise ExecError
+
+///|
+/// 用户函数调用深度上限（与解释轨 MAX_CALL_DEPTH 同值）。
+pub const MAX_USER_CALL_DEPTH : Int = 16
 
 ///|
 /// 按项目播种运行时（初值文本像数字按数字，否则按文本；与解释轨
@@ -153,7 +198,7 @@ pub fn new_runtime(
   for pair in variables {
     declared.push(pair.0)
     match @studio_lang.text_to_number(pair.1) {
-      Some(n) => vars[pair.0] = VNum(n)
+      Some(n) => vars[pair.0] = int_value(n)
       None => vars[pair.0] = VStr(pair.1)
     }
   }
@@ -170,6 +215,9 @@ pub fn new_runtime(
     steps: 0,
     max_steps: MAX_STEPS,
     rng: seed_rng(RANDOM_SEED),
+    user_functions: Map([], capacity=2),
+    call_depth: 0,
+    broadcasts: [],
     gate_answers: [],
     gate_cursor: 0,
     declared,
@@ -250,6 +298,14 @@ fn snapshot(rt : Runtime) -> Unit {
   let vars : Map[String, Value] = Map([], capacity=8)
   for key in rt.vars.keys() {
     match rt.vars.get(key) {
+      // 深拷贝列表：闸门回滚要还原元素修改，不能共享可变数组
+      Some(VArr(items)) => {
+        let copy : Array[Value] = []
+        for item in items {
+          copy.push(copy_value(item))
+        }
+        vars[key] = VArr(copy)
+      }
       Some(value) => vars[key] = value
       None => ()
     }
@@ -347,6 +403,9 @@ fn attempt(rt : Runtime) -> Unit {
       } catch {
         GateHalt => rt.status = WaitingGate
         LoopBreak => rt.status = Completed
+        // Return 泄漏到顶层：语义校验拒绝它在函数体外出现在合法程序里；
+        // 防御性处理为完成（返回值丢弃）。
+        LoopReturn(_) => rt.status = Completed
         RuntimeError(error) => {
           rt.status = Failed
           rt.error = Some(error)
@@ -364,7 +423,10 @@ fn drive(rt : Runtime, handler : Handler) -> Unit raise ExecError {
 ///|
 /// 按程序初值播种运行时（初值文本像数字按数字，否则按文本；
 /// 与解释轨 initial_values/initial_texts/initial_rows 同一规则）。
-pub fn runtime_for_program(program : @ir.StudioProgram) -> Runtime {
+pub fn runtime_for_program(
+  program : @ir.StudioProgram,
+  lower? : ((@ir.FuncDef) -> UserFunction)? = None,
+) -> Runtime {
   let texts : Map[String, String] = Map([], capacity=8)
   for control in program.controls {
     texts[control.name] = control.text
@@ -381,7 +443,18 @@ pub fn runtime_for_program(program : @ir.StudioProgram) -> Runtime {
   for variable in program.variables {
     variables.push((variable.name, variable.init))
   }
-  new_runtime(texts, rows, variables)
+  let runtime = new_runtime(texts, rows, variables)
+  // 注册用户函数（切片 F）：lower 钩子由 IDE 内编译轨传入（lower.mbt 的
+  // 闭包）；导出 bundle 的 kernel 副本没有 lower——生成代码经 runner 的
+  // studio_dispatch_function 自行注册。
+  match lower {
+    Some(lower_function) =>
+      for func in program.functions {
+        runtime.register_user_function(func.name, lower_function(func))
+      }
+    None => ()
+  }
+  runtime
 }
 
 ///|
@@ -530,6 +603,7 @@ pub fn Runtime::count_loop(
 ) -> Unit raise ExecError {
   let count = match times {
     VNum(n) => n.to_int()
+    VInt(n) => n
     _ =>
       raise ExecError::RuntimeError(ErrorDetails::{
         kind: BadLoopCount,
@@ -538,12 +612,12 @@ pub fn Runtime::count_loop(
         b: "",
       })
   }
-  let mut index = 1.0
-  while index <= count.to_double() {
+  let mut index = 1
+  while index <= count {
     if loop_var != "" {
-      self.set(loop_var, VNum(index))
+      self.set(loop_var, VInt(index))
     }
-    self.record_iteration(index.to_int(), line)
+    self.record_iteration(index, line)
     let mut stop = false
     drive(self, body) catch {
       LoopBreak => stop = true
@@ -552,7 +626,7 @@ pub fn Runtime::count_loop(
     if stop {
       return
     }
-    index = index + 1.0
+    index = index + 1
   }
 }
 
@@ -592,6 +666,228 @@ pub fn Runtime::break_loop(self : Runtime) -> Unit raise ExecError {
 
 ///|
 /// 逻辑取反（非逻辑操作数 → TypeMismatch，同解释轨）。
+///|
+/// 值深拷贝（闸门快照用）：只有列表是可变的，其余按值共享。
+fn copy_value(value : Value) -> Value {
+  match value {
+    VArr(items) => {
+      let copy : Array[Value] = []
+      for item in items {
+        copy.push(copy_value(item))
+      }
+      VArr(copy)
+    }
+    other => other
+  }
+}
+
+///|
+/// 下标取值：1 起（与解释轨 index_value / 取行 row_at 同口径）。
+pub fn index_values(
+  base : Value,
+  index : Value,
+  line : Int,
+) -> Value raise ExecError {
+  let items = match base {
+    VArr(items) => items
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: "index",
+        b: "list",
+      })
+  }
+  let position = match index {
+    VInt(n) => n
+    VNum(n) => n.to_int()
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: "index",
+        b: "number",
+      })
+  }
+  if position < 1 || position > items.length() {
+    raise ExecError::RuntimeError(ErrorDetails::{
+      kind: TypeMismatch,
+      line,
+      a: "index",
+      b: "1..\{items.length()}",
+    })
+  }
+  items[position - 1]
+}
+
+///|
+/// 元素赋值：变量须持有列表；1 起、越界报错（解释轨 set_index_value 同语义）。
+pub fn set_index_values(
+  base : Value,
+  index : Value,
+  value : Value,
+  line : Int,
+) -> Unit raise ExecError {
+  let items = match base {
+    VArr(items) => items
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: "index",
+        b: "list",
+      })
+  }
+  let position = match index {
+    VInt(n) => n
+    VNum(n) => n.to_int()
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: "index",
+        b: "number",
+      })
+  }
+  if position < 1 || position > items.length() {
+    raise ExecError::RuntimeError(ErrorDetails::{
+      kind: TypeMismatch,
+      line,
+      a: "index",
+      b: "1..\{items.length()}",
+    })
+  }
+  items[position - 1] = value
+}
+
+///|
+/// 列表长度（函数内建）。
+pub fn list_length(_rt : Runtime, value : Value, line : Int) -> Value raise ExecError {
+  match value {
+    VArr(items) => VInt(items.length())
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: "list_length",
+        b: "list",
+      })
+  }
+}
+
+///|
+/// 加入列表（命令内建）：第一个参数是变量名，列表按引用修改。
+/// 审计与 set_text 同型：成功修改后记一条 OpCommand。
+pub fn Runtime::append_list(
+  self : Runtime,
+  name : String,
+  value : Value,
+  op_name : String,
+  line : Int,
+  detail : String,
+) -> Unit raise ExecError {
+  ignore(op_name)
+  let items = match self.vars.get(name) {
+    Some(VArr(items)) => items
+    Some(_) =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: name,
+        b: "list",
+      })
+    None =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: NotDeclared,
+        line,
+        a: name,
+        b: "use declare first",
+      })
+  }
+  items.push(value)
+  self.record(line, OpCommand, detail)
+}
+
+///|
+/// 注册用户函数（生成代码在装配期调用；同名覆盖无害——同一程序只会
+/// 注册一次）。
+pub fn Runtime::register_user_function(
+  self : Runtime,
+  name : String,
+  function : UserFunction,
+) -> Unit {
+  self.user_functions[name] = function
+}
+
+///|
+/// 是否注册了该名字的用户函数（调用分派的先内建、后自定义次序用）。
+pub fn Runtime::has_user_function(self : Runtime, name : String) -> Bool {
+  self.user_functions.contains(name)
+}
+
+
+///|
+/// 调用用户函数：整帧隔离（vars/declared 快照恢复），参数按位绑定；
+/// 深度上限与解释轨一致；Return 的 LoopReturn 控制信号在此边界捕获。
+pub fn Runtime::call_user_function(
+  self : Runtime,
+  name : String,
+  arg_values : Array[Value],
+  line : Int,
+) -> Value raise ExecError {
+  let function = match self.user_functions.get(name) {
+    Some(function) => function
+    None => {
+      ignore(unknown_builtin(name, line))
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: UnknownBuiltin,
+        line,
+        a: name,
+        b: "function",
+      })
+    }
+  }
+  if self.call_depth >= MAX_USER_CALL_DEPTH {
+    raise ExecError::RuntimeError(ErrorDetails::{
+      kind: StepBudget,
+      line,
+      a: "call depth",
+      b: "\{MAX_USER_CALL_DEPTH}",
+    })
+  }
+  let saved_vars : Map[String, Value] = Map([], capacity=16)
+  for key in self.vars.keys() {
+    match self.vars.get(key) {
+      Some(value) => saved_vars[key] = value
+      None => ()
+    }
+  }
+  let saved_declared : Array[String] = []
+  for declared in self.declared {
+    saved_declared.push(declared)
+  }
+  // 参数绑定由注册的闭包完成（只有它持有 IR 参数名）；帧隔离在这里。
+  self.call_depth = self.call_depth + 1
+  let result = function(self, arg_values)
+  self.call_depth = self.call_depth - 1
+  self.vars = saved_vars
+  self.declared = saved_declared
+  result
+}
+
+///|
+/// 广播（命令内建）：文案入总线队列，宿主事件收尾时排空到
+/// on_broadcast 处理器（与解释轨同口径）。
+pub fn Runtime::broadcast(
+  self : Runtime,
+  value : Value,
+  line : Int,
+) -> Unit raise ExecError {
+  let text = as_text(value, "broadcast", line)
+  self.broadcasts.push(text)
+}
+
+///|
 pub fn bool_of(
   value : Value,
   role : String,
@@ -614,7 +910,10 @@ pub fn bool_of(
 pub fn add_values(left : Value, right : Value, line : Int) -> Value {
   ignore(line)
   match (left, right) {
+    (VInt(a), VInt(b)) => VInt(a + b)
     (VNum(a), VNum(b)) => VNum(a + b)
+    (VInt(a), VNum(b)) => VNum(a.to_double() + b)
+    (VNum(a), VInt(b)) => VNum(a + b.to_double())
     _ => VStr(value_to_text(left) + value_to_text(right))
   }
 }
@@ -626,7 +925,10 @@ pub fn sub_values(
   line : Int,
 ) -> Value raise ExecError {
   match (left, right) {
+    (VInt(a), VInt(b)) => VInt(a - b)
     (VNum(a), VNum(b)) => VNum(a - b)
+    (VInt(a), VNum(b)) => VNum(a.to_double() - b)
+    (VNum(a), VInt(b)) => VNum(a - b.to_double())
     _ =>
       raise ExecError::RuntimeError(ErrorDetails::{
         kind: TypeMismatch,
@@ -644,7 +946,10 @@ pub fn mul_values(
   line : Int,
 ) -> Value raise ExecError {
   match (left, right) {
+    (VInt(a), VInt(b)) => VInt(a * b)
     (VNum(a), VNum(b)) => VNum(a * b)
+    (VInt(a), VNum(b)) => VNum(a.to_double() * b)
+    (VNum(a), VInt(b)) => VNum(a * b.to_double())
     _ =>
       raise ExecError::RuntimeError(ErrorDetails::{
         kind: TypeMismatch,
@@ -662,6 +967,18 @@ pub fn div_values(
   line : Int,
 ) -> Value raise ExecError {
   match (left, right) {
+    // 整数 ÷ 整数 = 整数（向零截断）——与解释轨同语义
+    (VInt(a), VInt(b)) =>
+      if b == 0 {
+        raise ExecError::RuntimeError(ErrorDetails::{
+          kind: DivideByZero,
+          line,
+          a: "",
+          b: "",
+        })
+      } else {
+        VInt(a / b)
+      }
     (VNum(a), VNum(b)) =>
       if b == 0.0 {
         raise ExecError::RuntimeError(ErrorDetails::{
@@ -672,6 +989,28 @@ pub fn div_values(
         })
       } else {
         VNum(a / b)
+      }
+    (VInt(a), VNum(b)) =>
+      if b == 0.0 {
+        raise ExecError::RuntimeError(ErrorDetails::{
+          kind: DivideByZero,
+          line,
+          a: "",
+          b: "",
+        })
+      } else {
+        VNum(a.to_double() / b)
+      }
+    (VNum(a), VInt(b)) =>
+      if b == 0 {
+        raise ExecError::RuntimeError(ErrorDetails::{
+          kind: DivideByZero,
+          line,
+          a: "",
+          b: "",
+        })
+      } else {
+        VNum(a / b.to_double())
       }
     _ =>
       raise ExecError::RuntimeError(ErrorDetails::{
@@ -692,6 +1031,9 @@ pub fn eq_values(
 ) -> Value raise ExecError {
   match (left, right) {
     (VNum(a), VNum(b)) => VBool(a == b)
+    (VInt(a), VInt(b)) => VBool(a == b)
+    (VInt(a), VNum(b)) => VBool(a.to_double() == b)
+    (VNum(a), VInt(b)) => VBool(a == b.to_double())
     (VStr(a), VStr(b)) => VBool(a == b)
     (VBool(a), VBool(b)) => VBool(a == b)
     _ =>
@@ -715,6 +1057,16 @@ pub fn compare_values(
   let is_gt = op == ">"
   let is_le = op == "<="
   let flag = match (left, right) {
+    (VInt(a), VInt(b)) =>
+      if is_lt {
+        a < b
+      } else if is_gt {
+        a > b
+      } else if is_le {
+        a <= b
+      } else {
+        a >= b
+      }
     (VNum(a), VNum(b)) =>
       if is_lt {
         a < b
@@ -724,6 +1076,26 @@ pub fn compare_values(
         a <= b
       } else {
         a >= b
+      }
+    (VInt(a), VNum(b)) =>
+      if is_lt {
+        a.to_double() < b
+      } else if is_gt {
+        a.to_double() > b
+      } else if is_le {
+        a.to_double() <= b
+      } else {
+        a.to_double() >= b
+      }
+    (VNum(a), VInt(b)) =>
+      if is_lt {
+        a < b.to_double()
+      } else if is_gt {
+        a > b.to_double()
+      } else if is_le {
+        a <= b.to_double()
+      } else {
+        a >= b.to_double()
       }
     (VStr(a), VStr(b)) =>
       if is_lt {
@@ -761,7 +1133,7 @@ pub fn get_number(
 ) -> Value raise ExecError {
   let text = rt.texts.get(control).unwrap_or("")
   match @studio_lang.text_to_number(text) {
-    Some(n) => VNum(n)
+    Some(n) => int_value(n)
     None =>
       raise ExecError::RuntimeError(ErrorDetails::{
         kind: TypeMismatch,
@@ -819,6 +1191,7 @@ pub fn contains(
 pub fn random(rt : Runtime, max : Value, line : Int) -> Value raise ExecError {
   let bound = match max {
     VNum(n) => n
+    VInt(n) => n.to_double()
     _ =>
       raise ExecError::RuntimeError(ErrorDetails::{
         kind: TypeMismatch,
@@ -832,17 +1205,17 @@ pub fn random(rt : Runtime, max : Value, line : Int) -> Value raise ExecError {
   rt.rng = rt.rng ^ ((rt.rng << 5) & 2147483647)
   let span = bound.to_int()
   if span <= 1 {
-    VNum(1.0)
+    VInt(1)
   } else {
-    VNum((rt.rng % span).to_double() + 1.0)
+    VInt(rt.rng % span + 1)
   }
 }
 
 ///|
 pub fn row_count(rt : Runtime, control : String) -> Value {
   match rt.rows.get(control) {
-    Some(items) => VNum(items.length().to_double())
-    None => VNum(0.0)
+    Some(items) => VInt(items.length())
+    None => VInt(0)
   }
 }
 
@@ -856,6 +1229,7 @@ pub fn row_at(
 ) -> Value raise ExecError {
   let position = match index {
     VNum(n) => n.to_int()
+    VInt(n) => n
     _ =>
       raise ExecError::RuntimeError(ErrorDetails::{
         kind: TypeMismatch,
@@ -1013,6 +1387,7 @@ pub fn not_value(value : Value, line : Int) -> Value raise ExecError {
 pub fn neg_value(value : Value, line : Int) -> Value raise ExecError {
   match value {
     VNum(n) => VNum(-n)
+    VInt(n) => VInt(-n)
     _ =>
       raise ExecError::RuntimeError(ErrorDetails::{
         kind: TypeMismatch,

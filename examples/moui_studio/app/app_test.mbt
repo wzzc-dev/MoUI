@@ -70,10 +70,14 @@ test "add and delete control keeps handlers consistent" {
   let renamed = apply(model, SetControlName("标签", "标题"))
   assert_true(@ir.find_control(renamed.program, "标题") is Some(_))
   assert_eq(renamed.selected_control, "标题")
-  let deleted = apply(renamed, DeleteControl("标题"))
+  // 删除必经确认（confirm.mbt 纪律）：RequestConfirm 已入栈，确认续行
+  let deleted = apply(apply(renamed, DeleteControl("标题")), ConfirmAccepted)
   assert_eq(deleted.program.controls.length(), 2)
   // Removing a different control must not clear the current selection.
-  let keep_selection = apply(@app.initial_model(), DeleteControl("显示"))
+  let keep_selection = apply(
+    apply(@app.initial_model(), DeleteControl("显示")),
+    ConfirmAccepted,
+  )
   assert_eq(keep_selection.selected_control, "按钮")
   // Reserved DSL words cannot become control identifiers.
   let reserved = apply(@app.initial_model(), SetControlName("按钮", "if"))
@@ -970,11 +974,11 @@ test "delete control clears stale draft only for its own handler" {
   let model = @app.initial_model()
   // 选中子程序是 按钮@on_click：删除按钮 → 选中清空、草稿同步清空
   assert_true(model.code_draft != "")
-  let deleted = apply(model, DeleteControl("按钮"))
+  let deleted = apply(apply(model, DeleteControl("按钮")), ConfirmAccepted)
   assert_eq(deleted.selected_handler, "")
   assert_eq(deleted.code_draft, "")
   // 删除别的控件不动草稿（未提交的编辑不丢失）
-  let kept = apply(model, DeleteControl("显示"))
+  let kept = apply(apply(model, DeleteControl("显示")), ConfirmAccepted)
   assert_true(kept.code_draft != "")
 }
 
@@ -1064,7 +1068,7 @@ test "undo restores selection and code draft" {
   let model = @app.initial_model()
   let draft = model.code_draft
   // 删除「按钮」：选中子程序被清、草稿清空
-  let deleted = apply(model, DeleteControl("按钮"))
+  let deleted = apply(apply(model, DeleteControl("按钮")), ConfirmAccepted)
   assert_eq(deleted.selected_handler, "")
   assert_eq(deleted.code_draft, "")
   // 撤销：子程序与草稿一起回来
@@ -1235,8 +1239,8 @@ test "help cheatsheet is generated from the keyword catalog" {
   assert_true(helped.mode is ModeHelp)
   let view = @app.view(helped)
   ignore(view)
-  // 内建目录条目数（14 个内建，含 2 个闸门）
-  assert_eq(@studio_lang.builtin_catalog().length(), 14)
+  // 内建目录条目数（17 个内建，含 2 个闸门；广播为切片 G 新增）
+  assert_eq(@studio_lang.builtin_catalog().length(), 17)
 }
 
 ///|

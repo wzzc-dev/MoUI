@@ -127,8 +127,7 @@ test "string literals are escaped for MoonBit source" {
     window: @ir.WindowSpec::{
       title: "引号\"与\\反斜杠",
       width: 640,
-      height: 480,
-    },
+      height: 480, timer_interval: 0 },
   }
   let source = @export.moonbit_preview(program)
   assert_true(source.contains("引号"))

@@ -28,6 +28,7 @@ fn composer_run(model : Model) -> (Model, @moui.Effect[Msg]) {
           ..model.program,
           controls: [],
           handlers: [],
+          functions: [],
         },
       }
       update_pure(cleared, GenerateProposal)
@@ -261,6 +262,12 @@ pub fn structural_error_text(
     @ir.TooManyStatements(_) => text(t, "err.too_many_statements")
     @ir.LoopTooDeep(_) => text(t, "err.loop_too_deep")
     @ir.ExprTooDeep(_) => text(t, "err.expr_too_deep")
+    @ir.DuplicateFunctionName(name) =>
+      text_with(t, "err.duplicate_function", [("name", name)])
+    @ir.InvalidFunctionName(name) =>
+      text_with(t, "err.invalid_function_name", [("name", name)])
+    @ir.DuplicateParam(func, param) =>
+      text_with(t, "err.duplicate_param", [("a", func), ("b", param)])
   }
 }
 

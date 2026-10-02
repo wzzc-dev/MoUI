@@ -48,8 +48,8 @@
     },
     {
       "path": "examples/moui_studio/services/export/kernel_studio_lang_rt.mbt",
-      "maxLines": 1535,
-      "reason": "Generated kernel mirror of domain/studio_lang runtime sources. Raised 1511->1540 for `next_seed` (the xorshift seed advance shared by both tracks): the interpreter's random sequence must continue across events, otherwise repeated clicks on one button return identical 'random' results and read as 'the click did nothing'."
+      "maxLines": 2100,
+      "reason": "Generated kernel mirror of domain/studio_lang runtime sources. Raised 1535->2100 for the capability-upgrade slice: integer semantics (VInt/int_value + mixed-precision arithmetic), array semantics (VArr/index/set_index_value), user-defined functions (call frames with full-var snapshot, Return via return_slot, MAX_CALL_DEPTH), and the broadcast bus — each mirrored verbatim into the export bundle so the compiled track stays byte-identical in audit text with the interpret track (services/diff matrix)."
     },
     {
       "path": "moui_sun/text/text_system_test.mbt",

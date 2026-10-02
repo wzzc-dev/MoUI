@@ -604,6 +604,24 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
       hint: "",
     },
     StudioCommand::{
+      id: "studio.ctx.runtime",
+      label: text(t, "app.command.ctx.runtime"),
+      group: group_pane,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.code.complete",
+      label: text(t, "app.command.code.complete"),
+      group: group_pane,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.code.jump",
+      label: text(t, "app.command.code.jump"),
+      group: group_pane,
+      hint: "",
+    },
+    StudioCommand::{
       id: "studio.bottom.toggle",
       label: text(t, "app.command.bottom.toggle"),
       group: group_pane,
@@ -618,6 +636,12 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
     StudioCommand::{
       id: "studio.bottom.console",
       label: text(t, "app.command.bottom.console"),
+      group: group_pane,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.bottom.problems",
+      label: text(t, "app.command.bottom.problems"),
       group: group_pane,
       hint: "",
     },

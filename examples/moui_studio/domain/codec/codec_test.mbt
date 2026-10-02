@@ -64,15 +64,16 @@ fn sample_program() -> @ir.StudioProgram {
             ],
             [@ir.Call("message_box", [@ir.StrLit("你好，")])],
           ),
-          @ir.CountLoop(@ir.NumLit(3.0), Some("i"), [
+          @ir.CountLoop(@ir.IntLit(3), Some("i"), [
             @ir.Assign(
               "次数",
-              @ir.Binary(@ir.Add, @ir.Var("次数"), @ir.NumLit(1.0)),
+              @ir.Binary(@ir.Add, @ir.Var("次数"), @ir.IntLit(1)),
             ),
           ]),
         ],
       },
     ],
+    functions: [],
   }
 }
 
@@ -134,6 +135,7 @@ test "decode reports structural and language errors" {
         body: [],
       },
     ],
+    functions: [],
   }
   match @codec.decode_program(@codec.encode_program(broken)) {
     Err(errors) =>
@@ -154,6 +156,7 @@ test "decode reports structural and language errors" {
         body: [@ir.Break],
       },
     ],
+    functions: [],
   }
   match @codec.decode_program(@codec.encode_program(stray_break)) {
     Err(errors) => assert_true(errors.any(e => e is @codec.LanguageIssue(_, _)))

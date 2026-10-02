@@ -90,6 +90,7 @@ pub(all) struct GeneratedSource {
 pub fn generate_handler_source(
   handler : @ir.Handler,
   index : Int,
+  functions? : Array[@ir.FuncDef] = [],
 ) -> GeneratedHandler {
   let ctx : GenCtx = {
     buf: StringBuilder(),
@@ -98,6 +99,8 @@ pub fn generate_handler_source(
     path: [],
     line: 1,
     audit_line: 1,
+    audit_line_override: None,
+    functions,
   }
   write_line(
     ctx,
@@ -138,7 +141,7 @@ pub fn generate_source(program : @ir.StudioProgram) -> GeneratedSource {
   let mut index = 0
   for handler in program.handlers {
     index = index + 1
-    let generated = generate_handler_source(handler, index)
+    let generated = generate_handler_source(handler, index, functions=program.functions)
     let offset = count_newlines(buf.to_string())
     buf.write_string(generated.source)
     buf.write_string("\n")
@@ -160,6 +163,63 @@ pub fn generate_source(program : @ir.StudioProgram) -> GeneratedSource {
   if program.handlers.length() == 0 {
     buf.write_string("/// （本程序还没有事件子程序）\n")
   }
+  // 用户函数（切片 F）：体审计行号统一 0（两轨同口径）；分派表与
+  // handler 同构，生成期烘焙、无运行期反射。分派表无条件发射
+  // （runner 模板按名字注册，无函数时恒 None）。
+  if program.functions.length() > 0 {
+    buf.write_string("\n///|\n")
+    buf.write_string("/// 用户自定义函数：参数按位绑定；Return 经 LoopReturn 传回。\n")
+    let mut fn_index = 0
+    for func in program.functions {
+      fn_index = fn_index + 1
+      let fn_name = "studio_fn_\{fn_index}"
+      buf.write_string("pub fn \{fn_name}(rt : @compiled_runtime.Runtime, args : Array[@compiled_runtime.Value]) -> @compiled_runtime.Value raise @compiled_runtime.ExecError {\n")
+      buf.write_string("  ignore(args)\n")
+      let mut param_index = 0
+      for param in func.params {
+        param_index = param_index + 1
+        buf.write_string("  rt.vars[\{mbt_quote(param)}] = args[\{param_index - 1}]\n")
+        buf.write_string("  if !rt.declared.contains(\{mbt_quote(param)}) {\n")
+        buf.write_string("    rt.declared.push(\{mbt_quote(param)})\n")
+        buf.write_string("  }\n")
+      }
+      buf.write_string("  try {\n")
+      // 体：行号 0——函数体没有用户源码行号
+      let ctx : GenCtx = {
+        buf,
+        lines: [],
+        depth: 1,
+        path: [],
+        line: 1,
+        audit_line: 1,
+        audit_line_override: Some(0),
+        functions: program.functions,
+      }
+      write_body(ctx, func.body, true)
+      buf.write_string("    @compiled_runtime.VUnit\n")
+      buf.write_string("  } catch {\n")
+      buf.write_string("    @compiled_runtime.LoopReturn(value) => value\n")
+      buf.write_string("    error => raise error\n")
+      buf.write_string("  }\n")
+      buf.write_string("}\n")
+      buf.write_string("\n")
+    }
+  }
+  buf.write_string("\n///|\n")
+  buf.write_string("/// 用户函数分派表：名称 → 注册闭包（无函数时恒 None）。\n")
+  buf.write_string("pub fn studio_dispatch_function(name : String) -> @compiled_runtime.UserFunction? {\n")
+  if program.functions.length() == 0 {
+    buf.write_string("  ignore(name)\n")
+  }
+  let mut fn_index2 = 0
+  for func in program.functions {
+    fn_index2 = fn_index2 + 1
+    buf.write_string("  if name == \{mbt_quote(func.name)} {\n")
+    buf.write_string("    return Some(studio_fn_\{fn_index2})\n")
+    buf.write_string("  }\n")
+  }
+  buf.write_string("  None\n")
+  buf.write_string("}\n")
   write_dispatch(buf, program, handlers)
   { source: buf.to_string(), handlers, }
 }
@@ -208,6 +268,39 @@ priv struct GenCtx {
   mut path : Array[Int]
   mut line : Int
   mut audit_line : Int
+  // 用户函数体：审计行号统一 0（与解释轨 call_user_function 的
+  // compile_body(traced_from_stmts) 同口径；函数体没有用户源码行号）
+  audit_line_override : Int?
+  // 程序的用户函数表：调用解析「先内建、后自定义」用
+  functions : Array[@ir.FuncDef]
+}
+
+///|
+/// 是否为用户自定义函数（生成期解析；与解释轨 find_builtin→find_function
+/// 的次序一致）。
+fn is_user_function(ctx : GenCtx, name : String) -> Bool {
+  let mut found = false
+  for func in ctx.functions {
+    if func.name == name {
+      found = true
+    }
+  }
+  found
+}
+
+///|
+/// 用户函数调用实参的生成文本序列。
+fn write_args(ctx : GenCtx, args : Array[@ir.Expr]) -> String {
+  let buf = StringBuilder()
+  let mut first = true
+  for arg in args {
+    if !first {
+      buf.write_string(", ")
+    }
+    buf.write_string(write_value(ctx, arg))
+    first = false
+  }
+  buf.to_string()
 }
 
 ///|
@@ -300,7 +393,11 @@ fn record_stmt_line(ctx : GenCtx) -> Unit {
   for part in ctx.path {
     path.push(part)
   }
-  ctx.lines.push(StmtLine::{ path, line: ctx.line, audit_line: ctx.audit_line, })
+  let audit_line = match ctx.audit_line_override {
+    Some(fixed) => fixed
+    None => ctx.audit_line
+  }
+  ctx.lines.push(StmtLine::{ path, line: ctx.line, audit_line: audit_line, })
 }
 
 ///|
@@ -337,6 +434,23 @@ fn write_stmt(ctx : GenCtx, stmt : @ir.Stmt) -> Unit {
       write_line(
         ctx,
         "rt.audit_assign(\{mbt_quote(name)}, \{write_value(ctx, expr)}, \{line}, \{mbt_quote("\{name} = \{@studio_lang.canonical_expr(expr)}")})",
+      )
+    }
+    @ir.SetIndex(name, index, value) => {
+      record_stmt_line(ctx)
+      let line = ctx.audit_line
+      write_line(ctx, "rt.require_declared(\{mbt_quote(name)}, \{line})")
+      write_line(
+        ctx,
+        "let existing_\{line} = rt.get(\{mbt_quote(name)}, \{line})",
+      )
+      write_line(
+        ctx,
+        "@compiled_runtime.set_index_values(existing_\{line}, \{write_value(ctx, index)}, \{write_value(ctx, value)}, \{line})",
+      )
+      write_line(
+        ctx,
+        "rt.record(\{line}, @compiled_runtime.OpCommand, \{mbt_quote("\{name}[\{@studio_lang.canonical_expr(index)}] = \{@studio_lang.canonical_expr(value)}")})",
       )
     }
     @ir.If(cond, then_body, else_ifs, else_body) => {
@@ -411,6 +525,21 @@ fn write_stmt(ctx : GenCtx, stmt : @ir.Stmt) -> Unit {
       record_stmt_line(ctx)
       write_line(ctx, "rt.break_loop()")
     }
+    @ir.Return(expr) => {
+      record_stmt_line(ctx)
+      match expr {
+        Some(value) =>
+          write_line(
+            ctx,
+            "raise @compiled_runtime.LoopReturn(\{write_value(ctx, value)})",
+          )
+        None =>
+          write_line(
+            ctx,
+            "raise @compiled_runtime.LoopReturn(@compiled_runtime.VUnit)",
+          )
+      }
+    }
     @ir.Call(name, args) => {
       record_stmt_line(ctx)
       write_stmt_call(ctx, name, args)
@@ -451,11 +580,23 @@ fn write_stmt_call(ctx : GenCtx, name : String, args : Array[@ir.Expr]) -> Unit 
         "rt.record(\{line}, @compiled_runtime.OpCommand, \{mbt_quote(@studio_lang.canonical_expr(@ir.Call(name, args)))})",
       )
     }
+    // 内建没有 → 用户自定义函数：语句位调用 + 记账（与解释轨同口径）
     None =>
-      write_line(
-        ctx,
-        "ignore(@compiled_runtime.unknown_builtin(\{mbt_quote(name)}, \{line}))",
-      )
+      if is_user_function(ctx, name) {
+        write_line(
+          ctx,
+          "rt.call_user_function(\{mbt_quote(name)}, [\{write_args(ctx, args)}], \{line})",
+        )
+        write_line(
+          ctx,
+          "rt.record(\{line}, @compiled_runtime.OpCommand, \{mbt_quote(@studio_lang.canonical_expr(@ir.Call(name, args)))})",
+        )
+      } else {
+        write_line(
+          ctx,
+          "ignore(@compiled_runtime.unknown_builtin(\{mbt_quote(name)}, \{line}))",
+        )
+      }
   }
 }
 
@@ -483,6 +624,23 @@ fn write_command_call(
         ctx,
         "rt.append_row(\{write_control_name(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line}, \{detail})",
       )
+    "broadcast" =>
+      write_line(
+        ctx,
+        "rt.broadcast(\{write_value(ctx, args[0])}, \{line})",
+      )
+    "append_list" => {
+      // 第一个参数是变量名（裸标识符直接取名字，同解释轨）
+      let list_name = match args[0] {
+        @ir.Var(list_name) => mbt_quote(list_name)
+        _ =>
+          "@compiled_runtime.as_text(\{write_value(ctx, args[0])}, \"append_list\", \{line})"
+      }
+      write_line(
+        ctx,
+        "rt.append_list(\{list_name}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line}, \{detail})",
+      )
+    }
     _ =>
       write_line(
         ctx,
@@ -536,6 +694,7 @@ fn write_value(ctx : GenCtx, expr : @ir.Expr) -> String {
   let line = ctx.audit_line
   match expr {
     @ir.NumLit(n) => "@compiled_runtime.VNum(\{number_literal(n)})"
+    @ir.IntLit(n) => "@compiled_runtime.VInt(\{n})"
     @ir.StrLit(text) => "@compiled_runtime.VStr(\{mbt_quote(text)})"
     @ir.BoolLit(flag) =>
       "@compiled_runtime.VBool(\{if flag { "true" } else { "false" }})"
@@ -549,6 +708,22 @@ fn write_value(ctx : GenCtx, expr : @ir.Expr) -> String {
       "@compiled_runtime.not_value(\{write_value(ctx, inner)}, \{line})"
     @ir.Neg(inner) =>
       "@compiled_runtime.neg_value(\{write_value(ctx, inner)}, \{line})"
+    @ir.ListLit(items) => {
+      let buf = StringBuilder()
+      buf.write_string("[")
+      let mut first = true
+      for item in items {
+        if !first {
+          buf.write_string(", ")
+        }
+        buf.write_string(write_value(ctx, item))
+        first = false
+      }
+      buf.write_string("]")
+      "@compiled_runtime.VArr(\{buf.to_string()})"
+    }
+    @ir.Index(base, index) =>
+      "@compiled_runtime.index_values(\{write_value(ctx, base)}, \{write_value(ctx, index)}, \{line})"
     @ir.Binary(op, left, right) => write_binary(ctx, op, left, right)
     @ir.Call(name, args) => write_function_call(ctx, name, args)
   }
@@ -624,8 +799,13 @@ fn write_function_call(
     "message_box" | "set_text" | "append_row" =>
       // 命令不能出现在表达式位（语义校验拒绝）；保留同款错误路径。
       "ignore(@compiled_runtime.unknown_builtin(\{mbt_quote(name)}, \{line})); @compiled_runtime.VUnit"
+    // 内建没有 → 用户自定义函数（表达式位；返回值直接参与运算）
     _ =>
-      "ignore(@compiled_runtime.unknown_builtin(\{mbt_quote(name)}, \{line})); @compiled_runtime.VUnit"
+      if is_user_function(ctx, name) {
+        "rt.call_user_function(\{mbt_quote(name)}, [\{write_args(ctx, args)}], \{line})"
+      } else {
+        "ignore(@compiled_runtime.unknown_builtin(\{mbt_quote(name)}, \{line})); @compiled_runtime.VUnit"
+      }
   }
 }
 

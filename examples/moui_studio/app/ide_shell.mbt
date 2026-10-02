@@ -578,6 +578,9 @@ fn group_create_menu(
     add(text(t, "control.check_box"), AddControl(@ir.CheckBox))
     add(text(t, "control.list_box"), AddControl(@ir.ListBox))
     add(text(t, "control.table"), AddControl(@ir.Table))
+    add(text(t, "control.dropdown"), AddControl(@ir.Dropdown))
+    add(text(t, "control.progress_bar"), AddControl(@ir.ProgressBar))
+    add(text(t, "control.image"), AddControl(@ir.Image))
   } else if group == tree_group_variables() {
     add(text(t, "app.tree.create.variable"), AddVariable)
   } else if group == tree_group_handlers() {
@@ -924,22 +927,29 @@ pub fn ide_bottom_bar(
 ) -> @moui.View[Msg] {
   let pending = pending_side_effects(model)
   let errors = audit_error_count(model)
+  let problems = problem_rows(model, t).length()
   let head_cells : Array[@moui.View[Msg]] = [
     tab_button(
       text(t, "app.bottom.audit"),
-      model.bottom_audit,
-      SetBottomTab(true),
+      model.bottom_tab is BtAudit,
+      SetBottomTab(BtAudit),
       pending,
     ),
     tab_button(
       text(t, "app.bottom.console"),
-      !model.bottom_audit,
-      SetBottomTab(false),
+      model.bottom_tab is BtConsole,
+      SetBottomTab(BtConsole),
       model.log_lines.length(),
+    ),
+    tab_button(
+      text(t, "app.bottom.problems"),
+      model.bottom_tab is BtProblems,
+      SetBottomTab(BtProblems),
+      problems,
     ),
     @views.spacer(min_length=6.0, weight=1.0),
   ]
-  if model.bottom_audit && pending > 0 {
+  if model.bottom_tab is BtAudit && pending > 0 {
     head_cells.push(
       action_chip(
         text(t, "app.audit.confirm_all"),
@@ -949,7 +959,7 @@ pub fn ide_bottom_bar(
       ),
     )
   }
-  if !model.bottom_audit {
+  if model.bottom_tab is BtConsole {
     head_cells.push(
       action_chip(text(t, "app.console.clear"), ClearConsole, Ghost, 22.0),
     )
@@ -1007,10 +1017,10 @@ pub fn ide_bottom_bar(
       padding=0.0,
     )
   }
-  let body = if model.bottom_audit {
-    audit_pane(model, t, width, model.bottom_height - 30.0)
-  } else {
-    console_pane(model, t, width, model.bottom_height - 30.0)
+  let body = match model.bottom_tab {
+    BtAudit => audit_pane(model, t, width, model.bottom_height - 30.0)
+    BtConsole => console_pane(model, t, width, model.bottom_height - 30.0)
+    BtProblems => problems_pane(model, t, width, model.bottom_height - 30.0)
   }
   @views.container(
     @views.column([hairline(), head, body], spacing=0.0),
@@ -1051,7 +1061,9 @@ fn tab_button(
     corner_radius=4.0,
     height=22.0,
     padding=0.0,
-  ).on_tap(on_click)
+  )
+  .accessibility_label(label + (if count > 0 { " (\{count})" } else { "" }))
+  .on_tap(on_click)
 }
 
 ///|

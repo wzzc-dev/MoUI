@@ -45,9 +45,17 @@ pub fn runner_source() -> String {
     #|    Ok(decoded) => (decoded, "")
     #|    Err(errors) => (@ir.empty_program(), "项目数据无效：\{errors.length()} 个错误")
     #|  }
+    #|  let machine = @compiled_runtime.runtime_for_program(program)
+    #|  // 注册用户函数（生成代码经 studio_dispatch_function 提供闭包）
+    #|  for func in program.functions {
+    #|    match studio_dispatch_function(func.name) {
+    #|      Some(function) => machine.register_user_function(func.name, function)
+    #|      None => ()
+    #|    }
+    #|  }
     #|  {
     #|    program,
-    #|    machine: @compiled_runtime.runtime_for_program(program),
+    #|    machine,
     #|    checks: Map([], capacity=4),
     #|    notice,
     #|    run_label: "",
@@ -265,6 +273,48 @@ pub fn runner_source() -> String {
     #|      }
     #|      @views.column(rows, spacing=0.0)
     #|    }
+    #|    // 切片 G 新控件（导出应用与 Studio 同语义）
+    #|    @ir.Dropdown => {
+    #|      let items = if control.items.length() > 0 {
+    #|        control.items
+    #|      } else {
+    #|        ["选项 A", "选项 B"]
+    #|      }
+    #|      let selected = model.machine.selections.get(control.name).unwrap_or(0)
+    #|      let index = selected.clamp(min=0, max=items.length() - 1)
+    #|      @views.button(
+    #|        "▼ \{items[index]}",
+    #|        on_click=Pick(
+    #|          control.name,
+    #|          (index + 1) % items.length(),
+    #|        ),
+    #|        variant=Tonal,
+    #|      )
+    #|    }
+    #|    @ir.ProgressBar => {
+    #|      let bound = match control.items {
+    #|        [name, ..] => name
+    #|        [] => ""
+    #|      }
+    #|      let percent = match model.machine.vars.get(bound) {
+    #|        Some(@compiled_runtime.VInt(n)) => n.to_double() / 100.0
+    #|        Some(@compiled_runtime.VNum(n)) => n / 100.0
+    #|        _ => 0.0
+    #|      }
+    #|      @views.progress(
+    #|        percent.clamp(min=0.0, max=1.0),
+    #|        width=control.width.to_double(),
+    #|      )
+    #|    }
+    #|    @ir.Image =>
+    #|      @views.image(
+    #|        match control.items {
+    #|          [path, ..] => path
+    #|          [] => ""
+    #|        },
+    #|        width=control.width.to_double(),
+    #|        height=control.height.to_double(),
+    #|      )
     #|  }
     #|}
     #|

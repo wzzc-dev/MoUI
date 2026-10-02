@@ -1,21 +1,24 @@
 ///|
-/// v4 IDE 代码工作区：行号 + 高亮 token + 行内联错误 + IR 行尺 + 脚注，
+/// v4 IDE 代码工作区：行号槽 + 真编辑面 + IR 行尺 + 脚注，
 /// 以及空舞台。
 ///
 /// 从 `workspace.mbt` 拆出（原文件 1162 行，逼近 1200 硬上限）。分工：
 /// `workspace.mbt` 管窗格外壳与宽度分配（窗格头、分隔条、可视化工作区），
 /// 本文件管**代码视图与空舞台**这两块内容渲染。
 ///
-/// IR 是唯一事实来源——代码高亮只影响颜色，不产生第二份结构。
+/// IR 是唯一事实来源——高亮与编辑都发生在 `model.code_draft`（IR 的
+/// 渲染投影）上，提交时经 `parse_handler_body` 写回 IR，不产生第二份结构。
+/// 编辑面是 `moui_richtext` 的受控富文本编辑器（光标/选区/撤销/剪贴板
+/// 全部框架侧），DSL 着色通过 `format=` 的 token run 注入。
 
 // ============================================================================
 // 代码工作区
 // ============================================================================
 
 ///|
-/// 代码工作区：行号 + 高亮 token 行 + 行内联错误 + IR 行尺 + 脚注。
-/// 只读渲染 + 下方纯文本编辑区：高亮是「读」的投影，编辑仍走 text_area
-/// （避免自绘文本光标——core 没有文本命中/光标 API）。
+/// 代码工作区：行号槽 + 受控编辑面 + IR 行尺 + 脚注。
+/// 三列共用一份滚动状态（`model.code_scroll`）：编辑面是滚动的事实来源，
+/// 行号槽与竖尺是跟随者，行号 ↔ 色块的对应才不会错位。
 pub fn code_workspace(
   model : Model,
   t : @i18n.Translator,
@@ -29,26 +32,55 @@ pub fn code_workspace(
     Some(handler) => handler.control_name
   }
   let head = pane_head(text(t, "app.pane.code"), handler_subtitle, width, [
-    pill(
-      if model.language is ZhHans {
-        "MoonBit"
-      } else {
-        "MoonBit"
-      },
-      ide_text_faint(),
-      66.0,
-    ),
+    pill("MoonBit", ide_text_faint(), 66.0),
   ])
-  let lines = code_lines(model)
   let spans = ir_line_spans(model)
-  let rows : Array[@moui.View[Msg]] = []
-  for line in lines {
-    rows.push(code_line_row(model, line, spans, width - 2.0))
-  }
-  // 高度预算：头 30 + 错误条 + 代码区 + 说明条 30 + 脚注
-  let code_height = (height - 180.0).max(100.0)
-  let ruler = ir_ruler(model, t, spans, IR_RAIL_WIDTH, code_height)
-  let error_bar = if model.code_error == "" {
+  // 高度预算：头 30 + 错误条 + 说明条 30 + 脚注 40；其余全部给编辑面。
+  let code_height = (height - 150.0).max(120.0)
+  let editor_width = (width - 2.0 - CODE_GUTTER_WIDTH - IR_RAIL_WIDTH).max(
+    80.0,
+  )
+  @views.container(
+    @views.column(
+      [
+        head,
+        code_error_bar(model, t, width),
+        // 行号槽 | 编辑面 | IR 竖尺 并排：三者同高，滚动同步由
+        // `EditorScrolled` 单向汇聚到 model 再各自回填 offset。
+        @views.row(
+          [
+            code_gutter(model, CODE_GUTTER_WIDTH, code_height),
+            code_editor_surface(model, t, editor_width, code_height),
+            ir_ruler(model, spans, code_height),
+          ],
+          spacing=0.0,
+          align=Start,
+        ).frame(width=width - 2.0, height=code_height),
+        completion_popup(model, width),
+        code_hint_bar(t, width),
+        code_foot(model, t, width),
+      ],
+      spacing=0.0,
+    ).frame(width~, height~),
+    background=ide_editor_background(),
+    width~,
+    height~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 行号槽宽度：4 位数行号 + 错误标记位（切片 B 启用）。
+const CODE_GUTTER_WIDTH : Double = 44.0
+
+///|
+/// 语法错误条：`code_error` 非空时单行提示（提交失败时由 commit_code 写入）。
+fn code_error_bar(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  if model.code_error == "" {
     @views.text("", width=1.0, height=1.0)
   } else {
     @views.container(
@@ -65,136 +97,322 @@ pub fn code_workspace(
       padding=0.0,
     )
   }
-  @views.container(
-    @views.column(
-      [
-        head,
-        error_bar,
-        // 代码区与 IR 竖条**并排**（设计稿：竖条贴右缘、色块对齐代码行），
-        // 不是上下堆叠。两者同高，行号→色块的对应关系才是空间上的。
+}
+
+///|
+/// 行号槽：跟随编辑面滚动（共享 `code_scroll`），当前行点亮。
+fn code_gutter(
+  model : Model,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let active_line = @code_editor.code_editor_caret_position(
+      model.code_draft,
+      model.code_caret,
+    )
+    .line
+  let diagnostic_lines = @code_editor.code_editor_diagnostic_lines(
+    model.code_draft,
+    model.code_diagnostics,
+  )
+  let rows : Array[@moui.View[Msg]] = []
+  for line in @code_editor.code_editor_source_lines(model.code_draft) {
+    let is_active = line.number == active_line
+    let has_diagnostic = diagnostic_lines.contains(line.number)
+    // 行号槽 = 8pt 标记位 + 行号：诊断行画红点并把行号染红——
+    // 「哪一行有问题」在滚动时也要一眼可辨。
+    let marker = @views.container(
+      @views.text("", width=1.0, height=1.0),
+      background=if has_diagnostic { ide_danger() } else { ide_editor_background() },
+      corner_radius=2.0,
+      width=5.0,
+      height=5.0,
+      padding=0.0,
+    )
+    rows.push(
+      @views.container(
         @views.row(
           [
-            @views.scroll_view(
-              @views.column(rows, spacing=0.0),
-              width=(width - 2.0 - IR_RAIL_WIDTH).max(80.0),
-              height=code_height,
-              shows_indicator=true,
+            @views.container(
+              @views.center(marker, width=8.0, height=CODE_LINE_HEIGHT),
+              width=8.0,
+              height=CODE_LINE_HEIGHT,
+              padding=0.0,
             ),
-            ruler,
+            @views.text(
+              "\{line.number}",
+              theme=studio_theme(),
+              role=Mono,
+              width=(width - 16.0).max(20.0),
+              height=CODE_LINE_HEIGHT,
+              align=TextEnd,
+            ).foreground(
+              if has_diagnostic {
+                ide_danger()
+              } else if is_active {
+                ide_text()
+              } else {
+                ide_text_faint()
+              },
+            ),
           ],
-          spacing=0.0,
-          align=Start,
-        ).frame(width=width - 2.0, height=code_height),
-        code_hint_bar(t, width),
-        code_foot(model, t, width),
-      ],
-      spacing=0.0,
-    ).frame(width~, height~),
-    background=ide_editor_background(),
+          spacing=2.0,
+          align=Center,
+        ).frame(width~, height=CODE_LINE_HEIGHT),
+        background=if is_active { ide_panel_alt() } else { ide_editor_background() },
+        width~,
+        height=CODE_LINE_HEIGHT,
+        padding=0.0,
+      ),
+    )
+  }
+  @views.scroll_view(
+    @views.column(rows, spacing=0.0),
+    offset=model.code_scroll,
     width~,
     height~,
-    padding=0.0,
+    on_scroll=Some(offset => EditorScrolled(offset.y)),
+    shows_indicator=false,
   )
 }
 
 ///|
-/// 单行代码：行号槽（32pt）+ token 序列。
-/// 命中 IR 高亮的行整行加暖色底——这是「IR → 代码」方向的可视提示。
-fn code_line_row(
+/// 代码行高：行号槽 / 编辑面块高 / IR 竖尺三方对齐的基准。
+const CODE_LINE_HEIGHT : Double = 20.0
+
+///|
+/// 编辑面：`moui_richtext` 受控富文本编辑器。
+/// DSL 着色走 `format=`（token run + source_range），换行自动缩进走
+/// `input_transform=`，滚动上报走 `on_scroll=`（行号槽与竖尺跟随）。
+fn code_editor_surface(
   model : Model,
-  line : CodeLine,
-  spans : Array[IrLineSpan],
+  t : @i18n.Translator,
   width : Double,
+  height : Double,
 ) -> @moui.View[Msg] {
-  let span = ir_span_for_line(spans, line.number)
-  let highlighted = span is Some(span) &&
-    same_path(span.path, model.ir_highlight)
-  // 悬停高亮：与点击高亮**取并集**，但用更轻的底色——点击是驻留选择，
-  // 悬停是瞬态预览，两者视觉上要能区分开（设计稿 irHl 也是加一层 tl 边）。
-  let hovered = match (span, model.hover_path) {
-    (Some(span), Some(path)) => same_path(span.path, path)
-    _ => false
-  }
-  let cells : Array[@moui.View[Msg]] = [
-    @views.text(
-      line.number.to_string(),
-      theme=studio_theme(),
-      role=Mono,
-      width=32.0,
-      height=20.0,
-      align=TextEnd,
-    ).foreground(
-      // 行号是「这一行和某条 IR 语句有关系」最直接的指示器：点击与悬停
-      // 都要点亮它，否则悬停整行只有底色变化、左缘的行号还是灰的，
-      // 看上去像没反应（实测就是漏了 `hovered` 这一支）。
-      if highlighted || hovered {
-        ide_ir_highlight()
-      } else {
-        ide_text_faint()
+  let font = @text.FontSpec::new(
+    families=@text.FontFamilyStack::monospace(),
+    size=13.0,
+  )
+  @moui_richtext.controlled_rich_text_editor(
+    value=model.code_draft,
+    on_input=source => EditCode(source),
+    placeholder=text(t, "app.code.cheatsheet"),
+    size=@geometry.Size::new(width~, height~),
+    format=source => code_document(model, source, font),
+    font~,
+    foreground=code_plain_color(),
+    placeholder_color=ide_text_faint(),
+    background=@graphics.Brush::solid(ide_editor_background()),
+    cursor_color=ide_accent(),
+    corner_radius=0.0,
+    on_selection_change=Some(
+      (caret, selection) => EditorCaretMoved(caret, selection),
+    ),
+    input_transform=Some(
+      (source, caret, _selection, inserted) => {
+        if inserted == "\n" {
+          code_newline_transform(model, source, caret)
+        } else {
+          None
+        }
       },
     ),
-  ]
-  if line.tokens.length() == 0 {
-    // 空行保留行高（否则行号与内容错位）
-    cells.push(@views.text("", width=(width - 44.0).max(20.0), height=20.0))
-  } else {
-    let token_views : Array[@moui.View[Msg]] = []
-    for token in line.tokens {
-      token_views.push(
-        @views.text(
-          token.text,
-          theme=studio_theme(),
-          role=Mono,
-          width=token_width(token),
-          height=20.0,
-          align=TextStart,
-        ).foreground(code_token_color(token.kind)),
-      )
-    }
-    cells.push(@views.row(token_views, spacing=0.0, align=Center))
-  }
-  // 行必须显式钉宽：`row` 只量到子节点之和，容器（ContainerBox）会把
-  // 「比容器窄」的子节点**居中**——表现是行号贴左、代码却飘在中间
-  // （实测行号 x=205、代码 x=460）。这是本仓最常复发的布局陷阱。
-  @views.container(
-    @views.padding_edges(
-      @views.row(cells, spacing=6.0, align=Center).frame(
-        width=(width - 16.0).max(20.0),
-      ),
-      left=8.0,
-      right=8.0,
-    ),
-    background=if highlighted {
-      ide_selection()
-    } else if hovered {
-      ide_panel_alt()
-    } else {
-      ide_editor_background()
-    },
-    height=20.0,
-    width~,
-    padding=0.0,
-  ).on_hover(active => {
-    HoverIrPath(if active { span.map(span => span.path) } else { None })
-  })
+    accepts_tab_input=false,
+    visible_scroll_y=model.code_scroll.y,
+    on_scroll=Some(y => EditorScrolled(y)),
+    visible_viewport_height=height,
+    visible_overscan=160.0,
+    selection_caret=model.code_caret,
+    selection_range=model.code_selection,
+    kind="StudioCodeEditor",
+    key=Some("studio-code-editor"),
+  )
 }
 
 ///|
-/// token 宽度估算：等宽 13pt 的 ASCII 约 7.8px/字符，非 ASCII（中文）
-/// 约 13px/字符。按字符类别分别计数——比统一乘系数更贴近实际，
-/// 且不依赖字体度量（core 没有文本测量 API）。
-fn token_width(token : CodeToken) -> Double {
-  let mut ascii = 0
-  let mut wide = 0
-  for c in token.text {
-    if c.to_int() < 0x80 {
-      ascii = ascii + 1
+/// DSL 源码 → 富文本文档：每行一个块，token run 带 `source_range` +
+/// 语义配色。行高固定 `CODE_LINE_HEIGHT`，行号槽与竖尺才能逐行对齐。
+fn code_document(
+  model : Model,
+  source : String,
+  font : @text.FontSpec,
+) -> @moui_richtext.RichTextDocument {
+  let keywords = @studio_lang.keywords_for(model.language.dsl_language())
+  let builtins = builtin_words(model.language.dsl_language())
+  let diagnostics = model.code_diagnostics
+  let blocks : Array[@moui_richtext.RichTextBlock] = []
+  let chars = source.to_array()
+  let mut line_start = 0
+  let mut index = 0
+  while index < chars.length() {
+    if chars[index] == '\n' {
+      blocks.push(
+        code_line_block(
+          String::from_array(chars[line_start:index]),
+          line_start~,
+          content_end=index,
+          source_end=index + 1,
+          keywords~,
+          builtins~,
+          diagnostics~,
+          font~,
+        ),
+      )
+      line_start = index + 1
+    }
+    index = index + 1
+  }
+  blocks.push(
+    code_line_block(
+      String::from_array(chars[line_start:chars.length()]),
+      line_start~,
+      content_end=chars.length(),
+      source_end=chars.length(),
+      keywords~,
+      builtins~,
+      diagnostics~,
+      font~,
+    ),
+  )
+  @moui_richtext.RichTextDocument::new(blocks~)
+}
+
+///|
+/// 单行 → 富文本块：ranged token 直接映射 run（颜色取渲染层调色板）。
+fn code_line_block(
+  line : String,
+  line_start~ : Int,
+  content_end~ : Int,
+  source_end~ : Int,
+  keywords~ : @studio_lang.Keywords,
+  builtins~ : Array[String],
+  diagnostics~ : Array[@code_editor.CodeDiagnostic],
+  font~ : @text.FontSpec,
+) -> @moui_richtext.RichTextBlock {
+  let runs : Array[@moui_richtext.RichTextRun] = []
+  for token in highlight_line_ranged(line, line_start, keywords, builtins) {
+    let start = token.start
+    let end = start + token.text.length()
+    // 行内标记：与诊断区间相交的 run 加淡红底——richtext 的装饰
+    // 只有删除线，底色是「这一段有问题」的最低限度行内提示。
+    let flagged = diagnostics.iter().any(diagnostic => {
+      diagnostic.range.start < end && start < diagnostic.range.end
+    })
+    runs.push(
+      @moui_richtext.RichTextRun::new(
+        text=token.text,
+        font=Some(font),
+        color=Some(code_token_color(token.kind)),
+        background=if flagged {
+          Some(@graphics.Brush::solid(code_error_line_tint()))
+        } else {
+          None
+        },
+        source_range=Some({ start, end }),
+      ),
+    )
+  }
+  if runs.is_empty() {
+    runs.push(
+      @moui_richtext.RichTextRun::new(
+        text="",
+        font=Some(font),
+        source_range=Some({ start: line_start, end: line_start, }),
+      ),
+    )
+  }
+  @moui_richtext.RichTextBlock::new(
+    runs~,
+    font=Some(font),
+    source_range=Some({ start: line_start, end: source_end, }),
+    content_range=Some({ start: line_start, end: content_end, }),
+    line_height=Some(CODE_LINE_HEIGHT),
+  )
+}
+
+///|
+/// 换行输入变换：`\n` → `\n` + 缩进。缩进 = 当前行前导空白，
+/// 当前行以块首关键字（如果/计次循环/当…）开头时多进一层；
+/// 块尾关键字（结束/跳出循环）回退一层。分类器复用 DSL 解析器的
+/// 关键字表，双语同一条路径。
+fn code_newline_transform(
+  model : Model,
+  source : String,
+  caret : Int,
+) -> @moui_richtext.RichTextInputTransform? {
+  let indent = dsl_indent_for_newline(model, source, caret)
+  let (text, cursors) = @code_editor.code_insert_text(
+    source,
+    [@code_editor.CodeCursor::new(position=caret)],
+    "\n" + indent,
+  )
+  let next_caret = match cursors {
+    [cursor, ..] => cursor.position
+    [] => caret
+  }
+  Some(
+    @moui_richtext.RichTextInputTransform::new(
+      text~,
+      caret=next_caret,
+      selection=None,
+    ),
+  )
+}
+
+///|
+/// DSL 换行缩进：当前行前导空白为基，块首关键字 +2，块尾关键字 -2。
+fn dsl_indent_for_newline(model : Model, source : String, caret : Int) -> String {
+  let chars = source.to_array()
+  let pos = caret.clamp(min=0, max=chars.length())
+  let mut line_start = pos
+  while line_start > 0 && chars[line_start - 1] != '\n' {
+    line_start = line_start - 1
+  }
+  let indent : Array[Char] = []
+  let mut index = line_start
+  while index < pos && (chars[index] == ' ' || chars[index] == '\t') {
+    indent.push(chars[index])
+    index = index + 1
+  }
+  // 行内容（去前导空白后）的第一个词
+  let mut end = pos
+  while end < chars.length() && chars[end] != '\n' {
+    end = end + 1
+  }
+  let trimmed = String::from_array(chars[index:end])
+  let word = StringBuilder()
+  for c in trimmed {
+    if {
+      let code = c.to_int()
+      code >= 0x80 ||
+      (code >= 0x30 && code <= 0x39) ||
+      (code >= 0x41 && code <= 0x5A) ||
+      (code >= 0x61 && code <= 0x7A) ||
+      code == 0x5F
+    } {
+      word.write_char(c)
     } else {
-      wide = wide + 1
+      break
     }
   }
-  let estimate = ascii.to_double() * 7.9 + wide.to_double() * 13.0
-  estimate.max(6.0)
+  let keywords = @studio_lang.keywords_for(model.language.dsl_language())
+  let deeper = match @studio_lang.classify_stmt_keyword(
+      word.to_string(),
+      keywords,
+    ) {
+    KwIf | KwCountLoop | KwWhile => 2
+    _ => 0
+  }
+  // 块尾关键字回退：结束/跳出循环（双语）
+  let closes =
+    trimmed == keywords.end_kw || trimmed == keywords.break_kw
+  let width = indent.length() + deeper * 2 - (if closes { 2 } else { 0 })
+  let spaces = StringBuilder()
+  for _ in 0..<width.max(0) {
+    spaces.write_char(' ')
+  }
+  spaces.to_string()
 }
 
 ///|
@@ -228,17 +446,14 @@ fn code_token_color(kind : CodeTokenKind) -> @graphics.Color {
 /// （驻留高亮，再点一次取消）。
 pub fn ir_ruler(
   model : Model,
-  t : @i18n.Translator,
   spans : Array[IrLineSpan],
-  width : Double,
   height : Double,
 ) -> @moui.View[Msg] {
-  let line_count = code_lines(model).length()
-  // 只画放得下的行：竖条不滚动，超出的部分本来也看不见。
-  let visible = (height / IR_RAIL_LINE_HEIGHT).floor().to_int().min(line_count)
+  // 全部行都画（编辑面是滚动事实来源，竖尺作为跟随者滚动同步）。
+  let line_count = split_line_texts(model.code_draft).length().max(1)
   let highlight = model.ir_highlight
   let cells : Array[@moui.View[Msg]] = []
-  for line in 1..<=visible {
+  for line in 1..<=line_count {
     let span = ir_span_for_line(spans, line)
     let cell = match span {
       None =>
@@ -255,7 +470,10 @@ pub fn ir_ruler(
           Some(hover) => same_path(span.path, hover)
           None => false
         }
-        let active = same_path(span.path, highlight) || hovered_bar
+        // 驻留高亮（点击）与悬停（瞬态预览）是**不同**的视觉：
+        // 驻留全亮暖黄，悬停半透明——竖尺是映射交互的唯一载体，
+        // 两者同色就分不清「我看的是它」和「我选了它」。
+        let pinned = same_path(span.path, highlight)
         let is_first = line == span.first_line
         let is_last = line == span.last_line
         // 首/末行圆角，中间行方角 —— 相邻贴合成一根长条
@@ -278,8 +496,10 @@ pub fn ir_ruler(
         }
         let bar = @views.container(
           @views.text("", width=1.0, height=1.0),
-          background=if active {
+          background=if pinned {
             ide_ir_highlight()
+          } else if hovered_bar {
+            ide_ir_hover()
           } else {
             block_category_fill(block_category(span.kind))
           },
@@ -311,12 +531,15 @@ pub fn ir_ruler(
     }
     cells.push(cell)
   }
-  @views.container(
-    @views.column(cells, spacing=0.0).frame(width=IR_RAIL_WIDTH, height~),
-    background=ide_panel(),
+  // 竖尺是滚动的**跟随者**：offset 由编辑面（或竖尺自身）经
+  // `EditorScrolled` 汇入 model，再回填到这里。
+  @views.scroll_view(
+    @views.column(cells, spacing=0.0),
+    offset=model.code_scroll,
     width=IR_RAIL_WIDTH,
     height~,
-    padding=0.0,
+    on_scroll=Some(offset => EditorScrolled(offset.y)),
+    shows_indicator=false,
   )
 }
 
@@ -329,9 +552,8 @@ pub const IR_RAIL_WIDTH : Double = 30.0
 const IR_RAIL_LINE_HEIGHT : Double = 20.0
 
 ///|
-/// 代码脚注：草稿编辑入口 + 恢复渲染 + 编译轨入口。
-/// 编辑区放在脚注（可折起）而不是主区：高亮区是主体，
-/// 编辑是低频动作，但必须可达（不能只读——那就成了预览不是编辑器）。
+/// 代码脚注：光标行列读数 + 恢复渲染 + 编译轨入口。
+/// 编辑已上移到主区（受控编辑面），脚注只留状态与动作。
 fn code_foot(
   model : Model,
   t : @i18n.Translator,
@@ -339,20 +561,7 @@ fn code_foot(
 ) -> @moui.View[Msg] {
   @views.container(
     @views.padding_xy(
-      @views.column(
-        [
-          @views.text_area(
-            model.code_draft,
-            on_input=source => EditCode(source),
-            placeholder=text(t, "app.code.cheatsheet"),
-            lines=3,
-            width=(width - 20.0).max(80.0),
-            line_height=20.0,
-          ),
-          code_foot_row(model, t, (width - 16.0).max(120.0)),
-        ],
-        spacing=6.0,
-      ),
+      code_foot_row(model, t, (width - 16.0).max(120.0)),
       horizontal=8.0,
       vertical=6.0,
     ),
@@ -395,7 +604,7 @@ fn code_hint_bar(t : @i18n.Translator, width : Double) -> @moui.View[Msg] {
 }
 
 ///|
-/// 代码页脚的动作行：草稿提示 + 恢复 + 编译。宽度按可用宽分配，
+/// 代码页脚的动作行：光标行列 + 恢复 + 编译。宽度按可用宽分配，
 /// 按钮用定宽胶囊（`@views.button` 的 width 是最小值，会把行撑破）。
 fn code_foot_row(
   model : Model,
@@ -409,12 +618,21 @@ fn code_foot_row(
   let restore_w = text_estimate_width(text(t, "app.code.restore")) + 34.0
   let compile_w = text_estimate_width(text(t, "app.code.compile")) + 34.0
   let gap = 6.0
+  let caret = @code_editor.code_editor_caret_position(
+    model.code_draft,
+    model.code_caret,
+  )
+  let caret_label = text_with(t, "app.code.caret", [
+    ("line", "\{caret.line}"),
+    ("col", "\{caret.column}"),
+  ])
   let hint_w = (width - restore_w - compile_w - gap * 2.0).max(40.0)
   fill_row(
     [
       @views.text(
-        text(t, "app.code.draft_hint"),
+        caret_label,
         theme=studio_theme(),
+        role=Mono,
         width=hint_w,
         height=16.0,
         align=TextStart,
@@ -454,7 +672,9 @@ fn foot_chip(
     width~,
     height=24.0,
     padding=0.0,
-  ).on_tap(on_click)
+  )
+  .accessibility_label(label)
+  .on_tap(on_click)
 }
 
 // ============================================================================
@@ -626,4 +846,54 @@ pub fn clone_path(path : Array[Int]) -> Array[Int] {
     copy.push(value)
   }
   copy
+}
+
+///|
+/// 补全弹层（切片 H）：候选词胶囊行——点击插入并关闭。
+/// 放在编辑面与说明条之间（不遮正文，不用弹层）。
+fn completion_popup(model : Model, width : Double) -> @moui.View[Msg] {
+  if !model.completion_open {
+    return @views.text("", width=1.0, height=1.0)
+  }
+  let chips : Array[@moui.View[Msg]] = []
+  for word in model.completions {
+    let chip_width = (text_estimate_width(word) + 12.0).max(28.0)
+    chips.push(
+      @views.container(
+        @views.center(
+          @views.text(
+            word,
+            theme=studio_theme(),
+            role=Mono,
+            width=(chip_width - 4.0).max(20.0),
+            height=16.0,
+          ).foreground(ide_text()),
+          width=chip_width,
+          height=20.0,
+        ),
+        background=ide_accent_soft(),
+        corner_radius=4.0,
+        width=chip_width,
+        height=22.0,
+        padding=0.0,
+      )
+      .accessibility_label(word)
+      .on_tap(ApplyCompletion(word)),
+    )
+  }
+  @views.container(
+    @views.padding_xy(
+      @views.scroll_view(
+        @views.row(chips, spacing=4.0, align=Center),
+        width=(width - 16.0).max(80.0),
+        height=26.0,
+        shows_indicator=false,
+      ),
+      horizontal=8.0,
+      vertical=3.0,
+    ),
+    background=ide_panel_alt(),
+    width~,
+    padding=0.0,
+  )
 }

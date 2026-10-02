@@ -401,6 +401,8 @@ fn form_widget(
   on_change? : (String, String) -> Msg,
   on_pick? : (String, Int) -> Msg,
   on_toggle? : (String, Bool) -> Msg,
+  progress_value? : Double = 0.0,
+  on_input_done? : (String) -> Msg,
 ) -> @moui.View[Msg] {
   match control.kind {
     @ir.Label => @views.text(value, align=TextStart)
@@ -412,9 +414,13 @@ fn form_widget(
     @ir.TextField =>
       match on_change {
         Some(change) =>
-          @views.text_field(value, on_input=new_value => {
-            change(control.name, new_value)
-          })
+          @views.text_field(
+            value,
+            on_input=new_value => {
+              change(control.name, new_value)
+            },
+            on_submit=on_input_done.map(done => done(control.name)),
+          )
         None => @views.text_field(value, on_input=_new_value => Msg::Noop)
       }
     @ir.CheckBox =>
@@ -426,6 +432,39 @@ fn form_widget(
         None =>
           @views.checkbox(value, checked~, on_change=_checked => Msg::Noop)
       }
+    // 下拉框：点一下循环到下一项（教学语义：选项轮换即换值，无弹层状态）
+    @ir.Dropdown => {
+      let items = if control.items.length() > 0 {
+        control.items
+      } else {
+        ["选项 A", "选项 B"]
+      }
+      let index = selected_row.clamp(min=0, max=items.length() - 1)
+      let current = items[index]
+      let next_index = (index + 1) % items.length()
+      match on_pick {
+        Some(pick) =>
+          @views.button(
+            "▼ " + current,
+            on_click=pick(control.name, next_index),
+            variant=Tonal,
+          )
+        None => @views.button("▼ " + current, variant=Tonal)
+      }
+    }
+    // 进度条：items[0] 是绑定的变量名（0..100），比例由调用方算好传入
+    @ir.ProgressBar =>
+      @views.progress(progress_value.clamp(min=0.0, max=1.0), width=control.width.to_double())
+    // 图片：items[0] 是资源路径（缺省占位）
+    @ir.Image =>
+      @views.image(
+        match control.items {
+          [path, ..] => path
+          [] => ""
+        },
+        width=control.width.to_double(),
+        height=control.height.to_double(),
+      )
     @ir.ListBox | @ir.Table => {
       // 列表框/表格是带视口的实物：行高 24，按设计高度截断可见行
       let max_rows = if control.height < 24 { 1 } else { control.height / 24 }
@@ -458,6 +497,22 @@ fn form_widget(
 }
 
 ///|
+/// 编译轨 Runtime 的变量表 → 解释轨值表（进度条绑定等只读展示用；
+/// 与 update_run 的 interpreted_value 同一转换）。
+fn compiled_values_map(
+  run : @compiled_runtime.Runtime,
+) -> Map[String, @studio_lang.Value] {
+  let values : Map[String, @studio_lang.Value] = Map([], capacity=8)
+  for key in run.vars.keys() {
+    match run.vars.get(key) {
+      Some(value) => values[key] = interpreted_value(value)
+      None => ()
+    }
+  }
+  values
+}
+
+///|
 /// 运行舞台唯一构造点：设计坐标绝对布局（StageLayout 按 IR 矩形分配子帧，
 /// tight 重排让控件精确等于设计的尺寸与位置）——两轨共用同一舞台，
 /// 只有数据源（解释轨 RunState / 编译轨 Runtime）不同。
@@ -467,6 +522,7 @@ fn run_stage(
   checks : Map[String, Bool],
   rows : Map[String, Array[String]],
   selections : Map[String, Int],
+  values : Map[String, @studio_lang.Value],
   avail_width : Double,
   avail_height : Double,
 ) -> @moui.View[Msg] {
@@ -474,6 +530,20 @@ fn run_stage(
   let stage_rects : Array[@geometry.Rect] = []
   for control in model.program.controls {
     let value = texts.get(control.name).unwrap_or(control.text)
+    // 进度条：绑定变量名（items[0]）的数值（0..100）
+    let progress = match control.kind {
+      @ir.ProgressBar =>
+        match control.items {
+          [bound, ..] =>
+            match values.get(bound) {
+              Some(@studio_lang.VInt(n)) => n.to_double() / 100.0
+              Some(@studio_lang.VNum(n)) => n / 100.0
+              _ => 0.0
+            }
+          [] => 0.0
+        }
+      _ => 0.0
+    }
     stage_widgets.push(
       form_widget(
         control,
@@ -485,6 +555,8 @@ fn run_stage(
         on_change=(name, new_value) => ControlChanged(name, new_value),
         on_pick=(name, index) => ControlPicked(name, index),
         on_toggle=(name, checked) => RunToggle(name, checked),
+        progress_value=progress,
+        on_input_done=name => ControlInputDone(name),
       ),
     )
     stage_rects.push(
@@ -540,6 +612,7 @@ fn compiled_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         run.checks,
         runtime.rows,
         runtime.selections,
+        compiled_values_map(runtime),
         @ir.DESIGN_WIDTH.to_double(),
         @ir.DESIGN_HEIGHT.to_double(),
       )
@@ -752,6 +825,7 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         run.checks,
         run.state.rows,
         run.state.selections,
+        run.state.vars,
         @ir.DESIGN_WIDTH.to_double(),
         @ir.DESIGN_HEIGHT.to_double(),
       )

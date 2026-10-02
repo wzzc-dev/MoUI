@@ -93,12 +93,28 @@ async fn main {
           on_result,
         })
       },
+      // 「停止编译」杀掉正在跑的 moon 子进程（runner 登记句柄，这里取消）。
+      compile_cancel=fn() { @compile.compile_cancel(compile_owner) },
       // 「运行产物」：脱离式启动（进程 reparent，Studio 退出不带走它）。
       launch_submit=(path, on_result) => {
         @launch.launch_submit(launch_owner, @launch.LaunchJob::{
           path,
           on_result,
         })
+      },
+      // 运行时检查器：把 moui_devtools 快照格式化成纯文本注入 app
+      // （app 不 import runtime，快照类型止步于本组合根）。
+      runtime_snapshot=() => {
+        match runtime_ref.val {
+          Some(runtime) => {
+            let snapshot = runtime.inspector_snapshot()
+            Some({
+              summary: @devtools.snapshot_summary(snapshot).text(),
+              report: @devtools.inspector_report_text(snapshot),
+            })
+          }
+          None => None
+        }
       },
     ),
     width=1280.0,

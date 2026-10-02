@@ -71,7 +71,7 @@ fn overflow_report(width : Double, height : Double, model : Model) -> String {
 /// 绘制命令的指纹：把每条命令压成一个短字符串拼接，用于「两次绘制有没有
 /// 任何差别」的全量比较。比逐个字段断言更耐改——新增一种绘制命令不会让它
 /// 失效，也不需要预先知道竖条用的是哪种命令。
-fn paint_signature(commands : Array[@core.DrawCommand]) -> String {
+fn _paint_signature(commands : Array[@core.DrawCommand]) -> String {
   let mut out = ""
   for command in commands {
     match command {
@@ -106,6 +106,42 @@ fn paint_signature(commands : Array[@core.DrawCommand]) -> String {
         out = out + "PR" + rounded.rect.origin.y.to_string()
       @core.PopRoundedClip => out = out + "pr"
       _ => out = out + "?"
+    }
+  }
+  out
+}
+
+///|
+/// 竖尺签名：竖条是**容器背景**（FillRoundedRectBrush），而
+/// `paint_signature` 对 Brush 只记 y 不记颜色——悬停/驻留换色对它不可见。
+/// 这个签名专门收编竖尺条形（宽 ≤16 的小圆角矩形），把 Brush 的
+/// rgba 全部哈希进去，供映射交互的绘制断言使用。
+fn rail_paint_signature(commands : Array[@core.DrawCommand]) -> String {
+  let mut out = ""
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, brush) =>
+        if rounded.rect.size.width <= 16.0 &&
+          rounded.rect.size.height >= 8.0 &&
+          rounded.rect.size.height <= 24.0 {
+          let color = brush.fallback_color()
+          out = out +
+            "RB" +
+            rounded.rect.origin.y.to_string() +
+            color.r.to_string() +
+            color.a.to_string()
+        }
+      @core.FillRoundedRect(rounded, color) =>
+        if rounded.rect.size.width <= 16.0 &&
+          rounded.rect.size.height >= 8.0 &&
+          rounded.rect.size.height <= 24.0 {
+          out = out +
+            "RR" +
+            rounded.rect.origin.y.to_string() +
+            color.r.to_string() +
+            color.a.to_string()
+        }
+      _ => ()
     }
   }
   out
@@ -576,53 +612,31 @@ test "blocks category rail is a vertical column left of the canvas" {
 }
 
 ///|
-/// 悬停联动的**绘制**结果：`hover_path` 命中时，对应代码行与 IR 竖条都要
-/// 换成高亮态。
+/// 悬停联动的**绘制**结果：`hover_path` 命中时，IR 竖条要换成悬停态。
 ///
 /// 只测 update 不够——「update 对了、view 忘了读新字段」是很可能的失误，
-/// 而那种情况下用户看到的是「悬停没反应」。所以这里比**行号文字的颜色**：
-/// 命中时行号由 faint 变 ir_highlight，是全视图唯一随 `hover_path` 变化的
-/// 文字属性，且不受布局影响。
-test "hover path repaints the matching code line" {
+/// 而那种情况下用户看到的是「悬停没反应」。代码编辑面上移到 richtext
+/// 受控编辑器后，映射交互的唯一载体是**竖尺条形**，所以这里比竖尺签名
+/// （`rail_paint_signature`，含 Brush 颜色）：悬停时条形由分类色变半透明
+/// 暖黄，且取消悬停必须**还原**（瞬态语义）。
+test "hover path repaints the matching rail bar" {
   let code_model = apply_shell(initial_model(), SetWorkSpace(WsCode))
-  let commands = shell_draw(code_model, 1280.0, 800.0)
   let spans = ir_line_spans(code_model)
   guard spans.length() > 0 else { fail("no IR spans in the code workspace") }
-  // 取第一条有确定行号的 span 作为悬停目标
-  let target_line = spans[0].first_line
   let target = spans[0].path
-  // 悬停前该行行号的颜色
-  let mut before : @core.Color? = None
-  for run in shell_texts(commands) {
-    if run.text == target_line.to_string() {
-      before = Some(run.color)
-    }
-  }
-  guard before is Some(before_color) else {
-    fail("line number " + target_line.to_string() + " is not drawn")
-  }
+  let baseline = rail_paint_signature(shell_draw(code_model, 1280.0, 800.0))
   let hovered = apply_shell(code_model, HoverIrPath(Some(target)))
-  let after_commands = shell_draw(hovered, 1280.0, 800.0)
-  let mut after : @core.Color? = None
-  for run in shell_texts(after_commands) {
-    if run.text == target_line.to_string() {
-      after = Some(run.color)
-    }
-  }
-  guard after is Some(after_color) else {
-    fail("line number vanished after hover")
-  }
-  if before_color == after_color {
+  let hover_sig = rail_paint_signature(shell_draw(hovered, 1280.0, 800.0))
+  if baseline == hover_sig {
     fail(
-      "hovering the line did not change its line-number colour (still the same), so hover_path is not read by the view",
+      "hovering the IR path did not repaint the rail bar, so hover_path is not read by the view",
     )
   }
   // 取消悬停必须**还原**（瞬态语义）
   let cleared = apply_shell(hovered, HoverIrPath(None))
-  for run in shell_texts(shell_draw(cleared, 1280.0, 800.0)) {
-    if run.text == target_line.to_string() && run.color != before_color {
-      fail("clearing hover did not restore the original line-number colour")
-    }
+  let cleared_sig = rail_paint_signature(shell_draw(cleared, 1280.0, 800.0))
+  if baseline != cleared_sig {
+    fail("clearing hover did not restore the original rail bar colour")
   }
 }
 
@@ -676,24 +690,24 @@ test "IR rail cells are hit-testable per line" {
   // 悬停不得写驻留槽位（否则悬停走过的每一行都会被记住）
   assert_eq(hovered.ir_highlight, [])
   // **视图必须真的读这两个字段**：只测 update 是不够的——把
-  // `hover_path` 从竖条/代码行的绘制里删掉，上面的断言全绿而界面毫无反应
-  // （本会话实测过这种「状态对了、界面没变」）。所以这里比**绘制命令**：
+  // `hover_path` 从竖尺的绘制里删掉，上面的断言全绿而界面毫无反应
+  // （本会话实测过这种「状态对了、界面没变」）。所以这里比**竖尺签名**：
   // 悬停态与静止态必须画出不同的东西。
-  let baseline = paint_signature(shell_draw(code_model, 1280.0, 800.0))
-  let hover_sig = paint_signature(shell_draw(hovered, 1280.0, 800.0))
+  let baseline = rail_paint_signature(shell_draw(code_model, 1280.0, 800.0))
+  let hover_sig = rail_paint_signature(shell_draw(hovered, 1280.0, 800.0))
   if baseline == hover_sig {
     fail(
       "hover_path changed but nothing repainted: the view is not reading hover_path",
     )
   }
   let (pinned_model, _) = update_pure(code_model, HighlightIrPath(path))
-  let pin_sig = paint_signature(shell_draw(pinned_model, 1280.0, 800.0))
+  let pin_sig = rail_paint_signature(shell_draw(pinned_model, 1280.0, 800.0))
   if baseline == pin_sig {
     fail(
       "ir_highlight changed but nothing repainted: the view is not reading ir_highlight",
     )
   }
-  // 悬停与点击是**不同**的视觉（瞬态预览 vs 驻留选择）：如果两者画出来
+  // 悬停与点击是**不同**的视觉（瞬态半透明 vs 驻留全亮）：如果两者画出来
   // 一模一样，就说明悬停其实被当成了驻留高亮。
   if hover_sig == pin_sig {
     fail(

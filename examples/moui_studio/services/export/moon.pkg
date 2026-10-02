@@ -3,8 +3,12 @@ import {
   "examples/moui_studio/domain/ir",
   "examples/moui_studio/domain/studio_lang",
   "examples/moui_studio/domain/codec",
-  "examples/moui_studio/domain/proposals",
 }
+
+// @proposals 只被黑盒测试（moonbit_codegen_test.mbt 的样例程序）使用
+import {
+  "examples/moui_studio/domain/proposals",
+} for "test"
 
 supported_targets = "native+wasm-gc"
 
