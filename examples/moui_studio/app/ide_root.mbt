@@ -141,18 +141,48 @@ fn shell_view(
     height=lower_height,
   )
   let lower_cells : Array[@moui.View[Msg]] = []
+  // sash 拖拽的宽度界限：**另一侧面板 + 两条 sash + 中心下限**之外都是
+  // 自己的余量。界限在视图构建期算好闭进闭包（拖拽期间窗口不变，界限
+  // 是常量），update 只兜底夹静态界限。
+  let left_drag_max = (side_width -
+    (if chrome_widths.right > 0.0 { chrome_widths.right + SASH_WIDTH } else { 0.0 }) -
+    320.0).max(LEFTBAR_MIN_WIDTH).min(LEFTBAR_MAX_WIDTH)
+  let right_drag_max = (side_width -
+    (match chrome_widths.left {
+      Some(left_width) => left_width + SASH_WIDTH
+      None => 0.0
+    }) -
+    320.0).max(RIGHTBAR_MIN_WIDTH).min(RIGHTBAR_MAX_WIDTH)
   if !fullscreen {
     match chrome_widths.left {
       Some(left_width) => {
         lower_cells.push(ide_left_panel(model, t, left_width, lower_height))
-        lower_cells.push(hairline_v())
+        lower_cells.push(
+          v_sash(fn(x) {
+            ResizeLeftPanel(
+              (x - ICONBAR_WIDTH - SASH_WIDTH / 2.0).clamp(
+                min=LEFTBAR_MIN_WIDTH,
+                max=left_drag_max,
+              ),
+            )
+          }, lower_height),
+        )
       }
       None => ()
     }
   }
   lower_cells.push(main_col)
   if !fullscreen && chrome_widths.right > 0.0 {
-    lower_cells.push(hairline_v())
+    lower_cells.push(
+      v_sash(fn(x) {
+        ResizeRightPanel(
+          (width - x - SASH_WIDTH / 2.0).clamp(
+            min=RIGHTBAR_MIN_WIDTH,
+            max=right_drag_max,
+          ),
+        )
+      }, lower_height),
+    )
     if model.ai_anchor is AiDocked {
       lower_cells.push(
         @views.column(
@@ -213,6 +243,37 @@ fn shell_view(
 }
 
 ///|
+/// 竖直 sash：三列之间**可拖拽的分隔区**（VS Code 口径）。
+///
+/// - 视觉：`SASH_WIDTH`（4pt）的竖带，底色 `ide_border_soft`——比两侧
+///   面板略亮一档，读作「这里是分隔」，又不抢过发丝线的克制。
+/// - 交互：拖拽把指针 x 经 `on_drag_x` 换算成目标宽度（界限由调用方
+///   闭包夹取）。**绝对映射**——指针在哪面板就到哪，不需要拖拽起点状态，
+///   来回拖也不会漂。
+/// - 捕获：拖拽激活期手势持有指针捕获（runtime 对捕获元素在指针出界时
+///   照常派发），所以 sash 自己随面板移动也不丢事件——与积木画布拖拽
+///   同一机制。
+fn v_sash(
+  on_drag_x : (Double) -> Msg,
+  height : Double,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.empty(),
+    background=ide_border_soft(),
+    width=SASH_WIDTH,
+    height~,
+    padding=0.0,
+  )
+  .on_drag_with_frame(fn(event, _frame) {
+    match event.phase {
+      @views.DragGesturePhase::Started | @views.DragGesturePhase::Changed =>
+        on_drag_x(event.position.x)
+      _ => Msg::Noop
+    }
+  })
+}
+
+///|
 /// 中心列的工作区段：**直接**铺满整行，不再有任何 AI 叠放层或避让带。
 ///
 /// **历史（重要）**：这里曾经是「工作区内容 + AI 浮动层」的叠放宿主，并为
@@ -240,29 +301,30 @@ pub(all) struct ShellChromeWidths {
 }
 
 ///|
-/// 三列宽度分配。宽窗口用设计稿的确定值（左 232 / 右 272 / 中心吃剩余）；
-/// 窄窗口按比例收窄两侧并**优先保住中心**——否则固定宽的三列加起来超过
-/// 窗口宽，右栏会被挤出屏幕（实际截图里右栏贴边、页签被切就是这个形态）。
+/// 三列宽度分配。**左/右栏宽度是用户可调的**（列间 sash 拖拽，存
+/// `model.left_width`/`right_width`，默认 = LEFTBAR/RIGHTBAR_WIDTH）；
+/// 中心列吃剩余。分隔区是 4pt 的 sash（`SASH_WIDTH`），预算按它显式扣。
 ///
-/// 中心列有 320 的下限（三工作区都在这个宽度下仍然可用）。当
-/// 图标栏 + 左 + 中心下限 + 右都放不下时，**左栏自动让位**（返回 None）：
-/// 设计师在窄窗口下最需要的是中心舞台，左栏可以从图标栏再点开。
-///
-/// `right` 返回 0.0 有两种来源，调用方**不必区分**（都是「不画右栏」）：
-/// 用户显式收起（`right_visible = false`），或窄窗口下让位。这里优先保住
-/// 右栏而不是让它让位——它是属性面板，收起了就没地方改属性；
-/// 真正需要腾空间时先让左栏（树可以从图标栏再点开）。
+/// 中心列有 320 的下限（三工作区都在这个宽度下仍然可用）。当用户宽度
+/// + 中心下限放不下时（窗口太小），**右栏紧急收缩到 232**、仍不够则
+/// **左栏让位**（返回 None）——与旧的设计稿定宽行为同构，只是把定宽
+/// 换成了用户可调宽。`right` 返回 0.0 有两种来源（用户收起 / 让位），
+/// 调用方不必区分。
 fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
-  // `width` = 活动栏右侧的可用宽（调用方已扣除 48 的活动栏）。
-  let usable = (width - 2.0).max(120.0)
+  // `width` = 活动栏右侧的可用宽（调用方已扣除活动栏）。
+  let sash = SASH_WIDTH
+  let usable = width.max(120.0)
   let center_min = 320.0
   let wants_left = !(model.left_view is LeftHidden)
   let wants_right = model.right_visible
-  let left_want = LEFTBAR_WIDTH
-  let right_want = RIGHTBAR_WIDTH
+  let left_want = model.left_width.clamp(min=LEFTBAR_MIN_WIDTH, max=LEFTBAR_MAX_WIDTH)
+  let right_want = model.right_width.clamp(
+    min=RIGHTBAR_MIN_WIDTH,
+    max=RIGHTBAR_MAX_WIDTH,
+  )
   if !wants_right {
-    // 右栏收起：中心吃满「可用 − 左栏」
-    let left_room = if wants_left { left_want + 1.0 } else { 0.0 }
+    // 右栏收起：中心吃满「可用 − 左栏 − 左 sash」
+    let left_room = if wants_left { left_want + sash } else { 0.0 }
     return ShellChromeWidths::{
       left: if wants_left {
         Some(left_want)
@@ -273,8 +335,8 @@ fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
       right: 0.0,
     }
   }
-  if usable >= left_want + right_want + center_min {
-    // 宽窗口：设计稿确定值
+  if usable >= left_want + right_want + sash * 2.0 + center_min {
+    // 宽窗口：用户的宽度原样生效，中心吃剩余
     ShellChromeWidths::{
       left: if wants_left {
         Some(left_want)
@@ -282,16 +344,17 @@ fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
         None
       },
       center: usable -
-      (if wants_left { left_want + 1.0 } else { 0.0 }) -
+      (if wants_left { left_want + sash } else { 0.0 }) -
       right_want -
-      1.0,
+      sash,
       right: right_want,
     }
   } else {
-    // 窄窗口：右栏收到 232（仍放得下 5 个页签与读数），中心吃剩下的。
-    let right_shrunk = 232.0
-    let needed_left = left_want + 1.0
-    let room = usable - right_shrunk - 1.0
+    // 窄窗口紧急收缩：右栏压到 232（仍放得下 5 个页签与读数），中心吃
+    // 剩下的；再不够左栏让位。
+    let right_shrunk = right_want.min(232.0).max(170.0)
+    let room = usable - right_shrunk - sash
+    let needed_left = left_want + sash
     if wants_left && room >= needed_left + center_min {
       ShellChromeWidths::{
         left: Some(left_want),
@@ -299,10 +362,10 @@ fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
         right: right_shrunk,
       }
     } else {
-      // 左栏让位：中心拿满「可用 − 右栏」
+      // 左栏让位：中心拿满「可用 − 右栏 − sash」
       ShellChromeWidths::{
         left: None,
-        center: (usable - right_shrunk - 1.0).max(center_min),
+        center: (usable - right_shrunk - sash).max(center_min),
         right: right_shrunk,
       }
     }

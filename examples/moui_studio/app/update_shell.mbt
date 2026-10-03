@@ -18,6 +18,31 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     SetSplitRatio(ratio) => Some(set_split_ratio(model, ratio))
     SetLeftView(view) => Some(set_left_view(model, view))
     SetRightVisible(visible) => Some(set_right_visible(model, visible))
+    // 列间 sash 拖拽：视图层已按当帧布局夹取，这里再兜底夹一次静态界限
+    // （窗口在拖拽中途变小等时序差）。纯布局状态：不进撤销、不标脏。
+    ResizeLeftPanel(width) =>
+      Some(
+        (
+          {
+            ..model,
+            left_width: width.clamp(min=LEFTBAR_MIN_WIDTH, max=LEFTBAR_MAX_WIDTH),
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    ResizeRightPanel(width) =>
+      Some(
+        (
+          {
+            ..model,
+            right_width: width.clamp(
+              min=RIGHTBAR_MIN_WIDTH,
+              max=RIGHTBAR_MAX_WIDTH,
+            ),
+          },
+          @moui.Effect::none(),
+        ),
+      )
     SetTreeQuery(query) =>
       Some(({ ..model, tree_query: query, }, @moui.Effect::none()))
     ToggleTreeGroup(group) => {

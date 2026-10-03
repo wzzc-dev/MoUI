@@ -58,7 +58,7 @@ pub const LABEL_WIDTH_SAFETY : Double = 0.95
 
 pub const LANGUAGE_SETTINGS_KEY : String = "studio.language"
 
-pub const LEFTBAR_MAX_WIDTH : Double = 260.0
+pub const LEFTBAR_MAX_WIDTH : Double = 480.0
 
 pub const LEFTBAR_MIN_WIDTH : Double = 200.0
 
@@ -82,7 +82,13 @@ pub const RECENT_LIMIT : Int = 24
 
 pub const RECENT_STRIP_ROWS : Int = 3
 
+pub const RIGHTBAR_MAX_WIDTH : Double = 560.0
+
+pub const RIGHTBAR_MIN_WIDTH : Double = 200.0
+
 pub const RIGHTBAR_WIDTH : Double = 272.0
+
+pub const SASH_WIDTH : Double = 4.0
 
 pub const SEE_ALL_HEIGHT : Double = 20.0
 
@@ -961,6 +967,8 @@ pub(all) struct Model {
   pane_blocks : Bool
   split_ratio : Double
   left_view : LeftView
+  left_width : Double
+  right_width : Double
   right_visible : Bool
   immersive : Bool
   tree_query : String
@@ -1135,6 +1143,8 @@ pub(all) enum Msg {
   SetTreeQuery(String)
   ToggleTreeGroup(String)
   SetRightVisible(Bool)
+  ResizeLeftPanel(Double)
+  ResizeRightPanel(Double)
   SetContextTab(ContextTab)
   SetBottomTab(BottomTab)
   GotoProblem(String, Int)

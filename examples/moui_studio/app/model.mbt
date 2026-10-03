@@ -573,6 +573,10 @@ pub(all) struct Model {
   split_ratio : Double
   // 左栏视图（图标栏切换；收起时不占宽度）
   left_view : LeftView
+  // 左/右栏宽度（列间 sash 拖拽改宽；默认 = LEFTBAR/RIGHTBAR_WIDTH，
+  // `shell_chrome_widths` 按它们分配三列，中心列吃剩余）
+  left_width : Double
+  right_width : Double
   // 右栏 Context 是否显示。左栏是「多视图 + 收起」所以用枚举；右栏只有
   // 一个视图，收起/展开就是布尔。
   right_visible : Bool
@@ -907,6 +911,11 @@ pub(all) enum Msg {
   /// （只可能关），打开入口在图标栏（只可能开）。共用一个 Toggle 会让
   /// 「点击目标当前不可见」这类情况反向操作，语义不可预测。
   SetRightVisible(Bool)
+  /// 列间 sash 拖拽改宽（VS Code 口径）：指针位置 → 目标宽度在**视图层**
+  /// 换算并夹取（界限依赖当帧布局），update 只再兜底夹一次。布局手势，
+  /// 不产生撤销点、不标脏。
+  ResizeLeftPanel(Double)
+  ResizeRightPanel(Double)
   // 右栏 Context 页签
   SetContextTab(ContextTab)
   // 底栏：页签切换 / 展开折叠 / 高度拖拽
@@ -1080,6 +1089,8 @@ pub fn initial_model(
     pane_blocks: true,
     split_ratio: 0.55,
     left_view: LeftTree,
+    left_width: LEFTBAR_WIDTH,
+    right_width: RIGHTBAR_WIDTH,
     right_visible: true,
     immersive,
     tree_query: "",

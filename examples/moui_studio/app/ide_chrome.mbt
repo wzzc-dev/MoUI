@@ -45,15 +45,27 @@ pub const FIELD_HEIGHT : Double = 26.0
 pub const LEFTBAR_MIN_WIDTH : Double = 200.0
 
 ///|
-/// 左栏固定宽度：结构树/数据行宽都按它算。IDE 左栏不做拖拽改宽——
-/// core 只暴露 drag 手势（无 pointer-move 流），改宽需要逐帧位置反馈。
+/// 左栏**默认**宽度（用户可以用列间 sash 拖拽改宽，见 `SASH_WIDTH`；
+/// 改后的宽度存 `model.left_width`，`shell_chrome_widths` 读它分配）。
 pub const LEFTBAR_WIDTH : Double = 232.0
 
 ///|
-pub const LEFTBAR_MAX_WIDTH : Double = 260.0
+pub const LEFTBAR_MAX_WIDTH : Double = 480.0
 
 ///|
+/// 右栏**默认**宽度（可拖拽改宽，同左栏）。
 pub const RIGHTBAR_WIDTH : Double = 272.0
+
+///|
+pub const RIGHTBAR_MIN_WIDTH : Double = 200.0
+
+///|
+pub const RIGHTBAR_MAX_WIDTH : Double = 560.0
+
+///|
+/// 列间 sash（可拖拽分隔区）的命中区宽度：VS Code 口径——比发丝线宽，
+/// 鼠标抓得住；视觉上是一条略亮于两侧面板的竖带（见 `v_sash`）。
+pub const SASH_WIDTH : Double = 4.0
 
 // ============================================================================
 // 基础件
@@ -82,12 +94,6 @@ pub fn fill_row(
 /// 并盖住后面的兄弟，2026-09-27 面板消失事故的根因）。
 pub fn hairline() -> @moui.View[Msg] {
   @views.divider(color=ide_border())
-}
-
-///|
-/// 竖发丝：row 里的列分隔。
-pub fn hairline_v() -> @moui.View[Msg] {
-  @views.divider(axis=Vertical, color=ide_border())
 }
 
 ///|

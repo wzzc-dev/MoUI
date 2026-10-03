@@ -1384,3 +1384,124 @@ test "activity bar uses the compact spec with bare-glyph selection" {
     msg="the gear should be pinned near the bottom edge, not in the icon rhythm",
   )
 }
+
+///|
+/// 列间 sash 的**模型侧**语义：拖拽消息改写用户宽度，`shell_chrome_widths`
+/// 按用户宽度分配三列；静态界限兜底夹取。
+test "sash resize messages drive the three-column widths" {
+  let base = initial_model()
+  let usable = 1280.0 - ICONBAR_WIDTH
+  // 拖宽左栏 → 左栏变宽、中心让位、右栏不动
+  let widened = apply_shell(base, ResizeLeftPanel(300.0))
+  let chrome = shell_chrome_widths(widened, usable)
+  assert_eq(chrome.left.unwrap(), 300.0)
+  assert_eq(chrome.right, RIGHTBAR_WIDTH)
+  assert_true(
+    chrome.center < shell_chrome_widths(base, usable).center,
+    msg="the center column must yield when the left panel widens",
+  )
+  // 拖窄过下限 → 夹到下限
+  let clamped_low = apply_shell(base, ResizeLeftPanel(40.0))
+  assert_eq(
+    shell_chrome_widths(clamped_low, usable).left.unwrap(),
+    LEFTBAR_MIN_WIDTH,
+  )
+  // 拖宽过上限 → 夹到上限
+  let clamped_high = apply_shell(base, ResizeLeftPanel(900.0))
+  assert_eq(
+    shell_chrome_widths(clamped_high, usable).left.unwrap(),
+    LEFTBAR_MAX_WIDTH,
+  )
+  // 右栏同理
+  let right_wide = apply_shell(base, ResizeRightPanel(340.0))
+  assert_eq(shell_chrome_widths(right_wide, usable).right, 340.0)
+  // 宽度合计 = 可用宽（无死区、无重叠）
+  let total = chrome.left.unwrap() +
+    SASH_WIDTH +
+    chrome.center +
+    SASH_WIDTH +
+    chrome.right
+  assert_true((total - usable).abs() < 0.6, msg="columns must fill the row")
+}
+
+///|
+/// 端到端：在左 sash 上按下并拖动，左栏真的跟着变宽——捕获语义 + 绝对
+/// 映射的真实链路（不是单测里的直接派消息）。
+test "dragging the column sash resizes the left panel (e2e)" {
+  let sink : Ref[(@core.Frame) -> Unit] = Ref(fn(_frame) { () })
+  let registered : Ref[Bool] = Ref(false)
+  let runtime = @runtime.new_program_with_dimensions(
+    program=program(
+      environment=@services.AppEnvironment::new(timer=Some(
+        fake_timer_source(sink, registered),
+      )),
+    ),
+    width=1280.0,
+    height=800.0,
+  )
+  let _ = runtime.draw_commands()
+  // 左 sash 中心：活动栏 + 左栏 + sash/2
+  let start_x = ICONBAR_WIDTH + LEFTBAR_WIDTH + SASH_WIDTH / 2.0
+  let y = 400.0
+  runtime.dispatch_event(
+    @core.Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=start_x, y=y),
+        phase=@core.Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=start_x + 60.0, y=y),
+        phase=@core.Move,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=start_x + 60.0, y=y),
+        phase=@core.Up,
+      ),
+    ),
+  )
+  // 重渲：左栏面板（ide_panel 底色、起点 = 活动栏宽）应变宽 60
+  let panel = ide_panel()
+  let sash_color = ide_border_soft()
+  let mut left_width = 0.0
+  let mut sash_x = -1.0
+  for command in runtime.draw_commands() {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @graphics.Brush::Solid(color)) => {
+        let rect = rounded.rect
+        if rect.size.height > 500.0 &&
+          rect.origin.y < 100.0 &&
+          color.r == panel.r &&
+          color.g == panel.g &&
+          rect.origin.x == ICONBAR_WIDTH {
+          left_width = rect.size.width
+        }
+        if color.r == sash_color.r &&
+          color.g == sash_color.g &&
+          rect.size.height > 500.0 &&
+          rect.origin.x > ICONBAR_WIDTH &&
+          rect.origin.x < 500.0 &&
+          sash_x < 0.0 {
+          sash_x = rect.origin.x
+        }
+      }
+      _ => ()
+    }
+  }
+  let expected = LEFTBAR_WIDTH + 60.0
+  assert_true(
+    (left_width - expected).abs() < 0.6,
+    msg="left panel width=\{left_width} should be \{expected} after dragging +60",
+  )
+  assert_true(
+    (sash_x - (ICONBAR_WIDTH + expected)).abs() < 0.6,
+    msg="sash x=\{sash_x} should follow the panel edge",
+  )
+}

@@ -97,3 +97,24 @@ node scripts/generate-i18n-catalogs.mjs --check --input examples/moui_studio/app
 - 第三轮追加：用户否掉选中条纹——`activity_bar_item` 助手整个删除，活动栏
   直接用 `icon_button(tile=false)`（列 align=Center 自动居中），几何测试改为
   「栏内不得出现强调色色块」的反断言。
+
+## 第四轮（2026-10-04）：三列之间加可拖拽 sash（参考 VS Code）
+
+用户要求左栏 / 中心主区 / 右栏之间像 VS Code 一样有可鼠标拖拽的分隔区，自由调节三者宽度。
+
+- **实现**：`hairline_v()`（1pt 发丝线，已删）换成 `v_sash`（4pt 命中区，
+  `ide_border_soft` 底色）+ `on_drag_with_frame`。拖拽用**绝对映射**（指针
+  x → 目标宽度，界限在视图构建期算好闭进闭包），不需要拖拽起点状态；update
+  侧 `ResizeLeftPanel/ResizeRightPanel` 只兜底夹静态界限（200–480 / 200–560）。
+- **捕获语义**：拖拽激活期手势 `captured: true`，runtime 对捕获元素在指针
+  出界时照常派发（`input_pointer.mbt` 的 `has_capture` 分支）——sash 自己
+  随面板移动也不丢事件，与积木画布拖拽同一机制。这是本功能可行的前提。
+- **Model**：`left_width`/`right_width`（默认 = LEFTBAR/RIGHTBAR_WIDTH）；
+  `shell_chrome_widths` 读用户宽度分配三列，sash 宽度进预算（4pt×2）；
+  窄窗口紧急收缩语义不变（右栏压 232 → 左栏让位）。中心列保底 320。
+- **顺手修掉**：旧预算 `usable = width - 2` 与两条 1pt 分隔线的组合在行尾
+  留了 2pt 死区（实测 1278 vs 1280）；新预算逐项显式扣 sash，三列 + 两条
+  sash 正好铺满 `side_width`。
+- **测试**：单元（改宽/夹取/合计=可用宽）+ e2e（真实 runtime 里在 sash 上
+  Down→Move(+60)→Up，左栏面板实测变宽 60、sash 跟随）。
+- 验证：app 277/277；四项静态校验全绿。
