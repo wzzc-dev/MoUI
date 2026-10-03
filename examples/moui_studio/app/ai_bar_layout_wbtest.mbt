@@ -642,7 +642,9 @@ test "the context menu opens at the pointer, not at the host corner" {
   let click_x = 400.0
   let click_y = 300.0
   let opened = apply_shell(model, BlocksContextMenu(0, click_x, click_y))
-  guard opened.block_menu is Some((_, sx, sy))
+  guard opened.block_menu is Some((_, sx, sy)) else {
+    abort("test faild")
+  }
   // 坐标被原样记住（视口坐标，不是画布局部坐标）
   assert_eq(sx, click_x)
   assert_eq(sy, click_y)
@@ -675,6 +677,12 @@ test "the context menu opens at the pointer, not at the host corner" {
   assert_true(
     (mx - click_x).abs() < 260.0,
     msg="menu x=\{mx} should be near the pointer x=\{click_x}",
+  )
+  // **主方向向右**（用户报的缺陷：菜单一直向左弹）：第一候选是 BelowStart
+  // ——菜单左缘对齐指针、向右下展开；指针周围的绘制 x 不得在指针左侧。
+  assert_true(
+    mx >= click_x,
+    msg="menu x=\{mx} must open rightward from the pointer x=\{click_x}",
   )
   // 垂直：菜单在指针的上下一个菜单高度内（不是画布另一端）
   assert_true(

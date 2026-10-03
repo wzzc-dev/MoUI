@@ -123,9 +123,23 @@ fn shell_view(
     )
   }
   let main_col = @views.column(
-    [workspace_seg, ide_bottom_bar(model, t, center_width, bottom_height)],
+    [
+      workspace_seg,
+      // 底栏宽度跟随 main_col：全屏页（运行/预览/帮助）没有左右栏，
+      // 若仍用 `center_width`（按「左栏+右栏都在」分配的宽），底栏只铺
+      // 左半段，右侧留一条空白（实测运行页 AI 栏右侧全空）。
+      ide_bottom_bar(
+        model,
+        t,
+        if fullscreen { side_width } else { center_width },
+        bottom_height,
+      ),
+    ],
     spacing=0.0,
-  ).frame(width=center_width, height=lower_height)
+  ).frame(
+    width=if fullscreen { side_width } else { center_width },
+    height=lower_height,
+  )
   let lower_cells : Array[@moui.View[Msg]] = []
   if !fullscreen {
     match chrome_widths.left {
@@ -380,11 +394,17 @@ fn studio_overlay_host(
       },
       placement=Some(
         @views.PresentationPlacement::new(
+          // 候选顺序 = 右键菜单的方向偏好。锚点是**零尺寸**的指针点，
+          // `…End` 会把菜单**右缘**对齐到指针（向左展开）、`…Start` 把
+          // **左缘**对齐到指针（向右展开）。此前 BelowEnd 打头，菜单
+          // 永远向左弹（用户报的缺陷）；成熟菜单（macOS/Windows/Scratch）
+          // 的主方向都是「向右下展开」，仅在视口边缘翻转：
+          // 先右下 → 右上（贴底时）→ 左下（贴右缘时）→ 左上（角落）。
           candidates=[
-            @views.PresentationPlacementCandidate::BelowEnd,
-            @views.PresentationPlacementCandidate::AboveEnd,
             @views.PresentationPlacementCandidate::BelowStart,
             @views.PresentationPlacementCandidate::AboveStart,
+            @views.PresentationPlacementCandidate::BelowEnd,
+            @views.PresentationPlacementCandidate::AboveEnd,
           ],
           viewport_insets=@core.Insets::all(8.0),
         ),

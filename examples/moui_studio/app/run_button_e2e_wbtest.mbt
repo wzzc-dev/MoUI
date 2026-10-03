@@ -88,3 +88,124 @@ test "click topbar run button starts the run (e2e)" {
   }
   assert_true(in_run_view)
 }
+
+///|
+/// 端到端复现用户报的两个运行页缺陷：
+/// ① 「运行」**装填不执行**——运行页舞台是设计的初始值（标签为空），
+///    点了舞台上的「点我」按钮标签才出现问候语；
+/// ② 运行页底栏（AI 输入条）**铺满中心列整行**——全屏页没有左右栏，
+///    底栏不能再按「扣掉左右栏」的 center_width 定宽（右侧留一条空白）。
+test "run arms the stage with empty label; bottom bar spans the full width (e2e)" {
+  let sink : Ref[(@core.Frame) -> Unit] = Ref(fn(_frame) { () })
+  let registered : Ref[Bool] = Ref(false)
+  let runtime = @runtime.new_program_with_dimensions(
+    program=program(
+      environment=@services.AppEnvironment::new(timer=Some(
+        fake_timer_source(sink, registered),
+      )),
+    ),
+    width=1280.0,
+    height=800.0,
+  )
+  let click_text = fn(runtime : @runtime.AppRuntime, needle : String) {
+    let commands = runtime.draw_commands()
+    let mut frame : @core.Rect? = None
+    for command in commands {
+      match command {
+        // **精确匹配**：contains 会点到「运行审计」页签（它也含「运行」），
+        // 顶栏按钮的文案就是整词「运行」。
+        @core.DrawText(run) => if run.text == needle { frame = Some(run.frame) }
+        _ => ()
+      }
+    }
+    match frame {
+      Some(rect) => {
+        let center = @core.Point::new(
+          x=rect.origin.x + rect.size.width / 2.0,
+          y=rect.origin.y + rect.size.height / 2.0,
+        )
+        runtime.dispatch_event(
+          @core.Pointer(@core.PointerEvent::new(position=center, phase=@core.Down)),
+        )
+        runtime.dispatch_event(
+          @core.Pointer(@core.PointerEvent::new(position=center, phase=@core.Up)),
+        )
+        true
+      }
+      None => false
+    }
+  }
+  let has_text = fn(runtime : @runtime.AppRuntime, needle : String) {
+    let mut found = false
+    for command in runtime.draw_commands() {
+      match command {
+        @core.DrawText(run) => if run.text.contains(needle) { found = true }
+        _ => ()
+      }
+    }
+    found
+  }
+  // 点顶栏「运行」→ 运行页
+  assert_true(click_text(runtime, "运行"))
+  // ① 装填不执行：舞台标签还是空的——问候语**尚未出现**
+  assert_false(
+    has_text(runtime, "你好，MoUI Studio！"),
+    msg="the greeting must not appear before the button is clicked",
+  )
+  // ② 底栏铺满整行：底栏条带里有面板底色的矩形横贯（宽 ≥ 内容行的 95%）
+  let panel = ide_panel()
+  let commands = runtime.draw_commands()
+  let mut bar_width = 0.0
+  for command in commands {
+    match command {
+      @core.FillRect(rect, color) =>
+        // 底栏条带：状态栏之上、内容区之下（y 取窗口下部 1/4）
+        if color.r == panel.r &&
+          color.g == panel.g &&
+          color.b == panel.b &&
+          rect.origin.y > 600.0 &&
+          rect.size.width > bar_width {
+          bar_width = rect.size.width
+        }
+      @core.FillRoundedRect(rounded, color) => {
+        let rect = rounded.rect
+        if color.r == panel.r &&
+          color.g == panel.g &&
+          color.b == panel.b &&
+          rect.origin.y > 600.0 &&
+          rect.size.width > bar_width {
+          bar_width = rect.size.width
+        }
+      }
+      // 容器底色走 brush 变体（与 shell_rects 同一教训：只收非 brush
+      // 变体会让「底栏在哪」这类断言全部落空）。
+      @core.FillRoundedRectBrush(rounded, @graphics.Brush::Solid(color)) => {
+        let rect = rounded.rect
+        if color.r == panel.r &&
+          color.g == panel.g &&
+          color.b == panel.b &&
+          rect.origin.y > 600.0 &&
+          rect.size.width > bar_width {
+          bar_width = rect.size.width
+        }
+      }
+      _ => ()
+    }
+  }
+  assert_true(
+    bar_width >= 1232.0 * 0.95,
+    msg="bottom bar width=\{bar_width} should span the content row (1232)",
+  )
+  // 点舞台上的「点我」按钮 → 问候语出现（事件驱动的执行）
+  assert_true(click_text(runtime, "点我"))
+  // 泵几帧让派发的子程序跑完
+  for index in 0..<10 {
+    (sink.val)(
+      @core.Frame::new(time_ms=index.to_double() * 30.0, delta_ms=30.0),
+    )
+  }
+  assert_true(
+    has_text(runtime, "你好，MoUI Studio！"),
+    msg="clicking the stage button must show the greeting",
+  )
+}

@@ -39,12 +39,25 @@ pub fn blocks_slot_hit(
   y : Double,
   measure : (String) -> Double,
   y_offset? : Double = 0.0,
+  lead_texts? : Array[String] = [],
 ) -> SlotHit? {
   let mut index = 0
   for item in blocks {
     let rect = rects[index]
     let local_y = y + y_offset
-    match slot_hit_in_row(item, rect, x, local_y, measure) {
+    let lead_text = if index < lead_texts.length() {
+      lead_texts[index]
+    } else {
+      ""
+    }
+    match slot_hit_in_row(
+      item,
+      rect,
+      x,
+      local_y,
+      measure,
+      blocks_row_lead_width(item, lead_text, measure),
+    ) {
       Some(entry) => {
         let path = match entry.0.expr_path {
           Some(path) => path
@@ -69,14 +82,19 @@ pub fn blocks_slot_hit(
 ///|
 /// **所有洞的几何**：一份推演，绘制与命中都读它。
 ///
-/// 这是本模块的核心纪律：洞的位置 = 标签前缀宽度 + 前面所有段宽度之和。
-/// 绘制层要它来画凹槽、命中层要它来判点击——**两处各算一份就会一起偏**，
-/// 而且只测其中一边的用例发现不了（画对了点错了，或反之）。所以只留
-/// 这一个函数产出 `(表达式路径, 矩形, 是否有内容)`，两边都消费它。
+/// 这是本模块的核心纪律：洞的位置 = 标签前缀宽度 + 引导宽 + 前面所有段
+/// 宽度之和。绘制层要它来画凹槽、命中层要它来判点击——**两处各算一份就
+/// 会一起偏**，而且只测其中一边的用例发现不了（画对了点错了，或反之）。
+/// 所以只留这一个函数产出 `(表达式路径, 矩形, 是否有内容)`，两边都消费它。
+///
+/// `lead` 是**引导宽**（标签起始 x 到第一段字形的距离 = 箭头前缀 + 本地化
+/// 标签宽，见 `blocks_row_lead_width`）。缺省 0 = 标签从 `item.text` 直接
+/// 开始（纯逻辑测试的口径）。
 pub fn blocks_slot_rects(
   item : @blocks.BlockItem,
   rect : @geometry.Rect,
   measure : (String) -> Double,
+  lead? : Double = 0.0,
 ) -> Array[(@blocks.TextSegment, @geometry.Rect)] {
   let result : Array[(@blocks.TextSegment, @geometry.Rect)] = []
   let segments = match item.segments {
@@ -89,7 +107,7 @@ pub fn blocks_slot_rects(
     @blocks.BkIf | @blocks.BkElseIf | @blocks.BkWhile => true
     _ => false
   }
-  let label_x = rect.origin.x + (if badge { 28.0 } else { 10.0 })
+  let label_x = rect.origin.x + (if badge { 28.0 } else { 10.0 }) + lead
   let mut cursor = label_x
   for segment in segments {
     let width = measure(segment.text)
@@ -123,12 +141,25 @@ pub fn blocks_value_hit(
   y : Double,
   measure : (String) -> Double,
   y_offset? : Double = 0.0,
+  lead_texts? : Array[String] = [],
 ) -> SlotHit? {
   let mut index = 0
   for item in blocks {
     let rect = rects[index]
     let local_y = y + y_offset
-    match value_hit_in_row(item, rect, x, local_y, measure) {
+    let lead_text = if index < lead_texts.length() {
+      lead_texts[index]
+    } else {
+      ""
+    }
+    match value_hit_in_row(
+      item,
+      rect,
+      x,
+      local_y,
+      measure,
+      blocks_row_lead_width(item, lead_text, measure),
+    ) {
       Some(entry) => {
         let path = match entry.0.expr_path {
           Some(path) => path
@@ -158,6 +189,7 @@ fn value_hit_in_row(
   x : Double,
   y : Double,
   measure : (String) -> Double,
+  lead : Double,
 ) -> (@blocks.TextSegment, @geometry.Rect)? {
   // 值段与洞段共用同一套几何推演（`blocks_slot_rects` 只产出洞），
   // 所以这里按同样的规则走一遍前缀宽度，但保留**所有**段落。
@@ -169,7 +201,7 @@ fn value_hit_in_row(
     @blocks.BkIf | @blocks.BkElseIf | @blocks.BkWhile => true
     _ => false
   }
-  let label_x = rect.origin.x + (if badge { 28.0 } else { 10.0 })
+  let label_x = rect.origin.x + (if badge { 28.0 } else { 10.0 }) + lead
   let mut cursor = label_x
   for segment in segments {
     let width = measure(segment.text)
@@ -201,8 +233,9 @@ fn slot_hit_in_row(
   x : Double,
   y : Double,
   measure : (String) -> Double,
+  lead : Double,
 ) -> (@blocks.TextSegment, @geometry.Rect)? {
-  for entry in blocks_slot_rects(item, rect, measure) {
+  for entry in blocks_slot_rects(item, rect, measure, lead~) {
     let hole = entry.1
     if x >= hole.origin.x && x <= hole.origin.x + hole.size.width &&
       y >= hole.origin.y && y <= hole.origin.y + hole.size.height {

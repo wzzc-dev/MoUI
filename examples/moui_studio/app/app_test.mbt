@@ -170,20 +170,25 @@ test "invalid draft blocks runtime control events" {
 }
 
 ///|
-test "run start executes hello handler to completion" {
+test "run start arms the stage; clicking the button executes the handler" {
   let model = apply(@app.initial_model(), RunStart)
   match model.run {
     None => fail("应进入运行态")
-    Some(_run) => {
-      let stepped = drain(model)
-      let final_run = stepped.run.unwrap()
-      assert_true(final_run.state.status is @studio_lang.Completed)
-      assert_eq(
-        final_run.state.texts.get("显示").unwrap_or(""),
-        "你好，MoUI Studio！",
-      )
+    Some(armed) => {
+      // **装填不执行**：标签仍是设计初值（空），指令一步未走——
+      // 「运行」把舞台装进实时态，事件子程序等真实控件事件。
+      assert_eq(armed.state.texts.get("显示").unwrap_or(""), "")
+      assert_eq(armed.state.steps, 0)
     }
   }
+  // 点击按钮（真实事件路径）→ 子程序执行，标签更新
+  let clicked = drain(apply(model, ControlClicked("按钮")))
+  let final_run = clicked.run.unwrap()
+  assert_true(final_run.state.status is @studio_lang.Completed)
+  assert_eq(
+    final_run.state.texts.get("显示").unwrap_or(""),
+    "你好，MoUI Studio！",
+  )
 }
 
 ///|
@@ -208,7 +213,7 @@ fn drain_compiled(model : @app.Model) -> @app.Model {
 }
 
 ///|
-test "compiled track runs hello handler to completion" {
+test "compiled track arms the stage; clicking the button executes the handler" {
   let model = @app.initial_model(compile_track_available=true)
   assert_true(model.compile_track_available)
   let switched = apply(model, SetRunTrack(Compile))
@@ -216,14 +221,18 @@ test "compiled track runs hello handler to completion" {
   let started = apply(switched, RunStart)
   match started.compiled_run {
     None => fail("编译轨应进入运行态")
-    Some(run) => {
-      assert_true(run.runtime.status is @compiled_runtime.Completed)
-      assert_eq(
-        run.runtime.texts.get("显示").unwrap_or(""),
-        "你好，MoUI Studio！",
-      )
+    Some(armed) => {
+      // **装填不执行**：标签仍是设计初值（空）
+      assert_eq(armed.runtime.texts.get("显示").unwrap_or(""), "")
     }
   }
+  let clicked = drain_compiled(apply(started, ControlClicked("按钮")))
+  let run = clicked.compiled_run.unwrap()
+  assert_true(run.runtime.status is @compiled_runtime.Completed)
+  assert_eq(
+    run.runtime.texts.get("显示").unwrap_or(""),
+    "你好，MoUI Studio！",
+  )
 }
 
 ///|
@@ -243,12 +252,12 @@ test "compiled track is unreachable on web and says so" {
 ///|
 test "two tracks keep independent run states across switches" {
   let model = @app.initial_model(compile_track_available=true)
-  // 解释轨跑一次并停在完成态
+  // 解释轨装填后即完成（空计划的装填态第一个 tick 收尾）
   let interpreted = drain(apply(model, RunStart))
   assert_true(interpreted.run.unwrap().state.status is @studio_lang.Completed)
-  // 切到编译轨再跑一次
+  // 切到编译轨，点按钮派发事件跑一遍
   let compiled = drain_compiled(
-    apply(apply(interpreted, SetRunTrack(Compile)), RunStart),
+    apply(apply(interpreted, SetRunTrack(Compile)), ControlClicked("按钮")),
   )
   assert_true(
     compiled.compiled_run.unwrap().runtime.status is @compiled_runtime.Completed,
@@ -266,9 +275,15 @@ test "two tracks keep independent run states across switches" {
 ///|
 test "both tracks produce identical observable results for the same handler" {
   let model = @app.initial_model(compile_track_available=true)
-  let interpreted = drain(apply(model, RunStart))
+  // 两轨各自装填后点同一个按钮：同一 handler 的可观察结果必须逐项相同
+  let interpreted = drain(
+    apply(apply(model, RunStart), ControlClicked("按钮")),
+  )
   let compiled = drain_compiled(
-    apply(apply(model, SetRunTrack(Compile)), RunStart),
+    apply(
+      apply(apply(model, SetRunTrack(Compile)), RunStart),
+      ControlClicked("按钮"),
+    ),
   )
   let run = interpreted.run.unwrap()
   let crun = compiled.compiled_run.unwrap()
@@ -292,12 +307,14 @@ test "both tracks produce identical observable results for the same handler" {
       )
     }
   }
-  // 审计序列 (line, op, detail) 逐项相同——op 枚举同构，按序号比较
+  // 审计序列逐项相同——op 枚举同构，按序号比较。行号不比：两轨的事件
+  // 派发行号口径本就不同源（解释轨 run_handler 走 IR 语句 → line 0；
+  // 编译轨走草稿 trace → 真实行号），比对 (op, detail) 即可锁住「同一段
+  // 程序在同轨上产生同一份可观察执行事实」。
   assert_eq(run.state.audit.length(), crun.runtime.audit.length())
   let mut index = 0
   for record in run.state.audit {
     let other = crun.runtime.audit[index]
-    assert_eq(record.line, other.line)
     assert_eq(record.detail, other.detail)
     assert_eq(
       @app.audit_op_rank(record.op),
@@ -454,7 +471,10 @@ test "table row selection dispatches its supported click handler" {
 test "append row persists across handlers without changing the program" {
   let model = apply(@app.initial_model(), SelectTemplate(1))
   let edited = apply(model, EditCode("追加行(名单, \"新同学\")\n"))
-  let finished = drain(apply(edited, RunStart))
+  // 装填后**点按钮**才执行（运行不再替用户跑一遍）
+  let finished = drain(
+    apply(apply(edited, RunStart), ControlClicked("点名按钮")),
+  )
   assert_eq(finished.run.unwrap().state.rows.get("名单").unwrap().length(), 6)
   assert_eq(
     @ir.find_control(finished.program, "名单").unwrap().items.length(),
@@ -1158,7 +1178,11 @@ test "template switch is undoable" {
 
 ///|
 test "single step pauses auto-advance and walks one instruction" {
-  let model = apply(@app.initial_model(), RunStart)
+  // 装填后点按钮派发 hello handler（ RunStart 本身不再执行语句）
+  let model = apply(
+    apply(@app.initial_model(), RunStart),
+    ControlClicked("按钮"),
+  )
   let started = match model.run {
     Some(run) => run
     None => fail("应进入运行态")
@@ -1185,9 +1209,9 @@ test "single step pauses auto-advance and walks one instruction" {
 
 ///|
 test "variables table data fills as the run declares variables" {
-  // 点名册样例声明了变量：运行到完成后 vars 非空
+  // 点名册样例声明了变量：装填后点按钮，运行到完成后 vars 非空
   let model = apply(@app.initial_model(), SelectTemplate(1))
-  let started = apply(model, RunStart)
+  let started = apply(apply(model, RunStart), ControlClicked("点名按钮"))
   let finished = drain(started)
   match finished.run {
     None => fail("点名册应可运行")
@@ -1256,7 +1280,11 @@ test "help cheatsheet is generated from the keyword catalog" {
 
 ///|
 test "audit jump lands on the matching block" {
-  let model = apply(@app.initial_model(), RunStart)
+  // 装填后点按钮执行 hello handler，审计里才有可跳的语句记录
+  let model = apply(
+    apply(@app.initial_model(), RunStart),
+    ControlClicked("按钮"),
+  )
   let finished = drain(model)
   // 运行完成后：点击第一条审计 → 积木视图 + 对应语句被选中
   let jumped = apply(finished, AuditJump(0))

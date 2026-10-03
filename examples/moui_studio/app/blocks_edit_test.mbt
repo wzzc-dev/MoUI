@@ -778,7 +778,14 @@ test "reporter slots are drawn at measured text offsets" {
     ),
   ]
   let blocks = @blocks.block_chain(body)
-  let rects = @app.blocks_item_rects(blocks, avail_width=470.0)
+  // 块宽随内容收紧后，矩形由**展示文本**决定——与绘制同一份，否则
+  // 「按 item.text 收窄的块」装不下带标签前缀的整行文字，截断守卫会把
+  // 洞整个跳掉（实测本用例 0 个洞）。
+  let rects = @app.blocks_item_rects(
+    blocks,
+    avail_width=470.0,
+    display_texts=["赋值  x = (1 + 2)"],
+  )
   // 度量：每个字符 7pt（确定性的假度量，便于断言精确位置）
   let per_char = fn(text : String) -> Double {
     text.length().to_double() * 7.0
@@ -806,14 +813,17 @@ test "reporter slots are drawn at measured text offsets" {
   assert_eq(holes.length(), 1)
   let (hx, _, hw, _, hfilled) = holes[0]
   // 洞在字面段 `x = `（4 字符 = 28pt）之后；标签起点 = 块的 x + 10pt
-  // （块的 x 含左外边距，不能假定为 0——这正是第一次写这条断言时算错的地方）
+  // （块的 x 含左外边距，不能假定为 0——这正是第一次写这条断言时算错的地方）。
+  // 未传 lead_texts（纯逻辑测试口径）时引导宽为 0，洞紧跟字面段。
   assert_eq(hx, rects[0].origin.x + 10.0 + 28.0)
   assert_eq(hw, "(1 + 2)".length().to_double() * 7.0)
   // 有内容 → filled
   assert_true(hfilled)
-  // 度量变宽 → 洞右移（位置真的跟着度量走）
+  // 度量变宽 → 洞右移（位置真的跟着度量走）。幅度取 8pt/字符：块宽随内容
+  // 收紧后，过宽的度量会让「标签装不下块」成立，截断守卫正确地跳过洞
+  // （20pt/字符实测就不画了）——那是否定路径，不是本用例的断言对象。
   let wider = fn(text : String) -> Double {
-    text.length().to_double() * 20.0
+    text.length().to_double() * 8.0
   }
   let ops2 = @app.blocks_draw_plan(
     blocks,
@@ -834,4 +844,127 @@ test "reporter slots are drawn at measured text offsets" {
     }
   }
   assert_true(hx2 > hx)
+}
+
+///|
+/// **插槽洞跟着标签前缀走**（引导宽）：展示文本 = 本地化标签 + 语句文本，
+/// 洞的游标必须从标签之后开始——否则洞画在「赋值」两个字底下，与字形
+/// 整个错开（实测「如果」块上孤零零一枚黑洞，用户报的「积木上的黑块」）。
+test "slot holes start after the localized label lead" {
+  // 右值取**复合**表达式：叶子（字面量/变量）是值段不是洞，不产 SlotHole
+  let body = [
+    @ir.Assign("x", @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2))),
+  ]
+  let blocks = @blocks.block_chain(body)
+  let rects = @app.blocks_item_rects(
+    blocks,
+    avail_width=470.0,
+    display_texts=["赋值  x = (1 + 2)"],
+  )
+  // 度量：每字符 7pt。引导 = 「赋值␣␣」（4 字符 = 28pt），字面段 = `x = `
+  // （4 字符 = 28pt）。
+  let per_char = fn(text : String) -> Double {
+    text.length().to_double() * 7.0
+  }
+  let ops = @app.blocks_draw_plan(
+    blocks,
+    ["赋值  x = (1 + 2)"],
+    rects,
+    0,
+    "",
+    None,
+    0.0,
+    0.0,
+    measure=per_char,
+    lead_texts=["赋值  "],
+  )
+  let mut hx = -1.0
+  for op in ops {
+    match op {
+      @app.BlocksDrawOp::SlotHole(x, _, _, _, _) => if hx < 0.0 { hx = x }
+      _ => ()
+    }
+  }
+  assert_true(hx >= 0.0)
+  // 洞在引导（28）+ 字面段（28）之后，标签起点 = 块 x + 10
+  assert_eq(hx, rects[0].origin.x + 10.0 + 28.0 + 28.0)
+}
+
+///|
+/// **块宽随内容收紧**（Scratch 口径）：短语句的块不再撑满画布——用户报的
+/// 「积木左右撑满了」。同时命中区有下限（64pt），「结束」这类小帽仍可点。
+test "block rows hug their content instead of filling the canvas" {
+  let blocks = @blocks.block_chain([@ir.Assign("x", @ir.IntLit(1))])
+  let full = @app.blocks_item_rects(blocks, avail_width=470.0)
+  let hugged = @app.blocks_item_rects(
+    blocks,
+    avail_width=470.0,
+    display_texts=["赋值  x = 1"],
+  )
+  // 满预算（无展示文本，按 item.text 估）也远小于旧的全宽 450
+  assert_true(full[0].size.width < 450.0)
+  // 带展示文本的宽度明显小于画布预算，且有下限
+  assert_true(hugged[0].size.width < 200.0)
+  assert_true(hugged[0].size.width >= 64.0)
+  // 上限仍是画布预算：超长语句不会越出画布
+  let long = @blocks.block_chain([
+    @ir.Assign("计数器", @ir.StrLit("一句非常非常非常长的展示文本来撑满画布")),
+  ])
+  let capped = @app.blocks_item_rects(
+    long,
+    avail_width=200.0,
+    display_texts=["赋值  计数器 = \"一句非常非常非常长的展示文本来撑满画布\""],
+  )
+  assert_true(capped[0].size.width <= 180.0)
+}
+
+///|
+/// **插槽洞画在文字之下**：绘制按 ops 顺序叠层，洞必须先于标签——
+/// 反过来洞会把字形盖掉（「洞里有字」读成「字被黑洞吃了」）。
+test "slot holes are painted beneath the label text" {
+  // 右值取**复合**表达式：叶子是值段不是洞，不产 SlotHole
+  let body = [
+    @ir.Assign("x", @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2))),
+  ]
+  let blocks = @blocks.block_chain(body)
+  let rects = @app.blocks_item_rects(
+    blocks,
+    avail_width=470.0,
+    display_texts=["赋值  x = (1 + 2)"],
+  )
+  let per_char = fn(text : String) -> Double {
+    text.length().to_double() * 7.0
+  }
+  let ops = @app.blocks_draw_plan(
+    blocks,
+    ["赋值  x = (1 + 2)"],
+    rects,
+    0,
+    "",
+    None,
+    0.0,
+    0.0,
+    measure=per_char,
+    lead_texts=["赋值  "],
+  )
+  let mut hole_index = -1
+  let mut label_index = -1
+  let mut i = 0
+  for op in ops {
+    match op {
+      @app.BlocksDrawOp::SlotHole(_, _, _, _, _) =>
+        if hole_index < 0 {
+          hole_index = i
+        }
+      @app.BlocksDrawOp::BlockLabel(_, _, _, _, _) =>
+        if label_index < 0 {
+          label_index = i
+        }
+      _ => ()
+    }
+    i = i + 1
+  }
+  assert_true(hole_index >= 0)
+  assert_true(label_index >= 0)
+  assert_true(hole_index < label_index)
 }

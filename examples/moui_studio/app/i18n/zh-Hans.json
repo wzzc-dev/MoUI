@@ -437,6 +437,7 @@
     "app.run.single.decorative": "这一块是结构标记（否则/结束），没有可运行的语句",
     "app.run.single.no_handler": "当前没有可运行的事件子程序",
     "app.run.single.no_selection": "先选中一条语句，再运行它",
+    "app.run.armed": "等待事件 · 点击控件触发",
     "app.run.stage": "正在运行",
     "app.run.start": "运行",
     "app.run.step": "单步",

@@ -6,6 +6,34 @@
 /// 阅读顺序。
 
 ///|
+/// 积木行的**展示文本**与**引导文本**（一份产出，两处消费）：
+/// - 展示 = 引导 + 语句文本——画布上的整行文字；
+/// - 引导 = 本地化标签 + 两个空格——插槽洞的游标从它的宽度之后开始累加
+///   段宽，所以洞要落在字形上就必须与展示**同源**（两处各拼会错位）。
+///   语句文本为空的行（装饰块）没有段，引导为空串。
+///
+/// 画布绘制（`blocks_canvas` 的 `display_texts`/`lead_texts`）与 update 层
+/// 的命中测试（`blocks_hit_index` 的 `display_texts`）都必须吃这一份。
+pub fn block_row_texts(
+  t : @i18n.Translator,
+  blocks : Array[@blocks.BlockItem],
+) -> (Array[String], Array[String]) {
+  let display : Array[String] = []
+  let lead : Array[String] = []
+  for item in blocks {
+    let label = text(t, @blocks.block_label_key(item.kind))
+    if item.text == "" {
+      display.push(label)
+      lead.push("")
+    } else {
+      display.push("\{label}  \{item.text}")
+      lead.push("\{label}  ")
+    }
+  }
+  (display, lead)
+}
+
+///|
 /// 积木窗格：分类条 + 积木画布（选中块处就地展开编辑卡）。
 /// 分类条点分类滚动到该类首块（选中分类记忆在 model.selected_category）。
 pub fn blocks_pane(
@@ -94,19 +122,15 @@ pub fn blocks_pane(
       )
     Some(handler) => {
       let blocks = @blocks.block_chain(handler.body)
-      let display_texts : Array[String] = []
-      for item in blocks {
-        let label = text(t, @blocks.block_label_key(item.kind))
-        display_texts.push(
-          if item.text == "" {
-            label
-          } else {
-            "\{label}  \{item.text}"
-          },
-        )
-      }
-      let rects = blocks_item_rects(blocks)
-      // 落槽指示线一次算好（链条坐标）
+      let (display_texts, lead_texts) = block_row_texts(t, blocks)
+      // 落槽指示线一次算好（链条坐标）。矩形必须与画布绘制**同一组入参**
+      // （真实画布宽 + 展示文本）：块宽随内容收紧后，宽度进了几何，
+      // 两处各算一份宽度，指示线与块体就对不上了。
+      let rects = blocks_item_rects(
+        blocks,
+        avail_width=canvas_width,
+        display_texts~,
+      )
       let mark = blocks_insert_mark(blocks, rects, model.block_drag)
       let spotlight = current_spotlight(model)
       let sel = model.selected_block
@@ -150,6 +174,7 @@ pub fn blocks_pane(
           expr_drag=model.expr_drag is Some(_),
           script_note~,
           note_height~,
+          lead_texts~,
         ),
         width=canvas_width,
         height=body_height,

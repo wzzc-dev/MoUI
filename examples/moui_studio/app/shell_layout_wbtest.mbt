@@ -393,7 +393,7 @@ test "rejecting a proposal records history without touching the program" {
 }
 
 ///|
-test "starting a run appends an audit entry naming the handler" {
+test "starting a run appends an audit entry for the armed stage" {
   let model = initial_model()
   let audit_before = model.audit_entries.length()
   let running = apply_shell(model, RunStart)
@@ -401,7 +401,11 @@ test "starting a run appends an audit entry naming the handler" {
   assert_true(running.audit_entries.length() > audit_before)
   let last = running.audit_entries[running.audit_entries.length() - 1]
   assert_true(last.kind is AuditRun)
-  assert_true(last.detail.contains("on_click"))
+  // 装填态的启动审计点名「等待事件」而不是某个子程序——「运行」不再
+  // 替用户执行选中的子程序，执行只发生在真实控件事件上。
+  assert_true(
+    last.detail.contains(text(translator_for(ZhHans), "app.run.armed")),
+  )
 }
 
 ///|
@@ -1167,4 +1171,104 @@ test "hover hint reaches the status bar" {
   // 离开即还原（悬停是瞬态）
   let left = apply_shell(hovering, HoverHint(""))
   assert_eq(left.hover_hint, "")
+}
+
+///|
+/// 积木画布的**真实渲染**验收（headless runtime + 真实文本度量）。
+///
+/// 单测里的假度量钉不住「估宽 vs 实渲」这一层；这里走真实布局读回命令：
+/// - 块宽随内容收紧（用户报「积木左右撑满了」）：小积木不再横贯画布列；
+/// - 标签**左对齐**：DrawText 的 frame.x = 块体 x + 徽标占位（此前默认
+///   居中，与洞的左起游标错开）；
+/// - 插槽洞跟在标签字形**之后**（用户报的「积木上的黑块」：洞孤零零画在
+///   标签起点上）。
+test "blocks canvas renders hugging rows with lead-aligned slot holes" {
+  // 走**真实更新路径**造一条 If：选模板后从流程分类插入 if 骨架
+  // （默认模板链里没有 If，画不出洞）。
+  let base = apply_shell(initial_model(), SelectTemplate(2))
+  let model = apply_shell(base, InsertStatement(2, 0))
+  let commands = shell_draw(model, 1280.0, 800.0)
+  // 块体 = FillRoundedRectBrush + 实心画笔，颜色取自 block_fill 色阶。
+  // 画布行的标签是「如果␣␣(…)」（两个空格）——速查表/帮助面板的「如果」
+  // 都不带这个形态，用它锁定积木行，不被同色 end 帽或右栏文本干扰。
+  let if_fill = block_fill(@blocks.BkIf)
+  let call_fill = block_fill(@blocks.BkCall)
+  let mut if_label : @core.TextRun? = None
+  let call_bodies : Array[@core.Rect] = []
+  for run in shell_texts(commands) {
+    if run.text.contains("如果  (") {
+      if_label = Some(run)
+    }
+  }
+  let label = match if_label {
+    Some(run) => run
+    None => fail("the if block label should be drawn on the canvas")
+  }
+  // 同行的棕色块体（If 帽）：y 包住标签行、x 在标签左侧
+  let mut if_body : @core.Rect? = None
+  let mut hole_x : Double? = None
+  let hole_fill = blocks_slot_filled()
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @graphics.Brush::Solid(color)) => {
+        let rect = rounded.rect
+        if color.r == if_fill.r && color.g == if_fill.g && color.b == if_fill.b &&
+          rect.origin.y <= label.frame.origin.y &&
+          label.frame.origin.y <= rect.origin.y + rect.size.height &&
+          rect.origin.x <= label.frame.origin.x {
+          if_body = Some(rect)
+        }
+        // 同行的插槽洞（条件段）
+        if color.r == hole_fill.r &&
+          color.g == hole_fill.g &&
+          color.b == hole_fill.b &&
+          rect.size.height >= 18.0 &&
+          rect.size.height <= 22.0 &&
+          rect.origin.y >= label.frame.origin.y &&
+          rect.origin.y <= label.frame.origin.y + label.frame.size.height {
+          hole_x = Some(rect.origin.x)
+        }
+        if color.r == call_fill.r &&
+          color.g == call_fill.g &&
+          color.b == call_fill.b &&
+          rect.size.height >= 30.0 &&
+          rect.size.height <= 38.0 {
+          call_bodies.push(rect)
+        }
+      }
+      _ => ()
+    }
+  }
+  let body = match if_body {
+    Some(rect) => rect
+    None => fail("the if block body should be drawn behind its label")
+  }
+  // 1) **块宽随内容**：条件块装着「如果  (计数 > 0)」，内容宽远小于画布列
+  //    （1280 视口下画布列 ~600+）；旧实现块宽 = 画布宽 − 边距。
+  assert_true(
+    body.size.width < 420.0,
+    msg="if block width=\{body.size.width} should hug its content",
+  )
+  // 2) **标签左对齐**：标签 run 的 frame.x = 块体 x + 28（徽标占位）。
+  assert_eq(label.frame.origin.x, body.origin.x + 28.0)
+  // 3) **插槽洞在字形之后**：洞的起点必须越过「如果␣␣」的字形
+  //    （真实度量 ≥ 24pt），不再贴着标签起点（用户报的黑块）。
+  let hx = match hole_x {
+    Some(value) => value
+    None => fail("the if block condition slot should be drawn")
+  }
+  assert_true(
+    hx >= body.origin.x + 28.0 + 24.0,
+    msg="slot hole x=\{hx} must sit after the label glyphs (body.x=\{body.origin.x})",
+  )
+  // 洞整体在块体内（不再画到块外）
+  assert_true(hx < body.origin.x + body.size.width)
+  // 4) 命令块同样收紧（链上至少一条 set_text）
+  assert_true(call_bodies.length() > 0)
+  for call in call_bodies {
+    assert_true(
+      call.size.width < 500.0,
+      msg="call block width=\{call.size.width} should hug its content",
+    )
+  }
 }

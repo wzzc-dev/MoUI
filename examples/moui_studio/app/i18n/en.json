@@ -437,6 +437,7 @@
     "app.run.single.decorative": "This is a structural marker (else/end), not a runnable statement",
     "app.run.single.no_handler": "No event handler to run",
     "app.run.single.no_selection": "Select a statement first",
+    "app.run.armed": "Waiting for events — click a control",
     "app.run.stage": "Now running",
     "app.run.start": "Run",
     "app.run.step": "Step",

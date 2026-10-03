@@ -206,7 +206,7 @@ pub fn blocks_visual_rects(
       @geometry.Rect::new(
         x=r.origin.x,
         y=r.origin.y,
-        width=(r.size.width - inset).max(60.0),
+        width=(r.size.width - inset).max(40.0),
         height=r.size.height,
       ),
     )
@@ -251,13 +251,20 @@ pub fn blocks_in_c_body(blocks : Array[@blocks.BlockItem], index : Int) -> Bool 
 /// 积木行矩形。`avail_width` 是画布可用宽：**必须传**（默认值是历史常量，
 /// 只在没有视口信息的纯逻辑测试里用）。
 ///
-/// 为什么要有这个参数：`block_width = 430` 是设计宽，而积木窗格在 1280 窗
-/// 口下只剩 ~370——不夹取的话块体与块文字会直接画到右栏上面去（实测块文字
-/// 右缘 1289 > 裁剪区右缘 1164）。这里的夹取和上层 `scroll_view` 的裁剪区
-/// 是两个层次的保护，缺一不可：夹取让块**长对了**，裁剪区只是兜底。
+/// **块宽随内容**（Scratch 口径）：每行的宽度由展示文本估宽决定，不再
+/// 撑满画布（用户报的「积木左右撑满了」）。估宽与 `fit_label` 同一把尺
+/// （`text_estimate_width`），除以 `LABEL_WIDTH_SAFETY` 抵消 fit_label 的
+/// 安全系数——否则「按估宽定的块」会被 fit_label 再截一次（估宽刚好等于
+/// 预算时省略号照样出现）。上限仍是画布预算：超长语句照旧截成省略号，
+/// 下限 64 保证小积木（如「结束」帽）仍有可点的命中区。
+///
+/// `display_texts` 是**绘制侧展示文本**（本地化标签 + 语句文本）。宽度
+/// 从它算，命中侧就必须传同一份——两处各算一份宽度，「画的块」与「命中
+/// 的块」会错开一截。缺省（纯逻辑测试）按 `item.text` 估，几何自洽。
 pub fn blocks_item_rects(
   blocks : Array[@blocks.BlockItem],
   avail_width? : Double = block_width,
+  display_texts? : Array[String] = [],
 ) -> Array[@geometry.Rect] {
   let rects : Array[@geometry.Rect] = []
   // 预算下限必须**不超过可用宽**：下限高于画布可用宽时块体本身就越出
@@ -268,9 +275,25 @@ pub fn blocks_item_rects(
   )
   for item in blocks {
     let x = block_margin + item.depth.to_double() * block_indent
-    let width = (budget - item.depth.to_double() * block_indent).max(
-      (budget * 0.5).max(60.0),
-    )
+    let display = if rects.length() < display_texts.length() {
+      display_texts[rects.length()]
+    } else {
+      item.text
+    }
+    // 行首内边距：条件块先画一枚徽标（占 28pt），其余 10pt。
+    // 与 `blocks_draw_plan` 的 label_x 偏移同一口径（两处各算会错位）。
+    let lead_pad = match item.kind {
+      @blocks.BkIf | @blocks.BkElseIf | @blocks.BkWhile => 28.0
+      _ => 10.0
+    }
+    // 内容宽 = 内边距 + 展示文本估宽（含返回箭头前缀）÷安全系数 + 右缘余量。
+    // 估宽偏窄 ~2%（见 `fit_label` 的注释），除以安全系数后实渲必然放得下。
+    let prefix = if item.kind is @blocks.BkReturn { "↩ " } else { "" }
+    let content = lead_pad +
+      text_estimate_width("\{prefix}\{display}") / LABEL_WIDTH_SAFETY +
+      12.0
+    let max_width = (budget - item.depth.to_double() * block_indent).max(64.0)
+    let width = content.min(max_width).max(64.0)
     rects.push(
       @geometry.Rect::new(
         x~,
@@ -286,18 +309,20 @@ pub fn blocks_item_rects(
 ///|
 /// 命中测试：返回压点所在行（链条下标），无命中返回 -1。
 ///
-/// `avail_width` **必须与绘制侧同值**（画布可用宽）：绘制用真实宽算块体，
-/// 命中用默认常量就会在「块右缘 → 430」这段空白里误判命中。默认值只服务
+/// `avail_width` 与 `display_texts` **必须与绘制侧同值**（画布可用宽 +
+/// 展示文本）：绘制用真实宽算块体，命中用不同的宽/文本就会在「块右缘 →
+/// 旧默认宽」那段空白里误判命中，或把块内点击判到块外。默认值只服务
 /// 没有视口信息的纯逻辑测试。
 pub fn blocks_hit_index(
   blocks : Array[@blocks.BlockItem],
   x : Double,
   y : Double,
   avail_width? : Double = block_width,
+  display_texts? : Array[String] = [],
 ) -> Int {
   let rects = blocks_visual_rects(
     blocks,
-    blocks_item_rects(blocks, avail_width~),
+    blocks_item_rects(blocks, avail_width~, display_texts~),
   )
   let mut i = rects.length()
   while i > 0 {
@@ -522,6 +547,25 @@ pub fn no_text_measure(_text : String) -> Double {
 }
 
 ///|
+/// 行首箭头前缀：返回块画「↩ 」——「离开子程序」的方向感。
+/// 标签与插槽洞的引导宽度都由它拼出（两处各写一份条件就会错位）。
+fn blocks_row_arrow(item : @blocks.BlockItem) -> String {
+  if item.kind is @blocks.BkReturn { "↩ " } else { "" }
+}
+
+///|
+/// 一行的**插槽引导宽度**：洞的游标从「标签起始 x + 引导宽」开始累加段宽。
+/// 引导 = 箭头前缀 + 本地化标签与分隔空格（`lead_texts`，与展示文本同源
+/// 产出）。绘制（`push_slot_holes`）与命中（`blocks_slot_hit`）都走这里。
+fn blocks_row_lead_width(
+  item : @blocks.BlockItem,
+  lead_text : String,
+  measure : (String) -> Double,
+) -> Double {
+  measure("\{blocks_row_arrow(item)}\{lead_text}")
+}
+
+///|
 pub fn blocks_draw_plan(
   blocks : Array[@blocks.BlockItem],
   display_texts : Array[String],
@@ -532,6 +576,7 @@ pub fn blocks_draw_plan(
   dx : Double,
   dy : Double,
   measure? : (String) -> Double = no_text_measure,
+  lead_texts? : Array[String] = [],
 ) -> Array[BlocksDrawOp] {
   let ops : Array[BlocksDrawOp] = []
   // C 左壁的长度 = **视觉高 − 基础行高**。不另算一份弧高：`blocks_visual_rects`
@@ -561,6 +606,8 @@ pub fn blocks_draw_plan(
     let h = r.size.height
     let display = if i < display_texts.length() { display_texts[i] } else { "" }
     let is_selected = i == selected
+    // 聚光灯只画描边（`BlockStroke`），不再加「▶ 」文字前缀：块宽现在
+    // 随内容收紧，前缀会把高亮行挤出一个省略号（运行态文字跳变）。
     let is_spotlight = item.text != "" && item.text == spotlight
     ops.push(BlockBody(x, y, w, h, item.kind))
     // 榫头：本块在列表中不是第一条才画——首块的上一项是父块（新栈开始）
@@ -598,29 +645,19 @@ pub fn blocks_draw_plan(
       _ => false
     }
     let label_x = if badge { x + 28.0 } else { x + 10.0 }
-    // 返回块：箭头前缀——「离开子程序」的方向感
-    let arrow = if item.kind is @blocks.BkReturn { "↩ " } else { "" }
-    let marker = if is_spotlight { "▶ " } else { "" }
     // 标签按**块宽**截断（设计稿 .blk 是 `text-overflow: ellipsis` 口径）：
-    // 块体已经夹到画布宽，但长语句仍会顶到块右缘之外——用省略号收尾，
+    // 块宽随内容收紧后，只有顶到画布预算的长语句才会截——用省略号收尾，
     // 让「这里有更多内容」是**看得见**的，而不是被画布边缘硬切掉一半。
-    let label_text = "\{marker}\{arrow}\{display}"
+    // 文字**左对齐**（TextStart）：插槽洞的游标正是从 label_x 起按段宽
+    // 累加的，居中会让洞与字形整个错开（实测「如果」块上孤零零一枚黑洞）。
+    let label_text = "\{blocks_row_arrow(item)}\{display}"
     let label_max = (w - (label_x - x) - 10.0).max(40.0)
-    ops.push(
-      BlockLabel(
-        label_text,
-        label_x,
-        y + 8.0,
-        label_max,
-        fit_label(label_text, label_max),
-      ),
-    )
     // **插槽凹槽**（reporter slot）：文本里可再塞一块积木的位置。
     //
-    // 截断判定改用**注入的真实度量**（与洞的位置同一把尺）。此前用
-    // `fit_label` 的字节估算判定，两把尺不一致时会出现「估算说没截断、
-    // 实际字形已越过块宽」——于是洞画到块体之外。度量缺席（全 0）时
-    // 保守跳过：宁可少画，也不要画在字形之外。
+    // 截断判定用**注入的真实度量**（与洞的位置同一把尺）。度量缺席（全 0）
+    // 时保守跳过：宁可少画，也不要画在字形之外。
+    // **洞必须画在文字之下**：先推洞、再推标签——绘制按 ops 顺序叠层，
+    // 反过来洞会把字形盖掉（「洞里有字」读成「字被黑洞吃了」）。
     let measured_label = measure(label_text)
     let not_truncated = measured_label <= 0.0 ||
       measured_label <= label_max * LABEL_WIDTH_SAFETY
@@ -632,9 +669,22 @@ pub fn blocks_draw_plan(
         y + 8.0,
         label_max,
         measure,
-        "\{marker}\{arrow}",
+        blocks_row_lead_width(
+          item,
+          if i < lead_texts.length() { lead_texts[i] } else { "" },
+          measure,
+        ),
       )
     }
+    ops.push(
+      BlockLabel(
+        label_text,
+        label_x,
+        y + 8.0,
+        label_max,
+        fit_label(label_text, label_max),
+      ),
+    )
     if is_selected || is_spotlight {
       ops.push(BlockStroke(x, y, w, h))
     }
@@ -669,8 +719,14 @@ pub(all) enum BlocksDrawOp {
 ///|
 /// 逐段累加宽度，为**插槽段**产出凹槽矩形。
 ///
-/// 段宽来自注入的 `measure`；`prefix` 是标签前缀（聚光灯/返回箭头），
-/// 它占的宽度也要算进去，否则所有洞都会左移一个前缀的距离。
+/// 段宽来自注入的 `measure`；`lead` 是**引导宽**（标签起始 x 到第一段
+/// 字形的距离 = 箭头前缀 + 本地化标签宽，见 `blocks_row_lead_width`）。
+/// 此前这里自己减「前缀宽」推游标，与命中层各算一份——两处一起偏，
+/// 只测一边的用例发现不了。
+///
+/// 该函数按「行矩形 + 徽标占位」推 label_x = rect.x + (28 | 10)。
+/// 这里的 `label_x` 已是绘制坐标，所以反推一个等价的行矩形交给它，
+/// 避免把徽标判定再写一遍（写两遍就会分叉）。
 fn push_slot_holes(
   ops : Array[BlocksDrawOp],
   item : @blocks.BlockItem,
@@ -678,27 +734,20 @@ fn push_slot_holes(
   label_y : Double,
   label_max : Double,
   measure : (String) -> Double,
-  prefix : String,
+  lead : Double,
 ) -> Unit {
-  // **几何来自 `blocks_slot_rects`**（与命中测试同一份），这里只负责把矩形
-  // 变成绘制指令。曾经这里自己累加段宽，与命中层各算一份——两处一起偏，
-  // 只测一边的用例发现不了。
-  //
-  // 该函数按「行矩形 + 徽标占位」推 label_x = rect.x + (28 | 10)。
-  // 这里的 `label_x` 已是绘制坐标，所以反推一个等价的行矩形交给它，
-  // 避免把徽标判定再写一遍（写两遍就会分叉）。
   let badge = match item.kind {
     @blocks.BkIf | @blocks.BkElseIf | @blocks.BkWhile => true
     _ => false
   }
-  let row_x = label_x - measure(prefix) - (if badge { 28.0 } else { 10.0 })
+  let row_x = label_x - (if badge { 28.0 } else { 10.0 })
   let row = @geometry.Rect::new(
     x=row_x,
     y=label_y - 6.0,
     width=label_max + 40.0,
     height=20.0,
   )
-  for entry in blocks_slot_rects(item, row, measure) {
+  for entry in blocks_slot_rects(item, row, measure, lead~) {
     let hole = entry.1
     if hole.origin.x + hole.size.width <= label_x + label_max {
       ops.push(
@@ -733,6 +782,7 @@ pub fn blocks_canvas(
   expr_drag? : Bool = false,
   script_note? : String = "",
   note_height? : Double = 0.0,
+  lead_texts? : Array[String] = [],
 ) -> @moui.View[Msg] {
   // 文本度量：**布局期**量好、**绘制期**取用。
   //
@@ -745,25 +795,42 @@ pub fn blocks_canvas(
   @views.container(
     @views.measured_canvas(
       measure=fn(_constraints, text_system) {
-        // 量本画布会用到的所有段（字面段 + 插槽段）与标签前缀。
-        // 逐段量而不是量整行：洞的位置正是逐段宽度的累加。
+        // 量本画布会用到的所有段（字面段 + 插槽段）、标签前缀与整行标签。
+        // 逐段量而不是量整行：洞的位置正是逐段宽度的累加；整行与引导文本
+        // 也要量——截断判定（`not_truncated`）与洞的起点（引导宽）读它们。
         let cache : Map[String, Double] = Map([])
+        let measure_into = fn(text : String, cache : Map[String, Double]) {
+          if !cache.contains(text) {
+            let font = @text.FontSpec::new(size=12.0)
+            let measured = text_system.measure_text(
+              @core.TextLayoutInput::new(text~, font~),
+            )
+            cache[text] = measured.size.width
+          }
+        }
         let mut index = 0
         for item in blocks {
           match item.segments {
             None => ()
-            Some(segments) => {
+            Some(segments) =>
               for segment in segments {
-                if !cache.contains(segment.text) {
-                  let font = @text.FontSpec::new(size=12.0)
-                  let measured = text_system.measure_text(
-                    @core.TextLayoutInput::new(text=segment.text, font~),
-                  )
-                  cache[segment.text] = measured.size.width
-                }
+                measure_into(segment.text, cache)
               }
-            }
           }
+          // 引导文本（箭头前缀 + 本地化标签）：洞的起点 = 它的宽度
+          let lead_text = if index < lead_texts.length() {
+            lead_texts[index]
+          } else {
+            ""
+          }
+          measure_into("\{blocks_row_arrow(item)}\{lead_text}", cache)
+          // 整行标签：截断判定的实尺
+          let display = if index < display_texts.length() {
+            display_texts[index]
+          } else {
+            ""
+          }
+          measure_into("\{blocks_row_arrow(item)}\{display}", cache)
           index = index + 1
         }
         metrics.val = cache
@@ -780,7 +847,7 @@ pub fn blocks_canvas(
         // 上方预留的空间（而不是叠在第一块积木上）。
         // 链坐标 → 画布局部：减去横幅偏移（`blocks_chain_y` 的逆）。
         let dy = frame.origin.y + note_height
-        let base = blocks_item_rects(blocks, avail_width=width)
+        let base = blocks_item_rects(blocks, avail_width=width, display_texts~)
         // C 形包裹：顶行的矩形向下扩张，把子栈**包在里面**（Scratch 的核心
         // 视觉语义）。绘制用扩张后的矩形，落槽仍用基础行高——插入位置按
         // 「行」算，视觉包裹按「弧」算，两者刻意分开。基础矩形只算一次。
@@ -802,6 +869,7 @@ pub fn blocks_canvas(
           dx,
           dy,
           measure~,
+          lead_texts~,
         )
         // **脚本说明横幅**：画在积木链上方（Scratch 的脚本注释贴在积木旁）。
         // 只在有说明时占位——空说明不画，否则每条子程序上方都会有一条
@@ -868,6 +936,9 @@ pub fn blocks_canvas(
                 @graphics.Brush::solid(block_notch_color()),
               )
             BlockLabel(_text, x, y, maxw, fitted) =>
+              // **左对齐**：插槽洞的游标从 frame.x 起按段宽累加，文字居中
+              // 会让洞与字形整个错开（实测「如果」块上孤零零一枚黑洞——
+              // 用户报的「积木上的黑块」）。
               draw_text(
                 ctx,
                 @text.TextRun::new(
@@ -875,6 +946,7 @@ pub fn blocks_canvas(
                   frame=@geometry.Rect::new(x~, y~, width=maxw, height=20.0),
                   font=@text.FontSpec::new(size=12.0),
                   color=block_text_color(),
+                  align=TextStart,
                 ),
               )
             BlockStroke(x, y, w, h) =>
@@ -961,7 +1033,7 @@ pub fn blocks_canvas(
         y_offset,
         note_height,
       )
-      let hit = blocks_hit_index(blocks, lx, ly, avail_width=width)
+      let hit = blocks_hit_index(blocks, lx, ly, avail_width=width, display_texts~)
       // **存视口坐标**（`position` 就是），不是画布局部坐标：菜单要锚在
       // 指针所在的那一点上，而 `context_menu_region` 的 `Viewport` 锚点
       // 吃的是视口坐标。存局部坐标的话菜单会按画布原点的偏移弹出来，
@@ -986,9 +1058,17 @@ pub fn blocks_canvas(
           None => 0.0
         }
       }
-      let base = blocks_item_rects(blocks, avail_width=width)
+      let base = blocks_item_rects(blocks, avail_width=width, display_texts~)
       let visual = blocks_visual_rects(blocks, base)
-      match blocks_value_hit(blocks, visual, lx, ly, measure, y_offset~) {
+      match blocks_value_hit(
+        blocks,
+        visual,
+        lx,
+        ly,
+        measure,
+        y_offset~,
+        lead_texts~,
+      ) {
         Some(hit) => Msg::EditBlockValue(hit.block_index, hit.expr_path)
         None =>
           // 宽度随消息带上：命中必须用与绘制同一组矩形（见 Msg 上的注释）。
@@ -1038,9 +1118,17 @@ pub fn blocks_canvas(
               None => 0.0
             }
           }
-          let base = blocks_item_rects(blocks, avail_width=width)
+          let base = blocks_item_rects(blocks, avail_width=width, display_texts~)
           let visual = blocks_visual_rects(blocks, base)
-          match blocks_slot_hit(blocks, visual, lx, ly, measure, y_offset~) {
+          match blocks_slot_hit(
+            blocks,
+            visual,
+            lx,
+            ly,
+            measure,
+            y_offset~,
+            lead_texts~,
+          ) {
             Some(hit) =>
               Msg::ExpressionDrop(hit.block_index, hit.expr_path)
             None =>

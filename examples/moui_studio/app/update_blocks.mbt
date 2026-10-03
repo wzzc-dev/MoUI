@@ -261,7 +261,13 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         Some((model, @moui.Effect::none()))
       } else {
         let blocks = block_chain_of(model)
-        let hit = blocks_hit_index(blocks, x, y, avail_width~)
+        // 展示文本与绘制同源（块宽随内容收紧后宽度进了几何）：
+        // 命中不吃同一份，块尾的点击就会落空。
+        let (display_texts, _lead_texts) = block_row_texts(
+          translator(model),
+          blocks,
+        )
+        let hit = blocks_hit_index(blocks, x, y, avail_width~, display_texts~)
         if hit >= 0 {
           Some((select_block(model, hit), @moui.Effect::none()))
         } else {
@@ -274,7 +280,8 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       // 重新分配），指针捕获随元素重建而丢失，拖拽断在第一帧。选中交给
       // 松手后的 tap / 选中跟随。
       let blocks = block_chain_of(model)
-      let hit = blocks_hit_index(blocks, x, y, avail_width~)
+      let (display_texts, _lead_texts) = block_row_texts(translator(model), blocks)
+      let hit = blocks_hit_index(blocks, x, y, avail_width~, display_texts~)
       if hit >= 0 && blocks[hit].path.length() > 0 {
         let item = blocks[hit]
         let list_path = blocks_parent_of(item.path)
@@ -306,7 +313,13 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         None => Some((model, @moui.Effect::none()))
         Some(drag) => {
           let blocks = block_chain_of(model)
-          let rects = blocks_item_rects(blocks, avail_width~)
+          // 展示文本与绘制同源：矩形（宽度）随内容收紧后，两处各算一份
+          // 宽度会让落槽指示与块体错开。纵向判定只吃 y，但矩形必须同源。
+          let (display_texts, _lead_texts) = block_row_texts(
+            translator(model),
+            blocks,
+          )
+          let rects = blocks_item_rects(blocks, avail_width~, display_texts~)
           // 落点列表：指针停在哪个容器里，就落到哪个容器的语句列表。
           // 停在某个 C 形头的行上 → 落进它的**体内**（Scratch 的「拖进洞里」）；
           // 否则与源同层（同层重排）。
@@ -616,9 +629,15 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         None => Some((model, @moui.Effect::none()))
         Some((category, template)) => {
           let blocks = block_chain_of(model)
-          let rects = blocks_item_rects(blocks, avail_width~)
+          // 展示文本与绘制同源（块宽随内容收紧后宽度进了几何），
+          // 命中不吃同一份，「拖到块尾松手」就会落空。
+          let (display_texts, _lead_texts) = block_row_texts(
+            translator(model),
+            blocks,
+          )
+          let rects = blocks_item_rects(blocks, avail_width~, display_texts~)
           // 横向决定**容器**（拖进 C 形块的洞里），纵向决定槽位。
-          let hit = blocks_hit_index(blocks, x, y, avail_width~)
+          let hit = blocks_hit_index(blocks, x, y, avail_width~, display_texts~)
           let (list_path, at) = if hit >= 0 && blocks[hit].path.length() > 0 {
             let item = blocks[hit]
             let r = rects[hit]

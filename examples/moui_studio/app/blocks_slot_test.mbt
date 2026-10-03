@@ -904,7 +904,7 @@ test "every flow and command skeleton parses in Chinese" {
 /// 结构树里那一组显示成 `[[app.tree.group.functions]]`，而所有字面量检查
 /// 都是绿的。这条用例把「拼出来的键」也纳入守卫。
 test "every tree group has a catalog entry" {
-  let translator = translator_for(ZhHans)
+  let translator = @app.translator_for(ZhHans)
   let groups = [
     @app.tree_group_window(),
     @app.tree_group_variables(),
@@ -915,7 +915,7 @@ test "every tree group has a catalog entry" {
   ]
   for group in groups {
     let key = @app.tree_group_label_key(group)
-    let label = text(translator, key)
+    let label = @app.text(translator, key)
     // 词条缺失时翻译器回显 `[[键名]]`——这正是要抓的症状
     assert_false(
       label.contains("[["),
@@ -938,14 +938,14 @@ test "bottom tab labels are translated in both languages" {
     "app.bottom.console",
     "app.bottom.problems",
   ]
-  let zh = translator_for(ZhHans)
+  let zh = @app.translator_for(ZhHans)
   for key in keys {
-    let label = text(zh, key)
+    let label = @app.text(zh, key)
     assert_false(label.contains("[["), msg="missing zh entry for \{key}")
   }
   // 中文侧必须真的含汉字（除品牌名这类专有词）
   for key in ["app.bottom.ai", "app.bottom.audit"] {
-    let label = text(zh, key)
+    let label = @app.text(zh, key)
     let mut has_cjk = false
     for ch in label {
       let code = ch.to_int()

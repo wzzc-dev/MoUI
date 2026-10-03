@@ -72,3 +72,39 @@
 - StageLayout/两层画布的缩放都现算 min(帧宽/640, 帧高/480)，三层永不
   失配；导出 runner 模板内嵌同款 StageLayout（自包含副本）。
 - 已知代价：zoom 对真控件是"盒子缩放、字号常量"（文字不随 zoom 放大）。
+
+## 积木画布几何（2026-10，用户报「菜单向左/积木撑满/黑块」一轮）
+
+- **块宽随内容**（Scratch 口径）：`blocks_item_rects` 按展示文本估宽收紧，
+  不再撑满画布。估宽 = `text_estimate_width` ÷ `LABEL_WIDTH_SAFETY`（否则
+  fit_label 的 5% 安全系数会把「按估宽定宽的块」再截一次省略号），下限 64。
+  纪律：**凡是算矩形的路径（draw / 命中 / update 的落槽与 PaletteDrop /
+  blocks_pane 的指示线）必须传同一份 `display_texts`**——宽度进了几何之后，
+  缺了它就是另一组矩形，命中与绘制错开。
+- **插槽洞的游标 = label_x + 引导宽**：引导 = 返回箭头 + 本地化标签 + 两
+  空格（`block_row_texts` 与展示文本同源产出 `lead_texts`；宽度经
+  `blocks_row_lead_width` 用真实度量）。洞游标曾从 label_x 直接累加段宽，
+  而整行文字按默认 `TextCenter` 画——洞（近黑胶囊）孤零零留在左边，就是
+  用户截图里的「积木上的黑块」。修法：标签 `align=TextStart` + 引导宽计入。
+- **洞必须画在文字之下**：绘制按 ops 顺序叠层，`SlotHole` 先于 `BlockLabel`
+  推入——反过来洞会把字形盖掉。
+- 聚光灯不再加「▶ 」文字前缀（`BlockStroke` 描边已表达）：内容宽下前缀
+  会让高亮行被 fit_label 挤出省略号。
+- 右键菜单候选顺序 `BelowStart → AboveStart → BelowEnd → AboveEnd`：锚点
+  是零尺寸指针点，`…End` 把菜单右缘对齐指针（向左弹）。零尺寸锚点下
+  「主方向」完全由候选顺序决定。
+
+## 运行语义与全屏页（2026-10，用户报「没点按钮标签就有内容 / 底栏只占左半」）
+
+- **「运行」= 装填，不执行**：`start_run`/`start_compiled_run` 只进入运行页
+  并建**空计划**运行态（舞台 = 设计初值），事件子程序只在真实控件事件
+  （`ControlClicked`/`RunToggle`/`ControlChanged`/`ControlInputDone`）时经
+  `run_handler` / `dispatch_compiled_event` 派发。此前 RunStart 直接把选中
+  子程序跑完——用户「还没点按钮标签就有内容」。装填态判别：`plan.instrs
+  == 0`（`merge_run_back` 据此跳过「运行完成」审计）。
+- **全屏页（运行/预览/帮助）的底栏必须用 `side_width`**：`shell_chrome_widths`
+  按「左右栏都在」算 `center_width`，而全屏页不渲染左右栏——底栏用
+  center_width 就只铺左半段，右侧一条空白。
+- 已知口径分歧（未修）：两轨事件派发的审计行号不同源——解释轨
+  `run_handler` 走 IR 语句（line 0），编译轨走草稿 trace（真实行号）。
+  跨轨比对审计时只能比 (op, detail)。

@@ -86,132 +86,118 @@ fn run_single_block(model : Model) -> Model {
 }
 
 ///|
+/// 启动运行：**装填，不执行**。
+///
+/// 「运行」进入实时运行页：舞台按**设计的初始值**呈现（标签是空的、
+/// 列表是设计行），事件子程序只在真实控件事件（点按钮/输入/下拉）时
+/// 派发。此前 RunStart 直接把当前选中的子程序跑完一遍——用户「还没点
+/// 按钮标签就有内容」（实测缺陷）：对事件驱动的程序，「运行」的语义是
+/// 装填舞台等事件，不是替用户点一次按钮。
+///
+/// 装填态 = **空语句集**的解释态：第一个 tick 即自然完成（`merge_run_back`
+/// 对空计划不记「运行完成」审计），变量/文本/行从活状态出发；真正的执行
+/// 走 `run_handler`（与事件派发同一条通道），种子在这里推进一格——
+/// 「反复点同一个按钮要能看见不同的随机结果」从装填起算。
 fn start_run(model : Model) -> Model {
   let committed = commit_code(model)
-  match current_handler(committed) {
-    None => { ..committed, notice: "", }
-    Some(handler) => {
-      let language = committed.language.dsl_language()
-      let body = match
-        @studio_lang.parse_handler_body(committed.code_draft, language) {
-        Ok(body) => body
-        Err(error) =>
-          return with_notice(
-            committed,
-            error_message(translator(committed), error),
-            true,
-          )
-      }
-      // 每次启动/派发都推进一格种子（与编译轨 run_handler 同一手法）：
-      // 反复点同一个按钮要能看见不同的随机结果，否则「运行之后点按钮
-      // 没反应」——那其实是有反应但每次都一样。
-      let seed = @studio_lang.next_seed(committed.runtime_seed)
-      let state = @studio_lang.start_run(
-        body,
-        committed.runtime_texts,
-        committed.runtime_values,
-        committed.runtime_rows,
-        seed~,
-        functions=committed.program.functions,
-      )
-      for key in committed.runtime_selections.keys() {
-        match committed.runtime_selections.get(key) {
-          Some(index) => state.selections[key] = index
-          None => ()
-        }
-      }
-      let run = RunModel::{
-        handler_label: "\{handler.control_name}@\{handler.event.tag()}",
-        state,
-        checks: Map([], capacity=8),
-        single_step: false,
-      }
-      // 启动是一条审计事实（不是每次 tick）：时间线要能回答「跑的是哪个
-      // 子程序」，所以记子程序键而不是泛泛的「已启动」。
-      let t = translator(committed)
-      let logged = log_line(
-        committed,
-        LogLevel::LogInfo,
-        text_with(t, "app.log.run_start", [("handler", run.handler_label)]),
-      )
-      let audited = push_audit(
-        logged,
-        AuditRun,
-        text(t, "app.audit.run_start"),
-        run.handler_label,
-      )
-      {
-        ..audited,
-        run: Some(run),
-        mode: ModeRun,
-        notice: "",
-        runtime_seed: seed,
-      }
+  // 草稿不合法：不进运行页（与事件派发同一道闸）。错误已经在编辑器上
+  // （code_error + 诊断），notice 带同一文案，让顶栏动作也有反馈。
+  if committed.code_error != "" {
+    return with_notice(committed, committed.code_error, true)
+  }
+  let seed = @studio_lang.next_seed(committed.runtime_seed)
+  let state = @studio_lang.start_run_stmts(
+    [],
+    committed.runtime_texts,
+    committed.runtime_values,
+    committed.runtime_rows,
+    seed~,
+    functions=committed.program.functions,
+  )
+  for key in committed.runtime_selections.keys() {
+    match committed.runtime_selections.get(key) {
+      Some(index) => state.selections[key] = index
+      None => ()
     }
+  }
+  let t = translator(committed)
+  let run = RunModel::{
+    handler_label: text(t, "app.run.armed"),
+    state,
+    checks: Map([], capacity=8),
+    single_step: false,
+  }
+  // 装填也是一条审计事实：时间线要能回答「运行页是什么时候进入的」。
+  let logged = log_line(
+    committed,
+    LogLevel::LogInfo,
+    text_with(t, "app.log.run_start", [("handler", run.handler_label)]),
+  )
+  let audited = push_audit(
+    logged,
+    AuditRun,
+    text(t, "app.audit.run_start"),
+    run.handler_label,
+  )
+  {
+    ..audited,
+    run: Some(run),
+    mode: ModeRun,
+    notice: "",
+    runtime_seed: seed,
   }
 }
 
 ///|
-/// 编译轨启动：同一程序 IR → `compiled_runtime` 执行面（native 可达）。
-/// 与解释轨共用控制名/事件查找；找不到 handler 与解释轨一样不动。
+/// 编译轨启动：**装填，不执行**（与解释轨 `start_run` 同一语义）。
+/// IR → `compiled_runtime` 执行面就绪，事件（点按钮/输入/下拉）时经
+/// `dispatch_compiled_event` 派发对应 handler——每次事件都重建 Runtime，
+/// 所以装填态只是「待命」的载体，不预先跑任何子程序。
 fn start_compiled_run(model : Model) -> Model {
   let committed = commit_code(model)
   if committed.code_error != "" {
-    return { ..committed, notice: "", }
+    return with_notice(committed, committed.code_error, true)
   }
-  match
-    @ir.parse_event_kind(
-      handler_event_of(committed.selected_handler).unwrap_or(""),
-    ) {
-    None => { ..committed, notice: "", }
-    Some(event) => {
-      let control = handler_control_of(committed.selected_handler).unwrap_or("")
-      match compiled_handler_for(committed, control, event) {
-        None => { ..committed, notice: "", }
-        Some(handler) => {
-          let runtime = @compiled_runtime.runtime_for_program(
-            committed.program,
-            lower=Some(@compiled_runtime.lower_user_function),
-          )
-          for key in committed.runtime_selections.keys() {
-            match committed.runtime_selections.get(key) {
-              Some(index) => runtime.selections[key] = index
-              None => ()
-            }
-          }
-          seed_compiled_runtime(runtime, committed)
-          // 采样事件起点：编译轨的 Runtime 每次事件都重建，种子必须由 app
-          // 显式接续（否则每次都从 RANDOM_SEED 起算 = 点十次同一个结果）。
-          let seed = @compiled_runtime.next_seed(committed.runtime_seed)
-          runtime.rng = seed
-          // 勾选框视觉状态是 app 层私有：切轨/重开事件时保留现值，
-          // 不因启动一次新运行而丢弃。
-          let checks : Map[String, Bool] = Map([], capacity=8)
-          match committed.compiled_run {
-            Some(previous) =>
-              for key in previous.checks.keys() {
-                match previous.checks.get(key) {
-                  Some(value) => checks[key] = value
-                  None => ()
-                }
-              }
-            None => ()
-          }
-          ignore(@compiled_runtime.run_handler(runtime, handler))
-          {
-            ..committed,
-            compiled_run: Some(CompiledRun::{
-              handler_label: handler_key(control, event.tag()),
-              runtime,
-              checks,
-            }),
-            mode: ModeRun,
-            notice: "",
-            runtime_seed: seed,
-          }
+  let runtime = @compiled_runtime.runtime_for_program(
+    committed.program,
+    lower=Some(@compiled_runtime.lower_user_function),
+  )
+  for key in committed.runtime_selections.keys() {
+    match committed.runtime_selections.get(key) {
+      Some(index) => runtime.selections[key] = index
+      None => ()
+    }
+  }
+  seed_compiled_runtime(runtime, committed)
+  // 采样事件起点：编译轨的 Runtime 每次事件都重建，种子必须由 app
+  // 显式接续（否则每次都从 RANDOM_SEED 起算 = 点十次同一个结果）。
+  let seed = @compiled_runtime.next_seed(committed.runtime_seed)
+  runtime.rng = seed
+  // 勾选框视觉状态是 app 层私有：切轨/重开事件时保留现值，
+  // 不因启动一次新运行而丢弃。
+  let checks : Map[String, Bool] = Map([], capacity=8)
+  match committed.compiled_run {
+    Some(previous) =>
+      for key in previous.checks.keys() {
+        match previous.checks.get(key) {
+          Some(value) => checks[key] = value
+          None => ()
         }
       }
-    }
+    None => ()
+  }
+  {
+    ..committed,
+    compiled_run: Some(
+      CompiledRun::{
+        handler_label: text(translator(committed), "app.run.armed"),
+        runtime,
+        checks,
+      },
+    ),
+    mode: ModeRun,
+    notice: "",
+    runtime_seed: seed,
   }
 }
 
@@ -443,22 +429,28 @@ fn merge_run_back(model : Model) -> Model {
         // 运行收尾是**唯一**的终态汇合点（tick / 单步 / 事件回灌都经过
         // 这里），所以审计只在这里记一次：失败记错误卡，成功记完成事实。
         // 散在各调用点记会重复计数，每次 tick 都刷一条。
+        // **装填态（空计划）不记收尾**：装填的解释态第一个 tick 就「完成」，
+        // 那不是一次运行——记一条毫无内容的「运行完成」是纯噪音。
         let t = translator(model)
-        let settled = match run.state.status {
-          @studio_lang.Failed => {
-            let reason = match run.state.error {
-              Some(error) => error_message(t, error)
-              None => text(t, "app.audit.run_failed.detail")
+        let settled = if run.state.plan.instrs.length() == 0 {
+          model
+        } else {
+          match run.state.status {
+            @studio_lang.Failed => {
+              let reason = match run.state.error {
+                Some(error) => error_message(t, error)
+                None => text(t, "app.audit.run_failed.detail")
+              }
+              push_audit_error(model, text(t, "app.audit.run_failed"), reason)
             }
-            push_audit_error(model, text(t, "app.audit.run_failed"), reason)
+            _ =>
+              push_audit(
+                model,
+                AuditOk,
+                text(t, "app.audit.run_done"),
+                run.handler_label,
+              )
           }
-          _ =>
-            push_audit(
-              model,
-              AuditOk,
-              text(t, "app.audit.run_done"),
-              run.handler_label,
-            )
         }
         settled
         // 停在副作用闸门：这一步会真的对外产生效果，必须先确认。

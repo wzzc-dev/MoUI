@@ -114,20 +114,15 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     Some(handler) => {
       let spotlight = current_spotlight(model)
       let blocks = @blocks.block_chain(handler.body)
-      // 展示名预渲染（画布 draw 闭包拿不到翻译器）：
-      // 有文本的语句 = 分类标签 + 语句文本；控制流块 = 分类标签
-      let display_texts : Array[String] = []
-      for item in blocks {
-        let label = text(t, @blocks.block_label_key(item.kind))
-        display_texts.push(
-          if item.text == "" {
-            label
-          } else {
-            "\{label}  \{item.text}"
-          },
-        )
-      }
-      let rects = blocks_item_rects(blocks)
+      // 展示名与引导文本同源产出（画布 draw 闭包拿不到翻译器）：
+      // 有文本的语句 = 分类标签 + 语句文本；控制流块 = 分类标签。
+      // 引导文本决定插槽洞的起点，必须与展示一起给画布。
+      let (display_texts, lead_texts) = block_row_texts(t, blocks)
+      let rects = blocks_item_rects(
+        blocks,
+        avail_width=420.0,
+        display_texts~,
+      )
       let canvas_height = rects.length().to_double() * 40.0 + 24.0
       let blocks_view = blocks_canvas(
         blocks,
@@ -138,6 +133,7 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
         420.0,
         canvas_height,
         text(t, "app.blocks.canvas"),
+        lead_texts~,
       )
       let editor : Array[@moui.View[Msg]] = []
       if model.selected_block >= 0 && model.selected_block < blocks.length() {

@@ -124,6 +124,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide", GeneratedI18nMessage::Text("Hide this pane")),
       ("app.pane.live", GeneratedI18nMessage::Text("Live App")),
       ("app.pane.solo", GeneratedI18nMessage::Text("Show live app only")),
+      (
+        "app.run.armed",
+        GeneratedI18nMessage::Text("Waiting for events — click a control"),
+      ),
       ("app.run.audit", GeneratedI18nMessage::Text("Execution log")),
       ("app.run.stage", GeneratedI18nMessage::Text("Now running")),
       ("app.run.start", GeneratedI18nMessage::Text("Run")),
@@ -1557,6 +1561,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide", GeneratedI18nMessage::Text("隐藏此窗格")),
       ("app.pane.live", GeneratedI18nMessage::Text("实时应用")),
       ("app.pane.solo", GeneratedI18nMessage::Text("只看实时应用")),
+      (
+        "app.run.armed",
+        GeneratedI18nMessage::Text("等待事件 · 点击控件触发"),
+      ),
       ("app.run.audit", GeneratedI18nMessage::Text("执行记录")),
       ("app.run.stage", GeneratedI18nMessage::Text("正在运行")),
       ("app.run.start", GeneratedI18nMessage::Text("运行")),
