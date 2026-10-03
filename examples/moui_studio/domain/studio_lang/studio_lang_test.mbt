@@ -334,7 +334,7 @@ test "submit_data gate reject skips but completes" {
 }
 
 ///|
-test "ask gate returns bool and short circuits" {
+test "ask gate returns the answer text and short circuits" {
   let state = @studio_lang.start_run_stmts(
     parse_body_ir(
       "变量 回答 = 询问(\"继续?\")\n信息框(转文本(回答))\n",
@@ -347,10 +347,12 @@ test "ask gate returns bool and short circuits" {
   @studio_lang.run_to_end(state)
   assert_true(state.status is @studio_lang.WaitingGate)
   assert_true(state.gate.unwrap().kind is @studio_lang.Ask)
-  @studio_lang.answer_gate(state, true)
+  // **`询问` 的返回值是回答文本**（Scratch 语义），不是「是否确认」。
+  // 这条断言此前写的是 `"true"`——那正是把回答内容丢掉的旧行为。
+  @studio_lang.answer_gate_with_text(state, true, "小明")
   @studio_lang.run_to_end(state)
   assert_true(state.status is @studio_lang.Completed)
-  assert_eq(state.messages[0], "true")
+  assert_eq(state.messages[0], "小明")
 }
 
 ///|

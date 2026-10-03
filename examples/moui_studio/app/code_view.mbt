@@ -783,37 +783,17 @@ pub fn empty_stage(
     spacing=12.0,
     align=Center,
   )
-  // hero 时引导语**上移**：AI 输入框这时升到上方当主角，两者都居中会
-  // 撞在一起（设计稿里 hero 卡直接盖住装饰性的「空 舞 台」字样，但本实现
-  // 的引导语是**可点的入口**——三个模板按钮——被盖住就等于点了没反应）。
-  // 用定长前导 spacer 顶到上沿，而不是按权重分配余量：权重份数随窗口
-  // 高度变化，窄窗口会把引导语又推回卡片底下。
-  let body = if ai_hero(model) {
-    @views.container(
-      @views.column(
-        [
-          @views.spacer(min_length=28.0, weight=0.0),
-          words,
-          @views.spacer(min_length=0.0, weight=1.0),
-        ],
-        spacing=0.0,
-        align=Center,
-      ).frame(width~, height~),
-      background=ide_editor_background(),
-      width~,
-      height~,
-      padding=0.0,
-    )
-  } else {
-    @views.container(
-      @views.center(words, width~, height~),
-      background=ide_editor_background(),
-      width~,
-      height~,
-      padding=0.0,
-    )
-  }
-  body
+  // 引导语**居中**：空舞台不再有「hero 输入框升到上方」这回事——AI 输入条
+  // 已改由底栏页签/右栏停靠承载，不再浮在中心列上，所以引导语不需要让位。
+  // （历史：hero 态曾把引导语用定长前导 spacer 顶到上沿，避免与浮起的
+  // 输入卡撞在一起。输入卡离开中心列后这段分支失去意义。）
+  @views.container(
+    @views.center(words, width~, height~),
+    background=ide_editor_background(),
+    width~,
+    height~,
+    padding=0.0,
+  )
 }
 
 // ============================================================================

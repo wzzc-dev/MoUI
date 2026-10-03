@@ -25,6 +25,89 @@ pub fn current_handler(model : Model) -> @ir.Handler? {
 }
 
 ///|
+/// **当前正在编辑的语句体**——统一「事件子程序」与「自定义积木」。
+///
+/// # 为什么需要这一层
+///
+/// 积木画布、插入面板、键盘导航、值编辑、上下文菜单全都建在
+/// `current_handler` 上（30 处调用）。自定义积木（`FuncDef`）的**体**
+/// 也是一串语句，但它不是 handler——于是建出来的积木**没有编辑面**：
+/// 看得见、改不了名、放不进语句，等于半个功能。
+///
+/// 这里给两者一个公共视图（体 + 写回），让积木界面**同一个画布**编辑
+/// 两种目标。写回按目标类型分派，界面层不必知道自己在编辑哪一种。
+pub(all) struct EditTarget {
+  /// 体所在的对象名（handler 的 `控件.事件` 键，或函数名）
+  label : String
+  body : Array[@ir.Stmt]
+  /// 该体属于自定义积木（函数体的语句规则与事件体不同：可以有 `return`）
+  is_function : Bool
+}
+
+///|
+/// 取当前编辑目标：优先自定义积木（若树里选中了它），否则事件子程序。
+pub fn current_target(model : Model) -> EditTarget? {
+  match selected_function(model) {
+    Some(func) =>
+      Some(EditTarget::{
+        label: func.name,
+        body: func.body,
+        is_function: true,
+      })
+    None =>
+      match current_handler(model) {
+        Some(handler) =>
+          Some(EditTarget::{
+            label: "\{handler.control_name}@\{handler.event.tag()}",
+            body: handler.body,
+            is_function: false,
+          })
+        None => None
+      }
+  }
+}
+
+///|
+/// 把新的体写回它所属的对象（函数或 handler）。
+///
+/// 与 `replace_handler_body` 同一纪律：克隆后替换、不就地改共享数组。
+pub fn replace_target_body(
+  model : Model,
+  label : String,
+  body : Array[@ir.Stmt],
+) -> Model {
+  // 先看是不是自定义积木（按名字定位）
+  let mut func_hit = false
+  for func in model.program.functions {
+    if func.name == label {
+      func_hit = true
+    }
+  }
+  if func_hit {
+    let functions : Array[@ir.FuncDef] = []
+    for func in model.program.functions {
+      if func.name == label {
+        functions.push(@ir.FuncDef::{ ..func, body, })
+      } else {
+        functions.push(func)
+      }
+    }
+    return { ..model, program: { ..model.program, functions, }, }
+  }
+  // 否则按 handler 键写回
+  let handlers : Array[@ir.Handler] = []
+  for handler in model.program.handlers {
+    let key = "\{handler.control_name}@\{handler.event.tag()}"
+    if key == label {
+      handlers.push(@ir.Handler::{ ..handler, body, })
+    } else {
+      handlers.push(handler)
+    }
+  }
+  { ..model, program: { ..model.program, handlers, }, }
+}
+
+///|
 fn handler_control_of(key : String) -> String? {
   let chars : Array[Char] = []
   for c in key {

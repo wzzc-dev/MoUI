@@ -505,6 +505,22 @@ pub fn[Msg] popup_host(
 }
 
 ///|
+/// 这个浮层**要不要挂一层屏障子节点**。
+///
+/// 屏障的职责有两件，任一成立就要挂：
+/// - **模态输入遮蔽**（`Modal`）：背景不可点，且画一层压暗；
+/// - **点别处关闭**（`outside_tap`）：接住菜单之外的按下并回关闭消息。
+///
+/// **三处必须用同一个判据**（`overlay_host_with_sizing` 建子节点、
+/// `OverlayHostNode::layout` 排帧、`place_overlays` 数下标）。早先只有
+/// 「建子节点」那一处判 `Modal`，而 `layout` / `place_overlays` 也各自
+/// 判一次——三份条件一旦不一致，子节点数与帧数就对不上，浮层会整层错位
+/// 或消失（改这一处时实测到了：菜单直接不渲染）。
+fn[Msg] presentation_needs_barrier(presentation : PresentationSpec[Msg]) -> Bool {
+  presentation.modality is Modal || presentation.dismiss.outside_tap
+}
+
+///|
 fn[Msg] overlay_host_with_sizing(
   base : @core.View[Msg],
   presentations : Array[PresentationSpec[Msg]],
@@ -515,7 +531,11 @@ fn[Msg] overlay_host_with_sizing(
   let children : Array[@core.View[Msg]] = [base_child]
   for index, presentation in presentations {
     if presentation.presented {
-      if presentation.modality is Modal {
+      // 判据单点定义在 `presentation_needs_barrier`：`outside_tap` 属于
+      // **关闭策略**而不是模态性（`PresentationDismissPolicy` 的注释也说
+      // 「发送消息与模态输入屏障是刻意分开的」），所以非模态浮层同样要挂
+      // ——否则上下文菜单传了 `outside_tap=true` 也永远收不到关闭消息。
+      if presentation_needs_barrier(presentation) {
         children.push(presentation_barrier(presentation))
       }
       children.push(
@@ -597,7 +617,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
   let mut child_index = 1
   for presentation in self.presentations {
     if presentation.presented {
-      if presentation.modality is Modal {
+      if presentation_needs_barrier(presentation) {
         frames.push(
           @core.Rect::new(
             x=0.0,
@@ -657,7 +677,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
   let mut child_index = 1
   for presentation in self.presentations {
     if presentation.presented {
-      if presentation.modality is Modal {
+      if presentation_needs_barrier(presentation) {
         child_index = child_index + 1
       }
       let measured = if child_index < context.child_sizes.length() {
@@ -805,6 +825,7 @@ fn[Msg] presentation_barrier(
       } else {
         None
       },
+      scrim: presentation.modality is Modal,
     },
     event=(node, context) => {
       match context.event {
@@ -947,6 +968,10 @@ fn[Msg] PresentationSurfaceGuard::event_result(
 priv struct PresentationBarrier[Msg] {
   id : String
   message : Msg?
+  /// 是否画压暗层。**模态才压暗**；只为「点别处关闭」而挂的屏障是
+  /// **透明**的——上下文菜单不该把整个界面压暗（那会读成模态对话框，
+  /// 而菜单不是模态的）。
+  scrim : Bool
 }
 
 ///|
@@ -969,9 +994,11 @@ impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn layout(_self, ctx)
 impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn paint(_self, _ctx) {
   {
     ..@core.ViewPaintPlan::empty(),
-    commands: [
-      FillRect(_ctx.frame, @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.22)),
-    ],
+    commands: if _self.scrim {
+      [FillRect(_ctx.frame, @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.22))]
+    } else {
+      []
+    },
     overlay_commands: [
       FillRect(_ctx.frame, @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     ],

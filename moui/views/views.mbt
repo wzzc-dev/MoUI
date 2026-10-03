@@ -10,7 +10,7 @@
 pub using @button {button, shortcut_button}
 
 ///|
-pub using @canvas {canvas, animated_canvas}
+pub using @canvas {canvas, animated_canvas, measured_canvas}
 
 ///|
 pub using @container {container, card, center, empty, spacer}

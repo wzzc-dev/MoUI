@@ -136,9 +136,21 @@ pub(all) struct DragState {
 /// 积木拖拽态：同层重排——list_path 定位语句列表，from/to 是
 /// 兄弟下标与落槽（落槽 = 落在原下标 to 的语句之前）。
 pub(all) struct BlocksDragState {
+  /// 源语句所在的语句列表路径（拖动前算定）
   list_path : Array[Int]
+  /// 源语句的**完整 IR 路径**（链下标在跨层移动时不够用：目标列表要用
+  /// 路径寻址，而链下标随展开的装饰块变化）。
+  from_path : Array[Int]
   from : Int
+  /// 落槽位置。`to_list` 为空时是「同列表内重排」语义。
   to : Int
+  /// **落点所在的列表路径**（可能跨层：拖进 C 形块的洞里）。
+  /// 空数组 = 顶层。与 `list_path` 不同即为跨层移动——
+  /// 那走 `@blocks.move_stmt_at`，同层仍走 `reorder_stack`。
+  to_list : Array[Int]
+  /// 当前落点**是否被语言规则接受**（`@blocks.drop_accepts_stmt`）。
+  /// 拖拽过程中据此画拒绝反馈；松手时也据此决定要不要真的写 IR。
+  valid : Bool
 }
 
 ///|
@@ -181,12 +193,17 @@ pub(all) enum ContextTab {
 }
 
 ///|
-/// 底栏页签：运行审计 / Console / 问题（诊断汇总）。
+/// 底栏页签：运行审计 / Console / 问题（诊断汇总）/ AI 输入条。
 /// 原来是 `bottom_audit : Bool` 两态开关，问题面板加入后升级为枚举。
+///
+/// `BtAi` 是**输入条的底栏落点**（`AiAnchor::AiBar`）：输入条与三个只读
+/// 面板并列成页签，占用同一块底栏高度，不额外占据中心列。选中它时底栏
+/// 里画出 composer（见 `ide_bottom_bar` 的 body 分派）。
 pub(all) enum BottomTab {
   BtAudit
   BtConsole
   BtProblems
+  BtAi
 }
 
 ///|
@@ -209,6 +226,10 @@ pub(all) enum SideTarget {
   SideVariable(String)
   /// 本地数据条目（列表/表格控件的行，或变量集合）。
   SideData(String)
+  /// **自定义积木**（Scratch 的「我的积木」）：名称 / 参数 / 函数体。
+  /// 选中它之后右栏显示函数名，积木画布进入该函数的体（`current_handler`
+  /// 的对称概念——`current_func`）。
+  SideFunction(String)
 }
 
 ///|
@@ -229,11 +250,22 @@ pub(all) enum ComposerMode {
 pub extend ComposerMode with Eq::{not_equal, equal}
 
 ///|
-/// AI 浮动层锚点：底部居中 / 左下 / 右下 / 停靠右栏。
+/// AI 输入面的落点。**只有两种**，两者都是内联档（各占一个既有面板，
+/// 不盖工作区、不预留任何中心列高度）：
+/// - **底栏**（`AiBar`）：输入条作为底栏的一个页签，与「运行审计 / Console /
+///   问题」并列。这是**默认**——底栏本就贴工作区底边，输入条落在那里是
+///   「命令条」。
+/// - **停靠右栏**（`AiDocked`）：输入条作为右栏顶部的内联卡，与属性/检查器
+///   并列；适合「一边改属性一边问 AI」的长会话。
+///
+/// **历史**：这里曾经还有三个「贴底浮层」锚点（居中/左下/右下）加一个
+/// 药丸收起态，以及配套的「AI 保留带」——中心列底部常驻一条 134pt 的
+/// 横带为浮卡让位。那条带本身是纯结构成本：它横跨左右两个窗格、与相邻
+/// 面只差 1.05:1 而读不出边界，用户报的「这块区域不协调」指的就是它。
+/// 浮层形态被两种内联落点取代后，带、药丸、hero 一并删除——**中心列拿回
+/// 全部高度**，输入条也不再需要一块「预留区」。
 pub(all) enum AiAnchor {
-  AiCenter
-  AiLeft
-  AiRight
+  AiBar
   AiDocked
 }
 
@@ -501,6 +533,11 @@ pub(all) struct Model {
   // 积木视图编辑态：选中块（block_chain 下标，-1 = 无）与语句草稿
   selected_block : Int
   block_draft : String
+  // 正在编辑的**值**：语句链下标 + 表达式路径 + 当前输入文本。
+  // `None` = 没有值编辑在进行（此时画布不画行内输入框）。
+  block_value_edit : (Int, Array[Int], String)?
+  // `询问` 闸门的回答草稿（用户正在输入的内容）。
+  gate_answer_draft : String
   // 悬停中的 IR 路径（None = 没有悬停）。绘制时与 `ir_highlight` 取并集。
   hover_path : Array[Int]?
   // 设计画布拖拽态：按下命中控件时建立，松开清除
@@ -562,9 +599,20 @@ pub(all) struct Model {
   // 最近修改（会话内，最多保留 RECENT_LIMIT 条）
   recent_changes : Array[RecentChange]
   recent_seq : Int
-  // AI 浮动层：锚点 / 是否药丸收起 / 线程卡是否折叠 / 上下文芯片
+  // 积木上下文菜单：打开时记录命中的链下标与锚点（画布局部坐标）
+  block_menu : (Int, Double, Double)?
+  // 正在从调色板拖动的骨架（分类下标, 模板下标）；None = 没在拖
+  palette_drag : (Int, Int)?
+  // 正在拖动的**报告块**（表达式模板下标）；None = 没在拖表达式。
+  // 与 `palette_drag` 分开：语句拖放与表达式拖放的落点语义不同
+  // （插一行 vs 换一个洞），合成一个字段就无法区分意图。
+  expr_drag : Int?
+  // 积木画布的滚动偏移（受控）。拖到画布上下缘附近时按 `Msg::BlocksAutoScroll`
+  // 逐步推进——Scratch/Figma 的「拖到边缘自动滚动」，长链条拖拽的必需项
+  // （不自动滚就只能拖到可视区内，链尾的块永远拖不动）。
+  blocks_scroll_y : Double
+  // AI 输入面：落点（底栏 / 右栏停靠）/ 线程卡是否折叠 / 上下文芯片
   ai_anchor : AiAnchor
-  ai_pill : Bool
   ai_cards_folded : Bool
   ai_context_chips : Array[String]
   // AI 会话卡（会话内）
@@ -657,6 +705,9 @@ pub(all) enum Msg {
   CommitBlock
   DuplicateBlock
   DeleteBlock
+  /// 键盘在积木链里上下移动选中（Scratch/IDE 口径：↑/↓ 走上/下一块）。
+  /// 参数是步长（+1 / -1）。没有选中时从链首开始（+1）或链尾（-1）。
+  SelectBlockStep(Int)
   /// 打开/关闭语句插入面板（分类轨点击；Scratch 积木调色板口径）。
   /// 面板给出该分类可插入的**语句骨架**，点一条即插入到当前选中块之后
   /// （没有选中则插到末尾）。这是「无 AI 也能写程序」的核心入口——
@@ -664,6 +715,88 @@ pub(all) enum Msg {
   ToggleStatementPalette(Int)
   /// 插入一条语句骨架：参数是分类下标与分类内模板下标。
   InsertStatement(Int, Int)
+  /// 从调色板**开始拖**一条骨架（Scratch 的字面手势）。
+  ///
+  /// 调色板与画布是**兄弟视图**，各自只能看到自己的帧；拖动中的指针位置
+  /// 由画布侧的消息补全。所以分两步：按下时记下「正在拖哪条骨架」，
+  /// 画布收到拖动/松手时按指针算落点并派发 `DropStatement`。
+  PaletteDragStart(Int, Int)
+  /// 从调色板**开始拖**一个报告块（表达式）。与语句拖放分开：表达式只能
+  /// 落进**洞**里（替换子表达式），不能插成一行。
+  PaletteExprDragStart(Int)
+  /// **只运行选中的那一条语句**（Scratch 的「点积木就跑它」）。
+  ///
+  /// 语义边界（刻意收窄，避免造出第二套执行模型）：
+  /// - 只跑**该语句本身**，不跑它下面的兄弟——Scratch 的「点击运行」跑的是
+  ///   整个脚本（栈），那是 `RunStart` 已有的语义；
+  /// - 控制流语句（if/循环）会连带跑它的**体内**（那是这一条语句的一部分），
+  ///   但不会跑它之后的兄弟；
+  /// - 是一次**有界沙箱执行**（沿用 `DEFAULT_MAX_STEPS` 与闸门），不是新的
+  ///   执行通道。
+  RunSingleBlock
+  /// 拖拽中指针停在画布上下缘附近 → 自动滚动一档（参数 = 方向：-1 上 / +1 下）。
+  BlocksAutoScroll(Int)
+  /// 用户手动滚动积木画布（受控偏移回报）。
+  BlocksScrolled(Double)
+  /// **新建自定义积木**（Scratch 的「制作一个积木」）。
+  ///
+  /// 语言层 / 解释器 / 编译运行时**早就支持** `FuncDef`（`return` 关键字、
+  /// `functions` 参数、`lower_user_function` 都在），但只能从 JSON 进来——
+  /// 界面上没有任何创建入口，所以「定义一个自己的积木」在积木界面里**做不到**。
+  /// 这条消息补的就是这个入口，走 IR 手术（与 `AddVariable` 同一纪律）。
+  AddFunction
+  /// **给当前编辑目标写说明**（Scratch 的「给这段脚本加注释」）。
+  ///
+  /// `Handler` / `FuncDef` 早就有 `note_zh` / `note_en` 字段，AI 上下文
+  /// （`update_ai.mbt` 的 `handler_note`）也一直在**读**它——但界面上没有
+  /// 任何**写**的入口，所以这两个字段永远是空的。这条消息补上入口。
+  ///
+  /// 写当前界面语言那一份，另一份留空由读取端回退（`handler_note` 已有
+  /// 「本语言为空则用另一语言」的回退逻辑）。
+  EditTargetNote(String)
+  /// 重命名自定义积木（并同步改写所有调用点的函数名）。
+  RenameFunction(String, String)
+  /// 点击积木上的一个**值**（叶子段）→ 就地编辑它（Scratch 的「点值改值」）。
+  ///
+  /// 参数：语句链下标、该值的表达式路径、值类型提示（数字/文本/布尔）。
+  /// 与 `EditBlock`（改整行草稿）分开：值编辑只动那一个叶子，
+  /// 不重新解析整行——整行草稿会把用户没碰的部分也重写一遍。
+  EditBlockValue(Int, Array[Int])
+  /// `询问` 闸门的**回答输入**（Scratch 的「询问并等待」要能打字）。
+  ///
+  /// 此前闸门卡片只给「确认/拒绝」两个按钮，`AnswerGate(Bool)` 也只带布尔
+  /// ——所以 `询问` 的回答内容**根本无从输入**，它只能当「是/否」用，而那
+  /// 不是它的语义。这条消息让用户把回答打进去。
+  GateAnswerInput(String)
+  /// 提交闸门回答（带当前输入的文本）。
+  GateAnswerSubmit
+  /// 值编辑的输入变化（正在编辑的文本）。
+  BlockValueInput(String)
+  /// 值编辑提交。
+  BlockValueCommit
+  /// 值编辑取消（Escape / 点别处）。
+  BlockValueCancel
+  /// 拖动报告块在画布上松手：**画布已解析出**目标洞（语句链下标 + 表达式
+  /// 路径），这里只做落地。
+  ///
+  /// 为什么由画布解析而不是 update：洞的位置 = 逐段文本宽度累加，需要
+  /// `TextSystem`；它只在**布局上下文**里，update 层拿不到。把解析放在
+  /// 画布（与绘制同一份度量）才保证「画在哪就点在哪」。
+  ExpressionDrop(Int, Array[Int])
+  /// 从调色板**拖一个报告块（表达式）进洞**并落下。
+  ///
+  /// 参数：表达式模板下标、目标语句链下标、目标表达式路径。
+  /// 与语句拖放分开：表达式**不能单独成为一条语句**，它只能替换某个
+  /// 子表达式——所以落点语义是「换掉那个洞里的东西」而不是「插一行」。
+  DropExpression(Int, Int, Array[Int])
+  /// 画布上松手时**完成调色板拖放**：按指针算落点容器与位置。
+  PaletteDrop(Double, Double, Double)
+  /// 从调色板**拖一条骨架到画布**并落下（Scratch 的字面手势）。
+  ///
+  /// 参数：分类下标、模板下标、落点列表路径、落点位置。与
+  /// `InsertStatement` 共用 `insert_statement_at` 的校验与手术——
+  /// 拖放只是「落点由指针决定」的插入，不是第二套插入语义。
+  DropStatement(Int, Int, Array[Int], Int)
   GenerateProposal
   AcceptProposal
   RejectProposal
@@ -710,12 +843,30 @@ pub(all) enum Msg {
   // toast 老化节拍（每秒一次；有 toast 时订阅才活跃）
   ToastTick
   ControlInputDone(String)
+  /// 在积木上右键（Scratch/IDE 口径的上下文菜单）。参数是点中的**链下标**
+  /// 与画布内坐标（菜单锚点）。下标 -1 = 点空白处（只显示画布级动作）。
+  BlocksContextMenu(Int, Double, Double)
+  /// 关闭积木上下文菜单（点其他地方 / Escape）。
+  BlocksContextMenuClose
+  /// 菜单动作：**先关菜单再执行动作**，一条消息搞定两件事。
+  ///
+  /// 为什么合成一条：`@views` 的 `on_tap` 每个视图只保留一个（后设的覆盖
+  /// 先设的），所以「点行 = 关菜单 + 执行」不能靠串两次 `on_tap`——
+  /// 实测只会触发最后一个。合成就没有这个歧义。
+  BlocksMenuAction(Msg)
   RunStep
   RunResume
   AuditJump(Int)
-  BlocksCanvasTap(Double, Double)
-  BlocksCanvasPress(Double, Double)
-  BlocksCanvasDragTo(Double, Double)
+  /// 积木画布的三个指针消息都带 `avail_width`（画布可用宽）。
+  ///
+  /// **为什么必须带**：命中与绘制必须用**同一组矩形**。绘制侧
+  /// （`blocks_canvas`）用真实画布宽算块体宽度，而命中侧此前用默认常量
+  /// `block_width = 430`——窄窗格里块被夹窄到 ~370，点在「块右缘到 430」
+  /// 之间的空隙仍会被判成命中（点在空白处却选中了积木）。
+  /// 宽度是视口派生的量，update 层算不出来，只能由视图侧随手势带上。
+  BlocksCanvasTap(Double, Double, Double)
+  BlocksCanvasPress(Double, Double, Double)
+  BlocksCanvasDragTo(Double, Double, Double)
   BlocksCanvasRelease
   RunToggle(String, Bool)
   AnswerGate(Bool)
@@ -778,7 +929,6 @@ pub(all) enum Msg {
   WindowDragBy(Double)
   CycleAiAnchor
   SetAiAnchor(AiAnchor)
-  ToggleAiPill
   ToggleAiCardsFold
   // 快速操作：对齐左/居中/对齐右（设计稿 x=24 边距口径）
   AlignControlLeft(String)
@@ -912,6 +1062,8 @@ pub fn initial_model(
     selected_block: -1,
     hover_path: None,
     block_draft: "",
+    block_value_edit: None,
+    gate_answer_draft: "",
     drag: None,
     runtime_values: @studio_lang.initial_values(program),
     runtime_texts: @studio_lang.initial_texts(program),
@@ -933,17 +1085,24 @@ pub fn initial_model(
     tree_query: "",
     tree_collapsed: [],
     ctx_tab: CtxProps,
-    bottom_open: false,
+    // 底栏默认**展开且选中 AI 页签**：`ai_anchor` 的默认档是 AI 输入条，
+    // 而它由底栏承载——底栏收着就等于「默认档看不见」，那是自相矛盾的
+    // 初始状态（用户第一眼找不到输入条）。三个只读面板仍在同一行，一次
+    // 点击可达。
+    bottom_open: true,
     bottom_height: 168.0,
-    bottom_tab: BtAudit,
+    bottom_tab: BtAi,
     audit_entries: initial_audit,
     audit_seq: initial_audit.length(),
     log_lines: boot_log_lines(program),
     log_seq: 3,
     recent_changes: [],
     recent_seq: 0,
-    ai_anchor: AiCenter,
-    ai_pill: false,
+    block_menu: None,
+    palette_drag: None,
+    expr_drag: None,
+    blocks_scroll_y: 0.0,
+    ai_anchor: AiBar,
     ai_cards_folded: false,
     ai_context_chips: [],
     ai_cards: [],

@@ -75,6 +75,13 @@ fn exec_body(
   body : Array[@studio_lang.TracedStmt],
 ) -> Unit raise ExecError {
   for traced in body {
+    // **语句之间检查运行状态**：`停止全部` 会把状态改成 `Stopped`，
+    // 此后剩余语句一律不再执行。解释轨的 `step_once` 本来就有这道检查
+    // （`if !(state.status is Running) { return }`），编译轨此前**没有**，
+    // 于是同一个程序在两条轨上行为不同——正是差分门该抓的那类偏差。
+    if !(rt.status is Running) {
+      return
+    }
     exec_stmt(rt, traced.stmt, traced.line)
   }
 }
@@ -87,6 +94,11 @@ fn exec_nested(
   line : Int,
 ) -> Unit raise ExecError {
   for stmt in body {
+    // 嵌套块（循环体 / if 体）同样要检查：`停止全部` 可能出现在循环内部，
+    // 不检查会让循环继续跑完整轮。
+    if !(rt.status is Running) {
+      return
+    }
     exec_stmt(rt, stmt, line)
   }
 }
@@ -232,6 +244,30 @@ fn exec_command(
       )
     "broadcast" =>
       rt.broadcast(eval_expr(rt, args[0], line), line)
+    "wait" => {
+      // **语句位的 `等待 N 秒`**：与 `stop_all` 同样是**语句**，所以必须
+      // 进 `exec_command`（语句位分派器），只进 `eval_call` 会报未知内建。
+      let seconds = match eval_expr(rt, args[0], line) {
+        VNum(n) => n
+        VInt(n) => n.to_double()
+        _ =>
+          raise ExecError::RuntimeError(ErrorDetails::{
+            kind: TypeMismatch,
+            line,
+            a: name,
+            b: "number",
+          })
+      }
+      ignore(wait_value(rt, seconds))
+      rt.record(line, OpCommand, detail)
+    }
+    "stop_all" => {
+      // **语句位的 `停止全部`**：`exec_command` 是语句位分派器，与
+      // 表达式位的 `eval_call` 是**两张表**——只往 `eval_call` 加就会
+      // 「表达式位能用、语句位报未知内建」，而 `stop_all` 恰恰是语句。
+      ignore(stop_all(rt))
+      rt.record(line, OpCommand, detail)
+    }
     "append_list" => {
       let list_name = match args[0] {
         @ir.Var(name) => name
@@ -433,6 +469,20 @@ fn eval_call(
     "get_number" => get_number(rt, control_name_of(rt, args[0], line), line)
     "to_text" => to_text(eval_expr(rt, args[0], line))
     "text_length" => text_length(eval_expr(rt, args[0], line), name, line)
+    "mod" =>
+      mod_value(
+        eval_expr(rt, args[0], line),
+        eval_expr(rt, args[1], line),
+        name,
+        line,
+      )
+    "round" => round_value(eval_expr(rt, args[0], line), name, line)
+    "stop_all" => stop_all(rt)
+    "answer" => last_answer(rt)
+    "abs" => abs_value(eval_expr(rt, args[0], line), name, line)
+    "floor" => floor_value(eval_expr(rt, args[0], line), name, line)
+    "ceiling" => ceiling_value(eval_expr(rt, args[0], line), name, line)
+    "sqrt" => sqrt_value(eval_expr(rt, args[0], line), name, line)
     "contains" =>
       contains(
         eval_expr(rt, args[0], line),

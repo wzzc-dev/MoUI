@@ -52,8 +52,17 @@ fn shell_view(
     ModePreview | ModeHelp | ModeRun => true
     _ => false
   }
+  // 底栏高：展开时按**内容**算（AI 页签要装下线程卡，见 `ai_bar_height`），
+  // 收起时只留页签头。写成「模型里那个数」会让 AI 页签在有提案时裁掉线程区
+  // ——高度是算出来的，不是存下来的（`bottom_height` 只作为用户拖拽的下限）。
   let bottom_height = if model.bottom_open {
-    model.bottom_height
+    if model.bottom_tab is BtAi {
+      ai_bar_height(model, center_width_of(model, width), height).max(
+        model.bottom_height,
+      )
+    } else {
+      model.bottom_height
+    }
   } else {
     PANEL_HEAD_HEIGHT
   }
@@ -114,7 +123,7 @@ fn shell_view(
     )
   }
   let main_col = @views.column(
-    [workspace_seg, ide_bottom_bar(model, t, center_width)],
+    [workspace_seg, ide_bottom_bar(model, t, center_width, bottom_height)],
     spacing=0.0,
   ).frame(width=center_width, height=lower_height)
   let lower_cells : Array[@moui.View[Msg]] = []
@@ -130,7 +139,7 @@ fn shell_view(
   lower_cells.push(main_col)
   if !fullscreen && chrome_widths.right > 0.0 {
     lower_cells.push(hairline_v())
-    if model.ai_anchor is AiDocked && !model.ai_pill {
+    if model.ai_anchor is AiDocked {
       lower_cells.push(
         @views.column(
           [
@@ -190,53 +199,21 @@ fn shell_view(
 }
 
 ///|
-/// 中心列的工作区段：工作区内容 + AI 浮动层的叠放宿主。
-/// 避让带：浮动卡（非停靠、非药丸）贴着中心列底部，把内容区按卡高让出来，
-/// 卡片就不会压住窗格脚注或底栏。停靠态在右栏内联，不占中心高度。
-/// stack 给每个子整帧，所以「让出高度」不能靠在 stack 里改子高度做
-/// ——内容仍会被撑满整帧。正确做法是把中心列拆成**上下两段**：
-/// 内容段拿 row_height − 带高，浮动卡段拿带高（卡片在段内贴底）。
+/// 中心列的工作区段：**直接**铺满整行，不再有任何 AI 叠放层或避让带。
 ///
-/// 两种叠放形态，按「要不要让位」选：
-///
-/// - band > 0（浮动卡贴底）：**上下两段**。内容段拿 row_height − band，
-///   浮动卡段拿 band。stack 做不到这件事——stack 给每个子整帧，内容仍会
-///   被撑满，卡片就压在内容上。
-/// - band == 0（hero / 药丸 / 停靠）：**stack 覆盖**。此时浮动层本就该叠在
-///   工作区之上（药丸是角标、hero 是空舞台主角）。若仍用两段式，两段各要
-///   整行高，第二段会被列框裁掉——hero 输入框与药丸会整块消失。
+/// **历史（重要）**：这里曾经是「工作区内容 + AI 浮动层」的叠放宿主，并为
+/// 贴底浮卡在中心列底部预留一条 134pt 的「AI 保留带」——带横跨左右两个
+/// 窗格，与相邻面只差 1.05:1 而读不出边界，用户报的「这块区域不协调」
+/// 就是它。浮层形态被两种内联落点（底栏页签 / 右栏停靠）取代后，带、
+/// 避让计算、分隔线一并删除：**中心列拿回全部高度**，输入条改由它所在的
+/// 那个面板自己承载，不再需要「预留区」这种跨窗格的结构。
 fn center_workspace(
   model : Model,
   t : @i18n.Translator,
   center_width : Double,
   row_height : Double,
 ) -> @moui.View[Msg] {
-  let band = ai_avoidance_band(model, center_width, row_height)
-  let content_height = row_height - band
-  if band > 0.0 {
-    @views.column(
-      [
-        @views.container(
-          workspace_content(model, t, center_width, content_height),
-          width=center_width,
-          height=content_height,
-          padding=0.0,
-        ),
-        @views.container(
-          ai_overlay_layer(model, t, center_width, band),
-          width=center_width,
-          height=band,
-          padding=0.0,
-        ),
-      ],
-      spacing=0.0,
-    ).frame(width=center_width, height=row_height)
-  } else {
-    @views.stack([
-      workspace_content(model, t, center_width, row_height),
-      ai_overlay_layer(model, t, center_width, row_height),
-    ]).frame(width=center_width, height=row_height)
-  }
+  workspace_content(model, t, center_width, row_height)
 }
 
 ///|
@@ -340,59 +317,6 @@ fn workspace_content(
 }
 
 ///|
-/// 避让带高度：浮动卡实际会占的高度；停靠/药丸态为 0（它们不盖内容）。
-/// 与 ai_card_height 同源——两处各算一份，预留量和实际遮挡就会对不上。
-fn ai_avoidance_band(
-  model : Model,
-  center_width : Double,
-  row_height : Double,
-) -> Double {
-  if model.ai_pill || model.ai_anchor is AiDocked {
-    return 0.0
-  }
-  // hero 态不避让：它本身就是空舞台的主角（占了内容区反而没意义，
-  // 而且空舞台没有内容会被遮住）。
-  if ai_hero(model) {
-    return 0.0
-  }
-  let card_width = match model.ai_anchor {
-    AiCenter => (center_width - 20.0).max(320.0).min(680.0)
-    _ => (center_width * 0.42).max(300.0).min(360.0)
-  }
-  let needed = ai_card_height(model, card_width) + 24.0
-  // 卡比工作区还高时不避让（避让只会把内容压没），让它盖着。
-  if needed > row_height * 0.6 {
-    0.0
-  } else {
-    needed
-  }
-}
-
-///|
-/// AI 浮动层：药丸态 → 药丸；展开态 → 浮动卡；无内容 → 空占位
-/// （stack 的子必须占位，否则 stack 尺寸塌成 0）。
-fn ai_overlay_layer(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-  height : Double,
-) -> @moui.View[Msg] {
-  // 停靠态由 workspace_row 并入右栏，这里不重复画
-  if model.ai_anchor is AiDocked {
-    return @views.text("", width=1.0, height=1.0)
-  }
-  // 保留带：底栏展开时把浮动层抬起来，避免压住审计时间线
-  let reserve = if model.bottom_open { model.bottom_height } else { 30.0 }
-  if model.ai_pill {
-    return ai_pill_view(model, t, width, height, reserve)
-  }
-  match ai_layer(model, t, width, height) {
-    Some(layer) => layer
-    None => @views.text("", width=1.0, height=1.0)
-  }
-}
-
-///|
 /// 模态宿主：命令面板 / 设置 / AI 历史。
 /// 三个都是 Modal + Dialog：Dialog 自动居中，Modal 给遮罩与背景语义隐藏，
 /// Escape/点击外部由 dismiss.message 收敛回各自的开关键。
@@ -434,6 +358,43 @@ fn studio_overlay_host(
         message=Some(ToggleAiHistory),
       ),
       presented=model.ai_history_open,
+    ),
+    // **积木右键菜单**：挂在**顶层**宿主上（viewport 大小），而不是画布
+    // 窗格里。
+    //
+    // 为什么必须在顶层：菜单要「点别处关闭」，而关闭靠的是浮层屏障接住
+    // 菜单之外的按下。屏障的覆盖范围 = 宿主的范围——挂在窗格里就只有窗格
+    // 那么大（实测 233×536），在窗口其它地方点根本到不了屏障，菜单
+    // **永远不消失**。顶层宿主铺满视口，屏障才盖得住整个窗口。
+    //
+    // 锚点用 `block_menu` 里存的**视口坐标**（右键点），所以菜单弹在指针处。
+    @views.PresentationSpec::new(
+      id="studio-block-menu",
+      kind=@views.PresentationKind::ContextMenu,
+      content=block_context_menu(model, t),
+      anchor=match model.block_menu {
+        Some((_, x, y)) => @views.PresentationAnchor::Viewport(
+          @core.Point::new(x~, y~),
+        )
+        None => @views.PresentationAnchor::HostBase
+      },
+      placement=Some(
+        @views.PresentationPlacement::new(
+          candidates=[
+            @views.PresentationPlacementCandidate::BelowEnd,
+            @views.PresentationPlacementCandidate::AboveEnd,
+            @views.PresentationPlacementCandidate::BelowStart,
+            @views.PresentationPlacementCandidate::AboveStart,
+          ],
+          viewport_insets=@core.Insets::all(8.0),
+        ),
+      ),
+      dismiss=@views.PresentationDismissPolicy::new(
+        outside_tap=true,
+        escape=true,
+        message=Some(BlocksContextMenuClose),
+      ),
+      presented=model.block_menu is Some(_),
     ),
     // 破坏性操作确认卡：Escape / 点外部 = 取消（confirm.mbt 纪律）。
     @views.PresentationSpec::new(

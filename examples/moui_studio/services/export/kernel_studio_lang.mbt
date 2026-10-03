@@ -313,6 +313,74 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|      kind: Function,
     #|      arity: 1,
     #|    },
+    #|    // **Scratch 运算分类里还缺的两个**：取余与四舍五入。
+    #|    // 二者都是纯函数（无副作用、无状态），补进目录即可让报告块面板也拿到
+    #|    // （面板可达性由不变式用例守住）。
+    #|    BuiltinSpec::{
+    #|      id: "mod",
+    #|      zh: "取余",
+    #|      en: "mod",
+    #|      kind: Function,
+    #|      arity: 2,
+    #|    },
+    #|    BuiltinSpec::{
+    #|      id: "round",
+    #|      zh: "四舍五入",
+    #|      en: "round",
+    #|      kind: Function,
+    #|      arity: 1,
+    #|    },
+    #|    // Scratch 运算分类里其余的数学函数（纯函数、无状态、无副作用）：
+    #|    // 补进目录即可同时获得解释轨、编译轨、代码生成与报告块面板入口。
+    #|    BuiltinSpec::{
+    #|      id: "wait",
+    #|      zh: "等待",
+    #|      en: "wait",
+    #|      kind: Command,
+    #|      arity: 1,
+    #|    },
+    #|    BuiltinSpec::{
+    #|      id: "stop_all",
+    #|      zh: "停止全部",
+    #|      en: "stop_all",
+    #|      kind: Command,
+    #|      arity: 0,
+    #|    },
+    #|    BuiltinSpec::{
+    #|      id: "answer",
+    #|      zh: "回答",
+    #|      en: "answer",
+    #|      kind: Function,
+    #|      arity: 0,
+    #|    },
+    #|    BuiltinSpec::{
+    #|      id: "abs",
+    #|      zh: "绝对值",
+    #|      en: "abs",
+    #|      kind: Function,
+    #|      arity: 1,
+    #|    },
+    #|    BuiltinSpec::{
+    #|      id: "floor",
+    #|      zh: "向下取整",
+    #|      en: "floor",
+    #|      kind: Function,
+    #|      arity: 1,
+    #|    },
+    #|    BuiltinSpec::{
+    #|      id: "ceiling",
+    #|      zh: "向上取整",
+    #|      en: "ceiling",
+    #|      kind: Function,
+    #|      arity: 1,
+    #|    },
+    #|    BuiltinSpec::{
+    #|      id: "sqrt",
+    #|      zh: "平方根",
+    #|      en: "sqrt",
+    #|      kind: Function,
+    #|      arity: 1,
+    #|    },
     #|    BuiltinSpec::{
     #|      id: "contains",
     #|      zh: "文本包含",

@@ -46,6 +46,8 @@ pub(all) enum RunStatus {
   WaitingGate
   Completed
   Failed
+  /// **被 `停止全部` 主动停住**（与 `Failed` 分开：停止不是错误）。
+  Stopped
 }
 
 ///|
@@ -150,11 +152,18 @@ pub(all) struct Runtime {
   mut audit : Array[StepRecord]
   mut status : RunStatus
   mut gate : Gate?
+  /// `等待 N 秒` 的剩余 tick 数（0 = 没在等）。与解释轨 `RunState::wait_ticks`
+  /// 同一语义：用 tick 计数而非墙钟，保证两条轨在同一虚拟时钟下行为一致。
+  mut wait_ticks : Int
   mut error : ErrorDetails?
   mut steps : Int
   max_steps : Int
   mut rng : Int
   mut gate_answers : Array[Bool]
+  /// `询问` 的回答文本（与 `gate_answers` 一一对应）。
+  gate_answer_texts : Array[String]
+  /// 最近一次 `询问` 的回答（`回答` 报告块读取它）。
+  mut last_answer : String
   mut gate_cursor : Int
   mut declared : Array[String]
   // 事务式重放：闸门应答后从头重放，但从运行前快照恢复全部可观察状态，
@@ -211,6 +220,7 @@ pub fn new_runtime(
     audit: [],
     status: Running,
     gate: None,
+    wait_ticks: 0,
     error: None,
     steps: 0,
     max_steps: MAX_STEPS,
@@ -219,6 +229,8 @@ pub fn new_runtime(
     call_depth: 0,
     broadcasts: [],
     gate_answers: [],
+    gate_answer_texts: [],
+    last_answer: "",
     gate_cursor: 0,
     declared,
     active_handler: None,
@@ -278,14 +290,35 @@ pub fn run_handler(rt : Runtime, handler : Handler) -> RunStatus {
 ///|
 /// 闸门应答（FIFO）：记下决定后重放到下一个终止态（完成/闸门/失败）。
 pub fn answer_gate(rt : Runtime, decision : Bool) -> RunStatus {
+  answer_gate_with_text(rt, decision, "")
+}
+
+///|
+/// 带**回答文本**的闸门应答（`询问` 用这个）。与解释轨
+/// `answer_gate_with_text` 同一语义：文本按序入队，并更新 `last_answer`。
+pub fn answer_gate_with_text(
+  rt : Runtime,
+  decision : Bool,
+  text : String,
+) -> RunStatus {
   if !(rt.status is WaitingGate) {
     return rt.status
   }
   rt.gate_answers.push(decision)
+  rt.gate_answer_texts.push(text)
+  if text != "" {
+    rt.last_answer = text
+  }
   rt.gate = None
   rt.status = Running
   attempt(rt)
   rt.status
+}
+
+///|
+/// `回答` 报告块：最近一次询问的回答文本。
+pub fn last_answer(rt : Runtime) -> Value {
+  VStr(rt.last_answer)
 }
 
 ///|
@@ -688,16 +721,8 @@ pub fn index_values(
   index : Value,
   line : Int,
 ) -> Value raise ExecError {
-  let items = match base {
-    VArr(items) => items
-    _ =>
-      raise ExecError::RuntimeError(ErrorDetails::{
-        kind: TypeMismatch,
-        line,
-        a: "index",
-        b: "list",
-      })
-  }
+  // **字符串也能按下标取字符**（Scratch 的「第 N 个字符」），与解释轨
+  // `index_value` 同一语义：1-based，按**字符**而非字节，越界报错。
   let position = match index {
     VInt(n) => n
     VNum(n) => n.to_int()
@@ -709,15 +734,41 @@ pub fn index_values(
         b: "number",
       })
   }
-  if position < 1 || position > items.length() {
-    raise ExecError::RuntimeError(ErrorDetails::{
-      kind: TypeMismatch,
-      line,
-      a: "index",
-      b: "1..\{items.length()}",
-    })
+  match base {
+    VArr(items) => {
+      if position < 1 || position > items.length() {
+        raise ExecError::RuntimeError(ErrorDetails::{
+          kind: TypeMismatch,
+          line,
+          a: "index",
+          b: "1..\{items.length()}",
+        })
+      }
+      items[position - 1]
+    }
+    VStr(text) => {
+      let chars : Array[String] = []
+      for c in text {
+        chars.push(c.to_string())
+      }
+      if position < 1 || position > chars.length() {
+        raise ExecError::RuntimeError(ErrorDetails::{
+          kind: TypeMismatch,
+          line,
+          a: "index",
+          b: "1..\{chars.length()}",
+        })
+      }
+      VStr(chars[position - 1])
+    }
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: "index",
+        b: "list or text",
+      })
   }
-  items[position - 1]
 }
 
 ///|
@@ -1177,6 +1228,162 @@ pub fn text_length(
 }
 
 ///|
+/// 数值强制（与解释轨的二元运算同一口径）：`VNum` 直取、`VInt` 提升，
+/// 其余报类型错。
+pub fn as_number(
+  value : Value,
+  role : String,
+  line : Int,
+) -> Double raise ExecError {
+  match value {
+    VNum(n) => n
+    VInt(n) => n.to_double()
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: TypeMismatch,
+        line,
+        a: role,
+        b: "number",
+      })
+  }
+}
+
+///|
+/// 取余（Scratch 语义：结果**非负**，且整数 % 整数 仍是整数）。
+pub fn mod_value(
+  left : Value,
+  right : Value,
+  role : String,
+  line : Int,
+) -> Value raise ExecError {
+  match (left, right) {
+    (VInt(a), VInt(b)) =>
+      if b == 0 {
+        raise ExecError::RuntimeError(ErrorDetails::{
+          kind: DivideByZero,
+          line,
+          a: "",
+          b: "",
+        })
+      } else {
+        let raw = a % b
+        VInt(if raw < 0 { raw + (if b < 0 { -b } else { b }) } else { raw })
+      }
+    (left, right) => {
+      let a = as_number(left, role, line)
+      let b = as_number(right, role, line)
+      if b == 0.0 {
+        raise ExecError::RuntimeError(ErrorDetails::{
+          kind: DivideByZero,
+          line,
+          a: "",
+          b: "",
+        })
+      } else {
+        VNum(a - b * (a / b).floor())
+      }
+    }
+  }
+}
+
+///|
+/// 等待 N 秒：折算成 tick 数挂起（与解释轨同一语义，折算函数同源）。
+pub fn wait_value(rt : Runtime, seconds : Double) -> Value {
+  rt.wait_ticks = if seconds < 0.0 {
+    1
+  } else {
+    let ticks = (seconds * 1000.0 / 30.0).ceil().to_int()
+    if ticks < 1 { 1 } else { ticks }
+  }
+  VUnit
+}
+
+///|
+/// 宿主每个 tick 调一次：等到了返回 `true`（可以继续）。
+pub fn tick_wait(rt : Runtime) -> Bool {
+  if rt.wait_ticks <= 0 {
+    return true
+  }
+  rt.wait_ticks = rt.wait_ticks - 1
+  rt.wait_ticks <= 0
+}
+
+///|
+/// 停止全部：把运行时标成 `Stopped`。与解释轨同一语义（停止不是错误）。
+pub fn stop_all(rt : Runtime) -> Value {
+  rt.status = Stopped
+  VUnit
+}
+
+///|
+/// 平方根（牛顿迭代，与解释轨同一实现）。
+pub fn sqrt_of(value : Double) -> Double {
+  if value == 0.0 {
+    return 0.0
+  }
+  let mut guess = if value < 1.0 { 1.0 } else { value }
+  let mut i = 0
+  while i < 24 {
+    guess = (guess + value / guess) / 2.0
+    i = i + 1
+  }
+  guess
+}
+
+///|
+/// 绝对值 / 向下取整 / 向上取整 / 平方根：都是**纯数值函数**，走同一个
+/// 强制入口（`as_number`），与解释轨逐项对齐。
+pub fn abs_value(value : Value, role : String, line : Int) -> Value raise ExecError {
+  VNum(as_number(value, role, line).abs())
+}
+
+///|
+pub fn floor_value(
+  value : Value,
+  role : String,
+  line : Int,
+) -> Value raise ExecError {
+  VInt(as_number(value, role, line).floor().to_int())
+}
+
+///|
+pub fn ceiling_value(
+  value : Value,
+  role : String,
+  line : Int,
+) -> Value raise ExecError {
+  VInt((0.0 - (0.0 - as_number(value, role, line)).floor()).to_int())
+}
+
+///|
+pub fn sqrt_value(
+  value : Value,
+  role : String,
+  line : Int,
+) -> Value raise ExecError {
+  let n = as_number(value, role, line)
+  if n < 0.0 {
+    raise ExecError::RuntimeError(ErrorDetails::{
+      kind: TypeMismatch,
+      line,
+      a: role,
+      b: "non-negative number",
+    })
+  }
+  VNum(sqrt_of(n))
+}
+
+///|
+/// 四舍五入到整数（.5 向上）。
+pub fn round_value(
+  value : Value,
+  role : String,
+  line : Int,
+) -> Value raise ExecError {
+  VInt((as_number(value, role, line) + 0.5).floor().to_int())
+}
+
+///|
 pub fn contains(
   haystack : Value,
   needle : Value,
@@ -1347,10 +1554,17 @@ pub fn Runtime::ask(
   let prompt = as_text(question, role, line)
   if self.gate_cursor < self.gate_answers.length() {
     let decision = self.gate_answers[self.gate_cursor]
+    // **`询问` 的返回值是回答文本**（Scratch 语义），与解释轨 `eval_gate`
+    // 完全一致：取同一游标位置的文本；空则回退最近一次回答。
+    let answer = if self.gate_cursor < self.gate_answer_texts.length() {
+      self.gate_answer_texts[self.gate_cursor]
+    } else {
+      ""
+    }
     self.gate_cursor = self.gate_cursor + 1
     let outcome = if decision { "confirmed" } else { "rejected" }
     self.record(line, OpGate, "\{detail} -> \{outcome}")
-    VBool(decision)
+    if answer == "" { VStr(self.last_answer) } else { VStr(answer) }
   } else {
     self.gate = Some(Gate::{ kind: Ask, prompt, payload: "", })
     raise ExecError::GateHalt

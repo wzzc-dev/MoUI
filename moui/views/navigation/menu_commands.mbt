@@ -105,15 +105,29 @@ pub fn[Msg] command_menu(
 }
 
 ///|
+/// 上下文菜单宿主。
+///
+/// `anchor?`：`None` = `HostBase`（锚宿主）；`Some(point)` = 锚**视口坐标
+/// 的某一点**（右键点）——菜单是「在哪儿点的就在哪儿弹」，右键菜单几乎总
+/// 要传它。
+///
+/// `dismiss?` 是**关闭信号**：菜单要「点别处消失」，但 `visible` 由调用方
+/// 持有，框架无法自己清掉——必须回一条消息。不传则只能靠点菜单项关闭，
+/// **点空白处永远不消失**（实测缺陷）。
+///
+/// 本函数用 `popup_host`（`BaseSized`），屏障只盖住宿主那一块，窗口别处的
+/// 点击**到不了屏障**；要全局生效须挂到 viewport 大小的宿主上。
 pub fn[Msg] context_menu_region(
   child~ : @core.View[Msg],
   menu~ : @core.View[Msg],
   visible~ : Bool,
+  anchor? : @core.Point? = None,
+  dismiss? : Msg? = None,
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  // Context menus float above their host, so lift them with the component
-  // overlay shadow (Fluent flyout) or the neutral large elevation shadow.
+  // Context menus float above their host: lift with the component overlay
+  // shadow (Fluent flyout) or the neutral large elevation shadow.
   let panel = @container.container(
     menu,
     variant=Overlay,
@@ -129,12 +143,22 @@ pub fn[Msg] context_menu_region(
       @presentation.PresentationSpec::new(
         id="context-menu",
         kind=ContextMenu,
-        anchor=HostBase,
+        anchor=match anchor {
+          Some(point) => @presentation.PresentationAnchor::Viewport(point)
+          None => HostBase
+        },
         placement=Some(
           @presentation.PresentationPlacement::new(
             candidates=[AboveEnd, BelowEnd, AboveStart, BelowStart],
-            viewport_insets=@core.Insets::all(0.0),
+            viewport_insets=@core.Insets::all(8.0),
           ),
+        ),
+        // 点空白 / 按 Esc 都回同一条 `dismiss` 消息（调用方映射成清
+        // `visible`）。
+        dismiss=@presentation.PresentationDismissPolicy::new(
+          outside_tap=dismiss is Some(_),
+          escape=dismiss is Some(_),
+          message=dismiss,
         ),
         content=panel,
       ),

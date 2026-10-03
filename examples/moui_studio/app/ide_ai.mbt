@@ -40,117 +40,36 @@ pub fn composer_height(width : Double) -> Double {
 }
 
 ///|
-/// AI 浮动层：停靠模式返回右栏内联视图（由调用方放进右栏）；
-/// 其余锚点返回可叠在 stack 上的浮动卡。返回 None 表示药丸收起，
-/// 调用方改画药丸。
+/// 停靠档的 AI 输入面：右栏顶部的内联卡。
+///
+/// **只有停靠档会调用它。** 底栏档由底栏自己画（`ide_bottom_bar` 的
+/// `BtAi` 页签 → `ai_bar_composer`）。两个落点共用同一个 `composer`，
+/// 所以这里只负责「放到右栏里」这一件事。
 pub fn ai_layer(
   model : Model,
   t : @i18n.Translator,
   width : Double,
   height : Double,
 ) -> @moui.View[Msg]? {
-  if model.ai_pill {
-    return None
+  match model.ai_anchor {
+    AiBar => None
+    AiDocked => Some(ai_docked(model, t, width, height))
   }
-  if model.ai_anchor is AiDocked {
-    return Some(ai_docked(model, t, width, height))
-  }
-  Some(ai_floating(model, t, width, height))
 }
 
 ///|
-/// 浮动卡：宽度按锚点收窄（左/右锚 360，居中 480），
-/// 高度自适应内容但钳在可用高度内。
-fn ai_floating(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-  height : Double,
-) -> @moui.View[Msg] {
-  // 设计稿：底部居中 680（窄窗口按容器收），左右锚 360，hero 700。
-  let hero = ai_hero(model)
-  let card_width = if hero {
-    (width - 20.0).max(320.0).min(700.0)
-  } else {
-    match model.ai_anchor {
-      AiCenter => (width - 20.0).max(320.0).min(680.0)
-      _ => (width * 0.42).max(300.0).min(360.0)
-    }
-  }
-  let card_height = ai_card_height(model, card_width)
-  // 卡高由内容决定；**线程区只能拿剩下的**，不能拿「可用高度减去一个常数」。
-  // 后者在线程卡多起来时长到超出卡片自身帧高，把输入条和决策行顶出可视区
-  // （实测：一张 diff 卡就把 composer 挤没了）。这里按
-  // 「卡高 − 卡内其它部分」反推线程区预算，滚动条因此出现在线程区而不是
-  // 整张卡上。
-  let card = ai_card_body(model, t, card_width, thread_area_height(model))
-  // 锚点 → stack 内的绝对摆放：stack 给每个子整帧，align 在帧内按
-  // 「已量尺寸」贴边（mod_aligned_rect 取 min(帧, 子)），所以这里只需
-  // 给出承载帧，卡片自己量出来的高度就决定它贴哪。
-  // 贴底摆放**不能**用 .align()：AlignModifier 把自己量成子节点尺寸
-  // （mod_aligned_rect 的 bounds 就是 `constrain(child)`），所以它在
-  // 更大的帧里永远拿不到 slack，居中/贴底都是空操作。
-  // 这里用「权重 spacer + 定高卡片」的列，把卡片确定性地压到带底。
-  let usable = (height - 12.0).max(card_height)
-  // 水平定位（设计稿 `#aiLayer` 是 `left:50%` 平移居中，pill 态不改锚点）：
-  // 居中锚用**对称权重 spacer**——与药丸同一条纪律，`align` 在更大的帧里
-  // 拿不到 slack 是空操作；左右锚用固定边距 + 权重 spacer 推到对侧。
-  let card_cell = @views.container(
-    card,
-    width=card_width,
-    height=card_height,
-    padding=0.0,
-  )
-  let row : Array[@moui.View[Msg]] = match model.ai_anchor {
-    AiCenter =>
-      [
-        @views.spacer(min_length=0.0, weight=1.0),
-        card_cell,
-        @views.spacer(min_length=0.0, weight=1.0),
-      ]
-    AiLeft =>
-      [
-        @views.spacer(min_length=12.0, weight=0.0),
-        card_cell,
-        @views.spacer(min_length=0.0, weight=1.0),
-      ]
-    AiRight | AiDocked =>
-      [
-        @views.spacer(min_length=0.0, weight=1.0),
-        card_cell,
-        @views.spacer(min_length=12.0, weight=0.0),
-      ]
-  }
-  // hero 贴「上方 42%」而不是贴底：设计稿 `.hero{bottom:auto;top:42%}`。
-  // 用两个权重 spacer 按 42:58 分配余量，等价于把卡放在 42% 处。
-  let lead_space = (usable - card_height).max(0.0)
-  let (top_weight, bottom_weight) = if hero { (42.0, 58.0) } else { (0.0, 1.0) }
-  ignore(lead_space)
-  // 外层只用 `center` 定位，**不能用 container**：无 background 的 container
-  // 会回落到环境 Base 变体的刷子（不透明面板色），于是整帧被刷成一块底板，
-  // 把下面工作区的内容（空舞台的引导语、按钮）整片盖掉——位置对、文字在
-  // 绘制流里，但屏幕上什么都没有。
-  @views.center(
-    @views.column(
-      [
-        @views.spacer(min_length=0.0, weight=top_weight),
-        @views.row(row, spacing=0.0, align=Start).frame(
-          width=width.max(card_width),
-          height=card_height,
-        ),
-        @views.spacer(min_length=0.0, weight=bottom_weight),
-      ],
-      spacing=0.0,
-    ).frame(width=width.max(card_width), height=usable),
-    width=width.max(card_width),
-    height=usable,
-  )
-}
+/// 卡片四周的内衬：输入盒与卡片边缘之间的呼吸缝。
+///
+/// 停靠档的卡片宽度由右栏决定、高度由内容决定，所以内衬是**预算的一部分**
+/// （`card_chrome_height` 要计入它），视图层再用 `padding` 把它留出来。
+/// 两处同源，卡片才不会裁掉自己的内容。
+pub const AI_CARD_PAD : Double = 8.0
 
 ///|
-/// 浮动卡的内容高度：头 + （折叠条 + 线程区）+ 上下文芯片 + 输入行 + 决策行。
-/// 卡片高度必须**统一算**——视图层与避让预留（ai_reserve）各算一份，
-/// 预留量就会和实际遮挡对不上。
+/// AI 卡的内容高度：输入盒 + 决策行 + 线程区 + 卡片内衬。
+///
+/// 停靠档由右栏的列布局决定实际高度，但这个函数仍是**唯一**的
+/// 「内容需要多高」口径——右栏层用它做高度钳制与测试断言。
 pub fn ai_card_height(model : Model, card_width : Double) -> Double {
   card_chrome_height(model, card_width) + thread_area_height(model)
 }
@@ -169,23 +88,17 @@ fn thread_area_height(model : Model) -> Double {
 }
 
 ///|
-/// 卡内除线程区以外的固定高度（输入盒 + 决策行 + 内边距）。线程区的预算
-/// 是「卡高 − 这个数」。无头部——浮层输入盒不需要标题栏。
+/// 卡内除线程区以外的固定高度（输入盒 + 决策行 + 四周内衬）。
+///
+/// 内衬**必须计入**：视图层用 `padding=AI_CARD_PAD` 把输入盒推进去，
+/// 预算少算这一圈，卡片就会裁掉自己的内容。曾经这里是一个孤零零的
+/// `+ 12.0`——视图层没有对应元素，那 12pt 被 ContainerBox 居中平摊，
+/// 成了「上下不对称」的一半来源。现在它与 `AI_CARD_PAD` 同源。
 fn card_chrome_height(model : Model, width : Double) -> Double {
-  composer_height(width) + decision_bar_height(model) + 12.0
+  composer_height(width) +
+  decision_bar_height(model) +
+  AI_CARD_PAD * 2.0
 }
-
-///|
-/// 设计稿 `#aiLayer.hero`：**空舞台**时输入框升格成主角——升到上方、
-/// 加宽到 700、并列出示例指令。这是「从零开始」时唯一有意义的入口，
-/// 所以只有 `WsEmpty` 触发（有内容时抢焦点反而碍事）。
-pub fn ai_hero(model : Model) -> Bool {
-  model.workspace is WsEmpty && !model.ai_pill && !(model.ai_anchor is AiDocked)
-}
-
-///|
-/// 示例指令芯片行高（hero 专属）。
-pub const HERO_HINT_HEIGHT : Double = 30.0
 
 ///|
 /// 停靠卡：铺满右栏宽度的内联版本（无浮动底边距）。
@@ -218,15 +131,19 @@ fn ai_card_body(
   // 卡片级操作收敛到输入盒脚注（收起/停靠/历史），锚点循环与 provider
   // 设置走命令面板（⌘K）。
   let body : Array[@moui.View[Msg]] = []
+  // 卡内可用宽 = 卡宽 − 四周内衬。**所有**子件都按这个宽建，谁都不许
+  // 再声明「卡宽」——内衬是卡片提供的，子件自己再按卡宽算一遍就会溢出
+  // （列会给它们 W−16 的约束，它们却声明 W）。
+  let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
   // 折叠条：有待审计卡时显示计数并允许折叠线程
   let pending = pending_ai_cards(model)
   if model.ai_cards.length() > 0 {
-    body.push(fold_bar(model, t, width, pending))
+    body.push(fold_bar(model, t, inner, pending))
     if !model.ai_cards_folded {
       body.push(
         @views.scroll_view(
-          @views.column(ai_card_views(model, t, width), spacing=6.0),
-          width~,
+          @views.column(ai_card_views(model, t, inner), spacing=6.0),
+          width=inner,
           // thread_height 已是共享 helper 算出的线程区预算（含 280 上限），
           // 这里不再二次钳制——两处各钳一次，改了上限就会漏改一处。
           height=thread_height,
@@ -237,33 +154,30 @@ fn ai_card_body(
       // （折叠态不显示——折叠时线程区本来就收起了）。跳的是既有 AI 历史
       // 对话框，不新开一页。
       if model.ai_cards.length() > 3 {
-        body.push(see_all_row(t, width))
+        body.push(see_all_row(t, inner))
       }
     }
   }
-  // 输入盒两侧留 8pt（盒与卡片边缘的呼吸感），高度预算已含（composer_height）
-  body.push(
-    @views.container(
-      composer(model, t, width),
-      width~,
-      height=composer_height(width),
-      padding=0.0,
-    ),
-  )
-  if ai_hero(model) {
-    body.push(hero_hints(model, t, width))
-  }
+  // 输入盒是卡内唯一的实体（线程区/决策行都在它之上/之下），所以
+  // **它自己就是那道边界**：卡片只出填充，不再描边。
+  //
+  // 此前卡与外盒各画一圈、两圈又同为 `#414449`（`ide_border` 与
+  // `ide_elevated` 在主题里一度是同一个 rgba），左右只隔 8pt、垂直相距 0，
+  // 读起来像「画错的边框」而不是「抬起的卡片」。收敛成一道环之后，
+  // 「这是输入区」由**填充 + 单环**表达，层级更少也更干净。
+  //
+  // **不要再套一层定宽 wrapper**：包一层没有 background 的 container，
+  // 它在 paint 期会回落到环境 Base → `palette.surface`，于是一圈本该露出
+  // 卡片底色的内衬被刷成另一个颜色（实测 `#1F2227` 夹在卡片 `#393B40` 与
+  // 输入盒 `#2B2D30` 之间）。这一圈此前看不见，只是因为那个回落色**恰好**
+  // 等于旧带的回落色；给带钉上显式底色后就露出来了——「无背景 container =
+  // 不透明面板色」是本仓反复踩的坑，这里直接不创造它。
+  body.push(composer(model, t, width))
   body.push(decision_bar(model, t, width))
   @views.container(
-    @views.column(body, spacing=0.0),
+    @views.padding(@views.column(body, spacing=0.0), AI_CARD_PAD),
     background=ide_elevated(),
     corner_radius=10.0,
-    border=Some(
-      @graphics.BorderStyle::new(
-        brush=@graphics.Brush::solid(ide_border()),
-        width=1.0,
-      ),
-    ),
     width~,
     padding=0.0,
   )
@@ -498,14 +412,75 @@ fn ai_card_view(
 /// 是 `min_size`，文字比声明的宽就会自己长大顶出卡片。
 
 ///|
-/// 停靠态切换的动作名：停靠时这个 ghost 图标是「浮出」——可访问名要跟
-/// 实际行为一致（图标没有绘制文字，这是唯一的语义出口）。
-pub fn ai_anchor_toggle_key(model : Model) -> String {
-  if model.ai_anchor is AiDocked {
-    "app.ai.undock"
-  } else {
-    "app.ai.dock"
-  }
+/// 底栏档所需的最小底栏高度：页签头 + 输入面（不含线程区）。
+///
+/// 线程卡出现时底栏还要更高（见 `ai_bar_height`）——写死一个值会在有提案
+/// 时把线程区裁掉，那正是「生成完什么都看不见」的形态。
+pub const AI_BAR_HEIGHT : Double = PANEL_HEAD_HEIGHT +
+  COMPOSER_HEIGHT +
+  AI_CARD_PAD * 2.0 +
+  4.0
+
+///|
+/// 底栏档的实际高度：按内容（含线程区）算，并钳在窗口可用高之内。
+///
+/// 与「底栏装得下输入面」同一纪律：高度是**算出来的**，不是写死的。
+/// 上限 `max` 防止线程卡多起来把工作区压没（底栏超过屏幕一半时截断，
+/// 线程区自己会滚动）。
+pub fn ai_bar_height(model : Model, width : Double, viewport_height : Double) -> Double {
+  let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
+  let content = PANEL_HEAD_HEIGHT +
+    ai_card_height(model, inner) +
+    AI_CARD_PAD * 2.0 +
+    4.0
+  content.max(AI_BAR_HEIGHT).min((viewport_height * 0.5).max(AI_BAR_HEIGHT))
+}
+
+///|
+/// 底栏档的输入面：**与停靠档逐段同构**——折叠条 +（线程区 + #seeAll）+
+/// 输入盒 + 决策行，只是宿主换成底栏、宽度按底栏给。
+///
+/// **为什么不能只放一个 composer**：线程卡（提案 diff / 计划 / 闸门）是
+/// 「Agent 干了什么」的唯一可见记录，必须与输入面**同宿主**——否则默认
+/// 档下生成提案后什么都看不见（实测：底栏档只有输入盒，`#seeAll`、
+/// 待审计计数、diff 卡全部消失）。所以这里复用 `ai_card_body`，而不是
+/// 另写一个精简版。
+///
+/// `height` 由调用方给（底栏体区高）：卡片必须待在自己的格子里，否则会按
+/// 自然高画出去、越过底栏边界露出窗口底色。
+pub fn ai_bar_composer(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  // 线程区只能拿「体区 − 输入面固定部分」的剩余，不能拿满高——
+  // 否则输入盒会被顶出底栏。
+  let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
+  let chrome = composer_height(inner) +
+    decision_bar_height(model) +
+    AI_CARD_PAD * 2.0
+  let thread = (height - chrome - AI_CARD_PAD * 2.0).max(0.0)
+  // **宽度只扣一次内衬**：`ai_card_body` 自己已经用 `width − 2×pad` 算内宽
+  // 并声明`width`，这里再套一层 `padding_xy` 就等于扣两次——卡片声明整宽、
+  // 却只被给了 `width − 16` 的格子，右侧那 16pt 连同发送钮一起被推出面板
+  // （实测发送钮贴死在中心列右缘 2009，右边一个 padding 都不剩）。
+  // 所以外层只给底色，不再加横向内衬。
+  // **外层容器必须显式给底色**：无背景的 container 在 paint 期回落到环境
+  // Base → `palette.surface`（`#1F2227`），于是卡片上下那两圈内衬被刷成
+  // 另一个颜色，在底栏里读成「两段脏边」。底栏的底色是 `ide_panel()`，
+  // 这里跟它对齐——回落色与宿主面板不同色，是同一个坑的第二次。
+  @views.container(
+    @views.padding_xy(
+      ai_card_body(model, t, inner, thread.min(thread_area_height(model))),
+      horizontal=AI_CARD_PAD,
+      vertical=AI_CARD_PAD,
+    ),
+    background=ide_panel(),
+    width~,
+    height~,
+    padding=0.0,
+  )
 }
 
 ///|
@@ -536,59 +511,52 @@ fn composer(
     line_height=20.0,
     on_submit=Some(send_msg),
   )
-  // 盒内脚注的 ghost 操作：停靠态给「浮出」；浮动态给 停靠/历史/收起
-  // （窄卡只留收起）。锚点循环与 provider 设置走命令面板，不再占盒内空间。
+  // 盒内脚注的 ghost 操作：**两种内联落点之间的一步切换**。
+  //
+  // 底栏档显示「停靠右栏」按钮，停靠档显示「放到底栏」——两边互为出口，
+  // 用户在任一形态下都只需一次点击就能换到另一种一等形态。浮动族（贴底
+  // 浮层）是次要档，只保留「收起成药丸」这一个出口，不再各配一个按钮
+  // （那会让脚注变成一排图标，而它本该只有两个动作）。
+  //
+  // 历史/锚点循环/provider 设置走命令面板（⌘K），不占盒内空间。
   let ghost_surface = ide_panel()
   let foot_cells : Array[@moui.View[Msg]] = [
     @views.row(modes, spacing=3.0, align=Center),
     @views.spacer(min_length=6.0, weight=1.0),
   ]
-  if model.ai_anchor is AiDocked {
+  if inner_width >= 300.0 {
     foot_cells.push(
       ghost_icon_button(
         Columns,
-        text(t, ai_anchor_toggle_key(model)),
-        true,
-        SetAiAnchor(AiCenter),
+        text(t, "app.ai.to_dock"),
+        model.ai_anchor is AiDocked,
+        SetAiAnchor(AiDocked),
         22.0,
         20.0,
         11.0,
         ghost_surface,
       ),
     )
-  } else {
-    if inner_width >= 320.0 {
-      foot_cells.push(
-        ghost_icon_button(
-          Columns,
-          text(t, "app.ai.dock"),
-          false,
-          SetAiAnchor(AiDocked),
-          22.0,
-          20.0,
-          11.0,
-          ghost_surface,
-        ),
-      )
-      foot_cells.push(
-        ghost_icon_button(
-          Clipboard,
-          text(t, "app.ai.history"),
-          false,
-          ToggleAiHistory,
-          22.0,
-          20.0,
-          11.0,
-          ghost_surface,
-        ),
-      )
-    }
     foot_cells.push(
       ghost_icon_button(
-        Minus,
-        text(t, "app.ai.pill"),
+        // 底栏档用 ChevronDown：与底栏「展开/收起」同一个视觉语汇
+        // （图标集里没有专用的 bottom-panel 图标，不为一个按钮加新图标）。
+        ChevronDown,
+        text(t, "app.ai.to_bar"),
+        model.ai_anchor is AiBar,
+        SetAiAnchor(AiBar),
+        22.0,
+        20.0,
+        11.0,
+        ghost_surface,
+      ),
+    )
+    foot_cells.push(
+      ghost_icon_button(
+        Clipboard,
+        text(t, "app.ai.history"),
         false,
-        ToggleAiPill,
+        ToggleAiHistory,
         22.0,
         20.0,
         11.0,
@@ -623,80 +591,12 @@ fn composer(
 }
 
 ///|
-/// 锚点读数（设计稿 `#posHint`）：让人不用猜「现在这条会飘在哪」。
+/// 锚点读数（设计稿 `#posHint`）：让人不用猜「现在这条在哪」。
 pub fn anchor_hint_key(anchor : AiAnchor) -> String {
   match anchor {
-    AiCenter => "app.ai.anchor.center"
-    AiLeft => "app.ai.anchor.left"
-    AiRight => "app.ai.anchor.right"
+    AiBar => "app.ai.anchor.bar"
     AiDocked => "app.ai.anchor.docked"
   }
-}
-
-///|
-/// hero 示例指令行（设计稿 `#heroChips`）：空舞台时给三条可点即填的
-/// 例子——「从零开始」最缺的是「我能说什么」。点击只**填输入框**
-/// （SetPrompt），不直接执行：用户仍要自己按发送，才看得清 Agent 收到
-/// 的是什么。
-fn hero_hints(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-) -> @moui.View[Msg] {
-  ignore(model)
-  let keys : Array[String] = [
-    "app.ai.hero.roll_call", "app.ai.hero.history", "app.ai.hero.explain",
-  ]
-  let chips : Array[@moui.View[Msg]] = []
-  // 三等分是错的：中文示例句比英文长得多，等分会把最长的那条截掉
-  // （实测 1000px 宽时「生成一个班级点名册 App」需要 148.6 只拿到 136）。
-  // 按每条**实测宽**的比例分配，间距先扣掉。
-  let gap = 4.0
-  let inner = (width - 16.0).max(120.0)
-  // 卡片在窄窗只有 ~460pt，三条中文示例句**放不下**。等比压缩会把文字截成
-  // 半个词——那比不显示更糟。所以按自然宽**贪心放得下几条就放几条**，
-  // 一条都放不下就留空行（高度预算不变，卡片的排版不会跳）。
-  //
-  // 需求侧乘 1.05：`text_estimate_width` 比真实字形窄约 3%。
-  let mut used = 0.0
-  for key in keys {
-    let need = text_estimate_width(text(t, key)) * 1.05 + 20.0
-    let with_gap = if chips.length() == 0 { need } else { need + gap }
-    if used + with_gap > inner && chips.length() > 0 {
-      continue
-    }
-    let cell = need
-    chips.push(
-      @views.container(
-        @views.center(
-          @views.text(
-            text(t, key),
-            theme=studio_theme(),
-            width=(cell - 12.0).max(40.0),
-            height=16.0,
-          ).foreground(ide_text_muted()),
-          width=cell,
-          height=24.0,
-        ),
-        background=ide_panel_alt(),
-        corner_radius=10.0,
-        width=cell,
-        height=24.0,
-        padding=0.0,
-      ).on_tap(SetPrompt(text(t, key))),
-    )
-    used = used + with_gap
-  }
-  @views.container(
-    @views.padding_xy(
-      fill_row(chips, (width - 16.0).max(120.0), 4.0, Center),
-      horizontal=8.0,
-      vertical=3.0,
-    ),
-    width~,
-    height=HERO_HINT_HEIGHT,
-    padding=0.0,
-  )
 }
 
 ///|
@@ -872,115 +772,3 @@ pub fn decision_bar_height(model : Model) -> Double {
 // ============================================================================
 // 药丸
 // ============================================================================
-
-///|
-/// AI 药丸：收起态的唯一入口（**居中贴底**，带待审计徽标）。
-///
-/// 设计稿口径 `#aiPill`：高 32、内垫 `0 16 0 12`、圆角 16、字号 12.5；
-/// `#aiLayer.pill` 只改宽度与贴底距离，**不改水平锚点**——`#aiLayer` 本身是
-/// `left:50%;transform:translateX(-50%)`，所以药丸是**水平居中**的。
-///
-/// 两个曾经踩中的坑，都在这里钉住：
-/// 1. 外层用**无背景 `container`** 定位 → 它回落到环境 Base 刷子（不透明
-///    面板色），整帧被刷成一块底板，中心工作区的内容（Live 画布、代码视图）
-///    整片盖掉：位置对、文字也在绘制流里，但屏幕上看不见。定位-only 必须用
-///    `@views.center`，它不带任何表面绘制。
-/// 2. 药丸宽度写死 180、水平只放右侧权重 spacer → 贴右而不是居中。
-///    宽度改为按内容累加（中英「待审计 / To review」宽度差近一倍，写死必然
-///    在一种语言下截断或留大片空白），水平用左右**对称权重 spacer** 居中。
-pub fn ai_pill_view(
-  model : Model,
-  t : @i18n.Translator,
-  width : Double,
-  height : Double,
-  reserve : Double,
-) -> @moui.View[Msg] {
-  ignore(reserve)
-  let pending = pending_ai_cards(model)
-  // 「待审计 N」是**待办摘要**不是装饰：药丸收起后卡片全不可见，这是唯一
-  // 还告诉你有多少条待采纳提案的地方。
-  // 文本宽度按 `text_estimate_width` 分配并乘 1.02 安全系数（实测估算偏窄
-  // 约 2%）；`@views.text` 只会涨不会缩，所以这里给够即可，无须担心截断。
-  let agent_label = "Agent"
-  let agent_w = (text_estimate_width(agent_label) * 1.02).max(36.0)
-  let cells : Array[@moui.View[Msg]] = [
-    @views.icon(Focus, size=13.0, color=ide_accent()),
-    @views.text(agent_label, theme=studio_theme(), width=agent_w, height=18.0).foreground(
-      ide_text(),
-    ),
-  ]
-  let mut content_w = 13.0 + 6.0 + agent_w
-  if pending > 0 {
-    let pending_label = text(t, "app.ai.pill_pending")
-    let pending_w = (text_estimate_width(pending_label) * 1.02).max(30.0)
-    let number_label = pending.to_string()
-    let number_w = (text_estimate_width(number_label) * 1.02).max(10.0)
-    cells.push(
-      @views.text(
-        pending_label,
-        theme=studio_theme(),
-        width=pending_w,
-        height=18.0,
-      ).foreground(ide_text_muted()),
-    )
-    cells.push(
-      @views.text(
-        number_label,
-        theme=studio_theme(),
-        width=number_w,
-        height=18.0,
-      ).foreground(ide_warning()),
-    )
-    content_w = content_w + 6.0 + pending_w + 6.0 + number_w
-  }
-  let pill_h = 32.0
-  let pill_w = (12.0 + content_w + 16.0).max(96.0)
-  let pill_view = @views.container(
-    @views.padding_edges(
-      @views.row(cells, spacing=6.0, align=Center),
-      left=12.0,
-      right=16.0,
-    ),
-    background=ide_elevated(),
-    corner_radius=16.0,
-    border=Some(
-      @graphics.BorderStyle::new(
-        brush=@graphics.Brush::solid(ide_border()),
-        width=1.0,
-      ),
-    ),
-    width=pill_w,
-    height=pill_h,
-    padding=0.0,
-  ).on_tap(ToggleAiPill)
-  // 贴底与居中都用**对称权重 spacer** 表达，不用 `align`：`AlignModifier`
-  // 把自己量成子节点尺寸，在更大的帧里永远拿不到 slack（见 ai_floating 的
-  // 同类注释）。竖直：上方权重 1 / 下方不加 → 贴底；水平：左右各权重 1 →
-  // 严格居中。
-  let usable = (height - 10.0).max(pill_h)
-  let col_w = width.max(pill_w)
-  @views.center(
-    @views.column(
-      [
-        @views.spacer(min_length=0.0, weight=1.0),
-        @views.row(
-          [
-            @views.spacer(min_length=0.0, weight=1.0),
-            @views.container(
-              pill_view,
-              width=pill_w,
-              height=pill_h,
-              padding=0.0,
-            ),
-            @views.spacer(min_length=0.0, weight=1.0),
-          ],
-          spacing=0.0,
-          align=Center,
-        ).frame(width=col_w, height=pill_h),
-      ],
-      spacing=0.0,
-    ).frame(width=col_w, height=usable),
-    width=col_w,
-    height=usable,
-  )
-}

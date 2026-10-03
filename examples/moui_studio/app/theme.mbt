@@ -153,6 +153,42 @@ pub fn block_notch_color() -> @graphics.Color {
 
 ///|
 /// 积木画布底板：比页面背景略暗一档的工程网格底。
+///
+/// **必须显式钉在画布容器上。** 早先 `blocks_canvas` 的容器没写
+/// background，回落到环境 Base → `palette.surface`，于是画布底与相邻的
+/// AI 保留带**完全同色**（实测同为 `#22262C`），两段之间的边界整个消失。
+/// 落回主题色是「看起来对、其实没画」的典型：只要邻居也走回落，两块就糊成
+/// 一片。画布底板与壳面板是两套配色纪律（前者属于积木域），所以这里
+/// 不并入 `ide_*` 系列，由积木画布自己钉。
+///|
+/// 插槽（reporter slot）底色：**有内容**时用比块体略暗的一档，读作
+/// 「这里坐着一块东西」（内容块自己会画在洞上面）。
+///|
+/// 脚本说明横幅的底色：比画布略亮的一档浅底，读作「这是注释不是代码」。
+pub fn blocks_note_background() -> @graphics.Color {
+  @graphics.Color::rgba(r=0.145, g=0.157, b=0.180, a=1.0)
+}
+
+///|
+/// 脚本说明的文字色：比积木文本弱一档（注释不该与代码抢注意力）。
+pub fn blocks_note_text() -> @graphics.Color {
+  @graphics.Color::rgba(r=0.639, g=0.667, b=0.710, a=1.0)
+}
+
+///|
+pub fn blocks_slot_filled() -> @graphics.Color {
+  @graphics.Color::rgba(r=0.118, g=0.129, b=0.153, a=1.0)
+}
+
+///|
+/// 空插槽底色：比 `blocks_slot_filled` 再暗一档（内凹），读作「这里等着
+/// 塞一块」。两者都刻意**不与块体同色**——同色会让洞看不出来，而洞是
+/// 「这里可以放东西」的唯一视觉线索。
+pub fn blocks_slot_empty() -> @graphics.Color {
+  @graphics.Color::rgba(r=0.078, g=0.086, b=0.106, a=1.0)
+}
+
+///|
 pub fn blocks_canvas_background() -> @graphics.Color {
   @graphics.Color::rgba(r=0.098, g=0.106, b=0.125)
 }
@@ -188,18 +224,27 @@ pub fn ide_panel_alt() -> @core.Color {
 
 ///|
 /// 抬起面：输入框 / 卡片 / 内联卡（比面板再亮一档）。
+///
+/// **与 `ide_border`/`ide_hover` 是三件事，不是一件事。** 这三个函数一度
+/// 返回同一个 rgba，后果是「面 = 线 = 悬停」：卡片描边与卡片填充同色，
+/// 悬停也和静止同色，悬停反馈整个失效。原注释说「flat solid surfaces,
+/// layer separation comes from border tone」——那句话要求**线比面亮**，
+/// 抄成同值就把设计意图抹掉了。下面按 面 < 悬停 < 线 排开。
 pub fn ide_elevated() -> @core.Color {
   @core.Color::rgba(r=0.224, g=0.231, b=0.251)
 }
 
 ///|
-/// 悬停底：行/按钮 hover。
+/// 悬停底：行/按钮 hover（比抬起面亮一档，实测 1.09:1）。
+///
+/// 悬停是**瞬态状态**，必须在静止面上看得出来。与 `ide_elevated` 同值时，
+/// 抬起面上的行悬停完全无反馈。
 pub fn ide_hover() -> @core.Color {
-  @core.Color::rgba(r=0.224, g=0.231, b=0.251)
+  @core.Color::rgba(r=0.244, g=0.252, b=0.272)
 }
 
 ///|
-/// 悬停二档：抬起面之上的 hover。
+/// 悬停二档：抬起面之上的 hover（保留原值，仍是最高一档）。
 pub fn ide_hover_strong() -> @core.Color {
   @core.Color::rgba(r=0.259, g=0.271, b=0.290)
 }
@@ -212,8 +257,11 @@ pub fn ide_selection() -> @core.Color {
 
 ///|
 /// 边框：发丝分隔线（面板之间、行之间）。
+///
+/// 比 `ide_elevated` 亮一档（1.17:1）——发丝线要能在它分隔的**两块面**
+/// 上都读出来，所以必须高于两侧的面，不能等于面。
 pub fn ide_border() -> @core.Color {
-  @core.Color::rgba(r=0.224, g=0.231, b=0.251)
+  @core.Color::rgba(r=0.262, g=0.272, b=0.294)
 }
 
 ///|

@@ -157,6 +157,9 @@ fn interp_status(status : @studio_lang.RunStatus) -> String {
     @studio_lang.WaitingGate => "waiting_gate"
     @studio_lang.Completed => "completed"
     @studio_lang.Failed => "failed"
+    // `Stopped`（被 `停止全部` 停住）必须是**同一个名字**，否则两轨即使
+    // 语义一致也会因为状态串不同而差分失败——归一化的意义正在于此。
+    @studio_lang.Stopped => "stopped"
   }
 }
 
@@ -167,6 +170,7 @@ fn compiled_status(status : @compiled_runtime.RunStatus) -> String {
     @compiled_runtime.WaitingGate => "waiting_gate"
     @compiled_runtime.Completed => "completed"
     @compiled_runtime.Failed => "failed"
+    @compiled_runtime.Stopped => "stopped"
   }
 }
 

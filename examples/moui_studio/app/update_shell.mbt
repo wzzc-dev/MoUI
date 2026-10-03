@@ -81,12 +81,27 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     SetContextTab(tab) =>
       Some(({ ..model, ctx_tab: tab, }, @moui.Effect::none()))
     SetBottomTab(tab) =>
-      Some(
-        ({ ..model, bottom_tab: tab, bottom_open: true, }, @moui.Effect::none()),
-      )
+      Some((select_bottom_tab(model, tab), @moui.Effect::none()))
     ToggleBottom =>
       Some(
-        ({ ..model, bottom_open: !model.bottom_open, }, @moui.Effect::none()),
+        (
+          // **收起/展开底栏只动底栏**——绝不偷偷把 AI 输入面挪去右栏。
+          //
+          // 早先的实现在收起时会把 `ai_anchor` 改成 `AiDocked`（理由是
+          // 「别把输入面整个藏起来」）。那个理由本身不成立，而且造成两个
+          // 用户可见的缺陷：
+          //   ① 收起底栏 → AI **自己出现在右栏**（用户没让它过去，
+          //      这叫「取消」也不为过：用户只是想折叠一个面板）；
+          //   ② 再展开、点「AI 输入」页签 → 输入面**回不来**
+          //      （锚点已是 `AiDocked`，底栏那份 composer 不画）。
+          //
+          // 正确的语义：折叠面板不等于切换输入面的落点。收起时若输入面
+          // 正由底栏承载，它**跟着一起收起**（和审计/控制台页签一样），
+          // 展开后原样回来——落点始终由 `ai_anchor` 单独决定，只有
+          // `SetAiAnchor` / `CycleAiAnchor` 能改它。
+          sync_ai_placement({ ..model, bottom_open: !model.bottom_open }),
+          @moui.Effect::none(),
+        ),
       )
     AuditOpen(index) =>
       Some(
@@ -101,14 +116,14 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     CycleAiAnchor =>
       Some(
         (
-          { ..model, ai_anchor: next_anchor(model.ai_anchor), },
+          apply_ai_anchor(model, next_anchor(model.ai_anchor)),
           @moui.Effect::none(),
         ),
       )
     SetAiAnchor(anchor) =>
-      Some(({ ..model, ai_anchor: anchor, }, @moui.Effect::none()))
-    ToggleAiPill =>
-      Some(({ ..model, ai_pill: !model.ai_pill, }, @moui.Effect::none()))
+      Some(
+        (apply_ai_anchor(model, anchor), @moui.Effect::none()),
+      )
     ToggleAiCardsFold =>
       Some(
         (
@@ -429,13 +444,106 @@ pub fn push_recent(
 // ============================================================================
 
 ///|
-/// 锚点循环：居中 → 右 → 左 → 停靠 → 居中（设计稿的循环顺序）。
+/// 锚点循环：只有两种落点，所以循环就是**两者互换**——从底栏按一次到
+/// 停靠，再按一次回底栏。
 fn next_anchor(anchor : AiAnchor) -> AiAnchor {
   match anchor {
-    AiCenter => AiRight
-    AiRight => AiLeft
-    AiLeft => AiDocked
-    AiDocked => AiCenter
+    AiBar => AiDocked
+    AiDocked => AiBar
+  }
+}
+
+///|
+/// 切换底栏页签。
+///
+/// **只读页签绝不搬动 AI 输入面**：点「运行审计」「Console」「问题」只是
+/// 想看一眼那个面板，`ai_anchor` 保持原样。早先的实现会在此时把锚点改成
+/// `AiDocked`（为了绕开 `sync_ai_placement` 对页签的强制），后果是用户在
+/// AI 输入面上点一下「问题」，**AI 就自己跑到右栏去了**——用户报的正是
+/// 这个。
+///
+/// 点「AI 输入」则是**明确要求把输入面放到这里**，所以锚点一并切到
+/// `AiBar`（从停靠档也能拉回来）。
+fn select_bottom_tab(model : Model, tab : BottomTab) -> Model {
+  let anchored = if tab is BtAi {
+    { ..model, ai_anchor: AiBar }
+  } else {
+    model
+  }
+  sync_ai_placement({ ..anchored, bottom_tab: tab, bottom_open: true })
+}
+
+///|
+/// 显式切换 AI 落点（`SetAiAnchor` / `CycleAiAnchor` 共用）。
+///
+/// 「把输入面放到某处」必须**同时让它可见**，否则用户按了按钮却什么都没
+/// 发生：
+///
+/// - 落到底栏 ⇒ 展开底栏并选中 AI 页签（页签是「果」，由落点推出来）；
+/// - 落到右栏 ⇒ `sync_ai_placement` 会让底栏从 AI 页签让开，避免两份
+///   composer 同时画。
+fn apply_ai_anchor(model : Model, anchor : AiAnchor) -> Model {
+  match anchor {
+    AiBar =>
+      sync_ai_placement({
+        ..model,
+        ai_anchor: AiBar,
+        bottom_tab: BtAi,
+        bottom_open: true,
+      })
+    AiDocked => sync_ai_placement({ ..model, ai_anchor: AiDocked })
+  }
+}
+
+///|
+/// 把「AI 落点」与「底栏状态」收敛成**一个自洽状态**（唯一漏斗）。
+///
+/// 这两件事在模型里是分开的字段（`ai_anchor` / `bottom_open` /
+/// `bottom_tab`），但它们描述的是**同一件事**——「输入条现在落在哪」。
+/// 任何一处单独改动都会产生矛盾状态，实测到过两种：
+///
+/// - `ai_anchor = AiDocked` 而 `bottom_tab = BtAi`：底栏与右栏**各画一份
+///   composer**，一个输入面变成两个；
+/// - `ai_anchor = AiBar` 而 `bottom_tab != BtAi`：底栏档却停在别的页签，
+///   展开底栏看不到输入框。
+///
+/// 所以所有写这三个字段的地方都必须过这个函数。**不要再在分支里各写一份
+/// 联动**——那正是上面第一个矛盾的来源（`SetBottomTab` 改页签、`SetAiAnchor`
+/// 改锚点，两边各联动一半）。
+///
+/// **`bottom_open` 不在这个不变式里**（曾经的第三条约束「`AiBar` ⇒
+/// `bottom_open = true`」已删除）。折叠底栏是**面板级的**用户动作，与
+/// 「输入面落在哪」是两件事：折叠时输入面跟着收起（和审计/控制台页签
+/// 完全一样），展开后原样回来——因为 `bottom_tab` 仍是 `BtAi`。把
+/// `bottom_open` 钉成 `true` 会让「收起底栏」变成一个**按不动的按钮**。
+fn sync_ai_placement(model : Model) -> Model {
+  match model.ai_anchor {
+    AiBar =>
+      // 底栏档：只保证「高度装得下 composer」。
+      //
+      // **不强制 `bottom_tab`、也不强制 `bottom_open`**：
+      // - 强制页签会让「点其它页签」永远打不开（sync 每次都把它拉回
+      //   `BtAi`）——那正是早先不得不「顺手改锚点」的原因，而改锚点又
+      //   造成「AI 自己跑到右栏」；
+      // - 强制展开会让「收起底栏」变成按不动的按钮。
+      //
+      // 页签与展开都是**用户的选择**；落点只管「输入面归谁画」。要让
+      // 输入面可见，走 `apply_ai_anchor`（显式切换落点时才需要）。
+      {
+        ..model,
+        bottom_height: model.bottom_height.max(AI_BAR_HEIGHT),
+      }
+    AiDocked =>
+      // 停靠档：输入条由右栏承载，底栏若正停在 AI 页签就必须让开
+      // （否则两边同时画）。底栏是否展开、展开多少由用户决定，不动。
+      {
+        ..model,
+        bottom_tab: if model.bottom_tab is BtAi {
+          BtAudit
+        } else {
+          model.bottom_tab
+        },
+      }
   }
 }
 
@@ -583,18 +691,18 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.audit.settle_all" =>
       update_pure(model, AuditSettleAll("app.audit.confirmed"))
     "studio.ai.anchor" => update_pure(model, CycleAiAnchor)
+    "studio.ai.bar" => update_pure(model, SetAiAnchor(AiBar))
     "studio.ai.dock" =>
       update_pure(
         model,
         SetAiAnchor(
           if model.ai_anchor is AiDocked {
-            AiCenter
+            AiBar
           } else {
             AiDocked
           },
         ),
       )
-    "studio.ai.pill" => update_pure(model, ToggleAiPill)
     "studio.ai.history" => update_pure(model, ToggleAiHistory)
     "studio.settings" => update_pure(model, ToggleSettings)
     "studio.run.start" => update_pure(model, RunStart)

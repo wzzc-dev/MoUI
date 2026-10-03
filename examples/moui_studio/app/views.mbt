@@ -905,6 +905,7 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       let gate_card : Array[@moui.View[Msg]] = []
       match run.state.gate {
         Some(gate) => {
+          let is_ask = gate.kind is @studio_lang.Ask
           let prompt = match gate.kind {
             @studio_lang.Submit =>
               text_with(t, "app.run.gate.submit", [
@@ -914,29 +915,49 @@ fn interpret_run_form(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
             @studio_lang.Ask =>
               text_with(t, "app.run.gate.ask", [("prompt", gate.prompt)])
           }
-          gate_card.push(
-            @views.column([
-              @views.callout(
-                theme=studio_theme(),
-                text(t, "app.run.gate.title"),
-                prompt,
-                tone=@style.Warning,
+          let rows : Array[@moui.View[Msg]] = [
+            @views.callout(
+              theme=studio_theme(),
+              text(t, "app.run.gate.title"),
+              prompt,
+              tone=@style.Warning,
+              width=420.0,
+            ),
+          ]
+          // **`询问` 要能打字**：回答才是它的返回值。
+          //
+          // 此前闸门卡片只给「确认/拒绝」两个按钮——用户没有任何地方输入
+          // 回答，于是 `询问` 只能当「是/否」用，而 Scratch 的 `询问` 是
+          // 「把回答当值用」（`说 (回答)`）。输入框只在 Ask 闸门出现：
+          // `提交数据` 的确认不需要填内容。
+          if is_ask {
+            rows.push(
+              @views.text_field(
+                model.gate_answer_draft,
+                on_input=text_value => GateAnswerInput(text_value),
+                on_submit=Some(GateAnswerSubmit),
+                placeholder=text(t, "app.run.gate.answer_hint"),
+                variant=Outline,
                 width=420.0,
+                height=32.0,
               ),
-              @views.row([
-                @views.button(
-                  text(t, "app.run.gate.confirm"),
-                  on_click=AnswerGate(true),
-                  variant=Primary,
-                ),
-                @views.button(
-                  text(t, "app.run.gate.reject"),
-                  on_click=AnswerGate(false),
-                  variant=Outline,
-                ),
-              ]),
+            )
+          }
+          rows.push(
+            @views.row([
+              @views.button(
+                text(t, "app.run.gate.confirm"),
+                on_click=AnswerGate(true),
+                variant=Primary,
+              ),
+              @views.button(
+                text(t, "app.run.gate.reject"),
+                on_click=AnswerGate(false),
+                variant=Outline,
+              ),
             ]),
           )
+          gate_card.push(@views.column(rows))
         }
         None => ()
       }

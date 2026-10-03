@@ -14,6 +14,8 @@ pub(all) enum TreeNodeKind {
   TnVariable
   TnHandler
   TnDataFile
+  /// 自定义积木（Scratch 的「我的积木」）。
+  TnFunction
 }
 
 ///|
@@ -47,6 +49,11 @@ pub fn tree_group_controls() -> String {
 ///|
 pub fn tree_group_variables() -> String {
   "variables"
+}
+
+///|
+pub fn tree_group_functions() -> String {
+  "functions"
 }
 
 ///|
@@ -208,6 +215,37 @@ pub fn program_tree(model : Model) -> Array[TreeNode] {
         locked: false,
         select_key: handler_key(handler.control_name, handler.event.tag()),
         action: "handler",
+      })
+    }
+  }
+  // **自定义积木分组**（Scratch 的「我的积木」）。
+  //
+  // 为什么必须有这一组：`FuncDef` 语言层一直支持，但树上没有位置、界面上
+  // 也没有创建入口——于是「自己定义一个积木」在积木界面里完全做不到
+  // （只能从 JSON 手写）。有了这一组，用户看得见、点得到、能改名。
+  nodes.push(TreeNode::{
+    kind: TnGroup,
+    label: "",
+    meta: "\{model.program.functions.length()}",
+    group: tree_group_functions(),
+    depth: 0,
+    locked: false,
+    select_key: "",
+    action: "",
+  })
+  for func in model.program.functions {
+    let label = func.name
+    let meta = "×\{func.body.length()}"
+    if matches(query, label, meta) {
+      nodes.push(TreeNode::{
+        kind: TnFunction,
+        label,
+        meta,
+        group: tree_group_functions(),
+        depth: 1,
+        locked: false,
+        select_key: func.name,
+        action: "function",
       })
     }
   }

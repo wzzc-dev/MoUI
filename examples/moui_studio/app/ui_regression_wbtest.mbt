@@ -3,35 +3,32 @@
 /// 复用 shell_layout_wbtest 的白盒助手（同包共享）。
 
 ///|
-test "ai floating card is horizontally centered at the center anchor" {
-  // 设计稿 #aiLayer 是 left:50% 平移居中。旧实现的居中锚只放一个
-  // Start 对齐的卡片，卡片贴中心列左缘——居中必须由对称权重 spacer
-  // 表达（与药丸同一条纪律）。判据：卡片的圆角填充矩形（宽 = AiCenter
-  // 设计值）中心必须对齐中心列中心；卡内「发送」贴右是另一件事。
-  let model = initial_model()
+test "docked AI card stays inside the right panel" {
+  // 停靠档：输入卡是右栏顶部的内联卡，必须**完整落在右栏**内——
+  // 不能越到中心列或溢出窗口右缘。历史：浮动锚点按中心列居中，
+  // 卡片宽度是设计值；改成右栏内联后，宽度由右栏决定，判据也随之改为
+  // 「落在右栏区间内」。
+  let model = apply_shell(initial_model(), SetAiAnchor(AiDocked))
   let width = 1280.0
   let commands = shell_draw(model, width, 800.0)
-  let column_left = ICONBAR_WIDTH + 1.0 + LEFTBAR_WIDTH + 1.0
   let chrome = shell_chrome_widths(model, width - ICONBAR_WIDTH)
-  let column_center = column_left + chrome.center / 2.0
-  let card_width = (chrome.center - 20.0).max(320.0).min(680.0)
-  let mut found = false
-  for rect in shell_rects(commands) {
-    if (rect.size.width - card_width).abs() <= 2.0 {
-      found = true
-      let rect_center = rect.origin.x + rect.size.width / 2.0
-      if (rect_center - column_center).abs() > 8.0 {
-        fail(
-          "ai card is not centered: rect_center=" +
-          rect_center.to_string() +
-          " column_center=" +
-          column_center.to_string(),
-        )
-      }
-    }
+  // 右栏：窗口右缘往左 chrome.right，左缘再往左一条发丝线
+  let right_panel_right = width
+  let right_panel_left = right_panel_right - chrome.right
+  guard shell_find_text(commands, "描述你想要的应用") is Some(run) else {
+    fail("docked AI composer missing")
   }
-  if !found {
-    fail("ai card rect not found at width " + card_width.to_string())
+  if run.frame.origin.x < right_panel_left - 1.0 ||
+    run.frame.origin.x + run.frame.size.width > right_panel_right + 1.0 {
+    fail(
+      "docked AI card escapes the right panel: x=" +
+      run.frame.origin.x.to_string() +
+      " panel=[" +
+      right_panel_left.to_string() +
+      "," +
+      right_panel_right.to_string() +
+      "]",
+    )
   }
 }
 

@@ -420,6 +420,24 @@ pub fn[Msg] View::on_tap_with_frame(
 }
 
 ///|
+/// Secondary (right-button) tap with hit-test geometry: hands the pointer
+/// position plus the child frame, so a context-menu host can hit-test *which*
+/// item the menu belongs to.
+///
+/// Why this exists next to `on_secondary_tap`: that one carries a fixed
+/// message, which is enough for "open the context menu" but not for "open the
+/// context menu **for the block under the cursor**". Canvas surfaces that own
+/// their own hit-testing (the blocks canvas) need the point.
+pub fn[Msg] View::on_secondary_tap_with_frame(
+  self : View[Msg],
+  handler : (Point, Rect) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(
+    OnSecondaryTapWithFrameModifier::{ handler, }.to_any_modifier(),
+  )
+}
+
+///|
 /// Hover observer: calls `handler` with `true` when the pointer enters this
 /// view and `false` when it leaves.
 ///

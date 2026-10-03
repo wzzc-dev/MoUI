@@ -10,6 +10,9 @@ pub(all) enum RunStatus {
   WaitingGate
   Completed
   Failed
+  /// **被 `停止全部` 主动停住**——与 `Failed` 分开：停止不是错误，
+  /// 审计与界面都该读作「用户让它停」，而不是「出错了」。
+  Stopped
 }
 
 ///|
@@ -105,9 +108,23 @@ pub(all) struct RunState {
   max_steps : Int
   mut rng : Int
   gate_answers : Array[Bool]
+  /// `询问` 的**回答文本**（与 `gate_answers` 一一对应）。
+  ///
+  /// 为什么必须单独存文本：`询问` 在 Scratch 里的语义是「问一句，**把回答
+  /// 当值用**」（`说 (回答)`）。此前只存了 `Bool`（确认/拒绝），于是回答内容
+  /// 被丢掉——`ask` 只能当「是/否」用，而那不是它的语义。
+  gate_answer_texts : Array[String]
+  /// 最近一次 `询问` 的回答（Scratch 的 `回答` 报告块读取它）。
+  mut last_answer : String
   mut declared : Array[String]
   mut gate_cursor : Int
   mut paused : Bool
+  /// `等待 N 秒` 的**剩余 tick 数**（0 = 没在等）。
+  ///
+  /// 用 tick 计数而不是墙钟：解释器是**纯函数式状态机**（测试不碰 UI），
+  /// 读真实时间会让同一程序两次运行结果不同。宿主每个 `RunTick` 调一次
+  /// `tick_wait`，减到 0 才继续执行下一条语句。
+  mut wait_ticks : Int
   // 广播总线（切片 G）：`广播(文案)` 入队，宿主事件收尾时排空——
   // 每个 on_broadcast 窗体级处理器依次收到一条
   mut broadcasts : Array[String]
@@ -263,9 +280,12 @@ pub fn start_run(
       seed % 2147483647
     },
     gate_answers: [],
+    gate_answer_texts: [],
+    last_answer: "",
     declared: [],
     gate_cursor: 0,
     paused: false,
+    wait_ticks: 0,
     broadcasts: [],
     functions: functions,
     call_depth: 0,
@@ -485,10 +505,28 @@ pub fn step_once(state : RunState) -> Unit {
 ///|
 /// 闸门应答：推入决定并立即恢复执行。多条闸门按 FIFO 消费。
 pub fn answer_gate(state : RunState, decision : Bool) -> Unit {
+  answer_gate_with_text(state, decision, "")
+}
+
+///|
+/// 带**回答文本**的闸门应答（`询问` 用这个）。
+///
+/// 文本既进 `gate_answer_texts`（按序对应，供 `eval_gate` 取值），也写进
+/// `last_answer`（Scratch 的 `回答` 报告块随时可读最近一次回答，不限于
+/// `询问` 紧邻的下一句）。
+pub fn answer_gate_with_text(
+  state : RunState,
+  decision : Bool,
+  text : String,
+) -> Unit {
   if !(state.status is WaitingGate) {
     return
   }
   state.gate_answers.push(decision)
+  state.gate_answer_texts.push(text)
+  if text != "" {
+    state.last_answer = text
+  }
   state.gate = None
   state.paused = false
   state.status = Running
@@ -896,19 +934,40 @@ fn RunState::index_value(
   index : Value,
   line : Int,
 ) -> Value raise LangError {
-  let items = match base {
-    VArr(items) => items
-    _ => raise LangError(TypeMismatch, line, "index", "list")
+  // **字符串也能按下标取字符**（Scratch 的「第 N 个字符」）。
+  // 1-based，与列表一致：`"abc"[1]` = `"a"`。越界报错而不是返回空串
+  // ——静默返回空串会让「取错位置」看起来像「字符串是空的」。
+  match base {
+    VArr(items) => {
+      let position = match index {
+        VInt(n) => n
+        VNum(n) => n.to_int()
+        _ => raise LangError(TypeMismatch, line, "index", "number")
+      }
+      if position < 1 || position > items.length() {
+        raise LangError(TypeMismatch, line, "index", "1..\{items.length()}")
+      }
+      items[position - 1]
+    }
+    VStr(text) => {
+      let position = match index {
+        VInt(n) => n
+        VNum(n) => n.to_int()
+        _ => raise LangError(TypeMismatch, line, "index", "number")
+      }
+      // 按**字符**（而非字节）索引：中文一个字是一个字符，按字节会把
+      // 一个汉字切成半个。`str_to_chars` 的语义与 `text_length` 一致。
+      let chars : Array[String] = []
+      for c in text {
+        chars.push(c.to_string())
+      }
+      if position < 1 || position > chars.length() {
+        raise LangError(TypeMismatch, line, "index", "1..\{chars.length()}")
+      }
+      VStr(chars[position - 1])
+    }
+    _ => raise LangError(TypeMismatch, line, "index", "list or text")
   }
-  let position = match index {
-    VInt(n) => n
-    VNum(n) => n.to_int()
-    _ => raise LangError(TypeMismatch, line, "index", "number")
-  }
-  if position < 1 || position > items.length() {
-    raise LangError(TypeMismatch, line, "index", "1..\{items.length()}")
-  }
-  items[position - 1]
 }
 
 ///|
@@ -1016,7 +1075,19 @@ fn RunState::eval_gate(
       detail: "\{canonical_call_text(spec.id, args)} -> \{outcome}",
     })
     if spec.id == "ask" {
-      VBool(decision)
+      // **`询问` 的返回值是回答文本**（Scratch 语义），不是「是否确认」。
+      // 回答为空时回退到最近一次回答：用户点了确认但没输入内容时，
+      // 返回空串会让 `说 (回答)` 显示空白，而用户期望看到上一次的回答。
+      let answer = if self.gate_cursor - 1 < self.gate_answer_texts.length() {
+        self.gate_answer_texts[self.gate_cursor - 1]
+      } else {
+        ""
+      }
+      if answer == "" {
+        VStr(self.last_answer)
+      } else {
+        VStr(answer)
+      }
     } else {
       VUnit
     }
@@ -1045,6 +1116,30 @@ fn RunState::eval_command(
   line : Int,
 ) -> Value raise LangError {
   match spec.id {
+    "wait" => {
+      // **等待 N 秒**：把秒数折算成 tick 数并挂起。折算在**宿主**那一侧
+      // （`TICK_MS` 已知），这里只收秒数——解释器不关心帧率。
+      let seconds = match self.eval(args[0], line) {
+        VNum(n) => n
+        VInt(n) => n.to_double()
+        _ => raise LangError(TypeMismatch, line, spec.id, "number")
+      }
+      if seconds < 0.0 {
+        raise LangError(TypeMismatch, line, spec.id, "non-negative number")
+      }
+      self.wait_ticks = wait_ticks_for_seconds(seconds)
+      VUnit
+    }
+    "stop_all" => {
+      // 停止全部：把自己标成 Stopped。`step_once` 只在 `Running` 时推进，
+      // 所以这一条执行完循环自然结束；广播队列也不再排空。
+      //
+      // **必须放在 `eval_command`**（按 `BuiltinKind::Command` 分派）而不是
+      // `eval_function`：目录里它是 Command，放错分支就永远走不到——症状是
+      // 「未知内建」错误，而代码里明明写着实现。
+      self.status = Stopped
+      VUnit
+    }
     "message_box" => {
       let text = self.value_as_text(self.eval(args[0], line), spec.id, line)
       if self.paused || !(self.status is Running) {
@@ -1162,6 +1257,63 @@ fn RunState::eval_function(
     "to_text" => {
       let value = self.eval(args[0], line)
       VStr(value_to_text(value))
+    }
+    "mod" => {
+      // 取余**保留整数性**（与 `Div` 的「整数 ÷ 整数 = 整数」同一纪律）：
+      // 整数 % 整数 → 整数，掺入小数才是小数。Scratch 的 `mod` 也是如此，
+      // 而且整数余数在循环计数里是常见用法，返回浮点会显示成 `1.0`。
+      match (self.eval(args[0], line), self.eval(args[1], line)) {
+        (VInt(a), VInt(b)) =>
+          if b == 0 {
+            raise LangError(DivideByZero, line, spec.id, "")
+          } else {
+            // MoonBit 的 `%` 与 C 同号（向零截断），Scratch 的 mod 取
+            // **非负**余数；这里按 Scratch 语义修正，免得 `-7 mod 3`
+            // 在教学场景里得到 -1。
+            let raw = a % b
+            VInt(if raw < 0 { raw + (if b < 0 { -b } else { b }) } else { raw })
+          }
+        (left, right) => {
+          // 掺入小数：按浮点取余。`as_number` 与既有二元运算同一口径
+          // （`VNum` 直取、`VInt` 提升，其余报类型错）。
+          let a = match left {
+            VNum(n) => n
+            VInt(n) => n.to_double()
+            _ => raise LangError(TypeMismatch, line, spec.id, "numbers")
+          }
+          let b = match right {
+            VNum(n) => n
+            VInt(n) => n.to_double()
+            _ => raise LangError(TypeMismatch, line, spec.id, "numbers")
+          }
+          if b == 0.0 {
+            raise LangError(DivideByZero, line, spec.id, "")
+          } else {
+            VNum(a - b * floor_of(a / b))
+          }
+        }
+      }
+    }
+    "answer" => VStr(self.last_answer)
+    "abs" => VNum(number_of_value(self.eval(args[0], line), spec.id, line).abs())
+    "floor" =>
+      VInt(floor_of(number_of_value(self.eval(args[0], line), spec.id, line)).to_int())
+    "ceiling" =>
+      VInt(
+        (0.0 - floor_of(0.0 - number_of_value(self.eval(args[0], line), spec.id, line))).to_int(),
+      )
+    "sqrt" => {
+      let value = number_of_value(self.eval(args[0], line), spec.id, line)
+      if value < 0.0 {
+        raise LangError(TypeMismatch, line, spec.id, "non-negative number")
+      }
+      VNum(sqrt_of(value))
+    }
+    "round" => {
+      // 四舍五入到**整数**（Scratch 的 `round` 返回整数）：教学场景里
+      // 学生要的是「3.6 → 4」，返回 4.0 会显示成 `4`（`number_to_text`
+      // 会去掉 .0），但类型上仍是数——这里统一给 VInt 更贴合直觉。
+      VInt(round_to_int(number_of_value(self.eval(args[0], line), spec.id, line)))
     }
     "text_length" => {
       let text = self.value_as_text(self.eval(args[0], line), spec.id, line)
@@ -1502,4 +1654,74 @@ fn emit_stmt(
       }
     }
   }
+}
+
+///|
+/// 宿主每个 tick 调一次：等到了就返回 `true`（可以继续执行）。
+///
+/// 与闸门（`WaitingGate`）分开：闸门**等人的回答**，等待**等时间**。
+/// 两者都不推进 `pc`——所以「等待中再 tick 一次」是安全的幂等操作。
+pub fn tick_wait(state : RunState) -> Bool {
+  if state.wait_ticks <= 0 {
+    return true
+  }
+  state.wait_ticks = state.wait_ticks - 1
+  state.wait_ticks <= 0
+}
+
+///|
+/// 秒 → tick 数的折算（宿主调用，帧率由宿主决定）。
+///
+/// 向上取整并保底 1：`等待 0.01 秒` 在 30ms 帧率下也应该**至少等一帧**，
+/// 否则「等待」会退化成「什么都不做」，用户看到的是「这句没生效」。
+pub fn wait_ticks_for_seconds(seconds : Double) -> Int {
+  let ticks = (seconds * 1000.0 / 30.0).ceil().to_int()
+  if ticks < 1 { 1 } else { ticks }
+}
+
+///|
+/// 数值强制（与二元运算同一口径）：`VNum` 直取、`VInt` 提升，其余报类型错。
+fn number_of_value(value : Value, role : String, line : Int) -> Double raise LangError {
+  match value {
+    VNum(n) => n
+    VInt(n) => n.to_double()
+    _ => raise LangError(TypeMismatch, line, role, "number")
+  }
+}
+
+///|
+/// 平方根（牛顿迭代）。不依赖标准库命名：只需要「正数的平方根」这一条
+/// 语义，自己写清楚比猜 API 名更稳。迭代 24 次对教学精度足够（双精度
+/// 收敛约 6 次，多留余量不花钱）。
+fn sqrt_of(value : Double) -> Double {
+  if value == 0.0 {
+    return 0.0
+  }
+  let mut guess = value
+  if guess < 1.0 {
+    guess = 1.0
+  }
+  let mut i = 0
+  while i < 24 {
+    guess = (guess + value / guess) / 2.0
+    i = i + 1
+  }
+  guess
+}
+
+///|
+/// 向下取整（`floor` 的本地实现）。
+///
+/// 不依赖标准库的命名细节：这里只需要「向负无穷取整」这一条语义，
+/// 自己写清楚比猜 API 名更稳（且与 `mod` 的非负余数约定配套）。
+fn floor_of(value : Double) -> Double {
+  // `Double::floor` 就是「向负无穷取整」（`number_to_text` 也用同一个，
+  // 所以格式化与取整的口径一致）。
+  value.floor()
+}
+
+///|
+/// 四舍五入到整数（.5 向上，与 Scratch 一致）。
+fn round_to_int(value : Double) -> Int {
+  floor_of(value + 0.5).to_int()
 }

@@ -782,6 +782,22 @@ fn write_function_call(
     "to_text" => "@compiled_runtime.to_text(\{write_value(ctx, args[0])})"
     "text_length" =>
       "@compiled_runtime.text_length(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "mod" =>
+      "@compiled_runtime.mod_value(\{write_value(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line})"
+    "round" =>
+      "@compiled_runtime.round_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "stop_all" => "@compiled_runtime.stop_all(rt)"
+    "wait" =>
+      "@compiled_runtime.wait_value(rt, @compiled_runtime.as_number(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line}))"
+    "answer" => "@compiled_runtime.last_answer(rt)"
+    "abs" =>
+      "@compiled_runtime.abs_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "floor" =>
+      "@compiled_runtime.floor_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "ceiling" =>
+      "@compiled_runtime.ceiling_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "sqrt" =>
+      "@compiled_runtime.sqrt_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
     "contains" =>
       "@compiled_runtime.contains(\{write_value(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line})"
     "random" =>

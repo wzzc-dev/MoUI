@@ -50,6 +50,161 @@ fn add_variable(model : Model) -> Model {
 }
 
 ///|
+/// 新建一个**自定义积木**（Scratch 的「制作一个积木」）。
+///
+/// 语言层 / 解释器 / 编译运行时早就支持 `FuncDef`（`return`、`functions`
+/// 参数、`lower_user_function` 都在），但只能从 JSON 进来——界面上没有
+/// 创建入口，所以「定义自己的积木」在积木界面里做不到。这里补上入口，
+/// 走 IR 手术（与 `AddVariable` 同一纪律：克隆后手术、建完即选中）。
+///
+/// 新函数带一个**空体**：先让用户看到积木头与参数位，再往里放语句。
+/// 函数体里默认放一条 `return`，因为空体函数在语义层是合法的但运行起来
+/// 什么都不发生——给一条 `return` 让「返回」这件事在界面上可见。
+fn add_function(model : Model) -> Model {
+  if model.program.functions.length() >= @ir.MAX_FUNCS {
+    return with_notice(
+      model,
+      text(translator(model), "app.status.functions_limit"),
+      true,
+    )
+  }
+  let name = fresh_function_name(model.program)
+  let functions = model.program.functions
+  functions.push(@ir.FuncDef::{
+    name,
+    params: [],
+    body: [@ir.Return(None)],
+    note_zh: "",
+    note_en: "",
+  })
+  let next = {
+    ..model,
+    program: { ..model.program, functions, },
+    notice: "",
+  }
+  // 建完即选中：右栏立刻能改名（与「新建变量后选中」同一节奏）
+  select_target(next, SideFunction(name))
+}
+
+///|
+/// 重命名自定义积木，并同步改写**所有调用点**。
+///
+/// 与变量重命名同一理由：调用点的函数名不是用户能逐个找到的东西（积木上
+/// 显示的是渲染后的文本），不同步就会出现「改了名，旧调用还在调旧名字」
+/// ——运行时报「函数不存在」，而用户以为自己改好了。
+fn rename_function(model : Model, from : String, to : String) -> Model {
+  let trimmed = to.trim().to_owned()
+  if trimmed.length() == 0 || trimmed == from {
+    return model
+  }
+  // 名字不能与别的函数撞（撞了会调用到错的那个）
+  for func in model.program.functions {
+    if func.name == trimmed && func.name != from {
+      return with_notice(
+        model,
+        text(translator(model), "app.status.function_name_taken"),
+        true,
+      )
+    }
+  }
+  let functions : Array[@ir.FuncDef] = []
+  for func in model.program.functions {
+    if func.name == from {
+      functions.push(@ir.FuncDef::{ ..func, name: trimmed, })
+    } else {
+      functions.push(func)
+    }
+  }
+  // 同步改写子程序体里对该函数的调用
+  let handlers : Array[@ir.Handler] = []
+  for handler in model.program.handlers {
+    handlers.push(@ir.Handler::{
+      ..handler,
+      body: rename_calls_in_stmts(handler.body, from, trimmed),
+    })
+  }
+  // 其他函数体里也可能调用它
+  let renamed_funcs : Array[@ir.FuncDef] = []
+  for func in functions {
+    renamed_funcs.push(@ir.FuncDef::{
+      ..func,
+      body: rename_calls_in_stmts(func.body, from, trimmed),
+    })
+  }
+  let next = {
+    ..model,
+    program: { ..model.program, functions: renamed_funcs, handlers, },
+    notice: "",
+  }
+  // 选中槽跟着改名（否则槽指向一个已经不存在的名字）
+  if model.side_target is Some(SideFunction(old)) && old == from {
+    select_target(next, SideFunction(trimmed))
+  } else {
+    next
+  }
+}
+
+///|
+/// 把语句树里所有 `Call(from, ...)` 改成 `Call(to, ...)`（递归进控制流体）。
+fn rename_calls_in_stmts(
+  body : Array[@ir.Stmt],
+  from : String,
+  to : String,
+) -> Array[@ir.Stmt] {
+  let result : Array[@ir.Stmt] = []
+  for stmt in body {
+    result.push(
+      match stmt {
+        @ir.Stmt::Call(name, args) =>
+          if name == from {
+            @ir.Stmt::Call(to, args)
+          } else {
+            stmt
+          }
+        @ir.If(cond, then_body, arms, else_body) => {
+          let new_arms : Array[(@ir.Expr, Array[@ir.Stmt])] = []
+          for arm in arms {
+            new_arms.push((arm.0, rename_calls_in_stmts(arm.1, from, to)))
+          }
+          @ir.If(
+            cond,
+            rename_calls_in_stmts(then_body, from, to),
+            new_arms,
+            rename_calls_in_stmts(else_body, from, to),
+          )
+        }
+        @ir.CountLoop(times, loop_var, loop_body) =>
+          @ir.CountLoop(times, loop_var, rename_calls_in_stmts(loop_body, from, to))
+        @ir.WhileLoop(cond, loop_body) =>
+          @ir.WhileLoop(cond, rename_calls_in_stmts(loop_body, from, to))
+        _ => stmt
+      },
+    )
+  }
+  result
+}
+
+///|
+/// 未占用的函数名（`我的积木1` / `我的积木2`…）。
+fn fresh_function_name(program : @ir.StudioProgram) -> String {
+  let mut index = 1
+  while index < 1000 {
+    let candidate = "我的积木" + index.to_string()
+    let mut taken = false
+    for func in program.functions {
+      if func.name == candidate {
+        taken = true
+      }
+    }
+    if !taken {
+      return candidate
+    }
+    index = index + 1
+  }
+  "我的积木"
+}
+
+///|
 /// 重命名变量，并同步改写所有引用它的表达式（`Var(name)`）。
 ///
 /// 为什么不留给用户自己改引用：变量的引用**没有图形化入口**（只有代码
@@ -321,6 +476,27 @@ pub fn update_selection_msgs(
                 timer_interval: parse_window_timer(raw),
               },
             },
+          }),
+          @moui.Effect::none(),
+        ),
+      )
+    AddFunction =>
+      Some(
+        (
+          with_recent_undo_point(
+            model,
+            text(translator(model), "app.function.new"),
+            "app.recent.action.function",
+            m => add_function(m),
+          ),
+          @moui.Effect::none(),
+        ),
+      )
+    RenameFunction(from, to) =>
+      Some(
+        (
+          with_undo_point(model, "func:\{from}", m => {
+            rename_function(m, from, to)
           }),
           @moui.Effect::none(),
         ),

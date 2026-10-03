@@ -104,6 +104,26 @@ pub fn selected_data_file(model : Model) -> DataFileEntry? {
 }
 
 ///|
+/// 当前选中的**自定义积木**（None = 没选中，或该函数已不存在）。
+///
+/// 与 `selected_data_file` 同一理由：判存在要回程序里查一次——函数被删掉
+/// 后槽还指着旧名字，重新查才知道它已经没了（否则右栏会显示一个幽灵函数）。
+pub fn selected_function(model : Model) -> @ir.FuncDef? {
+  match model.side_target {
+    Some(SideFunction(name)) => {
+      let mut found : @ir.FuncDef? = None
+      for func in model.program.functions {
+        if func.name == name {
+          found = Some(func)
+        }
+      }
+      found
+    }
+    _ => None
+  }
+}
+
+///|
 /// 树行是否处于选中态（三类节点各有各的判据，集中在这里避免视图层
 /// 各写一份而漂移）。
 pub fn tree_node_selected(
@@ -127,6 +147,11 @@ pub fn tree_node_selected(
     TnDataFile =>
       match model.side_target {
         Some(SideData(name)) => name == key
+        _ => false
+      }
+    TnFunction =>
+      match model.side_target {
+        Some(SideFunction(name)) => name == key
         _ => false
       }
     TnGroup => false

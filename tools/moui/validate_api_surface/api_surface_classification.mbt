@@ -28,7 +28,15 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/core/pkg.generated.mbti",
       category: "advanced_core_protocol",
-      max_count: 1165,
+      // `View::on_secondary_tap_with_frame` (+1): the existing
+      // `on_secondary_tap` carries a fixed message, which is enough to open a
+      // context menu but not to open it *for the item under the cursor*.
+      // Canvas surfaces that own their hit-testing (the MoUI Studio blocks
+      // canvas) need the pointer point, exactly like `on_tap_with_frame`
+      // already provides for primary taps. Adding it here keeps the
+      // right-click path in core's event layer rather than duplicating
+      // hit-testing in the app.
+      max_count: 1166,
     },
     {
       path: "moui/core/pkg.generated.mbti",

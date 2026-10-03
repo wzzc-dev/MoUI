@@ -92,84 +92,61 @@ test "hiding panes funnels into the empty stage with restore entries" {
 }
 
 ///|
-/// 药丸态必须**水平居中**在中心列，且浮动层的外层只做定位、不铺底板。
+/// AI 输入条**只住在自己的宿主面板里**（底栏带 或 右栏），不浮在工作区上。
 ///
-/// 真实缺陷（用户截图）：药丸写死 180 宽、水平只放**右侧**权重 spacer，于是
-/// 它贴在中心列右下角（实测中心 x≈900，而列中心是 644）——设计稿
-/// `#aiLayer` 是 `left:50%;transform:translateX(-50%)`，收起态同样居中。
+/// 真实缺陷（用户截图 + 本轮复查）：输入条的定位外层曾是无背景
+/// `@views.container`，会回落到环境 Base 刷子（不透明面板色）整帧铺满；
+/// 那个回落色又与相邻的积木画布底**完全同色**，于是「一条横带压在工作区
+/// 底部」被读成「工作区没铺满」——这正是用户报的「不协调」。
 ///
-/// 第二件事是**结构性**的：药丸的定位外层原先是无背景 `@views.container`，
-/// 它回落到环境 Base 刷子（不透明面板色），整帧被刷成一块底板把工作区内容
-/// 盖掉。同文件 `ai_floating` 的注释里已经记录过这个坑（「位置对、文字也在
-/// 绘制流里，但屏幕上什么都没有」），药丸这条路径漏改了。这里断言「药丸带里
-/// 没有任何横跨整个中心列宽度的填充」把这个结构钉住。
+/// 本仓的解法是**结构性的**：输入面只由底栏页签 / 右栏停靠两个宿主承载，
+/// 中心列里不再有任何 AI 定位层。判据取**纵向**归属：舞台区（内容行）
+/// 之内不许出现输入条文字——底栏在内容行之下、右栏在中心列之右。
 ///
-/// 注：这条 slab 断言在 **Web 目标下不会复现**（浏览器里那个无背景 container
-/// 没画出填充，实测中心列填充只有 398/321 宽），它主要在原生沉浸式窗口里
-/// 可见。所以这里钉的是结构（外层不许有表面绘制），而不是某次渲染的具体像素。
-test "AI pill stays centred and paints no slab over the workspace" {
+/// 注意不能按横向判：底栏本身就横跨中心列宽度，横向判据会把合法的底栏
+/// 误判成「铺在中心列上」（这正是第一版的错误）。
+test "AI input lives only inside its host panel" {
   let model = initial_model()
-  let pill = apply_shell(model, ToggleAiPill)
-  assert_true(pill.ai_pill)
-  let commands = shell_draw(pill, 1280.0, 800.0)
-  // 中心列的水平范围（图标栏 + 左栏之后，右栏之前）
-  let widths = shell_chrome_widths(pill, 1280.0 - ICONBAR_WIDTH)
+  let widths = shell_chrome_widths(model, 1280.0 - ICONBAR_WIDTH)
   let center_left = ICONBAR_WIDTH + 2.0 + LEFTBAR_WIDTH + 1.0
   let center_right = center_left + widths.center
-  // 药丸本体：找「Agent」标签所在的那颗圆角盒。
-  guard shell_find_text(commands, "Agent") is Some(agent) else {
-    fail("AI pill label missing")
+  // 每档断言「输入条在它自己的宿主里」，而不是「不在工作区里」——
+  // 后者需要一个「工作区到哪结束」的中间量（= 行高 − 底栏高），
+  // 那个量算错就会把底栏误判成工作区（第一版正是如此）。直接判宿主归属
+  // 更简单也更贴近要钉的性质。
+  let bar = apply_shell(model, SetAiAnchor(AiBar))
+  let bar_commands = shell_draw(bar, 1280.0, 800.0)
+  guard shell_find_text(bar_commands, "描述你想要的应用") is Some(bar_run) else {
+    fail("bar AI composer missing")
   }
-  let mut pill_box : @core.Rect? = None
-  for rect in shell_rects(commands) {
-    let contains = rect.origin.x <= agent.frame.origin.x + 0.5 &&
-      rect.origin.x + rect.size.width >=
-      agent.frame.origin.x + agent.frame.size.width - 0.5 &&
-      rect.origin.y <= agent.frame.origin.y + 0.5 &&
-      rect.origin.y + rect.size.height >=
-      agent.frame.origin.y + agent.frame.size.height - 0.5
-    // 药丸盒比文字宽（有内垫）但不可能是整列
-    if contains &&
-      rect.size.width > agent.frame.size.width &&
-      rect.size.width < widths.center / 2.0 {
-      pill_box = Some(rect)
-    }
-  }
-  guard pill_box is Some(box) else {
-    fail("could not locate the AI pill box around its label")
-  }
-  let pill_center = box.origin.x + box.size.width / 2.0
-  let column_center = center_left + widths.center / 2.0
-  if (pill_center - column_center).abs() > 6.0 {
+  // 底栏档：底栏在中心列的下方（顶边 = 顶栏 + 1 + 工作区段高）。
+  let bar_top = TOPBAR_HEIGHT + 1.0 + (800.0 -
+    TOPBAR_HEIGHT -
+    STATUSBAR_HEIGHT -
+    PANEL_HEAD_HEIGHT -
+    2.0 -
+    ai_bar_height(bar, widths.center, 800.0))
+  if bar_run.frame.origin.y < bar_top - 0.5 {
     fail(
-      "AI pill is not centred in the workspace column: pill centre=" +
-      pill_center.to_string() +
-      " column centre=" +
-      column_center.to_string(),
+      "bar AI composer sits above the bottom bar: y=" +
+      bar_run.frame.origin.y.to_string() +
+      " bar_top=" +
+      bar_top.to_string(),
     )
   }
-  // 药丸必须留在中心列内（不能横跨到右栏或左栏）
-  if box.origin.x < center_left - 0.5 ||
-    box.origin.x + box.size.width > center_right + 0.5 {
-    fail("AI pill escapes the workspace column")
+  // 停靠档：输入条在右栏（中心列右缘之右）
+  let docked = apply_shell(model, SetAiAnchor(AiDocked))
+  let docked_commands = shell_draw(docked, 1280.0, 800.0)
+  guard shell_find_text(docked_commands, "描述你想要的应用") is Some(docked_run) else {
+    fail("docked AI composer missing")
   }
-  // 定位外层不许铺底板：药丸那条纵向带里不得出现「从中心列左缘起、横跨
-  // 整列宽度」的填充。根窗口底色从 x=0 起铺满整窗（早于所有内容），所以
-  // 用「起点贴中心列左缘」把它排除掉。
-  for rect in shell_rects(commands) {
-    let starts_at_column = (rect.origin.x - center_left).abs() < 2.0
-    let spans_column = rect.size.width >= widths.center * 0.9
-    let in_pill_band = rect.origin.y + rect.size.height >= agent.frame.origin.y &&
-      rect.origin.y <= agent.frame.origin.y + agent.frame.size.height
-    if starts_at_column && spans_column && in_pill_band {
-      fail(
-        "pill wrapper paints a column-wide slab (width=" +
-        rect.size.width.to_string() +
-        " at y=" +
-        rect.origin.y.to_string() +
-        ")",
-      )
-    }
+  if docked_run.frame.origin.x < center_right - 1.0 {
+    fail(
+      "docked AI composer sits left of the right panel: x=" +
+      docked_run.frame.origin.x.to_string() +
+      " panel_left=" +
+      center_right.to_string(),
+    )
   }
 }
 

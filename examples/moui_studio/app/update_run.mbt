@@ -3,6 +3,89 @@
 
 ///|
 /// 启动运行：解析当前 handler 源码 → 指令机。
+///|
+/// 只运行**当前选中的那一条语句**（Scratch 的「点积木就跑它」）。
+///
+/// 复用 `start_run_stmts`（既有入口，与 `RunStart` 同一条执行通道），
+/// 所以沙箱步数预算、闸门、审计、变量表全部一致——不新造执行模型。
+///
+/// **只喂这一条语句**：控制流语句自带体内（`If`/`CountLoop`/`WhileLoop`
+/// 的 body 是这条语句的一部分），所以「跑一条」自然包含「跑它的体内」，
+/// 但**不含它之后的兄弟**——那正是「单块运行」与「运行整个子程序」的分界。
+///
+/// 没有选中、或选中的是装饰块（`else`/`end`，没有对应语句）时给出提示，
+/// 而不是静默什么都不做。
+fn run_single_block(model : Model) -> Model {
+  let committed = commit_code(model)
+  let handler = match current_handler(committed) {
+    None => {
+      return with_notice(
+        committed,
+        text(translator(committed), "app.run.single.no_handler"),
+        true,
+      )
+    }
+    Some(handler) => handler
+  }
+  let chain = block_chain_of(committed)
+  let item = match block_at(chain, committed.selected_block) {
+    None => {
+      return with_notice(
+        committed,
+        text(translator(committed), "app.run.single.no_selection"),
+        true,
+      )
+    }
+    Some(item) => item
+  }
+  if item.path.length() == 0 {
+    // 装饰块（else / end）没有对应语句
+    return with_notice(
+      committed,
+      text(translator(committed), "app.run.single.decorative"),
+      true,
+    )
+  }
+  let stmt = match @blocks.stmt_at(handler.body, item.path) {
+    None => {
+      return with_notice(
+        committed,
+        text(translator(committed), "app.run.single.no_selection"),
+        true,
+      )
+    }
+    Some(stmt) => stmt
+  }
+  let seed = @studio_lang.next_seed(committed.runtime_seed)
+  // `start_run_stmts` 接语句列表：只喂这一条。
+  let state = @studio_lang.start_run_stmts(
+    [stmt],
+    committed.runtime_texts,
+    committed.runtime_values,
+    committed.runtime_rows,
+    seed~,
+    functions=committed.program.functions,
+  )
+  @studio_lang.run_to_end(state)
+  let run = RunModel::{
+    handler_label: "\{handler.control_name}@\{handler.event.tag()} · 单块",
+    state,
+    checks: Map([], capacity=8),
+    single_step: false,
+  }
+  let t = translator(committed)
+  let audited = push_audit(
+    { ..committed, run: Some(run), runtime_seed: seed },
+    AuditRun,
+    text(t, "app.audit.run_start"),
+    run.handler_label,
+  )
+  // **不产生撤销点**：运行不改程序（IR 一字未动），只是执行了一次；
+  // 给运行记还原点会让「撤销」把用户撤回到运行前——那不是可撤销的编辑。
+  audited
+}
+
+///|
 fn start_run(model : Model) -> Model {
   let committed = commit_code(model)
   match current_handler(committed) {
@@ -271,6 +354,31 @@ fn interpreted_value(value : @compiled_runtime.Value) -> @studio_lang.Value {
 }
 
 ///|
+/// 闸门应答：把**回答草稿**一起送进闸门（`询问` 的回答就是这个文本），
+/// 并在提交后清空草稿（下一次询问从空开始，不会带上一轮的答案）。
+fn answer_gate_with_draft(model : Model, decision : Bool) -> Model {
+  let text = model.gate_answer_draft
+  let cleared = { ..model, gate_answer_draft: "" }
+  if current_track(model) is Compile {
+    match cleared.compiled_run {
+      None => cleared
+      Some(run) => {
+        ignore(@compiled_runtime.answer_gate_with_text(run.runtime, decision, text))
+        drain_broadcasts_compiled(merge_compiled_run_back(cleared))
+      }
+    }
+  } else {
+    match cleared.run {
+      None => cleared
+      Some(run) => {
+        @studio_lang.answer_gate_with_text(run.state, decision, text)
+        drain_broadcasts_interpret(merge_run_back(cleared))
+      }
+    }
+  }
+}
+
+///|
 /// 运行推进：每次 tick 执行若干条指令（聚光灯可跟随）。
 fn run_tick(model : Model) -> Model {
   match model.run {
@@ -278,10 +386,15 @@ fn run_tick(model : Model) -> Model {
     Some(run) => {
       // 单步模式下计时器不自动推进（RunStep 负责走一条指令）
       if run.state.status is @studio_lang.Running && !run.single_step {
-        let mut i = 0
-        while i < 6 && run.state.status is @studio_lang.Running {
-          @studio_lang.step_once(run.state)
-          i = i + 1
+        // **等待优先**：`等待 N 秒` 挂起时本 tick 不执行任何指令，
+        // 只把剩余 tick 数减一。不这么做的话「等待」会在同一个 tick 里
+        // 被后续指令直接跨过去（用户看到的是「没等」）。
+        if @studio_lang.tick_wait(run.state) {
+          let mut i = 0
+          while i < 6 && run.state.status is @studio_lang.Running {
+            @studio_lang.step_once(run.state)
+            i = i + 1
+          }
         }
       }
       drain_broadcasts_interpret(merge_run_back(model))
@@ -646,6 +759,7 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     | RevealArtifact(_)
     | RunArtifact(_)
     | ArtifactActionDone(_, _) => None
+    RunSingleBlock => Some((run_single_block(model), @moui.Effect::none()))
     RunStart =>
       if current_track(model) is Compile {
         Some((start_compiled_run(model), @moui.Effect::none()))
@@ -787,26 +901,20 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           }
         }
       }
+    GateAnswerInput(text) =>
+      Some(({ ..model, gate_answer_draft: text }, @moui.Effect::none()))
+    GateAnswerSubmit =>
+      // 提交时把**草稿文本**一起送进闸门（`询问` 的回答就是这个文本）。
+      Some(
+        (
+          answer_gate_with_draft(model, true),
+          @moui.Effect::none(),
+        ),
+      )
     AnswerGate(decision) =>
-      if current_track(model) is Compile {
-        match model.compiled_run {
-          None => Some((model, @moui.Effect::none()))
-          Some(run) => {
-            ignore(@compiled_runtime.answer_gate(run.runtime, decision))
-            Some((drain_broadcasts_compiled(merge_compiled_run_back(model)), @moui.Effect::none()))
-          }
-        }
-      } else {
-        match model.run {
-          None => Some((model, @moui.Effect::none()))
-          Some(run) => {
-            @studio_lang.answer_gate(run.state, decision)
-            Some(
-              (drain_broadcasts_interpret(merge_run_back(model)), @moui.Effect::none()),
-            )
-          }
-        }
-      }
+      // 确认同样带上草稿文本：用户可能在回答框里打了字再点确认；
+      // 拒绝也带（文本仍会被记录为「这次的回答」，只是 decision=false）。
+      Some((answer_gate_with_draft(model, decision), @moui.Effect::none()))
     ControlClicked(name) => {
       if gate_waiting(model) {
         return Some((model, @moui.Effect::none()))

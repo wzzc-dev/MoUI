@@ -190,9 +190,15 @@ fn check_call(
       match found {
         None => errors.push(LangError(UnknownBuiltin, 0, name, ""))
         Some(func) => {
-          if statement {
-            errors.push(LangError(TypeMismatch, 0, func.name, "expression"))
-          }
+          // **自定义积木在语句位是合法的**（Scratch 的「我的积木」就是一条
+          // 可独立执行的语句）。早先这里无条件报 `TypeMismatch(expression)`，
+          // 于是新建的积木**永远无法被调用**——建得出来、拖得进去、运行就
+          // 报「类型不匹配」，而解释器其实完整支持（`call_user_function`
+          // 就在 `eval_call` 的自定义分支里）。
+          //
+          // 表达式位也合法：有返回值的自定义积木可以嵌进洞里（`Return` 的
+          // 存在与否由运行时决定，静态不做区分——与 Scratch 一致，它的
+          // reporter 与 stack 块同名同体）。
           if args.length() != func.params.length() {
             errors.push(
               LangError(

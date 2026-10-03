@@ -98,5 +98,44 @@ pub fn studio_program_commands(
     has_selection,
     DuplicateControl(model.selected_control),
   )
+  // ── 积木域键盘（Scratch/IDE 口径）────────────────────────────────────
+  //
+  // 判据用 `selected_block >= 0`（选中了积木）而不是「在积木工作区」：
+  // 选中态本身就是「用户正在编辑积木」的可靠信号，而工作区可能在代码页。
+  // 三条都**只在有积木选中时**启用——否则 Delete 会变成「删掉一个看不见
+  // 的东西」，那是危险的空操作。
+  let has_block = model.selected_block >= 0
+  bind("ArrowUp", false, "app.command.block.prev", Activate, has_block, SelectBlockStep(-1))
+  bind("ArrowDown", false, "app.command.block.next", Activate, has_block, SelectBlockStep(1))
+  bind("Delete", false, "app.command.block.delete", Activate, has_block, DeleteBlock)
+  bind("Backspace", false, "app.command.block.delete", Activate, has_block, DeleteBlock)
+  bind("d", false, "app.command.block.duplicate", Activate, has_block, DuplicateBlock)
+  bind("Enter", true, "app.command.block.commit", Submit, has_block, CommitBlock)
+  // 「运行这一块」（Scratch 的点击运行）：Cmd/Ctrl+R。
+  // **不能用 Cmd+Enter**——那个已经给了「提交积木编辑」，同一组合绑两条
+  // 命令会双触发（`ActionCommandMap` 按 key 匹配，不按 intent 去重）。
+  bind("r", false, "app.run.single", Activate, has_block, RunSingleBlock)
+  // Escape 取消**值编辑**：只在值编辑进行中启用。值编辑是个「就地小输入」，
+  // 没有取消路径的话用户只能提交（或点走），而提交会改 IR——想放弃却改了。
+  bind(
+    "Escape",
+    false,
+    "app.command.block.cancel_value",
+    Activate,
+    model.block_value_edit is Some(_),
+    BlockValueCancel,
+  )
+  // Escape 收起**补全弹层**：`completion_open` 此前只有「打开」没有「关闭」
+  // 的生产者（`DismissCompletion` 有处理分支却没人发），于是弹出后按 Esc
+  // 关不掉——只能选中某一项或点走。与值编辑的 Escape 是**互斥**的两态
+  // （补全弹层与值编辑不会同时在），所以同一个键不会双触发。
+  bind(
+    "Escape",
+    false,
+    "app.command.code.dismiss_completion",
+    Activate,
+    model.completion_open,
+    DismissCompletion,
+  )
   commands
 }

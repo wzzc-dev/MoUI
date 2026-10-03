@@ -303,7 +303,7 @@ pub fn ide_icon_bar(
     icon_button(
       Focus,
       text(t, "app.ai.title"),
-      model.ai_anchor is AiDocked && !model.ai_pill,
+      model.ai_anchor is AiDocked,
       CycleAiAnchor,
       32.0,
       32.0,
@@ -539,6 +539,9 @@ fn group_create_menu(
     add(text(t, "control.image"), AddControl(@ir.Image))
   } else if group == tree_group_variables() {
     add(text(t, "app.tree.create.variable"), AddVariable)
+  } else if group == tree_group_functions() {
+    // 「制作一个积木」：直接建一个空体积木并选中它（右栏立刻可改名）
+    add(text(t, "app.function.new"), AddFunction)
   } else if group == tree_group_handlers() {
     // 子程序挂在（控件, 事件）对上：先选一个控件，右栏「动作」页签里
     // 列出该控件支持的事件，点未建的那个即建。这里给一条直达引导。
@@ -617,6 +620,7 @@ fn tree_node_row(
   let on_click = match node.kind {
     TnControl => Some(SelectControl(node.select_key))
     TnHandler => Some(SelectHandler(node.select_key))
+    TnFunction => Some(SelectSide(SideFunction(node.select_key)))
     TnWindow => Some(SelectSide(SideWindow))
     TnVariable => Some(SelectSide(SideVariable(node.select_key)))
     TnDataFile => Some(SelectSide(SideData(node.select_key)))
@@ -876,10 +880,19 @@ fn recent_tail(
 
 ///|
 /// 底栏：拖动条 + 页签头 + 面板体。收起时只剩 26pt 页签头。
+///|
+/// 底栏：页签头 + 当前页签的体。
+///
+/// `height` 由**调用方**给（`shell_view` 里按内容算出的 `bottom_height`），
+/// 不再读 `model.bottom_height`——那两个值会分叉：AI 页签的内容高随线程卡
+/// 数量变化，模型里存的仍是用户上次的拖拽值，于是面板被算成 164pt、
+/// 体内的卡片却按 168pt 布局，多出的部分把窗口底色（`#16181C`）露在底栏里
+/// （实测底栏底部一条 14px 的暗带）。高度只有一个来源。
 pub fn ide_bottom_bar(
   model : Model,
   t : @i18n.Translator,
   width : Double,
+  height : Double,
 ) -> @moui.View[Msg] {
   let pending = pending_side_effects(model)
   let errors = audit_error_count(model)
@@ -902,6 +915,14 @@ pub fn ide_bottom_bar(
       model.bottom_tab is BtProblems,
       SetBottomTab(BtProblems),
       problems,
+    ),
+    // AI 输入条页签：与三个只读面板并列。计数用待审计提案数——它是
+    // 「这里有没有等你处理的东西」的唯一读数（与药丸徽标同一个来源）。
+    tab_button(
+      text(t, "app.bottom.ai"),
+      model.bottom_tab is BtAi,
+      SetBottomTab(BtAi),
+      pending_ai_cards(model),
     ),
   ]
   if model.bottom_tab is BtAudit && pending > 0 {
@@ -975,9 +996,17 @@ pub fn ide_bottom_bar(
     )
   }
   let body = match model.bottom_tab {
-    BtAudit => audit_pane(model, t, width, model.bottom_height - 30.0)
-    BtConsole => console_pane(model, t, width, model.bottom_height - 30.0)
-    BtProblems => problems_pane(model, t, width, model.bottom_height - 30.0)
+    BtAudit => audit_pane(model, t, width, height - 30.0)
+    BtConsole => console_pane(model, t, width, height - 30.0)
+    BtProblems => problems_pane(model, t, width, height - 30.0)
+    // AI 输入面：与停靠档**同一个** `ai_card_body`（折叠条 + 线程区 +
+    // 输入盒 + 决策行），宿主换成底栏。
+    //
+    // 高度**显式给**（body 区 = 总高 − 页签头）：卡片必须待在自己的格子里，
+    // 否则它会按内容自然高画出去、越过底栏边界，把窗口底色露在底栏里
+    // （实测底栏底部一条 14px 的暗带）。线程区自己会滚动，所以这里不套
+    // 外层 scroll_view——两层滚动会让线程卡的滚动量与预期不符。
+    BtAi => ai_bar_composer(model, t, width, (height - PANEL_HEAD_HEIGHT).max(80.0))
   }
   @views.container(
     @views.column([hairline(), head, body], spacing=0.0),

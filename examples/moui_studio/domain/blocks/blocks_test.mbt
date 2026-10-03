@@ -353,3 +353,213 @@ test "clone_stmts deep-copies nested structures" {
     _ => fail("克隆后原件不应被波及")
   }
 }
+
+///|
+/// 跨列表移动：把一条语句从顶层拖进 If 的 then 体（Scratch 的核心手势
+/// 「拖进 C 形块的洞里」）。
+///
+/// 这是 `reorder_stmt` 明确排除的能力（它只管同层重排），也是嵌套编辑
+/// 从「只能靠面板插入」变成「可以拖」的关键手术。
+test "move_stmt_at drags a statement into an if body" {
+  // 顶层：if(cond){a=1} ; b = 2
+  let body = [
+    @ir.If(@ir.Var("c"), [@ir.Assign("a", @ir.IntLit(1))], [], []),
+    @ir.Assign("b", @ir.IntLit(2)),
+  ]
+  // 把顶层第 1 条（b=2）移到 If@0 的 then 体末尾（list_path = [0,0]）
+  let moved = @blocks.move_stmt_at(body, [1], [0, 0], 1)
+  assert_true(moved is Some(_))
+  let after = moved.unwrap()
+  // 顶层只剩 if
+  assert_eq(after.length(), 1)
+  match after[0] {
+    @ir.If(_, then_body, _, _) => {
+      // then 体：a=1（原）+ b=2（移入）
+      assert_eq(then_body.length(), 2)
+      match then_body[1] {
+        @ir.Assign(name, _) => assert_eq(name, "b")
+        _ => fail("moved statement is not the expected assign")
+      }
+    }
+    _ => fail("top-level statement is no longer an if")
+  }
+  // 原 body 不被改动（克隆后手术的纪律）
+  assert_eq(body.length(), 2)
+}
+
+///|
+/// 同列表内移动要**补偿下标**：先删会让目标位置左移一位。
+///
+/// 不补偿的后果是「往后挪一位」变成「原地不动」——拖了但块没动，
+/// 用户以为拖拽坏了。
+test "move_stmt_at compensates the index when moving forward in one list" {
+  let body = [
+    @ir.Assign("a", @ir.IntLit(1)),
+    @ir.Assign("b", @ir.IntLit(2)),
+    @ir.Assign("c", @ir.IntLit(3)),
+  ]
+  // 把 a（下标 0）移到「c 之后」= 位置 3；删掉 a 后 c 在下标 1，插到 2
+  let moved = @blocks.move_stmt_at(body, [0], [], 3)
+  assert_true(moved is Some(_))
+  let after = moved.unwrap()
+  assert_eq(after.length(), 3)
+  // 结果顺序：b, c, a
+  let names : Array[String] = []
+  for stmt in after {
+    match stmt {
+      @ir.Assign(name, _) => names.push(name)
+      _ => ()
+    }
+  }
+  assert_eq(names[0], "b")
+  assert_eq(names[1], "c")
+  assert_eq(names[2], "a")
+}
+
+///|
+/// 非法路径必须返回 `None`（调用方据此**拒绝**拖拽并给反馈），
+/// 而不是静默原样返回——静默返回会让「拖失败」看起来像「拖成功但没动」。
+test "move_stmt_at rejects invalid paths" {
+  let body = [@ir.Assign("a", @ir.IntLit(1))]
+  // 空源路径
+  assert_true(@blocks.move_stmt_at(body, [], [], 0) is None)
+  // 源越界
+  assert_true(@blocks.move_stmt_at(body, [9], [], 0) is None)
+  // 目标列表不存在
+  assert_true(@blocks.move_stmt_at(body, [0], [7, 0], 0) is None)
+  // 目标位置越界
+  assert_true(@blocks.move_stmt_at(body, [0], [], 5) is None)
+}
+
+///|
+/// **整栈重排**：抓住第 2 块时，它**和它下面所有块**一起移动
+/// （Scratch 的手感）。`reorder_stmt` 只搬一条，用它做栈拖拽会把一段逻辑
+/// 拆散——用户以为丢块了。
+test "reorder_stack moves the grabbed block together with everything below it" {
+  let body = [
+    @ir.Assign("a", @ir.IntLit(1)),
+    @ir.Assign("b", @ir.IntLit(2)),
+    @ir.Assign("c", @ir.IntLit(3)),
+    @ir.Assign("d", @ir.IntLit(4)),
+  ]
+  // 抓住 b（下标 1），拖到最前（drop_before = 0）
+  let moved = @blocks.reorder_stack(body, [], 1, 0)
+  assert_true(moved is Some(_))
+  let after = moved.unwrap()
+  let names = stmt_names(after)
+  // b、c、d 作为一整段搬到最前，段内顺序不变
+  assert_eq(names[0], "b")
+  assert_eq(names[1], "c")
+  assert_eq(names[2], "d")
+  assert_eq(names[3], "a")
+  // 原 body 不被改动
+  assert_eq(stmt_names(body)[0], "a")
+}
+
+///|
+/// 栈拖到自己内部 = 原位，返回 `None`（调用方当无操作）。
+///
+/// 不这么判的话「抓起一块又放回它下面一格」会产生一次无意义的撤销点，
+/// 而且 `drop_before` 落在栈内时段的插入位置在数学上无定义。
+test "reorder_stack treats a drop inside the stack as no-op" {
+  let body = [
+    @ir.Assign("a", @ir.IntLit(1)),
+    @ir.Assign("b", @ir.IntLit(2)),
+    @ir.Assign("c", @ir.IntLit(3)),
+  ]
+  // 抓住 a（栈 = a,b,c，长度 3），落在栈内
+  assert_true(@blocks.reorder_stack(body, [], 0, 1) is None)
+  assert_true(@blocks.reorder_stack(body, [], 0, 2) is None)
+  assert_true(@blocks.reorder_stack(body, [], 0, 3) is None)
+  // 越界
+  assert_true(@blocks.reorder_stack(body, [], 9, 0) is None)
+  assert_true(@blocks.reorder_stack(body, [], -1, 0) is None)
+}
+
+///|
+/// 栈拖拽**保留段内顺序**（这是「一起搬走」的定义）。
+test "reorder_stack preserves the segment order" {
+  let body = [
+    @ir.Assign("a", @ir.IntLit(1)),
+    @ir.Assign("b", @ir.IntLit(2)),
+    @ir.Assign("c", @ir.IntLit(3)),
+    @ir.Assign("d", @ir.IntLit(4)),
+  ]
+  // 抓 b（栈 = b,c,d），落到「a 之前」（drop_before = 0）
+  let moved = @blocks.reorder_stack(body, [], 1, 0)
+  assert_true(moved is Some(_))
+  let names = stmt_names(moved.unwrap())
+  assert_eq(names[0], "b")
+  assert_eq(names[1], "c")
+  assert_eq(names[2], "d")
+  assert_eq(names[3], "a")
+}
+
+///|
+/// 抓住**整条列表**时，任何落点都是原位 → `None`（无操作）。
+///
+/// 这条容易被当成 bug：栈占满列表时「搬到末尾」与「不动」是同一位置。
+/// 返回 `Some` 会凭空产生一次撤销点，而画面上什么都没变。
+test "reorder_stack rejects moving an entire list" {
+  let body = [
+    @ir.Assign("a", @ir.IntLit(1)),
+    @ir.Assign("b", @ir.IntLit(2)),
+    @ir.Assign("c", @ir.IntLit(3)),
+  ]
+  assert_true(@blocks.reorder_stack(body, [], 0, 3) is None)
+  assert_true(@blocks.reorder_stack(body, [], 0, 0) is None)
+}
+
+///|
+/// 取一串语句里的赋值名，供顺序断言。
+fn stmt_names(body : Array[@ir.Stmt]) -> Array[String] {
+  let names : Array[String] = []
+  for stmt in body {
+    match stmt {
+      @ir.Assign(name, _) => names.push(name)
+      _ => ()
+    }
+  }
+  names
+}
+
+///|
+/// 落点有效性：`break` **只能在循环体内**（语言规则 `BreakOutsideLoop`）。
+///
+/// 语言层在整程序校验时报这个错；拖拽当场先判一次，用户就不必
+/// 「拖进去 → 运行 → 看报错」。判据必须看**容器的真实父语句类型**，
+/// 不能按路径 slot 猜：`[i,2]` 既可能是 `If` 的 else，也可能是循环体。
+test "drop_accepts_stmt rejects break outside a loop" {
+  let body = [
+    @ir.Assign("a", @ir.IntLit(1)),
+    @ir.If(@ir.Var("c"), [], [], []),
+    @ir.CountLoop(@ir.IntLit(3), None, []),
+  ]
+  // 顶层（路径 []）不接受 break
+  assert_false(@blocks.drop_accepts_stmt(body, [], @ir.Break))
+  // If 的 then（[1,0]）不在循环里 → 不接受
+  assert_false(@blocks.drop_accepts_stmt(body, [1, 0], @ir.Break))
+  // If 的 else（[1,2]）也不在循环里 → 不接受（按 slot 猜会误判成循环体）
+  assert_false(@blocks.drop_accepts_stmt(body, [1, 2], @ir.Break))
+  // 循环体（[2,2]）→ 接受
+  assert_true(@blocks.drop_accepts_stmt(body, [2, 2], @ir.Break))
+  // 非 break 语句任何位置都接受
+  assert_true(@blocks.drop_accepts_stmt(body, [], @ir.Assign("b", @ir.IntLit(1))))
+}
+
+///|
+/// 嵌套：`If` 在循环体内时，`If` 的 then 也**在循环里**，`break` 合法
+/// （语言语义按嵌套判定，不是只看直接父层）。
+test "drop_accepts_stmt accepts break inside a loop nested under an if" {
+  let body = [
+    @ir.CountLoop(
+      @ir.IntLit(3),
+      None,
+      [@ir.If(@ir.Var("c"), [], [], [])],
+    ),
+  ]
+  // 循环体 → if.then：路径 = 循环体 [0] 段 + If 的 then 段
+  // [0,2] = CountLoop@0 的循环体；再进 If 的 then → [0,2] 后接 [0,0]
+  // stmt_list_at 的语法是「下标链」：先 0 进循环体，再 0 进那个 If，再 0 进 then
+  assert_true(@blocks.drop_accepts_stmt(body, [0, 2, 0, 0], @ir.Break))
+}

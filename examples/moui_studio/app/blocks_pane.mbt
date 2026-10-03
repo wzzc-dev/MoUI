@@ -119,9 +119,23 @@ pub fn blocks_pane(
       // 代价是「编辑入口离选中远了一步」——用右栏自动切到属性页签 + 画布
       // 选中描边两个信号补回来（成熟 IDE 的检查器同样是「选中在画布、
       // 编辑在侧栏」，IDEA 的 Properties 面板就是这个分工）。
-      let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT + 24.0)
+      // **脚本说明横幅**：有说明时在积木链上方留出一条，并把同一高度
+      // 加进画布高度——两处不一致会让横幅被裁掉（画布太矮）或与第一块
+      // 积木重叠（偏移与高度不匹配）。
+      let script_note = target_note(model)
+      let note_height = if script_note == "" { 0.0 } else { BLOCKS_NOTE_HEIGHT }
+      let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT +
+        24.0 + note_height)
         .max(body_height)
         .max(120.0)
+      // **画布不再自带上下文菜单宿主**：菜单改由**顶层**
+      // `studio_overlay_host`（viewport 大小）承载。
+      //
+      // 为什么必须搬到顶层：`context_menu_region` 用的是 `popup_host`
+      // （`BaseSized`），宿主只有**窗格那么大**（实测屏障 233×536），
+      // 于是「点别处关闭」的屏障最多只盖住这一个窗格——在窗口其它任何
+      // 地方点，指针根本到不了屏障，菜单**永远不消失**（用户报的缺陷）。
+      // 屏障要覆盖整个窗口，宿主就必须是 viewport 大小的那一层。
       @views.scroll_view(
         blocks_canvas(
           blocks,
@@ -132,9 +146,22 @@ pub fn blocks_pane(
           canvas_width,
           canvas_height,
           text(t, "app.blocks.canvas"),
+          palette_drag=model.palette_drag is Some(_),
+          expr_drag=model.expr_drag is Some(_),
+          script_note~,
+          note_height~,
         ),
         width=canvas_width,
         height=body_height,
+        // **受控滚动**：偏移来自模型，拖到边缘时由 `BlocksAutoScroll`
+        // 推进。不受控的话自动滚动无处落笔（滚动位置是控件内部状态，
+        // update 层看不到也改不了）。
+        offset=@core.Point::new(
+          x=0.0,
+          y=model.blocks_scroll_y,
+        ),
+        // 手动滚动要回报，否则下一次重渲会把用户滚到的位置弹回模型值。
+        on_scroll=Some(offset => BlocksScrolled(offset.y)),
         shows_indicator=true,
       )
     }
@@ -264,6 +291,84 @@ pub fn statement_palette_panel(
       vertical=0.0,
     ),
   ]
+  // **变量分类里给出「新建变量」入口**（Scratch 的「建立一个变量」按钮）。
+  //
+  // 为什么必须在这里：此前新建变量只能去左栏结构树的「+」——而用户此刻
+  // 正在积木画布上想加一个变量，视线与心智都在这里。Scratch 把入口放在
+  // 变量分类底部正是这个理由。复用既有的 `AddVariable`（自动命名、过撤销
+  // 点），不新开一条创建路径。
+  if category is Some(@blocks.CatVariable) {
+    rows.push(
+      @views.container(
+        @views.padding_xy(
+          @views.text(
+            fit_label(text(t, "app.variable.new"), width - 24.0),
+            theme=studio_theme(),
+            width=(width - 20.0).max(60.0),
+            height=18.0,
+            align=TextStart,
+          ).foreground(ide_accent()),
+          horizontal=8.0,
+          vertical=0.0,
+        ),
+        background=ide_panel_alt(),
+        corner_radius=4.0,
+        width=(width - 12.0).max(60.0),
+        height=28.0,
+        padding=0.0,
+      )
+      .on_tap(AddVariable)
+      .accessibility_label(text(t, "app.variable.new")),
+    )
+  }
+  // **报告块**（运算分类）：这些是**表达式**，只作为洞里的内容。
+  //
+  // 与语句骨架分开渲染的理由：报告块不能「插一行」（`1 + 1` 单独成句在
+  // 语言里非法），所以它们没有点击插入，只有拖拽——面板上给出这条提示，
+  // 否则用户点了没反应会以为坏了。
+  if category is Some(@blocks.CatExpression) {
+    rows.push(
+      @views.padding_xy(
+        hint_lines_view(
+          text(t, "app.expr.palette.hint"),
+          width - 24.0,
+          ide_text_faint(),
+          2,
+        ),
+        horizontal=8.0,
+        vertical=0.0,
+      ),
+    )
+    let mut expr_index = 0
+    for template in expression_templates() {
+      let label = text(t, template.label_key)
+      rows.push(
+        @views.container(
+          @views.padding_xy(
+            @views.text(
+              fit_label(label, width - 24.0),
+              theme=studio_theme(),
+              width=(width - 20.0).max(60.0),
+              height=18.0,
+              align=TextStart,
+            ).foreground(ide_text()),
+            horizontal=8.0,
+            vertical=0.0,
+          ),
+          background=ide_panel_alt(),
+          corner_radius=4.0,
+          width=(width - 12.0).max(60.0),
+          height=28.0,
+          padding=0.0,
+        )
+        // 只可拖，不可点：表达式不能单独成句。拖动时记下模板下标，
+        // 落点（哪个洞）由画布侧按指针算。
+        .on_drag(_event => PaletteExprDragStart(expr_index))
+        .accessibility_label(label),
+      )
+      expr_index = expr_index + 1
+    }
+  }
   if templates.length() == 0 {
     rows.push(
       @views.padding_xy(
@@ -301,6 +406,11 @@ pub fn statement_palette_panel(
           padding=0.0,
         )
         .on_tap(InsertStatement(model.selected_category, index))
+        // 拖动 = 从调色板拖到画布（Scratch 的字面手势）。这里只记下
+        // 「拖动源」，落点由画布侧按指针算——两个视图互相看不到对方的帧。
+        .on_drag(
+          _event => PaletteDragStart(model.selected_category, index),
+        )
         .accessibility_label(label),
       )
       index = index + 1
@@ -396,4 +506,92 @@ fn category_rail_row(
     width=CATEGORY_RAIL_WIDTH,
     padding=0.0,
   ).on_tap(on_click)
+}
+
+///|
+/// 积木右键菜单（Scratch/IDE 口径）。
+///
+/// 动作全部复用**既有消息**——`DuplicateBlock` / `DeleteBlock` 已经是右栏
+/// 编辑卡上的按钮载体，这里只是把同一批动作搬到指针处。**不新开执行路径**：
+/// 菜单是「同一动作的第二个入口」，不是第二套语义。
+///
+/// 每一项都先发 `BlocksContextMenuClose`（见各行的 `on_tap` 串联）——
+/// 点完不关菜单，用户会以为没生效。
+pub fn block_context_menu(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+  let has_block = model.selected_block >= 0
+  let rows : Array[@moui.View[Msg]] = []
+  if has_block {
+    // 「运行这一块」放最前：Scratch 里点击积木的直接动作就是运行。
+    rows.push(
+      menu_action_row(
+        text(t, "app.run.single"),
+        ide_success(),
+        RunSingleBlock,
+        true,
+      ),
+    )
+    rows.push(
+      menu_action_row(
+        text(t, "app.block.duplicate"),
+        ide_text(),
+        DuplicateBlock,
+        true,
+      ),
+    )
+    rows.push(
+      menu_action_row(
+        text(t, "app.block.delete"),
+        ide_danger(),
+        DeleteBlock,
+        true,
+      ),
+    )
+  } else {
+    // 点空白处：给画布级动作（至少要有可插入语句的入口，否则菜单是空的）
+    rows.push(
+      menu_action_row(
+        text(t, "app.blocks.rail.hint"),
+        ide_text_muted(),
+        ToggleStatementPalette(model.selected_category),
+        true,
+      ),
+    )
+  }
+  @views.container(
+    @views.column(rows, spacing=0.0),
+    background=ide_panel_alt(),
+    corner_radius=6.0,
+    width=168.0,
+    padding=0.0,
+  )
+}
+
+///|
+/// 菜单行：文字 + 点击派发。动作后**先关菜单**再执行——菜单留着会挡住
+/// 结果（删除后菜单还悬在那里，用户以为没删掉）。
+fn menu_action_row(
+  label : String,
+  color : @core.Color,
+  action : Msg,
+  enabled : Bool,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.padding_xy(
+      @views.text(
+        fit_label(label, 140.0),
+        theme=studio_theme(),
+        width=140.0,
+        height=18.0,
+        align=TextStart,
+      ).foreground(if enabled { color } else { ide_text_faint() }),
+      horizontal=12.0,
+      vertical=0.0,
+    ),
+    height=28.0,
+    width=168.0,
+    padding=0.0,
+  ).on_tap(
+    // 禁用项也要能点（关掉菜单），所以包一层而不是挂 Noop。
+    if enabled { BlocksMenuAction(action) } else { BlocksContextMenuClose },
+  )
 }

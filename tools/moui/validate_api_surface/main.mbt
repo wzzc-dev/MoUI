@@ -333,8 +333,13 @@ fn package_budgets() -> Array[PackageBudget] {
       // and SemanticId::new: +14 lines, +5 pub, +1 pub(all); View::on_tap_with_frame +1 line, +1 pub; View::on_hover +1 line, +1 pub.
       // ViewSemanticsInfo::overlaying (modifier semantics overlay merge)
       // adds +1 line, +1 pub.
-      max_lines: 2749,
-      max_pub_lines: 1153,
+      // View::on_secondary_tap_with_frame (MoUI Studio blocks context menu)
+      // adds +1 line, +1 pub: `on_secondary_tap` carries a fixed message,
+      // which opens a menu but cannot say *which* item it is for; canvas
+      // surfaces that own their hit-testing need the pointer point, exactly
+      // like `on_tap_with_frame` already provides for primary taps.
+      max_lines: 2750,
+      max_pub_lines: 1154,
       max_pub_all_lines: 190,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

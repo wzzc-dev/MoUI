@@ -73,6 +73,72 @@ fn[Msg] OnSecondaryTapModifier::to_any_modifier(
 }
 
 ///|
+/// Secondary (right-button) tap **with position and frame**.
+///
+/// `OnSecondaryTapModifier` carries a fixed message, so a context-menu host
+/// cannot learn *where* the user right-clicked and therefore cannot hit-test
+/// which item to build a menu for. This variant hands over the pointer point
+/// and the child frame, mirroring `OnTapWithFrameModifier`.
+///
+/// Fires on press (not press/release): native context menus open on
+/// button-down, and the host backends show the menu before the release can be
+/// dispatched to the tree — same rationale as `OnSecondaryTapModifier`.
+priv struct OnSecondaryTapWithFrameModifier[Msg] {
+  handler : (Point, Rect) -> Msg
+}
+
+///|
+fn[Msg] OnSecondaryTapWithFrameModifier::to_any_modifier(
+  self : OnSecondaryTapWithFrameModifier[Msg],
+) -> AnyModifier[Msg] {
+  let handler = self.handler
+  {
+    ..noop_modifier(),
+    identity_kind: "OnSecondaryTapWithFrame",
+    event: fn(ctx) {
+      match ctx.event {
+        Pointer(event) if event.button == 1 => {
+          let inside = ctx.frame.contains(event.position)
+          let current = view_state_to_pressable_state(ctx.state)
+          let tap = recognize_press_tap(current, inside, event.phase)
+          let next_state = pressable_state_to_view_state(
+            ctx.state,
+            tap.next_state,
+          )
+          let activated = event.phase == Down && inside
+          let changed = next_state != ctx.state || activated
+          let frame = match ctx.child_frames {
+            [cf, ..] => cf
+            [] => ctx.frame
+          }
+          {
+            changed,
+            activated,
+            focused: false,
+            // No pointer capture — see `OnSecondaryTapModifier`: capturing
+            // would mis-attribute a second right-click elsewhere.
+            captured: false,
+            state: Some(next_state),
+            text_control: None,
+            dirty: if changed {
+              ViewPaintDirty
+            } else {
+              ViewClean
+            },
+            messages: if activated {
+              [handler(event.position, frame)]
+            } else {
+              []
+            },
+          }
+        }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
+}
+
+///|
 pub fn[Msg] OnTapModifier::to_any_modifier(
   self : OnTapModifier[Msg],
 ) -> AnyModifier[Msg] {

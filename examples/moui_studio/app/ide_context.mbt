@@ -186,12 +186,33 @@ fn context_block_editor(
             @views.padding_xy(head, horizontal=8.0, vertical=0.0),
             // 单行语句编辑用 text_field：原生单行控件（自带水平滚动），
             // Enter 直接应用草稿（text_area 的 8pt×2 垂直内垫会竖切字形）。
+            //
+            // **值编辑进行中时，同一个格子改为编辑那个值**（Scratch 的
+            // 「点值改值」）：只换绑定的数据源与提交消息，不另开一块面板——
+            // 用户点的还是积木上那个数，编辑框就该在同一个位置。
             @views.padding_xy(
               @views.text_field(
-                model.block_draft,
-                on_input=source => EditBlock(source),
-                on_submit=Some(CommitBlock),
-                placeholder=text(t, "app.block.editor_hint"),
+                match model.block_value_edit {
+                  Some((_, _, draft)) => draft
+                  None => model.block_draft
+                },
+                on_input=source => match model.block_value_edit {
+                  Some(_) => BlockValueInput(source)
+                  None => EditBlock(source)
+                },
+                on_submit=Some(
+                  match model.block_value_edit {
+                    Some(_) => BlockValueCommit
+                    None => CommitBlock
+                  },
+                ),
+                placeholder=text(
+                  t,
+                  match model.block_value_edit {
+                    Some(_) => "app.block.value_hint"
+                    None => "app.block.editor_hint"
+                  },
+                ),
                 variant=Outline,
                 width=inner,
                 height=FIELD_HEIGHT,
@@ -207,6 +228,34 @@ fn context_block_editor(
                 height=16.0,
                 align=TextStart,
               ).foreground(ide_text_faint()),
+              horizontal=8.0,
+              vertical=0.0,
+            ),
+            // **给这段脚本写说明**（Scratch 的「加注释」）。
+            //
+            // `Handler` / `FuncDef` 一直有 `note_zh` / `note_en` 字段，AI
+            // 上下文也一直在读它（`handler_note`），但界面上没有写的入口，
+            // 所以那两个字段永远是空的——「能力在、入口不在」的又一例。
+            @views.padding_xy(
+              @views.text(
+                text(t, "app.block.note_label"),
+                theme=studio_theme(),
+                width=inner,
+                height=16.0,
+                align=TextStart,
+              ).foreground(ide_text_faint()),
+              horizontal=8.0,
+              vertical=0.0,
+            ),
+            @views.padding_xy(
+              @views.text_field(
+                target_note(model),
+                on_input=note => EditTargetNote(note),
+                placeholder=text(t, "app.block.note_hint"),
+                variant=Outline,
+                width=inner,
+                height=FIELD_HEIGHT,
+              ),
               horizontal=8.0,
               vertical=0.0,
             ),
@@ -253,6 +302,14 @@ fn context_head(
         file_name,
         match selected_data_file(model) {
           Some(_) => text(t, "app.ctx.data")
+          None => text(t, "app.ctx.gone")
+        },
+      )
+    Some(SideFunction(func_name)) =>
+      (
+        func_name,
+        match selected_function(model) {
+          Some(_) => text(t, "app.ctx.function")
           None => text(t, "app.ctx.gone")
         },
       )
@@ -424,6 +481,7 @@ fn context_props(
     Some(SideWindow) => return window_props(model, t, width)
     Some(SideVariable(_)) => return variable_props(model, t, width)
     Some(SideData(_)) => return data_props(model, t, width)
+    Some(SideFunction(_)) => return function_props(model, t, width)
     None => ()
   }
   match find_selected_control(model) {
@@ -1246,6 +1304,59 @@ fn variable_props(
 /// 不是独立实体——所以这里是**只读**视图，编辑入口回到来源控件本身
 /// （选中该控件后在同一个属性页签改 items，或改程序语句）。
 /// 给一个能改的输入框会让人以为数据有独立存储。
+///|
+/// **自定义积木**的属性：名字、参数个数、以及「谁在调用它」的提示。
+///
+/// 为什么参数编辑先只做**个数**：`FuncDef.params` 是位置参数（`Call` 按
+/// 顺序传实参），改名要同步改写所有调用点的实参顺序语义——那需要一次
+/// 全程序重写。先把「造得出来、看得见、能改主体」做通，参数改名单独一步。
+fn function_props(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let func = match selected_function(model) {
+    Some(func) => func
+    None => return empty_hint(text(t, "app.inspector.gone"), width, 120.0)
+  }
+  let field_width = (width - 90.0).max(80.0)
+  let rows : Array[@moui.View[Msg]] = [
+    field_label(t, "app.inspector.name", width),
+    @views.text_field(
+      func.name,
+      on_input=new_value => RenameFunction(func.name, new_value),
+      width=field_width,
+      height=FIELD_HEIGHT,
+    ),
+    field_label(t, "app.inspector.function_params", width),
+    @views.text(
+      text_with(
+        t,
+        "app.inspector.function_param_count",
+        [("count", func.params.length().to_string())],
+      ),
+      theme=studio_theme(),
+      width=field_width,
+      height=20.0,
+      align=TextStart,
+    ).foreground(ide_text_muted()),
+    field_label(t, "app.inspector.function_body", width),
+    @views.text(
+      text_with(
+        t,
+        "app.inspector.function_body_hint",
+        [("count", func.body.length().to_string())],
+      ),
+      theme=studio_theme(),
+      width=field_width,
+      height=20.0,
+      align=TextStart,
+    ).foreground(ide_text_muted()),
+  ]
+  @views.column(rows, spacing=6.0)
+}
+
+///|
 fn data_props(
   model : Model,
   t : @i18n.Translator,

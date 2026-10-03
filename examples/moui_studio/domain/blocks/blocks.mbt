@@ -114,9 +114,10 @@ pub fn builtin_block_spec(id : String) -> BlockSpec? {
 /// 内建返回值类型（积木端口类型校验用）。
 pub fn builtin_result_type(id : String) -> BlockValueType {
   match id {
-    "get_text" | "row_at" | "selected_row" | "to_text" => VtText
-    "get_number" | "text_length" | "random" | "row_count" | "list_length" =>
-      VtNumber
+    "get_text" | "row_at" | "selected_row" | "to_text" | "answer" => VtText
+    "get_number" | "text_length" | "random" | "row_count" | "list_length" |
+    // 取余与四舍五入都是**数值**结果（`round` 返回整数，仍归数值端口）
+    "mod" | "round" | "abs" | "floor" | "ceiling" | "sqrt" => VtNumber
     "contains" | "ask" => VtBool
     _ => VtAny
   }
@@ -138,6 +139,12 @@ pub fn builtin_param_types(id : String) -> Array[BlockValueType] {
     "append_list" => [VtAny, VtAny]
     "broadcast" => [VtText]
     "row_at" => [VtAny, VtNumber]
+    // 取余接两个数；四舍五入接一个数
+    "stop_all" => []
+    "wait" => [VtNumber]
+    "answer" => []
+    "mod" => [VtNumber, VtNumber]
+    "round" | "abs" | "floor" | "ceiling" | "sqrt" => [VtNumber]
     "ask" => [VtText]
     "submit_data" => [VtAny, VtAny]
     _ => []
@@ -179,6 +186,12 @@ pub(all) struct BlockItem {
   // [1,0,0] = 第二条顶层 If 的 then 体第一条）。控制流装饰块
   // （else/end）没有对应语句，path 为空。
   path : Array[Int]
+  // 行内**分段**（字面段 / 插槽段），供绘制层画洞、命中层认洞。
+  //
+  // 与 `text` **同一次投影产出**：两处各切一次就会分叉（文本改了而段表
+  // 没改），而分叉的后果是洞画在错误位置且命中一起偏——两者会一起错，
+  // 所以放同一个结构里由构造点保证一致。装饰块（else/end）为 `None`。
+  segments : Array[TextSegment]?
 }
 
 ///|
@@ -187,7 +200,31 @@ pub(all) struct BlockItem {
 pub fn block_chain(body : Array[Stmt]) -> Array[BlockItem] {
   let items : Array[BlockItem] = []
   emit_chain(items, body, 0, [])
+  attach_segments(items, body)
   items
+}
+
+///|
+/// 给每个链条目挂上**行内分段**。
+///
+/// 集中在投影出口做（而不是 14 个 `BlockItem` 构造点各写一遍）：段表与
+/// `text` 必须同源，分散填就会漏填或错填，而漏填的表现是「某类积木画不出
+/// 洞」、错填的表现是「洞画在字符之间」——都不容易一眼看出。
+/// 装饰块（`else`/`end`，`path` 为空）没有对应语句，保持 `None`。
+fn attach_segments(items : Array[BlockItem], body : Array[Stmt]) -> Unit {
+  let mut index = 0
+  for item in items {
+    if item.path.length() > 0 {
+      match stmt_at(body, item.path) {
+        Some(stmt) => {
+          let segments = stmt_text_segments(stmt)
+          items[index] = { ..item, segments: Some(segments), }
+        }
+        None => ()
+      }
+    }
+    index = index + 1
+  }
 }
 
 ///|
@@ -208,6 +245,7 @@ fn emit_chain(
           text: "\{name} = \{@studio_lang.canonical_expr(expr)}",
           builtin: "",
           path,
+          segments: None,
         })
       @ir.Assign(name, expr) =>
         items.push(BlockItem::{
@@ -216,6 +254,7 @@ fn emit_chain(
           text: "\{name} = \{@studio_lang.canonical_expr(expr)}",
           builtin: "",
           path,
+          segments: None,
         })
       @ir.SetIndex(name, index, value) =>
         items.push(BlockItem::{
@@ -224,6 +263,7 @@ fn emit_chain(
           text: "\{name}[\{@studio_lang.canonical_expr(index)}] = \{@studio_lang.canonical_expr(value)}",
           builtin: "",
           path,
+          segments: None,
         })
       @ir.Return(expr) =>
         items.push(BlockItem::{
@@ -235,6 +275,7 @@ fn emit_chain(
           },
           builtin: "",
           path,
+          segments: None,
         })
       @ir.If(cond, then_body, else_ifs, else_body) => {
         items.push(BlockItem::{
@@ -243,6 +284,7 @@ fn emit_chain(
           text: @studio_lang.canonical_expr(cond),
           builtin: "",
           path,
+          segments: None,
         })
         emit_chain(items, then_body, depth + 1, child_path(path, 0))
         let mut arm_index = 0
@@ -253,6 +295,7 @@ fn emit_chain(
             text: @studio_lang.canonical_expr(arm.0),
             builtin: "",
             path,
+            segments: None,
           })
           emit_chain(
             items,
@@ -269,6 +312,7 @@ fn emit_chain(
             text: "",
             builtin: "",
             path: [],
+            segments: None,
           })
           emit_chain(items, else_body, depth + 1, child_path(path, 2))
         }
@@ -278,6 +322,7 @@ fn emit_chain(
           text: "",
           builtin: "",
           path: [],
+          segments: None,
         })
       }
       @ir.CountLoop(times, loop_var, loop_body) => {
@@ -291,6 +336,7 @@ fn emit_chain(
           text: "\{@studio_lang.canonical_expr(times)} / \{name}",
           builtin: "",
           path,
+          segments: None,
         })
         emit_chain(items, loop_body, depth + 1, child_path(path, 2))
         items.push(BlockItem::{
@@ -299,6 +345,7 @@ fn emit_chain(
           text: "",
           builtin: "",
           path: [],
+          segments: None,
         })
       }
       @ir.WhileLoop(cond, loop_body) => {
@@ -308,6 +355,7 @@ fn emit_chain(
           text: @studio_lang.canonical_expr(cond),
           builtin: "",
           path,
+          segments: None,
         })
         emit_chain(items, loop_body, depth + 1, child_path(path, 2))
         items.push(BlockItem::{
@@ -316,6 +364,7 @@ fn emit_chain(
           text: "",
           builtin: "",
           path: [],
+          segments: None,
         })
       }
       @ir.Break =>
@@ -325,6 +374,7 @@ fn emit_chain(
           text: "",
           builtin: "",
           path,
+          segments: None,
         })
       @ir.Stmt::Call(name, args) =>
         items.push(BlockItem::{
@@ -333,6 +383,7 @@ fn emit_chain(
           text: @studio_lang.canonical_call_text(name, args),
           builtin: name,
           path,
+          segments: None,
         })
     }
     index = index + 1
@@ -640,6 +691,217 @@ pub fn clone_expr(expr : Expr) -> Expr {
 }
 
 ///|
+/// 落点**是否接受**这条语句（拖拽的有效性判定 / Scratch 的「不能放进那里」）。
+///
+/// 这里的约束来自**语言本身的规则**，不是凭空的规则表——
+/// `@studio_lang` 的 `check_body` 已经定义了哪些语句在哪些位置非法，
+/// 这里只取其中与**容器位置**相关、且拖拽当场就能判定的那几条：
+///
+/// - **`break` 必须在循环体内**（`BreakOutsideLoop`）。语言层在整程序校验时
+///   报这个错；拖拽时先判一次，用户就不必「拖进去 → 运行 → 看报错」。
+/// - **`return` 必须在子程序里**。语句级拖拽不会改变所在子程序，所以恒定
+///   成立，不需要在这里判。
+///
+/// 判据只看 `to_list_path` 的形状：它是否位于某个循环体内。路径语法见
+/// `stmt_list_at`——`[i,2]` 是 `If@i` 的 else **或循环体**；所以要看
+/// `to_list_path` 指向的容器**属于哪种父语句**，而不是只看长度。
+///
+/// 返回 `false` 表示这次落点应当被**拒绝**（调用方给视觉反馈并且不改 IR），
+/// 而不是「静默丢弃」。
+pub fn drop_accepts_stmt(
+  body : Array[Stmt],
+  to_list_path : Array[Int],
+  stmt : Stmt,
+) -> Bool {
+  let needs_loop = match stmt {
+    @ir.Break => true
+    _ => false
+  }
+  if !needs_loop {
+    return true
+  }
+  stmt_list_in_loop(body, to_list_path, false)
+}
+
+///|
+/// `list_path` 指向的语句列表是否位于某个**循环体内**。
+///
+/// 逐段下降：每一段 `[i, slot, ...]` 描述「进入 `body[i]` 的某个子列表」。
+/// `slot == 2` 时既可能是 `If` 的 else，也可能是 `CountLoop/WhileLoop` 的
+/// 循环体——**必须看那一条语句的真实类型**，不能按 slot 猜（按 slot 猜会把
+/// `if…else` 当成循环，于是 `break` 被错误放行）。
+fn stmt_list_in_loop(
+  body : Array[Stmt],
+  list_path : Array[Int],
+  inside : Bool,
+) -> Bool {
+  if list_path.length() == 0 {
+    return inside
+  }
+  let head = list_path[0]
+  if head < 0 || head >= body.length() {
+    return inside
+  }
+  let target = body[head]
+  return match target {
+    @ir.CountLoop(_, _, loop_body) =>
+      if list_path.length() == 2 && list_path[1] == 2 {
+        // 正是循环体本身：已经在内
+        true
+      } else {
+        stmt_list_in_loop(loop_body, [], true)
+      }
+    @ir.WhileLoop(_, loop_body) =>
+      if list_path.length() == 2 && list_path[1] == 2 {
+        true
+      } else {
+        stmt_list_in_loop(loop_body, [], true)
+      }
+    @ir.If(_, then_body, arms, else_body) => {
+      // 继续下降：slot 0 = then / 1 = else-if 臂 / 2 = else
+      if list_path.length() < 2 {
+        inside
+      } else {
+        let rest : Array[Int] = []
+        let mut k = 2
+        while k < list_path.length() {
+          rest.push(list_path[k])
+          k = k + 1
+        }
+        match list_path[1] {
+          0 => stmt_list_in_loop(then_body, rest, inside)
+          1 => {
+            let arm_index = if list_path.length() >= 3 {
+              list_path[2]
+            } else {
+              -1
+            }
+            if arm_index >= 0 && arm_index < arms.length() {
+              let arm_rest : Array[Int] = []
+              let mut j = 3
+              while j < list_path.length() {
+                arm_rest.push(list_path[j])
+                j = j + 1
+              }
+              stmt_list_in_loop(arms[arm_index].1, arm_rest, inside)
+            } else {
+              inside
+            }
+          }
+          2 => stmt_list_in_loop(else_body, rest, inside)
+          _ => inside
+        }
+      }
+    }
+    _ => inside
+  }
+}
+
+///|
+/// **跨列表移动**：把 `from_path` 处的语句移到 `to_list_path` 的 `at` 位置。
+///
+/// 这是「把语句拖进 C 形块体内」的落地手术，也是 Scratch 编辑器的核心
+/// 手势（拖进 if/循环的洞里）。此前的 `reorder_stmt` **只在同一个列表内**
+/// 重排（其注释明确写了「跨层移动不在 v1 范围」），所以嵌套只能靠「先选中
+/// 父块、再从面板插入」间接达成——拖拽进洞是不可能的。
+///
+/// 三步都复用既有原语，不新增寻径规则：`stmt_at` 取出 →（若是跨列表）
+/// `delete_stmt_at` 删源 → `insert_stmt_at` 插目标。
+///
+/// **同列表内**的移动直接委托 `reorder_stmt`——它自己已经做了「先删再插时
+/// 目标位置左移一位」的补偿（`insert_at > from` 时减 1）。这里**不要再补一次**
+/// （双重补偿会把「往后挪一位」变成「往前挪一位」，实测把 a 移到 c 之后
+/// 得到的是 a,c,b 而不是 b,c,a）。
+///
+/// 返回 `None` 表示路径非法或目标列表不存在。调用方据此**拒绝**这次拖拽，
+/// 而不是静默丢弃——静默丢弃让用户以为拖成功但块没动。
+pub fn move_stmt_at(
+  body : Array[Stmt],
+  from_path : Array[Int],
+  to_list_path : Array[Int],
+  at : Int,
+) -> Array[Stmt]? {
+  if from_path.length() == 0 {
+    return None
+  }
+  // 源路径必须**真的**指向一条语句。`stmt_at` 对非法路径返回 None，
+  // 但这里还要挡住「路径指向装饰块」这类没有对应语句的位置——它们
+  // 本来就取不到 Stmt，所以同一条检查即可。
+  let stmt = match stmt_at(body, from_path) {
+    Some(value) => value
+    None => return None
+  }
+  // 源语句所属的**列表路径** = 语句路径去掉最后一位
+  let from_list : Array[Int] = []
+  let mut i = 0
+  while i < from_path.length() - 1 {
+    from_list.push(from_path[i])
+    i = i + 1
+  }
+  let same_list = if from_list.length() != to_list_path.length() {
+    false
+  } else {
+    let mut equal = true
+    let mut k = 0
+    while k < from_list.length() {
+      if from_list[k] != to_list_path[k] {
+        equal = false
+      }
+      k = k + 1
+    }
+    equal
+  }
+  let from_index = from_path[from_path.length() - 1]
+  // 目标列表必须存在，且 `at` 落在**原**范围内——两种移动都要先过这一关。
+  //
+  // 为什么在分支之前判：`reorder_stmt` 对越界的 `drop_before` 是**钳制**
+  // （`insert_at > list.length()` 时夹到末尾），那是同层拖拽要的宽容
+  // （拖到列表下方 = 追加到末尾）；但 `move_stmt_at` 是编程接口，越界应当
+  // **拒绝**。若只在跨列表分支里判，同列表的越界会被 `reorder_stmt`
+  // 悄悄钳住（实测顶层只有 1 条时 `at=5` 被接受）。
+  let target_len = match stmt_list_at(body, to_list_path) {
+    Some(list) => list.length()
+    None => return None
+  }
+  if at < 0 || at > target_len {
+    return None
+  }
+  if same_list {
+    return reorder_stmt(body, to_list_path, from_index, at)
+  }
+  // 跨列表：顺序必须是「删源 → 插目标」——反过来插进去的会被随后的删除
+  // 带走（同一条语句不可能同时在两处）。`insert_stmt_at` 内部会 clone。
+  //
+  // **但删除会让「排在源之后」的容器索引整体左移一位**，所以目标列表路径
+  // 必须先补偿：源在顶层下标 `from_index`，而目标容器的顶层下标是
+  // `to_list_path[0]`——后者更大时减一。
+  //
+  // 不补偿的后果是**拖拽静默失败**：实测把顶层第 0 条拖进顶层第 1 条的
+  // if 体里，删掉第 0 条后那个 if 变成第 0 条，而目标路径仍指向 [1,0]，
+  // `stmt_list_at` 越界返回 None，整次移动被丢弃（用户看到「拖了没反应」）。
+  let adjusted : Array[Int] = []
+  for part in to_list_path {
+    adjusted.push(part)
+  }
+  if adjusted.length() > 0 && from_list.length() == 0 &&
+    adjusted[0] > from_index {
+    adjusted[0] = adjusted[0] - 1
+  }
+  let without = delete_stmt_at(body, from_path)
+  // 删源后要确认源真的少了（路径非法时 delete 会原样返回），
+  // 否则「移动」会退化成「复制」。
+  if without.length() == body.length() &&
+    from_list.length() == 0 &&
+    from_index < body.length() {
+    return None
+  }
+  match insert_stmt_at(without, adjusted, at, stmt) {
+    Some(result) => Some(result)
+    None => None
+  }
+}
+
+///|
 /// 插入一条语句：在 `list_path` 列表的 `at` 位置插入 `stmt`（`at` 为
 /// 列表长度时追加到末尾；`list_path` 为空数组时是顶层）。返回**新数组**
 /// （克隆后手术，不改传入的 body——与 replace/delete/reorder 同一纪律：
@@ -710,6 +972,88 @@ pub fn stmt_list_at(body : Array[Stmt], list_path : Array[Int]) -> Array[Stmt]? 
       }
     _ => None
   }
+}
+
+///|
+/// **整栈重排**：抓住 `from` 时，把从它起**到列表末尾**的整段一起搬到
+/// `drop_before` 槽位。
+///
+/// 这是 Scratch 的手感：抓住栈中间一块，它和**它下面的所有块**一起移动
+/// （「把这段逻辑整体挪走」）。`reorder_stmt` 只搬一条，用它做栈拖拽会把
+/// 一段逻辑拆散——实测拖第 2 块时第 3、4 块留在原地，用户以为丢块了。
+///
+/// 语义与 `reorder_stmt` 一致（先摘除再插入，`drop_before > from` 时目标
+/// 左移 `stack_len` 位），越界或列表不存在返回 `None`。
+///
+/// `drop_before` **落在栈内**（`from < drop_before <= from + stack_len`）
+/// 视作原位——搬到自己内部没有意义，返回 `None` 让调用方当无操作处理。
+pub fn reorder_stack(
+  body : Array[Stmt],
+  list_path : Array[Int],
+  from : Int,
+  drop_before : Int,
+) -> Array[Stmt]? {
+  let working = clone_stmts(body)
+  let list = match stmt_list_at(working, list_path) {
+    Some(list) => list
+    None => return None
+  }
+  if from < 0 || from >= list.length() {
+    return None
+  }
+  let stack_len = list.length() - from
+  // 「原位」判定必须按**插入后的位置**算，不能按 `drop_before` 落在哪一段算：
+  //
+  //   插入位置 = drop_before −（drop_before > from 时减 stack_len），再钳到 [0, len]
+  //   原位 ⟺ 插入位置 == from
+  //
+  // 两个反例说明为什么不能只看区间：
+  // - `drop_before == from`（落在抓取块顶缘）→ 插入位置 == from，是原位；
+  // - 抓的是**整条列表**（stack_len == list.length()）时，任何 `drop_before`
+  //   算出来都回到 from —— 整条搬走等于没动。
+  // 早先的区间写法把「抓整条列表」漏成 `Some`，会凭空产生一次撤销点而画面
+  // 什么都没变。
+  let mut probe_at = drop_before
+  if probe_at > from {
+    probe_at = probe_at - stack_len
+  }
+  if probe_at < 0 {
+    probe_at = 0
+  }
+  if probe_at > list.length() {
+    probe_at = list.length()
+  }
+  if probe_at == from {
+    return None
+  }
+  // 摘出整段（保持段内顺序）
+  let segment : Array[Stmt] = []
+  let mut i = 0
+  while i < stack_len {
+    segment.push(list[from + i])
+    i = i + 1
+  }
+  let mut removed = 0
+  while removed < stack_len {
+    let _ = list.remove(from)
+    removed = removed + 1
+  }
+  let mut insert_at = drop_before
+  if insert_at > from {
+    insert_at = insert_at - stack_len
+  }
+  if insert_at < 0 {
+    insert_at = 0
+  }
+  if insert_at > list.length() {
+    insert_at = list.length()
+  }
+  let mut k = 0
+  for stmt in segment {
+    list.insert(insert_at + k, stmt)
+    k = k + 1
+  }
+  Some(working)
 }
 
 ///|
