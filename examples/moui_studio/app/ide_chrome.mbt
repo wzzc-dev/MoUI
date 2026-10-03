@@ -14,7 +14,10 @@
 pub const TOPBAR_HEIGHT : Double = 40.0
 
 ///|
-pub const ICONBAR_WIDTH : Double = 48.0
+/// 图标栏宽度：参考 VS Code 紧凑活动栏口径（实测截图 ~34pt，原版默认
+/// 48px 满格槽位；这里取窄栏 + 28pt 节距的组合）。顶栏/内容行的宽度
+/// 分配都从它推导（`width - ICONBAR_WIDTH`）。
+pub const ICONBAR_WIDTH : Double = 34.0
 
 ///|
 pub const PANEL_HEAD_HEIGHT : Double = 30.0
@@ -378,6 +381,8 @@ pub fn pill(
 /// 图标按钮：图标栏与工具条共用。选中态用强调色弱底 + 强调色图标。
 /// 无 hover 回调（core 只暴露 hovered 状态给节点），所以只有「选中/未选中」
 /// 两态——设计稿的悬停底色由内置按钮的 Ghost 样式自然给出。
+/// `tile`：是否画**常驻选中底块**。活动栏走紧凑口径（裸字形，选中只有
+/// 字形亮度一层）时传 `false`；面板头等工具条按钮保持默认的底块两态。
 pub fn icon_button(
   icon : @style.IconName,
   tip : String,
@@ -386,10 +391,12 @@ pub fn icon_button(
   width : Double,
   height : Double,
   icon_size : Double,
+  tile? : Bool = true,
 ) -> @moui.View[Msg] {
   // VS Code 活动栏口径：选中 = **深灰微高亮底 + 白色字形**（不是蓝底蓝字
   // ——蓝色块连排是「不协调」的主因）；未选中 = 灰字形裸露（底色与所在
-  // 表面同色，即视觉透明）。
+  // 表面同色，即视觉透明）。`tile=false` 时选中也不画底块（颜色两态保留：
+  // 亮字 = 活动态）。
   let tint = if selected { ide_text() } else { ide_text_muted() }
   @views.container(
     @views.center(
@@ -397,7 +404,7 @@ pub fn icon_button(
       width=width - 8.0,
       height=height - 8.0,
     ),
-    background=if selected { ide_hover() } else { ide_panel() },
+    background=if selected && tile { ide_hover() } else { ide_panel() },
     corner_radius=4.0,
     width~,
     height~,

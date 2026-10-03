@@ -1272,3 +1272,115 @@ test "blocks canvas renders hugging rows with lead-aligned slot holes" {
     )
   }
 }
+
+///|
+/// 活动栏**紧凑口径**几何验收（参考 VS Code 截图实测：栏 34 / 节距 28 /
+/// 字形 17 / 裸字形 + 左缘条纹）。
+test "activity bar uses the compact spec with bare-glyph selection" {
+  let model = initial_model()
+  let commands = shell_draw(model, 1280.0, 800.0)
+  let panel = ide_panel()
+  let accent = ide_accent()
+  let hover = ide_hover()
+  // 1) 栏底色从 x=0 铺开、宽度 = ICONBAR_WIDTH（左栏同色但起点在栏右）
+  let mut bar_width = 0.0
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @graphics.Brush::Solid(color)) => {
+        let rect = rounded.rect
+        if color.r == panel.r &&
+          color.g == panel.g &&
+          color.b == panel.b &&
+          rect.origin.x == 0.0 &&
+          rect.size.height > 400.0 &&
+          rect.size.width > bar_width {
+          bar_width = rect.size.width
+        }
+      }
+      _ => ()
+    }
+  }
+  assert_true(
+    bar_width > 0.0 && (bar_width - ICONBAR_WIDTH).abs() < 0.6,
+    msg="icon bar width=\{bar_width} should equal ICONBAR_WIDTH=\{ICONBAR_WIDTH}",
+  )
+  // 2) **无条纹**：选中态只靠字形亮度，栏内不得出现强调色色块（条纹方案
+  //    试过被否掉——这条反断言防止它悄悄回来）
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @graphics.Brush::Solid(color)) => {
+        let rect = rounded.rect
+        if color.r == accent.r &&
+          color.g == accent.g &&
+          color.b == accent.b &&
+          rect.origin.x < ICONBAR_WIDTH {
+          fail("activity bar must not paint an accent stripe/tile")
+        }
+      }
+      _ => ()
+    }
+  }
+  // 3) 活动栏内**无常驻底块**（tile=false）：栏 x 范围内不得有 hover 底色
+  for command in commands {
+    match command {
+      @core.FillRoundedRectBrush(rounded, @graphics.Brush::Solid(color)) => {
+        let rect = rounded.rect
+        if color.r == hover.r &&
+          color.g == hover.g &&
+          color.b == hover.b &&
+          rect.origin.x < ICONBAR_WIDTH &&
+          rect.size.width <= 30.0 &&
+          rect.size.height <= 30.0 {
+          fail("activity bar items must not paint persistent tiles")
+        }
+      }
+      _ => ()
+    }
+  }
+  // 4) 图标节距：图标是 DrawPath（24 viewBox 缩放到 17 盒）。收集栏内
+  //    路径的 y 中心，聚类后节距应为 28、共 7 枚（6 栏目 + 设置）。
+  let centers : Array[Double] = []
+  for command in commands {
+    match command {
+      @core.DrawPath(spec) => {
+        let mut min_y = 1000000.0
+        let mut max_y = -1000000.0
+        let mut min_x = 1000000.0
+        let mut max_x = -1000000.0
+        for verb in spec.verbs {
+          match verb {
+            @core.PathVerb::MoveTo(p) | LineTo(p) | QuadTo(_, p) | CubicTo(_, _, p) => {
+              if p.x < min_x { min_x = p.x }
+              if p.x > max_x { max_x = p.x }
+              if p.y < min_y { min_y = p.y }
+              if p.y > max_y { max_y = p.y }
+            }
+            @core.PathVerb::Close => ()
+          }
+        }
+        // 栏内的图标路径（x 在栏宽内、排除分隔线之类的细条）
+        if max_x <= ICONBAR_WIDTH && max_x > 4.0 && (max_y - min_y) > 5.0 {
+          centers.push((min_y + max_y) / 2.0)
+        }
+      }
+      _ => ()
+    }
+  }
+  centers.sort()
+  assert_true(centers.length() == 7, msg="expected 7 icon glyphs, got \{centers.length()}")
+  // 前 6 项（栏目）节距 28；第 7 枚是**钉底**的设置齿轮（spacer 推到底边），
+  // 不参与节距——这正是「设置钉在最底」的口径。
+  let mut i = 1
+  while i < 6 {
+    let pitch = centers[i] - centers[i - 1]
+    assert_true(
+      (pitch - 28.0).abs() < 0.8,
+      msg="icon pitch=\{pitch} should be 28 (centers=\{centers})",
+    )
+    i = i + 1
+  }
+  assert_true(
+    centers[6] > centers[5] + 100.0,
+    msg="the gear should be pinned near the bottom edge, not in the icon rhythm",
+  )
+}

@@ -242,21 +242,24 @@ fn handler_crumb(model : Model) -> String {
 }
 
 // ============================================================================
-// 图标栏（48pt）
+// 图标栏（34pt）
 // ============================================================================
 
 ///|
-/// 图标栏：可视化 / 代码 | 树 / 数据 | AI | 设置。
+/// 图标栏：可视化 / 代码 | 树 / 数据 | AI | 右栏 | 设置。
 /// 点当前项 = 收起（工作区进空舞台、左栏收起），与设计稿 setLeft/setWS 同语义。
+///
+/// **紧凑活动栏口径（参考 VS Code 截图实测）**：栏宽 34、单项节距 28、
+/// 字形 17（墨迹 ~13-15pt，对齐实测 13-16pt）。**裸字形，无底块无条纹**：
+/// 选中态只有字形亮度这一层（亮字形 = 活动态，`ide_text` vs
+/// `ide_text_muted`）——条纹方案试过被否掉。仍是 VS Code 的「全高贯通」
+/// 骨架：从窗口顶直抵窗口底边，状态栏在它右侧铺开；图标从信号灯带之下
+/// 开始；设置钉在最底（贴窗口底边框）。
 pub fn ide_icon_bar(
   model : Model,
   t : @i18n.Translator,
   height : Double,
 ) -> @moui.View[Msg] {
-  // VS Code 活动栏口径：**全高贯通**（从窗口顶直抵窗口底边，状态栏在它
-  // 右侧铺开、不穿过活动栏），图标从信号灯带之下开始；等尺寸（32×32）、
-  // 等节奏（spacing=0）；设置钉在最底（贴窗口底边框）。
-  // 无选中条纹——选中态由背景高亮表达。
   let top_clearance = if model.immersive {
     WINDOW_CHROME_HEIGHT
   } else {
@@ -269,45 +272,50 @@ pub fn ide_icon_bar(
       text(t, "app.ws.visual"),
       model.workspace is WsVisual,
       SetWorkSpace(WsVisual),
-      32.0,
-      32.0,
-      15.0,
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
     ),
     icon_button(
       CodeInline,
       text(t, "app.ws.code"),
       model.workspace is WsCode,
       SetWorkSpace(WsCode),
-      32.0,
-      32.0,
-      15.0,
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
     ),
     icon_button(
       Sidebar,
       text(t, "app.left.tree"),
       model.left_view is LeftTree,
       SetLeftView(LeftTree),
-      32.0,
-      32.0,
-      15.0,
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
     ),
     icon_button(
       Table,
       text(t, "app.left.data"),
       model.left_view is LeftData,
       SetLeftView(LeftData),
-      32.0,
-      32.0,
-      15.0,
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
     ),
     icon_button(
       Focus,
       text(t, "app.ai.title"),
       model.ai_anchor is AiDocked,
       CycleAiAnchor,
-      32.0,
-      32.0,
-      15.0,
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
     ),
     // 右栏开合。关掉之后唯一的重开入口就在这里——所以它必须始终在场
     // （不像左栏两个图标那样是「多视图」关系）。
@@ -316,22 +324,23 @@ pub fn ide_icon_bar(
       text(t, "app.right.show"),
       model.right_visible,
       SetRightVisible(!model.right_visible),
-      32.0,
-      32.0,
-      15.0,
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
     ),
     @views.spacer(min_length=4.0, weight=1.0),
-    // 设置钉在最底：按钮与字形**与其余栏目同规格**（32×32/15）——
-    // VS Code 的齿轮也是同一槽位节奏，缩小一号反而显得孤立。按钮贴
-    // 窗口底边框，字形居中自带 ~8px 自然留白，与 VS Code 的贴底观感一致。
+    // 设置钉在最底：与整体同规格（28×28/17）——VS Code 的齿轮也是同一
+    // 槽位节奏，缩小一号反而显得孤立。按钮贴窗口底边框。
     icon_button(
       Gear,
       text(t, "app.settings.title"),
       model.settings_open,
       ToggleSettings,
-      32.0,
-      32.0,
-      15.0,
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
     ),
   ]
   @views.container(

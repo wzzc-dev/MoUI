@@ -77,3 +77,23 @@ node scripts/generate-i18n-catalogs.mjs --check --input examples/moui_studio/app
 - [ ] Architectural choice → ADR（无：均为包内缺陷修复，不涉结构约束）
 - [ ] Multi-session work remaining → 无
 - [ ] Stale guidance found → 无
+
+## 第三轮（2026-10-04）：活动栏改紧凑口径（参考用户截图里的 VS Code）
+
+用户提供了 VS Code 与 MoUI Studio 活动栏的并排截图并要求按截图修改。实测截图（两窗口信号灯间距相同 → 同比例尺）：VS Code 活动栏 ~34pt、图标节距 ~28pt、字形墨迹 13-16pt；MoUI 原为 48pt/32pt/9-13pt。修正了上一轮「VS Code 默认 48px」的口径错误——用户截图里那根比默认窄。
+
+| 项 | 旧 | 新 |
+|---|---|---|
+| `ICONBAR_WIDTH` | 48 | **34** |
+| 按钮 | 32×32（常驻选中底块） | **28×28，无常驻底块**（`icon_button` 新增 `tile?` 参数，默认 true，面板头不受影响） |
+| 字形 | 15pt | **17pt** |
+| 选中态 | 灰底块 | **裸字形**（亮度两态；条纹方案做过又被用户否掉，几何测试有反断言） |
+
+- 条纹/填充用 `@views.empty()` 而不是 1×1 空文本：空文本会被「窗格头文字不得越界」几何扫描逮住（条纹在活动栏 x≈0.5，落在所有窗格之外）。
+- 几何验收测试 `shell_layout_wbtest`「activity bar uses the compact spec」：栏宽=ICONBAR_WIDTH、条纹 2×28@x=0、栏内无 hover 底块、前 6 枚图标节距 28、设置齿轮钉底（不参与节距）。
+- 注意：`1e9` 在 MoonBit 里不是合法 Double 字面量（`e9` 被当标识符），用 `1000000.0`。
+- 验证：app 275/275；静态校验全绿。
+
+- 第三轮追加：用户否掉选中条纹——`activity_bar_item` 助手整个删除，活动栏
+  直接用 `icon_button(tile=false)`（列 align=Center 自动居中），几何测试改为
+  「栏内不得出现强调色色块」的反断言。

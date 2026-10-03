@@ -50,7 +50,7 @@ pub const FIELD_HEIGHT : Double = 26.0
 
 pub const FOLD_BAR_HEIGHT : Double = 27.0
 
-pub const ICONBAR_WIDTH : Double = 48.0
+pub const ICONBAR_WIDTH : Double = 34.0
 
 pub const IR_RAIL_WIDTH : Double = 30.0
 
@@ -366,7 +366,7 @@ pub fn hit_test_control(Array[@ir.Control], Double, Double) -> @ir.Control?
 
 pub fn hit_test_handle(@ir.Control, Double, Double) -> @ir.DragCorner?
 
-pub fn icon_button(@style.IconName, String, Bool, Msg, Double, Double, Double) -> @core.View[Msg]
+pub fn icon_button(@style.IconName, String, Bool, Msg, Double, Double, Double, tile? : Bool) -> @core.View[Msg]
 
 pub fn ide_accent() -> @core.Color
 
