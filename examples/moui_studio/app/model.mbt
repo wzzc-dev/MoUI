@@ -459,6 +459,15 @@ pub(all) struct StudioCommand {
 }
 
 ///|
+/// 打开的工程文件（试用反馈：点击文件即可编辑,保存写回磁盘）。
+/// saved_content 是脏标记的基准;draft 是编辑中的内容。
+pub(all) struct OpenProjectFile {
+  rel : String
+  saved_content : String
+  draft : String
+}
+
+///|
 /// 代码视图外观（M5-5e）：中英 DSL 降级为显示外观，MoonBit 是默认显示——
 /// IR 仍是唯一事实来源，两种外观都是 IR 的可再推导投影。
 pub(all) enum CodeAppearance {
@@ -627,6 +636,13 @@ pub(all) struct Model {
   // 资源管理器:折叠的包(相对路径)与选中的文件(相对路径)
   project_tree_collapsed : Array[String]
   selected_project_file : String?
+  /// 打开的工程文件（M8 反馈 → 试用反馈：点开即可编辑,保存写回磁盘）。
+  /// rel = 工程相对路径;saved_content = 最近一次落盘/读取的内容（脏标记
+  /// 的基准）;draft = 编辑中的内容。
+  open_project_file : OpenProjectFile?
+  /// 工程文件编辑器的光标/选区（受控编辑器:光标状态由模型回传）。
+  project_file_caret : Int
+  project_file_selection : @core.TextRange?
   // 构建服务(M0-7):最近一次构建报告(诊断汇进 Problems)、进行中标记、
   // 待执行请求(程序包装层看到 busy 上升即派发注入的 build_submit)
   last_build : @build.BuildReport?
@@ -706,6 +722,12 @@ pub(all) enum Msg {
   SwitchLanguage
   CycleCodeAppearance // 代码视图外观切换：MoonBit（默认显示）⇄ 中英 DSL（M5-5e）
   SetCodeAppearance(CodeAppearance) // 直达目标外观（双芯片入口，实测反馈）
+  ProjectFileLoaded(String, @services.ServiceTaskResult[String]) // 工程文件读取回执
+  ClearProjectFile // 关闭工程文件
+  EditProjectFile(String) // 工程文件草稿编辑
+  ProjectFileCaretMoved(Int, @core.TextRange?) // 工程文件编辑器光标/选区上报
+  SaveProjectFile // 保存工程文件（写盘）
+  ProjectFileSaveFinished(@services.ServiceTaskResult[Unit]) // 保存回执
   CodeProjectSaved(@services.ServiceTaskResult[Unit]) // 代码工程骨架落盘回执（M6①）
   SetMode(Mode)
   SetDesignZoom(Double)
@@ -1210,6 +1232,9 @@ pub fn initial_model(
     active_project: -1,
     project_tree_collapsed: [],
     selected_project_file: None,
+    open_project_file: None,
+    project_file_caret: 0,
+    project_file_selection: None,
     last_build: None,
     build_busy: false,
     pending_build: None,

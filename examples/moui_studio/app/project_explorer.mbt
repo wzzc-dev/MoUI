@@ -44,9 +44,13 @@ pub fn project_explorer(
       padding=0.0,
     ).on_tap(ImportProjectRequested),
   )
-  // 工程列表(每个:模块名 + 根目录,选中高亮,尾部 × 移除)
+  // 工程列表(每个:模块名 + 根目录,选中高亮,尾部 × 移除)。
+  // 只有一个工程时隐藏（下方树根行就是它——重复出现读成两个工程,实测反馈）。
   let mut index = 0
   for project in model.projects {
+    if model.projects.length() <= 1 {
+      break
+    }
     let active = index == model.active_project
     rows.push(
       tree_row(
@@ -60,11 +64,9 @@ pub fn project_explorer(
         Some(SetActiveProject(index)),
         width,
         trailing=Some(
-          @views.container(
-            @views.center(@views.icon(Trash, size=12.0, color=ide_text_faint())),
-            width=18.0,
-            height=16.0,
-          ).on_tap(RemoveProject(index)),
+          @views.icon(Trash, size=12.0, color=ide_text()).on_tap(
+            RemoveProject(index),
+          ),
         ),
         trailing_width=18.0,
       ),
@@ -132,20 +134,19 @@ pub fn project_explorer(
                 name,
                 "",
                 2,
-                model.selected_project_file is Some(_),
+                // **相等比较**:is Some(file_rel) 是绑定模式——匹配任意
+                // Some 并遮蔽 file_rel,恒为真（实测整树高亮的根因）。
+                model.selected_project_file == Some(file_rel),
                 false,
                 false,
                 Some(SelectProjectFile(file_rel)),
                 None,
                 width,
+                // 图标直接挂 on_tap（无背景 wrapper——裸 container 会回落
+                // 到环境面板色，在选中行上读成黑方块，实测缺陷）
                 trailing=Some(
-                  @views.container(
-                    @views.center(
-                      @views.icon(Trash, size=12.0, color=ide_text_faint()),
-                    ),
-                    width=18.0,
-                    height=16.0,
-                  ).on_tap(RequestConfirm(CkDeleteProjectFile(file_rel))),
+                  @views.icon(Trash, size=12.0, color=ide_text())
+                  .on_tap(RequestConfirm(CkDeleteProjectFile(file_rel))),
                 ),
                 trailing_width=18.0,
               ),

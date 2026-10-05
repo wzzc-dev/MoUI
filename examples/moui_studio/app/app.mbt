@@ -135,6 +135,36 @@ pub fn update_with_services(
     // 复制产物路径：走系统剪贴板（native 是 NSPasteboard，Web 是可用的
     // navigator.clipboard 垫片）。成功/失败都回一条 ArtifactActionDone，
     // 让 notice 如实说话——静默失败会让用户以为「复制了」。
+    // 工程树点文件（M8 反馈）：读文件内容 → 只读查看器。读取在服务层，
+    // 选中/取消的纯转移照走 update_pure。
+    SelectProjectFile(rel) => {
+      let (next, effect) = update_pure(model, msg)
+      let read_effect = match active_project_of(model) {
+        Some(project) =>
+          services
+          .files()
+          .read_text("\{project.root}/\{rel}")
+          .effect(map=r => ProjectFileLoaded(rel, r))
+        None => @moui.Effect::none()
+      }
+      (next, @moui.Effect::batch([effect, read_effect]))
+    }
+    // 保存工程文件（试用反馈：点开的文件可编辑,保存写回磁盘）。
+    SaveProjectFile =>
+      match (model.open_project_file, active_project_of(model)) {
+        (Some(open), Some(project)) => {
+          let _ = project
+          (
+            model,
+            services
+            .files()
+            .write_text("\{project.root}/\{open.rel}", open.draft)
+            .effect(map=r => ProjectFileSaveFinished(r)),
+          )
+        }
+        _ => (model, @moui.Effect::none())
+      }
+
     CopyArtifactPath(path) =>
       (
         model,

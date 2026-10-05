@@ -1672,3 +1672,48 @@ test "restore respects code appearance" {
     restored_dsl.code_draft.contains("变量"),
   )
 }
+
+///|
+/// 试用反馈:工程文件点开即可编辑,保存写回磁盘(脏标记 + 回执对齐基准)。
+test "project file opens editable and saves" {
+  let services = @services.AppServices::new()
+  // 点文件:选中态 + 读取回执挂载编辑器(读取走 fake 服务的成功路径——
+  // 文件不存在时 fake 返回错误内容,这里直接喂回执测纯转移)
+  let selected = apply(@app.initial_model(), SelectProjectFile("app/main.mbt"))
+  assert_true(selected.selected_project_file is Some(_))
+  let loaded = apply(
+    selected,
+    ProjectFileLoaded(
+      "app/main.mbt",
+      Success("fn main {\n  println(\"hi\")\n}\n"),
+    ),
+  )
+  match loaded.open_project_file {
+    Some(open) => {
+      assert_eq(open.rel, "app/main.mbt")
+      assert_true(open.draft.contains("println"))
+      assert_false(open.draft != open.saved_content)
+      // 编辑:草稿变化 → 脏
+      let edited = apply(loaded, EditProjectFile("fn main {}\n"))
+      match edited.open_project_file {
+        Some(open2) => assert_true(open2.draft != open2.saved_content)
+        None => fail("编辑后文件应仍打开")
+      }
+      // 保存:回执对齐脏基准
+      let saver = apply(edited, SaveProjectFile)
+      let saved = apply(
+        saver,
+        ProjectFileSaveFinished(Success(())),
+      )
+      match saved.open_project_file {
+        Some(open3) => assert_false(open3.draft != open3.saved_content)
+        None => fail("保存后文件应仍打开")
+      }
+      // 关闭:回到 IR 编辑面
+      let closed = apply(saved, ClearProjectFile)
+      assert_true(closed.open_project_file is None)
+      assert_true(closed.selected_project_file is None)
+    }
+    None => fail("读取回执后文件应打开")
+  }
+}

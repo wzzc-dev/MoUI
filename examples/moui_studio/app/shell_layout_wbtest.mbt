@@ -202,7 +202,8 @@ test "workspace switching swaps the centre content" {
   let code = apply_shell(visual, SetWorkSpace(WsCode))
   assert_true(code.workspace is WsCode)
   let code_commands = shell_draw(code, 1280.0, 800.0)
-  assert_true(shell_has_text(code_commands, "按 IR 重渲染"))
+  // 脚注芯片:编译钮常驻;「按 IR 重渲染」按外观显隐（M8,MoonBit 外观下隐藏）
+  assert_true(shell_has_text(code_commands, "编译 MoonBit"))
   assert_false(shell_has_text(code_commands, "实时应用"))
   // 切到空舞台
   let empty = apply_shell(code, SetWorkSpace(WsEmpty))

@@ -336,7 +336,12 @@ test "immersive mode keeps every band inside the window" {
 test "chrome chips are wide enough for their labels" {
   let keys = ["app.code.restore", "app.code.compile"]
   let t = translator(initial_model())
-  let model = apply_shell(initial_model(), SetWorkSpace(WsCode))
+  // 「按 IR 重渲染」只在 DSL 外观渲染（M8：MoonBit 外观下它是无效果动作,
+  // 按外观显隐）——芯片宽度卫生在 DSL 外观下验证。
+  let model = apply_shell(
+    apply_shell(initial_model(), SetCodeAppearance(AppDsl)),
+    SetWorkSpace(WsCode),
+  )
   let commands = shell_draw(model, 1280.0, 800.0)
   for key in keys {
     let label = text(t, key)

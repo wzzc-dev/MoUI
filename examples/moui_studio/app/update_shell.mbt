@@ -42,6 +42,81 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         ({ ..model, project_tree_collapsed: collapsed, }, @moui.Effect::none()),
       )
     }
+    ProjectFileLoaded(rel, result) =>
+      match result {
+        Success(content) =>
+          // 文件仍处于选中态才挂载编辑器（再点同文件 = 取消选中）
+          if model.selected_project_file is Some(current) && current == rel {
+            Some(
+              (
+                {
+                  ..model,
+                  open_project_file: Some(OpenProjectFile::{
+                    rel,
+                    saved_content: content,
+                    draft: content,
+                  }),
+                },
+                @moui.Effect::none(),
+              ),
+            )
+          } else {
+            Some((model, @moui.Effect::none()))
+          }
+        Failure(error) =>
+          Some((with_notice(model, error.message, true), @moui.Effect::none()))
+        Cancelled => Some((model, @moui.Effect::none()))
+      }
+    ProjectFileSaveFinished(result) =>
+      // 落盘完成:脏基准对齐草稿（纯转移;写盘任务在服务层）
+      match result {
+        Success(_) =>
+          match model.open_project_file {
+            Some(open) =>
+              Some(
+                (
+                  with_notice(
+                    { ..model, open_project_file: Some({ ..open, saved_content: open.draft, }), },
+                    "已保存",
+                    false,
+                  ),
+                  @moui.Effect::none(),
+                ),
+              )
+            None => Some((model, @moui.Effect::none()))
+          }
+        Failure(error) =>
+          Some((with_notice(model, error.message, true), @moui.Effect::none()))
+        Cancelled => Some((model, @moui.Effect::none()))
+      }
+    ProjectFileCaretMoved(caret, selection) =>
+      // 受控编辑器的光标回传:没有这个往返,光标不能移动（移动会被
+      // 模型里的旧值复位——实测「光标只能向上」的根因）。
+      Some(
+        (
+          {
+            ..model,
+            project_file_caret: caret,
+            project_file_selection: selection,
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    EditProjectFile(draft) =>
+      match model.open_project_file {
+        None => Some((model, @moui.Effect::none()))
+        Some(open) =>
+          Some(
+            ({ ..model, open_project_file: Some({ ..open, draft, }), }, @moui.Effect::none()),
+          )
+      }
+    ClearProjectFile =>
+      Some(
+        (
+          { ..model, open_project_file: None, selected_project_file: None, },
+          @moui.Effect::none(),
+        ),
+      )
     SelectProjectFile(rel) =>
       // 再点同一个文件 = 取消选中(与图标栏「再点一次」同一心智)
       Some(

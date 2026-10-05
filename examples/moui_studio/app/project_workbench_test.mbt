@@ -161,7 +161,7 @@ test "explorer 移除工程:会话级,active 下标随位次修正" {
     @project.parse_module_manifest("name = \"b/mod\"\nversion = \"0.1.0\"") {
     Ok(manifest) =>
       match @project.scan_module(manifest, []) {
-        Ok(scanned) =>
+        Ok(_scanned) =>
           @project.ProjectSource::{
             root: "/b",
             module_manifest: "name = \"b/mod\"\nversion = \"0.1.0\"",

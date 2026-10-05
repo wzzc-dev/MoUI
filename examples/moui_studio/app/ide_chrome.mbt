@@ -770,14 +770,9 @@ pub fn tree_row(
         ).on_tap(message),
       )
     None =>
-      cells.push(
-        @views.container(
-          @views.text("", width=14.0, height=16.0),
-          width=14.0,
-          height=16.0,
-          padding=0.0,
-        ),
-      )
+      // 叶子占位:**透明空文本**——裸 container 会回落环境面板色,
+      // 在选中行(ide_selection 蓝)上读成黑方块(实测缺陷)。
+      cells.push(@views.text("", width=14.0, height=16.0))
   }
   // 标签宽度必须**从剩余空间反推**，不能写死 `width - 44`：
   // 有 meta 时会多出一个单元格加一条间距，写死的宽度会让整行溢出，

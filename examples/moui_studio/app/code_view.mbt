@@ -33,7 +33,90 @@ pub fn code_workspace(
   }
   // 外观胶囊（M5-5e）：MoonBit（默认显示）⇄ DSL，点按循环。
   let head = pane_head(text(t, "app.pane.code"), handler_subtitle, width, [])
-  let spans = ir_line_spans(model)
+  // 工程文件只读查看器（M8 反馈：工程树点文件没反应）——打开工程文件
+  // 时代码工作区整面切到文件内容，脚注/编辑面都不参与（文件不是 IR 投影）。
+  let body_view = match model.open_project_file {
+    Some(open) => {
+      let dirty = open.draft != open.saved_content
+      // **code editor**(试用反馈:为什么不用 code editor)——与 IR 编辑面
+      // 同一套受控富文本编辑器:mono 字体、光标/选区/撤销/剪贴板框架侧,
+      // 工程文件不做 DSL 着色(plain 文档)。
+      //
+      // **滚动方案(实测反馈:受控滚动不滚、无滚动条)**:受控编辑器的
+      // visible_scroll_y 需要外部驱动,滚轮路径不可靠——改为**外层
+      // scroll_view 承担滚动**(滚轮/滚动条都走它,与块画布同一机制),
+      // 行号槽与编辑器放进同一行,一起滚;编辑器按**内容全高**渲染
+      // (不传 viewport/overscan,不做窗口化)。
+      let content_height = (open.draft.split("\n").length().to_double() * CODE_LINE_HEIGHT + 60.0).max(
+          (height - 26.0 - 8.0).max(120.0),
+        )
+      let editor_width = (width - 48.0).max(80.0)
+      let file_rows : Array[@moui.View[Msg]] = [
+        @views.container(
+          @views.row(
+            [
+              @views.text(
+                open.rel + (if dirty { " ●" } else { "" }),
+                theme=studio_theme(),
+                role=Mono,
+                width=(width - 220.0).max(60.0),
+                height=16.0,
+                align=TextStart,
+              ).foreground(ide_text()),
+              @views.spacer(min_length=6.0, weight=1.0),
+              foot_chip("保存", text_estimate_width("保存") + 24.0, dirty, SaveProjectFile),
+              @views.text("关闭", theme=studio_theme(), width=36.0, height=16.0)
+              .foreground(ide_accent())
+              .on_tap(ClearProjectFile),
+            ],
+            spacing=6.0,
+            align=Center,
+          ),
+          background=ide_panel(),
+          width~,
+          height=26.0,
+          padding=0.0,
+        ),
+        @views.scroll_view(
+          @views.row(
+            [
+              project_file_gutter(open),
+              @moui_richtext.controlled_rich_text_editor(
+                value=open.draft,
+                on_input=value => EditProjectFile(value),
+                placeholder="",
+                size=@geometry.Size::new(
+                  width=editor_width,
+                  height=content_height,
+                ),
+                format=source => plain_code_document(source, mono_code_font()),
+                font=mono_code_font(),
+                foreground=ide_text(),
+                placeholder_color=ide_text_faint(),
+                background=@graphics.Brush::solid(ide_editor_background()),
+                cursor_color=ide_accent(),
+                corner_radius=0.0,
+                on_selection_change=Some((caret, selection) => {
+                  ProjectFileCaretMoved(caret, selection)
+                }),
+                selection_caret=model.project_file_caret,
+                selection_range=model.project_file_selection,
+                kind="StudioProjectFileEditor",
+                key=Some("studio-project-file-editor"),
+              ),
+            ],
+            spacing=0.0,
+            align=Start,
+          ).frame(width=(width - 30.0).max(80.0), height=content_height),
+          width=(width - 8.0).max(80.0),
+          height=(height - 26.0 - 8.0).max(120.0),
+          shows_indicator=true,
+        ),
+      ]
+      @views.column(file_rows, spacing=0.0).frame(width=width, height=height)
+    }
+    None => {
+      let spans = ir_line_spans(model)
   // 高度预算：头 30 + 说明条 30 + 脚注 36 + 补全占位 1 + **底栏页签带 26**
   //（中心列的下缘与收起底栏的页签头相接——实测这 26pt 会被底栏盖住，
   // 脚注整行「消失」，切换芯片也随之不可见）,错误条可见时再 +24。
@@ -41,7 +124,7 @@ pub fn code_workspace(
   let chrome = 123.0 + error_reserve
   let code_height = (height - chrome).max(120.0)
   let editor_width = (width - 2.0 - CODE_GUTTER_WIDTH - IR_RAIL_WIDTH).max(80.0)
-  @views.container(
+      @views.container(
     @views.column(
       [
         head,
@@ -63,6 +146,15 @@ pub fn code_workspace(
       ],
       spacing=0.0,
     ).frame(width~, height~),
+    background=ide_editor_background(),
+    width~,
+    height~,
+    padding=0.0,
+      )
+    }
+  }
+  @views.container(
+    body_view,
     background=ide_editor_background(),
     width~,
     height~,
@@ -645,7 +737,11 @@ fn code_foot_row(
       text_estimate_width(label) * 1.05 + 28.0
     }
   }
-  let hint_w = (width - appearance_w - restore_w - compile_w - gap * 3.0).max(40.0)
+  // 「按 IR 重渲染」只在 DSL 外观有意义（MoonBit 外观下恢复 = 原样重生成,
+  // 点了没效果——实测反馈建议删除,收窄为按外观显隐）。
+  let show_restore = model.code_appearance is AppDsl
+  let restore_reserve = if show_restore { restore_w } else { 0.0 }
+  let hint_w = (width - appearance_w - restore_reserve - compile_w - gap * 3.0).max(40.0)
   // 外观切换芯片（实测反馈两轮：用户找不到入口）——脚注行右侧，
   // 文案写明**目标**（「切到中文 DSL」/「切到 MoonBit」），不存在歧义。
   let appearance_chip = match model.code_appearance {
@@ -679,7 +775,11 @@ fn code_foot_row(
         align=TextStart,
       ).foreground(ide_text_faint()),
       appearance_chip,
-      foot_chip(text(t, "app.code.restore"), restore_w, false, RestoreCodeDraft),
+      if show_restore {
+        foot_chip(text(t, "app.code.restore"), restore_w, false, RestoreCodeDraft)
+      } else {
+        @views.text("", width=1.0, height=1.0)
+      },
       foot_chip(text(t, "app.code.compile"), compile_w, true, CompileRun),
     ],
     width,
@@ -918,4 +1018,117 @@ fn completion_popup(model : Model, width : Double) -> @moui.View[Msg] {
     width~,
     padding=0.0,
   )
+}
+
+///|
+/// 工程文件编辑器的 mono 字体(与 IR 编辑面同一套)。
+fn mono_code_font() -> @text.FontSpec {
+  @text.FontSpec::new(families=@text.FontFamilyStack::monospace(), size=13.0)
+}
+
+///|
+/// 工程文件 → 富文本文档:**plain 口径**——不做 DSL 着色(工程文件是
+/// 用户手改的 MoonBit 源码,不是 IR 投影),每行一个块、单一 mono run;
+/// source/content 区间沿用 IR 编辑面的行块约定。
+fn plain_code_document(
+  source : String,
+  font : @text.FontSpec,
+) -> @moui_richtext.RichTextDocument {
+  // **与 IR 编辑面同一条文档管线**（实测光标/选区问题的收敛手段）：
+  // 复用 code_line_block（分词/空行/区间约定完全一致），关键字表与
+  // 内建表给「永不匹配」的空值——工程文件不着色,但块结构与
+  // 已验证的 IR 编辑器逐字段一致。
+  let no_keywords = empty_keywords()
+  let blocks : Array[@moui_richtext.RichTextBlock] = []
+  let chars = source.to_array()
+  let mut line_start = 0
+  let mut index = 0
+  while index < chars.length() {
+    if chars[index] == '\n' {
+      blocks.push(
+        code_line_block(
+          String::from_array(chars[line_start:index]),
+          line_start~,
+          content_end=index,
+          source_end=index + 1,
+          keywords=no_keywords,
+          builtins=[],
+          diagnostics=[],
+          font~,
+        ),
+      )
+      line_start = index + 1
+    }
+    index = index + 1
+  }
+  blocks.push(
+    code_line_block(
+      String::from_array(chars[line_start:chars.length()]),
+      line_start~,
+      content_end=chars.length(),
+      source_end=chars.length(),
+      keywords=no_keywords,
+      builtins=[],
+      diagnostics=[],
+      font~,
+    ),
+  )
+  @moui_richtext.RichTextDocument::new(blocks~)
+}
+
+///|
+/// 永不匹配的关键字表：所有字段置 \u{0}（NUL 不会出现在源码里）。
+/// 工程文件不做 DSL 着色,但块结构必须与已验证的 IR 编辑器一致。
+fn empty_keywords() -> @studio_lang.Keywords {
+  let nul = "\u{0}"
+  @studio_lang.Keywords::{
+    declare_kw: nul,
+    if_kw: nul,
+    then_kw: nul,
+    else_if_kw: nul,
+    else_kw: nul,
+    end_kw: nul,
+    count_kw: nul,
+    times_kw: nul,
+    as_kw: nul,
+    while_kw: nul,
+    do_kw: nul,
+    break_kw: nul,
+    true_kw: nul,
+    false_kw: nul,
+    and_kw: nul,
+    or_kw: nul,
+    not_kw: nul,
+    return_kw: nul,
+    struct_kw: nul,
+    match_kw: nul,
+    case_kw: nul,
+    enum_kw: nul,
+  }
+}
+
+///|
+/// 工程文件编辑器的行号槽:与 IR 编辑面的 code_gutter 同构——
+/// 行号列跟随编辑器滚动（共享 project_file_scroll）。
+fn project_file_gutter(
+  open : OpenProjectFile,
+) -> @moui.View[Msg] {
+  let rows : Array[@moui.View[Msg]] = []
+  let line_count = open.draft.split("\n").length()
+  let mut number = 1
+  while number <= line_count {
+    rows.push(
+      @views.text(
+        "\{number}",
+        theme=studio_theme(),
+        role=Mono,
+        width=36.0,
+        height=CODE_LINE_HEIGHT,
+        align=TextEnd,
+      ).foreground(ide_text_faint()),
+    )
+    number = number + 1
+  }
+  // 行号列与编辑器在同一外层 scroll_view 里（一起滚,无独立滚动状态）。
+  @views.column(rows, spacing=0.0)
 }
