@@ -1,0 +1,9 @@
+import {
+  "examples/moui_studio/services/export",
+}
+
+supported_targets = "native+wasm-gc"
+
+options(
+  targets: { },
+)

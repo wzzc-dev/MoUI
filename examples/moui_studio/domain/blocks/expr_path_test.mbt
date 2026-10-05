@@ -217,3 +217,68 @@ test "parse_leaf_value accepts free text as a string" {
     _ => fail("a compound expression typed into a value cell is literal text")
   }
 }
+
+///|
+/// 字段访问（M5-5c 前端③）：唯一洞口是基底；字段名不可替换；
+/// 路径寻址/替换与 canonical 插槽文本同源。
+test "field access exposes the base as its only slot" {
+  let body = [@ir.Assign("y", @ir.FieldAccess(@ir.Var("person"), "名字"))]
+  // 根 = 整个字段访问；插槽文本与 canonical 同源
+  match @blocks.expr_at(body, [0], []) {
+    Some(@ir.FieldAccess(_, "名字")) => ()
+    _ => fail("root is not the field access")
+  }
+  // [0] = 基底；越界槽位拒绝
+  match @blocks.expr_at(body, [0], [0]) {
+    Some(@ir.Var(name)) => assert_eq(name, "person")
+    _ => fail("base slot is not person")
+  }
+  assert_true(@blocks.expr_at(body, [0], [1]) is None)
+  // 换基底保字段名
+  match @blocks.replace_expr_at(body, [0], [0], @ir.Var("学生")) {
+    Some(next) =>
+      assert_true(
+        next[0] is @ir.Assign(_, @ir.FieldAccess(@ir.Var("学生"), "名字")),
+      )
+    None => fail("base replacement failed")
+  }
+  // 槽位 1（字段名位）不可写
+  assert_true(
+    @blocks.replace_expr_at(body, [0], [1], @ir.Var("x")) is None,
+  )
+}
+
+///|
+test "field access nests inside larger expressions" {
+  // y = person.年龄 + 1：FieldAccess 占二元左槽 [0]，自身基底 [0,0]
+  let body = [
+    @ir.Assign(
+      "y",
+      @ir.Binary(
+        @ir.Add,
+        @ir.FieldAccess(@ir.Var("person"), "年龄"),
+        @ir.IntLit(1),
+      ),
+    ),
+  ]
+  assert_eq(@blocks.expr_slot_count(@ir.FieldAccess(@ir.Var("p"), "f")), 1)
+  match @blocks.expr_at(body, [0], [0, 0]) {
+    Some(@ir.Var(name)) => assert_eq(name, "person")
+    _ => fail("nested base is not person")
+  }
+  // 深层替换：person → 队员
+  match @blocks.replace_expr_at(body, [0], [0, 0], @ir.Var("队员")) {
+    Some(next) =>
+      assert_true(
+        next[0] is @ir.Assign(
+          _,
+          @ir.Binary(
+            _,
+            @ir.FieldAccess(@ir.Var("队员"), "年龄"),
+            _,
+          ),
+        ),
+      )
+    None => fail("nested base replacement failed")
+  }
+}

@@ -8,12 +8,16 @@
 /// 底栏绘制时发生；若未来程序规模上探，再引入脏标记缓存。
 
 ///|
-/// 问题行：`handler_key` 非空且 `line > 0` 时可跳转（GotoProblem）。
+/// 问题行：`handler_key` 以 "build:" / "compile:" 开头时是工具链诊断
+/// （`file` 非空，GotoProblem 跳资源管理器定位文件）；否则是程序内
+/// 诊断（跳积木/代码草稿）。
 pub(all) struct ProblemRow {
   handler_key : String
   label : String
   message : String
   line : Int
+  /// 工具链诊断的文件路径(程序内诊断为空串)
+  file : String
 }
 
 ///|
@@ -33,6 +37,7 @@ pub fn problem_rows(model : Model, t : @i18n.Translator) -> Array[ProblemRow] {
           label: handler.control_name,
           message: error_message(t, error),
           line: error.line(),
+          file: "",
         })
     }
   }
@@ -43,7 +48,21 @@ pub fn problem_rows(model : Model, t : @i18n.Translator) -> Array[ProblemRow] {
       label: text(t, "app.problems.program"),
       message: error_message(t, error),
       line: 0,
+      file: "",
     })
+  }
+  // 工具链诊断合流(M0-7):构建服务报告 + 真编译报告,统一进一张表。
+  // label = 诊断文件路径(file 非空 → GotoProblem 跳资源管理器定位)。
+  for report in build_reports(model) {
+    for diagnostic in report.diagnostics {
+      rows.push(ProblemRow::{
+        handler_key: "build:" + diagnostic.file,
+        label: text(t, "app.problems.build"),
+        message: diagnostic.text,
+        line: diagnostic.line,
+        file: diagnostic.file,
+      })
+    }
   }
   // 当前草稿的实时诊断（未提交；行号可跳）
   if model.code_error != "" {
@@ -53,6 +72,7 @@ pub fn problem_rows(model : Model, t : @i18n.Translator) -> Array[ProblemRow] {
         label: text(t, "app.problems.draft"),
         message: diagnostic.message,
         line: line_of_offset(model.code_draft, diagnostic.range.start),
+        file: "",
       })
     }
   }
@@ -171,4 +191,29 @@ pub fn problems_pane(
     height~,
     shows_indicator=true,
   )
+}
+
+///|
+/// 参与问题合流的工具链报告(最近的在前):构建服务报告 + 真编译报告。
+fn build_reports(model : Model) -> Array[@export.CompileReport] {
+  let reports : Array[@export.CompileReport] = []
+  match model.last_build {
+    Some(report) =>
+      reports.push(@export.CompileReport::{
+        ok: report.ok,
+        exit_code: report.exit_code,
+        target: report.kind.tag(),
+        source_path: "",
+        output: report.output,
+        diagnostics: report.diagnostics,
+        artifacts: [],
+        work_root: "",
+      })
+    None => ()
+  }
+  match model.compile_report {
+    Some(report) => reports.push(report)
+    None => ()
+  }
+  reports
 }

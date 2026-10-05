@@ -1,0 +1,96 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/project"
+
+import {
+  "wzzc-dev/moui/services",
+}
+
+// Values
+pub const PREVIEW_HARNESS_VERSION : Int = 1
+
+pub const PREVIEW_PACKAGE_REL : String = ".studio/preview"
+
+pub const PREVIEW_SENTINEL : String = "__STUDIO_PREVIEW_V1__"
+
+pub const PREVIEW_STAGE_HEIGHT : Double = 480.0
+
+pub const PREVIEW_STAGE_WIDTH : Double = 640.0
+
+pub fn parse_module_manifest(String) -> Result[ModuleManifest, String]
+
+pub fn parse_package_manifest(rel_path~ : String, String) -> Result[PackageManifest, String]
+
+pub fn preview_harness_files(String, String) -> Array[(String, String)]
+
+pub fn scan_module(ModuleManifest, Array[(String, String, Bool, Array[String])]) -> Result[ScannedModule, String]
+
+pub fn scan_package_paths(Array[LayoutEntry]) -> Array[String]
+
+pub fn walk_project_task(@services.FileServices, String) -> @services.ServiceTask[Result[ProjectSource, String]]
+
+// Errors
+
+// Types and methods
+pub(all) struct LayoutEntry {
+  rel_path : String
+  is_dir : Bool
+  files : Array[String]
+}
+
+pub(all) struct ModuleImport {
+  path : String
+  version : String
+  alias_name : String
+}
+
+pub(all) struct ModuleManifest {
+  name : String
+  version : String
+  preferred_target : String
+  imports : Array[ModuleImport]
+}
+
+pub(all) struct PackageImport {
+  path : String
+  alias_name : String
+}
+
+pub(all) enum PackageKind {
+  PkPlain
+  PkWebEntry
+  PkNativeEntry
+}
+
+pub(all) struct PackageManifest {
+  rel_path : String
+  imports : Array[PackageImport]
+  test_imports : Array[PackageImport]
+  wbtest_imports : Array[PackageImport]
+  supported_targets : String
+}
+
+pub(all) struct ProjectSource {
+  root : String
+  module_manifest : String
+  package_sources : Array[(String, String, Bool, Array[String])]
+}
+
+pub(all) struct ScannedModule {
+  manifest : ModuleManifest
+  packages : Array[ScannedPackage]
+  web_entry : String
+  native_entry : String
+  program_packages : Array[String]
+}
+
+pub(all) struct ScannedPackage {
+  rel_path : String
+  manifest : PackageManifest
+  has_program : Bool
+  kind : PackageKind
+  files : Array[String]
+}
+
+// Type aliases
+
+// Traits

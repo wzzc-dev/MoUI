@@ -31,11 +31,7 @@ pub fn studio_program_commands(
             shortcut=Some(
               @core.KeyboardShortcut::new(
                 key~,
-                modifiers=@core.KeyModifiers::new(
-                  shift~,
-                  control=!meta,
-                  meta~,
-                ),
+                modifiers=@core.KeyModifiers::new(shift~, control=!meta, meta~),
               ),
             ),
             enabled~,
@@ -49,14 +45,7 @@ pub fn studio_program_commands(
   let has_selection = model.selected_control != ""
   bind("s", false, "app.command.file.save", Submit, true, SaveRequested)
   bind("o", false, "app.command.file.open", Activate, true, OpenRequested)
-  bind(
-    "e",
-    false,
-    "app.command.file.export",
-    Submit,
-    true,
-    ExportRequested,
-  )
+  bind("e", false, "app.command.file.export", Submit, true, ExportRequested)
   bind("Enter", false, "app.command.run.start", Submit, true, RunStart)
   // 撤销/重做：从按钮载体迁移到全局表（按钮壳的 stack 顶对齐导致图标
   // 偏上；全局表接管快捷键后按钮恢复与芯片对齐的 icon_button）
@@ -65,7 +54,14 @@ pub fn studio_program_commands(
   // 命令面板：Ctrl/Cmd+K
   bind("k", false, "app.command.open", Activate, true, CommandPaletteOpen)
   // Ctrl+Space：补全候选（编辑器情报）
-  bind(" ", false, "app.command.code.complete", Activate, true, TriggerCompletion)
+  bind(
+    " ",
+    false,
+    "app.command.code.complete",
+    Activate,
+    true,
+    TriggerCompletion,
+  )
   bind(
     "1",
     false,
@@ -82,14 +78,7 @@ pub fn studio_program_commands(
     true,
     SetWorkSpace(WsCode),
   )
-  bind(
-    "j",
-    false,
-    "app.command.bottom.toggle",
-    Activate,
-    true,
-    ToggleBottom,
-  )
+  bind("j", false, "app.command.bottom.toggle", Activate, true, ToggleBottom)
   bind(
     "d",
     false,
@@ -105,12 +94,54 @@ pub fn studio_program_commands(
   // 三条都**只在有积木选中时**启用——否则 Delete 会变成「删掉一个看不见
   // 的东西」，那是危险的空操作。
   let has_block = model.selected_block >= 0
-  bind("ArrowUp", false, "app.command.block.prev", Activate, has_block, SelectBlockStep(-1))
-  bind("ArrowDown", false, "app.command.block.next", Activate, has_block, SelectBlockStep(1))
-  bind("Delete", false, "app.command.block.delete", Activate, has_block, DeleteBlock)
-  bind("Backspace", false, "app.command.block.delete", Activate, has_block, DeleteBlock)
-  bind("d", false, "app.command.block.duplicate", Activate, has_block, DuplicateBlock)
-  bind("Enter", true, "app.command.block.commit", Submit, has_block, CommitBlock)
+  bind(
+    "ArrowUp",
+    false,
+    "app.command.block.prev",
+    Activate,
+    has_block,
+    SelectBlockStep(-1),
+  )
+  bind(
+    "ArrowDown",
+    false,
+    "app.command.block.next",
+    Activate,
+    has_block,
+    SelectBlockStep(1),
+  )
+  bind(
+    "Delete",
+    false,
+    "app.command.block.delete",
+    Activate,
+    has_block,
+    DeleteBlock,
+  )
+  bind(
+    "Backspace",
+    false,
+    "app.command.block.delete",
+    Activate,
+    has_block,
+    DeleteBlock,
+  )
+  bind(
+    "d",
+    false,
+    "app.command.block.duplicate",
+    Activate,
+    has_block,
+    DuplicateBlock,
+  )
+  bind(
+    "Enter",
+    true,
+    "app.command.block.commit",
+    Submit,
+    has_block,
+    CommitBlock,
+  )
   // 「运行这一块」（Scratch 的点击运行）：Cmd/Ctrl+R。
   // **不能用 Cmd+Enter**——那个已经给了「提交积木编辑」，同一组合绑两条
   // 命令会双触发（`ActionCommandMap` 按 key 匹配，不按 intent 去重）。

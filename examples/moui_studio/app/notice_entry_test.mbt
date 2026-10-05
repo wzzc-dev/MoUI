@@ -59,7 +59,8 @@ test "save and open failures surface a toast" {
       services,
     ).0
   assert_eq(open_failed.toasts.length(), 1)
-  assert_true(open_failed.notice.contains("不合法"))
+  // M6③：旧格式读取失败是结构化报错，指向迁移器口径而非笼统「打开失败」
+  assert_true(open_failed.notice.contains("迁移器"))
 }
 
 ///|

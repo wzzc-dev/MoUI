@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/build_native"
+
+import {
+  "examples/moui_studio/services/build",
+  "moonbitlang/async/aqueue",
+  "moonbitlang/async/process",
+  "moonbitlang/core/ref",
+}
+
+// Values
+pub fn build_cancel(BuildOwner) -> Unit
+
+pub fn build_submit(BuildOwner, @build.BuildRequest) -> Unit
+
+pub async fn build_worker_loop(BuildOwner) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct BuildOwner {
+  queue : @aqueue.Queue[@build.BuildRequest]
+  active : @ref.Ref[@process.Process?]
+}
+pub fn BuildOwner::new() -> Self
+
+// Type aliases
+
+// Traits

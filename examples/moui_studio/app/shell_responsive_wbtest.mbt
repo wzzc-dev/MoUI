@@ -407,7 +407,10 @@ test "no drawn label is clipped by its own container" {
   //
   // `SetWorkSpace` 是**切换**：在默认（WsVisual）上再发 WsVisual 会收起成
   // 空舞台。所以可视化工作区直接取默认模型，另外两个才是切过去。
-  let visual = initial_model()
+  // 代码内容用 DSL 外观验证（M5-5e）：默认 MoonBit 外观的长代码行由
+  // 编辑器渲染期裁剪，流级标签卫生契约取面板镶边基准（同
+  // pane_lifecycle 的口径说明）。
+  let visual = apply_shell(initial_model(), CycleCodeAppearance)
   let code = apply_shell(visual, SetWorkSpace(WsCode))
   let empty = apply_shell(code, SetWorkSpace(WsEmpty))
   let mut hits = ""

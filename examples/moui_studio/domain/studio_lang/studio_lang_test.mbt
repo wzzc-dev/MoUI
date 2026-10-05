@@ -477,6 +477,8 @@ test "language validation catches break and command position" {
       },
     ],
     functions: [],
+  structs: [],
+  enums: [],
   }
   let errors = @studio_lang.validate_program_language(program)
   assert_true(errors.any(e => e.kind() is @studio_lang.BreakOutsideLoop))
@@ -509,6 +511,8 @@ test "language validation catches break and command position" {
       },
     ],
     functions: [],
+  structs: [],
+  enums: [],
   })
   assert_true(clean.is_empty())
 }
@@ -710,4 +714,313 @@ test "broadcast queues text for window handlers" {
   assert_eq(state.broadcasts.length(), 2)
   assert_eq(state.broadcasts[0], "下课了")
   assert_eq(state.broadcasts[1], "集合")
+}
+
+///|
+/// 字段访问（M5-5c 前端①）：`person.名字` 解析为 FieldAccess；链式与
+/// 下标混合；canonical 文本往返一致。
+test "field access parses to ir and round trips" {
+  match @studio_lang.parse_expression_text("person.名字", @studio_lang.ZhHans) {
+    Err(error) => abort("解析失败: \{error.a()} @\{error.line()}")
+    Ok(expr) => {
+      assert_true(expr is @ir.FieldAccess(_, "名字"))
+      // 往返：canonical 文本再解析，再次 canonical 应逐字相同
+      let text = @studio_lang.canonical_expr(expr)
+      assert_eq(text, "person.名字")
+      match @studio_lang.parse_expression_text(text, @studio_lang.ZhHans) {
+        Ok(again) => assert_eq(@studio_lang.canonical_expr(again), text)
+        Err(error) => abort("往返解析失败: \{text} \{error.a()}")
+      }
+    }
+  }
+}
+
+///|
+test "field access chains and mixes with index" {
+  let chained = match @studio_lang.parse_expression_text(
+    "a.b.c",
+    @studio_lang.ZhHans,
+  ) {
+    Ok(@ir.FieldAccess(@ir.FieldAccess(@ir.Var("a"), "b"), "c")) => true
+    _ => false
+  }
+  assert_true(chained)
+  // 名单[1].分数：下标再取字段
+  let mixed = match @studio_lang.parse_expression_text(
+    "名单[1].分数",
+    @studio_lang.ZhHans,
+  ) {
+    Ok(@ir.FieldAccess(@ir.Index(@ir.Var("名单"), _), "分数")) => true
+    _ => false
+  }
+  assert_true(mixed)
+  // 括号基底：(a + b).分数 可区分于 a + b.分数
+  let paren = match @studio_lang.parse_expression_text(
+    "(a + b).分数",
+    @studio_lang.ZhHans,
+  ) {
+    Ok(@ir.FieldAccess(@ir.Binary(@ir.Add, _, _), "分数")) => true
+    _ => false
+  }
+  assert_true(paren)
+  // 缺字段名报结构化错误
+  assert_true(
+    @studio_lang.parse_expression_text("person.", @studio_lang.ZhHans)
+    is Err(_),
+  )
+}
+
+///|
+test "field access evaluates against struct value" {
+  let values : Map[String, @studio_lang.Value] = Map([
+    ("person", @studio_lang.VStruct(Map([("年龄", @studio_lang.VInt(9))]))),
+  ], capacity=4)
+  let state = run_zh("返回 person.年龄\n", Map([], capacity=4), values)
+  assert_true(state.status is @studio_lang.Completed)
+  match state.return_slot {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 9)
+    _ => abort("person.年龄 应为 VInt(9)")
+  }
+}
+
+///|
+/// 顶层 struct 声明（M5-5c 前端②）：解析 → StructDecl（类型存规范 id）；
+/// render_struct_declarations 与 parse_struct_declarations 构成往返硬门。
+test "struct declarations parse and round trip" {
+  match @studio_lang.parse_struct_declarations(
+    "结构 Person { 名字: 文本, 年龄: 数字 }\n",
+    @studio_lang.ZhHans,
+  ) {
+    Err(error) => abort("解析失败: \{error.a()} @\{error.line()}")
+    Ok(decls) => {
+      assert_eq(decls.length(), 1)
+      assert_eq(decls[0].name, "Person")
+      assert_eq(decls[0].fields.length(), 2)
+      assert_eq(decls[0].fields[0].field_name, "名字")
+      assert_eq(decls[0].fields[0].field_type, "text")
+      assert_eq(decls[0].fields[1].field_name, "年龄")
+      assert_eq(decls[0].fields[1].field_type, "number")
+      // 往返硬门：中文渲染 → 再解析 → 同一 IR；英文渲染同理
+      let zh_text = @studio_lang.render_struct_declarations(decls, @studio_lang.ZhHans)
+      assert_eq(zh_text, "结构 Person { 名字: 文本, 年龄: 数字 }\n")
+      match @studio_lang.parse_struct_declarations(zh_text, @studio_lang.ZhHans) {
+        Ok(again) => {
+          assert_eq(again.length(), 1)
+          assert_eq(again[0].name, decls[0].name)
+          assert_eq(again[0].fields[0].field_name, "名字")
+          assert_eq(again[0].fields[0].field_type, "text")
+        }
+        Err(error) => abort("往返解析失败: \{error.a()}")
+      }
+      let en_text = @studio_lang.render_struct_declarations(decls, @studio_lang.En)
+      assert_eq(en_text, "struct Person { 名字: text, 年龄: number }\n")
+      match @studio_lang.parse_struct_declarations(en_text, @studio_lang.En) {
+        Ok(again) => assert_eq(again[0].fields[1].field_type, "number")
+        Err(error) => abort("英文往返解析失败: \{error.a()}")
+      }
+    }
+  }
+}
+
+///|
+test "struct declarations accept multiple decls empty struct and en keywords" {
+  // 中文语言：多声明 + 空括号结构（声明间允许空行）
+  match @studio_lang.parse_struct_declarations(
+    "结构 点 { }\n\n结构 地址 { 城市: 文本, 门牌: 整数 }\n",
+    @studio_lang.ZhHans,
+  ) {
+    Err(error) => abort("解析失败: \{error.a()} @\{error.line()}")
+    Ok(decls) => {
+      assert_eq(decls.length(), 2)
+      assert_eq(decls[0].name, "点")
+      assert_eq(decls[0].fields.length(), 0)
+      assert_eq(decls[1].name, "地址")
+      assert_eq(decls[1].fields[1].field_type, "int")
+    }
+  }
+  // 英文语言：struct 关键字 + 英文类型词（文本/text 双收是类型词表的宽进，
+  // 结构关键字本身按当前语言表分派，与语句关键字同一口径）
+  match @studio_lang.parse_struct_declarations(
+    "struct Item { label: text, count: int, ok: bool }\n",
+    @studio_lang.En,
+  ) {
+    Err(error) => abort("英文解析失败: \{error.a()} @\{error.line()}")
+    Ok(decls) => {
+      assert_eq(decls.length(), 1)
+      assert_eq(decls[0].name, "Item")
+      assert_eq(decls[0].fields.length(), 3)
+      assert_eq(decls[0].fields[2].field_type, "bool")
+    }
+  }
+}
+
+///|
+test "struct declarations reject malformed input" {
+  // 缺左括号
+  assert_true(
+    @studio_lang.parse_struct_declarations("结构 Person 名字: 文本\n", @studio_lang.ZhHans)
+    is Err(_),
+  )
+  // 缺冒号
+  assert_true(
+    @studio_lang.parse_struct_declarations("结构 Person { 名字 文本 }\n", @studio_lang.ZhHans)
+    is Err(_),
+  )
+  // 未知类型词
+  assert_true(
+    @studio_lang.parse_struct_declarations("结构 Person { 名字: 布尔 }\n", @studio_lang.ZhHans)
+    is Err(_),
+  )
+  // 保留字当结构名
+  assert_true(
+    @studio_lang.parse_struct_declarations("结构 变量 { 名字: 文本 }\n", @studio_lang.ZhHans)
+    is Err(_),
+  )
+  // 声明后接多余内容
+  assert_true(
+    @studio_lang.parse_struct_declarations("结构 Person { 名字: 文本 } 额外\n", @studio_lang.ZhHans)
+    is Err(_),
+  )
+  // 结构/struct 进入保留字并集
+  assert_true(@studio_lang.is_reserved("结构"))
+  assert_true(@studio_lang.is_reserved("struct"))
+}
+
+///|
+/// 枚举声明（M5-5d）：解析 → EnumDecl；渲染往返硬门（中英双语）。
+test "enum declarations parse and round trip" {
+  match @studio_lang.parse_enum_declarations(
+    "枚举 花色 { 红桃, 黑桃 }\n",
+    @studio_lang.ZhHans,
+  ) {
+    Err(error) => abort("解析失败: \{error.a()} @\{error.line()}")
+    Ok(decls) => {
+      assert_eq(decls.length(), 1)
+      assert_eq(decls[0].name, "花色")
+      assert_eq(decls[0].cases.length(), 2)
+      assert_eq(decls[0].cases[0], "红桃")
+      let zh = @studio_lang.render_enum_declarations(decls, @studio_lang.ZhHans)
+      assert_eq(zh, "枚举 花色 { 红桃, 黑桃 }\n")
+      let en = @studio_lang.render_enum_declarations(decls, @studio_lang.En)
+      assert_eq(en, "enum 花色 { 红桃, 黑桃 }\n")
+      match @studio_lang.parse_enum_declarations(en, @studio_lang.En) {
+        Ok(again) => assert_eq(again[0].cases[1], "黑桃")
+        Err(error) => abort("英文往返失败: \{error.a()}")
+      }
+    }
+  }
+}
+
+///|
+/// 匹配语句解析 + 往返硬门：canonical 渲染再解析签名一致（双语）。
+test "match statement parses and round trips" {
+  let source = "匹配 花色::红桃\n情况 红桃\n  x = 1\n情况 黑桃\n  x = 2\n否则\n  x = 3\n结束\n"
+  let body = parse_body_ir(source, @studio_lang.ZhHans)
+  assert_true(body[0] is @ir.Match(_, _, _))
+  for language in [@studio_lang.ZhHans, @studio_lang.En] {
+    let rendered = @studio_lang.render_stmts(body, language)
+    match @studio_lang.parse_handler_body(rendered, language) {
+      Ok(traced) => {
+        let parsed = traced.map(item => item.stmt)
+        assert_eq(@ir.stmts_signature(parsed), @ir.stmts_signature(body))
+      }
+      Err(error) => abort("往返失败 \{language.tag()}: \{error.a()}")
+    }
+  }
+  // EnumTag canonical 形态
+  match body[0] {
+    @ir.Match(@ir.EnumTag(e, c), _, _) => {
+      assert_eq(e, "花色")
+      assert_eq(c, "红桃")
+    }
+    _ => abort("subject 应为 EnumTag")
+  }
+}
+
+///|
+/// 匹配求值：命中臂 / 落 else / subject 非枚举值报错。
+test "match dispatch evaluates once and audits" {
+  // 命中红桃
+  let state = run_zh(
+    "变量 x = 0\n匹配 花色::红桃\n情况 红桃\n  x = 1\n情况 黑桃\n  x = 2\n否则\n  x = 3\n结束\n",
+    Map([], capacity=4),
+    Map([], capacity=4),
+  )
+  assert_true(state.status is @studio_lang.Completed)
+  match state.vars.get("x") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 1)
+    _ => abort("应命中红桃臂")
+  }
+  // 落 else
+  let state2 = run_zh(
+    "变量 x = 0\n匹配 花色::方块\n情况 红桃\n  x = 1\n否则\n  x = 9\n结束\n",
+    Map([], capacity=4),
+    Map([], capacity=4),
+  )
+  match state2.vars.get("x") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 9)
+    _ => abort("应落 else 臂")
+  }
+  // subject 非枚举值 → 运行错误
+  let state3 = run_zh(
+    "变量 x = 0\n变量 y = 5\n匹配 y\n情况 红桃\n  x = 1\n结束\n",
+    Map([], capacity=4),
+    Map([], capacity=4),
+  )
+  assert_true(state3.status is @studio_lang.Failed)
+  // 枚举值经变量传递后仍可分派（单次求值语义）
+  let state4 = run_zh(
+    "变量 x = 0\n变量 牌 = 花色::黑桃\n匹配 牌\n情况 红桃\n  x = 1\n情况 黑桃\n  x = 2\n结束\n",
+    Map([], capacity=4),
+    Map([], capacity=4),
+  )
+  match state4.vars.get("x") {
+    Some(@studio_lang.VInt(n)) => assert_eq(n, 2)
+    _ => abort("应命中黑桃臂")
+  }
+}
+
+///|
+test "match validates case names against declared enums" {
+  let program : @ir.StudioProgram = {
+    version: 1,
+    window: @ir.default_window(),
+    controls: [],
+    variables: [],
+    handlers: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "",
+        note_en: "",
+        body: [
+          @ir.Match(
+            @ir.EnumTag("花色", "红桃"),
+            [@ir.MatchArm::{ case_name: "梅子", body: [] }],
+            [],
+          ),
+        ],
+      },
+    ],
+    functions: [],
+    structs: [],
+    enums: [@ir.EnumDecl::{ name: "花色", cases: ["红桃", "黑桃"] }],
+  }
+  let errors = @studio_lang.validate_program_language(program)
+  assert_true(errors.any(e => e.a() == "梅子"))
+  // 未知枚举名
+  let program2 = {
+    ..program,
+    handlers: [
+      @ir.Handler::{
+        control_name: "按钮",
+        event: @ir.OnClick,
+        note_zh: "",
+        note_en: "",
+        body: [@ir.Match(@ir.EnumTag("方位", "上"), [], [])],
+      },
+    ],
+  }
+  let errors2 = @studio_lang.validate_program_language(program2)
+  assert_true(errors2.any(e => e.a() == "方位"))
 }

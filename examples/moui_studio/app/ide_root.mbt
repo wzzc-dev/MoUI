@@ -74,10 +74,7 @@ fn shell_view(
   // VS Code 骨架：**活动栏全高贯通左侧**（从窗口顶到状态栏），状态栏
   // 横贯整个底边。右列（顶栏+内容+底栏面板）在活动栏右侧。
   let body_height = (height - STATUSBAR_HEIGHT - 1.0).max(200.0)
-  let chrome = TOPBAR_HEIGHT +
-    bottom_height +
-    window_bar +
-    2.0
+  let chrome = TOPBAR_HEIGHT + bottom_height + window_bar + 2.0
   let content_height = (body_height - chrome).max(200.0)
   let content = if fullscreen {
     // 全屏页（预览/帮助/运行）：两侧栏收起，内容居中占满
@@ -131,7 +128,11 @@ fn shell_view(
       ide_bottom_bar(
         model,
         t,
-        if fullscreen { side_width } else { center_width },
+        if fullscreen {
+          side_width
+        } else {
+          center_width
+        },
         bottom_height,
       ),
     ],
@@ -145,27 +146,38 @@ fn shell_view(
   // 自己的余量。界限在视图构建期算好闭进闭包（拖拽期间窗口不变，界限
   // 是常量），update 只兜底夹静态界限。
   let left_drag_max = (side_width -
-    (if chrome_widths.right > 0.0 { chrome_widths.right + SASH_WIDTH } else { 0.0 }) -
-    320.0).max(LEFTBAR_MIN_WIDTH).min(LEFTBAR_MAX_WIDTH)
+    (if chrome_widths.right > 0.0 {
+      chrome_widths.right + SASH_WIDTH
+    } else {
+      0.0
+    }) -
+    320.0)
+    .max(LEFTBAR_MIN_WIDTH)
+    .min(LEFTBAR_MAX_WIDTH)
   let right_drag_max = (side_width -
     (match chrome_widths.left {
       Some(left_width) => left_width + SASH_WIDTH
       None => 0.0
     }) -
-    320.0).max(RIGHTBAR_MIN_WIDTH).min(RIGHTBAR_MAX_WIDTH)
+    320.0)
+    .max(RIGHTBAR_MIN_WIDTH)
+    .min(RIGHTBAR_MAX_WIDTH)
   if !fullscreen {
     match chrome_widths.left {
       Some(left_width) => {
         lower_cells.push(ide_left_panel(model, t, left_width, lower_height))
         lower_cells.push(
-          v_sash(fn(x) {
-            ResizeLeftPanel(
-              (x - ICONBAR_WIDTH - SASH_WIDTH / 2.0).clamp(
-                min=LEFTBAR_MIN_WIDTH,
-                max=left_drag_max,
-              ),
-            )
-          }, lower_height),
+          v_sash(
+            fn(x) {
+              ResizeLeftPanel(
+                (x - ICONBAR_WIDTH - SASH_WIDTH / 2.0).clamp(
+                  min=LEFTBAR_MIN_WIDTH,
+                  max=left_drag_max,
+                ),
+              )
+            },
+            lower_height,
+          ),
         )
       }
       None => ()
@@ -174,33 +186,43 @@ fn shell_view(
   lower_cells.push(main_col)
   if !fullscreen && chrome_widths.right > 0.0 {
     lower_cells.push(
-      v_sash(fn(x) {
-        ResizeRightPanel(
-          (width - x - SASH_WIDTH / 2.0).clamp(
-            min=RIGHTBAR_MIN_WIDTH,
-            max=right_drag_max,
-          ),
-        )
-      }, lower_height),
+      v_sash(
+        fn(x) {
+          ResizeRightPanel(
+            (width - x - SASH_WIDTH / 2.0).clamp(
+              min=RIGHTBAR_MIN_WIDTH,
+              max=right_drag_max,
+            ),
+          )
+        },
+        lower_height,
+      ),
     )
     if model.ai_anchor is AiDocked {
+      // VS Code 口径（实测反馈）：AI 输入**钉在右栏最底部**（属性页签
+      // 之下），卡片按内容自适应——线程空时只占输入盒一条，不再固定
+      // 340 顶在右栏上部留一大块空白。
+      let ai_card_h = ai_card_height(model, chrome_widths.right)
+      let ai_slice = (ai_card_h + PANEL_HEAD_HEIGHT + 8.0).min(
+        (lower_height - 200.0).max(0.0),
+      )
       lower_cells.push(
         @views.column(
           [
-            @views.container(
-              match ai_layer(model, t, chrome_widths.right, 340.0) {
-                Some(layer) => layer
-                None => @views.text("", width=1.0, height=1.0)
-              },
-              width=chrome_widths.right,
-              height=340.0,
-              padding=0.0,
-            ),
             ide_right_panel(
               model,
               t,
               chrome_widths.right,
-              lower_height - 340.0,
+              (lower_height - ai_slice).max(200.0),
+            ),
+            @views.container(
+              match ai_layer(model, t, chrome_widths.right, ai_slice) {
+                Some(layer) => layer
+                None => @views.text("", width=1.0, height=1.0)
+              },
+              width=chrome_widths.right,
+              height=ai_slice,
+              padding=0.0,
             ),
           ],
           spacing=0.0,
@@ -230,7 +252,7 @@ fn shell_view(
         @views.column(
           [right_side, hairline(), ide_status_bar(model, t, side_width)],
           spacing=0.0,
-        ).frame(width=side_width, height=height),
+        ).frame(width=side_width, height~),
       ],
       spacing=0.0,
       align=Stretch,
@@ -253,18 +275,14 @@ fn shell_view(
 /// - 捕获：拖拽激活期手势持有指针捕获（runtime 对捕获元素在指针出界时
 ///   照常派发），所以 sash 自己随面板移动也不丢事件——与积木画布拖拽
 ///   同一机制。
-fn v_sash(
-  on_drag_x : (Double) -> Msg,
-  height : Double,
-) -> @moui.View[Msg] {
+fn v_sash(on_drag_x : (Double) -> Msg, height : Double) -> @moui.View[Msg] {
   @views.container(
     @views.empty(),
     background=ide_border_soft(),
     width=SASH_WIDTH,
     height~,
     padding=0.0,
-  )
-  .on_drag_with_frame(fn(event, _frame) {
+  ).on_drag_with_frame(fn(event, _frame) {
     match event.phase {
       @views.DragGesturePhase::Started | @views.DragGesturePhase::Changed =>
         on_drag_x(event.position.x)
@@ -317,7 +335,10 @@ fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
   let center_min = 320.0
   let wants_left = !(model.left_view is LeftHidden)
   let wants_right = model.right_visible
-  let left_want = model.left_width.clamp(min=LEFTBAR_MIN_WIDTH, max=LEFTBAR_MAX_WIDTH)
+  let left_want = model.left_width.clamp(
+    min=LEFTBAR_MIN_WIDTH,
+    max=LEFTBAR_MAX_WIDTH,
+  )
   let right_want = model.right_width.clamp(
     min=RIGHTBAR_MIN_WIDTH,
     max=RIGHTBAR_MAX_WIDTH,
@@ -389,6 +410,7 @@ fn workspace_content(
   match model.workspace {
     WsVisual => visual_workspace(model, t, width, height)
     WsCode => code_workspace(model, t, width, height)
+    WsPreview => preview_workspace(model, t, width, height)
     WsEmpty => empty_stage(model, t, width, height)
   }
 }
@@ -450,9 +472,8 @@ fn studio_overlay_host(
       kind=@views.PresentationKind::ContextMenu,
       content=block_context_menu(model, t),
       anchor=match model.block_menu {
-        Some((_, x, y)) => @views.PresentationAnchor::Viewport(
-          @core.Point::new(x~, y~),
-        )
+        Some((_, x, y)) =>
+          @views.PresentationAnchor::Viewport(@core.Point::new(x~, y~))
         None => @views.PresentationAnchor::HostBase
       },
       placement=Some(

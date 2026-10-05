@@ -105,6 +105,23 @@ pub fn kernel_studio_lang_printer_mbt() -> String {
     #|      write_indent(buf, indent)
     #|      buf.write_string(keywords.end_kw)
     #|    }
+    #|    @ir.Match(subject, arms, else_body) => {
+    #|      buf.write_string("\{keywords.match_kw} ")
+    #|      write_expr(buf, subject, 0, false, keywords, language)
+    #|      buf.write_string("\n")
+    #|      for arm in arms {
+    #|        write_indent(buf, indent)
+    #|        buf.write_string("\{keywords.case_kw} \{arm.case_name}\n")
+    #|        write_stmts(buf, arm.body, indent + 1, language)
+    #|      }
+    #|      if else_body.length() > 0 {
+    #|        write_indent(buf, indent)
+    #|        buf.write_string("\{keywords.else_kw}\n")
+    #|        write_stmts(buf, else_body, indent + 1, language)
+    #|      }
+    #|      write_indent(buf, indent)
+    #|      buf.write_string(keywords.end_kw)
+    #|    }
     #|    @ir.CountLoop(times, loop_var, body) => {
     #|      buf.write_string("\{keywords.count_kw} ")
     #|      write_expr(buf, times, 0, false, keywords, language)
@@ -166,7 +183,9 @@ pub fn kernel_studio_lang_printer_mbt() -> String {
     #|    | @ir.Var(_)
     #|    | @ir.ListLit(_)
     #|    | @ir.Index(_, _)
-    #|    | @ir.Call(_, _) => 7
+    #|    | @ir.Call(_, _)
+    #|    | @ir.FieldAccess(_, _)
+    #|    | @ir.EnumTag(_, _) => 7
     #|  }
     #|}
     #|
@@ -239,6 +258,20 @@ pub fn kernel_studio_lang_printer_mbt() -> String {
     #|    @ir.BoolLit(flag) =>
     #|      buf.write_string(if flag { keywords.true_kw } else { keywords.false_kw })
     #|    @ir.Var(name) => buf.write_string(name)
+    #|    @ir.FieldAccess(base, field) => {
+    #|      // 基底非主级（二元/一元）时加括号：(a + b).field 可区分
+    #|      if expr_precedence(base) < 7 {
+    #|        buf.write_string("(")
+    #|        write_expr(buf, base, 0, false, keywords, language)
+    #|        buf.write_string(")")
+    #|      } else {
+    #|        write_expr(buf, base, 7, false, keywords, language)
+    #|      }
+    #|      buf.write_string(".")
+    #|      buf.write_string(field)
+    #|    }
+    #|    @ir.EnumTag(enum_name, case_name) =>
+    #|      buf.write_string("\{enum_name}::\{case_name}")
     #|    @ir.Not(inner) => {
     #|      buf.write_string("\{keywords.not_kw} ")
     #|      write_expr(buf, inner, 6, false, keywords, language)
@@ -285,6 +318,50 @@ pub fn kernel_studio_lang_printer_mbt() -> String {
     #|    @ir.And => keywords.and_kw
     #|    @ir.Or => keywords.or_kw
     #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 渲染 struct 声明（M5-5c 前端②）：一行一个声明、字段两空格后逗号
+    #|/// 分隔，与 parse_struct_declarations 构成往返硬门。字段名语言无关；
+    #|/// 类型词取当前语言表。
+    #|pub fn render_struct_declarations(
+    #|  decls : Array[@ir.StructDecl],
+    #|  language : Language,
+    #|) -> String {
+    #|  let buf = StringBuilder()
+    #|  for decl in decls {
+    #|    buf.write_string("\{keywords_for(language).struct_kw} \{decl.name} { ")
+    #|    for index, field in decl.fields {
+    #|      if index > 0 {
+    #|        buf.write_string(", ")
+    #|      }
+    #|      let display = struct_field_type_display(field.field_type, language)
+    #|      buf.write_string("\{field.field_name}: \{display}")
+    #|    }
+    #|    buf.write_string(" }\n")
+    #|  }
+    #|  buf.to_string()
+    #|}
+    #|
+    #|///|
+    #|/// 渲染枚举声明（M5-5d）：一行一个声明、情况逗号分隔，与
+    #|/// parse_enum_declarations 构成往返硬门。
+    #|pub fn render_enum_declarations(
+    #|  decls : Array[@ir.EnumDecl],
+    #|  language : Language,
+    #|) -> String {
+    #|  let buf = StringBuilder()
+    #|  for decl in decls {
+    #|    buf.write_string("\{keywords_for(language).enum_kw} \{decl.name} { ")
+    #|    for index, case_name in decl.cases {
+    #|      if index > 0 {
+    #|        buf.write_string(", ")
+    #|      }
+    #|      buf.write_string(case_name)
+    #|    }
+    #|    buf.write_string(" }\n")
+    #|  }
+    #|  buf.to_string()
     #|}
     #|
   source
@@ -350,6 +427,8 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|  VArr(Array[Value])
     #|  VBool(Bool)
     #|  VUnit
+    #|  VStruct(Map[String, Value])
+    #|  VEnum(String, String) // 枚举值：枚举名, 情况名（M5-5d）
     #|}
     #|
     #|///|
@@ -378,6 +457,7 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|  LoopInit(Expr, String, Int) // 次数表达式, 计数器槽, 循环结束目标
     #|  LoopCheck(String, String, Int) // 计数器槽, 循环变量(""=无), 循环结束目标
     #|  LoopNext(String, Int) // 计数器槽, 循环开始目标
+    #|  CaseOf(Expr, Array[String], Array[Int], Int) // subject, 情况名, 各臂跳转目标, else 目标（M5-5d）
     #|}
     #|
     #|///|
@@ -744,6 +824,33 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|        })
     #|        state.pc = if flag { state.pc + 1 } else { target }
     #|      }
+    #|      CaseOf(subject, case_names, targets, else_target) => {
+    #|        // 匹配分派（M5-5d）：subject 单次求值，必须枚举值
+    #|        let value = state.eval(subject, line)
+    #|        if state.paused || !(state.status is Running) {
+    #|          return
+    #|        }
+    #|        let case_name = match value {
+    #|          VEnum(_enum_name, matched) => matched
+    #|          _ =>
+    #|            raise LangError(TypeMismatch, line, "匹配对象", "应为枚举值")
+    #|        }
+    #|        state.audit.push(StepRecord::{
+    #|          line,
+    #|          op: OpCondition,
+    #|          detail: "\{canonical_expr(subject)} -> \{case_name}",
+    #|        })
+    #|        let mut target = else_target
+    #|        let mut index = 0
+    #|        while index < case_names.length() {
+    #|          if case_names[index] == case_name {
+    #|            target = targets[index]
+    #|            break
+    #|          }
+    #|          index = index + 1
+    #|        }
+    #|        state.pc = target
+    #|      }
     #|      Jump(target) => state.pc = target
     #|      LoopInit(times, counter, end) => {
     #|        let value = state.eval(times, line)
@@ -933,6 +1040,21 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|    VNum(n) => number_to_text(n)
     #|    VInt(n) => n.to_string()
     #|    VStr(text) => text
+    #|    VEnum(enum_name, case_name) => "\{enum_name}::\{case_name}"
+    #|    VStruct(fields) => {
+    #|      let buf = StringBuilder()
+    #|      buf.write_string("{")
+    #|      let mut first = true
+    #|      for key, val in fields {
+    #|        if !first {
+    #|          buf.write_string(", ")
+    #|        }
+    #|        buf.write_string("\{key}: \{value_to_text(val)}")
+    #|        first = false
+    #|      }
+    #|      buf.write_string("}")
+    #|      buf.to_string()
+    #|    }
     #|    VArr(items) => {
     #|      let buf = StringBuilder()
     #|      buf.write_string("[")
@@ -993,6 +1115,18 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|    @ir.IntLit(n) => VInt(n)
     #|    @ir.StrLit(text) => VStr(text)
     #|    @ir.BoolLit(flag) => VBool(flag)
+    #|    @ir.EnumTag(enum_name, case_name) => VEnum(enum_name, case_name)
+    #|    @ir.FieldAccess(base, field) => {
+    #|      let base_val = self.eval(base, line)
+    #|      match base_val {
+    #|        VStruct(fields) =>
+    #|          match fields.get(field) {
+    #|            Some(v) => v
+    #|            None => raise LangError(UnknownName, 0, field, "")
+    #|          }
+    #|        _ => raise LangError(UnknownName, 0, field, "")
+    #|      }
+    #|    }
     #|    @ir.ListLit(items) => {
     #|      let values : Array[Value] = []
     #|      for item in items {
@@ -1720,6 +1854,13 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|    @ir.StrLit(text) => buf.write_string("\"\{text}\"")
     #|    @ir.BoolLit(flag) => buf.write_string(if flag { "true" } else { "false" })
     #|    @ir.Var(name) => buf.write_string(name)
+    #|    @ir.FieldAccess(base, field) => {
+    #|      write_canonical_expr(buf, base)
+    #|      buf.write_string(".")
+    #|      buf.write_string(field)
+    #|    }
+    #|    @ir.EnumTag(enum_name, case_name) =>
+    #|      buf.write_string("\{enum_name}::\{case_name}")
     #|    @ir.Not(inner) => {
     #|      buf.write_string("not ")
     #|      write_canonical_expr(buf, inner)
@@ -1876,6 +2017,42 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|        index = index + 1
     #|      }
     #|      let end = instrs.length()
+    #|      for slot in end_jumps {
+    #|        match instrs[slot] {
+    #|          Jump(_) => instrs[slot] = Jump(end)
+    #|          _ => ()
+    #|        }
+    #|      }
+    #|    }
+    #|    @ir.Match(subject, arms, else_body) => {
+    #|      // 单次求值：subject 只在分派指令里求值一次（M5-5d）
+    #|      let case_names : Array[String] = []
+    #|      let open_targets : Array[Int] = []
+    #|      for arm in arms {
+    #|        case_names.push(arm.case_name)
+    #|        open_targets.push(-1)
+    #|      }
+    #|      let dispatch_slot = instrs.length()
+    #|      instrs.push(CaseOf(subject, case_names, open_targets, -1))
+    #|      lines.push(line)
+    #|      let body_starts : Array[Int] = []
+    #|      let end_jumps : Array[Int] = []
+    #|      for arm in arms {
+    #|        body_starts.push(instrs.length())
+    #|        emit_body(instrs, lines, arm.body, line, break_patches)
+    #|        let jump = instrs.length()
+    #|        instrs.push(Jump(-1))
+    #|        lines.push(line)
+    #|        end_jumps.push(jump)
+    #|      }
+    #|      let else_start = instrs.length()
+    #|      emit_body(instrs, lines, else_body, line, break_patches)
+    #|      let end = instrs.length()
+    #|      match instrs[dispatch_slot] {
+    #|        CaseOf(subject2, names, _, _) =>
+    #|          instrs[dispatch_slot] = CaseOf(subject2, names, body_starts, else_start)
+    #|        _ => ()
+    #|      }
     #|      for slot in end_jumps {
     #|        match instrs[slot] {
     #|          Jump(_) => instrs[slot] = Jump(end)
@@ -2045,12 +2222,26 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|      errors.push(LangError(ReservedWord, 0, variable.name, ""))
     #|    }
     #|  }
+    #|  // struct 声明（M5-5c）：名拒绝保留字，字段类型必须在规范词表内
+    #|  for decl in program.structs {
+    #|    if is_reserved(decl.name) {
+    #|      errors.push(LangError(ReservedWord, 0, decl.name, ""))
+    #|    }
+    #|    for field in decl.fields {
+    #|      if is_reserved(field.field_name) {
+    #|        errors.push(LangError(ReservedWord, 0, field.field_name, ""))
+    #|      }
+    #|      if !is_struct_field_type_id(field.field_type) {
+    #|        errors.push(LangError(TypeMismatch, 0, "字段类型", field.field_type))
+    #|      }
+    #|    }
+    #|  }
     #|  for handler in program.handlers {
     #|    let declared : Array[String] = []
     #|    for variable in program.variables {
     #|      declared.push(variable.name)
     #|    }
-    #|    check_body(handler.body, errors, [], declared, program.functions, false)
+    #|    check_body(handler.body, errors, [], declared, program.functions, program.enums, false)
     #|    check_round_trip(handler.body, errors)
     #|  }
     #|  // 函数定义：体在「函数内」语境检查（Return 合法），双语往返同门槛
@@ -2065,7 +2256,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|    for param in func.params {
     #|      declared.push(param)
     #|    }
-    #|    check_body(func.body, errors, [], declared, program.functions, true)
+    #|    check_body(func.body, errors, [], declared, program.functions, program.enums, true)
     #|    check_round_trip(func.body, errors)
     #|  }
     #|  errors
@@ -2078,6 +2269,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|  in_loop : Array[Bool],
     #|  declared : Array[String],
     #|  functions : Array[@ir.FuncDef],
+    #|  enums : Array[@ir.EnumDecl],
     #|  in_func : Bool,
     #|) -> Unit {
     #|  for stmt in body {
@@ -2092,7 +2284,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|        }
     #|      @ir.Declare(name, expr) => {
     #|        check_name(name, errors)
-    #|        check_expr(expr, errors, declared, functions)
+    #|        check_expr(expr, errors, declared, functions, enums)
     #|        if !declared.contains(name) {
     #|          declared.push(name)
     #|        }
@@ -2101,27 +2293,27 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|        if !declared.contains(name) {
     #|          errors.push(LangError(NotDeclared, 0, name, ""))
     #|        }
-    #|        check_expr(expr, errors, declared, functions)
+    #|        check_expr(expr, errors, declared, functions, enums)
     #|      }
     #|      @ir.SetIndex(name, index, value) => {
     #|        if !declared.contains(name) {
     #|          errors.push(LangError(NotDeclared, 0, name, ""))
     #|        }
-    #|        check_expr(index, errors, declared, functions)
-    #|        check_expr(value, errors, declared, functions)
+    #|        check_expr(index, errors, declared, functions, enums)
+    #|        check_expr(value, errors, declared, functions, enums)
     #|      }
-    #|      @ir.Call(name, args) => check_call(name, args, errors, true, declared, functions)
+    #|      @ir.Call(name, args) => check_call(name, args, errors, true, declared, functions, enums)
     #|      @ir.If(cond, then_body, else_ifs, else_body) => {
-    #|        check_expr(cond, errors, declared, functions)
-    #|        check_body(then_body, errors, in_loop, declared, functions, in_func)
+    #|        check_expr(cond, errors, declared, functions, enums)
+    #|        check_body(then_body, errors, in_loop, declared, functions, enums, in_func)
     #|        for arm in else_ifs {
-    #|          check_expr(arm.0, errors, declared, functions)
-    #|          check_body(arm.1, errors, in_loop, declared, functions, in_func)
+    #|          check_expr(arm.0, errors, declared, functions, enums)
+    #|          check_body(arm.1, errors, in_loop, declared, functions, enums, in_func)
     #|        }
-    #|        check_body(else_body, errors, in_loop, declared, functions, in_func)
+    #|        check_body(else_body, errors, in_loop, declared, functions, enums, in_func)
     #|      }
     #|      @ir.CountLoop(times, loop_var, loop_body) => {
-    #|        check_expr(times, errors, declared, functions)
+    #|        check_expr(times, errors, declared, functions, enums)
     #|        match loop_var {
     #|          Some(name) => {
     #|            check_name(name, errors)
@@ -2131,14 +2323,48 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|          }
     #|          None => ()
     #|        }
-    #|        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, in_func)
+    #|        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, enums, in_func)
     #|      }
     #|      @ir.WhileLoop(cond, loop_body) => {
-    #|        check_expr(cond, errors, declared, functions)
-    #|        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, in_func)
+    #|        check_expr(cond, errors, declared, functions, enums)
+    #|        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, enums, in_func)
+    #|      }
+    #|      @ir.Match(subject, arms, else_body) => {
+    #|        check_expr(subject, errors, declared, functions, enums)
+    #|        let seen : Array[String] = []
+    #|        for arm in arms {
+    #|          check_case_name(arm.case_name, enums, seen, errors)
+    #|          check_body(arm.body, errors, in_loop, declared, functions, enums, in_func)
+    #|        }
+    #|        check_body(else_body, errors, in_loop, declared, functions, enums, in_func)
     #|      }
     #|    }
     #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 匹配臂的情况名必须属于某已声明枚举，且臂间不得重复（M5-5d）。
+    #|fn check_case_name(
+    #|  case_name : String,
+    #|  enums : Array[@ir.EnumDecl],
+    #|  seen : Array[String],
+    #|  errors : Array[LangError],
+    #|) -> Unit {
+    #|  let mut known = false
+    #|  for decl in enums {
+    #|    for case in decl.cases {
+    #|      if case == case_name {
+    #|        known = true
+    #|      }
+    #|    }
+    #|  }
+    #|  if !known {
+    #|    errors.push(LangError(UnknownName, 0, case_name, "未知的情况"))
+    #|  }
+    #|  if seen.contains(case_name) {
+    #|    errors.push(LangError(UnknownName, 0, case_name, "重复的情况"))
+    #|  }
+    #|  seen.push(case_name)
     #|}
     #|
     #|///|
@@ -2172,6 +2398,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|  errors : Array[LangError],
     #|  declared : Array[String],
     #|  functions : Array[@ir.FuncDef],
+    #|  enums : Array[@ir.EnumDecl],
     #|) -> Unit {
     #|  match expr {
     #|    @ir.NumLit(_) | @ir.IntLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) => ()
@@ -2179,21 +2406,38 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|      if !declared.contains(name) {
     #|        errors.push(LangError(NotDeclared, 0, name, ""))
     #|      }
-    #|    @ir.Not(inner) | @ir.Neg(inner) => check_expr(inner, errors, declared, functions)
+    #|    @ir.EnumTag(enum_name, case_name) =>
+    #|      // 枚举值字面量：枚举与情况都必须已声明（M5-5d）
+    #|      {
+    #|        let mut known = false
+    #|        for decl in enums {
+    #|          if decl.name == enum_name {
+    #|            if !decl.cases.contains(case_name) {
+    #|              errors.push(LangError(UnknownName, 0, case_name, "不在枚举内"))
+    #|            }
+    #|            known = true
+    #|          }
+    #|        }
+    #|        if !known {
+    #|          errors.push(LangError(UnknownName, 0, enum_name, "未知枚举"))
+    #|        }
+    #|      }
+    #|    @ir.FieldAccess(base, _) => check_expr(base, errors, declared, functions, enums)
+    #|    @ir.Not(inner) | @ir.Neg(inner) => check_expr(inner, errors, declared, functions, enums)
     #|    @ir.Binary(_, left, right) => {
-    #|      check_expr(left, errors, declared, functions)
-    #|      check_expr(right, errors, declared, functions)
+    #|      check_expr(left, errors, declared, functions, enums)
+    #|      check_expr(right, errors, declared, functions, enums)
     #|    }
     #|    @ir.ListLit(items) =>
     #|      for item in items {
-    #|        check_expr(item, errors, declared, functions)
+    #|        check_expr(item, errors, declared, functions, enums)
     #|      }
     #|    @ir.Index(base, index) => {
-    #|      check_expr(base, errors, declared, functions)
-    #|      check_expr(index, errors, declared, functions)
+    #|      check_expr(base, errors, declared, functions, enums)
+    #|      check_expr(index, errors, declared, functions, enums)
     #|    }
     #|    @ir.Call(name, args) =>
-    #|      check_call(name, args, errors, false, declared, functions)
+    #|      check_call(name, args, errors, false, declared, functions, enums)
     #|  }
     #|}
     #|
@@ -2206,6 +2450,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|  statement : Bool,
     #|  declared : Array[String],
     #|  functions : Array[@ir.FuncDef],
+    #|  enums : Array[@ir.EnumDecl],
     #|) -> Unit {
     #|  match find_builtin(name) {
     #|    None => {
@@ -2239,7 +2484,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|            )
     #|          }
     #|          for arg in args {
-    #|            check_expr(arg, errors, declared, functions)
+    #|            check_expr(arg, errors, declared, functions, enums)
     #|          }
     #|        }
     #|      }
@@ -2260,7 +2505,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|      while index < args.length() {
     #|        let arg = args[index]
     #|        if !is_control_name_arg(spec.id, index, arg) {
-    #|          check_expr(arg, errors, declared, functions)
+    #|          check_expr(arg, errors, declared, functions, enums)
     #|        }
     #|        index = index + 1
     #|      }

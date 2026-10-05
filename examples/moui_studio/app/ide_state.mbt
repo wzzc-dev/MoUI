@@ -481,7 +481,11 @@ fn highlight_line_ranged(
   let flush = fn(buf : StringBuilder, kind : CodeTokenKind) {
     let value = buf.to_string()
     if value != "" {
-      tokens.push(RangedToken::{ start: line_start + consumed, text: value, kind, })
+      tokens.push(RangedToken::{
+        start: line_start + consumed,
+        text: value,
+        kind,
+      })
       consumed = consumed + value.length()
     }
     buf.reset()
@@ -751,7 +755,10 @@ pub fn block_category(kind : @blocks.BlockKind) -> @blocks.BlockCategory {
       @blocks.CatFlow
     @blocks.BkCountLoop | @blocks.BkWhile => @blocks.CatFlow
     @blocks.BkBreak => @blocks.CatFlow
+    @blocks.BkMatch | @blocks.BkCase => @blocks.CatFlow
     @blocks.BkCall => @blocks.CatCommand
+    // 声明块：数据类型定义归变量/数据族
+    @blocks.BkEnumDecl | @blocks.BkStructDecl => @blocks.CatVariable
   }
 }
 
@@ -821,6 +828,8 @@ fn value_type_label(value : @studio_lang.Value) -> String {
     @studio_lang.VNum(_) | @studio_lang.VInt(_) => "number"
     @studio_lang.VArr(_) => "list"
     @studio_lang.VBool(_) => "bool"
+    @studio_lang.VStruct(_) => "struct"
+    @studio_lang.VEnum(_, _) => "enum"
     @studio_lang.VUnit => "unit"
   }
 }
@@ -832,6 +841,8 @@ fn compiled_value_type_label(value : @compiled_runtime.Value) -> String {
     @compiled_runtime.VNum(_) | @compiled_runtime.VInt(_) => "number"
     @compiled_runtime.VArr(_) => "list"
     @compiled_runtime.VBool(_) => "bool"
+    @compiled_runtime.VStruct(_) => "struct"
+    @compiled_runtime.VEnum(_, _) => "enum"
     @compiled_runtime.VUnit => "unit"
   }
 }

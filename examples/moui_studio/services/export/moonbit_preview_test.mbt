@@ -47,6 +47,8 @@ fn preview_fixture() -> @ir.StudioProgram {
       },
     ],
     functions: [],
+    structs: [],
+    enums: [],
   }
 }
 

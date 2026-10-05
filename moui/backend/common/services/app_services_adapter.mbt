@@ -392,6 +392,19 @@ fn HostServicesAdapter::app_file_services(
         },
       )
     },
+    delete_file=path => {
+      self.service_task(
+        key="file:delete:" + path,
+        label="Delete file",
+        request=DeleteFile(path),
+        decode=response => {
+          match response {
+            FileDeleted(_path) => Success(())
+            other => host_failure(other)
+          }
+        },
+      )
+    },
   )
 }
 

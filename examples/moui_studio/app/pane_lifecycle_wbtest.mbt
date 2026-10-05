@@ -116,16 +116,21 @@ test "AI input lives only inside its host panel" {
   // 更简单也更贴近要钉的性质。
   let bar = apply_shell(model, SetAiAnchor(AiBar))
   let bar_commands = shell_draw(bar, 1280.0, 800.0)
-  guard shell_find_text(bar_commands, "描述你想要的应用") is Some(bar_run) else {
+  guard shell_find_text(bar_commands, "描述你想要的应用")
+    is Some(bar_run) else {
     fail("bar AI composer missing")
   }
   // 底栏档：底栏在中心列的下方（顶边 = 顶栏 + 1 + 工作区段高）。
-  let bar_top = TOPBAR_HEIGHT + 1.0 + (800.0 -
-    TOPBAR_HEIGHT -
-    STATUSBAR_HEIGHT -
-    PANEL_HEAD_HEIGHT -
-    2.0 -
-    ai_bar_height(bar, widths.center, 800.0))
+  let bar_top = TOPBAR_HEIGHT +
+    1.0 +
+    (
+      800.0 -
+      TOPBAR_HEIGHT -
+      STATUSBAR_HEIGHT -
+      PANEL_HEAD_HEIGHT -
+      2.0 -
+      ai_bar_height(bar, widths.center, 800.0)
+    )
   if bar_run.frame.origin.y < bar_top - 0.5 {
     fail(
       "bar AI composer sits above the bottom bar: y=" +
@@ -137,7 +142,8 @@ test "AI input lives only inside its host panel" {
   // 停靠档：输入条在右栏（中心列右缘之右）
   let docked = apply_shell(model, SetAiAnchor(AiDocked))
   let docked_commands = shell_draw(docked, 1280.0, 800.0)
-  guard shell_find_text(docked_commands, "描述你想要的应用") is Some(docked_run) else {
+  guard shell_find_text(docked_commands, "描述你想要的应用")
+    is Some(docked_run) else {
     fail("docked AI composer missing")
   }
   if docked_run.frame.origin.x < center_right - 1.0 {
@@ -313,7 +319,12 @@ test "pane head text stays inside its own pane" {
 /// 也在中心列右侧：按 x 过滤会把右栏自己的页签误判成溢出（第一版就这么
 /// 误报过）。
 test "text never escapes its own clip region" {
-  let base = initial_model()
+  // 代码内容用 DSL 外观验证（M5-5e）：默认的 MoonBit 外观是只读代码
+  // 显示，长代码行的 token run 由编辑器的 PushClip 在渲染期横向裁剪
+  //（代码编辑器的横溢出是行业常态——终端/VS Code 同款），但本测试的
+  // 流级卫生契约针对的是「面板镶边不走裁剪」这类缺陷，故取换行/短行
+  // 的 DSL 显示作为面板几何的基准样本。
+  let base = apply_shell(initial_model(), CycleCodeAppearance)
   let code = apply_shell(base, SetWorkSpace(WsCode))
   let empty = apply_shell(code, SetWorkSpace(WsEmpty))
   let cases : Array[(String, Model)] = [

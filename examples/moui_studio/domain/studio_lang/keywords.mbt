@@ -47,6 +47,10 @@ pub(all) struct Keywords {
   or_kw : String // 或 / or
   not_kw : String // 非 / not
   return_kw : String // 返回 / return
+  struct_kw : String // 结构 / struct
+  match_kw : String // 匹配 / match
+  case_kw : String // 情况 / case
+  enum_kw : String // 枚举 / enum
 }
 
 ///|
@@ -72,6 +76,10 @@ pub fn keywords_for(language : Language) -> Keywords {
         or_kw: "或",
         not_kw: "非",
         return_kw: "返回",
+        struct_kw: "结构",
+        match_kw: "匹配",
+        case_kw: "情况",
+        enum_kw: "枚举",
       }
     En =>
       Keywords::{
@@ -93,6 +101,10 @@ pub fn keywords_for(language : Language) -> Keywords {
         or_kw: "or",
         not_kw: "not",
         return_kw: "return",
+        struct_kw: "struct",
+        match_kw: "match",
+        case_kw: "case",
+        enum_kw: "enum",
       }
   }
 }
@@ -359,6 +371,10 @@ pub fn is_reserved(text : String) -> Bool {
   text == zh.or_kw ||
   text == zh.not_kw ||
   text == zh.return_kw ||
+  text == zh.struct_kw ||
+  text == zh.match_kw ||
+  text == zh.case_kw ||
+  text == zh.enum_kw ||
   text == en.declare_kw ||
   text == en.if_kw ||
   text == en.then_kw ||
@@ -376,7 +392,11 @@ pub fn is_reserved(text : String) -> Bool {
   text == en.and_kw ||
   text == en.or_kw ||
   text == en.not_kw ||
-  text == en.return_kw
+  text == en.return_kw ||
+  text == en.struct_kw ||
+  text == en.match_kw ||
+  text == en.case_kw ||
+  text == en.enum_kw
 }
 
 ///|
@@ -388,6 +408,7 @@ pub(all) enum StmtKeyword {
   KwWhile
   KwBreak
   KwReturn
+  KwMatch
   NoneKw
 }
 
@@ -405,7 +426,48 @@ pub fn classify_stmt_keyword(text : String, keywords : Keywords) -> StmtKeyword 
     KwBreak
   } else if text == keywords.return_kw {
     KwReturn
+  } else if text == keywords.match_kw {
+    KwMatch
   } else {
     NoneKw
   }
+}
+
+///|
+/// 结构字段类型词表(M5-5c 前端②):IR 存规范 id(英文),
+/// 界面/渲染按当前语言显示——与内建目录同一「IR 规范 id」原则。
+/// 双语词并集都可识别(语言无关词法,解析器按表分派)。
+pub fn struct_field_type_id(text : String) -> String? {
+  match text {
+    "文本" | "text" => Some("text")
+    "数字" | "number" => Some("number")
+    "整数" | "int" => Some("int")
+    "真假" | "bool" => Some("bool")
+    _ => None
+  }
+}
+
+///|
+/// 规范类型 id → 当前语言显示名。
+pub fn struct_field_type_display(id : String, language : Language) -> String {
+  let zh = match id {
+    "text" => "文本"
+    "number" => "数字"
+    "int" => "整数"
+    "bool" => "真假"
+    _ => id
+  }
+  match language {
+    ZhHans => zh
+    En => id
+  }
+}
+
+///|
+/// 规范类型 id 判定（codec/语义层共用）：id 必须已在词表内。
+pub fn is_struct_field_type_id(id : String) -> Bool {
+  id == "text" ||
+  id == "number" ||
+  id == "int" ||
+  id == "bool"
 }

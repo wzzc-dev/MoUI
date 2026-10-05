@@ -118,6 +118,8 @@ pub fn apply_proposal(
     variables,
     handlers,
     functions: program.functions,
+    structs: program.structs,
+    enums: program.enums,
   }
   // 先删后改再增：remove → update → add
   for name in proposal.controls_remove {

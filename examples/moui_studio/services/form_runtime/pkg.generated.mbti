@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/form_runtime"
+
+import {
+  "examples/moui_studio/services/compiled_runtime",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct FormRuntime {
+  inner : @compiled_runtime.Runtime
+}
+pub fn FormRuntime::audit_assign(Self, String, @compiled_runtime.Value, Int, String) -> Unit
+pub fn FormRuntime::from(@compiled_runtime.Runtime) -> Self
+pub fn FormRuntime::get(Self, String) -> @compiled_runtime.Value
+pub fn FormRuntime::inner(Self) -> @compiled_runtime.Runtime
+pub fn FormRuntime::message_box(Self, String) -> Unit
+pub fn FormRuntime::set(Self, String, @compiled_runtime.Value) -> Unit
+pub fn FormRuntime::set_text(Self, String, String) -> Unit
+
+// Type aliases
+
+// Traits

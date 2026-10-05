@@ -118,11 +118,7 @@ fn blocks_panel(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       // 有文本的语句 = 分类标签 + 语句文本；控制流块 = 分类标签。
       // 引导文本决定插槽洞的起点，必须与展示一起给画布。
       let (display_texts, lead_texts) = block_row_texts(t, blocks)
-      let rects = blocks_item_rects(
-        blocks,
-        avail_width=420.0,
-        display_texts~,
-      )
+      let rects = blocks_item_rects(blocks, avail_width=420.0, display_texts~)
       let canvas_height = rects.length().to_double() * 40.0 + 24.0
       let blocks_view = blocks_canvas(
         blocks,
@@ -412,9 +408,7 @@ fn form_widget(
         Some(change) =>
           @views.text_field(
             value,
-            on_input=new_value => {
-              change(control.name, new_value)
-            },
+            on_input=new_value => change(control.name, new_value),
             on_submit=on_input_done.map(done => done(control.name)),
           )
         None => @views.text_field(value, on_input=_new_value => Msg::Noop)
@@ -450,7 +444,10 @@ fn form_widget(
     }
     // 进度条：items[0] 是绑定的变量名（0..100），比例由调用方算好传入
     @ir.ProgressBar =>
-      @views.progress(progress_value.clamp(min=0.0, max=1.0), width=control.width.to_double())
+      @views.progress(
+        progress_value.clamp(min=0.0, max=1.0),
+        width=control.width.to_double(),
+      )
     // 图片：items[0] 是资源路径（缺省占位）
     @ir.Image =>
       @views.image(

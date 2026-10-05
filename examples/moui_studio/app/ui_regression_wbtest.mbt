@@ -44,7 +44,8 @@ test "design stage widgets render with the product (light) theme" {
   let width = 1280.0
   let commands = shell_draw(model, width, 800.0)
   let column_left = ICONBAR_WIDTH + 1.0 + LEFTBAR_WIDTH + 1.0
-  let right_edge = column_left + shell_chrome_widths(model, width - ICONBAR_WIDTH).center
+  let right_edge = column_left +
+    shell_chrome_widths(model, width - ICONBAR_WIDTH).center
   let stage_top = TOPBAR_HEIGHT + ICONBAR_WIDTH
   let mut dark_texts = 0
   for run in shell_texts(commands) {

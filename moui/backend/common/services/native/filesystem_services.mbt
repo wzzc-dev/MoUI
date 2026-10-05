@@ -61,3 +61,17 @@ pub fn dispatch_list_directory(path : String) -> @host.HostServiceResponse {
   }
   DirectoryListing(path, entries)
 }
+
+///|
+/// 删除文件(资源管理器 M0-6b)。`@fs.remove_file` 对目录会失败——目录
+/// 删除不在本协议内(工程树删除按文件粒度,逐个确认)。
+pub fn dispatch_delete_file(path : String) -> @host.HostServiceResponse {
+  if @fs.path_exists(path) {
+    @fs.remove_file(path) catch {
+      _ => return Unavailable("file delete failed")
+    }
+    FileDeleted(path)
+  } else {
+    Unavailable("file does not exist")
+  }
+}

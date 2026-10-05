@@ -91,7 +91,7 @@ pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_sele
 
 pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, border? : @core.BorderStyle?, variant? : @style.ContainerVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
 
-pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
+pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, anchor? : @core.Point?, dismiss? : Msg?, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
 
@@ -217,6 +217,8 @@ pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.The
 
 pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
 
+pub fn[Msg] measured_canvas(measure~ : (@core.Constraints, @core.TextSystem) -> @core.Size, draw~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_label? : String) -> @core.View[Msg]
+
 pub fn[Msg] menu_bar(Array[@controls.MenuItem[Msg]], active? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -252,6 +254,8 @@ pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool
 pub fn[Msg] picker(Array[@style.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, max_height? : Double) -> @core.View[Msg]
 
 pub fn picker_item(String, String) -> @style.PickerItem
+
+pub fn[Msg] place(@core.View[Msg], x~ : Double, y~ : Double, width~ : Double, height~ : Double) -> Placed[Msg]
 
 pub fn pop_clip(@common.PaintContext) -> Unit
 
@@ -347,6 +351,8 @@ pub fn[Msg] split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], pr
 
 pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
+pub fn[Msg] stage(width~ : Double, height~ : Double, Array[Placed[Msg]]) -> @core.View[Msg]
+
 pub fn[Msg] stat_card(String, String, caption? : String, tone? : @style.FeedbackTone, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] status_badge(String, tone? : @style.BadgeTone, detail? : String, theme? : @core.Theme, style? : @style.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
@@ -408,6 +414,13 @@ pub fn[Msg] wizard_step(@controls.WizardStep[Msg]) -> @core.View[Msg]
 // Errors
 
 // Types and methods
+pub(all) struct Placed[Msg] {
+  view : @core.View[Msg]
+  x : Double
+  y : Double
+  width : Double
+  height : Double
+}
 
 // Type aliases
 pub using @core {type ActionCommand}

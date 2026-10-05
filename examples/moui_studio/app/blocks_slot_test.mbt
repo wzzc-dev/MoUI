@@ -13,9 +13,7 @@ test "slot hit test resolves the expression under the pointer" {
   let blocks = @blocks.block_chain(body)
   let rects = @app.blocks_item_rects(blocks, avail_width=470.0)
   // 每字符 7pt 的确定性度量
-  let measure = fn(text : String) -> Double {
-    text.length().to_double() * 7.0
-  }
+  let measure = fn(text : String) -> Double { text.length().to_double() * 7.0 }
   let rect = rects[0]
   let row_y = rect.origin.y + 12.0
   // 洞在 `x = `（4 字符 = 28pt）之后，标签起点 = rect.x + 10
@@ -30,9 +28,7 @@ test "slot hit test resolves the expression under the pointer" {
   assert_true(@blocks.expr_at(body, [0], resolved.expr_path) is Some(_))
   // 命中矩形与绘制矩形同一份：x 落在矩形内
   assert_true(hole_x >= resolved.rect.origin.x)
-  assert_true(
-    hole_x <= resolved.rect.origin.x + resolved.rect.size.width,
-  )
+  assert_true(hole_x <= resolved.rect.origin.x + resolved.rect.size.width)
 }
 
 ///|
@@ -46,9 +42,7 @@ test "slot hit test ignores literal text" {
   ]
   let blocks = @blocks.block_chain(body)
   let rects = @app.blocks_item_rects(blocks, avail_width=470.0)
-  let measure = fn(text : String) -> Double {
-    text.length().to_double() * 7.0
-  }
+  let measure = fn(text : String) -> Double { text.length().to_double() * 7.0 }
   let rect = rects[0]
   let row_y = rect.origin.y + 12.0
   // `x` 的位置（标签起点 + 2pt）
@@ -69,19 +63,14 @@ test "slot hit test ignores literal text" {
 /// 会表现为「点第二个洞选中了第一个」。
 test "each call argument is independently hittable" {
   let body = [
-    @ir.Stmt::Call(
-      "set_text",
-      [
-        @ir.Expr::Call("to_text", [@ir.Var("a")]),
-        @ir.Expr::Call("to_text", [@ir.Var("b")]),
-      ],
-    ),
+    @ir.Stmt::Call("set_text", [
+      @ir.Expr::Call("to_text", [@ir.Var("a")]),
+      @ir.Expr::Call("to_text", [@ir.Var("b")]),
+    ]),
   ]
   let blocks = @blocks.block_chain(body)
   let rects = @app.blocks_item_rects(blocks, avail_width=470.0)
-  let measure = fn(text : String) -> Double {
-    text.length().to_double() * 7.0
-  }
+  let measure = fn(text : String) -> Double { text.length().to_double() * 7.0 }
   let rect = rects[0]
   let row_y = rect.origin.y + 12.0
   // 从两个洞各自命中一次，路径必须不同
@@ -129,7 +118,7 @@ test "dropping a reporter into a slot replaces that subexpression" {
   // 表达式模板 0 = 加法 `1 + 1`
   let before = @app.block_chain_of(picked)[picked.selected_block].text
   let dropped = apply(
-    { ..picked, expr_drag: Some(0) },
+    { ..picked, expr_drag: Some(0), },
     ExpressionDrop(picked.selected_block, []),
   )
   // 拖动源已清
@@ -147,7 +136,7 @@ test "dropping a reporter into a slot replaces that subexpression" {
 test "dropping a reporter outside a slot is reported and changes nothing" {
   let model = apply(@app.initial_model(), SelectTemplate(2))
   let before = @app.block_chain_of(model).map(item => item.text)
-  let dropped = apply({ ..model, expr_drag: Some(0) }, ExpressionDrop(-1, []))
+  let dropped = apply({ ..model, expr_drag: Some(0), }, ExpressionDrop(-1, []))
   assert_true(dropped.notice != "")
   assert_false(dropped.expr_drag is Some(_))
   let after = @app.block_chain_of(dropped).map(item => item.text)
@@ -202,12 +191,16 @@ test "editing a value changes only that leaf" {
   let opened = apply(picked, EditBlockValue(index, []))
   let handler = @app.current_handler(picked).unwrap()
   let is_leaf = @blocks.expr_leaf_text(
-    @blocks.expr_at(handler.body, blocks[index].path, []).unwrap(),
-  ) is Some(_)
+      @blocks.expr_at(handler.body, blocks[index].path, []).unwrap(),
+    )
+    is Some(_)
   assert_eq(opened.block_value_edit is Some(_), is_leaf)
   if opened.block_value_edit is Some(_) {
     // 输入新值并提交
-    let committed = apply(apply(opened, BlockValueInput("42")), BlockValueCommit)
+    let committed = apply(
+      apply(opened, BlockValueInput("42")),
+      BlockValueCommit,
+    )
     assert_false(committed.block_value_edit is Some(_))
     let after = @app.block_chain_of(committed)[index].text
     assert_true(after != before)
@@ -225,7 +218,7 @@ test "value editing refuses non-leaf positions" {
   let index = picked.selected_block
   // 越界路径
   assert_false(
-    (apply(picked, EditBlockValue(index, [7]))).block_value_edit is Some(_),
+    apply(picked, EditBlockValue(index, [7])).block_value_edit is Some(_),
   )
   // 指向一个**洞**（调用语句的第 0 个实参若是调用，则它是洞）
   let chain = @app.block_chain_of(picked)
@@ -236,7 +229,7 @@ test "value editing refuses non-leaf positions" {
         match segment.expr_path {
           Some(path) =>
             assert_false(
-              (apply(picked, EditBlockValue(index, path))).block_value_edit
+              apply(picked, EditBlockValue(index, path)).block_value_edit
               is Some(_),
             )
           None => ()
@@ -295,7 +288,10 @@ test "every command builtin is reachable from the palette" {
             _ => ()
           }
         }
-      Err(_) => fail("a palette skeleton must be parseable: \{template.skeleton(@studio_lang.ZhHans)}")
+      Err(_) =>
+        fail(
+          "a palette skeleton must be parseable: \{template.skeleton(@studio_lang.ZhHans)}",
+        )
     }
   }
   // 目录里所有**可插入语句**的类都必须可达：`Command`（普通命令）与
@@ -543,7 +539,10 @@ test "a custom block body is editable on the blocks canvas" {
   // 「用了未声明的变量」——那是**测试数据**的问题，不是函数体编辑的问题。
   let with_stmt = apply(
     added,
-    InsertStatement(1, @app.template_index_of(1, "app.stmt.tpl.declare").unwrap()),
+    InsertStatement(
+      1,
+      @app.template_index_of(1, "app.stmt.tpl.declare").unwrap(),
+    ),
   )
   let after = @app.block_chain_of(with_stmt)
   assert_true(after.length() > chain.length())
@@ -551,7 +550,10 @@ test "a custom block body is editable on the blocks canvas" {
   let func = @app.selected_function(with_stmt).unwrap()
   assert_true(func.body.length() > 1)
   // 语义检查仍通过（函数体里允许 return）
-  assert_eq(@studio_lang.validate_program_language(with_stmt.program).length(), 0)
+  assert_eq(
+    @studio_lang.validate_program_language(with_stmt.program).length(),
+    0,
+  )
 }
 
 ///|
@@ -562,7 +564,10 @@ test "deleting a statement inside a custom block writes back to the function" {
   // 先插一条**变量声明**（不引用模板里的名字），得到 ≥2 条语句
   let with_stmt = apply(
     added,
-    InsertStatement(1, @app.template_index_of(1, "app.stmt.tpl.declare").unwrap()),
+    InsertStatement(
+      1,
+      @app.template_index_of(1, "app.stmt.tpl.declare").unwrap(),
+    ),
   )
   let before = @app.block_chain_of(with_stmt).length()
   // 选中第一条可编辑语句并删除
@@ -610,7 +615,10 @@ test "a custom block can be called from an event handler" {
   let typed = apply(on_block, EditBlock("\{func_name}()"))
   let committed = apply(typed, CommitBlock)
   // 语义检查通过：调用被认成用户函数，不是未知名字
-  assert_eq(@studio_lang.validate_program_language(committed.program).length(), 0)
+  assert_eq(
+    @studio_lang.validate_program_language(committed.program).length(),
+    0,
+  )
   // 调用点真的写进了子程序体
   let handler = @app.current_handler(committed).unwrap()
   let mut found_call = false
@@ -797,11 +805,12 @@ test "the if-else skeleton produces a real else branch" {
   // 把示例名改成自己的名字后成立。
   assert_true(
     @studio_lang.parse_handler_body(
-      @app.templates_for_category(@blocks.CatFlow)[
-        @app.template_index_of(2, "app.stmt.tpl.if_else").unwrap()
-      ].skeleton(@studio_lang.ZhHans),
+      @app.templates_for_category(@blocks.CatFlow)[@app.template_index_of(
+        2, "app.stmt.tpl.if_else",
+      ).unwrap()].skeleton(@studio_lang.ZhHans),
       @studio_lang.ZhHans,
-    ) is Ok(_),
+    )
+    is Ok(_),
   )
 }
 
@@ -827,7 +836,10 @@ test "repeat-until negates its condition" {
       @ir.WhileLoop(cond, _) => {
         found_while = true
         // 条件必须是**取反**（`Not`），否则语义写反了
-        assert_true(cond is @ir.Not(_), msg="repeat-until must negate its condition")
+        assert_true(
+          cond is @ir.Not(_),
+          msg="repeat-until must negate its condition",
+        )
       }
       _ => ()
     }
@@ -847,7 +859,8 @@ test "forever terminates at the step budget instead of hanging" {
   let skeleton = @app.templates_for_category(@blocks.CatFlow)[index].skeleton(
     @studio_lang.ZhHans,
   )
-  let stmts = match @studio_lang.parse_handler_body(skeleton, @studio_lang.ZhHans) {
+  let stmts = match
+    @studio_lang.parse_handler_body(skeleton, @studio_lang.ZhHans) {
     Ok(stmts) => stmts
     Err(_) => fail("forever skeleton must parse: \{skeleton}")
   }
@@ -917,10 +930,7 @@ test "every tree group has a catalog entry" {
     let key = @app.tree_group_label_key(group)
     let label = @app.text(translator, key)
     // 词条缺失时翻译器回显 `[[键名]]`——这正是要抓的症状
-    assert_false(
-      label.contains("[["),
-      msg="missing catalog entry for \{key}",
-    )
+    assert_false(label.contains("[["), msg="missing catalog entry for \{key}")
     assert_true(label != "", msg="empty label for \{key}")
   }
 }
@@ -933,10 +943,7 @@ test "every tree group has a catalog entry" {
 /// **中文侧含汉字**——只查键存在的话，装反了照样全绿。
 test "bottom tab labels are translated in both languages" {
   let keys = [
-    "app.bottom.ai",
-    "app.bottom.audit",
-    "app.bottom.console",
-    "app.bottom.problems",
+    "app.bottom.ai", "app.bottom.audit", "app.bottom.console", "app.bottom.problems",
   ]
   let zh = @app.translator_for(ZhHans)
   for key in keys {
@@ -953,6 +960,9 @@ test "bottom tab labels are translated in both languages" {
         has_cjk = true
       }
     }
-    assert_true(has_cjk, msg="zh entry for \{key} should contain Chinese: \{label}")
+    assert_true(
+      has_cjk,
+      msg="zh entry for \{key} should contain Chinese: \{label}",
+    )
   }
 }

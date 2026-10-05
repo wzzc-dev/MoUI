@@ -49,6 +49,8 @@ pub fn sample_hello() -> @ir.StudioProgram {
       },
     ],
     functions: [],
+    structs: [],
+    enums: [],
   }
 }
 
@@ -114,6 +116,8 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
       },
     ],
     functions: [],
+    structs: [],
+    enums: [],
   }
 }
 
@@ -244,6 +248,8 @@ pub fn sample_drill() -> @ir.StudioProgram {
       },
     ],
     functions: [],
+    structs: [],
+    enums: [],
   }
 }
 
@@ -339,6 +345,8 @@ pub fn sample_store() -> @ir.StudioProgram {
       },
     ],
     functions: [],
+    structs: [],
+    enums: [],
   }
 }
 

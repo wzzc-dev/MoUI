@@ -201,7 +201,18 @@ fn count_stmt(stmt : Stmt) -> Int {
       count_stmts(else_body) +
       count_if_chain(else_ifs)
     CountLoop(_, _, body) | WhileLoop(_, body) => 1 + count_stmts(body)
+    Match(_, arms, else_body) =>
+      1 + count_stmts(else_body) + count_match_arms(arms)
   }
+}
+
+///|
+fn count_match_arms(arms : Array[MatchArm]) -> Int {
+  let mut total = 0
+  for arm in arms {
+    total = total + count_stmts(arm.body)
+  }
+  total
 }
 
 ///|
@@ -248,6 +259,16 @@ fn body_loop_depth(body : Array[Stmt], current : Int) -> Int {
       }
       CountLoop(_, _, loop_body) | WhileLoop(_, loop_body) =>
         body_loop_depth(loop_body, current + 1)
+      Match(_, arms, else_body) => {
+        let mut deepest_arm = body_loop_depth(else_body, current)
+        for arm in arms {
+          let inner = body_loop_depth(arm.body, current)
+          if inner > deepest_arm {
+            deepest_arm = inner
+          }
+        }
+        deepest_arm
+      }
     }
     if depth > deepest {
       deepest = depth
@@ -267,6 +288,8 @@ pub fn expr_depth(expr : Expr) -> Int {
       let i = expr_depth(index)
       (if b > i { b } else { i }) + 1
     }
+    FieldAccess(base, _) => 1 + expr_depth(base)
+    EnumTag(_, _) => 1
     ListLit(items) => {
       let mut deepest = 0
       for item in items {
@@ -375,6 +398,20 @@ fn stmt_expr_depth(stmt : Stmt) -> Int {
       } else {
         body_depth
       }
+    }
+    Match(subject, arms, else_body) => {
+      let mut deepest = expr_depth(subject)
+      let else_depth = body_expr_depth(else_body)
+      if else_depth > deepest {
+        deepest = else_depth
+      }
+      for arm in arms {
+        let arm_body = body_expr_depth(arm.body)
+        if arm_body > deepest {
+          deepest = arm_body
+        }
+      }
+      deepest
     }
   }
 }

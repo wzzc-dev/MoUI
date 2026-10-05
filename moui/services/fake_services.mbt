@@ -84,6 +84,11 @@ pub fn FakeAppServices::new() -> FakeAppServices {
       calls_value.push("file:list-directory:" + path)
       ServiceTask::succeed(key="fake:file:list-directory:" + path, value=[])
     },
+    delete_file=path => {
+      calls_value.push("file:delete:" + path)
+      let _ = text_files.remove(path)
+      ServiceTask::succeed(key="fake:file:delete:" + path, value=())
+    },
   )
   let clipboard = ClipboardServices::new(
     read_text=() => {

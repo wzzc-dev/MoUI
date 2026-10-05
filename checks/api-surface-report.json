@@ -60,14 +60,14 @@
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 677,
-      "public_declarations": 326,
-      "pub_all_declarations": 0
+      "lines": 691,
+      "public_declarations": 329,
+      "pub_all_declarations": 67
     },
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 651,
+      "lines": 654,
       "public_declarations": 268,
       "pub_all_declarations": 44
     },

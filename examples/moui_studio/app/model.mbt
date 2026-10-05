@@ -60,6 +60,9 @@ pub(all) struct CompiledRun {
 pub(all) struct PendingProposal {
   proposal : @proposals.ProposalV1
   diff : Array[@proposals.DiffEntry]
+  /// 代码真源文本 diff（M6②）：handlers.mbt/form.mbt 前后逐行 ±，
+  /// 显示层展示的是代码 diff 而非结构化条目。
+  code_diff : Array[(String, String)]
   summary : String
   errors : Array[String]
   valid : Bool
@@ -121,6 +124,8 @@ pub(all) struct UndoEntry {
 pub(all) struct ProposalRecord {
   summary : String
   diff : Array[@proposals.DiffEntry]
+  /// 采纳时的代码真源文本 diff（M6②：历史回放看代码改了哪几行）。
+  code_diff : Array[(String, String)]
   accepted : Bool
   seq : Int
 }
@@ -170,14 +175,24 @@ pub(all) enum DragKind {
 pub(all) enum WorkSpace {
   WsVisual
   WsCode
+  /// 工程预览(M1):headless 帧重放画布(M2/M3 加 web/native 模式)
+  WsPreview
   WsEmpty
 }
 
 ///|
-/// 左栏视图：程序结构树 / 本地数据 / 收起。
+/// 预览模式(M2-2):画布快览(模式一)/ web 实时(模式二,webview)。
+pub(all) enum PreviewMode {
+  PmFrame
+  PmWeb
+}
+
+///|
+/// 左栏视图：程序结构树 / 本地数据 / 工程资源管理器 / 收起。
 pub(all) enum LeftView {
   LeftTree
   LeftData
+  LeftProject
   LeftHidden
 }
 
@@ -444,9 +459,26 @@ pub(all) struct StudioCommand {
 }
 
 ///|
+/// 代码视图外观（M5-5e）：中英 DSL 降级为显示外观，MoonBit 是默认显示——
+/// IR 仍是唯一事实来源，两种外观都是 IR 的可再推导投影。
+pub(all) enum CodeAppearance {
+  AppMoonBit // MoonBit 子集源码（codegen 产物形状，代码真源的显示）
+  AppDsl // 中英 DSL（教学显示外观；沿用 parse_handler_body 编辑提交）
+}
+
+///|
 pub(all) struct Model {
   program : @ir.StudioProgram
   language : UiLanguage
+  code_appearance : CodeAppearance
+  /// 代码工程骨架待落盘（M6①）：SelectTemplate 置位，组合根清位并写
+  /// form.mbt/handlers.mbt（确认续行在纯链内完成模板切换，也要落盘）。
+  pending_code_project : Bool
+  /// 迁移写盘目录覆盖（M6③）：打开 .studio.json 时 = 旧文件所在目录；
+  /// None = 用打开工程的首个程序包。组合根消费后清位。
+  pending_open_dir : String?
+  /// 预览模式一的画布/布局二分（M4 收尾）：true = 布局设计器画布。
+  preview_design_open : Bool
   mode : Mode
   // 设计画布缩放：0 = 适应窗口（画布等比铺满画布列，默认行为）；
   // >0 = 固定比例（画布逻辑尺寸 640×zoom，超出视口由滚动接管）。
@@ -587,6 +619,35 @@ pub(all) struct Model {
   tree_query : String
   // 结构树展开的分组集合（g 值文本；设计稿只在会话内记忆）
   tree_collapsed : Array[String]
+  // === 工程工作台（M0）：导入的 MoonBit 工程（会话内，不持久化）===
+  // 最近导入的在前；active_project 是资源管理器当前高亮的下标（-1 = 无）。
+  // Studio 自身的 .studio.json 程序仍是主编辑上下文，真源切换在 M6。
+  projects : Array[ProjectRecord]
+  active_project : Int
+  // 资源管理器:折叠的包(相对路径)与选中的文件(相对路径)
+  project_tree_collapsed : Array[String]
+  selected_project_file : String?
+  // 构建服务(M0-7):最近一次构建报告(诊断汇进 Problems)、进行中标记、
+  // 待执行请求(程序包装层看到 busy 上升即派发注入的 build_submit)
+  last_build : @build.BuildReport?
+  build_busy : Bool
+  pending_build : ProjectBuildRequest?
+  // 预览 harness 落盘(M1):导入成功后逐文件写 .studio/preview(Export
+  // 三段式同款——队列在 Model,回执推进游标),写完置 None
+  preview_write : PreviewWriteState?
+  // 预览帧(M1-2):FramePreview 构建回执解析出的可重放帧
+  preview_frame : PreviewFrame?
+  // 语义点选(M1-3):选中的语义节点下标(帧快照内稳定)+ label 编辑草稿
+  selected_semantic : Int?
+  semantic_draft : String
+  // 表单设计器会话(M4-2):form.mbt 加载/编辑/保存
+  form_designer : FormDesignerSession?
+  selected_form_control : Int?
+  // 预览模式条(M2-2):画布快览 / web 实时(webview)
+  preview_mode : PreviewMode
+  preview_web_url : String?
+  preview_web_opened : Bool
+  build_seq : Int
   // 右栏 Context 页签
   ctx_tab : ContextTab
   // 底部横条展开态与高度（审计 + Console）
@@ -643,6 +704,9 @@ pub(all) struct Model {
 pub(all) enum Msg {
   Noop // 设计舞台展示态控件的兜底回调（输入被手势覆盖层拦截，正常不触发）
   SwitchLanguage
+  CycleCodeAppearance // 代码视图外观切换：MoonBit（默认显示）⇄ 中英 DSL（M5-5e）
+  SetCodeAppearance(CodeAppearance) // 直达目标外观（双芯片入口，实测反馈）
+  CodeProjectSaved(@services.ServiceTaskResult[Unit]) // 代码工程骨架落盘回执（M6①）
   SetMode(Mode)
   SetDesignZoom(Double)
   SelectControl(String)
@@ -887,6 +951,49 @@ pub(all) enum Msg {
   OpenRequested
   OpenPathPicked(@services.ServiceTaskResult[String])
   OpenReadCompleted(@services.ServiceTaskResult[String])
+  // === 工程工作台消息（M0）：导入 MoonBit 工程 ===
+  // 链条：ImportProjectRequested（选目录）→ ProjectRootPicked（目录确定，
+  // 起 walk 任务）→ ProjectWalkCompleted（树走完，解析成工程记录）。
+  ImportProjectRequested
+  ProjectRootPicked(@services.ServiceTaskResult[String])
+  ProjectWalkCompleted(
+    @services.ServiceTaskResult[Result[@project.ProjectSource, String]]
+  )
+  // 资源管理器导航(纯状态):选中工程 / 折叠包 / 选中文件 / 会话内移除工程
+  SetActiveProject(Int)
+  ToggleProjectPackage(String)
+  SelectProjectFile(String)
+  RemoveProject(Int)
+  // 文件删除(确认后续行 + 服务回执;M0-6b)
+  ProjectFileDeleteRun(String)
+  ProjectFileDeleted(String, @services.ServiceTaskResult[Unit])
+  // 构建服务(M0-7):UI 请求(kind)→ busy 置位 → 包装层派发注入的
+  // build_submit → 回执落 last_build(诊断汇进 Problems)
+  ProjectBuildRun(@build.BuildKind)
+  ProjectBuildFinished(@build.BuildKind, Result[@build.BuildReport, String])
+  // 预览 harness 落盘回执(成功推进游标;全部写完 = 预览就绪)
+  PreviewFileWritten(@services.ServiceTaskResult[Unit])
+  // 语义点选 + 字面量属性补丁(M1-3)
+  SelectSemanticNode(Int)
+  SemanticLabelInput(String)
+  SemanticLabelCommit
+  SemanticPatchFinished(Result[String, String])
+  // 表单设计器(M4-2):打开(读 form.mbt)/加载回执/拖拽结束(span 补丁+写回)
+  SelectFormControl(Int)
+  SetPreviewDesignOpen(Bool)
+  FormDesignOpen
+  FormDesignLoaded(@services.ServiceTaskResult[String])
+  FormDesignDragEnd(Int, Double, Double)
+  FormDesignResizeEnd(Int, Double, Double)
+  FormDesignSaved(@services.ServiceTaskResult[Unit])
+  // 外部改动重载（M8）：手动刷新入口读 form.mbt → 比对 → 提示/重载
+  FormDesignExternalCheck
+  FormDesignExternalChecked(@services.ServiceTaskResult[String])
+  // 预览模式条(M2-2):Frame/Web 切换;Web 构建回执后 wrapper 派发
+  // navigate/reload(经注入的 webview 控制器闭包)
+  SetPreviewMode(PreviewMode)
+  PreviewNavigate(String)
+  PreviewReload
   ExportRequested
   ExportDirPicked(@services.ServiceTaskResult[String])
   ExportFileWritten(@services.ServiceTaskResult[Unit])
@@ -1021,6 +1128,10 @@ pub fn initial_model(
   let model = {
     program,
     language: ZhHans,
+    code_appearance: AppMoonBit,
+    pending_code_project: false,
+    pending_open_dir: None,
+    preview_design_open: false,
     mode: ModeDesign,
     design_zoom: 0.0,
     selected_control: "按钮",
@@ -1095,6 +1206,23 @@ pub fn initial_model(
     immersive,
     tree_query: "",
     tree_collapsed: [],
+    projects: [],
+    active_project: -1,
+    project_tree_collapsed: [],
+    selected_project_file: None,
+    last_build: None,
+    build_busy: false,
+    pending_build: None,
+    preview_write: None,
+    preview_frame: None,
+    selected_semantic: None,
+    semantic_draft: "",
+    form_designer: None,
+    selected_form_control: None,
+    preview_mode: PmFrame,
+    preview_web_url: None,
+    preview_web_opened: false,
+    build_seq: 0,
     ctx_tab: CtxProps,
     // 底栏默认**展开且选中 AI 页签**：`ai_anchor` 的默认档是 AI 输入条，
     // 而它由底栏承载——底栏收着就等于「默认档看不见」，那是自相矛盾的

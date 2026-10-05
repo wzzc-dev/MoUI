@@ -191,9 +191,11 @@ pub struct FileServices {
   read_bytes_fn : (String) -> ServiceTask[Bytes]
   write_bytes_fn : (String, Bytes) -> ServiceTask[Unit]
   list_directory_fn : (String) -> ServiceTask[Array[DirectoryEntry]]
+  delete_file_fn : (String) -> ServiceTask[Unit]
 }
+pub fn FileServices::delete_file(Self, String) -> ServiceTask[Unit]
 pub fn FileServices::list_directory(Self, String) -> ServiceTask[Array[DirectoryEntry]]
-pub fn FileServices::new(open_file? : (FileDialogOptions) -> ServiceTask[String], save_file? : (FileDialogOptions) -> ServiceTask[String], pick_directory? : (FileDialogOptions) -> ServiceTask[String], read_text? : (String) -> ServiceTask[String], write_text? : (String, String) -> ServiceTask[Unit], read_bytes? : (String) -> ServiceTask[Bytes], write_bytes? : (String, Bytes) -> ServiceTask[Unit], list_directory? : (String) -> ServiceTask[Array[DirectoryEntry]]) -> Self
+pub fn FileServices::new(open_file? : (FileDialogOptions) -> ServiceTask[String], save_file? : (FileDialogOptions) -> ServiceTask[String], pick_directory? : (FileDialogOptions) -> ServiceTask[String], read_text? : (String) -> ServiceTask[String], write_text? : (String, String) -> ServiceTask[Unit], read_bytes? : (String) -> ServiceTask[Bytes], write_bytes? : (String, Bytes) -> ServiceTask[Unit], list_directory? : (String) -> ServiceTask[Array[DirectoryEntry]], delete_file? : (String) -> ServiceTask[Unit]) -> Self
 pub fn FileServices::open_file(Self, options? : FileDialogOptions) -> ServiceTask[String]
 pub fn FileServices::pick_directory(Self, options? : FileDialogOptions) -> ServiceTask[String]
 pub fn FileServices::read_bytes(Self, String) -> ServiceTask[Bytes]

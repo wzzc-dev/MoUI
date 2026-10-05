@@ -28,7 +28,9 @@ test "run chip stays right of the window drag region" {
       _ => ()
     }
   }
-  guard chip is Some(rect) else { fail("顶栏没有画运行芯片（accent 填充缺失）") }
+  guard chip is Some(rect) else {
+    fail("顶栏没有画运行芯片（accent 填充缺失）")
+  }
   let drag_right = topbar_drag_width(model, translator(model), 1280.0)
   let chip_left = rect.origin.x
   let chip_right = rect.origin.x + rect.size.width

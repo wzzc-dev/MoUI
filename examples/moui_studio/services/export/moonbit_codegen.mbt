@@ -304,6 +304,13 @@ fn write_args(ctx : GenCtx, args : Array[@ir.Expr]) -> String {
 }
 
 ///|
+/// 事件子程序的 MoonBit 函数名（M6①：form.mbt 的 on_click 绑定
+/// 与 handlers.mbt 的函数名必须同源，这里是对外唯一出口）。
+pub fn handler_function_name(handler : @ir.Handler, index : Int) -> String {
+  function_name_for(handler, index)
+}
+
+///|
 fn function_name_for(handler : @ir.Handler, index : Int) -> String {
   "studio_" +
   sanitize_identifier(handler.control_name) +
@@ -482,6 +489,40 @@ fn write_stmt(ctx : GenCtx, stmt : @ir.Stmt) -> Unit {
         write_body(ctx, else_body, false)
         pop_path(ctx)
       })
+      write_line(ctx, "}")
+    }
+    @ir.Match(subject, arms, else_body) => {
+      // 匹配分派（M5-5d）：单次求值 + 审计一行（与解释轨同格式）
+      record_stmt_line(ctx)
+      let line = ctx.audit_line
+      let dispatch_name = "dispatch_\{(ctx.lines.length()).to_string()}"
+      write_line(
+        ctx,
+        "let \{dispatch_name} = @compiled_runtime.enum_case(\{write_value(ctx, subject)}, \{line})",
+      )
+      write_line(
+        ctx,
+        "rt.record(\{line}, @compiled_runtime.OpCondition, \{mbt_quote("\{@studio_lang.canonical_expr(subject)} -> ")} + \{dispatch_name})",
+      )
+      write_line(ctx, "match \{dispatch_name} {")
+      let mut arm_index = 0
+      for arm in arms {
+        write_line(ctx, "  \{mbt_quote(arm.case_name)} => {")
+        with_depth(ctx, fn() {
+          push_path(ctx, arm_index)
+          write_body(ctx, arm.body, false)
+          pop_path(ctx)
+        })
+        write_line(ctx, "}")
+        arm_index = arm_index + 1
+      }
+      write_line(ctx, "  _ => {")
+      with_depth(ctx, fn() {
+        push_path(ctx, arms.length())
+        write_body(ctx, else_body, false)
+        pop_path(ctx)
+      })
+      write_line(ctx, "}")
       write_line(ctx, "}")
     }
     @ir.CountLoop(times, loop_var, body) => {
@@ -726,6 +767,10 @@ fn write_value(ctx : GenCtx, expr : @ir.Expr) -> String {
       "@compiled_runtime.index_values(\{write_value(ctx, base)}, \{write_value(ctx, index)}, \{line})"
     @ir.Binary(op, left, right) => write_binary(ctx, op, left, right)
     @ir.Call(name, args) => write_function_call(ctx, name, args)
+    @ir.FieldAccess(base, field) =>
+      "@compiled_runtime.get_field(\{write_value(ctx, base)}, \{mbt_quote(field)}, \{line})"
+    @ir.EnumTag(enum_name, case_name) =>
+      "@compiled_runtime.make_enum(\{mbt_quote(enum_name)}, \{mbt_quote(case_name)})"
   }
 }
 

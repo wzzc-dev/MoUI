@@ -16,12 +16,26 @@ pub fn validate_program_language(program : StudioProgram) -> Array[LangError] {
       errors.push(LangError(ReservedWord, 0, variable.name, ""))
     }
   }
+  // struct 声明（M5-5c）：名拒绝保留字，字段类型必须在规范词表内
+  for decl in program.structs {
+    if is_reserved(decl.name) {
+      errors.push(LangError(ReservedWord, 0, decl.name, ""))
+    }
+    for field in decl.fields {
+      if is_reserved(field.field_name) {
+        errors.push(LangError(ReservedWord, 0, field.field_name, ""))
+      }
+      if !is_struct_field_type_id(field.field_type) {
+        errors.push(LangError(TypeMismatch, 0, "字段类型", field.field_type))
+      }
+    }
+  }
   for handler in program.handlers {
     let declared : Array[String] = []
     for variable in program.variables {
       declared.push(variable.name)
     }
-    check_body(handler.body, errors, [], declared, program.functions, false)
+    check_body(handler.body, errors, [], declared, program.functions, program.enums, false)
     check_round_trip(handler.body, errors)
   }
   // 函数定义：体在「函数内」语境检查（Return 合法），双语往返同门槛
@@ -36,7 +50,7 @@ pub fn validate_program_language(program : StudioProgram) -> Array[LangError] {
     for param in func.params {
       declared.push(param)
     }
-    check_body(func.body, errors, [], declared, program.functions, true)
+    check_body(func.body, errors, [], declared, program.functions, program.enums, true)
     check_round_trip(func.body, errors)
   }
   errors
@@ -49,6 +63,7 @@ fn check_body(
   in_loop : Array[Bool],
   declared : Array[String],
   functions : Array[@ir.FuncDef],
+  enums : Array[@ir.EnumDecl],
   in_func : Bool,
 ) -> Unit {
   for stmt in body {
@@ -63,7 +78,7 @@ fn check_body(
         }
       @ir.Declare(name, expr) => {
         check_name(name, errors)
-        check_expr(expr, errors, declared, functions)
+        check_expr(expr, errors, declared, functions, enums)
         if !declared.contains(name) {
           declared.push(name)
         }
@@ -72,27 +87,27 @@ fn check_body(
         if !declared.contains(name) {
           errors.push(LangError(NotDeclared, 0, name, ""))
         }
-        check_expr(expr, errors, declared, functions)
+        check_expr(expr, errors, declared, functions, enums)
       }
       @ir.SetIndex(name, index, value) => {
         if !declared.contains(name) {
           errors.push(LangError(NotDeclared, 0, name, ""))
         }
-        check_expr(index, errors, declared, functions)
-        check_expr(value, errors, declared, functions)
+        check_expr(index, errors, declared, functions, enums)
+        check_expr(value, errors, declared, functions, enums)
       }
-      @ir.Call(name, args) => check_call(name, args, errors, true, declared, functions)
+      @ir.Call(name, args) => check_call(name, args, errors, true, declared, functions, enums)
       @ir.If(cond, then_body, else_ifs, else_body) => {
-        check_expr(cond, errors, declared, functions)
-        check_body(then_body, errors, in_loop, declared, functions, in_func)
+        check_expr(cond, errors, declared, functions, enums)
+        check_body(then_body, errors, in_loop, declared, functions, enums, in_func)
         for arm in else_ifs {
-          check_expr(arm.0, errors, declared, functions)
-          check_body(arm.1, errors, in_loop, declared, functions, in_func)
+          check_expr(arm.0, errors, declared, functions, enums)
+          check_body(arm.1, errors, in_loop, declared, functions, enums, in_func)
         }
-        check_body(else_body, errors, in_loop, declared, functions, in_func)
+        check_body(else_body, errors, in_loop, declared, functions, enums, in_func)
       }
       @ir.CountLoop(times, loop_var, loop_body) => {
-        check_expr(times, errors, declared, functions)
+        check_expr(times, errors, declared, functions, enums)
         match loop_var {
           Some(name) => {
             check_name(name, errors)
@@ -102,14 +117,48 @@ fn check_body(
           }
           None => ()
         }
-        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, in_func)
+        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, enums, in_func)
       }
       @ir.WhileLoop(cond, loop_body) => {
-        check_expr(cond, errors, declared, functions)
-        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, in_func)
+        check_expr(cond, errors, declared, functions, enums)
+        check_body(loop_body, errors, in_loop_plus(in_loop), declared, functions, enums, in_func)
+      }
+      @ir.Match(subject, arms, else_body) => {
+        check_expr(subject, errors, declared, functions, enums)
+        let seen : Array[String] = []
+        for arm in arms {
+          check_case_name(arm.case_name, enums, seen, errors)
+          check_body(arm.body, errors, in_loop, declared, functions, enums, in_func)
+        }
+        check_body(else_body, errors, in_loop, declared, functions, enums, in_func)
       }
     }
   }
+}
+
+///|
+/// 匹配臂的情况名必须属于某已声明枚举，且臂间不得重复（M5-5d）。
+fn check_case_name(
+  case_name : String,
+  enums : Array[@ir.EnumDecl],
+  seen : Array[String],
+  errors : Array[LangError],
+) -> Unit {
+  let mut known = false
+  for decl in enums {
+    for case in decl.cases {
+      if case == case_name {
+        known = true
+      }
+    }
+  }
+  if !known {
+    errors.push(LangError(UnknownName, 0, case_name, "未知的情况"))
+  }
+  if seen.contains(case_name) {
+    errors.push(LangError(UnknownName, 0, case_name, "重复的情况"))
+  }
+  seen.push(case_name)
 }
 
 ///|
@@ -143,6 +192,7 @@ fn check_expr(
   errors : Array[LangError],
   declared : Array[String],
   functions : Array[@ir.FuncDef],
+  enums : Array[@ir.EnumDecl],
 ) -> Unit {
   match expr {
     @ir.NumLit(_) | @ir.IntLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) => ()
@@ -150,21 +200,38 @@ fn check_expr(
       if !declared.contains(name) {
         errors.push(LangError(NotDeclared, 0, name, ""))
       }
-    @ir.Not(inner) | @ir.Neg(inner) => check_expr(inner, errors, declared, functions)
+    @ir.EnumTag(enum_name, case_name) =>
+      // 枚举值字面量：枚举与情况都必须已声明（M5-5d）
+      {
+        let mut known = false
+        for decl in enums {
+          if decl.name == enum_name {
+            if !decl.cases.contains(case_name) {
+              errors.push(LangError(UnknownName, 0, case_name, "不在枚举内"))
+            }
+            known = true
+          }
+        }
+        if !known {
+          errors.push(LangError(UnknownName, 0, enum_name, "未知枚举"))
+        }
+      }
+    @ir.FieldAccess(base, _) => check_expr(base, errors, declared, functions, enums)
+    @ir.Not(inner) | @ir.Neg(inner) => check_expr(inner, errors, declared, functions, enums)
     @ir.Binary(_, left, right) => {
-      check_expr(left, errors, declared, functions)
-      check_expr(right, errors, declared, functions)
+      check_expr(left, errors, declared, functions, enums)
+      check_expr(right, errors, declared, functions, enums)
     }
     @ir.ListLit(items) =>
       for item in items {
-        check_expr(item, errors, declared, functions)
+        check_expr(item, errors, declared, functions, enums)
       }
     @ir.Index(base, index) => {
-      check_expr(base, errors, declared, functions)
-      check_expr(index, errors, declared, functions)
+      check_expr(base, errors, declared, functions, enums)
+      check_expr(index, errors, declared, functions, enums)
     }
     @ir.Call(name, args) =>
-      check_call(name, args, errors, false, declared, functions)
+      check_call(name, args, errors, false, declared, functions, enums)
   }
 }
 
@@ -177,6 +244,7 @@ fn check_call(
   statement : Bool,
   declared : Array[String],
   functions : Array[@ir.FuncDef],
+  enums : Array[@ir.EnumDecl],
 ) -> Unit {
   match find_builtin(name) {
     None => {
@@ -210,7 +278,7 @@ fn check_call(
             )
           }
           for arg in args {
-            check_expr(arg, errors, declared, functions)
+            check_expr(arg, errors, declared, functions, enums)
           }
         }
       }
@@ -231,7 +299,7 @@ fn check_call(
       while index < args.length() {
         let arg = args[index]
         if !is_control_name_arg(spec.id, index, arg) {
-          check_expr(arg, errors, declared, functions)
+          check_expr(arg, errors, declared, functions, enums)
         }
         index = index + 1
       }

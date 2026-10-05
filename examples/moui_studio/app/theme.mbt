@@ -116,6 +116,11 @@ pub fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
       @graphics.Color::rgba(r=0.157, g=0.208, b=0.318)
     @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkEnd =>
       @graphics.Color::rgba(r=0.298, g=0.235, b=0.145)
+    @blocks.BkMatch | @blocks.BkCase =>
+      @graphics.Color::rgba(r=0.298, g=0.235, b=0.145)
+    // 声明块：数据族的存值蓝（更深一档，与普通变量行区分）
+    @blocks.BkEnumDecl | @blocks.BkStructDecl =>
+      @graphics.Color::rgba(r=0.106, g=0.157, b=0.255)
     @blocks.BkCountLoop | @blocks.BkWhile | @blocks.BkReturn =>
       @graphics.Color::rgba(r=0.145, g=0.271, b=0.196)
     @blocks.BkBreak => @graphics.Color::rgba(r=0.318, g=0.165, b=0.157)
@@ -129,6 +134,8 @@ pub fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
 pub fn block_corner_radius(kind : @blocks.BlockKind) -> Double {
   match kind {
     @blocks.BkDeclare | @blocks.BkAssign | @blocks.BkSetIndex => 14.0
+    // 声明块也是数据族：胶囊圆角
+    @blocks.BkEnumDecl | @blocks.BkStructDecl => 14.0
     _ => 6.0
   }
 }
@@ -137,6 +144,13 @@ pub fn block_corner_radius(kind : @blocks.BlockKind) -> Double {
 /// 条件徽标色：比块体亮一档的暖白半透明——「这里是一个取值判断」。
 pub fn block_badge_color(_kind : @blocks.BlockKind) -> @graphics.Color {
   @graphics.Color::rgba(r=0.95, g=0.95, b=0.92, a=0.32)
+}
+
+///|
+/// 单轮廓描边色（M7②）：低透明度暗色——块体边缘一点点「咬合」的
+/// 立体感，不与选中描边（强调色）竞争。
+pub fn block_outline_stroke() -> @graphics.Color {
+  @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.35)
 }
 
 ///|
@@ -160,9 +174,11 @@ pub fn block_notch_color() -> @graphics.Color {
 /// 落回主题色是「看起来对、其实没画」的典型：只要邻居也走回落，两块就糊成
 /// 一片。画布底板与壳面板是两套配色纪律（前者属于积木域），所以这里
 /// 不并入 `ide_*` 系列，由积木画布自己钉。
+
 ///|
 /// 插槽（reporter slot）底色：**有内容**时用比块体略暗的一档，读作
 /// 「这里坐着一块东西」（内容块自己会画在洞上面）。
+
 ///|
 /// 脚本说明横幅的底色：比画布略亮的一档浅底，读作「这是注释不是代码」。
 pub fn blocks_note_background() -> @graphics.Color {

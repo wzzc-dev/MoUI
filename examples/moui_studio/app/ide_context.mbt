@@ -41,7 +41,7 @@ pub fn ide_right_panel(
     ).frame(width~, height~),
     background=ide_panel(),
     width~,
-    height=height,
+    height~,
     padding=0.0,
   )
 }
@@ -196,9 +196,11 @@ fn context_block_editor(
                   Some((_, _, draft)) => draft
                   None => model.block_draft
                 },
-                on_input=source => match model.block_value_edit {
-                  Some(_) => BlockValueInput(source)
-                  None => EditBlock(source)
+                on_input=source => {
+                  match model.block_value_edit {
+                    Some(_) => BlockValueInput(source)
+                    None => EditBlock(source)
+                  }
                 },
                 on_submit=Some(
                   match model.block_value_edit {
@@ -564,8 +566,7 @@ fn context_props(
               [name, ..] => name
               [] => ""
             },
-            on_input=new_value =>
-              SetControlItems(control.name, new_value),
+            on_input=new_value => SetControlItems(control.name, new_value),
             width=field_width,
             height=FIELD_HEIGHT,
           ),
@@ -579,8 +580,7 @@ fn context_props(
               [path, ..] => path
               [] => ""
             },
-            on_input=new_value =>
-              SetControlItems(control.name, new_value),
+            on_input=new_value => SetControlItems(control.name, new_value),
             width=field_width,
             height=FIELD_HEIGHT,
           ),
@@ -1199,15 +1199,16 @@ fn window_event_rows(
     }
     let label = text(t, "event.\{event.tag()}")
     let action_w = text_estimate_width(
-      text(
-        t,
-        if exists {
-          "app.inspector.window_event_edit"
-        } else {
-          "app.inspector.window_event_create"
-        },
-      ),
-    ) + 34.0
+        text(
+          t,
+          if exists {
+            "app.inspector.window_event_edit"
+          } else {
+            "app.inspector.window_event_create"
+          },
+        ),
+      ) +
+      34.0
     rows.push(
       @views.container(
         @views.padding_xy(
@@ -1304,6 +1305,7 @@ fn variable_props(
 /// 不是独立实体——所以这里是**只读**视图，编辑入口回到来源控件本身
 /// （选中该控件后在同一个属性页签改 items，或改程序语句）。
 /// 给一个能改的输入框会让人以为数据有独立存储。
+
 ///|
 /// **自定义积木**的属性：名字、参数个数、以及「谁在调用它」的提示。
 ///
@@ -1330,11 +1332,9 @@ fn function_props(
     ),
     field_label(t, "app.inspector.function_params", width),
     @views.text(
-      text_with(
-        t,
-        "app.inspector.function_param_count",
-        [("count", func.params.length().to_string())],
-      ),
+      text_with(t, "app.inspector.function_param_count", [
+        ("count", func.params.length().to_string()),
+      ]),
       theme=studio_theme(),
       width=field_width,
       height=20.0,
@@ -1342,11 +1342,9 @@ fn function_props(
     ).foreground(ide_text_muted()),
     field_label(t, "app.inspector.function_body", width),
     @views.text(
-      text_with(
-        t,
-        "app.inspector.function_body_hint",
-        [("count", func.body.length().to_string())],
-      ),
+      text_with(t, "app.inspector.function_body_hint", [
+        ("count", func.body.length().to_string()),
+      ]),
       theme=studio_theme(),
       width=field_width,
       height=20.0,
@@ -1469,7 +1467,11 @@ fn context_runtime(
           @views.container(
             @views.padding_xy(
               @views.text(
-                if line == "" { " " } else { line.to_owned() },
+                if line == "" {
+                  " "
+                } else {
+                  line.to_owned()
+                },
                 theme=studio_theme(),
                 role=Mono,
                 width=(width - 24.0).max(80.0),

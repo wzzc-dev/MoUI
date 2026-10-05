@@ -49,7 +49,11 @@ test "compile submit is dispatched only on the false to true edge" {
   assert_false(@app.compile_submit_needed(web, compile_apply(web, CompileRun)))
   // 源码草稿有错时不派发（先修再编译）：CompileRun 会先 commit，
   // 提交失败只写 code_error，不进入忙态，也就不派发。
-  let broken = compile_apply(model, EditCode("x ="))
+  // 坏草稿语义在 DSL 外观下制造（M5-5e：默认 MoonBit 外观不做编辑提交）
+  let broken = compile_apply(
+    compile_apply(model, CycleCodeAppearance),
+    EditCode("x ="),
+  )
   let refused = compile_apply(broken, CompileRun)
   assert_true(refused.code_error != "")
   assert_false(refused.compile_busy)

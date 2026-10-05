@@ -295,6 +295,7 @@ pub fn pane_head_layout(
   tail : String,
   pane_width : Double,
   action_count : Int,
+  actions_width? : Double = -1.0,
 ) -> PaneHeadLayout {
   let content = (pane_width - PANE_HEAD_INSET * 2.0).max(40.0)
   let has_subtitle = subtitle != ""
@@ -305,7 +306,13 @@ pub fn pane_head_layout(
   // 格子数 = 文字格 + 1 个权重 spacer + 动作数；间隙数 = 格子数 − 1
   let cell_count = text_cells + 1 + action_count
   let gaps = (cell_count - 1).max(0).to_double() * PANE_HEAD_GAP
-  let actions = action_count.to_double() * PANE_HEAD_ACTION_WIDTH
+  // 动作宽度默认按图标钮 24/个；动作是**宽芯片**时调用方传实际合计
+  //（实测缺陷：代码页签头的外观双芯片 108pt 按两个 24 算，溢出窗格）。
+  let actions = if actions_width >= 0.0 {
+    actions_width
+  } else {
+    action_count.to_double() * PANE_HEAD_ACTION_WIDTH
+  }
   let pool = (content - gaps - actions).max(0.0)
   let title_want = (text_estimate_width(title) * 1.02).max(20.0)
   let title_width = title_want.min(pool * 0.35)
@@ -341,8 +348,16 @@ pub fn pane_head(
   width : Double,
   actions : Array[@moui.View[Msg]],
   tail? : String = "",
+  actions_width? : Double = -1.0,
 ) -> @moui.View[Msg] {
-  let layout = pane_head_layout(title, subtitle, tail, width, actions.length())
+  let layout = pane_head_layout(
+    title,
+    subtitle,
+    tail,
+    width,
+    actions.length(),
+    actions_width~,
+  )
   let cells : Array[@moui.View[Msg]] = [
     @views.text(
       title,

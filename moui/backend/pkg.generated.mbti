@@ -418,6 +418,7 @@ pub(all) enum HostServiceKind {
   SystemThemeService
   SettingsService
   DirectoryListingService
+  FileDeleteService
   PlatformChannelService
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceKind::equal(Self, Self) -> Bool
@@ -436,6 +437,7 @@ pub(all) enum HostServiceRequest {
   QuerySystemTheme
   Settings(HostSettingsRequest)
   ListDirectory(String)
+  DeleteFile(String)
   PlatformChannel(PlatformChannelRequest)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceRequest::equal(Self, Self) -> Bool
@@ -474,6 +476,7 @@ pub(all) enum HostServiceResponse {
   SettingWritten
   SettingRemoved
   DirectoryListing(String, Array[HostDirectoryEntry])
+  FileDeleted(String)
   PlatformChannel(PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceResponse::binary_file_diagnostic(Self) -> HostBinaryFileDiagnostic?

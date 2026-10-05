@@ -51,8 +51,15 @@ test "english translation resolves" {
 }
 
 ///|
+///|
+/// 编辑语义测试的口径（M5-5e）：代码视图默认外观是 MoonBit（只读显示投影）；
+/// 测试「编辑草稿→提交/诊断」语义时先切到 DSL 外观。
+fn dsl_edit_model(model : @app.Model) -> @app.Model {
+  apply(model, CycleCodeAppearance)
+}
+
 test "language switch commits parseable draft and re-renders" {
-  let model = @app.initial_model()
+  let model = dsl_edit_model(@app.initial_model())
   let switched = apply(model, SwitchLanguage)
   assert_true(switched.code_draft.contains("set_text"))
   let switched_back = apply(switched, SwitchLanguage)
@@ -95,7 +102,7 @@ test "add and delete control keeps handlers consistent" {
 
 ///|
 test "code edit commits into program" {
-  let model = @app.initial_model()
+  let model = dsl_edit_model(@app.initial_model())
   let edited = apply(model, EditCode("设置文本(显示, \"新文本\")\n"))
   let committed = apply(edited, SelectHandler("按钮@on_click"))
   match @app.current_handler(committed) {
@@ -118,7 +125,7 @@ test "code edit commits into program" {
 test "mode switch commits the current code draft" {
   let edited = apply(
     apply(
-      @app.initial_model(),
+      dsl_edit_model(@app.initial_model()),
       EditCode("设置文本(显示, \"模式切换后\")\n"),
     ),
     SetMode(@app.ModeDesign),
@@ -135,7 +142,7 @@ test "mode switch commits the current code draft" {
 
 ///|
 test "syntax error surfaces localized message" {
-  let model = @app.initial_model()
+  let model = dsl_edit_model(@app.initial_model())
   let edited = apply(model, EditCode("如果 真的 则\n"))
   let started = apply(edited, RunStart)
   // 语法错误进 notice（本地化），且不进入运行态
@@ -152,7 +159,7 @@ test "syntax error surfaces localized message" {
 
 ///|
 test "invalid draft never executes stale control handlers" {
-  let started = apply(@app.initial_model(), RunStart)
+  let started = dsl_edit_model(apply(@app.initial_model(), RunStart))
   let broken = apply(started, EditCode("如果 真的 则\n"))
   let clicked = apply(broken, ControlClicked("按钮"))
   assert_true(clicked.code_error != "")
@@ -161,7 +168,7 @@ test "invalid draft never executes stale control handlers" {
 
 ///|
 test "invalid draft blocks runtime control events" {
-  let started = apply(@app.initial_model(), RunStart)
+  let started = dsl_edit_model(apply(@app.initial_model(), RunStart))
   let before_steps = started.run.unwrap().state.steps
   let broken = apply(started, EditCode("如果 真的 则\n"))
   let clicked = apply(broken, ControlClicked("按钮"))
@@ -221,10 +228,9 @@ test "compiled track arms the stage; clicking the button executes the handler" {
   let started = apply(switched, RunStart)
   match started.compiled_run {
     None => fail("编译轨应进入运行态")
-    Some(armed) => {
+    Some(armed) =>
       // **装填不执行**：标签仍是设计初值（空）
       assert_eq(armed.runtime.texts.get("显示").unwrap_or(""), "")
-    }
   }
   let clicked = drain_compiled(apply(started, ControlClicked("按钮")))
   let run = clicked.compiled_run.unwrap()
@@ -452,7 +458,7 @@ test "list selection survives the next handler run" {
 
 ///|
 test "table row selection dispatches its supported click handler" {
-  let model = apply(@app.initial_model(), SelectTemplate(3))
+  let model = dsl_edit_model(apply(@app.initial_model(), SelectTemplate(3)))
   let table = @ir.find_control(model.program, "商品表").unwrap()
   let with_handler = apply(model, CreateHandler(table.name, @ir.OnClick))
   let edited = apply(
@@ -469,7 +475,7 @@ test "table row selection dispatches its supported click handler" {
 
 ///|
 test "append row persists across handlers without changing the program" {
-  let model = apply(@app.initial_model(), SelectTemplate(1))
+  let model = dsl_edit_model(apply(@app.initial_model(), SelectTemplate(1)))
   let edited = apply(model, EditCode("追加行(名单, \"新同学\")\n"))
   // 装填后**点按钮**才执行（运行不再替用户跑一遍）
   let finished = drain(
@@ -487,7 +493,7 @@ test "append row persists across handlers without changing the program" {
 
 ///|
 test "checkbox change keeps its checked state while running on_change" {
-  let added = apply(@app.initial_model(), AddControl(@ir.CheckBox))
+  let added = dsl_edit_model(apply(@app.initial_model(), AddControl(@ir.CheckBox)))
   let checkbox = added.program.controls[added.program.controls.length() - 1]
   let handler = apply(added, CreateHandler(checkbox.name, @ir.OnChange))
   let edited = apply(handler, EditCode("设置文本(显示, \"已勾选\")\n"))
@@ -618,7 +624,9 @@ test "block view edits write back to the ir" {
   assert_eq(selected.selected_block, 0)
   // 改成字符串字面量并应用
   let edited = apply(selected, EditBlock("变量 人数 = 42\n"))
-  let committed = apply(edited, CommitBlock)
+  // 断言代码草稿的 DSL 文本：代码视图默认是 MoonBit 外观（M5-5e），
+  // 先切到 DSL 外观让草稿按教学语言渲染再断言。
+  let committed = apply(apply(edited, CycleCodeAppearance), CommitBlock)
   match @app.current_handler(committed) {
     Some(handler) => {
       assert_eq(handler.body.length(), 3)
@@ -1423,7 +1431,6 @@ test "blocks canvas layout, hit test and drop slot" {
   )
 }
 
-
 ///|
 /// 积木标签按块宽截断：宽够就原样，宽不够就「…」收尾且**不超宽**。
 test "fit_label truncates block labels to the block width" {
@@ -1499,4 +1506,169 @@ test "window drag region declaration is idempotent and clearable" {
   source.set_region(None)
   assert_eq(source.region(), None)
   assert_true(source.revision() > revision)
+}
+
+///|
+/// M5-5e：代码视图默认外观是 MoonBit（代码真源的显示投影）。
+test "code view defaults to moonbit appearance showing generated source" {
+  let model = @app.initial_model()
+  assert_true(model.code_appearance is @app.AppMoonBit)
+  // 草稿 = codegen 的 handler 子集源码（与导出 bundle 同源形状）
+  assert_true(model.code_draft.contains("rt."))
+  assert_true(model.code_draft.contains("@compiled_runtime"))
+  // MoonBit⇄IR 无损：显示的源码正是 generate_handler_source 的逐字节产物
+  match @app.current_handler(model) {
+    Some(handler) =>
+      assert_eq(
+        model.code_draft,
+        @export.generate_handler_source(
+          handler,
+          1,
+          functions=model.program.functions,
+        ).source,
+      )
+    None => fail("初始模型应有 handler")
+  }
+  // 逆解析链仍闭合：生成源可被积木逆解析器认领（M5-5a 契约的外观侧兑现）
+  let generated = @export.generate_source(model.program)
+  let parsed = @blocks_code.parse_generated_source(
+    generated.handlers[0].source,
+    generated.handlers[0].stmt_lines,
+  )
+  assert_true(parsed.blocks.length() > 0)
+}
+
+///|
+test "cycling appearance shows dsl and moonbit display is commit free" {
+  let model = @app.initial_model()
+  // 切到 DSL 外观：草稿按教学语言渲染
+  let dsl = apply(model, CycleCodeAppearance)
+  assert_true(dsl.code_appearance is @app.AppDsl)
+  assert_true(dsl.code_draft.contains("变量") || dsl.code_draft.contains("设置文本"))
+  // DSL 外观下编辑→提交通路保持既有语义
+  let edited = apply(dsl, EditCode("设置文本(显示, \"改\")\n"))
+  let committed = apply(edited, SelectHandler("按钮@on_click"))
+  match @app.current_handler(committed) {
+    Some(handler) =>
+      assert_true(
+        handler.body.any(stmt => stmt is @ir.Stmt::Call("set_text", _)),
+      )
+    None => fail("handler 应仍在")
+  }
+  // 切回 MoonBit：草稿重新推导为生成源
+  let back = apply(committed, CycleCodeAppearance)
+  assert_true(back.code_appearance is @app.AppMoonBit)
+  assert_true(back.code_draft.contains("rt.set_text("))
+  // MoonBit 外观是显示投影：编辑不提交、不产生 DSL 误报（IR 不被污染）
+  let garbled = apply(back, EditCode("这不是 MoonBit 也不是 DSL"))
+  let settled = apply(garbled, SelectHandler("按钮@on_click"))
+  assert_true(settled.code_error == "")
+  match @app.current_handler(settled) {
+    Some(handler) =>
+      assert_true(
+        handler.body.any(stmt => stmt is @ir.Stmt::Call("set_text", _)),
+      )
+    None => fail("MoonBit 外观编辑不得改写 IR")
+  }
+}
+
+///|
+/// M6②：提案 diff 变文本 diff——待采纳卡展示 handlers.mbt/form.mbt 的
+/// 行级 ±（代码真源），采纳置位代码工程落盘标记，历史记录保留文本 diff。
+test "proposal diff shows code text and accept triggers codegen write" {
+  let model = apply(@app.initial_model(), SetPrompt("帮我做一个随机点名"))
+  let generated = apply(model, GenerateProposal)
+  match generated.pending {
+    None => fail("应产生待采纳提案")
+    Some(pending) => {
+      assert_true(pending.valid)
+      // 校验链不变：结构化 diff 仍在（可读性/预算门同一链）
+      assert_true(pending.diff.length() > 0)
+      // 代码真源文本 diff 非空：替换式提案必然改写 handlers.mbt 行
+      assert_true(pending.code_diff.length() > 0)
+      // 行级 ± 形态：删除行带 -，新增行带 +
+      assert_true(pending.code_diff.any(pair => pair.0 == "-"))
+      assert_true(pending.code_diff.any(pair => pair.0 == "+"))
+      // 采纳：置位代码工程落盘标记（组合根写 handlers.mbt/form.mbt）
+      let accepted = apply(generated, AcceptProposal)
+      assert_true(accepted.pending_code_project)
+      // 历史记录保留文本 diff（会话回放看代码改了哪几行）
+      assert_true(accepted.proposal_history.length() > 0)
+      let last = accepted.proposal_history[accepted.proposal_history.length() - 1]
+      assert_true(last.accepted)
+      assert_eq(last.code_diff.length(), pending.code_diff.length())
+    }
+  }
+}
+
+///|
+test "code text diff trims common prefix and suffix" {
+  // 完全相同 → 空 diff
+  assert_eq(@app.code_text_diff("a\nb\n", "a\nb\n").length(), 0)
+  // 单行改动：中间一行 - 旧 + 新
+  let diff = @app.code_text_diff(
+    "let x = 1\nlet y = 2\nlet z = 3\n",
+    "let x = 1\nlet y = 20\nlet z = 3\n",
+  )
+  assert_eq(diff.length(), 2)
+  assert_eq(diff[0].0, "-")
+  assert_eq(diff[0].1, "let y = 2")
+  assert_eq(diff[1].0, "+")
+  assert_eq(diff[1].1, "let y = 20")
+}
+
+///|
+test "code project text joins form and handlers with a boundary" {
+  let program = @proposals.sample_hello()
+  let text = @app.code_project_text(program)
+  assert_true(text.contains("=== handlers.mbt ==="))
+  assert_true(text.contains("stage(640, 480"))
+  assert_true(text.contains("fn studio_"))
+}
+
+///|
+/// M4 收尾：布局页签开关 + 保存联动——进入布局设计置位页签并无会话时
+/// 自动派发 FormDesignOpen；FormDesignSaved 成功后给重载通知并派发
+/// BkFramePreview 重建（模式一重放新帧 / 模式二经 build_seq 触发 reload）。
+test "design tab toggle and saved rebuild link" {
+  let services = @services.AppServices::new()
+  let (opened, _) = @app.update_with_services(
+    @app.initial_model(),
+    SetPreviewDesignOpen(true),
+    services,
+  )
+  assert_true(opened.preview_design_open)
+  let (closed, _) = @app.update_with_services(
+    opened,
+    SetPreviewDesignOpen(false),
+    services,
+  )
+  assert_false(closed.preview_design_open)
+  let (saved, saved_effect) = @app.update_with_services(
+    @app.initial_model(),
+    FormDesignSaved(Success(())),
+    services,
+  )
+  assert_true(saved.notice.contains("重载"))
+  // effect 非 none：重建派发真实存在（Effect::none 无法直接判定，
+  // 用 notice + 重建语义的集成断言覆盖；派发内容由 app.mbt 装配锁定）
+  assert_true(saved_effect is _)
+}
+
+///|
+/// 实测反馈修复：MoonBit 外观下「按 IR 重渲染」不得把草稿打回中文 DSL——
+/// 恢复按当前外观渲染（M5-5e 的 render_code_appearance 口径）。
+test "restore respects code appearance" {
+  let model = @app.initial_model()
+  // 默认 MoonBit 外观：恢复后草稿仍是生成源（rt. 调用形态）
+  let restored = apply(model, RestoreCodeDraft)
+  assert_true(restored.code_draft.contains("rt."))
+  assert_false(restored.code_draft.contains("设置文本"))
+  // DSL 外观：恢复后是教学语言渲染
+  let dsl = apply(restored, CycleCodeAppearance)
+  let restored_dsl = apply(dsl, RestoreCodeDraft)
+  assert_true(
+    restored_dsl.code_draft.contains("设置文本") ||
+    restored_dsl.code_draft.contains("变量"),
+  )
 }

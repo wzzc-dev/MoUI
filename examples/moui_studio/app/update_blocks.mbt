@@ -280,7 +280,10 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       // 重新分配），指针捕获随元素重建而丢失，拖拽断在第一帧。选中交给
       // 松手后的 tap / 选中跟随。
       let blocks = block_chain_of(model)
-      let (display_texts, _lead_texts) = block_row_texts(translator(model), blocks)
+      let (display_texts, _lead_texts) = block_row_texts(
+        translator(model),
+        blocks,
+      )
       let hit = blocks_hit_index(blocks, x, y, avail_width~, display_texts~)
       if hit >= 0 && blocks[hit].path.length() > 0 {
         let item = blocks[hit]
@@ -473,10 +476,11 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       Some(
         (
           match open_value_edit(model, block_index, expr_path) {
-            Some((next, initial)) => {
-              ..next,
-              block_value_edit: Some((block_index, expr_path, initial)),
-            }
+            Some((next, initial)) =>
+              {
+                ..next,
+                block_value_edit: Some((block_index, expr_path, initial)),
+              }
             None => model
           },
           @moui.Effect::none(),
@@ -487,14 +491,13 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         (
           match model.block_value_edit {
             Some((index, path, _)) =>
-              { ..model, block_value_edit: Some((index, path, text)) }
+              { ..model, block_value_edit: Some((index, path, text)), }
             None => model
           },
           @moui.Effect::none(),
         ),
       )
-    BlockValueCommit =>
-      Some((commit_value_edit(model), @moui.Effect::none()))
+    BlockValueCommit => Some((commit_value_edit(model), @moui.Effect::none()))
     BlockValueCancel =>
       Some(({ ..model, block_value_edit: None, }, @moui.Effect::none()))
     ToggleStatementPalette(index) =>
@@ -524,7 +527,11 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         (
           {
             ..model,
-            selected_block: if index >= 0 { index } else { model.selected_block },
+            selected_block: if index >= 0 {
+              index
+            } else {
+              model.selected_block
+            },
             block_menu: Some((index, x, y)),
           },
           @moui.Effect::none(),
@@ -537,17 +544,17 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       // （右栏按钮、快捷键）走**完全相同**的处理路径，不复制语义。
       Some(
         (
-          update_pure({ ..model, block_menu: None }, action).0,
+          update_pure({ ..model, block_menu: None, }, action).0,
           @moui.Effect::none(),
         ),
       )
     RunSingleBlock => Some((run_single_block(model), @moui.Effect::none()))
     PaletteExprDragStart(template) =>
-      Some(({ ..model, expr_drag: Some(template) }, @moui.Effect::none()))
+      Some(({ ..model, expr_drag: Some(template), }, @moui.Effect::none()))
     PaletteDragStart(category, template) =>
       Some(
         (
-          { ..model, palette_drag: Some((category, template)) },
+          { ..model, palette_drag: Some((category, template)), },
           @moui.Effect::none(),
         ),
       )
@@ -560,13 +567,13 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           {
             ..model,
             blocks_scroll_y: (model.blocks_scroll_y +
-              direction.to_double() * BLOCKS_AUTOSCROLL_STEP).max(0.0),
+            direction.to_double() * BLOCKS_AUTOSCROLL_STEP).max(0.0),
           },
           @moui.Effect::none(),
         ),
       )
     BlocksScrolled(y) =>
-      Some(({ ..model, blocks_scroll_y: y.max(0.0) }, @moui.Effect::none()))
+      Some(({ ..model, blocks_scroll_y: y.max(0.0), }, @moui.Effect::none()))
     ExpressionDrop(block_index, expr_path) =>
       // 洞的解析（段级命中）由**画布**完成（`TextSystem` 只在布局上下文里，
       // 而洞的位置必须与绘制用同一把尺）；这里只做落地。
@@ -578,7 +585,7 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             Some(
               (
                 with_notice(
-                  { ..model, expr_drag: None },
+                  { ..model, expr_drag: None, },
                   text(translator(model), "app.expr.drop.no_slot"),
                   true,
                 ),
@@ -589,7 +596,7 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             Some(
               (
                 update_pure(
-                  { ..model, expr_drag: None },
+                  { ..model, expr_drag: None, },
                   DropExpression(template, block_index, expr_path),
                 ).0,
                 @moui.Effect::none(),
@@ -617,12 +624,14 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             model,
             text(translator(model), "app.recent.action.insert_stmt"),
             "app.recent.action.insert_stmt",
-            m => insert_statement_at(m, category, template, Some((list_path, at))),
+            m => {
+              insert_statement_at(m, category, template, Some((list_path, at)))
+            },
           ),
           @moui.Effect::none(),
         ),
       )
-    PaletteDrop(x, y, avail_width) => {
+    PaletteDrop(x, y, avail_width) =>
       // 落点由**画布**算：调色板只记了「在拖哪条骨架」，指针位置只有这里
       // 才知道。算完派发 `DropStatement`（与点击插入共用同一条落地路径）。
       match model.palette_drag {
@@ -665,7 +674,7 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           Some(
             (
               update_pure(
-                { ..model, palette_drag: None },
+                { ..model, palette_drag: None, },
                 DropStatement(category, template, list_path, at),
               ).0,
               @moui.Effect::none(),
@@ -673,7 +682,6 @@ fn update_blocks_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           )
         }
       }
-    }
     DropExpression(template_index, block_index, expr_path) =>
       // 报告块落入洞：过 `parse_expression_text`（与手打表达式同一条校验链），
       // 解析失败只提示、不塞非法表达式；成功则走 `replace_expr_at` 这一条
@@ -754,7 +762,11 @@ pub fn target_note(model : Model) -> String {
           None => ""
           Some(func) =>
             if model.language is ZhHans {
-              if func.note_zh == "" { func.note_en } else { func.note_zh }
+              if func.note_zh == "" {
+                func.note_en
+              } else {
+                func.note_zh
+              }
             } else if func.note_en == "" {
               func.note_zh
             } else {

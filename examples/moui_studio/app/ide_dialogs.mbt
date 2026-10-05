@@ -474,6 +474,7 @@ pub fn ide_status_bar(
   let workspace = match model.workspace {
     WsVisual => text(t, "app.ws.visual")
     WsCode => text(t, "app.ws.code")
+    WsPreview => text(t, "app.ws.preview")
     WsEmpty => text(t, "app.ws.empty")
   }
   let file = match current_handler(model) {
@@ -583,6 +584,12 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
     StudioCommand::{
       id: "studio.workspace.code",
       label: text(t, "app.command.ws.code"),
+      group: group_ws,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.workspace.preview",
+      label: text(t, "app.command.ws.preview"),
       group: group_ws,
       hint: "",
     },

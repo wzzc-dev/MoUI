@@ -34,6 +34,10 @@ pub(all) enum BlockKind {
   BkWhile
   BkBreak
   BkCall
+  BkMatch
+  BkCase
+  BkEnumDecl
+  BkStructDecl
 }
 
 ///|
@@ -59,6 +63,7 @@ pub fn stmt_block_kind(stmt : Stmt) -> BlockKind {
     @ir.WhileLoop(_, _) => BkWhile
     @ir.Break => BkBreak
     @ir.Stmt::Call(_, _) => BkCall
+    @ir.Match(_, _, _) => BkMatch
   }
 }
 
@@ -78,6 +83,10 @@ pub fn block_label_key(kind : BlockKind) -> String {
     BkWhile => "blocks.while"
     BkBreak => "blocks.break"
     BkCall => "blocks.call"
+    BkMatch => "blocks.match"
+    BkCase => "blocks.case"
+    BkEnumDecl => "blocks.enum_decl"
+    BkStructDecl => "blocks.struct_decl"
   }
 }
 
@@ -87,6 +96,8 @@ pub fn flow_companion_kinds(kind : BlockKind) -> Array[BlockKind] {
   match kind {
     BkIf => [BkElseIf, BkElse, BkEnd]
     BkCountLoop | BkWhile => [BkEnd]
+    // 匹配：情况行 + 否则 + 结束都是匹配头的伴随块
+    BkMatch => [BkCase, BkElse, BkEnd]
     _ => []
   }
 }
@@ -348,6 +359,54 @@ fn emit_chain(
           segments: None,
         })
       }
+      @ir.Match(subject, arms, else_body) => {
+        items.push(BlockItem::{
+          kind: BkMatch,
+          depth,
+          text: @studio_lang.canonical_expr(subject),
+          builtin: "",
+          path,
+          segments: None,
+        })
+        // 路径方案（线性）：section i = 第 i 个 arm 体；section arms.length() = else
+        let mut arm_index = 0
+        for arm in arms {
+          items.push(BlockItem::{
+            kind: BkCase,
+            depth,
+            text: arm.case_name,
+            builtin: "",
+            path,
+            segments: None,
+          })
+          emit_chain(items, arm.body, depth + 1, child_path(path, arm_index))
+          arm_index = arm_index + 1
+        }
+        if else_body.length() > 0 {
+          items.push(BlockItem::{
+            kind: BkElse,
+            depth,
+            text: "",
+            builtin: "",
+            path: [],
+            segments: None,
+          })
+          emit_chain(
+            items,
+            else_body,
+            depth + 1,
+            child_path(path, arms.length()),
+          )
+        }
+        items.push(BlockItem::{
+          kind: BkEnd,
+          depth,
+          text: "",
+          builtin: "",
+          path: [],
+          segments: None,
+        })
+      }
       @ir.WhileLoop(cond, loop_body) => {
         items.push(BlockItem::{
           kind: BkWhile,
@@ -463,6 +522,19 @@ pub fn replace_stmt_at(
       let updated = replace_stmt_at(loop_body, drop_first(rest), stmt)
       body[head] = @ir.WhileLoop(cond, updated)
     }
+    @ir.Match(subject, arms, else_body) => {
+      // section i = 第 i 个 arm 体；section arms.length() = else
+      let rest = drop_first(path)
+      let section = rest[0]
+      if section >= 0 && section < arms.length() {
+        let arm = arms[section]
+        let updated = replace_stmt_at(arm.body, drop_first(rest), stmt)
+        arms[section] = @ir.MatchArm::{ case_name: arm.case_name, body: updated, }
+      } else if section == arms.length() {
+        let updated = replace_stmt_at(else_body, drop_first(rest), stmt)
+        body[head] = @ir.Match(subject, arms, updated)
+      }
+    }
     _ => ()
   }
   body
@@ -531,6 +603,18 @@ pub fn delete_stmt_at(body : Array[Stmt], path : Array[Int]) -> Array[Stmt] {
       }
       let updated = delete_stmt_at(loop_body, drop_first(rest))
       body[head] = @ir.WhileLoop(cond, updated)
+    }
+    @ir.Match(subject, arms, else_body) => {
+      let rest = drop_first(path)
+      let section = rest[0]
+      if section >= 0 && section < arms.length() {
+        let arm = arms[section]
+        let updated = delete_stmt_at(arm.body, drop_first(rest))
+        arms[section] = @ir.MatchArm::{ case_name: arm.case_name, body: updated, }
+      } else if section == arms.length() {
+        let updated = delete_stmt_at(else_body, drop_first(rest))
+        body[head] = @ir.Match(subject, arms, updated)
+      }
     }
     _ => ()
   }
@@ -606,6 +690,16 @@ pub fn stmt_at(body : Array[Stmt], path : Array[Int]) -> Stmt? {
       } else {
         None
       }
+    @ir.Match(_, arms, else_body) => {
+      let section = rest[0]
+      if section >= 0 && section < arms.length() {
+        stmt_at(arms[section].body, drop_first(rest))
+      } else if section == arms.length() {
+        stmt_at(else_body, drop_first(rest))
+      } else {
+        None
+      }
+    }
     _ => None
   }
 }
@@ -649,6 +743,19 @@ pub fn clone_stmt(stmt : Stmt) -> Stmt {
       @ir.CountLoop(clone_expr(times), iter, clone_stmts(loop_body))
     @ir.WhileLoop(cond, loop_body) =>
       @ir.WhileLoop(clone_expr(cond), clone_stmts(loop_body))
+    @ir.Match(subject, arms, else_body) => {
+      let arm_clones : Array[@ir.MatchArm] = []
+      for arm in arms {
+        arm_clones.push(
+          @ir.MatchArm::{ case_name: arm.case_name, body: clone_stmts(arm.body), },
+        )
+      }
+      @ir.Match(
+        clone_expr(subject),
+        arm_clones,
+        clone_stmts(else_body),
+      )
+    }
     @ir.Break => @ir.Break
     @ir.Stmt::Call(name, args) => {
       let copied : Array[Expr] = []
@@ -678,6 +785,8 @@ pub fn clone_expr(expr : Expr) -> Expr {
     @ir.Var(name) => @ir.Var(name)
     @ir.Not(inner) => @ir.Not(clone_expr(inner))
     @ir.Neg(inner) => @ir.Neg(clone_expr(inner))
+    @ir.FieldAccess(base, field) => @ir.FieldAccess(clone_expr(base), field)
+    @ir.EnumTag(enum_name, case_name) => @ir.EnumTag(enum_name, case_name)
     @ir.Binary(op, left, right) =>
       @ir.Binary(op, clone_expr(left), clone_expr(right))
     @ir.Call(name, args) => {
@@ -970,6 +1079,21 @@ pub fn stmt_list_at(body : Array[Stmt], list_path : Array[Int]) -> Array[Stmt]? 
       } else {
         None
       }
+    @ir.Match(_, arms, else_body) => {
+      // section i = 第 i 个 arm 体；section arms.length() = else
+      if rest_len == 1 {
+        let section = list_path[1]
+        if section >= 0 && section < arms.length() {
+          Some(arms[section].body)
+        } else if section == arms.length() {
+          Some(else_body)
+        } else {
+          None
+        }
+      } else {
+        None
+      }
+    }
     _ => None
   }
 }
@@ -1089,4 +1213,38 @@ pub fn reorder_stmt(
   }
   list.insert(insert_at, stmt)
   Some(working)
+}
+
+///|
+/// 声明块投影（M7①）：程序级 enum/struct 声明 → 只读积木行。
+/// path 为空（装饰块口径）：不参与命中/编辑/榫卯，画布据此把它们画成
+/// 「数据声明区」。文本取规范写法（英文关键字 = 规范 id 口径，与
+/// 表达式段的语言无关原则一致）。
+pub fn declaration_chain(program : StudioProgram) -> Array[BlockItem] {
+  let items : Array[BlockItem] = []
+  for decl in program.enums {
+    let cases = decl.cases.map(case_name => case_name).join(", ")
+    items.push(BlockItem::{
+      kind: BkEnumDecl,
+      depth: 0,
+      text: "enum \{decl.name} { \{cases} }",
+      builtin: "",
+      path: [],
+      segments: None,
+    })
+  }
+  for decl in program.structs {
+    let fields = decl.fields
+      .map(field => "\{field.field_name}: \{field.field_type}")
+      .join(", ")
+    items.push(BlockItem::{
+      kind: BkStructDecl,
+      depth: 0,
+      text: "struct \{decl.name} { \{fields} }",
+      builtin: "",
+      path: [],
+      segments: None,
+    })
+  }
+  items
 }

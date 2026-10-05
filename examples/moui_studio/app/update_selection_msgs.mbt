@@ -77,11 +77,7 @@ fn add_function(model : Model) -> Model {
     note_zh: "",
     note_en: "",
   })
-  let next = {
-    ..model,
-    program: { ..model.program, functions, },
-    notice: "",
-  }
+  let next = { ..model, program: { ..model.program, functions, }, notice: "", }
   // 建完即选中：右栏立刻能改名（与「新建变量后选中」同一节奏）
   select_target(next, SideFunction(name))
 }
@@ -111,7 +107,7 @@ fn rename_function(model : Model, from : String, to : String) -> Model {
   for func in model.program.functions {
     if func.name == from {
       functions.push(@ir.FuncDef::{ ..func, name: trimmed, })
-    } else {
+      } else {
       functions.push(func)
     }
   }
@@ -174,7 +170,11 @@ fn rename_calls_in_stmts(
           )
         }
         @ir.CountLoop(times, loop_var, loop_body) =>
-          @ir.CountLoop(times, loop_var, rename_calls_in_stmts(loop_body, from, to))
+          @ir.CountLoop(
+            times,
+            loop_var,
+            rename_calls_in_stmts(loop_body, from, to),
+          )
         @ir.WhileLoop(cond, loop_body) =>
           @ir.WhileLoop(cond, rename_calls_in_stmts(loop_body, from, to))
         _ => stmt
@@ -380,6 +380,16 @@ fn rename_var_in_stmt(stmt : @ir.Stmt, from : String, to : String) -> @ir.Stmt {
       }
       @ir.Stmt::Call(name, renamed)
     }
+    @ir.Match(subject, arms, else_body) =>
+      @ir.Match(
+        rename_var_in_expr(subject, from, to),
+        arms.map(arm =>
+          @ir.MatchArm::{
+            case_name: arm.case_name,
+            body: rename_var_in_stmts(arm.body, from, to),
+          }),
+        rename_var_in_stmts(else_body, from, to),
+      )
   }
 }
 

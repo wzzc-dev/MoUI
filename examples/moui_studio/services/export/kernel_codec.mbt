@@ -159,6 +159,22 @@ pub fn kernel_codec_mbt() -> String {
     #|        ("cond", encode_expr(cond)),
     #|        ("body", Json::array(body.map(encode_stmt))),
     #|      ])
+    #|    @ir.Match(subject, arms, else_body) =>
+    #|      encode_stmt_node(stmt, "match", [
+    #|        ("subject", encode_expr(subject)),
+    #|        (
+    #|          "arms",
+    #|          Json::array(
+    #|            arms.map(arm => {
+    #|              let arm_fields : Map[String, Json] = Map([], capacity=2)
+    #|              arm_fields["case"] = Json::string(arm.case_name)
+    #|              arm_fields["body"] = Json::array(arm.body.map(encode_stmt))
+    #|              Json::object(arm_fields)
+    #|            }),
+    #|          ),
+    #|        ),
+    #|        ("else", Json::array(else_body.map(encode_stmt))),
+    #|      ])
     #|  }
     #|}
     #|
@@ -185,6 +201,8 @@ pub fn kernel_codec_mbt() -> String {
     #|    @ir.StrLit(text) => expr_node("str", [("v", Json::string(text))])
     #|    @ir.BoolLit(flag) => expr_node("bool", [("v", Json::boolean(flag))])
     #|    @ir.Var(name) => expr_node("var", [("v", Json::string(name))])
+    #|    @ir.FieldAccess(base, field) =>
+    #|      expr_node("field_access", [("base", encode_expr(base)), ("field", Json::string(field))])
     #|    @ir.ListLit(items) =>
     #|      expr_node("list", [("items", Json::array(items.map(encode_expr)))])
     #|    @ir.Index(base, index) =>
@@ -204,6 +222,11 @@ pub fn kernel_codec_mbt() -> String {
     #|      expr_node("call", [
     #|        ("name", Json::string(name)),
     #|        ("args", Json::array(args.map(encode_expr))),
+    #|      ])
+    #|    @ir.EnumTag(enum_name, case_name) =>
+    #|      expr_node("enum_tag", [
+    #|        ("enum", Json::string(enum_name)),
+    #|        ("case", Json::string(case_name)),
     #|      ])
     #|  }
     #|}
@@ -245,7 +268,36 @@ pub fn kernel_codec_mbt() -> String {
     #|  if program.functions.length() > 0 {
     #|    root["functions"] = Json::array(program.functions.map(encode_function))
     #|  }
+    #|  if program.structs.length() > 0 {
+    #|    root["structs"] = Json::array(program.structs.map(encode_struct_decl))
+    #|  }
+    #|  if program.enums.length() > 0 {
+    #|    root["enums"] = Json::array(
+    #|      program.enums.map(decl => {
+    #|        let fields : Map[String, Json] = Map([], capacity=2)
+    #|        fields["name"] = Json::string(decl.name)
+    #|        fields["cases"] = Json::array(decl.cases.map(Json::string))
+    #|        Json::object(fields)
+    #|      }),
+    #|    )
+    #|  }
     #|  Json::object(root).stringify()
+    #|}
+    #|
+    #|///|
+    #|/// struct 声明编码（M5-5c ⑧）：名 + 字段（名/类型对，类型存规范 id）。
+    #|fn encode_struct_decl(decl : @ir.StructDecl) -> Json {
+    #|  let fields : Map[String, Json] = Map([], capacity=2)
+    #|  fields["name"] = Json::string(decl.name)
+    #|  fields["fields"] = Json::array(
+    #|    decl.fields.map(field => {
+    #|      let item : Map[String, Json] = Map([], capacity=2)
+    #|      item["name"] = Json::string(field.field_name)
+    #|      item["type"] = Json::string(field.field_type)
+    #|      Json::object(item)
+    #|    }),
+    #|  )
+    #|  Json::object(fields)
     #|}
     #|
     #|///|
@@ -309,6 +361,46 @@ pub fn kernel_codec_mbt() -> String {
     #|    note_zh: json_string_field(note, "zh").unwrap_or(""),
     #|    note_en: json_string_field(note, "en").unwrap_or(""),
     #|  })
+    #|}
+    #|
+    #|///|
+    #|/// struct 声明解码（M5-5c ⑧）：名/字段名/类型三元组。类型词只做
+    #|/// 透传，规范词表校验由 studio_lang 语言级校验统一把关。
+    #|fn decode_struct_decl(
+    #|  fields : Map[String, Json],
+    #|  errors : Array[CodecError],
+    #|) -> @ir.StructDecl? {
+    #|  let name = match json_string_field(fields, "name") {
+    #|    Some(name) => name
+    #|    None => {
+    #|      errors.push(MissingField("structs.name"))
+    #|      return None
+    #|    }
+    #|  }
+    #|  let struct_fields : Array[@ir.StructField] = []
+    #|  match fields.get("fields") {
+    #|    Some(Array(values)) =>
+    #|      for value in values {
+    #|        match value {
+    #|          Object(item) =>
+    #|            match json_string_field(item, "name") {
+    #|              Some(field_name) =>
+    #|                match json_string_field(item, "type") {
+    #|                  Some(field_type) =>
+    #|                    struct_fields.push(
+    #|                      @ir.StructField::{ field_name, field_type, },
+    #|                    )
+    #|                  None => errors.push(MissingField("structs[].type"))
+    #|                }
+    #|              None => errors.push(MissingField("structs[].name"))
+    #|            }
+    #|          _ => errors.push(MissingField("structs.fields[]"))
+    #|        }
+    #|      }
+    #|    None => ()
+    #|    _ => errors.push(MissingField("structs.fields"))
+    #|  }
+    #|  Some(@ir.StructDecl::{ name, fields: struct_fields, })
     #|}
     #|
     #|///|
@@ -529,6 +621,39 @@ pub fn kernel_codec_mbt() -> String {
     #|          }
     #|          Ok(@ir.WhileLoop(cond, body))
     #|        }
+    #|        "match" => {
+    #|          let subject = match stmt_expr(fields) {
+    #|            Ok(expr) => expr
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          let arms : Array[@ir.MatchArm] = []
+    #|          match fields.get("arms") {
+    #|            Some(Array(values)) =>
+    #|              for value in values {
+    #|                match value {
+    #|                  Object(arm_fields) => {
+    #|                    let case_name = match json_string_field(arm_fields, "case") {
+    #|                      Some(text) => text
+    #|                      None => return Err(MissingField("stmt.arms[].case"))
+    #|                    }
+    #|                    let body = match decode_stmt_array(arm_fields, "body") {
+    #|                      Ok(body) => body
+    #|                      Err(error) => return Err(error)
+    #|                    }
+    #|                    arms.push(@ir.MatchArm::{ case_name, body, })
+    #|                  }
+    #|                  _ => return Err(MissingField("stmt.arms[]"))
+    #|                }
+    #|              }
+    #|            None => return Err(MissingField("stmt.arms"))
+    #|            _ => return Err(MissingField("stmt.arms"))
+    #|          }
+    #|          let else_body = match decode_stmt_array(fields, "else") {
+    #|            Ok(body) => body
+    #|            Err(error) => return Err(error)
+    #|          }
+    #|          Ok(@ir.Match(subject, arms, else_body))
+    #|        }
     #|        other => Err(BadStatement(other))
     #|      }
     #|    }
@@ -546,7 +671,7 @@ pub fn kernel_codec_mbt() -> String {
     #|
     #|///|
     #|fn stmt_expr(fields : Map[String, Json]) -> Result[@ir.Expr, CodecError] {
-    #|  let candidates : Array[String] = ["expr", "cond", "times"]
+    #|  let candidates : Array[String] = ["expr", "cond", "times", "subject"]
     #|  let mut found : Json? = None
     #|  for key in candidates {
     #|    match fields.get(key) {
@@ -678,6 +803,17 @@ pub fn kernel_codec_mbt() -> String {
     #|            Some(String(text)) => Ok(@ir.Var(text))
     #|            _ => Err(BadExpr("var"))
     #|          }
+    #|        "enum_tag" => {
+    #|          let enum_name = match json_string_field(fields, "enum") {
+    #|            Some(text) => text
+    #|            None => return Err(MissingField("expr.enum"))
+    #|          }
+    #|          let case_name = match json_string_field(fields, "case") {
+    #|            Some(text) => text
+    #|            None => return Err(MissingField("expr.case"))
+    #|          }
+    #|          Ok(@ir.EnumTag(enum_name, case_name))
+    #|        }
     #|        "list" =>
     #|          match fields.get("items") {
     #|            Some(Array(values)) => {
@@ -904,6 +1040,54 @@ pub fn kernel_codec_mbt() -> String {
     #|    None => ()
     #|    _ => errors.push(MissingField("functions"))
     #|  }
+    #|  let structs : Array[@ir.StructDecl] = []
+    #|  match fields.get("structs") {
+    #|    Some(Array(values)) =>
+    #|      for value in values {
+    #|        match value {
+    #|          Object(item) =>
+    #|            match decode_struct_decl(item, errors) {
+    #|              Some(decl) => structs.push(decl)
+    #|              None => ()
+    #|            }
+    #|          _ => errors.push(MissingField("structs[]"))
+    #|        }
+    #|      }
+    #|    // 可选段：无 structs 字段 = 空（v1 加性演进，旧文件照常解码）
+    #|    None => ()
+    #|    _ => errors.push(MissingField("structs"))
+    #|  }
+    #|  let enums : Array[@ir.EnumDecl] = []
+    #|  match fields.get("enums") {
+    #|    Some(Array(values)) =>
+    #|      for value in values {
+    #|        match value {
+    #|          Object(item) =>
+    #|            match json_string_field(item, "name") {
+    #|              Some(name) => {
+    #|                let cases : Array[String] = []
+    #|                match item.get("cases") {
+    #|                  Some(Array(case_values)) =>
+    #|                    for case_value in case_values {
+    #|                      match case_value {
+    #|                        String(text) => cases.push(text)
+    #|                        _ => errors.push(MissingField("enums[].cases[]"))
+    #|                      }
+    #|                    }
+    #|                  None => ()
+    #|                  _ => errors.push(MissingField("enums[].cases"))
+    #|                }
+    #|                enums.push(@ir.EnumDecl::{ name, cases, })
+    #|              }
+    #|              None => errors.push(MissingField("enums[].name"))
+    #|            }
+    #|          _ => errors.push(MissingField("enums[]"))
+    #|        }
+    #|      }
+    #|    // 可选段：无 enums 字段 = 空（v1 加性演进，旧文件照常解码）
+    #|    None => ()
+    #|    _ => errors.push(MissingField("enums"))
+    #|  }
     #|  if !errors.is_empty() {
     #|    return Err(errors)
     #|  }
@@ -914,6 +1098,8 @@ pub fn kernel_codec_mbt() -> String {
     #|    variables,
     #|    handlers,
     #|    functions,
+    #|    structs,
+    #|    enums,
     #|  }
     #|  for error in @ir.validate_program(program) {
     #|    errors.push(Structural(error))

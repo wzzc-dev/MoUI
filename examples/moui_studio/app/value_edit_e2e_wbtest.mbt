@@ -17,9 +17,9 @@ test "e2e: clicking a value in the blocks canvas opens the inline editor" {
   let registered : Ref[Bool] = Ref(false)
   let runtime = @runtime.new_program_with_dimensions(
     program=program(
-      environment=@services.AppEnvironment::new(timer=Some(
-        fake_timer_source(sink, registered),
-      )),
+      environment=@services.AppEnvironment::new(
+        timer=Some(fake_timer_source(sink, registered)),
+      ),
     ),
     width=1600.0,
     height=900.0,
@@ -61,16 +61,11 @@ test "e2e: clicking a value in the blocks canvas opens the inline editor" {
 /// 检查两者的几何不相交。
 test "value and slot hit regions never overlap" {
   let body = [
-    @ir.Assign(
-      "x",
-      @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2)),
-    ),
+    @ir.Assign("x", @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2))),
   ]
   let blocks = @blocks.block_chain(body)
   let rects = blocks_item_rects(blocks, avail_width=470.0)
-  let measure = fn(text : String) -> Double {
-    text.length().to_double() * 7.0
-  }
+  let measure = fn(text : String) -> Double { text.length().to_double() * 7.0 }
   let slots = blocks_slot_rects(blocks[0], rects[0], measure)
   // 对每个洞的中心点：值命中**不得**返回
   for entry in slots {

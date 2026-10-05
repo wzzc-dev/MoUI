@@ -41,7 +41,12 @@ pub fn runtime_sample_arrived(
       history.push(item)
     }
   }
-  { ..model, runtime_report: Some(sample), runtime_missing: false, runtime_history: history, }
+  {
+    ..model,
+    runtime_report: Some(sample),
+    runtime_missing: false,
+    runtime_history: history,
+  }
 }
 
 ///|
@@ -63,6 +68,6 @@ pub fn runtime_refresh_attached(
   }
   match take() {
     Some(sample) => (runtime_sample_arrived(next, sample), @moui.Effect::none())
-    None => ({ ..next, runtime_missing: true }, @moui.Effect::none())
+    None => ({ ..next, runtime_missing: true, }, @moui.Effect::none())
   }
 }

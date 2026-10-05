@@ -6,7 +6,13 @@ test "insert statement lands right after the selected block" {
   assert_true(before.length() >= 2)
   let original_second = before[1].text
   let selected = select_block_index(model, 0)
-  let inserted = apply(selected, InsertStatement(3, @app.template_index_of(3, "app.stmt.tpl.message").unwrap()))
+  let inserted = apply(
+    selected,
+    InsertStatement(
+      3,
+      @app.template_index_of(3, "app.stmt.tpl.message").unwrap(),
+    ),
+  )
   let after = @app.block_chain_of(inserted)
   assert_eq(after.length(), before.length() + 1)
   // 新语句插在下标 1，原第二条被挤到下标 2
@@ -19,7 +25,13 @@ test "insert statement lands right after the selected block" {
 test "inserted statement is undoable" {
   let model = apply(@app.initial_model(), SelectTemplate(2))
   let count = @app.block_chain_of(model).length()
-  let inserted = apply(model, InsertStatement(3, @app.template_index_of(3, "app.stmt.tpl.message").unwrap()))
+  let inserted = apply(
+    model,
+    InsertStatement(
+      3,
+      @app.template_index_of(3, "app.stmt.tpl.message").unwrap(),
+    ),
+  )
   assert_eq(@app.block_chain_of(inserted).length(), count + 1)
   let undone = apply(inserted, Undo)
   assert_eq(@app.block_chain_of(undone).length(), count)
@@ -30,7 +42,13 @@ test "inserted statement is undoable" {
 test "insert statement without a handler is a safe no-op" {
   let model = apply(@app.initial_model(), ClearSelection)
   let before = model.program.handlers.length()
-  let inserted = apply(model, InsertStatement(3, @app.template_index_of(3, "app.stmt.tpl.message").unwrap()))
+  let inserted = apply(
+    model,
+    InsertStatement(
+      3,
+      @app.template_index_of(3, "app.stmt.tpl.message").unwrap(),
+    ),
+  )
   assert_eq(inserted.program.handlers.length(), before)
   assert_true(@app.block_chain_of(inserted).length() == 0)
 }

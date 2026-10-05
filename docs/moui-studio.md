@@ -8,9 +8,11 @@ toolchain output, a grid canvas, and a terminal-style console.
 
 - Source: `examples/moui_studio` (module + `moon.work` member)
 - Entrypoints: Web (`web_wasm`) and macOS (`macos_skia`)
-- Project format: `moui.studio.project` v1 (`.studio.json`), the only format —
-  files from earlier product generations are rejected with a structured error,
-  never read or migrated
+- Code source of truth: imported MoonBit projects keep `form.mbt` +
+  `handlers.mbt` as the on-disk truth; the in-memory `.studio.json` format is a
+  **legacy interchange format** — opening one runs the one-time migrator, which
+  writes the code project next to it (decode failures are structured errors
+  that name the migrator, never a silent partial load)
 - Language: `domain/studio_lang` keywords render in zh-Hans or en-US over one
   canonical IR
 
@@ -28,6 +30,45 @@ no second source of truth:
 Editing anywhere writes back to the IR and refreshes the other views. Round-trip
 consistency is a hard gate:
 `parse(render_zh(ir)) == ir == parse(render_en(ir))`.
+
+The Code view defaults to the **MoonBit appearance** — the generated subset
+source that byte-for-byte matches the export bundle (`CodeAppearance`); the
+zh/en DSL renderings are display appearances (`CycleCodeAppearance` toggles).
+Editing/commit still happens in the DSL appearance; the MoonBit display never
+mutates the IR behind your back.
+
+## Code as source of truth (workbench)
+
+Since the workbench upgrade, an imported MoonBit project keeps two code files as
+the on-disk source of truth, both derived from the same IR snapshot:
+
+| File | Contents | Written by |
+|---|---|---|
+| `form.mbt` | Coordinate-layout subset (`stage(...)` + `place(...)`) consumed by the layout designer | `render_form` (parse∘render round-trip is a hard gate) |
+| `handlers.mbt` | The generated event-handler MoonBit source, byte-identical to the export bundle | `generate_source` |
+
+- **Import** scans a MoonBit module (`moon.mod` / `moon.pkg`), detects the
+  program package, and powers three preview modes: canvas quick-view (headless
+  frame replay), web live preview (`webpreview` static server + webview), and
+  native run (`build_native` worker).
+- **Templates and accepted AI proposals** regenerate the code project
+  (`pending_code_project` → the composition root writes both files). A proposal
+  shows a **code text diff** (`code_text_diff`, line-level ± over the combined
+  form+handlers text) instead of structured entries only.
+- **Opening a legacy `.studio.json`** runs the migrator: decode → write
+  `form.mbt` + `handlers.mbt` next to the old file → load the IR. Decode
+  failures are structured and name the migrator; the old format is never loaded
+  as a program source directly.
+- **External changes** (e.g. VS Code edits `form.mbt`): a manual refresh entry
+  in the preview mode strip reads the file, compares it with the designer
+  session, and reloads with a notice — parse failures keep the current design
+  and say so.
+- **Blocks grew real MoonBit semantics**: struct/enum declarations, field
+  access (`person.名字`), and match dispatch flow through the nine-surface IR
+  chain; the generated source is re-ingested by the inverse parser
+  (`parse∘gen == id` contract), and blocks shapes encode it (match hat with
+  multi-branch C arms, declaration rows, field-access pills, single-outline
+  tab/notch PathSpec).
 
 ## Two execution tracks
 

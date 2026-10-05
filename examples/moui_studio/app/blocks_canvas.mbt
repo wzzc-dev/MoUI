@@ -134,8 +134,13 @@ pub fn blocks_c_arms(
   while i < blocks.length() {
     let head = blocks[i]
     let is_head = match head.kind {
-      @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkCountLoop |
-      @blocks.BkWhile => true
+      @blocks.BkIf
+      | @blocks.BkElseIf
+      | @blocks.BkCase
+      | @blocks.BkElse
+      | @blocks.BkCountLoop
+      | @blocks.BkWhile
+      | @blocks.BkMatch => true
       _ => false
     }
     if is_head && i < rects.length() {
@@ -145,9 +150,12 @@ pub fn blocks_c_arms(
       while j < blocks.length() {
         let item = blocks[j]
         if item.depth == head.depth &&
-          (item.kind is @blocks.BkElseIf ||
+          (
+            item.kind is @blocks.BkElseIf ||
+            item.kind is @blocks.BkCase ||
             item.kind is @blocks.BkElse ||
-            item.kind is @blocks.BkEnd) {
+            item.kind is @blocks.BkEnd
+          ) {
           terminator = j
           break
         }
@@ -197,11 +205,7 @@ pub fn blocks_visual_rects(
   let out : Array[@geometry.Rect] = []
   let mut i = 0
   for r in rects {
-    let inset = if blocks_in_c_body(blocks, i) {
-      block_arm_width
-    } else {
-      0.0
-    }
+    let inset = if blocks_in_c_body(blocks, i) { block_arm_width } else { 0.0 }
     out.push(
       @geometry.Rect::new(
         x=r.origin.x,
@@ -236,8 +240,13 @@ pub fn blocks_in_c_body(blocks : Array[@blocks.BlockItem], index : Int) -> Bool 
     if item.depth < depth {
       // 找到所属的父层：它是 C 头才算「在体内」
       return match item.kind {
-        @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkCountLoop |
-        @blocks.BkWhile => true
+        @blocks.BkIf
+        | @blocks.BkElseIf
+        | @blocks.BkCase
+        | @blocks.BkElse
+        | @blocks.BkCountLoop
+        | @blocks.BkWhile
+        | @blocks.BkMatch => true
         _ => false
       }
     }
@@ -538,6 +547,7 @@ pub fn blocks_insert_mark(
 /// 选中/聚光灯描边 + 落槽指示线。display_texts 与 blocks 一一对应
 /// （控制流块的本地化标签由调用方预渲染，draw 闭包拿不到翻译器）。
 /// `insert_mark` 是**本画布本地坐标**的指示线（调用方已按段换算）。
+
 ///|
 /// 文本宽度度量：绘制计划**注入**它而不是自己拿 `TextSystem`——
 /// 计划函数是纯的（便于单测），而 `TextSystem` 只在布局上下文里。
@@ -550,7 +560,11 @@ pub fn no_text_measure(_text : String) -> Double {
 /// 行首箭头前缀：返回块画「↩ 」——「离开子程序」的方向感。
 /// 标签与插槽洞的引导宽度都由它拼出（两处各写一份条件就会错位）。
 fn blocks_row_arrow(item : @blocks.BlockItem) -> String {
-  if item.kind is @blocks.BkReturn { "↩ " } else { "" }
+  if item.kind is @blocks.BkReturn {
+    "↩ "
+  } else {
+    ""
+  }
 }
 
 ///|
@@ -593,8 +607,7 @@ pub fn blocks_draw_plan(
   match insert_mark {
     // 无效落点画成**红色拒收线**（比「什么都不画」明确：用户不会以为
     // 拖拽坏了）。有效落点是强调色插入线。
-    Some((y, w, valid)) =>
-      ops.push(InsertMark(dx + 10.0, dy + y, w, valid))
+    Some((y, w, valid)) => ops.push(InsertMark(dx + 10.0, dy + y, w, valid))
     None => ()
   }
   let mut i = 0
@@ -609,15 +622,12 @@ pub fn blocks_draw_plan(
     // 聚光灯只画描边（`BlockStroke`），不再加「▶ 」文字前缀：块宽现在
     // 随内容收紧，前缀会把高亮行挤出一个省略号（运行态文字跳变）。
     let is_spotlight = item.text != "" && item.text == spotlight
-    ops.push(BlockBody(x, y, w, h, item.kind))
-    // 榫头：本块在列表中不是第一条才画——首块的上一项是父块（新栈开始）
-    if item.path.length() > 0 && item.path[item.path.length() - 1] > 0 {
-      ops.push(BlockTab(x + 20.0, y - 5.0, 18.0, item.kind))
-    }
-    // 卯口：底边中央挖去画布底色，下一块的榫头插进来
-    if item.path.length() > 0 {
-      ops.push(BlockNotchCut(x + 20.0, y + h - 1.0))
-    }
+    // 单轮廓（M7②）：榫头/卯口在外轮廓里一次 fill+stroke——
+    // 榫头 = 顶边凸起（有上一块才画）；卯口 = 底边凹口（有下一块才画）。
+    let has_tab = item.path.length() > 0 &&
+      item.path[item.path.length() - 1] > 0
+    let has_notch = item.path.length() > 0
+    ops.push(BlockOutline(x, y, w, h, item.kind, has_tab, has_notch))
     // **C 形左壁**：从顶块（帽）底边向下拉到收尾块顶边。帽本身保持一行高，
     // 壁与收尾块一起把子栈围成 C——「帽 + 左壁 + 底口」三段，缺一段就读成
     // 普通缩进。壁色跟顶块 kind（否则会读成另一块积木）。
@@ -638,7 +648,8 @@ pub fn blocks_draw_plan(
     // 条件块（如果/否则如果/当）：标签前一枚「六角宝石」徽标——
     // 取值分支的视觉锚点（真实六角需要多边形绘制，圆角近似同位）。
     let badge = match item.kind {
-      @blocks.BkIf | @blocks.BkElseIf | @blocks.BkWhile => {
+      // 匹配帽与如果/当同族：取值分派的决策锚点
+      @blocks.BkIf | @blocks.BkElseIf | @blocks.BkWhile | @blocks.BkMatch => {
         ops.push(BlockBadge(x + 8.0, y + 10.0, item.kind))
         true
       }
@@ -671,7 +682,11 @@ pub fn blocks_draw_plan(
         measure,
         blocks_row_lead_width(
           item,
-          if i < lead_texts.length() { lead_texts[i] } else { "" },
+          if i < lead_texts.length() {
+            lead_texts[i]
+          } else {
+            ""
+          },
           measure,
         ),
       )
@@ -695,13 +710,14 @@ pub fn blocks_draw_plan(
 
 ///|
 pub(all) enum BlocksDrawOp {
-  BlockBody(Double, Double, Double, Double, @blocks.BlockKind)
+  /// 单轮廓块体（M7②）：榫头/卯口**画进外轮廓**（PathSpec 一次
+  /// fill+stroke），替代贴片式三段（块体填充 + 榫头贴片 + 卯口挖色）。
+  /// `(x, y, w, h, kind, has_tab, has_notch)`。
+  BlockOutline(Double, Double, Double, Double, @blocks.BlockKind, Bool, Bool)
   /// C 形块的左壁：`(x, y, w, h, kind)`——从顶块底边向下延伸包住子栈。
   /// `kind` 决定壁色（与顶块同色，否则「包裹」会读成另一块积木）。
   BlockArm(Double, Double, Double, Double, @blocks.BlockKind)
   BlockBadge(Double, Double, @blocks.BlockKind)
-  BlockTab(Double, Double, Double, @blocks.BlockKind)
-  BlockNotchCut(Double, Double)
   BlockLabel(String, Double, Double, Double, String)
   /// 脚本说明横幅：`(文本, x, y, 宽)`。画在积木链**上方**。
   ///
@@ -713,7 +729,7 @@ pub(all) enum BlocksDrawOp {
   InsertMark(Double, Double, Double, Bool)
   /// 插槽（reporter slot）的圆角凹槽：`(x, y, w, h, 是否有内容)`。
   /// 画在字形之下，读作「这里可以塞一块积木」。
-  SlotHole(Double, Double, Double, Double, Bool)
+  SlotHole(Double, Double, Double, Double, Bool, Bool)
 }
 
 ///|
@@ -757,6 +773,7 @@ fn push_slot_holes(
           hole.size.width,
           hole.size.height,
           measure(entry.0.text) > 0.0,
+          entry.0.pill,
         ),
       )
     }
@@ -890,15 +907,9 @@ pub fn blocks_canvas(
         }
         for op in ops {
           match op {
-            BlockBody(x, y, w, h, kind) =>
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(
-                  rect=@geometry.Rect::new(x~, y~, width=w, height=h),
-                  radius=block_corner_radius(kind),
-                ),
-                @graphics.Brush::solid(block_fill(kind)),
-              )
+            BlockOutline(x, y, w, h, kind, tab, notch) =>
+              // 单轮廓（M7②）：一次 fill+stroke，榫卯在轮廓里
+              paint_block_outline(ctx, x, y, w, h, kind, tab, notch)
             BlockArm(x, y, w, h, kind) =>
               fill_rounded_rect(
                 ctx,
@@ -916,24 +927,6 @@ pub fn blocks_canvas(
                   radius=4.0,
                 ),
                 @graphics.Brush::solid(block_badge_color(kind)),
-              )
-            BlockTab(x, y, w, kind) =>
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(
-                  rect=@geometry.Rect::new(x~, y~, width=w, height=7.0),
-                  radius=2.0,
-                ),
-                @graphics.Brush::solid(block_fill(kind)),
-              )
-            BlockNotchCut(x, y) =>
-              fill_rounded_rect(
-                ctx,
-                @graphics.RoundedRect::new(
-                  rect=@geometry.Rect::new(x~, y~, width=18.0, height=6.0),
-                  radius=2.0,
-                ),
-                @graphics.Brush::solid(block_notch_color()),
               )
             BlockLabel(_text, x, y, maxw, fitted) =>
               // **左对齐**：插槽洞的游标从 frame.x 起按段宽累加，文字居中
@@ -977,44 +970,52 @@ pub fn blocks_canvas(
                   radius=1.5,
                 ),
                 @graphics.Brush::solid(
-                  if valid { ide_accent() } else { ide_danger() },
+                  if valid {
+                    ide_accent()
+                  } else {
+                    ide_danger()
+                  },
                 ),
               )
-            ScriptNote(text_value, x, y, w) =>
-              // 说明用**斜体式的弱化色**画在浅底上，与积木文本区分开：
-              // 注释不该和代码抢注意力（Scratch 的注释也是灰底灰字）。
-              {
-                fill_rounded_rect(
-                  ctx,
-                  @graphics.RoundedRect::new(
-                    rect=@geometry.Rect::new(x~, y~, width=w, height=16.0),
-                    radius=3.0,
-                  ),
-                  @graphics.Brush::solid(blocks_note_background()),
-                )
-                draw_text(
-                  ctx,
-                  @text.TextRun::new(
-                    text=text_value,
-                    frame=@geometry.Rect::new(x~, y~, width=w, height=16.0),
-                    font=@text.FontSpec::new(size=11.0),
-                    color=blocks_note_text(),
-                  ),
-                )
-              }
-            SlotHole(x, y, w, h, filled) =>
+            // 说明用**斜体式的弱化色**画在浅底上，与积木文本区分开：
+            // 注释不该和代码抢注意力（Scratch 的注释也是灰底灰字）。
+            ScriptNote(text_value, x, y, w) => {
+              fill_rounded_rect(
+                ctx,
+                @graphics.RoundedRect::new(
+                  rect=@geometry.Rect::new(x~, y~, width=w, height=16.0),
+                  radius=3.0,
+                ),
+                @graphics.Brush::solid(blocks_note_background()),
+              )
+              draw_text(
+                ctx,
+                @text.TextRun::new(
+                  text=text_value,
+                  frame=@geometry.Rect::new(x~, y~, width=w, height=16.0),
+                  font=@text.FontSpec::new(size=11.0),
+                  color=blocks_note_text(),
+                ),
+              )
+            }
+            SlotHole(x, y, w, h, filled, pill) =>
               // 插槽：**浅色内凹**读作「这里可以塞一块积木」。
               // 有内容时底色更亮一点（内容块坐上去），空槽更暗（等一块进来）。
               // 颜色取自画布栈的既有色阶，不新引入 token——插槽是积木的
               // 内部结构，不是独立表面。
+              // 字段访问胶囊（M7②）：全圆角（h/2），数据读取的专属形态。
               fill_rounded_rect(
                 ctx,
                 @graphics.RoundedRect::new(
                   rect=@geometry.Rect::new(x~, y~, width=w, height=h),
-                  radius=6.0,
+                  radius=if pill { h / 2.0 } else { 6.0 },
                 ),
                 @graphics.Brush::solid(
-                  if filled { blocks_slot_filled() } else { blocks_slot_empty() },
+                  if filled {
+                    blocks_slot_filled()
+                  } else {
+                    blocks_slot_empty()
+                  },
                 ),
               )
           }
@@ -1033,7 +1034,13 @@ pub fn blocks_canvas(
         y_offset,
         note_height,
       )
-      let hit = blocks_hit_index(blocks, lx, ly, avail_width=width, display_texts~)
+      let hit = blocks_hit_index(
+        blocks,
+        lx,
+        ly,
+        avail_width=width,
+        display_texts~,
+      )
       // **存视口坐标**（`position` 就是），不是画布局部坐标：菜单要锚在
       // 指针所在的那一点上，而 `context_menu_region` 的 `Viewport` 锚点
       // 吃的是视口坐标。存局部坐标的话菜单会按画布原点的偏移弹出来，
@@ -1060,15 +1067,16 @@ pub fn blocks_canvas(
       }
       let base = blocks_item_rects(blocks, avail_width=width, display_texts~)
       let visual = blocks_visual_rects(blocks, base)
-      match blocks_value_hit(
-        blocks,
-        visual,
-        lx,
-        ly,
-        measure,
-        y_offset~,
-        lead_texts~,
-      ) {
+      match
+        blocks_value_hit(
+          blocks,
+          visual,
+          lx,
+          ly,
+          measure,
+          y_offset~,
+          lead_texts~,
+        ) {
         Some(hit) => Msg::EditBlockValue(hit.block_index, hit.expr_path)
         None =>
           // 宽度随消息带上：命中必须用与绘制同一组矩形（见 Msg 上的注释）。
@@ -1118,19 +1126,23 @@ pub fn blocks_canvas(
               None => 0.0
             }
           }
-          let base = blocks_item_rects(blocks, avail_width=width, display_texts~)
-          let visual = blocks_visual_rects(blocks, base)
-          match blocks_slot_hit(
+          let base = blocks_item_rects(
             blocks,
-            visual,
-            lx,
-            ly,
-            measure,
-            y_offset~,
-            lead_texts~,
-          ) {
-            Some(hit) =>
-              Msg::ExpressionDrop(hit.block_index, hit.expr_path)
+            avail_width=width,
+            display_texts~,
+          )
+          let visual = blocks_visual_rects(blocks, base)
+          match
+            blocks_slot_hit(
+              blocks,
+              visual,
+              lx,
+              ly,
+              measure,
+              y_offset~,
+              lead_texts~,
+            ) {
+            Some(hit) => Msg::ExpressionDrop(hit.block_index, hit.expr_path)
             None =>
               // 没落在洞上：明确拒绝（松手毫无反应会让用户以为拖坏了）
               Msg::ExpressionDrop(-1, [])
@@ -1164,5 +1176,77 @@ pub fn blocks_canvas(
     // 配色纪律，画布底由积木域自己钉，不借邻居的回落色。
     background=blocks_canvas_background(),
     padding=0.0,
+  )
+}
+
+///|
+/// 单轮廓 PathSpec（M7②）：块体外轮廓 = 圆角矩形 + 顶边榫头凸起 +
+/// 底边卯口凹口，**一条路径**描述整块。榫/卯只在有相邻块时启用
+///（has_tab = 不是栈首；has_notch = 后面还有块）。
+pub fn block_outline_path(
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  tab : Bool,
+  notch : Bool,
+) -> Array[@core.PathVerb] {
+  let r = 6.0
+  let tab_l = x + 20.0
+  let tab_r = x + 38.0
+  let depth = 5.0
+  let verbs : Array[@core.PathVerb] = []
+  // 顶边：左 → 右（有榫头则中段凸起）
+  verbs.push(@core.MoveTo(@core.Point::new(x=x + r, y~)))
+  if tab {
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_l, y~)))
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_l, y=y - depth)))
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_r, y=y - depth)))
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_r, y~)))
+  }
+  verbs.push(@core.LineTo(@core.Point::new(x=x + w - r, y~)))
+  verbs.push(@core.QuadTo(@core.Point::new(x=x + w, y~), @core.Point::new(x=x + w, y=y + r)))
+  // 右边
+  verbs.push(@core.LineTo(@core.Point::new(x=x + w, y=y + h - r)))
+  verbs.push(@core.QuadTo(@core.Point::new(x=x + w, y=y + h), @core.Point::new(x=x + w - r, y=y + h)))
+  // 底边：右 → 左（有卯口则中段凹进）。注意凹口两端点的 y 是**底边**
+  // y+h——写成 y~ 会抓到顶边 y，路径自交后填充出贯穿整行的楔形（实测缺陷）。
+  if notch {
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_r, y=y + h)))
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_r, y=y + h + depth)))
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_l, y=y + h + depth)))
+    verbs.push(@core.LineTo(@core.Point::new(x=tab_l, y=y + h)))
+  }
+  verbs.push(@core.LineTo(@core.Point::new(x=x + r, y=y + h)))
+  verbs.push(@core.QuadTo(@core.Point::new(x~ , y=y + h), @core.Point::new(x~, y=y + h - r)))
+  // 左边
+  verbs.push(@core.LineTo(@core.Point::new(x~, y=y + r)))
+  verbs.push(@core.QuadTo(@core.Point::new(x~, y~), @core.Point::new(x=x + r, y~)))
+  verbs.push(@core.Close)
+  verbs
+}
+
+///|
+/// 单轮廓一次 fill+stroke：榫卯不再是贴片，块与块的「咬合」由轮廓
+/// 几何直接表达（渲染器一次走带，无叠色缝）。
+pub fn paint_block_outline(
+  ctx : @views.PaintContext,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  kind : @blocks.BlockKind,
+  tab : Bool,
+  notch : Bool,
+) -> Unit {
+  ctx.commands.push(
+    @core.DrawPath(
+      @core.PathSpec::{
+        verbs: block_outline_path(x, y, w, h, tab, notch),
+        fill: Some(@graphics.Brush::solid(block_fill(kind))),
+        stroke: Some(@graphics.Brush::solid(block_outline_stroke())),
+        stroke_width: 1.0,
+      },
+    ),
   )
 }

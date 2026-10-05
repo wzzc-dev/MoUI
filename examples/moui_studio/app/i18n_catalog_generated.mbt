@@ -185,6 +185,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Values come from whichever track is running (interpret / compile)",
         ),
       ),
+      ("app.ws.preview", GeneratedI18nMessage::Text("Preview")),
       ("blocks.declare", GeneratedI18nMessage::Text("declare")),
       ("blocks.else_if", GeneratedI18nMessage::Text("elseif")),
       ("builtin.random", GeneratedI18nMessage::Text("random")),
@@ -305,6 +306,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.expr.tpl.mod", GeneratedI18nMessage::Text("Modulo")),
       ("app.function.new", GeneratedI18nMessage::Text("New block")),
       ("app.handler.none", GeneratedI18nMessage::Text("No handler selected")),
+      ("app.left.project", GeneratedI18nMessage::Text("Projects")),
       ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
       (
         "app.preview.note",
@@ -385,6 +387,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.preview.title",
         GeneratedI18nMessage::Text("MoonBit source preview"),
       ),
+      (
+        "app.project.empty",
+        GeneratedI18nMessage::Text(
+          "No MoonBit project imported yet — click Import above to pick a directory",
+        ),
+      ),
       ("app.qa.align_left", GeneratedI18nMessage::Text("Align left (24)")),
       ("app.run.variables", GeneratedI18nMessage::Text("Variables")),
       ("app.runtime.title", GeneratedI18nMessage::Text("Runtime snapshot")),
@@ -459,8 +467,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide_live", GeneratedI18nMessage::Text("Hide live app")),
       ("app.pane.live.idle", GeneratedI18nMessage::Text("design")),
       ("app.pane.show_live", GeneratedI18nMessage::Text("+ Live App")),
+      ("app.problems.build", GeneratedI18nMessage::Text("Build")),
       ("app.problems.draft", GeneratedI18nMessage::Text("Draft")),
       ("app.problems.empty", GeneratedI18nMessage::Text("No problems found.")),
+      (
+        "app.project.import",
+        GeneratedI18nMessage::Text("Import MoonBit project…"),
+      ),
       ("app.qa.align_right", GeneratedI18nMessage::Text("Align right (24)")),
       (
         "app.run.audit_hint",
@@ -533,6 +546,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Write your program here; keyword cheatsheet lives under Help",
         ),
       ),
+      ("app.code.switch_dsl", GeneratedI18nMessage::Text("Switch to DSL")),
       (
         "app.command.ai.dock",
         GeneratedI18nMessage::Text("Dock / undock AI layer"),
@@ -699,6 +713,16 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.inspector.delete", GeneratedI18nMessage::Text("Delete control")),
       ("app.pane.show_blocks", GeneratedI18nMessage::Text("+ Blocks pane")),
       ("app.problems.program", GeneratedI18nMessage::Text("Program")),
+      ("app.project.build_ok", GeneratedI18nMessage::Text("Build passed: {a}")),
+      (
+        "app.project.imported",
+        GeneratedI18nMessage::Text("Project imported: {name}"),
+      ),
+      ("app.project.kind.web", GeneratedI18nMessage::Text("web entry")),
+      (
+        "app.project.no_entry",
+        GeneratedI18nMessage::Text("This project has no matching entry package"),
+      ),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("Confirm send")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("no handler")),
@@ -862,6 +886,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Reset pane split ratio"),
       ),
       (
+        "app.command.ws.preview",
+        GeneratedI18nMessage::Text("Switch to preview workspace"),
+      ),
+      (
         "app.compile.phase.wasm",
         GeneratedI18nMessage::Text("Building Web artifact"),
       ),
@@ -878,6 +906,21 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Real compile failed"),
       ),
       ("app.pane.foot_controls", GeneratedI18nMessage::Text("{count} controls")),
+      (
+        "app.project.build_busy",
+        GeneratedI18nMessage::Text("A build is already running"),
+      ),
+      ("app.project.design_tab", GeneratedI18nMessage::Text("Layout")),
+      ("app.project.kind.plain", GeneratedI18nMessage::Text("package")),
+      (
+        "app.project.no_project",
+        GeneratedI18nMessage::Text("Import a MoonBit project first"),
+      ),
+      (
+        "app.project.props_none",
+        GeneratedI18nMessage::Text("Click an element in the preview canvas"),
+      ),
+      ("app.project.props_role", GeneratedI18nMessage::Text("Role: {a}")),
       ("app.recent.action.edit", GeneratedI18nMessage::Text("Edited program")),
       ("app.recent.action.move", GeneratedI18nMessage::Text("Moved control")),
       ("app.recent.action.rect", GeneratedI18nMessage::Text("Changed geometry")),
@@ -938,6 +981,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "app.code.switch_moonbit",
+        GeneratedI18nMessage::Text("Switch to MoonBit"),
+      ),
+      (
         "app.command.compile.run",
         GeneratedI18nMessage::Text("Compile and run (MoonBit)"),
       ),
@@ -992,6 +1039,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.inspector.data_meta", GeneratedI18nMessage::Text("Size")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("Duplicate")),
+      (
+        "app.project.design_open",
+        GeneratedI18nMessage::Text("Open layout designer"),
+      ),
+      ("app.project.kind.native", GeneratedI18nMessage::Text("native entry")),
+      ("app.project.props_apply", GeneratedI18nMessage::Text("Apply & rebuild")),
+      ("app.project.props_title", GeneratedI18nMessage::Text("Properties")),
       ("app.recent.action.align", GeneratedI18nMessage::Text("Aligned control")),
       ("app.recent.action.items", GeneratedI18nMessage::Text("Changed items")),
       (
@@ -1039,6 +1093,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Bottom bar: run audit"),
       ),
       (
+        "app.command.left.project",
+        GeneratedI18nMessage::Text("Left panel: Projects"),
+      ),
+      (
         "app.command.mode.preview",
         GeneratedI18nMessage::Text("Switch to MoonBit source view"),
       ),
@@ -1063,6 +1121,20 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "The timer advances only while running (virtual clock).",
         ),
+      ),
+      (
+        "app.project.build_failed",
+        GeneratedI18nMessage::Text("Build failed: {a}"),
+      ),
+      (
+        "app.project.design_empty",
+        GeneratedI18nMessage::Text(
+          "The layout designer reads the project's form.mbt — drag controls, edit literals, save and previews rebuild automatically",
+        ),
+      ),
+      (
+        "app.project.file_deleted",
+        GeneratedI18nMessage::Text("File deleted: {a}"),
       ),
       (
         "app.recent.action.delete",
@@ -1130,6 +1202,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.phase.prepare",
         GeneratedI18nMessage::Text("Preparing workspace"),
       ),
+      (
+        "app.dialog.import_project",
+        GeneratedI18nMessage::Text("Select MoonBit project directory"),
+      ),
       ("app.expr.tpl.selected_row", GeneratedI18nMessage::Text("Selected row")),
       ("app.inspector.data_access", GeneratedI18nMessage::Text("Access")),
       ("app.inspector.data_source", GeneratedI18nMessage::Text("Data source")),
@@ -1142,6 +1218,22 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.log.proposal_rejected",
         GeneratedI18nMessage::Text("Proposal rejected"),
+      ),
+      (
+        "app.project.label_patched",
+        GeneratedI18nMessage::Text("Patched: {a}, rebuilding preview"),
+      ),
+      (
+        "app.project.preview_empty",
+        GeneratedI18nMessage::Text(
+          "No preview yet — build once to render the frame",
+        ),
+      ),
+      (
+        "app.project.preview_ready",
+        GeneratedI18nMessage::Text(
+          "Preview ready: the project canvas is available",
+        ),
       ),
       (
         "app.recent.action.handler",
@@ -1218,6 +1310,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.inspector.window_title", GeneratedI18nMessage::Text("Window title")),
       (
+        "app.project.external_check",
+        GeneratedI18nMessage::Text("Check external changes"),
+      ),
+      (
+        "app.project.preview_failed",
+        GeneratedI18nMessage::Text("Preview file write failed: {a}"),
+      ),
+      (
         "app.recent.action.function",
         GeneratedI18nMessage::Text("New custom block"),
       ),
@@ -1279,6 +1379,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "app.project.preview_rebuild",
+        GeneratedI18nMessage::Text("Rebuild preview"),
+      ),
+      (
         "app.recent.action.duplicate",
         GeneratedI18nMessage::Text("Duplicated control"),
       ),
@@ -1329,6 +1433,18 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.inspector.timer_interval",
         GeneratedI18nMessage::Text("Timer interval (seconds, 0=off)"),
       ),
+      (
+        "app.project.preview_building",
+        GeneratedI18nMessage::Text("Preview build running…"),
+      ),
+      (
+        "app.project.props_label_hint",
+        GeneratedI18nMessage::Text("Text literal"),
+      ),
+      (
+        "app.project.semantic_nothing",
+        GeneratedI18nMessage::Text("No editable text selected"),
+      ),
       ("app.settings.group.workspace", GeneratedI18nMessage::Text("Workspace")),
       (
         "app.status.proposal_accepted",
@@ -1372,6 +1488,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.inspector.function_params",
         GeneratedI18nMessage::Text("Parameters"),
+      ),
+      (
+        "app.project.external_reloaded",
+        GeneratedI18nMessage::Text("External changes detected, reloaded"),
+      ),
+      (
+        "app.project.preview_build_now",
+        GeneratedI18nMessage::Text("Build preview"),
       ),
       (
         "app.recent.action.insert_expr",
@@ -1423,10 +1547,32 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.blocks.cat.block.expression",
         GeneratedI18nMessage::Text("Operators"),
       ),
+      (
+        "app.confirm.delete_project_file",
+        GeneratedI18nMessage::Text(
+          "Delete file \"{a}\"? This cannot be undone.",
+        ),
+      ),
       ("app.inspector.window_event_edit", GeneratedI18nMessage::Text("Edit")),
+      (
+        "app.project.preview_unknown_ops",
+        GeneratedI18nMessage::Text(
+          "{a} draw commands are not replayable yet and were skipped",
+        ),
+      ),
       (
         "app.inspector.function_body_hint",
         GeneratedI18nMessage::Text("{count} statements"),
+      ),
+      (
+        "app.project.external_parse_error",
+        GeneratedI18nMessage::Text(
+          "External changes failed to parse, keeping current design: {a}",
+        ),
+      ),
+      (
+        "app.project.preview_rebuild_hint",
+        GeneratedI18nMessage::Text("Save then click Rebuild to refresh"),
       ),
       (
         "app.settings.compile.unavailable",
@@ -1619,6 +1765,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "变量值来自运行中的两个执行轨（解释轨 / 编译轨）",
         ),
       ),
+      ("app.ws.preview", GeneratedI18nMessage::Text("预览")),
       ("blocks.declare", GeneratedI18nMessage::Text("声明变量")),
       ("blocks.else_if", GeneratedI18nMessage::Text("否则如果")),
       ("builtin.random", GeneratedI18nMessage::Text("随机数")),
@@ -1736,6 +1883,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.expr.tpl.mod", GeneratedI18nMessage::Text("取余")),
       ("app.function.new", GeneratedI18nMessage::Text("新建积木")),
       ("app.handler.none", GeneratedI18nMessage::Text("未选中子程序")),
+      ("app.left.project", GeneratedI18nMessage::Text("工程")),
       ("app.mode.preview", GeneratedI18nMessage::Text("MoonBit")),
       (
         "app.preview.note",
@@ -1812,6 +1960,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("启动子程序 {handler}"),
       ),
       ("app.preview.title", GeneratedI18nMessage::Text("MoonBit 源码预览")),
+      (
+        "app.project.empty",
+        GeneratedI18nMessage::Text(
+          "还没有导入的 MoonBit 工程——点上方「导入」选择工程目录",
+        ),
+      ),
       ("app.qa.align_left", GeneratedI18nMessage::Text("左对齐（24）")),
       ("app.run.variables", GeneratedI18nMessage::Text("变量")),
       ("app.runtime.title", GeneratedI18nMessage::Text("运行时快照")),
@@ -1874,10 +2028,15 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide_live", GeneratedI18nMessage::Text("隐藏实时应用")),
       ("app.pane.live.idle", GeneratedI18nMessage::Text("设计态")),
       ("app.pane.show_live", GeneratedI18nMessage::Text("+ 实时应用")),
+      ("app.problems.build", GeneratedI18nMessage::Text("构建")),
       ("app.problems.draft", GeneratedI18nMessage::Text("草稿")),
       (
         "app.problems.empty",
         GeneratedI18nMessage::Text("没有发现问题。"),
+      ),
+      (
+        "app.project.import",
+        GeneratedI18nMessage::Text("导入 MoonBit 工程…"),
       ),
       ("app.qa.align_right", GeneratedI18nMessage::Text("右对齐（24）")),
       (
@@ -1956,6 +2115,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "在此编写程序；关键字速查见顶栏「帮助」",
         ),
       ),
+      ("app.code.switch_dsl", GeneratedI18nMessage::Text("切到中文 DSL")),
       ("app.command.ai.dock", GeneratedI18nMessage::Text("AI 层停靠/浮动")),
       ("app.command.ai.pill", GeneratedI18nMessage::Text("AI 层收成药丸")),
       (
@@ -2111,6 +2271,16 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.inspector.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.pane.show_blocks", GeneratedI18nMessage::Text("+ 积木窗格")),
       ("app.problems.program", GeneratedI18nMessage::Text("程序")),
+      ("app.project.build_ok", GeneratedI18nMessage::Text("构建通过:{a}")),
+      (
+        "app.project.imported",
+        GeneratedI18nMessage::Text("工程已导入：{name}"),
+      ),
+      ("app.project.kind.web", GeneratedI18nMessage::Text("web 入口")),
+      (
+        "app.project.no_entry",
+        GeneratedI18nMessage::Text("该工程缺少对应的入口包"),
+      ),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("确认送出")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("未选中子程序")),
@@ -2266,6 +2436,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("重置窗格分割比例"),
       ),
       (
+        "app.command.ws.preview",
+        GeneratedI18nMessage::Text("切到预览工作区"),
+      ),
+      (
         "app.compile.phase.wasm",
         GeneratedI18nMessage::Text("构建 Web 产物"),
       ),
@@ -2282,6 +2456,21 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.pane.foot_controls",
         GeneratedI18nMessage::Text("{count} 个控件"),
       ),
+      (
+        "app.project.build_busy",
+        GeneratedI18nMessage::Text("已有构建在进行,请等它结束"),
+      ),
+      ("app.project.design_tab", GeneratedI18nMessage::Text("布局设计")),
+      ("app.project.kind.plain", GeneratedI18nMessage::Text("包")),
+      (
+        "app.project.no_project",
+        GeneratedI18nMessage::Text("先导入一个 MoonBit 工程"),
+      ),
+      (
+        "app.project.props_none",
+        GeneratedI18nMessage::Text("在预览画布上点选一个元素"),
+      ),
+      ("app.project.props_role", GeneratedI18nMessage::Text("角色:{a}")),
       ("app.recent.action.edit", GeneratedI18nMessage::Text("修改程序")),
       ("app.recent.action.move", GeneratedI18nMessage::Text("移动控件")),
       ("app.recent.action.rect", GeneratedI18nMessage::Text("改几何")),
@@ -2338,6 +2527,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "拖动积木可同层重排；点选积木就地编辑语句",
         ),
       ),
+      ("app.code.switch_moonbit", GeneratedI18nMessage::Text("切到 MoonBit")),
       (
         "app.command.compile.run",
         GeneratedI18nMessage::Text("编译并运行（MoonBit）"),
@@ -2396,6 +2586,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.inspector.data_meta", GeneratedI18nMessage::Text("规模")),
       ("app.inspector.duplicate", GeneratedI18nMessage::Text("复制控件")),
+      (
+        "app.project.design_open",
+        GeneratedI18nMessage::Text("打开布局设计器"),
+      ),
+      ("app.project.kind.native", GeneratedI18nMessage::Text("native 入口")),
+      ("app.project.props_apply", GeneratedI18nMessage::Text("应用并重建")),
+      ("app.project.props_title", GeneratedI18nMessage::Text("属性")),
       ("app.recent.action.align", GeneratedI18nMessage::Text("对齐控件")),
       ("app.recent.action.items", GeneratedI18nMessage::Text("改列表项")),
       (
@@ -2443,6 +2640,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("底栏：运行审计"),
       ),
       (
+        "app.command.left.project",
+        GeneratedI18nMessage::Text("左栏：工程"),
+      ),
+      (
         "app.command.mode.preview",
         GeneratedI18nMessage::Text("切到 MoonBit 源码视图"),
       ),
@@ -2464,6 +2665,20 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "定时器只在运行期间步进（虚拟时钟）。",
         ),
+      ),
+      (
+        "app.project.build_failed",
+        GeneratedI18nMessage::Text("构建失败:{a}"),
+      ),
+      (
+        "app.project.design_empty",
+        GeneratedI18nMessage::Text(
+          "布局设计器读取工程的 form.mbt——拖拽控件、改字面量,保存后预览自动重建",
+        ),
+      ),
+      (
+        "app.project.file_deleted",
+        GeneratedI18nMessage::Text("已删除文件:{a}"),
       ),
       ("app.recent.action.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.recent.action.insert", GeneratedI18nMessage::Text("插入控件")),
@@ -2523,6 +2738,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.phase.prepare",
         GeneratedI18nMessage::Text("准备工作目录"),
       ),
+      (
+        "app.dialog.import_project",
+        GeneratedI18nMessage::Text("选择 MoonBit 工程目录"),
+      ),
       ("app.expr.tpl.selected_row", GeneratedI18nMessage::Text("选中行")),
       ("app.inspector.data_access", GeneratedI18nMessage::Text("访问")),
       ("app.inspector.data_source", GeneratedI18nMessage::Text("数据来源")),
@@ -2538,6 +2757,20 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.log.proposal_rejected",
         GeneratedI18nMessage::Text("提案已拒绝"),
+      ),
+      (
+        "app.project.label_patched",
+        GeneratedI18nMessage::Text("已修改:{a},正在重建预览"),
+      ),
+      (
+        "app.project.preview_empty",
+        GeneratedI18nMessage::Text(
+          "还没有预览画面——构建一次预览即可出图",
+        ),
+      ),
+      (
+        "app.project.preview_ready",
+        GeneratedI18nMessage::Text("预览已就绪：工程画布可查看了"),
       ),
       (
         "app.recent.action.handler",
@@ -2621,6 +2854,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.inspector.window_title", GeneratedI18nMessage::Text("窗体标题")),
       (
+        "app.project.external_check",
+        GeneratedI18nMessage::Text("检查外部修改"),
+      ),
+      (
+        "app.project.preview_failed",
+        GeneratedI18nMessage::Text("预览文件写入失败：{a}"),
+      ),
+      (
         "app.recent.action.function",
         GeneratedI18nMessage::Text("新建自定义积木"),
       ),
@@ -2685,6 +2926,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "app.project.preview_rebuild",
+        GeneratedI18nMessage::Text("重新预览"),
+      ),
+      (
         "app.recent.action.duplicate",
         GeneratedI18nMessage::Text("复制控件"),
       ),
@@ -2741,6 +2986,18 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.inspector.timer_interval",
         GeneratedI18nMessage::Text("定时器间隔（秒，0=关）"),
       ),
+      (
+        "app.project.preview_building",
+        GeneratedI18nMessage::Text("预览构建中…"),
+      ),
+      (
+        "app.project.props_label_hint",
+        GeneratedI18nMessage::Text("文本字面量"),
+      ),
+      (
+        "app.project.semantic_nothing",
+        GeneratedI18nMessage::Text("没有选中可编辑的文本"),
+      ),
       ("app.settings.group.workspace", GeneratedI18nMessage::Text("工作区")),
       (
         "app.status.proposal_accepted",
@@ -2782,6 +3039,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("删除变量"),
       ),
       ("app.inspector.function_params", GeneratedI18nMessage::Text("参数")),
+      (
+        "app.project.external_reloaded",
+        GeneratedI18nMessage::Text("检测到外部修改,已重载"),
+      ),
+      (
+        "app.project.preview_build_now",
+        GeneratedI18nMessage::Text("构建预览"),
+      ),
       (
         "app.recent.action.insert_expr",
         GeneratedI18nMessage::Text("插入报告块"),
@@ -2829,10 +3094,32 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("子程序重复：{name}"),
       ),
       ("app.blocks.cat.block.expression", GeneratedI18nMessage::Text("运算")),
+      (
+        "app.confirm.delete_project_file",
+        GeneratedI18nMessage::Text(
+          "删除文件「{a}」？此操作不可撤销。",
+        ),
+      ),
       ("app.inspector.window_event_edit", GeneratedI18nMessage::Text("编辑")),
+      (
+        "app.project.preview_unknown_ops",
+        GeneratedI18nMessage::Text(
+          "有 {a} 个绘制命令暂不支持重放,已在画面中跳过",
+        ),
+      ),
       (
         "app.inspector.function_body_hint",
         GeneratedI18nMessage::Text("{count} 条语句"),
+      ),
+      (
+        "app.project.external_parse_error",
+        GeneratedI18nMessage::Text(
+          "外部修改无法解析,保留当前设计:{a}",
+        ),
+      ),
+      (
+        "app.project.preview_rebuild_hint",
+        GeneratedI18nMessage::Text("保存后点「重新预览」刷新画面"),
       ),
       (
         "app.settings.compile.unavailable",

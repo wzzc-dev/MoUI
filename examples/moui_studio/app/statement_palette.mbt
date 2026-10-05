@@ -82,13 +82,13 @@ pub fn statement_templates() -> Array[StatementTemplate] {
     StatementTemplate::{
       category: @blocks.CatFlow,
       label_key: "app.stmt.tpl.if_else",
-      // **如果…否则…结束**：语言层与积木链一直支持（`Stmt::If` 的第四个
-      // 字段就是 else 体，`block_chain` 会展开成 `else` 装饰块），但面板里
-      // 只有「如果…结束」——用户想要 else 分支只能先插 if 再手写代码。
-      // 这是 Scratch 最基本的控制流之一，缺入口等于缺能力。
       skeleton_zh: "如果 计数 > 0 则\n  set_text(标签, \"正\") \n否则\n  set_text(标签, \"负\") \n结束",
       skeleton_en: "if count > 0 then\n  set_text(label, \"pos\") \nelse\n  set_text(label, \"neg\") \nend",
     },
+    // **如果…否则…结束**：语言层与积木链一直支持（`Stmt::If` 的第四个
+    // 字段就是 else 体，`block_chain` 会展开成 `else` 装饰块），但面板里
+    // 只有「如果…结束」——用户想要 else 分支只能先插 if 再手写代码。
+    // 这是 Scratch 最基本的控制流之一，缺入口等于缺能力。
     StatementTemplate::{
       category: @blocks.CatFlow,
       label_key: "app.stmt.tpl.repeat",
@@ -104,28 +104,28 @@ pub fn statement_templates() -> Array[StatementTemplate] {
     StatementTemplate::{
       category: @blocks.CatFlow,
       label_key: "app.stmt.tpl.forever",
-      // **重复执行（永远）**：Scratch 的 `forever`。IR 里等价于
-      // 「当 真 循环」——同样是**零成本对齐**（不动执行语义）。
-      //
-      // 安全性：不会真的卡死——解释器有 `DEFAULT_MAX_STEPS`（10 万步）预算，
-      // 编译轨有同一预算，超了报 `StepBudget`。所以「永远」是相对用户语义
-      // 的，运行时仍有硬上限（教学场景里比挂死浏览器好得多）。
       skeleton_zh: "当 真 循环\n  message_box(\"一直做\")\n结束",
       skeleton_en: "while true do\n  message_box(\"keep going\")\nend",
     },
+    // **重复执行（永远）**：Scratch 的 `forever`。IR 里等价于
+    // 「当 真 循环」——同样是**零成本对齐**（不动执行语义）。
+    //
+    // 安全性：不会真的卡死——解释器有 `DEFAULT_MAX_STEPS`（10 万步）预算，
+    // 编译轨有同一预算，超了报 `StepBudget`。所以「永远」是相对用户语义
+    // 的，运行时仍有硬上限（教学场景里比挂死浏览器好得多）。
     StatementTemplate::{
       category: @blocks.CatFlow,
       label_key: "app.stmt.tpl.repeat_until",
-      // **重复直到…**：Scratch 的 `repeat until`。本仓的 IR 里它等价于
-      // 「当 非(条件) 循环」——所以**不新增执行语义**，只给一条让用户
-      // 不必自己写 `非` 的骨架（negation 由骨架承担）。
-      //
-      // 为什么不加 IR 变体：那会牵动 parser/printer/interp/codegen/
-      // compiled_runtime/kernel 六处，而语义完全等价——用骨架表达是
-      // 「零成本对齐」。
       skeleton_zh: "当 非(计数 > 10) 循环\n  计数 = 计数 + 1\n结束",
       skeleton_en: "while not count > 10 do\n  count = count + 1\nend",
     },
+    // **重复直到…**：Scratch 的 `repeat until`。本仓的 IR 里它等价于
+    // 「当 非(条件) 循环」——所以**不新增执行语义**，只给一条让用户
+    // 不必自己写 `非` 的骨架（negation 由骨架承担）。
+    //
+    // 为什么不加 IR 变体：那会牵动 parser/printer/interp/codegen/
+    // compiled_runtime/kernel 六处，而语义完全等价——用骨架表达是
+    // 「零成本对齐」。
     StatementTemplate::{
       category: @blocks.CatFlow,
       label_key: "app.stmt.tpl.break",
@@ -163,19 +163,19 @@ pub fn statement_templates() -> Array[StatementTemplate] {
     StatementTemplate::{
       category: @blocks.CatCommand,
       label_key: "app.stmt.tpl.wait",
-      // `等待 N 秒`：执行到那里挂起若干帧再继续（Scratch 的「等待」）。
       skeleton_zh: "wait(1)",
       skeleton_en: "wait(1)",
     },
+    // `等待 N 秒`：执行到那里挂起若干帧再继续（Scratch 的「等待」）。
     StatementTemplate::{
       category: @blocks.CatCommand,
       label_key: "app.stmt.tpl.ask",
-      // `ask`（询问并等待）是**闸门**：执行到这里会停下等人回答，
-      // 与 `submit_data` 同一条 Gate 通道。它此前已实现却没有面板入口，
-      // 于是「问一句再按回答分支」这种基本交互在积木界面里做不到。
       skeleton_zh: "ask(\"你叫什么名字？\")",
       skeleton_en: "ask(\"What is your name?\")",
     },
+    // `ask`（询问并等待）是**闸门**：执行到这里会停下等人回答，
+    // 与 `submit_data` 同一条 Gate 通道。它此前已实现却没有面板入口，
+    // 于是「问一句再按回答分支」这种基本交互在积木界面里做不到。
     StatementTemplate::{
       category: @blocks.CatCommand,
       label_key: "app.stmt.tpl.stop_all",

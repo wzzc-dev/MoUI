@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/blocks_code"
+
+import {
+  "examples/moui_studio/services/export",
+}
+
+// Values
+pub fn is_block_editable_line(String) -> Bool
+
+pub fn parse_generated_source(String, Array[@export.StmtLine]) -> ParsedHandlerSource
+
+// Errors
+
+// Types and methods
+pub(all) struct HandlerBlock {
+  path : Array[Int]
+  canonical : String
+  start_line : Int
+  end_line : Int
+  editable : Bool
+}
+
+pub(all) struct ParsedHandlerSource {
+  blocks : Array[HandlerBlock]
+  non_editable_lines : Array[Int]
+}
+pub fn ParsedHandlerSource::blocks(Self) -> Array[HandlerBlock]
+pub fn ParsedHandlerSource::non_editable_lines(Self) -> Array[Int]
+
+// Type aliases
+
+// Traits

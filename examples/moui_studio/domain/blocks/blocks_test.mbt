@@ -104,6 +104,8 @@ test "block text matches interpreter audit detail for spotlight" {
       },
     ],
     functions: [],
+  structs: [],
+  enums: [],
   }
   let texts = @studio_lang.initial_texts(program)
   let rows = @studio_lang.initial_rows(program)
@@ -562,4 +564,59 @@ test "drop_accepts_stmt accepts break inside a loop nested under an if" {
   // [0,2] = CountLoop@0 的循环体；再进 If 的 then → [0,2] 后接 [0,0]
   // stmt_list_at 的语法是「下标链」：先 0 进循环体，再 0 进那个 If，再 0 进 then
   assert_true(@blocks.drop_accepts_stmt(body, [0, 2, 0, 0], @ir.Break))
+}
+
+///|
+/// 匹配语句投影（M5-5d）：头 + 情况行 + 否则 + 结束；臂内路径寻址线性
+/// （section i = 第 i 个臂，section arms.length() = else）。
+test "match projects to a block chain with linear arm sections" {
+  let body : Array[@ir.Stmt] = [
+    @ir.Match(
+      @ir.EnumTag("花色", "红桃"),
+      [
+        @ir.MatchArm::{ case_name: "红桃", body: [@ir.Assign("x", @ir.IntLit(1))] },
+        @ir.MatchArm::{ case_name: "黑桃", body: [@ir.Assign("x", @ir.IntLit(2))] },
+      ],
+      [@ir.Assign("x", @ir.IntLit(9))],
+    ),
+  ]
+  let chain = @blocks.block_chain(body)
+  let kinds = chain.map(item => item.kind)
+  // 头 + 情况0 + 体 + 情况1 + 体 + 否则 + 体 + 结束
+  assert_true(kinds.any(k => k is @blocks.BkMatch))
+  let mut case_count = 0
+  for k in kinds {
+    if k is @blocks.BkCase {
+      case_count = case_count + 1
+    }
+  }
+  assert_eq(case_count, 2)
+  assert_true(kinds.any(k => k is @blocks.BkElse))
+  assert_true(kinds.any(k => k is @blocks.BkEnd))
+  // 头文本 = canonical subject；情况行文本 = 情况名
+  assert_eq(chain[0].text, "花色::红桃")
+  assert_eq(chain[1].text, "红桃")
+  assert_eq(chain[2].text, "x = 1")
+  // 臂内语句可寻址：section 0 = 红桃臂；section 2 = else
+  assert_true(
+    @blocks.stmt_at(body, [0, 0, 0]) is Some(_),
+  )
+  match @blocks.stmt_at(body, [0, 2, 0]) {
+    Some(@ir.Assign(name, _)) => assert_eq(name, "x")
+    _ => fail("else 臂内语句应可寻址")
+  }
+  // stmt_list_at：臂体列表可取（拖拽插入的前提）
+  assert_true(@blocks.stmt_list_at(body, [0, 0]) is Some(_))
+  assert_true(@blocks.stmt_list_at(body, [0, 2]) is Some(_))
+  assert_true(@blocks.stmt_list_at(body, [0, 5]) is None)
+  // 臂内替换
+  let replaced = @blocks.replace_stmt_at(
+    body,
+    [0, 1, 0],
+    @ir.Assign("x", @ir.IntLit(22)),
+  )
+  match @blocks.stmt_at(replaced, [0, 1, 0]) {
+    Some(@ir.Assign(_, @ir.IntLit(n))) => assert_eq(n, 22)
+    _ => fail("黑桃臂替换失败")
+  }
 }

@@ -31,15 +31,16 @@ pub fn code_workspace(
     None => text(t, "app.handler.none")
     Some(handler) => handler.control_name
   }
-  let head = pane_head(text(t, "app.pane.code"), handler_subtitle, width, [
-    pill("MoonBit", ide_text_faint(), 66.0),
-  ])
+  // 外观胶囊（M5-5e）：MoonBit（默认显示）⇄ DSL，点按循环。
+  let head = pane_head(text(t, "app.pane.code"), handler_subtitle, width, [])
   let spans = ir_line_spans(model)
-  // 高度预算：头 30 + 错误条 + 说明条 30 + 脚注 40；其余全部给编辑面。
-  let code_height = (height - 150.0).max(120.0)
-  let editor_width = (width - 2.0 - CODE_GUTTER_WIDTH - IR_RAIL_WIDTH).max(
-    80.0,
-  )
+  // 高度预算：头 30 + 说明条 30 + 脚注 36 + 补全占位 1 + **底栏页签带 26**
+  //（中心列的下缘与收起底栏的页签头相接——实测这 26pt 会被底栏盖住，
+  // 脚注整行「消失」，切换芯片也随之不可见）,错误条可见时再 +24。
+  let error_reserve = if model.code_error == "" { 0.0 } else { 24.0 }
+  let chrome = 123.0 + error_reserve
+  let code_height = (height - chrome).max(120.0)
+  let editor_width = (width - 2.0 - CODE_GUTTER_WIDTH - IR_RAIL_WIDTH).max(80.0)
   @views.container(
     @views.column(
       [
@@ -109,8 +110,7 @@ fn code_gutter(
   let active_line = @code_editor.code_editor_caret_position(
       model.code_draft,
       model.code_caret,
-    )
-    .line
+    ).line
   let diagnostic_lines = @code_editor.code_editor_diagnostic_lines(
     model.code_draft,
     model.code_diagnostics,
@@ -123,7 +123,11 @@ fn code_gutter(
     // 「哪一行有问题」在滚动时也要一眼可辨。
     let marker = @views.container(
       @views.text("", width=1.0, height=1.0),
-      background=if has_diagnostic { ide_danger() } else { ide_editor_background() },
+      background=if has_diagnostic {
+        ide_danger()
+      } else {
+        ide_editor_background()
+      },
       corner_radius=2.0,
       width=5.0,
       height=5.0,
@@ -159,7 +163,11 @@ fn code_gutter(
           spacing=2.0,
           align=Center,
         ).frame(width~, height=CODE_LINE_HEIGHT),
-        background=if is_active { ide_panel_alt() } else { ide_editor_background() },
+        background=if is_active {
+          ide_panel_alt()
+        } else {
+          ide_editor_background()
+        },
         width~,
         height=CODE_LINE_HEIGHT,
         padding=0.0,
@@ -206,18 +214,16 @@ fn code_editor_surface(
     background=@graphics.Brush::solid(ide_editor_background()),
     cursor_color=ide_accent(),
     corner_radius=0.0,
-    on_selection_change=Some(
-      (caret, selection) => EditorCaretMoved(caret, selection),
-    ),
-    input_transform=Some(
-      (source, caret, _selection, inserted) => {
-        if inserted == "\n" {
-          code_newline_transform(model, source, caret)
-        } else {
-          None
-        }
-      },
-    ),
+    on_selection_change=Some((caret, selection) => {
+      EditorCaretMoved(caret, selection)
+    }),
+    input_transform=Some((source, caret, _selection, inserted) => {
+      if inserted == "\n" {
+        code_newline_transform(model, source, caret)
+      } else {
+        None
+      }
+    }),
     accepts_tab_input=false,
     visible_scroll_y=model.code_scroll.y,
     on_scroll=Some(y => EditorScrolled(y)),
@@ -296,9 +302,11 @@ fn code_line_block(
     let end = start + token.text.length()
     // 行内标记：与诊断区间相交的 run 加淡红底——richtext 的装饰
     // 只有删除线，底色是「这一段有问题」的最低限度行内提示。
-    let flagged = diagnostics.iter().any(diagnostic => {
-      diagnostic.range.start < end && start < diagnostic.range.end
-    })
+    let flagged = diagnostics
+      .iter()
+      .any(diagnostic => {
+        diagnostic.range.start < end && start < diagnostic.range.end
+      })
     runs.push(
       @moui_richtext.RichTextRun::new(
         text=token.text,
@@ -309,7 +317,7 @@ fn code_line_block(
         } else {
           None
         },
-        source_range=Some({ start, end }),
+        source_range=Some({ start, end, }),
       ),
     )
   }
@@ -362,7 +370,11 @@ fn code_newline_transform(
 
 ///|
 /// DSL 换行缩进：当前行前导空白为基，块首关键字 +2，块尾关键字 -2。
-fn dsl_indent_for_newline(model : Model, source : String, caret : Int) -> String {
+fn dsl_indent_for_newline(
+  model : Model,
+  source : String,
+  caret : Int,
+) -> String {
   let chars = source.to_array()
   let pos = caret.clamp(min=0, max=chars.length())
   let mut line_start = pos
@@ -383,30 +395,27 @@ fn dsl_indent_for_newline(model : Model, source : String, caret : Int) -> String
   let trimmed = String::from_array(chars[index:end])
   let word = StringBuilder()
   for c in trimmed {
-    if {
-      let code = c.to_int()
-      code >= 0x80 ||
-      (code >= 0x30 && code <= 0x39) ||
-      (code >= 0x41 && code <= 0x5A) ||
-      (code >= 0x61 && code <= 0x7A) ||
-      code == 0x5F
-    } {
+    if ({
+        let code = c.to_int()
+        code >= 0x80 ||
+        (code >= 0x30 && code <= 0x39) ||
+        (code >= 0x41 && code <= 0x5A) ||
+        (code >= 0x61 && code <= 0x7A) ||
+        code == 0x5F
+      }) {
       word.write_char(c)
     } else {
       break
     }
   }
   let keywords = @studio_lang.keywords_for(model.language.dsl_language())
-  let deeper = match @studio_lang.classify_stmt_keyword(
-      word.to_string(),
-      keywords,
-    ) {
+  let deeper = match
+    @studio_lang.classify_stmt_keyword(word.to_string(), keywords) {
     KwIf | KwCountLoop | KwWhile => 2
     _ => 0
   }
   // 块尾关键字回退：结束/跳出循环（双语）
-  let closes =
-    trimmed == keywords.end_kw || trimmed == keywords.break_kw
+  let closes = trimmed == keywords.end_kw || trimmed == keywords.break_kw
   let width = indent.length() + deeper * 2 - (if closes { 2 } else { 0 })
   let spaces = StringBuilder()
   for _ in 0..<width.max(0) {
@@ -626,7 +635,39 @@ fn code_foot_row(
     ("line", "\{caret.line}"),
     ("col", "\{caret.column}"),
   ])
-  let hint_w = (width - restore_w - compile_w - gap * 2.0).max(40.0)
+  let appearance_w = match model.code_appearance {
+    AppMoonBit => {
+      let label = text(t, "app.code.switch_dsl")
+      text_estimate_width(label) * 1.05 + 28.0
+    }
+    AppDsl => {
+      let label = text(t, "app.code.switch_moonbit")
+      text_estimate_width(label) * 1.05 + 28.0
+    }
+  }
+  let hint_w = (width - appearance_w - restore_w - compile_w - gap * 3.0).max(40.0)
+  // 外观切换芯片（实测反馈两轮：用户找不到入口）——脚注行右侧，
+  // 文案写明**目标**（「切到中文 DSL」/「切到 MoonBit」），不存在歧义。
+  let appearance_chip = match model.code_appearance {
+    AppMoonBit => {
+      let label = text(t, "app.code.switch_dsl")
+      foot_chip(
+        label,
+        text_estimate_width(label) * 1.05 + 28.0,
+        false,
+        SetCodeAppearance(AppDsl),
+      )
+    }
+    AppDsl => {
+      let label = text(t, "app.code.switch_moonbit")
+      foot_chip(
+        label,
+        text_estimate_width(label) * 1.05 + 28.0,
+        false,
+        SetCodeAppearance(AppMoonBit),
+      )
+    }
+  }
   fill_row(
     [
       @views.text(
@@ -637,6 +678,7 @@ fn code_foot_row(
         height=16.0,
         align=TextStart,
       ).foreground(ide_text_faint()),
+      appearance_chip,
       foot_chip(text(t, "app.code.restore"), restore_w, false, RestoreCodeDraft),
       foot_chip(text(t, "app.code.compile"), compile_w, true, CompileRun),
     ],

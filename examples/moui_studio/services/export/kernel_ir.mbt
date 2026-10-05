@@ -188,6 +188,15 @@ pub fn kernel_ir_mbt() -> String {
     #|  Index(Expr, Expr)
     #|  Binary(BinOp, Expr, Expr)
     #|  Call(String, Array[Expr]) // 内建命令/函数（规范名见 studio_lang 目录）
+    #|  FieldAccess(Expr, String) // base.field_name（M5-5c）
+    #|  EnumTag(String, String) // 枚举值字面量：枚举名::情况名（M5-5d）
+    #|}
+    #|
+    #|///|
+    #|/// 匹配分派臂（M5-5d）：case_name 必须是某已声明枚举的情况。
+    #|pub(all) struct MatchArm {
+    #|  case_name : String
+    #|  body : Array[Stmt]
     #|}
     #|
     #|///|
@@ -202,6 +211,7 @@ pub fn kernel_ir_mbt() -> String {
     #|  Call(String, Array[Expr]) // 内建命令
     #|  SetIndex(String, Expr, Expr) // 名单[i] = 值
     #|  Return(Expr?) // 返回 expr（仅函数体内合法）
+    #|  Match(Expr, Array[MatchArm], Array[Stmt]) // subject, arms, else（M5-5d；else 可为空但必在）
     #|}
     #|
     #|///|
@@ -245,6 +255,29 @@ pub fn kernel_ir_mbt() -> String {
     #|  variables : Array[Variable]
     #|  handlers : Array[Handler]
     #|  functions : Array[FuncDef]
+    #|  structs : Array[StructDecl]
+    #|  enums : Array[EnumDecl]
+    #|}
+    #|
+    #|///|
+    #|/// struct 字段(M5-5c)。
+    #|pub(all) struct StructField {
+    #|  field_name : String
+    #|  field_type : String
+    #|}
+    #|
+    #|///|
+    #|/// struct 声明(M5-5c)。
+    #|pub(all) struct StructDecl {
+    #|  name : String
+    #|  fields : Array[StructField]
+    #|}
+    #|
+    #|///|
+    #|/// 枚举声明(M5-5d)：标签集合，v1 无载荷。
+    #|pub(all) struct EnumDecl {
+    #|  name : String
+    #|  cases : Array[String]
     #|}
     #|
     #|///|
@@ -266,6 +299,8 @@ pub fn kernel_ir_mbt() -> String {
     #|    variables: [],
     #|    handlers: [],
     #|    functions: [],
+    #|    structs: [],
+    #|    enums: [],
     #|  }
     #|}
     #|
@@ -711,7 +746,18 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|      count_stmts(else_body) +
     #|      count_if_chain(else_ifs)
     #|    CountLoop(_, _, body) | WhileLoop(_, body) => 1 + count_stmts(body)
+    #|    Match(_, arms, else_body) =>
+    #|      1 + count_stmts(else_body) + count_match_arms(arms)
     #|  }
+    #|}
+    #|
+    #|///|
+    #|fn count_match_arms(arms : Array[MatchArm]) -> Int {
+    #|  let mut total = 0
+    #|  for arm in arms {
+    #|    total = total + count_stmts(arm.body)
+    #|  }
+    #|  total
     #|}
     #|
     #|///|
@@ -758,6 +804,16 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|      }
     #|      CountLoop(_, _, loop_body) | WhileLoop(_, loop_body) =>
     #|        body_loop_depth(loop_body, current + 1)
+    #|      Match(_, arms, else_body) => {
+    #|        let mut deepest_arm = body_loop_depth(else_body, current)
+    #|        for arm in arms {
+    #|          let inner = body_loop_depth(arm.body, current)
+    #|          if inner > deepest_arm {
+    #|            deepest_arm = inner
+    #|          }
+    #|        }
+    #|        deepest_arm
+    #|      }
     #|    }
     #|    if depth > deepest {
     #|      deepest = depth
@@ -777,6 +833,8 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|      let i = expr_depth(index)
     #|      (if b > i { b } else { i }) + 1
     #|    }
+    #|    FieldAccess(base, _) => 1 + expr_depth(base)
+    #|    EnumTag(_, _) => 1
     #|    ListLit(items) => {
     #|      let mut deepest = 0
     #|      for item in items {
@@ -885,6 +943,20 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|      } else {
     #|        body_depth
     #|      }
+    #|    }
+    #|    Match(subject, arms, else_body) => {
+    #|      let mut deepest = expr_depth(subject)
+    #|      let else_depth = body_expr_depth(else_body)
+    #|      if else_depth > deepest {
+    #|        deepest = else_depth
+    #|      }
+    #|      for arm in arms {
+    #|        let arm_body = body_expr_depth(arm.body)
+    #|        if arm_body > deepest {
+    #|          deepest = arm_body
+    #|        }
+    #|      }
+    #|      deepest
     #|    }
     #|  }
     #|}
@@ -1030,6 +1102,16 @@ pub fn kernel_ir_signature_mbt() -> String {
     #|        write_expr(buf, arg)
     #|      }
     #|    }
+    #|    Match(subject, arms, else_body) => {
+    #|      buf.write_string("match ")
+    #|      write_expr(buf, subject)
+    #|      write_stmts(buf, else_body, indent + 1)
+    #|      for arm in arms {
+    #|        write_indent(buf, indent)
+    #|        buf.write_string("case \{arm.case_name}")
+    #|        write_stmts(buf, arm.body, indent + 1)
+    #|      }
+    #|    }
     #|  }
     #|}
     #|
@@ -1048,6 +1130,14 @@ pub fn kernel_ir_signature_mbt() -> String {
     #|      }
     #|      buf.write_string(")")
     #|    }
+    #|    FieldAccess(base, field) => {
+    #|      buf.write_string("field(")
+    #|      write_expr(buf, base)
+    #|      buf.write_string(",\"\{field}\"")
+    #|      buf.write_string(")")
+    #|    }
+    #|    EnumTag(enum_name, case_name) =>
+    #|      buf.write_string("enumtag(\"\{enum_name}::\{case_name}\")")
     #|    Index(base, index) => {
     #|      buf.write_string("index(")
     #|      write_expr(buf, base)

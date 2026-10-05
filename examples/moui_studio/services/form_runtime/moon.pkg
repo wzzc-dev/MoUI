@@ -1,0 +1,9 @@
+import {
+  "examples/moui_studio/services/compiled_runtime",
+}
+
+supported_targets = "native+wasm-gc"
+
+options(
+  targets: { },
+)

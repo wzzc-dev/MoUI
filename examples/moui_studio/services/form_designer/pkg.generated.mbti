@@ -1,0 +1,73 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/services/form_designer"
+
+import {
+  "examples/moui_studio/domain/ir",
+}
+
+// Values
+pub fn apply_control_patch(String, ControlSpans, Double, Double, Double, Double) -> String
+
+pub fn apply_number_patch(String, Int, Int, String) -> String
+
+pub fn apply_text_patch(String, Int, Int, String) -> String
+
+pub fn double_literal(Double) -> String
+
+pub fn form_controls_to_ir(FormModel) -> Array[@ir.Control]
+
+pub fn form_model_eq(FormModel, FormModel) -> Bool
+
+pub fn form_model_move(FormModel, Int, Double, Double) -> FormModel
+
+pub fn form_model_resize(FormModel, Int, Double, Double) -> FormModel
+
+pub fn number_len(String, Int) -> Int
+
+pub fn parse_form(String) -> Result[ParsedForm, String]
+
+pub fn render_form(FormModel) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct ControlSpans {
+  x : Int
+  y : Int
+  width : Int
+  height : Int
+  text : Int
+}
+
+pub(all) struct FormControl {
+  kind : FormKind
+  text : String
+  handler : String?
+  x : Double
+  y : Double
+  width : Double
+  height : Double
+}
+
+pub(all) enum FormKind {
+  FkText
+  FkButton
+  FkTextField
+  FkCheckBox
+  FkImage
+}
+
+pub(all) struct FormModel {
+  stage_width : Double
+  stage_height : Double
+  controls : Array[FormControl]
+}
+
+pub(all) struct ParsedForm {
+  model : FormModel
+  spans : Array[ControlSpans]
+}
+
+// Type aliases
+
+// Traits

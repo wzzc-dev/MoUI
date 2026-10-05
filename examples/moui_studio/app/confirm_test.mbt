@@ -33,8 +33,12 @@ test "template switch is guarded only when work exists" {
   let fresh = @app.initial_model()
   let applied = apply(fresh, @app.SelectTemplate(3))
   assert_true(applied.pending_confirm is None)
-  // 用户改过（dirty）：先确认
-  let dirty = apply(fresh, @app.EditCode("设置文本(\"标签\", \"改\")\n"))
+  // 用户改过（dirty）：先确认。编辑语义在 DSL 外观下进行（M5-5e：
+  // 代码视图默认是 MoonBit 显示投影，编辑提交走 DSL 外观）。
+  let dirty = apply(
+    apply(fresh, CycleCodeAppearance),
+    @app.EditCode("设置文本(\"标签\", \"改\")\n"),
+  )
   let committed = apply(dirty, @app.SetMode(@app.ModePreview))
   let asked = apply(committed, @app.SelectTemplate(0))
   assert_true(asked.pending_confirm is Some(_))

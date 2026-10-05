@@ -17,6 +17,122 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     TogglePaneBlocks => Some(toggle_pane_blocks(model))
     SetSplitRatio(ratio) => Some(set_split_ratio(model, ratio))
     SetLeftView(view) => Some(set_left_view(model, view))
+    SetActiveProject(index) =>
+      Some(
+        (
+          { ..model, active_project: index, selected_project_file: None, },
+          @moui.Effect::none(),
+        ),
+      )
+    ToggleProjectPackage(rel) => {
+      // 折叠集合翻转(与 ToggleTreeGroup 同一手法,不共享可变数组)
+      let collapsed : Array[String] = []
+      let mut removed = false
+      for item in model.project_tree_collapsed {
+        if item == rel {
+          removed = true
+        } else {
+          collapsed.push(item)
+        }
+      }
+      if !removed {
+        collapsed.push(rel)
+      }
+      Some(
+        ({ ..model, project_tree_collapsed: collapsed, }, @moui.Effect::none()),
+      )
+    }
+    SelectProjectFile(rel) =>
+      // 再点同一个文件 = 取消选中(与图标栏「再点一次」同一心智)
+      Some(
+        (
+          {
+            ..model,
+            selected_project_file: if model.selected_project_file
+              is Some(current) &&
+              current == rel {
+              None
+            } else {
+              Some(rel)
+            },
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    RemoveProject(index) =>
+      Some((remove_project_at(model, index), @moui.Effect::none()))
+    SelectSemanticNode(index) => {
+      // 选中语义节点:label 预填进编辑草稿(空 label 也能选中,草稿为空);
+      // 再点同一个 = 取消选中
+      let current = match model.selected_semantic {
+        Some(value) => value
+        None => -1
+      }
+      if index == current {
+        Some(
+          (
+            { ..model, selected_semantic: None, semantic_draft: "", },
+            @moui.Effect::none(),
+          ),
+        )
+      } else {
+        let draft = match model.preview_frame {
+          Some(frame) => {
+            let nodes = semantic_hit_nodes(frame)
+            if index >= 0 && index < nodes.length() {
+              nodes[index].label
+            } else {
+              ""
+            }
+          }
+          None => ""
+        }
+        Some(
+          (
+            { ..model, selected_semantic: Some(index), semantic_draft: draft, },
+            @moui.Effect::none(),
+          ),
+        )
+      }
+    }
+    SemanticLabelInput(text) =>
+      Some(({ ..model, semantic_draft: text, }, @moui.Effect::none()))
+    SetPreviewMode(mode) =>
+      Some(({ ..model, preview_mode: mode, }, @moui.Effect::none()))
+    // 直达目标外观（实测反馈：单个循环胶囊太隐蔽，用户找不到 DSL 入口）
+    SetCodeAppearance(appearance) =>
+      Some(
+        (
+          sync_code_draft({ ..model, code_appearance: appearance, }),
+          @moui.Effect::none(),
+        ),
+      )
+    // 布局页签开关（M4 收尾）：进入布局设计时若无会话则自动加载 form.mbt
+    //（FormDesignOpen 走服务层读盘链）。
+    SetPreviewDesignOpen(open) => {
+      let next = { ..model, preview_design_open: open, }
+      if open && model.form_designer is None {
+        Some((next, @moui.Effect::dispatch(emit => emit(FormDesignOpen))))
+      } else {
+        Some((next, @moui.Effect::none()))
+      }
+    }
+    SelectFormControl(index) => {
+      let current = match model.selected_form_control {
+        Some(value) => value
+        None => -1
+      }
+      if index == current {
+        Some(({ ..model, selected_form_control: None, }, @moui.Effect::none()))
+      } else {
+        Some(
+          (
+            { ..model, selected_form_control: Some(index), },
+            @moui.Effect::none(),
+          ),
+        )
+      }
+    }
     SetRightVisible(visible) => Some(set_right_visible(model, visible))
     // 列间 sash 拖拽：视图层已按当帧布局夹取，这里再兜底夹一次静态界限
     // （窗口在拖拽中途变小等时序差）。纯布局状态：不进撤销、不标脏。
@@ -25,7 +141,10 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         (
           {
             ..model,
-            left_width: width.clamp(min=LEFTBAR_MIN_WIDTH, max=LEFTBAR_MAX_WIDTH),
+            left_width: width.clamp(
+              min=LEFTBAR_MIN_WIDTH,
+              max=LEFTBAR_MAX_WIDTH,
+            ),
           },
           @moui.Effect::none(),
         ),
@@ -66,11 +185,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
       if candidates.length() > 0 {
         Some(
           (
-            {
-              ..model,
-              completions: candidates,
-              completion_open: true,
-            },
+            { ..model, completions: candidates, completion_open: true, },
             @moui.Effect::none(),
           ),
         )
@@ -79,7 +194,11 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
       }
     }
     ApplyCompletion(word) => {
-      let (text, caret) = apply_completion(model.code_draft, model.code_caret, word)
+      let (text, caret) = apply_completion(
+        model.code_draft,
+        model.code_caret,
+        word,
+      )
       Some(
         (
           with_draft_diagnostics({
@@ -124,7 +243,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
           // 正由底栏承载，它**跟着一起收起**（和审计/控制台页签一样），
           // 展开后原样回来——落点始终由 `ai_anchor` 单独决定，只有
           // `SetAiAnchor` / `CycleAiAnchor` 能改它。
-          sync_ai_placement({ ..model, bottom_open: !model.bottom_open }),
+          sync_ai_placement({ ..model, bottom_open: !model.bottom_open, }),
           @moui.Effect::none(),
         ),
       )
@@ -146,9 +265,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         ),
       )
     SetAiAnchor(anchor) =>
-      Some(
-        (apply_ai_anchor(model, anchor), @moui.Effect::none()),
-      )
+      Some((apply_ai_anchor(model, anchor), @moui.Effect::none()))
     ToggleAiCardsFold =>
       Some(
         (
@@ -213,6 +330,7 @@ fn set_workspace(
     (_, requested) => requested
   }
   let next = match target {
+    WsPreview => { ..model, workspace: WsPreview, mode: ModeDesign, }
     WsVisual =>
       {
         ..model,
@@ -292,10 +410,45 @@ fn set_split_ratio(model : Model, ratio : Double) -> (Model, @moui.Effect[Msg]) 
 /// 左栏切换：点当前图标 = 收起（设计稿 setLeft 语义）。
 fn set_left_view(model : Model, view : LeftView) -> (Model, @moui.Effect[Msg]) {
   let target = match (model.left_view, view) {
-    (LeftTree, LeftTree) | (LeftData, LeftData) => LeftHidden
+    (LeftTree, LeftTree) | (LeftData, LeftData) | (LeftProject, LeftProject) =>
+      LeftHidden
     (_, wanted) => wanted
   }
   ({ ..model, left_view: target, }, @moui.Effect::none())
+}
+
+///|
+/// 会话内移除导入的工程(不动磁盘)。active_project 随之修正:
+/// 移除的正是当前选中 → 清空选中;移除在选中之前 → 下标左移一位。
+fn remove_project_at(model : Model, index : Int) -> Model {
+  if index < 0 || index >= model.projects.length() {
+    return model
+  }
+  let projects : Array[ProjectRecord] = []
+  let mut i = 0
+  for project in model.projects {
+    if i != index {
+      projects.push(project)
+    }
+    i = i + 1
+  }
+  // 选中修正:移除的正是当前选中 → 落到**同位的下一个工程**(IDE 移除
+  // 选中标签页的惯例;列表空了才清空选中);移除在选中之前 → 下标左移。
+  let remaining = projects.length()
+  let active = if model.active_project == index {
+    if remaining == 0 {
+      -1
+    } else if index >= remaining {
+      remaining - 1
+    } else {
+      index
+    }
+  } else if model.active_project > index {
+    model.active_project - 1
+  } else {
+    model.active_project
+  }
+  { ..model, projects, active_project: active, selected_project_file: None, }
 }
 
 ///|
@@ -491,11 +644,11 @@ fn next_anchor(anchor : AiAnchor) -> AiAnchor {
 /// `AiBar`（从停靠档也能拉回来）。
 fn select_bottom_tab(model : Model, tab : BottomTab) -> Model {
   let anchored = if tab is BtAi {
-    { ..model, ai_anchor: AiBar }
+    { ..model, ai_anchor: AiBar, }
   } else {
     model
   }
-  sync_ai_placement({ ..anchored, bottom_tab: tab, bottom_open: true })
+  sync_ai_placement({ ..anchored, bottom_tab: tab, bottom_open: true, })
 }
 
 ///|
@@ -516,7 +669,7 @@ fn apply_ai_anchor(model : Model, anchor : AiAnchor) -> Model {
         bottom_tab: BtAi,
         bottom_open: true,
       })
-    AiDocked => sync_ai_placement({ ..model, ai_anchor: AiDocked })
+    AiDocked => sync_ai_placement({ ..model, ai_anchor: AiDocked, })
   }
 }
 
@@ -554,10 +707,7 @@ fn sync_ai_placement(model : Model) -> Model {
       //
       // 页签与展开都是**用户的选择**；落点只管「输入面归谁画」。要让
       // 输入面可见，走 `apply_ai_anchor`（显式切换落点时才需要）。
-      {
-        ..model,
-        bottom_height: model.bottom_height.max(AI_BAR_HEIGHT),
-      }
+      { ..model, bottom_height: model.bottom_height.max(AI_BAR_HEIGHT), }
     AiDocked =>
       // 停靠档：输入条由右栏承载，底栏若正停在 AI 页签就必须让开
       // （否则两边同时画）。底栏是否展开、展开多少由用户决定，不动。
@@ -699,6 +849,7 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.workspace.visual" => update_pure(model, SetWorkSpace(WsVisual))
     "studio.workspace.code" => update_pure(model, SetWorkSpace(WsCode))
     "studio.workspace.empty" => update_pure(model, SetWorkSpace(WsEmpty))
+    "studio.workspace.preview" => update_pure(model, SetWorkSpace(WsPreview))
     "studio.pane.split" => update_pure(model, SetSplitRatio(0.55))
     "studio.pane.live" => update_pure(model, TogglePaneLive)
     "studio.pane.blocks" => update_pure(model, TogglePaneBlocks)
@@ -720,13 +871,7 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.ai.dock" =>
       update_pure(
         model,
-        SetAiAnchor(
-          if model.ai_anchor is AiDocked {
-            AiBar
-          } else {
-            AiDocked
-          },
-        ),
+        SetAiAnchor(if model.ai_anchor is AiDocked { AiBar } else { AiDocked }),
       )
     "studio.ai.history" => update_pure(model, ToggleAiHistory)
     "studio.settings" => update_pure(model, ToggleSettings)
@@ -749,15 +894,14 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
 }
 
 ///|
-/// 代码草稿回归 IR 渲染：丢弃手改，重新按当前语言渲染当前子程序。
+/// 代码草稿回归 IR 渲染：丢弃手改，按**当前外观**重新渲染当前子程序。
+/// 外观感知（实测缺陷）：旧实现无条件按 DSL 语言渲染——MoonBit 外观下
+/// 点「按 IR 重渲染」会把草稿打回中文 DSL 且没有回去的入口。
 fn restore_code_draft(model : Model) -> (Model, @moui.Effect[Msg]) {
   match current_handler(model) {
     None => (model, @moui.Effect::none())
     Some(handler) => {
-      let rendered = @studio_lang.render_handler(
-        handler,
-        model.language.dsl_language(),
-      )
+      let rendered = render_code_appearance(model, handler)
       (
         log_line(
           { ..model, code_draft: rendered, code_error: "", },
@@ -776,7 +920,11 @@ fn age_toasts(model : Model) -> Model {
   let kept : Array[ToastEntry] = []
   for toast in model.toasts {
     if toast.age + 1 < TOAST_SECONDS {
-      kept.push(ToastEntry::{ text: toast.text, warning: toast.warning, age: toast.age + 1, })
+      kept.push(ToastEntry::{
+        text: toast.text,
+        warning: toast.warning,
+        age: toast.age + 1,
+      })
     }
   }
   { ..model, toasts: kept, }

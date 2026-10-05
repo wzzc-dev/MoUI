@@ -12,6 +12,11 @@ import {
   "examples/moui_studio/services/provider_native" @provider,
   "examples/moui_studio/services/compile_native" @compile,
   "examples/moui_studio/services/launch_native" @launch,
+  "examples/moui_studio/services/build",
+  "examples/moui_studio/services/build_native",
+  "examples/moui_studio/services/webpreview",
+  "wzzc-dev/moui_webview/host" @webview_host,
+  "wzzc-dev/moui_webview/backend/macos" @macos_webview,
 }
 
 supported_targets = "native"

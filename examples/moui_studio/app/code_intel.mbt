@@ -37,19 +37,20 @@ pub fn completions_for(model : Model, prefix : String) -> Array[String] {
   let candidates : Array[String] = []
   let language = model.language.dsl_language()
   let keywords = @studio_lang.keywords_for(language)
-  for keyword in [
-    keywords.declare_kw,
-    keywords.if_kw,
-    keywords.else_kw,
-    keywords.else_if_kw,
-    keywords.end_kw,
-    keywords.count_kw,
-    keywords.while_kw,
-    keywords.break_kw,
-    keywords.return_kw,
-    keywords.true_kw,
-    keywords.false_kw,
-  ] {
+  for
+    keyword in [
+      keywords.declare_kw,
+      keywords.if_kw,
+      keywords.else_kw,
+      keywords.else_if_kw,
+      keywords.end_kw,
+      keywords.count_kw,
+      keywords.while_kw,
+      keywords.break_kw,
+      keywords.return_kw,
+      keywords.true_kw,
+      keywords.false_kw,
+    ] {
     candidates.push(keyword)
   }
   for entry in @studio_lang.builtin_catalog() {
@@ -67,7 +68,8 @@ pub fn completions_for(model : Model, prefix : String) -> Array[String] {
   for line_text in split_line_texts(model.code_draft) {
     let trimmed = line_text.trim().to_owned()
     let declare_kw_prefix = keywords.declare_kw + " "
-    if trimmed.has_prefix(declare_kw_prefix) && trimmed.length() > declare_kw_prefix.length() {
+    if trimmed.has_prefix(declare_kw_prefix) &&
+      trimmed.length() > declare_kw_prefix.length() {
       let rest = trimmed[declare_kw_prefix.length():].to_owned()
       let mut name = rest
       if rest.rev_find(" ") is Some(index) {
@@ -101,7 +103,9 @@ pub fn apply_completion(
   completion : String,
 ) -> (String, Int) {
   let (word, start) = word_at_caret(source, caret)
-  let text = source[:start].to_owned() + completion + source[start + word.length():].to_owned()
+  let text = source[:start].to_owned() +
+    completion +
+    source[start + word.length():].to_owned()
   (text, start + completion.length())
 }
 

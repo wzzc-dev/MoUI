@@ -180,6 +180,15 @@ pub(all) enum Expr {
   Index(Expr, Expr)
   Binary(BinOp, Expr, Expr)
   Call(String, Array[Expr]) // 内建命令/函数（规范名见 studio_lang 目录）
+  FieldAccess(Expr, String) // base.field_name（M5-5c）
+  EnumTag(String, String) // 枚举值字面量：枚举名::情况名（M5-5d）
+}
+
+///|
+/// 匹配分派臂（M5-5d）：case_name 必须是某已声明枚举的情况。
+pub(all) struct MatchArm {
+  case_name : String
+  body : Array[Stmt]
 }
 
 ///|
@@ -194,6 +203,7 @@ pub(all) enum Stmt {
   Call(String, Array[Expr]) // 内建命令
   SetIndex(String, Expr, Expr) // 名单[i] = 值
   Return(Expr?) // 返回 expr（仅函数体内合法）
+  Match(Expr, Array[MatchArm], Array[Stmt]) // subject, arms, else（M5-5d；else 可为空但必在）
 }
 
 ///|
@@ -237,6 +247,29 @@ pub(all) struct StudioProgram {
   variables : Array[Variable]
   handlers : Array[Handler]
   functions : Array[FuncDef]
+  structs : Array[StructDecl]
+  enums : Array[EnumDecl]
+}
+
+///|
+/// struct 字段(M5-5c)。
+pub(all) struct StructField {
+  field_name : String
+  field_type : String
+}
+
+///|
+/// struct 声明(M5-5c)。
+pub(all) struct StructDecl {
+  name : String
+  fields : Array[StructField]
+}
+
+///|
+/// 枚举声明(M5-5d)：标签集合，v1 无载荷。
+pub(all) struct EnumDecl {
+  name : String
+  cases : Array[String]
 }
 
 ///|
@@ -258,6 +291,8 @@ pub fn empty_program() -> StudioProgram {
     variables: [],
     handlers: [],
     functions: [],
+    structs: [],
+    enums: [],
   }
 }
 

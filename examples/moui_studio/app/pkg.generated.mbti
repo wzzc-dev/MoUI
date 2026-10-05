@@ -6,13 +6,17 @@ import {
   "examples/moui_studio/domain/ir",
   "examples/moui_studio/domain/proposals",
   "examples/moui_studio/domain/studio_lang",
+  "examples/moui_studio/services/build",
   "examples/moui_studio/services/compiled_runtime",
   "examples/moui_studio/services/export",
+  "examples/moui_studio/services/form_designer",
+  "examples/moui_studio/services/project",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/views/style",
   "wzzc-dev/moui_i18n",
   "wzzc-dev/moui_richtext/code_editor",
+  "wzzc-dev/moui_webview/host",
 }
 
 // Values
@@ -124,6 +128,8 @@ pub const WINDOW_CHROME_HEIGHT : Double = 32.0
 
 pub fn action_chip(String, Msg, ChipTone, Double) -> @core.View[Msg]
 
+pub fn active_project_of(Model) -> ProjectRecord?
+
 pub fn ai_bar_composer(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn ai_bar_height(Model, Double, Double) -> Double
@@ -226,6 +232,8 @@ pub fn blocks_visual_rects(Array[@blocks.BlockItem], Array[@core.Rect]) -> Array
 
 pub fn bottom_strip_height(Model) -> Double
 
+pub fn build_entry_rel(@build.BuildKind, ProjectRecord) -> String
+
 pub fn builtin_words(@studio_lang.Language) -> Array[String]
 
 pub fn bundle_files(String, String) -> Array[(String, String)]
@@ -322,6 +330,8 @@ pub let design_total_height : Double
 
 pub fn diff_row(String, String, Double) -> @core.View[Msg]
 
+pub fn draw_command_from_json(Json) -> Result[@core.DrawCommand, String]
+
 pub fn empty_hint(String, Double, Double) -> @core.View[Msg]
 
 pub fn empty_program() -> @ir.StudioProgram
@@ -340,6 +350,8 @@ pub fn fill_row(Array[@core.View[Msg]], Double, Double, @style.CrossAlign) -> @c
 
 pub fn filter_studio_commands(Array[StudioCommand], String) -> Array[StudioCommand]
 
+pub fn find_literal_span(String, String) -> (Int, Int)?
+
 pub fn first_control_name(Array[@ir.Control]) -> String
 
 pub fn first_handler_key(Array[@ir.Handler]) -> String
@@ -349,6 +361,20 @@ pub fn fit_label(String, Double) -> String
 pub fn fit_scale(Double, Double, Double, Double) -> Double
 
 pub fn folder_url_of(String) -> String
+
+pub fn form_design_apply_move(FormDesignerSession, Int, Double, Double) -> (FormDesignerSession, Bool)
+
+pub fn form_design_apply_resize(FormDesignerSession, Int, Double, Double) -> (FormDesignerSession, Bool)
+
+pub fn form_design_canvas(FormDesignerSession, Int?, Double, Double) -> @core.View[Msg]
+
+pub fn form_design_load_task(@services.FileServices, String, String) -> @services.ServiceTask[String]
+
+pub fn form_design_rel(ProjectRecord) -> String?
+
+pub fn form_design_rel_of(Model) -> String?
+
+pub fn form_design_write_effect(Model, FormDesignerSession, @services.FileServices) -> (Model, @core.Effect[Msg])
 
 pub fn gate_pending(Model) -> Bool
 
@@ -361,8 +387,6 @@ pub fn group_can_create(String) -> Bool
 pub fn group_children(Array[TreeNode], String) -> Array[TreeNode]
 
 pub fn hairline() -> @core.View[Msg]
-
-pub fn hairline_v() -> @core.View[Msg]
 
 pub fn handler_key(String, String) -> String
 
@@ -434,6 +458,8 @@ pub fn initial_model(provider_config? : ProviderConfig, compile_track_available?
 
 pub fn inline_card(@core.Color, @core.View[Msg], Double, Bool) -> @core.View[Msg]
 
+pub fn install_preview_web(@host.WebViewController?, PreviewWebControls?) -> Unit
+
 pub fn ir_line_spans(Model) -> Array[IrLineSpan]
 
 pub fn ir_ruler(Model, Array[IrLineSpan], Double) -> @core.View[Msg]
@@ -456,6 +482,12 @@ pub fn middle_ellipsis(String, Double) -> String
 
 pub fn no_text_measure(String) -> Double
 
+pub fn noop_build_cancel() -> Unit
+
+pub fn noop_build_submit(@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit
+
+pub fn noop_preview_web_controls() -> PreviewWebControls
+
 pub fn pane_foot(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
 pub fn pane_head(String, String, Double, Array[@core.View[Msg]], tail? : String) -> @core.View[Msg]
@@ -464,21 +496,39 @@ pub fn pane_head_layout(String, String, String, Double, Int) -> PaneHeadLayout
 
 pub fn panel_head(String, String, Array[@core.View[Msg]], Double, trailing_widths? : Array[Double]) -> @core.View[Msg]
 
+pub fn parse_preview_frame(String) -> Result[PreviewFrame, String]
+
 pub fn pending_ai_cards(Model) -> Int
 
 pub fn pending_side_effects(Model) -> Int
 
 pub fn pill(String, @core.Color, Double) -> @core.View[Msg]
 
+pub fn preview_replay_canvas(Model, PreviewFrame, Double) -> @core.View[Msg]
+
+pub fn preview_web_controller() -> @host.WebViewController?
+
+pub fn preview_web_controls() -> PreviewWebControls
+
+pub fn preview_workspace(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn preview_write_current(PreviewWriteState) -> (String, String)?
+
+pub fn preview_write_state_for(ProjectRecord) -> PreviewWriteState?
+
 pub fn problem_rows(Model, @moui_i18n.Translator) -> Array[ProblemRow]
 
 pub fn problems_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : PreviewWebControls, provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
 
 pub fn program_tree(Model) -> Array[TreeNode]
 
 pub fn progress_bar(Int, Double) -> @core.View[Msg]
+
+pub fn project_explorer(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn project_record_from_source(@project.ProjectSource) -> Result[ProjectRecord, String]
 
 pub fn proposal_error_text(@moui_i18n.Translator, @proposals.ProposalError) -> String
 
@@ -527,6 +577,16 @@ pub fn selected_data_file(Model) -> DataFileEntry?
 pub fn selected_function(Model) -> @ir.FuncDef?
 
 pub fn selected_variable(Model) -> @ir.Variable?
+
+pub fn semantic_commit_request(Model) -> Result[SemanticPatchRequest, String]?
+
+pub fn semantic_hit_index(Array[SemanticHitNode], Double, Double) -> Int
+
+pub fn semantic_hit_nodes(PreviewFrame) -> Array[SemanticHitNode]
+
+pub fn semantic_label_patch_task(@services.FileServices, SemanticPatchRequest) -> @services.ServiceTask[Result[String, String]]
+
+pub fn semantic_property_strip(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
 pub fn settings_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
@@ -644,7 +704,9 @@ pub fn update_selection_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
 pub fn update_with_launch_for_test(Model, Msg, @services.AppServices, (String, (Result[Unit, String]) -> Unit) -> Unit) -> (Model, @core.Effect[Msg])
 
-pub fn update_with_services(Model, Msg, @services.AppServices) -> (Model, @core.Effect[Msg])
+pub fn update_with_services(Model, Msg, @services.AppServices, preview_web? : PreviewWebControls) -> (Model, @core.Effect[Msg])
+
+pub fn upsert_project(Array[ProjectRecord], ProjectRecord) -> (Array[ProjectRecord], Int)
 
 pub fn view(Model) -> @core.View[Msg]
 
@@ -793,6 +855,7 @@ pub fn ComposerMode::not_equal(Self, Self) -> Bool
 pub(all) enum ConfirmKind {
   CkDeleteControl(String)
   CkDeleteVariable(String)
+  CkDeleteProjectFile(String)
   CkTemplate(Int)
   CkNewBlank
   CkOpen
@@ -851,6 +914,13 @@ pub(all) struct ExpressionTemplate {
 }
 pub fn ExpressionTemplate::skeleton(Self, @studio_lang.Language) -> String
 
+pub(all) struct FormDesignerSession {
+  root : String
+  form_rel : String
+  source : String
+  parsed : @form_designer.ParsedForm
+}
+
 pub(all) struct GeneratedI18nCatalog {
   locale : String
   messages : Array[(String, GeneratedI18nMessage)]
@@ -872,6 +942,7 @@ pub(all) struct IrLineSpan {
 pub(all) enum LeftView {
   LeftTree
   LeftData
+  LeftProject
   LeftHidden
 }
 
@@ -973,6 +1044,23 @@ pub(all) struct Model {
   immersive : Bool
   tree_query : String
   tree_collapsed : Array[String]
+  projects : Array[ProjectRecord]
+  active_project : Int
+  project_tree_collapsed : Array[String]
+  selected_project_file : String?
+  last_build : @build.BuildReport?
+  build_busy : Bool
+  pending_build : ProjectBuildRequest?
+  preview_write : PreviewWriteState?
+  preview_frame : PreviewFrame?
+  selected_semantic : Int?
+  semantic_draft : String
+  form_designer : FormDesignerSession?
+  selected_form_control : Int?
+  preview_mode : PreviewMode
+  preview_web_url : String?
+  preview_web_opened : Bool
+  build_seq : Int
   ctx_tab : ContextTab
   bottom_open : Bool
   bottom_height : Double
@@ -1129,6 +1217,31 @@ pub(all) enum Msg {
   OpenRequested
   OpenPathPicked(@services.ServiceTaskResult[String])
   OpenReadCompleted(@services.ServiceTaskResult[String])
+  ImportProjectRequested
+  ProjectRootPicked(@services.ServiceTaskResult[String])
+  ProjectWalkCompleted(@services.ServiceTaskResult[Result[@project.ProjectSource, String]])
+  SetActiveProject(Int)
+  ToggleProjectPackage(String)
+  SelectProjectFile(String)
+  RemoveProject(Int)
+  ProjectFileDeleteRun(String)
+  ProjectFileDeleted(String, @services.ServiceTaskResult[Unit])
+  ProjectBuildRun(@build.BuildKind)
+  ProjectBuildFinished(@build.BuildKind, Result[@build.BuildReport, String])
+  PreviewFileWritten(@services.ServiceTaskResult[Unit])
+  SelectSemanticNode(Int)
+  SemanticLabelInput(String)
+  SemanticLabelCommit
+  SemanticPatchFinished(Result[String, String])
+  SelectFormControl(Int)
+  FormDesignOpen
+  FormDesignLoaded(@services.ServiceTaskResult[String])
+  FormDesignDragEnd(Int, Double, Double)
+  FormDesignResizeEnd(Int, Double, Double)
+  FormDesignSaved(@services.ServiceTaskResult[Unit])
+  SetPreviewMode(PreviewMode)
+  PreviewNavigate(String)
+  PreviewReload
   ExportRequested
   ExportDirPicked(@services.ServiceTaskResult[String])
   ExportFileWritten(@services.ServiceTaskResult[Unit])
@@ -1187,11 +1300,50 @@ pub(all) struct PendingProposal {
   valid : Bool
 }
 
+pub(all) struct PreviewFrame {
+  version : Int
+  width : Double
+  height : Double
+  commands : Array[@core.DrawCommand]
+  semantics : Array[Json]
+  unknown_ops : Array[String]
+}
+
+pub(all) enum PreviewMode {
+  PmFrame
+  PmWeb
+}
+
+pub(all) struct PreviewWebControls {
+  port : Int
+  set_directory : (String) -> Unit
+  navigate : (String) -> @core.Effect[Msg]
+  reload : () -> @core.Effect[Msg]
+}
+
+pub(all) struct PreviewWriteState {
+  files : Array[(String, String)]
+  done : Int
+}
+
 pub(all) struct ProblemRow {
   handler_key : String
   label : String
   message : String
   line : Int
+  file : String
+}
+
+pub(all) struct ProjectBuildRequest {
+  kind : @build.BuildKind
+  root : String
+  entry_rel : String
+}
+
+pub(all) struct ProjectRecord {
+  root : String
+  module_name : String
+  scanned : @project.ScannedModule
 }
 
 pub(all) struct ProposalRecord {
@@ -1248,6 +1400,18 @@ pub(all) enum RunTrack {
 pub(all) struct RuntimeInspectSample {
   summary : String
   report : String
+}
+
+pub(all) struct SemanticHitNode {
+  role : String
+  label : String
+  frame : @core.Rect
+}
+
+pub(all) struct SemanticPatchRequest {
+  paths : Array[String]
+  label : String
+  new_text : String
 }
 
 pub(all) struct ShellChromeWidths {
@@ -1336,10 +1500,13 @@ pub(all) struct WatchRow {
 pub(all) enum WorkSpace {
   WsVisual
   WsCode
+  WsPreview
   WsEmpty
 }
 
 // Type aliases
+pub type BuildSubmit = (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit
+
 pub type CompileSubmit = (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit
 
 pub type LaunchSubmit = (String, (Result[Unit, String]) -> Unit) -> Unit

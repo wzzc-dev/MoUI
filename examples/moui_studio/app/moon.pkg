@@ -8,6 +8,7 @@ import {
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",
   "wzzc-dev/moui/text",
+  "moonbitlang/core/json",
   "wzzc-dev/moui_richtext",
   "wzzc-dev/moui_richtext/code_editor",
   "examples/moui_studio/domain/ir",
@@ -16,7 +17,13 @@ import {
   "examples/moui_studio/domain/proposals",
   "examples/moui_studio/domain/blocks",
   "examples/moui_studio/services/export",
+  "examples/moui_studio/services/blocks_code" @blocks_code,
   "examples/moui_studio/services/compiled_runtime",
+  "examples/moui_studio/services/project",
+  "examples/moui_studio/services/build",
+  "examples/moui_studio/services/form_designer",
+  "wzzc-dev/moui_webview/host" @webview_host,
+  "wzzc-dev/moui_webview/views" @webview_views,
 }
 
 import {

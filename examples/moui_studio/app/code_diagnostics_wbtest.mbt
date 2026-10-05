@@ -6,7 +6,8 @@
 
 ///|
 test "editing an invalid draft produces live structured diagnostics" {
-  let model = initial_model()
+  // 编辑诊断语义在 DSL 外观下验证（M5-5e：默认 MoonBit 外观不做 DSL 诊断）
+  let model = apply_shell(initial_model(), CycleCodeAppearance)
   let broken = apply_shell(model, EditCode("x ="))
   assert_true(broken.code_error != "")
   assert_eq(broken.code_diagnostics.length(), 1)
@@ -26,13 +27,16 @@ test "editing an invalid draft produces live structured diagnostics" {
 
 ///|
 test "problems pane attributes rows to handlers and lines" {
-  let model = apply_shell(initial_model(), EditCode("x ="))
+  let model = apply_shell(
+    apply_shell(initial_model(), CycleCodeAppearance),
+    EditCode("x ="),
+  )
   let rows = problem_rows(model, translator(model))
   assert_true(rows.length() > 0)
-  let draft_rows = rows.iter().filter(row => row.label == text(
-      translator(model),
-      "app.problems.draft",
-    )).collect()
+  let draft_rows = rows
+    .iter()
+    .filter(row => row.label == text(translator(model), "app.problems.draft"))
+    .collect()
   assert_true(draft_rows.length() > 0)
   let row = draft_rows[0]
   // 草稿行可跳转：handler 归属 + 行号

@@ -50,14 +50,15 @@ pub fn blocks_slot_hit(
     } else {
       ""
     }
-    match slot_hit_in_row(
-      item,
-      rect,
-      x,
-      local_y,
-      measure,
-      blocks_row_lead_width(item, lead_text, measure),
-    ) {
+    match
+      slot_hit_in_row(
+        item,
+        rect,
+        x,
+        local_y,
+        measure,
+        blocks_row_lead_width(item, lead_text, measure),
+      ) {
       Some(entry) => {
         let path = match entry.0.expr_path {
           Some(path) => path
@@ -113,15 +114,17 @@ pub fn blocks_slot_rects(
     let width = measure(segment.text)
     if segment.is_slot {
       // 洞的最小宽度：空槽也要看得见（Scratch 的空槽是一个小胶囊）。
-      result.push((
-        segment,
-        @geometry.Rect::new(
-          x=cursor,
-          y=rect.origin.y + 6.0,
-          width=width.max(28.0),
-          height=20.0,
+      result.push(
+        (
+          segment,
+          @geometry.Rect::new(
+            x=cursor,
+            y=rect.origin.y + 6.0,
+            width=width.max(28.0),
+            height=20.0,
+          ),
         ),
-      ))
+      )
     }
     cursor = cursor + width
   }
@@ -152,14 +155,15 @@ pub fn blocks_value_hit(
     } else {
       ""
     }
-    match value_hit_in_row(
-      item,
-      rect,
-      x,
-      local_y,
-      measure,
-      blocks_row_lead_width(item, lead_text, measure),
-    ) {
+    match
+      value_hit_in_row(
+        item,
+        rect,
+        x,
+        local_y,
+        measure,
+        blocks_row_lead_width(item, lead_text, measure),
+      ) {
       Some(entry) => {
         let path = match entry.0.expr_path {
           Some(path) => path
@@ -207,17 +211,21 @@ fn value_hit_in_row(
     let width = measure(segment.text)
     let hit_width = if segment.is_slot { width.max(28.0) } else { width }
     if !segment.is_slot && segment.expr_path is Some(_) {
-      if x >= cursor && x <= cursor + hit_width && y >= rect.origin.y + 6.0 &&
+      if x >= cursor &&
+        x <= cursor + hit_width &&
+        y >= rect.origin.y + 6.0 &&
         y <= rect.origin.y + 26.0 {
-        return Some((
-          segment,
-          @geometry.Rect::new(
-            x=cursor,
-            y=rect.origin.y + 6.0,
-            width=hit_width,
-            height=20.0,
+        return Some(
+          (
+            segment,
+            @geometry.Rect::new(
+              x=cursor,
+              y=rect.origin.y + 6.0,
+              width=hit_width,
+              height=20.0,
+            ),
           ),
-        ))
+        )
       }
     }
     cursor = cursor + width
@@ -237,8 +245,10 @@ fn slot_hit_in_row(
 ) -> (@blocks.TextSegment, @geometry.Rect)? {
   for entry in blocks_slot_rects(item, rect, measure, lead~) {
     let hole = entry.1
-    if x >= hole.origin.x && x <= hole.origin.x + hole.size.width &&
-      y >= hole.origin.y && y <= hole.origin.y + hole.size.height {
+    if x >= hole.origin.x &&
+      x <= hole.origin.x + hole.size.width &&
+      y >= hole.origin.y &&
+      y <= hole.origin.y + hole.size.height {
       return Some(entry)
     }
   }

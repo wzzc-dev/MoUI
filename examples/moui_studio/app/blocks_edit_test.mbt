@@ -70,6 +70,7 @@ test "blocks insert mark follows sibling slots in chain space" {
   // 无拖拽：无指示线
   assert_true(@app.blocks_insert_mark(blocks, rects, None) is None)
 }
+
 ///|
 test "blocks canvas drag moves the grabbed stack and is undoable" {
   // 口算训练营：取一个有 ≥2 条顶层语句的子程序
@@ -223,10 +224,7 @@ test "block keyboard commands are registered and gated on selection" {
   assert_eq(idle_bindings, 6)
   assert_false(idle_delete_enabled)
   // 选中一块积木后：三条都启用
-  let picked = apply(
-    apply(idle, SelectTemplate(2)),
-    SelectBlockStep(1),
-  )
+  let picked = apply(apply(idle, SelectTemplate(2)), SelectBlockStep(1))
   assert_true(picked.selected_block >= 0)
   let picked_cmds = @app.studio_program_commands(picked)
   let mut delete_enabled = false
@@ -286,7 +284,9 @@ test "dragging a statement into an if body moves it across layers" {
   let mut source_index = -1
   let mut k = 0
   for item in chain {
-    if source_index < 0 && item.path.length() > 0 && !@app.blocks_in_c_body(chain, k) &&
+    if source_index < 0 &&
+      item.path.length() > 0 &&
+      !@app.blocks_in_c_body(chain, k) &&
       k != head_index {
       source_index = k
     }
@@ -329,7 +329,10 @@ test "dragging a statement into an if body moves it across layers" {
       has_top_level_source = true
     }
     // 在某个 if 的 then 体里：深度 1 且路径形如 [k, 0, m]
-    if is_source && item.depth == 1 && item.path.length() >= 2 && item.path[1] == 0 {
+    if is_source &&
+      item.depth == 1 &&
+      item.path.length() >= 2 &&
+      item.path[1] == 0 {
       found_inside = true
     }
   }
@@ -543,7 +546,11 @@ test "an invalid drop is rejected and leaves the program untouched" {
   let last = rects[rects.length() - 1]
   let dragged = apply(
     pressed,
-    BlocksCanvasDragTo(last.origin.x + 10.0, last.origin.y + last.size.height + 4.0, 470.0),
+    BlocksCanvasDragTo(
+      last.origin.x + 10.0,
+      last.origin.y + last.size.height + 4.0,
+      470.0,
+    ),
   )
   let drag_state = match dragged.block_drag {
     Some(d) => d
@@ -667,7 +674,7 @@ test "running a decorative block explains why nothing runs" {
   }
   assert_true(end_index >= 0)
   // 直接选中装饰块（它的 path 为空）
-  let on_end = { ..with_if, selected_block: end_index }
+  let on_end = { ..with_if, selected_block: end_index, }
   let ran = apply(on_end, RunSingleBlock)
   assert_true(ran.run is None)
   assert_true(ran.notice != "")
@@ -728,10 +735,7 @@ test "an empty container still shows an insert mark" {
     if victim < 0 {
       break
     }
-    emptied = apply(
-      { ..emptied, selected_block: victim },
-      DeleteBlock,
-    )
+    emptied = apply({ ..emptied, selected_block: victim, }, DeleteBlock)
     rounds = rounds + 1
   }
   // 空的 then 体路径 = if_path ++ [0]
@@ -740,7 +744,10 @@ test "an empty container still shows an insert mark" {
     empty_body.push(part)
   }
   empty_body.push(0)
-  let rects = @app.blocks_item_rects(@app.block_chain_of(emptied), avail_width=470.0)
+  let rects = @app.blocks_item_rects(
+    @app.block_chain_of(emptied),
+    avail_width=470.0,
+  )
   // 构造拖拽态：落点是那个空体
   let drag : @app.BlocksDragState = {
     list_path: [],
@@ -772,24 +779,17 @@ test "an empty container still shows an insert mark" {
 /// 「所有洞都画在同一个 x」这类错误。
 test "reporter slots are drawn at measured text offsets" {
   let body = [
-    @ir.Assign(
-      "x",
-      @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2)),
-    ),
+    @ir.Assign("x", @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2))),
   ]
   let blocks = @blocks.block_chain(body)
   // 块宽随内容收紧后，矩形由**展示文本**决定——与绘制同一份，否则
   // 「按 item.text 收窄的块」装不下带标签前缀的整行文字，截断守卫会把
   // 洞整个跳掉（实测本用例 0 个洞）。
-  let rects = @app.blocks_item_rects(
-    blocks,
-    avail_width=470.0,
-    display_texts=["赋值  x = (1 + 2)"],
-  )
+  let rects = @app.blocks_item_rects(blocks, avail_width=470.0, display_texts=[
+    "赋值  x = (1 + 2)",
+  ])
   // 度量：每个字符 7pt（确定性的假度量，便于断言精确位置）
-  let per_char = fn(text : String) -> Double {
-    text.length().to_double() * 7.0
-  }
+  let per_char = fn(text : String) -> Double { text.length().to_double() * 7.0 }
   let ops = @app.blocks_draw_plan(
     blocks,
     ["赋值  x = (1 + 2)"],
@@ -804,7 +804,7 @@ test "reporter slots are drawn at measured text offsets" {
   let holes : Array[(Double, Double, Double, Double, Bool)] = []
   for op in ops {
     match op {
-      @app.BlocksDrawOp::SlotHole(x, y, w, h, filled) =>
+      @app.BlocksDrawOp::SlotHole(x, y, w, h, filled, _) =>
         holes.push((x, y, w, h, filled))
       _ => ()
     }
@@ -822,9 +822,7 @@ test "reporter slots are drawn at measured text offsets" {
   // 度量变宽 → 洞右移（位置真的跟着度量走）。幅度取 8pt/字符：块宽随内容
   // 收紧后，过宽的度量会让「标签装不下块」成立，截断守卫正确地跳过洞
   // （20pt/字符实测就不画了）——那是否定路径，不是本用例的断言对象。
-  let wider = fn(text : String) -> Double {
-    text.length().to_double() * 8.0
-  }
+  let wider = fn(text : String) -> Double { text.length().to_double() * 8.0 }
   let ops2 = @app.blocks_draw_plan(
     blocks,
     ["赋值  x = (1 + 2)"],
@@ -839,7 +837,7 @@ test "reporter slots are drawn at measured text offsets" {
   let mut hx2 = -1.0
   for op in ops2 {
     match op {
-      @app.BlocksDrawOp::SlotHole(x, _, _, _, _) => if hx2 < 0.0 { hx2 = x }
+      @app.BlocksDrawOp::SlotHole(x, _, _, _, _, _) => if hx2 < 0.0 { hx2 = x }
       _ => ()
     }
   }
@@ -856,16 +854,12 @@ test "slot holes start after the localized label lead" {
     @ir.Assign("x", @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2))),
   ]
   let blocks = @blocks.block_chain(body)
-  let rects = @app.blocks_item_rects(
-    blocks,
-    avail_width=470.0,
-    display_texts=["赋值  x = (1 + 2)"],
-  )
+  let rects = @app.blocks_item_rects(blocks, avail_width=470.0, display_texts=[
+    "赋值  x = (1 + 2)",
+  ])
   // 度量：每字符 7pt。引导 = 「赋值␣␣」（4 字符 = 28pt），字面段 = `x = `
   // （4 字符 = 28pt）。
-  let per_char = fn(text : String) -> Double {
-    text.length().to_double() * 7.0
-  }
+  let per_char = fn(text : String) -> Double { text.length().to_double() * 7.0 }
   let ops = @app.blocks_draw_plan(
     blocks,
     ["赋值  x = (1 + 2)"],
@@ -881,7 +875,7 @@ test "slot holes start after the localized label lead" {
   let mut hx = -1.0
   for op in ops {
     match op {
-      @app.BlocksDrawOp::SlotHole(x, _, _, _, _) => if hx < 0.0 { hx = x }
+      @app.BlocksDrawOp::SlotHole(x, _, _, _, _, _) => if hx < 0.0 { hx = x }
       _ => ()
     }
   }
@@ -896,11 +890,9 @@ test "slot holes start after the localized label lead" {
 test "block rows hug their content instead of filling the canvas" {
   let blocks = @blocks.block_chain([@ir.Assign("x", @ir.IntLit(1))])
   let full = @app.blocks_item_rects(blocks, avail_width=470.0)
-  let hugged = @app.blocks_item_rects(
-    blocks,
-    avail_width=470.0,
-    display_texts=["赋值  x = 1"],
-  )
+  let hugged = @app.blocks_item_rects(blocks, avail_width=470.0, display_texts=[
+    "赋值  x = 1",
+  ])
   // 满预算（无展示文本，按 item.text 估）也远小于旧的全宽 450
   assert_true(full[0].size.width < 450.0)
   // 带展示文本的宽度明显小于画布预算，且有下限
@@ -908,13 +900,14 @@ test "block rows hug their content instead of filling the canvas" {
   assert_true(hugged[0].size.width >= 64.0)
   // 上限仍是画布预算：超长语句不会越出画布
   let long = @blocks.block_chain([
-    @ir.Assign("计数器", @ir.StrLit("一句非常非常非常长的展示文本来撑满画布")),
+    @ir.Assign(
+      "计数器",
+      @ir.StrLit("一句非常非常非常长的展示文本来撑满画布"),
+    ),
   ])
-  let capped = @app.blocks_item_rects(
-    long,
-    avail_width=200.0,
-    display_texts=["赋值  计数器 = \"一句非常非常非常长的展示文本来撑满画布\""],
-  )
+  let capped = @app.blocks_item_rects(long, avail_width=200.0, display_texts=[
+    "赋值  计数器 = \"一句非常非常非常长的展示文本来撑满画布\"",
+  ])
   assert_true(capped[0].size.width <= 180.0)
 }
 
@@ -927,14 +920,10 @@ test "slot holes are painted beneath the label text" {
     @ir.Assign("x", @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2))),
   ]
   let blocks = @blocks.block_chain(body)
-  let rects = @app.blocks_item_rects(
-    blocks,
-    avail_width=470.0,
-    display_texts=["赋值  x = (1 + 2)"],
-  )
-  let per_char = fn(text : String) -> Double {
-    text.length().to_double() * 7.0
-  }
+  let rects = @app.blocks_item_rects(blocks, avail_width=470.0, display_texts=[
+    "赋值  x = (1 + 2)",
+  ])
+  let per_char = fn(text : String) -> Double { text.length().to_double() * 7.0 }
   let ops = @app.blocks_draw_plan(
     blocks,
     ["赋值  x = (1 + 2)"],
@@ -952,7 +941,7 @@ test "slot holes are painted beneath the label text" {
   let mut i = 0
   for op in ops {
     match op {
-      @app.BlocksDrawOp::SlotHole(_, _, _, _, _) =>
+      @app.BlocksDrawOp::SlotHole(_, _, _, _, _, _) =>
         if hole_index < 0 {
           hole_index = i
         }

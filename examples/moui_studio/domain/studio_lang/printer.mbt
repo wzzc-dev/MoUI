@@ -97,6 +97,23 @@ fn write_stmt(
       write_indent(buf, indent)
       buf.write_string(keywords.end_kw)
     }
+    @ir.Match(subject, arms, else_body) => {
+      buf.write_string("\{keywords.match_kw} ")
+      write_expr(buf, subject, 0, false, keywords, language)
+      buf.write_string("\n")
+      for arm in arms {
+        write_indent(buf, indent)
+        buf.write_string("\{keywords.case_kw} \{arm.case_name}\n")
+        write_stmts(buf, arm.body, indent + 1, language)
+      }
+      if else_body.length() > 0 {
+        write_indent(buf, indent)
+        buf.write_string("\{keywords.else_kw}\n")
+        write_stmts(buf, else_body, indent + 1, language)
+      }
+      write_indent(buf, indent)
+      buf.write_string(keywords.end_kw)
+    }
     @ir.CountLoop(times, loop_var, body) => {
       buf.write_string("\{keywords.count_kw} ")
       write_expr(buf, times, 0, false, keywords, language)
@@ -158,7 +175,9 @@ fn expr_precedence(expr : Expr) -> Int {
     | @ir.Var(_)
     | @ir.ListLit(_)
     | @ir.Index(_, _)
-    | @ir.Call(_, _) => 7
+    | @ir.Call(_, _)
+    | @ir.FieldAccess(_, _)
+    | @ir.EnumTag(_, _) => 7
   }
 }
 
@@ -231,6 +250,20 @@ fn write_expr_inner(
     @ir.BoolLit(flag) =>
       buf.write_string(if flag { keywords.true_kw } else { keywords.false_kw })
     @ir.Var(name) => buf.write_string(name)
+    @ir.FieldAccess(base, field) => {
+      // 基底非主级（二元/一元）时加括号：(a + b).field 可区分
+      if expr_precedence(base) < 7 {
+        buf.write_string("(")
+        write_expr(buf, base, 0, false, keywords, language)
+        buf.write_string(")")
+      } else {
+        write_expr(buf, base, 7, false, keywords, language)
+      }
+      buf.write_string(".")
+      buf.write_string(field)
+    }
+    @ir.EnumTag(enum_name, case_name) =>
+      buf.write_string("\{enum_name}::\{case_name}")
     @ir.Not(inner) => {
       buf.write_string("\{keywords.not_kw} ")
       write_expr(buf, inner, 6, false, keywords, language)
@@ -277,4 +310,48 @@ fn binary_symbol(op : BinOp, keywords : Keywords) -> String {
     @ir.And => keywords.and_kw
     @ir.Or => keywords.or_kw
   }
+}
+
+///|
+/// 渲染 struct 声明（M5-5c 前端②）：一行一个声明、字段两空格后逗号
+/// 分隔，与 parse_struct_declarations 构成往返硬门。字段名语言无关；
+/// 类型词取当前语言表。
+pub fn render_struct_declarations(
+  decls : Array[@ir.StructDecl],
+  language : Language,
+) -> String {
+  let buf = StringBuilder()
+  for decl in decls {
+    buf.write_string("\{keywords_for(language).struct_kw} \{decl.name} { ")
+    for index, field in decl.fields {
+      if index > 0 {
+        buf.write_string(", ")
+      }
+      let display = struct_field_type_display(field.field_type, language)
+      buf.write_string("\{field.field_name}: \{display}")
+    }
+    buf.write_string(" }\n")
+  }
+  buf.to_string()
+}
+
+///|
+/// 渲染枚举声明（M5-5d）：一行一个声明、情况逗号分隔，与
+/// parse_enum_declarations 构成往返硬门。
+pub fn render_enum_declarations(
+  decls : Array[@ir.EnumDecl],
+  language : Language,
+) -> String {
+  let buf = StringBuilder()
+  for decl in decls {
+    buf.write_string("\{keywords_for(language).enum_kw} \{decl.name} { ")
+    for index, case_name in decl.cases {
+      if index > 0 {
+        buf.write_string(", ")
+      }
+      buf.write_string(case_name)
+    }
+    buf.write_string(" }\n")
+  }
+  buf.to_string()
 }

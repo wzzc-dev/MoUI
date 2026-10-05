@@ -45,8 +45,6 @@ pub const TOPBAR_ACTIONS_SAFETY : Double = 8.0
 /// 这里跟随平台习惯；两者都注册会让 Shift 组合与单 Shift 判别变复杂，
 /// 收益不抵成本。
 
-
-
 ///|
 /// 运行/停止芯片标签：运行中变停止。宽度计算与渲染共用同一来源。
 fn run_label(model : Model, t : @i18n.Translator) -> String {
@@ -110,6 +108,7 @@ pub fn ide_top_bar(
   let crumb = match model.workspace {
     WsVisual => text(t, "app.crumb.visual")
     WsCode => "\{text(t, "app.crumb.code")} › \{handler_crumb(model)}"
+    WsPreview => text(t, "app.ws.preview")
     WsEmpty => text(t, "app.crumb.empty")
   }
   let left = topbar_brand(text(t, "app.title"), model.dirty, crumb)
@@ -266,7 +265,10 @@ pub fn ide_icon_bar(
     TOPBAR_HEIGHT
   }
   let items : Array[@moui.View[Msg]] = [
-    @views.spacer(min_length=0.0, weight=0.0).frame(width=1.0, height=top_clearance),
+    @views.spacer(min_length=0.0, weight=0.0).frame(
+      width=1.0,
+      height=top_clearance,
+    ),
     icon_button(
       Eye,
       text(t, "app.ws.visual"),
@@ -302,6 +304,16 @@ pub fn ide_icon_bar(
       text(t, "app.left.data"),
       model.left_view is LeftData,
       SetLeftView(LeftData),
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
+    ),
+    icon_button(
+      FolderOpen,
+      text(t, "app.left.project"),
+      model.left_view is LeftProject,
+      SetLeftView(LeftProject),
       28.0,
       28.0,
       17.0,
@@ -371,6 +383,8 @@ pub fn ide_left_panel(
   let head = panel_head(
     if model.left_view is LeftData {
       text(t, "app.left.data")
+    } else if model.left_view is LeftProject {
+      text(t, "app.left.project")
     } else {
       text(t, "app.left.tree")
     },
@@ -409,20 +423,23 @@ pub fn ide_left_panel(
   // 其余全给结构树。底部块必须显式定高——不定高的子树会按内容一路长高，
   // 把结构树挤没。
   let strip_height = bottom_strip_height(model)
-  let body_height = (height - PANEL_HEAD_HEIGHT - 34.0 - strip_height).max(
-    120.0,
-  )
+  // 搜索框只服务结构树(树查询);工程页/数据页不占这 34pt,还给正文
+  let search_visible = model.left_view is LeftTree
+  let body_height = (height -
+  PANEL_HEAD_HEIGHT -
+  (if search_visible { 34.0 } else { 0.0 }) -
+  strip_height).max(120.0)
   let body = if model.left_view is LeftData {
     data_view(model, t, width, body_height)
+  } else if model.left_view is LeftProject {
+    project_explorer(model, t, width, body_height)
   } else {
     tree_view_ide(model, t, width, body_height)
   }
   @views.container(
     @views.column(
+      (if search_visible { [head, search, body] } else { [head, body] }) +
       [
-        head,
-        search,
-        body,
         @views.container(
           bottom_strip(model, t, width),
           width~,
@@ -434,7 +451,7 @@ pub fn ide_left_panel(
     ),
     background=ide_panel(),
     width~,
-    height=height,
+    height~,
     padding=0.0,
   )
 }
@@ -889,6 +906,7 @@ fn recent_tail(
 
 ///|
 /// 底栏：拖动条 + 页签头 + 面板体。收起时只剩 26pt 页签头。
+
 ///|
 /// 底栏：页签头 + 当前页签的体。
 ///
@@ -993,14 +1011,14 @@ pub fn ide_bottom_bar(
     ),
     background=ide_panel_alt(),
     height=PANEL_HEAD_HEIGHT,
-    width=width,
+    width~,
     padding=0.0,
   )
   if !model.bottom_open {
     return @views.container(
       @views.column([hairline(), head], spacing=0.0),
       background=ide_panel(),
-      width=width,
+      width~,
       padding=0.0,
     )
   }
@@ -1015,12 +1033,13 @@ pub fn ide_bottom_bar(
     // 否则它会按内容自然高画出去、越过底栏边界，把窗口底色露在底栏里
     // （实测底栏底部一条 14px 的暗带）。线程区自己会滚动，所以这里不套
     // 外层 scroll_view——两层滚动会让线程卡的滚动量与预期不符。
-    BtAi => ai_bar_composer(model, t, width, (height - PANEL_HEAD_HEIGHT).max(80.0))
+    BtAi =>
+      ai_bar_composer(model, t, width, (height - PANEL_HEAD_HEIGHT).max(80.0))
   }
   @views.container(
     @views.column([hairline(), head, body], spacing=0.0),
     background=ide_panel(),
-    width=width,
+    width~,
     padding=0.0,
   )
 }

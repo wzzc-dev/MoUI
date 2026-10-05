@@ -46,7 +46,12 @@ priv enum TokenKind {
   Newline
   LParen
   RParen
+  LBrace
+  RBrace
+  Colon
+  DoubleColon
   Comma
+  Dot
   Plus
   Minus
   Star
@@ -83,7 +88,11 @@ fn is_operator_char(c : Char) -> Bool {
   c == ')' ||
   c == '[' ||
   c == ']' ||
+  c == '{' ||
+  c == '}' ||
+  c == ':' ||
   c == ',' ||
+  c == '.' ||
   c == '+' ||
   c == '-' ||
   c == '*' ||
@@ -183,6 +192,8 @@ fn lex(source : String) -> Result[Array[Token], LangError] {
           Some(Ne)
         } else if c == '>' && next == '=' {
           Some(Ge)
+        } else if c == ':' && next == ':' {
+          Some(DoubleColon)
         } else {
           None
         }
@@ -197,7 +208,11 @@ fn lex(source : String) -> Result[Array[Token], LangError] {
               ')' => RParen
               '[' => LBracket
               ']' => RBracket
+              '{' => LBrace
+              '}' => RBrace
+              ':' => Colon
               ',' => Comma
+              '.' => Dot
               '+' => Plus
               '-' => Minus
               '*' => Star

@@ -31,6 +31,7 @@ pub struct FileServices {
   read_bytes_fn : (String) -> ServiceTask[Bytes]
   write_bytes_fn : (String, Bytes) -> ServiceTask[Unit]
   list_directory_fn : (String) -> ServiceTask[Array[DirectoryEntry]]
+  delete_file_fn : (String) -> ServiceTask[Unit]
 }
 
 ///|
@@ -68,6 +69,9 @@ pub fn FileServices::new(
   list_directory? : (String) -> ServiceTask[Array[DirectoryEntry]] = _path => {
     unavailable_task("file:list-directory", "directory listing")
   },
+  delete_file? : (String) -> ServiceTask[Unit] = _path => {
+    unavailable_task("file:delete", "file deletion")
+  },
 ) -> FileServices {
   {
     open_file_fn: open_file,
@@ -78,6 +82,7 @@ pub fn FileServices::new(
     read_bytes_fn: read_bytes,
     write_bytes_fn: write_bytes,
     list_directory_fn: list_directory,
+    delete_file_fn: delete_file,
   }
 }
 
@@ -116,6 +121,15 @@ pub fn FileServices::read_text(
   path : String,
 ) -> ServiceTask[String] {
   (self.read_text_fn)(path)
+}
+
+///|
+/// 删除文件(资源管理器 M0-6b;web 端能力掩码不含,显式不可用)。
+pub fn FileServices::delete_file(
+  self : FileServices,
+  path : String,
+) -> ServiceTask[Unit] {
+  (self.delete_file_fn)(path)
 }
 
 ///|

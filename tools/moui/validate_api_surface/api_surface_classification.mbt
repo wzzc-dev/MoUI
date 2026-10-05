@@ -64,7 +64,8 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       category: "app_constructor",
       // Variable list rendering and grid semantics add three view-returning
       // app entrypoints; the remaining data-grid API is state-helper surface.
-      max_count: 137,
+      // 坐标舞台(M4):stage/place/Placed 构造面 +1。
+      max_count: 138,
     },
     {
       path: "moui/views/pkg.generated.mbti",
@@ -245,6 +246,10 @@ fn classify_api_surface_line(path : String, line : String) -> String? {
       // control-theme records, so classify those as styles rather than debt.
       if line.has_prefix("pub(all) enum") {
         // Fall through to semantic classification below
+      } else if line.contains("Placed") {
+        // 坐标舞台的放置记录(M4):place()/stage() 构造面的配套数据类型,
+        // 与 app_constructor 同属视图构造表面,不是迁移债。
+        return Some("app_constructor")
       } else if line.contains("Presentation") {
         // Presentation declarations are app-owned state/configuration, not a
         // migration shim or control theme token.

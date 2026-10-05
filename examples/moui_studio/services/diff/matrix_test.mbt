@@ -197,6 +197,45 @@ fn statement_kind_handlers(
       ]),
     ),
   )
+  // 匹配分派（M5-5d）：命中乙臂 / 落 else 两种路径
+  results.push(
+    (
+      "match-dispatch",
+      synthetic_handler(program, [
+        @ir.Declare("差分分支", @ir.EnumTag("差分牌", "乙")),
+        @ir.Match(
+          @ir.Var("差分分支"),
+          [
+            @ir.MatchArm::{
+              case_name: "甲",
+              body: [
+                @ir.Call("set_text", [@ir.Var(label), @ir.StrLit("甲")]),
+              ],
+            },
+            @ir.MatchArm::{
+              case_name: "乙",
+              body: [
+                @ir.Call("set_text", [@ir.Var(label), @ir.StrLit("乙")]),
+              ],
+            },
+          ],
+          [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("其他")])],
+        ),
+        @ir.Match(
+          @ir.EnumTag("差分牌", "丙"),
+          [
+            @ir.MatchArm::{
+              case_name: "甲",
+              body: [
+                @ir.Call("set_text", [@ir.Var(label), @ir.StrLit("甲")]),
+              ],
+            },
+          ],
+          [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("其他")])],
+        ),
+      ]),
+    ),
+  )
   // 命令调用（message_box + set_text）
   results.push(
     (

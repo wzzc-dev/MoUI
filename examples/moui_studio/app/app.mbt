@@ -129,6 +129,7 @@ pub fn update_with_services(
   model : Model,
   msg : Msg,
   services : @services.AppServices,
+  preview_web? : PreviewWebControls = noop_preview_web_controls(),
 ) -> (Model, @moui.Effect[Msg]) {
   match msg {
     // 复制产物路径：走系统剪贴板（native 是 NSPasteboard，Web 是可用的
@@ -230,8 +231,10 @@ pub fn update_with_services(
     OpenPathPicked(result) =>
       match result {
         Success(path) =>
+          // 记下旧文件所在目录（M6③）：迁移器把 form.mbt/handlers.mbt
+          // 写到这里，一次性完成格式转换。
           (
-            model,
+            { ..model, pending_open_dir: Some(dirname_of(path)), },
             services
             .files()
             .read_text(path)
@@ -244,8 +247,14 @@ pub fn update_with_services(
     OpenReadCompleted(result) =>
       match result {
         Success(source) =>
-          match @codec.decode_program(source) {
-            Ok(program) => {
+          // M6③：打开 .studio.json = 一次性迁移。解码失败是结构化报错
+          // （携带 codec 原因并指向迁移器口径），不再笼统「打开失败」。
+          match migrate_studio_source(
+            model.pending_open_dir.unwrap_or("."),
+            source,
+          ) {
+            Ok(outcome) => {
+              let program = outcome.program
               let next = {
                 ..model,
                 program,
@@ -271,6 +280,8 @@ pub fn update_with_services(
                 saved_encoding: @codec.encode_program(program),
                 selected_control: first_control_name(program.controls),
                 selected_handler: first_handler_key(program.handlers),
+                // 迁移器落盘：组合根写 form.mbt + handlers.mbt 到旧文件目录
+                pending_code_project: true,
               }
               (
                 with_notice(
@@ -281,21 +292,486 @@ pub fn update_with_services(
                 @moui.Effect::none(),
               )
             }
-            Err(_) =>
+            Err(message) =>
+              (with_notice(model, message, true), @moui.Effect::none())
+          }
+        Failure(error) =>
+          (with_notice(model, error.message, true), @moui.Effect::none())
+        Cancelled => (model, @moui.Effect::none())
+      }
+    // === 工程工作台（M0）：导入 MoonBit 工程 ===
+    // 与 Open 同构的三段链。walk 任务的域级失败（目录不是 MoonBit 模块、
+    // 超限）在任务值里是 Err(...)，基础设施失败才是 Failure——两种都要
+    // 说话，但文案口径不同：前者是「选错了目录」，后者是「扫描坏了」。
+    ImportProjectRequested => {
+      let options = @services.FileDialogOptions::new(
+        title=text(translator(model), "app.dialog.import_project"),
+      )
+      (
+        model,
+        services
+        .files()
+        .pick_directory(options~)
+        .effect(map=r => ProjectRootPicked(r)),
+      )
+    }
+    ProjectRootPicked(result) =>
+      match result {
+        Success(root) =>
+          (
+            model,
+            @project.walk_project_task(services.files(), root).effect(map=r => {
+              ProjectWalkCompleted(r)
+            }),
+          )
+        Failure(error) =>
+          (with_notice(model, error.message, true), @moui.Effect::none())
+        Cancelled => (model, @moui.Effect::none())
+      }
+    ProjectWalkCompleted(result) =>
+      match result {
+        Success(Ok(source)) =>
+          match project_record_from_source(source) {
+            Ok(record) => {
+              // 同 root 原位替换（重复导入=刷新扫描），新工程成为当前选中
+              let (projects, index) = upsert_project(model.projects, record)
+              let notified = with_notice(
+                { ..model, projects, active_project: index, },
+                text_with(translator(model), "app.project.imported", [
+                  ("name", record.module_name),
+                ]),
+                false,
+              )
+              // 预览 harness(M1):工程有逻辑入口就生成 .studio/preview
+              // 并逐文件落盘(回执 PreviewFileWritten 推进游标)
+              match preview_write_state_for(record) {
+                None => (notified, @moui.Effect::none())
+                Some(state) =>
+                  match preview_write_current(state) {
+                    None => (notified, @moui.Effect::none())
+                    Some((path, content)) =>
+                      (
+                        { ..notified, preview_write: Some(state), },
+                        services
+                        .files()
+                        .write_text(path, content)
+                        .effect(map=r => PreviewFileWritten(r)),
+                      )
+                  }
+              }
+            }
+            Err(msg) => (with_notice(model, msg, true), @moui.Effect::none())
+          }
+        Success(Err(msg)) =>
+          (with_notice(model, msg, true), @moui.Effect::none())
+        Failure(error) =>
+          (with_notice(model, error.message, true), @moui.Effect::none())
+        Cancelled => (model, @moui.Effect::none())
+      }
+    // 删除工程文件(确认流续行,M0-6b):磁盘删除 → 回执后重扫工程
+    // (复用导入链,upsert 原位替换刷新文件树)。
+    ProjectFileDeleteRun(rel) =>
+      match active_project_of(model) {
+        None => (model, @moui.Effect::none())
+        Some(project) =>
+          (
+            model,
+            services
+            .files()
+            .delete_file("\{project.root}/\{rel}")
+            .effect(map=r => ProjectFileDeleted(rel, r)),
+          )
+      }
+    ProjectFileDeleted(rel, result) =>
+      match result {
+        Success(_) =>
+          match active_project_of(model) {
+            None => (model, @moui.Effect::none())
+            Some(project) =>
               (
                 with_notice(
                   model,
-                  text(translator(model), "app.status.open_failed"),
-                  true,
+                  text_with(translator(model), "app.project.file_deleted", [
+                    ("a", rel),
+                  ]),
+                  false,
                 ),
-                @moui.Effect::none(),
+                @project.walk_project_task(services.files(), project.root).effect(map=r => {
+                    ProjectWalkCompleted(r)
+                  },
+                ),
               )
           }
         Failure(error) =>
           (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
-    // 导出独立应用：native 有系统目录选择 + 逐文件写盘；Web 端的目录
+    // 构建服务(M0-7):kind 分发。StudioCompile 回路由既有编译轨
+    // (CompileRun,五阶段管线),其余 kind 经注入的 build_submit 走
+    // build_native 的单命令执行。门:工具链能力与编译轨同口径。
+    ProjectBuildRun(kind) => {
+      let gate = if !model.compile_track_available {
+        Some(text(translator(model), "app.track.unavailable_web"))
+      } else if model.build_busy {
+        Some(text(translator(model), "app.project.build_busy"))
+      } else {
+        None
+      }
+      match gate {
+        Some(message) =>
+          (with_notice(model, message, true), @moui.Effect::none())
+        None =>
+          match active_project_of(model) {
+            None =>
+              (
+                with_notice(
+                  model,
+                  text(translator(model), "app.project.no_project"),
+                  true,
+                ),
+                @moui.Effect::none(),
+              )
+            Some(project) => {
+              let entry_rel = build_entry_rel(kind, project)
+              if entry_rel == "" {
+                (
+                  with_notice(
+                    model,
+                    text(translator(model), "app.project.no_entry"),
+                    true,
+                  ),
+                  @moui.Effect::none(),
+                )
+              } else {
+                (
+                  {
+                    ..model,
+                    build_busy: true,
+                    pending_build: Some(ProjectBuildRequest::{
+                      kind,
+                      root: project.root,
+                      entry_rel,
+                    }),
+                  },
+                  @moui.Effect::none(),
+                )
+              }
+            }
+          }
+      }
+    }
+    ProjectBuildFinished(kind, result) =>
+      match result {
+        Ok(report) => {
+          // 诊断落 last_build,由 Problems 汇流渲染;busy 复位
+          let cleared = {
+            ..model,
+            last_build: Some(report),
+            build_busy: false,
+          }
+          // FramePreview 成功(M1-2):解析哨兵协议 → 可重放帧
+          let with_frame = if kind is BkFramePreview && report.ok {
+            match parse_preview_frame(report.output) {
+              Ok(frame) => { ..cleared, preview_frame: Some(frame), }
+              Err(message) =>
+                return (
+                  with_notice(cleared, message, true),
+                  @moui.Effect::none(),
+                )
+            }
+          } else {
+            cleared
+          }
+          // WebPreview 成功(M2-2):设静态服务目录 + 组预览 URL +
+          // 存 build_seq(wrapper 据此派发 navigate/首次后 reload)
+          let with_web = if kind is BkWebPreview && report.ok {
+            (preview_web_controls().set_directory)(report.web_root)
+            let url = "http://127.0.0.1:\{preview_web_controls().port}/\{report.web_index_rel}"
+            {
+              ..with_frame,
+              preview_web_url: Some(url),
+              preview_web_opened: true,
+              preview_mode: PmWeb,
+              workspace: WsPreview,
+              build_seq: model.build_seq + 1,
+            }
+          } else {
+            with_frame
+          }
+          // RunNative 成功(M3):产物落盘 → **自动脱离启动**(独立窗口,
+          // Studio 退出不带走它——复用产物启动通道,零新执行路径)
+          if kind is BkRunNative && report.ok && report.artifact_path != "" {
+            (
+              with_web,
+              @moui.Effect::batch([
+                @moui.Effect::dispatch(emit => {
+                  emit(RunArtifact(report.artifact_path))
+                }),
+              ]),
+            )
+          } else {
+            (
+              with_notice(
+                with_web,
+                if report.ok {
+                  text_with(translator(model), "app.project.build_ok", [
+                    ("a", kind.tag()),
+                  ])
+                } else {
+                  text_with(translator(model), "app.project.build_failed", [
+                    ("a", kind.tag()),
+                  ])
+                },
+                !report.ok,
+              ),
+              @moui.Effect::none(),
+            )
+          }
+        }
+        Err(message) =>
+          (
+            with_notice({ ..model, build_busy: false, }, message, true),
+            @moui.Effect::none(),
+          )
+      }
+    // 预览 harness 落盘回执(M1):成功推进游标;全部写完 = 预览就绪;
+    // 失败(典型:web 端无写盘)显式声明并放弃本轮落盘。
+    PreviewFileWritten(result) =>
+      match (model.preview_write, result) {
+        (None, _) => (model, @moui.Effect::none())
+        (Some(_), Cancelled) =>
+          ({ ..model, preview_write: None, }, @moui.Effect::none())
+        (Some(_), Failure(error)) =>
+          (
+            with_notice(
+              { ..model, preview_write: None, },
+              text_with(translator(model), "app.project.preview_failed", [
+                ("a", error.message),
+              ]),
+              true,
+            ),
+            @moui.Effect::none(),
+          )
+        (Some(state), Success(_)) => {
+          let advanced = { ..state, done: state.done + 1, }
+          match preview_write_current(advanced) {
+            None =>
+              (
+                with_notice(
+                  { ..model, preview_write: None, },
+                  text(translator(model), "app.project.preview_ready"),
+                  false,
+                ),
+                @moui.Effect::none(),
+              )
+            Some((path, content)) =>
+              (
+                { ..model, preview_write: Some(advanced), },
+                services
+                .files()
+                .write_text(path, content)
+                .effect(map=r => PreviewFileWritten(r)),
+              )
+          }
+        }
+      }
+    // 字面量属性补丁(M1-3):读程序包源文件 → 定位字面量 → 转义回写 →
+    // 成功后**自动走 BkFramePreview 重建**(点标题改文本 → 重建出新帧)。
+    SemanticLabelCommit =>
+      match semantic_commit_request(model) {
+        None => (model, @moui.Effect::none())
+        Some(Err(message)) =>
+          (with_notice(model, message, true), @moui.Effect::none())
+        Some(Ok(request)) =>
+          (
+            model,
+            semantic_label_patch_task(services.files(), request).effect(map=r => {
+              match r {
+                @services.Success(result) => SemanticPatchFinished(result)
+                @services.Failure(error) =>
+                  SemanticPatchFinished(Err(error.message))
+                @services.Cancelled => SemanticPatchFinished(Err("已取消"))
+              }
+            }),
+          )
+      }
+    SemanticPatchFinished(result) =>
+      match result {
+        Ok(path) =>
+          // 补丁成功:通知 + **自动重建预览**(点标题改文本 → 重建出新帧)
+          (
+            with_notice(
+              model,
+              text_with(translator(model), "app.project.label_patched", [
+                ("a", path),
+              ]),
+              false,
+            ),
+            @moui.Effect::dispatch(emit => emit(ProjectBuildRun(BkFramePreview))),
+          )
+        Err(message) =>
+          (with_notice(model, message, true), @moui.Effect::none())
+      }
+    // 表单设计器(M4-2):form.mbt 加载/编辑/保存链。
+    FormDesignOpen =>
+      match (active_project_of(model), form_design_rel_of(model)) {
+        (Some(project), Some(form_rel)) =>
+          (
+            model,
+            form_design_load_task(services.files(), project.root, form_rel).effect(map=r => {
+                FormDesignLoaded(r)
+              },
+            ),
+          )
+        _ => (model, @moui.Effect::none())
+      }
+    FormDesignLoaded(result) =>
+      match result {
+        Success(source) =>
+          match @form_designer.parse_form(source) {
+            Err(message) =>
+              (with_notice(model, message, true), @moui.Effect::none())
+            Ok(parsed) => {
+              let project = match active_project_of(model) {
+                Some(project) => project
+                None => return (model, @moui.Effect::none())
+              }
+              let form_rel = match form_design_rel_of(model) {
+                Some(rel) => rel
+                None => return (model, @moui.Effect::none())
+              }
+              (
+                {
+                  ..model,
+                  form_designer: Some(FormDesignerSession::{
+                    root: project.root,
+                    form_rel,
+                    source,
+                    parsed,
+                  }),
+                },
+                @moui.Effect::none(),
+              )
+            }
+          }
+        Failure(error) =>
+          (with_notice(model, error.message, true), @moui.Effect::none())
+        Cancelled => (model, @moui.Effect::none())
+      }
+    FormDesignDragEnd(index, dx, dy) =>
+      match model.form_designer {
+        None => (model, @moui.Effect::none())
+        Some(session) => {
+          let (next_session, changed) = form_design_apply_move(
+            session, index, dx, dy,
+          )
+          if changed {
+            form_design_write_effect(model, next_session, services.files())
+          } else {
+            (model, @moui.Effect::none())
+          }
+        }
+      }
+    FormDesignResizeEnd(index, dw, dh) =>
+      match model.form_designer {
+        None => (model, @moui.Effect::none())
+        Some(session) => {
+          let (next_session, changed) = form_design_apply_resize(
+            session, index, dw, dh,
+          )
+          if changed {
+            form_design_write_effect(model, next_session, services.files())
+          } else {
+            (model, @moui.Effect::none())
+          }
+        }
+      }
+    FormDesignSaved(result) =>
+      match result {
+        Success(_) =>
+          // 三模式联动（M4）：拖拽/缩放保存 → span 补丁写回 form.mbt →
+          // **自动重建预览**——模式一重放新帧；模式二经 build_seq 变化
+          // 触发 webview reload（preview_web_effect 的 rebuilt 分支）。
+          (
+            with_notice(
+              model,
+              text(translator(model), "app.project.external_reloaded"),
+              false,
+            ),
+            @moui.Effect::dispatch(emit => emit(ProjectBuildRun(BkFramePreview))),
+          )
+        Failure(error) =>
+          (with_notice(model, error.message, true), @moui.Effect::none())
+        Cancelled => (model, @moui.Effect::none())
+      }
+    // 外部改动重载（M8）：手动刷新入口 → 读 form.mbt → 回执比对。
+    // 设计器会话未打开时静默（刷新芯片只在会话存在时显示）。
+    FormDesignExternalCheck =>
+      match model.form_designer {
+        None => (model, @moui.Effect::none())
+        Some(session) =>
+          (
+            model,
+            services
+            .files()
+            .read_text("\{session.root}/\{session.form_rel}")
+            .effect(map=r => FormDesignExternalChecked(r)),
+          )
+      }
+    FormDesignExternalChecked(result) =>
+      match (model.form_designer, result) {
+        (Some(session), Success(new_source)) =>
+          if new_source == session.source {
+            (model, @moui.Effect::none())
+          } else {
+            match @form_designer.parse_form(new_source) {
+              Err(message) =>
+                (
+                  with_notice(
+                    model,
+                    text_with(translator(model), "app.project.external_parse_error", [
+                      ("a", message),
+                    ]),
+                    true,
+                  ),
+                  @moui.Effect::none(),
+                )
+              Ok(parsed) =>
+                (
+                  with_notice(
+                    {
+                      ..model,
+                      form_designer: Some(
+                        {
+                          ..session,
+                          source: new_source,
+                          parsed,
+                        },
+                      ),
+                    },
+                    text(translator(model), "app.project.external_reloaded"),
+                    false,
+                  ),
+                  @moui.Effect::none(),
+                )
+            }
+          }
+        // 无会话时静默忽略外部读取结果
+        (None, Success(_)) => (model, @moui.Effect::none())
+        (_, Failure(error)) =>
+          (with_notice(model, error.message, true), @moui.Effect::none())
+        (_, Cancelled) => (model, @moui.Effect::none())
+      }
+    // 代码工程骨架落盘回执（M6①）：两份文件各回一条，成功给一条
+    // 静默 notice（重渲自动生效），失败如实说话。
+    CodeProjectSaved(result) =>
+      match result {
+        Success(_) => (model, @moui.Effect::none())
+        Failure(error) =>
+          (with_notice(model, error.message, true), @moui.Effect::none())
+        Cancelled => (model, @moui.Effect::none())
+      }
+    // 导出独立应用：native 有系统目录选择 + 逐文件写盘    // 导出独立应用：native 有系统目录选择 + 逐文件写盘    // 导出独立应用：native 有系统目录选择 + 逐文件写盘；Web 端的目录
     // 「选择」返回的是文件名列表而非可写路径，25 个文件全部写不进去——
     // 与编译轨同一口径：**不可达就显式声明**，不弹一个必然失败的目录框。
     ExportRequested =>
@@ -608,6 +1084,10 @@ pub fn program(
   launch_submit? : LaunchSubmit = noop_launch_submit,
   runtime_snapshot? : RuntimeSnapshotFn = noop_runtime_snapshot,
   compile_cancel? : () -> Unit = noop_compile_cancel,
+  build_submit? : BuildSubmit = noop_build_submit,
+  build_cancel? : () -> Unit = noop_build_cancel,
+  webview_controller? : @webview_host.WebViewController? = None,
+  preview_web? : PreviewWebControls = noop_preview_web_controls(),
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
   export_available? : Bool = false,
@@ -621,7 +1101,12 @@ pub fn program(
   let submit_launch = launch_submit
   let take_snapshot = runtime_snapshot
   let cancel_compile = compile_cancel
+  let submit_build = build_submit
+  let web_controls = preview_web
+  let web_controller = webview_controller
   let on_locale = apply_locale
+  // 预览 web 控制注入(M2-2):槽位供视图与处理器读取
+  install_preview_web(webview_controller, Some(preview_web))
   @moui.Program::new_with_environment(
     init=() => {
       (
@@ -663,7 +1148,7 @@ pub fn program(
             let (next, effect) = update_with_provider(
               model, msg, services, submit, submit_launch, on_locale,
             )
-            ({ ..next, open_confirmed: false }, effect)
+            ({ ..next, open_confirmed: false, }, effect)
           }
         SaveRequested
         | SavePathPicked(_)
@@ -692,15 +1177,19 @@ pub fn program(
             model, msg, services, submit, submit_launch, on_locale,
           )
         _ => {
-          let (next, effect) = update_pure(model, msg)
+          // 默认臂走 **update_with_services**（它的默认臂就是 update_pure，
+          // 是严格超集）：导入工程/表单设计器/语义补丁等服务消息只有这
+          // 一层接得住——此前默认臂直通 update_pure，导入按钮点了没反应
+          //（服务消息被静默丢弃，实测缺陷）。
+          let (next, effect) = update_with_services(
+            model, msg, services, preview_web~,
+          )
           // 运行时检查器挂载：只有「打开 Runtime 页签 / 显式刷新」两条
           // 路径会真正采样（O(节点数) 的全树遍历），其余消息零开销通过。
           // effect 必须与原 effect 合并——确认卡的打开续行（CkOpen 的
           // Effect::dispatch(OpenRequested)）就走在 update_pure 里。
           let (next2, refresh_effect) = runtime_refresh_attached(
-            next,
-            msg,
-            take_snapshot,
+            next, msg, take_snapshot,
           )
           (next2, @moui.Effect::batch([effect, refresh_effect]))
         }
@@ -708,6 +1197,51 @@ pub fn program(
       // 真编译派发：只有「CompileRun 使 compile_busy 从假变真」这一次
       // 转移才入队——重复点击/其它消息不会重复排队。项目 JSON 在此编码，
       // 与导出 bundle 的输入是同一份（预览源码 = bundle 内实际编译源码）。
+      // 预览 webview(M2-2):url 变化 → navigate;同 url 重建 → reload。
+      // 控制器缺失(web 入口)时跳过——web 模式显式不可用。
+      let preview_web_effect = if web_controls.port > 0 {
+        match web_controller {
+          Some(controller) => {
+            let url_changed = match
+              (model.preview_web_url, next0.preview_web_url) {
+              (Some(old_url), Some(new_url)) => old_url != new_url
+              (None, Some(_)) => true
+              _ => false
+            }
+            let rebuilt = next0.build_seq != model.build_seq &&
+              next0.preview_mode is PmWeb &&
+              next0.preview_web_opened
+            if url_changed {
+              match next0.preview_web_url {
+                Some(url) => controller.navigate(url).effect(map=_ => Msg::Noop)
+                None => @moui.Effect::none()
+              }
+            } else if rebuilt && !url_changed {
+              controller.reload().effect(map=_ => Msg::Noop)
+            } else {
+              @moui.Effect::none()
+            }
+          }
+          None => @moui.Effect::none()
+        }
+      } else {
+        @moui.Effect::none()
+      }
+      // 构建服务(M0-7):busy 上升 = 有新请求 → 派发注入的 build_submit
+      // (回调 emit ProjectBuildFinished,回执落 last_build 并汇进 Problems)
+      let build_effect = if next0.build_busy && !model.build_busy {
+        match next0.pending_build {
+          Some(request) =>
+            @moui.Effect::dispatch(emit => {
+              submit_build(request.kind, request.root, request.entry_rel, result => {
+                emit(ProjectBuildFinished(request.kind, result))
+              })
+            })
+          None => @moui.Effect::none()
+        }
+      } else {
+        @moui.Effect::none()
+      }
       let compile_effect = if compile_submit_needed(model, next0) {
         let json = @codec.encode_program(next0.program)
         let name = sanitize_export_name(next0)
@@ -733,8 +1267,62 @@ pub fn program(
       let encoding = @codec.encode_program(next0.program)
       let dirty = encoding != next0.saved_encoding
       let should_write = dirty && encoding != next0.draft_encoding
+      // 代码工程骨架落盘（M6①/M6③）：SelectTemplate / 提案采纳 / 打开
+      // 迁移交错的置位标记 → 写 form.mbt + handlers.mbt。写盘目录优先取
+      // `pending_open_dir`（迁移器：旧 .studio.json 所在目录），否则打开
+      // 工程的首个程序包；两者皆无时静默清位。
+      let code_project_effect = if next0.pending_code_project {
+        match next0.pending_open_dir {
+          Some(dir) => {
+            let files = code_project_files(next0.program)
+            @moui.Effect::batch([
+              services
+              .files()
+              .write_text("\{dir}/form.mbt", files.form_mbt)
+              .effect(map=r => CodeProjectSaved(r)),
+              services
+              .files()
+              .write_text("\{dir}/handlers.mbt", files.handlers_mbt)
+              .effect(map=r => CodeProjectSaved(r)),
+            ])
+          }
+          None =>
+            match active_project_of(next0) {
+              Some(project) =>
+                match code_project_target(project) {
+                  Some(pkg) => {
+                    let files = code_project_files(next0.program)
+                    let root = project.root
+                    @moui.Effect::batch([
+                      services
+                      .files()
+                      .write_text("\{root}/\{pkg}/form.mbt", files.form_mbt)
+                      .effect(map=r => CodeProjectSaved(r)),
+                      services
+                      .files()
+                      .write_text(
+                        "\{root}/\{pkg}/handlers.mbt",
+                        files.handlers_mbt,
+                      )
+                      .effect(map=r => CodeProjectSaved(r)),
+                    ])
+                  }
+                  None => @moui.Effect::none()
+                }
+              None => @moui.Effect::none()
+            }
+        }
+      } else {
+        @moui.Effect::none()
+      }
       let next = {
         ..next0,
+        pending_code_project: false,
+        pending_open_dir: if next0.pending_code_project {
+          None
+        } else {
+          next0.pending_open_dir
+        },
         dirty,
         draft_encoding: if should_write {
           encoding
@@ -745,14 +1333,23 @@ pub fn program(
       let effect = if should_write {
         @moui.Effect::batch([
           effect0,
+          build_effect,
+          preview_web_effect,
           compile_effect,
+          code_project_effect,
           services
           .settings()
           .write(DRAFT_SETTINGS_KEY, encoding)
           .effect(map=_ => SetNotice("")),
         ])
       } else {
-        @moui.Effect::batch([effect0, compile_effect])
+        @moui.Effect::batch([
+          effect0,
+          build_effect,
+          preview_web_effect,
+          compile_effect,
+          code_project_effect,
+        ])
       }
       (next, effect)
     },
@@ -776,7 +1373,11 @@ pub fn program(
       // 非沉浸式（Web 入口）必须清空——浏览器没有原生拖窗，
       // 留下一个「看起来能拖但拖不动」的区域只会误导。
       if model.immersive {
-        let __drag_w = topbar_drag_width(model, translator(model), viewport.width)
+        let __drag_w = topbar_drag_width(
+          model,
+          translator(model),
+          viewport.width,
+        )
         services
         .platform()
         .window_drag()
@@ -796,8 +1397,7 @@ pub fn program(
       view_with_viewport(model, viewport)
     },
     subscriptions=model => run_subscription(model, timer),
-  )
-  .with_commands(commands=studio_program_commands)
+  ).with_commands(commands=studio_program_commands)
 }
 
 ///|

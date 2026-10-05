@@ -97,6 +97,8 @@ pub(all) enum Value {
   VArr(Array[Value])
   VBool(Bool)
   VUnit
+  VStruct(Map[String, Value])
+  VEnum(String, String) // 枚举值：枚举名, 情况名（M5-5d）
 }
 
 ///|
@@ -117,6 +119,21 @@ pub fn value_to_text(value : Value) -> String {
     VNum(n) => @studio_lang.number_to_text(n)
     VInt(n) => n.to_string()
     VStr(text) => text
+    VEnum(enum_name, case_name) => "\{enum_name}::\{case_name}"
+    VStruct(fields) => {
+      let buf = StringBuilder()
+      buf.write_string("{")
+      let mut first = true
+      for key, val in fields {
+        if !first {
+          buf.write_string(", ")
+        }
+        buf.write_string("\{key}: \{value_to_text(val)}")
+        first = false
+      }
+      buf.write_string("}")
+      buf.to_string()
+    }
     VArr(items) => {
       let buf = StringBuilder()
       buf.write_string("[")
@@ -1640,4 +1657,55 @@ pub fn or_values(
     return VBool(true)
   }
   VBool(bool_of(right(rt), "logic operand", line))
+}
+
+///|
+///|
+/// 构造枚举值（M5-5d）。
+pub fn make_enum(enum_name : String, case_name : String) -> Value {
+  VEnum(enum_name, case_name)
+}
+
+///|
+/// 读取枚举值的情况名（M5-5d）：匹配分派用；非枚举值报运行时错误。
+pub fn enum_case(value : Value, line : Int) -> String raise ExecError {
+  match value {
+    VEnum(_enum_name, case_name) => case_name
+    _ =>
+      raise RuntimeError({
+        kind: UnknownBuiltin,
+        line,
+        a: "匹配对象",
+        b: "应为枚举值",
+      })
+  }
+}
+
+///|
+/// 读取 struct 值的字段(M5-5c)。纯值级查找，不需要运行时状态。
+pub fn get_field(
+  value : Value,
+  field : String,
+  line : Int,
+) -> Value raise ExecError {
+  match value {
+    VStruct(fields) =>
+      match fields.get(field) {
+        Some(v) => v
+        None =>
+          raise RuntimeError({
+            kind: UnknownBuiltin,
+            line,
+            a: field,
+            b: "",
+          })
+      }
+    _ =>
+      raise RuntimeError({
+        kind: UnknownBuiltin,
+        line,
+        a: field,
+        b: "not a struct value",
+      })
+  }
 }

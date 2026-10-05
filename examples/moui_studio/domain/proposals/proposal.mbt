@@ -668,6 +668,22 @@ fn encode_stmt_json(stmt : @ir.Stmt) -> Json {
         ("cond", encode_expr_json(cond)),
         ("body", Json::array(body.map(encode_stmt_json))),
       ])
+    @ir.Match(subject, arms, else_body) =>
+      stmt_node("match", [
+        ("subject", encode_expr_json(subject)),
+        (
+          "arms",
+          Json::array(
+            arms.map(arm => {
+              let arm_fields : Map[String, Json] = Map([], capacity=2)
+              arm_fields["case"] = Json::string(arm.case_name)
+              arm_fields["body"] = Json::array(arm.body.map(encode_stmt_json))
+              Json::object(arm_fields)
+            }),
+          ),
+        ),
+        ("else", Json::array(else_body.map(encode_stmt_json))),
+      ])
   }
 }
 
@@ -696,6 +712,11 @@ fn encode_expr_json(expr : @ir.Expr) -> Json {
         ("base", encode_expr_json(base)),
         ("at", encode_expr_json(index)),
       ])
+    @ir.FieldAccess(base, field) =>
+      expr_node("field_access", [
+        ("base", encode_expr_json(base)),
+        ("field", Json::string(field)),
+      ])
     @ir.Not(inner) => expr_node("not", [("e", encode_expr_json(inner))])
     @ir.Neg(inner) => expr_node("neg", [("e", encode_expr_json(inner))])
     @ir.Binary(op, left, right) =>
@@ -708,6 +729,11 @@ fn encode_expr_json(expr : @ir.Expr) -> Json {
       expr_node("call", [
         ("name", Json::string(name)),
         ("args", Json::array(args.map(encode_expr_json))),
+      ])
+    @ir.EnumTag(enum_name, case_name) =>
+      expr_node("enum_tag", [
+        ("enum", Json::string(enum_name)),
+        ("case", Json::string(case_name)),
       ])
   }
 }

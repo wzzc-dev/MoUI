@@ -14,6 +14,7 @@
 pub(all) enum ConfirmKind {
   CkDeleteControl(String)
   CkDeleteVariable(String)
+  CkDeleteProjectFile(String)
   CkTemplate(Int)
   CkNewBlank
   CkOpen
@@ -21,15 +22,14 @@ pub(all) enum ConfirmKind {
 
 ///|
 /// 确认卡的文案（标题 + 正文）：kind 是数据，措辞是渲染层的事。
-pub fn confirm_copy(
-  kind : ConfirmKind,
-  t : @i18n.Translator,
-) -> String {
+pub fn confirm_copy(kind : ConfirmKind, t : @i18n.Translator) -> String {
   match kind {
     CkDeleteControl(name) =>
       text_with(t, "app.confirm.delete_control", [("a", name)])
     CkDeleteVariable(name) =>
       text_with(t, "app.confirm.delete_variable", [("a", name)])
+    CkDeleteProjectFile(rel) =>
+      text_with(t, "app.confirm.delete_project_file", [("a", rel)])
     CkTemplate(_) => text(t, "app.confirm.template")
     CkNewBlank => text(t, "app.confirm.new_blank")
     CkOpen => text(t, "app.confirm.open")
@@ -61,10 +61,7 @@ fn confirm_kind_of(msg : Msg) -> ConfirmKind {
 
 ///|
 /// 纯转移链第一环：确认状态机 + 破坏性守卫。返回 None = 放行后续链。
-fn update_confirm_msgs(
-  model : Model,
-  msg : Msg,
-) -> (Model, @moui.Effect[Msg])? {
+fn update_confirm_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
     RequestConfirm(kind) =>
       Some(({ ..model, pending_confirm: Some(kind), }, @moui.Effect::none()))
@@ -86,12 +83,25 @@ fn update_confirm_msgs(
                   @moui.Effect::dispatch(emit => emit(OpenRequested)),
                 ),
               )
+            // 删除工程文件走服务流(磁盘删除,纯链接不住):确认后派发
+            // **独立续行消息** ProjectFileDeleteRun——它不是被守卫消息,
+            // 无需放行标记,服务层直接执行删除并重扫工程。
+            CkDeleteProjectFile(rel) =>
+              Some(
+                (
+                  cleared,
+                  @moui.Effect::dispatch(emit => emit(ProjectFileDeleteRun(rel))),
+                ),
+              )
             // 其余四种在纯链内同步续行：update_pure_inner 跳过守卫层，
             // 原处理器直接执行——测试的纯转移上下文也能走完整流程。
             _ => {
               let follow : Msg = match kind {
                 CkDeleteControl(name) => DeleteControl(name)
                 CkDeleteVariable(name) => DeleteVariable(name)
+                // 删除工程文件在上方独立臂经 Effect 续行(服务流),此分支
+                // 不可达;穷举要求给一个无害映射。
+                CkDeleteProjectFile(_) => OpenRequested
                 CkTemplate(index) => SelectTemplate(index)
                 CkNewBlank => NewBlankProgram
                 CkOpen => OpenRequested
@@ -132,10 +142,7 @@ fn update_confirm_msgs(
 
 ///|
 /// 确认卡（模态对话框）：标题 + 正文 + 取消/确认两键。
-fn confirm_dialog(
-  model : Model,
-  t : @i18n.Translator,
-) -> @moui.View[Msg] {
+fn confirm_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
   let message = match model.pending_confirm {
     Some(kind) => confirm_copy(kind, t)
     None => ""
@@ -189,4 +196,3 @@ fn confirm_dialog(
     padding=16.0,
   )
 }
-

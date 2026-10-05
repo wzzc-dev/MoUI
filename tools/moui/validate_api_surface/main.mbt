@@ -404,9 +404,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 820,
-      max_pub_lines: 370,
-      max_pub_all_lines: 20,
+      max_lines: 691,
+      max_pub_lines: 329,
+      max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "pub using @core {type Color}", "pub using @core {type ColorScheme}", "pub using @core {type Point}",
@@ -429,7 +429,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "backend protocols",
       path: "moui/backend/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend\"",
-      max_lines: 651,
+      max_lines: 654,
       max_pub_lines: 268,
       max_pub_all_lines: 55,
       required_tokens: [

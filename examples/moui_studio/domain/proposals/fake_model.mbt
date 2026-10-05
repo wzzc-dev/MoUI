@@ -97,6 +97,8 @@ fn generic_sample() -> @ir.StudioProgram {
       },
     ],
     functions: [],
+    structs: [],
+    enums: [],
   }
 }
 

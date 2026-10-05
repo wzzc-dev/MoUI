@@ -70,6 +70,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
 | [moui-studio](active/moui-studio.md) | MoUI Studio：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
 | [moui-studio-capability-upgrade](active/moui-studio-capability-upgrade.md) | MoUI Studio 能力升级：真编辑器/诊断面板/运行时检查器/键盘与进程卫生/积木形状/语言层(函数·数组·整数)/属性 schema 与新控件事件/MoonBit 情报 |
+| [moui-studio-workbench](active/moui-studio-workbench.md) | MoUI Studio 工程工作台：代码真源(handlers.mbt/form.mbt)+ 三模式预览(画布快览/web+webview/native)+ 拖拽布局设计器 + 工程导入与资源管理器 + 积木长成 Blockly for MoonBit(IR 逐构造生长)，.studio.json 迁移退役 |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
 | [view-node-trait-refactor](active/view-node-trait-refactor.md) | Complete the public ViewNode trait migration |
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |

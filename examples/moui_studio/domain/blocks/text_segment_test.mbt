@@ -114,3 +114,21 @@ test "a call exposes one slot per argument" {
     index = index + 1
   }
 }
+
+///|
+/// 字段访问（M5-5c 前端③）：插槽文本走 canonical（`person.名字`），
+/// 与字面段拼回逐字一致，路径仍可寻址。
+test "field access projects as canonical slot text" {
+  let stmt = @ir.Assign("y", @ir.FieldAccess(@ir.Var("person"), "名字"))
+  let segments = @blocks.stmt_text_segments(stmt)
+  let joined = segments.fold(init="", (acc, segment) => acc + segment.text)
+  let chain = @blocks.block_chain([stmt])
+  assert_eq(joined, chain[0].text)
+  // 插槽段：非字面段文本即 canonical 表达式，路径可解析到同一表达式
+  let slots = segments.filter(segment => segment.is_slot)
+  assert_eq(slots.length(), 1)
+  assert_eq(slots[0].text, "person.名字")
+  assert_true(
+    @blocks.expr_at([stmt], [0], slots[0].expr_path.unwrap()) is Some(_),
+  )
+}

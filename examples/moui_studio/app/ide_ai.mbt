@@ -29,7 +29,7 @@ pub const CHIPS_HEIGHT : Double = 26.0
 /// 高度必须给 `lines × line_height + 16`：text_area 内部有 8pt×2 垂直内垫，
 /// 只传 `lines=2` 时可见文本区只剩一行——这就是「输入区还是一行」的根因。
 /// 这里 lines=3 × 20 = 60 → 可见 44 = 两整行（长 prompt 折行可读）。
-pub const COMPOSER_HEIGHT : Double = 98.0
+pub const COMPOSER_HEIGHT : Double = 88.0
 
 ///|
 /// 输入盒高度唯一计算源（视图层与 card_chrome_height 共用——两处各算
@@ -95,9 +95,7 @@ fn thread_area_height(model : Model) -> Double {
 /// `+ 12.0`——视图层没有对应元素，那 12pt 被 ContainerBox 居中平摊，
 /// 成了「上下不对称」的一半来源。现在它与 `AI_CARD_PAD` 同源。
 fn card_chrome_height(model : Model, width : Double) -> Double {
-  composer_height(width) +
-  decision_bar_height(model) +
-  AI_CARD_PAD * 2.0
+  composer_height(width) + decision_bar_height(model) + AI_CARD_PAD * 2.0
 }
 
 ///|
@@ -137,6 +135,18 @@ fn ai_card_body(
   let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
   // 折叠条：有待审计卡时显示计数并允许折叠线程
   let pending = pending_ai_cards(model)
+  // VS Code 口径（实测反馈）：输入盒**钉在卡底**，不浮在区域顶部——
+  // 线程区为空/折叠时用占位吃掉线程预算，输入盒沉底。占位高度必须
+  // 扣掉输入盒/决策行/卡片内衬——整段占满会让决策行被裁掉（实测缺陷）。
+  if model.ai_cards.length() == 0 || model.ai_cards_folded {
+    let pin_height = (
+      thread_height -
+      composer_height(width) -
+      decision_bar_height(model) -
+      AI_CARD_PAD * 2.0,
+    ).max(0.0)
+    body.push(@views.text("", width=1.0, height=pin_height))
+  }
   if model.ai_cards.length() > 0 {
     body.push(fold_bar(model, t, inner, pending))
     if !model.ai_cards_folded {
@@ -174,10 +184,12 @@ fn ai_card_body(
   // 不透明面板色」是本仓反复踩的坑，这里直接不创造它。
   body.push(composer(model, t, width))
   body.push(decision_bar(model, t, width))
+  // 扁平（实测反馈：卡片要「阴影/色阶」感,与面板融为一块）——
+  // 与 composer 同底色,无圆角无抬升。
   @views.container(
     @views.padding(@views.column(body, spacing=0.0), AI_CARD_PAD),
-    background=ide_elevated(),
-    corner_radius=10.0,
+    background=ide_panel(),
+    corner_radius=0.0,
     width~,
     padding=0.0,
   )
@@ -427,12 +439,15 @@ pub const AI_BAR_HEIGHT : Double = PANEL_HEAD_HEIGHT +
 /// 与「底栏装得下输入面」同一纪律：高度是**算出来的**，不是写死的。
 /// 上限 `max` 防止线程卡多起来把工作区压没（底栏超过屏幕一半时截断，
 /// 线程区自己会滚动）。
-pub fn ai_bar_height(model : Model, width : Double, viewport_height : Double) -> Double {
+pub fn ai_bar_height(
+  model : Model,
+  width : Double,
+  viewport_height : Double,
+) -> Double {
   let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
-  let content = PANEL_HEAD_HEIGHT +
-    ai_card_height(model, inner) +
-    AI_CARD_PAD * 2.0 +
-    4.0
+  // ai_card_height **已含**卡片四周内衬（AI_CARD_PAD*2）——这里再计一次
+  // 会让底栏比内容高出一截，页签头和输入盒之间留出一条空白带（实测缺陷）。
+  let content = PANEL_HEAD_HEIGHT + ai_card_height(model, inner) + 4.0
   content.max(AI_BAR_HEIGHT).min((viewport_height * 0.5).max(AI_BAR_HEIGHT))
 }
 
@@ -501,16 +516,7 @@ fn composer(
   let inner_width = box_width - 16.0
   let busy = model.ai_busy
   let send_msg = if busy { Msg::Noop } else { ComposerRun }
-  let field = @views.text_area(
-    model.prompt_draft,
-    on_input=value => SetPrompt(value),
-    placeholder=text(t, "app.ai.prompt"),
-    lines=3,
-    variant=Plain,
-    width=inner_width,
-    line_height=20.0,
-    on_submit=Some(send_msg),
-  )
+  // 输入域移到下方 input_row（与发送同行）——这里不再构建。
   // 盒内脚注的 ghost 操作：**两种内联落点之间的一步切换**。
   //
   // 底栏档显示「停靠右栏」按钮，停靠档显示「放到底栏」——两边互为出口，
@@ -564,26 +570,36 @@ fn composer(
       ),
     )
   }
+  // 发送钮在模式行右端（**只有一个**——输入行内再放一个是实测的双钮缺陷）。
   foot_cells.push(
     round_send_button(text(t, "app.ai.send"), send_msg, !busy, 24.0),
   )
+  // 实测反馈第四轮：**输入在上，模式胶囊 + 发送在下**；输入域可见
+  // **两行**（text_area 内部有 8pt×2 垂直内垫——lines=3 才可见两整行，
+  // 见 COMPOSER_HEIGHT 的注释）；整体扁平无阴影。
+  // 输入域**直接作为列子项**（包定高容器或塞 row 都会让它不渲染，
+  // text_area 的高度语义只在列布局下可靠，两轮实测确认）。
   let foot = fill_row(foot_cells, inner_width, 6.0, Center)
+  let field = @views.text_area(
+    model.prompt_draft,
+    on_input=value => SetPrompt(value),
+    placeholder=text(t, "app.ai.prompt"),
+    lines=3,
+    variant=Plain,
+    width=inner_width,
+    line_height=20.0,
+    on_submit=Some(send_msg),
+  )
   @views.container(
     @views.padding_edges(
       @views.column([field, foot], spacing=2.0),
       left=8.0,
       right=8.0,
-      top=5.0,
-      bottom=6.0,
+      top=4.0,
+      bottom=4.0,
     ),
     background=ide_panel(),
-    corner_radius=8.0,
-    border=Some(
-      @graphics.BorderStyle::new(
-        brush=@graphics.Brush::solid(ide_border()),
-        width=1.0,
-      ),
-    ),
+    corner_radius=0.0,
     width=box_width,
     height=composer_height(width),
     padding=0.0,

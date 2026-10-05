@@ -10,15 +10,17 @@ test "runtime sample arrival records report and bounded dedup history" {
   let model = initial_model()
   let mut current = model
   for index in 0..<40 {
-    let label = if index % 3 == 0 { "s-a" } else if index % 3 == 1 {
+    let label = if index % 3 == 0 {
+      "s-a"
+    } else if index % 3 == 1 {
       "s-b"
     } else {
       "s-c"
     }
-    current = runtime_sample_arrived(
-      current,
-      { summary: label, report: "report \{label}" },
-    )
+    current = runtime_sample_arrived(current, {
+      summary: label,
+      report: "report \{label}",
+    })
   }
   let report = current.runtime_report
   assert_true(report is Some(_))
@@ -33,7 +35,7 @@ test "runtime refresh samples only on tab open or explicit refresh" {
   let mut calls = 0
   let take : RuntimeSnapshotFn = fn() {
     calls = calls + 1
-    Some({ summary: "sum", report: "[runtime]\nnodes" })
+    Some({ summary: "sum", report: "[runtime]\nnodes", })
   }
   let model = initial_model()
   // 无关消息：不采样
@@ -45,7 +47,11 @@ test "runtime refresh samples only on tab open or explicit refresh" {
   assert_eq(calls, 0)
   // 打开 Runtime 页签：采样一次
   let (opened, _) = update_pure(model, SetContextTab(CtxRuntime))
-  let (sampled, _) = runtime_refresh_attached(opened, SetContextTab(CtxRuntime), take)
+  let (sampled, _) = runtime_refresh_attached(
+    opened,
+    SetContextTab(CtxRuntime),
+    take,
+  )
   assert_eq(calls, 1)
   assert_true(sampled.runtime_report is Some(_))
   assert_false(sampled.runtime_missing)
@@ -60,7 +66,11 @@ test "runtime tab without channel degrades explicitly" {
   let take : RuntimeSnapshotFn = fn() { None }
   let model = initial_model()
   let (opened, _) = update_pure(model, SetContextTab(CtxRuntime))
-  let (degraded, _) = runtime_refresh_attached(opened, SetContextTab(CtxRuntime), take)
+  let (degraded, _) = runtime_refresh_attached(
+    opened,
+    SetContextTab(CtxRuntime),
+    take,
+  )
   assert_true(degraded.runtime_missing)
   assert_true(degraded.runtime_report is None)
 }

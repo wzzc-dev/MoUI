@@ -23,6 +23,9 @@ pub(all) struct TextSegment {
   expr_path : Array[Int]?
   /// 该段是否画成**插槽**（圆角凹槽背景）。文本段为 `false`。
   is_slot : Bool
+  /// 字段访问胶囊（M7②）：表达式是 FieldAccess 的洞画成**胶囊**
+  /// ——「读数据字段」与普通运算凹槽在视觉上分族。
+  pill : Bool
   /// 该段是**关键字**时对应的 i18n 键（否则 `None`）。
   ///
   /// 为什么关键字不能烘进 `text`：`如果` / `重复` / `当` 是**界面语言**的
@@ -97,6 +100,7 @@ fn push_literal(segments : Array[TextSegment], text : String) -> Unit {
       text,
       expr_path: None,
       is_slot: false,
+      pill: false,
       label_key: None,
     })
   }
@@ -127,6 +131,8 @@ pub fn push_slot(
     text: @studio_lang.canonical_expr(expr),
     expr_path: Some(path),
     is_slot: !is_leaf,
+    // 字段访问（`person.名字`）画成胶囊：数据读取的专属形态
+    pill: expr is @ir.FieldAccess(_, _),
     label_key: None,
   })
 }

@@ -149,7 +149,8 @@ pub fn blocks_pane(
       let script_note = target_note(model)
       let note_height = if script_note == "" { 0.0 } else { BLOCKS_NOTE_HEIGHT }
       let canvas_height = (rects.length().to_double() * BLOCK_ROW_HEIGHT +
-        24.0 + note_height)
+        24.0 +
+        note_height)
         .max(body_height)
         .max(120.0)
       // **画布不再自带上下文菜单宿主**：菜单改由**顶层**
@@ -181,10 +182,7 @@ pub fn blocks_pane(
         // **受控滚动**：偏移来自模型，拖到边缘时由 `BlocksAutoScroll`
         // 推进。不受控的话自动滚动无处落笔（滚动位置是控件内部状态，
         // update 层看不到也改不了）。
-        offset=@core.Point::new(
-          x=0.0,
-          y=model.blocks_scroll_y,
-        ),
+        offset=@core.Point::new(x=0.0, y=model.blocks_scroll_y),
         // 手动滚动要回报，否则下一次重渲会把用户滚到的位置弹回模型值。
         on_scroll=Some(offset => BlocksScrolled(offset.y)),
         shows_indicator=true,
@@ -211,7 +209,8 @@ pub fn blocks_pane(
       // 成熟画布工具（Scratch/Figma）不在画布上放常驻用法提示：旧版的
       // 脚注提示与编辑条空态提示两条 24-30pt 的截断文字是纯噪音，删掉后
       // 高度还给画布。交互说明留给空态提示与控件 tooltip。
-      [head, body],
+      // 数据声明区（M7①）在画布上方：有 enum/struct 声明才占高度。
+      [head, declaration_strip(model, width), body],
       spacing=0.0,
     ).frame(width~, height~),
     background=ide_editor_background(),
@@ -433,9 +432,7 @@ pub fn statement_palette_panel(
         .on_tap(InsertStatement(model.selected_category, index))
         // 拖动 = 从调色板拖到画布（Scratch 的字面手势）。这里只记下
         // 「拖动源」，落点由画布侧按指针算——两个视图互相看不到对方的帧。
-        .on_drag(
-          _event => PaletteDragStart(model.selected_category, index),
-        )
+        .on_drag(_event => PaletteDragStart(model.selected_category, index))
         .accessibility_label(label),
       )
       index = index + 1
@@ -542,7 +539,10 @@ fn category_rail_row(
 ///
 /// 每一项都先发 `BlocksContextMenuClose`（见各行的 `on_tap` 串联）——
 /// 点完不关菜单，用户会以为没生效。
-pub fn block_context_menu(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
+pub fn block_context_menu(
+  model : Model,
+  t : @i18n.Translator,
+) -> @moui.View[Msg] {
   let has_block = model.selected_block >= 0
   let rows : Array[@moui.View[Msg]] = []
   if has_block {
@@ -617,6 +617,47 @@ fn menu_action_row(
     padding=0.0,
   ).on_tap(
     // 禁用项也要能点（关掉菜单），所以包一层而不是挂 Noop。
-    if enabled { BlocksMenuAction(action) } else { BlocksContextMenuClose },
+    if enabled {
+      BlocksMenuAction(action)
+    } else {
+      BlocksContextMenuClose
+    },
   )
+}
+
+///|
+/// 数据声明区（M7①）：enum/struct 声明块投影——**只读行**。声明的真源
+/// 在代码工程层（handlers/form 同源派生），不参与积木命中/编辑/榫卯，
+/// 画布索引因此零耦合。没有声明时不占任何高度（存量程序零布局影响）。
+pub fn declaration_strip(model : Model, width : Double) -> @moui.View[Msg] {
+  let decls = @blocks.declaration_chain(model.program)
+  if decls.length() == 0 {
+    @views.container(
+      @views.text("", width=1.0, height=1.0),
+      width~,
+      height=0.0,
+      padding=0.0,
+    )
+  } else {
+    let rows : Array[@moui.View[Msg]] = []
+    for item in decls {
+      rows.push(
+        @views.container(
+          @views.text(item.text, theme=studio_theme(), width=(width - 34.0).max(80.0), height=22.0)
+          .foreground(block_text_color()),
+          background=block_fill(item.kind),
+          corner_radius=block_corner_radius(item.kind),
+          width=(width - 24.0).max(80.0),
+          height=26.0,
+          padding=0.0,
+        ),
+      )
+    }
+    @views.container(
+      @views.column(rows, spacing=4.0),
+      width~,
+      height=decls.length().to_double() * 30.0 + 6.0,
+      padding=0.0,
+    )
+  }
 }

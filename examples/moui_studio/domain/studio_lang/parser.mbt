@@ -82,6 +82,109 @@ pub fn parse_expression_text(
 }
 
 ///|
+/// 解析顶层 struct 声明（M5-5c 前端②）：一段源文本（可含多个声明、
+/// 声明间允许空行）→ `@ir.StructDecl` 数组，调用方填入
+/// `StudioProgram.structs`。字段类型存规范 id（text/number/int/bool）。
+///
+/// 形式：`结构 Person { 名字: 文本, 年龄: 数字 }`
+///      `struct Person { name: text, age: number }`
+pub fn parse_struct_declarations(
+  source : String,
+  language : Language,
+) -> Result[Array[@ir.StructDecl], LangError] {
+  let tokens = match lex(source) {
+    Ok(tokens) => tokens
+    Err(error) => return Err(error)
+  }
+  let parser = Parser::{ tokens, pos: 0, keywords: keywords_for(language), }
+  try {
+    let decls : Array[@ir.StructDecl] = []
+    parser.skip_newlines()
+    while !(parser.peek().kind is Eof) {
+      decls.push(parser.parse_struct_decl())
+      parser.skip_newlines()
+    }
+    Ok(decls)
+  } catch {
+    error => Err(error)
+  }
+}
+
+///|
+/// 单个 struct 声明：结构 名 { 字段: 类型, … }。字段名与类型都是
+/// 标识符；类型经 struct_field_type_id 归一化为规范 id。
+fn Parser::parse_struct_decl(self : Parser) -> @ir.StructDecl raise LangError {
+  self.expect_keyword(self.keywords.struct_kw)
+  let name = match self.peek().kind {
+    Ident(text) =>
+      if is_reserved(text) {
+        return self.fail(ReservedWord, text, "")
+      } else {
+        ignore(self.advance())
+        text
+      }
+    _ => self.fail_expect_keyword(self.keywords.struct_kw)
+  }
+  if self.peek().kind is LBrace {
+    ignore(self.advance())
+  } else {
+    self.fail_expect_keyword("{")
+  }
+  let fields : Array[@ir.StructField] = []
+  if self.peek().kind is RBrace {
+    ignore(self.advance())
+    return @ir.StructDecl::{ name, fields, }
+  }
+  while true {
+    let field_name = match self.peek().kind {
+      Ident(text) =>
+        if is_reserved(text) {
+          return self.fail(ReservedWord, text, "")
+        } else {
+          ignore(self.advance())
+          text
+        }
+      _ => self.fail(UnexpectedToken, "字段名应为标识符", "")
+    }
+    if self.peek().kind is Colon {
+      ignore(self.advance())
+    } else {
+      self.fail_expect_keyword(":")
+    }
+    let field_type = match self.peek().kind {
+      Ident(text) => match struct_field_type_id(text) {
+        Some(id) => {
+          ignore(self.advance())
+          id
+        }
+        None =>
+          self.fail(
+            TypeMismatch,
+            "字段类型",
+            "文本/数字/整数/真假，遇到 「\{text}」",
+          )
+      }
+      _ =>
+        self.fail(
+          TypeMismatch,
+          "字段类型",
+          "文本/数字/整数/真假，遇到 \{token_label(self.peek().kind)}",
+        )
+    }
+    fields.push(@ir.StructField::{ field_name, field_type, })
+    match self.peek().kind {
+      Comma => ignore(self.advance())
+      RBrace => {
+        ignore(self.advance())
+        break
+      }
+      _ => self.fail_expect_keyword(", 或 }")
+    }
+  }
+  @ir.StructDecl::{ name, fields, }
+}
+
+///|
 pub fn check_syntax(source : String, language : Language) -> LangError? {
   match parse_handler_body(source, language) {
     Ok(_) => None
@@ -208,6 +311,7 @@ fn Parser::parse_statement(self : Parser) -> Stmt raise LangError {
             _ => @ir.Return(Some(self.parse_expr()))
           }
         }
+        KwMatch => self.parse_match()
         NoneKw =>
           if is_reserved(text) {
             self.fail(ReservedWord, text, "")
@@ -350,6 +454,34 @@ fn Parser::parse_if(self : Parser) -> Stmt raise LangError {
     else_ifs.map(arm => (arm.0, traced_to_stmts(arm.1))),
     traced_to_stmts(else_body),
   )
+}
+
+///|
+/// 匹配 表达式 [情况 标签 …]* [否则 …] 结束
+/// / match expr [case tag …]* [else …] end（M5-5d）
+fn Parser::parse_match(self : Parser) -> Stmt raise LangError {
+  ignore(self.advance()) // 匹配 / match
+  let subject = self.parse_expr()
+  self.skip_newlines()
+  let arms : Array[@ir.MatchArm] = []
+  while self.at_keyword(self.keywords.case_kw) {
+    ignore(self.advance())
+    let case_name = self.parse_name("「\{self.keywords.case_kw}」后应跟情况名")
+    let arm_body = self.parse_stmts_until([
+      self.keywords.case_kw,
+      self.keywords.else_kw,
+      self.keywords.end_kw,
+    ])
+    arms.push(@ir.MatchArm::{ case_name, body: traced_to_stmts(arm_body), })
+  }
+  let else_body = if self.at_keyword(self.keywords.else_kw) {
+    ignore(self.advance())
+    self.parse_stmts_until([self.keywords.end_kw])
+  } else {
+    []
+  }
+  self.expect_keyword(self.keywords.end_kw)
+  @ir.Match(subject, arms, traced_to_stmts(else_body))
 }
 
 ///|
@@ -561,16 +693,120 @@ fn Parser::parse_primary(self : Parser) -> Expr raise LangError {
     }
     _ => self.fail_unexpected()
   }
-  // 后缀下标：名单[2]、矩阵[i][j]（1 起，与取行一致）
+  // 后缀下标与字段访问：名单[2]、person.名字、名单[1].分数（下标 1 起，与取行一致）
   let mut result = atom
-  while self.peek().kind is LBracket {
-    ignore(self.advance())
-    let index = self.parse_expr()
+  while true {
     match self.peek().kind {
-      RBracket => ignore(self.advance())
-      _ => self.fail(UnexpectedToken, "下标后应为 ]", "")
+      LBracket => {
+        ignore(self.advance())
+        let index = self.parse_expr()
+        match self.peek().kind {
+          RBracket => ignore(self.advance())
+          _ => self.fail(UnexpectedToken, "下标后应为 ]", "")
+        }
+        result = @ir.Index(result, index)
+      }
+      Dot => {
+        ignore(self.advance())
+        let field = match self.peek().kind {
+          Ident(text) => {
+            ignore(self.advance())
+            text
+          }
+          _ => self.fail(UnexpectedToken, "字段访问 . 后应为字段名", "")
+        }
+        result = @ir.FieldAccess(result, field)
+      }
+      DoubleColon => {
+        // 枚举值字面量：花色::红桃（基底必须是裸枚举名）
+        ignore(self.advance())
+        let case_name = match self.peek().kind {
+          Ident(text) => {
+            ignore(self.advance())
+            text
+          }
+          _ => self.fail(UnexpectedToken, "枚举值 :: 后应为情况名", "")
+        }
+        let enum_name = match result {
+          @ir.Var(name) => name
+          _ => self.fail(UnexpectedToken, "枚举值 :: 前应为枚举名", "")
+        }
+        result = @ir.EnumTag(enum_name, case_name)
+      }
+      _ => break
     }
-    result = @ir.Index(result, index)
   }
   result
+}
+
+///|
+/// 解析顶层枚举声明（M5-5d）：`枚举 花色 { 红桃, 黑桃 }` /
+/// `enum Suit { hearts, spades }`。情况名拒绝保留字；调用方填入
+/// `StudioProgram.enums`。
+pub fn parse_enum_declarations(
+  source : String,
+  language : Language,
+) -> Result[Array[@ir.EnumDecl], LangError] {
+  let tokens = match lex(source) {
+    Ok(tokens) => tokens
+    Err(error) => return Err(error)
+  }
+  let parser = Parser::{ tokens, pos: 0, keywords: keywords_for(language), }
+  try {
+    let decls : Array[@ir.EnumDecl] = []
+    parser.skip_newlines()
+    while !(parser.peek().kind is Eof) {
+      decls.push(parser.parse_enum_decl())
+      parser.skip_newlines()
+    }
+    Ok(decls)
+  } catch {
+    error => Err(error)
+  }
+}
+
+///|
+fn Parser::parse_enum_decl(self : Parser) -> @ir.EnumDecl raise LangError {
+  self.expect_keyword(self.keywords.enum_kw)
+  let name = match self.peek().kind {
+    Ident(text) =>
+      if is_reserved(text) {
+        return self.fail(ReservedWord, text, "")
+      } else {
+        ignore(self.advance())
+        text
+      }
+    _ => self.fail_expect_keyword(self.keywords.enum_kw)
+  }
+  if self.peek().kind is LBrace {
+    ignore(self.advance())
+  } else {
+    self.fail_expect_keyword("{")
+  }
+  let cases : Array[String] = []
+  if self.peek().kind is RBrace {
+    ignore(self.advance())
+    return @ir.EnumDecl::{ name, cases, }
+  }
+  while true {
+    match self.peek().kind {
+      Ident(text) =>
+        if is_reserved(text) {
+          return self.fail(ReservedWord, text, "")
+        } else {
+          ignore(self.advance())
+          cases.push(text)
+        }
+      _ => self.fail(UnexpectedToken, "情况名应为标识符", "")
+    }
+    match self.peek().kind {
+      Comma => ignore(self.advance())
+      RBrace => {
+        ignore(self.advance())
+        break
+      }
+      _ => self.fail_expect_keyword(", 或 }")
+    }
+  }
+  @ir.EnumDecl::{ name, cases, }
 }

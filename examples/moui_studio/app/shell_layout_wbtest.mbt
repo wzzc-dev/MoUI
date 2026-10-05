@@ -259,14 +259,16 @@ test "AI input bar lives in the two inline placements and never covers the statu
     fail("AI bar composer missing")
   }
   assert_true(
-    bar_run.frame.origin.y + bar_run.frame.size.height < 800.0 - STATUSBAR_HEIGHT,
+    bar_run.frame.origin.y + bar_run.frame.size.height <
+    800.0 - STATUSBAR_HEIGHT,
   )
   // 停靠档：并入右栏（输入盒仍在），且同样不越状态栏
   let docked = apply_shell(model, SetAiAnchor(AiDocked))
   assert_true(docked.ai_anchor is AiDocked)
   let docked_commands = shell_draw(docked, 1280.0, 800.0)
   assert_true(shell_has_text(docked_commands, "描述你想要的应用"))
-  guard shell_find_text(docked_commands, "描述你想要的应用") is Some(run) else {
+  guard shell_find_text(docked_commands, "描述你想要的应用")
+    is Some(run) else {
     fail("docked AI card missing")
   }
   assert_true(run.frame.origin.y + run.frame.size.height < 770.0)
@@ -644,7 +646,10 @@ test "no AI band: the workspace content is adjacent to the panel below it" {
       }
     }
     if slabs.length() < 2 {
-      fail("expected at least workspace + bottom bar slabs, got " + slabs.length().to_string())
+      fail(
+        "expected at least workspace + bottom bar slabs, got " +
+        slabs.length().to_string(),
+      )
     }
     // 相邻性：排序后每一段的下沿必须贴住下一段的上沿（允许 2pt 发丝线）
     let sorted = slabs.copy()
@@ -769,13 +774,19 @@ test "empty workspace keeps guidance and AI input in separate panels" {
   }
   // 空舞台 + 停靠档：输入条改到右栏，仍然可见
   let docked = apply_shell(empty, SetAiAnchor(AiDocked))
-  assert_true(shell_has_text(shell_draw(docked, 1280.0, 800.0), "描述你想要的应用"))
+  assert_true(
+    shell_has_text(
+      shell_draw(docked, 1280.0, 800.0),
+      "描述你想要的应用",
+    ),
+  )
 }
 
 ///|
 /// 输入条模式段：四个模式都在，且「发送」按模式分流到既有通道。
 test "composer mode routes send to existing channels" {
-  let model = initial_model()
+  // 修复通道的「无效草稿」语义在 DSL 外观下制造（M5-5e）
+  let model = apply_shell(initial_model(), CycleCodeAppearance)
   let commands = shell_draw(model, 1280.0, 800.0)
   for label in ["修改", "生成", "解释", "修复"] {
     assert_true(shell_has_text(commands, label))
@@ -857,7 +868,12 @@ test "both inline placements render the composer regardless of workspace" {
     }
     // 停靠档
     let docked = apply_shell(m, SetAiAnchor(AiDocked))
-    assert_true(shell_has_text(shell_draw(docked, 1280.0, 800.0), "描述你想要的应用"))
+    assert_true(
+      shell_has_text(
+        shell_draw(docked, 1280.0, 800.0),
+        "描述你想要的应用",
+      ),
+    )
   }
 }
 
@@ -1126,7 +1142,8 @@ test "thread cards never push the composer out of its host" {
     fail("expected >3 cards, got " + model.ai_cards.length().to_string())
   }
   let commands = shell_draw(model, 1280.0, 800.0)
-  guard shell_find_text(commands, "描述你想要的应用") is Some(composer_run) else {
+  guard shell_find_text(commands, "描述你想要的应用")
+    is Some(composer_run) else {
     fail("AI composer missing")
   }
   guard shell_find_send_button(commands) is Some(send) else {
@@ -1204,21 +1221,80 @@ test "blocks canvas renders hugging rows with lead-aligned slot holes" {
     Some(run) => run
     None => fail("the if block label should be drawn on the canvas")
   }
-  // 同行的棕色块体（If 帽）：y 包住标签行、x 在标签左侧
+  // 同行的棕色块体（If 帽）：y 包住标签行、x 在标签左侧。
+  // M7②：块体 = 单轮廓 DrawPath（fill+stroke 一体），不再是贴片填充。
   let mut if_body : @core.Rect? = None
   let mut hole_x : Double? = None
   let hole_fill = blocks_slot_filled()
   for command in commands {
     match command {
+      @core.DrawPath(path) =>
+        match path.fill {
+          Some(@graphics.Brush::Solid(color)) => {
+            // PathSpec 无整体矩形——从动词的包围盒取（首 MoveTo + 各顶点）
+            let mut min_x = 0.0
+            let mut max_x = 0.0
+            let mut min_y = 0.0
+            let mut max_y = 0.0
+            let mut first = true
+            for verb in path.verbs {
+              let (vx, vy) = match verb {
+                @core.MoveTo(p) => (p.x, p.y)
+                @core.LineTo(p) => (p.x, p.y)
+                @core.QuadTo(p, _) => (p.x, p.y)
+                @core.CubicTo(p, _, _) => (p.x, p.y)
+                @core.Close => continue
+              }
+              if first {
+                min_x = vx
+                max_x = vx
+                min_y = vy
+                max_y = vy
+                first = false
+              } else {
+                if vx < min_x {
+                  min_x = vx
+                }
+                if vx > max_x {
+                  max_x = vx
+                }
+                if vy < min_y {
+                  min_y = vy
+                }
+                if vy > max_y {
+                  max_y = vy
+                }
+              }
+            }
+            let rect = @geometry.Rect::new(
+              x=min_x,
+              y=min_y,
+              width=max_x - min_x,
+              height=max_y - min_y,
+            )
+            if color.r == if_fill.r &&
+              color.g == if_fill.g &&
+              color.b == if_fill.b &&
+              rect.origin.y <= label.frame.origin.y &&
+              label.frame.origin.y <= rect.origin.y + rect.size.height &&
+              rect.origin.x <= label.frame.origin.x {
+              if_body = Some(rect)
+            }
+            // 同行的命令块体（Call 帽，M7② 后同为单轮廓路径；包围盒
+            // 含榫头/卯口凸起 ±5pt，高度上限放宽到 60）
+            if color.r == call_fill.r &&
+              color.g == call_fill.g &&
+              color.b == call_fill.b &&
+              rect.size.height >= 30.0 &&
+              rect.size.height <= 60.0 {
+              call_bodies.push(rect)
+            }
+          }
+          _ => ()
+        }
       @core.FillRoundedRectBrush(rounded, @graphics.Brush::Solid(color)) => {
         let rect = rounded.rect
-        if color.r == if_fill.r && color.g == if_fill.g && color.b == if_fill.b &&
-          rect.origin.y <= label.frame.origin.y &&
-          label.frame.origin.y <= rect.origin.y + rect.size.height &&
-          rect.origin.x <= label.frame.origin.x {
-          if_body = Some(rect)
-        }
-        // 同行的插槽洞（条件段）
+        // 同行的插槽洞（条件段）——插槽仍是圆角填充
         if color.r == hole_fill.r &&
           color.g == hole_fill.g &&
           color.b == hole_fill.b &&
@@ -1227,13 +1303,6 @@ test "blocks canvas renders hugging rows with lead-aligned slot holes" {
           rect.origin.y >= label.frame.origin.y &&
           rect.origin.y <= label.frame.origin.y + label.frame.size.height {
           hole_x = Some(rect.origin.x)
-        }
-        if color.r == call_fill.r &&
-          color.g == call_fill.g &&
-          color.b == call_fill.b &&
-          rect.size.height >= 30.0 &&
-          rect.size.height <= 38.0 {
-          call_bodies.push(rect)
         }
       }
       _ => ()
@@ -1349,17 +1418,28 @@ test "activity bar uses the compact spec with bare-glyph selection" {
         let mut max_x = -1000000.0
         for verb in spec.verbs {
           match verb {
-            @core.PathVerb::MoveTo(p) | LineTo(p) | QuadTo(_, p) | CubicTo(_, _, p) => {
-              if p.x < min_x { min_x = p.x }
-              if p.x > max_x { max_x = p.x }
-              if p.y < min_y { min_y = p.y }
-              if p.y > max_y { max_y = p.y }
+            @core.PathVerb::MoveTo(p)
+            | LineTo(p)
+            | QuadTo(_, p)
+            | CubicTo(_, _, p) => {
+              if p.x < min_x {
+                min_x = p.x
+              }
+              if p.x > max_x {
+                max_x = p.x
+              }
+              if p.y < min_y {
+                min_y = p.y
+              }
+              if p.y > max_y {
+                max_y = p.y
+              }
             }
             @core.PathVerb::Close => ()
           }
         }
         // 栏内的图标路径（x 在栏宽内、排除分隔线之类的细条）
-        if max_x <= ICONBAR_WIDTH && max_x > 4.0 && (max_y - min_y) > 5.0 {
+        if max_x <= ICONBAR_WIDTH && max_x > 4.0 && max_y - min_y > 5.0 {
           centers.push((min_y + max_y) / 2.0)
         }
       }
@@ -1367,11 +1447,15 @@ test "activity bar uses the compact spec with bare-glyph selection" {
     }
   }
   centers.sort()
-  assert_true(centers.length() == 7, msg="expected 7 icon glyphs, got \{centers.length()}")
-  // 前 6 项（栏目）节距 28；第 7 枚是**钉底**的设置齿轮（spacer 推到底边），
+  // 工程工作台(M0-6)在栏目里加了「工程」图标:7 个栏目图标 + 1 枚钉底齿轮
+  assert_true(
+    centers.length() == 8,
+    msg="expected 8 icon glyphs, got \{centers.length()}",
+  )
+  // 前 7 项（栏目）节距 28；第 8 枚是**钉底**的设置齿轮（spacer 推到底边），
   // 不参与节距——这正是「设置钉在最底」的口径。
   let mut i = 1
-  while i < 6 {
+  while i < 7 {
     let pitch = centers[i] - centers[i - 1]
     assert_true(
       (pitch - 28.0).abs() < 0.8,
@@ -1380,7 +1464,7 @@ test "activity bar uses the compact spec with bare-glyph selection" {
     i = i + 1
   }
   assert_true(
-    centers[6] > centers[5] + 100.0,
+    centers[7] > centers[6] + 100.0,
     msg="the gear should be pinned near the bottom edge, not in the icon rhythm",
   )
 }
@@ -1432,9 +1516,9 @@ test "dragging the column sash resizes the left panel (e2e)" {
   let registered : Ref[Bool] = Ref(false)
   let runtime = @runtime.new_program_with_dimensions(
     program=program(
-      environment=@services.AppEnvironment::new(timer=Some(
-        fake_timer_source(sink, registered),
-      )),
+      environment=@services.AppEnvironment::new(
+        timer=Some(fake_timer_source(sink, registered)),
+      ),
     ),
     width=1280.0,
     height=800.0,
@@ -1446,7 +1530,7 @@ test "dragging the column sash resizes the left panel (e2e)" {
   runtime.dispatch_event(
     @core.Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=start_x, y=y),
+        position=@core.Point::new(x=start_x, y~),
         phase=@core.Down,
       ),
     ),
@@ -1454,7 +1538,7 @@ test "dragging the column sash resizes the left panel (e2e)" {
   runtime.dispatch_event(
     @core.Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=start_x + 60.0, y=y),
+        position=@core.Point::new(x=start_x + 60.0, y~),
         phase=@core.Move,
       ),
     ),
@@ -1462,7 +1546,7 @@ test "dragging the column sash resizes the left panel (e2e)" {
   runtime.dispatch_event(
     @core.Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=start_x + 60.0, y=y),
+        position=@core.Point::new(x=start_x + 60.0, y~),
         phase=@core.Up,
       ),
     ),

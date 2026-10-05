@@ -22,7 +22,8 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/views",
       path: "moui/views",
-      max_count: 66,
+      // 坐标舞台(M4):Placed 结构 +1(stage/place 布局原语)。
+      max_count: 67,
     },
     {
       kind: "pub(all)",

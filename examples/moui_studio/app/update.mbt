@@ -49,11 +49,7 @@ pub(all) struct EditTarget {
 pub fn current_target(model : Model) -> EditTarget? {
   match selected_function(model) {
     Some(func) =>
-      Some(EditTarget::{
-        label: func.name,
-        body: func.body,
-        is_function: true,
-      })
+      Some(EditTarget::{ label: func.name, body: func.body, is_function: true, })
     None =>
       match current_handler(model) {
         Some(handler) =>
@@ -264,6 +260,16 @@ fn rename_control_in_stmt(
           None => None
         },
       )
+    @ir.Match(subject, arms, else_body) =>
+      @ir.Match(
+        rename_control_in_expr(subject, from, to),
+        arms.map(arm =>
+          @ir.MatchArm::{
+            case_name: arm.case_name,
+            body: arm.body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+          }),
+        else_body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+      )
   }
 }
 
@@ -274,8 +280,15 @@ fn rename_control_in_expr(
   to : String,
 ) -> @ir.Expr {
   match expr {
-    @ir.NumLit(_) | @ir.IntLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) | @ir.Var(_) => expr
+    @ir.NumLit(_)
+    | @ir.IntLit(_)
+    | @ir.StrLit(_)
+    | @ir.BoolLit(_)
+    | @ir.Var(_) => expr
     @ir.Not(inner) => @ir.Not(rename_control_in_expr(inner, from, to))
+    @ir.EnumTag(_, _) => expr
+    @ir.FieldAccess(base, field) =>
+      @ir.FieldAccess(rename_control_in_expr(base, from, to), field)
     @ir.Neg(inner) => @ir.Neg(rename_control_in_expr(inner, from, to))
     @ir.ListLit(items) => {
       let copy : Array[@ir.Expr] = []
@@ -341,6 +354,11 @@ fn rename_control_in_args(
 ///|
 /// 用当前语言的规范源码替换某 handler 的 body（代码视图提交）。
 fn commit_code(model : Model) -> Model {
+  // MoonBit 外观是显示投影，不承担编辑提交（M5-5e）：IR 已是真源，
+  // 草稿会在下一次 sync 重新推导，跳过 DSL 解析避免误报。
+  if model.code_appearance is AppMoonBit {
+    return { ..model, code_error: "", code_diagnostics: [], }
+  }
   match current_handler(model) {
     None => with_draft_diagnostics(model)
     Some(handler) =>
@@ -382,6 +400,10 @@ fn commit_code(model : Model) -> Model {
 /// `code_diagnostics`（结构化、行内标记 + 问题面板用）来自同一次
 /// `check_syntax`，不会互相矛盾。
 fn with_draft_diagnostics(model : Model) -> Model {
+  if model.code_appearance is AppMoonBit {
+    // MoonBit 显示不做 DSL 语法诊断（形状不同，误报无意义）
+    return { ..model, code_error: "", code_diagnostics: [], }
+  }
   match
     @studio_lang.check_syntax(model.code_draft, model.language.dsl_language()) {
     None => { ..model, code_error: "", code_diagnostics: [], }
@@ -393,7 +415,11 @@ fn with_draft_diagnostics(model : Model) -> Model {
           message: error_message(translator(model), error),
         },
       ]
-      { ..model, code_error: diagnostics[0].message, code_diagnostics: diagnostics, }
+      {
+        ..model,
+        code_error: diagnostics[0].message,
+        code_diagnostics: diagnostics,
+      }
     }
   }
 }
@@ -401,17 +427,20 @@ fn with_draft_diagnostics(model : Model) -> Model {
 ///|
 /// LangError 的行号 → 源码内的偏移区间（整行）。行号越界或为 0 时
 /// 退化为整段源码。
-fn lang_error_line_range(source : String, error : @studio_lang.LangError) -> @core.TextRange {
+fn lang_error_line_range(
+  source : String,
+  error : @studio_lang.LangError,
+) -> @core.TextRange {
   let line = error.line()
   let lines = split_line_texts(source)
   if line <= 0 || line > lines.length() {
-    return { start: 0, end: source.length() }
+    return { start: 0, end: source.length(), }
   }
   let mut start = 0
   for index in 0..<(line - 1) {
     start = start + lines[index].length() + 1
   }
-  { start, end: start + lines[line - 1].length() }
+  { start, end: start + lines[line - 1].length(), }
 }
 
 ///|
@@ -428,10 +457,7 @@ fn sync_code_draft(model : Model) -> Model {
     Some(handler) =>
       {
         ..model,
-        code_draft: @studio_lang.render_handler(
-          handler,
-          model.language.dsl_language(),
-        ),
+        code_draft: render_code_appearance(model, handler),
         code_error: "",
         code_diagnostics: [],
       }
@@ -439,9 +465,34 @@ fn sync_code_draft(model : Model) -> Model {
 }
 
 ///|
+/// 当前外观下的代码草稿渲染（M5-5e）：
+/// - MoonBit：codegen 的 handler 子集源码（与导出/编译同源的形状）；
+/// - DSL：中英教学渲染（降级后的显示外观，仍是 IR 的投影）。
+fn render_code_appearance(model : Model, handler : @ir.Handler) -> String {
+  match model.code_appearance {
+    AppMoonBit =>
+      @export.generate_handler_source(
+        handler,
+        1,
+        functions=model.program.functions,
+      ).source
+    AppDsl => @studio_lang.render_handler(handler, model.language.dsl_language())
+  }
+}
+
+///|
 /// 外壳域消息处理：语言/模式/选择/代码草稿/模板。
 fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
+    CycleCodeAppearance => {
+      // 外观切换（M5-5e）：MoonBit ⇄ DSL。DSL 外观切换前先提交旧草稿
+      //（与 SwitchLanguage 同口径）；MoonBit 外观是显示投影，无需提交。
+      let next = match model.code_appearance {
+        AppMoonBit => { ..model, code_appearance: AppDsl, }
+        AppDsl => { ..model, code_appearance: AppMoonBit, }
+      }
+      Some((sync_code_draft(next), @moui.Effect::none()))
+    }
     SwitchLanguage => {
       let committed = commit_code(model)
       let switched = { ..committed, language: switch(model.language), }
@@ -495,34 +546,35 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         )
       }
     }
-    GotoProblem(key, line) => {
-      // 问题面板的跳转：先提交当前草稿（与 SelectHandler 同一纪律），
-      // 再切到目标 handler，把光标钉到目标行行首、滚动对齐（行号槽 /
-      // 编辑面 / 竖尺共享 code_scroll，一次设置三方齐动）。
-      let committed = commit_code(model)
-      let next = sync_code_draft(select_handler_key(committed, key))
-      let lines = split_line_texts(next.code_draft)
-      let target = if line >= 1 && line <= lines.length() { line } else { 1 }
-      let mut caret = 0
-      for index in 0..<(target - 1) {
-        caret = caret + lines[index].length() + 1
+    GotoProblem(key, line) =>
+      // 工具链诊断行(build:/compile: 前缀):跳**资源管理器**定位文件
+      // (M0-7 阶段文件内容查看未接编辑面,先做文件级定位;M1 接编辑面后
+      // 这里升级为文件+行号跳转)。
+      if key.has_prefix("build:") || key.has_prefix("compile:") {
+        let file = if key.has_prefix("build:") {
+          key[6:].to_owned()
+        } else {
+          key[9:].to_owned()
+        }
+        Some(
+          (
+            {
+              ..model,
+              left_view: LeftProject,
+              selected_project_file: Some(file),
+            },
+            @moui.Effect::none(),
+          ),
+        )
+      } else {
+        Some(goto_problem_program(model, key, line))
       }
-      let scroll_y = ((target - 3).to_double() * 20.0).max(0.0)
-      Some(
-        (
-          {
-            ..next,
-            code_caret: caret,
-            code_selection: None,
-            code_scroll: @geometry.Point::new(x=0.0, y=scroll_y),
-          },
-          @moui.Effect::none(),
-        ),
-      )
-    }
     EditCode(source) =>
       Some(
-        (with_draft_diagnostics({ ..model, code_draft: source, }), @moui.Effect::none()),
+        (
+          with_draft_diagnostics({ ..model, code_draft: source, }),
+          @moui.Effect::none(),
+        ),
       )
     EditorCaretMoved(caret, selection) =>
       Some(
@@ -561,6 +613,8 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           runtime_texts: @studio_lang.initial_texts(program),
           runtime_rows: @studio_lang.initial_rows(program),
           runtime_selections: Map([], capacity=4),
+          // 代码工程骨架待落盘（M6①）：组合根据此写 form.mbt/handlers.mbt
+          pending_code_project: true,
         },
       )
       Some(
@@ -1106,10 +1160,7 @@ pub fn update_pure(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
 ///|
 /// 纯转移内层链（不含确认守卫层）：ConfirmAccepted 续行原消息时走这里，
 /// 避免守卫把续行消息再次拦成确认请求。
-fn update_pure_inner(
-  model : Model,
-  msg : Msg,
-) -> (Model, @moui.Effect[Msg]) {
+fn update_pure_inner(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
   match update_shell_msgs(model, msg) {
     Some(result) => result
     None =>
@@ -1273,56 +1324,85 @@ fn create_control_handler(
   event : @ir.EventKind,
 ) -> (Model, @moui.Effect[Msg])? {
   match @ir.find_control(model.program, control_name) {
-      None => Some((model, @moui.Effect::none()))
-      Some(control) =>
-        if !control.kind.supports_event(event) {
-          Some((model, @moui.Effect::none()))
-        } else if @ir.find_handler(model.program, control_name, event)
-          is Some(_) {
-          Some((model, @moui.Effect::none()))
-        } else if model.program.handlers.length() >= @ir.MAX_HANDLERS {
-          Some(
-            (
-              with_notice(
-                model,
-                text(translator(model), "app.status.handlers_limit"),
-                true,
-              ),
-              @moui.Effect::none(),
+    None => Some((model, @moui.Effect::none()))
+    Some(control) =>
+      if !control.kind.supports_event(event) {
+        Some((model, @moui.Effect::none()))
+      } else if @ir.find_handler(model.program, control_name, event) is Some(_) {
+        Some((model, @moui.Effect::none()))
+      } else if model.program.handlers.length() >= @ir.MAX_HANDLERS {
+        Some(
+          (
+            with_notice(
+              model,
+              text(translator(model), "app.status.handlers_limit"),
+              true,
             ),
-          )
-        } else {
-          Some(
-            (
-              with_recent_undo_point(
-                model,
-                control_name,
-                "app.recent.action.handler",
-                m => {
-                  let handlers : Array[@ir.Handler] = []
-                  for existing in m.program.handlers {
-                    handlers.push(existing)
-                  }
-                  handlers.push(@ir.Handler::{
-                    control_name,
-                    event,
-                    note_zh: "",
-                    note_en: "",
-                    body: [],
-                  })
-                  let next = {
-                    ..m,
-                    program: { ..m.program, handlers, },
-                    selected_handler: handler_key(control_name, event.tag()),
-                  }
-                  sync_code_draft(next)
-                },
-              ),
-              @moui.Effect::none(),
+            @moui.Effect::none(),
+          ),
+        )
+      } else {
+        Some(
+          (
+            with_recent_undo_point(
+              model,
+              control_name,
+              "app.recent.action.handler",
+              m => {
+                let handlers : Array[@ir.Handler] = []
+                for existing in m.program.handlers {
+                  handlers.push(existing)
+                }
+                handlers.push(@ir.Handler::{
+                  control_name,
+                  event,
+                  note_zh: "",
+                  note_en: "",
+                  body: [],
+                })
+                let next = {
+                  ..m,
+                  program: { ..m.program, handlers, },
+                  selected_handler: handler_key(control_name, event.tag()),
+                }
+                sync_code_draft(next)
+              },
             ),
-          )
-        }
+            @moui.Effect::none(),
+          ),
+        )
+      }
   }
+}
+
+///|
+
+///|
+/// 程序内诊断的跳转主体(GotoProblem 的非工具链分支):提交草稿 → 切
+/// handler → 光标钉目标行 + 滚动对齐(行号槽/编辑面/竖尺共享 code_scroll)。
+fn goto_problem_program(
+  model : Model,
+  key : String,
+  line : Int,
+) -> (Model, @moui.Effect[Msg]) {
+  let committed = commit_code(model)
+  let next = sync_code_draft(select_handler_key(committed, key))
+  let lines = split_line_texts(next.code_draft)
+  let target = if line >= 1 && line <= lines.length() { line } else { 1 }
+  let mut caret = 0
+  for index in 0..<(target - 1) {
+    caret = caret + lines[index].length() + 1
+  }
+  let scroll_y = ((target - 3).to_double() * 20.0).max(0.0)
+  (
+    {
+      ..next,
+      code_caret: caret,
+      code_selection: None,
+      code_scroll: @geometry.Point::new(x=0.0, y=scroll_y),
+    },
+    @moui.Effect::none(),
+  )
 }
 
 ///|

@@ -18,9 +18,9 @@ test "click topbar run button starts the run (e2e)" {
   let sink : Ref[(@core.Frame) -> Unit] = Ref(fn(_frame) { () })
   let registered : Ref[Bool] = Ref(false)
   let studio_program = program(
-    environment=@services.AppEnvironment::new(timer=Some(
-      fake_timer_source(sink, registered),
-    )),
+    environment=@services.AppEnvironment::new(
+      timer=Some(fake_timer_source(sink, registered)),
+    ),
   )
   let runtime = @runtime.new_program_with_dimensions(
     program=studio_program,
@@ -76,13 +76,18 @@ test "click topbar run button starts the run (e2e)" {
   assert_true(registered.val)
   // 泵 60 帧（30ms × 60 ≈ 2s）：解释轨应推进
   for index in 0..<60 {
-    (sink.val)(@core.Frame::new(time_ms=index.to_double() * 30.0, delta_ms=30.0))
+    (sink.val)(
+      @core.Frame::new(time_ms=index.to_double() * 30.0, delta_ms=30.0),
+    )
   }
   // 运行视图出现（ModeRun 全屏页的标志文本）
   let mut in_run_view = false
   for command in runtime.draw_commands() {
     match command {
-      @core.DrawText(run) => if run.text.contains("运行") { in_run_view = true }
+      @core.DrawText(run) =>
+        if run.text.contains("运行") {
+          in_run_view = true
+        }
       _ => ()
     }
   }
@@ -100,9 +105,9 @@ test "run arms the stage with empty label; bottom bar spans the full width (e2e)
   let registered : Ref[Bool] = Ref(false)
   let runtime = @runtime.new_program_with_dimensions(
     program=program(
-      environment=@services.AppEnvironment::new(timer=Some(
-        fake_timer_source(sink, registered),
-      )),
+      environment=@services.AppEnvironment::new(
+        timer=Some(fake_timer_source(sink, registered)),
+      ),
     ),
     width=1280.0,
     height=800.0,
@@ -125,10 +130,14 @@ test "run arms the stage with empty label; bottom bar spans the full width (e2e)
           y=rect.origin.y + rect.size.height / 2.0,
         )
         runtime.dispatch_event(
-          @core.Pointer(@core.PointerEvent::new(position=center, phase=@core.Down)),
+          @core.Pointer(
+            @core.PointerEvent::new(position=center, phase=@core.Down),
+          ),
         )
         runtime.dispatch_event(
-          @core.Pointer(@core.PointerEvent::new(position=center, phase=@core.Up)),
+          @core.Pointer(
+            @core.PointerEvent::new(position=center, phase=@core.Up),
+          ),
         )
         true
       }

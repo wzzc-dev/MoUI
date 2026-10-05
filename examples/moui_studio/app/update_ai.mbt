@@ -29,6 +29,7 @@ fn composer_run(model : Model) -> (Model, @moui.Effect[Msg]) {
           controls: [],
           handlers: [],
           functions: [],
+          structs: [],
         },
       }
       update_pure(cleared, GenerateProposal)
@@ -66,10 +67,14 @@ fn accept_proposal(model : Model) -> Model {
           runtime_rows: @studio_lang.initial_rows(next),
           runtime_selections: Map([], capacity=4),
         }
+        // 采纳（M6②）：IR 已更新 → 代码真源骨架随之重新生成落盘
+        //（pending_code_project 由组合根消费：handlers.mbt 全量 codegen——
+        // 文件尚为 codegen 所有，重生成即 span 补丁的超集；form.mbt 同理）。
         let accepted = settle_newest_thread_card(
           record_history(cleared, pending, true),
           text(translator(model), "app.ai.card.applied"),
         )
+        let accepted = { ..accepted, pending_code_project: true, }
         // 采纳是一条**大事实**：审计留痕 + 最近修改记「Agent」+ toast 回执，
         // 三处都从这一条事件派生（教学上「Agent 改了什么」必须可追溯）。
         let t = translator(accepted)
@@ -119,6 +124,13 @@ pub fn proposal_from_completion(model : Model, completion : String) -> Model {
         messages.push(proposal_error_text(translator(model), error))
       }
       let diff = @proposals.proposal_diff(model.program, proposal)
+      // 代码真源文本 diff（M6②）：把提案应用到 IR 副本，前后各生成一次
+      // 代码工程文本，行级 ± 即用户在 diff 卡看到的「改了哪几行」。
+      // 校验链不变：apply_proposal 只在纯函数副本上预演。
+      let code_diff = code_text_diff(
+        code_project_text(model.program),
+        code_project_text(@proposals.apply_proposal(model.program, proposal)),
+      )
       let summary = match model.language {
         ZhHans => proposal.summary_zh
         En => proposal.summary_en
@@ -126,6 +138,7 @@ pub fn proposal_from_completion(model : Model, completion : String) -> Model {
       let pending : PendingProposal = {
         proposal,
         diff,
+        code_diff,
         summary,
         errors: messages,
         valid: errors.is_empty(),
@@ -181,6 +194,14 @@ fn push_proposal_thread_card(model : Model, pending : PendingProposal) -> Model 
       ),
     )
   }
+  // 代码 diff 卡（M6②）：显示层展示 handlers.mbt/form.mbt 的行级 ±，
+  // 结构化条目降级为代码 diff 为空时的兜底（纯 form 外变更）。
+  let code_lines : Array[(String, String)] = if pending.code_diff.length() >
+    0 {
+    pending.code_diff
+  } else {
+    lines
+  }
   push_ai_card(model, AiCard::{
     kind: CardDiff,
     title: pending.summary,
@@ -190,7 +211,7 @@ fn push_proposal_thread_card(model : Model, pending : PendingProposal) -> Model 
     steps: [],
     steps_done: 0,
     progress: 100,
-    diff_lines: lines,
+    diff_lines: code_lines,
     settled: false,
     settled_note: "",
     seq: 0,
@@ -456,6 +477,7 @@ fn record_history(
   history.push(ProposalRecord::{
     summary: pending.summary,
     diff: pending.diff,
+    code_diff: pending.code_diff,
     accepted,
     seq: history.length() + 1,
   })

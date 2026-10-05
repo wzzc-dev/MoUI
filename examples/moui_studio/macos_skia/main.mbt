@@ -32,16 +32,56 @@ async fn main {
   //
   // 无边框窗口没有标题栏，不接这条通道就完全没法移动窗口。
   let window_drag = @services.WindowDragRegionSource::new()
+  // 预览 webview(M2-2):宿主状态机 + macOS 平台插件(WKWebView 承载)。
+  // 控制器经 PreviewWebControls 注入 app;命令走 effect 泵到插件。
+  let webview_host = @webview_host.WebViewHost::new()
+  // 控制器创建失败不 fail-fast:Web 预览显式不可用,Frame 预览照常
+  let webview_controller : @webview_host.WebViewController? = match
+    webview_host.create_controller(id="studio-preview") {
+    Ok(controller) => Some(controller)
+    Err(error) => {
+      println("webview controller unavailable: \{error.message}")
+      None
+    }
+  }
+  let webview_plugin = @macos_webview.create_macos_webview_plugin(webview_host)
   let app_options = @macos.MacosHostAppOptions::new(
     transparent_titlebar=immersive,
     min_window_size=Some(@dpi.LogicalSize::LogicalSize(900.0, 600.0)),
     window_drag=Some(window_drag),
+    platform_view_plugins=[webview_plugin],
   )
   let owner = @provider.ProviderOwner::new()
   // 真编译执行器：与 provider 同一模式——UI 线程只入队，进程 IO 在 worker。
   let compile_owner = @compile.CompileOwner::new()
   // 产物启动执行器：同一模式。`spawn` 在 worker 上做，UI 不阻塞。
   let launch_owner = @launch.LaunchOwner::new()
+  // 通用构建执行器(M0-7):FramePreview/WebPreview/RunNative 的 moon 命令。
+  let build_owner = @build_native.BuildOwner::new()
+  // 本地静态服务(M2):绑定回环端口 0(OS 分配);服务目录在构建回执后
+  // 经 PreviewWebControls.set_directory 动态指向 workspace 根。
+  // 绑定失败不 fail-fast:Web 预览显式不可用(port=0),Frame 预览照常。
+  let preview_server : @webpreview.StaticServer? = match
+    @webpreview.bind_static_server() {
+    Ok(server) => Some(server)
+    Err(message) => {
+      println("webpreview static server unavailable: \{message}")
+      None
+    }
+  }
+  let preview_web : @studio_app.PreviewWebControls = match
+    (preview_server, webview_controller) {
+    (Some(server), Some(controller)) =>
+      {
+        port: server.port(),
+        set_directory: dir => server.set_directory(dir),
+        navigate: url => {
+          controller.navigate(url).effect(map=_ => @studio_app.Msg::Noop)
+        },
+        reload: () => controller.reload().effect(map=_ => @studio_app.Msg::Noop),
+      }
+    _ => @studio_app.noop_preview_web_controls()
+  }
   let config = @provider.load_provider_config(
     "examples/moui_studio/.config.json",
   ).unwrap_or(@provider.ProviderConfig::{
@@ -83,6 +123,16 @@ async fn main {
           spec.prompt,
           on_result,
         )
+      },
+      webview_controller~,
+      preview_web~,
+      build_submit=(kind, root, entry_rel, on_result) => {
+        @build_native.build_submit(build_owner, @build.BuildRequest::{
+          kind,
+          root,
+          entry_rel,
+          on_result,
+        })
       },
       compile_submit=(project_json, app_name, on_progress, on_result) => {
         @compile.compile_submit(compile_owner, @compile.CompileJob::{
@@ -137,6 +187,16 @@ async fn main {
   let launch_task : async () -> Unit = async fn() {
     @launch.launch_worker_loop(launch_owner)
   }
+  let build_task : async () -> Unit = async fn() {
+    @build_native.build_worker_loop(build_owner)
+  }
+  // 静态服务循环:仅在绑定成功时注册(随从);close 可优雅停止
+  let webpreview_task : async () -> Unit = async fn() {
+    match preview_server {
+      Some(server) => @webpreview.serve_forever(server)
+      None => return
+    }
+  }
   let agent_task : async () -> Unit = async fn() {
     // serve_with_diagnostics：语义工具之外再暴露运行时计数/绘制摘要/
     // 事件与命令注入（诊断面），供 Agent 做无头 E2E 与健康观测。
@@ -153,6 +213,6 @@ async fn main {
   // 框架里那个 helper 用 `return_immediately`（交出主结果 + 取消所有子任务），
   // 窗口一返回就取消 worker，进程随即收敛。
   @macos.run_window_with_workers(window=window_task, workers=[
-    worker_task, compile_task, launch_task, agent_task,
+    worker_task, compile_task, launch_task, agent_task, build_task, webpreview_task,
   ])
 }

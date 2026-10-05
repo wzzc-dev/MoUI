@@ -3,6 +3,7 @@
 
 ///|
 /// 启动运行：解析当前 handler 源码 → 指令机。
+
 ///|
 /// 只运行**当前选中的那一条语句**（Scratch 的「点积木就跑它」）。
 ///
@@ -18,24 +19,22 @@
 fn run_single_block(model : Model) -> Model {
   let committed = commit_code(model)
   let handler = match current_handler(committed) {
-    None => {
+    None =>
       return with_notice(
         committed,
         text(translator(committed), "app.run.single.no_handler"),
         true,
       )
-    }
     Some(handler) => handler
   }
   let chain = block_chain_of(committed)
   let item = match block_at(chain, committed.selected_block) {
-    None => {
+    None =>
       return with_notice(
         committed,
         text(translator(committed), "app.run.single.no_selection"),
         true,
       )
-    }
     Some(item) => item
   }
   if item.path.length() == 0 {
@@ -47,13 +46,12 @@ fn run_single_block(model : Model) -> Model {
     )
   }
   let stmt = match @blocks.stmt_at(handler.body, item.path) {
-    None => {
+    None =>
       return with_notice(
         committed,
         text(translator(committed), "app.run.single.no_selection"),
         true,
       )
-    }
     Some(stmt) => stmt
   }
   let seed = @studio_lang.next_seed(committed.runtime_seed)
@@ -75,7 +73,7 @@ fn run_single_block(model : Model) -> Model {
   }
   let t = translator(committed)
   let audited = push_audit(
-    { ..committed, run: Some(run), runtime_seed: seed },
+    { ..committed, run: Some(run), runtime_seed: seed, },
     AuditRun,
     text(t, "app.audit.run_start"),
     run.handler_label,
@@ -139,13 +137,7 @@ fn start_run(model : Model) -> Model {
     text(t, "app.audit.run_start"),
     run.handler_label,
   )
-  {
-    ..audited,
-    run: Some(run),
-    mode: ModeRun,
-    notice: "",
-    runtime_seed: seed,
-  }
+  { ..audited, run: Some(run), mode: ModeRun, notice: "", runtime_seed: seed, }
 }
 
 ///|
@@ -188,13 +180,11 @@ fn start_compiled_run(model : Model) -> Model {
   }
   {
     ..committed,
-    compiled_run: Some(
-      CompiledRun::{
-        handler_label: text(translator(committed), "app.run.armed"),
-        runtime,
-        checks,
-      },
-    ),
+    compiled_run: Some(CompiledRun::{
+      handler_label: text(translator(committed), "app.run.armed"),
+      runtime,
+      checks,
+    }),
     mode: ModeRun,
     notice: "",
     runtime_seed: seed,
@@ -203,8 +193,10 @@ fn start_compiled_run(model : Model) -> Model {
 
 ///|
 /// 按当前程序查找 lower 后的编译轨 handler（无则 None，不兜底）。
-/// 行号口径与解释轨 `start_run` 一致：解析 `code_draft` 得到带 Trace 的
-/// 语句序列再 lower，使两轨审计 `(line, op, detail)` 同源。
+/// 编译轨 handler 从 **IR** 推导（M5-5e）：解释轨走 `start_run_stmts` 的
+/// `traced_from_stmts` 口径，编译轨同用 IR body + traced_from_stmts——
+/// 两轨审计 `(line, op, detail)` 同源，且都不依赖显示草稿（代码视图
+/// 只是 IR 的投影，MoonBit/DSL 外观切换不应影响运行轨）。
 fn compiled_handler_for(
   model : Model,
   control : String,
@@ -212,15 +204,12 @@ fn compiled_handler_for(
 ) -> @compiled_runtime.Handler? {
   match @ir.find_handler(model.program, control, event) {
     None => None
-    Some(_handler) =>
-      match
-        @studio_lang.parse_handler_body(
-          model.code_draft,
-          model.language.dsl_language(),
-        ) {
-        Err(_) => None
-        Ok(body) => Some(@compiled_runtime.lower_traced_handler(body))
-      }
+    Some(handler) =>
+      Some(
+        @compiled_runtime.lower_traced_handler(
+          @studio_lang.traced_from_stmts(handler.body),
+        ),
+      )
   }
 }
 
@@ -272,6 +261,8 @@ fn compiled_value(value : @studio_lang.Value) -> @compiled_runtime.Value {
     }
     @studio_lang.VStr(text) => @compiled_runtime.VStr(text)
     @studio_lang.VBool(flag) => @compiled_runtime.VBool(flag)
+    @studio_lang.VEnum(e, c) => @compiled_runtime.VEnum(e, c)
+    VStruct(_) => VUnit
     @studio_lang.VUnit => @compiled_runtime.VUnit
   }
 }
@@ -335,6 +326,8 @@ fn interpreted_value(value : @compiled_runtime.Value) -> @studio_lang.Value {
     }
     @compiled_runtime.VStr(text) => @studio_lang.VStr(text)
     @compiled_runtime.VBool(flag) => @studio_lang.VBool(flag)
+    @compiled_runtime.VEnum(e, c) => @studio_lang.VEnum(e, c)
+    VStruct(_) => VUnit
     @compiled_runtime.VUnit => @studio_lang.VUnit
   }
 }
@@ -344,12 +337,14 @@ fn interpreted_value(value : @compiled_runtime.Value) -> @studio_lang.Value {
 /// 并在提交后清空草稿（下一次询问从空开始，不会带上一轮的答案）。
 fn answer_gate_with_draft(model : Model, decision : Bool) -> Model {
   let text = model.gate_answer_draft
-  let cleared = { ..model, gate_answer_draft: "" }
+  let cleared = { ..model, gate_answer_draft: "", }
   if current_track(model) is Compile {
     match cleared.compiled_run {
       None => cleared
       Some(run) => {
-        ignore(@compiled_runtime.answer_gate_with_text(run.runtime, decision, text))
+        ignore(
+          @compiled_runtime.answer_gate_with_text(run.runtime, decision, text),
+        )
         drain_broadcasts_compiled(merge_compiled_run_back(cleared))
       }
     }
@@ -802,7 +797,7 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         Some((run_tick(model), @moui.Effect::none()))
       }
     TimerTick => Some((timer_tick(model), @moui.Effect::none()))
-    ControlInputDone(name) => {
+    ControlInputDone(name) =>
       // 完成输入（切片 G）：提交（Enter）即派发 on_input_done 处理器
       if gate_waiting(model) {
         Some((model, @moui.Effect::none()))
@@ -815,7 +810,6 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           Some((next, effect))
         }
       }
-    }
     RunStep =>
       if current_track(model) is Compile {
         Some((model, @moui.Effect::none()))
@@ -894,15 +888,10 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         }
       }
     GateAnswerInput(text) =>
-      Some(({ ..model, gate_answer_draft: text }, @moui.Effect::none()))
+      Some(({ ..model, gate_answer_draft: text, }, @moui.Effect::none()))
     GateAnswerSubmit =>
       // 提交时把**草稿文本**一起送进闸门（`询问` 的回答就是这个文本）。
-      Some(
-        (
-          answer_gate_with_draft(model, true),
-          @moui.Effect::none(),
-        ),
-      )
+      Some((answer_gate_with_draft(model, true), @moui.Effect::none()))
     AnswerGate(decision) =>
       // 确认同样带上草稿文本：用户可能在回答框里打了字再点确认；
       // 拒绝也带（文本仍会被记录为「这次的回答」，只是 decision=false）。

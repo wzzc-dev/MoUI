@@ -128,6 +128,8 @@ test "budget checks count nested statements and independent branches" {
       },
     ],
     functions: [],
+  structs: [],
+  enums: [],
   }
   let expected = @ir.MAX_STMTS_PER_HANDLER + 1
   assert_true(
@@ -157,6 +159,8 @@ test "invalid control rectangles are rejected at the input boundary" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   assert_true(
     @ir.validate_program(program).any(e => e is @ir.InvalidControlRect("按钮")),
@@ -210,6 +214,8 @@ test "validate_program reports structural errors" {
       },
     ],
     functions: [],
+  structs: [],
+  enums: [],
   }
   let errors = @ir.validate_program(program)
   assert_true(errors.any(e => e is @ir.DuplicateControlName(_)))
@@ -254,6 +260,8 @@ test "program signature is deterministic" {
       },
     ],
     functions: [],
+  structs: [],
+  enums: [],
   }
   assert_eq(@ir.program_signature(build()), @ir.program_signature(build()))
   let a = build()
@@ -283,6 +291,8 @@ test "find helpers and next id" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   match @ir.find_control(program, "按钮") {
     Some(control) => assert_eq(control.id, 7)
@@ -449,6 +459,8 @@ test "duplicate handler pair is rejected" {
     variables: [],
     handlers: [handler, { ..handler, note_zh: "重复", note_en: "dup", }],
     functions: [],
+  structs: [],
+  enums: [],
   }
   assert_true(
     @ir.validate_program(program).any(e => e is @ir.DuplicateHandler(_)),
@@ -458,6 +470,8 @@ test "duplicate handler pair is rejected" {
     ..program,
     handlers: [handler, { ..handler, event: @ir.OnChange, }],
     functions: [],
+  structs: [],
+  enums: [],
   }
   assert_true(!@ir.validate_program(ok).any(e => e is @ir.DuplicateHandler(_)))
 }

@@ -55,6 +55,8 @@ pub(all) enum Value {
   VArr(Array[Value])
   VBool(Bool)
   VUnit
+  VStruct(Map[String, Value])
+  VEnum(String, String) // 枚举值：枚举名, 情况名（M5-5d）
 }
 
 ///|
@@ -83,6 +85,7 @@ pub(all) enum Instr {
   LoopInit(Expr, String, Int) // 次数表达式, 计数器槽, 循环结束目标
   LoopCheck(String, String, Int) // 计数器槽, 循环变量(""=无), 循环结束目标
   LoopNext(String, Int) // 计数器槽, 循环开始目标
+  CaseOf(Expr, Array[String], Array[Int], Int) // subject, 情况名, 各臂跳转目标, else 目标（M5-5d）
 }
 
 ///|
@@ -449,6 +452,33 @@ pub fn step_once(state : RunState) -> Unit {
         })
         state.pc = if flag { state.pc + 1 } else { target }
       }
+      CaseOf(subject, case_names, targets, else_target) => {
+        // 匹配分派（M5-5d）：subject 单次求值，必须枚举值
+        let value = state.eval(subject, line)
+        if state.paused || !(state.status is Running) {
+          return
+        }
+        let case_name = match value {
+          VEnum(_enum_name, matched) => matched
+          _ =>
+            raise LangError(TypeMismatch, line, "匹配对象", "应为枚举值")
+        }
+        state.audit.push(StepRecord::{
+          line,
+          op: OpCondition,
+          detail: "\{canonical_expr(subject)} -> \{case_name}",
+        })
+        let mut target = else_target
+        let mut index = 0
+        while index < case_names.length() {
+          if case_names[index] == case_name {
+            target = targets[index]
+            break
+          }
+          index = index + 1
+        }
+        state.pc = target
+      }
       Jump(target) => state.pc = target
       LoopInit(times, counter, end) => {
         let value = state.eval(times, line)
@@ -638,6 +668,21 @@ pub fn value_to_text(value : Value) -> String {
     VNum(n) => number_to_text(n)
     VInt(n) => n.to_string()
     VStr(text) => text
+    VEnum(enum_name, case_name) => "\{enum_name}::\{case_name}"
+    VStruct(fields) => {
+      let buf = StringBuilder()
+      buf.write_string("{")
+      let mut first = true
+      for key, val in fields {
+        if !first {
+          buf.write_string(", ")
+        }
+        buf.write_string("\{key}: \{value_to_text(val)}")
+        first = false
+      }
+      buf.write_string("}")
+      buf.to_string()
+    }
     VArr(items) => {
       let buf = StringBuilder()
       buf.write_string("[")
@@ -698,6 +743,18 @@ fn RunState::eval(
     @ir.IntLit(n) => VInt(n)
     @ir.StrLit(text) => VStr(text)
     @ir.BoolLit(flag) => VBool(flag)
+    @ir.EnumTag(enum_name, case_name) => VEnum(enum_name, case_name)
+    @ir.FieldAccess(base, field) => {
+      let base_val = self.eval(base, line)
+      match base_val {
+        VStruct(fields) =>
+          match fields.get(field) {
+            Some(v) => v
+            None => raise LangError(UnknownName, 0, field, "")
+          }
+        _ => raise LangError(UnknownName, 0, field, "")
+      }
+    }
     @ir.ListLit(items) => {
       let values : Array[Value] = []
       for item in items {
@@ -1425,6 +1482,13 @@ fn write_canonical_expr(buf : StringBuilder, expr : Expr) -> Unit {
     @ir.StrLit(text) => buf.write_string("\"\{text}\"")
     @ir.BoolLit(flag) => buf.write_string(if flag { "true" } else { "false" })
     @ir.Var(name) => buf.write_string(name)
+    @ir.FieldAccess(base, field) => {
+      write_canonical_expr(buf, base)
+      buf.write_string(".")
+      buf.write_string(field)
+    }
+    @ir.EnumTag(enum_name, case_name) =>
+      buf.write_string("\{enum_name}::\{case_name}")
     @ir.Not(inner) => {
       buf.write_string("not ")
       write_canonical_expr(buf, inner)
@@ -1581,6 +1645,42 @@ fn emit_stmt(
         index = index + 1
       }
       let end = instrs.length()
+      for slot in end_jumps {
+        match instrs[slot] {
+          Jump(_) => instrs[slot] = Jump(end)
+          _ => ()
+        }
+      }
+    }
+    @ir.Match(subject, arms, else_body) => {
+      // 单次求值：subject 只在分派指令里求值一次（M5-5d）
+      let case_names : Array[String] = []
+      let open_targets : Array[Int] = []
+      for arm in arms {
+        case_names.push(arm.case_name)
+        open_targets.push(-1)
+      }
+      let dispatch_slot = instrs.length()
+      instrs.push(CaseOf(subject, case_names, open_targets, -1))
+      lines.push(line)
+      let body_starts : Array[Int] = []
+      let end_jumps : Array[Int] = []
+      for arm in arms {
+        body_starts.push(instrs.length())
+        emit_body(instrs, lines, arm.body, line, break_patches)
+        let jump = instrs.length()
+        instrs.push(Jump(-1))
+        lines.push(line)
+        end_jumps.push(jump)
+      }
+      let else_start = instrs.length()
+      emit_body(instrs, lines, else_body, line, break_patches)
+      let end = instrs.length()
+      match instrs[dispatch_slot] {
+        CaseOf(subject2, names, _, _) =>
+          instrs[dispatch_slot] = CaseOf(subject2, names, body_starts, else_start)
+        _ => ()
+      }
       for slot in end_jumps {
         match instrs[slot] {
           Jump(_) => instrs[slot] = Jump(end)

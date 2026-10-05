@@ -8,6 +8,7 @@
 /// 本文件钉住两类**只在底栏宿主下才出现**的缺陷：
 /// 1. 环境回落色漏进底栏（无背景 container → `palette.surface`）；
 /// 2. 输入面溢出中心列右缘（内衬被扣两次 → 发送钮贴死在列边）。
+
 ///|
 /// 底栏 AI 页签里**不许露出宿主面板以外的底色**。
 ///
@@ -23,12 +24,16 @@ test "the AI bottom bar shows no ambient-fallback surface" {
   let model = initial_model()
   let commands = shell_draw(model, 1280.0, 800.0)
   // 底栏纵向范围：状态栏之上、工作区段之下
-  let bottom_bar_top = TOPBAR_HEIGHT + 1.0 + (800.0 -
-    TOPBAR_HEIGHT -
-    STATUSBAR_HEIGHT -
-    PANEL_HEAD_HEIGHT -
-    2.0 -
-    ai_bar_height(model, center_width_of(model, 1280.0), 800.0))
+  let bottom_bar_top = TOPBAR_HEIGHT +
+    1.0 +
+    (
+      800.0 -
+      TOPBAR_HEIGHT -
+      STATUSBAR_HEIGHT -
+      PANEL_HEAD_HEIGHT -
+      2.0 -
+      ai_bar_height(model, center_width_of(model, 1280.0), 800.0)
+    )
   let bottom_bar_bottom = 800.0 - STATUSBAR_HEIGHT
   let center_left = ICONBAR_WIDTH + 2.0 + LEFTBAR_WIDTH + 1.0
   let center_width = center_width_of(model, 1280.0)
@@ -84,7 +89,8 @@ test "the AI input bar never overflows the centre column" {
   let model = initial_model()
   let commands = shell_draw(model, 1280.0, 800.0)
   let center_left = ICONBAR_WIDTH + 2.0 + LEFTBAR_WIDTH + 1.0
-  let center_right = center_left + center_width_of(model, 1280.0 - ICONBAR_WIDTH)
+  let center_right = center_left +
+    center_width_of(model, 1280.0 - ICONBAR_WIDTH)
   guard shell_find_send_button(commands) is Some(send) else {
     fail("round send button missing")
   }
@@ -125,6 +131,7 @@ test "the AI input bar never overflows the centre column" {
     }
   }
 }
+
 ///|
 /// 变量分类的调色板里给出「新建变量」入口（Scratch 的「建立一个变量」）——
 /// 用户正在积木画布上想加变量时，不必再跑去左栏结构树。
@@ -165,7 +172,9 @@ test "the variable palette offers an inline create-variable entry" {
   }
   assert_true(flow_index >= 0)
   let on_flow = apply_shell(on_var, ToggleStatementPalette(flow_index))
-  assert_false(shell_has_text(shell_draw(on_flow, 1280.0, 800.0), "新建变量"))
+  assert_false(
+    shell_has_text(shell_draw(on_flow, 1280.0, 800.0), "新建变量"),
+  )
   // 点它确实加出一个变量
   let before = on_var.program.variables.length()
   let added = apply_shell(on_var, AddVariable)
@@ -225,6 +234,7 @@ test "reporter slots reach the real draw pipeline" {
   }
   assert_true(slot_fills > 0)
 }
+
 ///|
 /// 说明输入框**真的画在右栏编辑卡里**（不只是模型里有字段）。
 ///
@@ -258,7 +268,12 @@ test "the ask gate renders an answer input but submit does not" {
   // 不用 RunTick 推进——那还要依赖计时器与推进预算，断言会变得间接。
   let base = apply_shell(initial_model(), SelectTemplate(2))
   let gate_state = @studio_lang.start_run_stmts(
-    [@ir.Declare("姓名", @ir.Expr::Call("ask", [@ir.StrLit("你叫什么？")]))],
+    [
+      @ir.Declare(
+        "姓名",
+        @ir.Expr::Call("ask", [@ir.StrLit("你叫什么？")]),
+      ),
+    ],
     Map([], capacity=2),
     Map([], capacity=2),
     Map([], capacity=2),
@@ -296,12 +311,7 @@ test "the ask gate renders an answer input but submit does not" {
 
   // 对照：`提交数据` 闸门**不**渲染回答输入框（它的确认不需要填内容）
   let submit_state = @studio_lang.start_run_stmts(
-    [
-      @ir.Stmt::Call("submit_data", [
-        @ir.StrLit("payload"),
-        @ir.Var("输出"),
-      ]),
-    ],
+    [@ir.Stmt::Call("submit_data", [@ir.StrLit("payload"), @ir.Var("输出")])],
     Map([], capacity=2),
     Map([], capacity=2),
     Map([], capacity=2),
@@ -348,7 +358,10 @@ test "the script note renders on the blocks canvas only when set" {
   let on_handler = apply_shell(model, SelectHandler(key))
   // 模板自带说明 → 横幅应出现（用一段模板里没有的独特文本做对照更稳，
   // 所以先写一条自己的说明）
-  let noted = apply_shell(on_handler, EditTargetNote("这段负责出题与批改"))
+  let noted = apply_shell(
+    on_handler,
+    EditTargetNote("这段负责出题与批改"),
+  )
   let commands = shell_draw(noted, 1600.0, 900.0)
   assert_true(shell_has_text(commands, "这段负责出题与批改"))
 
@@ -420,7 +433,10 @@ test "clicking a block with a note shown selects the block under the pointer" {
     model.program.handlers[0].event.tag(),
   )
   let on_handler = apply_shell(model, SelectHandler(key))
-  let noted = apply_shell(on_handler, EditTargetNote("说明会把积木推下去"))
+  let noted = apply_shell(
+    on_handler,
+    EditTargetNote("说明会把积木推下去"),
+  )
   let chain = block_chain_of(noted)
   assert_true(chain.length() >= 2)
 
@@ -431,7 +447,9 @@ test "clicking a block with a note shown selects the block under the pointer" {
     view=(current, env) => view_with_viewport(current, env.viewport_size()),
   )
   let runtime = @runtime.new_program_with_dimensions(
-    program~, width=1600.0, height=900.0,
+    program~,
+    width=1600.0,
+    height=900.0,
   )
   let mut banner_y : Double? = None
   let label_rect : Ref[@core.Rect?] = Ref(None)
@@ -443,7 +461,8 @@ test "clicking a block with a note shown selects the block under the pointer" {
           banner_text = run.text
           banner_y = Some(run.frame.origin.y)
         }
-        if run.text.contains(chain[1].text) && run.text != banner_text &&
+        if run.text.contains(chain[1].text) &&
+          run.text != banner_text &&
           label_rect.val is None {
           label_rect.val = Some(run.frame)
         }
@@ -510,7 +529,9 @@ test "collapsing the bottom bar does not move the AI composer to the right panel
     msg="collapsing must not change the AI anchor",
   )
   // 右栏里没有第二份 composer
-  assert_true(ai_layer(collapsed, translator_for(ZhHans), 1280.0, 800.0) is None)
+  assert_true(
+    ai_layer(collapsed, translator_for(ZhHans), 1280.0, 800.0) is None,
+  )
   // 页签仍是 AI：展开后输入面原样回来
   assert_true(collapsed.bottom_tab is BtAi)
   let reopened = apply_shell(collapsed, ToggleBottom)
@@ -530,7 +551,10 @@ test "the AI tab restores the composer after collapse and expand" {
   assert_true(reopened.bottom_open)
   // 点 AI 页签：锚点必须回到 AiBar（这才是「点得开」）
   let on_ai = apply_shell(reopened, SetBottomTab(BtAi))
-  assert_true(on_ai.ai_anchor is AiBar, msg="clicking the AI tab must anchor to AiBar")
+  assert_true(
+    on_ai.ai_anchor is AiBar,
+    msg="clicking the AI tab must anchor to AiBar",
+  )
   assert_true(on_ai.bottom_tab is BtAi)
   assert_true(on_ai.bottom_open)
   // 输入面真的画出来了（占位文案在场）
@@ -541,7 +565,10 @@ test "the AI tab restores the composer after collapse and expand" {
   let docked = apply_shell(on_ai, SetAiAnchor(AiDocked))
   assert_true(docked.ai_anchor is AiDocked)
   let back = apply_shell(docked, SetBottomTab(BtAi))
-  assert_true(back.ai_anchor is AiBar, msg="AI tab must pull the composer back from dock")
+  assert_true(
+    back.ai_anchor is AiBar,
+    msg="AI tab must pull the composer back from dock",
+  )
 
   // **反例 2**：点只读页签不该把锚点搬走
   let audit = apply_shell(back, SetBottomTab(BtAudit))
@@ -569,7 +596,9 @@ test "switching to a read-only bottom tab never docks the AI composer" {
       msg="a read-only tab must not move the AI composer",
     )
     // 右栏没有第二份 composer
-    assert_true(ai_layer(switched, translator_for(ZhHans), 1280.0, 800.0) is None)
+    assert_true(
+      ai_layer(switched, translator_for(ZhHans), 1280.0, 800.0) is None,
+    )
     // 页签确实切过去了（不是「什么都没发生」）
     let is_target = match tab {
       BtAudit => switched.bottom_tab is BtAudit
@@ -593,10 +622,15 @@ test "the AI tab pulls the composer back to the bottom bar" {
   let docked = apply_shell(model, SetAiAnchor(AiDocked))
   assert_true(docked.ai_anchor is AiDocked)
   // 右栏这时有 composer
-  assert_true(ai_layer(docked, translator_for(ZhHans), 1280.0, 800.0) is Some(_))
+  assert_true(
+    ai_layer(docked, translator_for(ZhHans), 1280.0, 800.0) is Some(_),
+  )
   // 点 AI 页签 → 拉回底栏档
   let back = apply_shell(docked, SetBottomTab(BtAi))
-  assert_true(back.ai_anchor is AiBar, msg="the AI tab must anchor the composer to the bar")
+  assert_true(
+    back.ai_anchor is AiBar,
+    msg="the AI tab must anchor the composer to the bar",
+  )
   assert_true(back.bottom_tab is BtAi)
   assert_true(back.bottom_open)
   // 右栏不再画 composer（一个输入面只有一份）
@@ -619,7 +653,10 @@ test "explicitly anchoring to the bar reveals the composer" {
   // 显式落到底栏
   let back = apply_shell(docked, SetAiAnchor(AiBar))
   assert_true(back.ai_anchor is AiBar)
-  assert_true(back.bottom_tab is BtAi, msg="anchoring to the bar must select the AI tab")
+  assert_true(
+    back.bottom_tab is BtAi,
+    msg="anchoring to the bar must select the AI tab",
+  )
   assert_true(back.bottom_open, msg="anchoring to the bar must expand the bar")
   // composer 真的画出来了
   let commands = shell_draw(back, 1280.0, 800.0)
@@ -642,9 +679,7 @@ test "the context menu opens at the pointer, not at the host corner" {
   let click_x = 400.0
   let click_y = 300.0
   let opened = apply_shell(model, BlocksContextMenu(0, click_x, click_y))
-  guard opened.block_menu is Some((_, sx, sy)) else {
-    abort("test faild")
-  }
+  guard opened.block_menu is Some((_, sx, sy)) else { abort("test faild") }
   // 坐标被原样记住（视口坐标，不是画布局部坐标）
   assert_eq(sx, click_x)
   assert_eq(sy, click_y)
@@ -719,7 +754,9 @@ test "the context menu closes when clicking outside it" {
     view=(current, env) => view_with_viewport(current, env.viewport_size()),
   )
   let runtime = @runtime.new_program_with_dimensions(
-    program~, width=1280.0, height=800.0,
+    program~,
+    width=1280.0,
+    height=800.0,
   )
   // 菜单必须真的画着（否则「点空白关掉了什么」没有意义）
   assert_true(runtime.draw_commands().length() > 0)
@@ -733,7 +770,10 @@ test "the context menu closes when clicking outside it" {
     @core.Pointer(@core.PointerEvent::new(position=point, phase=@core.Up)),
   )
   // 必须收到过消息，且**最后一次状态是菜单已关**
-  assert_true(states.length() > 0, msg="clicking outside should produce a message")
+  assert_true(
+    states.length() > 0,
+    msg="clicking outside should produce a message",
+  )
   assert_false(
     states[states.length() - 1],
     msg="the context menu should be closed after clicking outside",

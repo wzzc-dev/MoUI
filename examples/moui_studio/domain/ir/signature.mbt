@@ -133,6 +133,16 @@ fn write_stmt(buf : StringBuilder, stmt : Stmt, indent : Int) -> Unit {
         write_expr(buf, arg)
       }
     }
+    Match(subject, arms, else_body) => {
+      buf.write_string("match ")
+      write_expr(buf, subject)
+      write_stmts(buf, else_body, indent + 1)
+      for arm in arms {
+        write_indent(buf, indent)
+        buf.write_string("case \{arm.case_name}")
+        write_stmts(buf, arm.body, indent + 1)
+      }
+    }
   }
 }
 
@@ -151,6 +161,14 @@ fn write_expr(buf : StringBuilder, expr : Expr) -> Unit {
       }
       buf.write_string(")")
     }
+    FieldAccess(base, field) => {
+      buf.write_string("field(")
+      write_expr(buf, base)
+      buf.write_string(",\"\{field}\"")
+      buf.write_string(")")
+    }
+    EnumTag(enum_name, case_name) =>
+      buf.write_string("enumtag(\"\{enum_name}::\{case_name}\")")
     Index(base, index) => {
       buf.write_string("index(")
       write_expr(buf, base)

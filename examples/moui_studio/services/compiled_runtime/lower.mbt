@@ -187,6 +187,25 @@ fn exec_stmt(rt : Runtime, stmt : @ir.Stmt, line : Int) -> Unit raise ExecError 
           exec_nested(inner, body, line)
         },
       )
+    @ir.Match(subject, arms, else_body) => {
+      // 匹配分派（M5-5d）：subject 单次求值；审计格式与解释轨一致
+      let case_name = enum_case(eval_expr(rt, subject, line), line)
+      rt.record(
+        line,
+        OpCondition,
+        "\{@studio_lang.canonical_expr(subject)} -> \{case_name}",
+      )
+      let mut taken = false
+      for arm in arms {
+        if !taken && arm.case_name == case_name {
+          exec_nested(rt, arm.body, line)
+          taken = true
+        }
+      }
+      if !taken {
+        exec_nested(rt, else_body, line)
+      }
+    }
     @ir.Break => rt.break_loop()
     @ir.Return(expr) => {
       // 返回 = LoopReturn 控制信号；函数调用边界（注册闭包）捕获
@@ -352,6 +371,9 @@ fn eval_expr(
     @ir.IntLit(n) => VInt(n)
     @ir.StrLit(text) => VStr(text)
     @ir.BoolLit(flag) => VBool(flag)
+    @ir.EnumTag(enum_name, case_name) => VEnum(enum_name, case_name)
+    @ir.FieldAccess(base, field) =>
+      get_field(eval_expr(rt, base, line), field, line)
     @ir.Var(name) =>
       match @studio_lang.builtin_kind(name) {
         Some(_) => {

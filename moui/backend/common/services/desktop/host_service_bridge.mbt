@@ -13,6 +13,7 @@ pub struct DesktopHostServices {
   show_menu : (Array[@core.ActionCommand]) -> @host.HostServiceResponse
   set_application_menu : (Array[@host.HostApplicationMenu]) -> @host.HostServiceResponse
   list_directory : (String) -> @host.HostServiceResponse
+  delete_file : (String) -> @host.HostServiceResponse
 }
 
 ///|
@@ -30,6 +31,7 @@ pub fn DesktopHostServices::new(
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
   binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
   list_directory? : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
+  delete_file? : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_delete_file,
 ) -> DesktopHostServices {
   {
     capabilities,
@@ -43,6 +45,7 @@ pub fn DesktopHostServices::new(
     show_menu,
     set_application_menu,
     list_directory,
+    delete_file,
   }
 }
 
@@ -67,6 +70,7 @@ pub fn DesktopHostServices::bridge(
       QuerySystemTheme => SystemTheme(self.system_theme)
       Settings(value) => (self.settings)(value)
       ListDirectory(path) => (self.list_directory)(path)
+      DeleteFile(path) => (self.delete_file)(path)
       PlatformChannel(_) => Unavailable(request.unavailable_message())
     }
   })

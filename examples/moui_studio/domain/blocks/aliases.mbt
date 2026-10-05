@@ -7,3 +7,6 @@ type Stmt = @ir.Stmt
 
 ///|
 type Expr = @ir.Expr
+
+///|
+type StudioProgram = @ir.StudioProgram

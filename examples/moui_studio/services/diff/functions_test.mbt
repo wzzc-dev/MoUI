@@ -56,6 +56,8 @@ test "user functions agree across both tracks" {
         note_en: "recursive factorial",
       },
     ],
+  structs: [],
+  enums: [],
   }
   let handler_body : Array[@ir.Stmt] = [
     @ir.Declare("翻倍", @ir.Call("加倍", [@ir.IntLit(21)])),
@@ -159,6 +161,8 @@ test "statement-position custom block calls agree across both tracks" {
         note_en: "append a row",
       },
     ],
+  structs: [],
+  enums: [],
   }
   // 语句位调用（不是 `Declare` 的右值）
   let handler_body : Array[@ir.Stmt] = [
@@ -237,6 +241,8 @@ test "mod and round agree across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   // 逐例对拍：每例一个 `Declare`，两边算完比文本
   let cases : Array[(@ir.Expr, String)] = [
@@ -338,6 +344,8 @@ test "math functions agree across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   let cases : Array[(@ir.Expr, String)] = [
     (@ir.Expr::Call("abs", [@ir.IntLit(-7)]), "abs_neg"),
@@ -429,6 +437,8 @@ test "stop_all halts the run and agrees across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   // 先加一行，再停止，**再**加一行——第二行不该出现
   let handler_body : Array[@ir.Stmt] = [
@@ -494,6 +504,8 @@ test "wait suspends and agrees across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   let handler_body : Array[@ir.Stmt] = [
     @ir.Stmt::Call("wait", [@ir.NumLit(0.1)]),
@@ -567,6 +579,8 @@ test "ask returns the answer text on both tracks" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   // 把 `询问` 的结果存进变量（闸门会**在表达式求值中途**挂起，所以它必须
   // 作为 `Declare` 的右值——写在 `set_text(控件, ask(...))` 里会让外层命令
@@ -655,6 +669,8 @@ test "string indexing agrees across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
+  structs: [],
+  enums: [],
   }
   // 逐例对拍
   let cases : Array[(@ir.Expr, String)] = [

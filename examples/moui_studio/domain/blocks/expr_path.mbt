@@ -28,11 +28,12 @@
 pub fn expr_slot_count(expr : Expr) -> Int {
   match expr {
     @ir.NumLit(_) | @ir.IntLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) |
-    @ir.Var(_) => 0
+    @ir.Var(_) | @ir.EnumTag(_, _) => 0
     @ir.Not(_) | @ir.Neg(_) => 1
     @ir.Index(_, _) | @ir.Binary(_, _, _) => 2
     @ir.ListLit(items) => items.length()
     @ir.Call(_, args) => args.length()
+    @ir.FieldAccess(_, _) => 1
   }
 }
 
@@ -65,7 +66,20 @@ pub fn expr_child(expr : Expr, slot : Int) -> Expr? {
       } else {
         None
       }
-    _ => None
+    // 字段访问的唯一洞口是基底（`person.名字` 里可换的是 `person`）
+    @ir.FieldAccess(base, _) =>
+      if slot == 0 {
+        Some(base)
+      } else {
+        None
+      }
+    // 叶子（字面量/变量/枚举值）没有子表达式
+    @ir.NumLit(_)
+    | @ir.IntLit(_)
+    | @ir.StrLit(_)
+    | @ir.BoolLit(_)
+    | @ir.Var(_)
+    | @ir.EnumTag(_, _) => None
   }
 }
 
@@ -121,7 +135,20 @@ pub fn replace_expr_child(expr : Expr, slot : Int, value : Expr) -> Expr? {
       } else {
         None
       }
-    _ => None
+    // 字段访问：slot 0 换基底，字段名本身不可替换
+    @ir.FieldAccess(_, field) =>
+      if slot == 0 {
+        Some(@ir.FieldAccess(value, field))
+      } else {
+        None
+      }
+    // 叶子（字面量/变量/枚举值）没有可替换的子表达式
+    @ir.NumLit(_)
+    | @ir.IntLit(_)
+    | @ir.StrLit(_)
+    | @ir.BoolLit(_)
+    | @ir.Var(_)
+    | @ir.EnumTag(_, _) => None
   }
 }
 
@@ -288,6 +315,7 @@ pub fn expr_leaf_text(expr : Expr) -> String? {
     @ir.StrLit(text) => Some(text)
     @ir.BoolLit(flag) => Some(if flag { "true" } else { "false" })
     @ir.Var(name) => Some(name)
+    @ir.EnumTag(enum_name, case_name) => Some("\{enum_name}::\{case_name}")
     _ => None
   }
 }
