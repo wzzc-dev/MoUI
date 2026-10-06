@@ -56,20 +56,16 @@ async fn Pty::spawn_shell(shell : String, cols : Int, rows : Int) -> Pty? {
 }
 
 ///|
-/// 关闭：fd close + 非阻塞回收（重试覆盖回收竞争窗口），仍存活发 SIGHUP。
+/// 关闭会话（M8-fix 重排序）：**先退进程、再关 master fd**——macOS 上
+/// slave 仍被 shell 持有时 close(master) 会阻塞在 tty close（真机卡死
+/// 实证：主线程 UN+ 挂在 close）。顺序：SIGHUP → reap → SIGKILL 兜底
+/// → reap → 最后 close（zsh 已死、slave 已关，close 立即返回）。
 fn Pty::shutdown(self : Pty) -> Unit {
+  ignore(pty_signal(self.pid, 1)) // SIGHUP：通知 shell 退出
+  ignore(pty_reap(self.pid))
+  ignore(pty_signal(self.pid, 9)) // SIGKILL 兜底：确保进程死透
+  ignore(pty_reap(self.pid))
   self.raw.close()
-  let mut reaped = false
-  for _ in 0..<5 {
-    if pty_reap(self.pid) != 0L {
-      reaped = true
-      break
-    }
-  }
-  if !reaped {
-    ignore(pty_signal(self.pid, 1)) // SIGHUP
-    ignore(pty_reap(self.pid))
-  }
 }
 
 ///|
