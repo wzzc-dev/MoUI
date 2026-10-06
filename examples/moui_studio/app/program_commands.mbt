@@ -96,6 +96,15 @@ pub fn studio_program_commands(
     true,
     SetBottomTab(BtTerminal),
   )
+  // Ctrl+Shift+T：关闭终端（kill PTY + 收起页签）——开关全程键盘可达
+  bind(
+    "t",
+    true,
+    "app.command.bottom.terminal.close",
+    Activate,
+    true,
+    TerminalTabClose,
+  )
   bind(
     "d",
     false,

@@ -1633,6 +1633,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "app.command.bottom.terminal.close",
+        GeneratedI18nMessage::Text("Close terminal"),
+      ),
+      (
         "app.inspector.window_event_create",
         GeneratedI18nMessage::Text("Create"),
       ),
@@ -3227,6 +3231,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "本端只有解释轨与源码预览；编译轨仅在 native 入口可达。",
         ),
+      ),
+      (
+        "app.command.bottom.terminal.close",
+        GeneratedI18nMessage::Text("关闭终端"),
       ),
       (
         "app.inspector.window_event_create",

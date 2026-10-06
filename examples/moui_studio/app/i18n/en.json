@@ -135,6 +135,7 @@
     "app.command.bottom.console": "Bottom bar: console",
     "app.command.bottom.problems": "Bottom: Problems",
     "app.command.bottom.terminal": "Switch to terminal tab",
+    "app.command.bottom.terminal.close": "Close terminal",
     "app.command.bottom.toggle": "Toggle bottom bar",
     "app.command.code.complete": "Complete: list candidates",
     "app.command.code.dismiss_completion": "Dismiss completion",

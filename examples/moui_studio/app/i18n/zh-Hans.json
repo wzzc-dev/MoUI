@@ -135,6 +135,7 @@
     "app.command.bottom.console": "底栏：Console",
     "app.command.bottom.problems": "底栏：问题",
     "app.command.bottom.terminal": "切到终端页签",
+    "app.command.bottom.terminal.close": "关闭终端",
     "app.command.bottom.toggle": "展开/收起底栏",
     "app.command.code.complete": "补全：列出候选词",
     "app.command.code.dismiss_completion": "收起补全",

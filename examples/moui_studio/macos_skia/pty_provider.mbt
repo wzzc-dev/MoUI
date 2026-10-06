@@ -107,7 +107,7 @@ priv enum PtyWork {
     (@studio_app.Msg) -> Unit
   )
   PtyWriteWork(String)
-  PtyKillWork(() -> @studio_app.Msg, (@studio_app.Msg) -> Unit)
+  PtyKillWork
   PtyShutdown
 }
 
@@ -187,11 +187,15 @@ async fn pty_worker_loop(provider : PtyProvider) -> Unit {
                 match provider.queue.get() {
                   PtyWriteWork(text) =>
                     ignore(pty.raw.write(@utf8.encode(text)) catch { _ => 0 })
-                  PtyKillWork(on_exit, kill_emit) => {
+                  // Kill/Shutdown：先取消读循环再关 fd，**退出 group**——
+                  // 下一次派生从外层循环全新开始。此前 Kill 不退出 group，
+                  // reopen 的 SpawnWork 到达内层循环命中重入队分支 →
+                  // 同一工作项无限入队/取出 = 卡死（真机采样实证）。
+                  PtyKillWork => {
                     reader.cancel()
                     pty.shutdown()
                     provider.pty_ref.val = None
-                    kill_emit(on_exit())
+                    break
                   }
                   PtyShutdown => {
                     reader.cancel()
@@ -199,14 +203,8 @@ async fn pty_worker_loop(provider : PtyProvider) -> Unit {
                     provider.pty_ref.val = None
                     return
                   }
-                  PtySpawnWork(_, _, _, _, _) => {
-                    // 读循环期间的重复派生：重新入队等下一轮（不重入）
-                    let _ = provider.queue.try_put(
-                      PtySpawnWork(cols, rows, on_output, on_exit, emit),
-                    ) catch {
-                      _ => false
-                    }
-                  }
+                  // group 活跃期 handle 必 Some → 不会触发新派生；防御性丢弃
+                  PtySpawnWork(_, _, _, _, _) => ()
                 }
               }
             })
@@ -217,12 +215,11 @@ async fn pty_worker_loop(provider : PtyProvider) -> Unit {
       PtyWriteWork(text) =>
         // 未派生时的写入：丢弃（无会话可写）
         ignore(text)
-      PtyKillWork(on_exit, kill_emit) =>
+      PtyKillWork =>
         match provider.pty_ref.val {
           Some(pty) => {
             pty.shutdown()
             provider.pty_ref.val = None
-            kill_emit(on_exit())
           }
           None => ()
         }

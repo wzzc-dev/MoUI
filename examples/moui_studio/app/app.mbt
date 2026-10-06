@@ -85,9 +85,13 @@ pub fn update_with_services(
     // 关闭 = kill + 句柄清空（屏保留回看）
     TerminalOutput(text) => {
       model.terminal.feed_output(text)
-      // 新输出 → 终端屏滚动跟随到底部（用户反馈②）：offset 置大值由
-      // scroll 容器 clamp，序号自增触发请求
-      model.terminal_scroll = @geometry.Point::new(x=0.0, y=1.0e9)
+      // 新输出 → 终端屏滚动跟随到底部（用户反馈②）：offset = 内容底部
+      //（行数×行高，容器 clamp 到精确底部）——**不用 1e9 巨值**（收起/
+      // 重开重挂载时的巨值 offset 处理是卡死嫌疑，M9-fix 排查中）
+      model.terminal_scroll = @geometry.Point::new(
+        x=0.0,
+        y=(model.terminal.screen.length().to_double() + 1.0) * 16.0,
+      )
       model.terminal_scroll_seq = model.terminal_scroll_seq + 1
       (model, @moui.Effect::none())
     }
