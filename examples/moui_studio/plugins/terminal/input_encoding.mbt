@@ -1,6 +1,7 @@
 ///|
 /// vendor 自 examples/terminal/addon（M8②：跨 workspace 模块导入不可行，
 /// 终端键编码是本插件的域内技术，按 Cordis provider/vendor 纪律落地本包）。
+
 ///|
 /// 键盘事件 → 终端输入字节序列。
 /// 返回 None 表示该按键不应透传给终端(如修饰键单独按下)。

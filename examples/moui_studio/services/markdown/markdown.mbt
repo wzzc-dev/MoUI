@@ -74,7 +74,8 @@ pub fn parse_markdown(source : String) -> Array[MarkdownBlock] {
         // 未闭合围栏：吃到结尾（诚实——围栏意图明确，仍按代码块处理）
         while index < count {
           let inner = lines[index]
-          if fence_of(inner) is Some((close_marker, _)) && close_marker == marker {
+          if fence_of(inner) is Some((close_marker, _)) &&
+            close_marker == marker {
             break
           }
           code_lines.push(inner)
@@ -323,7 +324,11 @@ fn ordered_item_text(line : String) -> String? {
   }
   // 点后必须有内容（允许无空格：1.列表 也认）
   if chars[digits] == '.' && digits + 1 < chars.length() {
-    let rest_start = if chars[digits + 1] == ' ' { digits + 2 } else { digits + 1 }
+    let rest_start = if chars[digits + 1] == ' ' {
+      digits + 2
+    } else {
+      digits + 1
+    }
     let buf = StringBuilder()
     let mut index = rest_start
     while index < chars.length() {

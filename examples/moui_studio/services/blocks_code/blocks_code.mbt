@@ -52,6 +52,8 @@ const AUDIT_ASSIGN_PREFIX : String = "rt.audit_assign("
 ///|
 /// 哨兵:record 调用的前缀。
 const RECORD_PREFIX : String = "rt.record("
+
+///|
 const DISPATCH_AUDIT_MARK : String = "@compiled_runtime.OpCondition"
 
 ///|

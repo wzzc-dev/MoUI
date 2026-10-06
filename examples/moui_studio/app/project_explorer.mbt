@@ -145,8 +145,9 @@ pub fn project_explorer(
                 // 图标直接挂 on_tap（无背景 wrapper——裸 container 会回落
                 // 到环境面板色，在选中行上读成黑方块，实测缺陷）
                 trailing=Some(
-                  @views.icon(Trash, size=12.0, color=ide_text())
-                  .on_tap(RequestConfirm(CkDeleteProjectFile(file_rel))),
+                  @views.icon(Trash, size=12.0, color=ide_text()).on_tap(
+                    RequestConfirm(CkDeleteProjectFile(file_rel)),
+                  ),
                 ),
                 trailing_width=18.0,
               ),

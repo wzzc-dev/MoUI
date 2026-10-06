@@ -426,7 +426,7 @@ async fn run_tool(
   command : String,
   args : Array[String],
   cwd : String,
-) -> (Int, String) raise {
+) -> (Int, String) {
   let (out_reader, out_w) = @process.read_from_process()
   let (err_reader, err_w) = @process.read_from_process()
   let out_box = Ref("")

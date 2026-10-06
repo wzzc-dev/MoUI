@@ -1205,10 +1205,20 @@ pub fn block_outline_path(
     verbs.push(@core.LineTo(@core.Point::new(x=tab_r, y~)))
   }
   verbs.push(@core.LineTo(@core.Point::new(x=x + w - r, y~)))
-  verbs.push(@core.QuadTo(@core.Point::new(x=x + w, y~), @core.Point::new(x=x + w, y=y + r)))
+  verbs.push(
+    @core.QuadTo(
+      @core.Point::new(x=x + w, y~),
+      @core.Point::new(x=x + w, y=y + r),
+    ),
+  )
   // 右边
   verbs.push(@core.LineTo(@core.Point::new(x=x + w, y=y + h - r)))
-  verbs.push(@core.QuadTo(@core.Point::new(x=x + w, y=y + h), @core.Point::new(x=x + w - r, y=y + h)))
+  verbs.push(
+    @core.QuadTo(
+      @core.Point::new(x=x + w, y=y + h),
+      @core.Point::new(x=x + w - r, y=y + h),
+    ),
+  )
   // 底边：右 → 左（有卯口则中段凹进）。注意凹口两端点的 y 是**底边**
   // y+h——写成 y~ 会抓到顶边 y，路径自交后填充出贯穿整行的楔形（实测缺陷）。
   if notch {
@@ -1218,10 +1228,17 @@ pub fn block_outline_path(
     verbs.push(@core.LineTo(@core.Point::new(x=tab_l, y=y + h)))
   }
   verbs.push(@core.LineTo(@core.Point::new(x=x + r, y=y + h)))
-  verbs.push(@core.QuadTo(@core.Point::new(x~ , y=y + h), @core.Point::new(x~, y=y + h - r)))
+  verbs.push(
+    @core.QuadTo(
+      @core.Point::new(x~, y=y + h),
+      @core.Point::new(x~, y=y + h - r),
+    ),
+  )
   // 左边
   verbs.push(@core.LineTo(@core.Point::new(x~, y=y + r)))
-  verbs.push(@core.QuadTo(@core.Point::new(x~, y~), @core.Point::new(x=x + r, y~)))
+  verbs.push(
+    @core.QuadTo(@core.Point::new(x~, y~), @core.Point::new(x=x + r, y~)),
+  )
   verbs.push(@core.Close)
   verbs
 }
@@ -1240,13 +1257,11 @@ pub fn paint_block_outline(
   notch : Bool,
 ) -> Unit {
   ctx.commands.push(
-    @core.DrawPath(
-      @core.PathSpec::{
-        verbs: block_outline_path(x, y, w, h, tab, notch),
-        fill: Some(@graphics.Brush::solid(block_fill(kind))),
-        stroke: Some(@graphics.Brush::solid(block_outline_stroke())),
-        stroke_width: 1.0,
-      },
-    ),
+    @core.DrawPath(@core.PathSpec::{
+      verbs: block_outline_path(x, y, w, h, tab, notch),
+      fill: Some(@graphics.Brush::solid(block_fill(kind))),
+      stroke: Some(@graphics.Brush::solid(block_outline_stroke())),
+      stroke_width: 1.0,
+    }),
   )
 }

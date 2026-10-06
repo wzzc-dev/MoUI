@@ -27,8 +27,12 @@
 /// 索引是 [被索引, 下标]，列表字面量是元素顺序，一元是 [操作数]。
 pub fn expr_slot_count(expr : Expr) -> Int {
   match expr {
-    @ir.NumLit(_) | @ir.IntLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) |
-    @ir.Var(_) | @ir.EnumTag(_, _) => 0
+    @ir.NumLit(_)
+    | @ir.IntLit(_)
+    | @ir.StrLit(_)
+    | @ir.BoolLit(_)
+    | @ir.Var(_)
+    | @ir.EnumTag(_, _) => 0
     @ir.Not(_) | @ir.Neg(_) => 1
     @ir.Index(_, _) | @ir.Binary(_, _, _) => 2
     @ir.ListLit(items) => items.length()
@@ -41,7 +45,12 @@ pub fn expr_slot_count(expr : Expr) -> Int {
 /// 取第 `slot` 个子表达式。
 pub fn expr_child(expr : Expr, slot : Int) -> Expr? {
   match expr {
-    @ir.Not(inner) | @ir.Neg(inner) => if slot == 0 { Some(inner) } else { None }
+    @ir.Not(inner) | @ir.Neg(inner) =>
+      if slot == 0 {
+        Some(inner)
+      } else {
+        None
+      }
     @ir.Index(target, index) =>
       match slot {
         0 => Some(target)
@@ -67,12 +76,7 @@ pub fn expr_child(expr : Expr, slot : Int) -> Expr? {
         None
       }
     // 字段访问的唯一洞口是基底（`person.名字` 里可换的是 `person`）
-    @ir.FieldAccess(base, _) =>
-      if slot == 0 {
-        Some(base)
-      } else {
-        None
-      }
+    @ir.FieldAccess(base, _) => if slot == 0 { Some(base) } else { None }
     // 叶子（字面量/变量/枚举值）没有子表达式
     @ir.NumLit(_)
     | @ir.IntLit(_)
@@ -87,18 +91,8 @@ pub fn expr_child(expr : Expr, slot : Int) -> Expr? {
 /// 用 `value` 换掉 `expr` 的第 `slot` 个子表达式（克隆后手术）。
 pub fn replace_expr_child(expr : Expr, slot : Int, value : Expr) -> Expr? {
   match expr {
-    @ir.Not(_) =>
-      if slot == 0 {
-        Some(@ir.Not(value))
-      } else {
-        None
-      }
-    @ir.Neg(_) =>
-      if slot == 0 {
-        Some(@ir.Neg(value))
-      } else {
-        None
-      }
+    @ir.Not(_) => if slot == 0 { Some(@ir.Not(value)) } else { None }
+    @ir.Neg(_) => if slot == 0 { Some(@ir.Neg(value)) } else { None }
     @ir.Index(target, index) =>
       match slot {
         0 => Some(@ir.Index(value, index))
@@ -157,7 +151,11 @@ pub fn replace_expr_child(expr : Expr, slot : Int, value : Expr) -> Expr? {
 ///
 /// 路径非法（越界 / 该语句没有根表达式 / 中途取不到子表达式）返回 `None`，
 /// 调用方据此拒绝操作而不是猜一个位置。
-pub fn expr_at(body : Array[Stmt], stmt_path : Array[Int], path : Array[Int]) -> Expr? {
+pub fn expr_at(
+  body : Array[Stmt],
+  stmt_path : Array[Int],
+  path : Array[Int],
+) -> Expr? {
   let stmt = match stmt_at(body, stmt_path) {
     Some(stmt) => stmt
     None => return None
@@ -335,7 +333,10 @@ pub fn expr_leaf_text(expr : Expr) -> String? {
 ///
 /// 第 3 条是关键的宽容：值编辑格子里打什么都应该能存下去，而不是报
 /// 「解析失败」——那会让用户觉得「改了没反应」。
-pub fn parse_leaf_value(source : String, language : @studio_lang.Language) -> Expr {
+pub fn parse_leaf_value(
+  source : String,
+  language : @studio_lang.Language,
+) -> Expr {
   let trimmed = source.trim().to_owned()
   if trimmed.length() == 0 {
     return @ir.StrLit("")
@@ -350,11 +351,12 @@ pub fn parse_leaf_value(source : String, language : @studio_lang.Language) -> Ex
         // 解析成变量——但用户在值格子里打中文想要的是**文本**。
         // 这里加一道形状检查：标识符必须由字母/数字/下划线/中文**标识符**
         // 组成且不以数字开头，否则回落成字符串。
-        @ir.Var(name) => if leaf_is_identifier_shaped(name) {
-          expr
-        } else {
-          @ir.StrLit(source)
-        }
+        @ir.Var(name) =>
+          if leaf_is_identifier_shaped(name) {
+            expr
+          } else {
+            @ir.StrLit(source)
+          }
         _ => @ir.StrLit(source)
       }
     Err(_) => @ir.StrLit(source)

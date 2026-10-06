@@ -10,7 +10,10 @@ pub struct TerminalKeyboardNode {}
 
 ///|
 impl @core.ViewNode for TerminalKeyboardNode with fn identity(_self) {
-  @core.ViewIdentity::new(kind="TerminalKeyboardInput", key=Some("terminal-input"))
+  @core.ViewIdentity::new(
+    kind="TerminalKeyboardInput",
+    key=Some("terminal-input"),
+  )
 }
 
 ///|
@@ -50,26 +53,15 @@ pub fn[Msg] keyboard_input(
       match ctx.event {
         Pointer(event) =>
           if event.phase is @core.PointerPhase::Down {
+            // 与 core 的 handle_focusable_modifier 同款：焦点声明走
+            // result.focused，不伪造 ViewStateContext（app 插件不得触碰
+            // view-state 机制，见 runtime-state-render-ownership 门）。
             {
+              ..@core.ViewEventResult::ignored(),
               changed: true,
-              activated: false,
               focused: true,
               captured: true,
-              state: Some(
-                {
-                  focused: true,
-                  hovered: false,
-                  pressed: true,
-                  selected: false,
-                  checked: false,
-                  expanded: false,
-                  disabled: false,
-                  slots: @core.ViewStateSlots::empty(),
-                },
-              ),
-              text_control: None,
               dirty: @core.ViewPaintDirty,
-              messages: [],
             }
           } else {
             @core.ViewEventResult::ignored()

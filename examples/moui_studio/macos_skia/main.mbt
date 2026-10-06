@@ -209,9 +209,7 @@ async fn main {
   let build_task : async () -> Unit = async fn() {
     @build_native.build_worker_loop(build_owner)
   }
-  let pty_task : async () -> Unit = async fn() {
-    pty_worker_loop(pty_provider)
-  }
+  let pty_task : async () -> Unit = async fn() { pty_worker_loop(pty_provider) }
   // 静态服务循环:仅在绑定成功时注册(随从);close 可优雅停止
   let webpreview_task : async () -> Unit = async fn() {
     match preview_server {

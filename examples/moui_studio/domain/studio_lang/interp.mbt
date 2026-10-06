@@ -290,7 +290,7 @@ pub fn start_run(
     paused: false,
     wait_ticks: 0,
     broadcasts: [],
-    functions: functions,
+    functions,
     call_depth: 0,
     return_slot: None,
   }
@@ -461,7 +461,12 @@ pub fn step_once(state : RunState) -> Unit {
         let case_name = match value {
           VEnum(_enum_name, matched) => matched
           _ =>
-            raise LangError(TypeMismatch, line, "匹配对象", "应为枚举值")
+            raise LangError(
+              TypeMismatch,
+              line,
+              "匹配对象",
+              "应为枚举值",
+            )
         }
         state.audit.push(StepRecord::{
           line,
@@ -612,7 +617,12 @@ fn RunState::call_user_function(
     raise LangError(StepBudget, line, "call depth", "\{MAX_CALL_DEPTH}")
   }
   if arg_values.length() != func.params.length() {
-    raise LangError(ArityMismatch, line, func.name, "\{func.params.length()}/\{arg_values.length()}")
+    raise LangError(
+      ArityMismatch,
+      line,
+      func.name,
+      "\{func.params.length()}/\{arg_values.length()}",
+    )
   }
   // 帧：全量快照 vars/declared（教学规模下 Map 拷贝可忽略）
   let saved_vars : Map[String, Value] = Map([], capacity=16)
@@ -923,8 +933,7 @@ fn RunState::eval_binary(
               a >= b
             },
           )
-        (VInt(a), VNum(b)) =>
-          VBool(compare_mixed(op, a.to_double(), b))
+        (VInt(a), VNum(b)) => VBool(compare_mixed(op, a.to_double(), b))
         (VNum(a), VInt(b)) => VBool(compare_mixed(op, a, b.to_double()))
         (VStr(a), VStr(b)) =>
           VBool(
@@ -1244,15 +1253,12 @@ fn RunState::eval_command(
       // 命令：第一个参数是**变量名**（裸标识符），列表按引用修改
       let name = match args[0] {
         @ir.Var(name) => name
-        _ =>
-          raise LangError(TypeMismatch, line, "append_list", "variable")
+        _ => raise LangError(TypeMismatch, line, "append_list", "variable")
       }
       let items = match self.vars.get(name) {
         Some(VArr(items)) => items
-        Some(_) =>
-          raise LangError(TypeMismatch, line, name, "list")
-        None =>
-          raise LangError(NotDeclared, line, name, "use declare first")
+        Some(_) => raise LangError(TypeMismatch, line, name, "list")
+        None => raise LangError(NotDeclared, line, name, "use declare first")
       }
       let value = self.eval(args[1], line)
       if self.paused || !(self.status is Running) {
@@ -1315,7 +1321,7 @@ fn RunState::eval_function(
       let value = self.eval(args[0], line)
       VStr(value_to_text(value))
     }
-    "mod" => {
+    "mod" =>
       // 取余**保留整数性**（与 `Div` 的「整数 ÷ 整数 = 整数」同一纪律）：
       // 整数 % 整数 → 整数，掺入小数才是小数。Scratch 的 `mod` 也是如此，
       // 而且整数余数在循环计数里是常见用法，返回浮点会显示成 `1.0`。
@@ -1350,14 +1356,17 @@ fn RunState::eval_function(
           }
         }
       }
-    }
     "answer" => VStr(self.last_answer)
-    "abs" => VNum(number_of_value(self.eval(args[0], line), spec.id, line).abs())
+    "abs" =>
+      VNum(number_of_value(self.eval(args[0], line), spec.id, line).abs())
     "floor" =>
-      VInt(floor_of(number_of_value(self.eval(args[0], line), spec.id, line)).to_int())
+      VInt(
+        floor_of(number_of_value(self.eval(args[0], line), spec.id, line)).to_int(),
+      )
     "ceiling" =>
       VInt(
-        (0.0 - floor_of(0.0 - number_of_value(self.eval(args[0], line), spec.id, line))).to_int(),
+        (0.0 -
+        floor_of(0.0 - number_of_value(self.eval(args[0], line), spec.id, line))).to_int(),
       )
     "sqrt" => {
       let value = number_of_value(self.eval(args[0], line), spec.id, line)
@@ -1366,12 +1375,13 @@ fn RunState::eval_function(
       }
       VNum(sqrt_of(value))
     }
-    "round" => {
+    "round" =>
       // 四舍五入到**整数**（Scratch 的 `round` 返回整数）：教学场景里
       // 学生要的是「3.6 → 4」，返回 4.0 会显示成 `4`（`number_to_text`
       // 会去掉 .0），但类型上仍是数——这里统一给 VInt 更贴合直觉。
-      VInt(round_to_int(number_of_value(self.eval(args[0], line), spec.id, line)))
-    }
+      VInt(
+        round_to_int(number_of_value(self.eval(args[0], line), spec.id, line)),
+      )
     "text_length" => {
       let text = self.value_as_text(self.eval(args[0], line), spec.id, line)
       VInt(text.length())
@@ -1678,7 +1688,9 @@ fn emit_stmt(
       let end = instrs.length()
       match instrs[dispatch_slot] {
         CaseOf(subject2, names, _, _) =>
-          instrs[dispatch_slot] = CaseOf(subject2, names, body_starts, else_start)
+          instrs[dispatch_slot] = CaseOf(
+            subject2, names, body_starts, else_start,
+          )
         _ => ()
       }
       for slot in end_jumps {
@@ -1776,12 +1788,20 @@ pub fn tick_wait(state : RunState) -> Bool {
 /// 否则「等待」会退化成「什么都不做」，用户看到的是「这句没生效」。
 pub fn wait_ticks_for_seconds(seconds : Double) -> Int {
   let ticks = (seconds * 1000.0 / 30.0).ceil().to_int()
-  if ticks < 1 { 1 } else { ticks }
+  if ticks < 1 {
+    1
+  } else {
+    ticks
+  }
 }
 
 ///|
 /// 数值强制（与二元运算同一口径）：`VNum` 直取、`VInt` 提升，其余报类型错。
-fn number_of_value(value : Value, role : String, line : Int) -> Double raise LangError {
+fn number_of_value(
+  value : Value,
+  role : String,
+  line : Int,
+) -> Double raise LangError {
   match value {
     VNum(n) => n
     VInt(n) => n.to_double()

@@ -196,7 +196,16 @@ test "match hat wraps every arm in a C shape" {
   // 快照口径：4 段臂（帽→情况0、情况0→情况1、情况1→否则、否则→结束）
   let base = @app.blocks_item_rects(blocks, avail_width=470.0)
   let visual = @app.blocks_visual_rects(blocks, base)
-  let ops = @app.blocks_draw_plan(blocks, blocks.map(item => item.text), visual, -1, "", None, 0.0, 0.0)
+  let ops = @app.blocks_draw_plan(
+    blocks,
+    blocks.map(item => item.text),
+    visual,
+    -1,
+    "",
+    None,
+    0.0,
+    0.0,
+  )
   let mut arms = 0
   for op in ops {
     match op {
@@ -231,13 +240,11 @@ test "declaration blocks project as read-only rows" {
   let program = @proposals.sample_hello()
   let with_decls = {
     ..program,
-    enums: [@ir.EnumDecl::{ name: "花色", cases: ["红桃", "黑桃"] }],
+    enums: [@ir.EnumDecl::{ name: "花色", cases: ["红桃", "黑桃"], }],
     structs: [
       @ir.StructDecl::{
         name: "Person",
-        fields: [
-          @ir.StructField::{ field_name: "名字", field_type: "text" },
-        ],
+        fields: [@ir.StructField::{ field_name: "名字", field_type: "text", }],
       },
     ],
   }
@@ -253,7 +260,16 @@ test "declaration blocks project as read-only rows" {
   }
   // 绘制计划：有块体与标签，没有榫卯/臂/洞
   let rects = @app.blocks_item_rects(decls, avail_width=470.0)
-  let ops = @app.blocks_draw_plan(decls, decls.map(item => item.text), rects, -1, "", None, 0.0, 0.0)
+  let ops = @app.blocks_draw_plan(
+    decls,
+    decls.map(item => item.text),
+    rects,
+    -1,
+    "",
+    None,
+    0.0,
+    0.0,
+  )
   let mut bodies = 0
   let mut decorations = 0
   for op in ops {
@@ -304,7 +320,16 @@ test "headless acceptance: outline path and field access pill" {
   assert_true(shoulder_right)
   // 2) 一次 fill+stroke：绘制指令流里只有一条 DrawPath
   let ctx = @views.PaintContext::new()
-  @app.paint_block_outline(ctx, 10.0, 20.0, 200.0, 30.0, @blocks.BkCall, true, true)
+  @app.paint_block_outline(
+    ctx,
+    10.0,
+    20.0,
+    200.0,
+    30.0,
+    @blocks.BkCall,
+    true,
+    true,
+  )
   let commands = ctx.finish()
   assert_eq(commands.length(), 1)
   match commands[0] {
@@ -317,10 +342,7 @@ test "headless acceptance: outline path and field access pill" {
   // 3) 字段访问胶囊：FieldAccess 槽 pill=true，普通运算槽 pill=false
   let blocks = @blocks.block_chain([
     @ir.Assign("y", @ir.FieldAccess(@ir.Var("person"), "名字")),
-    @ir.Assign(
-      "z",
-      @ir.Binary(@ir.Add, @ir.Var("a"), @ir.Var("b")),
-    ),
+    @ir.Assign("z", @ir.Binary(@ir.Add, @ir.Var("a"), @ir.Var("b"))),
   ])
   let rects = @app.blocks_item_rects(blocks, avail_width=470.0)
   let ops = @app.blocks_draw_plan(

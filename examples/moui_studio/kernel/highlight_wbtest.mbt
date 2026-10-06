@@ -73,7 +73,7 @@ test "moonbit highlight unterminated constructs degrade to literal" {
 ///|
 test "moonbit highlighter service dispatches by language" {
   let service = HighlightService::new()
-  service.register({ language: "moonbit", run: moonbit_highlight })
+  service.register({ language: "moonbit", run: moonbit_highlight, })
   match service.dispatch("moonbit") {
     Some(highlighter) => {
       let tokens = (highlighter.run)("let x = 1")

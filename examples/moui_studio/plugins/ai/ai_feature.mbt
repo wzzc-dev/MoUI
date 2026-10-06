@@ -49,7 +49,9 @@ pub fn ai_sessions_feature() -> @moui.Feature[AiSessions, AiSessionMsg] {
 
 ///|
 /// 会话列表的读数投影：[(下标, 会话名, 是否当前)]，供壳渲染列表。
-pub fn AiSessions::list_entries(self : AiSessions) -> Array[(Int, String, Bool)] {
+pub fn AiSessions::list_entries(
+  self : AiSessions,
+) -> Array[(Int, String, Bool)] {
   let entries : Array[(Int, String, Bool)] = []
   let mut index = 0
   for session in self.sessions {

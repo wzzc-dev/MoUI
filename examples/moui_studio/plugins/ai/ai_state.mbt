@@ -122,10 +122,7 @@ pub fn AiSessions::count(self : AiSessions) -> Int {
 
 ///|
 /// 按下标读会话（越界返回 None；列表渲染用）。
-pub fn AiSessions::session_at(
-  self : AiSessions,
-  index : Int,
-) -> AiSession? {
+pub fn AiSessions::session_at(self : AiSessions, index : Int) -> AiSession? {
   if index >= 0 && index < self.sessions.length() {
     Some(self.sessions[index])
   } else {
@@ -185,7 +182,10 @@ pub fn AiSessions::remove(self : AiSessions, index : Int) -> Unit {
 /// 流式追加（M4）：把增量文本**追加到最后一张卡的 body**——流式卡由调用方
 /// （fake/真实 provider 路径）先推入，之后每个分片经本操作追加。追加语义
 /// 稳定：只动最后一张卡，既有卡零改动（重渲染不闪不重排）。
-pub fn AiSessions::append_to_last_card(self : AiSessions, text : String) -> Unit {
+pub fn AiSessions::append_to_last_card(
+  self : AiSessions,
+  text : String,
+) -> Unit {
   let session = self.current()
   if session.cards.length() == 0 {
     return
@@ -196,13 +196,13 @@ pub fn AiSessions::append_to_last_card(self : AiSessions, text : String) -> Unit
   for card in session.cards {
     if index == total - 1 {
       // 只动最后一张卡（流式卡），既有卡零改动
-      cards.push({ ..card, body: card.body + text })
+      cards.push({ ..card, body: card.body + text, })
     } else {
       cards.push(card)
     }
     index = index + 1
   }
-  self.amend({ ..session, cards })
+  self.amend({ ..session, cards, })
 }
 
 ///|

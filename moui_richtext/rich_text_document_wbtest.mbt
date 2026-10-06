@@ -899,13 +899,25 @@ test "vertical movement preserves goal column across short lines" {
   let caret = 16
   // 上移一行：短行 "ab" 只有 2 列 → 钳到行尾 offset 9
   let step1 = vertical_caret_step_goal(
-    session, caret, None, base, content, text_system, up=true,
+    session,
+    caret,
+    None,
+    base,
+    content,
+    text_system,
+    up=true,
   )
   assert_eq(step1, 9)
   // 再上移一行：goal 保持第 3 行第 6 列的 x → 落在长行第 6 列（offset 6），
   // 不被短行钳成第 2 列（offset 2）
   let step2 = vertical_caret_step_goal(
-    session, step1, Some(458.0), base, content, text_system, up=true,
+    session,
+    step1,
+    Some(458.0),
+    base,
+    content,
+    text_system,
+    up=true,
   )
   assert_eq(step2, 6)
 }
@@ -921,11 +933,23 @@ test "vertical movement preserves goal column across empty lines" {
   // 从末行行尾（offset 14，第 6 列）向上：空行是 bare separator（既有
   // blank-gap collapse 口径）——跨过它落在 goal 列 = 首行第 6 列（offset 6）
   let step1 = vertical_caret_step_goal(
-    session, 14, None, base, content, text_system, up=true,
+    session,
+    14,
+    None,
+    base,
+    content,
+    text_system,
+    up=true,
   )
   assert_eq(step1, 6)
   let step2 = vertical_caret_step_goal(
-    session, step1, Some(458.0), base, content, text_system, up=true,
+    session,
+    step1,
+    Some(458.0),
+    base,
+    content,
+    text_system,
+    up=true,
   )
   assert_eq(step2, 0)
 }
@@ -939,13 +963,16 @@ test "vertical movement clamps at document boundaries" {
     @core.Rect::new(x=100.0, y=0.0, width=668.0, height=640.0),
   )
   // 首行再向上：停在原地（offset 0）
-  let top = vertical_caret_step(
-    session, 0, base, content, text_system, up=true,
-  )
+  let top = vertical_caret_step(session, 0, base, content, text_system, up=true)
   assert_eq(top, 0)
   // 末行再向下：停在原地（文档末尾 offset 9）
   let bottom = vertical_caret_step(
-    session, 9, base, content, text_system, up=false,
+    session,
+    9,
+    base,
+    content,
+    text_system,
+    up=false,
   )
   assert_eq(bottom, 9)
 }

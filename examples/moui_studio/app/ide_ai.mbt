@@ -104,7 +104,9 @@ pub fn ai_session_list(
           row,
           @views.container(
             @views.center(
-              @views.text("✕", theme=studio_theme(), width=10.0, height=14.0).foreground(ide_text_faint()),
+              @views.text("✕", theme=studio_theme(), width=10.0, height=14.0).foreground(
+                ide_text_faint(),
+              ),
               width=18.0,
               height=16.0,
             ),
@@ -178,10 +180,7 @@ pub fn ai_center(
   } else {
     @views.container(
       @views.column(
-        [
-          @views.spacer(min_length=0.0, weight=1.0),
-          composer,
-        ],
+        [@views.spacer(min_length=0.0, weight=1.0), composer],
         spacing=0.0,
       ),
       background=ide_editor_background(),
@@ -237,7 +236,9 @@ fn thread_area_height(model : Model) -> Double {
     0.0
   } else {
     // 线程区有 280 的上限（见 ai_card_body 的 scroll_view）
-    (6.0 * model.ai_sessions.current().cards.length().to_double() + 40.0).min(280.0)
+    (6.0 * model.ai_sessions.current().cards.length().to_double() + 40.0).min(
+      280.0,
+    )
   }
 }
 
@@ -293,12 +294,10 @@ fn ai_card_body(
   // 线程区为空/折叠时用占位吃掉线程预算，输入盒沉底。占位高度必须
   // 扣掉输入盒/决策行/卡片内衬——整段占满会让决策行被裁掉（实测缺陷）。
   if model.ai_sessions.current().cards.length() == 0 || model.ai_cards_folded {
-    let pin_height = (
-      thread_height -
-      composer_height(width) -
-      decision_bar_height(model) -
-      AI_CARD_PAD * 2.0,
-    ).max(0.0)
+    let pin_height = (thread_height -
+    composer_height(width) -
+    decision_bar_height(model) -
+    AI_CARD_PAD * 2.0).max(0.0)
     body.push(@views.text("", width=1.0, height=pin_height))
   }
   if model.ai_sessions.current().cards.length() > 0 {
@@ -506,7 +505,9 @@ fn ai_card_view(
     // M4：讲解/流式卡的 body 走 markdown 块渲染（子集 + 诚实降级）；
     // 其余卡保持单行摘要文本
     if card.kind is CardExplanation {
-      rows.push(markdown_blocks_view(@markdown.parse_markdown(card.body), width))
+      rows.push(
+        markdown_blocks_view(@markdown.parse_markdown(card.body), width),
+      )
     } else {
       rows.push(
         @views.text(

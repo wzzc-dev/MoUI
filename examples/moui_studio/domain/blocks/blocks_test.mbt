@@ -104,8 +104,8 @@ test "block text matches interpreter audit detail for spotlight" {
       },
     ],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   let texts = @studio_lang.initial_texts(program)
   let rows = @studio_lang.initial_rows(program)
@@ -546,7 +546,9 @@ test "drop_accepts_stmt rejects break outside a loop" {
   // 循环体（[2,2]）→ 接受
   assert_true(@blocks.drop_accepts_stmt(body, [2, 2], @ir.Break))
   // 非 break 语句任何位置都接受
-  assert_true(@blocks.drop_accepts_stmt(body, [], @ir.Assign("b", @ir.IntLit(1))))
+  assert_true(
+    @blocks.drop_accepts_stmt(body, [], @ir.Assign("b", @ir.IntLit(1))),
+  )
 }
 
 ///|
@@ -554,11 +556,7 @@ test "drop_accepts_stmt rejects break outside a loop" {
 /// （语言语义按嵌套判定，不是只看直接父层）。
 test "drop_accepts_stmt accepts break inside a loop nested under an if" {
   let body = [
-    @ir.CountLoop(
-      @ir.IntLit(3),
-      None,
-      [@ir.If(@ir.Var("c"), [], [], [])],
-    ),
+    @ir.CountLoop(@ir.IntLit(3), None, [@ir.If(@ir.Var("c"), [], [], [])]),
   ]
   // 循环体 → if.then：路径 = 循环体 [0] 段 + If 的 then 段
   // [0,2] = CountLoop@0 的循环体；再进 If 的 then → [0,2] 后接 [0,0]
@@ -574,8 +572,14 @@ test "match projects to a block chain with linear arm sections" {
     @ir.Match(
       @ir.EnumTag("花色", "红桃"),
       [
-        @ir.MatchArm::{ case_name: "红桃", body: [@ir.Assign("x", @ir.IntLit(1))] },
-        @ir.MatchArm::{ case_name: "黑桃", body: [@ir.Assign("x", @ir.IntLit(2))] },
+        @ir.MatchArm::{
+          case_name: "红桃",
+          body: [@ir.Assign("x", @ir.IntLit(1))],
+        },
+        @ir.MatchArm::{
+          case_name: "黑桃",
+          body: [@ir.Assign("x", @ir.IntLit(2))],
+        },
       ],
       [@ir.Assign("x", @ir.IntLit(9))],
     ),
@@ -598,9 +602,7 @@ test "match projects to a block chain with linear arm sections" {
   assert_eq(chain[1].text, "红桃")
   assert_eq(chain[2].text, "x = 1")
   // 臂内语句可寻址：section 0 = 红桃臂；section 2 = else
-  assert_true(
-    @blocks.stmt_at(body, [0, 0, 0]) is Some(_),
-  )
+  assert_true(@blocks.stmt_at(body, [0, 0, 0]) is Some(_))
   match @blocks.stmt_at(body, [0, 2, 0]) {
     Some(@ir.Assign(name, _)) => assert_eq(name, "x")
     _ => fail("else 臂内语句应可寻址")

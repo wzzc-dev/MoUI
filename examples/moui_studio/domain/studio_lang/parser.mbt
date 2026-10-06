@@ -58,6 +58,7 @@ pub fn parse_handler_body(
 
 ///|
 /// 只解析不运行：编辑器实时语法检查。
+
 ///|
 /// 解析单表达式文本（全局变量初始值用）：失败给结构化错误。
 pub fn parse_expression_text(
@@ -152,18 +153,19 @@ fn Parser::parse_struct_decl(self : Parser) -> @ir.StructDecl raise LangError {
       self.fail_expect_keyword(":")
     }
     let field_type = match self.peek().kind {
-      Ident(text) => match struct_field_type_id(text) {
-        Some(id) => {
-          ignore(self.advance())
-          id
+      Ident(text) =>
+        match struct_field_type_id(text) {
+          Some(id) => {
+            ignore(self.advance())
+            id
+          }
+          None =>
+            self.fail(
+              TypeMismatch,
+              "字段类型",
+              "文本/数字/整数/真假，遇到 「\{text}」",
+            )
         }
-        None =>
-          self.fail(
-            TypeMismatch,
-            "字段类型",
-            "文本/数字/整数/真假，遇到 「\{text}」",
-          )
-      }
       _ =>
         self.fail(
           TypeMismatch,
@@ -466,7 +468,9 @@ fn Parser::parse_match(self : Parser) -> Stmt raise LangError {
   let arms : Array[@ir.MatchArm] = []
   while self.at_keyword(self.keywords.case_kw) {
     ignore(self.advance())
-    let case_name = self.parse_name("「\{self.keywords.case_kw}」后应跟情况名")
+    let case_name = self.parse_name(
+      "「\{self.keywords.case_kw}」后应跟情况名",
+    )
     let arm_body = self.parse_stmts_until([
       self.keywords.case_kw,
       self.keywords.else_kw,
@@ -713,7 +717,8 @@ fn Parser::parse_primary(self : Parser) -> Expr raise LangError {
             ignore(self.advance())
             text
           }
-          _ => self.fail(UnexpectedToken, "字段访问 . 后应为字段名", "")
+          _ =>
+            self.fail(UnexpectedToken, "字段访问 . 后应为字段名", "")
         }
         result = @ir.FieldAccess(result, field)
       }

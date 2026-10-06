@@ -516,7 +516,9 @@ pub fn[Msg] popup_host(
 /// 「建子节点」那一处判 `Modal`，而 `layout` / `place_overlays` 也各自
 /// 判一次——三份条件一旦不一致，子节点数与帧数就对不上，浮层会整层错位
 /// 或消失（改这一处时实测到了：菜单直接不渲染）。
-fn[Msg] presentation_needs_barrier(presentation : PresentationSpec[Msg]) -> Bool {
+fn[Msg] presentation_needs_barrier(
+  presentation : PresentationSpec[Msg],
+) -> Bool {
   presentation.modality is Modal || presentation.dismiss.outside_tap
 }
 

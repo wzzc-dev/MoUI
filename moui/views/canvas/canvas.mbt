@@ -140,9 +140,7 @@ pub fn[Msg] measured_canvas(
   draw~ : (PaintContext, @core.Rect) -> Unit,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @core.View::from_node(
-    MeasuredCanvas::{ measure, draw, semantics_label, },
-  )
+  @core.View::from_node(MeasuredCanvas::{ measure, draw, semantics_label, })
 }
 
 ///|

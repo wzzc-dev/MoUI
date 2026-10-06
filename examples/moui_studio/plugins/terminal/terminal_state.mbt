@@ -30,16 +30,12 @@ pub(all) struct TerminalState {
 
 ///|
 /// 初始状态：available 由组合根按服务能力注入。
-pub fn TerminalState::new(available? : Bool = false, cols? : Int = 80, rows? : Int = 24) -> TerminalState {
-  {
-    available,
-    handle: None,
-    screen: [],
-    input_draft: "",
-    col: 0,
-    cols,
-    rows,
-  }
+pub fn TerminalState::new(
+  available? : Bool = false,
+  cols? : Int = 80,
+  rows? : Int = 24,
+) -> TerminalState {
+  { available, handle: None, screen: [], input_draft: "", col: 0, cols, rows, }
 }
 
 ///|
@@ -174,7 +170,9 @@ fn skip_escape(chars : Array[Char], start : Int) -> Int {
       if chars[index] == '\u{7}' {
         return index + 1
       }
-      if chars[index] == '\u{1b}' && index + 1 < count && chars[index + 1] == '\\' {
+      if chars[index] == '\u{1b}' &&
+        index + 1 < count &&
+        chars[index + 1] == '\\' {
         return index + 2
       }
       index = index + 1

@@ -716,6 +716,7 @@ pub fn Runtime::break_loop(self : Runtime) -> Unit raise ExecError {
 
 ///|
 /// 逻辑取反（非逻辑操作数 → TypeMismatch，同解释轨）。
+
 ///|
 /// 值深拷贝（闸门快照用）：只有列表是可变的，其余按值共享。
 fn copy_value(value : Value) -> Value {
@@ -830,7 +831,11 @@ pub fn set_index_values(
 
 ///|
 /// 列表长度（函数内建）。
-pub fn list_length(_rt : Runtime, value : Value, line : Int) -> Value raise ExecError {
+pub fn list_length(
+  _rt : Runtime,
+  value : Value,
+  line : Int,
+) -> Value raise ExecError {
   match value {
     VArr(items) => VInt(items.length())
     _ =>
@@ -892,7 +897,6 @@ pub fn Runtime::register_user_function(
 pub fn Runtime::has_user_function(self : Runtime, name : String) -> Bool {
   self.user_functions.contains(name)
 }
-
 
 ///|
 /// 调用用户函数：整帧隔离（vars/declared 快照恢复），参数按位绑定；
@@ -1310,7 +1314,11 @@ pub fn wait_value(rt : Runtime, seconds : Double) -> Value {
     1
   } else {
     let ticks = (seconds * 1000.0 / 30.0).ceil().to_int()
-    if ticks < 1 { 1 } else { ticks }
+    if ticks < 1 {
+      1
+    } else {
+      ticks
+    }
   }
   VUnit
 }
@@ -1350,7 +1358,11 @@ pub fn sqrt_of(value : Double) -> Double {
 ///|
 /// 绝对值 / 向下取整 / 向上取整 / 平方根：都是**纯数值函数**，走同一个
 /// 强制入口（`as_number`），与解释轨逐项对齐。
-pub fn abs_value(value : Value, role : String, line : Int) -> Value raise ExecError {
+pub fn abs_value(
+  value : Value,
+  role : String,
+  line : Int,
+) -> Value raise ExecError {
   VNum(as_number(value, role, line).abs())
 }
 
@@ -1581,7 +1593,11 @@ pub fn Runtime::ask(
     self.gate_cursor = self.gate_cursor + 1
     let outcome = if decision { "confirmed" } else { "rejected" }
     self.record(line, OpGate, "\{detail} -> \{outcome}")
-    if answer == "" { VStr(self.last_answer) } else { VStr(answer) }
+    if answer == "" {
+      VStr(self.last_answer)
+    } else {
+      VStr(answer)
+    }
   } else {
     self.gate = Some(Gate::{ kind: Ask, prompt, payload: "", })
     raise ExecError::GateHalt
@@ -1660,6 +1676,7 @@ pub fn or_values(
 }
 
 ///|
+
 ///|
 /// 构造枚举值（M5-5d）。
 pub fn make_enum(enum_name : String, case_name : String) -> Value {
@@ -1693,12 +1710,7 @@ pub fn get_field(
       match fields.get(field) {
         Some(v) => v
         None =>
-          raise RuntimeError({
-            kind: UnknownBuiltin,
-            line,
-            a: field,
-            b: "",
-          })
+          raise RuntimeError({ kind: UnknownBuiltin, line, a: field, b: "", })
       }
     _ =>
       raise RuntimeError({

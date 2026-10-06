@@ -120,8 +120,8 @@ test "program validation rejects reserved names and undeclared assignments" {
       },
     ],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   let errors = @studio_lang.validate_program_language(program)
   assert_true(errors.any(e => e.kind() is @studio_lang.ReservedWord))

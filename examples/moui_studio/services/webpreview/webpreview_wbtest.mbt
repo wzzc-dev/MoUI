@@ -54,12 +54,11 @@ async test "静态服务绑定:端口 0 → 实际端口回读 → close" {
 /// 检出位置无关:CI/其他开发者用 MOUI_TEST_PROJECT_ROOT 指定仓库根,或
 /// 依赖 CI 自动提供的 GITHUB_WORKSPACE;缺省回退本仓常用检出路径。
 async test "workspace 根探测:counter 真工程" {
-  let workspace_root = @env.get_env_var("MOUI_TEST_PROJECT_ROOT")
-    .unwrap_or(
-      @env.get_env_var("GITHUB_WORKSPACE").unwrap_or(
-        "/Volumes/Data/Code/moon/MoUI",
-      ),
-    )
+  let workspace_root = @env.get_env_var("MOUI_TEST_PROJECT_ROOT").unwrap_or(
+    @env.get_env_var("GITHUB_WORKSPACE").unwrap_or(
+      "/Volumes/Data/Code/moon/MoUI",
+    ),
+  )
   let root = workspace_root_for(workspace_root + "/examples/counter")
   assert_true(
     root.has_prefix(workspace_root),

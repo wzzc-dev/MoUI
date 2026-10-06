@@ -116,7 +116,9 @@ pub fn noop_compile_submit(
   _on_progress : (@export.CompileProgress) -> Unit,
   callback : (Result[@export.CompileReport, String]) -> Unit,
 ) -> Unit {
-  callback(Err("本端没有真编译执行器：编译轨仅在 native 入口可达"))
+  callback(
+    Err("本端没有真编译执行器：编译轨仅在 native 入口可达"),
+  )
 }
 
 ///|

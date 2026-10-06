@@ -187,7 +187,8 @@ fn skipped_directory(name : String) -> Bool {
   name == "artifacts" ||
   name == "dist" ||
   name == "node_modules" ||
-  name == "output"
+  name == "output" ||
+  name == ".kilo"
 }
 
 ///|

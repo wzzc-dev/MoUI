@@ -107,7 +107,7 @@ fn rename_function(model : Model, from : String, to : String) -> Model {
   for func in model.program.functions {
     if func.name == from {
       functions.push(@ir.FuncDef::{ ..func, name: trimmed, })
-      } else {
+    } else {
       functions.push(func)
     }
   }
@@ -383,11 +383,10 @@ fn rename_var_in_stmt(stmt : @ir.Stmt, from : String, to : String) -> @ir.Stmt {
     @ir.Match(subject, arms, else_body) =>
       @ir.Match(
         rename_var_in_expr(subject, from, to),
-        arms.map(arm =>
-          @ir.MatchArm::{
-            case_name: arm.case_name,
-            body: rename_var_in_stmts(arm.body, from, to),
-          }),
+        arms.map(arm => @ir.MatchArm::{
+          case_name: arm.case_name,
+          body: rename_var_in_stmts(arm.body, from, to),
+        }),
         rename_var_in_stmts(else_body, from, to),
       )
   }

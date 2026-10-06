@@ -32,7 +32,7 @@ pub(all) enum StudioEvent {
 /// 与导出 bundle 同源。
 pub fn emit_code_project_write(model : Model) -> Model {
   let (dir_override, model) = match model.pending_open_dir {
-    Some(dir) => (Some(dir), { ..model, pending_open_dir: None })
+    Some(dir) => (Some(dir), { ..model, pending_open_dir: None, })
     None => (None, model)
   }
   match dir_override {
@@ -41,7 +41,8 @@ pub fn emit_code_project_write(model : Model) -> Model {
       match active_project_of(model) {
         Some(project) =>
           match code_project_target(project) {
-            Some(pkg) => emit_code_project_write_to(model, "\{project.root}/\{pkg}")
+            Some(pkg) =>
+              emit_code_project_write_to(model, "\{project.root}/\{pkg}")
             None => model
           }
         None => model

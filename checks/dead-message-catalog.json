@@ -24,6 +24,26 @@
         {
           "variant": "WindowDragBy",
           "reason": "Window dragging is a platform-local concern (docs/invariants.md P10) routed through WindowDragRegionSource, not a queued WindowRequest."
+        },
+        {
+          "variant": "CycleCodeAppearance",
+          "reason": "M5-5e code-view appearance toggle (MoonBit ⇄ DSL) kept as update-covered protocol: the update arm and wbtests exercise the transition while the view-side entry is pending re-wiring after the code pane refactor."
+        },
+        {
+          "variant": "FormDesignDragEnd",
+          "reason": "Form-designer drag commit protocol added with the form canvas contract (65d7b60d6): the update arm applies the span patch and form_design_canvas.mbt documents the dispatch point; the canvas pointer-gesture wiring is still in flight."
+        },
+        {
+          "variant": "FormDesignResizeEnd",
+          "reason": "Same in-flight form-designer gesture protocol as FormDesignDragEnd (resize commit counterpart)."
+        },
+        {
+          "variant": "TerminalInput",
+          "reason": "Terminal input protocol message: the update arm dispatches the PtyService write effect and app_test covers it; production input currently routes through the kernel PtyService while the view-side send path is being migrated (M9 terminal work)."
+        },
+        {
+          "variant": "TerminalType",
+          "reason": "Terminal typed-input protocol message, same in-flight migration as TerminalInput."
         }
       ]
     }

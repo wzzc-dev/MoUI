@@ -78,12 +78,12 @@ fn sample_program() -> @ir.StudioProgram {
       @ir.StructDecl::{
         name: "Person",
         fields: [
-          @ir.StructField::{ field_name: "名字", field_type: "text" },
-          @ir.StructField::{ field_name: "年龄", field_type: "number" },
+          @ir.StructField::{ field_name: "名字", field_type: "text", },
+          @ir.StructField::{ field_name: "年龄", field_type: "number", },
         ],
       },
     ],
-    enums: [@ir.EnumDecl::{ name: "花色", cases: ["红桃", "黑桃"] }],
+    enums: [@ir.EnumDecl::{ name: "花色", cases: ["红桃", "黑桃"], }],
   }
 }
 
@@ -211,7 +211,7 @@ test "structs encode decode round trip" {
 ///|
 test "structs segment is optional for old files" {
   let program = sample_program()
-  let bare : @ir.StudioProgram = { ..program, structs: [] }
+  let bare : @ir.StudioProgram = { ..program, structs: [], }
   let text = @codec.encode_program(bare)
   // 空 structs 不落盘（与 functions 同一口径），旧文件无此字段照常解码
   assert_false(text.contains("\"structs\""))
@@ -229,15 +229,13 @@ test "structs with unknown type word surface as language errors" {
     structs: [
       @ir.StructDecl::{
         name: "Weird",
-        fields: [@ir.StructField::{ field_name: "x", field_type: "布尔" }],
+        fields: [@ir.StructField::{ field_name: "x", field_type: "布尔", }],
       },
     ],
   }
   match @codec.decode_program(@codec.encode_program(broken)) {
     Err(errors) =>
-      assert_true(
-        errors.any(e => e is @codec.LanguageIssue("字段类型", 0)),
-      )
+      assert_true(errors.any(e => e is @codec.LanguageIssue("字段类型", 0)))
     Ok(_) => fail("未知字段类型应被语言级校验拦截")
   }
 }

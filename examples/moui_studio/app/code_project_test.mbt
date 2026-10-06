@@ -18,9 +18,9 @@ test "code project files derive form and handlers from the same ir" {
   // 往返硬门：parse ∘ render == id（form_designer 同一门）
   match @form_designer.parse_form(files.form_mbt) {
     Ok(parsed) =>
-      assert_true(@form_designer.form_model_eq(parsed.model, {
-        ..parsed.model,
-      }))
+      assert_true(
+        @form_designer.form_model_eq(parsed.model, { ..parsed.model, }),
+      )
     Err(message) => fail("form.mbt 应可解析: \{message}")
   }
 }
@@ -50,7 +50,8 @@ test "form subset boundary skips non form controls honestly" {
   assert_true(files.handlers_mbt.contains("fn studio_"))
   match @form_designer.parse_form(files.form_mbt) {
     Ok(_) => ()
-    Err(message) => fail("含跳过控件的 form.mbt 仍应可解析: \{message}")
+    Err(message) =>
+      fail("含跳过控件的 form.mbt 仍应可解析: \{message}")
   }
 }
 
@@ -85,7 +86,10 @@ test "migrator converts studio json to code project files" {
   match @app.migrate_studio_source("/tmp/legacy", studio_json) {
     Ok(outcome) => {
       // IR 无损：迁移不改程序语义（签名一致）
-      assert_eq(@ir.program_signature(outcome.program), @ir.program_signature(program))
+      assert_eq(
+        @ir.program_signature(outcome.program),
+        @ir.program_signature(program),
+      )
       // 写盘目标在旧文件所在目录
       assert_eq(outcome.form_path, "/tmp/legacy/form.mbt")
       assert_eq(outcome.handlers_path, "/tmp/legacy/handlers.mbt")
@@ -94,7 +98,10 @@ test "migrator converts studio json to code project files" {
       assert_eq(outcome.files.form_mbt, direct.form_mbt)
       assert_eq(outcome.files.handlers_mbt, direct.handlers_mbt)
       // handlers 腿与导出 bundle 同源
-      assert_eq(outcome.files.handlers_mbt, @export.generate_source(program).source)
+      assert_eq(
+        outcome.files.handlers_mbt,
+        @export.generate_source(program).source,
+      )
     }
     Err(message) => fail("合法 .studio.json 应迁移成功: \{message}")
   }
@@ -124,7 +131,8 @@ test "migrator rejects broken studio json with migration-directed error" {
       },
     ],
   }
-  match @app.migrate_studio_source("/tmp/legacy", @codec.encode_program(broken)) {
+  match
+    @app.migrate_studio_source("/tmp/legacy", @codec.encode_program(broken)) {
     Err(message) => assert_true(message.contains("迁移器"))
     Ok(_) => fail("结构非法应被拒绝")
   }
@@ -132,6 +140,9 @@ test "migrator rejects broken studio json with migration-directed error" {
 
 ///|
 test "dirname of opened file is the migration target" {
-  assert_eq(@app.dirname_of("/Users/tea/projects/counter/project.studio.json"), "/Users/tea/projects/counter")
+  assert_eq(
+    @app.dirname_of("/Users/tea/projects/counter/project.studio.json"),
+    "/Users/tea/projects/counter",
+  )
   assert_eq(@app.dirname_of("project.studio.json"), ".")
 }

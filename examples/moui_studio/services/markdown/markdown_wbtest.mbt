@@ -99,7 +99,9 @@ test "markdown rule and paragraph merging" {
 
 ///|
 test "markdown inline styles code bold italic" {
-  let blocks = parse_markdown("说 **重点** 和 *语气* 还有 `rt.set_text(x)`")
+  let blocks = parse_markdown(
+    "说 **重点** 和 *语气* 还有 `rt.set_text(x)`",
+  )
   assert_eq(blocks.length(), 1)
   match blocks[0] {
     MbParagraph(pieces) => {
@@ -133,7 +135,8 @@ test "markdown inline styles code bold italic" {
   // 未闭合标记保持字面（诚实降级）
   let unterminated = parse_markdown("没闭合的 ** 标记和 ` 反引号")
   match unterminated[0] {
-    MbParagraph(pieces) => assert_eq(inline_text(pieces), "没闭合的 ** 标记和 ` 反引号")
+    MbParagraph(pieces) =>
+      assert_eq(inline_text(pieces), "没闭合的 ** 标记和 ` 反引号")
     _ => abort("expected paragraph")
   }
 }

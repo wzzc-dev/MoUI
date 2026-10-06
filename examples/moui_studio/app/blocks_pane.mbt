@@ -643,8 +643,12 @@ pub fn declaration_strip(model : Model, width : Double) -> @moui.View[Msg] {
     for item in decls {
       rows.push(
         @views.container(
-          @views.text(item.text, theme=studio_theme(), width=(width - 34.0).max(80.0), height=22.0)
-          .foreground(block_text_color()),
+          @views.text(
+            item.text,
+            theme=studio_theme(),
+            width=(width - 34.0).max(80.0),
+            height=22.0,
+          ).foreground(block_text_color()),
           background=block_fill(item.kind),
           corner_radius=block_corner_radius(item.kind),
           width=(width - 24.0).max(80.0),

@@ -141,7 +141,11 @@ pub fn generate_source(program : @ir.StudioProgram) -> GeneratedSource {
   let mut index = 0
   for handler in program.handlers {
     index = index + 1
-    let generated = generate_handler_source(handler, index, functions=program.functions)
+    let generated = generate_handler_source(
+      handler,
+      index,
+      functions=program.functions,
+    )
     let offset = count_newlines(buf.to_string())
     buf.write_string(generated.source)
     buf.write_string("\n")
@@ -168,17 +172,23 @@ pub fn generate_source(program : @ir.StudioProgram) -> GeneratedSource {
   // （runner 模板按名字注册，无函数时恒 None）。
   if program.functions.length() > 0 {
     buf.write_string("\n///|\n")
-    buf.write_string("/// 用户自定义函数：参数按位绑定；Return 经 LoopReturn 传回。\n")
+    buf.write_string(
+      "/// 用户自定义函数：参数按位绑定；Return 经 LoopReturn 传回。\n",
+    )
     let mut fn_index = 0
     for func in program.functions {
       fn_index = fn_index + 1
       let fn_name = "studio_fn_\{fn_index}"
-      buf.write_string("pub fn \{fn_name}(rt : @compiled_runtime.Runtime, args : Array[@compiled_runtime.Value]) -> @compiled_runtime.Value raise @compiled_runtime.ExecError {\n")
+      buf.write_string(
+        "pub fn \{fn_name}(rt : @compiled_runtime.Runtime, args : Array[@compiled_runtime.Value]) -> @compiled_runtime.Value raise @compiled_runtime.ExecError {\n",
+      )
       buf.write_string("  ignore(args)\n")
       let mut param_index = 0
       for param in func.params {
         param_index = param_index + 1
-        buf.write_string("  rt.vars[\{mbt_quote(param)}] = args[\{param_index - 1}]\n")
+        buf.write_string(
+          "  rt.vars[\{mbt_quote(param)}] = args[\{param_index - 1}]\n",
+        )
         buf.write_string("  if !rt.declared.contains(\{mbt_quote(param)}) {\n")
         buf.write_string("    rt.declared.push(\{mbt_quote(param)})\n")
         buf.write_string("  }\n")
@@ -206,8 +216,12 @@ pub fn generate_source(program : @ir.StudioProgram) -> GeneratedSource {
     }
   }
   buf.write_string("\n///|\n")
-  buf.write_string("/// 用户函数分派表：名称 → 注册闭包（无函数时恒 None）。\n")
-  buf.write_string("pub fn studio_dispatch_function(name : String) -> @compiled_runtime.UserFunction? {\n")
+  buf.write_string(
+    "/// 用户函数分派表：名称 → 注册闭包（无函数时恒 None）。\n",
+  )
+  buf.write_string(
+    "pub fn studio_dispatch_function(name : String) -> @compiled_runtime.UserFunction? {\n",
+  )
   if program.functions.length() == 0 {
     buf.write_string("  ignore(name)\n")
   }
@@ -404,7 +418,7 @@ fn record_stmt_line(ctx : GenCtx) -> Unit {
     Some(fixed) => fixed
     None => ctx.audit_line
   }
-  ctx.lines.push(StmtLine::{ path, line: ctx.line, audit_line: audit_line, })
+  ctx.lines.push(StmtLine::{ path, line: ctx.line, audit_line, })
 }
 
 ///|
@@ -576,8 +590,7 @@ fn write_stmt(ctx : GenCtx, stmt : @ir.Stmt) -> Unit {
           )
         None =>
           write_line(
-            ctx,
-            "raise @compiled_runtime.LoopReturn(@compiled_runtime.VUnit)",
+            ctx, "raise @compiled_runtime.LoopReturn(@compiled_runtime.VUnit)",
           )
       }
     }
@@ -666,10 +679,7 @@ fn write_command_call(
         "rt.append_row(\{write_control_name(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line}, \{detail})",
       )
     "broadcast" =>
-      write_line(
-        ctx,
-        "rt.broadcast(\{write_value(ctx, args[0])}, \{line})",
-      )
+      write_line(ctx, "rt.broadcast(\{write_value(ctx, args[0])}, \{line})")
     "append_list" => {
       // 第一个参数是变量名（裸标识符直接取名字，同解释轨）
       let list_name = match args[0] {

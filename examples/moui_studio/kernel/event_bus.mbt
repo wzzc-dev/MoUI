@@ -21,7 +21,7 @@ pub struct EventBus[Event, Msg] {
 
 ///|
 pub fn[Event, Msg] EventBus::new() -> EventBus[Event, Msg] {
-  { listeners: [] }
+  { listeners: [], }
 }
 
 ///|
@@ -36,7 +36,9 @@ pub fn[Event, Msg] EventBus::on(
 
 ///|
 /// 已注册监听器名（按注册序；测试与诊断用）。
-pub fn[Event, Msg] EventBus::listener_names(self : EventBus[Event, Msg]) -> Array[String] {
+pub fn[Event, Msg] EventBus::listener_names(
+  self : EventBus[Event, Msg],
+) -> Array[String] {
   let names : Array[String] = []
   for entry in self.listeners {
     names.push(entry.0)
@@ -86,8 +88,6 @@ pub fn[Event, Msg] fire_events(
     [] => @moui.Effect::none()
     [single] => @moui.Effect::send(single)
     _ =>
-      @moui.Effect::batch(
-        messages.map(message => @moui.Effect::send(message)),
-      )
+      @moui.Effect::batch(messages.map(message => @moui.Effect::send(message)))
   }
 }

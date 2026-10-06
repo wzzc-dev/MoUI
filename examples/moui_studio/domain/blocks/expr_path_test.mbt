@@ -100,10 +100,7 @@ test "expr_at slot numbering follows canonical writing order" {
   let call = [
     @ir.Assign(
       "z",
-      @ir.Expr::Call(
-        "set_text",
-        [@ir.Var("a"), @ir.StrLit("b"), @ir.IntLit(7)],
-      ),
+      @ir.Expr::Call("set_text", [@ir.Var("a"), @ir.StrLit("b"), @ir.IntLit(7)]),
     ),
   ]
   // 第 1 个实参
@@ -142,9 +139,8 @@ test "expr_leaf_text distinguishes values from slots" {
   assert_eq(@blocks.expr_leaf_text(@ir.Var("score")), Some("score"))
   // 复合表达式不是叶子（它是洞）
   assert_true(
-    @blocks.expr_leaf_text(
-      @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2)),
-    ) is None,
+    @blocks.expr_leaf_text(@ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2)))
+    is None,
   )
   assert_true(
     @blocks.expr_leaf_text(@ir.Expr::Call("random", [@ir.IntLit(9)])) is None,
@@ -243,9 +239,7 @@ test "field access exposes the base as its only slot" {
     None => fail("base replacement failed")
   }
   // 槽位 1（字段名位）不可写
-  assert_true(
-    @blocks.replace_expr_at(body, [0], [1], @ir.Var("x")) is None,
-  )
+  assert_true(@blocks.replace_expr_at(body, [0], [1], @ir.Var("x")) is None)
 }
 
 ///|
@@ -270,13 +264,10 @@ test "field access nests inside larger expressions" {
   match @blocks.replace_expr_at(body, [0], [0, 0], @ir.Var("队员")) {
     Some(next) =>
       assert_true(
-        next[0] is @ir.Assign(
+        next[0]
+        is @ir.Assign(
           _,
-          @ir.Binary(
-            _,
-            @ir.FieldAccess(@ir.Var("队员"), "年龄"),
-            _,
-          ),
+          @ir.Binary(_, @ir.FieldAccess(@ir.Var("队员"), "年龄"), _)
         ),
       )
     None => fail("nested base replacement failed")

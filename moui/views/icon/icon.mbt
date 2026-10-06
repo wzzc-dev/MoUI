@@ -117,10 +117,26 @@ pub fn icon_path(name : @style.IconName) -> Array[@core.PathVerb] {
         LineTo(@core.Point::new(x=17.6, y=8.5)),
         LineTo(@core.Point::new(x=18.43, y=10.52)),
         MoveTo(@core.Point::new(x=15.1, y=12.0)),
-        CubicTo(@core.Point::new(x=15.1, y=10.29), @core.Point::new(x=13.71, y=8.9), @core.Point::new(x=12.0, y=8.9)),
-        CubicTo(@core.Point::new(x=10.29, y=8.9), @core.Point::new(x=8.9, y=10.29), @core.Point::new(x=8.9, y=12.0)),
-        CubicTo(@core.Point::new(x=8.9, y=13.71), @core.Point::new(x=10.29, y=15.1), @core.Point::new(x=12.0, y=15.1)),
-        CubicTo(@core.Point::new(x=13.71, y=15.1), @core.Point::new(x=15.1, y=13.71), @core.Point::new(x=15.1, y=12.0)),
+        CubicTo(
+          @core.Point::new(x=15.1, y=10.29),
+          @core.Point::new(x=13.71, y=8.9),
+          @core.Point::new(x=12.0, y=8.9),
+        ),
+        CubicTo(
+          @core.Point::new(x=10.29, y=8.9),
+          @core.Point::new(x=8.9, y=10.29),
+          @core.Point::new(x=8.9, y=12.0),
+        ),
+        CubicTo(
+          @core.Point::new(x=8.9, y=13.71),
+          @core.Point::new(x=10.29, y=15.1),
+          @core.Point::new(x=12.0, y=15.1),
+        ),
+        CubicTo(
+          @core.Point::new(x=13.71, y=15.1),
+          @core.Point::new(x=15.1, y=13.71),
+          @core.Point::new(x=15.1, y=12.0),
+        ),
       ]
     Settings =>
       [

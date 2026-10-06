@@ -39,10 +39,7 @@ test "statement segments reproduce the projected text exactly" {
 /// 这是「点中某段 → 换掉那个子表达式」链路成立的前提：段里的路径与
 /// `expr_path.mbt` 的寻址语法必须是同一套。
 test "slot segments carry resolvable expression paths" {
-  let stmt = @ir.Assign(
-    "x",
-    @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2)),
-  )
+  let stmt = @ir.Assign("x", @ir.Binary(@ir.Add, @ir.IntLit(1), @ir.IntLit(2)))
   let body = [stmt]
   let segments = @blocks.stmt_text_segments(stmt)
   let mut slots = 0
@@ -85,10 +82,11 @@ test "leaf values are marked as values rather than slots" {
 /// 调用的每个实参各是一段（洞的数量 = 实参个数）——Scratch 的 `说 (a) 和 (b)`
 /// 每个凹槽都能塞块。
 test "a call exposes one slot per argument" {
-  let stmt = @ir.Stmt::Call(
-    "set_text",
-    [@ir.Var("a"), @ir.StrLit("b"), @ir.IntLit(7)],
-  )
+  let stmt = @ir.Stmt::Call("set_text", [
+    @ir.Var("a"),
+    @ir.StrLit("b"),
+    @ir.IntLit(7),
+  ])
   let body = [stmt]
   let segments = @blocks.stmt_text_segments(stmt)
   // 7 段 = 4 个字面段（`set_text(` / `, ` / `, ` / `)`）+ 3 个实参段。

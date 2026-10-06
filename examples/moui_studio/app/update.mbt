@@ -263,11 +263,10 @@ fn rename_control_in_stmt(
     @ir.Match(subject, arms, else_body) =>
       @ir.Match(
         rename_control_in_expr(subject, from, to),
-        arms.map(arm =>
-          @ir.MatchArm::{
-            case_name: arm.case_name,
-            body: arm.body.map(stmt => rename_control_in_stmt(stmt, from, to)),
-          }),
+        arms.map(arm => @ir.MatchArm::{
+          case_name: arm.case_name,
+          body: arm.body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+        }),
         else_body.map(stmt => rename_control_in_stmt(stmt, from, to)),
       )
   }
@@ -476,7 +475,8 @@ fn render_code_appearance(model : Model, handler : @ir.Handler) -> String {
         1,
         functions=model.program.functions,
       ).source
-    AppDsl => @studio_lang.render_handler(handler, model.language.dsl_language())
+    AppDsl =>
+      @studio_lang.render_handler(handler, model.language.dsl_language())
   }
 }
 

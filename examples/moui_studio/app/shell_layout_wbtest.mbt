@@ -1047,7 +1047,10 @@ test "see all sessions appears only with a long thread list" {
     many = apply_shell(many, GenerateProposal)
   }
   if many.ai_sessions.current().cards.length() <= 3 {
-    fail("expected >3 thread cards, got " + many.ai_sessions.current().cards.length().to_string())
+    fail(
+      "expected >3 thread cards, got " +
+      many.ai_sessions.current().cards.length().to_string(),
+    )
   }
   assert_true(
     shell_has_text(shell_draw(many, 1280.0, 800.0), "查看全部会话 →"),
@@ -1141,7 +1144,10 @@ test "thread cards never push the composer out of its host" {
     model = apply_shell(model, GenerateProposal)
   }
   if model.ai_sessions.current().cards.length() <= 3 {
-    fail("expected >3 cards, got " + model.ai_sessions.current().cards.length().to_string())
+    fail(
+      "expected >3 cards, got " +
+      model.ai_sessions.current().cards.length().to_string(),
+    )
   }
   let commands = shell_draw(model, 1280.0, 800.0)
   guard shell_find_text(commands, "描述你想要的应用")

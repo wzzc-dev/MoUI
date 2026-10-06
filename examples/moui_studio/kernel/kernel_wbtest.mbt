@@ -69,21 +69,26 @@ fn fake_state_update(
   message : FakeInnerMsg,
 ) -> (FakeState, @moui.Effect[FakeInnerMsg]) {
   match message {
-    FakeAsked(question) => ({ asked: question }, @moui.Effect::none())
+    FakeAsked(question) => ({ asked: question, }, @moui.Effect::none())
   }
 }
 
 ///|
 /// 假面板视图（切片消息类型）：真实 @views 视图。
 fn fake_inner_view() -> @moui.View[FakeInnerMsg] {
-  @views.text("fake-plugin", theme=@views.light_theme(), width=40.0, height=16.0)
+  @views.text(
+    "fake-plugin",
+    theme=@views.light_theme(),
+    width=40.0,
+    height=16.0,
+  )
 }
 
 ///|
 /// 假插件的 Feature（契约第 1 件：状态切片 + 五元组）。
 fn fake_feature() -> @moui.Feature[FakeState, FakeInnerMsg] {
   @moui.Feature::new(
-    init=() => ({ asked: "" }, @moui.Effect::none()),
+    init=() => ({ asked: "", }, @moui.Effect::none()),
     update=fake_state_update,
     view=_state => fake_inner_view(),
   )
@@ -91,7 +96,12 @@ fn fake_feature() -> @moui.Feature[FakeState, FakeInnerMsg] {
 
 ///|
 /// 假插件的 scope（组合根挂载形态：lens 对 + wrap）。
-fn fake_scope() -> @moui.ScopedFeature[FakeModel, FakeState, FakeInnerMsg, FakeMsg] {
+fn fake_scope() -> @moui.ScopedFeature[
+  FakeModel,
+  FakeState,
+  FakeInnerMsg,
+  FakeMsg,
+] {
   fake_feature().scope(
     read=model => model.state,
     write=(state, model) => { ..model, state, },
@@ -108,7 +118,7 @@ fn fake_root_view() -> @moui.View[FakeMsg] {
 ///|
 /// 测试 1：scope 委托——根消息经包装臂进入切片 update，lens 写回。
 test "kernel/fake plugin scope delegates through lens" {
-  let model : FakeModel = { title: "root", state: { asked: "" } }
+  let model : FakeModel = { title: "root", state: { asked: "", }, }
   let (next, effect) = fake_scope().update(model, FakeAsked("hi"))
   assert_eq(next.state.asked, "hi")
   assert_eq(next.title, "root")
@@ -203,7 +213,7 @@ test "kernel/denied services fail explicitly" {
   // provider：回调收到 Err（闭包同步执行，直接断言）
   let mut provider_error = ""
   (services.provider_submit)(
-    { endpoint: "", key: "", model: "", system: "", prompt: "" },
+    { endpoint: "", key: "", model: "", system: "", prompt: "", },
     fn(result) {
       match result {
         Err(message) => provider_error = message
@@ -220,7 +230,9 @@ test "kernel/denied services fail explicitly" {
       Ok(_) => abort("denied build must not succeed")
     }
   })
-  assert_eq(build_error, "本端没有构建执行器:构建仅在 native 入口可达")
+  assert_eq(
+    build_error, "本端没有构建执行器:构建仅在 native 入口可达",
+  )
   // web 控制：noop 效果
   assert_eq(services.preview_web.port, 0)
   assert_no_effect((services.preview_web.navigate)("http://localhost"))
@@ -236,7 +248,11 @@ test "kernel/contributions render and apply are pure" {
     render: (_model, _width, _height) => fake_root_view(),
   }
   // 渲染调用闭合（视图树深检归渲染层测试）
-  let view = (panel.render)({ title: "m", state: { asked: "" } }, 100.0, 100.0)
+  let view = (panel.render)(
+    { title: "m", state: { asked: "", }, },
+    100.0,
+    100.0,
+  )
   ignore(view)
   let item : ActivityItem[FakeModel, FakeMsg] = {
     id: "fake.activity",
@@ -245,9 +261,9 @@ test "kernel/contributions render and apply are pure" {
     active: model => model.state.asked != "",
     on_click: model => FakeMsg::FakePing(model.state.asked),
   }
-  assert_eq((item.active)({ title: "", state: { asked: "" } }), false)
+  assert_eq((item.active)({ title: "", state: { asked: "", }, }), false)
   assert_eq(
-    (item.on_click)({ title: "", state: { asked: "x" } }),
+    (item.on_click)({ title: "", state: { asked: "x", }, }),
     FakeMsg::FakePing("x"),
   )
   let perspective : Perspective[FakeModel] = {
@@ -257,9 +273,9 @@ test "kernel/contributions render and apply are pure" {
     center: "fake.center",
     right_panel: "",
     bottom_tab: "fake.tab",
-    apply: model => { ..model, title: "entered" },
+    apply: model => { ..model, title: "entered", },
   }
-  let entered = (perspective.apply)({ title: "root", state: { asked: "" } })
+  let entered = (perspective.apply)({ title: "root", state: { asked: "", }, })
   assert_eq(entered.title, "entered")
   assert_eq(entered.state.asked, "")
 }

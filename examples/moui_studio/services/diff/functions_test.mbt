@@ -25,7 +25,9 @@ test "user functions agree across both tracks" {
       @ir.FuncDef::{
         name: "加倍",
         params: ["值"],
-        body: [@ir.Return(Some(@ir.Binary(@ir.Mul, @ir.Var("值"), @ir.IntLit(2))))],
+        body: [
+          @ir.Return(Some(@ir.Binary(@ir.Mul, @ir.Var("值"), @ir.IntLit(2)))),
+        ],
         note_zh: "返回两倍值",
         note_en: "double the value",
       },
@@ -56,8 +58,8 @@ test "user functions agree across both tracks" {
         note_en: "recursive factorial",
       },
     ],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   let handler_body : Array[@ir.Stmt] = [
     @ir.Declare("翻倍", @ir.Call("加倍", [@ir.IntLit(21)])),
@@ -97,22 +99,24 @@ test "user functions agree across both tracks" {
     compiled_value.map(@compiled_runtime.value_to_text),
   )
   assert_eq(
-    interpret
-    .vars
-    .get("阶乘五")
-    .map(@studio_lang.value_to_text),
+    interpret.vars.get("阶乘五").map(@studio_lang.value_to_text),
     compiled.vars.get("阶乘五").map(@compiled_runtime.value_to_text),
   )
   // 整数语义：42 + 120 = 162（VInt 加法，非文本拼接）
-  assert_eq(@studio_lang.value_to_text(interpret.vars.get("翻倍").unwrap()), "42")
-  assert_eq(@studio_lang.value_to_text(interpret.vars.get("阶乘五").unwrap()), "120")
+  assert_eq(
+    @studio_lang.value_to_text(interpret.vars.get("翻倍").unwrap()),
+    "42",
+  )
+  assert_eq(
+    @studio_lang.value_to_text(interpret.vars.get("阶乘五").unwrap()),
+    "120",
+  )
   assert_eq(compiled.texts.get("输出").unwrap_or(""), "162")
   assert_eq(interpret.texts.get("输出").unwrap_or(""), "162")
   // 审计（line/op/detail）逐条相等：函数体行号两轨同为 0
   assert_eq(interpret.audit.length(), compiled.audit.length())
   let mut index = 0
-  while index < interpret.audit.length() &&
-  index < compiled.audit.length() {
+  while index < interpret.audit.length() && index < compiled.audit.length() {
     let left = interpret.audit[index]
     let right = compiled.audit[index]
     assert_eq(left.line, right.line)
@@ -161,8 +165,8 @@ test "statement-position custom block calls agree across both tracks" {
         note_en: "append a row",
       },
     ],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   // 语句位调用（不是 `Declare` 的右值）
   let handler_body : Array[@ir.Stmt] = [
@@ -241,8 +245,8 @@ test "mod and round agree across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   // 逐例对拍：每例一个 `Declare`，两边算完比文本
   let cases : Array[(@ir.Expr, String)] = [
@@ -344,8 +348,8 @@ test "math functions agree across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   let cases : Array[(@ir.Expr, String)] = [
     (@ir.Expr::Call("abs", [@ir.IntLit(-7)]), "abs_neg"),
@@ -396,10 +400,7 @@ test "math functions agree across both tracks" {
     Map([], capacity=1),
   )
   @studio_lang.run_to_end(neg_floor)
-  assert_eq(
-    @studio_lang.value_to_text(neg_floor.vars.get("f").unwrap()),
-    "-3",
-  )
+  assert_eq(@studio_lang.value_to_text(neg_floor.vars.get("f").unwrap()), "-3")
   let root = @studio_lang.start_run_stmts(
     [@ir.Declare("s", @ir.Expr::Call("sqrt", [@ir.IntLit(9)]))],
     Map([], capacity=1),
@@ -437,8 +438,8 @@ test "stop_all halts the run and agrees across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   // 先加一行，再停止，**再**加一行——第二行不该出现
   let handler_body : Array[@ir.Stmt] = [
@@ -504,8 +505,8 @@ test "wait suspends and agrees across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   let handler_body : Array[@ir.Stmt] = [
     @ir.Stmt::Call("wait", [@ir.NumLit(0.1)]),
@@ -579,15 +580,18 @@ test "ask returns the answer text on both tracks" {
     variables: [],
     handlers: [],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   // 把 `询问` 的结果存进变量（闸门会**在表达式求值中途**挂起，所以它必须
   // 作为 `Declare` 的右值——写在 `set_text(控件, ask(...))` 里会让外层命令
   // 在挂起时拿到 `VUnit` 而报类型错，那是闸门语义的固有约束，不是缺陷）。
   // 随后再用 `回答` 报告块读一次：两条取值路径都要对。
   let handler_body : Array[@ir.Stmt] = [
-    @ir.Declare("姓名", @ir.Expr::Call("ask", [@ir.StrLit("你叫什么？")])),
+    @ir.Declare(
+      "姓名",
+      @ir.Expr::Call("ask", [@ir.StrLit("你叫什么？")]),
+    ),
     @ir.Stmt::Call("set_text", [
       @ir.Var("输出"),
       @ir.Expr::Call("to_text", [@ir.Var("姓名")]),
@@ -669,8 +673,8 @@ test "string indexing agrees across both tracks" {
     variables: [],
     handlers: [],
     functions: [],
-  structs: [],
-  enums: [],
+    structs: [],
+    enums: [],
   }
   // 逐例对拍
   let cases : Array[(@ir.Expr, String)] = [

@@ -286,7 +286,8 @@ pub fn ide_icon_bar(
   ]
   // 教学版 profile（M7）：只渲染图形化模式项（无终端/无工程/AI）
   let mode_items = if !(model.profile is Teaching) {
-    mode_items + [
+    mode_items +
+    [
       // 代码编辑：左栏工程文件树 / 中心代码编辑器 / 右栏 AI 停靠（VS Code 口径）
       mode_button(CodeInline, text(t, "app.perspective.code"), PsCode),
       // AI 工作台：中心会话流 / 底栏终端（M3/M5 逐级落地）
@@ -296,27 +297,29 @@ pub fn ide_icon_bar(
     mode_items
   }
   let items : Array[@moui.View[Msg]] = [
-    @views.spacer(min_length=0.0, weight=0.0).frame(
-      width=1.0,
-      height=top_clearance,
-    ),
-  ] + mode_items + [
-    // 模式组与工具组分隔（组间分文的可见边界）
-    @views.container(hairline(), width=20.0, height=1.0, padding=0.0),
-    @views.spacer(min_length=4.0, weight=1.0),
-    // 设置钉在最底：与整体同规格（28×28/17）——VS Code 的齿轮也是同一
-    // 槽位节奏，缩小一号反而显得孤立。按钮贴窗口底边框。
-    icon_button(
-      Gear,
-      text(t, "app.settings.title"),
-      model.settings_open,
-      ToggleSettings,
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
-  ]
+      @views.spacer(min_length=0.0, weight=0.0).frame(
+        width=1.0,
+        height=top_clearance,
+      ),
+    ] +
+    mode_items +
+    [
+      // 模式组与工具组分隔（组间分文的可见边界）
+      @views.container(hairline(), width=20.0, height=1.0, padding=0.0),
+      @views.spacer(min_length=4.0, weight=1.0),
+      // 设置钉在最底：与整体同规格（28×28/17）——VS Code 的齿轮也是同一
+      // 槽位节奏，缩小一号反而显得孤立。按钮贴窗口底边框。
+      icon_button(
+        Gear,
+        text(t, "app.settings.title"),
+        model.settings_open,
+        ToggleSettings,
+        28.0,
+        28.0,
+        17.0,
+        tile=false,
+      ),
+    ]
   @views.container(
     // 列必须显式定宽高：权重 spacer 只有在确定了主轴尺寸后才拿得到 slack。
     @views.column(items, spacing=0.0, align=Center).frame(
@@ -1034,7 +1037,11 @@ pub fn ide_bottom_bar(
       if ai_host_is_bottom(model) {
         ai_bar_composer(model, t, width, (height - PANEL_HEAD_HEIGHT).max(80.0))
       } else {
-        empty_hint(text(t, "app.ai.elsewhere"), width, height - PANEL_HEAD_HEIGHT)
+        empty_hint(
+          text(t, "app.ai.elsewhere"),
+          width,
+          height - PANEL_HEAD_HEIGHT,
+        )
       }
     // 真终端（M5）：可用 = 屏行滚动 + 输入行；不可用（web/无头/教学版）
     // = 显式空态
@@ -1285,7 +1292,11 @@ pub fn terminal_pane(
   if term.screen.length() == 0 {
     screen_rows.push(
       empty_hint(
-        if term.running() { "" } else { text(t, "app.terminal.waiting") },
+        if term.running() {
+          ""
+        } else {
+          text(t, "app.terminal.waiting")
+        },
         width,
         screen_height,
       ),
@@ -1317,7 +1328,11 @@ pub fn terminal_pane(
       }
       screen_rows.push(
         @views.text(
-          if display == "" { " " } else { display },
+          if display == "" {
+            " "
+          } else {
+            display
+          },
           theme=studio_theme(),
           role=Mono,
           width=(width - 16.0).max(60.0),
@@ -1349,7 +1364,7 @@ pub fn terminal_pane(
       right=8.0,
     ),
     background=ide_editor_background(),
-    width=width,
+    width~,
     height=screen_height,
     padding=0.0,
   )

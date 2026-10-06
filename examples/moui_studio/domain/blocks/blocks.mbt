@@ -126,9 +126,18 @@ pub fn builtin_block_spec(id : String) -> BlockSpec? {
 pub fn builtin_result_type(id : String) -> BlockValueType {
   match id {
     "get_text" | "row_at" | "selected_row" | "to_text" | "answer" => VtText
-    "get_number" | "text_length" | "random" | "row_count" | "list_length" |
+    "get_number"
+    | "text_length"
+    | "random"
+    | "row_count"
+    | "list_length"
     // 取余与四舍五入都是**数值**结果（`round` 返回整数，仍归数值端口）
-    "mod" | "round" | "abs" | "floor" | "ceiling" | "sqrt" => VtNumber
+    | "mod"
+    | "round"
+    | "abs"
+    | "floor"
+    | "ceiling"
+    | "sqrt" => VtNumber
     "contains" | "ask" => VtBool
     _ => VtAny
   }
@@ -529,7 +538,10 @@ pub fn replace_stmt_at(
       if section >= 0 && section < arms.length() {
         let arm = arms[section]
         let updated = replace_stmt_at(arm.body, drop_first(rest), stmt)
-        arms[section] = @ir.MatchArm::{ case_name: arm.case_name, body: updated, }
+        arms[section] = @ir.MatchArm::{
+          case_name: arm.case_name,
+          body: updated,
+        }
       } else if section == arms.length() {
         let updated = replace_stmt_at(else_body, drop_first(rest), stmt)
         body[head] = @ir.Match(subject, arms, updated)
@@ -610,7 +622,10 @@ pub fn delete_stmt_at(body : Array[Stmt], path : Array[Int]) -> Array[Stmt] {
       if section >= 0 && section < arms.length() {
         let arm = arms[section]
         let updated = delete_stmt_at(arm.body, drop_first(rest))
-        arms[section] = @ir.MatchArm::{ case_name: arm.case_name, body: updated, }
+        arms[section] = @ir.MatchArm::{
+          case_name: arm.case_name,
+          body: updated,
+        }
       } else if section == arms.length() {
         let updated = delete_stmt_at(else_body, drop_first(rest))
         body[head] = @ir.Match(subject, arms, updated)
@@ -723,10 +738,12 @@ pub fn clone_stmt(stmt : Stmt) -> Stmt {
     @ir.SetIndex(name, index, value) =>
       @ir.SetIndex(name, clone_expr(index), clone_expr(value))
     @ir.Return(expr) =>
-      @ir.Return(match expr {
-        Some(value) => Some(clone_expr(value))
-        None => None
-      })
+      @ir.Return(
+        match expr {
+          Some(value) => Some(clone_expr(value))
+          None => None
+        },
+      )
     @ir.If(cond, then_body, else_ifs, else_body) => {
       let arms : Array[(Expr, Array[Stmt])] = []
       for arm in else_ifs {
@@ -746,15 +763,12 @@ pub fn clone_stmt(stmt : Stmt) -> Stmt {
     @ir.Match(subject, arms, else_body) => {
       let arm_clones : Array[@ir.MatchArm] = []
       for arm in arms {
-        arm_clones.push(
-          @ir.MatchArm::{ case_name: arm.case_name, body: clone_stmts(arm.body), },
-        )
+        arm_clones.push(@ir.MatchArm::{
+          case_name: arm.case_name,
+          body: clone_stmts(arm.body),
+        })
       }
-      @ir.Match(
-        clone_expr(subject),
-        arm_clones,
-        clone_stmts(else_body),
-      )
+      @ir.Match(clone_expr(subject), arm_clones, clone_stmts(else_body))
     }
     @ir.Break => @ir.Break
     @ir.Stmt::Call(name, args) => {
@@ -866,7 +880,7 @@ fn stmt_list_in_loop(
       } else {
         stmt_list_in_loop(loop_body, [], true)
       }
-    @ir.If(_, then_body, arms, else_body) => {
+    @ir.If(_, then_body, arms, else_body) =>
       // 继续下降：slot 0 = then / 1 = else-if 臂 / 2 = else
       if list_path.length() < 2 {
         inside
@@ -901,7 +915,6 @@ fn stmt_list_in_loop(
           _ => inside
         }
       }
-    }
     _ => inside
   }
 }
@@ -992,7 +1005,8 @@ pub fn move_stmt_at(
   for part in to_list_path {
     adjusted.push(part)
   }
-  if adjusted.length() > 0 && from_list.length() == 0 &&
+  if adjusted.length() > 0 &&
+    from_list.length() == 0 &&
     adjusted[0] > from_index {
     adjusted[0] = adjusted[0] - 1
   }
@@ -1079,7 +1093,7 @@ pub fn stmt_list_at(body : Array[Stmt], list_path : Array[Int]) -> Array[Stmt]? 
       } else {
         None
       }
-    @ir.Match(_, arms, else_body) => {
+    @ir.Match(_, arms, else_body) =>
       // section i = 第 i 个 arm 体；section arms.length() = else
       if rest_len == 1 {
         let section = list_path[1]
@@ -1093,7 +1107,6 @@ pub fn stmt_list_at(body : Array[Stmt], list_path : Array[Int]) -> Array[Stmt]? 
       } else {
         None
       }
-    }
     _ => None
   }
 }

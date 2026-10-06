@@ -5,10 +5,7 @@
 ///|
 /// 测试辅助：置 MoonBit 代码草稿（M6① 着色分派验证用；生产路径由
 /// sync_code_draft 按 IR 播种，不手置草稿）。
-pub fn update_moonbit_draft_for_test(
-  model : Model,
-  draft : String,
-) -> Model {
+pub fn update_moonbit_draft_for_test(model : Model, draft : String) -> Model {
   { ..model, code_draft: draft, }
 }
 
@@ -102,10 +99,7 @@ pub fn update_with_services(
       match (model.terminal.take_input(), model.terminal.handle) {
         (Some(line), Some(handle)) =>
           if pty.available {
-            (
-              model,
-              @moui.Effect::dispatch(_emit => { (pty.write)(handle, line) }),
-            )
+            (model, @moui.Effect::dispatch(_emit => (pty.write)(handle, line)))
           } else {
             (model, @moui.Effect::none())
           }
@@ -123,13 +117,16 @@ pub fn update_with_services(
           model.terminal.session_closed()
           model.terminal_open = false
           (
-            { ..model, bottom_tab: BtConsole, bottom_open: false },
-            @moui.Effect::dispatch(_emit => { (pty.kill)(handle) }),
+            { ..model, bottom_tab: BtConsole, bottom_open: false, },
+            @moui.Effect::dispatch(_emit => (pty.kill)(handle)),
           )
         }
         None => {
           model.terminal_open = false
-          ({ ..model, bottom_tab: BtConsole, bottom_open: false }, @moui.Effect::none())
+          (
+            { ..model, bottom_tab: BtConsole, bottom_open: false, },
+            @moui.Effect::none(),
+          )
         }
       }
     // 终端直连键入（M8 交互式）：键盘/输入法透传，字节序列直接写 PTY
@@ -138,10 +135,7 @@ pub fn update_with_services(
       match model.terminal.handle {
         Some(handle) =>
           if pty.available {
-            (
-              model,
-              @moui.Effect::dispatch(_emit => { (pty.write)(handle, seq) }),
-            )
+            (model, @moui.Effect::dispatch(_emit => (pty.write)(handle, seq)))
           } else {
             (model, @moui.Effect::none())
           }
@@ -152,7 +146,7 @@ pub fn update_with_services(
         Some(handle) => {
           model.terminal.session_closed()
           if pty.available {
-            (model, @moui.Effect::dispatch(_emit => { (pty.kill)(handle) }))
+            (model, @moui.Effect::dispatch(_emit => (pty.kill)(handle)))
           } else {
             (model, @moui.Effect::none())
           }
@@ -169,7 +163,7 @@ pub fn update_with_services(
       } else {
         (model, @moui.Effect::none())
       }
-    StreamFinished => ({ ..model, ai_streaming: false }, @moui.Effect::none())
+    StreamFinished => ({ ..model, ai_streaming: false, }, @moui.Effect::none())
     StopGeneration => {
       // 截断：停止标志复位 + 流式卡标记已停止（「已停止」回执）
       let session = model.ai_sessions.current()
@@ -178,16 +172,18 @@ pub fn update_with_services(
       let mut index = 0
       for card in session.cards {
         if index == total - 1 && !card.settled {
-          cards.push(
-            AiCard::{ ..card, settled: true, settled_note: "app.ai.stopped" },
-          )
+          cards.push(AiCard::{
+            ..card,
+            settled: true,
+            settled_note: "app.ai.stopped",
+          })
         } else {
           cards.push(card)
         }
         index = index + 1
       }
-      model.ai_sessions.amend({ ..session, cards })
-      ({ ..model, ai_streaming: false }, @moui.Effect::none())
+      model.ai_sessions.amend({ ..session, cards, })
+      ({ ..model, ai_streaming: false, }, @moui.Effect::none())
     }
     // 复制产物路径：走系统剪贴板（native 是 NSPasteboard，Web 是可用的
     // navigator.clipboard 垫片）。成功/失败都回一条 ArtifactActionDone，
@@ -221,7 +217,6 @@ pub fn update_with_services(
         }
         _ => (model, @moui.Effect::none())
       }
-
     CopyArtifactPath(path) =>
       (
         model,
@@ -336,10 +331,8 @@ pub fn update_with_services(
         Success(source) =>
           // M6③：打开 .studio.json = 一次性迁移。解码失败是结构化报错
           // （携带 codec 原因并指向迁移器口径），不再笼统「打开失败」。
-          match migrate_studio_source(
-            model.pending_open_dir.unwrap_or("."),
-            source,
-          ) {
+          match
+            migrate_studio_source(model.pending_open_dir.unwrap_or("."), source) {
             Ok(outcome) => {
               let program = outcome.program
               let next = {
@@ -815,9 +808,11 @@ pub fn update_with_services(
                 (
                   with_notice(
                     model,
-                    text_with(translator(model), "app.project.external_parse_error", [
-                      ("a", message),
-                    ]),
+                    text_with(
+                      translator(model),
+                      "app.project.external_parse_error",
+                      [("a", message)],
+                    ),
                     true,
                   ),
                   @moui.Effect::none(),
@@ -827,13 +822,11 @@ pub fn update_with_services(
                   with_notice(
                     {
                       ..model,
-                      form_designer: Some(
-                        {
-                          ..session,
-                          source: new_source,
-                          parsed,
-                        },
-                      ),
+                      form_designer: Some({
+                        ..session,
+                        source: new_source,
+                        parsed,
+                      }),
                     },
                     text(translator(model), "app.project.external_reloaded"),
                     false,
@@ -1201,13 +1194,13 @@ pub fn program(
   // 高亮服务（M6）：moonbit 词法器随内核注册；DSL 词法走既有直连扫描
   // （关键字表依赖会话内 UI 语言，provider 注册表供未来消费者按 id 分派）
   let highlight = @kernel.HighlightService::new()
-  highlight.register({ language: "moonbit", run: @kernel.moonbit_highlight })
+  highlight.register({ language: "moonbit", run: @kernel.moonbit_highlight, })
   let svc : @kernel.StudioServices[Msg] = {
     provider_submit: submit,
     compile_submit: submit_compile,
     compile_cancel: cancel_compile,
     build_submit: submit_build,
-    build_cancel: build_cancel,
+    build_cancel,
     launch_submit: submit_launch,
     files: services.files(),
     preview_web: web_controls,
@@ -1219,18 +1212,18 @@ pub fn program(
   // 代码工程写盘（SelectTemplate / 提案采纳 / 迁移器的汇合点）
   bus.on("studio.code_project", fn(event) {
     match event {
-      EvCodeProjectWrite(dir, form_mbt, handlers_mbt) => [
-        CodeProjectWriteRequested(dir, form_mbt, handlers_mbt),
-      ]
+      EvCodeProjectWrite(dir, form_mbt, handlers_mbt) =>
+        [CodeProjectWriteRequested(dir, form_mbt, handlers_mbt)]
       _ => []
     }
   })
   // 构建派发（ProjectBuildRun 过门后的执行通道）
   bus.on("studio.build", fn(event) {
     match event {
-      EvBuildSubmit(kind, root, entry_rel) => [
-        BuildDispatchRequested(ProjectBuildRequest::{ kind, root, entry_rel, }),
-      ]
+      EvBuildSubmit(kind, root, entry_rel) =>
+        [
+          BuildDispatchRequested(ProjectBuildRequest::{ kind, root, entry_rel, }),
+        ]
       _ => []
     }
   })
@@ -1296,7 +1289,7 @@ pub fn program(
         PreviewReload => (model, (svc.preview_web.reload)())
         SetBottomHeight(h) =>
           (
-            { ..model, bottom_height: h.clamp(min=100.0, max=1200.0) },
+            { ..model, bottom_height: h.clamp(min=100.0, max=1200.0), },
             @moui.Effect::none(),
           )
         // 终端聚焦请求（M8）：经组合根注入的回调把键盘焦点交给终端节点
@@ -1357,7 +1350,11 @@ pub fn program(
           // 一层接得住——此前默认臂直通 update_pure，导入按钮点了没反应
           //（服务消息被静默丢弃，实测缺陷）。
           let (next, effect) = update_with_services(
-            model, msg, services, preview_web~, pty~,
+            model,
+            msg,
+            services,
+            preview_web~,
+            pty~,
           )
           // 运行时检查器挂载：只有「打开 Runtime 页签 / 显式刷新」两条
           // 路径会真正采样（O(节点数) 的全树遍历），其余消息零开销通过。
@@ -1452,11 +1449,7 @@ pub fn program(
         ])
       } else {
         @moui.Effect::batch([
-          effect0,
-          events_effect,
-          compile_effect,
-          terminal_spawn_effect,
-          terminal_focus_effect,
+          effect0, events_effect, compile_effect, terminal_spawn_effect, terminal_focus_effect,
         ])
       }
       (next, effect)
@@ -1574,22 +1567,19 @@ fn update_with_provider(
         // 切块，逐片经 StreamChunk 追加进当前会话的流式卡；真实 provider
         // 未来把回调换成 SSE 分片即可复用同一消息流）
         let (with_explanation, _) = update_pure(model, msg)
-        let streamed = push_ai_card(
-          with_explanation,
-          AiCard::{
-            kind: CardExplanation,
-            title: text(translator(model), "app.ai.card.explain"),
-            body: "",
-            steps: [],
-            steps_done: 0,
-            progress: 0,
-            diff_lines: [],
-            settled: false,
-            settled_note: "",
-            seq: 0,
-          },
-        )
-        let streamed = { ..streamed, ai_streaming: true, explanation: "" }
+        let streamed = push_ai_card(with_explanation, AiCard::{
+          kind: CardExplanation,
+          title: text(translator(model), "app.ai.card.explain"),
+          body: "",
+          steps: [],
+          steps_done: 0,
+          progress: 0,
+          diff_lines: [],
+          settled: false,
+          settled_note: "",
+          seq: 0,
+        })
+        let streamed = { ..streamed, ai_streaming: true, explanation: "", }
         let chunks = @ai.fake_stream_chunks(with_explanation.explanation, 12)
         (
           streamed,

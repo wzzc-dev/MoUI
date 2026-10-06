@@ -82,11 +82,7 @@ pub fn parse_inline(text : String) -> Array[MarkdownInline] {
 
 ///|
 /// 从 start 起扫描到 close 字符之前，返回（区间文本, close 后的下标）。
-fn scan_until(
-  chars : Array[Char],
-  start : Int,
-  close : Char,
-) -> (String, Int)? {
+fn scan_until(chars : Array[Char], start : Int, close : Char) -> (String, Int)? {
   let buf = StringBuilder()
   let mut index = start
   while index < chars.length() {
@@ -105,7 +101,9 @@ fn scan_until_double_star(chars : Array[Char], start : Int) -> (String, Int)? {
   let buf = StringBuilder()
   let mut index = start
   while index < chars.length() {
-    if chars[index] == '*' && index + 1 < chars.length() && chars[index + 1] == '*' {
+    if chars[index] == '*' &&
+      index + 1 < chars.length() &&
+      chars[index + 1] == '*' {
       return Some((buf.to_string(), index + 2))
     }
     buf.write_char(chars[index])

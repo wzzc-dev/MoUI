@@ -5,21 +5,23 @@
 /// 造一个带内容的会话切片：会话 0 有点名草稿与卡片，会话 1 空。
 fn seeded_sessions() -> AiSessions {
   let sessions = AiSessions::new()
-  sessions.current().cards.push(
-    AiCard::{
-      kind: CardPlan,
-      title: "计划",
-      body: "先加按钮",
-      steps: ["加按钮"],
-      steps_done: 1,
-      progress: 100,
-      diff_lines: [],
-      settled: true,
-      settled_note: "",
-      seq: 1,
-    },
-  )
-  sessions.amend({ ..sessions.current(), prompt_draft: "帮我做一个点名册", card_seq: 1 })
+  sessions.current().cards.push(AiCard::{
+    kind: CardPlan,
+    title: "计划",
+    body: "先加按钮",
+    steps: ["加按钮"],
+    steps_done: 1,
+    progress: 100,
+    diff_lines: [],
+    settled: true,
+    settled_note: "",
+    seq: 1,
+  })
+  sessions.amend({
+    ..sessions.current(),
+    prompt_draft: "帮我做一个点名册",
+    card_seq: 1,
+  })
   sessions
 }
 
@@ -41,21 +43,23 @@ test "ai session switch isolates drafts and cards" {
   assert_eq(sessions.current().prompt_draft, "")
   assert_eq(sessions.current().cards.length(), 0)
   // 新会话里写草稿 + 推卡（标量经 amend 重建；数组共享引用可直接 push）
-  sessions.amend({ ..sessions.current(), prompt_draft: "第二个会话的问题", card_seq: 1 })
-  sessions.current().cards.push(
-    AiCard::{
-      kind: CardExplanation,
-      title: "讲解",
-      body: "解释",
-      steps: [],
-      steps_done: 0,
-      progress: 0,
-      diff_lines: [],
-      settled: true,
-      settled_note: "",
-      seq: 1,
-    },
-  )
+  sessions.amend({
+    ..sessions.current(),
+    prompt_draft: "第二个会话的问题",
+    card_seq: 1,
+  })
+  sessions.current().cards.push(AiCard::{
+    kind: CardExplanation,
+    title: "讲解",
+    body: "解释",
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: true,
+    settled_note: "",
+    seq: 1,
+  })
   // 切回会话 0：原内容原样在（互不串线）
   assert_true(sessions.switch(0))
   assert_eq(sessions.current().prompt_draft, "帮我做一个点名册")
@@ -73,7 +77,7 @@ test "ai session remove follows the remove-project convention" {
   // 删当前（0）→ 落到同位的下一个（原会话 1 成为新 0）
   let sessions = seeded_sessions()
   let _ = sessions.create()
-  sessions.amend({ ..sessions.current(), prompt_draft: "第二" })
+  sessions.amend({ ..sessions.current(), prompt_draft: "第二", })
   let _ = sessions.switch(0)
   sessions.remove(0)
   assert_eq(sessions.count(), 1)
@@ -148,20 +152,18 @@ test "fake stream chunks are deterministic and cover the whole text" {
 test "ai session append_to_last_card only touches the last card" {
   let sessions = seeded_sessions()
   let before = sessions.current().cards[0].body
-  sessions.current().cards.push(
-    AiCard::{
-      kind: CardExplanation,
-      title: "讲解",
-      body: "",
-      steps: [],
-      steps_done: 0,
-      progress: 0,
-      diff_lines: [],
-      settled: false,
-      settled_note: "",
-      seq: 2,
-    },
-  )
+  sessions.current().cards.push(AiCard::{
+    kind: CardExplanation,
+    title: "讲解",
+    body: "",
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: false,
+    settled_note: "",
+    seq: 2,
+  })
   sessions.append_to_last_card("增量一")
   sessions.append_to_last_card("增量二")
   // 最后一张（流式卡）追加了两个分片

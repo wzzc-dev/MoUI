@@ -123,8 +123,11 @@ pub fn push_slot(
   // 判据取「叶子 vs 复合」而不是「字面量 vs 非字面量」——变量虽不是字面量，
   // 但它是叶子（没有子表达式可以替换），当成洞会让它显示为一个空的凹槽。
   let is_leaf = match expr {
-    @ir.NumLit(_) | @ir.IntLit(_) | @ir.StrLit(_) | @ir.BoolLit(_) |
-    @ir.Var(_) => true
+    @ir.NumLit(_)
+    | @ir.IntLit(_)
+    | @ir.StrLit(_)
+    | @ir.BoolLit(_)
+    | @ir.Var(_) => true
     _ => false
   }
   segments.push(TextSegment::{

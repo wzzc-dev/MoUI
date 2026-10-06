@@ -466,8 +466,5 @@ pub fn struct_field_type_display(id : String, language : Language) -> String {
 ///|
 /// 规范类型 id 判定（codec/语义层共用）：id 必须已在词表内。
 pub fn is_struct_field_type_id(id : String) -> Bool {
-  id == "text" ||
-  id == "number" ||
-  id == "int" ||
-  id == "bool"
+  id == "text" || id == "number" || id == "int" || id == "bool"
 }

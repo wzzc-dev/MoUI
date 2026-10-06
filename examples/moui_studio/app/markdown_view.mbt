@@ -27,37 +27,29 @@ pub fn markdown_blocks_view(
             theme=studio_theme(),
             role=if level == 1 { Title } else { Subtitle },
             width=(width - 16.0).max(60.0),
-            height=height,
-          )
-          .foreground(ide_text()),
+            height~,
+          ).foreground(ide_text()),
         )
       }
-      MbParagraph(pieces) =>
-        rows.push(markdown_inline_row(pieces, width))
+      MbParagraph(pieces) => rows.push(markdown_inline_row(pieces, width))
       MbBulletList(items) =>
         for item in items {
           rows.push(
             @views.row(
-              [
-                markdown_inline_row(item, (width - 20.0).max(60.0)),
-              ],
+              [markdown_inline_row(item, (width - 20.0).max(60.0))],
               spacing=0.0,
               align=Center,
-            )
-            .frame(width~, height=18.0),
+            ).frame(width~, height=18.0),
           )
         }
       MbOrderedList(items) =>
         for item in items {
           rows.push(
             @views.row(
-              [
-                markdown_inline_row(item, (width - 20.0).max(60.0)),
-              ],
+              [markdown_inline_row(item, (width - 20.0).max(60.0))],
               spacing=0.0,
               align=Center,
-            )
-            .frame(width~, height=18.0),
+            ).frame(width~, height=18.0),
           )
         }
       MbCodeBlock(_lang, code) =>
@@ -66,7 +58,11 @@ pub fn markdown_blocks_view(
             @views.container(
               @views.padding_edges(
                 @views.text(
-                  if line == "" { " " } else { line },
+                  if line == "" {
+                    " "
+                  } else {
+                    line
+                  },
                   theme=studio_theme(),
                   role=Mono,
                   width=(width - 24.0).max(60.0),

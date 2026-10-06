@@ -119,139 +119,139 @@ pub fn preview_workspace(
         height=40.0,
         padding=0.0,
       )
-          // 布局设计器区（M4 收尾）：会话在 = 画布；不在 = 打开入口。
-          let designer_area = fn(area_height : Double) -> @moui.View[Msg] {
-            let area_width = (width - 226.0).max(120.0)
-            match model.form_designer {
-              Some(session) =>
-                form_design_canvas(
-                  session,
-                  model.selected_form_control,
-                  area_width,
-                  area_height,
-                )
-              None =>
-                @views.container(
-                  @views.column(
-                    [
-                      @views.text(
-                        text(t, "app.project.design_empty"),
-                        theme=studio_theme(),
-                        width=(area_width - 40.0).max(80.0),
-                        height=24.0,
-                        align=TextCenter,
-                      ).foreground(ide_text_muted()),
-                      @views.button(
-                        text(t, "app.project.design_open"),
-                        on_click=FormDesignOpen,
-                        variant=Primary,
-                      ),
-                    ],
-                    spacing=12.0,
-                    align=Center,
+      // 布局设计器区（M4 收尾）：会话在 = 画布；不在 = 打开入口。
+      let designer_area = fn(area_height : Double) -> @moui.View[Msg] {
+        let area_width = (width - 226.0).max(120.0)
+        match model.form_designer {
+          Some(session) =>
+            form_design_canvas(
+              session,
+              model.selected_form_control,
+              area_width,
+              area_height,
+            )
+          None =>
+            @views.container(
+              @views.column(
+                [
+                  @views.text(
+                    text(t, "app.project.design_empty"),
+                    theme=studio_theme(),
+                    width=(area_width - 40.0).max(80.0),
+                    height=24.0,
+                    align=TextCenter,
+                  ).foreground(ide_text_muted()),
+                  @views.button(
+                    text(t, "app.project.design_open"),
+                    on_click=FormDesignOpen,
+                    variant=Primary,
                   ),
-                  width=area_width,
-                  height~,
-                  padding=0.0,
-                )
-            }
-          }
+                ],
+                spacing=12.0,
+                align=Center,
+              ),
+              width=area_width,
+              height~,
+              padding=0.0,
+            )
+        }
+      }
       let body = if model.preview_design_open {
         // 布局设计器不依赖预览帧：未构建也能进入（M4 收尾）
         designer_area(height)
       } else {
         match model.preview_frame {
-        None =>
-          @views.container(
-            @views.column(
-              [
-                @views.text(
-                  text(t, "app.project.preview_empty"),
-                  theme=studio_theme(),
-                  width=(width - 40.0).max(80.0),
-                  height=24.0,
-                  align=TextCenter,
-                ).foreground(ide_text_muted()),
-                @views.button(
-                  text(t, "app.project.preview_build_now"),
-                  on_click=ProjectBuildRun(BkFramePreview),
-                  variant=Primary,
-                ),
-              ],
-              spacing=12.0,
-              align=Center,
-            ),
-            width~,
-            height~,
-            padding=0.0,
-          )
-        Some(frame) => {
-          // 未知 op 横幅:诚实列出,不静默
-          let warning = if frame.unknown_ops.length() > 0 {
+          None =>
             @views.container(
-              @views.padding_xy(
-                @views.text(
-                  fit_label(
-                    text_with(t, "app.project.preview_unknown_ops", [
-                      ("a", frame.unknown_ops.length().to_string()),
-                    ]),
-                    (width - 260.0).max(60.0),
+              @views.column(
+                [
+                  @views.text(
+                    text(t, "app.project.preview_empty"),
+                    theme=studio_theme(),
+                    width=(width - 40.0).max(80.0),
+                    height=24.0,
+                    align=TextCenter,
+                  ).foreground(ide_text_muted()),
+                  @views.button(
+                    text(t, "app.project.preview_build_now"),
+                    on_click=ProjectBuildRun(BkFramePreview),
+                    variant=Primary,
                   ),
-                  theme=studio_theme(),
-                  width=(width - 260.0).max(60.0),
-                  height=18.0,
-                  align=TextStart,
-                ).foreground(ide_text_muted()),
-                horizontal=12.0,
-                vertical=4.0,
+                ],
+                spacing=12.0,
+                align=Center,
               ),
-              background=ide_panel(),
               width~,
-              height=26.0,
+              height~,
               padding=0.0,
             )
-          } else {
-            @views.text("", width=1.0, height=1.0)
-          }
-          let canvas_width = (width - 226.0).max(120.0)
-          let canvas_area = if model.preview_mode is PmWeb {
-            match preview_web_controller() {
-              Some(controller) =>
-                @webview_views.web_view(
-                  controller~,
-                  title="preview",
-                  width=Some(canvas_width),
-                  height=Some(frame.height),
-                )
-              None =>
-                @views.container(
-                  empty_hint(
-                    text(t, "app.project.preview_web_unavailable"),
-                    canvas_width,
-                    height,
-                  ),
-                  width=canvas_width,
-                  height~,
-                  padding=0.0,
-                )
+          Some(frame) => {
+            // 未知 op 横幅:诚实列出,不静默
+            let warning = if frame.unknown_ops.length() > 0 {
+              @views.container(
+                @views.padding_xy(
+                  @views.text(
+                    fit_label(
+                      text_with(t, "app.project.preview_unknown_ops", [
+                        ("a", frame.unknown_ops.length().to_string()),
+                      ]),
+                      (width - 260.0).max(60.0),
+                    ),
+                    theme=studio_theme(),
+                    width=(width - 260.0).max(60.0),
+                    height=18.0,
+                    align=TextStart,
+                  ).foreground(ide_text_muted()),
+                  horizontal=12.0,
+                  vertical=4.0,
+                ),
+                background=ide_panel(),
+                width~,
+                height=26.0,
+                padding=0.0,
+              )
+            } else {
+              @views.text("", width=1.0, height=1.0)
             }
-          } else if model.preview_design_open {
-            // 布局设计器（M4 收尾）：拖拽/保存 → span 补丁写 form.mbt
-            designer_area(frame.height)
-          } else {
-            preview_replay_canvas(model, frame, canvas_width)
+            let canvas_width = (width - 226.0).max(120.0)
+            let canvas_area = if model.preview_mode is PmWeb {
+              match preview_web_controller() {
+                Some(controller) =>
+                  @webview_views.web_view(
+                    controller~,
+                    title="preview",
+                    width=Some(canvas_width),
+                    height=Some(frame.height),
+                  )
+                None =>
+                  @views.container(
+                    empty_hint(
+                      text(t, "app.project.preview_web_unavailable"),
+                      canvas_width,
+                      height,
+                    ),
+                    width=canvas_width,
+                    height~,
+                    padding=0.0,
+                  )
+              }
+            } else if model.preview_design_open {
+              // 布局设计器（M4 收尾）：拖拽/保存 → span 补丁写 form.mbt
+              designer_area(frame.height)
+            } else {
+              preview_replay_canvas(model, frame, canvas_width)
+            }
+            let canvas_column = @views.column(
+              [warning, canvas_area],
+              spacing=0.0,
+            ).frame(width=canvas_width, height~)
+            @views.row(
+              [canvas_column, semantic_property_strip(model, t, height)],
+              spacing=0.0,
+              align=Start,
+            ).frame(width~, height~)
           }
-          let canvas_column = @views.column([warning, canvas_area], spacing=0.0).frame(
-            width=canvas_width,
-            height~,
-          )
-          @views.row(
-            [canvas_column, semantic_property_strip(model, t, height)],
-            spacing=0.0,
-            align=Start,
-          ).frame(width~, height~)
         }
-      }
       }
       @views.container(
         @views.column([head, body], spacing=0.0).frame(width~, height~),

@@ -414,7 +414,10 @@ pub fn code_lines(model : Model) -> Array[CodeLine] {
 ///|
 /// MoonBit 行级分词（RangedToken 形态）：供受控编辑器的 source_range
 /// 约定（start 为全文绝对偏移，由 line_start 平移内核 token 的行内偏移）。
-pub fn moonbit_line_ranged(line : String, line_start : Int) -> Array[RangedToken] {
+pub fn moonbit_line_ranged(
+  line : String,
+  line_start : Int,
+) -> Array[RangedToken] {
   let tokens : Array[RangedToken] = []
   for token in @kernel.moonbit_highlight(line) {
     let kind : CodeTokenKind = match token.kind {
@@ -425,13 +428,11 @@ pub fn moonbit_line_ranged(line : String, line_start : Int) -> Array[RangedToken
       HlBuiltin => TokBuiltin
       HlPlain => TokPlain
     }
-    tokens.push(
-      RangedToken::{
-        start: line_start + token.start,
-        text: token.text,
-        kind,
-      },
-    )
+    tokens.push(RangedToken::{
+      start: line_start + token.start,
+      text: token.text,
+      kind,
+    })
   }
   tokens
 }

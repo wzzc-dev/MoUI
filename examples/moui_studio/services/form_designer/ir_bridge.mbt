@@ -114,17 +114,15 @@ pub fn ir_controls_to_form_model(
         handler = Some(handler_name_of(candidate, index + 1))
       }
     }
-    form_controls.push(
-      FormControl::{
-        kind,
-        text: control.text,
-        handler,
-        x: control.x.to_double(),
-        y: control.y.to_double(),
-        width: control.width.to_double(),
-        height: control.height.to_double(),
-      },
-    )
+    form_controls.push(FormControl::{
+      kind,
+      text: control.text,
+      handler,
+      x: control.x.to_double(),
+      y: control.y.to_double(),
+      width: control.width.to_double(),
+      height: control.height.to_double(),
+    })
   }
   FormModel::{
     stage_width: window.width.to_double(),

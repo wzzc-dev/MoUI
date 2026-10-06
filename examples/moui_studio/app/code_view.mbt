@@ -47,9 +47,9 @@ pub fn code_workspace(
       // scroll_view 承担滚动**(滚轮/滚动条都走它,与块画布同一机制),
       // 行号槽与编辑器放进同一行,一起滚;编辑器按**内容全高**渲染
       // (不传 viewport/overscan,不做窗口化)。
-      let content_height = (open.draft.split("\n").length().to_double() * CODE_LINE_HEIGHT + 60.0).max(
-          (height - 26.0 - 8.0).max(120.0),
-        )
+      let content_height = (open.draft.split("\n").length().to_double() *
+      CODE_LINE_HEIGHT +
+      60.0).max((height - 26.0 - 8.0).max(120.0))
       let editor_width = (width - 48.0).max(80.0)
       let file_rows : Array[@moui.View[Msg]] = [
         @views.container(
@@ -64,8 +64,18 @@ pub fn code_workspace(
                 align=TextStart,
               ).foreground(ide_text()),
               @views.spacer(min_length=6.0, weight=1.0),
-              foot_chip("保存", text_estimate_width("保存") + 24.0, dirty, SaveProjectFile),
-              @views.text("关闭", theme=studio_theme(), width=36.0, height=16.0)
+              foot_chip(
+                "保存",
+                text_estimate_width("保存") + 24.0,
+                dirty,
+                SaveProjectFile,
+              ),
+              @views.text(
+                "关闭",
+                theme=studio_theme(),
+                width=36.0,
+                height=16.0,
+              )
               .foreground(ide_accent())
               .on_tap(ClearProjectFile),
             ],
@@ -91,8 +101,9 @@ pub fn code_workspace(
                 ),
                 // M6①：工程文件是用户手改的 MoonBit 源码——着色升级为
                 // 内核 MoonBit 词法器（此前 plain：永不匹配的空关键字表）
-                format=source =>
-                  plain_code_document(source, mono_code_font(), moonbit=true),
+                format=source => {
+                  plain_code_document(source, mono_code_font(), moonbit=true)
+                },
                 font=mono_code_font(),
                 foreground=ide_text(),
                 placeholder_color=ide_text_faint(),
@@ -116,43 +127,45 @@ pub fn code_workspace(
           shows_indicator=true,
         ),
       ]
-      @views.column(file_rows, spacing=0.0).frame(width=width, height=height)
+      @views.column(file_rows, spacing=0.0).frame(width~, height~)
     }
     None => {
       let spans = ir_line_spans(model)
-  // 高度预算：头 30 + 说明条 30 + 脚注 36 + 补全占位 1 + **底栏页签带 26**
-  //（中心列的下缘与收起底栏的页签头相接——实测这 26pt 会被底栏盖住，
-  // 脚注整行「消失」，切换芯片也随之不可见）,错误条可见时再 +24。
-  let error_reserve = if model.code_error == "" { 0.0 } else { 24.0 }
-  let chrome = 123.0 + error_reserve
-  let code_height = (height - chrome).max(120.0)
-  let editor_width = (width - 2.0 - CODE_GUTTER_WIDTH - IR_RAIL_WIDTH).max(80.0)
+      // 高度预算：头 30 + 说明条 30 + 脚注 36 + 补全占位 1 + **底栏页签带 26**
+      //（中心列的下缘与收起底栏的页签头相接——实测这 26pt 会被底栏盖住，
+      // 脚注整行「消失」，切换芯片也随之不可见）,错误条可见时再 +24。
+      let error_reserve = if model.code_error == "" { 0.0 } else { 24.0 }
+      let chrome = 123.0 + error_reserve
+      let code_height = (height - chrome).max(120.0)
+      let editor_width = (width - 2.0 - CODE_GUTTER_WIDTH - IR_RAIL_WIDTH).max(
+        80.0,
+      )
       @views.container(
-    @views.column(
-      [
-        head,
-        code_error_bar(model, t, width),
-        // 行号槽 | 编辑面 | IR 竖尺 并排：三者同高，滚动同步由
-        // `EditorScrolled` 单向汇聚到 model 再各自回填 offset。
-        @views.row(
+        @views.column(
           [
-            code_gutter(model, CODE_GUTTER_WIDTH, code_height),
-            code_editor_surface(model, t, editor_width, code_height),
-            ir_ruler(model, spans, code_height),
+            head,
+            code_error_bar(model, t, width),
+            // 行号槽 | 编辑面 | IR 竖尺 并排：三者同高，滚动同步由
+            // `EditorScrolled` 单向汇聚到 model 再各自回填 offset。
+            @views.row(
+              [
+                code_gutter(model, CODE_GUTTER_WIDTH, code_height),
+                code_editor_surface(model, t, editor_width, code_height),
+                ir_ruler(model, spans, code_height),
+              ],
+              spacing=0.0,
+              align=Start,
+            ).frame(width=width - 2.0, height=code_height),
+            completion_popup(model, width),
+            code_hint_bar(t, width),
+            code_foot(model, t, width),
           ],
           spacing=0.0,
-          align=Start,
-        ).frame(width=width - 2.0, height=code_height),
-        completion_popup(model, width),
-        code_hint_bar(t, width),
-        code_foot(model, t, width),
-      ],
-      spacing=0.0,
-    ).frame(width~, height~),
-    background=ide_editor_background(),
-    width~,
-    height~,
-    padding=0.0,
+        ).frame(width~, height~),
+        background=ide_editor_background(),
+        width~,
+        height~,
+        padding=0.0,
       )
     }
   }
@@ -750,7 +763,9 @@ fn code_foot_row(
   // 点了没效果——实测反馈建议删除,收窄为按外观显隐）。
   let show_restore = model.code_appearance is AppDsl
   let restore_reserve = if show_restore { restore_w } else { 0.0 }
-  let hint_w = (width - appearance_w - restore_reserve - compile_w - gap * 3.0).max(40.0)
+  let hint_w = (width - appearance_w - restore_reserve - compile_w - gap * 3.0).max(
+    40.0,
+  )
   // 外观切换芯片（实测反馈两轮：用户找不到入口）——脚注行右侧，
   // 文案写明**目标**（「切到中文 DSL」/「切到 MoonBit」），不存在歧义。
   let appearance_chip = match model.code_appearance {
@@ -785,7 +800,12 @@ fn code_foot_row(
       ).foreground(ide_text_faint()),
       appearance_chip,
       if show_restore {
-        foot_chip(text(t, "app.code.restore"), restore_w, false, RestoreCodeDraft)
+        foot_chip(
+          text(t, "app.code.restore"),
+          restore_w,
+          false,
+          RestoreCodeDraft,
+        )
       } else {
         @views.text("", width=1.0, height=1.0)
       },
@@ -1122,9 +1142,7 @@ fn empty_keywords() -> @studio_lang.Keywords {
 ///|
 /// 工程文件编辑器的行号槽:与 IR 编辑面的 code_gutter 同构——
 /// 行号列跟随编辑器滚动（共享 project_file_scroll）。
-fn project_file_gutter(
-  open : OpenProjectFile,
-) -> @moui.View[Msg] {
+fn project_file_gutter(open : OpenProjectFile) -> @moui.View[Msg] {
   let rows : Array[@moui.View[Msg]] = []
   let line_count = open.draft.split("\n").length()
   let mut number = 1

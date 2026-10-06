@@ -207,13 +207,12 @@ fn exec_stmt(rt : Runtime, stmt : @ir.Stmt, line : Int) -> Unit raise ExecError 
       }
     }
     @ir.Break => rt.break_loop()
-    @ir.Return(expr) => {
+    @ir.Return(expr) =>
       // 返回 = LoopReturn 控制信号；函数调用边界（注册闭包）捕获
       match expr {
         Some(value) => raise LoopReturn(eval_expr(rt, value, line))
         None => raise LoopReturn(VUnit)
       }
-    }
     @ir.Stmt::Call(name, args) =>
       match @studio_lang.builtin_kind(name) {
         Some(@studio_lang.Command) => exec_command(rt, name, args, line)
@@ -261,8 +260,7 @@ fn exec_command(
         line,
         detail,
       )
-    "broadcast" =>
-      rt.broadcast(eval_expr(rt, args[0], line), line)
+    "broadcast" => rt.broadcast(eval_expr(rt, args[0], line), line)
     "wait" => {
       // **语句位的 `等待 N 秒`**：与 `stop_all` 同样是**语句**，所以必须
       // 进 `exec_command`（语句位分派器），只进 `eval_call` 会报未知内建。
@@ -329,7 +327,7 @@ fn exec_gate(
         detail,
       )
     "ask" => rt.ask(eval_expr(rt, args[0], line), name, line, detail)
-    _ => {
+    _ =>
       // 内建没有 → 用户自定义函数（先内建、后自定义，与解释轨同口径）
       if rt.has_user_function(name) {
         let arg_values : Array[Value] = []
@@ -340,7 +338,6 @@ fn exec_gate(
       } else {
         unknown_builtin(name, line)
       }
-    }
   }
 }
 
@@ -392,11 +389,7 @@ fn eval_expr(
       VArr(values)
     }
     @ir.Index(base, index) =>
-      index_values(
-        eval_expr(rt, base, line),
-        eval_expr(rt, index, line),
-        line,
-      )
+      index_values(eval_expr(rt, base, line), eval_expr(rt, index, line), line)
     @ir.Binary(op, left, right) => eval_binary(rt, op, left, right, line)
     @ir.Expr::Call(name, args) => eval_call(rt, name, args, line)
   }
@@ -512,8 +505,7 @@ fn eval_call(
         name,
         line,
       )
-    "list_length" =>
-      list_length(rt, eval_expr(rt, args[0], line), line)
+    "list_length" => list_length(rt, eval_expr(rt, args[0], line), line)
     "random" => random(rt, eval_expr(rt, args[0], line), line)
     "row_count" => row_count(rt, control_name_of(rt, args[0], line))
     "row_at" =>
@@ -540,7 +532,7 @@ fn eval_call(
         @studio_lang.canonical_call_text(name, args),
       )
     // 内建没有 → 用户自定义函数（先内建、后自定义，与解释轨同口径）
-    _ => {
+    _ =>
       if rt.has_user_function(name) {
         let arg_values : Array[Value] = []
         for arg in args {
@@ -550,6 +542,5 @@ fn eval_call(
       } else {
         unknown_builtin(name, line)
       }
-    }
   }
 }

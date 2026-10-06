@@ -75,9 +75,10 @@ fn accept_proposal(model : Model) -> Model {
           text(translator(model), "app.ai.card.applied"),
         )
         // 采纳后清空当前会话的提问草稿（原语义：草稿已被消费）
-        accepted.ai_sessions.amend(
-          { ..accepted.ai_sessions.current(), prompt_draft: "" },
-        )
+        accepted.ai_sessions.amend({
+          ..accepted.ai_sessions.current(),
+          prompt_draft: "",
+        })
         // 语义事件（M3）：采纳事实进事件总线（扩展点，当前无消费者）
         accepted.outbox.push(EvProposalAccepted(0, pending.summary))
         let accepted = emit_code_project_write(accepted)
@@ -203,8 +204,7 @@ fn push_proposal_thread_card(model : Model, pending : PendingProposal) -> Model 
   }
   // 代码 diff 卡（M6②）：显示层展示 handlers.mbt/form.mbt 的行级 ±，
   // 结构化条目降级为代码 diff 为空时的兜底（纯 form 外变更）。
-  let code_lines : Array[(String, String)] = if pending.code_diff.length() >
-    0 {
+  let code_lines : Array[(String, String)] = if pending.code_diff.length() > 0 {
     pending.code_diff
   } else {
     lines
@@ -346,10 +346,11 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
     SetPrompt(value) => {
       // 草稿进**当前会话**（M3 会话切片化）
-      model.ai_sessions.amend(
-        { ..model.ai_sessions.current(), prompt_draft: value },
-      )
-      Some(({ ..model, prompt_error: "" }, @moui.Effect::none()))
+      model.ai_sessions.amend({
+        ..model.ai_sessions.current(),
+        prompt_draft: value,
+      })
+      Some(({ ..model, prompt_error: "", }, @moui.Effect::none()))
     }
     ExplainHandler =>
       Some(
@@ -489,8 +490,9 @@ fn record_history(
     seq: history.length() + 1,
   })
   // 历史按会话隔离（M3）：amend 当前会话
-  model.ai_sessions.amend(
-    { ..model.ai_sessions.current(), proposal_history: history },
-  )
+  model.ai_sessions.amend({
+    ..model.ai_sessions.current(),
+    proposal_history: history,
+  })
   model
 }

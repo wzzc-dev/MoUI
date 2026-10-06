@@ -208,15 +208,11 @@ fn statement_kind_handlers(
           [
             @ir.MatchArm::{
               case_name: "甲",
-              body: [
-                @ir.Call("set_text", [@ir.Var(label), @ir.StrLit("甲")]),
-              ],
+              body: [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("甲")])],
             },
             @ir.MatchArm::{
               case_name: "乙",
-              body: [
-                @ir.Call("set_text", [@ir.Var(label), @ir.StrLit("乙")]),
-              ],
+              body: [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("乙")])],
             },
           ],
           [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("其他")])],
@@ -226,9 +222,7 @@ fn statement_kind_handlers(
           [
             @ir.MatchArm::{
               case_name: "甲",
-              body: [
-                @ir.Call("set_text", [@ir.Var(label), @ir.StrLit("甲")]),
-              ],
+              body: [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("甲")])],
             },
           ],
           [@ir.Call("set_text", [@ir.Var(label), @ir.StrLit("其他")])],
@@ -321,9 +315,7 @@ fn statement_kind_handlers(
   results.push(
     (
       "error-not-declared",
-      synthetic_handler(program, [
-        @ir.Assign("差分未声明", @ir.IntLit(1)),
-      ]),
+      synthetic_handler(program, [@ir.Assign("差分未声明", @ir.IntLit(1))]),
     ),
   )
   // 失败注入：除零

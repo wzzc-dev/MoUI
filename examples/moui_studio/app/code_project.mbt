@@ -55,16 +55,16 @@ pub fn code_text_diff(
   // 公共前缀
   let mut prefix = 0
   while prefix < old_lines.length() &&
-    prefix < new_lines.length() &&
-    old_lines[prefix] == new_lines[prefix] {
+        prefix < new_lines.length() &&
+        old_lines[prefix] == new_lines[prefix] {
     prefix = prefix + 1
   }
   // 公共后缀（不越过前缀）
   let mut suffix = 0
   while suffix < old_lines.length() - prefix &&
-    suffix < new_lines.length() - prefix &&
-    old_lines[old_lines.length() - 1 - suffix] ==
-    new_lines[new_lines.length() - 1 - suffix] {
+        suffix < new_lines.length() - prefix &&
+        old_lines[old_lines.length() - 1 - suffix] ==
+        new_lines[new_lines.length() - 1 - suffix] {
     suffix = suffix + 1
   }
   let old_end = old_lines.length() - suffix

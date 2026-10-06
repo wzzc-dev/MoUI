@@ -51,6 +51,7 @@ test "english translation resolves" {
 }
 
 ///|
+
 ///|
 /// 编辑语义测试的口径（M5-5e）：代码视图默认外观是 MoonBit（只读显示投影）；
 /// 测试「编辑草稿→提交/诊断」语义时先切到 DSL 外观。
@@ -58,6 +59,7 @@ fn dsl_edit_model(model : @app.Model) -> @app.Model {
   apply(model, CycleCodeAppearance)
 }
 
+///|
 test "language switch commits parseable draft and re-renders" {
   let model = dsl_edit_model(@app.initial_model())
   let switched = apply(model, SwitchLanguage)
@@ -493,7 +495,9 @@ test "append row persists across handlers without changing the program" {
 
 ///|
 test "checkbox change keeps its checked state while running on_change" {
-  let added = dsl_edit_model(apply(@app.initial_model(), AddControl(@ir.CheckBox)))
+  let added = dsl_edit_model(
+    apply(@app.initial_model(), AddControl(@ir.CheckBox)),
+  )
   let checkbox = added.program.controls[added.program.controls.length() - 1]
   let handler = apply(added, CreateHandler(checkbox.name, @ir.OnChange))
   let edited = apply(handler, EditCode("设置文本(显示, \"已勾选\")\n"))
@@ -1544,7 +1548,9 @@ test "cycling appearance shows dsl and moonbit display is commit free" {
   // 切到 DSL 外观：草稿按教学语言渲染
   let dsl = apply(model, CycleCodeAppearance)
   assert_true(dsl.code_appearance is @app.AppDsl)
-  assert_true(dsl.code_draft.contains("变量") || dsl.code_draft.contains("设置文本"))
+  assert_true(
+    dsl.code_draft.contains("变量") || dsl.code_draft.contains("设置文本"),
+  )
   // DSL 外观下编辑→提交通路保持既有语义
   let edited = apply(dsl, EditCode("设置文本(显示, \"改\")\n"))
   let committed = apply(edited, SelectHandler("按钮@on_click"))
@@ -1597,10 +1603,13 @@ test "proposal diff shows code text and accept triggers codegen write" {
       assert_true(pending.code_diff.any(pair => pair.0 == "+"))
       // 采纳：发出代码工程写盘事件（M1 事件化，组合根监听器写盘）
       let accepted = apply(generated, AcceptProposal)
-      assert_true(accepted.outbox.any(event => event is EvCodeProjectWrite(_, _, _)))
+      assert_true(
+        accepted.outbox.any(event => event is EvCodeProjectWrite(_, _, _)),
+      )
       // 历史记录保留文本 diff（会话回放看代码改了哪几行）
       assert_true(accepted.ai_sessions.current().proposal_history.length() > 0)
-      let last = accepted.ai_sessions.current().proposal_history[accepted.ai_sessions.current().proposal_history.length() - 1]
+      let last = accepted.ai_sessions.current().proposal_history[accepted.ai_sessions.current().proposal_history.length() -
+        1]
       assert_true(last.accepted)
       assert_eq(last.code_diff.length(), pending.code_diff.length())
     }
@@ -1613,8 +1622,7 @@ test "code text diff trims common prefix and suffix" {
   assert_eq(@app.code_text_diff("a\nb\n", "a\nb\n").length(), 0)
   // 单行改动：中间一行 - 旧 + 新
   let diff = @app.code_text_diff(
-    "let x = 1\nlet y = 2\nlet z = 3\n",
-    "let x = 1\nlet y = 20\nlet z = 3\n",
+    "let x = 1\nlet y = 2\nlet z = 3\n", "let x = 1\nlet y = 20\nlet z = 3\n",
   )
   assert_eq(diff.length(), 2)
   assert_eq(diff[0].0, "-")
@@ -1682,7 +1690,6 @@ test "restore respects code appearance" {
 ///|
 /// 试用反馈:工程文件点开即可编辑,保存写回磁盘(脏标记 + 回执对齐基准)。
 test "project file opens editable and saves" {
-  let services = @services.AppServices::new()
   // 点文件:选中态 + 读取回执挂载编辑器(读取走 fake 服务的成功路径——
   // 文件不存在时 fake 返回错误内容,这里直接喂回执测纯转移)
   let selected = apply(@app.initial_model(), SelectProjectFile("app/main.mbt"))
@@ -1707,10 +1714,7 @@ test "project file opens editable and saves" {
       }
       // 保存:回执对齐脏基准
       let saver = apply(edited, SaveProjectFile)
-      let saved = apply(
-        saver,
-        ProjectFileSaveFinished(Success(())),
-      )
+      let saved = apply(saver, ProjectFileSaveFinished(Success(())))
       match saved.open_project_file {
         Some(open3) => assert_false(open3.draft != open3.saved_content)
         None => fail("保存后文件应仍打开")
@@ -1752,16 +1756,14 @@ test "ai perspective walks prompt to proposal to accept with isolated sessions" 
   // 采纳：提案历史进当前会话 + 语义/落盘事件 + 审计留痕
   let accepted = apply(generated, AcceptProposal)
   assert_eq(accepted.ai_sessions.current().proposal_history.length(), 1)
-  assert_true(
-    accepted.outbox.any(event => event is EvProposalAccepted(_, _)),
-  )
+  assert_true(accepted.outbox.any(event => event is EvProposalAccepted(_, _)))
   assert_true(
     accepted.outbox.any(event => event is EvCodeProjectWrite(_, _, _)),
   )
   assert_true(
-    accepted
-    .audit_entries
-    .any(entry => entry.text == "app.ai.card.applied" || entry.kind is AuditRun),
+    accepted.audit_entries.any(entry => {
+      entry.text == "app.ai.card.applied" || entry.kind is AuditRun
+    }),
   )
   // 草稿被消费
   assert_eq(accepted.ai_sessions.current().prompt_draft, "")
@@ -1788,29 +1790,38 @@ test "fake explanation streams chunks and stop truncates cleanly" {
   assert_true(model.provider_mode is @app.Fake)
   // 启动流式讲解：流式卡就位（空 body）+ 标志为真
   let (streaming, _effect) = @app.update_with_launch_for_test(
-      model,
-      ExplainHandler,
-      services,
-      fn(_path, _done) { () },
-    )
-    ignore(0)
+    model,
+    ExplainHandler,
+    services,
+    fn(_path, _done) { () },
+  )
+  ignore(0)
   assert_true(streaming.ai_streaming)
   assert_eq(streaming.ai_sessions.current().cards.length(), 1)
   assert_eq(streaming.ai_sessions.current().cards[0].body, "")
   // 分片逐段到达（消息流断言）
-  let (one, _) = @app.update_with_services(streaming, StreamChunk("第一段。"), services)
-  let (two, _) = @app.update_with_services(one, StreamChunk("第二段。"), services)
-  assert_eq(
-    two.ai_sessions.current().cards[0].body,
-    "第一段。第二段。",
+  let (one, _) = @app.update_with_services(
+    streaming,
+    StreamChunk("第一段。"),
+    services,
   )
+  let (two, _) = @app.update_with_services(
+    one,
+    StreamChunk("第二段。"),
+    services,
+  )
+  assert_eq(two.ai_sessions.current().cards[0].body, "第一段。第二段。")
   assert_true(two.ai_streaming)
   // 停止生成：标志复位 + 卡片标记已停止
   let (stopped, _) = @app.update_with_services(two, StopGeneration, services)
   assert_false(stopped.ai_streaming)
   assert_true(stopped.ai_sessions.current().cards[0].settled)
   // 停止后的残余分片被忽略（干净截断，不追加）
-  let (ignored, _) = @app.update_with_services(stopped, StreamChunk("不应出现"), services)
+  let (ignored, _) = @app.update_with_services(
+    stopped,
+    StreamChunk("不应出现"),
+    services,
+  )
   assert_eq(
     ignored.ai_sessions.current().cards[0].body,
     "第一段。第二段。",
@@ -1818,12 +1829,16 @@ test "fake explanation streams chunks and stop truncates cleanly" {
   // 正常完成路径：独立一轮流（会话切片共享可变，避免与前段别名）——
   // StreamFinished 只复位标志，不标已停止
   let (fresh_stream, _) = @app.update_with_launch_for_test(
-      @app.initial_model(),
-      ExplainHandler,
-      services,
-      fn(_path, _done) { () },
-    )
-  let (done, _) = @app.update_with_services(fresh_stream, StreamFinished, services)
+    @app.initial_model(),
+    ExplainHandler,
+    services,
+    fn(_path, _done) { () },
+  )
+  let (done, _) = @app.update_with_services(
+    fresh_stream,
+    StreamFinished,
+    services,
+  )
   assert_false(done.ai_streaming)
   assert_false(done.ai_sessions.current().cards[0].settled)
 }
@@ -1848,12 +1863,20 @@ test "terminal tab message flow spawns writes and closes via pty service" {
     kill: fn(_handle) { killed.val = killed.val + 1 },
   }
   // AI 模式预设 + 终端页签
-  let in_mode = apply(@app.initial_model(pty_available=true), SetPerspective(PsAi))
+  let in_mode = apply(
+    @app.initial_model(pty_available=true),
+    SetPerspective(PsAi),
+  )
   let tabbed = apply(in_mode, SetBottomTab(BtTerminal))
   assert_true(tabbed.terminal.available)
   // 派生回执：句柄挂上（真程序里由包装层 spawn 触发经此回执）；
   // 终端臂在 update_with_services（导出层），不走 update_pure
-  let spawned = @app.update_with_services(tabbed, TerminalSpawned(Some(0)), services, pty~).0
+  let spawned = @app.update_with_services(
+      tabbed,
+      TerminalSpawned(Some(0)),
+      services,
+      pty~,
+    ).0
   assert_true(spawned.terminal.running())
   // PTY 输出喂屏（\r\n 语义：内容行 + 等待空行）
   let out = @app.update_with_services(
@@ -1865,11 +1888,21 @@ test "terminal tab message flow spawns writes and closes via pty service" {
   assert_eq(out.terminal.screen.length(), 2)
   assert_eq(out.terminal.screen[0], "user@host % ls")
   // 输入行提交：Dispatch 效应真调 fake write（run 即执行）
-  let typed = @app.update_with_services(out, TerminalType("ls -la"), services, pty~).0
+  let typed = @app.update_with_services(
+      out,
+      TerminalType("ls -la"),
+      services,
+      pty~,
+    ).0
   assert_eq(typed.terminal.input_draft, "ls -la")
   assert_true(typed.terminal.running())
   assert_true(pty.available)
-  let (_m, effect) = @app.update_with_services(typed, TerminalInput, services, pty~)
+  let (_m, effect) = @app.update_with_services(
+    typed,
+    TerminalInput,
+    services,
+    pty~,
+  )
   match effect {
     @moui.Effect::Dispatch(run) => run(_msg => ())
     _ => fail("TerminalInput 应派发写入效应")
@@ -1877,7 +1910,12 @@ test "terminal tab message flow spawns writes and closes via pty service" {
   assert_eq(written.val, "ls -la\n")
   // 派生触发在包装层 effect（本测试不经包装层）；派生计数由真机冒烟覆盖
   // 关闭：kill 一次（Dispatch 效应手动泵）+ 句柄清空（屏保留回看）
-  let (_cm, close_effect) = @app.update_with_services(typed, TerminalClose, services, pty~)
+  let (_cm, close_effect) = @app.update_with_services(
+    typed,
+    TerminalClose,
+    services,
+    pty~,
+  )
   match close_effect {
     @moui.Effect::Dispatch(run) => run(_msg => ())
     _ => fail("TerminalClose 应派发 kill 效应")
@@ -1895,7 +1933,9 @@ test "code_lines dispatches moonbit rules under AppMoonBit appearance" {
   let model = @app.initial_model()
   assert_true(model.code_appearance is @app.AppMoonBit)
   // MoonBit 源码：fn/let 是 MoonBit 关键字（DSL 表里不存在 fn/struct 判定）
-  let with_code = @app.update_moonbit_draft_for_test(model, "fn main() { let n = 1 }")
+  let with_code = @app.update_moonbit_draft_for_test(
+    model, "fn main() { let n = 1 }",
+  )
   let lines = @app.code_lines(with_code)
   assert_true(lines.length() >= 1)
   // fn（MoonBit 关键字）与 main（首字母小写→非内建）着色分离：
@@ -1903,14 +1943,17 @@ test "code_lines dispatches moonbit rules under AppMoonBit appearance" {
   let mut has_keyword = false
   for line in lines {
     for token in line.tokens {
-      if token.kind is @app.TokKeyword && (token.text == "fn" || token.text == "let") {
+      if token.kind is @app.TokKeyword &&
+        (token.text == "fn" || token.text == "let") {
         has_keyword = true
       }
     }
   }
   assert_true(has_keyword)
   // 注释按 MoonBit 规则着色
-  let with_comment = @app.update_moonbit_draft_for_test(model, "// 注释\nlet x = 1")
+  let with_comment = @app.update_moonbit_draft_for_test(
+    model, "// 注释\nlet x = 1",
+  )
   let comment_lines = @app.code_lines(with_comment)
   let mut has_comment = false
   for line in comment_lines {
@@ -1973,15 +2016,20 @@ test "terminal tab toggle closes and reopens via select_bottom_tab" {
   assert_true(in_mode.terminal_open)
   // M8④：AI 模式底栏默认收起
   assert_false(in_mode.bottom_open)
-  let spawned = @app.update_with_services(in_mode, TerminalSpawned(Some(0)), services, pty~).0
+  let spawned = @app.update_with_services(
+      in_mode,
+      TerminalSpawned(Some(0)),
+      services,
+      pty~,
+    ).0
   // 再点选中的终端页签 = 关闭（TerminalTabClose）：kill 一次 + 页签退出
   // 选中 + 底栏收起（kill 在 Dispatch 效应里，手动泵）
   let (_cm, close_effect) = @app.update_with_services(
-      spawned,
-      TerminalTabClose,
-      services,
-      pty~,
-    )
+    spawned,
+    TerminalTabClose,
+    services,
+    pty~,
+  )
   match close_effect {
     @moui.Effect::Dispatch(run) => run(_msg => ())
     _ => fail("TerminalTabClose 应派发 kill 效应")
@@ -1993,7 +2041,12 @@ test "terminal tab toggle closes and reopens via select_bottom_tab" {
   assert_true(closed.bottom_tab is @app.BtConsole)
   assert_false(closed.bottom_open)
   // 关闭态再点 = 重开（terminal_open 恢复；句柄已清 → 重派生条件成立）
-  let reopened = @app.update_with_services(closed, SetBottomTab(BtTerminal), services, pty~).0
+  let reopened = @app.update_with_services(
+      closed,
+      SetBottomTab(BtTerminal),
+      services,
+      pty~,
+    ).0
   assert_true(reopened.terminal_open)
   assert_true(reopened.bottom_tab is @app.BtTerminal)
   assert_true(reopened.bottom_open)
@@ -2008,7 +2061,7 @@ test "ai center composer centers when session is empty" {
   // headless 探针覆盖，这里锁状态判据）
   assert_eq(in_mode.ai_sessions.current().cards.length(), 0)
   // 推一张卡后有卡路径成立
-  let with_card = @app.push_ai_card(in_mode, AiCard::{
+  let with_card = @app.push_ai_card(in_mode, @app.AiCard::{
     kind: CardExplanation,
     title: "讲解",
     body: "内容",

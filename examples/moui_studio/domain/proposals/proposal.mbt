@@ -222,7 +222,9 @@ fn decode_window(
           "MoUI Studio 程序",
         ),
         width: json_int_field(fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
-        height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT), timer_interval: 0 })
+        height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
+        timer_interval: 0,
+      })
     _ => {
       errors.push(MissingField("window"))
       None
@@ -624,10 +626,13 @@ fn encode_stmt_json(stmt : @ir.Stmt) -> Json {
         ("value", encode_expr_json(value)),
       ])
     @ir.Return(expr) =>
-      stmt_node("return", match expr {
-        Some(value) => [("expr", encode_expr_json(value))]
-        None => []
-      })
+      stmt_node(
+        "return",
+        match expr {
+          Some(value) => [("expr", encode_expr_json(value))]
+          None => []
+        },
+      )
     @ir.Break => stmt_node("break", [])
     @ir.Call(name, args) =>
       stmt_node("call", [

@@ -45,7 +45,7 @@ pub(all) struct HighlightService {
 
 ///|
 pub fn HighlightService::new() -> HighlightService {
-  { highlighters: [] }
+  { highlighters: [], }
 }
 
 ///|
@@ -76,11 +76,11 @@ pub fn HighlightService::dispatch(
 /// MoonBit 关键字表（着色用词形分类，不参与任何语义判断）。
 fn moonbit_keywords() -> Array[String] {
   [
-    "fn", "let", "mut", "pub", "priv", "struct", "enum", "trait", "impl",
-    "if", "else", "match", "while", "for", "loop", "in", "break", "continue",
-    "return", "true", "false", "as", "is", "not", "and", "or", "type",
-    "const", "import", "export", "extern", "derive", "test", "guard",
-    "raise", "try", "catch", "async", "using", "typealias", "case",
+    "fn", "let", "mut", "pub", "priv", "struct", "enum", "trait", "impl", "if", "else",
+    "match", "while", "for", "loop", "in", "break", "continue", "return", "true",
+    "false", "as", "is", "not", "and", "or", "type", "const", "import", "export",
+    "extern", "derive", "test", "guard", "raise", "try", "catch", "async", "using",
+    "typealias", "case",
   ]
 }
 
@@ -103,7 +103,7 @@ pub fn moonbit_highlight(source : String) -> Array[HighlightToken] {
   let count = chars.length()
   let push = fn(start : Int, text : String, kind : HighlightKind) {
     if text != "" {
-      tokens.push({ start, text, kind })
+      tokens.push({ start, text, kind, })
     }
   }
   let is_word = fn(c : Char) {
@@ -135,8 +135,7 @@ pub fn moonbit_highlight(source : String) -> Array[HighlightToken] {
     // 块注释（单层）
     if c == '/' && c2 == '*' {
       let mut end = index + 2
-      while end + 1 < count &&
-            !(chars[end] == '*' && chars[end + 1] == '/') {
+      while end + 1 < count && !(chars[end] == '*' && chars[end + 1] == '/') {
         end = end + 1
       }
       let stop = if end + 1 < count { end + 2 } else { count }
@@ -243,9 +242,14 @@ pub fn moonbit_highlight(source : String) -> Array[HighlightToken] {
       let start = index
       while index < count {
         let nc = chars[index]
-        if (nc >= '0' && nc <= '9') || nc == '.' ||
-           (nc >= 'a' && nc <= 'f') || (nc >= 'A' && nc <= 'F') ||
-           nc == 'x' || nc == 'o' || nc == 'L' || nc == 'U' {
+        if (nc >= '0' && nc <= '9') ||
+          nc == '.' ||
+          (nc >= 'a' && nc <= 'f') ||
+          (nc >= 'A' && nc <= 'F') ||
+          nc == 'x' ||
+          nc == 'o' ||
+          nc == 'L' ||
+          nc == 'U' {
           index = index + 1
         } else {
           break
@@ -280,9 +284,10 @@ pub fn moonbit_highlight(source : String) -> Array[HighlightToken] {
     while index < count {
       let nc = chars[index]
       let nc2 = if index + 1 < count { chars[index + 1] } else { '\u{0}' }
-      if nc == '"' || (nc == '/' && (nc2 == '/' || nc2 == '*')) ||
-         (nc >= '0' && nc <= '9') ||
-         (is_word(nc) && !(nc >= '0' && nc <= '9')) {
+      if nc == '"' ||
+        (nc == '/' && (nc2 == '/' || nc2 == '*')) ||
+        (nc >= '0' && nc <= '9') ||
+        (is_word(nc) && !(nc >= '0' && nc <= '9')) {
         break
       }
       index = index + 1

@@ -8,7 +8,12 @@
 pub fn sample_hello() -> @ir.StudioProgram {
   {
     version: 1,
-    window: @ir.WindowSpec::{ title: "问候", width: 640, height: 480, timer_interval: 0 },
+    window: @ir.WindowSpec::{
+      title: "问候",
+      width: 640,
+      height: 480,
+      timer_interval: 0,
+    },
     controls: [
       @ir.Control::{
         id: 1,
@@ -62,7 +67,9 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
     window: @ir.WindowSpec::{
       title: "班级点名册",
       width: 640,
-      height: 480, timer_interval: 0 },
+      height: 480,
+      timer_interval: 0,
+    },
     controls: [
       @ir.Control::{
         id: 1,
@@ -129,7 +136,9 @@ pub fn sample_drill() -> @ir.StudioProgram {
     window: @ir.WindowSpec::{
       title: "口算训练营",
       width: 640,
-      height: 480, timer_interval: 0 },
+      height: 480,
+      timer_interval: 0,
+    },
     controls: [
       @ir.Control::{
         id: 1,
@@ -261,7 +270,9 @@ pub fn sample_store() -> @ir.StudioProgram {
     window: @ir.WindowSpec::{
       title: "班级小卖部",
       width: 640,
-      height: 480, timer_interval: 0 },
+      height: 480,
+      timer_interval: 0,
+    },
     controls: [
       @ir.Control::{
         id: 1,

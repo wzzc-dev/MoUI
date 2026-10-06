@@ -9,11 +9,15 @@
 ///|
 /// AI 插件的会话切片挂载（M3，settings 样板同构）：lens 对 + wrap。
 /// 视图由壳组装（切片的 Feature view 域刻意 abort，见插件包注释）。
-fn ai_sessions_scope(
-) -> @moui.ScopedFeature[Model, @ai.AiSessions, @ai.AiSessionMsg, Msg] {
+fn ai_sessions_scope() -> @moui.ScopedFeature[
+  Model,
+  @ai.AiSessions,
+  @ai.AiSessionMsg,
+  Msg,
+] {
   @ai.ai_sessions_feature().scope(
     read=model => model.ai_sessions,
-    write=(sessions, model) => { ..model, ai_sessions: sessions },
+    write=(sessions, model) => { ..model, ai_sessions: sessions, },
     wrap=message => AiSessionOp(message),
   )
 }
@@ -96,7 +100,13 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
               Some(
                 (
                   with_notice(
-                    { ..model, open_project_file: Some({ ..open, saved_content: open.draft, }), },
+                    {
+                      ..model,
+                      open_project_file: Some({
+                        ..open,
+                        saved_content: open.draft,
+                      }),
+                    },
                     "已保存",
                     false,
                   ),
@@ -127,7 +137,10 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         None => Some((model, @moui.Effect::none()))
         Some(open) =>
           Some(
-            ({ ..model, open_project_file: Some({ ..open, draft, }), }, @moui.Effect::none()),
+            (
+              { ..model, open_project_file: Some({ ..open, draft, }), },
+              @moui.Effect::none(),
+            ),
           )
       }
     ClearProjectFile =>
@@ -779,6 +792,7 @@ pub fn push_recent(
 /// （右栏停靠 > AI 模式中心 > 底栏页签），「页签与落点互相联动」的整套
 /// reconciliation（sync_ai_placement / apply_ai_anchor）随之删除——
 /// 推导出的状态天然自洽，没有需要收敛的矛盾态。
+
 ///|
 /// 底栏高度兜底钳制（视图层按窗口高度精确钳后，update 再兜底）。
 pub fn clamp_bottom_height(height : Double) -> Double {
@@ -790,7 +804,7 @@ fn select_bottom_tab(model : Model, tab : BottomTab) -> Model {
   // 终端页签（M8）：**关闭态**再点 = 重开（terminal_open 恢复，句柄已清
   // → 下次 update 重派生）；选中态的关闭走 TerminalTabClose（kill 需要
   // 服务，在 update_with_services）。其余页签照常选中。
-  if tab is BtTerminal && !(model.terminal_open) {
+  if tab is BtTerminal && !model.terminal_open {
     model.terminal_open = true
     return { ..model, bottom_tab: tab, bottom_open: true, }
   }
@@ -807,9 +821,7 @@ pub fn push_ai_card(model : Model, card : AiCard) -> Model {
   while cards.length() > AI_CARD_LIMIT {
     ignore(cards.remove(0))
   }
-  model.ai_sessions.amend(
-    { ..session, cards, card_seq: session.card_seq + 1, },
-  )
+  model.ai_sessions.amend({ ..session, cards, card_seq: session.card_seq + 1, })
   model
 }
 
@@ -941,7 +953,13 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.right.toggle" =>
       update_pure(
         model,
-        SetRightView(if model.right_view is RvHidden { RvContext } else { RvHidden }),
+        SetRightView(
+          if model.right_view is RvHidden {
+            RvContext
+          } else {
+            RvHidden
+          },
+        ),
       )
     "studio.right.context" => update_pure(model, SetRightView(RvContext))
     "studio.ctx.runtime" => update_pure(model, SetContextTab(CtxRuntime))
