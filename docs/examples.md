@@ -698,7 +698,7 @@ invoking a platform toolchain:
 
 ```sh
 moui package --platform macos --platform web \
-  --version 0.2.0 --output dist/moui --manifest dist/moui/moui-package.json \
+  --version 0.2.1 --output dist/moui --manifest dist/moui/moui-package.json \
   --dry-run --json
 ```
 
@@ -755,7 +755,7 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the `wzzc-dev/window@0.5.4-0.2.0` Wayland host core. The
+Linux examples use the `wzzc-dev/window@0.5.4-0.2.1` Wayland host core. The
 recommended native entrypoints compose `backend/linux` with `moui_skia_renderer` and
 present Skia CPU pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:

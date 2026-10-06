@@ -2,7 +2,7 @@
 
 `backend/linux` is a minimal native Linux host core with two windowing
 backends — Wayland (xdg-shell, default) and X11 (Xlib) — sharing one API. It
-uses the `wzzc-dev/window@0.5.4-0.2.0` Linux package for event-loop and window handles,
+uses the `wzzc-dev/window@0.5.4-0.2.1` Linux package for event-loop and window handles,
 normalizes window/input events through the shared `Event` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Application entrypoints supply ordered
@@ -90,7 +90,7 @@ Linux runtime requirements are intentionally native:
   hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources, plus
   X11 development headers (`libx11-dev`, `libxext-dev`, `libxrandr-dev`) for
-  the `wzzc-dev/window@0.5.4-0.2.0` native stubs.
+  the `wzzc-dev/window@0.5.4-0.2.1` native stubs.
 - `wl_data_device_manager` from the compositor for native clipboard selection
   and file drag/drop runtime behavior.
 - XDG desktop integration for Linux services: OpenURI goes through
@@ -305,7 +305,7 @@ writes, desktop URL opening, IME composition/cursor geometry, and file
 drag/drop are implemented host-service/input paths, but they remain
 matching-host runtime evidence boundaries: cite only logs that exercised the
 actual desktop/compositor service, not the package preflight summary alone.
-Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.2.0`
+Record dependency-level facts from the `wzzc-dev/window@0.5.4-0.2.1`
 package smoke artifacts; keep the MoUI Showcase
 `linux_skia` run as the mainline application observation. Keep `linux_wgpu` as
 a WGPU diagnostic observation when a Vulkan/WGPU stack is configured.

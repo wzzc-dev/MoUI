@@ -1,14 +1,14 @@
 name = "wzzc-dev/moui_3d"
 
-version = "0.2.0"
+version = "0.2.1"
 
 preferred_target = "native"
 
 supported_targets = "+native+wasm-gc+wasm"
 
 import {
-  "wzzc-dev/moui@0.2.0",
-  "wzzc-dev/window@0.5.4-0.2.0",
+  "wzzc-dev/moui@0.2.1",
+  "wzzc-dev/window@0.5.4-0.2.1",
 }
 
 readme = "README.mbt.md"

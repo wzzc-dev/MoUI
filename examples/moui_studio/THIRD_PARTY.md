@@ -4,8 +4,8 @@
 
 MoUI Studio（`examples/moui_studio`）是 MoUI 仓库的一部分，随 MoUI 以 **Apache-2.0** 分发。
 
-运行时依赖（版本固定，见 `moon.mod`）：`wzzc-dev/moui@0.2.0`、
-`wzzc-dev/window@0.5.4-0.2.0`、`wzzc-dev/moui_skia_renderer@0.2.0`、
+运行时依赖（版本固定，见 `moon.mod`）：`wzzc-dev/moui@0.2.1`、
+`wzzc-dev/window@0.5.4-0.2.1`、`wzzc-dev/moui_skia_renderer@0.2.1`、
 `wzzc-dev/moui_web_renderer@0.1.10`、`wzzc-dev/moui_i18n@0.1.7`、
 `moonbitlang/async@0.22.4`、`moonbitlang/x@0.5.5`（均为 Apache-2.0 / MIT 兼容）。
 导出的独立应用 bundle 通过 `deps.txt` 重新列明同一组依赖。

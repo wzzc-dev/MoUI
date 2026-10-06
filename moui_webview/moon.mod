@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_webview"
 
-version = "0.2.0"
+version = "0.2.1"
 
 description = "WebView platform view addon for MoUI: wraps platform-native WebView backends (WKWebView, WebKitGTK, WebView2) into MoUI's declarative view tree."
 
@@ -11,8 +11,8 @@ license = "Apache-2.0"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.2.0",
-  "wzzc-dev/window@0.5.4-0.2.0",
+  "wzzc-dev/moui@0.2.1",
+  "wzzc-dev/window@0.5.4-0.2.1",
 }
 
 readme = "README.mbt.md"

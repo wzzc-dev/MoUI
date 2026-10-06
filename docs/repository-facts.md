@@ -73,9 +73,9 @@ This file is generated from repository manifests and validator reports.
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 889 | 595 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2749 | 1153 | 190 |
-| views facade (moui/views/pkg.generated.mbti) | 677 | 326 | 0 |
-| backend protocols (moui/backend/pkg.generated.mbti) | 651 | 268 | 44 |
+| core (moui/core/pkg.generated.mbti) | 2751 | 1154 | 190 |
+| views facade (moui/views/pkg.generated.mbti) | 690 | 329 | 1 |
+| backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 604 | 279 | 31 |
 | render common (moui/render/common/pkg.generated.mbti) | 430 | 166 | 13 |
 | skia renderer (moui_skia_renderer/pkg.generated.mbti) | 279 | 165 | 7 |
