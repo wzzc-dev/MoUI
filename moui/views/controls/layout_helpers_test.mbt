@@ -83,6 +83,7 @@ fn center_test_text_control() -> @core.TextControlStateContext {
     caret: 0,
     selection: None,
     text_selection_anchor: None,
+    goal_column: None,
     text_selection_origin: None,
     composition: None,
     composition_cursor: None,

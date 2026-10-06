@@ -168,6 +168,7 @@ fn[Msg] rich_text_editor_snapshot(
             caret,
             selection: None,
             text_selection_anchor: None,
+            goal_column: None,
             composition: None,
             composition_cursor: None,
           }

@@ -1060,6 +1060,7 @@ fn select_rich_text_control(
     caret: length,
     selection: Some(@core.TextRange::new(start=0, end=length)),
     text_selection_anchor: None,
+    goal_column: None,
     composition: None,
     composition_cursor: None,
   }

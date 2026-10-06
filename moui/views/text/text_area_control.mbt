@@ -388,6 +388,7 @@ fn[Msg] text_area_vertical_caret_move(
       caret: hit.offset,
       selection: Some(@core.TextRange::new(start~, end~)),
       text_selection_anchor: Some(anchor),
+      goal_column: None,
       composition: None,
       composition_cursor: None,
     }

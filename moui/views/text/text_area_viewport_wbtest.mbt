@@ -19,6 +19,7 @@ fn viewport_test_text_control(caret~ : Int) -> @core.TextControlStateContext {
     caret,
     selection: None,
     text_selection_anchor: None,
+    goal_column: None,
     text_selection_origin: None,
     composition: None,
     composition_cursor: None,
