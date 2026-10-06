@@ -1,5 +1,6 @@
 ///|
 async test "probe real shape moon version" {
+  let moon_bin = @env.get_env_var("MOON_BIN").unwrap_or("moon")
   let (out_reader, out_w) = @process.read_from_process()
   let (err_reader, err_w) = @process.read_from_process()
   let out_box = Ref("")
@@ -16,7 +17,7 @@ async test "probe real shape moon version" {
     })
     let child = @process.spawn(
       group,
-      "/Users/zc/.moon/bin/moon",
+      moon_bin,
       ["--version"],
       stdout=out_w,
       stderr=err_w,

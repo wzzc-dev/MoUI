@@ -38,6 +38,10 @@ priv struct Pty {
 
 ///|
 /// 派生一个运行 shell 的 PTY 会话（worker 异步上下文内调用）。
+/// 仅 Unix：async 的 `Fd` 在 Windows 上是 opaque HANDLE，无法从 Int 构造，
+/// 且 pty.c 依赖 openpty/posix_spawn。Windows 侧编不过也跑不了，直接报
+/// 不可用（workspace check 在所有 native 平台做类型检查）。
+#cfg(not(platform="windows"))
 async fn Pty::spawn_shell(shell : String, cols : Int, rows : Int) -> Pty? {
   let bytes = @utf8.encode(shell)
   let arr : Array[Byte] = []
@@ -53,6 +57,14 @@ async fn Pty::spawn_shell(shell : String, cols : Int, rows : Int) -> Pty? {
   let pid = (packed >> 32).to_int()
   let raw = @raw_fd.RawFd::RawFd(fd)
   Some({ fd, pid, raw, })
+}
+
+///|
+/// Windows 桩：无 PTY 可派生，spawn 直接失败（UI 侧走 on_exit 分支）。
+#cfg(platform="windows")
+async fn Pty::spawn_shell(_shell : String, _cols : Int, _rows : Int) -> Pty? {
+  println("[pty] PTY is not supported on this platform")
+  None
 }
 
 ///|
@@ -72,10 +84,7 @@ fn Pty::shutdown(self : Pty) -> Unit {
 /// 输出读循环：持续读取 PTY 输出并以文本块 emit（decode_lossy——跨块
 /// 多字节拆分时替换符，v1 诚实口径：shell 回显以 ASCII 为主）。
 /// 子进程退出（EOF）时结束。
-async fn Pty::pty_read_loop(
-  self : Pty,
-  emit : (String) -> Unit,
-) -> Unit {
+async fn Pty::pty_read_loop(self : Pty, emit : (String) -> Unit) -> Unit {
   let buf : FixedArray[Byte] = FixedArray::make(4096, 0)
   while true {
     let n = self.raw.read(buf)
@@ -95,7 +104,7 @@ priv enum PtyWork {
     Int,
     (String) -> @studio_app.Msg,
     () -> @studio_app.Msg,
-    (@studio_app.Msg) -> Unit,
+    (@studio_app.Msg) -> Unit
   )
   PtyWriteWork(String)
   PtyKillWork(() -> @studio_app.Msg, (@studio_app.Msg) -> Unit)
@@ -123,14 +132,15 @@ fn pty_native_service(
   {
     available: true,
     spawn: fn(cols, rows, on_output, on_exit, emit) {
-      let _ = (
-        provider.queue.try_put(PtySpawnWork(cols, rows, on_output, on_exit, emit))
-        catch { _ => false }
-      )
+      let _ = provider.queue.try_put(
+        PtySpawnWork(cols, rows, on_output, on_exit, emit),
+      ) catch {
+        _ => false
+      }
       Some(0)
     },
     write: fn(_handle, input) {
-      let _ = (provider.queue.try_put(PtyWriteWork(input)) catch { _ => false })
+      let _ = provider.queue.try_put(PtyWriteWork(input)) catch { _ => false }
     },
     resize: fn(_handle, _cols, _rows) { () },
     kill: fn(_handle) { () },
@@ -140,7 +150,7 @@ fn pty_native_service(
 ///|
 /// 请求一次优雅退出（窗口关闭时调用；worker 收尾 kill + 退出循环）。
 fn pty_provider_shutdown(provider : PtyProvider) -> Unit {
-  let _ = (provider.queue.try_put(PtyShutdown) catch { _ => false })
+  let _ = provider.queue.try_put(PtyShutdown) catch { _ => false }
 }
 
 ///|
@@ -175,9 +185,8 @@ async fn pty_worker_loop(provider : PtyProvider) -> Unit {
               // ——与 terminal composition 的 task group 同款分工。
               while true {
                 match provider.queue.get() {
-                  PtyWriteWork(text) => {
+                  PtyWriteWork(text) =>
                     ignore(pty.raw.write(@utf8.encode(text)) catch { _ => 0 })
-                  }
                   PtyKillWork(on_exit, kill_emit) => {
                     reader.cancel()
                     pty.shutdown()
@@ -192,12 +201,11 @@ async fn pty_worker_loop(provider : PtyProvider) -> Unit {
                   }
                   PtySpawnWork(_, _, _, _, _) => {
                     // 读循环期间的重复派生：重新入队等下一轮（不重入）
-                    let _ = (
-                      provider.queue.try_put(
-                        PtySpawnWork(cols, rows, on_output, on_exit, emit),
-                      )
-                      catch { _ => false }
-                    )
+                    let _ = provider.queue.try_put(
+                      PtySpawnWork(cols, rows, on_output, on_exit, emit),
+                    ) catch {
+                      _ => false
+                    }
                   }
                 }
               }

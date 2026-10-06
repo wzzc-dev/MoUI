@@ -51,10 +51,18 @@ async test "静态服务绑定:端口 0 → 实际端口回读 → close" {
 ///|
 /// 真机验证(M2-3):在真实 counter 工程上跑 workspace 根探测——
 /// counter 是本仓库 moon.work 的成员,应探出仓库根(含 moon.work)。
+/// 检出位置无关:CI/其他开发者用 MOUI_TEST_PROJECT_ROOT 指定仓库根,或
+/// 依赖 CI 自动提供的 GITHUB_WORKSPACE;缺省回退本仓常用检出路径。
 async test "workspace 根探测:counter 真工程" {
-  let root = workspace_root_for("/Volumes/Data/Code/moon/MoUI/examples/counter")
+  let workspace_root = @env.get_env_var("MOUI_TEST_PROJECT_ROOT")
+    .unwrap_or(
+      @env.get_env_var("GITHUB_WORKSPACE").unwrap_or(
+        "/Volumes/Data/Code/moon/MoUI",
+      ),
+    )
+  let root = workspace_root_for(workspace_root + "/examples/counter")
   assert_true(
-    root.has_prefix("/Volumes/Data/Code/moon/MoUI"),
+    root.has_prefix(workspace_root),
     msg="应探出仓库根,实际:\{root}",
   )
   assert_true(

@@ -5,6 +5,10 @@ import {
   "moonbitlang/async/http",
 }
 
+import {
+  "moonbitlang/core/env",
+} for "wbtest"
+
 supported_targets = "native"
 
 options(
