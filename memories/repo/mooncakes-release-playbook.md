@@ -4,6 +4,11 @@
 以 `checks/release-modules.json` 为唯一权威(4 阶段:base-bindings →
 renderers → addons → entrypoints),模块内部依赖关系决定阶段顺序。
 
+2026-10-06 的 0.2.1 增量发布(window@0.5.4-0.2.1 + dock icon 特性)沿用本
+手册一次通过:19 个公开模块 + window 全部 200 OK,阶段间 `moon update`。
+新增经验:`moon publish --dry-run` 在服务器 202 后仍可能以非零码退出,以
+"Server status" 行为准,不代表失败。
+
 ## moon publish 的三个坑(都会以 "moon check failed" 假象出现)
 
 1. **索引滞后**:刚发布的依赖版本,下一个模块的发布沙箱解析不到
