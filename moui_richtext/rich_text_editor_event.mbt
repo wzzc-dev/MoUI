@@ -136,6 +136,7 @@ fn[Msg] rich_text_pointer_event(
               caret,
               selection: None,
               text_selection_anchor: None,
+              goal_column: None,
               text_selection_origin: None,
               composition: None,
               composition_cursor: None,
@@ -194,6 +195,7 @@ fn[Msg] rich_text_pointer_event(
               caret,
               selection: None,
               text_selection_anchor: Some(caret),
+              goal_column: None,
               composition: None,
               composition_cursor: None,
             }
@@ -870,6 +872,8 @@ fn[Msg] rich_text_caret_move_result(
     selection: caret_move.selection,
     composition: None,
     composition_cursor: None,
+    // 水平移动重置目标列（M6②）：只有垂直移动才播种/保持 goal
+    goal_column: None,
   }
   let changed = next_control.caret != ctx.text_control.caret ||
     next_control.selection != ctx.text_control.selection ||

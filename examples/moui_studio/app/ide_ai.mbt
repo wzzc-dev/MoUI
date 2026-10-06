@@ -40,7 +40,160 @@ pub fn composer_height(width : Double) -> Double {
 }
 
 ///|
-/// 停靠档的 AI 输入面：右栏顶部的内联卡。
+/// AI 会话列表（M3 插件贡献的 AI 模式左栏视图）：新建入口 + 会话行
+/// （名 + 当前高亮 + 尾部 ✕ 删除，RemoveProject 惯例由切片 ops 保证）。
+pub fn ai_session_list(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let sessions = model.ai_sessions
+  let rows : Array[@moui.View[Msg]] = [
+    @views.container(
+      @views.padding_edges(
+        @views.text(
+          "+ " + text(t, "app.ai.session.new"),
+          theme=studio_theme(),
+          width=(width - 44.0).max(60.0),
+          height=18.0,
+          align=TextStart,
+        ).foreground(ide_accent()),
+        left=8.0,
+        right=8.0,
+      ),
+      background=ide_panel(),
+      height=TREE_ROW_HEIGHT,
+      width~,
+      padding=0.0,
+    ).on_tap(AiSessionOp(AiSessionCreate)),
+  ]
+  for entry in sessions.list_entries() {
+    let (index, title, is_active) = entry
+    let row_cells : Array[@moui.View[Msg]] = [
+      @views.text(
+        title,
+        theme=studio_theme(),
+        width=(width - 60.0).max(40.0),
+        height=18.0,
+        align=TextStart,
+      ).foreground(if is_active { ide_text() } else { ide_text_muted() }),
+    ]
+    let row = @views.container(
+      @views.padding_edges(
+        @views.row(row_cells, spacing=4.0, align=Center),
+        left=8.0,
+        right=8.0,
+      ),
+      background=if is_active { ide_selection() } else { ide_panel() },
+      height=TREE_ROW_HEIGHT,
+      width~,
+      padding=0.0,
+    )
+    let row = if is_active {
+      row
+    } else {
+      row.on_tap(AiSessionOp(AiSessionSwitch(index)))
+    }
+    // 尾部 ✕：只对非当前会话给（删当前会话的重建语义容易误触）
+    let row = if is_active {
+      row
+    } else {
+      @views.row(
+        [
+          row,
+          @views.container(
+            @views.center(
+              @views.text("✕", theme=studio_theme(), width=10.0, height=14.0).foreground(ide_text_faint()),
+              width=18.0,
+              height=16.0,
+            ),
+            background=ide_panel(),
+            width=18.0,
+            height=TREE_ROW_HEIGHT,
+            padding=0.0,
+          ).on_tap(AiSessionOp(AiSessionRemove(index))),
+        ],
+        spacing=0.0,
+        align=Center,
+      ).frame(width~, height=TREE_ROW_HEIGHT)
+    }
+    rows.push(row)
+  }
+  @views.scroll_view(
+    @views.column(rows, spacing=0.0),
+    width~,
+    height~,
+    shows_indicator=true,
+  )
+}
+
+///|
+/// AI 输入面的宿主（M2，唯一性推导）：
+///
+/// 1. `right_view is RvAi` → **右栏停靠**（`ai_layer`，由 ide_root 挂载）；
+/// 2. 否则 `perspective is PsAi` → **AI 模式中心**（`ai_center`，全幅
+///    composer；M2 过渡形态，M3 升级会话流）；
+/// 3. 否则 → **底栏 `BtAi` 页签**（`ai_bar_composer`，由 ide_bottom_bar 画，
+///    页签只在 3 成立时出现）。
+///
+/// 推导出的状态天然恰好一个宿主——旧「锚点 × 底栏页签」两字段互拉的
+/// reconciliation（sync_ai_placement）随之删除。
+pub fn ai_host_is_bottom(model : Model) -> Bool {
+  !(model.right_view is RvAi) && !(model.perspective is PsAi)
+}
+
+///|
+/// AI 模式的中心工作区（宿主 2；M8③ Codex/ZCode 口径改造）：
+/// **空会话** = composer 垂直居中于大画布（「Pitch your idea」形态）；
+/// **有卡片** = 会话流滚动 + composer 钉底。
+pub fn ai_center(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let composer_h = ai_bar_height(model, width, height).min(height)
+  let composer = ai_bar_composer(model, t, width, composer_h)
+  let empty = model.ai_sessions.current().cards.length() == 0
+  if empty {
+    // 空会话：居中（上下配重 42% / 58%——视觉重心略高于几何中心）
+    let top_pad = ((height - composer_h) * 0.42).max(24.0)
+    @views.container(
+      @views.column(
+        [
+          @views.spacer(min_length=0.0, weight=0.0).frame(
+            width=1.0,
+            height=top_pad,
+          ),
+          composer,
+        ],
+        spacing=0.0,
+      ),
+      background=ide_editor_background(),
+      width~,
+      height~,
+      padding=0.0,
+    )
+  } else {
+    @views.container(
+      @views.column(
+        [
+          @views.spacer(min_length=0.0, weight=1.0),
+          composer,
+        ],
+        spacing=0.0,
+      ),
+      background=ide_editor_background(),
+      width~,
+      height~,
+      padding=0.0,
+    )
+  }
+}
+
+///|
+/// 停靠档的 AI 输入面：右栏的内联卡（钉底，见 ide_root 的装配）。
 ///
 /// **只有停靠档会调用它。** 底栏档由底栏自己画（`ide_bottom_bar` 的
 /// `BtAi` 页签 → `ai_bar_composer`）。两个落点共用同一个 `composer`，
@@ -51,9 +204,10 @@ pub fn ai_layer(
   width : Double,
   height : Double,
 ) -> @moui.View[Msg]? {
-  match model.ai_anchor {
-    AiBar => None
-    AiDocked => Some(ai_docked(model, t, width, height))
+  if model.right_view is RvAi {
+    Some(ai_docked(model, t, width, height))
+  } else {
+    None
   }
 }
 
@@ -79,11 +233,11 @@ pub fn ai_card_height(model : Model, card_width : Double) -> Double {
 /// **只能有一处算**——视图层和高度预算各算一份，卡片就会裁掉自己的内容
 /// （或反过来留一块空白）。
 fn thread_area_height(model : Model) -> Double {
-  if model.ai_cards.length() == 0 || model.ai_cards_folded {
+  if model.ai_sessions.current().cards.length() == 0 || model.ai_cards_folded {
     0.0
   } else {
     // 线程区有 280 的上限（见 ai_card_body 的 scroll_view）
-    (6.0 * model.ai_cards.length().to_double() + 40.0).min(280.0)
+    (6.0 * model.ai_sessions.current().cards.length().to_double() + 40.0).min(280.0)
   }
 }
 
@@ -138,7 +292,7 @@ fn ai_card_body(
   // VS Code 口径（实测反馈）：输入盒**钉在卡底**，不浮在区域顶部——
   // 线程区为空/折叠时用占位吃掉线程预算，输入盒沉底。占位高度必须
   // 扣掉输入盒/决策行/卡片内衬——整段占满会让决策行被裁掉（实测缺陷）。
-  if model.ai_cards.length() == 0 || model.ai_cards_folded {
+  if model.ai_sessions.current().cards.length() == 0 || model.ai_cards_folded {
     let pin_height = (
       thread_height -
       composer_height(width) -
@@ -147,7 +301,7 @@ fn ai_card_body(
     ).max(0.0)
     body.push(@views.text("", width=1.0, height=pin_height))
   }
-  if model.ai_cards.length() > 0 {
+  if model.ai_sessions.current().cards.length() > 0 {
     body.push(fold_bar(model, t, inner, pending))
     if !model.ai_cards_folded {
       body.push(
@@ -163,7 +317,7 @@ fn ai_card_body(
       // 设计稿 `#seeAll`：线程超过 3 条时给一个「查看全部会话 →」的出口
       // （折叠态不显示——折叠时线程区本来就收起了）。跳的是既有 AI 历史
       // 对话框，不新开一页。
-      if model.ai_cards.length() > 3 {
+      if model.ai_sessions.current().cards.length() > 3 {
         body.push(see_all_row(t, inner))
       }
     }
@@ -305,7 +459,7 @@ fn ai_card_views(
   let views : Array[@moui.View[Msg]] = []
   let inner = width - 20.0
   let mut index = 0
-  for card in model.ai_cards {
+  for card in model.ai_sessions.current().cards {
     views.push(ai_card_view(model, t, card, index, inner))
     index = index + 1
   }
@@ -349,15 +503,21 @@ fn ai_card_view(
     ),
   ]
   if card.body != "" {
-    rows.push(
-      @views.text(
-        card.body,
-        theme=studio_theme(),
-        width=(width - 16.0).max(60.0),
-        height=18.0,
-        align=TextStart,
-      ).foreground(ide_text_muted()),
-    )
+    // M4：讲解/流式卡的 body 走 markdown 块渲染（子集 + 诚实降级）；
+    // 其余卡保持单行摘要文本
+    if card.kind is CardExplanation {
+      rows.push(markdown_blocks_view(@markdown.parse_markdown(card.body), width))
+    } else {
+      rows.push(
+        @views.text(
+          card.body,
+          theme=studio_theme(),
+          width=(width - 16.0).max(60.0),
+          height=18.0,
+          align=TextStart,
+        ).foreground(ide_text_muted()),
+      )
+    }
   }
   // 计划卡：进度条 + 步骤清单
   if card.kind is CardPlan {
@@ -535,8 +695,8 @@ fn composer(
       ghost_icon_button(
         Columns,
         text(t, "app.ai.to_dock"),
-        model.ai_anchor is AiDocked,
-        SetAiAnchor(AiDocked),
+        model.right_view is RvAi,
+        StudioCommandRun("studio.ai.dock"),
         22.0,
         20.0,
         11.0,
@@ -549,8 +709,8 @@ fn composer(
         // （图标集里没有专用的 bottom-panel 图标，不为一个按钮加新图标）。
         ChevronDown,
         text(t, "app.ai.to_bar"),
-        model.ai_anchor is AiBar,
-        SetAiAnchor(AiBar),
+        !(model.right_view is RvAi),
+        StudioCommandRun("studio.ai.bar"),
         22.0,
         20.0,
         11.0,
@@ -571,9 +731,16 @@ fn composer(
     )
   }
   // 发送钮在模式行右端（**只有一个**——输入行内再放一个是实测的双钮缺陷）。
-  foot_cells.push(
-    round_send_button(text(t, "app.ai.send"), send_msg, !busy, 24.0),
-  )
+  // 流式生成进行中：发送换**停止**（截断入口，M4）——同一槽位两个互斥动作。
+  if model.ai_streaming {
+    foot_cells.push(
+      action_chip(text(t, "app.ai.stop"), StopGeneration, Quiet, 24.0),
+    )
+  } else {
+    foot_cells.push(
+      round_send_button(text(t, "app.ai.send"), send_msg, !busy, 24.0),
+    )
+  }
   // 实测反馈第四轮：**输入在上，模式胶囊 + 发送在下**；输入域可见
   // **两行**（text_area 内部有 8pt×2 垂直内垫——lines=3 才可见两整行，
   // 见 COMPOSER_HEIGHT 的注释）；整体扁平无阴影。
@@ -581,7 +748,7 @@ fn composer(
   // text_area 的高度语义只在列布局下可靠，两轮实测确认）。
   let foot = fill_row(foot_cells, inner_width, 6.0, Center)
   let field = @views.text_area(
-    model.prompt_draft,
+    model.ai_sessions.current().prompt_draft,
     on_input=value => SetPrompt(value),
     placeholder=text(t, "app.ai.prompt"),
     lines=3,
@@ -607,11 +774,14 @@ fn composer(
 }
 
 ///|
-/// 锚点读数（设计稿 `#posHint`）：让人不用猜「现在这条在哪」。
-pub fn anchor_hint_key(anchor : AiAnchor) -> String {
-  match anchor {
-    AiBar => "app.ai.anchor.bar"
-    AiDocked => "app.ai.anchor.docked"
+/// AI 宿主读数（设计稿 `#posHint`）：让人不用猜「现在输入面在哪」。
+pub fn ai_host_hint_key(model : Model) -> String {
+  if model.right_view is RvAi {
+    "app.ai.anchor.docked"
+  } else if model.perspective is PsAi {
+    "app.ai.anchor.center"
+  } else {
+    "app.ai.anchor.bar"
   }
 }
 

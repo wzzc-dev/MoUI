@@ -24,6 +24,7 @@ fn history_test_control(caret? : Int = 0) -> @core.TextControlStateContext {
     caret,
     selection: None,
     text_selection_anchor: None,
+    goal_column: None,
     text_selection_origin: None,
     composition: None,
     composition_cursor: None,

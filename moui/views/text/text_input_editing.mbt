@@ -393,6 +393,7 @@ fn select_text_control(
     caret: length,
     selection: Some(@core.TextRange::new(start=0, end=length)),
     text_selection_anchor: None,
+    goal_column: None,
     composition: None,
     composition_cursor: None,
   }
@@ -408,6 +409,7 @@ fn text_control_for_text(
     caret: text_length(text),
     selection: None,
     text_selection_anchor: None,
+    goal_column: None,
     composition: None,
     composition_cursor: None,
   }

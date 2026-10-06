@@ -75,6 +75,7 @@ fn[Msg] handle_text_field_pointer(
       caret,
       selection: None,
       text_selection_anchor: Some(caret),
+      goal_column: None,
       composition: None,
       composition_cursor: None,
     }

@@ -55,10 +55,25 @@ test "form subset boundary skips non form controls honestly" {
 }
 
 ///|
-test "select template marks the pending code project write" {
-  // 纯转移置位（组合根消费后清位并写盘）；确认续行同口径
+test "select template emits code project write only with a write target" {
+  // 无在册工程、无迁移目录：与旧「置位后组合根静默清位」同语义——不发事件
   let applied = apply(@app.initial_model(), SelectTemplate(1))
-  assert_true(applied.pending_code_project)
+  assert_eq(applied.outbox.length(), 0)
+  // 有在册工程：事件带目标目录与双腿全文（M1 事件化，组合根监听器写盘）
+  let imported = @app.update_with_services(
+      @app.initial_model(compile_track_available=true),
+      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      @services.AppServices::new(),
+    ).0
+  let emitted = apply(imported, SelectTemplate(1))
+  match emitted.outbox {
+    [EvCodeProjectWrite(dir, form_mbt, handlers_mbt), ..] => {
+      assert_true(dir.contains("/"))
+      assert_true(form_mbt.contains("place(@views."))
+      assert_true(handlers_mbt.contains("fn studio_"))
+    }
+    _ => fail("应发出代码工程写盘事件")
+  }
 }
 
 ///|

@@ -59,7 +59,6 @@ fn accept_proposal(model : Model) -> Model {
           ..model,
           program: next,
           pending: None,
-          prompt_draft: "",
           selected_control: first_control_name(next.controls),
           run: None,
           runtime_values: @studio_lang.initial_values(next),
@@ -68,13 +67,20 @@ fn accept_proposal(model : Model) -> Model {
           runtime_selections: Map([], capacity=4),
         }
         // 采纳（M6②）：IR 已更新 → 代码真源骨架随之重新生成落盘
-        //（pending_code_project 由组合根消费：handlers.mbt 全量 codegen——
-        // 文件尚为 codegen 所有，重生成即 span 补丁的超集；form.mbt 同理）。
+        //（EvCodeProjectWrite 事件（M1）由组合根监听器消费：handlers.mbt
+        // 全量 codegen——文件尚为 codegen 所有，重生成即 span 补丁的超集；
+        // form.mbt 同理）。
         let accepted = settle_newest_thread_card(
           record_history(cleared, pending, true),
           text(translator(model), "app.ai.card.applied"),
         )
-        let accepted = { ..accepted, pending_code_project: true, }
+        // 采纳后清空当前会话的提问草稿（原语义：草稿已被消费）
+        accepted.ai_sessions.amend(
+          { ..accepted.ai_sessions.current(), prompt_draft: "" },
+        )
+        // 语义事件（M3）：采纳事实进事件总线（扩展点，当前无消费者）
+        accepted.outbox.push(EvProposalAccepted(0, pending.summary))
+        let accepted = emit_code_project_write(accepted)
         // 采纳是一条**大事实**：审计留痕 + 最近修改记「Agent」+ toast 回执，
         // 三处都从这一条事件派生（教学上「Agent 改了什么」必须可追溯）。
         let t = translator(accepted)
@@ -159,7 +165,7 @@ pub fn proposal_from_completion(model : Model, completion : String) -> Model {
 /// 把**最新的未处理线程卡**标记为已处理（采纳/拒绝时调用），并写上回执。
 /// 只动最新一张：一次提案对应一张卡，标记更早的会把历史卡的语义搞混。
 fn settle_newest_thread_card(model : Model, note : String) -> Model {
-  let cards = model.ai_cards
+  let cards = model.ai_sessions.current().cards
   let mut index = cards.length() - 1
   while index >= 0 {
     let card = cards[index]
@@ -169,7 +175,8 @@ fn settle_newest_thread_card(model : Model, note : String) -> Model {
     }
     index = index - 1
   }
-  { ..model, ai_cards: cards, }
+  // 卡数组是共享引用：上面的原位标记已经生效（M3 会话切片共享语义）
+  model
 }
 
 ///|
@@ -337,13 +344,13 @@ pub fn local_explanation(model : Model) -> String {
 /// AI 域消息处理：未命中的消息返回 None 交还链式分发。
 fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
-    SetPrompt(value) =>
-      Some(
-        (
-          { ..model, prompt_draft: value, prompt_error: "", },
-          @moui.Effect::none(),
-        ),
+    SetPrompt(value) => {
+      // 草稿进**当前会话**（M3 会话切片化）
+      model.ai_sessions.amend(
+        { ..model.ai_sessions.current(), prompt_draft: value },
       )
+      Some(({ ..model, prompt_error: "" }, @moui.Effect::none()))
+    }
     ExplainHandler =>
       Some(
         (
@@ -358,7 +365,7 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     ComposerRun => Some(composer_run(model))
     GenerateProposal => {
       let completion = @proposals.fake_model_completion(
-        model.prompt_draft,
+        model.ai_sessions.current().prompt_draft,
         model.program,
       )
       Some((proposal_from_completion(model, completion), @moui.Effect::none()))
@@ -471,7 +478,7 @@ fn record_history(
   accepted : Bool,
 ) -> Model {
   let history : Array[ProposalRecord] = []
-  for record in model.proposal_history {
+  for record in model.ai_sessions.current().proposal_history {
     history.push(record)
   }
   history.push(ProposalRecord::{
@@ -481,5 +488,9 @@ fn record_history(
     accepted,
     seq: history.length() + 1,
   })
-  { ..model, proposal_history: history, }
+  // 历史按会话隔离（M3）：amend 当前会话
+  model.ai_sessions.amend(
+    { ..model.ai_sessions.current(), proposal_history: history },
+  )
+  model
 }

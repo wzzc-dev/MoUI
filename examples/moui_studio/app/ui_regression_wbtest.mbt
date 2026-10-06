@@ -8,7 +8,7 @@ test "docked AI card stays inside the right panel" {
   // 不能越到中心列或溢出窗口右缘。历史：浮动锚点按中心列居中，
   // 卡片宽度是设计值；改成右栏内联后，宽度由右栏决定，判据也随之改为
   // 「落在右栏区间内」。
-  let model = apply_shell(initial_model(), SetAiAnchor(AiDocked))
+  let model = apply_shell(initial_model(), SetRightView(RvAi))
   let width = 1280.0
   let commands = shell_draw(model, width, 800.0)
   let chrome = shell_chrome_widths(model, width - ICONBAR_WIDTH)

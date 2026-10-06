@@ -245,15 +245,15 @@ fn handler_crumb(model : Model) -> String {
 // ============================================================================
 
 ///|
-/// 图标栏：可视化 / 代码 | 树 / 数据 | AI | 右栏 | 设置。
-/// 点当前项 = 收起（工作区进空舞台、左栏收起），与设计稿 setLeft/setWS 同语义。
+/// 活动栏（M2 三模式工作台）：**唯一的职责 = 「我在哪个任务里」**——
+/// 三个模式项 + 钉底的设置。点击语义全局同质：选模式；同值再点 no-op
+/// （预设不重放）。左右栏各自的临时收放由面板头 ✕ 与命令面板承担，
+/// 不再占活动栏槽位（此前 8 个按钮混排四种职责、五种再点语义——
+/// 收敛记录见计划文档）。
 ///
 /// **紧凑活动栏口径（参考 VS Code 截图实测）**：栏宽 34、单项节距 28、
-/// 字形 17（墨迹 ~13-15pt，对齐实测 13-16pt）。**裸字形，无底块无条纹**：
-/// 选中态只有字形亮度这一层（亮字形 = 活动态，`ide_text` vs
-/// `ide_text_muted`）——条纹方案试过被否掉。仍是 VS Code 的「全高贯通」
-/// 骨架：从窗口顶直抵窗口底边，状态栏在它右侧铺开；图标从信号灯带之下
-/// 开始；设置钉在最底（贴窗口底边框）。
+/// 字形 17。仍是「全高贯通」骨架：从窗口顶直抵窗口底边；图标从信号灯带
+/// 之下开始；设置钉在最底（贴窗口底边框）。
 pub fn ide_icon_bar(
   model : Model,
   t : @i18n.Translator,
@@ -264,83 +264,45 @@ pub fn ide_icon_bar(
   } else {
     TOPBAR_HEIGHT
   }
+  let mode_button = fn(
+    icon : @style.IconName,
+    label : String,
+    perspective : StudioPerspective,
+  ) {
+    icon_button(
+      icon,
+      label,
+      model.perspective == perspective,
+      SetPerspective(perspective),
+      28.0,
+      28.0,
+      17.0,
+      tile=false,
+    )
+  }
+  let mode_items : Array[@moui.View[Msg]] = [
+    // 图形化编辑：左栏结构树 / 中心可视化（预览是中心形态）/ 右栏检查器
+    mode_button(Eye, text(t, "app.perspective.visual"), PsVisual),
+  ]
+  // 教学版 profile（M7）：只渲染图形化模式项（无终端/无工程/AI）
+  let mode_items = if !(model.profile is Teaching) {
+    mode_items + [
+      // 代码编辑：左栏工程文件树 / 中心代码编辑器 / 右栏 AI 停靠（VS Code 口径）
+      mode_button(CodeInline, text(t, "app.perspective.code"), PsCode),
+      // AI 工作台：中心会话流 / 底栏终端（M3/M5 逐级落地）
+      mode_button(Focus, text(t, "app.perspective.ai"), PsAi),
+    ]
+  } else {
+    mode_items
+  }
   let items : Array[@moui.View[Msg]] = [
     @views.spacer(min_length=0.0, weight=0.0).frame(
       width=1.0,
       height=top_clearance,
     ),
-    icon_button(
-      Eye,
-      text(t, "app.ws.visual"),
-      model.workspace is WsVisual,
-      SetWorkSpace(WsVisual),
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
-    icon_button(
-      CodeInline,
-      text(t, "app.ws.code"),
-      model.workspace is WsCode,
-      SetWorkSpace(WsCode),
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
-    icon_button(
-      Sidebar,
-      text(t, "app.left.tree"),
-      model.left_view is LeftTree,
-      SetLeftView(LeftTree),
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
-    icon_button(
-      Table,
-      text(t, "app.left.data"),
-      model.left_view is LeftData,
-      SetLeftView(LeftData),
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
-    icon_button(
-      FolderOpen,
-      text(t, "app.left.project"),
-      model.left_view is LeftProject,
-      SetLeftView(LeftProject),
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
-    icon_button(
-      Focus,
-      text(t, "app.ai.title"),
-      model.ai_anchor is AiDocked,
-      CycleAiAnchor,
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
-    // 右栏开合。关掉之后唯一的重开入口就在这里——所以它必须始终在场
-    // （不像左栏两个图标那样是「多视图」关系）。
-    icon_button(
-      Columns,
-      text(t, "app.right.show"),
-      model.right_visible,
-      SetRightVisible(!model.right_visible),
-      28.0,
-      28.0,
-      17.0,
-      tile=false,
-    ),
+  ] + mode_items + [
+    // 模式组与工具组分隔（组间分文的可见边界）
+    @views.container(hairline(), width=20.0, height=1.0, padding=0.0),
     @views.spacer(min_length=4.0, weight=1.0),
     // 设置钉在最底：与整体同规格（28×28/17）——VS Code 的齿轮也是同一
     // 槽位节奏，缩小一号反而显得孤立。按钮贴窗口底边框。
@@ -385,6 +347,8 @@ pub fn ide_left_panel(
       text(t, "app.left.data")
     } else if model.left_view is LeftProject {
       text(t, "app.left.project")
+    } else if model.left_view is LeftAiSessions {
+      text(t, "app.ai.sessions")
     } else {
       text(t, "app.left.tree")
     },
@@ -433,6 +397,8 @@ pub fn ide_left_panel(
     data_view(model, t, width, body_height)
   } else if model.left_view is LeftProject {
     project_explorer(model, t, width, body_height)
+  } else if model.left_view is LeftAiSessions {
+    ai_session_list(model, t, width, body_height)
   } else {
     tree_view_ide(model, t, width, body_height)
   }
@@ -924,6 +890,9 @@ pub fn ide_bottom_bar(
   let pending = pending_side_effects(model)
   let errors = audit_error_count(model)
   let problems = problem_rows(model, t).length()
+  // AI 宿主推导（M2）：底栏页签只在「AI 没有停靠右栏、也不在 AI 模式中心」
+  // 时出现——任何时刻输入面恰好一个宿主可见（见 ide_ai.mbt 的 host 注释）。
+  let ai_in_bottom = !(model.right_view is RvAi) && !(model.perspective is PsAi)
   let head_cells : Array[@moui.View[Msg]] = [
     tab_button(
       text(t, "app.bottom.audit"),
@@ -943,15 +912,40 @@ pub fn ide_bottom_bar(
       SetBottomTab(BtProblems),
       problems,
     ),
-    // AI 输入条页签：与三个只读面板并列。计数用待审计提案数——它是
+    // AI 输入条页签：与只读面板并列。计数用待审计提案数——它是
     // 「这里有没有等你处理的东西」的唯一读数（与药丸徽标同一个来源）。
+  ]
+  let ai_tab_cells : Array[@moui.View[Msg]] = if ai_in_bottom {
+    [
+      tab_button(
+        text(t, "app.bottom.ai"),
+        model.bottom_tab is BtAi,
+        SetBottomTab(BtAi),
+        pending_ai_cards(model),
+      ),
+    ]
+  } else {
+    []
+  }
+  let head_cells = head_cells + ai_tab_cells
+  // 真终端页签（M5）：AI 模式专属（预设表：模式 3 底栏 = 真终端）
+  // 终端页签（M8）：全模式可用——关闭态点击重开（重派生）；选中态再点
+  // = 关闭（kill + 收起，见 select_bottom_tab 的开关语义）
+  // 终端页签（M8）：关闭态点击 = 重开（SetBottomTab）；开+选中态再点 =
+  // 关闭（TerminalTabClose → kill + 收起）
+  let terminal_tab_cells : Array[@moui.View[Msg]] = [
     tab_button(
-      text(t, "app.bottom.ai"),
-      model.bottom_tab is BtAi,
-      SetBottomTab(BtAi),
-      pending_ai_cards(model),
+      text(t, "app.bottom.terminal"),
+      model.bottom_tab is BtTerminal && model.terminal_open,
+      if model.bottom_tab is BtTerminal && model.terminal_open {
+        TerminalTabClose
+      } else {
+        SetBottomTab(BtTerminal)
+      },
+      0,
     ),
   ]
+  let head_cells = head_cells + terminal_tab_cells
   if model.bottom_tab is BtAudit && pending > 0 {
     head_cells.push(
       action_chip(
@@ -1034,7 +1028,18 @@ pub fn ide_bottom_bar(
     // （实测底栏底部一条 14px 的暗带）。线程区自己会滚动，所以这里不套
     // 外层 scroll_view——两层滚动会让线程卡的滚动量与预期不符。
     BtAi =>
-      ai_bar_composer(model, t, width, (height - PANEL_HEAD_HEIGHT).max(80.0))
+      // 防御性门控：页签列表已按宿主推导过滤，但 stale 的页签选择仍可能
+      // 指到 BtAi（如停靠后再展开）。宿主不在底栏时诚实显示空态，
+      // 绝不画第二份 composer。
+      if ai_host_is_bottom(model) {
+        ai_bar_composer(model, t, width, (height - PANEL_HEAD_HEIGHT).max(80.0))
+      } else {
+        empty_hint(text(t, "app.ai.elsewhere"), width, height - PANEL_HEAD_HEIGHT)
+      }
+    // 真终端（M5）：可用 = 屏行滚动 + 输入行；不可用（web/无头/教学版）
+    // = 显式空态
+    // 真终端（M5/M8 交互式）：不可用端（web/无头/教学版）上层已降级空态
+    BtTerminal => terminal_pane(model, t, width, height - PANEL_HEAD_HEIGHT)
   }
   @views.container(
     @views.column([hairline(), head, body], spacing=0.0),
@@ -1261,5 +1266,104 @@ pub fn console_pane(
     width~,
     height~,
     padding=0.0,
+  )
+}
+
+///|
+/// 终端面板（M5；M8② 交互式键入回退到行输入——keyboard_input 直通的
+/// 焦点路由未通，见计划 M8 真机复核记录）：行缓冲屏滚动 + 输入行
+/// （回车/执行芯片提交给 PTY）。回显由 PTY 输出流返回（真终端语义）。
+pub fn terminal_pane(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let term = model.terminal
+  let screen_height = height
+  let screen_rows : Array[@moui.View[Msg]] = []
+  if term.screen.length() == 0 {
+    screen_rows.push(
+      empty_hint(
+        if term.running() { "" } else { text(t, "app.terminal.waiting") },
+        width,
+        screen_height,
+      ),
+    )
+  } else {
+    let total = term.screen.length()
+    let mut line_index = 0
+    for line in term.screen {
+      let is_last = line_index == total - 1
+      // 光标（M8 用户反馈①）：末行按 col 插入光标符号（▌）——会话运行时
+      // 可见，指示下一个键入位置（列光标模型与 write_at_col 同源）
+      let display = if is_last && term.running() {
+        let chars : Array[Char] = []
+        for c in line {
+          chars.push(c)
+        }
+        let col = term.col.clamp(min=0, max=chars.length())
+        let buf = StringBuilder()
+        for i in 0..<col {
+          buf.write_char(chars[i])
+        }
+        buf.write_string("▌")
+        for i in col..<chars.length() {
+          buf.write_char(chars[i])
+        }
+        buf.to_string()
+      } else {
+        line
+      }
+      screen_rows.push(
+        @views.text(
+          if display == "" { " " } else { display },
+          theme=studio_theme(),
+          role=Mono,
+          width=(width - 16.0).max(60.0),
+          height=16.0,
+          align=TextStart,
+        ).foreground(code_plain_color()),
+      )
+      line_index = line_index + 1
+    }
+  }
+  // 滚动受控（M8 用户反馈②）：offset 跟随模型（用户手动滚动经
+  // TerminalScrolled 回写）；新输出时模型置 (0, 1e9) + 序号自增 →
+  // ScrollRequest 强制滚到底部（容器 clamp）
+  let screen = @views.container(
+    @views.padding_edges(
+      @views.scroll_view(
+        @views.column(screen_rows, spacing=0.0),
+        offset=model.terminal_scroll,
+        width=width - 16.0,
+        height=screen_height - 16.0,
+        on_scroll=Some(offset => TerminalScrolled(offset)),
+        request=@core.ScrollRequest::new(
+          id=model.terminal_scroll_seq,
+          offset=model.terminal_scroll,
+        ),
+        shows_indicator=true,
+      ),
+      left=8.0,
+      right=8.0,
+    ),
+    background=ide_editor_background(),
+    width=width,
+    height=screen_height,
+    padding=0.0,
+  )
+  // 键盘直通（M8② 交互式）：keyboard_input 节点（identity key =
+  // "terminal-input"，Ctrl+T/AI 进入时 focus_key 聚焦）——键入经
+  // TerminalWrite 直写 PTY，回显由 PTY 输出流返回（真终端语义）
+  @terminal.keyboard_input(
+    screen,
+    fn(event) {
+      match @terminal.encode_key(event) {
+        Some(seq) => Some(TerminalWrite(seq))
+        None => None
+      }
+    },
+    fn(text) { Some(TerminalWrite(text)) },
   )
 }

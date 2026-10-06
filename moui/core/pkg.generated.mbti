@@ -1999,6 +1999,7 @@ pub(all) struct TextControlStateContext {
   composition_cursor : TextRange?
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
+  goal_column : Double?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextControlStateContext::equal(Self, Self) -> Bool
 pub fn TextControlStateContext::not_equal(Self, Self) -> Bool

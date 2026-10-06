@@ -318,13 +318,16 @@ test "构建运行:busy 置位 + 待执行请求按 kind 装配" {
     services,
   )
   assert_true(running.build_busy)
-  let request = match running.pending_build {
-    Some(request) => request
-    None => fail("应有待执行构建请求")
+  // 事件驱动(M1):过门即发 EvBuildSubmit,派发给注入的 submit 由组合根
+  // 监听器承担(回执仍是 ProjectBuildFinished)
+  match running.outbox {
+    [EvBuildSubmit(kind, root, entry_rel)] => {
+      assert_eq(kind, BkWebPreview)
+      assert_eq(root, "/root")
+      assert_eq(entry_rel, "web_wasm")
+    }
+    _ => fail("应发出构建提交事件")
   }
-  assert_eq(request.kind, BkWebPreview)
-  assert_eq(request.root, "/root")
-  assert_eq(request.entry_rel, "web_wasm")
 }
 
 ///|

@@ -7,9 +7,29 @@
 /// 仍走 with_undo_point + 既有 commit 通道，保证撤销栈连续。
 
 ///|
+/// AI 插件的会话切片挂载（M3，settings 样板同构）：lens 对 + wrap。
+/// 视图由壳组装（切片的 Feature view 域刻意 abort，见插件包注释）。
+fn ai_sessions_scope(
+) -> @moui.ScopedFeature[Model, @ai.AiSessions, @ai.AiSessionMsg, Msg] {
+  @ai.ai_sessions_feature().scope(
+    read=model => model.ai_sessions,
+    write=(sessions, model) => { ..model, ai_sessions: sessions },
+    wrap=message => AiSessionOp(message),
+  )
+}
+
+///|
 /// 壳消息分发：未命中返回 None（链式交给其他域）。
 pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
   match msg {
+    AiSessionOp(op) => {
+      // AI 插件会话切片经 Feature::scope 委托（M3）：lens 对 + wrap，
+      // 与 settings 样板同构；切片 update 零副作用，effect 原样丢弃。
+      let scope = ai_sessions_scope()
+      let (next, effect) = scope.update(model, op)
+      Some((next, effect))
+    }
+    SetPerspective(p) => Some(set_perspective(model, p))
     SetWorkSpace(workspace) => Some(set_workspace(model, workspace))
     TogglePaneLive => Some(toggle_pane_live(model))
     ShowPaneLive => Some(show_pane_live(model))
@@ -208,7 +228,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         )
       }
     }
-    SetRightVisible(visible) => Some(set_right_visible(model, visible))
+    SetRightView(view) => Some(set_right_view(model, view))
     // 列间 sash 拖拽：视图层已按当帧布局夹取，这里再兜底夹一次静态界限
     // （窗口在拖拽中途变小等时序差）。纯布局状态：不进撤销、不标脏。
     ResizeLeftPanel(width) =>
@@ -306,19 +326,11 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         (
           // **收起/展开底栏只动底栏**——绝不偷偷把 AI 输入面挪去右栏。
           //
-          // 早先的实现在收起时会把 `ai_anchor` 改成 `AiDocked`（理由是
-          // 「别把输入面整个藏起来」）。那个理由本身不成立，而且造成两个
-          // 用户可见的缺陷：
-          //   ① 收起底栏 → AI **自己出现在右栏**（用户没让它过去，
-          //      这叫「取消」也不为过：用户只是想折叠一个面板）；
-          //   ② 再展开、点「AI 输入」页签 → 输入面**回不来**
-          //      （锚点已是 `AiDocked`，底栏那份 composer 不画）。
-          //
-          // 正确的语义：折叠面板不等于切换输入面的落点。收起时若输入面
-          // 正由底栏承载，它**跟着一起收起**（和审计/控制台页签一样），
-          // 展开后原样回来——落点始终由 `ai_anchor` 单独决定，只有
-          // `SetAiAnchor` / `CycleAiAnchor` 能改它。
-          sync_ai_placement({ ..model, bottom_open: !model.bottom_open, }),
+          // 折叠面板是面板级动作，与「AI 输入面的宿主」是两件事：收起时
+          // 输入面跟着收起（和审计/控制台页签一样），展开后原样回来。
+          // 宿主由 right_view × 当前模式推导（M2），不存在
+          // 「收起把 AI 挪走」的联动（历史事故记录见计划文档）。
+          { ..model, bottom_open: !model.bottom_open, },
           @moui.Effect::none(),
         ),
       )
@@ -332,15 +344,6 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     AuditSettle(index, note) => Some(settle_audit(model, index, note))
     AuditSettleAll(note) => Some(settle_all_audit(model, note))
     ClearConsole => Some(({ ..model, log_lines: [], }, @moui.Effect::none()))
-    CycleAiAnchor =>
-      Some(
-        (
-          apply_ai_anchor(model, next_anchor(model.ai_anchor)),
-          @moui.Effect::none(),
-        ),
-      )
-    SetAiAnchor(anchor) =>
-      Some((apply_ai_anchor(model, anchor), @moui.Effect::none()))
     ToggleAiCardsFold =>
       Some(
         (
@@ -391,20 +394,19 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
 // ============================================================================
 
 ///|
-/// 工作区切换：图标栏点当前工作区 = 收起成空舞台（设计稿的 toggle 语义）；
-/// 切到可视化工作区时两个窗格都显（从收起态恢复要有内容，否则点了没反应）。
+/// 中心工作区切换（M2 起降为中心形态机制——模式切换走 `SetPerspective`，
+/// 活动栏不再有工作区按钮）。**「再点当前 = 空舞台」的语义已删除**（设计
+/// 契约 1：五种再点语义收敛为一种；空舞台只作为两窗格全关的自然结果出现）。
+/// 同值请求 = no-op。切可视化时两个窗格都显（从收起态恢复要有内容，
+/// 否则点了没反应）。
 fn set_workspace(
   model : Model,
   workspace : WorkSpace,
 ) -> (Model, @moui.Effect[Msg]) {
-  // 重复点当前工作区 = 收起（进空舞台）；否则切到「请求的」工作区。
-  // 通配臂不能绑成当前值（写成 (other, _) => other），那会让任何切换
-  // 都静默退回原工作区——这个 bug 只有落布局才看得出来。
-  let target = match (model.workspace, workspace) {
-    (WsVisual, WsVisual) | (WsCode, WsCode) => WsEmpty
-    (_, requested) => requested
+  if model.workspace == workspace {
+    return (model, @moui.Effect::none())
   }
-  let next = match target {
+  let next = match workspace {
     WsPreview => { ..model, workspace: WsPreview, mode: ModeDesign, }
     WsVisual =>
       {
@@ -415,6 +417,8 @@ fn set_workspace(
         pane_blocks: true,
       }
     WsCode => { ..model, workspace: WsCode, mode: ModeCode, }
+    // WsEmpty 不再是任何入口的目标（空舞台 = 两窗格全关的自然结果，
+    // 恢复入口是空舞台上的「+ 窗格」按钮）；防御性保留：照原样置位。
     WsEmpty => { ..model, workspace: WsEmpty, }
   }
   (next, @moui.Effect::none())
@@ -527,14 +531,85 @@ fn remove_project_at(model : Model, index : Int) -> Model {
 }
 
 ///|
-/// 右栏显隐（右栏头的 ✕ 关、图标栏的面板图标开）。幂等：重复设同一个值
-/// 不改变模型。打开时**顺带把左栏的收起考虑进去**——两者互不干涉，
-/// 各自吃各自的宽度（窄窗口下由 `shell_chrome_widths` 决定谁让位）。
-fn set_right_visible(
+/// 右栏当前视图（M2）：右栏头的 ✕ 关（RvHidden），重开与换视图走命令
+/// 面板逃生口（studio.right.context / studio.ai.dock 等）。幂等。
+///
+/// 切到停靠（RvAi）时底栏若正停在 AI 页签必须让开——否则底栏（stale 页签）
+/// 与右栏各画一份 composer。这不是「落点联动」：宿主仍是推导的，这里只是
+/// 把 stale 的页签选择复位到审计（AI 回底栏时由 studio.ai.bar 显式选回）。
+fn set_right_view(
   model : Model,
-  visible : Bool,
+  view : RightView,
 ) -> (Model, @moui.Effect[Msg]) {
-  ({ ..model, right_visible: visible, }, @moui.Effect::none())
+  let next = match (view, model.bottom_tab) {
+    (RvAi, BtAi) => { ..model, bottom_tab: BtAudit, }
+    _ => model
+  }
+  ({ ..next, right_view: view, }, @moui.Effect::none())
+}
+
+///|
+/// 任务模式切换（M2 三模式工作台）：**进模式 = 应用预设**——一次性置位
+/// 左栏视图、右栏视图与中心形态。同值再点 no-op（设计契约 1：不再有
+/// 「再点 = 空舞台」）。模式内的临时收放不回写预设（契约 3），预设也不
+/// 跨模式记忆（v1）。
+fn set_perspective(
+  model : Model,
+  perspective : StudioPerspective,
+) -> (Model, @moui.Effect[Msg]) {
+  if model.perspective == perspective {
+    return (model, @moui.Effect::none())
+  }
+  // 教学版 profile（M7）：只开放图形化模式——切其它模式 no-op（能力
+  // 缺席而非隐藏报错；活动栏对应图标也不渲染）
+  if model.profile is Teaching && !(perspective is PsVisual) {
+    return (model, @moui.Effect::none())
+  }
+  (apply_perspective_preset(model, perspective), @moui.Effect::none())
+}
+
+///|
+/// 预设表（唯一事实，与计划文档的表格一一对应）。中心形态：PsVisual →
+/// 可视化画布（预览走 `SetWorkSpace(WsPreview)` 的中心切换，不占活动栏）；
+/// PsCode → 代码编辑器；PsAi 不改 workspace——中心渲染以 perspective 优先
+/// （M2 过渡 = 全幅 composer，M3 升级会话流）。
+fn apply_perspective_preset(
+  model : Model,
+  perspective : StudioPerspective,
+) -> Model {
+  match perspective {
+    PsVisual =>
+      {
+        ..model,
+        perspective,
+        left_view: LeftTree,
+        right_view: RvContext,
+        workspace: WsVisual,
+        mode: ModeDesign,
+      }
+    PsCode =>
+      {
+        ..model,
+        perspective,
+        left_view: LeftProject,
+        right_view: RvAi,
+        workspace: WsCode,
+        mode: ModeDesign,
+      }
+    PsAi =>
+      {
+        ..model,
+        perspective,
+        // AI 会话列表（M3 插件贡献的左栏视图）
+        left_view: LeftAiSessions,
+        right_view: RvHidden,
+        mode: ModeDesign,
+        // 真终端页签（M5/M8）：AI 模式预设选中终端页签；底栏默认收起
+        // （M8④ 用户反馈：需要时再展开——页签头常在，点终端页签即展开）
+        bottom_tab: BtTerminal,
+        bottom_open: false,
+      }
+  }
 }
 
 // ============================================================================
@@ -697,115 +772,45 @@ pub fn push_recent(
 // ============================================================================
 
 ///|
-/// 锚点循环：只有两种落点，所以循环就是**两者互换**——从底栏按一次到
-/// 停靠，再按一次回底栏。
-fn next_anchor(anchor : AiAnchor) -> AiAnchor {
-  match anchor {
-    AiBar => AiDocked
-    AiDocked => AiBar
-  }
-}
-
-///|
 /// 切换底栏页签。
 ///
 /// **只读页签绝不搬动 AI 输入面**：点「运行审计」「Console」「问题」只是
-/// 想看一眼那个面板，`ai_anchor` 保持原样。早先的实现会在此时把锚点改成
-/// `AiDocked`（为了绕开 `sync_ai_placement` 对页签的强制），后果是用户在
-/// AI 输入面上点一下「问题」，**AI 就自己跑到右栏去了**——用户报的正是
-/// 这个。
-///
-/// 点「AI 输入」则是**明确要求把输入面放到这里**，所以锚点一并切到
-/// `AiBar`（从停靠档也能拉回来）。
+/// 想看一眼那个面板。M2 起 AI 的宿主由 `right_view` 与当前模式**推导**
+/// （右栏停靠 > AI 模式中心 > 底栏页签），「页签与落点互相联动」的整套
+/// reconciliation（sync_ai_placement / apply_ai_anchor）随之删除——
+/// 推导出的状态天然自洽，没有需要收敛的矛盾态。
+///|
+/// 底栏高度兜底钳制（视图层按窗口高度精确钳后，update 再兜底）。
+pub fn clamp_bottom_height(height : Double) -> Double {
+  height.clamp(min=100.0, max=1200.0)
+}
+
+///|
 fn select_bottom_tab(model : Model, tab : BottomTab) -> Model {
-  let anchored = if tab is BtAi {
-    { ..model, ai_anchor: AiBar, }
-  } else {
-    model
+  // 终端页签（M8）：**关闭态**再点 = 重开（terminal_open 恢复，句柄已清
+  // → 下次 update 重派生）；选中态的关闭走 TerminalTabClose（kill 需要
+  // 服务，在 update_with_services）。其余页签照常选中。
+  if tab is BtTerminal && !(model.terminal_open) {
+    model.terminal_open = true
+    return { ..model, bottom_tab: tab, bottom_open: true, }
   }
-  sync_ai_placement({ ..anchored, bottom_tab: tab, bottom_open: true, })
+  { ..model, bottom_tab: tab, bottom_open: true, }
 }
 
 ///|
-/// 显式切换 AI 落点（`SetAiAnchor` / `CycleAiAnchor` 共用）。
-///
-/// 「把输入面放到某处」必须**同时让它可见**，否则用户按了按钮却什么都没
-/// 发生：
-///
-/// - 落到底栏 ⇒ 展开底栏并选中 AI 页签（页签是「果」，由落点推出来）；
-/// - 落到右栏 ⇒ `sync_ai_placement` 会让底栏从 AI 页签让开，避免两份
-///   composer 同时画。
-fn apply_ai_anchor(model : Model, anchor : AiAnchor) -> Model {
-  match anchor {
-    AiBar =>
-      sync_ai_placement({
-        ..model,
-        ai_anchor: AiBar,
-        bottom_tab: BtAi,
-        bottom_open: true,
-      })
-    AiDocked => sync_ai_placement({ ..model, ai_anchor: AiDocked, })
-  }
-}
-
-///|
-/// 把「AI 落点」与「底栏状态」收敛成**一个自洽状态**（唯一漏斗）。
-///
-/// 这两件事在模型里是分开的字段（`ai_anchor` / `bottom_open` /
-/// `bottom_tab`），但它们描述的是**同一件事**——「输入条现在落在哪」。
-/// 任何一处单独改动都会产生矛盾状态，实测到过两种：
-///
-/// - `ai_anchor = AiDocked` 而 `bottom_tab = BtAi`：底栏与右栏**各画一份
-///   composer**，一个输入面变成两个；
-/// - `ai_anchor = AiBar` 而 `bottom_tab != BtAi`：底栏档却停在别的页签，
-///   展开底栏看不到输入框。
-///
-/// 所以所有写这三个字段的地方都必须过这个函数。**不要再在分支里各写一份
-/// 联动**——那正是上面第一个矛盾的来源（`SetBottomTab` 改页签、`SetAiAnchor`
-/// 改锚点，两边各联动一半）。
-///
-/// **`bottom_open` 不在这个不变式里**（曾经的第三条约束「`AiBar` ⇒
-/// `bottom_open = true`」已删除）。折叠底栏是**面板级的**用户动作，与
-/// 「输入面落在哪」是两件事：折叠时输入面跟着收起（和审计/控制台页签
-/// 完全一样），展开后原样回来——因为 `bottom_tab` 仍是 `BtAi`。把
-/// `bottom_open` 钉成 `true` 会让「收起底栏」变成一个**按不动的按钮**。
-fn sync_ai_placement(model : Model) -> Model {
-  match model.ai_anchor {
-    AiBar =>
-      // 底栏档：只保证「高度装得下 composer」。
-      //
-      // **不强制 `bottom_tab`、也不强制 `bottom_open`**：
-      // - 强制页签会让「点其它页签」永远打不开（sync 每次都把它拉回
-      //   `BtAi`）——那正是早先不得不「顺手改锚点」的原因，而改锚点又
-      //   造成「AI 自己跑到右栏」；
-      // - 强制展开会让「收起底栏」变成按不动的按钮。
-      //
-      // 页签与展开都是**用户的选择**；落点只管「输入面归谁画」。要让
-      // 输入面可见，走 `apply_ai_anchor`（显式切换落点时才需要）。
-      { ..model, bottom_height: model.bottom_height.max(AI_BAR_HEIGHT), }
-    AiDocked =>
-      // 停靠档：输入条由右栏承载，底栏若正停在 AI 页签就必须让开
-      // （否则两边同时画）。底栏是否展开、展开多少由用户决定，不动。
-      {
-        ..model,
-        bottom_tab: if model.bottom_tab is BtAi {
-          BtAudit
-        } else {
-          model.bottom_tab
-        },
-      }
-  }
-}
-
-///|
-/// 追加 AI 会话卡（超 AI_CARD_LIMIT 丢最旧）。
+/// 追加 AI 会话卡（超 AI_CARD_LIMIT 丢最旧）：写进**当前会话**的线程
+/// （M3 会话切片化，经 amend 原位替换活跃会话）。
 pub fn push_ai_card(model : Model, card : AiCard) -> Model {
-  let cards = model.ai_cards
-  cards.push(AiCard::{ ..card, seq: model.ai_card_seq, })
+  let session = model.ai_sessions.current()
+  let cards = session.cards
+  cards.push(AiCard::{ ..card, seq: session.card_seq, })
   while cards.length() > AI_CARD_LIMIT {
     ignore(cards.remove(0))
   }
-  { ..model, ai_cards: cards, ai_card_seq: model.ai_card_seq + 1, }
+  model.ai_sessions.amend(
+    { ..session, cards, card_seq: session.card_seq + 1, },
+  )
+  model
 }
 
 // ============================================================================
@@ -921,9 +926,12 @@ pub fn with_notice(model : Model, notice : String, warning : Bool) -> Model {
 /// 每条命令都是既有消息的封装——命令面板不引入新的状态通道。
 fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) {
   match id {
-    "studio.workspace.visual" => update_pure(model, SetWorkSpace(WsVisual))
-    "studio.workspace.code" => update_pure(model, SetWorkSpace(WsCode))
-    "studio.workspace.empty" => update_pure(model, SetWorkSpace(WsEmpty))
+    // 三模式（M2）：面板命令 = 模式命令；预览是图形化模式的中心形态
+    "studio.mode.visual" => update_pure(model, SetPerspective(PsVisual))
+    "studio.mode.code" => update_pure(model, SetPerspective(PsCode))
+    "studio.mode.ai" => update_pure(model, SetPerspective(PsAi))
+    "studio.workspace.visual" => update_pure(model, SetPerspective(PsVisual))
+    "studio.workspace.code" => update_pure(model, SetPerspective(PsCode))
     "studio.workspace.preview" => update_pure(model, SetWorkSpace(WsPreview))
     "studio.pane.split" => update_pure(model, SetSplitRatio(0.55))
     "studio.pane.live" => update_pure(model, TogglePaneLive)
@@ -931,7 +939,11 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.left.tree" => update_pure(model, SetLeftView(LeftTree))
     "studio.left.data" => update_pure(model, SetLeftView(LeftData))
     "studio.right.toggle" =>
-      update_pure(model, SetRightVisible(!model.right_visible))
+      update_pure(
+        model,
+        SetRightView(if model.right_view is RvHidden { RvContext } else { RvHidden }),
+      )
+    "studio.right.context" => update_pure(model, SetRightView(RvContext))
     "studio.ctx.runtime" => update_pure(model, SetContextTab(CtxRuntime))
     "studio.code.complete" => update_pure(model, TriggerCompletion)
     "studio.code.jump" => update_pure(model, JumpToDeclaration)
@@ -941,13 +953,14 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.bottom.toggle" => update_pure(model, ToggleBottom)
     "studio.audit.settle_all" =>
       update_pure(model, AuditSettleAll("app.audit.confirmed"))
-    "studio.ai.anchor" => update_pure(model, CycleAiAnchor)
-    "studio.ai.bar" => update_pure(model, SetAiAnchor(AiBar))
-    "studio.ai.dock" =>
-      update_pure(
-        model,
-        SetAiAnchor(if model.ai_anchor is AiDocked { AiBar } else { AiDocked }),
-      )
+    // AI 落点显式 move-to（M2）：落底栏 = 右栏换回检查器 + 展开底栏选中
+    // AI 页签（「把输入面放到某处」必须同时让它可见）；落右栏 = 停靠。
+    // 不再有循环命令。composer 的 ghost 按钮也走这两条命令。
+    "studio.ai.bar" => {
+      let (next, _) = update_pure(model, SetRightView(RvContext))
+      update_pure(next, SetBottomTab(BtAi))
+    }
+    "studio.ai.dock" => update_pure(model, SetRightView(RvAi))
     "studio.ai.history" => update_pure(model, ToggleAiHistory)
     "studio.settings" => update_pure(model, ToggleSettings)
     "studio.run.start" => update_pure(model, RunStart)

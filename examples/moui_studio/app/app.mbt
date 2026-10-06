@@ -3,8 +3,13 @@
 /// + 真实 provider 派发。平台入口只负责把 provider_submit 与 timer 接上。
 
 ///|
-fn noop_compile_cancel() -> Unit {
-  ()
+/// 测试辅助：置 MoonBit 代码草稿（M6① 着色分派验证用；生产路径由
+/// sync_code_draft 按 IR 播种，不手置草稿）。
+pub fn update_moonbit_draft_for_test(
+  model : Model,
+  draft : String,
+) -> Model {
+  { ..model, code_draft: draft, }
 }
 
 ///|
@@ -24,72 +29,18 @@ pub fn explanation_system_prompt() -> String {
 pub const LANGUAGE_SETTINGS_KEY : String = "studio.language"
 
 ///|
-/// 真实 provider 请求规格：由 app 组装（面板里的模型名 + 按请求类型
-/// 选择的 system 提示），平台入口只负责投递，不再自行拼提示。
-pub(all) struct ProviderRequestSpec {
-  endpoint : String
-  key : String
-  model : String
-  system : String
-  prompt : String
-}
+/// 服务闭包与请求规格的类型定义已收编进内核服务注册表
+/// （`kernel/services.mbt`，M1 插件化）；这里保留公开别名，既有引用零改动。
+pub type ProviderRequestSpec = @kernel.ProviderRequestSpec
 
 ///|
-/// 真实 provider 提交签名：入口注入，UI 线程从不等待网络。
-pub type ProviderSubmit = (
-  ProviderRequestSpec,
-  (Result[String, String]) -> Unit,
-) -> Unit
+pub type ProviderSubmit = @kernel.ProviderSubmit
 
 ///|
-fn noop_provider_submit(
-  _spec : ProviderRequestSpec,
-  callback : (Result[String, String]) -> Unit,
-) -> Unit {
-  callback(Err("真实 provider 未接入"))
-}
+pub type CompileSubmit = @kernel.CompileSubmit
 
 ///|
-/// 真编译提交签名：由平台入口注入（macOS 起 native worker；Web/测试用
-/// noop）。UI 线程同步返回、从不等待 moon 工具链；工具链进程全部在
-/// async worker 上跑，进度与结果都经回调回到 UI 线程（与 provider 同一模式）。
-///
-/// `on_progress` 让界面在编译过程中就能显示「正在做第 N 步」——没有它，
-/// 用户点完编译只能看着一个静态徽标等十几秒，读起来像「卡住了」。
-pub type CompileSubmit = (
-  String,
-  String,
-  (@export.CompileProgress) -> Unit,
-  (Result[@export.CompileReport, String]) -> Unit,
-) -> Unit
-
-///|
-fn noop_compile_submit(
-  _project_json : String,
-  _app_name : String,
-  _on_progress : (@export.CompileProgress) -> Unit,
-  callback : (Result[@export.CompileReport, String]) -> Unit,
-) -> Unit {
-  callback(
-    Err("本端没有真编译执行器：编译轨仅在 native 入口可达"),
-  )
-}
-
-///|
-/// 产物启动提交签名：由平台入口注入（macOS 起 native worker；Web/测试用
-/// noop）。与编译同一模式——UI 线程同步返回，`spawn` 在 worker 上做。
-///
-/// 启动是**脱离式**的：进程 reparent 到系统 init，Studio 退出不带走它。
-/// 所以回调只报「起没起来」，不含退出码（见 services/launch_native）。
-pub type LaunchSubmit = (String, (Result[Unit, String]) -> Unit) -> Unit
-
-///|
-fn noop_launch_submit(
-  _path : String,
-  callback : (Result[Unit, String]) -> Unit,
-) -> Unit {
-  callback(Err("本端没有产物启动执行器：仅 native 入口可达"))
-}
+pub type LaunchSubmit = @kernel.LaunchSubmit
 
 ///|
 /// 产物旁路动作 → 成功 toast 的 i18n 键（三种动作各说各的事实）。
@@ -117,7 +68,7 @@ pub fn update_with_launch_for_test(
     model,
     msg,
     services,
-    noop_provider_submit,
+    @kernel.noop_provider_submit,
     launch_submit,
     _tag => (),
   )
@@ -129,9 +80,115 @@ pub fn update_with_services(
   model : Model,
   msg : Msg,
   services : @services.AppServices,
-  preview_web? : PreviewWebControls = noop_preview_web_controls(),
+  preview_web? : PreviewWebControls = @kernel.noop_preview_web_controls(),
+  pty? : @kernel.PtyService[Msg] = @kernel.PtyService::unavailable(),
 ) -> (Model, @moui.Effect[Msg]) {
   match msg {
+    // 终端（M5）：PTY 输出增量喂屏；派生回执挂句柄；输入行经服务写出；
+    // 关闭 = kill + 句柄清空（屏保留回看）
+    TerminalOutput(text) => {
+      model.terminal.feed_output(text)
+      // 新输出 → 终端屏滚动跟随到底部（用户反馈②）：offset 置大值由
+      // scroll 容器 clamp，序号自增触发请求
+      model.terminal_scroll = @geometry.Point::new(x=0.0, y=1.0e9)
+      model.terminal_scroll_seq = model.terminal_scroll_seq + 1
+      (model, @moui.Effect::none())
+    }
+    TerminalSpawned(handle) => {
+      model.terminal.handle = handle
+      (model, @moui.Effect::none())
+    }
+    TerminalInput =>
+      match (model.terminal.take_input(), model.terminal.handle) {
+        (Some(line), Some(handle)) =>
+          if pty.available {
+            (
+              model,
+              @moui.Effect::dispatch(_emit => { (pty.write)(handle, line) }),
+            )
+          } else {
+            (model, @moui.Effect::none())
+          }
+        _ => (model, @moui.Effect::none())
+      }
+    TerminalType(text) => {
+      model.terminal.type_text(text)
+      (model, @moui.Effect::none())
+    }
+    // 终端页签关闭（M8）：kill PTY + 开关复位 + 页签退选到 Console +
+    // 底栏收起（屏保留回看；重开 = 再点页签，重派生条件自动成立）
+    TerminalTabClose =>
+      match model.terminal.handle {
+        Some(handle) => {
+          model.terminal.session_closed()
+          model.terminal_open = false
+          (
+            { ..model, bottom_tab: BtConsole, bottom_open: false },
+            @moui.Effect::dispatch(_emit => { (pty.kill)(handle) }),
+          )
+        }
+        None => {
+          model.terminal_open = false
+          ({ ..model, bottom_tab: BtConsole, bottom_open: false }, @moui.Effect::none())
+        }
+      }
+    // 终端直连键入（M8 交互式）：键盘/输入法透传，字节序列直接写 PTY
+    //（回显由 PTY 输出流返回——真终端语义，不本地回显）
+    TerminalWrite(seq) =>
+      match model.terminal.handle {
+        Some(handle) =>
+          if pty.available {
+            (
+              model,
+              @moui.Effect::dispatch(_emit => { (pty.write)(handle, seq) }),
+            )
+          } else {
+            (model, @moui.Effect::none())
+          }
+        None => (model, @moui.Effect::none())
+      }
+    TerminalClose =>
+      match model.terminal.handle {
+        Some(handle) => {
+          model.terminal.session_closed()
+          if pty.available {
+            (model, @moui.Effect::dispatch(_emit => { (pty.kill)(handle) }))
+          } else {
+            (model, @moui.Effect::none())
+          }
+        }
+        None => (model, @moui.Effect::none())
+      }
+    // 流式分片（M4）：追加进当前会话的流式卡。已停止（ai_streaming=false）
+    // 后的残余分片直接忽略（干净截断）。放导出层而非包装闭包——测试与
+    // 生产默认臂都经这里，消息流可断言。
+    StreamChunk(chunk) =>
+      if model.ai_streaming {
+        model.ai_sessions.append_to_last_card(chunk)
+        (model, @moui.Effect::none())
+      } else {
+        (model, @moui.Effect::none())
+      }
+    StreamFinished => ({ ..model, ai_streaming: false }, @moui.Effect::none())
+    StopGeneration => {
+      // 截断：停止标志复位 + 流式卡标记已停止（「已停止」回执）
+      let session = model.ai_sessions.current()
+      let total = session.cards.length()
+      let cards : Array[AiCard] = []
+      let mut index = 0
+      for card in session.cards {
+        if index == total - 1 && !card.settled {
+          cards.push(
+            AiCard::{ ..card, settled: true, settled_note: "app.ai.stopped" },
+          )
+        } else {
+          cards.push(card)
+        }
+        index = index + 1
+      }
+      model.ai_sessions.amend({ ..session, cards })
+      ({ ..model, ai_streaming: false }, @moui.Effect::none())
+    }
     // 复制产物路径：走系统剪贴板（native 是 NSPasteboard，Web 是可用的
     // navigator.clipboard 垫片）。成功/失败都回一条 ArtifactActionDone，
     // 让 notice 如实说话——静默失败会让用户以为「复制了」。
@@ -289,7 +346,8 @@ pub fn update_with_services(
                 ..model,
                 program,
                 pending: None,
-                prompt_draft: "",
+                // 新程序 = 新 AI 上下文：会话切片重置（旧语义即清草稿/历史）
+                ai_sessions: @ai.AiSessions::new(),
                 prompt_error: "",
                 explanation: "",
                 ai_busy: false,
@@ -305,14 +363,14 @@ pub fn update_with_services(
                 runtime_selections: Map([], capacity=4),
                 undo_stack: [],
                 redo_stack: [],
-                proposal_history: [],
                 // 打开成功：基线对齐新程序（脏标记随之清除）
                 saved_encoding: @codec.encode_program(program),
                 selected_control: first_control_name(program.controls),
                 selected_handler: first_handler_key(program.handlers),
-                // 迁移器落盘：组合根写 form.mbt + handlers.mbt 到旧文件目录
-                pending_code_project: true,
               }
+              // 迁移器落盘（M1 事件化）：发出代码工程写盘事件，目录取
+              // pending_open_dir（旧 .studio.json 所在目录，发出点消费清位）
+              let next = emit_code_project_write(next)
               (
                 with_notice(
                   sync_code_draft(next),
@@ -473,18 +531,10 @@ pub fn update_with_services(
                   @moui.Effect::none(),
                 )
               } else {
-                (
-                  {
-                    ..model,
-                    build_busy: true,
-                    pending_build: Some(ProjectBuildRequest::{
-                      kind,
-                      root: project.root,
-                      entry_rel,
-                    }),
-                  },
-                  @moui.Effect::none(),
-                )
+                // 过门即发构建事件（M1 事件化）：busy 置位防重复排队，
+                // 派发给注入的 build_submit 由组合根监听器承担
+                model.outbox.push(EvBuildSubmit(kind, project.root, entry_rel))
+                ({ ..model, build_busy: true, }, @moui.Effect::none())
               }
             }
           }
@@ -512,19 +562,25 @@ pub fn update_with_services(
           } else {
             cleared
           }
-          // WebPreview 成功(M2-2):设静态服务目录 + 组预览 URL +
-          // 存 build_seq(wrapper 据此派发 navigate/首次后 reload)
+          // WebPreview 成功(M2-2):设静态服务目录 + 组预览 URL。
+          // webview 命令改事件驱动(M1):URL 变化(含首次)发 navigate,
+          // 同 URL 重建发 reload——由组合根监听器经 PreviewNavigate/
+          // PreviewReload 消息派发,不再 diff build_seq。
           let with_web = if kind is BkWebPreview && report.ok {
             (preview_web_controls().set_directory)(report.web_root)
             let url = "http://127.0.0.1:\{preview_web_controls().port}/\{report.web_index_rel}"
-            {
+            let next = {
               ..with_frame,
               preview_web_url: Some(url),
               preview_web_opened: true,
               preview_mode: PmWeb,
               workspace: WsPreview,
-              build_seq: model.build_seq + 1,
             }
+            match model.preview_web_url {
+              Some(old) if old == url => next.outbox.push(EvPreviewWebReload)
+              _ => next.outbox.push(EvPreviewWebNavigate(url))
+            }
+            next
           } else {
             with_frame
           }
@@ -1109,19 +1165,22 @@ fn run_subscription(
 /// Web 入口注入 noop——浏览器只用离线假模型）。
 pub fn program(
   environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  provider_submit? : ProviderSubmit = noop_provider_submit,
-  compile_submit? : CompileSubmit = noop_compile_submit,
-  launch_submit? : LaunchSubmit = noop_launch_submit,
+  provider_submit? : ProviderSubmit = @kernel.noop_provider_submit,
+  compile_submit? : CompileSubmit = @kernel.noop_compile_submit,
+  launch_submit? : LaunchSubmit = @kernel.noop_launch_submit,
   runtime_snapshot? : RuntimeSnapshotFn = noop_runtime_snapshot,
-  compile_cancel? : () -> Unit = noop_compile_cancel,
-  build_submit? : BuildSubmit = noop_build_submit,
-  build_cancel? : () -> Unit = noop_build_cancel,
+  compile_cancel? : () -> Unit = @kernel.noop_compile_cancel,
+  build_submit? : BuildSubmit = @kernel.noop_build_submit,
+  build_cancel? : () -> Unit = @kernel.noop_build_cancel,
   webview_controller? : @webview_host.WebViewController? = None,
-  preview_web? : PreviewWebControls = noop_preview_web_controls(),
+  preview_web? : PreviewWebControls = @kernel.noop_preview_web_controls(),
   provider_config? : ProviderConfig,
   compile_track_available? : Bool = false,
   export_available? : Bool = false,
   immersive? : Bool = false,
+  pty? : @kernel.PtyService[Msg] = @kernel.PtyService::unavailable(),
+  focus_terminal? : () -> Unit = fn() { () },
+  profile? : StudioProfile = Full,
   apply_locale? : (String) -> Unit = _tag => (),
 ) -> @moui.Program[Model, Msg] {
   let services = environment.services()
@@ -1133,10 +1192,56 @@ pub fn program(
   let cancel_compile = compile_cancel
   let submit_build = build_submit
   let web_controls = preview_web
-  let web_controller = webview_controller
   let on_locale = apply_locale
+
   // 预览 web 控制注入(M2-2):槽位供视图与处理器读取
   install_preview_web(webview_controller, Some(preview_web))
+  // 类型化服务容器（M1 内核化）：平台能力集中一处，事件监听器与消息臂
+  // 经它取能力；provider 的选择已经由上面注入的闭包决定。
+  // 高亮服务（M6）：moonbit 词法器随内核注册；DSL 词法走既有直连扫描
+  // （关键字表依赖会话内 UI 语言，provider 注册表供未来消费者按 id 分派）
+  let highlight = @kernel.HighlightService::new()
+  highlight.register({ language: "moonbit", run: @kernel.moonbit_highlight })
+  let svc : @kernel.StudioServices[Msg] = {
+    provider_submit: submit,
+    compile_submit: submit_compile,
+    compile_cancel: cancel_compile,
+    build_submit: submit_build,
+    build_cancel: build_cancel,
+    launch_submit: submit_launch,
+    files: services.files(),
+    preview_web: web_controls,
+    highlight,
+  }
+  // 事件总线（M1 内核化）：组合根是唯一注册点。监听器是纯函数——把事件
+  // 翻译成后续消息，副作用由那些消息的 update 臂经 svc 执行。
+  let bus : @kernel.EventBus[StudioEvent, Msg] = @kernel.EventBus::new()
+  // 代码工程写盘（SelectTemplate / 提案采纳 / 迁移器的汇合点）
+  bus.on("studio.code_project", fn(event) {
+    match event {
+      EvCodeProjectWrite(dir, form_mbt, handlers_mbt) => [
+        CodeProjectWriteRequested(dir, form_mbt, handlers_mbt),
+      ]
+      _ => []
+    }
+  })
+  // 构建派发（ProjectBuildRun 过门后的执行通道）
+  bus.on("studio.build", fn(event) {
+    match event {
+      EvBuildSubmit(kind, root, entry_rel) => [
+        BuildDispatchRequested(ProjectBuildRequest::{ kind, root, entry_rel, }),
+      ]
+      _ => []
+    }
+  })
+  // webview 命令（Web 预览重建回执）
+  bus.on("studio.preview_web", fn(event) {
+    match event {
+      EvPreviewWebNavigate(url) => [PreviewNavigate(url)]
+      EvPreviewWebReload => [PreviewReload]
+      _ => []
+    }
+  })
   @moui.Program::new_with_environment(
     init=() => {
       (
@@ -1145,6 +1250,8 @@ pub fn program(
           compile_track_available~,
           export_available~,
           immersive~,
+          pty_available=pty.available && !(profile is Teaching),
+          profile~,
         ),
         @moui.Effect::batch([
           services
@@ -1160,6 +1267,44 @@ pub fn program(
     },
     update=(model, msg) => {
       let (next0, effect0) = match msg {
+        // 事件驱动消息（M1 内核化）：由事件总线从 outbox 翻译而来，副作用
+        // 经服务容器执行——监听器保持纯函数，这里才是副作用的家。
+        CodeProjectWriteRequested(dir, form_mbt, handlers_mbt) =>
+          (
+            model,
+            @moui.Effect::batch([
+              services
+              .files()
+              .write_text("\{dir}/form.mbt", form_mbt)
+              .effect(map=r => CodeProjectSaved(r)),
+              services
+              .files()
+              .write_text("\{dir}/handlers.mbt", handlers_mbt)
+              .effect(map=r => CodeProjectSaved(r)),
+            ]),
+          )
+        BuildDispatchRequested(request) =>
+          (
+            model,
+            @moui.Effect::dispatch(emit => {
+              submit_build(request.kind, request.root, request.entry_rel, result => {
+                emit(ProjectBuildFinished(request.kind, result))
+              })
+            }),
+          )
+        PreviewNavigate(url) => (model, (svc.preview_web.navigate)(url))
+        PreviewReload => (model, (svc.preview_web.reload)())
+        SetBottomHeight(h) =>
+          (
+            { ..model, bottom_height: h.clamp(min=100.0, max=1200.0) },
+            @moui.Effect::none(),
+          )
+        // 终端聚焦请求（M8）：经组合根注入的回调把键盘焦点交给终端节点
+        // （runtime.focus_key("terminal-input")——app 不接触 runtime）
+        FocusTerminalRequest => {
+          focus_terminal()
+          (model, @moui.Effect::none())
+        }
         // 「停止编译」= 真终止：清 UI 状态之外还要杀掉正在跑的 moon
         // 子进程（旧实现只清状态，工具链继续后台跑完，进程表可见）。
         CompileStopped => {
@@ -1212,7 +1357,7 @@ pub fn program(
           // 一层接得住——此前默认臂直通 update_pure，导入按钮点了没反应
           //（服务消息被静默丢弃，实测缺陷）。
           let (next, effect) = update_with_services(
-            model, msg, services, preview_web~,
+            model, msg, services, preview_web~, pty~,
           )
           // 运行时检查器挂载：只有「打开 Runtime 页签 / 显式刷新」两条
           // 路径会真正采样（O(节点数) 的全树遍历），其余消息零开销通过。
@@ -1224,54 +1369,39 @@ pub fn program(
           (next2, @moui.Effect::batch([effect, refresh_effect]))
         }
       }
-      // 真编译派发：只有「CompileRun 使 compile_busy 从假变真」这一次
-      // 转移才入队——重复点击/其它消息不会重复排队。项目 JSON 在此编码，
-      // 与导出 bundle 的输入是同一份（预览源码 = bundle 内实际编译源码）。
-      // 预览 webview(M2-2):url 变化 → navigate;同 url 重建 → reload。
-      // 控制器缺失(web 入口)时跳过——web 模式显式不可用。
-      let preview_web_effect = if web_controls.port > 0 {
-        match web_controller {
-          Some(controller) => {
-            let url_changed = match
-              (model.preview_web_url, next0.preview_web_url) {
-              (Some(old_url), Some(new_url)) => old_url != new_url
-              (None, Some(_)) => true
-              _ => false
-            }
-            let rebuilt = next0.build_seq != model.build_seq &&
-              next0.preview_mode is PmWeb &&
-              next0.preview_web_opened
-            if url_changed {
-              match next0.preview_web_url {
-                Some(url) => controller.navigate(url).effect(map=_ => Msg::Noop)
-                None => @moui.Effect::none()
-              }
-            } else if rebuilt && !url_changed {
-              controller.reload().effect(map=_ => Msg::Noop)
-            } else {
-              @moui.Effect::none()
-            }
-          }
-          None => @moui.Effect::none()
-        }
+      // 终端派生触发（M5）：AI 模式 + 终端页签在位 + 未派生 + 本端有
+      // PTY 能力 → 派生一次（句柄经 TerminalSpawned 回执挂上；非 flag——
+      // 读的是动作后的界面状态）。别处不再有派生入口。
+      // 终端聚焦请求（M8）：进 AI 模式或选终端页签时，请宿主把键盘焦点
+      // 交给终端节点（Effect::send 下一趟 update 到达——届时面板已渲染）
+      let terminal_focus_effect = match msg {
+        SetBottomTab(BtTerminal) | SetPerspective(PsAi) =>
+          @moui.Effect::send(FocusTerminalRequest)
+        _ => @moui.Effect::none()
+      }
+      // 终端全模式可用（M8 用户反馈①②）：触发不限模式——页签在哪个
+      // 模式被选中，PTY 就在那里派生
+      let terminal_spawn_effect = if next0.bottom_tab is BtTerminal &&
+        next0.terminal_open &&
+        next0.terminal.handle is None &&
+        pty.available {
+        @moui.Effect::dispatch(emit => {
+          let handle = (pty.spawn)(
+            80,
+            24,
+            text => TerminalOutput(text),
+            () => TerminalClose,
+            emit,
+          )
+          emit(TerminalSpawned(handle))
+        })
       } else {
         @moui.Effect::none()
       }
-      // 构建服务(M0-7):busy 上升 = 有新请求 → 派发注入的 build_submit
-      // (回调 emit ProjectBuildFinished,回执落 last_build 并汇进 Problems)
-      let build_effect = if next0.build_busy && !model.build_busy {
-        match next0.pending_build {
-          Some(request) =>
-            @moui.Effect::dispatch(emit => {
-              submit_build(request.kind, request.root, request.entry_rel, result => {
-                emit(ProjectBuildFinished(request.kind, result))
-              })
-            })
-          None => @moui.Effect::none()
-        }
-      } else {
-        @moui.Effect::none()
-      }
+      // 事件出口排空（M1 内核化）：本趟 update 发出的全部事实经事件总线
+      // 翻译为后续消息（副作用在那些消息的臂里经 svc 执行）。取代旧的
+      // preview_web diff / build busy 上升 / code_project flag 三个消费点。
+      let events_effect = @kernel.fire_events(next0.outbox, bus)
       let compile_effect = if compile_submit_needed(model, next0) {
         let json = @codec.encode_program(next0.program)
         let name = sanitize_export_name(next0)
@@ -1297,62 +1427,10 @@ pub fn program(
       let encoding = @codec.encode_program(next0.program)
       let dirty = encoding != next0.saved_encoding
       let should_write = dirty && encoding != next0.draft_encoding
-      // 代码工程骨架落盘（M6①/M6③）：SelectTemplate / 提案采纳 / 打开
-      // 迁移交错的置位标记 → 写 form.mbt + handlers.mbt。写盘目录优先取
-      // `pending_open_dir`（迁移器：旧 .studio.json 所在目录），否则打开
-      // 工程的首个程序包；两者皆无时静默清位。
-      let code_project_effect = if next0.pending_code_project {
-        match next0.pending_open_dir {
-          Some(dir) => {
-            let files = code_project_files(next0.program)
-            @moui.Effect::batch([
-              services
-              .files()
-              .write_text("\{dir}/form.mbt", files.form_mbt)
-              .effect(map=r => CodeProjectSaved(r)),
-              services
-              .files()
-              .write_text("\{dir}/handlers.mbt", files.handlers_mbt)
-              .effect(map=r => CodeProjectSaved(r)),
-            ])
-          }
-          None =>
-            match active_project_of(next0) {
-              Some(project) =>
-                match code_project_target(project) {
-                  Some(pkg) => {
-                    let files = code_project_files(next0.program)
-                    let root = project.root
-                    @moui.Effect::batch([
-                      services
-                      .files()
-                      .write_text("\{root}/\{pkg}/form.mbt", files.form_mbt)
-                      .effect(map=r => CodeProjectSaved(r)),
-                      services
-                      .files()
-                      .write_text(
-                        "\{root}/\{pkg}/handlers.mbt",
-                        files.handlers_mbt,
-                      )
-                      .effect(map=r => CodeProjectSaved(r)),
-                    ])
-                  }
-                  None => @moui.Effect::none()
-                }
-              None => @moui.Effect::none()
-            }
-        }
-      } else {
-        @moui.Effect::none()
-      }
       let next = {
         ..next0,
-        pending_code_project: false,
-        pending_open_dir: if next0.pending_code_project {
-          None
-        } else {
-          next0.pending_open_dir
-        },
+        // 事件已排空：outbox 归零（与旧 flag 的「消费即清位」同语义）
+        outbox: [],
         dirty,
         draft_encoding: if should_write {
           encoding
@@ -1363,10 +1441,10 @@ pub fn program(
       let effect = if should_write {
         @moui.Effect::batch([
           effect0,
-          build_effect,
-          preview_web_effect,
+          events_effect,
           compile_effect,
-          code_project_effect,
+          terminal_spawn_effect,
+          terminal_focus_effect,
           services
           .settings()
           .write(DRAFT_SETTINGS_KEY, encoding)
@@ -1375,10 +1453,10 @@ pub fn program(
       } else {
         @moui.Effect::batch([
           effect0,
-          build_effect,
-          preview_web_effect,
+          events_effect,
           compile_effect,
-          code_project_effect,
+          terminal_spawn_effect,
+          terminal_focus_effect,
         ])
       }
       (next, effect)
@@ -1492,7 +1570,36 @@ fn update_with_provider(
     }
     ExplainHandler =>
       if model.provider_mode is Fake || model.provider_key == "" {
-        update_pure(model, ExplainHandler)
+        // M4 流式：fake 路径 = 确定性分块流（本地讲解文本按固定字符数
+        // 切块，逐片经 StreamChunk 追加进当前会话的流式卡；真实 provider
+        // 未来把回调换成 SSE 分片即可复用同一消息流）
+        let (with_explanation, _) = update_pure(model, msg)
+        let streamed = push_ai_card(
+          with_explanation,
+          AiCard::{
+            kind: CardExplanation,
+            title: text(translator(model), "app.ai.card.explain"),
+            body: "",
+            steps: [],
+            steps_done: 0,
+            progress: 0,
+            diff_lines: [],
+            settled: false,
+            settled_note: "",
+            seq: 0,
+          },
+        )
+        let streamed = { ..streamed, ai_streaming: true, explanation: "" }
+        let chunks = @ai.fake_stream_chunks(with_explanation.explanation, 12)
+        (
+          streamed,
+          @moui.Effect::dispatch(emit => {
+            for chunk in chunks {
+              emit(StreamChunk(chunk))
+            }
+            emit(StreamFinished)
+          }),
+        )
       } else {
         match current_handler(model) {
           None => (model, @moui.Effect::none())
@@ -1535,7 +1642,7 @@ fn update_with_provider(
                 key: model.provider_key,
                 model: model.provider_model,
                 system: @proposals.proposal_system_prompt(),
-                prompt: model.prompt_draft,
+                prompt: model.ai_sessions.current().prompt_draft,
               },
               result => emit(RealGenerationFinished(result)),
             )

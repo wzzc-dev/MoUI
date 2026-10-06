@@ -43,6 +43,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.pill", GeneratedI18nMessage::Text("Collapse to pill")),
       ("app.ai.real", GeneratedI18nMessage::Text("Real model")),
       ("app.ai.send", GeneratedI18nMessage::Text("Send")),
+      ("app.ai.stop", GeneratedI18nMessage::Text("Stop")),
       ("app.lang.en", GeneratedI18nMessage::Text("English")),
       ("app.lang.zh", GeneratedI18nMessage::Text("中文")),
       ("app.palette", GeneratedI18nMessage::Text("Controls")),
@@ -141,6 +142,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.history", GeneratedI18nMessage::Text("Proposal history")),
       ("app.ai.see_all", GeneratedI18nMessage::Text("See all sessions →")),
       ("app.ai.settled", GeneratedI18nMessage::Text("handled")),
+      ("app.ai.stopped", GeneratedI18nMessage::Text("Stopped by user")),
       ("app.ai.to_dock", GeneratedI18nMessage::Text("Dock to right panel")),
       (
         "app.audit.boot",
@@ -203,6 +205,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "The key stays in local memory only: never in source, never in exports, never written to settings.",
         ),
       ),
+      ("app.ai.sessions", GeneratedI18nMessage::Text("AI sessions")),
       ("app.ai.settings", GeneratedI18nMessage::Text("Model settings")),
       (
         "app.audit.empty",
@@ -263,6 +266,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.ai.card.diff",
         GeneratedI18nMessage::Text("{count} changes to review"),
+      ),
+      (
+        "app.ai.elsewhere",
+        GeneratedI18nMessage::Text(
+          "The AI composer lives in another panel (right dock or AI workbench).",
+        ),
       ),
       ("app.ai.fold_idle", GeneratedI18nMessage::Text("Agent thread")),
       ("app.ai.mode.edit", GeneratedI18nMessage::Text("Edit")),
@@ -329,6 +338,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.status.saved", GeneratedI18nMessage::Text("Project saved")),
       ("app.stmt.tpl.ask", GeneratedI18nMessage::Text("Ask and wait")),
+      ("app.terminal.run", GeneratedI18nMessage::Text("Run")),
       ("app.variable.new", GeneratedI18nMessage::Text("New variable")),
       ("blocks.set_index", GeneratedI18nMessage::Text("Set element")),
       ("builtin.contains", GeneratedI18nMessage::Text("contains")),
@@ -421,7 +431,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ai.anchor.left", GeneratedI18nMessage::Text("Bottom left")),
       ("app.ai.explanation", GeneratedI18nMessage::Text("Explanation")),
+      (
+        "app.ai.host.center",
+        GeneratedI18nMessage::Text("AI workbench · center"),
+      ),
       ("app.ai.mode.repair", GeneratedI18nMessage::Text("Repair")),
+      ("app.ai.session.new", GeneratedI18nMessage::Text("New session")),
       ("app.audit.controls", GeneratedI18nMessage::Text("Control layer ready")),
       ("app.audit.handlers", GeneratedI18nMessage::Text("Event handlers ready")),
       ("app.audit.rejected", GeneratedI18nMessage::Text("rejected")),
@@ -467,6 +482,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide_live", GeneratedI18nMessage::Text("Hide live app")),
       ("app.pane.live.idle", GeneratedI18nMessage::Text("design")),
       ("app.pane.show_live", GeneratedI18nMessage::Text("+ Live App")),
+      ("app.perspective.ai", GeneratedI18nMessage::Text("AI workbench")),
       ("app.problems.build", GeneratedI18nMessage::Text("Build")),
       ("app.problems.draft", GeneratedI18nMessage::Text("Draft")),
       ("app.problems.empty", GeneratedI18nMessage::Text("No problems found.")),
@@ -507,6 +523,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_broadcast", GeneratedI18nMessage::Text("Broadcast")),
       ("app.ai.anchor.right", GeneratedI18nMessage::Text("Bottom right")),
       ("app.ai.card.applied", GeneratedI18nMessage::Text("Applied")),
+      ("app.ai.card.explain", GeneratedI18nMessage::Text("Explanation")),
       (
         "app.ai.fold_pending",
         GeneratedI18nMessage::Text("Agent · {count} to audit"),
@@ -540,6 +557,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.bottom.collapse", GeneratedI18nMessage::Text("Collapse bottom bar")),
       ("app.bottom.problems", GeneratedI18nMessage::Text("Problems")),
+      ("app.bottom.terminal", GeneratedI18nMessage::Text("Terminal")),
       (
         "app.code.cheatsheet",
         GeneratedI18nMessage::Text(
@@ -712,6 +730,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.expr.tpl.to_text", GeneratedI18nMessage::Text("To text")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("Delete control")),
       ("app.pane.show_blocks", GeneratedI18nMessage::Text("+ Blocks pane")),
+      ("app.perspective.code", GeneratedI18nMessage::Text("Code editing")),
       ("app.problems.program", GeneratedI18nMessage::Text("Program")),
       ("app.project.build_ok", GeneratedI18nMessage::Text("Build passed: {a}")),
       (
@@ -730,6 +749,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.stmt.tpl.forever", GeneratedI18nMessage::Text("Forever")),
       ("app.stmt.tpl.if_else", GeneratedI18nMessage::Text("If…else")),
       ("app.stmt.tpl.message", GeneratedI18nMessage::Text("message_box")),
+      (
+        "app.terminal.waiting",
+        GeneratedI18nMessage::Text(
+          "Switch to the AI mode bottom terminal to start a session.",
+        ),
+      ),
       (
         "app.window.drag_hint",
         GeneratedI18nMessage::Text("Drag this bar to move the window"),
@@ -906,6 +931,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Real compile failed"),
       ),
       ("app.pane.foot_controls", GeneratedI18nMessage::Text("{count} controls")),
+      ("app.perspective.visual", GeneratedI18nMessage::Text("Visual editing")),
       (
         "app.project.build_busy",
         GeneratedI18nMessage::Text("A build is already running"),
@@ -1060,6 +1086,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.stmt.tpl.append_row", GeneratedI18nMessage::Text("append_row")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("Class roll call")),
+      (
+        "app.terminal.input_hint",
+        GeneratedI18nMessage::Text("Type a command…"),
+      ),
       ("app.tree.create.control", GeneratedI18nMessage::Text("New control")),
       (
         "app.tree.create.handler",
@@ -1158,6 +1188,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.stmt.tpl.assign_expr",
         GeneratedI18nMessage::Text("assign + arithmetic"),
+      ),
+      (
+        "app.terminal.unavailable",
+        GeneratedI18nMessage::Text(
+          "Terminal is unavailable on this platform (PTY requires native).",
+        ),
       ),
       ("app.tree.create.variable", GeneratedI18nMessage::Text("New variable")),
       ("app.tree.group.functions", GeneratedI18nMessage::Text("Custom blocks")),
@@ -1282,6 +1318,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Bottom bar: console"),
       ),
       (
+        "app.command.perspective.ai",
+        GeneratedI18nMessage::Text("Switch to AI workbench"),
+      ),
+      (
         "app.command.workspace.code",
         GeneratedI18nMessage::Text("Switch to code workspace"),
       ),
@@ -1356,6 +1396,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.bottom.problems",
         GeneratedI18nMessage::Text("Bottom: Problems"),
       ),
+      (
+        "app.command.bottom.terminal",
+        GeneratedI18nMessage::Text("Switch to terminal tab"),
+      ),
       ("app.command.group.workspace", GeneratedI18nMessage::Text("Workspace")),
       (
         "app.command.track.interpret",
@@ -1423,6 +1467,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.audit.settle_all",
         GeneratedI18nMessage::Text("Confirm all side effects"),
+      ),
+      (
+        "app.command.perspective.code",
+        GeneratedI18nMessage::Text("Switch to code editing"),
       ),
       (
         "app.command.workspace.visual",
@@ -1512,6 +1560,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.block.cancel_value",
         GeneratedI18nMessage::Text("Cancel value edit"),
+      ),
+      (
+        "app.command.perspective.visual",
+        GeneratedI18nMessage::Text("Switch to visual editing"),
       ),
       (
         "app.inspector.window_size_hint",
@@ -1628,6 +1680,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.pill", GeneratedI18nMessage::Text("收成药丸")),
       ("app.ai.real", GeneratedI18nMessage::Text("真实模型")),
       ("app.ai.send", GeneratedI18nMessage::Text("发送")),
+      ("app.ai.stop", GeneratedI18nMessage::Text("停止")),
       ("app.lang.en", GeneratedI18nMessage::Text("English")),
       ("app.lang.zh", GeneratedI18nMessage::Text("中文")),
       ("app.palette", GeneratedI18nMessage::Text("控件")),
@@ -1724,6 +1777,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.history", GeneratedI18nMessage::Text("提案历史")),
       ("app.ai.see_all", GeneratedI18nMessage::Text("查看全部会话 →")),
       ("app.ai.settled", GeneratedI18nMessage::Text("已处理")),
+      ("app.ai.stopped", GeneratedI18nMessage::Text("已停止生成")),
       ("app.ai.to_dock", GeneratedI18nMessage::Text("停靠右栏")),
       (
         "app.audit.boot",
@@ -1786,6 +1840,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "密钥只进本机内存，不进源码、不进导出包、不写设置文件。",
         ),
       ),
+      ("app.ai.sessions", GeneratedI18nMessage::Text("AI 会话")),
       ("app.ai.settings", GeneratedI18nMessage::Text("模型设置")),
       (
         "app.audit.empty",
@@ -1843,6 +1898,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.ai.card.diff",
         GeneratedI18nMessage::Text("{count} 处改动待采纳"),
+      ),
+      (
+        "app.ai.elsewhere",
+        GeneratedI18nMessage::Text(
+          "AI 输入面在别的面板（右栏停靠或 AI 工作台）。",
+        ),
       ),
       ("app.ai.fold_idle", GeneratedI18nMessage::Text("Agent 线程")),
       ("app.ai.mode.edit", GeneratedI18nMessage::Text("修改")),
@@ -1908,6 +1969,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.status.saved", GeneratedI18nMessage::Text("已保存项目")),
       ("app.stmt.tpl.ask", GeneratedI18nMessage::Text("询问并等待")),
+      ("app.terminal.run", GeneratedI18nMessage::Text("执行")),
       ("app.variable.new", GeneratedI18nMessage::Text("新建变量")),
       ("blocks.set_index", GeneratedI18nMessage::Text("元素赋值")),
       ("builtin.contains", GeneratedI18nMessage::Text("文本包含")),
@@ -1985,7 +2047,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ai.anchor.left", GeneratedI18nMessage::Text("左下角")),
       ("app.ai.explanation", GeneratedI18nMessage::Text("讲解")),
+      (
+        "app.ai.host.center",
+        GeneratedI18nMessage::Text("AI 工作台 · 中心"),
+      ),
       ("app.ai.mode.repair", GeneratedI18nMessage::Text("修复")),
+      ("app.ai.session.new", GeneratedI18nMessage::Text("新建会话")),
       ("app.audit.controls", GeneratedI18nMessage::Text("控件层已就绪")),
       (
         "app.audit.handlers",
@@ -2028,6 +2095,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide_live", GeneratedI18nMessage::Text("隐藏实时应用")),
       ("app.pane.live.idle", GeneratedI18nMessage::Text("设计态")),
       ("app.pane.show_live", GeneratedI18nMessage::Text("+ 实时应用")),
+      ("app.perspective.ai", GeneratedI18nMessage::Text("AI 工作台")),
       ("app.problems.build", GeneratedI18nMessage::Text("构建")),
       ("app.problems.draft", GeneratedI18nMessage::Text("草稿")),
       (
@@ -2074,6 +2142,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("event.on_broadcast", GeneratedI18nMessage::Text("广播消息")),
       ("app.ai.anchor.right", GeneratedI18nMessage::Text("右下角")),
       ("app.ai.card.applied", GeneratedI18nMessage::Text("已应用")),
+      ("app.ai.card.explain", GeneratedI18nMessage::Text("讲解")),
       (
         "app.ai.fold_pending",
         GeneratedI18nMessage::Text("Agent 待审计 {count}"),
@@ -2109,6 +2178,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.bottom.collapse", GeneratedI18nMessage::Text("收起底栏")),
       ("app.bottom.problems", GeneratedI18nMessage::Text("问题")),
+      ("app.bottom.terminal", GeneratedI18nMessage::Text("终端")),
       (
         "app.code.cheatsheet",
         GeneratedI18nMessage::Text(
@@ -2270,6 +2340,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.expr.tpl.to_text", GeneratedI18nMessage::Text("转文本")),
       ("app.inspector.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.pane.show_blocks", GeneratedI18nMessage::Text("+ 积木窗格")),
+      ("app.perspective.code", GeneratedI18nMessage::Text("代码编辑")),
       ("app.problems.program", GeneratedI18nMessage::Text("程序")),
       ("app.project.build_ok", GeneratedI18nMessage::Text("构建通过:{a}")),
       (
@@ -2288,6 +2359,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.stmt.tpl.forever", GeneratedI18nMessage::Text("重复执行")),
       ("app.stmt.tpl.if_else", GeneratedI18nMessage::Text("如果…否则")),
       ("app.stmt.tpl.message", GeneratedI18nMessage::Text("信息框")),
+      (
+        "app.terminal.waiting",
+        GeneratedI18nMessage::Text(
+          "切到 AI 模式底栏终端即可开启会话。",
+        ),
+      ),
       (
         "app.window.drag_hint",
         GeneratedI18nMessage::Text("按住此条拖动窗口"),
@@ -2456,6 +2533,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.pane.foot_controls",
         GeneratedI18nMessage::Text("{count} 个控件"),
       ),
+      ("app.perspective.visual", GeneratedI18nMessage::Text("图形化编辑")),
       (
         "app.project.build_busy",
         GeneratedI18nMessage::Text("已有构建在进行,请等它结束"),
@@ -2607,6 +2685,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.stmt.tpl.append_row", GeneratedI18nMessage::Text("追加行")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),
+      ("app.terminal.input_hint", GeneratedI18nMessage::Text("输入命令…")),
       ("app.tree.create.control", GeneratedI18nMessage::Text("新建控件")),
       (
         "app.tree.create.handler",
@@ -2696,6 +2775,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.stmt.tpl.assign_expr",
         GeneratedI18nMessage::Text("赋值 + 运算"),
+      ),
+      (
+        "app.terminal.unavailable",
+        GeneratedI18nMessage::Text(
+          "本平台没有终端能力（PTY 仅 native）。",
+        ),
       ),
       ("app.tree.create.variable", GeneratedI18nMessage::Text("新建变量")),
       (
@@ -2826,6 +2911,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("底栏：Console"),
       ),
       (
+        "app.command.perspective.ai",
+        GeneratedI18nMessage::Text("切到 AI 工作台"),
+      ),
+      (
         "app.command.workspace.code",
         GeneratedI18nMessage::Text("切到代码工作区"),
       ),
@@ -2900,6 +2989,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.bottom.problems",
         GeneratedI18nMessage::Text("底栏：问题"),
       ),
+      (
+        "app.command.bottom.terminal",
+        GeneratedI18nMessage::Text("切到终端页签"),
+      ),
       ("app.command.group.workspace", GeneratedI18nMessage::Text("工作区")),
       (
         "app.command.track.interpret",
@@ -2973,6 +3066,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.audit.settle_all",
         GeneratedI18nMessage::Text("确认全部副作用"),
+      ),
+      (
+        "app.command.perspective.code",
+        GeneratedI18nMessage::Text("切到代码编辑"),
       ),
       (
         "app.command.workspace.visual",
@@ -3062,6 +3159,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.command.block.cancel_value",
         GeneratedI18nMessage::Text("取消值编辑"),
+      ),
+      (
+        "app.command.perspective.visual",
+        GeneratedI18nMessage::Text("切到图形化编辑"),
       ),
       (
         "app.inspector.window_size_hint",

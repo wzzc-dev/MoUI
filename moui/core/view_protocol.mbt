@@ -271,6 +271,9 @@ pub(all) struct TextControlStateContext {
   composition_cursor : TextRange?
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
+  /// 垂直移动的目标列（M6②，VS Code 口径）：ArrowUp/Down 播种并保持，
+  /// 水平移动/点击/文本插入重置为 None。None = 尚无目标列。
+  goal_column : Double?
 } derive(Eq, Debug, ToJson)
 
 ///|

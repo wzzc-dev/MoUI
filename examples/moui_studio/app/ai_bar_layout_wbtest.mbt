@@ -519,13 +519,13 @@ test "clicking a block with a note shown selects the block under the pointer" {
 test "collapsing the bottom bar does not move the AI composer to the right panel" {
   let model = initial_model()
   // 默认在底栏档
-  assert_true(model.ai_anchor is AiBar)
+  assert_true(model.right_view is RvContext)
   let collapsed = apply_shell(model, ToggleBottom)
   // 底栏收起了
   assert_false(collapsed.bottom_open)
   // **锚点没被动过**：用户没要求把 AI 挪去右栏
   assert_true(
-    collapsed.ai_anchor is AiBar,
+    collapsed.right_view is RvContext,
     msg="collapsing must not change the AI anchor",
   )
   // 右栏里没有第二份 composer
@@ -536,7 +536,7 @@ test "collapsing the bottom bar does not move the AI composer to the right panel
   assert_true(collapsed.bottom_tab is BtAi)
   let reopened = apply_shell(collapsed, ToggleBottom)
   assert_true(reopened.bottom_open)
-  assert_true(reopened.ai_anchor is AiBar)
+  assert_true(reopened.right_view is RvContext)
 }
 
 ///|
@@ -549,11 +549,11 @@ test "the AI tab restores the composer after collapse and expand" {
   let collapsed = apply_shell(model, ToggleBottom)
   let reopened = apply_shell(collapsed, ToggleBottom)
   assert_true(reopened.bottom_open)
-  // 点 AI 页签：锚点必须回到 AiBar（这才是「点得开」）
+  // 点 AI 页签：宿主本就在底栏，页签只负责选中（不产生落点联动）
   let on_ai = apply_shell(reopened, SetBottomTab(BtAi))
   assert_true(
-    on_ai.ai_anchor is AiBar,
-    msg="clicking the AI tab must anchor to AiBar",
+    on_ai.right_view is RvContext,
+    msg="clicking the AI tab must keep the host on the bar",
   )
   assert_true(on_ai.bottom_tab is BtAi)
   assert_true(on_ai.bottom_open)
@@ -561,21 +561,21 @@ test "the AI tab restores the composer after collapse and expand" {
   let commands = shell_draw(on_ai, 1280.0, 800.0)
   assert_true(shell_has_text(commands, "AI 输入"))
 
-  // **反例**：从停靠档点 AI 页签同样要能回到输入面
-  let docked = apply_shell(on_ai, SetAiAnchor(AiDocked))
-  assert_true(docked.ai_anchor is AiDocked)
-  let back = apply_shell(docked, SetBottomTab(BtAi))
-  assert_true(
-    back.ai_anchor is AiBar,
-    msg="AI tab must pull the composer back from dock",
+  // **反例**：切到停靠后，stale 的 AI 页签必须让位（审计顶上）——
+  // 否则底栏与右栏各画一份 composer
+  let docked = apply_shell(on_ai, SetRightView(RvAi))
+  assert_true(docked.right_view is RvAi)
+  assert_false(
+    docked.bottom_tab is BtAi,
+    msg="docking must move the stale AI tab out of the way",
   )
 
-  // **反例 2**：点只读页签不该把锚点搬走
-  let audit = apply_shell(back, SetBottomTab(BtAudit))
+  // **反例 2**：点只读页签不动宿主（回到底栏档再切审计，输入面留在底栏）
+  let bar_again = apply_shell(model, SetBottomTab(BtAi))
+  let audit = apply_shell(bar_again, SetBottomTab(BtAudit))
   assert_true(audit.bottom_tab is BtAudit)
   assert_true(audit.bottom_open)
-  let audit_commands = shell_draw(audit, 1280.0, 800.0)
-  assert_true(shell_has_text(audit_commands, "程序已载入 IR"))
+  assert_true(audit.right_view is RvContext)
 }
 
 ///|
@@ -588,11 +588,11 @@ test "the AI tab restores the composer after collapse and expand" {
 /// 判据：切页签前后 `ai_anchor` 必须**一模一样**，且右栏里不出现 composer。
 test "switching to a read-only bottom tab never docks the AI composer" {
   let model = initial_model()
-  assert_true(model.ai_anchor is AiBar)
+  assert_true(model.right_view is RvContext)
   for tab in [BtAudit, BtConsole, BtProblems] {
     let switched = apply_shell(model, SetBottomTab(tab))
     assert_true(
-      switched.ai_anchor is AiBar,
+      switched.right_view is RvContext,
       msg="a read-only tab must not move the AI composer",
     )
     // 右栏没有第二份 composer
@@ -612,24 +612,25 @@ test "switching to a read-only bottom tab never docks the AI composer" {
 }
 
 ///|
-/// **点「AI 输入」页签 = 把输入面放回底栏**（含从停靠档拉回）。
+/// **「放到底栏」命令 = 把输入面放回底栏并让它可见**（含从停靠档拉回）。
 ///
-/// 与上一条成对：只读页签不动落点，AI 页签**主动**把落点拉回底栏，
-/// 否则页签亮着、下面却没有输入框。
-test "the AI tab pulls the composer back to the bottom bar" {
+/// M2 起宿主由 right_view × 模式推导，落点切换是**复合动作**（右栏换回
+/// 检查器 + 展开底栏选中 AI 页签）——由 studio.ai.bar 命令承担；停靠后
+/// 底栏的 AI 页签已不在列表里，不存在「点页签拉回」的路径。
+test "the move-to-bar command pulls the composer back to the bottom bar" {
   let model = initial_model()
   // 先停靠到右栏（显式切换落点，这是唯一能改落点的入口）
-  let docked = apply_shell(model, SetAiAnchor(AiDocked))
-  assert_true(docked.ai_anchor is AiDocked)
+  let docked = apply_shell(model, SetRightView(RvAi))
+  assert_true(docked.right_view is RvAi)
   // 右栏这时有 composer
   assert_true(
     ai_layer(docked, translator_for(ZhHans), 1280.0, 800.0) is Some(_),
   )
-  // 点 AI 页签 → 拉回底栏档
-  let back = apply_shell(docked, SetBottomTab(BtAi))
+  // 命令「放到底栏」→ 拉回底栏档
+  let back = apply_shell(docked, StudioCommandRun("studio.ai.bar"))
   assert_true(
-    back.ai_anchor is AiBar,
-    msg="the AI tab must anchor the composer to the bar",
+    back.right_view is RvContext,
+    msg="the command must anchor the composer to the bar",
   )
   assert_true(back.bottom_tab is BtAi)
   assert_true(back.bottom_open)
@@ -647,12 +648,12 @@ test "explicitly anchoring to the bar reveals the composer" {
   let model = initial_model()
   // 走到一个「审计页签 + 停靠档」的状态
   let audit = apply_shell(model, SetBottomTab(BtAudit))
-  let docked = apply_shell(audit, SetAiAnchor(AiDocked))
-  assert_true(docked.ai_anchor is AiDocked)
+  let docked = apply_shell(audit, SetRightView(RvAi))
+  assert_true(docked.right_view is RvAi)
   assert_true(docked.bottom_tab is BtAudit)
-  // 显式落到底栏
-  let back = apply_shell(docked, SetAiAnchor(AiBar))
-  assert_true(back.ai_anchor is AiBar)
+  // 显式落到底栏（命令链负责选中 AI 页签 + 展开底栏）
+  let back = apply_shell(docked, StudioCommandRun("studio.ai.bar"))
+  assert_true(back.right_view is RvContext)
   assert_true(
     back.bottom_tab is BtAi,
     msg="anchoring to the bar must select the AI tab",

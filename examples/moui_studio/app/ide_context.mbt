@@ -369,7 +369,7 @@ fn context_head(
       Close,
       text(t, "app.right.hide"),
       false,
-      SetRightVisible(false),
+      SetRightView(RvHidden),
       20.0,
       20.0,
       12.0,

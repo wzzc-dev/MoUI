@@ -541,6 +541,7 @@ fn[Msg] markdown_session_pointer_event(
               caret,
               selection: None,
               text_selection_anchor: None,
+              goal_column: None,
               text_selection_origin: None,
               composition: None,
               composition_cursor: None,
@@ -596,6 +597,7 @@ fn[Msg] markdown_session_pointer_event(
               caret,
               selection: None,
               text_selection_anchor: Some(caret),
+              goal_column: None,
               text_selection_origin: Some(event.position),
               composition: None,
               composition_cursor: None,
@@ -707,6 +709,7 @@ fn[Msg] markdown_session_pointer_event(
           text_control=Some({
             ..ctx.text_control,
             text_selection_anchor: None,
+            goal_column: None,
             text_selection_origin: None,
           }),
           dirty=ViewPaintDirty,

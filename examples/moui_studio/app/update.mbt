@@ -613,10 +613,11 @@ fn update_shell_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           runtime_texts: @studio_lang.initial_texts(program),
           runtime_rows: @studio_lang.initial_rows(program),
           runtime_selections: Map([], capacity=4),
-          // 代码工程骨架待落盘（M6①）：组合根据此写 form.mbt/handlers.mbt
-          pending_code_project: true,
         },
       )
+      // 代码工程骨架待落盘（M6①，M1 事件化）：发出 EvCodeProjectWrite，
+      // 组合根监听器据此写 form.mbt/handlers.mbt
+      let next = emit_code_project_write(next)
       Some(
         (
           sync_code_draft({

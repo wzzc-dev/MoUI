@@ -495,6 +495,7 @@ test "vertical caret movement steps onto the visible blank line" {
       content,
       base,
       text_system,
+      goal_x=10.0,
       up=false,
     )
     down_steps.push(down)
@@ -512,6 +513,7 @@ test "vertical caret movement steps onto the visible blank line" {
       content,
       base,
       text_system,
+      goal_x=10.0,
       up=true,
     )
     up_steps.push(up)
@@ -717,6 +719,7 @@ fn vertical_caret_step(
     content,
     base,
     text_system,
+    goal_x=caret_rect.origin.x,
     up~,
   )
 }
@@ -829,4 +832,120 @@ test "every line box covers the font it renders" {
   // The document above renders headings, paragraphs, a list, a quote, a code
   // block, a table, a rule, and a footnote definition.
   inspect(checked > 8, content="true")
+}
+
+///|
+/// M6② goal-column 测试（VS Code 口径）：**目标列跨步保持**——首移从
+/// 当前 caret rect 播种 goal_x，之后垂直移动一直用同一个 goal_x（不随
+/// target 重算），水平移动/点击/输入才重置（控制字段流转在
+/// rich_text_vertical_caret_move_result + 各重置构造点）。
+fn vertical_caret_step_goal(
+  session : MarkdownDocumentSession,
+  caret : Int,
+  goal_x : Double?,
+  base : @core.FontSpec,
+  content : @core.Rect,
+  text_system : @core.TextSystem,
+  up~ : Bool,
+) -> Int {
+  let window = markdown_session_visible_window(
+    session,
+    { caret, selection: None, },
+    base,
+    source_mode=false,
+    focus_mode=false,
+    base_dir=None,
+    visible_scroll_y=0.0,
+    visible_viewport_height=640.0,
+    visible_overscan=0.0,
+    content_width=content.size.width,
+    text_system~,
+  )
+  let content = window.content_rect(content)
+  let caret_rect = rich_text_document_caret_rect_or_plain(
+    window.document,
+    caret,
+    content,
+    base,
+    text_system,
+    session.source(),
+  )
+  // 播种：首移无 goal 时取当前 caret rect 的 x；保持：有 goal 用原 goal
+  let goal = match goal_x {
+    Some(x) => x
+    None => caret_rect.origin.x
+  }
+  rich_text_vertical_target_offset(
+    window.document,
+    caret,
+    caret_rect,
+    content,
+    base,
+    text_system,
+    goal_x=goal,
+    up~,
+  )
+}
+
+///|
+test "vertical movement preserves goal column across short lines" {
+  let base = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  let session = MarkdownDocumentSession::new("abcdef\nab\nabcdef")
+  let content = rich_text_editor_content_rect(
+    @core.Rect::new(x=100.0, y=0.0, width=668.0, height=640.0),
+  )
+  // 从末行行尾（offset 16，第 3 行第 6 列）出发：首移播种 goal_x
+  let caret = 16
+  // 上移一行：短行 "ab" 只有 2 列 → 钳到行尾 offset 9
+  let step1 = vertical_caret_step_goal(
+    session, caret, None, base, content, text_system, up=true,
+  )
+  assert_eq(step1, 9)
+  // 再上移一行：goal 保持第 3 行第 6 列的 x → 落在长行第 6 列（offset 6），
+  // 不被短行钳成第 2 列（offset 2）
+  let step2 = vertical_caret_step_goal(
+    session, step1, Some(458.0), base, content, text_system, up=true,
+  )
+  assert_eq(step2, 6)
+}
+
+///|
+test "vertical movement preserves goal column across empty lines" {
+  let base = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  let session = MarkdownDocumentSession::new("abcdef\n\nabcdef")
+  let content = rich_text_editor_content_rect(
+    @core.Rect::new(x=100.0, y=0.0, width=668.0, height=640.0),
+  )
+  // 从末行行尾（offset 14，第 6 列）向上：空行是 bare separator（既有
+  // blank-gap collapse 口径）——跨过它落在 goal 列 = 首行第 6 列（offset 6）
+  let step1 = vertical_caret_step_goal(
+    session, 14, None, base, content, text_system, up=true,
+  )
+  assert_eq(step1, 6)
+  let step2 = vertical_caret_step_goal(
+    session, step1, Some(458.0), base, content, text_system, up=true,
+  )
+  assert_eq(step2, 0)
+}
+
+///|
+test "vertical movement clamps at document boundaries" {
+  let base = @core.FontSpec::new(size=17.0)
+  let text_system = @core.TextSystem::fallback()
+  let session = MarkdownDocumentSession::new("abcdef\nab")
+  let content = rich_text_editor_content_rect(
+    @core.Rect::new(x=100.0, y=0.0, width=668.0, height=640.0),
+  )
+  // 首行再向上：停在原地（offset 0）
+  let top = vertical_caret_step(
+    session, 0, base, content, text_system, up=true,
+  )
+  assert_eq(top, 0)
+  // 末行再向下：停在原地（文档末尾 offset 9）
+  let bottom = vertical_caret_step(
+    session, 9, base, content, text_system, up=false,
+  )
+  assert_eq(bottom, 9)
 }

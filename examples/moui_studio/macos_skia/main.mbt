@@ -58,6 +58,21 @@ async fn main {
   let launch_owner = @launch.LaunchOwner::new()
   // 通用构建执行器(M0-7):FramePreview/WebPreview/RunNative 的 moon 命令。
   let build_owner = @build_native.BuildOwner::new()
+  // 终端 PTY provider(M5):vendor pty_host 宿主技术,queue+worker 形态,
+  // 服务闭包同步入队(UI 零阻塞),worker 异步真派生 + 读循环。
+  let pty_provider = PtyProvider::{
+    queue: @async.Queue::new(kind=Unbounded),
+    pty_ref: Ref(None),
+  }
+  let pty_service = pty_native_service(pty_provider)
+  // 终端聚焦回调（M8）：runtime.focus_key 把键盘焦点交给终端节点
+  // （节点 identity key = "terminal-input"；runtime_ref 在程序创建后填充）
+  let focus_terminal = fn() {
+    match runtime_ref.val {
+      Some(runtime) => ignore(runtime.focus_key("terminal-input"))
+      None => ()
+    }
+  }
   // 本地静态服务(M2):绑定回环端口 0(OS 分配);服务目录在构建回执后
   // 经 PreviewWebControls.set_directory 动态指向 workspace 根。
   // 绑定失败不 fail-fast:Web 预览显式不可用(port=0),Frame 预览照常。
@@ -80,7 +95,7 @@ async fn main {
         },
         reload: () => controller.reload().effect(map=_ => @studio_app.Msg::Noop),
       }
-    _ => @studio_app.noop_preview_web_controls()
+    _ => @kernel.PreviewWebControls::noop()
   }
   let config = @provider.load_provider_config(
     "examples/moui_studio/.config.json",
@@ -97,6 +112,8 @@ async fn main {
   let runtime = @runtime.new_program_with_dimensions(
     program=@studio_app.program(
       environment=@macos.app_environment(window_drag=Some(window_drag)),
+      pty=pty_service,
+      focus_terminal~,
       provider_config~,
       // native 入口：编译轨可达（Web 入口保持默认 false =
       // 只有解释轨 + 源码预览，边界在 docs 定位页写明）。
@@ -177,6 +194,8 @@ async fn main {
     .render_all(@render_skia.from_env(platform=MacOS))
     .backend(@macos.entry(options=app_options))
     .run_async_pump()
+    // 窗口关闭后通知 PTY worker 优雅退出（kill 残留 shell 子进程）
+    pty_provider_shutdown(pty_provider)
   }
   let worker_task : async () -> Unit = async fn() {
     @provider.provider_worker_loop(owner)
@@ -189,6 +208,9 @@ async fn main {
   }
   let build_task : async () -> Unit = async fn() {
     @build_native.build_worker_loop(build_owner)
+  }
+  let pty_task : async () -> Unit = async fn() {
+    pty_worker_loop(pty_provider)
   }
   // 静态服务循环:仅在绑定成功时注册(随从);close 可优雅停止
   let webpreview_task : async () -> Unit = async fn() {
@@ -214,5 +236,6 @@ async fn main {
   // 窗口一返回就取消 worker，进程随即收敛。
   @macos.run_window_with_workers(window=window_task, workers=[
     worker_task, compile_task, launch_task, agent_task, build_task, webpreview_task,
+    pty_task,
   ])
 }

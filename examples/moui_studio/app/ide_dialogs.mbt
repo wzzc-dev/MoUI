@@ -25,23 +25,23 @@ pub fn settings_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     @views.row(
       [
         @views.button(
-          text(t, "app.ws.visual"),
-          on_click=SetWorkSpace(WsVisual),
-          variant=if model.workspace is WsVisual { Primary } else { Outline },
+          text(t, "app.perspective.visual"),
+          on_click=SetPerspective(PsVisual),
+          variant=if model.perspective is PsVisual { Primary } else { Outline },
           width=124.0,
           height=28.0,
         ),
         @views.button(
-          text(t, "app.ws.code"),
-          on_click=SetWorkSpace(WsCode),
-          variant=if model.workspace is WsCode { Primary } else { Outline },
+          text(t, "app.perspective.code"),
+          on_click=SetPerspective(PsCode),
+          variant=if model.perspective is PsCode { Primary } else { Outline },
           width=124.0,
           height=28.0,
         ),
         @views.button(
-          text(t, "app.ws.empty"),
-          on_click=SetWorkSpace(WsEmpty),
-          variant=if model.workspace is WsEmpty { Primary } else { Outline },
+          text(t, "app.perspective.ai"),
+          on_click=SetPerspective(PsAi),
+          variant=if model.perspective is PsAi { Primary } else { Outline },
           width=124.0,
           height=28.0,
         ),
@@ -249,7 +249,7 @@ pub fn ai_history_dialog(
     ).foreground(ide_text()),
     @views.divider(color=ide_border()),
   ]
-  if model.proposal_history.length() == 0 {
+  if model.ai_sessions.current().proposal_history.length() == 0 {
     rows.push(
       @views.text(
         text(t, "app.ai.history.empty"),
@@ -261,9 +261,9 @@ pub fn ai_history_dialog(
     )
   } else {
     // 新的在上（回放先看最近一次）
-    let mut index = model.proposal_history.length() - 1
+    let mut index = model.ai_sessions.current().proposal_history.length() - 1
     while index >= 0 {
-      let record = model.proposal_history[index]
+      let record = model.ai_sessions.current().proposal_history[index]
       rows.push(
         @views.container(
           @views.column(
@@ -576,26 +576,26 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
   let group_template = text(t, "app.templates")
   [
     StudioCommand::{
-      id: "studio.workspace.visual",
-      label: text(t, "app.command.ws.visual"),
+      id: "studio.mode.visual",
+      label: text(t, "app.command.perspective.visual"),
       group: group_ws,
       hint: "",
     },
     StudioCommand::{
-      id: "studio.workspace.code",
-      label: text(t, "app.command.ws.code"),
+      id: "studio.mode.code",
+      label: text(t, "app.command.perspective.code"),
+      group: group_ws,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.mode.ai",
+      label: text(t, "app.command.perspective.ai"),
       group: group_ws,
       hint: "",
     },
     StudioCommand::{
       id: "studio.workspace.preview",
       label: text(t, "app.command.ws.preview"),
-      group: group_ws,
-      hint: "",
-    },
-    StudioCommand::{
-      id: "studio.workspace.empty",
-      label: text(t, "app.command.ws.empty"),
       group: group_ws,
       hint: "",
     },

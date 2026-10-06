@@ -136,6 +136,7 @@ fn rich_text_vertical_target_offset(
   content : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
+  goal_x~ : Double,
   up~ : Bool,
 ) -> Int {
   if document.blocks.is_empty() {
@@ -149,7 +150,7 @@ fn rich_text_vertical_target_offset(
     } else {
       caret_rect.origin.y + caret_rect.size.height + line_height * 0.5
     }
-    let target_point = @core.Point::new(x=caret_rect.origin.x, y=target_y)
+    let target_point = @core.Point::new(x=goal_x, y=target_y)
     return rich_text_document_source_offset_at_point(
       document, target_point, content, base_font, text_system,
     ).unwrap_or(source_caret)
@@ -237,7 +238,7 @@ fn rich_text_vertical_target_offset(
   }
   // Within the block: keep the caret column and move one visual line.
   let target_point = @core.Point::new(
-    x=caret_rect.origin.x + caret_rect.size.width * 0.5,
+    x=goal_x,
     y=if up { line_center_y - step } else { line_center_y + step },
   )
   match
@@ -375,6 +376,12 @@ fn[Msg] rich_text_vertical_caret_move_result(
     ctx.text_system,
     display_text,
   )
+  // M6② goal-column：垂直移动播种（首移）并保持目标 x；水平移动/点击/
+  // 输入把 goal_column 清回 None（重置点在各自的 control 构造处）
+  let goal_x = match ctx.text_control.goal_column {
+    Some(x) => x
+    None => caret_rect.origin.x
+  }
   let target_offset = rich_text_vertical_target_offset(
     document,
     visual_caret,
@@ -382,6 +389,7 @@ fn[Msg] rich_text_vertical_caret_move_result(
     content,
     font,
     ctx.text_system,
+    goal_x~,
     up~,
   )
   if target_offset == ctx.text_control.caret && !extend_selection {
@@ -401,6 +409,7 @@ fn[Msg] rich_text_vertical_caret_move_result(
       text_selection_anchor: Some(anchor),
       composition: None,
       composition_cursor: None,
+      goal_column: Some(goal_x),
     }
   } else {
     {
@@ -410,6 +419,7 @@ fn[Msg] rich_text_vertical_caret_move_result(
       text_selection_anchor: None,
       composition: None,
       composition_cursor: None,
+      goal_column: Some(goal_x),
     }
   }
   let changed = next_control.caret != ctx.text_control.caret ||

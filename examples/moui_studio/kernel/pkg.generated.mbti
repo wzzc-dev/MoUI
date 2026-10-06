@@ -1,0 +1,161 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/kernel"
+
+import {
+  "examples/moui_studio/services/build",
+  "examples/moui_studio/services/export",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
+}
+
+// Values
+pub fn[Event, Msg] fire_events(Array[Event], EventBus[Event, Msg]) -> @core.Effect[Msg]
+
+pub fn moonbit_highlight(String) -> Array[HighlightToken]
+
+pub fn noop_build_cancel() -> Unit
+
+pub fn noop_build_submit(@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit
+
+pub fn noop_compile_cancel() -> Unit
+
+pub fn noop_compile_submit(String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit
+
+pub fn noop_launch_submit(String, (Result[Unit, String]) -> Unit) -> Unit
+
+pub fn[Msg] noop_preview_web_controls() -> PreviewWebControls[Msg]
+
+pub fn noop_provider_submit(ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct ActivityItem[Model, Msg] {
+  id : String
+  icon : String
+  label_key : String
+  active : (Model) -> Bool
+  on_click : (Model) -> Msg
+}
+
+pub(all) struct BottomTab[Model, Msg] {
+  id : String
+  label_key : String
+  badge : (Model) -> Int
+  selected : (Model) -> Bool
+  on_select : (Model) -> Msg
+  render_body : (Model, Double, Double) -> @core.View[Msg]
+}
+
+pub(all) struct CommandContribution[Model, Msg] {
+  id : String
+  label_key : String
+  run : (Model) -> Msg?
+}
+
+pub struct EventBus[Event, Msg] {
+  // private fields
+}
+pub fn[Event, Msg] EventBus::emit(Self[Event, Msg], Event) -> @core.Effect[Msg]
+pub fn[Event, Msg] EventBus::listener_names(Self[Event, Msg]) -> Array[String]
+pub fn[Event, Msg] EventBus::messages_for(Self[Event, Msg], Event) -> Array[Msg]
+pub fn[Event, Msg] EventBus::new() -> Self[Event, Msg]
+pub fn[Event, Msg] EventBus::on(Self[Event, Msg], String, (Event) -> Array[Msg]) -> Unit
+
+pub(all) enum HighlightKind {
+  HlPlain
+  HlKeyword
+  HlString
+  HlNumber
+  HlComment
+  HlBuiltin
+} derive(Eq)
+pub fn HighlightKind::equal(Self, Self) -> Bool
+pub fn HighlightKind::not_equal(Self, Self) -> Bool
+
+pub(all) struct HighlightService {
+  highlighters : Array[Highlighter]
+}
+pub fn HighlightService::dispatch(Self, String) -> Highlighter?
+pub fn HighlightService::new() -> Self
+pub fn HighlightService::register(Self, Highlighter) -> Unit
+
+pub(all) struct HighlightToken {
+  start : Int
+  text : String
+  kind : HighlightKind
+}
+
+pub(all) struct Highlighter {
+  language : String
+  run : (String) -> Array[HighlightToken]
+}
+
+pub(all) struct PanelView[Model, Msg] {
+  id : String
+  render : (Model, Double, Double) -> @core.View[Msg]
+}
+
+pub(all) struct Perspective[Model] {
+  id : String
+  label_key : String
+  left_panel : String
+  center : String
+  right_panel : String
+  bottom_tab : String
+  apply : (Model) -> Model
+}
+
+pub(all) struct PluginDescriptor {
+  name : String
+  summary : String
+}
+
+pub(all) struct PreviewWebControls[Msg] {
+  port : Int
+  set_directory : (String) -> Unit
+  navigate : (String) -> @core.Effect[Msg]
+  reload : () -> @core.Effect[Msg]
+}
+pub fn[Msg] PreviewWebControls::noop() -> Self[Msg]
+
+pub(all) struct ProviderRequestSpec {
+  endpoint : String
+  key : String
+  model : String
+  system : String
+  prompt : String
+}
+
+pub(all) struct PtyService[Msg] {
+  available : Bool
+  spawn : (Int, Int, (String) -> Msg, () -> Msg, (Msg) -> Unit) -> Int?
+  write : (Int, String) -> Unit
+  resize : (Int, Int, Int) -> Unit
+  kill : (Int) -> Unit
+}
+pub fn[Msg] PtyService::unavailable() -> Self[Msg]
+
+pub(all) struct StudioServices[Msg] {
+  provider_submit : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit
+  compile_submit : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit
+  compile_cancel : () -> Unit
+  build_submit : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit
+  build_cancel : () -> Unit
+  launch_submit : (String, (Result[Unit, String]) -> Unit) -> Unit
+  files : @services.FileServices
+  preview_web : PreviewWebControls[Msg]
+  highlight : HighlightService
+}
+pub fn[Msg] StudioServices::denied(files? : @services.FileServices) -> Self[Msg]
+
+// Type aliases
+pub type BuildSubmit = (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit
+
+pub type CompileSubmit = (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit
+
+pub type LaunchSubmit = (String, (Result[Unit, String]) -> Unit) -> Unit
+
+pub type ProviderSubmit = (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit
+
+// Traits

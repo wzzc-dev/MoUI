@@ -6,13 +6,18 @@ import {
   "examples/moui_studio/domain/ir",
   "examples/moui_studio/domain/proposals",
   "examples/moui_studio/domain/studio_lang",
+  "examples/moui_studio/kernel",
+  "examples/moui_studio/plugins/ai",
+  "examples/moui_studio/plugins/terminal",
   "examples/moui_studio/services/build",
   "examples/moui_studio/services/compiled_runtime",
   "examples/moui_studio/services/export",
   "examples/moui_studio/services/form_designer",
+  "examples/moui_studio/services/markdown",
   "examples/moui_studio/services/project",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views/common",
   "wzzc-dev/moui/views/style",
   "wzzc-dev/moui_i18n",
   "wzzc-dev/moui_richtext/code_editor",
@@ -20,7 +25,7 @@ import {
 }
 
 // Values
-pub const AI_BAR_HEIGHT : Double = 148.
+pub const AI_BAR_HEIGHT : Double = 138.
 
 pub const AI_CARD_LIMIT : Int = 24
 
@@ -46,7 +51,7 @@ pub const CATEGORY_RAIL_WIDTH : Double = 86.0
 
 pub const CHIPS_HEIGHT : Double = 26.0
 
-pub const COMPOSER_HEIGHT : Double = 98.0
+pub const COMPOSER_HEIGHT : Double = 88.0
 
 pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
 
@@ -136,11 +141,17 @@ pub fn ai_bar_height(Model, Double, Double) -> Double
 
 pub fn ai_card_height(Model, Double) -> Double
 
+pub fn ai_center(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
 pub fn ai_history_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
+
+pub fn ai_host_hint_key(Model) -> String
+
+pub fn ai_host_is_bottom(Model) -> Bool
 
 pub fn ai_layer(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]?
 
-pub fn anchor_hint_key(AiAnchor) -> String
+pub fn ai_session_list(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn app_running(Model) -> Bool
 
@@ -177,6 +188,10 @@ pub fn block_corner_radius(@blocks.BlockKind) -> Double
 pub fn block_fill(@blocks.BlockKind) -> @core.Color
 
 pub fn block_notch_color() -> @core.Color
+
+pub fn block_outline_path(Double, Double, Double, Double, Bool, Bool) -> Array[@core.PathVerb]
+
+pub fn block_outline_stroke() -> @core.Color
 
 pub fn block_row_texts(@moui_i18n.Translator, Array[@blocks.BlockItem]) -> (Array[String], Array[String])
 
@@ -266,7 +281,15 @@ pub fn code_number_color() -> @core.Color
 
 pub fn code_plain_color() -> @core.Color
 
+pub fn code_project_files(@ir.StudioProgram) -> CodeProjectFiles
+
+pub fn code_project_target(ProjectRecord) -> String?
+
+pub fn code_project_text(@ir.StudioProgram) -> String
+
 pub fn code_string_color() -> @core.Color
+
+pub fn code_text_diff(String, String) -> Array[(String, String)]
 
 pub fn code_type_color() -> @core.Color
 
@@ -318,6 +341,8 @@ pub fn decision_bar_height(Model) -> Double
 
 pub fn declaration_line_of(Model, Int) -> Int
 
+pub fn declaration_strip(Model, Double) -> @core.View[Msg]
+
 pub fn default_viewport_size() -> @core.Size
 
 pub fn design_backdrop_plan() -> Array[DesignDrawOp]
@@ -330,7 +355,11 @@ pub let design_total_height : Double
 
 pub fn diff_row(String, String, Double) -> @core.View[Msg]
 
+pub fn dirname_of(String) -> String
+
 pub fn draw_command_from_json(Json) -> Result[@core.DrawCommand, String]
+
+pub fn emit_code_project_write(Model) -> Model
 
 pub fn empty_hint(String, Double, Double) -> @core.View[Msg]
 
@@ -454,11 +483,11 @@ pub fn ide_warning() -> @core.Color
 
 pub fn ide_warning_soft() -> @core.Color
 
-pub fn initial_model(provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool) -> Model
+pub fn initial_model(provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty_available? : Bool, profile? : StudioProfile) -> Model
 
 pub fn inline_card(@core.Color, @core.View[Msg], Double, Bool) -> @core.View[Msg]
 
-pub fn install_preview_web(@host.WebViewController?, PreviewWebControls?) -> Unit
+pub fn install_preview_web(@host.WebViewController?, @kernel.PreviewWebControls[Msg]?) -> Unit
 
 pub fn ir_line_spans(Model) -> Array[IrLineSpan]
 
@@ -478,21 +507,23 @@ pub fn local_explanation(Model) -> String
 
 pub fn log_line(Model, LogLevel, String) -> Model
 
+pub fn markdown_blocks_view(Array[@markdown.MarkdownBlock], Double) -> @core.View[Msg]
+
 pub fn middle_ellipsis(String, Double) -> String
+
+pub fn migrate_studio_source(String, String) -> Result[MigrationOutcome, String]
+
+pub fn moonbit_line_ranged(String, Int) -> Array[RangedToken]
 
 pub fn no_text_measure(String) -> Double
 
-pub fn noop_build_cancel() -> Unit
-
-pub fn noop_build_submit(@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit
-
-pub fn noop_preview_web_controls() -> PreviewWebControls
+pub fn paint_block_outline(@common.PaintContext, Double, Double, Double, Double, @blocks.BlockKind, Bool, Bool) -> Unit
 
 pub fn pane_foot(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
-pub fn pane_head(String, String, Double, Array[@core.View[Msg]], tail? : String) -> @core.View[Msg]
+pub fn pane_head(String, String, Double, Array[@core.View[Msg]], tail? : String, actions_width? : Double) -> @core.View[Msg]
 
-pub fn pane_head_layout(String, String, String, Double, Int) -> PaneHeadLayout
+pub fn pane_head_layout(String, String, String, Double, Int, actions_width? : Double) -> PaneHeadLayout
 
 pub fn panel_head(String, String, Array[@core.View[Msg]], Double, trailing_widths? : Array[Double]) -> @core.View[Msg]
 
@@ -508,7 +539,7 @@ pub fn preview_replay_canvas(Model, PreviewFrame, Double) -> @core.View[Msg]
 
 pub fn preview_web_controller() -> @host.WebViewController?
 
-pub fn preview_web_controls() -> PreviewWebControls
+pub fn preview_web_controls() -> @kernel.PreviewWebControls[Msg]
 
 pub fn preview_workspace(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
@@ -520,7 +551,7 @@ pub fn problem_rows(Model, @moui_i18n.Translator) -> Array[ProblemRow]
 
 pub fn problems_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : PreviewWebControls, provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : @kernel.PreviewWebControls[Msg], provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty? : @kernel.PtyService[Msg], profile? : StudioProfile, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
 
 pub fn program_tree(Model) -> Array[TreeNode]
 
@@ -536,7 +567,7 @@ pub fn proposal_from_completion(Model, String) -> Model
 
 pub fn proposal_system_prompt() -> String
 
-pub fn push_ai_card(Model, AiCard) -> Model
+pub fn push_ai_card(Model, @ai.AiCard) -> Model
 
 pub fn push_audit(Model, AuditKind, String, String) -> Model
 
@@ -646,6 +677,8 @@ pub fn template_index_of(Int, String) -> Int?
 
 pub fn templates_for_category(@blocks.BlockCategory) -> Array[StatementTemplate]
 
+pub fn terminal_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
 pub fn text(@moui_i18n.Translator, String) -> String
 
 pub fn text_chip(String, Msg, Double, Bool) -> @core.View[Msg]
@@ -698,13 +731,15 @@ pub fn ui_language_from_tag(String) -> UiLanguage
 
 pub fn update_ide_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
+pub fn update_moonbit_draft_for_test(Model, String) -> Model
+
 pub fn update_pure(Model, Msg) -> (Model, @core.Effect[Msg])
 
 pub fn update_selection_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
 pub fn update_with_launch_for_test(Model, Msg, @services.AppServices, (String, (Result[Unit, String]) -> Unit) -> Unit) -> (Model, @core.Effect[Msg])
 
-pub fn update_with_services(Model, Msg, @services.AppServices, preview_web? : PreviewWebControls) -> (Model, @core.Effect[Msg])
+pub fn update_with_services(Model, Msg, @services.AppServices, preview_web? : @kernel.PreviewWebControls[Msg], pty? : @kernel.PtyService[Msg]) -> (Model, @core.Effect[Msg])
 
 pub fn upsert_project(Array[ProjectRecord], ProjectRecord) -> (Array[ProjectRecord], Int)
 
@@ -729,32 +764,6 @@ pub fn wrapped_line_count(String, Double) -> Int
 // Errors
 
 // Types and methods
-pub(all) enum AiAnchor {
-  AiBar
-  AiDocked
-}
-
-pub(all) struct AiCard {
-  kind : AiCardKind
-  title : String
-  body : String
-  steps : Array[String]
-  steps_done : Int
-  progress : Int
-  diff_lines : Array[(String, String)]
-  settled : Bool
-  settled_note : String
-  seq : Int
-}
-
-pub(all) enum AiCardKind {
-  CardPlan
-  CardDiff
-  CardSideEffect
-  CardExplanation
-  CardError
-}
-
 pub(all) enum ArtifactAction {
   ArtifactCopy
   ArtifactReveal
@@ -793,16 +802,14 @@ pub(all) struct BlocksDragState {
 }
 
 pub(all) enum BlocksDrawOp {
-  BlockBody(Double, Double, Double, Double, @blocks.BlockKind)
+  BlockOutline(Double, Double, Double, Double, @blocks.BlockKind, Bool, Bool)
   BlockArm(Double, Double, Double, Double, @blocks.BlockKind)
   BlockBadge(Double, Double, @blocks.BlockKind)
-  BlockTab(Double, Double, Double, @blocks.BlockKind)
-  BlockNotchCut(Double, Double)
   BlockLabel(String, Double, Double, Double, String)
   ScriptNote(String, Double, Double, Double)
   BlockStroke(Double, Double, Double, Double)
   InsertMark(Double, Double, Double, Bool)
-  SlotHole(Double, Double, Double, Double, Bool)
+  SlotHole(Double, Double, Double, Double, Bool, Bool)
 }
 
 pub(all) enum BottomTab {
@@ -810,6 +817,7 @@ pub(all) enum BottomTab {
   BtConsole
   BtProblems
   BtAi
+  BtTerminal
 }
 
 pub(all) enum ChipTone {
@@ -818,9 +826,19 @@ pub(all) enum ChipTone {
   Ghost
 }
 
+pub(all) enum CodeAppearance {
+  AppMoonBit
+  AppDsl
+}
+
 pub(all) struct CodeLine {
   number : Int
   tokens : Array[CodeToken]
+}
+
+pub(all) struct CodeProjectFiles {
+  form_mbt : String
+  handlers_mbt : String
 }
 
 pub(all) struct CodeToken {
@@ -943,6 +961,7 @@ pub(all) enum LeftView {
   LeftTree
   LeftData
   LeftProject
+  LeftAiSessions
   LeftHidden
 }
 
@@ -958,6 +977,13 @@ pub(all) struct LogLine {
   text : String
 }
 
+pub(all) struct MigrationOutcome {
+  program : @ir.StudioProgram
+  form_path : String
+  handlers_path : String
+  files : CodeProjectFiles
+}
+
 pub(all) enum Mode {
   ModeDesign
   ModeBlocks
@@ -970,6 +996,10 @@ pub(all) enum Mode {
 pub(all) struct Model {
   program : @ir.StudioProgram
   language : UiLanguage
+  code_appearance : CodeAppearance
+  outbox : Array[StudioEvent]
+  pending_open_dir : String?
+  preview_design_open : Bool
   mode : Mode
   design_zoom : Double
   selected_control : String
@@ -1001,7 +1031,7 @@ pub(all) struct Model {
   hover_studio_command : String
   hover_hint : String
   pending : PendingProposal?
-  prompt_draft : String
+  ai_sessions : @ai.AiSessions
   composer_mode : ComposerMode
   prompt_error : String
   provider_mode : ProviderMode
@@ -1031,7 +1061,6 @@ pub(all) struct Model {
   timer_elapsed : Int
   undo_stack : Array[UndoEntry]
   redo_stack : Array[UndoEntry]
-  proposal_history : Array[ProposalRecord]
   block_drag : BlocksDragState?
   workspace : WorkSpace
   pane_live : Bool
@@ -1040,7 +1069,9 @@ pub(all) struct Model {
   left_view : LeftView
   left_width : Double
   right_width : Double
-  right_visible : Bool
+  perspective : StudioPerspective
+  profile : StudioProfile
+  right_view : RightView
   immersive : Bool
   tree_query : String
   tree_collapsed : Array[String]
@@ -1048,9 +1079,11 @@ pub(all) struct Model {
   active_project : Int
   project_tree_collapsed : Array[String]
   selected_project_file : String?
+  open_project_file : OpenProjectFile?
+  project_file_caret : Int
+  project_file_selection : @core.TextRange?
   last_build : @build.BuildReport?
   build_busy : Bool
-  pending_build : ProjectBuildRequest?
   preview_write : PreviewWriteState?
   preview_frame : PreviewFrame?
   selected_semantic : Int?
@@ -1060,7 +1093,6 @@ pub(all) struct Model {
   preview_mode : PreviewMode
   preview_web_url : String?
   preview_web_opened : Bool
-  build_seq : Int
   ctx_tab : ContextTab
   bottom_open : Bool
   bottom_height : Double
@@ -1075,11 +1107,11 @@ pub(all) struct Model {
   palette_drag : (Int, Int)?
   expr_drag : Int?
   blocks_scroll_y : Double
-  ai_anchor : AiAnchor
   ai_cards_folded : Bool
+  ai_streaming : Bool
+  terminal : @terminal.TerminalState
+  mut terminal_open : Bool
   ai_context_chips : Array[String]
-  ai_cards : Array[AiCard]
-  ai_card_seq : Int
   settings_open : Bool
   ai_history_open : Bool
   toasts : Array[ToastEntry]
@@ -1092,6 +1124,15 @@ pub(all) struct Model {
 pub(all) enum Msg {
   Noop
   SwitchLanguage
+  CycleCodeAppearance
+  SetCodeAppearance(CodeAppearance)
+  ProjectFileLoaded(String, @services.ServiceTaskResult[String])
+  ClearProjectFile
+  EditProjectFile(String)
+  ProjectFileCaretMoved(Int, @core.TextRange?)
+  SaveProjectFile
+  ProjectFileSaveFinished(@services.ServiceTaskResult[Unit])
+  CodeProjectSaved(@services.ServiceTaskResult[Unit])
   SetMode(Mode)
   SetDesignZoom(Double)
   SelectControl(String)
@@ -1234,11 +1275,14 @@ pub(all) enum Msg {
   SemanticLabelCommit
   SemanticPatchFinished(Result[String, String])
   SelectFormControl(Int)
+  SetPreviewDesignOpen(Bool)
   FormDesignOpen
   FormDesignLoaded(@services.ServiceTaskResult[String])
   FormDesignDragEnd(Int, Double, Double)
   FormDesignResizeEnd(Int, Double, Double)
   FormDesignSaved(@services.ServiceTaskResult[Unit])
+  FormDesignExternalCheck
+  FormDesignExternalChecked(@services.ServiceTaskResult[String])
   SetPreviewMode(PreviewMode)
   PreviewNavigate(String)
   PreviewReload
@@ -1246,16 +1290,30 @@ pub(all) enum Msg {
   ExportDirPicked(@services.ServiceTaskResult[String])
   ExportFileWritten(@services.ServiceTaskResult[Unit])
   SetNotice(String)
+  CodeProjectWriteRequested(String, String, String)
+  BuildDispatchRequested(ProjectBuildRequest)
+  AiSessionOp(@ai.AiSessionMsg)
+  TerminalOutput(String)
+  TerminalSpawned(Int?)
+  TerminalInput
+  TerminalClose
+  TerminalType(String)
+  TerminalWrite(String)
+  TerminalTabClose
+  StreamChunk(String)
+  StreamFinished
+  StopGeneration
   SetWorkSpace(WorkSpace)
   TogglePaneLive
   TogglePaneBlocks
   ShowPaneLive
   ShowPaneBlocks
   SetSplitRatio(Double)
+  SetPerspective(StudioPerspective)
   SetLeftView(LeftView)
   SetTreeQuery(String)
   ToggleTreeGroup(String)
-  SetRightVisible(Bool)
+  SetRightView(RightView)
   ResizeLeftPanel(Double)
   ResizeRightPanel(Double)
   SetContextTab(ContextTab)
@@ -1270,8 +1328,6 @@ pub(all) enum Msg {
   WindowMinimize
   WindowZoom
   WindowDragBy(Double)
-  CycleAiAnchor
-  SetAiAnchor(AiAnchor)
   ToggleAiCardsFold
   AlignControlLeft(String)
   AlignControlCenter(String)
@@ -1286,6 +1342,12 @@ pub(all) enum Msg {
   RestoreCodeDraft
 }
 
+pub(all) struct OpenProjectFile {
+  rel : String
+  saved_content : String
+  draft : String
+}
+
 pub(all) struct PaneHeadLayout {
   title_width : Double
   subtitle_width : Double
@@ -1295,6 +1357,7 @@ pub(all) struct PaneHeadLayout {
 pub(all) struct PendingProposal {
   proposal : @proposals.ProposalV1
   diff : Array[@proposals.DiffEntry]
+  code_diff : Array[(String, String)]
   summary : String
   errors : Array[String]
   valid : Bool
@@ -1312,13 +1375,6 @@ pub(all) struct PreviewFrame {
 pub(all) enum PreviewMode {
   PmFrame
   PmWeb
-}
-
-pub(all) struct PreviewWebControls {
-  port : Int
-  set_directory : (String) -> Unit
-  navigate : (String) -> @core.Effect[Msg]
-  reload : () -> @core.Effect[Msg]
 }
 
 pub(all) struct PreviewWriteState {
@@ -1346,13 +1402,6 @@ pub(all) struct ProjectRecord {
   scanned : @project.ScannedModule
 }
 
-pub(all) struct ProposalRecord {
-  summary : String
-  diff : Array[@proposals.DiffEntry]
-  accepted : Bool
-  seq : Int
-}
-
 pub(all) struct ProviderConfig {
   endpoint : String
   model : String
@@ -1362,14 +1411,6 @@ pub(all) struct ProviderConfig {
 pub(all) enum ProviderMode {
   Fake
   Real
-}
-
-pub(all) struct ProviderRequestSpec {
-  endpoint : String
-  key : String
-  model : String
-  system : String
-  prompt : String
 }
 
 pub(all) struct RangedToken {
@@ -1384,6 +1425,14 @@ pub(all) struct RecentChange {
   action : String
   seq : Int
 }
+
+pub(all) enum RightView {
+  RvContext
+  RvAi
+  RvHidden
+} derive(Eq)
+pub fn RightView::equal(Self, Self) -> Bool
+pub fn RightView::not_equal(Self, Self) -> Bool
 
 pub(all) struct RunModel {
   handler_label : String
@@ -1448,6 +1497,29 @@ pub(all) struct StudioCommand {
   hint : String
 }
 
+pub(all) enum StudioEvent {
+  EvCodeProjectWrite(String, String, String)
+  EvBuildSubmit(@build.BuildKind, String, String)
+  EvPreviewWebNavigate(String)
+  EvPreviewWebReload
+  EvProposalAccepted(Int, String)
+}
+
+pub(all) enum StudioPerspective {
+  PsVisual
+  PsCode
+  PsAi
+} derive(Eq)
+pub fn StudioPerspective::equal(Self, Self) -> Bool
+pub fn StudioPerspective::not_equal(Self, Self) -> Bool
+
+pub(all) enum StudioProfile {
+  Full
+  Teaching
+} derive(Eq)
+pub fn StudioProfile::equal(Self, Self) -> Bool
+pub fn StudioProfile::not_equal(Self, Self) -> Bool
+
 pub(all) struct ToastEntry {
   text : String
   warning : Bool
@@ -1502,16 +1574,28 @@ pub(all) enum WorkSpace {
   WsCode
   WsPreview
   WsEmpty
-}
+} derive(Eq)
+pub fn WorkSpace::equal(Self, Self) -> Bool
+pub fn WorkSpace::not_equal(Self, Self) -> Bool
 
 // Type aliases
+pub using @ai {type AiCard}
+
+pub using @ai {type AiCardKind}
+
 pub type BuildSubmit = (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit
 
 pub type CompileSubmit = (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit
 
 pub type LaunchSubmit = (String, (Result[Unit, String]) -> Unit) -> Unit
 
-pub type ProviderSubmit = (ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit
+pub type PreviewWebControls = @kernel.PreviewWebControls[Msg]
+
+pub using @ai {type ProposalRecord}
+
+pub using @kernel {type ProviderRequestSpec}
+
+pub type ProviderSubmit = (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit
 
 pub type RuntimeSnapshotFn = () -> RuntimeInspectSample?
 

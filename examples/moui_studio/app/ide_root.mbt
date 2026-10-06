@@ -119,9 +119,27 @@ fn shell_view(
       padding=0.0,
     )
   }
+  // 底栏高度拖拽 sash（M8 用户反馈③）：拖动条映射为 SetBottomHeight
+  //（拖到哪栏顶就到哪，绝对映射；视图层按窗口高度钳制，update 兜底）
+  let bottom_sash = @views.container(
+    @views.empty(),
+    background=ide_border_soft(),
+    width~,
+    height=SASH_WIDTH,
+    padding=0.0,
+  ).on_drag_with_frame(fn(event, _frame) {
+    match event.phase {
+      @views.DragGesturePhase::Started | @views.DragGesturePhase::Changed =>
+        Msg::SetBottomHeight(
+          (height - event.position.y).clamp(min=100.0, max=1200.0),
+        )
+      _ => Msg::Noop
+    }
+  })
   let main_col = @views.column(
     [
       workspace_seg,
+      bottom_sash,
       // 底栏宽度跟随 main_col：全屏页（运行/预览/帮助）没有左右栏，
       // 若仍用 `center_width`（按「左栏+右栏都在」分配的宽），底栏只铺
       // 左半段，右侧留一条空白（实测运行页 AI 栏右侧全空）。
@@ -198,7 +216,7 @@ fn shell_view(
         lower_height,
       ),
     )
-    if model.ai_anchor is AiDocked {
+    if model.right_view is RvAi {
       // VS Code 口径（实测反馈）：AI 输入**钉在右栏最底部**（属性页签
       // 之下），卡片按内容自适应——线程空时只占输入盒一条，不再固定
       // 340 顶在右栏上部留一大块空白。
@@ -334,7 +352,7 @@ fn shell_chrome_widths(model : Model, width : Double) -> ShellChromeWidths {
   let usable = width.max(120.0)
   let center_min = 320.0
   let wants_left = !(model.left_view is LeftHidden)
-  let wants_right = model.right_visible
+  let wants_right = !(model.right_view is RvHidden)
   let left_want = model.left_width.clamp(
     min=LEFTBAR_MIN_WIDTH,
     max=LEFTBAR_MAX_WIDTH,
@@ -400,13 +418,18 @@ pub fn center_width_of(model : Model, width : Double) -> Double {
 }
 
 ///|
-/// 中心内容：可视化工作区 / 代码工作区 / 空舞台。
+/// 中心内容：AI 工作区（PsAi 优先）——可视化 / 代码 / 预览 / 空舞台。
+/// M2 过渡态：AI 模式的中心 = 全幅 composer（线程卡 + 输入盒），
+/// M3 升级为会话流。
 fn workspace_content(
   model : Model,
   t : @i18n.Translator,
   width : Double,
   height : Double,
 ) -> @moui.View[Msg] {
+  if model.perspective is PsAi {
+    return ai_center(model, t, width, height)
+  }
   match model.workspace {
     WsVisual => visual_workspace(model, t, width, height)
     WsCode => code_workspace(model, t, width, height)

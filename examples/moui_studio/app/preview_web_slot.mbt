@@ -33,6 +33,6 @@ pub fn preview_web_controller() -> @webview_host.WebViewController? {
 pub fn preview_web_controls() -> PreviewWebControls {
   match controls_slot.val {
     Some(controls) => controls
-    None => noop_preview_web_controls()
+    None => @kernel.noop_preview_web_controls()
   }
 }

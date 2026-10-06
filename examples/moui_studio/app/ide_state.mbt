@@ -387,21 +387,72 @@ pub fn data_file_entries(model : Model) -> Array[DataFileEntry] {
 /// 退化成纯文本，绝不改变语义（IR 仍是唯一事实来源）。
 pub fn code_lines(model : Model) -> Array[CodeLine] {
   let lines : Array[CodeLine] = []
+  // M6①：按外观分派词法器——AppMoonBit 外观显示的是 MoonBit 源码，
+  // 必须用 MoonBit 规则（内核词法器）；AppDsl 维持 DSL 关键字表直连扫描
+  let moonbit = model.code_appearance is AppMoonBit
   let keywords = @studio_lang.keywords_for(model.language.dsl_language())
   let builtins = builtin_words(model.language.dsl_language())
   let texts = split_line_texts(model.code_draft)
   let mut number = 1
   for text in texts {
-    lines.push(CodeLine::{
-      number,
-      tokens: highlight_line(text, keywords, builtins),
-    })
+    let tokens : Array[CodeToken] = if moonbit {
+      // 内核 MoonBit 词法器（单行输入同样适用；块注释/插值的跨行保真
+      // 由工程文件编辑器的全文路径承担）
+      moonbit_line_tokens(text)
+    } else {
+      highlight_line(text, keywords, builtins)
+    }
+    lines.push(CodeLine::{ number, tokens, })
     number = number + 1
   }
   if lines.length() == 0 {
     lines.push(CodeLine::{ number: 1, tokens: [], })
   }
   lines
+}
+
+///|
+/// MoonBit 行级分词（RangedToken 形态）：供受控编辑器的 source_range
+/// 约定（start 为全文绝对偏移，由 line_start 平移内核 token 的行内偏移）。
+pub fn moonbit_line_ranged(line : String, line_start : Int) -> Array[RangedToken] {
+  let tokens : Array[RangedToken] = []
+  for token in @kernel.moonbit_highlight(line) {
+    let kind : CodeTokenKind = match token.kind {
+      HlKeyword => TokKeyword
+      HlString => TokString
+      HlNumber => TokNumber
+      HlComment => TokComment
+      HlBuiltin => TokBuiltin
+      HlPlain => TokPlain
+    }
+    tokens.push(
+      RangedToken::{
+        start: line_start + token.start,
+        text: token.text,
+        kind,
+      },
+    )
+  }
+  tokens
+}
+
+///|
+/// MoonBit 行级分词：复用内核 `moonbit_highlight`（单行输入），
+/// 内核分类映射回渲染层 CodeTokenKind（着色失败由内核降级纯文本）。
+fn moonbit_line_tokens(line : String) -> Array[CodeToken] {
+  let tokens : Array[CodeToken] = []
+  for token in @kernel.moonbit_highlight(line) {
+    let kind : CodeTokenKind = match token.kind {
+      HlKeyword => TokKeyword
+      HlString => TokString
+      HlNumber => TokNumber
+      HlComment => TokComment
+      HlBuiltin => TokBuiltin
+      HlPlain => TokPlain
+    }
+    tokens.push(CodeToken::{ kind, text: token.text, })
+  }
+  tokens
 }
 
 ///|
@@ -901,7 +952,7 @@ pub fn audit_error_count(model : Model) -> Int {
 /// 待审计的 AI 卡数（未 settled 的 diff/副作用卡）：药丸徽标 + 折叠条共用。
 pub fn pending_ai_cards(model : Model) -> Int {
   let mut count = 0
-  for card in model.ai_cards {
+  for card in model.ai_sessions.current().cards {
     if !card.settled && (card.kind is CardDiff || card.kind is CardSideEffect) {
       count = count + 1
     }

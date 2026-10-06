@@ -213,6 +213,13 @@ fn file_budgets() -> Array[FileBudget] {
       path: "examples/moui_studio/services/export/kernel_compiled_runtime.mbt",
       max_lines: 1800,
     },
+    // Plugin-kernel slice (M3/M4): multi-session AI acceptance (prompt ->
+    // proposal card -> accept -> audit across isolated sessions) and streaming
+    // coverage (fake-provider chunked explanation, stop-truncation message flow).
+    {
+      path: "examples/moui_studio/app/app_test.mbt",
+      max_lines: 2024,
+    },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },

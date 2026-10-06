@@ -89,7 +89,10 @@ pub fn code_workspace(
                   width=editor_width,
                   height=content_height,
                 ),
-                format=source => plain_code_document(source, mono_code_font()),
+                // M6①：工程文件是用户手改的 MoonBit 源码——着色升级为
+                // 内核 MoonBit 词法器（此前 plain：永不匹配的空关键字表）
+                format=source =>
+                  plain_code_document(source, mono_code_font(), moonbit=true),
                 font=mono_code_font(),
                 foreground=ide_text(),
                 placeholder_color=ide_text_faint(),
@@ -387,9 +390,15 @@ fn code_line_block(
   builtins~ : Array[String],
   diagnostics~ : Array[@code_editor.CodeDiagnostic],
   font~ : @text.FontSpec,
+  moonbit? : Bool = false,
 ) -> @moui_richtext.RichTextBlock {
   let runs : Array[@moui_richtext.RichTextRun] = []
-  for token in highlight_line_ranged(line, line_start, keywords, builtins) {
+  let tokens : Array[RangedToken] = if moonbit {
+    moonbit_line_ranged(line, line_start)
+  } else {
+    highlight_line_ranged(line, line_start, keywords, builtins)
+  }
+  for token in tokens {
     let start = token.start
     let end = start + token.text.length()
     // 行内标记：与诊断区间相交的 run 加淡红底——richtext 的装饰
@@ -1033,11 +1042,12 @@ fn mono_code_font() -> @text.FontSpec {
 fn plain_code_document(
   source : String,
   font : @text.FontSpec,
+  moonbit? : Bool = false,
 ) -> @moui_richtext.RichTextDocument {
   // **与 IR 编辑面同一条文档管线**（实测光标/选区问题的收敛手段）：
-  // 复用 code_line_block（分词/空行/区间约定完全一致），关键字表与
-  // 内建表给「永不匹配」的空值——工程文件不着色,但块结构与
-  // 已验证的 IR 编辑器逐字段一致。
+  // 复用 code_line_block（分词/空行/区间约定完全一致）。默认关键字表与
+  // 内建表给「永不匹配」的空值；moonbit=true 时改用内核 MoonBit 词法
+  // 器（M6①：工程文件是用户手改的 MoonBit 源码）。
   let no_keywords = empty_keywords()
   let blocks : Array[@moui_richtext.RichTextBlock] = []
   let chars = source.to_array()
@@ -1055,6 +1065,7 @@ fn plain_code_document(
           builtins=[],
           diagnostics=[],
           font~,
+          moonbit~,
         ),
       )
       line_start = index + 1
@@ -1071,6 +1082,7 @@ fn plain_code_document(
       builtins=[],
       diagnostics=[],
       font~,
+      moonbit~,
     ),
   )
   @moui_richtext.RichTextDocument::new(blocks~)

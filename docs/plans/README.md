@@ -83,6 +83,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [overlay-system-redesign](done/overlay-system-redesign.md) | Ordered `OverlayHost + PresentationSpec` with runtime placement/input/focus and neutral host-modal transport |
 | [overlay-placement-portal-unification](active/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
 | [feature-scope-composition](active/feature-scope-composition.md) | Add `Feature[Model, Msg]` + `Feature::scope` lens composition to core, `FieldAction` keyed forms, and settings/workbench pilots |
+| [moui-studio-plugin-kernel](done/moui-studio-plugin-kernel.md) | MoUI Studio 插件化改造：静态插件内核（Plugin 契约/服务注册表/事件总线）+ 三模式工作台 + AI 满配（多会话/Markdown/流式/真终端）+ 编辑器完善 + 教学版 profile |
 
 ## Debt
 

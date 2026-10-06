@@ -244,7 +244,7 @@ test "bottom bar expands to the audit timeline and console stays switchable" {
 test "AI input bar lives in the two inline placements and never covers the status bar" {
   let model = initial_model()
   // 默认 = 底栏档：输入盒在底栏里，且底栏被自动打开并选中 AI 页签
-  assert_true(model.ai_anchor is AiBar)
+  assert_true(model.right_view is RvContext)
   assert_true(model.bottom_open)
   assert_true(model.bottom_tab is BtAi)
   let commands = shell_draw(model, 1280.0, 800.0)
@@ -264,8 +264,8 @@ test "AI input bar lives in the two inline placements and never covers the statu
     800.0 - STATUSBAR_HEIGHT,
   )
   // 停靠档：并入右栏（输入盒仍在），且同样不越状态栏
-  let docked = apply_shell(model, SetAiAnchor(AiDocked))
-  assert_true(docked.ai_anchor is AiDocked)
+  let docked = apply_shell(model, SetRightView(RvAi))
+  assert_true(docked.right_view is RvAi)
   let docked_commands = shell_draw(docked, 1280.0, 800.0)
   assert_true(shell_has_text(docked_commands, "描述你想要的应用"))
   guard shell_find_text(docked_commands, "描述你想要的应用")
@@ -391,8 +391,8 @@ test "rejecting a proposal records history without touching the program" {
   let rejected = apply_shell(proposed, RejectProposal)
   assert_true(rejected.pending is None)
   assert_eq(@ir.program_signature(rejected.program), signature)
-  assert_eq(rejected.proposal_history.length(), 1)
-  assert_false(rejected.proposal_history[0].accepted)
+  assert_eq(rejected.ai_sessions.current().proposal_history.length(), 1)
+  assert_false(rejected.ai_sessions.current().proposal_history[0].accepted)
 }
 
 ///|
@@ -623,8 +623,8 @@ test "no AI band: the workspace content is adjacent to the panel below it" {
   // 实测（旧实现）：工作区 568 → 带 134 → 底栏，中间夹着一条带；
   // 现在：工作区 568 → 底栏，41+568 == 609，严丝合缝。
   let model = initial_model()
-  for anchor in [AiBar, AiDocked] {
-    let anchored = apply_shell(model, SetAiAnchor(anchor))
+  for view in [RvContext, RvAi] {
+    let anchored = apply_shell(model, SetRightView(view))
     let commands = shell_draw(anchored, 1280.0, 800.0)
     let widths = shell_chrome_widths(anchored, 1280.0 - ICONBAR_WIDTH)
     // 收集所有中心列宽的段，按顶边排序
@@ -652,13 +652,14 @@ test "no AI band: the workspace content is adjacent to the panel below it" {
         slabs.length().to_string(),
       )
     }
-    // 相邻性：排序后每一段的下沿必须贴住下一段的上沿（允许 2pt 发丝线）
+    // 相邻性：排序后每一段的下沿必须贴住下一段的上沿（允许 2pt 发丝线；
+    // M8 起 workspace 与底栏之间是 4pt 的底栏高度拖拽 sash——允许 5pt）
     let sorted = slabs.copy()
     sorted.sort_by(fn(a, b) { a.origin.y.compare(b.origin.y) })
     let top = sorted[0]
     let next = sorted[1]
     let gap = next.origin.y - (top.origin.y + top.size.height)
-    if gap > 2.0 {
+    if gap > 5.0 {
       fail(
         "a band sits between the workspace and the panel below it: gap=" +
         gap.to_string() +
@@ -774,7 +775,7 @@ test "empty workspace keeps guidance and AI input in separate panels" {
     fail("AI send button missing on empty stage")
   }
   // 空舞台 + 停靠档：输入条改到右栏，仍然可见
-  let docked = apply_shell(empty, SetAiAnchor(AiDocked))
+  let docked = apply_shell(empty, SetRightView(RvAi))
   assert_true(
     shell_has_text(
       shell_draw(docked, 1280.0, 800.0),
@@ -868,7 +869,7 @@ test "both inline placements render the composer regardless of workspace" {
       fail("AI send button missing in bar placement")
     }
     // 停靠档
-    let docked = apply_shell(m, SetAiAnchor(AiDocked))
+    let docked = apply_shell(m, SetRightView(RvAi))
     assert_true(
       shell_has_text(
         shell_draw(docked, 1280.0, 800.0),
@@ -964,7 +965,7 @@ test "ai composer box stays inside its host panel" {
   // 停靠档：输入卡在右栏内联，发送钮必须落在**右栏**里（不溢出面板）。
   // 底栏档同理，只是宿主换成底栏——两者共用同一个 composer，所以这里
   // 用停靠档验证「输入盒不会长出宿主」这一条。
-  let model = apply_shell(initial_model(), SetAiAnchor(AiDocked))
+  let model = apply_shell(initial_model(), SetRightView(RvAi))
   let commands = shell_draw(model, 1280.0, 800.0)
   // 无头部（Codex 口径）：标题/读数/徽标都不再绘制
   assert_false(shell_has_text(commands, "AI 提案"))
@@ -995,17 +996,18 @@ test "ai composer box stays inside its host panel" {
 }
 
 ///|
-/// 锚点映射是唯一的语义来源（读数已随头部一起删掉，锚点状态只能从
-/// model 与命令面板读）。
-test "anchor hint keys follow the current anchor" {
+/// AI 宿主读数由 right_view × 当前模式推导（M2），三种宿主三个读数。
+test "ai host hint follows the derived host" {
   let model = initial_model()
-  // 默认档是底栏（输入条与三个只读面板并列），不是贴底浮层。
-  assert_eq(anchor_hint_key(model.ai_anchor), "app.ai.anchor.bar")
-  assert_eq(anchor_hint_key(AiDocked), "app.ai.anchor.docked")
-  // 循环锚点后状态要变（底栏 → 停靠 → 三个浮动锚依次轮转）
-  let cycled = apply_shell(model, CycleAiAnchor)
-  assert_false(cycled.ai_anchor is AiBar)
-  // 无头部：任何锚点下都不再有「底部居中」读数
+  // 默认（图形化模式 + 检查器右栏）：AI 在底栏页签
+  assert_eq(ai_host_hint_key(model), "app.ai.anchor.bar")
+  // 停靠：右栏切到 AI
+  let docked = apply_shell(model, SetRightView(RvAi))
+  assert_eq(ai_host_hint_key(docked), "app.ai.anchor.docked")
+  // AI 模式：宿主是中心
+  let center = apply_shell(model, SetPerspective(PsAi))
+  assert_eq(ai_host_hint_key(center), "app.ai.anchor.center")
+  // 无头部：任何宿主下都不再有「底部居中」读数
   assert_false(shell_has_text(shell_draw(model, 1280.0, 800.0), "底部居中"))
 }
 
@@ -1014,22 +1016,21 @@ test "anchor hint keys follow the current anchor" {
 /// 底栏档选中的是底栏 AI 页签，停靠档在右栏。
 ///
 /// 判据取状态而不是绘制指令：绘制里两种形态都可能出现同样的 composer
-/// 文字，只有 `ai_anchor` + `bottom_tab` 能区分「现在这条在哪」。
+/// 文字，只有 `right_view` + `bottom_tab` 能区分「现在这条在哪」。
 test "both inline AI placements are reachable in one step" {
-  let bar = apply_shell(initial_model(), SetAiAnchor(AiBar))
-  assert_true(bar.ai_anchor is AiBar)
-  // 切到底栏档必须把底栏打开并选中 AI 页签——否则「选了却看不见」
+  // 底栏档（默认宿主）：点 AI 页签 = 打开底栏并选中它
+  let bar = apply_shell(initial_model(), SetBottomTab(BtAi))
+  assert_true(bar.right_view is RvContext)
   assert_true(bar.bottom_open)
   assert_true(bar.bottom_tab is BtAi)
   // 一步切到停靠
-  let docked = apply_shell(bar, SetAiAnchor(AiDocked))
-  assert_true(docked.ai_anchor is AiDocked)
-  // 再一步切回底栏
-  let back = apply_shell(docked, SetAiAnchor(AiBar))
-  assert_true(back.ai_anchor is AiBar)
-  assert_true(back.bottom_tab is BtAi)
+  let docked = apply_shell(bar, SetRightView(RvAi))
+  assert_true(docked.right_view is RvAi)
+  // 再一步切回底栏（右栏换回检查器 → 宿主推导回底栏页签）
+  let back = apply_shell(docked, SetRightView(RvContext))
+  assert_true(back.right_view is RvContext)
   // 两种落点都是内联档：都不占中心列高度，所以都没有避让带
-  assert_false(AiBar is AiDocked)
+  assert_false(RvContext is RvAi)
 }
 
 ///|
@@ -1045,8 +1046,8 @@ test "see all sessions appears only with a long thread list" {
   for _ in 0..<4 {
     many = apply_shell(many, GenerateProposal)
   }
-  if many.ai_cards.length() <= 3 {
-    fail("expected >3 thread cards, got " + many.ai_cards.length().to_string())
+  if many.ai_sessions.current().cards.length() <= 3 {
+    fail("expected >3 thread cards, got " + many.ai_sessions.current().cards.length().to_string())
   }
   assert_true(
     shell_has_text(shell_draw(many, 1280.0, 800.0), "查看全部会话 →"),
@@ -1080,10 +1081,10 @@ test "pending review count still surfaces after the pill removal" {
 /// 于是线程区/折叠条/#seeAll/药丸计数全是永不出现的死 UI。
 test "proposal threads produce visible, settleable cards" {
   let model = initial_model()
-  assert_eq(model.ai_cards.length(), 0)
+  assert_eq(model.ai_sessions.current().cards.length(), 0)
   let proposed = apply_shell(model, GenerateProposal)
   assert_true(proposed.pending is Some(_))
-  assert_eq(proposed.ai_cards.length(), 1)
+  assert_eq(proposed.ai_sessions.current().cards.length(), 1)
   assert_eq(pending_ai_cards(proposed), 1)
   // 卡片可见：折叠条给出待审计计数
   let commands = shell_draw(proposed, 1280.0, 800.0)
@@ -1092,14 +1093,14 @@ test "proposal threads produce visible, settleable cards" {
   let accepted = apply_shell(proposed, AcceptProposal)
   assert_true(accepted.pending is None)
   assert_eq(pending_ai_cards(accepted), 0)
-  assert_eq(accepted.ai_cards.length(), 1)
-  assert_true(accepted.ai_cards[0].settled)
+  assert_eq(accepted.ai_sessions.current().cards.length(), 1)
+  assert_true(accepted.ai_sessions.current().cards[0].settled)
   // 拒绝同理
   let rejected = apply_shell(
     apply_shell(model, GenerateProposal),
     RejectProposal,
   )
-  assert_true(rejected.ai_cards[0].settled)
+  assert_true(rejected.ai_sessions.current().cards[0].settled)
   assert_eq(pending_ai_cards(rejected), 0)
 }
 
@@ -1134,13 +1135,13 @@ fn shell_find_send_button(commands : Array[@core.DrawCommand]) -> @core.Rect? {
 ///|
 /// 现在线程区预算由 `ai_card_height − card_chrome_height` 反推。
 test "thread cards never push the composer out of its host" {
-  let mut model = apply_shell(initial_model(), SetAiAnchor(AiDocked))
+  let mut model = apply_shell(initial_model(), SetRightView(RvAi))
   // 连推几张卡，触发线程区滚动上限
   for _ in 0..<5 {
     model = apply_shell(model, GenerateProposal)
   }
-  if model.ai_cards.length() <= 3 {
-    fail("expected >3 cards, got " + model.ai_cards.length().to_string())
+  if model.ai_sessions.current().cards.length() <= 3 {
+    fail("expected >3 cards, got " + model.ai_sessions.current().cards.length().to_string())
   }
   let commands = shell_draw(model, 1280.0, 800.0)
   guard shell_find_text(commands, "描述你想要的应用")
@@ -1448,15 +1449,16 @@ test "activity bar uses the compact spec with bare-glyph selection" {
     }
   }
   centers.sort()
-  // 工程工作台(M0-6)在栏目里加了「工程」图标:7 个栏目图标 + 1 枚钉底齿轮
+  // 三模式工作台(M2):3 个模式项 + 1 枚钉底齿轮（组间分隔线是 1pt 细条，
+  // 被「墨迹高度 > 5pt」的判据排除）
   assert_true(
-    centers.length() == 8,
-    msg="expected 8 icon glyphs, got \{centers.length()}",
+    centers.length() == 4,
+    msg="expected 4 icon glyphs, got \{centers.length()}",
   )
-  // 前 7 项（栏目）节距 28；第 8 枚是**钉底**的设置齿轮（spacer 推到底边），
-  // 不参与节距——这正是「设置钉在最底」的口径。
+  // 前 3 项（模式组）节距 28；第 4 枚是**钉底**的设置齿轮（spacer 推到
+  // 底边），不参与节距——这正是「设置钉在最底」的口径。
   let mut i = 1
-  while i < 7 {
+  while i < 3 {
     let pitch = centers[i] - centers[i - 1]
     assert_true(
       (pitch - 28.0).abs() < 0.8,
@@ -1465,7 +1467,7 @@ test "activity bar uses the compact spec with bare-glyph selection" {
     i = i + 1
   }
   assert_true(
-    centers[7] > centers[6] + 100.0,
+    centers[3] > centers[2] + 100.0,
     msg="the gear should be pinned near the bottom edge, not in the icon rhythm",
   )
 }

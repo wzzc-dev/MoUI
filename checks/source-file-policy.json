@@ -37,11 +37,6 @@
   },
   "ratchets": [
     {
-      "path": "examples/moui_studio/app/app_test.mbt",
-      "maxLines": 1493,
-      "reason": "Existing Studio app test suite after dual-track coverage, zero-compat rename, block-label truncation, transient-hover isolation, and window drag-region declaration coverage."
-    },
-    {
       "path": "examples/moui_studio/services/export/kernel_studio_lang.mbt",
       "maxLines": 1235,
       "reason": "Generated kernel mirror of domain/studio_lang sources."

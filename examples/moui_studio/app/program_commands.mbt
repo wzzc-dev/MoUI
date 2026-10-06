@@ -65,20 +65,37 @@ pub fn studio_program_commands(
   bind(
     "1",
     false,
-    "app.command.workspace.visual",
+    "app.command.perspective.visual",
     Activate,
     true,
-    SetWorkSpace(WsVisual),
+    SetPerspective(PsVisual),
   )
   bind(
     "2",
     false,
-    "app.command.workspace.code",
+    "app.command.perspective.code",
     Activate,
     true,
-    SetWorkSpace(WsCode),
+    SetPerspective(PsCode),
+  )
+  bind(
+    "3",
+    false,
+    "app.command.perspective.ai",
+    Activate,
+    true,
+    SetPerspective(PsAi),
   )
   bind("j", false, "app.command.bottom.toggle", Activate, true, ToggleBottom)
+  // Ctrl+T：底栏切到终端页签（M8 用户反馈：键盘直达终端）
+  bind(
+    "t",
+    false,
+    "app.command.bottom.terminal",
+    Activate,
+    true,
+    SetBottomTab(BtTerminal),
+  )
   bind(
     "d",
     false,

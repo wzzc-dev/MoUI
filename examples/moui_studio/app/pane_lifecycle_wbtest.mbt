@@ -114,7 +114,7 @@ test "AI input lives only inside its host panel" {
   // 后者需要一个「工作区到哪结束」的中间量（= 行高 − 底栏高），
   // 那个量算错就会把底栏误判成工作区（第一版正是如此）。直接判宿主归属
   // 更简单也更贴近要钉的性质。
-  let bar = apply_shell(model, SetAiAnchor(AiBar))
+  let bar = apply_shell(model, SetRightView(RvContext))
   let bar_commands = shell_draw(bar, 1280.0, 800.0)
   guard shell_find_text(bar_commands, "描述你想要的应用")
     is Some(bar_run) else {
@@ -140,7 +140,7 @@ test "AI input lives only inside its host panel" {
     )
   }
   // 停靠档：输入条在右栏（中心列右缘之右）
-  let docked = apply_shell(model, SetAiAnchor(AiDocked))
+  let docked = apply_shell(model, SetRightView(RvAi))
   let docked_commands = shell_draw(docked, 1280.0, 800.0)
   guard shell_find_text(docked_commands, "描述你想要的应用")
     is Some(docked_run) else {
@@ -562,10 +562,10 @@ test "blocks pane appears only while an event handler is selected" {
 /// 重新打开。
 test "the right panel head closes the panel, not the selection" {
   let model = initial_model()
-  assert_true(model.right_visible)
+  assert_true(!(model.right_view is RvHidden))
   // 收起：右栏宽度归零，中心列吃掉这份宽度
-  let hidden = apply_shell(model, SetRightVisible(false))
-  assert_eq(hidden.right_visible, false)
+  let hidden = apply_shell(model, SetRightView(RvHidden))
+  assert_true(hidden.right_view is RvHidden)
   let widths = shell_chrome_widths(model, 1280.0 - ICONBAR_WIDTH)
   let hidden_widths = shell_chrome_widths(hidden, 1280.0)
   assert_eq(hidden_widths.right, 0.0)
@@ -588,8 +588,8 @@ test "the right panel head closes the panel, not the selection" {
   assert_eq(hidden.selected_control, model.selected_control)
   assert_eq(hidden.selected_handler, model.selected_handler)
   // 重新打开：图标栏的入口必须能把它带回来
-  let back = apply_shell(hidden, SetRightVisible(true))
-  assert_true(back.right_visible)
+  let back = apply_shell(hidden, SetRightView(RvContext))
+  assert_true(!(back.right_view is RvHidden))
   assert_true(shell_has_text(shell_draw(back, 1280.0, 800.0), "快速操作"))
   // 头的右上角那个 ✕ 是「关闭面板」，它必须比「清空选中」的 ✕ 更靠右。
   // 两个 ✕ 都是 20/18pt 的小按钮，用图标盒位置区分。

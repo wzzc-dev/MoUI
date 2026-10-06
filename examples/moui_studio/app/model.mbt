@@ -120,15 +120,7 @@ pub(all) struct UndoEntry {
 }
 
 ///|
-/// 提案历史条目：会话内回放「AI 干了什么」（采纳/拒绝 + 摘要 + diff）。
-pub(all) struct ProposalRecord {
-  summary : String
-  diff : Array[@proposals.DiffEntry]
-  /// 采纳时的代码真源文本 diff（M6②：历史回放看代码改了哪几行）。
-  code_diff : Array[(String, String)]
-  accepted : Bool
-  seq : Int
-}
+pub type ProposalRecord = @ai.ProposalRecord
 
 ///|
 /// 设计画布拖拽态：被拖控件 + 拖拽种类（移动/缩放）。
@@ -178,7 +170,10 @@ pub(all) enum WorkSpace {
   /// 工程预览(M1):headless 帧重放画布(M2/M3 加 web/native 模式)
   WsPreview
   WsEmpty
-}
+} derive(Eq)
+
+///|
+pub extend WorkSpace with Eq::{not_equal, equal}
 
 ///|
 /// 预览模式(M2-2):画布快览(模式一)/ web 实时(模式二,webview)。
@@ -188,11 +183,25 @@ pub(all) enum PreviewMode {
 }
 
 ///|
-/// 左栏视图：程序结构树 / 本地数据 / 工程资源管理器 / 收起。
+/// 组合 profile（M7）：完整版（默认）/ 教学版（只保留图形化模式——
+/// 无终端、无工程、会话精简；这是「无特权内核」的验收证明：教学版 =
+/// 组合根少注册能力与模式，产品功能自洽地缺席而非崩溃）。
+pub(all) enum StudioProfile {
+  Full
+  Teaching
+} derive(Eq)
+
+///|
+pub extend StudioProfile with Eq::{not_equal, equal}
+
+///|
+/// 左栏视图：程序结构树 / 本地数据 / 工程资源管理器 / AI 会话列表 / 收起。
 pub(all) enum LeftView {
   LeftTree
   LeftData
   LeftProject
+  /// AI 会话列表（M3，AI 模式的预设左栏）
+  LeftAiSessions
   LeftHidden
 }
 
@@ -208,7 +217,7 @@ pub(all) enum ContextTab {
 }
 
 ///|
-/// 底栏页签：运行审计 / Console / 问题（诊断汇总）/ AI 输入条。
+/// 底栏页签：运行审计 / Console / 问题（诊断汇总）/ AI 输入条 / 终端。
 /// 原来是 `bottom_audit : Bool` 两态开关，问题面板加入后升级为枚举。
 ///
 /// `BtAi` 是**输入条的底栏落点**（`AiAnchor::AiBar`）：输入条与三个只读
@@ -219,6 +228,8 @@ pub(all) enum BottomTab {
   BtConsole
   BtProblems
   BtAi
+  /// 真终端（M5，AI 模式专属页签）
+  BtTerminal
 }
 
 ///|
@@ -265,56 +276,47 @@ pub(all) enum ComposerMode {
 pub extend ComposerMode with Eq::{not_equal, equal}
 
 ///|
-/// AI 输入面的落点。**只有两种**，两者都是内联档（各占一个既有面板，
-/// 不盖工作区、不预留任何中心列高度）：
-/// - **底栏**（`AiBar`）：输入条作为底栏的一个页签，与「运行审计 / Console /
-///   问题」并列。这是**默认**——底栏本就贴工作区底边，输入条落在那里是
-///   「命令条」。
-/// - **停靠右栏**（`AiDocked`）：输入条作为右栏顶部的内联卡，与属性/检查器
-///   并列；适合「一边改属性一边问 AI」的长会话。
-///
-/// **历史**：这里曾经还有三个「贴底浮层」锚点（居中/左下/右下）加一个
-/// 药丸收起态，以及配套的「AI 保留带」——中心列底部常驻一条 134pt 的
-/// 横带为浮卡让位。那条带本身是纯结构成本：它横跨左右两个窗格、与相邻
-/// 面只差 1.05:1 而读不出边界，用户报的「这块区域不协调」指的就是它。
-/// 浮层形态被两种内联落点取代后，带、药丸、hero 一并删除——**中心列拿回
-/// 全部高度**，输入条也不再需要一块「预留区」。
-pub(all) enum AiAnchor {
-  AiBar
-  AiDocked
-}
+/// 任务模式（M2 三模式工作台）：活动栏唯一职责——「我在哪个任务里」。
+/// 每个模式绑定一套全区域预设（左栏/中心/右栏/底栏页签，见计划的预设表），
+/// 切换 = 一次性应用预设；模式内的临时收放不回写预设（契约 3）。
+pub(all) enum StudioPerspective {
+  /// 图形化编辑：左栏结构树 / 中心可视化（画布/预览胶囊）/ 右栏检查器 /
+  /// 底栏 审计│Console│问题│AI 输入
+  PsVisual
+  /// 代码编辑：左栏工程文件树 / 中心代码编辑器 / 右栏 AI 停靠卡（VS Code 口径）/
+  /// 底栏 审计│Console│问题
+  PsCode
+  /// AI 工作台：左栏会话列表(M3) / 中心全幅会话流 / 右栏默认不显示 /
+  /// 底栏 真终端(M5)
+  PsAi
+} derive(Eq)
 
 ///|
-/// AI 会话卡的种类：Agent 计划 / diff 待审计 / 副作用确认 / 讲解 / 错误。
-/// 卡是「Agent 干了什么」的可审计投影，不承载执行语义——采纳仍走既有
-/// AcceptProposal / AnswerGate 通道。
-pub(all) enum AiCardKind {
-  CardPlan
-  CardDiff
-  CardSideEffect
-  CardExplanation
-  CardError
-}
+pub extend StudioPerspective with Eq::{not_equal, equal}
 
 ///|
-/// AI 会话卡：会话内的可见工作记录（设计稿 threadStack）。
-/// steps 只在计划卡非空；diff 行只在 diff 卡非空。
-pub(all) struct AiCard {
-  kind : AiCardKind
-  title : String
-  body : String
-  // 计划卡：步骤文本 + 已完成步数 + 进度百分比
-  steps : Array[String]
-  steps_done : Int
-  progress : Int
-  // diff 卡：逐行 ± 文本
-  diff_lines : Array[(String, String)]
-  // 卡是否已被用户处理（接受/拒绝/确认）：处理过的卡降透明度显示
-  settled : Bool
-  settled_note : String
-  // 单调递增序号：用于稳定 key 与「最新一张」判定
-  seq : Int
-}
+/// 右栏当前视图：取代旧 `right_visible`（布尔）与 `ai_anchor` 的 AiDocked 档
+/// 的 2×2 组合——单一枚举消除两状态互拉（历史上出过「收起底栏 AI 自己跑
+/// 去右栏」的事故，根因就是两个独立状态描述同一件事）。
+pub(all) enum RightView {
+  /// Context 检查器占满右栏（AI 回落底栏页签）
+  RvContext
+  /// Context 页签 + AI 卡钉底（原 AiDocked 的布局）
+  RvAi
+  /// 右栏不占宽（AI 回落底栏页签）
+  RvHidden
+} derive(Eq)
+
+///|
+pub extend RightView with Eq::{not_equal, equal}
+
+///|
+/// AI 卡与提案历史的类型定义已迁入 AI 插件包（M3 会话切片化：
+/// `plugins/ai/ai_state.mbt`）；app 保留公开别名，既有引用零改动。
+pub type AiCardKind = @ai.AiCardKind
+
+///|
+pub type AiCard = @ai.AiCard
 
 ///|
 /// 运行审计条目种类：通过 / 运行 / 副作用待确认 / 错误。
@@ -480,11 +482,12 @@ pub(all) struct Model {
   program : @ir.StudioProgram
   language : UiLanguage
   code_appearance : CodeAppearance
-  /// 代码工程骨架待落盘（M6①）：SelectTemplate 置位，组合根清位并写
-  /// form.mbt/handlers.mbt（确认续行在纯链内完成模板切换，也要落盘）。
-  pending_code_project : Bool
-  /// 迁移写盘目录覆盖（M6③）：打开 .studio.json 时 = 旧文件所在目录；
-  /// None = 用打开工程的首个程序包。组合根消费后清位。
+  /// 跨域事件出口（M1 插件化）：update 在事实发生处推进（见 app/events.mbt），
+  /// 程序包装层每趟排空一次并经 kernel 事件总线翻译成后续消息。取代旧的
+  /// pending_code_project / pending_build / build_seq 三个跨域 flag。
+  outbox : Array[StudioEvent]
+  /// 迁移写盘目录（M6③）：打开 .studio.json 时 = 旧文件所在目录；
+  /// 由代码工程写盘事件的发出点消费（`emit_code_project_write`）。
   pending_open_dir : String?
   /// 预览模式一的画布/布局二分（M4 收尾）：true = 布局设计器画布。
   preview_design_open : Bool
@@ -547,7 +550,9 @@ pub(all) struct Model {
   /// 同样可达。框架的 `@views.tooltip` 是可选替代（需逐元素 hover 状态）。
   hover_hint : String
   pending : PendingProposal?
-  prompt_draft : String
+  // AI 会话切片（M3 插件化）：草稿/线程卡/提案历史按会话隔离，
+  // 见 plugins/ai；`pending` 提案与审计仍走全局通道（契约 4）
+  ai_sessions : @ai.AiSessions
   composer_mode : ComposerMode
   prompt_error : String
   provider_mode : ProviderMode
@@ -599,8 +604,6 @@ pub(all) struct Model {
   // 撤销/重做：变更前快照栈（深度 UNDO_DEPTH）与重做栈
   undo_stack : Array[UndoEntry]
   redo_stack : Array[UndoEntry]
-  // 会话内提案历史（不持久化）
-  proposal_history : Array[ProposalRecord]
   // 积木画布拖拽（同层重排）进行中
   block_drag : BlocksDragState?
   // === v4 IDE 壳工作区状态（全部会话内，不持久化）===
@@ -618,9 +621,13 @@ pub(all) struct Model {
   // `shell_chrome_widths` 按它们分配三列，中心列吃剩余）
   left_width : Double
   right_width : Double
-  // 右栏 Context 是否显示。左栏是「多视图 + 收起」所以用枚举；右栏只有
-  // 一个视图，收起/展开就是布尔。
-  right_visible : Bool
+  // 任务模式（M2 三模式工作台）：活动栏唯一职责，切换 = 应用预设
+  perspective : StudioPerspective
+  // 组合 profile（M7）：Teaching = 只开放图形化模式 + 无终端
+  profile : StudioProfile
+  // 右栏当前视图（M2）：取代 right_visible × ai_anchor 的 2×2 组合，
+  // AI 宿主由它推导（RvAi=右栏停靠，否则底栏页签或 AI 模式中心）
+  right_view : RightView
   // 沉浸式无边框：true 时顶栏之上多一条窗控条（信号点 + 拖拽区）。
   // 平台入口按自己有没有无边框窗口决定——Web 恒 false。
   immersive : Bool
@@ -643,11 +650,10 @@ pub(all) struct Model {
   /// 工程文件编辑器的光标/选区（受控编辑器:光标状态由模型回传）。
   project_file_caret : Int
   project_file_selection : @core.TextRange?
-  // 构建服务(M0-7):最近一次构建报告(诊断汇进 Problems)、进行中标记、
-  // 待执行请求(程序包装层看到 busy 上升即派发注入的 build_submit)
+  // 构建服务(M0-7):最近一次构建报告(诊断汇进 Problems)与进行中标记。
+  // 待执行请求已改事件驱动(M1):过门即发 EvBuildSubmit,不再存 pending_build。
   last_build : @build.BuildReport?
   build_busy : Bool
-  pending_build : ProjectBuildRequest?
   // 预览 harness 落盘(M1):导入成功后逐文件写 .studio/preview(Export
   // 三段式同款——队列在 Model,回执推进游标),写完置 None
   preview_write : PreviewWriteState?
@@ -663,7 +669,6 @@ pub(all) struct Model {
   preview_mode : PreviewMode
   preview_web_url : String?
   preview_web_opened : Bool
-  build_seq : Int
   // 右栏 Context 页签
   ctx_tab : ContextTab
   // 底部横条展开态与高度（审计 + Console）
@@ -692,13 +697,20 @@ pub(all) struct Model {
   // 逐步推进——Scratch/Figma 的「拖到边缘自动滚动」，长链条拖拽的必需项
   // （不自动滚就只能拖到可视区内，链尾的块永远拖不动）。
   blocks_scroll_y : Double
-  // AI 输入面：落点（底栏 / 右栏停靠）/ 线程卡是否折叠 / 上下文芯片
-  ai_anchor : AiAnchor
+  // AI 输入面：宿主由 right_view × perspective 推导（M2）/ 线程卡是否折叠
   ai_cards_folded : Bool
+  // 流式生成进行中（M4）：StreamChunk 分片只在为真时追加（停止即截断）
+  ai_streaming : Bool
+  // 终端插件状态切片（M5）：全模式底栏可用（M8）；web = unavailable 空态
+  terminal : @terminal.TerminalState
+  /// 终端页签开合（M8）：开 = 页签可选、选中显示交互终端；关 = 已 kill、
+  /// 再点页签重开（重派生）。关闭动作 = 再点选中的终端页签。
+  mut terminal_open : Bool
+  /// 终端屏滚动（M8 用户反馈②）：受控 offset（跟随用户手动滚动）+
+  /// 请求序号（新输出时自增 → 强制滚到底部，scroll 容器 clamp）
+  mut terminal_scroll : @geometry.Point
+  mut terminal_scroll_seq : Int
   ai_context_chips : Array[String]
-  // AI 会话卡（会话内）
-  ai_cards : Array[AiCard]
-  ai_card_seq : Int
   // 设置对话框 / AI 历史对话框
   settings_open : Bool
   ai_history_open : Bool
@@ -1021,6 +1033,36 @@ pub(all) enum Msg {
   ExportFileWritten(@services.ServiceTaskResult[Unit])
   SetNotice(String)
   // === v4 IDE 壳消息 ===
+  // 事件驱动消息（M1 内核化）：由 outbox 事件经总线翻译而来，副作用在
+  // 程序包装层的臂里经服务容器执行。
+  /// 代码工程骨架写盘（EvCodeProjectWrite 的翻译）：目录 + form.mbt + handlers.mbt
+  CodeProjectWriteRequested(String, String, String)
+  /// 构建请求派发（EvBuildSubmit 的翻译）
+  BuildDispatchRequested(ProjectBuildRequest)
+  /// AI 会话操作（M3 插件化）：新建/切换/删除，经 Feature::scope 委托
+  /// 给 plugins/ai 的状态切片
+  AiSessionOp(@ai.AiSessionMsg)
+  /// 终端（M5 插件）：PTY 输出增量 / 派生回执 / 提交输入行 / 关闭会话
+  TerminalOutput(String)
+  TerminalSpawned(Int?)
+  TerminalInput
+  TerminalClose
+  /// 终端输入行键入（受控 text_field 增量）
+  TerminalType(String)
+  /// 终端直连键入（M8 交互式：键盘/文本输入经 keyboard_input 透传给 PTY）
+  TerminalWrite(String)
+  /// 终端页签开关（M8）：再点选中的终端页签 = 关闭（kill + 收起）；关闭态
+  /// 再点 = 重开（重派生）
+  TerminalTabClose
+  /// 请求宿主把键盘焦点交给终端（M8：经注入的 focus_terminal 回调调
+  /// runtime.focus_key("terminal-input")——app 不接触 runtime）
+  FocusTerminalRequest
+  /// 流式分片到达（M4）：追加进当前会话的流式卡；已停止则忽略
+  StreamChunk(String)
+  /// 流式完成（正常结束）
+  StreamFinished
+  /// 停止生成（用户动作）：截断流式，卡片标记已停止
+  StopGeneration
   // 工作区编排：图标栏切换（同一工作区再点一次 = 空舞台）
   SetWorkSpace(WorkSpace)
   TogglePaneLive
@@ -1032,14 +1074,15 @@ pub(all) enum Msg {
   ShowPaneBlocks
   // 分隔条拖拽：比例（0.2–0.8，越界由 update 钳制）
   SetSplitRatio(Double)
+  // 任务模式切换（M2）：进模式按预设置位四区域；同值再点 no-op
+  SetPerspective(StudioPerspective)
   // 左栏：视图切换 / 关闭 / 搜索 / 分组展开折叠
   SetLeftView(LeftView)
   SetTreeQuery(String)
   ToggleTreeGroup(String)
-  /// 显式设置右栏显隐。用**显式布尔**而不是 Toggle：关闭入口在右栏头的 ✕
-  /// （只可能关），打开入口在图标栏（只可能开）。共用一个 Toggle 会让
-  /// 「点击目标当前不可见」这类情况反向操作，语义不可预测。
-  SetRightVisible(Bool)
+  /// 显式设置右栏当前视图（M2）：关闭入口在右栏头的 ✕（只可能关 →
+  /// RvHidden），重开与换视图走命令面板逃生口（studio.right.* / studio.ai.*）。
+  SetRightView(RightView)
   /// 列间 sash 拖拽改宽（VS Code 口径）：指针位置 → 目标宽度在**视图层**
   /// 换算并夹取（界限依赖当帧布局），update 只再兜底夹一次。布局手势，
   /// 不产生撤销点、不标脏。
@@ -1049,6 +1092,10 @@ pub(all) enum Msg {
   SetContextTab(ContextTab)
   // 底栏：页签切换 / 展开折叠 / 高度拖拽
   SetBottomTab(BottomTab)
+  /// 底栏高度拖拽（M8 用户反馈③）：sash 位置 → 钳制后的高度
+  SetBottomHeight(Double)
+  /// 终端屏滚动（M8②）：用户手动滚动（受控 offset 跟随）
+  TerminalScrolled(@geometry.Point)
   // 问题面板：跳到某子程序草稿的某行（选中 handler + 光标 + 滚动对齐）
   GotoProblem(String, Int)
   ToggleBottom
@@ -1058,15 +1105,13 @@ pub(all) enum Msg {
   AuditSettleAll(String)
   // 最近修改 / Console 清空
   ClearConsole
-  // AI 浮动层：锚点循环 / 直接设置 / 药丸 / 折叠卡 / 上下文芯片
+  // AI 浮动层：药丸 / 折叠卡 / 上下文芯片（落点已由 right_view 推导，M2）
   // 沉浸式无边框窗口：三个窗控件 + 拖拽。native 映射到真实窗口请求，
   // Web/无边框未启用时是安全 no-op（不假装能关掉浏览器标签页）。
   WindowClose
   WindowMinimize
   WindowZoom
   WindowDragBy(Double)
-  CycleAiAnchor
-  SetAiAnchor(AiAnchor)
   ToggleAiCardsFold
   // 快速操作：对齐左/居中/对齐右（设计稿 x=24 边距口径）
   AlignControlLeft(String)
@@ -1129,6 +1174,8 @@ pub fn initial_model(
   compile_track_available? : Bool = false,
   export_available? : Bool = false,
   immersive? : Bool = false,
+  pty_available? : Bool = false,
+  profile? : StudioProfile = Full,
 ) -> Model {
   let program = @proposals.sample_hello()
   let config = match provider_config {
@@ -1151,7 +1198,7 @@ pub fn initial_model(
     program,
     language: ZhHans,
     code_appearance: AppMoonBit,
-    pending_code_project: false,
+    outbox: [],
     pending_open_dir: None,
     preview_design_open: false,
     mode: ModeDesign,
@@ -1185,7 +1232,8 @@ pub fn initial_model(
     hover_studio_command: "",
     hover_hint: "",
     pending: None,
-    prompt_draft: "",
+    ai_sessions: @ai.AiSessions::new(),
+    profile,
     composer_mode: ComposeEdit,
     prompt_error: "",
     provider_mode: Fake,
@@ -1215,7 +1263,6 @@ pub fn initial_model(
     timer_elapsed: 0,
     undo_stack: [],
     redo_stack: [],
-    proposal_history: [],
     block_drag: None,
     workspace: WsVisual,
     pane_live: true,
@@ -1224,7 +1271,8 @@ pub fn initial_model(
     left_view: LeftTree,
     left_width: LEFTBAR_WIDTH,
     right_width: RIGHTBAR_WIDTH,
-    right_visible: true,
+    perspective: PsVisual,
+    right_view: RvContext,
     immersive,
     tree_query: "",
     tree_collapsed: [],
@@ -1237,7 +1285,6 @@ pub fn initial_model(
     project_file_selection: None,
     last_build: None,
     build_busy: false,
-    pending_build: None,
     preview_write: None,
     preview_frame: None,
     selected_semantic: None,
@@ -1247,12 +1294,10 @@ pub fn initial_model(
     preview_mode: PmFrame,
     preview_web_url: None,
     preview_web_opened: false,
-    build_seq: 0,
     ctx_tab: CtxProps,
-    // 底栏默认**展开且选中 AI 页签**：`ai_anchor` 的默认档是 AI 输入条，
-    // 而它由底栏承载——底栏收着就等于「默认档看不见」，那是自相矛盾的
-    // 初始状态（用户第一眼找不到输入条）。三个只读面板仍在同一行，一次
-    // 点击可达。
+    // 底栏默认**展开且选中 AI 页签**：图形化模式的 AI 输入条由底栏承载
+    // （右栏预设是检查器），底栏收着输入条就看不见——初始状态必须让
+    // 「问 AI」第一眼可达。三个只读面板仍在同一行，一次点击可达。
     bottom_open: true,
     bottom_height: 168.0,
     bottom_tab: BtAi,
@@ -1266,11 +1311,16 @@ pub fn initial_model(
     palette_drag: None,
     expr_drag: None,
     blocks_scroll_y: 0.0,
-    ai_anchor: AiBar,
     ai_cards_folded: false,
+    ai_streaming: false,
+    // 教学版 profile 强制无终端（组合根与直调 initial_model 的测试同口径）
+    terminal: @terminal.TerminalState::new(
+      available=pty_available && !(profile is Teaching),
+    ),
+    terminal_open: true,
+    terminal_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    terminal_scroll_seq: 0,
     ai_context_chips: [],
-    ai_cards: [],
-    ai_card_seq: 0,
     settings_open: false,
     ai_history_open: false,
     toasts: [],

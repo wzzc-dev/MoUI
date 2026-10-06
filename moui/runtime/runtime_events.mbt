@@ -420,13 +420,15 @@ fn RuntimeState::move_focus(
 ///|
 fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
   self.ensure_render_tree()
-  match self.element_tree.root.focusable_key_target(key) {
+  let found = self.element_tree.root.focusable_key_target(key)
+  match found {
     Some(target) => {
       let previous_focus = self.animfocus.focused_element
       let constrained = self.element_tree.root.constrained_focus_target(
         Some(target),
         current=previous_focus,
       )
+      println("[focus-dbg] constrained_ok=\{constrained == Some(target)}")
       if constrained == Some(target) {
         ignore(self.commit_focus(Some(target)))
         true

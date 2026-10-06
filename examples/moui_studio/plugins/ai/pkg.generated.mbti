@@ -1,0 +1,82 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/plugins/ai"
+
+import {
+  "examples/moui_studio/domain/proposals",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn ai_sessions_feature() -> @core.Feature[AiSessions, AiSessionMsg]
+
+pub fn fake_stream_chunks(String, Int) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub(all) struct AiCard {
+  kind : AiCardKind
+  title : String
+  body : String
+  steps : Array[String]
+  steps_done : Int
+  progress : Int
+  diff_lines : Array[(String, String)]
+  settled : Bool
+  settled_note : String
+  seq : Int
+}
+
+pub(all) enum AiCardKind {
+  CardPlan
+  CardDiff
+  CardSideEffect
+  CardExplanation
+  CardError
+}
+
+pub(all) struct AiSession {
+  title : String
+  prompt_draft : String
+  cards : Array[AiCard]
+  card_seq : Int
+  proposal_history : Array[ProposalRecord]
+}
+pub fn AiSession::default(Int) -> Self
+
+pub(all) enum AiSessionMsg {
+  AiSessionCreate
+  AiSessionSwitch(Int)
+  AiSessionRemove(Int)
+}
+
+pub(all) struct AiSessions {
+  sessions : Array[AiSession]
+  mut active : Int
+  mut seq : Int
+}
+pub fn AiSessions::active_index(Self) -> Int
+pub fn AiSessions::amend(Self, AiSession) -> Unit
+pub fn AiSessions::append_to_last_card(Self, String) -> Unit
+pub fn AiSessions::count(Self) -> Int
+pub fn AiSessions::create(Self) -> Int
+pub fn AiSessions::current(Self) -> AiSession
+pub fn AiSessions::fresh(Int) -> Self
+pub fn AiSessions::list_entries(Self) -> Array[(Int, String, Bool)]
+pub fn AiSessions::new() -> Self
+pub fn AiSessions::remove(Self, Int) -> Unit
+pub fn AiSessions::session_at(Self, Int) -> AiSession?
+pub fn AiSessions::switch(Self, Int) -> Bool
+pub fn AiSessions::update(Self, AiSessionMsg) -> (Self, @core.Effect[AiSessionMsg])
+
+pub(all) struct ProposalRecord {
+  summary : String
+  diff : Array[@proposals.DiffEntry]
+  code_diff : Array[(String, String)]
+  accepted : Bool
+  seq : Int
+}
+
+// Type aliases
+
+// Traits

@@ -397,6 +397,7 @@ fn[Msg] text_area_vertical_caret_move(
       caret: hit.offset,
       selection: None,
       text_selection_anchor: None,
+      goal_column: None,
       composition: None,
       composition_cursor: None,
     }
@@ -495,6 +496,7 @@ fn[Msg] handle_text_area_pointer(
       caret: hit_offset,
       selection: None,
       text_selection_anchor: Some(hit_offset),
+      goal_column: None,
       composition: None,
       composition_cursor: None,
     }

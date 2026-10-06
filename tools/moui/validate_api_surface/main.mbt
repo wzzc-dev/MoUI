@@ -338,7 +338,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // which opens a menu but cannot say *which* item it is for; canvas
       // surfaces that own their hit-testing need the pointer point, exactly
       // like `on_tap_with_frame` already provides for primary taps.
-      max_lines: 2750,
+      max_lines: 2760,
       max_pub_lines: 1154,
       max_pub_all_lines: 190,
       required_tokens: [

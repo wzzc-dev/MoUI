@@ -9,6 +9,10 @@ import {
   "wzzc-dev/moui_devtools" @devtools,
   "wzzc-dev/moui_agent_mcp/stdio" @mcp_stdio,
   "examples/moui_studio/app" @studio_app,
+  "examples/moui_studio/kernel",
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/async/raw_fd" @raw_fd,
   "examples/moui_studio/services/provider_native" @provider,
   "examples/moui_studio/services/compile_native" @compile,
   "examples/moui_studio/services/launch_native" @launch,
@@ -24,6 +28,7 @@ supported_targets = "native"
 pkgtype(kind: "executable")
 
 options(
+  "native-stub": [ "pty.c" ],
   link: { "native": { "cc-link-flags": "" } },
   targets: { "main.mbt": [ "native" ] },
 )

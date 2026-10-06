@@ -93,23 +93,13 @@ pub(all) struct ProjectBuildRequest {
 }
 
 ///|
-/// 构建提交签名:平台入口注入(native 起 BuildOwner worker;web/测试 noop)。
-pub type BuildSubmit = (
-  @build.BuildKind,
-  String,
-  String,
-  (Result[@build.BuildReport, String]) -> Unit,
-) -> Unit
+/// 构建提交签名与预览 web 控制束的类型定义已收编进内核服务注册表
+/// （`kernel/services.mbt`，M1 插件化）；这里保留公开别名，既有引用零改动
+/// （`PreviewWebControls` 在内核泛型于消息类型，app 侧固化为本包 Msg）。
+pub type BuildSubmit = @kernel.BuildSubmit
 
 ///|
-pub fn noop_build_submit(
-  _kind : @build.BuildKind,
-  _root : String,
-  _entry_rel : String,
-  callback : (Result[@build.BuildReport, String]) -> Unit,
-) -> Unit {
-  callback(Err("本端没有构建执行器:构建仅在 native 入口可达"))
-}
+pub type PreviewWebControls = @kernel.PreviewWebControls[Msg]
 
 ///|
 /// 当前工程对应 kind 的入口包(缺 = ""):
@@ -124,11 +114,6 @@ pub fn build_entry_rel(
     BkWebPreview => project.scanned.web_entry
     BkRunNative => project.scanned.native_entry
   }
-}
-
-///|
-pub fn noop_build_cancel() -> Unit {
-  ()
 }
 
 ///|
@@ -171,25 +156,6 @@ pub fn preview_write_current(state : PreviewWriteState) -> (String, String)? {
 }
 
 ///|
-/// 预览 web 控制束(M2-2):静态服务端口/目录设置 + webview 命令。
-/// 平台入口在组合根装配(native 真实现;web/测试用 noop)。
-pub(all) struct PreviewWebControls {
-  /// 静态服务实际端口(0 = 未启动/web 不可用)
-  port : Int
-  /// 设置静态服务的服务目录(构建回执后调用)
-  set_directory : (String) -> Unit
-  /// webview 导航(返回 Effect 走运行时 effect 泵)
-  navigate : (String) -> @moui.Effect[Msg]
-  /// webview 刷新(重建后)
-  reload : () -> @moui.Effect[Msg]
-}
-
-///|
-pub fn noop_preview_web_controls() -> PreviewWebControls {
-  {
-    port: 0,
-    set_directory: _directory => (),
-    navigate: _url => @moui.Effect::none(),
-    reload: () => @moui.Effect::none(),
-  }
-}
+/// 预览 web 控制束的类型定义与 noop 已收编进内核
+/// （`kernel/services.mbt` 的 `PreviewWebControls[Msg]`，M1 插件化）；
+/// app 侧别名见本文件顶部。

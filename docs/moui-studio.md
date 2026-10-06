@@ -250,3 +250,27 @@ moon test examples/moui_studio/app --target wasm-gc
 
 See `examples/moui_studio/README.md` for the full verification loop and
 `docs/plans/active/moui-studio.md` for the acceptance matrix.
+
+
+## 插件化架构（M0–M7，2026-10-06）
+
+Studio 的壳与能力面按**静态插件架构**组织（ADR 0038；参照 Cordis 的静态可
+移植面，运行时动态性因 MoonBit 能力边界刻意不做）：
+
+- **内核 `kernel/`**：类型化服务容器 `StudioServices[Msg]`、事件总线
+  （纯监听器 + outbox 排空）、贡献点类型（PanelView/ActivityItem/BottomTab/
+  CommandContribution/Perspective）、MoonBit 词法器。
+- **插件 `plugins/`**：`ai`（多会话切片：`AiSessions.current()/amend()` 纪律、
+  Markdown 流式卡）、`terminal`（行缓冲屏 + 列光标 VT 处理；PTY 能力经
+  `PtyService` 键，native provider 在组合根 vendor examples/terminal 宿主
+  技术，web 显式降级）。
+- **三模式工作台**：活动栏 = 图形化/代码/AI 模式切换器 + ⚙；每模式绑定
+  全区域预设；「再点当前 = no-op」单一语义；AI 宿主唯一性由
+  `RightView` × 模式推导。
+- **教学版 profile**：`program(profile=Teaching)` 裁出图形化单模式 +
+  无终端（能力缺席显式呈现，不崩不藏）；完整版默认。
+- **编辑器**：MoonBit 着色（内核词法器，`code_lines` 按外观分派；工程文件
+  编辑器同源）；goal-column 光标语义（`TextControlStateContext.goal_column`，
+  垂直播种/保持、水平/点击/插入重置）。
+
+验收与里程碑记录：`docs/plans/done/moui-studio-plugin-kernel.md`。

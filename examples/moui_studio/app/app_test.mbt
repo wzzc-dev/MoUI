@@ -1236,7 +1236,7 @@ test "variables table data fills as the run declares variables" {
 ///|
 test "proposal history records accept and reject" {
   let model = @app.initial_model()
-  assert_eq(model.proposal_history.length(), 0)
+  assert_eq(model.ai_sessions.current().proposal_history.length(), 0)
   // 采纳一条
   let accepted = apply(
     apply(
@@ -1245,9 +1245,9 @@ test "proposal history records accept and reject" {
     ),
     AcceptProposal,
   )
-  assert_eq(accepted.proposal_history.length(), 1)
-  assert_true(accepted.proposal_history[0].accepted)
-  assert_eq(accepted.proposal_history[0].seq, 1)
+  assert_eq(accepted.ai_sessions.current().proposal_history.length(), 1)
+  assert_true(accepted.ai_sessions.current().proposal_history[0].accepted)
+  assert_eq(accepted.ai_sessions.current().proposal_history[0].seq, 1)
   // 再生成并拒绝一条
   let rejected = apply(
     apply(
@@ -1256,11 +1256,11 @@ test "proposal history records accept and reject" {
     ),
     RejectProposal,
   )
-  assert_eq(rejected.proposal_history.length(), 2)
-  assert_true(!rejected.proposal_history[1].accepted)
-  assert_eq(rejected.proposal_history[1].seq, 2)
+  assert_eq(rejected.ai_sessions.current().proposal_history.length(), 2)
+  assert_true(!rejected.ai_sessions.current().proposal_history[1].accepted)
+  assert_eq(rejected.ai_sessions.current().proposal_history[1].seq, 2)
   // 摘要非空（来自提案 summary）
-  assert_true(rejected.proposal_history[1].summary != "")
+  assert_true(rejected.ai_sessions.current().proposal_history[1].summary != "")
 }
 
 ///|
@@ -1576,7 +1576,13 @@ test "cycling appearance shows dsl and moonbit display is commit free" {
 /// M6②：提案 diff 变文本 diff——待采纳卡展示 handlers.mbt/form.mbt 的
 /// 行级 ±（代码真源），采纳置位代码工程落盘标记，历史记录保留文本 diff。
 test "proposal diff shows code text and accept triggers codegen write" {
-  let model = apply(@app.initial_model(), SetPrompt("帮我做一个随机点名"))
+  // 在册工程让采纳的写盘事件有目标（counter 工程导入；事件驱动见 app/events.mbt）
+  let imported = @app.update_with_services(
+      @app.initial_model(compile_track_available=true),
+      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      @services.AppServices::new(),
+    ).0
+  let model = apply(imported, SetPrompt("帮我做一个随机点名"))
   let generated = apply(model, GenerateProposal)
   match generated.pending {
     None => fail("应产生待采纳提案")
@@ -1589,12 +1595,12 @@ test "proposal diff shows code text and accept triggers codegen write" {
       // 行级 ± 形态：删除行带 -，新增行带 +
       assert_true(pending.code_diff.any(pair => pair.0 == "-"))
       assert_true(pending.code_diff.any(pair => pair.0 == "+"))
-      // 采纳：置位代码工程落盘标记（组合根写 handlers.mbt/form.mbt）
+      // 采纳：发出代码工程写盘事件（M1 事件化，组合根监听器写盘）
       let accepted = apply(generated, AcceptProposal)
-      assert_true(accepted.pending_code_project)
+      assert_true(accepted.outbox.any(event => event is EvCodeProjectWrite(_, _, _)))
       // 历史记录保留文本 diff（会话回放看代码改了哪几行）
-      assert_true(accepted.proposal_history.length() > 0)
-      let last = accepted.proposal_history[accepted.proposal_history.length() - 1]
+      assert_true(accepted.ai_sessions.current().proposal_history.length() > 0)
+      let last = accepted.ai_sessions.current().proposal_history[accepted.ai_sessions.current().proposal_history.length() - 1]
       assert_true(last.accepted)
       assert_eq(last.code_diff.length(), pending.code_diff.length())
     }
@@ -1716,4 +1722,303 @@ test "project file opens editable and saves" {
     }
     None => fail("读取回执后文件应打开")
   }
+}
+
+///|
+/// M3 验收：AI 模式走通「提问 → 提案卡 → 采纳 → 审计」+ 多会话互不串线。
+test "ai perspective walks prompt to proposal to accept with isolated sessions" {
+  // 在册工程（写盘事件有目标）+ 切到 AI 模式（预设：左栏会话列表/右栏收起）
+  let imported = @app.update_with_services(
+      @app.initial_model(compile_track_available=true),
+      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      @services.AppServices::new(),
+    ).0
+  let in_mode = apply(imported, SetPerspective(PsAi))
+  assert_true(in_mode.left_view is LeftAiSessions)
+  assert_true(in_mode.right_view is RvHidden)
+  // 提问：草稿进当前会话
+  let asked = apply(in_mode, SetPrompt("帮我做一个随机点名"))
+  assert_eq(
+    asked.ai_sessions.current().prompt_draft,
+    "帮我做一个随机点名",
+  )
+  // 生成（fake provider）：待审提案 + diff 卡进线程
+  let generated = apply(asked, GenerateProposal)
+  match generated.pending {
+    None => fail("应产生待采纳提案")
+    Some(pending) => assert_true(pending.valid)
+  }
+  assert_eq(generated.ai_sessions.current().cards.length(), 1)
+  // 采纳：提案历史进当前会话 + 语义/落盘事件 + 审计留痕
+  let accepted = apply(generated, AcceptProposal)
+  assert_eq(accepted.ai_sessions.current().proposal_history.length(), 1)
+  assert_true(
+    accepted.outbox.any(event => event is EvProposalAccepted(_, _)),
+  )
+  assert_true(
+    accepted.outbox.any(event => event is EvCodeProjectWrite(_, _, _)),
+  )
+  assert_true(
+    accepted
+    .audit_entries
+    .any(entry => entry.text == "app.ai.card.applied" || entry.kind is AuditRun),
+  )
+  // 草稿被消费
+  assert_eq(accepted.ai_sessions.current().prompt_draft, "")
+  // 多会话互不串线：新建会话是空的，切回原会话内容原样在
+  let created = apply(accepted, AiSessionOp(AiSessionCreate))
+  assert_eq(created.ai_sessions.count(), 2)
+  assert_eq(created.ai_sessions.current().cards.length(), 0)
+  assert_eq(created.ai_sessions.current().proposal_history.length(), 0)
+  let switched = apply(created, AiSessionOp(AiSessionSwitch(0)))
+  assert_eq(switched.ai_sessions.current().cards.length(), 1)
+  assert_eq(switched.ai_sessions.current().proposal_history.length(), 1)
+  // 删除原会话（RemoveProject 惯例：落到同位下一个）
+  let removed = apply(switched, AiSessionOp(AiSessionRemove(0)))
+  assert_eq(removed.ai_sessions.count(), 1)
+  assert_eq(removed.ai_sessions.current().proposal_history.length(), 0)
+}
+
+///|
+/// M4 验收：fake 讲解走确定性分块流式——分片逐段追加进当前会话的流式卡，
+/// 停止生成干净截断（后续分片被忽略），正常完成复位标志。
+test "fake explanation streams chunks and stop truncates cleanly" {
+  let services = @services.AppServices::new()
+  let model = @app.initial_model()
+  assert_true(model.provider_mode is @app.Fake)
+  // 启动流式讲解：流式卡就位（空 body）+ 标志为真
+  let (streaming, _effect) = @app.update_with_launch_for_test(
+      model,
+      ExplainHandler,
+      services,
+      fn(_path, _done) { () },
+    )
+    ignore(0)
+  assert_true(streaming.ai_streaming)
+  assert_eq(streaming.ai_sessions.current().cards.length(), 1)
+  assert_eq(streaming.ai_sessions.current().cards[0].body, "")
+  // 分片逐段到达（消息流断言）
+  let (one, _) = @app.update_with_services(streaming, StreamChunk("第一段。"), services)
+  let (two, _) = @app.update_with_services(one, StreamChunk("第二段。"), services)
+  assert_eq(
+    two.ai_sessions.current().cards[0].body,
+    "第一段。第二段。",
+  )
+  assert_true(two.ai_streaming)
+  // 停止生成：标志复位 + 卡片标记已停止
+  let (stopped, _) = @app.update_with_services(two, StopGeneration, services)
+  assert_false(stopped.ai_streaming)
+  assert_true(stopped.ai_sessions.current().cards[0].settled)
+  // 停止后的残余分片被忽略（干净截断，不追加）
+  let (ignored, _) = @app.update_with_services(stopped, StreamChunk("不应出现"), services)
+  assert_eq(
+    ignored.ai_sessions.current().cards[0].body,
+    "第一段。第二段。",
+  )
+  // 正常完成路径：独立一轮流（会话切片共享可变，避免与前段别名）——
+  // StreamFinished 只复位标志，不标已停止
+  let (fresh_stream, _) = @app.update_with_launch_for_test(
+      @app.initial_model(),
+      ExplainHandler,
+      services,
+      fn(_path, _done) { () },
+    )
+  let (done, _) = @app.update_with_services(fresh_stream, StreamFinished, services)
+  assert_false(done.ai_streaming)
+  assert_false(done.ai_sessions.current().cards[0].settled)
+}
+
+///|
+/// M5 验收：终端页签的消息流——派生回执挂句柄、PTY 输出喂屏、输入行经
+/// 服务写出（Dispatch 效应真调 fake write）、关闭触发 kill（生命周期）。
+test "terminal tab message flow spawns writes and closes via pty service" {
+  let services = @services.AppServices::new()
+  // fake PTY 服务：记录派生/写入/终止（无头不真起 PTY）
+  let spawn_calls = Ref(0)
+  let written = Ref("")
+  let killed = Ref(0)
+  let pty : @kernel.PtyService[@app.Msg] = {
+    available: true,
+    spawn: fn(_cols, _rows, _on_output, _on_exit, _emit) {
+      spawn_calls.val = spawn_calls.val + 1
+      Some(0)
+    },
+    write: fn(_handle, input) { written.val = written.val + input },
+    resize: fn(_handle, _cols, _rows) { () },
+    kill: fn(_handle) { killed.val = killed.val + 1 },
+  }
+  // AI 模式预设 + 终端页签
+  let in_mode = apply(@app.initial_model(pty_available=true), SetPerspective(PsAi))
+  let tabbed = apply(in_mode, SetBottomTab(BtTerminal))
+  assert_true(tabbed.terminal.available)
+  // 派生回执：句柄挂上（真程序里由包装层 spawn 触发经此回执）；
+  // 终端臂在 update_with_services（导出层），不走 update_pure
+  let spawned = @app.update_with_services(tabbed, TerminalSpawned(Some(0)), services, pty~).0
+  assert_true(spawned.terminal.running())
+  // PTY 输出喂屏（\r\n 语义：内容行 + 等待空行）
+  let out = @app.update_with_services(
+      spawned,
+      TerminalOutput("user@host % ls\r\n"),
+      services,
+      pty~,
+    ).0
+  assert_eq(out.terminal.screen.length(), 2)
+  assert_eq(out.terminal.screen[0], "user@host % ls")
+  // 输入行提交：Dispatch 效应真调 fake write（run 即执行）
+  let typed = @app.update_with_services(out, TerminalType("ls -la"), services, pty~).0
+  assert_eq(typed.terminal.input_draft, "ls -la")
+  assert_true(typed.terminal.running())
+  assert_true(pty.available)
+  let (_m, effect) = @app.update_with_services(typed, TerminalInput, services, pty~)
+  match effect {
+    @moui.Effect::Dispatch(run) => run(_msg => ())
+    _ => fail("TerminalInput 应派发写入效应")
+  }
+  assert_eq(written.val, "ls -la\n")
+  // 派生触发在包装层 effect（本测试不经包装层）；派生计数由真机冒烟覆盖
+  // 关闭：kill 一次（Dispatch 效应手动泵）+ 句柄清空（屏保留回看）
+  let (_cm, close_effect) = @app.update_with_services(typed, TerminalClose, services, pty~)
+  match close_effect {
+    @moui.Effect::Dispatch(run) => run(_msg => ())
+    _ => fail("TerminalClose 应派发 kill 效应")
+  }
+  assert_eq(killed.val, 1)
+  assert_false(typed.terminal.running())
+  // 屏保留回看（关闭不清内容）
+  assert_eq(typed.terminal.screen[0], "user@host % ls")
+}
+
+///|
+/// M6① 验收：AppMoonBit 外观按 MoonBit 规则着色（修复「MoonBit 源码
+/// 用 DSL 关键字表」的缺陷）——关键字/类型名/注释三类 MoonBit 特有判定。
+test "code_lines dispatches moonbit rules under AppMoonBit appearance" {
+  let model = @app.initial_model()
+  assert_true(model.code_appearance is @app.AppMoonBit)
+  // MoonBit 源码：fn/let 是 MoonBit 关键字（DSL 表里不存在 fn/struct 判定）
+  let with_code = @app.update_moonbit_draft_for_test(model, "fn main() { let n = 1 }")
+  let lines = @app.code_lines(with_code)
+  assert_true(lines.length() >= 1)
+  // fn（MoonBit 关键字）与 main（首字母小写→非内建）着色分离：
+  // CodeTokenKind 无 Eq，用文本匹配判定关键字命中
+  let mut has_keyword = false
+  for line in lines {
+    for token in line.tokens {
+      if token.kind is @app.TokKeyword && (token.text == "fn" || token.text == "let") {
+        has_keyword = true
+      }
+    }
+  }
+  assert_true(has_keyword)
+  // 注释按 MoonBit 规则着色
+  let with_comment = @app.update_moonbit_draft_for_test(model, "// 注释\nlet x = 1")
+  let comment_lines = @app.code_lines(with_comment)
+  let mut has_comment = false
+  for line in comment_lines {
+    for token in line.tokens {
+      if token.kind is @app.TokComment && token.text.contains("注释") {
+        has_comment = true
+      }
+    }
+  }
+  assert_true(has_comment)
+  // DSL 外观维持既有 DSL 关键字表（口径不回归）
+  let dsl = @app.update_moonbit_draft_for_test(model, "如果 x 那么 y")
+  let dsl_switched = apply(dsl, CycleCodeAppearance)
+  assert_true(dsl_switched.code_appearance is @app.AppDsl)
+}
+
+///|
+/// M7 验收：教学版 profile——只开放图形化模式（其它模式切换 no-op、活动栏
+/// 只渲染一个模式项、终端强制不可用），完整版不受影响。
+test "teaching profile restricts perspectives and terminal" {
+  // 教学版：PTY 强制不可用（pty_available 传真也被 profile 取与）
+  let teaching = @app.initial_model(pty_available=true, profile=@app.Teaching)
+  assert_true(teaching.profile is @app.Teaching)
+  assert_false(teaching.terminal.available)
+  // 图形化模式切换正常（同值 no-op 语义不变）
+  assert_true(teaching.perspective is @app.PsVisual)
+  // 切代码/AI：no-op（留在图形化）
+  let code = apply(teaching, SetPerspective(PsCode))
+  assert_true(code.perspective is @app.PsVisual)
+  let ai = apply(teaching, SetPerspective(PsAi))
+  assert_true(ai.perspective is @app.PsVisual)
+  // 完整版：三模式全可切
+  let full = @app.initial_model()
+  let full_code = apply(full, SetPerspective(PsCode))
+  assert_true(full_code.perspective is @app.PsCode)
+  let full_ai = apply(full_code, SetPerspective(PsAi))
+  assert_true(full_ai.perspective is @app.PsAi)
+}
+
+///|
+/// M8① 验收：终端页签开关语义——选中态再点 = 关闭（kill + 收起 + 页签
+/// 退出选中）；关闭态再点 = 重开（重派生条件恢复）。
+test "terminal tab toggle closes and reopens via select_bottom_tab" {
+  let services = @services.AppServices::new()
+  let killed = Ref(0)
+  let pty : @kernel.PtyService[@app.Msg] = {
+    available: true,
+    spawn: fn(_cols, _rows, _on_output, _on_exit, _emit) { Some(0) },
+    write: fn(_handle, _input) { () },
+    resize: fn(_handle, _cols, _rows) { () },
+    kill: fn(_handle) { killed.val = killed.val + 1 },
+  }
+  // AI 模式 + 终端页签选中 + 派生回执
+  let in_mode = @app.update_with_services(
+      @app.initial_model(pty_available=true),
+      SetPerspective(PsAi),
+      services,
+      pty~,
+    ).0
+  assert_true(in_mode.terminal_open)
+  // M8④：AI 模式底栏默认收起
+  assert_false(in_mode.bottom_open)
+  let spawned = @app.update_with_services(in_mode, TerminalSpawned(Some(0)), services, pty~).0
+  // 再点选中的终端页签 = 关闭（TerminalTabClose）：kill 一次 + 页签退出
+  // 选中 + 底栏收起（kill 在 Dispatch 效应里，手动泵）
+  let (_cm, close_effect) = @app.update_with_services(
+      spawned,
+      TerminalTabClose,
+      services,
+      pty~,
+    )
+  match close_effect {
+    @moui.Effect::Dispatch(run) => run(_msg => ())
+    _ => fail("TerminalTabClose 应派发 kill 效应")
+  }
+  let closed = _cm
+  assert_false(closed.terminal_open)
+  assert_false(closed.terminal.running())
+  assert_eq(killed.val, 1)
+  assert_true(closed.bottom_tab is @app.BtConsole)
+  assert_false(closed.bottom_open)
+  // 关闭态再点 = 重开（terminal_open 恢复；句柄已清 → 重派生条件成立）
+  let reopened = @app.update_with_services(closed, SetBottomTab(BtTerminal), services, pty~).0
+  assert_true(reopened.terminal_open)
+  assert_true(reopened.bottom_tab is @app.BtTerminal)
+  assert_true(reopened.bottom_open)
+}
+
+///|
+/// M8③ 验收：AI 中心空会话 = 居中 composer；有卡片 = 钉底。
+test "ai center composer centers when session is empty" {
+  let model = @app.initial_model()
+  let in_mode = apply(model, SetPerspective(PsAi))
+  // 空会话（无卡）：ai_center 用居中形态——直接断言会话无卡（渲染形态由
+  // headless 探针覆盖，这里锁状态判据）
+  assert_eq(in_mode.ai_sessions.current().cards.length(), 0)
+  // 推一张卡后有卡路径成立
+  let with_card = @app.push_ai_card(in_mode, AiCard::{
+    kind: CardExplanation,
+    title: "讲解",
+    body: "内容",
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: false,
+    settled_note: "",
+    seq: 0,
+  })
+  assert_eq(with_card.ai_sessions.current().cards.length(), 1)
 }
