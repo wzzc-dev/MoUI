@@ -261,7 +261,19 @@ fn create_macos_app(
     transparent_titlebar: options.transparent_titlebar,
     show_after_first_present: options.show_after_first_present,
     platform_attributes: options.platform_attributes,
-    on_ready: options.on_ready,
+    // The Dock icon must be applied after `did_finish_launching`: the launch
+    // policy switch re-registers the app with the Dock, which resets any icon
+    // set earlier back to the generic system icon. `on_ready` runs after the
+    // primary window is ready and the default menu is installed, so the icon
+    // sticks; applying it before the app's own on_ready callback keeps an
+    // explicit user override (e.g. `set_application_icon_path`) winning.
+    on_ready: Some(() => {
+      macos_apply_dock_icon(options.dock_icon_path)
+      match options.on_ready {
+        Some(callback) => callback()
+        None => ()
+      }
+    }),
     min_window_size: options.min_window_size,
     window_drag: options.window_drag,
     window_drag_applied: None,

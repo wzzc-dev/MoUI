@@ -55,6 +55,11 @@ pub struct MacosHostAppOptions {
   /// same source handed to `app_environment`; leave unset when the app draws a
   /// conventional title bar.
   priv window_drag : @services.WindowDragRegionSource?
+  /// File path of the icon shown in the Dock (and the About panel). `None`
+  /// keeps the platform default: bundled `.app` binaries use their bundle
+  /// icon, and unbundled binaries get the embedded MoUI Moonbud icon instead
+  /// of the generic system icon. See `docs/platform-notes-macos.md`.
+  priv dock_icon_path : String?
 }
 
 ///|
@@ -181,6 +186,7 @@ pub fn MacosHostAppOptions::new(
   min_window_size? : @dpi.LogicalSize? = None,
   frame_clock? : (() -> Double)? = None,
   window_drag? : @services.WindowDragRegionSource? = None,
+  dock_icon_path? : String? = None,
 ) -> MacosHostAppOptions {
   {
     scene_resolver,
@@ -193,6 +199,7 @@ pub fn MacosHostAppOptions::new(
     min_window_size,
     frame_clock,
     window_drag,
+    dock_icon_path,
   }
 }
 
@@ -201,6 +208,16 @@ pub fn MacosHostAppOptions::platform_view_plugins(
   self : MacosHostAppOptions,
 ) -> Array[@host.PlatformViewPlugin] {
   self.platform_view_plugins
+}
+
+///|
+/// File path of the icon shown in the Dock, or `None` for the platform
+/// default (bundle icon for bundled `.app` binaries, embedded MoUI Moonbud
+/// icon for unbundled binaries).
+pub fn MacosHostAppOptions::dock_icon_path(
+  self : MacosHostAppOptions,
+) -> String? {
+  self.dock_icon_path
 }
 
 ///|

@@ -117,6 +117,32 @@ matching window's redraw, while stale or disposed tokens are ignored. The real
 Skia smoke records matching-host async second-frame evidence only when the
 token completion and repaint markers are present.
 
+## Application Icon (Dock)
+
+Unbundled macOS binaries (everything launched through `moon run`/`moon build`
+output) would normally show the generic system gear in the Dock. The macOS
+backend applies an application-wide icon automatically:
+
+- Unbundled binaries get the embedded MoUI Moonbud icon
+  (`moui/backend/macos/macos_branding_icon.mbt`, generated from
+  `resource/branding/moonbud-mascot-100.png` by
+  `scripts/generate-macos-branding-icon.mjs`).
+- Bundled `.app` binaries keep their bundle-declared icon unless an override
+  is set, so packaging MoUI apps with `Info.plist` icons is not affected.
+
+Pass `MacosHostAppOptions::new(dock_icon_path=Some(path))` at the composition
+root to use a custom image file (anything `NSImage` decodes). The icon is
+applied from the `on_ready` hook, after `did_finish_launching`: the launch
+policy switch re-registers the app with the Dock and would reset an icon set
+earlier back to the generic system icon.
+
+For runtime changes (for example swapping the icon while the app runs), call
+the `wzzc-dev/window/macos` APIs directly on the main thread:
+`set_application_icon_path(path)` / `set_application_icon_data(bytes)` return
+false when AppKit is unavailable or the image cannot be decoded, and
+`application_is_bundled()` reports which default policy applies. Loading
+failures are reported on stdout and leave the previous icon in place.
+
 ## Link Flags
 
 macOS host frameworks are injected by `moui/build.js` for
