@@ -8,6 +8,8 @@ import {
 // Values
 pub fn dispatch_binary_file(@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse
 
+pub fn dispatch_delete_file(String) -> @backend.HostServiceResponse
+
 pub fn dispatch_list_directory(String) -> @backend.HostServiceResponse
 
 pub fn dispatch_text_file(@backend.HostTextFileRequest) -> @backend.HostServiceResponse

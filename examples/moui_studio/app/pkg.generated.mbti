@@ -263,6 +263,8 @@ pub fn center_width_of(Model, Double) -> Double
 
 pub fn chip_label_width(String) -> Double
 
+pub fn clamp_bottom_height(Double) -> Double
+
 pub fn clear_selection(Model) -> Model
 
 pub fn clone_path(Array[Int]) -> Array[Int]
@@ -551,7 +553,7 @@ pub fn problem_rows(Model, @moui_i18n.Translator) -> Array[ProblemRow]
 
 pub fn problems_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : @kernel.PreviewWebControls[Msg], provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty? : @kernel.PtyService[Msg], profile? : StudioProfile, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : @kernel.PreviewWebControls[Msg], provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty? : @kernel.PtyService[Msg], focus_terminal? : () -> Unit, profile? : StudioProfile, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
 
 pub fn program_tree(Model) -> Array[TreeNode]
 
@@ -1111,6 +1113,8 @@ pub(all) struct Model {
   ai_streaming : Bool
   terminal : @terminal.TerminalState
   mut terminal_open : Bool
+  mut terminal_scroll : @core.Point
+  mut terminal_scroll_seq : Int
   ai_context_chips : Array[String]
   settings_open : Bool
   ai_history_open : Bool
@@ -1300,6 +1304,7 @@ pub(all) enum Msg {
   TerminalType(String)
   TerminalWrite(String)
   TerminalTabClose
+  FocusTerminalRequest
   StreamChunk(String)
   StreamFinished
   StopGeneration
@@ -1318,6 +1323,8 @@ pub(all) enum Msg {
   ResizeRightPanel(Double)
   SetContextTab(ContextTab)
   SetBottomTab(BottomTab)
+  SetBottomHeight(Double)
+  TerminalScrolled(@core.Point)
   GotoProblem(String, Int)
   ToggleBottom
   AuditOpen(Int)

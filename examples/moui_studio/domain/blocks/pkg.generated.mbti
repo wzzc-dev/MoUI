@@ -3,6 +3,7 @@ package "examples/moui_studio/domain/blocks"
 
 import {
   "examples/moui_studio/domain/ir",
+  "examples/moui_studio/domain/studio_lang",
 }
 
 // Values
@@ -24,23 +25,53 @@ pub fn clone_stmt(@ir.Stmt) -> @ir.Stmt
 
 pub fn clone_stmts(Array[@ir.Stmt]) -> Array[@ir.Stmt]
 
+pub fn declaration_chain(@ir.StudioProgram) -> Array[BlockItem]
+
 pub fn delete_stmt_at(Array[@ir.Stmt], Array[Int]) -> Array[@ir.Stmt]
 
+pub fn drop_accepts_stmt(Array[@ir.Stmt], Array[Int], @ir.Stmt) -> Bool
+
 pub fn event_block(String, String) -> BlockSpec
+
+pub fn expr_at(Array[@ir.Stmt], Array[Int], Array[Int]) -> @ir.Expr?
+
+pub fn expr_child(@ir.Expr, Int) -> @ir.Expr?
+
+pub fn expr_leaf_text(@ir.Expr) -> String?
+
+pub fn expr_slot_count(@ir.Expr) -> Int
 
 pub fn flow_companion_kinds(BlockKind) -> Array[BlockKind]
 
 pub fn insert_stmt_at(Array[@ir.Stmt], Array[Int], Int, @ir.Stmt) -> Array[@ir.Stmt]?
 
+pub fn move_stmt_at(Array[@ir.Stmt], Array[Int], Array[Int], Int) -> Array[@ir.Stmt]?
+
+pub fn parse_leaf_value(String, @studio_lang.Language) -> @ir.Expr
+
+pub fn push_slot(Array[TextSegment], @ir.Expr, Array[Int]) -> Unit
+
+pub fn reorder_stack(Array[@ir.Stmt], Array[Int], Int, Int) -> Array[@ir.Stmt]?
+
 pub fn reorder_stmt(Array[@ir.Stmt], Array[Int], Int, Int) -> Array[@ir.Stmt]?
 
+pub fn replace_expr_at(Array[@ir.Stmt], Array[Int], Array[Int], @ir.Expr) -> Array[@ir.Stmt]?
+
+pub fn replace_expr_child(@ir.Expr, Int, @ir.Expr) -> @ir.Expr?
+
 pub fn replace_stmt_at(Array[@ir.Stmt], Array[Int], @ir.Stmt) -> Array[@ir.Stmt]
+
+pub fn segments_slot_count(Array[TextSegment]) -> Int
 
 pub fn stmt_at(Array[@ir.Stmt], Array[Int]) -> @ir.Stmt?
 
 pub fn stmt_block_kind(@ir.Stmt) -> BlockKind
 
 pub fn stmt_list_at(Array[@ir.Stmt], Array[Int]) -> Array[@ir.Stmt]?
+
+pub fn stmt_root_expr(@ir.Stmt) -> @ir.Expr?
+
+pub fn stmt_text_segments(@ir.Stmt) -> Array[TextSegment]
 
 // Errors
 
@@ -59,11 +90,14 @@ pub(all) struct BlockItem {
   text : String
   builtin : String
   path : Array[Int]
+  segments : Array[TextSegment]?
 }
 
 pub(all) enum BlockKind {
   BkDeclare
   BkAssign
+  BkSetIndex
+  BkReturn
   BkIf
   BkElseIf
   BkElse
@@ -72,6 +106,10 @@ pub(all) enum BlockKind {
   BkWhile
   BkBreak
   BkCall
+  BkMatch
+  BkCase
+  BkEnumDecl
+  BkStructDecl
 }
 
 pub(all) struct BlockSpec {
@@ -87,6 +125,14 @@ pub(all) enum BlockValueType {
   VtNumber
   VtBool
   VtAny
+}
+
+pub(all) struct TextSegment {
+  text : String
+  expr_path : Array[Int]?
+  is_slot : Bool
+  pill : Bool
+  label_key : String?
 }
 
 // Type aliases

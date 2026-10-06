@@ -24,11 +24,13 @@ pub fn escape_mbt(String) -> String
 
 pub fn export_bundle(String, String) -> Array[(String, String)]
 
-pub fn generate_handler_source(@ir.Handler, Int) -> GeneratedHandler
+pub fn generate_handler_source(@ir.Handler, Int, functions? : Array[@ir.FuncDef]) -> GeneratedHandler
 
 pub fn generate_source(@ir.StudioProgram) -> GeneratedSource
 
 pub fn generated_handlers_mbt(String) -> String
+
+pub fn handler_function_name(@ir.Handler, Int) -> String
 
 pub fn ir_pkg() -> String
 

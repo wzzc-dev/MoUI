@@ -9,7 +9,11 @@ import {
 // Values
 pub const MAX_STEPS : Int = 100_000
 
+pub const MAX_USER_CALL_DEPTH : Int = 16
+
 pub const RANDOM_SEED : Int = 20260927
+
+pub fn abs_value(Value, String, Int) -> Value raise ExecError
 
 pub fn add_values(Value, Value, Int) -> Value
 
@@ -17,7 +21,11 @@ pub fn and_values((Runtime) -> Value raise ExecError, (Runtime) -> Value raise E
 
 pub fn answer_gate(Runtime, Bool) -> RunStatus
 
+pub fn answer_gate_with_text(Runtime, Bool, String) -> RunStatus
+
 pub fn arity_error(String, Int, Int, Int) -> Value raise ExecError
+
+pub fn as_number(Value, String, Int) -> Double raise ExecError
 
 pub fn as_text(Value, String, Int) -> String raise ExecError
 
@@ -27,13 +35,21 @@ pub fn bool_of(Value, String, Int) -> Bool raise ExecError
 
 pub fn bool_text(Bool) -> String
 
+pub fn ceiling_value(Value, String, Int) -> Value raise ExecError
+
 pub fn compare_values(Value, Value, String, Int) -> Value raise ExecError
 
 pub fn contains(Value, Value, String, Int) -> Value raise ExecError
 
 pub fn div_values(Value, Value, Int) -> Value raise ExecError
 
+pub fn enum_case(Value, Int) -> String raise ExecError
+
 pub fn eq_values(Value, Value, Int) -> Value raise ExecError
+
+pub fn floor_value(Value, String, Int) -> Value raise ExecError
+
+pub fn get_field(Value, String, Int) -> Value raise ExecError
 
 pub fn get_number(Runtime, String, Int) -> Value raise ExecError
 
@@ -41,9 +57,23 @@ pub fn get_text(Runtime, String) -> Value
 
 pub fn handler_for(@ir.StudioProgram, String, String) -> Handler?
 
+pub fn index_values(Value, Value, Int) -> Value raise ExecError
+
+pub fn int_value(Double) -> Value
+
+pub fn last_answer(Runtime) -> Value
+
+pub fn list_length(Runtime, Value, Int) -> Value raise ExecError
+
 pub fn lower_handler(Array[@ir.Stmt]) -> Handler
 
 pub fn lower_traced_handler(Array[@studio_lang.TracedStmt]) -> Handler
+
+pub fn lower_user_function(@ir.FuncDef) -> (Runtime, Array[Value]) -> Value raise ExecError
+
+pub fn make_enum(String, String) -> Value
+
+pub fn mod_value(Value, Value, String, Int) -> Value raise ExecError
 
 pub fn mul_values(Value, Value, Int) -> Value raise ExecError
 
@@ -61,19 +91,31 @@ pub fn or_values((Runtime) -> Value raise ExecError, (Runtime) -> Value raise Ex
 
 pub fn random(Runtime, Value, Int) -> Value raise ExecError
 
+pub fn round_value(Value, String, Int) -> Value raise ExecError
+
 pub fn row_at(Runtime, String, Value, Int) -> Value raise ExecError
 
 pub fn row_count(Runtime, String) -> Value
 
 pub fn run_handler(Runtime, Handler) -> RunStatus
 
-pub fn runtime_for_program(@ir.StudioProgram) -> Runtime
+pub fn runtime_for_program(@ir.StudioProgram, lower? : ((@ir.FuncDef) -> ((Runtime, Array[Value]) -> Value raise ExecError))?) -> Runtime
 
 pub fn selected_row(Runtime, String) -> Value
+
+pub fn set_index_values(Value, Value, Value, Int) -> Unit raise ExecError
+
+pub fn sqrt_of(Double) -> Double
+
+pub fn sqrt_value(Value, String, Int) -> Value raise ExecError
+
+pub fn stop_all(Runtime) -> Value
 
 pub fn sub_values(Value, Value, Int) -> Value raise ExecError
 
 pub fn text_length(Value, String, Int) -> Value raise ExecError
+
+pub fn tick_wait(Runtime) -> Bool
 
 pub fn to_text(Value) -> Value
 
@@ -81,11 +123,14 @@ pub fn unknown_builtin(String, Int) -> Value raise ExecError
 
 pub fn value_to_text(Value) -> String
 
+pub fn wait_value(Runtime, Double) -> Value
+
 // Errors
 pub(all) suberror ExecError {
   RuntimeError(ErrorDetails)
   GateHalt
   LoopBreak
+  LoopReturn(Value)
 }
 
 // Types and methods
@@ -123,6 +168,7 @@ pub(all) enum RunStatus {
   WaitingGate
   Completed
   Failed
+  Stopped
 }
 
 pub(all) struct Runtime {
@@ -134,11 +180,14 @@ pub(all) struct Runtime {
   mut audit : Array[StepRecord]
   mut status : RunStatus
   mut gate : Gate?
+  mut wait_ticks : Int
   mut error : ErrorDetails?
   mut steps : Int
   max_steps : Int
   mut rng : Int
   mut gate_answers : Array[Bool]
+  gate_answer_texts : Array[String]
+  mut last_answer : String
   mut gate_cursor : Int
   mut declared : Array[String]
   mut active_handler : Handler?
@@ -148,17 +197,25 @@ pub(all) struct Runtime {
   mut base_selections : Map[String, Int]
   mut base_declared : Array[String]
   mut base_rng : Int
+  mut user_functions : Map[String, (Runtime, Array[Value]) -> Value raise ExecError]
+  mut call_depth : Int
+  mut broadcasts : Array[String]
 }
+pub fn Runtime::append_list(Self, String, Value, String, Int, String) -> Unit raise ExecError
 pub fn Runtime::append_row(Self, String, Value, String, Int, String) -> Unit raise ExecError
 pub fn Runtime::ask(Self, Value, String, Int, String) -> Value raise ExecError
 pub fn Runtime::audit_assign(Self, String, Value, Int, String) -> Unit raise ExecError
 pub fn Runtime::break_loop(Self) -> Unit raise ExecError
+pub fn Runtime::broadcast(Self, Value, Int) -> Unit raise ExecError
+pub fn Runtime::call_user_function(Self, String, Array[Value], Int) -> Value raise ExecError
 pub fn Runtime::count_loop(Self, Value, String, Int, (Self) -> Unit raise ExecError) -> Unit raise ExecError
 pub fn Runtime::get(Self, String, Int) -> Value raise ExecError
+pub fn Runtime::has_user_function(Self, String) -> Bool
 pub fn Runtime::message_box(Self, Value, String, Int, String) -> Unit raise ExecError
 pub fn Runtime::record(Self, Int, StepOp, String) -> Unit raise ExecError
 pub fn Runtime::record_condition(Self, Bool, Int, String) -> Unit raise ExecError
 pub fn Runtime::record_iteration(Self, Int, Int) -> Unit raise ExecError
+pub fn Runtime::register_user_function(Self, String, (Self, Array[Value]) -> Value raise ExecError) -> Unit
 pub fn Runtime::require_declared(Self, String, Int) -> Unit raise ExecError
 pub fn Runtime::set(Self, String, Value) -> Unit
 pub fn Runtime::set_text(Self, String, Value, String, Int, String) -> Unit raise ExecError
@@ -182,11 +239,16 @@ pub(all) struct StepRecord {
 
 pub(all) enum Value {
   VNum(Double)
+  VInt(Int)
   VStr(String)
+  VArr(Array[Value])
   VBool(Bool)
   VUnit
+  VStruct(Map[String, Value])
+  VEnum(String, String)
 }
 
 // Type aliases
+pub type UserFunction = (Runtime, Array[Value]) -> Value raise ExecError
 
 // Traits

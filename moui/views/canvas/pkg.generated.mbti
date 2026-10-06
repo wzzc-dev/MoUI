@@ -11,6 +11,8 @@ pub fn[Msg] animated_canvas(measure~ : (@core.Constraints) -> @core.Size, draw~ 
 
 pub fn[Msg] canvas(measure~ : (@core.Constraints) -> @core.Size, draw~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_label? : String) -> @core.View[Msg]
 
+pub fn[Msg] measured_canvas(measure~ : (@core.Constraints, @core.TextSystem) -> @core.Size, draw~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_label? : String) -> @core.View[Msg]
+
 pub fn view_declaration(layout? : @core.DeclarationChannel, paint? : @core.DeclarationChannel, semantics? : @core.DeclarationChannel, platform? : @core.DeclarationChannel) -> @core.ViewDeclaration
 
 pub fn view_exact_channel(@core.DeclarationKey) -> @core.DeclarationChannel

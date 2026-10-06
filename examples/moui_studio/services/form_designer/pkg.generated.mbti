@@ -22,6 +22,8 @@ pub fn form_model_move(FormModel, Int, Double, Double) -> FormModel
 
 pub fn form_model_resize(FormModel, Int, Double, Double) -> FormModel
 
+pub fn ir_controls_to_form_model(@ir.WindowSpec, Array[@ir.Control], Array[@ir.Handler], (@ir.Handler, Int) -> String) -> FormModel
+
 pub fn number_len(String, Int) -> Int
 
 pub fn parse_form(String) -> Result[ParsedForm, String]

@@ -4,14 +4,18 @@ package "examples/moui_studio/services/compile_native"
 import {
   "examples/moui_studio/services/export",
   "moonbitlang/async/aqueue",
+  "moonbitlang/async/process",
+  "moonbitlang/core/ref",
 }
 
 // Values
 pub fn collect_artifacts(String) -> Array[@export.CompileArtifact]
 
-pub async fn compile_bundle_at(String, on_progress? : (@export.CompileProgress) -> Unit) -> Result[@export.CompileReport, String]
+pub async fn compile_bundle_at(String, on_progress? : (@export.CompileProgress) -> Unit, owner? : CompileOwner) -> Result[@export.CompileReport, String]
 
-pub async fn compile_project(String, String, String, on_progress? : (@export.CompileProgress) -> Unit) -> Result[@export.CompileReport, String]
+pub fn compile_cancel(CompileOwner) -> Unit
+
+pub async fn compile_project(String, String, String, on_progress? : (@export.CompileProgress) -> Unit, owner? : CompileOwner) -> Result[@export.CompileReport, String]
 
 pub fn compile_submit(CompileOwner, CompileJob) -> Unit
 
@@ -32,6 +36,7 @@ pub(all) struct CompileJob {
 
 pub(all) struct CompileOwner {
   queue : @aqueue.Queue[CompileJob]
+  active : @ref.Ref[@process.Process?]
 }
 pub fn CompileOwner::new() -> Self
 

@@ -10,9 +10,13 @@ pub const MAX_CONTROLS : Int = 128
 
 pub const MAX_EXPR_DEPTH : Int = 32
 
+pub const MAX_FUNCS : Int = 16
+
 pub const MAX_HANDLERS : Int = 64
 
 pub const MAX_LOOP_DEPTH : Int = 64
+
+pub const MAX_PARAMS : Int = 8
 
 pub const MAX_STMTS_PER_HANDLER : Int = 512
 
@@ -33,6 +37,8 @@ pub fn empty_program() -> StudioProgram
 pub fn expr_depth(Expr) -> Int
 
 pub fn find_control(StudioProgram, String) -> Control?
+
+pub fn find_function(StudioProgram, String) -> FuncDef?
 
 pub fn find_handler(StudioProgram, String, EventKind) -> Handler?
 
@@ -96,6 +102,9 @@ pub(all) enum ControlKind {
   CheckBox
   ListBox
   Table
+  Dropdown
+  ProgressBar
+  Image
 }
 pub fn ControlKind::supports_event(Self, EventKind) -> Bool
 pub fn ControlKind::tag(Self) -> String
@@ -107,21 +116,42 @@ pub(all) enum DragCorner {
   CornerSE
 }
 
+pub(all) struct EnumDecl {
+  name : String
+  cases : Array[String]
+}
+
 pub(all) enum EventKind {
   OnClick
   OnChange
+  OnInputDone
+  OnTimer
+  OnBroadcast
 }
 pub fn EventKind::tag(Self) -> String
 
 pub(all) enum Expr {
   NumLit(Double)
+  IntLit(Int)
   StrLit(String)
+  ListLit(Array[Expr])
   BoolLit(Bool)
   Var(String)
   Not(Expr)
   Neg(Expr)
+  Index(Expr, Expr)
   Binary(BinOp, Expr, Expr)
   Call(String, Array[Expr])
+  FieldAccess(Expr, String)
+  EnumTag(String, String)
+}
+
+pub(all) struct FuncDef {
+  name : String
+  params : Array[String]
+  body : Array[Stmt]
+  note_zh : String
+  note_en : String
 }
 
 pub(all) struct Handler {
@@ -147,6 +177,14 @@ pub(all) enum IrError {
   TooManyStatements(Int)
   LoopTooDeep(Int)
   ExprTooDeep(Int)
+  DuplicateFunctionName(String)
+  InvalidFunctionName(String)
+  DuplicateParam(String, String)
+}
+
+pub(all) struct MatchArm {
+  case_name : String
+  body : Array[Stmt]
 }
 
 pub(all) enum RectField {
@@ -164,6 +202,19 @@ pub(all) enum Stmt {
   WhileLoop(Expr, Array[Stmt])
   Break
   Call(String, Array[Expr])
+  SetIndex(String, Expr, Expr)
+  Return(Expr?)
+  Match(Expr, Array[MatchArm], Array[Stmt])
+}
+
+pub(all) struct StructDecl {
+  name : String
+  fields : Array[StructField]
+}
+
+pub(all) struct StructField {
+  field_name : String
+  field_type : String
 }
 
 pub(all) struct StudioProgram {
@@ -172,6 +223,9 @@ pub(all) struct StudioProgram {
   controls : Array[Control]
   variables : Array[Variable]
   handlers : Array[Handler]
+  functions : Array[FuncDef]
+  structs : Array[StructDecl]
+  enums : Array[EnumDecl]
 }
 
 pub(all) struct Variable {
@@ -183,6 +237,7 @@ pub(all) struct WindowSpec {
   title : String
   width : Int
   height : Int
+  timer_interval : Int
 }
 
 // Type aliases

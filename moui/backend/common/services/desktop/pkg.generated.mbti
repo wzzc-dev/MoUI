@@ -36,9 +36,10 @@ pub struct DesktopHostServices {
   show_menu : (Array[@core.ActionCommand]) -> @backend.HostServiceResponse
   set_application_menu : (Array[@backend.HostApplicationMenu]) -> @backend.HostServiceResponse
   list_directory : (String) -> @backend.HostServiceResponse
+  delete_file : (String) -> @backend.HostServiceResponse
 }
 pub fn DesktopHostServices::bridge(Self) -> @backend.HostServiceBridge
-pub fn DesktopHostServices::new(capabilities~ : @backend.HostServiceCapabilities, system_theme~ : @core.ColorScheme, clipboard~ : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url~ : (String) -> Bool, file_dialog~ : (@backend.HostFileDialogOptions) -> Array[String], settings~ : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, show_menu~ : (Array[@core.ActionCommand]) -> @backend.HostServiceResponse, set_application_menu? : (Array[@backend.HostApplicationMenu]) -> @backend.HostServiceResponse, text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, list_directory? : (String) -> @backend.HostServiceResponse) -> Self
+pub fn DesktopHostServices::new(capabilities~ : @backend.HostServiceCapabilities, system_theme~ : @core.ColorScheme, clipboard~ : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url~ : (String) -> Bool, file_dialog~ : (@backend.HostFileDialogOptions) -> Array[String], settings~ : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, show_menu~ : (Array[@core.ActionCommand]) -> @backend.HostServiceResponse, set_application_menu? : (Array[@backend.HostApplicationMenu]) -> @backend.HostServiceResponse, text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, list_directory? : (String) -> @backend.HostServiceResponse, delete_file? : (String) -> @backend.HostServiceResponse) -> Self
 
 // Type aliases
 

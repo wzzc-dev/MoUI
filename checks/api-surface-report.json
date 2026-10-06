@@ -53,16 +53,16 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2755,
+      "lines": 2751,
       "public_declarations": 1154,
       "pub_all_declarations": 190
     },
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 691,
+      "lines": 690,
       "public_declarations": 329,
-      "pub_all_declarations": 67
+      "pub_all_declarations": 1
     },
     {
       "label": "backend protocols",

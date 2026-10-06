@@ -10,7 +10,11 @@ pub const DEFAULT_MAX_STEPS : Int = 100_000
 
 pub const DEFAULT_SEED : Int = 20260927
 
+pub const MAX_CALL_DEPTH : Int = 16
+
 pub fn answer_gate(RunState, Bool) -> Unit
+
+pub fn answer_gate_with_text(RunState, Bool, String) -> Unit
 
 pub fn builtin_catalog() -> Array[BuiltinSpec]
 
@@ -28,6 +32,8 @@ pub fn check_syntax(String, Language) -> LangError?
 
 pub fn classify_stmt_keyword(String, Keywords) -> StmtKeyword
 
+pub fn constant_value(String) -> Value?
+
 pub fn find_builtin(String) -> BuiltinSpec?
 
 pub fn initial_rows(@ir.StudioProgram) -> Map[String, Array[String]]
@@ -36,7 +42,11 @@ pub fn initial_texts(@ir.StudioProgram) -> Map[String, String]
 
 pub fn initial_values(@ir.StudioProgram) -> Map[String, Value]
 
+pub fn int_value(Double) -> Value
+
 pub fn is_reserved(String) -> Bool
+
+pub fn is_struct_field_type_id(String) -> Bool
 
 pub fn keywords_for(Language) -> Keywords
 
@@ -44,29 +54,47 @@ pub fn next_seed(Int) -> Int
 
 pub fn number_to_text(Double) -> String
 
+pub fn parse_enum_declarations(String, Language) -> Result[Array[@ir.EnumDecl], LangError]
+
+pub fn parse_expression_text(String, Language) -> Result[@ir.Expr, LangError]
+
 pub fn parse_handler_body(String, Language) -> Result[Array[TracedStmt], LangError]
 
 pub fn parse_language(String) -> Language?
+
+pub fn parse_struct_declarations(String, Language) -> Result[Array[@ir.StructDecl], LangError]
+
+pub fn render_enum_declarations(Array[@ir.EnumDecl], Language) -> String
 
 pub fn render_handler(@ir.Handler, Language) -> String
 
 pub fn render_stmts(Array[@ir.Stmt], Language) -> String
 
+pub fn render_struct_declarations(Array[@ir.StructDecl], Language) -> String
+
 pub fn run_to_end(RunState) -> Unit
 
-pub fn start_run(Array[TracedStmt], Map[String, String], Map[String, Value], Map[String, Array[String]], max_steps? : Int, seed? : Int) -> RunState
+pub fn start_run(Array[TracedStmt], Map[String, String], Map[String, Value], Map[String, Array[String]], max_steps? : Int, seed? : Int, functions? : Array[@ir.FuncDef]) -> RunState
 
-pub fn start_run_stmts(Array[@ir.Stmt], Map[String, String], Map[String, Value], Map[String, Array[String]], max_steps? : Int, seed? : Int) -> RunState
+pub fn start_run_stmts(Array[@ir.Stmt], Map[String, String], Map[String, Value], Map[String, Array[String]], max_steps? : Int, seed? : Int, functions? : Array[@ir.FuncDef]) -> RunState
 
 pub fn step_once(RunState) -> Unit
 
+pub fn struct_field_type_display(String, Language) -> String
+
+pub fn struct_field_type_id(String) -> String?
+
 pub fn text_to_number(String) -> Double?
+
+pub fn tick_wait(RunState) -> Bool
 
 pub fn traced_from_stmts(Array[@ir.Stmt]) -> Array[TracedStmt]
 
 pub fn validate_program_language(@ir.StudioProgram) -> Array[LangError]
 
 pub fn value_to_text(Value) -> String
+
+pub fn wait_ticks_for_seconds(Double) -> Int
 
 // Errors
 pub(all) suberror LangError {
@@ -106,12 +134,15 @@ pub(all) enum GateKind {
 pub(all) enum Instr {
   Declare(String, @ir.Expr)
   Assign(String, @ir.Expr)
+  SetIndexVar(String, @ir.Expr, @ir.Expr)
+  ReturnInstr(@ir.Expr?)
   ExprStmt(@ir.Expr)
   JumpIfFalse(@ir.Expr, Int)
   Jump(Int)
   LoopInit(@ir.Expr, String, Int)
   LoopCheck(String, String, Int)
   LoopNext(String, Int)
+  CaseOf(@ir.Expr, Array[String], Array[Int], Int)
 }
 
 pub(all) struct Keywords {
@@ -132,6 +163,11 @@ pub(all) struct Keywords {
   and_kw : String
   or_kw : String
   not_kw : String
+  return_kw : String
+  struct_kw : String
+  match_kw : String
+  case_kw : String
+  enum_kw : String
 }
 
 pub(all) enum LangErrorKind {
@@ -164,9 +200,9 @@ pub(all) struct Plan {
 }
 
 pub(all) struct RunState {
-  plan : Plan
+  mut plan : Plan
   mut pc : Int
-  vars : Map[String, Value]
+  mut vars : Map[String, Value]
   texts : Map[String, String]
   rows : Map[String, Array[String]]
   selections : Map[String, Int]
@@ -179,9 +215,16 @@ pub(all) struct RunState {
   max_steps : Int
   mut rng : Int
   gate_answers : Array[Bool]
+  gate_answer_texts : Array[String]
+  mut last_answer : String
   mut declared : Array[String]
   mut gate_cursor : Int
   mut paused : Bool
+  mut wait_ticks : Int
+  mut broadcasts : Array[String]
+  functions : Array[@ir.FuncDef]
+  mut call_depth : Int
+  mut return_slot : Value?
 }
 
 pub(all) enum RunStatus {
@@ -189,6 +232,7 @@ pub(all) enum RunStatus {
   WaitingGate
   Completed
   Failed
+  Stopped
 }
 
 pub(all) enum StepOp {
@@ -212,6 +256,8 @@ pub(all) enum StmtKeyword {
   KwCountLoop
   KwWhile
   KwBreak
+  KwReturn
+  KwMatch
   NoneKw
 }
 
@@ -222,9 +268,13 @@ pub(all) struct TracedStmt {
 
 pub(all) enum Value {
   VNum(Double)
+  VInt(Int)
   VStr(String)
+  VArr(Array[Value])
   VBool(Bool)
   VUnit
+  VStruct(Map[String, Value])
+  VEnum(String, String)
 }
 
 // Type aliases
