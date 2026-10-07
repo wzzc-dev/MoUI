@@ -699,6 +699,8 @@ pub(all) struct Model {
   multi_selected : Array[String]
   // G7.4 外观:true = 暗色(默认);settings 持久化 "1"/"0"
   ui_dark : Bool
+  // G7.4 解释轨断点:当前 handler 的源码行号集合;RunStart/换 handler 清空
+  breakpoints : Array[Int]
   // G4 全文搜索:查询草稿 + 命中集 + 进行中标记（结果面板挂 BtSearch 页签）
   search_query : String
   search_hits : Array[SearchHit]
@@ -843,6 +845,8 @@ pub(all) enum Msg {
   ToggleMultiSelectMode
   ToggleUiDark
   UiDarkLoaded(@services.ServiceTaskResult[String?])
+  ToggleBreakpoint(Int)
+  RunToBreakpoint
   ToggleUiDarkModeSwitch
   SearchQueryDraft(String)
   SearchRun
@@ -1465,6 +1469,7 @@ pub fn initial_model(
     multi_select_mode: false,
     multi_selected: [],
     ui_dark: true,
+    breakpoints: [],
     search_query: "",
     search_hits: [],
     search_busy: false,

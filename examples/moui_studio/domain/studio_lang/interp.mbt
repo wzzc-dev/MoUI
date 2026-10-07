@@ -323,6 +323,29 @@ pub fn start_run_stmts(
 }
 
 ///|
+/// 执行到断点行或终止态（G7.4）：逐条 step,当前源码行命中断点集即停
+/// （状态保持 Running,由调用方以 single_step 语义接管）。返回是否因
+/// 命中断点而停（false = 跑到终止态）。
+pub fn run_to_breakpoint(
+  state : RunState,
+  breakpoints : Array[Int],
+) -> Bool {
+  let mut budget = state.max_steps + 64
+  while state.status is Running && budget > 0 {
+    // 先看下一条指令的源码行:命中断点即停（还没执行它）
+    if state.pc < state.plan.instrs.length() {
+      let next_line = state.plan.lines[state.pc]
+      if breakpoints.contains(next_line) {
+        return true
+      }
+    }
+    step_once(state)
+    budget = budget - 1
+  }
+  false
+}
+
+///|
 /// 执行到终止态（完成/闸门/失败）。
 pub fn run_to_end(state : RunState) -> Unit {
   let mut budget = state.max_steps + 64

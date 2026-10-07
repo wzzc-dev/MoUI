@@ -139,7 +139,7 @@ fn start_run(model : Model) -> Model {
     text(t, "app.audit.run_start"),
     run.handler_label,
   )
-  { ..audited, run: Some(run), mode: ModeRun, notice: "", runtime_seed: seed, }
+  { ..audited, run: Some(run), mode: ModeRun, notice: "", runtime_seed: seed, breakpoints: [], }
 }
 
 ///|
@@ -836,6 +836,32 @@ fn update_run_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
               ),
             )
           }
+        }
+      }
+    // 断点续跑（G7.4）：单步语义接管,循环 step 到命中断点行或终止态;
+    // 命中后保持 single_step=true（UI 停在当前状态等下一条指令）
+    RunToBreakpoint =>
+      match model.run {
+        None => Some((model, @moui.Effect::none()))
+        Some(run) => {
+          if run.state.status is @studio_lang.Running {
+            let hit = @studio_lang.run_to_breakpoint(
+              run.state,
+              model.breakpoints,
+            )
+            ignore(hit)
+          }
+          Some(
+            (
+              drain_broadcasts_interpret(
+                merge_run_back({
+                  ..model,
+                  run: Some({ ..run, single_step: true, }),
+                }),
+              ),
+              @moui.Effect::none(),
+            ),
+          )
         }
       }
     RunResume =>

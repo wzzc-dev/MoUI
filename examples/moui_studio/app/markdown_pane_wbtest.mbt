@@ -268,3 +268,31 @@ test "主题切换:翻转模型与 Ref 同步" {
   set_ui_dark(true)
   assert_true(ide_text().r > 0.5, msg="暗色档文字应为浅色")
 }
+
+///|
+/// G7.4 断点:行号点击切换断点集;RunToBreakpoint 命中断点行暂停,
+/// 未命中断点的指令继续执行到命中为止。
+test "断点:切换集合与命中暂停" {
+  let services = @services.AppServices::new()
+  let program : @ir.StudioProgram = {
+    ..initial_model().program,
+    variables: [{ name: "计数", init: "0" }],
+  }
+  let base = {
+    ..initial_model(),
+    program,
+    selected_control: "lbl",
+    code_appearance: AppDsl,
+    runtime_values: @studio_lang.initial_values(program),
+    runtime_texts: @studio_lang.initial_texts(program),
+    runtime_rows: @studio_lang.initial_rows(program),
+  }
+  // 无断点:RunToBreakpoint 跑到终止态(等待事件),不产生断点暂停
+  let no_bp = update_with_services(base, RunToBreakpoint, services).0
+  assert_true(no_bp.breakpoints.is_empty())
+  // 设断点:行号 1(变量声明/赋值所在行)
+  let with_bp = update_with_services(base, ToggleBreakpoint(1), services).0
+  assert_true(with_bp.breakpoints.contains(1))
+  let removed = update_with_services(with_bp, ToggleBreakpoint(1), services).0
+  assert_false(removed.breakpoints.contains(1))
+}

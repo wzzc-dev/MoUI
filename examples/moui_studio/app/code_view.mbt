@@ -211,20 +211,37 @@ fn code_gutter(
   for line in @code_editor.code_editor_source_lines(model.code_draft) {
     let is_active = line.number == active_line
     let has_diagnostic = diagnostic_lines.contains(line.number)
+    let has_breakpoint = model.breakpoints.contains(line.number)
     // 行号槽 = 8pt 标记位 + 行号：诊断行画红点并把行号染红——
     // 「哪一行有问题」在滚动时也要一眼可辨。
-    let marker = @views.container(
-      @views.text("", width=1.0, height=1.0),
-      background=if has_diagnostic {
-        ide_danger()
-      } else {
-        ide_editor_background()
-      },
-      corner_radius=2.0,
-      width=5.0,
-      height=5.0,
-      padding=0.0,
-    )
+    // 断点标记（G7.4）：实心圆点 = 已设断点;点击行号槽切换
+    let marker = if has_breakpoint {
+      @views.container(
+        @views.center(
+          @views.text("", width=1.0, height=1.0),
+          width=6.0,
+          height=6.0,
+        ),
+        background=ide_danger(),
+        corner_radius=3.0,
+        width=6.0,
+        height=6.0,
+        padding=0.0,
+      )
+    } else {
+      @views.container(
+        @views.text("", width=1.0, height=1.0),
+        background=if has_diagnostic {
+          ide_danger()
+        } else {
+          ide_editor_background()
+        },
+        corner_radius=2.0,
+        width=5.0,
+        height=5.0,
+        padding=0.0,
+      )
+    }
     rows.push(
       @views.container(
         @views.row(
@@ -242,7 +259,8 @@ fn code_gutter(
               width=(width - 16.0).max(20.0),
               height=CODE_LINE_HEIGHT,
               align=TextEnd,
-            ).foreground(
+            )
+            .foreground(
               if has_diagnostic {
                 ide_danger()
               } else if is_active {
@@ -263,7 +281,7 @@ fn code_gutter(
         width~,
         height=CODE_LINE_HEIGHT,
         padding=0.0,
-      ),
+      ).on_tap(ToggleBreakpoint(line.number)),
     )
   }
   @views.scroll_view(

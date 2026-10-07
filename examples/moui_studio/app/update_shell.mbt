@@ -246,6 +246,21 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     // 全文搜索（G4 F3）:查询草稿纯转移;运行与回执在服务层
     SearchQueryDraft(value) =>
       Some(({ ..model, search_query: value, }, @moui.Effect::none()))
+    // 断点（G7.4）：行号槽点击切换断点集
+    ToggleBreakpoint(line) => {
+      let next : Array[Int] = if model.breakpoints.contains(line) {
+        let kept : Array[Int] = []
+        for bp in model.breakpoints {
+          if bp != line {
+            kept.push(bp)
+          }
+        }
+        kept
+      } else {
+        model.breakpoints + [line]
+      }
+      Some(({ ..model, breakpoints: next }, @moui.Effect::none()))
+    }
     // 纯聊天离线（G1）：确定性假回复 + 接通引导（真实提交在程序级臂）
     ChatSubmit =>
       if model.provider_mode is Fake || model.provider_key == "" {
