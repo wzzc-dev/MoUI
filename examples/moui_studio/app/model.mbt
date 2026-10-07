@@ -688,6 +688,9 @@ pub(all) struct Model {
   file_create_open : Bool
   file_rename_open : String?
   file_name_draft : String
+  // G7.3 插件管理:禁用清单（静态装配的「启用/禁用」诚实形态——禁用 =
+  // 组合根装配时过滤贡献项入口,不是运行时卸载）。id: ai / terminal / markdown
+  plugin_disabled : Array[String]
   // G4 全文搜索:查询草稿 + 命中集 + 进行中标记（结果面板挂 BtSearch 页签）
   search_query : String
   search_hits : Array[SearchHit]
@@ -818,6 +821,8 @@ pub(all) enum Msg {
   ProjectRenameWritten(String, String, @services.ServiceTaskResult[Unit])
   ProjectRenameDeleted(String, String, @services.ServiceTaskResult[Unit])
   // === 全文搜索（G4 F3）：草稿 → 运行（服务链扫工程树）→ 命中集 → 跳转 ===
+  TogglePlugin(String)
+  PluginsLoaded(@services.ServiceTaskResult[String?])
   SearchQueryDraft(String)
   SearchRun
   SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])
@@ -1299,6 +1304,11 @@ pub fn empty_provider_config() -> ProviderConfig {
 pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
 
 ///|
+/// 插件启用态的 settings 键（G7.3）：值为逗号连接的禁用 id 列表
+/// （空串 = 全部启用）。
+pub const PLUGINS_SETTINGS_KEY : String = "studio.plugins"
+
+///|
 /// 初始模型：问候样例 + 中文界面 + 假模型；代码草稿按当前语言播种。
 /// provider_config 非空时预填面板（key 仍只进会话内存）。
 pub fn initial_model(
@@ -1422,6 +1432,7 @@ pub fn initial_model(
     file_create_open: false,
     file_rename_open: None,
     file_name_draft: "",
+    plugin_disabled: [],
     search_query: "",
     search_hits: [],
     search_busy: false,

@@ -344,7 +344,13 @@ pub fn ide_icon_bar(
       // 代码编辑：左栏工程文件树 / 中心代码编辑器 / 右栏 AI 停靠（VS Code 口径）
       mode_button(CodeInline, text(t, "app.perspective.code"), PsCode),
       // AI 工作台：中心会话流 / 底栏终端（M3/M5 逐级落地）
-      mode_button(Focus, text(t, "app.perspective.ai"), PsAi),
+      // G7.3:AI 插件被禁用时活动栏入口不渲染（点击守卫在
+      // set_perspective:PsAi no-op 兜底）
+      if plugin_active(model, "ai") {
+        mode_button(Focus, text(t, "app.perspective.ai"), PsAi)
+      } else {
+        @views.empty()
+      }
     ]
   } else {
     mode_items
@@ -948,7 +954,9 @@ pub fn ide_bottom_bar(
   let problems = problem_rows(model, t).length()
   // AI 宿主推导（M2）：底栏页签只在「AI 没有停靠右栏、也不在 AI 模式中心」
   // 时出现——任何时刻输入面恰好一个宿主可见（见 ide_ai.mbt 的 host 注释）。
-  let ai_in_bottom = !(model.right_view is RvAi) && !(model.perspective is PsAi)
+  let ai_in_bottom = !(model.right_view is RvAi) &&
+    !(model.perspective is PsAi) &&
+    plugin_active(model, "ai")
   let head_cells : Array[@moui.View[Msg]] = [
     tab_button(
       text(t, "app.bottom.audit"),
@@ -996,7 +1004,13 @@ pub fn ide_bottom_bar(
   // = 关闭（kill + 收起，见 select_bottom_tab 的开关语义）
   // 终端页签（M8）：关闭态点击 = 重开（SetBottomTab）；开+选中态再点 =
   // 关闭（TerminalTabClose → kill + 收起）
-  let terminal_tab_cells : Array[@moui.View[Msg]] = [
+  let terminal_tab_cells : Array[@moui.View[Msg]] = if !plugin_active(
+    model,
+    "terminal",
+  ) {
+    // G7.3:终端插件被禁用时页签整体不渲染
+    []
+  } else { [
     tab_button(
       text(t, "app.bottom.terminal"),
       model.bottom_tab is BtTerminal && model.terminal_open,
@@ -1008,6 +1022,7 @@ pub fn ide_bottom_bar(
       0,
     ),
   ]
+  }
   let head_cells = head_cells + terminal_tab_cells
   if model.bottom_tab is BtAudit && pending > 0 {
     head_cells.push(

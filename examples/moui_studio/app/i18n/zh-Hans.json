@@ -751,6 +751,16 @@
     "app.expr.tpl.lower": "小写",
     "app.expr.tpl.sin": "正弦",
     "app.expr.tpl.cos": "余弦",
-    "app.expr.tpl.log": "对数"
+    "app.expr.tpl.log": "对数",
+    "app.settings.group.plugins": "插件",
+    "app.plugin.ai": "AI 助手",
+    "app.plugin.ai.summary": "对白转录工作台与结构化提案",
+    "app.plugin.terminal": "终端",
+    "app.plugin.terminal.summary": "内置 PTY 终端页签",
+    "app.plugin.markdown": "Markdown 面板",
+    "app.plugin.markdown.summary": ".md 文件打开为格式化编辑",
+    "app.plugin.disable": "禁用",
+    "app.plugin.enable": "启用",
+    "app.plugin.static_note": "静态装配：安装新插件需重新构建。"
   }
 }

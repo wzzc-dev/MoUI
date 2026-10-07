@@ -111,6 +111,19 @@ pub fn settings_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       ide_text_faint(),
       3,
     ),
+    group_label(t, "app.settings.group.plugins"),
+    // G7.3 插件管理:静态装配的诚实形态——列出已装配插件,启用/禁用
+    // 只过滤贡献项入口;「安装新插件需重新构建」如实声明。
+    plugin_row(model, t, "ai"),
+    plugin_row(model, t, "terminal"),
+    plugin_row(model, t, "markdown"),
+    @views.text(
+      text(t, "app.plugin.static_note"),
+      theme=studio_theme(),
+      width=392.0,
+      height=16.0,
+      align=TextStart,
+    ).foreground(ide_text_faint()),
     group_label(t, "app.settings.group.provider"),
     @views.row(
       [
@@ -854,4 +867,62 @@ fn lowercase(text : String) -> String {
     }
   }
   buf.to_string()
+}
+
+
+///|
+/// 插件行（G7.3）：名称 + 一句话职责 + 启用/禁用切换按钮。
+fn plugin_row(
+  model : Model,
+  t : @i18n.Translator,
+  id : String,
+) -> @moui.View[Msg] {
+  let name_key = match id {
+    "ai" => "app.plugin.ai"
+    "terminal" => "app.plugin.terminal"
+    _ => "app.plugin.markdown"
+  }
+  let summary_key = match id {
+    "ai" => "app.plugin.ai.summary"
+    "terminal" => "app.plugin.terminal.summary"
+    _ => "app.plugin.markdown.summary"
+  }
+  let active = plugin_active(model, id)
+  @views.row(
+    [
+      @views.column(
+        [
+          @views.text(
+            text(t, name_key),
+            theme=studio_theme(),
+            width=220.0,
+            height=16.0,
+            align=TextStart,
+          ).foreground(ide_text()),
+          @views.text(
+            text(t, summary_key),
+            theme=studio_theme(),
+            width=220.0,
+            height=14.0,
+            align=TextStart,
+          ).foreground(ide_text_faint()),
+        ],
+        spacing=1.0,
+      ),
+      @views.spacer(min_length=6.0, weight=1.0),
+      @views.button(
+        text(t, if active {
+          "app.plugin.disable"
+        } else {
+          "app.plugin.enable"
+        }),
+        on_click=TogglePlugin(id),
+        variant=if active { Outline } else { Primary },
+        width=76.0,
+        height=26.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  ).frame(width=392.0, height=36.0)
 }

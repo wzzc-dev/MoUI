@@ -556,3 +556,41 @@ pub fn auto_build_after_save(
     }
   }
 }
+
+///|
+/// 插件管理（G7.3）：禁用判定。静态装配的诚实口径——禁用 = 贡献项入口
+/// 被过滤（Feature 状态保留），不是运行时卸载；「安装新插件需重新构建」。
+pub fn plugin_active(model : Model, id : String) -> Bool {
+  !model.plugin_disabled.contains(id)
+}
+
+///|
+/// 插件存储编码（settings 值是字符串）:逗号连接的禁用 id 列表。
+pub fn encode_plugin_disabled(model : Model) -> String {
+  let buf = StringBuilder()
+  let mut first = true
+  for id in model.plugin_disabled {
+    if !first {
+      buf.write_string(",")
+    }
+    buf.write_string(id)
+    first = false
+  }
+  buf.to_string()
+}
+
+///|
+/// 解析存储的禁用清单（空串 = 全部启用;未知 id 忽略）。
+pub fn decode_plugin_disabled(text : String) -> Array[String] {
+  let ids : Array[String] = []
+  if text == "" {
+    return ids
+  }
+  for piece in text.split(",") {
+    let id = piece.to_owned()
+    if id == "ai" || id == "terminal" || id == "markdown" {
+      ids.push(id)
+    }
+  }
+  ids
+}

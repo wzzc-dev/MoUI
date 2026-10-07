@@ -977,3 +977,24 @@ test "启动事件:OnStart 装填即执行" {
       }
   }
 }
+
+///|
+/// G7.3 插件管理:禁用终端 → 页签归一 + 持久化写入;重新启用恢复。
+test "插件管理:禁用终端归一页签并持久化" {
+  let services = @services.AppServices::new()
+  let base = {
+    ..@app.initial_model(),
+    bottom_tab: BtTerminal,
+  }
+  let toggled = @app.update_with_services(base, TogglePlugin("terminal"), services).0
+  // 页签归一:禁用时正停在终端页签 → 回审计页签
+  assert_true(toggled.bottom_tab is BtAudit)
+  assert_false(@app.plugin_active(toggled, "terminal"))
+  // 写盘事件入 outbox（settings 写由组合根监听）
+  let re_enabled = @app.update_with_services(
+      toggled,
+      TogglePlugin("terminal"),
+      services,
+    ).0
+  assert_true(@app.plugin_active(re_enabled, "terminal"))
+}

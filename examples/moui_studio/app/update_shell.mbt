@@ -693,6 +693,10 @@ fn set_perspective(
   if model.profile is Teaching && !(perspective is PsVisual) {
     return (model, @moui.Effect::none())
   }
+  // 插件管理（G7.3）：AI 插件被禁用时切到 AI 模式 no-op（入口同被隐藏）
+  if perspective is PsAi && !plugin_active(model, "ai") {
+    return (model, @moui.Effect::none())
+  }
   (apply_perspective_preset(model, perspective), @moui.Effect::none())
 }
 

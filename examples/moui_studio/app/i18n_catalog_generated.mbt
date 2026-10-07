@@ -128,6 +128,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide", GeneratedI18nMessage::Text("Hide this pane")),
       ("app.pane.live", GeneratedI18nMessage::Text("Live App")),
       ("app.pane.solo", GeneratedI18nMessage::Text("Show live app only")),
+      ("app.plugin.ai", GeneratedI18nMessage::Text("AI assistant")),
       (
         "app.run.armed",
         GeneratedI18nMessage::Text("Waiting for events — click a control"),
@@ -420,6 +421,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.log.run_start",
         GeneratedI18nMessage::Text("Started handler {handler}"),
       ),
+      ("app.plugin.enable", GeneratedI18nMessage::Text("Enable")),
       (
         "app.preview.title",
         GeneratedI18nMessage::Text("MoonBit source preview"),
@@ -514,6 +516,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.live.idle", GeneratedI18nMessage::Text("design")),
       ("app.pane.show_live", GeneratedI18nMessage::Text("+ Live App")),
       ("app.perspective.ai", GeneratedI18nMessage::Text("AI workbench")),
+      ("app.plugin.disable", GeneratedI18nMessage::Text("Disable")),
       ("app.problems.build", GeneratedI18nMessage::Text("Build")),
       ("app.problems.draft", GeneratedI18nMessage::Text("Draft")),
       ("app.problems.empty", GeneratedI18nMessage::Text("No problems found.")),
@@ -649,6 +652,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.pane.live.badge",
         GeneratedI18nMessage::Text("Running · {percent}%"),
       ),
+      ("app.plugin.markdown", GeneratedI18nMessage::Text("Markdown pane")),
+      ("app.plugin.terminal", GeneratedI18nMessage::Text("Terminal")),
       ("app.qa.align_center", GeneratedI18nMessage::Text("Center horizontally")),
       ("app.run.gate.reject", GeneratedI18nMessage::Text("Reject")),
       (
@@ -907,6 +912,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Starting real compile (moon check)"),
       ),
       ("app.pane.live.running", GeneratedI18nMessage::Text("running")),
+      (
+        "app.plugin.ai.summary",
+        GeneratedI18nMessage::Text(
+          "Transcript workbench and structured proposals",
+        ),
+      ),
       ("app.recent.action.new", GeneratedI18nMessage::Text("New program")),
       (
         "app.run.compile_stage",
@@ -999,6 +1010,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.pane.foot_controls", GeneratedI18nMessage::Text("{count} controls")),
       ("app.perspective.visual", GeneratedI18nMessage::Text("Visual editing")),
+      (
+        "app.plugin.static_note",
+        GeneratedI18nMessage::Text(
+          "Static assembly: installing new plugins requires a rebuild.",
+        ),
+      ),
       (
         "app.project.build_busy",
         GeneratedI18nMessage::Text("A build is already running"),
@@ -1501,6 +1518,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Switched template"),
       ),
       ("app.recent.action.variable", GeneratedI18nMessage::Text("New variable")),
+      ("app.settings.group.plugins", GeneratedI18nMessage::Text("Plugins")),
       (
         "app.status.functions_limit",
         GeneratedI18nMessage::Text("Custom block limit reached"),
@@ -1556,6 +1574,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "Renaming rewrites every statement that references this variable.",
         ),
+      ),
+      (
+        "app.plugin.markdown.summary",
+        GeneratedI18nMessage::Text("Open .md files as formatted editor"),
+      ),
+      (
+        "app.plugin.terminal.summary",
+        GeneratedI18nMessage::Text("Built-in PTY terminal tab"),
       ),
       (
         "app.project.preview_rebuild",
@@ -1920,6 +1946,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.hide", GeneratedI18nMessage::Text("隐藏此窗格")),
       ("app.pane.live", GeneratedI18nMessage::Text("实时应用")),
       ("app.pane.solo", GeneratedI18nMessage::Text("只看实时应用")),
+      ("app.plugin.ai", GeneratedI18nMessage::Text("AI 助手")),
       (
         "app.run.armed",
         GeneratedI18nMessage::Text("等待事件 · 点击控件触发"),
@@ -2207,6 +2234,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.log.run_start",
         GeneratedI18nMessage::Text("启动子程序 {handler}"),
       ),
+      ("app.plugin.enable", GeneratedI18nMessage::Text("启用")),
       ("app.preview.title", GeneratedI18nMessage::Text("MoonBit 源码预览")),
       (
         "app.project.empty",
@@ -2286,6 +2314,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.pane.live.idle", GeneratedI18nMessage::Text("设计态")),
       ("app.pane.show_live", GeneratedI18nMessage::Text("+ 实时应用")),
       ("app.perspective.ai", GeneratedI18nMessage::Text("AI 工作台")),
+      ("app.plugin.disable", GeneratedI18nMessage::Text("禁用")),
       ("app.problems.build", GeneratedI18nMessage::Text("构建")),
       ("app.problems.draft", GeneratedI18nMessage::Text("草稿")),
       (
@@ -2423,6 +2452,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.pane.live.badge",
         GeneratedI18nMessage::Text("运行中 · {percent}%"),
       ),
+      ("app.plugin.markdown", GeneratedI18nMessage::Text("Markdown 面板")),
+      ("app.plugin.terminal", GeneratedI18nMessage::Text("终端")),
       ("app.qa.align_center", GeneratedI18nMessage::Text("水平居中")),
       ("app.run.gate.reject", GeneratedI18nMessage::Text("拒绝")),
       (
@@ -2673,6 +2704,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("开始真编译（moon check）"),
       ),
       ("app.pane.live.running", GeneratedI18nMessage::Text("运行中")),
+      (
+        "app.plugin.ai.summary",
+        GeneratedI18nMessage::Text("对白转录工作台与结构化提案"),
+      ),
       ("app.recent.action.new", GeneratedI18nMessage::Text("新建程序")),
       (
         "app.run.compile_stage",
@@ -2760,6 +2795,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("{count} 个控件"),
       ),
       ("app.perspective.visual", GeneratedI18nMessage::Text("图形化编辑")),
+      (
+        "app.plugin.static_note",
+        GeneratedI18nMessage::Text(
+          "静态装配：安装新插件需重新构建。",
+        ),
+      ),
       (
         "app.project.build_busy",
         GeneratedI18nMessage::Text("已有构建在进行,请等它结束"),
@@ -3239,6 +3280,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.recent.action.template", GeneratedI18nMessage::Text("换模板")),
       ("app.recent.action.variable", GeneratedI18nMessage::Text("新建变量")),
+      ("app.settings.group.plugins", GeneratedI18nMessage::Text("插件")),
       (
         "app.status.functions_limit",
         GeneratedI18nMessage::Text("自定义积木数量已达上限"),
@@ -3300,6 +3342,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "改名会同步改写所有引用该变量的语句。",
         ),
+      ),
+      (
+        "app.plugin.markdown.summary",
+        GeneratedI18nMessage::Text(".md 文件打开为格式化编辑"),
+      ),
+      (
+        "app.plugin.terminal.summary",
+        GeneratedI18nMessage::Text("内置 PTY 终端页签"),
       ),
       (
         "app.project.preview_rebuild",

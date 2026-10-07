@@ -52,6 +52,7 @@ pub fn code_workspace(
       60.0).max((height - 26.0 - 8.0).max(120.0))
       let editor_width = (width - 48.0).max(80.0)
       let body_height = project_file_body_height(
+        model,
         open~,
         editor_width,
         content_height,
@@ -101,7 +102,7 @@ pub fn code_workspace(
         file_tab_strip(model, width),
         @views.scroll_view(
           @views.row(
-            [project_file_body(open~, editor_width, content_height)],
+            [project_file_body(model, open~, editor_width, content_height)],
             spacing=0.0,
             align=Start,
           ).frame(width=(width - 30.0).max(80.0), height=body_height),
@@ -1101,11 +1102,12 @@ fn file_tab_strip(model : Model, width : Double) -> @moui.View[Msg] {
 /// 渲染 + on_input 回草稿通道）;其余文件 → 既有 mono 受控编辑器
 /// （MoonBit 词法着色 + 光标/选区受控回传）。
 fn project_file_body(
+  model : Model,
   open~ : OpenProjectFile,
   editor_width : Double,
   content_height : Double,
 ) -> @moui.View[Msg] {
-  if open.rel.has_suffix(".md") {
+  if open.rel.has_suffix(".md") && plugin_active(model, "markdown") {
     @md.markdown_file_view(
       content=open.draft,
       on_input=value => EditProjectFile(value),
@@ -1156,11 +1158,12 @@ fn project_file_body(
 /// 编辑面内容全高：`.md` 用 Markdown 渲染高度估算（scroll_view 外层
 /// 滚动需要）;其余文件 = 行数 × 行高（既有口径）。
 fn project_file_body_height(
+  model : Model,
   open~ : OpenProjectFile,
   editor_width : Double,
   content_height : Double,
 ) -> Double {
-  if open.rel.has_suffix(".md") {
+  if open.rel.has_suffix(".md") && plugin_active(model, "markdown") {
     @md.markdown_content_height(
       content=open.draft,
       width=editor_width,

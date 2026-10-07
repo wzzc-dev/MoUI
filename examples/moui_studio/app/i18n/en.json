@@ -751,6 +751,16 @@
     "app.expr.tpl.lower": "Lowercase",
     "app.expr.tpl.sin": "Sine",
     "app.expr.tpl.cos": "Cosine",
-    "app.expr.tpl.log": "Logarithm"
+    "app.expr.tpl.log": "Logarithm",
+    "app.settings.group.plugins": "Plugins",
+    "app.plugin.ai": "AI assistant",
+    "app.plugin.ai.summary": "Transcript workbench and structured proposals",
+    "app.plugin.terminal": "Terminal",
+    "app.plugin.terminal.summary": "Built-in PTY terminal tab",
+    "app.plugin.markdown": "Markdown pane",
+    "app.plugin.markdown.summary": "Open .md files as formatted editor",
+    "app.plugin.disable": "Disable",
+    "app.plugin.enable": "Enable",
+    "app.plugin.static_note": "Static assembly: installing new plugins requires a rebuild."
   }
 }

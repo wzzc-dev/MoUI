@@ -225,6 +225,62 @@ pub fn update_with_services(
           )
         _ => (model, @moui.Effect::none())
       }
+    // 插件管理（G7.3）：禁用 = 过滤贡献项入口（状态保留,非运行时卸载）。
+    TogglePlugin(id) => {
+      let next : Array[String] = if plugin_active(model, id) {
+        let added = model.plugin_disabled + [id]
+        added
+      } else {
+        let removed : Array[String] = []
+        for existing in model.plugin_disabled {
+          if existing != id {
+            removed.push(existing)
+          }
+        }
+        removed
+      }
+      let toggled = { ..model, plugin_disabled: next }
+      // 归一化:禁用终端/AI 时若正停在其入口,先退回无害页签/模式
+      let normalized = if id == "terminal" &&
+        !plugin_active(toggled, "terminal") &&
+        toggled.bottom_tab is BtTerminal {
+        { ..toggled, bottom_tab: BtAudit }
+      } else if id == "ai" &&
+        !plugin_active(toggled, "ai") &&
+        toggled.perspective is PsAi {
+        apply_perspective_preset(toggled, PsVisual)
+      } else {
+        toggled
+      }
+      (
+        normalized,
+        services
+        .settings()
+        .write(PLUGINS_SETTINGS_KEY, encode_plugin_disabled(normalized))
+        .effect(map=_ => Msg::Noop),
+      )
+    }
+    PluginsLoaded(result) =>
+      match result {
+        Success(payload) => {
+          let restored = {
+            ..model,
+            plugin_disabled: decode_plugin_disabled(payload.unwrap_or("")),
+          }
+      // 与 Toggle 同款归一化（boot 恢复也可能带来禁用态）
+          let normalized = if !plugin_active(restored, "terminal") &&
+            restored.bottom_tab is BtTerminal {
+            { ..restored, bottom_tab: BtAudit }
+          } else if !plugin_active(restored, "ai") &&
+            restored.perspective is PsAi {
+            apply_perspective_preset(restored, PsVisual)
+          } else {
+            restored
+          }
+          (normalized, @moui.Effect::none())
+        }
+        Failure(_) | Cancelled => (model, @moui.Effect::none())
+      }
     // === 全文搜索（G4 F3）:树缓存按需读文件扫描,双护栏防失控 ===
     SearchRun =>
       match active_project_of(model) {
@@ -1697,6 +1753,10 @@ pub fn program(
           .settings()
           .read(DRAFT_SETTINGS_KEY)
           .effect(map=result => DraftLoaded(result)),
+          services
+          .settings()
+          .read(PLUGINS_SETTINGS_KEY)
+          .effect(map=result => PluginsLoaded(result)),
           load_effect,
           projects_load_effect,
         ]),
@@ -1784,6 +1844,7 @@ pub fn program(
             Failure(error) =>
               (push_toast(model, error.message, true), @moui.Effect::none())
           }
+
         // 打开项目是覆盖性动作：有未保存修改时先要确认（破坏性操作
         // 确认纪律）。确认续行带 `open_confirmed` 一次性放行标记——
         // 放行即复位，标记不会泄漏到下一次打开。
