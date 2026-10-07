@@ -35,9 +35,9 @@ pub fn code_workspace(
   let head = pane_head(text(t, "app.pane.code"), handler_subtitle, width, [])
   // 工程文件只读查看器（M8 反馈：工程树点文件没反应）——打开工程文件
   // 时代码工作区整面切到文件内容，脚注/编辑面都不参与（文件不是 IR 投影）。
-  let body_view = match model.open_project_file {
+  let body_view = match active_project_file(model) {
     Some(open) => {
-      let dirty = open.draft != open.saved_content
+      let dirty = file_is_dirty(open)
       // **code editor**(试用反馈:为什么不用 code editor)——与 IR 编辑面
       // 同一套受控富文本编辑器:mono 字体、光标/选区/撤销/剪贴板框架侧,
       // 工程文件不做 DSL 着色(plain 文档)。
@@ -75,6 +75,12 @@ pub fn code_workspace(
                 dirty,
                 SaveProjectFile,
               ),
+              foot_chip(
+                "保存全部",
+                text_estimate_width("保存全部") + 24.0,
+                any_file_dirty(model),
+                SaveAllFiles,
+              ),
               @views.text(
                 "关闭",
                 theme=studio_theme(),
@@ -82,7 +88,7 @@ pub fn code_workspace(
                 height=16.0,
               )
               .foreground(ide_accent())
-              .on_tap(ClearProjectFile),
+              .on_tap(CloseFileTab(model.open_file_index)),
             ],
             spacing=6.0,
             align=Center,
@@ -92,9 +98,10 @@ pub fn code_workspace(
           height=26.0,
           padding=0.0,
         ),
+        file_tab_strip(model, width),
         @views.scroll_view(
           @views.row(
-            [project_file_body(model, open~, editor_width, content_height)],
+            [project_file_body(open~, editor_width, content_height)],
             spacing=0.0,
             align=Start,
           ).frame(width=(width - 30.0).max(80.0), height=body_height),
@@ -1032,11 +1039,68 @@ fn mono_code_font() -> @text.FontSpec {
 }
 
 ///|
+/// tab 标签:rel 末段 + 脏点。
+fn file_tab_label(rel : String) -> String {
+  let mut label = rel
+  for part in rel.split("/") {
+    label = part.to_owned()
+  }
+  label
+}
+
+///|
+/// tab strip（G4 多标签）:一排 tab,active 高亮,× 关闭(脏经确认流)。
+/// 行宽不足时裁切——v1 不做横向滚动,tab 数量由用户控制。
+fn file_tab_strip(model : Model, width : Double) -> @moui.View[Msg] {
+  let cells : Array[@moui.View[Msg]] = []
+  for i, file in model.open_project_files {
+    let active = i == model.open_file_index
+    let label = file_tab_label(file.rel) +
+      (if file_is_dirty(file) { " ●" } else { "" })
+    let cell_width = (text_estimate_width(label) + 40.0).min(150.0).max(64.0)
+    cells.push(
+      @views.container(
+        @views.row(
+          [
+            @views.text(
+              fit_label(label, cell_width - 20.0),
+              theme=studio_theme(),
+              role=Mono,
+              width=cell_width - 20.0,
+              height=14.0,
+              align=TextStart,
+            ).foreground(if active { ide_text() } else { ide_text_faint() }),
+            @views.text(
+              "×",
+              theme=studio_theme(),
+              width=14.0,
+              height=14.0,
+              align=TextCenter,
+            )
+            .foreground(ide_text_faint())
+            .on_tap(CloseFileTab(i)),
+          ],
+          spacing=2.0,
+          align=Center,
+        ),
+        background=if active { ide_panel() } else { ide_editor_background() },
+        width=cell_width,
+        height=22.0,
+        padding=0.0,
+      ).on_tap(SelectFileTab(i)),
+    )
+  }
+  @views.row(cells, spacing=2.0, align=Start).frame(
+    width=(width - 12.0).max(80.0),
+    height=24.0,
+  )
+}
+
+///|
 /// 工程文件编辑面（G3）：`.md` → Markdown 插件面板（MoMark 引擎,格式
 /// 渲染 + on_input 回草稿通道）;其余文件 → 既有 mono 受控编辑器
 /// （MoonBit 词法着色 + 光标/选区受控回传）。
 fn project_file_body(
-  model : Model,
   open~ : OpenProjectFile,
   editor_width : Double,
   content_height : Double,
@@ -1076,8 +1140,8 @@ fn project_file_body(
           on_selection_change=Some((caret, selection) => {
             ProjectFileCaretMoved(caret, selection)
           }),
-          selection_caret=model.project_file_caret,
-          selection_range=model.project_file_selection,
+          selection_caret=open.caret,
+          selection_range=open.selection,
           kind="StudioProjectFileEditor",
           key=Some("studio-project-file-editor"),
         ),

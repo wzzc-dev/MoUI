@@ -9,11 +9,16 @@ fn md_pane_model(rel~ : String, content~ : String) -> Model {
     ..initial_model(),
     // .md 面板挂在代码工作区（WsCode 是 code_workspace 的宿主）
     workspace: WsCode,
-    open_project_file: Some(OpenProjectFile::{
-      rel,
-      saved_content: content,
-      draft: content,
-    }),
+    open_project_files: [
+      OpenProjectFile::{
+        rel,
+        saved_content: content,
+        draft: content,
+        caret: 0,
+        selection: None,
+      },
+    ],
+    open_file_index: 0,
   }
 }
 

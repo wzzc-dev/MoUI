@@ -368,3 +368,114 @@ pub fn preview_write_current(state : PreviewWriteState) -> (String, String)? {
 /// 预览 web 控制束的类型定义与 noop 已收编进内核
 /// （`kernel/services.mbt` 的 `PreviewWebControls[Msg]`，M1 插件化）；
 /// app 侧别名见本文件顶部。
+
+///|
+/// active tab（G4 多标签;下标越界 = None）。
+pub fn active_project_file(model : Model) -> OpenProjectFile? {
+  if model.open_file_index >= 0 &&
+    model.open_file_index < model.open_project_files.length() {
+    Some(model.open_project_files[model.open_file_index])
+  } else {
+    None
+  }
+}
+
+///|
+/// tab 脏标记：草稿偏离落盘基准。
+pub fn file_is_dirty(open : OpenProjectFile) -> Bool {
+  open.draft != open.saved_content
+}
+
+///|
+/// 任一 tab 脏（「保存全部」chip 的出现条件）。
+pub fn any_file_dirty(model : Model) -> Bool {
+  for file in model.open_project_files {
+    if file_is_dirty(file) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// 打开文件 upsert:同 rel 原位替换（重新读取=刷新内容）,否则追加并激活。
+pub fn upsert_open_file(
+  files : Array[OpenProjectFile],
+  open : OpenProjectFile,
+) -> (Array[OpenProjectFile], Int) {
+  let mut existing = -1
+  let mut i = 0
+  for file in files {
+    if file.rel == open.rel {
+      existing = i
+    }
+    i = i + 1
+  }
+  let next : Array[OpenProjectFile] = []
+  for j, file in files {
+    if j == existing {
+      next.push(open)
+    } else {
+      next.push(file)
+    }
+  }
+  if existing >= 0 {
+    (next, existing)
+  } else {
+    next.push(open)
+    (next, files.length())
+  }
+}
+
+///|
+/// 按 rel 找 tab 下标（无则 None）。
+pub fn open_file_index_of(files : Array[OpenProjectFile], rel : String) -> Int? {
+  let mut found : Int? = None
+  for i, file in files {
+    if file.rel == rel {
+      found = Some(i)
+    }
+  }
+  found
+}
+
+///|
+/// 关闭下标处的 tab,并把 active 收敛到合法范围（删的是 active 时停在
+/// 同位置的下一个 tab,尾部则回退一格）。
+pub fn close_open_file_at(model : Model, index : Int) -> Model {
+  if index < 0 || index >= model.open_project_files.length() {
+    return model
+  }
+  let files : Array[OpenProjectFile] = []
+  for i, file in model.open_project_files {
+    if i != index {
+      files.push(file)
+    }
+  }
+  let next_index = if files.is_empty() {
+    -1
+  } else if index < files.length() {
+    index
+  } else {
+    files.length() - 1
+  }
+  { ..model, open_project_files: files, open_file_index: next_index, }
+}
+
+///|
+/// 原位替换下标处的 tab（光标/草稿/脏基准回写）。
+pub fn replace_open_file_at(
+  files : Array[OpenProjectFile],
+  index : Int,
+  open : OpenProjectFile,
+) -> Array[OpenProjectFile] {
+  let next : Array[OpenProjectFile] = []
+  for i, file in files {
+    if i == index {
+      next.push(open)
+    } else {
+      next.push(file)
+    }
+  }
+  next
+}

@@ -214,18 +214,39 @@ pub fn update_with_services(
     }
     // 保存工程文件（试用反馈：点开的文件可编辑,保存写回磁盘）。
     SaveProjectFile =>
-      match (model.open_project_file, active_project_of(model)) {
-        (Some(open), Some(project)) => {
-          let _ = project
+      match (active_project_file(model), active_project_of(model)) {
+        (Some(open), Some(project)) =>
           (
             model,
             services
             .files()
             .write_text("\{project.root}/\{open.rel}", open.draft)
-            .effect(map=r => ProjectFileSaveFinished(r)),
+            .effect(map=r => ProjectFileSaveFinished(open.rel, r)),
           )
-        }
         _ => (model, @moui.Effect::none())
+      }
+    // 保存全部（G4 多标签）：逐脏 tab 写盘,回执各按 rel 定位落账。
+    SaveAllFiles =>
+      match active_project_of(model) {
+        None => (model, @moui.Effect::none())
+        Some(project) => {
+          let writes : Array[@moui.Effect[Msg]] = []
+          for open in model.open_project_files {
+            if open.draft != open.saved_content {
+              writes.push(
+                services
+                .files()
+                .write_text("\{project.root}/\{open.rel}", open.draft)
+                .effect(map=r => ProjectFileSaveFinished(open.rel, r)),
+              )
+            }
+          }
+          if writes.is_empty() {
+            (model, @moui.Effect::none())
+          } else {
+            (model, @moui.Effect::batch(writes))
+          }
+        }
       }
     CopyArtifactPath(path) =>
       (
@@ -540,7 +561,14 @@ pub fn update_with_services(
         Success(_) =>
           match active_project_of(model) {
             None => (model, @moui.Effect::none())
-            Some(project) =>
+            Some(project) => {
+              // 打开中的 tab 一并关闭（文件已不存在;删除本身走确认流,
+              // 这里不再对脏 tab 二次打扰）
+              let model = match
+                open_file_index_of(model.open_project_files, rel) {
+                Some(index) => close_open_file_at(model, index)
+                None => model
+              }
               (
                 with_notice(
                   model,
@@ -553,6 +581,7 @@ pub fn update_with_services(
                   ProjectScanCompleted(r)
                 }),
               )
+            }
           }
         Failure(error) =>
           (with_notice(model, error.message, true), @moui.Effect::none())

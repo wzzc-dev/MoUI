@@ -18,6 +18,8 @@ pub(all) enum ConfirmKind {
   CkTemplate(Int)
   CkNewBlank
   CkOpen
+  /// 关闭脏 tab（G4 多标签）：载荷 = tab 下标
+  CkCloseFileTab(Int)
 }
 
 ///|
@@ -33,6 +35,7 @@ pub fn confirm_copy(kind : ConfirmKind, t : @i18n.Translator) -> String {
     CkTemplate(_) => text(t, "app.confirm.template")
     CkNewBlank => text(t, "app.confirm.new_blank")
     CkOpen => text(t, "app.confirm.open")
+    CkCloseFileTab(_) => text(t, "app.confirm.close_file")
   }
 }
 
@@ -55,6 +58,7 @@ fn confirm_kind_of(msg : Msg) -> ConfirmKind {
     DeleteVariable(name) => CkDeleteVariable(name)
     SelectTemplate(index) => CkTemplate(index)
     NewBlankProgram => CkNewBlank
+    CloseFileTab(index) => CkCloseFileTab(index)
     _ => CkOpen
   }
 }
@@ -105,6 +109,7 @@ fn update_confirm_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
                 CkTemplate(index) => SelectTemplate(index)
                 CkNewBlank => NewBlankProgram
                 CkOpen => OpenRequested
+                CkCloseFileTab(index) => CloseFileTab(index)
               }
               Some(update_pure_inner(cleared, follow))
             }
@@ -116,13 +121,20 @@ fn update_confirm_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     DeleteControl(_)
     | DeleteVariable(_)
     | SelectTemplate(_)
-    | NewBlankProgram =>
+    | NewBlankProgram
+    | CloseFileTab(_) =>
       if model.pending_confirm is Some(_) {
         None
       } else {
-        // 删除类无条件守卫；模板/新建只挡「有未保存工作」的程序。
+        // 删除类无条件守卫；模板/新建只挡「有未保存工作」的程序；
+        // 关闭 tab 只挡脏 tab（干净 tab 直接关,不打扰）。
         let guarded = match msg {
           DeleteControl(_) | DeleteVariable(_) => true
+          CloseFileTab(index) =>
+            match model.open_project_files.get(index) {
+              Some(open) => file_is_dirty(open)
+              None => false
+            }
           _ => program_has_work(model)
         }
         if guarded {

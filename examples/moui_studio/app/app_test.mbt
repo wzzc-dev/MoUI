@@ -1701,28 +1701,31 @@ test "project file opens editable and saves" {
       Success("fn main {\n  println(\"hi\")\n}\n"),
     ),
   )
-  match loaded.open_project_file {
+  match @app.active_project_file(loaded) {
     Some(open) => {
       assert_eq(open.rel, "app/main.mbt")
       assert_true(open.draft.contains("println"))
-      assert_false(open.draft != open.saved_content)
+      assert_false(@app.file_is_dirty(open))
       // 编辑:草稿变化 → 脏
       let edited = apply(loaded, EditProjectFile("fn main {}\n"))
-      match edited.open_project_file {
-        Some(open2) => assert_true(open2.draft != open2.saved_content)
+      match @app.active_project_file(edited) {
+        Some(open2) => assert_true(@app.file_is_dirty(open2))
         None => fail("编辑后文件应仍打开")
       }
-      // 保存:回执对齐脏基准
+      // 保存:回执按 rel 定位 tab,对齐脏基准
       let saver = apply(edited, SaveProjectFile)
-      let saved = apply(saver, ProjectFileSaveFinished(Success(())))
-      match saved.open_project_file {
-        Some(open3) => assert_false(open3.draft != open3.saved_content)
+      let saved = apply(
+        saver,
+        ProjectFileSaveFinished("app/main.mbt", Success(())),
+      )
+      match @app.active_project_file(saved) {
+        Some(open3) => assert_false(@app.file_is_dirty(open3))
         None => fail("保存后文件应仍打开")
       }
       // 关闭:回到 IR 编辑面
-      let closed = apply(saved, ClearProjectFile)
-      assert_true(closed.open_project_file is None)
-      assert_true(closed.selected_project_file is None)
+      let closed = apply(saved, CloseFileTab(saved.open_file_index))
+      assert_true(closed.open_project_files.is_empty())
+      assert_eq(closed.open_file_index, -1)
     }
     None => fail("读取回执后文件应打开")
   }

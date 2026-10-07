@@ -693,3 +693,59 @@ test "工作区导入:多成员入库 + 失败汇总" {
   // 汇总通知要提到 1 个跳过
   assert_true(next.notice.contains("1"), msg=next.notice)
 }
+
+///|
+/// G4 多标签:两文件并行打开互不串台;脏 tab 关闭走确认流,确认后续行关闭。
+test "多标签:并行打开 + 切换 + 脏关闭确认" {
+  let services = @services.AppServices::new()
+  let selected = @app.update_with_services(
+      @app.initial_model(),
+      SelectProjectFile("a.md"),
+      services,
+    ).0
+  let loaded_a = @app.update_with_services(
+      selected,
+      ProjectFileLoaded("a.md", Success("# A")),
+      services,
+    ).0
+  let selected_b = @app.update_with_services(
+      loaded_a,
+      SelectProjectFile("b.mbt"),
+      services,
+    ).0
+  let loaded_b = @app.update_with_services(
+      selected_b,
+      ProjectFileLoaded("b.mbt", Success("fn main {}")),
+      services,
+    ).0
+  assert_eq(loaded_b.open_project_files.length(), 2)
+  assert_eq(loaded_b.open_file_index, 1)
+  // 切回 a:active tab 正确,光标随 tab(初始 0)
+  let switched = @app.update_with_services(loaded_b, SelectFileTab(0), services).0
+  match @app.active_project_file(switched) {
+    Some(open) => {
+      assert_eq(open.rel, "a.md")
+      assert_eq(open.caret, 0)
+    }
+    None => fail("切换后应有 active tab")
+  }
+  // 编辑 a → 脏;关闭命中确认流(tab 未关)
+  let edited = @app.update_with_services(
+      switched,
+      EditProjectFile("# A2"),
+      services,
+    ).0
+  let guarded = @app.update_with_services(edited, CloseFileTab(0), services).0
+  assert_true(
+    guarded.pending_confirm is Some(CkCloseFileTab(0)),
+    msg="脏 tab 关闭应进确认",
+  )
+  assert_eq(guarded.open_project_files.length(), 2)
+  // 确认 → 续行关闭
+  let accepted = @app.update_with_services(guarded, ConfirmAccepted, services).0
+  assert_eq(accepted.open_project_files.length(), 1)
+  match @app.active_project_file(accepted) {
+    Some(open) => assert_eq(open.rel, "b.mbt")
+    None => fail("关闭后应停在剩余 tab")
+  }
+}

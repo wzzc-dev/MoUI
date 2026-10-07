@@ -87,18 +87,19 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     ProjectFileLoaded(rel, result) =>
       match result {
         Success(content) =>
-          // 文件仍处于选中态才挂载编辑器（再点同文件 = 取消选中）
+          // 文件仍处于选中态才挂载编辑器（再点同文件 = 取消选中）;
+          // G4 多标签:同 rel 原位替换(重新读取=刷新内容),否则追加并激活。
           if model.selected_project_file is Some(current) && current == rel {
+            let (files, index) = upsert_open_file(model.open_project_files, OpenProjectFile::{
+              rel,
+              saved_content: content,
+              draft: content,
+              caret: 0,
+              selection: None,
+            })
             Some(
               (
-                {
-                  ..model,
-                  open_project_file: Some(OpenProjectFile::{
-                    rel,
-                    saved_content: content,
-                    draft: content,
-                  }),
-                },
+                { ..model, open_project_files: files, open_file_index: index, },
                 @moui.Effect::none(),
               ),
             )
@@ -109,21 +110,23 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
           Some((with_notice(model, error.message, true), @moui.Effect::none()))
         Cancelled => Some((model, @moui.Effect::none()))
       }
-    ProjectFileSaveFinished(result) =>
-      // 落盘完成:脏基准对齐草稿（纯转移;写盘任务在服务层）
+    ProjectFileSaveFinished(rel, result) =>
+      // 落盘完成:按 rel 定位 tab,脏基准对齐草稿（写盘任务在服务层）
       match result {
         Success(_) =>
-          match model.open_project_file {
-            Some(open) =>
+          match open_file_index_of(model.open_project_files, rel) {
+            Some(index) => {
+              let open = model.open_project_files[index]
               Some(
                 (
                   with_notice(
                     {
                       ..model,
-                      open_project_file: Some({
-                        ..open,
-                        saved_content: open.draft,
-                      }),
+                      open_project_files: replace_open_file_at(
+                        model.open_project_files,
+                        index,
+                        { ..open, saved_content: open.draft, },
+                      ),
                     },
                     "已保存",
                     false,
@@ -131,6 +134,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
                   @moui.Effect::none(),
                 ),
               )
+            }
             None => Some((model, @moui.Effect::none()))
           }
         Failure(error) =>
@@ -138,36 +142,53 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         Cancelled => Some((model, @moui.Effect::none()))
       }
     ProjectFileCaretMoved(caret, selection) =>
-      // 受控编辑器的光标回传:没有这个往返,光标不能移动（移动会被
-      // 模型里的旧值复位——实测「光标只能向上」的根因）。
-      Some(
-        (
-          {
-            ..model,
-            project_file_caret: caret,
-            project_file_selection: selection,
-          },
-          @moui.Effect::none(),
-        ),
-      )
-    EditProjectFile(draft) =>
-      match model.open_project_file {
+      // 受控编辑器的光标回传（active tab）:没有这个往返,光标不能移动
+      // （移动会被模型里的旧值复位——实测「光标只能向上」的根因）。
+      match active_project_file(model) {
         None => Some((model, @moui.Effect::none()))
         Some(open) =>
           Some(
             (
-              { ..model, open_project_file: Some({ ..open, draft, }), },
+              {
+                ..model,
+                open_project_files: replace_open_file_at(
+                  model.open_project_files,
+                  model.open_file_index,
+                  { ..open, caret, selection, },
+                ),
+              },
               @moui.Effect::none(),
             ),
           )
       }
-    ClearProjectFile =>
-      Some(
-        (
-          { ..model, open_project_file: None, selected_project_file: None, },
-          @moui.Effect::none(),
-        ),
-      )
+    EditProjectFile(draft) =>
+      match active_project_file(model) {
+        None => Some((model, @moui.Effect::none()))
+        Some(open) =>
+          Some(
+            (
+              {
+                ..model,
+                open_project_files: replace_open_file_at(
+                  model.open_project_files,
+                  model.open_file_index,
+                  { ..open, draft, },
+                ),
+              },
+              @moui.Effect::none(),
+            ),
+          )
+      }
+    // tab 导航（G4 多标签）：切换 = 置 active（光标随 tab 恢复）;
+    // 关闭的脏 tab 守卫在 update_confirm_msgs（CkCloseFileTab）。
+    SelectFileTab(index) =>
+      if index >= 0 && index < model.open_project_files.length() {
+        Some(({ ..model, open_file_index: index, }, @moui.Effect::none()))
+      } else {
+        Some((model, @moui.Effect::none()))
+      }
+    CloseFileTab(index) =>
+      Some((close_open_file_at(model, index), @moui.Effect::none()))
     SelectProjectFile(rel) =>
       // 再点同一个文件 = 取消选中(与图标栏「再点一次」同一心智)
       Some(
