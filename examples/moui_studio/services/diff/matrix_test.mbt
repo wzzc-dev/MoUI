@@ -426,3 +426,34 @@ test "diff matrix: unresolved gate shape matches before answering" {
     }
   }
 }
+
+///|
+/// G7.1:启动事件——纯 OnStart 程序（零控件）两轨执行其体,审计逐位一致。
+test "diff matrix: OnStart standalone program" {
+  let program : @ir.StudioProgram = {
+    ..@ir.empty_program(),
+    window: { title: "OnStart门禁", width: 640, height: 480, timer_interval: 0 },
+    variables: [{ name: "开机计数", init: "0" }],
+    handlers: [
+      {
+        control_name: "",
+        event: @ir.OnStart,
+        note_zh: "开机即累加",
+        note_en: "increment on start",
+        body: [
+          @ir.Assign("开机计数", @ir.Binary(@ir.Add, @ir.Var("开机计数"), @ir.IntLit(1))),
+        ],
+      },
+    ],
+  }
+  for language in languages() {
+    let report = @diff.diff_case(
+      "OnStart[\{language.tag()}]",
+      program,
+      program.handlers[0],
+      language,
+      [],
+    )
+    assert_no_mismatch(report)
+  }
+}

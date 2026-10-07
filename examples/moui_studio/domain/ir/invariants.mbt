@@ -118,10 +118,12 @@ pub fn validate_program(program : StudioProgram) -> Array[IrError] {
     if body_expr_depth(handler.body) > MAX_EXPR_DEPTH {
       errors.push(ExprTooDeep(body_expr_depth(handler.body)))
     }
-    // 窗体级事件（control_name = ""）：仅定时器/广播——虚拟时钟与
-    // 广播总线不属于任何控件
+    // 窗体级事件（control_name = ""）：定时器/广播/启动——虚拟时钟、
+    // 广播总线与启动语义不属于任何控件
     if handler.control_name == "" {
-      if !(handler.event is OnTimer) && !(handler.event is OnBroadcast) {
+      if !(handler.event is OnTimer) &&
+        !(handler.event is OnBroadcast) &&
+        !(handler.event is OnStart) {
         errors.push(UnsupportedEvent("", handler.event.tag()))
       }
     } else {

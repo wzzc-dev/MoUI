@@ -57,6 +57,8 @@ pub(all) enum EventKind {
   OnInputDone
   OnTimer
   OnBroadcast
+  /// 程序启动（G7.1）：窗体级（control_name = ""），运行装填后立即执行
+  OnStart
 }
 
 ///|
@@ -67,6 +69,7 @@ pub fn EventKind::tag(self : EventKind) -> String {
     OnInputDone => "on_input_done"
     OnTimer => "on_timer"
     OnBroadcast => "on_broadcast"
+    OnStart => "on_start"
   }
 }
 
@@ -78,6 +81,7 @@ pub fn parse_event_kind(text : String) -> EventKind? {
     "on_input_done" => Some(OnInputDone)
     "on_timer" => Some(OnTimer)
     "on_broadcast" => Some(OnBroadcast)
+    "on_start" => Some(OnStart)
     _ => None
   }
 }

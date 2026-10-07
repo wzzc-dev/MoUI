@@ -737,6 +737,7 @@
     "app.bottom.search": "Search",
     "app.search.run": "Search",
     "app.search.running": "Searching…",
-    "app.search.empty": "No results. Type a query and press Search."
+    "app.search.empty": "No results. Type a query and press Search.",
+    "event.on_start": "On start"
   }
 }

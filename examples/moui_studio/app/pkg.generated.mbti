@@ -146,6 +146,8 @@ pub const WINDOW_CHROME_HEIGHT : Double = 32.0
 
 pub fn action_chip(String, Msg, ChipTone, Double) -> @core.View[Msg]
 
+pub fn active_project_file(Model) -> OpenProjectFile?
+
 pub fn active_project_of(Model) -> ProjectRecord?
 
 pub fn ai_bar_composer(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
@@ -168,6 +170,8 @@ pub fn ai_session_list(Model, @moui_i18n.Translator, Double, Double) -> @core.Vi
 
 pub fn ai_workspace_panel(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
+pub fn any_file_dirty(Model) -> Bool
+
 pub fn app_running(Model) -> Bool
 
 pub fn apply_completion(String, Int, String) -> (String, Int)
@@ -179,6 +183,8 @@ pub fn audit_error_count(Model) -> Int
 pub fn audit_op_rank(@studio_lang.StepOp) -> Int
 
 pub fn audit_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn auto_build_after_save(Model, String) -> (Model, @core.Effect[Msg])
 
 pub fn block_badge_color(@blocks.BlockKind) -> @core.Color
 
@@ -287,6 +293,8 @@ pub fn clamp_bottom_height(Double) -> Double
 pub fn clear_selection(Model) -> Model
 
 pub fn clone_path(Array[Int]) -> Array[Int]
+
+pub fn close_open_file_at(Model, Int) -> Model
 
 pub fn code_comment_color() -> @core.Color
 
@@ -405,6 +413,8 @@ pub fn error_message(@moui_i18n.Translator, @studio_lang.LangError) -> String
 pub fn explanation_system_prompt() -> String
 
 pub fn expression_templates() -> Array[ExpressionTemplate]
+
+pub fn file_is_dirty(OpenProjectFile) -> Bool
 
 pub fn fill_row(Array[@core.View[Msg]], Double, Double, @style.CrossAlign) -> @core.View[Msg]
 
@@ -564,6 +574,8 @@ pub fn moonbit_line_ranged(String, Int) -> Array[RangedToken]
 
 pub fn no_text_measure(String) -> Double
 
+pub fn open_file_index_of(Array[OpenProjectFile], String) -> Int?
+
 pub fn paint_block_outline(@common.PaintContext, Double, Double, Double, Double, @blocks.BlockKind, Bool, Bool) -> Unit
 
 pub fn pane_foot(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
@@ -608,7 +620,11 @@ pub fn progress_bar(Int, Double) -> @core.View[Msg]
 
 pub fn project_explorer(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
+pub fn project_has_file(Model, String) -> Bool
+
 pub fn project_record_from_source(@project.ProjectSource) -> Result[ProjectRecord, String]
+
+pub fn project_search_task(@services.FileServices, String, Array[String], query~ : String) -> @services.ServiceTask[Array[SearchHit]]
 
 pub fn proposal_error_text(@moui_i18n.Translator, @proposals.ProposalError) -> String
 
@@ -630,6 +646,10 @@ pub fn push_toast(Model, String, Bool) -> Model
 
 pub fn relative_time_bucket(Int, Int) -> (String, Int)
 
+pub fn rename_open_file(Array[OpenProjectFile], String, String) -> Array[OpenProjectFile]
+
+pub fn replace_open_file_at(Array[OpenProjectFile], Int, OpenProjectFile) -> Array[OpenProjectFile]
+
 pub fn replace_target_body(Model, String, Array[@ir.Stmt]) -> Model
 
 pub fn round_send_button(String, Msg, Bool, Double) -> @core.View[Msg]
@@ -641,6 +661,8 @@ pub fn runtime_sample_arrived(Model, RuntimeInspectSample) -> Model
 pub fn same_category(@blocks.BlockCategory, @blocks.BlockCategory) -> Bool
 
 pub fn same_path(Array[Int], Array[Int]) -> Bool
+
+pub fn search_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn seed_code_draft(Model) -> Model
 
@@ -796,7 +818,11 @@ pub fn update_with_launch_for_test(Model, Msg, @services.AppServices, (String, (
 
 pub fn update_with_services(Model, Msg, @services.AppServices, pty? : @kernel.PtyService[Msg]) -> (Model, @core.Effect[Msg])
 
+pub fn upsert_open_file(Array[OpenProjectFile], OpenProjectFile) -> (Array[OpenProjectFile], Int)
+
 pub fn upsert_project(Array[ProjectRecord], ProjectRecord) -> (Array[ProjectRecord], Int)
+
+pub fn valid_new_file_rel(String) -> Bool
 
 pub fn view(Model) -> @core.View[Msg]
 
@@ -872,6 +898,7 @@ pub(all) enum BottomTab {
   BtAudit
   BtConsole
   BtProblems
+  BtSearch
   BtAi
   BtTerminal
 }
@@ -933,6 +960,7 @@ pub(all) enum ConfirmKind {
   CkTemplate(Int)
   CkNewBlank
   CkOpen
+  CkCloseFileTab(Int)
 }
 
 pub(all) enum ContextTab {
@@ -1140,9 +1168,14 @@ pub(all) struct Model {
   restore_active_root : String
   project_tree_collapsed : Array[String]
   selected_project_file : String?
-  open_project_file : OpenProjectFile?
-  project_file_caret : Int
-  project_file_selection : @core.TextRange?
+  open_project_files : Array[OpenProjectFile]
+  open_file_index : Int
+  file_create_open : Bool
+  file_rename_open : String?
+  file_name_draft : String
+  search_query : String
+  search_hits : Array[SearchHit]
+  search_busy : Bool
   last_build : @build.BuildReport?
   build_busy : Bool
   preview_write : PreviewWriteState?
@@ -1198,11 +1231,29 @@ pub(all) enum Msg {
   CycleCodeAppearance
   SetCodeAppearance(CodeAppearance)
   ProjectFileLoaded(String, @services.ServiceTaskResult[String])
-  ClearProjectFile
   EditProjectFile(String)
   ProjectFileCaretMoved(Int, @core.TextRange?)
   SaveProjectFile
-  ProjectFileSaveFinished(@services.ServiceTaskResult[Unit])
+  SaveAllFiles
+  ProjectFileSaveFinished(String, @services.ServiceTaskResult[Unit])
+  SelectFileTab(Int)
+  CloseFileTab(Int)
+  FileCreateStart
+  FileCreateDraft(String)
+  FileCreateCommit
+  FileCreateDismiss
+  FileRenameStart(String)
+  FileRenameDraft(String)
+  FileRenameCommit
+  FileRenameDismiss
+  ProjectFileCreated(String, @services.ServiceTaskResult[Unit])
+  ProjectRenameRead(String, String, @services.ServiceTaskResult[String])
+  ProjectRenameWritten(String, String, @services.ServiceTaskResult[Unit])
+  ProjectRenameDeleted(String, String, @services.ServiceTaskResult[Unit])
+  SearchQueryDraft(String)
+  SearchRun
+  SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])
+  SearchHitClicked(String)
   CodeProjectSaved(@services.ServiceTaskResult[Unit])
   SetMode(Mode)
   SetDesignZoom(Double)
@@ -1443,6 +1494,8 @@ pub(all) struct OpenProjectFile {
   rel : String
   saved_content : String
   draft : String
+  caret : Int
+  selection : @core.TextRange?
 }
 
 pub(all) struct PaneHeadLayout {
@@ -1554,6 +1607,12 @@ pub(all) enum RunTrack {
 pub(all) struct RuntimeInspectSample {
   summary : String
   report : String
+}
+
+pub(all) struct SearchHit {
+  rel : String
+  line : Int
+  preview : String
 }
 
 pub(all) struct SemanticHitNode {

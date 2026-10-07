@@ -118,6 +118,8 @@ fn start_run(model : Model) -> Model {
       None => ()
     }
   }
+  // 启动事件（G7.1）：装填后立即执行 OnStart 子程序——「程序开机」语义
+  fire_onstart_interp(committed.program, state)
   let t = translator(committed)
   let run = RunModel::{
     handler_label: text(t, "app.run.armed"),
@@ -160,6 +162,8 @@ fn start_compiled_run(model : Model) -> Model {
       None => ()
     }
   }
+  // 启动事件（G7.1）：与解释轨同语义——装填后立即执行 OnStart 子程序
+  fire_onstart_compiled(committed.program, runtime)
   seed_compiled_runtime(runtime, committed)
   // 采样事件起点：编译轨的 Runtime 每次事件都重建，种子必须由 app
   // 显式接续（否则每次都从 RANDOM_SEED 起算 = 点十次同一个结果）。
@@ -1334,4 +1338,59 @@ fn timer_tick(model : Model) -> Model {
   }
   let (fired, _) = run_handler(committed, "", "on_timer")
   fired
+}
+
+///|
+/// 启动事件派发（G7.1，解释轨）：逐个执行窗体级 OnStart 子程序,
+/// vars/texts 回写活动状态（广播 drain 同款口径;无 消息文本 槽）。
+fn fire_onstart_interp(
+  program : @ir.StudioProgram,
+  state : @studio_lang.RunState,
+) -> Unit {
+  for handler in program.handlers {
+    if handler.control_name == "" && handler.event is @ir.OnStart {
+      let texts = Map([], capacity=8)
+      for key in state.texts.keys() {
+        match state.texts.get(key) {
+          Some(value) => texts[key] = value
+          None => ()
+        }
+      }
+      let sub = @studio_lang.start_run_stmts(
+        handler.body,
+        texts,
+        state.vars,
+        state.rows,
+        functions=program.functions,
+      )
+      @studio_lang.run_to_end(sub)
+      for key in sub.vars.keys() {
+        match sub.vars.get(key) {
+          Some(value) => state.vars[key] = value
+          None => ()
+        }
+      }
+      for key in sub.texts.keys() {
+        match sub.texts.get(key) {
+          Some(value) => state.texts[key] = value
+          None => ()
+        }
+      }
+    }
+  }
+}
+
+///|
+/// 启动事件派发（G7.1，编译轨）：同一 Runtime 上逐个 lower + 执行
+/// OnStart 子程序（`编译轨广播排空` 同款）。
+fn fire_onstart_compiled(
+  program : @ir.StudioProgram,
+  runtime : @compiled_runtime.Runtime,
+) -> Unit {
+  for handler in program.handlers {
+    if handler.control_name == "" && handler.event is @ir.OnStart {
+      let compiled_handler = @compiled_runtime.lower_handler(handler.body)
+      let _ = @compiled_runtime.run_handler(runtime, compiled_handler)
+    }
+  }
 }

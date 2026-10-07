@@ -933,3 +933,47 @@ test "全文搜索:命中落集,点击跳转" {
   assert_true(jumped.workspace is WsCode, msg="跳转应切到代码工作区")
   assert_true(jumped.selected_project_file == Some("app/app.mbt"))
 }
+
+///|
+/// G7.1:启动事件——RunStart 装填后立即执行 OnStart 子程序（零控件
+/// 纯逻辑程序）,声明的变量进活动状态。
+test "启动事件:OnStart 装填即执行" {
+  let services = @services.AppServices::new()
+  let program = {
+    ..@ir.empty_program(),
+    window: { title: "纯逻辑", width: 640, height: 480, timer_interval: 0 },
+    variables: [{ name: "开机计数", init: "0" }],
+    handlers: [
+      {
+        control_name: "",
+        event: @ir.OnStart,
+        note_zh: "开机即累加",
+        note_en: "increment on start",
+        body: [
+          @ir.Assign(
+            "开机计数",
+            @ir.Binary(@ir.Add, @ir.Var("开机计数"), @ir.IntLit(1)),
+          ),
+        ],
+      },
+    ],
+  }
+  let base = {
+    ..@app.initial_model(),
+    program,
+    // 变量初值快照随程序一起替换（start_run 从这里装填活动状态）
+    runtime_values: @studio_lang.initial_values(program),
+    runtime_texts: @studio_lang.initial_texts(program),
+    runtime_rows: @studio_lang.initial_rows(program),
+  }
+  let started = @app.update_with_services(base, RunStart, services).0
+  match started.run {
+    None => fail("RunStart 应进入运行态")
+    Some(run) =>
+      match run.state.vars.get("开机计数") {
+        Some(@studio_lang.VInt(1)) => ()
+        Some(other) => fail("开机计数应为 1,实得非预期值")
+        None => fail("OnStart 应已执行:变量未出现")
+      }
+  }
+}

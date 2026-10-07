@@ -737,6 +737,7 @@
     "app.bottom.search": "搜索",
     "app.search.run": "搜索",
     "app.search.running": "搜索中…",
-    "app.search.empty": "无结果。输入关键字后点「搜索」。"
+    "app.search.empty": "无结果。输入关键字后点「搜索」。",
+    "event.on_start": "当程序启动"
   }
 }

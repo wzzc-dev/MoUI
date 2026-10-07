@@ -1189,7 +1189,7 @@ fn window_event_rows(
   width : Double,
 ) -> @moui.View[Msg] {
   let rows : Array[@moui.View[Msg]] = []
-  for event in [@ir.OnTimer, @ir.OnBroadcast] {
+  for event in [@ir.OnTimer, @ir.OnBroadcast, @ir.OnStart] {
     let exists = @ir.find_handler(model.program, "", event) is Some(_)
     let selected = model.selected_handler == handler_key("", event.tag())
     let action = if exists {

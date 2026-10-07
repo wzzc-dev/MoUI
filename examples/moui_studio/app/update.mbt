@@ -687,9 +687,11 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     CreateHandler(control_name, event) =>
       // 新建子程序：控件存在 + 事件受支持 + 不重复 + 预算内，
       // 建空子程序并选中（note 留空——可读性契约的必填约束针对 AI 提案）
-      // 窗体级事件（control_name = ""）：仅定时器/广播（切片 G）
+      // 窗体级事件（control_name = ""）：定时器/广播/启动（切片 G + G7.1）
       if control_name == "" {
-        if !(event is @ir.OnTimer) && !(event is @ir.OnBroadcast) {
+        if !(event is @ir.OnTimer) &&
+          !(event is @ir.OnBroadcast) &&
+          !(event is @ir.OnStart) {
           Some((model, @moui.Effect::none()))
         } else if @ir.find_handler(model.program, control_name, event)
           is Some(_) {
