@@ -19,7 +19,7 @@ pub(all) struct StudioClock {
 /// 部分场景):2026-01-01(周四)00:00:00。测试要确定的时间戳时手动置
 /// Model.clock。
 pub fn default_studio_clock() -> StudioClock {
-  { year: 2026, month: 1, day: 1, weekday: 4, hour: 0, minute: 0, second: 0 }
+  { year: 2026, month: 1, day: 1, weekday: 4, hour: 0, minute: 0, second: 0, }
 }
 
 ///|
@@ -49,16 +49,20 @@ pub fn civil_seconds(clock : StudioClock) -> Int {
 /// HH:MM 显示(时间线动作行的时间戳),24 小时制零填充。
 pub fn format_hhmm(clock : StudioClock) -> String {
   let hh = if clock.hour < 10 { "0\{clock.hour}" } else { "\{clock.hour}" }
-  let mm = if clock.minute < 10 { "0\{clock.minute}" } else { "\{clock.minute}" }
+  let mm = if clock.minute < 10 {
+    "0\{clock.minute}"
+  } else {
+    "\{clock.minute}"
+  }
   "\{hh}:\{mm}"
 }
 
 ///|
 /// 从 civil_seconds 戳还原 HH:MM 显示(卡片只存整数戳,不存整个时钟)。
 pub fn hhmm_of_stamp(at : Int) -> String {
-  let in_day = ((at % 86400) + 86400) % 86400
+  let in_day = (at % 86400 + 86400) % 86400
   let hour = in_day / 3600
-  let minute = (in_day % 3600) / 60
+  let minute = in_day % 3600 / 60
   let hh = if hour < 10 { "0\{hour}" } else { "\{hour}" }
   let mm = if minute < 10 { "0\{minute}" } else { "\{minute}" }
   "\{hh}:\{mm}"

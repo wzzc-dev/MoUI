@@ -68,10 +68,10 @@ pub fn ai_workspace_panel(
       )
     }
   }
-  @views.column(
-    [ai_ws_tab_header(model, t, inner), body],
-    spacing=0.0,
-  ).frame(width~, height~)
+  @views.column([ai_ws_tab_header(model, t, inner), body], spacing=0.0).frame(
+    width~,
+    height~,
+  )
 }
 
 ///|
@@ -82,7 +82,7 @@ fn ai_ws_tab_header(
   width : Double,
 ) -> @moui.View[Msg] {
   let changes_w = (text_estimate_width(text(t, "app.ai.ws.changes")) * 1.05 +
-    30.0).max(56.0)
+  30.0).max(56.0)
   let files_w = (text_estimate_width(text(t, "app.ai.ws.files")) * 1.05 + 16.0).max(
     48.0,
   )
@@ -102,11 +102,13 @@ fn ai_ws_tab_header(
                     theme=studio_theme(),
                     width=changes_w - 30.0,
                     height=16.0,
-                  ).foreground(if changes_active {
-                    ide_text()
-                  } else {
-                    ide_text_muted()
-                  }),
+                  ).foreground(
+                    if changes_active {
+                      ide_text()
+                    } else {
+                      ide_text_muted()
+                    },
+                  ),
                   count_badge(count.to_string(), if count > 0 { 1 } else { 0 }),
                 ],
                 spacing=4.0,
@@ -115,7 +117,11 @@ fn ai_ws_tab_header(
               width=changes_w,
               height=22.0,
             ),
-            background=if changes_active { ide_selection() } else { ide_panel() },
+            background=if changes_active {
+              ide_selection()
+            } else {
+              ide_panel()
+            },
             corner_radius=4.0,
             width=changes_w,
             height=22.0,
@@ -128,11 +134,13 @@ fn ai_ws_tab_header(
                 theme=studio_theme(),
                 width=files_w - 8.0,
                 height=16.0,
-              ).foreground(if files_active {
-                ide_text()
-              } else {
-                ide_text_muted()
-              }),
+              ).foreground(
+                if files_active {
+                  ide_text()
+                } else {
+                  ide_text_muted()
+                },
+              ),
               width=files_w,
               height=22.0,
             ),
@@ -169,9 +177,10 @@ fn ai_ws_changes_tab(
   let rows : Array[@moui.View[Msg]] = []
   // 待采纳提案置顶:摘要 + 改动文件 + 采纳/拒绝（复用既有通道）
   match model.pending {
-    Some(pending) => {
-      rows.push(ai_ws_pending_card(model, t, pending.summary, pending.diff, width))
-    }
+    Some(pending) =>
+      rows.push(
+        ai_ws_pending_card(model, t, pending.summary, pending.diff, width),
+      )
     None => ()
   }
   // 提案历史（最新在前）
@@ -205,11 +214,13 @@ fn ai_ws_changes_tab(
                   theme=studio_theme(),
                   width=40.0,
                   height=14.0,
-                ).foreground(if record.accepted {
-                  ide_success()
-                } else {
-                  ide_text_faint()
-                }),
+                ).foreground(
+                  if record.accepted {
+                    ide_success()
+                  } else {
+                    ide_text_faint()
+                  },
+                ),
               ],
               width,
               4.0,

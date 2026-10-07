@@ -38,22 +38,19 @@ fn ai_transcript_model() -> Model {
 test "transcript shows user bubble right aligned and session header" {
   // 只推一张用户气泡卡（内容短于视口,贴底钳制回 0,气泡必在视口内）；
   // composer 草稿也会画同一段文字——断言「存在 x 在右半的那一条」即可。
-  let model = push_ai_card(
-    apply_ai(initial_model(), SetPerspective(PsAi)),
-    AiCard::{
-      kind: CardUserPrompt,
-      title: "",
-      body: "帮我做一个班级随机点名册",
-      steps: [],
-      steps_done: 0,
-      progress: 0,
-      diff_lines: [],
-      settled: true,
-      settled_note: "",
-      seq: 0,
-      at: 0,
-    },
-  )
+  let model = push_ai_card(apply_ai(initial_model(), SetPerspective(PsAi)), AiCard::{
+    kind: CardUserPrompt,
+    title: "",
+    body: "帮我做一个班级随机点名册",
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: true,
+    settled_note: "",
+    seq: 0,
+    at: 0,
+  })
   let commands = ai_draw(model, 1280.0, 800.0)
   let mut bubble_x = -1.0
   let mut header_found = false
@@ -126,22 +123,19 @@ test "transcript groups work cards with pending audit count" {
 test "transcript renders explanation card as ai message with retry action" {
   let model = ai_transcript_model()
   // 直接推一张讲解卡（流式完成后的形态）+ 已处理的 diff 卡
-  let with_explain = push_ai_card(
-    model,
-    AiCard::{
-      kind: CardExplanation,
-      title: "",
-      body: "## 讲解标题\n第一段说明",
-      steps: [],
-      steps_done: 0,
-      progress: 0,
-      diff_lines: [],
-      settled: false,
-      settled_note: "",
-      seq: 0,
-      at: 0,
-    },
-  )
+  let with_explain = push_ai_card(model, AiCard::{
+    kind: CardExplanation,
+    title: "",
+    body: "## 讲解标题\n第一段说明",
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: false,
+    settled_note: "",
+    seq: 0,
+    at: 0,
+  })
   let commands = ai_draw(with_explain, 1280.0, 800.0)
   let mut heading = false
   let mut retry = false
@@ -330,7 +324,8 @@ test "bottom bar host reserves room for the composer block incl chips" {
   let inner = width - AI_CARD_PAD * 2.0
   let bar = ai_bar_height(model, width, 800.0)
   // 内衬在 card_chrome_height 里已计 pad*2;外层包装只补横向,纵向不再垫
-  let needed = PANEL_HEAD_HEIGHT + composer_block_height(inner) +
+  let needed = PANEL_HEAD_HEIGHT +
+    composer_block_height(inner) +
     decision_bar_height(model) +
     AI_CARD_PAD * 2.0 +
     4.0

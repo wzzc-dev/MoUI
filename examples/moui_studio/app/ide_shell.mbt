@@ -80,11 +80,8 @@ pub const TOPBAR_LEFT_TOGGLE_ZONE : Double = 34.0
 ///|
 /// 拖拽区起点（绝对 x）：顶栏行起点 + 左栏开关带宽。
 pub fn topbar_drag_x(model : Model) -> Double {
-  (if model.immersive {
-    TRAFFIC_LIGHT_INSET
-  } else {
-    10.0
-  }) + TOPBAR_LEFT_TOGGLE_ZONE
+  (if model.immersive { TRAFFIC_LIGHT_INSET } else { 10.0 }) +
+  TOPBAR_LEFT_TOGGLE_ZONE
 }
 
 ///|

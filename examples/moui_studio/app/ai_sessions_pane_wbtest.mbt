@@ -1,4 +1,3 @@
-
 ///|
 test "session row title hugs the row left edge at every width" {
   // 真机反馈:双行会话行前有一段空白——旧实现按内容估宽后 frame 居中,
@@ -31,7 +30,9 @@ test "session row title hugs the row left edge at every width" {
     }
   }
   for run in shell_texts(ai_draw(model, 1280.0, 800.0)) {
-    if run.text == "会话 1" && run.frame.origin.y > 110.0 && run.frame.origin.y < 240.0 {
+    if run.text == "会话 1" &&
+      run.frame.origin.y > 110.0 &&
+      run.frame.origin.y < 240.0 {
       if title_x < 0.0 || run.frame.origin.x < title_x {
         title_x = run.frame.origin.x
       }
@@ -59,7 +60,9 @@ test "session row title hugs the row left edge at every width" {
     }
   }
   for run in shell_texts(ai_draw(model, 2000.0, 800.0)) {
-    if run.text == "会话 1" && run.frame.origin.y > 110.0 && run.frame.origin.y < 240.0 {
+    if run.text == "会话 1" &&
+      run.frame.origin.y > 110.0 &&
+      run.frame.origin.y < 240.0 {
       if title_x_wide < 0.0 || run.frame.origin.x < title_x_wide {
         title_x_wide = run.frame.origin.x
       }

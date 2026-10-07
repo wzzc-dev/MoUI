@@ -74,12 +74,9 @@ fn dropdown_chip(
       @views.row(
         [
           @views.icon(icon, size=11.0, color=ide_text_muted()),
-          @views.text(
-            label,
-            theme=studio_theme(),
-            width=label_w,
-            height=16.0,
-          ).foreground(ide_text_muted()),
+          @views.text(label, theme=studio_theme(), width=label_w, height=16.0).foreground(
+            ide_text_muted(),
+          ),
           @views.icon(ChevronDown, size=10.0, color=ide_text_faint()),
         ],
         spacing=4.0,
@@ -115,7 +112,9 @@ fn context_chips_row(
   } else {
     fit_label(model.provider_model, 160.0)
   }
-  cells.push(dropdown_chip(Gear, model_label, StudioCommandRun("studio.settings")))
+  cells.push(
+    dropdown_chip(Gear, model_label, StudioCommandRun("studio.settings")),
+  )
   // 外层容器必须显式给底色：无背景 container 在 paint 期回落到环境
   // Base 刷子（实测抓到的 ambient 回落缺陷），与输入盒同色读作一块。
   @views.container(
@@ -127,10 +126,10 @@ fn context_chips_row(
   )
 }
 
-
 ///|
 /// 提示头条：「提示: 」+ 着色关键词 + 其余；整行可点 = 打开提案历史
 /// （给着色词真实行为,不做死链接）。带 hairline 下边与输入区分隔。
+
 ///|
 /// 信息芯片：小圆角读数。`on_click` 为 None = 纯信息展示（不可点）。
 fn info_chip(
@@ -237,7 +236,7 @@ pub fn ai_center(
           ai_posture_row(model, t, width),
         ],
         spacing=0.0,
-      ).frame(height=height),
+      ).frame(height~),
       background=ide_editor_background(),
       width~,
       height~,
@@ -251,11 +250,9 @@ pub fn ai_center(
     let header_h = AI_SESSION_HEADER_HEIGHT
     let follow_h = if model.transcript_follow { 0.0 } else { 26.0 }
     let posture_h = POSTURE_HEIGHT
-    let transcript_h = (height -
-    header_h -
-    composer_h -
-    follow_h -
-    posture_h).max(120.0)
+    let transcript_h = (height - header_h - composer_h - follow_h - posture_h).max(
+      120.0,
+    )
     @views.container(
       @views.column(
         [
@@ -284,13 +281,10 @@ fn ai_session_header(
 ) -> @moui.View[Msg] {
   let session = model.ai_sessions.current()
   let index = model.ai_sessions.active_index()
-  let title = fit_label(
-    session.title,
-    (width - 200.0).max(60.0),
-  )
-  let title_w = (text_estimate_width(title) * 1.02 + 8.0).min(width - 200.0).max(
-    40.0,
-  )
+  let title = fit_label(session.title, (width - 200.0).max(60.0))
+  let title_w = (text_estimate_width(title) * 1.02 + 8.0)
+    .min(width - 200.0)
+    .max(40.0)
   let pin_label = if session.pinned {
     text(t, "app.ai.unpin")
   } else {
@@ -463,15 +457,20 @@ fn work_group_row(
     let minutes = duration / 60
     let seconds = duration % 60
     text_with(t, "app.ai.work.trace", [
-      ("duration", text_with(t, "app.ai.work.duration", [
-        ("m", minutes.to_string()),
-        ("s", seconds.to_string()),
-      ])),
+      (
+        "duration",
+        text_with(t, "app.ai.work.duration", [
+          ("m", minutes.to_string()),
+          ("s", seconds.to_string()),
+        ]),
+      ),
     ])
   } else {
     text(t, "app.ai.fold_idle")
   }
-  let body : Array[@moui.View[Msg]] = [work_group_bar(model, label, inner, pending > 0)]
+  let body : Array[@moui.View[Msg]] = [
+    work_group_bar(model, label, inner, pending > 0),
+  ]
   if !model.ai_cards_folded {
     let mut card_index = 0
     for card in group {
@@ -513,7 +512,13 @@ fn work_group_bar(
             width=(width - 60.0).max(60.0),
             height=16.0,
             align=TextStart,
-          ).foreground(if has_pending { ide_warning() } else { ide_text_faint() }),
+          ).foreground(
+            if has_pending {
+              ide_warning()
+            } else {
+              ide_text_faint()
+            },
+          ),
         ],
         spacing=4.0,
         align=Center,
@@ -571,24 +576,20 @@ fn user_bubble_row(
           0.0,
           Center,
         ),
-        message_actions_row(
-          card,
-          inner,
-          [
-            action_chip(
-              text(t, "app.ai.action.copy"),
-              CopyAiMessage(card.seq),
-              Ghost,
-              18.0,
-            ),
-            action_chip(
-              text(t, "app.ai.action.edit"),
-              EditUserPrompt(card.seq),
-              Ghost,
-              18.0,
-            ),
-          ],
-        ),
+        message_actions_row(card, inner, [
+          action_chip(
+            text(t, "app.ai.action.copy"),
+            CopyAiMessage(card.seq),
+            Ghost,
+            18.0,
+          ),
+          action_chip(
+            text(t, "app.ai.action.edit"),
+            EditUserPrompt(card.seq),
+            Ghost,
+            18.0,
+          ),
+        ]),
       ],
       spacing=2.0,
     ).frame(width=inner),
@@ -613,24 +614,20 @@ fn ai_message_row(
     @views.column(
       [
         markdown_blocks_view(blocks, inner),
-        message_actions_row(
-          card,
-          inner,
-          [
-            action_chip(
-              text(t, "app.ai.action.copy"),
-              CopyAiMessage(card.seq),
-              Ghost,
-              18.0,
-            ),
-            action_chip(
-              text(t, "app.ai.action.retry"),
-              RetryUserPrompt(card.seq),
-              Ghost,
-              18.0,
-            ),
-          ],
-        ),
+        message_actions_row(card, inner, [
+          action_chip(
+            text(t, "app.ai.action.copy"),
+            CopyAiMessage(card.seq),
+            Ghost,
+            18.0,
+          ),
+          action_chip(
+            text(t, "app.ai.action.retry"),
+            RetryUserPrompt(card.seq),
+            Ghost,
+            18.0,
+          ),
+        ]),
       ],
       spacing=4.0,
     ).frame(width=inner),
@@ -726,9 +723,7 @@ fn thread_area_height(model : Model) -> Double {
 /// `+ 12.0`——视图层没有对应元素，那 12pt 被 ContainerBox 居中平摊，
 /// 成了「上下不对称」的一半来源。现在它与 `AI_CARD_PAD` 同源。
 fn card_chrome_height(model : Model, width : Double) -> Double {
-  composer_block_height(width) +
-  decision_bar_height(model) +
-  AI_CARD_PAD * 2.0
+  composer_block_height(width) + decision_bar_height(model) + AI_CARD_PAD * 2.0
 }
 
 ///|
@@ -1312,7 +1307,10 @@ fn composer(
     // 维持扁平无描边（「与面板融为一体」的实测口径只适用于嵌入面板）。
     corner_radius=if model.perspective is PsAi { 10.0 } else { 0.0 },
     border=if model.perspective is PsAi {
-      Some(@core.BorderStyle::{ brush: @core.Brush::Solid(ide_border()), width: 1.0 })
+      Some(@core.BorderStyle::{
+        brush: @core.Brush::Solid(ide_border()),
+        width: 1.0,
+      })
     } else {
       None
     },
@@ -1324,10 +1322,10 @@ fn composer(
   // composer_block_height，调用方的高度预算与这里同源。
   let chips_h = context_chips_height(width)
   if chips_h > 0.0 {
-    @views.column(
-      [context_chips_row(model, t, box_width), box],
-      spacing=2.0,
-    ).frame(width=box_width, height=composer_height(width) + chips_h)
+    @views.column([context_chips_row(model, t, box_width), box], spacing=2.0).frame(
+      width=box_width,
+      height=composer_height(width) + chips_h,
+    )
   } else {
     box
   }
@@ -1353,12 +1351,13 @@ fn composer_mode_dropdown(
     @views.center(
       @views.row(
         [
-          @views.text(
-            label,
-            theme=studio_theme(),
-            width=label_w,
-            height=16.0,
-          ).foreground(if open { ide_accent() } else { ide_text_muted() }),
+          @views.text(label, theme=studio_theme(), width=label_w, height=16.0).foreground(
+            if open {
+              ide_accent()
+            } else {
+              ide_text_muted()
+            },
+          ),
           @views.icon(ChevronDown, size=10.0, color=ide_text_muted()),
         ],
         spacing=3.0,
@@ -1403,7 +1402,13 @@ fn ai_posture_row(
             width=(text_estimate_width(label) + 4.0).max(40.0),
             height=14.0,
             align=TextStart,
-          ).foreground(if pending > 0 { ide_warning() } else { ide_text_faint() }),
+          ).foreground(
+            if pending > 0 {
+              ide_warning()
+            } else {
+              ide_text_faint()
+            },
+          ),
           @views.spacer(min_length=6.0, weight=1.0),
         ],
         width,

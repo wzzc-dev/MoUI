@@ -10,22 +10,19 @@ fn composer_run(model : Model) -> (Model, @moui.Effect[Msg]) {
   // 「用户说了什么」都留下可审计的记录。空 prompt 不推（没有可回显的内容）。
   let prompt = stamped.ai_sessions.current().prompt_draft
   let with_prompt = if prompt != "" {
-    push_ai_card(
-      stamped,
-      AiCard::{
-        kind: CardUserPrompt,
-        title: "",
-        body: prompt,
-        steps: [],
-        steps_done: 0,
-        progress: 0,
-        diff_lines: [],
-        settled: true,
-        settled_note: "",
-        seq: 0,
-        at: 0,
-      },
-    )
+    push_ai_card(stamped, AiCard::{
+      kind: CardUserPrompt,
+      title: "",
+      body: prompt,
+      steps: [],
+      steps_done: 0,
+      progress: 0,
+      diff_lines: [],
+      settled: true,
+      settled_note: "",
+      seq: 0,
+      at: 0,
+    })
   } else {
     stamped
   }
@@ -220,7 +217,10 @@ fn accept_proposal(model : Model) -> Model {
 
 ///|
 /// 会话存储错误本地化（加载失败如实提示,不静默吞掉坏文件）。
-pub fn store_error_text(t : @i18n.Translator, error : @ai.AiStoreError) -> String {
+pub fn store_error_text(
+  t : @i18n.Translator,
+  error : @ai.AiStoreError,
+) -> String {
   match error {
     @ai.StoreBadJson => text(t, "app.ai.store.bad_json")
     @ai.StoreBadFormat => text(t, "app.ai.store.bad_format")
@@ -241,22 +241,19 @@ pub fn mark_ai_sessions_dirty(model : Model) -> Unit {
 /// 给这个卡种类真实的生产推送点，失败在会话流里可见可回溯（decision_bar
 /// 的错误行仍保留给紧凑宿主）。
 fn push_error_card(model : Model, message : String) -> Model {
-  push_ai_card(
-    model,
-    AiCard::{
-      kind: CardError,
-      title: text(translator(model), "app.ai.card.error"),
-      body: message,
-      steps: [],
-      steps_done: 0,
-      progress: 0,
-      diff_lines: [],
-      settled: false,
-      settled_note: "",
-      seq: 0,
-      at: 0,
-    },
-  )
+  push_ai_card(model, AiCard::{
+    kind: CardError,
+    title: text(translator(model), "app.ai.card.error"),
+    body: message,
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: false,
+    settled_note: "",
+    seq: 0,
+    at: 0,
+  })
 }
 
 ///|
@@ -267,10 +264,7 @@ pub fn proposal_from_completion(model : Model, completion : String) -> Model {
   match @proposals.decode_proposal(completion) {
     Err(_) => {
       let message = text(translator(model), "app.status.proposal_invalid")
-      push_error_card(
-        { ..model, prompt_error: message },
-        message,
-      )
+      push_error_card({ ..model, prompt_error: message, }, message)
     }
     Ok(proposal) => {
       let errors = @proposals.validate_proposal(model.program, proposal)
@@ -654,7 +648,8 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                 transcript_follow: true,
                 transcript_scroll: @geometry.Point::new(x=0.0, y=0.0),
               }
-              restored.transcript_scroll_seq = restored.transcript_scroll_seq + 1
+              restored.transcript_scroll_seq = restored.transcript_scroll_seq +
+                1
               Some((restored, @moui.Effect::none()))
             }
             Err(error) =>
@@ -676,12 +671,7 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
       match result {
         Success(_) | Cancelled => Some((model, @moui.Effect::none()))
         Failure(error) =>
-          Some(
-            (
-              push_toast(model, error.message, true),
-              @moui.Effect::none(),
-            ),
-          )
+          Some((push_toast(model, error.message, true), @moui.Effect::none()))
       }
     // 时间线消息动作（对白转录）：编辑 = 回填草稿；重发 = 回填 + 立即重跑
     // （ComposerRun 语义，不是第二条执行通道）。
@@ -715,7 +705,11 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           {
             ..model,
             ai_sessions_search_open: opening,
-            ai_sessions_query: if opening { model.ai_sessions_query } else { "" },
+            ai_sessions_query: if opening {
+              model.ai_sessions_query
+            } else {
+              ""
+            },
           },
           @moui.Effect::none(),
         ),
@@ -744,7 +738,12 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
     AiSessionRenameDraft(value) =>
       match model.session_rename {
         Some((index, _)) =>
-          Some(({ ..model, session_rename: Some((index, value)), }, @moui.Effect::none()))
+          Some(
+            (
+              { ..model, session_rename: Some((index, value)), },
+              @moui.Effect::none(),
+            ),
+          )
         None => Some((model, @moui.Effect::none()))
       }
     AiSessionRenameCommit =>
@@ -813,8 +812,11 @@ fn restore_prompt_draft(model : Model, seq : Int) -> Model {
     Some(card) =>
       if card.kind is CardUserPrompt {
         let draft = card.body
-        model.ai_sessions.amend({ ..model.ai_sessions.current(), prompt_draft: draft, })
-        { ..model, prompt_error: "" }
+        model.ai_sessions.amend({
+          ..model.ai_sessions.current(),
+          prompt_draft: draft,
+        })
+        { ..model, prompt_error: "", }
       } else {
         model
       }
@@ -848,8 +850,11 @@ fn restore_prompt_of_turn(model : Model, seq : Int) -> Model {
   }
   match prompt {
     Some(text) => {
-      model.ai_sessions.amend({ ..model.ai_sessions.current(), prompt_draft: text, })
-      { ..model, prompt_error: "" }
+      model.ai_sessions.amend({
+        ..model.ai_sessions.current(),
+        prompt_draft: text,
+      })
+      { ..model, prompt_error: "", }
     }
     None => model
   }

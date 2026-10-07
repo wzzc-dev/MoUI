@@ -3,6 +3,7 @@
 /// 区头动作行（新建 ⌘N + 搜索）+ 可选过滤行 + 置顶/工程分组的会话行
 /// （相对时间 + 悬停改名/置顶/删除 + 行内改名）。渲染由壳组装（ide_shell
 /// 的 LeftAiSessions 分支），纯视图层，不改会话状态——状态操作走 AiSessionOp。
+
 ///|
 /// 双行会话行高（VS Code 智能体模式口径）：标题行 15 + 元信息行 12 + 间距与内垫。
 pub const AI_SESSION_ROW_HEIGHT : Double = 36.0
@@ -179,7 +180,12 @@ fn ai_session_group_rows(
   let rest : Array[Int] = []
   for index in sorted {
     match model.ai_sessions.session_at(index) {
-      Some(session) => if session.pinned { pinned.push(index) } else { rest.push(index) }
+      Some(session) =>
+        if session.pinned {
+          pinned.push(index)
+        } else {
+          rest.push(index)
+        }
       None => ()
     }
   }
@@ -198,7 +204,11 @@ fn ai_session_group_rows(
     match model.ai_sessions.session_at(index) {
       Some(session) => {
         if session.project != current_project && current_group.length() > 0 {
-          rows.push(ai_project_group(model, t, current_project, current_group, width, now))
+          rows.push(
+            ai_project_group(
+              model, t, current_project, current_group, width, now,
+            ),
+          )
           current_group = []
         }
         current_project = session.project
@@ -208,7 +218,9 @@ fn ai_session_group_rows(
     }
   }
   if current_group.length() > 0 {
-    rows.push(ai_project_group(model, t, current_project, current_group, width, now))
+    rows.push(
+      ai_project_group(model, t, current_project, current_group, width, now),
+    )
   }
   rows
 }
@@ -259,12 +271,9 @@ fn ai_group_bar(
           align=TextStart,
         ).foreground(ide_text_faint()),
         @views.spacer(min_length=4.0, weight=1.0),
-        @views.text(
-          "\{count}",
-          theme=studio_theme(),
-          width=24.0,
-          height=16.0,
-        ).foreground(ide_text_faint()),
+        @views.text("\{count}", theme=studio_theme(), width=24.0, height=16.0).foreground(
+          ide_text_faint(),
+        ),
       ],
       (width - 8.0).max(80.0),
       4.0,
@@ -348,9 +357,9 @@ fn ai_session_row(
   let time_w = (line_w - 12.0).max(30.0)
   let accent = if active { ide_accent() } else { ide_text_faint() }
   // 来源：有已采纳提案的会话 = Gear（Agent 干过活），否则 Chat（纯聊天）
-  let source_icon : @style.IconName = if session.proposal_history.any(
-    record => record.accepted,
-  ) {
+  let source_icon : @style.IconName = if session.proposal_history.any(record => {
+      record.accepted
+    }) {
     Gear
   } else {
     Chat
@@ -441,9 +450,7 @@ fn ai_session_row(
       // 行显式钉宽 = 容器 − 左右内垫:不加 frame,ContainerBox 会把
       // 「自然宽较窄」的行居中放置,行首出现随容器宽度增长的空隙
       // （真机实测缺陷）。
-      @views.row(cells, spacing=4.0, align=Center).frame(
-        width=row_width - 16.0,
-      ),
+      @views.row(cells, spacing=4.0, align=Center).frame(width=row_width - 16.0),
       left=8.0,
       right=8.0,
     ),
