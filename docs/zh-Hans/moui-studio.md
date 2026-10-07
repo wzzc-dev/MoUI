@@ -127,6 +127,14 @@ moon build examples/moui_studio/web_wasm --target wasm-gc
 # macOS native
 moon run examples/moui_studio/macos_skia --target native
 
+# Linux / Windows native（Skia；能力缺口显式降级：无 PTY 终端、
+# 无 webview 预览、无墙钟 FFI、无沉浸式标题栏；provider/编译轨/构建/持久化/MCP 复用）
+moon run examples/moui_studio/linux_skia --target native
+moon run examples/moui_studio/windows_skia --target native
+
+# HarmonyOS（window-hosted 嵌入式运行时；experimental，ready=false）
+moon run examples/moui_studio/harmonyos_window_hosted --target native
+
 # 测试
 moon test examples/moui_studio/app --target native
 moon test examples/moui_studio/app --target wasm-gc

@@ -71,6 +71,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [moui-studio](active/moui-studio.md) | MoUI Studio：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
 | [moui-studio-capability-upgrade](active/moui-studio-capability-upgrade.md) | MoUI Studio 能力升级：真编辑器/诊断面板/运行时检查器/键盘与进程卫生/积木形状/语言层(函数·数组·整数)/属性 schema 与新控件事件/MoonBit 情报 |
 | [moui-studio-workbench](active/moui-studio-workbench.md) | MoUI Studio 工程工作台：代码真源(handlers.mbt/form.mbt)+ 三模式预览(画布快览/web+webview/native)+ 拖拽布局设计器 + 工程导入与资源管理器 + 积木长成 Blockly for MoonBit(IR 逐构造生长)，.studio.json 迁移退役 |
+| [moui-studio-props-v2](active/moui-studio-props-v2.md) | MoUI Studio 可视化属性 v2：ControlProps（字号/加粗/颜色/对齐/可见/禁用 + TextField 三件）typed 字段 + codec 缺省兼容 + form_widget 主题覆盖渲染 + 检查器属性面板（走撤销点） |
 | [moui-studio-blocks-standalone](active/moui-studio-blocks-standalone.md) | MoUI Studio 积木独立：OnStart 启动事件（两轨+导出）+ ForEach 九面全套 + 列表/字符串/数学内建补全 + 骨架表全可达，双轨差分门用例守住 |
 | [moui-studio-workspace-feel](active/moui-studio-workspace-feel.md) | MoUI Studio 工作区手感：多标签编辑(光标随 tab/脏关闭确认/保存全部) + 文件 CRUD(新建/改名三步链) + 全文搜索(BtSearch 页签+跳转) + 保存即自动构建 live 诊断 |
 | [moui-studio-markdown-plugin](active/moui-studio-markdown-plugin.md) | MoUI Studio Markdown 插件：.md 打开即 MoMark 引擎格式编辑（moui_richtext.markdown_editor）+ 草稿/写盘通道零新机制;无状态视图贡献（terminal 先例） |

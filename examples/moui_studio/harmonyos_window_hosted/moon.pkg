@@ -1,0 +1,14 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/harmonyos" @harmonyos_host,
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "examples/moui_studio/app" @studio_app,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

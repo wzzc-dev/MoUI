@@ -273,8 +273,17 @@ The fixed three-sentence differentiator:
 # Web (wasm-gc)
 moon build examples/moui_studio/web_wasm --target wasm-gc
 
-# macOS native
+# macOS native (mainline desktop: full capability set)
 moon run examples/moui_studio/macos_skia --target native
+
+# Linux / Windows native (Skia; capability gaps degrade explicitly:
+# no PTY terminal, no webview preview, no wall-clock FFI, no immersive
+# titlebar; provider/compile/build/persistence/MCP are shared)
+moon run examples/moui_studio/linux_skia --target native
+moon run examples/moui_studio/windows_skia --target native
+
+# HarmonyOS (window-hosted embedded runtime; experimental, ready=false)
+moon run examples/moui_studio/harmonyos_window_hosted --target native
 
 # Tests
 moon test examples/moui_studio/app --target native
