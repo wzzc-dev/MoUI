@@ -1406,7 +1406,6 @@ fn RunState::eval_command(
       })
       VUnit
     }
-
     _ => raise LangError(UnknownBuiltin, line, spec.id, "")
   }
 }
@@ -1611,8 +1610,14 @@ fn RunState::eval_function(
       }
       VStr(found)
     }
-    "upper" => VStr(self.value_as_text(self.eval(args[0], line), spec.id, line).to_upper())
-    "lower" => VStr(self.value_as_text(self.eval(args[0], line), spec.id, line).to_lower())
+    "upper" =>
+      VStr(
+        self.value_as_text(self.eval(args[0], line), spec.id, line).to_upper(),
+      )
+    "lower" =>
+      VStr(
+        self.value_as_text(self.eval(args[0], line), spec.id, line).to_lower(),
+      )
     "index_of_list" => {
       let items = list_items_of(self, args[0], line, spec.id)
       let wanted = self.eval(args[1], line)
@@ -1628,10 +1633,12 @@ fn RunState::eval_function(
       }
       VInt(found)
     }
-    "sin" => VNum(sin_of(number_of_value(self.eval(args[0], line), spec.id, line)))
-    "cos" => VNum(cos_of(number_of_value(self.eval(args[0], line), spec.id, line)))
-    "log" => VNum(ln_of(number_of_value(self.eval(args[0], line), spec.id, line)))
-
+    "sin" =>
+      VNum(sin_of(number_of_value(self.eval(args[0], line), spec.id, line)))
+    "cos" =>
+      VNum(cos_of(number_of_value(self.eval(args[0], line), spec.id, line)))
+    "log" =>
+      VNum(ln_of(number_of_value(self.eval(args[0], line), spec.id, line)))
     _ => raise LangError(UnknownBuiltin, line, spec.id, "")
   }
 }

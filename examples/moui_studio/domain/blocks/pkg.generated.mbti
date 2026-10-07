@@ -103,6 +103,7 @@ pub(all) enum BlockKind {
   BkElse
   BkEnd
   BkCountLoop
+  BkForEach
   BkWhile
   BkBreak
   BkCall

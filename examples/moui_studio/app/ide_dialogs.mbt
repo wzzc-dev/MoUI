@@ -869,7 +869,6 @@ fn lowercase(text : String) -> String {
   buf.to_string()
 }
 
-
 ///|
 /// 插件行（G7.3）：名称 + 一句话职责 + 启用/禁用切换按钮。
 fn plugin_row(
@@ -911,11 +910,7 @@ fn plugin_row(
       ),
       @views.spacer(min_length=6.0, weight=1.0),
       @views.button(
-        text(t, if active {
-          "app.plugin.disable"
-        } else {
-          "app.plugin.enable"
-        }),
+        text(t, if active { "app.plugin.disable" } else { "app.plugin.enable" }),
         on_click=TogglePlugin(id),
         variant=if active { Outline } else { Primary },
         width=76.0,

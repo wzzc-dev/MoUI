@@ -142,6 +142,8 @@ pub(all) enum Instr {
   LoopInit(@ir.Expr, String, Int)
   LoopCheck(String, String, Int)
   LoopNext(String, Int)
+  FeInit(@ir.Expr, String, Int)
+  FeCheck(String, String, Int)
   CaseOf(@ir.Expr, Array[String], Array[Int], Int)
 }
 
@@ -155,6 +157,8 @@ pub(all) struct Keywords {
   count_kw : String
   times_kw : String
   as_kw : String
+  foreach_kw : String
+  each_in_kw : String
   while_kw : String
   do_kw : String
   break_kw : String
@@ -254,6 +258,7 @@ pub(all) enum StmtKeyword {
   KwDeclare
   KwIf
   KwCountLoop
+  KwForEach
   KwWhile
   KwBreak
   KwReturn

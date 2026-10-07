@@ -547,23 +547,20 @@ fn prop_theme(props : @ir.ControlProps) -> @core.Theme? {
   }
   let weight = if props.bold { 600 } else { 400 }
   fn role(spec : @core.FontSpec) -> @core.FontSpec {
-    { ..spec, size, weight }
+    { ..spec, size, weight, }
   }
   Some(
-    @core.Theme::with_typography(
-      base,
-      {
-        display: role(ty.display),
-        headline: role(ty.headline),
-        title: role(ty.title),
-        subtitle: role(ty.subtitle),
-        body: role(ty.body),
-        label: role(ty.label),
-        caption: role(ty.caption),
-        overline: role(ty.overline),
-        control: role(ty.control),
-      },
-    ),
+    @core.Theme::with_typography(base, {
+      display: role(ty.display),
+      headline: role(ty.headline),
+      title: role(ty.title),
+      subtitle: role(ty.subtitle),
+      body: role(ty.body),
+      label: role(ty.label),
+      caption: role(ty.caption),
+      overline: role(ty.overline),
+      control: role(ty.control),
+    }),
   )
 }
 
@@ -598,11 +595,12 @@ pub fn prop_color(hex : String) -> @core.Color? {
   if chars[0] != '#' {
     return None
   }
-  match (
-    hex_pair(chars[1], chars[2]),
-    hex_pair(chars[3], chars[4]),
-    hex_pair(chars[5], chars[6]),
-  ) {
+  match
+    (
+      hex_pair(chars[1], chars[2]),
+      hex_pair(chars[3], chars[4]),
+      hex_pair(chars[5], chars[6]),
+    ) {
     (Some(r), Some(g), Some(b)) =>
       Some(
         @core.Color::rgba(

@@ -93,7 +93,10 @@ test "子集契约:stmt_lines 路径与逆解析块对齐" {
   let program = sample_program()
   let generated = @export.generate_source(program)
   let handler = generated.handlers[0]
-  let parsed = @blocks_code.parse_generated_source(handler.source, handler.stmt_lines)
+  let parsed = @blocks_code.parse_generated_source(
+    handler.source,
+    handler.stmt_lines,
+  )
   // 每个有 audit_line 的 stmt_line 都应有对应的 block
   let mut matched = 0
   for entry in handler.stmt_lines {
@@ -117,7 +120,9 @@ test "可积木检测:is_block_editable_line 识别已知模式" {
       "  rt.audit_assign(\"x\", rt.get(\"x\", 1), 1, \"x\")",
     ),
   )
-  assert_true(@blocks_code.is_block_editable_line("  rt.record(1, op, \"detail\")"))
+  assert_true(
+    @blocks_code.is_block_editable_line("  rt.record(1, op, \"detail\")"),
+  )
   assert_false(@blocks_code.is_block_editable_line("  // 注释"))
   assert_false(@blocks_code.is_block_editable_line(""))
 }
@@ -152,7 +157,10 @@ test "match dispatch audit lines are not blocks" {
   }
   let generated = @export.generate_source(program)
   let handler = generated.handlers[0]
-  let parsed = @blocks_code.parse_generated_source(handler.source, handler.stmt_lines)
+  let parsed = @blocks_code.parse_generated_source(
+    handler.source,
+    handler.stmt_lines,
+  )
   // 分派审计行被诚实记为不可积木(不再是字符串判据的误报)
   assert_true(parsed.non_editable_lines.length() == 1)
   // 命中臂与 else 臂的赋值语句仍是可积木块

@@ -813,7 +813,8 @@ test "design canvas plan draws grid, handles and alignment guides" {
   assert_eq(guides, 0)
   // 拖拽中：被拖控件左缘与其他控件左缘差 ≤4px 时画竖向参考线
   let base = @ir.empty_program()
-  let anchor = @ir.Control::{ props: @ir.ControlProps::default(),
+  let anchor = @ir.Control::{
+    props: @ir.ControlProps::default(),
     id: 1,
     kind: @ir.Label,
     name: "锚点",

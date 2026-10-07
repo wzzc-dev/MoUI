@@ -13,7 +13,7 @@ pub async fn provider_live_completion(ProviderConfig, String) -> Result[String, 
 
 pub fn provider_submit(ProviderOwner, String, String, @model_provider.CompletionRequest, (Result[String, String]) -> Unit) -> Unit
 
-pub fn provider_submit_prompt(ProviderOwner, String, String, String, String, String, (Result[String, String]) -> Unit) -> Unit
+pub fn provider_submit_prompt(ProviderOwner, String, String, String, String, String, history~ : Array[(String, String)], json_mode~ : Bool, (Result[String, String]) -> Unit) -> Unit
 
 pub async fn provider_worker_loop(ProviderOwner) -> Unit
 

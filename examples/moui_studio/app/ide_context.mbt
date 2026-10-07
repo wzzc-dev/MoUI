@@ -552,8 +552,7 @@ fn context_props(
               } else {
                 ""
               },
-              on_input=raw =>
-                SetControlPropText(control.name, "font_size", raw),
+              on_input=raw => SetControlPropText(control.name, "font_size", raw),
               width=(field_width - 6.0) / 2.0,
               height=FIELD_HEIGHT,
             ),
@@ -571,15 +570,17 @@ fn context_props(
           [
             @views.text_field(
               control.props.text_color,
-              on_input=raw =>
-                SetControlPropText(control.name, "text_color", raw),
+              on_input=raw => {
+                SetControlPropText(control.name, "text_color", raw)
+              },
               width=(field_width - 6.0) / 2.0,
               height=FIELD_HEIGHT,
             ),
             @views.text_field(
               control.props.back_color,
-              on_input=raw =>
-                SetControlPropText(control.name, "back_color", raw),
+              on_input=raw => {
+                SetControlPropText(control.name, "back_color", raw)
+              },
               width=(field_width - 6.0) / 2.0,
               height=FIELD_HEIGHT,
             ),

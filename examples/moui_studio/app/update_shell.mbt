@@ -250,27 +250,22 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     ChatSubmit =>
       if model.provider_mode is Fake || model.provider_key == "" {
         let prompt = model.ai_sessions.current().prompt_draft
-        let reply = text_with(
-          translator(model),
-          "app.ai.offline_reply",
-          [("prompt", prompt)],
-        )
-        let with_card = push_ai_card(
-          model,
-          AiCard::{
-            kind: CardExplanation,
-            title: text(translator(model), "app.ai.chat.title"),
-            body: reply,
-            steps: [],
-            steps_done: 0,
-            progress: 0,
-            diff_lines: [],
-            settled: true,
-            settled_note: "",
-            seq: 0,
-            at: 0,
-          },
-        )
+        let reply = text_with(translator(model), "app.ai.offline_reply", [
+          ("prompt", prompt),
+        ])
+        let with_card = push_ai_card(model, AiCard::{
+          kind: CardExplanation,
+          title: text(translator(model), "app.ai.chat.title"),
+          body: reply,
+          steps: [],
+          steps_done: 0,
+          progress: 0,
+          diff_lines: [],
+          settled: true,
+          settled_note: "",
+          seq: 0,
+          at: 0,
+        })
         let hinted = with_notice(
           with_card,
           text(translator(model), "app.ai.offline_hint"),

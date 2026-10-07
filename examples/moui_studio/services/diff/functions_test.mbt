@@ -7,7 +7,8 @@ test "user functions agree across both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",
@@ -141,7 +142,8 @@ test "statement-position custom block calls agree across both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",
@@ -230,7 +232,8 @@ test "mod and round agree across both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",
@@ -333,7 +336,8 @@ test "math functions agree across both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",
@@ -423,7 +427,8 @@ test "stop_all halts the run and agrees across both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",
@@ -490,7 +495,8 @@ test "wait suspends and agrees across both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",
@@ -565,7 +571,8 @@ test "ask returns the answer text on both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",
@@ -658,7 +665,8 @@ test "string indexing agrees across both tracks" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "输出",

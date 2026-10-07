@@ -9,7 +9,8 @@ fn preview_fixture() -> @ir.StudioProgram {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "确定",

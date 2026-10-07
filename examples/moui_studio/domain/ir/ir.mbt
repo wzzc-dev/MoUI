@@ -595,7 +595,11 @@ pub fn Control::resize_from_corner(
 ///|
 /// 属性编辑（G7.2）：按键设置文本属性（font_size/align/text_color/
 /// back_color/placeholder）。非法值静默忽略（编辑器侧已约束输入）。
-pub fn Control::with_prop(self : Control, key : String, value : String) -> Control {
+pub fn Control::with_prop(
+  self : Control,
+  key : String,
+  value : String,
+) -> Control {
   let props = match key {
     "font_size" => {
       let digits = value.trim(chars=" \t")
@@ -609,23 +613,23 @@ pub fn Control::with_prop(self : Control, key : String, value : String) -> Contr
         }
       }
       if valid {
-        { ..self.props, font_size: parsed }
+        { ..self.props, font_size: parsed, }
       } else {
         self.props
       }
     }
     "align" =>
       if value == "start" || value == "center" || value == "end" {
-        { ..self.props, align: value }
+        { ..self.props, align: value, }
       } else {
         self.props
       }
-    "text_color" => { ..self.props, text_color: value }
-    "back_color" => { ..self.props, back_color: value }
-    "placeholder" => { ..self.props, placeholder: value }
+    "text_color" => { ..self.props, text_color: value, }
+    "back_color" => { ..self.props, back_color: value, }
+    "placeholder" => { ..self.props, placeholder: value, }
     _ => self.props
   }
-  { ..self, props }
+  { ..self, props, }
 }
 
 ///|
@@ -633,12 +637,12 @@ pub fn Control::with_prop(self : Control, key : String, value : String) -> Contr
 /// password）。
 pub fn Control::toggle_prop(self : Control, key : String) -> Control {
   let props = match key {
-    "bold" => { ..self.props, bold: !self.props.bold }
-    "visible" => { ..self.props, visible: !self.props.visible }
-    "disabled" => { ..self.props, disabled: !self.props.disabled }
-    "multiline" => { ..self.props, multiline: !self.props.multiline }
-    "password" => { ..self.props, password: !self.props.password }
+    "bold" => { ..self.props, bold: !self.props.bold, }
+    "visible" => { ..self.props, visible: !self.props.visible, }
+    "disabled" => { ..self.props, disabled: !self.props.disabled, }
+    "multiline" => { ..self.props, multiline: !self.props.multiline, }
+    "password" => { ..self.props, password: !self.props.password, }
     _ => self.props
   }
-  { ..self, props }
+  { ..self, props, }
 }

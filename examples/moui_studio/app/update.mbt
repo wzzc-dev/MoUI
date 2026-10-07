@@ -1041,7 +1041,8 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             m => {
               let id = @ir.next_control_id(m.program)
               let name = fresh_control_name(m.program, kind)
-              let control = @ir.Control::{ props: @ir.ControlProps::default(),
+              let control = @ir.Control::{
+                props: @ir.ControlProps::default(),
                 id,
                 kind,
                 name,

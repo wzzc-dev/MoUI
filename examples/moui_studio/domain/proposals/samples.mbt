@@ -15,7 +15,8 @@ pub fn sample_hello() -> @ir.StudioProgram {
       timer_interval: 0,
     },
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "显示",
@@ -26,7 +27,8 @@ pub fn sample_hello() -> @ir.StudioProgram {
         height: 32,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.Button,
         name: "按钮",
@@ -71,7 +73,8 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
       timer_interval: 0,
     },
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "结果",
@@ -82,7 +85,8 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
         height: 36,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.ListBox,
         name: "名单",
@@ -93,7 +97,8 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
         height: 150,
         items: ["张三", "李四", "王五", "赵六", "钱七"],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 3,
         kind: @ir.Button,
         name: "点名按钮",
@@ -140,7 +145,8 @@ pub fn sample_drill() -> @ir.StudioProgram {
       timer_interval: 0,
     },
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "题目",
@@ -151,7 +157,8 @@ pub fn sample_drill() -> @ir.StudioProgram {
         height: 36,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.TextField,
         name: "答案框",
@@ -162,7 +169,8 @@ pub fn sample_drill() -> @ir.StudioProgram {
         height: 32,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 3,
         kind: @ir.Button,
         name: "出题按钮",
@@ -173,7 +181,8 @@ pub fn sample_drill() -> @ir.StudioProgram {
         height: 32,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 4,
         kind: @ir.Button,
         name: "批改按钮",
@@ -184,7 +193,8 @@ pub fn sample_drill() -> @ir.StudioProgram {
         height: 32,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 5,
         kind: @ir.Label,
         name: "判定",
@@ -274,7 +284,8 @@ pub fn sample_store() -> @ir.StudioProgram {
       timer_interval: 0,
     },
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Table,
         name: "商品表",
@@ -285,7 +296,8 @@ pub fn sample_store() -> @ir.StudioProgram {
         height: 130,
         items: ["铅笔 1元", "橡皮 2元", "笔记本 5元"],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.Label,
         name: "营业额标签",
@@ -296,7 +308,8 @@ pub fn sample_store() -> @ir.StudioProgram {
         height: 32,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 3,
         kind: @ir.Button,
         name: "卖铅笔",
@@ -307,7 +320,8 @@ pub fn sample_store() -> @ir.StudioProgram {
         height: 34,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 4,
         kind: @ir.Button,
         name: "记账",

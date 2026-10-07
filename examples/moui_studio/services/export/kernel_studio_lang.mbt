@@ -1542,7 +1542,9 @@ pub fn kernel_studio_lang_parser_mbt() -> String {
     #|  ignore(self.advance()) // 遍历 / foreach
     #|  let list_expr = self.parse_expr()
     #|  self.expect_keyword(self.keywords.each_in_kw)
-    #|  let loop_var = self.parse_name("「\{self.keywords.each_in_kw}」后应跟元素变量名")
+    #|  let loop_var = self.parse_name(
+    #|    "「\{self.keywords.each_in_kw}」后应跟元素变量名",
+    #|  )
     #|  let body = self.parse_stmts_until([self.keywords.end_kw])
     #|  self.expect_keyword(self.keywords.end_kw)
     #|  @ir.ForEach(list_expr, loop_var, traced_to_stmts(body))

@@ -125,6 +125,8 @@ pub(all) struct ProviderRequestSpec {
   model : String
   system : String
   prompt : String
+  history : Array[(String, String)]
+  json_mode : Bool
 }
 
 pub(all) struct PtyService[Msg] {

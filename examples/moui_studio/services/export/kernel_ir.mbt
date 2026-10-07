@@ -603,7 +603,11 @@ pub fn kernel_ir_mbt() -> String {
     #|///|
     #|/// 属性编辑（G7.2）：按键设置文本属性（font_size/align/text_color/
     #|/// back_color/placeholder）。非法值静默忽略（编辑器侧已约束输入）。
-    #|pub fn Control::with_prop(self : Control, key : String, value : String) -> Control {
+    #|pub fn Control::with_prop(
+    #|  self : Control,
+    #|  key : String,
+    #|  value : String,
+    #|) -> Control {
     #|  let props = match key {
     #|    "font_size" => {
     #|      let digits = value.trim(chars=" \t")
@@ -617,23 +621,23 @@ pub fn kernel_ir_mbt() -> String {
     #|        }
     #|      }
     #|      if valid {
-    #|        { ..self.props, font_size: parsed }
+    #|        { ..self.props, font_size: parsed, }
     #|      } else {
     #|        self.props
     #|      }
     #|    }
     #|    "align" =>
     #|      if value == "start" || value == "center" || value == "end" {
-    #|        { ..self.props, align: value }
+    #|        { ..self.props, align: value, }
     #|      } else {
     #|        self.props
     #|      }
-    #|    "text_color" => { ..self.props, text_color: value }
-    #|    "back_color" => { ..self.props, back_color: value }
-    #|    "placeholder" => { ..self.props, placeholder: value }
+    #|    "text_color" => { ..self.props, text_color: value, }
+    #|    "back_color" => { ..self.props, back_color: value, }
+    #|    "placeholder" => { ..self.props, placeholder: value, }
     #|    _ => self.props
     #|  }
-    #|  { ..self, props }
+    #|  { ..self, props, }
     #|}
     #|
     #|///|
@@ -641,14 +645,14 @@ pub fn kernel_ir_mbt() -> String {
     #|/// password）。
     #|pub fn Control::toggle_prop(self : Control, key : String) -> Control {
     #|  let props = match key {
-    #|    "bold" => { ..self.props, bold: !self.props.bold }
-    #|    "visible" => { ..self.props, visible: !self.props.visible }
-    #|    "disabled" => { ..self.props, disabled: !self.props.disabled }
-    #|    "multiline" => { ..self.props, multiline: !self.props.multiline }
-    #|    "password" => { ..self.props, password: !self.props.password }
+    #|    "bold" => { ..self.props, bold: !self.props.bold, }
+    #|    "visible" => { ..self.props, visible: !self.props.visible, }
+    #|    "disabled" => { ..self.props, disabled: !self.props.disabled, }
+    #|    "multiline" => { ..self.props, multiline: !self.props.multiline, }
+    #|    "password" => { ..self.props, password: !self.props.password, }
     #|    _ => self.props
     #|  }
-    #|  { ..self, props }
+    #|  { ..self, props, }
     #|}
     #|
   source
@@ -919,8 +923,9 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|        }
     #|        arms
     #|      }
-    #|      CountLoop(_, _, loop_body) | ForEach(_, _, loop_body) | WhileLoop(_, loop_body) =>
-    #|        body_loop_depth(loop_body, current + 1)
+    #|      CountLoop(_, _, loop_body)
+    #|      | ForEach(_, _, loop_body)
+    #|      | WhileLoop(_, loop_body) => body_loop_depth(loop_body, current + 1)
     #|      Match(_, arms, else_body) => {
     #|        let mut deepest_arm = body_loop_depth(else_body, current)
     #|        for arm in arms {

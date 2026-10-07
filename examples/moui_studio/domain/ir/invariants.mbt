@@ -260,8 +260,9 @@ fn body_loop_depth(body : Array[Stmt], current : Int) -> Int {
         }
         arms
       }
-      CountLoop(_, _, loop_body) | ForEach(_, _, loop_body) | WhileLoop(_, loop_body) =>
-        body_loop_depth(loop_body, current + 1)
+      CountLoop(_, _, loop_body)
+      | ForEach(_, _, loop_body)
+      | WhileLoop(_, loop_body) => body_loop_depth(loop_body, current + 1)
       Match(_, arms, else_body) => {
         let mut deepest_arm = body_loop_depth(else_body, current)
         for arm in arms {

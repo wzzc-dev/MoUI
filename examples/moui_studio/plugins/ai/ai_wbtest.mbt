@@ -286,7 +286,7 @@ test "ai sessions codec round trips the full container" {
     seq: 1,
   })
   let _ = sessions.switch(1)
-  sessions.amend({ ..sessions.current(), project: "examples/counter" })
+  sessions.amend({ ..sessions.current(), project: "examples/counter", })
   sessions.touch(1799366700)
   let encoded = encode_ai_sessions(sessions)
   match decode_ai_sessions(encoded) {
@@ -329,9 +329,10 @@ test "ai sessions codec rejects bad json format and unknown versions" {
     Err(StoreBadFormat) => ()
     _ => fail("缺 format 应报 StoreBadFormat")
   }
-  match decode_ai_sessions(
-    "{\"format\": \"moui.studio.ai-sessions\", \"version\": 99}",
-  ) {
+  match
+    decode_ai_sessions(
+      "{\"format\": \"moui.studio.ai-sessions\", \"version\": 99}",
+    ) {
     Err(StoreBadVersion(99)) => ()
     _ => fail("未知版本应报 StoreBadVersion(99)")
   }
@@ -339,9 +340,10 @@ test "ai sessions codec rejects bad json format and unknown versions" {
 
 ///|
 test "ai sessions codec rebuilds fresh when the store is empty" {
-  match decode_ai_sessions(
-    "{\"format\": \"moui.studio.ai-sessions\", \"version\": 1, \"sessions\": []}",
-  ) {
+  match
+    decode_ai_sessions(
+      "{\"format\": \"moui.studio.ai-sessions\", \"version\": 1, \"sessions\": []}",
+    ) {
     Ok(container) => {
       assert_eq(container.count(), 1)
       assert_eq(container.current().cards.length(), 0)

@@ -31,6 +31,7 @@ pub(all) struct CompletionRequest {
   system : String
   messages : Array[ChatMessage]
   temperature : Double
+  json_mode : Bool
 }
 pub fn CompletionRequest::new(String, String) -> Self
 pub fn CompletionRequest::with_message(Self, ChatRole, String) -> Self

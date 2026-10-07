@@ -7,7 +7,8 @@ fn sample_program() -> @ir.StudioProgram {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "确定",
@@ -18,7 +19,8 @@ fn sample_program() -> @ir.StudioProgram {
         height: 28,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.TextField,
         name: "姓名框",
@@ -29,7 +31,8 @@ fn sample_program() -> @ir.StudioProgram {
         height: 28,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 3,
         kind: @ir.ListBox,
         name: "名单",
@@ -304,7 +307,18 @@ test "control props: legacy decode defaults + roundtrip" {
   match @codec.decode_program(legacy) {
     Ok(program) =>
       match program.controls[0].props {
-        { font_size: 0, bold: false, text_color: "", back_color: "", align: "", visible: true, disabled: false, multiline: false, placeholder: "", password: false } => ()
+        {
+          font_size: 0,
+          bold: false,
+          text_color: "",
+          back_color: "",
+          align: "",
+          visible: true,
+          disabled: false,
+          multiline: false,
+          placeholder: "",
+          password: false,
+        } => ()
         _ => fail("缺 props 应解码为全默认")
       }
     Err(errors) => fail("旧文件应可解码:\\{errors.length()} 个错误")

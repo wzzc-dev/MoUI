@@ -96,6 +96,8 @@ pub const PANE_HEAD_GAP : Double = 6.0
 
 pub const PANE_HEAD_INSET : Double = 8.0
 
+pub const PLUGINS_SETTINGS_KEY : String = "studio.plugins"
+
 pub const POSTURE_HEIGHT : Double = 20.0
 
 pub const RECENT_LIMIT : Int = 24
@@ -284,6 +286,10 @@ pub fn category_rail(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
 pub fn center_width_of(Model, Double) -> Double
 
+pub fn chat_history(Model) -> Array[(String, String)]
+
+pub fn chat_system_prompt() -> String
+
 pub fn chip_label_width(String) -> Double
 
 pub fn civil_seconds(StudioClock) -> Int
@@ -376,6 +382,8 @@ pub fn declaration_line_of(Model, Int) -> Int
 
 pub fn declaration_strip(Model, Double) -> @core.View[Msg]
 
+pub fn decode_plugin_disabled(String) -> Array[String]
+
 pub fn decode_project_store(String) -> Result[(String, Array[(String, String)]), String]
 
 pub fn default_studio_clock() -> StudioClock
@@ -405,6 +413,8 @@ pub fn empty_program() -> @ir.StudioProgram
 pub fn empty_provider_config() -> ProviderConfig
 
 pub fn empty_stage(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn encode_plugin_disabled(Model) -> String
 
 pub fn encode_project_store(Model) -> String
 
@@ -596,6 +606,8 @@ pub fn pending_side_effects(Model) -> Int
 
 pub fn pill(String, @core.Color, Double) -> @core.View[Msg]
 
+pub fn plugin_active(Model, String) -> Bool
+
 pub fn preview_replay_canvas(Model, PreviewFrame, Double) -> @core.View[Msg]
 
 pub fn preview_web_controller() -> @host.WebViewController?
@@ -625,6 +637,8 @@ pub fn project_has_file(Model, String) -> Bool
 pub fn project_record_from_source(@project.ProjectSource) -> Result[ProjectRecord, String]
 
 pub fn project_search_task(@services.FileServices, String, Array[String], query~ : String) -> @services.ServiceTask[Array[SearchHit]]
+
+pub fn prop_color(String) -> @core.Color?
 
 pub fn proposal_error_text(@moui_i18n.Translator, @proposals.ProposalError) -> String
 
@@ -949,6 +963,7 @@ pub(all) enum ComposerMode {
   ComposeGenerate
   ComposeExplain
   ComposeRepair
+  ComposeChat
 } derive(Eq)
 pub fn ComposerMode::equal(Self, Self) -> Bool
 pub fn ComposerMode::not_equal(Self, Self) -> Bool
@@ -1173,6 +1188,7 @@ pub(all) struct Model {
   file_create_open : Bool
   file_rename_open : String?
   file_name_draft : String
+  plugin_disabled : Array[String]
   search_query : String
   search_hits : Array[SearchHit]
   search_busy : Bool
@@ -1250,6 +1266,10 @@ pub(all) enum Msg {
   ProjectRenameRead(String, String, @services.ServiceTaskResult[String])
   ProjectRenameWritten(String, String, @services.ServiceTaskResult[Unit])
   ProjectRenameDeleted(String, String, @services.ServiceTaskResult[Unit])
+  TogglePlugin(String)
+  PluginsLoaded(@services.ServiceTaskResult[String?])
+  SetControlPropText(String, String, String)
+  ToggleControlProp(String, String)
   SearchQueryDraft(String)
   SearchRun
   SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])
@@ -1299,6 +1319,8 @@ pub(all) enum Msg {
   SetRightPanelTab(RightPanelTab)
   ComposerRun
   RealGenerationFinished(Result[String, String])
+  ChatSubmit
+  RealChatFinished(Result[String, String])
   ExplainHandler
   RealExplanationFinished(Result[String, String])
   LanguageLoaded(String)

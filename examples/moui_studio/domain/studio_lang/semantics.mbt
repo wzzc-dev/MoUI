@@ -144,13 +144,7 @@ fn check_body(
           declared.push(loop_var)
         }
         check_body(
-          loop_body,
-          errors,
-          in_loop,
-          declared,
-          functions,
-          enums,
-          in_func,
+          loop_body, errors, in_loop, declared, functions, enums, in_func,
         )
       }
       @ir.CountLoop(times, loop_var, loop_body) => {

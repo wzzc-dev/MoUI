@@ -8,9 +8,7 @@
 /// host-sim behaviour, not product readiness.
 fn main {
   let runtime = @runtime.new_program_with_dimensions(
-    program=@studio_app.program(
-      environment=@harmonyos_host.app_environment(),
-    ),
+    program=@studio_app.program(environment=@harmonyos_host.app_environment()),
     width=640.0,
     height=480.0,
   )

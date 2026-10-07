@@ -102,10 +102,12 @@ pub fn provider_submit_prompt(
   let request_base = @provider.CompletionRequest::new(model, system)
   let request = {
     ..request_base,
-    messages: history.map(msg => match msg.0 {
-      "assistant" =>
-        @provider.ChatMessage::{ role: Assistant, content: msg.1, }
-      _ => @provider.ChatMessage::{ role: User, content: msg.1, }
+    messages: history.map(msg => {
+      match msg.0 {
+        "assistant" =>
+          @provider.ChatMessage::{ role: Assistant, content: msg.1, }
+        _ => @provider.ChatMessage::{ role: User, content: msg.1, }
+      }
     }),
     json_mode,
   }.with_message(User, prompt)

@@ -105,7 +105,8 @@ test "budget checks count nested statements and independent branches" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",
@@ -174,7 +175,8 @@ test "validate_program reports structural errors" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",
@@ -185,7 +187,8 @@ test "validate_program reports structural errors" {
         height: 28,
         items: [],
       },
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.Label,
         name: "按钮",
@@ -230,7 +233,8 @@ test "program signature is deterministic" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "确定",
@@ -277,7 +281,8 @@ test "find helpers and next id" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 7,
         kind: @ir.Button,
         name: "按钮",
@@ -449,7 +454,8 @@ test "duplicate handler pair is rejected" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{ props: @ir.ControlProps::default(),
+      @ir.Control::{
+        props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",

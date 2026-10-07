@@ -91,8 +91,11 @@ pub(all) struct Control {
   width : Int
   height : Int
   items : Array[String]
+  props : ControlProps
 }
 pub fn Control::resize_from_corner(Self, DragCorner, Int, Int) -> Self
+pub fn Control::toggle_prop(Self, String) -> Self
+pub fn Control::with_prop(Self, String, String) -> Self
 pub fn Control::with_rect_field(Self, RectField, Int) -> Self
 
 pub(all) enum ControlKind {
@@ -108,6 +111,21 @@ pub(all) enum ControlKind {
 }
 pub fn ControlKind::supports_event(Self, EventKind) -> Bool
 pub fn ControlKind::tag(Self) -> String
+
+pub(all) struct ControlProps {
+  font_size : Int
+  bold : Bool
+  text_color : String
+  back_color : String
+  align : String
+  visible : Bool
+  disabled : Bool
+  multiline : Bool
+  placeholder : String
+  password : Bool
+}
+pub fn ControlProps::default() -> Self
+pub fn ControlProps::is_default(Self) -> Bool
 
 pub(all) enum DragCorner {
   CornerNW
@@ -127,6 +145,7 @@ pub(all) enum EventKind {
   OnInputDone
   OnTimer
   OnBroadcast
+  OnStart
 }
 pub fn EventKind::tag(Self) -> String
 
@@ -199,6 +218,7 @@ pub(all) enum Stmt {
   Assign(String, Expr)
   If(Expr, Array[Stmt], Array[(Expr, Array[Stmt])], Array[Stmt])
   CountLoop(Expr, String?, Array[Stmt])
+  ForEach(Expr, String, Array[Stmt])
   WhileLoop(Expr, Array[Stmt])
   Break
   Call(String, Array[Expr])

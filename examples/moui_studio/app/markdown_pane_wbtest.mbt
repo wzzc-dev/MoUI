@@ -117,7 +117,10 @@ test "插件管理:AI 门控与 markdown 回退" {
       _ => ()
     }
   }
-  assert_true(raw_found, msg="禁用 markdown 插件后 .md 应走 plain 编辑")
+  assert_true(
+    raw_found,
+    msg="禁用 markdown 插件后 .md 应走 plain 编辑",
+  )
 }
 
 ///|
@@ -128,7 +131,7 @@ test "属性 v2:字号生效且可见性门控渲染" {
   sized.program.controls[0] = {
     ..sized.program.controls[0],
     text: "大字",
-    props: { ..sized.program.controls[0].props, font_size: 20 },
+    props: { ..sized.program.controls[0].props, font_size: 20, },
   }
   let mut size_found = false
   for run in shell_texts(shell_draw(sized, 1280.0, 800.0)) {
@@ -142,7 +145,7 @@ test "属性 v2:字号生效且可见性门控渲染" {
   hidden.program.controls[0] = {
     ..hidden.program.controls[0],
     text: "隐身",
-    props: { ..hidden.program.controls[0].props, visible: false },
+    props: { ..hidden.program.controls[0].props, visible: false, },
   }
   let mut hidden_found = false
   for run in shell_texts(shell_draw(hidden, 1280.0, 800.0)) {

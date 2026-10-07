@@ -1786,7 +1786,6 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|      })
     #|      VUnit
     #|    }
-    #|
     #|    _ => raise LangError(UnknownBuiltin, line, spec.id, "")
     #|  }
     #|}
@@ -1991,8 +1990,14 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|      }
     #|      VStr(found)
     #|    }
-    #|    "upper" => VStr(self.value_as_text(self.eval(args[0], line), spec.id, line).to_upper())
-    #|    "lower" => VStr(self.value_as_text(self.eval(args[0], line), spec.id, line).to_lower())
+    #|    "upper" =>
+    #|      VStr(
+    #|        self.value_as_text(self.eval(args[0], line), spec.id, line).to_upper(),
+    #|      )
+    #|    "lower" =>
+    #|      VStr(
+    #|        self.value_as_text(self.eval(args[0], line), spec.id, line).to_lower(),
+    #|      )
     #|    "index_of_list" => {
     #|      let items = list_items_of(self, args[0], line, spec.id)
     #|      let wanted = self.eval(args[1], line)
@@ -2008,10 +2013,12 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|      }
     #|      VInt(found)
     #|    }
-    #|    "sin" => VNum(sin_of(number_of_value(self.eval(args[0], line), spec.id, line)))
-    #|    "cos" => VNum(cos_of(number_of_value(self.eval(args[0], line), spec.id, line)))
-    #|    "log" => VNum(ln_of(number_of_value(self.eval(args[0], line), spec.id, line)))
-    #|
+    #|    "sin" =>
+    #|      VNum(sin_of(number_of_value(self.eval(args[0], line), spec.id, line)))
+    #|    "cos" =>
+    #|      VNum(cos_of(number_of_value(self.eval(args[0], line), spec.id, line)))
+    #|    "log" =>
+    #|      VNum(ln_of(number_of_value(self.eval(args[0], line), spec.id, line)))
     #|    _ => raise LangError(UnknownBuiltin, line, spec.id, "")
     #|  }
     #|}
@@ -2649,13 +2656,7 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|          declared.push(loop_var)
     #|        }
     #|        check_body(
-    #|          loop_body,
-    #|          errors,
-    #|          in_loop,
-    #|          declared,
-    #|          functions,
-    #|          enums,
-    #|          in_func,
+    #|          loop_body, errors, in_loop, declared, functions, enums, in_func,
     #|        )
     #|      }
     #|      @ir.CountLoop(times, loop_var, loop_body) => {

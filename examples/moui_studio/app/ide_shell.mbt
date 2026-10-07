@@ -350,7 +350,7 @@ pub fn ide_icon_bar(
         mode_button(Focus, text(t, "app.perspective.ai"), PsAi)
       } else {
         @views.empty()
-      }
+      },
     ]
   } else {
     mode_items
@@ -1005,23 +1005,23 @@ pub fn ide_bottom_bar(
   // 终端页签（M8）：关闭态点击 = 重开（SetBottomTab）；开+选中态再点 =
   // 关闭（TerminalTabClose → kill + 收起）
   let terminal_tab_cells : Array[@moui.View[Msg]] = if !plugin_active(
-    model,
-    "terminal",
-  ) {
+      model, "terminal",
+    ) {
     // G7.3:终端插件被禁用时页签整体不渲染
     []
-  } else { [
-    tab_button(
-      text(t, "app.bottom.terminal"),
-      model.bottom_tab is BtTerminal && model.terminal_open,
-      if model.bottom_tab is BtTerminal && model.terminal_open {
-        TerminalTabClose
-      } else {
-        SetBottomTab(BtTerminal)
-      },
-      0,
-    ),
-  ]
+  } else {
+    [
+      tab_button(
+        text(t, "app.bottom.terminal"),
+        model.bottom_tab is BtTerminal && model.terminal_open,
+        if model.bottom_tab is BtTerminal && model.terminal_open {
+          TerminalTabClose
+        } else {
+          SetBottomTab(BtTerminal)
+        },
+        0,
+      ),
+    ]
   }
   let head_cells = head_cells + terminal_tab_cells
   if model.bottom_tab is BtAudit && pending > 0 {

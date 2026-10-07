@@ -193,10 +193,7 @@ fn statement_kind_handlers(
         ),
         @ir.Declare(
           "差分位置",
-          @ir.Call("index_of_list", [
-            @ir.Var("差分名单"),
-            @ir.StrLit("乙"),
-          ]),
+          @ir.Call("index_of_list", [@ir.Var("差分名单"), @ir.StrLit("乙")]),
         ),
         @ir.Call("set_text", [
           @ir.Var(label),
@@ -490,8 +487,13 @@ test "diff matrix: unresolved gate shape matches before answering" {
 test "diff matrix: OnStart standalone program" {
   let program : @ir.StudioProgram = {
     ..@ir.empty_program(),
-    window: { title: "OnStart门禁", width: 640, height: 480, timer_interval: 0 },
-    variables: [{ name: "开机计数", init: "0" }],
+    window: {
+      title: "OnStart门禁",
+      width: 640,
+      height: 480,
+      timer_interval: 0,
+    },
+    variables: [{ name: "开机计数", init: "0", }],
     handlers: [
       {
         control_name: "",
@@ -499,7 +501,10 @@ test "diff matrix: OnStart standalone program" {
         note_zh: "开机即累加",
         note_en: "increment on start",
         body: [
-          @ir.Assign("开机计数", @ir.Binary(@ir.Add, @ir.Var("开机计数"), @ir.IntLit(1))),
+          @ir.Assign(
+            "开机计数",
+            @ir.Binary(@ir.Add, @ir.Var("开机计数"), @ir.IntLit(1)),
+          ),
         ],
       },
     ],

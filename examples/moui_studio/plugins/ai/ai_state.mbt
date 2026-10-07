@@ -165,7 +165,7 @@ pub fn AiSessions::amend(self : AiSessions, session : AiSession) -> Unit {
 pub fn AiSessions::create(self : AiSessions, now : Int) -> Int {
   self.seq = self.seq + 1
   let session = AiSession::default(self.seq)
-  self.sessions.push({ ..session, created: now, updated: now })
+  self.sessions.push({ ..session, created: now, updated: now, })
   self.active = self.sessions.length() - 1
   self.active
 }
@@ -219,7 +219,11 @@ pub fn AiSessions::rename(
 
 ///|
 /// 置顶/取消置顶（越界 no-op，返回是否生效）。列表渲染按它分组。
-pub fn AiSessions::set_pinned(self : AiSessions, index : Int, pinned : Bool) -> Bool {
+pub fn AiSessions::set_pinned(
+  self : AiSessions,
+  index : Int,
+  pinned : Bool,
+) -> Bool {
   match self.session_at(index) {
     Some(session) => {
       self.sessions[index] = { ..session, pinned, }

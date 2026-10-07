@@ -273,12 +273,12 @@ pub fn update_with_services(
         }
         removed
       }
-      let toggled = { ..model, plugin_disabled: next }
+      let toggled = { ..model, plugin_disabled: next, }
       // 归一化:禁用终端/AI 时若正停在其入口,先退回无害页签/模式
       let normalized = if id == "terminal" &&
         !plugin_active(toggled, "terminal") &&
         toggled.bottom_tab is BtTerminal {
-        { ..toggled, bottom_tab: BtAudit }
+        { ..toggled, bottom_tab: BtAudit, }
       } else if id == "ai" &&
         !plugin_active(toggled, "ai") &&
         toggled.perspective is PsAi {
@@ -301,10 +301,10 @@ pub fn update_with_services(
             ..model,
             plugin_disabled: decode_plugin_disabled(payload.unwrap_or("")),
           }
-      // 与 Toggle 同款归一化（boot 恢复也可能带来禁用态）
+          // 与 Toggle 同款归一化（boot 恢复也可能带来禁用态）
           let normalized = if !plugin_active(restored, "terminal") &&
             restored.bottom_tab is BtTerminal {
-            { ..restored, bottom_tab: BtAudit }
+            { ..restored, bottom_tab: BtAudit, }
           } else if !plugin_active(restored, "ai") &&
             restored.perspective is PsAi {
             apply_perspective_preset(restored, PsVisual)
@@ -2219,26 +2219,23 @@ fn update_with_provider(
     RealChatFinished(result) =>
       match result {
         Ok(reply) => {
-          let with_card = push_ai_card(
-            model,
-            AiCard::{
-              kind: CardExplanation,
-              title: text(translator(model), "app.ai.chat.title"),
-              body: reply,
-              steps: [],
-              steps_done: 0,
-              progress: 0,
-              diff_lines: [],
-              settled: true,
-              settled_note: "",
-              seq: 0,
-              at: 0,
-            },
-          )
+          let with_card = push_ai_card(model, AiCard::{
+            kind: CardExplanation,
+            title: text(translator(model), "app.ai.chat.title"),
+            body: reply,
+            steps: [],
+            steps_done: 0,
+            progress: 0,
+            diff_lines: [],
+            settled: true,
+            settled_note: "",
+            seq: 0,
+            at: 0,
+          })
           ({ ..with_card, ai_busy: false, }, @moui.Effect::none())
         }
         Err(message) => {
-          let errored = push_error_card({ ..model, ai_busy: false }, message)
+          let errored = push_error_card({ ..model, ai_busy: false, }, message)
           (errored, @moui.Effect::none())
         }
       }

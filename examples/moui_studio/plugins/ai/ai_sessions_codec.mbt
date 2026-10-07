@@ -226,7 +226,9 @@ fn encode_session(session : AiSession) -> Json {
   fields["created"] = Json::number(session.created.to_double())
   fields["card_seq"] = Json::number(session.card_seq.to_double())
   fields["cards"] = Json::array(session.cards.map(encode_card))
-  fields["history"] = Json::array(session.proposal_history.map(encode_history_entry))
+  fields["history"] = Json::array(
+    session.proposal_history.map(encode_history_entry),
+  )
   Json::object(fields)
 }
 
@@ -271,10 +273,10 @@ fn decode_session(fields : Map[String, Json]) -> AiSession? {
         project: json_string_field(fields, "project").unwrap_or(""),
         pinned: json_int_field(fields, "pinned").unwrap_or(0) != 0,
         updated: json_int_field(fields, "updated").unwrap_or(0),
-        created: json_int_field(fields, "created")
-          .unwrap_or(json_int_field(fields, "updated").unwrap_or(0)),
-        card_seq: json_int_field(fields, "card_seq")
-          .unwrap_or(cards.length()),
+        created: json_int_field(fields, "created").unwrap_or(
+          json_int_field(fields, "updated").unwrap_or(0),
+        ),
+        card_seq: json_int_field(fields, "card_seq").unwrap_or(cards.length()),
         cards,
         proposal_history: history,
       })
@@ -298,19 +300,14 @@ pub fn encode_ai_sessions(sessions : AiSessions) -> String {
 ///|
 /// 解码会话容器。空 sessions 数组按「无存储」处理，重建一个全新会话
 /// （列表永不为空的切片纪律在解码后依然成立）。
-pub fn decode_ai_sessions(
-  source : String,
-) -> Result[AiSessions, AiStoreError] {
+pub fn decode_ai_sessions(source : String) -> Result[AiSessions, AiStoreError] {
   let payload = @json.parse(source) catch { _ => return Err(StoreBadJson) }
   let fields = match payload {
     Object(fields) => fields
     _ => return Err(StoreBadFormat)
   }
   match json_string_field(fields, "format") {
-    Some(text) =>
-      if text != AI_SESSIONS_FORMAT {
-        return Err(StoreBadFormat)
-      }
+    Some(text) => if text != AI_SESSIONS_FORMAT { return Err(StoreBadFormat) }
     None => return Err(StoreBadFormat)
   }
   let version = match json_int_field(fields, "version") {
