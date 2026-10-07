@@ -396,21 +396,45 @@ fn form_widget(
   progress_value? : Double = 0.0,
   on_input_done? : (String) -> Msg,
 ) -> @moui.View[Msg] {
-  match control.kind {
-    @ir.Label => @views.text(value, align=TextStart)
+  // 属性 v2（G7.2）：不可见 = 空视图（占位保持 stage 配对不串位）
+  if !control.props.visible {
+    return @views.empty()
+  }
+  let props = control.props
+  let theme = prop_theme(props)
+  let fg = prop_color(props.text_color)
+  let bg = prop_color(props.back_color)
+  let view = match control.kind {
+    @ir.Label =>
+      // 仅在属性定制（字号/加粗）时传主题覆盖——默认沿用环境主题
+      // （舞台继承产品浅色主题，显式传 studio_theme 会打回 IDE 暗色）
+      match theme {
+        Some(t) => @views.text(value, align=prop_align(props.align), theme=t)
+        None => @views.text(value, align=prop_align(props.align))
+      }
     @ir.Button =>
       match on_click {
-        Some(click) => @views.button(value, on_click=click)
+        Some(click) =>
+          if props.disabled {
+            @views.button(value)
+          } else {
+            @views.button(value, on_click=click)
+          }
         None => @views.button(value)
       }
     @ir.TextField =>
       match on_change {
         Some(change) =>
-          @views.text_field(
-            value,
-            on_input=new_value => change(control.name, new_value),
-            on_submit=on_input_done.map(done => done(control.name)),
-          )
+          if props.disabled {
+            @views.text_field(value, on_input=_new_value => Msg::Noop)
+          } else {
+            @views.text_field(
+              value,
+              on_input=new_value => change(control.name, new_value),
+              on_submit=on_input_done.map(done => done(control.name)),
+              placeholder=props.placeholder,
+            )
+          }
         None => @views.text_field(value, on_input=_new_value => Msg::Noop)
       }
     @ir.CheckBox =>
@@ -486,6 +510,118 @@ fn form_widget(
       }
       @views.column(row_views, spacing=0.0)
     }
+  }
+  finish_prop_view(view, fg, bg)
+}
+
+///|
+/// 属性收口（G7.2）：文字颜色/背景色修饰器（空值跳过）。
+fn finish_prop_view(
+  view : @moui.View[Msg],
+  fg : @core.Color?,
+  bg : @core.Color?,
+) -> @moui.View[Msg] {
+  let view = match fg {
+    Some(color) => view.foreground(color)
+    None => view
+  }
+  match bg {
+    Some(color) => view.background_brush(@graphics.Brush::solid(color))
+    None => view
+  }
+}
+
+///|
+/// 属性 → 主题排版覆盖（G7.2）：字号/加粗统一到全部角色;
+/// 默认属性返回 None（沿用主题零开销）。
+fn prop_theme(props : @ir.ControlProps) -> @core.Theme? {
+  if props.font_size <= 0 && !props.bold {
+    return None
+  }
+  let base = studio_theme()
+  let ty = base.typography
+  let size = if props.font_size > 0 {
+    props.font_size.to_double()
+  } else {
+    ty.body.size
+  }
+  let weight = if props.bold { 600 } else { 400 }
+  fn role(spec : @core.FontSpec) -> @core.FontSpec {
+    { ..spec, size, weight }
+  }
+  Some(
+    @core.Theme::with_typography(
+      base,
+      {
+        display: role(ty.display),
+        headline: role(ty.headline),
+        title: role(ty.title),
+        subtitle: role(ty.subtitle),
+        body: role(ty.body),
+        label: role(ty.label),
+        caption: role(ty.caption),
+        overline: role(ty.overline),
+        control: role(ty.control),
+      },
+    ),
+  )
+}
+
+///|
+/// 属性 → 颜色：#RRGGBB → Color;空串/非 7 位 = None。
+pub fn prop_color(hex : String) -> @core.Color? {
+  if hex.length() != 7 {
+    return None
+  }
+  fn hex_pair(high : Char, low : Char) -> Int? {
+    fn digit(c : Char) -> Int? {
+      let code = c.to_int()
+      if code >= 48 && code <= 57 {
+        Some(code - 48)
+      } else if code >= 97 && code <= 102 {
+        Some(code - 87)
+      } else if code >= 65 && code <= 70 {
+        Some(code - 55)
+      } else {
+        None
+      }
+    }
+    match (digit(high), digit(low)) {
+      (Some(h), Some(l)) => Some(h * 16 + l)
+      _ => None
+    }
+  }
+  let chars : Array[Char] = []
+  for ch in hex {
+    chars.push(ch)
+  }
+  if chars[0] != '#' {
+    return None
+  }
+  match (
+    hex_pair(chars[1], chars[2]),
+    hex_pair(chars[3], chars[4]),
+    hex_pair(chars[5], chars[6]),
+  ) {
+    (Some(r), Some(g), Some(b)) =>
+      Some(
+        @core.Color::rgba(
+          r=r.to_double() / 255.0,
+          g=g.to_double() / 255.0,
+          b=b.to_double() / 255.0,
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+/// 属性 → 文本对齐（空 = start）。
+fn prop_align(align : String) -> @core.TextAlign {
+  match align {
+    "center" => TextCenter
+    "end" => TextEnd
+    _ => TextStart
   }
 }
 

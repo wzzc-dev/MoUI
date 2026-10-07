@@ -906,6 +906,41 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
+    // 属性 v2（G7.2）：属性编辑是程序变更——走撤销点，与文本编辑同纪律
+    SetControlPropText(name, key, value) =>
+      Some(
+        (
+          with_undo_point(model, "prop:\{name}:\{key}", m => {
+            let controls : Array[@ir.Control] = []
+            for control in m.program.controls {
+              if control.name == name {
+                controls.push(control.with_prop(key, value))
+              } else {
+                controls.push(control)
+              }
+            }
+            { ..m, program: { ..m.program, controls, }, }
+          }),
+          @moui.Effect::none(),
+        ),
+      )
+    ToggleControlProp(name, key) =>
+      Some(
+        (
+          with_undo_point(model, "prop:\{name}:\{key}", m => {
+            let controls : Array[@ir.Control] = []
+            for control in m.program.controls {
+              if control.name == name {
+                controls.push(control.toggle_prop(key))
+              } else {
+                controls.push(control)
+              }
+            }
+            { ..m, program: { ..m.program, controls, }, }
+          }),
+          @moui.Effect::none(),
+        ),
+      )
     SetControlName(name, value) => {
       if value == "" ||
         @studio_lang.is_reserved(value) ||

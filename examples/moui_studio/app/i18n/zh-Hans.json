@@ -761,6 +761,13 @@
     "app.plugin.markdown.summary": ".md 文件打开为格式化编辑",
     "app.plugin.disable": "禁用",
     "app.plugin.enable": "启用",
-    "app.plugin.static_note": "静态装配：安装新插件需重新构建。"
+    "app.plugin.static_note": "静态装配：安装新插件需重新构建。",
+    "app.inspector.props": "属性（字号 / 颜色 #RRGGBB / 对齐）",
+    "app.props.bold": "加粗",
+    "app.props.align_start": "左",
+    "app.props.align_center": "中",
+    "app.props.align_end": "右",
+    "app.props.visible": "显示",
+    "app.props.disabled": "禁用"
   }
 }

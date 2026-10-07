@@ -761,6 +761,13 @@
     "app.plugin.markdown.summary": "Open .md files as formatted editor",
     "app.plugin.disable": "Disable",
     "app.plugin.enable": "Enable",
-    "app.plugin.static_note": "Static assembly: installing new plugins requires a rebuild."
+    "app.plugin.static_note": "Static assembly: installing new plugins requires a rebuild.",
+    "app.inspector.props": "Properties (size / #RRGGBB color / align)",
+    "app.props.bold": "Bold",
+    "app.props.align_start": "Left",
+    "app.props.align_center": "Center",
+    "app.props.align_end": "Right",
+    "app.props.visible": "Shown",
+    "app.props.disabled": "Disabled"
   }
 }

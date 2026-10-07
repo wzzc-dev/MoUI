@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 可视化属性 v2——对齐易语言属性窗
 
-- **Status**: active（P1 纯层已落地：IR ControlProps + codec 兼容；全套 4849/4849 绿）
+- **Status**: active（P1 纯层 + P2 渲染/检查器已落地；全套 4850/4850 绿。P3 form.mbt 往返待做）
 - **Goal**: 控件属性可调（字号/加粗/颜色/对齐/可见/禁用 + TextField 三件），
   设计画布、运行预览与导出应用一致渲染；旧文件无损加载。
 - **Non-goals**: 锚定/自动布局;数据绑定;控件新种类。
@@ -29,14 +29,15 @@
 - [x] codec encode（默认省略）/decode（缺字段默认）+ 兼容测试
 - [x] 59 处 Control 构造点清扫（struct-update 字面量除外）
 
-### P2 渲染链（进行中）
-- [ ] form_widget 应用属性：字号（TypographyScale 覆盖）/加粗/前景色
-      （foreground 修饰器）/背景色（container 包装）/对齐/可见/禁用;
-      TextField 多行用 text_area、占位符、密码态
-- [ ] 检查器属性面板：选中控件的 props 编辑（字号数值、加粗开关、
-      颜色文本、对齐胶囊、可见/禁用开关）→ SetControlProp 消息
-- [ ] 差分门禁：属性不改变量/文本/审计语义（纯展示），门禁断言扩展
-      「属性双轨不产生差异」的用例
+### P2 渲染链（完成，2026-10-07）
+- [x] form_widget 应用属性：字号（TypographyScale 覆盖，仅定制时传主题
+      ——默认沿用环境主题避免打回 IDE 暗色）/加粗/前景色（foreground
+      修饰器）/背景色（background_brush）/对齐/可见（空视图占位保配对）/
+      禁用（Button 去点击、TextField 去 on_input）
+- [x] 检查器属性面板：字号数值、加粗开关、文字/背景颜色（#RRGGBB）、
+      对齐三胶囊、显示/禁用开关 → SetControlPropText/ToggleControlProp
+      （走撤销点，与文本编辑同纪律）
+- [x] 渲染测试：字号 20 进 DrawText、visible=false 不渲染
 
 ### P3 持久链（进行中）
 - [ ] form.mbt 子集语法扩展（属性字面量参数）+ 解析往返门

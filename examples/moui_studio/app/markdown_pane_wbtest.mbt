@@ -119,3 +119,36 @@ test "插件管理:AI 门控与 markdown 回退" {
   }
   assert_true(raw_found, msg="禁用 markdown 插件后 .md 应走 plain 编辑")
 }
+
+///|
+/// G7.2 属性 v2:字号应用到舞台控件文字;visible=false 控件不渲染。
+test "属性 v2:字号生效且可见性门控渲染" {
+  // 字号 20:舞台标签文字以 20pt 绘制
+  let sized = initial_model()
+  sized.program.controls[0] = {
+    ..sized.program.controls[0],
+    text: "大字",
+    props: { ..sized.program.controls[0].props, font_size: 20 },
+  }
+  let mut size_found = false
+  for run in shell_texts(shell_draw(sized, 1280.0, 800.0)) {
+    if run.text.contains("大字") && run.font.size == 20.0 {
+      size_found = true
+    }
+  }
+  assert_true(size_found, msg="字号 20 应出现在舞台文字绘制里")
+  // visible=false:文字不渲染
+  let hidden = initial_model()
+  hidden.program.controls[0] = {
+    ..hidden.program.controls[0],
+    text: "隐身",
+    props: { ..hidden.program.controls[0].props, visible: false },
+  }
+  let mut hidden_found = false
+  for run in shell_texts(shell_draw(hidden, 1280.0, 800.0)) {
+    if run.text.contains("隐身") {
+      hidden_found = true
+    }
+  }
+  assert_false(hidden_found, msg="不可见控件不应渲染文字")
+}

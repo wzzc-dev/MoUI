@@ -541,6 +541,109 @@ fn context_props(
           ],
           spacing=6.0,
         ),
+        // 属性 v2（G7.2）：字号/加粗/颜色/对齐/可见——改属性 = 改程序
+        //（走撤销点），运行预览与设计画布同一渲染出口。
+        field_label(t, "app.inspector.props", width),
+        @views.row(
+          [
+            @views.text_field(
+              if control.props.font_size > 0 {
+                control.props.font_size.to_string()
+              } else {
+                ""
+              },
+              on_input=raw =>
+                SetControlPropText(control.name, "font_size", raw),
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+            @views.button(
+              text(t, "app.props.bold"),
+              on_click=ToggleControlProp(control.name, "bold"),
+              variant=if control.props.bold { Primary } else { Outline },
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+          ],
+          spacing=6.0,
+        ),
+        @views.row(
+          [
+            @views.text_field(
+              control.props.text_color,
+              on_input=raw =>
+                SetControlPropText(control.name, "text_color", raw),
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+            @views.text_field(
+              control.props.back_color,
+              on_input=raw =>
+                SetControlPropText(control.name, "back_color", raw),
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+          ],
+          spacing=6.0,
+        ),
+        @views.row(
+          [
+            @views.button(
+              text(t, "app.props.align_start"),
+              on_click=SetControlPropText(control.name, "align", "start"),
+              variant=if control.props.align == "start" ||
+                control.props.align == "" {
+                Primary
+              } else {
+                Outline
+              },
+              width=(field_width - 12.0) / 3.0,
+              height=FIELD_HEIGHT,
+            ),
+            @views.button(
+              text(t, "app.props.align_center"),
+              on_click=SetControlPropText(control.name, "align", "center"),
+              variant=if control.props.align == "center" {
+                Primary
+              } else {
+                Outline
+              },
+              width=(field_width - 12.0) / 3.0,
+              height=FIELD_HEIGHT,
+            ),
+            @views.button(
+              text(t, "app.props.align_end"),
+              on_click=SetControlPropText(control.name, "align", "end"),
+              variant=if control.props.align == "end" {
+                Primary
+              } else {
+                Outline
+              },
+              width=(field_width - 12.0) / 3.0,
+              height=FIELD_HEIGHT,
+            ),
+          ],
+          spacing=6.0,
+        ),
+        @views.row(
+          [
+            @views.button(
+              text(t, "app.props.visible"),
+              on_click=ToggleControlProp(control.name, "visible"),
+              variant=if control.props.visible { Primary } else { Outline },
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+            @views.button(
+              text(t, "app.props.disabled"),
+              on_click=ToggleControlProp(control.name, "disabled"),
+              variant=if control.props.disabled { Primary } else { Outline },
+              width=(field_width - 6.0) / 2.0,
+              height=FIELD_HEIGHT,
+            ),
+          ],
+          spacing=6.0,
+        ),
       ]
       // 属性 schema 的数据面（切片 G）：items 按种类承载不同载荷——
       // 列表框/表格/下拉框 = 多行选项；进度条 = 绑定变量名；图片 = 资源路径

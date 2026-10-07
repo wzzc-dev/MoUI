@@ -823,6 +823,9 @@ pub(all) enum Msg {
   // === 全文搜索（G4 F3）：草稿 → 运行（服务链扫工程树）→ 命中集 → 跳转 ===
   TogglePlugin(String)
   PluginsLoaded(@services.ServiceTaskResult[String?])
+  // 属性 v2（G7.2）：文本属性与布尔属性两条编辑通道
+  SetControlPropText(String, String, String)
+  ToggleControlProp(String, String)
   SearchQueryDraft(String)
   SearchRun
   SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])

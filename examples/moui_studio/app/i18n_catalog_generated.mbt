@@ -180,6 +180,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.help.logic", GeneratedI18nMessage::Text("Logic")),
       ("app.help.title", GeneratedI18nMessage::Text("Help")),
+      ("app.props.bold", GeneratedI18nMessage::Text("Bold")),
       ("app.recent.you", GeneratedI18nMessage::Text("you")),
       ("app.right.hide", GeneratedI18nMessage::Text("Hide right panel")),
       ("app.right.show", GeneratedI18nMessage::Text("Properties panel")),
@@ -432,6 +433,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "No MoonBit project imported yet — click Import above to pick a directory",
         ),
       ),
+      ("app.props.visible", GeneratedI18nMessage::Text("Shown")),
       ("app.qa.align_left", GeneratedI18nMessage::Text("Align left (24)")),
       ("app.run.variables", GeneratedI18nMessage::Text("Variables")),
       ("app.runtime.title", GeneratedI18nMessage::Text("Runtime snapshot")),
@@ -524,6 +526,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.import",
         GeneratedI18nMessage::Text("Import MoonBit project…"),
       ),
+      ("app.props.disabled", GeneratedI18nMessage::Text("Disabled")),
       ("app.qa.align_right", GeneratedI18nMessage::Text("Align right (24)")),
       (
         "app.run.audit_hint",
@@ -641,6 +644,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Options (one per line)"),
       ),
       (
+        "app.inspector.props",
+        GeneratedI18nMessage::Text("Properties (size / #RRGGBB color / align)"),
+      ),
+      (
         "app.log.settled_all",
         GeneratedI18nMessage::Text("All side-effect cards confirmed"),
       ),
@@ -654,6 +661,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.plugin.markdown", GeneratedI18nMessage::Text("Markdown pane")),
       ("app.plugin.terminal", GeneratedI18nMessage::Text("Terminal")),
+      ("app.props.align_end", GeneratedI18nMessage::Text("Right")),
       ("app.qa.align_center", GeneratedI18nMessage::Text("Center horizontally")),
       ("app.run.gate.reject", GeneratedI18nMessage::Text("Reject")),
       (
@@ -918,6 +926,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Transcript workbench and structured proposals",
         ),
       ),
+      ("app.props.align_start", GeneratedI18nMessage::Text("Left")),
       ("app.recent.action.new", GeneratedI18nMessage::Text("New program")),
       (
         "app.run.compile_stage",
@@ -1035,6 +1044,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Click an element in the preview canvas"),
       ),
       ("app.project.props_role", GeneratedI18nMessage::Text("Role: {a}")),
+      ("app.props.align_center", GeneratedI18nMessage::Text("Center")),
       ("app.recent.action.edit", GeneratedI18nMessage::Text("Edited program")),
       ("app.recent.action.move", GeneratedI18nMessage::Text("Moved control")),
       ("app.recent.action.rect", GeneratedI18nMessage::Text("Changed geometry")),
@@ -1995,6 +2005,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.help.logic", GeneratedI18nMessage::Text("逻辑词")),
       ("app.help.title", GeneratedI18nMessage::Text("帮助")),
+      ("app.props.bold", GeneratedI18nMessage::Text("加粗")),
       ("app.recent.you", GeneratedI18nMessage::Text("你")),
       ("app.right.hide", GeneratedI18nMessage::Text("收起右栏")),
       ("app.right.show", GeneratedI18nMessage::Text("属性面板")),
@@ -2242,6 +2253,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "还没有导入的 MoonBit 工程——点上方「导入」选择工程目录",
         ),
       ),
+      ("app.props.visible", GeneratedI18nMessage::Text("显示")),
       ("app.qa.align_left", GeneratedI18nMessage::Text("左对齐（24）")),
       ("app.run.variables", GeneratedI18nMessage::Text("变量")),
       ("app.runtime.title", GeneratedI18nMessage::Text("运行时快照")),
@@ -2325,6 +2337,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.import",
         GeneratedI18nMessage::Text("导入 MoonBit 工程…"),
       ),
+      ("app.props.disabled", GeneratedI18nMessage::Text("禁用")),
       ("app.qa.align_right", GeneratedI18nMessage::Text("右对齐（24）")),
       (
         "app.run.audit_hint",
@@ -2441,6 +2454,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("选项（每行一项）"),
       ),
       (
+        "app.inspector.props",
+        GeneratedI18nMessage::Text(
+          "属性（字号 / 颜色 #RRGGBB / 对齐）",
+        ),
+      ),
+      (
         "app.log.settled_all",
         GeneratedI18nMessage::Text("已确认全部副作用卡"),
       ),
@@ -2454,6 +2473,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.plugin.markdown", GeneratedI18nMessage::Text("Markdown 面板")),
       ("app.plugin.terminal", GeneratedI18nMessage::Text("终端")),
+      ("app.props.align_end", GeneratedI18nMessage::Text("右")),
       ("app.qa.align_center", GeneratedI18nMessage::Text("水平居中")),
       ("app.run.gate.reject", GeneratedI18nMessage::Text("拒绝")),
       (
@@ -2708,6 +2728,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.plugin.ai.summary",
         GeneratedI18nMessage::Text("对白转录工作台与结构化提案"),
       ),
+      ("app.props.align_start", GeneratedI18nMessage::Text("左")),
       ("app.recent.action.new", GeneratedI18nMessage::Text("新建程序")),
       (
         "app.run.compile_stage",
@@ -2820,6 +2841,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("在预览画布上点选一个元素"),
       ),
       ("app.project.props_role", GeneratedI18nMessage::Text("角色:{a}")),
+      ("app.props.align_center", GeneratedI18nMessage::Text("中")),
       ("app.recent.action.edit", GeneratedI18nMessage::Text("修改程序")),
       ("app.recent.action.move", GeneratedI18nMessage::Text("移动控件")),
       ("app.recent.action.rect", GeneratedI18nMessage::Text("改几何")),
