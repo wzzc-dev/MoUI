@@ -53,8 +53,10 @@ fn shell_view(
     _ => false
   }
   // 底栏高：展开时按**内容**算（AI 页签要装下线程卡，见 `ai_bar_height`），
-  // 收起时只留页签头。写成「模型里那个数」会让 AI 页签在有提案时裁掉线程区
-  // ——高度是算出来的，不是存下来的（`bottom_height` 只作为用户拖拽的下限）。
+  // 收起时**整个隐藏**（页签行也隐藏——重开走标题栏的底栏开关 / J 键 /
+  // 命令面板，VS Code 面板口径）。写成「模型里那个数」会让 AI 页签在有提案
+  // 时裁掉线程区——高度是算出来的，不是存下来的（`bottom_height` 只作为
+  // 用户拖拽的下限）。
   let bottom_height = if model.bottom_open {
     if model.bottom_tab is BtAi {
       ai_bar_height(model, center_width_of(model, width), height).max(
@@ -64,7 +66,7 @@ fn shell_view(
       model.bottom_height
     }
   } else {
-    PANEL_HEAD_HEIGHT
+    0.0
   }
   let window_bar = if model.immersive {
     WINDOW_CHROME_HEIGHT - TOPBAR_HEIGHT
@@ -121,21 +123,27 @@ fn shell_view(
   }
   // 底栏高度拖拽 sash（M8 用户反馈③）：拖动条映射为 SetBottomHeight
   //（拖到哪栏顶就到哪，绝对映射；视图层按窗口高度钳制，update 兜底）
-  let bottom_sash = @views.container(
-    @views.empty(),
-    background=ide_border_soft(),
-    width~,
-    height=SASH_WIDTH,
-    padding=0.0,
-  ).on_drag_with_frame(fn(event, _frame) {
-    match event.phase {
-      @views.DragGesturePhase::Started | @views.DragGesturePhase::Changed =>
-        Msg::SetBottomHeight(
-          (height - event.position.y).clamp(min=100.0, max=1200.0),
-        )
-      _ => Msg::Noop
-    }
-  })
+  // 收起态连拖拽手柄一起隐藏（没有可调的东西;重开走标题栏开关）
+  let bottom_sash = if model.bottom_open {
+    @views.container(
+      @views.empty(),
+      background=ide_border_soft(),
+      width~,
+      height=SASH_WIDTH,
+      padding=0.0,
+    ).on_drag_with_frame(fn(event, _frame) {
+      match event.phase {
+        @views.DragGesturePhase::Started | @views.DragGesturePhase::Changed =>
+          Msg::SetBottomHeight(
+            (height - event.position.y).clamp(min=100.0, max=1200.0),
+          )
+        _ => Msg::Noop
+      }
+    })
+  } else {
+    // 收起态:零高手柄（无可调对象）
+    @views.container(@views.empty(), width~, height=0.0, padding=0.0)
+  }
   let main_col = @views.column(
     [
       workspace_seg,

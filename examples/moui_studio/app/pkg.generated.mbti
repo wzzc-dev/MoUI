@@ -9,6 +9,7 @@ import {
   "examples/moui_studio/kernel",
   "examples/moui_studio/plugins/ai",
   "examples/moui_studio/plugins/terminal",
+  "examples/moui_studio/services/blocks_code",
   "examples/moui_studio/services/build",
   "examples/moui_studio/services/compiled_runtime",
   "examples/moui_studio/services/export",
@@ -25,11 +26,15 @@ import {
 }
 
 // Values
-pub const AI_BAR_HEIGHT : Double = 138.
+pub const AI_BAR_HEIGHT : Double = 166.
 
 pub const AI_CARD_LIMIT : Int = 24
 
 pub const AI_CARD_PAD : Double = 8.0
+
+pub const AI_SESSION_HEADER_HEIGHT : Double = 34.0
+
+pub const AI_SESSION_ROW_HEIGHT : Double = 36.0
 
 pub const ALIGN_MARGIN : Int = 24
 
@@ -87,6 +92,8 @@ pub const PANE_HEAD_GAP : Double = 6.0
 
 pub const PANE_HEAD_INSET : Double = 8.0
 
+pub const POSTURE_HEIGHT : Double = 20.0
+
 pub const RECENT_LIMIT : Int = 24
 
 pub const RECENT_STRIP_ROWS : Int = 3
@@ -118,6 +125,8 @@ pub const TOPBAR_ACTION_HEIGHT : Double = 24.0
 pub const TOPBAR_HEIGHT : Double = 40.0
 
 pub const TOPBAR_ICON_BUTTON_WIDTH : Double = 32.0
+
+pub const TOPBAR_LEFT_TOGGLE_ZONE : Double = 34.0
 
 pub const TRAFFIC_LIGHT_CENTER_Y : Double = 15.8
 
@@ -255,6 +264,8 @@ pub fn bundle_files(String, String) -> Array[(String, String)]
 
 pub fn button_label_width(String) -> Double
 
+pub fn card_text_by_seq(Model, Int) -> String?
+
 pub fn category_at(Int) -> @blocks.BlockCategory?
 
 pub fn category_rail(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
@@ -262,6 +273,8 @@ pub fn category_rail(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 pub fn center_width_of(Model, Double) -> Double
 
 pub fn chip_label_width(String) -> Double
+
+pub fn civil_seconds(StudioClock) -> Int
 
 pub fn clamp_bottom_height(Double) -> Double
 
@@ -319,11 +332,15 @@ pub fn compiled_run_header(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
 pub fn completions_for(Model, String) -> Array[String]
 
+pub fn composer_block_height(Double) -> Double
+
 pub fn composer_height(Double) -> Double
 
 pub fn confirm_copy(ConfirmKind, @moui_i18n.Translator) -> String
 
 pub fn console_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn context_chips_height(Double) -> Double
 
 pub fn control_events(@ir.Control) -> Array[@ir.EventKind]
 
@@ -344,6 +361,8 @@ pub fn decision_bar_height(Model) -> Double
 pub fn declaration_line_of(Model, Int) -> Int
 
 pub fn declaration_strip(Model, Double) -> @core.View[Msg]
+
+pub fn default_studio_clock() -> StudioClock
 
 pub fn default_viewport_size() -> @core.Size
 
@@ -393,6 +412,8 @@ pub fn fit_scale(Double, Double, Double, Double) -> Double
 
 pub fn folder_url_of(String) -> String
 
+pub fn follow_transcript(Model) -> Model
+
 pub fn form_design_apply_move(FormDesignerSession, Int, Double, Double) -> (FormDesignerSession, Bool)
 
 pub fn form_design_apply_resize(FormDesignerSession, Int, Double, Double) -> (FormDesignerSession, Bool)
@@ -407,6 +428,8 @@ pub fn form_design_rel_of(Model) -> String?
 
 pub fn form_design_write_effect(Model, FormDesignerSession, @services.FileServices) -> (Model, @core.Effect[Msg])
 
+pub fn format_hhmm(StudioClock) -> String
+
 pub fn gate_pending(Model) -> Bool
 
 pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog]
@@ -420,6 +443,8 @@ pub fn group_children(Array[TreeNode], String) -> Array[TreeNode]
 pub fn hairline() -> @core.View[Msg]
 
 pub fn handler_key(String, String) -> String
+
+pub fn hhmm_of_stamp(Int) -> String
 
 pub fn hint_lines_view(String, Double, @core.Color, Int) -> @core.View[Msg]
 
@@ -509,6 +534,8 @@ pub fn local_explanation(Model) -> String
 
 pub fn log_line(Model, LogLevel, String) -> Model
 
+pub fn mark_ai_sessions_dirty(Model) -> Unit
+
 pub fn markdown_blocks_view(Array[@markdown.MarkdownBlock], Double) -> @core.View[Msg]
 
 pub fn middle_ellipsis(String, Double) -> String
@@ -528,6 +555,8 @@ pub fn pane_head(String, String, Double, Array[@core.View[Msg]], tail? : String,
 pub fn pane_head_layout(String, String, String, Double, Int, actions_width? : Double) -> PaneHeadLayout
 
 pub fn panel_head(String, String, Array[@core.View[Msg]], Double, trailing_widths? : Array[Double]) -> @core.View[Msg]
+
+pub fn parse_generated_source(String, Array[@export.StmtLine]) -> @blocks_code.ParsedHandlerSource
 
 pub fn parse_preview_frame(String) -> Result[PreviewFrame, String]
 
@@ -553,7 +582,7 @@ pub fn problem_rows(Model, @moui_i18n.Translator) -> Array[ProblemRow]
 
 pub fn problems_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : @kernel.PreviewWebControls[Msg], provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty? : @kernel.PtyService[Msg], focus_terminal? : () -> Unit, profile? : StudioProfile, apply_locale? : (String) -> Unit) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : @kernel.PreviewWebControls[Msg], provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty? : @kernel.PtyService[Msg], focus_terminal? : () -> Unit, profile? : StudioProfile, apply_locale? : (String) -> Unit, wall_clock? : (() -> StudioClock)?, sessions_store_path? : String) -> @core.Program[Model, Msg]
 
 pub fn program_tree(Model) -> Array[TreeNode]
 
@@ -580,6 +609,8 @@ pub fn push_audit_side_effect(Model, String, String) -> Model
 pub fn push_recent(Model, String, String, Bool) -> Model
 
 pub fn push_toast(Model, String, Bool) -> Model
+
+pub fn relative_time_bucket(Int, Int) -> (String, Int)
 
 pub fn replace_target_body(Model, String, Array[@ir.Stmt]) -> Model
 
@@ -649,6 +680,8 @@ pub fn status_cells(Array[(String, Int)], Double, Bool) -> @core.View[Msg]
 
 pub fn status_position(Model) -> String
 
+pub fn store_error_text(@moui_i18n.Translator, @ai.AiStoreError) -> String
+
 pub fn structural_error_text(@moui_i18n.Translator, @ir.IrError) -> String
 
 pub fn studio_commands(@moui_i18n.Translator) -> Array[StudioCommand]
@@ -703,6 +736,8 @@ pub fn topbar_chip_bound(String, Double) -> Double
 
 pub fn topbar_drag_width(Model, @moui_i18n.Translator, Double) -> Double
 
+pub fn topbar_drag_x(Model) -> Double
+
 pub fn translator(Model) -> @moui_i18n.Translator
 
 pub fn translator_for(UiLanguage) -> @moui_i18n.Translator
@@ -741,7 +776,7 @@ pub fn update_selection_msgs(Model, Msg) -> (Model, @core.Effect[Msg])?
 
 pub fn update_with_launch_for_test(Model, Msg, @services.AppServices, (String, (Result[Unit, String]) -> Unit) -> Unit) -> (Model, @core.Effect[Msg])
 
-pub fn update_with_services(Model, Msg, @services.AppServices, preview_web? : @kernel.PreviewWebControls[Msg], pty? : @kernel.PtyService[Msg]) -> (Model, @core.Effect[Msg])
+pub fn update_with_services(Model, Msg, @services.AppServices, pty? : @kernel.PtyService[Msg]) -> (Model, @core.Effect[Msg])
 
 pub fn upsert_project(Array[ProjectRecord], ProjectRecord) -> (Array[ProjectRecord], Int)
 
@@ -770,6 +805,7 @@ pub(all) enum ArtifactAction {
   ArtifactCopy
   ArtifactReveal
   ArtifactLaunch
+  ArtifactAiCopy
 }
 
 pub(all) struct AuditEntry {
@@ -1035,6 +1071,7 @@ pub(all) struct Model {
   pending : PendingProposal?
   ai_sessions : @ai.AiSessions
   composer_mode : ComposerMode
+  composer_mode_picker_open : Bool
   prompt_error : String
   provider_mode : ProviderMode
   provider_endpoint : String
@@ -1111,6 +1148,14 @@ pub(all) struct Model {
   blocks_scroll_y : Double
   ai_cards_folded : Bool
   ai_streaming : Bool
+  clock : StudioClock
+  mut transcript_scroll : @core.Point
+  mut transcript_scroll_seq : Int
+  mut transcript_follow : Bool
+  ai_sessions_search_open : Bool
+  ai_sessions_query : String
+  ai_session_hover : Int
+  session_rename : (Int, String)?
   terminal : @terminal.TerminalState
   mut terminal_open : Bool
   mut terminal_scroll : @core.Point
@@ -1177,6 +1222,7 @@ pub(all) enum Msg {
   Redo
   SetPrompt(String)
   SetComposerMode(ComposerMode)
+  ToggleComposerModePicker
   ComposerRun
   RealGenerationFinished(Result[String, String])
   ExplainHandler
@@ -1308,6 +1354,22 @@ pub(all) enum Msg {
   StreamChunk(String)
   StreamFinished
   StopGeneration
+  ClockUpdated(StudioClock)
+  CopyAiMessage(Int)
+  EditUserPrompt(Int)
+  RetryUserPrompt(Int)
+  TranscriptScrolled(@core.Point)
+  TranscriptScrollToBottom
+  ToggleAiSessionSearch
+  SetAiSessionsQuery(String)
+  AiSessionHover(Int, Bool)
+  AiSessionRenameStart(Int)
+  AiSessionRenameDraft(String)
+  AiSessionRenameCommit
+  AiSessionRenameDismiss
+  AiSessionsStoreLoaded(@services.ServiceTaskResult[String])
+  AiSessionsStoreWriteRequested
+  AiSessionsStoreSaved(@services.ServiceTaskResult[Unit])
   SetWorkSpace(WorkSpace)
   TogglePaneLive
   TogglePaneBlocks
@@ -1497,6 +1559,16 @@ pub(all) struct StatementTemplate {
 }
 pub fn StatementTemplate::skeleton(Self, @studio_lang.Language) -> String
 
+pub(all) struct StudioClock {
+  year : Int
+  month : Int
+  day : Int
+  weekday : Int
+  hour : Int
+  minute : Int
+  second : Int
+}
+
 pub(all) struct StudioCommand {
   id : String
   label : String
@@ -1510,6 +1582,7 @@ pub(all) enum StudioEvent {
   EvPreviewWebNavigate(String)
   EvPreviewWebReload
   EvProposalAccepted(Int, String)
+  EvAiSessionsDirty
 }
 
 pub(all) enum StudioPerspective {

@@ -608,6 +608,63 @@ pub fn icon_path(name : @style.IconName) -> Array[@core.PathVerb] {
         MoveTo(@core.Point::new(x=9.0, y=5.0)),
         LineTo(@core.Point::new(x=9.0, y=19.0)),
       ]
+    PanelBottom =>
+      [
+        MoveTo(@core.Point::new(x=3.0, y=5.0)),
+        LineTo(@core.Point::new(x=21.0, y=5.0)),
+        LineTo(@core.Point::new(x=21.0, y=19.0)),
+        LineTo(@core.Point::new(x=3.0, y=19.0)),
+        LineTo(@core.Point::new(x=3.0, y=5.0)),
+        MoveTo(@core.Point::new(x=3.0, y=14.0)),
+        LineTo(@core.Point::new(x=21.0, y=14.0)),
+      ]
+    Pin =>
+      [
+        MoveTo(@core.Point::new(x=8.0, y=3.0)),
+        LineTo(@core.Point::new(x=16.0, y=3.0)),
+        LineTo(@core.Point::new(x=16.0, y=9.0)),
+        LineTo(@core.Point::new(x=13.5, y=11.0)),
+        LineTo(@core.Point::new(x=13.5, y=14.0)),
+        LineTo(@core.Point::new(x=10.5, y=14.0)),
+        LineTo(@core.Point::new(x=10.5, y=11.0)),
+        LineTo(@core.Point::new(x=8.0, y=9.0)),
+        LineTo(@core.Point::new(x=8.0, y=3.0)),
+        Close,
+        MoveTo(@core.Point::new(x=12.0, y=14.0)),
+        LineTo(@core.Point::new(x=12.0, y=20.0)),
+      ]
+    Chat =>
+      [
+        MoveTo(@core.Point::new(x=21.0, y=11.5)),
+        CubicTo(
+          @core.Point::new(x=21.0, y=16.0),
+          @core.Point::new(x=17.0, y=19.5),
+          @core.Point::new(x=12.0, y=19.5),
+        ),
+        CubicTo(
+          @core.Point::new(x=11.0, y=19.5),
+          @core.Point::new(x=10.0, y=19.4),
+          @core.Point::new(x=9.2, y=19.1),
+        ),
+        LineTo(@core.Point::new(x=4.0, y=20.5)),
+        LineTo(@core.Point::new(x=5.4, y=16.0)),
+        CubicTo(
+          @core.Point::new(x=4.0, y=14.8),
+          @core.Point::new(x=3.0, y=13.2),
+          @core.Point::new(x=3.0, y=11.5),
+        ),
+        CubicTo(
+          @core.Point::new(x=3.0, y=7.1),
+          @core.Point::new(x=7.0, y=3.5),
+          @core.Point::new(x=12.0, y=3.5),
+        ),
+        CubicTo(
+          @core.Point::new(x=17.0, y=3.5),
+          @core.Point::new(x=21.0, y=7.1),
+          @core.Point::new(x=21.0, y=11.5),
+        ),
+        Close,
+      ]
   }
 }
 
@@ -789,5 +846,8 @@ pub fn icon_label(name : @style.IconName) -> String {
     Focus => "Focus"
     Columns => "Columns"
     Sidebar => "Sidebar"
+    Pin => "Pin"
+    PanelBottom => "PanelBottom"
+    Chat => "Chat"
   }
 }

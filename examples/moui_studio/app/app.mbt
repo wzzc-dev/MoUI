@@ -46,6 +46,7 @@ pub fn artifact_done_key(what : ArtifactAction) -> String {
     ArtifactCopy => "app.compile.path_copied"
     ArtifactReveal => "app.compile.revealed"
     ArtifactLaunch => "app.compile.launched"
+    ArtifactAiCopy => "app.ai.copied"
   }
 }
 
@@ -77,7 +78,6 @@ pub fn update_with_services(
   model : Model,
   msg : Msg,
   services : @services.AppServices,
-  preview_web? : PreviewWebControls = @kernel.noop_preview_web_controls(),
   pty? : @kernel.PtyService[Msg] = @kernel.PtyService::unavailable(),
 ) -> (Model, @moui.Effect[Msg]) {
   match msg {
@@ -163,11 +163,17 @@ pub fn update_with_services(
     StreamChunk(chunk) =>
       if model.ai_streaming {
         model.ai_sessions.append_to_last_card(chunk)
-        (model, @moui.Effect::none())
+        // 流式追加也是新内容：跟随态下时间线贴底
+        (follow_transcript(model), @moui.Effect::none())
       } else {
         (model, @moui.Effect::none())
       }
-    StreamFinished => ({ ..model, ai_streaming: false, }, @moui.Effect::none())
+    StreamFinished => {
+      // 一轮流式收尾 = 结构性事件：会话存储脏标
+      let finished = { ..model, ai_streaming: false, }
+      mark_ai_sessions_dirty(finished)
+      (finished, @moui.Effect::none())
+    }
     StopGeneration => {
       // 截断：停止标志复位 + 流式卡标记已停止（「已停止」回执）
       let session = model.ai_sessions.current()
@@ -229,6 +235,19 @@ pub fn update_with_services(
         .write_text(path)
         .effect(map=r => ArtifactActionDone(ArtifactCopy, r)),
       )
+    // 时间线消息复制（对白转录）：同一条剪贴板通道，回执文案区分来源。
+    CopyAiMessage(seq) =>
+      match card_text_by_seq(model, seq) {
+        Some(body) =>
+          (
+            model,
+            services
+            .clipboard()
+            .write_text(body)
+            .effect(map=r => ArtifactActionDone(ArtifactAiCopy, r)),
+          )
+        None => (model, @moui.Effect::none())
+      }
     // 在文件夹中打开：把产物**所在目录**交给系统文件管理器。
     //
     // 为什么传目录而不是文件：`file:///…/app` 这类 URL 在 macOS 上会按
@@ -1113,6 +1132,7 @@ fn language_tag_of(result : @services.ServiceTaskResult[String?]) -> String {
 fn run_subscription(
   model : Model,
   timer : @services.TimerSource?,
+  wall_clock : (() -> StudioClock)?,
 ) -> @moui.Subscription[Msg] {
   // 虚拟时钟（切片 G）：窗体定时器开启且运行中时，用帧时间把每秒一帧
   // 标成 TimerTick——设计态订阅不活跃，时钟不走，这就是「虚拟」。
@@ -1154,7 +1174,15 @@ fn run_subscription(
       }
     None => @moui.Subscription::none()
   }
-  @moui.Subscription::batch([run_subscription_plan, toast_subscription])
+  // 墙钟订阅（对白转录）：组合根注入了 wall_clock 且在 AI 模式时每秒重取
+  // 一次——时间线 HH:MM、相对时间、「已工作 N 秒」随之走动。其他模式没有
+  // 时间显示，订阅不活跃（省一档每秒全树重渲）。
+  let clock_subscription = match (timer, wall_clock, model.perspective) {
+    (Some(source), Some(f), PsAi) =>
+      source.subscription(interval_ms=1000.0, map=_frame => ClockUpdated(f()))
+    _ => @moui.Subscription::none()
+  }
+  @moui.Subscription::batch([run_subscription_plan, toast_subscription, clock_subscription])
 }
 
 ///|
@@ -1179,6 +1207,12 @@ pub fn program(
   focus_terminal? : () -> Unit = fn() { () },
   profile? : StudioProfile = Full,
   apply_locale? : (String) -> Unit = _tag => (),
+  /// 墙钟闭包（组合根映射平台 FFI 注入；缺省 = 常数钟）。时间戳/时长/
+  /// 相对时间的唯一来源；订阅只在 AI 模式活跃（run_subscription）。
+  wall_clock? : (() -> StudioClock)? = None,
+  /// AI 会话存储路径（M5）：非空 = native 持久化开启（init 读取 +
+  /// 结构性事件写盘）；空 = 关闭（web 入口），UI 无持久化入口。
+  sessions_store_path? : String = "",
 ) -> @moui.Program[Model, Msg] {
   let services = environment.services()
   let timer = environment.timer()
@@ -1190,6 +1224,7 @@ pub fn program(
   let submit_build = build_submit
   let web_controls = preview_web
   let on_locale = apply_locale
+  let wall = wall_clock
 
   // 预览 web 控制注入(M2-2):槽位供视图与处理器读取
   install_preview_web(webview_controller, Some(preview_web))
@@ -1231,6 +1266,16 @@ pub fn program(
       _ => []
     }
   })
+  // AI 会话存储（M5）：只有组合根配置了路径才注册——web/裸测试组合根
+  // 不注册，EvAiSessionsDirty 排空零开销。
+  if sessions_store_path != "" {
+    bus.on("studio.ai_sessions", fn(event) {
+      match event {
+        EvAiSessionsDirty => [AiSessionsStoreWriteRequested]
+        _ => []
+      }
+    })
+  }
   // webview 命令（Web 预览重建回执）
   bus.on("studio.preview_web", fn(event) {
     match event {
@@ -1241,15 +1286,31 @@ pub fn program(
   })
   @moui.Program::new_with_environment(
     init=() => {
+      let base = initial_model(
+        provider_config?,
+        compile_track_available~,
+        export_available~,
+        immersive~,
+        pty_available=pty.available && !(profile is Teaching),
+        profile~,
+      )
+      // 组合根注入了墙钟就用真实时刻播种 Model.clock（常数钟只兜底）
+      let model = match wall {
+        Some(f) => { ..base, clock: f() }
+        None => base
+      }
+      // 会话存储（M5）：配置了路径才读；文件不存在（首跑）= Failure，
+      // 处理臂保持默认会话不声不响（坏文件才 with_notice）。
+      let load_effect = if sessions_store_path != "" {
+        services
+        .files()
+        .read_text(sessions_store_path)
+        .effect(map=result => AiSessionsStoreLoaded(result))
+      } else {
+        @moui.Effect::none()
+      }
       (
-        initial_model(
-          provider_config?,
-          compile_track_available~,
-          export_available~,
-          immersive~,
-          pty_available=pty.available && !(profile is Teaching),
-          profile~,
-        ),
+        model,
         @moui.Effect::batch([
           services
           .settings()
@@ -1259,6 +1320,7 @@ pub fn program(
           .settings()
           .read(DRAFT_SETTINGS_KEY)
           .effect(map=result => DraftLoaded(result)),
+          load_effect,
         ]),
       )
     },
@@ -1308,6 +1370,20 @@ pub fn program(
           cancel_compile()
           update_pure(model, msg)
         }
+        // AI 会话存储写盘（M5）：事件总线从 EvAiSessionsDirty 翻译而来；
+        // 只有配置了路径的组合根会发出这条消息（监听器按路径注册）。
+        AiSessionsStoreWriteRequested =>
+          if sessions_store_path != "" {
+            (
+              model,
+              services
+              .files()
+              .write_text(sessions_store_path, @ai.encode_ai_sessions(model.ai_sessions))
+              .effect(map=result => AiSessionsStoreSaved(result)),
+            )
+          } else {
+            (model, @moui.Effect::none())
+          }
         // 打开项目是覆盖性动作：有未保存修改时先要确认（破坏性操作
         // 确认纪律）。确认续行带 `open_confirmed` 一次性放行标记——
         // 放行即复位，标记不会泄漏到下一次打开。
@@ -1336,6 +1412,7 @@ pub fn program(
         // 纯转移链遇到它们返回 None（见 update_run_msgs），不在这里接住
         // 就会被静默丢弃——按钮点了没反应。
         | CopyArtifactPath(_)
+        | CopyAiMessage(_)
         | RevealArtifact(_)
         | RunArtifact(_)
         | ArtifactActionDone(_)
@@ -1357,7 +1434,6 @@ pub fn program(
             model,
             msg,
             services,
-            preview_web~,
             pty~,
           )
           // 运行时检查器挂载：只有「打开 Runtime 页签 / 显式刷新」两条
@@ -1489,7 +1565,7 @@ pub fn program(
         .set_region(
           Some(
             @core.Rect::new(
-              x=0.0,
+              x=topbar_drag_x(model),
               y=0.0,
               width=__drag_w,
               height=WINDOW_CHROME_HEIGHT,
@@ -1501,7 +1577,7 @@ pub fn program(
       }
       view_with_viewport(model, viewport)
     },
-    subscriptions=model => run_subscription(model, timer),
+    subscriptions=model => run_subscription(model, timer, wall),
   ).with_commands(commands=studio_program_commands)
 }
 
@@ -1582,6 +1658,7 @@ fn update_with_provider(
           settled: false,
           settled_note: "",
           seq: 0,
+          at: 0,
         })
         let streamed = { ..streamed, ai_streaming: true, explanation: "", }
         let chunks = @ai.fake_stream_chunks(with_explanation.explanation, 12)
@@ -1645,4 +1722,15 @@ fn update_with_provider(
       }
     _ => update_with_services(model, msg, services)
   }
+}
+
+
+///|
+/// 生成源逆解析门面：测试与未来「粘贴代码 → 积木」入口共用的唯一通道
+/// （app 不直接散用 @blocks_code,导入面收敛于此）。
+pub fn parse_generated_source(
+  source : String,
+  stmt_lines : Array[@export.StmtLine],
+) -> @blocks_code.ParsedHandlerSource {
+  @blocks_code.parse_generated_source(source, stmt_lines)
 }

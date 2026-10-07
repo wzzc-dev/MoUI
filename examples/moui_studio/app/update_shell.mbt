@@ -31,6 +31,24 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
       // 与 settings 样板同构；切片 update 零副作用，effect 原样丢弃。
       let scope = ai_sessions_scope()
       let (next, effect) = scope.update(model, op)
+      // 切换会话 = 换一条时间线：滚动复位到顶 + 恢复自动跟随
+      // （贴底由新内容到达时触发，终端同款口径）。
+      let next = match op {
+        // 新建/切换/删除都会改变「当前时间线」——滚动复位 + 恢复跟随
+        AiSessionCreate(_) | AiSessionSwitch(_) | AiSessionRemove(_) => {
+          next.transcript_scroll = @geometry.Point::new(x=0.0, y=0.0)
+          next.transcript_scroll_seq = next.transcript_scroll_seq + 1
+          next.transcript_follow = true
+          // 结构性事件：会话存储脏标（切换也存——active 指针在存储里）
+          mark_ai_sessions_dirty(next)
+          next
+        }
+        AiSessionPin(_, _) => {
+          mark_ai_sessions_dirty(next)
+          next
+        }
+        _ => next
+      }
       Some((next, effect))
     }
     SetPerspective(p) => Some(set_perspective(model, p))
@@ -813,16 +831,20 @@ fn select_bottom_tab(model : Model, tab : BottomTab) -> Model {
 
 ///|
 /// 追加 AI 会话卡（超 AI_CARD_LIMIT 丢最旧）：写进**当前会话**的线程
-/// （M3 会话切片化，经 amend 原位替换活跃会话）。
+/// （M3 会话切片化，经 amend 原位替换活跃会话）。`at` 戳在这里统一盖——
+/// 构造点不必各自取钟，时间线的时间与时长口径单一。
 pub fn push_ai_card(model : Model, card : AiCard) -> Model {
   let session = model.ai_sessions.current()
   let cards = session.cards
-  cards.push(AiCard::{ ..card, seq: session.card_seq, })
+  cards.push(
+    AiCard::{ ..card, seq: session.card_seq, at: civil_seconds(model.clock), },
+  )
   while cards.length() > AI_CARD_LIMIT {
     ignore(cards.remove(0))
   }
   model.ai_sessions.amend({ ..session, cards, card_seq: session.card_seq + 1, })
-  model
+  // 新内容到达：跟随态下强制时间线贴底（对白转录；非跟随态不动）
+  follow_transcript(model)
 }
 
 // ============================================================================
@@ -946,6 +968,15 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.workspace.code" => update_pure(model, SetPerspective(PsCode))
     "studio.workspace.preview" => update_pure(model, SetWorkSpace(WsPreview))
     "studio.pane.split" => update_pure(model, SetSplitRatio(0.55))
+    "studio.left.toggle" =>
+      update_pure(
+        model,
+        SetLeftView(if model.left_view is LeftHidden {
+          LeftTree
+        } else {
+          LeftHidden
+        }),
+      )
     "studio.pane.live" => update_pure(model, TogglePaneLive)
     "studio.pane.blocks" => update_pure(model, TogglePaneBlocks)
     "studio.left.tree" => update_pure(model, SetLeftView(LeftTree))
@@ -974,6 +1005,11 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     // AI 落点显式 move-to（M2）：落底栏 = 右栏换回检查器 + 展开底栏选中
     // AI 页签（「把输入面放到某处」必须同时让它可见）；落右栏 = 停靠。
     // 不再有循环命令。composer 的 ghost 按钮也走这两条命令。
+    // 会话管理（M6,对白转录）：命令面板与键盘同走 run_studio_command
+    "studio.ai.new_session" =>
+      update_pure(model, AiSessionOp(AiSessionCreate(civil_seconds(model.clock))))
+    "studio.ai.search" => update_pure(model, ToggleAiSessionSearch)
+
     "studio.ai.bar" => {
       let (next, _) = update_pure(model, SetRightView(RvContext))
       update_pure(next, SetBottomTab(BtAi))

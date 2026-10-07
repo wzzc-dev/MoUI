@@ -253,6 +253,9 @@ pub(all) enum IconName {
   Focus
   Columns
   Sidebar
+  Pin
+  Chat
+  PanelBottom
 } derive(Eq, Debug, ToJson)
 
 ///|

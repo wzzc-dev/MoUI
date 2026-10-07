@@ -116,10 +116,14 @@ pub fn kernel_codec_mbt() -> String {
     #|      ])
     #|    @ir.Break => encode_stmt_node(stmt, "break", [])
     #|    @ir.Return(expr) =>
-    #|      encode_stmt_node(stmt, "return", match expr {
-    #|        Some(value) => [("expr", encode_expr(value))]
-    #|        None => []
-    #|      })
+    #|      encode_stmt_node(
+    #|        stmt,
+    #|        "return",
+    #|        match expr {
+    #|          Some(value) => [("expr", encode_expr(value))]
+    #|          None => []
+    #|        },
+    #|      )
     #|    @ir.Call(name, args) =>
     #|      encode_stmt_node(stmt, "call", [
     #|        ("name", Json::string(name)),
@@ -202,7 +206,10 @@ pub fn kernel_codec_mbt() -> String {
     #|    @ir.BoolLit(flag) => expr_node("bool", [("v", Json::boolean(flag))])
     #|    @ir.Var(name) => expr_node("var", [("v", Json::string(name))])
     #|    @ir.FieldAccess(base, field) =>
-    #|      expr_node("field_access", [("base", encode_expr(base)), ("field", Json::string(field))])
+    #|      expr_node("field_access", [
+    #|        ("base", encode_expr(base)),
+    #|        ("field", Json::string(field)),
+    #|      ])
     #|    @ir.ListLit(items) =>
     #|      expr_node("list", [("items", Json::array(items.map(encode_expr)))])
     #|    @ir.Index(base, index) =>
@@ -387,9 +394,10 @@ pub fn kernel_codec_mbt() -> String {
     #|              Some(field_name) =>
     #|                match json_string_field(item, "type") {
     #|                  Some(field_type) =>
-    #|                    struct_fields.push(
-    #|                      @ir.StructField::{ field_name, field_type, },
-    #|                    )
+    #|                    struct_fields.push(@ir.StructField::{
+    #|                      field_name,
+    #|                      field_type,
+    #|                    })
     #|                  None => errors.push(MissingField("structs[].type"))
     #|                }
     #|              None => errors.push(MissingField("structs[].name"))
@@ -632,7 +640,8 @@ pub fn kernel_codec_mbt() -> String {
     #|              for value in values {
     #|                match value {
     #|                  Object(arm_fields) => {
-    #|                    let case_name = match json_string_field(arm_fields, "case") {
+    #|                    let case_name = match
+    #|                      json_string_field(arm_fields, "case") {
     #|                      Some(text) => text
     #|                      None => return Err(MissingField("stmt.arms[].case"))
     #|                    }

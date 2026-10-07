@@ -242,13 +242,14 @@ test "immersive mode merges the title bar into one band" {
       brand.frame.origin.x.to_string(),
     )
   }
-  // 非沉浸态不该有这段让位（Web 没有原生信号灯，多出来的左边距只是浪费）
+  // 非沉浸态没有原生信号灯,但左栏开关（两种模式都在）排在品牌之前——
+  // brand 应紧跟开关之后（≥ 开关区 44）,而不是保留 78 的信号灯让位
   guard shell_find_text(plain_commands, "MoUI Studio") is Some(plain_brand) else {
     fail("brand missing in plain mode")
   }
-  if plain_brand.frame.origin.x > TRAFFIC_LIGHT_INSET - 1.0 {
+  if plain_brand.frame.origin.x < 44.0 || plain_brand.frame.origin.x > 120.0 {
     fail(
-      "plain top bar should not reserve the traffic-light inset: x=" +
+      "plain brand should sit right after the left-panel toggle: x=" +
       plain_brand.frame.origin.x.to_string(),
     )
   }

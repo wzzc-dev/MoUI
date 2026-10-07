@@ -595,10 +595,7 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|///|
     #|/// 规范类型 id 判定（codec/语义层共用）：id 必须已在词表内。
     #|pub fn is_struct_field_type_id(id : String) -> Bool {
-    #|  id == "text" ||
-    #|  id == "number" ||
-    #|  id == "int" ||
-    #|  id == "bool"
+    #|  id == "text" || id == "number" || id == "int" || id == "bool"
     #|}
     #|
   source
@@ -996,6 +993,7 @@ pub fn kernel_studio_lang_parser_mbt() -> String {
     #|
     #|///|
     #|/// 只解析不运行：编辑器实时语法检查。
+    #|
     #|///|
     #|/// 解析单表达式文本（全局变量初始值用）：失败给结构化错误。
     #|pub fn parse_expression_text(
@@ -1090,18 +1088,19 @@ pub fn kernel_studio_lang_parser_mbt() -> String {
     #|      self.fail_expect_keyword(":")
     #|    }
     #|    let field_type = match self.peek().kind {
-    #|      Ident(text) => match struct_field_type_id(text) {
-    #|        Some(id) => {
-    #|          ignore(self.advance())
-    #|          id
+    #|      Ident(text) =>
+    #|        match struct_field_type_id(text) {
+    #|          Some(id) => {
+    #|            ignore(self.advance())
+    #|            id
+    #|          }
+    #|          None =>
+    #|            self.fail(
+    #|              TypeMismatch,
+    #|              "字段类型",
+    #|              "文本/数字/整数/真假，遇到 「\{text}」",
+    #|            )
     #|        }
-    #|        None =>
-    #|          self.fail(
-    #|            TypeMismatch,
-    #|            "字段类型",
-    #|            "文本/数字/整数/真假，遇到 「\{text}」",
-    #|          )
-    #|      }
     #|      _ =>
     #|        self.fail(
     #|          TypeMismatch,
@@ -1404,7 +1403,9 @@ pub fn kernel_studio_lang_parser_mbt() -> String {
     #|  let arms : Array[@ir.MatchArm] = []
     #|  while self.at_keyword(self.keywords.case_kw) {
     #|    ignore(self.advance())
-    #|    let case_name = self.parse_name("「\{self.keywords.case_kw}」后应跟情况名")
+    #|    let case_name = self.parse_name(
+    #|      "「\{self.keywords.case_kw}」后应跟情况名",
+    #|    )
     #|    let arm_body = self.parse_stmts_until([
     #|      self.keywords.case_kw,
     #|      self.keywords.else_kw,
@@ -1651,7 +1652,8 @@ pub fn kernel_studio_lang_parser_mbt() -> String {
     #|            ignore(self.advance())
     #|            text
     #|          }
-    #|          _ => self.fail(UnexpectedToken, "字段访问 . 后应为字段名", "")
+    #|          _ =>
+    #|            self.fail(UnexpectedToken, "字段访问 . 后应为字段名", "")
     #|        }
     #|        result = @ir.FieldAccess(result, field)
     #|      }

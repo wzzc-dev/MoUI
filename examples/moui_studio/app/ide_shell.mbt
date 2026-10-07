@@ -65,10 +65,26 @@ pub fn topbar_actions_width(model : Model, t : @i18n.Translator) -> Double {
   topbar_chip_bound(run_label(model, t), 56.0) +
   topbar_chip_bound(text(t, "app.run.step"), 48.0) +
   topbar_chip_bound(text(t, "app.topbar.compile"), 72.0) +
+  // 图标簇：撤销/重做/搜索（32）+ 底栏/右栏开关（28）+ 设置（28）
   TOPBAR_ICON_BUTTON_WIDTH * 3.0 +
-  28.0 +
-  TOPBAR_ACTION_GAP * 6.0 +
+  28.0 * 3.0 +
+  TOPBAR_ACTION_GAP * 8.0 +
   TOPBAR_ACTIONS_SAFETY
+}
+
+///|
+/// 左上角左栏开关占据的宽度（VS Code 口径:信号灯后的第一个窗控钮）。
+/// 拖拽区必须从它右侧开始,否则点开关会变成拖窗口（原生无边框窗口实测）。
+pub const TOPBAR_LEFT_TOGGLE_ZONE : Double = 34.0
+
+///|
+/// 拖拽区起点（绝对 x）：顶栏行起点 + 左栏开关带宽。
+pub fn topbar_drag_x(model : Model) -> Double {
+  (if model.immersive {
+    TRAFFIC_LIGHT_INSET
+  } else {
+    10.0
+  }) + TOPBAR_LEFT_TOGGLE_ZONE
 }
 
 ///|
@@ -86,7 +102,11 @@ pub fn topbar_drag_width(
   t : @i18n.Translator,
   width : Double,
 ) -> Double {
-  (width - 10.0 - topbar_actions_width(model, t)).max(TRAFFIC_LIGHT_INSET)
+  // 从左栏开关右侧到动作簇左缘。左栏开关自身在拖拽区**左侧**——
+  // 拖拽区盖住它,点击就会变成拖窗口。
+  (width - 10.0 - TOPBAR_LEFT_TOGGLE_ZONE - topbar_actions_width(model, t)).max(
+    0.0,
+  )
 }
 
 ///|
@@ -111,7 +131,23 @@ pub fn ide_top_bar(
     WsPreview => text(t, "app.ws.preview")
     WsEmpty => text(t, "app.crumb.empty")
   }
-  let left = topbar_brand(text(t, "app.title"), model.dirty, crumb)
+  // 左上角：左栏收起/展开（VS Code 的侧栏开关口径,信号灯后第一钮）。
+  let left = @views.row(
+    [
+      icon_button(
+        Sidebar,
+        text(t, "app.topbar.left_panel"),
+        !(model.left_view is LeftHidden),
+        StudioCommandRun("studio.left.toggle"),
+        28.0,
+        26.0,
+        14.0,
+      ),
+      topbar_brand(text(t, "app.title"), model.dirty, crumb),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
   // 动作簇：24pt 紧凑芯片（IDEA/VSCode 标题栏口径）。运行是唯一主行动作
   // （强调色填充）；单步仅在活运行（含闸门暂停）时可用——编译轨不支持单步，
   // 芯片仍显示但禁用（诚实反映「本轨没有单步」而不是藏起来）。
@@ -179,6 +215,25 @@ pub fn ide_top_bar(
       text(t, "app.settings.title"),
       model.settings_open,
       ToggleSettings,
+      28.0,
+      26.0,
+      14.0,
+    ),
+    // 右上角：底栏收起/展开 + 右栏收起/展开（VS Code 的两个布局开关口径）
+    icon_button(
+      PanelBottom,
+      text(t, "app.topbar.bottom_panel"),
+      model.bottom_open,
+      StudioCommandRun("studio.bottom.toggle"),
+      28.0,
+      26.0,
+      14.0,
+    ),
+    icon_button(
+      Columns,
+      text(t, "app.topbar.right_panel"),
+      !(model.right_view is RvHidden),
+      StudioCommandRun("studio.right.toggle"),
       28.0,
       26.0,
       14.0,
@@ -1012,10 +1067,14 @@ pub fn ide_bottom_bar(
     padding=0.0,
   )
   if !model.bottom_open {
+    // 收起 = **整个底栏隐藏**（页签行也不留——重开入口在标题栏右上的底栏
+    // 开关 / J 键 / 命令面板,VS Code 面板口径）。零高容器必须显式给底色,
+    // 否则回落环境刷子在缝隙里露一条（本仓反复踩的 ambient 坑）。
     return @views.container(
-      @views.column([hairline(), head], spacing=0.0),
+      @views.text("", width=1.0, height=0.0),
       background=ide_panel(),
       width~,
+      height=0.0,
       padding=0.0,
     )
   }

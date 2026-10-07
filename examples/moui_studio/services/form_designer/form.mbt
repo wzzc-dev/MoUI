@@ -158,12 +158,3 @@ pub fn form_model_eq(a : FormModel, b : FormModel) -> Bool {
   }
   true
 }
-
-///|
-fn text_to_chars(text : String) -> Array[Char] {
-  let chars : Array[Char] = []
-  for c in text {
-    chars.push(c)
-  }
-  chars
-}

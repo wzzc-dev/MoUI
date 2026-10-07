@@ -32,6 +32,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.ai.key",
         GeneratedI18nMessage::Text("API key (session memory only)"),
       ),
+      ("app.ai.pin", GeneratedI18nMessage::Text("Pin")),
       ("blocks.end", GeneratedI18nMessage::Text("end")),
       ("diff.added", GeneratedI18nMessage::Text("Added")),
       ("op.command", GeneratedI18nMessage::Text("command")),
@@ -57,6 +58,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("builtin.ask", GeneratedI18nMessage::Text("ask")),
       ("app.ai.model", GeneratedI18nMessage::Text("Model")),
       ("app.ai.title", GeneratedI18nMessage::Text("AI proposals")),
+      ("app.ai.unpin", GeneratedI18nMessage::Text("Unpin")),
       ("app.ctx.data", GeneratedI18nMessage::Text("Data")),
       ("app.ctx.deps", GeneratedI18nMessage::Text("Dependencies")),
       ("app.ctx.gone", GeneratedI18nMessage::Text("missing")),
@@ -86,6 +88,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("op.condition", GeneratedI18nMessage::Text("condition")),
       ("app.ai.accept", GeneratedI18nMessage::Text("Accept")),
       ("app.ai.anchor", GeneratedI18nMessage::Text("Cycle anchor")),
+      ("app.ai.copied", GeneratedI18nMessage::Text("Copied to clipboard")),
       ("app.ai.prompt", GeneratedI18nMessage::Text("Describe the app you want")),
       ("app.ai.reason", GeneratedI18nMessage::Text("Summary")),
       ("app.ai.reject", GeneratedI18nMessage::Text("Reject")),
@@ -275,6 +278,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ai.fold_idle", GeneratedI18nMessage::Text("Agent thread")),
       ("app.ai.mode.edit", GeneratedI18nMessage::Text("Edit")),
+      ("app.ai.time.days", GeneratedI18nMessage::Text("{n}d ago")),
       ("app.audit.reject", GeneratedI18nMessage::Text("Reject")),
       ("app.block.delete", GeneratedI18nMessage::Text("Delete statement")),
       ("app.bottom.audit", GeneratedI18nMessage::Text("Run audit")),
@@ -354,6 +358,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("err.unknown_name", GeneratedI18nMessage::Text("Unknown name: {a}")),
       ("app.ai.anchor.bar", GeneratedI18nMessage::Text("Bottom bar")),
+      ("app.ai.card.error", GeneratedI18nMessage::Text("Something went wrong")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("Change preview")),
       (
         "app.ai.no_context",
@@ -362,6 +367,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.ai.pill_label", GeneratedI18nMessage::Text("AI assistant")),
+      ("app.ai.time.hours", GeneratedI18nMessage::Text("{n}h ago")),
+      ("app.ai.work.trace", GeneratedI18nMessage::Text("Worked for {duration}")),
       ("app.audit.confirm", GeneratedI18nMessage::Text("Confirm")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("Blocks canvas")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("Expand bottom bar")),
@@ -429,6 +436,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.type_mismatch",
         GeneratedI18nMessage::Text("{a} type mismatch (expected {b})"),
       ),
+      ("app.ai.action.copy", GeneratedI18nMessage::Text("Copy")),
+      ("app.ai.action.edit", GeneratedI18nMessage::Text("Edit")),
       ("app.ai.anchor.left", GeneratedI18nMessage::Text("Bottom left")),
       ("app.ai.explanation", GeneratedI18nMessage::Text("Explanation")),
       (
@@ -521,6 +530,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Expected {a} here, found {b}"),
       ),
       ("event.on_broadcast", GeneratedI18nMessage::Text("Broadcast")),
+      ("app.ai.action.retry", GeneratedI18nMessage::Text("Retry")),
       ("app.ai.anchor.right", GeneratedI18nMessage::Text("Bottom right")),
       ("app.ai.card.applied", GeneratedI18nMessage::Text("Applied")),
       ("app.ai.card.explain", GeneratedI18nMessage::Text("Explanation")),
@@ -528,6 +538,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.ai.fold_pending",
         GeneratedI18nMessage::Text("Agent · {count} to audit"),
       ),
+      ("app.ai.group.pinned", GeneratedI18nMessage::Text("Pinned")),
       (
         "app.ai.hero.explain",
         GeneratedI18nMessage::Text("Explain on_button_click"),
@@ -537,7 +548,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Add history to random roll call"),
       ),
       ("app.ai.mode.explain", GeneratedI18nMessage::Text("Explain")),
+      ("app.ai.pending_chip", GeneratedI18nMessage::Text("{count} to review")),
       ("app.ai.pill_pending", GeneratedI18nMessage::Text("To review")),
+      (
+        "app.ai.posture.gate",
+        GeneratedI18nMessage::Text("Gate · review each proposal"),
+      ),
+      ("app.ai.time.minutes", GeneratedI18nMessage::Text("{n}m ago")),
       ("app.audit.confirmed", GeneratedI18nMessage::Text("confirmed")),
       (
         "app.audit.gate_hint",
@@ -660,6 +677,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("No proposal history yet"),
       ),
       ("app.ai.mode.generate", GeneratedI18nMessage::Text("Create")),
+      ("app.ai.scroll_bottom", GeneratedI18nMessage::Text("Scroll to bottom")),
+      ("app.ai.time.just_now", GeneratedI18nMessage::Text("just now")),
+      ("app.ai.work.duration", GeneratedI18nMessage::Text("{m}m {s}s")),
       (
         "app.audit.compile_ok",
         GeneratedI18nMessage::Text("Real compile succeeded"),
@@ -766,6 +786,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.ai.hero.roll_call",
         GeneratedI18nMessage::Text("Create a roll-call app"),
       ),
+      ("app.ai.session.delete", GeneratedI18nMessage::Text("Delete session")),
+      (
+        "app.ai.store.bad_json",
+        GeneratedI18nMessage::Text(
+          "Session store is not valid JSON; kept current sessions",
+        ),
+      ),
       (
         "app.audit.confirm_all",
         GeneratedI18nMessage::Text("Confirm all side effects"),
@@ -865,6 +892,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.stmt.tpl.set_text", GeneratedI18nMessage::Text("set_text")),
       ("app.stmt.tpl.stop_all", GeneratedI18nMessage::Text("Stop all")),
+      ("app.topbar.left_panel", GeneratedI18nMessage::Text("Left panel")),
       ("app.tree.group.window", GeneratedI18nMessage::Text("Window")),
       (
         "err.duplicate_control",
@@ -973,6 +1001,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.stmt.palette.title", GeneratedI18nMessage::Text("Insert statement")),
       ("app.stmt.tpl.broadcast", GeneratedI18nMessage::Text("Broadcast")),
       ("app.stmt.tpl.set_index", GeneratedI18nMessage::Text("Set element")),
+      ("app.topbar.right_panel", GeneratedI18nMessage::Text("Right panel")),
       (
         "app.track.compile_note",
         GeneratedI18nMessage::Text(
@@ -995,6 +1024,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.too_many_variables",
         GeneratedI18nMessage::Text("Variable limit exceeded"),
+      ),
+      (
+        "app.ai.store.bad_format",
+        GeneratedI18nMessage::Text(
+          "Session store format unrecognized; kept current sessions",
+        ),
       ),
       (
         "app.block.selected_none",
@@ -1090,6 +1125,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.terminal.input_hint",
         GeneratedI18nMessage::Text("Type a command…"),
       ),
+      ("app.topbar.bottom_panel", GeneratedI18nMessage::Text("Bottom panel")),
       ("app.tree.create.control", GeneratedI18nMessage::Text("New control")),
       (
         "app.tree.create.handler",
@@ -1104,6 +1140,19 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("String is missing its closing quote"),
+      ),
+      ("app.ai.session.new_short", GeneratedI18nMessage::Text("New")),
+      (
+        "app.ai.store.bad_payload",
+        GeneratedI18nMessage::Text(
+          "Session store is corrupted; kept current sessions",
+        ),
+      ),
+      (
+        "app.ai.store.bad_version",
+        GeneratedI18nMessage::Text(
+          "Session store was written by a newer version; kept current sessions",
+        ),
       ),
       (
         "app.audit.compile_failed",
@@ -1216,6 +1265,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.proposal_readability",
         GeneratedI18nMessage::Text("Readability issue: {target}"),
       ),
+      (
+        "app.ai.search.placeholder",
+        GeneratedI18nMessage::Text("Search sessions"),
+      ),
       ("app.blocks.cat.block.flow", GeneratedI18nMessage::Text("Flow")),
       (
         "app.command.bottom.toggle",
@@ -1313,6 +1366,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Proposal JSON is invalid"),
       ),
       ("app.blocks.cat.block.event", GeneratedI18nMessage::Text("Events")),
+      (
+        "app.command.ai.new_session",
+        GeneratedI18nMessage::Text("New AI session"),
+      ),
       (
         "app.command.bottom.console",
         GeneratedI18nMessage::Text("Bottom bar: console"),
@@ -1463,6 +1520,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.unknown_handler_control",
         GeneratedI18nMessage::Text("Handler points to missing control: {name}"),
       ),
+      (
+        "app.ai.group.default_project",
+        GeneratedI18nMessage::Text("Default project"),
+      ),
       ("app.blocks.cat.block.command", GeneratedI18nMessage::Text("Commands")),
       (
         "app.command.audit.settle_all",
@@ -1522,6 +1583,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.blocks.cat.block.variable", GeneratedI18nMessage::Text("Variables")),
       (
+        "app.command.ai.dismiss_rename",
+        GeneratedI18nMessage::Text("Dismiss session rename"),
+      ),
+      (
         "app.command.control.duplicate",
         GeneratedI18nMessage::Text("Duplicate selected control"),
       ),
@@ -1556,6 +1621,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.proposal_bad_control_kind",
         GeneratedI18nMessage::Text("Unknown control kind: {kind}"),
+      ),
+      (
+        "app.command.ai.search_sessions",
+        GeneratedI18nMessage::Text("Search AI sessions"),
       ),
       (
         "app.command.block.cancel_value",
@@ -1673,6 +1742,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("blocks.if", GeneratedI18nMessage::Text("如果")),
       ("op.assign", GeneratedI18nMessage::Text("赋值")),
       ("app.ai.key", GeneratedI18nMessage::Text("密钥（仅本机内存）")),
+      ("app.ai.pin", GeneratedI18nMessage::Text("置顶")),
       ("blocks.end", GeneratedI18nMessage::Text("结束")),
       ("diff.added", GeneratedI18nMessage::Text("新增")),
       ("op.command", GeneratedI18nMessage::Text("命令")),
@@ -1698,6 +1768,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("builtin.ask", GeneratedI18nMessage::Text("询问")),
       ("app.ai.model", GeneratedI18nMessage::Text("模型名")),
       ("app.ai.title", GeneratedI18nMessage::Text("AI 提案")),
+      ("app.ai.unpin", GeneratedI18nMessage::Text("取消置顶")),
       ("app.ctx.data", GeneratedI18nMessage::Text("数据")),
       ("app.ctx.deps", GeneratedI18nMessage::Text("依赖")),
       ("app.ctx.gone", GeneratedI18nMessage::Text("已不存在")),
@@ -1727,6 +1798,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("op.condition", GeneratedI18nMessage::Text("条件")),
       ("app.ai.accept", GeneratedI18nMessage::Text("采纳")),
       ("app.ai.anchor", GeneratedI18nMessage::Text("切换锚点")),
+      ("app.ai.copied", GeneratedI18nMessage::Text("已复制到剪贴板")),
       ("app.ai.prompt", GeneratedI18nMessage::Text("描述你想要的应用")),
       ("app.ai.reason", GeneratedI18nMessage::Text("摘要")),
       ("app.ai.reject", GeneratedI18nMessage::Text("拒绝")),
@@ -1911,6 +1983,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ai.fold_idle", GeneratedI18nMessage::Text("Agent 线程")),
       ("app.ai.mode.edit", GeneratedI18nMessage::Text("修改")),
+      ("app.ai.time.days", GeneratedI18nMessage::Text("{n} 天前")),
       ("app.audit.reject", GeneratedI18nMessage::Text("拒绝")),
       ("app.block.delete", GeneratedI18nMessage::Text("删除语句")),
       ("app.bottom.audit", GeneratedI18nMessage::Text("运行审计")),
@@ -1989,6 +2062,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("err.unknown_name", GeneratedI18nMessage::Text("未知名字：{a}")),
       ("app.ai.anchor.bar", GeneratedI18nMessage::Text("底栏")),
+      ("app.ai.card.error", GeneratedI18nMessage::Text("出错了")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("变更预览")),
       (
         "app.ai.no_context",
@@ -1997,6 +2071,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.ai.pill_label", GeneratedI18nMessage::Text("AI 助手")),
+      ("app.ai.time.hours", GeneratedI18nMessage::Text("{n} 小时前")),
+      ("app.ai.work.trace", GeneratedI18nMessage::Text("已工作 {duration}")),
       ("app.audit.confirm", GeneratedI18nMessage::Text("确认")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("积木画布")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("展开底栏")),
@@ -2049,6 +2125,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.type_mismatch",
         GeneratedI18nMessage::Text("{a} 类型不匹配（期望 {b}）"),
       ),
+      ("app.ai.action.copy", GeneratedI18nMessage::Text("复制")),
+      ("app.ai.action.edit", GeneratedI18nMessage::Text("编辑")),
       ("app.ai.anchor.left", GeneratedI18nMessage::Text("左下角")),
       ("app.ai.explanation", GeneratedI18nMessage::Text("讲解")),
       (
@@ -2144,6 +2222,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("这里应是「{a}」，实际是 {b}"),
       ),
       ("event.on_broadcast", GeneratedI18nMessage::Text("广播消息")),
+      ("app.ai.action.retry", GeneratedI18nMessage::Text("重发")),
       ("app.ai.anchor.right", GeneratedI18nMessage::Text("右下角")),
       ("app.ai.card.applied", GeneratedI18nMessage::Text("已应用")),
       ("app.ai.card.explain", GeneratedI18nMessage::Text("讲解")),
@@ -2151,6 +2230,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.ai.fold_pending",
         GeneratedI18nMessage::Text("Agent 待审计 {count}"),
       ),
+      ("app.ai.group.pinned", GeneratedI18nMessage::Text("置顶")),
       (
         "app.ai.hero.explain",
         GeneratedI18nMessage::Text("解释 on_按钮_被单击"),
@@ -2160,7 +2240,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("给随机点名加历史记录"),
       ),
       ("app.ai.mode.explain", GeneratedI18nMessage::Text("解释")),
+      ("app.ai.pending_chip", GeneratedI18nMessage::Text("待审计 {count}")),
       ("app.ai.pill_pending", GeneratedI18nMessage::Text("待审计")),
+      (
+        "app.ai.posture.gate",
+        GeneratedI18nMessage::Text("闸门 · 逐条采纳"),
+      ),
+      ("app.ai.time.minutes", GeneratedI18nMessage::Text("{n} 分前")),
       ("app.audit.confirmed", GeneratedI18nMessage::Text("已确认")),
       (
         "app.audit.gate_hint",
@@ -2282,6 +2368,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("还没有提案历史"),
       ),
       ("app.ai.mode.generate", GeneratedI18nMessage::Text("生成")),
+      ("app.ai.scroll_bottom", GeneratedI18nMessage::Text("回到底部")),
+      ("app.ai.time.just_now", GeneratedI18nMessage::Text("刚刚")),
+      ("app.ai.work.duration", GeneratedI18nMessage::Text("{m} 分 {s} 秒")),
       ("app.audit.compile_ok", GeneratedI18nMessage::Text("真编译通过")),
       (
         "app.audit.run_failed",
@@ -2380,6 +2469,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.ai.hero.roll_call",
         GeneratedI18nMessage::Text("生成一个班级点名册 App"),
       ),
+      ("app.ai.session.delete", GeneratedI18nMessage::Text("删除会话")),
+      (
+        "app.ai.store.bad_json",
+        GeneratedI18nMessage::Text(
+          "会话存储文件不是合法 JSON，已保留当前会话",
+        ),
+      ),
       (
         "app.audit.confirm_all",
         GeneratedI18nMessage::Text("确认全部副作用"),
@@ -2474,6 +2570,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.stmt.tpl.set_text", GeneratedI18nMessage::Text("设置文本")),
       ("app.stmt.tpl.stop_all", GeneratedI18nMessage::Text("停止全部")),
+      ("app.topbar.left_panel", GeneratedI18nMessage::Text("左栏")),
       ("app.tree.group.window", GeneratedI18nMessage::Text("窗体")),
       (
         "err.duplicate_control",
@@ -2579,6 +2676,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.stmt.palette.title", GeneratedI18nMessage::Text("插入语句")),
       ("app.stmt.tpl.broadcast", GeneratedI18nMessage::Text("广播消息")),
       ("app.stmt.tpl.set_index", GeneratedI18nMessage::Text("元素赋值")),
+      ("app.topbar.right_panel", GeneratedI18nMessage::Text("右栏")),
       (
         "app.track.compile_note",
         GeneratedI18nMessage::Text(
@@ -2601,6 +2699,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.too_many_variables",
         GeneratedI18nMessage::Text("变量超出预算"),
+      ),
+      (
+        "app.ai.store.bad_format",
+        GeneratedI18nMessage::Text(
+          "会话存储文件格式不认识，已保留当前会话",
+        ),
       ),
       ("app.block.selected_none", GeneratedI18nMessage::Text("未选中积木")),
       (
@@ -2690,6 +2794,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.stmt.tpl.append_row", GeneratedI18nMessage::Text("追加行")),
       ("app.templates.roll_call", GeneratedI18nMessage::Text("班级点名册")),
       ("app.terminal.input_hint", GeneratedI18nMessage::Text("输入命令…")),
+      ("app.topbar.bottom_panel", GeneratedI18nMessage::Text("底栏")),
       ("app.tree.create.control", GeneratedI18nMessage::Text("新建控件")),
       (
         "app.tree.create.handler",
@@ -2704,6 +2809,19 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.unterminated_string",
         GeneratedI18nMessage::Text("字符串缺少结束引号"),
+      ),
+      ("app.ai.session.new_short", GeneratedI18nMessage::Text("新建")),
+      (
+        "app.ai.store.bad_payload",
+        GeneratedI18nMessage::Text(
+          "会话存储文件内容损坏，已保留当前会话",
+        ),
+      ),
+      (
+        "app.ai.store.bad_version",
+        GeneratedI18nMessage::Text(
+          "会话存储文件版本过新，已保留当前会话",
+        ),
       ),
       (
         "app.audit.compile_failed",
@@ -2808,6 +2926,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.proposal_readability",
         GeneratedI18nMessage::Text("可读性问题：{target}"),
       ),
+      ("app.ai.search.placeholder", GeneratedI18nMessage::Text("搜索会话")),
       ("app.blocks.cat.block.flow", GeneratedI18nMessage::Text("流程")),
       (
         "app.command.bottom.toggle",
@@ -2910,6 +3029,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("提案 JSON 不合法"),
       ),
       ("app.blocks.cat.block.event", GeneratedI18nMessage::Text("事件")),
+      (
+        "app.command.ai.new_session",
+        GeneratedI18nMessage::Text("新建 AI 会话"),
+      ),
       (
         "app.command.bottom.console",
         GeneratedI18nMessage::Text("底栏：Console"),
@@ -3066,6 +3189,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "err.unknown_handler_control",
         GeneratedI18nMessage::Text("子程序指向不存在的控件：{name}"),
       ),
+      (
+        "app.ai.group.default_project",
+        GeneratedI18nMessage::Text("默认工程"),
+      ),
       ("app.blocks.cat.block.command", GeneratedI18nMessage::Text("命令")),
       (
         "app.command.audit.settle_all",
@@ -3128,6 +3255,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.blocks.cat.block.variable", GeneratedI18nMessage::Text("变量")),
       (
+        "app.command.ai.dismiss_rename",
+        GeneratedI18nMessage::Text("放弃重命名会话"),
+      ),
+      (
         "app.command.control.duplicate",
         GeneratedI18nMessage::Text("复制选中控件"),
       ),
@@ -3159,6 +3290,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "err.proposal_bad_control_kind",
         GeneratedI18nMessage::Text("未知控件类型：{kind}"),
+      ),
+      (
+        "app.command.ai.search_sessions",
+        GeneratedI18nMessage::Text("搜索 AI 会话"),
       ),
       (
         "app.command.block.cancel_value",

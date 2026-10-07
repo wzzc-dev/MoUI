@@ -1535,7 +1535,7 @@ test "code view defaults to moonbit appearance showing generated source" {
   }
   // 逆解析链仍闭合：生成源可被积木逆解析器认领（M5-5a 契约的外观侧兑现）
   let generated = @export.generate_source(model.program)
-  let parsed = @blocks_code.parse_generated_source(
+  let parsed = @app.parse_generated_source(
     generated.handlers[0].source,
     generated.handlers[0].stmt_lines,
   )
@@ -1768,7 +1768,7 @@ test "ai perspective walks prompt to proposal to accept with isolated sessions" 
   // 草稿被消费
   assert_eq(accepted.ai_sessions.current().prompt_draft, "")
   // 多会话互不串线：新建会话是空的，切回原会话内容原样在
-  let created = apply(accepted, AiSessionOp(AiSessionCreate))
+  let created = apply(accepted, AiSessionOp(AiSessionCreate(0)))
   assert_eq(created.ai_sessions.count(), 2)
   assert_eq(created.ai_sessions.current().cards.length(), 0)
   assert_eq(created.ai_sessions.current().proposal_history.length(), 0)
@@ -2072,6 +2072,7 @@ test "ai center composer centers when session is empty" {
     settled: false,
     settled_note: "",
     seq: 0,
+    at: 0,
   })
   assert_eq(with_card.ai_sessions.current().cards.length(), 1)
 }

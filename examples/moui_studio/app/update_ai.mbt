@@ -1,31 +1,59 @@
 ///|
 /// 「发送」按当前模式分流到既有通道——模式只改**入口路由**，不新增
 /// 执行路径（提案仍走 proposals 校验链，讲解仍是确定性函数）。
+///
+/// 提交是**结构性事件**：先给当前会话盖戳（默认名置题 + 工程戳 + updated
+/// 时间戳），再进模式路由——草稿键入不经过这里，列表排序不随打字抖动。
 fn composer_run(model : Model) -> (Model, @moui.Effect[Msg]) {
-  match model.composer_mode {
+  let stamped = stamp_session_submit(model)
+  // 用户提问进时间线（对白转录）：气泡卡在路由前推送——无论走哪条模式，
+  // 「用户说了什么」都留下可审计的记录。空 prompt 不推（没有可回显的内容）。
+  let prompt = stamped.ai_sessions.current().prompt_draft
+  let with_prompt = if prompt != "" {
+    push_ai_card(
+      stamped,
+      AiCard::{
+        kind: CardUserPrompt,
+        title: "",
+        body: prompt,
+        steps: [],
+        steps_done: 0,
+        progress: 0,
+        diff_lines: [],
+        settled: true,
+        settled_note: "",
+        seq: 0,
+        at: 0,
+      },
+    )
+  } else {
+    stamped
+  }
+  mark_ai_sessions_dirty(with_prompt)
+  match with_prompt.composer_mode {
     // 解释需要「当前子程序」才有话说：没选中就先选第一个子程序
     // （与左栏点选同一语义），否则讲解恒为空——点了没反应。
     ComposeExplain => {
-      let targeted = if current_handler(model) is None &&
-        model.program.handlers.length() > 0 {
-        let first = model.program.handlers[0]
+      let targeted = if current_handler(with_prompt) is None &&
+        with_prompt.program.handlers.length() > 0 {
+        let first = with_prompt.program.handlers[0]
         update_pure(
-          model,
+          with_prompt,
           SelectHandler(handler_key(first.control_name, first.event.tag())),
         )
       } else {
-        (model, @moui.Effect::none())
+        (with_prompt, @moui.Effect::none())
       }
       update_pure(targeted.0, ExplainHandler)
     }
-    ComposeRepair => update_pure(model, RestoreCodeDraft)
+    ComposeRepair => update_pure(with_prompt, RestoreCodeDraft)
     // 生成 = 以空程序为基底的修改：清空控件与子程序让提案从零重建，
     // 走的还是同一个 proposals 校验链（不是「另一条生成通道」）。
     ComposeGenerate => {
       let cleared = {
-        ..model,
+        ..with_prompt,
         program: @ir.StudioProgram::{
-          ..model.program,
+          ..with_prompt.program,
           controls: [],
           handlers: [],
           functions: [],
@@ -34,8 +62,78 @@ fn composer_run(model : Model) -> (Model, @moui.Effect[Msg]) {
       }
       update_pure(cleared, GenerateProposal)
     }
-    ComposeEdit => update_pure(model, GenerateProposal)
+    ComposeEdit => update_pure(with_prompt, GenerateProposal)
   }
+}
+
+///|
+/// 提交盖戳：默认名（「会话 N」形态）的会话以 prompt 首行置题（用户改过
+/// 的名字不覆盖）；工程戳 = active_project 的 module_name（无工程保持
+/// 原值）；updated = 当前墙钟。
+fn stamp_session_submit(model : Model) -> Model {
+  let session = model.ai_sessions.current()
+  let project = match active_project_of(model) {
+    Some(record) => record.module_name
+    None => session.project
+  }
+  let title = if is_default_session_title(session.title) {
+    session_title_from_prompt(session.prompt_draft, session.title)
+  } else {
+    session.title
+  }
+  model.ai_sessions.amend({
+    ..session,
+    title,
+    project,
+    updated: civil_seconds(model.clock),
+  })
+  model
+}
+
+///|
+/// 默认名形态判定（「会话 N」，N 全为数字）：只有它会被提交置题覆盖。
+/// 用户改名成「会话 3」的边缘情况接受被覆盖——自动命名与手动命名的
+/// 区分不做第二个状态位，判定保持单一来源。
+fn is_default_session_title(title : String) -> Bool {
+  if !title.has_prefix("会话 ") {
+    return false
+  }
+  let rest = title[3:]
+  if rest.length() == 0 {
+    return false
+  }
+  let mut all_digits = true
+  for ch in rest {
+    if !(ch >= '0' && ch <= '9') {
+      all_digits = false
+      break
+    }
+  }
+  all_digits
+}
+
+///|
+/// 从 prompt 首行取会话标题：按字符取前 18 个（中英文混排同一口径），
+/// 空 prompt 保持原名。
+fn session_title_from_prompt(prompt : String, fallback : String) -> String {
+  let mut first_line = ""
+  for line in prompt.split("\n") {
+    first_line = line.trim().to_owned()
+    break
+  }
+  if first_line == "" {
+    return fallback
+  }
+  let buf = StringBuilder()
+  let mut taken = 0
+  for ch in first_line {
+    if taken >= 18 {
+      break
+    }
+    buf.write_char(ch)
+    taken = taken + 1
+  }
+  buf.to_string()
 }
 
 ///|
@@ -107,10 +205,58 @@ fn accept_proposal(model : Model) -> Model {
           true,
         )
         // 采纳回执走 with_notice 单一漏斗（notice 字段 + toast 一处搞定，
-        // 不再 push_toast 与 notice 各写一份）。
-        with_notice(tracked, text(t, "app.toast.proposal_accepted"), false)
+        // 不再 push_toast 与 notice 各写一份）。必须吃进 tracked（审计+最近
+        // 修改之后的状态）——吃进更早的 accepted 会把审计/最近修改整段丢掉。
+        let accepted = with_notice(
+          tracked,
+          text(t, "app.toast.proposal_accepted"),
+          false,
+        )
+        mark_ai_sessions_dirty(accepted)
+        accepted
       }
   }
+}
+
+///|
+/// 会话存储错误本地化（加载失败如实提示,不静默吞掉坏文件）。
+pub fn store_error_text(t : @i18n.Translator, error : @ai.AiStoreError) -> String {
+  match error {
+    @ai.StoreBadJson => text(t, "app.ai.store.bad_json")
+    @ai.StoreBadFormat => text(t, "app.ai.store.bad_format")
+    @ai.StoreBadVersion(_) => text(t, "app.ai.store.bad_version")
+    @ai.StoreBadPayload => text(t, "app.ai.store.bad_payload")
+  }
+}
+
+///|
+/// 会话结构性变化的统一出口：进 outbox 事件,由总线翻译成写盘请求
+/// （未配置存储路径的组合根不注册监听器 → 排空零开销）。
+pub fn mark_ai_sessions_dirty(model : Model) -> Unit {
+  model.outbox.push(EvAiSessionsDirty)
+}
+
+///|
+/// 错误进时间线（对白转录）：解析/校验/网络失败都推一张 CardError 卡——
+/// 给这个卡种类真实的生产推送点，失败在会话流里可见可回溯（decision_bar
+/// 的错误行仍保留给紧凑宿主）。
+fn push_error_card(model : Model, message : String) -> Model {
+  push_ai_card(
+    model,
+    AiCard::{
+      kind: CardError,
+      title: text(translator(model), "app.ai.card.error"),
+      body: message,
+      steps: [],
+      steps_done: 0,
+      progress: 0,
+      diff_lines: [],
+      settled: false,
+      settled_note: "",
+      seq: 0,
+      at: 0,
+    },
+  )
 }
 
 ///|
@@ -119,11 +265,13 @@ fn accept_proposal(model : Model) -> Model {
 /// 这里只负责把「已得到的补全文本」变成待采纳提案。
 pub fn proposal_from_completion(model : Model, completion : String) -> Model {
   match @proposals.decode_proposal(completion) {
-    Err(_) =>
-      {
-        ..model,
-        prompt_error: text(translator(model), "app.status.proposal_invalid"),
-      }
+    Err(_) => {
+      let message = text(translator(model), "app.status.proposal_invalid")
+      push_error_card(
+        { ..model, prompt_error: message },
+        message,
+      )
+    }
     Ok(proposal) => {
       let errors = @proposals.validate_proposal(model.program, proposal)
       let messages : Array[String] = []
@@ -222,6 +370,7 @@ fn push_proposal_thread_card(model : Model, pending : PendingProposal) -> Model 
     settled: false,
     settled_note: "",
     seq: 0,
+    at: 0,
   })
 }
 
@@ -359,8 +508,24 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
+    // 选模式即收起下拉（V4）：脚注从四选一胶囊行切回单芯片
     SetComposerMode(mode) =>
-      Some(({ ..model, composer_mode: mode, }, @moui.Effect::none()))
+      Some(
+        (
+          { ..model, composer_mode: mode, composer_mode_picker_open: false, },
+          @moui.Effect::none(),
+        ),
+      )
+    ToggleComposerModePicker =>
+      Some(
+        (
+          {
+            ..model,
+            composer_mode_picker_open: !model.composer_mode_picker_open,
+          },
+          @moui.Effect::none(),
+        ),
+      )
     // 「发送」按当前模式分流到既有通道——模式只改**入口路由**，
     // 不新增执行路径（提案仍走校验链，讲解仍是确定性函数）。
     ComposerRun => Some(composer_run(model))
@@ -406,7 +571,9 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                 text(t, "app.toast.proposal_rejected"),
                 true,
               )
-              { ..toasted, pending: None, }
+              let rejected = { ..toasted, pending: None, }
+              mark_ai_sessions_dirty(rejected)
+              rejected
             }
           },
           @moui.Effect::none(),
@@ -427,7 +594,10 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         Err(message) =>
           Some(
             (
-              { ..model, prompt_error: message, ai_busy: false, },
+              push_error_card(
+                { ..model, prompt_error: message, ai_busy: false, },
+                message,
+              ),
               @moui.Effect::none(),
             ),
           )
@@ -467,7 +637,219 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
+    // 墙钟刷新：纯状态转移（订阅只在 AI 模式活跃，见 run_subscription）
+    ClockUpdated(clock) => Some(({ ..model, clock, }, @moui.Effect::none()))
+    // 会话存储加载回执（M5）：Success 解码替换（坏文件 with_notice 不静默）；
+    // Failure = 文件尚不存在（首跑常态），保持默认会话不声不响。
+    AiSessionsStoreLoaded(result) =>
+      match result {
+        Success(payload) =>
+          match @ai.decode_ai_sessions(payload) {
+            Ok(container) => {
+              let restored : Model = {
+                ..model,
+                ai_sessions: container,
+                transcript_follow: true,
+                transcript_scroll: @geometry.Point::new(x=0.0, y=0.0),
+              }
+              restored.transcript_scroll_seq = restored.transcript_scroll_seq + 1
+              Some((restored, @moui.Effect::none()))
+            }
+            Err(error) =>
+              Some(
+                (
+                  with_notice(
+                    model,
+                    store_error_text(translator(model), error),
+                    true,
+                  ),
+                  @moui.Effect::none(),
+                ),
+              )
+          }
+        Failure(_) | Cancelled => Some((model, @moui.Effect::none()))
+      }
+    // 写盘回执：失败才提示（保存是常规动作,成功不刷屏）
+    AiSessionsStoreSaved(result) =>
+      match result {
+        Success(_) | Cancelled => Some((model, @moui.Effect::none()))
+        Failure(error) =>
+          Some(
+            (
+              push_toast(model, error.message, true),
+              @moui.Effect::none(),
+            ),
+          )
+      }
+    // 时间线消息动作（对白转录）：编辑 = 回填草稿；重发 = 回填 + 立即重跑
+    // （ComposerRun 语义，不是第二条执行通道）。
+    EditUserPrompt(seq) =>
+      Some((restore_prompt_draft(model, seq), @moui.Effect::none()))
+    RetryUserPrompt(seq) => {
+      let restored = restore_prompt_of_turn(model, seq)
+      if restored.ai_sessions.current().prompt_draft == "" {
+        Some((restored, @moui.Effect::none()))
+      } else {
+        Some(composer_run(restored))
+      }
+    }
+    // 时间线受控滚动（终端同款）：上滚 = 关自动跟随（出现「回到底部」），
+    // 下滚 = 恢复跟随；新内容追加时只在跟随态强制贴底。
+    TranscriptScrolled(offset) => {
+      let was = model.transcript_scroll.y
+      model.transcript_scroll = offset
+      if offset.y < was - 2.0 {
+        model.transcript_follow = false
+      } else if offset.y > was + 2.0 {
+        model.transcript_follow = true
+      }
+      Some((model, @moui.Effect::none()))
+    }
+    // === 左栏会话列表（M4）：搜索 / 悬停 / 行内改名 ===
+    ToggleAiSessionSearch => {
+      let opening = !model.ai_sessions_search_open
+      Some(
+        (
+          {
+            ..model,
+            ai_sessions_search_open: opening,
+            ai_sessions_query: if opening { model.ai_sessions_query } else { "" },
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    }
+    SetAiSessionsQuery(value) =>
+      Some(({ ..model, ai_sessions_query: value, }, @moui.Effect::none()))
+    AiSessionHover(index, entered) =>
+      Some(
+        (
+          { ..model, ai_session_hover: if entered { index } else { -1 }, },
+          @moui.Effect::none(),
+        ),
+      )
+    AiSessionRenameStart(index) =>
+      match model.ai_sessions.session_at(index) {
+        Some(session) =>
+          Some(
+            (
+              { ..model, session_rename: Some((index, session.title)), },
+              @moui.Effect::none(),
+            ),
+          )
+        None => Some((model, @moui.Effect::none()))
+      }
+    AiSessionRenameDraft(value) =>
+      match model.session_rename {
+        Some((index, _)) =>
+          Some(({ ..model, session_rename: Some((index, value)), }, @moui.Effect::none()))
+        None => Some((model, @moui.Effect::none()))
+      }
+    AiSessionRenameCommit =>
+      match model.session_rename {
+        Some((index, draft)) => {
+          let trimmed = draft.trim().to_owned()
+          if trimmed != "" {
+            let _ = model.ai_sessions.rename(index, trimmed)
+            // 改名是结构性事件：盖「最近活动」戳 + 存储脏标
+            model.ai_sessions.touch(civil_seconds(model.clock))
+            mark_ai_sessions_dirty(model)
+          }
+          Some(({ ..model, session_rename: None, }, @moui.Effect::none()))
+        }
+        None => Some((model, @moui.Effect::none()))
+      }
+    AiSessionRenameDismiss =>
+      Some(({ ..model, session_rename: None, }, @moui.Effect::none()))
+    TranscriptScrollToBottom => {
+      model.transcript_follow = true
+      model.transcript_scroll = @geometry.Point::new(x=0.0, y=1000000000.0)
+      model.transcript_scroll_seq = model.transcript_scroll_seq + 1
+      Some((model, @moui.Effect::none()))
+    }
     _ => None
+  }
+}
+
+///|
+/// 自动贴底：跟随态下新内容追加后强制滚到底部（ScrollRequest offset 用
+/// 1e9 由容器钳底，终端先例）。非跟随态不动——用户正在上滚看历史。
+pub fn follow_transcript(model : Model) -> Model {
+  if model.transcript_follow {
+    model.transcript_scroll = @geometry.Point::new(x=0.0, y=1000000000.0)
+    model.transcript_scroll_seq = model.transcript_scroll_seq + 1
+  }
+  model
+}
+
+///|
+/// 按 seq 找时间线里的卡（动作消息只带 seq；找不到返回 None）。
+fn card_by_seq(model : Model, seq : Int) -> AiCard? {
+  let mut found : AiCard? = None
+  for card in model.ai_sessions.current().cards {
+    if card.seq == seq {
+      found = Some(card)
+    }
+  }
+  found
+}
+
+///|
+/// 复制用的消息正文（剪贴板写入在服务层执行,这里只取文本）。
+pub fn card_text_by_seq(model : Model, seq : Int) -> String? {
+  match card_by_seq(model, seq) {
+    Some(card) => Some(card.body)
+    None => None
+  }
+}
+
+///|
+/// 把一条用户提问的原文回填进 composer 草稿（气泡「编辑」动作）。
+/// 只在目标卡是 CardUserPrompt 时生效。
+fn restore_prompt_draft(model : Model, seq : Int) -> Model {
+  match card_by_seq(model, seq) {
+    Some(card) =>
+      if card.kind is CardUserPrompt {
+        let draft = card.body
+        model.ai_sessions.amend({ ..model.ai_sessions.current(), prompt_draft: draft, })
+        { ..model, prompt_error: "" }
+      } else {
+        model
+      }
+    None => model
+  }
+}
+
+///|
+/// 「重发」：找到该条 AI 卡**之前最近的一条用户提问**，回填草稿。
+/// 找不到（会话开头就没有提问）时草稿保持原样、重发 no-op。
+fn restore_prompt_of_turn(model : Model, seq : Int) -> Model {
+  let cards = model.ai_sessions.current().cards
+  let mut prompt : String? = None
+  let mut index = cards.length() - 1
+  while index >= 0 {
+    let card = cards[index]
+    if card.seq == seq {
+      // 从目标卡往前找最近的用户提问
+      let mut walk = index
+      while walk >= 0 {
+        let candidate = cards[walk]
+        if candidate.kind is CardUserPrompt {
+          prompt = Some(candidate.body)
+          break
+        }
+        walk = walk - 1
+      }
+      break
+    }
+    index = index - 1
+  }
+  match prompt {
+    Some(text) => {
+      model.ai_sessions.amend({ ..model.ai_sessions.current(), prompt_draft: text, })
+      { ..model, prompt_error: "" }
+    }
+    None => model
   }
 }
 

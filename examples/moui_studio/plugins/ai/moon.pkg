@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui",
+  "moonbitlang/core/json",
   "examples/moui_studio/domain/proposals",
 }
 

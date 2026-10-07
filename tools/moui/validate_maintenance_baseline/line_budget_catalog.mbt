@@ -199,7 +199,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/moui_studio/services/export/kernel_studio_lang_rt.mbt",
-      max_lines: 2600,
+      // 2600 -> 2700: 2026-10-07 sync_kernel 统一 moon fmt 风格后快照变长
+      //（纯格式化,语义不变）;内核快照随 domain 能力逐构造逐字生长。
+      max_lines: 2700,
     },
     {
       path: "examples/moui_studio/services/export/kernel_ir.mbt",

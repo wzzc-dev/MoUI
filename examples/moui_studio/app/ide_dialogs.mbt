@@ -600,6 +600,12 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
       hint: "",
     },
     StudioCommand::{
+      id: "studio.left.toggle",
+      label: text(t, "app.topbar.left_panel"),
+      group: group_pane,
+      hint: "",
+    },
+    StudioCommand::{
       id: "studio.pane.live",
       label: text(t, "app.command.pane.live"),
       group: group_pane,
@@ -686,6 +692,18 @@ pub fn studio_commands(t : @i18n.Translator) -> Array[StudioCommand] {
     StudioCommand::{
       id: "studio.ai.anchor",
       label: text(t, "app.command.ai.anchor"),
+      group: group_ai,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.ai.new_session",
+      label: text(t, "app.command.ai.new_session"),
+      group: group_ai,
+      hint: "",
+    },
+    StudioCommand::{
+      id: "studio.ai.search",
+      label: text(t, "app.command.ai.search_sessions"),
       group: group_ai,
       hint: "",
     },

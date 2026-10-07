@@ -25,6 +25,8 @@ pub(all) enum ArtifactAction {
   ArtifactCopy
   ArtifactReveal
   ArtifactLaunch
+  /// 时间线消息复制（对白转录）：复用同一条回执通道，文案区分
+  ArtifactAiCopy
 }
 
 ///|
@@ -554,6 +556,9 @@ pub(all) struct Model {
   // 见 plugins/ai；`pending` 提案与审计仍走全局通道（契约 4）
   ai_sessions : @ai.AiSessions
   composer_mode : ComposerMode
+  // 模式下拉展开态（V4,VS Code 的 Agent ⌄ 口径）：收起 = 单芯片,
+  // 展开 = 脚注原位切回四选一胶囊行；SetComposerMode 后收起。
+  composer_mode_picker_open : Bool
   prompt_error : String
   provider_mode : ProviderMode
   provider_endpoint : String
@@ -701,6 +706,23 @@ pub(all) struct Model {
   ai_cards_folded : Bool
   // 流式生成进行中（M4）：StreamChunk 分片只在为真时追加（停止即截断）
   ai_streaming : Bool
+  // 墙钟快照（对白转录）：组合根注入 wall_clock 闭包时每秒经 ClockUpdated
+  // 刷新；默认常数钟（clock.mbt）——时间戳/时长/相对时间的唯一来源
+  clock : StudioClock
+  // AI 模式时间线的受控滚动（终端同款）：用户手动滚动回写 offset，
+  // 新内容追加时按 seq 强制贴底；离底显示浮动「回到底部」
+  mut transcript_scroll : @geometry.Point
+  mut transcript_scroll_seq : Int
+  // 自动贴底开关：用户上滚即关，点「回到底部」或手动滚到底即开
+  mut transcript_follow : Bool
+  // === 左栏会话列表（对白转录 M4）===
+  // 搜索过滤（本地,title 子串）
+  ai_sessions_search_open : Bool
+  ai_sessions_query : String
+  // 悬停中的会话行下标（-1 = 无）：✕/置顶动作只在悬停行出现
+  ai_session_hover : Int
+  // 行内改名编辑态:(下标, 草稿);None = 没有在改名
+  session_rename : (Int, String)?
   // 终端插件状态切片（M5）：全模式底栏可用（M8）；web = unavailable 空态
   terminal : @terminal.TerminalState
   /// 终端页签开合（M8）：开 = 页签可选、选中显示交互终端；关 = 已 kill、
@@ -798,6 +820,8 @@ pub(all) enum Msg {
   Redo
   SetPrompt(String)
   SetComposerMode(ComposerMode)
+  /// 开/关 composer 的模式下拉（V4）：收起态单芯片 ↔ 展开态四选一胶囊行
+  ToggleComposerModePicker
   ComposerRun
   RealGenerationFinished(Result[String, String])
   ExplainHandler
@@ -1063,6 +1087,41 @@ pub(all) enum Msg {
   StreamFinished
   /// 停止生成（用户动作）：截断流式，卡片标记已停止
   StopGeneration
+  /// 墙钟刷新（组合根注入 wall_clock 时 1s 一次，仅 AI 模式订阅）：
+  /// 时间线 HH:MM、相对时间、「已工作 N 秒」随之走动。
+  ClockUpdated(StudioClock)
+  /// 复制时间线里的一条消息（参数 = 卡 seq）：走系统剪贴板。
+  CopyAiMessage(Int)
+  /// 把一条用户提问回填进 composer 草稿（对白转录气泡的「编辑」）。
+  EditUserPrompt(Int)
+  /// 重发一轮：把该条 AI 消息**之前的用户提问**回填草稿并立即重跑
+  /// （ComposerRun 语义，不是第二条执行通道）。
+  RetryUserPrompt(Int)
+  /// 时间线受控滚动回写（终端同款）。
+  TranscriptScrolled(@geometry.Point)
+  /// 「回到底部」浮动按钮：强制贴底 + 恢复自动跟随。
+  TranscriptScrollToBottom
+  // === 左栏会话列表（M4）===
+  /// 开/关会话搜索过滤行（关闭时清空查询）
+  ToggleAiSessionSearch
+  /// 会话过滤查询输入
+  SetAiSessionsQuery(String)
+  /// 悬停进入/离开某会话行（参数 = 下标, 是否进入）
+  AiSessionHover(Int, Bool)
+  /// 行内改名：进入编辑态（参数 = 会话下标）
+  AiSessionRenameStart(Int)
+  /// 行内改名草稿
+  AiSessionRenameDraft(String)
+  /// 行内改名提交（Enter）
+  AiSessionRenameCommit
+  /// 行内改名放弃（Escape / 点击别处）
+  AiSessionRenameDismiss
+  /// 会话存储读取回执（M5,仅组合根配置了存储路径时发起）
+  AiSessionsStoreLoaded(@services.ServiceTaskResult[String])
+  /// 会话存储写盘请求（总线从 EvAiSessionsDirty 翻译而来）
+  AiSessionsStoreWriteRequested
+  /// 会话存储写盘回执
+  AiSessionsStoreSaved(@services.ServiceTaskResult[Unit])
   // 工作区编排：图标栏切换（同一工作区再点一次 = 空舞台）
   SetWorkSpace(WorkSpace)
   TogglePaneLive
@@ -1235,6 +1294,7 @@ pub fn initial_model(
     ai_sessions: @ai.AiSessions::new(),
     profile,
     composer_mode: ComposeEdit,
+    composer_mode_picker_open: false,
     prompt_error: "",
     provider_mode: Fake,
     provider_endpoint: endpoint,
@@ -1313,6 +1373,14 @@ pub fn initial_model(
     blocks_scroll_y: 0.0,
     ai_cards_folded: false,
     ai_streaming: false,
+    clock: default_studio_clock(),
+    transcript_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    transcript_scroll_seq: 0,
+    transcript_follow: true,
+    ai_sessions_search_open: false,
+    ai_sessions_query: "",
+    ai_session_hover: -1,
+    session_rename: None,
     // 教学版 profile 强制无终端（组合根与直调 initial_model 的测试同口径）
     terminal: @terminal.TerminalState::new(
       available=pty_available && !(profile is Teaching),

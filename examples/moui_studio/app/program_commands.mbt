@@ -62,6 +62,23 @@ pub fn studio_program_commands(
     true,
     TriggerCompletion,
   )
+  // 新建 AI 会话 / 会话搜索（M6,对白转录）：meta+control 双注册由 bind 统一
+  bind(
+    "n",
+    false,
+    "app.command.ai.new_session",
+    Activate,
+    true,
+    AiSessionOp(AiSessionCreate(civil_seconds(model.clock))),
+  )
+  bind(
+    "f",
+    false,
+    "app.command.ai.search_sessions",
+    Activate,
+    model.perspective is PsAi,
+    ToggleAiSessionSearch,
+  )
   bind(
     "1",
     false,
@@ -193,6 +210,15 @@ pub fn studio_program_commands(
     Activate,
     model.completion_open,
     DismissCompletion,
+  )
+  // Escape 放弃会话行内改名（M6）：与补全/值编辑互斥（AI 模式左栏编辑态）
+  bind(
+    "Escape",
+    false,
+    "app.command.ai.dismiss_rename",
+    Activate,
+    model.session_rename is Some(_),
+    AiSessionRenameDismiss,
   )
   commands
 }

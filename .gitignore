@@ -50,3 +50,5 @@ examples/mo_workbench/macos_skia/.mo_workbench/settings.json
 competition-2026/*
 # MoUI Studio real-provider credentials: runtime-only, never commit (rotate freely)
 examples/moui_studio/.config.json
+# MoUI Studio runtime state (AI session store etc.), never commit
+.studio/

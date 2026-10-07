@@ -151,12 +151,6 @@ fn parse_stage_head(
 }
 
 ///|
-priv struct PlaceParse {
-  control : FormControl
-  spans : ControlSpans
-}
-
-///|
 /// place 行解析:`place(@views.<kind>("text"[, on_click=id]), x=N, y=N, width=N, height=N),`
 fn parse_place_line(
   line : String,

@@ -441,6 +441,9 @@ pub(all) enum IconName {
   Focus
   Columns
   Sidebar
+  Pin
+  Chat
+  PanelBottom
 } derive(Eq, ToJson, @debug.Debug)
 pub fn IconName::equal(Self, Self) -> Bool
 pub fn IconName::not_equal(Self, Self) -> Bool

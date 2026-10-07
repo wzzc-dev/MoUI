@@ -4,11 +4,28 @@
 /// apply_locale 经 Ref 后置绑定（runtime 构造时还不存在）。
 
 ///|
+/// 平台墙钟 → app 的 StudioClock 纯数据映射（mo_desktop 的 DesktopClock
+/// 同款先例；web 的 FFI 在 moui/backend/web/web_host.mbt）。
+fn web_studio_clock() -> @studio_app.StudioClock {
+  let clock = @web.web_wall_clock()
+  {
+    year: clock.year,
+    month: clock.month,
+    day: clock.day,
+    weekday: clock.weekday,
+    hour: clock.hour,
+    minute: clock.minute,
+    second: clock.second,
+  }
+}
+
+///|
 fn main {
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let runtime = @runtime.new_program_with_dimensions(
     program=@studio_app.program(
       environment=@web.app_environment(),
+      wall_clock=Some(web_studio_clock),
       apply_locale=tag => {
         match runtime_ref.val {
           Some(runtime) =>

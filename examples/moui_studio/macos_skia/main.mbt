@@ -123,6 +123,12 @@ async fn main {
       // 不可用（app.export.unavailable_web），不弹一个必然失败的目录框。
       export_available=true,
       immersive~,
+      // 墙钟（对白转录）：平台 FFI → app 的 StudioClock 纯数据映射
+      // （mo_desktop 的 DesktopClock 同款先例）。
+      wall_clock=Some(macos_studio_clock),
+      // AI 会话存储（M5）：native 持久化开启（相对 moon run 的仓库根,
+      // .studio/ 已在 .gitignore）；web 入口不传 = 显式关闭。
+      sessions_store_path=".studio/ai_sessions.json",
       apply_locale=tag => {
         match runtime_ref.val {
           Some(runtime) =>
@@ -236,4 +242,20 @@ async fn main {
     worker_task, compile_task, launch_task, agent_task, build_task, webpreview_task,
     pty_task,
   ])
+}
+
+///|
+/// 平台墙钟 → app 的 StudioClock 纯数据映射（mo_desktop 的 DesktopClock
+/// 同款先例；FFI 在 moui/backend/macos/macos_wall_clock.mbt）。
+fn macos_studio_clock() -> @studio_app.StudioClock {
+  let clock = @macos.macos_wall_clock()
+  {
+    year: clock.year,
+    month: clock.month,
+    day: clock.day,
+    weekday: clock.weekday,
+    hour: clock.hour,
+    minute: clock.minute,
+    second: clock.second,
+  }
 }

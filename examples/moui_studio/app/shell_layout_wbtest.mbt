@@ -214,13 +214,14 @@ test "workspace switching swaps the centre content" {
 }
 
 ///|
-test "bottom bar expands to the audit timeline and console stays switchable" {
-  // 初始态是**AI 页签展开**（AI 输入条的默认落点就是底栏）。这里先显式
-  // 收起，再验证「收起只剩页签头 / 展开出审计条目」这条既有契约。
+test "bottom bar hides entirely when collapsed and expands to the audit" {
+  // 初始态是**AI 页签展开**（AI 输入条的默认落点就是底栏）。收起 = 整个
+  // 底栏隐藏（页签行也不留——重开走标题栏底栏开关 / J 键 / 命令面板,
+  // VS Code 面板口径）。
   let model = apply_shell(initial_model(), ToggleBottom)
   assert_false(model.bottom_open)
   let collapsed = shell_draw(model, 1280.0, 800.0)
-  assert_true(shell_has_text(collapsed, "运行审计"))
+  assert_false(shell_has_text(collapsed, "运行审计"))
   assert_false(shell_has_text(collapsed, "程序已载入 IR"))
   // 展开 + 切到审计页签：审计条目出现（初始三条 boot 记录）
   let open = apply_shell(model, SetBottomTab(BtAudit))
@@ -249,12 +250,18 @@ test "AI input bar lives in the two inline placements and never covers the statu
   assert_true(model.bottom_tab is BtAi)
   let commands = shell_draw(model, 1280.0, 800.0)
   assert_true(shell_has_text(commands, "描述你想要的应用"))
-  // 输入条是输入盒形态：模式段文字 + 圆形发送钮（图标，无文字）
+  // 输入条是输入盒形态：模式下拉（当前模式名）+ 圆形发送钮（图标，无文字）
   guard shell_find_send_button(commands) is Some(_) else {
     fail("round send button missing")
   }
+  // 收起态 = 单「修改 ⌄」下拉芯片（当前模式名可见）
   assert_true(shell_has_text(commands, "修改"))
-  assert_true(shell_has_text(commands, "修复"))
+  // 展开态（ToggleComposerModePicker）= 四选一胶囊行
+  let expanded = apply_shell(model, ToggleComposerModePicker)
+  let expanded_commands = shell_draw(expanded, 1280.0, 800.0)
+  for label in ["修改", "生成", "解释", "修复"] {
+    assert_true(shell_has_text(expanded_commands, label))
+  }
   // 底栏档：输入盒必须在状态栏**之上**（底栏在状态栏之上，输入盒在底栏内）
   guard shell_find_text(commands, "描述你想要的应用") is Some(bar_run) else {
     fail("AI bar composer missing")
@@ -789,7 +796,9 @@ test "empty workspace keeps guidance and AI input in separate panels" {
 test "composer mode routes send to existing channels" {
   // 修复通道的「无效草稿」语义在 DSL 外观下制造（M5-5e）
   let model = apply_shell(initial_model(), CycleCodeAppearance)
-  let commands = shell_draw(model, 1280.0, 800.0)
+  // V4：四胶囊收敛为单下拉——展开态才可见四选一
+  let expanded = apply_shell(model, ToggleComposerModePicker)
+  let commands = shell_draw(expanded, 1280.0, 800.0)
   for label in ["修改", "生成", "解释", "修复"] {
     assert_true(shell_has_text(commands, label))
   }
@@ -1468,7 +1477,7 @@ test "activity bar uses the compact spec with bare-glyph selection" {
     let pitch = centers[i] - centers[i - 1]
     assert_true(
       (pitch - 28.0).abs() < 0.8,
-      msg="icon pitch=\{pitch} should be 28 (centers=\{centers})",
+      msg="icon pitch=\{pitch} should be 28",
     )
     i = i + 1
   }

@@ -40,135 +40,200 @@ pub fn composer_height(width : Double) -> Double {
 }
 
 ///|
-/// AI 会话列表（M3 插件贡献的 AI 模式左栏视图）：新建入口 + 会话行
-/// （名 + 当前高亮 + 尾部 ✕ 删除，RemoveProject 惯例由切片 ops 保证）。
-pub fn ai_session_list(
+/// composer 信息层（对白转录）：工程芯片（有 active 工程才在）+ 模型芯片
+/// （离线/真实读数恒在）。只在宽卡（≥420）显示——右栏停靠/窄底栏放不下，
+/// 强行显示会把脚注挤出面板。
+pub fn context_chips_height(width : Double) -> Double {
+  if width >= 420.0 {
+    CHIPS_HEIGHT + 2.0
+  } else {
+    0.0
+  }
+}
+
+///|
+/// composer 块高 = 输入盒 + 上方上下文芯片行 + 空会话提示头条（仅中心态）。
+/// 中心态与紧凑宿主的高度预算都从这里取——两处各算一份，芯片行/提示条
+/// 就会把输入盒顶出宿主。
+pub fn composer_block_height(width : Double) -> Double {
+  composer_height(width) + context_chips_height(width)
+}
+
+///|
+/// 下拉芯片（VS Code 智能体模式口径）：图标 + 文案 + ChevronDown，
+/// 点击走真实命令（工程 → 打开资源管理器切换上下文；模型 → 设置）。
+fn dropdown_chip(
+  icon : @style.IconName,
+  label : String,
+  on_click : Msg,
+) -> @moui.View[Msg] {
+  let label_w = (text_estimate_width(label) * 1.05 + 8.0).max(24.0)
+  let chip_w = label_w + 44.0
+  @views.container(
+    @views.center(
+      @views.row(
+        [
+          @views.icon(icon, size=11.0, color=ide_text_muted()),
+          @views.text(
+            label,
+            theme=studio_theme(),
+            width=label_w,
+            height=16.0,
+          ).foreground(ide_text_muted()),
+          @views.icon(ChevronDown, size=10.0, color=ide_text_faint()),
+        ],
+        spacing=4.0,
+        align=Center,
+      ).frame(width=chip_w - 16.0),
+      width=chip_w,
+      height=22.0,
+    ),
+    background=ide_panel_alt(),
+    corner_radius=11.0,
+    width=chip_w,
+    height=22.0,
+    padding=0.0,
+  ).on_tap(on_click)
+}
+
+///|
+/// 上下文芯片行（VS Code 口径）：工程下拉芯片 + 模型下拉芯片。
+fn context_chips_row(
   model : Model,
   t : @i18n.Translator,
   width : Double,
-  height : Double,
 ) -> @moui.View[Msg] {
-  let sessions = model.ai_sessions
-  let rows : Array[@moui.View[Msg]] = [
-    @views.container(
-      @views.padding_edges(
-        @views.text(
-          "+ " + text(t, "app.ai.session.new"),
-          theme=studio_theme(),
-          width=(width - 44.0).max(60.0),
-          height=18.0,
-          align=TextStart,
-        ).foreground(ide_accent()),
-        left=8.0,
-        right=8.0,
-      ),
-      background=ide_panel(),
-      height=TREE_ROW_HEIGHT,
-      width~,
-      padding=0.0,
-    ).on_tap(AiSessionOp(AiSessionCreate)),
-  ]
-  for entry in sessions.list_entries() {
-    let (index, title, is_active) = entry
-    let row_cells : Array[@moui.View[Msg]] = [
-      @views.text(
-        title,
-        theme=studio_theme(),
-        width=(width - 60.0).max(40.0),
-        height=18.0,
-        align=TextStart,
-      ).foreground(if is_active { ide_text() } else { ide_text_muted() }),
-    ]
-    let row = @views.container(
-      @views.padding_edges(
-        @views.row(row_cells, spacing=4.0, align=Center),
-        left=8.0,
-        right=8.0,
-      ),
-      background=if is_active { ide_selection() } else { ide_panel() },
-      height=TREE_ROW_HEIGHT,
-      width~,
-      padding=0.0,
-    )
-    let row = if is_active {
-      row
-    } else {
-      row.on_tap(AiSessionOp(AiSessionSwitch(index)))
-    }
-    // 尾部 ✕：只对非当前会话给（删当前会话的重建语义容易误触）
-    let row = if is_active {
-      row
-    } else {
-      @views.row(
-        [
-          row,
-          @views.container(
-            @views.center(
-              @views.text("✕", theme=studio_theme(), width=10.0, height=14.0).foreground(
-                ide_text_faint(),
-              ),
-              width=18.0,
-              height=16.0,
-            ),
-            background=ide_panel(),
-            width=18.0,
-            height=TREE_ROW_HEIGHT,
-            padding=0.0,
-          ).on_tap(AiSessionOp(AiSessionRemove(index))),
-        ],
-        spacing=0.0,
-        align=Center,
-      ).frame(width~, height=TREE_ROW_HEIGHT)
-    }
-    rows.push(row)
+  let cells : Array[@moui.View[Msg]] = []
+  let project_label = match active_project_of(model) {
+    Some(record) => fit_label(record.module_name, 160.0)
+    None => text(t, "app.ai.group.default_project")
   }
-  @views.scroll_view(
-    @views.column(rows, spacing=0.0),
+  // 工程 → 打开资源管理器（切换工程上下文的既有通道）
+  cells.push(dropdown_chip(FolderOpen, project_label, SetLeftView(LeftProject)))
+  let model_label = if model.provider_mode is Fake {
+    text(t, "app.ai.fake")
+  } else {
+    fit_label(model.provider_model, 160.0)
+  }
+  cells.push(dropdown_chip(Gear, model_label, StudioCommandRun("studio.settings")))
+  // 外层容器必须显式给底色：无背景 container 在 paint 期回落到环境
+  // Base 刷子（实测抓到的 ambient 回落缺陷），与输入盒同色读作一块。
+  @views.container(
+    fill_row(cells, width, 6.0, Start),
+    background=ide_panel(),
     width~,
-    height~,
-    shows_indicator=true,
+    height=CHIPS_HEIGHT,
+    padding=0.0,
+  )
+}
+
+
+///|
+/// 提示头条：「提示: 」+ 着色关键词 + 其余；整行可点 = 打开提案历史
+/// （给着色词真实行为,不做死链接）。带 hairline 下边与输入区分隔。
+///|
+/// 信息芯片：小圆角读数。`on_click` 为 None = 纯信息展示（不可点）。
+fn info_chip(
+  label : String,
+  background : @graphics.Color,
+  foreground : @core.Color,
+  on_click : Msg?,
+) -> @moui.View[Msg] {
+  let chip_w = (text_estimate_width(label) * 1.05 + 16.0).max(36.0)
+  let chip = @views.container(
+    @views.center(
+      @views.text(
+        label,
+        theme=studio_theme(),
+        width=(chip_w - 12.0).max(20.0),
+        height=16.0,
+      ).foreground(foreground),
+      width=chip_w,
+      height=20.0,
+    ),
+    background~,
+    corner_radius=10.0,
+    width=chip_w,
+    height=20.0,
+    padding=0.0,
+  )
+  match on_click {
+    Some(msg) => chip.on_tap(msg)
+    None => chip
+  }
+}
+
+///|
+/// composer 的四周留白（VS Code 智能体模式口径）：输入面浮在中心区里,
+/// 与左右缘、底部各留一圈,不顶满。中心态两个分支共用（底栏/停靠宿主不套,
+/// 面板内的输入面仍贴边）。
+fn ai_composer_framed(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let side = 16.0
+  @views.padding_edges(
+    composer(model, t, (width - side * 2.0).max(280.0)),
+    left=side,
+    right=side,
+    bottom=8.0,
   )
 }
 
 ///|
-/// AI 输入面的宿主（M2，唯一性推导）：
-///
-/// 1. `right_view is RvAi` → **右栏停靠**（`ai_layer`，由 ide_root 挂载）；
-/// 2. 否则 `perspective is PsAi` → **AI 模式中心**（`ai_center`，全幅
-///    composer；M2 过渡形态，M3 升级会话流）；
-/// 3. 否则 → **底栏 `BtAi` 页签**（`ai_bar_composer`，由 ide_bottom_bar 画，
-///    页签只在 3 成立时出现）。
-///
-/// 推导出的状态天然恰好一个宿主——旧「锚点 × 底栏页签」两字段互拉的
-/// reconciliation（sync_ai_placement）随之删除。
-pub fn ai_host_is_bottom(model : Model) -> Bool {
-  !(model.right_view is RvAi) && !(model.perspective is PsAi)
-}
-
-///|
-/// AI 模式的中心工作区（宿主 2；M8③ Codex/ZCode 口径改造）：
+/// AI 模式的中心工作区（宿主 2；对白转录）：
 /// **空会话** = composer 垂直居中于大画布（「Pitch your idea」形态）；
-/// **有卡片** = 会话流滚动 + composer 钉底。
+/// **有内容** = 会话头 + 全幅对白时间线（滚动）+ composer 钉底。
 pub fn ai_center(
   model : Model,
   t : @i18n.Translator,
   width : Double,
   height : Double,
 ) -> @moui.View[Msg] {
-  let composer_h = ai_bar_height(model, width, height).min(height)
-  let composer = ai_bar_composer(model, t, width, composer_h)
-  let empty = model.ai_sessions.current().cards.length() == 0
-  if empty {
-    // 空会话：居中（上下配重 42% / 58%——视觉重心略高于几何中心）
-    let top_pad = ((height - composer_h) * 0.42).max(24.0)
+  let cards = model.ai_sessions.current().cards
+  if cards.length() == 0 {
+    // 空会话：视觉居中（50/50）——上下**等重加权 spacer**。列必须显式
+    // `.frame(height=height)`：ContainerBox 会把「量出来比容器矮」的子节点
+    // 垂直居中（布局陷阱①）,加权 spacer 在测量期只报 min_length,不钉高度
+    // 列就会缩成内容高、整体偏下（真机实测缺陷）。钉死高度后 spacer 才
+    // 拿得到 slack,列恰好铺满。
     @views.container(
       @views.column(
         [
-          @views.spacer(min_length=0.0, weight=0.0).frame(
-            width=1.0,
-            height=top_pad,
-          ),
-          composer,
+          @views.spacer(min_length=0.0, weight=1.0),
+          ai_composer_framed(model, t, width),
+          @views.spacer(min_length=4.0, weight=1.0),
+          ai_posture_row(model, t, width),
+        ],
+        spacing=0.0,
+      ).frame(height=height),
+      background=ide_editor_background(),
+      width~,
+      height~,
+      padding=0.0,
+    )
+  } else {
+    // 有内容：会话头 + 全幅时间线（滚动）+ composer 钉底 + 姿态读数。
+    // 「回到底部」芯片行夹在时间线与 composer 之间（非跟随态才占高）——
+    // 不用 stack+align 叠放：叠放会遮住时间线末尾的内容，芯片行不遮。
+    let composer_h = composer_block_height(width)
+    let header_h = AI_SESSION_HEADER_HEIGHT
+    let follow_h = if model.transcript_follow { 0.0 } else { 26.0 }
+    let posture_h = POSTURE_HEIGHT
+    let transcript_h = (height -
+    header_h -
+    composer_h -
+    follow_h -
+    posture_h).max(120.0)
+    @views.container(
+      @views.column(
+        [
+          ai_session_header(model, t, width),
+          ai_transcript(model, t, width, transcript_h),
+          ai_scroll_to_bottom_row(t, width, follow_h),
+          ai_composer_framed(model, t, width),
+          ai_posture_row(model, t, width),
         ],
         spacing=0.0,
       ),
@@ -177,18 +242,399 @@ pub fn ai_center(
       height~,
       padding=0.0,
     )
+  }
+}
+
+///|
+/// 会话头：标题（截断）+ 置顶切换 + 删除当前会话。
+fn ai_session_header(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let session = model.ai_sessions.current()
+  let index = model.ai_sessions.active_index()
+  let title = fit_label(
+    session.title,
+    (width - 200.0).max(60.0),
+  )
+  let title_w = (text_estimate_width(title) * 1.02 + 8.0).min(width - 200.0).max(
+    40.0,
+  )
+  let pin_label = if session.pinned {
+    text(t, "app.ai.unpin")
   } else {
-    @views.container(
-      @views.column(
-        [@views.spacer(min_length=0.0, weight=1.0), composer],
-        spacing=0.0,
-      ),
-      background=ide_editor_background(),
+    text(t, "app.ai.pin")
+  }
+  @views.container(
+    fill_row(
+      [
+        @views.text(
+          title,
+          theme=studio_theme(),
+          width=title_w,
+          height=18.0,
+          align=TextStart,
+        ).foreground(ide_text()),
+        @views.spacer(min_length=6.0, weight=1.0),
+        action_chip(
+          pin_label,
+          AiSessionOp(AiSessionPin(index, !session.pinned)),
+          Ghost,
+          22.0,
+        ),
+        action_chip(
+          text(t, "app.ai.session.delete"),
+          AiSessionOp(AiSessionRemove(index)),
+          Ghost,
+          22.0,
+        ),
+      ],
+      width,
+      6.0,
+      Center,
+    ),
+    width~,
+    height=AI_SESSION_HEADER_HEIGHT,
+    padding=0.0,
+  )
+}
+
+///|
+/// 「回到底部」芯片行：非自动跟随态才渲染（跟随态 0 高不占位）。
+/// 右对齐——与滚动位置语义一致（按钮把视口送回底部）。
+fn ai_scroll_to_bottom_row(
+  t : @i18n.Translator,
+  width : Double,
+  row_h : Double,
+) -> @moui.View[Msg] {
+  if row_h <= 0.0 {
+    return @views.container(
+      @views.text("", width=1.0, height=1.0),
       width~,
-      height~,
+      height=0.0,
       padding=0.0,
     )
   }
+  @views.container(
+    fill_row(
+      [
+        @views.spacer(min_length=0.0, weight=1.0),
+        action_chip(
+          text(t, "app.ai.scroll_bottom"),
+          TranscriptScrollToBottom,
+          Quiet,
+          20.0,
+        ),
+      ],
+      width,
+      6.0,
+      Center,
+    ),
+    width~,
+    height=row_h,
+    padding=0.0,
+  )
+}
+
+///|
+/// 全幅对白时间线（滚动）：用户气泡 / AI 消息 / 工作卡折叠组按序渲染。
+/// 受控滚动 + 自动贴底与终端同一套机制（offset 回写 + ScrollRequest 钳底）。
+fn ai_transcript(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+  height : Double,
+) -> @moui.View[Msg] {
+  let inner = (width - 24.0).max(120.0)
+  let rows = timeline_rows(model, t, width)
+  @views.container(
+    @views.padding_edges(
+      @views.scroll_view(
+        @views.column(rows, spacing=8.0).frame(width=inner),
+        offset=model.transcript_scroll,
+        on_scroll=Some(offset => TranscriptScrolled(offset)),
+        request=@core.ScrollRequest::new(
+          id=model.transcript_scroll_seq,
+          offset=model.transcript_scroll,
+        ),
+        width~,
+        height~,
+        shows_indicator=true,
+      ),
+      left=12.0,
+      right=12.0,
+      top=4.0,
+      bottom=4.0,
+    ),
+    width~,
+    height~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 时间线行构建：连续的 Agent 工作卡（计划/diff/副作用）归入一组折叠区
+/// （「已工作 N / 待审计 N」），用户气泡、AI 消息与错误卡独立成行。
+fn timeline_rows(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> Array[@moui.View[Msg]] {
+  let cards = model.ai_sessions.current().cards
+  let rows : Array[@moui.View[Msg]] = []
+  let mut group : Array[AiCard] = []
+  let mut index = 0
+  for card in cards {
+    let is_work = card.kind is CardPlan ||
+      card.kind is CardDiff ||
+      card.kind is CardSideEffect
+    if is_work {
+      group.push(card)
+    } else {
+      if group.length() > 0 {
+        rows.push(work_group_row(model, t, group, width))
+        group = []
+      }
+      match card.kind {
+        CardUserPrompt => rows.push(user_bubble_row(t, card, width))
+        CardExplanation => rows.push(ai_message_row(model, t, card, width))
+        _ => rows.push(ai_card_view(model, t, card, index, width - 24.0))
+      }
+    }
+    index = index + 1
+  }
+  if group.length() > 0 {
+    rows.push(work_group_row(model, t, group, width))
+  }
+  rows
+}
+
+///|
+/// 「已工作」折叠组：连续工作卡的可见记录。有未处理卡显示「待审计 N」
+/// （警告色），否则显示工作时长（≥1 秒）或中性「Agent 线程」。
+fn work_group_row(
+  model : Model,
+  t : @i18n.Translator,
+  group : Array[AiCard],
+  width : Double,
+) -> @moui.View[Msg] {
+  let inner = (width - 24.0).max(120.0)
+  let mut pending = 0
+  for card in group {
+    if !card.settled && (card.kind is CardDiff || card.kind is CardSideEffect) {
+      pending = pending + 1
+    }
+  }
+  let duration = (group[group.length() - 1].at - group[0].at).max(0)
+  let label = if pending > 0 {
+    text_with(t, "app.ai.fold_pending", [("count", pending.to_string())])
+  } else if duration >= 1 {
+    let minutes = duration / 60
+    let seconds = duration % 60
+    text_with(t, "app.ai.work.trace", [
+      ("duration", text_with(t, "app.ai.work.duration", [
+        ("m", minutes.to_string()),
+        ("s", seconds.to_string()),
+      ])),
+    ])
+  } else {
+    text(t, "app.ai.fold_idle")
+  }
+  let body : Array[@moui.View[Msg]] = [work_group_bar(model, label, inner, pending > 0)]
+  if !model.ai_cards_folded {
+    let mut card_index = 0
+    for card in group {
+      body.push(ai_card_view(model, t, card, card_index, inner))
+      card_index = card_index + 1
+    }
+  }
+  @views.container(
+    @views.column(body, spacing=4.0).frame(width=inner),
+    width~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 折叠组头：chevron + 标签（待审计 = 警告色），点击折叠/展开。
+fn work_group_bar(
+  model : Model,
+  label : String,
+  width : Double,
+  has_pending : Bool,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.padding_xy(
+      @views.row(
+        [
+          @views.icon(
+            if model.ai_cards_folded {
+              ChevronRight
+            } else {
+              ChevronDown
+            },
+            size=12.0,
+            color=ide_text_muted(),
+          ),
+          @views.text(
+            label,
+            theme=studio_theme(),
+            width=(width - 60.0).max(60.0),
+            height=16.0,
+            align=TextStart,
+          ).foreground(if has_pending { ide_warning() } else { ide_text_faint() }),
+        ],
+        spacing=4.0,
+        align=Center,
+      ),
+      horizontal=8.0,
+      vertical=0.0,
+    ),
+    height=22.0,
+    width~,
+    padding=0.0,
+  ).on_tap(ToggleAiCardsFold)
+}
+
+///|
+/// 用户提问气泡（右对齐，强调色淡底）：宽度按内容估宽钳在 70% 行宽内，
+/// 长 prompt 贪心折行；动作行 = 复制 / 编辑（回填草稿）+ HH:MM。
+fn user_bubble_row(
+  t : @i18n.Translator,
+  card : AiCard,
+  width : Double,
+) -> @moui.View[Msg] {
+  let inner = (width - 24.0).max(120.0)
+  let max_w = (inner * 0.7).max(160.0)
+  let est = (text_estimate_width(card.body) + 20.0).min(max_w)
+  let lines = wrap_text_lines(card.body, est - 16.0)
+  let line_h = 18.0
+  let bubble_w = est
+  let bubble_h = lines.length().to_double() * line_h + 16.0
+  let lines_view : Array[@moui.View[Msg]] = []
+  for line in lines {
+    lines_view.push(
+      @views.text(
+        line,
+        theme=studio_theme(),
+        width=bubble_w - 16.0,
+        height=line_h,
+        align=TextStart,
+      ).foreground(ide_text()),
+    )
+  }
+  let bubble = @views.container(
+    @views.column(lines_view, spacing=0.0).frame(width=bubble_w - 16.0),
+    background=ide_selection(),
+    corner_radius=10.0,
+    width=bubble_w,
+    height=bubble_h,
+    padding=8.0,
+  )
+  @views.container(
+    @views.column(
+      [
+        fill_row(
+          [@views.spacer(min_length=0.0, weight=1.0), bubble],
+          inner,
+          0.0,
+          Center,
+        ),
+        message_actions_row(
+          card,
+          inner,
+          [
+            action_chip(
+              text(t, "app.ai.action.copy"),
+              CopyAiMessage(card.seq),
+              Ghost,
+              18.0,
+            ),
+            action_chip(
+              text(t, "app.ai.action.edit"),
+              EditUserPrompt(card.seq),
+              Ghost,
+              18.0,
+            ),
+          ],
+        ),
+      ],
+      spacing=2.0,
+    ).frame(width=inner),
+    width~,
+    padding=0.0,
+  )
+}
+
+///|
+/// AI 消息行（左对齐，无底色）：markdown 渲染 + 动作行（复制 / 重发）。
+/// 重发 = 该轮用户提问回填并重跑（单一 ComposerRun 通道）。
+fn ai_message_row(
+  model : Model,
+  t : @i18n.Translator,
+  card : AiCard,
+  width : Double,
+) -> @moui.View[Msg] {
+  ignore(model)
+  let inner = (width - 24.0).max(120.0)
+  let blocks = @markdown.parse_markdown(card.body)
+  @views.container(
+    @views.column(
+      [
+        markdown_blocks_view(blocks, inner),
+        message_actions_row(
+          card,
+          inner,
+          [
+            action_chip(
+              text(t, "app.ai.action.copy"),
+              CopyAiMessage(card.seq),
+              Ghost,
+              18.0,
+            ),
+            action_chip(
+              text(t, "app.ai.action.retry"),
+              RetryUserPrompt(card.seq),
+              Ghost,
+              18.0,
+            ),
+          ],
+        ),
+      ],
+      spacing=4.0,
+    ).frame(width=inner),
+    width~,
+    padding=0.0,
+  )
+}
+
+///|
+/// 消息动作行：动作芯片 + HH:MM 时间戳（mono、淡色）。
+fn message_actions_row(
+  card : AiCard,
+  width : Double,
+  chips : Array[@moui.View[Msg]],
+) -> @moui.View[Msg] {
+  let cells : Array[@moui.View[Msg]] = []
+  for chip in chips {
+    cells.push(chip)
+  }
+  cells.push(
+    @views.text(
+      hhmm_of_stamp(card.at),
+      theme=studio_theme(),
+      role=Mono,
+      width=44.0,
+      height=14.0,
+    ).foreground(ide_text_faint()),
+  )
+  @views.container(
+    fill_row(cells, width, 4.0, Start),
+    width~,
+    height=20.0,
+    padding=0.0,
+  )
 }
 
 ///|
@@ -250,7 +696,9 @@ fn thread_area_height(model : Model) -> Double {
 /// `+ 12.0`——视图层没有对应元素，那 12pt 被 ContainerBox 居中平摊，
 /// 成了「上下不对称」的一半来源。现在它与 `AI_CARD_PAD` 同源。
 fn card_chrome_height(model : Model, width : Double) -> Double {
-  composer_height(width) + decision_bar_height(model) + AI_CARD_PAD * 2.0
+  composer_block_height(width) +
+  decision_bar_height(model) +
+  AI_CARD_PAD * 2.0
 }
 
 ///|
@@ -294,11 +742,22 @@ fn ai_card_body(
   // 线程区为空/折叠时用占位吃掉线程预算，输入盒沉底。占位高度必须
   // 扣掉输入盒/决策行/卡片内衬——整段占满会让决策行被裁掉（实测缺陷）。
   if model.ai_sessions.current().cards.length() == 0 || model.ai_cards_folded {
+    // 钉底占位扣的是 composer **块**足迹（含芯片行/提示头——
+    // composer_block_height 单一口径）。漏算芯片行,脚注会被底栏裁掉（真机实测）。
+    // 占位为 0 时**不要**推空文本：text 有最小行高(~16pt),零高占位也会
+    // 在 composer 上方顶出一条空带（真机实测缺陷）。
     let pin_height = (thread_height -
-    composer_height(width) -
+    composer_block_height(width) -
     decision_bar_height(model) -
     AI_CARD_PAD * 2.0).max(0.0)
-    body.push(@views.text("", width=1.0, height=pin_height))
+    if pin_height > 0.0 {
+      body.push(@views.container(
+        @views.text("", width=1.0, height=pin_height),
+        width=1.0,
+        height=pin_height,
+        padding=0.0,
+      ))
+    }
   }
   if model.ai_sessions.current().cards.length() > 0 {
     body.push(fold_bar(model, t, inner, pending))
@@ -474,6 +933,7 @@ fn ai_card_view(
   width : Double,
 ) -> @moui.View[Msg] {
   let accent = match card.kind {
+    CardUserPrompt => ide_accent()
     CardPlan => ide_accent()
     CardDiff => ide_success()
     CardSideEffect => ide_warning()
@@ -591,6 +1051,8 @@ fn ai_card_view(
 /// 时把线程区裁掉，那正是「生成完什么都看不见」的形态。
 pub const AI_BAR_HEIGHT : Double = PANEL_HEAD_HEIGHT +
   COMPOSER_HEIGHT +
+  CHIPS_HEIGHT +
+  2.0 +
   AI_CARD_PAD * 2.0 +
   4.0
 
@@ -633,7 +1095,9 @@ pub fn ai_bar_composer(
   // 线程区只能拿「体区 − 输入面固定部分」的剩余，不能拿满高——
   // 否则输入盒会被顶出底栏。
   let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
-  let chrome = composer_height(inner) +
+  // chrome 按 composer **块**足迹算（composer_block_height 含芯片行——
+  // 宽底栏 ≥420 会渲染芯片行,漏算 30pt 脚注就被裁掉（真机实测缺陷））。
+  let chrome = composer_block_height(inner) +
     decision_bar_height(model) +
     AI_CARD_PAD * 2.0
   let thread = (height - chrome - AI_CARD_PAD * 2.0).max(0.0)
@@ -647,10 +1111,13 @@ pub fn ai_bar_composer(
   // 另一个颜色，在底栏里读成「两段脏边」。底栏的底色是 `ide_panel()`，
   // 这里跟它对齐——回落色与宿主面板不同色，是同一个坑的第二次。
   @views.container(
+    // 横向内衬 8:卡片按 inner(宽−16)建,两侧各 8 补齐整宽。**纵向不能再垫**:
+    // ai_card_body 自己的容器已有四周 8 内衬,再垫 16 会双重计账——
+    // V3 芯片行加宽块足迹后,这 16pt 刚好吃掉脚注（真机实测缺陷）。
     @views.padding_xy(
       ai_card_body(model, t, inner, thread.min(thread_area_height(model))),
       horizontal=AI_CARD_PAD,
-      vertical=AI_CARD_PAD,
+      vertical=0.0,
     ),
     background=ide_panel(),
     width~,
@@ -665,19 +1132,26 @@ fn composer(
   t : @i18n.Translator,
   width : Double,
 ) -> @moui.View[Msg] {
-  let modes : Array[@moui.View[Msg]] = [
-    composer_mode_chip(model, t, ComposeEdit, "app.ai.mode.edit"),
-    composer_mode_chip(model, t, ComposeGenerate, "app.ai.mode.generate"),
-    composer_mode_chip(model, t, ComposeExplain, "app.ai.mode.explain"),
-    composer_mode_chip(model, t, ComposeRepair, "app.ai.mode.repair"),
-  ]
-  // 输入盒（Codex/ZCode 口径）：圆角容器内 = **两行**无边框文本域
-  // （Enter 直接发送）+ 盒内脚注（模式胶囊靠左，ghost 操作与圆形发送靠右）。
+  // 脚注左端：模式选择（VS Code 的 Agent ⌄ 口径）。收起 = 单个「当前模式 ⌄」
+  // 下拉芯片；展开 = 原位切回四选一胶囊行（SetComposerMode 后收起）——
+  // 不引入浮层，88 预算内原位切换。
+  let mode_cells : Array[@moui.View[Msg]] = if model.composer_mode_picker_open {
+    [
+      composer_mode_chip(model, t, ComposeEdit, "app.ai.mode.edit"),
+      composer_mode_chip(model, t, ComposeGenerate, "app.ai.mode.generate"),
+      composer_mode_chip(model, t, ComposeExplain, "app.ai.mode.explain"),
+      composer_mode_chip(model, t, ComposeRepair, "app.ai.mode.repair"),
+    ]
+  } else {
+    [composer_mode_dropdown(model, t)]
+  }
+  // 输入盒（VS Code 智能体模式口径）：提示头条（空会话中心态）+ **两行**
+  // 无边框文本域（Enter 直接发送）+ 盒内脚注（模式/模型靠左，ghost 与
+  // 圆形发送靠右）。
   let box_width = (width - 16.0).max(120.0)
   let inner_width = box_width - 16.0
   let busy = model.ai_busy
   let send_msg = if busy { Msg::Noop } else { ComposerRun }
-  // 输入域移到下方 input_row（与发送同行）——这里不再构建。
   // 盒内脚注的 ghost 操作：**两种内联落点之间的一步切换**。
   //
   // 底栏档显示「停靠右栏」按钮，停靠档显示「放到底栏」——两边互为出口，
@@ -688,7 +1162,7 @@ fn composer(
   // 历史/锚点循环/provider 设置走命令面板（⌘K），不占盒内空间。
   let ghost_surface = ide_panel()
   let foot_cells : Array[@moui.View[Msg]] = [
-    @views.row(modes, spacing=3.0, align=Center),
+    @views.row(mode_cells, spacing=3.0, align=Center),
     @views.spacer(min_length=6.0, weight=1.0),
   ]
   if inner_width >= 300.0 {
@@ -731,6 +1205,23 @@ fn composer(
       ),
     )
   }
+  // 模型 chip（VS Code 的 ⚡模型 口径）：离线/真实读数，点击开设置。
+  // 无推理档/上下文数据——不虚构「极高 · 1.1M」式读数。
+  if inner_width >= 300.0 {
+    let model_label = if model.provider_mode is Fake {
+      text(t, "app.ai.fake")
+    } else {
+      fit_label(model.provider_model, 140.0)
+    }
+    foot_cells.push(
+      info_chip(
+        model_label,
+        ide_panel(),
+        ide_text_muted(),
+        Some(StudioCommandRun("studio.settings")),
+      ),
+    )
+  }
   // 发送钮在模式行右端（**只有一个**——输入行内再放一个是实测的双钮缺陷）。
   // 流式生成进行中：发送换**停止**（截断入口，M4）——同一槽位两个互斥动作。
   if model.ai_streaming {
@@ -758,7 +1249,7 @@ fn composer(
     line_height=20.0,
     on_submit=Some(send_msg),
   )
-  @views.container(
+  let box = @views.container(
     @views.padding_edges(
       @views.column([field, foot], spacing=2.0),
       left=8.0,
@@ -767,9 +1258,113 @@ fn composer(
       bottom=3.0,
     ),
     background=ide_panel(),
-    corner_radius=0.0,
+    // 中心态（AI 模式大画布）圆角浮起 + 1px 描边；右栏/底栏嵌入宿主
+    // 维持扁平无描边（「与面板融为一体」的实测口径只适用于嵌入面板）。
+    corner_radius=if model.perspective is PsAi { 10.0 } else { 0.0 },
+    border=if model.perspective is PsAi {
+      Some(@core.BorderStyle::{ brush: @core.Brush::Solid(ide_border()), width: 1.0 })
+    } else {
+      None
+    },
     width=box_width,
     height=composer_height(width),
+    padding=0.0,
+  )
+  // 信息层芯片行在输入盒**上方**（宽卡才显示）——块高走
+  // composer_block_height，调用方的高度预算与这里同源。
+  let chips_h = context_chips_height(width)
+  if chips_h > 0.0 {
+    @views.column(
+      [context_chips_row(model, t, box_width), box],
+      spacing=2.0,
+    ).frame(width=box_width, height=composer_height(width) + chips_h)
+  } else {
+    box
+  }
+}
+
+///|
+/// 模式下拉芯片（收起态）：「当前模式 ⌄」——VS Code 的 Agent ⌄ 口径。
+/// 点击展开 = 脚注原位切回四选一胶囊行（ToggleComposerModePicker）。
+fn composer_mode_dropdown(
+  model : Model,
+  t : @i18n.Translator,
+) -> @moui.View[Msg] {
+  let label = match model.composer_mode {
+    ComposeEdit => text(t, "app.ai.mode.edit")
+    ComposeGenerate => text(t, "app.ai.mode.generate")
+    ComposeExplain => text(t, "app.ai.mode.explain")
+    ComposeRepair => text(t, "app.ai.mode.repair")
+  }
+  let label_w = (text_estimate_width(label) * 1.05 + 8.0).max(30.0)
+  let chip_w = label_w + 26.0
+  let open = model.composer_mode_picker_open
+  @views.container(
+    @views.center(
+      @views.row(
+        [
+          @views.text(
+            label,
+            theme=studio_theme(),
+            width=label_w,
+            height=16.0,
+          ).foreground(if open { ide_accent() } else { ide_text_muted() }),
+          @views.icon(ChevronDown, size=10.0, color=ide_text_muted()),
+        ],
+        spacing=3.0,
+        align=Center,
+      ).frame(width=chip_w - 12.0),
+      width=chip_w,
+      height=20.0,
+    ),
+    background=if open { ide_selection() } else { ide_panel() },
+    corner_radius=10.0,
+    width=chip_w,
+    height=20.0,
+    padding=0.0,
+  ).on_tap(ToggleComposerModePicker)
+}
+
+///|
+/// 姿态读数行高（对白转录 V5：空态常驻,VS Code 的 Autopilot 行语义替换）。
+pub const POSTURE_HEIGHT : Double = 20.0
+
+///|
+/// 姿态读数（闸门哲学常驻可见）：无未处理卡 = 「闸门 · 逐条采纳」弱读数；
+/// 有卡 = 「待审计 N」警告色（pending_ai_cards）。右侧不放工作树/分支。
+fn ai_posture_row(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let pending = pending_ai_cards(model)
+  let label = if pending > 0 {
+    text_with(t, "app.ai.pending_chip", [("count", pending.to_string())])
+  } else {
+    text(t, "app.ai.posture.gate")
+  }
+  @views.container(
+    @views.padding_edges(
+      fill_row(
+        [
+          @views.text(
+            label,
+            theme=studio_theme(),
+            width=(text_estimate_width(label) + 4.0).max(40.0),
+            height=14.0,
+            align=TextStart,
+          ).foreground(if pending > 0 { ide_warning() } else { ide_text_faint() }),
+          @views.spacer(min_length=6.0, weight=1.0),
+        ],
+        width,
+        4.0,
+        Start,
+      ),
+      left=8.0,
+      right=8.0,
+    ),
+    width~,
+    height=POSTURE_HEIGHT,
     padding=0.0,
   )
 }

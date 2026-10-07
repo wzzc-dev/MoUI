@@ -7,7 +7,15 @@ import {
 }
 
 // Values
+pub const AI_SESSIONS_FORMAT : String = "moui.studio.ai-sessions"
+
+pub const AI_SESSIONS_VERSION : Int = 1
+
 pub fn ai_sessions_feature() -> @core.Feature[AiSessions, AiSessionMsg]
+
+pub fn decode_ai_sessions(String) -> Result[AiSessions, AiStoreError]
+
+pub fn encode_ai_sessions(AiSessions) -> String
 
 pub fn fake_stream_chunks(String, Int) -> Array[String]
 
@@ -25,9 +33,11 @@ pub(all) struct AiCard {
   settled : Bool
   settled_note : String
   seq : Int
+  at : Int
 }
 
 pub(all) enum AiCardKind {
+  CardUserPrompt
   CardPlan
   CardDiff
   CardSideEffect
@@ -41,13 +51,19 @@ pub(all) struct AiSession {
   cards : Array[AiCard]
   card_seq : Int
   proposal_history : Array[ProposalRecord]
+  project : String
+  pinned : Bool
+  updated : Int
+  created : Int
 }
 pub fn AiSession::default(Int) -> Self
 
 pub(all) enum AiSessionMsg {
-  AiSessionCreate
+  AiSessionCreate(Int)
   AiSessionSwitch(Int)
   AiSessionRemove(Int)
+  AiSessionRename(Int, String)
+  AiSessionPin(Int, Bool)
 }
 
 pub(all) struct AiSessions {
@@ -59,15 +75,25 @@ pub fn AiSessions::active_index(Self) -> Int
 pub fn AiSessions::amend(Self, AiSession) -> Unit
 pub fn AiSessions::append_to_last_card(Self, String) -> Unit
 pub fn AiSessions::count(Self) -> Int
-pub fn AiSessions::create(Self) -> Int
+pub fn AiSessions::create(Self, Int) -> Int
 pub fn AiSessions::current(Self) -> AiSession
 pub fn AiSessions::fresh(Int) -> Self
 pub fn AiSessions::list_entries(Self) -> Array[(Int, String, Bool)]
 pub fn AiSessions::new() -> Self
 pub fn AiSessions::remove(Self, Int) -> Unit
+pub fn AiSessions::rename(Self, Int, String) -> Bool
 pub fn AiSessions::session_at(Self, Int) -> AiSession?
+pub fn AiSessions::set_pinned(Self, Int, Bool) -> Bool
 pub fn AiSessions::switch(Self, Int) -> Bool
+pub fn AiSessions::touch(Self, Int) -> Unit
 pub fn AiSessions::update(Self, AiSessionMsg) -> (Self, @core.Effect[AiSessionMsg])
+
+pub(all) enum AiStoreError {
+  StoreBadJson
+  StoreBadFormat
+  StoreBadVersion(Int)
+  StoreBadPayload
+}
 
 pub(all) struct ProposalRecord {
   summary : String

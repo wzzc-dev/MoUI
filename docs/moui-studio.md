@@ -167,6 +167,39 @@ closed the largest gaps to a mature IDE:
   names, prefix-filtered) and jump-to-declaration, computed in-process from the
   DSL's own tables — the DSL is its own language server.
 
+## AI mode: dialog transcript workbench (2026-10)
+
+The AI mode is a **dialog transcript workbench** (see
+`docs/plans/active/moui-studio-ai-chat.md`):
+
+- Submitted prompts are echoed as right-aligned user bubbles with copy/edit
+  actions; AI explanations render as markdown messages with copy/retry; the
+  proposal diff card keeps its in-card accept/reject gate; provider failures
+  land as error cards in the timeline. Consecutive work cards collapse into a
+  "worked for N" group; the transcript auto-follows new content with a
+  scroll-to-bottom escape hatch.
+- The composer shows an info layer on wide hosts: the active project and the
+  provider/model readout (click opens settings), plus a pending-audit posture
+  chip; the empty session states the product tip ("AI only proposes structured
+  diffs — nothing changes until you accept").
+- The left pane groups sessions by pin/project with relative timestamps,
+  inline rename, search filter, and hover actions; Ctrl/Cmd+N creates a
+  session and Ctrl/Cmd+F toggles the filter.
+- **Look & interaction (phase 2, VS Code agent-mode baseline)**: two-line
+  session rows (icon + title / source icon · relative time, always visible via
+  the `created` stamp with an `updated` fallback); header = outlined 新 + ⌘N
+  keycap + settings gear + search; two dropdown chips (project → project
+  explorer, model → settings); the tip strip lives in the composer card header
+  ("Tip: " + accented keyword, whole strip opens proposal history); the four
+  mode capsules collapse into a single "current mode ⌄" dropdown that expands
+  in place; the model chip sits in the footnote; center-mode composer gets a
+  1px border; the empty state is visually centered with the gate posture
+  readout always visible.
+- Sessions persist natively to `.studio/ai_sessions.json`
+  (`moui.studio.ai-sessions v1`; unknown versions are rejected, never
+  migrated). Web keeps persistence explicitly off. Wall-clock timestamps come
+  from a composition-root-injected clock (no runtime import).
+
 ## Dual-track differential gate
 
 `services/diff` is a hard gate, not a report. It runs the four built-in samples

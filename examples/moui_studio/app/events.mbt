@@ -22,6 +22,9 @@ pub(all) enum StudioEvent {
   /// 提案被采纳（M3）：语义事实的扩展点——落盘事实由 EvCodeProjectWrite
   /// 承载，本事件供未来插件订阅（当前无消费者 → 排空时零开销 NoEffect）。
   EvProposalAccepted(Int, String)
+  /// AI 会话发生结构性变化（M5）：提交/采纳/拒绝/新建/切换/删除/置顶/
+  /// 改名/流式完成。组合根配置了存储路径时由总线翻译成写盘请求。
+  EvAiSessionsDirty
 }
 
 ///|

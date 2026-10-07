@@ -10,10 +10,11 @@
 /// 会话切片的组成单元，必须随切片走。
 
 ///|
-/// AI 会话卡的种类：Agent 计划 / diff 待审计 / 副作用确认 / 讲解 / 错误。
-/// 卡是「Agent 干了什么」的可审计投影，不承载执行语义——采纳仍走既有
-/// AcceptProposal / AnswerGate 通道。
+/// AI 会话卡的种类：用户提问 / Agent 计划 / diff 待审计 / 副作用确认 /
+/// 讲解 / 错误。卡是「这轮对话发生了什么」的可审计投影，不承载执行语义
+/// ——采纳仍走既有 AcceptProposal / AnswerGate 通道。
 pub(all) enum AiCardKind {
+  CardUserPrompt
   CardPlan
   CardDiff
   CardSideEffect
@@ -39,6 +40,9 @@ pub(all) struct AiCard {
   settled_note : String
   // 单调递增序号：用于稳定 key 与「最新一张」判定
   seq : Int
+  // 推送时刻的 civil_seconds 戳（时间线显示 HH:MM 与「已工作 N 秒」时长）。
+  // 0 = 未知（构造点未盖戳；push_ai_card 是唯一盖章漏斗）
+  at : Int
 }
 
 ///|
@@ -55,12 +59,23 @@ pub(all) struct ProposalRecord {
 ///|
 /// 单个会话：独立的草稿 / 线程卡 / 提案历史。
 pub(all) struct AiSession {
-  /// 会话名（列表显示；新建时给默认名，可后续改名）
+  /// 会话名（列表显示；新建时给默认名，提交首轮提问自动置题，可后续改名）
   title : String
   prompt_draft : String
   cards : Array[AiCard]
   card_seq : Int
   proposal_history : Array[ProposalRecord]
+  /// 所属工程（提交首轮提问时盖 active_project 的 module_name 戳；
+  /// "" = 无工程，列表按它分组显示为「默认工程」）
+  project : String
+  /// 置顶（列表置顶分组；改名/置顶走 AiSessionMsg）
+  pinned : Bool
+  /// 最近一次**结构性事件**的 civil_seconds 戳（提交/采纳/拒绝/切换/流式完成；
+  /// 草稿键入不盖戳——避免列表按 updated 排序时随打字抖动）。0 = 未知。
+  updated : Int
+  /// 创建时刻的 civil_seconds 戳（VS Code 基准：会话行常显「N 周前」类元信息
+  /// 的数据根源）。0 = 未知（一期存量会话）；显示回退链 created > updated。
+  created : Int
 }
 
 ///|
@@ -97,6 +112,10 @@ pub fn AiSession::default(count : Int) -> AiSession {
     cards: [],
     card_seq: 0,
     proposal_history: [],
+    project: "",
+    pinned: false,
+    updated: 0,
+    created: 0,
   }
 }
 
@@ -140,10 +159,13 @@ pub fn AiSessions::amend(self : AiSessions, session : AiSession) -> Unit {
 
 ///|
 /// 新建会话并切换过去（返回新活跃下标）。默认名取「会话 N」，N = 历史
-/// 开过的最大序号 + 1（删除重建不重名）。
-pub fn AiSessions::create(self : AiSessions) -> Int {
+/// 开过的最大序号 + 1（删除重建不重名）。`now` = 创建时刻（civil_seconds），
+/// 同时盖 created 与 updated——会话行「N 前」元信息常显的数据来源；
+/// 切片本身无钟，由调用方（持 model.clock 的视图/命令层）传入。
+pub fn AiSessions::create(self : AiSessions, now : Int) -> Int {
   self.seq = self.seq + 1
-  self.sessions.push(AiSession::default(self.seq))
+  let session = AiSession::default(self.seq)
+  self.sessions.push({ ..session, created: now, updated: now })
   self.active = self.sessions.length() - 1
   self.active
 }
@@ -176,6 +198,44 @@ pub fn AiSessions::remove(self : AiSessions, index : Int) -> Unit {
   if self.active >= self.sessions.length() {
     self.active = self.sessions.length() - 1
   }
+}
+
+///|
+/// 重命名会话（越界 no-op，返回是否生效）。改名是显式动作：置题后的
+/// 自动命名不再覆盖它（composer_run 只在默认名形态下置题）。
+pub fn AiSessions::rename(
+  self : AiSessions,
+  index : Int,
+  title : String,
+) -> Bool {
+  match self.session_at(index) {
+    Some(session) => {
+      self.sessions[index] = { ..session, title, }
+      true
+    }
+    None => false
+  }
+}
+
+///|
+/// 置顶/取消置顶（越界 no-op，返回是否生效）。列表渲染按它分组。
+pub fn AiSessions::set_pinned(self : AiSessions, index : Int, pinned : Bool) -> Bool {
+  match self.session_at(index) {
+    Some(session) => {
+      self.sessions[index] = { ..session, pinned, }
+      true
+    }
+    None => false
+  }
+}
+
+///|
+/// 给当前会话盖「最近活动」时间戳（civil_seconds）。只在**结构性事件**
+/// （提交/采纳/拒绝/切换/流式完成）调用——草稿键入走 SetPrompt，不经过
+/// 这里，列表按 updated 排序才不会随打字抖动。
+pub fn AiSessions::touch(self : AiSessions, at : Int) -> Unit {
+  let session = self.current()
+  self.amend({ ..session, updated: at, })
 }
 
 ///|

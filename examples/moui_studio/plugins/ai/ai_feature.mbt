@@ -8,11 +8,14 @@
 /// view 域刻意 abort（mo_workbench 先例）。
 
 ///|
-/// 会话操作消息：新建 / 切换 / 删除。
+/// 会话操作消息：新建 / 切换 / 删除 / 改名 / 置顶。
 pub(all) enum AiSessionMsg {
-  AiSessionCreate
+  /// 新建会话；载荷 = 创建时刻（civil_seconds，调用方经 model.clock 取）
+  AiSessionCreate(Int)
   AiSessionSwitch(Int)
   AiSessionRemove(Int)
+  AiSessionRename(Int, String)
+  AiSessionPin(Int, Bool)
 }
 
 ///|
@@ -22,8 +25,8 @@ pub fn AiSessions::update(
   message : AiSessionMsg,
 ) -> (AiSessions, @moui.Effect[AiSessionMsg]) {
   match message {
-    AiSessionCreate => {
-      ignore(self.create())
+    AiSessionCreate(now) => {
+      ignore(self.create(now))
       (self, @moui.Effect::none())
     }
     AiSessionSwitch(index) => {
@@ -32,6 +35,14 @@ pub fn AiSessions::update(
     }
     AiSessionRemove(index) => {
       self.remove(index)
+      (self, @moui.Effect::none())
+    }
+    AiSessionRename(index, title) => {
+      let _ = self.rename(index, title)
+      (self, @moui.Effect::none())
+    }
+    AiSessionPin(index, pinned) => {
+      let _ = self.set_pinned(index, pinned)
       (self, @moui.Effect::none())
     }
   }
