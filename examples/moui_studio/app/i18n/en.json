@@ -740,6 +740,17 @@
     "app.search.empty": "No results. Type a query and press Search.",
     "event.on_start": "On start",
     "blocks.for_each": "foreach",
-    "app.stmt.tpl.for_each": "Foreach over a list"
+    "app.stmt.tpl.for_each": "Foreach over a list",
+    "app.stmt.tpl.insert_list": "Insert into list",
+    "app.stmt.tpl.remove_list": "Remove from list",
+    "app.stmt.tpl.replace_list": "Replace in list",
+    "app.expr.tpl.index_of_list": "Find in list",
+    "app.expr.tpl.join": "Join texts",
+    "app.expr.tpl.letter": "Letter N of text",
+    "app.expr.tpl.upper": "Uppercase",
+    "app.expr.tpl.lower": "Lowercase",
+    "app.expr.tpl.sin": "Sine",
+    "app.expr.tpl.cos": "Cosine",
+    "app.expr.tpl.log": "Logarithm"
   }
 }

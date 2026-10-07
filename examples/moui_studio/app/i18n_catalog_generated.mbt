@@ -326,7 +326,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.expr.tpl.abs", GeneratedI18nMessage::Text("Absolute value")),
       ("app.expr.tpl.add", GeneratedI18nMessage::Text("Add")),
       ("app.expr.tpl.and", GeneratedI18nMessage::Text("And")),
+      ("app.expr.tpl.cos", GeneratedI18nMessage::Text("Cosine")),
+      ("app.expr.tpl.log", GeneratedI18nMessage::Text("Logarithm")),
       ("app.expr.tpl.mod", GeneratedI18nMessage::Text("Modulo")),
+      ("app.expr.tpl.sin", GeneratedI18nMessage::Text("Sine")),
       ("app.function.new", GeneratedI18nMessage::Text("New block")),
       ("app.handler.none", GeneratedI18nMessage::Text("No handler selected")),
       ("app.left.project", GeneratedI18nMessage::Text("Projects")),
@@ -403,6 +406,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.dialog.export",
         GeneratedI18nMessage::Text("Choose export directory"),
       ),
+      ("app.expr.tpl.join", GeneratedI18nMessage::Text("Join texts")),
       ("app.expr.tpl.sqrt", GeneratedI18nMessage::Text("Square root")),
       ("app.help.builtins", GeneratedI18nMessage::Text("Commands & functions")),
       ("app.help.commands", GeneratedI18nMessage::Text("Command")),
@@ -489,7 +493,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.ctx.state.gate", GeneratedI18nMessage::Text("Gate")),
       ("app.expr.tpl.floor", GeneratedI18nMessage::Text("Floor")),
+      ("app.expr.tpl.lower", GeneratedI18nMessage::Text("Lowercase")),
       ("app.expr.tpl.round", GeneratedI18nMessage::Text("Round")),
+      ("app.expr.tpl.upper", GeneratedI18nMessage::Text("Uppercase")),
       ("app.help.functions", GeneratedI18nMessage::Text("Function")),
       (
         "app.inspector.gone",
@@ -624,6 +630,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.empty.roll_call", GeneratedI18nMessage::Text("New roll call")),
       ("app.expr.tpl.answer", GeneratedI18nMessage::Text("Answer")),
       ("app.expr.tpl.length", GeneratedI18nMessage::Text("Text length")),
+      ("app.expr.tpl.letter", GeneratedI18nMessage::Text("Letter N of text")),
       ("app.expr.tpl.random", GeneratedI18nMessage::Text("Random")),
       ("app.expr.tpl.row_at", GeneratedI18nMessage::Text("Row at")),
       (
@@ -1281,6 +1288,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("assign + arithmetic"),
       ),
       (
+        "app.stmt.tpl.insert_list",
+        GeneratedI18nMessage::Text("Insert into list"),
+      ),
+      (
+        "app.stmt.tpl.remove_list",
+        GeneratedI18nMessage::Text("Remove from list"),
+      ),
+      (
         "app.terminal.unavailable",
         GeneratedI18nMessage::Text(
           "Terminal is unavailable on this platform (PTY requires native).",
@@ -1394,6 +1409,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("app.stmt.tpl.repeat_until", GeneratedI18nMessage::Text("Repeat until")),
       (
+        "app.stmt.tpl.replace_list",
+        GeneratedI18nMessage::Text("Replace in list"),
+      ),
+      (
         "app.track.unavailable_web",
         GeneratedI18nMessage::Text(
           "The web build ships the interpreter track plus source preview only; the compiled track is native-only.",
@@ -1446,6 +1465,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "Exporting a standalone app needs a native directory picker and disk writes; unavailable on the web entry — export from the macOS entry instead.",
         ),
       ),
+      ("app.expr.tpl.index_of_list", GeneratedI18nMessage::Text("Find in list")),
       ("app.inspector.data_preview", GeneratedI18nMessage::Text("Preview")),
       (
         "app.inspector.progress_var",
@@ -2092,7 +2112,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.expr.tpl.abs", GeneratedI18nMessage::Text("绝对值")),
       ("app.expr.tpl.add", GeneratedI18nMessage::Text("加法")),
       ("app.expr.tpl.and", GeneratedI18nMessage::Text("与")),
+      ("app.expr.tpl.cos", GeneratedI18nMessage::Text("余弦")),
+      ("app.expr.tpl.log", GeneratedI18nMessage::Text("对数")),
       ("app.expr.tpl.mod", GeneratedI18nMessage::Text("取余")),
+      ("app.expr.tpl.sin", GeneratedI18nMessage::Text("正弦")),
       ("app.function.new", GeneratedI18nMessage::Text("新建积木")),
       ("app.handler.none", GeneratedI18nMessage::Text("未选中子程序")),
       ("app.left.project", GeneratedI18nMessage::Text("工程")),
@@ -2170,6 +2193,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.data.readonly", GeneratedI18nMessage::Text("只读")),
       ("app.design.canvas", GeneratedI18nMessage::Text("表单设计画布")),
       ("app.dialog.export", GeneratedI18nMessage::Text("选择导出目录")),
+      ("app.expr.tpl.join", GeneratedI18nMessage::Text("连接")),
       ("app.expr.tpl.sqrt", GeneratedI18nMessage::Text("平方根")),
       ("app.help.builtins", GeneratedI18nMessage::Text("命令与函数")),
       ("app.help.commands", GeneratedI18nMessage::Text("命令")),
@@ -2244,7 +2268,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ctx.deps.empty", GeneratedI18nMessage::Text("没有发现依赖")),
       ("app.ctx.state.gate", GeneratedI18nMessage::Text("闸门")),
       ("app.expr.tpl.floor", GeneratedI18nMessage::Text("向下取整")),
+      ("app.expr.tpl.lower", GeneratedI18nMessage::Text("小写")),
       ("app.expr.tpl.round", GeneratedI18nMessage::Text("四舍五入")),
+      ("app.expr.tpl.upper", GeneratedI18nMessage::Text("大写")),
       ("app.help.functions", GeneratedI18nMessage::Text("函数")),
       (
         "app.inspector.gone",
@@ -2378,6 +2404,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.empty.roll_call", GeneratedI18nMessage::Text("新建点名册")),
       ("app.expr.tpl.answer", GeneratedI18nMessage::Text("回答")),
       ("app.expr.tpl.length", GeneratedI18nMessage::Text("文本长度")),
+      ("app.expr.tpl.letter", GeneratedI18nMessage::Text("取字符")),
       ("app.expr.tpl.random", GeneratedI18nMessage::Text("随机数")),
       ("app.expr.tpl.row_at", GeneratedI18nMessage::Text("第几行")),
       (
@@ -3009,6 +3036,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.stmt.tpl.assign_expr",
         GeneratedI18nMessage::Text("赋值 + 运算"),
       ),
+      ("app.stmt.tpl.insert_list", GeneratedI18nMessage::Text("插入列表")),
+      ("app.stmt.tpl.remove_list", GeneratedI18nMessage::Text("删除列表")),
       (
         "app.terminal.unavailable",
         GeneratedI18nMessage::Text(
@@ -3125,6 +3154,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.stmt.tpl.repeat_until",
         GeneratedI18nMessage::Text("重复直到…"),
       ),
+      ("app.stmt.tpl.replace_list", GeneratedI18nMessage::Text("替换列表")),
       (
         "app.track.unavailable_web",
         GeneratedI18nMessage::Text(
@@ -3178,6 +3208,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "导出独立应用需要系统目录选择与写盘：Web 端不可用，请在 macOS 入口导出。",
         ),
       ),
+      ("app.expr.tpl.index_of_list", GeneratedI18nMessage::Text("查找列表")),
       ("app.inspector.data_preview", GeneratedI18nMessage::Text("内容预览")),
       (
         "app.inspector.progress_var",

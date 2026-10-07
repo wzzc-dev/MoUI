@@ -174,6 +174,40 @@ fn statement_kind_handlers(
       ]),
     ),
   )
+  // G7.1 内建补全:字符串（连接/大写）+ 列表查找,两轨文本逐位一致
+  results.push(
+    (
+      "builtins-g7",
+      synthetic_handler(program, [
+        @ir.Declare(
+          "差分文本",
+          @ir.Call("join", [
+            @ir.StrLit("分数: "),
+            @ir.Call("to_text", [@ir.IntLit(5)]),
+          ]),
+        ),
+        @ir.Assign("差分文本", @ir.Call("upper", [@ir.Var("差分文本")])),
+        @ir.Declare(
+          "差分名单",
+          @ir.ListLit([@ir.StrLit("甲"), @ir.StrLit("乙")]),
+        ),
+        @ir.Declare(
+          "差分位置",
+          @ir.Call("index_of_list", [
+            @ir.Var("差分名单"),
+            @ir.StrLit("乙"),
+          ]),
+        ),
+        @ir.Call("set_text", [
+          @ir.Var(label),
+          @ir.Call("join", [
+            @ir.Var("差分文本"),
+            @ir.Call("to_text", [@ir.Var("差分位置")]),
+          ]),
+        ]),
+      ]),
+    ),
+  )
   // 计次循环 + 跳出（第 2 轮跳出）
   results.push(
     (

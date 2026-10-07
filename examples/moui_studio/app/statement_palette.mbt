@@ -163,6 +163,25 @@ pub fn statement_templates() -> Array[StatementTemplate] {
       skeleton_zh: "submit_data(计数, \"演示目标\")",
       skeleton_en: "submit_data(count, \"demo\")",
     },
+    // G7.1 列表操作命令（可解析性由 blocks_slot 不变式守住）
+    StatementTemplate::{
+      category: @blocks.CatCommand,
+      label_key: "app.stmt.tpl.insert_list",
+      skeleton_zh: "insert_list(名单, 1, \"新项\")",
+      skeleton_en: "insert_list(roster, 1, \"new\")",
+    },
+    StatementTemplate::{
+      category: @blocks.CatCommand,
+      label_key: "app.stmt.tpl.remove_list",
+      skeleton_zh: "remove_list(名单, 1)",
+      skeleton_en: "remove_list(roster, 1)",
+    },
+    StatementTemplate::{
+      category: @blocks.CatCommand,
+      label_key: "app.stmt.tpl.replace_list",
+      skeleton_zh: "replace_list(名单, 1, \"替换\")",
+      skeleton_en: "replace_list(roster, 1, \"swap\")",
+    },
     // 下面两条此前只能手打：解释器早就实现了，但面板里没有入口，
     // 于是「广播消息」与「往列表里加一项」在积木界面里**够不着**——
     // 这正是「积木界面覆盖 Scratch 能力」的缺口：能力在、入口不在。
@@ -264,6 +283,47 @@ pub fn expression_templates() -> Array[ExpressionTemplate] {
       label_key: "app.expr.tpl.compare",
       skeleton_zh: "1 > 0",
       skeleton_en: "1 > 0",
+    },
+    // G7.1 内建补全（可解析性由 blocks_slot 不变式守住）
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.index_of_list",
+      skeleton_zh: "index_of_list(名单, \"甲\")",
+      skeleton_en: "index_of_list(roster, \"a\")",
+    },
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.join",
+      skeleton_zh: "join(\"a\", \"b\")",
+      skeleton_en: "join(\"a\", \"b\")",
+    },
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.letter",
+      skeleton_zh: "letter(\"你好\", 1)",
+      skeleton_en: "letter(\"hi\", 1)",
+    },
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.upper",
+      skeleton_zh: "upper(\"abc\")",
+      skeleton_en: "upper(\"abc\")",
+    },
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.lower",
+      skeleton_zh: "lower(\"ABC\")",
+      skeleton_en: "lower(\"ABC\")",
+    },
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.sin",
+      skeleton_zh: "sin(1)",
+      skeleton_en: "sin(1)",
+    },
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.cos",
+      skeleton_zh: "cos(1)",
+      skeleton_en: "cos(1)",
+    },
+    ExpressionTemplate::{
+      label_key: "app.expr.tpl.log",
+      skeleton_zh: "log(1)",
+      skeleton_en: "log(1)",
     },
     ExpressionTemplate::{
       label_key: "app.expr.tpl.and",

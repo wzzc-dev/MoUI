@@ -142,6 +142,8 @@ pub fn builtin_result_type(id : String) -> BlockValueType {
     | "ceiling"
     | "sqrt" => VtNumber
     "contains" | "ask" => VtBool
+    "index_of_list" | "letter" | "join" | "upper" | "lower" => VtText
+    "sin" | "cos" | "log" => VtNumber
     _ => VtAny
   }
 }
@@ -168,6 +170,13 @@ pub fn builtin_param_types(id : String) -> Array[BlockValueType] {
     "answer" => []
     "mod" => [VtNumber, VtNumber]
     "round" | "abs" | "floor" | "ceiling" | "sqrt" => [VtNumber]
+    "insert_list" | "replace_list" => [VtAny, VtNumber, VtAny]
+    "remove_list" => [VtAny, VtNumber]
+    "index_of_list" => [VtAny, VtAny]
+    "join" => [VtText, VtText]
+    "letter" => [VtText, VtNumber]
+    "upper" | "lower" => [VtText]
+    "sin" | "cos" | "log" => [VtNumber]
     "ask" => [VtText]
     "submit_data" => [VtAny, VtAny]
     _ => []

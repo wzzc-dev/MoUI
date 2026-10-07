@@ -740,6 +740,17 @@
     "app.search.empty": "无结果。输入关键字后点「搜索」。",
     "event.on_start": "当程序启动",
     "blocks.for_each": "遍历",
-    "app.stmt.tpl.for_each": "遍历列表中的每个元素"
+    "app.stmt.tpl.for_each": "遍历列表中的每个元素",
+    "app.stmt.tpl.insert_list": "插入列表",
+    "app.stmt.tpl.remove_list": "删除列表",
+    "app.stmt.tpl.replace_list": "替换列表",
+    "app.expr.tpl.index_of_list": "查找列表",
+    "app.expr.tpl.join": "连接",
+    "app.expr.tpl.letter": "取字符",
+    "app.expr.tpl.upper": "大写",
+    "app.expr.tpl.lower": "小写",
+    "app.expr.tpl.sin": "正弦",
+    "app.expr.tpl.cos": "余弦",
+    "app.expr.tpl.log": "对数"
   }
 }

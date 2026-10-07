@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 积木独立——OnStart 启动事件 + 语句/内建补全
 
-- **Status**: active
+- **Status**: active（OnStart + ForEach + 内建补全已落地；全套 4846/4846 绿）
 - **Goal**: 「启动」窗体级事件让纯逻辑程序成为可能（不依赖控件:装填后立即
   执行,两轨同语义,差分门禁覆盖）;语句面补齐 for-each 与列表/字符串/数学内建,
   语句骨架表全类目可达。
@@ -35,6 +35,13 @@
    - 每构造过九面：parser/printer（双语）/interp/codegen/compiled_runtime/
      blocks/codec/signature + 双轨差分门用例;语句骨架表补到全类目可达。
 3. **验收**：无控件纯 OnStart 程序可写可跑，两轨审计逐位一致;门禁新用例绿。
+
+## 实施记录（2026-10-07）
+
+- OnStart：全链落地（IR/invariants/创建门/inspector/两轨装填后派发/导出 runner/门禁用例），commit 9b879870a。
+- ForEach：九面全套（含 FeInit/FeCheck 指令、隐藏列表槽 @i{n}#l 内部命名、blocks BkForEach、kernel 同步再生），commit 7427bb33b。
+- 内建补全：insert_list/remove_list/replace_list/index_of_list/join/letter/upper/lower/sin/cos/log 十一个，五面（目录/解释/编译/codegen/blocks 端口类型）+ 面板骨架 + i18n；正弦/余弦/对数用本地级数实现（两轨逐字同实现保位型一致），门禁用例 builtins-g7 守住。
+- 骨架表：for_each/内建 11 条全部可解析可达（blocks_slot 两条不变式自动守住）。
 
 ## 边界声明
 

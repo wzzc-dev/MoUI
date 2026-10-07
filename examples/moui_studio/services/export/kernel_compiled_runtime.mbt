@@ -1768,5 +1768,308 @@ pub fn kernel_compiled_runtime_mbt() -> String {
     #|  }
     #|}
     #|
+    #|///|
+    #|/// 插入列表（G7.1）：1-based,1..=长度+1；按变量引用原位修改。
+    #|pub fn Runtime::insert_list(
+    #|  self : Runtime,
+    #|  name : String,
+    #|  index_value : Value,
+    #|  value : Value,
+    #|  op_name : String,
+    #|  line : Int,
+    #|  detail : String,
+    #|) -> Unit raise ExecError {
+    #|  ignore(op_name)
+    #|  let items = match self.vars.get(name) {
+    #|    Some(VArr(items)) => items
+    #|    Some(_) =>
+    #|      raise ExecError::RuntimeError(ErrorDetails::{
+    #|        kind: TypeMismatch,
+    #|        line,
+    #|        a: name,
+    #|        b: "list",
+    #|      })
+    #|    None =>
+    #|      raise ExecError::RuntimeError(ErrorDetails::{
+    #|        kind: NotDeclared,
+    #|        line,
+    #|        a: name,
+    #|        b: "use declare first",
+    #|      })
+    #|  }
+    #|  let index = as_number(index_value, "insert_list", line).to_int()
+    #|  if index < 1 || index > items.length() + 1 {
+    #|    raise ExecError::RuntimeError(ErrorDetails::{
+    #|      kind: TypeMismatch,
+    #|      line,
+    #|      a: "insert_list",
+    #|      b: "1..=length+1",
+    #|    })
+    #|  }
+    #|  items.insert(index - 1, value)
+    #|}
+    #|
+    #|///|
+    #|/// 删除列表（G7.1）：1-based。
+    #|pub fn Runtime::remove_list(
+    #|  self : Runtime,
+    #|  name : String,
+    #|  index_value : Value,
+    #|  op_name : String,
+    #|  line : Int,
+    #|  detail : String,
+    #|) -> Unit raise ExecError {
+    #|  ignore(op_name)
+    #|  let items = match self.vars.get(name) {
+    #|    Some(VArr(items)) => items
+    #|    Some(_) =>
+    #|      raise ExecError::RuntimeError(ErrorDetails::{
+    #|        kind: TypeMismatch,
+    #|        line,
+    #|        a: name,
+    #|        b: "list",
+    #|      })
+    #|    None =>
+    #|      raise ExecError::RuntimeError(ErrorDetails::{
+    #|        kind: NotDeclared,
+    #|        line,
+    #|        a: name,
+    #|        b: "use declare first",
+    #|      })
+    #|  }
+    #|  let index = as_number(index_value, "remove_list", line).to_int()
+    #|  if index < 1 || index > items.length() {
+    #|    raise ExecError::RuntimeError(ErrorDetails::{
+    #|      kind: TypeMismatch,
+    #|      line,
+    #|      a: "remove_list",
+    #|      b: "1..=length",
+    #|    })
+    #|  }
+    #|  let tail : Array[Value] = []
+    #|  for i, item in items {
+    #|    if i != index - 1 {
+    #|      tail.push(item)
+    #|    }
+    #|  }
+    #|  items.clear()
+    #|  for item in tail {
+    #|    items.push(item)
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|/// 替换列表（G7.1）：1-based。
+    #|pub fn Runtime::replace_list(
+    #|  self : Runtime,
+    #|  name : String,
+    #|  index_value : Value,
+    #|  value : Value,
+    #|  op_name : String,
+    #|  line : Int,
+    #|  detail : String,
+    #|) -> Unit raise ExecError {
+    #|  ignore(op_name)
+    #|  let items = match self.vars.get(name) {
+    #|    Some(VArr(items)) => items
+    #|    Some(_) =>
+    #|      raise ExecError::RuntimeError(ErrorDetails::{
+    #|        kind: TypeMismatch,
+    #|        line,
+    #|        a: name,
+    #|        b: "list",
+    #|      })
+    #|    None =>
+    #|      raise ExecError::RuntimeError(ErrorDetails::{
+    #|        kind: NotDeclared,
+    #|        line,
+    #|        a: name,
+    #|        b: "use declare first",
+    #|      })
+    #|  }
+    #|  let index = as_number(index_value, "replace_list", line).to_int()
+    #|  if index < 1 || index > items.length() {
+    #|    raise ExecError::RuntimeError(ErrorDetails::{
+    #|      kind: TypeMismatch,
+    #|      line,
+    #|      a: "replace_list",
+    #|      b: "1..=length",
+    #|    })
+    #|  }
+    #|  items[index - 1] = value
+    #|}
+    #|
+    #|///|
+    #|/// 查找列表（G7.1）：按规范文本逐项比对,返回 1-based 下标,未命中 0。
+    #|pub fn index_of_list(
+    #|  rt : Runtime,
+    #|  list_value : Value,
+    #|  wanted : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  ignore(role)
+    #|  ignore(line)
+    #|  let wanted_text = value_to_text(wanted)
+    #|  let items = match list_value {
+    #|    VArr(items) => items
+    #|    _ => []
+    #|  }
+    #|  let mut found = 0
+    #|  let mut i = 0
+    #|  for item in items {
+    #|    i = i + 1
+    #|    if value_to_text(item) == wanted_text {
+    #|      found = i
+    #|      break
+    #|    }
+    #|  }
+    #|  rt.last_index_result(found)
+    #|}
+    #|
+    #|///|
+    #|fn Runtime::last_index_result(self : Runtime, found : Int) -> Value {
+    #|  VInt(found)
+    #|}
+    #|
+    #|///|
+    #|/// 连接（G7.1）：两侧按 value_to_text 规范转文本后拼接。
+    #|pub fn join_value(
+    #|  left : Value,
+    #|  right : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  ignore(role)
+    #|  ignore(line)
+    #|  VStr(value_to_text(left) + value_to_text(right))
+    #|}
+    #|
+    #|///|
+    #|/// 取字符（G7.1）：1-based 字符索引（与 取长度 按字符计同口径），
+    #|/// 越界返回空文本。
+    #|pub fn letter_value(
+    #|  value : Value,
+    #|  index_value : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  ignore(role)
+    #|  let text = value_to_text(value)
+    #|  let index = as_number(index_value, "letter", line).to_int()
+    #|  let mut seen = 0
+    #|  let mut found = ""
+    #|  if index >= 1 {
+    #|    for ch in text {
+    #|      seen = seen + 1
+    #|      if seen == index {
+    #|        found = ch.to_string()
+    #|        break
+    #|      }
+    #|    }
+    #|  }
+    #|  VStr(found)
+    #|}
+    #|
+    #|///|
+    #|/// 大写（G7.1）。
+    #|pub fn upper_value(
+    #|  value : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  ignore(role)
+    #|  ignore(line)
+    #|  VStr(value_to_text(value).to_upper())
+    #|}
+    #|
+    #|///|
+    #|/// 小写（G7.1）。
+    #|pub fn lower_value(
+    #|  value : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  ignore(role)
+    #|  ignore(line)
+    #|  VStr(value_to_text(value).to_lower())
+    #|}
+    #|
+    #|///|
+    #|/// 正弦（G7.1）：与解释轨 sin_of 逐字同实现——两轨同一位型才过差分门。
+    #|fn sin_value_inner(value : Double) -> Double {
+    #|  let pi2 = 6.283185307179586
+    #|  let mut x = value - (value / pi2).floor() * pi2
+    #|  if x > 3.141592653589793 {
+    #|    x = x - pi2
+    #|  }
+    #|  let mut sum = 0.0
+    #|  let mut term = x
+    #|  let mut k = 1
+    #|  while k <= 25 {
+    #|    sum = sum + term
+    #|    term = -term * x * x / ((k + 1).to_double() * (k + 2).to_double())
+    #|    k = k + 2
+    #|  }
+    #|  sum
+    #|}
+    #|
+    #|///|
+    #|pub fn sin_value(
+    #|  value : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  VNum(sin_value_inner(as_number(value, role, line)))
+    #|}
+    #|
+    #|///|
+    #|pub fn cos_value(
+    #|  value : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  VNum(sin_value_inner(as_number(value, role, line) + 1.5707963267948966))
+    #|}
+    #|
+    #|///|
+    #|/// 自然对数（G7.1）：区间归约到 [1,2) 后用 atanh 级数。与解释轨逐字同实现。
+    #|fn ln_inner(value : Double) -> Double {
+    #|  if value <= 0.0 {
+    #|    return 0.0
+    #|  }
+    #|  let ln2 = 0.6931471805599453
+    #|  let mut m = value
+    #|  let mut k = 0
+    #|  while m >= 2.0 {
+    #|    m = m / 2.0
+    #|    k = k + 1
+    #|  }
+    #|  while m < 1.0 {
+    #|    m = m * 2.0
+    #|    k = k - 1
+    #|  }
+    #|  let z = (m - 1.0) / (m + 1.0)
+    #|  let z2 = z * z
+    #|  let mut sum = 0.0
+    #|  let mut term = z
+    #|  let mut n = 1
+    #|  while n <= 17 {
+    #|    sum = sum + term / n.to_double()
+    #|    term = term * z2
+    #|    n = n + 2
+    #|  }
+    #|  2.0 * sum + k.to_double() * ln2
+    #|}
+    #|
+    #|///|
+    #|pub fn ln_value(
+    #|  value : Value,
+    #|  role : String,
+    #|  line : Int,
+    #|) -> Value raise ExecError {
+    #|  VNum(ln_inner(as_number(value, role, line)))
+    #|}
+    #|
   source
 }

@@ -702,6 +702,39 @@ fn write_command_call(
         "rt.append_list(\{list_name}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line}, \{detail})",
       )
     }
+    "insert_list" => {
+      let list_name = match args[0] {
+        @ir.Var(list_name) => mbt_quote(list_name)
+        _ =>
+          "@compiled_runtime.as_text(\{write_value(ctx, args[0])}, \"insert_list\", \{line})"
+      }
+      write_line(
+        ctx,
+        "rt.insert_list(\{list_name}, \{write_value(ctx, args[1])}, \{write_value(ctx, args[2])}, \{mbt_quote(name)}, \{line}, \{detail})",
+      )
+    }
+    "remove_list" => {
+      let list_name = match args[0] {
+        @ir.Var(list_name) => mbt_quote(list_name)
+        _ =>
+          "@compiled_runtime.as_text(\{write_value(ctx, args[0])}, \"remove_list\", \{line})"
+      }
+      write_line(
+        ctx,
+        "rt.remove_list(\{list_name}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line}, \{detail})",
+      )
+    }
+    "replace_list" => {
+      let list_name = match args[0] {
+        @ir.Var(list_name) => mbt_quote(list_name)
+        _ =>
+          "@compiled_runtime.as_text(\{write_value(ctx, args[0])}, \"replace_list\", \{line})"
+      }
+      write_line(
+        ctx,
+        "rt.replace_list(\{list_name}, \{write_value(ctx, args[1])}, \{write_value(ctx, args[2])}, \{mbt_quote(name)}, \{line}, \{detail})",
+      )
+    }
     _ =>
       write_line(
         ctx,
@@ -863,6 +896,22 @@ fn write_function_call(
       "@compiled_runtime.ceiling_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
     "sqrt" =>
       "@compiled_runtime.sqrt_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "index_of_list" =>
+      "@compiled_runtime.index_of_list(rt, \{write_value(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line})"
+    "join" =>
+      "@compiled_runtime.join_value(\{write_value(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line})"
+    "letter" =>
+      "@compiled_runtime.letter_value(\{write_value(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line})"
+    "upper" =>
+      "@compiled_runtime.upper_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "lower" =>
+      "@compiled_runtime.lower_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "sin" =>
+      "@compiled_runtime.sin_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "cos" =>
+      "@compiled_runtime.cos_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
+    "log" =>
+      "@compiled_runtime.ln_value(\{write_value(ctx, args[0])}, \{mbt_quote(name)}, \{line})"
     "contains" =>
       "@compiled_runtime.contains(\{write_value(ctx, args[0])}, \{write_value(ctx, args[1])}, \{mbt_quote(name)}, \{line})"
     "random" =>

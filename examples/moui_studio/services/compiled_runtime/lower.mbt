@@ -313,6 +313,65 @@ fn exec_command(
         detail,
       )
     }
+    "insert_list" => {
+      let list_name = match args[0] {
+        @ir.Var(list_name) => list_name
+        _ =>
+          raise ExecError::RuntimeError(ErrorDetails::{
+            kind: TypeMismatch,
+            line,
+            a: "insert_list",
+            b: "variable",
+          })
+      }
+      rt.insert_list(
+        list_name,
+        eval_expr(rt, args[1], line),
+        eval_expr(rt, args[2], line),
+        name,
+        line,
+        detail,
+      )
+    }
+    "remove_list" => {
+      let list_name = match args[0] {
+        @ir.Var(list_name) => list_name
+        _ =>
+          raise ExecError::RuntimeError(ErrorDetails::{
+            kind: TypeMismatch,
+            line,
+            a: "remove_list",
+            b: "variable",
+          })
+      }
+      rt.remove_list(
+        list_name,
+        eval_expr(rt, args[1], line),
+        name,
+        line,
+        detail,
+      )
+    }
+    "replace_list" => {
+      let list_name = match args[0] {
+        @ir.Var(list_name) => list_name
+        _ =>
+          raise ExecError::RuntimeError(ErrorDetails::{
+            kind: TypeMismatch,
+            line,
+            a: "replace_list",
+            b: "variable",
+          })
+      }
+      rt.replace_list(
+        list_name,
+        eval_expr(rt, args[1], line),
+        eval_expr(rt, args[2], line),
+        name,
+        line,
+        detail,
+      )
+    }
     _ => ignore(unknown_builtin(name, line))
   }
 }
@@ -507,6 +566,33 @@ fn eval_call(
     "floor" => floor_value(eval_expr(rt, args[0], line), name, line)
     "ceiling" => ceiling_value(eval_expr(rt, args[0], line), name, line)
     "sqrt" => sqrt_value(eval_expr(rt, args[0], line), name, line)
+    "index_of_list" =>
+      index_of_list(
+        rt,
+        eval_expr(rt, args[0], line),
+        eval_expr(rt, args[1], line),
+        name,
+        line,
+      )
+    "join" =>
+      join_value(
+        eval_expr(rt, args[0], line),
+        eval_expr(rt, args[1], line),
+        name,
+        line,
+      )
+    "letter" =>
+      letter_value(
+        eval_expr(rt, args[0], line),
+        eval_expr(rt, args[1], line),
+        name,
+        line,
+      )
+    "upper" => upper_value(eval_expr(rt, args[0], line), name, line)
+    "lower" => lower_value(eval_expr(rt, args[0], line), name, line)
+    "sin" => sin_value(eval_expr(rt, args[0], line), name, line)
+    "cos" => cos_value(eval_expr(rt, args[0], line), name, line)
+    "log" => ln_value(eval_expr(rt, args[0], line), name, line)
     "contains" =>
       contains(
         eval_expr(rt, args[0], line),

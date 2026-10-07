@@ -1340,7 +1340,93 @@ fn RunState::eval_command(
       })
       VUnit
     }
+    // G7.1 列表操作命令：第一个参数是**变量名**（按引用修改,同 append_list）
+    "insert_list" => {
+      let items = list_items_of(self, args[0], line, spec.id)
+      let index = number_of_value(self.eval(args[1], line), spec.id, line).to_int()
+      let value = self.eval(args[2], line)
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      // 1-based:1..=长度+1（允许插到末尾之后一格）
+      if index < 1 || index > items.length() + 1 {
+        raise LangError(TypeMismatch, line, spec.id, "1..=length+1")
+      }
+      items.insert(index - 1, value)
+      self.audit.push(StepRecord::{
+        line,
+        op: OpCommand,
+        detail: canonical_call_text(spec.id, args),
+      })
+      VUnit
+    }
+    "remove_list" => {
+      let items = list_items_of(self, args[0], line, spec.id)
+      let index = number_of_value(self.eval(args[1], line), spec.id, line).to_int()
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      if index < 1 || index > items.length() {
+        raise LangError(TypeMismatch, line, spec.id, "1..=length")
+      }
+      let removed = items[index - 1]
+      let tail : Array[Value] = []
+      for i, item in items {
+        if i != index - 1 {
+          tail.push(item)
+        }
+      }
+      items.clear()
+      for item in tail {
+        items.push(item)
+      }
+      ignore(removed)
+      self.audit.push(StepRecord::{
+        line,
+        op: OpCommand,
+        detail: canonical_call_text(spec.id, args),
+      })
+      VUnit
+    }
+    "replace_list" => {
+      let items = list_items_of(self, args[0], line, spec.id)
+      let index = number_of_value(self.eval(args[1], line), spec.id, line).to_int()
+      let value = self.eval(args[2], line)
+      if self.paused || !(self.status is Running) {
+        return VUnit
+      }
+      if index < 1 || index > items.length() {
+        raise LangError(TypeMismatch, line, spec.id, "1..=length")
+      }
+      items[index - 1] = value
+      self.audit.push(StepRecord::{
+        line,
+        op: OpCommand,
+        detail: canonical_call_text(spec.id, args),
+      })
+      VUnit
+    }
+
     _ => raise LangError(UnknownBuiltin, line, spec.id, "")
+  }
+}
+
+///|
+/// 列表命令的第一个参数 = 裸变量名 → 该变量的 VArr 引用（append_list 同款）。
+fn list_items_of(
+  state : RunState,
+  arg : @ir.Expr,
+  line : Int,
+  op : String,
+) -> Array[Value] raise LangError {
+  match arg {
+    @ir.Var(name) =>
+      match state.vars.get(name) {
+        Some(VArr(items)) => items
+        Some(_) => raise LangError(TypeMismatch, line, name, "list")
+        None => raise LangError(NotDeclared, line, name, "use declare first")
+      }
+    _ => raise LangError(TypeMismatch, line, op, "variable")
   }
 }
 
@@ -1502,6 +1588,50 @@ fn RunState::eval_function(
         None => VStr("")
       }
     }
+    // G7.1 字符串/列表查找/三角对数函数
+    "join" => {
+      let left = self.value_as_text(self.eval(args[0], line), spec.id, line)
+      let right = self.value_as_text(self.eval(args[1], line), spec.id, line)
+      VStr(left + right)
+    }
+    "letter" => {
+      let text = self.value_as_text(self.eval(args[0], line), spec.id, line)
+      let index = number_of_value(self.eval(args[1], line), spec.id, line).to_int()
+      // 1-based 字符索引（与 取长度 的口径一致按字符计）
+      let mut seen = 0
+      let mut found = ""
+      if index >= 1 {
+        for ch in text {
+          seen = seen + 1
+          if seen == index {
+            found = ch.to_string()
+            break
+          }
+        }
+      }
+      VStr(found)
+    }
+    "upper" => VStr(self.value_as_text(self.eval(args[0], line), spec.id, line).to_upper())
+    "lower" => VStr(self.value_as_text(self.eval(args[0], line), spec.id, line).to_lower())
+    "index_of_list" => {
+      let items = list_items_of(self, args[0], line, spec.id)
+      let wanted = self.eval(args[1], line)
+      let wanted_text = value_to_text(wanted)
+      let mut found = 0
+      let mut i = 0
+      for item in items {
+        i = i + 1
+        if value_to_text(item) == wanted_text {
+          found = i
+          break
+        }
+      }
+      VInt(found)
+    }
+    "sin" => VNum(sin_of(number_of_value(self.eval(args[0], line), spec.id, line)))
+    "cos" => VNum(cos_of(number_of_value(self.eval(args[0], line), spec.id, line)))
+    "log" => VNum(ln_of(number_of_value(self.eval(args[0], line), spec.id, line)))
+
     _ => raise LangError(UnknownBuiltin, line, spec.id, "")
   }
 }
@@ -1928,4 +2058,61 @@ fn floor_of(value : Double) -> Double {
 /// 四舍五入到整数（.5 向上，与 Scratch 一致）。
 fn round_to_int(value : Double) -> Int {
   floor_of(value + 0.5).to_int()
+}
+
+///|
+/// 正弦（G7.1）：先做 2π 区间归约,再取泰勒级数到教学精度。
+/// 与编译轨的 `sin_of` 是同一份实现（逐字复制）——两轨同一位型才过差分门。
+fn sin_of(value : Double) -> Double {
+  let pi2 = 6.283185307179586
+  let mut x = value - (value / pi2).floor() * pi2
+  if x > 3.141592653589793 {
+    x = x - pi2
+  }
+  let mut sum = 0.0
+  let mut term = x
+  let mut k = 1
+  while k <= 25 {
+    sum = sum + term
+    term = -term * x * x / ((k + 1).to_double() * (k + 2).to_double())
+    k = k + 2
+  }
+  sum
+}
+
+///|
+/// 余弦（G7.1）：cos(x) = sin(x + π/2)，共享同一套级数与归约。
+fn cos_of(value : Double) -> Double {
+  sin_of(value + 1.5707963267948966)
+}
+
+///|
+/// 自然对数（G7.1）：区间归约到 [1,2) 后用 atanh 级数
+/// （z=(m-1)/(m+1) ≤ 1/3,数项即达教学精度）。与编译轨逐字同实现。
+fn ln_of(value : Double) -> Double {
+  if value <= 0.0 {
+    return 0.0
+  }
+  let ln2 = 0.6931471805599453
+  let mut m = value
+  let mut k = 0
+  while m >= 2.0 {
+    m = m / 2.0
+    k = k + 1
+  }
+  while m < 1.0 {
+    m = m * 2.0
+    k = k - 1
+  }
+  let z = (m - 1.0) / (m + 1.0)
+  let z2 = z * z
+  let mut sum = 0.0
+  let mut term = z
+  let mut n = 1
+  while n <= 17 {
+    sum = sum + term / n.to_double()
+    term = term * z2
+    n = n + 2
+  }
+  2.0 * sum + k.to_double() * ln2
 }
