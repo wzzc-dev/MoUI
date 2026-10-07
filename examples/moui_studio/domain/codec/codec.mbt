@@ -91,14 +91,30 @@ fn encode_control(control : @ir.Control) -> Json {
 
 ///|
 /// 属性对象解码（G7.2）：缺字段取默认；旧文件没有 props 键 = 全默认。
+/// 公开给提案解码复用（AI 可提出带属性的控件，同一套容错口径）。
+pub fn decode_control_props(
+  fields : Map[String, Json],
+) -> @ir.ControlProps {
+  decode_props_inner(fields)
+}
+
+///|
 fn decode_props(fields : Map[String, Json]) -> @ir.ControlProps {
-  let base = @ir.ControlProps::default()
   match fields.get("props") {
-    Some(Object(prop_fields)) => {
-      let font_size = match prop_int_field(prop_fields, "font_size") {
-        Some(value) => value
-        None => base.font_size
-      }
+    Some(Object(prop_fields)) => decode_props_inner(prop_fields)
+    _ => @ir.ControlProps::default()
+  }
+}
+
+///|
+fn decode_props_inner(
+  prop_fields : Map[String, Json],
+) -> @ir.ControlProps {
+  let base = @ir.ControlProps::default()
+  let font_size = match prop_int_field(prop_fields, "font_size") {
+    Some(value) => value
+    None => base.font_size
+  }
       let bold = match prop_bool_field(prop_fields, "bold") {
         Some(value) => value
         None => base.bold
@@ -147,9 +163,6 @@ fn decode_props(fields : Map[String, Json]) -> @ir.ControlProps {
         placeholder,
         password,
       }
-    }
-    _ => base
-  }
 }
 
 ///|
@@ -360,6 +373,10 @@ pub fn encode_program(program : @ir.StudioProgram) -> String {
   window["title"] = Json::string(program.window.title)
   window["width"] = Json::number(program.window.width.to_double())
   window["height"] = Json::number(program.window.height.to_double())
+  // G7.2:非默认窗体背景色才编码（缺省形态与旧文件一致）
+  if program.window.back_color != "" {
+    window["back_color"] = Json::string(program.window.back_color)
+  }
   window["timer_interval"] = Json::number(
     program.window.timer_interval.to_double(),
   )
@@ -1092,6 +1109,10 @@ pub fn decode_program(
         // 可选段：旧 v1 文件无 timer_interval → 0（定时器关闭）
         timer_interval: json_int_field(window_fields, "timer_interval").unwrap_or(
           0,
+        ),
+        // G7.2:窗体背景色(可选;旧文件无 → 空串 = 主题默认)
+        back_color: json_string_field(window_fields, "back_color").unwrap_or(
+          "",
         ),
       }
     _ => @ir.default_window()

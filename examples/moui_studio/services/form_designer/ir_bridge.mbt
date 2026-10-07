@@ -18,7 +18,7 @@ pub fn form_controls_to_ir(model : FormModel) -> Array[@ir.Control] {
       FkImage => @ir.Image
     }
     controls.push(@ir.Control::{
-      props: @ir.ControlProps::default(),
+      props: control.props,
       id: index,
       kind,
       name: form_control_name(control.kind, index),
@@ -116,6 +116,7 @@ pub fn ir_controls_to_form_model(
       }
     }
     form_controls.push(FormControl::{
+      props: control.props,
       kind,
       text: control.text,
       handler,

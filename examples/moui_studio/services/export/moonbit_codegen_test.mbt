@@ -129,6 +129,7 @@ test "string literals are escaped for MoonBit source" {
       width: 640,
       height: 480,
       timer_interval: 0,
+        back_color: "",
     },
   }
   let source = @export.moonbit_preview(program)

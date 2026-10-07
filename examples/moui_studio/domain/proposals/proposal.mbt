@@ -105,8 +105,14 @@ fn decode_control_object(
           }
         _ => ()
       }
+      // G7.2:可选 props 对象(AI 可提出带属性的控件;缺省 = 全默认,
+      // 容错口径与项目 codec 完全一致)
+      let props = match fields.get("props") {
+        Some(Object(prop_fields)) => @codec.decode_control_props(prop_fields)
+        _ => @ir.ControlProps::default()
+      }
       Some(@ir.Control::{
-        props: @ir.ControlProps::default(),
+        props,
         id: json_int_field(fields, "id").unwrap_or(0),
         kind,
         name,
@@ -225,6 +231,7 @@ fn decode_window(
         width: json_int_field(fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
         height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
         timer_interval: 0,
+      back_color: "",
       })
     _ => {
       errors.push(MissingField("window"))
@@ -573,7 +580,7 @@ fn encode_handlers_sections(proposal : ProposalV1) -> Json {
 
 ///|
 fn encode_control_json(control : @ir.Control) -> Json {
-  let fields : Map[String, Json] = Map([], capacity=9)
+  let fields : Map[String, Json] = Map([], capacity=10)
   fields["id"] = Json::number(control.id.to_double())
   fields["kind"] = Json::string(control.kind.tag())
   fields["name"] = Json::string(control.name)
@@ -583,6 +590,21 @@ fn encode_control_json(control : @ir.Control) -> Json {
   fields["width"] = Json::number(control.width.to_double())
   fields["height"] = Json::number(control.height.to_double())
   fields["items"] = Json::array(control.items.map(Json::string))
+  // G7.2:非默认属性随提案携带(采纳后原样进 IR)
+  if !control.props.is_default() {
+    let props : Map[String, Json] = Map([], capacity=10)
+    props["font_size"] = Json::number(control.props.font_size.to_double())
+    props["bold"] = Json::boolean(control.props.bold)
+    props["text_color"] = Json::string(control.props.text_color)
+    props["back_color"] = Json::string(control.props.back_color)
+    props["align"] = Json::string(control.props.align)
+    props["visible"] = Json::boolean(control.props.visible)
+    props["disabled"] = Json::boolean(control.props.disabled)
+    props["multiline"] = Json::boolean(control.props.multiline)
+    props["placeholder"] = Json::string(control.props.placeholder)
+    props["password"] = Json::boolean(control.props.password)
+    fields["props"] = Json::object(props)
+  }
   Json::object(fields)
 }
 

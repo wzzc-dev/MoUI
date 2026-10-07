@@ -153,7 +153,7 @@ pub(all) struct ControlProps {
   multiline : Bool
   placeholder : String
   password : Bool
-}
+} derive(Eq)
 
 ///|
 pub fn ControlProps::default() -> ControlProps {
@@ -287,6 +287,13 @@ pub(all) struct WindowSpec {
   height : Int
   // 定时器间隔（秒；0 = 关闭）——OnTimer 虚拟时钟只在运行期间步进
   timer_interval : Int
+  /// 窗体背景色（G7.2；#RRGGBB，空 = 主题默认）
+  back_color : String
+}
+
+///|
+pub fn WindowSpec::default(title~ : String, width~ : Int, height~ : Int) -> WindowSpec {
+  { title, width, height, timer_interval: 0, back_color: "" }
 }
 
 ///|
@@ -342,6 +349,7 @@ pub fn default_window() -> WindowSpec {
     width: DESIGN_WIDTH,
     height: DESIGN_HEIGHT,
     timer_interval: 0,
+    back_color: "",
   }
 }
 

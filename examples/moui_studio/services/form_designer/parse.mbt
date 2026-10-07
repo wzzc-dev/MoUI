@@ -291,11 +291,143 @@ fn parse_place_line(
     }
     li = li + 1
   }
+  // 属性 v2(G7.2):height= 之后的自由命名参数(font_size/bold/text_color/
+  // back_color/align/visible/disabled/multiline/placeholder/password)。
+  // 值形态:数字 | true/false | "字符串"。未知键 = 结构化报错(规范形态纪律)。
+  let mut props = @ir.ControlProps::default()
+  let mut pk = search_from
+  while pk < n {
+    let c = chars[pk]
+    if !((c >= 'a' && c <= 'z') || c == '_') {
+      pk = pk + 1
+      continue
+    }
+    let key_start = pk
+    let mut key = ""
+    while pk < n && ((chars[pk] >= 'a' && chars[pk] <= 'z') || chars[pk] == '_') {
+      key = key + chars[pk].to_string()
+      pk = pk + 1
+    }
+    let _ = key_start
+    if pk >= n || chars[pk] != '=' {
+      continue
+    }
+    pk = pk + 1
+    while pk < n && chars[pk] == ' ' {
+      pk = pk + 1
+    }
+    if pk >= n {
+      return Err("form.mbt:\{line_no}:\{key} 缺少值")
+    }
+    let is_known = key == "font_size" ||
+      key == "bold" ||
+      key == "text_color" ||
+      key == "back_color" ||
+      key == "align" ||
+      key == "visible" ||
+      key == "disabled" ||
+      key == "multiline" ||
+      key == "placeholder" ||
+      key == "password"
+    if !is_known {
+      return Err("form.mbt:\{line_no}:未知属性键:\{key}(规范形态漂移,请重新保存)")
+    }
+    if chars[pk] == '"' {
+      let mut value = ""
+      pk = pk + 1
+      let mut closed = false
+      while pk < n {
+        let c = chars[pk]
+        if c == '\\' {
+          pk = pk + 1
+          if pk < n {
+            value = value + chars[pk].to_string()
+          }
+        } else if c == '"' {
+          closed = true
+          pk = pk + 1
+          break
+        } else {
+          value = value + c.to_string()
+          pk = pk + 1
+        }
+      }
+      if !closed {
+        return Err("form.mbt:\{line_no}:\{key} 字符串未闭合")
+      }
+      props = match key {
+        "text_color" => { ..props, text_color: value }
+        "back_color" => { ..props, back_color: value }
+        "align" =>
+          if value == "start" || value == "center" || value == "end" {
+            { ..props, align: value }
+          } else {
+            return Err("form.mbt:\{line_no}:align 仅接受 start/center/end")
+          }
+        "placeholder" => { ..props, placeholder: value }
+        _ => return Err("form.mbt:\{line_no}:\{key} 应为布尔/数字")
+      }
+    } else {
+      let mut token = ""
+      while pk < n && chars[pk] != ',' && chars[pk] != ')' && chars[pk] != ' ' {
+        token = token + chars[pk].to_string()
+        pk = pk + 1
+      }
+      props = match key {
+        "font_size" =>
+          match parse_form_number(token) {
+            Some(value) => { ..props, font_size: value.to_int() }
+            None => return Err("form.mbt:\{line_no}:font_size 数字不合法")
+          }
+        "bold" =>
+          if token == "true" {
+            { ..props, bold: true }
+          } else if token == "false" {
+            { ..props, bold: false }
+          } else {
+            return Err("form.mbt:\{line_no}:bold 应为 true/false")
+          }
+        "visible" =>
+          if token == "true" {
+            { ..props, visible: true }
+          } else if token == "false" {
+            { ..props, visible: false }
+          } else {
+            return Err("form.mbt:\{line_no}:visible 应为 true/false")
+          }
+        "disabled" =>
+          if token == "true" {
+            { ..props, disabled: true }
+          } else if token == "false" {
+            { ..props, disabled: false }
+          } else {
+            return Err("form.mbt:\{line_no}:disabled 应为 true/false")
+          }
+        "multiline" =>
+          if token == "true" {
+            { ..props, multiline: true }
+          } else if token == "false" {
+            { ..props, multiline: false }
+          } else {
+            return Err("form.mbt:\{line_no}:multiline 应为 true/false")
+          }
+        "password" =>
+          if token == "true" {
+            { ..props, password: true }
+          } else if token == "false" {
+            { ..props, password: false }
+          } else {
+            return Err("form.mbt:\{line_no}:password 应为 true/false")
+          }
+        _ => return Err("form.mbt:\{line_no}:\{key} 应为字符串")
+      }
+    }
+  }
   match (values[0], values[1], values[2], values[3]) {
     (Some(x), Some(y), Some(width), Some(height)) =>
       Ok(
         (
-          FormControl::{ kind, text, handler, x, y, width, height, },
+          FormControl::{ props, kind, text, handler, x, y, width, height, },
           ControlSpans::{
             x: spans[0],
             y: spans[1],

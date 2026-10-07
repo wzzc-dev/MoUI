@@ -60,6 +60,8 @@ pub(all) struct FormControl {
   y : Double
   width : Double
   height : Double
+  /// 属性 v2(G7.2):默认属性在渲染时整体省略,解析缺省 = 默认
+  props : @ir.ControlProps
 }
 
 ///|
@@ -109,11 +111,48 @@ pub fn render_form(model : FormModel) -> String {
     }
     builder.write_string("), ")
     builder.write_string(
-      "x=\{control.x}, y=\{control.y}, width=\{control.width}, height=\{control.height}),\n",
+      "x=\{control.x}, y=\{control.y}, width=\{control.width}, height=\{control.height}\{render_props(control.props)}),\n",
     )
   }
   builder.write_string("  ])\n}\n")
   builder.to_string()
+}
+
+///|
+/// 属性 v2(G7.2):非默认属性 → 规范命名参数(默认整体省略,旧文件零变化)。
+fn render_props(props : @ir.ControlProps) -> String {
+  let out = StringBuilder()
+  if props.font_size > 0 {
+    out.write_string(", font_size=\{props.font_size}")
+  }
+  if props.bold {
+    out.write_string(", bold=true")
+  }
+  if props.text_color != "" {
+    out.write_string(", text_color=\"\{props.text_color}\"")
+  }
+  if props.back_color != "" {
+    out.write_string(", back_color=\"\{props.back_color}\"")
+  }
+  if props.align != "" {
+    out.write_string(", align=\"\{props.align}\"")
+  }
+  if !props.visible {
+    out.write_string(", visible=false")
+  }
+  if props.disabled {
+    out.write_string(", disabled=true")
+  }
+  if props.multiline {
+    out.write_string(", multiline=true")
+  }
+  if props.placeholder != "" {
+    out.write_string(", placeholder=\"\{escape_form_string(props.placeholder)}\"")
+  }
+  if props.password {
+    out.write_string(", password=true")
+  }
+  out.to_string()
 }
 
 ///|
@@ -151,7 +190,8 @@ pub fn form_model_eq(a : FormModel, b : FormModel) -> Bool {
       control.x != other.x ||
       control.y != other.y ||
       control.width != other.width ||
-      control.height != other.height {
+      control.height != other.height ||
+      control.props != other.props {
       return false
     }
     i = i + 1

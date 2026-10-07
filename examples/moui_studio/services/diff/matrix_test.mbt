@@ -492,6 +492,7 @@ test "diff matrix: OnStart standalone program" {
       width: 640,
       height: 480,
       timer_interval: 0,
+        back_color: "",
     },
     variables: [{ name: "开机计数", init: "0", }],
     handlers: [

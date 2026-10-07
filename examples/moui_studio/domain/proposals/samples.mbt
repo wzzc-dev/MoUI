@@ -13,6 +13,7 @@ pub fn sample_hello() -> @ir.StudioProgram {
       width: 640,
       height: 480,
       timer_interval: 0,
+      back_color: "",
     },
     controls: [
       @ir.Control::{
@@ -71,6 +72,7 @@ pub fn sample_roll_call() -> @ir.StudioProgram {
       width: 640,
       height: 480,
       timer_interval: 0,
+      back_color: "",
     },
     controls: [
       @ir.Control::{
@@ -143,6 +145,7 @@ pub fn sample_drill() -> @ir.StudioProgram {
       width: 640,
       height: 480,
       timer_interval: 0,
+      back_color: "",
     },
     controls: [
       @ir.Control::{
@@ -282,6 +285,7 @@ pub fn sample_store() -> @ir.StudioProgram {
       width: 640,
       height: 480,
       timer_interval: 0,
+      back_color: "",
     },
     controls: [
       @ir.Control::{
