@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/moui_studio/plugins/markdown"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn markdown_content_height(content~ : String, width~ : Double, font~ : @core.FontSpec) -> Double
+
+pub fn[Msg] markdown_file_view(content~ : String, on_input~ : (String) -> Msg, width~ : Double, height~ : Double, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, cursor_color~ : @core.Color, key? : String) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

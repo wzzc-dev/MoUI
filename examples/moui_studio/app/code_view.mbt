@@ -51,6 +51,11 @@ pub fn code_workspace(
       CODE_LINE_HEIGHT +
       60.0).max((height - 26.0 - 8.0).max(120.0))
       let editor_width = (width - 48.0).max(80.0)
+      let body_height = project_file_body_height(
+        open~,
+        editor_width,
+        content_height,
+      )
       let file_rows : Array[@moui.View[Msg]] = [
         @views.container(
           @views.row(
@@ -89,39 +94,10 @@ pub fn code_workspace(
         ),
         @views.scroll_view(
           @views.row(
-            [
-              project_file_gutter(open),
-              @moui_richtext.controlled_rich_text_editor(
-                value=open.draft,
-                on_input=value => EditProjectFile(value),
-                placeholder="",
-                size=@geometry.Size::new(
-                  width=editor_width,
-                  height=content_height,
-                ),
-                // M6①：工程文件是用户手改的 MoonBit 源码——着色升级为
-                // 内核 MoonBit 词法器（此前 plain：永不匹配的空关键字表）
-                format=source => {
-                  plain_code_document(source, mono_code_font(), moonbit=true)
-                },
-                font=mono_code_font(),
-                foreground=ide_text(),
-                placeholder_color=ide_text_faint(),
-                background=@graphics.Brush::solid(ide_editor_background()),
-                cursor_color=ide_accent(),
-                corner_radius=0.0,
-                on_selection_change=Some((caret, selection) => {
-                  ProjectFileCaretMoved(caret, selection)
-                }),
-                selection_caret=model.project_file_caret,
-                selection_range=model.project_file_selection,
-                kind="StudioProjectFileEditor",
-                key=Some("studio-project-file-editor"),
-              ),
-            ],
+            [project_file_body(model, open~, editor_width, content_height)],
             spacing=0.0,
             align=Start,
-          ).frame(width=(width - 30.0).max(80.0), height=content_height),
+          ).frame(width=(width - 30.0).max(80.0), height=body_height),
           width=(width - 8.0).max(80.0),
           height=(height - 26.0 - 8.0).max(120.0),
           shows_indicator=true,
@@ -1053,6 +1029,82 @@ fn completion_popup(model : Model, width : Double) -> @moui.View[Msg] {
 /// 工程文件编辑器的 mono 字体(与 IR 编辑面同一套)。
 fn mono_code_font() -> @text.FontSpec {
   @text.FontSpec::new(families=@text.FontFamilyStack::monospace(), size=13.0)
+}
+
+///|
+/// 工程文件编辑面（G3）：`.md` → Markdown 插件面板（MoMark 引擎,格式
+/// 渲染 + on_input 回草稿通道）;其余文件 → 既有 mono 受控编辑器
+/// （MoonBit 词法着色 + 光标/选区受控回传）。
+fn project_file_body(
+  model : Model,
+  open~ : OpenProjectFile,
+  editor_width : Double,
+  content_height : Double,
+) -> @moui.View[Msg] {
+  if open.rel.has_suffix(".md") {
+    @md.markdown_file_view(
+      content=open.draft,
+      on_input=value => EditProjectFile(value),
+      width=editor_width,
+      height=content_height,
+      font=@text.FontSpec::new(size=13.0),
+      foreground=ide_text(),
+      placeholder_color=ide_text_faint(),
+      background=@graphics.Brush::solid(ide_editor_background()),
+      cursor_color=ide_accent(),
+    )
+  } else {
+    @views.row(
+      [
+        project_file_gutter(open),
+        @moui_richtext.controlled_rich_text_editor(
+          value=open.draft,
+          on_input=value => EditProjectFile(value),
+          placeholder="",
+          size=@geometry.Size::new(width=editor_width, height=content_height),
+          // M6①：工程文件是用户手改的 MoonBit 源码——着色升级为
+          // 内核 MoonBit 词法器（此前 plain：永不匹配的空关键字表）
+          format=source => {
+            plain_code_document(source, mono_code_font(), moonbit=true)
+          },
+          font=mono_code_font(),
+          foreground=ide_text(),
+          placeholder_color=ide_text_faint(),
+          background=@graphics.Brush::solid(ide_editor_background()),
+          cursor_color=ide_accent(),
+          corner_radius=0.0,
+          on_selection_change=Some((caret, selection) => {
+            ProjectFileCaretMoved(caret, selection)
+          }),
+          selection_caret=model.project_file_caret,
+          selection_range=model.project_file_selection,
+          kind="StudioProjectFileEditor",
+          key=Some("studio-project-file-editor"),
+        ),
+      ],
+      spacing=0.0,
+      align=Start,
+    )
+  }
+}
+
+///|
+/// 编辑面内容全高：`.md` 用 Markdown 渲染高度估算（scroll_view 外层
+/// 滚动需要）;其余文件 = 行数 × 行高（既有口径）。
+fn project_file_body_height(
+  open~ : OpenProjectFile,
+  editor_width : Double,
+  content_height : Double,
+) -> Double {
+  if open.rel.has_suffix(".md") {
+    @md.markdown_content_height(
+      content=open.draft,
+      width=editor_width,
+      font=@text.FontSpec::new(size=13.0),
+    ).max(content_height)
+  } else {
+    content_height
+  }
 }
 
 ///|
