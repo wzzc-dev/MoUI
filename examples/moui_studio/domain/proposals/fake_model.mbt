@@ -49,7 +49,7 @@ fn generic_sample() -> @ir.StudioProgram {
       timer_interval: 0,
     },
     controls: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Label,
         name: "提示",
@@ -60,7 +60,7 @@ fn generic_sample() -> @ir.StudioProgram {
         height: 32,
         items: [],
       },
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.TextField,
         name: "输入框",
@@ -71,7 +71,7 @@ fn generic_sample() -> @ir.StudioProgram {
         height: 32,
         items: [],
       },
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 3,
         kind: @ir.Button,
         name: "确定",

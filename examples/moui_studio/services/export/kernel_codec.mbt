@@ -79,7 +79,111 @@ pub fn kernel_codec_mbt() -> String {
     #|  fields["width"] = Json::number(control.width.to_double())
     #|  fields["height"] = Json::number(control.height.to_double())
     #|  fields["items"] = Json::array(control.items.map(Json::string))
+    #|  // G7.2 属性 v2：默认属性省略——保持旧文件形态，读侧缺字段 = 默认
+    #|  if !control.props.is_default() {
+    #|    let props : Map[String, Json] = Map([], capacity=10)
+    #|    props["font_size"] = Json::number(control.props.font_size.to_double())
+    #|    props["bold"] = Json::boolean(control.props.bold)
+    #|    props["text_color"] = Json::string(control.props.text_color)
+    #|    props["back_color"] = Json::string(control.props.back_color)
+    #|    props["align"] = Json::string(control.props.align)
+    #|    props["visible"] = Json::boolean(control.props.visible)
+    #|    props["disabled"] = Json::boolean(control.props.disabled)
+    #|    props["multiline"] = Json::boolean(control.props.multiline)
+    #|    props["placeholder"] = Json::string(control.props.placeholder)
+    #|    props["password"] = Json::boolean(control.props.password)
+    #|    fields["props"] = Json::object(props)
+    #|  }
     #|  Json::object(fields)
+    #|}
+    #|
+    #|///|
+    #|/// 属性对象解码（G7.2）：缺字段取默认；旧文件没有 props 键 = 全默认。
+    #|fn decode_props(fields : Map[String, Json]) -> @ir.ControlProps {
+    #|  let base = @ir.ControlProps::default()
+    #|  match fields.get("props") {
+    #|    Some(Object(prop_fields)) => {
+    #|      let font_size = match prop_int_field(prop_fields, "font_size") {
+    #|        Some(value) => value
+    #|        None => base.font_size
+    #|      }
+    #|      let bold = match prop_bool_field(prop_fields, "bold") {
+    #|        Some(value) => value
+    #|        None => base.bold
+    #|      }
+    #|      let text_color = match prop_string_field(prop_fields, "text_color") {
+    #|        Some(value) => value
+    #|        None => base.text_color
+    #|      }
+    #|      let back_color = match prop_string_field(prop_fields, "back_color") {
+    #|        Some(value) => value
+    #|        None => base.back_color
+    #|      }
+    #|      let align = match prop_string_field(prop_fields, "align") {
+    #|        Some(value) => value
+    #|        None => base.align
+    #|      }
+    #|      let visible = match prop_bool_field(prop_fields, "visible") {
+    #|        Some(value) => value
+    #|        None => base.visible
+    #|      }
+    #|      let disabled = match prop_bool_field(prop_fields, "disabled") {
+    #|        Some(value) => value
+    #|        None => base.disabled
+    #|      }
+    #|      let multiline = match prop_bool_field(prop_fields, "multiline") {
+    #|        Some(value) => value
+    #|        None => base.multiline
+    #|      }
+    #|      let placeholder = match prop_string_field(prop_fields, "placeholder") {
+    #|        Some(value) => value
+    #|        None => base.placeholder
+    #|      }
+    #|      let password = match prop_bool_field(prop_fields, "password") {
+    #|        Some(value) => value
+    #|        None => base.password
+    #|      }
+    #|      {
+    #|        font_size,
+    #|        bold,
+    #|        text_color,
+    #|        back_color,
+    #|        align,
+    #|        visible,
+    #|        disabled,
+    #|        multiline,
+    #|        placeholder,
+    #|        password,
+    #|      }
+    #|    }
+    #|    _ => base
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn prop_int_field(fields : Map[String, Json], key : String) -> Int? {
+    #|  match fields.get(key) {
+    #|    Some(Number(value, ..)) => Some(value.to_int())
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn prop_bool_field(fields : Map[String, Json], key : String) -> Bool? {
+    #|  match fields.get(key) {
+    #|    // Json 的布尔是单例 True/False（见既有 bool 解码）
+    #|    Some(True) => Some(true)
+    #|    Some(False) => Some(false)
+    #|    _ => None
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn prop_string_field(fields : Map[String, Json], key : String) -> String? {
+    #|  match fields.get(key) {
+    #|    Some(String(value)) => Some(value)
+    #|    _ => None
+    #|  }
     #|}
     #|
     #|///|
@@ -460,6 +564,7 @@ pub fn kernel_codec_mbt() -> String {
     #|    width: json_int_field(fields, "width").unwrap_or(120),
     #|    height: json_int_field(fields, "height").unwrap_or(36),
     #|    items: json_items_field(fields, "items"),
+    #|    props: decode_props(fields),
     #|  })
     #|}
     #|

@@ -17,7 +17,7 @@ pub fn form_controls_to_ir(model : FormModel) -> Array[@ir.Control] {
       FkCheckBox => @ir.CheckBox
       FkImage => @ir.Image
     }
-    controls.push(@ir.Control::{
+    controls.push(@ir.Control::{ props: @ir.ControlProps::default(),
       id: index,
       kind,
       name: form_control_name(control.kind, index),

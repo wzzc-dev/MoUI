@@ -49,7 +49,7 @@ test "validation chain rejects junk names and missing notes" {
       "summary",
     ),
     controls_add: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "tmp",
@@ -397,7 +397,7 @@ test "reject: handler without bilingual note" {
       },
     ],
     controls_add: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",
@@ -424,7 +424,7 @@ test "reject: junk names a1/tmp" {
   let with_junk_control = {
     ..base,
     controls_add: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "a1",
@@ -474,7 +474,7 @@ test "reject: structural issues surface as Structural(IrError)" {
   let wrong_event = {
     ..handler_ref_proposal("按钮", @ir.OnChange),
     controls_add: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",
@@ -494,7 +494,7 @@ test "reject: structural issues surface as Structural(IrError)" {
   let corrupt_base : @ir.StudioProgram = {
     ..@ir.empty_program(),
     controls: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",
@@ -545,7 +545,7 @@ test "reject: unknown builtin in body is a language issue" {
       },
     ],
     controls_add: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",

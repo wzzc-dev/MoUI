@@ -126,6 +126,64 @@ pub(all) struct Control {
   width : Int
   height : Int
   items : Array[String]
+  /// 属性 v2（G7.2）：固定字段 + 默认值；缺省构造见 `ControlProps::default`。
+  props : ControlProps
+}
+
+///|
+/// 控件属性（G7.2 v1）：字号/加粗/文字与背景色/对齐/可见/禁用，
+/// 以及 TextField 专属的三件。颜色用 `#RRGGBB` 文本（空 = 主题默认）。
+/// 解码缺字段 = 默认值——旧工程文件无损加载（兼容不迁移）。
+pub(all) struct ControlProps {
+  /// 字号（pt）；0 = 主题默认
+  font_size : Int
+  /// 加粗
+  bold : Bool
+  /// 文字颜色（#RRGGBB；空 = 主题默认）
+  text_color : String
+  /// 背景色（#RRGGBB；空 = 主题默认）
+  back_color : String
+  /// 对齐：start / center / end（空 = start）
+  align : String
+  /// 可见（默认 true）
+  visible : Bool
+  /// 禁用（默认 false）
+  disabled : Bool
+  /// TextField 专属：多行 / 占位符 / 密码态
+  multiline : Bool
+  placeholder : String
+  password : Bool
+}
+
+///|
+pub fn ControlProps::default() -> ControlProps {
+  {
+    font_size: 0,
+    bold: false,
+    text_color: "",
+    back_color: "",
+    align: "",
+    visible: true,
+    disabled: false,
+    multiline: false,
+    placeholder: "",
+    password: false,
+  }
+}
+
+///|
+/// 属性是否有任何自定义（codec 编码省略与画布快路径都用）。
+pub fn ControlProps::is_default(self : ControlProps) -> Bool {
+  self.font_size == 0 &&
+  !self.bold &&
+  self.text_color == "" &&
+  self.back_color == "" &&
+  self.align == "" &&
+  self.visible &&
+  !self.disabled &&
+  !self.multiline &&
+  self.placeholder == "" &&
+  !self.password
 }
 
 ///|

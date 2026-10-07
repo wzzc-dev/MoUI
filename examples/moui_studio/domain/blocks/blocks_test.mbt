@@ -67,7 +67,7 @@ test "block text matches interpreter audit detail for spotlight" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",
@@ -78,7 +78,7 @@ test "block text matches interpreter audit detail for spotlight" {
         height: 30,
         items: [],
       },
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.ListBox,
         name: "名单",

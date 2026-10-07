@@ -813,7 +813,7 @@ test "design canvas plan draws grid, handles and alignment guides" {
   assert_eq(guides, 0)
   // 拖拽中：被拖控件左缘与其他控件左缘差 ≤4px 时画竖向参考线
   let base = @ir.empty_program()
-  let anchor = @ir.Control::{
+  let anchor = @ir.Control::{ props: @ir.ControlProps::default(),
     id: 1,
     kind: @ir.Label,
     name: "锚点",
@@ -854,6 +854,7 @@ test "handle hit test resolves corners within radius" {
     width: 60,
     height: 40,
     items: [],
+    props: @ir.ControlProps::default(),
   }
   match @app.hit_test_handle(control, 100.0, 100.0) {
     Some(corner) => assert_true(corner is @ir.CornerNW)
@@ -909,6 +910,7 @@ test "snap move position aligns near edges only within tolerance" {
     width: 30,
     height: 30,
     items: [],
+    props: @ir.ControlProps::default(),
   }
   let dragged : @ir.Control = {
     ..anchor,

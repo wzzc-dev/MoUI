@@ -92,7 +92,7 @@ test "program validation rejects reserved names and undeclared assignments" {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "按钮",

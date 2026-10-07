@@ -105,7 +105,7 @@ fn decode_control_object(
           }
         _ => ()
       }
-      Some(@ir.Control::{
+      Some(@ir.Control::{ props: @ir.ControlProps::default(),
         id: json_int_field(fields, "id").unwrap_or(0),
         kind,
         name,

@@ -7,7 +7,7 @@ fn sample_program() -> @ir.StudioProgram {
     version: 1,
     window: @ir.default_window(),
     controls: [
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 1,
         kind: @ir.Button,
         name: "确定",
@@ -18,7 +18,7 @@ fn sample_program() -> @ir.StudioProgram {
         height: 28,
         items: [],
       },
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 2,
         kind: @ir.TextField,
         name: "姓名框",
@@ -29,7 +29,7 @@ fn sample_program() -> @ir.StudioProgram {
         height: 28,
         items: [],
       },
-      @ir.Control::{
+      @ir.Control::{ props: @ir.ControlProps::default(),
         id: 3,
         kind: @ir.ListBox,
         name: "名单",
@@ -291,5 +291,57 @@ test "enums and match statements encode decode round trip" {
         _ => fail("match 往返后语句形状不符")
       }
     Err(errors) => fail("match 往返失败: \{errors.length()} 个错误")
+  }
+}
+
+///|
+/// G7.2:属性 v2——旧形态文件（无 props 键）解码为全默认;带 props 的
+/// 新形态编解码往返。
+test "control props: legacy decode defaults + roundtrip" {
+  // 旧形态:controls 里没有 props 键
+  let legacy =
+    #|{"format":"moui.studio.project","version":1,"window":{"title":"t","width":640,"height":480,"timer_interval":0},"controls":[{"id":1,"kind":"label","name":"lbl","text":"hi","x":10,"y":10,"width":80,"height":24,"items":[]}],"variables":[],"handlers":[],"functions":[],"structs":[],"enums":[]}
+  match @codec.decode_program(legacy) {
+    Ok(program) =>
+      match program.controls[0].props {
+        { font_size: 0, bold: false, text_color: "", back_color: "", align: "", visible: true, disabled: false, multiline: false, placeholder: "", password: false } => ()
+        _ => fail("缺 props 应解码为全默认")
+      }
+    Err(errors) => fail("旧文件应可解码:\\{errors.length()} 个错误")
+  }
+  // 新形态:自定义字号/加粗 → 编码后仍可还原
+  let program = match @codec.decode_program(legacy) {
+    Ok(program) => program
+    Err(_) => fail("旧文件应可解码")
+  }
+  let styled = {
+    ..program,
+    controls: [
+      {
+        ..program.controls[0],
+        props: @ir.ControlProps::{
+          font_size: 18,
+          bold: true,
+          text_color: "#FF8800",
+          back_color: "",
+          align: "center",
+          visible: true,
+          disabled: false,
+          multiline: false,
+          placeholder: "",
+          password: false,
+        },
+      },
+    ],
+  }
+  let encoded = @codec.encode_program(styled)
+  match @codec.decode_program(encoded) {
+    Ok(back) => {
+      assert_eq(back.controls[0].props.font_size, 18)
+      assert_eq(back.controls[0].props.bold, true)
+      assert_eq(back.controls[0].props.text_color, "#FF8800")
+      assert_eq(back.controls[0].props.align, "center")
+    }
+    Err(_) => fail("带 props 的编码应可解码")
   }
 }
