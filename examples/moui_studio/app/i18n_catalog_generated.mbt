@@ -766,6 +766,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Project imported: {name}"),
       ),
       ("app.project.kind.web", GeneratedI18nMessage::Text("web entry")),
+      ("app.project.new_file", GeneratedI18nMessage::Text("New file")),
       (
         "app.project.no_entry",
         GeneratedI18nMessage::Text("This project has no matching entry package"),
@@ -958,6 +959,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.phase.wasm",
         GeneratedI18nMessage::Text("Building Web artifact"),
       ),
+      (
+        "app.confirm.close_file",
+        GeneratedI18nMessage::Text(
+          "Close \"{a}\"? Unsaved changes will be lost.",
+        ),
+      ),
       ("app.ctx.actions.create", GeneratedI18nMessage::Text("create")),
       (
         "app.expr.drop.rejected",
@@ -1120,6 +1127,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.design_open",
         GeneratedI18nMessage::Text("Open layout designer"),
       ),
+      (
+        "app.project.file_exists",
+        GeneratedI18nMessage::Text("File already exists: {a}"),
+      ),
       ("app.project.kind.native", GeneratedI18nMessage::Text("native entry")),
       ("app.project.props_apply", GeneratedI18nMessage::Text("Apply & rebuild")),
       ("app.project.props_title", GeneratedI18nMessage::Text("Properties")),
@@ -1227,10 +1238,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "The layout designer reads the project's form.mbt — drag controls, edit literals, save and previews rebuild automatically",
         ),
       ),
+      ("app.project.file_created", GeneratedI18nMessage::Text("Created {a}")),
       (
         "app.project.file_deleted",
         GeneratedI18nMessage::Text("File deleted: {a}"),
       ),
+      ("app.project.file_renamed", GeneratedI18nMessage::Text("Renamed to {a}")),
       (
         "app.recent.action.delete",
         GeneratedI18nMessage::Text("Deleted control"),
@@ -1441,6 +1454,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Preview file write failed: {a}"),
       ),
       (
+        "app.project.rename_partial",
+        GeneratedI18nMessage::Text(
+          "Rename incomplete, please clean up manually: {a}",
+        ),
+      ),
+      (
         "app.recent.action.function",
         GeneratedI18nMessage::Text("New custom block"),
       ),
@@ -1631,6 +1650,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.project.external_reloaded",
         GeneratedI18nMessage::Text("External changes detected, reloaded"),
+      ),
+      (
+        "app.project.file_name_invalid",
+        GeneratedI18nMessage::Text(
+          "Invalid file name (empty, leading /, or contains ..)",
+        ),
       ),
       (
         "app.project.preview_build_now",
@@ -2475,6 +2500,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("工程已导入：{name}"),
       ),
       ("app.project.kind.web", GeneratedI18nMessage::Text("web 入口")),
+      ("app.project.new_file", GeneratedI18nMessage::Text("新建文件")),
       (
         "app.project.no_entry",
         GeneratedI18nMessage::Text("该工程缺少对应的入口包"),
@@ -2659,6 +2685,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.compile.phase.wasm",
         GeneratedI18nMessage::Text("构建 Web 产物"),
       ),
+      (
+        "app.confirm.close_file",
+        GeneratedI18nMessage::Text(
+          "关闭「{a}」？未保存的修改将丢失。",
+        ),
+      ),
       ("app.ctx.actions.create", GeneratedI18nMessage::Text("新建")),
       (
         "app.expr.drop.rejected",
@@ -2818,6 +2850,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.design_open",
         GeneratedI18nMessage::Text("打开布局设计器"),
       ),
+      (
+        "app.project.file_exists",
+        GeneratedI18nMessage::Text("文件已存在：{a}"),
+      ),
       ("app.project.kind.native", GeneratedI18nMessage::Text("native 入口")),
       ("app.project.props_apply", GeneratedI18nMessage::Text("应用并重建")),
       ("app.project.props_title", GeneratedI18nMessage::Text("属性")),
@@ -2919,9 +2955,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "布局设计器读取工程的 form.mbt——拖拽控件、改字面量,保存后预览自动重建",
         ),
       ),
+      ("app.project.file_created", GeneratedI18nMessage::Text("已创建 {a}")),
       (
         "app.project.file_deleted",
         GeneratedI18nMessage::Text("已删除文件:{a}"),
+      ),
+      (
+        "app.project.file_renamed",
+        GeneratedI18nMessage::Text("已重命名为 {a}"),
       ),
       ("app.recent.action.delete", GeneratedI18nMessage::Text("删除控件")),
       ("app.recent.action.insert", GeneratedI18nMessage::Text("插入控件")),
@@ -3130,6 +3171,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("预览文件写入失败：{a}"),
       ),
       (
+        "app.project.rename_partial",
+        GeneratedI18nMessage::Text("重命名未完成，请手动清理：{a}"),
+      ),
+      (
         "app.recent.action.function",
         GeneratedI18nMessage::Text("新建自定义积木"),
       ),
@@ -3326,6 +3371,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.project.external_reloaded",
         GeneratedI18nMessage::Text("检测到外部修改,已重载"),
+      ),
+      (
+        "app.project.file_name_invalid",
+        GeneratedI18nMessage::Text(
+          "文件名无效（不能为空、以 / 开头或包含 ..）",
+        ),
       ),
       (
         "app.project.preview_build_now",

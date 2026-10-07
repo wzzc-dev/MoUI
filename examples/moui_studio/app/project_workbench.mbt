@@ -479,3 +479,52 @@ pub fn replace_open_file_at(
   }
   next
 }
+
+///|
+/// 新文件 rel 校验（G4 CRUD）：非空、不以 `/` 开头（工程内相对路径）、
+/// 不含 `..`（不逃逸工程根）。空格等其余字符交给文件系统裁决。
+pub fn valid_new_file_rel(rel : String) -> Bool {
+  rel != "" && !rel.has_prefix("/") && !rel.contains("..")
+}
+
+///|
+/// 改名后同步 open tabs:rel 替换,内容与光标状态原样保留。
+pub fn rename_open_file(
+  files : Array[OpenProjectFile],
+  old : String,
+  new : String,
+) -> Array[OpenProjectFile] {
+  let next : Array[OpenProjectFile] = []
+  for file in files {
+    if file.rel == old {
+      next.push({ ..file, rel: new, })
+    } else {
+      next.push(file)
+    }
+  }
+  next
+}
+
+///|
+/// 工程文件树里是否已有该 rel（新建重名拒绝的依据）。
+pub fn project_has_file(model : Model, rel : String) -> Bool {
+  match active_project_of(model) {
+    None => false
+    Some(project) => {
+      let mut found = false
+      for pkg in project.scanned.packages {
+        for name in pkg.files {
+          let file_rel = if pkg.rel_path == "" {
+            name
+          } else {
+            "\{pkg.rel_path}/\{name}"
+          }
+          if file_rel == rel {
+            found = true
+          }
+        }
+      }
+      found
+    }
+  }
+}

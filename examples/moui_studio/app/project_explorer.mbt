@@ -58,6 +58,35 @@ pub fn project_explorer(
       )
     None => ()
   }
+  // 新建文件(G4 CRUD):常显入口;打开时替换为一行式输入(✓ 提交 / × 取消)
+  if model.file_create_open {
+    rows.push(file_name_input_row(model, width, creating=true))
+  } else {
+    rows.push(
+      @views.container(
+        @views.padding_xy(
+          @views.row(
+            [
+              @views.text(
+                "+ " + text(t, "app.project.new_file"),
+                theme=studio_theme(),
+                width=(width - 60.0).max(60.0),
+                height=18.0,
+                align=TextStart,
+              ).foreground(ide_accent()),
+            ],
+            spacing=6.0,
+            align=Center,
+          ),
+          horizontal=12.0,
+          vertical=6.0,
+        ),
+        width~,
+        height=30.0,
+        padding=0.0,
+      ).on_tap(FileCreateStart),
+    )
+  }
   // 工程列表(每个:模块名 + 根目录,选中高亮,尾部 × 移除)。
   // 只有一个工程时隐藏（下方树根行就是它——重复出现读成两个工程,实测反馈）。
   let mut index = 0
@@ -143,29 +172,48 @@ pub fn project_explorer(
             } else {
               "\{pkg.rel_path}/\{name}"
             }
-            rows.push(
-              tree_row(
-                name,
-                "",
-                2,
-                // **相等比较**:is Some(file_rel) 是绑定模式——匹配任意
-                // Some 并遮蔽 file_rel,恒为真（实测整树高亮的根因）。
-                model.selected_project_file == Some(file_rel),
-                false,
-                false,
-                Some(SelectProjectFile(file_rel)),
-                None,
-                width,
-                // 图标直接挂 on_tap（无背景 wrapper——裸 container 会回落
-                // 到环境面板色，在选中行上读成黑方块，实测缺陷）
-                trailing=Some(
-                  @views.icon(Trash, size=12.0, color=ide_text()).on_tap(
-                    RequestConfirm(CkDeleteProjectFile(file_rel)),
+            if model.file_rename_open == Some(file_rel) {
+              rows.push(file_name_input_row(model, width, creating=false))
+            } else {
+              rows.push(
+                tree_row(
+                  name,
+                  "",
+                  2,
+                  // **相等比较**:is Some(file_rel) 是绑定模式——匹配任意
+                  // Some 并遮蔽 file_rel,恒为真（实测整树高亮的根因）。
+                  model.selected_project_file == Some(file_rel),
+                  false,
+                  false,
+                  Some(SelectProjectFile(file_rel)),
+                  None,
+                  width,
+                  // 图标直接挂 on_tap（无背景 wrapper——裸 container 会回落
+                  // 到环境面板色，在选中行上读成黑方块，实测缺陷）
+                  trailing=Some(
+                    @views.row(
+                      [
+                        @views.text(
+                          "✎",
+                          theme=studio_theme(),
+                          width=14.0,
+                          height=16.0,
+                          align=TextCenter,
+                        )
+                        .foreground(ide_text())
+                        .on_tap(FileRenameStart(file_rel)),
+                        @views.icon(Trash, size=12.0, color=ide_text()).on_tap(
+                          RequestConfirm(CkDeleteProjectFile(file_rel)),
+                        ),
+                      ],
+                      spacing=6.0,
+                      align=Center,
+                    ),
                   ),
+                  trailing_width=34.0,
                 ),
-                trailing_width=18.0,
-              ),
-            )
+              )
+            }
           }
         }
       }
@@ -241,4 +289,55 @@ fn project_entry_meta(project : ProjectRecord) -> String {
     i = i + 1
   }
   out
+}
+
+///|
+/// 一行式文件名输入（G4 CRUD）：新建/改名共用——✓ 提交按模式分流到
+/// FileCreateCommit / FileRenameCommit（提交臂在服务层,这里只收输入）。
+fn file_name_input_row(
+  model : Model,
+  width : Double,
+  creating~ : Bool,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.row(
+      [
+        @views.text_field(
+          model.file_name_draft,
+          on_input=value => {
+            if creating {
+              FileCreateDraft(value)
+            } else {
+              FileRenameDraft(value)
+            }
+          },
+          width=(width - 80.0).max(60.0),
+          height=22.0,
+        ),
+        @views.text(
+          "✓",
+          theme=studio_theme(),
+          width=22.0,
+          height=18.0,
+          align=TextCenter,
+        )
+        .foreground(ide_accent())
+        .on_tap(if creating { FileCreateCommit } else { FileRenameCommit }),
+        @views.text(
+          "×",
+          theme=studio_theme(),
+          width=22.0,
+          height=18.0,
+          align=TextCenter,
+        )
+        .foreground(ide_text_faint())
+        .on_tap(if creating { FileCreateDismiss } else { FileRenameDismiss }),
+      ],
+      spacing=6.0,
+      align=Center,
+    ),
+    width~,
+    height=28.0,
+    padding=0.0,
+  )
 }

@@ -726,6 +726,13 @@
     "app.project.scanning": "Scanned {n} dirs · {path}",
     "app.project.imported_n": "Workspace imported: {n} modules",
     "app.project.import_summary": "Imported {n} modules, {m} skipped: {reason}",
-    "app.project.import_failed": "Import failed: {reason}"
+    "app.project.import_failed": "Import failed: {reason}",
+    "app.project.new_file": "New file",
+    "app.project.file_name_invalid": "Invalid file name (empty, leading /, or contains ..)",
+    "app.project.file_exists": "File already exists: {a}",
+    "app.project.file_created": "Created {a}",
+    "app.project.file_renamed": "Renamed to {a}",
+    "app.project.rename_partial": "Rename incomplete, please clean up manually: {a}",
+    "app.confirm.close_file": "Close \"{a}\"? Unsaved changes will be lost."
   }
 }

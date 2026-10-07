@@ -680,6 +680,12 @@ pub(all) struct Model {
   /// 的基准）;draft = 编辑中的内容;caret/selection 随 tab 走。
   open_project_files : Array[OpenProjectFile]
   open_file_index : Int
+  // G4 文件 CRUD:inline 一行式输入态(新建/改名共用输入框草稿)。
+  // file_create_open = 资源管理器顶部显示「新建文件」输入行;
+  // file_rename_open = 正在改名的 rel(该文件行替换为输入行)。
+  file_create_open : Bool
+  file_rename_open : String?
+  file_name_draft : String
   // 构建服务(M0-7):最近一次构建报告(诊断汇进 Problems)与进行中标记。
   // 待执行请求已改事件驱动(M1):过门即发 EvBuildSubmit,不再存 pending_build。
   last_build : @build.BuildReport?
@@ -790,6 +796,21 @@ pub(all) enum Msg {
   // tab 导航（G4 多标签）：切换 / 关闭（脏 tab 经确认流放行）
   SelectFileTab(Int)
   CloseFileTab(Int)
+  // === 文件 CRUD（G4）：新建 / 重命名（inline 输入 + 服务链）===
+  // 新建 = write_text → 回执开 tab + 重扫;改名 = read→write→delete 三步链,
+  // 每步回执驱动,失败结构化提示已到哪步（半完成不静默）。
+  FileCreateStart
+  FileCreateDraft(String)
+  FileCreateCommit
+  FileCreateDismiss
+  FileRenameStart(String)
+  FileRenameDraft(String)
+  FileRenameCommit
+  FileRenameDismiss
+  ProjectFileCreated(String, @services.ServiceTaskResult[Unit])
+  ProjectRenameRead(String, String, @services.ServiceTaskResult[String])
+  ProjectRenameWritten(String, String, @services.ServiceTaskResult[Unit])
+  ProjectRenameDeleted(String, String, @services.ServiceTaskResult[Unit])
   CodeProjectSaved(@services.ServiceTaskResult[Unit]) // 代码工程骨架落盘回执（M6①）
   SetMode(Mode)
   SetDesignZoom(Double)
@@ -1387,6 +1408,9 @@ pub fn initial_model(
     selected_project_file: None,
     open_project_files: [],
     open_file_index: -1,
+    file_create_open: false,
+    file_rename_open: None,
+    file_name_draft: "",
     last_build: None,
     build_busy: false,
     preview_write: None,

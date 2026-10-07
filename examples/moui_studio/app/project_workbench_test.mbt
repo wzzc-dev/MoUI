@@ -749,3 +749,86 @@ test "多标签:并行打开 + 切换 + 脏关闭确认" {
     None => fail("关闭后应停在剩余 tab")
   }
 }
+
+///|
+/// G4 CRUD:新建文件链——commit 校验重名拒绝;成功回执开空 tab 并关输入态。
+test "文件 CRUD:新建拒绝重名,成功开 tab" {
+  let services = @services.AppServices::new()
+  let imported = @app.update_with_services(
+      @app.initial_model(),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
+      services,
+    ).0
+  // 重名拒绝(树里已有 app/app.mbt)
+  let dup = @app.update_with_services(
+      { ..imported, file_create_open: true, file_name_draft: "app/app.mbt", },
+      FileCreateCommit,
+      services,
+    ).0
+  assert_true(dup.notice.contains("已存在"), msg=dup.notice)
+  assert_eq(dup.open_project_files.length(), 0)
+  // 合法新建:回执后开空 tab、输入态关闭
+  let created = @app.update_with_services(
+      { ..imported, file_create_open: true, file_name_draft: "app/notes.md", },
+      ProjectFileCreated("app/notes.md", Success(())),
+      services,
+    ).0
+  assert_eq(created.open_project_files.length(), 1)
+  assert_eq(created.open_file_index, 0)
+  assert_false(created.file_create_open)
+  match @app.active_project_file(created) {
+    Some(open) => {
+      assert_eq(open.rel, "app/notes.md")
+      assert_eq(open.draft, "")
+    }
+    None => fail("新建后应打开空 tab")
+  }
+}
+
+///|
+/// G4 CRUD:改名三步链——回执逐段驱动,tab 的 rel 同步替换、内容保留。
+test "文件 CRUD:改名链走完 tab rel 替换" {
+  let services = @services.AppServices::new()
+  let open_tab = {
+    ..@app.initial_model(),
+    open_project_files: [
+      OpenProjectFile::{
+        rel: "app/old.md",
+        saved_content: "# 旧",
+        draft: "# 旧草稿",
+        caret: 3,
+        selection: None,
+      },
+    ],
+    open_file_index: 0,
+    file_rename_open: Some("app/old.md"),
+    file_name_draft: "app/new.md",
+  }
+  // read 回执 → 写;写回执 → 删;删回执 → rel 替换 + 输入态关闭
+  let read_ok = @app.update_with_services(
+      open_tab,
+      ProjectRenameRead("app/old.md", "app/new.md", Success("# 旧")),
+      services,
+    ).0
+  let written = @app.update_with_services(
+      read_ok,
+      ProjectRenameWritten("app/old.md", "app/new.md", Success(())),
+      services,
+    ).0
+  let deleted = @app.update_with_services(
+      written,
+      ProjectRenameDeleted("app/old.md", "app/new.md", Success(())),
+      services,
+    ).0
+  assert_eq(deleted.open_project_files.length(), 1)
+  match @app.active_project_file(deleted) {
+    Some(open) => {
+      assert_eq(open.rel, "app/new.md")
+      // 草稿与光标原样保留
+      assert_eq(open.draft, "# 旧草稿")
+      assert_eq(open.caret, 3)
+    }
+    None => fail("改名后 tab 应保留")
+  }
+  assert_false(deleted.file_rename_open is Some(_))
+}

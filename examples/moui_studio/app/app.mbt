@@ -225,6 +225,213 @@ pub fn update_with_services(
           )
         _ => (model, @moui.Effect::none())
       }
+    // === 文件 CRUD（G4）：新建 = write;改名 = read→write→delete 三步链 ===
+    FileCreateCommit =>
+      match active_project_of(model) {
+        None => (model, @moui.Effect::none())
+        Some(project) => {
+          let rel = model.file_name_draft.trim(chars=" \t").to_owned()
+          if !valid_new_file_rel(rel) {
+            (
+              with_notice(
+                model,
+                text(translator(model), "app.project.file_name_invalid"),
+                true,
+              ),
+              @moui.Effect::none(),
+            )
+          } else if project_has_file(model, rel) {
+            (
+              with_notice(
+                model,
+                text_with(translator(model), "app.project.file_exists", [
+                  ("a", rel),
+                ]),
+                true,
+              ),
+              @moui.Effect::none(),
+            )
+          } else {
+            (
+              model,
+              services
+              .files()
+              .write_text("\{project.root}/\{rel}", "")
+              .effect(map=r => ProjectFileCreated(rel, r)),
+            )
+          }
+        }
+      }
+    ProjectFileCreated(rel, result) =>
+      match result {
+        Success(_) =>
+          match active_project_of(model) {
+            None => (model, @moui.Effect::none())
+            Some(project) => {
+              // 开空 tab + 重扫刷新文件树
+              let (files, index) = upsert_open_file(model.open_project_files, OpenProjectFile::{
+                rel,
+                saved_content: "",
+                draft: "",
+                caret: 0,
+                selection: None,
+              })
+              let created = with_notice(
+                {
+                  ..model,
+                  open_project_files: files,
+                  open_file_index: index,
+                  file_create_open: false,
+                  file_name_draft: "",
+                },
+                text_with(translator(model), "app.project.file_created", [
+                  ("a", rel),
+                ]),
+                false,
+              )
+              (
+                created,
+                @project.walk_root_task(services.files(), project.root).effect(map=r => {
+                  ProjectScanCompleted(r)
+                }),
+              )
+            }
+          }
+        Failure(error) =>
+          (
+            with_notice(
+              { ..model, file_create_open: false, },
+              error.message,
+              true,
+            ),
+            @moui.Effect::none(),
+          )
+        Cancelled => (model, @moui.Effect::none())
+      }
+    FileRenameCommit =>
+      match (model.file_rename_open, active_project_of(model)) {
+        (Some(old), Some(project)) => {
+          let new = model.file_name_draft.trim(chars=" \t").to_owned()
+          if !valid_new_file_rel(new) {
+            (
+              with_notice(
+                model,
+                text(translator(model), "app.project.file_name_invalid"),
+                true,
+              ),
+              @moui.Effect::none(),
+            )
+          } else if new == old {
+            ({ ..model, file_rename_open: None, }, @moui.Effect::none())
+          } else {
+            (
+              model,
+              services
+              .files()
+              .read_text("\{project.root}/\{old}")
+              .effect(map=r => ProjectRenameRead(old, new, r)),
+            )
+          }
+        }
+        _ => (model, @moui.Effect::none())
+      }
+    ProjectRenameRead(old, new, result) =>
+      match result {
+        Success(content) =>
+          match active_project_of(model) {
+            None => (model, @moui.Effect::none())
+            Some(project) =>
+              (
+                model,
+                services
+                .files()
+                .write_text("\{project.root}/\{new}", content)
+                .effect(map=r => ProjectRenameWritten(old, new, r)),
+              )
+          }
+        Failure(error) =>
+          (
+            with_notice(
+              { ..model, file_rename_open: None, },
+              error.message,
+              true,
+            ),
+            @moui.Effect::none(),
+          )
+        Cancelled => (model, @moui.Effect::none())
+      }
+    ProjectRenameWritten(old, new, result) =>
+      match result {
+        Success(_) =>
+          match active_project_of(model) {
+            None => (model, @moui.Effect::none())
+            Some(project) =>
+              (
+                model,
+                services
+                .files()
+                .delete_file("\{project.root}/\{old}")
+                .effect(map=r => ProjectRenameDeleted(old, new, r)),
+              )
+          }
+        Failure(error) =>
+          // 新文件已写、旧文件残留——半完成如实说话,不静默
+          (
+            with_notice(
+              { ..model, file_rename_open: None, },
+              text_with(translator(model), "app.project.rename_partial", [
+                ("a", error.message),
+              ]),
+              true,
+            ),
+            @moui.Effect::none(),
+          )
+        Cancelled => (model, @moui.Effect::none())
+      }
+    ProjectRenameDeleted(old, new, result) =>
+      match result {
+        Success(_) => {
+          let renamed = {
+            ..model,
+            open_project_files: rename_open_file(
+              model.open_project_files,
+              old,
+              new,
+            ),
+            file_rename_open: None,
+            file_name_draft: "",
+          }
+          let noticed = with_notice(
+            renamed,
+            text_with(translator(model), "app.project.file_renamed", [
+              ("a", new),
+            ]),
+            false,
+          )
+          match active_project_of(noticed) {
+            None => (noticed, @moui.Effect::none())
+            Some(project) =>
+              (
+                noticed,
+                @project.walk_root_task(services.files(), project.root).effect(map=r => {
+                  ProjectScanCompleted(r)
+                }),
+              )
+          }
+        }
+        Failure(error) =>
+          (
+            with_notice(
+              { ..model, file_rename_open: None, },
+              text_with(translator(model), "app.project.rename_partial", [
+                ("a", error.message),
+              ]),
+              true,
+            ),
+            @moui.Effect::none(),
+          )
+        Cancelled => (model, @moui.Effect::none())
+      }
     // 保存全部（G4 多标签）：逐脏 tab 写盘,回执各按 rel 定位落账。
     SaveAllFiles =>
       match active_project_of(model) {

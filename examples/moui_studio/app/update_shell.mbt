@@ -189,6 +189,58 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
       }
     CloseFileTab(index) =>
       Some((close_open_file_at(model, index), @moui.Effect::none()))
+    // 文件 CRUD 输入态（G4）：新建/改名共用一行式输入,Start 置草稿,
+    // Dismiss 清态;Draft 只在对应模式打开时接受（防串台）。
+    FileCreateStart =>
+      Some(
+        (
+          {
+            ..model,
+            file_create_open: true,
+            file_rename_open: None,
+            file_name_draft: "",
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    FileCreateDraft(value) =>
+      if model.file_create_open {
+        Some(({ ..model, file_name_draft: value, }, @moui.Effect::none()))
+      } else {
+        Some((model, @moui.Effect::none()))
+      }
+    FileCreateDismiss =>
+      Some(
+        (
+          { ..model, file_create_open: false, file_name_draft: "", },
+          @moui.Effect::none(),
+        ),
+      )
+    FileRenameStart(rel) =>
+      Some(
+        (
+          {
+            ..model,
+            file_rename_open: Some(rel),
+            file_create_open: false,
+            file_name_draft: rel,
+          },
+          @moui.Effect::none(),
+        ),
+      )
+    FileRenameDraft(value) =>
+      if model.file_rename_open is Some(_) {
+        Some(({ ..model, file_name_draft: value, }, @moui.Effect::none()))
+      } else {
+        Some((model, @moui.Effect::none()))
+      }
+    FileRenameDismiss =>
+      Some(
+        (
+          { ..model, file_rename_open: None, file_name_draft: "", },
+          @moui.Effect::none(),
+        ),
+      )
     SelectProjectFile(rel) =>
       // 再点同一个文件 = 取消选中(与图标栏「再点一次」同一心智)
       Some(

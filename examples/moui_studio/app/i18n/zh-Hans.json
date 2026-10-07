@@ -726,6 +726,13 @@
     "app.project.scanning": "已扫描 {n} 个目录 · {path}",
     "app.project.imported_n": "工作区已导入：{n} 个模块",
     "app.project.import_summary": "已导入 {n} 个模块，{m} 个跳过：{reason}",
-    "app.project.import_failed": "导入失败：{reason}"
+    "app.project.import_failed": "导入失败：{reason}",
+    "app.project.new_file": "新建文件",
+    "app.project.file_name_invalid": "文件名无效（不能为空、以 / 开头或包含 ..）",
+    "app.project.file_exists": "文件已存在：{a}",
+    "app.project.file_created": "已创建 {a}",
+    "app.project.file_renamed": "已重命名为 {a}",
+    "app.project.rename_partial": "重命名未完成，请手动清理：{a}",
+    "app.confirm.close_file": "关闭「{a}」？未保存的修改将丢失。"
   }
 }
