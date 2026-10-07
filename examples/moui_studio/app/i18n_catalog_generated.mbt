@@ -289,6 +289,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.ai.fold_idle", GeneratedI18nMessage::Text("Agent thread")),
+      ("app.ai.mode.chat", GeneratedI18nMessage::Text("Chat")),
       ("app.ai.mode.edit", GeneratedI18nMessage::Text("Edit")),
       ("app.ai.time.days", GeneratedI18nMessage::Text("{n}d ago")),
       ("app.audit.reject", GeneratedI18nMessage::Text("Reject")),
@@ -378,6 +379,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("err.unknown_name", GeneratedI18nMessage::Text("Unknown name: {a}")),
       ("app.ai.anchor.bar", GeneratedI18nMessage::Text("Bottom bar")),
       ("app.ai.card.error", GeneratedI18nMessage::Text("Something went wrong")),
+      ("app.ai.chat.title", GeneratedI18nMessage::Text("Reply")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("Change preview")),
       (
         "app.ai.no_context",
@@ -577,6 +579,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Add history to random roll call"),
       ),
       ("app.ai.mode.explain", GeneratedI18nMessage::Text("Explain")),
+      (
+        "app.ai.offline_hint",
+        GeneratedI18nMessage::Text(
+          "Offline model — open Settings to connect a real provider for real replies.",
+        ),
+      ),
       ("app.ai.pending_chip", GeneratedI18nMessage::Text("{count} to review")),
       ("app.ai.pill_pending", GeneratedI18nMessage::Text("To review")),
       (
@@ -714,6 +722,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("No proposal history yet"),
       ),
       ("app.ai.mode.generate", GeneratedI18nMessage::Text("Create")),
+      (
+        "app.ai.offline_reply",
+        GeneratedI18nMessage::Text(
+          "[Offline model] Received: \"{prompt}\". Open Settings to switch to a real provider.",
+        ),
+      ),
       ("app.ai.scroll_bottom", GeneratedI18nMessage::Text("Scroll to bottom")),
       ("app.ai.time.just_now", GeneratedI18nMessage::Text("just now")),
       ("app.ai.work.duration", GeneratedI18nMessage::Text("{m}m {s}s")),
@@ -2114,6 +2128,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.ai.fold_idle", GeneratedI18nMessage::Text("Agent 线程")),
+      ("app.ai.mode.chat", GeneratedI18nMessage::Text("聊天")),
       ("app.ai.mode.edit", GeneratedI18nMessage::Text("修改")),
       ("app.ai.time.days", GeneratedI18nMessage::Text("{n} 天前")),
       ("app.audit.reject", GeneratedI18nMessage::Text("拒绝")),
@@ -2204,6 +2219,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("err.unknown_name", GeneratedI18nMessage::Text("未知名字：{a}")),
       ("app.ai.anchor.bar", GeneratedI18nMessage::Text("底栏")),
       ("app.ai.card.error", GeneratedI18nMessage::Text("出错了")),
+      ("app.ai.chat.title", GeneratedI18nMessage::Text("回复")),
       ("app.ai.diff.title", GeneratedI18nMessage::Text("变更预览")),
       (
         "app.ai.no_context",
@@ -2391,6 +2407,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("给随机点名加历史记录"),
       ),
       ("app.ai.mode.explain", GeneratedI18nMessage::Text("解释")),
+      (
+        "app.ai.offline_hint",
+        GeneratedI18nMessage::Text(
+          "当前是离线模型——打开设置接入真实模型后即可获得真实回复。",
+        ),
+      ),
       ("app.ai.pending_chip", GeneratedI18nMessage::Text("待审计 {count}")),
       ("app.ai.pill_pending", GeneratedI18nMessage::Text("待审计")),
       (
@@ -2529,6 +2551,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("还没有提案历史"),
       ),
       ("app.ai.mode.generate", GeneratedI18nMessage::Text("生成")),
+      (
+        "app.ai.offline_reply",
+        GeneratedI18nMessage::Text(
+          "【离线模型】已收到：「{prompt}」。打开设置切换到真实模型即可接通。",
+        ),
+      ),
       ("app.ai.scroll_bottom", GeneratedI18nMessage::Text("回到底部")),
       ("app.ai.time.just_now", GeneratedI18nMessage::Text("刚刚")),
       ("app.ai.work.duration", GeneratedI18nMessage::Text("{m} 分 {s} 秒")),

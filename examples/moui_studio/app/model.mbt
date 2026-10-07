@@ -274,6 +274,8 @@ pub(all) enum ComposerMode {
   ComposeGenerate
   ComposeExplain
   ComposeRepair
+  /// 纯聊天（G1）：不走提案校验链,回复为普通 markdown 消息
+  ComposeChat
 } derive(Eq)
 
 ///|
@@ -894,6 +896,9 @@ pub(all) enum Msg {
   SetRightPanelTab(RightPanelTab)
   ComposerRun
   RealGenerationFinished(Result[String, String])
+  /// 纯聊天回复回执（G1）：成功 = markdown 文本,失败 = 错误卡
+  ChatSubmit
+  RealChatFinished(Result[String, String])
   ExplainHandler
   RealExplanationFinished(Result[String, String])
   LanguageLoaded(String)

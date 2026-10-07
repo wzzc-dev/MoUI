@@ -1186,6 +1186,7 @@ fn composer(
       composer_mode_chip(model, t, ComposeGenerate, "app.ai.mode.generate"),
       composer_mode_chip(model, t, ComposeExplain, "app.ai.mode.explain"),
       composer_mode_chip(model, t, ComposeRepair, "app.ai.mode.repair"),
+      composer_mode_chip(model, t, ComposeChat, "app.ai.mode.chat"),
     ]
   } else {
     [composer_mode_dropdown(model, t)]
@@ -1343,6 +1344,7 @@ fn composer_mode_dropdown(
     ComposeGenerate => text(t, "app.ai.mode.generate")
     ComposeExplain => text(t, "app.ai.mode.explain")
     ComposeRepair => text(t, "app.ai.mode.repair")
+    ComposeChat => text(t, "app.ai.mode.chat")
   }
   let label_w = (text_estimate_width(label) * 1.05 + 8.0).max(30.0)
   let chip_w = label_w + 26.0

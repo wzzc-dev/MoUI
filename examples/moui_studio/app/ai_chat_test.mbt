@@ -430,3 +430,30 @@ test "session meta time falls back created then updated then just now" {
   // 这里锁回退函数口径——created 0、updated 0 → 时间戳取 0 → 视图层显示刚刚
   assert_true(ran.ai_sessions.current().created == 1000)
 }
+
+///|
+/// G1 纯聊天:离线路由——确定性回复卡进转录 + 接通引导提示;
+/// 历史构建——用户气泡与 AI 回复按序进上下文。
+test "纯聊天:离线回复与历史构建" {
+  let asked = apply(
+    { ..initial_model(), composer_mode: ComposeChat },
+    SetPrompt("你好"),
+  )
+  let ran = apply(asked, ComposerRun)
+  // 离线假回复卡在转录里
+  let cards = ran.ai_sessions.current().cards
+  let mut reply_found = false
+  for card in cards {
+    if card.kind is CardExplanation && card.body.contains("离线模型") {
+      reply_found = true
+    }
+  }
+  assert_true(reply_found, msg="离线回复应进转录")
+  // 接通引导提示
+  assert_true(ran.notice.contains("设置"), msg=ran.notice)
+  // 多轮历史:用户提问 + 助手回复
+  let history = chat_history(ran)
+  assert_eq(history.length(), 2)
+  assert_eq(history[0].0, "user")
+  assert_eq(history[1].0, "assistant")
+}

@@ -768,6 +768,10 @@
     "app.props.align_center": "中",
     "app.props.align_end": "右",
     "app.props.visible": "显示",
-    "app.props.disabled": "禁用"
+    "app.props.disabled": "禁用",
+    "app.ai.mode.chat": "聊天",
+    "app.ai.chat.title": "回复",
+    "app.ai.offline_hint": "当前是离线模型——打开设置接入真实模型后即可获得真实回复。",
+    "app.ai.offline_reply": "【离线模型】已收到：「{prompt}」。打开设置切换到真实模型即可接通。"
   }
 }

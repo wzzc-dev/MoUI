@@ -6,11 +6,16 @@ test "请求体编码为 OpenAI 兼容结构且稳定" {
     .with_message(User, "你好")
     .with_message(Assistant, "在的")
     .with_message(User, "讲个笑话")
+  // G1:请求默认纯文本（json_mode=false）——不携带 response_format
+  let request = { ..request, json_mode: false }
   let body = @model_provider.build_request_body(request)
   let encoded = body.stringify()
   assert_true(encoded.contains("\"model\":\"fake-gpt-mini\""))
   assert_true(encoded.contains("\"role\":\"user\""))
-  assert_true(encoded.contains("\"response_format\""))
+  assert_false(encoded.contains("response_format"))
+  // 提案类（json_mode=true）才带 response_format
+  let json_body = @model_provider.build_request_body({ ..request, json_mode: true })
+  assert_true(json_body.stringify().contains("\"response_format\""))
   // 二次编码一致（稳定性）
   assert_eq(encoded, body.stringify())
 }

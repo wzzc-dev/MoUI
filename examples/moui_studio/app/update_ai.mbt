@@ -44,6 +44,9 @@ fn composer_run(model : Model) -> (Model, @moui.Effect[Msg]) {
       update_pure(targeted.0, ExplainHandler)
     }
     ComposeRepair => update_pure(with_prompt, RestoreCodeDraft)
+    // 纯聊天（G1）：ChatSubmit 在服务层拆分——真 provider 带多轮历史,
+    // 离线给确定性回复;回复以普通 markdown 消息卡进转录
+    ComposeChat => update_pure(with_prompt, ChatSubmit)
     // 生成 = 以空程序为基底的修改：清空控件与子程序让提案从零重建，
     // 走的还是同一个 proposals 校验链（不是「另一条生成通道」）。
     ComposeGenerate => {

@@ -768,6 +768,10 @@
     "app.props.align_center": "Center",
     "app.props.align_end": "Right",
     "app.props.visible": "Shown",
-    "app.props.disabled": "Disabled"
+    "app.props.disabled": "Disabled",
+    "app.ai.mode.chat": "Chat",
+    "app.ai.chat.title": "Reply",
+    "app.ai.offline_hint": "Offline model — open Settings to connect a real provider for real replies.",
+    "app.ai.offline_reply": "[Offline model] Received: \"{prompt}\". Open Settings to switch to a real provider."
   }
 }

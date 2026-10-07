@@ -246,6 +246,41 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
     // 全文搜索（G4 F3）:查询草稿纯转移;运行与回执在服务层
     SearchQueryDraft(value) =>
       Some(({ ..model, search_query: value, }, @moui.Effect::none()))
+    // 纯聊天离线（G1）：确定性假回复 + 接通引导（真实提交在程序级臂）
+    ChatSubmit =>
+      if model.provider_mode is Fake || model.provider_key == "" {
+        let prompt = model.ai_sessions.current().prompt_draft
+        let reply = text_with(
+          translator(model),
+          "app.ai.offline_reply",
+          [("prompt", prompt)],
+        )
+        let with_card = push_ai_card(
+          model,
+          AiCard::{
+            kind: CardExplanation,
+            title: text(translator(model), "app.ai.chat.title"),
+            body: reply,
+            steps: [],
+            steps_done: 0,
+            progress: 0,
+            diff_lines: [],
+            settled: true,
+            settled_note: "",
+            seq: 0,
+            at: 0,
+          },
+        )
+        let hinted = with_notice(
+          with_card,
+          text(translator(model), "app.ai.offline_hint"),
+          false,
+        )
+        Some((hinted, @moui.Effect::none()))
+      } else {
+        // 真实提交：纯链未命中（程序级臂接管）
+        None
+      }
     SelectProjectFile(rel) =>
       // 再点同一个文件 = 取消选中(与图标栏「再点一次」同一心智)
       Some(

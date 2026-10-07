@@ -146,6 +146,8 @@ async fn main {
           spec.model,
           spec.system,
           spec.prompt,
+          history=spec.history,
+          json_mode=spec.json_mode,
           on_result,
         )
       },

@@ -213,7 +213,15 @@ test "kernel/denied services fail explicitly" {
   // provider：回调收到 Err（闭包同步执行，直接断言）
   let mut provider_error = ""
   (services.provider_submit)(
-    { endpoint: "", key: "", model: "", system: "", prompt: "", },
+    {
+      endpoint: "",
+      key: "",
+      model: "",
+      system: "",
+      prompt: "",
+      history: [],
+      json_mode: false,
+    },
     fn(result) {
       match result {
         Err(message) => provider_error = message

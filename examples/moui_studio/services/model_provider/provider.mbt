@@ -28,6 +28,8 @@ pub(all) struct CompletionRequest {
   system : String
   messages : Array[ChatMessage]
   temperature : Double
+  /// G1:提案类请求要求 JSON 输出;讲解/聊天为纯文本
+  json_mode : Bool
 }
 
 ///|
@@ -35,7 +37,7 @@ pub fn CompletionRequest::new(
   model : String,
   system : String,
 ) -> CompletionRequest {
-  { model, system, messages: [], temperature: 0.7, }
+  { model, system, messages: [], temperature: 0.7, json_mode: false, }
 }
 
 ///|
@@ -81,9 +83,13 @@ pub fn build_request_body(request : CompletionRequest) -> Json {
   root["model"] = Json::string(request.model)
   root["messages"] = Json::array(messages)
   root["temperature"] = Json::number(request.temperature)
-  let response_format = Map([], capacity=1)
-  response_format["type"] = Json::string("json_object")
-  root["response_format"] = Json::object(response_format)
+  // G1:JSON mode 仅在提案类请求携带——讲解/聊天是纯文本,
+  // 不兼容 JSON mode 的端点也不受影响
+  if request.json_mode {
+    let response_format = Map([], capacity=1)
+    response_format["type"] = Json::string("json_object")
+    root["response_format"] = Json::object(response_format)
+  }
   Json::object(root)
 }
 

@@ -16,6 +16,12 @@ pub(all) struct ProviderRequestSpec {
   model : String
   system : String
   prompt : String
+  /// 多轮上下文（G1）：按序的 (role, content)，role 为 "user"/"assistant"。
+  /// 当前提问不在其中（prompt 单独承载）。
+  history : Array[(String, String)]
+  /// 提案类请求要求 JSON 输出（response_format=json_object）；
+  /// 讲解/聊天为纯文本（G1）。
+  json_mode : Bool
 }
 
 ///|

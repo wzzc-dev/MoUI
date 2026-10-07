@@ -94,12 +94,21 @@ pub fn provider_submit_prompt(
   model : String,
   system : String,
   prompt : String,
+  history~ : Array[(String, String)],
+  json_mode~ : Bool,
   on_result : (Result[String, String]) -> Unit,
 ) -> Unit {
-  let request = @provider.CompletionRequest::new(model, system).with_message(
-    User,
-    prompt,
-  )
+  // 多轮上下文（G1）：历史按序进消息列表,当前提问是最后一条 user
+  let request_base = @provider.CompletionRequest::new(model, system)
+  let request = {
+    ..request_base,
+    messages: history.map(msg => match msg.0 {
+      "assistant" =>
+        @provider.ChatMessage::{ role: Assistant, content: msg.1, }
+      _ => @provider.ChatMessage::{ role: User, content: msg.1, }
+    }),
+    json_mode,
+  }.with_message(User, prompt)
   provider_submit(owner, endpoint, key, request, on_result)
 }
 

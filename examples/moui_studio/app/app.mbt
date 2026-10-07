@@ -22,6 +22,40 @@ pub fn explanation_system_prompt() -> String {
 }
 
 ///|
+/// 纯聊天 system prompt（G1）：简短、跟随用户语言、可含 markdown。
+pub fn chat_system_prompt() -> String {
+  "You are the built-in assistant of MoUI Studio, a visual programming IDE. Answer briefly and helpfully in the user's language (Chinese or English). Markdown is allowed. You are chatting, not generating proposals: never emit structured proposal JSON."
+}
+
+///|
+/// 纯聊天的多轮上下文（G1）：当前会话最近 6 条 user/assistant 消息
+/// （用户气泡 + AI markdown 回复；提案/错误卡不进历史）。
+pub fn chat_history(model : Model) -> Array[(String, String)] {
+  let session = model.ai_sessions.current()
+  let collected : Array[(String, String)] = []
+  for card in session.cards {
+    match card.kind {
+      CardUserPrompt =>
+        if card.body != "" {
+          collected.push(("user", card.body))
+        }
+      CardExplanation =>
+        if card.body != "" && card.settled {
+          collected.push(("assistant", card.body))
+        }
+      _ => ()
+    }
+  }
+  // 截尾：只保留最近 6 条
+  let start = if collected.length() > 6 { collected.length() - 6 } else { 0 }
+  let history : Array[(String, String)] = []
+  for i in start..<collected.length() {
+    history.push(collected[i])
+  }
+  history
+}
+
+///|
 /// 语言持久化键（SettingsServices）。
 pub const LANGUAGE_SETTINGS_KEY : String = "studio.language"
 
@@ -2144,6 +2178,9 @@ fn update_with_provider(
                       handler,
                       model.language.dsl_language(),
                     ),
+                    history: [],
+                    // 讲解是纯文本：不带 JSON mode
+                    json_mode: false,
                   },
                   result => emit(RealExplanationFinished(result)),
                 )
@@ -2170,11 +2207,65 @@ fn update_with_provider(
                 model: model.provider_model,
                 system: @proposals.proposal_system_prompt(),
                 prompt: model.ai_sessions.current().prompt_draft,
+                history: [],
+                // 提案要求 JSON 输出（G1）
+                json_mode: true,
               },
               result => emit(RealGenerationFinished(result)),
             )
           }),
         )
+      }
+    RealChatFinished(result) =>
+      match result {
+        Ok(reply) => {
+          let with_card = push_ai_card(
+            model,
+            AiCard::{
+              kind: CardExplanation,
+              title: text(translator(model), "app.ai.chat.title"),
+              body: reply,
+              steps: [],
+              steps_done: 0,
+              progress: 0,
+              diff_lines: [],
+              settled: true,
+              settled_note: "",
+              seq: 0,
+              at: 0,
+            },
+          )
+          ({ ..with_card, ai_busy: false, }, @moui.Effect::none())
+        }
+        Err(message) => {
+          let errored = push_error_card({ ..model, ai_busy: false }, message)
+          (errored, @moui.Effect::none())
+        }
+      }
+    // 纯聊天真提交（G1）：带多轮历史、纯文本；离线路由在纯链
+    // （update_ide_msgs 的 ChatSubmit 臂）。
+    ChatSubmit =>
+      if !(model.provider_mode is Fake) && model.provider_key != "" {
+        let history = chat_history(model)
+        (
+          { ..model, ai_busy: true, },
+          @moui.Effect::dispatch(emit => {
+            submit(
+              {
+                endpoint: model.provider_endpoint,
+                key: model.provider_key,
+                model: model.provider_model,
+                system: chat_system_prompt(),
+                prompt: model.ai_sessions.current().prompt_draft,
+                history,
+                json_mode: false,
+              },
+              result => emit(RealChatFinished(result)),
+            )
+          }),
+        )
+      } else {
+        update_with_services(model, msg, services)
       }
     _ => update_with_services(model, msg, services)
   }
