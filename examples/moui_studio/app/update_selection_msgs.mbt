@@ -358,6 +358,16 @@ fn rename_var_in_stmt(stmt : @ir.Stmt, from : String, to : String) -> @ir.Stmt {
         rename_var_in_stmts(else_body, from, to),
       )
     }
+    @ir.ForEach(list_expr, iter, loop_body) =>
+      @ir.ForEach(
+        rename_var_in_expr(list_expr, from, to),
+        if iter == from {
+          to
+        } else {
+          iter
+        },
+        rename_var_in_stmts(loop_body, from, to),
+      )
     @ir.CountLoop(times, iter, loop_body) =>
       @ir.CountLoop(
         rename_var_in_expr(times, from, to),

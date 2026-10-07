@@ -127,6 +127,14 @@ fn write_stmt(
       write_indent(buf, indent)
       buf.write_string(keywords.end_kw)
     }
+    @ir.ForEach(list_expr, loop_var, body) => {
+      buf.write_string("\{keywords.foreach_kw} ")
+      write_expr(buf, list_expr, 0, false, keywords, language)
+      buf.write_string(" \{keywords.each_in_kw} \{loop_var}\n")
+      write_stmts(buf, body, indent + 1, language)
+      write_indent(buf, indent)
+      buf.write_string(keywords.end_kw)
+    }
     @ir.WhileLoop(cond, body) => {
       buf.write_string("\{keywords.while_kw} ")
       write_expr(buf, cond, 0, false, keywords, language)

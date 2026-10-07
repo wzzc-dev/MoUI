@@ -73,6 +73,12 @@ pub fn stmt_text_segments(stmt : Stmt) -> Array[TextSegment] {
       }
       push_literal(segments, name)
     }
+    @ir.ForEach(list_expr, loop_var, _) => {
+      // 与 emit_chain 同口径:`"<列表> / <元素变量>"`
+      push_slot(segments, list_expr, [])
+      push_literal(segments, " / ")
+      push_literal(segments, loop_var)
+    }
     @ir.WhileLoop(cond, _) => push_slot(segments, cond, [])
     @ir.Return(Some(expr)) => push_slot(segments, expr, [])
     @ir.Call(name, args) => {

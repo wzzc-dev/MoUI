@@ -553,6 +553,16 @@ fn write_stmt(ctx : GenCtx, stmt : @ir.Stmt) -> Unit {
       with_depth(ctx, fn() { write_body(ctx, body, false) })
       write_line(ctx, "})")
     }
+    @ir.ForEach(list_expr, loop_var, body) => {
+      record_stmt_line(ctx)
+      let line = ctx.audit_line
+      write_line(
+        ctx,
+        "rt.for_each(\{write_value(ctx, list_expr)}, \{mbt_quote(loop_var)}, \{line}, fn(rt : @compiled_runtime.Runtime) -> Unit raise @compiled_runtime.ExecError {",
+      )
+      with_depth(ctx, fn() { write_body(ctx, body, false) })
+      write_line(ctx, "})")
+    }
     @ir.WhileLoop(cond, body) => {
       record_stmt_line(ctx)
       let line = ctx.audit_line

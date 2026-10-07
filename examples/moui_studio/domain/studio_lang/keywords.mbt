@@ -38,6 +38,8 @@ pub(all) struct Keywords {
   count_kw : String // 计次循环 / repeat
   times_kw : String // 次 / times
   as_kw : String // 为 / as
+  foreach_kw : String // 遍历 / foreach
+  each_in_kw : String // 中的每个 / as（G7.1 ForEach）
   while_kw : String // 当 / while
   do_kw : String // 循环 / do
   break_kw : String // 跳出循环 / break
@@ -67,6 +69,8 @@ pub fn keywords_for(language : Language) -> Keywords {
         count_kw: "计次循环",
         times_kw: "次",
         as_kw: "为",
+        foreach_kw: "遍历",
+        each_in_kw: "中的每个",
         while_kw: "当",
         do_kw: "循环",
         break_kw: "跳出循环",
@@ -92,6 +96,8 @@ pub fn keywords_for(language : Language) -> Keywords {
         count_kw: "repeat",
         times_kw: "times",
         as_kw: "as",
+        foreach_kw: "foreach",
+        each_in_kw: "as",
         while_kw: "while",
         do_kw: "do",
         break_kw: "break",
@@ -361,6 +367,8 @@ pub fn is_reserved(text : String) -> Bool {
   text == zh.end_kw ||
   text == zh.count_kw ||
   text == zh.times_kw ||
+  text == zh.foreach_kw ||
+  text == zh.each_in_kw ||
   text == zh.as_kw ||
   text == zh.while_kw ||
   text == zh.do_kw ||
@@ -383,6 +391,8 @@ pub fn is_reserved(text : String) -> Bool {
   text == en.end_kw ||
   text == en.count_kw ||
   text == en.times_kw ||
+  text == en.foreach_kw ||
+  text == en.each_in_kw ||
   text == en.as_kw ||
   text == en.while_kw ||
   text == en.do_kw ||
@@ -405,6 +415,7 @@ pub(all) enum StmtKeyword {
   KwDeclare
   KwIf
   KwCountLoop
+  KwForEach
   KwWhile
   KwBreak
   KwReturn
@@ -420,6 +431,8 @@ pub fn classify_stmt_keyword(text : String, keywords : Keywords) -> StmtKeyword 
     KwIf
   } else if text == keywords.count_kw {
     KwCountLoop
+  } else if text == keywords.foreach_kw {
+    KwForEach
   } else if text == keywords.while_kw {
     KwWhile
   } else if text == keywords.break_kw {

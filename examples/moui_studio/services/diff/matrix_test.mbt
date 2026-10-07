@@ -150,6 +150,30 @@ fn statement_kind_handlers(
       ]),
     ),
   )
+  // 遍历循环（G7.1）:列表字面量逐元素绑定 + 文本累加,两轨审计逐位一致
+  results.push(
+    (
+      "for-each",
+      synthetic_handler(program, [
+        @ir.Declare("差分点名", @ir.StrLit("")),
+        @ir.ForEach(
+          @ir.ListLit([@ir.StrLit("甲"), @ir.StrLit("乙"), @ir.StrLit("丙")]),
+          "差分成员",
+          [
+            @ir.Assign(
+              "差分点名",
+              @ir.Binary(
+                @ir.Add,
+                @ir.Var("差分点名"),
+                @ir.Var("差分成员"),
+              ),
+            ),
+          ],
+        ),
+        @ir.Call("set_text", [@ir.Var(label), @ir.Var("差分点名")]),
+      ]),
+    ),
+  )
   // 计次循环 + 跳出（第 2 轮跳出）
   results.push(
     (

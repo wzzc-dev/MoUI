@@ -805,7 +805,8 @@ pub fn block_category(kind : @blocks.BlockKind) -> @blocks.BlockCategory {
     @blocks.BkReturn => @blocks.CatFlow
     @blocks.BkIf | @blocks.BkElseIf | @blocks.BkElse | @blocks.BkEnd =>
       @blocks.CatFlow
-    @blocks.BkCountLoop | @blocks.BkWhile => @blocks.CatFlow
+    @blocks.BkCountLoop | @blocks.BkForEach | @blocks.BkWhile =>
+      @blocks.CatFlow
     @blocks.BkBreak => @blocks.CatFlow
     @blocks.BkMatch | @blocks.BkCase => @blocks.CatFlow
     @blocks.BkCall => @blocks.CatCommand

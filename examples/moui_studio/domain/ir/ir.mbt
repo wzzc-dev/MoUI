@@ -202,6 +202,7 @@ pub(all) enum Stmt {
   Assign(String, Expr) // x = expr（必须已声明）
   If(Expr, Array[Stmt], Array[(Expr, Array[Stmt])], Array[Stmt]) // cond, then, else-ifs, else
   CountLoop(Expr, String?, Array[Stmt]) // times, loop var, body
+  ForEach(Expr, String, Array[Stmt]) // 遍历列表表达式, 元素变量, 体（G7.1）
   WhileLoop(Expr, Array[Stmt])
   Break
   Call(String, Array[Expr]) // 内建命令

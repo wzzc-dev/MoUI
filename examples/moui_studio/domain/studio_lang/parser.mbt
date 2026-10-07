@@ -300,6 +300,7 @@ fn Parser::parse_statement(self : Parser) -> Stmt raise LangError {
         KwDeclare => self.parse_declare()
         KwIf => self.parse_if()
         KwCountLoop => self.parse_count_loop()
+        KwForEach => self.parse_foreach()
         KwWhile => self.parse_while()
         KwBreak => {
           ignore(self.advance())
@@ -505,6 +506,18 @@ fn Parser::parse_count_loop(self : Parser) -> Stmt raise LangError {
   let body = self.parse_stmts_until([self.keywords.end_kw])
   self.expect_keyword(self.keywords.end_kw)
   @ir.CountLoop(count, loop_var, traced_to_stmts(body))
+}
+
+///|
+/// 遍历 <列表表达式> 中的每个 <元素> … 结束 / foreach <list> as <item> … end
+fn Parser::parse_foreach(self : Parser) -> Stmt raise LangError {
+  ignore(self.advance()) // 遍历 / foreach
+  let list_expr = self.parse_expr()
+  self.expect_keyword(self.keywords.each_in_kw)
+  let loop_var = self.parse_name("「\{self.keywords.each_in_kw}」后应跟元素变量名")
+  let body = self.parse_stmts_until([self.keywords.end_kw])
+  self.expect_keyword(self.keywords.end_kw)
+  @ir.ForEach(list_expr, loop_var, traced_to_stmts(body))
 }
 
 ///|

@@ -135,6 +135,14 @@ pub fn kernel_studio_lang_printer_mbt() -> String {
     #|      write_indent(buf, indent)
     #|      buf.write_string(keywords.end_kw)
     #|    }
+    #|    @ir.ForEach(list_expr, loop_var, body) => {
+    #|      buf.write_string("\{keywords.foreach_kw} ")
+    #|      write_expr(buf, list_expr, 0, false, keywords, language)
+    #|      buf.write_string(" \{keywords.each_in_kw} \{loop_var}\n")
+    #|      write_stmts(buf, body, indent + 1, language)
+    #|      write_indent(buf, indent)
+    #|      buf.write_string(keywords.end_kw)
+    #|    }
     #|    @ir.WhileLoop(cond, body) => {
     #|      buf.write_string("\{keywords.while_kw} ")
     #|      write_expr(buf, cond, 0, false, keywords, language)
@@ -457,6 +465,10 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|  LoopInit(Expr, String, Int) // 次数表达式, 计数器槽, 循环结束目标
     #|  LoopCheck(String, String, Int) // 计数器槽, 循环变量(""=无), 循环结束目标
     #|  LoopNext(String, Int) // 计数器槽, 循环开始目标
+    #|  // ForEach（G7.1）:列表表达式求值一次存隐藏槽（`@i{n}#l`,内部槽命名
+    #|  // 纪律使其不进终值比对）,计数器逐个索引
+    #|  FeInit(Expr, String, Int) // 列表表达式, 计数器槽, 循环结束目标
+    #|  FeCheck(String, String, Int) // 计数器槽, 元素变量, 循环结束目标
     #|  CaseOf(Expr, Array[String], Array[Int], Int) // subject, 情况名, 各臂跳转目标, else 目标（M5-5d）
     #|}
     #|
@@ -899,6 +911,50 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|        let index = state.lookup_number(counter, line)
     #|        state.vars[counter] = VInt(index.to_int() + 1)
     #|        state.pc = start
+    #|      }
+    #|      FeInit(list_expr, counter, end) => {
+    #|        let value = state.eval(list_expr, line)
+    #|        if state.paused || !(state.status is Running) {
+    #|          return
+    #|        }
+    #|        let items = match value {
+    #|          VArr(items) => items
+    #|          _ => raise LangError(BadLoopCount, line, "", "")
+    #|        }
+    #|        state.vars["\{counter}#l"] = VArr(items)
+    #|        state.vars["\{counter}#n"] = VInt(items.length())
+    #|        state.vars[counter] = VInt(1)
+    #|        if items.length() < 1 {
+    #|          state.pc = end
+    #|        } else {
+    #|          state.pc = state.pc + 1
+    #|        }
+    #|      }
+    #|      FeCheck(counter, loop_var, end) => {
+    #|        let index = state.lookup_number(counter, line)
+    #|        let count = state.lookup_number("\{counter}#n", line)
+    #|        if index > count {
+    #|          state.pc = end
+    #|        } else {
+    #|          // 元素绑定 = 名单第 index 项（1-based,与 名单[i] 同口径）
+    #|          let ordinal = index.to_int()
+    #|          match state.vars.get("\{counter}#l") {
+    #|            Some(VArr(items)) =>
+    #|              if ordinal >= 1 && ordinal <= items.length() {
+    #|                state.vars[loop_var] = items[ordinal - 1]
+    #|                if !state.declared.contains(loop_var) {
+    #|                  state.declared.push(loop_var)
+    #|                }
+    #|              }
+    #|            _ => ()
+    #|          }
+    #|          state.audit.push(StepRecord::{
+    #|            line,
+    #|            op: OpLoop,
+    #|            detail: "iteration \{ordinal}",
+    #|          })
+    #|          state.pc = state.pc + 1
+    #|        }
     #|      }
     #|    }
     #|  } catch {
@@ -2111,6 +2167,42 @@ pub fn kernel_studio_lang_interp_mbt() -> String {
     #|        }
     #|      }
     #|    }
+    #|    @ir.ForEach(list_expr, loop_var, loop_body) => {
+    #|      let counter = "@i\{instrs.length()}"
+    #|      let init_slot = instrs.length()
+    #|      instrs.push(FeInit(list_expr, counter, -1))
+    #|      lines.push(line)
+    #|      let start = instrs.length()
+    #|      let check_slot = start
+    #|      instrs.push(FeCheck(counter, loop_var, -1))
+    #|      lines.push(line)
+    #|      let patches : Array[Array[Int]] = []
+    #|      for existing in break_patches {
+    #|        patches.push(existing)
+    #|      }
+    #|      patches.push([])
+    #|      emit_body(instrs, lines, loop_body, line, patches)
+    #|      instrs.push(LoopNext(counter, start))
+    #|      lines.push(line)
+    #|      let end = instrs.length()
+    #|      match instrs[init_slot] {
+    #|        FeInit(expr, counter_slot, _) =>
+    #|          instrs[init_slot] = FeInit(expr, counter_slot, end)
+    #|        _ => ()
+    #|      }
+    #|      match instrs[check_slot] {
+    #|        FeCheck(counter_slot, var_name, _) =>
+    #|          instrs[check_slot] = FeCheck(counter_slot, var_name, end)
+    #|        _ => ()
+    #|      }
+    #|      let inner = patches[patches.length() - 1]
+    #|      for slot in inner {
+    #|        match instrs[slot] {
+    #|          Jump(_) => instrs[slot] = Jump(end)
+    #|          _ => ()
+    #|        }
+    #|      }
+    #|    }
     #|    @ir.WhileLoop(cond, loop_body) => {
     #|      let start = instrs.length()
     #|      let cond_slot = start
@@ -2361,6 +2453,22 @@ pub fn kernel_studio_lang_semantics_mbt() -> String {
     #|        }
     #|        check_body(
     #|          else_body, errors, in_loop, declared, functions, enums, in_func,
+    #|        )
+    #|      }
+    #|      @ir.ForEach(list_expr, loop_var, loop_body) => {
+    #|        check_expr(list_expr, errors, declared, functions, enums)
+    #|        check_name(loop_var, errors)
+    #|        if !declared.contains(loop_var) {
+    #|          declared.push(loop_var)
+    #|        }
+    #|        check_body(
+    #|          loop_body,
+    #|          errors,
+    #|          in_loop,
+    #|          declared,
+    #|          functions,
+    #|          enums,
+    #|          in_func,
     #|        )
     #|      }
     #|      @ir.CountLoop(times, loop_var, loop_body) => {

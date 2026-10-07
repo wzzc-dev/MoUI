@@ -121,7 +121,7 @@ pub fn block_fill(kind : @blocks.BlockKind) -> @graphics.Color {
     // 声明块：数据族的存值蓝（更深一档，与普通变量行区分）
     @blocks.BkEnumDecl | @blocks.BkStructDecl =>
       @graphics.Color::rgba(r=0.106, g=0.157, b=0.255)
-    @blocks.BkCountLoop | @blocks.BkWhile | @blocks.BkReturn =>
+    @blocks.BkCountLoop | @blocks.BkForEach | @blocks.BkWhile | @blocks.BkReturn =>
       @graphics.Color::rgba(r=0.145, g=0.271, b=0.196)
     @blocks.BkBreak => @graphics.Color::rgba(r=0.318, g=0.165, b=0.157)
     @blocks.BkCall => @graphics.Color::rgba(r=0.243, g=0.192, b=0.333)

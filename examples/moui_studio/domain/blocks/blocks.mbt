@@ -31,6 +31,7 @@ pub(all) enum BlockKind {
   BkElse
   BkEnd
   BkCountLoop
+  BkForEach
   BkWhile
   BkBreak
   BkCall
@@ -60,6 +61,7 @@ pub fn stmt_block_kind(stmt : Stmt) -> BlockKind {
     @ir.Return(_) => BkReturn
     @ir.If(_, _, _, _) => BkIf
     @ir.CountLoop(_, _, _) => BkCountLoop
+    @ir.ForEach(_, _, _) => BkForEach
     @ir.WhileLoop(_, _) => BkWhile
     @ir.Break => BkBreak
     @ir.Stmt::Call(_, _) => BkCall
@@ -80,6 +82,7 @@ pub fn block_label_key(kind : BlockKind) -> String {
     BkElse => "blocks.else"
     BkEnd => "blocks.end"
     BkCountLoop => "blocks.count_loop"
+    BkForEach => "blocks.for_each"
     BkWhile => "blocks.while"
     BkBreak => "blocks.break"
     BkCall => "blocks.call"
@@ -95,7 +98,7 @@ pub fn block_label_key(kind : BlockKind) -> String {
 pub fn flow_companion_kinds(kind : BlockKind) -> Array[BlockKind] {
   match kind {
     BkIf => [BkElseIf, BkElse, BkEnd]
-    BkCountLoop | BkWhile => [BkEnd]
+    BkCountLoop | BkForEach | BkWhile => [BkEnd]
     // 匹配：情况行 + 否则 + 结束都是匹配头的伴随块
     BkMatch => [BkCase, BkElse, BkEnd]
     _ => []
@@ -368,6 +371,25 @@ fn emit_chain(
           segments: None,
         })
       }
+      @ir.ForEach(list_expr, loop_var, loop_body) => {
+        items.push(BlockItem::{
+          kind: BkForEach,
+          depth,
+          text: "\{@studio_lang.canonical_expr(list_expr)} / \{loop_var}",
+          builtin: "",
+          path,
+          segments: None,
+        })
+        emit_chain(items, loop_body, depth + 1, child_path(path, 2))
+        items.push(BlockItem::{
+          kind: BkEnd,
+          depth,
+          text: "",
+          builtin: "",
+          path: [],
+          segments: None,
+        })
+      }
       @ir.Match(subject, arms, else_body) => {
         items.push(BlockItem::{
           kind: BkMatch,
@@ -523,6 +545,14 @@ pub fn replace_stmt_at(
       let updated = replace_stmt_at(loop_body, drop_first(rest), stmt)
       body[head] = @ir.CountLoop(times, loop_var, updated)
     }
+    @ir.ForEach(list_expr, loop_var, loop_body) => {
+      let rest = drop_first(path)
+      if rest[0] != 2 {
+        return body
+      }
+      let updated = replace_stmt_at(loop_body, drop_first(rest), stmt)
+      body[head] = @ir.ForEach(list_expr, loop_var, updated)
+    }
     @ir.WhileLoop(cond, loop_body) => {
       let rest = drop_first(path)
       if rest[0] != 2 {
@@ -607,6 +637,14 @@ pub fn delete_stmt_at(body : Array[Stmt], path : Array[Int]) -> Array[Stmt] {
       }
       let updated = delete_stmt_at(loop_body, drop_first(rest))
       body[head] = @ir.CountLoop(times, loop_var, updated)
+    }
+    @ir.ForEach(list_expr, loop_var, loop_body) => {
+      let rest = drop_first(path)
+      if rest[0] != 2 {
+        return body
+      }
+      let updated = delete_stmt_at(loop_body, drop_first(rest))
+      body[head] = @ir.ForEach(list_expr, loop_var, updated)
     }
     @ir.WhileLoop(cond, loop_body) => {
       let rest = drop_first(path)
@@ -699,6 +737,12 @@ pub fn stmt_at(body : Array[Stmt], path : Array[Int]) -> Stmt? {
       } else {
         None
       }
+    @ir.ForEach(_, _, loop_body) =>
+      if rest[0] == 2 {
+        stmt_at(loop_body, drop_first(rest))
+      } else {
+        None
+      }
     @ir.WhileLoop(_, loop_body) =>
       if rest[0] == 2 {
         stmt_at(loop_body, drop_first(rest))
@@ -758,6 +802,8 @@ pub fn clone_stmt(stmt : Stmt) -> Stmt {
     }
     @ir.CountLoop(times, iter, loop_body) =>
       @ir.CountLoop(clone_expr(times), iter, clone_stmts(loop_body))
+    @ir.ForEach(list_expr, iter, loop_body) =>
+      @ir.ForEach(clone_expr(list_expr), iter, clone_stmts(loop_body))
     @ir.WhileLoop(cond, loop_body) =>
       @ir.WhileLoop(clone_expr(cond), clone_stmts(loop_body))
     @ir.Match(subject, arms, else_body) => {
@@ -870,6 +916,12 @@ fn stmt_list_in_loop(
     @ir.CountLoop(_, _, loop_body) =>
       if list_path.length() == 2 && list_path[1] == 2 {
         // 正是循环体本身：已经在内
+        true
+      } else {
+        stmt_list_in_loop(loop_body, [], true)
+      }
+    @ir.ForEach(_, _, loop_body) =>
+      if list_path.length() == 2 && list_path[1] == 2 {
         true
       } else {
         stmt_list_in_loop(loop_body, [], true)
@@ -1082,6 +1134,12 @@ pub fn stmt_list_at(body : Array[Stmt], list_path : Array[Int]) -> Array[Stmt]? 
         None
       }
     @ir.CountLoop(_, _, loop_body) =>
+      if rest_len == 1 && list_path[1] == 2 {
+        Some(loop_body)
+      } else {
+        None
+      }
+    @ir.ForEach(_, _, loop_body) =>
       if rest_len == 1 && list_path[1] == 2 {
         Some(loop_body)
       } else {

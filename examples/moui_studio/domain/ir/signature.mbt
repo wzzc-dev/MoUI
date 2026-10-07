@@ -104,6 +104,12 @@ fn write_stmt(buf : StringBuilder, stmt : Stmt, indent : Int) -> Unit {
       buf.write_string(" as \{loop_var.unwrap_or("-")}")
       write_stmts(buf, body, indent + 1)
     }
+    ForEach(list_expr, loop_var, body) => {
+      buf.write_string("foreach ")
+      write_expr(buf, list_expr)
+      buf.write_string(" as \{loop_var}")
+      write_stmts(buf, body, indent + 1)
+    }
     WhileLoop(cond, body) => {
       buf.write_string("while ")
       write_expr(buf, cond)

@@ -53,7 +53,7 @@ pub fn runner_source() -> String {
     #|      None => ()
     #|    }
     #|  }
-    #|  {
+    #|  let model : Model = {
     #|    program,
     #|    machine,
     #|    checks: Map([], capacity=4),
@@ -61,6 +61,9 @@ pub fn runner_source() -> String {
     #|    run_label: "",
     #|    diag_open: false,
     #|  }
+    #|  // 启动事件（G7.1）：程序「开机」即执行一次 OnStart 子程序
+    #|  // （无 OnStart handler 时 run_event 原样返回）
+    #|  run_event(model, "", @ir.OnStart)
     #|}
     #|
     #|///|

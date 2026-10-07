@@ -65,6 +65,7 @@ pub fn kernel_ir_mbt() -> String {
     #|  OnInputDone
     #|  OnTimer
     #|  OnBroadcast
+    #|  /// 程序启动（G7.1）：窗体级（control_name = ""），运行装填后立即执行
     #|  OnStart
     #|}
     #|
@@ -209,6 +210,7 @@ pub fn kernel_ir_mbt() -> String {
     #|  Assign(String, Expr) // x = expr（必须已声明）
     #|  If(Expr, Array[Stmt], Array[(Expr, Array[Stmt])], Array[Stmt]) // cond, then, else-ifs, else
     #|  CountLoop(Expr, String?, Array[Stmt]) // times, loop var, body
+    #|  ForEach(Expr, String, Array[Stmt]) // 遍历列表表达式, 元素变量, 体（G7.1）
     #|  WhileLoop(Expr, Array[Stmt])
     #|  Break
     #|  Call(String, Array[Expr]) // 内建命令
@@ -750,7 +752,8 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|      count_stmts(then_body) +
     #|      count_stmts(else_body) +
     #|      count_if_chain(else_ifs)
-    #|    CountLoop(_, _, body) | WhileLoop(_, body) => 1 + count_stmts(body)
+    #|    CountLoop(_, _, body) | ForEach(_, _, body) | WhileLoop(_, body) =>
+    #|      1 + count_stmts(body)
     #|    Match(_, arms, else_body) =>
     #|      1 + count_stmts(else_body) + count_match_arms(arms)
     #|  }
@@ -807,7 +810,7 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|        }
     #|        arms
     #|      }
-    #|      CountLoop(_, _, loop_body) | WhileLoop(_, loop_body) =>
+    #|      CountLoop(_, _, loop_body) | ForEach(_, _, loop_body) | WhileLoop(_, loop_body) =>
     #|        body_loop_depth(loop_body, current + 1)
     #|      Match(_, arms, else_body) => {
     #|        let mut deepest_arm = body_loop_depth(else_body, current)
@@ -936,6 +939,15 @@ pub fn kernel_ir_invariants_mbt() -> String {
     #|      let body_depth = body_expr_depth(body)
     #|      if count_depth > body_depth {
     #|        count_depth
+    #|      } else {
+    #|        body_depth
+    #|      }
+    #|    }
+    #|    ForEach(list_expr, _, body) => {
+    #|      let list_depth = expr_depth(list_expr)
+    #|      let body_depth = body_expr_depth(body)
+    #|      if list_depth > body_depth {
+    #|        list_depth
     #|      } else {
     #|        body_depth
     #|      }
@@ -1076,6 +1088,12 @@ pub fn kernel_ir_signature_mbt() -> String {
     #|      buf.write_string("count ")
     #|      write_expr(buf, times)
     #|      buf.write_string(" as \{loop_var.unwrap_or("-")}")
+    #|      write_stmts(buf, body, indent + 1)
+    #|    }
+    #|    ForEach(list_expr, loop_var, body) => {
+    #|      buf.write_string("foreach ")
+    #|      write_expr(buf, list_expr)
+    #|      buf.write_string(" as \{loop_var}")
     #|      write_stmts(buf, body, indent + 1)
     #|    }
     #|    WhileLoop(cond, body) => {

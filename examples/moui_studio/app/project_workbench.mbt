@@ -201,7 +201,7 @@ pub fn decode_project_store(
     return Err("projects.json:格式标识不符")
   }
   let version_ok = match fields.get("version") {
-    Some(Number(value)) => value == PROJECTS_STORE_VERSION.to_double()
+    Some(Number(value, ..)) => value == PROJECTS_STORE_VERSION.to_double()
     _ => false
   }
   if !version_ok {

@@ -167,6 +167,8 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|  count_kw : String // 计次循环 / repeat
     #|  times_kw : String // 次 / times
     #|  as_kw : String // 为 / as
+    #|  foreach_kw : String // 遍历 / foreach
+    #|  each_in_kw : String // 中的每个 / as（G7.1 ForEach）
     #|  while_kw : String // 当 / while
     #|  do_kw : String // 循环 / do
     #|  break_kw : String // 跳出循环 / break
@@ -196,6 +198,8 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|        count_kw: "计次循环",
     #|        times_kw: "次",
     #|        as_kw: "为",
+    #|        foreach_kw: "遍历",
+    #|        each_in_kw: "中的每个",
     #|        while_kw: "当",
     #|        do_kw: "循环",
     #|        break_kw: "跳出循环",
@@ -221,6 +225,8 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|        count_kw: "repeat",
     #|        times_kw: "times",
     #|        as_kw: "as",
+    #|        foreach_kw: "foreach",
+    #|        each_in_kw: "as",
     #|        while_kw: "while",
     #|        do_kw: "do",
     #|        break_kw: "break",
@@ -490,6 +496,8 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|  text == zh.end_kw ||
     #|  text == zh.count_kw ||
     #|  text == zh.times_kw ||
+    #|  text == zh.foreach_kw ||
+    #|  text == zh.each_in_kw ||
     #|  text == zh.as_kw ||
     #|  text == zh.while_kw ||
     #|  text == zh.do_kw ||
@@ -512,6 +520,8 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|  text == en.end_kw ||
     #|  text == en.count_kw ||
     #|  text == en.times_kw ||
+    #|  text == en.foreach_kw ||
+    #|  text == en.each_in_kw ||
     #|  text == en.as_kw ||
     #|  text == en.while_kw ||
     #|  text == en.do_kw ||
@@ -534,6 +544,7 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|  KwDeclare
     #|  KwIf
     #|  KwCountLoop
+    #|  KwForEach
     #|  KwWhile
     #|  KwBreak
     #|  KwReturn
@@ -549,6 +560,8 @@ pub fn kernel_studio_lang_keywords_mbt() -> String {
     #|    KwIf
     #|  } else if text == keywords.count_kw {
     #|    KwCountLoop
+    #|  } else if text == keywords.foreach_kw {
+    #|    KwForEach
     #|  } else if text == keywords.while_kw {
     #|    KwWhile
     #|  } else if text == keywords.break_kw {
@@ -1235,6 +1248,7 @@ pub fn kernel_studio_lang_parser_mbt() -> String {
     #|        KwDeclare => self.parse_declare()
     #|        KwIf => self.parse_if()
     #|        KwCountLoop => self.parse_count_loop()
+    #|        KwForEach => self.parse_foreach()
     #|        KwWhile => self.parse_while()
     #|        KwBreak => {
     #|          ignore(self.advance())
@@ -1440,6 +1454,18 @@ pub fn kernel_studio_lang_parser_mbt() -> String {
     #|  let body = self.parse_stmts_until([self.keywords.end_kw])
     #|  self.expect_keyword(self.keywords.end_kw)
     #|  @ir.CountLoop(count, loop_var, traced_to_stmts(body))
+    #|}
+    #|
+    #|///|
+    #|/// 遍历 <列表表达式> 中的每个 <元素> … 结束 / foreach <list> as <item> … end
+    #|fn Parser::parse_foreach(self : Parser) -> Stmt raise LangError {
+    #|  ignore(self.advance()) // 遍历 / foreach
+    #|  let list_expr = self.parse_expr()
+    #|  self.expect_keyword(self.keywords.each_in_kw)
+    #|  let loop_var = self.parse_name("「\{self.keywords.each_in_kw}」后应跟元素变量名")
+    #|  let body = self.parse_stmts_until([self.keywords.end_kw])
+    #|  self.expect_keyword(self.keywords.end_kw)
+    #|  @ir.ForEach(list_expr, loop_var, traced_to_stmts(body))
     #|}
     #|
     #|///|

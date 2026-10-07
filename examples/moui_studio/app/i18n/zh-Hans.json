@@ -738,6 +738,8 @@
     "app.search.run": "搜索",
     "app.search.running": "搜索中…",
     "app.search.empty": "无结果。输入关键字后点「搜索」。",
-    "event.on_start": "当程序启动"
+    "event.on_start": "当程序启动",
+    "blocks.for_each": "遍历",
+    "app.stmt.tpl.for_each": "遍历列表中的每个元素"
   }
 }

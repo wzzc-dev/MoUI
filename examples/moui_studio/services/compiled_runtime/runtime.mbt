@@ -681,6 +681,44 @@ pub fn Runtime::count_loop(
 }
 
 ///|
+/// 遍历循环（G7.1）：列表求值一次,1-based 元素变量绑定,每次迭代记一条
+/// 审计（与解释轨 FeCheck 同口径）;`LoopBreak` 在这一层被吞掉。
+pub fn Runtime::for_each(
+  self : Runtime,
+  list_value : Value,
+  loop_var : String,
+  line : Int,
+  body : (Runtime) -> Unit raise ExecError,
+) -> Unit raise ExecError {
+  let items = match list_value {
+    VArr(items) => items
+    _ =>
+      raise ExecError::RuntimeError(ErrorDetails::{
+        kind: BadLoopCount,
+        line,
+        a: "",
+        b: "",
+      })
+  }
+  let mut index = 1
+  for item in items {
+    if loop_var != "" {
+      self.set(loop_var, item)
+    }
+    self.record_iteration(index, line)
+    let mut stop = false
+    drive(self, body) catch {
+      LoopBreak => stop = true
+      e => raise e
+    }
+    if stop {
+      return
+    }
+    index = index + 1
+  }
+}
+
+///|
 /// 当循环：条件为真才进体；`LoopBreak` 在这一层被吞掉。
 pub fn Runtime::while_loop(
   self : Runtime,

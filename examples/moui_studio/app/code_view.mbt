@@ -1238,6 +1238,8 @@ fn empty_keywords() -> @studio_lang.Keywords {
     end_kw: nul,
     count_kw: nul,
     times_kw: nul,
+    foreach_kw: nul,
+    each_in_kw: nul,
     as_kw: nul,
     while_kw: nul,
     do_kw: nul,

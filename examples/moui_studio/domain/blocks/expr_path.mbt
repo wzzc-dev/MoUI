@@ -248,6 +248,7 @@ pub fn stmt_root_expr(stmt : Stmt) -> Expr? {
     @ir.Declare(_, expr) | @ir.Assign(_, expr) => Some(expr)
     @ir.If(cond, _, _, _) => Some(cond)
     @ir.CountLoop(times, _, _) => Some(times)
+    @ir.ForEach(list_expr, _, _) => Some(list_expr)
     @ir.WhileLoop(cond, _) => Some(cond)
     @ir.Return(Some(expr)) => Some(expr)
     @ir.SetIndex(_, index, _) => Some(index)
@@ -279,6 +280,8 @@ fn replace_stmt_root_expr(
       @ir.If(value, then_body, arms, else_body)
     @ir.CountLoop(_, loop_var, loop_body) =>
       @ir.CountLoop(value, loop_var, loop_body)
+    @ir.ForEach(_, loop_var, loop_body) =>
+      @ir.ForEach(value, loop_var, loop_body)
     @ir.WhileLoop(_, loop_body) => @ir.WhileLoop(value, loop_body)
     @ir.Return(_) => @ir.Return(Some(value))
     @ir.SetIndex(name, _, v) => @ir.SetIndex(name, value, v)

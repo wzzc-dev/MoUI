@@ -150,6 +150,12 @@ fn encode_stmt(stmt : @ir.Stmt) -> Json {
         ),
         ("body", Json::array(body.map(encode_stmt))),
       ])
+    @ir.ForEach(list_expr, loop_var, body) =>
+      encode_stmt_node(stmt, "for_each", [
+        ("list", encode_expr(list_expr)),
+        ("as", Json::string(loop_var)),
+        ("body", Json::array(body.map(encode_stmt))),
+      ])
     @ir.WhileLoop(cond, body) =>
       encode_stmt_node(stmt, "while", [
         ("cond", encode_expr(cond)),
@@ -609,6 +615,17 @@ fn decode_stmt(value : Json) -> Result[@ir.Stmt, CodecError] {
             Err(error) => return Err(error)
           }
           Ok(@ir.CountLoop(times, stmt_loop_var(fields), body))
+        }
+        "for_each" => {
+          let list_expr = match stmt_expr(fields) {
+            Ok(list_expr) => list_expr
+            Err(error) => return Err(error)
+          }
+          let body = match decode_stmt_array(fields, "body") {
+            Ok(body) => body
+            Err(error) => return Err(error)
+          }
+          Ok(@ir.ForEach(list_expr, stmt_loop_var(fields).unwrap_or(""), body))
         }
         "while" => {
           let cond = match stmt_expr(fields) {

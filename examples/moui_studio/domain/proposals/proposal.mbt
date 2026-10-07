@@ -668,6 +668,12 @@ fn encode_stmt_json(stmt : @ir.Stmt) -> Json {
         ),
         ("body", Json::array(body.map(encode_stmt_json))),
       ])
+    @ir.ForEach(list_expr, loop_var, body) =>
+      stmt_node("for_each", [
+        ("list", encode_expr_json(list_expr)),
+        ("as", Json::string(loop_var)),
+        ("body", Json::array(body.map(encode_stmt_json))),
+      ])
     @ir.WhileLoop(cond, body) =>
       stmt_node("while", [
         ("cond", encode_expr_json(cond)),

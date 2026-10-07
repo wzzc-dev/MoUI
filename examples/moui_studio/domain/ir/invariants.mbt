@@ -202,7 +202,8 @@ fn count_stmt(stmt : Stmt) -> Int {
       count_stmts(then_body) +
       count_stmts(else_body) +
       count_if_chain(else_ifs)
-    CountLoop(_, _, body) | WhileLoop(_, body) => 1 + count_stmts(body)
+    CountLoop(_, _, body) | ForEach(_, _, body) | WhileLoop(_, body) =>
+      1 + count_stmts(body)
     Match(_, arms, else_body) =>
       1 + count_stmts(else_body) + count_match_arms(arms)
   }
@@ -259,7 +260,7 @@ fn body_loop_depth(body : Array[Stmt], current : Int) -> Int {
         }
         arms
       }
-      CountLoop(_, _, loop_body) | WhileLoop(_, loop_body) =>
+      CountLoop(_, _, loop_body) | ForEach(_, _, loop_body) | WhileLoop(_, loop_body) =>
         body_loop_depth(loop_body, current + 1)
       Match(_, arms, else_body) => {
         let mut deepest_arm = body_loop_depth(else_body, current)
@@ -388,6 +389,15 @@ fn stmt_expr_depth(stmt : Stmt) -> Int {
       let body_depth = body_expr_depth(body)
       if count_depth > body_depth {
         count_depth
+      } else {
+        body_depth
+      }
+    }
+    ForEach(list_expr, _, body) => {
+      let list_depth = expr_depth(list_expr)
+      let body_depth = body_expr_depth(body)
+      if list_depth > body_depth {
+        list_depth
       } else {
         body_depth
       }

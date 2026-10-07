@@ -247,6 +247,12 @@ fn rename_control_in_stmt(
         loop_var,
         body.map(stmt => rename_control_in_stmt(stmt, from, to)),
       )
+    @ir.ForEach(list_expr, loop_var, body) =>
+      @ir.ForEach(
+        rename_control_in_expr(list_expr, from, to),
+        loop_var,
+        body.map(stmt => rename_control_in_stmt(stmt, from, to)),
+      )
     @ir.WhileLoop(cond, body) =>
       @ir.WhileLoop(
         rename_control_in_expr(cond, from, to),

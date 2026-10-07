@@ -266,6 +266,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Run the program to watch variables here"),
       ),
       ("app.watch.title", GeneratedI18nMessage::Text("Runtime watch")),
+      ("blocks.for_each", GeneratedI18nMessage::Text("foreach")),
       ("builtin.to_text", GeneratedI18nMessage::Text("to_text")),
       ("err.missing_end", GeneratedI18nMessage::Text("Missing the end keyword")),
       (
@@ -910,6 +911,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "Click one to insert after the selected block",
         ),
+      ),
+      (
+        "app.stmt.tpl.for_each",
+        GeneratedI18nMessage::Text("Foreach over a list"),
       ),
       ("app.stmt.tpl.set_text", GeneratedI18nMessage::Text("set_text")),
       ("app.stmt.tpl.stop_all", GeneratedI18nMessage::Text("Stop all")),
@@ -2032,6 +2037,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       ("app.watch.title", GeneratedI18nMessage::Text("运行时监视")),
+      ("blocks.for_each", GeneratedI18nMessage::Text("遍历")),
       ("builtin.to_text", GeneratedI18nMessage::Text("转文本")),
       ("err.missing_end", GeneratedI18nMessage::Text("缺少结束关键字")),
       (
@@ -2649,6 +2655,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.stmt.palette.hint",
         GeneratedI18nMessage::Text("点一条插入到选中块之后"),
+      ),
+      (
+        "app.stmt.tpl.for_each",
+        GeneratedI18nMessage::Text("遍历列表中的每个元素"),
       ),
       ("app.stmt.tpl.set_text", GeneratedI18nMessage::Text("设置文本")),
       ("app.stmt.tpl.stop_all", GeneratedI18nMessage::Text("停止全部")),

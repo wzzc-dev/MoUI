@@ -97,6 +97,12 @@ pub fn statement_templates() -> Array[StatementTemplate] {
     },
     StatementTemplate::{
       category: @blocks.CatFlow,
+      label_key: "app.stmt.tpl.for_each",
+      skeleton_zh: "遍历 名单 中的每个 元素\n  set_text(标签, 元素) \n结束",
+      skeleton_en: "foreach roster as item\n  set_text(label, item) \nend",
+    },
+    StatementTemplate::{
+      category: @blocks.CatFlow,
       label_key: "app.stmt.tpl.while",
       skeleton_zh: "当 计数 < 10 循环\n  计数 = 计数 + 1\n结束",
       skeleton_en: "while count < 10 do\n  count = count + 1\nend",

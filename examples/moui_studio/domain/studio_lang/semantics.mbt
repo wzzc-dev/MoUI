@@ -137,6 +137,22 @@ fn check_body(
           else_body, errors, in_loop, declared, functions, enums, in_func,
         )
       }
+      @ir.ForEach(list_expr, loop_var, loop_body) => {
+        check_expr(list_expr, errors, declared, functions, enums)
+        check_name(loop_var, errors)
+        if !declared.contains(loop_var) {
+          declared.push(loop_var)
+        }
+        check_body(
+          loop_body,
+          errors,
+          in_loop,
+          declared,
+          functions,
+          enums,
+          in_func,
+        )
+      }
       @ir.CountLoop(times, loop_var, loop_body) => {
         check_expr(times, errors, declared, functions, enums)
         match loop_var {

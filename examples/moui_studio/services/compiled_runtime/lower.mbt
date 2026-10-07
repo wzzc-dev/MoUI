@@ -174,6 +174,15 @@ fn exec_stmt(rt : Runtime, stmt : @ir.Stmt, line : Int) -> Unit raise ExecError 
         exec_nested(inner, body, line)
       })
     }
+    @ir.ForEach(list_expr, loop_var, body) =>
+      rt.for_each(
+        eval_expr(rt, list_expr, line),
+        loop_var,
+        line,
+        fn(inner : Runtime) -> Unit raise ExecError {
+          exec_nested(inner, body, line)
+        },
+      )
     @ir.WhileLoop(cond, body) =>
       rt.while_loop(
         line,

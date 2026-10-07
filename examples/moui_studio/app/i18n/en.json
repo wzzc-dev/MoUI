@@ -738,6 +738,8 @@
     "app.search.run": "Search",
     "app.search.running": "Searching…",
     "app.search.empty": "No results. Type a query and press Search.",
-    "event.on_start": "On start"
+    "event.on_start": "On start",
+    "blocks.for_each": "foreach",
+    "app.stmt.tpl.for_each": "Foreach over a list"
   }
 }
