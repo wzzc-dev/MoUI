@@ -102,9 +102,10 @@ pub fn topbar_drag_width(
   t : @i18n.Translator,
   width : Double,
 ) -> Double {
-  // 从左栏开关右侧到动作簇左缘。左栏开关自身在拖拽区**左侧**——
-  // 拖拽区盖住它,点击就会变成拖窗口。
-  (width - 10.0 - TOPBAR_LEFT_TOGGLE_ZONE - topbar_actions_width(model, t)).max(
+  // 从左栏开关右侧到动作簇左缘。**宽度从 drag_x 起算**（矩形 x = drag_x）:
+  // 若再减 LEFT_TOGGLE_ZONE,拖拽区右缘会越过动作簇,运行/单步/编译
+  // 被拖拽区盖住——点击变成拖窗口（原生无边框窗口实测缺陷）。
+  (width - topbar_drag_x(model) - 10.0 - topbar_actions_width(model, t)).max(
     0.0,
   )
 }

@@ -297,12 +297,16 @@ test "immersive drag region stops before the top bar actions" {
     if button_left > 99999.0 {
       fail("could not locate the run button box at width " + width.to_string())
     }
-    if drag_width > button_left + 0.5 {
+    // 拖拽矩形起点是 topbar_drag_x（左栏开关右侧）——真不变量:
+    // **drag_x + drag_width ≤ 运行按钮左缘**。只比 drag_width 会漏掉
+    // 「起点右移后宽度未同步收窄」的缺陷（运行点击变拖窗口,实测）。
+    let drag_right = topbar_drag_x(model) + drag_width
+    if drag_right > button_left + 0.5 {
       fail(
         "drag region covers the run button at width " +
         width.to_string() +
         ": drag right edge=" +
-        drag_width.to_string() +
+        drag_right.to_string() +
         " button left=" +
         button_left.to_string(),
       )
