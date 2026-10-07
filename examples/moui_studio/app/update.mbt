@@ -874,6 +874,21 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
         Some(control) =>
           if model.drag is Some(_) {
             Some((model, @moui.Effect::none()))
+          } else if model.multi_select_mode {
+            // 多选模式（G7.2 P3e）：命中即切换成员集
+            let members : Array[String] = []
+            let mut had = false
+            for name in model.multi_selected {
+              if name == control.name {
+                had = true
+              } else {
+                members.push(name)
+              }
+            }
+            if !had {
+              members.push(control.name)
+            }
+            Some(({ ..model, multi_selected: members }, @moui.Effect::none()))
           } else {
             Some(
               (
@@ -884,7 +899,9 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           }
         None =>
           if model.drag is Some(_) {
-            Some((model, @moui.Effect::none()))
+            Some(({ ..model, selected_control: "", }, @moui.Effect::none()))
+          } else if model.multi_select_mode {
+            Some(({ ..model, multi_selected: [] }, @moui.Effect::none()))
           } else {
             Some(({ ..model, selected_control: "", }, @moui.Effect::none()))
           }
@@ -938,6 +955,163 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             }
             { ..m, program: { ..m.program, controls, }, }
           }),
+          @moui.Effect::none(),
+        ),
+      )
+    // ── 画布交互（G7.2 P3e）──────────────────────────────────────
+    CopySelectedControl =>
+      match @ir.find_control(model.program, model.selected_control) {
+        None => Some((model, @moui.Effect::none()))
+        Some(control) => {
+          let items : Array[String] = []
+          for item in control.items {
+            items.push(item)
+          }
+          Some(
+            (
+              {
+                ..model,
+                control_clipboard: Some({ ..control, items }),
+              },
+              @moui.Effect::none(),
+            ),
+          )
+        }
+      }
+    PasteControl =>
+      match model.control_clipboard {
+        None => Some((model, @moui.Effect::none()))
+        Some(source) =>
+          if model.program.controls.length() >= @ir.MAX_CONTROLS {
+            return Some(
+              (
+                with_notice(
+                  model,
+                  text(translator(model), "app.status.controls_limit"),
+                  true,
+                ),
+                @moui.Effect::none(),
+              ),
+            )
+          } else {
+            Some(
+              (
+                with_undo_point(model, "paste", m => {
+                  let id = @ir.next_control_id(m.program)
+                  let copy_name = fresh_control_name(m.program, source.kind)
+                  let items : Array[String] = []
+                  for item in source.items {
+                    items.push(item)
+                  }
+                  let control = @ir.Control::{
+                    ..source,
+                    id,
+                    name: copy_name,
+                    x: source.x + 16,
+                    y: source.y + 16,
+                    items,
+                  }
+                  let control = control
+                    .with_rect_field(@ir.RectX, control.x)
+                    .with_rect_field(@ir.RectY, control.y)
+                  {
+                    ..m,
+                    program: {
+                      ..m.program,
+                      controls: append_control(m.program.controls, control),
+                    },
+                    selected_control: copy_name,
+                  }
+                }),
+                @moui.Effect::none(),
+              ),
+            )
+          }
+      }
+    BringToFront(name) =>
+      // z-order = 控件数组顺序(后画的在上);置顶 = 挪到数组末尾
+      Some(
+        (
+          with_undo_point(model, "zorder:\{name}", m => {
+            let picked = @ir.find_control(m.program, name)
+            let controls : Array[@ir.Control] = []
+            for control in m.program.controls {
+              if control.name != name {
+                controls.push(control)
+              }
+            }
+            match picked {
+              Some(control) => controls.push(control)
+              None => ()
+            }
+            { ..m, program: { ..m.program, controls, }, }
+          }),
+          @moui.Effect::none(),
+        ),
+      )
+    SendToBack(name) =>
+      Some(
+        (
+          with_undo_point(model, "zorder:\{name}", m => {
+            let picked = @ir.find_control(m.program, name)
+            let controls : Array[@ir.Control] = []
+            match picked {
+              Some(control) => controls.push(control)
+              None => ()
+            }
+            for control in m.program.controls {
+              if control.name != name {
+                controls.push(control)
+              }
+            }
+            { ..m, program: { ..m.program, controls, }, }
+          }),
+          @moui.Effect::none(),
+        ),
+      )
+    NudgeControl(name, dx, dy) =>
+      // 键盘微调（G7.2 P3e）：多选模式下整组移动;夹取到画布内
+      Some(
+        (
+          with_undo_point(model, "nudge", m => {
+            let members : Array[String] = if m.multi_selected.length() > 0 {
+              m.multi_selected
+            } else {
+              [name]
+            }
+            let controls : Array[@ir.Control] = []
+            for control in m.program.controls {
+              if members.contains(control.name) {
+                let x = (control.x + dx).clamp(
+                  min=0,
+                  max=@ir.DESIGN_WIDTH - control.width,
+                )
+                let y = (control.y + dy).clamp(
+                  min=0,
+                  max=@ir.DESIGN_HEIGHT - control.height,
+                )
+                controls.push({ ..control, x, y })
+              } else {
+                controls.push(control)
+              }
+            }
+            { ..m, program: { ..m.program, controls, }, }
+          }),
+          @moui.Effect::none(),
+        ),
+      )
+    ToggleMultiSelectMode =>
+      Some(
+        (
+          {
+            ..model,
+            multi_select_mode: !model.multi_select_mode,
+            multi_selected: if model.multi_select_mode {
+              []
+            } else {
+              model.multi_selected
+            },
+          },
           @moui.Effect::none(),
         ),
       )

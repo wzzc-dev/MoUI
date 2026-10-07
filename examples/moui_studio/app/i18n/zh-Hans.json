@@ -772,6 +772,15 @@
     "app.ai.mode.chat": "聊天",
     "app.ai.chat.title": "回复",
     "app.ai.offline_hint": "当前是离线模型——打开设置接入真实模型后即可获得真实回复。",
-    "app.ai.offline_reply": "【离线模型】已收到：「{prompt}」。打开设置切换到真实模型即可接通。"
+    "app.ai.offline_reply": "【离线模型】已收到：「{prompt}」。打开设置切换到真实模型即可接通。",
+    "app.command.control.copy": "复制控件",
+    "app.command.control.paste": "粘贴控件",
+    "app.command.control.front": "置顶控件",
+    "app.command.control.back": "置底控件",
+    "app.command.control.multi": "多选模式",
+    "app.command.control.nudge.left": "左移控件",
+    "app.command.control.nudge.right": "右移控件",
+    "app.command.control.nudge.up": "上移控件",
+    "app.command.control.nudge.down": "下移控件"
   }
 }

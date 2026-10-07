@@ -190,6 +190,7 @@ fn design_stage_view(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     stage_rects,
     text(t, "app.design.canvas"),
     text(t, "app.design.empty"),
+    multi_selected=model.multi_selected,
   )
 }
 

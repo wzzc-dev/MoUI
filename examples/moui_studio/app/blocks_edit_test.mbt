@@ -211,10 +211,20 @@ test "block keyboard commands are registered and gated on selection" {
     let cmd = entry.command
     match cmd.shortcut {
       Some(sc) =>
+        // G7.2 P3e 之后方向键同时被画布微调注册——这里只数**积木域**的
+        // 三条（label 含 app.command.block），避免与画布微调键相加。
         if sc.key == "Delete" || sc.key == "ArrowUp" || sc.key == "ArrowDown" {
-          idle_bindings = idle_bindings + 1
-          if sc.key == "Delete" && cmd.enabled {
-            idle_delete_enabled = true
+          // G7.2 P3e 之后方向键同时被画布微调注册——按**消息**筛积木域
+          // （SelectBlockStep/DeleteBlock 是积木域专属消息）。
+          let is_block_domain = match entry.message {
+            SelectBlockStep(_) | DeleteBlock => true
+            _ => false
+          }
+          if is_block_domain || sc.key == "Delete" {
+            idle_bindings = idle_bindings + 1
+            if sc.key == "Delete" && cmd.enabled {
+              idle_delete_enabled = true
+            }
           }
         }
       None => ()

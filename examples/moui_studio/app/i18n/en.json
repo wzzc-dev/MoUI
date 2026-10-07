@@ -772,6 +772,15 @@
     "app.ai.mode.chat": "Chat",
     "app.ai.chat.title": "Reply",
     "app.ai.offline_hint": "Offline model — open Settings to connect a real provider for real replies.",
-    "app.ai.offline_reply": "[Offline model] Received: \"{prompt}\". Open Settings to switch to a real provider."
+    "app.ai.offline_reply": "[Offline model] Received: \"{prompt}\". Open Settings to switch to a real provider.",
+    "app.command.control.copy": "Copy control",
+    "app.command.control.paste": "Paste control",
+    "app.command.control.front": "Bring control to front",
+    "app.command.control.back": "Send control to back",
+    "app.command.control.multi": "Multi-select mode",
+    "app.command.control.nudge.left": "Nudge control left",
+    "app.command.control.nudge.right": "Nudge control right",
+    "app.command.control.nudge.up": "Nudge control up",
+    "app.command.control.nudge.down": "Nudge control down"
   }
 }

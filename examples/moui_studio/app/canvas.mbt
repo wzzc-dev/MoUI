@@ -438,6 +438,7 @@ pub fn design_overlay_plan(
   program : @ir.StudioProgram,
   selection : String,
   drag_control : String?,
+  multi_selected? : Array[String] = [],
 ) -> Array[DesignDrawOp] {
   let ops : Array[DesignDrawOp] = []
   for control in program.controls {
@@ -454,7 +455,7 @@ pub fn design_overlay_plan(
     if empty_content {
       ops.push(GhostName(rect, control.name))
     }
-    if selection == control.name {
+    if selection == control.name || multi_selected.contains(control.name) {
       ops.push(SelectionStroke(rect))
       // 名牌：选中控件左上角的小徽标（识别控件名用，平时不破坏拟真观感）
       ops.push(
@@ -567,6 +568,7 @@ pub fn design_stage(
   stage_rects : Array[@geometry.Rect],
   semantics_label : String,
   empty_hint : String,
+  multi_selected? : Array[String] = [],
 ) -> @moui.View[Msg] {
   let backdrop = canvas(
     measure=pane_fill_measure,
@@ -614,7 +616,12 @@ pub fn design_stage(
             fill_rounded_rect(
               ctx,
               @graphics.RoundedRect::new(rect=place(rect), radius=6.0 * scale),
-              @graphics.Brush::solid(studio_stage_background()),
+              @graphics.Brush::solid(
+                match prop_color(program.window.back_color) {
+                  Some(color) => color
+                  None => studio_stage_background()
+                },
+              ),
             )
           GridDot(rect) =>
             fill_rounded_rect(
@@ -697,7 +704,12 @@ pub fn design_stage(
       let stage_right = ox + design_width * scale
       let stage_top = oy
       let stage_bottom = oy + design_total_height * scale
-      for op in design_overlay_plan(program, selection, drag_control) {
+      for op in design_overlay_plan(
+        program,
+        selection,
+        drag_control,
+        multi_selected~,
+      ) {
         match op {
           BoundsOutline(rect) =>
             stroke_rounded_rect(

@@ -155,3 +155,94 @@ test "属性 v2:字号生效且可见性门控渲染" {
   }
   assert_false(hidden_found, msg="不可见控件不应渲染文字")
 }
+
+///|
+/// G7.2 P3e:画布交互键盘(复制/粘贴/置顶/置底/微调/多选)已登记且
+/// 按选择门控;置顶/置底真改数组顺序(z-order)。
+test "画布交互:命令门控与 z-order" {
+  // 初始模型带样例控件选中（selected_control="按钮"）——门控测试用
+  // 真正无选中的模型
+  let idle = { ..initial_model(), selected_control: "" }
+  let mut copy_enabled = false
+  let mut front_enabled = false
+  let mut nudge_enabled = false
+  for entry in studio_program_commands(idle) {
+    let cmd = entry.command
+    match cmd.shortcut {
+      Some(sc) => {
+        if sc.key == "c" && cmd.enabled {
+          match entry.message {
+            CopySelectedControl => copy_enabled = true
+            _ => ()
+          }
+        }
+        if sc.key == "]" && cmd.enabled {
+          match entry.message {
+            BringToFront(_) => front_enabled = true
+            _ => ()
+          }
+        }
+        if sc.key == "ArrowLeft" && cmd.enabled {
+          match entry.message {
+            NudgeControl(_, _, _) => nudge_enabled = true
+            _ => ()
+          }
+        }
+      }
+      None => ()
+    }
+  }
+  assert_false(copy_enabled, msg="无选中时复制应禁用")
+  assert_false(front_enabled, msg="无选中时置顶应禁用")
+  assert_false(nudge_enabled, msg="无选中时微调应禁用")
+  // 选中控件:门打开;置顶真改数组顺序
+  let program = {
+    ..initial_model().program,
+    controls: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Label,
+        name: "lbl",
+        text: "",
+        x: 20,
+        y: 20,
+        width: 120,
+        height: 28,
+        items: [],
+        props: @ir.ControlProps::default(),
+      },
+    ],
+  }
+  let selected = { ..initial_model(), program, selected_control: "lbl" }
+  let mut sel_copy = false
+  let mut sel_front = false
+  for entry in studio_program_commands(selected) {
+    let cmd = entry.command
+    match cmd.shortcut {
+      Some(sc) => {
+        if sc.key == "c" && cmd.enabled {
+          match entry.message {
+            CopySelectedControl => sel_copy = true
+            _ => ()
+          }
+        }
+        if sc.key == "]" && cmd.enabled {
+          match entry.message {
+            BringToFront(_) => sel_front = true
+            _ => ()
+          }
+        }
+      }
+      None => ()
+    }
+  }
+  assert_true(sel_copy, msg="选中后复制应启用")
+  assert_true(sel_front, msg="选中后置顶应启用")
+  // z-order 真改数组顺序:置顶后 lbl 在数组末尾
+  let fronted = update_with_services(
+    selected,
+    BringToFront("lbl"),
+    @services.AppServices::new(),
+  ).0
+  assert_eq(fronted.program.controls[fronted.program.controls.length() - 1].name, "lbl")
+}

@@ -1260,6 +1260,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Bottom bar: run audit"),
       ),
       (
+        "app.command.control.back",
+        GeneratedI18nMessage::Text("Send control to back"),
+      ),
+      ("app.command.control.copy", GeneratedI18nMessage::Text("Copy control")),
+      (
         "app.command.left.project",
         GeneratedI18nMessage::Text("Left panel: Projects"),
       ),
@@ -1376,6 +1381,15 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.code.complete",
         GeneratedI18nMessage::Text("Complete: list candidates"),
       ),
+      (
+        "app.command.control.front",
+        GeneratedI18nMessage::Text("Bring control to front"),
+      ),
+      (
+        "app.command.control.multi",
+        GeneratedI18nMessage::Text("Multi-select mode"),
+      ),
+      ("app.command.control.paste", GeneratedI18nMessage::Text("Paste control")),
       (
         "app.command.track.compile",
         GeneratedI18nMessage::Text("Switch to compile track"),
@@ -1658,6 +1672,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Confirm all side effects"),
       ),
       (
+        "app.command.control.nudge.up",
+        GeneratedI18nMessage::Text("Nudge control up"),
+      ),
+      (
         "app.command.perspective.code",
         GeneratedI18nMessage::Text("Switch to code editing"),
       ),
@@ -1765,6 +1783,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Cancel value edit"),
       ),
       (
+        "app.command.control.nudge.down",
+        GeneratedI18nMessage::Text("Nudge control down"),
+      ),
+      (
+        "app.command.control.nudge.left",
+        GeneratedI18nMessage::Text("Nudge control left"),
+      ),
+      (
         "app.command.perspective.visual",
         GeneratedI18nMessage::Text("Switch to visual editing"),
       ),
@@ -1801,6 +1827,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.blocks.cat.block.expression",
         GeneratedI18nMessage::Text("Operators"),
+      ),
+      (
+        "app.command.control.nudge.right",
+        GeneratedI18nMessage::Text("Nudge control right"),
       ),
       (
         "app.confirm.delete_project_file",
@@ -3064,6 +3094,8 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.bottom.audit",
         GeneratedI18nMessage::Text("底栏：运行审计"),
       ),
+      ("app.command.control.back", GeneratedI18nMessage::Text("置底控件")),
+      ("app.command.control.copy", GeneratedI18nMessage::Text("复制控件")),
       (
         "app.command.left.project",
         GeneratedI18nMessage::Text("左栏：工程"),
@@ -3167,6 +3199,9 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.command.code.complete",
         GeneratedI18nMessage::Text("补全：列出候选词"),
       ),
+      ("app.command.control.front", GeneratedI18nMessage::Text("置顶控件")),
+      ("app.command.control.multi", GeneratedI18nMessage::Text("多选模式")),
+      ("app.command.control.paste", GeneratedI18nMessage::Text("粘贴控件")),
       (
         "app.command.track.compile",
         GeneratedI18nMessage::Text("切到编译轨"),
@@ -3455,6 +3490,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("确认全部副作用"),
       ),
       (
+        "app.command.control.nudge.up",
+        GeneratedI18nMessage::Text("上移控件"),
+      ),
+      (
         "app.command.perspective.code",
         GeneratedI18nMessage::Text("切到代码编辑"),
       ),
@@ -3562,6 +3601,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("取消值编辑"),
       ),
       (
+        "app.command.control.nudge.down",
+        GeneratedI18nMessage::Text("下移控件"),
+      ),
+      (
+        "app.command.control.nudge.left",
+        GeneratedI18nMessage::Text("左移控件"),
+      ),
+      (
         "app.command.perspective.visual",
         GeneratedI18nMessage::Text("切到图形化编辑"),
       ),
@@ -3596,6 +3643,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("子程序重复：{name}"),
       ),
       ("app.blocks.cat.block.expression", GeneratedI18nMessage::Text("运算")),
+      (
+        "app.command.control.nudge.right",
+        GeneratedI18nMessage::Text("右移控件"),
+      ),
       (
         "app.confirm.delete_project_file",
         GeneratedI18nMessage::Text(

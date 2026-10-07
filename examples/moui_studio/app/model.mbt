@@ -693,6 +693,10 @@ pub(all) struct Model {
   // G7.3 插件管理:禁用清单（静态装配的「启用/禁用」诚实形态——禁用 =
   // 组合根装配时过滤贡献项入口,不是运行时卸载）。id: ai / terminal / markdown
   plugin_disabled : Array[String]
+  // G7.2 P3e 画布交互:复制剪贴板(会话内) + 多选模式与成员集
+  control_clipboard : @ir.Control?
+  multi_select_mode : Bool
+  multi_selected : Array[String]
   // G4 全文搜索:查询草稿 + 命中集 + 进行中标记（结果面板挂 BtSearch 页签）
   search_query : String
   search_hits : Array[SearchHit]
@@ -828,6 +832,13 @@ pub(all) enum Msg {
   // 属性 v2（G7.2）：文本属性与布尔属性两条编辑通道
   SetControlPropText(String, String, String)
   ToggleControlProp(String, String)
+  // 画布交互(G7.2 P3e):复制/粘贴/置顶置底/键盘微调/多选模式
+  CopySelectedControl
+  PasteControl
+  BringToFront(String)
+  SendToBack(String)
+  NudgeControl(String, Int, Int)
+  ToggleMultiSelectMode
   SearchQueryDraft(String)
   SearchRun
   SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])
@@ -1441,6 +1452,9 @@ pub fn initial_model(
     file_rename_open: None,
     file_name_draft: "",
     plugin_disabled: [],
+    control_clipboard: None,
+    multi_select_mode: false,
+    multi_selected: [],
     search_query: "",
     search_hits: [],
     search_busy: false,

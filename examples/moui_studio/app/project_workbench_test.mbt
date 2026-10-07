@@ -973,7 +973,7 @@ test "启动事件:OnStart 装填即执行" {
     Some(run) =>
       match run.state.vars.get("开机计数") {
         Some(@studio_lang.VInt(1)) => ()
-        Some(other) => fail("开机计数应为 1,实得非预期值")
+        Some(_) => fail("开机计数应为 1,实得非预期值")
         None => fail("OnStart 应已执行:变量未出现")
       }
   }
