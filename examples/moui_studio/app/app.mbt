@@ -315,6 +315,23 @@ pub fn update_with_services(
         }
         Failure(_) | Cancelled => (model, @moui.Effect::none())
       }
+    // 外观切换（G7.4）：翻转 + 持久化;Ref 同步在程序级 update 每条消息后做
+    ToggleUiDark =>
+      (
+        { ..model, ui_dark: !model.ui_dark, },
+        services
+        .settings()
+        .write(UI_DARK_SETTINGS_KEY, if model.ui_dark { "0" } else { "1" })
+        .effect(map=_ => Msg::Noop),
+      )
+    UiDarkLoaded(result) =>
+      match result {
+        Success(Some("0")) =>
+          ({ ..model, ui_dark: false, }, @moui.Effect::none())
+        Success(Some("1")) =>
+          ({ ..model, ui_dark: true, }, @moui.Effect::none())
+        _ => (model, @moui.Effect::none())
+      }
     // === 全文搜索（G4 F3）:树缓存按需读文件扫描,双护栏防失控 ===
     SearchRun =>
       match active_project_of(model) {
@@ -1791,12 +1808,17 @@ pub fn program(
           .settings()
           .read(PLUGINS_SETTINGS_KEY)
           .effect(map=result => PluginsLoaded(result)),
+          services
+          .settings()
+          .read(UI_DARK_SETTINGS_KEY)
+          .effect(map=result => UiDarkLoaded(result)),
           load_effect,
           projects_load_effect,
         ]),
       )
     },
     update=(model, msg) => {
+      set_ui_dark(model.ui_dark)
       let (next0, effect0) = match msg {
         // 事件驱动消息（M1 内核化）：由事件总线从 outbox 翻译而来，副作用
         // 经服务容器执行——监听器保持纯函数，这里才是副作用的家。

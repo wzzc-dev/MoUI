@@ -704,12 +704,13 @@ pub fn design_stage(
       let stage_right = ox + design_width * scale
       let stage_top = oy
       let stage_bottom = oy + design_total_height * scale
-      for op in design_overlay_plan(
-        program,
-        selection,
-        drag_control,
-        multi_selected~,
-      ) {
+      for
+        op in design_overlay_plan(
+          program,
+          selection,
+          drag_control,
+          multi_selected~,
+        ) {
         match op {
           BoundsOutline(rect) =>
             stroke_rounded_rect(

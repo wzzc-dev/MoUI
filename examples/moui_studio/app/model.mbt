@@ -697,6 +697,8 @@ pub(all) struct Model {
   control_clipboard : @ir.Control?
   multi_select_mode : Bool
   multi_selected : Array[String]
+  // G7.4 外观:true = 暗色(默认);settings 持久化 "1"/"0"
+  ui_dark : Bool
   // G4 全文搜索:查询草稿 + 命中集 + 进行中标记（结果面板挂 BtSearch 页签）
   search_query : String
   search_hits : Array[SearchHit]
@@ -839,6 +841,9 @@ pub(all) enum Msg {
   SendToBack(String)
   NudgeControl(String, Int, Int)
   ToggleMultiSelectMode
+  ToggleUiDark
+  UiDarkLoaded(@services.ServiceTaskResult[String?])
+  ToggleUiDarkModeSwitch
   SearchQueryDraft(String)
   SearchRun
   SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])
@@ -1323,6 +1328,10 @@ pub fn empty_provider_config() -> ProviderConfig {
 pub const DRAFT_SETTINGS_KEY : String = "studio.draft"
 
 ///|
+/// 外观主题 settings 键（G7.4）："1" = 暗色（默认），"0" = 亮色。
+pub const UI_DARK_SETTINGS_KEY : String = "studio.ui_dark"
+
+///|
 /// 插件启用态的 settings 键（G7.3）：值为逗号连接的禁用 id 列表
 /// （空串 = 全部启用）。
 pub const PLUGINS_SETTINGS_KEY : String = "studio.plugins"
@@ -1455,6 +1464,7 @@ pub fn initial_model(
     control_clipboard: None,
     multi_select_mode: false,
     multi_selected: [],
+    ui_dark: true,
     search_query: "",
     search_hits: [],
     search_busy: false,

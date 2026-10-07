@@ -781,6 +781,9 @@
     "app.command.control.nudge.left": "Nudge control left",
     "app.command.control.nudge.right": "Nudge control right",
     "app.command.control.nudge.up": "Nudge control up",
-    "app.command.control.nudge.down": "Nudge control down"
+    "app.command.control.nudge.down": "Nudge control down",
+    "app.settings.group.appearance": "Appearance",
+    "app.settings.dark": "Dark",
+    "app.settings.light": "Light"
   }
 }

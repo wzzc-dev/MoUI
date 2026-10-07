@@ -111,6 +111,26 @@ pub fn settings_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       ide_text_faint(),
       3,
     ),
+    group_label(t, "app.settings.group.appearance"),
+    @views.row(
+      [
+        @views.button(
+          text(t, "app.settings.dark"),
+          on_click=if model.ui_dark { Msg::Noop } else { ToggleUiDark },
+          variant=if model.ui_dark { Primary } else { Outline },
+          width=124.0,
+          height=28.0,
+        ),
+        @views.button(
+          text(t, "app.settings.light"),
+          on_click=if model.ui_dark { ToggleUiDark } else { Msg::Noop },
+          variant=if model.ui_dark { Outline } else { Primary },
+          width=124.0,
+          height=28.0,
+        ),
+      ],
+      spacing=8.0,
+    ),
     group_label(t, "app.settings.group.plugins"),
     // G7.3 插件管理:静态装配的诚实形态——列出已装配插件,启用/禁用
     // 只过滤贡献项入口;「安装新插件需重新构建」如实声明。

@@ -149,8 +149,22 @@ pub fn studio_program_commands(
     PasteControl,
   )
   // 置顶/置底（Ctrl+] / Ctrl+[）
-  bind("]", false, "app.command.control.front", Activate, has_selection, BringToFront(model.selected_control))
-  bind("[", false, "app.command.control.back", Activate, has_selection, SendToBack(model.selected_control))
+  bind(
+    "]",
+    false,
+    "app.command.control.front",
+    Activate,
+    has_selection,
+    BringToFront(model.selected_control),
+  )
+  bind(
+    "[",
+    false,
+    "app.command.control.back",
+    Activate,
+    has_selection,
+    SendToBack(model.selected_control),
+  )
   // 多选模式开关（Ctrl+M;命中切换成员,方向键整组微调）
   bind(
     "m",
@@ -161,10 +175,38 @@ pub fn studio_program_commands(
     ToggleMultiSelectMode,
   )
   // 方向键微调（1px/按;多选模式下整组移动）
-  bind("ArrowLeft", false, "app.command.control.nudge.left", Activate, has_selection, NudgeControl(model.selected_control, -1, 0))
-  bind("ArrowRight", false, "app.command.control.nudge.right", Activate, has_selection, NudgeControl(model.selected_control, 1, 0))
-  bind("ArrowUp", false, "app.command.control.nudge.up", Activate, has_selection, NudgeControl(model.selected_control, 0, -1))
-  bind("ArrowDown", false, "app.command.control.nudge.down", Activate, has_selection, NudgeControl(model.selected_control, 0, 1))
+  bind(
+    "ArrowLeft",
+    false,
+    "app.command.control.nudge.left",
+    Activate,
+    has_selection,
+    NudgeControl(model.selected_control, -1, 0),
+  )
+  bind(
+    "ArrowRight",
+    false,
+    "app.command.control.nudge.right",
+    Activate,
+    has_selection,
+    NudgeControl(model.selected_control, 1, 0),
+  )
+  bind(
+    "ArrowUp",
+    false,
+    "app.command.control.nudge.up",
+    Activate,
+    has_selection,
+    NudgeControl(model.selected_control, 0, -1),
+  )
+  bind(
+    "ArrowDown",
+    false,
+    "app.command.control.nudge.down",
+    Activate,
+    has_selection,
+    NudgeControl(model.selected_control, 0, 1),
+  )
   // ── 积木域键盘（Scratch/IDE 口径）────────────────────────────────────
   //
   // 判据用 `selected_block >= 0`（选中了积木）而不是「在积木工作区」：

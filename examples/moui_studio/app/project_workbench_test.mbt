@@ -941,8 +941,13 @@ test "启动事件:OnStart 装填即执行" {
   let services = @services.AppServices::new()
   let program = {
     ..@ir.empty_program(),
-    window: { title: "纯逻辑", width: 640, height: 480, timer_interval: 0,
-        back_color: "", },
+    window: {
+      title: "纯逻辑",
+      width: 640,
+      height: 480,
+      timer_interval: 0,
+      back_color: "",
+    },
     variables: [{ name: "开机计数", init: "0", }],
     handlers: [
       {

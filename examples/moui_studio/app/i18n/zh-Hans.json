@@ -781,6 +781,9 @@
     "app.command.control.nudge.left": "左移控件",
     "app.command.control.nudge.right": "右移控件",
     "app.command.control.nudge.up": "上移控件",
-    "app.command.control.nudge.down": "下移控件"
+    "app.command.control.nudge.down": "下移控件",
+    "app.settings.group.appearance": "外观",
+    "app.settings.dark": "暗色",
+    "app.settings.light": "亮色"
   }
 }

@@ -162,7 +162,7 @@ test "属性 v2:字号生效且可见性门控渲染" {
 test "画布交互:命令门控与 z-order" {
   // 初始模型带样例控件选中（selected_control="按钮"）——门控测试用
   // 真正无选中的模型
-  let idle = { ..initial_model(), selected_control: "" }
+  let idle = { ..initial_model(), selected_control: "", }
   let mut copy_enabled = false
   let mut front_enabled = false
   let mut nudge_enabled = false
@@ -213,7 +213,7 @@ test "画布交互:命令门控与 z-order" {
       },
     ],
   }
-  let selected = { ..initial_model(), program, selected_control: "lbl" }
+  let selected = { ..initial_model(), program, selected_control: "lbl", }
   let mut sel_copy = false
   let mut sel_front = false
   for entry in studio_program_commands(selected) {
@@ -240,9 +240,31 @@ test "画布交互:命令门控与 z-order" {
   assert_true(sel_front, msg="选中后置顶应启用")
   // z-order 真改数组顺序:置顶后 lbl 在数组末尾
   let fronted = update_with_services(
-    selected,
-    BringToFront("lbl"),
-    @services.AppServices::new(),
-  ).0
-  assert_eq(fronted.program.controls[fronted.program.controls.length() - 1].name, "lbl")
+      selected,
+      BringToFront("lbl"),
+      @services.AppServices::new(),
+    ).0
+  assert_eq(
+    fronted.program.controls[fronted.program.controls.length() - 1].name,
+    "lbl",
+  )
+}
+
+///|
+/// G7.4:主题切换——ToggleUiDark 翻转模型;Ref 同步后 ide_text 走亮色档;
+/// settings 持久化写 "0"/"1"。
+test "主题切换:翻转模型与 Ref 同步" {
+  let services = @services.AppServices::new()
+  assert_true(initial_model().ui_dark)
+  let toggled = update_with_services(initial_model(), ToggleUiDark, services).0
+  assert_false(toggled.ui_dark)
+  // 持久化值写盘(事件进 outbox 由组合根监听——这里断言模型翻转即可)
+  // Ref 同步:程序包装层每条消息做,测试直接调 set_ui_dark 验证两档
+  set_ui_dark(toggled.ui_dark)
+  assert_false(ui_is_dark())
+  // 亮色档下 ide_text 应为深色
+  let light_text = ide_text()
+  assert_true(light_text.r < 0.5, msg="亮色档文字应为深色")
+  set_ui_dark(true)
+  assert_true(ide_text().r > 0.5, msg="暗色档文字应为浅色")
 }

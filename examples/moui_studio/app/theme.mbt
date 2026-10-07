@@ -14,22 +14,68 @@
 /// 否则「行是 IDE 的行、字是移动端的字」，两边互相打架。
 /// **只改编辑器壳**：舞台控件走 `studio_product_theme`，导出应用的字阶
 /// 不变（产品 UI 的观感不因编辑器密度调整而漂移）。
+
+///|
+/// 主题模式（G7.4）：true = 暗色（默认）。Ref 而非模型传参——190 个
+/// ide_*/studio_* 调用点无模型上下文；程序包装层每条消息后把模型里的
+/// ui_dark 同步进 ref（单一事实源仍是模型 + settings 持久化）。
+let ui_dark_ref : Ref[Bool] = Ref(true)
+
+///|
+pub fn set_ui_dark(dark : Bool) -> Unit {
+  ui_dark_ref.val = dark
+}
+
+///|
+pub fn ui_is_dark() -> Bool {
+  ui_dark_ref.val
+}
+
+///|
 pub fn studio_theme() -> @core.Theme {
-  @views.theme(
-    scheme=Dark,
-    palette=@core.ColorPalette::from_seed(
-      primary=ide_accent(),
-      Dark,
-      foreground=@core.Color::rgba(r=0.90, g=0.91, b=0.93),
-      background=@core.Color::rgba(r=0.086, g=0.094, b=0.110),
-      surface=@core.Color::rgba(r=0.121, g=0.133, b=0.153),
-      surface_variant=@core.Color::rgba(r=0.161, g=0.176, b=0.200),
-      outline=@core.Color::rgba(r=0.235, g=0.255, b=0.290),
-      muted=@core.Color::rgba(r=0.553, g=0.580, b=0.620),
-    ),
-    radius_scale=@core.RadiusScale::{ sm: 2.0, md: 4.0, lg: 6.0, pill: 999.0, },
-    typography=studio_typography(),
-  )
+  if ui_dark_ref.val {
+    @views.theme(
+      scheme=Dark,
+      palette=@core.ColorPalette::from_seed(
+        primary=ide_accent(),
+        Dark,
+        foreground=@core.Color::rgba(r=0.90, g=0.91, b=0.93),
+        background=@core.Color::rgba(r=0.086, g=0.094, b=0.110),
+        surface=@core.Color::rgba(r=0.121, g=0.133, b=0.153),
+        surface_variant=@core.Color::rgba(r=0.161, g=0.176, b=0.200),
+        outline=@core.Color::rgba(r=0.235, g=0.255, b=0.290),
+        muted=@core.Color::rgba(r=0.553, g=0.580, b=0.620),
+      ),
+      radius_scale=@core.RadiusScale::{
+        sm: 2.0,
+        md: 4.0,
+        lg: 6.0,
+        pill: 999.0,
+      },
+      typography=studio_typography(),
+    )
+  } else {
+    @views.theme(
+      scheme=Light,
+      palette=@core.ColorPalette::from_seed(
+        primary=ide_accent(),
+        Light,
+        foreground=@core.Color::rgba(r=0.13, g=0.14, b=0.16),
+        background=@core.Color::rgba(r=0.973, g=0.976, b=0.980),
+        surface=@core.Color::rgba(r=0.945, g=0.949, b=0.957),
+        surface_variant=@core.Color::rgba(r=0.906, g=0.914, b=0.925),
+        outline=@core.Color::rgba(r=0.769, g=0.784, b=0.804),
+        muted=@core.Color::rgba(r=0.42, g=0.44, b=0.47),
+      ),
+      radius_scale=@core.RadiusScale::{
+        sm: 2.0,
+        md: 4.0,
+        lg: 6.0,
+        pill: 999.0,
+      },
+      typography=studio_typography(),
+    )
+  }
 }
 
 ///|
@@ -85,7 +131,11 @@ pub fn studio_stage_title_bar() -> @core.Color {
 /// 主题底色（macOS 浅色系统给白底），根容器必须显式铺满，否则暗色文字
 /// 落在透出的白底上（2026-09-29 白字白底事故的窗口侧修复）。
 pub fn studio_window_background() -> @core.Color {
-  @core.Color::rgba(r=0.086, g=0.094, b=0.110)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.086, g=0.094, b=0.110)
+  } else {
+    @core.Color::rgba(r=0.945, g=0.949, b=0.957)
+  }
 }
 
 ///|
@@ -103,7 +153,11 @@ pub fn studio_stage_outline() -> @core.Color {
 ///|
 /// 终端式控制台卡底：比 surface 再暗一档，和面板区分出「日志区」。
 pub fn studio_console_background() -> @core.Color {
-  @core.Color::rgba(r=0.078, g=0.086, b=0.102)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.078, g=0.086, b=0.102)
+  } else {
+    @core.Color::rgba(r=0.961, g=0.965, b=0.969)
+  }
 }
 
 ///|
@@ -225,19 +279,31 @@ pub fn blocks_canvas_background() -> @graphics.Color {
 ///|
 /// 编辑器底：代码区 / 积木画布 / 舞台背板的最底一档。
 pub fn ide_editor_background() -> @core.Color {
-  @core.Color::rgba(r=0.118, g=0.122, b=0.133)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.118, g=0.122, b=0.133)
+  } else {
+    @core.Color::rgba(r=0.984, g=0.984, b=0.988)
+  }
 }
 
 ///|
 /// 面板：顶栏 / 图标栏 / 左栏 / 右栏 / 底部横条 / 状态栏。
 pub fn ide_panel() -> @core.Color {
-  @core.Color::rgba(r=0.169, g=0.176, b=0.188)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.169, g=0.176, b=0.188)
+  } else {
+    @core.Color::rgba(r=0.945, g=0.949, b=0.957)
+  }
 }
 
 ///|
 /// 面板二档：按钮底 / 分段控件底 / 芯片底。
 pub fn ide_panel_alt() -> @core.Color {
-  @core.Color::rgba(r=0.200, g=0.212, b=0.227)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.200, g=0.212, b=0.227)
+  } else {
+    @core.Color::rgba(r=0.914, g=0.922, b=0.933)
+  }
 }
 
 ///|
@@ -249,7 +315,11 @@ pub fn ide_panel_alt() -> @core.Color {
 /// layer separation comes from border tone」——那句话要求**线比面亮**，
 /// 抄成同值就把设计意图抹掉了。下面按 面 < 悬停 < 线 排开。
 pub fn ide_elevated() -> @core.Color {
-  @core.Color::rgba(r=0.224, g=0.231, b=0.251)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.224, g=0.231, b=0.251)
+  } else {
+    @core.Color::rgba(r=1.0, g=1.0, b=1.0)
+  }
 }
 
 ///|
@@ -258,19 +328,31 @@ pub fn ide_elevated() -> @core.Color {
 /// 悬停是**瞬态状态**，必须在静止面上看得出来。与 `ide_elevated` 同值时，
 /// 抬起面上的行悬停完全无反馈。
 pub fn ide_hover() -> @core.Color {
-  @core.Color::rgba(r=0.244, g=0.252, b=0.272)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.244, g=0.252, b=0.272)
+  } else {
+    @core.Color::rgba(r=0.886, g=0.898, b=0.914)
+  }
 }
 
 ///|
 /// 悬停二档：抬起面之上的 hover（保留原值，仍是最高一档）。
 pub fn ide_hover_strong() -> @core.Color {
-  @core.Color::rgba(r=0.259, g=0.271, b=0.290)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.259, g=0.271, b=0.290)
+  } else {
+    @core.Color::rgba(r=0.851, g=0.867, b=0.886)
+  }
 }
 
 ///|
 /// 选中底：树行/列表行选中（低饱和蓝灰，不与强调色抢）。
 pub fn ide_selection() -> @core.Color {
-  @core.Color::rgba(r=0.184, g=0.271, b=0.329)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.184, g=0.271, b=0.329)
+  } else {
+    @core.Color::rgba(r=0.800, g=0.882, b=0.961)
+  }
 }
 
 ///|
@@ -279,31 +361,51 @@ pub fn ide_selection() -> @core.Color {
 /// 比 `ide_elevated` 亮一档（1.17:1）——发丝线要能在它分隔的**两块面**
 /// 上都读出来，所以必须高于两侧的面，不能等于面。
 pub fn ide_border() -> @core.Color {
-  @core.Color::rgba(r=0.262, g=0.272, b=0.294)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.262, g=0.272, b=0.294)
+  } else {
+    @core.Color::rgba(r=0.784, g=0.800, b=0.820)
+  }
 }
 
 ///|
 /// 边框弱档：面板内部行分隔（比 ide_border 更淡）。
 pub fn ide_border_soft() -> @core.Color {
-  @core.Color::rgba(r=0.200, g=0.208, b=0.220)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.200, g=0.208, b=0.220)
+  } else {
+    @core.Color::rgba(r=0.878, g=0.890, b=0.902)
+  }
 }
 
 ///|
 /// 一级文字：正文/标题。
 pub fn ide_text() -> @core.Color {
-  @core.Color::rgba(r=0.875, g=0.882, b=0.898)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.875, g=0.882, b=0.898)
+  } else {
+    @core.Color::rgba(r=0.13, g=0.14, b=0.16)
+  }
 }
 
 ///|
 /// 二级文字：次要说明 / 未选中标签。
 pub fn ide_text_muted() -> @core.Color {
-  @core.Color::rgba(r=0.616, g=0.627, b=0.659)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.616, g=0.627, b=0.659)
+  } else {
+    @core.Color::rgba(r=0.35, g=0.37, b=0.40)
+  }
 }
 
 ///|
 /// 三级文字：元信息 / 计数 / 行号。
 pub fn ide_text_faint() -> @core.Color {
-  @core.Color::rgba(r=0.447, g=0.459, b=0.478)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.447, g=0.459, b=0.478)
+  } else {
+    @core.Color::rgba(r=0.55, g=0.57, b=0.60)
+  }
 }
 
 ///|
@@ -357,43 +459,71 @@ pub fn ide_danger_soft() -> @core.Color {
 ///|
 /// 代码语法色：关键字。
 pub fn code_keyword_color() -> @core.Color {
-  @core.Color::rgba(r=0.812, g=0.557, b=0.427)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.812, g=0.557, b=0.427)
+  } else {
+    @core.Color::rgba(r=0.55, g=0.27, b=0.15)
+  }
 }
 
 ///|
 /// 代码语法色：字符串。
 pub fn code_string_color() -> @core.Color {
-  @core.Color::rgba(r=0.416, g=0.671, b=0.451)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.416, g=0.671, b=0.451)
+  } else {
+    @core.Color::rgba(r=0.10, g=0.42, b=0.20)
+  }
 }
 
 ///|
 /// 代码语法色：数字。
 pub fn code_number_color() -> @core.Color {
-  @core.Color::rgba(r=0.165, g=0.675, b=0.722)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.165, g=0.675, b=0.722)
+  } else {
+    @core.Color::rgba(r=0.05, g=0.42, b=0.48)
+  }
 }
 
 ///|
 /// 代码语法色：函数/内建命令。
 pub fn code_function_color() -> @core.Color {
-  @core.Color::rgba(r=0.337, g=0.659, b=0.961)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.337, g=0.659, b=0.961)
+  } else {
+    @core.Color::rgba(r=0.05, g=0.36, b=0.72)
+  }
 }
 
 ///|
 /// 代码语法色：注释。
 pub fn code_comment_color() -> @core.Color {
-  @core.Color::rgba(r=0.478, g=0.494, b=0.522)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.478, g=0.494, b=0.522)
+  } else {
+    @core.Color::rgba(r=0.42, g=0.44, b=0.47)
+  }
 }
 
 ///|
 /// 代码语法色：类型/控制关键字之外的高亮档。
 pub fn code_type_color() -> @core.Color {
-  @core.Color::rgba(r=0.780, g=0.490, b=0.733)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.780, g=0.490, b=0.733)
+  } else {
+    @core.Color::rgba(r=0.48, g=0.16, b=0.45)
+  }
 }
 
 ///|
 /// 代码正文色：非高亮的普通 token。
 pub fn code_plain_color() -> @core.Color {
-  @core.Color::rgba(r=0.820, g=0.831, b=0.851)
+  if ui_dark_ref.val {
+    @core.Color::rgba(r=0.820, g=0.831, b=0.851)
+  } else {
+    @core.Color::rgba(r=0.15, g=0.16, b=0.18)
+  }
 }
 
 ///|

@@ -888,7 +888,7 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
             if !had {
               members.push(control.name)
             }
-            Some(({ ..model, multi_selected: members }, @moui.Effect::none()))
+            Some(({ ..model, multi_selected: members, }, @moui.Effect::none()))
           } else {
             Some(
               (
@@ -901,7 +901,7 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           if model.drag is Some(_) {
             Some(({ ..model, selected_control: "", }, @moui.Effect::none()))
           } else if model.multi_select_mode {
-            Some(({ ..model, multi_selected: [] }, @moui.Effect::none()))
+            Some(({ ..model, multi_selected: [], }, @moui.Effect::none()))
           } else {
             Some(({ ..model, selected_control: "", }, @moui.Effect::none()))
           }
@@ -969,10 +969,7 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           }
           Some(
             (
-              {
-                ..model,
-                control_clipboard: Some({ ..control, items }),
-              },
+              { ..model, control_clipboard: Some({ ..control, items, }), },
               @moui.Effect::none(),
             ),
           )
@@ -1090,7 +1087,7 @@ fn update_design_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
                   min=0,
                   max=@ir.DESIGN_HEIGHT - control.height,
                 )
-                controls.push({ ..control, x, y })
+                controls.push({ ..control, x, y, })
               } else {
                 controls.push(control)
               }
