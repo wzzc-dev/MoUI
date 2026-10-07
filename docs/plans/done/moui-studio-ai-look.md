@@ -148,3 +148,18 @@ VS Code 智能体模式基准逐项核对;更新 docs/moui-studio.md 与 memorie
 - moon check 清零：app 包全部警告（未用变量/弃用 trim/substring/模式载荷/
   blocks_code 未用包→pub 门面/UpdateWithServices 未用参）回收;仅剩
   moui/views/stage.mbt 框架固有 2 条（不在本仓范围）。
+
+- 右栏开关模式感知（用户反馈「AI 模式右侧展开显示不合适」）：AI 模式展开 =
+  RvAi（AI 会话停靠右栏下部,检查器在上——M2 既有装配）;其余模式 = RvContext。
+  中心让位:PsAi + RvAi 时 ai_center 只画会话流（composer/姿态归停靠宿主,
+  不画第二份输入面）。
+
+- AI 模式右栏展开落地为工作区面板（用户确认方向,替代上一轮的 RvAi 停靠指向）：
+  `RvWorkspace`（RightView 新变体）= 双页签「更改 N（提案数徽章）/ 文件」。
+  「更改」= 待采纳提案置顶卡（内嵌采纳/拒绝）+ `proposal_history` 时间线
+  （采纳✓/拒绝✗ + 摘要 + 改动文件 chips——由 diff IR 路径推导落盘文件:
+  control/window→form.mbt,handler/variable→handlers.mbt）;空态提示。
+  「文件」= 复用 project_explorer（无工程时空态提示,用户口径保留）。
+  中心让位:PsAi+RvAi 时 ai_center 只画会话流（宿主唯一性）。
+  回归测试两条（页签/空态/历史/文件 chips）+ 破坏验证（开关误指 RvContext → 红）。
+  真机截图确认「更改 0 / 文件」页签 + 空态提示渲染。

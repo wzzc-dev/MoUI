@@ -300,11 +300,24 @@ pub extend StudioPerspective with Eq::{not_equal, equal}
 /// 右栏当前视图：取代旧 `right_visible`（布尔）与 `ai_anchor` 的 AiDocked 档
 /// 的 2×2 组合——单一枚举消除两状态互拉（历史上出过「收起底栏 AI 自己跑
 /// 去右栏」的事故，根因就是两个独立状态描述同一件事）。
+///|
+/// AI 工作区面板（RvWorkspace）的页签：更改（提案历史）/ 文件（工程树）。
+pub(all) enum RightPanelTab {
+  RpChanges
+  RpFiles
+} derive(Eq)
+
+///|
+pub extend RightPanelTab with Eq::{not_equal, equal}
+
+///|
 pub(all) enum RightView {
   /// Context 检查器占满右栏（AI 回落底栏页签）
   RvContext
   /// Context 页签 + AI 卡钉底（原 AiDocked 的布局）
   RvAi
+  /// AI 模式工作区面板：更改（提案历史）/ 文件（工程树）双页签
+  RvWorkspace
   /// 右栏不占宽（AI 回落底栏页签）
   RvHidden
 } derive(Eq)
@@ -559,6 +572,8 @@ pub(all) struct Model {
   // 模式下拉展开态（V4,VS Code 的 Agent ⌄ 口径）：收起 = 单芯片,
   // 展开 = 脚注原位切回四选一胶囊行；SetComposerMode 后收起。
   composer_mode_picker_open : Bool
+  // AI 工作区面板（RvWorkspace）当前页签
+  right_panel_tab : RightPanelTab
   prompt_error : String
   provider_mode : ProviderMode
   provider_endpoint : String
@@ -822,6 +837,8 @@ pub(all) enum Msg {
   SetComposerMode(ComposerMode)
   /// 开/关 composer 的模式下拉（V4）：收起态单芯片 ↔ 展开态四选一胶囊行
   ToggleComposerModePicker
+  /// 切换 AI 工作区面板页签（更改/文件）
+  SetRightPanelTab(RightPanelTab)
   ComposerRun
   RealGenerationFinished(Result[String, String])
   ExplainHandler
@@ -1295,6 +1312,7 @@ pub fn initial_model(
     profile,
     composer_mode: ComposeEdit,
     composer_mode_picker_open: false,
+    right_panel_tab: RpChanges,
     prompt_error: "",
     provider_mode: Fake,
     provider_endpoint: endpoint,

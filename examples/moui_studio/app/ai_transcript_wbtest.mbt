@@ -336,3 +336,63 @@ test "bottom bar host reserves room for the composer block incl chips" {
     4.0
   assert_true(bar >= needed)
 }
+
+///|
+test "ai workspace panel shows changes and files tabs on right expand" {
+  // AI 模式右栏开关 → RvWorkspace（更改/文件 双页签,VS Code 口径）
+  let base = apply_ai(initial_model(), SetPerspective(PsAi))
+  let expanded = apply_ai(base, StudioCommandRun("studio.right.toggle"))
+  assert_true(expanded.right_view is RvWorkspace)
+  let commands = ai_draw(expanded, 1280.0, 800.0)
+  let mut changes_tab = false
+  let mut files_tab = false
+  let mut empty_hint = false
+  for run in shell_texts(commands) {
+    if run.text == "更改" {
+      changes_tab = true
+    }
+    if run.text == "文件" {
+      files_tab = true
+    }
+    if run.text.contains("还没有提案记录") {
+      empty_hint = true
+    }
+  }
+  assert_true(changes_tab)
+  assert_true(files_tab)
+  // 空会话无提案:更改页签显示空态提示
+  assert_true(empty_hint)
+}
+
+///|
+test "workspace changes tab lists proposal history with file chips" {
+  let base = apply_ai(initial_model(), SetPerspective(PsAi))
+  let asked = apply_ai(base, SetPrompt("帮我做一个随机点名册"))
+  let ran = apply_ai(asked, ComposerRun)
+  let accepted = apply_ai(ran, AcceptProposal)
+  let expanded = apply_ai(accepted, StudioCommandRun("studio.right.toggle"))
+  let commands = ai_draw(expanded, 1280.0, 800.0)
+  let mut summary_found = false
+  let mut accepted_badge = false
+  let mut form_chip = false
+  let mut handlers_chip = false
+  for run in shell_texts(commands) {
+    if run.text.contains("帮我做一个随机点名册") {
+      summary_found = true
+    }
+    if run.text.contains("已采纳") {
+      accepted_badge = true
+    }
+    if run.text == "form.mbt" {
+      form_chip = true
+    }
+    if run.text == "handlers.mbt" {
+      handlers_chip = true
+    }
+  }
+  // 历史条目:摘要 + 已采纳徽章 + 改动落盘文件 chips
+  assert_true(summary_found)
+  assert_true(accepted_badge)
+  assert_true(form_chip)
+  assert_true(handlers_chip)
+}

@@ -70,3 +70,10 @@
 - **拖拽区随顶栏内容演进**：顶栏新增窗控钮必须同步 topbar_actions_width
   （右簇）与 topbar_drag_x（左簇——左栏开关在拖拽区左侧,漏算=点开关变拖窗口）。
   破坏验证:frame 高度×0.62 → posture 位移被 `posture_y > 700` 断言红线命中。
+
+- **RvWorkspace 工作区面板**：AI 模式右栏展开 = 更改/文件 双页签（非停靠、
+  非检查器）。更改数据源 = proposal_history + pending;改动文件从 DiffEntry.path
+  前缀推导（control/window→form.mbt,handler/variable→handlers.mbt——注意前缀
+  是 control. 不是 controls.）。文件页签复用 project_explorer（空态内置）。
+  新枚举变体记得 `pub extend X with Eq::{not_equal, equal}`（derive(Eq) 的
+  implicit promotion 已弃用,check 会报 0079）。

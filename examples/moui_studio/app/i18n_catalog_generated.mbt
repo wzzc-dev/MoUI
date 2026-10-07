@@ -211,6 +211,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.sessions", GeneratedI18nMessage::Text("AI sessions")),
       ("app.ai.settings", GeneratedI18nMessage::Text("Model settings")),
       (
+        "app.ai.ws.empty",
+        GeneratedI18nMessage::Text(
+          "No proposals yet — describe your idea in the composer",
+        ),
+      ),
+      ("app.ai.ws.files", GeneratedI18nMessage::Text("Files")),
+      (
         "app.audit.empty",
         GeneratedI18nMessage::Text(
           "No audit entries yet — run the program to fill this timeline",
@@ -369,6 +376,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.pill_label", GeneratedI18nMessage::Text("AI assistant")),
       ("app.ai.time.hours", GeneratedI18nMessage::Text("{n}h ago")),
       ("app.ai.work.trace", GeneratedI18nMessage::Text("Worked for {duration}")),
+      ("app.ai.ws.changes", GeneratedI18nMessage::Text("Changes")),
       ("app.audit.confirm", GeneratedI18nMessage::Text("Confirm")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("Blocks canvas")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("Expand bottom bar")),
@@ -1919,6 +1927,13 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.sessions", GeneratedI18nMessage::Text("AI 会话")),
       ("app.ai.settings", GeneratedI18nMessage::Text("模型设置")),
       (
+        "app.ai.ws.empty",
+        GeneratedI18nMessage::Text(
+          "还没有提案记录——在输入面描述你想要的应用",
+        ),
+      ),
+      ("app.ai.ws.files", GeneratedI18nMessage::Text("文件")),
+      (
         "app.audit.empty",
         GeneratedI18nMessage::Text(
           "还没有审计记录——运行程序后这里会逐条记录",
@@ -2073,6 +2088,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.ai.pill_label", GeneratedI18nMessage::Text("AI 助手")),
       ("app.ai.time.hours", GeneratedI18nMessage::Text("{n} 小时前")),
       ("app.ai.work.trace", GeneratedI18nMessage::Text("已工作 {duration}")),
+      ("app.ai.ws.changes", GeneratedI18nMessage::Text("更改")),
       ("app.audit.confirm", GeneratedI18nMessage::Text("确认")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("积木画布")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("展开底栏")),

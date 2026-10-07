@@ -224,7 +224,12 @@ fn shell_view(
         lower_height,
       ),
     )
-    if model.right_view is RvAi {
+    if model.right_view is RvWorkspace {
+      // AI 工作区面板（VS Code 智能体模式口径）:更改/文件 双页签占满右栏
+      lower_cells.push(
+        ai_workspace_panel(model, t, chrome_widths.right, lower_height),
+      )
+    } else if model.right_view is RvAi {
       // VS Code 口径（实测反馈）：AI 输入**钉在右栏最底部**（属性页签
       // 之下），卡片按内容自适应——线程空时只占输入盒一条，不再固定
       // 340 顶在右栏上部留一大块空白。

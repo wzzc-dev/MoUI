@@ -986,7 +986,13 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
         model,
         SetRightView(
           if model.right_view is RvHidden {
-            RvContext
+            // AI 模式展开 = 工作区面板（更改/文件——VS Code 智能体模式口径）;
+            // 其余模式 = 检查器
+            if model.perspective is PsAi {
+              RvWorkspace
+            } else {
+              RvContext
+            }
           } else {
             RvHidden
           },

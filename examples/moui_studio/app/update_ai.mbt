@@ -516,6 +516,8 @@ fn update_ai_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? {
           @moui.Effect::none(),
         ),
       )
+    SetRightPanelTab(tab) =>
+      Some(({ ..model, right_panel_tab: tab, }, @moui.Effect::none()))
     ToggleComposerModePicker =>
       Some(
         (

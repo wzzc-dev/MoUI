@@ -36,6 +36,10 @@ pub const AI_SESSION_HEADER_HEIGHT : Double = 34.0
 
 pub const AI_SESSION_ROW_HEIGHT : Double = 36.0
 
+pub const AI_WS_ENTRY_HEIGHT : Double = 44.0
+
+pub const AI_WS_HEAD_HEIGHT : Double = 34.0
+
 pub const ALIGN_MARGIN : Int = 24
 
 pub const AUDIT_LIMIT : Int = 200
@@ -161,6 +165,8 @@ pub fn ai_host_is_bottom(Model) -> Bool
 pub fn ai_layer(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]?
 
 pub fn ai_session_list(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
+
+pub fn ai_workspace_panel(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
 pub fn app_running(Model) -> Bool
 
@@ -1072,6 +1078,7 @@ pub(all) struct Model {
   ai_sessions : @ai.AiSessions
   composer_mode : ComposerMode
   composer_mode_picker_open : Bool
+  right_panel_tab : RightPanelTab
   prompt_error : String
   provider_mode : ProviderMode
   provider_endpoint : String
@@ -1223,6 +1230,7 @@ pub(all) enum Msg {
   SetPrompt(String)
   SetComposerMode(ComposerMode)
   ToggleComposerModePicker
+  SetRightPanelTab(RightPanelTab)
   ComposerRun
   RealGenerationFinished(Result[String, String])
   ExplainHandler
@@ -1495,9 +1503,17 @@ pub(all) struct RecentChange {
   seq : Int
 }
 
+pub(all) enum RightPanelTab {
+  RpChanges
+  RpFiles
+} derive(Eq)
+pub fn RightPanelTab::equal(Self, Self) -> Bool
+pub fn RightPanelTab::not_equal(Self, Self) -> Bool
+
 pub(all) enum RightView {
   RvContext
   RvAi
+  RvWorkspace
   RvHidden
 } derive(Eq)
 pub fn RightView::equal(Self, Self) -> Bool

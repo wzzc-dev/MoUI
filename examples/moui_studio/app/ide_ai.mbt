@@ -192,6 +192,36 @@ pub fn ai_center(
   height : Double,
 ) -> @moui.View[Msg] {
   let cards = model.ai_sessions.current().cards
+  if model.right_view is RvAi {
+    // 宿主唯一性（M2）:RvAi > PsAi 中心——AI 已停靠右栏时,中心只剩
+    // 会话流（无 composer/姿态——输入面归停靠宿主,不画第二份）。
+    return @views.container(
+      @views.padding_edges(
+        @views.scroll_view(
+          @views.column(timeline_rows(model, t, width), spacing=8.0).frame(
+            width=(width - 24.0).max(120.0),
+          ),
+          offset=model.transcript_scroll,
+          on_scroll=Some(offset => TranscriptScrolled(offset)),
+          request=@core.ScrollRequest::new(
+            id=model.transcript_scroll_seq,
+            offset=model.transcript_scroll,
+          ),
+          width~,
+          height~,
+          shows_indicator=true,
+        ),
+        left=12.0,
+        right=12.0,
+        top=4.0,
+        bottom=4.0,
+      ),
+      background=ide_editor_background(),
+      width~,
+      height~,
+      padding=0.0,
+    )
+  }
   if cards.length() == 0 {
     // 空会话：视觉居中（50/50）——上下**等重加权 spacer**。列必须显式
     // `.frame(height=height)`：ContainerBox 会把「量出来比容器矮」的子节点
