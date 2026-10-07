@@ -111,29 +111,31 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
         Cancelled => Some((model, @moui.Effect::none()))
       }
     ProjectFileSaveFinished(rel, result) =>
-      // 落盘完成:按 rel 定位 tab,脏基准对齐草稿（写盘任务在服务层）
+      // 落盘完成:按 rel 定位 tab,脏基准对齐草稿（写盘任务在服务层）。
+      // F4 live 诊断:保存 .mbt 即自动起一次 web 构建（build 通道原样复用,
+      // 诊断汇 Problems）——保存是天然节流点,不做独立防抖计时器。
       match result {
         Success(_) =>
           match open_file_index_of(model.open_project_files, rel) {
             Some(index) => {
               let open = model.open_project_files[index]
-              Some(
-                (
-                  with_notice(
-                    {
-                      ..model,
-                      open_project_files: replace_open_file_at(
-                        model.open_project_files,
-                        index,
-                        { ..open, saved_content: open.draft, },
-                      ),
-                    },
-                    "已保存",
-                    false,
+              let aligned = with_notice(
+                {
+                  ..model,
+                  open_project_files: replace_open_file_at(
+                    model.open_project_files,
+                    index,
+                    { ..open, saved_content: open.draft, },
                   ),
-                  @moui.Effect::none(),
-                ),
+                },
+                "已保存",
+                false,
               )
+              let (with_build, build_effect) = auto_build_after_save(
+                aligned,
+                open.rel,
+              )
+              Some((with_build, build_effect))
             }
             None => Some((model, @moui.Effect::none()))
           }
@@ -241,6 +243,9 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
           @moui.Effect::none(),
         ),
       )
+    // 全文搜索（G4 F3）:查询草稿纯转移;运行与回执在服务层
+    SearchQueryDraft(value) =>
+      Some(({ ..model, search_query: value, }, @moui.Effect::none()))
     SelectProjectFile(rel) =>
       // 再点同一个文件 = 取消选中(与图标栏「再点一次」同一心智)
       Some(

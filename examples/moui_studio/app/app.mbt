@@ -225,6 +225,76 @@ pub fn update_with_services(
           )
         _ => (model, @moui.Effect::none())
       }
+    // === 全文搜索（G4 F3）:树缓存按需读文件扫描,双护栏防失控 ===
+    SearchRun =>
+      match active_project_of(model) {
+        None => (model, @moui.Effect::none())
+        Some(project) => {
+          let query = model.search_query.trim(chars=" \t").to_owned()
+          if query == "" {
+            (model, @moui.Effect::none())
+          } else {
+            // 目标 = 扫描树里的文本文件（.mbt/.md）,来自扫描缓存不重走树
+            let targets : Array[String] = []
+            for pkg in project.scanned.packages {
+              for name in pkg.files {
+                let rel = if pkg.rel_path == "" {
+                  name
+                } else {
+                  "\{pkg.rel_path}/\{name}"
+                }
+                if rel.has_suffix(".mbt") || rel.has_suffix(".md") {
+                  targets.push(rel)
+                }
+              }
+            }
+            if targets.is_empty() {
+              (model, @moui.Effect::none())
+            } else {
+              (
+                { ..model, search_busy: true, },
+                @moui.Effect::dispatch(emit => {
+                  let _ = project_search_task(
+                    services.files(),
+                    project.root,
+                    targets,
+                    query~,
+                  ).start(r => emit(SearchFinished(r)))
+                }),
+              )
+            }
+          }
+        }
+      }
+    SearchFinished(result) =>
+      match result {
+        Success(hits) =>
+          (
+            { ..model, search_hits: hits, search_busy: false, },
+            @moui.Effect::none(),
+          )
+        Failure(_) | Cancelled =>
+          ({ ..model, search_busy: false, }, @moui.Effect::none())
+      }
+    SearchHitClicked(rel) => {
+      // 跳转 = 切到代码工作区 + 打开该文件（选中态相同则免重复读——
+      // ProjectFileLoaded 的挂载守卫依赖选中态）
+      let (next, _) = update_pure(model, SetWorkSpace(WsCode))
+      if next.selected_project_file == Some(rel) {
+        (next, @moui.Effect::none())
+      } else {
+        let (selected, effect) = update_pure(next, SelectProjectFile(rel))
+        let read_effect = match active_project_of(selected) {
+          Some(project) =>
+            services
+            .files()
+            .read_text("\{project.root}/\{rel}")
+            .effect(map=r => ProjectFileLoaded(rel, r))
+          None => @moui.Effect::none()
+        }
+        (selected, @moui.Effect::batch([effect, read_effect]))
+      }
+    }
     // === 文件 CRUD（G4）：新建 = write;改名 = read→write→delete 三步链 ===
     FileCreateCommit =>
       match active_project_of(model) {

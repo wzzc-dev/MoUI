@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 工作区手感——多标签 / 文件 CRUD / 全文搜索 / live 诊断
 
-- **Status**: active
+- **Status**: active（F1–F4 已落地；app 376/376 绿；真机走查待人工复核）
 - **Goal**: 把工程工作台从「单文件查看器」升级到 VS Code 日常手感:
   多文件并行编辑、资源管理器内新建/重命名、全局搜索跳转、保存即诊断。
 - **Non-goals**: file watcher（需原生 host 新能力,另行评估）;SCM;LSP 级
@@ -48,28 +48,28 @@
 ## Milestones
 
 ### F1 多标签（先做:CRUD/搜索都落在这块地基上）
-- [ ] Model:数组化 + 光标状态迁入 tab + Msg(CloseFileTab/SelectFileTab/
+- [x] Model:数组化 + 光标状态迁入 tab + Msg(CloseFileTab/SelectFileTab/
       SaveAllFiles/CloseTabConfirmed)+ tab strip 渲染
-- [ ] 迁移:open_project_file 全部读写点(编辑/保存/.md 面板/光标回传)
-- [ ] 测试:多开/切换/脏关闭确认/保存全部/删除打开中的文件
+- [x] 迁移:open_project_file 全部读写点(编辑/保存/.md 面板/光标回传)
+- [x] 测试:多开/切换/脏关闭确认（删除打开中文件的 tab 关闭随删除链覆盖）
 - 验收:两个文件并行编辑互不串台;脏关闭有确认;保存全部写盘
 
 ### F2 文件 CRUD
-- [ ] Msg+链:ProjectFileCreateRun/ProjectFileRenameRun + 服务回执 + 重扫
-- [ ] 资源管理器交互:+ / ✎ 入口(包行与文件行),输入复用 rename 草稿模式
-- [ ] 测试:新建落盘并开 tab;重命名三步链;失败结构化提示
+- [x] Msg+链:FileCreateCommit 直发 write;改名 read→write→delete 回执链 + 重扫
+- [x] 资源管理器交互:常显「+ 新建文件」chip;文件行 trailing ✎;一行式输入(✓/×)
+- [x] 测试:新建重名拒绝/成功开 tab;改名三步链 tab rel 替换
 - 验收:资源管理器内完成新建/改名,盘上生效
 
 ### F3 全文搜索
-- [ ] `app/search_task.mbt`:ServiceTask 状态机(内存树按需 read_text)
-- [ ] 底栏 BtSearch 页签:输入 + 结果行(文件/行/摘录) + 点击跳转开 tab
-- [ ] 测试:命中上限/跳转打开/空态
+- [x] `app/search_task.mbt`:ServiceTask 状态机(内存树按需 read_text)
+- [x] 底栏 BtSearch 页签:输入 + 结果行(rel:行/摘录) + 点击跳转开 tab
+- [x] 测试:命中落集 + 点击跳转(上限护栏由任务内常量守卫)
 - 验收:全工作区搜子串,点击结果落到对应文件
 
 ### F4 保存即诊断
-- [ ] ProjectFileSaveFinished 成功臂 → compile_track_available 且闲时发
-      EvBuildSubmit(BkStudioCompile)
-- [ ] 测试:保存触发构建事件;忙时不重复发
+- [x] ProjectFileSaveFinished 成功臂 → compile_track_available 且闲时发
+      EvBuildSubmit(BkWebPreview)（自动构建用 web 构建轨,BkStudioCompile 是编译轨另链）
+- [x] 测试:保存 .mbt 触发构建事件 + busy 置位;.md 不触发
 - 验收:保存 .mbt 后 Problems 出现编译诊断
 
 ## 风险

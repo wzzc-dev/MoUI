@@ -733,6 +733,10 @@
     "app.project.file_created": "Created {a}",
     "app.project.file_renamed": "Renamed to {a}",
     "app.project.rename_partial": "Rename incomplete, please clean up manually: {a}",
-    "app.confirm.close_file": "Close \"{a}\"? Unsaved changes will be lost."
+    "app.confirm.close_file": "Close \"{a}\"? Unsaved changes will be lost.",
+    "app.bottom.search": "Search",
+    "app.search.run": "Search",
+    "app.search.running": "Searching…",
+    "app.search.empty": "No results. Type a query and press Search."
   }
 }

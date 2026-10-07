@@ -184,6 +184,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.right.show", GeneratedI18nMessage::Text("Properties panel")),
       ("app.run.resume", GeneratedI18nMessage::Text("Resume")),
       ("app.run.single", GeneratedI18nMessage::Text("Run this block")),
+      ("app.search.run", GeneratedI18nMessage::Text("Search")),
       (
         "app.watch.hint",
         GeneratedI18nMessage::Text(
@@ -347,6 +348,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.runtime.hint",
         GeneratedI18nMessage::Text("Press Refresh to sample the runtime."),
       ),
+      (
+        "app.search.empty",
+        GeneratedI18nMessage::Text("No results. Type a query and press Search."),
+      ),
       ("app.status.saved", GeneratedI18nMessage::Text("Project saved")),
       ("app.stmt.tpl.ask", GeneratedI18nMessage::Text("Ask and wait")),
       ("app.terminal.run", GeneratedI18nMessage::Text("Run")),
@@ -380,6 +385,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.audit.confirm", GeneratedI18nMessage::Text("Confirm")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("Blocks canvas")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("Expand bottom bar")),
+      ("app.bottom.search", GeneratedI18nMessage::Text("Search")),
       ("app.command.empty", GeneratedI18nMessage::Text("No matching commands")),
       ("app.confirm.title", GeneratedI18nMessage::Text("Confirm")),
       ("app.console.clear", GeneratedI18nMessage::Text("Clear")),
@@ -513,6 +519,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Tap an entry to jump to its block"),
       ),
       ("app.run.gate.title", GeneratedI18nMessage::Text("Confirmation needed")),
+      ("app.search.running", GeneratedI18nMessage::Text("Searching…")),
       ("app.settings.close", GeneratedI18nMessage::Text("Close")),
       ("app.settings.title", GeneratedI18nMessage::Text("Settings")),
       ("app.statusbar.idle", GeneratedI18nMessage::Text("idle")),
@@ -1940,6 +1947,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.right.show", GeneratedI18nMessage::Text("属性面板")),
       ("app.run.resume", GeneratedI18nMessage::Text("继续")),
       ("app.run.single", GeneratedI18nMessage::Text("运行这一块")),
+      ("app.search.run", GeneratedI18nMessage::Text("搜索")),
       (
         "app.watch.hint",
         GeneratedI18nMessage::Text(
@@ -2102,6 +2110,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
           "点「刷新快照」采样当前运行时。",
         ),
       ),
+      (
+        "app.search.empty",
+        GeneratedI18nMessage::Text(
+          "无结果。输入关键字后点「搜索」。",
+        ),
+      ),
       ("app.status.saved", GeneratedI18nMessage::Text("已保存项目")),
       ("app.stmt.tpl.ask", GeneratedI18nMessage::Text("询问并等待")),
       ("app.terminal.run", GeneratedI18nMessage::Text("执行")),
@@ -2135,6 +2149,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("app.audit.confirm", GeneratedI18nMessage::Text("确认")),
       ("app.blocks.canvas", GeneratedI18nMessage::Text("积木画布")),
       ("app.bottom.expand", GeneratedI18nMessage::Text("展开底栏")),
+      ("app.bottom.search", GeneratedI18nMessage::Text("搜索")),
       ("app.command.empty", GeneratedI18nMessage::Text("没有匹配的命令")),
       ("app.confirm.title", GeneratedI18nMessage::Text("确认操作")),
       ("app.console.clear", GeneratedI18nMessage::Text("清空")),
@@ -2253,6 +2268,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("点击条目可跳到积木"),
       ),
       ("app.run.gate.title", GeneratedI18nMessage::Text("需要你的确认")),
+      ("app.search.running", GeneratedI18nMessage::Text("搜索中…")),
       ("app.settings.close", GeneratedI18nMessage::Text("关闭")),
       ("app.settings.title", GeneratedI18nMessage::Text("设置")),
       ("app.statusbar.idle", GeneratedI18nMessage::Text("空闲")),

@@ -968,6 +968,13 @@ pub fn ide_bottom_bar(
       SetBottomTab(BtProblems),
       problems,
     ),
+    // 全文搜索页签（G4 F3）:徽标 = 命中数（0 = 不画）
+    tab_button(
+      text(t, "app.bottom.search"),
+      model.bottom_tab is BtSearch,
+      SetBottomTab(BtSearch),
+      model.search_hits.length(),
+    ),
     // AI 输入条页签：与只读面板并列。计数用待审计提案数——它是
     // 「这里有没有等你处理的东西」的唯一读数（与药丸徽标同一个来源）。
   ]
@@ -1080,6 +1087,7 @@ pub fn ide_bottom_bar(
     BtAudit => audit_pane(model, t, width, height - 30.0)
     BtConsole => console_pane(model, t, width, height - 30.0)
     BtProblems => problems_pane(model, t, width, height - 30.0)
+    BtSearch => search_pane(model, t, width, height - 30.0)
     // AI 输入面：与停靠档**同一个** `ai_card_body`（折叠条 + 线程区 +
     // 输入盒 + 决策行），宿主换成底栏。
     //

@@ -832,3 +832,104 @@ test "文件 CRUD:改名链走完 tab rel 替换" {
   }
   assert_false(deleted.file_rename_open is Some(_))
 }
+
+///|
+/// G4 F4:保存 .mbt 自动起 web 构建（诊断汇 Problems）;.md 保存不触发。
+test "保存后自动构建:mbt 触发,md 不触发" {
+  let services = @services.AppServices::new()
+  let imported = @app.update_with_services(
+      @app.initial_model(compile_track_available=true),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
+      services,
+    ).0
+  let selected = @app.update_with_services(
+      imported,
+      SelectProjectFile("app/app.mbt"),
+      services,
+    ).0
+  let loaded = @app.update_with_services(
+      selected,
+      ProjectFileLoaded("app/app.mbt", Success("pub fn program() -> Unit { }")),
+      services,
+    ).0
+  let (saved, _) = @app.update_with_services(
+    loaded,
+    ProjectFileSaveFinished("app/app.mbt", Success(())),
+    services,
+  )
+  // 事件驱动:过门即发构建事件 + busy 置位
+  assert_true(
+    saved.outbox is [.., EvBuildSubmit(BkWebPreview, "/root", "web_wasm")],
+    msg="保存 .mbt 应发出构建事件",
+  )
+  assert_true(saved.build_busy)
+  // .md 保存:不触发（独立导入基底——outbox 是共享数组,不能复用上面
+  // 已被 .mbt 分支推入构建事件的模型）
+  let md_base = @app.update_with_services(
+      @app.initial_model(compile_track_available=true),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
+      services,
+    ).0
+  let md_loaded = @app.update_with_services(
+      {
+        ..md_base,
+        open_project_files: [
+          OpenProjectFile::{
+            rel: "README.md",
+            saved_content: "x",
+            draft: "x",
+            caret: 0,
+            selection: None,
+          },
+        ],
+        open_file_index: 0,
+      },
+      ProjectFileSaveFinished("README.md", Success(())),
+      services,
+    ).0
+  // import 步遗留的 EvProjectsDirty 在 outbox 里（真实程序每趟排空）,
+  // 这里只断言没有构建事件
+  let mut has_build = false
+  for event in md_loaded.outbox {
+    match event {
+      EvBuildSubmit(_, _, _) => has_build = true
+      _ => ()
+    }
+  }
+  assert_false(has_build, msg="保存 .md 不应触发构建")
+}
+
+///|
+/// G4 F3:全文搜索——服务回执落命中集;命中点击 = 切代码工作区 + 选中并读文件。
+test "全文搜索:命中落集,点击跳转" {
+  let services = @services.AppServices::new()
+  let imported = @app.update_with_services(
+      @app.initial_model(),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
+      services,
+    ).0
+  let queried = @app.update_with_services(
+      { ..imported, bottom_tab: BtSearch, search_query: "program", },
+      SearchRun,
+      services,
+    ).0
+  assert_true(queried.search_busy)
+  let hits : Array[SearchHit] = [
+    SearchHit::{ rel: "app/app.mbt", line: 3, preview: "pub fn program() {", },
+  ]
+  let finished = @app.update_with_services(
+      queried,
+      SearchFinished(Success(hits)),
+      services,
+    ).0
+  assert_false(finished.search_busy)
+  assert_eq(finished.search_hits.length(), 1)
+  // 点击命中:工作区切到代码 + 文件选中(读 effect 由服务层执行)
+  let jumped = @app.update_with_services(
+      finished,
+      SearchHitClicked("app/app.mbt"),
+      services,
+    ).0
+  assert_true(jumped.workspace is WsCode, msg="跳转应切到代码工作区")
+  assert_true(jumped.selected_project_file == Some("app/app.mbt"))
+}

@@ -528,3 +528,31 @@ pub fn project_has_file(model : Model, rel : String) -> Bool {
     }
   }
 }
+
+///|
+/// 保存后的 live 诊断（G4 F4）：保存的 .mbt 且编译轨可用、构建空闲、
+/// 工程有 web 入口时，发一次 web 构建事件（诊断汇 Problems 的既有链）。
+/// 条件不满足全部静默——诊断是顺手送的,不该变成打扰。
+pub fn auto_build_after_save(
+  model : Model,
+  rel : String,
+) -> (Model, @moui.Effect[Msg]) {
+  if !rel.has_suffix(".mbt") ||
+    !model.compile_track_available ||
+    model.build_busy {
+    return (model, @moui.Effect::none())
+  }
+  match active_project_of(model) {
+    None => (model, @moui.Effect::none())
+    Some(project) => {
+      let entry_rel = build_entry_rel(BkWebPreview, project)
+      if entry_rel == "" {
+        (model, @moui.Effect::none())
+      } else {
+        // 过门即发构建事件（M1 事件化同款）:busy 置位防重复排队
+        model.outbox.push(EvBuildSubmit(BkWebPreview, project.root, entry_rel))
+        ({ ..model, build_busy: true, }, @moui.Effect::none())
+      }
+    }
+  }
+}

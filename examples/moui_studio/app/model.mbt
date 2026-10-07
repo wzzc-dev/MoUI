@@ -229,6 +229,8 @@ pub(all) enum BottomTab {
   BtAudit
   BtConsole
   BtProblems
+  /// 工作区全文搜索（G4 F3）
+  BtSearch
   BtAi
   /// 真终端（M5，AI 模式专属页签）
   BtTerminal
@@ -686,6 +688,10 @@ pub(all) struct Model {
   file_create_open : Bool
   file_rename_open : String?
   file_name_draft : String
+  // G4 全文搜索:查询草稿 + 命中集 + 进行中标记（结果面板挂 BtSearch 页签）
+  search_query : String
+  search_hits : Array[SearchHit]
+  search_busy : Bool
   // 构建服务(M0-7):最近一次构建报告(诊断汇进 Problems)与进行中标记。
   // 待执行请求已改事件驱动(M1):过门即发 EvBuildSubmit,不再存 pending_build。
   last_build : @build.BuildReport?
@@ -811,6 +817,11 @@ pub(all) enum Msg {
   ProjectRenameRead(String, String, @services.ServiceTaskResult[String])
   ProjectRenameWritten(String, String, @services.ServiceTaskResult[Unit])
   ProjectRenameDeleted(String, String, @services.ServiceTaskResult[Unit])
+  // === 全文搜索（G4 F3）：草稿 → 运行（服务链扫工程树）→ 命中集 → 跳转 ===
+  SearchQueryDraft(String)
+  SearchRun
+  SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])
+  SearchHitClicked(String)
   CodeProjectSaved(@services.ServiceTaskResult[Unit]) // 代码工程骨架落盘回执（M6①）
   SetMode(Mode)
   SetDesignZoom(Double)
@@ -1411,6 +1422,9 @@ pub fn initial_model(
     file_create_open: false,
     file_rename_open: None,
     file_name_draft: "",
+    search_query: "",
+    search_hits: [],
+    search_busy: false,
     last_build: None,
     build_busy: false,
     preview_write: None,
