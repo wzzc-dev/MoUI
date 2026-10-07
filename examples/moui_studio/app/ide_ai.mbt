@@ -761,52 +761,73 @@ fn ai_card_body(
   // 「AI 提案 / 底部居中 / 离线模型」与一排图标都是冗余 chrome。
   // 卡片级操作收敛到输入盒脚注（收起/停靠/历史），锚点循环与 provider
   // 设置走命令面板（⌘K）。
-  let body : Array[@moui.View[Msg]] = []
   // 卡内可用宽 = 卡宽 − 四周内衬。**所有**子件都按这个宽建，谁都不许
   // 再声明「卡宽」——内衬是卡片提供的，子件自己再按卡宽算一遍就会溢出
   // （列会给它们 W−16 的约束，它们却声明 W）。
   let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
   // 折叠条：有待审计卡时显示计数并允许折叠线程
   let pending = pending_ai_cards(model)
-  // VS Code 口径（实测反馈）：输入盒**钉在卡底**，不浮在区域顶部——
-  // 线程区为空/折叠时用占位吃掉线程预算，输入盒沉底。占位高度必须
-  // 扣掉输入盒/决策行/卡片内衬——整段占满会让决策行被裁掉（实测缺陷）。
+  // 固定部分 = composer 块 + 决策行 + 上下内衬;剩余全部给钉底占位/线程区。
+  // **列必须显式钉高（见函数尾 .frame）**——否则 ContainerBox 把「量出来比
+  // 宿主矮」的卡片垂直居中,composer 浮在中间、上下留空（真机实测缺陷）。
+  let fixed = composer_block_height(width) +
+    decision_bar_height(model) +
+    AI_CARD_PAD * 2.0
+  let thread_left = (thread_height - fixed).max(0.0)
+  let body : Array[@moui.View[Msg]] = []
   if model.ai_sessions.current().cards.length() == 0 || model.ai_cards_folded {
-    // 钉底占位扣的是 composer **块**足迹（含芯片行/提示头——
-    // composer_block_height 单一口径）。漏算芯片行,脚注会被底栏裁掉（真机实测）。
-    // 占位为 0 时**不要**推空文本：text 有最小行高(~16pt),零高占位也会
-    // 在 composer 上方顶出一条空带（真机实测缺陷）。
-    let pin_height = (thread_height -
-    composer_block_height(width) -
-    decision_bar_height(model) -
-    AI_CARD_PAD * 2.0).max(0.0)
-    if pin_height > 0.0 {
-      body.push(@views.container(
-        @views.text("", width=1.0, height=pin_height),
-        width=1.0,
-        height=pin_height,
-        padding=0.0,
-      ))
-    }
-  }
-  if model.ai_sessions.current().cards.length() > 0 {
-    body.push(fold_bar(model, t, inner, pending))
-    if !model.ai_cards_folded {
+    // 空线程/折叠：剩余空间全部给钉底占位（输入面沉底,空带在上方——
+    // VS Code 面板口径）。占位用零高 container（text 有最小行高,会顶出空带）。
+    if thread_left > 0.0 {
       body.push(
-        @views.scroll_view(
-          @views.column(ai_card_views(model, t, inner), spacing=6.0),
-          width=inner,
-          // thread_height 已是共享 helper 算出的线程区预算（含 280 上限），
-          // 这里不再二次钳制——两处各钳一次，改了上限就会漏改一处。
-          height=thread_height,
-          shows_indicator=true,
+        @views.container(
+          @views.text("", width=1.0, height=thread_left),
+          width=1.0,
+          height=thread_left,
+          padding=0.0,
         ),
       )
-      // 设计稿 `#seeAll`：线程超过 3 条时给一个「查看全部会话 →」的出口
-      // （折叠态不显示——折叠时线程区本来就收起了）。跳的是既有 AI 历史
-      // 对话框，不新开一页。
-      if model.ai_sessions.current().cards.length() > 3 {
-        body.push(see_all_row(t, inner))
+    }
+  } else {
+    body.push(fold_bar(model, t, inner, pending))
+    let fold_h = FOLD_BAR_HEIGHT
+    // 线程区 = 钉底占位之外的剩余（ capped at 280 上限）
+    let used = (thread_left - fold_h).min(thread_area_height(model)).max(0.0)
+    body.push(
+      @views.scroll_view(
+        @views.column(ai_card_views(model, t, inner), spacing=6.0),
+        width=inner,
+        height=used,
+        shows_indicator=true,
+      ),
+    )
+    // 设计稿 `#seeAll`：线程超过 3 条时给一个「查看全部会话 →」的出口
+    // （折叠态不显示——折叠时线程区本来就收起了）。跳的是既有 AI 历史
+    // 对话框，不新开一页。
+    if model.ai_sessions.current().cards.length() > 3 {
+      body.push(see_all_row(t, inner))
+      let rest = (thread_left - fold_h - used - SEE_ALL_HEIGHT).max(0.0)
+      if rest > 0.0 {
+        body.push(
+          @views.container(
+            @views.text("", width=1.0, height=rest),
+            width=1.0,
+            height=rest,
+            padding=0.0,
+          ),
+        )
+      }
+    } else {
+      let rest = (thread_left - fold_h - used).max(0.0)
+      if rest > 0.0 {
+        body.push(
+          @views.container(
+            @views.text("", width=1.0, height=rest),
+            width=1.0,
+            height=rest,
+            padding=0.0,
+          ),
+        )
       }
     }
   }
@@ -829,7 +850,11 @@ fn ai_card_body(
   // 扁平（实测反馈：卡片要「阴影/色阶」感,与面板融为一块）——
   // 与 composer 同底色,无圆角无抬升。
   @views.container(
-    @views.padding(@views.column(body, spacing=0.0), AI_CARD_PAD),
+    // 列钉高 = 宿主给的线程区高:filler 吸收剩余,composer/决策行沉底
+    @views.padding(
+      @views.column(body, spacing=0.0).frame(height=thread_height),
+      AI_CARD_PAD,
+    ),
     background=ide_panel(),
     corner_radius=0.0,
     width~,
@@ -1125,12 +1150,7 @@ pub fn ai_bar_composer(
   // 线程区只能拿「体区 − 输入面固定部分」的剩余，不能拿满高——
   // 否则输入盒会被顶出底栏。
   let inner = (width - AI_CARD_PAD * 2.0).max(120.0)
-  // chrome 按 composer **块**足迹算（composer_block_height 含芯片行——
-  // 宽底栏 ≥420 会渲染芯片行,漏算 30pt 脚注就被裁掉（真机实测缺陷））。
-  let chrome = composer_block_height(inner) +
-    decision_bar_height(model) +
-    AI_CARD_PAD * 2.0
-  let thread = (height - chrome - AI_CARD_PAD * 2.0).max(0.0)
+
   // **宽度只扣一次内衬**：`ai_card_body` 自己已经用 `width − 2×pad` 算内宽
   // 并声明`width`，这里再套一层 `padding_xy` 就等于扣两次——卡片声明整宽、
   // 却只被给了 `width − 16` 的格子，右侧那 16pt 连同发送钮一起被推出面板
@@ -1145,7 +1165,7 @@ pub fn ai_bar_composer(
     // ai_card_body 自己的容器已有四周 8 内衬,再垫 16 会双重计账——
     // V3 芯片行加宽块足迹后,这 16pt 刚好吃掉脚注（真机实测缺陷）。
     @views.padding_xy(
-      ai_card_body(model, t, inner, thread.min(thread_area_height(model))),
+      ai_card_body(model, t, inner, height),
       horizontal=AI_CARD_PAD,
       vertical=0.0,
     ),

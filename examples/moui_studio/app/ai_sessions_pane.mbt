@@ -340,12 +340,12 @@ fn ai_session_row(
   } else {
     text_with(t, time_key, [("n", count.to_string())])
   }
-  let time_w = (text_estimate_width(time_label) + 4.0).max(30.0)
-  let title = fit_label(session.title, (row_width - 118.0).max(40.0))
   let line_w = (row_width - 118.0).max(60.0)
-  let title_w = (text_estimate_width(title) * 1.02 + 4.0).min(line_w - 16.0).max(
-    24.0,
-  )
+  // 标题占满「行宽 − 图标 − 间距」:内容恰好填满 frame,行不会因
+  // 短标题被 frame 居中而出现行首空隙（真机实测缺陷）。
+  let title_w = (line_w - 15.0).max(24.0)
+  let title = fit_label(session.title, title_w)
+  let time_w = (line_w - 12.0).max(30.0)
   let accent = if active { ide_accent() } else { ide_text_faint() }
   // 来源：有已采纳提案的会话 = Gear（Agent 干过活），否则 Chat（纯聊天）
   let source_icon : @style.IconName = if session.proposal_history.any(
@@ -355,6 +355,9 @@ fn ai_session_row(
   } else {
     Chat
   }
+  // 行内容**自然宽、左对齐**——不套 .frame(width=…):Frame 对「量出来比
+  // frame 窄」的子行会做居中放置（真机实测:标题被推到行中,行首出现
+  // 一段随宽度增长的空白）。fit_label 负责超长截断。
   let line1 = @views.row(
     [
       @views.icon(Chat, size=11.0, color=accent),
@@ -367,8 +370,8 @@ fn ai_session_row(
       ).foreground(if active { ide_text() } else { ide_text_muted() }),
     ],
     spacing=4.0,
-    align=Center,
-  ).frame(width=line_w)
+    align=Start,
+  )
   let line2 = @views.row(
     [
       @views.icon(source_icon, size=9.0, color=ide_text_faint()),
@@ -381,8 +384,8 @@ fn ai_session_row(
       ).foreground(ide_text_faint()),
     ],
     spacing=3.0,
-    align=Center,
-  ).frame(width=line_w)
+    align=Start,
+  )
   let cells : Array[@moui.View[Msg]] = [
     @views.column([line1, line2], spacing=1.0),
     @views.spacer(min_length=4.0, weight=1.0),
@@ -435,7 +438,12 @@ fn ai_session_row(
   }
   let row = @views.container(
     @views.padding_edges(
-      @views.row(cells, spacing=4.0, align=Center),
+      // 行显式钉宽 = 容器 − 左右内垫:不加 frame,ContainerBox 会把
+      // 「自然宽较窄」的行居中放置,行首出现随容器宽度增长的空隙
+      // （真机实测缺陷）。
+      @views.row(cells, spacing=4.0, align=Center).frame(
+        width=row_width - 16.0,
+      ),
       left=8.0,
       right=8.0,
     ),

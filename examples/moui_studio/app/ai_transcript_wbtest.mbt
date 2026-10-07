@@ -396,3 +396,26 @@ test "workspace changes tab lists proposal history with file chips" {
   assert_true(form_chip)
   assert_true(handlers_chip)
 }
+
+///|
+test "user bubble stays inside the transcript at every width" {
+  // 真机反馈:气泡右缘被窗口裁切。契约:气泡右缘 ≤ 窗口右缘 − 8（转录
+  // 区右内垫）。三种宽度全测——窄窗布局变化最容易挤出界。
+  let model = apply_ai(initial_model(), SetPerspective(PsAi))
+  let asked = apply_ai(model, SetPrompt("你好"))
+  let ran = apply_ai(asked, ComposerRun)
+  for width in [1280.0, 1600.0, 2000.0] {
+    let commands = ai_draw(ran, width, 800.0)
+    let mut bubble_right = -1.0
+    for run in shell_texts(commands) {
+      if run.text == "你好" && run.frame.origin.x > 300.0 {
+        let right = run.frame.origin.x + run.frame.size.width
+        if right > bubble_right {
+          bubble_right = right
+        }
+      }
+    }
+    assert_true(bubble_right > 0.0)
+    assert_true(bubble_right <= width - 8.0)
+  }
+}
