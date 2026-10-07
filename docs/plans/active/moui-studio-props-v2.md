@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 可视化属性 v2——对齐易语言属性窗
 
-- **Status**: active（P1 纯层 + P2 渲染/检查器已落地；全套 4850/4850 绿。P3 form.mbt 往返待做）
+- **Status**: active（P1 + P2 已落地并推送，CI 绿；P3 form.mbt 往返与 codegen 属性写入为下一个切片，见 Milestones P3）
 - **Goal**: 控件属性可调（字号/加粗/颜色/对齐/可见/禁用 + TextField 三件），
   设计画布、运行预览与导出应用一致渲染；旧文件无损加载。
 - **Non-goals**: 锚定/自动布局;数据绑定;控件新种类。

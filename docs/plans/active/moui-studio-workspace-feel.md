@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 工作区手感——多标签 / 文件 CRUD / 全文搜索 / live 诊断
 
-- **Status**: active（F1–F4 已落地；app 376/376 绿；真机走查待人工复核）
+- **Status**: active（F1–F4 已落地并推送，CI 绿；file watcher / SCM / LSM 级重构按 Non-goals 维持缺席）
 - **Goal**: 把工程工作台从「单文件查看器」升级到 VS Code 日常手感:
   多文件并行编辑、资源管理器内新建/重命名、全局搜索跳转、保存即诊断。
 - **Non-goals**: file watcher（需原生 host 新能力,另行评估）;SCM;LSP 级
