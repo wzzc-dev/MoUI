@@ -185,8 +185,27 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
           @moui.Effect::none(),
         ),
       )
-    RemoveProject(index) =>
-      Some((remove_project_at(model, index), @moui.Effect::none()))
+    RemoveProject(index) => {
+      let removed = remove_project_at(model, index)
+      mark_projects_dirty(removed)
+      Some((removed, @moui.Effect::none()))
+    }
+    // 扫描进度(G2):节流回调读数,一行显示;完成臂统一清 None
+    ProjectScanProgress(p) =>
+      Some(
+        (
+          {
+            ..model,
+            scan_progress: Some(
+              text_with(translator(model), "app.project.scanning", [
+                ("n", p.scanned_dirs.to_string()),
+                ("path", p.current),
+              ]),
+            ),
+          },
+          @moui.Effect::none(),
+        ),
+      )
     SelectSemanticNode(index) => {
       // 选中语义节点:label 预填进编辑草稿(空 label 也能选中,草稿为空);
       // 再点同一个 = 取消选中
@@ -836,9 +855,11 @@ fn select_bottom_tab(model : Model, tab : BottomTab) -> Model {
 pub fn push_ai_card(model : Model, card : AiCard) -> Model {
   let session = model.ai_sessions.current()
   let cards = session.cards
-  cards.push(
-    AiCard::{ ..card, seq: session.card_seq, at: civil_seconds(model.clock), },
-  )
+  cards.push(AiCard::{
+    ..card,
+    seq: session.card_seq,
+    at: civil_seconds(model.clock),
+  })
   while cards.length() > AI_CARD_LIMIT {
     ignore(cards.remove(0))
   }
@@ -971,11 +992,13 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     "studio.left.toggle" =>
       update_pure(
         model,
-        SetLeftView(if model.left_view is LeftHidden {
-          LeftTree
-        } else {
-          LeftHidden
-        }),
+        SetLeftView(
+          if model.left_view is LeftHidden {
+            LeftTree
+          } else {
+            LeftHidden
+          },
+        ),
       )
     "studio.pane.live" => update_pure(model, TogglePaneLive)
     "studio.pane.blocks" => update_pure(model, TogglePaneBlocks)
@@ -1013,9 +1036,11 @@ fn run_studio_command(model : Model, id : String) -> (Model, @moui.Effect[Msg]) 
     // 不再有循环命令。composer 的 ghost 按钮也走这两条命令。
     // 会话管理（M6,对白转录）：命令面板与键盘同走 run_studio_command
     "studio.ai.new_session" =>
-      update_pure(model, AiSessionOp(AiSessionCreate(civil_seconds(model.clock))))
+      update_pure(
+        model,
+        AiSessionOp(AiSessionCreate(civil_seconds(model.clock))),
+      )
     "studio.ai.search" => update_pure(model, ToggleAiSessionSearch)
-
     "studio.ai.bar" => {
       let (next, _) = update_pure(model, SetRightView(RvContext))
       update_pure(next, SetBottomTab(BtAi))

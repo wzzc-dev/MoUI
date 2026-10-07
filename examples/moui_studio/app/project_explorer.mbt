@@ -44,6 +44,20 @@ pub fn project_explorer(
       padding=0.0,
     ).on_tap(ImportProjectRequested),
   )
+  // 扫描进度读数(G2):进行中才显示;导入完成/失败臂统一清 None
+  match model.scan_progress {
+    Some(line) =>
+      rows.push(
+        @views.text(
+          fit_label(line, (width - 24.0).max(60.0)),
+          theme=studio_theme(),
+          width~,
+          height=16.0,
+          align=TextStart,
+        ).foreground(ide_text_faint()),
+      )
+    None => ()
+  }
   // 工程列表(每个:模块名 + 根目录,选中高亮,尾部 × 移除)。
   // 只有一个工程时隐藏（下方树根行就是它——重复出现读成两个工程,实测反馈）。
   let mut index = 0

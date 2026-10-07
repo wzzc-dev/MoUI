@@ -56,7 +56,7 @@ test "explorer 渲染导入工程的模块名/包名/文件名" {
   let services = @services.AppServices::new()
   let imported = update_with_services(
       initial_model(),
-      ProjectWalkCompleted(Success(Ok(explorer_source()))),
+      ProjectScanCompleted(Success(Ok(Single(explorer_source())))),
       services,
     ).0
   let opened = explorer_apply(imported, SetLeftView(LeftProject))
@@ -100,7 +100,7 @@ test "预览工作区重放帧:JSON 命令真画到画布上" {
   let services = @services.AppServices::new()
   let imported = update_with_services(
       initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(explorer_source()))),
+      ProjectScanCompleted(Success(Ok(Single(explorer_source())))),
       services,
     ).0
   let report = @build.BuildReport::{

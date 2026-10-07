@@ -722,6 +722,10 @@
     "op.condition": "condition",
     "op.gate": "gate",
     "op.loop": "loop",
-    "op.message": "message"
+    "op.message": "message",
+    "app.project.scanning": "Scanned {n} dirs · {path}",
+    "app.project.imported_n": "Workspace imported: {n} modules",
+    "app.project.import_summary": "Imported {n} modules, {m} skipped: {reason}",
+    "app.project.import_failed": "Import failed: {reason}"
   }
 }

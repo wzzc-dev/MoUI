@@ -422,55 +422,104 @@ pub fn update_with_services(
     ProjectRootPicked(result) =>
       match result {
         Success(root) =>
+          // 扫描在服务回调链上推进;进度经 dispatch 的 emit 直发 Msg
+          // (provider/compile 的 worker 回调同款线程纪律),完成走同一条 emit。
           (
             model,
-            @project.walk_project_task(services.files(), root).effect(map=r => {
-              ProjectWalkCompleted(r)
+            @moui.Effect::dispatch(emit => {
+              let _ = @project.walk_root_task(services.files(), root, on_progress=p => {
+                emit(ProjectScanProgress(p))
+              }).start(r => emit(ProjectScanCompleted(r)))
             }),
           )
         Failure(error) =>
           (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
       }
-    ProjectWalkCompleted(result) =>
+    ProjectScanCompleted(result) =>
       match result {
-        Success(Ok(source)) =>
-          match project_record_from_source(source) {
-            Ok(record) => {
-              // 同 root 原位替换（重复导入=刷新扫描），新工程成为当前选中
-              let (projects, index) = upsert_project(model.projects, record)
-              let notified = with_notice(
-                { ..model, projects, active_project: index, },
-                text_with(translator(model), "app.project.imported", [
-                  ("name", record.module_name),
-                ]),
-                false,
-              )
-              // 预览 harness(M1):工程有逻辑入口就生成 .studio/preview
-              // 并逐文件落盘(回执 PreviewFileWritten 推进游标)
-              match preview_write_state_for(record) {
-                None => (notified, @moui.Effect::none())
-                Some(state) =>
-                  match preview_write_current(state) {
-                    None => (notified, @moui.Effect::none())
-                    Some((path, content)) =>
-                      (
-                        { ..notified, preview_write: Some(state), },
-                        services
-                        .files()
-                        .write_text(path, content)
-                        .effect(map=r => PreviewFileWritten(r)),
-                      )
-                  }
-              }
-            }
-            Err(msg) => (with_notice(model, msg, true), @moui.Effect::none())
+        Success(Ok(output)) =>
+          match output {
+            Single(source) =>
+              import_single_source(model, services.files(), source)
+            Workspace(scan) => import_workspace_scan(model, scan)
           }
         Success(Err(msg)) =>
           (with_notice(model, msg, true), @moui.Effect::none())
         Failure(error) =>
           (with_notice(model, error.message, true), @moui.Effect::none())
         Cancelled => (model, @moui.Effect::none())
+      }
+    // 工程记录存储(G2 W3):boot 读取 → 静默重扫 → 静默合并;坏文件才说话。
+    ProjectsStoreLoaded(result) =>
+      match result {
+        Success(payload) =>
+          match decode_project_store(payload) {
+            Ok((active_root, records)) =>
+              if records.is_empty() {
+                (model, @moui.Effect::none())
+              } else {
+                // 逐 root 起静默重扫;回执走 ProjectRestoreScanCompleted
+                (
+                  {
+                    ..model,
+                    projects_restore_pending: records.length(),
+                    restore_active_root: active_root,
+                  },
+                  @moui.Effect::dispatch(emit => {
+                    for entry in records {
+                      let (root, _name) = entry
+                      let _ = @project.walk_root_task(services.files(), root).start(r => {
+                          emit(ProjectRestoreScanCompleted(r))
+                        },
+                      )
+                    }
+                  }),
+                )
+              }
+            Err(message) =>
+              (with_notice(model, message, true), @moui.Effect::none())
+          }
+        // 文件不存在(首跑常态)= 不声不响
+        Failure(_) | Cancelled => (model, @moui.Effect::none())
+      }
+    ProjectRestoreScanCompleted(result) =>
+      // 静默合并:成功即 upsert(无通知无 harness——通知噪音与写盘都省);
+      // 失败成员丢弃(工程在盘上,重新导入即可)。pending 在所有臂递减,
+      // 归零时按存储的 active_root 落位选中。
+      match result {
+        Success(Ok(Single(source))) => {
+          let pending = model.projects_restore_pending - 1
+          match project_record_from_source(source) {
+            Ok(record) => {
+              let (projects, _index) = upsert_project(model.projects, record)
+              let next = {
+                ..model,
+                projects,
+                projects_restore_pending: pending,
+              }
+              if pending == 0 {
+                (finish_restore_active(next), @moui.Effect::none())
+              } else {
+                (next, @moui.Effect::none())
+              }
+            }
+            Err(_) =>
+              (
+                { ..model, projects_restore_pending: pending, },
+                @moui.Effect::none(),
+              )
+          }
+        }
+        Success(Ok(Workspace(_))) | Success(Err(_)) | Failure(_) | Cancelled =>
+          // 恢复只存单模块 root;其余回执一律静默递减
+          (
+            {
+              ..model,
+              projects_restore_pending: model.projects_restore_pending - 1,
+            },
+            @moui.Effect::none(),
+          )
       }
     // 删除工程文件(确认流续行,M0-6b):磁盘删除 → 回执后重扫工程
     // (复用导入链,upsert 原位替换刷新文件树)。
@@ -500,10 +549,9 @@ pub fn update_with_services(
                   ]),
                   false,
                 ),
-                @project.walk_project_task(services.files(), project.root).effect(map=r => {
-                    ProjectWalkCompleted(r)
-                  },
-                ),
+                @project.walk_root_task(services.files(), project.root).effect(map=r => {
+                  ProjectScanCompleted(r)
+                }),
               )
           }
         Failure(error) =>
@@ -1182,7 +1230,9 @@ fn run_subscription(
       source.subscription(interval_ms=1000.0, map=_frame => ClockUpdated(f()))
     _ => @moui.Subscription::none()
   }
-  @moui.Subscription::batch([run_subscription_plan, toast_subscription, clock_subscription])
+  @moui.Subscription::batch([
+    run_subscription_plan, toast_subscription, clock_subscription,
+  ])
 }
 
 ///|
@@ -1213,6 +1263,9 @@ pub fn program(
   /// AI 会话存储路径（M5）：非空 = native 持久化开启（init 读取 +
   /// 结构性事件写盘）；空 = 关闭（web 入口），UI 无持久化入口。
   sessions_store_path? : String = "",
+  /// 工程记录存储路径（G2）：`.studio/projects.json`（只存 root/module_name
+  /// 摘要,启动重扫拿新鲜树）；空 = 关闭（web 入口）。
+  projects_store_path? : String = "",
 ) -> @moui.Program[Model, Msg] {
   let services = environment.services()
   let timer = environment.timer()
@@ -1276,6 +1329,15 @@ pub fn program(
       }
     })
   }
+  // 工程记录存储（G2）：同款纪律,EvProjectsDirty → 写盘请求。
+  if projects_store_path != "" {
+    bus.on("studio.projects", fn(event) {
+      match event {
+        EvProjectsDirty => [ProjectsStoreWriteRequested]
+        _ => []
+      }
+    })
+  }
   // webview 命令（Web 预览重建回执）
   bus.on("studio.preview_web", fn(event) {
     match event {
@@ -1296,7 +1358,7 @@ pub fn program(
       )
       // 组合根注入了墙钟就用真实时刻播种 Model.clock（常数钟只兜底）
       let model = match wall {
-        Some(f) => { ..base, clock: f() }
+        Some(f) => { ..base, clock: f(), }
         None => base
       }
       // 会话存储（M5）：配置了路径才读；文件不存在（首跑）= Failure，
@@ -1306,6 +1368,15 @@ pub fn program(
         .files()
         .read_text(sessions_store_path)
         .effect(map=result => AiSessionsStoreLoaded(result))
+      } else {
+        @moui.Effect::none()
+      }
+      // 工程记录存储（G2）：同款;Loaded 臂解码后逐 root 静默重扫。
+      let projects_load_effect = if projects_store_path != "" {
+        services
+        .files()
+        .read_text(projects_store_path)
+        .effect(map=result => ProjectsStoreLoaded(result))
       } else {
         @moui.Effect::none()
       }
@@ -1321,6 +1392,7 @@ pub fn program(
           .read(DRAFT_SETTINGS_KEY)
           .effect(map=result => DraftLoaded(result)),
           load_effect,
+          projects_load_effect,
         ]),
       )
     },
@@ -1378,11 +1450,33 @@ pub fn program(
               model,
               services
               .files()
-              .write_text(sessions_store_path, @ai.encode_ai_sessions(model.ai_sessions))
+              .write_text(
+                sessions_store_path,
+                @ai.encode_ai_sessions(model.ai_sessions),
+              )
               .effect(map=result => AiSessionsStoreSaved(result)),
             )
           } else {
             (model, @moui.Effect::none())
+          }
+        // 工程记录存储写盘（G2）：EvProjectsDirty 翻译而来,同款纪律。
+        ProjectsStoreWriteRequested =>
+          if projects_store_path != "" {
+            (
+              model,
+              services
+              .files()
+              .write_text(projects_store_path, encode_project_store(model))
+              .effect(map=result => ProjectsStoreSaved(result)),
+            )
+          } else {
+            (model, @moui.Effect::none())
+          }
+        ProjectsStoreSaved(result) =>
+          match result {
+            Success(_) | Cancelled => (model, @moui.Effect::none())
+            Failure(error) =>
+              (push_toast(model, error.message, true), @moui.Effect::none())
           }
         // 打开项目是覆盖性动作：有未保存修改时先要确认（破坏性操作
         // 确认纪律）。确认续行带 `open_confirmed` 一次性放行标记——
@@ -1430,12 +1524,7 @@ pub fn program(
           // 是严格超集）：导入工程/表单设计器/语义补丁等服务消息只有这
           // 一层接得住——此前默认臂直通 update_pure，导入按钮点了没反应
           //（服务消息被静默丢弃，实测缺陷）。
-          let (next, effect) = update_with_services(
-            model,
-            msg,
-            services,
-            pty~,
-          )
+          let (next, effect) = update_with_services(model, msg, services, pty~)
           // 运行时检查器挂载：只有「打开 Runtime 页签 / 显式刷新」两条
           // 路径会真正采样（O(节点数) 的全树遍历），其余消息零开销通过。
           // effect 必须与原 effect 合并——确认卡的打开续行（CkOpen 的
@@ -1723,7 +1812,6 @@ fn update_with_provider(
     _ => update_with_services(model, msg, services)
   }
 }
-
 
 ///|
 /// 生成源逆解析门面：测试与未来「粘贴代码 → 积木」入口共用的唯一通道

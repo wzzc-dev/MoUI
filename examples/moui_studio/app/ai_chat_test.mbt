@@ -125,11 +125,17 @@ test "submitting stamps default title truncated to 18 chars and updated time" {
   // 24 个全角字符的 prompt → 标题取前 18 个字符
   let asked = apply(
     timed,
-    SetPrompt("一二三四五六七八九十一二三四五六七八九十一二三"),
+    SetPrompt(
+      "一二三四五六七八九十一二三四五六七八九十一二三",
+    ),
   )
   let run = apply(asked, ComposerRun)
   assert_eq(run.ai_sessions.current().title.length(), 18)
-  assert_true(run.ai_sessions.current().title.has_prefix("一二三四五六七八九十一二三四五六七八"))
+  assert_true(
+    run.ai_sessions.current().title.has_prefix(
+      "一二三四五六七八九十一二三四五六七八",
+    ),
+  )
   // updated 盖了当前墙钟(20:44:00 的 civil_seconds,必然 > 0)
   assert_true(run.ai_sessions.current().updated > 0)
   assert_false(run.ai_sessions.current().pinned)
@@ -138,10 +144,10 @@ test "submitting stamps default title truncated to 18 chars and updated time" {
 ///|
 test "submit keeps renamed title and stamps active project" {
   let imported = @app.update_with_services(
-    @app.initial_model(),
-    ProjectWalkCompleted(Success(Ok(counter_source()))),
-    @services.AppServices::new(),
-  ).0
+      @app.initial_model(),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
+      @services.AppServices::new(),
+    ).0
   let named = apply(imported, AiSessionOp(AiSessionRename(0, "我的会话")))
   let asked = apply(named, SetPrompt("随机点名"))
   let run = apply(asked, ComposerRun)
@@ -167,7 +173,9 @@ test "composer run echoes the prompt as a user bubble card" {
 ///|
 test "proposal failure pushes an error card into the timeline" {
   let model = @app.initial_model()
-  let failed = @app.proposal_from_completion(model, "这不是合法提案 JSON")
+  let failed = @app.proposal_from_completion(
+    model, "这不是合法提案 JSON",
+  )
   let cards = failed.ai_sessions.current().cards
   assert_true(cards.length() >= 1)
   assert_true(cards[cards.length() - 1].kind is @ai.CardError)
@@ -184,11 +192,17 @@ test "edit and retry restore the prompt draft from the timeline" {
   let ai_seq = cards[1].seq
   // 编辑：把提问原文回填草稿
   let edited = apply(run, EditUserPrompt(user_seq))
-  assert_eq(edited.ai_sessions.current().prompt_draft, "帮我做一个随机点名册")
+  assert_eq(
+    edited.ai_sessions.current().prompt_draft,
+    "帮我做一个随机点名册",
+  )
   // 重发：回填 + 立即重跑（时间线再长出一轮提问 + diff）
   let before = run.ai_sessions.current().cards.length()
   let retried = apply(run, RetryUserPrompt(ai_seq))
-  assert_eq(retried.ai_sessions.current().prompt_draft, "帮我做一个随机点名册")
+  assert_eq(
+    retried.ai_sessions.current().prompt_draft,
+    "帮我做一个随机点名册",
+  )
   assert_true(retried.ai_sessions.current().cards.length() > before)
 }
 
@@ -196,29 +210,29 @@ test "edit and retry restore the prompt draft from the timeline" {
 test "transcript follow toggles by scroll direction and new content" {
   let model = @app.initial_model()
   // 先下滚（跟随保持），再上滚（y 变小）→ 关跟随；再下滚 → 恢复
-  let lower = apply(model, TranscriptScrolled(@geometry.Point::new(x=0.0, y=90.0)))
+  let lower = apply(
+    model,
+    TranscriptScrolled(@geometry.Point::new(x=0.0, y=90.0)),
+  )
   assert_true(lower.transcript_follow)
   let up = apply(lower, TranscriptScrolled(@geometry.Point::new(x=0.0, y=50.0)))
   assert_false(up.transcript_follow)
   let down = apply(up, TranscriptScrolled(@geometry.Point::new(x=0.0, y=90.0)))
   assert_true(down.transcript_follow)
   // 非跟随态：新卡不触发贴底请求；恢复后：新卡强制贴底
-  let quiet = @app.push_ai_card(
-    down,
-    @app.AiCard::{
-      kind: @ai.CardUserPrompt,
-      title: "",
-      body: "x",
-      steps: [],
-      steps_done: 0,
-      progress: 0,
-      diff_lines: [],
-      settled: true,
-      settled_note: "",
-      seq: 0,
-      at: 0,
-    },
-  )
+  let quiet = @app.push_ai_card(down, @app.AiCard::{
+    kind: @ai.CardUserPrompt,
+    title: "",
+    body: "x",
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: true,
+    settled_note: "",
+    seq: 0,
+    at: 0,
+  })
   let seq_before = quiet.transcript_scroll_seq
   assert_eq(quiet.transcript_scroll_seq, seq_before)
   let seq_before2 = quiet.transcript_scroll_seq
@@ -226,22 +240,19 @@ test "transcript follow toggles by scroll direction and new content" {
   assert_true(follower.transcript_scroll_seq > seq_before2)
   // 「before」必须先取值：push 原地改 mut 字段,follower 与 bumped 同记录
   let seq_before_bump = follower.transcript_scroll_seq
-  let _bumped = @app.push_ai_card(
-    follower,
-    @app.AiCard::{
-      kind: @ai.CardUserPrompt,
-      title: "",
-      body: "y",
-      steps: [],
-      steps_done: 0,
-      progress: 0,
-      diff_lines: [],
-      settled: true,
-      settled_note: "",
-      seq: 0,
-      at: 0,
-    },
-  )
+  let _bumped = @app.push_ai_card(follower, @app.AiCard::{
+    kind: @ai.CardUserPrompt,
+    title: "",
+    body: "y",
+    steps: [],
+    steps_done: 0,
+    progress: 0,
+    diff_lines: [],
+    settled: true,
+    settled_note: "",
+    seq: 0,
+    at: 0,
+  })
   assert_true(follower.transcript_scroll_seq > seq_before_bump)
 }
 
@@ -250,8 +261,14 @@ test "switching sessions resets transcript scroll to follow" {
   let model = @app.initial_model()
   let asked = apply(model, SetPrompt("帮我做一个随机点名册"))
   let run = apply(asked, ComposerRun)
-  let scrolled = apply(run, TranscriptScrolled(@geometry.Point::new(x=0.0, y=40.0)))
-  let scrolled = apply(scrolled, TranscriptScrolled(@geometry.Point::new(x=0.0, y=10.0)))
+  let scrolled = apply(
+    run,
+    TranscriptScrolled(@geometry.Point::new(x=0.0, y=40.0)),
+  )
+  let scrolled = apply(
+    scrolled,
+    TranscriptScrolled(@geometry.Point::new(x=0.0, y=10.0)),
+  )
   assert_false(scrolled.transcript_follow)
   let created = apply(scrolled, AiSessionOp(AiSessionCreate(0)))
   assert_true(created.transcript_follow)
@@ -371,7 +388,10 @@ test "keyboard n creates a session and palette ids dispatch" {
   assert_true(has_search)
   // 会话容器是共享可变引用（amend 语义）：model 已被上面的 create 原地
   // 改过——命令面板 dispatch 必须用**新鲜**模型断言,否则计数叠加。
-  let via_palette = apply(@app.initial_model(), StudioCommandRun("studio.ai.new_session"))
+  let via_palette = apply(
+    @app.initial_model(),
+    StudioCommandRun("studio.ai.new_session"),
+  )
   assert_eq(via_palette.ai_sessions.count(), 2)
   let searched = apply(model, StudioCommandRun("studio.ai.search"))
   assert_true(searched.ai_sessions_search_open)

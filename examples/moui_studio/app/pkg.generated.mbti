@@ -368,6 +368,8 @@ pub fn declaration_line_of(Model, Int) -> Int
 
 pub fn declaration_strip(Model, Double) -> @core.View[Msg]
 
+pub fn decode_project_store(String) -> Result[(String, Array[(String, String)]), String]
+
 pub fn default_studio_clock() -> StudioClock
 
 pub fn default_viewport_size() -> @core.Size
@@ -396,6 +398,8 @@ pub fn empty_provider_config() -> ProviderConfig
 
 pub fn empty_stage(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
+pub fn encode_project_store(Model) -> String
+
 pub fn error_message(@moui_i18n.Translator, @studio_lang.LangError) -> String
 
 pub fn explanation_system_prompt() -> String
@@ -407,6 +411,8 @@ pub fn fill_row(Array[@core.View[Msg]], Double, Double, @style.CrossAlign) -> @c
 pub fn filter_studio_commands(Array[StudioCommand], String) -> Array[StudioCommand]
 
 pub fn find_literal_span(String, String) -> (Int, Int)?
+
+pub fn finish_restore_active(Model) -> Model
 
 pub fn first_control_name(Array[@ir.Control]) -> String
 
@@ -516,6 +522,10 @@ pub fn ide_warning() -> @core.Color
 
 pub fn ide_warning_soft() -> @core.Color
 
+pub fn import_single_source(Model, @services.FileServices, @project.ProjectSource) -> (Model, @core.Effect[Msg])
+
+pub fn import_workspace_scan(Model, @project.WorkspaceScan) -> (Model, @core.Effect[Msg])
+
 pub fn initial_model(provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty_available? : Bool, profile? : StudioProfile) -> Model
 
 pub fn inline_card(@core.Color, @core.View[Msg], Double, Bool) -> @core.View[Msg]
@@ -541,6 +551,8 @@ pub fn local_explanation(Model) -> String
 pub fn log_line(Model, LogLevel, String) -> Model
 
 pub fn mark_ai_sessions_dirty(Model) -> Unit
+
+pub fn mark_projects_dirty(Model) -> Unit
 
 pub fn markdown_blocks_view(Array[@markdown.MarkdownBlock], Double) -> @core.View[Msg]
 
@@ -588,7 +600,7 @@ pub fn problem_rows(Model, @moui_i18n.Translator) -> Array[ProblemRow]
 
 pub fn problems_pane(Model, @moui_i18n.Translator, Double, Double) -> @core.View[Msg]
 
-pub fn program(environment? : @services.AppEnvironment, provider_submit? : (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : @kernel.PreviewWebControls[Msg], provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty? : @kernel.PtyService[Msg], focus_terminal? : () -> Unit, profile? : StudioProfile, apply_locale? : (String) -> Unit, wall_clock? : (() -> StudioClock)?, sessions_store_path? : String) -> @core.Program[Model, Msg]
+pub fn program(environment? : @services.AppEnvironment, provider_submit? : (@kernel.ProviderRequestSpec, (Result[String, String]) -> Unit) -> Unit, compile_submit? : (String, String, (@export.CompileProgress) -> Unit, (Result[@export.CompileReport, String]) -> Unit) -> Unit, launch_submit? : (String, (Result[Unit, String]) -> Unit) -> Unit, runtime_snapshot? : () -> RuntimeInspectSample?, compile_cancel? : () -> Unit, build_submit? : (@build.BuildKind, String, String, (Result[@build.BuildReport, String]) -> Unit) -> Unit, build_cancel? : () -> Unit, webview_controller? : @host.WebViewController?, preview_web? : @kernel.PreviewWebControls[Msg], provider_config? : ProviderConfig, compile_track_available? : Bool, export_available? : Bool, immersive? : Bool, pty? : @kernel.PtyService[Msg], focus_terminal? : () -> Unit, profile? : StudioProfile, apply_locale? : (String) -> Unit, wall_clock? : (() -> StudioClock)?, sessions_store_path? : String, projects_store_path? : String) -> @core.Program[Model, Msg]
 
 pub fn program_tree(Model) -> Array[TreeNode]
 
@@ -1123,6 +1135,9 @@ pub(all) struct Model {
   tree_collapsed : Array[String]
   projects : Array[ProjectRecord]
   active_project : Int
+  scan_progress : String?
+  projects_restore_pending : Int
+  restore_active_root : String
   project_tree_collapsed : Array[String]
   selected_project_file : String?
   open_project_file : OpenProjectFile?
@@ -1318,7 +1333,12 @@ pub(all) enum Msg {
   OpenReadCompleted(@services.ServiceTaskResult[String])
   ImportProjectRequested
   ProjectRootPicked(@services.ServiceTaskResult[String])
-  ProjectWalkCompleted(@services.ServiceTaskResult[Result[@project.ProjectSource, String]])
+  ProjectScanCompleted(@services.ServiceTaskResult[Result[@project.ProjectScanOutput, String]])
+  ProjectScanProgress(@project.WalkProgress)
+  ProjectsStoreLoaded(@services.ServiceTaskResult[String])
+  ProjectRestoreScanCompleted(@services.ServiceTaskResult[Result[@project.ProjectScanOutput, String]])
+  ProjectsStoreWriteRequested
+  ProjectsStoreSaved(@services.ServiceTaskResult[Unit])
   SetActiveProject(Int)
   ToggleProjectPackage(String)
   SelectProjectFile(String)
@@ -1599,6 +1619,7 @@ pub(all) enum StudioEvent {
   EvPreviewWebReload
   EvProposalAccepted(Int, String)
   EvAiSessionsDirty
+  EvProjectsDirty
 }
 
 pub(all) enum StudioPerspective {

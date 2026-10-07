@@ -1585,7 +1585,7 @@ test "proposal diff shows code text and accept triggers codegen write" {
   // 在册工程让采纳的写盘事件有目标（counter 工程导入；事件驱动见 app/events.mbt）
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       @services.AppServices::new(),
     ).0
   let model = apply(imported, SetPrompt("帮我做一个随机点名"))
@@ -1734,7 +1734,7 @@ test "ai perspective walks prompt to proposal to accept with isolated sessions" 
   // 在册工程（写盘事件有目标）+ 切到 AI 模式（预设：左栏会话列表/右栏收起）
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       @services.AppServices::new(),
     ).0
   let in_mode = apply(imported, SetPerspective(PsAi))

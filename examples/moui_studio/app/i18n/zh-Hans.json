@@ -722,6 +722,10 @@
     "op.condition": "条件",
     "op.gate": "闸门",
     "op.loop": "循环",
-    "op.message": "信息框"
+    "op.message": "信息框",
+    "app.project.scanning": "已扫描 {n} 个目录 · {path}",
+    "app.project.imported_n": "工作区已导入：{n} 个模块",
+    "app.project.import_summary": "已导入 {n} 个模块，{m} 个跳过：{reason}",
+    "app.project.import_failed": "导入失败：{reason}"
   }
 }

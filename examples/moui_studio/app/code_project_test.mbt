@@ -63,12 +63,13 @@ test "select template emits code project write only with a write target" {
   // 有在册工程：事件带目标目录与双腿全文（M1 事件化，组合根监听器写盘）
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       @services.AppServices::new(),
     ).0
   let emitted = apply(imported, SelectTemplate(1))
   match emitted.outbox {
-    [EvCodeProjectWrite(dir, form_mbt, handlers_mbt), ..] => {
+    // import 步已入队 EvProjectsDirty(真实程序每趟排空),这里断言尾部事件
+    [.., EvCodeProjectWrite(dir, form_mbt, handlers_mbt)] => {
       assert_true(dir.contains("/"))
       assert_true(form_mbt.contains("place(@views."))
       assert_true(handlers_mbt.contains("fn studio_"))

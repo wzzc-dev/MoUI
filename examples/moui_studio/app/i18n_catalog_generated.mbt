@@ -770,6 +770,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.no_entry",
         GeneratedI18nMessage::Text("This project has no matching entry package"),
       ),
+      (
+        "app.project.scanning",
+        GeneratedI18nMessage::Text("Scanned {n} dirs · {path}"),
+      ),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("Confirm send")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("no handler")),
@@ -973,6 +977,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("A build is already running"),
       ),
       ("app.project.design_tab", GeneratedI18nMessage::Text("Layout")),
+      (
+        "app.project.imported_n",
+        GeneratedI18nMessage::Text("Workspace imported: {n} modules"),
+      ),
       ("app.project.kind.plain", GeneratedI18nMessage::Text("package")),
       (
         "app.project.no_project",
@@ -1317,6 +1325,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Proposal rejected"),
       ),
       (
+        "app.project.import_failed",
+        GeneratedI18nMessage::Text("Import failed: {reason}"),
+      ),
+      (
         "app.project.label_patched",
         GeneratedI18nMessage::Text("Patched: {a}, rebuilding preview"),
       ),
@@ -1417,6 +1429,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.project.external_check",
         GeneratedI18nMessage::Text("Check external changes"),
+      ),
+      (
+        "app.project.import_summary",
+        GeneratedI18nMessage::Text(
+          "Imported {n} modules, {m} skipped: {reason}",
+        ),
       ),
       (
         "app.project.preview_failed",
@@ -2461,6 +2479,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.no_entry",
         GeneratedI18nMessage::Text("该工程缺少对应的入口包"),
       ),
+      (
+        "app.project.scanning",
+        GeneratedI18nMessage::Text("已扫描 {n} 个目录 · {path}"),
+      ),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("确认送出")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("app.statusbar.nofile", GeneratedI18nMessage::Text("未选中子程序")),
@@ -2656,6 +2678,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("已有构建在进行,请等它结束"),
       ),
       ("app.project.design_tab", GeneratedI18nMessage::Text("布局设计")),
+      (
+        "app.project.imported_n",
+        GeneratedI18nMessage::Text("工作区已导入：{n} 个模块"),
+      ),
       ("app.project.kind.plain", GeneratedI18nMessage::Text("包")),
       (
         "app.project.no_project",
@@ -2983,6 +3009,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("提案已拒绝"),
       ),
       (
+        "app.project.import_failed",
+        GeneratedI18nMessage::Text("导入失败：{reason}"),
+      ),
+      (
         "app.project.label_patched",
         GeneratedI18nMessage::Text("已修改:{a},正在重建预览"),
       ),
@@ -3088,6 +3118,12 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.project.external_check",
         GeneratedI18nMessage::Text("检查外部修改"),
+      ),
+      (
+        "app.project.import_summary",
+        GeneratedI18nMessage::Text(
+          "已导入 {n} 个模块，{m} 个跳过：{reason}",
+        ),
       ),
       (
         "app.project.preview_failed",

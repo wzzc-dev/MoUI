@@ -129,6 +129,8 @@ async fn main {
       // AI 会话存储（M5）：native 持久化开启（相对 moon run 的仓库根,
       // .studio/ 已在 .gitignore）；web 入口不传 = 显式关闭。
       sessions_store_path=".studio/ai_sessions.json",
+      // 工程记录存储（G2）：同款;只存 root/module_name 摘要,启动重扫。
+      projects_store_path=".studio/projects.json",
       apply_locale=tag => {
         match runtime_ref.val {
           Some(runtime) =>

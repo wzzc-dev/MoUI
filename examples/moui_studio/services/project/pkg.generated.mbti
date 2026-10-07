@@ -16,7 +16,11 @@ pub const PREVIEW_STAGE_HEIGHT : Double = 480.0
 
 pub const PREVIEW_STAGE_WIDTH : Double = 640.0
 
+pub fn normalize_workspace_member(String) -> String?
+
 pub fn parse_module_manifest(String) -> Result[ModuleManifest, String]
+
+pub fn parse_moon_work(String) -> Result[Array[String], String]
 
 pub fn parse_package_manifest(rel_path~ : String, String) -> Result[PackageManifest, String]
 
@@ -26,7 +30,7 @@ pub fn scan_module(ModuleManifest, Array[(String, String, Bool, Array[String])])
 
 pub fn scan_package_paths(Array[LayoutEntry]) -> Array[String]
 
-pub fn walk_project_task(@services.FileServices, String) -> @services.ServiceTask[Result[ProjectSource, String]]
+pub fn walk_root_task(@services.FileServices, String, on_progress? : (WalkProgress) -> Unit) -> @services.ServiceTask[Result[ProjectScanOutput, String]]
 
 // Errors
 
@@ -69,6 +73,11 @@ pub(all) struct PackageManifest {
   supported_targets : String
 }
 
+pub(all) enum ProjectScanOutput {
+  Single(ProjectSource)
+  Workspace(WorkspaceScan)
+}
+
 pub(all) struct ProjectSource {
   root : String
   module_manifest : String
@@ -89,6 +98,17 @@ pub(all) struct ScannedPackage {
   has_program : Bool
   kind : PackageKind
   files : Array[String]
+}
+
+pub(all) struct WalkProgress {
+  scanned_dirs : Int
+  current : String
+}
+
+pub(all) struct WorkspaceScan {
+  root : String
+  loaded : Array[ProjectSource]
+  failed : Array[(String, String)]
 }
 
 // Type aliases

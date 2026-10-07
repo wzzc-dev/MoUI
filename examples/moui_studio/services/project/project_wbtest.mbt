@@ -483,10 +483,10 @@ test "walk 走完 counter 形目录树并喂饱纯扫描(全链)" {
   texts["/root/macos_skia/moon.pkg"] = entry_pkg_source()
   texts["/root/macos_skia/main.mbt"] = "fn main { }"
   let files = fake_file_services(directories, texts)
-  let outcome : Ref[@services.ServiceTaskResult[Result[ProjectSource, String]]?] = Ref(
-    None,
-  )
-  let _ = walk_project_task(files, "/root").start(result => {
+  let outcome : Ref[
+    @services.ServiceTaskResult[Result[ProjectScanOutput, String]]?,
+  ] = Ref(None)
+  let _ = walk_root_task(files, "/root").start(result => {
     outcome.val = Some(result)
   })
   let walked = match outcome.val {
@@ -494,7 +494,7 @@ test "walk 走完 counter 形目录树并喂饱纯扫描(全链)" {
     None => fail("walker 未完成")
   }
   match walked {
-    Success(Ok(project)) => {
+    Success(Ok(Single(project))) => {
       assert_eq(project.root, "/root")
       assert_eq(project.package_sources.length(), 3)
       // app 包:清单文本 + program 探测命中
@@ -515,6 +515,7 @@ test "walk 走完 counter 形目录树并喂饱纯扫描(全链)" {
       }
     }
     Success(Err(msg)) => fail("walk 不应报域错误:\{msg}")
+    Success(Ok(Workspace(_))) => fail("单模块不应走工作区模式")
     Failure(error) => fail("walk 不应失败:\{error.message}")
     Cancelled => fail("walk 不应被取消")
   }
@@ -538,19 +539,20 @@ test "walk 跳过 .git 等构建目录" {
   texts["/root/app/moon.pkg"] = entry_pkg_source()
   texts["/root/app/a.mbt"] = ""
   let files = fake_file_services(directories, texts)
-  let outcome : Ref[@services.ServiceTaskResult[Result[ProjectSource, String]]?] = Ref(
-    None,
-  )
-  let _ = walk_project_task(files, "/root").start(result => {
+  let outcome : Ref[
+    @services.ServiceTaskResult[Result[ProjectScanOutput, String]]?,
+  ] = Ref(None)
+  let _ = walk_root_task(files, "/root").start(result => {
     outcome.val = Some(result)
   })
   match outcome.val {
-    Some(Success(Ok(project))) =>
+    Some(Success(Ok(Single(project)))) =>
       // 只访问了根与 app;.git 不产生包条目
       assert_eq(project.package_sources, [
         ("app", entry_pkg_source(), false, ["moon.pkg", "a.mbt"]),
       ])
     Some(Success(Err(msg))) => fail("walk 不应报域错误:\{msg}")
+    Some(Success(Ok(Workspace(_)))) => fail("单模块不应走工作区模式")
     Some(Failure(error)) => fail("walk 不应失败:\{error.message}")
     Some(Cancelled) => fail("walk 不应被取消")
     None => fail("walker 未完成")
@@ -563,10 +565,10 @@ test "walk 无 moon.mod 报域错误" {
   let texts : Map[String, String] = Map([])
   directories["/root"] = [dir_entry("readme.md", "/root", false)]
   let files = fake_file_services(directories, texts)
-  let outcome : Ref[@services.ServiceTaskResult[Result[ProjectSource, String]]?] = Ref(
-    None,
-  )
-  let _ = walk_project_task(files, "/root").start(result => {
+  let outcome : Ref[
+    @services.ServiceTaskResult[Result[ProjectScanOutput, String]]?,
+  ] = Ref(None)
+  let _ = walk_root_task(files, "/root").start(result => {
     outcome.val = Some(result)
   })
   match outcome.val {
@@ -578,6 +580,185 @@ test "walk 无 moon.mod 报域错误" {
     Some(Success(Ok(_))) => fail("无 moon.mod 应报域错误")
     Some(Failure(error)) => fail("不应走基础设施失败:\{error.message}")
     Some(Cancelled) => fail("不应被取消")
+    None => fail("walker 未完成")
+  }
+}
+
+///|
+/// 本仓库根 moon.work 的缩影(含 `//` 注释行,考注释剥离与成员归一)。
+fn repo_work_source() -> String {
+  let text =
+    #|members = [
+    #|  // 框架核心
+    #|  "./moui",
+    #|  "./moui_richtext",
+    #|  // 示例
+    #|  "./examples/moui_studio",
+    #|  "./examples/momark",
+    #|]
+  text
+}
+
+///|
+test "moon.work 解析:真实样例 + 注释剥离 + ./ 归一" {
+  match parse_moon_work(repo_work_source()) {
+    Ok(members) =>
+      assert_eq(members, [
+        "moui", "moui_richtext", "examples/moui_studio", "examples/momark",
+      ])
+    Err(msg) => fail("moon.work 应可解析:\{msg}")
+  }
+}
+
+///|
+test "moon.work 单行块与根自身条目拒绝" {
+  match parse_moon_work("members = [ \"./a\", \".\", \"./b\" ]") {
+    Ok(members) => assert_eq(members, ["a", "b"])
+    Err(msg) => fail("单行块应可解析:\{msg}")
+  }
+}
+
+///|
+test "moon.work 坏清单结构化报错" {
+  match parse_moon_work("name = \"x\"") {
+    Ok(_) => fail("缺 members 应报错")
+    Err(msg) => assert_true(msg.contains("members"), msg~)
+  }
+  match parse_moon_work("members = [\n  \"./a\",\n") {
+    Ok(_) => fail("未闭合块应报错")
+    Err(msg) => assert_true(msg.contains("未闭合"), msg~)
+  }
+}
+
+///|
+test "walk 根目录 moon.work → 工作区逐成员扫描,成员失败不炸单" {
+  let directories : Map[String, Array[@services.DirectoryEntry]] = Map([])
+  let texts : Map[String, String] = Map([])
+  directories["/root"] = [
+    dir_entry("moon.work", "/root", false),
+    dir_entry("good", "/root", true),
+    dir_entry("bad", "/root", true),
+  ]
+  directories["/root/good"] = [
+    dir_entry("moon.mod", "/root/good", false),
+    dir_entry("app", "/root/good", true),
+  ]
+  directories["/root/good/app"] = [
+    dir_entry("moon.pkg", "/root/good/app", false),
+    dir_entry("app.mbt", "/root/good/app", false),
+  ]
+  // bad 成员:目录存在但没有 moon.mod
+  directories["/root/bad"] = [dir_entry("readme.md", "/root/bad", false)]
+  texts["/root/moon.work"] = "members = [ \"./good\", \"./bad\" ]"
+  texts["/root/good/moon.mod"] = counter_mod_source()
+  texts["/root/good/app/moon.pkg"] = plain_two_import_pkg()
+  let files = fake_file_services(directories, texts)
+  let outcome : Ref[
+    @services.ServiceTaskResult[Result[ProjectScanOutput, String]]?,
+  ] = Ref(None)
+  let _ = walk_root_task(files, "/root").start(result => {
+    outcome.val = Some(result)
+  })
+  match outcome.val {
+    Some(Success(Ok(Workspace(scan)))) => {
+      assert_eq(scan.root, "/root")
+      assert_eq(scan.loaded.length(), 1)
+      assert_eq(scan.loaded[0].root, "/root/good")
+      assert_eq(scan.failed.length(), 1)
+      let (path, reason) = scan.failed[0]
+      assert_eq(path, "bad")
+      assert_true(reason.contains("moon.mod"), msg=reason)
+    }
+    Some(Success(Ok(Single(_)))) => fail("moon.work 应走工作区模式")
+    Some(Success(Err(msg))) => fail("成员失败不应炸整单:\{msg}")
+    Some(Failure(error)) => fail("walk 不应失败:\{error.message}")
+    Some(Cancelled) => fail("walk 不应被取消")
+    None => fail("walker 未完成")
+  }
+}
+
+///|
+test "walk 工作区模式不深读 .mbt(program 探测关闭)" {
+  let directories : Map[String, Array[@services.DirectoryEntry]] = Map([])
+  let texts : Map[String, String] = Map([])
+  directories["/root"] = [
+    dir_entry("moon.work", "/root", false),
+    dir_entry("m", "/root", true),
+  ]
+  directories["/root/m"] = [
+    dir_entry("moon.mod", "/root/m", false),
+    dir_entry("app", "/root/m", true),
+  ]
+  directories["/root/m/app"] = [
+    dir_entry("moon.pkg", "/root/m/app", false),
+    dir_entry("app.mbt", "/root/m/app", false),
+  ]
+  texts["/root/moon.work"] = "members = [ \"./m\" ]"
+  texts["/root/m/moon.mod"] = counter_mod_source()
+  texts["/root/m/app/moon.pkg"] = plain_two_import_pkg()
+  // 工作区模式不读 .mbt——假 FS 里根本不提供该文件,读到了反而说明越界
+  let files = fake_file_services(directories, texts)
+  let outcome : Ref[
+    @services.ServiceTaskResult[Result[ProjectScanOutput, String]]?,
+  ] = Ref(None)
+  let _ = walk_root_task(files, "/root").start(result => {
+    outcome.val = Some(result)
+  })
+  match outcome.val {
+    Some(Success(Ok(Workspace(scan)))) => {
+      assert_eq(scan.loaded.length(), 1)
+      assert_eq(scan.loaded[0].package_sources.length(), 1)
+      // has_program 恒 false(入口判定只按目录名约定,规模治理)
+      assert_eq(scan.loaded[0].package_sources[0].2, false)
+    }
+    Some(Success(Ok(Single(_)))) => fail("moon.work 应走工作区模式")
+    Some(Success(Err(msg))) => fail("不应报域错误:\{msg}")
+    Some(Failure(error)) => fail("不应触发 .mbt 读取:\{error.message}")
+    Some(Cancelled) => fail("walk 不应被取消")
+    None => fail("walker 未完成")
+  }
+}
+
+///|
+test "walk 工作区成员超每成员目录上限 → 成员失败不炸单" {
+  let directories : Map[String, Array[@services.DirectoryEntry]] = Map([])
+  let texts : Map[String, String] = Map([])
+  directories["/root"] = [
+    dir_entry("moon.work", "/root", false),
+    dir_entry("big", "/root", true),
+    dir_entry("ok", "/root", true),
+  ]
+  // big 成员铺 WALK_MAX_DIRS + 1 个子目录,逼出每成员上限
+  let big_entries : Array[@services.DirectoryEntry] = []
+  for i in 0..<(WALK_MAX_DIRS + 1) {
+    let name = "d\{i}"
+    big_entries.push(dir_entry(name, "/root/big", true))
+    directories["/root/big/\{name}"] = []
+  }
+  directories["/root/big"] = big_entries
+  directories["/root/ok"] = [dir_entry("moon.mod", "/root/ok", false)]
+  texts["/root/moon.work"] = "members = [ \"./big\", \"./ok\" ]"
+  texts["/root/ok/moon.mod"] = counter_mod_source()
+  let files = fake_file_services(directories, texts)
+  let outcome : Ref[
+    @services.ServiceTaskResult[Result[ProjectScanOutput, String]]?,
+  ] = Ref(None)
+  let _ = walk_root_task(files, "/root").start(result => {
+    outcome.val = Some(result)
+  })
+  match outcome.val {
+    Some(Success(Ok(Workspace(scan)))) => {
+      assert_eq(scan.loaded.length(), 1)
+      assert_eq(scan.loaded[0].root, "/root/ok")
+      assert_eq(scan.failed.length(), 1)
+      let (path, reason) = scan.failed[0]
+      assert_eq(path, "big")
+      assert_true(reason.contains("目录数超过"), msg=reason)
+    }
+    Some(Success(Ok(Single(_)))) => fail("moon.work 应走工作区模式")
+    Some(Success(Err(msg))) => fail("成员超限不应炸整单:\{msg}")
+    Some(Failure(error)) => fail("walk 不应失败:\{error.message}")
+    Some(Cancelled) => fail("walk 不应被取消")
     None => fail("walker 未完成")
   }
 }

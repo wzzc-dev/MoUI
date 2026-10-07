@@ -300,6 +300,7 @@ pub extend StudioPerspective with Eq::{not_equal, equal}
 /// 右栏当前视图：取代旧 `right_visible`（布尔）与 `ai_anchor` 的 AiDocked 档
 /// 的 2×2 组合——单一枚举消除两状态互拉（历史上出过「收起底栏 AI 自己跑
 /// 去右栏」的事故，根因就是两个独立状态描述同一件事）。
+
 ///|
 /// AI 工作区面板（RvWorkspace）的页签：更改（提案历史）/ 文件（工程树）。
 pub(all) enum RightPanelTab {
@@ -660,6 +661,14 @@ pub(all) struct Model {
   // Studio 自身的 .studio.json 程序仍是主编辑上下文，真源切换在 M6。
   projects : Array[ProjectRecord]
   active_project : Int
+  // 扫描进度读数（G2）：进行中 = 资源管理器头部一行「已扫描 N 目录」;
+  // 完成即清 None。
+  scan_progress : String?
+  // 工程记录恢复中（G2 W3）：>0 = 还有 N 个 boot 重扫未回来（静默合并）;
+  // 0 = 常规导入语义（带通知与预览 harness）。restore_active_root 是本次
+  // 恢复要重新选中的工程根（全部重扫回来时落位）。
+  projects_restore_pending : Int
+  restore_active_root : String
   // 资源管理器:折叠的包(相对路径)与选中的文件(相对路径)
   project_tree_collapsed : Array[String]
   selected_project_file : String?
@@ -1028,12 +1037,23 @@ pub(all) enum Msg {
   OpenReadCompleted(@services.ServiceTaskResult[String])
   // === 工程工作台消息（M0）：导入 MoonBit 工程 ===
   // 链条：ImportProjectRequested（选目录）→ ProjectRootPicked（目录确定，
-  // 起 walk 任务）→ ProjectWalkCompleted（树走完，解析成工程记录）。
+  // 走扫描任务）→ ProjectScanCompleted（扫描完：单模块或 moon.work 工作区）。
   ImportProjectRequested
   ProjectRootPicked(@services.ServiceTaskResult[String])
-  ProjectWalkCompleted(
-    @services.ServiceTaskResult[Result[@project.ProjectSource, String]]
+  ProjectScanCompleted(
+    @services.ServiceTaskResult[Result[@project.ProjectScanOutput, String]]
   )
+  // 扫描进度（节流回调）：资源管理器头部一行读数（G2）
+  ProjectScanProgress(@project.WalkProgress)
+  // 工程记录存储（G2 W3）：boot 读取回执 → 解码 → 逐 root 静默重扫；
+  // 重扫回执走静默合并（不弹通知、不产 harness）；写盘请求/回执与
+  // ai-sessions 同款纪律。
+  ProjectsStoreLoaded(@services.ServiceTaskResult[String])
+  ProjectRestoreScanCompleted(
+    @services.ServiceTaskResult[Result[@project.ProjectScanOutput, String]]
+  )
+  ProjectsStoreWriteRequested
+  ProjectsStoreSaved(@services.ServiceTaskResult[Unit])
   // 资源管理器导航(纯状态):选中工程 / 折叠包 / 选中文件 / 会话内移除工程
   SetActiveProject(Int)
   ToggleProjectPackage(String)
@@ -1356,6 +1376,9 @@ pub fn initial_model(
     tree_collapsed: [],
     projects: [],
     active_project: -1,
+    scan_progress: None,
+    projects_restore_pending: 0,
+    restore_active_root: "",
     project_tree_collapsed: [],
     selected_project_file: None,
     open_project_file: None,

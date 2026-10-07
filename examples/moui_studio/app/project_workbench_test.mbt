@@ -43,7 +43,7 @@ test "导入完成:工程入库、成为当前选中、toast 报名" {
   let services = @services.AppServices::new()
   let (next, _) = @app.update_with_services(
     @app.initial_model(),
-    ProjectWalkCompleted(Success(Ok(counter_source()))),
+    ProjectScanCompleted(Success(Ok(Single(counter_source())))),
     services,
   )
   assert_eq(next.projects.length(), 1)
@@ -63,12 +63,12 @@ test "重复导入同根工程:原位替换不新增" {
   let services = @services.AppServices::new()
   let first = @app.update_with_services(
       @app.initial_model(),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   let second = @app.update_with_services(
     first,
-    ProjectWalkCompleted(Success(Ok(counter_source()))),
+    ProjectScanCompleted(Success(Ok(Single(counter_source())))),
     services,
   )
   assert_eq(second.0.projects.length(), 1)
@@ -80,7 +80,7 @@ test "域级失败(目录不是 MoonBit 模块):toast 说明、不进列表" {
   let services = @services.AppServices::new()
   let (next, _) = @app.update_with_services(
     @app.initial_model(),
-    ProjectWalkCompleted(Success(Err("/root:目录里没有 moon.mod"))),
+    ProjectScanCompleted(Success(Err("/root:目录里没有 moon.mod"))),
     services,
   )
   assert_eq(next.projects.length(), 0)
@@ -94,7 +94,7 @@ test "基础设施失败(扫描坏了):toast 报服务错误" {
   let services = @services.AppServices::new()
   let (next, _) = @app.update_with_services(
     @app.initial_model(),
-    ProjectWalkCompleted(
+    ProjectScanCompleted(
       Failure(@services.ServiceError::new(code="fs", message="磁盘不可读")),
     ),
     services,
@@ -135,7 +135,7 @@ test "explorer 纯导航:选中工程/折叠包/选中文件(再点取消)" {
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   // 折叠/展开翻转
@@ -174,12 +174,12 @@ test "explorer 移除工程:会话级,active 下标随位次修正" {
   let _ = source_a
   let with_a = @app.update_with_services(
       @app.initial_model(),
-      ProjectWalkCompleted(Success(Ok(source_a))),
+      ProjectScanCompleted(Success(Ok(Single(source_a)))),
       services,
     ).0
   let with_b = @app.update_with_services(
       with_a,
-      ProjectWalkCompleted(Success(Ok(source_b))),
+      ProjectScanCompleted(Success(Ok(Single(source_b)))),
       services,
     ).0
   // b 在表头且是当前选中(0);移除 0 → a 回到选中位 0
@@ -200,7 +200,7 @@ test "文件删除确认流:置卡→确认清卡→服务执行→回执通知"
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   // 1) 请求确认:置确认卡
@@ -291,7 +291,7 @@ test "构建门:web 不可用 / 无工程 / 缺入口各自显式说话" {
   }
   let with_project = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(web_only_source))),
+      ProjectScanCompleted(Success(Ok(Single(web_only_source)))),
       services,
     ).0
   assert_eq(with_project.projects[0].scanned.native_entry, "")
@@ -309,7 +309,7 @@ test "构建运行:busy 置位 + 待执行请求按 kind 装配" {
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   let (running, _) = @app.update_with_services(
@@ -321,7 +321,8 @@ test "构建运行:busy 置位 + 待执行请求按 kind 装配" {
   // 事件驱动(M1):过门即发 EvBuildSubmit,派发给注入的 submit 由组合根
   // 监听器承担(回执仍是 ProjectBuildFinished)
   match running.outbox {
-    [EvBuildSubmit(kind, root, entry_rel)] => {
+    // import 步已入队 EvProjectsDirty(真实程序每趟排空),这里只断言尾部事件
+    [.., EvBuildSubmit(kind, root, entry_rel)] => {
       assert_eq(kind, BkWebPreview)
       assert_eq(root, "/root")
       assert_eq(entry_rel, "web_wasm")
@@ -335,7 +336,7 @@ test "构建回执:报告落 last_build,busy 复位,诊断汇进 Problems" {
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   // 基线在**任何后续变更之前**取死(共享数组的引用语义)
@@ -397,7 +398,7 @@ test "预览落盘:导入成功即建队列,回执推进,写完就绪" {
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   // 导入成功:落盘队列建立(moon.pkg + main.mbt 两个文件)
@@ -440,7 +441,7 @@ test "预览落盘失败:显式声明并放弃" {
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   let (failed, _) = @app.update_with_services(
@@ -470,7 +471,7 @@ test "FramePreview 回执:解析哨兵协议 → 帧入库" {
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   let report = @build.BuildReport::{
@@ -503,7 +504,7 @@ test "FramePreview 回执:解析失败显式报错,不落帧" {
   let services = @services.AppServices::new()
   let imported = @app.update_with_services(
       @app.initial_model(compile_track_available=true),
-      ProjectWalkCompleted(Success(Ok(counter_source()))),
+      ProjectScanCompleted(Success(Ok(Single(counter_source())))),
       services,
     ).0
   let report = @build.BuildReport::{
@@ -578,4 +579,117 @@ test "字面量 span 定位与补丁任务" {
     Some(Cancelled) => fail("不应被取消")
     None => fail("任务未完成")
   }
+}
+
+///|
+/// G2 W3:工程记录存储编码往返(root/module_name 摘要 + active_root)。
+test "工程记录存储编码往返" {
+  let services = @services.AppServices::new()
+  let (imported, _) = @app.update_with_services(
+    @app.initial_model(),
+    ProjectScanCompleted(Success(Ok(Single(counter_source())))),
+    services,
+  )
+  let (with_second, _) = @app.update_with_services(
+    imported,
+    ProjectScanCompleted(
+      Success(Ok(Single({ ..counter_source(), root: "/root_b", }))),
+    ),
+    services,
+  )
+  let encoded = @app.encode_project_store(with_second)
+  match @app.decode_project_store(encoded) {
+    Ok((active_root, records)) => {
+      assert_eq(active_root, "/root_b")
+      assert_eq(records.length(), 2)
+      // upsert 头插:后导入的在前
+      assert_eq(records[0], ("/root_b", "examples/counter"))
+    }
+    Err(msg) => fail("编码产物应可解码:\{msg}")
+  }
+}
+
+///|
+test "工程记录存储拒绝坏 JSON 与未知版本" {
+  match @app.decode_project_store("not json") {
+    Ok(_) => fail("坏 JSON 应报错")
+    Err(msg) => assert_true(msg.contains("JSON"), msg~)
+  }
+  match
+    @app.decode_project_store(
+      (
+        #|{"format":"moui.studio.projects","version":99,"projects":[]}
+      ),
+    ) {
+    Ok(_) => fail("未知版本应拒绝")
+    Err(msg) => assert_true(msg.contains("未知版本"), msg~)
+  }
+}
+
+///|
+/// G2 W3:boot 恢复链——Loaded 起静默重扫,回执逐个静默合并(无通知),
+/// pending 归零时按 active_root 落位选中。
+test "boot 恢复:静默重扫合并并落位 active" {
+  let services = @services.AppServices::new()
+  let payload =
+    #|{"format":"moui.studio.projects","version":1,"active_root":"/root_b",
+    #|  "projects":[{"root":"/root_a","module_name":"a"},{"root":"/root_b","module_name":"b"}]}
+  let (loaded, _) = @app.update_with_services(
+    @app.initial_model(),
+    ProjectsStoreLoaded(Success(payload)),
+    services,
+  )
+  assert_eq(loaded.projects_restore_pending, 2)
+  assert_eq(loaded.restore_active_root, "/root_b")
+  let (restored_a, _) = @app.update_with_services(
+    loaded,
+    ProjectRestoreScanCompleted(
+      Success(Ok(Single({ ..counter_source(), root: "/root_a", }))),
+    ),
+    services,
+  )
+  assert_eq(restored_a.projects_restore_pending, 1)
+  assert_eq(restored_a.projects.length(), 1)
+  // 恢复期间不弹通知(静默合并)
+  assert_eq(restored_a.notice, "")
+  let (restored_b, _) = @app.update_with_services(
+    restored_a,
+    ProjectRestoreScanCompleted(
+      Success(Ok(Single({ ..counter_source(), root: "/root_b", }))),
+    ),
+    services,
+  )
+  assert_eq(restored_b.projects_restore_pending, 0)
+  assert_eq(restored_b.projects.length(), 2)
+  assert_eq(restored_b.restore_active_root, "")
+  // active 落位在 /root_b 的记录上
+  match @app.active_project_of(restored_b) {
+    Some(project) => assert_eq(project.root, "/root_b")
+    None => fail("恢复后应有选中工程")
+  }
+}
+
+///|
+/// G2 W2:工作区导入——逐成员入库,失败成员汇总进通知,进度读数清空。
+test "工作区导入:多成员入库 + 失败汇总" {
+  let services = @services.AppServices::new()
+  let good_a = { ..counter_source(), root: "/root_a", }
+  let good_b = { ..counter_source(), root: "/root_b", }
+  let scan : @project.WorkspaceScan = {
+    root: "/workspace",
+    loaded: [good_a, good_b],
+    failed: [("/bad", "目录里没有 moon.mod")],
+  }
+  let (next, _) = @app.update_with_services(
+    {
+      ..@app.initial_model(),
+      scan_progress: Some("已扫描 100 个目录 · x"),
+    },
+    ProjectScanCompleted(Success(Ok(Workspace(scan)))),
+    services,
+  )
+  assert_eq(next.projects.length(), 2)
+  assert_eq(next.scan_progress, None)
+  // 汇总通知要提到 1 个跳过
+  assert_true(next.notice.contains("1"), msg=next.notice)
 }
