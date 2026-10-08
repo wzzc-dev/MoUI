@@ -8,10 +8,6 @@ import {
   "wzzc-dev/moui_wgpu_renderer" @render_wgpu,
 }
 
-import {
-  "moonbitlang/core/test",
-} for "wbtest"
-
 supported_targets = "+native"
 
 pkgtype(kind: "executable")

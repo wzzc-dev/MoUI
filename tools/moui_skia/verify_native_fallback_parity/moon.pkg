@@ -5,10 +5,8 @@ import {
 }
 
 import {
-  "moonbitlang/core/test",
   "wzzc-dev/moui_tools" @tools,
 } for "wbtest"
-
 supported_targets = "+native"
 
 pkgtype(kind: "executable")

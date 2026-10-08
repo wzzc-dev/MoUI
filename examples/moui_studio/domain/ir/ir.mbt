@@ -155,6 +155,8 @@ pub(all) struct ControlProps {
   password : Bool
 } derive(Eq)
 
+pub extend ControlProps with Eq::{not_equal, equal}
+
 ///|
 pub fn ControlProps::default() -> ControlProps {
   {

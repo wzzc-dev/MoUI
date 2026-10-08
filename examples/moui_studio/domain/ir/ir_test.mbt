@@ -152,7 +152,7 @@ test "invalid control rectangles are rejected at the input boundary" {
     width: 8,
     height: 8,
     items: [],
-    props: ControlProps::default(),
+    props: @ir.ControlProps::default(),
   }
   let program : @ir.StudioProgram = {
     version: 1,
@@ -321,7 +321,7 @@ test "rect field edits clamp into the design canvas" {
     width: 100,
     height: 32,
     items: [],
-    props: ControlProps::default(),
+    props: @ir.ControlProps::default(),
   }
   // 拖出右/下边界 → 夹回画布内
   let moved = control.with_rect_field(@ir.RectX, 900)
@@ -348,7 +348,7 @@ test "resize from SE corner keeps top-left fixed and clamps" {
     width: 30,
     height: 30,
     items: [],
-    props: ControlProps::default(),
+    props: @ir.ControlProps::default(),
   }
   // 正常生长：左上角不动
   let grown = control.resize_from_corner(@ir.CornerSE, 635, 470)
@@ -380,7 +380,7 @@ test "resize from NW corner keeps bottom-right fixed and clamps" {
     width: 60,
     height: 40,
     items: [],
-    props: ControlProps::default(),
+    props: @ir.ControlProps::default(),
   }
   // 正常生长：右下角 (160, 140) 不动，左上角随指针
   let grown = control.resize_from_corner(@ir.CornerNW, 80, 90)
@@ -416,7 +416,7 @@ test "resize from NE/SW corners keeps opposite edges fixed" {
     width: 60,
     height: 40,
     items: [],
-    props: ControlProps::default(),
+    props: @ir.ControlProps::default(),
   }
   // NE：左缘与下缘固定，右缘/上缘随指针
   let ne = control.resize_from_corner(@ir.CornerNE, 200, 70)

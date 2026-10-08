@@ -1,6 +1,6 @@
 ///|
 test "NativeSurface exposes size and handle" {
-  let surface = NativeSurface::new(42, 3, 2)
+  let surface = @softbuffer.NativeSurface::new(42, 3, 2)
   assert_eq(surface.get_width(), 3)
   assert_eq(surface.get_height(), 2)
   assert_eq(surface.handle(), 42)
@@ -12,7 +12,7 @@ test "NativeSurface exposes size and handle" {
 ///|
 test "NativeSurface normalizes invalid stored dimensions" {
   let count = Ref(0)
-  let surface = NativeSurface::new(42, -2, 3).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, -2, 3).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   assert_eq(surface.get_width(), 0)
@@ -46,7 +46,7 @@ test "NativeSurface normalizes invalid stored dimensions" {
 
 ///|
 test "NativeSurface syncs RenderFrame dimensions" {
-  let surface = NativeSurface::new(42, 1, 1)
+  let surface = @softbuffer.NativeSurface::new(42, 1, 1)
   let frame = @graphics.RenderFrame::new(3, 2)
   assert_true(!surface.matches_frame(frame))
   assert_true(surface.sync_frame_size(frame))
@@ -65,7 +65,7 @@ test "NativeSurface syncs RenderFrame dimensions" {
 
 ///|
 test "NativeSurface validates present parameters" {
-  let surface = NativeSurface::new(42, 2, 2)
+  let surface = @softbuffer.NativeSurface::new(42, 2, 2)
   let pixels : FixedArray[Byte] = FixedArray::make(16, 0)
   assert_true(
     surface.present_pixels(0, 2, 8, pixels) ==
@@ -101,7 +101,7 @@ test "NativeSurface validates present parameters" {
 
 ///|
 test "NativeSurface dispatches through graphics Surface trait" {
-  let surface = NativeSurface::new(42, 2, 2)
+  let surface = @softbuffer.NativeSurface::new(42, 2, 2)
   let pixels : FixedArray[Byte] = FixedArray::make(16, 0)
   let result = @graphics.present_pixels(surface, 2, 2, 4, pixels)
   assert_true(result == Err(@graphics.PresentError::InvalidRowBytes(4, 8)))
@@ -113,7 +113,7 @@ test "NativeSurface dispatches through graphics Surface trait" {
 
 ///|
 test "NativeSurface accepts padded row bytes through shared validation" {
-  let surface = NativeSurface::new(42, 1, 2)
+  let surface = @softbuffer.NativeSurface::new(42, 1, 2)
   let pixels : FixedArray[Byte] = FixedArray::make(12, 0)
   let result = surface.present_pixels(1, 2, 8, pixels)
   assert_true(result == Ok(()))
@@ -122,7 +122,7 @@ test "NativeSurface accepts padded row bytes through shared validation" {
 ///|
 test "NativeSurface::present uses validated full-frame present path" {
   let count = Ref(0)
-  let surface = NativeSurface::new(42, 2, 2).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 2).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   let pixels : FixedArray[Byte] = FixedArray::make(16, 0)
@@ -136,7 +136,7 @@ test "NativeSurface::present uses validated full-frame present path" {
   )
   assert_eq(count.val, 1)
 
-  let zero = NativeSurface::new(42, 0, 2).with_pre_present_hook(fn() {
+  let zero = @softbuffer.NativeSurface::new(42, 0, 2).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   assert_true(
@@ -148,7 +148,7 @@ test "NativeSurface::present uses validated full-frame present path" {
 ///|
 test "NativeSurface calls pre-present hook only after validation" {
   let count = Ref(0)
-  let surface = NativeSurface::new(42, 2, 2).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 2).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   let pixels : FixedArray[Byte] = FixedArray::make(16, 0)
@@ -190,7 +190,7 @@ test "NativeSurface calls pre-present hook only after validation" {
 ///|
 test "NativeSurface builds from RenderFrame dimensions" {
   let frame = @graphics.RenderFrame::new(3, 2)
-  let surface = NativeSurface::from_frame(42, frame)
+  let surface = @softbuffer.NativeSurface::from_frame(42, frame)
   assert_eq(surface.handle(), 42)
   assert_eq(surface.get_width(), 3)
   assert_eq(surface.get_height(), 2)
@@ -205,7 +205,7 @@ test "NativeSurface present_frame_all calls hook and consumes full-frame lifecyc
   layer.get_canvas().draw_pixel(1, 0, @graphics.Color::blue())
   ignore(frame.get_layer_tree().add_layer(layer))
 
-  let surface = NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   assert_eq(count.val, 0)

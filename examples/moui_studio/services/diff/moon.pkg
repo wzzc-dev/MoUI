@@ -1,8 +1,11 @@
 import {
   "examples/moui_studio/domain/ir",
   "examples/moui_studio/domain/studio_lang",
-  "examples/moui_studio/domain/proposals",
   "examples/moui_studio/services/compiled_runtime",
 }
+
+import {
+  "examples/moui_studio/domain/proposals",
+} for "test"
 
 supported_targets = "native+wasm-gc"

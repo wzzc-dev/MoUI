@@ -42,24 +42,24 @@ pub fn[Msg] place(
 
 ///|
 /// 坐标舞台节点:按 fit 缩放 + 居中,给每个 place 分配最终帧。
-priv struct StageNode[Msg] {
+priv struct StageNode {
   design_width : Double
   design_height : Double
   rects : Array[@core.Rect]
 }
 
 ///|
-impl[Msg] @core.ViewNode for StageNode[Msg] with fn identity(_self) {
+impl @core.ViewNode for StageNode with fn identity(_self) {
   @core.ViewIdentity::new(kind="Stage")
 }
 
 ///|
-impl[Msg] @core.ViewNode for StageNode[Msg] with fn declaration(_self) {
+impl @core.ViewNode for StageNode with fn declaration(_self) {
   @core.ViewDeclaration::constant()
 }
 
 ///|
-impl[Msg] @core.ViewNode for StageNode[Msg] with fn layout(self, ctx) {
+impl @core.ViewNode for StageNode with fn layout(self, ctx) {
   let avail_w = ctx.constraints.max.width
   let avail_h = ctx.constraints.max.height
   // 适应比例:不放大(上限 1,放大只会让像素发虚);下限 0.5 保证窄窗格
@@ -98,7 +98,7 @@ impl[Msg] @core.ViewNode for StageNode[Msg] with fn layout(self, ctx) {
 }
 
 ///|
-impl[Msg] @core.ViewNode for StageNode[Msg] with fn semantics(_self) {
+impl @core.ViewNode for StageNode with fn semantics(_self) {
   // 透明组合:子控件的语义(按钮/输入框/文本…)直接对外暴露——
   // 预览点选层读到的就是舞台上的真实控件帧。
   @core.ViewSemanticsInfo::new(composition=Transparent)

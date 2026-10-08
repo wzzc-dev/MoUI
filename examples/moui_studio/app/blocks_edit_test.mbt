@@ -972,7 +972,7 @@ test "slot holes are painted beneath the label text" {
 /// G7.1.1:启动 hat——积木视图顶部的「⚡ 启动」入口在无 OnStart 时
 /// 创建 handler（CreateHandler("", OnStart)），有时切换选中。
 test "启动 hat:入口在积木窗格常显,点击创建/切换 OnStart" {
-  let model = initial_model()
+  let model = @app.initial_model()
   assert_true(
     @ir.find_handler(model.program, "", @ir.OnStart) is None,
     msg="初始不应有 OnStart",
@@ -984,7 +984,7 @@ test "启动 hat:入口在积木窗格常显,点击创建/切换 OnStart" {
     msg="CreateHandler 应创建 OnStart",
   )
   assert_true(
-    created.selected_handler == handler_key("", @ir.OnStart.tag()),
+    created.selected_handler == @app.handler_key("", @ir.OnStart.tag()),
     msg="创建后应选中 OnStart",
   )
 }

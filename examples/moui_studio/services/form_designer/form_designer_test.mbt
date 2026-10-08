@@ -1,7 +1,7 @@
 ///|
 /// 往返门(硬):parse(render(m)) == m,字段级一致。
 test "form 往返门:render → parse 字段级一致" {
-  let model : FormModel = {
+  let model : @form_designer.FormModel = {
     stage_width: 640.0,
     stage_height: 480.0,
     controls: [
@@ -27,18 +27,18 @@ test "form 往返门:render → parse 字段级一致" {
       },
     ],
   }
-  let rendered = render_form(model)
-  match parse_form(rendered) {
+  let rendered = @form_designer.render_form(model)
+  match @form_designer.parse_form(rendered) {
     Err(msg) => fail("渲染文本应可解析:\{msg}")
     Ok(parsed) =>
-      assert_true(form_model_eq(model, parsed.model), msg="往返门失败")
+      assert_true(@form_designer.form_model_eq(model, parsed.model), msg="往返门失败")
   }
 }
 
 ///|
 /// span 补丁:拖拽改 x → 源码只有 x 字面量变化,其他字段零破坏。
 test "span 补丁:改 x 不破坏其他字段,往返仍闭合" {
-  let model : FormModel = {
+  let model : @form_designer.FormModel = {
     stage_width: 640.0,
     stage_height: 480.0,
     controls: [
@@ -54,21 +54,21 @@ test "span 补丁:改 x 不破坏其他字段,往返仍闭合" {
       },
     ],
   }
-  let source = render_form(model)
-  match parse_form(source) {
+  let source = @form_designer.render_form(model)
+  match @form_designer.parse_form(source) {
     Err(msg) => fail("基线应可解析:\{msg}")
     Ok(parsed) => {
       let spans = parsed.spans[0]
       // 拖拽:x 280 → 88
-      let patched = apply_control_patch(source, spans, 88.0, 180.0, 80.0, 36.0)
-      match parse_form(patched) {
+      let patched = @form_designer.apply_control_patch(source, spans, 88.0, 180.0, 80.0, 36.0)
+      match @form_designer.parse_form(patched) {
         Err(msg) => fail("补丁后应可解析:\{msg}")
         Ok(parsed2) => {
           assert_eq(parsed2.model.controls[0].x, 88.0)
           assert_eq(parsed2.model.controls[0].y, 180.0)
           assert_eq(parsed2.model.controls[0].width, 80.0)
           // 重建基线模型(新坐标)→ 往返门再闭合
-          let updated : FormModel = {
+          let updated : @form_designer.FormModel = {
             stage_width: parsed2.model.stage_width,
             stage_height: parsed2.model.stage_height,
             controls: [
@@ -84,7 +84,7 @@ test "span 补丁:改 x 不破坏其他字段,往返仍闭合" {
               },
             ],
           }
-          assert_true(form_model_eq(updated, parsed2.model))
+          assert_true(@form_designer.form_model_eq(updated, parsed2.model))
         }
       }
     }
@@ -94,7 +94,7 @@ test "span 补丁:改 x 不破坏其他字段,往返仍闭合" {
 ///|
 /// 文本补丁:改字符串字面量(点标题改文本的同一机制)。
 test "文本补丁:点标题改文本" {
-  let model : FormModel = {
+  let model : @form_designer.FormModel = {
     stage_width: 640.0,
     stage_height: 480.0,
     controls: [
@@ -110,13 +110,13 @@ test "文本补丁:点标题改文本" {
       },
     ],
   }
-  let source = render_form(model)
-  match parse_form(source) {
+  let source = @form_designer.render_form(model)
+  match @form_designer.parse_form(source) {
     Err(msg) => fail("基线应可解析:\{msg}")
     Ok(parsed) => {
       let span = parsed.spans[0]
-      let patched = apply_text_patch(source, span.text, 14, "我的计数器")
-      match parse_form(patched) {
+      let patched = @form_designer.apply_text_patch(source, span.text, 14, "我的计数器")
+      match @form_designer.parse_form(patched) {
         Err(msg) => fail("补丁后应可解析:\{msg}")
         Ok(parsed2) =>
           assert_eq(parsed2.model.controls[0].text, "我的计数器")
@@ -128,7 +128,7 @@ test "文本补丁:点标题改文本" {
 ///|
 /// 解析错误:漂出子集的结构化报错。
 test "非子集文本结构化报错" {
-  match parse_form("fn unrelated() { 1 }") {
+  match @form_designer.parse_form("fn unrelated() { 1 }") {
     Err(msg) => assert_true(msg.contains("stage"), msg~)
     Ok(_) => fail("非子集文本应失败")
   }
@@ -138,7 +138,7 @@ test "非子集文本结构化报错" {
 /// G7.2 P3:属性进 form.mbt 子集——非默认属性命名参数往返字段级一致;
 /// 默认属性渲染整体省略(旧文件形态零变化)。
 test "props roundtrip:styled control survives parse(render(m))" {
-  let model : FormModel = {
+  let model : @form_designer.FormModel = {
     stage_width: 640.0,
     stage_height: 480.0,
     controls: [
@@ -186,7 +186,7 @@ test "props roundtrip:styled control survives parse(render(m))" {
       },
     ],
   }
-  let rendered = render_form(model)
+  let rendered = @form_designer.render_form(model)
   // 默认属性省略:非默认才渲染(第一控件 align=center 应出现;
   // 第二控件无 font_size,默认 visible 不渲染)
   assert_true(
@@ -200,17 +200,17 @@ test "props roundtrip:styled control survives parse(render(m))" {
     rendered.contains("placeholder=\"请输入昵称\""),
     msg="占位符应渲染",
   )
-  match parse_form(rendered) {
+  match @form_designer.parse_form(rendered) {
     Err(msg) => fail("带属性渲染文本应可解析:\{msg}")
     Ok(parsed) =>
       assert_true(
-        form_model_eq(model, parsed.model),
+        @form_designer.form_model_eq(model, parsed.model),
         msg="属性往返门失败",
       )
   }
   // 未知键结构化报错(规范形态纪律)
   assert_true(
-    match parse_form(rendered.replace(old="font_size=20", new="rotation=45")) {
+    match @form_designer.parse_form(rendered.replace(old="font_size=20", new="rotation=45")) {
       Err(msg) => msg.contains("未知属性键")
       Ok(_) => false
     },

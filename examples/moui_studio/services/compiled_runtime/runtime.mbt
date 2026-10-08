@@ -1772,6 +1772,7 @@ pub fn Runtime::insert_list(
   detail : String,
 ) -> Unit raise ExecError {
   ignore(op_name)
+  ignore(detail)
   let items = match self.vars.get(name) {
     Some(VArr(items)) => items
     Some(_) =>
@@ -1812,6 +1813,7 @@ pub fn Runtime::remove_list(
   detail : String,
 ) -> Unit raise ExecError {
   ignore(op_name)
+  ignore(detail)
   let items = match self.vars.get(name) {
     Some(VArr(items)) => items
     Some(_) =>
@@ -1862,6 +1864,7 @@ pub fn Runtime::replace_list(
   detail : String,
 ) -> Unit raise ExecError {
   ignore(op_name)
+  ignore(detail)
   let items = match self.vars.get(name) {
     Some(VArr(items)) => items
     Some(_) =>
@@ -1899,7 +1902,7 @@ pub fn index_of_list(
   wanted : Value,
   role : String,
   line : Int,
-) -> Value raise ExecError {
+) -> Value {
   ignore(role)
   ignore(line)
   let wanted_text = value_to_text(wanted)
@@ -1920,7 +1923,7 @@ pub fn index_of_list(
 }
 
 ///|
-fn Runtime::last_index_result(self : Runtime, found : Int) -> Value {
+fn Runtime::last_index_result(_self : Runtime, found : Int) -> Value {
   VInt(found)
 }
 
@@ -1931,7 +1934,7 @@ pub fn join_value(
   right : Value,
   role : String,
   line : Int,
-) -> Value raise ExecError {
+) -> Value {
   ignore(role)
   ignore(line)
   VStr(value_to_text(left) + value_to_text(right))
@@ -1969,7 +1972,7 @@ pub fn upper_value(
   value : Value,
   role : String,
   line : Int,
-) -> Value raise ExecError {
+) -> Value {
   ignore(role)
   ignore(line)
   VStr(value_to_text(value).to_upper())
@@ -1981,7 +1984,7 @@ pub fn lower_value(
   value : Value,
   role : String,
   line : Int,
-) -> Value raise ExecError {
+) -> Value {
   ignore(role)
   ignore(line)
   VStr(value_to_text(value).to_lower())

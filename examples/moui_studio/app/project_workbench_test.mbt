@@ -792,7 +792,7 @@ test "文件 CRUD:改名链走完 tab rel 替换" {
   let open_tab = {
     ..@app.initial_model(),
     open_project_files: [
-      OpenProjectFile::{
+      @app.OpenProjectFile::{
         rel: "app/old.md",
         saved_content: "# 旧",
         draft: "# 旧草稿",
@@ -874,7 +874,7 @@ test "保存后自动构建:mbt 触发,md 不触发" {
       {
         ..md_base,
         open_project_files: [
-          OpenProjectFile::{
+          @app.OpenProjectFile::{
             rel: "README.md",
             saved_content: "x",
             draft: "x",
@@ -914,8 +914,8 @@ test "全文搜索:命中落集,点击跳转" {
       services,
     ).0
   assert_true(queried.search_busy)
-  let hits : Array[SearchHit] = [
-    SearchHit::{ rel: "app/app.mbt", line: 3, preview: "pub fn program() {", },
+  let hits : Array[@app.SearchHit] = [
+    @app.SearchHit::{ rel: "app/app.mbt", line: 3, preview: "pub fn program() {", },
   ]
   let finished = @app.update_with_services(
       queried,

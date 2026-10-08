@@ -1,11 +1,9 @@
 import {
-  "moonbitlang/core/buffer",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",
   "wzzc-dev/moui_tools" @tools,
 }
-
 supported_targets = "+native"
 
 pkgtype(kind: "executable")

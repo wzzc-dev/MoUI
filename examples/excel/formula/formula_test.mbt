@@ -11,11 +11,11 @@ test "formula evaluator resolves arithmetic references and ranges" {
       None => @cell.CellValue::Empty
     }
   }
-  inspect(evaluate("=A1+B1*2", lookup).to_display(), content="5")
-  inspect(evaluate("=SUM(A1:C1)", lookup).to_display(), content="6")
-  inspect(evaluate("=AVG(A1:C1)", lookup).to_display(), content="2")
-  inspect(evaluate("=PRODUCT(A1:C1)", lookup).to_display(), content="6")
-  inspect(evaluate("=MEDIAN(A1:C1)", lookup).to_display(), content="2")
+  inspect(@formula.evaluate("=A1+B1*2", lookup).to_display(), content="5")
+  inspect(@formula.evaluate("=SUM(A1:C1)", lookup).to_display(), content="6")
+  inspect(@formula.evaluate("=AVG(A1:C1)", lookup).to_display(), content="2")
+  inspect(@formula.evaluate("=PRODUCT(A1:C1)", lookup).to_display(), content="6")
+  inspect(@formula.evaluate("=MEDIAN(A1:C1)", lookup).to_display(), content="2")
 }
 
 ///|
@@ -31,18 +31,18 @@ test "formula references handle multi-letter columns" {
       None => @cell.CellValue::Empty
     }
   }
-  inspect(evaluate("=AA10*3", lookup).to_display(), content="21")
-  inspect(evaluate("=$AA$10*3", lookup).to_display(), content="21")
+  inspect(@formula.evaluate("=AA10*3", lookup).to_display(), content="21")
+  inspect(@formula.evaluate("=$AA$10*3", lookup).to_display(), content="21")
 }
 
 ///|
 test "formula reference extraction expands ranges" {
   inspect(
-    extract_references("=SUM(A1:B2)+C3").join(","),
+    @formula.extract_references("=SUM(A1:B2)+C3").join(","),
     content="A1,B1,A2,B2,C3",
   )
   inspect(
-    extract_references("=SUM($A$1:B$2)+$C3").join(","),
+    @formula.extract_references("=SUM($A$1:B$2)+$C3").join(","),
     content="A1,B1,A2,B2,C3",
   )
 }
@@ -50,8 +50,8 @@ test "formula reference extraction expands ranges" {
 ///|
 test "formula evaluator preserves ref errors" {
   let lookup = fn(_) { @cell.CellValue::Empty }
-  inspect(evaluate("=#REF!", lookup).to_display(), content="#REF!")
-  inspect(evaluate("=#REF!+A1", lookup).to_display(), content="#REF!")
+  inspect(@formula.evaluate("=#REF!", lookup).to_display(), content="#REF!")
+  inspect(@formula.evaluate("=#REF!+A1", lookup).to_display(), content="#REF!")
 }
 
 ///|
@@ -68,8 +68,8 @@ test "formula evaluator supports common aggregate functions" {
       None => @cell.CellValue::Empty
     }
   }
-  inspect(evaluate("=PRODUCT(A1:D1)", lookup).to_display(), content="384")
-  inspect(evaluate("=MEDIAN(A1:D1)", lookup).to_display(), content="5")
+  inspect(@formula.evaluate("=PRODUCT(A1:D1)", lookup).to_display(), content="384")
+  inspect(@formula.evaluate("=MEDIAN(A1:D1)", lookup).to_display(), content="5")
 }
 
 ///|
@@ -84,12 +84,12 @@ test "formula evaluator supports logical functions" {
       None => @cell.CellValue::Empty
     }
   }
-  inspect(evaluate("=AND(A1>0, B1=0)", lookup).to_display(), content="1")
-  inspect(evaluate("=AND(A1>0, B1>0)", lookup).to_display(), content="0")
-  inspect(evaluate("=OR(A1=0, B1=0)", lookup).to_display(), content="1")
-  inspect(evaluate("=NOT(B1>0)", lookup).to_display(), content="1")
+  inspect(@formula.evaluate("=AND(A1>0, B1=0)", lookup).to_display(), content="1")
+  inspect(@formula.evaluate("=AND(A1>0, B1>0)", lookup).to_display(), content="0")
+  inspect(@formula.evaluate("=OR(A1=0, B1=0)", lookup).to_display(), content="1")
+  inspect(@formula.evaluate("=NOT(B1>0)", lookup).to_display(), content="1")
   inspect(
-    evaluate("=IF(AND(A1>0,B1=0), 9, 1)", lookup).to_display(),
+    @formula.evaluate("=IF(AND(A1>0,B1=0), 9, 1)", lookup).to_display(),
     content="9",
   )
 }

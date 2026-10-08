@@ -3,7 +3,7 @@ test "NativeSurface dirty present batch preserves clipped-away dirty" {
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.mark_dirty_rect(@graphics.PixelRect::new(x=3, y=0, width=1, height=1))
-  let surface = NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 
@@ -25,7 +25,7 @@ test "NativeSurface submits materialized present batches with telemetry" {
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.get_canvas().draw_pixel(2, 0, @graphics.Color::red())
-  let surface = NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 
@@ -98,7 +98,7 @@ test "NativeSurface full-frame resized present batch preserves dirty until frame
   frame.get_canvas().draw_pixel(3, 0, @graphics.Color::blue())
   frame.mark_all_dirty()
 
-  let surface = NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   assert_true(surface.sync_frame_size(frame))
@@ -201,7 +201,7 @@ test "NativeSurface present batch submit plan rejects stale synced dimensions be
   frame.get_canvas().draw_pixel(3, 0, @graphics.Color::blue())
   frame.mark_all_dirty()
 
-  let surface = NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   assert_true(surface.sync_frame_size(frame))
@@ -247,13 +247,13 @@ test "NativeSurface present batch submit preflights target bounds" {
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.get_canvas().draw_pixel(3, 0, @graphics.Color::red())
-  let source_surface = NativeSurface::from_frame(42, frame)
+  let source_surface = @softbuffer.NativeSurface::from_frame(42, frame)
   let batch = match source_surface.dirty_frame_present_batch(frame) {
     Ok(value) => value
     Err(_) => abort("expected clipped native dirty present batch")
   }
 
-  let clipped_surface = NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
+  let clipped_surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
   match clipped_surface.submit_present_batch_plan(batch) {
@@ -273,7 +273,7 @@ test "NativeSurface dirty submit plan preserves clipped-away dirty without prese
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.mark_dirty_rect(@graphics.PixelRect::new(x=3, y=0, width=1, height=1))
-  let surface = NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 
@@ -310,7 +310,7 @@ test "NativeSurface submits dirty frames with scheduler result" {
   let layer = @graphics.Layer::new(1, 1).set_position(1, 0)
   layer.get_canvas().draw_pixel(0, 0, @graphics.Color::red())
   ignore(frame.get_layer_tree().add_layer(layer))
-  let surface = NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 
@@ -366,7 +366,7 @@ test "NativeSurface submits frames by present strategy" {
   partial_frame.mark_dirty_rect(
     @graphics.PixelRect::new(x=1, y=0, width=1, height=1),
   )
-  let partial_surface = NativeSurface::from_frame(42, partial_frame).with_pre_present_hook(fn() {
+  let partial_surface = @softbuffer.NativeSurface::from_frame(42, partial_frame).with_pre_present_hook(fn() {
       partial_count.val = partial_count.val + 1
     },
   )
@@ -427,7 +427,7 @@ test "NativeSurface submits frames by present strategy" {
   let full_count = Ref(0)
   let full_frame = @graphics.RenderFrame::new(2, 1)
   full_frame.mark_all_dirty()
-  let full_surface = NativeSurface::from_frame(42, full_frame).with_pre_present_hook(fn() {
+  let full_surface = @softbuffer.NativeSurface::from_frame(42, full_frame).with_pre_present_hook(fn() {
       full_count.val = full_count.val + 1
     },
   )
@@ -493,7 +493,7 @@ test "NativeSurface submits frames by present strategy" {
   bounds_frame.mark_dirty_rect(
     @graphics.PixelRect::new(x=6, y=0, width=1, height=1),
   )
-  let bounds_surface = NativeSurface::from_frame(42, bounds_frame).with_pre_present_hook(fn() {
+  let bounds_surface = @softbuffer.NativeSurface::from_frame(42, bounds_frame).with_pre_present_hook(fn() {
       bounds_count.val = bounds_count.val + 1
     },
   )
@@ -553,7 +553,7 @@ test "NativeSurface submits frames by present strategy" {
 
   let clean_count = Ref(0)
   let clean_frame = @graphics.RenderFrame::new(2, 1)
-  let clean_surface = NativeSurface::from_frame(42, clean_frame).with_pre_present_hook(fn() {
+  let clean_surface = @softbuffer.NativeSurface::from_frame(42, clean_frame).with_pre_present_hook(fn() {
       clean_count.val = clean_count.val + 1
     },
   )
@@ -603,7 +603,7 @@ test "NativeSurface strategy submit consumes clipped-away dirty without presenti
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.mark_dirty_rect(@graphics.PixelRect::new(x=3, y=0, width=1, height=1))
-  let surface = NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 
@@ -663,7 +663,7 @@ test "NativeSurface synced strategy submit resizes before planning" {
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.mark_dirty_rect(@graphics.PixelRect::new(x=3, y=0, width=1, height=1))
-  let surface = NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 
@@ -694,7 +694,7 @@ test "NativeSurface synced strategy submit resizes before planning" {
 test "NativeSurface synced policy submit resizes clean cached redraw" {
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(3, 1)
-  let surface = NativeSurface::new(42, 1, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 1, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 
@@ -739,7 +739,7 @@ test "NativeSurface synced policy submit resizes dirty full redraw" {
   ignore(frame.get_layer_tree().add_layer(layer))
   ignore(frame.resize(2, 1))
 
-  let surface = NativeSurface::new(42, 1, 1).with_pre_present_hook(fn() {
+  let surface = @softbuffer.NativeSurface::new(42, 1, 1).with_pre_present_hook(fn() {
     count.val = count.val + 1
   })
 

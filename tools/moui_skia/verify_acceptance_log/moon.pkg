@@ -6,10 +6,8 @@ import {
 }
 
 import {
-  "moonbitlang/core/test",
   "wzzc-dev/moui_tools/moui_skia/skia_acceptance",
 } for "wbtest"
-
 supported_targets = "+native"
 
 pkgtype(kind: "executable")

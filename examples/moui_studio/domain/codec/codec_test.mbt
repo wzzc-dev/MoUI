@@ -321,7 +321,7 @@ test "control props: legacy decode defaults + roundtrip" {
         } => ()
         _ => fail("缺 props 应解码为全默认")
       }
-    Err(errors) => fail("旧文件应可解码:\\{errors.length()} 个错误")
+    Err(errors) => fail("旧文件应可解码:\{errors.length()} 个错误")
   }
   // 新形态:自定义字号/加粗 → 编码后仍可还原
   let program = match @codec.decode_program(legacy) {

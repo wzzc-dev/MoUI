@@ -3,10 +3,8 @@ import {
   "examples/showcase/app" @showcase,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/render",
   "wzzc-dev/moui_skia_renderer" @skia_renderer,
 }
-
 supported_targets = "native"
 
 pkgtype(kind: "executable")

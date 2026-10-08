@@ -1,6 +1,6 @@
 ///|
 test "workbook demo data and formulas" {
-  let workbook = Workbook::demo()
+  let workbook = @sheet.Workbook::demo()
   inspect(workbook.sheet_names().join(","), content="Sales,Inventory")
   let sales = workbook.active()
   inspect(sales.display_cell(1, 5), content="5550")
@@ -9,7 +9,7 @@ test "workbook demo data and formulas" {
 
 ///|
 test "workbook edits selection and undo redo" {
-  let workbook = Workbook::demo().select_cell(1, 1)
+  let workbook = @sheet.Workbook::demo().select_cell(1, 1)
   let edited = workbook.set_selected_raw("999")
   inspect(edited.active().display_cell(1, 1), content="999")
   let undone = edited.undo()
@@ -20,7 +20,7 @@ test "workbook edits selection and undo redo" {
 
 ///|
 test "workbook copy cut paste and row column operations" {
-  let workbook = Workbook::demo().select_cell(1, 0)
+  let workbook = @sheet.Workbook::demo().select_cell(1, 0)
   let copied = workbook.copy_selected().select_cell(2, 1).paste_selected()
   inspect(copied.active().display_cell(2, 1), content="Widget A")
   let cut = copied.select_cell(1, 0).cut_selected()
@@ -45,13 +45,13 @@ test "workbook copy cut paste and row column operations" {
 
 ///|
 test "workbook copies and pastes rectangular ranges" {
-  let sheet = Sheet::new("Range", row_count=4, col_count=4)
+  let sheet = @sheet.Sheet::new("Range", row_count=4, col_count=4)
     .set_raw_no_undo(0, 0, "A")
     .set_raw_no_undo(0, 1, "B")
     .set_raw_no_undo(1, 0, "C")
     .set_raw_no_undo(1, 1, "D")
     .recalc()
-  let pasted = Workbook::from_sheets([sheet])
+  let pasted = @sheet.Workbook::from_sheets([sheet])
     .copy_range(0, 0, 1, 1)
     .select_cell(2, 2)
     .paste_selected()
@@ -70,7 +70,7 @@ test "workbook copies and pastes rectangular ranges" {
 
 ///|
 test "workbook exports clipboard TSV and pastes external TSV" {
-  let sheet = Sheet::new("TSV", row_count=5, col_count=5)
+  let sheet = @sheet.Sheet::new("TSV", row_count=5, col_count=5)
     .set_raw_no_undo(0, 0, "A")
     .set_raw_no_undo(0, 1, "B")
     .set_raw_no_undo(1, 0, "C")
@@ -80,7 +80,7 @@ test "workbook exports clipboard TSV and pastes external TSV" {
       num_format: @cell.NumFormat::Currency,
     })
     .recalc()
-  let copied = Workbook::from_sheets([sheet]).copy_range(0, 0, 1, 1)
+  let copied = @sheet.Workbook::from_sheets([sheet]).copy_range(0, 0, 1, 1)
   assert_true(copied.has_clipboard())
   inspect(copied.clipboard_tsv(), content="A\tB\nC\tD")
   let pasted = copied.select_cell(2, 2).paste_tsv("1\t2\r\n3\t4\n")
@@ -98,19 +98,19 @@ test "workbook exports clipboard TSV and pastes external TSV" {
 
 ///|
 test "workbook round trips quoted TSV clipboard cells" {
-  let sheet = Sheet::new("QuotedTSV", row_count=2, col_count=3)
+  let sheet = @sheet.Sheet::new("QuotedTSV", row_count=2, col_count=3)
     .set_raw_no_undo(0, 0, "A\tB")
     .set_raw_no_undo(0, 1, "He said \"yes\"")
     .set_raw_no_undo(0, 2, "Line\nBreak")
     .recalc()
-  let copied = Workbook::from_sheets([sheet]).copy_range(0, 0, 0, 2)
+  let copied = @sheet.Workbook::from_sheets([sheet]).copy_range(0, 0, 0, 2)
   let exported = copied.clipboard_tsv()
   inspect(
     exported,
     content="\"A\tB\"\t\"He said \"\"yes\"\"\"\t\"Line\nBreak\"",
   )
-  let pasted = Workbook::from_sheets([
-      Sheet::new("PasteQuoted", row_count=2, col_count=3),
+  let pasted = @sheet.Workbook::from_sheets([
+      @sheet.Sheet::new("PasteQuoted", row_count=2, col_count=3),
     ])
     .select_cell(0, 0)
     .paste_tsv(exported)
@@ -122,14 +122,14 @@ test "workbook round trips quoted TSV clipboard cells" {
 
 ///|
 test "workbook clears rectangular ranges with undo redo" {
-  let sheet = Sheet::new("Clear", row_count=4, col_count=4)
+  let sheet = @sheet.Sheet::new("Clear", row_count=4, col_count=4)
     .set_raw_no_undo(0, 0, "A")
     .set_raw_no_undo(0, 1, "B")
     .set_raw_no_undo(1, 0, "C")
     .set_raw_no_undo(1, 1, "D")
     .set_raw_no_undo(2, 2, "Keep")
     .recalc()
-  let cleared = Workbook::from_sheets([sheet]).clear_range(0, 0, 1, 1)
+  let cleared = @sheet.Workbook::from_sheets([sheet]).clear_range(0, 0, 1, 1)
   inspect(cleared.active().display_cell(0, 0), content="")
   inspect(cleared.active().display_cell(1, 1), content="")
   inspect(cleared.active().display_cell(2, 2), content="Keep")
@@ -143,13 +143,13 @@ test "workbook clears rectangular ranges with undo redo" {
 
 ///|
 test "workbook range selection drives copy and clear" {
-  let sheet = Sheet::new("SelectedRange", row_count=5, col_count=5)
+  let sheet = @sheet.Sheet::new("SelectedRange", row_count=5, col_count=5)
     .set_raw_no_undo(0, 0, "A")
     .set_raw_no_undo(0, 1, "B")
     .set_raw_no_undo(1, 0, "C")
     .set_raw_no_undo(1, 1, "D")
     .recalc()
-  let selected = Workbook::from_sheets([sheet]).select_range(0, 0, 1, 1)
+  let selected = @sheet.Workbook::from_sheets([sheet]).select_range(0, 0, 1, 1)
   inspect(selected.selected_ref(), content="A1:B2")
   inspect(selected.cell_is_selected(1, 1).to_string(), content="true")
   inspect(selected.cell_is_selected(2, 2).to_string(), content="false")
@@ -166,8 +166,8 @@ test "workbook range selection drives copy and clear" {
 
 ///|
 test "workbook extends selected ranges from keyboard anchor" {
-  let workbook = Workbook::from_sheets([
-    Sheet::new("Extend", row_count=5, col_count=5),
+  let workbook = @sheet.Workbook::from_sheets([
+    @sheet.Sheet::new("Extend", row_count=5, col_count=5),
   ]).select_cell(1, 1)
   let right = workbook.extend_selection(0, 1)
   inspect(right.selected_ref(), content="B2:C2")
@@ -193,7 +193,7 @@ test "workbook extends selected ranges from keyboard anchor" {
 
 ///|
 test "workbook navigates to contiguous data edges" {
-  let workbook = Workbook::demo()
+  let workbook = @sheet.Workbook::demo()
   let right = workbook.select_cell(1, 1).navigate_to_data_edge(0, 1)
   inspect(right.selected_ref(), content="F2")
   let down = workbook.select_cell(1, 1).navigate_to_data_edge(1, 0)
@@ -210,13 +210,13 @@ test "workbook navigates to contiguous data edges" {
 
 ///|
 test "workbook applies formats to selected ranges" {
-  let sheet = Sheet::new("Formats", row_count=3, col_count=3)
+  let sheet = @sheet.Sheet::new("Formats", row_count=3, col_count=3)
     .set_raw_no_undo(0, 0, "A")
     .set_raw_no_undo(0, 1, "B")
     .set_raw_no_undo(1, 0, "C")
     .set_raw_no_undo(1, 1, "D")
     .recalc()
-  let formatted = Workbook::from_sheets([sheet])
+  let formatted = @sheet.Workbook::from_sheets([sheet])
     .select_range(0, 0, 1, 1)
     .set_selected_format(fmt => { ..fmt, bold: true, })
   inspect(
@@ -245,7 +245,7 @@ test "workbook applies formats to selected ranges" {
 
 ///|
 test "workbook fills selected ranges down and right" {
-  let sheet = Sheet::new("Fill", row_count=4, col_count=4)
+  let sheet = @sheet.Sheet::new("Fill", row_count=4, col_count=4)
     .set_raw_no_undo(0, 0, "10")
     .set_raw_no_undo(1, 0, "20")
     .set_raw_no_undo(2, 0, "30")
@@ -255,7 +255,7 @@ test "workbook fills selected ranges down and right" {
     .set_raw_no_undo(3, 2, "7")
     .set_raw_no_undo(2, 0, "=A4")
     .recalc()
-  let down = Workbook::from_sheets([sheet])
+  let down = @sheet.Workbook::from_sheets([sheet])
     .select_range(0, 1, 2, 1)
     .fill_down_selected()
   inspect(down.active().safe_raw(1, 1), content="=A2")
@@ -272,7 +272,7 @@ test "workbook fills selected ranges down and right" {
 
 ///|
 test "workbook sorts selected ranges by first column" {
-  let sheet = Sheet::new("Sort", row_count=6, col_count=3)
+  let sheet = @sheet.Sheet::new("Sort", row_count=6, col_count=3)
     .set_raw_no_undo(0, 0, "Name")
     .set_raw_no_undo(0, 1, "Score")
     .set_raw_no_undo(1, 0, "Gamma")
@@ -288,7 +288,7 @@ test "workbook sorts selected ranges by first column" {
     .set_raw_no_undo(4, 1, "2")
     .set_raw_no_undo(4, 2, "b")
     .recalc()
-  let workbook = Workbook::from_sheets([sheet]).select_range(1, 0, 4, 2)
+  let workbook = @sheet.Workbook::from_sheets([sheet]).select_range(1, 0, 4, 2)
   let ascending = workbook.sort_selected_by_first_column(ascending=true)
   inspect(ascending.active().display_cell(1, 0), content="alpha")
   inspect(ascending.active().display_cell(1, 1), content="1")
@@ -311,12 +311,12 @@ test "workbook sorts selected ranges by first column" {
 
 ///|
 test "workbook translates formula references on pasted cells" {
-  let sheet = Sheet::new("Formulas", row_count=4, col_count=4)
+  let sheet = @sheet.Sheet::new("Formulas", row_count=4, col_count=4)
     .set_raw_no_undo(0, 0, "10")
     .set_raw_no_undo(1, 1, "5")
     .set_raw_no_undo(0, 1, "=A1+$A$1")
     .recalc()
-  let pasted = Workbook::from_sheets([sheet])
+  let pasted = @sheet.Workbook::from_sheets([sheet])
     .copy_range(0, 1, 0, 1)
     .select_cell(1, 2)
     .paste_selected()
@@ -326,7 +326,7 @@ test "workbook translates formula references on pasted cells" {
 
 ///|
 test "workbook row column deletion is undoable" {
-  let workbook = Workbook::demo()
+  let workbook = @sheet.Workbook::demo()
   let row_deleted = workbook.delete_row(1)
   inspect(row_deleted.active().row_count.to_string(), content="29")
   inspect(row_deleted.active().display_cell(1, 0), content="Widget B")
@@ -349,7 +349,7 @@ test "workbook row column deletion is undoable" {
 
 ///|
 test "workbook structure edits update formula references" {
-  let sheet = Sheet::new("Refs")
+  let sheet = @sheet.Sheet::new("Refs")
     .set_raw_no_undo(0, 0, "1")
     .set_raw_no_undo(1, 0, "2")
     .set_raw_no_undo(2, 0, "=SUM(A1:A2)")
@@ -358,7 +358,7 @@ test "workbook structure edits update formula references" {
     .set_raw_no_undo(0, 2, "=A1+B1")
     .set_raw_no_undo(1, 2, "=$A$1+B$1")
     .recalc()
-  let workbook = Workbook::from_sheets([sheet])
+  let workbook = @sheet.Workbook::from_sheets([sheet])
   let row_inserted = workbook.insert_row(1)
   inspect(row_inserted.active().safe_raw(3, 0), content="=SUM(A1:A3)")
   inspect(row_inserted.active().display_cell(3, 0), content="3")
@@ -379,14 +379,14 @@ test "workbook structure edits update formula references" {
 
 ///|
 test "workbook structure deletion marks removed references" {
-  let sheet = Sheet::new("Refs")
+  let sheet = @sheet.Sheet::new("Refs")
     .set_raw_no_undo(0, 0, "1")
     .set_raw_no_undo(1, 0, "2")
     .set_raw_no_undo(2, 0, "=A2")
     .set_raw_no_undo(0, 1, "4")
     .set_raw_no_undo(0, 2, "=B1")
     .recalc()
-  let workbook = Workbook::from_sheets([sheet])
+  let workbook = @sheet.Workbook::from_sheets([sheet])
   let row_deleted = workbook.delete_row(1)
   inspect(row_deleted.active().safe_raw(1, 0), content="=#REF!")
   inspect(row_deleted.active().display_cell(1, 0), content="#REF!")
@@ -397,7 +397,7 @@ test "workbook structure deletion marks removed references" {
 
 ///|
 test "workbook sheet switching and deletion" {
-  let workbook = Workbook::demo()
+  let workbook = @sheet.Workbook::demo()
   let switched = workbook.switch_sheet(1)
   inspect(switched.active().name, content="Inventory")
   let added = switched.add_sheet()
@@ -408,8 +408,8 @@ test "workbook sheet switching and deletion" {
 
 ///|
 test "workbook deletion preserves active sheet identity when possible" {
-  let workbook = Workbook::from_sheets(
-    [Sheet::new("One"), Sheet::new("Two"), Sheet::new("Three")],
+  let workbook = @sheet.Workbook::from_sheets(
+    [@sheet.Sheet::new("One"), @sheet.Sheet::new("Two"), @sheet.Sheet::new("Three")],
     active_sheet=2,
   )
   let deleted_before_active = workbook.delete_sheet(1)
@@ -425,10 +425,10 @@ test "workbook deletion preserves active sheet identity when possible" {
 
 ///|
 test "workbook add sheet avoids duplicate names" {
-  let workbook = Workbook::from_sheets([
-    Sheet::new("Sheet 1"),
-    Sheet::new("Sheet 2"),
-    Sheet::new("Sheet 3"),
+  let workbook = @sheet.Workbook::from_sheets([
+    @sheet.Sheet::new("Sheet 1"),
+    @sheet.Sheet::new("Sheet 2"),
+    @sheet.Sheet::new("Sheet 3"),
   ])
   let deleted = workbook.delete_sheet(1)
   inspect(deleted.sheet_names().join(","), content="Sheet 1,Sheet 3")

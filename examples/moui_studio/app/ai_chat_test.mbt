@@ -436,7 +436,7 @@ test "session meta time falls back created then updated then just now" {
 /// 历史构建——用户气泡与 AI 回复按序进上下文。
 test "纯聊天:离线回复与历史构建" {
   let asked = apply(
-    { ..initial_model(), composer_mode: ComposeChat, },
+    { ..@app.initial_model(), composer_mode: ComposeChat, },
     SetPrompt("你好"),
   )
   let ran = apply(asked, ComposerRun)
@@ -452,7 +452,7 @@ test "纯聊天:离线回复与历史构建" {
   // 接通引导提示
   assert_true(ran.notice.contains("设置"), msg=ran.notice)
   // 多轮历史:用户提问 + 助手回复
-  let history = chat_history(ran)
+  let history = @app.chat_history(ran)
   assert_eq(history.length(), 2)
   assert_eq(history[0].0, "user")
   assert_eq(history[1].0, "assistant")
