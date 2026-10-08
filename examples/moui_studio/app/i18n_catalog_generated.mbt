@@ -1579,11 +1579,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       (
         "app.props.label.back_color",
-        GeneratedI18nMessage::Text("Background #RRGGBB"),
+        GeneratedI18nMessage::Text("Background (e.g. #003366)"),
       ),
       (
         "app.props.label.text_color",
-        GeneratedI18nMessage::Text("Text color #RRGGBB"),
+        GeneratedI18nMessage::Text("Text color (e.g. #FF0000)"),
       ),
       (
         "app.recent.action.function",
@@ -3431,11 +3431,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       (
         "app.props.label.back_color",
-        GeneratedI18nMessage::Text("背景色 #RRGGBB"),
+        GeneratedI18nMessage::Text("背景色（如 #003366）"),
       ),
       (
         "app.props.label.text_color",
-        GeneratedI18nMessage::Text("文字色 #RRGGBB"),
+        GeneratedI18nMessage::Text("文字色（如 #FF0000）"),
       ),
       (
         "app.recent.action.function",

@@ -553,6 +553,7 @@ fn context_props(
                 ""
               },
               on_input=raw => SetControlPropText(control.name, "font_size", raw),
+              placeholder="字号",
               width=(field_width - 6.0) / 2.0,
               height=FIELD_HEIGHT,
             ),
@@ -566,64 +567,40 @@ fn context_props(
           ],
           spacing=6.0,
         ),
-        // 字号/加粗行内嵌说明
         @views.row(
           [
-            @views.text(
-              text(t, "app.props.label.font_size"),
-              theme=studio_theme(),
-              width=(field_width - 6.0) / 2.0,
-              height=14.0,
-              align=TextStart,
-            ).foreground(ide_text_faint()),
-            @views.text(
-              text(t, "app.props.label.bold"),
-              theme=studio_theme(),
-              width=(field_width - 6.0) / 2.0,
-              height=14.0,
-              align=TextStart,
-            ).foreground(ide_text_faint()),
-          ],
-          spacing=6.0,
-        ),
-        @views.row(
-          [
-            @views.text_field(
-              control.props.text_color,
-              on_input=raw => {
-                SetControlPropText(control.name, "text_color", raw)
-              },
-              width=(field_width - 6.0) / 2.0,
-              height=FIELD_HEIGHT,
+            // 文字色：输入框 + 实时色块预览
+            @views.row(
+              [
+                @views.text_field(
+                  control.props.text_color,
+                  on_input=raw => {
+                    SetControlPropText(control.name, "text_color", raw)
+                  },
+                  width=(field_width - 6.0) / 2.0 - 26.0,
+                  height=FIELD_HEIGHT,
+                ),
+                color_swatch(control.props.text_color),
+              ],
+              spacing=4.0,
+              align=Center,
             ),
-            @views.text_field(
-              control.props.back_color,
-              on_input=raw => {
-                SetControlPropText(control.name, "back_color", raw)
-              },
-              width=(field_width - 6.0) / 2.0,
-              height=FIELD_HEIGHT,
+            // 背景色：输入框 + 实时色块预览
+            @views.row(
+              [
+                @views.text_field(
+                  control.props.back_color,
+                  on_input=raw => {
+                    SetControlPropText(control.name, "back_color", raw)
+                  },
+                  width=(field_width - 6.0) / 2.0 - 26.0,
+                  height=FIELD_HEIGHT,
+                ),
+                color_swatch(control.props.back_color),
+              ],
+              spacing=4.0,
+              align=Center,
             ),
-          ],
-          spacing=6.0,
-        ),
-        // 颜色字段内嵌说明标签
-        @views.row(
-          [
-            @views.text(
-              text(t, "app.props.label.text_color"),
-              theme=studio_theme(),
-              width=(field_width - 6.0) / 2.0,
-              height=14.0,
-              align=TextStart,
-            ).foreground(ide_text_faint()),
-            @views.text(
-              text(t, "app.props.label.back_color"),
-              theme=studio_theme(),
-              width=(field_width - 6.0) / 2.0,
-              height=14.0,
-              align=TextStart,
-            ).foreground(ide_text_faint()),
           ],
           spacing=6.0,
         ),
@@ -1731,4 +1708,36 @@ fn foot_chip_like(
   )
   .accessibility_label(label)
   .on_tap(on_click)
+}
+
+///|
+/// 属性色块预览（G7.2）：输入 #RRGGBB 时实时显示解析出的颜色圆点；
+/// 无效/空值显示灰色空框。让用户立刻看到「颜色有没有生效」。
+fn color_swatch(hex : String) -> @moui.View[Msg] {
+  match prop_color(hex) {
+    Some(color) =>
+      @views.container(
+        @views.text("", width=1.0, height=1.0),
+        background=color,
+        corner_radius=10.0,
+        width=FIELD_HEIGHT - 4.0,
+        height=FIELD_HEIGHT - 4.0,
+        padding=0.0,
+      )
+    None =>
+      @views.container(
+        @views.text("", width=1.0, height=1.0),
+        background=ide_panel_alt(),
+        border=Some(
+          @graphics.BorderStyle::new(
+            brush=@graphics.Brush::solid(ide_border()),
+            width=1.0,
+          ),
+        ),
+        corner_radius=10.0,
+        width=FIELD_HEIGHT - 4.0,
+        height=FIELD_HEIGHT - 4.0,
+        padding=0.0,
+      )
+  }
 }

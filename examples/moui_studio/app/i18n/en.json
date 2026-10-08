@@ -805,7 +805,7 @@
     "app.project.restored": "Restored {n} recent projects",
     "app.props.label.font_size": "Font size (pt)",
     "app.props.label.bold": "Bold",
-    "app.props.label.text_color": "Text color #RRGGBB",
-    "app.props.label.back_color": "Background #RRGGBB"
+    "app.props.label.text_color": "Text color (e.g. #FF0000)",
+    "app.props.label.back_color": "Background (e.g. #003366)"
   }
 }
