@@ -9,6 +9,7 @@ import {
   "wzzc-dev/moui/graphics",
   "wzzc-dev/moui/text",
   "moonbitlang/core/json",
+  "moonbitlang/x/fs" @x/fs,
   "wzzc-dev/moui_richtext",
   "wzzc-dev/moui_richtext/code_editor",
   "examples/moui_studio/kernel",

@@ -68,6 +68,17 @@ pub fn import_single_source(
         false,
       )
       mark_projects_dirty(notified)
+      // G7.4.2 修复：确保 .studio/preview/ 目录存在后再写入
+      // （FileServices.write_text 不自动创建中间目录）
+      let preview_dir = record.root + "/.studio/preview"
+      if !@x/fs.path_exists(preview_dir) {
+        try {
+          @x/fs.create_dir(record.root + "/.studio")
+          @x/fs.create_dir(preview_dir)
+        } catch {
+          _ => ()
+        }
+      }
       match preview_write_state_for(record) {
         None => (notified, @moui.Effect::none())
         Some(state) =>
