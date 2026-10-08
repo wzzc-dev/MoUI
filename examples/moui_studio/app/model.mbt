@@ -847,7 +847,6 @@ pub(all) enum Msg {
   UiDarkLoaded(@services.ServiceTaskResult[String?])
   ToggleBreakpoint(Int)
   RunToBreakpoint
-  ToggleUiDarkModeSwitch
   SearchQueryDraft(String)
   SearchRun
   SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])

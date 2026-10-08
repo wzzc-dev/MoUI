@@ -231,7 +231,7 @@ fn decode_window(
         width: json_int_field(fields, "width").unwrap_or(@ir.DESIGN_WIDTH),
         height: json_int_field(fields, "height").unwrap_or(@ir.DESIGN_HEIGHT),
         timer_interval: 0,
-      back_color: "",
+        back_color: "",
       })
     _ => {
       errors.push(MissingField("window"))

@@ -13,7 +13,7 @@ test "form 往返门:render → parse 字段级一致" {
         y: 180.0,
         width: 80.0,
         height: 36.0,
-      props: @ir.ControlProps::default(),
+        props: @ir.ControlProps::default(),
       },
       {
         kind: FkText,
@@ -23,7 +23,7 @@ test "form 往返门:render → parse 字段级一致" {
         y: 20.0,
         width: 200.0,
         height: 24.0,
-      props: @ir.ControlProps::default(),
+        props: @ir.ControlProps::default(),
       },
     ],
   }
@@ -50,7 +50,7 @@ test "span 补丁:改 x 不破坏其他字段,往返仍闭合" {
         y: 180.0,
         width: 80.0,
         height: 36.0,
-      props: @ir.ControlProps::default(),
+        props: @ir.ControlProps::default(),
       },
     ],
   }
@@ -80,7 +80,7 @@ test "span 补丁:改 x 不破坏其他字段,往返仍闭合" {
                 y: 180.0,
                 width: 80.0,
                 height: 36.0,
-              props: @ir.ControlProps::default(),
+                props: @ir.ControlProps::default(),
               },
             ],
           }
@@ -106,7 +106,7 @@ test "文本补丁:点标题改文本" {
         y: 10.0,
         width: 200.0,
         height: 20.0,
-      props: @ir.ControlProps::default(),
+        props: @ir.ControlProps::default(),
       },
     ],
   }
@@ -189,20 +189,28 @@ test "props roundtrip:styled control survives parse(render(m))" {
   let rendered = render_form(model)
   // 默认属性省略:非默认才渲染(第一控件 align=center 应出现;
   // 第二控件无 font_size,默认 visible 不渲染)
-  assert_true(rendered.contains("align=\"center\""), msg="非默认对齐应渲染")
+  assert_true(
+    rendered.contains("align=\"center\""),
+    msg="非默认对齐应渲染",
+  )
   assert_false(rendered.contains("visible="), msg="默认 visible 不应渲染")
   assert_false(rendered.contains("font_size=0"), msg="默认字号不应渲染")
   assert_true(rendered.contains("font_size=20"), msg="非默认字号应渲染")
-  assert_true(rendered.contains("placeholder=\"请输入昵称\""), msg="占位符应渲染")
+  assert_true(
+    rendered.contains("placeholder=\"请输入昵称\""),
+    msg="占位符应渲染",
+  )
   match parse_form(rendered) {
     Err(msg) => fail("带属性渲染文本应可解析:\{msg}")
-    Ok(parsed) => assert_true(form_model_eq(model, parsed.model), msg="属性往返门失败")
+    Ok(parsed) =>
+      assert_true(
+        form_model_eq(model, parsed.model),
+        msg="属性往返门失败",
+      )
   }
   // 未知键结构化报错(规范形态纪律)
   assert_true(
-    match parse_form(
-      rendered.replace(old="font_size=20", new="rotation=45"),
-    ) {
+    match parse_form(rendered.replace(old="font_size=20", new="rotation=45")) {
       Err(msg) => msg.contains("未知属性键")
       Ok(_) => false
     },

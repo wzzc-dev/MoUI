@@ -72,6 +72,8 @@ pub fn render_stmts(Array[@ir.Stmt], Language) -> String
 
 pub fn render_struct_declarations(Array[@ir.StructDecl], Language) -> String
 
+pub fn run_to_breakpoint(RunState, Array[Int]) -> Bool
+
 pub fn run_to_end(RunState) -> Unit
 
 pub fn start_run(Array[TracedStmt], Map[String, String], Map[String, Value], Map[String, Array[String]], max_steps? : Int, seed? : Int, functions? : Array[@ir.FuncDef]) -> RunState

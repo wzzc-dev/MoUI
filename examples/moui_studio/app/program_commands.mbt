@@ -174,6 +174,15 @@ pub fn studio_program_commands(
     true,
     ToggleMultiSelectMode,
   )
+  // F5：继续到断点（G7.4 断点调试）
+  bind(
+    "F5",
+    false,
+    "app.command.run.to_breakpoint",
+    Activate,
+    model.run is Some(_),
+    RunToBreakpoint,
+  )
   // 方向键微调（1px/按;多选模式下整组移动）
   bind(
     "ArrowLeft",

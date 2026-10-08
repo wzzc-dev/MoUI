@@ -226,7 +226,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/moui_studio/app/app_test.mbt", max_lines: 2100, },
     // G2/G4/G7 (2026-10-07): 工作区导入/多标签/搜索/插件管理/聊天路由
     // 汇聚在组合根 update;按仓库先例登记行数预算。
-    { path: "examples/moui_studio/app/app.mbt", max_lines: 2300, },
+    { path: "examples/moui_studio/app/app.mbt", max_lines: 2350, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },

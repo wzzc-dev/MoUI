@@ -139,7 +139,14 @@ fn start_run(model : Model) -> Model {
     text(t, "app.audit.run_start"),
     run.handler_label,
   )
-  { ..audited, run: Some(run), mode: ModeRun, notice: "", runtime_seed: seed, breakpoints: [], }
+  {
+    ..audited,
+    run: Some(run),
+    mode: ModeRun,
+    notice: "",
+    runtime_seed: seed,
+    breakpoints: [],
+  }
 }
 
 ///|

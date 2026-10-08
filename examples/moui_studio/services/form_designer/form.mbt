@@ -147,7 +147,9 @@ fn render_props(props : @ir.ControlProps) -> String {
     out.write_string(", multiline=true")
   }
   if props.placeholder != "" {
-    out.write_string(", placeholder=\"\{escape_form_string(props.placeholder)}\"")
+    out.write_string(
+      ", placeholder=\"\{escape_form_string(props.placeholder)}\"",
+    )
   }
   if props.password {
     out.write_string(", password=true")

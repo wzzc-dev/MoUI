@@ -11,9 +11,9 @@ pub fn load_provider_config(String) -> ProviderConfig?
 
 pub async fn provider_live_completion(ProviderConfig, String) -> Result[String, String]
 
-pub fn provider_submit(ProviderOwner, String, String, @model_provider.CompletionRequest, (Result[String, String]) -> Unit) -> Unit
+pub fn provider_submit(ProviderOwner, String, String, @model_provider.CompletionRequest, on_chunk~ : ((String) -> Unit)?, (Result[String, String]) -> Unit) -> Unit
 
-pub fn provider_submit_prompt(ProviderOwner, String, String, String, String, String, history~ : Array[(String, String)], json_mode~ : Bool, (Result[String, String]) -> Unit) -> Unit
+pub fn provider_submit_prompt(ProviderOwner, String, String, String, String, String, history~ : Array[(String, String)], json_mode~ : Bool, on_chunk~ : ((String) -> Unit)?, (Result[String, String]) -> Unit) -> Unit
 
 pub async fn provider_worker_loop(ProviderOwner) -> Unit
 
@@ -31,6 +31,7 @@ pub(all) struct ProviderJob {
   key : String
   request : @model_provider.CompletionRequest
   on_result : (Result[String, String]) -> Unit
+  on_chunk : ((String) -> Unit)?
 }
 
 pub(all) struct ProviderOwner {

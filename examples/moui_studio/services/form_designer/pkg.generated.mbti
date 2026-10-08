@@ -49,6 +49,7 @@ pub(all) struct FormControl {
   y : Double
   width : Double
   height : Double
+  props : @ir.ControlProps
 }
 
 pub(all) enum FormKind {

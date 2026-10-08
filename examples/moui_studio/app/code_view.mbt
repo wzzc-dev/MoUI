@@ -259,8 +259,7 @@ fn code_gutter(
               width=(width - 16.0).max(20.0),
               height=CODE_LINE_HEIGHT,
               align=TextEnd,
-            )
-            .foreground(
+            ).foreground(
               if has_diagnostic {
                 ide_danger()
               } else if is_active {

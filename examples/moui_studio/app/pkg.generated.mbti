@@ -142,6 +142,8 @@ pub const TREE_META_WIDTH : Double = 68.0
 
 pub const TREE_ROW_HEIGHT : Double = 24.0
 
+pub const UI_DARK_SETTINGS_KEY : String = "studio.ui_dark"
+
 pub const UNDO_DEPTH : Int = 50
 
 pub const WINDOW_CHROME_HEIGHT : Double = 32.0
@@ -392,9 +394,9 @@ pub fn default_viewport_size() -> @core.Size
 
 pub fn design_backdrop_plan() -> Array[DesignDrawOp]
 
-pub fn design_overlay_plan(@ir.StudioProgram, String, String?) -> Array[DesignDrawOp]
+pub fn design_overlay_plan(@ir.StudioProgram, String, String?, multi_selected? : Array[String]) -> Array[DesignDrawOp]
 
-pub fn design_stage(@ir.StudioProgram, String, String?, Array[@core.View[Msg]], Array[@core.Rect], String, String) -> @core.View[Msg]
+pub fn design_stage(@ir.StudioProgram, String, String?, Array[@core.View[Msg]], Array[@core.Rect], String, String, multi_selected? : Array[String]) -> @core.View[Msg]
 
 pub let design_total_height : Double
 
@@ -706,6 +708,8 @@ pub fn semantic_label_patch_task(@services.FileServices, SemanticPatchRequest) -
 
 pub fn semantic_property_strip(Model, @moui_i18n.Translator, Double) -> @core.View[Msg]
 
+pub fn set_ui_dark(Bool) -> Unit
+
 pub fn settings_dialog(Model, @moui_i18n.Translator) -> @core.View[Msg]
 
 pub fn shortcut_icon_button(@style.IconName, String, Msg, @core.KeyboardShortcut, Double, Double, Double, alt_shortcut? : @core.KeyboardShortcut?) -> @core.View[Msg]
@@ -817,6 +821,8 @@ pub fn tree_group_window() -> String
 pub fn tree_node_selected(Model, TreeNodeKind, String) -> Bool
 
 pub fn tree_row(String, String, Int, Bool, Bool, Bool, Msg?, Msg?, Double, trailing? : @core.View[Msg]?, trailing_width? : Double) -> @core.View[Msg]
+
+pub fn ui_is_dark() -> Bool
 
 pub fn ui_language_from_tag(String) -> UiLanguage
 
@@ -1189,6 +1195,11 @@ pub(all) struct Model {
   file_rename_open : String?
   file_name_draft : String
   plugin_disabled : Array[String]
+  control_clipboard : @ir.Control?
+  multi_select_mode : Bool
+  multi_selected : Array[String]
+  ui_dark : Bool
+  breakpoints : Array[Int]
   search_query : String
   search_hits : Array[SearchHit]
   search_busy : Bool
@@ -1270,6 +1281,16 @@ pub(all) enum Msg {
   PluginsLoaded(@services.ServiceTaskResult[String?])
   SetControlPropText(String, String, String)
   ToggleControlProp(String, String)
+  CopySelectedControl
+  PasteControl
+  BringToFront(String)
+  SendToBack(String)
+  NudgeControl(String, Int, Int)
+  ToggleMultiSelectMode
+  ToggleUiDark
+  UiDarkLoaded(@services.ServiceTaskResult[String?])
+  ToggleBreakpoint(Int)
+  RunToBreakpoint
   SearchQueryDraft(String)
   SearchRun
   SearchFinished(@services.ServiceTaskResult[Array[SearchHit]])

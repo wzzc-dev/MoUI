@@ -100,9 +100,7 @@ pub fn kernel_codec_mbt() -> String {
     #|///|
     #|/// 属性对象解码（G7.2）：缺字段取默认；旧文件没有 props 键 = 全默认。
     #|/// 公开给提案解码复用（AI 可提出带属性的控件，同一套容错口径）。
-    #|pub fn decode_control_props(
-    #|  fields : Map[String, Json],
-    #|) -> @ir.ControlProps {
+    #|pub fn decode_control_props(fields : Map[String, Json]) -> @ir.ControlProps {
     #|  decode_props_inner(fields)
     #|}
     #|
@@ -115,62 +113,60 @@ pub fn kernel_codec_mbt() -> String {
     #|}
     #|
     #|///|
-    #|fn decode_props_inner(
-    #|  prop_fields : Map[String, Json],
-    #|) -> @ir.ControlProps {
+    #|fn decode_props_inner(prop_fields : Map[String, Json]) -> @ir.ControlProps {
     #|  let base = @ir.ControlProps::default()
     #|  let font_size = match prop_int_field(prop_fields, "font_size") {
     #|    Some(value) => value
     #|    None => base.font_size
     #|  }
-    #|      let bold = match prop_bool_field(prop_fields, "bold") {
-    #|        Some(value) => value
-    #|        None => base.bold
-    #|      }
-    #|      let text_color = match prop_string_field(prop_fields, "text_color") {
-    #|        Some(value) => value
-    #|        None => base.text_color
-    #|      }
-    #|      let back_color = match prop_string_field(prop_fields, "back_color") {
-    #|        Some(value) => value
-    #|        None => base.back_color
-    #|      }
-    #|      let align = match prop_string_field(prop_fields, "align") {
-    #|        Some(value) => value
-    #|        None => base.align
-    #|      }
-    #|      let visible = match prop_bool_field(prop_fields, "visible") {
-    #|        Some(value) => value
-    #|        None => base.visible
-    #|      }
-    #|      let disabled = match prop_bool_field(prop_fields, "disabled") {
-    #|        Some(value) => value
-    #|        None => base.disabled
-    #|      }
-    #|      let multiline = match prop_bool_field(prop_fields, "multiline") {
-    #|        Some(value) => value
-    #|        None => base.multiline
-    #|      }
-    #|      let placeholder = match prop_string_field(prop_fields, "placeholder") {
-    #|        Some(value) => value
-    #|        None => base.placeholder
-    #|      }
-    #|      let password = match prop_bool_field(prop_fields, "password") {
-    #|        Some(value) => value
-    #|        None => base.password
-    #|      }
-    #|      {
-    #|        font_size,
-    #|        bold,
-    #|        text_color,
-    #|        back_color,
-    #|        align,
-    #|        visible,
-    #|        disabled,
-    #|        multiline,
-    #|        placeholder,
-    #|        password,
-    #|      }
+    #|  let bold = match prop_bool_field(prop_fields, "bold") {
+    #|    Some(value) => value
+    #|    None => base.bold
+    #|  }
+    #|  let text_color = match prop_string_field(prop_fields, "text_color") {
+    #|    Some(value) => value
+    #|    None => base.text_color
+    #|  }
+    #|  let back_color = match prop_string_field(prop_fields, "back_color") {
+    #|    Some(value) => value
+    #|    None => base.back_color
+    #|  }
+    #|  let align = match prop_string_field(prop_fields, "align") {
+    #|    Some(value) => value
+    #|    None => base.align
+    #|  }
+    #|  let visible = match prop_bool_field(prop_fields, "visible") {
+    #|    Some(value) => value
+    #|    None => base.visible
+    #|  }
+    #|  let disabled = match prop_bool_field(prop_fields, "disabled") {
+    #|    Some(value) => value
+    #|    None => base.disabled
+    #|  }
+    #|  let multiline = match prop_bool_field(prop_fields, "multiline") {
+    #|    Some(value) => value
+    #|    None => base.multiline
+    #|  }
+    #|  let placeholder = match prop_string_field(prop_fields, "placeholder") {
+    #|    Some(value) => value
+    #|    None => base.placeholder
+    #|  }
+    #|  let password = match prop_bool_field(prop_fields, "password") {
+    #|    Some(value) => value
+    #|    None => base.password
+    #|  }
+    #|  {
+    #|    font_size,
+    #|    bold,
+    #|    text_color,
+    #|    back_color,
+    #|    align,
+    #|    visible,
+    #|    disabled,
+    #|    multiline,
+    #|    placeholder,
+    #|    password,
+    #|  }
     #|}
     #|
     #|///|
@@ -1119,9 +1115,7 @@ pub fn kernel_codec_mbt() -> String {
     #|          0,
     #|        ),
     #|        // G7.2:窗体背景色(可选;旧文件无 → 空串 = 主题默认)
-    #|        back_color: json_string_field(window_fields, "back_color").unwrap_or(
-    #|          "",
-    #|        ),
+    #|        back_color: json_string_field(window_fields, "back_color").unwrap_or(""),
     #|      }
     #|    _ => @ir.default_window()
     #|  }

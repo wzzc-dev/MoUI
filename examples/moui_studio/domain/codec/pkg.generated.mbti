@@ -10,6 +10,8 @@ pub const PROJECT_FORMAT : String = "moui.studio.project"
 
 pub const PROJECT_VERSION : Int = 1
 
+pub fn decode_control_props(Map[String, Json]) -> @ir.ControlProps
+
 pub fn decode_program(String) -> Result[@ir.StudioProgram, Array[CodecError]]
 
 pub fn decode_stmt_value(Json) -> Result[@ir.Stmt, CodecError]

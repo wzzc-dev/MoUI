@@ -259,7 +259,7 @@ pub fn update_ide_msgs(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg])? 
       } else {
         model.breakpoints + [line]
       }
-      Some(({ ..model, breakpoints: next }, @moui.Effect::none()))
+      Some(({ ..model, breakpoints: next, }, @moui.Effect::none()))
     }
     // 纯聊天离线（G1）：确定性假回复 + 接通引导（真实提交在程序级臂）
     ChatSubmit =>

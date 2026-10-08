@@ -123,7 +123,7 @@ pub(all) struct ControlProps {
   multiline : Bool
   placeholder : String
   password : Bool
-}
+} derive(Eq)
 pub fn ControlProps::default() -> Self
 pub fn ControlProps::is_default(Self) -> Bool
 
@@ -258,7 +258,9 @@ pub(all) struct WindowSpec {
   width : Int
   height : Int
   timer_interval : Int
+  back_color : String
 }
+pub fn WindowSpec::default(title~ : String, width~ : Int, height~ : Int) -> Self
 
 // Type aliases
 

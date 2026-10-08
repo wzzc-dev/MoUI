@@ -300,8 +300,12 @@ pub fn kernel_ir_mbt() -> String {
     #|}
     #|
     #|///|
-    #|pub fn WindowSpec::default(title~ : String, width~ : Int, height~ : Int) -> WindowSpec {
-    #|  { title, width, height, timer_interval: 0, back_color: "" }
+    #|pub fn WindowSpec::default(
+    #|  title~ : String,
+    #|  width~ : Int,
+    #|  height~ : Int,
+    #|) -> WindowSpec {
+    #|  { title, width, height, timer_interval: 0, back_color: "", }
     #|}
     #|
     #|///|

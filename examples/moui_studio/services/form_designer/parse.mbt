@@ -330,7 +330,9 @@ fn parse_place_line(
       key == "placeholder" ||
       key == "password"
     if !is_known {
-      return Err("form.mbt:\{line_no}:未知属性键:\{key}(规范形态漂移,请重新保存)")
+      return Err(
+        "form.mbt:\{line_no}:未知属性键:\{key}(规范形态漂移,请重新保存)",
+      )
     }
     if chars[pk] == '"' {
       let mut value = ""
@@ -356,15 +358,15 @@ fn parse_place_line(
         return Err("form.mbt:\{line_no}:\{key} 字符串未闭合")
       }
       props = match key {
-        "text_color" => { ..props, text_color: value }
-        "back_color" => { ..props, back_color: value }
+        "text_color" => { ..props, text_color: value, }
+        "back_color" => { ..props, back_color: value, }
         "align" =>
           if value == "start" || value == "center" || value == "end" {
-            { ..props, align: value }
+            { ..props, align: value, }
           } else {
             return Err("form.mbt:\{line_no}:align 仅接受 start/center/end")
           }
-        "placeholder" => { ..props, placeholder: value }
+        "placeholder" => { ..props, placeholder: value, }
         _ => return Err("form.mbt:\{line_no}:\{key} 应为布尔/数字")
       }
     } else {
@@ -376,46 +378,46 @@ fn parse_place_line(
       props = match key {
         "font_size" =>
           match parse_form_number(token) {
-            Some(value) => { ..props, font_size: value.to_int() }
+            Some(value) => { ..props, font_size: value.to_int(), }
             None => return Err("form.mbt:\{line_no}:font_size 数字不合法")
           }
         "bold" =>
           if token == "true" {
-            { ..props, bold: true }
+            { ..props, bold: true, }
           } else if token == "false" {
-            { ..props, bold: false }
+            { ..props, bold: false, }
           } else {
             return Err("form.mbt:\{line_no}:bold 应为 true/false")
           }
         "visible" =>
           if token == "true" {
-            { ..props, visible: true }
+            { ..props, visible: true, }
           } else if token == "false" {
-            { ..props, visible: false }
+            { ..props, visible: false, }
           } else {
             return Err("form.mbt:\{line_no}:visible 应为 true/false")
           }
         "disabled" =>
           if token == "true" {
-            { ..props, disabled: true }
+            { ..props, disabled: true, }
           } else if token == "false" {
-            { ..props, disabled: false }
+            { ..props, disabled: false, }
           } else {
             return Err("form.mbt:\{line_no}:disabled 应为 true/false")
           }
         "multiline" =>
           if token == "true" {
-            { ..props, multiline: true }
+            { ..props, multiline: true, }
           } else if token == "false" {
-            { ..props, multiline: false }
+            { ..props, multiline: false, }
           } else {
             return Err("form.mbt:\{line_no}:multiline 应为 true/false")
           }
         "password" =>
           if token == "true" {
-            { ..props, password: true }
+            { ..props, password: true, }
           } else if token == "false" {
-            { ..props, password: false }
+            { ..props, password: false, }
           } else {
             return Err("form.mbt:\{line_no}:password 应为 true/false")
           }

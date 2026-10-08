@@ -276,7 +276,7 @@ test "断点:切换集合与命中暂停" {
   let services = @services.AppServices::new()
   let program : @ir.StudioProgram = {
     ..initial_model().program,
-    variables: [{ name: "计数", init: "0" }],
+    variables: [{ name: "计数", init: "0", }],
   }
   let base = {
     ..initial_model(),
