@@ -241,7 +241,12 @@ pub fn settings_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
     ),
   ]
   @views.container(
-    @views.column(rows, spacing=6.0),
+    @views.scroll_view(
+      @views.column(rows, spacing=6.0),
+      width=400.0,
+      height=520.0,
+      shows_indicator=true,
+    ),
     width=432.0,
     background=ide_elevated(),
     corner_radius=8.0,
