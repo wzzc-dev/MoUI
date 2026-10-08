@@ -801,6 +801,7 @@
     "app.shortcut.front": "Bring to front",
     "app.shortcut.back": "Send to back",
     "app.shortcut.multi": "Multi-select mode",
-    "app.shortcut.nudge": "Nudge with arrows"
+    "app.shortcut.nudge": "Nudge with arrows",
+    "app.project.restored": "Restored {n} recent projects"
   }
 }

@@ -829,6 +829,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("This project has no matching entry package"),
       ),
       (
+        "app.project.restored",
+        GeneratedI18nMessage::Text("Restored {n} recent projects"),
+      ),
+      (
         "app.project.scanning",
         GeneratedI18nMessage::Text("Scanned {n} dirs · {path}"),
       ),
@@ -2704,6 +2708,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.project.no_entry",
         GeneratedI18nMessage::Text("该工程缺少对应的入口包"),
+      ),
+      (
+        "app.project.restored",
+        GeneratedI18nMessage::Text("已恢复 {n} 个最近工程"),
       ),
       (
         "app.project.scanning",

@@ -864,10 +864,18 @@ pub fn update_with_services(
               if records.is_empty() {
                 (model, @moui.Effect::none())
               } else {
+                let welcomed = with_notice(
+                  model,
+                  text_with(translator(model), "app.project.restored", [
+                    ("n", records.length().to_string()),
+                  ]),
+                  false,
+                )
+                ignore(welcomed)
                 // 逐 root 起静默重扫;回执走 ProjectRestoreScanCompleted
                 (
                   {
-                    ..model,
+                    ..welcomed,
                     projects_restore_pending: records.length(),
                     restore_active_root: active_root,
                   },

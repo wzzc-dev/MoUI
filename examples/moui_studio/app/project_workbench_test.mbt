@@ -650,8 +650,8 @@ test "boot 恢复:静默重扫合并并落位 active" {
   )
   assert_eq(restored_a.projects_restore_pending, 1)
   assert_eq(restored_a.projects.length(), 1)
-  // 恢复期间不弹通知(静默合并)
-  assert_eq(restored_a.notice, "")
+  // G7.4.2:恢复时显示欢迎通知(告知用户最近工程已恢复)
+  assert_true(restored_a.notice.contains("恢复"), msg=restored_a.notice)
   let (restored_b, _) = @app.update_with_services(
     restored_a,
     ProjectRestoreScanCompleted(

@@ -801,6 +801,7 @@
     "app.shortcut.front": "置顶控件",
     "app.shortcut.back": "置底控件",
     "app.shortcut.multi": "多选模式",
-    "app.shortcut.nudge": "键盘微调"
+    "app.shortcut.nudge": "键盘微调",
+    "app.project.restored": "已恢复 {n} 个最近工程"
   }
 }
