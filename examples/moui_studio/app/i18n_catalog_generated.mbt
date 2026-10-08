@@ -836,6 +836,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.scanning",
         GeneratedI18nMessage::Text("Scanned {n} dirs · {path}"),
       ),
+      ("app.props.label.bold", GeneratedI18nMessage::Text("Bold")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("Confirm send")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("Confirm")),
       ("app.shortcut.palette", GeneratedI18nMessage::Text("Command palette")),
@@ -1466,6 +1467,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         ),
       ),
       (
+        "app.props.label.font_size",
+        GeneratedI18nMessage::Text("Font size (pt)"),
+      ),
+      (
         "app.recent.action.handler",
         GeneratedI18nMessage::Text("Created handler"),
       ),
@@ -1571,6 +1576,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text(
           "Rename incomplete, please clean up manually: {a}",
         ),
+      ),
+      (
+        "app.props.label.back_color",
+        GeneratedI18nMessage::Text("Background #RRGGBB"),
+      ),
+      (
+        "app.props.label.text_color",
+        GeneratedI18nMessage::Text("Text color #RRGGBB"),
       ),
       (
         "app.recent.action.function",
@@ -2717,6 +2730,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "app.project.scanning",
         GeneratedI18nMessage::Text("已扫描 {n} 个目录 · {path}"),
       ),
+      ("app.props.label.bold", GeneratedI18nMessage::Text("加粗")),
       ("app.run.gate.confirm", GeneratedI18nMessage::Text("确认送出")),
       ("app.run.gate_pending", GeneratedI18nMessage::Text("待确认")),
       ("app.shortcut.palette", GeneratedI18nMessage::Text("命令面板")),
@@ -3303,6 +3317,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("预览已就绪：工程画布可查看了"),
       ),
       (
+        "app.props.label.font_size",
+        GeneratedI18nMessage::Text("字号（pt）"),
+      ),
+      (
         "app.recent.action.handler",
         GeneratedI18nMessage::Text("建事件子程序"),
       ),
@@ -3410,6 +3428,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "app.project.rename_partial",
         GeneratedI18nMessage::Text("重命名未完成，请手动清理：{a}"),
+      ),
+      (
+        "app.props.label.back_color",
+        GeneratedI18nMessage::Text("背景色 #RRGGBB"),
+      ),
+      (
+        "app.props.label.text_color",
+        GeneratedI18nMessage::Text("文字色 #RRGGBB"),
       ),
       (
         "app.recent.action.function",

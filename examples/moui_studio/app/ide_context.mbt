@@ -566,6 +566,26 @@ fn context_props(
           ],
           spacing=6.0,
         ),
+        // 字号/加粗行内嵌说明
+        @views.row(
+          [
+            @views.text(
+              text(t, "app.props.label.font_size"),
+              theme=studio_theme(),
+              width=(field_width - 6.0) / 2.0,
+              height=14.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
+            @views.text(
+              text(t, "app.props.label.bold"),
+              theme=studio_theme(),
+              width=(field_width - 6.0) / 2.0,
+              height=14.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
+          ],
+          spacing=6.0,
+        ),
         @views.row(
           [
             @views.text_field(
@@ -584,6 +604,26 @@ fn context_props(
               width=(field_width - 6.0) / 2.0,
               height=FIELD_HEIGHT,
             ),
+          ],
+          spacing=6.0,
+        ),
+        // 颜色字段内嵌说明标签
+        @views.row(
+          [
+            @views.text(
+              text(t, "app.props.label.text_color"),
+              theme=studio_theme(),
+              width=(field_width - 6.0) / 2.0,
+              height=14.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
+            @views.text(
+              text(t, "app.props.label.back_color"),
+              theme=studio_theme(),
+              width=(field_width - 6.0) / 2.0,
+              height=14.0,
+              align=TextStart,
+            ).foreground(ide_text_faint()),
           ],
           spacing=6.0,
         ),

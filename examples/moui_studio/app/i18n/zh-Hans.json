@@ -802,6 +802,10 @@
     "app.shortcut.back": "置底控件",
     "app.shortcut.multi": "多选模式",
     "app.shortcut.nudge": "键盘微调",
-    "app.project.restored": "已恢复 {n} 个最近工程"
+    "app.project.restored": "已恢复 {n} 个最近工程",
+    "app.props.label.font_size": "字号（pt）",
+    "app.props.label.bold": "加粗",
+    "app.props.label.text_color": "文字色 #RRGGBB",
+    "app.props.label.back_color": "背景色 #RRGGBB"
   }
 }

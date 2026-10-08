@@ -802,6 +802,10 @@
     "app.shortcut.back": "Send to back",
     "app.shortcut.multi": "Multi-select mode",
     "app.shortcut.nudge": "Nudge with arrows",
-    "app.project.restored": "Restored {n} recent projects"
+    "app.project.restored": "Restored {n} recent projects",
+    "app.props.label.font_size": "Font size (pt)",
+    "app.props.label.bold": "Bold",
+    "app.props.label.text_color": "Text color #RRGGBB",
+    "app.props.label.back_color": "Background #RRGGBB"
   }
 }
