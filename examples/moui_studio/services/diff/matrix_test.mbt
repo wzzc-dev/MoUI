@@ -521,3 +521,73 @@ test "diff matrix: OnStart standalone program" {
     assert_no_mismatch(report)
   }
 }
+
+///|
+/// G7.2:属性 v2 不影响双轨执行语义——带样式的控件与默认控件产生
+/// 相同的审计序列（属性是纯展示数据，不进 IR 语义路径）。
+test "diff matrix: props don't affect execution semantics" {
+  let program : @ir.StudioProgram = {
+    ..@ir.empty_program(),
+    window: {
+      title: "props-gate",
+      width: 640,
+      height: 480,
+      timer_interval: 0,
+      back_color: "",
+    },
+    variables: [{ name: "计数", init: "0", }],
+    controls: [
+      @ir.Control::{
+        id: 1,
+        kind: @ir.Button,
+        name: "btn",
+        text: "点我",
+        x: 20,
+        y: 20,
+        width: 100,
+        height: 32,
+        items: [],
+        props: @ir.ControlProps::{
+          font_size: 20,
+          bold: true,
+          text_color: "#FF0000",
+          back_color: "#00FF00",
+          align: "center",
+          visible: true,
+          disabled: false,
+          multiline: false,
+          placeholder: "",
+          password: false,
+        },
+      },
+    ],
+    handlers: [
+      {
+        control_name: "btn",
+        event: @ir.OnClick,
+        note_zh: "累加",
+        note_en: "increment",
+        body: [
+          @ir.Assign(
+            "计数",
+            @ir.Binary(@ir.Add, @ir.Var("计数"), @ir.IntLit(1)),
+          ),
+          @ir.Call("set_text", [
+            @ir.Var("btn"),
+            @ir.Call("to_text", [@ir.Var("计数")]),
+          ]),
+        ],
+      },
+    ],
+  }
+  for language in languages() {
+    let report = @diff.diff_case(
+      "props-gate[\{language.tag()}]",
+      program,
+      program.handlers[0],
+      language,
+      [],
+    )
+    assert_no_mismatch(report)
+  }
+}

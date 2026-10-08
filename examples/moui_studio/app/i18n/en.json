@@ -784,6 +784,23 @@
     "app.command.control.nudge.down": "Nudge control down",
     "app.settings.group.appearance": "Appearance",
     "app.settings.dark": "Dark",
-    "app.settings.light": "Light"
+    "app.settings.light": "Light",
+    "app.blocks.hat.onstart": "On Start",
+    "app.settings.group.shortcuts": "Shortcuts",
+    "app.shortcut.save": "Save program",
+    "app.shortcut.open": "Open program",
+    "app.shortcut.export": "Export program",
+    "app.shortcut.run": "Run program",
+    "app.shortcut.undo": "Undo",
+    "app.shortcut.redo": "Redo",
+    "app.shortcut.palette": "Command palette",
+    "app.shortcut.complete": "Code completion",
+    "app.shortcut.duplicate": "Duplicate control",
+    "app.shortcut.copy": "Copy control",
+    "app.shortcut.paste": "Paste control",
+    "app.shortcut.front": "Bring to front",
+    "app.shortcut.back": "Send to back",
+    "app.shortcut.multi": "Multi-select mode",
+    "app.shortcut.nudge": "Nudge with arrows"
   }
 }

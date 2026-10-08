@@ -87,6 +87,9 @@ pub fn blocks_pane(
   // （设计稿 #catbar），而不是压在画布上方——积木视图纵向最紧，把分类
   // 移到画布旁边的空白里等于白赚 30pt 画布高。
   let body_height = blocks_body_height(model, height)
+  // 启动 hat（G7.1.1）：积木视图顶部的窗体级脚本入口——用户无需在
+  // 设计器选中控件即可创建/切换到 OnStart 子程序（纯逻辑程序入口）
+  let hat_row = onstart_hat_row(model, t, width)
   let catbar = category_rail(model, t, body_height)
   // 语句插入面板：分类轨点开时，在轨与画布之间插一列骨架卡片（240pt）。
   // 宽度必须从 canvas_width **扣**：画布是自适应测量节点，让它先占满再把
@@ -210,7 +213,7 @@ pub fn blocks_pane(
       // 脚注提示与编辑条空态提示两条 24-30pt 的截断文字是纯噪音，删掉后
       // 高度还给画布。交互说明留给空态提示与控件 tooltip。
       // 数据声明区（M7①）在画布上方：有 enum/struct 声明才占高度。
-      [head, declaration_strip(model, width), body],
+      [head, hat_row, declaration_strip(model, width), body],
       spacing=0.0,
     ).frame(width~, height~),
     background=ide_editor_background(),
@@ -664,4 +667,75 @@ pub fn declaration_strip(model : Model, width : Double) -> @moui.View[Msg] {
       padding=0.0,
     )
   }
+}
+
+///|
+/// 启动 hat 行（G7.1.1）：积木视图顶部的窗体级脚本入口。
+/// 显示一个「⚡ 启动」胶囊——有 OnStart handler 时高亮并可切换到它，
+/// 没有时点击即创建（无需在设计器选中控件）。用户由此可以在积木
+/// 视图里直接写纯逻辑程序，不需要依赖设计器的任何控件。
+fn onstart_hat_row(
+  model : Model,
+  t : @i18n.Translator,
+  width : Double,
+) -> @moui.View[Msg] {
+  let exists = @ir.find_handler(model.program, "", @ir.OnStart) is Some(_)
+  let is_active = model.selected_handler == handler_key("", @ir.OnStart.tag())
+  let label = text(t, "app.blocks.hat.onstart")
+  let chip_width = text_estimate_width(label) + 32.0
+  @views.container(
+    @views.row(
+      [
+        @views.container(
+          @views.row(
+            [
+              @views.text(
+                "⚡",
+                theme=studio_theme(),
+                width=16.0,
+                height=18.0,
+                align=TextCenter,
+              ).foreground(
+                if is_active {
+                  ide_text()
+                } else {
+                  ide_text_faint()
+                },
+              ),
+              @views.text(
+                label,
+                theme=studio_theme(),
+                width=chip_width - 36.0,
+                height=18.0,
+                align=TextStart,
+              ).foreground(
+                if is_active {
+                  ide_text()
+                } else {
+                  ide_text_faint()
+                },
+              ),
+            ],
+            spacing=4.0,
+            align=Center,
+          ),
+          background=if is_active { ide_selection() } else { ide_panel() },
+          width=chip_width,
+          height=24.0,
+          padding=0.0,
+        ).on_tap(
+          if exists {
+            SelectHandler(handler_key("", @ir.OnStart.tag()))
+          } else {
+            CreateHandler("", @ir.OnStart)
+          },
+        ),
+      ],
+      spacing=0.0,
+      align=Start,
+    ),
+    width~,
+    height=28.0,
+    padding=0.0,
+  )
 }

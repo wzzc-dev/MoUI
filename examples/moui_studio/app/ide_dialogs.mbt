@@ -131,6 +131,22 @@ pub fn settings_dialog(model : Model, t : @i18n.Translator) -> @moui.View[Msg] {
       ],
       spacing=8.0,
     ),
+    group_label(t, "app.settings.group.shortcuts"),
+    shortcut_row(t, "app.shortcut.save", "Ctrl+S"),
+    shortcut_row(t, "app.shortcut.open", "Ctrl+O"),
+    shortcut_row(t, "app.shortcut.export", "Ctrl+E"),
+    shortcut_row(t, "app.shortcut.run", "Ctrl+Enter"),
+    shortcut_row(t, "app.shortcut.undo", "Ctrl+Z"),
+    shortcut_row(t, "app.shortcut.redo", "Ctrl+Shift+Z"),
+    shortcut_row(t, "app.shortcut.palette", "Ctrl+K"),
+    shortcut_row(t, "app.shortcut.complete", "Ctrl+Space"),
+    shortcut_row(t, "app.shortcut.duplicate", "Ctrl+D"),
+    shortcut_row(t, "app.shortcut.copy", "Ctrl+C"),
+    shortcut_row(t, "app.shortcut.paste", "Ctrl+V"),
+    shortcut_row(t, "app.shortcut.front", "Ctrl+]"),
+    shortcut_row(t, "app.shortcut.back", "Ctrl+["),
+    shortcut_row(t, "app.shortcut.multi", "Ctrl+M"),
+    shortcut_row(t, "app.shortcut.nudge", "方向键 / Arrow keys"),
     group_label(t, "app.settings.group.plugins"),
     // G7.3 插件管理:静态装配的诚实形态——列出已装配插件,启用/禁用
     // 只过滤贡献项入口;「安装新插件需重新构建」如实声明。
@@ -940,4 +956,41 @@ fn plugin_row(
     spacing=8.0,
     align=Center,
   ).frame(width=392.0, height=36.0)
+}
+
+///|
+/// 快捷键行（G7.4）：操作描述 + 按键组合的只读表格行。
+fn shortcut_row(
+  t : @i18n.Translator,
+  label_key : String,
+  keys : String,
+) -> @moui.View[Msg] {
+  @views.row(
+    [
+      @views.text(
+        text(t, label_key),
+        theme=studio_theme(),
+        width=180.0,
+        height=16.0,
+        align=TextStart,
+      ).foreground(ide_text()),
+      @views.spacer(min_length=6.0, weight=1.0),
+      @views.container(
+        @views.text(
+          keys,
+          theme=studio_theme(),
+          role=Mono,
+          width=120.0,
+          height=16.0,
+          align=TextCenter,
+        ).foreground(ide_text_faint()),
+        background=ide_panel(),
+        width=128.0,
+        height=20.0,
+        padding=0.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  ).frame(width=392.0, height=22.0)
 }

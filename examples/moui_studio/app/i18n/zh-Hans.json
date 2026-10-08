@@ -784,6 +784,23 @@
     "app.command.control.nudge.down": "下移控件",
     "app.settings.group.appearance": "外观",
     "app.settings.dark": "暗色",
-    "app.settings.light": "亮色"
+    "app.settings.light": "亮色",
+    "app.blocks.hat.onstart": "启动",
+    "app.settings.group.shortcuts": "快捷键",
+    "app.shortcut.save": "保存程序",
+    "app.shortcut.open": "打开程序",
+    "app.shortcut.export": "导出程序",
+    "app.shortcut.run": "运行程序",
+    "app.shortcut.undo": "撤销",
+    "app.shortcut.redo": "重做",
+    "app.shortcut.palette": "命令面板",
+    "app.shortcut.complete": "代码补全",
+    "app.shortcut.duplicate": "复制控件",
+    "app.shortcut.copy": "复制控件",
+    "app.shortcut.paste": "粘贴控件",
+    "app.shortcut.front": "置顶控件",
+    "app.shortcut.back": "置底控件",
+    "app.shortcut.multi": "多选模式",
+    "app.shortcut.nudge": "键盘微调"
   }
 }
