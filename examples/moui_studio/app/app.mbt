@@ -60,6 +60,19 @@ pub fn chat_history(model : Model) -> Array[(String, String)] {
 pub const LANGUAGE_SETTINGS_KEY : String = "studio.language"
 
 ///|
+/// 确保 .studio/ 目录存在（G7.4.2 修复：ai_sessions/projects 写入前
+/// 必须有目录，FileServices.write_text 不会自动创建中间目录）。
+fn ensure_studio_dir() -> Unit {
+  if !@x/fs.path_exists(".studio") {
+    try {
+      @x/fs.create_dir(".studio")
+    } catch {
+      _ => ()
+    }
+  }
+}
+
+///|
 /// 服务闭包与请求规格的类型定义已收编进内核服务注册表
 /// （`kernel/services.mbt`，M1 插件化）；这里保留公开别名，既有引用零改动。
 pub type ProviderRequestSpec = @kernel.ProviderRequestSpec
@@ -1876,6 +1889,7 @@ pub fn program(
         // 只有配置了路径的组合根会发出这条消息（监听器按路径注册）。
         AiSessionsStoreWriteRequested =>
           if sessions_store_path != "" {
+            ensure_studio_dir()
             (
               model,
               services
@@ -1892,6 +1906,7 @@ pub fn program(
         // 工程记录存储写盘（G2）：EvProjectsDirty 翻译而来,同款纪律。
         ProjectsStoreWriteRequested =>
           if projects_store_path != "" {
+            ensure_studio_dir()
             (
               model,
               services
