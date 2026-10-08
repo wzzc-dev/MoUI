@@ -148,6 +148,7 @@ async fn main {
           spec.prompt,
           history=spec.history,
           json_mode=spec.json_mode,
+          on_chunk=spec.on_chunk,
           on_result,
         )
       },

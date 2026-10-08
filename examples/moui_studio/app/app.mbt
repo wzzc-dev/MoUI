@@ -2203,6 +2203,7 @@ fn update_with_provider(
                     history: [],
                     // 讲解是纯文本：不带 JSON mode
                     json_mode: false,
+                    on_chunk: Some(chunk => emit(StreamChunk(chunk))),
                   },
                   result => emit(RealExplanationFinished(result)),
                 )
@@ -2232,6 +2233,7 @@ fn update_with_provider(
                 history: [],
                 // 提案要求 JSON 输出（G1）
                 json_mode: true,
+                on_chunk: None,
               },
               result => emit(RealGenerationFinished(result)),
             )
@@ -2278,6 +2280,7 @@ fn update_with_provider(
                 prompt: model.ai_sessions.current().prompt_draft,
                 history,
                 json_mode: false,
+                on_chunk: Some(chunk => emit(StreamChunk(chunk))),
               },
               result => emit(RealChatFinished(result)),
             )

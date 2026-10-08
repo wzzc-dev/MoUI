@@ -127,6 +127,7 @@ pub(all) struct ProviderRequestSpec {
   prompt : String
   history : Array[(String, String)]
   json_mode : Bool
+  on_chunk : ((String) -> Unit)?
 }
 
 pub(all) struct PtyService[Msg] {

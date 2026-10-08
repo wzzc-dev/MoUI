@@ -22,6 +22,9 @@ pub(all) struct ProviderRequestSpec {
   /// 提案类请求要求 JSON 输出（response_format=json_object）；
   /// 讲解/聊天为纯文本（G1）。
   json_mode : Bool
+  /// G1 流式：分块回调（None = 整包模式）。app 把 chunk 转成 StreamChunk
+  /// 消息进转录，UI 侧获得增量渲染。
+  on_chunk : ((String) -> Unit)?
 }
 
 ///|

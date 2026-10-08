@@ -221,6 +221,7 @@ test "kernel/denied services fail explicitly" {
       prompt: "",
       history: [],
       json_mode: false,
+      on_chunk: None,
     },
     fn(result) {
       match result {

@@ -17,6 +17,8 @@ pub(all) struct ProviderJob {
   key : String
   request : @provider.CompletionRequest
   on_result : (Result[String, String]) -> Unit
+  /// G1 流式：分块回调（SSE data: 行的增量文本）；None = 整包模式
+  on_chunk : ((String) -> Unit)?
 }
 
 ///|
@@ -45,9 +47,10 @@ pub fn provider_submit(
   endpoint : String,
   key : String,
   request : @provider.CompletionRequest,
+  on_chunk~ : ((String) -> Unit)?,
   on_result : (Result[String, String]) -> Unit,
 ) -> Unit {
-  let job = ProviderJob::{ endpoint, key, request, on_result, }
+  let job = ProviderJob::{ endpoint, key, request, on_result, on_chunk, }
   ignore(owner.queue.try_put(job) catch { _ => false })
 }
 
@@ -57,14 +60,57 @@ async fn provider_fetch(job : ProviderJob) -> Unit {
   let body = @provider.build_request_body(job.request).stringify()
   let url = @provider.completion_url(job.endpoint)
   let result = try {
-    let (response, data) = @http.post(url, body, headers={
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + job.key,
-    })
-    if response.code >= 200 && response.code < 300 {
-      @provider.parse_completion(data.text())
+    if job.on_chunk is Some(chunk_cb) {
+      // 分块派发（G1）：整包 POST 拿到完整回复后按固定字符数切块,
+      // 经 on_chunk 回调逐块送达 UI（复用 M4 的 StreamChunk 消息流）,
+      // UI 侧获得与假路径一致的流式体验;真实 wire 级 SSE 待
+      // async/http 流式读稳定后替换。
+      let (response, data) = @http.post(url, body, headers={
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + job.key,
+      })
+      if response.code >= 200 && response.code < 300 {
+        let full = @provider.parse_completion(data.text())
+        match full {
+          Ok(text) => {
+            let chars : Array[Char] = []
+            for ch in text {
+              chars.push(ch)
+            }
+            let chunk_size = 24
+            let mut i = 0
+            while i < chars.length() {
+              let end = if i + chunk_size < chars.length() {
+                i + chunk_size
+              } else {
+                chars.length()
+              }
+              let piece = StringBuilder()
+              let mut k = i
+              while k < end {
+                piece.write_char(chars[k])
+                k = k + 1
+              }
+              chunk_cb(piece.to_string())
+              i = end
+            }
+            Ok(text)
+          }
+          Err(message) => Err(message)
+        }
+      } else {
+        Err("provider 返回 HTTP \{response.code}")
+      }
     } else {
-      Err("provider 返回 HTTP \{response.code}")
+      let (response, data) = @http.post(url, body, headers={
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + job.key,
+      })
+      if response.code >= 200 && response.code < 300 {
+        @provider.parse_completion(data.text())
+      } else {
+        Err("provider 返回 HTTP \{response.code}")
+      }
     }
   } catch {
     err => Err("网络错误：\{err}")
@@ -96,6 +142,7 @@ pub fn provider_submit_prompt(
   prompt : String,
   history~ : Array[(String, String)],
   json_mode~ : Bool,
+  on_chunk~ : ((String) -> Unit)?,
   on_result : (Result[String, String]) -> Unit,
 ) -> Unit {
   // 多轮上下文（G1）：历史按序进消息列表,当前提问是最后一条 user
@@ -111,7 +158,7 @@ pub fn provider_submit_prompt(
     }),
     json_mode,
   }.with_message(User, prompt)
-  provider_submit(owner, endpoint, key, request, on_result)
+  provider_submit(owner, endpoint, key, request, on_chunk~, on_result)
 }
 
 ///|
