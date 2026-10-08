@@ -840,14 +840,22 @@ pub fn update_with_services(
     ProjectRootPicked(result) =>
       match result {
         Success(root) =>
-          // 扫描在服务回调链上推进;进度经 dispatch 的 emit 直发 Msg
-          // (provider/compile 的 worker 回调同款线程纪律),完成走同一条 emit。
+          // G7.2 性能修复：扫描在 worker 协程中用 @x/fs 直接 I/O 跑
+          //（不走 ServiceTask 回调链——大项目 UI 冻结的根因），UI 线程
+          // 零阻塞；进度/完成经 emit 直发 Msg（与 provider worker 同款）。
           (
             model,
             @moui.Effect::dispatch(emit => {
-              let _ = @project.walk_root_task(services.files(), root, on_progress=p => {
-                emit(ProjectScanProgress(p))
-              }).start(r => emit(ProjectScanCompleted(r)))
+              let result = direct_scan(
+                root,
+                on_progress=p => emit(ProjectScanProgress(p)),
+              )
+              match result {
+                Ok(output) =>
+                  emit(ProjectScanCompleted(Success(Ok(output))))
+                Err(message) =>
+                  emit(ProjectScanCompleted(Success(Err(message))))
+              }
             }),
           )
         Failure(error) =>
