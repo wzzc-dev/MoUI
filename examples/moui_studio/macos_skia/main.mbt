@@ -61,7 +61,7 @@ async fn main {
   // 终端 PTY provider(M5):vendor pty_host 宿主技术,queue+worker 形态,
   // 服务闭包同步入队(UI 零阻塞),worker 异步真派生 + 读循环。
   let pty_provider = PtyProvider::{
-    queue: @async.Queue::new(kind=Unbounded),
+    queue: @async.Queue(kind=Unbounded),
     pty_ref: Ref(None),
   }
   let pty_service = pty_native_service(pty_provider)

@@ -16,10 +16,6 @@ extern "C" fn pty_spawn(
 ) -> Int64 = "moonpty_spawn"
 
 ///|
-#borrow(fd)
-extern "C" fn pty_resize(fd : Int, cols : Int, rows : Int) -> Int64 = "moonpty_resize"
-
-///|
 #borrow(pid)
 extern "C" fn pty_reap(pid : Int) -> Int64 = "moonpty_reap"
 
@@ -31,7 +27,6 @@ extern "C" fn pty_signal(pid : Int, sig : Int) -> Int64 = "moonpty_signal"
 /// PTY 会话：master 端 fd + 子进程 pid（raw_fd 异步读写，与
 /// examples/terminal/pty_host 同构）。
 priv struct Pty {
-  fd : Int
   pid : Int
   raw : @raw_fd.RawFd
 }
@@ -53,10 +48,9 @@ async fn Pty::spawn_shell(shell : String, cols : Int, rows : Int) -> Pty? {
   if packed < 0L {
     return None
   }
-  let fd = packed.to_int()
   let pid = (packed >> 32).to_int()
-  let raw = @raw_fd.RawFd::RawFd(fd)
-  Some({ fd, pid, raw, })
+  let raw = @raw_fd.RawFd::RawFd(packed.to_int())
+  Some({ pid, raw, })
 }
 
 ///|
@@ -143,7 +137,9 @@ fn pty_native_service(
       let _ = provider.queue.try_put(PtyWriteWork(input)) catch { _ => false }
     },
     resize: fn(_handle, _cols, _rows) { () },
-    kill: fn(_handle) { () },
+    kill: fn(_handle) {
+      let _ = provider.queue.try_put(PtyKillWork) catch { _ => false }
+    },
   }
 }
 
