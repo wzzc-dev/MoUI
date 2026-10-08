@@ -178,3 +178,20 @@ the helper-managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted MSVC
 release root or pass that path as `-WgpuNativeRoot` to the Windows helper
 script. MSVC dynamic roots should contain `lib\\wgpu_native.dll` and
 `wgpu-native-meta\\wgpu-native-git-tag`.
+
+## MoUI Studio (windows_skia)
+
+`examples/moui_studio/windows_skia` is the Studio's Windows Skia entrypoint,
+mirroring the momark `windows_skia` template: `@windows_backend.app_environment()`
++ `entry(smoke_options=...)` + `@render_skia.from_env(platform=Windows)`, wired
+to the same `@studio_app.program` composition root. `MOUI_FIRST_FRAME_EXIT=1`
+enables the headless first-frame smoke.
+
+Capability parity matches the Linux entrypoint: provider worker, compile track,
+persistence, full-text search, and MCP agent transport are cross-platform;
+PTY terminal, WebView preview, wall-clock FFI, and immersive titlebar are
+absent with explicit degradation. File dialogs depend on the Windows service
+bridge's `file_dialog` capability.
+
+Evidence: `scripts/run-window-package-smoke.sh windows --run` or
+`MOUI_FIRST_FRAME_EXIT=1 moon run examples/moui_studio/windows_skia --target native`.

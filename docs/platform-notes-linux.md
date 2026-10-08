@@ -367,3 +367,31 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 The IME protocol functionality has been verified via WSL2. Full L3 runtime
 pass requires running `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` mode on a real Wayland
 desktop (Ubuntu 24.04+) with actual keyboard presses and mouse clicks.
+
+## MoUI Studio (linux_skia)
+
+`examples/moui_studio/linux_skia` is the Studio's Linux Skia entrypoint,
+following the momark template: `@linux_backend.app_environment()` +
+`entry(smoke_options=...)` + `@render_skia.from_env(platform=Linux)`, wired to
+the same `@studio_app.program` composition root as the macOS and Web entries.
+The `MOUI_FIRST_FRAME_EXIT=1` smoke convention is supported for headless
+evidence.
+
+Capability parity: the provider worker (async `@http`), compile track
+(`moon` subprocess), project/workspace persistence (`x/fs`), full-text search,
+and MCP agent stdio transport are shared cross-platform. Explicitly absent on
+this platform (each degrades with a structured message, never a crash):
+
+- PTY terminal (macOS-only `pty.c` stub); the Teaching terminal chip is not
+  rendered.
+- WebView live preview (macOS-only WKWebView); Frame preview remains
+  available.
+- Wall-clock FFI (macOS-only); timestamps fall back to the constant clock.
+- Immersive titlebar and window drag (macOS-only window frame integration).
+
+File dialogs (`pick_directory`) depend on the Linux service bridge's
+`file_dialog` capability; when the host does not provide one, import/export
+actions grey out with an explanatory notice.
+
+Evidence: `scripts/run-window-package-smoke.sh linux --run` or
+`MOUI_FIRST_FRAME_EXIT=1 moon run examples/moui_studio/linux_skia --target native`.
