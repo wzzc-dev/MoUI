@@ -1084,9 +1084,16 @@ pub fn update_with_services(
           }
           // RunNative 成功(M3):产物落盘 → **自动脱离启动**(独立窗口,
           // Studio 退出不带走它——复用产物启动通道,零新执行路径)
+          // G7.2 诊断：构建失败时把 moon 输出落 Console（用户能看到
+          // 具体的编译错误而不是只有「构建失败」toast）
+          let with_log = if !report.ok && report.output != "" {
+            log_line(with_web, LogLevel::LogError, report.output)
+          } else {
+            with_web
+          }
           if kind is BkRunNative && report.ok && report.artifact_path != "" {
             (
-              with_web,
+              with_log,
               @moui.Effect::batch([
                 @moui.Effect::dispatch(emit => {
                   emit(RunArtifact(report.artifact_path))
@@ -1096,7 +1103,7 @@ pub fn update_with_services(
           } else {
             (
               with_notice(
-                with_web,
+                with_log,
                 if report.ok {
                   text_with(translator(model), "app.project.build_ok", [
                     ("a", kind.tag()),
