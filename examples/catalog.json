@@ -132,12 +132,6 @@
       "path": "examples/terminal",
       "title": "Terminal",
       "featured": true
-    },
-    {
-      "id": "studio",
-      "path": "examples/moui_studio",
-      "title": "MoUI Studio",
-      "featured": false
     }
   ]
 }

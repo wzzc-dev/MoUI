@@ -6,7 +6,7 @@ what a block actually does. It targets both geeks and beginners, with a
 technical-looking shell: dark engineering panels, hairline dividers, mono-first
 toolchain output, a grid canvas, and a terminal-style console.
 
-- Source: `examples/moui_studio` (module + `moon.work` member)
+- Source: `moui_studio/` — standalone git subrepository (`wzzc-dev/moui_studio`, following the `examples/momark` pattern), also a `moon.work` member
 - Entrypoints: Web (`web_wasm`) and macOS (`macos_skia`)
 - Code source of truth: imported MoonBit projects keep `form.mbt` +
   `handlers.mbt` as the on-disk truth; the in-memory `.studio.json` format is a
@@ -271,26 +271,26 @@ The fixed three-sentence differentiator:
 
 ```sh
 # Web (wasm-gc)
-moon build examples/moui_studio/web_wasm --target wasm-gc
+moon build moui_studio/web_wasm --target wasm-gc
 
 # macOS native (mainline desktop: full capability set)
-moon run examples/moui_studio/macos_skia --target native
+moon run moui_studio/macos_skia --target native
 
 # Linux / Windows native (Skia; capability gaps degrade explicitly:
 # no PTY terminal, no webview preview, no wall-clock FFI, no immersive
 # titlebar; provider/compile/build/persistence/MCP are shared)
-moon run examples/moui_studio/linux_skia --target native
-moon run examples/moui_studio/windows_skia --target native
+moon run moui_studio/linux_skia --target native
+moon run moui_studio/windows_skia --target native
 
 # HarmonyOS (window-hosted embedded runtime; experimental, ready=false)
-moon run examples/moui_studio/harmonyos_window_hosted --target native
+moon run moui_studio/harmonyos_window_hosted --target native
 
 # Tests
-moon test examples/moui_studio/app --target native
-moon test examples/moui_studio/app --target wasm-gc
+moon test moui_studio/app --target native
+moon test moui_studio/app --target wasm-gc
 ```
 
-See `examples/moui_studio/README.md` for the full verification loop and
+See `moui_studio/README.md` for the full verification loop and
 `docs/plans/active/moui-studio.md` for the acceptance matrix.
 
 

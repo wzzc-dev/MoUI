@@ -26,8 +26,8 @@
 - `parse∘gen == id` inverse-parser contract (services/blocks_code).
 - Two-track diff matrix (services/diff) — audit sequences byte-identical.
 - i18n catalog: `node scripts/generate-i18n-catalogs.mjs --input
-  examples/moui_studio/app/i18n/catalogs.json --out
-  examples/moui_studio/app/i18n_catalog_generated.mbt` (no args targets the
+  moui_studio/app/i18n/catalogs.json --out
+  moui_studio/app/i18n_catalog_generated.mbt` (no args targets the
   WEBSITE manifest — wrong file).
 
 ## Known flake

@@ -38,7 +38,7 @@ M5-5c(struct/VStruct/FieldAccess)已完成;M5-5d(enum+match)尝试后回滚。
 - **未做**: M6(教学切换)、M7(拼图外观)、M8(收尾)。
 - 验证基线: app 308/308 双目标;模块全量 native 4722、wasm-gc 3130;
   静态门六项全绿;改 domain/studio_lang 或 codec 后必须跑
-  `moon run examples/moui_studio/tools/sync_kernel --target native`
+  `moon run moui_studio/tools/sync_kernel --target native`
   (kernel 是逐字节镜像,`--check` 报 DRIFT)。
 - **维护基线坑**: 文件超 1800 行(未跟踪阈值)会挂
   validate-maintenance-baseline——domain 文件长大时需在

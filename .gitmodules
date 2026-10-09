@@ -10,3 +10,7 @@
 	path = examples/momark
 	url = https://github.com/wzzc-dev/MoMark.git
 	branch = main
+[submodule "moui_studio"]
+	path = moui_studio
+	url = /Volumes/Data/Code/moon/moui_studio
+	branch = main

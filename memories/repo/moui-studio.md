@@ -2,7 +2,7 @@
 
 ## Package
 
-- `examples/moui_studio`（module `examples/moui_studio`，2026-09-27 建立）：中英双语可视化
+- `moui_studio`（module `moui_studio`，2026-09-27 建立）：中英双语可视化
   编程 IDE，单一程序 IR 支撑「窗体设计 / 积木编排 / 双语代码」三视图 + 结构化
   AI 提案 + 闸门化运行 + 独立应用导出。计划：`docs/plans/active/moui-studio.md`。
   前身 `examples/moeui_studio` / `examples/moblocks_studio` 已删除（git 历史
@@ -11,10 +11,10 @@
   `services/{export,model_provider,provider_native}`、`app/`（TEA + 五视图，
   native+wasm-gc）、`web_wasm/` + `macos_skia/` 薄入口、`tools/{sync_kernel,
   emit_bundle}`。
-- 最小循环：`moon test examples/moui_studio/app --target native|wasm-gc`、
-  `moon build examples/moui_studio/web_wasm --target wasm-gc`、
+- 最小循环：`moon test moui_studio/app --target native|wasm-gc`、
+  `moon build moui_studio/web_wasm --target wasm-gc`、
   `node scripts/generate-i18n-catalogs.mjs ... --check`、
-  `moon run examples/moui_studio/tools/sync_kernel --target native -- --check`。
+  `moon run moui_studio/tools/sync_kernel --target native -- --check`。
 
 ## 产品决策（重写时不要推翻）
 
@@ -29,7 +29,7 @@
   web 端只走确定性假模型，真实 OpenAI 兼容 provider 仅 native。
 - 真实模型默认配置：阶跃星辰 StepFun，endpoint
   `https://api.stepfun.com/step_plan/v1`，model `step-5-preview`。**凭据
-  唯一来源是 gitignored 的 `examples/moui_studio/.config.json`**
+  唯一来源是 gitignored 的 `moui_studio/.config.json`**
   （`{provider:{endpoint,model,api_key}}`，根 .gitignore 第 52 行登记）：
   native 组合根启动读取预填面板；`services/provider_native` 的
   `load_provider_config` 解析测试×2（**live smoke 测试从未落地**：
@@ -104,8 +104,8 @@
   `@provider.completion_url`（base 拼/全路径原样/尾斜杠归一）。
 - **live smoke**：`provider_native.provider_live_completion(config, prompt)`
   + `worker_test` 跳过式 async test（配置缺失即跳过）。`moon test` 的
-  cwd = **module 根**（`examples/moui_studio/`，探针实测），配置路径候选
-  `.config.json` + `examples/moui_studio/.config.json`。live 调用会消耗 key
+  cwd = **module 根**（`moui_studio/`，探针实测），配置路径候选
+  `.config.json` + `moui_studio/.config.json`。live 调用会消耗 key
   配额；测试期间出现工具链级 `warning: input verification failed`
   （非仓库源码，异步 IO 时出现，无害）。
 - async 组合：`async fn main` + `@async.all([window_task, worker_task])`，
@@ -139,13 +139,13 @@
 
 ## 2026-09-27 P1 落地后新增事实
 
-- **模块已成形**：`examples/moui_studio` 独立 module，五个领域包 + services×3 + tools×2 +
+- **模块已成形**：`moui_studio` 独立 module，五个领域包 + services×3 + tools×2 +
   app + web/macos 入口。全量测试：domain 51 + app 14 + model_provider 5 + export 8
   （双目标）+ provider_native 2（native）。
-- **最小循环**：`moon test examples/moui_studio/domain/<pkg> --target native|wasm-gc`、
-  `moon test examples/moui_studio/app --target native|wasm-gc`、
-  `moon run examples/moui_studio/tools/sync_kernel --target native -- --check`、
-  `moon run examples/moui_studio/tools/emit_bundle --target native -- <project.json> <name> <dir>`。
+- **最小循环**：`moon test moui_studio/domain/<pkg> --target native|wasm-gc`、
+  `moon test moui_studio/app --target native|wasm-gc`、
+  `moon run moui_studio/tools/sync_kernel --target native -- --check`、
+  `moon run moui_studio/tools/emit_bundle --target native -- <project.json> <name> <dir>`。
 - **IR 是语句级**（Declare/Assign/If/CountLoop/WhileLoop/Break/Call；If 带
   else-if 链数组）；内建 14 个（12 + row_count/row_at）；闸门 2 个
   （ask/submit_data）。IR 存规范 id（英文），源码名按语言表渲染。
@@ -175,7 +175,7 @@
 
 ## 2026-09-27 收官两项（verifier 补齐）
 
-- **i18n 生成链**：数据在 `examples/moui_studio/app/i18n/{zh-Hans,en}.json`（manifest
+- **i18n 生成链**：数据在 `moui_studio/app/i18n/{zh-Hans,en}.json`（manifest
   `catalogs.json`），`node scripts/generate-i18n-catalogs.mjs --input … --out …`
   生成 `i18n_catalog_generated.mbt`（GeneratedI18nCatalog + Text/Plural），
   app/i18n.mbt 只做适配（studio_messages 打平成 @i18n.Message）。`--check` 步骤
@@ -223,7 +223,7 @@
   `@provider.completion_url`；② `RealGenerationFinished` 原本没有处理器、
   真实生成结果被静默丢弃——现已移入 update_ai 纯域（结果消息是纯状态
   转移，与假模型同走 proposal_from_completion 校验链），并有回归测试。
-- **`moon test` 的 cwd = module 根**（`examples/moui_studio/`，探针实测），
+- **`moon test` 的 cwd = module 根**（`moui_studio/`，探针实测），
   不是仓库根；`moon run` 才是仓库根。`.config.json` 路径候选要两者兼顾。
 - **UI 框架要点（B1-B4 实测）**：`@views` facade 的 `pub using` 转发会把
   枚举构造器带进作用域（`variant=Ghost`/`role=Title` 裸写可用），但 match
@@ -366,7 +366,7 @@
 - **产品名零兼容**：唯一格式 `moui.studio.project` v1；旧 `format`/`version`
   结构化拒绝，不读取、不迁移、不留解码路径；**旧产品名**（改名前的三个
   写法）在仓库源码与文档零残留（grep 断言作提交门）。模块路径
-  `examples/moui_studio`，计划 `docs/plans/active/moui-studio.md`。
+  `moui_studio`，计划 `docs/plans/active/moui-studio.md`。
 - **双轨语义（v1 冻结）**：解释轨 = 课堂/Web 轨（沙箱即时执行，100_000 步
   预算、提交数据外发闸门 + 确认卡、审计日志、积木/代码聚光灯，计次循环
   槽 `@iN`/`@iN#n` 隐藏且差分排除）；编译轨 = 毕业通道（**仅 native**，
@@ -396,11 +396,11 @@
   diff matrix / compile native / export tests / export kernel sync。
 - **moon info 陷阱**：`scripts/check-generated-interfaces.mjs` 只快照**已
   tracked** 的 `pkg.generated.mbti`，但 `moon info` 会在**未跟踪**的
-  package（含 `examples/moui_studio/**`）里生成新 mbti。跑完 `moon info`
-  后记得 `git clean -f examples/moui_studio` 清掉这些不该提交的生成物，
+  package（含 `moui_studio/**`）里生成新 mbti。跑完 `moon info`
+  后记得 `git clean -f moui-studio` 清掉这些不该提交的生成物，
   只提交 tracked 漂移（本轮是 `moui/core/pkg.generated.mbti` 的
   `View::on_tap_with_frame`）。
-- **`moon fmt` 陷阱**：对 `examples/moui_studio/app/*.mbt` 通配会改写
+- **`moon fmt` 陷阱**：对 `moui_studio/app/*.mbt` 通配会改写
   无关既有文件（实测 `canvas.mbt`）；只对本次触碰的具体文件跑
   `moon fmt <file>`。仓库多处既有文件有 format 漂移（proposal/main/
   compile_report/studio_lang_test/worker_test/runtime_pointer_input_test），
@@ -411,7 +411,7 @@
   是同步生成物（web_wasm/docs 被 gitignore，不入库）。**旧名 grep**：
   新文档里别把旧产品名写回去（本轮踩过一次已清）；`git grep -in` 旧名
   三种写法应零命中（`docs/plans/done`、`docs/ai-sessions` 的历史快照除外）。
-- **artifacts/ 与凭据**：`artifacts/` 不入库；`examples/moui_studio/.config.json`
+- **artifacts/ 与凭据**：`artifacts/` 不入库；`moui_studio/.config.json`
   （StepFun key）gitignored，绝不入源码/bundle。
 
 ## 2026-09-30 中心工作区重构（满幅画布 / AI 卡瘦身 / scroll_view 居中缺陷）
@@ -572,10 +572,10 @@
   runtime.js` 与 `../../../_build/wasm-gc/.../web_wasm.wasm` 均相对
   `web_wasm/`。workspace 成员（wzzc-dev/*）**不在** `.mooncakes` 里（在
   仓库根目录作为 workspace 成员），直接 `python3 -m http.server` 于
-  web_wasm/ 会 404。**staging 布局**：`/tmp/stage/examples/moui_studio/
+  web_wasm/ 会 404。**staging 布局**：`/tmp/stage/moui_studio/
   web_wasm/index.html` + `.mooncakes/wzzc-dev/{moui,moui_web_renderer}`
   符号链接到仓库对应目录 + `_build/.../web_wasm` 符号链接，于 stage 根起
-  服务，URL `/examples/moui_studio/web_wasm/index.html`。runtime.js 内部
+  服务，URL `/moui_studio/web_wasm/index.html`。runtime.js 内部
   引 `../moui/backend/web/browser_runtime.js` 与
   `./canvas2d_runtime.js`，符号链接目录天然解析。
 - 命令面板/对话框类 presentation 打开瞬间有渐显动画：截图测对比度前先等
@@ -1260,7 +1260,7 @@ text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡�
 ### CI 盲区
 
 - `checks/profiles.json` 的 studio 步骤原先**全在 `services/`**，
-  `moon test examples/moui_studio/app`（172 个用例，含全部 UI 回归白盒）
+  `moon test moui_studio/app`（172 个用例，含全部 UI 回归白盒）
   **从不进 CI**。已加 `studio app tests` 到 pr profile。
 - 改动 `domain/blocks` 后 `sync_kernel --check` 仍报 current（内核集只有
   ir/studio_lang/codec，blocks 不在其中）——但**仍要跑**，因为 codegen 与

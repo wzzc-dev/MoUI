@@ -76,6 +76,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [moui-studio-workspace-feel](active/moui-studio-workspace-feel.md) | MoUI Studio 工作区手感：多标签编辑(光标随 tab/脏关闭确认/保存全部) + 文件 CRUD(新建/改名三步链) + 全文搜索(BtSearch 页签+跳转) + 保存即自动构建 live 诊断 |
 | [moui-studio-markdown-plugin](active/moui-studio-markdown-plugin.md) | MoUI Studio Markdown 插件：.md 打开即 MoMark 引擎格式编辑（moui_richtext.markdown_editor）+ 草稿/写盘通道零新机制;无状态视图贡献（terminal 先例） |
 | [moui-studio-workspace-import](active/moui-studio-workspace-import.md) | MoUI Studio 工作区导入：moon.work 成员逐模块导入 + 规模治理(入口候选不深读/三级上限/进度节流) + 工程记录持久化(.studio/projects.json v1, 启动静默重扫) |
+| [moui-studio-standalone-subrepo](done/moui-studio-standalone-subrepo.md) | MoUI Studio 迁出为独立子仓库 `moui_studio/`（模块 `wzzc-dev/moui_studio`，subtree split 保史 + submodule 挂载 + moon.work/检查/文档引用同步） |
 | [moui-studio-ai-chat](active/moui-studio-ai-chat.md) | MoUI Studio AI 模式改造为对白转录工作台：用户气泡/AI 消息/工作卡时间线 + composer 信息层(工程/模型/姿态) + 会话列表(相对时间/分组/置顶/搜索) + native 会话落盘 |
 | [moui-studio-ai-look](done/moui-studio-ai-look.md) | MoUI Studio AI 模式二期：向 VS Code 智能体模式空态基准复刻——双行会话行(常显时间)/区头动作/双下拉芯片/提示行并入卡头/单模式下拉/空态居中+姿态读数 |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |

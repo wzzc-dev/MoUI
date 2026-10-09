@@ -181,7 +181,7 @@ script. MSVC dynamic roots should contain `lib\\wgpu_native.dll` and
 
 ## MoUI Studio (windows_skia)
 
-`examples/moui_studio/windows_skia` is the Studio's Windows Skia entrypoint,
+`moui_studio/windows_skia` is the Studio's Windows Skia entrypoint,
 mirroring the momark `windows_skia` template: `@windows_backend.app_environment()`
 + `entry(smoke_options=...)` + `@render_skia.from_env(platform=Windows)`, wired
 to the same `@studio_app.program` composition root. `MOUI_FIRST_FRAME_EXIT=1`
@@ -194,4 +194,4 @@ absent with explicit degradation. File dialogs depend on the Windows service
 bridge's `file_dialog` capability.
 
 Evidence: `scripts/run-window-package-smoke.sh windows --run` or
-`MOUI_FIRST_FRAME_EXIT=1 moon run examples/moui_studio/windows_skia --target native`.
+`MOUI_FIRST_FRAME_EXIT=1 moon run moui_studio/windows_skia --target native`.

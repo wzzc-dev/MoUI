@@ -46,7 +46,7 @@ cat > "$TMP/project.studio.json" <<'JSON'
 JSON
 
 cd "$REPO_ROOT"
-moon run examples/moui_studio/tools/emit_bundle --target native -- \
+moon run moui_studio/tools/emit_bundle --target native -- \
   "$TMP/project.studio.json" studio_hello_export "$TMP/bundle"
 
 # 产物在 <target-dir>/<app-name>/ 子目录（app 名经模块名安全化，

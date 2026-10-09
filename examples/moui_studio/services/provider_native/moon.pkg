@@ -1,9 +1,0 @@
-import {
-  "moonbitlang/async",
-  "moonbitlang/async/http",
-  "moonbitlang/core/json",
-  "moonbitlang/x/fs" @x/fs,
-  "examples/moui_studio/services/model_provider" @provider,
-}
-
-supported_targets = "native"

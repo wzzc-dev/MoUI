@@ -370,7 +370,7 @@ desktop (Ubuntu 24.04+) with actual keyboard presses and mouse clicks.
 
 ## MoUI Studio (linux_skia)
 
-`examples/moui_studio/linux_skia` is the Studio's Linux Skia entrypoint,
+`moui_studio/linux_skia` is the Studio's Linux Skia entrypoint,
 following the momark template: `@linux_backend.app_environment()` +
 `entry(smoke_options=...)` + `@render_skia.from_env(platform=Linux)`, wired to
 the same `@studio_app.program` composition root as the macOS and Web entries.
@@ -394,4 +394,4 @@ File dialogs (`pick_directory`) depend on the Linux service bridge's
 actions grey out with an explanatory notice.
 
 Evidence: `scripts/run-window-package-smoke.sh linux --run` or
-`MOUI_FIRST_FRAME_EXIT=1 moon run examples/moui_studio/linux_skia --target native`.
+`MOUI_FIRST_FRAME_EXIT=1 moon run moui_studio/linux_skia --target native`.

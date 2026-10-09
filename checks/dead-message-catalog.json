@@ -4,9 +4,9 @@
   "enums": [
     {
       "name": "Msg",
-      "path": "examples/moui_studio/app/model.mbt",
+      "path": "moui_studio/app/model.mbt",
       "scanRoots": [
-        "examples/moui_studio/app"
+        "moui_studio/app"
       ],
       "waivers": [
         {

@@ -5,7 +5,7 @@ MoUI Studio 是 **MoUI 的 IDE 工具**：一个中英双语（zh-Hans / English
 讲清楚的老师。UI 走技术风：暗色工程面板、发丝分隔线、等宽字体优先、网格画布、
 终端式控制台。
 
-- 源码：`examples/moui_studio`（独立 module + `moon.work` 成员）
+- 源码：`moui_studio/`——独立 git 子仓库（`wzzc-dev/moui_studio`，沿用 `examples/momark` 的子仓库模式），同时是 `moon.work` 成员
 - 入口：Web（`web_wasm`）与 macOS（`macos_skia`）
 - 项目格式：`moui.studio.project` v1（`.studio.json`），且是唯一格式——
   早期产品世代的项目文件不会被读取或迁移，而是返回结构化拒绝
@@ -122,23 +122,23 @@ MoonBit 源码。
 
 ```sh
 # Web（wasm-gc）
-moon build examples/moui_studio/web_wasm --target wasm-gc
+moon build moui_studio/web_wasm --target wasm-gc
 
 # macOS native
-moon run examples/moui_studio/macos_skia --target native
+moon run moui_studio/macos_skia --target native
 
 # Linux / Windows native（Skia；能力缺口显式降级：无 PTY 终端、
 # 无 webview 预览、无墙钟 FFI、无沉浸式标题栏；provider/编译轨/构建/持久化/MCP 复用）
-moon run examples/moui_studio/linux_skia --target native
-moon run examples/moui_studio/windows_skia --target native
+moon run moui_studio/linux_skia --target native
+moon run moui_studio/windows_skia --target native
 
 # HarmonyOS（window-hosted 嵌入式运行时；experimental，ready=false）
-moon run examples/moui_studio/harmonyos_window_hosted --target native
+moon run moui_studio/harmonyos_window_hosted --target native
 
 # 测试
-moon test examples/moui_studio/app --target native
-moon test examples/moui_studio/app --target wasm-gc
+moon test moui_studio/app --target native
+moon test moui_studio/app --target wasm-gc
 ```
 
-完整验证循环见 `examples/moui_studio/README.md`，验收矩阵见
+完整验证循环见 `moui_studio/README.md`，验收矩阵见
 `docs/plans/active/moui-studio.md`。

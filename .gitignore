@@ -48,7 +48,5 @@ examples/mo_workbench/macos_skia/.mo_workbench/settings.json
 .box-agent/
 .zcodeignore
 competition-2026/*
-# MoUI Studio real-provider credentials: runtime-only, never commit (rotate freely)
-examples/moui_studio/.config.json
-# MoUI Studio runtime state (AI session store etc.), never commit
+# MoUI Studio (subrepo moui_studio) runtime state, never commit
 .studio/

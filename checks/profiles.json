@@ -199,9 +199,9 @@
             "node",
             "scripts/generate-i18n-catalogs.mjs",
             "--input",
-            "examples/moui_studio/app/i18n/catalogs.json",
+            "moui_studio/app/i18n/catalogs.json",
             "--out",
-            "examples/moui_studio/app/i18n_catalog_generated.mbt",
+            "moui_studio/app/i18n_catalog_generated.mbt",
             "--check"
           ]
         },
@@ -210,7 +210,7 @@
           "argv": [
             "moon",
             "test",
-            "examples/moui_studio/app",
+            "moui_studio/app",
             "--target",
             "native"
           ]
@@ -220,7 +220,7 @@
           "argv": [
             "moon",
             "test",
-            "examples/moui_studio/services/compiled_runtime",
+            "moui_studio/services/compiled_runtime",
             "--target",
             "native"
           ]
@@ -230,7 +230,7 @@
           "argv": [
             "moon",
             "test",
-            "examples/moui_studio/services/diff",
+            "moui_studio/services/diff",
             "--target",
             "native"
           ]
@@ -240,7 +240,7 @@
           "argv": [
             "moon",
             "test",
-            "examples/moui_studio/services/compile_native",
+            "moui_studio/services/compile_native",
             "--target",
             "native"
           ]
@@ -250,7 +250,7 @@
           "argv": [
             "moon",
             "test",
-            "examples/moui_studio/services/export",
+            "moui_studio/services/export",
             "--target",
             "native"
           ]
@@ -260,7 +260,7 @@
           "argv": [
             "moon",
             "run",
-            "examples/moui_studio/tools/sync_kernel",
+            "moui_studio/tools/sync_kernel",
             "--target",
             "native",
             "--",

@@ -4,7 +4,7 @@
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PLATFORM="${1:-linux}"
-ENTRY="examples/moui_studio/${PLATFORM}_skia"
+ENTRY="moui_studio/${PLATFORM}_skia"
 echo "=== MoUI Studio ${PLATFORM} smoke ==="
 cd "$REPO_ROOT"
 MOUI_FIRST_FRAME_EXIT=1 moon run "$ENTRY" --target native

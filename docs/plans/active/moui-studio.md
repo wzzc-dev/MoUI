@@ -1,6 +1,8 @@
 # MoUI Studio——中英双语的积木/代码同源可视化编程环境
 
 - Status: active
+
+> 2026-10-09: 产品已迁出为独立子仓库 `moui_studio/`（模块 `wzzc-dev/moui_studio`），见 `moui-studio-standalone-subrepo.md`；本文保留历史规划上下文，旧路径 `examples/moui_studio` 一律对应新位置。
 - Goal: 用单一产品取代 `examples/moeui_studio` 与 `examples/moblocks_studio`：
   一个中文优先、IDE 界面中英双语的可视化编程环境。一份带 schema 版本的程序 IR
   同时支撑「窗体设计 / 积木编排 / 双语代码」三种编辑视图与结构化 AI 提案，

@@ -1,8 +1,0 @@
-import {
-  "moonbitlang/core/json",
-  "examples/moui_studio/domain/ir",
-  "examples/moui_studio/domain/studio_lang",
-  "examples/moui_studio/domain/codec",
-}
-
-supported_targets = "native+wasm-gc"

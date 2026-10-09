@@ -151,7 +151,7 @@ These commands generate local scaffold manifests and logs under `artifacts/`; re
 
 The featured examples — `showcase`, `mo_workbench`, and `excel` — share app logic in `examples/<name>/app` and expose thin platform entrypoints.
 
-**MoUI Studio** (`examples/moui_studio`) is MoUI's own IDE: a bilingual visual programming environment where design, blocks, and code views all edit one statement-level IR, with `form.mbt` + `handlers.mbt` as the on-disk source of truth for imported projects, three real preview modes (headless frame, web live preview, native run), and readable structured AI proposals. See `docs/moui-studio.md` and ADR 0037. Showcase uses `web_wasm`, desktop renderer-specific entrypoints, and `android_window_hosted`, `ios_window_hosted`, and `harmonyos_window_hosted` mobile entrypoints.
+**MoUI Studio** (`moui_studio`, standalone subrepository `wzzc-dev/moui_studio`) is MoUI's own IDE: a bilingual visual programming environment where design, blocks, and code views all edit one statement-level IR, with `form.mbt` + `handlers.mbt` as the on-disk source of truth for imported projects, three real preview modes (headless frame, web live preview, native run), and readable structured AI proposals. See `docs/moui-studio.md` and ADR 0037. Showcase uses `web_wasm`, desktop renderer-specific entrypoints, and `android_window_hosted`, `ios_window_hosted`, and `harmonyos_window_hosted` mobile entrypoints.
 
 To try Showcase on a mobile platform, follow the platform-specific setup, build, and run instructions for [Android](docs/android-support.md), [iOS](docs/ios-support.md), or [HarmonyOS](docs/harmonyos-support.md). Standard examples use the matching `wzzc-dev/window` platform template through `moui build`.
 
