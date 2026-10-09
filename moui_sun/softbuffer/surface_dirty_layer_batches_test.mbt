@@ -59,8 +59,9 @@ test "NativeSurface exposes RenderFrame dirty present batches" {
   ignore(frame.get_layer_tree().add_layer(right))
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   match surface.dirty_frame_present_batch(frame) {
     Ok(batch) => {
       assert_eq(batch.get_rect_count(), 1)
@@ -105,8 +106,9 @@ test "NativeSurface materializes filtered dirty present batch without submitting
   ignore(frame.get_layer_tree().add_layer(layer))
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   match surface.dirty_frame_present_batch(frame) {
     Ok(batch) => {
       assert_eq(batch.get_rect_count(), 1)
@@ -163,8 +165,9 @@ test "NativeSurface materializes shader-filter dirty present batch without submi
   ignore(frame.get_layer_tree().add_layer(layer))
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   match surface.dirty_frame_present_batch(frame) {
     Ok(batch) => {
       assert_eq(batch.get_rect_count(), 1)
@@ -241,8 +244,9 @@ test "NativeSurface materializes antialiased layer path shader-filter batch with
   )
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   let left = @graphics.Color::new(r=159, g=255, b=223)
   let right = @graphics.Color::new(r=223, g=255, b=159)
   let batch = match surface.dirty_frame_present_batch(frame) {
@@ -368,8 +372,9 @@ test "NativeSurface materializes moved layer bounds without submitting" {
   assert_eq(frame.get_layer_tree().add_layer(moving), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -454,8 +459,9 @@ test "NativeSurface materializes resized layer bounds without submitting" {
   assert_eq(frame.get_layer_tree().add_layer(resizing), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -563,8 +569,9 @@ test "NativeSurface materializes hidden layer bounds without submitting" {
   assert_eq(frame.get_layer_tree().add_layer(top), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -632,8 +639,9 @@ test "NativeSurface materializes removed layer bounds without submitting" {
   assert_eq(frame.get_layer_tree().add_layer(top), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -728,8 +736,9 @@ test "NativeSurface materializes replaced layer bounds without submitting" {
   assert_eq(frame.get_layer_tree().add_layer(old_top), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -845,8 +854,9 @@ test "NativeSurface materializes reordered layer bounds without submitting" {
   assert_eq(frame.get_layer_tree().add_layer(top), 2)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(

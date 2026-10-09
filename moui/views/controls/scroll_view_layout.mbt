@@ -289,8 +289,15 @@ impl @core.ViewNode for ScrollContainer with fn child_constraints(
 
 ///|
 impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
+  // Viewport fallback: the child measures under unbounded constraints, so a
+  // windowed list (spacers + rows) reports its full virtual extent here —
+  // clamping against that would zero the offset and pin the child frame to
+  // the top while the window/paint paths use the real frame. Constrain the
+  // measured size instead: the viewport is the space the parent actually
+  // allots, which is also what the event path reads off `ctx.frame`.
+  let measured = @common.first_child_size(ctx.child_sizes)
   let viewport_size = self.viewport.unwrap_or(
-    @common.first_child_size(ctx.child_sizes),
+    ctx.constraints.constrain(measured),
   )
   let offset = scroll_runtime_state(self, ctx.state).offset
   @core.ViewLayoutResult::new(
@@ -305,7 +312,7 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
         ),
         offset~,
         viewport=viewport_size,
-        child_size=@common.first_child_size(ctx.child_sizes),
+        child_size=measured,
       ),
     ],
     clips_children=true,

@@ -12,5 +12,5 @@
 	branch = main
 [submodule "moui_studio"]
 	path = moui_studio
-	url = /Volumes/Data/Code/moon/moui_studio
+	url = git@github.com:wzzc-dev/moui_studio.git
 	branch = main

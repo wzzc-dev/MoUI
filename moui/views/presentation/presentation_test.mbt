@@ -99,3 +99,116 @@ test "toast presentations dock bottom-center in the viewport" {
   assert_true(frame.origin.x == 80.0)
   assert_true(frame.origin.y == 68.0)
 }
+
+///|
+/// 非模态屏障（toast / 上下文菜单）**只**消费 `Down`。
+///
+/// 回归：屏障曾把 `Move` 一并吃掉，而运行时一旦判定「事件已被覆盖层消费」，
+/// 就会把覆盖点之下的在流子节点整帧跳过——屏上只要有一条 toast，整个 app
+/// 的悬停全部失效（含顶栏既有图标按钮）。这里锁定「toast 在场时，底层
+/// 内容仍能收到 `Move`」，这是 hover 可用的前提。
+test "non-modal barrier passes Move through to the base" {
+  let moves : Ref[Int] = Ref(0)
+  let base : @core.View[Unit] = @container.container(
+    @container.container(
+      @text.text("Base"),
+      width=200.0,
+      height=100.0,
+      padding=0.0,
+    ),
+    width=200.0,
+    height=100.0,
+    padding=0.0,
+  ).on_hover(_hovered => {
+    moves.val = moves.val + 1
+    ()
+  })
+  let root = @presentation.overlay_host(base, [
+    @presentation.PresentationSpec::new(
+      id="toast",
+      kind=Toast,
+      content=@container.container(
+        @text.text("Toast"),
+        width=40.0,
+        height=20.0,
+        padding=0.0,
+      ),
+      dismiss=@presentation.PresentationDismissPolicy::new(
+        outside_tap=true,
+        message=Some(()),
+      ),
+    ),
+  ])
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=100.0),
+  )
+  ignore(runtime.layout())
+  // toast 停在底部中央（insets 12 + 内容 40x20）;点在上半区，
+  // 那里没有 toast 内容，只有它的全屏屏障。
+  runtime.dispatch_event(
+    @core.Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=20.0),
+        phase=Move,
+      ),
+    ),
+  )
+  if moves.val != 1 {
+    fail(
+      "toast 在场时底层内容应收到 Move（悬停可用），实际收到 \{moves.val} 次",
+    )
+  }
+}
+
+///|
+/// 模态屏障仍然吞掉一切：`Move` 不得穿到背景内容（背景不可交互是模态的
+/// 定义）。与上一条构成一对——放行只针对**非模态**屏障。
+test "modal barrier still swallows Move" {
+  let moves : Ref[Int] = Ref(0)
+  let base : @core.View[Unit] = @container.container(
+    @container.container(
+      @text.text("Base"),
+      width=200.0,
+      height=100.0,
+      padding=0.0,
+    ),
+    width=200.0,
+    height=100.0,
+    padding=0.0,
+  ).on_hover(_hovered => {
+    moves.val = moves.val + 1
+    ()
+  })
+  let root = @presentation.overlay_host(base, [
+    @presentation.PresentationSpec::new(
+      id="dialog",
+      kind=Dialog,
+      content=@container.container(
+        @text.text("Dialog"),
+        width=40.0,
+        height=20.0,
+        padding=0.0,
+      ),
+      modality=@presentation.PresentationModality::Modal,
+    ),
+  ])
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=100.0),
+  )
+  ignore(runtime.layout())
+  runtime.dispatch_event(
+    @core.Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=20.0),
+        phase=Move,
+      ),
+    ),
+  )
+  if moves.val != 0 {
+    fail(
+      "模态屏障应吞掉 Move，底层却收到了 \{moves.val} 次悬停",
+    )
+  }
+}

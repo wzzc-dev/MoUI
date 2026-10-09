@@ -14,7 +14,10 @@ test "formula evaluator resolves arithmetic references and ranges" {
   inspect(@formula.evaluate("=A1+B1*2", lookup).to_display(), content="5")
   inspect(@formula.evaluate("=SUM(A1:C1)", lookup).to_display(), content="6")
   inspect(@formula.evaluate("=AVG(A1:C1)", lookup).to_display(), content="2")
-  inspect(@formula.evaluate("=PRODUCT(A1:C1)", lookup).to_display(), content="6")
+  inspect(
+    @formula.evaluate("=PRODUCT(A1:C1)", lookup).to_display(),
+    content="6",
+  )
   inspect(@formula.evaluate("=MEDIAN(A1:C1)", lookup).to_display(), content="2")
 }
 
@@ -68,7 +71,10 @@ test "formula evaluator supports common aggregate functions" {
       None => @cell.CellValue::Empty
     }
   }
-  inspect(@formula.evaluate("=PRODUCT(A1:D1)", lookup).to_display(), content="384")
+  inspect(
+    @formula.evaluate("=PRODUCT(A1:D1)", lookup).to_display(),
+    content="384",
+  )
   inspect(@formula.evaluate("=MEDIAN(A1:D1)", lookup).to_display(), content="5")
 }
 
@@ -84,9 +90,18 @@ test "formula evaluator supports logical functions" {
       None => @cell.CellValue::Empty
     }
   }
-  inspect(@formula.evaluate("=AND(A1>0, B1=0)", lookup).to_display(), content="1")
-  inspect(@formula.evaluate("=AND(A1>0, B1>0)", lookup).to_display(), content="0")
-  inspect(@formula.evaluate("=OR(A1=0, B1=0)", lookup).to_display(), content="1")
+  inspect(
+    @formula.evaluate("=AND(A1>0, B1=0)", lookup).to_display(),
+    content="1",
+  )
+  inspect(
+    @formula.evaluate("=AND(A1>0, B1>0)", lookup).to_display(),
+    content="0",
+  )
+  inspect(
+    @formula.evaluate("=OR(A1=0, B1=0)", lookup).to_display(),
+    content="1",
+  )
   inspect(@formula.evaluate("=NOT(B1>0)", lookup).to_display(), content="1")
   inspect(
     @formula.evaluate("=IF(AND(A1>0,B1=0), 9, 1)", lookup).to_display(),

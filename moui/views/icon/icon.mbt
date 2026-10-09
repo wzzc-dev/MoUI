@@ -665,6 +665,194 @@ pub fn icon_path(name : @style.IconName) -> Array[@core.PathVerb] {
         ),
         Close,
       ]
+    Folder =>
+      [
+        MoveTo(@core.Point::new(x=3.0, y=18.0)),
+        LineTo(@core.Point::new(x=3.0, y=6.0)),
+        LineTo(@core.Point::new(x=9.0, y=6.0)),
+        LineTo(@core.Point::new(x=11.0, y=9.0)),
+        LineTo(@core.Point::new(x=21.0, y=9.0)),
+        LineTo(@core.Point::new(x=21.0, y=18.0)),
+        LineTo(@core.Point::new(x=3.0, y=18.0)),
+        Close,
+      ]
+    FolderOpened =>
+      [
+        MoveTo(@core.Point::new(x=3.0, y=18.0)),
+        LineTo(@core.Point::new(x=3.0, y=6.0)),
+        LineTo(@core.Point::new(x=9.0, y=6.0)),
+        LineTo(@core.Point::new(x=11.0, y=9.0)),
+        LineTo(@core.Point::new(x=18.0, y=9.0)),
+        MoveTo(@core.Point::new(x=3.0, y=18.0)),
+        LineTo(@core.Point::new(x=6.0, y=12.0)),
+        LineTo(@core.Point::new(x=22.0, y=12.0)),
+        LineTo(@core.Point::new(x=19.0, y=18.0)),
+        LineTo(@core.Point::new(x=3.0, y=18.0)),
+      ]
+    File =>
+      [
+        MoveTo(@core.Point::new(x=6.0, y=3.0)),
+        LineTo(@core.Point::new(x=14.0, y=3.0)),
+        LineTo(@core.Point::new(x=19.0, y=8.0)),
+        LineTo(@core.Point::new(x=19.0, y=21.0)),
+        LineTo(@core.Point::new(x=6.0, y=21.0)),
+        LineTo(@core.Point::new(x=6.0, y=3.0)),
+        Close,
+        MoveTo(@core.Point::new(x=14.0, y=3.0)),
+        LineTo(@core.Point::new(x=14.0, y=8.0)),
+        LineTo(@core.Point::new(x=19.0, y=8.0)),
+      ]
+    FileCode =>
+      [
+        MoveTo(@core.Point::new(x=6.0, y=3.0)),
+        LineTo(@core.Point::new(x=14.0, y=3.0)),
+        LineTo(@core.Point::new(x=19.0, y=8.0)),
+        LineTo(@core.Point::new(x=19.0, y=21.0)),
+        LineTo(@core.Point::new(x=6.0, y=21.0)),
+        LineTo(@core.Point::new(x=6.0, y=3.0)),
+        Close,
+        MoveTo(@core.Point::new(x=14.0, y=3.0)),
+        LineTo(@core.Point::new(x=14.0, y=8.0)),
+        LineTo(@core.Point::new(x=19.0, y=8.0)),
+        MoveTo(@core.Point::new(x=12.5, y=13.5)),
+        LineTo(@core.Point::new(x=10.0, y=16.5)),
+        LineTo(@core.Point::new(x=12.5, y=19.5)),
+        MoveTo(@core.Point::new(x=15.0, y=13.5)),
+        LineTo(@core.Point::new(x=17.5, y=16.5)),
+        LineTo(@core.Point::new(x=15.0, y=19.5)),
+      ]
+    FileMarkdown =>
+      [
+        MoveTo(@core.Point::new(x=5.0, y=8.0)),
+        LineTo(@core.Point::new(x=5.0, y=17.0)),
+        MoveTo(@core.Point::new(x=5.0, y=8.0)),
+        LineTo(@core.Point::new(x=9.0, y=13.0)),
+        LineTo(@core.Point::new(x=13.0, y=8.0)),
+        LineTo(@core.Point::new(x=13.0, y=17.0)),
+        MoveTo(@core.Point::new(x=16.0, y=10.0)),
+        LineTo(@core.Point::new(x=16.0, y=17.0)),
+        MoveTo(@core.Point::new(x=13.5, y=14.5)),
+        LineTo(@core.Point::new(x=16.0, y=17.0)),
+        LineTo(@core.Point::new(x=18.5, y=14.5)),
+      ]
+    FileJson =>
+      // 一对花括号（JSON 的视觉速记）：左 `{` 右 `}`，中缝留给点。
+      [
+        MoveTo(@core.Point::new(x=9.5, y=4.0)),
+        CubicTo(
+          @core.Point::new(x=6.5, y=4.0),
+          @core.Point::new(x=7.5, y=10.0),
+          @core.Point::new(x=5.0, y=12.0),
+        ),
+        CubicTo(
+          @core.Point::new(x=7.5, y=14.0),
+          @core.Point::new(x=6.5, y=20.0),
+          @core.Point::new(x=9.5, y=20.0),
+        ),
+        MoveTo(@core.Point::new(x=14.5, y=4.0)),
+        CubicTo(
+          @core.Point::new(x=17.5, y=4.0),
+          @core.Point::new(x=16.5, y=10.0),
+          @core.Point::new(x=19.0, y=12.0),
+        ),
+        CubicTo(
+          @core.Point::new(x=16.5, y=14.0),
+          @core.Point::new(x=17.5, y=20.0),
+          @core.Point::new(x=14.5, y=20.0),
+        ),
+      ]
+    FileImage =>
+      [
+        MoveTo(@core.Point::new(x=4.0, y=5.0)),
+        LineTo(@core.Point::new(x=20.0, y=5.0)),
+        LineTo(@core.Point::new(x=20.0, y=19.0)),
+        LineTo(@core.Point::new(x=4.0, y=19.0)),
+        LineTo(@core.Point::new(x=4.0, y=5.0)),
+        Close,
+        MoveTo(@core.Point::new(x=4.0, y=16.0)),
+        LineTo(@core.Point::new(x=9.0, y=11.0)),
+        LineTo(@core.Point::new(x=13.0, y=15.0)),
+        LineTo(@core.Point::new(x=16.0, y=12.0)),
+        LineTo(@core.Point::new(x=20.0, y=16.0)),
+        // 镜头点：图标层只描边（见 `Icon::paint` 的 stroke-only 计划），
+        // 零长度线段画不出圆点——用边长 1.6 的小方框描边读成一个点。
+        MoveTo(@core.Point::new(x=14.7, y=8.2)),
+        LineTo(@core.Point::new(x=16.3, y=8.2)),
+        LineTo(@core.Point::new(x=16.3, y=9.8)),
+        LineTo(@core.Point::new(x=14.7, y=9.8)),
+        Close,
+      ]
+    NewFolder =>
+      [
+        MoveTo(@core.Point::new(x=3.0, y=18.0)),
+        LineTo(@core.Point::new(x=3.0, y=6.0)),
+        LineTo(@core.Point::new(x=9.0, y=6.0)),
+        LineTo(@core.Point::new(x=11.0, y=9.0)),
+        LineTo(@core.Point::new(x=17.0, y=9.0)),
+        LineTo(@core.Point::new(x=17.0, y=18.0)),
+        LineTo(@core.Point::new(x=3.0, y=18.0)),
+        Close,
+        MoveTo(@core.Point::new(x=19.0, y=11.0)),
+        LineTo(@core.Point::new(x=19.0, y=17.0)),
+        MoveTo(@core.Point::new(x=16.0, y=14.0)),
+        LineTo(@core.Point::new(x=22.0, y=14.0)),
+      ]
+    Refresh =>
+      [
+        MoveTo(@core.Point::new(x=20.0, y=12.0)),
+        CubicTo(
+          @core.Point::new(x=20.0, y=16.4),
+          @core.Point::new(x=16.4, y=20.0),
+          @core.Point::new(x=12.0, y=20.0),
+        ),
+        CubicTo(
+          @core.Point::new(x=7.6, y=20.0),
+          @core.Point::new(x=4.0, y=16.4),
+          @core.Point::new(x=4.0, y=12.0),
+        ),
+        CubicTo(
+          @core.Point::new(x=4.0, y=7.6),
+          @core.Point::new(x=7.6, y=4.0),
+          @core.Point::new(x=12.0, y=4.0),
+        ),
+        CubicTo(
+          @core.Point::new(x=15.1, y=4.0),
+          @core.Point::new(x=17.8, y=5.8),
+          @core.Point::new(x=19.2, y=8.4),
+        ),
+        MoveTo(@core.Point::new(x=20.0, y=4.0)),
+        LineTo(@core.Point::new(x=20.0, y=9.0)),
+        LineTo(@core.Point::new(x=15.0, y=9.0)),
+      ]
+    CollapseAll =>
+      [
+        MoveTo(@core.Point::new(x=8.0, y=8.0)),
+        LineTo(@core.Point::new(x=12.0, y=4.0)),
+        LineTo(@core.Point::new(x=16.0, y=8.0)),
+        MoveTo(@core.Point::new(x=8.0, y=16.0)),
+        LineTo(@core.Point::new(x=12.0, y=20.0)),
+        LineTo(@core.Point::new(x=16.0, y=16.0)),
+      ]
+    Ellipsis =>
+      // 三个点：图标层只描边，零长度线段画不出点——每个点用边长 1.8 的
+      // 小方框描边（同 `FileImage` 的镜头点手法）。
+      [
+        MoveTo(@core.Point::new(x=4.1, y=11.1)),
+        LineTo(@core.Point::new(x=5.9, y=11.1)),
+        LineTo(@core.Point::new(x=5.9, y=12.9)),
+        LineTo(@core.Point::new(x=4.1, y=12.9)),
+        Close,
+        MoveTo(@core.Point::new(x=11.1, y=11.1)),
+        LineTo(@core.Point::new(x=12.9, y=11.1)),
+        LineTo(@core.Point::new(x=12.9, y=12.9)),
+        LineTo(@core.Point::new(x=11.1, y=12.9)),
+        Close,
+        MoveTo(@core.Point::new(x=18.1, y=11.1)),
+        LineTo(@core.Point::new(x=19.9, y=11.1)),
+        LineTo(@core.Point::new(x=19.9, y=12.9)),
+        LineTo(@core.Point::new(x=18.1, y=12.9)),
+        Close,
+      ]
   }
 }
 
@@ -849,5 +1037,16 @@ pub fn icon_label(name : @style.IconName) -> String {
     Pin => "Pin"
     PanelBottom => "PanelBottom"
     Chat => "Chat"
+    Folder => "Folder"
+    FolderOpened => "Folder opened"
+    File => "File"
+    FileCode => "Code file"
+    FileMarkdown => "Markdown file"
+    FileJson => "JSON file"
+    FileImage => "Image file"
+    NewFolder => "New folder"
+    Refresh => "Refresh"
+    CollapseAll => "Collapse all"
+    Ellipsis => "More actions"
   }
 }

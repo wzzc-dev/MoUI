@@ -13,8 +13,9 @@ test "NativeSurface exposes size and handle" {
 test "NativeSurface normalizes invalid stored dimensions" {
   let count = Ref(0)
   let surface = @softbuffer.NativeSurface::new(42, -2, 3).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_eq(surface.get_width(), 0)
   assert_eq(surface.get_height(), 3)
   assert_eq(surface.handle(), 42)
@@ -206,8 +207,9 @@ test "NativeSurface present_frame_all calls hook and consumes full-frame lifecyc
   ignore(frame.get_layer_tree().add_layer(layer))
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_eq(count.val, 0)
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)

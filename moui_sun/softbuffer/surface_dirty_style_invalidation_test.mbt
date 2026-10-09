@@ -79,8 +79,9 @@ test "NativeSurface materializes filter style invalidation batch without submitt
   assert_eq(frame.get_layer_tree().add_layer(layer), 0)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -145,8 +146,9 @@ test "NativeSurface treats identity filter as no-op present lifecycle" {
   assert_eq(frame.get_layer_tree().add_layer(layer), 0)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -247,8 +249,9 @@ test "NativeSurface materializes transparent RGB filter invalidation batch witho
   assert_eq(frame.get_layer_tree().add_layer(layer), 0)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -321,8 +324,9 @@ test "NativeSurface materializes cleared filter invalidation batch without submi
   assert_eq(frame.get_layer_tree().add_layer(layer), 0)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   let cyan = @graphics.Color::new(r=0, g=255, b=255)
@@ -391,8 +395,9 @@ test "NativeSurface materializes shader style invalidation batch without submitt
   assert_eq(frame.get_layer_tree().add_layer(layer), 0)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -465,8 +470,9 @@ test "NativeSurface materializes positioned shader invalidation through filter b
   assert_eq(frame.get_layer_tree().add_layer(layer), 0)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -569,8 +575,9 @@ test "NativeSurface materializes cleared shader invalidation batch without submi
   assert_eq(frame.get_layer_tree().add_layer(layer), 0)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -638,8 +645,9 @@ test "NativeSurface materializes blend style invalidation batch without submitti
   assert_eq(frame.get_layer_tree().add_layer(layer), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(
@@ -726,8 +734,9 @@ test "NativeSurface materializes Destination shader filter invalidation batch wi
   assert_eq(frame.get_layer_tree().add_layer(layer), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(frame.get_canvas().get_pixmap().get_pixel(1, 0), cached_left)
@@ -848,8 +857,9 @@ test "NativeSurface materializes transparent-source blend invalidation batch wit
   assert_eq(frame.get_layer_tree().add_layer(layer), 1)
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(frame.get_canvas().get_pixmap().get_pixel(1, 0), background_color)

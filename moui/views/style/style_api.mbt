@@ -256,6 +256,21 @@ pub(all) enum IconName {
   Pin
   Chat
   PanelBottom
+  /// 资源管理器(VS Code 口径)的文件树专用图标:目录/文件两类各按
+  /// 「结构」与「类型」两个关注点分开——`Folder`/`FolderOpened` 陈述结构,
+  /// `File*` 陈述类型。工具栏四件套(新建文件夹/刷新/全部折叠/更多)同批加入,
+  /// 避免每个宿主各自用 `canvas` 手搓同一套字形。
+  Folder
+  FolderOpened
+  File
+  FileCode
+  FileMarkdown
+  FileJson
+  FileImage
+  NewFolder
+  Refresh
+  CollapseAll
+  Ellipsis
 } derive(Eq, Debug, ToJson)
 
 ///|

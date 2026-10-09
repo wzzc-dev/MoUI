@@ -185,10 +185,7 @@ fn file_budgets() -> Array[FileBudget] {
     // subject) compile+exec, VEnum value, EnumTag eval — one coherent runtime.
     // G7.1 capability slice (2026-10-07): OnStart + ForEach + 11 builtins
     // (list/string/math) across interp and the compiled runtime.
-    {
-      path: "moui_studio/domain/studio_lang/interp.mbt",
-      max_lines: 2150,
-    },
+    { path: "moui_studio/domain/studio_lang/interp.mbt", max_lines: 2150, },
     {
       path: "moui_studio/services/compiled_runtime/runtime.mbt",
       max_lines: 2100,
@@ -207,14 +204,8 @@ fn file_budgets() -> Array[FileBudget] {
       // 经 sync_kernel 逐字镜像。
       max_lines: 3000,
     },
-    {
-      path: "moui_studio/services/export/kernel_ir.mbt",
-      max_lines: 1350,
-    },
-    {
-      path: "moui_studio/services/export/kernel_codec.mbt",
-      max_lines: 1300,
-    },
+    { path: "moui_studio/services/export/kernel_ir.mbt", max_lines: 1350, },
+    { path: "moui_studio/services/export/kernel_codec.mbt", max_lines: 1300, },
     {
       path: "moui_studio/services/export/kernel_compiled_runtime.mbt",
       max_lines: 2100,
@@ -226,7 +217,10 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui_studio/app/app_test.mbt", max_lines: 2100, },
     // G2/G4/G7 (2026-10-07): 工作区导入/多标签/搜索/插件管理/聊天路由
     // 汇聚在组合根 update;按仓库先例登记行数预算。
-    { path: "moui_studio/app/app.mbt", max_lines: 2350, },
+    // VS Code 资源管理器切片 (2026-10-09): 就地新建文件夹（@x/fs 直接 I/O,
+    // 不走零余量的 host 协议棘轮）、新建/改名按目标目录拼 rel、刷新重扫,
+    // 都落在组合根的消息臂上。
+    { path: "moui_studio/app/app.mbt", max_lines: 2470, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },

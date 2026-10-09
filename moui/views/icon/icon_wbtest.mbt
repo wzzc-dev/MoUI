@@ -37,6 +37,17 @@ test "all icon path verbs stay inside the 24x24 viewBox" {
     @style.Pin,
     @style.Chat,
     @style.PanelBottom,
+    @style.Folder,
+    @style.FolderOpened,
+    @style.File,
+    @style.FileCode,
+    @style.FileMarkdown,
+    @style.FileJson,
+    @style.FileImage,
+    @style.NewFolder,
+    @style.Refresh,
+    @style.CollapseAll,
+    @style.Ellipsis,
   ]
   for name in names {
     for verb in icon_path(name) {

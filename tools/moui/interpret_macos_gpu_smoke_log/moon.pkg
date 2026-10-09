@@ -3,9 +3,11 @@ import {
   "moonbitlang/x/sys",
   "wzzc-dev/moui_tools" @tools,
 }
+
 import {
   "moonbitlang/core/test",
 } for "wbtest"
+
 supported_targets = "+native"
 
 pkgtype(kind: "executable")

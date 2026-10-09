@@ -843,6 +843,23 @@ fn[Msg] presentation_barrier(
                   dirty: ViewPaintDirty,
                 }
             }
+          } else if !node.scrim && event.phase != Down {
+            // 非模态屏障（toast / 上下文菜单：只为「点别处关闭」而挂的）
+            // **只**消费 `Down`，其余相位一律放行。
+            //
+            // 放行 `Move` 是为了 **hover**：悬停是 `Move` 驱动的转移沿回调，
+            // 而屏障一旦「消费」事件，运行时就会把覆盖点之下的在流子节点
+            // 整帧跳过。屏上只要有一条 toast（导入/保存/编译成功都会发），
+            // **整个 app 的悬停就全部失效**——包括顶栏那些早就存在的图标
+            // 按钮。行内动作只在悬停出现的控件会因此变成死 UI。
+            //
+            // 放行 `Up` 是为了**点击**：`Down` 被屏障接住并派发关闭消息之后，
+            // 同一次点击的 `Up` 不该继续占着「已覆盖」标记。
+            //
+            // 这里原先只为**滚轮**开特例（`wheel_delta != 0` 的 `Move`），
+            // 于是「能滚但悬停/点击不灵」同时成立，把同一个根因拆成了两个
+            // 看起来无关的症状。判据现在统一成「非模态 = 只吃 Down」。
+            @core.ViewEventResult::ignored()
           } else {
             // A modal barrier consumes every pointer phase, even when it has no
             // dismiss message, so background content cannot observe the event.

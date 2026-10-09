@@ -116,7 +116,6 @@ This file is generated from repository manifests and validator reports.
 | MoMark | examples/momark | no |
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
-| MoUI Studio | moui_studio | no |
 
 ## Platform Status
 

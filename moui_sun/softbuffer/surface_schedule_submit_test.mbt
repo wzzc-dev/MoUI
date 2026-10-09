@@ -94,8 +94,9 @@ test "NativeSurface exposes dry-run frame schedule actions" {
     @graphics.PixelRect::new(x=3, y=0, width=1, height=1),
   )
   let clipped_surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
-    partial_count.val = partial_count.val + 1
-  })
+      partial_count.val = partial_count.val + 1
+    },
+  )
   let clipped_schedule = clipped_surface.frame_schedule(clipped_frame)
   assert_true(
     clipped_schedule.get_action() ==
@@ -151,8 +152,9 @@ test "NativeSurface exposes clean redraw schedule as full cached present" {
   assert_true(!frame.has_dirty())
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   let regular_schedule = surface.frame_schedule(frame)
   assert_true(
     regular_schedule.get_action() == @graphics.RenderFrameScheduleAction::Skip,
@@ -313,8 +315,9 @@ test "NativeSurface submits precomputed frame schedules" {
     @graphics.PixelRect::new(x=3, y=0, width=1, height=1),
   )
   let clipped_surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   let clipped_schedule = clipped_surface.frame_schedule(clipped_frame)
   match clipped_surface.submit_frame_schedule(clipped_frame, clipped_schedule) {
     Ok(result) => {
@@ -369,8 +372,9 @@ test "NativeSurface refreshes clean precomputed schedule after layer dirty" {
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(2, 1)
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   let schedule = surface.frame_schedule(frame)
   assert_true(
     schedule.get_action() == @graphics.RenderFrameScheduleAction::Skip,
@@ -468,8 +472,9 @@ test "NativeSurface submits clean redraw as cached full present" {
   assert_true(!frame.has_dirty())
 
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   match surface.submit_frame_redraw(frame) {
     Ok(result) => {
       assert_true(
@@ -554,8 +559,9 @@ test "NativeSurface submit requests preserve policy and schedule decisions" {
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.get_canvas().draw_pixel(1, 0, @graphics.Color::red())
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
 
   let request = surface.frame_submit_request_by_policy(
     frame,
@@ -658,8 +664,9 @@ test "NativeSurface refreshes clean precomputed request after layer dirty" {
   let count = Ref(0)
   let frame = @graphics.RenderFrame::new(2, 1)
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   let request = surface.frame_submit_request_by_policy(
     frame,
     @graphics.RenderFrameSubmitPolicy::DirtyOnly,

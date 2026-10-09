@@ -26,8 +26,9 @@ test "NativeSurface submits materialized present batches with telemetry" {
   let frame = @graphics.RenderFrame::new(4, 1)
   frame.get_canvas().draw_pixel(2, 0, @graphics.Color::red())
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
 
   let batch = match surface.dirty_frame_present_batch(frame) {
     Ok(value) => value
@@ -254,8 +255,9 @@ test "NativeSurface present batch submit preflights target bounds" {
   }
 
   let clipped_surface = @softbuffer.NativeSurface::new(42, 2, 1).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
   match clipped_surface.submit_present_batch_plan(batch) {
     Err(@graphics.PresentError::RectOutOfBounds(3, 0, 1, 1, 2, 1)) => ()
     _ => abort("expected clipped native batch submit plan error")
@@ -311,8 +313,9 @@ test "NativeSurface submits dirty frames with scheduler result" {
   layer.get_canvas().draw_pixel(0, 0, @graphics.Color::red())
   ignore(frame.get_layer_tree().add_layer(layer))
   let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+      count.val = count.val + 1
+    },
+  )
 
   match surface.submit_frame_dirty(frame) {
     Ok(result) => {

@@ -409,7 +409,11 @@ test "workbook sheet switching and deletion" {
 ///|
 test "workbook deletion preserves active sheet identity when possible" {
   let workbook = @sheet.Workbook::from_sheets(
-    [@sheet.Sheet::new("One"), @sheet.Sheet::new("Two"), @sheet.Sheet::new("Three")],
+    [
+      @sheet.Sheet::new("One"),
+      @sheet.Sheet::new("Two"),
+      @sheet.Sheet::new("Three"),
+    ],
     active_sheet=2,
   )
   let deleted_before_active = workbook.delete_sheet(1)
