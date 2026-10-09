@@ -267,3 +267,20 @@
   「折叠前 > 0」,否则判据本身失效、测试变成空断言。
 - 单段成员（`tools`、`moui`）没有中间目录,它自己就是那一层的目录行,
   这是正确形态,不要为它硬造一层同名节点。
+
+## 行数预算两套目录都要同步（2026-10-10）
+
+- **症状**：`node scripts/validate-maintenance-baseline.mjs` 直接失败并只打一行
+  `moui_studio/app/app.mbt`；`moon run tools/moui/validate_source_file_policy`
+  则报另外两个文件。
+- **根因**：仓库里有**两套**独立的行数预算目录，同一份文件要在两处登记：
+  1. `tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt`
+     （`validate-maintenance-baseline.mjs` 读，按物理行数比较）；
+  2. `checks/source-file-policy.json`
+     （`moui/validate_source_file_policy` 读，按**逻辑行数**比较）。
+  只改一处等于没改。
+- **触发场景**：子仓 `moui_studio` 的实现增长后只更新了主仓的子模块指针，
+  两套预算都没跟，于是主仓的门禁在指针对齐的那一刻开始失败。
+- **修法**：跑两个校验器，各自按报出的实测值结算预算（仓库先例是把
+  `maxLines` 设成当前实测值，并在 `reason` 里写清抬升区间与原因），
+  再复跑确认两者都退出 0。

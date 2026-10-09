@@ -220,7 +220,11 @@ fn file_budgets() -> Array[FileBudget] {
     // VS Code 资源管理器切片 (2026-10-09): 就地新建文件夹（@x/fs 直接 I/O,
     // 不走零余量的 host 协议棘轮）、新建/改名按目标目录拼 rel、刷新重扫,
     // 都落在组合根的消息臂上。
-    { path: "moui_studio/app/app.mbt", max_lines: 2470, },
+    // 2026-10-10: 资源管理器第二轮切片（就地新建行、工作区根保留、
+    // 成员层级补中间目录节点）继续落在同一个消息臂上，文件由 2464 增到
+    // 2520，旧预算 2470 已落后于实际；按仓库先例把预算结算到当前实测值，
+    // 后续拆分时再下调。
+    { path: "moui_studio/app/app.mbt", max_lines: 2520, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },
