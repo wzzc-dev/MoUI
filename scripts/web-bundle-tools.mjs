@@ -89,15 +89,46 @@ export function buildWebPackage(packagePath) {
 
 export function wasmArtifactPath(packagePath) {
   const normalized = normalizePackagePath(packagePath);
-  return join(
-    repoRoot,
-    "_build",
-    "wasm-gc",
-    "release",
-    "build",
-    normalized,
-    `${basename(normalized)}.wasm`,
+  // `moon build` lays artifacts out under the owning module's `name`
+  // (`wzzc-dev/moui_studio/web_wasm/...`), while the command line accepts the
+  // repository-relative path (`moui_studio/web_wasm`). Standalone
+  // subrepository members such as `moui_studio` hit that difference; packages in
+  // the root module resolve identically either way. Try the module-qualified
+  // location first and fall back to the plain one, reporting the plain path when
+  // neither exists so callers fail with the canonical name.
+  const buildRoot = join(repoRoot, "_build", "wasm-gc", "release", "build");
+  const artifactName = `${basename(normalized)}.wasm`;
+  const candidates = [];
+  const qualified = moduleQualifiedPackagePath(normalized);
+  if (qualified) {
+    candidates.push(join(buildRoot, qualified, artifactName));
+  }
+  candidates.push(join(buildRoot, normalized, artifactName));
+  return (
+    candidates.find(candidate => existsSync(candidate)) ??
+    candidates[candidates.length - 1]
   );
+}
+
+// Map a repository-relative package path to the path `moon build` uses under
+// `_build/<target>/<profile>/build/`, which is qualified by the owning module's
+// `name` from `moon.mod`. Returns "" when no owning manifest is found.
+export function moduleQualifiedPackagePath(normalized) {
+  const segments = normalized.split("/");
+  for (let count = segments.length; count > 0; count -= 1) {
+    const moduleRoot = join(repoRoot, segments.slice(0, count).join("/"));
+    const manifest = join(moduleRoot, "moon.mod");
+    if (!existsSync(manifest)) {
+      continue;
+    }
+    const match = readFileSync(manifest, "utf8").match(/^\s*name\s*=\s*"([^"]+)"/m);
+    if (!match) {
+      return "";
+    }
+    const remainder = segments.slice(count);
+    return [match[1], ...remainder].join("/");
+  }
+  return "";
 }
 
 export function packageRoot(packagePath) {

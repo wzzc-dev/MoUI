@@ -3271,6 +3271,212 @@ export function createMoonbitRuntimeImports() {
         return BigInt(Date.now());
       },
     },
+    // `moonbitlang/x/fs` lowers its wasm-gc externals to this namespace. See
+    // `createMoonbitFsImports()` below for the in-memory file system it backs.
+    __moonbit_fs_unstable: createMoonbitFsImports(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// `__moonbit_fs_unstable` host module
+// ---------------------------------------------------------------------------
+//
+// `moonbitlang/x/fs` declares its wasm-gc externals as
+// `= "__moonbit_fs_unstable" "..."` (`fs_wasm.mbt`), so any wasm-gc binary that
+// links the package refuses to instantiate until the host supplies a module of
+// that name. The handle ABI is moonrun's V8-native one: the string and byte
+// array entry points traffic in opaque host objects that stay on the JS side,
+// exactly as the `window_web` and `webgpu` modules already do.
+//
+// There is no real browser file system behind this. That is deliberate: the
+// web entry is a self-contained demo host, and the browser's real file access
+// (file pickers, directory handles) travels the `window_web` async service
+// path. This module backs only the package-level `@x/fs` calls Studio makes
+// against its own scratch directory, so it is an in-memory file system rooted
+// at "/" with POSIX-shaped normalization. Reads and writes never reach the
+// user's disk; a missing path fails loudly through `get_error_message` rather
+// than returning fabricated content.
+export function createMoonbitFsImports() {
+  const entries = new Map([["/", { kind: "dir" }]]);
+  let lastError = "";
+  let lastBytes = new Uint8Array(0);
+  let lastNameList = [];
+
+  const normalizePath = value => {
+    const parts = String(value ?? "").replace(/\\/g, "/").split("/");
+    const out = [];
+    for (const part of parts) {
+      if (part === "" || part === ".") {
+        continue;
+      }
+      if (part === "..") {
+        out.pop();
+        continue;
+      }
+      out.push(part);
+    }
+    return "/" + out.join("/");
+  };
+  const fail = message => {
+    lastError = message;
+    return -1;
+  };
+  const dirnameOf = path => {
+    const index = path.lastIndexOf("/");
+    return index <= 0 ? "/" : path.slice(0, index);
+  };
+
+  return {
+    // --- string handle ABI (moonrun V8 shim parity) ---
+    begin_create_string() {
+      return { value: "" };
+    },
+    string_append_char(handle, ch) {
+      handle.value += String.fromCharCode(ch);
+    },
+    finish_create_string(handle) {
+      return handle.value;
+    },
+    begin_read_string(value) {
+      return { value: String(value ?? ""), offset: 0 };
+    },
+    string_read_char(handle) {
+      if (handle.offset >= handle.value.length) {
+        return -1;
+      }
+      return handle.value.charCodeAt(handle.offset++);
+    },
+    finish_read_string() {},
+    begin_read_byte_array(bytes) {
+      return { bytes: bytes ?? new Uint8Array(0), offset: 0 };
+    },
+    byte_array_read_byte(handle) {
+      if (handle.offset >= handle.bytes.length) {
+        return -1;
+      }
+      return handle.bytes[handle.offset++] & 0xff;
+    },
+    finish_read_byte_array() {},
+    begin_create_byte_array() {
+      return { bytes: [] };
+    },
+    byte_array_append_byte(handle, byte) {
+      handle.bytes.push(byte & 0xff);
+    },
+    finish_create_byte_array(handle) {
+      return new Uint8Array(handle.bytes);
+    },
+    begin_read_string_array(values) {
+      return { values: values ?? [], offset: 0 };
+    },
+    string_array_read_string(handle) {
+      if (handle.offset >= handle.values.length) {
+        return "ffi_end_of_/string_array";
+      }
+      return handle.values[handle.offset++];
+    },
+    finish_read_string_array() {},
+    // --- file system ABI ---
+    get_error_message() {
+      return lastError;
+    },
+    get_file_content() {
+      return lastBytes;
+    },
+    get_dir_files() {
+      return lastNameList;
+    },
+    read_file_to_bytes_new(path) {
+      const entry = entries.get(normalizePath(path));
+      if (!entry || entry.kind !== "file") {
+        return fail("no such file: " + path);
+      }
+      lastBytes = entry.bytes;
+      return 0;
+    },
+    write_bytes_to_file_new(path, bytes) {
+      const normalized = normalizePath(path);
+      const parent = entries.get(dirnameOf(normalized));
+      if (!parent || parent.kind !== "dir") {
+        return fail("no such directory: " + dirnameOf(normalized));
+      }
+      entries.set(normalized, {
+        kind: "file",
+        bytes: new Uint8Array(bytes ?? new Uint8Array(0)),
+      });
+      return 0;
+    },
+    read_dir_new(path) {
+      const normalized = normalizePath(path);
+      const entry = entries.get(normalized);
+      if (!entry || entry.kind !== "dir") {
+        return fail("no such directory: " + path);
+      }
+      const prefix = normalized === "/" ? "/" : normalized + "/";
+      const names = [];
+      for (const key of entries.keys()) {
+        if (key === normalized || !key.startsWith(prefix)) {
+          continue;
+        }
+        const rest = key.slice(prefix.length);
+        if (rest === "" || rest.includes("/")) {
+          continue;
+        }
+        names.push(rest);
+      }
+      lastNameList = names;
+      return 0;
+    },
+    path_exists(path) {
+      return entries.has(normalizePath(path));
+    },
+    create_dir_new(path) {
+      const normalized = normalizePath(path);
+      if (normalized === "/") {
+        return 0;
+      }
+      if (entries.has(normalized)) {
+        return fail("already exists: " + path);
+      }
+      const parent = entries.get(dirnameOf(normalized));
+      if (!parent || parent.kind !== "dir") {
+        return fail("no such directory: " + dirnameOf(normalized));
+      }
+      entries.set(normalized, { kind: "dir" });
+      return 0;
+    },
+    is_dir_new(path) {
+      const entry = entries.get(normalizePath(path));
+      if (!entry) {
+        return fail("no such path: " + path);
+      }
+      return entry.kind === "dir" ? 1 : 0;
+    },
+    is_file_new(path) {
+      const entry = entries.get(normalizePath(path));
+      if (!entry) {
+        return fail("no such path: " + path);
+      }
+      return entry.kind === "file" ? 1 : 0;
+    },
+    remove_file_new(path) {
+      const normalized = normalizePath(path);
+      const entry = entries.get(normalized);
+      if (!entry || entry.kind !== "file") {
+        return fail("no such file: " + path);
+      }
+      entries.delete(normalized);
+      return 0;
+    },
+    remove_dir_new(path) {
+      const normalized = normalizePath(path);
+      const entry = entries.get(normalized);
+      if (!entry || entry.kind !== "dir") {
+        return fail("no such directory: " + path);
+      }
+      entries.delete(normalized);
+      return 0;
+    },
   };
 }
 
