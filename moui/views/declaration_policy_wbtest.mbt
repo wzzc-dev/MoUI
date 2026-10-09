@@ -75,3 +75,54 @@ test "aggregate themes and callback views declare uncacheable channels" {
   assert_true(callback_changes.semantics())
   assert_true(callback_changes.platform())
 }
+
+///|
+test "coordinate stage declares exact layout keys for design size and rects" {
+  let leaf : @core.View[Unit] = text("go")
+  let design : @core.View[Unit] = stage(width=640.0, height=480.0, [
+    place(leaf, x=10.0, y=10.0, width=80.0, height=28.0),
+  ])
+  let wider : @core.View[Unit] = stage(width=800.0, height=480.0, [
+    place(leaf, x=10.0, y=10.0, width=80.0, height=28.0),
+  ])
+  let moved : @core.View[Unit] = stage(width=640.0, height=480.0, [
+    place(leaf, x=20.0, y=10.0, width=80.0, height=28.0),
+  ])
+  let resized : @core.View[Unit] = stage(width=640.0, height=480.0, [
+    place(leaf, x=10.0, y=10.0, width=120.0, height=28.0),
+  ])
+
+  // A reused identity with identical inputs must stay clean.
+  debug_inspect(
+    declaration_policy_changes(design.declaration(), design.declaration()),
+    content="(false, false, false, false)",
+  )
+  // Design size and placed rectangles both feed `layout()`, so each change must
+  // dirty layout (and its dependents) instead of being cached as constant.
+  debug_inspect(
+    declaration_policy_changes(wider.declaration(), design.declaration()),
+    content="(true, true, true, true)",
+  )
+  debug_inspect(
+    declaration_policy_changes(moved.declaration(), design.declaration()),
+    content="(true, true, true, true)",
+  )
+  debug_inspect(
+    declaration_policy_changes(resized.declaration(), design.declaration()),
+    content="(true, true, true, true)",
+  )
+
+  // Rect order is part of the key: swapping two equal-length entries is a change.
+  let ordered : @core.View[Unit] = stage(width=640.0, height=480.0, [
+    place(leaf, x=10.0, y=10.0, width=80.0, height=28.0),
+    place(leaf, x=200.0, y=10.0, width=80.0, height=28.0),
+  ])
+  let swapped : @core.View[Unit] = stage(width=640.0, height=480.0, [
+    place(leaf, x=200.0, y=10.0, width=80.0, height=28.0),
+    place(leaf, x=10.0, y=10.0, width=80.0, height=28.0),
+  ])
+  debug_inspect(
+    declaration_policy_changes(swapped.declaration(), ordered.declaration()),
+    content="(true, true, true, true)",
+  )
+}

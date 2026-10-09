@@ -54,8 +54,44 @@ impl @core.ViewNode for StageNode with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for StageNode with fn declaration(_self) {
-  @core.ViewDeclaration::constant()
+/// Layout cache key: `layout()` derives every child frame from the design size
+/// and the placed rectangles, so all three fields participate in the layout
+/// channel. The node itself paints nothing (children paint), so paint,
+/// semantics and platform stay constant for a reused identity.
+fn stage_layout_key(
+  design_width : Double,
+  design_height : Double,
+  rects : Array[@core.Rect],
+) -> @core.DeclarationKey {
+  @core.DeclarationKey::record(type_tag="Stage.layout", fields=[
+    ("design_width", @core.DeclarationKey::double(design_width)),
+    ("design_height", @core.DeclarationKey::double(design_height)),
+    (
+      "rects",
+      @core.DeclarationKey::array(
+        rects.map(rect => {
+          @core.DeclarationKey::record(type_tag="Rect", fields=[
+            ("x", @core.DeclarationKey::double(rect.origin.x)),
+            ("y", @core.DeclarationKey::double(rect.origin.y)),
+            ("width", @core.DeclarationKey::double(rect.size.width)),
+            ("height", @core.DeclarationKey::double(rect.size.height)),
+          ])
+        }),
+      ),
+    ),
+  ])
+}
+
+///|
+impl @core.ViewNode for StageNode with fn declaration(self) {
+  @core.ViewDeclaration::channels(
+    layout=Exact(
+      stage_layout_key(self.design_width, self.design_height, self.rects),
+    ),
+    paint=Constant,
+    semantics=Constant,
+    platform=Constant,
+  )
 }
 
 ///|
