@@ -96,7 +96,7 @@ and local workspace members resolve from `moon.work`. The exact list is generate
 ```moonbit
 import {
   "wzzc-dev/window@0.5.4-0.2.1",
-  "wzzc-dev/moui@0.2.1",
+  "wzzc-dev/moui@0.2.2",
   "wzzc-dev/moui_skia@0.2.1",
 }
 ```
@@ -158,7 +158,7 @@ updates with the main MoUI checkout.
 For a fresh clone, fetch submodules in the initial checkout:
 
 ```sh
-git clone --recurse-submodules git@github.com:wzzc-dev/MoUI.git
+git clone --recurse-submodules https://github.com/wzzc-dev/MoUI.git
 ```
 
 If the repository was cloned without submodules, initialize them once:

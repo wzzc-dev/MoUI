@@ -90,7 +90,7 @@ cd MoUI
 git submodule update --init --recursive
 
 # 方式二：GitHub
-git clone git@github.com:wzzc-dev/MoUI.git
+git clone https://github.com/wzzc-dev/MoUI.git
 cd MoUI
 git submodule update --init --recursive
 ```

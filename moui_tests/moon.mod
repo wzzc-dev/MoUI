@@ -3,9 +3,9 @@ name = "wzzc-dev/moui_tests"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.2.1",
+  "wzzc-dev/moui@0.2.2",
   "wzzc-dev/moui_skia_renderer@0.2.1",
-  "wzzc-dev/moui_web_renderer@0.2.1",
+  "wzzc-dev/moui_web_renderer@0.2.2",
   "wzzc-dev/moui_wgpu_renderer@0.2.1",
   "wzzc-dev/moui_skia@0.2.1",
   "Milky2018/wgpu_mbt@0.14.8",

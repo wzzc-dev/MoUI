@@ -7,7 +7,7 @@ preferred_target = "native"
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.2.1",
+  "wzzc-dev/moui@0.2.2",
   "wzzc-dev/moui_3d@0.2.1",
   "Milky2018/wgpu_mbt@0.14.8",
 }

@@ -7,7 +7,7 @@ version = "0.2.1"
 license = "Apache-2.0"
 
 import {
-  "wzzc-dev/moui@0.2.1",
+  "wzzc-dev/moui@0.2.2",
   "wzzc-dev/moui_agent@0.2.1",
   "moonbitlang/async@0.22.4",
 }

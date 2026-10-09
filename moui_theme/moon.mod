@@ -5,7 +5,7 @@ preferred_target = "native"
 version = "0.2.1"
 
 import {
-  "wzzc-dev/moui@0.2.1",
+  "wzzc-dev/moui@0.2.2",
 }
 
 readme = "README.mbt.md"
