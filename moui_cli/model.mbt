@@ -1,16 +1,16 @@
 ///|
-let default_moui_dependency_version : String = "0.1.12"
+let default_moui_dependency_version : String = "0.2.2"
 
 ///|
 /// The web renderer releases independently from the framework; generated
 /// projects pin it separately so a framework bump does not force a matching
 /// renderer release.
-let default_web_renderer_dependency_version : String = "0.1.10"
+let default_web_renderer_dependency_version : String = "0.2.2"
 
 ///|
 /// The native Skia renderer releases independently from the framework;
 /// generated projects pin it separately for native platform entries.
-let default_moui_skia_renderer_dependency_version : String = "0.1.11"
+let default_moui_skia_renderer_dependency_version : String = "0.2.1"
 
 ///|
 priv struct PlannedFile {

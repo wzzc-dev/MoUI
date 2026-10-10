@@ -80,7 +80,12 @@ test "hello template emits greet app instead of counter" {
       let test_src = test_planned_text(files, "app/app_test.mbt")
       assert_true(test_src.contains("hello greet flips greeted"))
       let root_mod = test_planned_text(files, "moon.mod")
-      assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.10"))
+      assert_true(
+        root_mod.contains(
+          "wzzc-dev/moui_web_renderer@" +
+          default_web_renderer_dependency_version,
+        ),
+      )
       assert_false(root_mod.contains("wzzc-dev/moui_skia_renderer"))
     }
     Err(message) => fail(message)
@@ -164,7 +169,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.1.12",
+      #|  "mouiVersion": "0.2.2",
       #|  "platforms": [
       #|    "web",
       #|    "macos"
@@ -174,9 +179,21 @@ test "default macOS project file plan is exact" {
     ),
   )
   let root_mod = test_planned_text(files, "moon.mod")
-  assert_true(root_mod.contains("wzzc-dev/moui@0.1.12"))
-  assert_true(root_mod.contains("wzzc-dev/moui_web_renderer@0.1.10"))
-  assert_true(root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.11"))
+  assert_true(
+    root_mod.contains("wzzc-dev/moui@" + default_moui_dependency_version),
+  )
+  assert_true(
+    root_mod.contains(
+      "wzzc-dev/moui_web_renderer@" + default_web_renderer_dependency_version,
+    ),
+  )
+  assert_true(
+    root_mod.contains(
+      "wzzc-dev/moui_skia_renderer@" +
+      default_moui_skia_renderer_dependency_version,
+    ),
+  )
+  assert_true(root_mod.contains("preferred_target = \"native\""))
   let web_pkg = test_planned_text(files, "web_wasm/moon.pkg")
   assert_true(web_pkg.contains("wzzc-dev/moui_web_renderer"))
   assert_true(web_pkg.contains("@webgpu_adapter"))
@@ -221,11 +238,16 @@ test "mobile config contains window-hosted platform defaults" {
   let mobile = test_planned_text(files, "moui.mobile.json")
   let root_mod = test_planned_text(files, "moon.mod")
   inspect(
-    root_mod.contains("wzzc-dev/moui_skia_renderer@0.1.11"),
+    root_mod.contains(
+      "wzzc-dev/moui_skia_renderer@" +
+      default_moui_skia_renderer_dependency_version,
+    ),
     content="true",
   )
   inspect(
-    root_mod.contains("wzzc-dev/moui_web_renderer@0.1.10"),
+    root_mod.contains(
+      "wzzc-dev/moui_web_renderer@" + default_web_renderer_dependency_version,
+    ),
     content="true",
   )
   for platform in ["android", "ios", "harmonyos"] {

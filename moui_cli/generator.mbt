@@ -133,6 +133,8 @@ fn moon_mod_text(options : ProjectOptions) -> String {
     #|
     #|version = "0.1.0"
     #|
+    #|preferred_target = "native"
+    #|
     #|import {
     #|  "wzzc-dev/moui@__MOUI_VERSION__",
     #|__RENDERER_IMPORTS__

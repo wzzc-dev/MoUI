@@ -8,7 +8,7 @@ test "new parser applies host defaults and project defaults" {
   inspect(options.id, content="demo_app")
   inspect(options.module_name, content="local/demo_app")
   inspect(options.title, content="DemoApp")
-  inspect(options.moui_version, content="0.1.12")
+  inspect(options.moui_version, content=default_moui_dependency_version)
   inspect(options.platforms.join(","), content="web,linux")
 }
 
