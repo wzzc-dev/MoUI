@@ -8,7 +8,10 @@
 
 ///|
 /// Find/replace options. Defaults are case-insensitive substring matching.
-pub struct MarkdownFindOptions {
+///
+/// `pub(all)`: consumers outside this package must be able to build
+/// non-default option sets (the find-bar toggles write these fields).
+pub(all) struct MarkdownFindOptions {
   case_sensitive : Bool
   whole_word : Bool
   regex : Bool

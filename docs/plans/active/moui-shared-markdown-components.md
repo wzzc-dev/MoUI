@@ -64,7 +64,7 @@
 
 ## 工作切片
 
-1. **S1 模块骨架 + 记账**：`moui_markdown/moon.mod`（0.2.1，pin
+1. **S1 模块骨架 + 记账**：`moui_markdown/moon.mod`（0.2.2，pin
    `wzzc-dev/moui@0.2.2` + `wzzc-dev/moui_richtext@0.2.1`）、`moon.pkg`、
    `moon.work`、release catalog、source policy roots、pr profile、scan scope。
 2. **S2 纯函数**：`find.mbt`（匹配/正则/选区种子/next-prev-active/替换/状态
@@ -82,9 +82,11 @@
 
 ## Follow-up：Studio 接线（发布 `moui_markdown` 之后）
 
-1. `moon publish` 发布 `wzzc-dev/moui_markdown@0.2.1`（依赖已在上一批发布的
-   `moui@0.2.2` / `moui_richtext@0.2.1`），然后 `moon update` 刷新索引。
-2. 在 `moui_studio/moon.mod` 加 `wzzc-dev/moui_markdown@0.2.1`；在
+1. `moon publish` 发布 `wzzc-dev/moui_markdown@0.2.2`（依赖已在上一批发布的
+   `moui@0.2.2` / `moui_richtext@0.2.1`）。0.2.1 的 `MarkdownFindOptions`
+   是只读 struct，外部消费方无法构造非默认选项，0.2.2 改为 `pub(all)`
+   （patch 修复）；发布后 `moon update` 刷新索引。
+2. 在 `moui_studio/moon.mod` 加 `wzzc-dev/moui_markdown@0.2.2`；在
    `moui_studio/plugins/markdown/moon.pkg` 用 `@mdchrome` 别名 import（本包
    自身 alias 是 `markdown`，直接用默认名会撞）。
 3. 插件层（`plugins/markdown/markdown_view.mbt`）把现在手写的 chrome 换成
@@ -111,3 +113,4 @@
 | 2026-10-11 | S4 可用性探针：在 Studio `moon.mod` + `plugins/markdown/moon.pkg` 临时加依赖（`@mdchrome` 别名），`moon check` 在工作区内通过（workspace 解析未发布模块 OK）；确认插件包默认 alias `markdown` 与模块名冲突后，已 revert 探针改动，Studio 工作树恢复原状。 |
 | 2026-10-11 | S4 决策：本轮不接 MoMark / Studio。`moui_markdown` 未发布（registry 无索引），Studio standalone clone 会因缺失依赖失败；Studio `app/**` 另有他人未提交改动。MoMark 迁移与 Studio 插件接线分别在发布后单独提交。 |
 | 2026-10-11 | fmt 事故与恢复：在 `moui_markdown/` 内跑 `moon fmt` 时按 workspace 全量执行（2558 tasks），除本模块外还规范化了 `moui_studio/app/**` 下 14 个**他人未提交**文件（`app.mbt` 由 2566 → 2567 行触发 maintenance 棘轮）。全部 14 个文件已从子模块 `.git` 的 unreachable blob 中按"moonfmt(pre-image) == 现行 post-fmt 内容"唯一匹配恢复原始字节（`app.mbt` 恢复后 2566 行，diff stat 回到事故前 1019+/970-），无需 bump 棘轮；事后复验：studio app native 422/422、六个静态门 + generated interfaces + repo docs 全绿。教训：**不要在工作区内直接跑 bare `moon fmt`**（会全 workspace 重写），只对本模块文件用 `moonfmt <file> -w` 或 `moon fmt <path>`。 |
+| 2026-10-11 | S4 续：发现 0.2.1 `MarkdownFindOptions` 只读导致消费方无法构造非默认选项（Studio 探针编译错误复现）；改为 `pub(all)` 并 bump 0.2.2，`moon test moui_markdown --target native` 33/33 绿，mbti 定向刷新（仅该一行变化）。Studio 插件层接线进行中。 |

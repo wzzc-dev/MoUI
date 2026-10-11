@@ -108,7 +108,7 @@ pub fn MarkdownDocumentInfo::not_equal(Self, Self) -> Bool
 pub fn MarkdownDocumentInfo::to_json(Self) -> Json
 pub fn MarkdownDocumentInfo::to_repr(Self) -> @debug.Repr
 
-pub struct MarkdownFindOptions {
+pub(all) struct MarkdownFindOptions {
   case_sensitive : Bool
   whole_word : Bool
   regex : Bool
