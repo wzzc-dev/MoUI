@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1416,
-      "reason": "Shell message domain (workspace编排/文件 tabs/CRUD 输入态/搜索草稿/聊天离线路由); registered above the 1200 hard limit after the G4 multi-tab + CRUD + G1 chat offline routing. Shell message domain; raised 1231->1429 for the VS Code explorer slice (hover/section toggles, in-place create state, collapse-all, and the multi-root directory-collapse helpers) on top of the in-flight multi-tab/CRUD work this branch carries.; 2026-10-10 offline fake chat arm deleted, palette new-project dispatch is one line per id — ratchet lowered"
+      "maxLines": 1411,
+      "reason": "Shell message domain (workspace编排/文件 tabs/CRUD 输入态/搜索草稿/聊天离线路由); registered above the 1200 hard limit after the G4 multi-tab + CRUD + G1 chat offline routing. Shell message domain; raised 1231->1429 for the VS Code explorer slice (hover/section toggles, in-place create state, collapse-all, and the multi-root directory-collapse helpers) on top of the in-flight multi-tab/CRUD work this branch carries.; 2026-10-10 offline fake chat arm deleted, palette new-project dispatch is one line per id — ratchet lowered; lowered 1416->1411 on 2026-10-11: ExplorerCollapseAll delegates to collapse_all_tree_keys (seeded from scanned dirs), shrinking the update_shell arm"
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -410,8 +410,8 @@
     },
     {
       "path": "moui_studio/app/project_workbench_test.mbt",
-      "maxLines": 1503,
-      "reason": "Project workbench black-box suite; grew with the explorer slice's navigation/multi-root/sort/outline/in-place-create coverage. Registered above the 1200 hard limit as a new ratchet.; raised 1502->1503 on 2026-10-11: boot-restore test expands the workspace root before asserting the member tier (imported trees now default-collapsed)"
+      "maxLines": 1525,
+      "reason": "Project workbench black-box suite; grew with the explorer slice's navigation/multi-root/sort/outline/in-place-create coverage. Registered above the 1200 hard limit as a new ratchet.; raised 1502->1503 on 2026-10-11: boot-restore test expands the workspace root before asserting the member tier (imported trees now default-collapsed); raised 1503->1525 on 2026-10-11: all-folder default collapse tests (toggle ordering, ExplorerCollapseAll keeps subtree keys)"
     }
   ],
   "data": [
