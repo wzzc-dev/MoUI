@@ -41,11 +41,12 @@
 - [x] Msg-generic 视图层（大纲面板、查找替换栏、格式面板）可被任意 `Msg`
       实例化，颜色/字体/文案参数注入，零 app 依赖、零 `runtime` 依赖
       （wbtest 除外）。
-- [ ] 至少一个真实消费方证明可用：`moui_markdown` 尚未发布到
-      registry（`~/.moon/registry/index/user/wzzc-dev/` 无索引），Studio
-      standalone `git clone` + `moon build` 依赖 registry 解析；本轮不接线，
-      发布后作为 follow-up（Studio `app/**` 同时存在他人未提交改动，也不宜
-      在本轮触碰）。
+- [x] 至少一个真实消费方证明可用：`moui_markdown@0.2.2` 已发布 registry
+      （checksum `ae253e84…cc2e`），Studio `plugins/markdown` 真实消费：
+      find/replace 会话适配器 + 查找/大纲/文档信息/格式面板视图转发 +
+      白盒测试 7/7（native / wasm-gc 双目标绿，app 回归 422/422）。
+      app 层视觉挂载延后：`app/**` 他人 folder-projects 改动在途且行预算
+      棘轮顶格（见 Progress）。
 - [x] 静态门绿：validate-maintenance-baseline / validate-api-surface /
       validate-release-module-closures / validate-guidance-consistency /
       validate-doc-references。
@@ -89,13 +90,17 @@
 2. 在 `moui_studio/moon.mod` 加 `wzzc-dev/moui_markdown@0.2.2`；在
    `moui_studio/plugins/markdown/moon.pkg` 用 `@mdchrome` 别名 import（本包
    自身 alias 是 `markdown`，直接用默认名会撞）。
-3. 插件层（`plugins/markdown/markdown_view.mbt`）把现在手写的 chrome 换成
-   `@mdchrome.markdown_find_bar` / `markdown_document_info_panel`；新增大纲
-   与格式面板的 `Msg` 分支与折叠/替换状态（纯函数用 `@mdchrome.markdown_*`
-   系列，避免 Studio 再维护第二份匹配语义）。
+3. 插件层（`plugins/markdown/markdown_view.mbt`）：已落地会话查找/替换
+   适配器（`markdown_session_find_matches` / `_find_status` /
+   `_replace_current` / `_replace_all` / `_document_info`，返回可走既有
+   `ProjectFileMarkdownTransaction` 通道的事务）与 4 个中文默认文案的
+   Msg-generic 面板转发（查找栏 / 大纲 / 文档信息 / 格式面板）。
 4. `app/code_view.mbt` 的 `project_file_body` / `project_file_body_height`
    接入面板高度与侧栏布局；`.md` 已有 `md_session` 与
    `ProjectFileMarkdownTransaction` 消息，直接在现有分流上加 chrome 状态。
+   **本轮未做**：`app/**` 他人 folder-projects 改动在途，且
+   `code_view.mbt` / `model.mbt` / `update_shell.mbt` / `app.mbt` 行预算
+   棘轮顶格；插件层 API 与测试已就绪，待他人改动落地后按上述步骤接线。
 5. MoMark 仓库侧同一批迁移（`view_chrome.mbt` / `view_inspectors.mbt` /
    `editor_actions.mbt` 的 priv 实现换成 `@mdchrome` 调用），迁移后 bump
    `examples/momark` 子模块指针并在 MoUI 仓库重建基线。
@@ -114,3 +119,4 @@
 | 2026-10-11 | S4 决策：本轮不接 MoMark / Studio。`moui_markdown` 未发布（registry 无索引），Studio standalone clone 会因缺失依赖失败；Studio `app/**` 另有他人未提交改动。MoMark 迁移与 Studio 插件接线分别在发布后单独提交。 |
 | 2026-10-11 | fmt 事故与恢复：在 `moui_markdown/` 内跑 `moon fmt` 时按 workspace 全量执行（2558 tasks），除本模块外还规范化了 `moui_studio/app/**` 下 14 个**他人未提交**文件（`app.mbt` 由 2566 → 2567 行触发 maintenance 棘轮）。全部 14 个文件已从子模块 `.git` 的 unreachable blob 中按"moonfmt(pre-image) == 现行 post-fmt 内容"唯一匹配恢复原始字节（`app.mbt` 恢复后 2566 行，diff stat 回到事故前 1019+/970-），无需 bump 棘轮；事后复验：studio app native 422/422、六个静态门 + generated interfaces + repo docs 全绿。教训：**不要在工作区内直接跑 bare `moon fmt`**（会全 workspace 重写），只对本模块文件用 `moonfmt <file> -w` 或 `moon fmt <path>`。 |
 | 2026-10-11 | S4 续：发现 0.2.1 `MarkdownFindOptions` 只读导致消费方无法构造非默认选项（Studio 探针编译错误复现）；改为 `pub(all)` 并 bump 0.2.2，`moon test moui_markdown --target native` 33/33 绿，mbti 定向刷新（仅该一行变化）。Studio 插件层接线进行中。 |
+| 2026-10-11 | S4 完成（Studio 插件层）：`wzzc-dev/moui_markdown@0.2.2` 发布成功（200 OK；dry-run 202；索引 checksum `ae253e841c321e0e976090581562d1daaa6338739c8adb9543f1ab696cd8cc2e`，deps `moui@0.2.2` + `moui_richtext@0.2.1`）。Studio `moon.mod` 加依赖；`plugins/markdown` 新增 find/replace 会话适配器（事务走既有 `ProjectFileMarkdownTransaction` 链）+ 4 个中文默认文案面板转发；白盒 7/7 双目标绿、app 422/422 无回归；Studio 提交 `6ecade793` 已推送，`plugins/markdown/pkg.generated.mbti` 定向刷新（其余 31 个 mbti 字节未变）。app 层视觉挂载延后：app/** 他人 folder-projects 改动在途（1019+/970-）且 4 个文件行预算棘轮顶格。 |
