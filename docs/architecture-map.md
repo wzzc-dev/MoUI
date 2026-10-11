@@ -138,7 +138,8 @@ renderers consume `DrawCommand` only.
 | Skia FFI / native capability | `moui_skia` |
 | CPU raster stack (experimental) | `moui_sun` |
 | Embedded-runtime templates, native payload adapters, and nominal event loops/windows | `wzzc-dev/window/{android,ios,harmonyos}` |
-| Rich text domain | `moui_richtext` |
+| Rich text domain (engine) | `moui_richtext` |
+| Markdown chrome addon (find/replace, outline, format palette, document info, HTML export) | `moui_markdown` (not an app default dep) |
 | Design-system addons | `moui_theme` (not an app default dep) |
 | Repo validators | `tools/moui/*` via `scripts/*.mjs` shells |
 

@@ -1,0 +1,144 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_markdown"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/string",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_richtext",
+}
+
+// Values
+pub fn markdown_active_outline_index(Array[@moui_richtext.MarkdownEditorOutlineItem], Int) -> Int
+
+pub fn markdown_command_from_palette_action(String) -> @moui_richtext.MarkdownEditorCommand?
+
+pub fn markdown_document_info_from_parts(String, Array[@moui_richtext.MarkdownEditorBlock]) -> MarkdownDocumentInfo
+
+pub fn markdown_document_info_from_session(@moui_richtext.MarkdownDocumentSession) -> MarkdownDocumentInfo
+
+pub fn markdown_document_info_from_snapshot(@moui_richtext.MarkdownEditorSnapshot) -> MarkdownDocumentInfo
+
+pub fn[Msg] markdown_document_info_panel(theme~ : @core.Theme, info~ : MarkdownDocumentInfo, word_count~ : Int, line_count~ : Int, reading_time_label~ : String, height~ : Double, width? : Double, title? : String, words_label? : String, characters_label? : String, lines_label? : String, reading_label? : String, headings_label? : String, paragraphs_label? : String, list_items_label? : String, tasks_label? : String, quotes_label? : String, code_blocks_label? : String, tables_label? : String, links_label? : String, images_label? : String, footnotes_label? : String) -> @core.View[Msg]
+
+pub fn markdown_find_active_index(Array[@core.TextRange], @moui_richtext.MarkdownEditorSelection) -> Int
+
+pub fn[Msg] markdown_find_bar(theme~ : @core.Theme, query~ : String, replace_text~ : String, options~ : MarkdownFindOptions, status_label~ : String, on_query_input~ : (String) -> Msg, on_replace_input~ : (String) -> Msg, on_submit_query~ : Msg, on_submit_replace~ : Msg, on_toggle_case_sensitive~ : Msg, on_toggle_whole_word~ : Msg, on_toggle_regex~ : Msg, on_previous~ : Msg, on_next~ : Msg, on_replace_current~ : Msg, on_replace_all~ : Msg, on_close~ : Msg, width~ : Double, find_label? : String, replace_label? : String, search_placeholder? : String, replacement_placeholder? : String, replace_button_label? : String, replace_all_button_label? : String, match_case_tooltip? : String, whole_word_tooltip? : String, regex_tooltip? : String, previous_tooltip? : String, next_tooltip? : String, close_tooltip? : String, key_prefix? : String) -> @core.View[Msg]
+
+pub fn markdown_find_compile_regex(String, Bool) -> @string.Regex?
+
+pub fn markdown_find_live_update_index(Array[@core.TextRange], @moui_richtext.MarkdownEditorSelection) -> Int
+
+pub fn markdown_find_matches(String, String, options? : MarkdownFindOptions) -> Array[@core.TextRange]
+
+pub fn markdown_find_next_index(Array[@core.TextRange], @moui_richtext.MarkdownEditorSelection) -> Int
+
+pub fn markdown_find_previous_index(Array[@core.TextRange], @moui_richtext.MarkdownEditorSelection) -> Int
+
+pub fn markdown_find_query_from_selection(String, @moui_richtext.MarkdownEditorSelection) -> String?
+
+pub fn markdown_find_seed_from_caret_word(String, @moui_richtext.MarkdownEditorSelection) -> MarkdownFindSeed?
+
+pub fn markdown_find_status_label(String, Array[@core.TextRange], @moui_richtext.MarkdownEditorSelection, options? : MarkdownFindOptions) -> String
+
+pub fn markdown_folded_outline(Array[@moui_richtext.MarkdownEditorOutlineItem], Array[Int]) -> Array[@moui_richtext.MarkdownEditorOutlineItem]
+
+pub fn[Msg] markdown_format_palette(theme~ : @core.Theme, query~ : String, items~ : Array[MarkdownPaletteItem], on_query_input~ : (String) -> Msg, on_submit~ : Msg, on_action~ : (String) -> Msg, on_done~ : Msg, width~ : Double, title? : String, filter_placeholder? : String, done_label? : String, empty_label? : String, key_prefix? : String) -> @core.View[Msg]
+
+pub fn markdown_format_palette_filtered_items(String) -> Array[MarkdownPaletteItem]
+
+pub fn markdown_format_palette_items() -> Array[MarkdownPaletteItem]
+
+pub fn markdown_format_palette_matches(MarkdownPaletteItem, String) -> Bool
+
+pub fn markdown_html_blocks(Array[@moui_richtext.MarkdownEditorBlock]) -> String
+
+pub fn markdown_html_document(@moui_richtext.MarkdownEditorSnapshot, String) -> String
+
+pub fn markdown_html_escape_attribute(String) -> String
+
+pub fn markdown_html_escape_text(String) -> String
+
+pub fn markdown_html_inlines(Array[@moui_richtext.MarkdownInline]) -> String
+
+pub fn markdown_next_match_after_replacement(Array[@core.TextRange], Int, Int) -> @core.TextRange?
+
+pub fn markdown_outline_indent_width(Int) -> Double
+
+pub fn markdown_outline_item_is_active(Array[@moui_richtext.MarkdownEditorOutlineItem], @moui_richtext.MarkdownEditorOutlineItem, Int) -> Bool
+
+pub fn markdown_outline_label(@moui_richtext.MarkdownEditorOutlineItem) -> String
+
+pub fn[Msg] markdown_outline_panel(theme~ : @core.Theme, outline~ : Array[@moui_richtext.MarkdownEditorOutlineItem], folded_starts~ : Array[Int], caret~ : Int, on_jump~ : (Int) -> Msg, on_toggle_fold~ : (Int) -> Msg, height~ : Double, width? : Double, title? : String, empty_label? : String) -> @core.View[Msg]
+
+pub fn markdown_outline_truncate_title(String) -> String
+
+pub fn markdown_replace_all_matches(String, Array[@core.TextRange], String) -> String
+
+pub fn markdown_replace_source_range(String, @core.TextRange, String) -> String
+
+pub fn markdown_session_reading_label(@moui_richtext.MarkdownDocumentSession) -> String
+
+pub fn markdown_session_reading_time_short_label(@moui_richtext.MarkdownDocumentSession) -> String
+
+pub fn markdown_snapshot_reading_label(@moui_richtext.MarkdownEditorSnapshot) -> String
+
+pub fn markdown_snapshot_reading_time_short_label(@moui_richtext.MarkdownEditorSnapshot) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct MarkdownDocumentInfo {
+  character_count : Int
+  heading_count : Int
+  paragraph_count : Int
+  list_item_count : Int
+  task_count : Int
+  checked_task_count : Int
+  quote_count : Int
+  code_block_count : Int
+  table_count : Int
+  link_count : Int
+  image_count : Int
+  footnote_reference_count : Int
+  footnote_definition_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownDocumentInfo::equal(Self, Self) -> Bool
+pub fn MarkdownDocumentInfo::not_equal(Self, Self) -> Bool
+pub fn MarkdownDocumentInfo::to_json(Self) -> Json
+pub fn MarkdownDocumentInfo::to_repr(Self) -> @debug.Repr
+
+pub struct MarkdownFindOptions {
+  case_sensitive : Bool
+  whole_word : Bool
+  regex : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownFindOptions::default() -> Self
+pub fn MarkdownFindOptions::equal(Self, Self) -> Bool
+pub fn MarkdownFindOptions::not_equal(Self, Self) -> Bool
+pub fn MarkdownFindOptions::to_json(Self) -> Json
+pub fn MarkdownFindOptions::to_repr(Self) -> @debug.Repr
+
+pub(all) struct MarkdownFindSeed {
+  query : String
+  range : @core.TextRange
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownFindSeed::equal(Self, Self) -> Bool
+pub fn MarkdownFindSeed::not_equal(Self, Self) -> Bool
+pub fn MarkdownFindSeed::to_json(Self) -> Json
+pub fn MarkdownFindSeed::to_repr(Self) -> @debug.Repr
+
+pub(all) struct MarkdownPaletteItem {
+  action : String
+  label : String
+  group : String
+  shortcut : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownPaletteItem::equal(Self, Self) -> Bool
+pub fn MarkdownPaletteItem::not_equal(Self, Self) -> Bool
+pub fn MarkdownPaletteItem::to_json(Self) -> Json
+pub fn MarkdownPaletteItem::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

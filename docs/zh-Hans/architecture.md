@@ -40,6 +40,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui_sun_renderer/` | 实验性 Sun CPU raster renderer，基于仓库内 `moui_sun` workspace（ADR 0023：默认能力冻结，不在默认组合根）。 |
 | `moui_sun/` | 实验性 MoonBit 原生 CPU raster graphics/text/softbuffer workspace（ADR 0023）。 |
 | `moui_richtext/` | 富编辑应用使用的 Markdown/rich-text document、editor、command、input、paste、table 和 source-mapping 逻辑。 |
+| `moui_markdown/` | 基于 `moui_richtext` 的宿主中立 Markdown chrome addon：查找替换、大纲 helper、格式面板、文档信息、HTML 导出，以及供 MoMark / MoUI Studio 复用的 Msg-generic 面板视图。 |
 | `moui_skia/` | 可编辑的 Skia binding 以及 native/fallback capability contract workspace。 |
 | `moui_theme/` | 可选设计系统 addon workspace，涵盖 Material、Carbon、Primer、Fluent、通用 source-mapped token diagnostics，以及 Sickle 等第一方 visual theme addons。 |
 | `moui_tests/` | 不发布的测试模块，`tester/` 承接 harness 与 fixtures，并包含集成测试、benchmark、文本一致性套件及 renderer smoke。 |

@@ -24,6 +24,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_tests |
 | ./moui_i18n |
 | ./moui_richtext |
+| ./moui_markdown |
 | ./moui_webview |
 | ./moui_devtools |
 | ./moui_agent |

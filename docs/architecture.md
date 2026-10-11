@@ -50,6 +50,7 @@ ViewDeclaration -> ElementTree
 | `moui_sun_renderer/` | Experimental Sun CPU raster renderer over the repo-local `moui_sun` workspace (ADR 0023: capability freeze by default, not on default composition roots). |
 | `moui_sun/` | Experimental MoonBit-native CPU raster graphics/text/softbuffer workspace (ADR 0023). |
 | `moui_richtext/` | Markdown/rich-text document, editor, command, input, paste, table, and source-mapping logic used by rich editing apps. |
+| `moui_markdown/` | Host-neutral Markdown chrome addon on top of `moui_richtext`: find/replace, outline helpers, format palette, document info, HTML export, and Msg-generic panel views for MoMark and MoUI Studio. |
 | `moui_skia/` | Editable Skia binding and native/fallback capability contract workspace. |
 | `moui_theme/` | Optional design-system addon workspace for Material, Carbon, Primer, Fluent, common source-mapped token diagnostics, and first-party visual theme addons such as Sickle. |
 | `moui_tests/` | Unpublished test harnesses and fixtures under `tester/`, integration tests, benchmarks, text conformance suites, and renderer smokes. |

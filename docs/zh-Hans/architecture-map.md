@@ -58,7 +58,8 @@ thin wiring only                   ▼
 | 应用组合 | `@runtime.run_app(...)` 后调用 `.render(...)` 或 `.render_all(...)`，再调用 `.backend(...).run()` |
 | Skia FFI / native capability | `moui_skia` |
 | 嵌入运行时模板与事件循环 | `wzzc-dev/window/{android,ios,harmonyos}` |
-| 富文本领域 | `moui_richtext` |
+| 富文本领域（引擎） | `moui_richtext` |
+| Markdown chrome addon（查找替换/大纲/格式面板/文档信息/HTML 导出） | `moui_markdown`（不是 app 默认依赖） |
 | 设计系统 addons | `moui_theme`（不是 app 默认依赖） |
 | 仓库 validators | `tools/moui/*`，由 `scripts/*.mjs` shells 调用 |
 

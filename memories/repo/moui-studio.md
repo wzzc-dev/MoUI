@@ -405,6 +405,13 @@
   `moon fmt <file>`。仓库多处既有文件有 format 漂移（proposal/main/
   compile_report/studio_lang_test/worker_test/runtime_pointer_input_test），
   `moon fmt --check` 必须全绿才能过 pr profile。
+- **`moon fmt` 是 workspace 级**：在任一成员目录（如 `moui_markdown/`）里
+  跑不带路径的 `moon fmt` 会格式化**整个 workspace**（实测 2558 tasks），
+  包括 submodule 里他人未提交、非 canonical 文件的漂移；2026-10-11 曾因此
+  改写 `moui_studio/app/**` 14 个在途文件。恢复路径：子模块 `.git` 的
+  unreachable blob + `moonfmt <blob>` 与 post-fmt 缓存逐字节比对。预防：
+  只跑 `moon fmt <path>` / `moonfmt <file> -w`，或在 `moon fmt --check`
+  前确认工作树无他人脏文件。
 - **仓库生成物**：`docs/repository-facts.md` 是生成物——改 docs catalog
   后跑 `node scripts/generate-repo-docs.mjs --write`（会连带
   `sync-website-docs.mjs`）；`website/web_wasm/docs/*` 与 `sitemap.xml`

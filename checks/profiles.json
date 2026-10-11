@@ -395,6 +395,16 @@
           ]
         },
         {
+          "name": "markdown addon tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_markdown",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "WebView addon tests",
           "argv": [
             "moon",

@@ -86,6 +86,13 @@
       "releaseStage": "addons"
     },
     {
+      "name": "wzzc-dev/moui_markdown",
+      "directory": "moui_markdown",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
       "name": "wzzc-dev/moui_theme",
       "directory": "moui_theme",
       "publication": "public",

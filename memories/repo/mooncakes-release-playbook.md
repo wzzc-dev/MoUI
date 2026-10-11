@@ -36,6 +36,12 @@ renderers → addons → entrypoints),模块内部依赖关系决定阶段顺序
 - 从未上过 mooncakes 的内部模块(moui_tests/moui_tools/
   moui_product_tools/moui_3d_web_renderer/moui_3d_wgpu_renderer/momark)
   只 bump 版本号不发布,保持工作区 override 无警告。
+- 新增的**公开** addon(moui_markdown@0.2.1 之类)原则上进 release catalog,但
+  首次发布前只存在于工作区;此时下游独立仓库(如 moui_studio,moon.work 不
+  覆盖其 standalone clone)不能 pin 它——独立 `moon build` 会按 registry 解析
+  失败。顺序是:在 MoUI 内验证通过 → 发布模块 → 下游再 pin + moon update。
+  判断模块是否已上架:`~/.moon/registry/index/user/<owner>/<name>.index`
+  是否存在。
 
 ## 文档 token 同步面
 

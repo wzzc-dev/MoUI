@@ -10,6 +10,7 @@
     "moui_i18n",
     "moui_cli",
     "moui_richtext",
+    "moui_markdown",
     "moui_devtools",
     "moui_agent",
     "moui_agent_mcp",
