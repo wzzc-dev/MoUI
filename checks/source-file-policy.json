@@ -410,8 +410,8 @@
     },
     {
       "path": "moui_studio/app/project_workbench_test.mbt",
-      "maxLines": 1502,
-      "reason": "Project workbench black-box suite; grew with the explorer slice's navigation/multi-root/sort/outline/in-place-create coverage. Registered above the 1200 hard limit as a new ratchet."
+      "maxLines": 1503,
+      "reason": "Project workbench black-box suite; grew with the explorer slice's navigation/multi-root/sort/outline/in-place-create coverage. Registered above the 1200 hard limit as a new ratchet.; raised 1502->1503 on 2026-10-11: boot-restore test expands the workspace root before asserting the member tier (imported trees now default-collapsed)"
     }
   ],
   "data": [
