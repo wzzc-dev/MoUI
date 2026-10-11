@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1438,
-      "reason": "Shell message domain (workspace编排/文件 tabs/CRUD 输入态/搜索草稿/聊天离线路由); registered above the 1200 hard limit after the G4 multi-tab + CRUD + G1 chat offline routing. Shell message domain; raised 1231->1429 for the VS Code explorer slice (hover/section toggles, in-place create state, collapse-all, and the multi-root directory-collapse helpers) on top of the in-flight multi-tab/CRUD work this branch carries."
+      "maxLines": 1416,
+      "reason": "Shell message domain (workspace编排/文件 tabs/CRUD 输入态/搜索草稿/聊天离线路由); registered above the 1200 hard limit after the G4 multi-tab + CRUD + G1 chat offline routing. Shell message domain; raised 1231->1429 for the VS Code explorer slice (hover/section toggles, in-place create state, collapse-all, and the multi-root directory-collapse helpers) on top of the in-flight multi-tab/CRUD work this branch carries.; 2026-10-10 offline fake chat arm deleted, palette new-project dispatch is one line per id — ratchet lowered"
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -365,13 +365,13 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1644,
-      "reason": "Studio app message/model protocol; grew with the terminal, form-designer, and file-deletion message arms. Studio app message/model protocol; raised 1578->1623 for the VS Code explorer slice (explorer hover/section state, in-place create target dir, folder-create message pair, and the multi-root SelectProjectFileAt/ToggleProjectDirAt arms)."
+      "maxLines": 1659,
+      "reason": "Studio app message/model protocol; grew with the terminal, form-designer, and file-deletion message arms. Studio app message/model protocol; raised 1578->1623 for the VS Code explorer slice (explorer hover/section state, in-place create target dir, folder-create message pair, and the multi-root SelectProjectFileAt/ToggleProjectDirAt arms).; 2026-10-10 folder-projects: new-project draft/confirmed/program_root fields + snapshot messages"
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",
-      "maxLines": 1609,
-      "reason": "Whitebox layout regression suite for the studio shell; grew alongside ide_shell.mbt (M9 terminal integration). Raised 1594->1600 after canonical moonfmt normalization."
+      "maxLines": 1632,
+      "reason": "Whitebox layout regression suite for the studio shell; grew alongside ide_shell.mbt (M9 terminal integration). Raised 1594->1600 after canonical moonfmt normalization.; 2026-10-10 fake-model tests migrated to the real receipt channel"
     },
     {
       "path": "moui_studio/app/blocks_canvas.mbt",
@@ -385,13 +385,13 @@
     },
     {
       "path": "moui_studio/app/app.mbt",
-      "maxLines": 2520,
-      "reason": "Studio composition root; grew with the terminal/pty integration and webview/preview wiring (M8/M9 slices). Lowered 1654->1644 by canonical moonfmt normalization. Pre-existing overflow (budget had drifted behind the file on main) surfaced while re-running the validator during the moui_studio subrepo extraction; ratchet settled to the exact current count. Studio app message arm host; raised 2342->2466 for the VS Code explorer slice (in-place folder creation via @x/fs, directory-qualified file create/rename, explicit ExplorerRefresh rescan arm). Raised 2464->2520 for the second explorer slice: workspace-root preservation, member tier with synthesized intermediate directories, and the inline create row."
+      "maxLines": 2566,
+      "reason": "Studio composition root; grew with the terminal/pty integration and webview/preview wiring (M8/M9 slices). Lowered 1654->1644 by canonical moonfmt normalization. Pre-existing overflow (budget had drifted behind the file on main) surfaced while re-running the validator during the moui_studio subrepo extraction; ratchet settled to the exact current count. Studio app message arm host; raised 2342->2466 for the VS Code explorer slice (in-place folder creation via @x/fs, directory-qualified file create/rename, explicit ExplorerRefresh rescan arm). Raised 2464->2520 for the second explorer slice: workspace-root preservation, member tier with synthesized intermediate directories, and the inline create row.; 2026-10-10 folder-projects slice settled at current size (fake-model branches removed, new-project/restore arms added; helpers extracted to new_project.mbt/code_project.mbt)"
     },
     {
       "path": "moui_studio/app/app_test.mbt",
-      "maxLines": 2084,
-      "reason": "Studio app behavior suite; grew with coverage for the new message arms it guards. Raised 2024->2078 after canonical moonfmt normalization."
+      "maxLines": 2110,
+      "reason": "Studio app behavior suite; grew with coverage for the new message arms it guards. Raised 2024->2078 after canonical moonfmt normalization.; 2026-10-10 fake-model tests migrated to the real receipt channel (with_pending_roll_call)"
     },
     {
       "path": "moui_studio/app/code_view.mbt",
@@ -400,8 +400,8 @@
     },
     {
       "path": "moui_studio/app/ide_ai.mbt",
-      "maxLines": 1613,
-      "reason": "Registered at current measured logic lines (auto-ratchet during the G-series capability slices)."
+      "maxLines": 1639,
+      "reason": "Registered at current measured logic lines (auto-ratchet during the G-series capability slices).; 2026-10-10 provider chip shows key/availability states; composer degrades to a guidance panel when AI is unavailable"
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",
@@ -467,11 +467,11 @@
     },
     {
       "path": "moui_studio/app/i18n_catalog_generated.mbt",
-      "maxLines": 3878,
+      "maxLines": 3910,
       "generator": "scripts/generate-i18n-catalogs.mjs",
       "checkCommand": "node scripts/generate-i18n-catalogs.mjs --check",
       "header": "Generated by scripts/generate-i18n-catalogs.mjs",
-      "reason": "Generated Studio i18n catalog; v4 IDE shell strings (chrome/panes/context tabs/audit/console/settings/AI layer incl. composer modes, hero hints, window chrome/IR rail hints/status bar/command surface) are required for the keyboard-first IDE entry. Raised 1916->1918 for app.ctx.clear, 1918->1930 for the right-panel show/hide trio, 1930->1995 for the block-editor relocation plus the compile-artifact surface, 1995->2072 for compile progress reporting (app.compile.progress / .step / .step_done / .step_active / .elapsed and the seven app.compile.phase.* step names), 2072->2084 for separating the runnable GUI artifact from the headless self-check, then 2084->2116 for one-click launch (app.compile.launching / .launched / .revealed and the rewritten app.compile.launch_hint). The catalog must list every user-visible string, so each new user-facing affordance necessarily grows it. Raised 2323->3253 for the regenerated catalog (terminal/form-designer strings). Raised 3789->3868 for the VS Code-style explorer slice (app.explorer.* header/toolbar/section vocabulary: title, new file/folder, refresh, collapse all, open editors, outline, timeline, and the empty/rename/delete/folder state strings)."
+      "reason": "Generated Studio i18n catalog; v4 IDE shell strings (chrome/panes/context tabs/audit/console/settings/AI layer incl. composer modes, hero hints, window chrome/IR rail hints/status bar/command surface) are required for the keyboard-first IDE entry. Raised 1916->1918 for app.ctx.clear, 1918->1930 for the right-panel show/hide trio, 1930->1995 for the block-editor relocation plus the compile-artifact surface, 1995->2072 for compile progress reporting (app.compile.progress / .step / .step_done / .step_active / .elapsed and the seven app.compile.phase.* step names), 2072->2084 for separating the runnable GUI artifact from the headless self-check, then 2084->2116 for one-click launch (app.compile.launching / .launched / .revealed and the rewritten app.compile.launch_hint). The catalog must list every user-visible string, so each new user-facing affordance necessarily grows it. Raised 2323->3253 for the regenerated catalog (terminal/form-designer strings). Raised 3789->3868 for the VS Code-style explorer slice (app.explorer.* header/toolbar/section vocabulary: title, new file/folder, refresh, collapse all, open editors, outline, timeline, and the empty/rename/delete/folder state strings).; 2026-10-10 fake/offline keys removed, AI guidance + folder-project keys added (regenerated)"
     }
   ]
 }
