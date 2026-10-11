@@ -1,6 +1,6 @@
 # Plan: MoUI Studio Markdown 插件——.md 预览/编辑（MoMark 引擎接入）
 
-- **Status**: active（v1 已落地：插件包 + .md 路由 + 差分测试;插件 2/2、app 371/371 绿）
+- **Status**: done（2026-10-11 归档；v1 已落地：插件包 + .md 路由 + 差分测试；插件 2/2、app 371/371 绿）
 - **Goal**: 资源管理器点开 `.md` 文件时进入真正的 Markdown 编辑面（MoMark
   同款引擎），不再是 plain mono 文本;编辑沿用工程文件草稿通道（脏标记/保存
   写盘零新机制）。
@@ -46,3 +46,9 @@
 - `markdown_editor` 不支持光标/选区受控回传（与 mono 编辑器不同）——工程
   文件光标状态对 `.md` 不参与;这是引擎现能力边界,如实记录不遮掩。
 - 预览/源码双模式、WYSIWYG 格式气泡：后续增强（先跑通「点开即所见即所改」）。
+
+## Progress
+
+| Date | Note |
+|------|------|
+| 2026-10-11 | 归档核对：`plugins/markdown` 渲染 + `app/code_view` `.md` 分流（`plugin_active` 门控）在位，边界声明保留。本计划归档。 |

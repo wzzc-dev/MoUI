@@ -1,6 +1,6 @@
 # Plan: MoUI Studio AI 模式改造——对白转录工作台
 
-- **Status**: active（M0–M6 已全部落地；真机交互走查待人工会话复核）
+- **Status**: done（2026-10-11；M0–M6 全部落地并推送，真机交互走查已完成，见实施记录）
 - **Goal**: 把 AI 模式从「Agent 工作卡投影(280px 小卡、prompt 不回显)」改造为对白
   转录工作台:右对齐用户气泡 + AI 消息(markdown)+ 工作卡时间线、composer 信息层
   (工程/模型/姿态)、会话列表(相对时间/分组/置顶/搜索/快捷键)、native 会话落盘。
@@ -100,7 +100,7 @@
 - app 包不 import moui/runtime;时间/文件/剪贴板全部走组合根注入闭包 + ServiceTask。
 - 双目标(native + wasm-gc)全绿;web 缺能力时显式降级,不出现假按钮。
 - 新断言写完故意破坏一次确认会红;每步跑
-  `moon test examples/moui_studio/app|plugins/ai --target native|wasm-gc`;
+  `moon test moui_studio/app|plugins/ai --target native|wasm-gc`;
   收尾跑六静态门 + i18n --check + sync_kernel --check(未动 kernel 也跑,确认零漂移)。
 
 ## 验收
@@ -108,7 +108,8 @@
 1. 双目标测试全绿 + 六静态门绿。
 2. 真机走查(native):提交 → 用户气泡回显 → 流式回复 → diff 卡采纳 → 审计落账;
    重启后会话恢复、相对时间正确、置顶/分组/改名保持;Ctrl+N/Ctrl+F/Ctrl+K、
-   搜索过滤、删除、↓回底可用。
+   搜索过滤、删除、↓回底可用。**已覆盖**：提交 → 气泡回显 → 流式回复（`wt1-*`/`wt2-*`）；
+   **未覆盖（AX 信任 0 限制）**：真键盘快捷键、重启恢复、真机采纳点击——见实施记录边界说明。
 3. web 构建绿:持久化/墙钟缺席时显式降级,无死 UI。
 
 ## 实施记录（2026-10-07）
@@ -123,8 +124,14 @@
   会话行置顶用图标而非文字字形（避免字体缺字形的渲染风险）。
 - 本轮发现并修复一处**既有** kernel 快照格式漂移（kernel_*.mbt 的 moon fmt 风格，
   sync_kernel 已同步，--check 转绿）。
-- 待人工验证：真机交互走查（提交→气泡→流式→采纳；重启恢复；Ctrl+N/F/K 实测）。
-  后台会话截获原生窗口受限（见 memories/repo/moui-studio.md 的既有记录）。
+- 真机交互走查（2026-10-11，native，MCP stdio 驱动，证据
+  `artifacts/studio-analysis/walkthrough/wt1-*`、`wt2-*`）：**提交 → 用户气泡回显**（提交前后
+  卡片数 4→5）与**流式回复分片推进**（`wt1-05-stream-0..4`、落地态 `wt1-06-settled`）
+  已实测到位；`wt2` 复核了空态→提交→时间线增长（3→4 卡）路径。
+- **诚实边界**：macOS AX 进程信任为 0（`AXIsProcessTrusted()=0`），`Ctrl+N/F/K` 与
+  重启恢复（`NSOpenPanel`/真键盘输入）无法用合成输入验证；真实 provider 回复无法稳定
+  产出可解码 JSON，故「采纳 diff 卡」只在单测覆盖、未做真机采纳点击。后台会话截获
+  原生窗口受限（见 memories/repo/moui-studio.md 的既有记录）。
 
 ## Decision log
 

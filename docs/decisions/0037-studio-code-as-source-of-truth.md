@@ -3,7 +3,7 @@
 - **Date**: 2026-10-05
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (GLM plan sessions with repo owner review)
-- **Related**: `docs/plans/active/moui-studio-workbench.md`, ADR 0021
+- **Related**: `docs/plans/done/moui-studio-workbench.md`, ADR 0021
   (embedded runtime product class), `docs/moui-studio.md`
 
 ## Context

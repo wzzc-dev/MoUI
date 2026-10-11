@@ -1,6 +1,6 @@
 # moui-studio-folder-projects：示例项目落盘本地文件夹 + 移除离线模型
 
-状态：active · 起始 2026-10-10 · 来源会话：用户直接需求
+状态：done（2026-10-11 归档） · 起止 2026-10-10 → 2026-10-11 · 来源会话：用户直接需求
 
 ## 目标
 
@@ -30,22 +30,22 @@
 - Web 端浏览器 fetch provider。
 - 工程骨架的 web_wasm/macos_skia 入口包（预览走 `.studio/preview` harness；构建入口后续按需）。
 
-## 里程碑
+## 里程碑（全部完成，2026-10-11 核对）
 
-- M1 domain 清理：删 `domain/proposals/fake_model.mbt`（`proposal_system_prompt` 迁至
+- [x] M1 domain 清理：删 `domain/proposals/fake_model.mbt`（`proposal_system_prompt` 迁至
   samples.mbt）；删 `plugins/ai::fake_stream_chunks`、`services/model_provider::deterministic_completion`；
   相关测试改造。`samples.mbt` 与 `all_samples()` 保留。
-- M2 ProviderMode 移除：app 全部 Fake 分支合并为真实路径（无 key →
+- [x] M2 ProviderMode 移除：app 全部 Fake 分支合并为真实路径（无 key →
   `app.ai.key_needed` 引导）；模型 chip 恒显 provider_model（无 key「未连接」）；
   设置面板去 Fake/Real 切换；i18n 增删 + 生成器重跑。
-- M3 新建项目流：`new_project_skeleton_files()` 纯函数生成器 + wbtest；
+- [x] M3 新建项目流：`new_project_skeleton_files()` 纯函数生成器 + wbtest；
   `NewProjectRequested(template)` → pick_directory → 写骨架 → direct_scan 注册/激活
   → 模板 IR 进 model.program → EvCodeProjectWrite + 快照写入；空舞台按钮、
   `studio.template.*`、`studio.file.new` 全部走新流。
-- M4 IR 快照恢复：SetActiveProject 异步读 `<root>/.studio/program.json` →
+- [x] M4 IR 快照恢复：SetActiveProject 异步读 `<root>/.studio/program.json` →
   decode → 确认门（当前程序非空且不同）→ 载入；提案采纳同步快照。
-- M5 Web 降级：`ai_available` 注入 + UI 降级 + web_wasm 入口传 false。
-- M6 文档与验证：README（子仓库）、memories、决策反转记录；逐包 moon test
+- [x] M5 Web 降级：`ai_available` 注入 + UI 降级 + web_wasm 入口传 false。
+- [x] M6 文档与验证：README（子仓库）、memories、决策反转记录；逐包 moon test
   （native+wasm-gc）、新建工程 `moon build` 冒烟、静态五件套、i18n `--check`、
   source-file-policy。
 
@@ -53,3 +53,8 @@
 
 - 2026-10-10：计划建立；探索结论——示例模板硬编码于 `domain/proposals/samples.mbt`，
   工程导入不回读 IR，`ProviderMode::Fake` 默认且 Web 入口 noop provider。
+- 2026-10-11：归档核对——M1–M6 全部落地：`domain/proposals/fake_model.mbt` 已删除
+  （`proposals/` 仅剩 samples/validation）；`fake_stream_chunks`/`deterministic_completion`
+  全仓零残留；`app/new_project.mbt` 骨架生成器 + `NewProjectRequested` 落盘链 +
+  `PROGRAM_SNAPSHOT_REL` 快照恢复（`emit_program_snapshot`、`SetActiveProject` 回读）在位；
+  `web_wasm/main.mbt` 传 `ai_available=false`。本计划归档。

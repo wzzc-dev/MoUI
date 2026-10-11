@@ -2,7 +2,7 @@
 
 - **Agent**: GLM (ZCode)
 - **Goal**: 用户报 MoUI Studio 积木视图三个缺陷：① 积木上右键菜单一直向左弹（应主要向右）；② 积木左右撑满画布；③ 积木上出现不明黑块。
-- **Outcome**: Success — 三个根因全部修复，`moon test examples/moui_studio/app` 273/273 通过，静态校验全绿，headless 真实渲染验收确认。
+- **Outcome**: Success — 三个根因全部修复，`moon test moui_studio/app` 273/273 通过，静态校验全绿，headless 真实渲染验收确认。
 
 ## Summary
 
@@ -12,12 +12,12 @@
 
 | Package/File | What Changed | Why |
 |---|---|---|
-| `examples/moui_studio/app/ide_root.mbt` | 积木右键菜单候选顺序 `BelowEnd…` → `BelowStart, AboveStart, BelowEnd, AboveEnd` | 锚点是零尺寸指针点，`…End` 把菜单右缘对齐指针（向左弹）；成熟菜单主方向是右下展开 |
-| `examples/moui_studio/app/blocks_canvas.mbt` | `blocks_item_rects` 块宽随内容收紧（估宽 ÷ LABEL_WIDTH_SAFETY + 12，下限 64）；标签 `TextStart`；洞先于标签推入 ops；新增 `blocks_row_arrow` / `blocks_row_lead_width`；去「▶ 」聚光灯文字前缀；度量缓存补引导文本与整行 | ②③的修法；洞画在文字之下是叠层顺序要求 |
-| `examples/moui_studio/app/blocks_slot_hit.mbt` | `blocks_slot_rects` 增 `lead?`；`blocks_slot_hit` / `blocks_value_hit` 增 `lead_texts?` | 命中层与绘制层读同一份引导几何 |
-| `examples/moui_studio/app/blocks_pane.mbt` | 新增 `block_row_texts`（展示 + 引导同源产出）；指示线矩形与画布同参 | 展示/引导/命中三处不吃同一份就会错位 |
-| `examples/moui_studio/app/update_blocks.mbt` | 四处命中路径传 `display_texts` | 块宽进了几何后，update 侧矩形必须与绘制同源 |
-| `examples/moui_studio/app/views.mbt` | legacy `blocks_panel` 同步 | 同上 |
+| `moui_studio/app/ide_root.mbt` | 积木右键菜单候选顺序 `BelowEnd…` → `BelowStart, AboveStart, BelowEnd, AboveEnd` | 锚点是零尺寸指针点，`…End` 把菜单右缘对齐指针（向左弹）；成熟菜单主方向是右下展开 |
+| `moui_studio/app/blocks_canvas.mbt` | `blocks_item_rects` 块宽随内容收紧（估宽 ÷ LABEL_WIDTH_SAFETY + 12，下限 64）；标签 `TextStart`；洞先于标签推入 ops；新增 `blocks_row_arrow` / `blocks_row_lead_width`；去「▶ 」聚光灯文字前缀；度量缓存补引导文本与整行 | ②③的修法；洞画在文字之下是叠层顺序要求 |
+| `moui_studio/app/blocks_slot_hit.mbt` | `blocks_slot_rects` 增 `lead?`；`blocks_slot_hit` / `blocks_value_hit` 增 `lead_texts?` | 命中层与绘制层读同一份引导几何 |
+| `moui_studio/app/blocks_pane.mbt` | 新增 `block_row_texts`（展示 + 引导同源产出）；指示线矩形与画布同参 | 展示/引导/命中三处不吃同一份就会错位 |
+| `moui_studio/app/update_blocks.mbt` | 四处命中路径传 `display_texts` | 块宽进了几何后，update 侧矩形必须与绘制同源 |
+| `moui_studio/app/views.mbt` | legacy `blocks_panel` 同步 | 同上 |
 | 测试：`blocks_edit_test` / `shell_layout_wbtest` / `ai_bar_layout_wbtest` | 新增 4 条回归 + 既有菜单测试加「向右弹」断言 | 钉住三个修复的生产契约 |
 
 ## Key Decisions
@@ -36,12 +36,12 @@
 ## Validation
 
 ```sh
-moon test examples/moui_studio/app --target native          # 273/273
-moon test examples/moui_studio/domain/blocks examples/moui_studio/domain/studio_lang --target native  # 68/68
+moon test moui_studio/app --target native          # 273/273
+moon test moui_studio/domain/blocks moui_studio/domain/studio_lang --target native  # 68/68
 node scripts/validate-maintenance-baseline.mjs && node scripts/validate-api-surface.mjs   # ok
 node scripts/validate-release-module-closures.mjs && node scripts/validate-guidance-consistency.mjs  # ok
 node scripts/validate-renderer-capability-consistency.mjs && node scripts/validate-doc-references.mjs  # ok
-moon info examples/moui_studio/app --target native           # pkg.generated.mbti 已重新生成（此前已过期）
+moon info moui_studio/app --target native           # pkg.generated.mbti 已重新生成（此前已过期）
 ```
 
 ## Follow-Up
@@ -66,8 +66,8 @@ moon info examples/moui_studio/app --target native           # pkg.generated.mbt
 ## 第二轮验证
 
 ```sh
-moon test examples/moui_studio/app --target native   # 274/274
-node scripts/generate-i18n-catalogs.mjs --check --input examples/moui_studio/app/i18n/catalogs.json --out examples/moui_studio/app/i18n_catalog_generated.mbt  # ok
+moon test moui_studio/app --target native   # 274/274
+node scripts/generate-i18n-catalogs.mjs --check --input moui_studio/app/i18n/catalogs.json --out moui_studio/app/i18n_catalog_generated.mbt  # ok
 # 六项静态校验全绿（同上）
 ```
 

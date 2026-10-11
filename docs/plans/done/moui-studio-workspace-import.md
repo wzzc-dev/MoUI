@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 工程工作台——moon.work 工作区导入 + 规模治理 + 工程记录持久化
 
-- **Status**: active（W1–W3 已落地；studio 全套 4836/4836 绿；真机导入走查待人工复核）
+- **Status**: done（2026-10-11；W1–W3 全部落地；真机导入走查已完成，见总验收）
 - **Goal**: 让 Studio 能把 `moon.work` 多模块工作区（如本仓库根，54 成员）整体导入；
   单模块导入在仓库级规模下不再失控；导入的工程记录跨重启保留。
 - **Non-goals**: 多根工作区的「运行时添加/移除成员」UI（RemoveProject 已可会话内移除）；
@@ -19,7 +19,7 @@
 | `upsert_project` 原位替换 + 新工程置 active | `app/project_workbench.mbt:54` |
 | ServiceTask 无进度通道；compile 走 `on_progress` 回调 + Msg | `app/app.mbt:160` |
 | i18n 键源在 `app/i18n/{en,zh-Hans}.json`，经 `scripts/generate-i18n-catalogs.mjs` 再生成 | scripts 目录 |
-| 工作台计划（M0 导入/资源管理器/BuildService）已全部达成，本计划是其工作区延伸 | `docs/plans/active/moui-studio-workbench.md` |
+| 工作台计划（M0 导入/资源管理器/BuildService）已全部达成，本计划是其工作区延伸 | `docs/plans/done/moui-studio-workbench.md` |
 
 ## 设计决策
 
@@ -87,6 +87,13 @@
 ## 总验收
 
 - MoUI 仓库根导入成功：资源管理器可见成员模块，进度可见，failed 汇总说话。
+  **真机走查（2026-10-11，native，MCP stdio 驱动）**：导入成员根 → 资源管理器树展开到
+  `app` 目录 → 点开 `form.mbt`（证据 `artifacts/studio-analysis/walkthrough/wt3e-04..06`）；
+  持久化恢复走查（`wt3i-01/02`）与工程根切换（`wt3j-01/02`）均到位。
+  **诚实边界**：`NSOpenPanel` 目录选择无法在 AX 信任 0 下用合成输入驱动，导入入口以
+  预置 `.studio/projects.json`（`active_root` = 成员根）复核；仓库根恢复不出工程
+  （`finish_restore_active` 只匹配成员记录，表现为空态）；`ExplorerRefresh` 与启动重扫
+  不接 `on_progress`——「已扫描 N 个目录」只在导入对话框路径出现。
 - examples/momark 单模块导入不回退（含预览 harness）。
 - 重启后工程列表恢复（native）；web 行为不变。
 - 受影响包 `moon test` 绿 + 静态五件套绿。

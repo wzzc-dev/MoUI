@@ -2,11 +2,11 @@
 
 - Status: active
 
-> 2026-10-09: 产品已迁出为独立子仓库 `moui_studio/`（模块 `wzzc-dev/moui_studio`），见 `moui-studio-standalone-subrepo.md`；本文保留历史规划上下文，旧路径 `examples/moui_studio` 一律对应新位置。
+> 2026-10-09: 产品已迁出为独立子仓库 `moui_studio/`（模块 `wzzc-dev/moui_studio`），见 `moui-studio-standalone-subrepo.md`；本文保留历史规划上下文（2026-10-11 已将历史 `examples/moui_studio` 路径统一为当前 `moui_studio/` 位置）。
 - Goal: 用单一产品取代 `examples/moeui_studio` 与 `examples/moblocks_studio`：
   一个中文优先、IDE 界面中英双语的可视化编程环境。一份带 schema 版本的程序 IR
   同时支撑「窗体设计 / 积木编排 / 双语代码」三种编辑视图与结构化 AI 提案，
-  运行期带安全闸门，产物可导出为独立 MoUI 应用。落位 `examples/moui_studio`，
+  运行期带安全闸门，产物可导出为独立 MoUI 应用。落位 `moui_studio`，
   项目格式 `.studio.json`。
 - **可读性是一等公民**：AI 生成的程序必须能被人类看懂——每个生成的
   handler 必须携带双语「意图说明」，代码按规范格式渲染，AI 面板提供
@@ -214,7 +214,7 @@ pub(all) struct StudioProgram {
 - 真实 provider（可选，仅 native）：OpenAI 兼容，默认配置指向阶跃星辰
   StepFun —— `endpoint = https://api.stepfun.com/step_plan/v1`，
   `model = step-5-preview`。**凭据唯一来源是 gitignored 的
-  `examples/moui_studio/.config.json`**（`{ "provider": { endpoint, model,
+  `moui_studio/.config.json`**（`{ "provider": { endpoint, model,
   api_key } }`，已在根 `.gitignore` 登记）：native 组合根启动时读取并预填
   provider 面板，面板内仍可改；`services/provider_native` 提供
   `load_provider_config`（native-only，`x/fs` + 纯 JSON 解析）与一个
@@ -248,7 +248,7 @@ AI 产物默认人看不懂，是本产品要解决的核心矛盾。机制：
 - 内核集收缩为 3 个：`domain/ir`、`domain/studio_lang`、`domain/codec`
   （导出的应用不需要 IDE/积木/提案，MoBlocks 的 5+1 内核是自由图模型遗留）。
 - 漂移门已注册进 `checks/profiles.json` 的 pr profile（`studio export kernel
-  sync` = `moon run examples/moui_studio/tools/sync_kernel --target native --
+  sync` = `moon run moui_studio/tools/sync_kernel --target native --
   --check`），并配 `studio export build` 夜间档烟测（`scripts/studio-export-smoke.sh`）。
 - **真编译毕业通道（v1 验收项）**：IR → 可读 MoonBit 源码
   （`services/export/moonbit_codegen.mbt`）→ 本地 `moon check` →
@@ -277,7 +277,7 @@ AI 产物默认人看不懂，是本产品要解决的核心矛盾。机制：
 ## 9. 国际化（zh-Hans + en-US）
 
 - 用 `wzzc-dev/moui_i18n`（locale 归一化 / catalog 查找 / 回退 / 具名插值 /
-  count 规则）；catalog 源 `examples/moui_studio/app/i18n/{en-US,zh-Hans}.json`，
+  count 规则）；catalog 源 `moui_studio/app/i18n/{en-US,zh-Hans}.json`，
   由 `node scripts/generate-i18n-catalogs.mjs` 生成 MoonBit 表并纳入仓库，
   `--check` 进验证循环（参照 website 双语实践）。
 - 语言存放：app model 持有 `Language{ZhHans|EnUs}`（mo_desktop 模式），
@@ -293,10 +293,10 @@ AI 产物默认人看不懂，是本产品要解决的核心矛盾。机制：
 
 ## 10. 包结构与边界
 
-`examples/moui_studio`（独立 module + moon.work 成员 + catalog 条目）：
+`moui_studio`（独立 module + moon.work 成员 + catalog 条目）：
 
 ```text
-examples/moui_studio/
+moui_studio/
   README.md（双语）  THIRD_PARTY.md  NOTICE  moon.mod
   domain/ir/            程序 IR + 不变量 + 预算（纯 MoonBit，零依赖）
   domain/studio_lang/    lexer/parser/printer/interpreter + 双语关键字表 + 结构化错误
@@ -349,7 +349,7 @@ examples/moui_studio/
 | `app/canvas.mbt`（puzzle/spotlight） | `app/views/block_canvas.mbt` | 移植绘制方案与命中几何 |
 | `app/graph_editing.mbt`（100 步 undo） | app 编辑器 undo | 命令式 undo 用于设计/积木视图 |
 | `services/export/` + `tools/sync_kernel` + `tools/emit_bundle` + runner 模板 | 同名保留 | 内核集收缩为 ir/lang/codec；runner 模板按 MoUI Studio IR 重写 |
-| `fixtures/` 镜像模式 | `examples/moui_studio/fixtures/` | 保留（MoonBit 测试环境无同步文件读取） |
+| `fixtures/` 镜像模式 | `moui_studio/fixtures/` | 保留（MoonBit 测试环境无同步文件读取） |
 | `THIRD_PARTY.md` / `NOTICE` | 同名保留并扩写 | 追加易语言「仅概念参考、无代码/资产复用」声明；scratch-editor 维持架构研究声明 |
 
 **P0 已执行的仓库手术**（2026-09-27，随本计划同一 PR）：删除
@@ -368,14 +368,14 @@ website 副本；三个前代计划归档至 `docs/plans/done/` 并标注被本�
 3. **班级小卖部**：表格商品 + 库存增减 + 营业额标签 + `提交数据` 闸门演示。
 4. **问候**：最小 starters（按钮改标签文本）。
 
-每个样例一份一页教案（目标/步骤/可提问的拓展）随仓库 `examples/moui_studio/samples/`；
+每个样例一份一页教案（目标/步骤/可提问的拓展）随仓库 `moui_studio/samples/`；
 README 双语含 5 分钟 Quick Start。
 
 ## 13. 测试与验证策略
 
 - 双目标（native + wasm-gc）：`domain/*` 与 `app` 全量测试；入口
-  `moon build examples/moui_studio/web_wasm --target wasm-gc` +
-  `moon check examples/moui_studio/macos_skia --target native`。
+  `moon build moui_studio/web_wasm --target wasm-gc` +
+  `moon check moui_studio/macos_skia --target native`。
 - 必测清单：双语往返一致（`parse∘render_zh == parse∘render_en == id`）、
   20 类提案拒绝矩阵（≥15 条实测试用）、codec 往返 + 版本门、闸门
   确认/拒绝/无副作用、步数预算、审计内容、假模型确定性、导出 bundle
@@ -451,12 +451,12 @@ README 双语含 5 分钟 Quick Start。
 
 | Date | Decision |
 |------|----------|
-| 2026-09-27 | 产品定名 MoUI Studio，取代 moeui_studio/moblocks_studio，落位 examples/moui_studio |
+| 2026-09-27 | 产品定名 MoUI Studio，取代 moeui_studio/moblocks_studio，落位 moui_studio |
 | 2026-09-27 | IR 为语句级（非自由图）；积木是 IR 投影而非第二事实来源 |
 | 2026-09-27 | 内核语言中立：可读文案一律 catalog key，界面层本地化 |
 | 2026-09-27 | v1 外发动作为闸门化模拟，不做真实网络请求 |
 | 2026-09-27 | 双语关键字表 + 往返一致测试为 DSL 硬约束 |
-| 2026-09-27 | 真实模型默认阶跃星辰 StepFun（endpoint `api.stepfun.com/step_plan/v1`，model `step-5-preview`），凭据唯一来源为 gitignored 的 `examples/moui_studio/.config.json`（native 组合根启动读取、live smoke 测试按存在性跳过），假模型仍为默认模式 |
+| 2026-09-27 | 真实模型默认阶跃星辰 StepFun（endpoint `api.stepfun.com/step_plan/v1`，model `step-5-preview`），凭据唯一来源为 gitignored 的 `moui_studio/.config.json`（native 组合根启动读取、live smoke 测试按存在性跳过），假模型仍为默认模式 |
 | 2026-09-27 | 可读性为一等目标：handler 双语 note 必填、命名自解释、确定性渲染、「解释这个程序」讲解功能 |
 | 2026-09-27 | 允许按需扩展 MoUI 框架本身（新控件走 `moui/views` 的具体 `ViewNode`，core 不加枚举变体），决策需记录理由 |
 | 2026-09-27 | 品牌主题 `studio_theme` 需 `ColorPalette::from_seed`（朱砂 seed 派生全角色盘，手动覆盖派生角色质量更差）——studio app 主导入块引 `wzzc-dev/moui/core`，按 browser/mo_workbench/showcase 先例加入 validate-api-surface 的 shared-app core 导入授权名单 |
@@ -503,7 +503,7 @@ README 双语含 5 分钟 Quick Start。
 | 2026-09-30 | **v4 IDE 壳重写（对齐 `moui_studio.html` v4 稿）**：① 新增 `ide_chrome/ide_shell/ide_context/ide_ai/ide_dialogs/ide_root/ide_state/workspace/undo_history` 九文件承载新壳（顶栏 40 + 图标栏 48 + 左栏 232 + 中心 + 右栏 272 + 底栏 + 状态栏 22）；② **布局陷阱根治**：容器盒居中 + `padding_layout` 钳宽导致「不定宽的 row 拿不到权重 slack、整行被居中」——新增 `fill_row` 统一通道，所有带权重 spacer 的行/列显式定尺（顶栏内容因此从窗口中间回到两端贴边）；`AlignModifier` 只把自己量成子尺寸，`.frame().align()` 是空操作，浮动层改「权重 spacer + 定高」贴底；`scroll_view` 子节点是无界约束，画布宽必须由调用方传入（原写死 470 会溢出到隔壁面板）；`set_workspace` 通配臂写成 `(other, _) => other` 导致任何工作区切换都静默退回原工作区（三处只有落布局才暴露）。③ **拟真舞台**：设计/运行舞台改为浅色 App 窗口（34pt 标题条 + 红黄绿信号点），新增 `design_total_height`，背景/覆盖层/控件层/指针换算四处共用同一起点（`stage_point`）。④ **AI 避让带**：中心列拆上下两段，内容段 = 行高 − `ai_card_height`，浮动卡落在带内不遮内容；药丸/停靠态带高为 0。⑤ **接线补齐**：接受/拒绝提案 → 审计 + Console + 最近修改 + toast 四路派生；编译完成 → 审计（含诊断）+ Console；运行启动/收尾/副作用闸门 → 审计（终态只在 `merge_run_back` 记一次）；所有 IR 编辑经 `with_undo_point` 单一漏斗记「最近修改」，并把**合并**（连续同类编辑）与**留痕**（离散动作）拆成两个入口（`with_undo_point` / `with_recent_undo_point`）——同一 key 表达两者会把连插两个控件粘成一步撤销（被既有 undo depth 测试抓到）。⑥ i18n 新增 ~370 键（zh/en 各 369→…）、catalog 重生成（1786 行）。测试：app 76 → **104 用例 ×2 目标全绿**（新增壳布局 9 例 + 行为链 19 例：左右栏几何、工作区切换、底栏页签、避让带契约、空舞台、上下文页签、命令面板过滤、模态宿主、对齐夹取、toast 上限、split 夹取、树分组/过滤、IR↔行双向映射、最近修改计数与 no-op 不记账）。`update.mbt` 因越过 1200 行硬上限拆出 `undo_history.mbt`（1226 → 994 + 241）。验证：source-file-policy 1950 文件全绿、六静态 validator 全绿、i18n `--check` ok、web 1280×800 截图逐项复查 |
 | 2026-09-27 | 计划建立；P0 仓库手术完成（删两个前代 + moon.work/catalog/profiles/docs 更新 + 计划归档 + memory 重写） |
 | 2026-09-27 | 完善①：接入阶跃星辰真实模型；新增「AI 生成程序可读性」目标与 §7.1 机制、验收项 |
-| 2026-09-27 | 完善②：真实凭据走 gitignored `examples/moui_studio/.config.json`（含 live smoke 测试，文件已建）；新增「按需扩展 MoUI 框架」许可与边界 |
+| 2026-09-27 | 完善②：真实凭据走 gitignored `moui_studio/.config.json`（含 live smoke 测试，文件已建）；新增「按需扩展 MoUI 框架」许可与边界 |
 | 2026-09-27 | P1 完成：五个领域包（ir/studio_lang/codec/proposals/blocks）双目标全绿 51 测试×2；app 包 TEA + 五视图 + 中英 catalog 双目标 14/14；web/macos 薄入口就位；.studio.json 注册进 moon.work/catalog/examples.md/profiles（漂移门 studio export kernel sync）；教案×3 + 双语 README + DSL/IR 规范成文 |
 | 2026-09-27 | P1 收官：services/{model_provider,provider_native,export} + tools/{sync_kernel,emit_bundle} 全部就位（provider_native 含 .config.json 读取与 live smoke，export 8/8，sync --check 绿）；app 导出桩换真 @export；web/macos 入口编译通过且 apply_locale 宿主回调接通；emit_bundle 端到端验证（25 文件 bundle、内核逐字节一致、工作区外独立 wasm-gc 构建 49 任务 0 错误）；moon fmt 后重同步内核；facts/website 重生成；六项静态验证全绿 |
 | 2026-09-27 | 补齐四项：①「解释这个程序」（本地确定性讲解 + 真实 provider 路径）；② 界面语言经 SettingsServices 持久化（studio.language）+ 入口 set_environment 同步 Environment.locale；③ provider key 不入 bundle 的测试断言；④ .config.json 路径改为仓库根相对。全量：81 用例×2 目标 + native 2，六门全绿 |
@@ -563,4 +563,4 @@ README 双语含 5 分钟 Quick Start。
 | 2026-09-30 | **六项 UI 批次（框架语义叠加 / 去朱砂 / 顶栏紧凑化 / 舞台产品主题 / AI 层修正 / 固定宽根治）**：① **框架修复**：`ModifierViewNode::semantics()` 从「替换子节点」改为**叠加合并**（`ViewSemanticsInfo::overlaying`：modifier 显式设置的字段获胜，composition/text 不从子节点继承）——`.semantics_role(TreeItem).on_hover(...)` 读回 role 不再是 None；core 新增 3 测试，runtime 146 / views 37 全绿；`moui/core` mbti 棘轮 +1/+1（`checks/api-surface-report.json` 与 `tools/moui/validate_api_surface` 同步）。② **去朱砂**：`studio_theme()` 主色改 `ide_accent()`（IDE 蓝 #3574F0，IDEA/VSCode 口径），设计画布选中描边/名牌/手柄与积木选中/聚光灯的朱砂字面量全部改 `ide_accent()`；审计语义色点保持独立语义色。③ **顶栏紧凑化**：`@views.button`（声明 28 实渲 36）换成 24pt 高 / 13pt Caption 字的 `topbar_action` 芯片，运行=唯一强调色填充主行动作、单步可禁用；`topbar_chip_bound` 与 `topbar_actions_width`/拖拽区共用同一计算源。④ **舞台产品主题**：`stage_layout`（设计/运行舞台唯一构造点）套 `.theme(studio_product_theme())`（浅色+IDE 蓝），runner 模板 `runner_theme()` 同值内联（sync_kernel 同步）——设计所见 = 运行所见 = 导出应用所见；拟真浅色舞台上不再出现暗色控件。⑤ **AI 浮动层**：居中锚改对称权重 spacer 居中（旧实现贴中心列左缘，破断实测偏 22pt）；决策条/线程卡的 `@views.button` 换 `action_chip`（严格等高），`decision_bar_height` 同步（36pt 实渲按钮曾超预算）；发送/模式段/工具行芯片宽度全部按文案实测。⑥ **固定宽根治**：新增 `wrap_text_lines`/`hint_lines_view`（拉丁按词、CJK 逐字贪心换行）治长提示溢出（英文 `app.ai.key_hint` 766pt 曾装 392pt 行），`empty_hint` 改签名 `(label, width, height)` 并最多 3 行；紧凑条（决策条错误行/审计 gate_hint/代码脚注/ai.no_context）走 `fit_label` 截断；`count_badge`/`panel_head` meta/`topbar_brand`/`tab_button`/设置对话框按钮等改按内容宽。回归：新增 `app/ui_regression_wbtest.mbt` 5 测试（AI 卡居中、舞台产品主题、换行器、芯片宽），**两条关键断言按纪律故意破坏验证会红**（居中锚改回单 cell → 红 -22pt；舞台主题改回暗色 → 红 r=0.9）。全量：app 147×2 目标、core 110、runtime 146、views 37、domain/services 全包绿、六静态 validator、i18n `--check`、sync_kernel `--check` 全绿 | 中英双语界面在任何宽度不再截断/溢出；IDE 视觉统一为「中性深壳 + 单一蓝强调」；框架语义叠加让 hover 与 role 可共存 |
 | 2026-10-01 | **创建入口从面板底部上移到分组头（用户质疑「新建都在快速插入中合理吗」）**。评估结论：**位置本身可接受但三处不合理**——① 它已是从零开始的**唯一**创建通道，标签却叫「快速插入」（暗示还有正门，名实不符）；② 空间代价被低估：底部块含「最近修改」常驻占左栏 **约 35% 高度**（800pt 窗口实测 256/736），而结构树才是那个会长、会滚动的区域；③ **它是全局的，而本 App 另外两处创建都是上下文相关的**（右栏「动作」页签建事件子程序、积木分类轨建语句）——同类操作两套范式，控件/变量是那个例外。修法：`group_create_action` 给窗体/控件/变量/事件子程序四个分组头加 `+`（**本地数据不给**——条目从列表/表格控件的行派生，没有独立创建语义），点开是内联候选菜单（与积木的语句插入面板同一手法，不用 `@views.dropdown`——后者自带按钮锚点与 `DropdownState`，塞进 24pt 树行会撑破行高）；删除底部全局按钮块，左栏把 ~90pt 还给结构树。`tree_row` 增 `trailing`/`trailing_width` 参数并**把尾宽计进宽度账**（该文件已有两次同类教训：meta 写死 52 时「640×480」被裁成「64」）。这是**明确偏离 v4 设计稿**（设计稿是 4 个固定按钮）——按用户判断采用更贴合本 App 范式的形态。验证：app **185 用例 × 双目标全绿**（新增 3 例：控件组菜单与枚举等长且不越出左栏、变量组有新建入口、本地数据组无菜单；并把旧「快速插入格子」测试改写为「分组菜单项齐 + 不溢出」）；真机实测：控件组 `+` → `+ 选择框` → 控件落画布 + 进树 + 自动选中 + 右栏显示其属性；变量组 `+` 可开；本地数据组无 `+`。**同时更正一处失实结论**：先前记的「框架 Tooltip 没有视觉浮层、需要 portal」是**未核实就下的判断，是错的**——`moui/views/controls/control_focus_overlay.mbt:67` 的 `@views.tooltip` 就是可用的定位浮层（`examples/excel/app/view_toolbar.mbt:162` 在用）。代码注释、本计划 Decision log、memories 三处已全部回改 | 创建入口贴着它创建的东西；左栏多回 ~90pt 给结构树；控件 6 种与变量都有创建入口 |
 | 2026-10-01 | **左栏结构树可用性批次（用户报「窗体/本地数据点不动」+「没有新增结构的地方」）**。两个真实缺陷：① **树上有行但不可交互**——`tree_node_row` 只为 `TnControl`/`TnHandler` 生成 `on_tap`，窗体 / 变量 / 数据文件三类行的 `on_click` 是 `None`，点了完全没反应；而且变量行与数据行的 `select_key` 是**空串**（即便接上点击也会全部指向同一个空目标）。② **新建入口不全**——「快速插入」只有 4 个（按钮/标签/列表框/输入框），**选择框与表格没有入口**，且**没有任何地方能新建变量**（变量只来自 AI 提案或手打代码）。修法：① 新增 `SideTarget{Window,Variable(String),Data(String)}` + `app/update_selection.mbt` **选中单一漏斗**（`select_control_by_name` / `select_handler_key` / `select_target` / `clear_selection`）——三条槽互斥由一个地方保证；顺带修掉一个既有不一致：`SelectHandler` 此前**忘了清 `selected_control`**，于是点了子程序行右栏仍显示上一个控件的属性（正是缺少漏斗的直接后果）。树行选中态收敛到 `tree_node_selected`，视图层不再各写一份判据。② 右栏补三套属性面：窗体（标题可改 + 设计坐标系只读说明）、变量（名称/初值/删除 + 改名同步引用提示）、数据（只读来源/规模/访问/内容预览 + 派生说明）。窗体尺寸**刻意只读**：640×480 是全局常量，运行舞台缩放与控件越界校验都按它判定，放开编辑会让三处脱节——如实展示而不是给一个会破坏不变量的输入框。③ 变量 CRUD 独立成 `app/update_selection_msgs.mbt`（名称去重 `变量N`、`MAX_VARIABLES` 防呆、改名同步改写全部 `Var` 引用、删除不静默清理引用——留给 `validate_program` 如实报错）。④ 「新建」补齐到与 `ControlKind` 等长：按钮/标签/输入框/选择框/列表框/表格 + **变量**共 7 格（2 列 4 行），行数走 `INSERT_ROWS` 单一来源（旧常量写死 2 行，加到 7 格会把最后两行挤出面板下缘）。验证：app **183 用例 × 双目标全绿**（新增 11 例：三条槽互斥、变量行携带名字、窗体/数据行有 select_key、新建去重 + 选中、改名同步引用 + 选中跟随、非法/重名改名被拒、删除清选中、预算提示、初值写回、窗体标题写回、快速插入 7 格齐且不溢出）；真机实测（web 1280×832）：窗体行/变量行/数据行三类点击均切换选中且右栏显示对应属性面、`+变量` 建出「变量1」并自动选中、`+表格` 落控件后本地数据出现条目；七项 validator + i18n `--check` + `sync_kernel --check` + `export smoke` 全绿 | 树上每一类行都可点选；没有任何控件种类或变量是「只能靠 AI 才会出现」的 |
-| 2026-10-01 | **产品完善批次（差距分析驱动，四项致命/严重缺陷修复）**。起因：对 `examples/moui_studio` 做了一次源码 + 真机（web wasm-gc + 无头 Chromium）差距分析，查出三个「零调用者」缺陷——**165 个测试全绿也抓不到**（`artifacts/studio-gap-analysis.md`）。① **撤销/重做完全不可达**：`Msg::Undo`/`Msg::Redo` 有处理器但**全仓库无构造点**，命令面板还把 `@core.Undo` 槽位映射成了 `RunStart`（「撤销」= 运行）。修法：顶栏加撤销/重做按钮 + 注册键位（`Cmd+Z`/`Ctrl+Z`、`Cmd+Shift+Z`/`Ctrl+Shift+Z`）。**关键陷阱**：`KeyboardShortcut::matches` 是修饰键**精确相等**，meta 与 control 必须各注册一条（`shortcut_icon_button` 的 `alt_shortcut`），只注册一个会有一整端失灵且本机测不出；另一个陷阱是 `keyboard_shortcut` 匹配后走 `activate_primary` → 给首个子节点合成 **Enter** 事件，而 `on_tap` 只认 Pointer——所以快捷键必须挂在 `@views.button` 上（它显式处理 Enter/Space），套在 `on_tap` 外壳上永不触发。② **语句只能替换、不能新增**（最致命）：`commit_block`/`duplicate_block`/`delete_block` 三条写回路径都要求语句已存在，分类轨虽可点却只改一个高亮标志位——**没有 AI 与模板就写不出一行程序**。修法：新增 `app/statement_palette.mbt`（分类 → 语句骨架 → 插入）+ `@blocks.insert_stmt_at`（克隆后插入，与 replace/delete 同一撤销快照纪律），骨架过 `parse_handler_body` 同一校验链；骨架**中英各一份**（关键字表按语言互斥，同一文本不可能两边都解析）。③ **命令面板跑旧表**：`studio_commands()`（30 条 v4 命令）零调用者，面板渲染的是遗留的 10 条 `@core.CommandIntent` 表（所以四个模板只剩两个可达、Cmd+K 没绑却印着「Ctrl/Cmd + K 打开命令面板」）。修法：面板改产 `StudioCommandRun(id)`，删掉 `command_message` 借用通道。④ **CI 不跑 app 测试**：`checks/profiles.json` 的 studio 步骤全在 `services/`，IDE 本体 172 个测试（含全部 UI 回归白盒）从不进 CI。修法：pr profile 增 `studio app tests`。⑤ **机制性防复发**：新增 `tools/moui/validate_dead_messages` + `checks/dead-message-catalog.json` + `scripts/validate-dead-messages.mjs`（pr profile 的 `dead message gate`）——扫描指定 Msg 枚举，每个变体必须在声明文件之外有**构造点**（排除 match 臂/限定引用/`is` 模式），白名单需带理由且会 stale 报错。该门一上线就又抓出 4 个死消息（`SelectBlock`/`SetBottomHeight`/`ToggleProviderSettings`/`CompileStopped`）：前两个删除，后两个**接线**成真实功能（设置对话框的模型折叠区；编译忙碌态按钮从「再点一次编译」改成真正的**停止编译**，接上早已存在却没人用的 `app.compile.cancel` 文案）。⑥ **顺带修复**：图标栏 6 个纯图标无任何提示——框架 `Tooltip` 语义角色尚无视觉浮层（需 portal，属框架新增能力，不在本次范围），改用 IDE 口径**悬停写进状态栏**（`HoverHint`）。验证：app **173 用例 × native/wasm-gc 双目标全绿**（新增 9 例：从零写程序端到端、插入位置/可撤销/越界安全/面板开合、骨架双语可解析、分类下标映射、悬停到达状态栏）；六静态 validator + `dead message gate` + i18n `--check` + `sync_kernel --check` + `export smoke`（native-gui+layout+native-smoke+wasm-gc）全绿；web 1280×832 真机实测：`Cmd+K`/`Ctrl+K` 开面板（列出 v4 命令而非旧模式命令）、`Cmd+Z` 撤销与 `Cmd+Shift+Z` 重做**像素级确认生效**（此前三次键位测试截图哈希完全相同）、分类轨点「运算」→ 插入「赋值 计数 = 计数 + 1」→ 积木链出现新块 + 代码视图同步 + 右栏编辑卡出现 + 最近修改记「插入语句」+ 脏标点亮。教训：**测试直接构造消息会绕过「有没有 UI 入口」**——`apply(model, Undo)` 全绿而按钮根本不存在，这类缺陷必须靠「每个变体至少一个构造点」的静态门兜住 | 没有 AI 也能从零写程序；撤销/重做与命令面板真正可用；死 UI 从「事后发现」变成「提交即拦」 |
+| 2026-10-01 | **产品完善批次（差距分析驱动，四项致命/严重缺陷修复）**。起因：对 `moui_studio` 做了一次源码 + 真机（web wasm-gc + 无头 Chromium）差距分析，查出三个「零调用者」缺陷——**165 个测试全绿也抓不到**（`artifacts/studio-gap-analysis.md`）。① **撤销/重做完全不可达**：`Msg::Undo`/`Msg::Redo` 有处理器但**全仓库无构造点**，命令面板还把 `@core.Undo` 槽位映射成了 `RunStart`（「撤销」= 运行）。修法：顶栏加撤销/重做按钮 + 注册键位（`Cmd+Z`/`Ctrl+Z`、`Cmd+Shift+Z`/`Ctrl+Shift+Z`）。**关键陷阱**：`KeyboardShortcut::matches` 是修饰键**精确相等**，meta 与 control 必须各注册一条（`shortcut_icon_button` 的 `alt_shortcut`），只注册一个会有一整端失灵且本机测不出；另一个陷阱是 `keyboard_shortcut` 匹配后走 `activate_primary` → 给首个子节点合成 **Enter** 事件，而 `on_tap` 只认 Pointer——所以快捷键必须挂在 `@views.button` 上（它显式处理 Enter/Space），套在 `on_tap` 外壳上永不触发。② **语句只能替换、不能新增**（最致命）：`commit_block`/`duplicate_block`/`delete_block` 三条写回路径都要求语句已存在，分类轨虽可点却只改一个高亮标志位——**没有 AI 与模板就写不出一行程序**。修法：新增 `app/statement_palette.mbt`（分类 → 语句骨架 → 插入）+ `@blocks.insert_stmt_at`（克隆后插入，与 replace/delete 同一撤销快照纪律），骨架过 `parse_handler_body` 同一校验链；骨架**中英各一份**（关键字表按语言互斥，同一文本不可能两边都解析）。③ **命令面板跑旧表**：`studio_commands()`（30 条 v4 命令）零调用者，面板渲染的是遗留的 10 条 `@core.CommandIntent` 表（所以四个模板只剩两个可达、Cmd+K 没绑却印着「Ctrl/Cmd + K 打开命令面板」）。修法：面板改产 `StudioCommandRun(id)`，删掉 `command_message` 借用通道。④ **CI 不跑 app 测试**：`checks/profiles.json` 的 studio 步骤全在 `services/`，IDE 本体 172 个测试（含全部 UI 回归白盒）从不进 CI。修法：pr profile 增 `studio app tests`。⑤ **机制性防复发**：新增 `tools/moui/validate_dead_messages` + `checks/dead-message-catalog.json` + `scripts/validate-dead-messages.mjs`（pr profile 的 `dead message gate`）——扫描指定 Msg 枚举，每个变体必须在声明文件之外有**构造点**（排除 match 臂/限定引用/`is` 模式），白名单需带理由且会 stale 报错。该门一上线就又抓出 4 个死消息（`SelectBlock`/`SetBottomHeight`/`ToggleProviderSettings`/`CompileStopped`）：前两个删除，后两个**接线**成真实功能（设置对话框的模型折叠区；编译忙碌态按钮从「再点一次编译」改成真正的**停止编译**，接上早已存在却没人用的 `app.compile.cancel` 文案）。⑥ **顺带修复**：图标栏 6 个纯图标无任何提示——框架 `Tooltip` 语义角色尚无视觉浮层（需 portal，属框架新增能力，不在本次范围），改用 IDE 口径**悬停写进状态栏**（`HoverHint`）。验证：app **173 用例 × native/wasm-gc 双目标全绿**（新增 9 例：从零写程序端到端、插入位置/可撤销/越界安全/面板开合、骨架双语可解析、分类下标映射、悬停到达状态栏）；六静态 validator + `dead message gate` + i18n `--check` + `sync_kernel --check` + `export smoke`（native-gui+layout+native-smoke+wasm-gc）全绿；web 1280×832 真机实测：`Cmd+K`/`Ctrl+K` 开面板（列出 v4 命令而非旧模式命令）、`Cmd+Z` 撤销与 `Cmd+Shift+Z` 重做**像素级确认生效**（此前三次键位测试截图哈希完全相同）、分类轨点「运算」→ 插入「赋值 计数 = 计数 + 1」→ 积木链出现新块 + 代码视图同步 + 右栏编辑卡出现 + 最近修改记「插入语句」+ 脏标点亮。教训：**测试直接构造消息会绕过「有没有 UI 入口」**——`apply(model, Undo)` 全绿而按钮根本不存在，这类缺陷必须靠「每个变体至少一个构造点」的静态门兜住 | 没有 AI 也能从零写程序；撤销/重做与命令面板真正可用；死 UI 从「事后发现」变成「提交即拦」 |

@@ -122,7 +122,7 @@ confirmation card. No real network request is made, on either platform.
 
 ## Capability upgrade (2026-10)
 
-The capability-upgrade plan (`docs/plans/active/moui-studio-capability-upgrade.md`)
+The capability-upgrade plan (`docs/plans/done/moui-studio-capability-upgrade.md`)
 closed the largest gaps to a mature IDE:
 
 - **Real code editor.** The Code view is a `moui_richtext` controlled rich-text
@@ -170,7 +170,7 @@ closed the largest gaps to a mature IDE:
 ## AI mode: dialog transcript workbench (2026-10)
 
 The AI mode is a **dialog transcript workbench** (see
-`docs/plans/active/moui-studio-ai-chat.md`):
+`docs/plans/done/moui-studio-ai-chat.md`):
 
 - Submitted prompts are echoed as right-aligned user bubbles with copy/edit
   actions; AI explanations render as markdown messages with copy/retry; the

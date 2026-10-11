@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 能力升级——向成熟 IDE 靠拢的八切片改造
 
-- **Status**: active
+- **Status**: done（2026-10-11 归档；A–H 八切片全部验收，遗留项见「遗留与后续」）
 - **Goal**: 依据 2026-10-02 的差距分析（`artifacts/studio-gap-analysis.md` + 本轮复检），把 MoUI Studio 从「可视化 DSL 教学 IDE」升级为具备成熟 IDE 四根支柱的工具：真代码编辑器、运行时检查器、诊断面板、项目卫生（键盘/无障碍/确认/进程管理），并扩展语言与控件域（用户自定义函数、数组、整数、属性 schema、新控件与新事件）。
 - **Non-goals**: 多窗体、移动端、RTL、真实网络外发（沿用 v1 冻结）；引入通用 LSP 客户端框架（切片 H 用 in-app 情报 + 工具链挂钩替代）。
 
@@ -8,7 +8,7 @@
 
 | # | 切片 | 内容 | 验收 |
 |---|---|---|---|
-| A | 真编辑器 | 接入 `wzzc-dev/moui_richtext`(+`code_editor`)：`controlled_rich_text_editor` 取代只读行渲染 + `text_area` 草稿框；DSL token→`RichTextRun` 着色；`input_transform` 自动缩进；IR 竖尺与滚动同步保留 | Code 视图可点击定位光标、选区、撤销/重做、自动缩进；行号尺随滚动同步；`moon test examples/moui_studio/app --target native` 全绿 |
+| A | 真编辑器 | 接入 `wzzc-dev/moui_richtext`(+`code_editor`)：`controlled_rich_text_editor` 取代只读行渲染 + `text_area` 草稿框；DSL token→`RichTextRun` 着色；`input_transform` 自动缩进；IR 竖尺与滚动同步保留 | Code 视图可点击定位光标、选区、撤销/重做、自动缩进；行号尺随滚动同步；`moon test moui_studio/app --target native` 全绿 |
 | B | 诊断面板 | `check_syntax` 实时结构化诊断（range 化）+ 行内标记 + 行号尺错误点 + 底部 Problems 面板（bottom Bool→枚举）；`moon check` 编译诊断并入同一面板 | 编辑即见行内错误与 Problems 计数；编译诊断可点击跳转 |
 | C | 运行时检查器 | `moui_devtools` 接入：平台入口注入 `() -> String` 快照回调（app 不 import runtime，守住依赖边界）；右栏新增 Runtime tab：summary + 分节报告 + 有界历史 | 两个入口编译通过；native 可刷新真实快照；web 优雅降级提示 |
 | D | 卫生 | 键盘绑定表扩充（保存/打开/运行/模式切换/面板开关等）；交互面 a11y 标注补齐；破坏性操作（删控件/删变量/模板覆盖/打开覆盖）确认对话框；编译「停止」真正终止 moon 进程（保留子进程句柄 + cancel） | 快捷键实测生效；删除必经确认；停止后 moon 进程消失（进程表证据） |
@@ -87,7 +87,7 @@ A → B（行内标记依赖真编辑器）；C、D 独立；F → E（新语句
 
 ### Scratch 对齐剩余缺口（本轮未做，按价值排序）
 
-以下条目来自 `examples/moui_studio` 的能力走查（对照 Scratch 积木编辑器），本轮完成了 C 形包裹、跨层拖拽、键盘导航、变量内联创建、调色板拖放、右键菜单、整栈拖拽、无效落点拒收、边缘自动滚动、单块运行十项；其余仍未做：
+以下条目来自 `moui_studio` 的能力走查（对照 Scratch 积木编辑器），本轮完成了 C 形包裹、跨层拖拽、键盘导航、变量内联创建、调色板拖放、右键菜单、整栈拖拽、无效落点拒收、边缘自动滚动、单块运行十项；其余仍未做：
 
 | # | 能力 | 现状 | 落地要点 |
 |---|---|---|---|

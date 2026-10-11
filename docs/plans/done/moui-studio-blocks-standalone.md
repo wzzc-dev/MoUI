@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 积木独立——OnStart 启动事件 + 语句/内建补全
 
-- **Status**: active（OnStart + ForEach + 内建补全已落地；全套 4846/4846 绿）
+- **Status**: done（2026-10-11 归档；OnStart + ForEach + 内建补全全部落地）
 - **Goal**: 「启动」窗体级事件让纯逻辑程序成为可能（不依赖控件:装填后立即
   执行,两轨同语义,差分门禁覆盖）;语句面补齐 for-each 与列表/字符串/数学内建,
   语句骨架表全类目可达。
@@ -48,3 +48,9 @@
 - 积木视图对 OnStart handler 的呈现复用「选中即编辑」通道（selected_handler
   键），帽块沿用事件分类;专属「启动 hat」外观随后续形状切片打磨。
 - 本计划先落 OnStart;语句补全（1c/d）按九面节奏逐构造提交。
+
+## Progress
+
+| Date | Note |
+|------|------|
+| 2026-10-11 | 归档核对：OnStart/ForEach/11 内建/骨架表全可达，双轨门用例 (`builtins-g7`) 在位。本计划归档。 |

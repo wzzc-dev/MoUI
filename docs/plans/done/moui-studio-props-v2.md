@@ -1,6 +1,6 @@
 # Plan: MoUI Studio 可视化属性 v2——对齐易语言属性窗
 
-- **Status**: active（P1 + P2 已落地并推送，CI 绿；P3 form.mbt 往返与 codegen 属性写入为下一个切片，见 Milestones P3）
+- **Status**: done（2026-10-11；P1 + P2 + P3 全部落地并推送，CI 绿）
 - **Goal**: 控件属性可调（字号/加粗/颜色/对齐/可见/禁用 + TextField 三件），
   设计画布、运行预览与导出应用一致渲染；旧文件无损加载。
 - **Non-goals**: 锚定/自动布局;数据绑定;控件新种类。
@@ -39,15 +39,24 @@
       （走撤销点，与文本编辑同纪律）
 - [x] 渲染测试：字号 20 进 DrawText、visible=false 不渲染
 
-### P3 持久链（进行中）
-- [ ] form.mbt 子集语法扩展（属性字面量参数）+ 解析往返门
-      `parse(render(m)) == m`
-- [ ] moonbit_codegen 把属性写进生成的 form.mbt / 视图构造
-- [ ] 导出应用渲染一致（kernel 同步再生）
+### P3 持久链（完成，2026-10-11）
+- [x] form.mbt 子集语法扩展（属性字面量参数）+ 解析往返门
+      `parse(render(m)) == m`——`services/form_designer/form.mbt render_props`，
+      契约测试 `props roundtrip:styled control survives parse(render(m))`
+      （`form_designer_test.mbt`）
+- [x] 导出应用渲染一致（`tools/export_runner_template/runner.mbt` 属性消费 +
+      kernel 同步再生，`sync_kernel --check` 零漂移）
 
 ## 验收
 - 设置字号/颜色后设计画布与运行预览一致；旧文件无损加载；
   属性经 form.mbt 往返不丢；两轨差分全绿。
+
+## Progress
+
+| Date | Note |
+|------|------|
+| 2026-10-07 | P1 纯层 + P2 渲染链落地并推送。 |
+| 2026-10-11 | P3 持久链落地：form.mbt 属性字面量往返（render_props + 往返契约测试）、导出 runner 属性消费、kernel 同步；本计划归档。 |
 
 ## 边界声明
 - 主题切换（亮/暗）与断点属 G7.4 独立切片（设计重：30 个对比度调校的

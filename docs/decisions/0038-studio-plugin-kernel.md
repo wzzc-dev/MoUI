@@ -32,5 +32,5 @@
   - 新增面板/模式/服务 = 插件包 + 组合根一行注册；内核与既有插件零改动。
   - 教学版裁剪不崩不藏：缺什么显式不可用（终端空态、模式切换 no-op）。
 - **Verification**: M0–M7 验收记录见
-  `docs/plans/active/moui-studio-plugin-kernel.md` Progress；全量双目标
+  `docs/plans/done/moui-studio-plugin-kernel.md` Progress；全量双目标
   测试与六静态门每次里程碑独立验证。
