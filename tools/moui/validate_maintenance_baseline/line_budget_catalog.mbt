@@ -216,7 +216,9 @@ fn file_budgets() -> Array[FileBudget] {
     // G7.2/G7.3 (2026-10-07): props 往返用例 + 插件管理用例。
     // 2026-10-10 (folder projects): 假模型测试改造为真实回执通道
     // （with_pending_roll_call 助手），净增 12 行。
-    { path: "moui_studio/app/app_test.mbt", max_lines: 2120, },
+    // 2026-10-12 (AI 提案修复): 补忙碌占位卡/真实回执回归 + 部分字段
+    // update 合并用例；按先例结算到当前实测值。
+    { path: "moui_studio/app/app_test.mbt", max_lines: 2180, },
     // G2/G4/G7 (2026-10-07): 工作区导入/多标签/搜索/插件管理/聊天路由
     // 汇聚在组合根 update;按仓库先例登记行数预算。
     // VS Code 资源管理器切片 (2026-10-09): 就地新建文件夹（@x/fs 直接 I/O,
@@ -230,7 +232,9 @@ fn file_budgets() -> Array[FileBudget] {
     // 工程流 + 快照恢复 + 流式卡预置落进组合根/提交臂（app.mbt 分发已
     // 抽到 new_project.mbt/code_project.mbt，此处为剩余增量）；按先例
     // 结算到当前实测值。
-    { path: "moui_studio/app/app.mbt", max_lines: 2566, },
+    // 2026-10-12 (AI 提案修复): 生成臂加忙碌占位卡 + prompt 带当前程序
+    // IR（proposal_user_prompt）；按先例结算到当前实测值。
+    { path: "moui_studio/app/app.mbt", max_lines: 2580, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },

@@ -64,8 +64,6 @@ test "presentation host policy keeps transparent fallback" {
 }
 
 ///|
-
-///|
 fn toast_panel() -> @core.View[String] {
   let panel : @core.View[String] = @layout.frame(
     @text.text("Toast"),
@@ -209,6 +207,75 @@ test "modal barrier still swallows Move" {
   if moves.val != 0 {
     fail(
       "模态屏障应吞掉 Move，底层却收到了 \{moves.val} 次悬停",
+    )
+  }
+}
+
+///|
+/// 回归：控件浮层（tooltip）放在窄容器里时**不得**被父级紧约束压扁。
+///
+/// Studio 活动栏宽 34pt，tooltip 挂在图标按钮上；浮层宿主若继承活动栏的
+/// 紧约束，Raised 容器内边距会吃掉全部宽度，提示文字被压成 2pt 窄条
+/// （真机表现为「弹出的 tips 里面没内容」）。
+test "tooltip keeps natural width inside narrow parent" {
+  let popup_content : @core.View[Unit] = @container.container(
+    @text.text("代码编辑", width=180.0, height=24.0),
+    variant=Raised,
+  )
+  let host : @core.View[Unit] = @presentation.popup_host(
+    @layout.frame(@text.text("icon"), width=26.0, height=26.0),
+    [
+      @presentation.PresentationSpec::new(
+        id="narrow-tooltip",
+        kind=Tooltip,
+        anchor=@presentation.PresentationAnchor::HostBase,
+        placement=Some(
+          @presentation.PresentationPlacement::new(
+            candidates=[BelowEnd],
+            viewport_insets=@core.Insets::all(0.0),
+          ),
+        ),
+        content=popup_content,
+      ),
+    ],
+  )
+  // 34pt 宽的活动栏列：宿主自身被拉伸到 34，但浮层内容必须按自身内容
+  // 尺寸测量（180 文本 + 容器内边距），不能被 34 截断。
+  let narrow_column : @core.View[Unit] = @layout.column([host], spacing=0.0)
+  let root : @core.View[Unit] = @layout.frame(
+    narrow_column,
+    width=34.0,
+    height=200.0,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=200.0),
+  )
+  let layout = runtime.layout()
+  let column = match layout.children.get(0) {
+    Some(column) => column
+    None => {
+      fail("expected framed column at root")
+      return
+    }
+  }
+  let hosts = match column.children.get(0) {
+    Some(host_node) => host_node
+    None => {
+      fail("expected overlay host inside column")
+      return
+    }
+  }
+  let popup = match hosts.children.get(1) {
+    Some(popup) => popup
+    None => {
+      fail("expected tooltip popup child at index 1")
+      return
+    }
+  }
+  if popup.frame.size.width < 180.0 {
+    fail(
+      "tooltip popup width should keep natural text width, got \{popup.frame.size.width}",
     )
   }
 }

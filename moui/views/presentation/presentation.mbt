@@ -594,6 +594,24 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn declaration(_self) {
 }
 
 ///|
+impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn child_constraints(
+  self,
+  constraints,
+) {
+  if self.sizing is BaseSized {
+    // Control popups (tooltip / dropdown / context menu) size to their own
+    // content. The host often sits in a narrow control column (e.g. the
+    // 34pt Studio icon bar); inheriting that column's tight constraints
+    // would clamp the popup itself, collapsing a tooltip to a 2pt sliver.
+    // Relax here - not on a content wrapper - because the runtime clamps
+    // every node's measured size back into its parent's child constraints.
+    @core.Constraints::unbounded()
+  } else {
+    constraints.loosen()
+  }
+}
+
+///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
   let viewport = ctx.constraints.constrain(ctx.constraints.max)
   let host_size = if self.sizing is BaseSized {
