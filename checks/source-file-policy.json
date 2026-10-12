@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1566,
-      "reason": "S2b-1 project state slice: project arms moved to two-level project_state literals; fmt reflow net +152 wrap lines (logic unchanged, fields nested). Raise 1414->1566."
+      "maxLines": 1296,
+      "reason": "S2b-2: 14 pure project arms moved to plugins/project update; shell keeps the ProjectOp delegation arm + scope lens pair. Lower 1566->1296."
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -365,8 +365,8 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1583,
-      "reason": "S2b-1: 17 project-domain fields nested into one project_state : @proj.ProjectState field. Lower 1629->1583."
+      "maxLines": 1552,
+      "reason": "S2b-2: 14 project Msg variants replaced by single ProjectOp wrap. Lower 1583->1552."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",
@@ -405,13 +405,13 @@
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",
-      "maxLines": 1276,
-      "reason": "S2b-1: explorer wiring reflow under moon fmt. Raise 1272->1276."
+      "maxLines": 1292,
+      "reason": "S2b-2: constructor wraps (ProjectOp(...)) reflowed under moon fmt; +16 wrap lines (no logic added). Raise 1276->1292."
     },
     {
       "path": "moui_studio/app/project_workbench_test.mbt",
-      "maxLines": 1590,
-      "reason": "S2b-1: store/rename/restore asserts re-qualified to project_state paths; +65 wrap lines. Raise 1525->1590."
+      "maxLines": 1602,
+      "reason": "S2b-2: test constructors wrapped ProjectOp(...) reflowed wraps. Raise 1590->1602."
     }
   ],
   "data": [
