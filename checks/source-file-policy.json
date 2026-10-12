@@ -365,8 +365,8 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1552,
-      "reason": "S2b-2: 14 project Msg variants replaced by single ProjectOp wrap. Lower 1583->1552."
+      "maxLines": 1564,
+      "reason": "S3a: +3 type-forwarding aliases (PreviewFrame/SemanticHitNode/SemanticPatchRequest -> plugins/run, S2a precedent). 1552->1564."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",

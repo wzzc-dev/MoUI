@@ -22,7 +22,7 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // S2a 工程域出壳(2026-10-12):行模型/纯工具/工程类型迁
       // plugins/project(壳留包装),app 35,721 → 35,034。
       // S2b-1 状态切片(2026-10-12):17 字段并入 ProjectState → 35,251;S2b-2 子消息臂迁出 → 34865
-      max_count: 34865,
+      max_count: 33777,
     },
     {
       kind: "studio shell files",
@@ -30,7 +30,7 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       path: "moui_studio/app",
       // 基线冻结(2026-10-12 实测 53;完成线 ≤ 30)。
       // S1 chrome 出壳:theme.mbt 整文件迁出 → 52。
-      max_count: 52,
+      max_count: 51,
     },
     {
       kind: "studio model fields",
