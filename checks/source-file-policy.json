@@ -335,8 +335,8 @@
     },
     {
       "path": "moui_studio/app/views.mbt",
-      "maxLines": 1206,
-      "reason": "Studio shared view builders; registered above the 1200 hard limit after the G7.2 props application helpers (prop_theme/prop_color/prop_align/finish_prop_view) in form_widget."
+      "maxLines": 1209,
+      "reason": "S5 blocks bundle: two call sites re-qualified to plugins/blocks; kept on one line via `using @blk {..}` instead of @blk. qualification reflow (+1 using line, +2 doc). Raise 1206->1209."
     },
     {
       "path": "moui_studio/domain/blocks/blocks.mbt",
@@ -365,18 +365,13 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1552,
-      "reason": "S3b-1: RunModel/CompiledRun structs moved to plugins/run (type-forwarding aliases remain, net -12). Lower 1564->1552."
+      "maxLines": 1535,
+      "reason": "S5 blocks bundle: BlocksDragState struct replaced by a pub type forwarding alias (net -17 lines). Lower 1552->1535."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",
       "maxLines": 1636,
       "reason": "S2a project plugin extraction: @proj. constant qualifications; reraise 1634->1636."
-    },
-    {
-      "path": "moui_studio/app/blocks_canvas.mbt",
-      "maxLines": 1227,
-      "reason": "S1 chrome extraction: fit_label + LABEL_WIDTH_SAFETY moved to chrome; lower 1267->1227."
     },
     {
       "path": "moui_studio/app/ide_context.mbt",
@@ -405,8 +400,8 @@
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",
-      "maxLines": 1292,
-      "reason": "S2b-2: constructor wraps (ProjectOp(...)) reflowed under moon fmt; +16 wrap lines (no logic added). Raise 1276->1292."
+      "maxLines": 1287,
+      "reason": "Shell hygiene: removed the post-slice unused wrapper section_collapsed (-5). Lower 1292->1287."
     },
     {
       "path": "moui_studio/app/project_workbench_test.mbt",

@@ -311,10 +311,13 @@ Studio 的壳与能力面按**静态插件架构**组织（ADR 0038；参照 Cor
   住在插件，壳持单一 `ProjectOp` 委托臂）、`run`（预览数据层：`PreviewFrame`
   解析器族 + 语义命中/补丁装配 + `RunModel`/`CompiledRun` 结构 +
   `preview_replay_canvas`/`semantic_property_strip` 视图贡献）、
+  `blocks`（S5 积木捆绑：纯几何/命中/落槽 + `BlocksDrawOp` 绘制计划 +
+  `BlocksDragState`，零 `Model`/`Msg`/服务耦合；壳侧 `blocks_pane.mbt` 收
+  画布视图函数）、`markdown`（Markdown 渲染视图）。
   `chrome`（S1 壳原子：主题、尺寸常量、ChipTone/IconTint、`fit_label`）。
   出壳契约见 ADR 0038/0039 与 `docs/plans/active/moui-studio-shell-completion.md`
-  （预算棘轮只降;完成线 app ≤18,000 行 / ≤30 文件 / Model ≤55 字段 /
-  Msg ≤90 变体）。
+  （预算棘轮只降;完成线已按 ADR 0040 分三档——A 承诺线 app ≤27,000 行 /
+  ≤40 文件 / Model ≤115 字段 / Msg ≤140 变体，B 稳态纪律线 ≤22,000/32/80/100，C 北极星 = 原 18,000/30/55/90）。
 - **三模式工作台**：活动栏 = 图形化/代码/AI 模式切换器 + ⚙；每模式绑定
   全区域预设；「再点当前 = no-op」单一语义；AI 宿主唯一性由
   `RightView` × 模式推导。

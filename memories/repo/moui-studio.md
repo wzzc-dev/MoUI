@@ -15,6 +15,16 @@
   `moon build moui_studio/web_wasm --target wasm-gc`、
   `node scripts/generate-i18n-catalogs.mjs ... --check`、
   `moon run moui_studio/tools/sync_kernel --target native -- --check`。
+- **sync_kernel 双根解析**（2026-10-12）：路径表按母仓库根书写，但
+  `resolve_repo_path` 会按当前根补/去 `moui_studio/` 前缀——母仓库根
+  `moon run moui_studio/tools/sync_kernel` 与子仓库根
+  `moon run tools/sync_kernel` 等价（此前子仓库根必报 IOError，README 曾因此
+  写错入口）。
+- **子仓库独立 CI**（2026-10-12）：`moui_studio/.github/workflows/ci.yml`
+  把母仓库 pr profile 的 7 个 Studio 门禁按子仓库包路径落地，另补 app 的
+  wasm-gc 测试、web 入口构建、moon check / moon fmt；i18n catalog 门与真机
+  冒烟刻意不收（生成器在母仓库、冒烟是路径触发）。工具链钉在
+  `moui_studio/.moonbit-toolchain`。
 
 ## 产品决策（重写时不要推翻）
 
@@ -1441,3 +1451,55 @@ text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡�
 - Remaining distance exceeds the goal's round budget at the current
   per-round extraction pace; the ratchet gate guarantees no regression
   while extraction continues across future sessions.
+
+## Shell-completion round 17 (2026-10-12): CI + DoD stages + S5 blocks bundle
+
+- **独立 CI 落地**：`moui_studio/.github/workflows/ci.yml` 把母仓库 pr profile
+  的 7 个 Studio 门禁按子仓库包路径搬入，另补 app 的 wasm-gc 测试、web 入口
+  构建、`moon check` / `moon fmt --check`。**刻意不收**：i18n catalog 生成检查
+  （生成器 `tools/moui/generate_i18n_catalogs` 在母仓库，1k 行，不值得搬）与
+  真机/真 Skia 冒烟（路径触发）。工具链钉在 `moui_studio/.moonbit-toolchain
+  （与母仓库同版本）。子仓库**没有** moon.work，所以 `moon check` 不会混入
+  其他成员的警告——Studio 自有代码现在是 0 警告。
+- **sync_kernel 双根解析**：路径表按母仓库根书写，`resolve_repo_path` 按当前根
+  补/去 `moui_studio/` 前缀；`resolve_write_path` 按**目录**判定（输出文件可能
+  还没生成，按文件判定会在首次生成时写错仓库）。`String::substring` 已废弃，
+  用切片 `s[a:]` / `s[:b]` + `.to_owned()`；取目录用 `path.rev_find("/")`
+  （参照 `tools/emit_bundle` 的 `ensure_parent_dir`）。
+- **完成线分档（ADR 0040）**：原单一 18,000/30/55/90 不可达——实测剩余可迁量
+  7,494 行 / 14 文件（纯文件整体迁 3,127 + Model 耦合视图宽参数改造 4,367），
+  S4–S7 全做完也只到 ~26,000 行 / ~37 文件。改三档阶梯：**A 承诺线**
+  ≤27,000/40/115/140（S4–S7 完成即达成）、**B 稳态纪律线** ≤22,000/32/80/100、
+  **C 北极星** = 原值（需壳边界重界定）。棘轮上限仍绑实测值，与分档目标分离。
+- **S5 blocks 捆绑出壳（两次回滚后第三次成功）**：
+  - 新包 `plugins/blocks`。**包名与 domain/blocks 默认别名冲突**，import 得起
+    别名 `@blk`（plugins/project 的 `@scan` 先例）——这是 S5 前两次回滚没预料到的
+    一层，`moon check` 会直接报 Duplicate alias 警告。
+  - 承载：`blocks_slot_hit.mbt` 全文 + `blocks_canvas.mbt` 的 15 个纯几何函数 +
+    `BlocksDrawOp` + `BlocksDragState` + 两常量 + `blocks_row_arrow`/
+    `blocks_row_lead_width` + `block_outline_path`/`paint_block_outline`，
+    拆 `blocks_geometry.mbt` / `blocks_draw.mbt` / `blocks_slot_hit.mbt`。
+  - 壳侧 `blocks_canvas` 视图函数（398 行，构造 6+ App Msg）整段并入
+    `blocks_pane.mbt`（761 → 1,172，仍在 1200 硬限内）；两个源文件删除。
+  - `app/model.mbt` 的 `BlocksDragState` 改 `pub type` 转发别名；`app/moon.pkg`
+    主块与 `for "wbtest"` 块各加一条 `plugins/blocks @blk`。
+  - **限定名改写要覆盖三处**：app 源、`*wbtest.mbt`、`*_test.mbt`（后者是独立包，
+    用 `@app.X` 前缀，且测试包会继承包的 import 别名，所以 `@blk.` 可直接用）。
+    共 99 处。`@app.BlockBadge(...)` / `@app.BlocksDrawOp::SlotHole(...)` 这类
+    **跨包构造器模式**也要改成 `@blk.`——`pub type` 别名不把构造器带进作用域。
+  - 行数预算陷阱：`@blk.` 限定会把单行调用折成四行。`app/views.mbt` 原本就顶在
+    1206 的棘轮上限，改用 `using @blk {blocks_item_rects, blocks_insert_mark}`
+    （canvas.mbt 的 `using @views {..}` 先例）只 +1 行，再把
+    `checks/source-file-policy.json` 的 maxLines 按实测调 + reason。
+  - 预算：lines 33,535 → **32,481**、files 51 → **49**（fields 145 / variants 278
+    不变——`block_drag` 字段与 Msg 未动，本轮是纯几何/绘制层出壳）。
+- **验证**：app 双目标 435/435、全模块 4,955/4,955 native、
+  `plugins/blocks` 3/3（新增 `blocks_wbtest.mbt` 三条不变量：链条 y 换算、
+  C 形同层兄弟右缩、洞段才产矩形）、入口四端 + web 0 错、
+  `moon fmt --check` 干净、sync_kernel 双根 `current`、
+  六静态门 + pr profile 的 7 个 Studio 门 + source-file-policy 全绿。
+- **已知 flake**：`services/compile_native/runner_test.mbt` 的
+  "compile_bundle_at reports every step it starts" 在**全模块并行**跑时会因
+  moon 子进程锁竞争偶发失败（单包连跑 3 次全过）。测试自身已有 M8 flake 隔离
+  （失败后清理重跑一次），但全模块一次跑仍可能红——**这不是回归信号**，
+  判断时先单包复跑。

@@ -8,6 +8,9 @@
 ///
 /// 预算只降不升:上调必须改下表并写 reason(即审计记录,见 ADR 0039 与
 /// docs/plans/active/moui-studio-shell-completion.md)。
+///
+/// 注:上表的 `max_count` 始终绑定**当前实测值**(每次提取完成即降),它与
+/// ADR 0040 的完成线分档是两件事——分档是目标,棘轮是上限,不混用。
 
 ///|
 fn studio_shell_budgets() -> Array[CountBudget] {
@@ -22,7 +25,13 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // S2a 工程域出壳(2026-10-12):行模型/纯工具/工程类型迁
       // plugins/project(壳留包装),app 35,721 → 35,034。
       // S2b-1 状态切片(2026-10-12):17 字段并入 ProjectState → 35,251;S2b-2 子消息臂迁出 → 34865
-      max_count: 33546,
+      // 壳卫生清理(2026-10-12):删 2 个切片后遗留的未用包装
+      // (section_collapsed / collapse_all_tree_keys) → 33,535。
+      // S5 blocks 捆绑出壳(2026-10-12):blocks_slot_hit 全文 + blocks_canvas 的
+      // 15 个纯几何函数 + BlocksDrawOp + BlocksDragState + 2 常量 + row_arrow
+      // 迁 plugins/blocks(1,054 行);壳侧 blocks_pane.mbt 收画布视图函数
+      // → 32,481。
+      max_count: 32480,
     },
     {
       kind: "studio shell files",
@@ -30,7 +39,10 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       path: "moui_studio/app",
       // 基线冻结(2026-10-12 实测 53;完成线 ≤ 30)。
       // S1 chrome 出壳:theme.mbt 整文件迁出 → 52。
-      max_count: 51,
+      // 壳卫生清理(2026-10-12):仅删函数不动文件 → 51。
+      // S5 blocks 捆绑出壳(2026-10-12):blocks_canvas.mbt(视图函数并入
+      // blocks_pane.mbt)与 blocks_slot_hit.mbt(整文件迁插件)两个文件消失 → 49。
+      max_count: 49,
     },
     {
       kind: "studio model fields",

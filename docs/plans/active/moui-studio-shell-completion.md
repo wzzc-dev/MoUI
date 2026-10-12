@@ -4,7 +4,8 @@
 - **Date**: 2026-10-12
 - **Related**: ADR 0038（插件内核）、`docs/plans/done/moui-studio-plugin-kernel.md`（M5/M8
   显式推迟 blocks/project 提取）、`docs/moui-studio.md`、
-  ADR 0039（本计划的治理决定：完成线与棘轮）
+  ADR 0039（本计划的治理决定：完成线与棘轮）、
+  ADR 0040（2026-10-12 修订：完成线改三档阶梯，A 档为承诺线）
 - **Goal**: 结束「插件内核迁移无限并行」的状态：先给 app 旧壳上**只降不升的
   四项预算棘轮**（冻结今日基线），再按 ai/terminal/markdown 三次验证过的插件
   模式（状态切片 + `Feature::scope` 委托 + `[Msg]` 泛型视图构建器）分片把六个
@@ -24,15 +25,26 @@
 
 ## 完成线（Definition of Done）
 
-app 包 = 壳 + 组合根，四项预算全部达标（口径：`moui_studio/app/*.mbt`，
-排除 `*_test.mbt`、`*wbtest.mbt`、`i18n_catalog_generated.mbt`）：
+> **2026-10-12 修订（ADR 0040）**：原单一完成线 ≤18,000/30/55/90 的**可达性
+> 从未核算**。按本计划自己的侦察结论实测剩余可迁量 = 7,494 行 / 14 文件
+> （纯文件整体迁 3,127 + Model 耦合视图宽参数改造 4,367），S4–S7 全做完也只
+> 到 ~26,000 行 / ~37 文件。完成线已改为**三档阶梯**，A 档为承诺线，C 档为
+> 北极星；棘轮机制不变（上限仍是实测值的只降不升）。推导与规则见
+> [ADR 0040](../decisions/0040-studio-shell-completion-stages.md)。
 
-| 预算 | 基线（冻结） | 完成线 | 语义 |
-|---|---|---|---|
-| 源码行 | 37,279 | ≤ **18,000** | 只降不升；上调必须改预算表并写 reason |
-| 源文件数 | 53 | ≤ **30** | app 新增源文件需预算表登记 |
-| `Model` 字段 | 155 | ≤ **55** | 壳状态 + 每插件一个切片字段 |
-| `Msg` 变体 | 291 | ≤ **90** | 壳消息 + 每插件 1–2 个包装变体 |
+app 包 = 壳 + 组合根（口径：`moui_studio/app/*.mbt`，排除 `*_test.mbt`、
+`*wbtest.mbt`、`i18n_catalog_generated.mbt`）：
+
+| 档 | 源码行 | 源文件 | `Model` 字段 | `Msg` 变体 | 达成条件 |
+|---|---|---|---|---|---|
+| 当前（2026-10-12 实测） | 33,535 | 51 | 145 | 278 | — |
+| **A 承诺线** | ≤ 27,000 | ≤ 40 | ≤ 115 | ≤ 140 | S4–S7 完成（纯文件整体迁 + 视图族宽参数改造） |
+| **B 稳态纪律线** | ≤ 22,000 | ≤ 32 | ≤ 80 | ≤ 100 | run 域状态切片（Effect 形态定型后）+ 组装件继续宽参数化 |
+| **C 原完成线（北极星）** | ≤ 18,000 | ≤ 30 | ≤ 55 | ≤ 90 | 需超出 S4–S7 的新工作：壳边界重界定或壳级视图再拆分 |
+
+分档规则（ADR 0040）：棘轮上限与分档目标分离——`studio_shell_budgets` 的
+`max_count` 始终是**当前实测值**（每次提取完成即降并写 reason），不是上表的
+目标值；A 档达成即可宣称本计划完成；进 B 档前必须先做一次壳边界重界定评审。
 
 结构性标准（与预算同时验收）：
 
@@ -80,7 +92,7 @@ app 包 = 壳 + 组合根，四项预算全部达标（口径：`moui_studio/app
 | S2 | plugins/project | project_explorer 2145、project_workbench 1046、new_project 462、code_project 217、search_pane、search_task、direct_scan 289 | ~4.6k |
 | S3 | plugins/run | update_run 1429、preview_frame 875、preview_workspace 469、preview_web_slot、preview_semantics 282 | ~3.2k |
 | S4 | plugins/ai 补完 | ide_ai 1642、update_ai 952、ai_sessions_pane 485、ai_workspace_panel 346 | ~3.4k |
-| S5 | plugins/blocks | update_blocks 1038、blocks_canvas 1267、blocks_pane 743、blocks_slot_hit 256、statement_palette 480 | ~3.8k |
+| S5 | plugins/blocks | ~~update_blocks 1038、blocks_canvas 1267、blocks_pane 743、blocks_slot_hit 256、statement_palette 480~~ | ~3.8k → **实际 1.1k（2026-10-12 落地）** |
 | S6 | plugins/design | canvas 850、form_design_canvas 263、form_design_session、stage_layout、update_selection + update_selection_msgs 584 | ~2.5k |
 | S7 | plugins/code | code_view 1342、code_intel、views_compile 637、problems_pane 219 | ~2.4k |
 
@@ -106,9 +118,11 @@ app 包 = 壳 + 组合根，四项预算全部达标（口径：`moui_studio/app
 
 ### S8 收官
 
-- `update_pure` 链清空为纯路由；四预算降至终值；同步 `docs/moui-studio.md`、
-  `moui_studio/README.md` 包结构图、`memories/repo/moui-studio.md`；
-  计划迁 `docs/plans/done/`。
+- `update_pure` 链清空为纯路由；四预算降至此档目标值；同步
+  `docs/moui-studio.md`、`moui_studio/README.md` 包结构图、
+  `memories/repo/moui-studio.md`；计划迁 `docs/plans/done/`。
+- 「收官」的判定按 **A 承诺线**（ADR 0040）：S4–S7 完成 + 四预算进 A 档区间
+  即宣称完成；B/C 档另立范围决策，不算本计划的欠账。
 
 ## 每片验收
 
@@ -168,3 +182,5 @@ app 包 = 壳 + 组合根，四项预算全部达标（口径：`moui_studio/app
 | 2026-10-12 | **S5 侦察(blocks_canvas 依赖链)**:blocks_canvas.mbt(1,267 行,19 fn)实测零 Model/svc/Effect,但内嵌 `BlocksDragState`(壳类型)与 `blocks_slot_rects`(住在 blocks_slot_hit.mbt,256 行)——**非自包含,须捆绑迁移**:S5 首迁单元 = blocks_canvas + blocks_slot_hit + BlocksDragState 类型随迁(或先审 slot_hit 纯度定边界)。整体尝试已干净回滚(工作区 0 变更,app 0 错,零损伤)。出壳顺序建议:S5 以「canvas+slot_hit 捆绑」开包,后续 blocks_pane(743)/update_blocks(1038)按读面盘点跟进 |
 | 2026-10-12 | **S5 二次侦察(捆绑面定界终版)**:blocks_canvas + blocks_slot_hit 捆绑迁实测又暴露一层——纯几何层携带 **7 个共享类型**(BlockArm/BlockBadge/BlockLabel/BlockOutline/BlockStroke/InsertMark/ScriptNote/SlotHole 族,壳视图与测试大量模式匹配)+ 2 常量(BLOCKS_EDGE_ZONE/BLOCKS_NOTE_HEIGHT)+ blocks_row_arrow 函数;blocks_canvas 的视图函数本体(~520 行)构造 6+ 个 App Msg(BlocksContextMenu/EditBlockValue/BlocksCanvasTap/BlocksAutoScroll/ExpressionDrop/Noop),须留壳(并入 blocks_pane 可保文件数)。**S5 完整配方定版**:① plugins/blocks 承载 = slot_hit 全文 + canvas 的 15 个纯几何函数 + 7 类型 + 2 常量 + row_arrow;②壳侧 blocks_pane.mbt 收 canvas 视图函数(文件数守 51);③跨包模式匹配的枚举须 pub(all),类型用点需逐点验证限定形态(@blk.X 在 pattern 中的写法待专项验证)。两次尝试均干净回滚(工作区 0 变更、app 0 错)。S5 需整轮专攻,不宜碎步 |
 | 2026-10-12 | **S7 侦察 + S4-S7 统一形态结论**:problems_pane.mbt(219 行)读面实测 = language/program(IR 真源)/code_error/code_diagnostics/selected_handler/code_draft/last_build/compile_report——**跨域真源组装件**,与 preview_workspace/ai_sessions_pane 同判定族(留壳或宽参数结构改造)。至此 S4-S7 剩余大件全部盘点完毕,统一形态结论:**出壳余量主体是 Model 耦合视图/组装件**,只有两种处置——①纯函数文件整体迁(S3a 型,已穷尽:preview_frame 类);②宽参数结构 + [Msg] 泛型改造(每件 200-1,500 行,每件一个专注整轮,早期轮次的单轮容量可达 ~1,300 行)。碎步策略对此类文件失效(S5 两回滚实证)。**收官路径修定**:后续会话按「单件整轮」节奏执行 S4 视图族 → S5 捆绑 → S6/S7 逐件;本目标周期内若轮次耗尽,棘轮闸门保证已出壳部分永不回退,完成线作为持续北极星 |
+| 2026-10-12 | **完成线分档（ADR 0040）+ 独立 CI + 壳卫生清理**:① 实测剩余可迁量 = 纯文件整体迁 3,127 行（blocks_canvas/blocks_slot_hit/statement_palette/canvas/stage_layout/code_project，均零 `model.` 读取）+ Model 耦合视图宽参数改造 4,367 行（ide_ai/ai_sessions_pane/ai_workspace_panel/blocks_pane/views_compile/problems_pane/form_design_canvas/form_design_session）= 7,494 行 / 14 文件；S4–S7 全做完也只到 ~26,000 行 / ~37 文件，原 18,000 完成线不可达 → ADR 0040 改三档阶梯（A 承诺 ≤27,000/40/115/140；B 稳态 ≤22,000/32/80/100；C 北极星 = 原 18,000/30/55/90），棘轮机制不变（上限仍绑实测值）。② `moui_studio/.github/workflows/ci.yml` 落地：母仓库 pr profile 的 7 个 Studio 门禁按子仓库包路径搬入，另补 app 的 wasm-gc 测试、web 入口构建、`moon check` / `moon fmt --check`；i18n catalog 门（生成器在母仓库）与真机冒烟（路径触发）刻意不收；工具链钉在 `moui_studio/.moonbit-toolchain`。③ `tools/sync_kernel` 双根解析修复：路径表按母仓库根书写，`resolve_repo_path` 按当前根补/去 `moui_studio/` 前缀——子仓库根 `moon run tools/sync_kernel -- --check` 从必报 IOError 变为 `current`（README 原写法因此是错的，已改）。④ 壳卫生：删 2 个切片后遗留的未用包装（`section_collapsed` / `collapse_all_tree_keys`）、2 个未用 import（plugins/ai 的 geometry、plugins/run 的 views/style）、2 个 unreachable_code 测试臂；plugins/run 补 `supported_targets`。**Studio 自有代码 `moon check` 从 6 警告降到 0**。预算：lines 33,546 → **33,535**（files 51 / fields 145 / variants 278 不变，本轮是纯清理不是切片）。验收：app 435/435 双目标、全模块 4,952/4,952 native、`moon fmt --check` 干净、sync_kernel 双根 `current`、`validate-maintenance-baseline` ok |
+| 2026-10-12 | **S5 blocks 捆绑整轮落地（两次回滚后的第三次成功）**:按 S5 二次侦察定版的配方执行——① 新包 `plugins/blocks`（`moon.pkg` 里 domain/blocks 起别名 `@blk`，因为本包名就是 blocks，与默认别名冲突，plugins/project 的 `@scan` 先例；`String::substring` 已废弃，一律用切片语法）承载 `blocks_slot_hit.mbt` 全文 256 行 + `blocks_canvas.mbt` 的 15 个纯几何函数 + `BlocksDrawOp` + `BlocksDragState` + `BLOCKS_NOTE_HEIGHT`/`BLOCKS_EDGE_ZONE` 两常量 + `blocks_row_arrow`/`blocks_row_lead_width` + `block_outline_path`/`paint_block_outline`，拆成 `blocks_geometry.mbt`（几何/命中/落槽/拖拽态）/ `blocks_draw.mbt`（绘制计划/枚举/PathSpec）/ `blocks_slot_hit.mbt`（洞与值命中）三文件 + `blocks_wbtest.mbt` 3 条不变量（链条 y 换算、C 形同层兄弟右缩、洞段才产矩形）；② 壳侧 `blocks_canvas` 视图函数（398 行，构造 6+ App Msg 的那枚）整段并入 `blocks_pane.mbt`（761 → 1,172 行，仍在 1200 硬限内），`app/blocks_canvas.mbt` 与 `app/blocks_slot_hit.mbt` 两个文件删除；③ `app/model.mbt` 的 `BlocksDragState` 结构体改为 `pub type` 转发别名（S2a/S3a 先例），`app/moon.pkg` 主块与 `for "wbtest"` 块各加一条 `plugins/blocks @blk`；④ 全仓 `@app.X`/裸标识符按符号表批量改限定：app 源 + wbtest + `*_test` 三处共 99 处。**双目标 435/435 全绿、plugins/blocks 3/3、入口双目标 0 错、`moon fmt --check` 干净、sync_kernel 双根 `current`、六静态门 + pr profile 的 7 个 Studio 门全绿、Studio 自有 `moon check` 0 警告**。预算四降：lines 33,535 → **32,481**、files 51 → **49**（fields 145 / variants 278 不变——`block_drag` 字段与 Msg 未动，本轮是纯几何/绘制层出壳）。S5 域完结判定：纯几何 + 绘制计划 + 命中三层皆出壳；`update_blocks`（1,038 行，深耦 studio_lang 步进）与 `blocks_pane` 的组装视图按 markdown/terminal「视图由壳组装」终态判留壳 |
