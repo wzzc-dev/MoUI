@@ -234,7 +234,10 @@ fn file_budgets() -> Array[FileBudget] {
     // 结算到当前实测值。
     // 2026-10-12 (AI 提案修复): 生成臂加忙碌占位卡 + prompt 带当前程序
     // IR（proposal_user_prompt）；按先例结算到当前实测值。
-    { path: "moui_studio/app/app.mbt", max_lines: 2580, },
+    // 2026-10-12 (S2b-1 工程域状态切片): 17 字段并入 plugins/project 的
+    // ProjectState——组合根读写改两级(model.project_state.*),moon fmt 折行
+    // 净增;按先例结算到当前实测值。
+    { path: "moui_studio/app/app.mbt", max_lines: 2653, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },

@@ -21,7 +21,8 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // (~910,含 fit_label)迁出 moui_studio/chrome → 35,721。
       // S2a 工程域出壳(2026-10-12):行模型/纯工具/工程类型迁
       // plugins/project(壳留包装),app 35,721 → 35,034。
-      max_count: 35034,
+      // S2b-1 状态切片(2026-10-12):17 字段并入 ProjectState → 35,251(nested 展开 fmt 折行)
+      max_count: 35251,
     },
     {
       kind: "studio shell files",
@@ -36,7 +37,9 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       label: "moui_studio/app/model.mbt",
       path: "moui_studio/app/model.mbt",
       // 基线冻结(2026-10-12 实测 161,含 6 个 mut 字段;完成线 ≤ 55)。
-      max_count: 161,
+      // S2b-1 工程域状态切片(2026-10-12):17 个工程/资源管理器字段并入
+      // plugins/project 的 ProjectState(壳持单一 project_state 字段)→ 145。
+      max_count: 145,
     },
     {
       kind: "studio msg variants",

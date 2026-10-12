@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1414,
-      "reason": "S2a project plugin extraction: @proj.EXPLORER_SECTION_FOLDERS/WORKSPACE_ROOT_INDEX qualifications; reraise 1410->1414."
+      "maxLines": 1566,
+      "reason": "S2b-1 project state slice: project arms moved to two-level project_state literals; fmt reflow net +152 wrap lines (logic unchanged, fields nested). Raise 1414->1566."
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -355,8 +355,8 @@
     },
     {
       "path": "moui_studio/app/update.mbt",
-      "maxLines": 1640,
-      "reason": "Studio shell update reducer; grew with the terminal/pty and form-designer message arms (M8/M9 slices)."
+      "maxLines": 1643,
+      "reason": "S2b-1: one project_state path reflow. Raise 1640->1643."
     },
     {
       "path": "moui_studio/app/update_run.mbt",
@@ -365,8 +365,8 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1629,
-      "reason": "S2a project plugin extraction: ProjectRecord/WorkspaceRecord/OpenProjectFile/RecentChange moved to plugins/project (pub type aliases kept); lower 1657->1629."
+      "maxLines": 1583,
+      "reason": "S2b-1: 17 project-domain fields nested into one project_state : @proj.ProjectState field. Lower 1629->1583."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",
@@ -385,13 +385,13 @@
     },
     {
       "path": "moui_studio/app/app.mbt",
-      "maxLines": 2576,
-      "reason": "S1 chrome extraction: @chrome. cross-package qualification reflowed line wraps under moon fmt (no logic added); reraise 2553->2576."
+      "maxLines": 2653,
+      "reason": "S2b-1 project state slice: composition root reads/writes moved to model.project_state.* two-level paths; moon fmt reflow net +77 wrap lines (no logic added). Raise 2576->2653."
     },
     {
       "path": "moui_studio/app/app_test.mbt",
-      "maxLines": 2176,
-      "reason": "S1/S2a extractions: @chrome./@proj. qualifications in blackbox tests reflowed wraps; reraise 2112->2176."
+      "maxLines": 2179,
+      "reason": "S2b-1: test fixtures/asserts re-qualified to project_state paths reflowed wraps. Raise 2176->2179."
     },
     {
       "path": "moui_studio/app/code_view.mbt",
@@ -405,13 +405,13 @@
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",
-      "maxLines": 1272,
-      "reason": "S2a project plugin extraction: explorer row-model, outline/path/sort/icon utils, section constants moved to plugins/project; shell keeps render + wiring. Lower 2145->1272."
+      "maxLines": 1276,
+      "reason": "S2b-1: explorer wiring reflow under moon fmt. Raise 1272->1276."
     },
     {
       "path": "moui_studio/app/project_workbench_test.mbt",
-      "maxLines": 1525,
-      "reason": "Project workbench black-box suite; grew with the explorer slice's navigation/multi-root/sort/outline/in-place-create coverage. Registered above the 1200 hard limit as a new ratchet.; raised 1502->1503 on 2026-10-11: boot-restore test expands the workspace root before asserting the member tier (imported trees now default-collapsed); raised 1503->1525 on 2026-10-11: all-folder default collapse tests (toggle ordering, ExplorerCollapseAll keeps subtree keys)"
+      "maxLines": 1590,
+      "reason": "S2b-1: store/rename/restore asserts re-qualified to project_state paths; +65 wrap lines. Raise 1525->1590."
     }
   ],
   "data": [
