@@ -1,0 +1,228 @@
+///|
+/// Studio 壳收敛预算(ADR 0039):app 包 = 壳 + 组合根,四项只降不升。
+///
+/// 口径:`moui_studio/app` 下的 .mbt 源文件,排除 `*_test.mbt`、
+/// `*wbtest.mbt`、`i18n_catalog_generated.mbt`(测试与生成物不占源码预算)。
+/// Model 字段 = `pub(all) struct Model` 块内的字段行(含 `mut` 字段);
+/// Msg 变体 = `pub(all) enum Msg` 块内的变体声明行(载荷可跨行,只数声明行)。
+///
+/// 预算只降不升:上调必须改下表并写 reason(即审计记录,见 ADR 0039 与
+/// docs/plans/active/moui-studio-shell-completion.md)。
+
+///|
+fn studio_shell_budgets() -> Array[CountBudget] {
+  [
+    {
+      kind: "studio shell lines",
+      label: "moui_studio/app",
+      path: "moui_studio/app",
+      // 基线冻结(2026-10-12 实测 37,279;ADR 0039 完成线 ≤ 18,000)。
+      // S1 chrome 出壳(2026-10-12):theme.mbt(606)+ ide_chrome 共享原子
+      // (~910,含 fit_label)迁出 moui_studio/chrome → 35,721。
+      max_count: 35721,
+    },
+    {
+      kind: "studio shell files",
+      label: "moui_studio/app",
+      path: "moui_studio/app",
+      // 基线冻结(2026-10-12 实测 53;完成线 ≤ 30)。
+      // S1 chrome 出壳:theme.mbt 整文件迁出 → 52。
+      max_count: 52,
+    },
+    {
+      kind: "studio model fields",
+      label: "moui_studio/app/model.mbt",
+      path: "moui_studio/app/model.mbt",
+      // 基线冻结(2026-10-12 实测 161,含 6 个 mut 字段;完成线 ≤ 55)。
+      max_count: 161,
+    },
+    {
+      kind: "studio msg variants",
+      label: "moui_studio/app/model.mbt",
+      path: "moui_studio/app/model.mbt",
+      // 基线冻结(2026-10-12 实测 291;完成线 ≤ 90)。
+      max_count: 291,
+    },
+  ]
+}
+
+///|
+/// 源文件口径:排除测试与 i18n 生成物(它们由各自机制独立治理——
+/// source-file-policy 的 generated 清单与测试自身的预算)。
+fn studio_shell_source_file(path : String) -> Bool {
+  !path.has_suffix("_test.mbt") &&
+  !path.has_suffix("wbtest.mbt") &&
+  !path.has_suffix("i18n_catalog_generated.mbt")
+}
+
+///|
+fn collect_studio_shell_files(
+  repo_root : String,
+  files : Array[String],
+  failures : Array[String],
+) -> Unit {
+  let all : Array[String] = []
+  collect_mbt_files(repo_root, "moui_studio/app", all, failures)
+  for path in all {
+    if studio_shell_source_file(path) {
+      files.push(path)
+    }
+  }
+}
+
+///|
+/// `String[index]` 的返回类型是 UTF-16 码元(UInt16);与 Char 字面量的
+/// 比较(如 `>= 'a'`)是合法的,这里保持同一形态。
+fn studio_shell_is_ascii_ident_char(c : UInt16) -> Bool {
+  (c >= 'a' && c <= 'z') ||
+  (c >= 'A' && c <= 'Z') ||
+  (c >= '0' && c <= '9') ||
+  c == '_'
+}
+
+///|
+/// Model 字段行:恰两空格缩进 + 可选 `mut ` + 小写/下划线开头的标识符 +
+/// 空白 + `:`。更深缩进(载荷续行)与注释行天然不匹配。
+fn studio_shell_is_model_field_line(line : String) -> Bool {
+  if line.length() < 3 || line[0] != ' ' || line[1] != ' ' || line[2] == ' ' {
+    return false
+  }
+  let mut pos = 2
+  if line.has_prefix("  mut ") {
+    pos = 6
+  }
+  if pos >= line.length() {
+    return false
+  }
+  let lead = line[pos]
+  if !((lead >= 'a' && lead <= 'z') || lead == '_') {
+    return false
+  }
+  while pos < line.length() && studio_shell_is_ascii_ident_char(line[pos]) {
+    pos += 1
+  }
+  while pos < line.length() && line[pos] == ' ' {
+    pos += 1
+  }
+  pos < line.length() && line[pos] == ':'
+}
+
+///|
+/// Msg 变体声明行:恰两空格缩进 + 大写开头标识符,其后是行尾、载荷 `(`、
+/// 空白(注释前)或 `/`(行注释)。载荷跨行续行的缩进更深,不匹配。
+fn studio_shell_is_msg_variant_line(line : String) -> Bool {
+  if line.length() < 3 || line[0] != ' ' || line[1] != ' ' || line[2] == ' ' {
+    return false
+  }
+  let lead = line[2]
+  if !(lead >= 'A' && lead <= 'Z') {
+    return false
+  }
+  let mut pos = 2
+  while pos < line.length() && studio_shell_is_ascii_ident_char(line[pos]) {
+    pos += 1
+  }
+  if pos >= line.length() {
+    return true
+  }
+  let c = line[pos]
+  c == '(' || c == ' ' || c == '/'
+}
+
+///|
+/// 取 `decl` 声明行之后、配对 `}` 之前的所有行。找不到声明返回 None
+/// (由调用方记 failure,不让预算静默通过)。
+fn studio_shell_decl_span_lines(text : String, decl : String) -> Array[String]? {
+  let mut inside = false
+  let lines : Array[String] = []
+  for line_view in text.split("\n") {
+    let line = line_view.to_owned()
+    if !inside {
+      if line == decl {
+        inside = true
+      }
+    } else if line == "}" {
+      return Some(lines)
+    } else {
+      lines.push(line)
+    }
+  }
+  if inside {
+    // 无配对右括号:按文件尾处理(计数继续),语法问题由 moon check 兜底。
+    Some(lines)
+  } else {
+    None
+  }
+}
+
+///|
+fn count_studio_shell_decl(
+  repo_root : String,
+  path : String,
+  decl : String,
+  is_member : (String) -> Bool,
+  failures : Array[String],
+) -> Int {
+  match read_repo_text(repo_root, path) {
+    Ok(text) =>
+      match studio_shell_decl_span_lines(text, decl) {
+        Some(lines) => {
+          let mut count = 0
+          for line in lines {
+            if is_member(line) {
+              count += 1
+            }
+          }
+          count
+        }
+        None => {
+          failures.push(
+            "studio shell budget could not find decl: " + decl + " in " + path,
+          )
+          0
+        }
+      }
+    Err(message) => {
+      failures.push(message)
+      0
+    }
+  }
+}
+
+///|
+fn collect_studio_shell_overflows(
+  repo_root : String,
+  failures : Array[String],
+) -> Array[CountBudgetOverflow] {
+  let overflows : Array[CountBudgetOverflow] = []
+  let source_files : Array[String] = []
+  collect_studio_shell_files(repo_root, source_files, failures)
+  let mut source_lines = 0
+  for path in source_files {
+    match read_repo_text(repo_root, path) {
+      Ok(text) => source_lines += line_count(text)
+      Err(message) => failures.push(message)
+    }
+  }
+  let model_fields = count_studio_shell_decl(
+    repo_root, "moui_studio/app/model.mbt", "pub(all) struct Model {", studio_shell_is_model_field_line,
+    failures,
+  )
+  let msg_variants = count_studio_shell_decl(
+    repo_root, "moui_studio/app/model.mbt", "pub(all) enum Msg {", studio_shell_is_msg_variant_line,
+    failures,
+  )
+  for budget in studio_shell_budgets() {
+    let count = if budget.kind == "studio shell lines" {
+      source_lines
+    } else if budget.kind == "studio shell files" {
+      source_files.length()
+    } else if budget.kind == "studio model fields" {
+      model_fields
+    } else {
+      msg_variants
+    }
+    record_count_budget_overflow(budget, count, overflows)
+  }
+  overflows
+}

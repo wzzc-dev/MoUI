@@ -3,12 +3,14 @@ fn run_checks(repo_root : String, scope : String) -> Array[String] {
   let failures : Array[String] = []
   let overflows = collect_line_budget_overflows(repo_root, scope, failures)
   let count_overflows = collect_count_budget_overflows(repo_root, failures)
+  let studio_overflows = collect_studio_shell_overflows(repo_root, failures)
   let wrapper_failures = collect_moonbit_tool_wrapper_failures(repo_root)
   if !failures.is_empty() {
     failures
   } else {
     let messages = line_budget_overflow_paths(overflows)
     messages.append(count_budget_overflow_messages(count_overflows))
+    messages.append(count_budget_overflow_messages(studio_overflows))
     messages.append(wrapper_failures)
     messages
   }

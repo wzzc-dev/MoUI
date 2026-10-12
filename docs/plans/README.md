@@ -69,6 +69,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [runtime-state-render-ownership-convergence](active/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
 | [moui-studio](active/moui-studio.md) | MoUI Studio：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
+| [moui-studio-shell-completion](active/moui-studio-shell-completion.md) | MoUI Studio 壳收敛（ADR 0039）：四项预算棘轮冻结 app 旧壳（37,279 行/53 文件/161 Model 字段/291 Msg 变体，只降不升），S1 chrome 出壳 + S2–S7 六域按 ai/terminal 先例提取为插件包，抵达完成线（≤18,000 行/≤30 文件/≤55 字段/≤90 变体） |
 | [moui-studio-standalone-subrepo](done/moui-studio-standalone-subrepo.md) | MoUI Studio 迁出为独立子仓库 `moui_studio/`（模块 `wzzc-dev/moui_studio`，subtree split 保史 + submodule 挂载 + moon.work/检查/文档引用同步） |
 | [moui-studio-ai-look](done/moui-studio-ai-look.md) | MoUI Studio AI 模式二期：向 VS Code 智能体模式空态基准复刻——双行会话行(常显时间)/区头动作/双下拉芯片/提示行并入卡头/单模式下拉/空态居中+姿态读数 |
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
