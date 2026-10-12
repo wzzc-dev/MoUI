@@ -400,8 +400,8 @@
     },
     {
       "path": "moui_studio/app/ide_ai.mbt",
-      "maxLines": 1707,
-      "reason": "S1 chrome extraction: heaviest @chrome. qualification site (140 refs) reflowed wraps; reraise 1642->1707."
+      "maxLines": 1685,
+      "reason": "S4-1: composer/chips geometry consts + fns moved to plugins/ai (shell keeps forwarding wrappers). Lower 1707->1685."
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",
