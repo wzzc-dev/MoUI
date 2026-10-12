@@ -400,8 +400,8 @@
     },
     {
       "path": "moui_studio/app/ide_ai.mbt",
-      "maxLines": 1675,
-      "reason": "S4-2: thread_area_height moved to plugins/ai (AiSessions+cards_folded signature; shell keeps wrapper). Lower 1685->1675."
+      "maxLines": 1636,
+      "reason": "S4-3: see_all_row + SEE_ALL_HEIGHT moved to plugins/ai ([Msg]-generic with on_toggle~ callback; shell wrapper). Lower 1675->1636."
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",
