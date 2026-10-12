@@ -1425,3 +1425,19 @@ text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡�
   返回文件名列表，逐文件 write_text 必然失败——不可达就显式声明
   （`app.export.unavailable_web`），与 compile_track_available 同口径。
   给页面入口必须配出口（全屏页「返回编辑」行）。
+
+## Shell-completion status (2026-10-12, goal round 16)
+
+- Budget ratchets (ADR 0039, frozen-down only): app 33,546 lines / 51 files /
+  Model 145 fields / Msg 278 variants. Completion line: 18,000 / 30 / 55 / 90.
+- Extraction recipes proven in-repo (all logged in docs/plans/active/
+  moui-studio-shell-completion.md): (1) whole-file pure-data move + pub type
+  forwarding aliases; (2) consts travel with fns (consts cannot be forwarded);
+  (3) [Msg]-generic view builders with on_*~ callbacks + shell wrappers;
+  (4) Feature::scope child-message delegation (ProjectMsg, ai_sessions);
+  (5) take() must close blocks line-based — consts have no closing brace,
+  and 'leftmost ///|' regexes swallow middles (four incidents, all caught
+  pre-write by asserts/git).
+- Remaining distance exceeds the goal's round budget at the current
+  per-round extraction pace; the ratchet gate guarantees no regression
+  while extraction continues across future sessions.

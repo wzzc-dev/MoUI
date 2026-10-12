@@ -303,9 +303,18 @@ Studio 的壳与能力面按**静态插件架构**组织（ADR 0038；参照 Cor
   （纯监听器 + outbox 排空）、贡献点类型（PanelView/ActivityItem/BottomTab/
   CommandContribution/Perspective）、MoonBit 词法器。
 - **插件 `plugins/`**：`ai`（多会话切片：`AiSessions.current()/amend()` 纪律、
-  Markdown 流式卡）、`terminal`（行缓冲屏 + 列光标 VT 处理；PTY 能力经
+  Markdown 流式卡 + 会话切片 `Feature::scope` 挂载 + 几何/视图贡献
+  （composer 高度族、`see_all_row`））、`terminal`（行缓冲屏 + 列光标 VT 处理；PTY 能力经
   `PtyService` 键，native provider 在组合根 vendor examples/terminal 宿主
-  技术，web 显式降级）。
+  技术，web 显式降级）、`project`（工程域三层出壳：行模型 + `ProjectState`
+  状态切片 + `ProjectMsg` 子消息委托——资源管理器与 tab 编辑的纯态臂全部
+  住在插件，壳持单一 `ProjectOp` 委托臂）、`run`（预览数据层：`PreviewFrame`
+  解析器族 + 语义命中/补丁装配 + `RunModel`/`CompiledRun` 结构 +
+  `preview_replay_canvas`/`semantic_property_strip` 视图贡献）、
+  `chrome`（S1 壳原子：主题、尺寸常量、ChipTone/IconTint、`fit_label`）。
+  出壳契约见 ADR 0038/0039 与 `docs/plans/active/moui-studio-shell-completion.md`
+  （预算棘轮只降;完成线 app ≤18,000 行 / ≤30 文件 / Model ≤55 字段 /
+  Msg ≤90 变体）。
 - **三模式工作台**：活动栏 = 图形化/代码/AI 模式切换器 + ⚙；每模式绑定
   全区域预设；「再点当前 = no-op」单一语义；AI 宿主唯一性由
   `RightView` × 模式推导。
