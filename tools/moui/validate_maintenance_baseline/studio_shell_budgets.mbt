@@ -19,7 +19,9 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // 基线冻结(2026-10-12 实测 37,279;ADR 0039 完成线 ≤ 18,000)。
       // S1 chrome 出壳(2026-10-12):theme.mbt(606)+ ide_chrome 共享原子
       // (~910,含 fit_label)迁出 moui_studio/chrome → 35,721。
-      max_count: 35721,
+      // S2a 工程域出壳(2026-10-12):行模型/纯工具/工程类型迁
+      // plugins/project(壳留包装),app 35,721 → 35,034。
+      max_count: 35034,
     },
     {
       kind: "studio shell files",
