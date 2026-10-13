@@ -310,8 +310,8 @@
     },
     {
       "path": "moui_studio/app/ide_shell.mbt",
-      "maxLines": 1497,
-      "reason": "S1/S2a: chrome qualification reflow plus explorer wiring; net +11 wrap lines (recent_tail moved out to plugins/project); reraise 1486->1497."
+      "maxLines": 1456,
+      "reason": "S1/S2a: chrome qualification reflow plus explorer wiring; net +11 wrap lines (recent_tail moved out to plugins/project); reraise 1486->1497. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
     },
     {
       "path": "moui_studio/services/export/kernel_compiled_runtime.mbt",
@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1296,
-      "reason": "S2b-2: 14 pure project arms moved to plugins/project update; shell keeps the ProjectOp delegation arm + scope lens pair. Lower 1566->1296."
+      "maxLines": 1286,
+      "reason": "S2b-2: 14 pure project arms moved to plugins/project update; shell keeps the ProjectOp delegation arm + scope lens pair. Lower 1566->1296. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -365,18 +365,18 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1535,
-      "reason": "S5 blocks bundle: BlocksDragState struct replaced by a pub type forwarding alias (net -17 lines). Lower 1552->1535."
+      "maxLines": 1532,
+      "reason": "S5 blocks bundle: BlocksDragState struct replaced by a pub type forwarding alias (net -17 lines). Lower 1552->1535. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",
-      "maxLines": 1636,
-      "reason": "S2a project plugin extraction: @proj. constant qualifications; reraise 1634->1636."
+      "maxLines": 1637,
+      "reason": "S2a project plugin extraction: @proj. constant qualifications; reraise 1634->1636. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
     },
     {
       "path": "moui_studio/app/ide_context.mbt",
-      "maxLines": 1810,
-      "reason": "S1 chrome extraction: 163 @chrome. refs reflowed wraps under moon fmt; reraise 1753->1810."
+      "maxLines": 1778,
+      "reason": "S1 chrome extraction: 163 @chrome. refs reflowed wraps under moon fmt; reraise 1753->1810. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
     },
     {
       "path": "moui_studio/app/app.mbt",
@@ -395,8 +395,8 @@
     },
     {
       "path": "moui_studio/app/ide_ai.mbt",
-      "maxLines": 1636,
-      "reason": "S4-3: see_all_row + SEE_ALL_HEIGHT moved to plugins/ai ([Msg]-generic with on_toggle~ callback; shell wrapper). Lower 1675->1636."
+      "maxLines": 1448,
+      "reason": "S4-3: see_all_row + SEE_ALL_HEIGHT moved to plugins/ai ([Msg]-generic with on_toggle~ callback; shell wrapper). Lower 1675->1636. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",

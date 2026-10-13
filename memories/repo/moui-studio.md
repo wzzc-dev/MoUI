@@ -1159,6 +1159,27 @@ S.live=false; if(!S.blocks) S.ws='empty';
 所以右栏头现在是三段：`对象名 + 清除✕ | 权重 spacer | 种类徽标 + 关闭✕`。
 两个 ✕ 语义不同、位置不同，不能互换。
 
+（2026-10 右栏改 VS Code 侧面板形态后仍是这三段，只是两枚 ✕ 从 `icon_button`
+的 tile 底块换成 `ghost_icon_button` 的裸字形，并在徽标与关闭 ✕ 之间加了一枚
+设置齿轮。分组与语义一条都没动。）
+
+### AI 输入面只有一个宿主 = 右栏底部（2026-10 宿主唯一化）
+曾经有三个宿主：底栏「AI 输入」页签（`BtAi`）、右栏停靠档（`RvAi`）、AI 模式
+中心（`PsAi`）。同一个「输入面在哪」要靠 `right_view × perspective` 推导，还要
+防 stale 页签画出第二份 composer，并配了一对互为出口的切换钮
+（`app.ai.to_dock` / `app.ai.to_bar`）。
+
+现在**只有一个宿主**：右栏底部的钉底 composer（VS Code 侧面板口径）。底栏只
+承载只读面板（审计 / Console / 问题 / 搜索 / 终端），`BtAi` 与 `RvAi` 两个枚举
+变体、`studio.ai.dock` / `studio.ai.bar` 两条命令、`ai_host_hint_key` 读数
+（生产侧本就无调用点）一并删除。AI 工作台模式（PsAi）另在中心——那个模式的
+右栏是更改/文件工作区面板。
+
+连带的高度纪律：线程卡不再是「定高区域 + 内层 scroll_view」，而是右栏**单一
+滚动区里的一个分区**（`ai_thread_section`，分区头兼折叠条）。于是
+`ai_card_height` / `thread_area_height` / `card_chrome_height` / `ai_bar_height`
+一整套双算账的高度函数全部消失，只剩 `ai_docked_height` 一个来源。
+
 ### 右栏原本**没有**收起能力（这次补上）
 `right_visible : Bool`（左栏是「多视图 + 收起」所以用枚举，右栏只有一个视图，
 布尔足够）。`shell_chrome_widths` 的 `right` 返回 `0.0` 表示收起，调用方

@@ -200,6 +200,32 @@ The AI mode is a **dialog transcript workbench** (see
   migrated). Web keeps persistence explicitly off. Wall-clock timestamps come
   from a composition-root-injected clock (no runtime import).
 
+## Right panel: VS Code side-panel form (2026-10)
+
+The right column is a **VS Code side panel** (see
+`docs/plans/active/moui-studio-right-panel-vscode-form.md`). The information
+architecture is unchanged — the six Context tabs and every editing capability
+stay — only the shell and the AI input host change:
+
+- **Panel head**: object name + clear ✕ on the left, kind badge + settings gear
+  + collapse ✕ on the right, all as quiet ghost icons (no tile backgrounds).
+- **Tab row**: six flat text tabs; the active one is marked by brighter text
+  plus a 2pt accent underline instead of a filled pill.
+- **One scroll region**: the AI thread section (only when the session has
+  cards, foldable through its section head), the block editor card, the active
+  tab's content, quick actions, and the runtime watch are all sections of a
+  single `scroll_view`. Quick actions and the watch used to be fixed blocks
+  pinned below the scroll area.
+- **Docked composer**: the AI input lives at the bottom of the right panel —
+  a context chip naming the current subject, the two-line input box, and the
+  decision bar (accept/reject) when a proposal is pending.
+
+**The AI composer has exactly one host.** The bottom bar's "AI input" tab and
+the "dock to right panel / move to bottom bar" toggle pair are gone: the bottom
+bar carries read-only panels only (audit / console / problems / search /
+terminal), and the AI workbench mode (PsAi) keeps its own centre composer.
+`RightView` collapses to `RvContext` / `RvWorkspace` / `RvHidden`.
+
 ## Dual-track differential gate
 
 `services/diff` is a hard gate, not a report. It runs the four built-in samples
