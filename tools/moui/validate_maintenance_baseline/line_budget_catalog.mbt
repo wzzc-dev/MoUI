@@ -156,7 +156,10 @@ fn file_budgets() -> Array[FileBudget] {
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
       // Complex-data files are individually ratcheted below.
-      max_lines: 421,
+      // 2026-10-13: 421 -> 430 across the right-panel VS Code sidebar round
+      // (settlement notes for moui_studio/app.mbt and the tooltip rework);
+      // a settlement, not a new file.
+      max_lines: 431,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -237,7 +240,10 @@ fn file_budgets() -> Array[FileBudget] {
     // 2026-10-12 (S2b-1 工程域状态切片): 17 字段并入 plugins/project 的
     // ProjectState——组合根读写改两级(model.project_state.*),moon fmt 折行
     // 净增;按先例结算到当前实测值。
-    { path: "moui_studio/app/app.mbt", max_lines: 2653, },
+    // 2026-10-13 (右栏 VS Code 侧栏分页): 禁用插件的归一化抽成共享
+    // `normalize_disabled_plugins`（TogglePlugin 与 boot 恢复共用），两个臂
+    // 各改走它，净 +3 折行;按先例结算到当前实测值。
+    { path: "moui_studio/app/app.mbt", max_lines: 2656, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },
@@ -295,7 +301,12 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/controls/choice_groups.mbt", max_lines: 70, },
     { path: "moui/views/controls/choice_segmented.mbt", max_lines: 60, },
     { path: "moui/views/controls/choice_chips.mbt", max_lines: 160, },
-    { path: "moui/views/controls/control_focus_overlay.mbt", max_lines: 100, },
+    // 100 -> 138: the tooltip stopped using a fixed 180x24 text box inside a
+    // `Raised` container (that variant pads 16pt on every side, rendering a
+    // three-character hint as a 212x56 block) and now sizes itself to its
+    // content with a 6/3 inset and the theme's Overlay surface. The added lines
+    // are the content-width estimate plus the rationale for it.
+    { path: "moui/views/controls/control_focus_overlay.mbt", max_lines: 138, },
     { path: "moui/views/controls/input_group_shell.mbt", max_lines: 45, },
     { path: "moui/views/controls/input_number.mbt", max_lines: 105, },
     { path: "moui/views/controls/disclosure.mbt", max_lines: 210, },

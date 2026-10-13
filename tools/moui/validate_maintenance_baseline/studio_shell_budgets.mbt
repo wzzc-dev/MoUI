@@ -31,7 +31,13 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // 15 个纯几何函数 + BlocksDrawOp + BlocksDragState + 2 常量 + row_arrow
       // 迁 plugins/blocks(1,054 行);壳侧 blocks_pane.mbt 收画布视图函数
       // → 32,481。
-      max_count: 32480,
+      // 右栏 VS Code 侧栏分页(2026-10-13):检查器页与 AI 页分开,新增页块
+      // 切换器 / 对象条 / 圆角输入卡;同时把子页签条、对象条、页切换头三个
+      // **通用**原子搬进 chrome(无预算)——净 32,481 → 32,341。
+      // 同日真机复查三轮修了四个缺陷(转录宽与裁剪区不同源导致文字被切、
+      // diff 长行不截断、卡标题不吃徽标宽、恢复会话残留 in-flight 卡) →
+      // 32,341 → 32,421;仍在 S5 之后的下降通道内,低于本轮起点 32,480。
+      max_count: 32421,
     },
     {
       kind: "studio shell files",

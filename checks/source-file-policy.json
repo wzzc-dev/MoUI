@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1286,
-      "reason": "S2b-2: 14 pure project arms moved to plugins/project update; shell keeps the ProjectOp delegation arm + scope lens pair. Lower 1566->1296. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
+      "maxLines": 1303,
+      "reason": "Raised for the right-panel VS Code sidebar form: set_right_view doc rewrite plus normalize_disabled_plugins (the RvAi fallback shared by TogglePlugin and boot restore) and the studio.right.ai command. See docs/plans/active/moui-studio-right-panel-vscode-sidebar.md."
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -365,23 +365,23 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1532,
-      "reason": "S5 blocks bundle: BlocksDragState struct replaced by a pub type forwarding alias (net -17 lines). Lower 1552->1535. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
+      "maxLines": 1543,
+      "reason": "Raised for the right-panel VS Code sidebar form: RightView regains RvAi (inspector page / AI page / PsAi workspace / hidden) and the right_view + ai_cards_folded field docs are rewritten for pagination."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",
-      "maxLines": 1637,
-      "reason": "S2a project plugin extraction: @proj. constant qualifications; reraise 1634->1636. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
+      "maxLines": 1609,
+      "reason": "Lowered for the right-panel VS Code sidebar form: the composer host contract and the see-all contract moved to right_panel_wbtest.mbt, and the composer/host tests here were rewritten for the two-page form."
     },
     {
       "path": "moui_studio/app/ide_context.mbt",
-      "maxLines": 1778,
-      "reason": "S1 chrome extraction: 163 @chrome. refs reflowed wraps under moon fmt; reraise 1753->1810. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
+      "maxLines": 1760,
+      "reason": "Lowered for the right-panel VS Code sidebar form: the sub-tab strip, object strip and page-switcher head are now generic chrome atoms (chrome/side_panel.mbt); this file keeps only the app-bound label/selection wiring."
     },
     {
       "path": "moui_studio/app/app.mbt",
-      "maxLines": 2653,
-      "reason": "S2b-1 project state slice: composition root reads/writes moved to model.project_state.* two-level paths; moon fmt reflow net +77 wrap lines (no logic added). Raise 2576->2653."
+      "maxLines": 2656,
+      "reason": "Raised for the right-panel VS Code sidebar form: TogglePlugin and PluginsLoaded now route their disabled-plugin normalization through the shared normalize_disabled_plugins helper (nets +3 wrap lines)."
     },
     {
       "path": "moui_studio/app/app_test.mbt",
@@ -395,8 +395,8 @@
     },
     {
       "path": "moui_studio/app/ide_ai.mbt",
-      "maxLines": 1448,
-      "reason": "S4-3: see_all_row + SEE_ALL_HEIGHT moved to plugins/ai ([Msg]-generic with on_toggle~ callback; shell wrapper). Lower 1675->1636. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md."
+      "maxLines": 1544,
+      "reason": "Raised for the right-panel VS Code sidebar round: the AI page (ai_page / ai_conversation shared with the PsAi centre) and the carded docked block, plus three correctness fixes found on the real window -- diff_row long-line truncation, the transcript width/clip mismatch (rows were built at the outer width, shifting text 12pt past its clip), and the settled-badge width account in card titles. The old ai_thread_section / ai_card_views / has_ai_thread were deleted in the same round. See docs/plans/active/moui-studio-right-panel-vscode-sidebar.md."
     },
     {
       "path": "moui_studio/app/project_explorer.mbt",

@@ -1,6 +1,18 @@
 # Plan: MoUI Studio 右栏改成 VS Code 侧面板交互形态
 
-- **Status**: active
+> **两条非目标已被后续方案推翻（2026-10-13）**：见
+> [`moui-studio-right-panel-vscode-sidebar`](moui-studio-right-panel-vscode-sidebar.md)
+> ——右栏进一步改成**分页**侧栏（六页签 = 检查器页，AI 另起一页）：
+> 1. ~~「不改 composer 输入盒的扁平视觉（既有实测结论）」~~ → 输入面改成
+>    **圆角 + 描边 + 抬起面**的卡片，上下文芯片行移进卡内，卡下加一行姿态读数；
+> 2. ~~「六页签与全部编辑能力保留（信息架构不变）」~~ → 信息架构**变了**：
+>    输入面从检查器页移出，只在 AI 页出现。
+>
+> 本文件其余结论（面板头动作簇贴右缘、扁平页签行 + 活动态下划线、单一滚动区、
+> 快速操作/运行时监视作为分区、AI 输入面宿主唯一化）仍然有效，并被新方案继承。
+> 本文件**仍留在 active/**：它是那一轮仍然生效的部分结论的载体，不是完整历史。
+
+- **Status**: active（部分被 sidebar 方案推翻，见上方说明）
 - **Date**: 2026-10-13
 - **Related**: `docs/plans/active/moui-studio.md`（右栏/底栏/AI 落点的历次决策）、
   `docs/plans/done/moui-studio-ai-look.md`（上一轮 AI 面板形态）、

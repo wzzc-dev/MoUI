@@ -391,7 +391,7 @@ pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Them
 
 pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
+pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn tree_item(id~ : String, label~ : String, children? : Array[@data.TreeItem]) -> @data.TreeItem
 

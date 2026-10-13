@@ -218,8 +218,10 @@ test "modal barrier still swallows Move" {
 /// 紧约束，Raised 容器内边距会吃掉全部宽度，提示文字被压成 2pt 窄条
 /// （真机表现为「弹出的 tips 里面没内容」）。
 test "tooltip keeps natural width inside narrow parent" {
+  // 提示浮层的实际尺寸由 `@views.tooltip` 按内容估算决定；这里用与它同量级的
+  // 内容块（4 个全角字）作为被测内容，验证「窄父级不压扁浮层」这条性质本身。
   let popup_content : @core.View[Unit] = @container.container(
-    @text.text("代码编辑", width=180.0, height=24.0),
+    @text.text("代码编辑", width=52.0, height=18.0),
     variant=Raised,
   )
   let host : @core.View[Unit] = @presentation.popup_host(
@@ -273,9 +275,82 @@ test "tooltip keeps natural width inside narrow parent" {
       return
     }
   }
-  if popup.frame.size.width < 180.0 {
+  if popup.frame.size.width < 52.0 {
     fail(
       "tooltip popup width should keep natural text width, got \{popup.frame.size.width}",
     )
+  }
+}
+
+///|
+/// 回归：提示浮层**必须按内容定尺寸**，不能是一块固定的大方块。
+///
+/// 真机缺陷（用户报的「小 tips 弹出的现在有点太大了」）：旧实现把提示文字塞进
+/// 固定 `180×24` 的框、再套 `Raised` 容器——而 `Raised` 的 `padding` 是
+/// `spacing_scale.lg = 16`（四边各 16），于是一个三字提示渲染成 **212×56**，
+/// 比它指向的图标还大。提示是**线索**不是面板，尺寸应当跟着内容走。
+///
+/// 判据：三字提示的浮层宽必须远小于「固定 180 + 32 内衬」的旧尺寸，且高度在
+/// 一行小字的量级（≤ 24）。
+test "tooltip sizes itself to its content" {
+  let root : @core.View[Unit] = @layout.frame(
+    @layout.column(
+      [
+        @views.tooltip(
+          @layout.frame(@text.text("icon"), width=26.0, height=26.0),
+          "检查器",
+          visible=true,
+        ),
+      ],
+      spacing=0.0,
+    ),
+    width=600.0,
+    height=200.0,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=600.0, height=200.0),
+  )
+  let layout = runtime.layout()
+  // 结构：root(frame) → column → host → [锚点, 浮层]
+  let mut popup : @core.Rect? = None
+  let column = match layout.children.get(0) {
+    Some(value) => value
+    None => {
+      fail("expected column at root")
+      return
+    }
+  }
+  let host = match column.children.get(0) {
+    Some(value) => value
+    None => {
+      fail("expected overlay host inside column")
+      return
+    }
+  }
+  match host.children.get(1) {
+    Some(node) => popup = Some(node.frame)
+    None => {
+      fail("expected tooltip popup child at index 1")
+      return
+    }
+  }
+  match popup {
+    Some(frame) => {
+      if frame.size.width > 90.0 {
+        fail(
+          "tooltip must hug its content, got width " +
+          frame.size.width.to_string() +
+          " (a three-character label should be ~60pt, not the old 212pt box)",
+        )
+      }
+      if frame.size.height > 24.0 {
+        fail(
+          "tooltip must stay a single small line, got height " +
+          frame.size.height.to_string(),
+        )
+      }
+    }
+    None => fail("tooltip popup missing")
   }
 }

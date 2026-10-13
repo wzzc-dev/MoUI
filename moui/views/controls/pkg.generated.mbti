@@ -124,7 +124,7 @@ pub fn[Msg, Style] themeable_control(String, theme? : @core.Theme, (@style.Contr
 
 pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
+pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 

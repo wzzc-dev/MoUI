@@ -325,6 +325,22 @@
 - **后台会话截不到原生窗口**：`moon run macos_skia` 后台启动进程存活、
   但 AX 报 0 窗口、screencapture 只有桌面——窗口级 native 验证需要
   前台会话（此前会话成功过，环境差异）。
+  **2026-10-13 更正：这条不再是普遍事实。** 实测后台启动 + CGWindowList 枚举
+  + `screencapture -o -l <id>` 全都工作（连做四轮真机复查）。可用的配方：
+  ```sh
+  moon build moui_studio/macos_skia --target native
+  ./_build/native/debug/build/wzzc-dev/moui_studio/macos_skia/macos_skia.exe &
+  sleep 15
+  /tmp/winlist | grep "MoUI Studio"      # → "<id>\tmacos_skia.exe\tMoUI Studio\t320,72 1280x800"
+  screencapture -o -l <id> /tmp/shot.png # → 2560x1600（1280x800 @2x）
+  ```
+  两个前提：① 需要真实 GUI 登录会话（Window Server 在场）；② **cwd 必须是仓库根**
+  （入口读 `moui_studio/.config.json`、写 `.studio/*.json`）。
+  另：`/tmp/winlist`（CGWindowList 枚举器）**不在 repo 里**，是临时二进制；
+  `artifacts/studio-analysis/walkthrough/mcp.mjs` 依赖它且在 gitignore 内。要在
+  CI 里复现「启动 → 切页 → 截图 → 断言」，得先把这两件收进 repo。
+  还有一条：**macOS 入口没接 `MOUI_FIRST_FRAME_EXIT`**（只有 linux/windows 有），
+  所以 macOS 侧没有 headless 首帧路径，只能走上面这条「启动 + 窗口截图」。
 
 ## 2026-09-28 冻结后批次（积木画布/吸附/跳转/快捷键）新增事实
 
@@ -1163,6 +1179,15 @@ S.live=false; if(!S.blocks) S.ws='empty';
 的 tile 底块换成 `ghost_icon_button` 的裸字形，并在徽标与关闭 ✕ 之间加了一枚
 设置齿轮。分组与语义一条都没动。）
 
+**2026-10-13 分页后又动了一次（结论不变，位置变了）**：右栏改成**分页**侧栏
+（六页签 = 检查器页，AI 另起一页），头部要让位给**页块切换器**，于是对象身份
+与清除 ✕ 一起下移到**正文首段的对象条**（`@chrome.object_strip`）。头部现在
+只有三段：`页块切换器 | 权重 spacer | 动作簇（＋/⚙/收起✕）`。
+
+「清空与关闭必须是不同的带」这条纪律反而**更强**了：以前靠「一个在左、一个
+在最右」区分，现在靠「一个在头部带之外」区分——`pane_lifecycle_wbtest` 的判据
+相应改成「头部带里不得出现 18pt 的清空盒」。
+
 ### AI 输入面只有一个宿主 = 右栏底部（2026-10 宿主唯一化）
 曾经有三个宿主：底栏「AI 输入」页签（`BtAi`）、右栏停靠档（`RvAi`）、AI 模式
 中心（`PsAi`）。同一个「输入面在哪」要靠 `right_view × perspective` 推导，还要
@@ -1179,6 +1204,53 @@ S.live=false; if(!S.blocks) S.ws='empty';
 滚动区里的一个分区**（`ai_thread_section`，分区头兼折叠条）。于是
 `ai_card_height` / `thread_area_height` / `card_chrome_height` / `ai_bar_height`
 一整套双算账的高度函数全部消失，只剩 `ai_docked_height` 一个来源。
+
+**2026-10-13 分页后再次收敛（本条的唯一更新）**：输入面现在**只在 AI 页**
+（`RightView::RvAi`）。检查器页（`RvContext`）按严格 VS Code 口径**不画**
+输入面——检查器不该为聊天让出 148pt 的常驻高度。于是落点从「右栏底部」变成
+「右栏 AI 页 / PsAi 中心」两个，判据是 `shell_find_send_buttons` 的**计数**：
+`RvContext` 0 枚、`RvAi` 恰好 1 枚、`RvHidden` 0 枚、`PsAi` 中心 1 枚。
+`ai_thread_section` 随之删除（转录归 AI 页，与 PsAi 中心共用 `ai_conversation`）。
+
+`ai_docked_height` 仍是**唯一**来源，但另外两条是这一轮用真机复查换来的，别再犯：
+1. **固定段全额 + 可变段封顶**——早先对整块取 `min(220)`，待审计卡在场上时
+   `natural` = 224 > 220，被削掉的正是**最底下那条状态行**（用户看到「UI 没
+   画完」）。现在只有决策条吃封顶（`AI_DECISION_MAX_HEIGHT`），输入卡与状态行
+   无条件画全。
+2. **卡片内衬必须进预算**——卡片化新增的卡内衬 12pt 漏算过一次，状态行被顶出
+   面板（本仓的「双算账」复发形态）。每一段都走具名常量（`AI_CARD_INSET` /
+   `AI_CARD_ROW_GAP` / `AI_DOCK_GAP` / `AI_DOCK_PAD_V`）。
+
+### 转录/卡片的宽度必须与裁剪区同源（2026-10-13 用户报「右侧文字看不到」）
+`ai_transcript` 一度把**外宽**传给 `timeline_rows`，而滚动区被 `padding_edges`
+收到 `width − 24`：每行比自己的裁剪区宽 24pt、被 flex 居中后整条转录右移 12pt，
+**长行文本因此越过裁剪区右缘被切掉**（短行看不出来，所以只在长代码行上显形）。
+
+同一族的三条教训：
+- **`@views.text` 的宽是最小值**（布局取 `max(声明宽, 实测宽)`）：声明窄了它会
+  自己长宽。所以「声明宽 < 估算宽」**不会**截断文字，真正的截断是**文字越出
+  `PushClip` 边界**。同时这也意味着：**越界断言抓不到「正好在框右缘被切半个
+  词」**——那一类要用**省略号**做判据（`fit_label`）。
+- **卡片标题行必须自己算徽标宽**：写死预留 70pt 时，长标题会把右缘的「已处理」
+  徽标顶出裁剪区（用户实测看到「已处」被切）。徽标宽按内容算，标题宽 =
+  行宽 − 徽标宽 − 间距，再 `fit_label`。
+- **改一处宽度必须同时改裁剪区**：这两者在代码里是两个变量（`width` 与
+  `inner`），本仓已为此付过两次代价。
+
+### 未结算的 in-flight 卡不该跨进程存活（2026-10-13 用户报「生成成功还转圈」）
+`app.ai.busy`（「正在生成提案…」）与提交时预置的空流式「回复」卡都是**进行中**
+的瞬时状态，没有 settle 语义（回执/分片到达时才收尾）。但「提交后、回执前」
+存盘是可能的——未结算卡被如实写进 `.studio/ai_sessions.json`，于是下次启动读
+回来就**永远转圈 / 永远空白**。
+
+修法在**恢复边界**（`AiSessionsStoreLoaded` 臂）：`drop_in_flight_cards` 摘掉
+**无内容**的未结算计划卡与空流式卡；**有内容**的未结算卡（分片已到、或待审计
+的 diff 卡）原样保留——它们仍然承载信息。这与 `drop_ai_busy_card`（服务运行时
+回执路径、只摘最近一张计划卡）是**两个判据**，别合并。
+
+回归测试必须走**真实恢复通道**（编码 → 解码 → `AiSessionsStoreLoaded`），不是
+直接调函数——后者只能证明函数正确，证明不了恢复路径调用过它（本仓栽过
+「update 断言全绿、视图没接线」的跟头）。
 
 ### 右栏原本**没有**收起能力（这次补上）
 `right_visible : Bool`（左栏是「多视图 + 收起」所以用枚举，右栏只有一个视图，

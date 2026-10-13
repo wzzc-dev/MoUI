@@ -7,6 +7,7 @@ import {
 
 import {
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
   "wzzc-dev/moui/views/container",
   "wzzc-dev/moui/views/layout",
   "wzzc-dev/moui/views/text",
