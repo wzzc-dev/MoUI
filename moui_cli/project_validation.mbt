@@ -140,7 +140,7 @@ fn cleanup_generated_project_validation(project_root : String) -> Unit {
 ///|
 fn write_validated_project_file_plan(
   target : String,
-  files : Array[PlannedFile],
+  files : Array[@plan.PlannedFile],
   validate : (String) -> Result[Unit, String],
 ) -> Result[Array[String], String] {
   let temp = match stage_file_plan(target, files) {

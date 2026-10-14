@@ -9,7 +9,7 @@
 /// (`capture=false`), matching the mobile build flow.
 fn desktop_build_once(
   flow : DesktopFlow,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   release? : Bool = false,
 ) -> Result[String, String] {
   let argv = [
@@ -79,7 +79,10 @@ fn desktop_build_result_json(
 }
 
 ///|
-fn run_build_desktop(parsed : ParsedBuild, host : HostPlatform) -> CliOutcome {
+fn run_build_desktop(
+  parsed : ParsedBuild,
+  host : @plan.HostPlatform,
+) -> CliOutcome {
   guard parsed.options is Some(options) else {
     return failed_outcome(
       "build command options are unavailable",

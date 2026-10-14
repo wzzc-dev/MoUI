@@ -9,7 +9,7 @@ pub(all) struct CliOutcome {
 priv struct ParsedNew {
   help : Bool
   json : Bool
-  options : ProjectOptions?
+  options : @plan.ProjectOptions?
 }
 
 ///|
@@ -86,7 +86,7 @@ fn new_usage() -> String {
     #|  --title TITLE           Display title. Defaults from the project id.
     #|  --template NAME         App skeleton: counter (default) or hello.
     #|  --moui-version VERSION  MoUI dependency version written into moon.mod.
-    #|                          Defaults to 0.2.2. Independent from CLI version.
+    #|                          Defaults to 0.2.3. Independent from CLI version.
     #|  --platform PLATFORM     Add a target platform; may be repeated.
     #|                          Values: web, macos, windows, linux, android,
     #|                          ios, harmonyos, or all.
@@ -183,7 +183,7 @@ fn failed_outcome(
 fn parse_new_args(
   args : Array[String],
   cwd : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[ParsedNew, String] {
   let target : Ref[String?] = Ref(None)
   let id : Ref[String?] = Ref(None)
@@ -257,8 +257,10 @@ fn parse_new_args(
     return Err("missing target path for moui new")
   }
   let resolved_target = resolve_path(cwd, raw_target)
-  let project_id = id.val.unwrap_or_else(() => project_id_from_path(raw_target))
-  let selected = match normalize_platforms(host, platforms) {
+  let project_id = id.val.unwrap_or_else(() => {
+    @plan.project_id_from_path(raw_target)
+  })
+  let selected = match @plan.normalize_platforms(host, platforms) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
@@ -268,18 +270,20 @@ fn parse_new_args(
       "unsupported template: " + template_name + " (expected counter|hello)",
     )
   }
-  let options : ProjectOptions = {
+  let options : @plan.ProjectOptions = {
     target: resolved_target,
     id: project_id,
     module_name: module_name.val.unwrap_or("local/" + project_id),
-    title: title.val.unwrap_or_else(() => default_title(project_id)),
-    moui_version: moui_version.val.unwrap_or(default_moui_dependency_version),
-    moui_skia_renderer_version: default_moui_skia_renderer_dependency_version,
+    title: title.val.unwrap_or_else(() => @plan.default_title(project_id)),
+    moui_version: moui_version.val.unwrap_or(
+      @plan.default_moui_dependency_version,
+    ),
+    moui_skia_renderer_version: @plan.default_moui_skia_renderer_dependency_version,
     template: template_name,
     platforms: selected,
     bundle_id: bundle_id.val,
   }
-  match validate_project_options(options) {
+  match @plan.validate_project_options(options) {
     Ok(_) => Ok({ help: false, json: json.val, options: Some(options), })
     Err(message) => Err(message)
   }
@@ -686,7 +690,7 @@ fn version_output(json : Bool) -> CliOutcome {
       "ok": true,
       "command": "version",
       "version": cli_version(),
-      "defaultMouiDependencyVersion": default_moui_dependency_version,
+      "defaultMouiDependencyVersion": @plan.default_moui_dependency_version,
       "note": "CLI version and default wzzc-dev/moui dependency version are independent.",
     }
     stdout_outcome(value.stringify(indent=2) + "\n")
@@ -695,7 +699,7 @@ fn version_output(json : Bool) -> CliOutcome {
       "moui " +
       cli_version() +
       "\ndefault moui dependency: wzzc-dev/moui@" +
-      default_moui_dependency_version +
+      @plan.default_moui_dependency_version +
       "\n(CLI version and dependency version are independent)\n",
     )
   }

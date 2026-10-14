@@ -1,35 +1,20 @@
 ///|
-let platform_order : ReadOnlyArray[String] = [
+pub let platform_order : ReadOnlyArray[String] = [
   "web", "macos", "windows", "linux", "android", "ios", "harmonyos",
 ]
 
 ///|
-fn is_platform(value : String) -> Bool {
+pub fn is_platform(value : String) -> Bool {
   platform_order.contains(value)
 }
 
 ///|
-fn is_mobile_platform(value : String) -> Bool {
+pub fn is_mobile_platform(value : String) -> Bool {
   value == "android" || value == "ios" || value == "harmonyos"
 }
 
 ///|
-fn detect_host_platform() -> HostPlatform {
-  if @env.get_env_var("OS") == Some("Windows_NT") ||
-    @env.get_env_var("SystemRoot") is Some(_) {
-    Windows
-  } else if @fs.path_exists("/System/Library/CoreServices") {
-    Macos
-  } else if @fs.path_exists("/proc/sys/kernel/ostype") ||
-    @fs.path_exists("/etc/os-release") {
-    Linux
-  } else {
-    Unknown
-  }
-}
-
-///|
-fn default_platforms(host : HostPlatform) -> Array[String] {
+pub fn default_platforms(host : HostPlatform) -> Array[String] {
   let result = ["web"]
   match host {
     Macos => result.push("macos")
@@ -41,7 +26,7 @@ fn default_platforms(host : HostPlatform) -> Array[String] {
 }
 
 ///|
-fn normalize_platforms(
+pub fn normalize_platforms(
   host : HostPlatform,
   requested : Array[String],
 ) -> Result[Array[String], String] {
@@ -75,7 +60,9 @@ fn normalize_platforms(
 }
 
 ///|
-fn validate_project_options(options : ProjectOptions) -> Result[Unit, String] {
+pub fn validate_project_options(
+  options : ProjectOptions,
+) -> Result[Unit, String] {
   if options.target == "" {
     return Err("project target path must not be empty")
   }
@@ -329,13 +316,20 @@ fn app_test_text(template_id? : String = "counter") -> String {
 }
 
 ///|
-fn web_pkg_text(module_name : String) -> String {
+/// Web 入口包清单。`app_alias` 是组合根包（`<module>/app`）在本包的导入别名：
+/// `moui new` 用它默认的 `@app`，Studio 导出 bundle 用 `@exported_app`——
+/// 除此之外两边是同一份契约（含 `web_abi_exports` 的宿主入口名单）。
+pub fn web_pkg_text(
+  module_name : String,
+  app_alias? : String = "app",
+) -> String {
+  let exports = web_abi_exports.map(name => "        \"\{name}\",").join("\n")
   let template =
     #|import {
     #|  "wzzc-dev/moui/backend/web",
     #|  "wzzc-dev/moui_web_renderer" @webgpu_adapter,
     #|  "wzzc-dev/moui/runtime",
-    #|  "__MODULE__/app" @app,
+    #|  "__MODULE__/app" @__APP_ALIAS__,
     #|}
     #|
     #|supported_targets = "wasm-gc"
@@ -346,22 +340,22 @@ fn web_pkg_text(module_name : String) -> String {
     #|  link: {
     #|    "wasm-gc": {
     #|      "exports": [
-    #|        "web_dispatch_event",
-    #|        "web_dispatch_pointer_input",
-    #|        "web_dispatch_semantics_action",
-    #|        "web_dispatch_route",
-    #|        "web_complete_async_clipboard_read",
-    #|        "web_complete_async_file_dialog",
+    #|__EXPORTS__
     #|      ],
     #|    },
     #|  },
     #|  targets: { "main.mbt": [ "wasm-gc" ] },
     #|)
-  template.replace_all(old="__MODULE__", new=module_name)
+  template
+  .replace_all(old="__MODULE__", new=module_name)
+  .replace_all(old="__APP_ALIAS__", new=app_alias)
+  .replace_all(old="__EXPORTS__", new=exports)
 }
 
 ///|
-fn web_main_text(title : String) -> String {
+/// Web 入口包的 `main.mbt`：组合根接线 + 宿主入口转发。ABI 部分与 Studio 导出
+/// bundle 共用 `web_abi_shim_mbt()`，这里只负责插入。
+pub fn web_main_text(title : String) -> String {
   let title = moon_string(title)
   let template =
     #|///|
@@ -377,87 +371,14 @@ fn web_main_text(title : String) -> String {
     #|    .run()
     #|}
     #|
-    #|///|
-    #|pub fn web_dispatch_event(
-    #|  kind : Int,
-    #|  raw_id : Int,
-    #|  arg0 : Int,
-    #|  arg1 : Int,
-    #|  argd : Double,
-    #|  text_id : Int,
-    #|) -> Unit {
-    #|  @web.web_dispatch_event(kind, raw_id, arg0, arg1, argd, text_id)
-    #|}
-    #|
-    #|///|
-    #|pub fn web_dispatch_pointer_input(
-    #|  raw_id : Int,
-    #|  kind : Int,
-    #|  x_px : Double,
-    #|  y_px : Double,
-    #|  delta_x_px : Double,
-    #|  delta_y_px : Double,
-    #|  button : Int,
-    #|  modifiers : Int,
-    #|) -> Int {
-    #|  @web.web_dispatch_pointer_input(
-    #|    raw_id,
-    #|    kind,
-    #|    x_px,
-    #|    y_px,
-    #|    delta_x_px,
-    #|    delta_y_px,
-    #|    button,
-    #|    modifiers,
-    #|  )
-    #|}
-    #|
-    #|///|
-    #|pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
-    #|  @web.web_dispatch_route(source_code, text_id)
-    #|}
-    #|
-    #|///|
-    #|pub fn web_dispatch_semantics_action(
-    #|  raw_id : Int,
-    #|  node_id_text_id : Int,
-    #|  generation_text_id : Int,
-    #|  action_code : Int,
-    #|  value_id : Int,
-    #|  direction_code : Int,
-    #|) -> Unit {
-    #|  @web.web_dispatch_semantics_action(
-    #|    raw_id,
-    #|    node_id_text_id,
-    #|    generation_text_id,
-    #|    action_code,
-    #|    value_id,
-    #|    direction_code,
-    #|  )
-    #|}
-    #|
-    #|///|
-    #|pub fn web_complete_async_clipboard_read(
-    #|  id : Int,
-    #|  ok : Bool,
-    #|  text_id : Int,
-    #|) -> Unit {
-    #|  @web.web_complete_async_clipboard_read(id, ok, text_id)
-    #|}
-    #|
-    #|///|
-    #|pub fn web_complete_async_file_dialog(
-    #|  id : Int,
-    #|  ok : Bool,
-    #|  text_id : Int,
-    #|) -> Unit {
-    #|  @web.web_complete_async_file_dialog(id, ok, text_id)
-    #|}
-  template.replace_all(old="__TITLE__", new=title)
+    #|__ABI__
+  template
+  .replace_all(old="__TITLE__", new=title)
+  .replace_all(old="__ABI__", new=web_abi_shim_mbt().trim_end())
 }
 
 ///|
-fn web_html_text(title : String) -> String {
+pub fn web_html_text(title : String) -> String {
   let title = html_text(title)
   let template =
     #|<!doctype html>
@@ -488,7 +409,7 @@ fn web_html_text(title : String) -> String {
 }
 
 ///|
-fn desktop_pkg_text(module_name : String, platform : String) -> String {
+pub fn desktop_pkg_text(module_name : String, platform : String) -> String {
   let template =
     #|import {
     #|  "wzzc-dev/moui/runtime",
@@ -511,7 +432,7 @@ fn desktop_pkg_text(module_name : String, platform : String) -> String {
 }
 
 ///|
-fn desktop_main_text(title : String, platform : String) -> String {
+pub fn desktop_main_text(title : String, platform : String) -> String {
   let title = moon_string(title)
   let skia_platform = match platform {
     "macos" => "MacOS"
@@ -554,7 +475,7 @@ fn gitignore_text() -> String {
 }
 
 ///|
-fn moon_work_text() -> String {
+pub fn moon_work_text() -> String {
   // Single-module workspace root. Local path deps later go through moon.work
   // members (or moon.mod.json deps.path); moon.mod import stays registry-only.
   (
@@ -566,12 +487,12 @@ fn moon_work_text() -> String {
 }
 
 ///|
-fn readme_text(options : ProjectOptions) -> String {
+pub fn readme_text(options : ProjectOptions, cli_version : String) -> String {
   let builder = StringBuilder()
   builder.write_string("# " + options.title + "\n\n")
   builder.write_string(
     "Generated by `moui` CLI " +
-    cli_version() +
+    cli_version +
     " for module `" +
     options.module_name +
     "` (template `" +
@@ -582,7 +503,7 @@ fn readme_text(options : ProjectOptions) -> String {
     "This is a standalone MoUI app. Prefer this project over cloning the full MoUI monorepo unless you are changing the framework.\n\n",
   )
   builder.write_string("## Versions\n\n")
-  builder.write_string("- CLI: `" + cli_version() + "`\n")
+  builder.write_string("- CLI: `" + cli_version + "`\n")
   builder.write_string(
     "- Default/framework dependency: `wzzc-dev/moui@" +
     options.moui_version +
@@ -654,7 +575,7 @@ fn mobile_platform_json(fields : Array[(String, Json)]) -> Json {
 }
 
 ///|
-fn mobile_config_text(options : ProjectOptions) -> String {
+pub fn mobile_config_text(options : ProjectOptions) -> String {
   let root : Map[String, Json] = Map([
     ("schemaVersion", (1 : Int).to_json()),
     ("id", options.id.to_json()),
@@ -691,8 +612,9 @@ fn mobile_config_text(options : ProjectOptions) -> String {
 }
 
 ///|
-fn build_project_file_plan(
+pub fn build_project_file_plan(
   options : ProjectOptions,
+  cli_version : String,
 ) -> Result[Array[PlannedFile], String] {
   match validate_project_options(options) {
     Ok(_) => ()
@@ -709,7 +631,7 @@ fn build_project_file_plan(
   }
   let files = [
     text_file(".gitignore", gitignore_text()),
-    text_file("README.md", readme_text(options)),
+    text_file("README.md", readme_text(options, cli_version)),
     text_file(".moui/dev.mjs", dev_runner_text()),
     text_file("moon.mod", moon_mod_text(options)),
     text_file("moon.work", moon_work_text()),
@@ -768,39 +690,4 @@ fn build_project_file_plan(
   let sorted = files.copy()
   sorted.sort_by((left, right) => left.path.lexical_compare(right.path))
   Ok(sorted)
-}
-
-///|
-fn generate_project_with_validator(
-  options : ProjectOptions,
-  validate : (String) -> Result[Unit, String],
-) -> Result[Array[String], String] {
-  let files = match build_project_file_plan(options) {
-    Ok(value) => value
-    Err(message) => return Err(message)
-  }
-  write_validated_project_file_plan(options.target, files, validate)
-}
-
-///|
-fn generate_project(options : ProjectOptions) -> Result[Array[String], String] {
-  match generate_project_with_validator(options, validate_generated_project) {
-    Ok(files) => Ok(files)
-    Err(message) if options.platforms.any(is_mobile_platform) &&
-      (
-        message.contains("drain_host_update_envelope_json") ||
-        message.contains("dispatch_host_response_envelope_json") ||
-        message.contains("session_generation") ||
-        message.contains("attach_surface")
-      ) =>
-      Err(
-        "the resolved wzzc-dev/moui@" +
-        options.moui_version +
-        " package is incompatible with the embedded-runtime entrypoint. " +
-        "Validate against a current `moon package` artifact or set MOUI_PACKAGE_ROOT " +
-        "to a current package root. The target directory was rolled back.\n" +
-        message,
-      )
-    Err(message) => Err(message)
-  }
 }

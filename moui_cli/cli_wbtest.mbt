@@ -8,7 +8,7 @@ test "new parser applies host defaults and project defaults" {
   inspect(options.id, content="demo_app")
   inspect(options.module_name, content="local/demo_app")
   inspect(options.title, content="DemoApp")
-  inspect(options.moui_version, content=default_moui_dependency_version)
+  inspect(options.moui_version, content=@plan.default_moui_dependency_version)
   inspect(options.platforms.join(","), content="web,linux")
 }
 
@@ -98,7 +98,7 @@ test "help and version routes succeed" {
   inspect(root.get("version") == Some(cli_version().to_json()), content="true")
   inspect(
     root.get("defaultMouiDependencyVersion") ==
-    Some(default_moui_dependency_version.to_json()),
+    Some(@plan.default_moui_dependency_version.to_json()),
     content="true",
   )
 }

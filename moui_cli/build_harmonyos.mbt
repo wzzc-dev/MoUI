@@ -601,7 +601,7 @@ fn stage_harmonyos_window_hosted_project(
 /// Build the HarmonyOS HAP archive using the window-hosted template.
 fn build_harmonyos(
   options : BuildHarmonyosOptions,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[BuildResult, String] {
   let _ = host
   // Make build_dir + workspace_root absolute so MBW_* env vars consumed by

@@ -313,7 +313,7 @@ fn run_package_build(args : Array[String], cwd : String) -> CliOutcome {
   }
   let name = match options.name {
     Some(value) => value
-    None => product_name(base_name(flow.app_root))
+    None => @plan.product_name(base_name(flow.app_root))
   }
   let dist_root = resolve_path(
     cwd,

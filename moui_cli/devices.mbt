@@ -270,7 +270,9 @@ fn parse_hdc_targets(output : String) -> Array[Device] {
 /// List Android devices by invoking `adb devices -l`. Returns `Err` when
 /// `adb` cannot be located or the command fails; callers should treat this as
 /// "Android tooling unavailable" and continue scanning other platforms.
-fn list_android_devices(host : HostPlatform) -> Result[Array[Device], String] {
+fn list_android_devices(
+  host : @plan.HostPlatform,
+) -> Result[Array[Device], String] {
   let _ = host
   match find_in_path("adb", detect_host_platform()) {
     None => Err("adb was not found on PATH")
@@ -292,7 +294,7 @@ fn list_android_devices(host : HostPlatform) -> Result[Array[Device], String] {
 /// when `xcrun` is unavailable (non-macOS host or missing Xcode). Physical
 /// device listing via `xctrace list devices` is merged in but tolerated when
 /// unavailable.
-fn list_ios_devices(host : HostPlatform) -> Result[Array[Device], String] {
+fn list_ios_devices(host : @plan.HostPlatform) -> Result[Array[Device], String] {
   match host {
     Macos => ()
     _ => return Err("iOS devices require macOS with Xcode installed")
@@ -318,7 +320,9 @@ fn list_ios_devices(host : HostPlatform) -> Result[Array[Device], String] {
 ///|
 /// List HarmonyOS devices by invoking `hdc list targets`. Returns `Err` when
 /// `hdc` cannot be located (typical on hosts without DevEco Studio).
-fn list_harmonyos_devices(host : HostPlatform) -> Result[Array[Device], String] {
+fn list_harmonyos_devices(
+  host : @plan.HostPlatform,
+) -> Result[Array[Device], String] {
   let _ = host
   match find_in_path("hdc", detect_host_platform()) {
     None => Err("hdc was not found on PATH")
@@ -341,7 +345,7 @@ fn list_harmonyos_devices(host : HostPlatform) -> Result[Array[Device], String] 
 /// List all devices across platforms, skipping any platform whose toolchain
 /// is unavailable. Always returns successfully; callers can display an empty
 /// list when no platform tooling is installed.
-fn list_all_devices(host : HostPlatform) -> Array[Device] {
+fn list_all_devices(host : @plan.HostPlatform) -> Array[Device] {
   let devices : Array[Device] = []
   match list_android_devices(host) {
     Ok(values) =>
@@ -368,7 +372,7 @@ fn list_all_devices(host : HostPlatform) -> Array[Device] {
 }
 
 ///|
-fn run_devices(parsed : ParsedDevices, host : HostPlatform) -> CliOutcome {
+fn run_devices(parsed : ParsedDevices, host : @plan.HostPlatform) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(devices_usage())
   }
@@ -456,7 +460,7 @@ fn run_devices(parsed : ParsedDevices, host : HostPlatform) -> CliOutcome {
 /// supplies the requested platform (or the detected host name).
 fn desktop_host_devices(
   platform : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Array[Device] {
   let host_matches = (platform == "macos" && host == Macos) ||
     (platform == "windows" && host == Windows) ||

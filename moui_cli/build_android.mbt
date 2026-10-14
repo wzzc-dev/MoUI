@@ -303,7 +303,7 @@ fn patch_android_manifest_label(text : String, label : String) -> String {
 /// Mirrors `window/modules/window/android/scripts/build-hosted-apk.sh`.
 fn build_android(
   options : BuildAndroidOptions,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[BuildResult, String] {
   let _ = host
   // Make build_dir + workspace_root absolute so MBW_* project properties

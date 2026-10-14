@@ -30,19 +30,6 @@ fn test_planned_text(files : Array[PlannedFile], path : String) -> String raise 
 }
 
 ///|
-fn test_temp_path(label : String) -> String {
-  let root = match @env.get_env_var("TMPDIR") {
-    Some(value) => value
-    None =>
-      match @env.get_env_var("TEMP") {
-        Some(value) => value
-        None => @env.get_env_var("TMP").unwrap_or(".")
-      }
-  }
-  join_path(root, "moui-cli-" + label + "-" + @env.now().to_string())
-}
-
-///|
 test "default platforms include Web and the current desktop host" {
   inspect(default_platforms(Macos).join(","), content="web,macos")
   inspect(default_platforms(Windows).join(","), content="web,windows")
@@ -71,7 +58,10 @@ test "explicit platforms are additive and normalized in canonical order" {
 ///|
 test "hello template emits greet app instead of counter" {
   match
-    build_project_file_plan(test_project_options(["web"], template="hello")) {
+    build_project_file_plan(
+      test_project_options(["web"], template="hello"),
+      "0.0.0-test",
+    ) {
     Ok(files) => {
       let app = test_planned_text(files, "app/app.mbt")
       assert_true(app.contains("Say hello"))
@@ -94,7 +84,8 @@ test "hello template emits greet app instead of counter" {
 
 ///|
 test "generated project includes a local dev entrypoint" {
-  let files = match build_project_file_plan(test_project_options(["web"])) {
+  let files = match
+    build_project_file_plan(test_project_options(["web"]), "0.0.0-test") {
     Ok(files) => files
     Err(message) => fail(message)
   }
@@ -129,7 +120,10 @@ test "project names and validation reject unsafe identifiers" {
 ///|
 test "default macOS project file plan is exact" {
   let files = match
-    build_project_file_plan(test_project_options(["web", "macos"])) {
+    build_project_file_plan(
+      test_project_options(["web", "macos"]),
+      "0.0.0-test",
+    ) {
     Ok(files) => files
     Err(message) => fail(message)
   }
@@ -169,7 +163,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.2.2",
+      #|  "mouiVersion": "0.2.3",
       #|  "platforms": [
       #|    "web",
       #|    "macos"
@@ -231,7 +225,7 @@ test "mobile config contains window-hosted platform defaults" {
     ["web", "android", "ios", "harmonyos"],
     bundle_id=Some("dev.example.sample"),
   )
-  let files = match build_project_file_plan(options) {
+  let files = match build_project_file_plan(options, "0.0.0-test") {
     Ok(files) => files
     Err(message) => fail(message)
   }
@@ -308,41 +302,6 @@ test "mobile config contains window-hosted platform defaults" {
     harmonyos.get("compatibleSdkVersion") is Some(Number(20.0, repr=_)),
     content="true",
   )
-}
-
-///|
-test "generation refuses an existing target without changing it" {
-  let target = test_temp_path("existing-target")
-  remove_tree(target)
-  let options = { ..test_project_options(["web"]), target, }
-  let first = generate_project_with_validator(options, _ => Ok(()))
-  let marker = join_path(target, "keep.txt")
-  @fs.write_string_to_file(marker, "keep") catch {
-    _ => {
-      remove_tree(target)
-      fail("could not write target marker")
-    }
-  }
-  let second = generate_project_with_validator(options, _ => Ok(()))
-  let marker_text = @fs.read_file_to_string(marker) catch { _ => "missing" }
-  remove_tree(target)
-  inspect(first is Ok(_), content="true")
-  inspect(second is Err(_), content="true")
-  inspect(marker_text, content="keep")
-}
-
-///|
-test "failed project validation leaves no target directory" {
-  let target = test_temp_path("validation-rollback")
-  remove_tree(target)
-  let options = { ..test_project_options(["web"]), target, }
-  let result = generate_project_with_validator(options, _ => {
-    Err("injected validation failure")
-  })
-  let target_exists = @fs.path_exists(target)
-  remove_tree(target)
-  inspect(result is Err("injected validation failure"), content="true")
-  inspect(target_exists, content="false")
 }
 
 ///|

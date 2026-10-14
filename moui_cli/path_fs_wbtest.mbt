@@ -47,7 +47,7 @@ test "atomic generation supports Unicode project paths" {
   let target = join_path(root, "项目")
   remove_tree(root)
   let result = write_file_plan_atomic(target, [
-    text_file("目录/说明.txt", "ok"),
+    @plan.text_file("目录/说明.txt", "ok"),
   ])
   let content = @fs.read_file_to_string(join_path(target, "目录/说明.txt")) catch {
     _ => "missing"

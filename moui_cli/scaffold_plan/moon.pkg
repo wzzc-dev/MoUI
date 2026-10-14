@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
+}
+
+// 声明式文件计划生成器：零 fs / env / FFI，只吃参数、吐「路径 → 内容」。
+// 双目标可用是这条边界的验收——Studio 的 Web 端也要能算出同一份计划。
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

@@ -1,0 +1,104 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_cli/scaffold_plan"
+
+// Values
+pub fn base_name(String) -> String
+
+pub fn build_project_file_plan(ProjectOptions, String) -> Result[Array[PlannedFile], String]
+
+pub let default_moui_dependency_version : String
+
+pub let default_moui_skia_renderer_dependency_version : String
+
+pub fn default_platforms(HostPlatform) -> Array[String]
+
+pub fn default_title(String) -> String
+
+pub fn desktop_main_text(String, String) -> String
+
+pub fn desktop_pkg_text(String, String) -> String
+
+pub fn is_mobile_platform(String) -> Bool
+
+pub fn is_platform(String) -> Bool
+
+pub fn mobile_config_text(ProjectOptions) -> String
+
+pub fn mobile_entrypoint_main_text(String) -> String
+
+pub fn mobile_entrypoint_pkg_text(String, String) -> String
+
+pub fn moon_work_text() -> String
+
+pub fn normalize_platforms(HostPlatform, Array[String]) -> Result[Array[String], String]
+
+pub fn normalized_path(String) -> String
+
+pub fn parse_project_manifest(String) -> Result[ProjectManifest, String]
+
+pub let platform_order : ReadOnlyArray[String]
+
+pub fn product_name(String) -> String
+
+pub fn project_id_from_path(String) -> String
+
+pub fn readme_text(ProjectOptions, String) -> String
+
+pub fn text_file(String, String) -> PlannedFile
+
+pub fn validate_project_options(ProjectOptions) -> Result[Unit, String]
+
+pub let web_abi_exports : ReadOnlyArray[String]
+
+pub fn web_abi_shim_mbt() -> String
+
+pub fn web_html_text(String) -> String
+
+pub fn web_main_text(String) -> String
+
+pub fn web_pkg_text(String, app_alias? : String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum HostPlatform {
+  Macos
+  Windows
+  Linux
+  Unknown
+} derive(Eq)
+pub fn HostPlatform::equal(Self, Self) -> Bool
+pub fn HostPlatform::name(Self) -> String
+pub fn HostPlatform::not_equal(Self, Self) -> Bool
+
+pub(all) struct PlannedFile {
+  path : String
+  bytes : Bytes
+}
+
+pub(all) struct ProjectManifest {
+  schema_version : Int
+  id : String
+  title : String
+  module_name : String
+  moui_version : String
+  platforms : Array[String]
+  bundle_id : String?
+}
+pub fn ProjectManifest::to_json_text(Self) -> String
+
+pub(all) struct ProjectOptions {
+  target : String
+  id : String
+  module_name : String
+  title : String
+  moui_version : String
+  moui_skia_renderer_version : String
+  template : String
+  platforms : Array[String]
+  bundle_id : String?
+}
+
+// Type aliases
+
+// Traits

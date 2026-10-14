@@ -71,7 +71,7 @@ fn run_usage() -> String {
 fn parse_run_args(
   args : Array[String],
   cwd : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[ParsedRun, String] {
   let _ = cwd
   let _ = host
@@ -284,7 +284,7 @@ fn build_options_from_run_options(
 fn resolve_target_device(
   options : RunOptions,
   platform : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[Device, String] {
   match options.device {
     Some(id) =>
@@ -378,7 +378,7 @@ fn install_on_device(
   platform : String,
   device : Device,
   artifact : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[Unit, String] {
   match platform {
     "android" => {
@@ -476,7 +476,7 @@ fn launch_on_device(
   platform : String,
   device : Device,
   app : MobileApp,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   custom_args : Array[String],
 ) -> Result[String, String] {
   match platform {
@@ -609,7 +609,7 @@ fn follow_logs(
   platform : String,
   device : Device,
   filter : String?,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[Unit, String] {
   match platform {
     "android" => {
@@ -702,7 +702,11 @@ fn run_result_to_text(
 }
 
 ///|
-fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome {
+fn run_run(
+  parsed : ParsedRun,
+  cwd : String,
+  host : @plan.HostPlatform,
+) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(run_usage())
   }

@@ -265,7 +265,7 @@ fn msvc_resolve_zlib(project_root : String) -> Result[(String, String), String] 
 /// already configured a C compiler (CC preset), meaning "inherit as-is".
 fn windows_moon_env(
   project_root : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   wgpu_native_root? : String? = None,
 ) -> Result[Array[(String, String)], String] {
   if host != Windows {

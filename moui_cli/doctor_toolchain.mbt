@@ -257,7 +257,7 @@ fn gradle_declared_version_floor(
 fn gradle_version_floor(
   project_root : String,
   executable : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[String, String]? {
   let wrapper = normalized_path(executable) ==
     normalized_path(join_path(project_root, "gradlew")) ||

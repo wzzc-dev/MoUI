@@ -38,7 +38,7 @@ fn valid_android_ndk(root : String) -> Bool {
 ///|
 fn android_gradle_command(
   project_root : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> (String, String) {
   for root in project_search_roots(project_root) {
     match
@@ -56,7 +56,7 @@ fn android_gradle_command(
 ///|
 fn android_doctor_check(
   project_root : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   required : Bool,
 ) -> DoctorCheck {
   if !required {

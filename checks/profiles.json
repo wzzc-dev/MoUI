@@ -256,11 +256,53 @@
           ]
         },
         {
+          "name": "studio scaffold tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_studio/services/scaffold",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "cli scaffold generator tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_cli",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "cli scaffold generator purity",
+          "argv": [
+            "moon",
+            "test",
+            "moui_cli/scaffold_plan",
+            "--target",
+            "wasm-gc"
+          ]
+        },
+        {
           "name": "studio export kernel sync",
           "argv": [
             "moon",
             "run",
             "moui_studio/tools/sync_kernel",
+            "--target",
+            "native",
+            "--",
+            "--check"
+          ]
+        },
+        {
+          "name": "studio export version sync",
+          "argv": [
+            "moon",
+            "run",
+            "moui_studio/tools/sync_versions",
             "--target",
             "native",
             "--",

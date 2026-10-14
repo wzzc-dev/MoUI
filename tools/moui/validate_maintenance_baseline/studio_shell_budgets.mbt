@@ -136,7 +136,17 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // 依赖)。富文本输入变换 code_newline_transform 因依赖 moui_richtext
       // 视图输入层、避免向状态插件引入渲染依赖而留壳;CodeTokenKind/token 配色
       // 是壳模型类型与 chrome 主题映射,留壳。净降 101 行 → 27,000 / 39 文件。
-      max_count: 27000,
+      // 骨架生成面出壳(2026-10-14):新建工程骨架的落盘计划(模块名归一 +
+      // 文件集 + IR 快照常量)、目录守卫与 mkdir、模板下标映射迁
+      // services/scaffold;布局探测 is_studio_app_bundle 迁 plugins/project
+      // (与 code_project_target 同域);计划→工程身份合成迁 services/project
+      // (project_source_from_plan)、删空壳包装 app.empty_program
+      // → 26,819 / 39 文件。
+      // P4b 写盘事务(2026-10-14):写盘队列加删除相(NewProjectQueueResult
+      // 复用同一游标,中断回滚已写前缀)+30;同批清掉 5 个零调用者的遗留
+      // 包装(other_language_label / center_width_of / tree_group_has_children
+      // / block_category_first / clamp_bottom_height,-42) → 26,807 / 39 文件。
+      max_count: 26807,
     },
     {
       kind: "studio shell files",

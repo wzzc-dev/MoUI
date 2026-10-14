@@ -1596,3 +1596,28 @@ text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡�
   moon 子进程锁竞争偶发失败（单包连跑 3 次全过）。测试自身已有 M8 flake 隔离
   （失败后清理重跑一次），但全模块一次跑仍可能红——**这不是回归信号**，
   判断时先单包复跑。
+
+## 脚手架收敛 P4b（2026-10-14）：生成器跨模块共用 + 写盘事务
+
+- **web 宿主 ABI 现在是跨模块契约**：`wzzc-dev/moui_cli@0.2.3` 起注册表里的
+  `scaffold_plan` 持有 `web_abi_exports` 名单 + `web_abi_shim_mbt()` 转发与
+  `web_pkg_text(module, app_alias?)` 入口清单。Studio 的
+  `services/export`（`web_pkg`/`abi_mbt`）改成调它，`moui new` 的 `web_wasm/main.mbt`
+  也插同一段——两边只差组合根别名（`@app` vs `@exported_app`）。**后果**：
+  后端加一个宿主入口 = 先发布 `moui_cli`，Studio 独立 clone 才能编过
+  （顺序见 `mooncakes-release-playbook.md`）。
+- **新建工程写盘 = 一个队列两种相位**：`NewProjectDraft.rolling_back` 决定
+  `advance_new_project_queue` 发 `write_text` 还是 `delete_file`，游标推进
+  统一走 `NewProjectQueueResult`（旧 `NewProjectFileWritten` 改名）。中断
+  （Failure/Cancelled）把队列截成已写前缀再逐项删；`FileServices` **没有删
+  目录能力**，所以回滚只保证「不留半套骨架的文件」，`ensure_parent_dirs`
+  建的空目录留在原地。
+- **`moui.project.json` 还不能当 Studio 工程身份**，两条都不是 IO 问题：
+  ① `@plan.parse_project_manifest` 要求 `module` 是 `owner/name`，Studio 骨架
+  与导出 bundle 的 `moon.mod` 用裸名（`moui new` 默认 `local/<id>`）；
+  ② 清单的 `platforms` 要能兑现——CLI 桌面入口目录是 `<platform>_skia/`，
+  Studio 骨架写 `native_app/`。先定模块名前缀与入口目录约定，再谈身份。
+- **壳行数棘轮是硬的**：往 `moui_studio/app` 加 Effect 编排前，先用零调用者
+  扫描（token 计数 vs 声明计数，排除 `_test`/`wbtest`/`i18n_catalog_generated`）
+  还债。本批 +30 行由删 5 个遗留包装（−42）抵掉，`max_count` 26,819 →
+  26,807，`checks/source-file-policy.json` 的 `update_shell.mbt` 同批收紧。

@@ -50,7 +50,7 @@ fn verify_usage() -> String {
 fn parse_verify_args(
   args : Array[String],
   cwd : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[ParsedVerify, String] {
   let _ = cwd
   let _ = host
@@ -222,7 +222,7 @@ fn write_verify_manifest(
 fn resolve_verify_device(
   options : VerifyOptions,
   platform : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[Device, String] {
   match options.device {
     Some(id) =>
@@ -248,7 +248,7 @@ fn resolve_verify_device(
 }
 
 ///|
-fn run_verify(parsed : ParsedVerify, host : HostPlatform) -> CliOutcome {
+fn run_verify(parsed : ParsedVerify, host : @plan.HostPlatform) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(verify_usage())
   }

@@ -1,6 +1,6 @@
 ///|
 fn normalized_path(path : String) -> String {
-  path.replace_all(old="\\", new="/")
+  @plan.normalized_path(path)
 }
 
 ///|
@@ -41,23 +41,7 @@ fn parent_dir(path : String) -> String {
 
 ///|
 fn base_name(path : String) -> String {
-  let path = normalized_path(path)
-  let trimmed = if path.length() > 1 && path.has_suffix("/") {
-    path[:path.length() - 1].to_owned()
-  } else {
-    path
-  }
-  let mut slash = -1
-  for index in 0..<trimmed.length() {
-    if trimmed[index] == '/' {
-      slash = index
-    }
-  }
-  if slash < 0 {
-    trimmed
-  } else {
-    trimmed[slash + 1:].to_owned()
-  }
+  @plan.base_name(path)
 }
 
 ///|
@@ -302,7 +286,7 @@ fn replace_file_atomic(path : String, bytes : Bytes) -> Result[Unit, String] {
 }
 
 ///|
-fn validate_file_plan(files : Array[PlannedFile]) -> Result[Unit, String] {
+fn validate_file_plan(files : Array[@plan.PlannedFile]) -> Result[Unit, String] {
   let paths : Map[String, Bool] = Map([])
   for file in files {
     match validate_relative_path(file.path) {
@@ -320,7 +304,7 @@ fn validate_file_plan(files : Array[PlannedFile]) -> Result[Unit, String] {
 ///|
 fn stage_file_plan(
   target : String,
-  files : Array[PlannedFile],
+  files : Array[@plan.PlannedFile],
 ) -> Result[String, String] {
   if @fs.path_exists(target) {
     return Err("target already exists: " + target)
@@ -379,24 +363,13 @@ fn commit_staged_file_plan(
 ///|
 fn write_file_plan_atomic(
   target : String,
-  files : Array[PlannedFile],
+  files : Array[@plan.PlannedFile],
 ) -> Result[Unit, String] {
   let temp = match stage_file_plan(target, files) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
   commit_staged_file_plan(temp, target)
-}
-
-///|
-fn text_file(path : String, text : String) -> PlannedFile {
-  {
-    path,
-    bytes: @utf8.encode(
-      (if text.has_suffix("\n") { text } else { text + "\n" })[:],
-      bom=false,
-    ),
-  }
 }
 
 ///|

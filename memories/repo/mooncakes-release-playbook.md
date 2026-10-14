@@ -42,6 +42,12 @@ renderers → addons → entrypoints),模块内部依赖关系决定阶段顺序
   失败。顺序是:在 MoUI 内验证通过 → 发布模块 → 下游再 pin + moon update。
   判断模块是否已上架:`~/.moon/registry/index/user/<owner>/<name>.index`
   是否存在。
+- **模块内新增的包(package)同样受这条时序约束**,不只新模块。例:`moui_cli`
+  里新增的 `scaffold_plan` 纯生成器包在 `moui_cli` 下次发布前只存在于工作区,
+  Studio 若加 `wzzc-dev/moui_cli` 依赖,独立 clone 会解析到注册表里**没有这个包**
+  的旧版本而编译失败;`validate_workspace_pins` 又把 pin 钉在
+  `checks/release-modules.json` 的已发布版本上,所以「先发布再 pin」在这里是
+  门禁强制而不是可绕的工程选择。
 
 ## 文档 token 同步面
 

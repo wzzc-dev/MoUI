@@ -1,5 +1,5 @@
 ///|
-fn mobile_entrypoint_pkg_text(
+pub fn mobile_entrypoint_pkg_text(
   module_name : String,
   platform : String,
 ) -> String {
@@ -24,7 +24,7 @@ fn mobile_entrypoint_pkg_text(
 }
 
 ///|
-fn mobile_entrypoint_main_text(platform : String) -> String {
+pub fn mobile_entrypoint_main_text(platform : String) -> String {
   let skia_platform = match platform {
     "android" => "Android"
     "ios" => "IOS"

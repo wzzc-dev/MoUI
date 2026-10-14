@@ -89,7 +89,7 @@ fn build_usage() -> String {
 fn parse_build_args(
   args : Array[String],
   cwd : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[ParsedBuild, String] {
   let _ = host
   let help = Ref(false)
@@ -506,7 +506,7 @@ fn build_harmonyos_options_from_command(
 fn run_build_internal(
   options : BuildCommandOptions,
   platform : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   app : MobileApp,
   config : CliConfig,
 ) -> Result[BuildResult, String] {
@@ -561,7 +561,7 @@ fn build_result_to_text(
 }
 
 ///|
-fn run_build(parsed : ParsedBuild, host : HostPlatform) -> CliOutcome {
+fn run_build(parsed : ParsedBuild, host : @plan.HostPlatform) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(build_usage())
   }

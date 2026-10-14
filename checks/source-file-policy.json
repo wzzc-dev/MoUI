@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1259,
-      "reason": "Raised for the right-panel VS Code sidebar form: set_right_view doc rewrite plus normalize_disabled_plugins (the RvAi fallback shared by TogglePlugin and boot restore) and the studio.right.ai command. See docs/plans/active/moui-studio-right-panel-vscode-sidebar.md. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665)."
+      "maxLines": 1253,
+      "reason": "Raised for the right-panel VS Code sidebar form: set_right_view doc rewrite plus normalize_disabled_plugins (the RvAi fallback shared by TogglePlugin and boot restore) and the studio.right.ai command. See docs/plans/active/moui-studio-right-panel-vscode-sidebar.md. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665). Lowered with the P4b shell cleanup: the zero-caller clamp_bottom_height moved out with the unused ide wrappers. See docs/plans/active/moui-studio-scaffold-convergence.md."
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -365,8 +365,8 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1418,
-      "reason": "Raised for the right-panel VS Code sidebar form: RightView regains RvAi (inspector page / AI page / PsAi workspace / hidden) and the right_view + ai_cards_folded field docs are rewritten for pagination. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665)."
+      "maxLines": 1412,
+      "reason": "Raised for the right-panel VS Code sidebar form: RightView regains RvAi (inspector page / AI page / PsAi workspace / hidden) and the right_view + ai_cards_folded field docs are rewritten for pagination. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665). Lowered with the scaffold extraction: the unused app.empty_program wrapper moved to @scaffold/@ir."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",

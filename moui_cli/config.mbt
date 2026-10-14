@@ -4,7 +4,7 @@
 // user config is never touched.
 
 ///|
-fn config_dir(host : HostPlatform) -> String {
+fn config_dir(host : @plan.HostPlatform) -> String {
   match @env.get_env_var("MOUI_CONFIG_DIR") {
     Some(value) if value != "" => value
     _ =>
@@ -33,12 +33,12 @@ fn config_dir(host : HostPlatform) -> String {
 }
 
 ///|
-fn config_path(host : HostPlatform) -> String {
+fn config_path(host : @plan.HostPlatform) -> String {
   join_path(config_dir(host), "config.json")
 }
 
 ///|
-fn read_config(host : HostPlatform) -> Result[CliConfig, String] {
+fn read_config(host : @plan.HostPlatform) -> Result[CliConfig, String] {
   let path = config_path(host)
   let text = @fs.read_file_to_string(path) catch {
     _ => return Ok(default_cli_config())
@@ -55,7 +55,7 @@ fn read_config(host : HostPlatform) -> Result[CliConfig, String] {
 ///|
 fn write_config(
   config : CliConfig,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[Unit, String] {
   let dir = config_dir(host)
   match mkdir_p(dir) {

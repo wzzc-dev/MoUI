@@ -318,7 +318,7 @@ fn compile_ios_object(
 /// `window/modules/window/ios/scripts/build-hosted-sim-app.sh`. On macOS only.
 fn build_ios(
   options : BuildIosOptions,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[BuildResult, String] {
   match host {
     Macos => ()

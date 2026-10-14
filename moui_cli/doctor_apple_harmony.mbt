@@ -57,7 +57,7 @@ fn xcode_root_supports_ios(root : String) -> Bool {
 
 ///|
 fn xcode_doctor_check(
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   macos_required : Bool,
   ios_required : Bool,
 ) -> DoctorCheck {
@@ -186,7 +186,7 @@ fn xcode_doctor_check(
 ///|
 fn harmonyos_doctor_check(
   project_root : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   required : Bool,
 ) -> DoctorCheck {
   if !required {

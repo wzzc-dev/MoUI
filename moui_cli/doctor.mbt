@@ -87,7 +87,7 @@ fn path_is_nonempty_file(path : String) -> Bool {
 ///|
 /// Backward-compatible alias for `find_in_path` defined in `cli_path.mbt`.
 /// Existing doctor call sites continue to use the `find_executable` name.
-fn find_executable(name : String, host : HostPlatform) -> String? {
+fn find_executable(name : String, host : @plan.HostPlatform) -> String? {
   find_in_path(name, host)
 }
 
@@ -120,22 +120,22 @@ fn valid_skia_root(root : String) -> Bool {
 ///|
 fn doctor_platforms(
   options : DoctorOptions,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Result[Array[String], String] {
   if options.all {
-    return Ok([ for platform in platform_order => platform ])
+    return Ok([ for platform in @plan.platform_order => platform ])
   }
   if !options.platforms.is_empty() {
     let selected : Map[String, Bool] = Map([])
     for platform in options.platforms {
       let platform = platform.to_lower()
-      if !is_platform(platform) {
+      if !@plan.is_platform(platform) {
         return Err("unsupported doctor platform: " + platform)
       }
       selected[platform] = true
     }
     let result : Array[String] = []
-    for platform in platform_order {
+    for platform in @plan.platform_order {
       if selected.contains(platform) {
         result.push(platform)
       }
@@ -144,7 +144,7 @@ fn doctor_platforms(
   }
   let manifest_path = join_path(options.project_root, "moui.project.json")
   if !@fs.path_exists(manifest_path) {
-    return Ok(default_platforms(host))
+    return Ok(@plan.default_platforms(host))
   }
   match read_project_manifest(options.project_root) {
     Ok(manifest) => Ok(manifest.platforms)
@@ -153,7 +153,7 @@ fn doctor_platforms(
 }
 
 ///|
-fn moonbit_doctor_check(host : HostPlatform) -> DoctorCheck {
+fn moonbit_doctor_check(host : @plan.HostPlatform) -> DoctorCheck {
   match find_executable("moon", host) {
     Some(path) =>
       doctor_check(
@@ -249,7 +249,7 @@ fn msvc_zlib_root(project_root : String) -> String? {
 ///|
 fn msvc_doctor_check(
   project_root : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   required : Bool,
 ) -> DoctorCheck {
   if !required {
@@ -339,7 +339,10 @@ fn web_doctor_check(required : Bool) -> DoctorCheck {
 }
 
 ///|
-fn wayland_doctor_check(host : HostPlatform, required : Bool) -> DoctorCheck {
+fn wayland_doctor_check(
+  host : @plan.HostPlatform,
+  required : Bool,
+) -> DoctorCheck {
   if !required {
     return skipped_check(
       "wayland", "Wayland is not required by the selected platforms",

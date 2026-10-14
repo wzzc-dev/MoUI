@@ -18,7 +18,7 @@ priv struct EvidenceStatus {
 fn check_evidence_ready(
   project_root : String,
   platforms : Array[String],
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> Map[String, EvidenceStatus] {
   let _ = host
   let result : Map[String, EvidenceStatus] = Map([])

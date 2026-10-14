@@ -5,7 +5,10 @@ fn ensure_workspace_file(project_root : String) -> Result[String?, String] {
     return Ok(None)
   }
   match
-    replace_file_atomic(path, @utf8.encode(moon_work_text()[:], bom=false)) {
+    replace_file_atomic(
+      path,
+      @utf8.encode(@plan.moon_work_text()[:], bom=false),
+    ) {
     Ok(_) => Ok(Some("created moon.work"))
     Err(message) => Err(message)
   }
@@ -21,19 +24,22 @@ fn ensure_readme_file(project_root : String) -> Result[String?, String] {
     Ok(value) => value
     Err(_) => return Ok(None)
   }
-  let options : ProjectOptions = {
+  let options : @plan.ProjectOptions = {
     target: project_root,
     id: manifest.id,
     module_name: manifest.module_name,
     title: manifest.title,
     moui_version: manifest.moui_version,
-    moui_skia_renderer_version: default_moui_skia_renderer_dependency_version,
+    moui_skia_renderer_version: @plan.default_moui_skia_renderer_dependency_version,
     template: "counter",
     platforms: manifest.platforms.copy(),
     bundle_id: manifest.bundle_id,
   }
   match
-    replace_file_atomic(path, @utf8.encode(readme_text(options)[:], bom=false)) {
+    replace_file_atomic(
+      path,
+      @utf8.encode(@plan.readme_text(options, cli_version())[:], bom=false),
+    ) {
     Ok(_) => Ok(Some("created README.md"))
     Err(message) => Err(message)
   }

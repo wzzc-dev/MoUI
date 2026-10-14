@@ -115,7 +115,7 @@ fn parse_config_args(args : Array[String]) -> Result[ParsedConfig, String] {
 }
 
 ///|
-fn run_config(parsed : ParsedConfig, host : HostPlatform) -> CliOutcome {
+fn run_config(parsed : ParsedConfig, host : @plan.HostPlatform) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(config_usage())
   }

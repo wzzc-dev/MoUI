@@ -8,7 +8,7 @@
 fn run_run_desktop(
   parsed : ParsedRun,
   cwd : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> CliOutcome {
   guard parsed.options is Some(options) else {
     return failed_outcome(

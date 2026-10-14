@@ -2,7 +2,7 @@
 fn platform_entrypoint_directory(platform : String) -> String {
   if platform == "web" {
     "web_wasm"
-  } else if is_mobile_platform(platform) {
+  } else if @plan.is_mobile_platform(platform) {
     platform + "_window_hosted"
   } else {
     platform + "_skia"
@@ -11,40 +11,46 @@ fn platform_entrypoint_directory(platform : String) -> String {
 
 ///|
 fn platform_files_for(
-  options : ProjectOptions,
+  options : @plan.ProjectOptions,
   platform : String,
-) -> Result[Array[PlannedFile], String] {
-  if !is_platform(platform) {
+) -> Result[Array[@plan.PlannedFile], String] {
+  if !@plan.is_platform(platform) {
     return Err("unsupported platform: " + platform)
   }
   if platform == "web" {
     return Ok([
-      text_file("web_wasm/moon.pkg", web_pkg_text(options.module_name)),
-      text_file("web_wasm/main.mbt", web_main_text(options.title)),
-      text_file("web_wasm/index.html", web_html_text(options.title)),
+      @plan.text_file(
+        "web_wasm/moon.pkg",
+        @plan.web_pkg_text(options.module_name),
+      ),
+      @plan.text_file("web_wasm/main.mbt", @plan.web_main_text(options.title)),
+      @plan.text_file("web_wasm/index.html", @plan.web_html_text(options.title)),
     ])
   }
   if platform == "macos" || platform == "windows" || platform == "linux" {
     let directory = platform_entrypoint_directory(platform)
     return Ok([
-      text_file(
+      @plan.text_file(
         directory + "/moon.pkg",
-        desktop_pkg_text(options.module_name, platform),
+        @plan.desktop_pkg_text(options.module_name, platform),
       ),
-      text_file(
+      @plan.text_file(
         directory + "/main.mbt",
-        desktop_main_text(options.title, platform),
+        @plan.desktop_main_text(options.title, platform),
       ),
     ])
   }
-  if is_mobile_platform(platform) {
+  if @plan.is_mobile_platform(platform) {
     let directory = platform_entrypoint_directory(platform)
     return Ok([
-      text_file(
+      @plan.text_file(
         directory + "/moon.pkg",
-        mobile_entrypoint_pkg_text(options.module_name, platform),
+        @plan.mobile_entrypoint_pkg_text(options.module_name, platform),
       ),
-      text_file(directory + "/main.mbt", mobile_entrypoint_main_text(platform)),
+      @plan.text_file(
+        directory + "/main.mbt",
+        @plan.mobile_entrypoint_main_text(platform),
+      ),
     ])
   }
   Err("unsupported platform: " + platform)
@@ -57,7 +63,7 @@ fn merge_platform_lists(
 ) -> Result[(Array[String], Array[String]), String] {
   let selected : Map[String, Bool] = Map([])
   for platform in existing {
-    if !is_platform(platform) {
+    if !@plan.is_platform(platform) {
       return Err("existing project contains unsupported platform: " + platform)
     }
     selected[platform] = true
@@ -66,13 +72,13 @@ fn merge_platform_lists(
   for requested_platform in requested {
     let platform = requested_platform.to_lower()
     if platform == "all" {
-      for value in platform_order {
+      for value in @plan.platform_order {
         if !selected.contains(value) {
           selected[value] = true
           added.push(value)
         }
       }
-    } else if is_platform(platform) {
+    } else if @plan.is_platform(platform) {
       if !selected.contains(platform) {
         selected[platform] = true
         added.push(platform)
@@ -86,7 +92,7 @@ fn merge_platform_lists(
     }
   }
   let merged : Array[String] = []
-  for platform in platform_order {
+  for platform in @plan.platform_order {
     if selected.contains(platform) {
       merged.push(platform)
     }
@@ -97,13 +103,13 @@ fn merge_platform_lists(
 ///|
 fn merge_mobile_config_for_platforms(
   existing_text : String?,
-  options : ProjectOptions,
+  options : @plan.ProjectOptions,
 ) -> Result[String, String] {
-  if !options.platforms.any(is_mobile_platform) {
+  if !options.platforms.any(@plan.is_mobile_platform) {
     return Ok(existing_text.unwrap_or(""))
   }
   match existing_text {
-    None | Some("") => Ok(mobile_config_text(options))
+    None | Some("") => Ok(@plan.mobile_config_text(options))
     Some(text) => {
       let parsed = @json.parse(text) catch {
         _ => return Err("moui.mobile.json is invalid JSON")
@@ -111,7 +117,7 @@ fn merge_mobile_config_for_platforms(
       guard parsed is Object(root) else {
         return Err("moui.mobile.json root must be an object")
       }
-      let generated = @json.parse(mobile_config_text(options)) catch {
+      let generated = @json.parse(@plan.mobile_config_text(options)) catch {
         _ => return Err("could not build mobile platform defaults")
       }
       guard generated is Object(generated_root) else {
@@ -136,7 +142,7 @@ fn merge_mobile_config_for_platforms(
 ///|
 fn write_planned_files_into(
   project_root : String,
-  files : Array[PlannedFile],
+  files : Array[@plan.PlannedFile],
 ) -> Result[Array[String], String] {
   match validate_file_plan(files) {
     Ok(_) => ()
@@ -180,22 +186,22 @@ fn add_platforms_to_project(
     Some(value) => Some(value)
     None => manifest.bundle_id
   }
-  let project_options : ProjectOptions = {
+  let project_options : @plan.ProjectOptions = {
     target: options.project_root,
     id: manifest.id,
     module_name: manifest.module_name,
     title: manifest.title,
     moui_version: manifest.moui_version,
-    moui_skia_renderer_version: default_moui_skia_renderer_dependency_version,
+    moui_skia_renderer_version: @plan.default_moui_skia_renderer_dependency_version,
     template: "counter",
     platforms: merged,
     bundle_id,
   }
-  match validate_project_options(project_options) {
+  match @plan.validate_project_options(project_options) {
     Ok(_) => ()
     Err(message) => return Err(message)
   }
-  let files : Array[PlannedFile] = []
+  let files : Array[@plan.PlannedFile] = []
   for platform in added {
     match platform_files_for(project_options, platform) {
       Ok(platform_files) =>
@@ -205,7 +211,7 @@ fn add_platforms_to_project(
       Err(message) => return Err(message)
     }
   }
-  let updated_manifest : ProjectManifest = {
+  let updated_manifest : @plan.ProjectManifest = {
     schema_version: 1,
     id: manifest.id,
     title: manifest.title,
@@ -222,7 +228,7 @@ fn add_platforms_to_project(
     Ok(_) => ()
     Err(message) => return Err(message)
   }
-  if merged.any(is_mobile_platform) {
+  if merged.any(@plan.is_mobile_platform) {
     let mobile_path = join_path(options.project_root, "moui.mobile.json")
     let existing = if @fs.path_exists(mobile_path) {
       let text = @fs.read_file_to_string(mobile_path) catch {
@@ -254,7 +260,7 @@ fn add_platforms_to_project(
   }
   // Keep README current when present or create it when absent.
   let readme_path = join_path(options.project_root, "README.md")
-  let readme = readme_text(project_options)
+  let readme = @plan.readme_text(project_options, cli_version())
   if @fs.path_exists(readme_path) {
     match replace_file_atomic(readme_path, @utf8.encode(readme[:], bom=false)) {
       Ok(_) => ()
@@ -263,7 +269,7 @@ fn add_platforms_to_project(
   } else {
     match
       write_planned_files_into(options.project_root, [
-        text_file("README.md", readme),
+        @plan.text_file("README.md", readme),
       ]) {
       Ok(_) => ()
       Err(message) => return Err(message)

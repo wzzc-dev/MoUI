@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
+  "wzzc-dev/moui_cli/scaffold_plan" @plan,
 }
 
 supported_targets = "+native"

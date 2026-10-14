@@ -55,7 +55,7 @@ fn first_executable(paths : Array[String]) -> String? {
 ///|
 /// Split the PATH environment variable using the platform-specific separator
 /// (`;` on Windows, `:` elsewhere). Returns an empty array when PATH is unset.
-fn path_entries(host : HostPlatform) -> Array[String] {
+fn path_entries(host : @plan.HostPlatform) -> Array[String] {
   match @env.get_env_var("PATH") {
     Some(value) => {
       let separator = if host == Windows { ";" } else { ":" }
@@ -68,7 +68,7 @@ fn path_entries(host : HostPlatform) -> Array[String] {
 ///|
 /// Return the candidate executable file names for `name` on `host`. On
 /// Windows, also tries `.exe`, `.cmd`, and `.bat` suffixes.
-fn executable_names(name : String, host : HostPlatform) -> Array[String] {
+fn executable_names(name : String, host : @plan.HostPlatform) -> Array[String] {
   if host == Windows {
     if name.to_lower().has_suffix(".exe") {
       [name]
@@ -83,7 +83,7 @@ fn executable_names(name : String, host : HostPlatform) -> Array[String] {
 ///|
 /// Search for an executable named `name` in every PATH directory. Returns the
 /// full path to the first match, or `None` if not found.
-fn find_in_path(name : String, host : HostPlatform) -> String? {
+fn find_in_path(name : String, host : @plan.HostPlatform) -> String? {
   for directory in path_entries(host) {
     let root = if directory == "" { "." } else { directory }
     for candidate in executable_names(name, host) {
@@ -102,7 +102,7 @@ fn find_in_path(name : String, host : HostPlatform) -> String? {
 fn find_executable_in_home(
   name : String,
   home : String?,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
 ) -> String? {
   match home {
     Some(root) => {

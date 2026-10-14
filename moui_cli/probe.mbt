@@ -188,7 +188,7 @@ fn probe_android(
   device : Device,
   app_id : String,
   bundle_id : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   timeout_seconds : Int,
 ) -> ProbeResult {
   let _ = host
@@ -266,7 +266,7 @@ fn probe_android(
 fn probe_ios(
   device : Device,
   bundle_id : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   timeout_seconds : Int,
 ) -> ProbeResult {
   match host {
@@ -345,7 +345,7 @@ fn probe_harmonyos(
   device : Device,
   bundle_name : String,
   module_name : String,
-  host : HostPlatform,
+  host : @plan.HostPlatform,
   timeout_seconds : Int,
 ) -> ProbeResult {
   let _ = host
