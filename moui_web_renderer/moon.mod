@@ -7,7 +7,7 @@ preferred_target = "wasm-gc"
 supported_targets = "+wasm-gc+wasm"
 
 import {
-  "wzzc-dev/moui@0.2.2",
+  "wzzc-dev/moui@0.2.3",
 }
 
 readme = "README.md"
