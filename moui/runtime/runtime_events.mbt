@@ -428,7 +428,6 @@ fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
         Some(target),
         current=previous_focus,
       )
-      println("[focus-dbg] constrained_ok=\{constrained == Some(target)}")
       if constrained == Some(target) {
         ignore(self.commit_focus(Some(target)))
         true
