@@ -1,0 +1,6 @@
+# Playground 浏览器编译资产管线(website/playground)
+
+- Moon 新版 workspace graph(`_build/<target>/<cfg>/build/all_pkgs.json`)的条目只有 `root/rel/artifact`,**没有 `deps`**。Playground manifest 的链接闭包曾依赖 graph deps,结果闭包退化成 roots 本身,`linkCore` 只拿到 5 个 package core,moonc 在 `lib/xml/mir/monofy_analyze.ml` Assert_failure 崩掉,页面显示 `Core link failed (5 packages): 0,248,Assert_failure,...`。看到这条 panic 先查 manifest 闭包,不要先怀疑用户代码。
+- 现在(schemaVersion 2)的 deps 来源是 `moon build <path> --target wasm-gc --release --strip --dry-run -v`:它打印闭包内**每个**包(包括缓存新鲜的)的 `moonc build-package` 命令行;每包的直接 import 就是 `-i <path>:<alias>` token。`$MOON_HOME/.../bundle/...` 是 stdlib 直接跳过;`_build/<target>/<cfg>/(build|check)/<id>/<stem>.mi:<alias>` 的 `<id>` 段即包 id(注意去掉 stem 目录段)。外部 registry 包(window/Milky2018/*)也构建在同一个 `_build/...` 树下,格式统一。
+- `compiler-worker.js` 现在硬校验 `manifest.schemaVersion === 2` 并在缺 `deps` 数组时报清晰错误;`test-playground-assets.mjs` 断言闭包完整(每条非 std dep 都在 manifest 里、runtime deps 非空、`wzzc-dev/moui/render` 与 `wzzc-dev/window/core` 在闭包内)。这三处任何一处被绕过,故障又会变成浏览器里的 compiler panic。
+- 手工端到端验证:在 node 里 require `dist/playground/assets/moonc-web.cjs`,按 worker 的 compile() 流程 buildPackage(user) → buildPackage(runner) → 遍历 manifest 闭包 → linkCore,能产出 ~0.46MB wasm 即证明浏览器路径通了。

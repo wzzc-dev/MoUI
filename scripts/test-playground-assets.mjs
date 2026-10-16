@@ -54,10 +54,28 @@ assert.equal(/codemirror/i.test(hostSources), false, "Playground contains CodeMi
 assert.equal(/https?:\/\/(?:cdn\.|unpkg\.|esm\.sh|jsdelivr\.)/i.test(hostSources), false, "Playground contains an unpinned CDN dependency");
 const manifest = JSON.parse(readFileSync(join(root, "assets/manifest.json"), "utf8"));
 assert.equal(manifest.target, "wasm-gc");
+assert.equal(manifest.schemaVersion, 2, "compiler manifest must record per-package dependency edges");
 assert.equal(manifest.compiler.package, "@moonbit/moonc-worker");
 assert.equal(manifest.compiler.version, pinnedToolchain.mooncWorker, "Playground compiler version must match .moonbit-toolchain");
 assert.equal(manifest.compiler.integrity, pinnedToolchain.mooncWorkerIntegrity, "Playground compiler integrity must match .moonbit-toolchain");
 assert.ok(manifest.allowedImports.includes("wzzc-dev/moui/views"));
+// The in-browser linker walks manifest.packages dependency edges to build the
+// link closure; empty or dangling edges degrade the closure to the roots and
+// surface as an opaque moonc panic, so validate the graph at packaging time.
+const closureIds = new Set(Object.keys(manifest.packages));
+for (const [id, item] of Object.entries(manifest.packages)) {
+  assert.ok(Array.isArray(item.deps), `package ${id} has no dependency edges`);
+  for (const dependency of item.deps) {
+    assert.ok(
+      dependency.path.startsWith("moonbitlang/core/") || closureIds.has(dependency.path),
+      `dangling dependency ${id} -> ${dependency.path}`,
+    );
+  }
+}
+assert.ok(manifest.packages["wzzc-dev/moui/runtime"].deps.length > 0, "runner graph lost its dependency edges");
+for (const internal of ["wzzc-dev/moui/render", "wzzc-dev/window/core"]) {
+  assert.ok(closureIds.has(internal), `link closure lost transitive dependency ${internal}`);
+}
 assert.ok(manifest.lessons.lessons.length >= 6);
 for (const asset of manifest.assets) {
   assert.equal(/\.tsx?$/.test(asset.path), false, `TypeScript asset found ${asset.path}`);

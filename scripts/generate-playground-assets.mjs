@@ -71,24 +71,78 @@ function collectFiles(root, prefix = "") {
   return result;
 }
 
-function buildPlaygroundReleaseDependencies() {
-  // Build every required package (allowlist + Runner imports) for wasm-gc
-  // release so the generator is self-contained and works right after
-  // `moon clean`, without relying on leftover release .mi/.core artifacts
-  // produced by unrelated website builds. Package id "wzzc-dev/<path>" maps
-  // to the repo-relative directory "<path>".
-  const env = {
+function releaseBuildEnv() {
+  return {
     ...process.env,
     MOUI_SKIA_DISABLE_PREBUILD_SKIA:
       process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA || "1",
   };
-  for (const id of PLAYGROUND_REQUIRE_PACKAGES) {
-    if (!id.startsWith("wzzc-dev/")) continue;
-    runCommand("moon", ["build", id.slice("wzzc-dev/".length), "--target", "wasm-gc", "--release", "--strip"], {
+}
+
+// Package id "wzzc-dev/<path>" maps to the repo-relative directory "<path>".
+const requirePackagePaths = PLAYGROUND_REQUIRE_PACKAGES
+  .filter(id => id.startsWith("wzzc-dev/"))
+  .map(id => id.slice("wzzc-dev/".length));
+
+function buildPlaygroundReleaseDependencies() {
+  // Build every required package (allowlist + Runner imports) for wasm-gc
+  // release so the generator is self-contained and works right after
+  // `moon clean`, without relying on leftover release .mi/.core artifacts
+  // produced by unrelated website builds.
+  const env = releaseBuildEnv();
+  for (const path of requirePackagePaths) {
+    runCommand("moon", ["build", path, "--target", "wasm-gc", "--release", "--strip"], {
       cwd: repoRoot,
       env,
     });
   }
+}
+
+// Current Moon workspace graphs (`all_pkgs.json`) list packages without their
+// dependency edges, so the link closure cannot be read from the graph file.
+// `moon build --dry-run -v` prints the planned `moonc build-package` command
+// for every package in the closure (even cache-fresh ones); each command lists
+// the package's direct imports as `-i <build-dir>/<id>/<stem>.mi:<alias>`.
+// Std-library imports point into `$MOON_HOME/.../bundle/...` and are skipped.
+function miPathToPackageId(token) {
+  const normalized = token.replaceAll("\\", "/");
+  const match = normalized.match(
+    /^(?:.*\/)?_build\/[^/]+\/(?:debug|release)\/(?:build|check)\/(.+)\/[^/]+\.mi$/,
+  );
+  return match ? match[1] : null;
+}
+
+function releaseDependencyEdges(env) {
+  const edges = new Map();
+  for (const path of requirePackagePaths) {
+    const stdout = execFileSync(
+      "moon",
+      ["build", path, "--target", "wasm-gc", "--release", "--strip", "--dry-run", "-v"],
+      {
+        cwd: repoRoot,
+        env,
+        encoding: "utf8",
+        maxBuffer: 128 * 1024 * 1024,
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    for (const line of stdout.split(/\r?\n/)) {
+      if (!line.startsWith("moonc build-package")) continue;
+      const pkg = line.match(/(?:^|\s)-pkg\s+(\S+)/);
+      if (!pkg) continue;
+      if (!edges.has(pkg[1])) edges.set(pkg[1], new Map());
+      const record = edges.get(pkg[1]);
+      for (const found of line.matchAll(/(?:^|\s)-i\s+'([^']+)'|(?:^|\s)-i\s+(\S+)/g)) {
+        const token = (found[1] ?? found[2]).replaceAll("'", "");
+        const colon = token.lastIndexOf(":");
+        if (colon < 0) continue;
+        const dependency = miPathToPackageId(token.slice(0, colon));
+        if (!dependency) continue;
+        if (!record.has(dependency)) record.set(dependency, token.slice(colon + 1));
+      }
+    }
+  }
+  return edges;
 }
 
 const outDir = parseOut(process.argv.slice(2));
@@ -214,19 +268,25 @@ for (const pkg of packageGraph.packages) {
   const core = join(releaseRoot, id, `${stem}.core`);
   if (!existsSync(mi) || !existsSync(core)) continue;
   allPackages[id] = {
-    deps: (pkg.deps || []).map(dep => ({ path: dep.path, alias: dep.alias })),
     mi: `assets/core/${id}/${stem}.mi`,
     core: `assets/core/${id}/${stem}.core`,
   };
 }
 
+const dependencyEdges = releaseDependencyEdges(releaseBuildEnv());
 const packageIds = new Set();
 const collectPackage = id => {
   if (id.startsWith("moonbitlang/core/") || packageIds.has(id)) return;
   const item = allPackages[id];
   if (!item) throw new Error(`Missing prebuilt Playground dependency: ${id}`);
+  const edges = dependencyEdges.get(id);
+  if (!edges) {
+    throw new Error(
+      `No planned dependency edges for ${id}; \`moon build --dry-run -v\` did not cover it (toolchain mismatch?).`,
+    );
+  }
   packageIds.add(id);
-  for (const dependency of item.deps) collectPackage(dependency.path);
+  for (const dependency of edges.keys()) collectPackage(dependency);
 };
 for (const id of [
   ...ALLOWED_IMPORTS,
@@ -239,7 +299,11 @@ for (const id of [
 ]) {
   collectPackage(id);
 }
-const packages = Object.fromEntries([...packageIds].sort().map(id => [id, allPackages[id]]));
+const packages = Object.fromEntries([...packageIds].sort().map(id => [id, {
+  deps: [...dependencyEdges.get(id)].map(([path, alias]) => ({ path, alias })),
+  mi: allPackages[id].mi,
+  core: allPackages[id].core,
+}]));
 
 const coreModuleRoot = process.env.MOONBIT_PLAYGROUND_CORE_ROOT || join(homedir(), ".moon/lib/core");
 const coreBundleRoot = join(coreModuleRoot, "_build/wasm-gc/release/bundle");
@@ -274,7 +338,7 @@ const trackedAssets = collectFiles(outDir)
   .filter(file => !file.rel.startsWith(".npm-tmp/"))
   .map(file => ({ path: file.rel, hash: hashFile(file.full), bytes: statSync(file.full).size }));
 const manifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   target: "wasm-gc",
   compiler: { package: "@moonbit/moonc-worker", version: COMPILER_VERSION, integrity: COMPILER_INTEGRITY },
   userPackage: "wzzc-dev/moui_playground/user",

@@ -32,6 +32,12 @@ native Skia mainline package tests, internal `moui_tests/tester` harness tests,
 `moui_devtools` snapshot/debug tests, Showcase app tests,
 and Web builds.
 
+The source-file policy scan covers the main repo's own roots only:
+`moui_studio` is a subrepo with its own size gates (parallel CI), so its
+files and ratchets are deliberately absent from
+`checks/source-file-policy.json` and a studio submodule bump never
+re-baselines the main repo's budgets (2026-10-16 owner decision).
+
 The daily gate is sourced from `checks/profiles.json` and can be inspected with
 `node scripts/check.mjs --profile daily --list`. Representative command tokens
 that should stay synchronized with the catalog include:

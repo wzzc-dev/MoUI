@@ -58,9 +58,16 @@ function validateProject(files) {
 
 async function loadManifest() {
   if (!manifestPromise) {
-    manifestPromise = fetch(new URL("../assets/manifest.json", self.location.href)).then(response => {
+    manifestPromise = fetch(new URL("../assets/manifest.json", self.location.href)).then(async response => {
       if (!response.ok) throw new Error("Playground compiler manifest is unavailable.");
-      return response.json();
+      const manifest = await response.json();
+      if (manifest.schemaVersion !== 2) {
+        throw new Error(
+          `Playground assets are stale (compiler manifest schema v${manifest.schemaVersion}); ` +
+          "rebuild and redeploy the Playground assets.",
+        );
+      }
+      return manifest;
     });
   }
   return manifestPromise;
@@ -144,8 +151,11 @@ function reachablePackageIds(manifest, roots) {
     if (id.startsWith("moonbitlang/core/") || reachable.has(id)) return;
     const item = manifest.packages[id];
     if (!item) throw new Error(`Package core is unavailable for ${id}`);
+    if (!Array.isArray(item.deps)) {
+      throw new Error(`Playground manifest is missing dependency edges for ${id}.`);
+    }
     reachable.add(id);
-    for (const dependency of item.deps || []) visit(dependency.path);
+    for (const dependency of item.deps) visit(dependency.path);
   };
   for (const root of roots) visit(root);
   // The linker walks package symbols recursively. A dependency-first DFS is
