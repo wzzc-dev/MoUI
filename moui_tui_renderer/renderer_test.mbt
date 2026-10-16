@@ -358,6 +358,85 @@ test "unprojectable roles stay visible as placeholders" {
 }
 
 ///|
+/// R-F4:Content 控件的字形签名是它在 cell 栅格里唯一的可辨认表示。
+/// Button `[Go]`、Checkbox `(x)`、TextField `abc|`、Slider `═>` 此前只有
+/// PTY 层的间接证据,没有单元级点名 —— 这条测试把四个签名钉在一起。
+test "interactive roles paint their glyph markers" {
+  let base = @core.SemanticsState::default()
+  let root = node(
+    1UL,
+    role=@core.SemanticsRole::Group,
+    frame=rect(0.0, 0.0, 160.0, 96.0),
+    children=[nid(2UL), nid(3UL), nid(4UL), nid(5UL)],
+  )
+  let button = node(
+    2UL,
+    role=@core.SemanticsRole::Button,
+    frame=rect(8.0, 16.0, 48.0, 16.0),
+    label="Go",
+  )
+  let toggle = node(
+    3UL,
+    role=@core.SemanticsRole::Checkbox,
+    frame=rect(8.0, 32.0, 48.0, 16.0),
+    label="Wrap",
+    state={
+      focused: false,
+      disabled: false,
+      selected: false,
+      pressed: false,
+      checked: Some(@core.SemanticsCheckedState::Checked),
+      expanded: base.expanded,
+      invalid: base.invalid,
+      required: base.required,
+      read_only: base.read_only,
+      busy: base.busy,
+      multiline: base.multiline,
+      password: base.password,
+      modal: base.modal,
+    },
+  )
+  let field = node(
+    4UL,
+    role=@core.SemanticsRole::TextField,
+    frame=rect(8.0, 48.0, 48.0, 16.0),
+    label="Save",
+  )
+  let slider = node(
+    5UL,
+    role=@core.SemanticsRole::Slider,
+    frame=rect(8.0, 64.0, 80.0, 16.0),
+  )
+  let (sink, _) = capture()
+  let renderer = @moui_tui_renderer.TuiRenderer::new(
+    metrics=metrics(160.0, 96.0),
+    sink~,
+  )
+  ignore(
+    renderer.render_frame(
+      semantics_frame(nodes=[root, button, toggle, field, slider], root~),
+    ),
+  )
+  let lines : Array[String] = []
+  for y in 0..<renderer.rows() {
+    lines.push(renderer.line_text(y))
+  }
+  println("\n===== role glyphs =====\n\{grid(lines)}")
+  // 整帧 golden(2026-10-16,tui-hardening H2):四个 Content 控件的字形签名
+  // 与边框共存于一帧;checkbox 标签被窄框截断成 `Wr` 也是钉住的行为之一。
+  assert_eq(lines, [
+    "╭──────────────────╮", "│[Go]              │",
+    "│(x) Wr            │", "│Save|             │", "│═>════════        │",
+    "╰──────────────────╯",
+  ])
+  assert_true(lines[1].contains("[Go]"))
+  // checkbox 标签会被窄框截断,这里钉的是 checked marker 本体。
+  assert_true(lines[2].contains("(x)"))
+  assert_true(lines[3].contains("Save|"))
+  assert_true(lines[4].contains("═>"))
+}
+
+///|
 test "a leaf without text still leaves a cell" {
   let root = node(
     1UL,

@@ -13,7 +13,7 @@ pub fn ansi(sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog) -> @ren
 
 pub fn ansi_runs(Array[(String, Int, @moui_tui.CellAttrs)]) -> String
 
-pub fn attrs_for(String, @core.SemanticsState) -> @moui_tui.CellAttrs
+pub fn attrs_for(@core.SemanticsRole, @core.SemanticsState) -> @moui_tui.CellAttrs
 
 pub fn cell_text_system(CellBox) -> @core.TextSystem
 

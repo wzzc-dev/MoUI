@@ -404,7 +404,7 @@ fn paint_node(
       let seq = canvas.new_seq(role_priority(kind))
       if kind == Region {
         let (r0, c0, r1, c1) = box
-        canvas.draw_box(r0, c0, r1, c1, attrs_for(role, node.state), seq)
+        canvas.draw_box(r0, c0, r1, c1, attrs_for(node.role, node.state), seq)
       } else if kind != Item {
         // 条目行自己不写字:它的名字是子节点文本的聚合,
         // 再写一遍只会把子节点打断成残字。焦点/选中由帧末高亮带表达。
@@ -414,7 +414,7 @@ fn paint_node(
           node,
           role,
           node_text(node),
-          attrs_for(role, node.state),
+          attrs_for(node.role, node.state),
           box,
           seq,
         )
@@ -469,13 +469,7 @@ fn project_payload(
     match quantize_box(box, cell, canvas.cols, canvas.rows) {
       None => ()
       Some((r0, c0, r1, c1)) =>
-        canvas.style_range(
-          r0,
-          c0,
-          r1,
-          c1,
-          attrs_for(role_tag(nodes[i].role), state),
-        )
+        canvas.style_range(r0, c0, r1, c1, attrs_for(nodes[i].role, state))
     }
   }
   for (i, box) in painted {
@@ -486,13 +480,7 @@ fn project_payload(
     match quantize_box(box, cell, canvas.cols, canvas.rows) {
       None => ()
       Some((r0, c0, r1, c1)) =>
-        canvas.style_range(
-          r0,
-          c0,
-          r1,
-          c1,
-          attrs_for(role_tag(nodes[i].role), state),
-        )
+        canvas.style_range(r0, c0, r1, c1, attrs_for(nodes[i].role, state))
     }
   }
   offscreen

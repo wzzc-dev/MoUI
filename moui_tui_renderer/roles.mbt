@@ -122,24 +122,61 @@ fn fg(color : @tui.TermColor) -> @tui.CellAttrs {
 }
 
 ///|
+/// 未聚焦角色 → 基础 attrs,全匹配 `SemanticsRole`:新增角色必须在这里
+/// 表态(给色,或明确并入默认灰),样式层和 `role_tag`/`role_kind` 一样
+/// 在编译期兜底,而不是运行时静默换色。
+fn base_attrs(role : @core.SemanticsRole) -> @tui.CellAttrs {
+  match role {
+    @core.Button => @tui.attrs_with(fg(@tui.Indexed(4)), bold=Some(true))
+    @core.Heading =>
+      @tui.attrs_with(fg(@tui.TermColor::Default), bold=Some(true))
+    @core.Text | @core.Status | @core.Alert => fg(@tui.Indexed(2))
+    @core.TextField
+    | @core.ComboBox
+    | @core.Slider
+    | @core.Progress
+    | @core.Checkbox
+    | @core.Switch
+    | @core.Radio => fg(@tui.Indexed(5))
+    @core.None
+    | @core.Link
+    | @core.Navigation
+    | @core.Main
+    | @core.List
+    | @core.ListItem
+    | @core.Grid
+    | @core.ScrollView
+    | @core.Tab
+    | @core.Dialog
+    | @core.Tooltip
+    | @core.Menu
+    | @core.ButtonGroup
+    | @core.Form
+    | @core.FormField
+    | @core.Tree
+    | @core.TreeItem
+    | @core.Group
+    | @core.WebView
+    | @core.Image
+    | @core.Option
+    | @core.Table
+    | @core.Row
+    | @core.Cell
+    | @core.Separator => fg(@tui.Indexed(6))
+  }
+}
+
+///|
 /// 语义状态 + 角色 → SGR 属性。焦点与选中必须有可见差异,
 /// 否则键盘导航在终端里无法辨认。
-pub fn attrs_for(role : String, state : @core.SemanticsState) -> @tui.CellAttrs {
-  let interactive = [
-    "TextField", "ComboBox", "Slider", "Progress", "Checkbox", "Switch", "Radio",
-  ]
+pub fn attrs_for(
+  role : @core.SemanticsRole,
+  state : @core.SemanticsState,
+) -> @tui.CellAttrs {
   let base = if state.focused {
     @tui.attrs_with(fg(@tui.Indexed(3)), bold=Some(true), underline=Some(true))
-  } else if role == "Button" {
-    @tui.attrs_with(fg(@tui.Indexed(4)), bold=Some(true))
-  } else if role == "Heading" {
-    @tui.attrs_with(fg(@tui.TermColor::Default), bold=Some(true))
-  } else if role == "Text" || role == "Status" || role == "Alert" {
-    fg(@tui.Indexed(2))
-  } else if interactive.contains(role) {
-    fg(@tui.Indexed(5))
   } else {
-    fg(@tui.Indexed(6))
+    base_attrs(role)
   }
   let selected = if state.selected {
     @tui.attrs_with(base, reverse=Some(true))

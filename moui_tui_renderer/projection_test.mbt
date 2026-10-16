@@ -196,6 +196,13 @@ test "a container box and its items project into a recognisable grid" {
     lines.push(renderer.line_text(y))
   }
   println("\n===== box + items =====\n\{grid(lines)}")
+  // 整帧 golden(2026-10-16,tui-hardening H2):钉死区域只画框、条目只写字、
+  // 空行保留边框的完整投影。改投影规则要连带改这里,并在 AGENTS.md 记日期理由。
+  assert_eq(lines, [
+    "╭──────────────────╮", "│alpha             │",
+    "│beta              │", "│gamma             │", "│                  │",
+    "╰──────────────────╯",
+  ])
   // 区域只画框,不写字:`@core.List` 的 label 是集合摘要(`Selectable list`
   // 这类),画在盒顶会和第一个条目抢同一行,被更深的文本打断成残字。
   // 放弃的方案:每个区域画带标题的盒 —— 半截标题比没有标题更难读。
@@ -374,11 +381,17 @@ test "fully off-screen frames are dropped instead of clamped to the edge" {
 ///|
 test "focus and selection are visually distinct from plain text" {
   let plain = @moui_tui_renderer.attrs_for(
-    "ListItem",
+    @core.ListItem,
     @core.SemanticsState::default(),
   )
-  let focused = @moui_tui_renderer.attrs_for("ListItem", state(focused=true))
-  let selected = @moui_tui_renderer.attrs_for("ListItem", state(selected=true))
+  let focused = @moui_tui_renderer.attrs_for(
+    @core.ListItem,
+    state(focused=true),
+  )
+  let selected = @moui_tui_renderer.attrs_for(
+    @core.ListItem,
+    state(selected=true),
+  )
   assert_true(focused.underline)
   assert_true(focused.bold)
   assert_true(selected.reverse)

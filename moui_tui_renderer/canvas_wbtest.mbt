@@ -72,3 +72,36 @@ test "a band that moves away resets the attrs of cells nobody claimed" {
   // 字形不受清扫误伤
   assert_true(cell_at(canvas, 1, 2).ch == "x")
 }
+
+///|
+/// R-P5:词间空位只在能被本画笔归属时才填空白。直接抢格会把兄弟节点的
+/// 首字母擦成空格 —— 实测过的 `Entry 0` 变 ` ntry 0`。这里让两个同优先级
+/// 画笔竞争一格:先占的 `X` 必须原样存活,后面的词只能绕开它。
+test "a word gap never paints over a sibling glyph" {
+  let canvas = Canvas::new(8, 2)
+  let sibling = canvas.new_seq(role_priority(Content))
+  ignore(canvas.put(0, 3, "X", @tui.CellAttrs::default(), sibling))
+  let mine = canvas.new_seq(role_priority(Content))
+  canvas.write_boxed(0, 0, 0, 7, "ab cd", @tui.CellAttrs::default(), mine)
+  assert_true(cell_at(canvas, 0, 0).ch == "a")
+  // 词尾空格落在无主的 2 格:这是允许的。
+  assert_true(cell_at(canvas, 0, 2).ch == " ")
+  // 3 格是兄弟的首字母,gap 与 'c' 都不能把它擦掉。
+  assert_true(cell_at(canvas, 0, 3).ch == "X")
+  assert_true(cell_at(canvas, 0, 4).ch == "d")
+}
+
+///|
+/// R-P6:盒子小到画不出笔画时退化为一个 `~` 标记格,区域不能整个消失;
+/// 而 3x3 起步的盒必须画出真正的四角,`~` 不许出现在能画框的盒上。
+test "a too-small box degrades to a marker cell, a real box gets corners" {
+  let canvas = Canvas::new(8, 4)
+  let tiny = canvas.new_seq(role_priority(Region))
+  canvas.draw_box(0, 0, 0, 3, @tui.CellAttrs::default(), tiny)
+  assert_true(cell_at(canvas, 0, 0).ch == "~")
+  let real = canvas.new_seq(role_priority(Region))
+  canvas.draw_box(1, 0, 3, 2, @tui.CellAttrs::default(), real)
+  assert_true(cell_at(canvas, 1, 0).ch == "╭")
+  assert_true(cell_at(canvas, 3, 2).ch == "╯")
+  assert_true(cell_at(canvas, 2, 0).ch == "│")
+}
