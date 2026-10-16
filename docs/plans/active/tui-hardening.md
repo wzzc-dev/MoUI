@@ -64,8 +64,11 @@
 - [x] H3 `sh scripts/tui-pty-smoke.sh` green 3 consecutive local runs;
       workflow_dispatch of `moui-runtime-gates.yml` runs the new job green;
       `node scripts/smoke-check.mjs --check` green; `tui-output-path.md` in `done/`.
-- [ ] H4 default-palette golden frames byte-identical to H2; themed PTY case
+- [x] H4 default-palette golden frames byte-identical to H2; themed PTY case
       green; `moon info`/api-surface regenerated.
+      Scope note: the planned Ctrl-T live toggle became a launch-time
+      `--theme dark` entry flag (proved end to end in the PTY gate);
+      mid-session reload is recorded as debt in the H4 design.
 - [ ] H5 PTY suite green with two binaries and no lost assertion strength
       (each ported case names its origin); `sh scripts/check.sh --profile
       daily` green; this plan moved to `done/`.
@@ -85,4 +88,5 @@
 | 2026-10-16 | **H1 landed**: 9 commits (carrier `6a1495307` → fmt `c31cffdad`), focus-dbg removed (owner approval recorded in tui-output-path header), validate_api_surface ratchet settled 1669→1680 with dated reason, six static validators green, `sh scripts/check.sh --profile pr` green end-to-end (194 steps), PTY gate 13/13 before and after the fmt commit. |
 | 2026-10-16 | **H2 landed** (`7fa80d067`): attrs_for/base_attrs exhaustive on the enum (F4); AGENTS.md contract R1–F5 with deliberate-absences section; the 100x30 split golden was evaluated, captured and rejected in favour of content assertions (rationale recorded in the contract); P5/P6/B1/role-glyph tests added; box+items and role-glyph frames pinned as inline goldens, byte-identical to H1 behaviour; 69/69 + PTY 13/13 + six validators green. |
 | 2026-10-16 | **H3 landed**: settle became content-anchored (`await_frame` needle+confirm, `await_reply` for attrs-only frames; 13 cases migrated, 3 consecutive PTY runs 13/13); `smoke/gates.json` mode `manual`→`run`, `ci.gate` `manual-dispatch`→`nightly`; nightly `moui-runtime-gates.yml` gains the `tui-pty-smoke` job (macos-14, runs through `smoke-gate.mjs --run`); `docs/testing.md` PTY section rewritten; `tui-output-path.md` closed into `done/`. |
+| 2026-10-16 | **H4 landed** (`5190e0155`): TuiPalette + from_theme quantization; set_palette with forced rebuild; optional `theme` on the host and `palette` on `ansi()`; `--theme dark` on the layers entry; palette_test 4 cases; PTY gate 14/14 x3; versions bumped to 0.2.0 with pins synced; capability report EN+zh updated. |
 | 2026-10-16 | pre-existing infra note (not this plan's defect): `moui_studio/services/compile_native` failed twice in earlier profile runs under load (assertion flake, then SIGSEGV) while passing 4/4 in isolation; HEAD `20bf3089c` (studio scaffold_plan refactor) has never been pushed, so CI has not validated that surface. Unrelated to TUI paths; left for the owner. |
