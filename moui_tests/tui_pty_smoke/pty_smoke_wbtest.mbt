@@ -707,7 +707,11 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
       let top = row_or_check(session, "╭")
       let bottom = row_or_check(session, "╰")
       let spans = ring_spans(start, top)
-      check(session, "short window: both panes drew a ring", spans.length() == 2)
+      check(
+        session,
+        "short window: both panes drew a ring",
+        spans.length() == 2,
+      )
       // 一栏只剩一行内边:这是 12 行窗口的实测几何,框再吃一格就没有内容行可画了。
       check(
         session,
@@ -725,13 +729,18 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
           session,
           "short window: ring rows carry only strokes",
           ring_glyph_count(start, top, left, right) == 0 &&
-            ring_glyph_count(start, bottom, left, right) == 0,
+          ring_glyph_count(start, bottom, left, right) == 0,
         )
       }
       // 滚一格:第二层被推进可视区,但它必须落在内边行之外就没有的位置上,
       // 而不是写在底边框那一格(修之前的实测症状)。
       let item_row = row_or_check(session, "] Background")
-      let list_col = col_or_check(session, start, row_or_check(session, "[ Layers"), '[')
+      let list_col = col_or_check(
+        session,
+        start,
+        row_or_check(session, "[ Layers"),
+        '[',
+      )
       session.send("\u{1b}[<65;\{(list_col + 1)};\{(item_row + 1)}M")
       let scrolled = session.screen()
       for span in ring_spans(scrolled, top) {
@@ -740,7 +749,7 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
           session,
           "wheel: the ring rows are still only strokes",
           ring_glyph_count(scrolled, top, left, right) == 0 &&
-            ring_glyph_count(scrolled, bottom, left, right) == 0,
+          ring_glyph_count(scrolled, bottom, left, right) == 0,
         )
       }
       check(
@@ -769,7 +778,7 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
           session,
           "tap: the ring rows are still only strokes",
           ring_glyph_count(tapped, top, left, right) == 0 &&
-            ring_glyph_count(tapped, bottom, left, right) == 0,
+          ring_glyph_count(tapped, bottom, left, right) == 0,
         )
       }
       session.finish()
@@ -816,7 +825,11 @@ async test "S7 a moved selection sweeps the band off the vacated row" {
     None => println("skip: no tui_layers binary, set MOUI_TUI_LAYERS_BIN")
     Some(session) => {
       let start = session.screen()
-      check(session, "band flow: list starts on Background", start.has("sel=Background"))
+      check(
+        session,
+        "band flow: list starts on Background",
+        start.has("sel=Background"),
+      )
       let bg = row_or_check(session, "] Background")
       let below = bg + 1
       // 初始选中就有带:文字行下面那一整行空格子都是反白。
@@ -829,7 +842,11 @@ async test "S7 a moved selection sweeps the band off the vacated row" {
       // 新带必须真的落在 Grid 行上。
       session.send("\u{1b}[B")
       let moved = session.screen()
-      check(session, "band flow: selection moved to Grid", moved.has("sel=Grid"))
+      check(
+        session,
+        "band flow: selection moved to Grid",
+        moved.has("sel=Grid"),
+      )
       check(
         session,
         "band flow: the vacated tail line keeps no reversed cell",
@@ -867,7 +884,11 @@ async test "S7 a clicked row keeps the selection band on itself" {
       // 点 Background 的行名(owned 格):点击选中的行自己必须亮整行带。
       tap_cell(session, col=nth_glyph_col_mid(start, bg), row=bg)
       let picked = session.screen()
-      check(session, "clicked flow: selection followed the click", picked.has("sel=Background"))
+      check(
+        session,
+        "clicked flow: selection followed the click",
+        picked.has("sel=Background"),
+      )
       check(
         session,
         "clicked flow: the clicked row carries the band on its own line",
@@ -875,20 +896,30 @@ async test "S7 a clicked row keeps the selection band on itself" {
       )
       let grid_start = row_or_check(session, "] Grid")
       // 点 Grid:带必须**当拍**跟到 Grid,Background 连尾行一起收干净。
-      tap_cell(session, col=nth_glyph_col_mid(picked, grid_start), row=grid_start)
+      tap_cell(
+        session,
+        col=nth_glyph_col_mid(picked, grid_start),
+        row=grid_start,
+      )
       let moved = session.screen()
-      check(session, "clicked flow: selection moved to Grid", moved.has("sel=Grid"))
+      check(
+        session,
+        "clicked flow: selection moved to Grid",
+        moved.has("sel=Grid"),
+      )
       check(
         session,
         "clicked flow: the band lands on the clicked row",
-        reversed_in_cols(moved, grid_start, col_from=list.0, col_to=list.1) >= 10,
+        reversed_in_cols(moved, grid_start, col_from=list.0, col_to=list.1) >=
+        10,
       )
       let bg_after = row_or_check(session, "] Background")
       check(
         session,
         "clicked flow: the vacated row and its tail keep no reversed cell",
         reversed_in_cols(moved, bg_after, col_from=list.0, col_to=list.1) == 0 &&
-          reversed_in_cols(moved, bg_after + 1, col_from=list.0, col_to=list.1) == 0,
+        reversed_in_cols(moved, bg_after + 1, col_from=list.0, col_to=list.1) ==
+        0,
       )
       // 点空白处(两个面板之间,布景没有按钮):焦点散了,带不许闪没。
       tap_cell(session, col=45, row=grid_start)
@@ -896,15 +927,24 @@ async test "S7 a clicked row keeps the selection band on itself" {
       check(
         session,
         "clicked flow: a dead-zone click does not blink the band",
-        reversed_in_cols(blurred, grid_start, col_from=list.0, col_to=list.1) >= 10,
+        reversed_in_cols(blurred, grid_start, col_from=list.0, col_to=list.1) >=
+        10,
       )
       // 右栏:点 [runtime] 的标签(最后一个 '[',折叠钮后面那一枚)。
       // 被点行的带必须从**行首**一直盖过标签字形:修复前标签按钮的焦点带
       // 把标签四格的反白刷掉,行带只剩折叠钮前面那一小块。
       let runtime_row = row_or_check(session, "[runtime]")
-      tap_cell(session, col=last_open_bracket(moved, runtime_row), row=runtime_row)
+      tap_cell(
+        session,
+        col=last_open_bracket(moved, runtime_row),
+        row=runtime_row,
+      )
       let tree_frame = session.screen()
-      check(session, "clicked flow: tree selection moved", tree_frame.has("node=runtime"))
+      check(
+        session,
+        "clicked flow: tree selection moved",
+        tree_frame.has("node=runtime"),
+      )
       let runtime_now = row_or_check(session, "[runtime]")
       let src_now = row_or_check(session, "[src]")
       let label_col = last_open_bracket(tree_frame, runtime_now)
@@ -916,14 +956,26 @@ async test "S7 a clicked row keeps the selection band on itself" {
       check(
         session,
         "clicked flow: the tree band covers the label glyphs too",
-        reversed_in_cols(tree_frame, runtime_now, col_from=label_col, col_to=label_col + 8) >=
+        reversed_in_cols(
+          tree_frame,
+          runtime_now,
+          col_from=label_col,
+          col_to=label_col + 8,
+        ) >=
         8,
       )
       check(
         session,
         "clicked flow: the previous tree selection keeps no reversed cell",
-        reversed_in_cols(tree_frame, src_now, col_from=tree.0, col_to=tree.1) == 0 &&
-          reversed_in_cols(tree_frame, src_now + 1, col_from=tree.0, col_to=tree.1) == 0,
+        reversed_in_cols(tree_frame, src_now, col_from=tree.0, col_to=tree.1) ==
+        0 &&
+        reversed_in_cols(
+          tree_frame,
+          src_now + 1,
+          col_from=tree.0,
+          col_to=tree.1,
+        ) ==
+        0,
       )
       session.finish()
     }

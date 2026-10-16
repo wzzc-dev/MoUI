@@ -268,10 +268,8 @@ fn append_text_field_editing_overlay(
     0,
     max_int(0, layout.caret_positions.length() - 1),
   )
-  let cursor_x = text_frame.origin.x + caret_offset(
-    layout.caret_positions,
-    caret,
-  )
+  let cursor_x = text_frame.origin.x +
+    caret_offset(layout.caret_positions, caret)
   let cursor = text_editing_visual_cursor_rect(
     @core.Rect::new(
       x=cursor_x,
@@ -359,14 +357,9 @@ fn append_text_field_composition_underline(
           start,
           max_int(start, layout.caret_positions.length() - 1),
         )
-        let x0 = text_frame.origin.x + caret_offset(
-          layout.caret_positions,
-          start,
-        )
-        let x1 = text_frame.origin.x + caret_offset(
-          layout.caret_positions,
-          end,
-        )
+        let x0 = text_frame.origin.x +
+          caret_offset(layout.caret_positions, start)
+        let x1 = text_frame.origin.x + caret_offset(layout.caret_positions, end)
         if x1 > x0 {
           commands.push(
             FillRect(

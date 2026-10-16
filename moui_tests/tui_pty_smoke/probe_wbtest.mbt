@@ -12,7 +12,8 @@ fn band_rows(session : Session, label : String) -> Unit {
       }
     }
     if !cols.is_empty() {
-      out = out + "\n  row \{row}: \{cols.length()} 格反白 首=\{cols[0]} 尾=\{cols[cols.length() - 1]}"
+      out = out +
+        "\n  row \{row}: \{cols.length()} 格反白 首=\{cols[0]} 尾=\{cols[cols.length() - 1]}"
     }
   }
   println("=== band \{label} ===\{out}")

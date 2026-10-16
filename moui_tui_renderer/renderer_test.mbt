@@ -178,12 +178,10 @@ test "a shrink repaints the new grid, not the old one" {
 /// 就是最纯粹的残留载体;带移到别处时,被放弃的那一行必须整行重发,
 /// 且下一帧回到零字节(清扫是一次性的,不能把每个空帧都变成重绘)。
 test "a band that moves away rewrites the cells it vacated" {
-  let root = container(
-    1UL,
-    frame=rect(0.0, 0.0, 160.0, 96.0),
-    title="Files",
-    children=[nid(2UL), nid(3UL)],
-  )
+  let root = container(1UL, frame=rect(0.0, 0.0, 160.0, 96.0), title="Files", children=[
+    nid(2UL),
+    nid(3UL),
+  ])
   // 条目行(Item)不写任何字形:行里每一个格子都是无归属的空格,
   // 旧实现的输入增量对它们无能为力,这是残留的唯一藏身处。
   let head = node(
@@ -204,9 +202,7 @@ test "a band that moves away rewrites the cells it vacated" {
     sink~,
   )
   ignore(
-    renderer.render_frame(
-      semantics_frame(nodes=[root, head, tail], root~),
-    ),
+    renderer.render_frame(semantics_frame(nodes=[root, head, tail], root~)),
   )
   // 选中挪到第二条行:第一条行的带必须整行重发
   let head_dropped = node(
