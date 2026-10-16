@@ -2,9 +2,12 @@
 /// PTY 宿主:openpty + posix_spawn 派生真实终端会话,经 RawFd 异步读写。
 /// 仅支持 Unix(native)。
 #borrow(shell)
+#borrow(args)
 extern "C" fn pty_spawn(
   shell : Bytes,
   shell_len : Int,
+  args : Bytes,
+  args_len : Int,
   cols : Int,
   rows : Int,
 ) -> Int64 = "moonpty_spawn"
@@ -30,15 +33,34 @@ pub struct Pty {
 }
 
 ///|
-/// 派生一个运行 shell 的 PTY 会话。
-pub async fn Pty::spawn(shell : String, cols : Int, rows : Int) -> Pty? {
+/// 派生一个运行 shell 的 PTY 会话。`args` 是传给可执行文件的命令行参数
+/// (冒烟门用它开主题档等变体会话);空数组与旧行为完全一致。
+pub async fn Pty::spawn(
+  shell : String,
+  cols : Int,
+  rows : Int,
+  args? : Array[String] = [],
+) -> Pty? {
   let bytes = @utf8.encode(shell)
   let arr : Array[Byte] = []
   for i in 0..<bytes.length() {
     arr.push(bytes[i])
   }
   arr.push(b'\x00')
-  let packed = pty_spawn(Bytes::from_array(arr), bytes.length(), cols, rows)
+  let arg_bytes = @utf8.encode(args.join("\n"))
+  let arg_arr : Array[Byte] = []
+  for i in 0..<arg_bytes.length() {
+    arg_arr.push(arg_bytes[i])
+  }
+  arg_arr.push(b'\x00')
+  let packed = pty_spawn(
+    Bytes::from_array(arr),
+    bytes.length(),
+    Bytes::from_array(arg_arr),
+    arg_bytes.length(),
+    cols,
+    rows,
+  )
   if packed < 0L {
     return None
   }

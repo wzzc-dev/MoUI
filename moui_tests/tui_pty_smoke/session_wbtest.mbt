@@ -55,9 +55,14 @@ let session_lock : @async.Mutex = @async.Mutex::Mutex()
 /// 派生会话。首帧不在这里等:每个用例用 `await_frame` 等内容 needle,
 /// 启动等待自然被 `WAIT_BUDGET_MS` 覆盖。`path` 必须是已构建好的可执行文件;
 /// 拿到锁的一刻到 `finish` 之间就是这个用例独享的终端。
-async fn Session::open(path : String, cols~ : Int, rows~ : Int) -> Session {
+async fn Session::open(
+  path : String,
+  cols~ : Int,
+  rows~ : Int,
+  args? : Array[String] = [],
+) -> Session {
   session_lock.acquire()
-  match @pty.Pty::spawn(path, cols, rows) {
+  match @pty.Pty::spawn(path, cols, rows, args~) {
     None => {
       session_lock.release()
       abort("PTY 冒烟无法派生被测程序:" + path)

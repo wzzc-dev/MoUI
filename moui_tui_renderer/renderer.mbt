@@ -50,6 +50,7 @@ pub struct TuiRenderer {
   text_system : @core.TextSystem
   sink : TuiSink
   diagnostics : DegradeLog
+  mut palette : TuiPalette
   mut frame_count : Int
   mut present_count : Int
   mut offscreen_nodes : Int
@@ -61,6 +62,7 @@ pub fn TuiRenderer::new(
   sink~ : TuiSink,
   cell? : CellBox = CellBox::default(),
   diagnostics? : DegradeLog = DegradeLog::new(),
+  palette? : TuiPalette = TuiPalette::default(),
 ) -> TuiRenderer {
   let canvas = Canvas::new(cell.cols_of(metrics), cell.rows_of(metrics))
   {
@@ -70,10 +72,23 @@ pub fn TuiRenderer::new(
     text_system: cell_text_system(cell),
     sink,
     diagnostics,
+    palette,
     frame_count: 0,
     present_count: 0,
     offscreen_nodes: 0,
   }
+}
+
+///|
+/// 换调色板并强制下一帧整屏重建:attrs 遍布每一格,增量通路比较的是
+/// 「上次发出的格子」,换色后所有格子都算变了。重建走 `Canvas::resize`
+/// 同款的全帧标记,由下一次 `render_frame` 发一个 `ESC[2J` 帧。
+pub fn TuiRenderer::set_palette(
+  self : TuiRenderer,
+  palette : TuiPalette,
+) -> Unit {
+  self.palette = palette
+  self.canvas.force_rebuild()
 }
 
 ///|
@@ -153,6 +168,7 @@ pub fn TuiRenderer::render_frame(
         payload,
         self.cell,
         self.diagnostics,
+        self.palette,
       )
       self.offscreen_nodes = offscreen
       if offscreen > 0 {

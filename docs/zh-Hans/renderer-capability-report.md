@@ -26,6 +26,14 @@ Windows/Linux 平台状态，也不会提升全局 Skia 字体排印或 native p
 把 `gap` 写成 `supported` 等于声称画得出画不出来的东西。它不进入产品 `auto`
 选择，只由显式声明它的 composition root 注册。
 
+颜色经由 `TuiPalette` 进入：默认调色板就是这条终端路出厂时的固定 xterm
+16 色映射（字节不变，两条内联 golden 帧守着），`TuiPalette::from_theme`
+把应用的 `@core.Theme` 各角色量化进 xterm-256 立方——`primary` 给按钮与
+焦点、`secondary` 给交互控件、`on_surface` 给正文、`error` 给警示。终端
+宿主在启动时接受可选 `theme`（`run_program`/`run_view`）；`moui/core` 的
+语义节点不携带颜色，像素渲染器与语义契约都不受影响。运行中热切换主题
+记为债务（tui-hardening H4）。
+
 | 功能 | Skia 光栅原生 | Web wasm-gc | Native wgpu 诊断 | Sun CPU 光栅 | 终端 cell ANSI | 后续工作 |
 | --- | --- | --- | --- | --- | --- |
 | 矩形 | supported | supported | supported | supported | supported | Skia rect fill/stroke 有真实 native renderer 像素 smoke 覆盖。 |

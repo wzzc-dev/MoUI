@@ -457,6 +457,16 @@ tests capture it. Cell-level text coverage is one or two cells per code point
 with no shaper, which is why `Text shaping` and `Emoji text` are `partial`:
 `moui_tui.unicode_width` decides advance, the host terminal font decides glyphs.
 
+Colors enter through `TuiPalette`: the default palette is the fixed xterm
+16-color mapping the terminal path shipped with (unchanged bytes; two inline
+golden frames guard it), and `TuiPalette::from_theme` quantizes an app's
+`@core.Theme` palette roles into the xterm-256 cube — `primary` for buttons
+and focus, `secondary` for interactive controls, `on_surface` for text,
+`error` for alerts. The terminal host takes an optional `theme` at launch
+(`run_program`/`run_view`); `moui/core` carries no color on semantics nodes,
+so pixel renderers and the semantics contract are untouched. Mid-session
+theme reload is recorded as debt (tui-hardening H4).
+
 ## Update Rule
 
 When improving image, clip, opacity, transform, or any other draw command

@@ -10,6 +10,7 @@ pub fn ansi(
   sink~ : TuiSink,
   cell? : CellBox = CellBox::default(),
   diagnostics? : DegradeLog = DegradeLog::new(),
+  palette? : TuiPalette = TuiPalette::default(),
 ) -> @render.RendererProvider {
   let caps = tui_feature_capabilities()
   @render.RendererProvider::new(
@@ -26,6 +27,7 @@ pub fn ansi(
         sink~,
         cell~,
         diagnostics~,
+        palette~,
       )
       Bound(renderer.to_renderer_session())
     },

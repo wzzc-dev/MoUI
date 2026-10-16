@@ -127,6 +127,12 @@ fn Canvas::begin_frame(self : Canvas) -> Unit {
 }
 
 ///|
+/// 强制下一帧整屏重建(换调色板这类「内容没变但每一格的 attrs 都变了」)。
+fn Canvas::force_rebuild(self : Canvas) -> Unit {
+  self.rebuild = true
+}
+
+///|
 /// 帧末清扫:上一帧画过、这一帧没认领的格子刷白。
 /// 宽字符右半由左半一并清掉,否则会在行里留下吃不掉的一格。
 fn Canvas::sweep_stale(self : Canvas) -> Unit {

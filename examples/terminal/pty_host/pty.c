@@ -35,12 +35,17 @@ extern int openpty(int *amaster, int *aslave, char *name,
 /*
  * 派生一个运行 shell 的 PTY 会话。
  * 返回 Int64:低 32 位 = master fd,高 32 位 = 子进程 pid;失败返回 -1。
+ * args 为 '\n' 分隔的可选参数串(MoonBit 侧拼好,空串=无参数):
+ * 冒烟门用它给被测程序传命令行(如 `--theme dark`);shell 仍是 argv[0]。
  */
-int64_t moonpty_spawn(unsigned char *shell, int64_t shell_len, int64_t cols,
+int64_t moonpty_spawn(unsigned char *shell, int64_t shell_len,
+                      unsigned char *args, int64_t args_len, int64_t cols,
                       int64_t rows) {
   struct winsize ws;
   char *cmd;
-  char *argv[2];
+  char *argsbuf = NULL;
+  char *argv[16];
+  int argc = 0;
   pid_t pid = -1;
   int master = -1;
   int slave = -1;
@@ -57,8 +62,33 @@ int64_t moonpty_spawn(unsigned char *shell, int64_t shell_len, int64_t cols,
   }
   memcpy(cmd, shell, (size_t)shell_len);
   cmd[shell_len] = '\0';
+  argv[argc++] = cmd;
+  if (args != NULL && args_len > 0) {
+    argsbuf = (char *)malloc((size_t)args_len + 1);
+    if (argsbuf == NULL) {
+      free(cmd);
+      return -1;
+    }
+    memcpy(argsbuf, args, (size_t)args_len);
+    argsbuf[args_len] = '\0';
+    char *start = argsbuf;
+    for (char *p = argsbuf; p <= argsbuf + args_len; p++) {
+      if (*p == '\n' || p == argsbuf + args_len) {
+        *p = '\0';
+        if (p > start) {
+          if (argc >= 15) {
+            break;
+          }
+          argv[argc++] = start;
+        }
+        start = p + 1;
+      }
+    }
+  }
+  argv[argc] = NULL;
   if (openpty(&master, &slave, NULL, NULL, &ws) < 0) {
     free(cmd);
+    free(argsbuf);
     return -1;
   }
   /* openpty 在 macOS 不设置 CLOEXEC;避免后台子进程继承 master。 */
@@ -70,6 +100,7 @@ int64_t moonpty_spawn(unsigned char *shell, int64_t shell_len, int64_t cols,
     close(master);
     close(slave);
     free(cmd);
+    free(argsbuf);
     return -1;
   }
   if (posix_spawnattr_init(&attr) != 0) {
@@ -77,6 +108,7 @@ int64_t moonpty_spawn(unsigned char *shell, int64_t shell_len, int64_t cols,
     close(master);
     close(slave);
     free(cmd);
+    free(argsbuf);
     return -1;
   }
   rc = posix_spawn_file_actions_adddup2(&actions, slave, 0);
@@ -97,6 +129,7 @@ int64_t moonpty_spawn(unsigned char *shell, int64_t shell_len, int64_t cols,
     close(master);
     close(slave);
     free(cmd);
+    free(argsbuf);
     return -1;
   }
   /* 让子进程成为新会话首进程,并关闭所有继承的宿主 fd(CLOEXEC_DEFAULT)。 */
@@ -108,16 +141,16 @@ int64_t moonpty_spawn(unsigned char *shell, int64_t shell_len, int64_t cols,
     close(master);
     close(slave);
     free(cmd);
+    free(argsbuf);
     return -1;
   }
 
-  argv[0] = cmd;
-  argv[1] = NULL;
   rc = posix_spawn(&pid, cmd, &actions, &attr, argv, environ);
   posix_spawn_file_actions_destroy(&actions);
   posix_spawnattr_destroy(&attr);
   close(slave);
   free(cmd);
+  free(argsbuf);
   if (rc != 0) {
     close(master);
     return -1;

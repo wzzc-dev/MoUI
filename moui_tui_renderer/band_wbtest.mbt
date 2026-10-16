@@ -131,6 +131,7 @@ test "the selected band wins every cell it shares with the focused band" {
       payload_of(nodes=[root, row, button], root~),
       CellBox::default(),
       DegradeLog::new(),
+      TuiPalette::default(),
     ),
   )
   // 重叠且无字形:选中的反白必须活着(顺序反了这里就没有 reverse)。

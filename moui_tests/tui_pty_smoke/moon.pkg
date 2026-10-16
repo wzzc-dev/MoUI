@@ -4,6 +4,9 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "examples/terminal/pty_host" @pty,
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_tui" @tui,
+  "wzzc-dev/moui_tui_renderer" @tui_renderer,
 } for "wbtest"
 
 supported_targets = "+native"

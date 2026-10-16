@@ -1,4 +1,6 @@
 import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui_terminal_host" @terminal_host,
   "examples/tui_layers/app" @layers_app,
 }

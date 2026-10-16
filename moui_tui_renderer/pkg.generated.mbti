@@ -9,7 +9,7 @@ import {
 }
 
 // Values
-pub fn ansi(sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog) -> @render.RendererProvider
+pub fn ansi(sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog, palette? : TuiPalette) -> @render.RendererProvider
 
 pub fn ansi_runs(Array[(String, Int, @moui_tui.CellAttrs)]) -> String
 
@@ -30,6 +30,8 @@ pub fn note_dropped_commands(DegradeLog, Array[@core.DrawCommand], Array[@core.P
 pub fn paint_order(Array[@core.SemanticsNode], @core.SemanticsNodeId?) -> Array[Int]
 
 pub fn quantize(@core.Rect, CellBox, Int, Int) -> (Int, Int, Int, Int)
+
+pub fn quantize_color(@core.Color) -> @moui_tui.TermColor
 
 pub fn role_kind(@core.SemanticsRole) -> RoleKind
 
@@ -96,12 +98,27 @@ pub fn RoleKind::equal(Self, Self) -> Bool
 pub fn RoleKind::not_equal(Self, Self) -> Bool
 pub fn RoleKind::to_repr(Self) -> @debug.Repr
 
+pub(all) struct TuiPalette {
+  primary : @moui_tui.TermColor
+  interactive : @moui_tui.TermColor
+  content : @moui_tui.TermColor
+  status : @moui_tui.TermColor
+  alert : @moui_tui.TermColor
+  heading : @moui_tui.TermColor
+  neutral : @moui_tui.TermColor
+  focus : @moui_tui.TermColor
+}
+pub fn TuiPalette::attrs_for(Self, @core.SemanticsRole, @core.SemanticsState) -> @moui_tui.CellAttrs
+pub fn TuiPalette::default() -> Self
+pub fn TuiPalette::from_theme(@core.Theme) -> Self
+
 pub struct TuiRenderer {
   mut metrics : @core.SurfaceMetrics
   cell : CellBox
   text_system : @core.TextSystem
   sink : TuiSink
   diagnostics : DegradeLog
+  mut palette : TuiPalette
   mut frame_count : Int
   mut present_count : Int
   mut offscreen_nodes : Int
@@ -111,12 +128,13 @@ pub fn TuiRenderer::cols(Self) -> Int
 pub fn TuiRenderer::diagnostics(Self) -> DegradeLog
 pub fn TuiRenderer::frame_count(Self) -> Int
 pub fn TuiRenderer::line_text(Self, Int) -> String
-pub fn TuiRenderer::new(metrics~ : @core.SurfaceMetrics, sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog) -> Self
+pub fn TuiRenderer::new(metrics~ : @core.SurfaceMetrics, sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog, palette? : TuiPalette) -> Self
 pub fn TuiRenderer::offscreen_node_count(Self) -> Int
 pub fn TuiRenderer::present_count(Self) -> Int
 pub fn TuiRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
 pub fn TuiRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
 pub fn TuiRenderer::rows(Self) -> Int
+pub fn TuiRenderer::set_palette(Self, TuiPalette) -> Unit
 pub fn TuiRenderer::text_system(Self) -> @core.TextSystem
 pub fn TuiRenderer::to_renderer_session(Self) -> @render.RendererSession
 

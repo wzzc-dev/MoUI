@@ -10,9 +10,9 @@ import {
 }
 
 // Values
-pub fn[Model, Msg] run_program(program~ : @core.Program[Model, Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int) -> TerminalExit
+pub fn[Model, Msg] run_program(program~ : @core.Program[Model, Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int, theme? : @core.Theme?) -> TerminalExit
 
-pub fn[Msg] run_view(root~ : @core.View[Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int, on_message? : ((Msg) -> Unit)?) -> TerminalExit
+pub fn[Msg] run_view(root~ : @core.View[Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int, on_message? : ((Msg) -> Unit)?, theme? : @core.Theme?) -> TerminalExit
 
 // Errors
 

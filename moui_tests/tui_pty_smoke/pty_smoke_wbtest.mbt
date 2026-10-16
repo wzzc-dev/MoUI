@@ -1054,6 +1054,43 @@ async test "S7 a clicked row keeps the selection band on itself" {
 }
 
 ///|
+/// H4 主题接线的终端级证据:`--theme dark` 启动的会话必须把主题色量化
+/// 进可见格子,而默认调色板的按钮蓝(`idx:4`)一格不剩。期望值与被测链路
+/// 共用同一条量化函数,钉的是「Theme 走完了 host→palette→cells」,
+/// 不是具体 RGB 表。
+async test "H4 a themed launch repaints cells with theme colors" {
+  match layers_binary() {
+    None => ()
+    Some(path) => {
+      let session = Session::open(path, cols=100, rows=30, args=[
+        "--theme", "dark",
+      ])
+      session.await_frame(s => s.has("sel=Background"))
+      let theme = @core.Theme::neutral().with_palette(
+        @core.ColorPalette::dark(),
+      )
+      let palette = @tui_renderer.TuiPalette::from_theme(theme)
+      let expected = match palette.primary {
+        @tui.Indexed(n) => "idx:" + n.to_string()
+        _ => fail("dark primary must quantize to a 256-palette index")
+      }
+      let screen = session.screen()
+      check(
+        session,
+        "themed: primary cells carry the quantized theme color",
+        screen.styled_count(style => style.fg == expected) > 0,
+      )
+      check(
+        session,
+        "themed: the default button blue is gone",
+        screen.styled_count(style => style.fg == "idx:4") == 0,
+      )
+      session.finish()
+    }
+  }
+}
+
+///|
 /// 第 want 个非空白格的列(跳过边框与空白):点行名用,别点在边框上。
 fn nth_glyph_col_mid(screen : Screen, row : Int) -> Int {
   let mut seen = 0

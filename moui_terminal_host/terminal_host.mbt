@@ -147,6 +147,7 @@ pub fn[Model, Msg] run_program(
   program~ : @core.Program[Model, Msg],
   cell? : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
   idle_timeout_ms? : Int = DEFAULT_IDLE_TIMEOUT_MS,
+  theme? : @core.Theme? = None,
 ) -> TerminalExit {
   match probe_tty() {
     Err(exit) => exit
@@ -156,7 +157,7 @@ pub fn[Model, Msg] run_program(
         program~,
         size=input.metrics().logical_size,
       )
-      run(tty, runtime, input, idle_timeout_ms)
+      run(tty, runtime, input, idle_timeout_ms, palette_for(theme))
     }
   }
 }
@@ -168,6 +169,7 @@ pub fn[Msg] run_view(
   cell? : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
   idle_timeout_ms? : Int = DEFAULT_IDLE_TIMEOUT_MS,
   on_message? : ((Msg) -> Unit)? = None,
+  theme? : @core.Theme? = None,
 ) -> TerminalExit {
   match probe_tty() {
     Err(exit) => exit
@@ -178,8 +180,19 @@ pub fn[Msg] run_view(
         size=input.metrics().logical_size,
         on_message~,
       )
-      run(tty, runtime, input, idle_timeout_ms)
+      run(tty, runtime, input, idle_timeout_ms, palette_for(theme))
     }
+  }
+}
+
+///|
+/// 主题只在建会话时用一次:cell 前景色是渲染策略,由 `TuiPalette`
+/// 量化到 xterm-256;不给主题就是 S2–S7 的默认调色板。
+/// 运行中热切换记在 tui-hardening 的 debt 里。
+fn palette_for(theme : @core.Theme?) -> @tui_renderer.TuiPalette {
+  match theme {
+    Some(t) => @tui_renderer.TuiPalette::from_theme(t)
+    None => @tui_renderer.TuiPalette::default()
   }
 }
 
@@ -204,6 +217,7 @@ fn run(
   runtime : @runtime.AppRuntime,
   input : TerminalInput,
   idle_timeout_ms : Int,
+  palette : @tui_renderer.TuiPalette,
 ) -> TerminalExit {
   state.tty = Some(tty)
   state.input = Some(input)
@@ -215,7 +229,7 @@ fn run(
       state.needs_render = true
     }),
   )
-  let exit = match state.attach(input, tty) {
+  let exit = match state.attach(input, tty, palette) {
     Some(reason) => RendererRejected(reason)
     None =>
       match state.open_session(tty) {
@@ -250,6 +264,7 @@ fn TerminalState::attach(
   self : TerminalState,
   input : TerminalInput,
   tty : Tty,
+  palette : @tui_renderer.TuiPalette,
 ) -> String? {
   let sink = @tui_renderer.TuiSink::new(description="terminal stdout", write=text => {
     // 出口必须是纯函数,所以失败不抛出而是登记:主循环在帧末取出它,
@@ -263,7 +278,8 @@ fn TerminalState::attach(
     surface_id="terminal",
     metrics=input.metrics(),
   )
-  match @tui_renderer.ansi(sink~, cell=input.cell).bind_surface(surface) {
+  match
+    @tui_renderer.ansi(sink~, cell=input.cell, palette~).bind_surface(surface) {
     Bound(session) => {
       match self.session {
         Some(previous) => previous.dispose()

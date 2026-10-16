@@ -117,75 +117,12 @@ pub fn role_kind(role : @core.SemanticsRole) -> RoleKind {
 }
 
 ///|
-fn fg(color : @tui.TermColor) -> @tui.CellAttrs {
-  @tui.attrs_with(@tui.CellAttrs::default(), fg=Some(color))
-}
-
-///|
-/// 未聚焦角色 → 基础 attrs,全匹配 `SemanticsRole`:新增角色必须在这里
-/// 表态(给色,或明确并入默认灰),样式层和 `role_tag`/`role_kind` 一样
-/// 在编译期兜底,而不是运行时静默换色。
-fn base_attrs(role : @core.SemanticsRole) -> @tui.CellAttrs {
-  match role {
-    @core.Button => @tui.attrs_with(fg(@tui.Indexed(4)), bold=Some(true))
-    @core.Heading =>
-      @tui.attrs_with(fg(@tui.TermColor::Default), bold=Some(true))
-    @core.Text | @core.Status | @core.Alert => fg(@tui.Indexed(2))
-    @core.TextField
-    | @core.ComboBox
-    | @core.Slider
-    | @core.Progress
-    | @core.Checkbox
-    | @core.Switch
-    | @core.Radio => fg(@tui.Indexed(5))
-    @core.None
-    | @core.Link
-    | @core.Navigation
-    | @core.Main
-    | @core.List
-    | @core.ListItem
-    | @core.Grid
-    | @core.ScrollView
-    | @core.Tab
-    | @core.Dialog
-    | @core.Tooltip
-    | @core.Menu
-    | @core.ButtonGroup
-    | @core.Form
-    | @core.FormField
-    | @core.Tree
-    | @core.TreeItem
-    | @core.Group
-    | @core.WebView
-    | @core.Image
-    | @core.Option
-    | @core.Table
-    | @core.Row
-    | @core.Cell
-    | @core.Separator => fg(@tui.Indexed(6))
-  }
-}
-
-///|
-/// 语义状态 + 角色 → SGR 属性。焦点与选中必须有可见差异,
-/// 否则键盘导航在终端里无法辨认。
+/// 默认调色板的角色 → 样式入口;渲染器持有 `TuiPalette` 并显式调用
+/// `palette.attrs_for`。这里保留的默认版是给测试与「无宿主注入主题」
+/// 场景的便捷门面(也是两条 golden 帧锁定的颜色路径)。
 pub fn attrs_for(
   role : @core.SemanticsRole,
   state : @core.SemanticsState,
 ) -> @tui.CellAttrs {
-  let base = if state.focused {
-    @tui.attrs_with(fg(@tui.Indexed(3)), bold=Some(true), underline=Some(true))
-  } else {
-    base_attrs(role)
-  }
-  let selected = if state.selected {
-    @tui.attrs_with(base, reverse=Some(true))
-  } else {
-    base
-  }
-  if state.pressed && !selected.bold {
-    @tui.attrs_with(selected, bold=Some(true))
-  } else {
-    selected
-  }
+  TuiPalette::default().attrs_for(role, state)
 }
