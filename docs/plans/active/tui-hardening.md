@@ -55,7 +55,7 @@
 
 ## Acceptance
 
-- [ ] H1 `pr` profile green; S0–S7 work committed on this branch in module
+- [x] H1 `pr` profile green; S0–S7 work committed on this branch in module
       commits; focus-dbg gone; ratchet exact.
 - [ ] H2 `moon test moui_tui_renderer moui_tui moui_tests/tui_spike --target native`
       green with golden frames unchanged from H1 behaviour; every rule in
@@ -81,3 +81,5 @@
 | Date | Note |
 |---|---|
 | 2026-10-16 | plan opened on `tui/hardening`; H1 in progress. |
+| 2026-10-16 | **H1 landed**: 9 commits (carrier `6a1495307` → fmt `c31cffdad`), focus-dbg removed (owner approval recorded in tui-output-path header), validate_api_surface ratchet settled 1669→1680 with dated reason, six static validators green, `sh scripts/check.sh --profile pr` green end-to-end (194 steps), PTY gate 13/13 before and after the fmt commit. |
+| 2026-10-16 | pre-existing infra note (not this plan's defect): `moui_studio/services/compile_native` failed twice in earlier profile runs under load (assertion flake, then SIGSEGV) while passing 4/4 in isolation; HEAD `20bf3089c` (studio scaffold_plan refactor) has never been pushed, so CI has not validated that surface. Unrelated to TUI paths; left for the owner. |
