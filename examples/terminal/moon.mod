@@ -8,4 +8,5 @@ import {
   "moonbitlang/async@0.20.2",
   "wzzc-dev/moui@0.2.3",
   "wzzc-dev/moui_skia_renderer@0.2.1",
+  "wzzc-dev/moui_tui@0.1.0",
 }

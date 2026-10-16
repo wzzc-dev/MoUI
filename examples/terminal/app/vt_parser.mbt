@@ -16,9 +16,9 @@ pub extend ParseState with Eq::{not_equal, equal}
 
 ///|
 /// VT/ANSI 转义序列解析器(参考 xterm.js 状态机简化版)。
-/// 输出直接作用到 TermScreen。
+/// 输出直接作用到 @tui.TermScreen。
 pub(all) struct VtParser {
-  mut screen : TermScreen
+  mut screen : @tui.TermScreen
   mut state : ParseState
   mut params : Array[Int]
   mut param_buf : String
@@ -30,7 +30,7 @@ pub(all) struct VtParser {
 }
 
 ///|
-pub fn VtParser::new(screen : TermScreen) -> VtParser {
+pub fn VtParser::new(screen : @tui.TermScreen) -> VtParser {
   {
     screen,
     state: Ground,
@@ -45,7 +45,7 @@ pub fn VtParser::new(screen : TermScreen) -> VtParser {
 }
 
 ///|
-pub fn VtParser::screen(self : VtParser) -> TermScreen {
+pub fn VtParser::screen(self : VtParser) -> @tui.TermScreen {
   self.screen
 }
 
@@ -154,7 +154,7 @@ fn VtParser::utf8_push(self : VtParser, b : Byte) -> Unit {
     self.utf8_buf = []
     self.utf8_need = 0
     if ch.length() > 0 {
-      self.screen.print_char(ch, unicode_width(ch))
+      self.screen.print_char(ch, @tui.unicode_width(ch))
     }
   }
 }
@@ -302,7 +302,7 @@ fn VtParser::dispatch(self : VtParser, final_byte : Int) -> Unit {
       if self.private_marker {
         let p = self.param0(0)
         if p == 7 {
-          s.auto_wrap = final_byte == 0x68
+          s.set_auto_wrap(final_byte == 0x68)
         } else if p == 25 {
           s.set_cursor_visible(final_byte == 0x68)
         }
@@ -323,56 +323,73 @@ fn VtParser::sgr(self : VtParser) -> Unit {
   while i < self.params.length() {
     let p = self.params[i]
     match p {
-      0 => attrs = CellAttrs::default()
-      1 => attrs = attrs_with(attrs, bold=Some(true))
-      2 => attrs = attrs_with(attrs, dim=Some(true))
-      3 => attrs = attrs_with(attrs, italic=Some(true))
-      4 => attrs = attrs_with(attrs, underline=Some(true))
-      7 => attrs = attrs_with(attrs, reverse=Some(true))
-      21 | 22 => attrs = attrs_with(attrs, bold=Some(false), dim=Some(false))
-      23 => attrs = attrs_with(attrs, italic=Some(false))
-      24 => attrs = attrs_with(attrs, underline=Some(false))
-      27 => attrs = attrs_with(attrs, reverse=Some(false))
-      30..=37 => attrs = attrs_with(attrs, fg=Some(Indexed(p - 30)))
+      0 => attrs = @tui.CellAttrs::default()
+      1 => attrs = @tui.attrs_with(attrs, bold=Some(true))
+      2 => attrs = @tui.attrs_with(attrs, dim=Some(true))
+      3 => attrs = @tui.attrs_with(attrs, italic=Some(true))
+      4 => attrs = @tui.attrs_with(attrs, underline=Some(true))
+      7 => attrs = @tui.attrs_with(attrs, reverse=Some(true))
+      21 | 22 =>
+        attrs = @tui.attrs_with(attrs, bold=Some(false), dim=Some(false))
+      23 => attrs = @tui.attrs_with(attrs, italic=Some(false))
+      24 => attrs = @tui.attrs_with(attrs, underline=Some(false))
+      27 => attrs = @tui.attrs_with(attrs, reverse=Some(false))
+      30..=37 => attrs = @tui.attrs_with(attrs, fg=Some(@tui.Indexed(p - 30)))
       38 =>
         if i + 1 < self.params.length() &&
           self.params[i + 1] == 5 &&
           i + 2 < self.params.length() {
-          attrs = attrs_with(attrs, fg=Some(Indexed(self.params[i + 2])))
+          attrs = @tui.attrs_with(
+            attrs,
+            fg=Some(@tui.Indexed(self.params[i + 2])),
+          )
           i = i + 2
         } else if i + 1 < self.params.length() &&
           self.params[i + 1] == 2 &&
           i + 4 < self.params.length() {
-          attrs = attrs_with(
+          attrs = @tui.attrs_with(
             attrs,
             fg=Some(
-              Rgb(self.params[i + 2], self.params[i + 3], self.params[i + 4]),
+              @tui.Rgb(
+                self.params[i + 2],
+                self.params[i + 3],
+                self.params[i + 4],
+              ),
             ),
           )
           i = i + 4
         }
-      39 => attrs = attrs_with(attrs, fg=Some(Default))
-      40..=47 => attrs = attrs_with(attrs, bg=Some(Indexed(p - 40)))
+      39 => attrs = @tui.attrs_with(attrs, fg=Some(@tui.Default))
+      40..=47 => attrs = @tui.attrs_with(attrs, bg=Some(@tui.Indexed(p - 40)))
       48 =>
         if i + 1 < self.params.length() &&
           self.params[i + 1] == 5 &&
           i + 2 < self.params.length() {
-          attrs = attrs_with(attrs, bg=Some(Indexed(self.params[i + 2])))
+          attrs = @tui.attrs_with(
+            attrs,
+            bg=Some(@tui.Indexed(self.params[i + 2])),
+          )
           i = i + 2
         } else if i + 1 < self.params.length() &&
           self.params[i + 1] == 2 &&
           i + 4 < self.params.length() {
-          attrs = attrs_with(
+          attrs = @tui.attrs_with(
             attrs,
             bg=Some(
-              Rgb(self.params[i + 2], self.params[i + 3], self.params[i + 4]),
+              @tui.Rgb(
+                self.params[i + 2],
+                self.params[i + 3],
+                self.params[i + 4],
+              ),
             ),
           )
           i = i + 4
         }
-      49 => attrs = attrs_with(attrs, bg=Some(Default))
-      90..=97 => attrs = attrs_with(attrs, fg=Some(Indexed(p - 90 + 8)))
-      100..=107 => attrs = attrs_with(attrs, bg=Some(Indexed(p - 100 + 8)))
+      49 => attrs = @tui.attrs_with(attrs, bg=Some(@tui.Default))
+      90..=97 =>
+        attrs = @tui.attrs_with(attrs, fg=Some(@tui.Indexed(p - 90 + 8)))
+      100..=107 =>
+        attrs = @tui.attrs_with(attrs, bg=Some(@tui.Indexed(p - 100 + 8)))
       _ => ()
     }
     i = i + 1
@@ -431,37 +448,4 @@ fn parse_decimal(s : String) -> Int {
     n = n * 10 + d
   }
   n
-}
-
-///|
-/// 提取字符串首字符的 Unicode 码点(String::at 返回 UTF-16 code unit)。
-fn utf8_codepoint(s : String) -> Int {
-  let u = s[0].to_int()
-  if u >= 0xD800 && u <= 0xDBFF && s.length() >= 2 {
-    let lo = s[1].to_int()
-    0x10000 + ((u - 0xD800) << 10) + (lo - 0xDC00)
-  } else {
-    u
-  }
-}
-
-///|
-/// 简化 wcwidth:ASCII 1,常见宽字符区间 2,其余 1。
-pub fn unicode_width(ch : String) -> Int {
-  let cp = utf8_codepoint(ch)
-  if cp >= 0x20 && cp <= 0x7E {
-    return 1
-  }
-  if (cp >= 0x1100 && cp <= 0x115F) ||
-    (cp >= 0x2E80 && cp <= 0xA4CF) ||
-    (cp >= 0xAC00 && cp <= 0xD7A3) ||
-    (cp >= 0xF900 && cp <= 0xFAFF) ||
-    (cp >= 0xFE30 && cp <= 0xFE4F) ||
-    (cp >= 0xFF00 && cp <= 0xFF60) ||
-    (cp >= 0xFFE0 && cp <= 0xFFE6) ||
-    (cp >= 0x1F300 && cp <= 0x1FAFF) ||
-    (cp >= 0x20000 && cp <= 0x3FFFD) {
-    return 2
-  }
-  1
 }

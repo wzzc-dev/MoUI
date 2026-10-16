@@ -3,6 +3,7 @@ import {
   "wzzc-dev/moui/views",
   "wzzc-dev/moui",
   "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui_tui" @tui,
 }
 
 import {

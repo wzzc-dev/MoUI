@@ -4,30 +4,23 @@ package "examples/terminal/app"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_tui",
 }
 
 // Values
-pub fn attrs_with(CellAttrs, fg? : TermColor?, bg? : TermColor?, bold? : Bool?, dim? : Bool?, italic? : Bool?, underline? : Bool?, reverse? : Bool?) -> CellAttrs
-
-pub fn attrs_with_fg(CellAttrs, TermColor) -> CellAttrs
-
-pub fn blank_cell(CellAttrs) -> Cell
-
 pub fn cell_height(@core.Theme) -> Double
 
 pub fn cell_width(@core.Theme) -> Double
 
-pub fn selection_text(TermScreen, Selection?) -> String
+pub fn selection_text(@moui_tui.TermScreen, Selection?) -> String
 
-pub fn term_color_to_core(TermColor, @core.Theme) -> @core.Color
+pub fn term_color_to_core(@moui_tui.TermColor, @core.Theme) -> @core.Color
 
 pub fn terminal_background(@core.Theme) -> @core.Color
 
-pub fn[Msg] terminal_view(TermScreen, @core.Theme, scroll_offset? : Int, selection? : Selection?) -> @core.View[Msg]
+pub fn[Msg] terminal_view(@moui_tui.TermScreen, @core.Theme, scroll_offset? : Int, selection? : Selection?) -> @core.View[Msg]
 
 pub fn theme_for_pref(ThemePreference) -> @core.Theme
-
-pub fn unicode_width(String) -> Int
 
 pub fn update(Model, Msg) -> Model
 
@@ -36,31 +29,8 @@ pub fn view(Model) -> @core.View[Msg]
 // Errors
 
 // Types and methods
-pub(all) struct Cell {
-  ch : String
-  width : Int
-  attrs : CellAttrs
-} derive(Eq, @debug.Debug)
-pub fn Cell::equal(Self, Self) -> Bool
-pub fn Cell::not_equal(Self, Self) -> Bool
-pub fn Cell::to_repr(Self) -> @debug.Repr
-
-pub(all) struct CellAttrs {
-  fg : TermColor
-  bg : TermColor
-  bold : Bool
-  dim : Bool
-  italic : Bool
-  underline : Bool
-  reverse : Bool
-} derive(Eq, @debug.Debug)
-pub fn CellAttrs::default() -> Self
-pub fn CellAttrs::equal(Self, Self) -> Bool
-pub fn CellAttrs::not_equal(Self, Self) -> Bool
-pub fn CellAttrs::to_repr(Self) -> @debug.Repr
-
 pub(all) struct Model {
-  screen : TermScreen
+  screen : @moui_tui.TermScreen
   parser : VtParser
   mut scroll_offset : Int
   mut theme_pref : ThemePreference
@@ -68,7 +38,7 @@ pub(all) struct Model {
   mut selection_dragging : Bool
 }
 pub fn Model::new(Int, Int) -> Self
-pub fn Model::screen(Self) -> TermScreen
+pub fn Model::screen(Self) -> @moui_tui.TermScreen
 pub fn Model::scroll_offset(Self) -> Int
 pub fn Model::selection(Self) -> Selection?
 pub fn Model::theme_pref(Self) -> ThemePreference
@@ -107,83 +77,6 @@ pub fn Selection::contains_row(Self, Int) -> Bool
 pub fn Selection::new(Int, Int, Int, Int) -> Self
 pub fn Selection::normalized(Self) -> (Int, Int, Int, Int)
 
-pub(all) enum TermColor {
-  Default
-  Indexed(Int)
-  Rgb(Int, Int, Int)
-} derive(Eq, @debug.Debug)
-pub fn TermColor::equal(Self, Self) -> Bool
-pub fn TermColor::not_equal(Self, Self) -> Bool
-pub fn TermColor::to_repr(Self) -> @debug.Repr
-
-pub(all) struct TermRow {
-  mut cells : Array[Cell]
-}
-pub fn TermRow::new(Int, CellAttrs) -> Self
-pub fn TermRow::runs(Self) -> Array[(String, Int, CellAttrs)]
-pub fn TermRow::text(Self) -> String
-
-pub(all) struct TermScreen {
-  mut cols : Int
-  mut rows : Int
-  mut screen : Array[TermRow]
-  mut scrollback : Array[TermRow]
-  mut scrollback_limit : Int
-  mut cursor_row : Int
-  mut cursor_col : Int
-  mut scroll_top : Int
-  mut scroll_bottom : Int
-  mut saved_cursor_row : Int
-  mut saved_cursor_col : Int
-  mut wrap_pending : Bool
-  mut auto_wrap : Bool
-  mut cursor_visible : Bool
-  mut title : String
-  mut attrs : CellAttrs
-}
-pub fn TermScreen::backspace(Self) -> Unit
-pub fn TermScreen::carriage_return(Self) -> Unit
-pub fn TermScreen::clear_all(Self) -> Unit
-pub fn TermScreen::cols(Self) -> Int
-pub fn TermScreen::current_attrs(Self) -> CellAttrs
-pub fn TermScreen::cursor_col(Self) -> Int
-pub fn TermScreen::cursor_column(Self, Int) -> Unit
-pub fn TermScreen::cursor_down(Self, Int) -> Unit
-pub fn TermScreen::cursor_left(Self, Int) -> Unit
-pub fn TermScreen::cursor_line(Self, Int) -> Unit
-pub fn TermScreen::cursor_position(Self, Int, Int) -> Unit
-pub fn TermScreen::cursor_right(Self, Int) -> Unit
-pub fn TermScreen::cursor_row(Self) -> Int
-pub fn TermScreen::cursor_up(Self, Int) -> Unit
-pub fn TermScreen::cursor_visible(Self) -> Bool
-pub fn TermScreen::delete_chars(Self, Int) -> Unit
-pub fn TermScreen::delete_lines(Self, Int) -> Unit
-pub fn TermScreen::erase_chars(Self, Int) -> Unit
-pub fn TermScreen::erase_in_display(Self, Int) -> Unit
-pub fn TermScreen::erase_in_line(Self, Int) -> Unit
-pub fn TermScreen::insert_chars(Self, Int) -> Unit
-pub fn TermScreen::insert_lines(Self, Int) -> Unit
-pub fn TermScreen::line_at(Self, Int) -> TermRow
-pub fn TermScreen::linefeed(Self) -> Unit
-pub fn TermScreen::new(Int, Int) -> Self
-pub fn TermScreen::print_char(Self, String, Int) -> Unit
-pub fn TermScreen::reset(Self) -> Unit
-pub fn TermScreen::resize(Self, Int, Int) -> Unit
-pub fn TermScreen::restore_cursor(Self) -> Unit
-pub fn TermScreen::reverse_index(Self) -> Unit
-pub fn TermScreen::rows(Self) -> Int
-pub fn TermScreen::save_cursor(Self) -> Unit
-pub fn TermScreen::scroll_down(Self, Int) -> Unit
-pub fn TermScreen::scroll_up(Self, Int) -> Unit
-pub fn TermScreen::set_current_attrs(Self, CellAttrs) -> Unit
-pub fn TermScreen::set_cursor_visible(Self, Bool) -> Unit
-pub fn TermScreen::set_scroll_region(Self, Int, Int) -> Unit
-pub fn TermScreen::set_scrollback_limit(Self, Int) -> Unit
-pub fn TermScreen::set_title(Self, String) -> Unit
-pub fn TermScreen::tab(Self) -> Unit
-pub fn TermScreen::title(Self) -> String
-pub fn TermScreen::total_lines(Self) -> Int
-
 pub(all) enum ThemePreference {
   System
   Light
@@ -193,7 +86,7 @@ pub fn ThemePreference::id(Self) -> String
 pub fn ThemePreference::label(Self) -> String
 
 pub(all) struct VtParser {
-  mut screen : TermScreen
+  mut screen : @moui_tui.TermScreen
   mut state : ParseState
   mut params : Array[Int]
   mut param_buf : String
@@ -205,8 +98,8 @@ pub(all) struct VtParser {
 }
 pub fn VtParser::feed(Self, String) -> Unit
 pub fn VtParser::feed_bytes(Self, Bytes) -> Unit
-pub fn VtParser::new(TermScreen) -> Self
-pub fn VtParser::screen(Self) -> TermScreen
+pub fn VtParser::new(@moui_tui.TermScreen) -> Self
+pub fn VtParser::screen(Self) -> @moui_tui.TermScreen
 
 // Type aliases
 

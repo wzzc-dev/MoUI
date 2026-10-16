@@ -1,7 +1,7 @@
 ///|
 /// 终端应用模型:屏幕缓冲区 + 解析器 + 回看滚动偏移 + 主题偏好。
 pub(all) struct Model {
-  screen : TermScreen
+  screen : @tui.TermScreen
   parser : VtParser
   mut scroll_offset : Int
   mut theme_pref : ThemePreference
@@ -24,7 +24,7 @@ pub(all) enum Msg {
 
 ///|
 pub fn Model::new(cols : Int, rows : Int) -> Model {
-  let screen = TermScreen::new(cols, rows)
+  let screen = @tui.TermScreen::new(cols, rows)
   let parser = VtParser::new(screen)
   {
     screen,
@@ -37,7 +37,7 @@ pub fn Model::new(cols : Int, rows : Int) -> Model {
 }
 
 ///|
-pub fn Model::screen(self : Model) -> TermScreen {
+pub fn Model::screen(self : Model) -> @tui.TermScreen {
   self.screen
 }
 

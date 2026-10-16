@@ -79,21 +79,21 @@ test "terminal colors follow theme" {
   )
   // 默认前景跟随主题前景色(与面板底色保持对比)
   inspect(
-    @app.term_color_to_core(Default, light) == light.palette.foreground,
+    @app.term_color_to_core(@tui.Default, light) == light.palette.foreground,
     content="true",
   )
   inspect(
-    @app.term_color_to_core(Default, dark) == dark.palette.foreground,
+    @app.term_color_to_core(@tui.Default, dark) == dark.palette.foreground,
     content="true",
   )
   // ANSI 16 色/256 色/RGB 色板固定,不随主题变化
   inspect(
-    @app.term_color_to_core(Indexed(1), dark) ==
+    @app.term_color_to_core(@tui.Indexed(1), dark) ==
     @graphics.Color::rgba(r=0.80, g=0.0, b=0.0),
     content="true",
   )
   inspect(
-    @app.term_color_to_core(Rgb(0, 128, 255), dark) ==
+    @app.term_color_to_core(@tui.Rgb(0, 128, 255), dark) ==
     @graphics.Color::rgba(r=0.0, g=128.0 / 255.0, b=1.0),
     content="true",
   )

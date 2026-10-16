@@ -65,7 +65,10 @@ pub fn Selection::col_range_at(self : Selection, row : Int) -> (Int, Int)? {
 ///|
 /// 提取选中文本:每行截取选中列区间,行尾空白裁剪,行间以 \n 连接。
 /// 宽字符(占 2 列)只取主格;continuation 格跳过。
-pub fn selection_text(screen : TermScreen, selection : Selection?) -> String {
+pub fn selection_text(
+  screen : @tui.TermScreen,
+  selection : Selection?,
+) -> String {
   match selection {
     None => ""
     Some(sel) => {
@@ -91,7 +94,11 @@ pub fn selection_text(screen : TermScreen, selection : Selection?) -> String {
 }
 
 ///|
-fn selection_line_text(row : TermRow, sel : Selection, row_idx : Int) -> String {
+fn selection_line_text(
+  row : @tui.TermRow,
+  sel : Selection,
+  row_idx : Int,
+) -> String {
   let (start, end) = match sel.col_range_at(row_idx) {
     Some(range) => range
     None => return ""
@@ -109,5 +116,5 @@ fn selection_line_text(row : TermRow, sel : Selection, row_idx : Int) -> String 
   }
   // 仅裁剪行尾空白(与终端显示一致);前导空格必须保留,
   // 否则选中带缩进的内容会丢失缩进
-  trim_trailing_spaces(text)
+  @tui.trim_trailing_spaces(text)
 }

@@ -63,22 +63,22 @@ fn terminal_foreground(theme : @moui.Theme) -> @graphics.Color {
 }
 
 ///|
-/// TermColor → @graphics.Color。
+/// @tui.TermColor → @graphics.Color。
 /// 默认前景/背景跟随主题(与面板底色保持对比);ANSI 16 色与 RGB
 /// 色板固定(与其它主流终端一致,深浅主题下保持一致)。
 pub fn term_color_to_core(
-  color : TermColor,
+  color : @tui.TermColor,
   theme : @moui.Theme,
 ) -> @graphics.Color {
   match color {
-    Default => terminal_foreground(theme)
-    Indexed(n) =>
+    @tui.Default => terminal_foreground(theme)
+    @tui.Indexed(n) =>
       if n < 0 || n > 255 {
         terminal_foreground(theme)
       } else {
         ansi256_color(n)
       }
-    Rgb(r, g, b) =>
+    @tui.Rgb(r, g, b) =>
       @graphics.Color::rgba(
         r=r.clamp(min=0, max=255).to_double() / 255.0,
         g=g.clamp(min=0, max=255).to_double() / 255.0,
@@ -107,7 +107,7 @@ pub fn cell_height(theme : @moui.Theme) -> Double {
 ///|
 /// 一行文本的渲染视图:按 run 分段,段间 spacing 0。
 fn[Msg] terminal_row_view(
-  row : TermRow,
+  row : @tui.TermRow,
   theme : @moui.Theme,
   cols : Int,
   selection_range : (Int, Int)?,
@@ -127,7 +127,7 @@ fn[Msg] terminal_row_view(
     let fg = if selected { sel_fg } else { term_color_to_core(attrs.fg, theme) }
     let bg = if selected {
       sel_bg
-    } else if attrs.bg == Default {
+    } else if attrs.bg == @tui.Default {
       terminal_background(theme)
     } else {
       term_color_to_core(attrs.bg, theme)
@@ -169,7 +169,7 @@ fn[Msg] terminal_row_view(
 ///|
 /// 终端主视图:显示从回看偏移处起的可视行。
 pub fn[Msg] terminal_view(
-  screen : TermScreen,
+  screen : @tui.TermScreen,
   theme : @moui.Theme,
   scroll_offset? : Int = 0,
   selection? : Selection? = None,

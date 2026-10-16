@@ -1,219 +1,36 @@
 ///|
-/// 终端颜色:默认色、256 索引色、真彩色 RGB。
-pub(all) enum TermColor {
-  Default
-  Indexed(Int)
-  Rgb(Int, Int, Int)
-} derive(Eq, Debug)
+/// 终端屏幕模型:可视区 + 回看缓冲 + 光标 + 滚动区域 + 脏行增量。
+/// 只有单元格内容变化才标脏;光标移动、SGR 属性与滚动区域设置不算画面变化,
+/// 因此呈现器按 `take_damage` 输出即可覆盖残影,又不会重绘未变的行。
+pub struct TermScreen {
+  priv mut cols : Int
+  priv mut rows : Int
+  priv screen : Array[TermRow]
+  priv mut scrollback : Array[TermRow]
+  priv mut scrollback_limit : Int
+  priv mut cursor_row : Int
+  priv mut cursor_col : Int
+  priv mut scroll_top : Int
+  priv mut scroll_bottom : Int
+  priv mut saved_cursor_row : Int
+  priv mut saved_cursor_col : Int
+  priv mut wrap_pending : Bool
+  priv mut auto_wrap : Bool
+  priv mut cursor_visible : Bool
+  priv mut title : String
+  priv mut attrs : CellAttrs
+  priv mut dirty_rows : Array[Bool]
+  priv mut dirty_all : Bool
+  priv mut revision : Int
+}
 
 ///|
-pub extend TermColor with Debug::{to_repr}
-
-///|
-pub extend TermColor with Eq::{not_equal, equal}
-
-///|
-/// 单元格属性(SGR 状态)。
-pub(all) struct CellAttrs {
-  fg : TermColor
-  bg : TermColor
-  bold : Bool
-  dim : Bool
-  italic : Bool
-  underline : Bool
-  reverse : Bool
-} derive(Eq, Debug)
-
-///|
-pub extend CellAttrs with Debug::{to_repr}
-
-///|
-pub extend CellAttrs with Eq::{not_equal, equal}
-
-///|
-pub fn CellAttrs::default() -> CellAttrs {
-  {
-    fg: Default,
-    bg: Default,
-    bold: false,
-    dim: false,
-    italic: false,
-    underline: false,
-    reverse: false,
+fn dirty_mask(rows : Int) -> Array[Bool] {
+  let mask : Array[Bool] = []
+  for _ in 0..<rows {
+    mask.push(false)
   }
-}
-
-///|
-/// 复制属性并替换部分字段(解析器 SGR 用)。
-pub fn attrs_with(
-  attrs : CellAttrs,
-  fg? : TermColor? = None,
-  bg? : TermColor? = None,
-  bold? : Bool? = None,
-  dim? : Bool? = None,
-  italic? : Bool? = None,
-  underline? : Bool? = None,
-  reverse? : Bool? = None,
-) -> CellAttrs {
-  {
-    fg: match fg {
-      Some(v) => v
-      None => attrs.fg
-    },
-    bg: match bg {
-      Some(v) => v
-      None => attrs.bg
-    },
-    bold: match bold {
-      Some(v) => v
-      None => attrs.bold
-    },
-    dim: match dim {
-      Some(v) => v
-      None => attrs.dim
-    },
-    italic: match italic {
-      Some(v) => v
-      None => attrs.italic
-    },
-    underline: match underline {
-      Some(v) => v
-      None => attrs.underline
-    },
-    reverse: match reverse {
-      Some(v) => v
-      None => attrs.reverse
-    },
-  }
-}
-
-///|
-/// 复制属性并替换前景色(测试与解析器辅助)。
-pub fn attrs_with_fg(attrs : CellAttrs, fg : TermColor) -> CellAttrs {
-  attrs_with(attrs, fg=Some(fg))
-}
-
-///|
-/// 单元格:一个字符(宽字符占两格,第二格为 continuation,ch 为空)。
-pub(all) struct Cell {
-  ch : String
-  width : Int
-  attrs : CellAttrs
-} derive(Eq, Debug)
-
-///|
-pub extend Cell with Debug::{to_repr}
-
-///|
-pub extend Cell with Eq::{not_equal, equal}
-
-///|
-pub fn blank_cell(attrs : CellAttrs) -> Cell {
-  { ch: " ", width: 1, attrs, }
-}
-
-///|
-/// 屏幕上一行。
-pub(all) struct TermRow {
-  mut cells : Array[Cell]
-}
-
-///|
-pub fn TermRow::new(cols : Int, attrs : CellAttrs) -> TermRow {
-  let cells : Array[Cell] = []
-  for _ in 0..<cols {
-    cells.push(blank_cell(attrs))
-  }
-  { cells, }
-}
-
-///|
-/// 行内按连续相同属性合并的渲染 run:(文本, 占列数, 属性)。
-/// continuation 单元格(width == 0)不产生文本。
-pub fn TermRow::runs(self : TermRow) -> Array[(String, Int, CellAttrs)] {
-  let out : Array[(String, Int, CellAttrs)] = []
-  let mut current_attrs : CellAttrs? = None
-  let mut width_sum = 0
-  for cell in self.cells {
-    if cell.width == 0 {
-      continue
-    }
-    let merged = match current_attrs {
-      Some(attrs) => attrs == cell.attrs
-      None => false
-    }
-    if merged {
-      let last = out.length() - 1
-      out[last] = (out[last].0 + cell.ch, out[last].1 + cell.width, cell.attrs)
-      width_sum = width_sum + cell.width
-    } else {
-      out.push((cell.ch, cell.width, cell.attrs))
-      current_attrs = Some(cell.attrs)
-      width_sum = cell.width
-    }
-  }
-  // 裁剪尾部无背景 run 的空格后缀(渲染无意义)
-  if out.length() > 0 {
-    let (tail, tail_width, tail_attrs) = out[out.length() - 1]
-    if tail_attrs.bg == Default {
-      let trimmed = trim_trailing_spaces(tail)
-      if trimmed.length() == 0 {
-        ignore(out.pop())
-      } else if trimmed.length() != tail.length() {
-        let w = tail_width - (tail.length() - trimmed.length())
-        out[out.length() - 1] = (trimmed, w, tail_attrs)
-      }
-    }
-  }
-  out
-}
-
-///|
-/// 去掉字符串尾部空格(终端行文本用)。
-fn trim_trailing_spaces(s : String) -> String {
-  let mut end = s.length()
-  while end > 0 && s[end - 1] == ' ' {
-    end = end - 1
-  }
-  if end == s.length() {
-    s
-  } else {
-    s[0:end].to_owned()
-  }
-}
-
-///|
-/// 行文本(去掉尾部空白),供测试与标题提取使用。
-pub fn TermRow::text(self : TermRow) -> String {
-  let mut s = ""
-  for cell in self.cells {
-    if cell.width == 0 {
-      continue
-    }
-    s = s + cell.ch
-  }
-  trim_trailing_spaces(s)
-}
-
-///|
-/// 终端屏幕模型:可视区 + 回看缓冲 + 光标 + 滚动区域。
-pub(all) struct TermScreen {
-  mut cols : Int
-  mut rows : Int
-  mut screen : Array[TermRow]
-  mut scrollback : Array[TermRow]
-  mut scrollback_limit : Int
-  mut cursor_row : Int
-  mut cursor_col : Int
-  mut scroll_top : Int
-  mut scroll_bottom : Int
-  mut saved_cursor_row : Int
-  mut saved_cursor_col : Int
-  mut wrap_pending : Bool
-  mut auto_wrap : Bool
-  mut cursor_visible : Bool
-  mut title : String
-  mut attrs : CellAttrs
+  mask
 }
 
 ///|
@@ -240,7 +57,80 @@ pub fn TermScreen::new(cols : Int, rows : Int) -> TermScreen {
     cursor_visible: true,
     title: "",
     attrs,
+    dirty_rows: dirty_mask(rows),
+    dirty_all: false,
+    revision: 0,
   }
+}
+
+///|
+/// 标脏一行:首次变脏才推进 revision,合并同一帧内的多次写入。
+fn TermScreen::mark_row(self : TermScreen, y : Int) -> Unit {
+  if self.dirty_all || y < 0 || y >= self.dirty_rows.length() {
+    return
+  }
+  if !self.dirty_rows[y] {
+    self.dirty_rows[y] = true
+    self.revision = self.revision + 1
+  }
+}
+
+///|
+/// 标脏 [from, to) 行。
+fn TermScreen::mark_rows(self : TermScreen, from : Int, to : Int) -> Unit {
+  for y in from..<to {
+    self.mark_row(y)
+  }
+}
+
+///|
+fn TermScreen::mark_all(self : TermScreen) -> Unit {
+  if !self.dirty_all {
+    self.dirty_all = true
+    self.revision = self.revision + 1
+    self.dirty_rows = dirty_mask(self.rows)
+  }
+}
+
+///|
+/// 写入单个格:内容与属性都没变时不标脏。
+/// 投影器每帧重画整棵语义树,若同内容写入也算变化,damage 通路就永远非空,
+/// 增量呈现省下的重绘就不存在了。
+fn TermScreen::write_cell(
+  self : TermScreen,
+  y : Int,
+  x : Int,
+  cell : Cell,
+) -> Unit {
+  let row = self.screen[y]
+  if row.cells[x] == cell {
+    return
+  }
+  self.mark_row(y)
+  row.cells[x] = cell
+}
+
+///|
+/// 缓冲区代数:任何内容变化都会递增,呈现器用它跳过无变化的帧。
+pub fn TermScreen::revision(self : TermScreen) -> Int {
+  self.revision
+}
+
+///|
+/// 取出并清零脏区:整屏重建,或升序去重的脏行。
+pub fn TermScreen::take_damage(self : TermScreen) -> Damage {
+  let rows : Array[Int] = []
+  if !self.dirty_all {
+    for y, dirty in self.dirty_rows {
+      if dirty {
+        rows.push(y)
+      }
+    }
+  }
+  let damage : Damage = { full: self.dirty_all, rows, }
+  self.dirty_all = false
+  self.dirty_rows = dirty_mask(self.rows)
+  damage
 }
 
 ///|
@@ -281,6 +171,12 @@ pub fn TermScreen::cursor_visible(self : TermScreen) -> Bool {
 ///|
 pub fn TermScreen::set_cursor_visible(self : TermScreen, v : Bool) -> Unit {
   self.cursor_visible = v
+}
+
+///|
+/// DECAWM:关闭自动换行后,超宽字符停在最后一列而不是滚到新行。
+pub fn TermScreen::set_auto_wrap(self : TermScreen, v : Bool) -> Unit {
+  self.auto_wrap = v
 }
 
 ///|
@@ -336,6 +232,7 @@ pub fn TermScreen::reset(self : TermScreen) -> Unit {
 ///|
 /// 清空屏幕与回看缓冲。
 pub fn TermScreen::clear_all(self : TermScreen) -> Unit {
+  self.mark_all()
   for i in 0..<self.rows {
     self.screen[i] = TermRow::new(self.cols, self.attrs)
   }
@@ -364,7 +261,7 @@ fn TermScreen::prepend_scrollback(self : TermScreen, row : TermRow) -> Unit {
 }
 
 ///|
-/// 光标处写入字符;处理自动换行与宽字符。
+/// 光标处写入字符;处理自动换行与宽字符(右半格填 continuation)。
 pub fn TermScreen::print_char(
   self : TermScreen,
   ch : String,
@@ -379,17 +276,17 @@ pub fn TermScreen::print_char(
     // 宽字符放不下最后一格:丢弃(与 xterm 一致)
     return
   }
-  self.screen[self.cursor_row].cells[self.cursor_col] = {
+  self.write_cell(self.cursor_row, self.cursor_col, {
     ch,
     width,
     attrs: self.attrs,
-  }
+  })
   if width == 2 {
-    self.screen[self.cursor_row].cells[self.cursor_col + 1] = {
-      ch: "",
-      width: 0,
-      attrs: self.attrs,
-    }
+    self.write_cell(
+      self.cursor_row,
+      self.cursor_col + 1,
+      continuation_cell(self.attrs),
+    )
   }
   if self.cursor_col + width >= self.cols {
     if self.auto_wrap {
@@ -397,6 +294,52 @@ pub fn TermScreen::print_char(
     }
   } else {
     self.cursor_col = self.cursor_col + width
+  }
+}
+
+///|
+/// 直接写入第 y 行第 x 列,不移动光标 —— 投影器按量化盒定位单元格。
+/// 越界或宽字符放不下时返回 false,调用方据此记降级诊断。
+pub fn TermScreen::put(
+  self : TermScreen,
+  y : Int,
+  x : Int,
+  ch : String,
+  width : Int,
+  attrs : CellAttrs,
+) -> Bool {
+  if y < 0 || y >= self.rows || x < 0 || x >= self.cols {
+    return false
+  }
+  if width == 2 && x >= self.cols - 1 {
+    return false
+  }
+  self.write_cell(y, x, { ch, width, attrs, })
+  if width == 2 {
+    self.write_cell(y, x + 1, continuation_cell(attrs))
+  }
+  true
+}
+
+///|
+/// 把第 y 行的 [from, to) 列擦成空白(越界裁剪),保持 attrs 的底色。
+pub fn TermScreen::erase_cells(
+  self : TermScreen,
+  y : Int,
+  from : Int,
+  to : Int,
+  attrs : CellAttrs,
+) -> Unit {
+  if y < 0 || y >= self.rows {
+    return
+  }
+  let start = from.clamp(min=0, max=self.cols)
+  let end = to.clamp(min=0, max=self.cols)
+  if end <= start {
+    return
+  }
+  for i in start..<end {
+    self.write_cell(y, i, blank_cell(attrs))
   }
 }
 
@@ -545,25 +488,23 @@ pub fn TermScreen::erase_in_display(self : TermScreen, mode : Int) -> Unit {
   self.wrap_pending = false
   match mode {
     0 => {
-      for i in self.cursor_col..<self.cols {
-        self.screen[self.cursor_row].cells[i] = blank_cell(self.attrs)
-      }
+      self.erase_cells(self.cursor_row, self.cursor_col, self.cols, self.attrs)
       for r in (self.cursor_row + 1)..<self.rows {
-        self.screen[r] = TermRow::new(self.cols, self.attrs)
+        self.erase_cells(r, 0, self.cols, self.attrs)
       }
     }
     1 => {
-      for i in 0..<=self.cursor_col {
-        self.screen[self.cursor_row].cells[i] = blank_cell(self.attrs)
-      }
+      self.erase_cells(self.cursor_row, 0, self.cursor_col + 1, self.attrs)
       for r in 0..<self.cursor_row {
-        self.screen[r] = TermRow::new(self.cols, self.attrs)
+        self.erase_cells(r, 0, self.cols, self.attrs)
       }
     }
-    2 =>
+    2 => {
+      self.mark_all()
       for r in 0..<self.rows {
         self.screen[r] = TermRow::new(self.cols, self.attrs)
       }
+    }
     _ => self.clear_all()
   }
 }
@@ -572,31 +513,23 @@ pub fn TermScreen::erase_in_display(self : TermScreen, mode : Int) -> Unit {
 /// 清除行:0 = 光标到行尾,1 = 行首到光标,2 = 整行。
 pub fn TermScreen::erase_in_line(self : TermScreen, mode : Int) -> Unit {
   self.wrap_pending = false
-  let row = self.screen[self.cursor_row]
   match mode {
     0 =>
-      for i in self.cursor_col..<self.cols {
-        row.cells[i] = blank_cell(self.attrs)
-      }
-    1 =>
-      for i in 0..<=self.cursor_col {
-        row.cells[i] = blank_cell(self.attrs)
-      }
-    _ =>
-      for i in 0..<self.cols {
-        row.cells[i] = blank_cell(self.attrs)
-      }
+      self.erase_cells(self.cursor_row, self.cursor_col, self.cols, self.attrs)
+    1 => self.erase_cells(self.cursor_row, 0, self.cursor_col + 1, self.attrs)
+    _ => self.erase_cells(self.cursor_row, 0, self.cols, self.attrs)
   }
 }
 
 ///|
-/// 在光标行插入 n 个空行(区域内),底部行进入回看缓冲。
+/// 光标行插入 n 个空行(区域内),底部行进入回看缓冲。
 pub fn TermScreen::insert_lines(self : TermScreen, n : Int) -> Unit {
   self.wrap_pending = false
   if self.cursor_row < self.scroll_top || self.cursor_row > self.scroll_bottom {
     return
   }
   let n = clamp_count(n, self.scroll_bottom - self.scroll_top + 1)
+  self.mark_rows(self.cursor_row, self.scroll_bottom + 1)
   for _ in 0..<n {
     self.prepend_scrollback(self.screen[self.scroll_bottom])
     let mut i = self.scroll_bottom
@@ -616,6 +549,7 @@ pub fn TermScreen::delete_lines(self : TermScreen, n : Int) -> Unit {
     return
   }
   let n = clamp_count(n, self.scroll_bottom - self.scroll_top + 1)
+  self.mark_rows(self.cursor_row, self.scroll_bottom + 1)
   for _ in 0..<n {
     self.push_scrollback(self.screen[self.cursor_row])
     for i in self.cursor_row..<self.scroll_bottom {
@@ -631,6 +565,10 @@ pub fn TermScreen::insert_chars(self : TermScreen, n : Int) -> Unit {
   self.wrap_pending = false
   let row = self.screen[self.cursor_row]
   let count = clamp_count(n, self.cols - self.cursor_col)
+  if count == 0 {
+    return
+  }
+  self.mark_row(self.cursor_row)
   let mut i = self.cols - 1
   while i >= self.cursor_col + count {
     row.cells[i] = row.cells[i - count]
@@ -647,6 +585,10 @@ pub fn TermScreen::delete_chars(self : TermScreen, n : Int) -> Unit {
   self.wrap_pending = false
   let row = self.screen[self.cursor_row]
   let count = clamp_count(n, self.cols - self.cursor_col)
+  if count == 0 {
+    return
+  }
+  self.mark_row(self.cursor_row)
   for i in self.cursor_col..<(self.cols - count) {
     row.cells[i] = row.cells[i + count]
   }
@@ -659,17 +601,23 @@ pub fn TermScreen::delete_chars(self : TermScreen, n : Int) -> Unit {
 /// 擦除光标处起 n 个字符(置空白,不移动)。
 pub fn TermScreen::erase_chars(self : TermScreen, n : Int) -> Unit {
   self.wrap_pending = false
-  let row = self.screen[self.cursor_row]
   let count = clamp_count(n, self.cols - self.cursor_col)
-  for i in self.cursor_col..<(self.cursor_col + count) {
-    row.cells[i] = blank_cell(self.attrs)
-  }
+  self.erase_cells(
+    self.cursor_row,
+    self.cursor_col,
+    self.cursor_col + count,
+    self.attrs,
+  )
 }
 
 ///|
 /// 滚动区域内向上滚动 n 行,顶部行进入回看缓冲。
 pub fn TermScreen::scroll_up(self : TermScreen, n : Int) -> Unit {
   let n = clamp_count(n, self.scroll_bottom - self.scroll_top + 1)
+  if n == 0 {
+    return
+  }
+  self.mark_rows(self.scroll_top, self.scroll_bottom + 1)
   for _ in 0..<n {
     self.push_scrollback(self.screen[self.scroll_top])
     for i in self.scroll_top..<self.scroll_bottom {
@@ -683,6 +631,10 @@ pub fn TermScreen::scroll_up(self : TermScreen, n : Int) -> Unit {
 /// 滚动区域内向下滚动 n 行,底部行进入回看缓冲头部。
 pub fn TermScreen::scroll_down(self : TermScreen, n : Int) -> Unit {
   let n = clamp_count(n, self.scroll_bottom - self.scroll_top + 1)
+  if n == 0 {
+    return
+  }
+  self.mark_rows(self.scroll_top, self.scroll_bottom + 1)
   for _ in 0..<n {
     self.prepend_scrollback(self.screen[self.scroll_bottom])
     let mut i = self.scroll_bottom
@@ -737,6 +689,7 @@ pub fn TermScreen::set_title(self : TermScreen, title : String) -> Unit {
 
 ///|
 /// 调整尺寸;行/列变化尽量保留内容,缩小后的行进入回看缓冲。
+/// 尺寸变化会让所有行的列位置失效,因此整屏标脏。
 pub fn TermScreen::resize(
   self : TermScreen,
   new_cols : Int,
@@ -744,6 +697,7 @@ pub fn TermScreen::resize(
 ) -> Unit {
   let cols = if new_cols < 1 { 1 } else { new_cols }
   let rows = if new_rows < 1 { 1 } else { new_rows }
+  let size_changed = cols != self.cols || rows != self.rows
   // 列调整
   if cols != self.cols {
     for row in self.screen {
@@ -787,5 +741,11 @@ pub fn TermScreen::resize(
     }
     self.scroll_top = 0
     self.scroll_bottom = rows - 1
+  }
+  if size_changed {
+    self.dirty_rows = dirty_mask(rows)
+    self.mark_all()
+  } else if self.dirty_rows.length() != rows {
+    self.dirty_rows = dirty_mask(rows)
   }
 }
