@@ -20,6 +20,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_tui_pty_smoke:
+        description: Run the TUI real-PTY interaction smoke (examples terminal entries in a POSIX PTY).
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   catalog:
@@ -126,4 +131,32 @@ jobs:
           path: |
             artifacts/platform-observation/macos/
             artifacts/example-smoke/macos/
+          if-no-files-found: warn
+
+  tui-pty-smoke:
+    name: TUI real-PTY interaction smoke
+    runs-on: macos-14
+    needs: catalog
+    if: ${{ github.event_name == 'schedule' || inputs.run_tui_pty_smoke }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
+      - name: Run TUI real-PTY interaction smoke
+        run: node scripts/smoke-gate.mjs --suite tui.pty-interaction-smoke --run
+
+      - name: Upload TUI PTY smoke artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tui-pty-interaction-smoke
+          path: artifacts/smoke/tui-pty-smoke/
           if-no-files-found: warn

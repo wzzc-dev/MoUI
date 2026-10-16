@@ -29,7 +29,7 @@
 
 ## 已知待批准的 runtime 缺陷
 
-- `moui/runtime/runtime_events.mbt:431` 在 `RuntimeState::focus_key` 里 `println("[focus-dbg] constrained_ok=…")`,会污染终端 stdout。`git blame` = `8e26cde20a`(2026-10-06),是 `main` 上既有缺陷,不是 TUI 工作引入的。删它属于 `moui/runtime` 改动,需 owner 批准(见 `docs/plans/active/tui-output-path.md`)。
+- `moui/runtime/runtime_events.mbt` 的 `[focus-dbg]` println(污染终端 stdout,`git blame` = `8e26cde20a` 2026-10-06 的 `main` 既有缺陷)已于 2026-10-16 经 owner 批准删除(tui-hardening H1)。教训:runtime 的 stdout 对 TUI 宿主就是帧流的一部分,调试打印必须走结构化的诊断通道而不是 println。
 
 ## Harness 陷阱(S6 实测)
 

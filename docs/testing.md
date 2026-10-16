@@ -480,8 +480,8 @@ as the `moui-agent-mcp-protocol-smoke` artifact.
 
 ### Terminal PTY interaction smoke
 
-`smoke/gates.json` carries `tui.pty-interaction-smoke` (nightly tier, manual
-mode): it spawns the `examples/tui_split/terminal`, `examples/counter/terminal`
+`smoke/gates.json` carries `tui.pty-interaction-smoke` (nightly tier,
+`mode: run`): it spawns the `examples/tui_split/terminal`, `examples/counter/terminal`
 and `examples/tui_layers/terminal` native executables inside a real POSIX PTY,
 drives keys and SGR mouse sequences through the slave side, and decodes the ANSI
 byte stream back into a cell grid (100x30 baseline; some cases start narrower or
@@ -503,17 +503,19 @@ because a plain `moon test` must not depend on a built artifact. That skip would
 be a false pass here, so the script builds all three entrypoints, verifies each
 executable exists (a missing binary is exit 1), sets
 `TERM`, and points `MOUI_TUI_SMOKE_LOG` at `artifacts/smoke/tui-pty-smoke/`
-(raw bytes are written on failure only). Sessions are serialized with one mutex:
-the frame-completeness rule is a timing fact (a quiet window), and concurrent
-app-under-test processes read each other's frames as partial. Raising the quiet
-window was rejected — it only moves the threshold and makes the gate several
-times slower.
+(raw bytes are written on failure only). Frame completeness is content-anchored:
+each case waits for the needle that proves its frame landed (`await_frame`) or,
+for attrs-only repaints with no new text, for the first reply bytes
+(`await_reply`), then flushes with a short confirmation window. The quiet window
+is no longer the completion criterion, which is what made the gate safe to
+automate (tui-hardening H3). Sessions remain serialized under one mutex so CPU
+starvation cannot extend the confirmation window into a red.
 
-It is not wired into an automated CI job: the harness is time-based and needs a
-PTY, so its honest first home is the on-demand script. The gate entry declares
-`defaultDevCheck: false` and a `ci` block with `gate: manual-dispatch`, which is
-intent, not coverage — no workflow file runs this suite today. CI wiring is
-recorded as debt in `docs/plans/active/tui-output-path.md`.
+The gate runs unattended in CI: `.github/workflows/moui-runtime-gates.yml`
+executes `node scripts/smoke-gate.mjs --suite tui.pty-interaction-smoke --run`
+on the nightly schedule and on manual dispatch, on macos-14, and uploads the
+raw-stream artifact on failure. The catalog command is `mode: run`; developers
+can still run `sh scripts/tui-pty-smoke.sh` directly for local reproduction.
 
 ### Embedded runtime backends
 

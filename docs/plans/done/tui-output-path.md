@@ -1,10 +1,11 @@
 # TUI Output Path
 
-- Status: active — S0–S7 have landed with evidence; the two owner-gated open
-  items were resolved by owner decision on 2026-10-16, and follow-up work is
-  carried by [tui-hardening](tui-hardening.md); this file retires from
-  `docs/plans/active/` when the PTY gate lands in nightly CI (tui-hardening
-  stage H3). Option B
+- Status: done — S0–S7 landed with evidence, and the two owner-gated open items
+  were resolved by owner decision on 2026-10-16, carried by
+  [tui-hardening](../active/tui-hardening.md): the `[focus-dbg]` println was
+  deleted and the API-surface budget ratchet was settled in H1, and the PTY
+  interaction gate became content-anchored and joined the nightly
+  `moui-runtime-gates.yml` in H3, which is what closes this plan. Option B
   (frame carries semantics) was approved by the owner on 2026-10-14 and landed
   the same day. The two items this plan had left to the owner were resolved in
   the 2026-10-16 owner call: the `[focus-dbg]` `println` in
