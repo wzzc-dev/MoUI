@@ -89,6 +89,8 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [overlay-placement-portal-unification](active/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
 | [feature-scope-composition](active/feature-scope-composition.md) | Add `Feature[Model, Msg]` + `Feature::scope` lens composition to core, `FieldAction` keyed forms, and settings/workbench pilots |
 | [moui-studio-plugin-kernel](done/moui-studio-plugin-kernel.md) | MoUI Studio 插件化改造：静态插件内核（Plugin 契约/服务注册表/事件总线）+ 三模式工作台 + AI 满配（多会话/Markdown/流式/真终端）+ 编辑器完善 + 教学版 profile |
+| [tui-output-path](active/tui-output-path.md) | 让现有 `@moui.View[Msg]` 应用不经像素渲染就能在真实终端里操作：S0 cell 投影探针 → S1 可发布 cell buffer → S2 纯 MoonBit `moui_tui_renderer`（决策 B：DrawFrame 携带语义载荷）→ S3 terminal backend 三通道输入 → S4 双栏分屏与动态树 → S5 交互验收 → S6 一致性接入 |
+| [tui-hardening](active/tui-hardening.md) | TUI 路收尾与硬化：解红 pr 门并按模块提交 S0–S7 → 投影契约化（穷举 attrs_for / AGENTS.md 规则表 / 黄金帧）→ PTY 门确定性化并入 nightly → theme→ANSI palette（构造参数路线，不动 core）→ 示例收敛与 TerminalState 去全局化 |
 
 ## Debt
 
