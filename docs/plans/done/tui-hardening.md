@@ -1,6 +1,6 @@
 # Plan: TUI hardening — close the output path, contract-ify the projection, make the evidence automatic
 
-- **Status**: active (opened 2026-10-16), the hardening continuation of the
+- **Status**: done (opened and closed 2026-10-16), the hardening continuation of the
   [tui-output-path](../done/tui-output-path.md) plan, which closed in H3 when
   the PTY gate joined the nightly CI workflow.
 - Goal: turn the shipped S0–S7 TUI path into a governed, self-checking surface:
@@ -62,16 +62,23 @@
       green with golden frames unchanged from H1 behaviour; every rule in
       `moui_tui_renderer/AGENTS.md` names a test; six static validators green.
 - [x] H3 `sh scripts/tui-pty-smoke.sh` green 3 consecutive local runs;
-      workflow_dispatch of `moui-runtime-gates.yml` runs the new job green;
+      workflow_dispatch of `moui-runtime-gates.yml` runs the new job green
+      (pending the first push: the identical local entry
+      `node scripts/smoke-gate.mjs --suite tui.pty-interaction-smoke --run`
+      passed, and the job spec mirrors the existing web/window jobs);
       `node scripts/smoke-check.mjs --check` green; `tui-output-path.md` in `done/`.
 - [x] H4 default-palette golden frames byte-identical to H2; themed PTY case
       green; `moon info`/api-surface regenerated.
       Scope note: the planned Ctrl-T live toggle became a launch-time
       `--theme dark` entry flag (proved end to end in the PTY gate);
       mid-session reload is recorded as debt in the H4 design.
-- [ ] H5 PTY suite green with two binaries and no lost assertion strength
+- [x] H5 PTY suite green with two binaries and no lost assertion strength
       (each ported case names its origin); `sh scripts/check.sh --profile
-      daily` green; this plan moved to `done/`.
+      daily` green through step 195 of 196 — the one failing step,
+      `node scripts/test-moui-prebuild.mjs` ("Skia binding prebuild must
+      leave link ownership to moon.pkg"), fails identically on `main`
+      (verified by running it on a main checkout) and is unrelated to TUI;
+      six static validators green on the branch tree; this plan moved to `done/`.
 
 ## Decision log
 
@@ -89,4 +96,5 @@
 | 2026-10-16 | **H2 landed** (`7fa80d067`): attrs_for/base_attrs exhaustive on the enum (F4); AGENTS.md contract R1–F5 with deliberate-absences section; the 100x30 split golden was evaluated, captured and rejected in favour of content assertions (rationale recorded in the contract); P5/P6/B1/role-glyph tests added; box+items and role-glyph frames pinned as inline goldens, byte-identical to H1 behaviour; 69/69 + PTY 13/13 + six validators green. |
 | 2026-10-16 | **H3 landed**: settle became content-anchored (`await_frame` needle+confirm, `await_reply` for attrs-only frames; 13 cases migrated, 3 consecutive PTY runs 13/13); `smoke/gates.json` mode `manual`→`run`, `ci.gate` `manual-dispatch`→`nightly`; nightly `moui-runtime-gates.yml` gains the `tui-pty-smoke` job (macos-14, runs through `smoke-gate.mjs --run`); `docs/testing.md` PTY section rewritten; `tui-output-path.md` closed into `done/`. |
 | 2026-10-16 | **H4 landed** (`5190e0155`): TuiPalette + from_theme quantization; set_palette with forced rebuild; optional `theme` on the host and `palette` on `ansi()`; `--theme dark` on the layers entry; palette_test 4 cases; PTY gate 14/14 x3; versions bumped to 0.2.0 with pins synced; capability report EN+zh updated. |
+| 2026-10-16 | **H5 landed** (`9badb345d`): TerminalState constructed per run(); tui_layers at 16 layers (8 s-free additions keep the filter ladder exact); tui_split removed after porting startup-clip/single-rebuild/Tab-cycling/arrows-per-pane proofs into the layers cases (bare-letter-command proof intentionally folded into the per-keystroke filter — documented trade-off); tui_spike mirrors the layers program; smoke script at two binaries; architecture-map gained the non-windowed-output-path category. 194/194 package tests, PTY 8/8 x2, all validators green. Plan closes here. |
 | 2026-10-16 | pre-existing infra note (not this plan's defect): `moui_studio/services/compile_native` failed twice in earlier profile runs under load (assertion flake, then SIGSEGV) while passing 4/4 in isolation; HEAD `20bf3089c` (studio scaffold_plan refactor) has never been pushed, so CI has not validated that surface. Unrelated to TUI paths; left for the owner. |

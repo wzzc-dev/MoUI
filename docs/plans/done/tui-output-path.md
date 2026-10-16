@@ -2,7 +2,7 @@
 
 - Status: done — S0–S7 landed with evidence, and the two owner-gated open items
   were resolved by owner decision on 2026-10-16, carried by
-  [tui-hardening](../active/tui-hardening.md): the `[focus-dbg]` println was
+  [tui-hardening](tui-hardening.md): the `[focus-dbg]` println was
   deleted and the API-surface budget ratchet was settled in H1, and the PTY
   interaction gate became content-anchored and joined the nightly
   `moui-runtime-gates.yml` in H3, which is what closes this plan. Option B
