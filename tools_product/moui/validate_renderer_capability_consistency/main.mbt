@@ -4,8 +4,9 @@
 ///
 /// The capability self-report (`RendererProvider.capabilities`) is the single
 /// source of truth. This validator parses the report's grouped table and
-/// checks, per feature row, that the Skia / native WGPU / Sun columns match
-/// the status returned by the corresponding `*_capabilities` functions:
+/// checks, per feature row, that the Skia / native WGPU / Sun / terminal ANSI
+/// columns match the status returned by the corresponding `*_capabilities`
+/// functions:
 ///
 /// - "Skia raster native"       <- `@render_skia.skia_provider_capabilities`
 ///   (provider `skia-raster`, `SkiaRasterNative`)
@@ -13,6 +14,13 @@
 ///   (provider `wgpu`, `NativeWgpu`)
 /// - "Sun CPU raster"           <- `@render_sun.sun_feature_capabilities()`
 ///   (provider `sun-raster`)
+/// - "Terminal cell ANSI"       <- `@render_tui.tui_feature_capabilities()`
+///   (provider `tui-ansi`, `TerminalAnsiNative`)
+///
+/// The terminal column is checked in code because the TUI path claims nothing
+/// a cell grid cannot draw: an `Image` row that says `supported` here is a
+/// documentation lie about a placeholder, so an unlinked column would be worse
+/// than no column.
 ///
 /// The "Web wasm-gc" column is intentionally out of scope: its self-report
 /// lives in `moui_web_renderer`, a `wasm-gc`-only package that a
@@ -31,7 +39,8 @@ fn usage() -> String {
     #|Usage: tools/moui/validate_renderer_capability_consistency [--repo-root PATH]
     #|
     #|Checks that docs/renderer-capability-report.md table statuses match the
-    #|renderer capability self-reports in moui/render/{skia,wgpu,sun}.
+    #|renderer capability self-reports in moui/render/{skia,wgpu,sun} and the
+    #|terminal cell projector in moui_tui_renderer.
     #|
   )
 }
@@ -112,6 +121,7 @@ struct ReportRow {
   skia : String
   wgpu : String
   sun : String
+  tui : String
 }
 
 ///|
@@ -129,13 +139,14 @@ fn parse_table(text : String) -> (Int, Array[ReportRow]) {
     }
     if header_line > 0 && line.trim().has_prefix("|") {
       let cells = split_cells(line.to_owned())
-      if cells.length() >= 5 && cells[0] != "---" {
+      if cells.length() >= 6 && cells[0] != "---" {
         rows.push({
           line_no,
           feature_name: cells[0],
           skia: cells[1],
           wgpu: cells[3],
           sun: cells[4],
+          tui: cells[5],
         })
       }
     }
@@ -181,6 +192,7 @@ fn code_statuses() -> Array[ColumnRule] {
     backend=@render.RendererBackendKind::NativeWgpu,
   )
   let sun_caps = @render_sun.sun_feature_capabilities()
+  let tui_caps = @render_tui.tui_feature_capabilities()
   [
     {
       column_label: "Skia raster native",
@@ -197,6 +209,11 @@ fn code_statuses() -> Array[ColumnRule] {
       provider_id: "sun-raster",
       status_of: status_by_feature(sun_caps),
     },
+    {
+      column_label: "Terminal cell ANSI",
+      provider_id: "tui-ansi",
+      status_of: status_by_feature(tui_caps),
+    },
   ]
 }
 
@@ -207,6 +224,7 @@ fn report_cell(row : ReportRow, label : String) -> String {
     "Skia raster native" => row.skia
     "Native wgpu diagnostic" => row.wgpu
     "Sun CPU raster" => row.sun
+    "Terminal cell ANSI" => row.tui
     _ => row.skia
   }
 }

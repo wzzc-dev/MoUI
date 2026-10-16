@@ -34,6 +34,7 @@ Keep it brief — aim for 1–2 pages max per session.
 ## Index
 
 <!-- Add new entries newest-first: -->
+- [2026-10-15: TUI output path (S0–S7)](2026-10-15-tui-output-path.md)
 - [2026-08-29: Windows promoted to committed product class](2026-08-29-windows-committed-promotion.md)
 - [2026-08-05: Cross-platform behavior convergence](2026-08-05-cross-platform-behavior-convergence.md)
 - [2026-07-13: All-platform native GPU workers](2026-07-13-all-platform-native-gpu-workers.md)

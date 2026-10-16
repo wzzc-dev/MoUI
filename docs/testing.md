@@ -478,6 +478,43 @@ The `Agent MCP protocol smoke` job of `.github/workflows/ci.yml` runs the suite
 on every push, pull request, and manual dispatch, and uploads the two frames
 as the `moui-agent-mcp-protocol-smoke` artifact.
 
+### Terminal PTY interaction smoke
+
+`smoke/gates.json` carries `tui.pty-interaction-smoke` (nightly tier, manual
+mode): it spawns the `examples/tui_split/terminal`, `examples/counter/terminal`
+and `examples/tui_layers/terminal` native executables inside a real POSIX PTY,
+drives keys and SGR mouse sequences through the slave side, and decodes the ANSI
+byte stream back into a cell grid (100x30 baseline; some cases start narrower or
+resize mid-session). Assertions land on that grid — what a terminal actually
+displays — instead of on byte counts or
+renderer internals, so focus traversal, bordered-list selection, tree folding,
+keypress-without-submit, click/wheel, and resize reflow without ghosting are all
+proven end-to-end. `tui_layers` adds the three proofs the static split demo
+cannot carry: a text field focused by clicking its own cell and then filtered one
+keystroke at a time, a visibility marker read back after a click, and a wheel that
+moves only the hovered pane.
+
+```sh
+sh scripts/tui-pty-smoke.sh
+```
+
+The suite skips a case when the `MOUI_TUI_*_BIN` variable it needs is unset,
+because a plain `moon test` must not depend on a built artifact. That skip would
+be a false pass here, so the script builds all three entrypoints, verifies each
+executable exists (a missing binary is exit 1), sets
+`TERM`, and points `MOUI_TUI_SMOKE_LOG` at `artifacts/smoke/tui-pty-smoke/`
+(raw bytes are written on failure only). Sessions are serialized with one mutex:
+the frame-completeness rule is a timing fact (a quiet window), and concurrent
+app-under-test processes read each other's frames as partial. Raising the quiet
+window was rejected — it only moves the threshold and makes the gate several
+times slower.
+
+It is not wired into an automated CI job: the harness is time-based and needs a
+PTY, so its honest first home is the on-demand script. The gate entry declares
+`defaultDevCheck: false` and a `ci` block with `gate: manual-dispatch`, which is
+intent, not coverage — no workflow file runs this suite today. CI wiring is
+recorded as debt in `docs/plans/active/tui-output-path.md`.
+
 ### Embedded runtime backends
 
 Android, iOS, and HarmonyOS all use `wzzc-dev/window` `HostCmd` → `EventLoop`

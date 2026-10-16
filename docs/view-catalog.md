@@ -124,6 +124,31 @@ fn view(draft : String) -> @moui.View[Msg] {
 }
 ```
 
+## Terminal Output Coverage
+
+The catalog above stays renderer-neutral and the terminal path keeps it that
+way: `moui_tui_renderer` reads the same semantics surface every control already
+emits, so no view API changes for a TUI. What differs is only what the cell grid
+can express. `moui_tui_renderer/roles.mbt` puts every `SemanticsRole` in one of
+five projection classes — `Region` (named container, drawn as a border box),
+`Item` (a list/tree row: no text of its own, its chrome carries the row),
+`Label` (Tab/Option/Cell/Link: writes text, no box), `Content` (leaf text),
+`Placeholder` (a control the grid cannot draw):
+
+| Control family | On the terminal path |
+| --- | --- |
+| Text, heading, status, alert, button, checkbox, switch, radio, text field, combo box, slider, progress | Projected as cell text; `moui_tui_renderer` `attrs_for` turns focused semantics into blue+bold+underline, selected into reverse video, pressed into bold, so keyboard navigation stays legible without pixels. |
+| Lists, trees, tables, grids, scroll views, forms, menus, dialogs | Projected as bordered regions with clipped rows and per-region scroll; `selectable_list` and `tree_view` are proven head-to-end in the split demo inside a real PTY. |
+| `image`, `web_view` | Rendered as an explicit `[image]` / `[web-view]` placeholder token plus a degrade diagnostic — never silence. |
+| `canvas`, `custom_layout`, `moui_richtext`, `moui_3d*` | The box still claims cells, but their paint is pixel commands (`draw-path`, `gradient-brush`, `draw-shadow`, `draw-shader-effect`, `push-filter`, `draw-image`, `platform-view`) that a cell grid cannot sample; each is dropped and named in the degrade log. |
+
+Evidence boundary: only `examples/tui_split` and the counter TUI are proven in a
+real terminal (`sh scripts/tui-pty-smoke.sh`). The rows above describe the
+projection policy and its unit tests, not a per-control usability claim for the
+rest of the catalog. Capability statuses live in
+[Renderer Capability Report](renderer-capability-report.md); the route itself is
+experimental (`ready=false`).
+
 ## Text And Media
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |

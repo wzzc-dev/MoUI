@@ -30,6 +30,13 @@
       "releaseStage": "base-bindings"
     },
     {
+      "name": "wzzc-dev/moui_tui",
+      "directory": "moui_tui",
+      "publication": "public",
+      "role": "binding",
+      "releaseStage": "base-bindings"
+    },
+    {
       "name": "wzzc-dev/moui_skia_renderer",
       "directory": "moui_skia_renderer",
       "publication": "public",
@@ -58,8 +65,22 @@
       "releaseStage": "renderers"
     },
     {
+      "name": "wzzc-dev/moui_tui_renderer",
+      "directory": "moui_tui_renderer",
+      "publication": "public",
+      "role": "renderer",
+      "releaseStage": "renderers"
+    },
+    {
       "name": "wzzc-dev/moui_agent",
       "directory": "moui_agent",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
+      "name": "wzzc-dev/moui_terminal_host",
+      "directory": "moui_terminal_host",
       "publication": "public",
       "role": "addon",
       "releaseStage": "addons"

@@ -51,6 +51,27 @@ The independent evidence file is
 `checks/architecture-evidence/linux-skia-riscv64.json`. QEMU L2 evidence does
 not promote `checks/platforms/linux.json` or the Linux Wayland runtime claim.
 
+### Terminal Output Route (non-windowed, `experimental`)
+
+The ANSI cell path (`moui_tui` + `moui_tui_renderer` + `moui_terminal_host`) is
+deliberately **not** added as a fifteenth canonical route in
+`checks/platform-matrix.json`. Every column of that matrix describes a host
+window: a Showcase package, a per-platform evidence file, an entrypoint line
+budget, and L3 evidence from a matching device. The terminal route has no
+window, no pixel surface and no Showcase entry, so a row there would be
+structured evidence about a thing that does not exist. Rejected alternative:
+forcing the route into the matrix, which would also require relaxing the
+"canonical 14 routes" contract asserted by
+`tools/moui/validate_platform_matrix` — a governance change, not a documentation
+one.
+
+| Claim | Status |
+|---|---|
+| `product_class` | `experimental`, `ready=false` — no development/demonstration usability or product commitment |
+| Proven | Focus traversal, bordered-list selection, tree folding, keypress-without-submit, click/wheel, resize reflow without ghosting, inside a real POSIX PTY (`sh scripts/tui-pty-smoke.sh`) |
+| Not claimed | Pixel fidelity, per-control terminal coverage beyond the two proven examples, Windows console evidence, automated CI coverage |
+| Selection | Never part of product `auto`; registered only by a composition root that names `tui-ansi` explicitly |
+
 ### Two Prohibited Misstatements
 
 1. **Do not** state “all six platforms are product-ready / all L3 checks are green.”

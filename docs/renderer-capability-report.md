@@ -21,6 +21,19 @@ Skia smoke log can support a macOS-only runtime note, but it does not upgrade
 Windows/Linux platform status and does not promote global Skia typography or
 native paragraph/bidi readiness without matching-host smoke logs.
 
+**Terminal cell ANSI (`tui-ansi`) is an experimental output path.** It draws no
+pixels: it projects `DrawFrame.semantics` onto an equal-width cell grid and
+writes ANSI deltas to a host-supplied byte sink. Its column is checked in code
+by `@render_tui.tui_feature_capabilities()`, and the `gap` cells are honest
+gaps rather than fallbacks — a cell grid has no gradient, shadow, transform or
+vector path, so those records are dropped with a degrade diagnostic instead of
+being quietly approximated. The path is not part of the product `auto`
+selection, is registered only by composition roots that name it explicitly, and
+makes no pixel-fidelity claim. What it does claim is interaction fidelity:
+focus traversal, bordered-list selection, tree folding, immediate keypress,
+mouse click/wheel and resize reflow are proven inside a real PTY by the
+`tui.pty-interaction-smoke` gate (`smoke/gates.json`).
+
 Status meanings:
 
 - `supported`: implemented directly by the renderer.
@@ -31,25 +44,25 @@ Status meanings:
 - `unavailable`: the backend has a contract or planned mapping, but cannot be
   claimed supported in the current fallback-safe build.
 
-| Feature | Skia raster native | Web wasm-gc | Native wgpu diagnostic | Sun CPU raster | Follow-up |
+| Feature | Skia raster native | Web wasm-gc | Native wgpu diagnostic | Sun CPU raster | Terminal cell ANSI | Follow-up |
 | --- | --- | --- | --- | --- | --- |
-| Rect | supported | supported | supported | supported | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
-| Rounded rect | supported | supported | supported | supported | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
-| Gradient | supported | partial | partial | supported | Skia now renders linear and radial gradient brushes for rounded rects and paths; browser WebGPU and native WGPU diagnostics both preserve radial rounded/path brush payloads and shade radial interpolation in the visual shader. Web stays partial until Web renderer smoke records real radial center/mid/edge pixels; native WGPU keeps the same requirement only for its diagnostic smoke. |
-| Shadow | supported | supported | supported | supported | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
-| Text | supported | supported | supported | supported | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, representative coverage characters, and inferred fallback language tags through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
-| Image | supported | supported | supported | supported | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down/fit-width/fit-height placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; Sun renderer-local tests now cover JPEG data URI and local-file decode through the `mizchi/image` adapter plus the same contain/cover/stretch/scale-down/fit-width/fit-height placement and source-crop geometry; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
-| Clip | supported | supported | supported | supported | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. Sun CPU raster applies transformed rectangular clip bounds through `moui_sun` clip state and validates 2x rectangular/rounded clip pixels with inverse-transform rounded masking. |
-| Transform | supported | partial | partial | supported | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel smoke coverage. Sun CPU raster now keeps transform/clip state across layer, rounded-clip, and filter offscreen scopes. |
-| Opacity | supported | supported | supported | supported | Skia save-layer opacity has blended pixel smoke coverage. |
-| Layer compositing | supported | supported | supported | supported | Every frame carries complete `BeginRetainedLayer(spec)` payloads through `EndRetainedLayer(key)`. Skia and Sun keep renderer-local picture/pixel caches and decide hit, update, and eviction; runtime and host backends keep no residency mirror or command-cache fallback. |
-| Blend mode | supported | supported | supported | supported | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply through renderer-local pixels, with multiply/screen/overlay/darken/lighten output pixels also covered by the real native renderer smoke. |
-| Filter effect | supported | supported | supported | supported | Skia validates saturation and identity-normalized color matrix filters through renderer-local tests, with blur, saturation, brightness, contrast, and color matrix filters also covered by the real native renderer smoke. Sun CPU raster validates transformed filter scopes after offscreen canvases inherit parent transform/clip state. |
-| Path/vector | supported | supported | supported | supported | Skia replays `PathSpec` into native paths with renderer-local solid/gradient pixel tests and real native smoke coverage for solid/gradient fill and stroke output, plus quadratic and cubic curve verbs. WGPU/Web share the MoonBit tessellator, preserve path brush payloads, and submit radial path vertices through the visual shader instead of flattening radial brushes to a single sampled color. |
-| Shader effect | supported | supported | supported | supported | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. Sun CPU raster now records the same unsupported-command diagnostic shape when an unknown shader name falls back to the spec fallback brush. |
-| Text shaping | supported | supported | supported | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters plus inferred BCP47 script language tags before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes cluster interiors through the shared UAX-style `TextGraphemeBoundaries` scanner, exposes `TextSystem::layout_paragraph()` line metrics, paragraph caret rectangles, selection rectangles, and hit-test geometry, routes paragraph layout through native SkParagraph when available, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking. Sun raster exposes a renderer-backed `TextSystem` over `moui_sun/text` with requested-family-first fallback chain resolution across registered faces; renderer-local tests cover mixed Latin-plus-emoji measurement, no missing fallback diagnostic on covered draws, TextRun frame clipping, and paragraph metadata. The shared scanner uses generated Unicode 17.0 property predicates, `moui/core` runs curated and full vendored Unicode 17.0 default grapheme fixtures, and `moui_skia_renderer` runs the same fixture through `skia_grapheme_cluster_texts`. The real Skia smoke obtains bidi Arabic and mixed-direction visual-order markers plus paragraph wrapping, selection rectangles, hit testing, grapheme editing, and IME candidate/composition markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
-| Emoji text | supported | supported | supported | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo grapheme cluster samples, prefers emoji coverage characters and inferred language tags in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, retries platform emoji font candidates before default-font fallback, and reports deterministic color emoji readiness through `Typeface::has_color_glyphs` and glyph format metadata. Sun raster uses `moui_sun/text FontFallbackPlan` over the requested-family-first fallback chain so registered emoji coverage can be selected after a Latin primary face; renderer-local tests cover mixed Latin-plus-emoji measurement and covered draw diagnostics. The text/emoji smoke records high-saturation glyph/raster observation plus font/glyph metadata with a non-empty source/script/fallback-request-character-aware glyph key that matches the recorded source, text-system, shaper, script, fallback language tag payload, language-count, fallback request character, and format metadata, and obtains keycap, regional-indicator, and skin-tone-modifier fallback diagnostic markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
-| Async image | supported | supported | supported | supported | Renderer sessions emit tokenized `RendererImageLoadRequest` events. Backend image owners schedule/cancel byte I/O only, return the same token in `ImageResourceLoadCompletion`, and request redraw only when the session applies the completion. Skia, Sun, WGPU, and Web own decode/resource/cache state; stale and disposed tokens are inert. |
+| Rect | supported | supported | supported | supported | supported | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
+| Rounded rect | supported | supported | supported | supported | partial | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
+| Gradient | supported | partial | partial | supported | gap | Skia now renders linear and radial gradient brushes for rounded rects and paths; browser WebGPU and native WGPU diagnostics both preserve radial rounded/path brush payloads and shade radial interpolation in the visual shader. Web stays partial until Web renderer smoke records real radial center/mid/edge pixels; native WGPU keeps the same requirement only for its diagnostic smoke. |
+| Shadow | supported | supported | supported | supported | gap | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
+| Text | supported | supported | supported | supported | supported | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, representative coverage characters, and inferred fallback language tags through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
+| Image | supported | supported | supported | supported | gap | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down/fit-width/fit-height placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; Sun renderer-local tests now cover JPEG data URI and local-file decode through the `mizchi/image` adapter plus the same contain/cover/stretch/scale-down/fit-width/fit-height placement and source-crop geometry; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
+| Clip | supported | supported | supported | supported | supported | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. Sun CPU raster applies transformed rectangular clip bounds through `moui_sun` clip state and validates 2x rectangular/rounded clip pixels with inverse-transform rounded masking. |
+| Transform | supported | partial | partial | supported | gap | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel smoke coverage. Sun CPU raster now keeps transform/clip state across layer, rounded-clip, and filter offscreen scopes. |
+| Opacity | supported | supported | supported | supported | partial | Skia save-layer opacity has blended pixel smoke coverage. |
+| Layer compositing | supported | supported | supported | supported | partial | Every frame carries complete `BeginRetainedLayer(spec)` payloads through `EndRetainedLayer(key)`. Skia and Sun keep renderer-local picture/pixel caches and decide hit, update, and eviction; runtime and host backends keep no residency mirror or command-cache fallback. |
+| Blend mode | supported | supported | supported | supported | gap | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply through renderer-local pixels, with multiply/screen/overlay/darken/lighten output pixels also covered by the real native renderer smoke. |
+| Filter effect | supported | supported | supported | supported | gap | Skia validates saturation and identity-normalized color matrix filters through renderer-local tests, with blur, saturation, brightness, contrast, and color matrix filters also covered by the real native renderer smoke. Sun CPU raster validates transformed filter scopes after offscreen canvases inherit parent transform/clip state. |
+| Path/vector | supported | supported | supported | supported | gap | Skia replays `PathSpec` into native paths with renderer-local solid/gradient pixel tests and real native smoke coverage for solid/gradient fill and stroke output, plus quadratic and cubic curve verbs. WGPU/Web share the MoonBit tessellator, preserve path brush payloads, and submit radial path vertices through the visual shader instead of flattening radial brushes to a single sampled color. |
+| Shader effect | supported | supported | supported | supported | gap | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. Sun CPU raster now records the same unsupported-command diagnostic shape when an unknown shader name falls back to the spec fallback brush. |
+| Text shaping | supported | supported | supported | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters plus inferred BCP47 script language tags before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes cluster interiors through the shared UAX-style `TextGraphemeBoundaries` scanner, exposes `TextSystem::layout_paragraph()` line metrics, paragraph caret rectangles, selection rectangles, and hit-test geometry, routes paragraph layout through native SkParagraph when available, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking. Sun raster exposes a renderer-backed `TextSystem` over `moui_sun/text` with requested-family-first fallback chain resolution across registered faces; renderer-local tests cover mixed Latin-plus-emoji measurement, no missing fallback diagnostic on covered draws, TextRun frame clipping, and paragraph metadata. The shared scanner uses generated Unicode 17.0 property predicates, `moui/core` runs curated and full vendored Unicode 17.0 default grapheme fixtures, and `moui_skia_renderer` runs the same fixture through `skia_grapheme_cluster_texts`. The real Skia smoke obtains bidi Arabic and mixed-direction visual-order markers plus paragraph wrapping, selection rectangles, hit testing, grapheme editing, and IME candidate/composition markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
+| Emoji text | supported | supported | supported | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo grapheme cluster samples, prefers emoji coverage characters and inferred language tags in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, retries platform emoji font candidates before default-font fallback, and reports deterministic color emoji readiness through `Typeface::has_color_glyphs` and glyph format metadata. Sun raster uses `moui_sun/text FontFallbackPlan` over the requested-family-first fallback chain so registered emoji coverage can be selected after a Latin primary face; renderer-local tests cover mixed Latin-plus-emoji measurement and covered draw diagnostics. The text/emoji smoke records high-saturation glyph/raster observation plus font/glyph metadata with a non-empty source/script/fallback-request-character-aware glyph key that matches the recorded source, text-system, shaper, script, fallback language tag payload, language-count, fallback request character, and format metadata, and obtains keycap, regional-indicator, and skin-tone-modifier fallback diagnostic markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
+| Async image | supported | supported | supported | supported | gap | Renderer sessions emit tokenized `RendererImageLoadRequest` events. Backend image owners schedule/cancel byte I/O only, return the same token in `ImageResourceLoadCompletion`, and request redraw only when the session applies the completion. Skia, Sun, WGPU, and Web own decode/resource/cache state; stale and disposed tokens are inert. |
 
 ## Renderer Descriptors
 
@@ -65,6 +78,8 @@ to app code or view/runtime trees. Current descriptors are:
   `Native`.
 - `SunRasterNative`: family `Sun`, presentation `CpuPixelFrame`, target
   `Native`.
+- `TerminalAnsiNative`: family `Terminal`, presentation `ExternalSurface`,
+  target `Native`, provider id `tui-ansi`.
 
 For feature proof coverage (which CI job proves each feature), see
 [feature-proof-matrix.md](feature-proof-matrix.md) and
@@ -416,6 +431,32 @@ Remaining fallback approximations: shadow uses native `shadowBlur` with
 rounded clips are composited as layer masks, and path mesh gradients are
 linear-edge approximations rather than per-vertex barycentric shading.
 
+## Current Terminal Cell ANSI Notes
+
+`moui_tui_renderer` is a native, pure-MoonBit renderer package: it links no C
+library and opens no GPU device. Its input is `DrawFrame.semantics` only —
+pixel draw commands are not approximated but reported through a degrade log, so
+a node the terminal cannot draw becomes a named placeholder rather than an
+absence. Quantization (a 8x16 logical cell box by default), per-cell ownership
+and in-box wrapping live in this package, not in `moui/core` or
+`moui/runtime`.
+
+Layering is a claim rule rather than a painter's order: chrome borders claim
+cells at priority 1, container titles at 2, leaf content at 3, and equal
+priorities are first-come-first-served. Every paint is clipped to the node's own
+quantized box, and nodes whose box is entirely off-screen are dropped and
+counted (`offscreen_node_count()`). Output is ANSI row deltas: an unchanged
+frame emits zero bytes, a removed node repaints only the row it vacated, and a
+resize starts from a blank grid so no cell from the old width can be encoded
+into the new frame.
+
+`moui_tui` provides the cell buffer underneath it (damage/revision tracking and
+CJK/emoji double-width cells with a filled right half), and the byte sink is
+supplied by the composition root: the terminal backend wires it to stdout,
+tests capture it. Cell-level text coverage is one or two cells per code point
+with no shaper, which is why `Text shaping` and `Emoji text` are `partial`:
+`moui_tui.unicode_width` decides advance, the host terminal font decides glyphs.
+
 ## Update Rule
 
 When improving image, clip, opacity, transform, or any other draw command
@@ -424,5 +465,13 @@ support, update:
 1. `render/capabilities.mbt`
 2. `render/capabilities_test.mbt`
 3. this report page
+
+The Skia, native WGPU, Sun and terminal columns are all machine-checked against
+their code self-reports by
+`node scripts/validate-renderer-capability-consistency.mjs`; the Web column is
+checked by wasm-side package tests because a native validator cannot import
+`moui_web_renderer`. Changing terminal projection coverage means
+`moui_tui_renderer/capabilities.mbt` plus its cell in this table — a
+`supported` cell there would claim pixels a cell grid cannot draw.
 
 For text-related renderer changes, also update `docs/text-system.md`.

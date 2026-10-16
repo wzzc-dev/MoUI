@@ -132,6 +132,18 @@
       "path": "examples/terminal",
       "title": "Terminal",
       "featured": true
+    },
+    {
+      "id": "tui_split",
+      "path": "examples/tui_split",
+      "title": "TUI Split",
+      "featured": false
+    },
+    {
+      "id": "tui_layers",
+      "path": "examples/tui_layers",
+      "title": "TUI Layers",
+      "featured": false
     }
   ]
 }

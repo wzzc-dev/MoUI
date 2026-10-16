@@ -54,13 +54,14 @@ HostRuntimeDriver        input/service protocols   protocols and DTOs
                          ordered provider binding
                                       │
         │
-        ├────────────────┬────────────────┬────────────────┬────────────────┐
-        ▼                ▼                ▼                ▼
-moui_skia_renderer  moui_wgpu_renderer  moui_sun_renderer  moui_web_renderer
-        │                │                │                │
-        ▼                ▼                ▼                ├─ root: WebGPU host
-   moui_skia          wgpu_mbt         moui_sun            `─ canvas2d: fallback
-                    (diagnostic)     (experimental)
+        ├───────────────┬───────────────┬───────────────┬───────────────┬───────────────┐
+        ▼               ▼               ▼               ▼               ▼
+moui_skia_renderer  moui_wgpu_renderer  moui_sun_renderer  moui_web_renderer  moui_tui_renderer
+        │               │               │               │               │
+        ▼               ▼               ▼               ├─ root:        ▼
+   moui_skia        wgpu_mbt        moui_sun            │  WebGPU host  moui_tui
+                    (diagnostic)    (experimental)      └─ canvas2d:    (experimental)
+                                                        fallback        (ANSI bytes)
 ```
 
 Composition: an executable entrypoint builds an `AppBuilder` with
@@ -72,6 +73,12 @@ window exists; providers bind in registration order and the first
 backend imports or constructs a concrete renderer. Renderer selection is
 **provider negotiation** (`@render_common.resolve_renderer`), never a central switch.
 `RendererBackendKind` is diagnostic metadata only (ADR 0019, invariant P6).
+The terminal route is the narrow exception to "renderers consume `DrawCommand`
+only": `moui_tui_renderer` reads `DrawFrame.semantics` and writes ANSI bytes to
+a host-supplied sink, so quantization, per-cell ownership and in-box wrapping
+stay inside that package and `moui/core` / `moui/runtime` know nothing about
+terminals. Pixel commands handed to it are not approximated; each one is
+recorded as a degrade diagnostic.
 Extension cost (2026-08-03 audit): `moui/core` has ~210 enum variants of
 which ~2 are platform-related (~1%); adding a renderer costs one
 `RendererBackendKind` diagnostic variant plus a provider package — no core
@@ -133,7 +140,9 @@ renderers consume `DrawCommand` only.
 | Web host backend | `moui/backend/web` |
 | Opaque HostSurface/NativeSurface + RendererProvider/RendererSession/image protocols | `moui/render` |
 | Provider selection, fallback, workers, image lifecycle, shared drawing algorithms | `moui/render/common` |
-| Renderer implementations, providers, and platform policies | `moui_{skia,wgpu,sun,web}_renderer` (`moui_web_renderer/canvas2d` for Canvas2D) |
+| Renderer implementations, providers, and platform policies | `moui_{skia,wgpu,sun,web,tui}_renderer` (`moui_web_renderer/canvas2d` for Canvas2D) |
+| Cell buffer underneath the ANSI path (damage/revision, CJK double width) | `moui_tui` |
+| TTY raw mode, SGR mouse modes, input decode, cell→logical geometry, explicit `tui-ansi` composition | `moui_terminal_host` (experimental) |
 | Application/platform composition | `examples/*/<platform>/main.mbt` through `@runtime.run_app` |
 | Skia FFI / native capability | `moui_skia` |
 | CPU raster stack (experimental) | `moui_sun` |
@@ -150,6 +159,7 @@ renderers consume `DrawCommand` only.
 | Native Skia | **Mainline** |
 | Native WGPU | **Experimental** (engineering gate: `diagnostic` — runnable and testable, no product commitment) |
 | Sun CPU raster (`moui_sun_renderer` + `moui_sun`) | **Experimental** (ADR 0023) — no product commitment, not on default composition roots, capability freeze by default |
+| Terminal cell ANSI (`moui_tui_renderer` + `moui_tui` + `moui_terminal_host`) | **Experimental** (`ready=false`) — no pixel claim; semantics-only projection, non-projectable controls degrade to named placeholders; interaction proof is the PTY smoke gate, not a host-window route |
 | Web `wasm-gc` + browser WebGPU imports | Main web path, with Canvas2D provider fallback |
 | Embedded runtime backend route | `experimental` — code paths compile; no usability/product commitment without matching-device evidence |
 | Product `auto` renderer | Prefer `SkiaGpuNative` when host GPU surface exists; `SkiaRasterNative` explicit/recovery |

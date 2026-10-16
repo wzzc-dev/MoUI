@@ -46,15 +46,15 @@
     {
       "label": "runtime facade",
       "path": "moui/runtime/pkg.generated.mbti",
-      "lines": 889,
-      "public_declarations": 595,
+      "lines": 890,
+      "public_declarations": 596,
       "pub_all_declarations": 24
     },
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2751,
-      "public_declarations": 1154,
+      "lines": 2766,
+      "public_declarations": 1165,
       "pub_all_declarations": 190
     },
     {
@@ -74,7 +74,7 @@
     {
       "label": "render protocols",
       "path": "moui/render/pkg.generated.mbti",
-      "lines": 604,
+      "lines": 606,
       "public_declarations": 279,
       "pub_all_declarations": 31
     },

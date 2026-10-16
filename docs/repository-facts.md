@@ -21,6 +21,8 @@ This file is generated from repository manifests and validator reports.
 | ./moui_web_renderer |
 | ./moui_wgpu_renderer |
 | ./moui_sun_renderer |
+| ./moui_tui_renderer |
+| ./moui_terminal_host |
 | ./moui_tests |
 | ./moui_i18n |
 | ./moui_richtext |
@@ -38,6 +40,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_skia |
 | ./moui_theme |
 | ./moui_sun |
+| ./moui_tui |
 | ./examples/counter |
 | ./examples/multi_window |
 | ./examples/harmonyos_demo |
@@ -57,6 +60,8 @@ This file is generated from repository manifests and validator reports.
 | ./examples/momark |
 | ./examples/browser |
 | ./examples/terminal |
+| ./examples/tui_split |
+| ./examples/tui_layers |
 | ./moui_studio |
 | ./benchmarks/app_cached_layer |
 | ./benchmarks/full_cycle |
@@ -73,11 +78,11 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 889 | 595 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2751 | 1154 | 190 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 890 | 596 | 24 |
+| core (moui/core/pkg.generated.mbti) | 2766 | 1165 | 190 |
 | views facade (moui/views/pkg.generated.mbti) | 690 | 329 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
-| render protocols (moui/render/pkg.generated.mbti) | 604 | 279 | 31 |
+| render protocols (moui/render/pkg.generated.mbti) | 606 | 279 | 31 |
 | render common (moui/render/common/pkg.generated.mbti) | 430 | 166 | 13 |
 | skia renderer (moui_skia_renderer/pkg.generated.mbti) | 279 | 165 | 7 |
 | sun renderer (moui_sun_renderer/pkg.generated.mbti) | 272 | 175 | 1 |
@@ -117,6 +122,8 @@ This file is generated from repository manifests and validator reports.
 | MoMark | examples/momark | no |
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
+| TUI Split | examples/tui_split | no |
+| TUI Layers | examples/tui_layers | no |
 
 ## Platform Status
 
