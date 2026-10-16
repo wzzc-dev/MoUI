@@ -291,15 +291,18 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/runtime\"",
       // AppBuilder, PlatformEntry, and AppLaunchRequest are the public
       // application/platform composition contract.
-      max_lines: 889,
-      max_pub_lines: 595,
+      // AppRuntime::set_semantics_frames_enabled (TUI output path decision B)
+      // is the host's opt-in for semantics-carrying draw frames, so pixel hosts
+      // never build a payload: +1 line, +1 pub.
+      max_lines: 890,
+      max_pub_lines: 596,
       max_pub_all_lines: 28,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
         "pub struct AppRuntime", "pub fn[Model, Msg] new_program(", "pub fn[Model, Msg] new_program_with_dimensions(",
         "pub fn[Msg] new_view(", "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
         "pub fn AppRuntime::draw_frame(", "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
-        "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
+        "pub fn AppRuntime::set_semantics_frames_enabled(", "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
         "pub fn AppRuntime::read_semantics(", "pub fn AppRuntime::perform_semantics_action(",
         "pub struct SemanticsSnapshot", "pub struct SemanticsDelta", "pub(all) enum SemanticsActionDispatchError",
         "pub struct InspectorSnapshot", "pub struct ProgramRuntimeSnapshot", "pub struct RuntimeInspectorSnapshot",
@@ -338,25 +341,31 @@ fn package_budgets() -> Array[PackageBudget] {
       // which opens a menu but cannot say *which* item it is for; canvas
       // surfaces that own their hit-testing need the pointer point, exactly
       // like `on_tap_with_frame` already provides for primary taps.
-      max_lines: 2760,
-      max_pub_lines: 1154,
+      // SemanticsFramePayload (TUI output path decision B): DrawFrame gains an
+      // opt-in `semantics` field so a non-pixel renderer projects the committed
+      // tree from the frame it already receives, instead of reaching back into
+      // the runtime mid-paint. It is a carrier only — quantization, clipping and
+      // overlap repair stay in the consuming renderer — and pixel hosts never
+      // build it. +6 lines, +11 pub.
+      max_lines: 2766,
+      max_pub_lines: 1165,
       max_pub_all_lines: 190,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",
         "pub(all) enum Effect", "type Subscription", "pub(all) struct DrawFrame",
-        "pub(open) trait ViewNode", "View::from_node", "View::identity", "View::children",
-        "View::layout", "View::paint", "View::event", "View::text_command_result",
-        "View::accepts_focus", "pub(all) struct ViewIdentity", "pub(all) struct ViewLayoutContext",
-        "pub(all) struct ViewLayoutResult", "pub(all) struct ViewPaintContext", "pub(all) struct ViewPaintPlan",
-        "pub(all) struct ViewPaintLayer", "pub(all) struct ViewEventContext", "pub(all) struct ViewEventResult",
-        "pub(all) enum ViewDirtyHint", "ViewClean", "ViewPaintDirty", "pub(all) struct ViewTextCommandResult",
-        "pub(all) struct ViewSemanticsInfo", "pub(all) struct ViewStateContext",
-        "pub struct DeclarationKey", "pub struct ViewDeclaration", "pub struct SemanticId",
-        "pub struct SemanticsNodeId", "pub struct SemanticsGeneration", "pub(all) enum SemanticsActionKind",
-        "pub(all) enum SemanticsAction", "pub(open) trait ViewStateValue", "pub struct ViewStateSlot",
-        "pub struct ViewStateSlots", "ViewStateContext::read_slot", "ViewStateContext::with_slot",
-        "ViewStateContext::without_slot",
+        "pub struct SemanticsFramePayload", "pub(open) trait ViewNode", "View::from_node",
+        "View::identity", "View::children", "View::layout", "View::paint", "View::event",
+        "View::text_command_result", "View::accepts_focus", "pub(all) struct ViewIdentity",
+        "pub(all) struct ViewLayoutContext", "pub(all) struct ViewLayoutResult",
+        "pub(all) struct ViewPaintContext", "pub(all) struct ViewPaintPlan", "pub(all) struct ViewPaintLayer",
+        "pub(all) struct ViewEventContext", "pub(all) struct ViewEventResult", "pub(all) enum ViewDirtyHint",
+        "ViewClean", "ViewPaintDirty", "pub(all) struct ViewTextCommandResult", "pub(all) struct ViewSemanticsInfo",
+        "pub(all) struct ViewStateContext", "pub struct DeclarationKey", "pub struct ViewDeclaration",
+        "pub struct SemanticId", "pub struct SemanticsNodeId", "pub struct SemanticsGeneration",
+        "pub(all) enum SemanticsActionKind", "pub(all) enum SemanticsAction", "pub(open) trait ViewStateValue",
+        "pub struct ViewStateSlot", "pub struct ViewStateSlots", "ViewStateContext::read_slot",
+        "ViewStateContext::with_slot", "ViewStateContext::without_slot",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui_skia_renderer\"", "SkiaRasterRenderer",
@@ -447,7 +456,9 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/render\"",
       // HostSurface erases native handle meaning; RendererProvider binds one
       // per-window RendererSession at the composition boundary.
-      max_lines: 604,
+      // +2 lines: RendererBackendKind::TerminalAnsiNative and
+      // RendererFamily::Terminal, the protocol names the cell projector needs.
+      max_lines: 606,
       max_pub_lines: 279,
       max_pub_all_lines: 31,
       required_tokens: [

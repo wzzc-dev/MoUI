@@ -120,6 +120,7 @@ pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit
 pub fn AppRuntime::set_event_observer(Self, (@core.AppEvent) -> Unit) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_semantic_focus(Self, @core.SemanticsNodeId?) -> Bool
+pub fn AppRuntime::set_semantics_frames_enabled(Self, Bool) -> Unit
 pub fn AppRuntime::set_text_system(Self, @core.TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> @core.Size
 pub fn AppRuntime::text_system(Self) -> @core.TextSystem

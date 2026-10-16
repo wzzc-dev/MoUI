@@ -56,6 +56,31 @@ test "runtime draw frame exposes view overlay paint bounds" {
 }
 
 ///|
+test "semantics frames are opt-in and carry the committed snapshot" {
+  let runtime = AppRuntime::new_view(
+    root=runtime_semantics_cache_tree(),
+    size=@core.Size::new(width=100.0, height=48.0),
+  )
+  assert_true(runtime.draw_frame().semantics is None)
+  runtime.set_semantics_frames_enabled(true)
+  let frame = runtime.draw_frame()
+  guard runtime.read_semantics() is Ok(Full(snapshot)) else {
+    fail("expected a committed semantics snapshot")
+  }
+  match frame.semantics {
+    Some(payload) => {
+      assert_true(payload.generation() == snapshot.generation)
+      assert_true(payload.root() == snapshot.root)
+      assert_true(payload.node_count() > 0)
+      assert_true(payload.nodes() == snapshot.nodes())
+    }
+    None => fail("expected the frame to carry semantics")
+  }
+  runtime.set_semantics_frames_enabled(false)
+  assert_true(runtime.draw_frame().semantics is None)
+}
+
+///|
 test "runtime keeps a full-surface platform presenter transparent" {
   let root : @core.View[Unit] = runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="FullSurfacePlatformView"),

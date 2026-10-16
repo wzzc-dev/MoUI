@@ -367,6 +367,19 @@ pub fn AppRuntime::draw_frame(self : AppRuntime) -> @core.DrawFrame {
 }
 
 ///|
+/// Opt this host into semantics-carrying draw frames.
+///
+/// A non-pixel renderer (terminal output) projects the committed tree from the
+/// frame payload rather than reading the runtime mid-paint. Off by default, so
+/// pixel hosts build no payload and their frames are unchanged.
+pub fn AppRuntime::set_semantics_frames_enabled(
+  self : AppRuntime,
+  enabled : Bool,
+) -> Unit {
+  self.state.semantics.frames_carry_semantics = enabled
+}
+
+///|
 pub fn AppRuntime::size(self : AppRuntime) -> @core.Size {
   self.state.size
 }

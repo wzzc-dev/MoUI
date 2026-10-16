@@ -36,7 +36,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // already provides for primary taps. Adding it here keeps the
       // right-click path in core's event layer rather than duplicating
       // hit-testing in the app.
-      max_count: 1166,
+      // SemanticsFramePayload (TUI output path decision B, +11): the carrier
+      // type for DrawFrame's opt-in `semantics` field — record, constructor,
+      // five read accessors and three derived trait methods. It joins the other
+      // cross-runtime semantics value types here; the projection work
+      // (quantization, clipping, overlap repair) is the renderer's, not core's.
+      max_count: 1177,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -95,7 +100,11 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "runtime_diagnostic",
-      max_count: 595,
+      // AppRuntime::set_semantics_frames_enabled (+1): the host opt-in that
+      // makes draw frames carry the committed semantics tree. It sits with the
+      // other AppRuntime host controls; the projection itself lives in the
+      // terminal renderer.
+      max_count: 596,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",

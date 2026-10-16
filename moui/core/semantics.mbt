@@ -672,6 +672,74 @@ pub fn SemanticsState::default() -> SemanticsState {
 }
 
 ///|
+/// One committed semantics tree carried as draw-frame payload.
+///
+/// This is a carrier, not a projection: it holds the tree the runtime already
+/// committed, so a renderer can paint a non-pixel view of the same frame a
+/// pixel renderer receives. Turning nodes into cells (quantization, clipping,
+/// overlap repair) is the consuming renderer's job and must not move here.
+/// The mutable backing array stays private and accessors return fresh
+/// projections, so a renderer cannot mutate runtime-owned committed state.
+pub struct SemanticsFramePayload {
+  priv generation : SemanticsGeneration
+  priv root : SemanticsNodeId?
+  priv focused : SemanticsNodeId?
+  priv nodes : Array[SemanticsNode]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub extend SemanticsFramePayload with Debug::{to_repr}
+
+///|
+pub extend SemanticsFramePayload with Eq::{not_equal, equal}
+
+///|
+pub extend SemanticsFramePayload with ToJson::{to_json}
+
+///|
+pub fn SemanticsFramePayload::new(
+  generation~ : SemanticsGeneration,
+  nodes~ : Array[SemanticsNode],
+  root? : SemanticsNodeId? = None,
+  focused? : SemanticsNodeId? = None,
+) -> SemanticsFramePayload {
+  { generation, nodes, root, focused, }
+}
+
+///|
+pub fn SemanticsFramePayload::generation(
+  self : SemanticsFramePayload,
+) -> SemanticsGeneration {
+  self.generation
+}
+
+///|
+pub fn SemanticsFramePayload::root(
+  self : SemanticsFramePayload,
+) -> SemanticsNodeId? {
+  self.root
+}
+
+///|
+pub fn SemanticsFramePayload::focused(
+  self : SemanticsFramePayload,
+) -> SemanticsNodeId? {
+  self.focused
+}
+
+///|
+pub fn SemanticsFramePayload::node_count(self : SemanticsFramePayload) -> Int {
+  self.nodes.length()
+}
+
+///|
+pub fn SemanticsFramePayload::nodes(
+  self : SemanticsFramePayload,
+) -> Array[SemanticsNode] {
+  self.nodes.copy()
+}
+
+///|
 pub(all) enum ScrollAlignment {
   Start
   Center

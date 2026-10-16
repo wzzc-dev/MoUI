@@ -630,9 +630,10 @@ pub(all) struct DrawFrame {
   overlay_bounds : Rect?
   damage : DamageRegion
   clear_color : Color
+  semantics : SemanticsFramePayload?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DrawFrame::equal(Self, Self) -> Bool
-pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], overlay_bounds? : Rect?, damage~ : DamageRegion, clear_color? : Color) -> Self
+pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], overlay_bounds? : Rect?, damage~ : DamageRegion, clear_color? : Color, semantics? : SemanticsFramePayload?) -> Self
 pub fn DrawFrame::not_equal(Self, Self) -> Bool
 pub fn DrawFrame::to_json(Self) -> Json
 pub fn DrawFrame::to_repr(Self) -> @debug.Repr
@@ -1525,6 +1526,20 @@ pub(all) struct SemanticsExpandedModifier {
   expanded : Bool
 }
 pub fn[Msg] SemanticsExpandedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
+
+pub struct SemanticsFramePayload {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsFramePayload::equal(Self, Self) -> Bool
+pub fn SemanticsFramePayload::focused(Self) -> SemanticsNodeId?
+pub fn SemanticsFramePayload::generation(Self) -> SemanticsGeneration
+pub fn SemanticsFramePayload::new(generation~ : SemanticsGeneration, nodes~ : Array[SemanticsNode], root? : SemanticsNodeId?, focused? : SemanticsNodeId?) -> Self
+pub fn SemanticsFramePayload::node_count(Self) -> Int
+pub fn SemanticsFramePayload::nodes(Self) -> Array[SemanticsNode]
+pub fn SemanticsFramePayload::not_equal(Self, Self) -> Bool
+pub fn SemanticsFramePayload::root(Self) -> SemanticsNodeId?
+pub fn SemanticsFramePayload::to_json(Self) -> Json
+pub fn SemanticsFramePayload::to_repr(Self) -> @debug.Repr
 
 pub struct SemanticsGeneration {
   // private fields

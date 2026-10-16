@@ -345,8 +345,31 @@ fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] 
 }
 
 ///|
+/// The committed snapshot for hosts that opted into semantics-carrying frames.
+/// Committing before painting keeps the payload and the commands describing the
+/// same settled tree; the accessor copies nothing, it shares the committed
+/// arrays that `SemanticsFramePayload`'s public accessors then project.
+fn RuntimeState::frame_semantics_payload(
+  self : RuntimeState,
+) -> SemanticsFramePayload? {
+  if !self.semantics.frames_carry_semantics {
+    return None
+  }
+  let snapshot = self.cached_semantics()
+  Some(
+    @core.SemanticsFramePayload::new(
+      generation=snapshot.generation,
+      nodes=snapshot.nodes,
+      root=snapshot.root,
+      focused=snapshot.focused,
+    ),
+  )
+}
+
+///|
 fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.stats.draw_command_build_count = self.stats.draw_command_build_count + 1
+  let semantics = self.frame_semantics_payload()
   let commands : Array[DrawCommand] = Array(
     capacity=self.stats.last_command_count.max(64),
   )
@@ -379,6 +402,7 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
     overlay_bounds~,
     damage~,
     clear_color~,
+    semantics~,
   )
 }
 
@@ -546,6 +570,10 @@ priv struct SemanticsSubsystem {
   mut semantics_tree : SemanticsTree
   mut committed_semantics : SemanticsSnapshot
   mut semantics_initialized : Bool
+  /// Opt-in for non-pixel renderers: when set, every built `DrawFrame` carries
+  /// the committed snapshot as payload. Pixel hosts leave this off and pay
+  /// nothing.
+  mut frames_carry_semantics : Bool
   semantics_journal : Array[SemanticsDelta]
   mut next_semantics_node_id : UInt64
   semantic_id_index : Map[SemanticId, SemanticIdIndexEntry]
@@ -661,6 +689,7 @@ fn SemanticsSubsystem::new() -> SemanticsSubsystem {
     semantics_tree: SemanticsTree::empty(),
     committed_semantics: SemanticsSnapshot::empty(),
     semantics_initialized: false,
+    frames_carry_semantics: false,
     semantics_journal: [],
     next_semantics_node_id: 1UL,
     semantic_id_index: Map([]),

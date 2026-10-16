@@ -28,6 +28,11 @@ pub(all) struct DrawFrame {
   overlay_bounds : Rect?
   damage : DamageRegion
   clear_color : Color
+  /// Committed semantics for this frame, present only when the host opted in
+  /// with `AppRuntime::set_semantics_frames_enabled`. Pixel renderers ignore
+  /// it and pay nothing; a non-pixel renderer (TUI) projects from it instead of
+  /// reaching back into the runtime mid-paint.
+  semantics : SemanticsFramePayload?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -196,8 +201,9 @@ pub fn DrawFrame::new(
   overlay_bounds? : Rect? = None,
   damage~ : DamageRegion,
   clear_color? : Color = Color::white(),
+  semantics? : SemanticsFramePayload? = None,
 ) -> DrawFrame {
-  { commands, platform_views, overlay_bounds, damage, clear_color, }
+  { commands, platform_views, overlay_bounds, damage, clear_color, semantics, }
 }
 
 ///|

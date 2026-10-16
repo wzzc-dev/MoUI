@@ -18,6 +18,7 @@
 /// - `moui_wgpu_renderer`
 /// - `moui_sun_renderer`
 /// - `moui_web_renderer` and `moui_web_renderer/canvas2d`
+/// - `moui_tui_renderer`
 pub(all) enum RendererBackendKind {
   NativeWgpu
   WebGpuWasm
@@ -25,6 +26,7 @@ pub(all) enum RendererBackendKind {
   SkiaGpuNative
   SunRasterNative
   Canvas2DWasm
+  TerminalAnsiNative
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -58,6 +60,7 @@ pub(all) enum RendererFamily {
   Skia
   Sun
   Canvas2D
+  Terminal
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -307,6 +310,7 @@ pub fn RendererBackendKind::label(self : RendererBackendKind) -> String {
     SkiaGpuNative => "skia-gpu-native"
     SunRasterNative => "sun-raster-native"
     Canvas2DWasm => "canvas2d-wasm"
+    TerminalAnsiNative => "terminal-ansi-native"
   }
 }
 
@@ -319,6 +323,7 @@ pub fn RendererBackendKind::short_label(self : RendererBackendKind) -> String {
     SkiaGpuNative => "skia-gpu"
     SunRasterNative => "sun"
     Canvas2DWasm => "canvas2d"
+    TerminalAnsiNative => "tui"
   }
 }
 
@@ -330,6 +335,7 @@ pub fn RendererFamily::label(self : RendererFamily) -> String {
     Skia => "skia"
     Sun => "sun"
     Canvas2D => "canvas2d"
+    Terminal => "terminal"
   }
 }
 
@@ -377,6 +383,7 @@ pub fn RendererBackendKind::family(
     SkiaRasterNative | SkiaGpuNative => Skia
     SunRasterNative => Sun
     Canvas2DWasm => Canvas2D
+    TerminalAnsiNative => Terminal
   }
 }
 

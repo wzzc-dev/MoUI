@@ -100,8 +100,8 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1669,
-      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide)."
+      "maxLines": 1680,
+      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision)."
     },
     {
       "path": "moui_sun/graphics/path.mbt",

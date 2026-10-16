@@ -29,6 +29,7 @@ using @core {
   type ScrollAlignment,
   type SemanticId,
   type SemanticsActionKind,
+  type SemanticsFramePayload,
   type SemanticsGeneration,
   type SemanticsNode,
   type SemanticsNodeId,

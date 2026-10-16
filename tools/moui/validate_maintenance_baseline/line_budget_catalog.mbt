@@ -159,7 +159,8 @@ fn file_budgets() -> Array[FileBudget] {
       // 2026-10-13: 421 -> 430 across the right-panel VS Code sidebar round
       // (settlement notes for moui_studio/app.mbt and the tooltip rework);
       // a settlement, not a new file.
-      max_lines: 431,
+      // 2026-10-14: 431 -> 434 for the decision-B runtime.mbt settlement note.
+      max_lines: 434,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -417,7 +418,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     { path: "moui_skia_renderer/renderer_text.mbt", max_lines: 50, },
     { path: "moui_tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887, },
-    { path: "moui/runtime/runtime.mbt", max_lines: 470, },
+    // 470 -> 479 (2026-10-14, TUI output path decision B): the opt-in
+    // `set_semantics_frames_enabled` sits beside the `draw_frame` it steers.
+    { path: "moui/runtime/runtime.mbt", max_lines: 479, },
     { path: "moui/runtime/diagnostics.mbt", max_lines: 579, },
     { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 305, },
     {

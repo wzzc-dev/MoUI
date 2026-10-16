@@ -284,6 +284,7 @@ pub(all) enum RendererBackendKind {
   SkiaGpuNative
   SunRasterNative
   Canvas2DWasm
+  TerminalAnsiNative
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererBackendKind::equal(Self, Self) -> Bool
 pub fn RendererBackendKind::family(Self) -> RendererFamily
@@ -381,6 +382,7 @@ pub(all) enum RendererFamily {
   Skia
   Sun
   Canvas2D
+  Terminal
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererFamily::equal(Self, Self) -> Bool
 pub fn RendererFamily::label(Self) -> String
