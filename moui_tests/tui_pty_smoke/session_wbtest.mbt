@@ -16,14 +16,28 @@ priv struct Session {
 const SIGWINCH : Int = 28
 
 ///|
-/// 一轮 settle 的安静窗口(毫秒):这么久没有新字节就认为这一帧发完了。
-const QUIET_MS : Int = 250
+/// 确认窗(毫秒):等到内容或响应之后,这么久没有新字节才认为这一帧发完了。
+/// 它不再是完成判据 —— 判据是断言的 needle(`await_frame`)或「应用起码回了
+/// 一次话」(`await_reply`);安静窗降级为把这一帧的尾巴刷干净。会话锁保证
+/// 单进程独占 CPU 之后,60ms 内漏帧只剩进程自身调度一种来源,而这正是
+/// 内容锚点兜底的:needle 没到就一直轮询,不靠猜。
+const CONFIRM_MS : Int = 60
 
 ///|
-/// 会话第一个字节的等待上限(毫秒)。安静窗口回答的是「这一帧发完了没」,
-/// 不能拿来回答「进程起床了没」:派生后 250ms 内没字节是正常启动耗时,
-/// 用它等首帧会把空屏当成一帧读,整条冒烟就在第一个断言上随机红。
-const FIRST_FRAME_MS : Int = 5000
+/// 轮询步长(毫秒):needle 未命中时每轮最多等这么久。
+const POLL_MS : Int = 25
+
+///|
+/// 等内容的总预算(毫秒),包含被测进程派生与首帧延迟。超时不挂死也不判过:
+/// 让调用方的断言拿着整屏 dump 红,红得可复现(旧的 FIRST_FRAME_MS 是判据,
+/// 这里它只是失败上限)。
+const WAIT_BUDGET_MS : Int = 5000
+
+///|
+/// 等「应用起码回了一次话」的上限:用于只能靠「画面没变」来证明的断言
+/// (点命中盒外面、dead-zone 散焦)。首字节到了就转确认窗;整段预算没有动静
+/// 就按「确实没重绘」放行。
+const REPLY_BUDGET_MS : Int = 1500
 
 ///|
 /// 排空循环的上限轮次。PTY 缓冲约 4KB,被测程序写满就阻塞在写帧上,
@@ -31,15 +45,15 @@ const FIRST_FRAME_MS : Int = 5000
 const MAX_SETTLE_ROUNDS : Int = 512
 
 ///|
-/// 同一进程里同时只允许一个会话活着。async 测试驱动会把用例并发起来
-/// (最多 10 个协程),而 settle 判据是「250ms 没有新字节」这种时间事实:
-/// 七个被测进程抢同一颗事件循环时,被饿过 250ms 的那一帧会被读成半帧。
-/// 放弃的方案:把 QUIET_MS 提到 1s —— 只是把阈值推后,红还是随机红,
-/// 而且慢七倍。串行之后每个会话独占 CPU,时间判据才成立。
+/// 同一进程里同时只允许一个会话活着:一个会话独占 CPU,确认窗才不用把
+/// 「被别的测试饿死」误读成「这帧发完了」。放弃的方案:把安静窗提到 1s ——
+/// 只是把阈值推后;needle 锚定之后,串行仍然保留,因为会话之间的 CPU 竞争
+/// 依然是任何时间判据的敌人。
 let session_lock : @async.Mutex = @async.Mutex::Mutex()
 
 ///|
-/// 派生会话并等首帧发完。`path` 必须是已经构建好的可执行文件。
+/// 派生会话。首帧不在这里等:每个用例用 `await_frame` 等内容 needle,
+/// 启动等待自然被 `WAIT_BUDGET_MS` 覆盖。`path` 必须是已构建好的可执行文件;
 /// 拿到锁的一刻到 `finish` 之间就是这个用例独享的终端。
 async fn Session::open(path : String, cols~ : Int, rows~ : Int) -> Session {
   session_lock.acquire()
@@ -48,37 +62,75 @@ async fn Session::open(path : String, cols~ : Int, rows~ : Int) -> Session {
       session_lock.release()
       abort("PTY 冒烟无法派生被测程序:" + path)
     }
-    Some(pty) => {
-      let session = { pty, cols, rows, raw: [], }
-      session.settle()
-      session
-    }
+    Some(pty) => { pty, cols, rows, raw: [], }
   }
 }
 
 ///|
-/// 读到安静为止。用有界等待而不是固定读 N 次或固定 sleep:应用出错不回帧时,
-/// 冒烟要红,不能挂在阻塞读上。
-async fn Session::settle(self : Session) -> Unit {
+/// 一轮有界读:最多等 `timeout_ms` 拿新字节。返回是否真的读到了东西。
+async fn Session::drain_once(self : Session, timeout_ms : Int) -> Bool {
   let buf : FixedArray[Byte] = FixedArray::make(65536, 0)
   let bytes = buf.unsafe_reinterpret_as_bytes()
+  if !self.pty.wait_readable(timeout_ms) {
+    return false
+  }
+  let n = self.pty.read_output(buf)
+  if n <= 0 {
+    return false
+  }
+  let mut i = 0
+  while i < n {
+    self.raw.push(bytes[i])
+    i = i + 1
+  }
+  true
+}
+
+///|
+/// 刷帧尾:读到连续 `CONFIRM_MS` 没有新字节为止,轮次有界防挂死。
+async fn Session::settle_quiet(self : Session) -> Unit {
   let mut rounds = 0
-  while rounds < MAX_SETTLE_ROUNDS {
+  while rounds < MAX_SETTLE_ROUNDS && self.drain_once(CONFIRM_MS) {
     rounds = rounds + 1
-    let deadline = if self.raw.is_empty() { FIRST_FRAME_MS } else { QUIET_MS }
-    if !self.pty.wait_readable(deadline) {
-      return ()
-    }
-    let n = self.pty.read_output(buf)
-    if n <= 0 {
-      return ()
-    }
-    let mut i = 0
-    while i < n {
-      self.raw.push(bytes[i])
-      i = i + 1
+  }
+}
+
+///|
+/// 确定性等待:轮询反解出的栅格直到 `pred` 命中,再把这一帧的尾巴刷干净。
+///
+/// 约束两条,都用错就会随机红或假绿:
+/// - `pred` 必须锚在**新帧才会出现**的内容上(needle 从旧屏到新屏翻转);
+///   锚在一直存在的内容上等于不等。
+/// - `pred` 会被尚未发完的半帧求值,所以只能是纯读函数(`has`、计数、
+///   `styled_count`),不许用会 abort 的 `int_or_fail` / `row_or_check`。
+async fn Session::await_frame(self : Session, pred : (Screen) -> Bool) -> Unit {
+  let mut waited = 0
+  let mut hit = false
+  while !hit && waited < WAIT_BUDGET_MS {
+    if pred(self.screen()) {
+      hit = true
+    } else if !self.drain_once(POLL_MS) {
+      waited = waited + POLL_MS
     }
   }
+  self.settle_quiet()
+}
+
+///|
+/// 等「应用起码回了一次话」:新字节到达即转确认窗;`REPLY_BUDGET_MS`
+/// 内毫无动静则按「没有重绘」放行。用在只能靠画面不变来证明的断言前。
+async fn Session::await_reply(self : Session) -> Unit {
+  let start = self.raw.length()
+  let mut waited = 0
+  while waited < REPLY_BUDGET_MS {
+    if self.raw.length() > start {
+      break
+    }
+    if !self.drain_once(POLL_MS) {
+      waited = waited + POLL_MS
+    }
+  }
+  self.settle_quiet()
 }
 
 ///|
@@ -91,23 +143,22 @@ fn Session::screen(self : Session) -> Screen {
 }
 
 ///|
-/// 写入一段输入(按键或鼠标序列),然后等应用把这一帧发完。
+/// 写入一段输入(按键或鼠标序列)。不隐式等待:调用方紧接着用
+/// `await_frame`/`await_reply` 说明「等什么」,等待才有内容判据。
 async fn Session::send(self : Session, text : String) -> Unit {
   ignore(self.pty.write_input(@utf8.encode(text, bom=false)))
-  self.settle()
 }
 
 ///|
-/// 改窗口大小并等重排落地。
+/// 改窗口大小并触发重排;不隐式等待,调用方等 rebuild 计数翻上去。
 ///
 /// 内核只在 tty 有控制终端时才替 `TIOCSWINSZ` 发 SIGWINCH,而 posix_spawn
 /// (SETSID + dup2,不调 TIOCSCTTY)派生的子进程没有控制终端,所以这里由驱动
 /// 补发那一个信号。被测进程走的仍然是同一条 SIGWINCH→重排通路:证的是宿主,
 /// 不是内核的会话规则。
-async fn Session::resize_to(self : Session, cols : Int, rows : Int) -> Unit {
+fn Session::resize_to(self : Session, cols : Int, rows : Int) -> Unit {
   self.pty.resize(cols, rows)
   self.pty.signal(SIGWINCH)
-  self.settle()
 }
 
 ///|

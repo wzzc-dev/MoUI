@@ -37,6 +37,7 @@ async test "S5 startup projects the split grid with borders and clipped rows" {
   match open_demo() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("MoUI TUI split") && s.rebuilds >= 1)
       let screen = session.screen()
       check(session, "startup: header", screen.has("MoUI TUI split"))
       check(session, "startup: left pane title", screen.has("Entries 16"))
@@ -80,7 +81,9 @@ async test "S5 Tab and Shift-Tab move focus across panes with a visible state" {
   match open_demo() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("focus: list"))
       session.send("\t")
+      session.await_frame(s => s.has("focus: tree"))
       let moved = session.screen()
       check(session, "tab: focus hint follows", moved.has("focus: tree"))
       check(session, "tab: right pane gains brackets", moved.has("[ Files 7 ]"))
@@ -90,6 +93,7 @@ async test "S5 Tab and Shift-Tab move focus across panes with a visible state" {
         !moved.has("[ Entries 16 ]"),
       )
       session.send("\u{1b}[Z")
+      session.await_frame(s => s.has("focus: list"))
       let back = session.screen()
       check(session, "shift-tab: focus hint returns", back.has("focus: list"))
       check(
@@ -112,18 +116,21 @@ async test "S5 arrow keys move the selection inside the bordered list" {
   match open_demo() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("sel=Entry 0"))
       check(
         session,
         "arrows: starts on the first entry",
         session.screen().has("sel=Entry 0"),
       )
       session.send("\u{1b}[B\u{1b}[B")
+      session.await_frame(s => s.has("sel=Entry 2"))
       check(
         session,
         "arrows: two downs land on Entry 2",
         session.screen().has("sel=Entry 2"),
       )
       session.send("\u{1b}[A")
+      session.await_frame(s => s.has("sel=Entry 1"))
       check(
         session,
         "arrows: one up steps back",
@@ -132,6 +139,7 @@ async test "S5 arrow keys move the selection inside the bordered list" {
       // 方向键属于当前面板:换到树面板之后,同样的键必须改的是节点而不是条目。
       session.send("\t")
       session.send("\u{1b}[B")
+      session.await_frame(s => s.has("focus: tree"))
       let tree = session.screen()
       check(session, "arrows: focus left the list", !tree.has("focus: list"))
       check(
@@ -150,6 +158,7 @@ async test "S5 a bare keypress acts without submission" {
   match open_demo() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("Entries 16"))
       check(
         session,
         "instant: starts at 16 entries",
@@ -157,6 +166,7 @@ async test "S5 a bare keypress acts without submission" {
       )
       // 只发一个 `n`,不带 CR/LF,不带任何提交键。
       session.send("n")
+      session.await_frame(s => s.has("Entries 17"))
       let inserted = session.screen()
       check(
         session,
@@ -167,6 +177,7 @@ async test "S5 a bare keypress acts without submission" {
       // 序号是两条插入命令共用的计数器:`n` 已经用掉 0,所以 `a` 的节点叫
       // `new-1`。断言跟着实际序号写,而不是假设每个键位各自从 0 开始。
       session.send("a")
+      session.await_frame(s => s.has("Files 8"))
       let added = session.screen()
       check(
         session,
@@ -184,6 +195,7 @@ async test "S5 space folds and unfolds the focused tree node" {
   match open_demo() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("program.mbt"))
       let opened = session.screen()
       // 折叠前整个子树都在:program.mbt 必须看得见。
       check(session, "fold: subtree visible before", opened.has("program.mbt"))
@@ -194,11 +206,13 @@ async test "S5 space folds and unfolds the focused tree node" {
       )
       session.send("\t")
       session.send(" ")
+      session.await_frame(s => s.has("Files 2"))
       let folded = session.screen()
       check(session, "fold: subtree hidden", !folded.has("program.mbt"))
       check(session, "fold: node count drops", folded.int_or_fail("Files") == 2)
       check(session, "fold: the folder itself stays", folded.has("src"))
       session.send(" ")
+      session.await_frame(s => s.has("program.mbt"))
       let again = session.screen()
       check(session, "unfold: subtree back", again.has("program.mbt"))
       check(session, "unfold: node count back", again.int_or_fail("Files") == 7)
@@ -212,11 +226,13 @@ async test "S5 mouse click selects and wheel scrolls one pane only" {
   match open_demo() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("sel=Entry 0"))
       let before = session.screen()
       check(session, "click: initial selection", before.has("sel=Entry 0"))
       let row = row_or_check(session, "Entry 5")
       // SGR(1006) 坐标是 1 基;第 5 列落在左栏列表框内。
       session.send("\u{1b}[<0;5;\{(row + 1)}M\u{1b}[<0;5;\{(row + 1)}m")
+      session.await_frame(s => s.has("sel=Entry 5"))
       let clicked = session.screen()
       check(session, "click: press selects the row", clicked.has("sel=Entry 5"))
       check(
@@ -231,6 +247,8 @@ async test "S5 mouse click selects and wheel scrolls one pane only" {
       let tree_before = clicked.int_or_fail("tree=")
       // 滚轮向下:一个格高(scroll_line)对应一格偏移。
       session.send("\u{1b}[<65;5;\{(row + 1)}M")
+      // needle 钉成「list= 后跟目标读数」:rebuild 计数和滚动偏移都是回放事实。
+      session.await_frame(s => s.has("list=\{(list_before + 1)} "))
       let scrolled = session.screen()
       check(
         session,
@@ -289,9 +307,17 @@ async fn tap_cell(session : Session, col~ : Int, row~ : Int) -> Unit {
 }
 
 ///|
-/// 点一格(按 SGR 1006 的按下+抬起)并读回 counter 的 Count。
-async fn click_cell(session : Session, col~ : Int, row~ : Int) -> Int {
+/// 点一格(按 SGR 1006 的按下+抬起),等内容里出现 `expect` 那行读数,
+/// 再读回 counter 的 Count。`expect` 必须锚新帧才出现的读数;
+/// 「不该变」的点击传当前读数即可 —— needle 已成立,等待只剩确认窗。
+async fn click_cell(
+  session : Session,
+  col~ : Int,
+  row~ : Int,
+  expect~ : String,
+) -> Int {
   tap_cell(session, col~, row~)
+  session.await_frame(s => s.has(expect))
   session.screen().int_or_fail("Count:")
 }
 
@@ -345,12 +371,18 @@ async test "S5 the row a button label is drawn on is the row that fires" {
     None => ()
     Some(path) => {
       let session = Session::open(path, cols=54, rows=11)
+      session.await_frame(s => s.has("Count:"))
       let before = session.screen()
       let label_row = row_or_check(session, "[-]")
       let label_col = col_or_check(session, before, label_row, '-')
       let count = before.int_or_fail("Count:")
       // 看得见就得点得着:点标签那一格,Count 必须减一。
-      let after = click_cell(session, col=label_col, row=label_row)
+      let after = click_cell(
+        session,
+        col=label_col,
+        row=label_row,
+        expect="Count: \{count - 1}",
+      )
       check(session, "click: the drawn label row fires", after == count - 1)
       // 焦点带必须贴着标签:`[-]` 占 3 格,再加词尾那一格空白,总共不超过
       // 4 格。量化盒有 13 格宽,整幅刷下划线就会在按钮右边拖出一条黄线。
@@ -369,7 +401,13 @@ async test "S5 the row a button label is drawn on is the row that fires" {
         floating_rules(band) == 0,
       )
       // 命中盒不能往外扩:标签上面那一格不属于按钮,点了不该动。
-      let above = click_cell(session, col=label_col, row=label_row - 1)
+      // expect 传当前读数:needle 已成立,await 只剩确认窗,负断言读的是稳定帧。
+      let above = click_cell(
+        session,
+        col=label_col,
+        row=label_row - 1,
+        expect="Count: \{count - 1}",
+      )
       check(
         session,
         "click: the row above the label stays outside the hit box",
@@ -385,9 +423,12 @@ async test "S5 resize reflows with a full rebuild and leaves no ghosts" {
   match open_demo() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("focus: list"))
       let before = session.screen()
       check(session, "resize: baseline focus hint", before.has("focus: list"))
       session.resize_to(60, 20)
+      // rebuild 计数在回放里单调递增,是 resize 全量重建的确定性锚点。
+      session.await_frame(s => s.rebuilds >= before.rebuilds + 1)
       let small = session.screen()
       check(
         session,
@@ -409,6 +450,7 @@ async test "S5 resize reflows with a full rebuild and leaves no ghosts" {
       // 缩小之后写超出新网格的行,就是残影的直接来源。
       check(session, "resize: nothing painted outside the new grid", clean)
       session.resize_to(COLS, ROWS)
+      session.await_frame(s => s.rebuilds >= small.rebuilds + 1)
       let full = session.screen()
       check(
         session,
@@ -440,6 +482,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
   match open_layers() {
     None => ()
     Some(session) => {
+      session.await_frame(s => s.has("sel=Background"))
       let start = session.screen()
       check(
         session,
@@ -451,6 +494,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       let labels_row = row_or_check(session, "] Labels")
       let labels_col = col_or_check(session, start, labels_row, '[')
       tap_cell(session, col=labels_col, row=labels_row)
+      session.await_frame(s => s.has("sel=Labels"))
       check(
         session,
         "click: the marked row is selected",
@@ -458,6 +502,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       )
       // 选中跟着那一层,而不是跟着第几格:切掉可见性后,读回来的是这条行的标记。
       session.send(" ")
+      session.await_frame(s => s.has("hide=3"))
       let toggled = session.screen()
       check(session, "space: that layer is now hidden", toggled.has("hide=3"))
       check(
@@ -470,12 +515,14 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       let field_col = col_or_check(session, toggled, field_row, 'n')
       tap_cell(session, col=field_col, row=field_row)
       session.send("s")
+      session.await_frame(s => s.has("filter=s rows=6"))
       check(
         session,
         "type: one keystroke reshapes the list",
         session.screen().has("filter=s rows=6"),
       )
       session.send("t")
+      session.await_frame(s => s.has("filter=st rows=2"))
       check(
         session,
         "type: the second keystroke narrows again",
@@ -483,6 +530,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       )
       session.send("r")
       session.send("o")
+      session.await_frame(s => s.has("filter=stro rows=1"))
       let typed = session.screen()
       check(
         session,
@@ -499,6 +547,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       // 「没松开时是命令」和「松开时是字符」:Space 在过滤态被释放,
       // 于是 hide= 不动,而那一个空格进了框,把最后一行也滤掉。
       session.send(" ")
+      session.await_frame(s => s.has("rows=0"))
       let spaced = session.screen()
       check(
         session,
@@ -512,6 +561,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       )
       // 退格是框里还能用的编辑键(方向键被面板占着):五下把 `stro ` 清空。
       session.send("\u{7f}\u{7f}\u{7f}\u{7f}\u{7f}")
+      session.await_frame(s => s.has("filter=- rows=8"))
       check(
         session,
         "backspace edits the field",
@@ -520,6 +570,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       // 焦点进框之后方向键仍归列表:实测选中从 Labels 走到 Shadows,插入点不动。
       // 这是 `program_commands` 那条「按面板而不是按角色路由」的取舍,不是漏掉的键。
       session.send("\u{1b}[B")
+      session.await_frame(s => s.has("sel=Shadows"))
       check(
         session,
         "arrows still command the list while typing",
@@ -533,6 +584,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       let row_before = before_scroll.int_or_fail("row=")
       let file_before = before_scroll.int_or_fail("file=")
       session.send("\u{1b}[<65;\{(stream_col + 1)};\{(stream_row + 1)}M")
+      session.await_frame(s => s.has("row=\{(row_before + 1)} "))
       let scrolled = session.screen()
       check(
         session,
@@ -546,6 +598,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       )
       // 滚回来:上限是内容超出视口的那一格,所以这里只有一格可滚。
       session.send("\u{1b}[<64;\{(stream_col + 1)};\{(stream_row + 1)}M")
+      session.await_frame(s => s.has("row=\{(row_before)} "))
       check(
         session,
         "wheel: scrolling back lands where it started",
@@ -554,6 +607,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       // resize:三档走一圈,每一档都必须两栏俱在。
       let full = session.screen()
       session.resize_to(72, 14)
+      session.await_frame(s => s.rebuilds >= full.rebuilds + 1)
       let wide = session.screen()
       check(
         session,
@@ -581,6 +635,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
         session, "resize 72x14: nothing painted outside the new grid", clean,
       )
       session.resize_to(43, 11)
+      session.await_frame(s => s.rebuilds >= wide.rebuilds + 1)
       let tiny = session.screen()
       check(
         session,
@@ -609,6 +664,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
         session, "resize 43x11: nothing painted outside the new grid", tiny_clean,
       )
       session.resize_to(COLS, ROWS)
+      session.await_frame(s => s.rebuilds >= tiny.rebuilds + 1)
       let back = session.screen()
       check(
         session,
@@ -703,6 +759,7 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
     None => println("skip: no tui_layers binary, set MOUI_TUI_LAYERS_BIN")
     Some(path) => {
       let session = Session::open(path, cols=190, rows=12)
+      session.await_frame(s => s.has("[x] Background") && s.has("[src]"))
       let start = session.screen()
       let top = row_or_check(session, "╭")
       let bottom = row_or_check(session, "╰")
@@ -742,6 +799,9 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
         '[',
       )
       session.send("\u{1b}[<65;\{(list_col + 1)};\{(item_row + 1)}M")
+      // 这条断言组没有「新文本」可锚(滚一格可能仍是 Background 可见),
+      // 但滚动必然重绘:`await_reply` 等首字节再确认,把「没反应」和「没等到」区分开。
+      session.await_reply()
       let scrolled = session.screen()
       for span in ring_spans(scrolled, top) {
         let (left, right) = span
@@ -761,6 +821,8 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
       let src_row = row_or_check(session, "[src]")
       let src_col = col_or_check(session, scrolled, src_row, '[')
       tap_cell(session, col=src_col + 1, row=src_row)
+      // 反白带是 attrs 变化,没有文本 needle 可锚;点击必然触发重绘,等响应。
+      session.await_reply()
       let tapped = session.screen()
       check(
         session,
@@ -824,6 +886,7 @@ async test "S7 a moved selection sweeps the band off the vacated row" {
   match open_layers() {
     None => println("skip: no tui_layers binary, set MOUI_TUI_LAYERS_BIN")
     Some(session) => {
+      session.await_frame(s => s.has("sel=Background"))
       let start = session.screen()
       check(
         session,
@@ -841,6 +904,7 @@ async test "S7 a moved selection sweeps the band off the vacated row" {
       // 方向键把选中挪到 Grid(不动焦点):旧带所在的空行必须一格格不留,
       // 新带必须真的落在 Grid 行上。
       session.send("\u{1b}[B")
+      session.await_frame(s => s.has("sel=Grid"))
       let moved = session.screen()
       check(
         session,
@@ -879,10 +943,13 @@ async test "S7 a clicked row keeps the selection band on itself" {
       // 不计进断言。
       let list = (10, 40)
       let tree = (50, 95)
+      session.await_frame(s => s.has("sel=Background"))
       let start = session.screen()
       let bg = row_or_check(session, "] Background")
       // 点 Background 的行名(owned 格):点击选中的行自己必须亮整行带。
       tap_cell(session, col=nth_glyph_col_mid(start, bg), row=bg)
+      // sel=Background 一直成立,没有新文本可锚;点击改变焦点带,等重绘响应。
+      session.await_reply()
       let picked = session.screen()
       check(
         session,
@@ -901,6 +968,7 @@ async test "S7 a clicked row keeps the selection band on itself" {
         col=nth_glyph_col_mid(picked, grid_start),
         row=grid_start,
       )
+      session.await_frame(s => s.has("sel=Grid"))
       let moved = session.screen()
       check(
         session,
@@ -923,6 +991,8 @@ async test "S7 a clicked row keeps the selection band on itself" {
       )
       // 点空白处(两个面板之间,布景没有按钮):焦点散了,带不许闪没。
       tap_cell(session, col=45, row=grid_start)
+      // blur 只撤焦点带(attrs),sel=Grid 不变,没有新文本可锚;等重绘。
+      session.await_reply()
       let blurred = session.screen()
       check(
         session,
@@ -939,6 +1009,7 @@ async test "S7 a clicked row keeps the selection band on itself" {
         col=last_open_bracket(moved, runtime_row),
         row=runtime_row,
       )
+      session.await_frame(s => s.has("node=runtime"))
       let tree_frame = session.screen()
       check(
         session,

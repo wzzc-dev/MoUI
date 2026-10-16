@@ -36,6 +36,8 @@ async fn tap(session : Session, row : Int, col : Int) -> Unit {
   session.send(
     "\u{1b}[<0;\{col + 1};\{row + 1}M\u{1b}[<0;\{col + 1};\{row + 1}m",
   )
+  // 探针只为观察带流,点击后等重绘首字节再确认,避免读到半帧。
+  session.await_reply()
 }
 
 ///|
@@ -44,6 +46,7 @@ async test "probe stale band after moving selection" {
     None => println("probe: no layers binary")
     Some(path) => {
       let session = Session::open(path, cols=100, rows=30)
+      session.await_frame(s => s.has("sel=Background"))
       let start = session.screen()
       let bg_row = match start.find_row("[x] Background") {
         Some(r) => r
