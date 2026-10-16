@@ -216,6 +216,23 @@ fn append_inner_focus_border(
 }
 
 ///|
+/// 第 `index` 个插入点的横偏移。
+///
+/// `caret_positions` 是允许整条为空的:文本系统只保证盒尺寸时就没有逐字插入点
+/// 可报(`moui/core` 的 `fallback_paragraph_caret_position` 与本包的点击命中都
+/// 已经按空数组防过)。`clamp_int(_, 0, len - 1)` 看着像防越界,对空数组却正好
+/// 造出一个合法下标 0,后面那次按下标取就是 panic —— 真终端里点一下文本框
+/// 就整个应用崩掉,走的是这条。没有几何可依据时退回盒起点。
+fn caret_offset(caret_positions : Array[Double], index : Int) -> Double {
+  let length = caret_positions.length()
+  if length == 0 {
+    0.0
+  } else {
+    caret_positions[clamp_int(index, 0, length - 1)]
+  }
+}
+
+///|
 fn append_text_field_editing_overlay(
   commands : Array[@core.DrawCommand],
   text~ : String,
@@ -251,7 +268,10 @@ fn append_text_field_editing_overlay(
     0,
     max_int(0, layout.caret_positions.length() - 1),
   )
-  let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
+  let cursor_x = text_frame.origin.x + caret_offset(
+    layout.caret_positions,
+    caret,
+  )
   let cursor = text_editing_visual_cursor_rect(
     @core.Rect::new(
       x=cursor_x,
@@ -291,8 +311,8 @@ fn append_text_field_selection_commands(
         start,
         max_int(start, layout.caret_positions.length() - 1),
       )
-      let x0 = text_frame.origin.x + layout.caret_positions[start]
-      let x1 = text_frame.origin.x + layout.caret_positions[end]
+      let x0 = text_frame.origin.x + caret_offset(layout.caret_positions, start)
+      let x1 = text_frame.origin.x + caret_offset(layout.caret_positions, end)
       if x1 > x0 {
         // Selection highlight tracks the ambient theme's primary palette token
         // so it follows the active color scheme (light/dark) and custom palette
@@ -339,8 +359,14 @@ fn append_text_field_composition_underline(
           start,
           max_int(start, layout.caret_positions.length() - 1),
         )
-        let x0 = text_frame.origin.x + layout.caret_positions[start]
-        let x1 = text_frame.origin.x + layout.caret_positions[end]
+        let x0 = text_frame.origin.x + caret_offset(
+          layout.caret_positions,
+          start,
+        )
+        let x1 = text_frame.origin.x + caret_offset(
+          layout.caret_positions,
+          end,
+        )
         if x1 > x0 {
           commands.push(
             FillRect(

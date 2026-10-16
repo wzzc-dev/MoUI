@@ -150,7 +150,11 @@ fn[Msg] tree_row(
     Some(handler) => row_body.on_secondary_tap(handler(item.id))
     None => row_body
   }
+  // The row carries the item id as its identity: tree rows come and go with
+  // collapse/expand, and without a key the reconciler matches them by position,
+  // so focus and selection would follow the slot instead of the item.
   row_view
+  .key("tree-" + item.id)
   .semantics_role(TreeItem)
   .semantics_expanded(expanded~)
   .semantics_selected(selected~)

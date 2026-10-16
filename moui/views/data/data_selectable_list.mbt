@@ -128,6 +128,9 @@ fn[Msg] selectable_list_row(
     content,
   ])
   .disabled(disabled=!item.enabled)
+  // Same reason as the tree rows: a list that reorders or filters must keep
+  // identity per item, not per position.
+  .key("list-" + item.id)
   .semantics_role(ListItem)
   .semantics_selected(selected~)
   .accessibility_label(selectable_list_item_label(item))

@@ -47,7 +47,10 @@ fn text_input_state_for_single_line(
     0,
     max_int(0, layout.caret_positions.length() - 1),
   )
-  let cursor_x = text_frame.origin.x + layout.caret_positions[visual_caret]
+  let cursor_x = text_frame.origin.x + caret_offset(
+    layout.caret_positions,
+    visual_caret,
+  )
   let caret_rect = text_editing_exact_cursor_rect(text_frame, cursor_x)
   {
     focused: true,
