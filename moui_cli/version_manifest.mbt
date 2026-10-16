@@ -4,7 +4,7 @@
 let embedded_module_manifest : String =
   #|name = "wzzc-dev/moui_cli"
   #|
-  #|version = "0.2.3"
+  #|version = "0.2.4"
   #|
   #|readme = "README.md"
   #|
