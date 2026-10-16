@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "examples/terminal/pty_host" @pty,
+} for "wbtest"
+
+supported_targets = "+native"
+
+options(
+  targets: { },
+)

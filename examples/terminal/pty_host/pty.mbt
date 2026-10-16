@@ -19,6 +19,9 @@ extern "C" fn pty_reap(pid : Int) -> Int64 = "moonpty_reap"
 extern "C" fn pty_signal(pid : Int, sig : Int) -> Int64 = "moonpty_signal"
 
 ///|
+extern "C" fn pty_wait(fd : Int, timeout_ms : Int) -> Int64 = "moonpty_wait"
+
+///|
 /// PTY 会话:master 端异步读写 + 原始 fd 用于 ioctl。
 pub struct Pty {
   fd : Int
@@ -79,6 +82,13 @@ pub async fn Pty::read_output(self : Pty, buf : FixedArray[Byte]) -> Int {
 }
 
 ///|
+/// master 端在 `timeout_ms` 内是否可读。驱动方必须有这条有界等待:
+/// 只有阻塞读时,被测进程不回复的冒烟会挂住而不是红。
+pub fn Pty::wait_readable(self : Pty, timeout_ms : Int) -> Bool {
+  pty_wait(self.fd, timeout_ms) > 0L
+}
+
+///|
 /// 写入输入(键盘/粘贴)。
 pub async fn Pty::write_input(self : Pty, data : Bytes) -> Int {
   self.raw.write(data)
@@ -88,6 +98,17 @@ pub async fn Pty::write_input(self : Pty, data : Bytes) -> Int {
 /// 调整 PTY 尺寸(通知 shell 的 TIOCSWINSZ)。
 pub fn Pty::resize(self : Pty, cols : Int, rows : Int) -> Unit {
   ignore(pty_resize(self.fd, cols, rows))
+}
+
+///|
+/// 向子进程发送信号(1=SIGHUP,2=SIGINT,28=SIGWINCH)。
+///
+/// 驱动方必须能自己补发 SIGWINCH:`TIOCSWINSZ` 只通知「该 tty 的前台进程组」,
+/// 而 posix_spawn(SETSID + dup2,无 TIOCSCTTY)派生的子进程没有控制终端,
+/// kernel 因此不会替真终端发这个信号。补发之后被测进程走的仍然是同一条
+/// SIGWINCH→重排通路,测的是宿主而不是内核。
+pub fn Pty::signal(self : Pty, sig : Int) -> Unit {
+  ignore(pty_signal(self.pid, sig))
 }
 
 ///|

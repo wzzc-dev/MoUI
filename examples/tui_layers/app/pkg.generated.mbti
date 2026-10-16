@@ -1,0 +1,111 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/tui_layers/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/data",
+}
+
+// Values
+pub fn cycle_pane(Pane, Int) -> Pane
+
+pub fn find_node(Array[Node], String) -> Node?
+
+pub fn hidden_count(Model) -> Int
+
+pub fn layer_marker(Model, String) -> String
+
+pub let layer_width : Double
+
+pub fn node(id~ : String, label~ : String, children? : Array[Node]) -> Node
+
+pub fn pane_name(Pane) -> String
+
+pub let pane_spacing : Double
+
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn program_commands(Model) -> Array[@core.ProgramCommand[Msg]]
+
+pub let row_height : Double
+
+pub let scroll_line : Double
+
+pub fn selected_layer_name(Model) -> String
+
+pub fn selected_node_label(Model) -> String
+
+pub fn to_tree_items(Array[Node]) -> Array[@data.TreeItem]
+
+pub let tree_width : Double
+
+pub fn visible_layers(Model) -> Array[Layer]
+
+pub fn visible_node_ids(Array[Node], Array[String]) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub(all) struct Layer {
+  id : String
+  name : String
+  visible : Bool
+} derive(Eq, @debug.Debug)
+pub fn Layer::equal(Self, Self) -> Bool
+pub fn Layer::not_equal(Self, Self) -> Bool
+pub fn Layer::to_repr(Self) -> @debug.Repr
+
+pub struct Model {
+  layers : Array[Layer]
+  selected_layer : String
+  filter : String
+  only_visible : Bool
+  tree : Array[Node]
+  expanded : Array[String]
+  selected_node : String
+  pane : Pane
+  layer_scroll : Double
+  tree_scroll : Double
+  serial : Int
+}
+pub fn Model::new() -> Self
+pub fn Model::update(Self, Msg) -> (Self, @core.Effect[Msg])
+pub fn Model::view(Self) -> @core.View[Msg]
+
+pub(all) enum Msg {
+  CyclePane(Int)
+  Move(Int)
+  SelectLayer(String)
+  ToggleLayer(String)
+  ToggleFocused
+  SetFilter(String)
+  SetOnlyVisible(Bool)
+  AddLayer
+  RemoveLayer
+  SelectNode(String)
+  ToggleNode(String)
+  AddNode
+  SetScroll(Pane, Double)
+  ScrollBy(Pane, Double)
+}
+
+pub(all) struct Node {
+  id : String
+  label : String
+  children : Array[Node]
+} derive(@debug.Debug)
+pub fn Node::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Pane {
+  LayersPane
+  FilesPane
+  FilterPane
+} derive(Eq, @debug.Debug)
+pub fn Pane::equal(Self, Self) -> Bool
+pub fn Pane::not_equal(Self, Self) -> Bool
+pub fn Pane::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

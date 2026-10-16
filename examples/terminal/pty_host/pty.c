@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <spawn.h>
 #include <signal.h>
+#include <poll.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <termios.h>
@@ -157,6 +158,26 @@ int64_t moonpty_reap(int64_t pid) {
  */
 int64_t moonpty_signal(int64_t pid, int64_t sig) {
   return kill((pid_t)pid, (int)sig);
+}
+
+/*
+ * 等待 master 端可读,最多 timeout_ms 毫秒。
+ * 返回 1=可读,0=超时,-1=错误。驱动方需要「读到安静为止」:
+ * 只有阻塞读的话,应用不回复时冒烟会挂住而不是红。
+ */
+int64_t moonpty_wait(int64_t fd, int64_t timeout_ms) {
+  struct pollfd pfd;
+  pfd.fd = (int)fd;
+  pfd.events = POLLIN;
+  pfd.revents = 0;
+  int rc = poll(&pfd, 1, (int)timeout_ms);
+  if (rc > 0) {
+    return 1;
+  }
+  if (rc == 0) {
+    return 0;
+  }
+  return -1;
 }
 
 #endif /* _WIN32 */

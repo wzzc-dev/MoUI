@@ -404,6 +404,37 @@
         "docs/plans/active/moui-studio.md"
       ],
       "artifacts": []
+    },
+    {
+      "id": "tui.pty-interaction-smoke",
+      "tier": "nightly",
+      "kind": "real-terminal-interaction-smoke",
+      "host": "any",
+      "purpose": "Drive the native terminal entries of examples/tui_split, examples/counter and examples/tui_layers inside a real POSIX PTY and decode their ANSI byte streams back into a cell grid, so focus traversal, bordered-list selection, file-tree folding, keypress-without-submit, mouse click and wheel, and resize reflow with no ghosting are asserted against what a terminal actually displays instead of against renderer internals. tui_layers carries the three proofs the static split demo cannot: a text field focused by clicking its own cell then filtered per keystroke with no Enter, a visibility marker read back after a click, and a wheel that scrolls only the hovered pane. No automated CI job yet: the suite is time-based (a settle window decides frame completeness) and needs a PTY, so it is run through the script on demand.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "sh",
+            "scripts/tui-pty-smoke.sh"
+          ],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "manual-dispatch"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/plans/active/tui-output-path.md"
+      ],
+      "artifacts": [
+        "artifacts/smoke/tui-pty-smoke/raw-stream.log"
+      ]
     }
   ]
 }

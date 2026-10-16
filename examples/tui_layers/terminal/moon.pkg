@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui_terminal_host" @terminal_host,
+  "examples/tui_layers/app" @layers_app,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

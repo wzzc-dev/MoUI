@@ -1,0 +1,76 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tests/tui_spike"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub let cell_h : Double
+
+pub fn cell_text_system() -> @core.TextSystem
+
+pub let cell_w : Double
+
+pub fn draw_box(CellGrid, Int, Int, Int, Int, String, Int, Int, Int) -> Unit
+
+pub fn grid_lines(CellGrid) -> Array[String]
+
+pub fn grid_to_ansi(CellGrid) -> String
+
+pub fn line_containing(Array[String], String) -> Int?
+
+pub fn new_grid(Int, Int) -> CellGrid
+
+pub fn new_seq(CellGrid, Int) -> Int
+
+pub fn[Model, Msg] project(@core.Program[Model, Msg], Double, Double, Double, Double) -> ProjectionReport
+
+pub fn row_is_chrome_only(String) -> Bool
+
+pub fn summary(ProjectionReport) -> String
+
+pub fn write_boxed(CellGrid, Int, Int, Int, Int, String, Int, Int) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct CellGrid {
+  cols : Int
+  rows : Int
+  chars : Array[Array[Char]]
+  attrs : Array[Array[Int]]
+  owners : Array[Array[Int]]
+  prio : Array[Int]
+}
+
+pub struct FrameAudit {
+  nodes : Int
+  off_grid_point : Int
+  off_grid_size : Int
+  worst_off_grid_px : Double
+} derive(Eq, @debug.Debug)
+pub fn FrameAudit::equal(Self, Self) -> Bool
+pub fn FrameAudit::not_equal(Self, Self) -> Bool
+pub fn FrameAudit::to_repr(Self) -> @debug.Repr
+
+pub struct ProjectionReport {
+  lines : Array[String]
+  plain : String
+  ansi : String
+  cols : Int
+  rows : Int
+  semantics_nodes : Int
+  layout_nodes : Int
+  draw_commands : Int
+  audit_semantics : FrameAudit
+  audit_layout : FrameAudit
+  roles : Array[(String, Int)]
+  frames : Array[String]
+  offscreen : Int
+}
+
+// Type aliases
+
+// Traits

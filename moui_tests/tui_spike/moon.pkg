@@ -1,0 +1,17 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+}
+
+import {
+  "examples/counter/app" @counter_app,
+  "examples/showcase/app" @showcase_app,
+  "examples/tui_split/app" @tui_split_app,
+  "wzzc-dev/moui_tui_renderer" @tui_renderer,
+} for "test"
+
+supported_targets = "+native"
+
+options(
+  targets: { },
+)
