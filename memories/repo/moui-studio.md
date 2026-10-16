@@ -1599,13 +1599,17 @@ text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡�
 
 ## 脚手架收敛 P4b（2026-10-14）：生成器跨模块共用 + 写盘事务
 
-- **web 宿主 ABI 现在是跨模块契约**：`wzzc-dev/moui_cli@0.2.3` 起注册表里的
+- **web 宿主 ABI 现在是跨模块契约**：`wzzc-dev/moui_cli@0.2.4` 起注册表里的
   `scaffold_plan` 持有 `web_abi_exports` 名单 + `web_abi_shim_mbt()` 转发与
   `web_pkg_text(module, app_alias?)` 入口清单。Studio 的
   `services/export`（`web_pkg`/`abi_mbt`）改成调它，`moui new` 的 `web_wasm/main.mbt`
   也插同一段——两边只差组合根别名（`@app` vs `@exported_app`）。**后果**：
   后端加一个宿主入口 = 先发布 `moui_cli`，Studio 独立 clone 才能编过
   （顺序见 `mooncakes-release-playbook.md`）。
+  2026-10-16 实测教训：`0.2.3` 是从**未提交的中间态树**发布的（发布 18:24、
+  最终提交 22:15），注册表内容缺 `app_alias`/`web_abi.mbt`，Studio 独立 CI
+  全线红；版本号撞号后不可重发，只能 bump `0.2.4` 重 pin。**发布必须从
+  已提交的干净树执行**。
 - **新建工程写盘 = 一个队列两种相位**：`NewProjectDraft.rolling_back` 决定
   `advance_new_project_queue` 发 `write_text` 还是 `delete_file`，游标推进
   统一走 `NewProjectQueueResult`（旧 `NewProjectFileWritten` 改名）。中断

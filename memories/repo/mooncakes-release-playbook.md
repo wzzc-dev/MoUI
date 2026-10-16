@@ -48,6 +48,12 @@ renderers → addons → entrypoints),模块内部依赖关系决定阶段顺序
   的旧版本而编译失败;`validate_workspace_pins` 又把 pin 钉在
   `checks/release-modules.json` 的已发布版本上,所以「先发布再 pin」在这里是
   门禁强制而不是可绕的工程选择。
+- **发布必须从已提交的干净树执行**(2026-10-16 实测):`moui_cli@0.2.3` 从
+  未提交的中间态树发布(发布 18:24,最终提交 22:15),注册表内容与同版本号
+  的源码不一致——缺 `scaffold_plan` 的 `app_alias` 参数与 `web_abi.mbt`,
+  Studio 独立 CI 全线 4085/4021。版本不可重发,只能 bump `0.2.4` 重 pin。
+  发布前先 `git status` 确认无未提交改动,并抽查 tarball
+  (`moon publish --dry-run` 后解包 `_build/publish/*.zip`)与工作区一致。
 
 ## 文档 token 同步面
 

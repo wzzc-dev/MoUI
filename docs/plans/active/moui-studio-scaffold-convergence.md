@@ -66,7 +66,7 @@
   读写、全部 `*_text()` 模板与 `build_project_file_plan()` 都在包内；根包只留
   「计划 → stage → validate → commit/回滚」的事务与 fs。`scaffold_plan` 已在
   native 与 wasm-gc 双目标通过测试，证明零 fs/env/FFI。
-- [x] P4b-1（Studio 侧，已落）：`moui_cli@0.2.3` 上注册表后，Studio 的
+- [x] P4b-1（Studio 侧，已落）：`moui_cli@0.2.4` 上注册表后，Studio 的
   `services/export` 依赖 `wzzc-dev/moui_cli/scaffold_plan`——web 入口包清单
   （`web_pkg`）与宿主 ABI 垫片（`abi_mbt`）改为调用同一份 `@plan` 生成器，
   两条生成链（`moui new` 骨架 / Studio 导出 bundle）只剩「组合根别名」这一处
@@ -104,8 +104,9 @@
   包外只暴露消费方真正需要的面（`project_mutate.mbt` 逐平台补文件要的
   `web_*`/`desktop_*`/`mobile_*` 模板 + 身份清单读写）；`app_text`/`moon_mod_text`/
   `dev_runner_text`/`gitignore_text`/`manifest_json`/`valid_*` 等回落到包内私有。
-- **P4b-1 生成器出壳（Studio 侧）**（已落）：`wzzc-dev/moui_cli@0.2.3` 发布
-  带上 `scaffold_plan` 包后，`moui_studio/moon.mod` pin 它、
+- **P4b-1 生成器出壳（Studio 侧）**（已落）：`wzzc-dev/moui_cli@0.2.4` 发布
+  带上 `scaffold_plan` 包后（`0.2.3` 曾从中间态树发布、缺 ABI 契约，
+  2026-10-16 重发布修正），`moui_studio/moon.mod` pin 它、
   `services/export/moon.pkg` 引 `@plan`，`web_pkg(name)` 改为
   `@plan.web_pkg_text(name, app_alias="exported_app")`、`abi_mbt()` 改为
   `@plan.web_abi_shim_mbt()`——宿主入口名单与转发从此一份事实（`moui new` 的
