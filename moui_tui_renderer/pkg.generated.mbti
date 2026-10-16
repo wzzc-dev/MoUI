@@ -1,0 +1,134 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tui_renderer"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui_tui",
+}
+
+// Values
+pub fn ansi(sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog) -> @render.RendererProvider
+
+pub fn ansi_runs(Array[(String, Int, @moui_tui.CellAttrs)]) -> String
+
+pub fn attrs_for(String, @core.SemanticsState) -> @moui_tui.CellAttrs
+
+pub fn cell_text_system(CellBox) -> @core.TextSystem
+
+pub fn cell_units(String) -> Int
+
+pub fn clips_in_tree(Array[@core.SemanticsNode], @core.SemanticsNodeId?, CellBox, Int, Int) -> Array[Clip]
+
+pub fn frame_update(@moui_tui.TermScreen, @moui_tui.Damage) -> String
+
+pub fn node_text(@core.SemanticsNode) -> String
+
+pub fn note_dropped_commands(DegradeLog, Array[@core.DrawCommand], Array[@core.PlatformViewPlacement]) -> Unit
+
+pub fn paint_order(Array[@core.SemanticsNode], @core.SemanticsNodeId?) -> Array[Int]
+
+pub fn quantize(@core.Rect, CellBox, Int, Int) -> (Int, Int, Int, Int)
+
+pub fn role_kind(@core.SemanticsRole) -> RoleKind
+
+pub fn role_priority(RoleKind) -> Int
+
+pub fn role_tag(@core.SemanticsRole) -> String
+
+pub fn sgr(@moui_tui.CellAttrs) -> String
+
+pub fn tui_feature_capabilities() -> Array[@render.RendererBackendFeatureCapability]
+
+pub fn tui_feature_note(@render.RendererFeature) -> String
+
+pub fn tui_feature_status(@render.RendererFeature) -> @render.RendererFeatureStatus
+
+pub fn tui_terminal_ansi_native_descriptor() -> @render.RendererDescriptor
+
+pub fn viewport(CellBox, Int, Int) -> @core.Rect
+
+// Errors
+
+// Types and methods
+pub(all) struct CellBox {
+  width : Double
+  height : Double
+}
+pub fn CellBox::cols_of(Self, @core.SurfaceMetrics) -> Int
+pub fn CellBox::default() -> Self
+pub fn CellBox::new(width~ : Double, height~ : Double) -> Self
+pub fn CellBox::rows_of(Self, @core.SurfaceMetrics) -> Int
+
+pub struct Clip {
+  chrome : @core.Rect
+  content : @core.Rect
+}
+
+pub struct DegradeLog {
+  // private fields
+}
+pub fn DegradeLog::clear(Self) -> Unit
+pub fn DegradeLog::find(Self, String) -> DegradeRecord?
+pub fn DegradeLog::new() -> Self
+pub fn DegradeLog::note(Self, String, String) -> Unit
+pub fn DegradeLog::records(Self) -> Array[DegradeRecord]
+pub fn DegradeLog::total(Self) -> Int
+
+pub(all) struct DegradeRecord {
+  source : String
+  detail : String
+  count : Int
+} derive(Eq, @debug.Debug)
+pub fn DegradeRecord::equal(Self, Self) -> Bool
+pub fn DegradeRecord::not_equal(Self, Self) -> Bool
+pub fn DegradeRecord::to_repr(Self) -> @debug.Repr
+
+pub(all) enum RoleKind {
+  Region
+  Item
+  Label
+  Content
+  Placeholder
+} derive(Eq, @debug.Debug)
+pub fn RoleKind::equal(Self, Self) -> Bool
+pub fn RoleKind::not_equal(Self, Self) -> Bool
+pub fn RoleKind::to_repr(Self) -> @debug.Repr
+
+pub struct TuiRenderer {
+  mut metrics : @core.SurfaceMetrics
+  cell : CellBox
+  text_system : @core.TextSystem
+  sink : TuiSink
+  diagnostics : DegradeLog
+  mut frame_count : Int
+  mut present_count : Int
+  mut offscreen_nodes : Int
+  // private fields
+}
+pub fn TuiRenderer::cols(Self) -> Int
+pub fn TuiRenderer::diagnostics(Self) -> DegradeLog
+pub fn TuiRenderer::frame_count(Self) -> Int
+pub fn TuiRenderer::line_text(Self, Int) -> String
+pub fn TuiRenderer::new(metrics~ : @core.SurfaceMetrics, sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog) -> Self
+pub fn TuiRenderer::offscreen_node_count(Self) -> Int
+pub fn TuiRenderer::present_count(Self) -> Int
+pub fn TuiRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
+pub fn TuiRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
+pub fn TuiRenderer::rows(Self) -> Int
+pub fn TuiRenderer::text_system(Self) -> @core.TextSystem
+pub fn TuiRenderer::to_renderer_session(Self) -> @render.RendererSession
+
+pub(all) struct TuiSink {
+  description : String
+  write : (String) -> Unit
+}
+pub fn TuiSink::describe(Self) -> String
+pub fn TuiSink::discard() -> Self
+pub fn TuiSink::emit(Self, String) -> Unit
+pub fn TuiSink::new(description~ : String, write~ : (String) -> Unit) -> Self
+
+// Type aliases
+
+// Traits

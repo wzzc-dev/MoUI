@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
+  "wzzc-dev/moui_tui" @tui,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

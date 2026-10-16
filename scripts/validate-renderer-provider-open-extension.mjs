@@ -137,8 +137,12 @@ function checkProviderFactoryExports() {
     const allContent = files
       .map((f) => readFileSync(f, "utf-8"))
       .join("\n");
+    // Match a declaration of the shape `pub fn name(params) -> ... RendererProvider`.
+    // Params may contain parentheses (labelled defaults like `CellBox::default()`),
+    // so the guard is "no braces/semicolons before the return type" rather than
+    // "no closing paren".
     const exportsProviderFactory =
-      /pub fn\s+\w+\s*\([^)]*\)\s*->\s*[^{\n]*RendererProvider/.test(
+      /pub\s+fn\s+[\w:]+[^{}]*?\)\s*->\s*[^{};]*RendererProvider/.test(
         allContent,
       );
     if (!exportsProviderFactory) {
