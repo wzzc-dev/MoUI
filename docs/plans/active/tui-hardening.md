@@ -57,7 +57,7 @@
 
 - [x] H1 `pr` profile green; S0–S7 work committed on this branch in module
       commits; focus-dbg gone; ratchet exact.
-- [ ] H2 `moon test moui_tui_renderer moui_tui moui_tests/tui_spike --target native`
+- [x] H2 `moon test moui_tui_renderer moui_tui moui_tests/tui_spike --target native`
       green with golden frames unchanged from H1 behaviour; every rule in
       `moui_tui_renderer/AGENTS.md` names a test; six static validators green.
 - [ ] H3 `sh scripts/tui-pty-smoke.sh` green 3 consecutive local runs;
@@ -82,4 +82,5 @@
 |---|---|
 | 2026-10-16 | plan opened on `tui/hardening`; H1 in progress. |
 | 2026-10-16 | **H1 landed**: 9 commits (carrier `6a1495307` → fmt `c31cffdad`), focus-dbg removed (owner approval recorded in tui-output-path header), validate_api_surface ratchet settled 1669→1680 with dated reason, six static validators green, `sh scripts/check.sh --profile pr` green end-to-end (194 steps), PTY gate 13/13 before and after the fmt commit. |
+| 2026-10-16 | **H2 landed** (`7fa80d067`): attrs_for/base_attrs exhaustive on the enum (F4); AGENTS.md contract R1–F5 with deliberate-absences section; the 100x30 split golden was evaluated, captured and rejected in favour of content assertions (rationale recorded in the contract); P5/P6/B1/role-glyph tests added; box+items and role-glyph frames pinned as inline goldens, byte-identical to H1 behaviour; 69/69 + PTY 13/13 + six validators green. |
 | 2026-10-16 | pre-existing infra note (not this plan's defect): `moui_studio/services/compile_native` failed twice in earlier profile runs under load (assertion flake, then SIGSEGV) while passing 4/4 in isolation; HEAD `20bf3089c` (studio scaffold_plan refactor) has never been pushed, so CI has not validated that surface. Unrelated to TUI paths; left for the owner. |
