@@ -1,0 +1,126 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_terminal_host"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common/input",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_tui_renderer",
+}
+
+// Values
+pub fn[Model, Msg] run_program(program~ : @core.Program[Model, Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int) -> TerminalExit
+
+pub fn[Msg] run_view(root~ : @core.View[Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int, on_message? : ((Msg) -> Unit)?) -> TerminalExit
+
+// Errors
+
+// Types and methods
+pub(all) struct CellPosition {
+  col : Int
+  row : Int
+} derive(Eq, @debug.Debug)
+pub fn CellPosition::equal(Self, Self) -> Bool
+pub fn CellPosition::not_equal(Self, Self) -> Bool
+pub fn CellPosition::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MousePhase {
+  Press
+  Release
+  Drag
+} derive(Eq, @debug.Debug)
+pub fn MousePhase::equal(Self, Self) -> Bool
+pub fn MousePhase::not_equal(Self, Self) -> Bool
+pub fn MousePhase::to_repr(Self) -> @debug.Repr
+
+pub(all) struct MouseReport {
+  position : CellPosition
+  button : Int
+  phase : MousePhase
+  modifiers : @core.KeyModifiers
+} derive(Eq, @debug.Debug)
+pub fn MouseReport::equal(Self, Self) -> Bool
+pub fn MouseReport::not_equal(Self, Self) -> Bool
+pub fn MouseReport::to_repr(Self) -> @debug.Repr
+
+pub enum PollState {
+  Ready
+  Timeout
+  Unavailable
+} derive(Eq, @debug.Debug)
+pub fn PollState::equal(Self, Self) -> Bool
+pub fn PollState::not_equal(Self, Self) -> Bool
+pub fn PollState::to_repr(Self) -> @debug.Repr
+
+pub struct TerminalDecoder {
+  mut pending : Array[Int]
+}
+pub fn TerminalDecoder::feed_bytes(Self, Bytes) -> Array[TerminalEvent]
+pub fn TerminalDecoder::flush(Self) -> TerminalEvent?
+pub fn TerminalDecoder::new() -> Self
+pub fn TerminalDecoder::pending_bytes(Self) -> Int
+
+pub(all) enum TerminalEvent {
+  Key(@core.KeyboardEvent)
+  Text(@core.TextInputEvent)
+  Mouse(MouseReport)
+  Wheel(WheelReport)
+} derive(Eq, @debug.Debug)
+pub fn TerminalEvent::equal(Self, Self) -> Bool
+pub fn TerminalEvent::not_equal(Self, Self) -> Bool
+pub fn TerminalEvent::to_repr(Self) -> @debug.Repr
+
+pub(all) enum TerminalExit {
+  Closed
+  NotTerminal
+  NoGridSize
+  SetupFailed(String)
+  RendererRejected(String)
+  WriteFailed(String)
+} derive(Eq, @debug.Debug)
+pub fn TerminalExit::describe(Self) -> String
+pub fn TerminalExit::equal(Self, Self) -> Bool
+pub fn TerminalExit::not_equal(Self, Self) -> Bool
+pub fn TerminalExit::to_repr(Self) -> @debug.Repr
+
+pub struct TerminalInput {
+  input : @input.InputState
+  surface : @input.SurfaceState
+  cell : @moui_tui_renderer.CellBox
+}
+pub fn TerminalInput::metrics(Self) -> @core.SurfaceMetrics
+pub fn TerminalInput::new(cols~ : Int, rows~ : Int, cell? : @moui_tui_renderer.CellBox) -> Self
+pub fn TerminalInput::point_of(Self, CellPosition) -> @core.Point
+pub fn TerminalInput::resize(Self, Int, Int) -> @backend.Event
+pub fn TerminalInput::to_host(Self, TerminalEvent) -> @backend.Event?
+
+pub struct Tty {
+  in_fd : Int
+  out_fd : Int
+}
+pub fn Tty::current() -> Self
+pub fn Tty::emit(Self, Bytes) -> String?
+pub fn Tty::enter_raw(Self) -> String?
+pub fn Tty::grid(Self) -> (Int, Int)?
+pub fn Tty::install_signal_handlers(Self) -> String?
+pub fn Tty::is_terminal(Self) -> Bool
+pub fn Tty::restore(Self) -> Unit
+pub fn Tty::take_input(Self) -> Bytes
+pub fn Tty::take_resize_signal(Self) -> Bool
+pub fn Tty::terminate_requested(Self) -> Bool
+pub fn Tty::wait(Self, timeout_ms~ : Int) -> PollState
+pub fn Tty::write_text(Self, String) -> String?
+
+pub(all) struct WheelReport {
+  position : CellPosition
+  up : Bool
+  modifiers : @core.KeyModifiers
+} derive(Eq, @debug.Debug)
+pub fn WheelReport::equal(Self, Self) -> Bool
+pub fn WheelReport::not_equal(Self, Self) -> Bool
+pub fn WheelReport::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

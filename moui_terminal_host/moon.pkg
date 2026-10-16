@@ -1,0 +1,16 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend" @backend_host,
+  "wzzc-dev/moui/backend/common/input" @window_input,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui_tui_renderer" @tui_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "tty_stub.c" ],
+  targets: { },
+)
