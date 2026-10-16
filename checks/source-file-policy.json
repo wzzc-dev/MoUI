@@ -310,8 +310,8 @@
     },
     {
       "path": "moui_studio/app/ide_shell.mbt",
-      "maxLines": 1481,
-      "reason": "S1/S2a: chrome qualification reflow plus explorer wiring; net +11 wrap lines (recent_tail moved out to plugins/project); reraise 1486->1497. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665)."
+      "maxLines": 1515,
+      "reason": "S1/S2a: chrome qualification reflow plus explorer wiring; net +11 wrap lines (recent_tail moved out to plugins/project); reraise 1486->1497. Lowered for the right-panel VS Code side-panel form (AI composer single-host): see docs/plans/active/moui-studio-right-panel-vscode-form.md. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665).; Raised for the topbar project/device chips (M3a: two topbar_action chips in the right cluster + topbar_device_label single source with actions-width accounting) and the PsDesign/PsBlocks activity-bar entries (M5)."
     },
     {
       "path": "moui_studio/services/export/kernel_compiled_runtime.mbt",
@@ -330,8 +330,8 @@
     },
     {
       "path": "moui_studio/app/update_shell.mbt",
-      "maxLines": 1253,
-      "reason": "Raised for the right-panel VS Code sidebar form: set_right_view doc rewrite plus normalize_disabled_plugins (the RvAi fallback shared by TogglePlugin and boot restore) and the studio.right.ai command. See docs/plans/active/moui-studio-right-panel-vscode-sidebar.md. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665). Lowered with the P4b shell cleanup: the zero-caller clamp_bottom_height moved out with the unused ide wrappers. See docs/plans/active/moui-studio-scaffold-convergence.md."
+      "maxLines": 1286,
+      "reason": "Raised for the right-panel VS Code sidebar form: set_right_view doc rewrite plus normalize_disabled_plugins (the RvAi fallback shared by TogglePlugin and boot restore) and the studio.right.ai command. See docs/plans/active/moui-studio-right-panel-vscode-sidebar.md. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665). Lowered with the P4b shell cleanup: the zero-caller clamp_bottom_height moved out with the unused ide wrappers. See docs/plans/active/moui-studio-scaffold-convergence.md.; Settled 1253->1259 to the exact current count (pre-existing drift from moui_studio 91f1665, confirmed failing on the pristine commit before the target-mode slice).; Raised for the PsDesign/PsBlocks perspective presets (apply_perspective_preset arms) and the studio.workspace.design/blocks command pipeline (M5)."
     },
     {
       "path": "moui_studio/app/views.mbt",
@@ -365,13 +365,13 @@
     },
     {
       "path": "moui_studio/app/model.mbt",
-      "maxLines": 1412,
-      "reason": "Raised for the right-panel VS Code sidebar form: RightView regains RvAi (inspector page / AI page / PsAi workspace / hidden) and the right_view + ai_cards_folded field docs are rewritten for pagination. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665). Lowered with the scaffold extraction: the unused app.empty_program wrapper moved to @scaffold/@ir."
+      "maxLines": 1446,
+      "reason": "Raised for the right-panel VS Code sidebar form: RightView regains RvAi (inspector page / AI page / PsAi workspace / hidden) and the right_view + ai_cards_folded field docs are rewritten for pagination. Settled to the exact current count after the studio project-file-management/compile-views slice (moui_studio 91f1665). Lowered with the scaffold extraction: the unused app.empty_program wrapper moved to @scaffold/@ir.; Raised 1412->1426 for the target-mode slice: InsertCustomFunction (custom-blocks palette group) and the blocks-canvas free-form state projection (script_origins/zoom/grid wiring docs).; Raised 1422->1440 for the target-mode slice (CopyAiCodeBlock + ArtifactAiCodeCopy + InsertCustomFunction + blocks-canvas state projection).; Raised for the PsDesign/PsBlocks StudioPerspective variants with workbench doc comments (M5)."
     },
     {
       "path": "moui_studio/app/shell_layout_wbtest.mbt",
-      "maxLines": 1629,
-      "reason": "Lowered for the right-panel VS Code sidebar form: the composer host contract and the see-all contract moved to right_panel_wbtest.mbt, and the composer/host tests here were rewritten for the two-page form. Raised 1609->1629 for the studio project-file-management/compile-views slice (moui_studio 91f1665)."
+      "maxLines": 1685,
+      "reason": "Lowered for the right-panel VS Code sidebar form: the composer host contract and the see-all contract moved to right_panel_wbtest.mbt, and the composer/host tests here were rewritten for the two-page form. Raised 1609->1629 for the studio project-file-management/compile-views slice (moui_studio 91f1665).; Raised for the workbench preset contract test (PsDesign/PsBlocks layout + IR sharing + no-op re-click) and the activity-bar glyph spec update 4->6 (M5) plus the topbar chip accounting contract test (M3a).; 1682->1685 by moon fmt reflow after the M5 slice."
     },
     {
       "path": "moui_studio/app/ide_context.mbt",
@@ -380,13 +380,13 @@
     },
     {
       "path": "moui_studio/app/app.mbt",
-      "maxLines": 2656,
-      "reason": "Raised for the right-panel VS Code sidebar form: TogglePlugin and PluginsLoaded now route their disabled-plugin normalization through the shared normalize_disabled_plugins helper (nets +3 wrap lines)."
+      "maxLines": 2672,
+      "reason": "Raised for the right-panel VS Code sidebar form: TogglePlugin and PluginsLoaded now route their disabled-plugin normalization through the shared normalize_disabled_plugins helper (nets +3 wrap lines).; Raised 2656->2672 for the target-mode slice (CopyAiCodeBlock arm + artifact_done_key entry)."
     },
     {
       "path": "moui_studio/app/app_test.mbt",
-      "maxLines": 2180,
-      "reason": "S2b-1: test fixtures/asserts re-qualified to project_state paths reflowed wraps. Raise 2176->2179. Raised 2179->2180 for the studio project-file-management/compile-views slice (moui_studio 91f1665)."
+      "maxLines": 2181,
+      "reason": "S2b-1: test fixtures/asserts re-qualified to project_state paths reflowed wraps. Raise 2176->2179. Raised 2179->2180 for the studio project-file-management/compile-views slice (moui_studio 91f1665).; Raised 2180->2181 for the target-mode slice (CopyAiCodeBlock arm + artifact_done_key entry)."
     },
     {
       "path": "moui_studio/app/code_view.mbt",
@@ -405,13 +405,18 @@
     },
     {
       "path": "moui_studio/app/right_panel_wbtest.mbt",
-      "maxLines": 1202,
-      "reason": "Right-panel VS Code sidebar form test host (composer/page contracts, see-all contract): registered at the exact current count after the right-panel slices pushed this new test file past the 1200 hard limit."
+      "maxLines": 1208,
+      "reason": "Right-panel VS Code sidebar form test host (composer/page contracts, see-all contract): registered at the exact current count after the right-panel slices pushed this new test file past the 1200 hard limit.; Raised 1202->1208 for the target-mode slice (CopyAiCodeBlock + ArtifactAiCodeCopy + InsertCustomFunction + blocks-canvas state projection)."
     },
     {
       "path": "moui_studio/plugins/ai/ide_ai_views.mbt",
-      "maxLines": 1416,
-      "reason": "AI plugin view layer (session cards, workspace panes, docked composer chrome) consolidated into plugins/ai during the right-panel plugin extraction slices; registered at the exact current count (moui_studio 91f1665)."
+      "maxLines": 1432,
+      "reason": "AI plugin view layer (session cards, workspace panes, docked composer chrome) consolidated into plugins/ai during the right-panel plugin extraction slices; registered at the exact current count (moui_studio 91f1665).; Ratcheted down 1416->1394 after the decision_bar family moved to plugins/ai/decision_bar.mbt (target-mode slice).; Raised 1394->1432 for the numbered-plan-step badges ( right-rail blue-circle composition, M3b)."
+    },
+    {
+      "path": "moui_studio/app/blocks_pane.mbt",
+      "maxLines": 1229,
+      "reason": "Blocks pane (category rail + toolbar + free-form canvas + edit-card composition). Crossed the 1200 logic-line hard limit during the  target-mode slice and the M1 hat-flag/M4 zoom-fit/M5 workbench slices on top of it: fit_zoom content-bounds budget, canvas hat_top forwarding, and the BlockStroke hat-outline branch; registered at 1234 after the M5 slice, then settled down to 1229 by moon fmt reflow."
     }
   ],
   "data": [
@@ -467,11 +472,11 @@
     },
     {
       "path": "moui_studio/app/i18n_catalog_generated.mbt",
-      "maxLines": 3910,
+      "maxLines": 4102,
       "generator": "scripts/generate-i18n-catalogs.mjs",
       "checkCommand": "node scripts/generate-i18n-catalogs.mjs --check",
       "header": "Generated by scripts/generate-i18n-catalogs.mjs",
-      "reason": "Generated Studio i18n catalog; v4 IDE shell strings (chrome/panes/context tabs/audit/console/settings/AI layer incl. composer modes, hero hints, window chrome/IR rail hints/status bar/command surface) are required for the keyboard-first IDE entry. Raised 1916->1918 for app.ctx.clear, 1918->1930 for the right-panel show/hide trio, 1930->1995 for the block-editor relocation plus the compile-artifact surface, 1995->2072 for compile progress reporting (app.compile.progress / .step / .step_done / .step_active / .elapsed and the seven app.compile.phase.* step names), 2072->2084 for separating the runnable GUI artifact from the headless self-check, then 2084->2116 for one-click launch (app.compile.launching / .launched / .revealed and the rewritten app.compile.launch_hint). The catalog must list every user-visible string, so each new user-facing affordance necessarily grows it. Raised 2323->3253 for the regenerated catalog (terminal/form-designer strings). Raised 3789->3868 for the VS Code-style explorer slice (app.explorer.* header/toolbar/section vocabulary: title, new file/folder, refresh, collapse all, open editors, outline, timeline, and the empty/rename/delete/folder state strings).; 2026-10-10 fake/offline keys removed, AI guidance + folder-project keys added (regenerated)"
+      "reason": "Generated Studio i18n catalog; v4 IDE shell strings (chrome/panes/context tabs/audit/console/settings/AI layer incl. composer modes, hero hints, window chrome/IR rail hints/status bar/command surface) are required for the keyboard-first IDE entry. Raised 1916->1918 for app.ctx.clear, 1918->1930 for the right-panel show/hide trio, 1930->1995 for the block-editor relocation plus the compile-artifact surface, 1995->2072 for compile progress reporting (app.compile.progress / .step / .step_done / .step_active / .elapsed and the seven app.compile.phase.* step names), 2072->2084 for separating the runnable GUI artifact from the headless self-check, then 2084->2116 for one-click launch (app.compile.launching / .launched / .revealed and the rewritten app.compile.launch_hint). The catalog must list every user-visible string, so each new user-facing affordance necessarily grows it. Raised 2323->3253 for the regenerated catalog (terminal/form-designer strings). Raised 3789->3868 for the VS Code-style explorer slice (app.explorer.* header/toolbar/section vocabulary: title, new file/folder, refresh, collapse all, open editors, outline, timeline, and the empty/rename/delete/folder/delete state strings).; 2026-10-10 fake/offline keys removed, AI guidance + folder-project keys added (regenerated). Raised 3910->4102 for the  target-mode slice: free-form blocks canvas (zoom/pan/grid/hat-move/drag-drop vocabulary app.blocks.canvas.*, app.blocks.palette.search + drag_hint + group.custom), the AI assistant panel (app.ai.section.*, .target.*, .block_chip, .plan.title, .code.*), and app.topbar.project/device — 36 new keys x 2 catalogs. The app.blocks.canvas.snapshot key was deliberately NOT merged (no encode->bytes path from the renderer facade; see the target-mode spec)."
     }
   ]
 }

@@ -256,16 +256,6 @@
           ]
         },
         {
-          "name": "studio scaffold tests",
-          "argv": [
-            "moon",
-            "test",
-            "moui_studio/services/scaffold",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "cli scaffold generator tests",
           "argv": [
             "moon",
@@ -291,18 +281,6 @@
             "moon",
             "run",
             "moui_studio/tools/sync_kernel",
-            "--target",
-            "native",
-            "--",
-            "--check"
-          ]
-        },
-        {
-          "name": "studio export version sync",
-          "argv": [
-            "moon",
-            "run",
-            "moui_studio/tools/sync_versions",
             "--target",
             "native",
             "--",

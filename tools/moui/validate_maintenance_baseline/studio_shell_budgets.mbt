@@ -146,7 +146,11 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // 复用同一游标,中断回滚已写前缀)+30;同批清掉 5 个零调用者的遗留
       // 包装(other_language_label / center_width_of / tree_group_has_children
       // / block_category_first / clamp_bottom_height,-42) → 26,807 / 39 文件。
-      max_count: 26807,
+      // 调色板拖拽换算(2026-10-16):update_blocks 增视口→链换算
+      // (palette_pointer_to_chain / update_palette_drag_pointer /
+      // update_palette_drop_at / palette_expression_drop_at)+blocks_pane
+      // 的行手势相位映射;SHELLDBG 调试残留同步移除(负抵扣)→ 27,750。
+      max_count: 27750,
     },
     {
       kind: "studio shell files",
@@ -226,7 +230,16 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // TerminalScrolled(−1)→ 238;PreviewNavigate/PreviewReload 与 TabClose
       //(kill PTY)、SetPreviewDesignOpen(打开时派发 FormDesignOpen)有 Effect
       // 留壳;design_zoom 单标量独立切片净 0 变体,实测留壳。
-      max_count: 238,
+      // 目标模式切片(2026-10-15):InsertCustomFunction(自制积木
+      // 组插入函数调用)+ CopyAiCodeBlock(块级复制)两个新壳臂;同批
+      // CopyAiMessage 复用既有通道,无新增委托 → 240。
+      // 调色板拖拽换算(2026-10-16):PaletteDragPointer/PaletteDropAt 两个
+      // 新壳臂——调色板行持有指针捕获(runtime 语义),画布手势收不到
+      // 移动/松手;行只能上报**视口坐标**,视口→链的换算需要画布布局帧
+      // (组合根注入的锚点回调),只有 update_with_provider 的闭包拿得到,
+      // 所以这两臂必须留壳、不能并入 BlocksUiMsg(切片 update 无 Model)
+      // → 242。
+      max_count: 242,
     },
   ]
 }
