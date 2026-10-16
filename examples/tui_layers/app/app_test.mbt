@@ -435,7 +435,7 @@ test "wheel over one pane scrolls that pane only" {
 ///|
 test "a click on a bordered row selects it and a right click folds a folder" {
   let runtime = open_app(width=960.0, height=480.0)
-  assert_true(text_present(runtime, "Layers 8/8"))
+  assert_true(text_present(runtime, "Layers 16/16"))
   // The marker is part of the row label, so the visible "[x]" state is what the
   // click was checked against — not a second hit box the layout could hide.
   click_row(runtime, role=@core.SemanticsRole::ListItem, needle="Labels")
@@ -464,7 +464,7 @@ test "a click on the only-visible box and on the add buttons reaches the model" 
   let box = only_frame(runtime, role=@core.SemanticsRole::Checkbox)
   click_frame(runtime, box)
   assert_true(text_present(runtime, "only=1"))
-  assert_true(text_present(runtime, "rows=6"))
+  assert_true(text_present(runtime, "rows=14"))
   // The box filters by rule: the two off layers leave the rows, but their own
   // `visible` facts are untouched, so `hide=` must not move.
   assert_true(text_present(runtime, "hide=2"))
@@ -473,11 +473,11 @@ test "a click on the only-visible box and on the add buttons reaches the model" 
   // message, so `rows=` must come back to the unfiltered count.
   click_frame(runtime, box)
   assert_true(text_present(runtime, "only=0"))
-  assert_true(text_present(runtime, "rows=8"))
+  assert_true(text_present(runtime, "rows=16"))
   assert_true(text_present(runtime, "[ ] Fills"))
   // The two buttons share the filter line: a click there is a command, not text.
   click_row(runtime, role=@core.SemanticsRole::Button, needle="layer")
-  assert_true(text_present(runtime, "Layers 9/9"))
+  assert_true(text_present(runtime, "Layers 17/17"))
   click_row(runtime, role=@core.SemanticsRole::Button, needle="folder")
   assert_true(text_present(runtime, "Files 11"))
   runtime.destroy()
@@ -528,15 +528,15 @@ test "Space means fold in the tree and hide in the list" {
 test "Ctrl chords are the structural commands and no letter is claimed" {
   let runtime = open_app(width=960.0, height=480.0)
   press(runtime, key="n", control=true)
-  assert_true(text_present(runtime, "Layers 9/9"))
+  assert_true(text_present(runtime, "Layers 17/17"))
   press(runtime, key="a", control=true)
   assert_true(text_present(runtime, "Files 11"))
   press(runtime, key="x", control=true)
-  assert_true(text_present(runtime, "Layers 8/8"))
+  assert_true(text_present(runtime, "Layers 16/16"))
   // A bare letter must reach the field, not the model. Nothing claims `n`, so the
   // only way a plain press could change the list is by firing a command.
   press(runtime, key="n")
-  assert_true(text_present(runtime, "Layers 8/8"))
+  assert_true(text_present(runtime, "Layers 16/16"))
   runtime.destroy()
 }
 
@@ -573,7 +573,7 @@ test "shrinking the window keeps both panes and their row counts" {
   assert_true(frame_right(right.frame) <= 640.0)
   // The row count in the pane titles is the layout-independent fact: eight layers
   // are still eight layers in a half-width window, so nothing was dropped to fit.
-  assert_true(text_present(runtime, "Layers 8/8"))
+  assert_true(text_present(runtime, "Layers 16/16"))
   assert_true(text_present(runtime, "Files 10"))
   runtime.destroy()
 }

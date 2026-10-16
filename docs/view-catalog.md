@@ -142,7 +142,7 @@ five projection classes — `Region` (named container, drawn as a border box),
 | `image`, `web_view` | Rendered as an explicit `[image]` / `[web-view]` placeholder token plus a degrade diagnostic — never silence. |
 | `canvas`, `custom_layout`, `moui_richtext`, `moui_3d*` | The box still claims cells, but their paint is pixel commands (`draw-path`, `gradient-brush`, `draw-shadow`, `draw-shader-effect`, `push-filter`, `draw-image`, `platform-view`) that a cell grid cannot sample; each is dropped and named in the degrade log. |
 
-Evidence boundary: only `examples/tui_split` and the counter TUI are proven in a
+Evidence boundary: only `examples/tui_layers` and the counter TUI are proven in a
 real terminal (`sh scripts/tui-pty-smoke.sh`). The rows above describe the
 projection policy and its unit tests, not a per-control usability claim for the
 rest of the catalog. Capability statuses live in

@@ -26,20 +26,24 @@ priv struct TerminalState {
 }
 
 ///|
-/// 一个进程只有一个控制终端,所以宿主状态是单例(与 wechat 后端同形)。
-/// 再次 `run_*` 会把上一轮的还原跳掉,不支持。
-let state : TerminalState = {
-  driver: None,
-  session: None,
-  input: None,
-  decoder: None,
-  tty: None,
-  modes_active: false,
-  needs_render: false,
-  close_requested: false,
-  surface_generation: 0,
-  next_sequence: 1,
-  write_failure: None,
+/// 一次会话一份状态。进程仍只有一个控制终端、`run_*` 仍不支持并发重入
+/// (两个会话抢同一颗 stdin),但那是 TTY 的物理事实,不需要把状态做成
+/// 全局变量:每次 `run` 构造一份,生命周期与函数调用一致,嵌套宿主
+/// (例如宿主测试里驱动两次会话)才成为可能。
+fn TerminalState::new() -> TerminalState {
+  {
+    driver: None,
+    session: None,
+    input: None,
+    decoder: None,
+    tty: None,
+    modes_active: false,
+    needs_render: false,
+    close_requested: false,
+    surface_generation: 0,
+    next_sequence: 1,
+    write_failure: None,
+  }
 }
 
 ///|
@@ -219,6 +223,7 @@ fn run(
   idle_timeout_ms : Int,
   palette : @tui_renderer.TuiPalette,
 ) -> TerminalExit {
+  let state = TerminalState::new()
   state.tty = Some(tty)
   state.input = Some(input)
   state.decoder = Some(TerminalDecoder::new())

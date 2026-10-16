@@ -38,7 +38,7 @@ test "the pane cycle has three stops and wraps both ways" {
 ///|
 test "each keystroke of the filter reshapes the rows with no submit" {
   let model = @app.Model::new()
-  inspect(@app.visible_layers(model).length(), content="8")
+  inspect(@app.visible_layers(model).length(), content="16")
   let (typed_s, _) = model.update(@app.SetFilter("s"))
   inspect(@app.visible_layers(typed_s).length(), content="6")
   // Reaching the field is also what says "keys type, they do not command".
@@ -52,7 +52,7 @@ test "each keystroke of the filter reshapes the rows with no submit" {
   let (upper, _) = model.update(@app.SetFilter("STR"))
   inspect(rows(upper), content="Strokes,Streamlines")
   let (cleared, _) = typed_stro.update(@app.SetFilter(""))
-  inspect(@app.visible_layers(cleared).length(), content="8")
+  inspect(@app.visible_layers(cleared).length(), content="16")
 }
 
 ///|
@@ -91,9 +91,10 @@ test "hiding a layer moves it out of the rows and the marker follows" {
   assert_true(@app.layer_marker(model, "l-gone") == "[?]")
   // `only-visible` is the other switch: it hides by rule, not by flipping facts.
   let (only, _) = model.update(@app.SetOnlyVisible(true))
+  let only_rows = rows(only)
   inspect(
-    rows(only),
-    content="Background,Grid,Strokes,Streamlines,Labels,Shadows",
+    only_rows,
+    content="Background,Grid,Strokes,Streamlines,Labels,Shadows,Tint,Rimlight,Backdrop,Lattice,Kernel,Molten,Pebble,Vellum",
   )
 }
 
@@ -103,12 +104,12 @@ test "a head insert shifts every row and keeps the cursor on its layer" {
   let (moved, _) = model.update(@app.Move(1))
   inspect(@app.selected_layer_name(moved), content="Grid")
   let (inserted, _) = moved.update(@app.AddLayer)
-  inspect(inserted.layers.length(), content="9")
+  inspect(inserted.layers.length(), content="17")
   inspect(inserted.layers[0].name, content="Layer 0")
   inspect(inserted.layers[1].name, content="Background")
   inspect(@app.selected_layer_name(inserted), content="Grid")
   let (deleted, _) = inserted.update(@app.RemoveLayer)
-  inspect(deleted.layers.length(), content="8")
+  inspect(deleted.layers.length(), content="16")
   // The row that took the deleted slot keeps the cursor.
   inspect(@app.selected_layer_name(deleted), content="Strokes")
 }
@@ -118,12 +119,12 @@ test "folding a folder hides only its descendants" {
   let model = @app.Model::new()
   inspect(
     tree_rows(model),
-    content="src,src/core,src/core/program.mbt,src/core/view.mbt,src/runtime,src/runtime/runtime.mbt,examples,examples/tui_split,examples/tui_layers,moon.mod",
+    content="src,src/core,src/core/program.mbt,src/core/view.mbt,src/runtime,src/runtime/runtime.mbt,examples,examples/terminal,examples/tui_layers,moon.mod",
   )
   let (folded, _) = model.update(@app.ToggleNode("src"))
   inspect(
     tree_rows(folded),
-    content="src,examples,examples/tui_split,examples/tui_layers,moon.mod",
+    content="src,examples,examples/terminal,examples/tui_layers,moon.mod",
   )
   // Closing a leaf is a no-op on rows: the id expands nothing.
   let (leaf, _) = model.update(@app.ToggleNode("moon.mod"))

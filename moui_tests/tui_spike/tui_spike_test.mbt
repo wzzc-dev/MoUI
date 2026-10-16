@@ -136,15 +136,15 @@ test "chrome-only rows read as pure box drawing" {
 /// instrument that measured the rules. Its `?]` residue and punched-through
 /// row heads are the defects S2 fixed; `renderer_projection_test.mbt` and
 /// `moui_tui_renderer/projection_test.mbt` are what the shipped renderer does.
-test "the split demo projects as two panes side by side" {
+test "the layers demo projects as two panes side by side" {
   let report = @tui_spike.project(
-    @tui_split_app.program(),
+    @tui_layers_app.program(),
     960.0,
     480.0,
     8.0,
     16.0,
   )
-  println("\n===== tui_split projected to 120x30 cells =====")
+  println("\n===== tui_layers projected to 120x30 cells =====")
   for line in report.lines {
     println(line)
   }
@@ -152,19 +152,20 @@ test "the split demo projects as two panes side by side" {
   inspect(role_count(report, "List"), content="1")
   inspect(role_count(report, "Tree"), content="1")
   inspect(role_count(report, "ScrollView"), content="2")
-  assert_true(report.plain.contains("Entries 16"))
-  assert_true(report.plain.contains("Files 7"))
-  assert_true(report.plain.contains("Entry 0"))
+  assert_true(report.plain.contains("Layers 16/16"))
+  assert_true(report.plain.contains("Files 10"))
+  assert_true(report.plain.contains("Background"))
   assert_true(report.plain.contains("program.mbt"))
   // Columns, not just presence: if the split collapsed into one stacked column
   // both labels would start in the left margin.
-  let list_col = col_of(report, "Entry 0")
+  let list_col = col_of(report, "Background")
   let tree_col = col_of(report, "program.mbt")
   println("list_col=\{list_col.to_string()} tree_col=\{tree_col.to_string()}")
   assert_true(list_col < tree_col)
-  // 16 rows of 32px overflow a 480px window, so the projection has to report the
-  // rows it could not place. The spike only clips at the window edge, never at a
-  // pane's own box -- that is the per-pane clip `moui_tui_renderer` must add.
+  // Sixteen layers of 40px overflow a 480px window, so the projection has to
+  // report the rows it could not place. The spike only clips at the window
+  // edge, never at a pane's own box -- that is the per-pane clip
+  // `moui_tui_renderer` must add.
   assert_true(report.offscreen > 0)
 }
 

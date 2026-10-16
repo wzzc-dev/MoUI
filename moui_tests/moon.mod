@@ -18,7 +18,7 @@ import {
   "examples/counter@0.1.0",
   "examples/showcase@0.1.0",
   "examples/terminal@0.1.0",
-  "examples/tui_split@0.1.0",
+  "examples/tui_layers@0.1.0",
 }
 
 description = "Unpublished MoUI test harnesses, integration tests, benchmarks, and renderer smokes"

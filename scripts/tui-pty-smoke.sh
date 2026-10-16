@@ -1,6 +1,6 @@
 #!/bin/sh
-# S5/S7 终端真机冒烟:在真 PTY 会话里驱动 examples 的 terminal 入口,
-# 逐项验收焦点流转、列表选择、树折叠、瞬时按键、鼠标与 resize 重排。
+# S5/S7/H4/H5 终端真机冒烟:在真 PTY 会话里驱动 examples 的 terminal 入口,
+# 逐项验收焦点流转、列表选择、树折叠、瞬时按键、鼠标、resize 重排与主题接线。
 #
 # 为什么要脚本门而不是普通 moon test:被测对象是「终端上最终出现的那一屏」,
 # 断言靠回放 ANSI 字节流反解栅格,所以必须先有 native 可执行文件,再把它们的
@@ -12,20 +12,15 @@ set -eu
 REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$REPO_ROOT"
 
-BIN="$REPO_ROOT/_build/native/debug/build/examples/tui_split/terminal/terminal.exe"
 LAYERS_BIN="$REPO_ROOT/_build/native/debug/build/examples/tui_layers/terminal/terminal.exe"
 COUNTER_BIN="$REPO_ROOT/_build/native/debug/build/examples/counter/terminal/terminal.exe"
 LOG_DIR="$REPO_ROOT/artifacts/smoke/tui-pty-smoke"
 
-moon build examples/tui_split/terminal --target native
 moon build examples/tui_layers/terminal --target native
 moon build examples/counter/terminal --target native
-if [ ! -f "$BIN" ]; then
-  echo "TUI PTY smoke: built executable missing: $BIN" >&2
-  exit 1
-fi
-# S7 的八项合一 demo 是即时按键与 only-visible 那条门的载体。少了这个产物,
-# 对应用例会因为环境变量没设而整体跳过 —— 跳过在这里等于假绿,所以要停。
+# 八项合一 demo 是双栏交互、即时按键、only-visible 与主题接线这些门的载体。
+# 少了这个产物,对应用例会因为环境变量没设而整体跳过 —— 跳过在这里等于
+# 假绿,所以要停。
 if [ ! -f "$LAYERS_BIN" ]; then
   echo "TUI PTY smoke: built executable missing: $LAYERS_BIN" >&2
   exit 1
@@ -42,8 +37,6 @@ mkdir -p "$LOG_DIR"
 # 被测程序按 TERM 选 SGR 扩展;反解器只认 xterm 族转义,别继承一个陌生的值。
 TERM=xterm-256color
 export TERM
-MOUI_TUI_SMOKE_BIN="$BIN"
-export MOUI_TUI_SMOKE_BIN
 MOUI_TUI_LAYERS_BIN="$LAYERS_BIN"
 export MOUI_TUI_LAYERS_BIN
 MOUI_TUI_COUNTER_BIN="$COUNTER_BIN"

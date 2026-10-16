@@ -209,13 +209,6 @@ fn smoke_env(name : String) -> String? {
 }
 
 ///|
-/// 被测可执行文件路径。未设置时用例整体跳过:这道门要点名才跑
-/// (`scripts/tui-pty-smoke.sh` 一定设置它),普通 `moon test` 不该依赖构建产物。
-fn smoke_binary() -> String? {
-  smoke_env("MOUI_TUI_SMOKE_BIN")
-}
-
-///|
 /// counter 的 terminal 入口:整屏只有三个按钮和一行 `Count:`,
 /// 是「按钮标签画在哪一行」这件事最干净的载体 —— 双栏 demo 里标签都住在
 /// 条目内部,行号偏移会被子节点的定位吃掉,测不出量化本身。
@@ -224,9 +217,11 @@ fn counter_binary() -> String? {
 }
 
 ///|
-/// `examples/tui_layers` 的 terminal 入口:八条验收要求住在同一个 app 里。
-/// 即时按键(状态行的 `rows=` 随每一下按键下降)与 `only-visible` 这类
-/// 「模型字段可直接配」的交互只有它才有载体,`tui_split` 的静态列表证明不了。
+/// `examples/tui_layers` 的 terminal 入口:H5 之后它是唯一的双栏交互门,
+/// 八条验收要求住在同一个 app 里;即时按键(状态行 `rows=` 随每一下按键
+/// 下降)与 `only-visible` 这类「模型字段可直接配」的交互只有它有载体。
+/// 未设置对应环境变量时用例整体跳过:这道门要点名才跑
+/// (`scripts/tui-pty-smoke.sh` 一定设置它),普通 `moon test` 不该依赖构建产物。
 fn layers_binary() -> String? {
   smoke_env("MOUI_TUI_LAYERS_BIN")
 }
@@ -238,15 +233,6 @@ const COLS : Int = 100
 
 ///|
 const ROWS : Int = 30
-
-///|
-/// 起一个双栏 demo 会话;门没开时给 None,调用方直接跳过。
-async fn open_demo() -> Session? {
-  match smoke_binary() {
-    None => None
-    Some(path) => Some(Session::open(path, cols=COLS, rows=ROWS))
-  }
-}
 
 ///|
 /// 起一个 S7 八项合一 demo 会话;门没开时给 None,调用方直接跳过。

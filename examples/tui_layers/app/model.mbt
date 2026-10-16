@@ -107,12 +107,17 @@ pub let scroll_line : Double = 16.0
 pub let pane_spacing : Double = 8.0
 
 ///|
-/// Eight layers, not a taste choice: the filter proofs need a list longer than
-/// one keystroke can collapse to zero rows, and the scroll proof needs a list
-/// taller than its own viewport. The names are chosen so the typed needle walks
-/// the visible count in clearly separate steps — `s` leaves 6, `st` leaves 2
-/// (Strokes, Streamlines), `stro` leaves 1 — so each keystroke that reached the
-/// model is separately readable from the status line.
+/// Sixteen layers, not a taste choice: the filter proofs need a list longer
+/// than one keystroke can collapse to zero rows, and the scroll proof needs a
+/// list clearly taller than its own viewport (with sixteen entries the eight
+/// visible rows overflow by more than one row pitch, so the wheel travels
+/// several rows and the tail must be clipped, not folded onto the frame).
+/// The names are chosen so the typed needle walks the visible count in
+/// clearly separate steps — `s` leaves 6, `st` leaves 2 (Strokes,
+/// Streamlines), `stro` leaves 1 — so each keystroke that reached the model
+/// is separately readable from the status line. The eight additions all avoid
+/// the letter `s`, which keeps every filter-ladder needle exact as the list
+/// grows.
 pub fn Model::new() -> Model {
   let layers = [
     { id: "l-bg", name: "Background", visible: true, },
@@ -123,6 +128,14 @@ pub fn Model::new() -> Model {
     { id: "l-guide", name: "Guides", visible: false, },
     { id: "l-label", name: "Labels", visible: true, },
     { id: "l-shadow", name: "Shadows", visible: true, },
+    { id: "l-tint", name: "Tint", visible: true, },
+    { id: "l-rim", name: "Rimlight", visible: true, },
+    { id: "l-back", name: "Backdrop", visible: true, },
+    { id: "l-lattice", name: "Lattice", visible: true, },
+    { id: "l-kernel", name: "Kernel", visible: true, },
+    { id: "l-molten", name: "Molten", visible: true, },
+    { id: "l-pebble", name: "Pebble", visible: true, },
+    { id: "l-vellum", name: "Vellum", visible: true, },
   ]
   let tree = [
     node(id="src", label="src", children=[
@@ -135,7 +148,7 @@ pub fn Model::new() -> Model {
       ]),
     ]),
     node(id="examples", label="examples", children=[
-      node(id="examples/tui_split", label="tui_split"),
+      node(id="examples/terminal", label="terminal"),
       node(id="examples/tui_layers", label="tui_layers"),
     ]),
     node(id="moon.mod", label="moon.mod"),

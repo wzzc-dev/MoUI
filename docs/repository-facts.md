@@ -60,7 +60,6 @@ This file is generated from repository manifests and validator reports.
 | ./examples/momark |
 | ./examples/browser |
 | ./examples/terminal |
-| ./examples/tui_split |
 | ./examples/tui_layers |
 | ./moui_studio |
 | ./benchmarks/app_cached_layer |
@@ -122,7 +121,6 @@ This file is generated from repository manifests and validator reports.
 | MoMark | examples/momark | no |
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
-| TUI Split | examples/tui_split | no |
 | TUI Layers | examples/tui_layers | no |
 
 ## Platform Status

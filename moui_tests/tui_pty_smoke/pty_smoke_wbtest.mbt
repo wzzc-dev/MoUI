@@ -33,245 +33,6 @@ fn row_or_check(session : Session, needle : String) -> Int {
 }
 
 ///|
-async test "S5 startup projects the split grid with borders and clipped rows" {
-  match open_demo() {
-    None => ()
-    Some(session) => {
-      session.await_frame(s => s.has("MoUI TUI split") && s.rebuilds >= 1)
-      let screen = session.screen()
-      check(session, "startup: header", screen.has("MoUI TUI split"))
-      check(session, "startup: left pane title", screen.has("Entries 16"))
-      check(session, "startup: right pane title", screen.has("Files 7"))
-      check(session, "startup: box-drawing border", screen.has("╭"))
-      check(session, "startup: focus hint", screen.has("focus: list"))
-      check(session, "startup: first visible row", screen.has("Entry 0"))
-      // 裁剪是可见属性而不是内部事实:16 行 × 2 格高于视口,最后一行必须看不见。
-      check(
-        session,
-        "startup: viewport clips the tail row",
-        !screen.has("Entry 15"),
-      )
-      check(
-        session,
-        "startup: some cell carries a non-default attribute",
-        screen.styled_count(style => {
-          style.bold ||
-          style.dim ||
-          style.italic ||
-          style.underline ||
-          style.reverse ||
-          style.fg != "" ||
-          style.bg != ""
-        }) >
-        0,
-      )
-      check(
-        session,
-        "startup: first frame is one rebuild",
-        screen.rebuilds == 1,
-      )
-      println("tui pty smoke startup: \{screen.locates} locate(s)")
-      session.finish()
-    }
-  }
-}
-
-///|
-async test "S5 Tab and Shift-Tab move focus across panes with a visible state" {
-  match open_demo() {
-    None => ()
-    Some(session) => {
-      session.await_frame(s => s.has("focus: list"))
-      session.send("\t")
-      session.await_frame(s => s.has("focus: tree"))
-      let moved = session.screen()
-      check(session, "tab: focus hint follows", moved.has("focus: tree"))
-      check(session, "tab: right pane gains brackets", moved.has("[ Files 7 ]"))
-      check(
-        session,
-        "tab: left pane loses brackets",
-        !moved.has("[ Entries 16 ]"),
-      )
-      session.send("\u{1b}[Z")
-      session.await_frame(s => s.has("focus: list"))
-      let back = session.screen()
-      check(session, "shift-tab: focus hint returns", back.has("focus: list"))
-      check(
-        session,
-        "shift-tab: left pane active again",
-        back.has("[ Entries 16 ]"),
-      )
-      check(
-        session,
-        "shift-tab: right pane loses brackets",
-        !back.has("[ Files 7 ]"),
-      )
-      session.finish()
-    }
-  }
-}
-
-///|
-async test "S5 arrow keys move the selection inside the bordered list" {
-  match open_demo() {
-    None => ()
-    Some(session) => {
-      session.await_frame(s => s.has("sel=Entry 0"))
-      check(
-        session,
-        "arrows: starts on the first entry",
-        session.screen().has("sel=Entry 0"),
-      )
-      session.send("\u{1b}[B\u{1b}[B")
-      session.await_frame(s => s.has("sel=Entry 2"))
-      check(
-        session,
-        "arrows: two downs land on Entry 2",
-        session.screen().has("sel=Entry 2"),
-      )
-      session.send("\u{1b}[A")
-      session.await_frame(s => s.has("sel=Entry 1"))
-      check(
-        session,
-        "arrows: one up steps back",
-        session.screen().has("sel=Entry 1"),
-      )
-      // 方向键属于当前面板:换到树面板之后,同样的键必须改的是节点而不是条目。
-      session.send("\t")
-      session.send("\u{1b}[B")
-      session.await_frame(s => s.has("focus: tree"))
-      let tree = session.screen()
-      check(session, "arrows: focus left the list", !tree.has("focus: list"))
-      check(
-        session,
-        "arrows: selection stayed on Entry 1",
-        tree.has("sel=Entry 1"),
-      )
-      check(session, "arrows: node moved instead", !tree.has("node=src"))
-      session.finish()
-    }
-  }
-}
-
-///|
-async test "S5 a bare keypress acts without submission" {
-  match open_demo() {
-    None => ()
-    Some(session) => {
-      session.await_frame(s => s.has("Entries 16"))
-      check(
-        session,
-        "instant: starts at 16 entries",
-        session.screen().has("Entries 16"),
-      )
-      // 只发一个 `n`,不带 CR/LF,不带任何提交键。
-      session.send("n")
-      session.await_frame(s => s.has("Entries 17"))
-      let inserted = session.screen()
-      check(
-        session,
-        "instant: insert applied on keydown",
-        inserted.has("Entries 17"),
-      )
-      check(session, "instant: the new row is visible", inserted.has("New 0"))
-      // 序号是两条插入命令共用的计数器:`n` 已经用掉 0,所以 `a` 的节点叫
-      // `new-1`。断言跟着实际序号写,而不是假设每个键位各自从 0 开始。
-      session.send("a")
-      session.await_frame(s => s.has("Files 8"))
-      let added = session.screen()
-      check(
-        session,
-        "instant: add node applied on keydown",
-        added.has("Files 8"),
-      )
-      check(session, "instant: the new node is visible", added.has("new-1"))
-      session.finish()
-    }
-  }
-}
-
-///|
-async test "S5 space folds and unfolds the focused tree node" {
-  match open_demo() {
-    None => ()
-    Some(session) => {
-      session.await_frame(s => s.has("program.mbt"))
-      let opened = session.screen()
-      // 折叠前整个子树都在:program.mbt 必须看得见。
-      check(session, "fold: subtree visible before", opened.has("program.mbt"))
-      check(
-        session,
-        "fold: count starts at 7",
-        opened.int_or_fail("Files") == 7,
-      )
-      session.send("\t")
-      session.send(" ")
-      session.await_frame(s => s.has("Files 2"))
-      let folded = session.screen()
-      check(session, "fold: subtree hidden", !folded.has("program.mbt"))
-      check(session, "fold: node count drops", folded.int_or_fail("Files") == 2)
-      check(session, "fold: the folder itself stays", folded.has("src"))
-      session.send(" ")
-      session.await_frame(s => s.has("program.mbt"))
-      let again = session.screen()
-      check(session, "unfold: subtree back", again.has("program.mbt"))
-      check(session, "unfold: node count back", again.int_or_fail("Files") == 7)
-      session.finish()
-    }
-  }
-}
-
-///|
-async test "S5 mouse click selects and wheel scrolls one pane only" {
-  match open_demo() {
-    None => ()
-    Some(session) => {
-      session.await_frame(s => s.has("sel=Entry 0"))
-      let before = session.screen()
-      check(session, "click: initial selection", before.has("sel=Entry 0"))
-      let row = row_or_check(session, "Entry 5")
-      // SGR(1006) 坐标是 1 基;第 5 列落在左栏列表框内。
-      session.send("\u{1b}[<0;5;\{(row + 1)}M\u{1b}[<0;5;\{(row + 1)}m")
-      session.await_frame(s => s.has("sel=Entry 5"))
-      let clicked = session.screen()
-      check(session, "click: press selects the row", clicked.has("sel=Entry 5"))
-      check(
-        session,
-        "click: pane focus follows the click",
-        clicked.has("focus: list"),
-      )
-
-      // 针尖必须带 `=`:表头那行的 `focus: list` 在栅格里更靠上,
-      // 只写 `list` 会让 int_after 去表头里找一个不存在的数字。
-      let list_before = clicked.int_or_fail("list=")
-      let tree_before = clicked.int_or_fail("tree=")
-      // 滚轮向下:一个格高(scroll_line)对应一格偏移。
-      session.send("\u{1b}[<65;5;\{(row + 1)}M")
-      // needle 钉成「list= 后跟目标读数」:rebuild 计数和滚动偏移都是回放事实。
-      session.await_frame(s => s.has("list=\{(list_before + 1)} "))
-      let scrolled = session.screen()
-      check(
-        session,
-        "wheel: the hovered pane scrolled",
-        scrolled.int_or_fail("list=") == list_before + 1,
-      )
-      check(
-        session,
-        "wheel: the other pane did not",
-        scrolled.int_or_fail("tree=") == tree_before,
-      )
-      // 滚动只换视口,不换选择:选中项必须还跟着它自己那一行。
-      check(
-        session,
-        "wheel: selection survived the scroll",
-        scrolled.has("sel=Entry 5"),
-      )
-      session.finish()
-    }
-  }
-}
-
-///|
 /// 标记落在第几格(0 基)。鼠标坐标必须按格给:猜列号会点到空白,
 /// 于是「什么都没发生」也能被读成通过。
 fn col_or_check(
@@ -419,61 +180,6 @@ async test "S5 the row a button label is drawn on is the row that fires" {
 }
 
 ///|
-async test "S5 resize reflows with a full rebuild and leaves no ghosts" {
-  match open_demo() {
-    None => ()
-    Some(session) => {
-      session.await_frame(s => s.has("focus: list"))
-      let before = session.screen()
-      check(session, "resize: baseline focus hint", before.has("focus: list"))
-      session.resize_to(60, 20)
-      // rebuild 计数在回放里单调递增,是 resize 全量重建的确定性锚点。
-      session.await_frame(s => s.rebuilds >= before.rebuilds + 1)
-      let small = session.screen()
-      check(
-        session,
-        "resize: shrink rebuilt the screen",
-        small.rebuilds == before.rebuilds + 1,
-      )
-      check(
-        session,
-        "resize: still laid out at the new size",
-        small.has("MoUI TUI split"),
-      )
-      check(session, "resize: panes still side by side", small.has("Files 7"))
-      let mut clean = true
-      for r in 20..<ROWS {
-        if !small.row_untouched(r) {
-          clean = false
-        }
-      }
-      // 缩小之后写超出新网格的行,就是残影的直接来源。
-      check(session, "resize: nothing painted outside the new grid", clean)
-      session.resize_to(COLS, ROWS)
-      session.await_frame(s => s.rebuilds >= small.rebuilds + 1)
-      let full = session.screen()
-      check(
-        session,
-        "resize: grow rebuilt again",
-        full.rebuilds == small.rebuilds + 1,
-      )
-      // 整屏脏必须逐行重画:每一行都被定位写过,才没有从没被覆盖的旧格。
-      check(
-        session,
-        "resize: every row repainted",
-        full.painted_count() == ROWS,
-      )
-      check(
-        session,
-        "resize: selection survived the reflow",
-        full.has("sel=Entry 0"),
-      )
-      session.finish()
-    }
-  }
-}
-
-///|
 /// S7 八项合一 demo 的门,管第 6–8 项:瞬时按键、鼠标点击/滚轮、resize 重排。
 /// 前五项由上面那批 `tui_split` 用例覆盖;这里补的三件事只有这个 app 有载体 ——
 /// 列表能被文本框逐键过滤、两栏各自滚动、缩到极窄时两栏都得活着。
@@ -487,8 +193,17 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       check(
         session,
         "layers: startup status",
-        start.has("sel=Background") && start.has("rows=8 hide=2 only=0"),
+        start.has("sel=Background") && start.has("rows=16 hide=2 only=0"),
       )
+      // H5 移植的裁剪判据(原 tui_split startup gate):十六行列表高于视口,
+      // 尾行必须不可见 —— 滚到才出现,不是夹到边框上。
+      check(
+        session,
+        "layers: viewport clips the tail rows at startup",
+        !start.has("Vellum") && !start.has("Pebble"),
+      )
+      // H5 移植(原 tui_split startup gate):首帧必须恰好一次全量重建。
+      check(session, "layers: first frame is one rebuild", start.rebuilds == 1)
       // 看得见的那一格就是命中格:`[x]` 画在列表行里,投影按中心量化,
       // 所以点标记那一格必然落在这条行的命中框内,不用按像素猜。
       let labels_row = row_or_check(session, "] Labels")
@@ -561,11 +276,11 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       )
       // 退格是框里还能用的编辑键(方向键被面板占着):五下把 `stro ` 清空。
       session.send("\u{7f}\u{7f}\u{7f}\u{7f}\u{7f}")
-      session.await_frame(s => s.has("filter=- rows=8"))
+      session.await_frame(s => s.has("filter=- rows=16"))
       check(
         session,
         "backspace edits the field",
-        session.screen().has("filter=- rows=8"),
+        session.screen().has("filter=- rows=16"),
       )
       // 焦点进框之后方向键仍归列表:实测选中从 Labels 走到 Shadows,插入点不动。
       // 这是 `program_commands` 那条「按面板而不是按角色路由」的取舍,不是漏掉的键。
@@ -577,27 +292,32 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
         session.screen().has("sel=Shadows"),
       )
       // 滚轮按悬停的那一栏走,和键盘焦点无关:焦点还在文本框,
-      // 滚列表栏只动 `row=`,`file=` 一格都不该碰。
+      // 滚列表栏只动 `row=`,`file=` 一格都不该碰。十六行列表超出视口至少
+      // 三行,所以滚轮证据是三格行程 + 三格回程,单格测试的「只有一格可滚」
+      // 上限随 H5 数据扩充一起撤销。
       let stream_row = row_or_check(session, "] Streamlines")
       let stream_col = col_or_check(session, session.screen(), stream_row, '[')
       let before_scroll = session.screen()
       let row_before = before_scroll.int_or_fail("row=")
       let file_before = before_scroll.int_or_fail("file=")
-      session.send("\u{1b}[<65;\{(stream_col + 1)};\{(stream_row + 1)}M")
-      session.await_frame(s => s.has("row=\{(row_before + 1)} "))
+      session.send(
+        "\u{1b}[<65;\{(stream_col + 1)};\{(stream_row + 1)}M\u{1b}[<65;\{(stream_col + 1)};\{(stream_row + 1)}M\u{1b}[<65;\{(stream_col + 1)};\{(stream_row + 1)}M",
+      )
+      session.await_frame(s => s.has("row=\{(row_before + 3)} "))
       let scrolled = session.screen()
       check(
         session,
-        "wheel: the hovered pane scrolled",
-        scrolled.int_or_fail("row=") == row_before + 1,
+        "wheel: the hovered pane scrolled three rows",
+        scrolled.int_or_fail("row=") == row_before + 3,
       )
       check(
         session,
         "wheel: the other pane did not",
         scrolled.int_or_fail("file=") == file_before,
       )
-      // 滚回来:上限是内容超出视口的那一格,所以这里只有一格可滚。
-      session.send("\u{1b}[<64;\{(stream_col + 1)};\{(stream_row + 1)}M")
+      session.send(
+        "\u{1b}[<64;\{(stream_col + 1)};\{(stream_row + 1)}M\u{1b}[<64;\{(stream_col + 1)};\{(stream_row + 1)}M\u{1b}[<64;\{(stream_col + 1)};\{(stream_row + 1)}M",
+      )
       session.await_frame(s => s.has("row=\{(row_before)} "))
       check(
         session,
@@ -617,7 +337,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       check(
         session,
         "resize 72x14: both pane titles survive",
-        wide.has("Layers 8/8") && wide.has("Files 10"),
+        wide.has("Layers 16/16") && wide.has("Files 10"),
       )
       check(
         session,
@@ -640,7 +360,7 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
       check(
         session,
         "resize 43x11: both pane titles survive",
-        tiny.has("Layers 8/8") && tiny.has("Files 10"),
+        tiny.has("Layers 16/16") && tiny.has("Files 10"),
       )
       check(
         session,
@@ -1084,6 +804,56 @@ async test "H4 a themed launch repaints cells with theme colors" {
         session,
         "themed: the default button blue is gone",
         screen.styled_count(style => style.fg == "idx:4") == 0,
+      )
+      session.finish()
+    }
+  }
+}
+
+///|
+/// H5 自 tui_split 移植的焦点遍历判据:Tab/Shift-Tab 跨面板移动,屏幕上
+/// 能看出焦点在哪 —— 活动面板的标题带方括号,失去焦点的标题方括号消失。
+/// layers 有三个面板(列表/文件树/过滤器),遍历方向与 tui_split 同构。
+async test "H5 Tab and Shift-Tab cycle the panes with a visible title state" {
+  match open_layers() {
+    None => ()
+    Some(session) => {
+      session.await_frame(s => s.has("[ Layers 16/16 ]"))
+      let start = session.screen()
+      check(
+        session,
+        "tab: startup marks the layers pane",
+        start.has("[ Layers 16/16 ]") && !start.has("[ Files 10 ]"),
+      )
+      session.send("\t")
+      session.await_frame(s => s.has("[ Files 10 ]"))
+      let moved = session.screen()
+      check(session, "tab: the files pane is marked", moved.has("[ Files 10 ]"))
+      check(
+        session,
+        "tab: the layers pane loses brackets",
+        !moved.has("[ Layers 16/16 ]"),
+      )
+      session.send("\u{1b}[Z")
+      session.await_frame(s => s.has("[ Layers 16/16 ]"))
+      let back = session.screen()
+      check(
+        session,
+        "shift-tab: focus returns to the layers pane",
+        back.has("[ Layers 16/16 ]") && !back.has("[ Files 10 ]"),
+      )
+      // H5 移植(原 tui_split 的「方向键属于当前面板」判据):换到文件树面板
+      // 之后,同一枚 ArrowDown 改的是 node= 而不是 sel=。
+      session.send("\t")
+      session.await_frame(s => s.has("[ Files 10 ]"))
+      session.send("\u{1b}[B")
+      session.await_frame(s => s.has("node=core"))
+      let stepped = session.screen()
+      check(session, "arrows: the tree node moved", stepped.has("node=core"))
+      check(
+        session,
+        "arrows: the list selection stayed put",
+        stepped.has("sel=Background"),
       )
       session.finish()
     }

@@ -481,7 +481,7 @@ as the `moui-agent-mcp-protocol-smoke` artifact.
 ### Terminal PTY interaction smoke
 
 `smoke/gates.json` carries `tui.pty-interaction-smoke` (nightly tier,
-`mode: run`): it spawns the `examples/tui_split/terminal`, `examples/counter/terminal`
+`mode: run`): it spawns the `examples/counter/terminal`
 and `examples/tui_layers/terminal` native executables inside a real POSIX PTY,
 drives keys and SGR mouse sequences through the slave side, and decodes the ANSI
 byte stream back into a cell grid (100x30 baseline; some cases start narrower or

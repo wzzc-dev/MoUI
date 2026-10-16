@@ -79,6 +79,20 @@ a host-supplied sink, so quantization, per-cell ownership and in-box wrapping
 stay inside that package and `moui/core` / `moui/runtime` know nothing about
 terminals. Pixel commands handed to it are not approximated; each one is
 recorded as a degrade diagnostic.
+
+**Non-windowed output paths** is the category name for hosts that run a MoUI
+program on a surface that is neither a window nor a pixel device. Two members
+exist today: the terminal path (`moui_terminal_host` + `moui_tui_renderer`,
+whose output is an ANSI byte stream through a composition-root sink) and the
+agent path (`moui_agent`, a `HostRuntimeDriver` pump with no present target at
+all). Both share the shape — drive the runtime through `HostRuntimeDriver`,
+declare the output composition explicitly, and stay outside the canonical
+platform matrix, which describes windowed hosts. A future headless snapshot
+or semantic-dump renderer belongs to this category, not to the platform
+matrix: classifying it here is what keeps the 14-route governance contract
+intact (the Linux RISC-V64 and ADR 0021 precedents vary or extend routes, this
+category is orthogonal to them). The category changes nothing else: renderer
+selection stays provider negotiation, and release-closure rules are unchanged.
 Extension cost (2026-08-03 audit): `moui/core` has ~210 enum variants of
 which ~2 are platform-related (~1%); adding a renderer costs one
 `RendererBackendKind` diagnostic variant plus a provider package — no core

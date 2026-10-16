@@ -51,7 +51,6 @@ members = [
   "./examples/momark",
   "./examples/browser",
   "./examples/terminal",
-  "./examples/tui_split",
   "./examples/tui_layers",
   "./moui_studio",
   "./benchmarks/app_cached_layer",
