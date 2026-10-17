@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 世界 · MoUI</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #f6f7f9;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        touch-action: none;
+      }
+      #canvas-host {
+        width: 100vw;
+        height: 100vh;
+      }
+      #diagnostics {
+        display: none;
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        width: min(520px, calc(100vw - 24px));
+        max-height: 40vh;
+        overflow: auto;
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        font: 12px/1.45 "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+      }
+      body.debug #diagnostics,
+      body.failed #diagnostics { display: block; }
+      #status { font-weight: 600; margin-bottom: 8px; }
+      #log { margin: 0; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-host" aria-label="AI 世界画布"></div>
+    <aside id="diagnostics" aria-live="polite">
+      <div id="status">Loading wasm-gc...</div>
+      <pre id="log"></pre>
+    </aside>
+    <script type="module">
+      import { bootMouiWasmGcApp } from "../../../moui_web_renderer/runtime.js";
+
+      const status = document.querySelector("#status");
+      const log = document.querySelector("#log");
+      let line = "";
+      const append = message => {
+        log.textContent += `${message}\n`;
+        log.scrollTop = log.scrollHeight;
+      };
+      const setStatus = message => {
+        status.textContent = message;
+        append(message);
+      };
+
+      // ------------------------------------------------------------------
+      // ai_world_host: provider fetch + folder database, owned by the page.
+      //
+      // Strings cross into wasm only as ids (the same handshake protocol the
+      // web backend's clipboard uses), fetch completions come back through the
+      // exported `ai_llm_complete`, and filesystem operations through
+      // `ai_fs_complete`. The library is a real directory when the File System
+      // Access API is available; otherwise an equivalent in-page store keeps
+      // the same folder shape, so the app cannot tell the difference.
+      // ------------------------------------------------------------------
+
+      let booted = null;
+      // Completions may land while boot is still resolving (the app kicks a
+      // library sync from its init effect, which runs inside _start). Queue
+      // them and replay once the instance is in hand.
+      const bootQueue = [];
+      function callExport(name, ...args) {
+        if (booted) {
+          try {
+            booted.exports?.[name]?.(...args);
+          } catch (error) {
+            setStatus(`export ${name} failed: ${error?.message ?? error}`);
+          }
+        } else {
+          bootQueue.push([name, args]);
+        }
+      }
+
+      const stringStore = new Map();
+      const stringBuilders = new Map();
+      const stringReaders = new Map();
+      let nextStringId = 1;
+      let nextHandle = 1;
+
+      function beginCreateString() {
+        const handle = nextHandle++;
+        stringBuilders.set(handle, []);
+        return handle;
+      }
+
+      function appendStringChar(handle, code) {
+        stringBuilders.get(handle)?.push(code);
+      }
+
+      function finishCreateString(handle) {
+        const codes = stringBuilders.get(handle) ?? [];
+        stringBuilders.delete(handle);
+        const text = codes
+          .map(code => String.fromCodePoint(code))
+          .join("");
+        const id = nextStringId++;
+        stringStore.set(id, text);
+        return id;
+      }
+
+      function takeString(id) {
+        const text = stringStore.get(id) ?? "";
+        stringStore.delete(id);
+        return text;
+      }
+
+      function peekStringId(id) {
+        const text = stringStore.get(id) ?? "";
+        const handle = nextHandle++;
+        stringReaders.set(handle, { chars: [...text], pos: 0 });
+        return handle;
+      }
+
+      function readStringChar(handle) {
+        const reader = stringReaders.get(handle);
+        if (!reader || reader.pos >= reader.chars.length) return -1;
+        const code = reader.chars[reader.pos].codePointAt(0);
+        reader.pos += 1;
+        return code;
+      }
+
+      function finishReadString(handle) {
+        stringReaders.delete(handle);
+      }
+
+      // ---- provider ----------------------------------------------------
+
+      async function llmSubmit(requestId, endpointId, keyId, bodyId) {
+        const endpoint = takeString(endpointId);
+        const apiKey = takeString(keyId);
+        const body = takeString(bodyId);
+        const url = endpoint.includes("/chat/completions")
+          ? endpoint
+          : `${endpoint.replace(/\/+$/, "")}/chat/completions`;
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body,
+          });
+          const text = await response.text();
+          const textId = nextStringId++;
+          stringStore.set(textId, text);
+          const ok = response.ok;
+          callExport("ai_llm_complete", requestId, ok, textId);
+          stringStore.delete(textId);
+        } catch (error) {
+          setStatus(`Provider request failed: ${error}`);
+          callExport("ai_llm_complete", requestId, false, 0);
+        }
+      }
+
+      // ---- folder database ----------------------------------------------
+
+      const LIBRARY_KEY = "ai_world_library_v1";
+
+      function virtualDb() {
+        try {
+          return JSON.parse(localStorage.getItem(LIBRARY_KEY) || "{}") || {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveVirtualDb(db) {
+        try {
+          localStorage.setItem(LIBRARY_KEY, JSON.stringify(db));
+        } catch {
+          /* storage unavailable: the world lives in memory only */
+        }
+      }
+
+      let rootHandle = null;
+
+      // Storage mode after the last pick, surfaced in the diagnostics line:
+      // "folder" = a real picked directory, "virtual" = the in-page library.
+      // Virtual is the fallback for browsers without the File System Access
+      // API (Safari) and for insecure origins — `showDirectoryPicker` is
+      // simply absent there, so the player can never grant a folder.
+      let libraryMode = "virtual";
+
+      function noteStorage(message) {
+        const where = rootHandle ? "真实文件夹" : "页面内等价库";
+        setStatus(`世界库：${where}` + (message ? ` — ${message}` : ""));
+        append(message ?? `已使用${where}作为世界库。`);
+      }
+
+      async function ensureReadWrite(handle) {
+        if (handle.queryPermission) {
+          const state = await handle.queryPermission({ mode: "readwrite" });
+          if (state !== "granted" && handle.requestPermission) {
+            await handle.requestPermission({ mode: "readwrite" });
+          }
+        }
+      }
+
+      async function listWorldNames() {
+        if (rootHandle) {
+          const names = [];
+          for await (const [name, entry] of rootHandle.entries()) {
+            if (entry.kind === "directory") names.push(name);
+          }
+          return names.sort();
+        }
+        return Object.keys(virtualDb()).sort();
+      }
+
+      async function seedVirtualLibrary() {
+        const db = virtualDb();
+        if (Object.keys(db).length > 0) return;
+        const example = "# 雨夜酒馆\n\n夜雨敲窗，炉火正暖。这是一座样本世界——你可以新建自己的世界，或让AI生成。\n";
+        db["雨夜酒馆"] = {
+          "world.md": example,
+          "characters/林掌柜.md":
+            "# 林掌柜\n\n## 人设\n\n酒馆掌柜，话不多但句句在理，见过的旅人比这条街的青石板还多。\n\n## 说话方式\n\n简短、沉稳，偶尔带一点旧江湖的念白\n\n## 目标\n\n把这壶酒卖给客人，顺便听点新鲜事\n\n## 秘密\n\n后堂埋着一坛三十年的女儿红\n\n## 位置\n\nx=320 y=210\n",
+          "world_book.md":
+            "# 世界书\n\n- 酒 | 花雕: 后堂埋着一坛三十年的女儿红，只有极熟的客人喝得到。\n- 雨夜: 雨大的时候，官道上不会有旅人——来的都是有事的人。\n",
+        };
+        saveVirtualDb(db);
+      }
+
+      async function pickRoot() {
+        if (!window.showDirectoryPicker) {
+          // Safari (and insecure origins) never expose the picker: fall back
+          // to the in-page library and say so, instead of failing silently
+          // and looking like a dead button.
+          libraryMode = "virtual";
+          rootHandle = null;
+          await seedVirtualLibrary();
+          noteStorage(
+            "此浏览器不支持目录句柄（如 Safari）；用 Chrome/Edge 打开本页可授权真实文件夹。",
+          );
+          return { names: await listWorldNames() };
+        }
+        try {
+          const handle = await window.showDirectoryPicker({
+            mode: "readwrite",
+            id: "ai-world-library",
+          });
+          rootHandle = handle;
+          libraryMode = "folder";
+          await ensureReadWrite(handle);
+          noteStorage(null);
+          return { names: await listWorldNames() };
+        } catch {
+          // Cancelled or denied: KEEP the previously picked folder if any —
+          // silently demoting to the in-page library would make the player's
+          // saved worlds disappear at the next list.
+          noteStorage(rootHandle ? null : "未选择文件夹，使用页面内等价库。");
+          return { names: await listWorldNames() };
+        }
+      }
+
+      async function readWorld(folder) {
+        const files = [];
+        if (rootHandle) {
+          const dir = await rootHandle.getDirectoryHandle(folder);
+          for await (const [name, entry] of dir.entries()) {
+            if (entry.kind === "file" && name.endsWith(".md")) {
+              files.push([name, await (await entry.getFile()).text()]);
+            } else if (entry.kind === "directory") {
+              for await (const [subName, subEntry] of entry.entries()) {
+                if (subEntry.kind === "file" && subName.endsWith(".md")) {
+                  files.push([
+                    `${name}/${subName}`,
+                    await (await subEntry.getFile()).text(),
+                  ]);
+                }
+              }
+            }
+          }
+        } else {
+          const folderMap = virtualDb()[folder] ?? {};
+          for (const [path, content] of Object.entries(folderMap)) {
+            files.push([path, content]);
+          }
+        }
+        return { files };
+      }
+
+      async function writeWorld(folder, files) {
+        if (rootHandle) {
+          const dir = await rootHandle.getDirectoryHandle(folder, {
+            create: true,
+          });
+          for (const [path, content] of files) {
+            const cut = path.lastIndexOf("/");
+            const fileName = cut >= 0 ? path.slice(cut + 1) : path;
+            const target = cut >= 0
+              ? await dir.getDirectoryHandle(path.slice(0, cut), {
+                  create: true,
+                })
+              : dir;
+            const file = await target.getFileHandle(fileName, {
+              create: true,
+            });
+            const writable = await file.createWritable();
+            await writable.write(content);
+            await writable.close();
+          }
+        } else {
+          const db = virtualDb();
+          const folderMap = db[folder] ?? (db[folder] = {});
+          for (const [path, content] of files) {
+            folderMap[path] = content;
+          }
+          saveVirtualDb(db);
+        }
+        return {};
+      }
+
+      const CONFIG_KEY = "ai_world_config_v1";
+      const CONFIG_FILE = "config.json";
+
+      async function readConfig() {
+        if (rootHandle) {
+          try {
+            const file = await rootHandle.getFileHandle(CONFIG_FILE);
+            return { content: await (await file.getFile()).text() };
+          } catch {
+            // Missing file = first run: empty content, not an error.
+            return { content: "" };
+          }
+        }
+        return { content: localStorage.getItem(CONFIG_KEY) ?? "" };
+      }
+
+      async function writeConfig(content) {
+        if (rootHandle) {
+          const file = await rootHandle.getFileHandle(CONFIG_FILE, {
+            create: true,
+          });
+          const writable = await file.createWritable();
+          await writable.write(content);
+          await writable.close();
+        } else {
+          try {
+            localStorage.setItem(CONFIG_KEY, content);
+          } catch { /* storage unavailable: settings stay in memory */ }
+        }
+        return {};
+      }
+
+      async function runFs(requestId, dirName, operation) {
+        try {
+          const payload = await operation();
+          const textId = finishCreateStringFor(JSON.stringify(payload));
+          const ok = true;
+          callExport("ai_fs_complete", requestId, ok, textId);
+          stringStore.delete(textId);
+        } catch (error) {
+          setStatus(`世界库操作失败（${dirName}）: ${error}`);
+          callExport("ai_fs_complete", requestId, false, 0);
+        }
+      }
+
+      function finishCreateStringFor(text) {
+        const handle = beginCreateString();
+        for (const ch of text) {
+          appendStringChar(handle, ch.codePointAt(0));
+        }
+        return finishCreateString(handle);
+      }
+
+      const aiWorldHost = {
+        begin_create_string: beginCreateString,
+        string_append_char: appendStringChar,
+        finish_create_string: finishCreateString,
+        begin_read_string: id => peekStringId(id),
+        string_read_char: readStringChar,
+        finish_read_string: finishReadString,
+        llm_submit: (requestId, endpointId, keyId, bodyId) => {
+          llmSubmit(requestId, endpointId, keyId, bodyId);
+        },
+        fs_pick: requestId => {
+          runFs(requestId, "选择世界库", pickRoot);
+        },
+        fs_list: requestId => {
+          runFs(requestId, "读取世界库", async () => ({
+            names: await listWorldNames(),
+          }));
+        },
+        fs_read: (requestId, folderId) => {
+          const folder = takeString(folderId);
+          runFs(requestId, folder, () => readWorld(folder));
+        },
+        fs_write: (requestId, folderId, manifestId) => {
+          const folder = takeString(folderId);
+          let files = [];
+          try {
+            const manifest = JSON.parse(takeString(manifestId));
+            files = manifest.files ?? [];
+          } catch {
+            files = [];
+          }
+          runFs(requestId, folder, () => writeWorld(folder, files));
+        },
+        fs_config_read: requestId => {
+          runFs(requestId, "读取设置", readConfig);
+        },
+        fs_config_write: (requestId, contentId) => {
+          const content = takeString(contentId);
+          runFs(requestId, "保存设置", () => writeConfig(content));
+        },
+      };
+
+      if (new URLSearchParams(window.location.search).get("debug") === "1") {
+        document.body.classList.add("debug");
+      }
+      window.__ai = { host: aiWorldHost, exports: () => booted?.exports, calls: [], ops: [], log: [] };
+
+      const pageParams = new URLSearchParams(window.location.search);
+      bootMouiWasmGcApp({
+        // The example is a workspace member: `moon build` writes to the
+        // repo-root `_build`, three levels up from this page. `?v=<n>` on the
+        // page URL feeds `?bv=` here, busting the browser cache on redeploy.
+        wasmUrl: new URL(
+          `../../../_build/wasm-gc/debug/build/examples/ai_world/web_wasm/web_wasm.wasm?bv=${pageParams.get("v") ?? "0"}`,
+          import.meta.url,
+        ),
+        canvasHost: "#canvas-host",
+        webgpu: {
+          // `?renderer=2d` forces the Canvas2D renderer (debug/automation aid:
+          // its canvas can be read back programmatically).
+          forceUnavailable: pageParams.get("renderer") === "2d",
+        },
+        onStatus: setStatus,
+        imports: { ai_world_host: aiWorldHost },
+        onPrint(ch) {
+          if (ch === "\n") {
+            append(line);
+            line = "";
+          } else {
+            line += ch;
+          }
+        },
+      }).then(instance => {
+        booted = instance;
+        for (const [name, args] of bootQueue.splice(0)) {
+          callExport(name, ...args);
+        }
+        status.textContent = "Running";
+        append("MoonBit wasm-gc started.");
+      }).catch(error => {
+        document.body.classList.add("failed");
+        status.textContent = "Failed";
+        append(error.stack || String(error));
+        console.error(error);
+      });
+    </script>
+  </body>
+</html>

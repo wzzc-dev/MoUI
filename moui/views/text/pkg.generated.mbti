@@ -9,7 +9,7 @@ import {
 // Values
 pub fn[Msg] controlled_search_bar_control(query~ : String, on_input~ : (String) -> Msg, placeholder~ : String, theme? : @core.Theme, variant? : @style.TextFieldVariant, style? : @style.TextFieldStyle, on_submit? : Msg?, on_clear? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] text(String, role? : @style.TextRole, theme? : @core.Theme, width? : Double, height? : Double, align? : @core.TextAlign) -> @core.View[Msg]
+pub fn[Msg] text(String, role? : @style.TextRole, theme? : @core.Theme, width? : Double, height? : Double, align? : @core.TextAlign, wrap? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double, on_submit? : Msg?) -> @core.View[Msg]
 

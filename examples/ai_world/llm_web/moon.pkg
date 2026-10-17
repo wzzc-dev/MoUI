@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/json",
+}
+
+supported_targets = "wasm-gc"
+
+options(
+  targets: { },
+)

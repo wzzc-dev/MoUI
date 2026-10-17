@@ -1,0 +1,443 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/ai_world/app"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/common",
+}
+
+// Values
+pub fn blank_world(String) -> Scenario
+
+pub fn build_messages(Scenario, CharacterCard, Conversation, String) -> Array[(String, String)]
+
+pub fn build_system_prompt(Scenario, CharacterCard) -> String
+
+pub fn character_at(Scenario, @core.Point, @core.Point) -> String?
+
+pub fn character_color(String) -> @core.Color
+
+pub let chat_history_limit : Int
+
+pub let config_default_endpoint : String
+
+pub let config_default_model : String
+
+pub let config_prompt_budget : Int
+
+pub let content_width : Double
+
+pub let context_char_budget : Int
+
+pub let controls_width : Double
+
+pub let conversations_file : String
+
+pub fn default_scenario() -> Scenario
+
+pub fn draw_scenario(@common.PaintContext, @core.Rect, Scenario, @core.Point, String?) -> Unit
+
+pub let events_file : String
+
+pub fn events_json_text(Array[String]) -> String
+
+pub fn extract_json_object(String) -> String?
+
+pub fn fallback_world(String) -> Scenario
+
+pub fn first_free_spot(Scenario) -> @core.Point
+
+pub fn llm_clean_reply(String, String) -> String
+
+pub fn llm_parse_reply(String) -> String?
+
+pub fn llm_request_body(LlmRequest) -> Json
+
+pub let map_canvas_height : Double
+
+pub let map_canvas_width : Double
+
+pub fn parse_character_md(String) -> CharacterCard?
+
+pub fn parse_conversations_json(String) -> ConversationsFile
+
+pub fn parse_events_json(String) -> EventsFile
+
+pub fn parse_world_book_line(String) -> WorldEntry?
+
+pub fn parse_world_files(WorldFiles) -> WorldParse?
+
+pub fn program(turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> @core.Program[WorldModel, Msg]
+
+pub fn prompt_summary(Scenario, CharacterCard, Conversation, String) -> String
+
+pub let rail_width : Double
+
+pub fn scripted_reply(Scenario, CharacterCard, String) -> String
+
+pub let stage_width : Double
+
+pub fn update(WorldModel, Msg, turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> (WorldModel, @core.Effect[Msg])
+
+pub fn view(WorldModel) -> @core.View[Msg]
+
+pub fn world_book_block(Scenario, String) -> String
+
+pub fn world_book_for(Scenario, String) -> String
+
+pub fn world_book_has_hit(Scenario, String) -> Bool
+
+pub fn world_book_trigger(Scenario, String) -> Array[WorldEntry]
+
+pub fn world_idea_prompt(String) -> WorldIdeaPrompt
+
+pub let world_log_limit : Int
+
+pub fn world_nudge(Scenario) -> String
+
+// Errors
+
+// Types and methods
+pub struct CharacterCard {
+  id : String
+  name : String
+  persona : String
+  appearance : String
+  secret : String
+  goal : String
+  voice : String
+  location : String
+  point : @core.Point
+  color : @core.Color
+} derive(Eq, @debug.Debug)
+pub fn CharacterCard::appearance(Self) -> String
+pub fn CharacterCard::character_md_text(Self) -> String
+pub fn CharacterCard::color(Self) -> @core.Color
+pub fn CharacterCard::equal(Self, Self) -> Bool
+pub fn CharacterCard::goal(Self) -> String
+pub fn CharacterCard::id(Self) -> String
+pub fn CharacterCard::location(Self) -> String
+pub fn CharacterCard::name(Self) -> String
+pub fn CharacterCard::new(id~ : String, name~ : String, persona~ : String, appearance? : String, secret? : String, goal? : String, voice? : String, location? : String, point? : @core.Point, color? : @core.Color) -> Self
+pub fn CharacterCard::not_equal(Self, Self) -> Bool
+pub fn CharacterCard::persona(Self) -> String
+pub fn CharacterCard::point(Self) -> @core.Point
+pub fn CharacterCard::secret(Self) -> String
+pub fn CharacterCard::to_repr(Self) -> @debug.Repr
+pub fn CharacterCard::voice(Self) -> String
+
+pub(all) struct CharacterDraft {
+  name : String
+  persona : String
+  appearance : String
+  voice : String
+  goal : String
+  secret : String
+} derive(Eq, @debug.Debug)
+pub fn CharacterDraft::equal(Self, Self) -> Bool
+pub fn CharacterDraft::new() -> Self
+pub fn CharacterDraft::not_equal(Self, Self) -> Bool
+pub fn CharacterDraft::to_card(Self, point~ : @core.Point) -> CharacterCard
+pub fn CharacterDraft::to_repr(Self) -> @debug.Repr
+pub fn CharacterDraft::with_appearance(Self, String) -> Self
+pub fn CharacterDraft::with_goal(Self, String) -> Self
+pub fn CharacterDraft::with_name(Self, String) -> Self
+pub fn CharacterDraft::with_persona(Self, String) -> Self
+pub fn CharacterDraft::with_secret(Self, String) -> Self
+pub fn CharacterDraft::with_voice(Self, String) -> Self
+
+pub struct ChatLine {
+  speaker : Speaker
+  text : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ChatLine::character(String, String) -> Self
+pub fn ChatLine::equal(Self, Self) -> Bool
+pub fn ChatLine::not_equal(Self, Self) -> Bool
+pub fn ChatLine::player(String) -> Self
+pub fn ChatLine::speaker(Self) -> Speaker
+pub fn ChatLine::text(Self) -> String
+pub fn ChatLine::to_json(Self) -> Json
+pub fn ChatLine::to_repr(Self) -> @debug.Repr
+
+pub struct Conversation {
+  character_id : String
+  lines : Array[ChatLine]
+  pending : Bool
+} derive(Eq, @debug.Debug)
+pub fn Conversation::append(Self, ChatLine) -> Self
+pub fn Conversation::character_id(Self) -> String
+pub fn Conversation::equal(Self, Self) -> Bool
+pub fn Conversation::lines(Self) -> Array[ChatLine]
+pub fn Conversation::new(character_id~ : String) -> Self
+pub fn Conversation::not_equal(Self, Self) -> Bool
+pub fn Conversation::pending(Self) -> Bool
+pub fn Conversation::to_repr(Self) -> @debug.Repr
+pub fn Conversation::to_wire(Self) -> Array[(String, String)]
+pub fn Conversation::with_pending(Self, Bool) -> Self
+
+pub struct ConversationBook {
+  entries : Array[Conversation]
+} derive(Eq, @debug.Debug)
+pub fn ConversationBook::active_count(Self) -> Int
+pub fn ConversationBook::clear(Self) -> Unit
+pub fn ConversationBook::equal(Self, Self) -> Bool
+pub fn ConversationBook::find(Self, String) -> Conversation?
+pub fn ConversationBook::for_character(Self, String) -> Conversation
+pub fn ConversationBook::new() -> Self
+pub fn ConversationBook::not_equal(Self, Self) -> Bool
+pub fn ConversationBook::set(Self, Conversation) -> Unit
+pub fn ConversationBook::to_json_text(Self) -> String
+pub fn ConversationBook::to_repr(Self) -> @debug.Repr
+
+pub(all) struct ConversationsFile {
+  conversations : Array[Conversation]
+  valid : Bool
+} derive(Eq, @debug.Debug)
+pub fn ConversationsFile::equal(Self, Self) -> Bool
+pub fn ConversationsFile::not_equal(Self, Self) -> Bool
+pub fn ConversationsFile::to_repr(Self) -> @debug.Repr
+
+pub(all) struct EventsFile {
+  events : Array[String]
+  valid : Bool
+} derive(Eq, @debug.Debug)
+pub fn EventsFile::equal(Self, Self) -> Bool
+pub fn EventsFile::not_equal(Self, Self) -> Bool
+pub fn EventsFile::to_repr(Self) -> @debug.Repr
+
+pub struct LlmRequest {
+  character_id : String
+  endpoint : String
+  api_key : String
+  model : String
+  temperature : Double
+  system : String
+  user : String
+} derive(Eq, @debug.Debug)
+pub fn LlmRequest::api_key(Self) -> String
+pub fn LlmRequest::character_id(Self) -> String
+pub fn LlmRequest::endpoint(Self) -> String
+pub fn LlmRequest::equal(Self, Self) -> Bool
+pub fn LlmRequest::model(Self) -> String
+pub fn LlmRequest::new(character_id~ : String, endpoint~ : String, api_key~ : String, model~ : String, temperature~ : Double, system~ : String, user~ : String) -> Self
+pub fn LlmRequest::not_equal(Self, Self) -> Bool
+pub fn LlmRequest::system(Self) -> String
+pub fn LlmRequest::temperature(Self) -> Double
+pub fn LlmRequest::to_repr(Self) -> @debug.Repr
+pub fn LlmRequest::user(Self) -> String
+
+pub struct ModelConfig {
+  endpoint : String
+  model : String
+  api_key : String
+  temperature : Double
+  tick_interval_ms : Double
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn ModelConfig::api_key(Self) -> String
+pub fn ModelConfig::endpoint(Self) -> String
+pub fn ModelConfig::equal(Self, Self) -> Bool
+pub fn ModelConfig::from_json(String) -> Self
+pub fn ModelConfig::llm_enabled(Self) -> Bool
+pub fn ModelConfig::model(Self) -> String
+pub fn ModelConfig::new() -> Self
+pub fn ModelConfig::not_equal(Self, Self) -> Bool
+pub fn ModelConfig::temperature(Self) -> Double
+pub fn ModelConfig::tick_interval_ms(Self) -> Double
+pub fn ModelConfig::to_json(Self) -> String
+pub fn ModelConfig::to_repr(Self) -> @debug.Repr
+pub fn ModelConfig::with_api_key(Self, String) -> Self
+pub fn ModelConfig::with_endpoint(Self, String) -> Self
+pub fn ModelConfig::with_model(Self, String) -> Self
+pub fn ModelConfig::with_temperature(Self, Double) -> Self
+pub fn ModelConfig::with_tick_interval_ms(Self, Double) -> Self
+
+pub(all) enum Msg {
+  Select(String?)
+  DraftChanged(String)
+  Send(String)
+  Reply(String, String?)
+  OpenSettings
+  CloseSettings
+  ConfigFileLoaded(String?)
+  SettingsSaved(Bool)
+  EndpointChanged(String)
+  ModelChanged(String)
+  ApiKeyChanged(String)
+  TemperatureChanged(String)
+  SaveConfig
+  ConfigLoaded(String?)
+  ConfigSaved
+  ImportScenario(String)
+  SyncLibrary
+  PickWorldRoot
+  WorldListArrived(Array[String])
+  OpenWorld(String)
+  WorldFilesArrived(String, Bool, Array[(String, String)])
+  WorldNameChanged(String)
+  NewWorld
+  WorldCommitted(String, Bool)
+  ToggleCreator
+  CreatorChanged(CharacterDraft)
+  CharacterCreated
+  WorldIdeaChanged(String)
+  GenerateWorld
+  WorldGenerated(String?)
+}
+
+pub(all) enum Page {
+  Main
+  Settings
+} derive(Eq, @debug.Debug)
+pub fn Page::equal(Self, Self) -> Bool
+pub fn Page::not_equal(Self, Self) -> Bool
+pub fn Page::to_repr(Self) -> @debug.Repr
+
+pub struct Scenario {
+  id : String
+  name : String
+  background : String
+  map_width : Double
+  map_height : Double
+  locations : Array[ScenarioLocation]
+  characters : Array[CharacterCard]
+  world_book : Array[WorldEntry]
+} derive(Eq, @debug.Debug)
+pub fn Scenario::background(Self) -> String
+pub fn Scenario::character(Self, String) -> CharacterCard?
+pub fn Scenario::character_point(Self, String) -> @core.Point?
+pub fn Scenario::characters(Self) -> Array[CharacterCard]
+pub fn Scenario::equal(Self, Self) -> Bool
+pub fn Scenario::from_json(String) -> Self
+pub fn Scenario::id(Self) -> String
+pub fn Scenario::location(Self, String) -> ScenarioLocation?
+pub fn Scenario::locations(Self) -> Array[ScenarioLocation]
+pub fn Scenario::map_height(Self) -> Double
+pub fn Scenario::map_width(Self) -> Double
+pub fn Scenario::name(Self) -> String
+pub fn Scenario::new(id~ : String, name~ : String, background~ : String, map_width? : Double, map_height? : Double, locations? : Array[ScenarioLocation], characters? : Array[CharacterCard], world_book? : Array[WorldEntry]) -> Self
+pub fn Scenario::not_equal(Self, Self) -> Bool
+pub fn Scenario::to_json(Self) -> String
+pub fn Scenario::to_repr(Self) -> @debug.Repr
+pub fn Scenario::try_from_json(String) -> Self?
+pub fn Scenario::world_book(Self) -> Array[WorldEntry]
+pub fn Scenario::world_files(Self) -> Array[(String, String)]
+
+pub struct ScenarioLocation {
+  id : String
+  name : String
+  description : String
+  rect : @core.Rect
+} derive(Eq, @debug.Debug)
+pub fn ScenarioLocation::description(Self) -> String
+pub fn ScenarioLocation::equal(Self, Self) -> Bool
+pub fn ScenarioLocation::id(Self) -> String
+pub fn ScenarioLocation::name(Self) -> String
+pub fn ScenarioLocation::new(id~ : String, name~ : String, description~ : String, rect~ : @core.Rect) -> Self
+pub fn ScenarioLocation::not_equal(Self, Self) -> Bool
+pub fn ScenarioLocation::rect(Self) -> @core.Rect
+pub fn ScenarioLocation::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Speaker {
+  Player
+  Character(String)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn Speaker::equal(Self, Self) -> Bool
+pub fn Speaker::not_equal(Self, Self) -> Bool
+pub fn Speaker::to_json(Self) -> Json
+pub fn Speaker::to_repr(Self) -> @debug.Repr
+
+pub struct WorldEntry {
+  keys : Array[String]
+  content : String
+} derive(Eq, @debug.Debug)
+pub fn WorldEntry::content(Self) -> String
+pub fn WorldEntry::equal(Self, Self) -> Bool
+pub fn WorldEntry::keys(Self) -> Array[String]
+pub fn WorldEntry::new(keys~ : Array[String], content~ : String) -> Self
+pub fn WorldEntry::not_equal(Self, Self) -> Bool
+pub fn WorldEntry::to_repr(Self) -> @debug.Repr
+
+pub(all) struct WorldFiles {
+  world_md : String
+  book_md : String
+  character_files : Array[(String, String)]
+  conversations_json : String
+  events_json : String
+} derive(Eq, @debug.Debug)
+pub fn WorldFiles::equal(Self, Self) -> Bool
+pub fn WorldFiles::not_equal(Self, Self) -> Bool
+pub fn WorldFiles::to_repr(Self) -> @debug.Repr
+
+pub(all) struct WorldHost {
+  list_worlds : ((Array[String]) -> Unit) -> Unit
+  pick_root : ((Array[String]) -> Unit) -> Unit
+  read_world : (String, (Bool, Array[(String, String)]) -> Unit) -> Unit
+  write_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
+  read_config : ((String?) -> Unit) -> Unit
+  write_config : (String, (Bool) -> Unit) -> Unit
+} derive(@debug.Debug)
+pub fn WorldHost::to_repr(Self) -> @debug.Repr
+
+pub struct WorldIdeaPrompt {
+  system : String
+  user : String
+} derive(Eq, @debug.Debug)
+pub fn WorldIdeaPrompt::equal(Self, Self) -> Bool
+pub fn WorldIdeaPrompt::not_equal(Self, Self) -> Bool
+pub fn WorldIdeaPrompt::to_repr(Self) -> @debug.Repr
+
+pub struct WorldModel {
+  scenario : Scenario
+  conversations : ConversationBook
+  config : ModelConfig
+  selected : String?
+  draft : String
+  log : Array[String]
+  worlds : Array[String]
+  current : String?
+  library_missing : Bool
+  world_name : String
+  creator_open : Bool
+  creator_draft : CharacterDraft
+  idea : String
+  generating : Bool
+  page : Page
+  config_file_loaded : Bool
+} derive(Eq, @debug.Debug)
+pub fn WorldModel::config(Self) -> ModelConfig
+pub fn WorldModel::conversations(Self) -> ConversationBook
+pub fn WorldModel::creator_draft(Self) -> CharacterDraft
+pub fn WorldModel::creator_open(Self) -> Bool
+pub fn WorldModel::current(Self) -> String?
+pub fn WorldModel::draft(Self) -> String
+pub fn WorldModel::equal(Self, Self) -> Bool
+pub fn WorldModel::generating(Self) -> Bool
+pub fn WorldModel::idea(Self) -> String
+pub fn WorldModel::library_missing(Self) -> Bool
+pub fn WorldModel::log(Self) -> Array[String]
+pub fn WorldModel::new() -> Self
+pub fn WorldModel::not_equal(Self, Self) -> Bool
+pub fn WorldModel::page(Self) -> Page
+pub fn WorldModel::push_log(Self, String) -> Unit
+pub fn WorldModel::scenario(Self) -> Scenario
+pub fn WorldModel::selected(Self) -> String?
+pub fn WorldModel::to_repr(Self) -> @debug.Repr
+pub fn WorldModel::world_name(Self) -> String
+pub fn WorldModel::worlds(Self) -> Array[String]
+
+pub struct WorldParse {
+  scenario : Scenario
+  conversations : Array[Conversation]
+  events : Array[String]
+  warnings : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn WorldParse::equal(Self, Self) -> Bool
+pub fn WorldParse::not_equal(Self, Self) -> Bool
+pub fn WorldParse::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+pub type TurnRunner = (LlmRequest, (String?) -> Unit) -> Unit
+
+// Traits

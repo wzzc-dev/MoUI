@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
+  "examples/ai_world/app",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

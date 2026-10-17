@@ -138,6 +138,12 @@
       "path": "examples/tui_layers",
       "title": "TUI Layers",
       "featured": false
+    },
+    {
+      "id": "ai_world",
+      "path": "examples/ai_world",
+      "title": "AI World",
+      "featured": false
     }
   ]
 }

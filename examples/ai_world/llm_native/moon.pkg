@@ -1,0 +1,11 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/http",
+  "moonbitlang/core/json",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

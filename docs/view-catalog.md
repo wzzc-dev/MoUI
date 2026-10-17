@@ -153,7 +153,7 @@ experimental (`ready=false`).
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `text` | `views/views.mbt` | Font/foreground modifiers | Text role through core | `views/tests/smoke` | Showcase, MoMark | Basic label primitive. |
+| `text` | `views/views.mbt` | Font/foreground modifiers | Text role through core | `views/tests/smoke` | Showcase, MoMark | Basic label primitive. Opt-in `wrap` turns the box into an auto-wrapping paragraph: the requested width bounds the line box (constraints may only narrow it), breaks come from the shared `TextSystem` paragraph engine (CJK/grapheme-safe, `\n` hard breaks), and the box grows downward, so long text composes with `scroll_view` instead of overflowing. |
 | `image` | `views/views.mbt` | Modifier-based | Image draw intent | `views/tests/smoke` | Showcase | Renderer image support is tracked in the capability report; Showcase Interaction Lab covers ready/loading/failed lifecycle states. |
 | `icon` | `views/views.mbt` | Modifier-based | Image role through core | `views/tests/smoke` | Showcase | Icon glyph primitive sized by `IconName`, with optional color/weight overrides. |
 | `web_view` | `views/web_view.mbt` | Host native WebView | WebView role through core | `views/tests/smoke`, WebView Demo app tests | WebView Demo | Controlled native WebView primitive. The composition root creates a `WebViewHost` and `WebViewController`; navigation uses `controller.navigate(url)` and controller tasks cover reload, stop, back, forward, JSON bridge messages, request/response, and disposal. Validated `WebViewEvent` values return through the program effect/subscription path. |
