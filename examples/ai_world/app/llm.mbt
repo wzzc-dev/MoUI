@@ -8,6 +8,13 @@
 
 ///|
 /// One request to send on behalf of a character.
+///
+/// `messages` is the full wire payload, already ordered and budget-trimmed by
+/// `plan_messages`. It is carried as `(role, content)` pairs rather than as
+/// separate `system`/`user` fields because the whole point of the context
+/// layer is that the model sees the *history*: a two-message request would
+/// silently drop the rolling summary, the world-book hits, and every earlier
+/// turn.
 pub struct LlmRequest {
   character_id : String
   /// Provider base URL or full chat/completions path.
@@ -15,8 +22,8 @@ pub struct LlmRequest {
   api_key : String
   model : String
   temperature : Double
-  system : String
-  user : String
+  /// Ordered wire messages: `("system" | "user" | "assistant", content)`.
+  messages : Array[(String, String)]
 } derive(Eq, Debug)
 
 ///|
@@ -32,10 +39,28 @@ pub fn LlmRequest::new(
   api_key~ : String,
   model~ : String,
   temperature~ : Double,
+  messages~ : Array[(String, String)],
+) -> LlmRequest {
+  { character_id, endpoint, api_key, model, temperature, messages, }
+}
+
+///|
+/// A request that carries exactly one system prompt and one user turn. Used by
+/// the auxiliary flows (world generation, memory compression, memory
+/// extraction) whose prompts are single-shot and have no history.
+pub fn LlmRequest::single_shot(
+  character_id~ : String,
+  endpoint~ : String,
+  api_key~ : String,
+  model~ : String,
+  temperature~ : Double,
   system~ : String,
   user~ : String,
 ) -> LlmRequest {
-  { character_id, endpoint, api_key, model, temperature, system, user, }
+  LlmRequest::new(character_id~, endpoint~, api_key~, model~, temperature~, messages=[
+    ("system", system),
+    ("user", user),
+  ])
 }
 
 ///|
@@ -64,25 +89,48 @@ pub fn LlmRequest::temperature(self : LlmRequest) -> Double {
 }
 
 ///|
-pub fn LlmRequest::system(self : LlmRequest) -> String {
-  self.system
+/// The ordered wire messages this request will send.
+pub fn LlmRequest::messages(self : LlmRequest) -> Array[(String, String)] {
+  self.messages
 }
 
 ///|
+/// The first system message (the persona prompt), or `""` when the request
+/// carries none. Kept for the prompt inspector and for tests that pin what the
+/// model was told about the world.
+pub fn LlmRequest::system(self : LlmRequest) -> String {
+  for message in self.messages {
+    if message.0 == "system" {
+      return message.1
+    }
+  }
+  ""
+}
+
+///|
+/// The last user turn, or `""` when the request carries none.
 pub fn LlmRequest::user(self : LlmRequest) -> String {
-  self.user
+  let mut index = self.messages.length()
+  while index > 0 {
+    index -= 1
+    if self.messages[index].0 == "user" {
+      return self.messages[index].1
+    }
+  }
+  ""
 }
 
 ///|
 /// Build the request body for an OpenAI-compatible chat/completions call.
 ///
-/// The system prompt is first so providers that only read the first system
-/// message still get the persona, and the user turn is last so the model always
-/// answers the thing the player just said.
+/// Every planned message rides along in order: system prompts first (persona,
+/// rolling summary, world-book hits), then the history, then the player's turn
+/// last so the model always answers the thing just said.
 pub fn llm_request_body(request : LlmRequest) -> Json {
   let messages : Array[Json] = []
-  messages.push(json_message("system", request.system))
-  messages.push(json_message("user", request.user))
+  for message in request.messages {
+    messages.push(json_message(message.0, message.1))
+  }
   let root : Map[String, Json] = {
     "model": Json::string(request.model),
     "messages": Json::array(messages),

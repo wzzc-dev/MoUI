@@ -251,6 +251,17 @@ pub fn ConversationBook::set(
 }
 
 ///|
+/// A book with its own entries array. `Conversation` values are immutable, so
+/// copying the array is enough to make the two books independent.
+pub fn ConversationBook::clone(self : ConversationBook) -> ConversationBook {
+  let entries : Array[Conversation] = []
+  for entry in self.entries {
+    entries.push(entry)
+  }
+  { entries, }
+}
+
+///|
 /// Drop every conversation. Used when the world itself is replaced: ids do
 /// not survive a world swap, so neither should the histories.
 pub fn ConversationBook::clear(self : ConversationBook) -> Unit {

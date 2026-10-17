@@ -82,6 +82,12 @@
       // library sync from its init effect, which runs inside _start). Queue
       // them and replay once the instance is in hand.
       const bootQueue = [];
+      // Strings handed to a *queued* export must outlive the queue. Releasing
+      // the id at completion time dropped the payload before the wasm side
+      // ever read it, so the first library listing (and any first provider
+      // reply) arrived as an empty string. Release now when booted, otherwise
+      // remember the id and release it once the queue has been replayed.
+      const deferredReleases = new Set();
       function callExport(name, ...args) {
         if (booted) {
           try {
@@ -91,6 +97,16 @@
           }
         } else {
           bootQueue.push([name, args]);
+        }
+      }
+
+      // Drop a string id after the export that carries it has run (or has been
+      // queued for replay).
+      function releaseString(id) {
+        if (booted) {
+          stringStore.delete(id);
+        } else {
+          deferredReleases.add(id);
         }
       }
 
@@ -169,7 +185,7 @@
           stringStore.set(textId, text);
           const ok = response.ok;
           callExport("ai_llm_complete", requestId, ok, textId);
-          stringStore.delete(textId);
+          releaseString(textId);
         } catch (error) {
           setStatus(`Provider request failed: ${error}`);
           callExport("ai_llm_complete", requestId, false, 0);
@@ -277,16 +293,22 @@
         }
       }
 
+      // A world folder is the Markdown world (world.md, characters/*.md,
+      // world_book.md) PLUS the JSON journal committed beside it
+      // (conversations.json, events.json). Both halves must be read back:
+      // skipping the journal silently reset every conversation on reload.
+      const WORLD_FILE = /\.(md|json)$/;
+
       async function readWorld(folder) {
         const files = [];
         if (rootHandle) {
           const dir = await rootHandle.getDirectoryHandle(folder);
           for await (const [name, entry] of dir.entries()) {
-            if (entry.kind === "file" && name.endsWith(".md")) {
+            if (entry.kind === "file" && WORLD_FILE.test(name)) {
               files.push([name, await (await entry.getFile()).text()]);
             } else if (entry.kind === "directory") {
               for await (const [subName, subEntry] of entry.entries()) {
-                if (subEntry.kind === "file" && subName.endsWith(".md")) {
+                if (subEntry.kind === "file" && WORLD_FILE.test(subName)) {
                   files.push([
                     `${name}/${subName}`,
                     await (await subEntry.getFile()).text(),
@@ -373,7 +395,7 @@
           const textId = finishCreateStringFor(JSON.stringify(payload));
           const ok = true;
           callExport("ai_fs_complete", requestId, ok, textId);
-          stringStore.delete(textId);
+          releaseString(textId);
         } catch (error) {
           setStatus(`世界库操作失败（${dirName}）: ${error}`);
           callExport("ai_fs_complete", requestId, false, 0);
@@ -465,6 +487,12 @@
         for (const [name, args] of bootQueue.splice(0)) {
           callExport(name, ...args);
         }
+        // The queue has been replayed: the wasm side has read every payload it
+        // was handed while booting, so the ids can be dropped now.
+        for (const id of deferredReleases) {
+          stringStore.delete(id);
+        }
+        deferredReleases.clear();
         status.textContent = "Running";
         append("MoonBit wasm-gc started.");
       }).catch(error => {

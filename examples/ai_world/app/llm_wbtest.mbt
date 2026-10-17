@@ -52,8 +52,8 @@ test "clean_reply leaves dialogue alone when there is no framing" {
 }
 
 ///|
-test "the request body carries model, system, user, and temperature" {
-  let request = LlmRequest::new(
+test "the request body carries model, every message, and temperature" {
+  let request = LlmRequest::single_shot(
     character_id="lin",
     endpoint="https://api.openai.com/v1",
     api_key="sk-test",
@@ -67,4 +67,45 @@ test "the request body carries model, system, user, and temperature" {
   assert_true(body.contains("你是林掌柜"))
   assert_true(body.contains("温一壶酒"))
   assert_true(body.contains("0.7"))
+}
+
+///|
+test "every planned message reaches the request body in order" {
+  // The context layer's whole value is that the model sees history; a body
+  // that only forwarded the first and last message made every turn stateless.
+  let request = LlmRequest::new(
+    character_id="lin",
+    endpoint="https://api.openai.com/v1",
+    api_key="sk-test",
+    model="gpt-4o-mini",
+    temperature=0.7,
+    messages=[
+      ("system", "你是林掌柜"),
+      ("system", "【此前】他们谈妥了赊账。"),
+      ("system", "【相关背景】后堂埋着女儿红。"),
+      ("user", "温一壶酒"),
+      ("assistant", "嗯，酒温好了。"),
+      ("user", "再来一壶"),
+    ],
+  )
+  let body = llm_request_body(request).stringify()
+  // Each role and content survives, in order.
+  let order : Array[String] = [
+    "你是林掌柜", "【此前】他们谈妥了赊账。", "【相关背景】后堂埋着女儿红。",
+    "温一壶酒", "嗯，酒温好了。", "再来一壶",
+  ]
+  let mut cursor = 0
+  for needle in order {
+    let at = match body.find(needle) {
+      Some(index) => index
+      None => fail("body is missing \{needle}")
+    }
+    assert_true(at >= cursor)
+    cursor = at
+  }
+  assert_true(body.contains("\"assistant\""))
+  // The accessors read the planned array, not a removed field.
+  assert_eq(request.system(), "你是林掌柜")
+  assert_eq(request.user(), "再来一壶")
+  assert_eq(request.messages().length(), 6)
 }

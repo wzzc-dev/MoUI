@@ -158,8 +158,8 @@ test "card colours are deterministic per name" {
 
 ///|
 test "unsafe names never reach a file path" {
-  assert_eq(md_safe_name("好/坏:名"), "好_坏_名")
-  assert_eq(md_safe_name("  "), "未命名")
+  assert_eq(world_folder_name("好/坏:名"), "好_坏_名")
+  assert_eq(world_folder_name("  "), "未命名")
 }
 
 ///|
@@ -241,5 +241,53 @@ test "a damaged journal degrades alone with a warning" {
       assert_eq(ok.warnings.length(), 2)
     }
     None => fail("the world itself must still parse")
+  }
+}
+
+///|
+test "the world file predicate admits the Markdown world and the journal" {
+  // Hosts use this to decide what to read back. A host that answered only for
+  // `.md` looked correct but dropped conversations.json / events.json, so a
+  // reopened world lost every conversation.
+  assert_true(is_world_file_name("world.md"))
+  assert_true(is_world_file_name("world_book.md"))
+  assert_true(is_world_file_name("林掌柜.md"))
+  assert_true(is_world_file_name("conversations.json"))
+  assert_true(is_world_file_name("events.json"))
+  // Unrelated files in the folder must not reach the model.
+  assert_false(is_world_file_name("notes.txt"))
+  assert_false(is_world_file_name("Thumbs.db"))
+  assert_false(is_world_file_name(".DS_Store"))
+}
+
+///|
+test "a folder carrying the journal restores history and events on open" {
+  // What a conforming host hands back: the Markdown files plus both journal
+  // files. This is the shape the native and web hosts now produce.
+  let book = ConversationBook::new()
+  book.set(
+    Conversation::new(character_id="林掌柜")
+    .append(ChatLine::player("温一壶酒"))
+    .append(ChatLine::character("林掌柜", "客官里边坐。"))
+    .with_summary("他们谈妥了赊账。", 2),
+  )
+  let log = ["林掌柜: 客官里边坐。", "you → 林掌柜: 温一壶酒"]
+  let sample = sample_files()
+  let parsed = parse_world_files(WorldFiles::{
+    world_md: sample.world_md,
+    book_md: sample.book_md,
+    character_files: [sample.character_files[0]],
+    conversations_json: book.to_json_text(),
+    events_json: events_json_text(log),
+  })
+  match parsed {
+    Some(ok) => {
+      assert_eq(ok.conversations.length(), 1)
+      assert_eq(ok.conversations[0].lines().length(), 2)
+      assert_eq(ok.conversations[0].summary(), "他们谈妥了赊账。")
+      assert_eq(ok.events.length(), 2)
+      assert_eq(ok.warnings.length(), 0)
+    }
+    None => fail("a folder with a journal must parse")
   }
 }

@@ -59,8 +59,7 @@ async fn run_ai_world() -> Unit {
       request.api_key(),
       request.model(),
       request.temperature(),
-      request.system(),
-      request.user(),
+      request.messages(),
       on_reply,
     )
   }
@@ -214,7 +213,9 @@ async fn run_fs_job(job : FsJob) -> Unit {
 }
 
 ///|
-/// Read every Markdown file of one world folder, two levels deep.
+/// Read every file of one world folder, two levels deep. The file filter is
+/// the app's `is_world_file_name`, so the native host and the web host agree
+/// on what belongs to a world (Markdown plus the JSON journal).
 async fn read_world_files(folder : String) -> (Bool, Array[(String, String)]) {
   let files : Array[(String, String)] = []
   let world_dir = "\{library_root.val}/\{folder}"
@@ -230,7 +231,7 @@ async fn read_world_files(folder : String) -> (Bool, Array[(String, String)]) {
       @fs.FileKind::Directory => {
         let sub = @fs.readdir(full, include_hidden=false) catch { _ => [] }
         for sub_name in sub {
-          if sub_name.has_suffix(".md") {
+          if @app.is_world_file_name(sub_name) {
             let file = "\{full}/\{sub_name}"
             let content = @fs.read_file(file).text() catch { _ => "" }
             let relative = "\{name}/\{sub_name}"
@@ -239,7 +240,7 @@ async fn read_world_files(folder : String) -> (Bool, Array[(String, String)]) {
         }
       }
       @fs.FileKind::Regular =>
-        if name.has_suffix(".md") {
+        if @app.is_world_file_name(name) {
           let content = @fs.read_file(full).text() catch { _ => "" }
           files.push((name, content))
         }

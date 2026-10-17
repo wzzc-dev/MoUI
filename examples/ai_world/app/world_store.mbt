@@ -52,6 +52,18 @@ pub extend WorldParse with Debug::{to_repr}
 pub extend WorldParse with Eq::{not_equal, equal}
 
 ///|
+/// Is this the name of a file the world folder owns?
+///
+/// The world is a folder of Markdown **plus** the JSON journal committed
+/// beside it (`conversations.json`, `events.json`). This predicate is the
+/// single source of truth for "what belongs to a world": hosts that filtered
+/// to `.md` alone silently reset every conversation on reopen. The web host
+/// mirrors the same rule in `index.html` (it cannot import MoonBit).
+pub fn is_world_file_name(name : String) -> Bool {
+  name.has_suffix(".md") || name.has_suffix(".json")
+}
+
+///|
 /// Parse one world folder. `None` means "not a world": `world.md` missing, or
 /// carrying no usable H1 name.
 pub fn parse_world_files(files : WorldFiles) -> WorldParse? {
@@ -487,8 +499,15 @@ pub fn character_color(name : String) -> @graphics.Color {
 }
 
 ///|
-/// A file name safe to store inside the library on any host.
-fn md_safe_name(name : String) -> String {
+/// A single path component safe to store inside the library on any host.
+///
+/// A world folder name comes straight from player input (and, on the offline
+/// path, from the one-line idea), and it is concatenated into a native path by
+/// the macOS host. Anything that can escape the library root must therefore be
+/// neutralised here: path separators, drive/ADS colons, the Windows reserved
+/// characters, control characters, and the `..` / `.` components themselves.
+/// Every world folder name goes through this before it reaches a `WorldHost`.
+pub fn world_folder_name(name : String) -> String {
   let safe : Array[Char] = []
   for ch in name {
     if ch == '/' ||
@@ -500,15 +519,22 @@ fn md_safe_name(name : String) -> String {
       ch == '<' ||
       ch == '>' ||
       ch == '|' ||
-      ch == '\n' {
+      ch == '\n' ||
+      ch == '\r' ||
+      ch == '\t' ||
+      ch == '\u{0}' {
       safe.push('_')
     } else {
       safe.push(ch)
     }
   }
   let text = String::from_array(safe).trim().to_owned()
-  if text == "" {
+  // `.` and `..` are path components, not names: a world called ".." would
+  // write over the library's parent. Leading dots would also hide the folder.
+  if text == "" || text == "." || text == ".." {
     "未命名"
+  } else if text.has_prefix(".") {
+    "_" + text
   } else {
     text
   }
@@ -525,7 +551,7 @@ pub fn Scenario::world_files(self : Scenario) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
   files.push(("world.md", self.world_md()))
   for card in self.characters() {
-    let file = md_safe_name(card.name())
+    let file = world_folder_name(card.name())
     files.push(("characters/\{file}.md", card.character_md_text()))
   }
   files.push(("world_book.md", self.world_book_md()))

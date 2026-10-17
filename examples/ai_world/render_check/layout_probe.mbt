@@ -2,7 +2,7 @@
 /// Layout variants for the short-window problem, probed without the browser.
 
 ///|
-using @views {button, column, expanded, flexible, row, scroll_view, text}
+using @views {column, expanded, flexible, row, scroll_view, text}
 
 ///|
 fn mini_stage() -> @moui.View[Unit] {

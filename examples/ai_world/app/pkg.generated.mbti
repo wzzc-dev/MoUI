@@ -3,7 +3,6 @@ package "examples/ai_world/app"
 
 import {
   "moonbitlang/core/debug",
-  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
 }
@@ -21,11 +20,19 @@ pub fn character_color(String) -> @core.Color
 
 pub let chat_history_limit : Int
 
+pub fn clip_chars(String, Int) -> String
+
+pub fn compression_source(Conversation) -> Array[ChatLine]
+
+pub let config_context_compact : String
+
+pub let config_context_roomy : String
+
+pub let config_context_standard : String
+
 pub let config_default_endpoint : String
 
 pub let config_default_model : String
-
-pub let config_prompt_budget : Int
 
 pub let content_width : Double
 
@@ -49,6 +56,8 @@ pub fn fallback_world(String) -> Scenario
 
 pub fn first_free_spot(Scenario) -> @core.Point
 
+pub fn is_world_file_name(String) -> Bool
+
 pub fn llm_clean_reply(String, String) -> String
 
 pub fn llm_parse_reply(String) -> String?
@@ -58,6 +67,12 @@ pub fn llm_request_body(LlmRequest) -> Json
 pub let map_canvas_height : Double
 
 pub let map_canvas_width : Double
+
+pub let memory_proposal_every : Int
+
+pub let memory_proposal_recent_lines : Int
+
+pub fn needs_compression(Conversation, Int) -> Bool
 
 pub fn parse_character_md(String) -> CharacterCard?
 
@@ -69,15 +84,25 @@ pub fn parse_world_book_line(String) -> WorldEntry?
 
 pub fn parse_world_files(WorldFiles) -> WorldParse?
 
+pub fn plan_messages(Scenario, CharacterCard, Conversation, String, budget? : Int) -> MessagePlan
+
 pub fn program(turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> @core.Program[WorldModel, Msg]
 
 pub fn prompt_summary(Scenario, CharacterCard, Conversation, String) -> String
+
+pub fn propose_memory_prompt(character_name~ : String, lines~ : Array[ChatLine]) -> (String, String)
 
 pub let rail_width : Double
 
 pub fn scripted_reply(Scenario, CharacterCard, String) -> String
 
 pub let stage_width : Double
+
+pub fn summarize_prompt(character_name~ : String, prior_summary~ : String, source_lines~ : Array[ChatLine]) -> (String, String)
+
+pub let summary_keep_recent : Int
+
+pub let summary_min_new_lines : Int
 
 pub fn update(WorldModel, Msg, turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> (WorldModel, @core.Effect[Msg])
 
@@ -90,6 +115,8 @@ pub fn world_book_for(Scenario, String) -> String
 pub fn world_book_has_hit(Scenario, String) -> Bool
 
 pub fn world_book_trigger(Scenario, String) -> Array[WorldEntry]
+
+pub fn world_folder_name(String) -> String
 
 pub fn world_idea_prompt(String) -> WorldIdeaPrompt
 
@@ -165,23 +192,31 @@ pub struct Conversation {
   character_id : String
   lines : Array[ChatLine]
   pending : Bool
+  summary : String
+  summarized_upto : Int
+  appended : Int
 } derive(Eq, @debug.Debug)
 pub fn Conversation::append(Self, ChatLine) -> Self
+pub fn Conversation::appended(Self) -> Int
 pub fn Conversation::character_id(Self) -> String
 pub fn Conversation::equal(Self, Self) -> Bool
 pub fn Conversation::lines(Self) -> Array[ChatLine]
 pub fn Conversation::new(character_id~ : String) -> Self
 pub fn Conversation::not_equal(Self, Self) -> Bool
 pub fn Conversation::pending(Self) -> Bool
+pub fn Conversation::summarized_upto(Self) -> Int
+pub fn Conversation::summary(Self) -> String
 pub fn Conversation::to_repr(Self) -> @debug.Repr
 pub fn Conversation::to_wire(Self) -> Array[(String, String)]
 pub fn Conversation::with_pending(Self, Bool) -> Self
+pub fn Conversation::with_summary(Self, String, Int) -> Self
 
 pub struct ConversationBook {
   entries : Array[Conversation]
 } derive(Eq, @debug.Debug)
 pub fn ConversationBook::active_count(Self) -> Int
 pub fn ConversationBook::clear(Self) -> Unit
+pub fn ConversationBook::clone(Self) -> Self
 pub fn ConversationBook::equal(Self, Self) -> Bool
 pub fn ConversationBook::find(Self, String) -> Conversation?
 pub fn ConversationBook::for_character(Self, String) -> Conversation
@@ -213,29 +248,40 @@ pub struct LlmRequest {
   api_key : String
   model : String
   temperature : Double
-  system : String
-  user : String
+  messages : Array[(String, String)]
 } derive(Eq, @debug.Debug)
 pub fn LlmRequest::api_key(Self) -> String
 pub fn LlmRequest::character_id(Self) -> String
 pub fn LlmRequest::endpoint(Self) -> String
 pub fn LlmRequest::equal(Self, Self) -> Bool
+pub fn LlmRequest::messages(Self) -> Array[(String, String)]
 pub fn LlmRequest::model(Self) -> String
-pub fn LlmRequest::new(character_id~ : String, endpoint~ : String, api_key~ : String, model~ : String, temperature~ : Double, system~ : String, user~ : String) -> Self
+pub fn LlmRequest::new(character_id~ : String, endpoint~ : String, api_key~ : String, model~ : String, temperature~ : Double, messages~ : Array[(String, String)]) -> Self
 pub fn LlmRequest::not_equal(Self, Self) -> Bool
+pub fn LlmRequest::single_shot(character_id~ : String, endpoint~ : String, api_key~ : String, model~ : String, temperature~ : Double, system~ : String, user~ : String) -> Self
 pub fn LlmRequest::system(Self) -> String
 pub fn LlmRequest::temperature(Self) -> Double
 pub fn LlmRequest::to_repr(Self) -> @debug.Repr
 pub fn LlmRequest::user(Self) -> String
+
+pub(all) struct MessagePlan {
+  messages : Array[(String, String)]
+  evicted : Array[ChatLine]
+} derive(Eq, @debug.Debug)
+pub fn MessagePlan::equal(Self, Self) -> Bool
+pub fn MessagePlan::not_equal(Self, Self) -> Bool
+pub fn MessagePlan::to_repr(Self) -> @debug.Repr
 
 pub struct ModelConfig {
   endpoint : String
   model : String
   api_key : String
   temperature : Double
-  tick_interval_ms : Double
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+  context_preset : String
+} derive(Eq, ToJson, @debug.Debug)
 pub fn ModelConfig::api_key(Self) -> String
+pub fn ModelConfig::context_budget(Self) -> Int
+pub fn ModelConfig::context_preset(Self) -> String
 pub fn ModelConfig::endpoint(Self) -> String
 pub fn ModelConfig::equal(Self, Self) -> Bool
 pub fn ModelConfig::from_json(String) -> Self
@@ -244,17 +290,17 @@ pub fn ModelConfig::model(Self) -> String
 pub fn ModelConfig::new() -> Self
 pub fn ModelConfig::not_equal(Self, Self) -> Bool
 pub fn ModelConfig::temperature(Self) -> Double
-pub fn ModelConfig::tick_interval_ms(Self) -> Double
 pub fn ModelConfig::to_json(Self) -> String
 pub fn ModelConfig::to_repr(Self) -> @debug.Repr
 pub fn ModelConfig::with_api_key(Self, String) -> Self
+pub fn ModelConfig::with_context_preset(Self, String) -> Self
 pub fn ModelConfig::with_endpoint(Self, String) -> Self
 pub fn ModelConfig::with_model(Self, String) -> Self
 pub fn ModelConfig::with_temperature(Self, Double) -> Self
-pub fn ModelConfig::with_tick_interval_ms(Self, Double) -> Self
 
 pub(all) enum Msg {
   Select(String?)
+  PanMap
   DraftChanged(String)
   Send(String)
   Reply(String, String?)
@@ -267,9 +313,6 @@ pub(all) enum Msg {
   ApiKeyChanged(String)
   TemperatureChanged(String)
   SaveConfig
-  ConfigLoaded(String?)
-  ConfigSaved
-  ImportScenario(String)
   SyncLibrary
   PickWorldRoot
   WorldListArrived(Array[String])
@@ -284,6 +327,12 @@ pub(all) enum Msg {
   WorldIdeaChanged(String)
   GenerateWorld
   WorldGenerated(String?)
+  ContextChanged(String)
+  SummaryArrived(String, Int, String?)
+  MemoryProposalsArrived(String?)
+  AcceptMemory(Int)
+  DiscardMemory(Int)
+  ToggleApiKeyReveal
 }
 
 pub(all) enum Page {
@@ -405,7 +454,10 @@ pub struct WorldModel {
   generating : Bool
   page : Page
   config_file_loaded : Bool
+  memory_drafts : Array[WorldEntry]
+  api_key_revealed : Bool
 } derive(Eq, @debug.Debug)
+pub fn WorldModel::api_key_revealed(Self) -> Bool
 pub fn WorldModel::config(Self) -> ModelConfig
 pub fn WorldModel::conversations(Self) -> ConversationBook
 pub fn WorldModel::creator_draft(Self) -> CharacterDraft
@@ -413,10 +465,12 @@ pub fn WorldModel::creator_open(Self) -> Bool
 pub fn WorldModel::current(Self) -> String?
 pub fn WorldModel::draft(Self) -> String
 pub fn WorldModel::equal(Self, Self) -> Bool
+pub fn WorldModel::fork(Self) -> Self
 pub fn WorldModel::generating(Self) -> Bool
 pub fn WorldModel::idea(Self) -> String
 pub fn WorldModel::library_missing(Self) -> Bool
 pub fn WorldModel::log(Self) -> Array[String]
+pub fn WorldModel::memory_drafts(Self) -> Array[WorldEntry]
 pub fn WorldModel::new() -> Self
 pub fn WorldModel::not_equal(Self, Self) -> Bool
 pub fn WorldModel::page(Self) -> Page

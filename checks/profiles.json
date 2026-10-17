@@ -633,6 +633,36 @@
             "--target",
             "wasm-gc"
           ]
+        },
+        {
+          "name": "AI World app tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/ai_world/app",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "AI World render contract tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/ai_world/render_check",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "AI World Web build",
+          "argv": [
+            "moon",
+            "build",
+            "examples/ai_world/web_wasm",
+            "--target",
+            "wasm-gc"
+          ]
         }
       ]
     },

@@ -28,7 +28,6 @@ using @views {
   flexible,
   padding_edges,
   fill_rounded_rect,
-  password_field,
   pop_clip,
   push_clip,
   row,
@@ -139,7 +138,10 @@ fn scenario_map(model : WorldModel) -> @moui.View[Msg] {
       y=pan_state.val.origin.y - event.delta.y,
     )
     pan_state.val = { origin: clamp_origin(next, model), }
-    Select(model.selected)
+    // Panning is a repaint, not a selection change: dispatching `Select` here
+    // re-selected the same character on every drag frame (harmlessly after the
+    // id guard, but the intent was wrong and it used to clear the draft).
+    PanMap
   })
   dragged.on_tap_with_frame((position, frame) => {
     let point = @geometry.Point::new(
@@ -518,19 +520,39 @@ fn conversation_panel(model : WorldModel) -> @moui.View[Msg] {
 ///|
 fn composer(model : WorldModel, enabled? : Bool = true) -> @moui.View[Msg] {
   if enabled {
+    // While a reply is in flight the composer is still editable (the player can
+    // start the next line) but sending is withheld: `update` rejects a second
+    // send for the same conversation, so the button must say so instead of
+    // looking clickable and doing nothing.
+    let waiting = match model.selected {
+      Some(id) => model.conversations.for_character(id).pending()
+      None => false
+    }
+    let send_label = if waiting { "等待回复…" } else { "发送" }
+    let send_button = if waiting {
+      // No handler while a turn is in flight: the label says why.
+      button(send_label, width=88.0)
+    } else {
+      button(send_label, on_click=Send(model.draft()), width=88.0)
+    }
+    let submit = if waiting { None } else { Some(Send(model.draft())) }
     column(
       [
         text_area(
           model.draft(),
           on_input=value => DraftChanged(value),
-          placeholder="说点什么…（回车发送）",
+          placeholder=if waiting {
+            "正在等待回复…（可以先写下下一句）"
+          } else {
+            "说点什么…（回车发送）"
+          },
           lines=2,
           width=stage_width,
-          on_submit=Some(Send(model.draft())),
+          on_submit=submit,
         ),
         row(
           [
-            button("发送", on_click=Send(model.draft()), width=88.0),
+            send_button,
             button(
               "换一个角色",
               on_click=Select(None),
@@ -714,122 +736,185 @@ pub fn view(model : WorldModel) -> @moui.View[Msg] {
 ///|
 /// The settings page: model configuration, persisted as `config.json` at the
 /// library root next to the world folders.
+///
+/// The card is taller than a short window, so it scrolls rather than clipping
+/// the save / back buttons off the bottom edge (the main view handles the same
+/// problem by making the map and transcript flexible).
 fn settings_view(model : WorldModel) -> @moui.View[Msg] {
   let config = model.config
   let wide = 520.0
   center(
     card(
-      column(
-        [
-          text(
-            "模型与设置",
-            role=Title,
-            width=wide,
-            height=36.0,
-            align=TextStart,
-          ),
-          wrapped_caption(
-            "设置保存在世界库根目录的 config.json 里，随你的世界一起走；API key 存在你自己选择的数据文件夹中。",
-            width=wide,
-          ),
-          text(
-            "OpenAI 兼容端点",
-            role=Body,
-            width=wide,
-            height=24.0,
-            align=TextStart,
-          ),
-          text_field(
-            config.endpoint(),
-            on_input=value => EndpointChanged(value),
-            placeholder="https://api.openai.com/v1",
-            width=wide,
-            height=32.0,
-          ),
-          text("模型名", role=Body, width=wide, height=24.0, align=TextStart),
-          text_field(
-            config.model(),
-            on_input=value => ModelChanged(value),
-            placeholder="例如 glm-5.3-flash / gpt-4o-mini",
-            width=wide,
-            height=32.0,
-          ),
-          text("API key", role=Body, width=wide, height=24.0, align=TextStart),
-          password_field(
-            config.api_key(),
-            on_input=value => ApiKeyChanged(value),
-            revealed=false,
-            on_toggle_reveal=ApiKeyChanged(config.api_key()),
-            placeholder="sk-…",
-            width=wide,
-          ),
-          text(
-            "温度（创造性，0.1 – 1.0）",
-            role=Body,
-            width=wide,
-            height=24.0,
-            align=TextStart,
-          ),
-          text_field(
-            config.temperature().to_string(),
-            on_input=value => TemperatureChanged(value),
-            placeholder="0.7",
-            width=wide,
-            height=32.0,
-          ),
-          text(
-            "上下文规模",
-            role=Body,
-            width=wide,
-            height=24.0,
-            align=TextStart,
-          ),
-          segmented_control(
-            [
-              choice_item("compact", "紧凑"),
-              choice_item("standard", "标准"),
-              choice_item("roomy", "宽裕"),
-            ],
-            selected=config.context_preset(),
-            on_select=value => ContextChanged(value),
-            width=wide,
-            size=Compact,
-          ),
-          wrapped_caption(
-            "紧凑≈3000字 · 标准≈6000字 · 宽裕≈12000字;影响历史保留量与记忆压缩频率。",
-            width=wide,
-          ),
-          row(
-            [
-              button(
-                "保存设置",
-                on_click=SaveConfig,
-                width=120.0,
-                height=34.0,
-              ),
-              button(
-                "返回世界",
-                on_click=CloseSettings,
-                variant=Tonal,
-                width=120.0,
-                height=34.0,
-              ),
-            ],
-            spacing=12.0,
-          ),
-          text(
-            if config.llm_enabled() {
-              "当前：回复与 AI 生成来自模型（改动保存后生效）"
+      scroll_view(
+        column(
+          [
+            text(
+              "模型与设置",
+              role=Title,
+              width=wide,
+              height=36.0,
+              align=TextStart,
+            ),
+            wrapped_caption(
+              "设置保存在世界库根目录的 config.json 里，随你的世界一起走；API key 存在你自己选择的数据文件夹中。",
+              width=wide,
+            ),
+            text(
+              "OpenAI 兼容端点",
+              role=Body,
+              width=wide,
+              height=24.0,
+              align=TextStart,
+            ),
+            text_field(
+              config.endpoint(),
+              on_input=value => EndpointChanged(value),
+              placeholder="https://api.openai.com/v1",
+              width=wide,
+              height=32.0,
+            ),
+            text(
+              "模型名",
+              role=Body,
+              width=wide,
+              height=24.0,
+              align=TextStart,
+            ),
+            text_field(
+              config.model(),
+              on_input=value => ModelChanged(value),
+              placeholder="例如 glm-5.3-flash / gpt-4o-mini",
+              width=wide,
+              height=32.0,
+            ),
+            text("API key", role=Body, width=wide, height=24.0, align=TextStart),
+            // While hidden the key is a *read-only* mask: an editable masked
+            // field would feed `••••` back through `on_input` and store it as the
+            // key. `@views.password_field` has the same shape (it masks the value
+            // it passes to `on_input`), so a plain field plus an explicit reveal
+            // is both correct and simpler. Editing is only possible when shown.
+            if model.api_key_revealed() {
+              row(
+                [
+                  text_field(
+                    config.api_key(),
+                    on_input=value => ApiKeyChanged(value),
+                    placeholder="sk-…",
+                    width=wide - 76.0,
+                    height=32.0,
+                  ),
+                  button(
+                    "隐藏",
+                    on_click=ToggleApiKeyReveal,
+                    variant=Tonal,
+                    width=68.0,
+                    height=32.0,
+                  ),
+                ],
+                spacing=8.0,
+              )
             } else {
-              "当前：未配置完整（缺 key/端点/模型），对话走本地剧本"
+              row(
+                [
+                  text(
+                    if config.api_key() == "" {
+                      "（未填写）"
+                    } else {
+                      "••••••••（已保存到本次会话）"
+                    },
+                    role=Body,
+                    width=wide - 76.0,
+                    height=32.0,
+                    align=TextStart,
+                  ),
+                  button(
+                    if config.api_key() == "" {
+                      "填写"
+                    } else {
+                      "显示/修改"
+                    },
+                    on_click=ToggleApiKeyReveal,
+                    variant=Tonal,
+                    width=68.0,
+                    height=32.0,
+                  ),
+                ],
+                spacing=8.0,
+              )
             },
-            role=Caption,
-            width=wide,
-            height=24.0,
-            align=TextStart,
-          ),
-        ],
-        spacing=10.0,
+            wrapped_caption(
+              "key 只存在本次会话的内存里，不会写进 config.json（那个文件会随世界库被备份或分享）。重新打开应用后需要再填一次。",
+              width=wide,
+            ),
+            text(
+              "温度（创造性，0.1 – 1.0）",
+              role=Body,
+              width=wide,
+              height=24.0,
+              align=TextStart,
+            ),
+            text_field(
+              config.temperature().to_string(),
+              on_input=value => TemperatureChanged(value),
+              placeholder="0.7",
+              width=wide,
+              height=32.0,
+            ),
+            text(
+              "上下文规模",
+              role=Body,
+              width=wide,
+              height=24.0,
+              align=TextStart,
+            ),
+            segmented_control(
+              [
+                choice_item("compact", "紧凑"),
+                choice_item("standard", "标准"),
+                choice_item("roomy", "宽裕"),
+              ],
+              selected=config.context_preset(),
+              on_select=value => ContextChanged(value),
+              width=wide,
+              size=Compact,
+            ),
+            wrapped_caption(
+              "紧凑≈3000字 · 标准≈6000字 · 宽裕≈12000字;影响历史保留量与记忆压缩频率。",
+              width=wide,
+            ),
+            row(
+              [
+                button(
+                  "保存设置",
+                  on_click=SaveConfig,
+                  width=120.0,
+                  height=34.0,
+                ),
+                button(
+                  "返回世界",
+                  on_click=CloseSettings,
+                  variant=Tonal,
+                  width=120.0,
+                  height=34.0,
+                ),
+              ],
+              spacing=12.0,
+            ),
+            text(
+              if config.llm_enabled() {
+                "当前：回复与 AI 生成来自模型（改动保存后生效）"
+              } else {
+                "当前：未配置完整（缺 key/端点/模型），对话走本地剧本"
+              },
+              role=Caption,
+              width=wide,
+              height=24.0,
+              align=TextStart,
+            ),
+          ],
+          spacing=10.0,
+        ),
+        width=wide,
       ),
       width=620.0,
       padding=26.0,

@@ -30,6 +30,16 @@
           "reason": "M5-5e code-view appearance toggle (MoonBit ⇄ DSL) kept as update-covered protocol: the update arm and wbtests exercise the transition while the view-side entry is pending re-wiring after the code pane refactor."
         }
       ]
+    },
+    {
+      "name": "Msg",
+      "path": "examples/ai_world/app/msg.mbt",
+      "scanRoots": [
+        "examples/ai_world/app",
+        "examples/ai_world/web_wasm",
+        "examples/ai_world/macos_skia"
+      ],
+      "waivers": []
     }
   ]
 }

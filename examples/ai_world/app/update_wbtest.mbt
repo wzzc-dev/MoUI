@@ -2,22 +2,15 @@
 /// Update-loop behaviour: selection, sending, replies, config, the world
 /// library, character creation, and AI world generation.
 ///
-/// The world starts blank; most tests import a small tavern scenario first.
-/// Provider-path tests flip the key on; no-key tests exercise the scripted
-/// local reply that replaced the old always-pending turn.
-
-///|
-let tavern_json : String =
-  #|{ "id": "tavern", "name": "雨夜酒馆", "background": "夜雨敲窗，炉火正暖。",
-  #|  "characters": [
-  #|    { "id": "lin", "name": "林掌柜", "persona": "酒馆掌柜，话不多但句句在理。",
-  #|      "voice": "简短、沉稳", "goal": "把这壶酒卖给客人", "secret": "后堂藏着一坛老酒" }
-  #|  ],
-  #|  "world_book": [ { "keys": ["酒", "花雕"], "content": "后堂埋着一坛三十年的女儿红。" } ] }
+/// The world starts blank; most tests open a small tavern world folder first.
+/// That is the same path the product uses (`WorldFilesArrived`), so the
+/// fixtures exercise the folder codec rather than a JSON import shortcut that
+/// no UI can reach. Provider-path tests flip the key on; no-key tests exercise
+/// the scripted local reply.
 
 ///|
 fn tavern() -> WorldModel {
-  step(WorldModel::new(), ImportScenario(tavern_json))
+  step(WorldModel::new(), WorldFilesArrived("tavern", true, tavern_files()))
 }
 
 ///|
@@ -29,9 +22,127 @@ fn tavern_with_key() -> WorldModel {
 test "selecting a character clears the composer" {
   let model = step(tavern(), DraftChanged("草稿"))
   assert_eq(model.draft(), "草稿")
-  let selected = step(model, Select(Some("lin")))
-  assert_eq(selected.selected(), Some("lin"))
+  let selected = step(model, Select(Some("林掌柜")))
+  assert_eq(selected.selected(), Some("林掌柜"))
   assert_eq(selected.draft(), "")
+}
+
+///|
+test "update never mutates the model it was given" {
+  // TEA purity: `(model, msg) -> (model, effect)` must not write through the
+  // input. Record update (`{ ..model, }`) shares array references, so a branch
+  // that logged or appended would edit the previous model too; the runtime
+  // does not diff models today, which is exactly why this must be pinned.
+  let before = tavern_with_key()
+  let selected = step(before, Select(Some("林掌柜")))
+  let log_before = before.log().length()
+  assert_eq(before.conversations.active_count(), 0)
+  // A turn appends a line, logs, and commits: all the containers mutate.
+  let (after, _effect) = update(selected, Send("温一壶酒"), turn_runner=(
+    _r,
+    _c,
+  ) => ())
+  assert_eq(selected.log().length(), log_before)
+  assert_eq(selected.conversations.for_character("林掌柜").lines().length(), 0)
+  assert_true(after.log().length() > log_before)
+  assert_eq(after.conversations.for_character("林掌柜").lines().length(), 1)
+  // Character creation mutates the roster and the log the same way.
+  let drafting = step(after, ToggleCreator)
+  let (created, _commit) = update(
+    step(
+      drafting,
+      CreatorChanged(drafting.creator_draft().with_name("阿七")),
+    ),
+    CharacterCreated,
+  )
+  assert_eq(after.scenario().characters().length(), 1)
+  assert_eq(created.scenario().characters().length(), 2)
+  assert_eq(drafting.log().length(), after.log().length())
+}
+
+///|
+test "re-selecting the same character keeps the draft" {
+  // The map drags and taps re-select the current character; that must not
+  // discard a half-written line.
+  let selected = step(tavern(), Select(Some("林掌柜")))
+  let typing = step(selected, DraftChanged("温一壶"))
+  let again = step(typing, Select(Some("林掌柜")))
+  assert_eq(again.draft(), "温一壶")
+  // Panning is likewise not a selection change.
+  let panned = step(typing, PanMap)
+  assert_eq(panned.draft(), "温一壶")
+  assert_eq(panned.selected(), Some("林掌柜"))
+  // Clearing the selection still clears it.
+  assert_eq(step(typing, Select(None)).draft(), "")
+}
+
+///|
+test "a second send is refused while the first is in flight" {
+  let selected = step(tavern_with_key(), Select(Some("林掌柜")))
+  let (sent, _first) = update(selected, Send("温一壶酒"), turn_runner=(
+    _r,
+    _c,
+  ) => ())
+  assert_true(sent.conversations.for_character("林掌柜").pending())
+  let lines = sent.conversations.for_character("林掌柜").lines().length()
+  // The player hits send again before the provider answers: no second line,
+  // no second request, and no duplicate log entry.
+  let (_, effect) = update(sent, Send("再来一壶"), turn_runner=(_r, _c) => {
+    ()
+  })
+  assert_true(is_no_effect(effect))
+  let (after, again) = update(sent, Send("再来一壶"), turn_runner=(_r, _c) => {
+    ()
+  })
+  assert_true(is_no_effect(again))
+  assert_eq(after.conversations.for_character("林掌柜").lines().length(), lines)
+  // Once the reply lands, sending works again.
+  let answered = step(sent, Reply("林掌柜", Some("嗯。")))
+  assert_false(answered.conversations.for_character("林掌柜").pending())
+  let (_, third) = update(answered, Send("再来一壶"), turn_runner=(_r, _c) => {
+    ()
+  })
+  assert_true(is_run_effect(third))
+}
+
+///|
+test "a world name with path syntax is sanitized before it reaches the host" {
+  let commits : Array[String] = []
+  let host : WorldHost = {
+    list_worlds: _done => (),
+    pick_root: _done => (),
+    read_world: (_folder, _done) => (),
+    write_world: (folder, _files, done) => {
+      commits.push(folder)
+      done(true)
+    },
+    read_config: _done => (),
+    write_config: (_content, _done) => (),
+  }
+  let typed = step(WorldModel::new(), WorldNameChanged("../../etc/passwd"))
+  let (created, effect) = update(typed, NewWorld, world_host=host)
+  // The traversal is neutralised: the name is a single path component, so no
+  // separator survives to make `..` mean "parent directory".
+  let folder = match created.current() {
+    Some(name) => name
+    None => fail("a world should have been created")
+  }
+  assert_false(folder.contains("/"))
+  assert_false(folder.contains("\\"))
+  assert_true(folder != "." && folder != "..")
+  // The host is only ever handed the sanitized name.
+  @moui.Effect::runtime_visit(
+    effect,
+    _m => (),
+    _d => (),
+    (_descriptor, run) => run(_m => ()),
+    (_descriptor, _task) => (),
+  )
+  assert_eq(commits, [folder])
+  // The player is told the name changed rather than silently losing it.
+  assert_true(
+    created.log().filter(line => line.contains("路径符号")).length() > 0,
+  )
 }
 
 ///|
@@ -39,16 +150,16 @@ test "sending with nothing selected is inert" {
   let model = WorldModel::new()
   let after = step(model, Send("你好"))
   assert_eq(after.log().length(), 0)
-  assert_eq(after.conversations.for_character("lin").lines().length(), 0)
+  assert_eq(after.conversations.for_character("林掌柜").lines().length(), 0)
 }
 
 ///|
 test "the no-key turn answers locally and completely" {
   // Without a key the world must still respond — in the same update, with no
   // dangling pending flag and no host effect.
-  let selected = step(tavern(), Select(Some("lin")))
+  let selected = step(tavern(), Select(Some("林掌柜")))
   let after = step(selected, Send("  温一壶酒  "))
-  let conversation = after.conversations.for_character("lin")
+  let conversation = after.conversations.for_character("林掌柜")
   assert_eq(conversation.lines().length(), 2)
   assert_eq(conversation.lines()[0].text(), "温一壶酒")
   assert_false(conversation.pending())
@@ -61,7 +172,7 @@ test "the no-key turn answers locally and completely" {
 ///|
 test "the scripted reply is deterministic and refers to the world" {
   let scenario = tavern().scenario()
-  let card : CharacterCard = scenario.character("lin").unwrap()
+  let card : CharacterCard = scenario.character("林掌柜").unwrap()
   let first = scripted_reply(scenario, card, "温一壶酒")
   let again = scripted_reply(scenario, card, "温一壶酒")
   assert_eq(first, again)
@@ -74,20 +185,20 @@ test "the scripted reply is deterministic and refers to the world" {
 
 ///|
 test "a keyed turn marks pending and emits exactly one provider effect" {
-  let selected = step(tavern_with_key(), Select(Some("lin")))
+  let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let (sent, effect) = update(selected, Send("温一壶酒"))
   assert_true(is_run_effect(effect))
-  let conversation = sent.conversations.for_character("lin")
+  let conversation = sent.conversations.for_character("林掌柜")
   assert_eq(conversation.lines().length(), 1)
   assert_true(conversation.pending())
 }
 
 ///|
 test "a reply is appended, cleaned, and clears pending" {
-  let selected = step(tavern_with_key(), Select(Some("lin")))
+  let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let sent = step(selected, Send("温一壶酒"))
-  let answered = step(sent, Reply("lin", Some("「嗯，酒温好了。」")))
-  let conversation = answered.conversations.for_character("lin")
+  let answered = step(sent, Reply("林掌柜", Some("「嗯，酒温好了。」")))
+  let conversation = answered.conversations.for_character("林掌柜")
   assert_eq(conversation.lines().length(), 2)
   // The corner brackets are stripped: the character speaks, not about itself.
   assert_eq(conversation.lines()[1].text(), "嗯，酒温好了。")
@@ -98,10 +209,10 @@ test "a reply is appended, cleaned, and clears pending" {
 ///|
 test "a failed reply keeps the history and clears pending" {
   // A provider hiccup must cost nothing: the player can simply ask again.
-  let selected = step(tavern_with_key(), Select(Some("lin")))
+  let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let sent = step(selected, Send("温一壶酒"))
-  let failed = step(sent, Reply("lin", None))
-  let conversation = failed.conversations.for_character("lin")
+  let failed = step(sent, Reply("林掌柜", None))
+  let conversation = failed.conversations.for_character("林掌柜")
   assert_eq(conversation.lines().length(), 1)
   assert_false(conversation.pending())
   // The failure is logged, and it names the provider rather than the character.
@@ -111,40 +222,57 @@ test "a failed reply keeps the history and clears pending" {
 
 ///|
 test "a reply for another character does not leak into this conversation" {
-  let selected = step(tavern_with_key(), Select(Some("lin")))
+  let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let sent = step(selected, Send("你好"))
   let other = step(sent, Reply("jianghu", Some("嗯。")))
-  assert_eq(other.conversations.for_character("lin").lines().length(), 1)
+  assert_eq(other.conversations.for_character("林掌柜").lines().length(), 1)
   assert_eq(other.conversations.for_character("jianghu").lines().length(), 1)
 }
 
 ///|
-test "importing a scenario replaces the world and clears the selection" {
-  let selected = step(WorldModel::new(), Select(Some("lin")))
+test "opening a different world folder replaces the world and drops selection" {
+  let selected = step(tavern(), Select(Some("林掌柜")))
   let imported = step(
     selected,
-    ImportScenario(
-      "{\"id\":\"court\",\"name\":\"朝堂\",\"background\":\"金殿。\"}",
-    ),
+    WorldFilesArrived("court", true, [
+      ("world.md", "# 朝堂\n\n金殿之上，无人敢言。\n"),
+      ("world_book.md", "# 世界书\n\n- 玉玺: 玉玺失踪了三日。\n"),
+    ]),
   )
   assert_eq(imported.scenario.name(), "朝堂")
-  assert_eq(imported.selected(), None)
+  // Conversations are keyed by character id and must not leak across worlds.
+  assert_eq(imported.conversations.for_character("林掌柜").lines().length(), 0)
   assert_true(imported.log().length() > 0)
 }
 
 ///|
-test "importing malformed JSON keeps the built-in reference world" {
-  let model = WorldModel::new()
-  let after = step(model, ImportScenario("garbage"))
-  assert_eq(after.scenario.id(), "tavern")
+test "opening a folder with no world.md keeps the current world" {
+  let model = step(tavern(), WorldFilesArrived("junk", true, [
+    ("notes.txt", "随便什么"),
+  ]))
+  assert_eq(model.scenario().name(), "雨夜酒馆")
+  assert_true(model.log()[0].contains("不是世界文件夹"))
 }
 
 ///|
-test "configuration edits round-trip through persistence" {
+test "configuration round-trips except the key, which stays in memory" {
   let model = step(WorldModel::new(), ApiKeyChanged("sk-test"))
   assert_true(model.config.llm_enabled())
   let restored = ModelConfig::from_json(model.config.to_json())
-  assert_eq(restored.api_key(), "sk-test")
+  // The endpoint/model/preset travel with the library; the credential does not.
+  // config.json sits in an ordinary folder the player may share or sync, so
+  // writing a live key there would leak it.
+  assert_eq(restored.api_key(), "")
+  assert_eq(restored.endpoint(), model.config.endpoint())
+  assert_eq(restored.model(), model.config.model())
+  assert_eq(restored.context_preset(), model.config.context_preset())
+  assert_false(restored.llm_enabled())
+  // An older file that still carries a key keeps working for that session.
+  let legacy = ModelConfig::from_json(
+    "{\"api_key\":\"sk-old\",\"endpoint\":\"https://example.invalid/v1\"}",
+  )
+  assert_eq(legacy.api_key(), "sk-old")
+  assert_true(legacy.llm_enabled())
   // Clearing the key disables the provider path.
   assert_false(step(model, ApiKeyChanged("")).config.llm_enabled())
 }
@@ -163,7 +291,7 @@ test "every Msg variant is reachable from a construction site" {
   // Mirrors the repository dead-message gate: each variant must be constructible
   // from the view or a proposal, not only from `update`.
   let model = WorldModel::new()
-  let selected = step(tavern(), Select(Some("lin")))
+  let selected = step(tavern(), Select(Some("林掌柜")))
   let world_files : Array[(String, String)] = [
     ("world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n"),
     ("characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n掌柜。\n"),
@@ -173,16 +301,13 @@ test "every Msg variant is reachable from a construction site" {
     step(model, Select(None)),
     step(selected, DraftChanged("draft")),
     step(selected, Send("hi")),
-    step(selected, Reply("lin", Some("ok"))),
-    step(selected, Reply("lin", None)),
+    step(selected, Reply("林掌柜", Some("ok"))),
+    step(selected, Reply("林掌柜", None)),
     step(model, EndpointChanged("https://example.invalid")),
     step(model, ModelChanged("gpt-4o-mini")),
     step(model, ApiKeyChanged("sk-x")),
     step(model, TemperatureChanged("0.5")),
     step(model, SaveConfig),
-    step(model, ConfigLoaded(None)),
-    step(model, ConfigSaved),
-    step(model, ImportScenario("{}")),
     step(model, SyncLibrary),
     step(model, PickWorldRoot),
     step(model, WorldListArrived(["tavern"])),
@@ -192,7 +317,7 @@ test "every Msg variant is reachable from a construction site" {
     step(model, ConfigFileLoaded(None)),
     step(model, SettingsSaved(true)),
   ]
-  assert_eq(touched.length(), 21)
+  assert_eq(touched.length(), 18)
   // Multi-argument messages are constructed but not stepped: the handler
   // behaviour has dedicated tests below.
   ignore(WorldFilesArrived("tavern", true, world_files))
@@ -206,7 +331,7 @@ test "every Msg variant is reachable from a construction site" {
   ignore(GenerateWorld)
   ignore(WorldGenerated(None))
   ignore(ContextChanged("standard"))
-  ignore(SummaryArrived("lin", 60, Some("笔记")))
+  ignore(SummaryArrived("林掌柜", 60, Some("笔记")))
   ignore(MemoryProposalsArrived(None))
   ignore(AcceptMemory(0))
   ignore(DiscardMemory(0))
@@ -586,7 +711,10 @@ test "settings open, file load, and save write to the world library" {
     (_descriptor, _task) => (),
   )
   assert_eq(writes.length(), 1)
-  assert_true(writes[0].contains("sk-live"))
+  // The file carries the shareable settings but never the credential.
+  assert_true(writes[0].contains("glm-5.3-flash"))
+  assert_false(writes[0].contains("sk-live"))
+  assert_false(writes[0].contains("\"api_key\""))
   // Close returns to the main page.
   assert_eq(step(loaded, CloseSettings).page(), Main)
   // A failed save is a log line; a missing file is silently ignored.
@@ -596,6 +724,99 @@ test "settings open, file load, and save write to the world library" {
   assert_true(is_no_effect(quiet_effect))
   let ignored = step(WorldModel::new(), ConfigFileLoaded(None))
   assert_eq(ignored.config().api_key(), "")
+}
+
+///|
+test "a provider turn carries the whole plan, including earlier turns" {
+  // Regression: the request used to be built from `plan.messages[0]` plus the
+  // last message only, so the model never saw history, the rolling summary, or
+  // the world-book block. Each turn was silently stateless.
+  let seen : Array[LlmRequest] = []
+  let runner : TurnRunner = (request, _on_reply) => seen.push(request)
+  let selected = step(tavern_with_key(), Select(Some("林掌柜")))
+  let (sent, effect) = update(
+    selected,
+    Send("温一壶酒"),
+    turn_runner=runner,
+  )
+  assert_true(is_run_effect(effect))
+  @moui.Effect::runtime_visit(
+    effect,
+    _m => (),
+    _d => (),
+    (_descriptor, run) => run(_m => ()),
+    (_descriptor, _task) => (),
+  )
+  assert_eq(seen.length(), 1)
+  // First turn: persona + the player's line, and the lore hit rides along.
+  let first = seen[0].messages()
+  assert_eq(first[0].0, "system")
+  assert_true(first[0].1.contains("林掌柜"))
+  assert_eq(first[first.length() - 1], ("user", "温一壶酒"))
+  assert_true(first.length() >= 3)
+  assert_true(
+    first.filter(message => message.1.contains("女儿红")).length() > 0,
+  )
+  // Second turn must include the previous exchange, oldest-first.
+  let answered = step(sent, Reply("林掌柜", Some("嗯，酒温好了。")))
+  let (_again, second_effect) = update(
+    answered,
+    Send("再来一壶"),
+    turn_runner=runner,
+  )
+  assert_true(is_run_effect(second_effect))
+  @moui.Effect::runtime_visit(
+    second_effect,
+    _m => (),
+    _d => (),
+    (_descriptor, run) => run(_m => ()),
+    (_descriptor, _task) => (),
+  )
+  assert_eq(seen.length(), 2)
+  let history = seen[1].messages()
+  assert_true(
+    history.filter(message => message.1 == "温一壶酒").length() > 0,
+  )
+  assert_true(
+    history.filter(message => message.1 == "嗯，酒温好了。").length() > 0,
+  )
+  assert_eq(history[history.length() - 1], ("user", "再来一壶"))
+  // The assistant line keeps its wire role rather than being flattened.
+  assert_true(history.filter(message => message.0 == "assistant").length() > 0)
+}
+
+///|
+test "the rolling summary rides on later turns" {
+  let seen : Array[LlmRequest] = []
+  let runner : TurnRunner = (request, _on_reply) => seen.push(request)
+  let selected = step(tavern_with_key(), Select(Some("林掌柜")))
+  selected.conversations.set(
+    selected.conversations
+    .for_character("林掌柜")
+    .append(ChatLine::player("旧事一桩"))
+    .with_summary("他们谈妥了赊账。", 60),
+  )
+  let (_sent, effect) = update(
+    selected,
+    Send("赊账还算数吗"),
+    turn_runner=runner,
+  )
+  @moui.Effect::runtime_visit(
+    effect,
+    _m => (),
+    _d => (),
+    (_descriptor, run) => run(_m => ()),
+    (_descriptor, _task) => (),
+  )
+  assert_eq(seen.length(), 1)
+  let messages = seen[0].messages()
+  assert_true(
+    messages.filter(message => message.1.contains("【此前】")).length() == 1,
+  )
+  assert_true(
+    messages.filter(message => message.1.contains("谈妥了赊账")).length() ==
+    1,
+  )
 }
 
 ///|
@@ -667,16 +888,16 @@ test "sending commits the journal and a fresh open restores it" {
 test "an overflowing send fires the compressor exactly once per threshold" {
   let captured : Array[String] = []
   let runner : TurnRunner = (request, _on_reply) => {
-    captured.push(request.system)
+    captured.push(request.system())
   }
   let model = tavern_with_key()
-  let selected = step(model, Select(Some("lin")))
+  let selected = step(model, Select(Some("林掌柜")))
   // Fill the history past the cap so compression pressure exists.
   let mut index = 0
   while index < 55 {
     selected.conversations.set(
       selected.conversations
-      .for_character("lin")
+      .for_character("林掌柜")
       .append(ChatLine::player("第 \\{index} 句闲聊")),
     )
     index += 1
@@ -702,18 +923,21 @@ test "an overflowing send fires the compressor exactly once per threshold" {
   let with_summary = step(
     _sent,
     SummaryArrived(
-      "lin",
-      _sent.conversations.for_character("lin").appended(),
+      "林掌柜",
+      _sent.conversations.for_character("林掌柜").appended(),
       Some("此前他们聊了55句闲聊。"),
     ),
   )
   assert_eq(
-    with_summary.conversations.for_character("lin").summary(),
+    with_summary.conversations.for_character("林掌柜").summary(),
     "此前他们聊了55句闲聊。",
   )
   captured.clear()
+  // The reply lands before the next turn: one send is in flight at a time, so
+  // a test that skipped the reply would now hit the in-flight guard.
+  let answered = step(with_summary, Reply("林掌柜", Some("嗯。")))
   let (_again, second_effect) = update(
-    with_summary,
+    answered,
     Send("再来一句"),
     turn_runner=runner,
   )
@@ -730,13 +954,13 @@ test "an overflowing send fires the compressor exactly once per threshold" {
 ///|
 test "memory proposals parse, deduplicate, and land only on accept" {
   let model0 = tavern_with_key()
-  let selected = step(model0, Select(Some("lin")))
+  let selected = step(model0, Select(Some("林掌柜")))
   // Bring the conversation to 9 appended lines so the reply reaches 10.
   let mut index = 0
   while index < 9 {
     selected.conversations.set(
       selected.conversations
-      .for_character("lin")
+      .for_character("林掌柜")
       .append(ChatLine::player("第 \\{index} 句")),
     )
     index += 1
@@ -747,7 +971,7 @@ test "memory proposals parse, deduplicate, and land only on accept" {
   }
   let (replied, effect) = update(
     selected,
-    Reply("lin", Some("嗯。")),
+    Reply("林掌柜", Some("嗯。")),
     turn_runner=runner,
   )
   assert_eq(replied.memory_drafts().length(), 0)

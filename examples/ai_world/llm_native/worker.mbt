@@ -23,8 +23,10 @@ pub struct LlmJob {
   api_key : String
   model : String
   temperature : Double
-  system : String
-  user : String
+  /// Ordered wire messages (`system` / `user` / `assistant`), already planned
+  /// and budget-trimmed by the app. Passing the whole array is what makes the
+  /// native transport history-aware.
+  messages : Array[(String, String)]
   on_result : (String?) -> Unit
 }
 
@@ -47,8 +49,7 @@ pub fn llm_submit(
   api_key : String,
   model : String,
   temperature : Double,
-  system : String,
-  user : String,
+  messages : Array[(String, String)],
   on_result : (String?) -> Unit,
 ) -> Unit {
   let job = LlmJob::{
@@ -56,8 +57,7 @@ pub fn llm_submit(
     api_key,
     model,
     temperature,
-    system,
-    user,
+    messages,
     on_result,
   }
   // The queue is unbounded, so a full queue is not a failure mode here.
@@ -65,22 +65,20 @@ pub fn llm_submit(
 }
 
 ///|
-/// Build the OpenAI-compatible chat/completions body.
+/// Build the OpenAI-compatible chat/completions body from the planned
+/// messages, in order.
 fn llm_request_body(job : LlmJob) -> String {
-  let system_message : Map[String, Json] = {
-    "role": Json::string("system"),
-    "content": Json::string(job.system),
-  }
-  let user_message : Map[String, Json] = {
-    "role": Json::string("user"),
-    "content": Json::string(job.user),
+  let messages : Array[Json] = []
+  for message in job.messages {
+    let fields : Map[String, Json] = {
+      "role": Json::string(message.0),
+      "content": Json::string(message.1),
+    }
+    messages.push(Json::object(fields))
   }
   let root : Map[String, Json] = {
     "model": Json::string(job.model),
-    "messages": Json::array([
-      Json::object(system_message),
-      Json::object(user_message),
-    ]),
+    "messages": Json::array(messages),
     "temperature": Json::number(job.temperature),
   }
   @json.to_json(Json::object(root)).stringify()

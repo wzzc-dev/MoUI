@@ -375,7 +375,7 @@ pub fn table_column(id~ : String, label~ : String, width? : Double) -> @data.Tab
 
 pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] text(String, role? : @style.TextRole, theme? : @core.Theme, width? : Double, height? : Double, align? : @core.TextAlign) -> @core.View[Msg]
+pub fn[Msg] text(String, role? : @style.TextRole, theme? : @core.Theme, width? : Double, height? : Double, align? : @core.TextAlign, wrap? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double, on_submit? : Msg?) -> @core.View[Msg]
 

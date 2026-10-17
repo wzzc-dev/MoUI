@@ -85,7 +85,9 @@ fn host_string(text_id : Int) -> String {
   let chars : Array[Char] = []
   let mut code = host_string_read_char(handle)
   while code >= 0 {
-    chars.push(Char::from_int(code))
+    // The page sends Unicode code points (`codePointAt`); a malformed one is
+    // replaced rather than trapping the read loop.
+    chars.push(code.to_char().unwrap_or('�'))
     code = host_string_read_char(handle)
   }
   host_finish_read_string(handle)
@@ -268,12 +270,9 @@ pub fn WebGateway::fs_complete(
     Some(ConfigRead(on_done)) => {
       self.fs_pending.remove(request_id)
       if ok {
-        let raw = host_string(payload_text_id)
-        let content = config_content(raw)
-        println("[llm] config raw_len=\{raw.length().to_string()} content_len=\{content.length().to_string()}")
         // The page wraps the file in {"content": ...}; unwrap before handing
         // the raw JSON to the app.
-        on_done(Some(content))
+        on_done(Some(config_content(payload)))
       } else {
         on_done(None)
       }

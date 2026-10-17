@@ -80,6 +80,11 @@ pub extend MessagePlan with Eq::{not_equal, equal}
 ///
 /// The world-book block rides on the *player's* turn rather than the system
 /// prompt, so only the turn that mentions "当铺" pays for the pawnshop lore.
+///
+/// Two messages are never trimmed: the system prompt (persona outranks
+/// setting) and the newest line (the player's actual turn). Dropping the
+/// newest line would make the model answer the world description instead of
+/// the question, so it is reserved before the history walk starts.
 pub fn plan_messages(
   scenario : Scenario,
   card : CharacterCard,
@@ -98,14 +103,24 @@ pub fn plan_messages(
   if lore != "" {
     messages.push(("system", "【相关背景】\n" + lore))
   }
-  // History newest-first until the remaining budget is spent.
-  let mut used = total_chars(messages)
+  let lines = conversation.lines()
+  // History newest-first until the remaining budget is spent. The newest line
+  // is mandatory (see above), so it is taken before the loop and its cost is
+  // charged up front.
   let kept : Array[(String, String)] = []
   let evicted : Array[ChatLine] = []
-  let mut index = conversation.lines().length()
+  let mut used = total_chars(messages)
+  let mut index = lines.length()
+  if index > 0 {
+    index -= 1
+    let newest = lines[index]
+    let wire = (newest.wire_role(), newest.text)
+    kept.push(wire)
+    used += wire.0.length() + wire.1.length()
+  }
   while index > 0 {
     index -= 1
-    let line = conversation.lines()[index]
+    let line = lines[index]
     let wire = (line.wire_role(), line.text)
     let cost = wire.0.length() + wire.1.length()
     if used + cost > budget {
@@ -116,9 +131,9 @@ pub fn plan_messages(
   }
   // Everything before the kept newest lines is evicted, oldest first, ready
   // for the compressor.
-  let evict_count = conversation.lines().length() - kept.length()
+  let evict_count = lines.length() - kept.length()
   for back in 0..<evict_count {
-    evicted.push(conversation.lines()[back])
+    evicted.push(lines[back])
   }
   // Restore oldest-first order for the wire.
   let mut cursor = kept.length()

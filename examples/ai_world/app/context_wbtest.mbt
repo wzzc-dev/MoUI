@@ -81,6 +81,32 @@ test "history is trimmed from the oldest end when the budget is exceeded" {
 }
 
 ///|
+test "the newest line survives even when the budget is already spent" {
+  // The newest turn is the thing the model must answer. It is reserved before
+  // the history walk, so an over-tight budget can drop older lines but never
+  // the question itself.
+  let scenario = Scenario::new(id="t", name="t", background="b", characters=[
+    CharacterCard::new(id="lin", name="林", persona="p"),
+  ])
+  let card = scenario
+    .character("lin")
+    .unwrap_or(CharacterCard::new(id="", name="", persona=""))
+  let conversation = Conversation::new(character_id="lin")
+    .append(ChatLine::player("旧的一句"))
+    .append(ChatLine::character("lin", "旧的回答"))
+    .append(ChatLine::player("这一句必须留下"))
+  // A budget far smaller than the system prompt alone.
+  let plan = plan_messages(scenario, card, conversation, "你好", budget=1)
+  assert_eq(
+    plan.messages[plan.messages.length() - 1].1,
+    "这一句必须留下",
+  )
+  // Everything older is handed to the compressor instead of vanishing.
+  assert_eq(plan.evicted.length(), 2)
+  assert_eq(plan.evicted[0].text(), "旧的一句")
+}
+
+///|
 test "an unrelated turn adds no lore message" {
   let scenario = default_scenario()
   let card = scenario

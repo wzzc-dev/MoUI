@@ -8,88 +8,6 @@
 /// cosmetic event rather than a corrupted world.
 
 ///|
-/// Top-level pages: the main three-stage layout and a full-width settings
-/// page (the model configuration lives in `<世界库>/config.json`).
-pub(all) enum Page {
-  Main
-  Settings
-} derive(Eq, Debug)
-
-///|
-pub extend Page with Debug::{to_repr}
-
-///|
-pub extend Page with Eq::{not_equal, equal}
-
-///|
-pub(all) enum Msg {
-  /// Select the character the player is talking to.
-  Select(String?)
-  /// Player edited the composer without sending yet.
-  DraftChanged(String)
-  /// Player typed a line and submitted it.
-  Send(String)
-  /// A provider reply arrived; `None` text means the call failed.
-  Reply(String, String?)
-  /// Open the settings page (re-reads `config.json` from the library).
-  OpenSettings
-  /// Back to the main layout.
-  CloseSettings
-  /// The library's `config.json` arrived; `None` = missing or unreadable.
-  ConfigFileLoaded(String?)
-  /// A settings-file write finished.
-  SettingsSaved(Bool)
-  /// Configuration field edits.
-  EndpointChanged(String)
-  ModelChanged(String)
-  ApiKeyChanged(String)
-  TemperatureChanged(String)
-  /// Persist the current configuration through host settings.
-  SaveConfig
-  ConfigLoaded(String?)
-  ConfigSaved
-  /// Import a scenario JSON blob, replacing the current world.
-  ImportScenario(String)
-  // ---- world management (folder database) ----
-  /// Re-list the library without interaction.
-  SyncLibrary
-  /// Ask the host to pick/point at the library root (a user gesture).
-  PickWorldRoot
-  /// The library listing arrived.
-  WorldListArrived(Array[String])
-  /// Open (or re-read) one world folder.
-  OpenWorld(String)
-  /// One world folder's files arrived.
-  WorldFilesArrived(String, Bool, Array[(String, String)])
-  /// The new-world name being typed.
-  WorldNameChanged(String)
-  /// Create the folder for a new world.
-  NewWorld
-  /// A world folder write finished.
-  WorldCommitted(String, Bool)
-  // ---- character creation ----
-  ToggleCreator
-  CreatorChanged(CharacterDraft)
-  CharacterCreated
-  // ---- AI world generation ----
-  WorldIdeaChanged(String)
-  GenerateWorld
-  /// The provider answered a generation request (`None` = failure).
-  WorldGenerated(String?)
-  // ---- context & memory ----
-  /// The context-budget preset changed from the settings page.
-  ContextChanged(String)
-  /// A memory-compression reply arrived; `None` = failure (retry later).
-  SummaryArrived(String, Int, String?)
-  /// A memory-extraction reply arrived; `None` = failure.
-  MemoryProposalsArrived(String?)
-  /// Adopt a proposed memory entry into the world book.
-  AcceptMemory(Int)
-  /// Drop a proposed memory entry.
-  DiscardMemory(Int)
-}
-
-///|
 pub struct WorldModel {
   scenario : Scenario
   conversations : ConversationBook
@@ -123,6 +41,9 @@ pub struct WorldModel {
   /// player's accept / discard decision. Nothing reaches the world book
   /// without that decision — the curated lore file stays the author's.
   memory_drafts : Array[WorldEntry]
+  /// Whether the settings page shows the API key in clear text. Session UI
+  /// state only; the key itself is never persisted either way.
+  api_key_revealed : Bool
 } derive(Eq, Debug)
 
 ///|
@@ -151,6 +72,7 @@ pub fn WorldModel::new() -> WorldModel {
     page: Main,
     config_file_loaded: false,
     memory_drafts: [],
+    api_key_revealed: false,
   }
 }
 
@@ -231,6 +153,12 @@ pub fn WorldModel::memory_drafts(self : WorldModel) -> Array[WorldEntry] {
 }
 
 ///|
+/// Whether the settings page renders the key in clear text.
+pub fn WorldModel::api_key_revealed(self : WorldModel) -> Bool {
+  self.api_key_revealed
+}
+
+///|
 pub fn WorldModel::world_name(self : WorldModel) -> String {
   self.world_name
 }
@@ -251,6 +179,12 @@ pub type TurnRunner = (LlmRequest, (String?) -> Unit) -> Unit
 ///|
 /// Host capability for the folder database (the player's library). Same
 /// injection style as `TurnRunner`: the platform entrypoint owns the IO.
+///
+/// The file set a host must return from `read_world` is a contract, not a
+/// detail: `world.md`, `characters/<名>.md`, `world_book.md`, and the journal
+/// (`conversations.json`, `events.json`) when present. Hosts that filter to
+/// `*.md` alone look correct but silently reset every conversation on reopen,
+/// so both entrypoints read the JSON files too.
 pub(all) struct WorldHost {
   /// Non-interactive listing of the world folders in the library.
   list_worlds : ((Array[String]) -> Unit) -> Unit
@@ -283,6 +217,27 @@ pub fn WorldModel::push_log(self : WorldModel, line : String) -> Unit {
 ///|
 /// Maximum retained log lines.
 pub let world_log_limit : Int = 40
+
+///|
+/// Start a new model value whose mutable containers are **not** shared with
+/// the previous one.
+///
+/// `{ ..model, }` copies the record but keeps the same `Array` references, so
+/// `push_log` / `ConversationBook::set` / `memory_drafts.push` would mutate
+/// the model that was passed in. `update` is supposed to be a pure
+/// `(Model, Msg) -> (Model, Effect)`, and tests that keep both values would
+/// otherwise observe edits "through" the old one. The runtime happens not to
+/// diff models today, which is exactly why this must not be load-bearing:
+/// every branch that mutates a container starts from `model.fork()`.
+pub fn WorldModel::fork(self : WorldModel) -> WorldModel {
+  {
+    ..self,
+    log: self.log.copy(),
+    worlds: self.worlds.copy(),
+    memory_drafts: self.memory_drafts.copy(),
+    conversations: self.conversations.clone(),
+  }
+}
 
 ///|
 /// Append the player's line to a conversation, returning the updated state.
@@ -360,100 +315,8 @@ fn world_files_from_paths(files : Array[(String, String)]) -> WorldFiles {
 }
 
 ///|
-/// Effect: list the library without interaction.
-fn sync_library_effect(host : WorldHost) -> @moui.Effect[Msg] {
-  @moui.Effect::run(
-    key="ai-world:library",
-    kind="filesystem",
-    label="List world library",
-    run=dispatch => {
-      (host.list_worlds)(names => dispatch(WorldListArrived(names)))
-    },
-  )
-}
-
-///|
-/// Effect: read one world folder.
-fn open_world_effect(host : WorldHost, folder : String) -> @moui.Effect[Msg] {
-  @moui.Effect::run(
-    key="ai-world:open",
-    kind="filesystem",
-    label="Open world \{folder}",
-    run=dispatch => {
-      (host.read_world)(folder, (ok, files) => {
-        dispatch(WorldFilesArrived(folder, ok, files))
-      })
-    },
-  )
-}
-
-///|
-/// Effect: read the library-root config file.
-fn read_config_effect(host : WorldHost) -> @moui.Effect[Msg] {
-  @moui.Effect::run(
-    key="ai-world:config-read",
-    kind="filesystem",
-    label="Load settings",
-    run=dispatch => (host.read_config)(text => dispatch(ConfigFileLoaded(text))),
-  )
-}
-
-///|
-/// Effect: write the library-root config file.
-fn write_config_effect(host : WorldHost, json : String) -> @moui.Effect[Msg] {
-  @moui.Effect::run(
-    key="ai-world:config-write",
-    kind="filesystem",
-    label="Save settings",
-    run=dispatch => (host.write_config)(json, ok => dispatch(SettingsSaved(ok))),
-  )
-}
-
-///|
-/// Effect: write every file of the current world folder.
-fn commit_world_effect(
-  host : WorldHost,
-  folder : String,
-  files : Array[(String, String)],
-) -> @moui.Effect[Msg] {
-  @moui.Effect::run(
-    key="ai-world:commit",
-    kind="filesystem",
-    label="Save world \{folder}",
-    run=dispatch => {
-      (host.write_world)(folder, files, ok => {
-        dispatch(WorldCommitted(folder, ok))
-      })
-    },
-  )
-}
-
-///|
-/// The full folder payload: the Markdown world files plus the JSON journal
-/// (conversations + event log). Every world mutation commits the journal too,
-/// so the folder on disk is always a complete, replayable world.
-fn commit_files(model : WorldModel) -> Array[(String, String)] {
-  let files = model.scenario.world_files()
-  files.push((conversations_file, model.conversations.to_json_text()))
-  files.push((events_file, events_json_text(model.log)))
-  files
-}
-
-///|
-/// Commit the journal (and with it the world) when a world folder and a host
-/// both exist; otherwise this is a no-op — running without a library still
-/// plays fine, it just persists nothing.
-fn journal_effect(
-  model : WorldModel,
-  world_host : WorldHost?,
-) -> @moui.Effect[Msg] {
-  match (model.current, world_host) {
-    (Some(folder), Some(host)) =>
-      commit_world_effect(host, folder, commit_files(model))
-    _ => @moui.Effect::none()
-  }
-}
-
+/// The folder payload and the host effects that write it live in `effect.mbt`;
+/// this file only decides when to emit them.
 ///|
 /// Apply a world message with an optional host; shared by the constructor so
 /// every entrypoint gets the same defaults.
@@ -469,7 +332,17 @@ pub fn update(
   }
   let host : WorldHost? = world_host
   match msg {
-    Select(id) => ({ ..model, selected: id, draft: "", }, @moui.Effect::none())
+    Select(id) => {
+      // Re-selecting the same character (a map tap on the selected marker, a
+      // drag that ends in a click) must not discard a half-written line.
+      let next = if model.selected == id {
+        model
+      } else {
+        { ..model, selected: id, draft: "", }
+      }
+      (next, @moui.Effect::none())
+    }
+    PanMap => (model, @moui.Effect::none())
     DraftChanged(value) => ({ ..model, draft: value, }, @moui.Effect::none())
     Send(text) => {
       let trimmed : String = text.trim().to_owned()
@@ -484,7 +357,14 @@ pub fn update(
           match model.scenario.character(id) {
             None => (model, @moui.Effect::none())
             Some(card) => {
-              let next = { ..model, draft: "", }
+              // One turn in flight per conversation: a second send while the
+              // provider is still answering would stack requests and let the
+              // first reply clear the pending flag under the second one.
+              let in_flight = model.conversations.for_character(id)
+              if in_flight.pending() {
+                return (model, @moui.Effect::none())
+              }
+              let next = { ..model.fork(), draft: "", }
               append_player(next, id, trimmed)
               next.push_log(
                 "you → \{character_name(next.scenario, id)}: \{trimmed}",
@@ -502,14 +382,17 @@ pub fn update(
                   trimmed,
                   budget=next.config.context_budget(),
                 )
+                // The whole plan is the request: system prompt, rolling
+                // summary, world-book hits, and every history line that fits.
+                // Sending only the first and last message would make each
+                // turn stateless and silently discard the compression work.
                 let request = LlmRequest::new(
                   character_id=id,
                   endpoint=next.config.endpoint(),
                   api_key=next.config.api_key(),
                   model=next.config.model(),
                   temperature=next.config.temperature(),
-                  system=plan.messages[0].1,
-                  user=plan.messages[plan.messages.length() - 1].1,
+                  messages=plan.messages,
                 )
                 let effects : Array[@moui.Effect[Msg]] = [
                   @moui.Effect::run(
@@ -534,7 +417,7 @@ pub fn update(
                     prior_summary=conversation.summary(),
                     source_lines=source,
                   )
-                  let summary_request = LlmRequest::new(
+                  let summary_request = LlmRequest::single_shot(
                     character_id=id,
                     endpoint=next.config.endpoint(),
                     api_key=next.config.api_key(),
@@ -577,7 +460,7 @@ pub fn update(
     Reply(character_id, text) =>
       match text {
         Some(reply) => {
-          let next = { ..model, }
+          let next = model.fork()
           let cleaned = llm_clean_reply(
             reply,
             character_name(next.scenario, character_id),
@@ -597,7 +480,7 @@ pub fn update(
               character_name=character_name(next.scenario, character_id),
               lines=conversation.lines(),
             )
-            let propose_request = LlmRequest::new(
+            let propose_request = LlmRequest::single_shot(
               character_id="!memory",
               endpoint=next.config.endpoint(),
               api_key=next.config.api_key(),
@@ -624,7 +507,7 @@ pub fn update(
         None => {
           // The provider failed. The conversation stays intact and the pending
           // flag clears, so the player can retry without losing context.
-          let next = { ..model, }
+          let next = model.fork()
           let conversation = next.conversations.for_character(character_id)
           next.conversations.set(conversation.with_pending(false))
           let name = character_name(next.scenario, character_id)
@@ -663,7 +546,7 @@ pub fn update(
       match host {
         Some(h) => (model, write_config_effect(h, model.config.to_json()))
         None => {
-          let next = { ..model, }
+          let next = model.fork()
           next.push_log(
             "（未接入世界库）设置仅保存在本会话内存中",
           )
@@ -683,7 +566,7 @@ pub fn update(
             (model, @moui.Effect::none())
           } else {
             let next = {
-              ..model,
+              ..model.fork(),
               config: ModelConfig::from_json(json),
               config_file_loaded: true,
             }
@@ -693,7 +576,7 @@ pub fn update(
         None => (model, @moui.Effect::none())
       }
     SettingsSaved(ok) => {
-      let next = { ..model, }
+      let next = model.fork()
       if ok {
         next.push_log(
           "设置已保存到世界库 config.json（key 属于你自己的数据文件夹）",
@@ -703,26 +586,6 @@ pub fn update(
           "设置写入失败——世界库还没有就绪，稍后再试",
         )
       }
-      (next, @moui.Effect::none())
-    }
-    ConfigLoaded(text) =>
-      match text {
-        Some(value) =>
-          (
-            { ..model, config: ModelConfig::from_json(value), },
-            @moui.Effect::none(),
-          )
-        None => (model, @moui.Effect::none())
-      }
-    ConfigSaved => {
-      let next = { ..model, }
-      next.push_log("configuration saved")
-      (next, @moui.Effect::none())
-    }
-    ImportScenario(text) => {
-      let scenario = Scenario::try_from_json(text).unwrap_or(default_scenario())
-      let next = { ..model, scenario, selected: None, }
-      next.push_log("scenario replaced: \{scenario.name()}")
       (next, @moui.Effect::none())
     }
     // ---- world management ----
@@ -784,13 +647,24 @@ pub fn update(
       }
     }
     OpenWorld(folder) =>
-      match host {
-        Some(h) => (model, open_world_effect(h, folder))
-        None => (model, @moui.Effect::none())
+      // Only a plain child-folder name can reach the host. The list comes from
+      // the host itself, so this is a guard against a malformed listing rather
+      // than a user path.
+      if folder != world_folder_name(folder) || folder == "" {
+        let next = model.fork()
+        next.push_log(
+          "「\{folder}」不是合法的世界文件夹名，已忽略",
+        )
+        (next, @moui.Effect::none())
+      } else {
+        match host {
+          Some(h) => (model, open_world_effect(h, folder))
+          None => (model, @moui.Effect::none())
+        }
       }
     WorldFilesArrived(folder, ok, files) =>
       if !ok {
-        let next = { ..model, }
+        let next = model.fork()
         next.push_log(
           "无法读取世界库「\{folder}」——先选择一个文件夹作为世界库",
         )
@@ -806,7 +680,7 @@ pub fn update(
               None => true
             }
             let next = {
-              ..model,
+              ..model.fork(),
               scenario: parsed.scenario,
               current: Some(folder),
             }
@@ -831,7 +705,7 @@ pub fn update(
             (next, @moui.Effect::none())
           }
           None => {
-            let next = { ..model, }
+            let next = model.fork()
             next.push_log(
               "「\{folder}」不是世界文件夹（缺 world.md 或名字行）",
             )
@@ -842,19 +716,29 @@ pub fn update(
     WorldNameChanged(value) =>
       ({ ..model, world_name: value, }, @moui.Effect::none())
     NewWorld => {
-      let name : String = model.world_name.trim().to_owned()
-      if name == "" {
-        let next = { ..model, }
+      let typed : String = model.world_name.trim().to_owned()
+      if typed == "" {
+        let next = model.fork()
         next.push_log("先给新世界起个名字")
         return (next, @moui.Effect::none())
       }
+      // The name becomes a directory on the player's disk, so it is sanitized
+      // before it is compared or handed to the host: a typed `../x` must not be
+      // able to create a folder outside the library.
+      let name = world_folder_name(typed)
+      if name != typed {
+        let warned = { ..model, }
+        warned.push_log(
+          "名字里的路径符号已替换：「\{typed}」→「\{name}」",
+        )
+      }
       if model.worlds.contains(name) {
-        let next = { ..model, }
+        let next = model.fork()
         next.push_log("「\{name}」已存在——直接打开它即可")
         return (next, @moui.Effect::none())
       }
       let next = {
-        ..model,
+        ..model.fork(),
         scenario: blank_world(name),
         current: Some(name),
         worlds: with_world(model.worlds, name),
@@ -869,7 +753,7 @@ pub fn update(
       }
     }
     WorldCommitted(folder, ok) => {
-      let next = { ..model, }
+      let next = model.fork()
       if ok {
         next.push_log("已保存到世界库：\{folder}")
       } else {
@@ -921,7 +805,7 @@ pub fn update(
         world_book=model.scenario.world_book(),
       )
       let next = {
-        ..model,
+        ..model.fork(),
         scenario,
         selected: Some(id),
         draft: "",
@@ -944,7 +828,7 @@ pub fn update(
     GenerateWorld => {
       let idea : String = model.idea.trim().to_owned()
       if idea == "" {
-        let next = { ..model, }
+        let next = model.fork()
         next.push_log(
           "先写一句话设定世界（例如：雨夜江南小镇的当铺）",
         )
@@ -955,7 +839,7 @@ pub fn update(
       } else if model.config.llm_enabled() {
         let next = { ..model, generating: true, }
         let prompt = world_idea_prompt(idea)
-        let request = LlmRequest::new(
+        let request = LlmRequest::single_shot(
           character_id="!world",
           endpoint=next.config.endpoint(),
           api_key=next.config.api_key(),
@@ -977,10 +861,12 @@ pub fn update(
         )
       } else {
         // Offline branch: the idea still becomes a world, deterministically.
+        // The folder name is derived from the player's idea, so it is
+        // sanitized here too (see `world_folder_name`).
         let world = fallback_world(idea)
-        let folder = world.name()
+        let folder = world_folder_name(world.name())
         let next = {
-          ..model,
+          ..model.fork(),
           scenario: world,
           current: Some(folder),
           idea: "",
@@ -1028,7 +914,7 @@ pub fn update(
                   // open; otherwise it becomes its own new world folder.
                   let folder = match model.current {
                     Some(folder) => folder
-                    None => md_safe_name(world.name())
+                    None => world_folder_name(world.name())
                   }
                   // Keep the world's folder identity stable for future saves.
                   let named = Scenario::new(
@@ -1042,7 +928,7 @@ pub fn update(
                     world_book=world.world_book(),
                   )
                   let settled = {
-                    ..next,
+                    ..next.fork(),
                     scenario: named,
                     current: Some(folder),
                     idea: "",
@@ -1074,7 +960,7 @@ pub fn update(
     SummaryArrived(character_id, marker, text) =>
       match text {
         Some(reply) => {
-          let next = { ..model, }
+          let next = model.fork()
           let conversation = next.conversations.for_character(character_id)
           let summary = clip_chars(llm_clean_reply(reply, ""), 600)
           next.conversations.set(conversation.with_summary(summary, marker))
@@ -1092,7 +978,7 @@ pub fn update(
       match reply {
         None => (model, @moui.Effect::none())
         Some(text) => {
-          let next = { ..model, }
+          let next = model.fork()
           let proposed = parse_memory_proposals(
             text,
             next.scenario.world_book(),
@@ -1146,6 +1032,11 @@ pub fn update(
           }
         }
       }
+    ToggleApiKeyReveal =>
+      (
+        { ..model, api_key_revealed: !model.api_key_revealed, },
+        @moui.Effect::none(),
+      )
     DiscardMemory(index) => {
       let drafts : Array[WorldEntry] = []
       for i in 0..<model.memory_drafts.length() {

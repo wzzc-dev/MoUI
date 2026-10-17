@@ -1,20 +1,21 @@
 ///|
-/// Model configuration: which provider to talk to, and how fast the world runs.
+/// Model configuration: which provider to talk to, and how much context to
+/// send.
 ///
-/// Configuration is persisted through `@services.SettingsServices` by the
-/// platform entrypoint, never by the app package directly: the app only owns
-/// the plain-data shape and the JSON encoding, which keeps it portable and
-/// testable. The API key lives only in session memory — it is never logged and
-/// never written into a project file.
+/// The app owns the plain-data shape and the JSON encoding; the platform
+/// entrypoints only move the bytes (`WorldHost::read_config` /
+/// `write_config`). Endpoint, model, sampling, and the context preset persist
+/// to `<library>/config.json` so they travel with the player's worlds. The API
+/// key does **not** persist: it lives in session memory only, is never logged,
+/// and `to_json` leaves it out (see `ModelConfig::to_json`).
 
 ///|
 pub struct ModelConfig {
   endpoint : String
   model : String
+  /// Provider credential. Session-only: never serialized, never logged.
   api_key : String
   temperature : Double
-  /// Milliseconds between world ticks. Lower is faster and costs more calls.
-  tick_interval_ms : Double
   /// Context budget preset: "compact" / "standard" / "roomy". Hand-decoded
   /// (see `from_json`) so an older config.json without this field still loads
   /// every other field instead of falling back wholesale to defaults.
@@ -32,11 +33,6 @@ pub let config_default_endpoint : String = "https://api.openai.com/v1"
 
 ///|
 pub let config_default_model : String = "gpt-4o-mini"
-
-///|
-/// How many characters of prompt we are willing to send. Bounded so a
-/// misbehaving provider cannot be handed an unbounded request.
-pub let config_prompt_budget : Int = 6000
 
 ///|
 /// Context presets: the settings page exposes tiers, never raw numbers —
@@ -78,22 +74,12 @@ pub fn ModelConfig::with_context_preset(
 }
 
 ///|
-/// Label of the preset for the event log.
-pub fn context_preset_label(preset : String) -> String {
-  match preset {
-    "compact" | "standard" | "roomy" => preset
-    _ => "standard"
-  }
-}
-
-///|
 pub fn ModelConfig::new() -> ModelConfig {
   {
     endpoint: config_default_endpoint,
     model: config_default_model,
     api_key: "",
     temperature: 0.7,
-    tick_interval_ms: 900.0,
     context_preset: config_context_standard,
   }
 }
@@ -116,11 +102,6 @@ pub fn ModelConfig::api_key(self : ModelConfig) -> String {
 ///|
 pub fn ModelConfig::temperature(self : ModelConfig) -> Double {
   self.temperature
-}
-
-///|
-pub fn ModelConfig::tick_interval_ms(self : ModelConfig) -> Double {
-  self.tick_interval_ms
 }
 
 ///|
@@ -165,24 +146,32 @@ pub fn ModelConfig::with_temperature(
 }
 
 ///|
-pub fn ModelConfig::with_tick_interval_ms(
-  self : ModelConfig,
-  tick_interval_ms : Double,
-) -> ModelConfig {
-  { ..self, tick_interval_ms, }
-}
-
-///|
-/// Encode for `SettingsServices::write`. Owned by the app so the persisted
-/// shape stays stable while the model evolves.
+/// Encode the *shareable* configuration: endpoint, model, sampling, and the
+/// context preset.
+///
+/// The API key is deliberately **not** written. `config.json` lives in the
+/// player's library folder, which is an ordinary directory (`config.json` gets
+/// committed, shared, or synced like any other file), so persisting a live
+/// credential there would leak it. The key stays in session memory; the
+/// settings page says so, and re-entering it after a restart is the cost.
 pub fn ModelConfig::to_json(self : ModelConfig) -> String {
-  @json.to_json(self).stringify()
+  let root : Map[String, Json] = {
+    "endpoint": Json::string(self.endpoint),
+    "model": Json::string(self.model),
+    "temperature": Json::number(self.temperature),
+    "context_preset": Json::string(self.context_preset),
+  }
+  Json::object(root).stringify()
 }
 
 ///|
-/// Decode from `SettingsServices::read`. Hand-written instead of derived so
-/// a field missing from an older config.json falls back per-field: one new
-/// setting must never wipe the player's endpoint/model/key.
+/// Decode from the library's `config.json`. Hand-written instead of derived so
+/// a field missing from an older file falls back per-field: one new setting
+/// must never wipe the player's endpoint/model.
+///
+/// `api_key` is accepted when an older file still contains one (so upgrading
+/// players keep working for that session) but is never written back by
+/// `to_json`.
 pub fn ModelConfig::from_json(text : String) -> ModelConfig {
   let defaults = ModelConfig::new()
   let parsed = @json.parse(text) catch { _ => return defaults }
@@ -203,7 +192,6 @@ pub fn ModelConfig::from_json(text : String) -> ModelConfig {
     }
   }
   let temperature = number_at("temperature", defaults.temperature)
-  let tick = number_at("tick_interval_ms", defaults.tick_interval_ms)
   {
     endpoint: text_at("endpoint", defaults.endpoint),
     model: text_at("model", defaults.model),
@@ -215,11 +203,6 @@ pub fn ModelConfig::from_json(text : String) -> ModelConfig {
       defaults.temperature
     } else {
       temperature
-    },
-    tick_interval_ms: if tick.is_nan() || tick <= 0.0 {
-      defaults.tick_interval_ms
-    } else {
-      tick
     },
     context_preset: text_at("context_preset", config_context_standard),
   }

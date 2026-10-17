@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/ai_world/llm_native"
+
+import {
+  "moonbitlang/async/aqueue",
+}
+
+// Values
+pub fn llm_submit(LlmOwner, String, String, String, Double, Array[(String, String)], (String?) -> Unit) -> Unit
+
+pub async fn llm_worker_loop(LlmOwner) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct LlmJob {
+  endpoint : String
+  api_key : String
+  model : String
+  temperature : Double
+  messages : Array[(String, String)]
+  on_result : (String?) -> Unit
+}
+
+pub struct LlmOwner {
+  queue : @aqueue.Queue[LlmJob]
+}
+pub fn LlmOwner::new() -> Self
+
+// Type aliases
+
+// Traits

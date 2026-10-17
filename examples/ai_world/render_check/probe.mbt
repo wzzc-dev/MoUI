@@ -6,21 +6,23 @@
 /// every marker must land at (view-x + map-x, view-y + map-y).
 
 ///|
+/// Build a probe world through the same folder path the product uses. The
+/// Markdown fixture keeps the probe honest: it exercises the real codec
+/// (`world.md` + a character card) rather than a test-only JSON import.
 fn robot_world() -> @app.WorldModel {
-  let json =
-    #|{ "id": "probe", "name": "探针世界", "background": "b",
-    #|  "map_width": 640, "map_height": 420,
-    #|  "locations": [
-    #|    { "id": "shop", "name": "当铺", "description": "",
-    #|      "rect": { "origin": {"x": 400.0, "y": 250.0}, "size": {"width": 180.0, "height": 120.0} } }
-    #|  ],
-    #|  "characters": [
-    #|    { "id": "zhou", "name": "周跛子", "persona": "x", "point": {"x": 490.0, "y": 310.0} }
-    #|  ],
-    #|  "world_book": [] }
+  let files : Array[(String, String)] = [
+    (
+      "world.md",
+      "# 探针世界\n\nb\n\n## 地点\n\n- 当铺: x=400 y=250 w=180 h=120\n",
+    ),
+    (
+      "characters/周跛子.md",
+      "# 周跛子\n\n## 人设\n\nx\n\n## 位置\n\nx=490 y=310\n",
+    ),
+  ]
   let (model, _effect) = @app.update(
     @app.WorldModel::new(),
-    @app.ImportScenario(json),
+    @app.WorldFilesArrived("probe", true, files),
   )
   model
 }
