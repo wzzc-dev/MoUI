@@ -171,12 +171,42 @@ pub fn llm_parse_reply(text : String) -> String? {
       match first.get("message") {
         Some(Object(message)) =>
           match message.get("content") {
+            // Plain text: the shape OpenAI itself returns.
             Some(String(content)) => Some(content)
-            _ => return None
+            // Content blocks: Anthropic-style gateways and several
+            // OpenAI-compatible proxies return `[{"type":"text","text":…}]`
+            // instead of a string. Rejecting it made every reply from such an
+            // endpoint look like a failure, with no hint as to why.
+            Some(Array(blocks)) => text_from_blocks(blocks)
+            _ => None
           }
-        _ => return None
+        _ => None
       }
-    _ => return None
+    _ => None
+  }
+}
+
+///|
+/// Join the text of a content-block array, ignoring non-text blocks.
+fn text_from_blocks(blocks : Array[Json]) -> String? {
+  let parts : Array[String] = []
+  for block in blocks {
+    match block {
+      Object(fields) =>
+        match fields.get("text") {
+          Some(String(text)) => parts.push(text)
+          _ => ()
+        }
+      _ => ()
+    }
+  }
+  if parts.is_empty() {
+    // A block array with no text (for example a pure tool-call response) is
+    // still a reply we cannot use; treating it as `None` keeps the failure
+    // path honest instead of appending an empty line.
+    None
+  } else {
+    Some(parts.join(""))
   }
 }
 

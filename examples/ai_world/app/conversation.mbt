@@ -31,10 +31,21 @@ fn speaker_role(speaker : Speaker) -> String {
 }
 
 ///|
-// One line of dialogue.
+/// One line of dialogue.
+///
+/// `alternatives` holds the other replies the model produced for the same turn
+/// plus where the player is looking right now — the "swipe" affordance every
+/// chat product has. `text` is always the selected alternative, so every
+/// existing reader (prompt assembly, transcript rendering, export) keeps
+/// working unchanged; swiping only swaps `text` and `selected`.
 pub struct ChatLine {
   speaker : Speaker
   text : String
+  /// Other candidates for this turn (never includes `text` itself).
+  alternatives : Array[String]
+  /// Index into the logical list `[text] + alternatives`, so a swipe can move
+  /// left/right without losing the original answer.
+  selected : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -48,12 +59,47 @@ pub extend ChatLine with ToJson::{to_json}
 
 ///|
 pub fn ChatLine::player(text : String) -> ChatLine {
-  { speaker: Player, text, }
+  { speaker: Player, text, alternatives: [], selected: 0, }
+}
+
+///|
+/// How the player addressed the world. Borrowed from AI Dungeon: "say" is the
+/// default line of dialogue, "do" is an action the world should react to, and
+/// "story" is the player narrating instead of speaking.
+///
+/// The intent only changes how the line is framed in the prompt and how it is
+/// shown in the transcript; it never changes what is stored (a `ChatLine` is
+/// still just a speaker plus text), so an old journal keeps loading.
+pub(all) enum InputIntent {
+  /// Plain speech: `你：…`.
+  Say
+  /// An action: `你 *做了…*`, which the model is told to respond to rather
+  /// than answer as dialogue.
+  Do
+  /// Narration by the player: `（旁白）…`, which the model continues instead
+  /// of replying to.
+  Story
+} derive(Eq, Debug)
+
+///|
+pub extend InputIntent with Debug::{to_repr}
+
+///|
+pub extend InputIntent with Eq::{not_equal, equal}
+
+///|
+/// A one-word label for the composer toggle.
+pub fn InputIntent::label(self : InputIntent) -> String {
+  match self {
+    Say => "说"
+    Do => "做"
+    Story => "旁白"
+  }
 }
 
 ///|
 pub fn ChatLine::character(id : String, text : String) -> ChatLine {
-  { speaker: Character(id), text, }
+  { speaker: Character(id), text, alternatives: [], selected: 0, }
 }
 
 ///|
@@ -72,6 +118,116 @@ pub fn ChatLine::text(self : ChatLine) -> String {
 /// continuous exchange instead of a claim-by-witness list.
 fn ChatLine::wire_role(self : ChatLine) -> String {
   speaker_role(self.speaker)
+}
+
+///|
+/// The other candidates for this turn (not including the shown text).
+///
+/// Together with `selected` this is the swipe model: the logical candidate
+/// list is `candidate_slots()`, and keeping the shown text out of
+/// `alternatives` means every reader that only cares about "what was said"
+/// keeps reading `text`.
+pub fn ChatLine::alternatives(self : ChatLine) -> Array[String] {
+  self.alternatives
+}
+
+///|
+/// Which candidate is shown (`0` = the original reply).
+pub fn ChatLine::selected(self : ChatLine) -> Int {
+  self.selected
+}
+
+///|
+/// How many candidates this line has (1 when it was never regenerated).
+pub fn ChatLine::candidate_count(self : ChatLine) -> Int {
+  1 + self.alternatives.length()
+}
+
+///|
+/// True when this line can be swiped.
+pub fn ChatLine::has_alternatives(self : ChatLine) -> Bool {
+  !self.alternatives.is_empty()
+}
+
+///|
+/// Candidates in logical order: index 0 is the first-ever reply.
+fn ChatLine::candidate_slots(self : ChatLine) -> Array[String] {
+  // `alternatives` stores candidates 1..n; candidate 0 is whatever text was
+  // showing when it was regenerated, which is preserved as `alternatives[0]`
+  // only while selected > 0. To stay stable under repeated regeneration, the
+  // canonical order is: `alternatives` (in insertion order) with the shown
+  // text substituted at `selected`.
+  let slots : Array[String] = []
+  let mut index = 0
+  while index < self.candidate_count() {
+    if index == self.selected {
+      slots.push(self.text)
+    } else {
+      // Map logical index -> alternatives index. Slot 0 is reserved for the
+      // original reply, so when selected != 0 nothing is stored for slot 0
+      // beyond `alternatives[0]`.
+      let alt_index = if index == 0 { 0 } else { index - 1 }
+      if alt_index < self.alternatives.length() {
+        slots.push(self.alternatives[alt_index])
+      }
+    }
+    index += 1
+  }
+  slots
+}
+
+///|
+/// Move to another candidate, keeping `text` in sync with `selected`.
+pub fn ChatLine::with_candidate(self : ChatLine, index : Int) -> ChatLine {
+  let slots = self.candidate_slots()
+  if index < 0 || index >= slots.length() {
+    return self
+  }
+  let shown = slots[index]
+  // Rebuild `alternatives` so the invariant `[text] + alternatives` holds and
+  // the newly shown text is no longer duplicated inside it.
+  let remaining : Array[String] = []
+  for slot_index, candidate in slots {
+    if slot_index != index {
+      remaining.push(candidate)
+    }
+  }
+  { ..self, text: shown, alternatives: remaining, selected: index, }
+}
+
+///|
+/// Add a freshly regenerated reply as a candidate and select it.
+///
+/// The previous reply stays reachable: a swipe back returns to it, which is
+/// what makes regenerating cheap to try. The shown reply simply moves into the
+/// candidate list, so repeated regeneration grows it by one each time.
+pub fn ChatLine::with_alternative(self : ChatLine, text : String) -> ChatLine {
+  let slots = self.candidate_slots()
+  let next : Array[String] = []
+  for candidate in slots {
+    next.push(candidate)
+  }
+  next.push(text)
+  let selected = next.length() - 1
+  let alternatives : Array[String] = []
+  let mut index = 0
+  while index < next.length() - 1 {
+    alternatives.push(next[index])
+    index += 1
+  }
+  { ..self, text, alternatives, selected, }
+}
+
+///|
+/// Replace this line's shown text in place, keeping the candidate list
+/// consistent (an edit changes only the candidate the player is looking at).
+pub fn ChatLine::with_text(self : ChatLine, text : String) -> ChatLine {
+  // Editing rewrites *the candidate currently shown* and leaves the others
+  // alone, so the swipe history survives an edit: the player can still flip
+  // back to an earlier version after fixing a typo. `text` is by definition the
+  // selected slot, and the invariant `[text] + alternatives` still holds
+  // because only that slot's content changes.
+  { ..self, text, }
 }
 
 ///|

@@ -91,6 +91,8 @@ fn decode_character(payload : Json) -> CharacterCard raise {
     name=json_string(fields.get("name"), "name"),
     persona=json_string(fields.get("persona"), "persona"),
     appearance=json_optional_string(fields.get("appearance")),
+    portrait=json_optional_string(fields.get("portrait")),
+    portrait_prompt=json_optional_string(fields.get("portrait_prompt")),
     secret=json_optional_string(fields.get("secret")),
     goal=json_optional_string(fields.get("goal")),
     voice=json_optional_string(fields.get("voice")),
@@ -110,7 +112,32 @@ fn decode_world_entry(payload : Json) -> WorldEntry raise {
     Some(Array(values)) => values.map(value => json_string(Some(value), "key"))
     _ => []
   }
-  WorldEntry::new(keys~, content=json_string(fields.get("content"), "content"))
+  // The modifiers are optional; a world written before they existed decodes to
+  // the same defaults the constructor uses.
+  let priority = match fields.get("priority") {
+    Some(Number(value, ..)) => value.to_int()
+    _ => 0
+  }
+  let position = match fields.get("position") {
+    Some(String(value)) => if value == "before" { Before } else { After }
+    _ => After
+  }
+  let recursion = match fields.get("recursion") {
+    Some(Number(value, ..)) => value.to_int()
+    _ => 0
+  }
+  let probability = match fields.get("probability") {
+    Some(Number(value, ..)) => value.to_int()
+    _ => 100
+  }
+  WorldEntry::new(
+    keys~,
+    content=json_string(fields.get("content"), "content"),
+    priority~,
+    position~,
+    recursion~,
+    probability~,
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -160,6 +187,8 @@ fn character_json(card : CharacterCard) -> Json {
     "name": Json::string(card.name()),
     "persona": Json::string(card.persona()),
     "appearance": Json::string(card.appearance()),
+    "portrait": Json::string(card.portrait()),
+    "portrait_prompt": Json::string(card.portrait_prompt()),
     "secret": Json::string(card.secret()),
     "goal": Json::string(card.goal()),
     "voice": Json::string(card.voice()),
@@ -172,9 +201,23 @@ fn character_json(card : CharacterCard) -> Json {
 
 ///|
 fn world_entry_json(entry : WorldEntry) -> Json {
+  // Only non-default modifiers are written, mirroring the Markdown writer, so a
+  // plain entry keeps its plain shape.
   let root : Map[String, Json] = {
     "keys": Json::array(entry.keys().map(key => Json::string(key))),
     "content": Json::string(entry.content()),
+  }
+  if entry.priority() != 0 {
+    root["priority"] = Json::number(entry.priority().to_double())
+  }
+  if entry.position() is Before {
+    root["position"] = Json::string("before")
+  }
+  if entry.recursion() != 0 {
+    root["recursion"] = Json::number(entry.recursion().to_double())
+  }
+  if entry.probability() != 100 {
+    root["probability"] = Json::number(entry.probability().to_double())
   }
   Json::object(root)
 }

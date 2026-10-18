@@ -45,7 +45,20 @@ extern "wasm" fn host_fs_write(
 extern "wasm" fn host_fs_config_read(request_id : Int) -> Unit = "ai_world_host" "fs_config_read"
 
 ///|
-extern "wasm" fn host_fs_config_write(request_id : Int, content_id : Int) -> Unit = "ai_world_host" "fs_config_write"
+extern "wasm" fn host_fs_config_write(
+  request_id : Int,
+  content_id : Int,
+) -> Unit = "ai_world_host" "fs_config_write"
+
+///|
+extern "wasm" fn host_fs_export_world(
+  request_id : Int,
+  folder_id : Int,
+  manifest_id : Int,
+) -> Unit = "ai_world_host" "fs_export_world"
+
+///|
+extern "wasm" fn host_fs_import_world(request_id : Int) -> Unit = "ai_world_host" "fs_import_world"
 
 ///|
 extern "wasm" fn host_begin_create_string() -> Int = "ai_world_host" "begin_create_string"
@@ -101,6 +114,8 @@ pub(all) enum FsJob {
   WriteDone((Bool) -> Unit)
   ConfigRead((String?) -> Unit)
   ConfigWrite((Bool) -> Unit)
+  ExportDone((Bool) -> Unit)
+  ImportDone((Bool, String, Array[(String, String)]) -> Unit)
 }
 
 ///|
@@ -114,11 +129,7 @@ pub struct WebGateway {
 
 ///|
 pub fn WebGateway::new() -> WebGateway {
-  {
-    next_id: Ref(1),
-    llm_pending: {},
-    fs_pending: {},
-  }
+  { next_id: Ref(1), llm_pending: {}, fs_pending: {}, }
 }
 
 ///|
@@ -242,6 +253,34 @@ pub fn WebGateway::config_write(
 }
 
 ///|
+/// Write one world out as a shareable bundle.
+pub fn WebGateway::fs_export_world(
+  self : WebGateway,
+  folder : String,
+  files : Array[(String, String)],
+  on_done : (Bool) -> Unit,
+) -> Unit {
+  let id = allocate(self)
+  self.fs_pending[id] = ExportDone(on_done)
+  host_fs_export_world(
+    id,
+    host_string_id(folder),
+    host_string_id(files_json(files)),
+  )
+}
+
+///|
+/// Pick a bundle and unpack it into a new world folder.
+pub fn WebGateway::fs_import_world(
+  self : WebGateway,
+  on_done : (Bool, String, Array[(String, String)]) -> Unit,
+) -> Unit {
+  let id = allocate(self)
+  self.fs_pending[id] = ImportDone(on_done)
+  host_fs_import_world(id)
+}
+
+///|
 /// The exported callback for filesystem results.
 pub fn WebGateway::fs_complete(
   self : WebGateway,
@@ -281,6 +320,23 @@ pub fn WebGateway::fs_complete(
       self.fs_pending.remove(request_id)
       on_done(ok)
     }
+    Some(ExportDone(on_done)) => {
+      self.fs_pending.remove(request_id)
+      on_done(ok)
+    }
+    Some(ImportDone(on_done)) => {
+      self.fs_pending.remove(request_id)
+      if ok {
+        // The page answers with `{folder, files}`; a damaged payload is a
+        // failed import rather than a half-built world.
+        match parse_imported(payload) {
+          Some(imported) => on_done(true, imported.0, parse_files(imported.1))
+          None => on_done(false, "", [])
+        }
+      } else {
+        on_done(false, "", [])
+      }
+    }
     None => ()
   }
 }
@@ -289,9 +345,7 @@ pub fn WebGateway::fs_complete(
 fn files_json(files : Array[(String, String)]) -> String {
   let rows : Array[Json] = []
   for pair in files {
-    rows.push(
-      Json::array([Json::string(pair.0), Json::string(pair.1)]),
-    )
+    rows.push(Json::array([Json::string(pair.0), Json::string(pair.1)]))
   }
   let root : Map[String, Json] = { "files": Json::array(rows) }
   root.to_json().stringify()
@@ -330,6 +384,32 @@ fn parse_names(payload : String) -> Array[String] {
     _ => ()
   }
   names
+}
+
+///|
+/// Decode `{"folder": "...", "files": [[path, content], ...]}` from the JS
+/// host. Returns the folder plus the raw `files` JSON array text so the
+/// existing row decoder can be reused.
+fn parse_imported(payload : String) -> (String, String)? {
+  let parsed = @json.parse(payload) catch { _ => return None }
+  match parsed {
+    Object(fields) =>
+      match fields.get("folder") {
+        Some(String(folder)) =>
+          match fields.get("files") {
+            Some(Array(_)) =>
+              Some(
+                (
+                  folder,
+                  Json::object({ "files": fields.get("files").unwrap() }).stringify(),
+                ),
+              )
+            _ => None
+          }
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|

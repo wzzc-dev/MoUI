@@ -8,15 +8,37 @@ import {
 }
 
 // Values
+pub fn advance_time_prompt(Scenario, String?, Array[CharacterCard]) -> (String, String)
+
+pub fn base64_decode(String) -> Bytes?
+
+pub fn base64_encode(Bytes) -> String
+
 pub fn blank_world(String) -> Scenario
+
+pub fn branched_key(String, Int) -> String
 
 pub fn build_messages(Scenario, CharacterCard, Conversation, String) -> Array[(String, String)]
 
+pub fn build_scene_prompt(Scenario, String, Array[CharacterCard], CharacterCard) -> String
+
 pub fn build_system_prompt(Scenario, CharacterCard) -> String
+
+pub fn bundle_decode(String) -> WorldBundle?
+
+pub fn bundle_encode(String, Array[(String, String)]) -> String
+
+pub let bundle_extension : String
+
+pub let bundle_format : String
+
+pub fn cast_at(Scenario, String) -> Array[CharacterCard]
 
 pub fn character_at(Scenario, @core.Point, @core.Point) -> String?
 
 pub fn character_color(String) -> @core.Color
+
+pub fn character_idea_prompt(String, String) -> (String, String)
 
 pub let chat_history_limit : Int
 
@@ -40,11 +62,21 @@ pub let context_char_budget : Int
 
 pub let controls_width : Double
 
+pub let conversation_index_file : String
+
+pub fn conversation_path(String) -> String
+
+pub let conversations_dir : String
+
 pub let conversations_file : String
+
+pub fn creator_archetypes() -> Array[CharacterArchetype]
 
 pub fn default_scenario() -> Scenario
 
 pub fn draw_scenario(@common.PaintContext, @core.Rect, Scenario, @core.Point, String?) -> Unit
+
+pub fn drop_late_reply(WorldModel, String) -> (WorldModel, @core.Effect[Msg])
 
 pub let events_file : String
 
@@ -56,6 +88,16 @@ pub fn fallback_world(String) -> Scenario
 
 pub fn first_free_spot(Scenario) -> @core.Point
 
+pub fn frame_player_text(String, InputIntent) -> String
+
+pub fn is_card_or_portrait_path(String) -> CharacterAssetKind
+
+pub fn is_portrait_file_name(String) -> Bool
+
+pub fn is_scene_key(String) -> Bool
+
+pub fn is_transient_log_line(String) -> Bool
+
 pub fn is_world_file_name(String) -> Bool
 
 pub fn llm_clean_reply(String, String) -> String
@@ -63,6 +105,16 @@ pub fn llm_clean_reply(String, String) -> String
 pub fn llm_parse_reply(String) -> String?
 
 pub fn llm_request_body(LlmRequest) -> Json
+
+pub fn location_at(Scenario, @core.Point, @core.Point) -> String?
+
+pub fn lore_block_at(Array[LoreHit], LorePosition) -> String
+
+pub fn lore_passes_probability(WorldEntry, Int) -> Bool
+
+pub let lore_recursion_cap : Int
+
+pub fn lore_summary(Array[LoreHit]) -> String
 
 pub let map_canvas_height : Double
 
@@ -76,15 +128,25 @@ pub fn needs_compression(Conversation, Int) -> Bool
 
 pub fn parse_character_md(String) -> CharacterCard?
 
+pub fn parse_conversation_file(String) -> ConversationsFile
+
 pub fn parse_conversations_json(String) -> ConversationsFile
 
 pub fn parse_events_json(String) -> EventsFile
+
+pub fn parse_generated_character(String) -> CharacterDraft?
 
 pub fn parse_world_book_line(String) -> WorldEntry?
 
 pub fn parse_world_files(WorldFiles) -> WorldParse?
 
 pub fn plan_messages(Scenario, CharacterCard, Conversation, String, budget? : Int) -> MessagePlan
+
+pub fn portrait_data_uri(String, String) -> String
+
+pub fn portrait_uri(CharacterCard, Array[(String, String)]) -> String
+
+pub fn portrait_world_path(String) -> String
 
 pub fn program(turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> @core.Program[WorldModel, Msg]
 
@@ -94,7 +156,17 @@ pub fn propose_memory_prompt(character_name~ : String, lines~ : Array[ChatLine])
 
 pub let rail_width : Double
 
+pub fn reply_target_exists(WorldModel, String) -> Bool
+
+pub fn responder_for(Array[CharacterCard], String, Int) -> CharacterCard?
+
+pub fn scene_key(String) -> String
+
 pub fn scripted_reply(Scenario, CharacterCard, String) -> String
+
+pub fn select_lore(Scenario, String, String, Int) -> Array[LoreHit]
+
+pub fn split_branch(String) -> (String, Int)?
 
 pub let stage_width : Double
 
@@ -104,13 +176,19 @@ pub let summary_keep_recent : Int
 
 pub let summary_min_new_lines : Int
 
+pub fn time_advanced_event(String) -> String
+
 pub fn update(WorldModel, Msg, turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> (WorldModel, @core.Effect[Msg])
+
+pub fn update_creation(WorldModel, Msg, (LlmRequest, (String?) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+
+pub fn update_editing(WorldModel, Msg, (LlmRequest, (String?) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+
+pub fn update_library(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
 
 pub fn view(WorldModel) -> @core.View[Msg]
 
 pub fn world_book_block(Scenario, String) -> String
-
-pub fn world_book_for(Scenario, String) -> String
 
 pub fn world_book_has_hit(Scenario, String) -> Bool
 
@@ -127,11 +205,31 @@ pub fn world_nudge(Scenario) -> String
 // Errors
 
 // Types and methods
+pub(all) struct CharacterArchetype {
+  label : String
+  name : String
+  persona : String
+  voice : String
+  goal : String
+  secret : String
+} derive(Eq, @debug.Debug)
+pub fn CharacterArchetype::equal(Self, Self) -> Bool
+pub fn CharacterArchetype::not_equal(Self, Self) -> Bool
+pub fn CharacterArchetype::to_repr(Self) -> @debug.Repr
+
+pub(all) enum CharacterAssetKind {
+  Card
+  Portrait
+  Other
+}
+
 pub struct CharacterCard {
   id : String
   name : String
   persona : String
   appearance : String
+  portrait : String
+  portrait_prompt : String
   secret : String
   goal : String
   voice : String
@@ -147,10 +245,12 @@ pub fn CharacterCard::goal(Self) -> String
 pub fn CharacterCard::id(Self) -> String
 pub fn CharacterCard::location(Self) -> String
 pub fn CharacterCard::name(Self) -> String
-pub fn CharacterCard::new(id~ : String, name~ : String, persona~ : String, appearance? : String, secret? : String, goal? : String, voice? : String, location? : String, point? : @core.Point, color? : @core.Color) -> Self
+pub fn CharacterCard::new(id~ : String, name~ : String, persona~ : String, appearance? : String, portrait? : String, portrait_prompt? : String, secret? : String, goal? : String, voice? : String, location? : String, point? : @core.Point, color? : @core.Color) -> Self
 pub fn CharacterCard::not_equal(Self, Self) -> Bool
 pub fn CharacterCard::persona(Self) -> String
 pub fn CharacterCard::point(Self) -> @core.Point
+pub fn CharacterCard::portrait(Self) -> String
+pub fn CharacterCard::portrait_prompt(Self) -> String
 pub fn CharacterCard::secret(Self) -> String
 pub fn CharacterCard::to_repr(Self) -> @debug.Repr
 pub fn CharacterCard::voice(Self) -> String
@@ -169,6 +269,7 @@ pub fn CharacterDraft::not_equal(Self, Self) -> Bool
 pub fn CharacterDraft::to_card(Self, point~ : @core.Point) -> CharacterCard
 pub fn CharacterDraft::to_repr(Self) -> @debug.Repr
 pub fn CharacterDraft::with_appearance(Self, String) -> Self
+pub fn CharacterDraft::with_archetype(Self, CharacterArchetype) -> Self
 pub fn CharacterDraft::with_goal(Self, String) -> Self
 pub fn CharacterDraft::with_name(Self, String) -> Self
 pub fn CharacterDraft::with_persona(Self, String) -> Self
@@ -178,15 +279,32 @@ pub fn CharacterDraft::with_voice(Self, String) -> Self
 pub struct ChatLine {
   speaker : Speaker
   text : String
+  alternatives : Array[String]
+  selected : Int
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ChatLine::alternatives(Self) -> Array[String]
+pub fn ChatLine::candidate_count(Self) -> Int
 pub fn ChatLine::character(String, String) -> Self
 pub fn ChatLine::equal(Self, Self) -> Bool
+pub fn ChatLine::has_alternatives(Self) -> Bool
 pub fn ChatLine::not_equal(Self, Self) -> Bool
 pub fn ChatLine::player(String) -> Self
+pub fn ChatLine::selected(Self) -> Int
 pub fn ChatLine::speaker(Self) -> Speaker
 pub fn ChatLine::text(Self) -> String
 pub fn ChatLine::to_json(Self) -> Json
 pub fn ChatLine::to_repr(Self) -> @debug.Repr
+pub fn ChatLine::with_alternative(Self, String) -> Self
+pub fn ChatLine::with_candidate(Self, Int) -> Self
+pub fn ChatLine::with_text(Self, String) -> Self
+
+pub(all) enum CommitScope {
+  World
+  Conversation(String)
+} derive(Eq, @debug.Debug)
+pub fn CommitScope::equal(Self, Self) -> Bool
+pub fn CommitScope::not_equal(Self, Self) -> Bool
+pub fn CommitScope::to_repr(Self) -> @debug.Repr
 
 pub struct Conversation {
   character_id : String
@@ -206,6 +324,7 @@ pub fn Conversation::not_equal(Self, Self) -> Bool
 pub fn Conversation::pending(Self) -> Bool
 pub fn Conversation::summarized_upto(Self) -> Int
 pub fn Conversation::summary(Self) -> String
+pub fn Conversation::to_json_text(Self) -> String
 pub fn Conversation::to_repr(Self) -> @debug.Repr
 pub fn Conversation::to_wire(Self) -> Array[(String, String)]
 pub fn Conversation::with_pending(Self, Bool) -> Self
@@ -242,6 +361,16 @@ pub fn EventsFile::equal(Self, Self) -> Bool
 pub fn EventsFile::not_equal(Self, Self) -> Bool
 pub fn EventsFile::to_repr(Self) -> @debug.Repr
 
+pub(all) enum InputIntent {
+  Say
+  Do
+  Story
+} derive(Eq, @debug.Debug)
+pub fn InputIntent::equal(Self, Self) -> Bool
+pub fn InputIntent::label(Self) -> String
+pub fn InputIntent::not_equal(Self, Self) -> Bool
+pub fn InputIntent::to_repr(Self) -> @debug.Repr
+
 pub struct LlmRequest {
   character_id : String
   endpoint : String
@@ -263,6 +392,22 @@ pub fn LlmRequest::system(Self) -> String
 pub fn LlmRequest::temperature(Self) -> Double
 pub fn LlmRequest::to_repr(Self) -> @debug.Repr
 pub fn LlmRequest::user(Self) -> String
+
+pub(all) struct LoreHit {
+  entry : WorldEntry
+  depth : Int
+} derive(Eq, @debug.Debug)
+pub fn LoreHit::equal(Self, Self) -> Bool
+pub fn LoreHit::not_equal(Self, Self) -> Bool
+pub fn LoreHit::to_repr(Self) -> @debug.Repr
+
+pub(all) enum LorePosition {
+  Before
+  After
+} derive(Eq, @debug.Debug)
+pub fn LorePosition::equal(Self, Self) -> Bool
+pub fn LorePosition::not_equal(Self, Self) -> Bool
+pub fn LorePosition::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MessagePlan {
   messages : Array[(String, String)]
@@ -300,10 +445,16 @@ pub fn ModelConfig::with_temperature(Self, Double) -> Self
 
 pub(all) enum Msg {
   Select(String?)
+  EnterScene(String)
+  LeaveScene
+  AdvanceTime
+  TimeAdvanced(String?)
   PanMap
   DraftChanged(String)
+  IntentChanged(Int)
   Send(String)
   Reply(String, String?)
+  SceneReply(String, String, String?)
   OpenSettings
   CloseSettings
   ConfigFileLoaded(String?)
@@ -324,6 +475,10 @@ pub(all) enum Msg {
   ToggleCreator
   CreatorChanged(CharacterDraft)
   CharacterCreated
+  UseArchetype(Int)
+  CharacterIdeaChanged(String)
+  DraftCharacter
+  CharacterDrafted(String?)
   WorldIdeaChanged(String)
   GenerateWorld
   WorldGenerated(String?)
@@ -333,6 +488,20 @@ pub(all) enum Msg {
   AcceptMemory(Int)
   DiscardMemory(Int)
   ToggleApiKeyReveal
+  RegenerateReply
+  Regenerated(String?)
+  SwipeReply(Int, Int)
+  EditLine(Int)
+  EditLineChanged(String)
+  EditLineCommit
+  EditLineCancel
+  DeleteLine(Int)
+  ClearConversation
+  BranchAt(Int)
+  ExportWorld
+  WorldExported(Bool)
+  ImportWorld
+  WorldImported(Bool, String, Array[(String, String)])
 }
 
 pub(all) enum Page {
@@ -397,15 +566,31 @@ pub fn Speaker::not_equal(Self, Self) -> Bool
 pub fn Speaker::to_json(Self) -> Json
 pub fn Speaker::to_repr(Self) -> @debug.Repr
 
+pub(all) struct WorldBundle {
+  name : String
+  files : Array[(String, String)]
+} derive(Eq, @debug.Debug)
+pub fn WorldBundle::equal(Self, Self) -> Bool
+pub fn WorldBundle::not_equal(Self, Self) -> Bool
+pub fn WorldBundle::to_repr(Self) -> @debug.Repr
+
 pub struct WorldEntry {
   keys : Array[String]
   content : String
+  priority : Int
+  position : LorePosition
+  recursion : Int
+  probability : Int
 } derive(Eq, @debug.Debug)
 pub fn WorldEntry::content(Self) -> String
 pub fn WorldEntry::equal(Self, Self) -> Bool
 pub fn WorldEntry::keys(Self) -> Array[String]
-pub fn WorldEntry::new(keys~ : Array[String], content~ : String) -> Self
+pub fn WorldEntry::new(keys~ : Array[String], content~ : String, priority? : Int, position? : LorePosition, recursion? : Int, probability? : Int) -> Self
 pub fn WorldEntry::not_equal(Self, Self) -> Bool
+pub fn WorldEntry::position(Self) -> LorePosition
+pub fn WorldEntry::priority(Self) -> Int
+pub fn WorldEntry::probability(Self) -> Int
+pub fn WorldEntry::recursion(Self) -> Int
 pub fn WorldEntry::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WorldFiles {
@@ -413,7 +598,9 @@ pub(all) struct WorldFiles {
   book_md : String
   character_files : Array[(String, String)]
   conversations_json : String
+  conversation_files : Array[(String, String)]
   events_json : String
+  portraits : Array[(String, String)]
 } derive(Eq, @debug.Debug)
 pub fn WorldFiles::equal(Self, Self) -> Bool
 pub fn WorldFiles::not_equal(Self, Self) -> Bool
@@ -426,6 +613,8 @@ pub(all) struct WorldHost {
   write_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
   read_config : ((String?) -> Unit) -> Unit
   write_config : (String, (Bool) -> Unit) -> Unit
+  export_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
+  import_world : ((Bool, String, Array[(String, String)]) -> Unit) -> Unit
 } derive(@debug.Debug)
 pub fn WorldHost::to_repr(Self) -> @debug.Repr
 
@@ -456,26 +645,42 @@ pub struct WorldModel {
   config_file_loaded : Bool
   memory_drafts : Array[WorldEntry]
   api_key_revealed : Bool
+  editing_line : Int?
+  edit_buffer : String
+  intent : InputIntent
+  character_idea : String
+  portraits : Array[(String, String)]
+  scene_location : String?
 } derive(Eq, @debug.Debug)
+pub fn WorldModel::active_conversation_key(Self) -> String?
 pub fn WorldModel::api_key_revealed(Self) -> Bool
+pub fn WorldModel::bundle_text(Self) -> String?
+pub fn WorldModel::character_idea(Self) -> String
 pub fn WorldModel::config(Self) -> ModelConfig
-pub fn WorldModel::conversations(Self) -> ConversationBook
 pub fn WorldModel::creator_draft(Self) -> CharacterDraft
 pub fn WorldModel::creator_open(Self) -> Bool
 pub fn WorldModel::current(Self) -> String?
 pub fn WorldModel::draft(Self) -> String
+pub fn WorldModel::edit_buffer(Self) -> String
+pub fn WorldModel::editing_line(Self) -> Int?
 pub fn WorldModel::equal(Self, Self) -> Bool
 pub fn WorldModel::fork(Self) -> Self
 pub fn WorldModel::generating(Self) -> Bool
 pub fn WorldModel::idea(Self) -> String
+pub fn WorldModel::in_scene(Self) -> Bool
+pub fn WorldModel::intent(Self) -> InputIntent
 pub fn WorldModel::library_missing(Self) -> Bool
 pub fn WorldModel::log(Self) -> Array[String]
 pub fn WorldModel::memory_drafts(Self) -> Array[WorldEntry]
 pub fn WorldModel::new() -> Self
 pub fn WorldModel::not_equal(Self, Self) -> Bool
 pub fn WorldModel::page(Self) -> Page
+pub fn WorldModel::portrait_for(Self, CharacterCard) -> String
+pub fn WorldModel::portraits(Self) -> Array[(String, String)]
 pub fn WorldModel::push_log(Self, String) -> Unit
 pub fn WorldModel::scenario(Self) -> Scenario
+pub fn WorldModel::scene_cast(Self) -> Array[CharacterCard]
+pub fn WorldModel::scene_location(Self) -> String?
 pub fn WorldModel::selected(Self) -> String?
 pub fn WorldModel::to_repr(Self) -> @debug.Repr
 pub fn WorldModel::world_name(Self) -> String

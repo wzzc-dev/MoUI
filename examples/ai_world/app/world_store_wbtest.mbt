@@ -23,6 +23,8 @@ fn sample_files() -> WorldFiles {
       ("characters/无名.md", "没有H1的文件"),
     ],
     conversations_json: "",
+    conversation_files: [],
+    portraits: [],
     events_json: "",
   }
 }
@@ -74,6 +76,8 @@ test "save → load is lossless for the fields the model owns" {
     book_md: pair_for(files, "world_book.md"),
     character_files: files.filter(pair => pair.0.has_prefix("characters/")),
     conversations_json: "",
+    conversation_files: [],
+    portraits: [],
     events_json: "",
   })
   match reloaded {
@@ -129,6 +133,8 @@ test "a world without a useful name is not a world" {
     book_md: "",
     character_files: [],
     conversations_json: "",
+    conversation_files: [],
+    portraits: [],
     events_json: "",
   }
   assert_true(parse_world_files(files) is None)
@@ -145,6 +151,8 @@ test "blank worlds get a helpful background stub" {
     book_md: pair_for(world.world_files(), "world_book.md"),
     character_files: [],
     conversations_json: "",
+    conversation_files: [],
+    portraits: [],
     events_json: "",
   })
   assert_true(parsed is Some(_))
@@ -174,6 +182,8 @@ fn journal_files_with(
       ("characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n掌柜。\n"),
     ],
     conversations_json,
+    conversation_files: [],
+    portraits: [],
     events_json,
   }
 }
@@ -278,6 +288,8 @@ test "a folder carrying the journal restores history and events on open" {
     book_md: sample.book_md,
     character_files: [sample.character_files[0]],
     conversations_json: book.to_json_text(),
+    conversation_files: [],
+    portraits: [],
     events_json: events_json_text(log),
   })
   match parsed {
@@ -290,4 +302,52 @@ test "a folder carrying the journal restores history and events on open" {
     }
     None => fail("a folder with a journal must parse")
   }
+}
+
+///|
+test "a very long world name is capped so the write cannot fail" {
+  // 500 CJK characters is ~1500 UTF-8 bytes: over the 255-byte cap most file
+  // systems apply to one path component. The name is truncated instead of
+  // being handed to the file system to reject.
+  let long = "长".repeat(500)
+  let folder = world_folder_name(long)
+  // The cap is on UTF-8 bytes, so measure bytes: `utf8_width` is the same
+  // helper the clipper spends its budget with.
+  let mut bytes = 0
+  for ch in folder {
+    bytes += utf8_width(ch)
+  }
+  assert_true(bytes <= 120)
+  assert_true(bytes > 100)
+  // ASCII is not over-truncated: 100 characters cost exactly 100 bytes.
+  let ascii = world_folder_name("a".repeat(100))
+  assert_eq(ascii.length(), 100)
+  assert_true(folder.length() > 0)
+  // Truncation keeps whole characters, so the result is still valid text:
+  // re-reading it character by character reproduces the same string.
+  let reread : Array[Char] = []
+  for ch in folder {
+    reread.push(ch)
+  }
+  assert_eq(String::from_array(reread), folder)
+  // A name that already fits is untouched.
+  assert_eq(world_folder_name("雨夜酒馆"), "雨夜酒馆")
+}
+
+///|
+test "hostile world names are neutralised" {
+  // Path traversal turns into underscores rather than escaping the library.
+  assert_eq(world_folder_name("../../etc/passwd"), "_.._.._etc_passwd")
+  // Control characters and separators too.
+  assert_eq(world_folder_name("名字\t带制表"), "名字_带制表")
+  assert_eq(world_folder_name("a/b"), "a_b")
+  assert_eq(world_folder_name("a\u{0}b"), "a_b")
+  // Dot names would hide or escape the folder.
+  assert_eq(world_folder_name("."), "未命名")
+  assert_eq(world_folder_name(".."), "未命名")
+  assert_true(world_folder_name(".hidden").has_prefix("_"))
+  assert_eq(world_folder_name("   "), "未命名")
+  // A name that is entirely separators becomes underscores, not "" and not a
+  // path fragment; it is still a legal folder name.
+  assert_eq(world_folder_name("///"), "___")
 }

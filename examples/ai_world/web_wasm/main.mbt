@@ -13,35 +13,35 @@
 ///   it is not).
 
 ///|
-let gateway : @llm_web.WebGateway = @llm_web.WebGateway::new()
+let gateway : @llm_web_gateway.WebGateway = @llm_web_gateway.WebGateway::new()
 
 ///|
 fn turn_runner(
-  request : @app.LlmRequest,
+  request : @world_app.LlmRequest,
   on_reply : (String?) -> Unit,
 ) -> Unit {
   // The body is shared with the native runner: same wire format, same parser.
-  let body = @app.llm_request_body(request).stringify()
-  gateway.llm_turn(
-    request.endpoint(),
-    request.api_key(),
-    body,
-    raw =>
-      match raw {
-        Some(text) => on_reply(@app.llm_parse_reply(text))
-        None => on_reply(None)
-      },
-  )
+  let body = @world_app.llm_request_body(request).stringify()
+  gateway.llm_turn(request.endpoint(), request.api_key(), body, raw => {
+    match raw {
+      Some(text) => on_reply(@world_app.llm_parse_reply(text))
+      None => on_reply(None)
+    }
+  })
 }
 
 ///|
-let world_host : @app.WorldHost = {
+let world_host : @world_app.WorldHost = {
   list_worlds: done => gateway.fs_list(done),
   pick_root: done => gateway.fs_pick(done),
   read_world: (folder, done) => gateway.fs_read(folder, done),
   write_world: (folder, files, done) => gateway.fs_write(folder, files, done),
   read_config: done => gateway.config_read(done),
   write_config: (content, done) => gateway.config_write(content, done),
+  export_world: (folder, files, done) => {
+    gateway.fs_export_world(folder, files, done)
+  },
+  import_world: done => gateway.fs_import_world(done),
 }
 
 ///|
@@ -49,7 +49,7 @@ fn main {
   @runtime.run_app(
     "MoUI AI World",
     @runtime.new_program_with_dimensions(
-      program=@app.program(turn_runner=turn_runner, world_host=world_host),
+      program=@world_app.program(turn_runner~, world_host~),
       width=1560.0,
       height=1080.0,
     ),

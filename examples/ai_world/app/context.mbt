@@ -54,9 +54,24 @@ pub fn build_system_prompt(scenario : Scenario, card : CharacterCard) -> String 
 }
 
 ///|
-/// The world-book block for one player turn, or `""` when nothing matched.
-pub fn world_book_for(scenario : Scenario, player_text : String) -> String {
-  world_book_block(scenario, player_text)
+/// Frame the player's line according to its intent, so the model knows whether
+/// it is being spoken to, shown an action, or handed narration to continue.
+///
+/// This is the AI Dungeon "do / say / story" distinction at the prompt layer:
+/// without it, "我推开门" reads as dialogue and the model answers it in quotes
+/// instead of describing what is behind the door.
+pub fn frame_player_text(text : String, intent : InputIntent) -> String {
+  match intent {
+    Say => text
+    Do =>
+      "*" +
+      text +
+      "*（这是一个动作，请回应它的后果，不要当成对白回答）"
+    Story =>
+      "（旁白）" +
+      text +
+      "（这是玩家在叙述，请接着往下写，不要以角色身份回话）"
+  }
 }
 
 ///|
@@ -93,15 +108,28 @@ pub fn plan_messages(
   budget? : Int = context_char_budget,
 ) -> MessagePlan {
   let messages : Array[(String, String)] = []
+  // Position matters: `Before` entries are world rules and belong ahead of the
+  // persona, `After` entries are scene facts that belong just before the
+  // history. Both come from the same lorebook, ordered by priority.
+  let hits = select_lore(
+    scenario,
+    player_text,
+    "",
+    conversation.lines().length(),
+  )
+  let before = lore_block_at(hits, Before)
+  if before != "" {
+    messages.push(("system", "【世界规则】\n" + before))
+  }
   messages.push(("system", build_system_prompt(scenario, card)))
   if conversation.summary() != "" {
     // The compressed memory of everything that fell out of the window. It
     // participates in the budget like any other message.
     messages.push(("system", "【此前】\n" + conversation.summary()))
   }
-  let lore = world_book_for(scenario, player_text)
-  if lore != "" {
-    messages.push(("system", "【相关背景】\n" + lore))
+  let after = lore_block_at(hits, After)
+  if after != "" {
+    messages.push(("system", "【相关背景】\n" + after))
   }
   let lines = conversation.lines()
   // History newest-first until the remaining budget is spent. The newest line

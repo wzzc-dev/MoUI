@@ -28,6 +28,7 @@ using @views {
   flexible,
   padding_edges,
   fill_rounded_rect,
+  image,
   pop_clip,
   push_clip,
   row,
@@ -120,6 +121,61 @@ fn wrapped_caption(content : String, width~ : Double) -> @moui.View[Msg] {
 }
 
 ///|
+/// A character's avatar: the portrait when the world ships one, otherwise the
+/// deterministic colour block with the name's first character. Two shapes are
+/// all the product needs (a list avatar and a stage portrait), so the helper
+/// takes a size and a corner radius instead of a style enum.
+fn avatar(
+  model : WorldModel,
+  card : CharacterCard,
+  size~ : Double,
+  radius? : Double = 0.0,
+) -> @moui.View[Msg] {
+  let uri = model.portrait_for(card)
+  if uri != "" {
+    // `fit=Cover` keeps a tall portrait from letterboxing inside a square.
+    // A screen reader reaches the roster and the stage as a list of faces;
+    // without a label the portrait is an unnameable image, so the character's
+    // name is the only thing that survives.
+    image(
+      uri,
+      width=size,
+      height=size,
+      fit=Cover,
+      corner_radius=radius,
+      accessibility_label=card.name() + " 的立绘",
+    )
+  } else {
+    // No portrait: the colour is derived from the name, so a world without art
+    // still reads as people rather than identical placeholders.
+    column(
+      [
+        text(
+          first_grapheme(card.name()),
+          role=Title,
+          width=size,
+          height=size,
+          align=TextCenter,
+        ),
+      ],
+      justify=Center,
+    )
+    .frame(width=size, height=size)
+    .background(card.color())
+    .corner_radius(radius)
+  }
+}
+
+///|
+/// The first visible character of a name, for the no-portrait fallback.
+fn first_grapheme(name : String) -> String {
+  for ch in name {
+    return ch.to_string()
+  }
+  "?"
+}
+
+///|
 /// The draggable scenario map.
 fn scenario_map(model : WorldModel) -> @moui.View[Msg] {
   let scenario = model.scenario
@@ -148,7 +204,17 @@ fn scenario_map(model : WorldModel) -> @moui.View[Msg] {
       x=position.x - frame.origin.x,
       y=position.y - frame.origin.y,
     )
-    Select(character_at(scenario, pan_origin(), point))
+    // A tap on a person opens their private chat; a tap on a place enters that
+    // place's scene. That is what makes the map carry meaning instead of being
+    // decoration next to the roster.
+    match character_at(scenario, pan_origin(), point) {
+      Some(id) => Select(Some(id))
+      None =>
+        match location_at(scenario, pan_origin(), point) {
+          Some(location) => EnterScene(location)
+          None => PanMap
+        }
+    }
   })
 }
 
@@ -283,6 +349,27 @@ fn world_library(model : WorldModel) -> @moui.View[Msg] {
         spacing=6.0,
       ),
       list,
+      // Portability lives next to the library, not buried in settings: a world
+      // is a folder, so send/receive is a first-class action on the world.
+      row(
+        [
+          button(
+            "导出世界",
+            on_click=ExportWorld,
+            variant=Tonal,
+            width=130.0,
+            height=26.0,
+          ),
+          button(
+            "导入",
+            on_click=ImportWorld,
+            variant=Tonal,
+            width=130.0,
+            height=26.0,
+          ),
+        ],
+        spacing=6.0,
+      ),
     ],
     spacing=6.0,
   )
@@ -294,14 +381,54 @@ fn roster_section(model : WorldModel) -> @moui.View[Msg] {
   let rows : Array[@moui.View[Msg]] = []
   for card in model.scenario.characters() {
     let selected = model.selected is Some(id) && id == card.id()
+    // The avatar is the only place a portrait shows in the roster: a 32px
+    // square reads at a glance and keeps the rail narrow.
     rows.push(
-      chip(
-        card.name(),
-        selected~,
-        on_click=Some(Select(Some(card.id()))),
-        width=rail_width - 12.0,
+      row(
+        [
+          avatar(model, card, size=30.0, radius=15.0),
+          chip(
+            card.name(),
+            selected~,
+            on_click=Some(Select(Some(card.id()))),
+            width=rail_width - 56.0,
+          ),
+        ],
+        spacing=8.0,
       ),
     )
+    // Branches of this character, indented under it. Without this list a
+    // branch is a dead end: the conversation exists on disk but the player has
+    // no way back to it after selecting something else.
+    let branches : Array[(Int, Int)] = []
+    for conversation in model.conversations.entries {
+      match split_branch(conversation.character_id()) {
+        Some((base, number)) =>
+          if base == card.id() {
+            branches.push((number, conversation.lines().length()))
+          }
+        None => ()
+      }
+    }
+    // Numeric order, independent of insertion order.
+    branches.sort_by((left, right) => left.0 - right.0)
+    for pair in branches {
+      let number = pair.0
+      let count = pair.1
+      let key = branched_key(card.id(), number)
+      rows.push(
+        chip(
+          "↳ 分支 " +
+          number.to_string() +
+          "（" +
+          count.to_string() +
+          " 条）",
+          selected=model.selected is Some(id) && id == key,
+          on_click=Some(Select(Some(key))),
+          width=rail_width - 32.0,
+        ),
+      )
+    }
   }
   let roster : @moui.View[Msg] = if rows.is_empty() {
     wrapped_caption(
@@ -312,8 +439,31 @@ fn roster_section(model : WorldModel) -> @moui.View[Msg] {
     scroll_view(
       column(rows, spacing=6.0),
       width=rail_width - 8.0,
-      height=(rows.length().to_double() * 36.0).min(140.0),
+      height=(rows.length().to_double() * 40.0).min(160.0),
     )
+  }
+  // Places with people in them become scenes: the map is the spatial view,
+  // this is the list view of the same idea.
+  let scenes : Array[@moui.View[Msg]] = []
+  for place in model.scenario.locations() {
+    let cast = cast_at(model.scenario, place.id())
+    if cast.length() >= 2 {
+      scenes.push(
+        chip(
+          "场景 · " +
+          place.name() +
+          "（" +
+          cast.length().to_string() +
+          "）",
+          selected=match model.scene_location() {
+            Some(current) => current == place.id()
+            None => false
+          },
+          on_click=Some(EnterScene(place.id())),
+          width=rail_width - 12.0,
+        ),
+      )
+    }
   }
   column(
     [
@@ -330,6 +480,14 @@ fn roster_section(model : WorldModel) -> @moui.View[Msg] {
         spacing=6.0,
       ),
       roster,
+      if scenes.is_empty() {
+        wrapped_caption(
+          "同一个地点有 2 个以上角色时会在这里出现「场景」，点进去就能让多人同场对话。",
+          width=rail_width,
+        )
+      } else {
+        column(scenes, spacing=6.0)
+      },
     ],
     spacing=6.0,
   )
@@ -340,8 +498,44 @@ fn roster_section(model : WorldModel) -> @moui.View[Msg] {
 fn creator_form(model : WorldModel) -> @moui.View[Msg] {
   let draft = model.creator_draft()
   let wide = rail_width - 4.0
+  // The wizard has two on-ramps, because there are two kinds of stuck:
+  // "I don't know what to make" (archetypes) and "I know, but writing six
+  // fields is tedious" (one-line idea → drafted card).
+  let archetype_buttons : Array[@moui.View[Msg]] = []
+  for index, archetype in creator_archetypes() {
+    archetype_buttons.push(
+      button(
+        archetype.label,
+        on_click=UseArchetype(index),
+        variant=Tonal,
+        width=70.0,
+        height=24.0,
+      ),
+    )
+  }
   column(
     [
+      wrapped_caption("从模板开始：", width=wide),
+      row(archetype_buttons, spacing=6.0),
+      row(
+        [
+          text_field(
+            model.character_idea(),
+            on_input=value => CharacterIdeaChanged(value),
+            placeholder="或一句话描述…",
+            width=wide - 82.0,
+            height=30.0,
+          ),
+          button(
+            "起草",
+            on_click=DraftCharacter,
+            variant=Tonal,
+            width=76.0,
+            height=30.0,
+          ),
+        ],
+        spacing=6.0,
+      ),
       text_field(
         draft.name,
         on_input=value => CreatorChanged(draft.with_name(value)),
@@ -398,15 +592,47 @@ fn creator_form(model : WorldModel) -> @moui.View[Msg] {
 fn conversation_stage(model : WorldModel) -> @moui.View[Msg] {
   column(
     [
-      text(
-        model.scenario.name(),
-        role=Body,
-        width=stage_width,
-        height=26.0,
-        align=TextStart,
+      row(
+        [
+          text(
+            model.scenario.name(),
+            role=Body,
+            width=stage_width - 92.0,
+            height=26.0,
+            align=TextStart,
+          ),
+          // The selected character's portrait on stage: the conversation is
+          // with *someone*, and a face makes that concrete.
+          match model.selected {
+            Some(id) =>
+              match model.scenario.character(id) {
+                Some(card) => avatar(model, card, size=40.0, radius=20.0)
+                None => text("", width=40.0, height=26.0)
+              }
+            None => text("", width=40.0, height=26.0)
+          },
+        ],
+        spacing=8.0,
+        align=Center,
       ),
       text(
-        scenario_blurb(model),
+        // The portrait prompt of the character on stage rides here: it is
+        // only useful if the player can see and copy it.
+        {
+          let hint = match model.selected {
+            Some(id) =>
+              match model.scenario.character(id) {
+                Some(card) => portrait_prompt_hint(card)
+                None => ""
+              }
+            None => ""
+          }
+          if hint != "" {
+            hint
+          } else {
+            scenario_blurb(model)
+          }
+        },
         role=Caption,
         width=stage_width,
         height=34.0,
@@ -420,6 +646,22 @@ fn conversation_stage(model : WorldModel) -> @moui.View[Msg] {
 }
 
 ///|
+
+///|
+/// The portrait prompt a generated world left for this character, phrased as
+/// something the player can act on.
+///
+/// The app deliberately never calls an image API, so the value of generating a
+/// prompt is entirely in making it *visible and copyable*. Empty for
+/// hand-written cards and for characters that already have a portrait file.
+fn portrait_prompt_hint(card : CharacterCard) -> String {
+  if card.portrait() != "" || card.portrait_prompt() == "" {
+    return ""
+  }
+  "立绘提示词（拿去生图后存为 characters/\{card.name()}.png）：\{card.portrait_prompt()}"
+}
+
+///|
 fn scenario_blurb(model : WorldModel) -> String {
   let nudge = world_nudge(model.scenario)
   if nudge != "" {
@@ -430,150 +672,34 @@ fn scenario_blurb(model : WorldModel) -> String {
 }
 
 ///|
-/// The conversation with the selected character: scrollable transcript plus
-/// composer.
-fn conversation_panel(model : WorldModel) -> @moui.View[Msg] {
-  match model.selected {
-    None =>
-      column(
-        [
-          text(
-            "点选地图上的角色，或在左侧名单里选一个，开始对话。",
-            role=Caption,
-            width=stage_width,
-            height=24.0,
-            align=TextStart,
-          ),
-          // The spring keeps the composer pinned to the bottom edge even
-          // while no conversation is on stage.
-          spacer(weight=1.0),
-          composer(model, enabled=false),
-        ],
-        spacing=6.0,
-      )
-    Some(id) =>
-      match model.scenario.character(id) {
-        None =>
-          column(
-            [
-              text(
-                "这个角色已不在当前世界里。重新选一个角色吧。",
-                role=Caption,
-                width=stage_width,
-                height=24.0,
-                align=TextStart,
-              ),
-              spacer(weight=1.0),
-              composer(model, enabled=false),
-            ],
-            spacing=6.0,
-          )
-        Some(card) => {
-          let conversation = model.conversations.for_character(id)
-          let transcript : Array[@moui.View[Msg]] = []
-          if conversation.lines().is_empty() {
-            transcript.push(
-              wrapped_caption(
-                "和\{card.name()}说点什么吧。TA 记得这个世界的背景，也可能藏着秘密。",
-                width=stage_width,
-              ),
-            )
-          }
-          for line in conversation.lines() {
-            let prefix = match line.speaker() {
-              Player => "你"
-              Character(_) => card.name()
-            }
-            transcript.push(
-              wrapped_body("\{prefix}：\{line.text()}", width=stage_width),
-            )
-          }
-          if conversation.pending() {
-            transcript.push(
-              text(
-                "\{card.name()} 正在斟酌…",
-                role=Caption,
-                width=stage_width,
-                height=20.0,
-                align=TextStart,
-              ),
-            )
-          }
-          column(
-            [
-              // The transcript absorbs all slack above the composer, so the
-              // composer stays pinned to the bottom edge at every transcript
-              // length instead of riding right under the last message.
-              flexible(
-                scroll_view(column(transcript, spacing=6.0), width=stage_width),
-                weight=1.0,
-              ),
-              composer(model, enabled=true),
-            ],
-            spacing=6.0,
-          )
-        }
+/// A one-line note about the world-book entries the player's last turn pulled
+/// in, or `""` when nothing matched. This is the visible half of the injection
+/// contract that `context.mbt` implements: the prompt already carries the lore,
+/// so the UI has to say so rather than letting a character "just know".
+fn lore_hint(scenario : Scenario, conversation : Conversation) -> String {
+  let lines = conversation.lines()
+  if lines.is_empty() {
+    return ""
+  }
+  // The freshest player line is the one whose lore is still relevant.
+  let mut player_text = ""
+  let mut index = lines.length()
+  while index > 0 {
+    index -= 1
+    match lines[index].speaker() {
+      Player => {
+        player_text = lines[index].text()
+        break
       }
-  }
-}
-
-///|
-fn composer(model : WorldModel, enabled? : Bool = true) -> @moui.View[Msg] {
-  if enabled {
-    // While a reply is in flight the composer is still editable (the player can
-    // start the next line) but sending is withheld: `update` rejects a second
-    // send for the same conversation, so the button must say so instead of
-    // looking clickable and doing nothing.
-    let waiting = match model.selected {
-      Some(id) => model.conversations.for_character(id).pending()
-      None => false
+      Character(_) => ()
     }
-    let send_label = if waiting { "等待回复…" } else { "发送" }
-    let send_button = if waiting {
-      // No handler while a turn is in flight: the label says why.
-      button(send_label, width=88.0)
-    } else {
-      button(send_label, on_click=Send(model.draft()), width=88.0)
-    }
-    let submit = if waiting { None } else { Some(Send(model.draft())) }
-    column(
-      [
-        text_area(
-          model.draft(),
-          on_input=value => DraftChanged(value),
-          placeholder=if waiting {
-            "正在等待回复…（可以先写下下一句）"
-          } else {
-            "说点什么…（回车发送）"
-          },
-          lines=2,
-          width=stage_width,
-          on_submit=submit,
-        ),
-        row(
-          [
-            send_button,
-            button(
-              "换一个角色",
-              on_click=Select(None),
-              variant=Tonal,
-              width=112.0,
-            ),
-          ],
-          spacing=8.0,
-        ),
-      ],
-      spacing=6.0,
-    )
-  } else {
-    text_area(
-      model.draft(),
-      on_input=value => DraftChanged(value),
-      placeholder="（先选择一个角色）",
-      lines=2,
-      width=stage_width,
-    )
   }
+  if player_text == "" {
+    return ""
+  }
+  // Same selector the prompt uses, so the panel cannot disagree with what the
+  // model was actually given.
+  lore_summary(select_lore(scenario, player_text, "", lines.length()))
 }
 
 ///|
@@ -587,12 +713,20 @@ fn controls_rail(model : WorldModel) -> @moui.View[Msg] {
   sections.push(
     column(
       [
-        text(
-          "事件",
-          role=Body,
-          width=controls_width,
-          height=24.0,
-          align=TextStart,
+        row(
+          [
+            text("事件", role=Body, width=120.0, height=24.0, align=TextStart),
+            // Explicit time advance: a provider call costs money, so the world
+            // never moves on its own — the player decides when to skip ahead.
+            button(
+              "推进时间",
+              on_click=AdvanceTime,
+              variant=Tonal,
+              width=92.0,
+              height=24.0,
+            ),
+          ],
+          spacing=6.0,
         ),
         log_panel(model),
       ],

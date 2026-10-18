@@ -215,3 +215,31 @@ pub fn character_at(
   }
   None
 }
+
+///|
+/// Hit-test a pointer position against the map's places, returning the location
+/// whose rect contains it. Called with view-local coordinates.
+///
+/// Places are tested after characters (see `view.mbt`): tapping a person must
+/// win over tapping the room they stand in, or selecting anyone inside a
+/// building would open the scene instead.
+pub fn location_at(
+  scenario : Scenario,
+  origin : @geometry.Point,
+  position : @geometry.Point,
+) -> String? {
+  let world = @geometry.Point::new(
+    x=position.x + origin.x,
+    y=position.y + origin.y,
+  )
+  for place in scenario.locations() {
+    let rect = place.rect()
+    if world.x >= rect.origin.x &&
+      world.x <= rect.origin.x + rect.size.width &&
+      world.y >= rect.origin.y &&
+      world.y <= rect.origin.y + rect.size.height {
+      return Some(place.id())
+    }
+  }
+  None
+}

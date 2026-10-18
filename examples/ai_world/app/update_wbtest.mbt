@@ -43,20 +43,20 @@ test "update never mutates the model it was given" {
     _c,
   ) => ())
   assert_eq(selected.log().length(), log_before)
-  assert_eq(selected.conversations.for_character("林掌柜").lines().length(), 0)
+  assert_eq(
+    selected.conversations.for_character("林掌柜").lines().length(),
+    0,
+  )
   assert_true(after.log().length() > log_before)
   assert_eq(after.conversations.for_character("林掌柜").lines().length(), 1)
   // Character creation mutates the roster and the log the same way.
   let drafting = step(after, ToggleCreator)
   let (created, _commit) = update(
-    step(
-      drafting,
-      CreatorChanged(drafting.creator_draft().with_name("阿七")),
-    ),
+    step(drafting, CreatorChanged(drafting.creator_draft().with_name("阿七"))),
     CharacterCreated,
   )
-  assert_eq(after.scenario().characters().length(), 1)
-  assert_eq(created.scenario().characters().length(), 2)
+  assert_eq(after.scenario().characters().length(), 2)
+  assert_eq(created.scenario().characters().length(), 3)
   assert_eq(drafting.log().length(), after.log().length())
 }
 
@@ -95,7 +95,10 @@ test "a second send is refused while the first is in flight" {
     ()
   })
   assert_true(is_no_effect(again))
-  assert_eq(after.conversations.for_character("林掌柜").lines().length(), lines)
+  assert_eq(
+    after.conversations.for_character("林掌柜").lines().length(),
+    lines,
+  )
   // Once the reply lands, sending works again.
   let answered = step(sent, Reply("林掌柜", Some("嗯。")))
   assert_false(answered.conversations.for_character("林掌柜").pending())
@@ -118,6 +121,8 @@ test "a world name with path syntax is sanitized before it reaches the host" {
     },
     read_config: _done => (),
     write_config: (_content, _done) => (),
+    export_world: (_folder, _files, _done) => (),
+    import_world: _done => (),
   }
   let typed = step(WorldModel::new(), WorldNameChanged("../../etc/passwd"))
   let (created, effect) = update(typed, NewWorld, world_host=host)
@@ -197,7 +202,10 @@ test "a keyed turn marks pending and emits exactly one provider effect" {
 test "a reply is appended, cleaned, and clears pending" {
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let sent = step(selected, Send("温一壶酒"))
-  let answered = step(sent, Reply("林掌柜", Some("「嗯，酒温好了。」")))
+  let answered = step(
+    sent,
+    Reply("林掌柜", Some("「嗯，酒温好了。」")),
+  )
   let conversation = answered.conversations.for_character("林掌柜")
   assert_eq(conversation.lines().length(), 2)
   // The corner brackets are stripped: the character speaks, not about itself.
@@ -216,7 +224,7 @@ test "a failed reply keeps the history and clears pending" {
   assert_eq(conversation.lines().length(), 1)
   assert_false(conversation.pending())
   // The failure is logged, and it names the provider rather than the character.
-  assert_true(failed.log()[0].contains("no reply from provider"))
+  assert_true(failed.log()[0].contains("没有回应"))
   assert_true(failed.log()[0].contains("林掌柜"))
 }
 
@@ -224,9 +232,23 @@ test "a failed reply keeps the history and clears pending" {
 test "a reply for another character does not leak into this conversation" {
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let sent = step(selected, Send("你好"))
+  // `jianghu` is not a character of this world, so the late reply is dropped
+  // rather than creating a ghost conversation. (This test used to assert the
+  // ghost: `for_character` returns a fresh Conversation for an unknown id, so
+  // appending there wrote an orphan file that the loader then discarded.)
   let other = step(sent, Reply("jianghu", Some("嗯。")))
   assert_eq(other.conversations.for_character("林掌柜").lines().length(), 1)
-  assert_eq(other.conversations.for_character("jianghu").lines().length(), 1)
+  assert_eq(other.conversations.for_character("jianghu").lines().length(), 0)
+  // A reply for a real, different character still lands correctly.
+  let sibling = step(sent, Reply("赶考书生", Some("嗯。")))
+  assert_eq(
+    sibling.conversations.for_character("林掌柜").lines().length(),
+    1,
+  )
+  assert_eq(
+    sibling.conversations.for_character("赶考书生").lines().length(),
+    1,
+  )
 }
 
 ///|
@@ -241,15 +263,19 @@ test "opening a different world folder replaces the world and drops selection" {
   )
   assert_eq(imported.scenario.name(), "朝堂")
   // Conversations are keyed by character id and must not leak across worlds.
-  assert_eq(imported.conversations.for_character("林掌柜").lines().length(), 0)
+  assert_eq(
+    imported.conversations.for_character("林掌柜").lines().length(),
+    0,
+  )
   assert_true(imported.log().length() > 0)
 }
 
 ///|
 test "opening a folder with no world.md keeps the current world" {
-  let model = step(tavern(), WorldFilesArrived("junk", true, [
-    ("notes.txt", "随便什么"),
-  ]))
+  let model = step(
+    tavern(),
+    WorldFilesArrived("junk", true, [("notes.txt", "随便什么")]),
+  )
   assert_eq(model.scenario().name(), "雨夜酒馆")
   assert_true(model.log()[0].contains("不是世界文件夹"))
 }
@@ -365,7 +391,7 @@ test "opening a world parses its folder and goes on stage" {
   )
   assert_eq(model.current(), Some("tavern"))
   assert_eq(model.scenario().name(), "雨夜酒馆")
-  assert_eq(model.scenario().characters().length(), 1)
+  assert_eq(model.scenario().characters().length(), 2)
   assert_eq(model.scenario().world_book().length(), 1)
   // The loaded card works as a conversation partner:
   let talking = step(model, Select(Some("林掌柜")))
@@ -411,6 +437,8 @@ test "creating a world stages it, dedups names, and commits the folder" {
     },
     read_config: _done => (),
     write_config: (_content, _done) => (),
+    export_world: (_folder, _files, _done) => (),
+    import_world: _done => (),
   }
   let named = step(WorldModel::new(), WorldNameChanged("新大陆"))
   let (created, effect) = update(named, NewWorld, world_host=host)
@@ -455,6 +483,8 @@ test "a created character joins the world, selects itself, and is committed" {
     },
     read_config: _done => (),
     write_config: (_content, _done) => (),
+    export_world: (_folder, _files, _done) => (),
+    import_world: _done => (),
   }
   let based = step(
     WorldModel::new(),
@@ -515,6 +545,8 @@ test "AI generation without a key builds a local world immediately" {
     },
     read_config: _done => (),
     write_config: (_content, _done) => (),
+    export_world: (_folder, _files, _done) => (),
+    import_world: _done => (),
   }
   let idea = step(
     WorldModel::new(),
@@ -594,6 +626,8 @@ let test_host : WorldHost = {
   write_world: (_folder, _files, _done) => (),
   read_config: _done => (),
   write_config: (_content, _done) => (),
+  export_world: (_folder, _files, _done) => (),
+  import_world: _done => (),
 }
 
 ///|
@@ -604,6 +638,9 @@ fn tavern_files() -> Array[(String, String)] {
     ),
     (
       "characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n酒馆掌柜，话不多但句句在理。\n\n## 说话方式\n\n简短、沉稳\n\n## 秘密\n\n后堂藏着一坛老酒\n\n## 位置\n\nx=320 y=210\n",
+    ),
+    (
+      "characters/赶考书生.md", "# 赶考书生\n\n## 人设\n\n姓陈，进京赶考，盘缠将尽。\n",
     ),
     (
       "world_book.md", "# 世界书\n\n- 酒 | 花雕: 后堂埋着一坛三十年的女儿红。\n",
@@ -674,6 +711,8 @@ test "settings open, file load, and save write to the world library" {
       writes.push(content)
       done(true)
     },
+    export_world: (_folder, _files, _done) => (),
+    import_world: _done => (),
   }
   // Opening the settings page reads the file and restores the config.
   let (opened, effect) = update(
@@ -832,6 +871,8 @@ test "sending commits the journal and a fresh open restores it" {
     },
     read_config: _done => (),
     write_config: (_content, _done) => (),
+    export_world: (_folder, _files, _done) => (),
+    import_world: _done => (),
   }
   // Fresh open of the tavern folder (no journal on file yet).
   let opened = step(
@@ -853,35 +894,49 @@ test "sending commits the journal and a fresh open restores it" {
   )
   assert_eq(writes.length(), 1)
   assert_eq(writes[0].0, "tavern")
-  let committed = parse_world_files(world_files_from_paths(writes[0].1))
-  match committed {
-    Some(ok) => {
-      assert_eq(ok.conversations.length(), 1)
-      let lines = ok.conversations[0].lines()
-      assert_eq(lines.length(), 2)
-      assert_eq(lines[0].text(), "温一壶酒")
-      // The scripted reply belongs to the character and is not empty.
-      assert_true(lines[1].speaker() is Character(_))
-      assert_true(lines[1].text() != "")
-      assert_true(ok.events.length() > 0)
-      // A fresh open of a folder restores the conversation and the log from
-      // the committed files — the folder is the source of truth.
-      let reopened = step(
-        WorldModel::new(),
-        WorldFilesArrived("tavern2", true, writes[0].1),
-      )
-      let restored = reopened.conversations.for_character("林掌柜")
-      assert_eq(restored.lines().length(), 2)
-      assert_eq(restored.lines()[0].text(), "温一壶酒")
-      // The committed events come back, plus this fresh open's own receipt.
-      assert_true(reopened.log()[0].contains("已载入"))
-      assert_true(
-        reopened.log().filter(line => line.contains("温一壶酒")).length() >
-        0,
-      )
-    }
-    None => fail("committed folder must parse back")
+  // A turn writes only the conversation it touched plus the event log: no
+  // world.md, no character cards, no other conversation. That is the point of
+  // the conversation scope.
+  let paths : Array[String] = []
+  for pair in writes[0].1 {
+    paths.push(pair.0)
   }
+  assert_eq(paths.length(), 2)
+  assert_true(paths.contains(conversation_path("林掌柜")))
+  assert_true(paths.contains(events_file))
+  assert_false(paths.contains("world.md"))
+  // The written conversation file parses back on its own.
+  let written : String = pair_for(writes[0].1, conversation_path("林掌柜"))
+  let parsed = parse_conversation_file(written)
+  assert_true(parsed.valid)
+  assert_eq(parsed.conversations.length(), 1)
+  let lines = parsed.conversations[0].lines()
+  assert_eq(lines.length(), 2)
+  assert_eq(lines[0].text(), "温一壶酒")
+  // The scripted reply belongs to the character and is not empty.
+  assert_true(lines[1].speaker() is Character(_))
+  assert_true(lines[1].text() != "")
+  let events = parse_events_json(pair_for(writes[0].1, events_file))
+  assert_true(events.events.length() > 0)
+  // A fresh open restores the conversation and the log: the folder is the
+  // source of truth. (The open combines the base world files with the
+  // conversation-scoped commit, which is what a real host returns.)
+  let folder : Array[(String, String)] = tavern_files()
+  for pair in writes[0].1 {
+    folder.push(pair)
+  }
+  let reopened = step(
+    WorldModel::new(),
+    WorldFilesArrived("tavern2", true, folder),
+  )
+  let restored = reopened.conversations.for_character("林掌柜")
+  assert_eq(restored.lines().length(), 2)
+  assert_eq(restored.lines()[0].text(), "温一壶酒")
+  // The committed events come back, plus this fresh open's own receipt.
+  assert_true(reopened.log()[0].contains("已载入"))
+  assert_true(
+    reopened.log().filter(line => line.contains("温一壶酒")).length() > 0,
+  )
 }
 
 ///|

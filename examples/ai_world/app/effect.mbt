@@ -79,28 +79,165 @@ fn commit_world_effect(
 }
 
 ///|
-/// The full folder payload: the Markdown world files plus the JSON journal
-/// (conversations + event log). Every world mutation commits the journal too,
-/// so the folder on disk is always a complete, replayable world.
-fn commit_files(model : WorldModel) -> Array[(String, String)] {
-  let files = model.scenario.world_files()
-  files.push((conversations_file, model.conversations.to_json_text()))
+/// What part of a world folder a commit has to rewrite.
+///
+/// Writing the whole folder on every turn is correct but wasteful: a world with
+/// eight characters meant nine file writes for a single line of dialogue, and
+/// the in-page fallback library re-serialized every world in one localStorage
+/// key. The scope separates "the world description changed" (new world, new
+/// character, AI generation, accepted memory) from "one conversation grew"
+/// (send / reply), which is by far the hot path.
+pub(all) enum CommitScope {
+  /// `world.md`, `world_book.md`, and every character card.
+  World
+  /// Exactly one character's conversation file, plus the event log.
+  Conversation(String)
+} derive(Eq, Debug)
+
+///|
+pub extend CommitScope with Debug::{to_repr}
+
+///|
+pub extend CommitScope with Eq::{not_equal, equal}
+
+///|
+/// The journal files a scope rewrites, besides the Markdown world.
+fn journal_files(
+  model : WorldModel,
+  scope : CommitScope,
+) -> Array[(String, String)] {
+  let files : Array[(String, String)] = []
+  match scope {
+    World => {
+      // Every conversation, one file each, plus the index that says which of
+      // them belong to this world. An empty conversation is still written: a
+      // skipped file would leave the previous history on disk, so clearing a
+      // chat would come back the next time the world loads. Hosts never delete
+      // files, so "empty" has to be expressed as an empty document.
+      for conversation in model.conversations.entries {
+        files.push(
+          (
+            conversation_path(conversation.character_id()),
+            conversation.to_json_text(),
+          ),
+        )
+      }
+      files.push(conversation_index(model))
+    }
+    Conversation(id) => {
+      // Even when empty: this is how a clear reaches the disk.
+      let conversation = model.conversations.for_character(id)
+      files.push((conversation_path(id), conversation.to_json_text()))
+    }
+  }
   files.push((events_file, events_json_text(model.log)))
   files
+}
+
+///|
+/// The folder payload for one commit.
+fn commit_files(
+  model : WorldModel,
+  scope : CommitScope,
+) -> Array[(String, String)] {
+  let files : Array[(String, String)] = match scope {
+    World => {
+      let world = model.scenario.world_files()
+      // Portrait bytes are world content, not a UI cache: without them a world
+      // exported to another machine comes back with every face missing. The
+      // Markdown only carries the file *name* (`portrait:`), so the asset has
+      // to ride alongside it or the reference dangles.
+      for pair in model.portraits {
+        // `pair.0` is already the folder-relative path the read side produced
+        // (`characters/<名>.png`). Re-deriving it through `world_folder_name`
+        // turned the separator into `_` and prefixed `characters/` again, so the
+        // exported asset was written as `characters/characters_<名>.png` and no
+        // card could resolve it. Portraits also live only under `characters/`.
+        world.push((portrait_world_path(pair.0), pair.1))
+      }
+      world
+    }
+    // A conversation turn does not touch the world description or the cards.
+    Conversation(_) => []
+  }
+  let journal = journal_files(model, scope)
+  for file in journal {
+    files.push(file)
+  }
+  files
+}
+
+///|
+/// The list of conversation files this world owns.
+///
+/// Written on every world-scope commit. Reading uses it to ignore orphaned
+/// `conversations/*.json` left behind by a replaced world: without it, a
+/// regenerated world that happens to reuse a character name would silently
+/// inherit the previous world's history. Hosts never delete anything — the
+/// files stay in the player's folder, which is the point of a folder database.
+fn conversation_index(model : WorldModel) -> (String, String) {
+  let paths : Array[Json] = []
+  for conversation in model.conversations.entries {
+    if !conversation.lines().is_empty() {
+      paths.push(Json::string(conversation_path(conversation.character_id())))
+    }
+  }
+  (
+    conversation_index_file,
+    Json::object({ "conversations": Json::array(paths) }).stringify(),
+  )
 }
 
 ///|
 /// Commit the journal (and with it the world) when a world folder and a host
 /// both exist; otherwise this is a no-op — running without a library still
 /// plays fine, it just persists nothing.
-fn journal_effect(
+fn commit_effect(
   model : WorldModel,
   world_host : WorldHost?,
+  scope : CommitScope,
 ) -> @moui.Effect[Msg] {
   match (model.current, world_host) {
     (Some(folder), Some(host)) =>
-      commit_world_effect(host, folder, commit_files(model))
+      commit_world_effect(host, folder, commit_files(model, scope))
     _ => @moui.Effect::none()
   }
 }
 
+///|
+/// Effect: write the current world out as a shareable bundle.
+///
+/// The payload is the same file set a world-scope commit writes, so the bundle
+/// is the world folder — importing it elsewhere reproduces the world exactly,
+/// including the journal. It deliberately excludes `config.json`: that file
+/// holds the player's provider endpoint and belongs to the library, not to a
+/// world.
+fn export_world_effect(
+  host : WorldHost,
+  folder : String,
+  files : Array[(String, String)],
+) -> @moui.Effect[Msg] {
+  @moui.Effect::run(
+    key="ai-world:export",
+    kind="filesystem",
+    label="Export world \{folder}",
+    run=dispatch => {
+      (host.export_world)(folder, files, ok => dispatch(WorldExported(ok)))
+    },
+  )
+}
+
+///|
+/// Effect: pick a bundle and add it to the library.
+fn import_world_effect(host : WorldHost) -> @moui.Effect[Msg] {
+  @moui.Effect::run(
+    key="ai-world:import",
+    kind="filesystem",
+    label="Import world",
+    run=dispatch => {
+      (host.import_world)((ok, folder, files) => {
+        dispatch(WorldImported(ok, folder, files))
+      })
+    },
+  )
+}

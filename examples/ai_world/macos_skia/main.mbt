@@ -38,6 +38,12 @@ priv enum FsKind {
   Write(String, Array[(String, String)], (Bool) -> Unit)
   ConfigRead((String?) -> Unit)
   ConfigWrite(String, (Bool) -> Unit)
+  /// Write an already-chosen path. The dialog runs on the main thread in the
+  /// host closure; only the file write is queued.
+  ExportTo(String, String, (Bool) -> Unit)
+  /// Read a bundle from a chosen path, unpack it into a fresh folder, and
+  /// report `(ok, folder, files)`.
+  ImportFrom(String, (Bool, String, Array[(String, String)]) -> Unit)
 }
 
 ///|
@@ -122,6 +128,51 @@ async fn run_ai_world() -> Unit {
           _ => false
         },
       )
+    },
+    export_world: (folder, files, done) => {
+      // The save dialog must run on the main thread, exactly like `pick_root`:
+      // this closure executes inside the app's effect pass on the window task.
+      let suggested = folder + @app.bundle_extension
+      let response = service_bridge.dispatch(
+        @backend.HostServiceRequest::FileDialog(
+          @backend.HostFileDialogOptions::new(
+            kind=@backend.HostFileDialogKind::SaveFile,
+            title="导出世界",
+            default_name=Some(suggested),
+          ),
+        ),
+      )
+      match response {
+        @backend.HostServiceResponse::FileDialogSelection([path, ..]) => {
+          let body = @app.bundle_encode(folder, files)
+          ignore(
+            fs_owner.queue.try_put(FsJob::{ kind: ExportTo(path, body, done), }) catch {
+              _ => false
+            },
+          )
+        }
+        // Cancelled: report it rather than pretending an export happened.
+        _ => done(false)
+      }
+    },
+    import_world: done => {
+      let response = service_bridge.dispatch(
+        @backend.HostServiceRequest::FileDialog(
+          @backend.HostFileDialogOptions::new(
+            kind=@backend.HostFileDialogKind::OpenFile,
+            title="导入世界",
+          ),
+        ),
+      )
+      match response {
+        @backend.HostServiceResponse::FileDialogSelection([path, ..]) =>
+          ignore(
+            fs_owner.queue.try_put(FsJob::{ kind: ImportFrom(path, done), }) catch {
+              _ => false
+            },
+          )
+        _ => done(false, "", [])
+      }
     },
   }
   let window_task : async () -> Unit = async fn() {
@@ -209,7 +260,58 @@ async fn run_fs_job(job : FsJob) -> Unit {
       }
       done(ok)
     }
+    ExportTo(path, body, done) => {
+      let mut ok = true
+      @fs.write_file(path, body) catch {
+        _ => ok = false
+      }
+      done(ok)
+    }
+    ImportFrom(path, done) => {
+      let text = @fs.read_file(path).text() catch {
+        _ => {
+          done(false, "", [])
+          return
+        }
+      }
+      match @app.bundle_decode(text) {
+        None => done(false, "", [])
+        Some(bundle) => {
+          // Never overwrite an existing world: `名字`, `名字 (2)`, …
+          let folder = unique_world_folder(bundle.name)
+          let files = bundle.files
+          let ok = write_world_files(folder, files)
+          if ok {
+            done(true, folder, files)
+          } else {
+            done(false, "", [])
+          }
+        }
+      }
+    }
   }
+}
+
+///|
+/// A world folder name that is not taken yet. Import must never merge into an
+/// existing world — that would silently mix two histories.
+async fn unique_world_folder(base : String) -> String {
+  let taken : Array[String] = @fs.readdir(
+    library_root.val,
+    include_hidden=false,
+  ) catch {
+    _ => []
+  }
+  if !taken.contains(base) {
+    return base
+  }
+  let mut index = 2
+  let mut candidate = "\{base} (\{index})"
+  while taken.contains(candidate) {
+    index += 1
+    candidate = "\{base} (\{index})"
+  }
+  candidate
 }
 
 ///|
@@ -231,7 +333,11 @@ async fn read_world_files(folder : String) -> (Bool, Array[(String, String)]) {
       @fs.FileKind::Directory => {
         let sub = @fs.readdir(full, include_hidden=false) catch { _ => [] }
         for sub_name in sub {
-          if @app.is_world_file_name(sub_name) {
+          if @app.is_portrait_file_name(sub_name) {
+            let file = "\{full}/\{sub_name}"
+            let bytes = @fs.read_file(file).binary() catch { _ => b"" }
+            files.push(("\{name}/\{sub_name}", @app.base64_encode(bytes)))
+          } else if @app.is_world_file_name(sub_name) {
             let file = "\{full}/\{sub_name}"
             let content = @fs.read_file(file).text() catch { _ => "" }
             let relative = "\{name}/\{sub_name}"
@@ -240,7 +346,10 @@ async fn read_world_files(folder : String) -> (Bool, Array[(String, String)]) {
         }
       }
       @fs.FileKind::Regular =>
-        if @app.is_world_file_name(name) {
+        if @app.is_portrait_file_name(name) {
+          let bytes = @fs.read_file(full).binary() catch { _ => b"" }
+          files.push((name, @app.base64_encode(bytes)))
+        } else if @app.is_world_file_name(name) {
           let content = @fs.read_file(full).text() catch { _ => "" }
           files.push((name, content))
         }

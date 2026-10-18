@@ -645,6 +645,16 @@
           ]
         },
         {
+          "name": "AI World native transport tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/ai_world/llm_native",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "AI World render contract tests",
           "argv": [
             "moon",

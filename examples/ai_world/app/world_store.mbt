@@ -21,10 +21,19 @@ pub(all) struct WorldFiles {
   book_md : String
   /// `(characters/<名>.md, content)` pairs in folder order.
   character_files : Array[(String, String)]
-  /// conversations.json body; `""` when the folder has none.
+  /// Legacy aggregate history (`conversations.json`), `""` when absent.
+  /// Worlds written by older builds keep every conversation here.
   conversations_json : String
+  /// `(conversations/<名>.json, body)` pairs — the current per-character
+  /// format, so a turn only rewrites the conversation it touched.
+  conversation_files : Array[(String, String)]
   /// events.json body; `""` when the folder has none.
   events_json : String
+  /// Portrait assets, `(file name, base64 bytes)`. Binary rides as base64
+  /// because the host contract is text (`WorldHost::read_world` returns
+  /// `Array[(String, String)]`); a portrait is a few hundred KB, so the
+  /// encoding cost is irrelevant next to keeping one host contract.
+  portraits : Array[(String, String)]
 } derive(Eq, Debug)
 
 ///|
@@ -64,11 +73,64 @@ pub fn is_world_file_name(name : String) -> Bool {
 }
 
 ///|
+/// Is this file a portrait asset of a world?
+///
+/// Portraits live beside the cards (`characters/<名>.png`), so the folder read
+/// has to carry them: without this the UI silently loses every portrait when a
+/// world is reopened from disk.
+pub fn is_portrait_file_name(name : String) -> Bool {
+  let lower = name.to_lower()
+  lower.has_suffix(".png") ||
+  lower.has_suffix(".jpg") ||
+  lower.has_suffix(".jpeg") ||
+  lower.has_suffix(".webp")
+}
+
+///|
+/// The `data:` URI a portrait renders from, or `""` when there is no bytes.
+pub fn portrait_data_uri(file_name : String, base64 : String) -> String {
+  if base64 == "" {
+    return ""
+  }
+  let mime = if file_name.to_lower().has_suffix(".png") {
+    "image/png"
+  } else if file_name.to_lower().has_suffix(".webp") {
+    "image/webp"
+  } else {
+    "image/jpeg"
+  }
+  "data:" + mime + ";base64," + base64
+}
+
+///|
+/// The portrait URI for one card, resolved against the world's assets.
+pub fn portrait_uri(
+  card : CharacterCard,
+  portraits : Array[(String, String)],
+) -> String {
+  let wanted : String = card.portrait().trim().to_owned()
+  if wanted == "" {
+    return ""
+  }
+  for pair in portraits {
+    let path : String = pair.0
+    let suffix : String = "/" + wanted
+    if path == wanted || path.has_suffix(suffix) {
+      return portrait_data_uri(path, pair.1)
+    }
+  }
+  ""
+}
+
+///|
 /// Parse one world folder. `None` means "not a world": `world.md` missing, or
 /// carrying no usable H1 name.
 pub fn parse_world_files(files : WorldFiles) -> WorldParse? {
   let warnings : Array[String] = []
-  let (name, background, locations) = parse_world_md(files.world_md, warnings)
+  let (name, background, locations, map_width, map_height) = parse_world_md(
+    files.world_md,
+    warnings,
+  )
   if name == "" {
     return None
   }
@@ -99,13 +161,56 @@ pub fn parse_world_files(files : WorldFiles) -> WorldParse? {
     }
   }
   let journal = parse_conversations_json(files.conversations_json)
+  // Per-character files ride beside the legacy aggregate. Both are read: a
+  // world may have been written by either build, and a mixed folder is the
+  // normal state during an upgrade.
+  let per_character : Array[Conversation] = []
+  let mut damaged_character_file = ""
+  for pair in files.conversation_files {
+    let parsed = parse_conversation_file(pair.1)
+    if !parsed.valid && damaged_character_file == "" {
+      damaged_character_file = pair.0
+    }
+    for conversation in parsed.conversations {
+      per_character.push(conversation)
+    }
+  }
+  // Per-character files win over the aggregate for the same character: they
+  // are the newer copy. An id present in both is a folder mid-upgrade.
+  let merged : Array[Conversation] = []
+  for conversation in per_character {
+    merged.push(conversation)
+  }
+  for conversation in journal.conversations {
+    if merged
+      .filter(other => other.character_id() == conversation.character_id())
+      .length() ==
+      0 {
+      merged.push(conversation)
+    }
+  }
   let events = parse_events_json(files.events_json)
   // A conversation pointing at a character that no longer exists drops alone,
   // with a warning — the same degrade-one-file rule as a damaged card.
   let kept : Array[Conversation] = []
-  for conversation in journal.conversations {
+  for conversation in merged {
     let character = conversation.character_id()
-    if characters.filter(other => other.id() == character).length() > 0 {
+    // The "orphaned conversation" rule only applies to a key that *names a
+    // character*. Two kinds of key do not:
+    //   - `scene:<地点>` — a multi-party transcript;
+    //   - `<角色>~N`     — a branch of that character's history.
+    // Both used to be dropped here, which silently deleted every scene and
+    // every branch on reload. A branch survives as long as its base character
+    // does, so it is resolved against its base, not against its full key.
+    let anchor = match split_branch(character) {
+      Some((base, _number)) => base
+      None => character
+    }
+    let known_character = characters
+      .filter(other => other.id() == anchor)
+      .length() >
+      0
+    if is_scene_key(character) || known_character {
       kept.push(conversation)
     } else {
       warnings.push("对话记录指向已不存在的角色：\{character}")
@@ -113,6 +218,9 @@ pub fn parse_world_files(files : WorldFiles) -> WorldParse? {
   }
   if !journal.valid {
     warnings.push("conversations.json 无法解析——对话从空白开始")
+  }
+  if damaged_character_file != "" {
+    warnings.push("对话文件无法解析：\{damaged_character_file}")
   }
   if !events.valid {
     warnings.push("events.json 无法解析——事件从空白开始")
@@ -122,6 +230,8 @@ pub fn parse_world_files(files : WorldFiles) -> WorldParse? {
       id=name,
       name~,
       background~,
+      map_width~,
+      map_height~,
       locations~,
       characters~,
       world_book=entries,
@@ -133,12 +243,21 @@ pub fn parse_world_files(files : WorldFiles) -> WorldParse? {
 }
 
 ///|
+
+///|
+/// Rebuild a card under a de-duplicated id.
+///
+/// Every field has to be copied explicitly, which is exactly why this is easy to
+/// get wrong: a field added to `CharacterCard` but forgotten here is silently
+/// dropped on *every* world load. `portrait_prompt` was lost that way.
 fn rename_card(card : CharacterCard, name : String) -> CharacterCard {
   CharacterCard::new(
     id=name,
     name~,
     persona=card.persona(),
     appearance=card.appearance(),
+    portrait=card.portrait(),
+    portrait_prompt=card.portrait_prompt(),
     voice=card.voice(),
     goal=card.goal(),
     secret=card.secret(),
@@ -155,10 +274,12 @@ fn rename_card(card : CharacterCard, name : String) -> CharacterCard {
 fn parse_world_md(
   content : String,
   warnings : Array[String],
-) -> (String, String, Array[ScenarioLocation]) {
+) -> (String, String, Array[ScenarioLocation], Double, Double) {
   let mut name = ""
   let background : Array[String] = []
   let locations : Array[ScenarioLocation] = []
+  let mut map_width = 640.0
+  let mut map_height = 420.0
   let mut section = ""
   for raw in file_lines(content) {
     let trimmed = raw.trim().to_owned()
@@ -188,6 +309,26 @@ fn parse_world_md(
       background.push("")
       continue
     }
+    if section == "地图" {
+      // `- 尺寸: w=640 h=420`; unparseable values keep the defaults rather than
+      // collapsing the map to zero.
+      if trimmed.has_prefix("- ") {
+        let body : String = trimmed[2:].trim().to_owned()
+        let rest = match split_colon(body) {
+          Some((_head, value)) => value
+          None => body
+        }
+        for token in rest.split(" ").to_array() {
+          let token : String = token.trim().to_owned()
+          if token.has_prefix("w=") {
+            map_width = parse_double(token[2:].to_owned(), map_width)
+          } else if token.has_prefix("h=") {
+            map_height = parse_double(token[2:].to_owned(), map_height)
+          }
+        }
+      }
+      continue
+    }
     if section == "地点" {
       match parse_location_line(trimmed) {
         Some(place) => locations.push(place)
@@ -202,7 +343,7 @@ fn parse_world_md(
   while background.length() > 0 && background[background.length() - 1] == "" {
     ignore(background.pop())
   }
-  (name, background.join("\n"), locations)
+  (name, background.join("\n"), locations, map_width, map_height)
 }
 
 ///|
@@ -228,6 +369,9 @@ pub fn parse_character_md(content : String) -> CharacterCard? {
       name~,
       persona=section_text(sections, "人设"),
       appearance=section_text(sections, "外貌"),
+      portrait=section_text(sections, "立绘"),
+      portrait_prompt=section_text(sections, "立绘提示词"),
+      location=section_text(sections, "所在"),
       voice=section_text(sections, "说话方式"),
       goal=section_text(sections, "目标"),
       secret=section_text(sections, "秘密"),
@@ -238,7 +382,19 @@ pub fn parse_character_md(content : String) -> CharacterCard? {
 }
 
 ///|
-/// Parse one world-book line: `- 关键词 | 另一个: 内容`.
+/// Parse one world-book line.
+///
+/// Base form (still the common case, and what a hand-written file uses):
+///
+///     - 关键词 | 另一个: 内容
+///
+/// Optional modifiers sit between the keys and the colon, so the line stays one
+/// readable Markdown bullet:
+///
+///     - 酒 | 花雕 [priority=10] [position=before] [recursion=2] [probability=60]: 内容
+///
+/// Every modifier is optional and order-independent; an unknown one is ignored
+/// rather than rejecting the entry (a typo must not cost the player their lore).
 pub fn parse_world_book_line(line : String) -> WorldEntry? {
   let trimmed = line.trim().to_owned()
   if !trimmed.has_prefix("- ") {
@@ -249,8 +405,9 @@ pub fn parse_world_book_line(line : String) -> WorldEntry? {
     Some((head, rest)) => (head, rest)
     None => return None
   }
+  let (key_text, modifiers) = strip_lore_modifiers(head)
   let keys : Array[String] = []
-  for part in head.split("|").to_array() {
+  for part in key_text.split("|").to_array() {
     let key = part.trim().to_owned()
     if key != "" {
       keys.push(key)
@@ -260,7 +417,120 @@ pub fn parse_world_book_line(line : String) -> WorldEntry? {
   if keys.is_empty() || content == "" {
     return None
   }
-  Some(WorldEntry::new(keys~, content~))
+  let priority = lore_int(modifiers, "priority", 0)
+  // A negative priority is meaningless (it would sort below "no priority" in a
+  // way no author expects), so it floors at 0.
+  let position = match lore_text(modifiers, "position") {
+    "before" => Before
+    _ => After
+  }
+  let recursion = lore_int(modifiers, "recursion", 0)
+  let probability = lore_int(modifiers, "probability", 100)
+  Some(
+    WorldEntry::new(
+      keys~,
+      content~,
+      priority=if priority < 0 { 0 } else { priority },
+      position~,
+      recursion=if recursion < 0 { 0 } else { recursion },
+      probability=if probability < 0 {
+        0
+      } else if probability > 100 {
+        100
+      } else {
+        probability
+      },
+    ),
+  )
+}
+
+///|
+/// Split `关键词 | 另一个 [priority=10]` into the key text and the `[k=v]`
+/// modifiers, in either order and with any whitespace.
+fn strip_lore_modifiers(head : String) -> (String, Array[(String, String)]) {
+  let modifiers : Array[(String, String)] = []
+  let kept : Array[String] = []
+  let chars : Array[Char] = []
+  for ch in head {
+    chars.push(ch)
+  }
+  let mut index = 0
+  let current : Array[Char] = []
+  while index < chars.length() {
+    if chars[index] == '[' {
+      // Collect until the closing bracket; an unterminated one is literal text
+      // rather than swallowing the rest of the line.
+      let mut close = index + 1
+      let mut found = false
+      while close < chars.length() {
+        if chars[close] == ']' {
+          found = true
+          break
+        }
+        close += 1
+      }
+      if found {
+        let inner = String::from_array(chars[index + 1:close]).to_string()
+        match split_equals(inner) {
+          Some((key, value)) => modifiers.push((key, value))
+          None =>
+            kept.push(String::from_array(chars[index:close + 1]).to_string())
+        }
+        index = close + 1
+        continue
+      }
+    }
+    current.push(chars[index])
+    index += 1
+  }
+  if !current.is_empty() {
+    kept.push(String::from_array(current).to_string())
+  }
+  (kept.join(""), modifiers)
+}
+
+///|
+fn split_equals(text : String) -> (String, String)? {
+  let chars : Array[Char] = []
+  for ch in text {
+    chars.push(ch)
+  }
+  let mut index = 0
+  while index < chars.length() {
+    if chars[index] == '=' {
+      let key = String::from_array(chars[0:index]).to_string()
+      let value = String::from_array(chars[index + 1:chars.length()]).to_string()
+      let key_norm : String = key.trim().to_owned().to_lower()
+      let value_norm : String = value.trim().to_owned().to_lower()
+      return Some((key_norm, value_norm))
+    }
+    index += 1
+  }
+  None
+}
+
+///|
+fn lore_text(modifiers : Array[(String, String)], key : String) -> String {
+  for pair in modifiers {
+    if pair.0 == key {
+      return pair.1
+    }
+  }
+  ""
+}
+
+///|
+fn lore_int(
+  modifiers : Array[(String, String)],
+  key : String,
+  fallback : Int,
+) -> Int {
+  for pair in modifiers {
+    if pair.0 == key {
+      return @string.parse_int(pair.1) catch { _ => return fallback }
+    }
+  }
+  fallback
 }
 
 ///|
@@ -272,9 +542,26 @@ fn parse_location_line(line : String) -> ScenarioLocation? {
     return None
   }
   let body : String = trimmed[2:].trim().to_owned()
-  let (name, rest) = match split_colon(body) {
+  let (head, rest) = match split_colon(body) {
     Some((name, rest)) => (name.trim().to_owned(), rest)
     None => return None
+  }
+  if head == "" {
+    return None
+  }
+  // `吧台 id=bar` keeps a slug id that characters reference. Hand-written
+  // files normally omit it, in which case the id is the display name.
+  let (name, id) = match find_substring(head, " id=") {
+    Some(at) => {
+      let name : String = head[0:at].trim().to_owned()
+      let id : String = head[at + 4:head.length()].trim().to_owned()
+      if name == "" || id == "" {
+        (head, head)
+      } else {
+        (name, id)
+      }
+    }
+    None => (head, head)
   }
   if name == "" {
     return None
@@ -292,7 +579,7 @@ fn parse_location_line(line : String) -> ScenarioLocation? {
   }
   Some(
     ScenarioLocation::new(
-      id=name,
+      id~,
       name~,
       description~,
       rect=@geometry.Rect::new(x~, y~, width=w, height=h),
@@ -531,12 +818,75 @@ pub fn world_folder_name(name : String) -> String {
   let text = String::from_array(safe).trim().to_owned()
   // `.` and `..` are path components, not names: a world called ".." would
   // write over the library's parent. Leading dots would also hide the folder.
-  if text == "" || text == "." || text == ".." {
+  let guarded = if text == "" || text == "." || text == ".." {
     "未命名"
   } else if text.has_prefix(".") {
     "_" + text
   } else {
     text
+  }
+  clip_folder_name(guarded)
+}
+
+///|
+/// The longest folder name we will create, in UTF-8 bytes.
+///
+/// Most file systems cap a single path component at 255 bytes, and CJK
+/// characters cost 3 bytes each, so a 500-character name would fail at write
+/// time with a bare "invalid argument" the player cannot act on. Truncating
+/// here keeps the failure impossible instead of surprising. 120 leaves room for
+/// the `~N` disambiguation suffix and the path separator.
+let folder_name_max_bytes : Int = 120
+
+///|
+/// The UTF-8 length of one character, so a budget in bytes can be spent
+/// exactly instead of assuming the worst case for ASCII.
+fn utf8_width(ch : Char) -> Int {
+  let code = ch.to_int()
+  if code < 0x80 {
+    1
+  } else if code < 0x800 {
+    2
+  } else if code < 0x10000 {
+    3
+  } else {
+    4
+  }
+}
+
+///|
+/// Truncate to a whole number of characters within the byte budget.
+///
+/// Cutting by *characters* rather than bytes matters: a cut mid-character would
+/// produce invalid UTF-8 and a name the file system rejects anyway.
+fn clip_folder_name(name : String) -> String {
+  let mut bytes = 0
+  let mut over = false
+  for ch in name {
+    bytes += utf8_width(ch)
+    if bytes > folder_name_max_bytes {
+      over = true
+      break
+    }
+  }
+  if !over {
+    return name
+  }
+  let kept : Array[Char] = []
+  let mut used = 0
+  for ch in name {
+    let width = utf8_width(ch)
+    if used + width > folder_name_max_bytes {
+      break
+    }
+    kept.push(ch)
+    used += width
+  }
+  let clipped = String::from_array(kept)
+  if clipped == "" {
+    "未命名"
+  } else {
+    clipped
   }
 }
 
@@ -567,13 +917,33 @@ fn Scenario::world_md(self : Scenario) -> String {
     out.push(self.background())
     out.push("")
   }
+  // The map size is world state, not a UI preference: without it every reload
+  // resets the canvas to its default and silently shrinks a custom map.
+  out.push("## 地图")
+  out.push("")
+  out.push("- 尺寸: w=\{self.map_width()} h=\{self.map_height()}")
+  out.push("")
   if !self.locations().is_empty() {
     out.push("## 地点")
     out.push("")
     for place in self.locations() {
       let rect = place.rect()
       out.push(
-        "- \{place.name()}: x=\{rect.origin.x} y=\{rect.origin.y} w=\{rect.size.width} h=\{rect.size.height}",
+        // The description follows a second colon, which the parser already
+        // understands. It was never written, so every place the player
+        // described came back undescribed.
+        // `id=…` is written only when the id is not simply the display name.
+        // Characters reference a place by id, so dropping a slug id would leave
+        // every `location` pointing at a name that no longer exists — and the
+        // scene's cast silently empties on reload.
+        "- \{place.name()}" +
+        (if place.id() == place.name() { "" } else { " id=\{place.id()}" }) +
+        ": x=\{rect.origin.x} y=\{rect.origin.y} w=\{rect.size.width} h=\{rect.size.height}" +
+        (if place.description() == "" {
+          ""
+        } else {
+          ": " + place.description()
+        }),
       )
     }
     out.push("")
@@ -598,6 +968,12 @@ pub fn CharacterCard::character_md_text(self : CharacterCard) -> String {
   out.push("")
   let optional : Array[(String, String)] = [
     ("外貌", self.appearance()),
+    // `location` is what `cast_at` uses to decide who is in a scene. Without it
+    // in the file, a character whose point is outside every rect silently drops
+    // out of their scene after a reload.
+    ("所在", self.location()),
+    ("立绘", self.portrait()),
+    ("立绘提示词", self.portrait_prompt()),
     ("说话方式", self.voice()),
     ("目标", self.goal()),
     ("秘密", self.secret()),
@@ -630,7 +1006,8 @@ fn Scenario::world_book_md(self : Scenario) -> String {
     )
   }
   for entry in self.world_book() {
-    out.push("- \{entry.keys().join(" | ")}: \{entry.content()}")
+    let keys = entry.keys().join(" | ")
+    out.push("- " + keys + lore_modifier_text(entry) + ": " + entry.content())
   }
   out.push("")
   out.join("\n")
@@ -645,4 +1022,72 @@ pub fn blank_world(name : String) -> Scenario {
     name~,
     background="（写下你的世界：它在哪里，正在发生什么。这几行会进入每个角色的记忆。）",
   )
+}
+
+///|
+/// The `[key=value]` suffix for a world-book entry, or `""` when every field is
+/// at its default. Only non-defaults are written, so an ordinary entry keeps
+/// the exact one-line form it always had (and hand-edited files stay readable).
+fn lore_modifier_text(entry : WorldEntry) -> String {
+  let parts : Array[String] = []
+  if entry.priority() != 0 {
+    parts.push("[priority=" + entry.priority().to_string() + "]")
+  }
+  if entry.position() is Before {
+    parts.push("[position=before]")
+  }
+  if entry.recursion() != 0 {
+    parts.push("[recursion=" + entry.recursion().to_string() + "]")
+  }
+  if entry.probability() != 100 {
+    parts.push("[probability=" + entry.probability().to_string() + "]")
+  }
+  if parts.is_empty() {
+    ""
+  } else {
+    " " + parts.join(" ")
+  }
+}
+
+///|
+/// The folder-relative path a portrait asset is stored at.
+///
+/// Portraits live beside their card (`characters/<名>.png`). The read side already
+/// hands back that path, so this normalises rather than re-derives: an incoming
+/// path keeps its directory when it has one, and a bare file name is placed under
+/// `characters/`.
+pub fn portrait_world_path(path : String) -> String {
+  if path.has_prefix("characters/") {
+    return path
+  }
+  let name = world_folder_name(path)
+  if is_portrait_file_name(name) {
+    "characters/" + name
+  } else {
+    "characters/" + name + ".png"
+  }
+}
+
+///|
+/// Which kind of file a `characters/` path holds.
+///
+/// A card and its portrait share the directory, so the prefix alone cannot
+/// separate them: a `.png` under `characters/` must reach the portrait list, not
+/// the card list, or the asset is lost on every world-scope write.
+pub(all) enum CharacterAssetKind {
+  Card
+  Portrait
+  Other
+}
+
+///|
+pub fn is_card_or_portrait_path(path : String) -> CharacterAssetKind {
+  if !path.has_prefix("characters/") {
+    return Other
+  }
+  if is_portrait_file_name(path) {
+    Portrait
+  } else {
+    Card
+  }
 }

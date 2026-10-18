@@ -1,11 +1,13 @@
 import {
   "moonbitlang/core/json",
+  "moonbitlang/core/math",
   "moonbitlang/core/string",
   "wzzc-dev/moui/views",
   "wzzc-dev/moui",
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",
   "wzzc-dev/moui/text",
+  "wzzc-dev/moui_richtext",
 }
 
 supported_targets = "+native+wasm-gc"

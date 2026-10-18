@@ -109,3 +109,27 @@ test "every planned message reaches the request body in order" {
   assert_eq(request.user(), "再来一壶")
   assert_eq(request.messages().length(), 6)
 }
+
+///|
+test "a content-block reply is parsed, not discarded" {
+  // Several OpenAI-compatible gateways (and anything Anthropic-shaped) return
+  // `content` as an array of blocks rather than a string. Rejecting that made
+  // every reply from such an endpoint look like a provider failure.
+  let blocks = "{\"choices\":[{\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"客官\"},{\"type\":\"text\",\"text\":\"里边坐。\"}]}}]}"
+  assert_eq(llm_parse_reply(blocks), Some("客官里边坐。"))
+  // Non-text blocks are skipped, not stringified into the dialogue.
+  let mixed = "{\"choices\":[{\"message\":{\"content\":[{\"type\":\"image\",\"url\":\"x\"},{\"type\":\"text\",\"text\":\"说正事。\"}]}}]}"
+  assert_eq(llm_parse_reply(mixed), Some("说正事。"))
+  // A blocks array with no text at all is still a failure, so the caller shows
+  // the retry path instead of appending an empty line.
+  let no_text = "{\"choices\":[{\"message\":{\"content\":[{\"type\":\"tool_use\",\"id\":\"1\"}]}}]}"
+  assert_true(llm_parse_reply(no_text) is None)
+  // The plain string form still works.
+  assert_eq(
+    llm_parse_reply("{\"choices\":[{\"message\":{\"content\":\"普通\"}}]}"),
+    Some("普通"),
+  )
+  // And so does a content array on a real error body, which stays a failure.
+  assert_true(llm_parse_reply("{\"error\":{\"message\":\"bad key\"}}") is None)
+  assert_true(llm_parse_reply("{\"choices\":[]}") is None)
+}

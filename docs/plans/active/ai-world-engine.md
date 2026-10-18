@@ -55,17 +55,17 @@
 
 ## Acceptance
 
-- [ ] Folder round-trip: parse template worlds, write them back, tolerate
+- [x] Folder round-trip: parse template worlds, write them back, tolerate
       damaged files (`moon test examples/ai_world/app --target native`).
-- [ ] Player creates a world and a character from the UI; conversation starts
+- [x] Player creates a world and a character from the UI; conversation starts
       with the card's persona in the system prompt.
-- [ ] Without a key the conversation still progresses (scripted replies).
-- [ ] `moon build examples/ai_world/web_wasm --target wasm-gc` succeeds; in the
+- [x] Without a key the conversation still progresses (scripted replies).
+- [x] `moon build examples/ai_world/web_wasm --target wasm-gc` succeeds; in the
       browser: pick library → new world → create character → chat → the .md
       files appear (real folder or fallback store).
-- [ ] A real provider (user-supplied endpoint/key, not committed) answers both
+- [x] A real provider (user-supplied endpoint/key, not committed) answers both
       the chat and the world generation on web.
-- [ ] README and `docs/examples.md` describe the product; static validators
+- [x] README and `docs/examples.md` describe the product; static validators
       pass.
 
 ## Decision log

@@ -14,7 +14,19 @@ pub fn scripted_reply(
   card : CharacterCard,
   player_text : String,
 ) -> String {
-  let lore = world_book_block(scenario, player_text)
+  // Same selector as the provider path, so the offline reply reacts to the
+  // same lore (priority/position/probability included) instead of a plain scan.
+  let hits = select_lore(scenario, player_text, "", 0)
+  let lore = match hits {
+    [] => ""
+    _ => {
+      let lines : Array[String] = []
+      for hit in hits {
+        lines.push("- " + hit.entry.content())
+      }
+      lines.join("\n")
+    }
+  }
   let variant = player_text.length() % 3
   let name = card.name()
   let voice_hint = if card.voice() != "" {

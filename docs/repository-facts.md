@@ -61,6 +61,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/browser |
 | ./examples/terminal |
 | ./examples/tui_layers |
+| ./examples/ai_world |
 | ./moui_studio |
 | ./benchmarks/app_cached_layer |
 | ./benchmarks/full_cycle |
@@ -122,6 +123,7 @@ This file is generated from repository manifests and validator reports.
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
 | TUI Layers | examples/tui_layers | no |
+| AI World | examples/ai_world | yes |
 
 ## Platform Status
 

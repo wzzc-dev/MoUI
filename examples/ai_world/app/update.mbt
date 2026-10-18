@@ -44,6 +44,23 @@ pub struct WorldModel {
   /// Whether the settings page shows the API key in clear text. Session UI
   /// state only; the key itself is never persisted either way.
   api_key_revealed : Bool
+  /// The history line being edited (`None` = not editing), plus its buffer.
+  /// Transient UI state: an edit only reaches the world on commit.
+  editing_line : Int?
+  edit_buffer : String
+  /// How the next line will be sent (say / do / story). Session UI state.
+  intent : InputIntent
+  /// The one-line character idea in the creation wizard.
+  character_idea : String
+  /// Portrait assets of the current world: `(file name, base64)` as read from
+  /// the folder. Cached in the model because rendering must not do IO.
+  portraits : Array[(String, String)]
+  /// The location whose scene is on stage (`None` = private chat mode).
+  ///
+  /// A scene reuses the conversation book under `scene:<地点>` and keeps
+  /// `selected` as "who answers next", so switching modes never rewrites a
+  /// private chat.
+  scene_location : String?
 } derive(Eq, Debug)
 
 ///|
@@ -73,6 +90,12 @@ pub fn WorldModel::new() -> WorldModel {
     config_file_loaded: false,
     memory_drafts: [],
     api_key_revealed: false,
+    editing_line: None,
+    edit_buffer: "",
+    intent: Say,
+    character_idea: "",
+    portraits: [],
+    scene_location: None,
   }
 }
 
@@ -82,9 +105,6 @@ pub fn WorldModel::scenario(self : WorldModel) -> Scenario {
 }
 
 ///|
-pub fn WorldModel::conversations(self : WorldModel) -> ConversationBook {
-  self.conversations
-}
 
 ///|
 pub fn WorldModel::config(self : WorldModel) -> ModelConfig {
@@ -159,6 +179,117 @@ pub fn WorldModel::api_key_revealed(self : WorldModel) -> Bool {
 }
 
 ///|
+/// The location whose scene is on stage, if any.
+pub fn WorldModel::scene_location(self : WorldModel) -> String? {
+  self.scene_location
+}
+
+///|
+/// Is the stage showing a multi-character scene?
+pub fn WorldModel::in_scene(self : WorldModel) -> Bool {
+  self.scene_location is Some(_)
+}
+
+///|
+/// The cast of the current scene (empty when not in a scene).
+pub fn WorldModel::scene_cast(self : WorldModel) -> Array[CharacterCard] {
+  match self.scene_location {
+    Some(location) => cast_at(self.scenario, location)
+    None => []
+  }
+}
+
+///|
+/// The conversation the composer targets: the scene transcript in scene mode,
+/// otherwise the selected character's private chat.
+pub fn WorldModel::active_conversation_key(self : WorldModel) -> String? {
+  match self.scene_location {
+    Some(location) => Some(scene_key(location))
+    None => self.selected
+  }
+}
+
+///|
+/// Portrait assets of the current world.
+pub fn WorldModel::portraits(self : WorldModel) -> Array[(String, String)] {
+  self.portraits
+}
+
+///|
+/// The portrait `data:` URI for one card, or `""` when it has none.
+pub fn WorldModel::portrait_for(
+  self : WorldModel,
+  card : CharacterCard,
+) -> String {
+  portrait_uri(card, self.portraits)
+}
+
+///|
+/// The one-line character idea in the creation wizard.
+pub fn WorldModel::character_idea(self : WorldModel) -> String {
+  self.character_idea
+}
+
+///|
+/// How the next line will be framed (say / do / story).
+pub fn WorldModel::intent(self : WorldModel) -> InputIntent {
+  self.intent
+}
+
+///|
+/// The history line being edited, if any.
+pub fn WorldModel::editing_line(self : WorldModel) -> Int? {
+  self.editing_line
+}
+
+///|
+/// The text currently in the inline editor.
+pub fn WorldModel::edit_buffer(self : WorldModel) -> String {
+  self.edit_buffer
+}
+
+///|
+/// Replace the whole conversation for one character with a new line list.
+///
+/// Editing a history line re-derives the conversation from its line array; a
+/// helper keeps that inside the app (the book is keyed by character id, and a
+/// stale key must never create a second entry).
+fn set_lines(
+  model : WorldModel,
+  character_id : String,
+  lines : Array[ChatLine],
+) -> Unit {
+  let current = model.conversations.for_character(character_id)
+  let mut rebuilt = Conversation::new(character_id~)
+  for line in lines {
+    rebuilt = rebuilt.append(line)
+  }
+  model.conversations.set({
+    ..current,
+    lines: rebuilt.lines(),
+    // Editing history does not change the rolling-summary watermark; only
+    // the line list (and its appended counter) is re-derived.
+    appended: rebuilt.appended(),
+    pending: false,
+  })
+}
+
+///|
+/// The generated reply for a turn: the line to regenerate, if the last line of
+/// the conversation is a character line.
+fn last_reply_index(conversation : Conversation) -> Int? {
+  let lines = conversation.lines()
+  if lines.is_empty() {
+    return None
+  }
+  let index = lines.length() - 1
+  match lines[index].speaker() {
+    Character(_) => Some(index)
+    Player => None
+  }
+}
+
+///|
 pub fn WorldModel::world_name(self : WorldModel) -> String {
   self.world_name
 }
@@ -200,6 +331,15 @@ pub(all) struct WorldHost {
   read_config : ((String?) -> Unit) -> Unit
   /// Write a file at the library root.
   write_config : (String, (Bool) -> Unit) -> Unit
+  /// Export one world as a single self-contained bundle file the player picks
+  /// a home for. The app hands over the exact folder contents (Markdown,
+  /// journal, and — later — portraits), so the bundle is the world.
+  /// `false` means the player cancelled or the write failed.
+  export_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
+  /// Import a bundle into the library as a new world folder. The host picks
+  /// the file, unpacks it, and returns `(ok, folder, files)` so the app can go
+  /// on stage immediately.
+  import_world : ((Bool, String, Array[(String, String)]) -> Unit) -> Unit
 } derive(Debug)
 
 ///|
@@ -235,6 +375,7 @@ pub fn WorldModel::fork(self : WorldModel) -> WorldModel {
     log: self.log.copy(),
     worlds: self.worlds.copy(),
     memory_drafts: self.memory_drafts.copy(),
+    portraits: self.portraits.copy(),
     conversations: self.conversations.clone(),
   }
 }
@@ -266,6 +407,25 @@ fn append_reply(
 }
 
 ///|
+/// Append a scene reply spoken by `respondent_id`.
+///
+/// The line's `Speaker::Character` carries the actual speaker, so a scene
+/// transcript can mix voices while still being one conversation.
+fn append_scene_reply(
+  model : WorldModel,
+  key : String,
+  respondent_id : String,
+  text : String,
+) -> Unit {
+  let conversation = model.conversations.for_character(key)
+  model.conversations.set(
+    conversation
+    .append(ChatLine::character(respondent_id, text))
+    .with_pending(false),
+  )
+}
+
+///|
 /// Parse a user-entered number, falling back to the current value when the
 /// text is not a finite positive number. Configuration must never become NaN.
 fn parse_double(text : String, fallback : Double) -> Double {
@@ -287,14 +447,31 @@ fn world_files_from_paths(files : Array[(String, String)]) -> WorldFiles {
   let mut conversations_json = ""
   let mut events_json = ""
   let cards : Array[(String, String)] = []
+  let conversations : Array[(String, String)] = []
+  let portraits : Array[(String, String)] = []
   for pair in files {
     let path = pair.0.trim().to_owned()
     if path == "world.md" || path.has_suffix("/world.md") {
       world_md = pair.1
     } else if path == "world_book.md" || path.has_suffix("/world_book.md") {
       book_md = pair.1
+    } else if is_card_or_portrait_path(path) is Portrait {
+      // Portraits live beside their cards (`characters/<名>.png`), so the prefix
+      // alone cannot tell them apart. See `is_card_or_portrait_path`.
+      portraits.push(pair)
     } else if path.has_prefix("characters/") {
       cards.push(pair)
+    } else if is_portrait_file_name(path) {
+      // Portrait assets ride as base64 beside the cards. They are not parsed
+      // by the world codec; the UI resolves them through `portrait_uri`.
+      portraits.push(pair)
+    } else if path.has_prefix(conversations_dir + "/") {
+      // `conversations/<名>.json` per-character history, plus the index that
+      // lists which of them belong to this world. The index is bookkeeping,
+      // not a conversation.
+      if path != conversation_index_file {
+        conversations.push(pair)
+      }
     } else if path == conversations_file ||
       path.has_suffix("/\{conversations_file}") {
       conversations_json = pair.1
@@ -310,13 +487,16 @@ fn world_files_from_paths(files : Array[(String, String)]) -> WorldFiles {
     book_md,
     character_files: cards,
     conversations_json,
+    conversation_files: conversations,
     events_json,
+    portraits,
   }
 }
 
 ///|
 /// The folder payload and the host effects that write it live in `effect.mbt`;
 /// this file only decides when to emit them.
+
 ///|
 /// Apply a world message with an optional host; shared by the constructor so
 /// every entrypoint gets the same defaults.
@@ -342,134 +522,121 @@ pub fn update(
       }
       (next, @moui.Effect::none())
     }
+    EnterScene(location) =>
+      if model.scenario.location(location) is None {
+        (model, @moui.Effect::none())
+      } else {
+        let cast = cast_at(model.scenario, location)
+        if cast.is_empty() {
+          let next = model.fork()
+          next.push_log("「\{location}」没有人在场")
+          (next, @moui.Effect::none())
+        } else {
+          let next = {
+            ..model.fork(),
+            scene_location: Some(location),
+            draft: "",
+          }
+          let names : Array[String] = []
+          for card in cast {
+            names.push(card.name())
+          }
+          next.push_log("进入场景「\{location}」：\{names.join("、")}")
+          (next, @moui.Effect::none())
+        }
+      }
+    LeaveScene => {
+      let next = { ..model.fork(), scene_location: None, draft: "", }
+      (next, @moui.Effect::none())
+    }
     PanMap => (model, @moui.Effect::none())
     DraftChanged(value) => ({ ..model, draft: value, }, @moui.Effect::none())
-    Send(text) => {
-      let trimmed : String = text.trim().to_owned()
-      if trimmed == "" {
-        return (model, @moui.Effect::none())
+    IntentChanged(code) =>
+      (
+        {
+          ..model,
+          intent: match code {
+            1 => Do
+            2 => Story
+            _ => Say
+          },
+        },
+        @moui.Effect::none(),
+      )
+    Send(text) =>
+      // A scene turn and a private turn differ only in how the prompt is built
+      // and which conversation key it lands in; everything after that (pending
+      // guard, journal commit) is shared.
+      match model.scene_location {
+        Some(location) => send_scene_turn(model, location, text, runner, host)
+        None => send_private_turn(model, text, runner, host)
       }
-      // No selection means nothing to talk to; the view keeps Send unavailable
-      // in that state, so this is a guard rather than a reachable branch.
-      match model.selected {
-        None => (model, @moui.Effect::none())
-        Some(id) =>
-          match model.scenario.character(id) {
-            None => (model, @moui.Effect::none())
-            Some(card) => {
-              // One turn in flight per conversation: a second send while the
-              // provider is still answering would stack requests and let the
-              // first reply clear the pending flag under the second one.
-              let in_flight = model.conversations.for_character(id)
-              if in_flight.pending() {
-                return (model, @moui.Effect::none())
-              }
-              let next = { ..model.fork(), draft: "", }
-              append_player(next, id, trimmed)
-              next.push_log(
-                "you → \{character_name(next.scenario, id)}: \{trimmed}",
-              )
-              if next.config.llm_enabled() {
-                // The provider turn is an effect, not a side effect here: the
-                // runner is injected by the host, the reply arrives as a
-                // typed message, and the pending flag keeps the UI honest.
-                let conversation = next.conversations.for_character(id)
-                next.conversations.set(conversation.with_pending(true))
-                let plan = plan_messages(
-                  next.scenario,
-                  card,
-                  conversation,
-                  trimmed,
-                  budget=next.config.context_budget(),
-                )
-                // The whole plan is the request: system prompt, rolling
-                // summary, world-book hits, and every history line that fits.
-                // Sending only the first and last message would make each
-                // turn stateless and silently discard the compression work.
-                let request = LlmRequest::new(
-                  character_id=id,
-                  endpoint=next.config.endpoint(),
-                  api_key=next.config.api_key(),
-                  model=next.config.model(),
-                  temperature=next.config.temperature(),
-                  messages=plan.messages,
-                )
-                let effects : Array[@moui.Effect[Msg]] = [
-                  @moui.Effect::run(
-                    key="ai-world:turn",
-                    kind="provider",
-                    label="Provider turn",
-                    run=dispatch => {
-                      runner(request, reply => dispatch(Reply(id, reply)))
-                    },
-                  ),
-                ]
-                // The player's line is world state: commit the journal
-                // alongside the turn, whatever the reply turns out to be.
-                effects.push(journal_effect(next, host))
-                // When history overflows its budget (or the cap), fold the
-                // evicted tail into the rolling summary for next time.
-                if needs_compression(conversation, plan.evicted.length()) {
-                  let marker = conversation.appended()
-                  let source = compression_source(conversation)
-                  let (summary_system, summary_user) = summarize_prompt(
-                    character_name=character_name(next.scenario, id),
-                    prior_summary=conversation.summary(),
-                    source_lines=source,
-                  )
-                  let summary_request = LlmRequest::single_shot(
-                    character_id=id,
-                    endpoint=next.config.endpoint(),
-                    api_key=next.config.api_key(),
-                    model=next.config.model(),
-                    temperature=next.config.temperature(),
-                    system=summary_system,
-                    user=summary_user,
-                  )
-                  effects.push(
-                    @moui.Effect::run(
-                      key="ai-world:compress",
-                      kind="provider",
-                      label="Compress memory",
-                      run=dispatch => {
-                        runner(summary_request, reply => {
-                          dispatch(SummaryArrived(id, marker, reply))
-                        })
-                      },
-                    ),
-                  )
-                }
-                (next, pack_effects(effects))
-              } else {
-                // No key: the world still answers, deterministically. The turn
-                // completes inside this update, so nothing can dangle.
-                append_reply(
-                  next,
-                  id,
-                  scripted_reply(next.scenario, card, trimmed),
-                )
-                next.push_log(
-                  "（本地剧本）\{character_name(next.scenario, id)} 已回应",
-                )
-                (next, journal_effect(next, host))
-              }
-            }
+    SceneReply(key, respondent_id, text) =>
+      match text {
+        Some(_reply) if !is_scene_key(key) => {
+          let next = model.fork()
+          next.push_log(
+            "这个场景已经不存在了，这条回复被丢弃。",
+          )
+          (next, @moui.Effect::none())
+        }
+        Some(reply) => {
+          let next = model.fork()
+          let name = character_name(next.scenario, respondent_id)
+          let cleaned = llm_clean_reply(reply, name)
+          // A provider that returns only whitespace (or only its own name
+          // prefix) cleans down to "". Appending that would leave a blank
+          // bubble the player cannot edit away, so treat it as a failed turn.
+          if cleaned == "" {
+            let conversation = next.conversations.for_character(key)
+            next.conversations.set(conversation.with_pending(false))
+            next.push_log(
+              "\{name} 没有回应（回复为空）。可以再发一次。",
+            )
+            (next, commit_effect(next, host, Conversation(key)))
+          } else {
+            append_scene_reply(next, key, respondent_id, cleaned)
+            next.push_log("\{name}: \{cleaned}")
+            (next, commit_effect(next, host, Conversation(key)))
           }
+        }
+        None => {
+          let next = model.fork()
+          let conversation = next.conversations.for_character(key)
+          next.conversations.set(conversation.with_pending(false))
+          next.push_log("场景中没有收到回复——可以重试")
+          (next, @moui.Effect::none())
+        }
       }
-    }
     Reply(character_id, text) =>
       match text {
+        Some(_reply) if !reply_target_exists(model, character_id) =>
+          drop_late_reply(
+            model, "这个角色已经不在世界里了，这条回复被丢弃。",
+          )
         Some(reply) => {
           let next = model.fork()
           let cleaned = llm_clean_reply(
             reply,
             character_name(next.scenario, character_id),
           )
+          // Same rule as the scene path: an empty cleaned reply is a failed
+          // turn, not an empty message.
+          if cleaned == "" {
+            let conversation = next.conversations.for_character(character_id)
+            next.conversations.set(conversation.with_pending(false))
+            next.push_log(
+              "\{character_name(next.scenario, character_id)} 没有回应（回复为空）。可以再发一次。",
+            )
+            return (next, commit_effect(next, host, Conversation(character_id)))
+          }
           append_reply(next, character_id, cleaned)
           next.push_log(
             "\{character_name(next.scenario, character_id)}: \{cleaned}",
           )
-          let effects : Array[@moui.Effect[Msg]] = [journal_effect(next, host)]
+          let effects : Array[@moui.Effect[Msg]] = [
+            commit_effect(next, host, Conversation(character_id)),
+          ]
           // Every N appends, ask the provider to distill long-term memories.
           // Drafts wait for an explicit accept; nothing writes itself.
           let conversation = next.conversations.for_character(character_id)
@@ -511,8 +678,12 @@ pub fn update(
           let conversation = next.conversations.for_character(character_id)
           next.conversations.set(conversation.with_pending(false))
           let name = character_name(next.scenario, character_id)
-          next.push_log("no reply from provider for \{name}")
-          (next, journal_effect(next, host))
+          // Speak the UI's language: every other notice is Chinese, and an
+          // English line here reads like an internal error leaking out.
+          next.push_log(
+            "\{name} 没有回应（请求失败）。可以再发一次。",
+          )
+          (next, commit_effect(next, host, Conversation(character_id)))
         }
       }
     EndpointChanged(value) =>
@@ -589,369 +760,40 @@ pub fn update(
       (next, @moui.Effect::none())
     }
     // ---- world management ----
-    SyncLibrary =>
-      match host {
-        Some(h) => (model, sync_library_effect(h))
-        None => (model, @moui.Effect::none())
-      }
-    PickWorldRoot =>
-      match host {
-        Some(h) =>
-          (
-            model,
-            @moui.Effect::run(
-              key="ai-world:pick-root",
-              kind="filesystem",
-              label="Pick world library",
-              run=dispatch => {
-                (h.pick_root)(names => dispatch(WorldListArrived(names)))
-              },
-            ),
-          )
-        None => (model, @moui.Effect::none())
-      }
-    WorldListArrived(names) => {
-      let next = { ..model, worlds: names, library_missing: false, }
-      // The config load rides on the first listing: this message can only be
-      // dispatched once the host bridge is fully past the boot race.
-      let config_effect = match host {
-        Some(h) =>
-          if next.config_file_loaded {
-            @moui.Effect::none()
-          } else {
-            read_config_effect(h)
-          }
-        None => @moui.Effect::none()
-      }
-      // First sync after launch opens the newest-known world so the product
-      // boots straight into a conversation instead of an empty catalogue.
-      let next = if next.config_file_loaded {
-        next
-      } else {
-        { ..next, config_file_loaded: true, }
-      }
-      if next.current is None && names.length() > 0 {
-        match host {
-          Some(h) =>
-            (
-              next,
-              @moui.Effect::batch([
-                open_world_effect(h, names[0]),
-                config_effect,
-              ]),
-            )
-          None => (next, @moui.Effect::none())
-        }
-      } else {
-        (next, config_effect)
-      }
-    }
-    OpenWorld(folder) =>
-      // Only a plain child-folder name can reach the host. The list comes from
-      // the host itself, so this is a guard against a malformed listing rather
-      // than a user path.
-      if folder != world_folder_name(folder) || folder == "" {
-        let next = model.fork()
-        next.push_log(
-          "「\{folder}」不是合法的世界文件夹名，已忽略",
-        )
-        (next, @moui.Effect::none())
-      } else {
-        match host {
-          Some(h) => (model, open_world_effect(h, folder))
-          None => (model, @moui.Effect::none())
-        }
-      }
+    // World library: listing, opening, creating, committing. Moved to
+    // `library.mbt` to keep this file under the source-file limit.
+    SyncLibrary => update_library(model, SyncLibrary, host)
+    PickWorldRoot => update_library(model, PickWorldRoot, host)
+    WorldListArrived(names) =>
+      update_library(model, WorldListArrived(names), host)
+    OpenWorld(folder) => update_library(model, OpenWorld(folder), host)
     WorldFilesArrived(folder, ok, files) =>
-      if !ok {
-        let next = model.fork()
-        next.push_log(
-          "无法读取世界库「\{folder}」——先选择一个文件夹作为世界库",
-        )
-        ({ ..next, library_missing: true, }, @moui.Effect::none())
-      } else {
-        match parse_world_files(world_files_from_paths(files)) {
-          Some(parsed) => {
-            // A different folder means a different world: conversations are
-            // keyed by character id and must not leak across worlds. Re-reading
-            // the same folder keeps the current history.
-            let fresh = match model.current {
-              Some(opened) => opened != folder
-              None => true
-            }
-            let next = {
-              ..model.fork(),
-              scenario: parsed.scenario,
-              current: Some(folder),
-            }
-            if fresh {
-              next.conversations.clear()
-              // The folder is the source of truth at open time: the world's
-              // own journal replaces whatever is in memory.
-              next.log.clear()
-              for event in parsed.events {
-                next.log.push(event)
-              }
-              for conversation in parsed.conversations {
-                next.conversations.set(conversation)
-              }
-            }
-            for warning in parsed.warnings {
-              next.push_log("世界书提示：\{warning}")
-            }
-            next.push_log(
-              "已载入「\{folder}」：\{parsed.scenario.characters().length()} 个角色，\{parsed.scenario.world_book().length()} 条世界书",
-            )
-            (next, @moui.Effect::none())
-          }
-          None => {
-            let next = model.fork()
-            next.push_log(
-              "「\{folder}」不是世界文件夹（缺 world.md 或名字行）",
-            )
-            (next, @moui.Effect::none())
-          }
-        }
-      }
+      update_library(model, WorldFilesArrived(folder, ok, files), host)
     WorldNameChanged(value) =>
-      ({ ..model, world_name: value, }, @moui.Effect::none())
-    NewWorld => {
-      let typed : String = model.world_name.trim().to_owned()
-      if typed == "" {
-        let next = model.fork()
-        next.push_log("先给新世界起个名字")
-        return (next, @moui.Effect::none())
-      }
-      // The name becomes a directory on the player's disk, so it is sanitized
-      // before it is compared or handed to the host: a typed `../x` must not be
-      // able to create a folder outside the library.
-      let name = world_folder_name(typed)
-      if name != typed {
-        let warned = { ..model, }
-        warned.push_log(
-          "名字里的路径符号已替换：「\{typed}」→「\{name}」",
-        )
-      }
-      if model.worlds.contains(name) {
-        let next = model.fork()
-        next.push_log("「\{name}」已存在——直接打开它即可")
-        return (next, @moui.Effect::none())
-      }
-      let next = {
-        ..model.fork(),
-        scenario: blank_world(name),
-        current: Some(name),
-        worlds: with_world(model.worlds, name),
-        world_name: "",
-        selected: None,
-      }
-      next.conversations.clear()
-      next.push_log("新世界「\{name}」已建立")
-      match host {
-        Some(h) => (next, commit_world_effect(h, name, commit_files(next)))
-        None => (next, @moui.Effect::none())
-      }
-    }
-    WorldCommitted(folder, ok) => {
-      let next = model.fork()
-      if ok {
-        next.push_log("已保存到世界库：\{folder}")
-      } else {
-        next.push_log(
-          "写入失败：\{folder}（世界仍在内存中，可重试或检查文件夹权限）",
-        )
-      }
-      (next, @moui.Effect::none())
-    }
+      update_library(model, WorldNameChanged(value), host)
+    NewWorld => update_library(model, NewWorld, host)
+    WorldCommitted(folder, ok) =>
+      update_library(model, WorldCommitted(folder, ok), host)
     // ---- character creation ----
-    ToggleCreator =>
-      (
-        {
-          ..model,
-          creator_open: !model.creator_open,
-          creator_draft: CharacterDraft::new(),
-        },
-        @moui.Effect::none(),
-      )
+    // Creation and generation: one cohesive feature (compose a character,
+    // generate a world), implemented in `creation.mbt`. Each arm keeps its own
+    // payload binding here; the bodies live there.
+    ToggleCreator => update_creation(model, ToggleCreator, runner, host)
     CreatorChanged(draft) =>
-      ({ ..model, creator_draft: draft, }, @moui.Effect::none())
-    CharacterCreated => {
-      let mut name : String = model.creator_draft.name.trim().to_owned()
-      if name == "" {
-        name = "无名旅人"
-      }
-      let mut count = 2
-      let mut id = name
-      while model.scenario.character(id) is Some(_) {
-        id = "\{name} (\{count})"
-        count += 1
-      }
-      let card = { ..model.creator_draft, name: id, }.to_card(
-        point=first_free_spot(model.scenario),
-      )
-      let characters : Array[CharacterCard] = []
-      for existing in model.scenario.characters() {
-        characters.push(existing)
-      }
-      characters.push(card)
-      let scenario = Scenario::new(
-        id=model.scenario.id(),
-        name=model.scenario.name(),
-        background=model.scenario.background(),
-        map_width=model.scenario.map_width(),
-        map_height=model.scenario.map_height(),
-        locations=model.scenario.locations(),
-        characters~,
-        world_book=model.scenario.world_book(),
-      )
-      let next = {
-        ..model.fork(),
-        scenario,
-        selected: Some(id),
-        draft: "",
-        creator_open: false,
-        creator_draft: CharacterDraft::new(),
-      }
-      next.push_log("\{id} 加入了这个世界")
-      match model.current {
-        Some(folder) =>
-          match host {
-            Some(h) =>
-              (next, commit_world_effect(h, folder, commit_files(next)))
-            None => (next, @moui.Effect::none())
-          }
-        None => (next, @moui.Effect::none())
-      }
-    }
-    // ---- AI world generation ----
-    WorldIdeaChanged(value) => ({ ..model, idea: value, }, @moui.Effect::none())
-    GenerateWorld => {
-      let idea : String = model.idea.trim().to_owned()
-      if idea == "" {
-        let next = model.fork()
-        next.push_log(
-          "先写一句话设定世界（例如：雨夜江南小镇的当铺）",
-        )
-        return (next, @moui.Effect::none())
-      }
-      if model.generating {
-        (model, @moui.Effect::none())
-      } else if model.config.llm_enabled() {
-        let next = { ..model, generating: true, }
-        let prompt = world_idea_prompt(idea)
-        let request = LlmRequest::single_shot(
-          character_id="!world",
-          endpoint=next.config.endpoint(),
-          api_key=next.config.api_key(),
-          model=next.config.model(),
-          temperature=next.config.temperature(),
-          system=prompt.system,
-          user=prompt.user,
-        )
-        (
-          next,
-          @moui.Effect::run(
-            key="ai-world:generate",
-            kind="provider",
-            label="Generate world",
-            run=dispatch => {
-              runner(request, reply => dispatch(WorldGenerated(reply)))
-            },
-          ),
-        )
-      } else {
-        // Offline branch: the idea still becomes a world, deterministically.
-        // The folder name is derived from the player's idea, so it is
-        // sanitized here too (see `world_folder_name`).
-        let world = fallback_world(idea)
-        let folder = world_folder_name(world.name())
-        let next = {
-          ..model.fork(),
-          scenario: world,
-          current: Some(folder),
-          idea: "",
-          generating: false,
-          worlds: with_world(model.worlds, folder),
-          selected: None,
-        }
-        next.conversations.clear()
-        next.push_log(
-          "（无 key）本地生成了世界「\{folder}」；配置模型后可让AI重新生成",
-        )
-        match host {
-          Some(h) => (next, commit_world_effect(h, folder, commit_files(next)))
-          None => (next, @moui.Effect::none())
-        }
-      }
-    }
-    WorldGenerated(reply) => {
-      let next = { ..model, generating: false, }
-      match reply {
-        None => {
-          next.push_log(
-            "AI 生成失败——检查端点与 key，再试一次",
-          )
-          (next, @moui.Effect::none())
-        }
-        Some(text) =>
-          match extract_json_object(text) {
-            None => {
-              next.push_log(
-                "AI 返回的内容不是可解析的世界 JSON——再试一次或换个说法",
-              )
-              (next, @moui.Effect::none())
-            }
-            Some(json) =>
-              match Scenario::try_from_json(json) {
-                None => {
-                  next.push_log(
-                    "AI 返回的内容不是可解析的世界 JSON——再试一次或换个说法",
-                  )
-                  (next, @moui.Effect::none())
-                }
-                Some(world) => {
-                  // The generation lands in the current folder when a world is
-                  // open; otherwise it becomes its own new world folder.
-                  let folder = match model.current {
-                    Some(folder) => folder
-                    None => world_folder_name(world.name())
-                  }
-                  // Keep the world's folder identity stable for future saves.
-                  let named = Scenario::new(
-                    id=folder,
-                    name=world.name(),
-                    background=world.background(),
-                    map_width=world.map_width(),
-                    map_height=world.map_height(),
-                    locations=world.locations(),
-                    characters=world.characters(),
-                    world_book=world.world_book(),
-                  )
-                  let settled = {
-                    ..next.fork(),
-                    scenario: named,
-                    current: Some(folder),
-                    idea: "",
-                    worlds: with_world(next.worlds, folder),
-                    selected: None,
-                  }
-                  settled.conversations.clear()
-                  settled.push_log(
-                    "AI 生成了世界「\{world.name()}」（\{world.characters().length()} 角色）",
-                  )
-                  match host {
-                    Some(h) =>
-                      (
-                        settled,
-                        commit_world_effect(h, folder, commit_files(settled)),
-                      )
-                    None => (settled, @moui.Effect::none())
-                  }
-                }
-              }
-          }
-      }
-    }
+      update_creation(model, CreatorChanged(draft), runner, host)
+    CharacterCreated => update_creation(model, CharacterCreated, runner, host)
+    UseArchetype(index) =>
+      update_creation(model, UseArchetype(index), runner, host)
+    CharacterIdeaChanged(value) =>
+      update_creation(model, CharacterIdeaChanged(value), runner, host)
+    DraftCharacter => update_creation(model, DraftCharacter, runner, host)
+    CharacterDrafted(reply) =>
+      update_creation(model, CharacterDrafted(reply), runner, host)
+    WorldIdeaChanged(value) =>
+      update_creation(model, WorldIdeaChanged(value), runner, host)
+    GenerateWorld => update_creation(model, GenerateWorld, runner, host)
+    WorldGenerated(reply) =>
+      update_creation(model, WorldGenerated(reply), runner, host)
     ContextChanged(value) =>
       (
         { ..model, config: model.config.with_context_preset(value), },
@@ -967,7 +809,11 @@ pub fn update(
           next.push_log(
             "已压缩 \{character_name(next.scenario, character_id)} 的记忆笔记",
           )
-          (next, @moui.Effect::none())
+          // The summary is conversation state, so it has to reach the file.
+          // Computing it and only keeping it in memory meant a reload restored
+          // the lines but not the compression, and the work was redone (or the
+          // summary silently lost) on the next launch.
+          (next, commit_effect(next, host, Conversation(character_id)))
         }
         None =>
           // A failed compression costs nothing: the next overflowing turn
@@ -1023,11 +869,11 @@ pub fn update(
               drafts.push(model.memory_drafts[i])
             }
           }
-          let next = { ..model, scenario, memory_drafts: drafts, }
+          let next = { ..model.fork(), scenario, memory_drafts: drafts, }
           next.push_log("已记住:「\{entry.content()}」")
           match (next.current, host) {
             (Some(folder), Some(h)) =>
-              (next, commit_world_effect(h, folder, commit_files(next)))
+              (next, commit_world_effect(h, folder, commit_files(next, World)))
             _ => (next, @moui.Effect::none())
           }
         }
@@ -1037,6 +883,184 @@ pub fn update(
         { ..model, api_key_revealed: !model.api_key_revealed, },
         @moui.Effect::none(),
       )
+    // ---- conversation editing ----
+    // History editing (regenerate / swipe / edit / delete / branch / clear)
+    // lives in `editing.mbt`: one cohesive feature that was pushing this file
+    // past the repository's source-file hard limit.
+    AdvanceTime => {
+      let location = model.scene_location
+      let present = match location {
+        Some(place) => cast_at(model.scenario, place)
+        None => model.scenario.characters()
+      }
+      let next = model.fork()
+      if !next.config.llm_enabled() {
+        // No provider: a deterministic note still advances the log, so the
+        // action is never a dead button offline.
+        let stamp = next.log.length() + 1
+        next.push_log(
+          "（这段时间）世界安静了一阵。再过一会儿，第 \{stamp} 段小事发生。",
+        )
+        return (next, commit_effect(next, host, World))
+      }
+      let (system, user) = advance_time_prompt(
+        model.scenario,
+        location,
+        present,
+      )
+      let request = LlmRequest::single_shot(
+        character_id="!time",
+        endpoint=next.config.endpoint(),
+        api_key=next.config.api_key(),
+        model=next.config.model(),
+        temperature=next.config.temperature(),
+        system~,
+        user~,
+      )
+      next.push_log("正在推进时间线…")
+      (
+        next,
+        @moui.Effect::run(
+          key="ai-world:advance-time",
+          kind="provider",
+          label="Advance time",
+          run=dispatch => {
+            runner(request, reply => dispatch(TimeAdvanced(reply)))
+          },
+        ),
+      )
+    }
+    TimeAdvanced(reply) => {
+      let next = model.fork()
+      match reply {
+        Some(text) => {
+          let event = time_advanced_event(text)
+          if event == "" {
+            next.push_log("没有明显的事发生")
+          } else {
+            next.push_log(event)
+          }
+        }
+        None => next.push_log("推进时间失败——可以再试一次")
+      }
+      (next, commit_effect(next, host, World))
+    }
+    // ---- portability ----
+    RegenerateReply => update_editing(model, RegenerateReply, runner, host)
+    Regenerated(reply) =>
+      update_editing(model, Regenerated(reply), runner, host)
+    SwipeReply(line_index, direction) =>
+      update_editing(model, SwipeReply(line_index, direction), runner, host)
+    EditLine(line_index) =>
+      update_editing(model, EditLine(line_index), runner, host)
+    EditLineChanged(value) =>
+      update_editing(model, EditLineChanged(value), runner, host)
+    EditLineCommit => update_editing(model, EditLineCommit, runner, host)
+    EditLineCancel => update_editing(model, EditLineCancel, runner, host)
+    DeleteLine(line_index) =>
+      update_editing(model, DeleteLine(line_index), runner, host)
+    BranchAt(line_index) =>
+      update_editing(model, BranchAt(line_index), runner, host)
+    ClearConversation => update_editing(model, ClearConversation, runner, host)
+    ExportWorld => {
+      let next = model.fork()
+      match (host, model.current) {
+        (Some(h), Some(folder)) => {
+          next.push_log("正在导出世界「\{folder}」…")
+          (next, export_world_effect(h, folder, commit_files(model, World)))
+        }
+        (None, _) => {
+          next.push_log("（未接入世界库）无法导出")
+          (next, @moui.Effect::none())
+        }
+        (_, None) => {
+          next.push_log("先打开一个世界再导出")
+          (next, @moui.Effect::none())
+        }
+      }
+    }
+    WorldExported(ok) => {
+      let next = model.fork()
+      if ok {
+        next.push_log(
+          "世界已导出为一个可分享的 .aiworld.json 文件",
+        )
+      } else {
+        next.push_log("导出取消或失败")
+      }
+      (next, @moui.Effect::none())
+    }
+    ImportWorld =>
+      match host {
+        Some(h) => (model, import_world_effect(h))
+        None => {
+          let next = model.fork()
+          next.push_log("（未接入世界库）无法导入")
+          (next, @moui.Effect::none())
+        }
+      }
+    WorldImported(ok, folder, files) =>
+      if !ok {
+        let next = model.fork()
+        next.push_log("导入取消或文件无法读取")
+        (next, @moui.Effect::none())
+      } else {
+        // The bundle carries the world's own file set, so the import goes
+        // through exactly the same parse path as opening a folder.
+        match parse_world_files(world_files_from_paths(files)) {
+          Some(parsed) => {
+            let name = if folder == "" {
+              parsed.scenario.name()
+            } else {
+              folder
+            }
+            let next = model.fork()
+            next.conversations.clear()
+            next.log.clear()
+            for conversation in parsed.conversations {
+              next.conversations.set(conversation)
+            }
+            for event in parsed.events {
+              next.log.push(event)
+            }
+            let settled = {
+              ..next,
+              scenario: parsed.scenario,
+              current: Some(world_folder_name(name)),
+              worlds: with_world(model.worlds, world_folder_name(name)),
+              selected: None,
+            }
+            settled.push_log(
+              "已导入世界「\{parsed.scenario.name()}」：\{parsed.scenario.characters().length()} 个角色，\{parsed.conversations.length()} 段对话",
+            )
+            for warning in parsed.warnings {
+              settled.push_log("导入提示：\{warning}")
+            }
+            // Persist immediately: an imported world that only lives in memory
+            // would vanish on reload, which is exactly what "file database"
+            // promises not to happen.
+            match host {
+              Some(h) =>
+                (
+                  settled,
+                  commit_world_effect(
+                    h,
+                    world_folder_name(name),
+                    commit_files(settled, World),
+                  ),
+                )
+              None => (settled, @moui.Effect::none())
+            }
+          }
+          None => {
+            let next = model.fork()
+            next.push_log(
+              "导入的文件不是有效的世界（缺 world.md 或名字行）",
+            )
+            (next, @moui.Effect::none())
+          }
+        }
+      }
     DiscardMemory(index) => {
       let drafts : Array[WorldEntry] = []
       for i in 0..<model.memory_drafts.length() {
@@ -1044,7 +1068,7 @@ pub fn update(
           drafts.push(model.memory_drafts[i])
         }
       }
-      let next = { ..model, memory_drafts: drafts, }
+      let next = { ..model.fork(), memory_drafts: drafts, }
       next.push_log("已忽略一条记忆提议")
       (next, @moui.Effect::none())
     }
@@ -1147,6 +1171,27 @@ fn parse_memory_proposals(
 
 ///|
 fn character_name(scenario : Scenario, id : String) -> String {
+  // A scene transcript is keyed by location, so its "speaker" in the log is the
+  // place rather than a person.
+  if is_scene_key(id) {
+    let location : String = id[6:].to_owned()
+    return match scenario.location(location) {
+      Some(place) => "场景「" + place.name() + "」"
+      None => "场景「" + location + "」"
+    }
+  }
+  // A branch is a sibling key (`林掌柜~2`); it is still that character, so the
+  // log and prompt say their name with the branch number appended.
+  match split_branch(id) {
+    Some((base, number)) => {
+      let name = match scenario.character(base) {
+        Some(card) => card.name()
+        None => base
+      }
+      return name + " · 分支 " + number.to_string()
+    }
+    None => ()
+  }
   match scenario.character(id) {
     Some(card) => card.name()
     None => id

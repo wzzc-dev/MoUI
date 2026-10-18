@@ -12,12 +12,10 @@
 fn robot_world() -> @app.WorldModel {
   let files : Array[(String, String)] = [
     (
-      "world.md",
-      "# 探针世界\n\nb\n\n## 地点\n\n- 当铺: x=400 y=250 w=180 h=120\n",
+      "world.md", "# 探针世界\n\nb\n\n## 地点\n\n- 当铺: x=400 y=250 w=180 h=120\n",
     ),
     (
-      "characters/周跛子.md",
-      "# 周跛子\n\n## 人设\n\nx\n\n## 位置\n\nx=490 y=310\n",
+      "characters/周跛子.md", "# 周跛子\n\n## 人设\n\nx\n\n## 位置\n\nx=490 y=310\n",
     ),
   ]
   let (model, _effect) = @app.update(

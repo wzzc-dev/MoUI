@@ -33,16 +33,36 @@ pub(all) enum Msg {
   /// selected character keeps the composer draft; switching characters does
   /// not carry a half-written line into a different conversation.
   Select(String?)
+  /// Enter the scene at a location: several characters present there talk in
+  /// one transcript instead of one-on-one.
+  EnterScene(String)
+  /// Leave the scene and go back to the character list.
+  LeaveScene
+  /// Advance the world clock: ask the model what happened while the player was
+  /// away, and fold the answer into the event log. An explicit action, never a
+  /// background tick: a provider call costs money and should not be driven by
+  /// a timer.
+  AdvanceTime
+  /// The advanced-time narration arrived (`None` = failure).
+  TimeAdvanced(String?)
   /// The map was panned. Transient (view-owned) state changed, but the message
   /// still travels through `update` so a drag cannot silently become a
   /// character switch that discards the draft.
   PanMap
   /// Player edited the composer without sending yet.
   DraftChanged(String)
+  /// The composer's input intent changed (say / do / story).
+  IntentChanged(Int)
   /// Player typed a line and submitted it.
   Send(String)
   /// A provider reply arrived; `None` text means the call failed.
+  ///
+  /// The key is the conversation the turn belonged to: a character id for a
+  /// private chat, `scene:<地点>` for a scene. A scene reply also carries the
+  /// respondent so its line is attributed to the right speaker.
   Reply(String, String?)
+  /// A scene reply arrived: `(scene key, respondent id, reply)`.
+  SceneReply(String, String, String?)
   /// Open the settings page (re-reads `config.json` from the library).
   OpenSettings
   /// Back to the main layout.
@@ -79,6 +99,15 @@ pub(all) enum Msg {
   ToggleCreator
   CreatorChanged(CharacterDraft)
   CharacterCreated
+  /// Fill the creator from a built-in archetype (index into
+  /// `creator_archetypes`).
+  UseArchetype(Int)
+  /// The one-line character idea being typed.
+  CharacterIdeaChanged(String)
+  /// Ask the provider to draft the card from that idea.
+  DraftCharacter
+  /// The drafted card arrived (`None` = failure, keep what was typed).
+  CharacterDrafted(String?)
   // ---- AI world generation ----
   WorldIdeaChanged(String)
   GenerateWorld
@@ -97,5 +126,36 @@ pub(all) enum Msg {
   DiscardMemory(Int)
   /// Show / hide the API key on the settings page.
   ToggleApiKeyReveal
+  // ---- conversation editing ----
+  /// Regenerate the last reply of the selected conversation (the previous one
+  /// becomes a swipe candidate).
+  RegenerateReply
+  /// A regeneration request settled; `None` = failure (keep the old reply).
+  Regenerated(String?)
+  /// Move within a reply's candidates. `(line index, direction)`.
+  SwipeReply(Int, Int)
+  /// Start editing one history line.
+  EditLine(Int)
+  /// The edit buffer changed.
+  EditLineChanged(String)
+  /// Commit the edited text back into the history.
+  EditLineCommit
+  /// Abandon the edit.
+  EditLineCancel
+  /// Delete one history line.
+  DeleteLine(Int)
+  /// Clear the selected character's conversation.
+  ClearConversation
+  /// Branch the conversation at a line: keep everything up to it and start a
+  /// new history from there, leaving the original intact on disk.
+  BranchAt(Int)
+  // ---- portability ----
+  /// Write the current world out as a shareable bundle.
+  ExportWorld
+  /// A bundle export finished; `false` = cancelled or failed.
+  WorldExported(Bool)
+  /// Pick a bundle and add it to the library as a new world.
+  ImportWorld
+  /// A bundle import finished: `(ok, folder, files)`.
+  WorldImported(Bool, String, Array[(String, String)])
 }
-
