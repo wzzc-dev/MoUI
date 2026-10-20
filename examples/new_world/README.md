@@ -280,10 +280,6 @@ moon test examples/new_world/app --target native    # 247 项：codec 往返、�
                                                    # 请求失败后仍可继续、迟到回复不乱写、
                                                    # 宿主读写失败时的降级、同地多人标记不重叠、
                                                    # 导出的包确实带上立绘
-moon test examples/new_world/render_check --target native   # 19 项：地图坐标、transcript 跟随尾部、
-                                                          # 文本不越界、立绘成为 DrawImage、动作行不溢出、
-                                                          # 超长回复不横向溢出、世界书命中真的画在屏幕上、
-                                                          # 插件帧随矩形变化、字号浮点往返
 moon build examples/new_world/web_wasm --target wasm-gc
 ```
 

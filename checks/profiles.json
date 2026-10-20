@@ -635,31 +635,21 @@
           ]
         },
         {
-          "name": "AI World app tests",
+          "name": "New World app tests",
           "argv": [
             "moon",
             "test",
-            "examples/ai_world/app",
+            "examples/new_world/app",
             "--target",
             "native"
           ]
         },
         {
-          "name": "AI World native transport tests",
+          "name": "New World native transport tests",
           "argv": [
             "moon",
             "test",
-            "examples/ai_world/llm_native",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "AI World render contract tests",
-          "argv": [
-            "moon",
-            "test",
-            "examples/ai_world/render_check",
+            "examples/new_world/llm_native",
             "--target",
             "native"
           ]

@@ -70,7 +70,8 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // Variable list rendering and grid semantics add three view-returning
       // app entrypoints; the remaining data-grid API is state-helper surface.
       // 坐标舞台(M4):stage/place/Placed 构造面 +1。
-      max_count: 138,
+      // flow/wrap 布局原语 +2，抵消旧 text/tooltip 签名扩展各 -1 后净 +1。
+      max_count: 139,
     },
     {
       path: "moui/views/pkg.generated.mbti",

@@ -413,8 +413,13 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 691,
-      max_pub_lines: 329,
+      // 691 -> 694 / 329 -> 331 (+2 declarations, +3 lines): the flow/wrap
+      // layout primitives join the facade (+2), and `text` / `tooltip` grew
+      // one optional parameter each (`wrap`, `theme`). flow is used by the
+      // framework's own data_filter_bar / data_selection_toolbar; wrap and
+      // the extended text are the app-facing layout vocabulary.
+      max_lines: 694,
+      max_pub_lines: 331,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [

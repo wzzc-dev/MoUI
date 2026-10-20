@@ -144,12 +144,6 @@
       "path": "examples/new_world",
       "title": "New World",
       "featured": true
-    },
-    {
-      "id": "plugin_host_smoke",
-      "path": "examples/plugin_host_smoke",
-      "title": "Plugin Host Smoke",
-      "featured": false
     }
   ]
 }

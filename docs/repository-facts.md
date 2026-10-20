@@ -123,7 +123,7 @@ This file is generated from repository manifests and validator reports.
 | Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
 | TUI Layers | examples/tui_layers | no |
-| AI World | examples/ai_world | yes |
+| New World | examples/new_world | yes |
 
 ## Platform Status
 
