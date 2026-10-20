@@ -152,12 +152,13 @@ test "an absurdly long reply scrolls rather than breaking the layout" {
   assert_true(in_stage_rows > 10)
   // A wrapped paragraph must never spill horizontally out of its column.
   assert_eq(overflow_right, 0)
-  // And the composer is still on stage, so the player can keep typing.
+  // And the composer is still on stage, so the player can keep typing: the
+  // 说【 label opens the first composer field.
   let mut saw_composer = false
   for command in commands {
     match command {
       @core.DrawText(run) =>
-        if run.text.contains("说点什么") {
+        if run.text.contains("说【") {
           saw_composer = true
         }
       _ => ()
@@ -184,7 +185,7 @@ test "the lore hint reaches the screen, not just the model" {
   )
   let (selected, _s) = @app.update(model, @app.Select(Some("甲")))
   // The hint describes the draft, so it needs text that matches the lore key.
-  let (typing, _t) = @app.update(selected, @app.DraftChanged("温一壶酒"))
+  let (typing, _t) = @app.update(selected, @app.SayDraftChanged("温一壶酒"))
   let (asked, _a) = @app.update(typing, @app.Send("温一壶酒"))
   let runtime = @runtime.new_view(
     root=@app.view_for(asked, @app.Screen::for_viewport(1560.0, 1080.0)),

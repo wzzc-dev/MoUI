@@ -20,11 +20,11 @@ fn tavern_with_key() -> WorldModel {
 
 ///|
 test "selecting a character clears the composer" {
-  let model = step(tavern(), DraftChanged("草稿"))
-  assert_eq(model.draft(), "草稿")
+  let model = step(tavern(), SayDraftChanged("草稿"))
+  assert_eq(model.say_draft(), "草稿")
   let selected = step(model, Select(Some("林掌柜")))
   assert_eq(selected.selected(), Some("林掌柜"))
-  assert_eq(selected.draft(), "")
+  assert_eq(selected.say_draft(), "")
 }
 
 ///|
@@ -65,15 +65,15 @@ test "re-selecting the same character keeps the draft" {
   // The map drags and taps re-select the current character; that must not
   // discard a half-written line.
   let selected = step(tavern(), Select(Some("林掌柜")))
-  let typing = step(selected, DraftChanged("温一壶"))
+  let typing = step(selected, SayDraftChanged("温一壶"))
   let again = step(typing, Select(Some("林掌柜")))
-  assert_eq(again.draft(), "温一壶")
+  assert_eq(again.say_draft(), "温一壶")
   // Panning is likewise not a selection change.
   let panned = step(typing, PanMap)
-  assert_eq(panned.draft(), "温一壶")
+  assert_eq(panned.say_draft(), "温一壶")
   assert_eq(panned.selected(), Some("林掌柜"))
   // Clearing the selection still clears it.
-  assert_eq(step(typing, Select(None)).draft(), "")
+  assert_eq(step(typing, Select(None)).say_draft(), "")
 }
 
 ///|
@@ -325,7 +325,7 @@ test "every Msg variant is reachable from a construction site" {
   ]
   let touched = [
     step(model, Select(None)),
-    step(selected, DraftChanged("draft")),
+    step(selected, SayDraftChanged("draft")),
     step(selected, Send("hi")),
     step(selected, Reply("林掌柜", Some("ok"))),
     step(selected, Reply("林掌柜", None)),
@@ -361,8 +361,8 @@ test "every Msg variant is reachable from a construction site" {
   ignore(MemoryProposalsArrived(None))
   ignore(AcceptMemory(0))
   ignore(DiscardMemory(0))
-  ignore(StageComposerPart)
-  ignore(RemoveComposerPart(0))
+  ignore(DoDraftChanged("推开门"))
+  ignore(StoryDraftChanged("雨声更大了。"))
   ignore(SendComposer)
   ignore(ShellTabChanged(0))
 }

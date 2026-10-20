@@ -14,8 +14,12 @@ pub struct WorldModel {
   config : ModelConfig
   /// The character the player is currently talking to.
   selected : String?
-  /// The line the player is composing.
-  draft : String
+  /// The composer's three fields (说 / 做 / 旁白). Each field frames its own
+  /// line, and one send composes the non-empty ones in order. Session UI state:
+  /// switching characters or scenes starts a fresh turn.
+  say_draft : String
+  do_draft : String
+  story_draft : String
   /// Newest-first log of provider/host events, so a failed turn is diagnosable.
   log : Array[String]
   /// World folders discovered in the library.
@@ -52,12 +56,6 @@ pub struct WorldModel {
   /// Transient UI state: an edit only reaches the world on commit.
   editing_line : Int?
   edit_buffer : String
-  /// How the next line will be sent (say / do / story). Session UI state.
-  intent : InputIntent
-  /// Parts staged for the next turn: say/do/story can be combined, so the
-  /// composer collects them before one send. Session UI state; the turn itself
-  /// lands in the journal as one player line.
-  composer_parts : Array[ComposerPart]
   /// The one-line character idea in the creation wizard.
   character_idea : String
   /// Portrait assets of the current world: `(file name, base64)` as read from
@@ -84,7 +82,9 @@ pub fn WorldModel::new() -> WorldModel {
     conversations: ConversationBook::new(),
     config: ModelConfig::new(),
     selected: None,
-    draft: "",
+    say_draft: "",
+    do_draft: "",
+    story_draft: "",
     log: [],
     worlds: [],
     current: None,
@@ -101,8 +101,6 @@ pub fn WorldModel::new() -> WorldModel {
     api_key_revealed: false,
     editing_line: None,
     edit_buffer: "",
-    intent: Say,
-    composer_parts: [],
     character_idea: "",
     portraits: [],
     scene_location: None,
@@ -125,11 +123,6 @@ pub fn WorldModel::config(self : WorldModel) -> ModelConfig {
 /// The character the player is currently talking to, if any.
 pub fn WorldModel::selected(self : WorldModel) -> String? {
   self.selected
-}
-
-///|
-pub fn WorldModel::draft(self : WorldModel) -> String {
-  self.draft
 }
 
 ///|
@@ -241,22 +234,27 @@ pub fn WorldModel::character_idea(self : WorldModel) -> String {
 }
 
 ///|
-/// How the next line will be framed (say / do / story).
-pub fn WorldModel::intent(self : WorldModel) -> InputIntent {
-  self.intent
+/// The composer's 说【】 field.
+pub fn WorldModel::say_draft(self : WorldModel) -> String {
+  self.say_draft
 }
 
 ///|
-/// Parts already staged for the next turn.
-pub fn WorldModel::composer_parts(self : WorldModel) -> Array[ComposerPart] {
-  self.composer_parts
+/// The composer's 做【】 field.
+pub fn WorldModel::do_draft(self : WorldModel) -> String {
+  self.do_draft
 }
 
 ///|
-/// Can the composer send right now? Staged parts count as content even when the
-/// input box is empty.
+/// The composer's 旁白【】 field.
+pub fn WorldModel::story_draft(self : WorldModel) -> String {
+  self.story_draft
+}
+
+///|
+/// Can the composer send right now? Any non-empty field counts as content.
 pub fn WorldModel::composer_ready(self : WorldModel) -> Bool {
-  composer_has_content(self.composer_parts, self.draft)
+  composer_has_content(self.say_draft, self.do_draft, self.story_draft)
 }
 
 ///|
@@ -405,7 +403,6 @@ pub fn WorldModel::fork(self : WorldModel) -> WorldModel {
     worlds: self.worlds.copy(),
     memory_drafts: self.memory_drafts.copy(),
     portraits: self.portraits.copy(),
-    composer_parts: self.composer_parts.copy(),
     conversations: self.conversations.clone(),
   }
 }
@@ -548,7 +545,7 @@ pub fn update(
       let next = if model.selected == id {
         model
       } else {
-        { ..model, selected: id, draft: "", }
+        { ..model, selected: id, say_draft: "", do_draft: "", story_draft: "", }
       }
       (next, @moui.Effect::none())
     }
@@ -565,7 +562,9 @@ pub fn update(
           let next = {
             ..model.fork(),
             scene_location: Some(location),
-            draft: "",
+            say_draft: "",
+            do_draft: "",
+            story_draft: "",
           }
           let names : Array[String] = []
           for card in cast {
@@ -576,17 +575,23 @@ pub fn update(
         }
       }
     LeaveScene => {
-      let next = { ..model.fork(), scene_location: None, draft: "", }
+      let next = {
+        ..model.fork(),
+        scene_location: None,
+        say_draft: "",
+        do_draft: "",
+        story_draft: "",
+      }
       (next, @moui.Effect::none())
     }
     PanMap => (model, @moui.Effect::none())
-    DraftChanged(value) => ({ ..model, draft: value, }, @moui.Effect::none())
-    IntentChanged(code) =>
-      update_composer(model, IntentChanged(code), runner, host)
+    SayDraftChanged(value) =>
+      ({ ..model, say_draft: value, }, @moui.Effect::none())
+    DoDraftChanged(value) =>
+      ({ ..model, do_draft: value, }, @moui.Effect::none())
+    StoryDraftChanged(value) =>
+      ({ ..model, story_draft: value, }, @moui.Effect::none())
     Send(text) => update_composer(model, Send(text), runner, host)
-    StageComposerPart => update_composer(model, StageComposerPart, runner, host)
-    RemoveComposerPart(index) =>
-      update_composer(model, RemoveComposerPart(index), runner, host)
     SendComposer => update_composer(model, SendComposer, runner, host)
     SceneReply(key, respondent_id, text) =>
       match text {

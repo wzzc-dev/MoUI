@@ -48,7 +48,7 @@ fn send_scene_turn(
     Some(card) => card
     None => return (model, @moui.Effect::none())
   }
-  let next = { ..model.fork(), draft: "", }
+  let next = { ..model.fork(), say_draft: "", do_draft: "", story_draft: "", }
   append_player(next, key, trimmed)
   next.push_log("you → 场景「\{location}」: \{trimmed}")
   if next.config.llm_enabled() {
@@ -138,7 +138,12 @@ fn send_private_turn(
           if in_flight.pending() {
             return (model, @moui.Effect::none())
           }
-          let next = { ..model.fork(), draft: "", }
+          let next = {
+            ..model.fork(),
+            say_draft: "",
+            do_draft: "",
+            story_draft: "",
+          }
           append_player(next, id, trimmed)
           next.push_log(
             "you → \{character_name(next.scenario, id)}: \{trimmed}",
@@ -159,13 +164,14 @@ fn send_private_turn(
             // The turn's parts frame the newest line for the model only; the
             // stored history keeps the raw text the player typed. The plan
             // already ends with that line, so the framed text replaces the
-            // last message rather than being added as a second copy.
+            // last message rather than being added as a second copy. A bare
+            // `Send` line is plain speech (`Say`), so it reaches the model
+            // verbatim; composed turns carry their own （动作）/（旁白） markers,
+            // which the framer reads part by part.
             let wire : Array[(String, String)] = []
             for index, message in plan.messages {
               if index == plan.messages.length() - 1 {
-                wire.push(
-                  (message.0, frame_player_turn(message.1, model.intent)),
-                )
+                wire.push((message.0, frame_player_turn(message.1, Say)))
               } else {
                 wire.push(message)
               }

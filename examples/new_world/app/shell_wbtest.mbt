@@ -156,5 +156,8 @@ test "the medium layout keeps the stage and switches the side rail" {
   // The stage did not move out of the frame: the composer's send action is
   // still there while the side rail shows the event log.
   assert_true(tree_has_text(on_controls, "发送"))
-  assert_true(tree_has_text(on_controls, "加成一段"))
+  // The composer is the three-field format: the intent label opens the bracket.
+  assert_true(tree_has_text(on_controls, "说【"))
+  assert_true(tree_has_text(on_controls, "做【"))
+  assert_true(tree_has_text(on_controls, "旁白【"))
 }

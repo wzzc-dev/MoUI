@@ -153,7 +153,9 @@ pub fn update_creation(
         ..model.fork(),
         scenario,
         selected: Some(id),
-        draft: "",
+        say_draft: "",
+        do_draft: "",
+        story_draft: "",
         creator_open: false,
         creator_draft: CharacterDraft::new(),
       }

@@ -201,9 +201,16 @@ pub fn Screen::for_viewport(width : Double, height : Double) -> Screen {
   // block's own 1,200px: stretching the columns on a 2,500px monitor would make
   // a 60-character dialogue line read as a newspaper column.
   let designed_total = Layout::default().content_width()
-  let layout = Layout::for_width(safe_width.min(designed_total))
   match mode {
     Wide => {
+      // The three-column block sits inside `main_view`'s page padding, so the
+      // columns must fit the window *minus* that padding. Scaling to the full
+      // width painted the block 44px past the right edge on the default
+      // 1200px window and clipped the controls rail's 推进时间 button in half.
+      let page_padding = 22.0
+      let layout = Layout::for_width(
+        (safe_width - page_padding * 2.0).min(designed_total),
+      )
       let rail = layout.rail_width
       let stage = layout.stage_width
       let controls = layout.controls_width
@@ -233,7 +240,7 @@ pub fn Screen::for_viewport(width : Double, height : Double) -> Screen {
         width: safe_width,
         height: safe_height,
         mode,
-        layout,
+        layout: Layout::for_width(safe_width.min(designed_total)),
         stage,
         rail,
         controls: rail,
@@ -250,7 +257,7 @@ pub fn Screen::for_viewport(width : Double, height : Double) -> Screen {
         width: safe_width,
         height: safe_height,
         mode,
-        layout,
+        layout: Layout::for_width(safe_width.min(designed_total)),
         stage,
         rail: 0.0,
         controls: 0.0,

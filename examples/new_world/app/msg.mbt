@@ -49,18 +49,15 @@ pub(all) enum Msg {
   /// still travels through `update` so a drag cannot silently become a
   /// character switch that discards the draft.
   PanMap
-  /// Player edited the composer without sending yet.
-  DraftChanged(String)
-  /// The composer's input intent changed (say / do / story).
-  IntentChanged(Int)
-  /// Stage the current draft as a part of the next turn (say/do/story can then
-  /// be combined in one send).
-  StageComposerPart
-  /// Remove one staged part by index.
-  RemoveComposerPart(Int)
+  /// Player typed into the composer's 说【】 field.
+  SayDraftChanged(String)
+  /// Player typed into the composer's 做【】 field.
+  DoDraftChanged(String)
+  /// Player typed into the composer's 旁白【】 field.
+  StoryDraftChanged(String)
   /// Player typed a line and submitted it.
   Send(String)
-  /// Send the staged parts plus the draft as one turn.
+  /// Send the three composer fields (说 / 做 / 旁白) as one turn.
   SendComposer
   /// A provider reply arrived; `None` text means the call failed.
   ///

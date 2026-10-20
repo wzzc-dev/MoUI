@@ -4,7 +4,8 @@
 /// Players routinely want to combine them — "我把伞收起来" (do) **and** "掌柜的，
 /// 还有酒吗？" (say) in the same turn, or narrate a scene beat and then speak.
 /// A single intent toggle could only ever send one of the three, so the composer
-/// stages parts and sends them together.
+/// keeps one field per intent (说【】 / 做【】 / 旁白【】) and sends the non-empty
+/// ones together.
 ///
 /// Storage stays a plain `ChatLine`: the parts are written as canonical,
 /// human-readable markers in the line's text, which is what keeps the journal
@@ -63,21 +64,6 @@ pub fn ComposerPart::to_line_text(self : ComposerPart) -> String {
     Say => self.text
     Do => composer_do_marker + self.text
     Story => composer_story_marker + self.text
-  }
-}
-
-///|
-/// A short excerpt for the staged-part row. The intent is rendered as its own
-/// tag next to this, so repeating it here would read "做 · 做 · 推开门".
-pub fn ComposerPart::summary(self : ComposerPart, max_chars : Int) -> String {
-  let chars : Array[Char] = []
-  for ch in self.text {
-    chars.push(ch)
-  }
-  if chars.length() > max_chars {
-    String::from_array(chars[0:max_chars]) + "…"
-  } else {
-    self.text
   }
 }
 
@@ -159,22 +145,28 @@ pub fn parse_player_parts(text : String) -> Array[ComposerPart] {
 }
 
 ///|
-/// The staged parts plus the current draft, ready for one send.
+/// The composer's three fields (说 / 做 / 旁白), ready for one send.
 ///
-/// `draft` may be empty: staging is an explicit action, so the player can add
-/// three parts and send without typing anything new.
-pub fn composer_parts_with_draft(
-  staged : Array[ComposerPart],
-  intent : InputIntent,
-  draft : String,
+/// Each non-empty field becomes a part with its own intent, in that fixed
+/// order, so "说一句话 + 做一个动作 + 旁白一句" is one turn typed in one place —
+/// no staging step.
+pub fn composer_field_parts(
+  say : String,
+  do_text : String,
+  story : String,
 ) -> Array[ComposerPart] {
   let parts : Array[ComposerPart] = []
-  for part in staged {
-    parts.push(part)
+  let said = say.trim().to_owned()
+  if said != "" {
+    parts.push(ComposerPart::new(Say, said))
   }
-  let text = draft.trim().to_owned()
-  if text != "" {
-    parts.push(ComposerPart::new(intent, text))
+  let acted = do_text.trim().to_owned()
+  if acted != "" {
+    parts.push(ComposerPart::new(Do, acted))
+  }
+  let narrated = story.trim().to_owned()
+  if narrated != "" {
+    parts.push(ComposerPart::new(Story, narrated))
   }
   parts
 }
@@ -182,13 +174,11 @@ pub fn composer_parts_with_draft(
 ///|
 /// Can this composer state be sent?
 pub fn composer_has_content(
-  staged : Array[ComposerPart],
-  draft : String,
+  say : String,
+  do_text : String,
+  story : String,
 ) -> Bool {
-  if !staged.is_empty() {
-    return true
-  }
-  draft.trim() != ""
+  say.trim() != "" || do_text.trim() != "" || story.trim() != ""
 }
 
 ///|
@@ -234,8 +224,8 @@ pub fn frame_player_turn(text : String, fallback : InputIntent) -> String {
 /// Dispatch the composer arms.
 ///
 /// Split out of `update.mbt` because `update.mbt` is at the repository's
-/// source-file hard limit and this is one cohesive feature: staging parts,
-/// removing them, and sending the whole turn. It also keeps the "one turn may
+/// source-file hard limit and this is one cohesive feature: the three fields
+/// (说 / 做 / 旁白) and sending the whole turn. It also keeps the "one turn may
 /// carry several intents" rule next to the type that encodes it.
 pub fn update_composer(
   model : WorldModel,
@@ -244,18 +234,12 @@ pub fn update_composer(
   host : WorldHost?,
 ) -> (WorldModel, @moui.Effect[Msg]) {
   match msg {
-    IntentChanged(code) =>
-      (
-        {
-          ..model,
-          intent: match code {
-            1 => Do
-            2 => Story
-            _ => Say
-          },
-        },
-        @moui.Effect::none(),
-      )
+    SayDraftChanged(value) =>
+      ({ ..model, say_draft: value, }, @moui.Effect::none())
+    DoDraftChanged(value) =>
+      ({ ..model, do_draft: value, }, @moui.Effect::none())
+    StoryDraftChanged(value) =>
+      ({ ..model, story_draft: value, }, @moui.Effect::none())
     Send(text) =>
       // A scene turn and a private turn differ only in how the prompt is built
       // and which conversation key it lands in; everything after that (pending
@@ -264,46 +248,25 @@ pub fn update_composer(
         Some(location) => send_scene_turn(model, location, text, runner, host)
         None => send_private_turn(model, text, runner, host)
       }
-    StageComposerPart => {
-      let text = model.draft.trim()
-      if text == "" {
-        let next = model.fork()
-        next.push_log(
-          "先在输入框里写一句，再把它加成动作/旁白",
-        )
-        (next, @moui.Effect::none())
-      } else {
-        let parts : Array[ComposerPart] = []
-        for part in model.composer_parts {
-          parts.push(part)
-        }
-        parts.push(ComposerPart::new(model.intent, text.to_owned()))
-        ({ ..model, composer_parts: parts, draft: "", }, @moui.Effect::none())
-      }
-    }
-    RemoveComposerPart(index) => {
-      let parts : Array[ComposerPart] = []
-      for i, part in model.composer_parts {
-        if i != index {
-          parts.push(part)
-        }
-      }
-      ({ ..model, composer_parts: parts, }, @moui.Effect::none())
-    }
     SendComposer => {
-      // One turn: the staged parts in order, then whatever is still in the input
-      // box under the current intent. The turn reaches the journal as one player
-      // line (see `composer_turn_text`), so the conversation model is unchanged.
-      let parts = composer_parts_with_draft(
-        model.composer_parts,
-        model.intent,
-        model.draft,
+      // One turn: the non-empty fields in 说 → 做 → 旁白 order. The turn reaches
+      // the journal as one player line (see `composer_turn_text`), so the
+      // conversation model is unchanged.
+      let parts = composer_field_parts(
+        model.say_draft,
+        model.do_draft,
+        model.story_draft,
       )
       let text = composer_turn_text(parts)
       if text == "" {
         (model, @moui.Effect::none())
       } else {
-        let cleared = { ..model, composer_parts: [], draft: "", }
+        let cleared = {
+          ..model,
+          say_draft: "",
+          do_draft: "",
+          story_draft: "",
+        }
         match cleared.scene_location {
           Some(location) =>
             send_scene_turn(cleared, location, text, runner, host)

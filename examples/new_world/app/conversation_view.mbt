@@ -87,7 +87,15 @@ fn scene_panel(
           "\{cast.length()} 人在场 · 说一句话，其中一位会回应",
           width=width - 104.0,
         ),
-        action_button("离开场景", LeaveScene, width=96.0),
+        // A standalone panel action, not a per-line row action: it keeps the
+        // standard `button_sm` scale instead of the halved row-action theme.
+        button(
+          "离开场景",
+          on_click=LeaveScene,
+          variant=Outline,
+          width=96.0,
+          height=button_sm_height,
+        ),
       ],
       spacing=action_gap,
       align=Center,
@@ -335,8 +343,9 @@ fn private_panel(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 ///
 /// These used to be 32×22 labels in the default filled variant, which read as
 /// four competing primary buttons under every message. They are now one scale
-/// (`button_sm_height`), ghost by default, with the destructive one in the danger
-/// colour and the swipe pair grouped around its counter.
+/// (`row_action_height`, half of the old row), ghost by default, with the
+/// destructive one in the danger colour and the swipe pair reduced to its
+/// glyphs around the counter.
 fn line_actions(
   index : Int,
   line : ChatLine,
@@ -344,43 +353,35 @@ fn line_actions(
 ) -> @moui.View[Msg] {
   let actions : Array[@moui.View[Msg]] = []
   if line.has_alternatives() {
-    actions.push(
-      // "‹" alone is unreadable to a screen reader and cryptic to a first-time
-      // player; `button` has no accessibility-label hook, so the glyph carries
-      // the meaning itself.
-      action_button("‹ 上一版", SwipeReply(index, -1), width=76.0),
-    )
+    actions.push(action_button("‹", SwipeReply(index, -1), width=30.0))
     actions.push(
       text(
         "\{line.selected() + 1}/\{line.candidate_count()}",
         role=Caption,
         width=36.0,
-        height=button_sm_height,
+        height=row_action_height(),
         align=TextCenter,
       ),
     )
-    actions.push(
-      action_button("下一版 ›", SwipeReply(index, 1), width=76.0),
-    )
+    actions.push(action_button("›", SwipeReply(index, 1), width=30.0))
   }
-  actions.push(action_button("改", EditLine(index), width=44.0))
-  actions.push(destructive_button("删", DeleteLine(index), width=44.0))
+  actions.push(action_button("改", EditLine(index), width=36.0))
+  actions.push(destructive_button("删", DeleteLine(index), width=36.0))
   // Branch from here: keep this line and everything before it in a new sibling
   // conversation, leaving the original intact.
-  actions.push(action_button("分叉", BranchAt(index), width=60.0))
+  actions.push(action_button("分叉", BranchAt(index), width=52.0))
   // Wrap rather than overflow: on a phone the swipe pair plus three actions is
   // wider than the stage, and a clipped "分叉" is a missing feature.
   wrap(actions, width~, spacing=6.0, row_spacing=4.0)
 }
 
 ///|
-/// The composer: staged parts, the input box, the intent control, and the action
-/// row.
+/// The composer: one 说【】 field, one 做【】 field, one 旁白【】 field, then the
+/// action row led by 发送.
 ///
-/// **Say / do / story are composable.** The old design made the segmented control
-/// pick *the* mode of the one line, so an action and a spoken line could never be
-/// sent together. Now a part is staged with its own intent, several parts ride
-/// one turn, and the input box always has an intent for what is typed next.
+/// Each field frames its line with its own intent, and one send composes the
+/// non-empty ones in order, so an action and a spoken line ride the same turn
+/// with no staging step in between. Enter in any field sends the whole turn.
 fn composer(
   model : WorldModel,
   screen : Screen,
@@ -388,173 +389,92 @@ fn composer(
   waiting? : Bool = false,
 ) -> @moui.View[Msg] {
   let width = screen.stage
-  let staged = model.composer_parts()
   let can_send = enabled && !waiting && model.composer_ready()
   let rows : Array[@moui.View[Msg]] = []
-  if !staged.is_empty() {
-    let parts : Array[@moui.View[Msg]] = []
-    for index, part in staged {
-      parts.push(staged_part_row(index, part, width~))
-    }
-    rows.push(
-      column(
-        [
-          wrapped_caption(
-            "这一轮将依次发出（说 / 做 / 旁白 可以混在一起）：",
-            width~,
-          ),
-          column(parts, spacing=4.0),
-        ],
-        spacing=4.0,
-      ),
-    )
-  }
+  // The 说 field carries the state hints the old single input box held: why the
+  // composer is inert, and that a reply can be pre-written while waiting.
   rows.push(
-    text_area(
-      model.draft(),
-      on_input=value => DraftChanged(value),
+    intent_field(
+      "说",
+      model.say_draft(),
+      value => SayDraftChanged(value),
       placeholder=if !enabled {
         "（先选择一个角色）"
       } else if waiting {
-        "正在等待回复…（可以先写下下一句）"
+        "（正在等待回复…可以先写下下一句）"
       } else {
-        "说点什么…（回车发送）"
+        ""
       },
-      lines=2,
       width~,
-      // Enter sends the box's line under the selected intent. With staged parts
-      // the submit has to fold them in too, so it goes through `SendComposer`;
-      // a plain line keeps the direct `Send` path (same result, one message
-      // fewer to reason about).
-      on_submit=if !can_send {
-        None
-      } else if staged.is_empty() {
-        Some(Send(model.draft()))
-      } else {
-        Some(SendComposer)
-      },
+      can_send~,
     ),
   )
-  if screen.tight_controls {
-    // A phone has four rows of vertical budget for the whole composer; folding
-    // the send button into the intent row leaves one more transcript row on
-    // screen.
-    rows.push(
-      row(
-        [
-          intent_control(model, compact_intent_width),
-          if can_send {
-            button(
-              "发送",
-              on_click=SendComposer,
-              width=width - compact_intent_width - action_gap,
-              height=button_md_height,
-            )
-          } else {
-            button(
-              if waiting {
-                "等待回复…"
-              } else {
-                "发送"
-              },
-              width=width - compact_intent_width - action_gap,
-              height=button_md_height,
-            )
-          },
-        ],
-        spacing=action_gap,
-        align=Center,
-      ),
-    )
-    rows.push(compact_secondary_actions(screen, enabled, waiting))
-  } else {
-    rows.push(intent_row(model, width))
-    rows.push(composer_actions(screen, can_send, enabled, waiting))
-  }
+  rows.push(
+    intent_field(
+      "做",
+      model.do_draft(),
+      value => DoDraftChanged(value),
+      width~,
+      can_send~,
+    ),
+  )
+  rows.push(
+    intent_field(
+      "旁白",
+      model.story_draft(),
+      value => StoryDraftChanged(value),
+      width~,
+      can_send~,
+    ),
+  )
+  rows.push(composer_actions(screen, can_send, enabled, waiting))
   column(rows, spacing=6.0)
 }
 
 ///|
-/// Width of the say/do/story control on a phone. Three short CJK labels fit in
-/// 168px with comfortable targets; the send button takes the rest of the row.
-let compact_intent_width : Double = 168.0
-
-///|
-/// The say/do/story selector, shared by the wide and compact composers so the
-/// two cannot drift apart.
-fn intent_control(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  segmented_control(
-    [
-      choice_item("0", "说"),
-      choice_item("1", "做"),
-      choice_item("2", "旁白"),
-    ],
-    selected=match model.intent() {
-      Say => "0"
-      Do => "1"
-      Story => "2"
-    },
-    on_select=value => {
-      IntentChanged(
-        match value {
-          "1" => 1
-          "2" => 2
-          _ => 0
-        },
-      )
-    },
-    width~,
-    size=Compact,
-  )
-}
-
-///|
-/// The phone's secondary composer actions: staging plus the three conversation
-/// commands, wrapped into as few rows as the width allows.
-fn compact_secondary_actions(
-  screen : Screen,
-  enabled : Bool,
-  waiting : Bool,
+/// One 说【…】-style composer row: the intent label opens the bracket, the field
+/// carries the text, and the closing bracket sits right after the field. The
+/// label width follows the full-width glyph count at the control font instead
+/// of a per-row constant, so 旁白【 and 说【 hug their fields the same way.
+fn intent_field(
+  label : String,
+  value : String,
+  on_input : (String) -> Msg,
+  placeholder? : String = "",
+  width~ : Double,
+  can_send? : Bool = false,
 ) -> @moui.View[Msg] {
-  let third = (screen.stage - action_gap * 2.0) / 3.0
-  wrap(
+  let label_width = label.length().to_double() * 16.0 + 6.0
+  let bracket_width = 20.0
+  let field_width = (width - label_width - bracket_width - action_gap).max(80.0)
+  row(
     [
-      button(
-        "加成一段",
-        on_click=StageComposerPart,
-        variant=Outline,
-        width=screen.stage,
+      text(
+        label + "【",
+        role=Control,
+        width=label_width,
+        height=button_md_height,
+        align=TextEnd,
+      ),
+      text_field(
+        value,
+        on_input~,
+        on_submit=if can_send { Some(SendComposer) } else { None },
+        placeholder~,
+        width=field_width,
         height=button_md_height,
       ),
-      ghost_third("重新生成", RegenerateReply, third, enabled && !waiting),
-      ghost_third("换人", Select(None), third, enabled),
-      ghost_third("清空", ClearConversation, third, enabled),
+      text(
+        "】",
+        role=Control,
+        width=bracket_width,
+        height=button_md_height,
+        align=TextStart,
+      ),
     ],
-    width=screen.stage,
-    spacing=action_gap,
-    row_spacing=6.0,
+    spacing=action_gap / 2.0,
+    align=Center,
   )
-}
-
-///|
-/// The intent selector plus the staging control.
-///
-/// The segmented control says how the *next typed line* will be framed; "加成一段"
-/// moves the current draft into the turn as a part with that intent, so the box
-/// can be reused for the next part.
-fn intent_row(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  let intent_width = if width < 420.0 { 168.0 } else { 192.0 }
-  let controls : Array[@moui.View[Msg]] = [
-    intent_control(model, intent_width),
-    button(
-      "加成一段",
-      on_click=StageComposerPart,
-      variant=Outline,
-      width=(width - intent_width - 8.0).max(112.0),
-      height=button_md_height,
-    ),
-  ]
-  wrap(controls, width~, spacing=action_gap, row_spacing=6.0)
 }
 
 ///|

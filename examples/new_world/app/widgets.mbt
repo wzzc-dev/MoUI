@@ -12,8 +12,12 @@
 /// |---------------|--------|----------------------------------------------|
 /// | `button_hero` | 40     | the primary action of a page (发送 / 保存)     |
 /// | `button_md`   | 32     | ordinary actions (重新生成 / 创建角色)         |
-/// | `button_sm`   | 28     | row actions (改 / 删 / 分叉 / 上一版)          |
+/// | `button_sm`   | 28     | standalone small actions (离开场景 / 保存)     |
 /// | `button_xs`   | 24     | inline affordances inside a caption row       |
+///
+/// The per-line action row (‹ › 改 删 分叉) sits below `button_xs`: the product
+/// halved it, and `row_action_height` + `compact_action_theme` are what make the
+/// half height real instead of being floored by the control font.
 ///
 /// Widths stay with the caller because label length varies by locale; heights,
 /// paddings, and gaps are what make a row read as one control group.
@@ -36,16 +40,46 @@ pub let button_xs_height : Double = 24.0
 pub let action_gap : Double = 8.0
 
 ///|
-/// A secondary row action (改 / 分叉 / 上一版 …). `Outline` draws the hairline
-/// border that makes a 28px row action read as a button; `Ghost` made the row
+/// A secondary row action in the per-line action row (改 / 删 / 分叉 / ‹ ›).
+/// `Outline` draws the hairline border that makes a row action read as a
+/// button; `Ghost` made the row
 /// look like a line of underlined text, which is what "按钮不太好看" was about.
+///
+/// Row actions render at half the height the product originally asked for
+/// (14px requested, ~16px rendered): the default control font plus the default
+/// 8px vertical paddings would floor the height at ~32px no matter what the
+/// caller requests, because `button` treats `height` as a *minimum*. The
+/// compact theme shrinks the metrics, not the palette, so the row keeps its
+/// colours while the buttons actually halve.
+fn compact_action_theme() -> @moui.Theme {
+  let base = @views.default_theme()
+  let label = @text.FontSpec::new(size=10.5, weight=600)
+  base
+  .with_spacing_scale({ xs: 1.0, sm: 1.0, md: 8.0, lg: 10.0, xl: 16.0 })
+  .with_typography({ ..base.typography, label, control: label, })
+}
+
+///|
+/// Requested height of a row action: half of the old `button_sm_height`.
+fn row_action_height() -> Double {
+  button_sm_height / 2.0
+}
+
+///|
 fn action_button(
   label : String,
   on_click : Msg,
   width~ : Double,
-  height? : Double = button_sm_height,
+  height? : Double = row_action_height(),
 ) -> @moui.View[Msg] {
-  button(label, on_click~, variant=Outline, width~, height~)
+  button(
+    label,
+    on_click~,
+    variant=Outline,
+    theme=compact_action_theme(),
+    width~,
+    height~,
+  )
 }
 
 ///|
@@ -55,9 +89,16 @@ fn destructive_button(
   label : String,
   on_click : Msg,
   width~ : Double,
-  height? : Double = button_sm_height,
+  height? : Double = row_action_height(),
 ) -> @moui.View[Msg] {
-  button(label, on_click~, width~, height~, style=destructive_ghost_style())
+  button(
+    label,
+    on_click~,
+    width~,
+    height~,
+    theme=compact_action_theme(),
+    style=destructive_ghost_style(),
+  )
 }
 
 ///|
@@ -120,56 +161,4 @@ fn section_header(
     Some(view) => row([label, view], spacing=action_gap, align=Center)
     None => row([label], spacing=0.0)
   }
-}
-
-///|
-/// A staged composer part: the intent label plus a short excerpt, with a remove
-/// control. Rendered as a chip-like row rather than a button so it reads as
-/// "already in this turn", not "press me".
-fn staged_part_row(
-  index : Int,
-  part : ComposerPart,
-  width~ : Double,
-) -> @moui.View[Msg] {
-  let palette = @views.default_theme().palette
-  // Two visual anchors: the intent tag says *how* the part will be read, the
-  // excerpt says what it is. A bare "做 · 推开门" line read as body text and the
-  // row did not look like something already committed to the turn.
-  container(
-    row(
-      [
-        text(
-          part.intent().label(),
-          role=Control,
-          width=44.0,
-          height=24.0,
-          align=TextCenter,
-        )
-        .foreground(palette.on_primary)
-        .background(palette.primary)
-        .corner_radius(4.0),
-        text(
-          part.summary(30),
-          role=Caption,
-          width=width - 116.0,
-          height=24.0,
-          align=TextStart,
-        ),
-        button(
-          "移除",
-          on_click=RemoveComposerPart(index),
-          variant=Ghost,
-          width=56.0,
-          height=button_xs_height,
-        ),
-      ],
-      spacing=action_gap,
-      align=Center,
-    ),
-    width~,
-    height=36.0,
-    background=palette.surface_variant.multiply_alpha(0.55),
-    corner_radius=6.0,
-    padding=6.0,
-  )
 }

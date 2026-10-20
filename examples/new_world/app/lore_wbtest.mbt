@@ -302,7 +302,7 @@ test "an entry with probability 0 never reaches the prompt" {
 }
 
 ///|
-test "input intents frame the player line without changing what is stored" {
+test "intents frame the wire; the journal keeps the marked player line" {
   // Say is the default and leaves the text alone.
   assert_eq(frame_player_text("温一壶酒", Say), "温一壶酒")
   // Do marks the line as an action and tells the model not to answer it as
@@ -315,13 +315,14 @@ test "input intents frame the player line without changing what is stored" {
   let narrated = frame_player_text("雨下了一夜", Story)
   assert_true(narrated.contains("旁白"))
   assert_true(narrated.contains("接着往下写"))
-  // The stored history is untouched: only the wire is framed.
+  // The stored line carries the canonical marker (what the transcript shows and
+  // what the journal keeps); the wire framing is a separate concern.
   let model = step(
     WorldModel::new(),
     WorldFilesArrived("tavern", true, tavern_files()),
   )
   let selected = step(model, Select(Some("林掌柜")))
-  let (sent, _e) = update(step(selected, IntentChanged(1)), Send("推开门"), world_host={
+  let (sent, _e) = update(step(selected, DoDraftChanged("推开门")), SendComposer, world_host={
     list_worlds: _done => (),
     pick_root: _done => (),
     read_world: (_folder, _done) => (),
@@ -333,19 +334,17 @@ test "input intents frame the player line without changing what is stored" {
   })
   assert_eq(
     sent.conversations.for_character("林掌柜").lines()[0].text(),
-    "推开门",
+    "（动作）推开门",
   )
 }
 
 ///|
-test "the intent selector maps its codes and defaults to Say" {
+test "the composer fields start empty and the intent labels stay stable" {
   let model = WorldModel::new()
-  assert_eq(model.intent(), Say)
-  assert_eq(step(model, IntentChanged(1)).intent(), Do)
-  assert_eq(step(model, IntentChanged(2)).intent(), Story)
-  // Anything unknown falls back rather than inventing a fourth mode.
-  assert_eq(step(model, IntentChanged(99)).intent(), Say)
-  // Labels are what the segmented control shows.
+  assert_eq(model.say_draft(), "")
+  assert_eq(model.do_draft(), "")
+  assert_eq(model.story_draft(), "")
+  // Labels are what the composer rows show.
   assert_eq(Say.label(), "说")
   assert_eq(Do.label(), "做")
   assert_eq(Story.label(), "旁白")
@@ -367,8 +366,8 @@ test "a Do turn sends the framed action on the wire" {
     ApiKeyChanged("sk-test"),
   )
   let selected = step(keyed, Select(Some("林掌柜")))
-  let acting = step(selected, IntentChanged(1))
-  let (_sent, effect) = update(acting, Send("推开门"), turn_runner=runner)
+  let acting = step(selected, DoDraftChanged("推开门"))
+  let (_sent, effect) = update(acting, SendComposer, turn_runner=runner)
   @moui.Effect::runtime_visit(
     effect,
     _m => (),

@@ -56,9 +56,9 @@ pub fn clip_chars(String, Int) -> String
 
 pub let composer_do_marker : String
 
-pub fn composer_has_content(Array[ComposerPart], String) -> Bool
+pub fn composer_field_parts(String, String, String) -> Array[ComposerPart]
 
-pub fn composer_parts_with_draft(Array[ComposerPart], InputIntent, String) -> Array[ComposerPart]
+pub fn composer_has_content(String, String, String) -> Bool
 
 pub let composer_story_marker : String
 
@@ -357,7 +357,6 @@ pub fn ComposerPart::equal(Self, Self) -> Bool
 pub fn ComposerPart::intent(Self) -> InputIntent
 pub fn ComposerPart::new(InputIntent, String) -> Self
 pub fn ComposerPart::not_equal(Self, Self) -> Bool
-pub fn ComposerPart::summary(Self, Int) -> String
 pub fn ComposerPart::text(Self) -> String
 pub fn ComposerPart::to_line_text(Self) -> String
 pub fn ComposerPart::to_repr(Self) -> @debug.Repr
@@ -529,10 +528,9 @@ pub(all) enum Msg {
   AdvanceTime
   TimeAdvanced(String?)
   PanMap
-  DraftChanged(String)
-  IntentChanged(Int)
-  StageComposerPart
-  RemoveComposerPart(Int)
+  SayDraftChanged(String)
+  DoDraftChanged(String)
+  StoryDraftChanged(String)
   Send(String)
   SendComposer
   Reply(String, String?)
@@ -732,7 +730,9 @@ pub struct WorldModel {
   conversations : ConversationBook
   config : ModelConfig
   selected : String?
-  draft : String
+  say_draft : String
+  do_draft : String
+  story_draft : String
   log : Array[String]
   worlds : Array[String]
   current : String?
@@ -749,8 +749,6 @@ pub struct WorldModel {
   api_key_revealed : Bool
   editing_line : Int?
   edit_buffer : String
-  intent : InputIntent
-  composer_parts : Array[ComposerPart]
   character_idea : String
   portraits : Array[(String, String)]
   scene_location : String?
@@ -759,13 +757,12 @@ pub fn WorldModel::active_conversation_key(Self) -> String?
 pub fn WorldModel::api_key_revealed(Self) -> Bool
 pub fn WorldModel::bundle_text(Self) -> String?
 pub fn WorldModel::character_idea(Self) -> String
-pub fn WorldModel::composer_parts(Self) -> Array[ComposerPart]
 pub fn WorldModel::composer_ready(Self) -> Bool
 pub fn WorldModel::config(Self) -> ModelConfig
 pub fn WorldModel::creator_draft(Self) -> CharacterDraft
 pub fn WorldModel::creator_open(Self) -> Bool
 pub fn WorldModel::current(Self) -> String?
-pub fn WorldModel::draft(Self) -> String
+pub fn WorldModel::do_draft(Self) -> String
 pub fn WorldModel::edit_buffer(Self) -> String
 pub fn WorldModel::editing_line(Self) -> Int?
 pub fn WorldModel::equal(Self, Self) -> Bool
@@ -773,7 +770,6 @@ pub fn WorldModel::fork(Self) -> Self
 pub fn WorldModel::generating(Self) -> Bool
 pub fn WorldModel::idea(Self) -> String
 pub fn WorldModel::in_scene(Self) -> Bool
-pub fn WorldModel::intent(Self) -> InputIntent
 pub fn WorldModel::library_missing(Self) -> Bool
 pub fn WorldModel::log(Self) -> Array[String]
 pub fn WorldModel::memory_drafts(Self) -> Array[WorldEntry]
@@ -783,11 +779,13 @@ pub fn WorldModel::page(Self) -> Page
 pub fn WorldModel::portrait_for(Self, CharacterCard) -> String
 pub fn WorldModel::portraits(Self) -> Array[(String, String)]
 pub fn WorldModel::push_log(Self, String) -> Unit
+pub fn WorldModel::say_draft(Self) -> String
 pub fn WorldModel::scenario(Self) -> Scenario
 pub fn WorldModel::scene_cast(Self) -> Array[CharacterCard]
 pub fn WorldModel::scene_location(Self) -> String?
 pub fn WorldModel::selected(Self) -> String?
 pub fn WorldModel::shell_tab(Self) -> CompactTab
+pub fn WorldModel::story_draft(Self) -> String
 pub fn WorldModel::to_repr(Self) -> @debug.Repr
 pub fn WorldModel::world_name(Self) -> String
 pub fn WorldModel::worlds(Self) -> Array[String]

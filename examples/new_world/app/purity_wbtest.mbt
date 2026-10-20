@@ -18,13 +18,10 @@ fn model_fingerprint(model : WorldModel) -> String {
     parts.push(line)
   }
   parts.push(model.selected().unwrap_or("-"))
-  parts.push(model.draft())
+  parts.push(model.say_draft())
+  parts.push(model.do_draft())
+  parts.push(model.story_draft())
   parts.push(model.scene_location().unwrap_or("-"))
-  parts.push(model.intent().label())
-  for part in model.composer_parts() {
-    parts.push(part.intent().label())
-    parts.push(part.text())
-  }
   parts.push(model.shell_tab().to_repr().to_string())
   parts.push(model.creator_open().to_string())
   parts.push(model.creator_draft().name)
@@ -77,10 +74,6 @@ test "no branch writes through the model it was given" {
     step(base, Select(Some("林掌柜"))),
     Send("温一壶酒"),
   )
-  let staged_model = step(
-    step(step(base, Select(Some("林掌柜"))), DraftChanged("推开门")),
-    StageComposerPart,
-  )
   let in_scene = step(base, EnterScene("吧台"))
   let scene_turn = step(in_scene, Send("掌柜的"))
   let branched = step(talking_model, BranchAt(0))
@@ -90,15 +83,10 @@ test "no branch writes through the model it was given" {
   // branch actually does something.
   let cases : Array[(String, WorldModel, Msg)] = [
     ("Select", base, Select(Some("赶考书生"))),
-    ("DraftChanged", base, DraftChanged("写了一半")),
-    ("IntentChanged", base, IntentChanged(1)),
-    (
-      "StageComposerPart",
-      step(base, DraftChanged("推开门")),
-      StageComposerPart,
-    ),
-    ("RemoveComposerPart", staged_model, RemoveComposerPart(0)),
-    ("SendComposer", staged_model, SendComposer),
+    ("SayDraftChanged", base, SayDraftChanged("写了一半")),
+    ("DoDraftChanged", base, DoDraftChanged("推开门")),
+    ("StoryDraftChanged", base, StoryDraftChanged("雨声更大了。")),
+    ("SendComposer", base, SendComposer),
     ("ShellTabChanged", base, ShellTabChanged(2)),
     ("PanMap", base, PanMap),
     ("Send", step(base, Select(Some("林掌柜"))), Send("温一壶酒")),
