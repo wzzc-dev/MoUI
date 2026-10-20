@@ -72,11 +72,18 @@ jobs:
         run: |
           # Regenerate only MoUI-tracked packages; mooncakes deps (e.g. bobzhang/openseek) are not in git.
           # Skip vendored third_party modules whose package ids differ from filesystem paths.
+          # Module roots (own moon.mod) are outside `-p` package resolution when they
+          # are not workspace members (e.g. moui_skia/scripts/native_smoke), so run
+          # them with `-C` from the module root instead.
           while IFS= read -r path; do
             case "$path" in
               third_party/*) continue ;;
             esac
-            moon info -p "$path"
+            if [ -f "$path/moon.mod" ] || [ -f "$path/moon.mod.json" ]; then
+              moon -C "$path" info
+            else
+              moon info -p "$path"
+            fi
           done < <(git ls-files '**/pkg.generated.mbti' | sed 's|/pkg.generated.mbti$||')
 
       - name: Check generated interface drift
