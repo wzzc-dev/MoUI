@@ -202,7 +202,9 @@ jobs:
 
   windows:
     name: Windows MSVC release Skia acceptance (${{ matrix.link_mode }})
-    runs-on: windows-latest
+    # windows-latest (windows-2025 + VS18 clang-cl) errors on the moon runtime's
+    # process.c int32_t*/LPDWORD mismatch; windows-2022 matches the renderer CI.
+    runs-on: windows-2022
     defaults:
       run:
         working-directory: moui_skia

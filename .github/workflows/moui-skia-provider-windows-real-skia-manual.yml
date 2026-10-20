@@ -73,7 +73,9 @@ on:
 jobs:
   provider-windows-real-skia:
     name: Windows provider real Skia
-    runs-on: windows-latest
+    # windows-2022 matches the renderer CI; windows-latest clang-cl rejects the
+    # moon runtime sources (see moui-skia-provider-real-skia-acceptance.yml).
+    runs-on: windows-2022
     defaults:
       run:
         working-directory: moui_skia
