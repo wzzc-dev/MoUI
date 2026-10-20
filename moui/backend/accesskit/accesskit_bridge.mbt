@@ -365,7 +365,7 @@ fn build_accesskit_update(
     @moon_accesskit.TreeId::root(),
     focus_id,
   )
-  update.set_tree(Tree(root_id))
+  update.set_tree(@moon_accesskit.TreeInfo::TreeInfo(root_id))
   match empty_node {
     Some(node) => update.push_node(root_id, node)
     None => ()

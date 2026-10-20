@@ -23,13 +23,13 @@ pub fn android_service_capabilities() -> @backend.HostServiceCapabilities
 
 pub fn android_surface_binding(Array[@render.RendererProvider]) -> AndroidSurfaceBinding
 
-pub fn android_window_hosted_pump_host_sim(AndroidEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
+pub fn android_window_hosted_pump_host_sim(AndroidEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int32, height? : Int32, scale? : Double) -> Unit
 
 pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> AndroidBackendInfo
 
-pub fn entry(options? : AndroidHostAppOptions, auto_exit_after_frames? : Int?) -> @runtime.PlatformEntry
+pub fn entry(options? : AndroidHostAppOptions, auto_exit_after_frames? : Int32?) -> @runtime.PlatformEntry
 
 pub fn host_surface_binding_from_android(AndroidSurfaceBinding) -> @embedded.HostSurfaceBinding
 
@@ -86,16 +86,16 @@ pub fn AndroidEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/andro
 pub fn AndroidEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::destroy_surfaces(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::device_event(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
-pub fn AndroidEmbeddedRuntimeBackend::frames_presented(Self) -> Int
+pub fn AndroidEmbeddedRuntimeBackend::frames_presented(Self) -> Int32
 pub fn AndroidEmbeddedRuntimeBackend::has_session(Self) -> Bool
 pub fn AndroidEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
-pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
+pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int32?) -> Self
 pub fn AndroidEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn AndroidEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
-pub fn AndroidEmbeddedRuntimeBackend::surface_generation(Self) -> Int
+pub fn AndroidEmbeddedRuntimeBackend::surface_generation(Self) -> Int32
 pub fn AndroidEmbeddedRuntimeBackend::suspended(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::window_event(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/android.ApplicationHandler for AndroidEmbeddedRuntimeBackend

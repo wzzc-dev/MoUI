@@ -11,15 +11,15 @@ import {
 // Values
 pub fn ansi(sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog, palette? : TuiPalette) -> @render.RendererProvider
 
-pub fn ansi_runs(Array[(String, Int, @moui_tui.CellAttrs)]) -> String
+pub fn ansi_runs(Array[(String, Int32, @moui_tui.CellAttrs)]) -> String
 
 pub fn attrs_for(@core.SemanticsRole, @core.SemanticsState) -> @moui_tui.CellAttrs
 
 pub fn cell_text_system(CellBox) -> @core.TextSystem
 
-pub fn cell_units(String) -> Int
+pub fn cell_units(String) -> Int32
 
-pub fn clips_in_tree(Array[@core.SemanticsNode], @core.SemanticsNodeId?, CellBox, Int, Int) -> Array[Clip]
+pub fn clips_in_tree(Array[@core.SemanticsNode], @core.SemanticsNodeId?, CellBox, Int32, Int32) -> Array[Clip]
 
 pub fn frame_update(@moui_tui.TermScreen, @moui_tui.Damage) -> String
 
@@ -27,15 +27,15 @@ pub fn node_text(@core.SemanticsNode) -> String
 
 pub fn note_dropped_commands(DegradeLog, Array[@core.DrawCommand], Array[@core.PlatformViewPlacement]) -> Unit
 
-pub fn paint_order(Array[@core.SemanticsNode], @core.SemanticsNodeId?) -> Array[Int]
+pub fn paint_order(Array[@core.SemanticsNode], @core.SemanticsNodeId?) -> Array[Int32]
 
-pub fn quantize(@core.Rect, CellBox, Int, Int) -> (Int, Int, Int, Int)
+pub fn quantize(@core.Rect, CellBox, Int32, Int32) -> (Int32, Int32, Int32, Int32)
 
 pub fn quantize_color(@core.Color) -> @moui_tui.TermColor
 
 pub fn role_kind(@core.SemanticsRole) -> RoleKind
 
-pub fn role_priority(RoleKind) -> Int
+pub fn role_priority(RoleKind) -> Int32
 
 pub fn role_tag(@core.SemanticsRole) -> String
 
@@ -49,7 +49,7 @@ pub fn tui_feature_status(@render.RendererFeature) -> @render.RendererFeatureSta
 
 pub fn tui_terminal_ansi_native_descriptor() -> @render.RendererDescriptor
 
-pub fn viewport(CellBox, Int, Int) -> @core.Rect
+pub fn viewport(CellBox, Int32, Int32) -> @core.Rect
 
 // Errors
 
@@ -58,10 +58,10 @@ pub(all) struct CellBox {
   width : Double
   height : Double
 }
-pub fn CellBox::cols_of(Self, @core.SurfaceMetrics) -> Int
+pub fn CellBox::cols_of(Self, @core.SurfaceMetrics) -> Int32
 pub fn CellBox::default() -> Self
 pub fn CellBox::new(width~ : Double, height~ : Double) -> Self
-pub fn CellBox::rows_of(Self, @core.SurfaceMetrics) -> Int
+pub fn CellBox::rows_of(Self, @core.SurfaceMetrics) -> Int32
 
 pub struct Clip {
   chrome : @core.Rect
@@ -76,12 +76,12 @@ pub fn DegradeLog::find(Self, String) -> DegradeRecord?
 pub fn DegradeLog::new() -> Self
 pub fn DegradeLog::note(Self, String, String) -> Unit
 pub fn DegradeLog::records(Self) -> Array[DegradeRecord]
-pub fn DegradeLog::total(Self) -> Int
+pub fn DegradeLog::total(Self) -> Int32
 
 pub(all) struct DegradeRecord {
   source : String
   detail : String
-  count : Int
+  count : Int32
 } derive(Eq, @debug.Debug)
 pub fn DegradeRecord::equal(Self, Self) -> Bool
 pub fn DegradeRecord::not_equal(Self, Self) -> Bool
@@ -119,21 +119,21 @@ pub struct TuiRenderer {
   sink : TuiSink
   diagnostics : DegradeLog
   mut palette : TuiPalette
-  mut frame_count : Int
-  mut present_count : Int
-  mut offscreen_nodes : Int
+  mut frame_count : Int32
+  mut present_count : Int32
+  mut offscreen_nodes : Int32
   // private fields
 }
-pub fn TuiRenderer::cols(Self) -> Int
+pub fn TuiRenderer::cols(Self) -> Int32
 pub fn TuiRenderer::diagnostics(Self) -> DegradeLog
-pub fn TuiRenderer::frame_count(Self) -> Int
-pub fn TuiRenderer::line_text(Self, Int) -> String
+pub fn TuiRenderer::frame_count(Self) -> Int32
+pub fn TuiRenderer::line_text(Self, Int32) -> String
 pub fn TuiRenderer::new(metrics~ : @core.SurfaceMetrics, sink~ : TuiSink, cell? : CellBox, diagnostics? : DegradeLog, palette? : TuiPalette) -> Self
-pub fn TuiRenderer::offscreen_node_count(Self) -> Int
-pub fn TuiRenderer::present_count(Self) -> Int
+pub fn TuiRenderer::offscreen_node_count(Self) -> Int32
+pub fn TuiRenderer::present_count(Self) -> Int32
 pub fn TuiRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
 pub fn TuiRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
-pub fn TuiRenderer::rows(Self) -> Int
+pub fn TuiRenderer::rows(Self) -> Int32
 pub fn TuiRenderer::set_palette(Self, TuiPalette) -> Unit
 pub fn TuiRenderer::text_system(Self) -> @core.TextSystem
 pub fn TuiRenderer::to_renderer_session(Self) -> @render.RendererSession

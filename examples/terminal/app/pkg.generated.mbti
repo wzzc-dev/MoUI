@@ -18,7 +18,7 @@ pub fn term_color_to_core(@moui_tui.TermColor, @core.Theme) -> @core.Color
 
 pub fn terminal_background(@core.Theme) -> @core.Color
 
-pub fn[Msg] terminal_view(@moui_tui.TermScreen, @core.Theme, scroll_offset? : Int, selection? : Selection?) -> @core.View[Msg]
+pub fn[Msg] terminal_view(@moui_tui.TermScreen, @core.Theme, scroll_offset? : Int32, selection? : Selection?) -> @core.View[Msg]
 
 pub fn theme_for_pref(ThemePreference) -> @core.Theme
 
@@ -32,25 +32,25 @@ pub fn view(Model) -> @core.View[Msg]
 pub(all) struct Model {
   screen : @moui_tui.TermScreen
   parser : VtParser
-  mut scroll_offset : Int
+  mut scroll_offset : Int32
   mut theme_pref : ThemePreference
   mut selection : Selection?
   mut selection_dragging : Bool
 }
-pub fn Model::new(Int, Int) -> Self
+pub fn Model::new(Int32, Int32) -> Self
 pub fn Model::screen(Self) -> @moui_tui.TermScreen
-pub fn Model::scroll_offset(Self) -> Int
+pub fn Model::scroll_offset(Self) -> Int32
 pub fn Model::selection(Self) -> Selection?
 pub fn Model::theme_pref(Self) -> ThemePreference
 
 pub(all) enum Msg {
   Feed(Bytes)
-  Resize(Int, Int)
+  Resize(Int32, Int32)
   WriteInput(String)
-  ScrollBy(Int)
+  ScrollBy(Int32)
   SetTheme(ThemePreference)
-  SelectionBegin(Int, Int)
-  SelectionMove(Int, Int)
+  SelectionBegin(Int32, Int32)
+  SelectionMove(Int32, Int32)
   SelectionEnd
   Copy
 }
@@ -67,15 +67,15 @@ pub fn ParseState::not_equal(Self, Self) -> Bool
 pub fn ParseState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Selection {
-  anchor_row : Int
-  anchor_col : Int
-  active_row : Int
-  active_col : Int
+  anchor_row : Int32
+  anchor_col : Int32
+  active_row : Int32
+  active_col : Int32
 }
-pub fn Selection::col_range_at(Self, Int) -> (Int, Int)?
-pub fn Selection::contains_row(Self, Int) -> Bool
-pub fn Selection::new(Int, Int, Int, Int) -> Self
-pub fn Selection::normalized(Self) -> (Int, Int, Int, Int)
+pub fn Selection::col_range_at(Self, Int32) -> (Int32, Int32)?
+pub fn Selection::contains_row(Self, Int32) -> Bool
+pub fn Selection::new(Int32, Int32, Int32, Int32) -> Self
+pub fn Selection::normalized(Self) -> (Int32, Int32, Int32, Int32)
 
 pub(all) enum ThemePreference {
   System
@@ -88,12 +88,12 @@ pub fn ThemePreference::label(Self) -> String
 pub(all) struct VtParser {
   mut screen : @moui_tui.TermScreen
   mut state : ParseState
-  mut params : Array[Int]
+  mut params : Array[Int32]
   mut param_buf : String
   mut private_marker : Bool
   mut osc_buf : String
   mut utf8_buf : Array[Byte]
-  mut utf8_need : Int
+  mut utf8_need : Int32
   mut ignore_next : Bool
 }
 pub fn VtParser::feed(Self, String) -> Unit

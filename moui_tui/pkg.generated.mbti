@@ -16,14 +16,14 @@ pub fn continuation_cell(CellAttrs) -> Cell
 
 pub fn trim_trailing_spaces(String) -> String
 
-pub fn unicode_width(String) -> Int
+pub fn unicode_width(String) -> Int32
 
 // Errors
 
 // Types and methods
 pub(all) struct Cell {
   ch : String
-  width : Int
+  width : Int32
   attrs : CellAttrs
 } derive(Eq, @debug.Debug)
 pub fn Cell::equal(Self, Self) -> Bool
@@ -46,7 +46,7 @@ pub fn CellAttrs::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Damage {
   full : Bool
-  rows : Array[Int]
+  rows : Array[Int32]
 } derive(Eq, @debug.Debug)
 pub fn Damage::equal(Self, Self) -> Bool
 pub fn Damage::is_empty(Self) -> Bool
@@ -55,8 +55,8 @@ pub fn Damage::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TermColor {
   Default
-  Indexed(Int)
-  Rgb(Int, Int, Int)
+  Indexed(Int32)
+  Rgb(Int32, Int32, Int32)
 } derive(Eq, @debug.Debug)
 pub fn TermColor::equal(Self, Self) -> Bool
 pub fn TermColor::not_equal(Self, Self) -> Bool
@@ -65,8 +65,8 @@ pub fn TermColor::to_repr(Self) -> @debug.Repr
 pub(all) struct TermRow {
   mut cells : Array[Cell]
 }
-pub fn TermRow::new(Int, CellAttrs) -> Self
-pub fn TermRow::runs(Self) -> Array[(String, Int, CellAttrs)]
+pub fn TermRow::new(Int32, CellAttrs) -> Self
+pub fn TermRow::runs(Self) -> Array[(String, Int32, CellAttrs)]
 pub fn TermRow::text(Self) -> String
 
 pub struct TermScreen {
@@ -75,50 +75,50 @@ pub struct TermScreen {
 pub fn TermScreen::backspace(Self) -> Unit
 pub fn TermScreen::carriage_return(Self) -> Unit
 pub fn TermScreen::clear_all(Self) -> Unit
-pub fn TermScreen::cols(Self) -> Int
+pub fn TermScreen::cols(Self) -> Int32
 pub fn TermScreen::current_attrs(Self) -> CellAttrs
-pub fn TermScreen::cursor_col(Self) -> Int
-pub fn TermScreen::cursor_column(Self, Int) -> Unit
-pub fn TermScreen::cursor_down(Self, Int) -> Unit
-pub fn TermScreen::cursor_left(Self, Int) -> Unit
-pub fn TermScreen::cursor_line(Self, Int) -> Unit
-pub fn TermScreen::cursor_position(Self, Int, Int) -> Unit
-pub fn TermScreen::cursor_right(Self, Int) -> Unit
-pub fn TermScreen::cursor_row(Self) -> Int
-pub fn TermScreen::cursor_up(Self, Int) -> Unit
+pub fn TermScreen::cursor_col(Self) -> Int32
+pub fn TermScreen::cursor_column(Self, Int32) -> Unit
+pub fn TermScreen::cursor_down(Self, Int32) -> Unit
+pub fn TermScreen::cursor_left(Self, Int32) -> Unit
+pub fn TermScreen::cursor_line(Self, Int32) -> Unit
+pub fn TermScreen::cursor_position(Self, Int32, Int32) -> Unit
+pub fn TermScreen::cursor_right(Self, Int32) -> Unit
+pub fn TermScreen::cursor_row(Self) -> Int32
+pub fn TermScreen::cursor_up(Self, Int32) -> Unit
 pub fn TermScreen::cursor_visible(Self) -> Bool
-pub fn TermScreen::delete_chars(Self, Int) -> Unit
-pub fn TermScreen::delete_lines(Self, Int) -> Unit
-pub fn TermScreen::erase_cells(Self, Int, Int, Int, CellAttrs) -> Unit
-pub fn TermScreen::erase_chars(Self, Int) -> Unit
-pub fn TermScreen::erase_in_display(Self, Int) -> Unit
-pub fn TermScreen::erase_in_line(Self, Int) -> Unit
-pub fn TermScreen::insert_chars(Self, Int) -> Unit
-pub fn TermScreen::insert_lines(Self, Int) -> Unit
-pub fn TermScreen::line_at(Self, Int) -> TermRow
+pub fn TermScreen::delete_chars(Self, Int32) -> Unit
+pub fn TermScreen::delete_lines(Self, Int32) -> Unit
+pub fn TermScreen::erase_cells(Self, Int32, Int32, Int32, CellAttrs) -> Unit
+pub fn TermScreen::erase_chars(Self, Int32) -> Unit
+pub fn TermScreen::erase_in_display(Self, Int32) -> Unit
+pub fn TermScreen::erase_in_line(Self, Int32) -> Unit
+pub fn TermScreen::insert_chars(Self, Int32) -> Unit
+pub fn TermScreen::insert_lines(Self, Int32) -> Unit
+pub fn TermScreen::line_at(Self, Int32) -> TermRow
 pub fn TermScreen::linefeed(Self) -> Unit
-pub fn TermScreen::new(Int, Int) -> Self
-pub fn TermScreen::print_char(Self, String, Int) -> Unit
-pub fn TermScreen::put(Self, Int, Int, String, Int, CellAttrs) -> Bool
+pub fn TermScreen::new(Int32, Int32) -> Self
+pub fn TermScreen::print_char(Self, String, Int32) -> Unit
+pub fn TermScreen::put(Self, Int32, Int32, String, Int32, CellAttrs) -> Bool
 pub fn TermScreen::reset(Self) -> Unit
-pub fn TermScreen::resize(Self, Int, Int) -> Unit
+pub fn TermScreen::resize(Self, Int32, Int32) -> Unit
 pub fn TermScreen::restore_cursor(Self) -> Unit
 pub fn TermScreen::reverse_index(Self) -> Unit
-pub fn TermScreen::revision(Self) -> Int
-pub fn TermScreen::rows(Self) -> Int
+pub fn TermScreen::revision(Self) -> Int32
+pub fn TermScreen::rows(Self) -> Int32
 pub fn TermScreen::save_cursor(Self) -> Unit
-pub fn TermScreen::scroll_down(Self, Int) -> Unit
-pub fn TermScreen::scroll_up(Self, Int) -> Unit
+pub fn TermScreen::scroll_down(Self, Int32) -> Unit
+pub fn TermScreen::scroll_up(Self, Int32) -> Unit
 pub fn TermScreen::set_auto_wrap(Self, Bool) -> Unit
 pub fn TermScreen::set_current_attrs(Self, CellAttrs) -> Unit
 pub fn TermScreen::set_cursor_visible(Self, Bool) -> Unit
-pub fn TermScreen::set_scroll_region(Self, Int, Int) -> Unit
-pub fn TermScreen::set_scrollback_limit(Self, Int) -> Unit
+pub fn TermScreen::set_scroll_region(Self, Int32, Int32) -> Unit
+pub fn TermScreen::set_scrollback_limit(Self, Int32) -> Unit
 pub fn TermScreen::set_title(Self, String) -> Unit
 pub fn TermScreen::tab(Self) -> Unit
 pub fn TermScreen::take_damage(Self) -> Damage
 pub fn TermScreen::title(Self) -> String
-pub fn TermScreen::total_lines(Self) -> Int
+pub fn TermScreen::total_lines(Self) -> Int32
 
 // Type aliases
 

@@ -10,17 +10,17 @@ import {
 // Values
 pub fn code_highlight_tokenize(String, String) -> Array[CodeHighlightSpan]
 
-pub fn[Msg] controlled_markdown_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
+pub fn[Msg] controlled_markdown_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] controlled_markdown_session_editor(session~ : MarkdownDocumentSession, selection~ : MarkdownEditorSelection, on_transaction~ : (MarkdownEditTransaction) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, scroll_glide? : MarkdownScrollGlide, on_scroll? : ((Double, Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, key? : String?) -> @core.View[Msg]
+pub fn[Msg] controlled_markdown_session_editor(session~ : MarkdownDocumentSession, selection~ : MarkdownEditorSelection, on_transaction~ : (MarkdownEditTransaction) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, on_command_click? : ((Int32) -> Msg)?, accepts_tab_input? : Bool, scroll_glide? : MarkdownScrollGlide, on_scroll? : ((Double, Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, on_command_click? : ((Int32) -> Msg)?, input_transform? : ((String, Int32, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int32, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
 
 pub let markdown_block_views : Array[MarkdownBlockView]
 
-pub fn[Msg] markdown_editor(value~ : String, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
+pub fn[Msg] markdown_editor(value~ : String, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
 pub fn markdown_editor_active_block_label(String, MarkdownEditorSelection) -> String
 
@@ -30,7 +30,7 @@ pub fn markdown_editor_apply_command_at(String, MarkdownEditorCommand, MarkdownE
 
 pub fn markdown_editor_ascii_word_char(Char) -> Bool
 
-pub fn markdown_editor_clamp_int(Int, Int, Int) -> Int
+pub fn markdown_editor_clamp_int(Int32, Int32, Int32) -> Int32
 
 pub fn markdown_editor_format(String, base? : @core.FontSpec, base_dir? : String?) -> RichTextDocument
 
@@ -40,19 +40,19 @@ pub fn markdown_editor_format_for_writing_mode(String, MarkdownEditorSelection, 
 
 pub fn markdown_editor_image_context(String, MarkdownEditorSelection) -> MarkdownReferenceContext?
 
-pub fn markdown_editor_indent_lines(String, Int, @core.TextRange?) -> RichTextInputTransform
+pub fn markdown_editor_indent_lines(String, Int32, @core.TextRange?) -> RichTextInputTransform
 
 pub fn markdown_editor_inline_marker(MarkdownEditorCommand) -> String
 
-pub fn markdown_editor_inline_marker_pair_at_caret(String, Int, String) -> @core.TextRange?
+pub fn markdown_editor_inline_marker_pair_at_caret(String, Int32, String) -> @core.TextRange?
 
-pub fn markdown_editor_insert_hard_break(String, Int, @core.TextRange?) -> RichTextInputTransform?
+pub fn markdown_editor_insert_hard_break(String, Int32, @core.TextRange?) -> RichTextInputTransform?
 
 pub fn markdown_editor_link_context(String, MarkdownEditorSelection) -> MarkdownReferenceContext?
 
-pub fn markdown_editor_max_int(Int, Int) -> Int
+pub fn markdown_editor_max_int(Int32, Int32) -> Int32
 
-pub fn markdown_editor_outdent_lines(String, Int, @core.TextRange?) -> RichTextInputTransform?
+pub fn markdown_editor_outdent_lines(String, Int32, @core.TextRange?) -> RichTextInputTransform?
 
 pub fn markdown_editor_preview_text(String) -> String
 
@@ -66,15 +66,15 @@ pub fn markdown_editor_selected_image_target(String, MarkdownEditorSelection) ->
 
 pub fn markdown_editor_selected_link_target(String, MarkdownEditorSelection) -> String?
 
-pub fn markdown_editor_substring(String, Int, Int) -> String
+pub fn markdown_editor_substring(String, Int32, Int32) -> String
 
-pub fn markdown_editor_text_length(String) -> Int
+pub fn markdown_editor_text_length(String) -> Int32
 
 pub fn markdown_editor_toggle_current_task(String, MarkdownEditorSelection) -> MarkdownEditorEditResult?
 
-pub fn markdown_editor_toggle_task_at(String, Int) -> MarkdownEditorEditResult?
+pub fn markdown_editor_toggle_task_at(String, Int32) -> MarkdownEditorEditResult?
 
-pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String, context? : MarkdownEditorInputContext?, split_paragraph_on_enter? : Bool) -> RichTextInputTransform?
+pub fn markdown_editor_transform_input(String, Int32, @core.TextRange?, String, context? : MarkdownEditorInputContext?, split_paragraph_on_enter? : Bool) -> RichTextInputTransform?
 
 pub let markdown_html_image_gallery_view : MarkdownBlockView
 
@@ -110,7 +110,7 @@ pub fn parse_markdown(String) -> Array[MarkdownBlock]
 
 pub fn parse_markdown_inlines(String) -> Array[MarkdownInline]
 
-pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
+pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int32, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
 
 pub fn rich_text_document_height(RichTextDocument, @core.FontSpec, text_system? : @core.TextSystem, block_width? : Double) -> Double
 
@@ -153,11 +153,11 @@ pub fn MarkdownBlock::to_json(Self) -> Json
 pub fn MarkdownBlock::to_repr(Self) -> @debug.Repr
 
 pub(all) enum MarkdownBlockKind {
-  Heading(Int)
+  Heading(Int32)
   Paragraph
   UnorderedListItem
   TaskListItem(Bool)
-  OrderedListItem(Int)
+  OrderedListItem(Int32)
   Blockquote
   CodeBlock
   HorizontalRule
@@ -188,14 +188,14 @@ pub struct MarkdownBlockViewProjection {
 }
 
 pub(all) struct MarkdownDocumentBlock {
-  id : Int
-  mut revision : Int
+  id : Int32
+  mut revision : Int32
   mut source_range : MarkdownSourceRange
   mut content_range : MarkdownSourceRange
   kind : MarkdownBlockKind
   text : String
   fingerprint : UInt64
-  inline_count : Int
+  inline_count : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownDocumentBlock::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentBlock::not_equal(Self, Self) -> Bool
@@ -203,9 +203,9 @@ pub fn MarkdownDocumentBlock::to_json(Self) -> Json
 pub fn MarkdownDocumentBlock::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownDocumentBlockHeightMetric {
-  mut block_id : Int
-  mut block_index : Int
-  mut revision : Int
+  mut block_id : Int32
+  mut block_index : Int32
+  mut revision : Int32
   mut source_range : MarkdownSourceRange
   mut visual_top_units : Double
   visual_height_units : Double
@@ -218,10 +218,10 @@ pub fn MarkdownDocumentBlockHeightMetric::to_json(Self) -> Json
 pub fn MarkdownDocumentBlockHeightMetric::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownDocumentDirtyRange {
-  start_block : Int
-  end_block : Int
-  source_start : Int
-  source_end : Int
+  start_block : Int32
+  end_block : Int32
+  source_start : Int32
+  source_end : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownDocumentDirtyRange::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentDirtyRange::not_equal(Self, Self) -> Bool
@@ -239,9 +239,9 @@ pub fn MarkdownDocumentHeightIndex::to_json(Self) -> Json
 pub fn MarkdownDocumentHeightIndex::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownDocumentLayoutBlock {
-  block_id : Int
-  block_index : Int
-  revision : Int
+  block_id : Int32
+  block_index : Int32
+  revision : Int32
   top : Double
   height : Double
   source_range : MarkdownSourceRange
@@ -252,14 +252,14 @@ pub fn MarkdownDocumentLayoutBlock::to_json(Self) -> Json
 pub fn MarkdownDocumentLayoutBlock::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownDocumentLayoutCache {
-  revision : Int
+  revision : Int32
   width : Double
   scroll_y : Double
   viewport_height : Double
   overscan : Double
   content_height : Double
-  visible_start : Int
-  visible_end : Int
+  visible_start : Int32
+  visible_end : Int32
   blocks : Array[MarkdownDocumentLayoutBlock]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownDocumentLayoutCache::equal(Self, Self) -> Bool
@@ -274,11 +274,11 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   scroll_y : Double
   viewport_height : Double
   overscan : Double
-  visible_start : Int
-  visible_end : Int
-  block_count : Int
-  rendered_block_count : Int
-  clip_lines : Int
+  visible_start : Int32
+  visible_end : Int32
+  block_count : Int32
+  rendered_block_count : Int32
+  clip_lines : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownDocumentRichTextWindow::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentRichTextWindow::not_equal(Self, Self) -> Bool
@@ -287,21 +287,21 @@ pub fn MarkdownDocumentRichTextWindow::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownDocumentSession {
   text_store : MarkdownDocumentTextStore
-  source_length : Int
+  source_length : Int32
   source_digest : UInt64
-  document_identity : Int
+  document_identity : Int32
   blocks : Array[MarkdownDocumentBlock]
   editor_blocks : Array[MarkdownEditorBlock]
-  line_count : Int
-  word_count : Int
-  reading_minutes : Int
+  line_count : Int32
+  word_count : Int32
+  reading_minutes : Int32
   active_heading : String
   metadata_title : String
   metadata_tags : Array[String]
   outline : Array[MarkdownEditorOutlineItem]
-  revision : Int
-  parse_count : Int
-  next_block_id : Int
+  revision : Int32
+  parse_count : Int32
+  next_block_id : Int32
   dirty_range : MarkdownDocumentDirtyRange?
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
@@ -316,29 +316,29 @@ pub fn MarkdownDocumentSession::rich_text(Self, MarkdownEditorSelection, base? :
 pub fn MarkdownDocumentSession::rich_text_window(Self, MarkdownEditorSelection, base? : @core.FontSpec, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, scroll_y? : Double, viewport_height? : Double, overscan? : Double, content_width? : Double) -> MarkdownDocumentRichTextWindow
 pub fn MarkdownDocumentSession::snapshot(Self, base? : @core.FontSpec, base_dir? : String?) -> MarkdownEditorSnapshot
 pub fn MarkdownDocumentSession::source(Self) -> String
-pub fn MarkdownDocumentSession::source_offset_y(Self, Int, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
+pub fn MarkdownDocumentSession::source_offset_y(Self, Int32, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
 pub fn MarkdownDocumentSession::to_json(Self) -> Json
 pub fn MarkdownDocumentSession::to_repr(Self) -> @debug.Repr
 pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
 
 pub(all) struct MarkdownDocumentTextStore {
   segments : @ref.Ref[Array[MarkdownTextSegment]]
-  revision : @ref.Ref[Int]
-  materialized : @ref.Ref[(Int, String)]
+  revision : @ref.Ref[Int32]
+  materialized : @ref.Ref[(Int32, String)]
 }
-pub fn MarkdownDocumentTextStore::char_at(Self, Int) -> Char?
+pub fn MarkdownDocumentTextStore::char_at(Self, Int32) -> Char?
 pub fn MarkdownDocumentTextStore::edit(Self, MarkdownSourceRange, String) -> Unit
 pub fn MarkdownDocumentTextStore::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentTextStore::from_texts(Array[String]) -> Self
-pub fn MarkdownDocumentTextStore::length(Self) -> Int
+pub fn MarkdownDocumentTextStore::length(Self) -> Int32
 pub fn MarkdownDocumentTextStore::new(String) -> Self
 pub fn MarkdownDocumentTextStore::not_equal(Self, Self) -> Bool
 pub fn MarkdownDocumentTextStore::replace_all(Self, String) -> Unit
-pub fn MarkdownDocumentTextStore::revision(Self) -> Int
+pub fn MarkdownDocumentTextStore::revision(Self) -> Int32
 pub fn MarkdownDocumentTextStore::seed(Self, String) -> Unit
-pub fn MarkdownDocumentTextStore::segmented(String, Array[Int]) -> Self
+pub fn MarkdownDocumentTextStore::segmented(String, Array[Int32]) -> Self
 pub fn MarkdownDocumentTextStore::source(Self) -> String
-pub fn MarkdownDocumentTextStore::text_of(Self, Int, Int) -> String
+pub fn MarkdownDocumentTextStore::text_of(Self, Int32, Int32) -> String
 pub fn MarkdownDocumentTextStore::to_json(Self) -> Json
 pub fn MarkdownDocumentTextStore::to_repr(Self) -> @debug.Repr
 pub impl Eq for MarkdownDocumentTextStore
@@ -364,17 +364,17 @@ pub(all) struct MarkdownEditTransaction {
   edit_range : MarkdownSourceRange
   replacement : String
   deleted : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   reason : MarkdownEditReason
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownEditTransaction::equal(Self, Self) -> Bool
-pub fn MarkdownEditTransaction::from_edit(String, String, Int, deleted~ : String, replacement~ : String, caret~ : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownEditTransaction::from_edit(String, String, Int32, deleted~ : String, replacement~ : String, caret~ : Int32, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_edit_result(String, MarkdownEditorEditResult, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_input_transform(String, RichTextInputTransform, reason? : MarkdownEditReason) -> Self
-pub fn MarkdownEditTransaction::from_sources(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownEditTransaction::from_sources(String, String, caret? : Int32, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::not_equal(Self, Self) -> Bool
-pub fn MarkdownEditTransaction::replace_all(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownEditTransaction::replace_all(String, String, caret? : Int32, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::to_json(Self) -> Json
 pub fn MarkdownEditTransaction::to_repr(Self) -> @debug.Repr
 
@@ -402,7 +402,7 @@ pub(all) enum MarkdownEditorCommand {
   SetFootnoteText(String)
   SetHtmlBlockText(String)
   Paragraph
-  Heading(Int)
+  Heading(Int32)
   BulletList
   TaskList
   OrderedList
@@ -428,7 +428,7 @@ pub fn MarkdownEditorCommand::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownEditorEditResult {
   source : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   edit_range : MarkdownSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
@@ -453,9 +453,9 @@ pub(all) struct MarkdownEditorInputContext {
 }
 
 pub(all) struct MarkdownEditorOutlineItem {
-  level : Int
+  level : Int32
   title : String
-  mut source_start : Int
+  mut source_start : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownEditorOutlineItem::equal(Self, Self) -> Bool
 pub fn MarkdownEditorOutlineItem::not_equal(Self, Self) -> Bool
@@ -473,7 +473,7 @@ pub fn MarkdownEditorRunSourceRange::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorRunSourceRange::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownEditorSelection {
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownEditorSelection::equal(Self, Self) -> Bool
@@ -490,9 +490,9 @@ pub(all) struct MarkdownEditorSnapshot {
   source : String
   blocks : Array[MarkdownEditorBlock]
   rich_text : RichTextDocument
-  line_count : Int
-  word_count : Int
-  reading_minutes : Int
+  line_count : Int32
+  word_count : Int32
+  reading_minutes : Int32
   active_heading : String
   metadata_title : String
   metadata_tags : Array[String]
@@ -549,12 +549,12 @@ pub fn MarkdownInlineKind::to_json(Self) -> Json
 pub fn MarkdownInlineKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownLinkBounds {
-  open_start : Int
-  close_start : Int
-  target_end : Int
-  target_start : Int
-  definition_target_start : Int
-  definition_target_end : Int
+  open_start : Int32
+  close_start : Int32
+  target_end : Int32
+  target_start : Int32
+  definition_target_start : Int32
+  definition_target_end : Int32
   reference_label : String
 } derive(Eq, @debug.Debug)
 pub fn MarkdownLinkBounds::equal(Self, Self) -> Bool
@@ -599,8 +599,8 @@ pub fn MarkdownSetextHeadingParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownSetextHeadingParseResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownSourceRange {
-  mut start : Int
-  mut end : Int
+  mut start : Int32
+  mut end : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownSourceRange::equal(Self, Self) -> Bool
 pub fn MarkdownSourceRange::not_equal(Self, Self) -> Bool
@@ -608,8 +608,8 @@ pub fn MarkdownSourceRange::to_json(Self) -> Json
 pub fn MarkdownSourceRange::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MarkdownTextSegment {
-  mut start : Int
-  mut end : Int
+  mut start : Int32
+  mut end : Int32
   mut text : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownTextSegment::equal(Self, Self) -> Bool
@@ -660,12 +660,12 @@ pub fn RichTextDocument::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RichTextInputTransform {
   text : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   edit_range : MarkdownSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RichTextInputTransform::equal(Self, Self) -> Bool
-pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : @core.TextRange?, edit_range? : MarkdownSourceRange?) -> Self
+pub fn RichTextInputTransform::new(text~ : String, caret~ : Int32, selection? : @core.TextRange?, edit_range? : MarkdownSourceRange?) -> Self
 pub fn RichTextInputTransform::not_equal(Self, Self) -> Bool
 pub fn RichTextInputTransform::to_json(Self) -> Json
 pub fn RichTextInputTransform::to_repr(Self) -> @debug.Repr
@@ -699,8 +699,8 @@ pub fn RichTextRun::to_json(Self) -> Json
 pub fn RichTextRun::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RichTextSourceRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RichTextSourceRange::equal(Self, Self) -> Bool
 pub fn RichTextSourceRange::not_equal(Self, Self) -> Bool

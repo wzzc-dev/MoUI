@@ -1088,18 +1088,18 @@ test "model changed updates current model" {
 }
 
 ///|
-test "unsupported custom model change is ignored" {
+test "custom model change applies" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(CodeMsg(ModelChanged("openai", "gpt-4o")))
-  inspect(model.code.current_model, content="deepseek-v4-flash")
+  inspect(model.code.current_model, content="gpt-4o")
   guard model.code.current_provider_id is Some(provider_id) else {
     fail("expected current provider")
   }
-  inspect(provider_id, content="deepseek")
+  inspect(provider_id, content="openai")
 }
 
 ///|
-test "provider with only unsupported models stays inspectable but not selected" {
+test "switching provider selects that provider's first model" {
   let model = test_model(script=_cmd => [])
   let model = { ..model, code: { ..model.code, model_picker_open: true, }, }
   let (model, _effect) = model.update(CodeMsg(SelectProvider("openai")))
@@ -1107,12 +1107,12 @@ test "provider with only unsupported models stays inspectable but not selected" 
     fail("expected active provider")
   }
   inspect(active_provider_id, content="openai")
-  inspect(model.code.current_model, content="deepseek-v4-flash")
+  inspect(model.code.current_model, content="gpt-4o")
   guard model.code.current_provider_id is Some(current_provider_id) else {
     fail("expected current provider")
   }
-  inspect(current_provider_id, content="deepseek")
-  assert_true(model.code.model_picker_open)
+  inspect(current_provider_id, content="openai")
+  assert_false(model.code.model_picker_open)
 }
 
 ///|

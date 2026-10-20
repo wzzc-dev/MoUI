@@ -32,7 +32,7 @@ pub(all) enum GeneratedI18nMessage {
 pub struct Model {
   dark : Bool
   locale : String
-  hero_count : Int
+  hero_count : Int32
   page : WebsitePage
   selected_doc_slug : String
   catalog_state : WebsiteCatalogLoadState
@@ -49,7 +49,7 @@ pub struct Model {
   route_history : @navigation.RouteHistoryState
   pending_anchor : String?
   copied_text : String?
-  next_service_token : Int
+  next_service_token : Int32
 }
 
 pub enum Msg {
@@ -84,14 +84,14 @@ pub enum Msg {
   ShowcaseGridScrolled(@core.Point)
   TutorialScrolled(@core.Point)
   HostRouteChanged(@services.RouteEvent)
-  HostCatalogCompleted(Int, @services.ServiceTaskResult[String])
-  HostDocsCompleted(Int, String, @services.ServiceTaskResult[String])
+  HostCatalogCompleted(Int32, @services.ServiceTaskResult[String])
+  HostDocsCompleted(Int32, String, @services.ServiceTaskResult[String])
   HostActionCompleted(@services.ServiceTaskResult[Unit])
 }
 
 pub enum WebsiteCatalogLoadState {
   CatalogNotLoaded
-  CatalogLoading(Int)
+  CatalogLoading(Int32)
   CatalogLoaded(WebsiteDocsCatalog)
   CatalogFailed(String)
 }
@@ -127,14 +127,14 @@ pub fn WebsiteDocGroup::to_repr(Self) -> @debug.Repr
 
 pub enum WebsiteDocLoadState {
   DocNotLoaded
-  DocLoading(Int, String)
+  DocLoading(Int32, String)
   DocLoaded(String, WebsiteDocDocument)
   DocFailed(String, String)
   DocNotFound(String)
 }
 
 pub struct WebsiteDocsCatalog {
-  schemaVersion : Int
+  schemaVersion : Int32
   siteUrl : String
   groups : Array[WebsiteDocGroup]
   entries : Array[WebsiteDocEntry]

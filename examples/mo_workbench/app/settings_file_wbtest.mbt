@@ -18,7 +18,7 @@ test "default settings file matches template defaults" {
   inspect(file.providers[1].id, content="openai")
   inspect(file.providers[1].base_url, content="https://api.openai.com/v1")
   inspect_active_provider_id(file.active_provider_id, "deepseek")
-  inspect(file.agent_backend.unwrap(), content="openseek")
+  inspect(file.agent_backend.unwrap(), content="acp")
   inspect(file.font_size, content="14")
   inspect(file.appearance, content="system")
 }
@@ -40,7 +40,7 @@ test "decode modern multi-provider settings json" {
     #|  "current_model": "deepseek-v4-flash",
     #|  "agent_backend": "acp",
     #|  "mo_workbench_workspace": ".",
-    #|  "mo_workbench_session_root": "./.openseek",
+    #|  "mo_workbench_session_root": "./.mo_workbench/sessions",
     #|  "acp_command": "agent",
     #|  "acp_args": "[\"--stdio\"]",
     #|  "acp_process_cwd": ".",
@@ -69,7 +69,7 @@ test "decode legacy single-provider settings json migrates" {
     #|  "openai_base_url": "https://token.sensenova.cn/v1",
     #|  "deepseek_api_key": "",
     #|  "mo_workbench_workspace": ".",
-    #|  "mo_workbench_session_root": "./.openseek",
+    #|  "mo_workbench_session_root": "./.mo_workbench/sessions",
     #|  "approval_policy": "write",
     #|  "sandbox_mode": "workspace",
     #|  "font_size": 16,

@@ -33,10 +33,10 @@ fn chat_message_body(
 ///|
 fn chat_message_text(
   text : String,
-  role? : @views.TextRole = Body,
+  role~ : @views.TextRole = Body,
   theme~ : @moui.Theme,
-  width? : Double = 160.0,
-  height? : Double = 32.0,
+  width~ : Double = 160.0,
+  height~ : Double = 32.0,
 ) -> @moui.View[CodeMsg] {
   @views.text(text, role~, theme~, width~, height~, align=TextStart)
 }
@@ -83,11 +83,11 @@ priv struct MessageLinesCacheEntry {
 }
 
 ///|
-let message_lines_cache : Map[Int, Array[MessageLinesCacheEntry]] = Map([])
+let message_lines_cache : Map[Int32, Array[MessageLinesCacheEntry]] = Map([])
 
 ///|
 priv struct MessageLinesCacheToken {
-  key : Int
+  key : Int32
   text : String
   width : Double
   font_size : Double
@@ -97,23 +97,23 @@ priv struct MessageLinesCacheToken {
 let message_lines_cache_order : Array[MessageLinesCacheToken] = []
 
 ///|
-let message_lines_cache_evict_cursor : Ref[Int] = Ref(0)
+let message_lines_cache_evict_cursor : Ref[Int32] = Ref(0)
 
 ///|
-let message_lines_cache_limit : Int = 384
+let message_lines_cache_limit : Int32 = 384
 
 ///|
 fn message_lines_cache_key(
   text_ : String,
   width : Double,
   font_size : Double,
-) -> Int {
+) -> Int32 {
   text_.length().lxor(width.hash()).lxor(font_size.hash())
 }
 
 ///|
 fn insert_message_lines_cache_entry(
-  key : Int,
+  key : Int32,
   entry : MessageLinesCacheEntry,
 ) -> Unit {
   let token = {
@@ -254,7 +254,7 @@ priv struct StreamRenderSnapshot {
   message_key : String
   content : String
   reasoning : String?
-  total_len : Int
+  total_len : Int32
   width : Double
   font_size : Double
 }
@@ -263,7 +263,7 @@ priv struct StreamRenderSnapshot {
 let stream_render_snapshot : Ref[StreamRenderSnapshot?] = Ref(None)
 
 ///|
-let stream_render_step : Int = 48
+let stream_render_step : Int32 = 48
 
 ///|
 /// 流式最后一条 Assistant 消息的渲染节流:返回本次实际应渲染的 `ChatMessage`。

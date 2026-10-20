@@ -18,7 +18,7 @@ pub fn view(DataTableModel) -> @core.View[DataTableMsg]
 
 // Types and methods
 pub(all) struct DataRecord {
-  id : Int
+  id : Int32
   project : String
   status : String
   owner : String
@@ -26,7 +26,7 @@ pub(all) struct DataRecord {
   priority : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataRecord::equal(Self, Self) -> Bool
-pub fn DataRecord::new(id~ : Int, project~ : String, status~ : String, owner~ : String, team~ : String, priority~ : String) -> Self
+pub fn DataRecord::new(id~ : Int32, project~ : String, status~ : String, owner~ : String, team~ : String, priority~ : String) -> Self
 pub fn DataRecord::not_equal(Self, Self) -> Bool
 pub fn DataRecord::to_json(Self) -> Json
 pub fn DataRecord::to_repr(Self) -> @debug.Repr
@@ -62,7 +62,7 @@ pub(all) struct DataTableModel {
   query : String
   selected_team : String
   selected_statuses : Array[String]
-  selected_row : Int
+  selected_row : Int32
   selected_rows : @data.SelectionState
   visible_columns : @data.ColumnVisibilityState
   column_widths : @data.ColumnWidthState
@@ -75,7 +75,7 @@ pub(all) struct DataTableModel {
 }
 pub fn DataTableModel::filtered_records(Self) -> Array[DataRecord]
 pub fn DataTableModel::new() -> Self
-pub fn DataTableModel::page_count(Self) -> Int
+pub fn DataTableModel::page_count(Self) -> Int32
 pub fn DataTableModel::program(Self) -> @core.Program[Self, DataTableMsg]
 pub fn DataTableModel::selected_record(Self) -> DataRecord?
 pub fn DataTableModel::sorted_records(Self) -> Array[DataRecord]
@@ -88,7 +88,7 @@ pub(all) enum DataTableMsg {
   TeamSelected(String)
   ToggleStatusFilter(String)
   ClearFilters
-  RowSelected(Int)
+  RowSelected(Int32)
   ClearSelection
   ArchiveSelection
   ExportSelection

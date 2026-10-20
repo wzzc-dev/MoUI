@@ -17,6 +17,14 @@ pub fn acp_initialize_request_line(String) -> String
 
 pub async fn acp_worker_loop(AcpBackendOwner) -> Unit
 
+pub fn mo_workbench_apply_settings_file_to_process_env(@app.MoWorkbenchSettingsFile) -> Unit
+
+pub fn mo_workbench_ensure_settings_file() -> Unit
+
+pub fn mo_workbench_load_settings_file() -> @app.MoWorkbenchSettingsFile?
+
+pub fn mo_workbench_persist_settings_file(@app.MoWorkbenchSettingsFile) -> Unit
+
 // Errors
 
 // Types and methods

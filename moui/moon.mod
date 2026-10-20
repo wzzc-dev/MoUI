@@ -1,16 +1,16 @@
 name = "wzzc-dev/moui"
 
-version = "0.2.3"
+version = "0.2.4"
 
 preferred_target = "native"
 
 import {
   "wzzc-dev/window@0.5.4-0.2.1",
-  "Milky2018/moon_accesskit@0.3.0",
-  "Milky2018/moon_zeno@0.1.3",
-  "Milky2018/svg@0.5.3",
-  "moonbitlang/async@0.22.4",
-  "moonbitlang/x@0.5.5",
+  "Milky2018/moon_accesskit@0.4.2",
+  "Milky2018/moon_zeno@0.1.5",
+  "Milky2018/svg@0.6.0",
+  "moonbitlang/async@0.22.5",
+  "moonbitlang/x@0.5.6",
 }
 
 readme = "README.mbt.md"

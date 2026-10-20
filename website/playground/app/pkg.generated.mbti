@@ -23,10 +23,10 @@ pub(all) struct CompileDiagnostic {
   severity : String
   message : String
   file : String
-  line : Int
-  column : Int
-  end_line : Int
-  end_column : Int
+  line : Int32
+  column : Int32
+  end_line : Int32
+  end_column : Int32
 } derive(ToJson, @json.FromJson)
 pub fn CompileDiagnostic::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn CompileDiagnostic::to_json(Self) -> Json
@@ -39,7 +39,7 @@ pub fn CompileFile::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDeco
 pub fn CompileFile::to_json(Self) -> Json
 
 pub(all) struct CompileRequest {
-  revision : Int
+  revision : Int32
   files : Array[CompileFile]
   lesson_id : String
 } derive(ToJson, @json.FromJson)
@@ -49,7 +49,7 @@ pub fn CompileRequest::to_json(Self) -> Json
 pub fn CompileRequest::to_json_line(Self) -> String
 
 pub(all) struct CompileResult {
-  revision : Int
+  revision : Int32
   status : CompileStatus
   diagnostics : Array[CompileDiagnostic]
 } derive(ToJson, @json.FromJson)
@@ -77,7 +77,7 @@ pub(all) struct Model {
   status : String
   preview_status : String
   lesson_id : String
-  revision : Int
+  revision : Int32
 }
 pub fn Model::new() -> Self
 
@@ -88,7 +88,7 @@ pub(all) enum Msg {
   SelectExample(String)
   SetFindQuery(String)
   SetReplaceText(String)
-  EditorSelectionChanged(Int, @core.TextRange?)
+  EditorSelectionChanged(Int32, @core.TextRange?)
   EditorScrollChanged(@core.Point)
   ReplaceAll
   FindNext
@@ -109,7 +109,7 @@ pub fn PlaygroundFile::equal(Self, Self) -> Bool
 pub fn PlaygroundFile::not_equal(Self, Self) -> Bool
 
 pub(all) struct PlaygroundProject {
-  schema_version : Int
+  schema_version : Int32
   files : Array[CompileFile]
   lesson_id : String
 } derive(ToJson, @json.FromJson)

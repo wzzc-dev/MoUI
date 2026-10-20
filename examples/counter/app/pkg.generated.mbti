@@ -16,7 +16,7 @@ pub fn view(Model) -> @core.View[Msg]
 
 // Types and methods
 pub struct Model {
-  count : Int
+  count : Int32
 }
 pub fn Model::new() -> Self
 

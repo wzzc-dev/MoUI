@@ -26,7 +26,7 @@ priv struct AcpPermissionPending {
 
 ///|
 priv struct AcpWorkerState {
-  mut next_id : Int
+  mut next_id : Int32
   mut active_session_id : String?
   mut session_list_supported : Bool
   mut load_session_supported : Bool

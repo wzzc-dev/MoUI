@@ -18,7 +18,7 @@ pub fn base64_encode(Bytes) -> String
 
 pub fn blank_world(String) -> Scenario
 
-pub fn branched_key(String, Int) -> String
+pub fn branched_key(String, Int32) -> String
 
 pub fn build_messages(Scenario, CharacterCard, Conversation, String) -> Array[(String, String)]
 
@@ -50,9 +50,9 @@ pub fn character_color(String) -> @core.Color
 
 pub fn character_idea_prompt(String, String) -> (String, String)
 
-pub let chat_history_limit : Int
+pub let chat_history_limit : Int32
 
-pub fn clip_chars(String, Int) -> String
+pub fn clip_chars(String, Int32) -> String
 
 pub let composer_do_marker : String
 
@@ -78,7 +78,7 @@ pub let config_default_model : String
 
 pub let content_width : Double
 
-pub let context_char_budget : Int
+pub let context_char_budget : Int32
 
 pub let controls_width : Double
 
@@ -138,17 +138,17 @@ pub fn location_at(Scenario, @core.Point, @core.Point) -> String?
 
 pub fn lore_block_at(Array[LoreHit], LorePosition) -> String
 
-pub fn lore_passes_probability(WorldEntry, Int) -> Bool
+pub fn lore_passes_probability(WorldEntry, Int32) -> Bool
 
-pub let lore_recursion_cap : Int
+pub let lore_recursion_cap : Int32
 
 pub fn lore_summary(Array[LoreHit]) -> String
 
-pub let memory_proposal_every : Int
+pub let memory_proposal_every : Int32
 
-pub let memory_proposal_recent_lines : Int
+pub let memory_proposal_recent_lines : Int32
 
-pub fn needs_compression(Conversation, Int) -> Bool
+pub fn needs_compression(Conversation, Int32) -> Bool
 
 pub fn parse_character_md(String) -> CharacterCard?
 
@@ -166,7 +166,7 @@ pub fn parse_world_book_line(String) -> WorldEntry?
 
 pub fn parse_world_files(WorldFiles) -> WorldParse?
 
-pub fn plan_messages(Scenario, CharacterCard, Conversation, String, budget? : Int) -> MessagePlan
+pub fn plan_messages(Scenario, CharacterCard, Conversation, String, budget? : Int32) -> MessagePlan
 
 pub fn portrait_data_uri(String, String) -> String
 
@@ -184,23 +184,23 @@ pub let rail_width : Double
 
 pub fn reply_target_exists(WorldModel, String) -> Bool
 
-pub fn responder_for(Array[CharacterCard], String, Int) -> CharacterCard?
+pub fn responder_for(Array[CharacterCard], String, Int32) -> CharacterCard?
 
 pub fn scene_key(String) -> String
 
 pub fn scripted_reply(Scenario, CharacterCard, String) -> String
 
-pub fn select_lore(Scenario, String, String, Int) -> Array[LoreHit]
+pub fn select_lore(Scenario, String, String, Int32) -> Array[LoreHit]
 
-pub fn split_branch(String) -> (String, Int)?
+pub fn split_branch(String) -> (String, Int32)?
 
 pub let stage_width : Double
 
 pub fn summarize_prompt(character_name~ : String, prior_summary~ : String, source_lines~ : Array[ChatLine]) -> (String, String)
 
-pub let summary_keep_recent : Int
+pub let summary_keep_recent : Int32
 
-pub let summary_min_new_lines : Int
+pub let summary_min_new_lines : Int32
 
 pub fn time_advanced_event(String) -> String
 
@@ -232,7 +232,7 @@ pub fn world_folder_name(String) -> String
 
 pub fn world_idea_prompt(String) -> WorldIdeaPrompt
 
-pub let world_log_limit : Int
+pub let world_log_limit : Int32
 
 pub fn world_nudge(Scenario) -> String
 
@@ -314,22 +314,22 @@ pub struct ChatLine {
   speaker : Speaker
   text : String
   alternatives : Array[String]
-  selected : Int
+  selected : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ChatLine::alternatives(Self) -> Array[String]
-pub fn ChatLine::candidate_count(Self) -> Int
+pub fn ChatLine::candidate_count(Self) -> Int32
 pub fn ChatLine::character(String, String) -> Self
 pub fn ChatLine::equal(Self, Self) -> Bool
 pub fn ChatLine::has_alternatives(Self) -> Bool
 pub fn ChatLine::not_equal(Self, Self) -> Bool
 pub fn ChatLine::player(String) -> Self
-pub fn ChatLine::selected(Self) -> Int
+pub fn ChatLine::selected(Self) -> Int32
 pub fn ChatLine::speaker(Self) -> Speaker
 pub fn ChatLine::text(Self) -> String
 pub fn ChatLine::to_json(Self) -> Json
 pub fn ChatLine::to_repr(Self) -> @debug.Repr
 pub fn ChatLine::with_alternative(Self, String) -> Self
-pub fn ChatLine::with_candidate(Self, Int) -> Self
+pub fn ChatLine::with_candidate(Self, Int32) -> Self
 pub fn ChatLine::with_text(Self, String) -> Self
 
 pub(all) enum CommitScope {
@@ -366,29 +366,29 @@ pub struct Conversation {
   lines : Array[ChatLine]
   pending : Bool
   summary : String
-  summarized_upto : Int
-  appended : Int
+  summarized_upto : Int32
+  appended : Int32
 } derive(Eq, @debug.Debug)
 pub fn Conversation::append(Self, ChatLine) -> Self
-pub fn Conversation::appended(Self) -> Int
+pub fn Conversation::appended(Self) -> Int32
 pub fn Conversation::character_id(Self) -> String
 pub fn Conversation::equal(Self, Self) -> Bool
 pub fn Conversation::lines(Self) -> Array[ChatLine]
 pub fn Conversation::new(character_id~ : String) -> Self
 pub fn Conversation::not_equal(Self, Self) -> Bool
 pub fn Conversation::pending(Self) -> Bool
-pub fn Conversation::summarized_upto(Self) -> Int
+pub fn Conversation::summarized_upto(Self) -> Int32
 pub fn Conversation::summary(Self) -> String
 pub fn Conversation::to_json_text(Self) -> String
 pub fn Conversation::to_repr(Self) -> @debug.Repr
 pub fn Conversation::to_wire(Self) -> Array[(String, String)]
 pub fn Conversation::with_pending(Self, Bool) -> Self
-pub fn Conversation::with_summary(Self, String, Int) -> Self
+pub fn Conversation::with_summary(Self, String, Int32) -> Self
 
 pub struct ConversationBook {
   entries : Array[Conversation]
 } derive(Eq, @debug.Debug)
-pub fn ConversationBook::active_count(Self) -> Int
+pub fn ConversationBook::active_count(Self) -> Int32
 pub fn ConversationBook::clear(Self) -> Unit
 pub fn ConversationBook::clone(Self) -> Self
 pub fn ConversationBook::equal(Self, Self) -> Bool
@@ -473,7 +473,7 @@ pub fn LlmRequest::user(Self) -> String
 
 pub(all) struct LoreHit {
   entry : WorldEntry
-  depth : Int
+  depth : Int32
 } derive(Eq, @debug.Debug)
 pub fn LoreHit::equal(Self, Self) -> Bool
 pub fn LoreHit::not_equal(Self, Self) -> Bool
@@ -503,7 +503,7 @@ pub struct ModelConfig {
   context_preset : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ModelConfig::api_key(Self) -> String
-pub fn ModelConfig::context_budget(Self) -> Int
+pub fn ModelConfig::context_budget(Self) -> Int32
 pub fn ModelConfig::context_preset(Self) -> String
 pub fn ModelConfig::endpoint(Self) -> String
 pub fn ModelConfig::equal(Self, Self) -> Bool
@@ -535,7 +535,7 @@ pub(all) enum Msg {
   SendComposer
   Reply(String, String?)
   SceneReply(String, String, String?)
-  ShellTabChanged(Int)
+  ShellTabChanged(Int32)
   OpenSettings
   CloseSettings
   ConfigFileLoaded(String?)
@@ -556,7 +556,7 @@ pub(all) enum Msg {
   ToggleCreator
   CreatorChanged(CharacterDraft)
   CharacterCreated
-  UseArchetype(Int)
+  UseArchetype(Int32)
   CharacterIdeaChanged(String)
   DraftCharacter
   CharacterDrafted(String?)
@@ -564,21 +564,21 @@ pub(all) enum Msg {
   GenerateWorld
   WorldGenerated(String?)
   ContextChanged(String)
-  SummaryArrived(String, Int, String?)
+  SummaryArrived(String, Int32, String?)
   MemoryProposalsArrived(String?)
-  AcceptMemory(Int)
-  DiscardMemory(Int)
+  AcceptMemory(Int32)
+  DiscardMemory(Int32)
   ToggleApiKeyReveal
   RegenerateReply
   Regenerated(String?)
-  SwipeReply(Int, Int)
-  EditLine(Int)
+  SwipeReply(Int32, Int32)
+  EditLine(Int32)
   EditLineChanged(String)
   EditLineCommit
   EditLineCancel
-  DeleteLine(Int)
+  DeleteLine(Int32)
   ClearConversation
-  BranchAt(Int)
+  BranchAt(Int32)
   ExportWorld
   WorldExported(Bool)
   ImportWorld
@@ -676,20 +676,20 @@ pub fn WorldBundle::to_repr(Self) -> @debug.Repr
 pub struct WorldEntry {
   keys : Array[String]
   content : String
-  priority : Int
+  priority : Int32
   position : LorePosition
-  recursion : Int
-  probability : Int
+  recursion : Int32
+  probability : Int32
 } derive(Eq, @debug.Debug)
 pub fn WorldEntry::content(Self) -> String
 pub fn WorldEntry::equal(Self, Self) -> Bool
 pub fn WorldEntry::keys(Self) -> Array[String]
-pub fn WorldEntry::new(keys~ : Array[String], content~ : String, priority? : Int, position? : LorePosition, recursion? : Int, probability? : Int) -> Self
+pub fn WorldEntry::new(keys~ : Array[String], content~ : String, priority? : Int32, position? : LorePosition, recursion? : Int32, probability? : Int32) -> Self
 pub fn WorldEntry::not_equal(Self, Self) -> Bool
 pub fn WorldEntry::position(Self) -> LorePosition
-pub fn WorldEntry::priority(Self) -> Int
-pub fn WorldEntry::probability(Self) -> Int
-pub fn WorldEntry::recursion(Self) -> Int
+pub fn WorldEntry::priority(Self) -> Int32
+pub fn WorldEntry::probability(Self) -> Int32
+pub fn WorldEntry::recursion(Self) -> Int32
 pub fn WorldEntry::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WorldFiles {
@@ -747,7 +747,7 @@ pub struct WorldModel {
   config_file_loaded : Bool
   memory_drafts : Array[WorldEntry]
   api_key_revealed : Bool
-  editing_line : Int?
+  editing_line : Int32?
   edit_buffer : String
   character_idea : String
   portraits : Array[(String, String)]
@@ -764,7 +764,7 @@ pub fn WorldModel::creator_open(Self) -> Bool
 pub fn WorldModel::current(Self) -> String?
 pub fn WorldModel::do_draft(Self) -> String
 pub fn WorldModel::edit_buffer(Self) -> String
-pub fn WorldModel::editing_line(Self) -> Int?
+pub fn WorldModel::editing_line(Self) -> Int32?
 pub fn WorldModel::equal(Self, Self) -> Bool
 pub fn WorldModel::fork(Self) -> Self
 pub fn WorldModel::generating(Self) -> Bool

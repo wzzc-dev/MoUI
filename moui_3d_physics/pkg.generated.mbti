@@ -31,7 +31,7 @@ pub(all) struct BodyId {
   value : Int64
 } derive(Eq, Hash, ToJson, @debug.Debug)
 pub fn BodyId::equal(Self, Self) -> Bool
-pub fn BodyId::hash(Self) -> Int
+pub fn BodyId::hash(Self) -> Int32
 pub fn BodyId::hash_combine(Self, Hasher) -> Unit
 pub fn BodyId::new(Int64) -> Self
 pub fn BodyId::not_equal(Self, Self) -> Bool
@@ -71,7 +71,7 @@ pub(all) struct ColliderId {
   value : Int64
 } derive(Eq, Hash, ToJson, @debug.Debug)
 pub fn ColliderId::equal(Self, Self) -> Bool
-pub fn ColliderId::hash(Self) -> Int
+pub fn ColliderId::hash(Self) -> Int32
 pub fn ColliderId::hash_combine(Self, Hasher) -> Unit
 pub fn ColliderId::new(Int64) -> Self
 pub fn ColliderId::not_equal(Self, Self) -> Bool
@@ -92,7 +92,7 @@ pub fn PhysicsWorld::create_body(Self, BodyDesc) -> BodyId
 pub fn PhysicsWorld::create_collider(Self, ColliderDesc) -> ColliderId
 pub fn PhysicsWorld::gravity(Self) -> @moui_3d.Vec3
 pub fn PhysicsWorld::new(gravity? : @moui_3d.Vec3) -> Self
-pub fn PhysicsWorld::step(Self, Double) -> Int
+pub fn PhysicsWorld::step(Self, Double) -> Int32
 pub fn PhysicsWorld::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RayHit {
@@ -115,7 +115,7 @@ pub(all) enum Shape {
   CapsuleY(Double, Double)
   CapsuleZ(Double, Double)
   Triangle(@moui_3d.Vec3, @moui_3d.Vec3, @moui_3d.Vec3)
-  Trimesh(Array[@moui_3d.Vec3], Array[(Int, Int, Int)])
+  Trimesh(Array[@moui_3d.Vec3], Array[(Int32, Int32, Int32)])
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Shape::equal(Self, Self) -> Bool
 pub fn Shape::not_equal(Self, Self) -> Bool

@@ -4,14 +4,14 @@
 let embedded_module_manifest : String =
   #|name = "wzzc-dev/moui_cli"
   #|
-  #|version = "0.2.4"
+  #|version = "0.2.5"
   #|
   #|readme = "README.md"
   #|
   #|preferred_target = "native"
   #|
   #|import {
-  #|  "moonbitlang/x@0.5.5",
+  #|  "moonbitlang/x@0.5.6",
   #|}
   #|
   #|repository = "https://github.com/wzzc-dev/MoUI.git"

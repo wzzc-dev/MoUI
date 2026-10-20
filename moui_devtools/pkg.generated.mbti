@@ -13,9 +13,9 @@ pub fn inspector_report_text(@runtime.InspectorSnapshot) -> String
 
 pub fn snapshot_debug_text(@runtime.InspectorSnapshot) -> String
 
-pub fn snapshot_json(@runtime.InspectorSnapshot, indent? : Int) -> String
+pub fn snapshot_json(@runtime.InspectorSnapshot, indent? : Int32) -> String
 
-pub fn snapshot_report_json(@runtime.InspectorSnapshot, indent? : Int) -> String
+pub fn snapshot_report_json(@runtime.InspectorSnapshot, indent? : Int32) -> String
 
 pub fn snapshot_summary(@runtime.InspectorSnapshot) -> SnapshotSummary
 
@@ -45,20 +45,20 @@ pub struct SnapshotHistory {
 }
 pub fn SnapshotHistory::debug_text(Self) -> String
 pub fn SnapshotHistory::latest(Self) -> SnapshotSummary?
-pub fn SnapshotHistory::length(Self) -> Int
+pub fn SnapshotHistory::length(Self) -> Int32
 pub fn SnapshotHistory::new() -> Self
 pub fn SnapshotHistory::push(Self, @runtime.InspectorSnapshot) -> Unit
 
 pub(all) struct SnapshotSummary {
   width : Double
   height : Double
-  dirty_count : Int
-  draw_command_count : Int
-  view_node_count : Int
-  layout_node_count : Int
-  semantics_node_count : Int
-  active_effect_task_count : Int
-  active_subscription_count : Int
+  dirty_count : Int32
+  draw_command_count : Int32
+  view_node_count : Int32
+  layout_node_count : Int32
+  semantics_node_count : Int32
+  active_effect_task_count : Int32
+  active_subscription_count : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SnapshotSummary::equal(Self, Self) -> Bool
 pub fn SnapshotSummary::from_snapshot(@runtime.InspectorSnapshot) -> Self

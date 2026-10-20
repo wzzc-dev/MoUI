@@ -16,13 +16,13 @@ pub fn finish_project_load() -> Unit
 
 pub fn register_project_dispatch((String) -> Unit) -> Unit
 
-pub fn request_compile(Int, String) -> Unit
+pub fn request_compile(Int32, String) -> Unit
 
 pub fn request_example(String) -> Unit
 
 pub fn request_share(String) -> Unit
 
-pub fn start_compile(Int, String, (String) -> Unit) -> Unit
+pub fn start_compile(Int32, String, (String) -> Unit) -> Unit
 
 // Errors
 

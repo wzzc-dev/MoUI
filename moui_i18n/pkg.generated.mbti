@@ -37,7 +37,7 @@ pub struct Translator {
 }
 pub fn Translator::new(catalog~ : Catalog, locale~ : Locale, default_locale~ : Locale) -> Self
 pub fn Translator::translate(Self, String, values? : ArrayView[(String, String)]) -> String
-pub fn Translator::translate_count(Self, String, Int, values? : ArrayView[(String, String)]) -> String
+pub fn Translator::translate_count(Self, String, Int32, values? : ArrayView[(String, String)]) -> String
 
 // Type aliases
 

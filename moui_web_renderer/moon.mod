@@ -1,13 +1,13 @@
 name = "wzzc-dev/moui_web_renderer"
 
-version = "0.2.2"
+version = "0.2.3"
 
 preferred_target = "wasm-gc"
 
 supported_targets = "+wasm-gc+wasm"
 
 import {
-  "wzzc-dev/moui@0.2.3",
+  "wzzc-dev/moui@0.2.4",
 }
 
 readme = "README.md"

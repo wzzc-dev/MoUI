@@ -17,7 +17,7 @@ pub fn env_flag(String) -> Bool
 
 pub fn route_host(source~ : @services.RouteSource, push~ : (String) -> Unit, replace~ : (String) -> Unit, back~ : () -> Unit, forward~ : () -> Unit) -> @app.ShowcaseRouteHost
 
-pub fn runtime(host_summary~ : @backend.HostCapabilitySummary, environment? : @services.AppEnvironment, renderer_providers? : Array[@render.RendererProvider], route? : String, route_host? : @app.ShowcaseRouteHost?, initial_section_code? : Int, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn runtime(host_summary~ : @backend.HostCapabilitySummary, environment? : @services.AppEnvironment, renderer_providers? : Array[@render.RendererProvider], route? : String, route_host? : @app.ShowcaseRouteHost?, initial_section_code? : Int32, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 // Errors
 

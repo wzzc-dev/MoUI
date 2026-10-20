@@ -10,27 +10,27 @@ import {
 // Values
 pub fn[Msg] avatar(String, image? : String?, theme? : @core.Theme, size? : Double) -> @core.View[Msg]
 
-pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int) -> @core.View[Msg]
+pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int32) -> @core.View[Msg]
 
 pub fn[Msg] column_visibility_panel(Array[TableColumn], visible~ : Array[String], on_toggle~ : (String, Bool) -> Msg, locked? : Array[String], title? : String, summary? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message~ : Msg, enabled? : Bool) -> DataFilter[Msg]
 
-pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int32, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn data_grid_cell(row~ : Int, column~ : Int) -> DataGridCell
+pub fn data_grid_cell(row~ : Int32, column~ : Int32) -> DataGridCell
 
 pub fn data_grid_cell_key(String, String) -> String
 
-pub fn[Msg] data_grid_cell_semantics(@core.View[Msg], row_index~ : Int, column_index~ : Int, row_count~ : Int, column_count~ : Int, selected? : Bool, read_only? : Bool) -> @core.View[Msg]
+pub fn[Msg] data_grid_cell_semantics(@core.View[Msg], row_index~ : Int32, column_index~ : Int32, row_count~ : Int32, column_count~ : Int32, selected? : Bool, read_only? : Bool) -> @core.View[Msg]
 
-pub fn data_grid_freeze_panes(rows? : Int, columns? : Int) -> DataGridFreezePanes
+pub fn data_grid_freeze_panes(rows? : Int32, columns? : Int32) -> DataGridFreezePanes
 
-pub fn[Msg] data_grid_row_semantics(@core.View[Msg], row_index~ : Int, row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+pub fn[Msg] data_grid_row_semantics(@core.View[Msg], row_index~ : Int32, row_count~ : Int32, column_count~ : Int32) -> @core.View[Msg]
 
-pub fn[Msg] data_grid_semantics(@core.View[Msg], row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+pub fn[Msg] data_grid_semantics(@core.View[Msg], row_count~ : Int32, column_count~ : Int32) -> @core.View[Msg]
 
-pub fn data_grid_viewport(first_row~ : Int, last_row~ : Int, first_column~ : Int, last_column~ : Int, row_count~ : Int, column_count~ : Int, overscan_rows? : Int, overscan_columns? : Int, freeze? : DataGridFreezePanes) -> DataGridViewport
+pub fn data_grid_viewport(first_row~ : Int32, last_row~ : Int32, first_column~ : Int32, last_column~ : Int32, row_count~ : Int32, column_count~ : Int32, overscan_rows? : Int32, overscan_columns? : Int32, freeze? : DataGridFreezePanes) -> DataGridViewport
 
 pub fn description_item(String, String) -> DescriptionItem
 
@@ -38,17 +38,17 @@ pub fn[Msg] description_list(Array[DescriptionItem], theme? : @core.Theme, width
 
 pub fn[Msg] detail_panel(String, Array[DescriptionItem], subtitle? : String, action? : @controls.StateViewAction[Msg]?, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] pagination(page~ : Int, page_count~ : Int, on_previous~ : Msg, on_next~ : Msg, theme? : @core.Theme, width? : Double, previous_label? : String, next_label? : String) -> @core.View[Msg]
+pub fn[Msg] pagination(page~ : Int32, page_count~ : Int32, on_previous~ : Msg, on_next~ : Msg, theme? : @core.Theme, width? : Double, previous_label? : String, next_label? : String) -> @core.View[Msg]
 
-pub fn scroll_to_key(request_id~ : Int, metrics~ : VariableListMetrics, key~ : String, inset? : Double) -> @core.ScrollRequest?
+pub fn scroll_to_key(request_id~ : Int32, metrics~ : VariableListMetrics, key~ : String, inset? : Double) -> @core.ScrollRequest?
 
 pub fn[Msg] selectable_list(Array[SelectableListItem[Msg]], selected? : String, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, row_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] selectable_list_item(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> SelectableListItem[Msg]
 
-pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[@controls.ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] selection_toolbar(selected_count~ : Int32, total_count? : Int32, actions? : Array[@controls.ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] table(Array[TableColumn], Array[Array[String]], selected_row? : Int?, on_row_select? : ((Int) -> Msg)?, sort_column? : String, sort_ascending? : Bool, on_sort? : ((String) -> Msg)?, sortable_columns? : Array[String], cell? : ((Int, TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
+pub fn[Msg] table(Array[TableColumn], Array[Array[String]], selected_row? : Int32?, on_row_select? : ((Int32) -> Msg)?, sort_column? : String, sort_ascending? : Bool, on_sort? : ((String) -> Msg)?, sortable_columns? : Array[String], cell? : ((Int32, TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
 
 pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColumn
 
@@ -58,7 +58,7 @@ pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : St
 
 pub fn[T] variable_list_metrics(Array[T], (T) -> String, (T) -> Double, spacing? : Double) -> VariableListMetrics
 
-pub fn[T, Msg] variable_virtual_list(Array[T], metrics~ : VariableListMetrics, (T) -> String, (T) -> @core.View[Msg], viewport_height? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] variable_virtual_list(Array[T], metrics~ : VariableListMetrics, (T) -> String, (T) -> @core.View[Msg], viewport_height? : Double, overscan? : Int32, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 // Errors
 
@@ -99,13 +99,13 @@ pub struct DataFilter[Msg] {
 }
 
 pub struct DataGridCell {
-  row : Int
-  column : Int
+  row : Int32
+  column : Int32
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DataGridCell::column(Self) -> Int
+pub fn DataGridCell::column(Self) -> Int32
 pub fn DataGridCell::equal(Self, Self) -> Bool
 pub fn DataGridCell::not_equal(Self, Self) -> Bool
-pub fn DataGridCell::row(Self) -> Int
+pub fn DataGridCell::row(Self) -> Int32
 pub fn DataGridCell::to_json(Self) -> Json
 pub fn DataGridCell::to_repr(Self) -> @debug.Repr
 
@@ -139,13 +139,13 @@ pub fn DataGridEditState::to_repr(Self) -> @debug.Repr
 pub fn DataGridEditState::update(Self, String) -> Self
 
 pub struct DataGridFreezePanes {
-  rows : Int
-  columns : Int
+  rows : Int32
+  columns : Int32
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DataGridFreezePanes::columns(Self) -> Int
+pub fn DataGridFreezePanes::columns(Self) -> Int32
 pub fn DataGridFreezePanes::equal(Self, Self) -> Bool
 pub fn DataGridFreezePanes::not_equal(Self, Self) -> Bool
-pub fn DataGridFreezePanes::rows(Self) -> Int
+pub fn DataGridFreezePanes::rows(Self) -> Int32
 pub fn DataGridFreezePanes::to_json(Self) -> Json
 pub fn DataGridFreezePanes::to_repr(Self) -> @debug.Repr
 
@@ -153,7 +153,7 @@ pub struct DataGridSelectionRange {
   first : DataGridCell
   last : DataGridCell
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DataGridSelectionRange::cell_count(Self) -> Int
+pub fn DataGridSelectionRange::cell_count(Self) -> Int32
 pub fn DataGridSelectionRange::contains(Self, DataGridCell) -> Bool
 pub fn DataGridSelectionRange::equal(Self, Self) -> Bool
 pub fn DataGridSelectionRange::first(Self) -> DataGridCell
@@ -169,9 +169,9 @@ pub struct DataGridSelectionState {
 pub fn DataGridSelectionState::anchor(Self) -> DataGridCell
 pub fn DataGridSelectionState::equal(Self, Self) -> Bool
 pub fn DataGridSelectionState::focus(Self) -> DataGridCell
-pub fn DataGridSelectionState::handle_key(Self, @core.KeyboardEvent, row_count~ : Int, column_count~ : Int, page_rows? : Int) -> Self
-pub fn DataGridSelectionState::move_by(Self, row_delta~ : Int, column_delta~ : Int, row_count~ : Int, column_count~ : Int, extending? : Bool) -> Self
-pub fn DataGridSelectionState::new(row? : Int, column? : Int) -> Self
+pub fn DataGridSelectionState::handle_key(Self, @core.KeyboardEvent, row_count~ : Int32, column_count~ : Int32, page_rows? : Int32) -> Self
+pub fn DataGridSelectionState::move_by(Self, row_delta~ : Int32, column_delta~ : Int32, row_count~ : Int32, column_count~ : Int32, extending? : Bool) -> Self
+pub fn DataGridSelectionState::new(row? : Int32, column? : Int32) -> Self
 pub fn DataGridSelectionState::not_equal(Self, Self) -> Bool
 pub fn DataGridSelectionState::range(Self) -> DataGridSelectionRange
 pub fn DataGridSelectionState::select(Self, DataGridCell, extending? : Bool) -> Self
@@ -179,12 +179,12 @@ pub fn DataGridSelectionState::to_json(Self) -> Json
 pub fn DataGridSelectionState::to_repr(Self) -> @debug.Repr
 
 pub struct DataGridViewport {
-  first_row : Int
-  last_row : Int
-  first_column : Int
-  last_column : Int
-  row_count : Int
-  column_count : Int
+  first_row : Int32
+  last_row : Int32
+  first_column : Int32
+  last_column : Int32
+  row_count : Int32
+  column_count : Int32
   freeze : DataGridFreezePanes
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DataGridViewport::cells(Self) -> Array[DataGridCell]
@@ -210,12 +210,12 @@ pub struct DescriptionItem {
 
 pub struct IncrementalData[T] {
   items : Array[T]
-  revision : Int
+  revision : Int32
 }
 pub fn[T] IncrementalData::apply(Self[T], Array[IncrementalDataChange[T]], (T) -> String) -> Self[T]
 pub fn[T] IncrementalData::items(Self[T]) -> Array[T]
 pub fn[T] IncrementalData::new(items? : Array[T]) -> Self[T]
-pub fn[T] IncrementalData::revision(Self[T]) -> Int
+pub fn[T] IncrementalData::revision(Self[T]) -> Int32
 
 pub(all) enum IncrementalDataChange[T] {
   Append(T)
@@ -225,19 +225,19 @@ pub(all) enum IncrementalDataChange[T] {
 }
 
 pub struct PaginationState {
-  page : Int
-  page_size : Int
-  total_count : Int
+  page : Int32
+  page_size : Int32
+  total_count : Int32
 }
 pub fn PaginationState::clamped(Self) -> Self
-pub fn PaginationState::end_index(Self) -> Int
-pub fn PaginationState::new(page? : Int, page_size? : Int, total_count? : Int) -> Self
+pub fn PaginationState::end_index(Self) -> Int32
+pub fn PaginationState::new(page? : Int32, page_size? : Int32, total_count? : Int32) -> Self
 pub fn PaginationState::next(Self) -> Self
-pub fn PaginationState::page(Self) -> Int
-pub fn PaginationState::page_count(Self) -> Int
-pub fn PaginationState::page_size(Self) -> Int
+pub fn PaginationState::page(Self) -> Int32
+pub fn PaginationState::page_count(Self) -> Int32
+pub fn PaginationState::page_size(Self) -> Int32
 pub fn PaginationState::previous(Self) -> Self
-pub fn PaginationState::start_index(Self) -> Int
+pub fn PaginationState::start_index(Self) -> Int32
 
 pub struct SelectableListItem[Msg] {
   id : String
@@ -253,7 +253,7 @@ pub struct SelectionState {
   selected : Array[String]
 }
 pub fn SelectionState::contains(Self, String) -> Bool
-pub fn SelectionState::count(Self) -> Int
+pub fn SelectionState::count(Self) -> Int32
 pub fn SelectionState::new(selected? : Array[String]) -> Self
 pub fn SelectionState::toggle(Self, String) -> Self
 
@@ -280,14 +280,14 @@ pub fn VariableListAnchor::key(Self) -> String
 
 pub struct VariableListGeometryChange {
   key : String
-  index : Int
+  index : Int32
   old_height : Double
   new_height : Double
   delta : Double
   total_delta : Double
 }
 pub fn VariableListGeometryChange::delta(Self) -> Double
-pub fn VariableListGeometryChange::index(Self) -> Int
+pub fn VariableListGeometryChange::index(Self) -> Int32
 pub fn VariableListGeometryChange::key(Self) -> String
 pub fn VariableListGeometryChange::new_height(Self) -> Double
 pub fn VariableListGeometryChange::old_height(Self) -> Double
@@ -304,32 +304,32 @@ pub struct VariableListMetrics {
 }
 pub fn VariableListMetrics::anchor_for_offset(Self, Double) -> VariableListAnchor?
 pub fn VariableListMetrics::clamp_offset(Self, Double, Double) -> Double
-pub fn VariableListMetrics::count(Self) -> Int
-pub fn VariableListMetrics::height_at(Self, Int) -> Double?
-pub fn VariableListMetrics::insert(Self, Int, String, Double) -> Int
-pub fn VariableListMetrics::is_measured(Self, Int) -> Bool
+pub fn VariableListMetrics::count(Self) -> Int32
+pub fn VariableListMetrics::height_at(Self, Int32) -> Double?
+pub fn VariableListMetrics::insert(Self, Int32, String, Double) -> Int32
+pub fn VariableListMetrics::is_measured(Self, Int32) -> Bool
 pub fn VariableListMetrics::max_scroll_offset(Self, Double) -> Double
-pub fn VariableListMetrics::offset_at(Self, Int) -> Double?
+pub fn VariableListMetrics::offset_at(Self, Int32) -> Double?
 pub fn VariableListMetrics::offset_for_anchor(Self, VariableListAnchor, fallback? : Double) -> Double
 pub fn VariableListMetrics::offset_for_key(Self, String) -> Double?
-pub fn VariableListMetrics::remove(Self, String) -> Int?
+pub fn VariableListMetrics::remove(Self, String) -> Int32?
 pub fn VariableListMetrics::restore_offset_after_updates(Self, VariableListAnchor?, Array[VariableListGeometryChange], Double, Double) -> Double
 pub fn VariableListMetrics::total_extent(Self) -> Double
 pub fn VariableListMetrics::update_height(Self, String, Double) -> VariableListGeometryChange?
 pub fn VariableListMetrics::update_heights(Self, Array[(String, Double)]) -> Array[VariableListGeometryChange]
-pub fn VariableListMetrics::visible_range(Self, offset_y~ : Double, viewport_height~ : Double, overscan? : Int) -> VariableListRange?
+pub fn VariableListMetrics::visible_range(Self, offset_y~ : Double, viewport_height~ : Double, overscan? : Int32) -> VariableListRange?
 pub fn VariableListMetrics::with_height(Self, String, Double) -> Self
 
 pub struct VariableListRange {
-  first_index : Int
-  last_index : Int
+  first_index : Int32
+  last_index : Int32
   before_extent : Double
   after_extent : Double
 }
 pub fn VariableListRange::after_extent(Self) -> Double
 pub fn VariableListRange::before_extent(Self) -> Double
-pub fn VariableListRange::first_index(Self) -> Int
-pub fn VariableListRange::last_index(Self) -> Int
+pub fn VariableListRange::first_index(Self) -> Int32
+pub fn VariableListRange::last_index(Self) -> Int32
 
 // Type aliases
 

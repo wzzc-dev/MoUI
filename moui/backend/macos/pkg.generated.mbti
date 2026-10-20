@@ -41,7 +41,7 @@ pub fn macos_native_view_handle(@wzzc-dev/window/macos.Window) -> UInt64?
 
 pub fn macos_perf_now_ms() -> Double
 
-pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @backend.HostServiceBridge
+pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int32) -> @backend.HostServiceBridge
 
 pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
@@ -89,7 +89,7 @@ pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@backend.Platfo
 pub struct MacosHostSmokeOptions {
   // private fields
 }
-pub fn MacosHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool, performance_smoke_duration_ms? : Int, performance_smoke_warm_up_presents? : Int, performance_smoke_refresh_hz? : Int, promotion_lifecycle_enabled? : Bool, promotion_surface_cycles? : Int, promotion_fg_bg_cycles? : Int, promotion_context_loss_count? : Int) -> Self
+pub fn MacosHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool, performance_smoke_duration_ms? : Int32, performance_smoke_warm_up_presents? : Int32, performance_smoke_refresh_hz? : Int32, promotion_lifecycle_enabled? : Bool, promotion_surface_cycles? : Int32, promotion_fg_bg_cycles? : Int32, promotion_context_loss_count? : Int32) -> Self
 pub fn MacosHostSmokeOptions::performance_enabled(Self) -> Bool
 
 pub struct MacosModalNativeHooks {

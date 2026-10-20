@@ -135,7 +135,7 @@ fn settings_panel_header(
       @views.text(
         "Loaded from " +
         model.env_source +
-        ". 可选择 OpenSeek 或 ACP agent transport backend。",
+        "。agent transport backend 选择 ACP。",
         role=Caption,
         theme~,
         width~,
@@ -341,23 +341,14 @@ fn provider_edit_form(
     ).foreground(workbench_text(theme)),
   )
   for m in p.models {
-    let supported = mo_workbench_model_supported_by_openseek(m)
     rows.push(
       @views.container(
         @views.text(m, role=Label, theme~, width=field_w - 16.0, height=22.0).foreground(
-          if supported {
-            workbench_text(theme)
-          } else {
-            theme.palette.muted
-          },
+          workbench_text(theme),
         ),
         width=field_w,
         height=38.0,
-        background=if supported {
-          workbench_subtle_background(theme)
-        } else {
-          @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.03)
-        },
+        background=workbench_subtle_background(theme),
         corner_radius=6.0,
         padding=8.0,
       ),
@@ -415,7 +406,7 @@ fn settings_agent_panel(
     [
       settings_field_row(
         "Backend",
-        "OpenSeek in-process backend or generic ACP stdio agent",
+        "Generic ACP stdio agent",
         backend_segmented_control(model.agent_backend, theme, field_w),
         theme,
         field_w,
@@ -438,12 +429,12 @@ fn settings_agent_panel(
       ),
       settings_field_row(
         "Session store",
-        "mo_workbench_session_root — OpenSeek session files",
+        "mo_workbench_session_root — agent session files",
         @views.text_field(
           model.session_root,
           on_input=value => SessionRootChanged(value),
           on_submit=None,
-          placeholder="./.openseek",
+          placeholder="./.mo_workbench/sessions",
           variant=Filled,
           theme~,
           width=field_w,
@@ -607,10 +598,7 @@ fn backend_segmented_control(
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.segmented_control(
-    [
-      @views.choice_item("openseek", "OpenSeek"),
-      @views.choice_item("acp", "ACP"),
-    ],
+    [@views.choice_item("acp", "ACP")],
     selected=agent_backend_kind_id(backend),
     on_select=id => BackendChanged(agent_backend_kind_from_id(id)),
     size=Compact,
@@ -681,7 +669,7 @@ fn sandbox_segmented_control(
 
 ///|
 fn font_size_stepper(
-  font_size : Int,
+  font_size : Int32,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {

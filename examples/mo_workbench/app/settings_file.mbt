@@ -38,7 +38,7 @@ pub struct MoWorkbenchSettingsFile {
   acp_process_cwd : String?
   approval_policy : String
   sandbox_mode : String
-  font_size : Int
+  font_size : Int32
   appearance : String
 } derive(Eq, Debug, ToJson, FromJson)
 
@@ -66,7 +66,7 @@ struct MoWorkbenchSettingsFileLegacy {
   mo_workbench_session_root : String
   approval_policy : String
   sandbox_mode : String
-  font_size : Int
+  font_size : Int32
   appearance : String
 } derive(Eq, Debug, ToJson, FromJson)
 
@@ -105,9 +105,9 @@ pub fn mo_workbench_default_settings_file() -> MoWorkbenchSettingsFile {
     ],
     active_provider_id: Some("deepseek"),
     current_model: "deepseek-v4-flash",
-    agent_backend: Some("openseek"),
+    agent_backend: Some("acp"),
     mo_workbench_workspace: ".",
-    mo_workbench_session_root: "./.openseek",
+    mo_workbench_session_root: "./.mo_workbench/sessions",
     acp_command: Some(""),
     acp_args: Some(""),
     acp_process_cwd: Some(""),
@@ -205,7 +205,7 @@ fn migrate_legacy_settings(
     ],
     active_provider_id: Some("deepseek"),
     current_model: "deepseek-v4-flash",
-    agent_backend: Some("openseek"),
+    agent_backend: Some("acp"),
     mo_workbench_workspace: legacy.mo_workbench_workspace,
     mo_workbench_session_root: legacy.mo_workbench_session_root,
     acp_command: Some(""),

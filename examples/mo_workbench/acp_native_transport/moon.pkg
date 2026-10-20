@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/env",
   "moonbitlang/core/json",
+  "moonbitlang/x/fs",
   "moonbitlang/async",
   "moonbitlang/async/process",
   "examples/mo_workbench/app",

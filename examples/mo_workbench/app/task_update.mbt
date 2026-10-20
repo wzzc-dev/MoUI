@@ -268,7 +268,7 @@ fn agent_event_needs_task_sync(event : AgentEvent) -> Bool {
 fn WorkbenchModel::update(
   self : WorkbenchModel,
   msg : WorkbenchMsg,
-  services? : @services.AppServices = @services.AppServices::unavailable(),
+  services~ : @services.AppServices = @services.AppServices::unavailable(),
 ) -> (WorkbenchModel, @moui.Effect[WorkbenchMsg]) {
   match msg {
     SwitchTab(tab) => ({ ..self, active_tab: tab, }, @moui.Effect::none())
@@ -341,10 +341,10 @@ fn WorkbenchModel::update(
     CodeMsg(m) =>
       match m {
         SelectProvider(provider_id) => {
-          // Switch the active provider from the chat picker. If it exposes a
-          // model OpenSeek can parse, select that model and re-point the
-          // backend; otherwise keep the active backend model and leave the
-          // picker open so the disabled rows remain visible.
+          // Switch the active provider from the chat picker. If it exposes at
+          // least one model, select that model and re-point the backend;
+          // otherwise keep the active backend model and leave the picker open
+          // so the provider's rows remain visible.
           let settings = self.settings.update(SelectProvider(provider_id)).0
           let provider = settings.find_provider(provider_id)
           let (api_key, base_url) = match provider {
@@ -353,16 +353,12 @@ fn WorkbenchModel::update(
           }
           match provider {
             Some(p) => {
-              let current_is_supported = p.models.contains(
-                  self.code.current_model,
-                ) &&
-                mo_workbench_model_supported_by_openseek(
-                  self.code.current_model,
-                )
-              let selected_model = if current_is_supported {
+              let selected_model = if p.models.contains(self.code.current_model) {
                 Some(self.code.current_model)
+              } else if p.models.is_empty() {
+                None
               } else {
-                mo_workbench_first_openseek_supported_model(p.models)
+                Some(p.models[0])
               }
               match selected_model {
                 Some(model_id) => {
@@ -397,9 +393,6 @@ fn WorkbenchModel::update(
           }
         }
         ModelChanged(provider_id, model_id) => {
-          if !mo_workbench_model_supported_by_openseek(model_id) {
-            return (self, @moui.Effect::none())
-          }
           // Resolve the provider's live connection and switch both the model
           // and the backend endpoint in one backend command.
           let provider = self.settings.find_provider(provider_id)

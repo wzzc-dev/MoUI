@@ -8,7 +8,7 @@ pub fn run_cli(Array[String], String) -> CliOutcome
 
 // Types and methods
 pub(all) struct CliOutcome {
-  exit_code : Int
+  exit_code : Int32
   stdout : String
   stderr : String
 }

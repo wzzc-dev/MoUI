@@ -23,7 +23,7 @@ pub fn render_present_completions_have_presented(Array[RenderPresentCompletion])
 
 pub fn render_present_completions_have_terminal(Array[RenderPresentCompletion]) -> Bool
 
-pub fn size_dim_to_uint(Double) -> UInt
+pub fn size_dim_to_uint(Double) -> UInt32
 
 // Errors
 
@@ -32,10 +32,10 @@ pub struct FrameToken {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FrameToken::equal(Self, Self) -> Bool
-pub fn FrameToken::new(surface_generation~ : Int, sequence~ : Int) -> Self
+pub fn FrameToken::new(surface_generation~ : Int32, sequence~ : Int32) -> Self
 pub fn FrameToken::not_equal(Self, Self) -> Bool
-pub fn FrameToken::sequence(Self) -> Int
-pub fn FrameToken::surface_generation(Self) -> Int
+pub fn FrameToken::sequence(Self) -> Int32
+pub fn FrameToken::surface_generation(Self) -> Int32
 pub fn FrameToken::to_json(Self) -> Json
 pub fn FrameToken::to_repr(Self) -> @debug.Repr
 
@@ -60,20 +60,20 @@ pub fn HostSurface::surface_id(Self) -> String
 pub(all) struct ImageResourceLoadCompletion {
   source : String
   status : ImageResourceLoadCompletionStatus
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   diagnostic : String
   background_io : Bool
   decoded_pixels : Bytes
-  decoded_row_bytes : Int
+  decoded_row_bytes : Int32
   background_decode : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ImageResourceLoadCompletion::equal(Self, Self) -> Bool
 pub fn ImageResourceLoadCompletion::failed(String, diagnostic~ : String, background_io? : Bool) -> Self
 pub fn ImageResourceLoadCompletion::has_decoded_rgba_payload(Self) -> Bool
 pub fn ImageResourceLoadCompletion::not_equal(Self, Self) -> Bool
-pub fn ImageResourceLoadCompletion::ready(String, width~ : Int, height~ : Int, background_io? : Bool) -> Self
-pub fn ImageResourceLoadCompletion::ready_decoded_rgba(String, width~ : Int, height~ : Int, row_bytes~ : Int, Bytes, background_io? : Bool, background_decode? : Bool) -> Self
+pub fn ImageResourceLoadCompletion::ready(String, width~ : Int32, height~ : Int32, background_io? : Bool) -> Self
+pub fn ImageResourceLoadCompletion::ready_decoded_rgba(String, width~ : Int32, height~ : Int32, row_bytes~ : Int32, Bytes, background_io? : Bool, background_decode? : Bool) -> Self
 pub fn ImageResourceLoadCompletion::to_json(Self) -> Json
 pub fn ImageResourceLoadCompletion::to_repr(Self) -> @debug.Repr
 
@@ -89,8 +89,8 @@ pub fn ImageResourceLoadCompletionStatus::to_repr(Self) -> @debug.Repr
 pub(all) struct ImageResourceRecord {
   source : String
   status : ImageResourceStatus
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   diagnostic : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ImageResourceRecord::disposed(String) -> Self
@@ -98,7 +98,7 @@ pub fn ImageResourceRecord::equal(Self, Self) -> Bool
 pub fn ImageResourceRecord::failed(String, diagnostic~ : String) -> Self
 pub fn ImageResourceRecord::loading(String) -> Self
 pub fn ImageResourceRecord::not_equal(Self, Self) -> Bool
-pub fn ImageResourceRecord::ready(String, width~ : Int, height~ : Int) -> Self
+pub fn ImageResourceRecord::ready(String, width~ : Int32, height~ : Int32) -> Self
 pub fn ImageResourceRecord::to_json(Self) -> Json
 pub fn ImageResourceRecord::to_repr(Self) -> @debug.Repr
 
@@ -125,18 +125,18 @@ pub fn NativeSurface::resize(Self, @core.SurfaceMetrics) -> Unit
 pub fn NativeSurface::surface_handle(Self) -> UInt64
 
 pub(all) struct PixelFrame {
-  width : Int
-  height : Int
-  row_bytes : Int
+  width : Int32
+  height : Int32
+  row_bytes : Int32
   scale_factor : Double
   pixels : Bytes
 }
-pub fn PixelFrame::height(Self) -> Int
-pub fn PixelFrame::new(width~ : Int, height~ : Int, row_bytes~ : Int, scale_factor~ : Double, pixels~ : Bytes) -> Self
+pub fn PixelFrame::height(Self) -> Int32
+pub fn PixelFrame::new(width~ : Int32, height~ : Int32, row_bytes~ : Int32, scale_factor~ : Double, pixels~ : Bytes) -> Self
 pub fn PixelFrame::pixels(Self) -> Bytes
-pub fn PixelFrame::row_bytes(Self) -> Int
+pub fn PixelFrame::row_bytes(Self) -> Int32
 pub fn PixelFrame::scale_factor(Self) -> Double
-pub fn PixelFrame::width(Self) -> Int
+pub fn PixelFrame::width(Self) -> Int32
 
 pub struct PresentTarget {
   description : String
@@ -192,13 +192,13 @@ pub fn RenderFrameInput::to_repr(Self) -> @debug.Repr
 pub(all) struct RenderFrameResult {
   presented : Bool
   queued : Bool
-  cache_hit_count : Int
-  cache_miss_count : Int
-  cache_update_count : Int
-  cache_evict_count : Int
+  cache_hit_count : Int32
+  cache_miss_count : Int32
+  cache_update_count : Int32
+  cache_evict_count : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderFrameResult::equal(Self, Self) -> Bool
-pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int, cache_miss_count? : Int, cache_update_count? : Int, cache_evict_count? : Int) -> Self
+pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int32, cache_miss_count? : Int32, cache_update_count? : Int32, cache_evict_count? : Int32) -> Self
 pub fn RenderFrameResult::not_equal(Self, Self) -> Bool
 pub fn RenderFrameResult::to_json(Self) -> Json
 pub fn RenderFrameResult::to_repr(Self) -> @debug.Repr
@@ -216,12 +216,12 @@ pub(all) struct RenderPresentCompletion {
   completed_at_ms : Double
   presented_at_ms : Double
   status : RenderPresentStatus
-  gpu_context_generation : Int
+  gpu_context_generation : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderPresentCompletion::completed_at_ms(Self) -> Double
 pub fn RenderPresentCompletion::equal(Self, Self) -> Bool
-pub fn RenderPresentCompletion::gpu_context_generation(Self) -> Int
-pub fn RenderPresentCompletion::new(token~ : FrameToken, submitted_at_ms~ : Double, completed_at_ms~ : Double, presented_at_ms~ : Double, status~ : RenderPresentStatus, gpu_context_generation~ : Int) -> Self
+pub fn RenderPresentCompletion::gpu_context_generation(Self) -> Int32
+pub fn RenderPresentCompletion::new(token~ : FrameToken, submitted_at_ms~ : Double, completed_at_ms~ : Double, presented_at_ms~ : Double, status~ : RenderPresentStatus, gpu_context_generation~ : Int32) -> Self
 pub fn RenderPresentCompletion::not_equal(Self, Self) -> Bool
 pub fn RenderPresentCompletion::presented_at_ms(Self) -> Double
 pub fn RenderPresentCompletion::status(Self) -> RenderPresentStatus
@@ -242,10 +242,10 @@ pub fn RenderPresentStatus::to_json(Self) -> Json
 pub fn RenderPresentStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RenderWindowId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderWindowId::equal(Self, Self) -> Bool
-pub fn RenderWindowId::new(Int) -> Self
+pub fn RenderWindowId::new(Int32) -> Self
 pub fn RenderWindowId::not_equal(Self, Self) -> Bool
 pub fn RenderWindowId::to_json(Self) -> Json
 pub fn RenderWindowId::to_repr(Self) -> @debug.Repr
@@ -314,9 +314,9 @@ pub struct RendererCommandFallback {
 pub fn RendererCommandFallback::command(Self) -> String
 pub fn RendererCommandFallback::equal(Self, Self) -> Bool
 pub fn RendererCommandFallback::feature(Self) -> RendererFeature
-pub fn RendererCommandFallback::index(Self) -> Int
+pub fn RendererCommandFallback::index(Self) -> Int32
 pub fn RendererCommandFallback::kind(Self) -> RendererCommandFallbackKind
-pub fn RendererCommandFallback::new(index~ : Int, feature~ : RendererFeature, command~ : String, kind? : RendererCommandFallbackKind, reason~ : String) -> Self
+pub fn RendererCommandFallback::new(index~ : Int32, feature~ : RendererFeature, command~ : String, kind? : RendererCommandFallbackKind, reason~ : String) -> Self
 pub fn RendererCommandFallback::not_equal(Self, Self) -> Bool
 pub fn RendererCommandFallback::reason(Self) -> String
 pub fn RendererCommandFallback::to_json(Self) -> Json
@@ -336,15 +336,15 @@ pub struct RendererCommandPlan {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererCommandPlan::equal(Self, Self) -> Bool
-pub fn RendererCommandPlan::fallback_count(Self) -> Int
+pub fn RendererCommandPlan::fallback_count(Self) -> Int32
 pub fn RendererCommandPlan::fallbacks(Self) -> Array[RendererCommandFallback]
-pub fn RendererCommandPlan::final_filter_depth(Self) -> Int
-pub fn RendererCommandPlan::final_layer_depth(Self) -> Int
-pub fn RendererCommandPlan::new(total_commands~ : Int, fallback_count~ : Int, final_layer_depth~ : Int, final_filter_depth~ : Int, fallbacks~ : Array[RendererCommandFallback]) -> Self
+pub fn RendererCommandPlan::final_filter_depth(Self) -> Int32
+pub fn RendererCommandPlan::final_layer_depth(Self) -> Int32
+pub fn RendererCommandPlan::new(total_commands~ : Int32, fallback_count~ : Int32, final_layer_depth~ : Int32, final_filter_depth~ : Int32, fallbacks~ : Array[RendererCommandFallback]) -> Self
 pub fn RendererCommandPlan::not_equal(Self, Self) -> Bool
 pub fn RendererCommandPlan::to_json(Self) -> Json
 pub fn RendererCommandPlan::to_repr(Self) -> @debug.Repr
-pub fn RendererCommandPlan::total_commands(Self) -> Int
+pub fn RendererCommandPlan::total_commands(Self) -> Int32
 
 pub(all) enum RendererControlMessage {
   Resize(@core.Size)
@@ -446,7 +446,7 @@ pub fn RendererFeatureStatus::to_repr(Self) -> @debug.Repr
 pub struct RendererGpuRecoveryCapability {
   // private fields
 }
-pub fn RendererGpuRecoveryCapability::new(inject_context_loss? : () -> Unit, gpu_recovery_count? : () -> Int, gpu_fallback_active? : () -> Bool) -> Self
+pub fn RendererGpuRecoveryCapability::new(inject_context_loss? : () -> Unit, gpu_recovery_count? : () -> Int32, gpu_fallback_active? : () -> Bool) -> Self
 
 pub(all) enum RendererImageCompletionResult {
   Applied(Bool)
@@ -467,7 +467,7 @@ pub fn RendererImageDecoder::new(decode~ : (String, Bytes?) -> ImageResourceLoad
 pub struct RendererImageDiagnostics {
   // private fields
 }
-pub fn RendererImageDiagnostics::pending_request_count(Self) -> Int
+pub fn RendererImageDiagnostics::pending_request_count(Self) -> Int32
 pub fn RendererImageDiagnostics::records(Self) -> Array[ImageResourceRecord]
 
 pub struct RendererImageLoadCompletion {
@@ -496,7 +496,7 @@ pub fn RendererImageLoadToken::to_repr(Self) -> @debug.Repr
 pub struct RendererPlatformViewCapability {
   // private fields
 }
-pub fn RendererPlatformViewCapability::new(draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
+pub fn RendererPlatformViewCapability::new(draw_platform_view_pixels? : (Bytes, Int32, Int32, Int32, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
 
 pub(all) enum RendererPresentationModel {
   HostGpuSurface
@@ -541,13 +541,13 @@ pub struct RendererSession {
 pub fn RendererSession::apply_image_load_completion(Self, RendererImageLoadCompletion) -> RendererImageCompletionResult
 pub fn RendererSession::dispose(Self) -> Unit
 pub fn RendererSession::drain_events(Self) -> Array[RendererEvent]
-pub fn RendererSession::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+pub fn RendererSession::draw_platform_view_pixels(Self, Bytes, Int32, Int32, Int32, Double, Double, Double, Double) -> Unit
 pub fn RendererSession::gpu_fallback_active(Self) -> Bool
-pub fn RendererSession::gpu_recovery_count(Self) -> Int
+pub fn RendererSession::gpu_recovery_count(Self) -> Int32
 pub fn RendererSession::image_diagnostics(Self) -> RendererImageDiagnostics
 pub fn RendererSession::inject_context_loss(Self) -> Unit
-pub fn RendererSession::new(resize~ : (@core.SurfaceMetrics) -> Unit, render_frame~ : (RenderFrameSubmission) -> RenderFrameResult, drain_events? : (() -> Array[RendererEvent])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int, recover? : (String) -> RecoveryResult, dispose? : () -> Unit, image_records? : () -> Array[ImageResourceRecord], apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool, image_source? : HostImageSource, image_decoder? : RendererImageDecoder?, native_surface? : NativeSurface?, platform_view? : RendererPlatformViewCapability, gpu_recovery? : RendererGpuRecoveryCapability) -> Self
-pub fn RendererSession::present_count(Self) -> Int
+pub fn RendererSession::new(resize~ : (@core.SurfaceMetrics) -> Unit, render_frame~ : (RenderFrameSubmission) -> RenderFrameResult, drain_events? : (() -> Array[RendererEvent])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int32, recover? : (String) -> RecoveryResult, dispose? : () -> Unit, image_records? : () -> Array[ImageResourceRecord], apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool, image_source? : HostImageSource, image_decoder? : RendererImageDecoder?, native_surface? : NativeSurface?, platform_view? : RendererPlatformViewCapability, gpu_recovery? : RendererGpuRecoveryCapability) -> Self
+pub fn RendererSession::present_count(Self) -> Int32
 pub fn RendererSession::recover(Self, String) -> RecoveryResult
 pub fn RendererSession::render_frame(Self, RenderFrameSubmission) -> RenderFrameResult
 pub fn RendererSession::resize(Self, @core.SurfaceMetrics) -> Unit

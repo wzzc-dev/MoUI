@@ -15,7 +15,7 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> IosBackendInfo
 
-pub fn entry(auto_exit_after_frames? : Int?) -> @runtime.PlatformEntry
+pub fn entry(auto_exit_after_frames? : Int32?) -> @runtime.PlatformEntry
 
 pub fn host_surface_binding_from_ios(IosSurfaceBinding) -> @embedded.HostSurfaceBinding
 
@@ -31,7 +31,7 @@ pub fn ios_service_capabilities() -> @backend.HostServiceCapabilities
 
 pub fn ios_surface_binding(Array[@render.RendererProvider]) -> IosSurfaceBinding
 
-pub fn ios_window_hosted_pump_host_sim(IosEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
+pub fn ios_window_hosted_pump_host_sim(IosEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int32, height? : Int32, scale? : Double) -> Unit
 
 // Errors
 
@@ -86,16 +86,16 @@ pub fn IosEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/ios.Activ
 pub fn IosEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::destroy_surfaces(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::device_event(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.DeviceId?, @wzzc-dev/window/core.DeviceEvent) -> Unit
-pub fn IosEmbeddedRuntimeBackend::frames_presented(Self) -> Int
+pub fn IosEmbeddedRuntimeBackend::frames_presented(Self) -> Int32
 pub fn IosEmbeddedRuntimeBackend::has_session(Self) -> Bool
 pub fn IosEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
-pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int?) -> Self
+pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int32?) -> Self
 pub fn IosEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
 pub fn IosEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn IosEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
-pub fn IosEmbeddedRuntimeBackend::surface_generation(Self) -> Int
+pub fn IosEmbeddedRuntimeBackend::surface_generation(Self) -> Int32
 pub fn IosEmbeddedRuntimeBackend::suspended(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::window_event(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/ios.ApplicationHandler for IosEmbeddedRuntimeBackend

@@ -12,7 +12,7 @@ pub fn create_macos_webview_plugin(@host.WebViewHost) -> @backend.PlatformViewPl
 
 pub fn dispose_macos_platform_views(@wzzc-dev/window/macos.Window) -> Unit
 
-pub fn drain_macos_webview_commands(@wzzc-dev/window/macos.Window, @host.WebViewHost) -> Int
+pub fn drain_macos_webview_commands(@wzzc-dev/window/macos.Window, @host.WebViewHost) -> Int32
 
 pub fn install_macos_webview_event_dispatcher(@host.WebViewHost, (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
 

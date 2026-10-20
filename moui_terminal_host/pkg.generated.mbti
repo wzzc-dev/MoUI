@@ -10,16 +10,16 @@ import {
 }
 
 // Values
-pub fn[Model, Msg] run_program(program~ : @core.Program[Model, Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int, theme? : @core.Theme?) -> TerminalExit
+pub fn[Model, Msg] run_program(program~ : @core.Program[Model, Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int32, theme? : @core.Theme?) -> TerminalExit
 
-pub fn[Msg] run_view(root~ : @core.View[Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int, on_message? : ((Msg) -> Unit)?, theme? : @core.Theme?) -> TerminalExit
+pub fn[Msg] run_view(root~ : @core.View[Msg], cell? : @moui_tui_renderer.CellBox, idle_timeout_ms? : Int32, on_message? : ((Msg) -> Unit)?, theme? : @core.Theme?) -> TerminalExit
 
 // Errors
 
 // Types and methods
 pub(all) struct CellPosition {
-  col : Int
-  row : Int
+  col : Int32
+  row : Int32
 } derive(Eq, @debug.Debug)
 pub fn CellPosition::equal(Self, Self) -> Bool
 pub fn CellPosition::not_equal(Self, Self) -> Bool
@@ -36,7 +36,7 @@ pub fn MousePhase::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MouseReport {
   position : CellPosition
-  button : Int
+  button : Int32
   phase : MousePhase
   modifiers : @core.KeyModifiers
 } derive(Eq, @debug.Debug)
@@ -54,12 +54,12 @@ pub fn PollState::not_equal(Self, Self) -> Bool
 pub fn PollState::to_repr(Self) -> @debug.Repr
 
 pub struct TerminalDecoder {
-  mut pending : Array[Int]
+  mut pending : Array[Int32]
 }
 pub fn TerminalDecoder::feed_bytes(Self, Bytes) -> Array[TerminalEvent]
 pub fn TerminalDecoder::flush(Self) -> TerminalEvent?
 pub fn TerminalDecoder::new() -> Self
-pub fn TerminalDecoder::pending_bytes(Self) -> Int
+pub fn TerminalDecoder::pending_bytes(Self) -> Int32
 
 pub(all) enum TerminalEvent {
   Key(@core.KeyboardEvent)
@@ -90,26 +90,26 @@ pub struct TerminalInput {
   cell : @moui_tui_renderer.CellBox
 }
 pub fn TerminalInput::metrics(Self) -> @core.SurfaceMetrics
-pub fn TerminalInput::new(cols~ : Int, rows~ : Int, cell? : @moui_tui_renderer.CellBox) -> Self
+pub fn TerminalInput::new(cols~ : Int32, rows~ : Int32, cell? : @moui_tui_renderer.CellBox) -> Self
 pub fn TerminalInput::point_of(Self, CellPosition) -> @core.Point
-pub fn TerminalInput::resize(Self, Int, Int) -> @backend.Event
+pub fn TerminalInput::resize(Self, Int32, Int32) -> @backend.Event
 pub fn TerminalInput::to_host(Self, TerminalEvent) -> @backend.Event?
 
 pub struct Tty {
-  in_fd : Int
-  out_fd : Int
+  in_fd : Int32
+  out_fd : Int32
 }
 pub fn Tty::current() -> Self
 pub fn Tty::emit(Self, Bytes) -> String?
 pub fn Tty::enter_raw(Self) -> String?
-pub fn Tty::grid(Self) -> (Int, Int)?
+pub fn Tty::grid(Self) -> (Int32, Int32)?
 pub fn Tty::install_signal_handlers(Self) -> String?
 pub fn Tty::is_terminal(Self) -> Bool
 pub fn Tty::restore(Self) -> Unit
 pub fn Tty::take_input(Self) -> Bytes
 pub fn Tty::take_resize_signal(Self) -> Bool
 pub fn Tty::terminate_requested(Self) -> Bool
-pub fn Tty::wait(Self, timeout_ms~ : Int) -> PollState
+pub fn Tty::wait(Self, timeout_ms~ : Int32) -> PollState
 pub fn Tty::write_text(Self, String) -> String?
 
 pub(all) struct WheelReport {

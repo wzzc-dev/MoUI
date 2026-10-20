@@ -67,14 +67,14 @@ pub fn HostApplicationMenu::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostApplicationMenuItem {
   title : String
-  action_id : Int
+  action_id : Int32
   key_equivalent : String
-  key_modifier_mask : Int
+  key_modifier_mask : Int32
   separator : Bool
   enabled : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostApplicationMenuItem::equal(Self, Self) -> Bool
-pub fn HostApplicationMenuItem::new(title~ : String, action_id~ : Int, key_equivalent? : String, key_modifier_mask? : Int, separator? : Bool, enabled? : Bool) -> Self
+pub fn HostApplicationMenuItem::new(title~ : String, action_id~ : Int32, key_equivalent? : String, key_modifier_mask? : Int32, separator? : Bool, enabled? : Bool) -> Self
 pub fn HostApplicationMenuItem::not_equal(Self, Self) -> Bool
 pub fn HostApplicationMenuItem::separator() -> Self
 pub fn HostApplicationMenuItem::to_json(Self) -> Json
@@ -104,7 +104,7 @@ pub fn HostBackendKind::to_repr(Self) -> @debug.Repr
 pub struct HostBinaryFileDiagnostic {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostBinaryFileDiagnostic::byte_length(Self) -> Int
+pub fn HostBinaryFileDiagnostic::byte_length(Self) -> Int32
 pub fn HostBinaryFileDiagnostic::equal(Self, Self) -> Bool
 pub fn HostBinaryFileDiagnostic::not_equal(Self, Self) -> Bool
 pub fn HostBinaryFileDiagnostic::operation(Self) -> String
@@ -142,11 +142,11 @@ pub(all) struct HostCapabilitySummary {
 pub fn HostCapabilitySummary::equal(Self, Self) -> Bool
 pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, host_modal_available? : Bool, web_view_description? : String, description? : String) -> Self
 pub fn HostCapabilitySummary::has_required_app_basics(Self) -> Bool
-pub fn HostCapabilitySummary::input_count(Self) -> Int
+pub fn HostCapabilitySummary::input_count(Self) -> Int32
 pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, host_modal_available? : Bool, web_view_description? : String, description? : String) -> Self
 pub fn HostCapabilitySummary::not_equal(Self, Self) -> Bool
 pub fn HostCapabilitySummary::preflight_fields(Self) -> String
-pub fn HostCapabilitySummary::service_count(Self) -> Int
+pub fn HostCapabilitySummary::service_count(Self) -> Int32
 pub fn HostCapabilitySummary::test_host(label? : String) -> Self
 pub fn HostCapabilitySummary::to_json(Self) -> Json
 pub fn HostCapabilitySummary::to_repr(Self) -> @debug.Repr
@@ -286,13 +286,13 @@ pub fn HostModalCapabilities::to_repr(Self) -> @debug.Repr
 pub fn HostModalCapabilities::unavailable() -> Self
 
 pub(all) enum HostModalEvent {
-  Pending(Int, String, Int)
-  Accepted(Int, String, Int)
-  Rejected(Int, String, Int, String)
-  Closed(Int, String, Int)
-  SurfaceAttached(Int, String, Int, String)
-  SurfaceDetached(Int, String, Int, String)
-  Input(Int, String, Int, @core.PointerEvent)
+  Pending(Int32, String, Int32)
+  Accepted(Int32, String, Int32)
+  Rejected(Int32, String, Int32, String)
+  Closed(Int32, String, Int32)
+  SurfaceAttached(Int32, String, Int32, String)
+  SurfaceDetached(Int32, String, Int32, String)
+  Input(Int32, String, Int32, @core.PointerEvent)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostModalEvent::equal(Self, Self) -> Bool
 pub fn HostModalEvent::not_equal(Self, Self) -> Bool
@@ -309,22 +309,22 @@ pub fn HostModalModality::to_json(Self) -> Json
 pub fn HostModalModality::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostModalRequest {
-  request_id : Int
+  request_id : Int32
   presentation_id : String
-  generation : Int
+  generation : Int32
   bounds : @core.Rect
   modality : HostModalModality
-  semantics_generation : Int
+  semantics_generation : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostModalRequest::bounds(Self) -> @core.Rect
 pub fn HostModalRequest::equal(Self, Self) -> Bool
-pub fn HostModalRequest::generation(Self) -> Int
+pub fn HostModalRequest::generation(Self) -> Int32
 pub fn HostModalRequest::modality(Self) -> HostModalModality
-pub fn HostModalRequest::new(request_id~ : Int, presentation_id~ : String, generation~ : Int, bounds~ : @core.Rect, modality? : HostModalModality, semantics_generation? : Int) -> Self
+pub fn HostModalRequest::new(request_id~ : Int32, presentation_id~ : String, generation~ : Int32, bounds~ : @core.Rect, modality? : HostModalModality, semantics_generation? : Int32) -> Self
 pub fn HostModalRequest::not_equal(Self, Self) -> Bool
 pub fn HostModalRequest::presentation_id(Self) -> String
-pub fn HostModalRequest::request_id(Self) -> Int
-pub fn HostModalRequest::semantics_generation(Self) -> Int
+pub fn HostModalRequest::request_id(Self) -> Int32
+pub fn HostModalRequest::semantics_generation(Self) -> Int32
 pub fn HostModalRequest::to_json(Self) -> Json
 pub fn HostModalRequest::to_repr(Self) -> @debug.Repr
 
@@ -448,10 +448,10 @@ pub fn HostServiceRequest::to_repr(Self) -> @debug.Repr
 pub fn HostServiceRequest::unavailable_message(Self) -> String
 
 pub(all) struct HostServiceRequestId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceRequestId::equal(Self, Self) -> Bool
-pub fn HostServiceRequestId::new(Int) -> Self
+pub fn HostServiceRequestId::new(Int32) -> Self
 pub fn HostServiceRequestId::not_equal(Self, Self) -> Bool
 pub fn HostServiceRequestId::to_json(Self) -> Json
 pub fn HostServiceRequestId::to_repr(Self) -> @debug.Repr
@@ -539,10 +539,10 @@ pub struct PlatformViewPlugin {
 pub fn PlatformViewPlugin::new(kind~ : String, capabilities_summary~ : String, install_event_dispatcher~ : ((UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit, sync_platform_views~ : (UInt64, @core.DrawFrame, Double) -> Unit, drain_commands~ : (UInt64) -> Unit, dispose_platform_views~ : (UInt64) -> Unit, setup_platform_view_draw? : ((UInt64, @core.DrawFrame, Double, ((@core.PlatformViewPixelSink) -> Unit) -> Unit) -> Unit)?, poll_native? : (() -> Int64?)?) -> Self
 
 pub(all) struct WindowId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn WindowId::equal(Self, Self) -> Bool
-pub fn WindowId::new(Int) -> Self
+pub fn WindowId::new(Int32) -> Self
 pub fn WindowId::not_equal(Self, Self) -> Bool
 pub fn WindowId::to_json(Self) -> Json
 pub fn WindowId::to_repr(Self) -> @debug.Repr
@@ -621,17 +621,17 @@ pub fn WindowRequestResult::to_repr(Self) -> @debug.Repr
 
 pub struct WindowRequests {
   push_fn : (WindowRequest) -> Unit
-  pending_count_fn : () -> Int
-  completed_count_fn : () -> Int
+  pending_count_fn : () -> Int32
+  completed_count_fn : () -> Int32
   drain_fn : () -> Array[WindowRequest]
   record_result_fn : (WindowRequest, WindowRequestResult) -> Unit
   subscribe_completed_fn : ((WindowRequestCompletion) -> Unit) -> () -> Unit
 }
-pub fn WindowRequests::completed_count(Self) -> Int
+pub fn WindowRequests::completed_count(Self) -> Int32
 pub fn WindowRequests::drain(Self) -> Array[WindowRequest]
 pub fn WindowRequests::drain_with_handler(Self, (WindowRequest) -> WindowRequestResult) -> Array[WindowRequestCompletion]
-pub fn WindowRequests::new(push? : (WindowRequest) -> Unit, pending_count? : () -> Int, completed_count? : () -> Int, drain? : () -> Array[WindowRequest], record_result? : (WindowRequest, WindowRequestResult) -> Unit, subscribe_completed? : ((WindowRequestCompletion) -> Unit) -> () -> Unit) -> Self
-pub fn WindowRequests::pending_count(Self) -> Int
+pub fn WindowRequests::new(push? : (WindowRequest) -> Unit, pending_count? : () -> Int32, completed_count? : () -> Int32, drain? : () -> Array[WindowRequest], record_result? : (WindowRequest, WindowRequestResult) -> Unit, subscribe_completed? : ((WindowRequestCompletion) -> Unit) -> () -> Unit) -> Self
+pub fn WindowRequests::pending_count(Self) -> Int32
 pub fn WindowRequests::push(Self, WindowRequest) -> Unit
 pub fn WindowRequests::record_result(Self, WindowRequest, WindowRequestResult) -> Unit
 pub fn WindowRequests::subscribe_completed(Self, (WindowRequestCompletion) -> Unit) -> () -> Unit

@@ -16,7 +16,7 @@ pub fn runtime_smoke_snapshot(title~ : String, @runtime.AppRuntime) -> RuntimeSm
 // Types and methods
 pub(all) struct RuntimeSmokeSnapshot {
   title : String
-  draw_command_count : Int
+  draw_command_count : Int32
   focused_text_input : Bool
   text_input_text : String
   inspector : @runtime.InspectorSnapshot

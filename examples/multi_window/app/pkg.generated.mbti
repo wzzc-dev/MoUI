@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn program(Scene, WindowActions, shared_count? : Int) -> @core.Program[Model, Msg]
+pub fn program(Scene, WindowActions, shared_count? : Int32) -> @core.Program[Model, Msg]
 
 pub fn scene_from_window(WindowScene) -> Scene?
 
@@ -20,12 +20,12 @@ pub fn view(Model) -> @core.View[Msg]
 // Types and methods
 pub struct Model {
   scene : Scene
-  count : Int
-  shared_count : Int
+  count : Int32
+  shared_count : Int32
   inspector_window_id : WindowId?
   status : String
 }
-pub fn Model::new(Scene, shared_count? : Int) -> Self
+pub fn Model::new(Scene, shared_count? : Int32) -> Self
 
 pub(all) enum Msg {
   OpenInspector
@@ -64,10 +64,10 @@ pub fn WindowEvent::to_json(Self) -> Json
 pub fn WindowEvent::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn WindowId::equal(Self, Self) -> Bool
-pub fn WindowId::new(Int) -> Self
+pub fn WindowId::new(Int32) -> Self
 pub fn WindowId::not_equal(Self, Self) -> Bool
 pub fn WindowId::to_json(Self) -> Json
 pub fn WindowId::to_repr(Self) -> @debug.Repr

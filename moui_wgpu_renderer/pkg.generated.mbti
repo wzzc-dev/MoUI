@@ -69,13 +69,13 @@ pub fn NativePlatformTextProvider::new(id~ : String, measure~ : (@core.TextLayou
 pub struct NativeRasterGlyph {
   // private fields
 }
-pub fn NativeRasterGlyph::bearing_x(Self) -> Int
-pub fn NativeRasterGlyph::bearing_y(Self) -> Int
+pub fn NativeRasterGlyph::bearing_x(Self) -> Int32
+pub fn NativeRasterGlyph::bearing_y(Self) -> Int32
 pub fn NativeRasterGlyph::format(Self) -> NativeRasterGlyphFormat
-pub fn NativeRasterGlyph::height(Self) -> Int
-pub fn NativeRasterGlyph::new(width~ : Int, height~ : Int, bearing_x~ : Int, bearing_y~ : Int, format? : NativeRasterGlyphFormat, pixels~ : Bytes) -> Self
+pub fn NativeRasterGlyph::height(Self) -> Int32
+pub fn NativeRasterGlyph::new(width~ : Int32, height~ : Int32, bearing_x~ : Int32, bearing_y~ : Int32, format? : NativeRasterGlyphFormat, pixels~ : Bytes) -> Self
 pub fn NativeRasterGlyph::pixels(Self) -> Bytes
-pub fn NativeRasterGlyph::width(Self) -> Int
+pub fn NativeRasterGlyph::width(Self) -> Int32
 
 pub(all) enum NativeRasterGlyphFormat {
   AlphaMask
@@ -90,11 +90,11 @@ pub struct NativeRendererSmokeFrame {
   // private fields
 }
 pub fn NativeRendererSmokeFrame::flip_y(Self) -> Bool
-pub fn NativeRendererSmokeFrame::height(Self) -> Int
-pub fn NativeRendererSmokeFrame::new(width~ : Int, height~ : Int, row_bytes~ : Int, pixels~ : Bytes, flip_y? : Bool) -> Self
+pub fn NativeRendererSmokeFrame::height(Self) -> Int32
+pub fn NativeRendererSmokeFrame::new(width~ : Int32, height~ : Int32, row_bytes~ : Int32, pixels~ : Bytes, flip_y? : Bool) -> Self
 pub fn NativeRendererSmokeFrame::pixels(Self) -> Bytes
-pub fn NativeRendererSmokeFrame::row_bytes(Self) -> Int
-pub fn NativeRendererSmokeFrame::width(Self) -> Int
+pub fn NativeRendererSmokeFrame::row_bytes(Self) -> Int32
+pub fn NativeRendererSmokeFrame::width(Self) -> Int32
 
 pub struct NativeTextEngine {
   // private fields
@@ -141,13 +141,13 @@ pub fn WgpuRenderer::backend_info(Self) -> @render.RendererBackendInfo
 pub fn WgpuRenderer::backend_kind(Self) -> @render.RendererBackendKind
 pub fn WgpuRenderer::dispose(Self) -> Unit
 pub fn WgpuRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
-pub fn WgpuRenderer::last_batch_count(Self) -> Int
-pub fn WgpuRenderer::present_count(Self) -> Int
+pub fn WgpuRenderer::last_batch_count(Self) -> Int32
+pub fn WgpuRenderer::present_count(Self) -> Int32
 pub fn WgpuRenderer::render(Self, Array[@core.DrawCommand]) -> Unit
 pub fn WgpuRenderer::resize(Self, @core.SurfaceMetrics) -> Unit
 pub fn WgpuRenderer::text_system(Self) -> @core.TextSystem
 pub fn WgpuRenderer::to_renderer_session(Self, image_source? : @render.HostImageSource, image_decoder? : @render.RendererImageDecoder?, native_surface? : @render.NativeSurface?) -> @render.RendererSession
-pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
+pub fn WgpuRenderer::unsupported_command_count(Self) -> Int32
 
 // Type aliases
 

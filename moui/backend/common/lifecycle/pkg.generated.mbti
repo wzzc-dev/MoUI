@@ -29,7 +29,7 @@ pub fn EmbeddedHostLifecyclePhase::to_repr(Self) -> @debug.Repr
 pub struct EmbeddedHostSurface {
   handle : UInt64
   metrics : @wzzc-dev/moui/core.SurfaceMetrics
-  generation : Int
+  generation : Int32
 } derive(Eq, @debug.Debug)
 pub fn EmbeddedHostSurface::equal(Self, Self) -> Bool
 pub fn EmbeddedHostSurface::not_equal(Self, Self) -> Bool
@@ -37,23 +37,23 @@ pub fn EmbeddedHostSurface::to_repr(Self) -> @debug.Repr
 
 pub struct EmbeddedLifecycle {
   mut phase : EmbeddedHostLifecyclePhase
-  mut generation : Int
+  mut generation : Int32
   mut surface : EmbeddedHostSurface?
   mut primary_window : @backend.WindowId?
-  mut exit_intent : Int?
+  mut exit_intent : Int32?
 }
 pub fn EmbeddedLifecycle::attach_surface(Self, UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Array[EmbeddedWindowHostAction]
 pub fn EmbeddedLifecycle::detach_surface(Self) -> Array[EmbeddedWindowHostAction]
-pub fn EmbeddedLifecycle::exit_intent(Self) -> Int?
+pub fn EmbeddedLifecycle::exit_intent(Self) -> Int32?
 pub fn EmbeddedLifecycle::new() -> Self
 pub fn EmbeddedLifecycle::phase(Self) -> EmbeddedHostLifecyclePhase
 pub fn EmbeddedLifecycle::primary_window(Self) -> @backend.WindowId?
 pub fn EmbeddedLifecycle::register_window(Self, @backend.WindowId) -> Unit
-pub fn EmbeddedLifecycle::request_exit(Self, Int) -> EmbeddedWindowHostAction
+pub fn EmbeddedLifecycle::request_exit(Self, Int32) -> EmbeddedWindowHostAction
 pub fn EmbeddedLifecycle::resize_surface(Self, @wzzc-dev/moui/core.SurfaceMetrics) -> EmbeddedWindowHostAction?
 pub fn EmbeddedLifecycle::resumed(Self) -> Array[EmbeddedWindowHostAction]
 pub fn EmbeddedLifecycle::surface(Self) -> EmbeddedHostSurface?
-pub fn EmbeddedLifecycle::surface_generation(Self) -> Int
+pub fn EmbeddedLifecycle::surface_generation(Self) -> Int32
 pub fn EmbeddedLifecycle::suspended(Self) -> Array[EmbeddedWindowHostAction]
 pub fn EmbeddedLifecycle::unregister_window(Self, @backend.WindowId) -> Unit
 
@@ -61,10 +61,10 @@ pub enum EmbeddedWindowHostAction {
   Resumed
   CanCreateSurfaces
   SurfaceAttached(EmbeddedHostSurface)
-  SurfaceDetached(Int)
+  SurfaceDetached(Int32)
   DestroySurfaces
   Suspended
-  Exit(Int)
+  Exit(Int32)
 } derive(Eq, @debug.Debug)
 pub fn EmbeddedWindowHostAction::equal(Self, Self) -> Bool
 pub fn EmbeddedWindowHostAction::not_equal(Self, Self) -> Bool
@@ -82,7 +82,7 @@ pub struct PlatformWindowMap {
   mut bindings : Array[PlatformWindowBinding]
 }
 pub fn PlatformWindowMap::bind(Self, platform_id~ : @wzzc-dev/window/core.WindowId, host_id~ : @backend.WindowId) -> Bool
-pub fn PlatformWindowMap::count(Self) -> Int
+pub fn PlatformWindowMap::count(Self) -> Int32
 pub fn PlatformWindowMap::is_empty(Self) -> Bool
 pub fn PlatformWindowMap::lookup_host(Self, @wzzc-dev/window/core.WindowId) -> @backend.WindowId?
 pub fn PlatformWindowMap::lookup_platform(Self, @backend.WindowId) -> @wzzc-dev/window/core.WindowId?
@@ -108,7 +108,7 @@ pub struct WindowCommands {
   queue : WindowRequestQueue
 }
 pub fn WindowCommands::close(Self, @backend.WindowId) -> Unit
-pub fn WindowCommands::completed_count(Self) -> Int
+pub fn WindowCommands::completed_count(Self) -> Int32
 pub fn WindowCommands::drain(Self) -> Array[@backend.WindowRequest]
 pub fn WindowCommands::drain_completed(Self) -> Array[@backend.WindowRequestCompletion]
 pub fn WindowCommands::drain_to_registry(Self, WindowRegistry) -> Array[@backend.WindowRequestCompletion]
@@ -119,7 +119,7 @@ pub fn WindowCommands::minimize(Self, @backend.WindowId) -> Unit
 pub fn WindowCommands::new(queue? : WindowRequestQueue) -> Self
 pub fn WindowCommands::open(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> Unit
 pub fn WindowCommands::open_window(Self, @backend.WindowOpenRequest) -> Unit
-pub fn WindowCommands::pending_count(Self) -> Int
+pub fn WindowCommands::pending_count(Self) -> Int32
 pub fn WindowCommands::queue(Self) -> WindowRequestQueue
 pub fn WindowCommands::record_result(Self, @backend.WindowRequest, @backend.WindowRequestResult) -> Unit
 pub fn WindowCommands::resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
@@ -137,20 +137,20 @@ pub fn WindowLifecycle::begin_close(Self, @backend.WindowId) -> Bool
 pub fn WindowLifecycle::bind_platform_window(Self, platform_id~ : @wzzc-dev/window/core.WindowId, window_id~ : @backend.WindowId) -> Bool
 pub fn WindowLifecycle::detach_surface(Self, @backend.WindowId) -> WindowSurfaceActions?
 pub fn WindowLifecycle::drain_window_requests(Self, (@backend.WindowRequest) -> @backend.WindowRequestResult) -> Unit
-pub fn WindowLifecycle::exit_intent(Self) -> Int?
+pub fn WindowLifecycle::exit_intent(Self) -> Int32?
 pub fn WindowLifecycle::finish_close(Self, @backend.WindowId) -> Unit
 pub fn WindowLifecycle::lookup_window(Self, @wzzc-dev/window/core.WindowId) -> @backend.WindowId?
 pub fn WindowLifecycle::new(requests~ : @backend.WindowRequests, scene_resolver~ : WindowSceneResolver) -> Self
 pub fn WindowLifecycle::open_resolution(Self, @backend.WindowOpenRequest) -> WindowOpenResolution
 pub fn WindowLifecycle::register_primary_runtime_slot(Self, @backend.WindowId, @runtime.HostRuntimeDriver) -> Unit
 pub fn WindowLifecycle::register_runtime_slot(Self, WindowRuntimeSlot) -> Bool
-pub fn WindowLifecycle::request_exit(Self, Int) -> Unit
+pub fn WindowLifecycle::request_exit(Self, Int32) -> Unit
 pub fn WindowLifecycle::rollback_window_record(Self, @backend.WindowId) -> Unit
 pub fn WindowLifecycle::runtime_slot_lookup(Self, @backend.WindowId) -> WindowRuntimeSlot?
 pub fn WindowLifecycle::runtime_slots(Self) -> WindowRuntimeSlots
 pub fn WindowLifecycle::runtime_slots_empty(Self) -> Bool
 pub fn WindowLifecycle::surface_actions(Self, @backend.WindowId) -> WindowSurfaceActions?
-pub fn WindowLifecycle::surface_generation(Self) -> Int
+pub fn WindowLifecycle::surface_generation(Self) -> Int32
 pub fn WindowLifecycle::sync_runtime_slot(Self, @backend.WindowId) -> Unit
 pub fn WindowLifecycle::sync_runtime_slots(Self) -> Unit
 pub fn WindowLifecycle::unbind_platform_window(Self, @backend.WindowId) -> @wzzc-dev/window/core.WindowId?
@@ -162,7 +162,7 @@ pub(all) enum WindowOpenResolution {
 }
 
 pub struct WindowRegistry {
-  mut next_value : Int
+  mut next_value : Int32
   mut records : Array[@backend.WindowRecord]
 }
 pub fn WindowRegistry::apply_host_event(Self, @backend.WindowId, @backend.Event) -> Bool
@@ -174,10 +174,10 @@ pub fn WindowRegistry::lookup(Self, @backend.WindowId) -> @backend.WindowRecord?
 pub fn WindowRegistry::minimize(Self, @backend.WindowId) -> Bool
 pub fn WindowRegistry::new() -> Self
 pub fn WindowRegistry::open(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> @backend.WindowId
-pub fn WindowRegistry::open_window_count(Self) -> Int
+pub fn WindowRegistry::open_window_count(Self) -> Int32
 pub fn WindowRegistry::open_windows(Self) -> Array[@backend.WindowRecord]
 pub fn WindowRegistry::primary_window(Self) -> @backend.WindowRecord?
-pub fn WindowRegistry::remove_closed(Self) -> Int
+pub fn WindowRegistry::remove_closed(Self) -> Int32
 pub fn WindowRegistry::request_close(Self, @backend.WindowId) -> Bool
 pub fn WindowRegistry::resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Bool
 pub fn WindowRegistry::set_primary(Self, @backend.WindowId) -> Bool
@@ -189,7 +189,7 @@ pub struct WindowRequestQueue {
   // private fields
 }
 pub fn WindowRequestQueue::close_window(Self, @backend.WindowId) -> Unit
-pub fn WindowRequestQueue::completed_count(Self) -> Int
+pub fn WindowRequestQueue::completed_count(Self) -> Int32
 pub fn WindowRequestQueue::drain(Self) -> Array[@backend.WindowRequest]
 pub fn WindowRequestQueue::drain_completed(Self) -> Array[@backend.WindowRequestCompletion]
 pub fn WindowRequestQueue::drain_with_handler(Self, (@backend.WindowRequest) -> @backend.WindowRequestResult) -> Array[@backend.WindowRequestCompletion]
@@ -198,7 +198,7 @@ pub fn WindowRequestQueue::is_empty(Self) -> Bool
 pub fn WindowRequestQueue::minimize_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::new() -> Self
 pub fn WindowRequestQueue::open_window(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> Unit
-pub fn WindowRequestQueue::pending_count(Self) -> Int
+pub fn WindowRequestQueue::pending_count(Self) -> Int32
 pub fn WindowRequestQueue::push(Self, @backend.WindowRequest) -> Unit
 pub fn WindowRequestQueue::record_result(Self, @backend.WindowRequest, @backend.WindowRequestResult) -> Unit
 pub fn WindowRequestQueue::requests(Self) -> @backend.WindowRequests
@@ -228,7 +228,7 @@ pub struct WindowRuntimeSlots {
 }
 pub fn WindowRuntimeSlots::apply_host_event(Self, WindowRegistry, @backend.WindowId, @backend.Event) -> Bool
 pub fn WindowRuntimeSlots::apply_request(Self, WindowRegistry, @backend.WindowRequest) -> @backend.WindowRequestResult
-pub fn WindowRuntimeSlots::count(Self) -> Int
+pub fn WindowRuntimeSlots::count(Self) -> Int32
 pub fn WindowRuntimeSlots::focused_slot(Self) -> WindowRuntimeSlot?
 pub fn WindowRuntimeSlots::insert(Self, WindowRuntimeSlot) -> Bool
 pub fn WindowRuntimeSlots::insert_from_registry(Self, WindowRegistry, @backend.WindowId, driver~ : @runtime.HostRuntimeDriver) -> Bool
@@ -238,9 +238,9 @@ pub fn WindowRuntimeSlots::new() -> Self
 pub fn WindowRuntimeSlots::open_slots(Self) -> Array[WindowRuntimeSlot]
 pub fn WindowRuntimeSlots::primary_slot(Self) -> WindowRuntimeSlot?
 pub fn WindowRuntimeSlots::remove(Self, @backend.WindowId) -> WindowRuntimeSlot?
-pub fn WindowRuntimeSlots::remove_closed(Self) -> Int
+pub fn WindowRuntimeSlots::remove_closed(Self) -> Int32
 pub fn WindowRuntimeSlots::sync_from_registry(Self, WindowRegistry, @backend.WindowId) -> Bool
-pub fn WindowRuntimeSlots::sync_open_from_registry(Self, WindowRegistry) -> Int
+pub fn WindowRuntimeSlots::sync_open_from_registry(Self, WindowRegistry) -> Int32
 pub fn WindowRuntimeSlots::sync_record(Self, @backend.WindowRecord) -> Bool
 
 pub(all) struct WindowSceneInstance {

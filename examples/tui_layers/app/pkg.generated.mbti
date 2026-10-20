@@ -8,11 +8,11 @@ import {
 }
 
 // Values
-pub fn cycle_pane(Pane, Int) -> Pane
+pub fn cycle_pane(Pane, Int32) -> Pane
 
 pub fn find_node(Array[Node], String) -> Node?
 
-pub fn hidden_count(Model) -> Int
+pub fn hidden_count(Model) -> Int32
 
 pub fn layer_marker(Model, String) -> String
 
@@ -67,15 +67,15 @@ pub struct Model {
   pane : Pane
   layer_scroll : Double
   tree_scroll : Double
-  serial : Int
+  serial : Int32
 }
 pub fn Model::new() -> Self
 pub fn Model::update(Self, Msg) -> (Self, @core.Effect[Msg])
 pub fn Model::view(Self) -> @core.View[Msg]
 
 pub(all) enum Msg {
-  CyclePane(Int)
-  Move(Int)
+  CyclePane(Int32)
+  Move(Int32)
   SelectLayer(String)
   ToggleLayer(String)
   ToggleFocused

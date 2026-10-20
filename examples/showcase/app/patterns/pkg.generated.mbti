@@ -47,13 +47,13 @@ pub fn CatalogItem::to_repr(Self) -> @debug.Repr
 
 pub struct Model {
   route : String
-  counter : Int
+  counter : Int32
   todo_items : Array[TodoItem]
   todo_draft : String
-  next_todo_id : Int
+  next_todo_id : Int32
   profile_name : String
   data_filter : String
-  workflow_step : Int
+  workflow_step : Int32
   notice : String
   scroll : @core.Point
 }
@@ -67,8 +67,8 @@ pub(all) enum Msg {
   Decrement
   TodoDraftChanged(String)
   TodoSubmit
-  TodoToggled(Int, Bool)
-  TodoRemoved(Int)
+  TodoToggled(Int32, Bool)
+  TodoRemoved(Int32)
   ProfileNameChanged(String)
   SaveProfile
   DataFilterChanged(String)
@@ -79,7 +79,7 @@ pub(all) enum Msg {
 }
 
 pub(all) struct TodoItem {
-  id : Int
+  id : Int32
   label : String
   completed : Bool
 } derive(Eq, @debug.Debug)

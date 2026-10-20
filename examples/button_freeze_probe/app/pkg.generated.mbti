@@ -21,7 +21,7 @@ pub struct Model {
   active : Bool
   review : Bool
   blocked : Bool
-  clicks : Int
+  clicks : Int32
   last_action : String
   previous_action : String
 }

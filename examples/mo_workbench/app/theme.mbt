@@ -48,7 +48,7 @@ fn workbench_theme(
 ///|
 fn workbench_conversation_theme(
   theme : @moui.Theme,
-  font_size : Int,
+  font_size : Int32,
 ) -> @moui.Theme {
   let effective_size = if font_size <= 10 { 10 } else { font_size }
   let font = @text.FontSpec::new(size=effective_size.to_double(), weight=260)
@@ -68,7 +68,7 @@ fn workbench_conversation_theme(
 ///|
 fn workbench_lightweight_theme(
   theme : @moui.Theme,
-  font_size : Int,
+  font_size : Int32,
 ) -> @moui.Theme {
   let font = @text.FontSpec::new(
     size=font_size.to_double().max(10.0),
@@ -115,7 +115,7 @@ fn workbench_sidebar_theme(theme : @moui.Theme) -> @moui.Theme {
 fn workbench_font_variant(
   font : @text.FontSpec,
   size_delta : Double,
-  weight : Int,
+  weight : Int32,
 ) -> @text.FontSpec {
   { ..font, size: (font.size + size_delta).max(10.0), weight, }
 }
@@ -533,7 +533,7 @@ fn user_message_background(theme : @moui.Theme) -> @graphics.Color {
 /// Purple circular send control (square frame + radius = diameter / 2).
 fn[Msg] workbench_send_button(
   theme : @moui.Theme,
-  diameter? : Double = 28.0,
+  diameter~ : Double = 28.0,
   on_tap~ : Msg,
 ) -> @moui.View[Msg] {
   let radius = diameter / 2.0

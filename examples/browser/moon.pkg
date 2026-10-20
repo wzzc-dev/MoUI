@@ -1,7 +1,0 @@
-import {
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/services",
-  "examples/browser/app",
-}
-
-supported_targets = "+native+wasm-gc"

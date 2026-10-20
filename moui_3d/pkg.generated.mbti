@@ -26,32 +26,32 @@ pub fn[Msg] three_d_viewport(binding~ : ThreeDViewportBinding, snapshot~ : Viewp
 pub(all) suberror GltfError {
   EmptyInput
   InvalidMagic
-  UnsupportedVersion(Int)
+  UnsupportedVersion(Int32)
   InvalidDeclaredLength
   TruncatedChunk
   MissingJsonChunk
   InvalidJson(String)
   UnsupportedAssetVersion(String)
-  MissingBuffer(Int)
-  MissingBufferView(Int)
-  MissingAccessor(Int)
+  MissingBuffer(Int32)
+  MissingBufferView(Int32)
+  MissingAccessor(Int32)
   MissingAttribute(String)
-  InvalidAccessor(Int)
-  UnsupportedComponentType(Int)
+  InvalidAccessor(Int32)
+  UnsupportedComponentType(Int32)
   UnsupportedAccessorType(String)
-  UnsupportedPrimitiveMode(Int)
+  UnsupportedPrimitiveMode(Int32)
   UnsupportedExtension(String)
   UnsupportedRequiredExtension(String)
   ExternalResourceUnavailable(String)
-  InvalidTexture(Int)
-  InvalidSampler(Int)
-  InvalidCamera(Int)
-  InvalidScene(Int)
-  InvalidSkin(Int)
-  InvalidAnimation(Int)
+  InvalidTexture(Int32)
+  InvalidSampler(Int32)
+  InvalidCamera(Int32)
+  InvalidScene(Int32)
+  InvalidSkin(Int32)
+  InvalidAnimation(Int32)
   UnsupportedAnimationPath(String)
-  InvalidNode(Int)
-  InvalidNodeCycle(Int)
+  InvalidNode(Int32)
+  InvalidNodeCycle(Int32)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn GltfError::equal(Self, Self) -> Bool
 pub fn GltfError::not_equal(Self, Self) -> Bool
@@ -212,29 +212,29 @@ pub fn CameraProjection::to_repr(Self) -> @debug.Repr
 pub(all) struct GltfDocument {
   json : String
   binary : Bytes?
-  mesh_count : Int
-  node_count : Int
-  material_count : Int
-  texture_count : Int
-  sampler_count : Int
-  camera_count : Int
-  scene_count : Int
+  mesh_count : Int32
+  node_count : Int32
+  material_count : Int32
+  texture_count : Int32
+  sampler_count : Int32
+  camera_count : Int32
+  scene_count : Int32
 } derive(@debug.Debug)
 pub fn GltfDocument::binary(Self) -> Bytes?
-pub fn GltfDocument::camera_count(Self) -> Int
+pub fn GltfDocument::camera_count(Self) -> Int32
 pub fn GltfDocument::json(Self) -> String
-pub fn GltfDocument::material_count(Self) -> Int
-pub fn GltfDocument::mesh_count(Self) -> Int
-pub fn GltfDocument::node_count(Self) -> Int
-pub fn GltfDocument::sampler_count(Self) -> Int
-pub fn GltfDocument::scene_count(Self) -> Int
-pub fn GltfDocument::texture_count(Self) -> Int
+pub fn GltfDocument::material_count(Self) -> Int32
+pub fn GltfDocument::mesh_count(Self) -> Int32
+pub fn GltfDocument::node_count(Self) -> Int32
+pub fn GltfDocument::sampler_count(Self) -> Int32
+pub fn GltfDocument::scene_count(Self) -> Int32
+pub fn GltfDocument::texture_count(Self) -> Int32
 pub fn GltfDocument::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Mat4 {
   values : Array[Double]
 } derive(@debug.Debug)
-pub fn Mat4::at(Self, Int, Int) -> Double
+pub fn Mat4::at(Self, Int32, Int32) -> Double
 pub fn Mat4::from_values(Array[Double]) -> Self
 pub fn Mat4::identity() -> Self
 pub fn Mat4::look_at(eye~ : Vec3, target~ : Vec3, up~ : Vec3) -> Self
@@ -279,14 +279,14 @@ pub fn Material::to_json(Self) -> Json
 pub fn Material::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MaterialId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MaterialId::equal(Self, Self) -> Bool
-pub fn MaterialId::new(Int) -> Self
+pub fn MaterialId::new(Int32) -> Self
 pub fn MaterialId::not_equal(Self, Self) -> Bool
 pub fn MaterialId::to_json(Self) -> Json
 pub fn MaterialId::to_repr(Self) -> @debug.Repr
-pub fn MaterialId::value(Self) -> Int
+pub fn MaterialId::value(Self) -> Int32
 
 pub(all) struct Mesh {
   name : String
@@ -302,14 +302,14 @@ pub fn Mesh::to_repr(Self) -> @debug.Repr
 pub fn Mesh::weights(Self) -> Array[Double]
 
 pub(all) struct MeshId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MeshId::equal(Self, Self) -> Bool
-pub fn MeshId::new(Int) -> Self
+pub fn MeshId::new(Int32) -> Self
 pub fn MeshId::not_equal(Self, Self) -> Bool
 pub fn MeshId::to_json(Self) -> Json
 pub fn MeshId::to_repr(Self) -> @debug.Repr
-pub fn MeshId::value(Self) -> Int
+pub fn MeshId::value(Self) -> Int32
 
 pub(all) struct Node {
   name : String
@@ -317,32 +317,32 @@ pub(all) struct Node {
   children : Array[NodeId]
   local_transform : Mat4
   mesh : MeshId?
-  camera : Int?
-  skin : Int?
+  camera : Int32?
+  skin : Int32?
   weights : Array[Double]?
 } derive(@debug.Debug)
-pub fn Node::camera(Self) -> Int?
+pub fn Node::camera(Self) -> Int32?
 pub fn Node::children(Self) -> Array[NodeId]
 pub fn Node::local_transform(Self) -> Mat4
 pub fn Node::mesh(Self) -> MeshId?
 pub fn Node::name(Self) -> String
-pub fn Node::new(name? : String, parent? : NodeId?, local_transform? : Mat4, mesh? : MeshId?, camera? : Int?, skin? : Int?, weights? : Array[Double]?) -> Self
+pub fn Node::new(name? : String, parent? : NodeId?, local_transform? : Mat4, mesh? : MeshId?, camera? : Int32?, skin? : Int32?, weights? : Array[Double]?) -> Self
 pub fn Node::parent(Self) -> NodeId?
-pub fn Node::skin(Self) -> Int?
+pub fn Node::skin(Self) -> Int32?
 pub fn Node::to_repr(Self) -> @debug.Repr
 pub fn Node::weights(Self) -> Array[Double]?
 pub fn Node::with_child(Self, NodeId) -> Self
 pub fn Node::with_local_transform(Self, Mat4) -> Self
 
 pub(all) struct NodeId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn NodeId::equal(Self, Self) -> Bool
-pub fn NodeId::new(Int) -> Self
+pub fn NodeId::new(Int32) -> Self
 pub fn NodeId::not_equal(Self, Self) -> Bool
 pub fn NodeId::to_json(Self) -> Json
 pub fn NodeId::to_repr(Self) -> @debug.Repr
-pub fn NodeId::value(Self) -> Int
+pub fn NodeId::value(Self) -> Int32
 
 pub(all) struct OrbitCamera {
   target : Vec3
@@ -390,7 +390,7 @@ pub fn PerspectiveCamera::with_aspect(Self, Double) -> Self
 
 pub(all) struct PickHit {
   node : NodeId
-  primitive_index : Int
+  primitive_index : Int32
   distance : Double
   position : Vec3
 } derive(Eq, ToJson, @debug.Debug)
@@ -399,22 +399,22 @@ pub fn PickHit::equal(Self, Self) -> Bool
 pub fn PickHit::node(Self) -> NodeId
 pub fn PickHit::not_equal(Self, Self) -> Bool
 pub fn PickHit::position(Self) -> Vec3
-pub fn PickHit::primitive_index(Self) -> Int
+pub fn PickHit::primitive_index(Self) -> Int32
 pub fn PickHit::to_json(Self) -> Json
 pub fn PickHit::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Primitive {
   vertices : Array[Vertex]
-  indices : Array[Int]
+  indices : Array[Int32]
   material : MaterialId?
   bounds : Aabb
   morph_targets : Array[Array[VertexDelta]]
 } derive(@debug.Debug)
 pub fn Primitive::bounds(Self) -> Aabb
-pub fn Primitive::indices(Self) -> Array[Int]
+pub fn Primitive::indices(Self) -> Array[Int32]
 pub fn Primitive::material(Self) -> MaterialId?
 pub fn Primitive::morph_targets(Self) -> Array[Array[VertexDelta]]
-pub fn Primitive::new(vertices~ : Array[Vertex], indices~ : Array[Int], material? : MaterialId?, morph_targets? : Array[Array[VertexDelta]]) -> Self
+pub fn Primitive::new(vertices~ : Array[Vertex], indices~ : Array[Int32], material? : MaterialId?, morph_targets? : Array[Array[VertexDelta]]) -> Self
 pub fn Primitive::to_repr(Self) -> @debug.Repr
 pub fn Primitive::vertices(Self) -> Array[Vertex]
 
@@ -484,14 +484,14 @@ pub fn SamplerFilter::to_json(Self) -> Json
 pub fn SamplerFilter::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SamplerId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SamplerId::equal(Self, Self) -> Bool
-pub fn SamplerId::new(Int) -> Self
+pub fn SamplerId::new(Int32) -> Self
 pub fn SamplerId::not_equal(Self, Self) -> Bool
 pub fn SamplerId::to_json(Self) -> Json
 pub fn SamplerId::to_repr(Self) -> @debug.Repr
-pub fn SamplerId::value(Self) -> Int
+pub fn SamplerId::value(Self) -> Int32
 
 pub(all) enum SamplerWrap {
   Repeat
@@ -511,25 +511,25 @@ pub(all) struct Scene {
   cameras : Array[Camera]
   definitions : Array[SceneDefinition]
   skins : Array[Skin]
-  mut default_scene : Int?
+  mut default_scene : Int32?
   nodes : Array[Node]
   animations : Array[AnimationClip]
 } derive(@debug.Debug)
-pub fn Scene::add_animation(Self, AnimationClip) -> Int
-pub fn Scene::add_camera(Self, Camera) -> Int
+pub fn Scene::add_animation(Self, AnimationClip) -> Int32
+pub fn Scene::add_camera(Self, Camera) -> Int32
 pub fn Scene::add_material(Self, Material) -> MaterialId
 pub fn Scene::add_mesh(Self, Mesh) -> MeshId
 pub fn Scene::add_node(Self, Node) -> NodeId
 pub fn Scene::add_sampler(Self, Sampler) -> SamplerId
-pub fn Scene::add_scene_definition(Self, SceneDefinition) -> Int
-pub fn Scene::add_skin(Self, Skin) -> Int
+pub fn Scene::add_scene_definition(Self, SceneDefinition) -> Int32
+pub fn Scene::add_skin(Self, Skin) -> Int32
 pub fn Scene::add_texture(Self, Texture) -> TextureId
 pub fn Scene::animations(Self) -> Array[AnimationClip]
 pub fn Scene::apply_animation_samples(Self, Array[AnimationSample]) -> Self
 pub fn Scene::bounds(Self) -> Aabb
 pub fn Scene::cameras(Self) -> Array[Camera]
 pub fn Scene::copy(Self) -> Self
-pub fn Scene::default_scene(Self) -> Int?
+pub fn Scene::default_scene(Self) -> Int32?
 pub fn Scene::empty() -> Self
 pub fn Scene::materials(Self) -> Array[Material]
 pub fn Scene::mesh(Self, MeshId) -> Mesh?
@@ -539,7 +539,7 @@ pub fn Scene::nodes(Self) -> Array[Node]
 pub fn Scene::pick(Self, Ray) -> PickHit?
 pub fn Scene::samplers(Self) -> Array[Sampler]
 pub fn Scene::scene_definitions(Self) -> Array[SceneDefinition]
-pub fn Scene::set_default_scene(Self, Int?) -> Unit
+pub fn Scene::set_default_scene(Self, Int32?) -> Unit
 pub fn Scene::skins(Self) -> Array[Skin]
 pub fn Scene::textures(Self) -> Array[Texture]
 pub fn Scene::to_repr(Self) -> @debug.Repr
@@ -583,14 +583,14 @@ pub fn Texture::to_repr(Self) -> @debug.Repr
 pub fn Texture::uri(String, mime_type? : String?, sampler? : SamplerId?) -> Self
 
 pub(all) struct TextureId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextureId::equal(Self, Self) -> Bool
-pub fn TextureId::new(Int) -> Self
+pub fn TextureId::new(Int32) -> Self
 pub fn TextureId::not_equal(Self, Self) -> Bool
 pub fn TextureId::to_json(Self) -> Json
 pub fn TextureId::to_repr(Self) -> @debug.Repr
-pub fn TextureId::value(Self) -> Int
+pub fn TextureId::value(Self) -> Int32
 
 pub(all) enum TextureSource {
   Uri(String)
@@ -610,8 +610,8 @@ pub fn ThreeDViewportBinding::status(Self) -> ViewportStatus
 
 pub struct ThreeDViewportHost {
   binding : ThreeDViewportBinding
-  surface_handler : @ref.Ref[(UInt64, Int, Int, Double) -> Unit]
-  frame_handler : @ref.Ref[(ViewportSnapshot, Int, Int, Double) -> Unit]
+  surface_handler : @ref.Ref[(UInt64, Int32, Int32, Double) -> Unit]
+  frame_handler : @ref.Ref[(ViewportSnapshot, Int32, Int32, Double) -> Unit]
   dispose_handler : @ref.Ref[(UInt64) -> Unit]
   invalidate_handler : @ref.Ref[() -> Unit]
 }
@@ -620,9 +620,9 @@ pub fn ThreeDViewportHost::dispose_platform_views(Self, UInt64) -> Unit
 pub fn ThreeDViewportHost::invalidate(Self) -> Unit
 pub fn ThreeDViewportHost::new(binding~ : ThreeDViewportBinding) -> Self
 pub fn ThreeDViewportHost::set_dispose_handler(Self, (UInt64) -> Unit) -> Unit
-pub fn ThreeDViewportHost::set_frame_handler(Self, (ViewportSnapshot, Int, Int, Double) -> Unit) -> Unit
+pub fn ThreeDViewportHost::set_frame_handler(Self, (ViewportSnapshot, Int32, Int32, Double) -> Unit) -> Unit
 pub fn ThreeDViewportHost::set_invalidate_handler(Self, () -> Unit) -> Unit
-pub fn ThreeDViewportHost::set_surface_handler(Self, (UInt64, Int, Int, Double) -> Unit) -> Unit
+pub fn ThreeDViewportHost::set_surface_handler(Self, (UInt64, Int32, Int32, Double) -> Unit) -> Unit
 pub fn ThreeDViewportHost::sync_platform_view(Self, UInt64, @core.PlatformViewPlacement, UInt64, @core.DrawFrame, Double, scale_factor? : Double) -> Unit
 pub fn ThreeDViewportHost::sync_platform_views(Self, UInt64, @core.DrawFrame, Double) -> Unit
 
@@ -685,12 +685,12 @@ pub(all) struct Vertex {
   position : Vec3
   normal : Vec3
   texcoord : Vec2
-  joints : (Int, Int, Int, Int)
+  joints : (Int32, Int32, Int32, Int32)
   weights : Vec4
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Vertex::equal(Self, Self) -> Bool
-pub fn Vertex::joints(Self) -> (Int, Int, Int, Int)
-pub fn Vertex::new(position~ : Vec3, normal? : Vec3, texcoord? : Vec2, joints? : (Int, Int, Int, Int), weights? : Vec4) -> Self
+pub fn Vertex::joints(Self) -> (Int32, Int32, Int32, Int32)
+pub fn Vertex::new(position~ : Vec3, normal? : Vec3, texcoord? : Vec2, joints? : (Int32, Int32, Int32, Int32), weights? : Vec4) -> Self
 pub fn Vertex::normal(Self) -> Vec3
 pub fn Vertex::not_equal(Self, Self) -> Bool
 pub fn Vertex::position(Self) -> Vec3

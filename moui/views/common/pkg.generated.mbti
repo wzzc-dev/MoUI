@@ -126,7 +126,7 @@ pub fn view_layout_declaration(@core.DeclarationKey) -> @core.ViewDeclaration
 
 pub fn view_max_double(Double, Double) -> Double
 
-pub fn view_max_int(Int, Int) -> Int
+pub fn view_max_int(Int32, Int32) -> Int32
 
 pub fn view_min_double(Double, Double) -> Double
 
@@ -152,9 +152,9 @@ pub fn view_uncacheable_declaration() -> @core.ViewDeclaration
 
 pub fn views_ambient_theme(@core.Theme?) -> @core.Theme
 
-pub fn visible_row_window(row_count~ : Int, scroll_y~ : Double, viewport_extent~ : Double, row_extent~ : Double, row_spacing~ : Double, overscan~ : Int) -> WindowedRowRange?
+pub fn visible_row_window(row_count~ : Int32, scroll_y~ : Double, viewport_extent~ : Double, row_extent~ : Double, row_spacing~ : Double, overscan~ : Int32) -> WindowedRowRange?
 
-pub fn windowed_row_count(item_count~ : Int, columns~ : Int) -> Int
+pub fn windowed_row_count(item_count~ : Int32, columns~ : Int32) -> Int32
 
 // Errors
 
@@ -171,8 +171,8 @@ pub fn PaintContext::finish(Self) -> Array[@core.DrawCommand]
 pub fn PaintContext::new() -> Self
 
 pub struct WindowedRowRange {
-  first_row : Int
-  last_row : Int
+  first_row : Int32
+  last_row : Int32
 }
 
 // Type aliases

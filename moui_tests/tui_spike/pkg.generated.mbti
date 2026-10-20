@@ -13,17 +13,17 @@ pub fn cell_text_system() -> @core.TextSystem
 
 pub let cell_w : Double
 
-pub fn draw_box(CellGrid, Int, Int, Int, Int, String, Int, Int, Int) -> Unit
+pub fn draw_box(CellGrid, Int32, Int32, Int32, Int32, String, Int32, Int32, Int32) -> Unit
 
 pub fn grid_lines(CellGrid) -> Array[String]
 
 pub fn grid_to_ansi(CellGrid) -> String
 
-pub fn line_containing(Array[String], String) -> Int?
+pub fn line_containing(Array[String], String) -> Int32?
 
-pub fn new_grid(Int, Int) -> CellGrid
+pub fn new_grid(Int32, Int32) -> CellGrid
 
-pub fn new_seq(CellGrid, Int) -> Int
+pub fn new_seq(CellGrid, Int32) -> Int32
 
 pub fn[Model, Msg] project(@core.Program[Model, Msg], Double, Double, Double, Double) -> ProjectionReport
 
@@ -31,24 +31,24 @@ pub fn row_is_chrome_only(String) -> Bool
 
 pub fn summary(ProjectionReport) -> String
 
-pub fn write_boxed(CellGrid, Int, Int, Int, Int, String, Int, Int) -> Unit
+pub fn write_boxed(CellGrid, Int32, Int32, Int32, Int32, String, Int32, Int32) -> Unit
 
 // Errors
 
 // Types and methods
 pub struct CellGrid {
-  cols : Int
-  rows : Int
+  cols : Int32
+  rows : Int32
   chars : Array[Array[Char]]
-  attrs : Array[Array[Int]]
-  owners : Array[Array[Int]]
-  prio : Array[Int]
+  attrs : Array[Array[Int32]]
+  owners : Array[Array[Int32]]
+  prio : Array[Int32]
 }
 
 pub struct FrameAudit {
-  nodes : Int
-  off_grid_point : Int
-  off_grid_size : Int
+  nodes : Int32
+  off_grid_point : Int32
+  off_grid_size : Int32
   worst_off_grid_px : Double
 } derive(Eq, @debug.Debug)
 pub fn FrameAudit::equal(Self, Self) -> Bool
@@ -59,16 +59,16 @@ pub struct ProjectionReport {
   lines : Array[String]
   plain : String
   ansi : String
-  cols : Int
-  rows : Int
-  semantics_nodes : Int
-  layout_nodes : Int
-  draw_commands : Int
+  cols : Int32
+  rows : Int32
+  semantics_nodes : Int32
+  layout_nodes : Int32
+  draw_commands : Int32
   audit_semantics : FrameAudit
   audit_layout : FrameAudit
-  roles : Array[(String, Int)]
+  roles : Array[(String, Int32)]
   frames : Array[String]
-  offscreen : Int
+  offscreen : Int32
 }
 
 // Type aliases

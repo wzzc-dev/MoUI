@@ -1,5 +1,5 @@
 ///|
-let acp_protocol_version : Int = 1
+let acp_protocol_version : Int32 = 1
 
 ///|
 fn acp_json_null() -> Json {
@@ -41,7 +41,7 @@ fn acp_rpc_result(id : Json, result : Json) -> Json {
 }
 
 ///|
-fn acp_rpc_error(id : Json, code : Int, message : String) -> Json {
+fn acp_rpc_error(id : Json, code : Int32, message : String) -> Json {
   (
     {
       "jsonrpc": "2.0",

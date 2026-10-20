@@ -24,7 +24,7 @@ pub struct Model {
   base_scene : @moui_3d.Scene
   snapshot : @moui_3d.ViewportSnapshot
   player : @moui_3d.AnimationPlayer
-  selected_clip : Int
+  selected_clip : Int32
   picked_node : @moui_3d.NodeId?
   fixture_loaded : Bool
   orbit_time : Double
@@ -40,7 +40,7 @@ pub(all) enum Msg {
   Viewport(@moui_3d.ViewportEvent)
   TogglePlayback
   SeekStart
-  SelectClip(Int)
+  SelectClip(Int32)
   Advance(Double)
 }
 

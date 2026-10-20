@@ -11,7 +11,7 @@
 //   backend  -> async worker -> emit(event) -> dispatch(map(event)) into UI queue
 
 ///|
-/// Thinking mode choice. Mirrors openseek's `ThinkingMode`.
+/// Thinking mode choice for backends that expose one.
 pub(all) enum ThinkingChoice {
   Normal
   High
@@ -25,7 +25,7 @@ pub extend ThinkingChoice with Debug::{to_repr}
 pub extend ThinkingChoice with Eq::{not_equal, equal}
 
 ///|
-/// Terminal status of an agent turn. Mirrors openseek's `TurnTerminal`.
+/// Terminal status of an agent turn.
 pub(all) enum TurnStatus {
   Finished
   Aborted
@@ -40,9 +40,10 @@ pub extend TurnStatus with Debug::{to_repr}
 pub extend TurnStatus with Eq::{not_equal, equal}
 
 ///|
-/// Agent backend selected by the workbench.
+/// Agent backend selected by the workbench. The retired in-process OpenSeek
+/// backend is no longer a choice; settings files that still say "openseek"
+/// fall back to ACP.
 pub(all) enum AgentBackendKind {
-  OpenSeek
   Acp
 } derive(Eq, Debug)
 
@@ -55,7 +56,6 @@ pub extend AgentBackendKind with Eq::{not_equal, equal}
 ///|
 pub fn agent_backend_kind_id(kind : AgentBackendKind) -> String {
   match kind {
-    OpenSeek => "openseek"
     Acp => "acp"
   }
 }
@@ -63,8 +63,7 @@ pub fn agent_backend_kind_id(kind : AgentBackendKind) -> String {
 ///|
 pub fn agent_backend_kind_from_id(id : String) -> AgentBackendKind {
   match id {
-    "acp" => Acp
-    _ => OpenSeek
+    _ => Acp
   }
 }
 
@@ -109,7 +108,7 @@ pub extend AgentPermissionOption with Eq::{not_equal, equal}
 pub fn agent_permission_option(
   id~ : String,
   name~ : String,
-  kind? : String = "",
+  kind~ : String = "",
 ) -> AgentPermissionOption {
   { id, name, kind, }
 }
@@ -134,10 +133,10 @@ pub extend AgentPermissionRequest with Eq::{not_equal, equal}
 pub fn agent_permission_request(
   request_id~ : String,
   session_id~ : String,
-  tool_call_id? : String = "",
-  title? : String = "",
-  kind? : String = "",
-  options? : Array[AgentPermissionOption] = [],
+  tool_call_id~ : String = "",
+  title~ : String = "",
+  kind~ : String = "",
+  options~ : Array[AgentPermissionOption] = [],
 ) -> AgentPermissionRequest {
   { request_id, session_id, tool_call_id, title, kind, options, }
 }
@@ -159,7 +158,7 @@ pub extend AgentSessionMode with Eq::{not_equal, equal}
 pub fn agent_session_mode(
   id~ : String,
   name~ : String,
-  description? : String? = None,
+  description~ : String? = None,
 ) -> AgentSessionMode {
   { id, name, description, }
 }
@@ -203,16 +202,16 @@ pub extend AgentSessionConfigOption with Eq::{not_equal, equal}
 pub fn agent_session_config_option(
   id~ : String,
   name~ : String,
-  description? : String? = None,
+  description~ : String? = None,
   current_value~ : AgentConfigValue,
-  values? : Array[AgentPermissionOption] = [],
+  values~ : Array[AgentPermissionOption] = [],
 ) -> AgentSessionConfigOption {
   { id, name, description, current_value, values, }
 }
 
 ///|
 /// Neutral agent events projected from the backend into the UI.
-/// The backend (openseek) maps its `SessionItem` / runtime events into these.
+/// The native transport maps backend-native session items into these.
 pub(all) enum AgentEvent {
   /// A user message was committed to the session.
   UserMessageAdded(String)
@@ -268,7 +267,7 @@ pub extend SessionSummary with Eq::{not_equal, equal}
 fn SessionSummary::new(
   id~ : String,
   first_prompt~ : String,
-  last_active_unix_seconds? : Int64? = None,
+  last_active_unix_seconds~ : Int64? = None,
 ) -> SessionSummary {
   { id, first_prompt, last_active_unix_seconds, }
 }
@@ -277,7 +276,7 @@ fn SessionSummary::new(
 pub fn session_summary(
   id~ : String,
   first_prompt~ : String,
-  last_active_unix_seconds? : Int64? = None,
+  last_active_unix_seconds~ : Int64? = None,
 ) -> SessionSummary {
   SessionSummary::new(id~, first_prompt~, last_active_unix_seconds~)
 }
@@ -314,7 +313,7 @@ pub(all) enum AgentCommand {
 
 ///|
 /// A backend runtime is a closure that accepts a batch of commands and an emit
-/// callback for events. Concrete backends (openseek owner) construct this.
+/// callback for events. Concrete backends (native transports) construct this.
 pub struct AgentBackendRuntime {
   run : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit
 }
@@ -336,8 +335,8 @@ pub fn agent_backend_runtime(
 
 ///|
 /// A stub backend that echoes canned replies, so the UI is fully interactive
-/// without an LLM. Native macOS Skia injects `openseek_native_transport` when
-/// an API key is set.
+/// without an LLM. Native macOS Skia injects a transport backend when the
+/// settings file carries an ACP agent configuration.
 pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
   AgentBackendRuntime::new(run=(commands, emit) => {
     for cmd in commands {
@@ -348,7 +347,7 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
             AssistantMessageAdded(
               "(stub reply) You said: " +
               task +
-              ". This is an offline placeholder; set openai_api_key in settings.json for OpenSeek.",
+              ". This is an offline placeholder; configure an ACP agent in settings.json.",
               None,
             ),
           )

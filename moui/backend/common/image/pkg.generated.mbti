@@ -29,7 +29,7 @@ pub struct WindowImageTaskStates {
   // private fields
 }
 pub fn WindowImageTaskStates::attach(Self, @backend.WindowId, starter? : WindowImageTaskStarter, request_redraw~ : () -> Unit) -> Bool
-pub fn WindowImageTaskStates::count(Self) -> Int
+pub fn WindowImageTaskStates::count(Self) -> Int32
 pub fn WindowImageTaskStates::dispose_window(Self, @backend.WindowId) -> Bool
 pub fn WindowImageTaskStates::lookup(Self, @backend.WindowId) -> WindowImageTasks?
 pub fn WindowImageTaskStates::new() -> Self
@@ -38,12 +38,12 @@ pub fn WindowImageTaskStates::remove(Self, @backend.WindowId) -> WindowImageTask
 pub struct WindowImageTasks {
   // private fields
 }
-pub fn WindowImageTasks::cancel(Self) -> Int
+pub fn WindowImageTasks::cancel(Self) -> Int32
 pub fn WindowImageTasks::dispose(Self) -> Unit
 pub fn WindowImageTasks::new(starter? : WindowImageTaskStarter, request_redraw~ : () -> Unit) -> Self
-pub fn WindowImageTasks::pending_count(Self) -> Int
+pub fn WindowImageTasks::pending_count(Self) -> Int32
 pub fn WindowImageTasks::schedule(Self, @render.RendererSession, @render.RendererImageLoadRequest) -> Bool
-pub fn WindowImageTasks::take_scheduled_count(Self) -> Int
+pub fn WindowImageTasks::take_scheduled_count(Self) -> Int32
 
 // Type aliases
 

@@ -33,7 +33,7 @@ pub fn[Msg] autocomplete(String, on_input~ : (String) -> Msg, Array[@controls.Me
 
 pub fn[Msg] avatar(String, image? : String?, theme? : @core.Theme, size? : Double) -> @core.View[Msg]
 
-pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int) -> @core.View[Msg]
+pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int32) -> @core.View[Msg]
 
 pub fn[Msg] badge(String, tone? : @style.BadgeTone, theme? : @core.Theme, style? : @style.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -101,21 +101,21 @@ pub fn dark_theme() -> @core.Theme
 
 pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message~ : Msg, enabled? : Bool) -> @data.DataFilter[Msg]
 
-pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[@data.DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[@data.DataFilter[Msg]], result_count? : Int32, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn data_grid_cell(row~ : Int, column~ : Int) -> @data.DataGridCell
+pub fn data_grid_cell(row~ : Int32, column~ : Int32) -> @data.DataGridCell
 
 pub fn data_grid_cell_key(String, String) -> String
 
-pub fn[Msg] data_grid_cell_semantics(@core.View[Msg], row_index~ : Int, column_index~ : Int, row_count~ : Int, column_count~ : Int, selected? : Bool, read_only? : Bool) -> @core.View[Msg]
+pub fn[Msg] data_grid_cell_semantics(@core.View[Msg], row_index~ : Int32, column_index~ : Int32, row_count~ : Int32, column_count~ : Int32, selected? : Bool, read_only? : Bool) -> @core.View[Msg]
 
-pub fn data_grid_freeze_panes(rows? : Int, columns? : Int) -> @data.DataGridFreezePanes
+pub fn data_grid_freeze_panes(rows? : Int32, columns? : Int32) -> @data.DataGridFreezePanes
 
-pub fn[Msg] data_grid_row_semantics(@core.View[Msg], row_index~ : Int, row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+pub fn[Msg] data_grid_row_semantics(@core.View[Msg], row_index~ : Int32, row_count~ : Int32, column_count~ : Int32) -> @core.View[Msg]
 
-pub fn[Msg] data_grid_semantics(@core.View[Msg], row_count~ : Int, column_count~ : Int) -> @core.View[Msg]
+pub fn[Msg] data_grid_semantics(@core.View[Msg], row_count~ : Int32, column_count~ : Int32) -> @core.View[Msg]
 
-pub fn data_grid_viewport(first_row~ : Int, last_row~ : Int, first_column~ : Int, last_column~ : Int, row_count~ : Int, column_count~ : Int, overscan_rows? : Int, overscan_columns? : Int, freeze? : @data.DataGridFreezePanes) -> @data.DataGridViewport
+pub fn data_grid_viewport(first_row~ : Int32, last_row~ : Int32, first_column~ : Int32, last_column~ : Int32, row_count~ : Int32, column_count~ : Int32, overscan_rows? : Int32, overscan_columns? : Int32, freeze? : @data.DataGridFreezePanes) -> @data.DataGridViewport
 
 pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @style.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
@@ -191,7 +191,7 @@ pub fn[Msg] form_workflow_bar(summary~ : @form.FormValidationSummary, primary~ :
 
 pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
+pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int32, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] icon(@style.IconName, size? : Double, color? : @core.Color, weight? : Double) -> @core.View[Msg]
 
@@ -207,7 +207,7 @@ pub fn[Msg] intrinsic_width(@core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] layout_priority(@core.View[Msg], Double) -> @core.View[Msg]
 
-pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, overscan? : Int, offset? : @core.Point, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
+pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], columns? : Int32, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, overscan? : Int32, offset? : @core.Point, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
 pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
@@ -249,7 +249,7 @@ pub fn[Msg] padding_insets(@core.View[Msg], @core.Insets) -> @core.View[Msg]
 
 pub fn[Msg] padding_xy(@core.View[Msg], horizontal? : Double, vertical? : Double) -> @core.View[Msg]
 
-pub fn[Msg] pagination(page~ : Int, page_count~ : Int, on_previous~ : Msg, on_next~ : Msg, theme? : @core.Theme, width? : Double, previous_label? : String, next_label? : String) -> @core.View[Msg]
+pub fn[Msg] pagination(page~ : Int32, page_count~ : Int32, on_previous~ : Msg, on_next~ : Msg, theme? : @core.Theme, width? : Double, previous_label? : String, next_label? : String) -> @core.View[Msg]
 
 pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -313,9 +313,9 @@ pub fn[Msg] router_stack(@navigation.RouterState, Array[@navigation.NavigationDe
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
-pub fn scroll_to_index(request_id~ : Int, index~ : Int, item_height? : Double, spacing? : Double) -> @core.ScrollRequest
+pub fn scroll_to_index(request_id~ : Int32, index~ : Int32, item_height? : Double, spacing? : Double) -> @core.ScrollRequest
 
-pub fn scroll_to_key(request_id~ : Int, metrics~ : @data.VariableListMetrics, key~ : String, inset? : Double) -> @core.ScrollRequest?
+pub fn scroll_to_key(request_id~ : Int32, metrics~ : @data.VariableListMetrics, key~ : String, inset? : Double) -> @core.ScrollRequest?
 
 pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
@@ -325,7 +325,7 @@ pub fn[Msg] section_nav(String, Array[@navigation.SectionNavItem[Msg]], selected
 
 pub fn[Msg] section_nav_item(id~ : String, label~ : String, message~ : Msg, summary? : String, enabled? : Bool) -> @navigation.SectionNavItem[Msg]
 
-pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int32, empty? : @core.View[Msg]?, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[@controls.ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -333,7 +333,7 @@ pub fn[Msg] selectable_list(Array[@data.SelectableListItem[Msg]], selected? : St
 
 pub fn[Msg] selectable_list_item(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> @data.SelectableListItem[Msg]
 
-pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[@controls.ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] selection_toolbar(selected_count~ : Int32, total_count? : Int32, actions? : Array[@controls.ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @style.SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
@@ -371,7 +371,7 @@ pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) 
 
 pub fn[Msg] tab_view(String, Array[@navigation.TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
 
-pub fn[Msg] table(Array[@data.TableColumn], Array[Array[String]], selected_row? : Int?, on_row_select? : ((Int) -> Msg)?, sort_column? : String, sort_ascending? : Bool, on_sort? : ((String) -> Msg)?, sortable_columns? : Array[String], cell? : ((Int, @data.TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
+pub fn[Msg] table(Array[@data.TableColumn], Array[Array[String]], selected_row? : Int32?, on_row_select? : ((Int32) -> Msg)?, sort_column? : String, sort_ascending? : Bool, on_sort? : ((String) -> Msg)?, sortable_columns? : Array[String], cell? : ((Int32, @data.TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
 
 pub fn table_column(id~ : String, label~ : String, width? : Double) -> @data.TableColumn
 
@@ -379,7 +379,7 @@ pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double)
 
 pub fn[Msg] text(String, role? : @style.TextRole, theme? : @core.Theme, width? : Double, height? : Double, align? : @core.TextAlign, wrap? : Bool) -> @core.View[Msg]
 
-pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double, on_submit? : Msg?) -> @core.View[Msg]
+pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int32, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double, on_submit? : Msg?) -> @core.View[Msg]
 
 pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, style? : @style.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -405,9 +405,9 @@ pub fn validate_form(Array[@form.FormFieldState]) -> @form.FormValidationResult
 
 pub fn[T] variable_list_metrics(Array[T], (T) -> String, (T) -> Double, spacing? : Double) -> @data.VariableListMetrics
 
-pub fn[T, Msg] variable_virtual_list(Array[T], metrics~ : @data.VariableListMetrics, (T) -> String, (T) -> @core.View[Msg], viewport_height? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] variable_virtual_list(Array[T], metrics~ : @data.VariableListMetrics, (T) -> String, (T) -> @core.View[Msg], viewport_height? : Double, overscan? : Int32, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
-pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int32, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn[Msg] wizard(Array[@controls.WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 

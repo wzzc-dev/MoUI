@@ -1,13 +1,13 @@
 name = "wzzc-dev/moui_3d"
 
-version = "0.2.1"
+version = "0.2.2"
 
 preferred_target = "native"
 
 supported_targets = "+native+wasm-gc+wasm"
 
 import {
-  "wzzc-dev/moui@0.2.3",
+  "wzzc-dev/moui@0.2.4",
   "wzzc-dev/window@0.5.4-0.2.1",
 }
 

@@ -15,15 +15,15 @@ pub fn animated_point(from~ : Point, to~ : Point, progress~ : Double, easing? : 
 
 pub fn animated_value(from~ : Double, to~ : Double, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Double
 
-pub fn clamp_int(Int, Int, Int) -> Int
+pub fn clamp_int(Int32, Int32, Int32) -> Int32
 
-pub fn composition_cursor_offset(TextControlStateContext, String) -> Int
+pub fn composition_cursor_offset(TextControlStateContext, String) -> Int32
 
-pub fn composition_start_index(String, Int, TextRange?) -> Int
+pub fn composition_start_index(String, Int32, TextRange?) -> Int32
 
 pub fn default_text_commands() -> Array[ActionCommand]
 
-pub fn delete_grapheme_range(@unicode.TextGraphemeBoundaries, Int, Int, Int) -> TextRange
+pub fn delete_grapheme_range(@unicode.TextGraphemeBoundaries, Int32, Int32, Int32) -> TextRange
 
 pub fn fallback_stabilize_grapheme_cluster_carets(String, Array[Double]) -> Array[Double]
 
@@ -37,11 +37,11 @@ pub fn is_select_all_shortcut(KeyboardEvent) -> Bool
 
 pub fn is_undo_shortcut(KeyboardEvent) -> Bool
 
-pub fn max_int(Int, Int) -> Int
+pub fn max_int(Int32, Int32) -> Int32
 
-pub fn min_int(Int, Int) -> Int
+pub fn min_int(Int32, Int32) -> Int32
 
-pub fn move_text_caret(String, Int, TextRange?, TextCaretDirection, extend_selection~ : Bool) -> TextCaretMoveResult
+pub fn move_text_caret(String, Int32, TextRange?, TextCaretDirection, extend_selection~ : Bool) -> TextCaretMoveResult
 
 pub fn[Msg] noop_modifier() -> AnyModifier[Msg]
 
@@ -51,7 +51,7 @@ pub fn optional_rect_union(Rect?, Rect?) -> Rect?
 
 pub fn replace_text_range(String, TextRange, String) -> String
 
-pub fn replace_text_range_edit(text~ : String, TextRange, String) -> (String, String, Int)
+pub fn replace_text_range_edit(text~ : String, TextRange, String) -> (String, String, Int32)
 
 pub fn resolve_minimal_theme(ThemeSpec, ColorScheme) -> Theme
 
@@ -59,15 +59,15 @@ pub fn resolve_theme(ThemeSpec, ColorScheme) -> Theme
 
 pub fn selected_text(String, TextRange?) -> String
 
-pub fn surrounding_delete_range(String, Int, Int, Int) -> TextRange
+pub fn surrounding_delete_range(String, Int32, Int32, Int32) -> TextRange
 
-pub fn text_history_delta(String, String) -> (Int, String, String)
+pub fn text_history_delta(String, String) -> (Int32, String, String)
 
 pub fn text_input_grapheme_selection(@unicode.TextGraphemeBoundaries, TextRange?) -> TextRange?
 
-pub fn text_next_grapheme_caret_boundary(String, Int) -> Int
+pub fn text_next_grapheme_caret_boundary(String, Int32) -> Int32
 
-pub fn text_previous_grapheme_caret_boundary(String, Int) -> Int
+pub fn text_previous_grapheme_caret_boundary(String, Int32) -> Int32
 
 // Errors
 
@@ -471,24 +471,24 @@ pub fn DamageRegion::full(String) -> Self
 pub fn DamageRegion::full_reason(Self) -> String
 pub fn DamageRegion::kind(Self) -> String
 pub fn DamageRegion::not_equal(Self, Self) -> Bool
-pub fn DamageRegion::rect_count(Self) -> Int
+pub fn DamageRegion::rect_count(Self) -> Int32
 pub fn DamageRegion::to_json(Self) -> Json
 pub fn DamageRegion::to_repr(Self) -> @debug.Repr
 pub fn DamageRegion::union_with(Self, Self, surface~ : Rect) -> Self
 
 pub(all) struct DateValue {
-  year : Int
-  month : Int
-  day : Int
-  hour : Int
-  minute : Int
-  second : Int
+  year : Int32
+  month : Int32
+  day : Int32
+  hour : Int32
+  minute : Int32
+  second : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DateValue::equal(Self, Self) -> Bool
 pub fn DateValue::format_date(Self) -> String
 pub fn DateValue::format_date_time(Self) -> String
 pub fn DateValue::format_time(Self) -> String
-pub fn DateValue::new(year~ : Int, month~ : Int, day~ : Int, hour? : Int, minute? : Int, second? : Int) -> Self
+pub fn DateValue::new(year~ : Int32, month~ : Int32, day~ : Int32, hour? : Int32, minute? : Int32, second? : Int32) -> Self
 pub fn DateValue::not_equal(Self, Self) -> Bool
 pub fn DateValue::to_json(Self) -> Json
 pub fn DateValue::to_repr(Self) -> @debug.Repr
@@ -524,16 +524,16 @@ pub fn DeclarationKey::bool(Bool) -> Self
 pub fn DeclarationKey::bytes(Bytes) -> Self
 pub fn DeclarationKey::double(Double) -> Self
 pub fn DeclarationKey::equal(Self, Self) -> Bool
-pub fn DeclarationKey::hash(Self) -> Int
+pub fn DeclarationKey::hash(Self) -> Int32
 pub fn DeclarationKey::hash_combine(Self, Hasher) -> Unit
-pub fn DeclarationKey::int(Int) -> Self
+pub fn DeclarationKey::int(Int32) -> Self
 pub fn DeclarationKey::int64(Int64) -> Self
 pub fn DeclarationKey::not_equal(Self, Self) -> Bool
 pub fn DeclarationKey::option(Self?) -> Self
 pub fn DeclarationKey::record(type_tag~ : String, fields~ : Array[(String, Self)]) -> Self
 pub fn DeclarationKey::string(String) -> Self
 pub fn DeclarationKey::to_repr(Self) -> @debug.Repr
-pub fn DeclarationKey::uint(UInt) -> Self
+pub fn DeclarationKey::uint(UInt32) -> Self
 pub fn DeclarationKey::uint64(UInt64) -> Self
 
 pub(all) struct DisabledModifier {
@@ -743,11 +743,11 @@ pub(all) struct FlexibleModifier {
 pub fn[Msg] FlexibleModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct FocusRequest {
-  id : Int
+  id : Int32
   key : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FocusRequest::equal(Self, Self) -> Bool
-pub fn FocusRequest::new(id~ : Int, key~ : String) -> Self
+pub fn FocusRequest::new(id~ : Int32, key~ : String) -> Self
 pub fn FocusRequest::not_equal(Self, Self) -> Bool
 pub fn FocusRequest::to_json(Self) -> Json
 pub fn FocusRequest::to_repr(Self) -> @debug.Repr
@@ -832,14 +832,14 @@ pub fn[Msg] FontModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 pub(all) struct FontSpec {
   families : FontFamilyStack
   size : Double
-  weight : Int
+  weight : Int32
   style : FontStyle
   variations : Array[FontVariation]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FontSpec::css_family(Self) -> String
 pub fn FontSpec::css_style(Self) -> String
 pub fn FontSpec::equal(Self, Self) -> Bool
-pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int, style? : FontStyle, variations? : Array[FontVariation]) -> Self
+pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int32, style? : FontStyle, variations? : Array[FontVariation]) -> Self
 pub fn FontSpec::not_equal(Self, Self) -> Bool
 pub fn FontSpec::to_json(Self) -> Json
 pub fn FontSpec::to_repr(Self) -> @debug.Repr
@@ -1188,8 +1188,8 @@ pub fn PlatformViewEvent::to_repr(Self) -> @debug.Repr
 pub struct PlatformViewPixelSink {
   // private fields
 }
-pub fn PlatformViewPixelSink::draw(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
-pub fn PlatformViewPixelSink::new(draw~ : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit) -> Self
+pub fn PlatformViewPixelSink::draw(Self, Bytes, Int32, Int32, Int32, Double, Double, Double, Double) -> Unit
+pub fn PlatformViewPixelSink::new(draw~ : (Bytes, Int32, Int32, Int32, Double, Double, Double, Double) -> Unit) -> Self
 
 pub(all) struct PlatformViewPlacement {
   id : String
@@ -1229,13 +1229,13 @@ pub fn Point::to_repr(Self) -> @debug.Repr
 pub(all) struct PointerEvent {
   position : Point
   phase : PointerPhase
-  button : Int
+  button : Int32
   wheel_delta : Point
   time_ms : Double
   modifiers : KeyModifiers
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PointerEvent::equal(Self, Self) -> Bool
-pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int, wheel_delta? : Point, time_ms? : Double, modifiers? : KeyModifiers) -> Self
+pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int32, wheel_delta? : Point, time_ms? : Double, modifiers? : KeyModifiers) -> Self
 pub fn PointerEvent::not_equal(Self, Self) -> Bool
 pub fn PointerEvent::to_json(Self) -> Json
 pub fn PointerEvent::to_repr(Self) -> @debug.Repr
@@ -1348,11 +1348,11 @@ pub fn[Msg] RepaintBoundaryModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 pub(all) struct RetainedLayerSpec {
   key : String
   frame : Rect
-  content_revision : Int
+  content_revision : Int32
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RetainedLayerSpec::equal(Self, Self) -> Bool
-pub fn RetainedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
+pub fn RetainedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int32, scale_factor? : Double) -> Self
 pub fn RetainedLayerSpec::not_equal(Self, Self) -> Bool
 pub fn RetainedLayerSpec::to_json(Self) -> Json
 pub fn RetainedLayerSpec::to_repr(Self) -> @debug.Repr
@@ -1394,11 +1394,11 @@ pub fn ScrollAlignment::to_json(Self) -> Json
 pub fn ScrollAlignment::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ScrollRequest {
-  id : Int
+  id : Int32
   offset : Point
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ScrollRequest::equal(Self, Self) -> Bool
-pub fn ScrollRequest::new(id~ : Int, offset~ : Point) -> Self
+pub fn ScrollRequest::new(id~ : Int32, offset~ : Point) -> Self
 pub fn ScrollRequest::not_equal(Self, Self) -> Bool
 pub fn ScrollRequest::to_json(Self) -> Json
 pub fn ScrollRequest::to_repr(Self) -> @debug.Repr
@@ -1406,9 +1406,9 @@ pub fn ScrollRequest::to_repr(Self) -> @debug.Repr
 pub struct SemanticId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
-pub fn SemanticId::compare(Self, Self) -> Int
+pub fn SemanticId::compare(Self, Self) -> Int32
 pub fn SemanticId::equal(Self, Self) -> Bool
-pub fn SemanticId::hash(Self) -> Int
+pub fn SemanticId::hash(Self) -> Int32
 pub fn SemanticId::hash_combine(Self, Hasher) -> Unit
 pub fn SemanticId::new(String) -> Self
 pub fn SemanticId::not_equal(Self, Self) -> Bool
@@ -1486,17 +1486,17 @@ pub fn SemanticsCheckedState::to_json(Self) -> Json
 pub fn SemanticsCheckedState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsCollectionInfo {
-  row_index : Int?
-  row_count : Int?
-  row_span : Int?
-  column_index : Int?
-  column_count : Int?
-  column_span : Int?
-  set_size : Int?
-  set_position : Int?
+  row_index : Int32?
+  row_count : Int32?
+  row_span : Int32?
+  column_index : Int32?
+  column_count : Int32?
+  column_span : Int32?
+  set_size : Int32?
+  set_position : Int32?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsCollectionInfo::equal(Self, Self) -> Bool
-pub fn SemanticsCollectionInfo::new(row_index? : Int, row_count? : Int, row_span? : Int, column_index? : Int, column_count? : Int, column_span? : Int, set_size? : Int, set_position? : Int) -> Self
+pub fn SemanticsCollectionInfo::new(row_index? : Int32, row_count? : Int32, row_span? : Int32, column_index? : Int32, column_count? : Int32, column_span? : Int32, set_size? : Int32, set_position? : Int32) -> Self
 pub fn SemanticsCollectionInfo::not_equal(Self, Self) -> Bool
 pub fn SemanticsCollectionInfo::to_json(Self) -> Json
 pub fn SemanticsCollectionInfo::to_repr(Self) -> @debug.Repr
@@ -1534,7 +1534,7 @@ pub fn SemanticsFramePayload::equal(Self, Self) -> Bool
 pub fn SemanticsFramePayload::focused(Self) -> SemanticsNodeId?
 pub fn SemanticsFramePayload::generation(Self) -> SemanticsGeneration
 pub fn SemanticsFramePayload::new(generation~ : SemanticsGeneration, nodes~ : Array[SemanticsNode], root? : SemanticsNodeId?, focused? : SemanticsNodeId?) -> Self
-pub fn SemanticsFramePayload::node_count(Self) -> Int
+pub fn SemanticsFramePayload::node_count(Self) -> Int32
 pub fn SemanticsFramePayload::nodes(Self) -> Array[SemanticsNode]
 pub fn SemanticsFramePayload::not_equal(Self, Self) -> Bool
 pub fn SemanticsFramePayload::root(Self) -> SemanticsNodeId?
@@ -1544,9 +1544,9 @@ pub fn SemanticsFramePayload::to_repr(Self) -> @debug.Repr
 pub struct SemanticsGeneration {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
-pub fn SemanticsGeneration::compare(Self, Self) -> Int
+pub fn SemanticsGeneration::compare(Self, Self) -> Int32
 pub fn SemanticsGeneration::equal(Self, Self) -> Bool
-pub fn SemanticsGeneration::hash(Self) -> Int
+pub fn SemanticsGeneration::hash(Self) -> Int32
 pub fn SemanticsGeneration::hash_combine(Self, Hasher) -> Unit
 pub fn SemanticsGeneration::new(UInt64) -> Self
 pub fn SemanticsGeneration::not_equal(Self, Self) -> Bool
@@ -1566,7 +1566,7 @@ pub(all) struct SemanticsInvalidModifier {
 pub fn[Msg] SemanticsInvalidModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct SemanticsLevelModifier {
-  level : Int
+  level : Int32
 }
 pub fn[Msg] SemanticsLevelModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
@@ -1589,7 +1589,7 @@ pub(all) struct SemanticsNode {
   node_id : SemanticsNodeId
   semantic_id : SemanticId?
   role : SemanticsRole
-  level : Int?
+  level : Int32?
   url : String
   label : String
   value : String
@@ -1602,7 +1602,7 @@ pub(all) struct SemanticsNode {
   live : SemanticsLive
   live_atomic : Bool
   actions : Array[SemanticsActionKind]
-  focus_order : Int?
+  focus_order : Int32?
   frame : Rect
   children : Array[SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
@@ -1614,9 +1614,9 @@ pub fn SemanticsNode::to_repr(Self) -> @debug.Repr
 pub struct SemanticsNodeId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
-pub fn SemanticsNodeId::compare(Self, Self) -> Int
+pub fn SemanticsNodeId::compare(Self, Self) -> Int32
 pub fn SemanticsNodeId::equal(Self, Self) -> Bool
-pub fn SemanticsNodeId::hash(Self) -> Int
+pub fn SemanticsNodeId::hash(Self) -> Int32
 pub fn SemanticsNodeId::hash_combine(Self, Hasher) -> Unit
 pub fn SemanticsNodeId::new(UInt64) -> Self
 pub fn SemanticsNodeId::not_equal(Self, Self) -> Bool
@@ -1644,7 +1644,7 @@ pub fn SemanticsNumericValue::to_json(Self) -> Json
 pub fn SemanticsNumericValue::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsPathSegment {
-  index : Int
+  index : Int32
   role : SemanticsRole?
   label : String?
   value : String?
@@ -1803,11 +1803,11 @@ pub fn SemanticsTarget::to_repr(Self) -> @debug.Repr
 
 pub(all) struct SemanticsTextValue {
   selection : TextRange?
-  caret : Int?
+  caret : Int32?
   editable : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsTextValue::equal(Self, Self) -> Bool
-pub fn SemanticsTextValue::new(selection? : TextRange, caret? : Int, editable? : Bool) -> Self
+pub fn SemanticsTextValue::new(selection? : TextRange, caret? : Int32, editable? : Bool) -> Self
 pub fn SemanticsTextValue::not_equal(Self, Self) -> Bool
 pub fn SemanticsTextValue::to_json(Self) -> Json
 pub fn SemanticsTextValue::to_repr(Self) -> @debug.Repr
@@ -1913,7 +1913,7 @@ pub fn[Msg] Subscription::none() -> Self[Msg]
 pub fn[Msg] Subscription::route_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::run(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::runtime_sources(Self[Msg]) -> Array[SubscriptionRuntimeSource[Msg]]
-pub fn[Msg] Subscription::runtime_visit(Self[Msg], (Int) -> Unit, (Int, Int) -> Unit, (Int, SubscriptionDescriptor) -> Unit) -> Unit
+pub fn[Msg] Subscription::runtime_visit(Self[Msg], (Int32) -> Unit, (Int32, Int32) -> Unit, (Int32, SubscriptionDescriptor) -> Unit) -> Unit
 pub fn[Msg] Subscription::timer(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 
@@ -1989,7 +1989,7 @@ pub(all) enum TextCaretDirection {
 }
 
 pub(all) struct TextCaretMoveResult {
-  caret : Int
+  caret : Int32
   selection : TextRange?
 }
 
@@ -2006,9 +2006,9 @@ pub fn TextCommandResult::to_json(Self) -> Json
 pub fn TextCommandResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextControlStateContext {
-  caret : Int
+  caret : Int32
   selection : TextRange?
-  text_selection_anchor : Int?
+  text_selection_anchor : Int32?
   text_selection_origin : Point?
   composition : String?
   composition_cursor : TextRange?
@@ -2022,10 +2022,10 @@ pub fn TextControlStateContext::to_json(Self) -> Json
 pub fn TextControlStateContext::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextHistoryEntryContext {
-  start : Int
+  start : Int32
   before : String
   after : String
-  caret : Int
+  caret : Int32
   selection : TextRange?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextHistoryEntryContext::equal(Self, Self) -> Bool
@@ -2043,7 +2043,7 @@ pub(all) enum TextInputEvent {
   CompositionUpdate(CompositionUpdate)
   CompositionEnd(String)
   DeleteRange(TextRange)
-  DeleteSurrounding(Int, Int)
+  DeleteSurrounding(Int32, Int32)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextInputEvent::equal(Self, Self) -> Bool
 pub fn TextInputEvent::not_equal(Self, Self) -> Bool
@@ -2053,7 +2053,7 @@ pub fn TextInputEvent::to_repr(Self) -> @debug.Repr
 pub(all) struct TextInputState {
   focused : Bool
   text : String
-  caret : Int
+  caret : Int32
   selection : TextRange?
   composition : String?
   composition_cursor : TextRange?
@@ -2088,8 +2088,8 @@ pub fn TextLayoutResult::to_json(Self) -> Json
 pub fn TextLayoutResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextParagraphHitTestResult {
-  offset : Int
-  line_index : Int
+  offset : Int32
+  line_index : Int32
   caret_rect : Rect
   is_inside : Bool
 } derive(Eq, ToJson, @debug.Debug)
@@ -2121,17 +2121,17 @@ pub(all) struct TextParagraphLayoutResult {
   visual_order : TextParagraphVisualOrderMetadata
   metadata : TextParagraphLayoutMetadata
 } derive(Eq, ToJson, @debug.Debug)
-pub fn TextParagraphLayoutResult::caret_rect_at(Self, Int) -> Rect
+pub fn TextParagraphLayoutResult::caret_rect_at(Self, Int32) -> Rect
 pub fn TextParagraphLayoutResult::equal(Self, Self) -> Bool
 pub fn TextParagraphLayoutResult::hit_test(Self, Point) -> TextParagraphHitTestResult
-pub fn TextParagraphLayoutResult::line_count(Self) -> Int
+pub fn TextParagraphLayoutResult::line_count(Self) -> Int32
 pub fn TextParagraphLayoutResult::not_equal(Self, Self) -> Bool
 pub fn TextParagraphLayoutResult::selection_rects(Self, TextRange) -> Array[Rect]
 pub fn TextParagraphLayoutResult::to_json(Self) -> Json
 pub fn TextParagraphLayoutResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextParagraphLineMetrics {
-  line_index : Int
+  line_index : Int32
   text_range : TextRange
   origin : Point
   size : Size
@@ -2145,10 +2145,10 @@ pub fn TextParagraphLineMetrics::to_repr(Self) -> @debug.Repr
 pub(all) struct TextParagraphVisualOrderMetadata {
   logical_text : String
   visual_text : String
-  logical_cluster_count : Int
-  visual_cluster_count : Int
-  segment_count : Int
-  glyph_count : Int
+  logical_cluster_count : Int32
+  visual_cluster_count : Int32
+  segment_count : Int32
+  glyph_count : Int32
   visual_order_differs : Bool
   bidi_visual_order_ready : Bool
 } derive(Eq, ToJson, @debug.Debug)
@@ -2158,13 +2158,13 @@ pub fn TextParagraphVisualOrderMetadata::to_json(Self) -> Json
 pub fn TextParagraphVisualOrderMetadata::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TextRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, ToJson, @debug.Debug)
-pub fn TextRange::collapsed(Int) -> Self
+pub fn TextRange::collapsed(Int32) -> Self
 pub fn TextRange::equal(Self, Self) -> Bool
 pub fn TextRange::is_collapsed(Self) -> Bool
-pub fn TextRange::new(start~ : Int, end~ : Int) -> Self
+pub fn TextRange::new(start~ : Int32, end~ : Int32) -> Self
 pub fn TextRange::normalized(Self) -> Self
 pub fn TextRange::not_equal(Self, Self) -> Bool
 pub fn TextRange::to_json(Self) -> Json
@@ -2410,7 +2410,7 @@ pub fn[Msg] View::on_tap_with_frame(Self[Msg], (Point, Rect) -> Msg) -> Self[Msg
 pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::paint(Self[Msg], ViewPaintContext) -> ViewPaintPlan
-pub fn[Msg] View::place_overlays(Self[Msg], OverlayPlacementContext) -> Array[(Int, Rect)]?
+pub fn[Msg] View::place_overlays(Self[Msg], OverlayPlacementContext) -> Array[(Int32, Rect)]?
 pub fn[Msg] View::platform_views(Self[Msg], ViewPlatformContext) -> Array[PlatformViewPlacement]
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
@@ -2425,7 +2425,7 @@ pub fn[Msg] View::semantics_composition(Self[Msg], SemanticsComposition) -> Self
 pub fn[Msg] View::semantics_description(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::semantics_expanded(Self[Msg], expanded? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_invalid(Self[Msg], invalid? : Bool) -> Self[Msg]
-pub fn[Msg] View::semantics_level(Self[Msg], Int) -> Self[Msg]
+pub fn[Msg] View::semantics_level(Self[Msg], Int32) -> Self[Msg]
 pub fn[Msg] View::semantics_live(Self[Msg], SemanticsLive, live_atomic? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_numeric(Self[Msg], SemanticsNumericValue) -> Self[Msg]
 pub fn[Msg] View::semantics_pressed(Self[Msg], pressed? : Bool) -> Self[Msg]
@@ -2555,12 +2555,12 @@ pub(all) struct ViewPaintContext {
 pub(all) struct ViewPaintLayer {
   frame : Rect
   cache_key : String
-  content_revision : Int
+  content_revision : Int32
   commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
 } derive(Eq, @debug.Debug)
 pub fn ViewPaintLayer::equal(Self, Self) -> Bool
-pub fn ViewPaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand]) -> Self
+pub fn ViewPaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int32, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand]) -> Self
 pub fn ViewPaintLayer::not_equal(Self, Self) -> Bool
 pub fn ViewPaintLayer::to_repr(Self) -> @debug.Repr
 
@@ -2632,7 +2632,7 @@ pub(all) struct ViewSemanticsInfo {
   composition : SemanticsComposition
   semantic_id : SemanticId?
   role : SemanticsRole?
-  level : Int?
+  level : Int32?
   url : String?
   label : String?
   value : String?
@@ -2657,7 +2657,7 @@ pub(all) struct ViewSemanticsInfo {
   live_atomic : Bool?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ViewSemanticsInfo::equal(Self, Self) -> Bool
-pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : SemanticsCheckedState, expanded? : Bool, invalid? : Bool, required? : Bool, read_only? : Bool, busy? : Bool, multiline? : Bool, password? : Bool, modal? : Bool, numeric? : SemanticsNumericValue, text? : SemanticsTextValue, collection? : SemanticsCollectionInfo, relations? : SemanticsRelationsDeclaration, live? : SemanticsLive, live_atomic? : Bool) -> Self
+pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int32, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : SemanticsCheckedState, expanded? : Bool, invalid? : Bool, required? : Bool, read_only? : Bool, busy? : Bool, multiline? : Bool, password? : Bool, modal? : Bool, numeric? : SemanticsNumericValue, text? : SemanticsTextValue, collection? : SemanticsCollectionInfo, relations? : SemanticsRelationsDeclaration, live? : SemanticsLive, live_atomic? : Bool) -> Self
 pub fn ViewSemanticsInfo::not_equal(Self, Self) -> Bool
 pub fn ViewSemanticsInfo::overlaying(Self, Self) -> Self
 pub fn ViewSemanticsInfo::to_json(Self) -> Json
@@ -2743,7 +2743,7 @@ pub(open) trait ViewNode {
   fn child_environment(Self, Environment) -> Environment = _
   fn child_style(Self, ViewStyle) -> ViewStyle = _
   fn layout(Self, ViewLayoutContext) -> ViewLayoutResult
-  fn place_overlays(Self, OverlayPlacementContext) -> Array[(Int, Rect)]? = _
+  fn place_overlays(Self, OverlayPlacementContext) -> Array[(Int32, Rect)]? = _
   fn paint(Self, ViewPaintContext) -> ViewPaintPlan = _
   fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
@@ -2760,7 +2760,7 @@ pub(open) trait ViewStateValue {
   fn decode_view_state(Self, Bytes) -> Self?
 }
 pub impl ViewStateValue for Bool
-pub impl ViewStateValue for Int
+pub impl ViewStateValue for Int32
 pub impl ViewStateValue for Double
 pub impl ViewStateValue for String
 pub impl ViewStateValue for Bytes

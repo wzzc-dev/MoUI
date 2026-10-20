@@ -10,7 +10,7 @@ pub fn encode_key(@core.KeyboardEvent) -> String?
 
 pub fn[Msg] keyboard_input(@core.View[Msg], (@core.KeyboardEvent) -> Msg?, (String) -> Msg?) -> @core.View[Msg]
 
-pub fn[Msg] terminal_selection_input(@core.View[Msg], (Int, Int) -> Msg?, (Int, Int) -> Msg?, () -> Msg?, cell_width~ : Double, cell_height~ : Double, scroll_offset~ : Int, total_lines~ : Int, rows~ : Int, cols~ : Int) -> @core.View[Msg]
+pub fn[Msg] terminal_selection_input(@core.View[Msg], (Int32, Int32) -> Msg?, (Int32, Int32) -> Msg?, () -> Msg?, cell_width~ : Double, cell_height~ : Double, scroll_offset~ : Int32, total_lines~ : Int32, rows~ : Int32, cols~ : Int32) -> @core.View[Msg]
 
 // Errors
 
@@ -21,13 +21,13 @@ pub struct TerminalKeyboardNode {
 pub struct TerminalSelectionNode {
   cell_width : Double
   cell_height : Double
-  scroll_offset : Int
-  total_lines : Int
-  rows : Int
-  cols : Int
+  scroll_offset : Int32
+  total_lines : Int32
+  rows : Int32
+  cols : Int32
 }
-pub fn TerminalSelectionNode::cell_at(Self, @core.Point, @core.Rect) -> (Int, Int)
-pub fn TerminalSelectionNode::new(cell_width~ : Double, cell_height~ : Double, scroll_offset~ : Int, total_lines~ : Int, rows~ : Int, cols~ : Int) -> Self
+pub fn TerminalSelectionNode::cell_at(Self, @core.Point, @core.Rect) -> (Int32, Int32)
+pub fn TerminalSelectionNode::new(cell_width~ : Double, cell_height~ : Double, scroll_offset~ : Int32, total_lines~ : Int32, rows~ : Int32, cols~ : Int32) -> Self
 
 // Type aliases
 

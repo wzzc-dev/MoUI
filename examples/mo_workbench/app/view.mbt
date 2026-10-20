@@ -377,8 +377,8 @@ fn new_task_section(
 ///|
 fn sidebar_fine_font(
   theme : @moui.Theme,
-  size_delta? : Double = -1.0,
-  weight? : Int = 300,
+  size_delta~ : Double = -1.0,
+  weight~ : Int32 = 300,
 ) -> @text.FontSpec {
   let base = theme.typography.caption
   { ..base, size: (base.size + size_delta).max(10.0), weight, }
@@ -387,8 +387,8 @@ fn sidebar_fine_font(
 ///|
 fn sidebar_control_font(
   theme : @moui.Theme,
-  size_delta? : Double = -0.5,
-  weight? : Int = 300,
+  size_delta~ : Double = -0.5,
+  weight~ : Int32 = 300,
 ) -> @text.FontSpec {
   let base = theme.typography.control
   { ..base, size: (base.size + size_delta).max(10.0), weight, }
@@ -397,8 +397,8 @@ fn sidebar_control_font(
 ///|
 fn sidebar_control_theme(
   theme : @moui.Theme,
-  size_delta? : Double = -0.5,
-  weight? : Int = 300,
+  size_delta~ : Double = -0.5,
+  weight~ : Int32 = 300,
 ) -> @moui.Theme {
   theme.with_typography({
     ..theme.typography,
@@ -611,7 +611,7 @@ fn sidebar_task_content_top() -> Double {
 }
 
 ///|
-fn sidebar_task_prefix_height(count : Int) -> Double {
+fn sidebar_task_prefix_height(count : Int32) -> Double {
   if count <= 0 {
     0.0
   } else {
@@ -621,19 +621,19 @@ fn sidebar_task_prefix_height(count : Int) -> Double {
 }
 
 ///|
-fn sidebar_task_suffix_height(count : Int) -> Double {
+fn sidebar_task_suffix_height(count : Int32) -> Double {
   sidebar_task_prefix_height(count)
 }
 
 ///|
 fn sidebar_visible_window(
-  count : Int,
+  count : Int32,
   offset : Double,
   viewport : Double,
   content_top : Double,
   spacing : Double,
-  overscan : Int,
-) -> (Int, Int) {
+  overscan : Int32,
+) -> (Int32, Int32) {
   if count <= 0 {
     return (0, 0)
   }
@@ -1123,7 +1123,7 @@ fn sandbox_mode_from_id(id : String) -> SandboxMode {
 }
 
 ///|
-fn truncate_text(text : String, max : Int) -> String {
+fn truncate_text(text : String, max : Int32) -> String {
   let chars = text.to_array()
   if chars.length() <= max {
     text

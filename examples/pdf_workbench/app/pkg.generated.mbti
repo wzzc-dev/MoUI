@@ -19,7 +19,7 @@ pub struct PdfWorkbenchApp {
   unit : Unit
 }
 pub fn PdfWorkbenchApp::new() -> Self
-pub fn PdfWorkbenchApp::program(Self, environment? : @services.AppEnvironment, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg]
+pub fn PdfWorkbenchApp::program(Self, environment? : @services.AppEnvironment, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int32) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg]
 
 pub(all) struct PdfWorkbenchCropBox {
   left : Double
@@ -35,8 +35,8 @@ pub fn PdfWorkbenchCropBox::to_repr(Self) -> @debug.Repr
 pub(all) struct PdfWorkbenchDocument {
   path : String
   original_bytes : Bytes
-  page_count : Int
-  selected_page : Int
+  page_count : Int32
+  selected_page : Int32
   extracted_text : String
   dirty : Bool
   writeback_available : Bool
@@ -54,16 +54,16 @@ pub(all) struct PdfWorkbenchDocument {
 }
 pub fn PdfWorkbenchDocument::discard_edits(Self) -> Self
 pub fn PdfWorkbenchDocument::from_bytes(path~ : String, bytes~ : Bytes) -> PdfWorkbenchLoadResult
-pub fn PdfWorkbenchDocument::from_engine_summary(path~ : String, original_bytes~ : Bytes, page_count~ : Int, selected_page~ : Int, extracted_text~ : String, dirty~ : Bool, writeback_available? : Bool, edits? : Array[PdfWorkbenchEdit], unsupported_entries? : Array[String], page_summaries? : Array[PdfWorkbenchPageSummary], metadata_summary? : String, metadata_title? : String, outline_summary? : String, annotation_summary? : String) -> PdfWorkbenchLoadResult
-pub fn PdfWorkbenchDocument::next_search_page(Self, String) -> Int?
-pub fn PdfWorkbenchDocument::previous_search_page(Self, String) -> Int?
-pub fn PdfWorkbenchDocument::search_count(Self, String) -> Int
-pub fn PdfWorkbenchDocument::search_match_pages(Self, String) -> Array[Int]
-pub fn PdfWorkbenchDocument::search_match_position(Self, String, Int) -> Int?
+pub fn PdfWorkbenchDocument::from_engine_summary(path~ : String, original_bytes~ : Bytes, page_count~ : Int32, selected_page~ : Int32, extracted_text~ : String, dirty~ : Bool, writeback_available? : Bool, edits? : Array[PdfWorkbenchEdit], unsupported_entries? : Array[String], page_summaries? : Array[PdfWorkbenchPageSummary], metadata_summary? : String, metadata_title? : String, outline_summary? : String, annotation_summary? : String) -> PdfWorkbenchLoadResult
+pub fn PdfWorkbenchDocument::next_search_page(Self, String) -> Int32?
+pub fn PdfWorkbenchDocument::previous_search_page(Self, String) -> Int32?
+pub fn PdfWorkbenchDocument::search_count(Self, String) -> Int32
+pub fn PdfWorkbenchDocument::search_match_pages(Self, String) -> Array[Int32]
+pub fn PdfWorkbenchDocument::search_match_position(Self, String, Int32) -> Int32?
 pub fn PdfWorkbenchDocument::selected_summary(Self) -> PdfWorkbenchPageSummary
 pub fn PdfWorkbenchDocument::undo_last_edit(Self) -> Self?
 pub fn PdfWorkbenchDocument::with_edit(Self, PdfWorkbenchEdit) -> Self
-pub fn PdfWorkbenchDocument::with_page_count_from_raster(Self, Int) -> Self
+pub fn PdfWorkbenchDocument::with_page_count_from_raster(Self, Int32) -> Self
 
 pub struct PdfWorkbenchDocumentServices {
   load : (String, Bytes) -> PdfWorkbenchLoadResult
@@ -80,12 +80,12 @@ pub(all) enum PdfWorkbenchDocumentWritebackResult {
 }
 
 pub(all) enum PdfWorkbenchEdit {
-  RotatePage(Int, Int)
-  CropPage(Int, PdfWorkbenchCropBox)
-  StampText(Int, String)
+  RotatePage(Int32, Int32)
+  CropPage(Int32, PdfWorkbenchCropBox)
+  StampText(Int32, String)
   SetMetadataTitle(String)
-  AddBookmark(Int, String)
-  AddTextAnnotation(Int, String)
+  AddBookmark(Int32, String)
+  AddTextAnnotation(Int32, String)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PdfWorkbenchEdit::equal(Self, Self) -> Bool
 pub fn PdfWorkbenchEdit::not_equal(Self, Self) -> Bool
@@ -112,13 +112,13 @@ pub struct PdfWorkbenchModel {
   bookmark_title_draft : String
   annotation_text_draft : String
   page_number_draft : String
-  startup_page_after_load : Int?
+  startup_page_after_load : Int32?
   pending_operation : PdfWorkbenchOperation?
   zoom : Double
   last_event : String
 }
 pub fn PdfWorkbenchModel::new() -> Self
-pub fn PdfWorkbenchModel::program(Self, environment? : @services.AppEnvironment, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int) -> @core.Program[Self, PdfWorkbenchMsg]
+pub fn PdfWorkbenchModel::program(Self, environment? : @services.AppEnvironment, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int32) -> @core.Program[Self, PdfWorkbenchMsg]
 
 pub enum PdfWorkbenchMsg {
   OpenRequested
@@ -133,7 +133,7 @@ pub enum PdfWorkbenchMsg {
   RasterCompleted(PdfWorkbenchRasterRequest, PdfWorkbenchRasterResponse)
   PreviousPage
   NextPage
-  SelectPage(Int)
+  SelectPage(Int32)
   SearchChanged(String)
   SearchPrevious
   SearchNext
@@ -171,7 +171,7 @@ pub fn PdfWorkbenchOperation::equal(Self, Self) -> Bool
 pub fn PdfWorkbenchOperation::not_equal(Self, Self) -> Bool
 
 pub(all) struct PdfWorkbenchPageSummary {
-  page_number : Int
+  page_number : Int32
   text_preview : String
   content_diagnostic : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -182,11 +182,11 @@ pub fn PdfWorkbenchPageSummary::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PdfWorkbenchRasterPage {
   cache_key : String
-  page_number : Int
+  page_number : Int32
   zoom : Double
-  page_count : Int
-  width_px : Int
-  height_px : Int
+  page_count : Int32
+  width_px : Int32
+  height_px : Int32
   image_source : String
   diagnostic : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -198,10 +198,10 @@ pub fn PdfWorkbenchRasterPage::to_repr(Self) -> @debug.Repr
 pub(all) struct PdfWorkbenchRasterRequest {
   path : String
   bytes : Bytes
-  page_number : Int
+  page_number : Int32
   zoom : Double
-  dpi : Int
-  max_pixel_edge : Int
+  dpi : Int32
+  max_pixel_edge : Int32
   cache_key : String
 }
 

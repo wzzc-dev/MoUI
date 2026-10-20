@@ -12,7 +12,7 @@ pub fn create_windows_webview_plugin(@host.WebViewHost) -> @backend.PlatformView
 
 pub fn dispose_windows_platform_views(@wzzc-dev/window/windows.Window) -> Unit
 
-pub fn drain_windows_webview_commands(@wzzc-dev/window/windows.Window, @host.WebViewHost) -> Int
+pub fn drain_windows_webview_commands(@wzzc-dev/window/windows.Window, @host.WebViewHost) -> Int32
 
 pub fn install_windows_webview_event_dispatcher(@host.WebViewHost, (UInt64, String, @core.PlatformViewEvent) -> Unit) -> Unit
 

@@ -12,7 +12,7 @@ import {
 // Values
 pub const SETTINGS_STORAGE_KEY : String = "mo_desktop:desktop"
 
-pub const SNAPSHOT_SCHEMA_VERSION : Int = 4
+pub const SNAPSHOT_SCHEMA_VERSION : Int32 = 4
 
 pub fn app_registry() -> Array[AppDescriptor]
 
@@ -37,7 +37,7 @@ pub(all) struct AppDescriptor {
   color : @core.Color
   default_width : Double
   default_height : Double
-  dock_priority : Int
+  dock_priority : Int32
 } derive(Eq, @debug.Debug)
 pub fn AppDescriptor::equal(Self, Self) -> Bool
 pub fn AppDescriptor::not_equal(Self, Self) -> Bool
@@ -85,16 +85,16 @@ pub fn BrowserPage::not_equal(Self, Self) -> Bool
 pub fn BrowserPage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopClock {
-  year : Int
-  month : Int
-  day : Int
-  weekday : Int
-  hour : Int
-  minute : Int
-  second : Int
+  year : Int32
+  month : Int32
+  day : Int32
+  weekday : Int32
+  hour : Int32
+  minute : Int32
+  second : Int32
 } derive(Eq, @debug.Debug)
 pub fn DesktopClock::equal(Self, Self) -> Bool
-pub fn DesktopClock::new(Int, Int, Int, Int, Int, Int, second? : Int) -> Self
+pub fn DesktopClock::new(Int32, Int32, Int32, Int32, Int32, Int32, second? : Int32) -> Self
 pub fn DesktopClock::not_equal(Self, Self) -> Bool
 pub fn DesktopClock::to_repr(Self) -> @debug.Repr
 
@@ -127,15 +127,15 @@ pub(all) struct DesktopModel {
   wallpaper_source : String
   phase : SessionPhase
   windows : Array[WindowRecord]
-  next_window_serial : Int
-  next_z_order : Int
+  next_window_serial : Int32
+  next_z_order : Int32
   overlay : DesktopOverlay
   appearance : AppearanceMode
   dark_mode : Bool
   clock : DesktopClock
   finder_location : FinderLocation
   finder_history : Array[FinderLocation]
-  finder_history_index : Int
+  finder_history_index : Int32
   finder_view_mode : FinderViewMode
   finder_query : String
   selected_file : String
@@ -145,7 +145,7 @@ pub(all) struct DesktopModel {
   browser_query : String
   browser_page : BrowserPage
   browser_tab_titles : Array[String]
-  browser_active_tab : Int
+  browser_active_tab : Int32
   wifi_enabled : Bool
   bluetooth_enabled : Bool
   low_power_mode : Bool
@@ -158,10 +158,10 @@ pub(all) struct DesktopModel {
   imported_files : Array[String]
   icon_placements : Array[DesktopIconPlacement]
   notes : Array[String]
-  active_note : Int
+  active_note : Int32
   terminal_lines : Array[String]
   terminal_input : String
-  boot_ticks : Int
+  boot_ticks : Int32
   login_password : String
   language : AppLanguage
   pending_service : DesktopService?
@@ -177,10 +177,10 @@ pub fn DesktopModel::has_visible_window(Self, AppKind) -> Bool
 pub fn DesktopModel::minimize_window(Self, WindowId) -> Self
 pub fn DesktopModel::move_icon_by(Self, String, Double, Double) -> Self
 pub fn DesktopModel::new(wallpaper_source? : String, clock? : DesktopClock) -> Self
-pub fn DesktopModel::note_title(Self, Int) -> String
+pub fn DesktopModel::note_title(Self, Int32) -> String
 pub fn DesktopModel::open_or_focus(Self, AppKind) -> Self
 pub fn DesktopModel::persisted_snapshot(Self) -> DesktopSnapshot
-pub fn DesktopModel::remaining_tasks(Self) -> Int
+pub fn DesktopModel::remaining_tasks(Self) -> Int32
 pub fn DesktopModel::resize_window(Self, WindowId, Double, Double) -> Self
 pub fn DesktopModel::restore_snapshot(Self, DesktopSnapshot) -> Self
 pub fn DesktopModel::task_done(Self, DesktopTask) -> Bool
@@ -214,7 +214,7 @@ pub fn DesktopService::not_equal(Self, Self) -> Bool
 pub fn DesktopService::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DesktopSnapshot {
-  schema_version : Int
+  schema_version : Int32
   dark_mode : Bool
   wallpaper_source : String
   volume : Double
@@ -330,8 +330,8 @@ pub(all) enum Msg {
   DesktopSettingsResetCompleted(@services.ServiceTaskResult[Unit])
   LaunchApp(AppKind)
   AddNote
-  SelectNote(Int)
-  DeleteNote(Int)
+  SelectNote(Int32)
+  DeleteNote(Int32)
   NoteBodyChanged(String)
   TerminalInputChanged(String)
   RunTerminalCommand
@@ -356,8 +356,8 @@ pub(all) enum Msg {
   SubmitBrowserQuery
   ShowBrowserStartPage
   NewBrowserTab
-  SelectBrowserTab(Int)
-  CloseBrowserTab(Int)
+  SelectBrowserTab(Int32)
+  CloseBrowserTab(Int32)
   OpenFavorite(String)
   ToggleDarkMode
   UseSystemAppearance
@@ -399,7 +399,7 @@ pub fn WindowBounds::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WindowId {
   app : AppKind
-  serial : Int
+  serial : Int32
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn WindowId::equal(Self, Self) -> Bool
 pub fn WindowId::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
@@ -411,7 +411,7 @@ pub(all) struct WindowRecord {
   id : WindowId
   state : WindowState
   bounds : WindowBounds
-  z_order : Int
+  z_order : Int32
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn WindowRecord::equal(Self, Self) -> Bool
 pub fn WindowRecord::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError

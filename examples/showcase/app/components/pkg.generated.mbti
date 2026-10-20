@@ -115,10 +115,10 @@ pub(all) struct ComponentGalleryModel {
   selected_density : String
   feature_enabled : Bool
   slider_value : Double
-  counter : Int
+  counter : Int32
   probe_text : String
-  probe_action_count : Int
-  probe_submit_count : Int
+  probe_action_count : Int32
+  probe_submit_count : Int32
   probe_dialog_open : Bool
   checkbox_group_selection : Array[String]
 }

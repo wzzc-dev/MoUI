@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn throwaway_bind_count() -> Int
+pub fn throwaway_bind_count() -> Int32
 
 pub fn throwaway_provider() -> @render.RendererProvider
 

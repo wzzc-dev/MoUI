@@ -15,11 +15,11 @@ pub fn encode_host_string(String) -> Bytes
 
 pub fn encode_menu_commands(Array[@core.ActionCommand]) -> Bytes
 
-pub fn host_file_dialog_kind_code(@backend.HostFileDialogKind) -> Int
+pub fn host_file_dialog_kind_code(@backend.HostFileDialogKind) -> Int32
 
-pub fn menu_command_response(Array[@core.ActionCommand], Int) -> @backend.HostServiceResponse
+pub fn menu_command_response(Array[@core.ActionCommand], Int32) -> @backend.HostServiceResponse
 
-pub fn menu_command_response_with_unavailable(Array[@core.ActionCommand], Int) -> @backend.HostServiceResponse
+pub fn menu_command_response_with_unavailable(Array[@core.ActionCommand], Int32) -> @backend.HostServiceResponse
 
 // Errors
 

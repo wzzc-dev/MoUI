@@ -28,20 +28,20 @@ pub struct HostModalSession {
   mut close_emitted : Bool
   mut transform : HostModalInputTransform
 }
-pub fn HostModalSession::accept(Self, Int, Int) -> @backend.HostModalEvent?
-pub fn HostModalSession::apply_result(Self, Int, Int, @backend.HostModalResult) -> @backend.HostModalEvent?
-pub fn HostModalSession::attach_surface(Self, String, Int) -> Bool
-pub fn HostModalSession::attach_surface_event(Self, String, Int) -> @backend.HostModalEvent?
+pub fn HostModalSession::accept(Self, Int32, Int32) -> @backend.HostModalEvent?
+pub fn HostModalSession::apply_result(Self, Int32, Int32, @backend.HostModalResult) -> @backend.HostModalEvent?
+pub fn HostModalSession::attach_surface(Self, String, Int32) -> Bool
+pub fn HostModalSession::attach_surface_event(Self, String, Int32) -> @backend.HostModalEvent?
 pub fn HostModalSession::begin(Self) -> @backend.HostModalEvent
-pub fn HostModalSession::close(Self, Int, Int) -> @backend.HostModalEvent?
-pub fn HostModalSession::detach_surface(Self, String, Int) -> Bool
-pub fn HostModalSession::detach_surface_event(Self, String, Int) -> @backend.HostModalEvent?
-pub fn HostModalSession::is_current(Self, Int, Int) -> Bool
+pub fn HostModalSession::close(Self, Int32, Int32) -> @backend.HostModalEvent?
+pub fn HostModalSession::detach_surface(Self, String, Int32) -> Bool
+pub fn HostModalSession::detach_surface_event(Self, String, Int32) -> @backend.HostModalEvent?
+pub fn HostModalSession::is_current(Self, Int32, Int32) -> Bool
 pub fn HostModalSession::is_native_only(Self) -> Bool
 pub fn HostModalSession::new(@backend.HostModalRequest) -> Self
-pub fn HostModalSession::reject(Self, Int, Int, String) -> @backend.HostModalEvent?
+pub fn HostModalSession::reject(Self, Int32, Int32, String) -> @backend.HostModalEvent?
 pub fn HostModalSession::request(Self) -> @backend.HostModalRequest
-pub fn HostModalSession::route_input(Self, Int, Int, @core.PointerEvent) -> @backend.HostModalEvent?
+pub fn HostModalSession::route_input(Self, Int32, Int32, @core.PointerEvent) -> @backend.HostModalEvent?
 pub fn HostModalSession::set_input_transform(Self, offset~ : @core.Point, scale~ : @core.Point) -> Unit
 pub fn HostModalSession::state(Self) -> HostModalSessionState
 pub fn HostModalSession::surface(Self) -> HostModalSurface?
@@ -60,7 +60,7 @@ pub fn HostModalSessionState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostModalSurface {
   token : String
-  generation : Int
+  generation : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostModalSurface::equal(Self, Self) -> Bool
 pub fn HostModalSurface::not_equal(Self, Self) -> Bool

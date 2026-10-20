@@ -115,7 +115,7 @@ pub fn RouteHistoryEntry::to_repr(Self) -> @debug.Repr
 
 pub struct RouteHistoryState {
   entries : Array[RouteHistoryEntry]
-  cursor : Int
+  cursor : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RouteHistoryState::back(Self) -> Self
 pub fn RouteHistoryState::can_go_back(Self) -> Bool
@@ -123,12 +123,12 @@ pub fn RouteHistoryState::can_go_forward(Self) -> Bool
 pub fn RouteHistoryState::current(Self) -> RouteLocation
 pub fn RouteHistoryState::current_entry(Self) -> RouteHistoryEntry?
 pub fn RouteHistoryState::current_route(Self) -> String
-pub fn RouteHistoryState::cursor(Self) -> Int
+pub fn RouteHistoryState::cursor(Self) -> Int32
 pub fn RouteHistoryState::entries(Self) -> Array[RouteHistoryEntry]
 pub fn RouteHistoryState::equal(Self, Self) -> Bool
 pub fn RouteHistoryState::forward(Self) -> Self
 pub fn RouteHistoryState::from_deep_link(String, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int32, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::from_snapshot(RouterSnapshot, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::new(initial? : RouteLocation, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::not_equal(Self, Self) -> Bool

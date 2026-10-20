@@ -27,7 +27,7 @@ pub fn make_surface_metrics(@dpi.PhysicalSize, scale_factor~ : Double) -> @wzzc-
 
 pub fn modifiers_to_core(@wzzc-dev/window/core.Modifiers) -> @wzzc-dev/moui/core.KeyModifiers
 
-pub fn mouse_button_to_core(@wzzc-dev/window/core.MouseButton) -> Int?
+pub fn mouse_button_to_core(@wzzc-dev/window/core.MouseButton) -> Int32?
 
 pub fn mouse_scroll_delta_to_host(@wzzc-dev/window/core.MouseScrollDelta, scale_factor? : Double) -> @backend.HostScrollDelta
 
@@ -102,17 +102,17 @@ pub fn SurfaceState::resize(Self, @wzzc-dev/moui/core.SurfaceMetrics) -> @backen
 
 pub(all) struct TextInputImeRequestDiagnostics {
   focused : Bool
-  text_length : Int
-  text_utf8_length : Int
-  cursor : Int
-  anchor : Int
-  cursor_utf8 : Int
-  anchor_utf8 : Int
+  text_length : Int32
+  text_utf8_length : Int32
+  cursor : Int32
+  anchor : Int32
+  cursor_utf8 : Int32
+  anchor_utf8 : Int32
   cursor_is_grapheme_boundary : Bool
   anchor_is_grapheme_boundary : Bool
   candidate_anchor : @wzzc-dev/moui/core.Rect
   has_surrounding_text : Bool
-  surrounding_text_utf8_length : Int
+  surrounding_text_utf8_length : Int32
   surrounding_text : String?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextInputImeRequestDiagnostics::equal(Self, Self) -> Bool
@@ -123,7 +123,7 @@ pub fn TextInputImeRequestDiagnostics::to_repr(Self) -> @debug.Repr
 pub struct TextInputImeStateKey {
   focused : Bool
   text : String
-  caret : Int
+  caret : Int32
   selection : @wzzc-dev/moui/core.TextRange?
   composition : String?
   composition_cursor : @wzzc-dev/moui/core.TextRange?

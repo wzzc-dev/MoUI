@@ -37,7 +37,7 @@ pub fn RapierWorld::create_body(Self, @moui_3d_physics.BodyDesc) -> @moui_3d_phy
 pub fn RapierWorld::create_collider(Self, @moui_3d_physics.ColliderDesc) -> @moui_3d_physics.ColliderId?
 pub fn RapierWorld::gravity(Self) -> @moui_3d.Vec3
 pub fn RapierWorld::new(gravity? : @moui_3d.Vec3) -> Self
-pub fn RapierWorld::step(Self, Double) -> Int
+pub fn RapierWorld::step(Self, Double) -> Int32
 
 // Type aliases
 

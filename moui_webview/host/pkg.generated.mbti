@@ -15,9 +15,9 @@ pub fn webview_decode_ffi_string(Bytes) -> String
 
 pub fn webview_encode_ffi_string(String) -> Bytes
 
-pub fn webview_encode_native_command(HostWebViewQueuedCommand) -> (Int, UInt64, UInt64, String)
+pub fn webview_encode_native_command(HostWebViewQueuedCommand) -> (Int32, UInt64, UInt64, String)
 
-pub fn webview_utf8_size(String) -> Int
+pub fn webview_utf8_size(String) -> Int32
 
 // Errors
 
@@ -157,9 +157,9 @@ pub fn WebViewChannelPolicy::to_repr(Self) -> @debug.Repr
 pub struct WebViewCommandId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
-pub fn WebViewCommandId::compare(Self, Self) -> Int
+pub fn WebViewCommandId::compare(Self, Self) -> Int32
 pub fn WebViewCommandId::equal(Self, Self) -> Bool
-pub fn WebViewCommandId::hash(Self) -> Int
+pub fn WebViewCommandId::hash(Self) -> Int32
 pub fn WebViewCommandId::hash_combine(Self, Hasher) -> Unit
 pub fn WebViewCommandId::not_equal(Self, Self) -> Bool
 pub fn WebViewCommandId::op_ge(Self, Self) -> Bool
@@ -189,7 +189,7 @@ pub fn WebViewController::id(Self) -> String
 pub fn WebViewController::navigate(Self, String) -> WebViewTask[WebViewCommandReceipt]
 pub fn WebViewController::post_message(Self, channel~ : String, payload~ : Json) -> WebViewTask[WebViewCommandReceipt]
 pub fn WebViewController::reload(Self) -> WebViewTask[WebViewCommandReceipt]
-pub fn WebViewController::request(Self, channel~ : String, payload~ : Json, timeout_ms? : Int) -> WebViewTask[Json]
+pub fn WebViewController::request(Self, channel~ : String, payload~ : Json, timeout_ms? : Int32) -> WebViewTask[Json]
 pub fn WebViewController::respond(Self, request_id~ : WebViewRequestId, result~ : Result[Json, WebViewError]) -> WebViewTask[WebViewCommandReceipt]
 pub fn WebViewController::stop(Self) -> WebViewTask[WebViewCommandReceipt]
 
@@ -247,13 +247,13 @@ pub fn WebViewEvent::to_repr(Self) -> @debug.Repr
 pub struct WebViewHost {
   // private fields
 }
-pub fn WebViewHost::accept_native_event(Self, controller_id~ : String, kind~ : Int, navigation_raw~ : UInt64, url~ : String, detail~ : String, flag~ : Int) -> WebViewEvent?
+pub fn WebViewHost::accept_native_event(Self, controller_id~ : String, kind~ : Int32, navigation_raw~ : UInt64, url~ : String, detail~ : String, flag~ : Int32) -> WebViewEvent?
 pub fn WebViewHost::create_controller(Self, id~ : String, config? : WebViewControllerConfig) -> Result[WebViewController, WebViewError]
-pub fn WebViewHost::drain_commands(Self, (HostWebViewQueuedCommand) -> Unit) -> Int
+pub fn WebViewHost::drain_commands(Self, (HostWebViewQueuedCommand) -> Unit) -> Int32
 pub fn WebViewHost::native_config(Self, String) -> HostWebViewNativeConfig?
 pub fn WebViewHost::new() -> Self
-pub fn WebViewHost::pending_command_count(Self) -> Int
-pub fn WebViewHost::pending_request_count(Self) -> Int
+pub fn WebViewHost::pending_command_count(Self) -> Int32
+pub fn WebViewHost::pending_request_count(Self) -> Int32
 pub fn WebViewHost::poll_timeouts(Self, Int64) -> Int64?
 
 pub(all) struct WebViewNavigation {
@@ -268,9 +268,9 @@ pub fn WebViewNavigation::to_repr(Self) -> @debug.Repr
 pub struct WebViewNavigationId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
-pub fn WebViewNavigationId::compare(Self, Self) -> Int
+pub fn WebViewNavigationId::compare(Self, Self) -> Int32
 pub fn WebViewNavigationId::equal(Self, Self) -> Bool
-pub fn WebViewNavigationId::hash(Self) -> Int
+pub fn WebViewNavigationId::hash(Self) -> Int32
 pub fn WebViewNavigationId::hash_combine(Self, Hasher) -> Unit
 pub fn WebViewNavigationId::not_equal(Self, Self) -> Bool
 pub fn WebViewNavigationId::op_ge(Self, Self) -> Bool
@@ -296,9 +296,9 @@ pub fn WebViewNoDragRegion::to_repr(Self) -> @debug.Repr
 pub struct WebViewOrigin {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
-pub fn WebViewOrigin::compare(Self, Self) -> Int
+pub fn WebViewOrigin::compare(Self, Self) -> Int32
 pub fn WebViewOrigin::equal(Self, Self) -> Bool
-pub fn WebViewOrigin::hash(Self) -> Int
+pub fn WebViewOrigin::hash(Self) -> Int32
 pub fn WebViewOrigin::hash_combine(Self, Hasher) -> Unit
 pub fn WebViewOrigin::not_equal(Self, Self) -> Bool
 pub fn WebViewOrigin::op_ge(Self, Self) -> Bool
@@ -323,9 +323,9 @@ pub fn WebViewPageRequest::to_repr(Self) -> @debug.Repr
 pub struct WebViewRequestId {
   // private fields
 } derive(Compare, Eq, Hash, @debug.Debug)
-pub fn WebViewRequestId::compare(Self, Self) -> Int
+pub fn WebViewRequestId::compare(Self, Self) -> Int32
 pub fn WebViewRequestId::equal(Self, Self) -> Bool
-pub fn WebViewRequestId::hash(Self) -> Int
+pub fn WebViewRequestId::hash(Self) -> Int32
 pub fn WebViewRequestId::hash_combine(Self, Hasher) -> Unit
 pub fn WebViewRequestId::not_equal(Self, Self) -> Bool
 pub fn WebViewRequestId::op_ge(Self, Self) -> Bool
@@ -340,12 +340,12 @@ pub(all) struct WebViewSecurityPolicy {
   allowed_origins : Array[WebViewOrigin]
   allowed_channels : Array[WebViewChannelPolicy]
   allow_file_urls : Bool
-  max_message_bytes : Int
-  max_pending_requests : Int
+  max_message_bytes : Int32
+  max_pending_requests : Int32
 } derive(Eq, @debug.Debug)
 pub fn WebViewSecurityPolicy::deny_all() -> Self
 pub fn WebViewSecurityPolicy::equal(Self, Self) -> Bool
-pub fn WebViewSecurityPolicy::new(allowed_origins? : Array[WebViewOrigin], allowed_channels? : Array[WebViewChannelPolicy], allow_file_urls? : Bool, max_message_bytes? : Int, max_pending_requests? : Int) -> Self
+pub fn WebViewSecurityPolicy::new(allowed_origins? : Array[WebViewOrigin], allowed_channels? : Array[WebViewChannelPolicy], allow_file_urls? : Bool, max_message_bytes? : Int32, max_pending_requests? : Int32) -> Self
 pub fn WebViewSecurityPolicy::not_equal(Self, Self) -> Bool
 pub fn WebViewSecurityPolicy::to_repr(Self) -> @debug.Repr
 

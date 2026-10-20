@@ -8,7 +8,7 @@ import {
 }
 
 // Values
-pub fn apply_window_drag_region(WindowDragRegionSource, Int?, (@core.Rect?) -> Bool) -> Int?
+pub fn apply_window_drag_region(WindowDragRegionSource, Int32?, (@core.Rect?) -> Bool) -> Int32?
 
 // Errors
 
@@ -37,9 +37,9 @@ pub fn AppLifecycleEvent::to_repr(Self) -> @debug.Repr
 pub struct AppLifecycleSource {
   // private fields
 }
-pub fn AppLifecycleSource::active_handler_count(Self) -> Int
+pub fn AppLifecycleSource::active_handler_count(Self) -> Int32
 pub fn AppLifecycleSource::new() -> Self
-pub fn AppLifecycleSource::publish(Self, AppLifecycleEvent) -> Int
+pub fn AppLifecycleSource::publish(Self, AppLifecycleEvent) -> Int32
 pub fn[Msg] AppLifecycleSource::subscription(Self, map~ : (AppLifecycleEvent) -> Msg, key? : String, label? : String) -> @core.Subscription[Msg]
 
 pub struct AppServices {
@@ -153,7 +153,7 @@ pub fn FakeAppServices::clipboard_text(Self) -> String
 pub fn FakeAppServices::new() -> Self
 pub fn FakeAppServices::notification(Self, String) -> NotificationRequest?
 pub fn FakeAppServices::print_requests(Self) -> Array[PrintRequest]
-pub fn FakeAppServices::publish_lifecycle(Self, AppLifecycleEvent) -> Int
+pub fn FakeAppServices::publish_lifecycle(Self, AppLifecycleEvent) -> Int32
 pub fn FakeAppServices::services(Self) -> AppServices
 pub fn FakeAppServices::set_directory_selection(Self, String?) -> Unit
 pub fn FakeAppServices::set_open_file_selection(Self, String?) -> Unit
@@ -241,7 +241,7 @@ pub(all) enum PermissionKind {
   Files
 } derive(Eq, Hash, ToJson, @debug.Debug)
 pub fn PermissionKind::equal(Self, Self) -> Bool
-pub fn PermissionKind::hash(Self) -> Int
+pub fn PermissionKind::hash(Self) -> Int32
 pub fn PermissionKind::hash_combine(Self, Hasher) -> Unit
 pub fn PermissionKind::not_equal(Self, Self) -> Bool
 pub fn PermissionKind::to_json(Self) -> Json
@@ -352,9 +352,9 @@ pub fn RouteQueryParam::to_repr(Self) -> @debug.Repr
 pub struct RouteSource {
   // private fields
 }
-pub fn RouteSource::active_handler_count(Self) -> Int
+pub fn RouteSource::active_handler_count(Self) -> Int32
 pub fn RouteSource::new() -> Self
-pub fn RouteSource::publish(Self, RouteEvent) -> Int
+pub fn RouteSource::publish(Self, RouteEvent) -> Int32
 pub fn[Msg] RouteSource::subscription(Self, map~ : (RouteEvent) -> Msg?, key? : String, label? : String) -> @core.Subscription[Msg]
 
 pub(all) struct ServiceError {
@@ -456,7 +456,7 @@ pub struct WindowDragRegionSource {
 }
 pub fn WindowDragRegionSource::new() -> Self
 pub fn WindowDragRegionSource::region(Self) -> @core.Rect?
-pub fn WindowDragRegionSource::revision(Self) -> Int
+pub fn WindowDragRegionSource::revision(Self) -> Int32
 pub fn WindowDragRegionSource::set_region(Self, @core.Rect?) -> Unit
 pub fn WindowDragRegionSource::unavailable() -> Self
 

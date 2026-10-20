@@ -58,7 +58,6 @@ This file is generated from repository manifests and validator reports.
 | ./examples/code_editor |
 | ./examples/webview_demo |
 | ./examples/momark |
-| ./examples/browser |
 | ./examples/terminal |
 | ./examples/tui_layers |
 | ./examples/ai_world |
@@ -120,7 +119,6 @@ This file is generated from repository manifests and validator reports.
 | Code Editor | examples/code_editor | no |
 | WebView Demo | examples/webview_demo | no |
 | MoMark | examples/momark | no |
-| Browser | examples/browser | no |
 | Terminal | examples/terminal | yes |
 | TUI Layers | examples/tui_layers | no |
 | New World | examples/new_world | yes |

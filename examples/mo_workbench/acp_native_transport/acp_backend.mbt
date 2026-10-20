@@ -9,9 +9,9 @@ pub struct AcpNativeTransportConfig {
 ///|
 pub fn AcpNativeTransportConfig::new(
   command~ : String,
-  args? : Array[String] = [],
-  process_cwd? : String = "",
-  workspace? : String = ".",
+  args~ : Array[String] = [],
+  process_cwd~ : String = "",
+  workspace~ : String = ".",
 ) -> AcpNativeTransportConfig {
   { command, args, process_cwd, workspace, }
 }

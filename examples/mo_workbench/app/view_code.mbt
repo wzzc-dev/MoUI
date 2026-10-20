@@ -101,7 +101,7 @@ fn code_composer_prompt_line_height() -> Double {
 }
 
 ///|
-fn code_composer_prompt_text_area_height(lines : Int) -> Double {
+fn code_composer_prompt_text_area_height(lines : Int32) -> Double {
   lines.to_double() * code_composer_prompt_line_height() + 16.0
 }
 
@@ -110,7 +110,7 @@ fn code_composer_prompt_lines(
   prompt : String,
   theme : @moui.Theme,
   width : Double,
-) -> Int {
+) -> Int32 {
   if prompt.is_empty() {
     2
   } else {
@@ -269,22 +269,8 @@ fn code_agent_controls(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
-  match settings.agent_backend {
-    OpenSeek =>
-      @views.row(
-        [
-          code_model_picker(
-            code,
-            theme,
-            code_model_picker_width(code, max_width=(width - 68.0).max(96.0)),
-          ),
-          code_thinking_picker(code, theme, 65.0),
-        ],
-        spacing=6.0,
-        align=Center,
-      )
-    Acp => acp_agent_controls(code, theme, width)
-  }
+  ignore(settings)
+  acp_agent_controls(code, theme, width)
 }
 
 ///|
@@ -393,7 +379,7 @@ fn acp_config_value_picker(
 ///|
 fn code_model_picker_width(
   code : CodeWorkspace,
-  max_width? : Double = 320.0,
+  max_width~ : Double = 320.0,
 ) -> Double {
   let text_width = code.current_model.to_array().length().to_double() * 7.2 +
     24.0
@@ -458,7 +444,7 @@ fn code_model_dropdown_panel(
 }
 
 ///|
-fn code_model_dropdown_row_count(settings : SettingsWorkspace) -> Int {
+fn code_model_dropdown_row_count(settings : SettingsWorkspace) -> Int32 {
   let base_rows = 2
   match settings.active_provider() {
     Some(p) =>
@@ -531,8 +517,8 @@ fn provider_switcher_row(
 }
 
 ///|
-/// A single model row. OpenSeek-supported models are selectable; custom ids
-/// stay visible but muted until the native backend can parse them.
+/// A single model row. Every advertised model id is selectable; the ACP agent
+/// decides at runtime which ones it can actually serve.
 fn model_option_row(
   provider_id : String,
   model_id : String,
@@ -540,13 +526,8 @@ fn model_option_row(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
-  let supported = mo_workbench_model_supported_by_openseek(model_id)
   let trailing : @moui.View[CodeMsg] = if selected {
     @views.icon(Check, size=16.0, color=workbench_accent(theme))
-  } else if !supported {
-    @views.text("待支持", role=Caption, theme~, width=44.0, height=16.0).foreground(
-      theme.palette.muted,
-    )
   } else {
     @views.container(
       @views.text("", role=Caption, theme~, width=16.0),
@@ -554,7 +535,6 @@ fn model_option_row(
       height=16.0,
     )
   }
-  let label_width = if supported { width - 36.0 } else { width - 64.0 }
   let row = @views.container(
     @views.row(
       [
@@ -562,15 +542,9 @@ fn model_option_row(
           model_id,
           role=Label,
           theme~,
-          width=label_width.max(80.0),
+          width=(width - 36.0).max(80.0),
           height=22.0,
-        ).foreground(
-          if supported {
-            workbench_text(theme)
-          } else {
-            theme.palette.muted
-          },
-        ),
+        ).foreground(workbench_text(theme)),
         trailing,
       ],
       spacing=6.0,
@@ -580,19 +554,13 @@ fn model_option_row(
     height=40.0,
     background=if selected {
       workbench_selector_chip_background(theme)
-    } else if !supported {
-      workbench_subtle_background(theme)
     } else {
       @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
     },
     corner_radius=8.0,
     padding=8.0,
   )
-  if supported {
-    row.on_tap(ModelChanged(provider_id, model_id))
-  } else {
-    row
-  }
+  row.on_tap(ModelChanged(provider_id, model_id))
 }
 
 ///|
@@ -713,7 +681,7 @@ fn workspace_folder_basename(path : String) -> String {
   if end <= 0 {
     path
   } else {
-    let mut last_slash : Int = -1
+    let mut last_slash : Int32 = -1
     for index in 0..<end {
       if chars[index] == '/' || chars[index] == '\\' {
         last_slash = index
@@ -731,7 +699,7 @@ fn workspace_folder_basename(path : String) -> String {
 ///|
 fn workspace_folder_chip_width(
   label : String,
-  max_width? : Double = 320.0,
+  max_width~ : Double = 320.0,
 ) -> Double {
   let text_width = label.to_array().length().to_double() * 8.0 + 52.0
   text_width.max(118.0).min(max_width)
@@ -830,7 +798,7 @@ fn code_heights_total(heights : Array[Double], spacing : Double) -> Double {
 fn code_prefix_height(
   heights : Array[Double],
   spacing : Double,
-  count : Int,
+  count : Int32,
 ) -> Double {
   let mut prefix = 0.0
   let mut i = 0
@@ -854,8 +822,8 @@ fn code_visible_window(
   spacing : Double,
   offset : Double,
   viewport : Double,
-  overscan : Int,
-) -> (Int, Int) {
+  overscan : Int32,
+) -> (Int32, Int32) {
   let n = heights.length()
   if n == 0 {
     return (0, 0)
@@ -961,7 +929,7 @@ fn code_message_window_rows(
 
 ///|
 /// 流式消息的节流 key:优先 message_id(跨 rebuild 稳定),缺失时回退全局下标。
-fn stream_message_key(model : CodeWorkspace, index : Int) -> String {
+fn stream_message_key(model : CodeWorkspace, index : Int32) -> String {
   match model.last_assistant_message_id {
     Some(id) => "msg-\{index}-\{id}"
     None => "msg-\{index}"

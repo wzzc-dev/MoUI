@@ -363,19 +363,15 @@ fn CodeWorkspace::update(
       // The shell intercepts `ModelChanged` to also dispatch the backend
       // `SetModel` with the provider's live connection; this arm keeps the
       // code model in sync if reached directly.
-      if mo_workbench_model_supported_by_openseek(model_id) {
-        (
-          {
-            ..self,
-            current_model: model_id,
-            current_provider_id: Some(provider_id),
-            model_picker_open: false,
-          },
-          @moui.Effect::none(),
-        )
-      } else {
-        (self, @moui.Effect::none())
-      }
+      (
+        {
+          ..self,
+          current_model: model_id,
+          current_provider_id: Some(provider_id),
+          model_picker_open: false,
+        },
+        @moui.Effect::none(),
+      )
     ToggleModelPicker =>
       (
         { ..self, model_picker_open: !self.model_picker_open, },

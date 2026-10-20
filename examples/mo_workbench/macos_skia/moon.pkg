@@ -5,7 +5,6 @@ import {
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/mo_workbench/app",
   "examples/mo_workbench/acp_native_transport" @acp_transport,
-  "examples/mo_workbench/openseek_native_transport" @openseek_transport,
 }
 
 supported_targets = "native"

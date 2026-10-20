@@ -11,27 +11,27 @@ pub fn native_font_registration_bytes(family_name~ : Bytes, data~ : Bytes) -> By
 
 pub fn native_font_registration_from_bytes(Bytes) -> NativeFontRegistrationPayload?
 
-pub let native_font_registration_protocol_version : Int
+pub let native_font_registration_protocol_version : Int32
 
 pub fn native_font_spec_bytes(@core.FontSpec) -> Bytes
 
 pub fn native_font_spec_from_bytes(Bytes) -> NativeFontSpecPayload?
 
-pub let native_font_spec_protocol_version : Int
+pub let native_font_spec_protocol_version : Int32
 
-pub fn native_font_style_code(@core.FontStyle) -> Int
+pub fn native_font_style_code(@core.FontStyle) -> Int32
 
 pub fn native_measure_layout_from_bytes(@core.TextLayoutInput, Bytes) -> @moui_wgpu_renderer.NativeTextLayout?
 
-pub let native_measure_layout_protocol_version : Int
+pub let native_measure_layout_protocol_version : Int32
 
 pub fn native_raster_glyph_from_bytes(Bytes) -> @moui_wgpu_renderer.NativeRasterGlyph?
 
-pub let native_raster_glyph_protocol_version : Int
+pub let native_raster_glyph_protocol_version : Int32
 
 pub fn native_run_layout_from_bytes(Bytes) -> @moui_wgpu_renderer.NativeTextLayout?
 
-pub let native_run_layout_protocol_version : Int
+pub let native_run_layout_protocol_version : Int32
 
 pub fn native_utf32_bytes(String) -> Bytes
 
@@ -49,9 +49,9 @@ pub struct NativeFontSpecPayload {
 }
 pub fn NativeFontSpecPayload::family_names(Self) -> Array[Bytes]
 pub fn NativeFontSpecPayload::size(Self) -> Double
-pub fn NativeFontSpecPayload::size_key(Self) -> Int
+pub fn NativeFontSpecPayload::size_key(Self) -> Int32
 pub fn NativeFontSpecPayload::style(Self) -> @core.FontStyle
-pub fn NativeFontSpecPayload::weight(Self) -> Int
+pub fn NativeFontSpecPayload::weight(Self) -> Int32
 
 // Type aliases
 

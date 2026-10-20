@@ -96,17 +96,17 @@ pub fn XrSessionMode::to_repr(Self) -> @debug.Repr
 pub(all) struct XrView {
   view : @moui_3d.Mat4
   projection : @moui_3d.Mat4
-  viewport_x : Int
-  viewport_y : Int
-  viewport_width : Int
-  viewport_height : Int
+  viewport_x : Int32
+  viewport_y : Int32
+  viewport_width : Int32
+  viewport_height : Int32
 } derive(@debug.Debug)
-pub fn XrView::new(view~ : @moui_3d.Mat4, projection~ : @moui_3d.Mat4, viewport_x~ : Int, viewport_y~ : Int, viewport_width~ : Int, viewport_height~ : Int) -> Self
+pub fn XrView::new(view~ : @moui_3d.Mat4, projection~ : @moui_3d.Mat4, viewport_x~ : Int32, viewport_y~ : Int32, viewport_width~ : Int32, viewport_height~ : Int32) -> Self
 pub fn XrView::projection(Self) -> @moui_3d.Mat4
 pub fn XrView::to_repr(Self) -> @debug.Repr
 pub fn XrView::view(Self) -> @moui_3d.Mat4
-pub fn XrView::viewport_height(Self) -> Int
-pub fn XrView::viewport_width(Self) -> Int
+pub fn XrView::viewport_height(Self) -> Int32
+pub fn XrView::viewport_width(Self) -> Int32
 
 // Type aliases
 

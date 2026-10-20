@@ -49,7 +49,6 @@ members = [
   "./examples/code_editor",
   "./examples/webview_demo",
   "./examples/momark",
-  "./examples/browser",
   "./examples/terminal",
   "./examples/tui_layers",
   "./examples/new_world",

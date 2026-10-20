@@ -32,25 +32,25 @@ pub fn ThreeDFrame::with_packet(Self, ThreeDRenderPacket) -> Self
 
 pub(all) struct ThreeDRenderItem {
   node : @moui_3d.NodeId
-  primitive_index : Int
+  primitive_index : Int32
   model : @moui_3d.Mat4
   vertices : Array[@moui_3d.Vertex]
-  indices : Array[Int]
+  indices : Array[Int32]
   base_color : @moui_3d.Vec4
   metallic : Double
   roughness : Double
-  skin : Int?
+  skin : Int32?
   morph_targets : Array[Array[@moui_3d.VertexDelta]]
 } derive(@debug.Debug)
 pub fn ThreeDRenderItem::base_color(Self) -> @moui_3d.Vec4
-pub fn ThreeDRenderItem::indices(Self) -> Array[Int]
+pub fn ThreeDRenderItem::indices(Self) -> Array[Int32]
 pub fn ThreeDRenderItem::metallic(Self) -> Double
 pub fn ThreeDRenderItem::model(Self) -> @moui_3d.Mat4
 pub fn ThreeDRenderItem::morph_targets(Self) -> Array[Array[@moui_3d.VertexDelta]]
 pub fn ThreeDRenderItem::node(Self) -> @moui_3d.NodeId
-pub fn ThreeDRenderItem::primitive_index(Self) -> Int
+pub fn ThreeDRenderItem::primitive_index(Self) -> Int32
 pub fn ThreeDRenderItem::roughness(Self) -> Double
-pub fn ThreeDRenderItem::skin(Self) -> Int?
+pub fn ThreeDRenderItem::skin(Self) -> Int32?
 pub fn ThreeDRenderItem::to_repr(Self) -> @debug.Repr
 pub fn ThreeDRenderItem::vertices(Self) -> Array[@moui_3d.Vertex]
 
@@ -200,18 +200,18 @@ pub fn ThreeDResourceKind::to_json(Self) -> Json
 pub fn ThreeDResourceKind::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ThreeDViewportSize {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ThreeDViewportSize::equal(Self, Self) -> Bool
-pub fn ThreeDViewportSize::height(Self) -> Int
-pub fn ThreeDViewportSize::new(width~ : Int, height~ : Int, scale_factor? : Double) -> Self
+pub fn ThreeDViewportSize::height(Self) -> Int32
+pub fn ThreeDViewportSize::new(width~ : Int32, height~ : Int32, scale_factor? : Double) -> Self
 pub fn ThreeDViewportSize::not_equal(Self, Self) -> Bool
 pub fn ThreeDViewportSize::scale_factor(Self) -> Double
 pub fn ThreeDViewportSize::to_json(Self) -> Json
 pub fn ThreeDViewportSize::to_repr(Self) -> @debug.Repr
-pub fn ThreeDViewportSize::width(Self) -> Int
+pub fn ThreeDViewportSize::width(Self) -> Int32
 
 // Type aliases
 

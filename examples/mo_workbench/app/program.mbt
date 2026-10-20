@@ -28,7 +28,7 @@ fn MoWorkbenchApp::initial_state(
 
 ///|
 /// Build the workbench program with the given backend runtime.
-/// The entrypoint (macos_skia) injects the concrete openseek backend here.
+/// The entrypoint (macos_skia) injects the concrete ACP backend here.
 pub fn MoWorkbenchApp::program_with_backend(
   self : MoWorkbenchApp,
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
@@ -46,10 +46,10 @@ pub fn MoWorkbenchApp::program_with_backend(
 /// Convenience constructor + program in one call (used by the entrypoint).
 pub fn program_with_backend(
   backend~ : AgentBackendRuntime,
-  settings_load? : SettingsLoadFn? = None,
-  settings_persist? : SettingsPersistFn? = None,
-  model_detect? : ModelDetectFn? = None,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  settings_load~ : SettingsLoadFn? = None,
+  settings_persist~ : SettingsPersistFn? = None,
+  model_detect~ : ModelDetectFn? = None,
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
   MoWorkbenchApp::new(
     backend~,

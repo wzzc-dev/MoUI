@@ -170,7 +170,7 @@ pub fn WebGpuWasmRenderer::dispose(Self) -> Unit
 pub fn WebGpuWasmRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
 pub fn WebGpuWasmRenderer::last_calls(Self) -> Array[WebGpuHostCall]
 pub fn WebGpuWasmRenderer::last_fallback_plan(Self) -> @render.RendererCommandPlan
-pub fn WebGpuWasmRenderer::present_count(Self) -> Int
+pub fn WebGpuWasmRenderer::present_count(Self) -> Int32
 pub fn WebGpuWasmRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise WebGpuHostError
 pub fn WebGpuWasmRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
 pub fn WebGpuWasmRenderer::resize(Self, @core.SurfaceMetrics) -> Unit raise WebGpuHostError

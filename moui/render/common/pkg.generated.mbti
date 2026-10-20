@@ -8,37 +8,37 @@ import {
 }
 
 // Values
-pub fn async_image_read_i32_le(Bytes, Int) -> Int
+pub fn async_image_read_i32_le(Bytes, Int32) -> Int32
 
 pub fn builtin_shader_names() -> Array[String]
 
 pub fn clear_svg_text_path_resolver() -> Unit
 
-pub fn codepoint_is_cjk(Int) -> Bool
+pub fn codepoint_is_cjk(Int32) -> Bool
 
-pub fn codepoint_is_cjk_ideograph(Int) -> Bool
+pub fn codepoint_is_cjk_ideograph(Int32) -> Bool
 
-pub fn codepoint_is_emoji_hint(Int) -> Bool
+pub fn codepoint_is_emoji_hint(Int32) -> Bool
 
-pub fn codepoint_is_hangul_cluster_codepoint(Int) -> Bool
+pub fn codepoint_is_hangul_cluster_codepoint(Int32) -> Bool
 
-pub fn codepoint_is_hangul_compatibility_jamo(Int) -> Bool
+pub fn codepoint_is_hangul_compatibility_jamo(Int32) -> Bool
 
-pub fn codepoint_is_hangul_l(Int) -> Bool
+pub fn codepoint_is_hangul_l(Int32) -> Bool
 
-pub fn codepoint_is_hangul_lv(Int) -> Bool
+pub fn codepoint_is_hangul_lv(Int32) -> Bool
 
-pub fn codepoint_is_hangul_lvt(Int) -> Bool
+pub fn codepoint_is_hangul_lvt(Int32) -> Bool
 
-pub fn codepoint_is_hangul_syllable(Int) -> Bool
+pub fn codepoint_is_hangul_syllable(Int32) -> Bool
 
-pub fn codepoint_is_hangul_t(Int) -> Bool
+pub fn codepoint_is_hangul_t(Int32) -> Bool
 
-pub fn codepoint_is_hangul_v(Int) -> Bool
+pub fn codepoint_is_hangul_v(Int32) -> Bool
 
-pub fn codepoint_is_kana(Int) -> Bool
+pub fn codepoint_is_kana(Int32) -> Bool
 
-pub fn codepoint_is_rtl_script(Int) -> Bool
+pub fn codepoint_is_rtl_script(Int32) -> Bool
 
 pub fn env_flag(String) -> Bool
 
@@ -48,7 +48,7 @@ pub fn image_decoder_plugin_chain(@render.RendererImageDecoder, builtin? : Array
 
 pub fn image_decoder_plugin_clear() -> Unit
 
-pub fn image_decoder_plugin_count() -> Int
+pub fn image_decoder_plugin_count() -> Int32
 
 pub fn image_decoder_plugin_register(@render.RendererImageDecoder) -> Unit
 
@@ -56,7 +56,7 @@ pub fn image_placement(@core.Rect, @core.Size, @core.ImageFit) -> ImagePlacement
 
 pub fn image_source_provider_clear() -> Unit
 
-pub fn image_source_provider_count() -> Int
+pub fn image_source_provider_count() -> Int32
 
 pub fn image_source_provider_read(String) -> Bytes?
 
@@ -86,7 +86,7 @@ pub fn renderer_features() -> Array[@render.RendererFeature]
 
 pub fn renderer_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind, capability_for~ : (@render.RendererFeature) -> (@render.RendererFeatureStatus, String)) -> Array[@render.RendererBackendFeatureCapability]
 
-pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int
+pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int32
 
 pub fn resolve_renderer(Array[@render.RendererProvider], @render.HostSurface) -> @render.RendererSession?
 
@@ -100,9 +100,9 @@ pub fn svg_intrinsic_size(String) -> @core.Size?
 
 pub fn svg_intrinsic_size_from_bytes(Bytes) -> @core.Size?
 
-pub fn svg_raster_target_size(@core.Size) -> (Int, Int)
+pub fn svg_raster_target_size(@core.Size) -> (Int32, Int32)
 
-pub fn svg_rasterize_rgba(String, Int, Int) -> Bytes?
+pub fn svg_rasterize_rgba(String, Int32, Int32) -> Bytes?
 
 pub fn svg_source_is_svg(String, Bytes) -> Bool
 
@@ -116,7 +116,7 @@ pub fn text_join_clusters(Array[String]) -> String
 
 pub fn text_mixed_segments(String) -> Array[String]
 
-pub fn text_segment_class(String) -> Int
+pub fn text_segment_class(String) -> Int32
 
 pub fn text_string_arrays_equal(Array[String], Array[String]) -> Bool
 
@@ -138,55 +138,55 @@ pub fn DrawPlanDiagnostic::to_repr(Self) -> @debug.Repr
 
 pub struct GpuRenderWorker {
   mut state : GpuRenderWorkerState
-  mut surface_generation : Int
-  mut gpu_context_generation : Int
-  mut next_sequence : Int
+  mut surface_generation : Int32
+  mut gpu_context_generation : Int32
+  mut next_sequence : Int32
   mut in_flight : GpuRenderWorkerFrame?
   mut pending : GpuRenderWorkerFrame?
   controls : Array[@render.RendererControlMessage]
   completions : Array[@render.RenderPresentCompletion]
-  mut submitted : Int
-  mut started : Int
-  mut completed : Int
-  mut dropped : Int
-  mut replaced_pending : Int
-  mut rejected_generation : Int
-  mut recovery_count : Int
-  mut recovery_failures : Int
-  readback_count : Int
+  mut submitted : Int32
+  mut started : Int32
+  mut completed : Int32
+  mut dropped : Int32
+  mut replaced_pending : Int32
+  mut rejected_generation : Int32
+  mut recovery_count : Int32
+  mut recovery_failures : Int32
+  readback_count : Int32
   resource_cache_bytes : Int64
-  worker_thread_id : Int
+  worker_thread_id : Int32
   mut fail_next_recovery : Bool
 }
 pub fn GpuRenderWorker::diagnostics(Self) -> GpuRenderWorkerDiagnostics
 pub fn GpuRenderWorker::drain_present_completions(Self) -> Array[@render.RenderPresentCompletion]
 pub fn GpuRenderWorker::fail_next_context_recovery(Self) -> Unit
-pub fn GpuRenderWorker::gpu_context_generation(Self) -> Int
-pub fn GpuRenderWorker::new(surface_generation? : Int, worker_thread_id? : Int) -> Self
+pub fn GpuRenderWorker::gpu_context_generation(Self) -> Int32
+pub fn GpuRenderWorker::new(surface_generation? : Int32, worker_thread_id? : Int32) -> Self
 pub fn GpuRenderWorker::poll(Self, completed_at_ms? : Double) -> Unit
 pub fn GpuRenderWorker::state(Self) -> GpuRenderWorkerState
 pub fn GpuRenderWorker::submit(Self, @render.RenderFrameInput, token? : @render.FrameToken, submitted_at_ms? : Double) -> @render.RenderFrameResult
-pub fn GpuRenderWorker::submit_control(Self, @render.RendererControlMessage) -> Int
-pub fn GpuRenderWorker::surface_generation(Self) -> Int
+pub fn GpuRenderWorker::submit_control(Self, @render.RendererControlMessage) -> Int32
+pub fn GpuRenderWorker::surface_generation(Self) -> Int32
 
 pub(all) struct GpuRenderWorkerDiagnostics {
   state : GpuRenderWorkerState
-  submitted : Int
-  started : Int
-  completed : Int
-  dropped : Int
-  replaced_pending : Int
-  rejected_generation : Int
-  surface_generation : Int
-  gpu_context_generation : Int
-  recovery_count : Int
-  recovery_failures : Int
-  readback_count : Int
+  submitted : Int32
+  started : Int32
+  completed : Int32
+  dropped : Int32
+  replaced_pending : Int32
+  rejected_generation : Int32
+  surface_generation : Int32
+  gpu_context_generation : Int32
+  recovery_count : Int32
+  recovery_failures : Int32
+  readback_count : Int32
   resource_cache_bytes : Int64
   in_flight : Bool
   pending : Bool
-  control_pending : Int
-  worker_thread_id : Int
+  control_pending : Int32
+  worker_thread_id : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn GpuRenderWorkerDiagnostics::equal(Self, Self) -> Bool
 pub fn GpuRenderWorkerDiagnostics::not_equal(Self, Self) -> Bool
@@ -231,11 +231,11 @@ pub struct ImageResourceLifecycle {
 pub fn ImageResourceLifecycle::apply_load_completion(Self, @render.ImageResourceLoadCompletion) -> Bool
 pub fn ImageResourceLifecycle::dispose(Self, String) -> Bool
 pub fn ImageResourceLifecycle::equal(Self, Self) -> Bool
-pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int
+pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int32
 pub fn ImageResourceLifecycle::lookup(Self, String) -> @render.ImageResourceRecord?
 pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -> Bool
 pub fn ImageResourceLifecycle::mark_loading(Self, String) -> Bool
-pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int, height~ : Int) -> Bool
+pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int32, height~ : Int32) -> Bool
 pub fn ImageResourceLifecycle::new() -> Self
 pub fn ImageResourceLifecycle::not_equal(Self, Self) -> Bool
 pub fn ImageResourceLifecycle::snapshot(Self) -> Array[@render.ImageResourceRecord]
@@ -305,42 +305,42 @@ pub fn PlanScopeKind::equal(Self, Self) -> Bool
 pub fn PlanScopeKind::not_equal(Self, Self) -> Bool
 
 pub struct RenderFrameMailbox {
-  mut surface_generation : Int
-  mut next_sequence : Int
+  mut surface_generation : Int32
+  mut next_sequence : Int32
   mut in_flight : RenderFramePacket?
   mut pending : RenderFramePacket?
-  mut submitted : Int
-  mut started : Int
-  mut completed : Int
-  mut replaced_pending : Int
-  mut rejected_generation : Int
+  mut submitted : Int32
+  mut started : Int32
+  mut completed : Int32
+  mut replaced_pending : Int32
+  mut rejected_generation : Int32
   control_queue : Array[@render.RendererControlMessage]
-  mut control_submitted : Int
-  mut control_drained : Int
+  mut control_submitted : Int32
+  mut control_drained : Int32
 }
 pub fn RenderFrameMailbox::begin_next(Self) -> RenderFramePacket?
-pub fn RenderFrameMailbox::complete(Self, Int) -> Bool
-pub fn RenderFrameMailbox::control_pending(Self) -> Int
+pub fn RenderFrameMailbox::complete(Self, Int32) -> Bool
+pub fn RenderFrameMailbox::control_pending(Self) -> Int32
 pub fn RenderFrameMailbox::diagnostics(Self) -> RenderFrameMailboxDiagnostics
 pub fn RenderFrameMailbox::drain_control(Self) -> Array[@render.RendererControlMessage]
 pub fn RenderFrameMailbox::has_control(Self) -> Bool
-pub fn RenderFrameMailbox::new(surface_generation? : Int) -> Self
-pub fn RenderFrameMailbox::replace_surface_generation(Self, Int) -> Unit
-pub fn RenderFrameMailbox::submit(Self, @render.RenderFrameInput) -> Int
-pub fn RenderFrameMailbox::submit_control(Self, @render.RendererControlMessage) -> Int
+pub fn RenderFrameMailbox::new(surface_generation? : Int32) -> Self
+pub fn RenderFrameMailbox::replace_surface_generation(Self, Int32) -> Unit
+pub fn RenderFrameMailbox::submit(Self, @render.RenderFrameInput) -> Int32
+pub fn RenderFrameMailbox::submit_control(Self, @render.RendererControlMessage) -> Int32
 
 pub(all) struct RenderFrameMailboxDiagnostics {
-  submitted : Int
-  started : Int
-  completed : Int
-  replaced_pending : Int
-  rejected_generation : Int
-  surface_generation : Int
+  submitted : Int32
+  started : Int32
+  completed : Int32
+  replaced_pending : Int32
+  rejected_generation : Int32
+  surface_generation : Int32
   in_flight : Bool
   pending : Bool
-  control_pending : Int
-  control_submitted : Int
-  control_drained : Int
+  control_pending : Int32
+  control_submitted : Int32
+  control_drained : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderFrameMailboxDiagnostics::equal(Self, Self) -> Bool
 pub fn RenderFrameMailboxDiagnostics::not_equal(Self, Self) -> Bool
@@ -348,12 +348,12 @@ pub fn RenderFrameMailboxDiagnostics::to_json(Self) -> Json
 pub fn RenderFrameMailboxDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RenderFramePacket {
-  sequence : Int
-  surface_generation : Int
+  sequence : Int32
+  surface_generation : Int32
   input : @render.RenderFrameInput
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderFramePacket::equal(Self, Self) -> Bool
-pub fn RenderFramePacket::new(sequence~ : Int, surface_generation~ : Int, @render.RenderFrameInput) -> Self
+pub fn RenderFramePacket::new(sequence~ : Int32, surface_generation~ : Int32, @render.RenderFrameInput) -> Self
 pub fn RenderFramePacket::not_equal(Self, Self) -> Bool
 pub fn RenderFramePacket::to_json(Self) -> Json
 pub fn RenderFramePacket::to_repr(Self) -> @debug.Repr

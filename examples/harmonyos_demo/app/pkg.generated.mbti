@@ -16,8 +16,8 @@ pub fn view(Model, @core.ViewEnvironment) -> @core.View[Msg]
 
 // Types and methods
 pub struct Model {
-  tap_count : Int
-  render_hint : Int
+  tap_count : Int32
+  render_hint : Int32
 }
 pub fn Model::new() -> Self
 

@@ -10,7 +10,7 @@ import {
 // Values
 pub fn color(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> @core.Color
 
-pub fn color_byte(r~ : Int, g~ : Int, b~ : Int, a? : Double) -> @core.Color
+pub fn color_byte(r~ : Int32, g~ : Int32, b~ : Int32, a? : Double) -> @core.Color
 
 pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 

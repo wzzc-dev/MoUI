@@ -72,7 +72,7 @@ pub fn[Msg] intrinsic_width(@core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] layout_priority(@core.View[Msg], Double) -> @core.View[Msg]
 
-pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], columns? : Int, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, overscan? : Int, offset? : @core.Point, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
+pub fn[T, Msg] lazy_grid(Array[T], (T) -> String, (T) -> @core.View[Msg], columns? : Int32, item_height? : Double, viewport_width? : Double, viewport_height? : Double, row_spacing? : Double, column_spacing? : Double, overscan? : Int32, offset? : @core.Point, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
 pub fn[T, Msg] lazy_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
@@ -98,13 +98,13 @@ pub fn[Msg] rounded_clip(@core.View[Msg], radius? : Double) -> @core.View[Msg]
 
 pub fn[Msg] scroll_container(child~ : @core.View[Msg], offset? : @core.Point, viewport? : @core.Size?, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn scroll_to_index(request_id~ : Int, index~ : Int, item_height? : Double, spacing? : Double) -> @core.ScrollRequest
+pub fn scroll_to_index(request_id~ : Int32, index~ : Int32, item_height? : Double, spacing? : Double) -> @core.ScrollRequest
 
 pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, on_scroll? : ((@core.Point) -> Msg)?, request? : @core.ScrollRequest, shows_indicator? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
 
-pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] sectioned_list(Array[@layout.SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], header? : (@layout.SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int32, empty? : @core.View[Msg]?, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -126,7 +126,7 @@ pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Doubl
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
+pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int32, empty? : @core.View[Msg]?, offset~ : @core.Point, on_scroll~ : (@core.Point) -> Msg, request? : @core.ScrollRequest) -> @core.View[Msg]
 
 // Errors
 

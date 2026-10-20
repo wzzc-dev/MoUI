@@ -1,10 +1,10 @@
 name = "wzzc-dev/moui_richtext"
 
-version = "0.2.1"
+version = "0.2.2"
 
 import {
-  "wzzc-dev/moui@0.2.3",
-  "mizchi/markdown@0.8.3",
+  "wzzc-dev/moui@0.2.4",
+  "mizchi/markdown@0.8.4",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

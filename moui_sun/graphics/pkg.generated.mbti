@@ -6,11 +6,11 @@ import {
 }
 
 // Values
-pub fn[S : Surface] present_pixels(S, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
+pub fn[S : Surface] present_pixels(S, Int32, Int32, Int32, FixedArray[Byte]) -> Result[Unit, PresentError]
 
-pub fn[S : Surface] present_pixels_rect(S, Int, Int, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
+pub fn[S : Surface] present_pixels_rect(S, Int32, Int32, Int32, Int32, Int32, FixedArray[Byte]) -> Result[Unit, PresentError]
 
-pub fn validate_present_rect(Int, Int, Int, Int, Int, Int, Int, FixedArray[Byte]) -> Result[PresentRectInfo, PresentError]
+pub fn validate_present_rect(Int32, Int32, Int32, Int32, Int32, Int32, Int32, FixedArray[Byte]) -> Result[PresentRectInfo, PresentError]
 
 // Errors
 
@@ -65,27 +65,27 @@ pub fn Canvas::clear(Self, Color) -> Unit
 pub fn Canvas::clear_clip(Self) -> Unit
 pub fn Canvas::clear_dirty_region(Self) -> Unit
 pub fn Canvas::concat_transform(Self, Transform) -> Unit
-pub fn[S : Surface] Canvas::dirty_present_batch(Self, S, Int) -> Result[PresentBatch, PresentError]
-pub fn[S : Surface] Canvas::dirty_present_plan(Self, S, Int) -> DirtyPresentPlan
-pub fn Canvas::draw_mask(Self, Int, Int, Int, Int, FixedArray[Byte], Paint) -> Unit
-pub fn Canvas::draw_mask_rect(Self, Int, Int, Int, Int, FixedArray[Byte], PixelRect, Paint) -> Unit
-pub fn Canvas::draw_nine_patch_pixmap(Self, Pixmap, Int, Int, Int, Int, NinePatchInsets, Paint, ImageSampling) -> Unit
-pub fn Canvas::draw_pixel(Self, Int, Int, Color) -> Unit
-pub fn Canvas::draw_pixmap(Self, Pixmap, Int, Int, Paint) -> Unit
-pub fn Canvas::draw_pixmap_rect(Self, Pixmap, PixelRect, Int, Int, Paint) -> Unit
+pub fn[S : Surface] Canvas::dirty_present_batch(Self, S, Int32) -> Result[PresentBatch, PresentError]
+pub fn[S : Surface] Canvas::dirty_present_plan(Self, S, Int32) -> DirtyPresentPlan
+pub fn Canvas::draw_mask(Self, Int32, Int32, Int32, Int32, FixedArray[Byte], Paint) -> Unit
+pub fn Canvas::draw_mask_rect(Self, Int32, Int32, Int32, Int32, FixedArray[Byte], PixelRect, Paint) -> Unit
+pub fn Canvas::draw_nine_patch_pixmap(Self, Pixmap, Int32, Int32, Int32, Int32, NinePatchInsets, Paint, ImageSampling) -> Unit
+pub fn Canvas::draw_pixel(Self, Int32, Int32, Color) -> Unit
+pub fn Canvas::draw_pixmap(Self, Pixmap, Int32, Int32, Paint) -> Unit
+pub fn Canvas::draw_pixmap_rect(Self, Pixmap, PixelRect, Int32, Int32, Paint) -> Unit
 pub fn Canvas::draw_placeholder_text(Self, String, Double, Double, Double, Color) -> Unit
-pub fn Canvas::draw_quality_nine_patch_pixmap(Self, Pixmap, Int, Int, Int, Int, NinePatchInsets, Paint, ImageQuality) -> Unit
-pub fn Canvas::draw_quality_pixmap(Self, Pixmap, Int, Int, Int, Int, Paint, ImageQuality) -> Unit
-pub fn Canvas::draw_quality_pixmap_rect(Self, Pixmap, PixelRect, Int, Int, Int, Int, Paint, ImageQuality) -> Unit
-pub fn Canvas::draw_sampled_pixmap(Self, Pixmap, Int, Int, Int, Int, Paint, ImageSampling) -> Unit
-pub fn Canvas::draw_sampled_pixmap_rect(Self, Pixmap, PixelRect, Int, Int, Int, Int, Paint, ImageSampling) -> Unit
-pub fn Canvas::draw_scaled_pixmap(Self, Pixmap, Int, Int, Int, Int, Paint) -> Unit
-pub fn Canvas::draw_scaled_pixmap_bicubic(Self, Pixmap, Int, Int, Int, Int, Paint) -> Unit
-pub fn Canvas::draw_scaled_pixmap_bilinear(Self, Pixmap, Int, Int, Int, Int, Paint) -> Unit
-pub fn Canvas::draw_scaled_pixmap_rect(Self, Pixmap, PixelRect, Int, Int, Int, Int, Paint) -> Unit
-pub fn Canvas::draw_scaled_pixmap_rect_bicubic(Self, Pixmap, PixelRect, Int, Int, Int, Int, Paint) -> Unit
-pub fn Canvas::draw_scaled_pixmap_rect_bilinear(Self, Pixmap, PixelRect, Int, Int, Int, Int, Paint) -> Unit
-pub fn Canvas::draw_tiled_pixmap_rect(Self, Pixmap, PixelRect, Int, Int, Int, Int, Paint) -> Unit
+pub fn Canvas::draw_quality_nine_patch_pixmap(Self, Pixmap, Int32, Int32, Int32, Int32, NinePatchInsets, Paint, ImageQuality) -> Unit
+pub fn Canvas::draw_quality_pixmap(Self, Pixmap, Int32, Int32, Int32, Int32, Paint, ImageQuality) -> Unit
+pub fn Canvas::draw_quality_pixmap_rect(Self, Pixmap, PixelRect, Int32, Int32, Int32, Int32, Paint, ImageQuality) -> Unit
+pub fn Canvas::draw_sampled_pixmap(Self, Pixmap, Int32, Int32, Int32, Int32, Paint, ImageSampling) -> Unit
+pub fn Canvas::draw_sampled_pixmap_rect(Self, Pixmap, PixelRect, Int32, Int32, Int32, Int32, Paint, ImageSampling) -> Unit
+pub fn Canvas::draw_scaled_pixmap(Self, Pixmap, Int32, Int32, Int32, Int32, Paint) -> Unit
+pub fn Canvas::draw_scaled_pixmap_bicubic(Self, Pixmap, Int32, Int32, Int32, Int32, Paint) -> Unit
+pub fn Canvas::draw_scaled_pixmap_bilinear(Self, Pixmap, Int32, Int32, Int32, Int32, Paint) -> Unit
+pub fn Canvas::draw_scaled_pixmap_rect(Self, Pixmap, PixelRect, Int32, Int32, Int32, Int32, Paint) -> Unit
+pub fn Canvas::draw_scaled_pixmap_rect_bicubic(Self, Pixmap, PixelRect, Int32, Int32, Int32, Int32, Paint) -> Unit
+pub fn Canvas::draw_scaled_pixmap_rect_bilinear(Self, Pixmap, PixelRect, Int32, Int32, Int32, Int32, Paint) -> Unit
+pub fn Canvas::draw_tiled_pixmap_rect(Self, Pixmap, PixelRect, Int32, Int32, Int32, Int32, Paint) -> Unit
 pub fn Canvas::draw_transformed_quality_pixmap(Self, Pixmap, Double, Double, Double, Double, Paint, ImageQuality) -> Unit
 pub fn Canvas::draw_transformed_quality_pixmap_rect(Self, Pixmap, PixelRect, Double, Double, Double, Double, Paint, ImageQuality) -> Unit
 pub fn Canvas::draw_transformed_sampled_pixmap(Self, Pixmap, Double, Double, Double, Double, Paint, ImageSampling) -> Unit
@@ -101,12 +101,12 @@ pub fn Canvas::fill_rounded_rect_corners(Self, Double, Double, Double, Double, D
 pub fn Canvas::get_clip_rect(Self) -> Rect?
 pub fn Canvas::get_dirty_region(Self) -> DirtyRegion
 pub fn Canvas::get_pixmap(Self) -> Pixmap
-pub fn Canvas::get_save_count(Self) -> Int
+pub fn Canvas::get_save_count(Self) -> Int32
 pub fn Canvas::get_transform(Self) -> Transform
 pub fn Canvas::intersect_clip_rect(Self, Rect) -> Unit
-pub fn Canvas::new(Int, Int) -> Self
-pub fn[S : Surface] Canvas::present_dirty_to(Self, S) -> Result[Int, PresentError]
-pub fn[S : Surface] Canvas::present_dirty_to_with_limit(Self, S, Int) -> Result[Int, PresentError]
+pub fn Canvas::new(Int32, Int32) -> Self
+pub fn[S : Surface] Canvas::present_dirty_to(Self, S) -> Result[Int32, PresentError]
+pub fn[S : Surface] Canvas::present_dirty_to_with_limit(Self, S, Int32) -> Result[Int32, PresentError]
 pub fn[S : Surface] Canvas::present_to(Self, S) -> Result[Unit, PresentError]
 pub fn Canvas::reset_transform(Self) -> Unit
 pub fn Canvas::restore(Self) -> Bool
@@ -167,13 +167,13 @@ pub struct DirtyPresentPlan {
 } derive(@debug.Debug)
 pub fn DirtyPresentPlan::get_mode(Self) -> DirtyPresentPlanMode
 pub fn DirtyPresentPlan::get_present_bounds(Self) -> PixelRect?
-pub fn DirtyPresentPlan::get_present_byte_count(Self) -> Int
-pub fn DirtyPresentPlan::get_present_pixel_count(Self) -> Int
-pub fn DirtyPresentPlan::get_present_strategy(Self, Int, Int) -> DirtyPresentStrategy
-pub fn DirtyPresentPlan::get_rect_count(Self) -> Int
+pub fn DirtyPresentPlan::get_present_byte_count(Self) -> Int32
+pub fn DirtyPresentPlan::get_present_pixel_count(Self) -> Int32
+pub fn DirtyPresentPlan::get_present_strategy(Self, Int32, Int32) -> DirtyPresentStrategy
+pub fn DirtyPresentPlan::get_rect_count(Self) -> Int32
 pub fn DirtyPresentPlan::get_rects(Self) -> Array[PixelRect]
 pub fn DirtyPresentPlan::is_empty(Self) -> Bool
-pub fn DirtyPresentPlan::saves_full_present_pixels(Self, Int, Int) -> Bool
+pub fn DirtyPresentPlan::saves_full_present_pixels(Self, Int32, Int32) -> Bool
 pub fn DirtyPresentPlan::to_repr(Self) -> @debug.Repr
 pub fn DirtyPresentPlan::uses_bounds_fallback(Self) -> Bool
 
@@ -198,17 +198,17 @@ pub fn DirtyPresentStrategy::to_repr(Self) -> @debug.Repr
 pub struct DirtyRegion {
   mut rects : Array[PixelRect]
 } derive(@debug.Debug)
-pub fn DirtyRegion::add_all(Self, Int, Int) -> Unit
+pub fn DirtyRegion::add_all(Self, Int32, Int32) -> Unit
 pub fn DirtyRegion::add_clipped_rect(Self, PixelRect, PixelRect) -> Unit
 pub fn DirtyRegion::add_rect(Self, PixelRect) -> Unit
 pub fn DirtyRegion::bounds(Self) -> PixelRect?
 pub fn DirtyRegion::clear(Self) -> Unit
-pub fn DirtyRegion::get_rect_count(Self) -> Int
+pub fn DirtyRegion::get_rect_count(Self) -> Int32
 pub fn DirtyRegion::get_rects(Self) -> Array[PixelRect]
 pub fn DirtyRegion::is_empty(Self) -> Bool
 pub fn DirtyRegion::new() -> Self
-pub fn DirtyRegion::present_plan(Self, PixelRect, Int) -> DirtyPresentPlan
-pub fn DirtyRegion::present_rects(Self, PixelRect, Int) -> Array[PixelRect]
+pub fn DirtyRegion::present_plan(Self, PixelRect, Int32) -> DirtyPresentPlan
+pub fn DirtyRegion::present_rects(Self, PixelRect, Int32) -> Array[PixelRect]
 pub fn DirtyRegion::to_repr(Self) -> @debug.Repr
 
 pub struct DirtySubmitPlan {
@@ -217,34 +217,34 @@ pub struct DirtySubmitPlan {
 } derive(@debug.Debug)
 pub fn DirtySubmitPlan::get_dirty_bounds(Self) -> PixelRect?
 pub fn DirtySubmitPlan::get_present_bounds(Self) -> PixelRect?
-pub fn DirtySubmitPlan::get_present_byte_count(Self) -> Int
-pub fn DirtySubmitPlan::get_present_pixel_count(Self) -> Int
+pub fn DirtySubmitPlan::get_present_byte_count(Self) -> Int32
+pub fn DirtySubmitPlan::get_present_pixel_count(Self) -> Int32
 pub fn DirtySubmitPlan::get_present_plan(Self) -> DirtyPresentPlan
-pub fn DirtySubmitPlan::get_present_rect_count(Self) -> Int
-pub fn DirtySubmitPlan::get_present_strategy(Self, Int, Int) -> DirtyPresentStrategy
+pub fn DirtySubmitPlan::get_present_rect_count(Self) -> Int32
+pub fn DirtySubmitPlan::get_present_strategy(Self, Int32, Int32) -> DirtyPresentStrategy
 pub fn DirtySubmitPlan::get_state(Self) -> DirtySubmitState
 pub fn DirtySubmitPlan::has_dirty(Self) -> Bool
 pub fn DirtySubmitPlan::needs_present(Self) -> Bool
-pub fn DirtySubmitPlan::saves_full_present_pixels(Self, Int, Int) -> Bool
+pub fn DirtySubmitPlan::saves_full_present_pixels(Self, Int32, Int32) -> Bool
 pub fn DirtySubmitPlan::to_repr(Self) -> @debug.Repr
 pub fn DirtySubmitPlan::uses_bounds_fallback(Self) -> Bool
 
 pub struct DirtySubmitResult {
   submit_plan : DirtySubmitPlan
-  presented_rect_count : Int
+  presented_rect_count : Int32
 } derive(@debug.Debug)
 pub fn DirtySubmitResult::did_present(Self) -> Bool
 pub fn DirtySubmitResult::get_dirty_bounds(Self) -> PixelRect?
 pub fn DirtySubmitResult::get_present_bounds(Self) -> PixelRect?
-pub fn DirtySubmitResult::get_present_byte_count(Self) -> Int
-pub fn DirtySubmitResult::get_present_pixel_count(Self) -> Int
-pub fn DirtySubmitResult::get_present_strategy(Self, Int, Int) -> DirtyPresentStrategy
-pub fn DirtySubmitResult::get_presented_rect_count(Self) -> Int
+pub fn DirtySubmitResult::get_present_byte_count(Self) -> Int32
+pub fn DirtySubmitResult::get_present_pixel_count(Self) -> Int32
+pub fn DirtySubmitResult::get_present_strategy(Self, Int32, Int32) -> DirtyPresentStrategy
+pub fn DirtySubmitResult::get_presented_rect_count(Self) -> Int32
 pub fn DirtySubmitResult::get_state(Self) -> DirtySubmitState
 pub fn DirtySubmitResult::get_submit_plan(Self) -> DirtySubmitPlan
 pub fn DirtySubmitResult::has_dirty(Self) -> Bool
 pub fn DirtySubmitResult::needs_present(Self) -> Bool
-pub fn DirtySubmitResult::saves_full_present_pixels(Self, Int, Int) -> Bool
+pub fn DirtySubmitResult::saves_full_present_pixels(Self, Int32, Int32) -> Bool
 pub fn DirtySubmitResult::to_repr(Self) -> @debug.Repr
 pub fn DirtySubmitResult::uses_bounds_fallback(Self) -> Bool
 pub fn DirtySubmitResult::was_clipped_away(Self) -> Bool
@@ -287,8 +287,8 @@ pub fn ImageSampling::to_repr(Self) -> @debug.Repr
 
 pub struct Layer {
   mut canvas : Canvas
-  mut x : Int
-  mut y : Int
+  mut x : Int32
+  mut y : Int32
   mut visible : Bool
   mut opacity : Double
   mut blend_mode : BlendMode
@@ -300,41 +300,41 @@ pub fn Layer::clear(Self, Color) -> Unit
 pub fn Layer::clear_dirty_region(Self) -> Unit
 pub fn Layer::clear_filter(Self) -> Self
 pub fn Layer::clear_shader(Self) -> Self
-pub fn Layer::composite_dirty_to(Self, Canvas, Int) -> Int
-pub fn Layer::composite_dirty_to_result(Self, Canvas, Int) -> LayerCompositeResult
-pub fn Layer::composite_to(Self, Canvas) -> Int
+pub fn Layer::composite_dirty_to(Self, Canvas, Int32) -> Int32
+pub fn Layer::composite_dirty_to_result(Self, Canvas, Int32) -> LayerCompositeResult
+pub fn Layer::composite_to(Self, Canvas) -> Int32
 pub fn Layer::dirty_bounds(Self) -> PixelRect?
 pub fn Layer::get_blend_mode(Self) -> BlendMode
 pub fn Layer::get_canvas(Self) -> Canvas
 pub fn Layer::get_dirty_region(Self) -> DirtyRegion
 pub fn Layer::get_filter(Self) -> PaintFilter?
-pub fn Layer::get_height(Self) -> Int
+pub fn Layer::get_height(Self) -> Int32
 pub fn Layer::get_opacity(Self) -> Double
 pub fn Layer::get_pixmap(Self) -> Pixmap
 pub fn Layer::get_shader(Self) -> PaintShader?
-pub fn Layer::get_width(Self) -> Int
-pub fn Layer::get_x(Self) -> Int
-pub fn Layer::get_y(Self) -> Int
+pub fn Layer::get_width(Self) -> Int32
+pub fn Layer::get_x(Self) -> Int32
+pub fn Layer::get_y(Self) -> Int32
 pub fn Layer::has_dirty(Self) -> Bool
 pub fn Layer::is_compositable(Self) -> Bool
 pub fn Layer::is_visible(Self) -> Bool
 pub fn Layer::mark_all_dirty(Self) -> Unit
 pub fn Layer::mark_dirty_rect(Self, PixelRect) -> Unit
-pub fn Layer::new(Int, Int) -> Self
-pub fn Layer::resize(Self, Int, Int) -> Self
+pub fn Layer::new(Int32, Int32) -> Self
+pub fn Layer::resize(Self, Int32, Int32) -> Self
 pub fn Layer::set_blend_mode(Self, BlendMode) -> Self
 pub fn Layer::set_filter(Self, PaintFilter) -> Self
 pub fn Layer::set_opacity(Self, Double) -> Self
-pub fn Layer::set_position(Self, Int, Int) -> Self
+pub fn Layer::set_position(Self, Int32, Int32) -> Self
 pub fn Layer::set_shader(Self, PaintShader) -> Self
 pub fn Layer::set_visible(Self, Bool) -> Self
 pub fn Layer::to_repr(Self) -> @debug.Repr
 pub fn Layer::translated_bounds(Self) -> PixelRect
 pub fn Layer::translated_dirty_bounds(Self) -> PixelRect?
-pub fn Layer::translated_dirty_rects(Self, Int) -> Array[PixelRect]
+pub fn Layer::translated_dirty_rects(Self, Int32) -> Array[PixelRect]
 
 pub struct LayerCompositeResult {
-  composited_rect_count : Int
+  composited_rect_count : Int32
   local_dirty_bounds : PixelRect?
   target_dirty_bounds : PixelRect?
   uses_bounds_fallback : Bool
@@ -343,7 +343,7 @@ pub struct LayerCompositeResult {
 } derive(@debug.Debug)
 pub fn LayerCompositeResult::did_clear_dirty(Self) -> Bool
 pub fn LayerCompositeResult::did_composite(Self) -> Bool
-pub fn LayerCompositeResult::get_composited_rect_count(Self) -> Int
+pub fn LayerCompositeResult::get_composited_rect_count(Self) -> Int32
 pub fn LayerCompositeResult::get_local_dirty_bounds(Self) -> PixelRect?
 pub fn LayerCompositeResult::get_target_dirty_bounds(Self) -> PixelRect?
 pub fn LayerCompositeResult::to_repr(Self) -> @debug.Repr
@@ -353,90 +353,90 @@ pub struct LayerTree {
   layers : Array[Layer]
   invalidation : DirtyRegion
 } derive(@debug.Debug)
-pub fn LayerTree::add_layer(Self, Layer) -> Int
+pub fn LayerTree::add_layer(Self, Layer) -> Int32
 pub fn LayerTree::clear_dirty_regions(Self) -> Unit
-pub fn LayerTree::clear_layer_filter(Self, Int) -> Bool
-pub fn LayerTree::clear_layer_shader(Self, Int) -> Bool
-pub fn LayerTree::composite_dirty_to(Self, Canvas, Int) -> Int
-pub fn LayerTree::composite_to(Self, Canvas) -> Int
+pub fn LayerTree::clear_layer_filter(Self, Int32) -> Bool
+pub fn LayerTree::clear_layer_shader(Self, Int32) -> Bool
+pub fn LayerTree::composite_dirty_to(Self, Canvas, Int32) -> Int32
+pub fn LayerTree::composite_to(Self, Canvas) -> Int32
 pub fn LayerTree::dirty_bounds(Self) -> PixelRect?
-pub fn[S : Surface] LayerTree::dirty_present_batch(Self, Canvas, S, Int) -> Result[PresentBatch, PresentError]
-pub fn[S : Surface] LayerTree::dirty_present_plan(Self, Canvas, S, Int) -> DirtyPresentPlan
-pub fn LayerTree::dirty_rects(Self, Int) -> Array[PixelRect]
-pub fn[S : Surface] LayerTree::dirty_submit_plan(Self, Canvas, S, Int) -> DirtySubmitPlan
-pub fn LayerTree::get_compositable_layer_count(Self) -> Int
-pub fn LayerTree::get_layer(Self, Int) -> Layer?
-pub fn LayerTree::get_layer_count(Self) -> Int
-pub fn LayerTree::invalidate_layer(Self, Int) -> Bool
+pub fn[S : Surface] LayerTree::dirty_present_batch(Self, Canvas, S, Int32) -> Result[PresentBatch, PresentError]
+pub fn[S : Surface] LayerTree::dirty_present_plan(Self, Canvas, S, Int32) -> DirtyPresentPlan
+pub fn LayerTree::dirty_rects(Self, Int32) -> Array[PixelRect]
+pub fn[S : Surface] LayerTree::dirty_submit_plan(Self, Canvas, S, Int32) -> DirtySubmitPlan
+pub fn LayerTree::get_compositable_layer_count(Self) -> Int32
+pub fn LayerTree::get_layer(Self, Int32) -> Layer?
+pub fn LayerTree::get_layer_count(Self) -> Int32
+pub fn LayerTree::invalidate_layer(Self, Int32) -> Bool
 pub fn LayerTree::invalidate_rect(Self, PixelRect) -> Unit
 pub fn LayerTree::new() -> Self
-pub fn[S : Surface] LayerTree::present_all_to(Self, Canvas, S) -> Result[Int, PresentError]
-pub fn[S : Surface] LayerTree::present_all_to_with_limit(Self, Canvas, S, Int) -> Result[Int, PresentError]
-pub fn[S : Surface] LayerTree::present_dirty_to(Self, Canvas, S) -> Result[Int, PresentError]
-pub fn[S : Surface] LayerTree::present_dirty_to_with_limit(Self, Canvas, S, Int) -> Result[Int, PresentError]
-pub fn[S : Surface] LayerTree::redraw_schedule(Self, Canvas, S, Int) -> RenderFrameSchedule
-pub fn LayerTree::remove_layer(Self, Int) -> Layer?
-pub fn LayerTree::reorder_layer(Self, Int, Int) -> Bool
-pub fn LayerTree::replace_layer(Self, Int, Layer) -> Layer?
-pub fn LayerTree::resize_layer(Self, Int, Int, Int) -> Bool
-pub fn LayerTree::set_layer_blend_mode(Self, Int, BlendMode) -> Bool
-pub fn LayerTree::set_layer_filter(Self, Int, PaintFilter) -> Bool
-pub fn LayerTree::set_layer_opacity(Self, Int, Double) -> Bool
-pub fn LayerTree::set_layer_position(Self, Int, Int, Int) -> Bool
-pub fn LayerTree::set_layer_shader(Self, Int, PaintShader) -> Bool
-pub fn LayerTree::set_layer_visible(Self, Int, Bool) -> Bool
-pub fn[S : Surface] LayerTree::submit_by_strategy_plan(Self, Canvas, S, Int) -> RenderFrameSubmitPlan
+pub fn[S : Surface] LayerTree::present_all_to(Self, Canvas, S) -> Result[Int32, PresentError]
+pub fn[S : Surface] LayerTree::present_all_to_with_limit(Self, Canvas, S, Int32) -> Result[Int32, PresentError]
+pub fn[S : Surface] LayerTree::present_dirty_to(Self, Canvas, S) -> Result[Int32, PresentError]
+pub fn[S : Surface] LayerTree::present_dirty_to_with_limit(Self, Canvas, S, Int32) -> Result[Int32, PresentError]
+pub fn[S : Surface] LayerTree::redraw_schedule(Self, Canvas, S, Int32) -> RenderFrameSchedule
+pub fn LayerTree::remove_layer(Self, Int32) -> Layer?
+pub fn LayerTree::reorder_layer(Self, Int32, Int32) -> Bool
+pub fn LayerTree::replace_layer(Self, Int32, Layer) -> Layer?
+pub fn LayerTree::resize_layer(Self, Int32, Int32, Int32) -> Bool
+pub fn LayerTree::set_layer_blend_mode(Self, Int32, BlendMode) -> Bool
+pub fn LayerTree::set_layer_filter(Self, Int32, PaintFilter) -> Bool
+pub fn LayerTree::set_layer_opacity(Self, Int32, Double) -> Bool
+pub fn LayerTree::set_layer_position(Self, Int32, Int32, Int32) -> Bool
+pub fn LayerTree::set_layer_shader(Self, Int32, PaintShader) -> Bool
+pub fn LayerTree::set_layer_visible(Self, Int32, Bool) -> Bool
+pub fn[S : Surface] LayerTree::submit_by_strategy_plan(Self, Canvas, S, Int32) -> RenderFrameSubmitPlan
 pub fn[S : Surface] LayerTree::submit_dirty_to(Self, Canvas, S) -> Result[DirtySubmitResult, PresentError]
-pub fn[S : Surface] LayerTree::submit_dirty_to_with_limit(Self, Canvas, S, Int) -> Result[DirtySubmitResult, PresentError]
-pub fn[S : Surface] LayerTree::submit_request_by_policy(Self, Canvas, S, Int, RenderFrameSubmitPolicy) -> RenderFrameSubmitRequest
+pub fn[S : Surface] LayerTree::submit_dirty_to_with_limit(Self, Canvas, S, Int32) -> Result[DirtySubmitResult, PresentError]
+pub fn[S : Surface] LayerTree::submit_request_by_policy(Self, Canvas, S, Int32, RenderFrameSubmitPolicy) -> RenderFrameSubmitRequest
 pub fn[S : Surface] LayerTree::submit_request_to(Self, Canvas, S, RenderFrameSubmitRequest) -> Result[RenderFrameSubmitResult, PresentError]
-pub fn[S : Surface] LayerTree::submit_request_to_with_limit(Self, Canvas, S, Int, RenderFrameSubmitRequest) -> Result[RenderFrameSubmitResult, PresentError]
-pub fn[S : Surface] LayerTree::submit_schedule(Self, Canvas, S, Int) -> RenderFrameSchedule
-pub fn[S : Surface] LayerTree::submit_schedule_by_policy(Self, Canvas, S, Int, RenderFrameSubmitPolicy) -> RenderFrameSchedule
+pub fn[S : Surface] LayerTree::submit_request_to_with_limit(Self, Canvas, S, Int32, RenderFrameSubmitRequest) -> Result[RenderFrameSubmitResult, PresentError]
+pub fn[S : Surface] LayerTree::submit_schedule(Self, Canvas, S, Int32) -> RenderFrameSchedule
+pub fn[S : Surface] LayerTree::submit_schedule_by_policy(Self, Canvas, S, Int32, RenderFrameSubmitPolicy) -> RenderFrameSchedule
 pub fn[S : Surface] LayerTree::submit_scheduled_to(Self, Canvas, S, RenderFrameSchedule) -> Result[RenderFrameSubmitResult, PresentError]
-pub fn[S : Surface] LayerTree::submit_scheduled_to_with_limit(Self, Canvas, S, Int, RenderFrameSchedule) -> Result[RenderFrameSubmitResult, PresentError]
+pub fn[S : Surface] LayerTree::submit_scheduled_to_with_limit(Self, Canvas, S, Int32, RenderFrameSchedule) -> Result[RenderFrameSubmitResult, PresentError]
 pub fn[S : Surface] LayerTree::submit_to_by_policy(Self, Canvas, S, RenderFrameSubmitPolicy) -> Result[RenderFrameSubmitResult, PresentError]
-pub fn[S : Surface] LayerTree::submit_to_by_policy_with_limit(Self, Canvas, S, Int, RenderFrameSubmitPolicy) -> Result[RenderFrameSubmitResult, PresentError]
+pub fn[S : Surface] LayerTree::submit_to_by_policy_with_limit(Self, Canvas, S, Int32, RenderFrameSubmitPolicy) -> Result[RenderFrameSubmitResult, PresentError]
 pub fn LayerTree::to_repr(Self) -> @debug.Repr
 
 pub struct MemoryPresentRecord {
   rect : PixelRect
-  row_bytes : Int
+  row_bytes : Int32
 } derive(Eq, @debug.Debug)
 pub fn MemoryPresentRecord::equal(Self, Self) -> Bool
-pub fn MemoryPresentRecord::get_present_byte_count(Self) -> Int
-pub fn MemoryPresentRecord::get_present_pixel_count(Self) -> Int
+pub fn MemoryPresentRecord::get_present_byte_count(Self) -> Int32
+pub fn MemoryPresentRecord::get_present_pixel_count(Self) -> Int32
 pub fn MemoryPresentRecord::get_rect(Self) -> PixelRect
-pub fn MemoryPresentRecord::get_row_bytes(Self) -> Int
-pub fn MemoryPresentRecord::get_source_byte_count(Self) -> Int
-pub fn MemoryPresentRecord::get_source_padding_byte_count(Self) -> Int
+pub fn MemoryPresentRecord::get_row_bytes(Self) -> Int32
+pub fn MemoryPresentRecord::get_source_byte_count(Self) -> Int32
+pub fn MemoryPresentRecord::get_source_padding_byte_count(Self) -> Int32
 pub fn MemoryPresentRecord::not_equal(Self, Self) -> Bool
 pub fn MemoryPresentRecord::to_repr(Self) -> @debug.Repr
 
 pub struct MemorySurface {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
-  mut present_count : Int
+  mut present_count : Int32
   present_records : Array[MemoryPresentRecord]
 } derive(@debug.Debug)
-pub fn MemorySurface::checksum(Self) -> Int
-pub fn MemorySurface::checksum_rect(Self, PixelRect) -> Result[Int, PresentError]
-pub fn MemorySurface::get_height(Self) -> Int
+pub fn MemorySurface::checksum(Self) -> Int32
+pub fn MemorySurface::checksum_rect(Self, PixelRect) -> Result[Int32, PresentError]
+pub fn MemorySurface::get_height(Self) -> Int32
 pub fn MemorySurface::get_last_present_record(Self) -> MemoryPresentRecord?
-pub fn MemorySurface::get_pixel(Self, Int, Int) -> Color
+pub fn MemorySurface::get_pixel(Self, Int32, Int32) -> Color
 pub fn MemorySurface::get_pixels(Self) -> FixedArray[Byte]
 pub fn MemorySurface::get_present_bounds(Self) -> PixelRect?
-pub fn MemorySurface::get_present_byte_count(Self) -> Int
-pub fn MemorySurface::get_present_count(Self) -> Int
-pub fn MemorySurface::get_present_pixel_count(Self) -> Int
+pub fn MemorySurface::get_present_byte_count(Self) -> Int32
+pub fn MemorySurface::get_present_count(Self) -> Int32
+pub fn MemorySurface::get_present_pixel_count(Self) -> Int32
 pub fn MemorySurface::get_present_records(Self) -> Array[MemoryPresentRecord]
-pub fn MemorySurface::get_present_source_byte_count(Self) -> Int
-pub fn MemorySurface::get_present_source_padding_byte_count(Self) -> Int
-pub fn MemorySurface::get_width(Self) -> Int
-pub fn MemorySurface::new(Int, Int) -> Self
-pub fn MemorySurface::present_pixels(Self, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
-pub fn MemorySurface::present_pixels_rect(Self, Int, Int, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
+pub fn MemorySurface::get_present_source_byte_count(Self) -> Int32
+pub fn MemorySurface::get_present_source_padding_byte_count(Self) -> Int32
+pub fn MemorySurface::get_width(Self) -> Int32
+pub fn MemorySurface::new(Int32, Int32) -> Self
+pub fn MemorySurface::present_pixels(Self, Int32, Int32, Int32, FixedArray[Byte]) -> Result[Unit, PresentError]
+pub fn MemorySurface::present_pixels_rect(Self, Int32, Int32, Int32, Int32, Int32, FixedArray[Byte]) -> Result[Unit, PresentError]
 pub fn MemorySurface::reset_present_telemetry(Self) -> Unit
 pub fn MemorySurface::to_bmp_bytes(Self) -> Bytes
 pub fn MemorySurface::to_bmp_rect_bytes(Self, PixelRect) -> Result[Bytes, PresentError]
@@ -452,13 +452,13 @@ pub fn MemorySurface::to_rgba_rect_bytes(Self, PixelRect) -> Result[Bytes, Prese
 pub impl Surface for MemorySurface
 
 pub struct NinePatchInsets {
-  left : Int
-  top : Int
-  right : Int
-  bottom : Int
+  left : Int32
+  top : Int32
+  right : Int32
+  bottom : Int32
 } derive(Eq, @debug.Debug)
 pub fn NinePatchInsets::equal(Self, Self) -> Bool
-pub fn NinePatchInsets::new(left~ : Int, top~ : Int, right~ : Int, bottom~ : Int) -> Self
+pub fn NinePatchInsets::new(left~ : Int32, top~ : Int32, right~ : Int32, bottom~ : Int32) -> Self
 pub fn NinePatchInsets::not_equal(Self, Self) -> Bool
 pub fn NinePatchInsets::to_repr(Self) -> @debug.Repr
 
@@ -524,11 +524,11 @@ pub fn PaintFilter::color_matrix(Array[Double]) -> Self
 pub fn PaintFilter::compose(Self, Self) -> Self
 pub fn PaintFilter::contrast(Double) -> Self
 pub fn PaintFilter::equal(Self, Self) -> Bool
-pub fn PaintFilter::get_filter_count(Self) -> Int
-pub fn PaintFilter::get_stage_color(Self, Int) -> Color?
-pub fn PaintFilter::get_stage_color_matrix(Self, Int) -> Array[Double]?
-pub fn PaintFilter::get_stage_factor(Self, Int) -> Double?
-pub fn PaintFilter::get_stage_type(Self, Int) -> PaintFilterType?
+pub fn PaintFilter::get_filter_count(Self) -> Int32
+pub fn PaintFilter::get_stage_color(Self, Int32) -> Color?
+pub fn PaintFilter::get_stage_color_matrix(Self, Int32) -> Array[Double]?
+pub fn PaintFilter::get_stage_factor(Self, Int32) -> Double?
+pub fn PaintFilter::get_stage_type(Self, Int32) -> PaintFilterType?
 pub fn PaintFilter::grayscale() -> Self
 pub fn PaintFilter::identity() -> Self
 pub fn PaintFilter::invert() -> Self
@@ -564,8 +564,8 @@ pub fn PaintGradientStop::to_repr(Self) -> @debug.Repr
 
 type PaintShader derive(Eq, @debug.Debug)
 pub fn PaintShader::equal(Self, Self) -> Bool
-pub fn PaintShader::get_gradient_stop(Self, Int) -> PaintGradientStop?
-pub fn PaintShader::get_gradient_stop_count(Self) -> Int
+pub fn PaintShader::get_gradient_stop(Self, Int32) -> PaintGradientStop?
+pub fn PaintShader::get_gradient_stop_count(Self) -> Int32
 pub fn PaintShader::get_gradient_stops(Self) -> Array[PaintGradientStop]
 pub fn PaintShader::get_linear_gradient_points(Self) -> (Point, Point)?
 pub fn PaintShader::get_local_from_device_transform(Self) -> Transform?
@@ -648,7 +648,7 @@ pub fn Path::new() -> Self
 pub fn Path::quad_to(Self, Double, Double, Double, Double) -> Self
 pub fn Path::rect_boolean(Self, Self, PathBooleanOp) -> Self?
 pub fn Path::rect_bounds(Self) -> Rect?
-pub fn Path::segment_count(Self) -> Int
+pub fn Path::segment_count(Self) -> Int32
 pub fn Path::simplified(Self) -> Self
 pub fn Path::to_repr(Self) -> @debug.Repr
 pub fn Path::transformed(Self, Transform) -> Self
@@ -677,68 +677,68 @@ pub fn PathSegment::not_equal(Self, Self) -> Bool
 pub fn PathSegment::to_repr(Self) -> @debug.Repr
 
 pub struct PixelRect {
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
 } derive(Eq, @debug.Debug)
-pub fn PixelRect::area(Self) -> Int
-pub fn PixelRect::bottom(Self) -> Int
+pub fn PixelRect::area(Self) -> Int32
+pub fn PixelRect::bottom(Self) -> Int32
 pub fn PixelRect::clip_to(Self, Self) -> Self?
-pub fn PixelRect::contains(Self, Int, Int) -> Bool
+pub fn PixelRect::contains(Self, Int32, Int32) -> Bool
 pub fn PixelRect::equal(Self, Self) -> Bool
 pub fn PixelRect::intersection(Self, Self) -> Self?
 pub fn PixelRect::intersects(Self, Self) -> Bool
 pub fn PixelRect::is_empty(Self) -> Bool
-pub fn PixelRect::new(x~ : Int, y~ : Int, width~ : Int, height~ : Int) -> Self
+pub fn PixelRect::new(x~ : Int32, y~ : Int32, width~ : Int32, height~ : Int32) -> Self
 pub fn PixelRect::not_equal(Self, Self) -> Bool
-pub fn PixelRect::right(Self) -> Int
+pub fn PixelRect::right(Self) -> Int32
 pub fn PixelRect::to_repr(Self) -> @debug.Repr
 pub fn PixelRect::union(Self, Self) -> Self
 
 pub struct Pixmap {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
 } derive(@debug.Debug)
-pub fn Pixmap::blend_mask(Self, Int, Int, Int, Int, FixedArray[Byte], Color) -> Unit
-pub fn Pixmap::blend_mask_rect(Self, Int, Int, Int, Int, FixedArray[Byte], PixelRect, Color) -> Unit
-pub fn Pixmap::blend_nine_patch_pixmap(Self, Int, Int, Int, Int, Self, NinePatchInsets, Double, ImageSampling) -> Unit
-pub fn Pixmap::blend_pixel(Self, Int, Int, Color) -> Unit
-pub fn Pixmap::blend_pixmap(Self, Int, Int, Self, Double) -> Unit
-pub fn Pixmap::blend_pixmap_rect(Self, Int, Int, Self, PixelRect, Double) -> Unit
-pub fn Pixmap::blend_quality_nine_patch_pixmap(Self, Int, Int, Int, Int, Self, NinePatchInsets, Double, ImageQuality) -> Unit
-pub fn Pixmap::blend_quality_pixmap(Self, Int, Int, Int, Int, Self, Double, ImageQuality) -> Unit
-pub fn Pixmap::blend_quality_pixmap_rect(Self, Int, Int, Int, Int, Self, PixelRect, Double, ImageQuality) -> Unit
-pub fn Pixmap::blend_rect(Self, Int, Int, Int, Int, Color) -> Unit
-pub fn Pixmap::blend_sampled_pixmap(Self, Int, Int, Int, Int, Self, Double, ImageSampling) -> Unit
-pub fn Pixmap::blend_sampled_pixmap_rect(Self, Int, Int, Int, Int, Self, PixelRect, Double, ImageSampling) -> Unit
-pub fn Pixmap::blend_scaled_pixmap(Self, Int, Int, Int, Int, Self, Double) -> Unit
-pub fn Pixmap::blend_scaled_pixmap_bicubic(Self, Int, Int, Int, Int, Self, Double) -> Unit
-pub fn Pixmap::blend_scaled_pixmap_bilinear(Self, Int, Int, Int, Int, Self, Double) -> Unit
-pub fn Pixmap::blend_scaled_pixmap_rect(Self, Int, Int, Int, Int, Self, PixelRect, Double) -> Unit
-pub fn Pixmap::blend_scaled_pixmap_rect_bicubic(Self, Int, Int, Int, Int, Self, PixelRect, Double) -> Unit
-pub fn Pixmap::blend_scaled_pixmap_rect_bilinear(Self, Int, Int, Int, Int, Self, PixelRect, Double) -> Unit
-pub fn Pixmap::blend_tiled_pixmap_rect(Self, Int, Int, Int, Int, Self, PixelRect, Double) -> Unit
-pub fn Pixmap::checksum(Self) -> Int
-pub fn Pixmap::checksum_rect(Self, PixelRect) -> Result[Int, PresentError]
+pub fn Pixmap::blend_mask(Self, Int32, Int32, Int32, Int32, FixedArray[Byte], Color) -> Unit
+pub fn Pixmap::blend_mask_rect(Self, Int32, Int32, Int32, Int32, FixedArray[Byte], PixelRect, Color) -> Unit
+pub fn Pixmap::blend_nine_patch_pixmap(Self, Int32, Int32, Int32, Int32, Self, NinePatchInsets, Double, ImageSampling) -> Unit
+pub fn Pixmap::blend_pixel(Self, Int32, Int32, Color) -> Unit
+pub fn Pixmap::blend_pixmap(Self, Int32, Int32, Self, Double) -> Unit
+pub fn Pixmap::blend_pixmap_rect(Self, Int32, Int32, Self, PixelRect, Double) -> Unit
+pub fn Pixmap::blend_quality_nine_patch_pixmap(Self, Int32, Int32, Int32, Int32, Self, NinePatchInsets, Double, ImageQuality) -> Unit
+pub fn Pixmap::blend_quality_pixmap(Self, Int32, Int32, Int32, Int32, Self, Double, ImageQuality) -> Unit
+pub fn Pixmap::blend_quality_pixmap_rect(Self, Int32, Int32, Int32, Int32, Self, PixelRect, Double, ImageQuality) -> Unit
+pub fn Pixmap::blend_rect(Self, Int32, Int32, Int32, Int32, Color) -> Unit
+pub fn Pixmap::blend_sampled_pixmap(Self, Int32, Int32, Int32, Int32, Self, Double, ImageSampling) -> Unit
+pub fn Pixmap::blend_sampled_pixmap_rect(Self, Int32, Int32, Int32, Int32, Self, PixelRect, Double, ImageSampling) -> Unit
+pub fn Pixmap::blend_scaled_pixmap(Self, Int32, Int32, Int32, Int32, Self, Double) -> Unit
+pub fn Pixmap::blend_scaled_pixmap_bicubic(Self, Int32, Int32, Int32, Int32, Self, Double) -> Unit
+pub fn Pixmap::blend_scaled_pixmap_bilinear(Self, Int32, Int32, Int32, Int32, Self, Double) -> Unit
+pub fn Pixmap::blend_scaled_pixmap_rect(Self, Int32, Int32, Int32, Int32, Self, PixelRect, Double) -> Unit
+pub fn Pixmap::blend_scaled_pixmap_rect_bicubic(Self, Int32, Int32, Int32, Int32, Self, PixelRect, Double) -> Unit
+pub fn Pixmap::blend_scaled_pixmap_rect_bilinear(Self, Int32, Int32, Int32, Int32, Self, PixelRect, Double) -> Unit
+pub fn Pixmap::blend_tiled_pixmap_rect(Self, Int32, Int32, Int32, Int32, Self, PixelRect, Double) -> Unit
+pub fn Pixmap::checksum(Self) -> Int32
+pub fn Pixmap::checksum_rect(Self, PixelRect) -> Result[Int32, PresentError]
 pub fn Pixmap::clear(Self, Color) -> Unit
 pub fn Pixmap::copy(Self) -> Self
 pub fn Pixmap::copy_rect(Self, PixelRect) -> Result[Self, PresentError]
-pub fn Pixmap::fill_rect(Self, Int, Int, Int, Int, Color) -> Unit
+pub fn Pixmap::fill_rect(Self, Int32, Int32, Int32, Int32, Color) -> Unit
 pub fn Pixmap::from_bmp_bytes(Bytes) -> Result[Self, PixmapDecodeError]
 pub fn Pixmap::from_png_bytes(Bytes) -> Result[Self, PixmapDecodeError]
-pub fn Pixmap::from_rgba_bytes(Int, Int, Bytes) -> Result[Self, PixmapDecodeError]
-pub fn Pixmap::get_height(Self) -> Int
-pub fn Pixmap::get_pixel(Self, Int, Int) -> Color
+pub fn Pixmap::from_rgba_bytes(Int32, Int32, Bytes) -> Result[Self, PixmapDecodeError]
+pub fn Pixmap::get_height(Self) -> Int32
+pub fn Pixmap::get_pixel(Self, Int32, Int32) -> Color
 pub fn Pixmap::get_pixels(Self) -> FixedArray[Byte]
-pub fn Pixmap::get_width(Self) -> Int
-pub fn Pixmap::new(Int, Int) -> Self
+pub fn Pixmap::get_width(Self) -> Int32
+pub fn Pixmap::new(Int32, Int32) -> Self
 pub fn Pixmap::present_batch(Self, DirtyPresentPlan) -> Result[PresentBatch, PresentError]
 pub fn Pixmap::present_rect_payload(Self, PixelRect) -> Result[PresentRectPayload, PresentError]
 pub fn[S : Surface] Pixmap::present_rect_to(Self, S, PixelRect) -> Result[Unit, PresentError]
 pub fn[S : Surface] Pixmap::present_to(Self, S) -> Result[Unit, PresentError]
-pub fn Pixmap::set_pixel(Self, Int, Int, Color) -> Unit
+pub fn Pixmap::set_pixel(Self, Int32, Int32, Color) -> Unit
 pub fn Pixmap::to_bmp_bytes(Self) -> Bytes
 pub fn Pixmap::to_bmp_rect_bytes(Self, PixelRect) -> Result[Bytes, PresentError]
 pub fn Pixmap::to_png_bytes(Self) -> Result[Bytes, PixmapEncodeError]
@@ -752,10 +752,10 @@ pub fn Pixmap::to_rgba_rect_bytes(Self, PixelRect) -> Result[Bytes, PresentError
 pub struct PixmapCache {
   mut pixmaps : Map[String, Pixmap]
   mut access_order : Array[String]
-  capacity : Int
+  capacity : Int32
   is_bounded : Bool
 } derive(@debug.Debug)
-pub fn PixmapCache::capacity(Self) -> Int
+pub fn PixmapCache::capacity(Self) -> Int32
 pub fn PixmapCache::clear(Self) -> Unit
 pub fn PixmapCache::contains(Self, String) -> Bool
 pub fn PixmapCache::get(Self, String) -> Pixmap?
@@ -763,18 +763,18 @@ pub fn PixmapCache::get_or_decode_bmp(Self, String, Bytes) -> Result[Pixmap, Pix
 pub fn PixmapCache::get_or_decode_bmp_result(Self, String, Bytes) -> Result[PixmapCacheDecodeResult, PixmapDecodeError]
 pub fn PixmapCache::get_or_decode_png(Self, String, Bytes) -> Result[Pixmap, PixmapDecodeError]
 pub fn PixmapCache::get_or_decode_png_result(Self, String, Bytes) -> Result[PixmapCacheDecodeResult, PixmapDecodeError]
-pub fn PixmapCache::get_or_decode_rgba(Self, String, Int, Int, Bytes) -> Result[Pixmap, PixmapDecodeError]
-pub fn PixmapCache::get_or_decode_rgba_result(Self, String, Int, Int, Bytes) -> Result[PixmapCacheDecodeResult, PixmapDecodeError]
+pub fn PixmapCache::get_or_decode_rgba(Self, String, Int32, Int32, Bytes) -> Result[Pixmap, PixmapDecodeError]
+pub fn PixmapCache::get_or_decode_rgba_result(Self, String, Int32, Int32, Bytes) -> Result[PixmapCacheDecodeResult, PixmapDecodeError]
 pub fn PixmapCache::get_or_insert(Self, String, Pixmap) -> Pixmap
 pub fn PixmapCache::get_or_insert_result(Self, String, Pixmap) -> PixmapCacheInsertResult
 pub fn PixmapCache::insert(Self, String, Pixmap) -> Pixmap
 pub fn PixmapCache::is_capacity_bounded(Self) -> Bool
 pub fn PixmapCache::is_empty(Self) -> Bool
-pub fn PixmapCache::len(Self) -> Int
+pub fn PixmapCache::len(Self) -> Int32
 pub fn PixmapCache::new() -> Self
 pub fn PixmapCache::remove(Self, String) -> Unit
 pub fn PixmapCache::to_repr(Self) -> @debug.Repr
-pub fn PixmapCache::with_capacity(Int) -> Self
+pub fn PixmapCache::with_capacity(Int32) -> Self
 
 pub struct PixmapCacheDecodeResult {
   pixmap : Pixmap
@@ -795,46 +795,46 @@ pub fn PixmapCacheInsertResult::get_pixmap(Self) -> Pixmap
 pub fn PixmapCacheInsertResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PixmapDecodeError {
-  UnexpectedEndOfData(Int, Int, Int)
-  InvalidRgbaDimensions(Int, Int)
-  RgbaByteLengthMismatch(Int, Int)
+  UnexpectedEndOfData(Int32, Int32, Int32)
+  InvalidRgbaDimensions(Int32, Int32)
+  RgbaByteLengthMismatch(Int32, Int32)
   InvalidBmpSignature(Byte, Byte)
-  UnsupportedBmpHeaderSize(Int)
-  UnsupportedBmpColorPlanes(Int)
-  UnsupportedBmpBitsPerPixel(Int)
-  UnsupportedBmpCompression(Int)
-  InvalidBmpDimensions(Int, Int)
-  BmpPixelDataOutOfBounds(Int, Int, Int)
+  UnsupportedBmpHeaderSize(Int32)
+  UnsupportedBmpColorPlanes(Int32)
+  UnsupportedBmpBitsPerPixel(Int32)
+  UnsupportedBmpCompression(Int32)
+  InvalidBmpDimensions(Int32, Int32)
+  BmpPixelDataOutOfBounds(Int32, Int32, Int32)
   InvalidPngSignature
   MissingPngImageHeader
   MissingPngImageData
   MissingPngImageEnd
-  UnsupportedPngHeaderSize(Int)
-  UnsupportedPngBitDepth(Int)
-  UnsupportedPngColorType(Int)
-  UnsupportedPngCompression(Int)
-  UnsupportedPngFilter(Int)
-  UnsupportedPngInterlace(Int)
-  UnsupportedPngChunk(Int, Int, Int, Int)
-  UnsupportedPngDeflateCompression(Int)
+  UnsupportedPngHeaderSize(Int32)
+  UnsupportedPngBitDepth(Int32)
+  UnsupportedPngColorType(Int32)
+  UnsupportedPngCompression(Int32)
+  UnsupportedPngFilter(Int32)
+  UnsupportedPngInterlace(Int32)
+  UnsupportedPngChunk(Int32, Int32, Int32, Int32)
+  UnsupportedPngDeflateCompression(Int32)
   UnsupportedPngDeflatePresetDictionary
-  UnsupportedPngDeflateBlockType(Int)
+  UnsupportedPngDeflateBlockType(Int32)
   InvalidPngDeflateCode
-  UnsupportedPngFilterType(Int)
-  InvalidPngDimensions(Int, Int)
-  InvalidPngZlibHeader(Int, Int)
-  PngCrcMismatch(UInt, UInt)
-  PngAdlerMismatch(UInt, UInt)
-  PngStoredBlockLengthMismatch(Int, Int)
-  PngInflateLengthMismatch(Int, Int)
-  PngScanlineLengthMismatch(Int, Int)
+  UnsupportedPngFilterType(Int32)
+  InvalidPngDimensions(Int32, Int32)
+  InvalidPngZlibHeader(Int32, Int32)
+  PngCrcMismatch(UInt32, UInt32)
+  PngAdlerMismatch(UInt32, UInt32)
+  PngStoredBlockLengthMismatch(Int32, Int32)
+  PngInflateLengthMismatch(Int32, Int32)
+  PngScanlineLengthMismatch(Int32, Int32)
 } derive(Eq, @debug.Debug)
 pub fn PixmapDecodeError::equal(Self, Self) -> Bool
 pub fn PixmapDecodeError::not_equal(Self, Self) -> Bool
 pub fn PixmapDecodeError::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PixmapEncodeError {
-  InvalidPngDimensions(Int, Int)
+  InvalidPngDimensions(Int32, Int32)
 } derive(Eq, @debug.Debug)
 pub fn PixmapEncodeError::equal(Self, Self) -> Bool
 pub fn PixmapEncodeError::not_equal(Self, Self) -> Bool
@@ -869,107 +869,107 @@ pub fn Point::to_repr(Self) -> @debug.Repr
 
 pub struct PresentBatch {
   payloads : Array[PresentRectPayload]
-  present_pixel_count : Int
-  present_byte_count : Int
+  present_pixel_count : Int32
+  present_byte_count : Int32
 } derive(@debug.Debug)
-pub fn PresentBatch::get_full_present_byte_savings(Self, Int, Int) -> Int
-pub fn PresentBatch::get_full_present_pixel_savings(Self, Int, Int) -> Int
+pub fn PresentBatch::get_full_present_byte_savings(Self, Int32, Int32) -> Int32
+pub fn PresentBatch::get_full_present_pixel_savings(Self, Int32, Int32) -> Int32
 pub fn PresentBatch::get_payloads(Self) -> Array[PresentRectPayload]
 pub fn PresentBatch::get_present_bounds(Self) -> PixelRect?
-pub fn PresentBatch::get_present_byte_count(Self) -> Int
-pub fn PresentBatch::get_present_pixel_count(Self) -> Int
-pub fn PresentBatch::get_present_strategy(Self, Int, Int) -> DirtyPresentStrategy
-pub fn PresentBatch::get_rect_count(Self) -> Int
-pub fn PresentBatch::get_source_byte_count(Self) -> Int
-pub fn PresentBatch::get_source_padding_byte_count(Self) -> Int
+pub fn PresentBatch::get_present_byte_count(Self) -> Int32
+pub fn PresentBatch::get_present_pixel_count(Self) -> Int32
+pub fn PresentBatch::get_present_strategy(Self, Int32, Int32) -> DirtyPresentStrategy
+pub fn PresentBatch::get_rect_count(Self) -> Int32
+pub fn PresentBatch::get_source_byte_count(Self) -> Int32
+pub fn PresentBatch::get_source_padding_byte_count(Self) -> Int32
 pub fn PresentBatch::is_empty(Self) -> Bool
-pub fn PresentBatch::saves_full_present_pixels(Self, Int, Int) -> Bool
+pub fn PresentBatch::saves_full_present_pixels(Self, Int32, Int32) -> Bool
 pub fn[S : Surface] PresentBatch::submit_plan_for(Self, S) -> Result[PresentBatchSubmitPlan, PresentError]
-pub fn[S : Surface] PresentBatch::submit_to(Self, S) -> Result[Int, PresentError]
+pub fn[S : Surface] PresentBatch::submit_to(Self, S) -> Result[Int32, PresentError]
 pub fn[S : Surface] PresentBatch::submit_to_result(Self, S) -> Result[PresentBatchSubmitResult, PresentError]
 pub fn PresentBatch::to_repr(Self) -> @debug.Repr
 pub fn[S : Surface] PresentBatch::validate_for(Self, S) -> Result[Unit, PresentError]
 
 pub struct PresentBatchSubmitPlan {
   batch : PresentBatch
-  surface_width : Int
-  surface_height : Int
+  surface_width : Int32
+  surface_height : Int32
 } derive(@debug.Debug)
 pub fn PresentBatchSubmitPlan::get_batch(Self) -> PresentBatch
-pub fn PresentBatchSubmitPlan::get_full_present_byte_savings(Self) -> Int
-pub fn PresentBatchSubmitPlan::get_full_present_pixel_savings(Self) -> Int
+pub fn PresentBatchSubmitPlan::get_full_present_byte_savings(Self) -> Int32
+pub fn PresentBatchSubmitPlan::get_full_present_pixel_savings(Self) -> Int32
 pub fn PresentBatchSubmitPlan::get_present_bounds(Self) -> PixelRect?
-pub fn PresentBatchSubmitPlan::get_present_byte_count(Self) -> Int
-pub fn PresentBatchSubmitPlan::get_present_pixel_count(Self) -> Int
+pub fn PresentBatchSubmitPlan::get_present_byte_count(Self) -> Int32
+pub fn PresentBatchSubmitPlan::get_present_pixel_count(Self) -> Int32
 pub fn PresentBatchSubmitPlan::get_present_strategy(Self) -> DirtyPresentStrategy
-pub fn PresentBatchSubmitPlan::get_rect_count(Self) -> Int
-pub fn PresentBatchSubmitPlan::get_source_byte_count(Self) -> Int
-pub fn PresentBatchSubmitPlan::get_source_padding_byte_count(Self) -> Int
-pub fn PresentBatchSubmitPlan::get_surface_height(Self) -> Int
-pub fn PresentBatchSubmitPlan::get_surface_width(Self) -> Int
+pub fn PresentBatchSubmitPlan::get_rect_count(Self) -> Int32
+pub fn PresentBatchSubmitPlan::get_source_byte_count(Self) -> Int32
+pub fn PresentBatchSubmitPlan::get_source_padding_byte_count(Self) -> Int32
+pub fn PresentBatchSubmitPlan::get_surface_height(Self) -> Int32
+pub fn PresentBatchSubmitPlan::get_surface_width(Self) -> Int32
 pub fn PresentBatchSubmitPlan::needs_present(Self) -> Bool
 pub fn PresentBatchSubmitPlan::saves_full_present_pixels(Self) -> Bool
-pub fn[S : Surface] PresentBatchSubmitPlan::submit_to(Self, S) -> Result[Int, PresentError]
+pub fn[S : Surface] PresentBatchSubmitPlan::submit_to(Self, S) -> Result[Int32, PresentError]
 pub fn[S : Surface] PresentBatchSubmitPlan::submit_to_result(Self, S) -> Result[PresentBatchSubmitResult, PresentError]
 pub fn PresentBatchSubmitPlan::to_repr(Self) -> @debug.Repr
 
 pub struct PresentBatchSubmitResult {
   submit_plan : PresentBatchSubmitPlan
-  presented_rect_count : Int
+  presented_rect_count : Int32
 } derive(@debug.Debug)
 pub fn PresentBatchSubmitResult::did_present(Self) -> Bool
 pub fn PresentBatchSubmitResult::get_batch(Self) -> PresentBatch
-pub fn PresentBatchSubmitResult::get_full_present_byte_savings(Self) -> Int
-pub fn PresentBatchSubmitResult::get_full_present_pixel_savings(Self) -> Int
+pub fn PresentBatchSubmitResult::get_full_present_byte_savings(Self) -> Int32
+pub fn PresentBatchSubmitResult::get_full_present_pixel_savings(Self) -> Int32
 pub fn PresentBatchSubmitResult::get_present_bounds(Self) -> PixelRect?
-pub fn PresentBatchSubmitResult::get_present_byte_count(Self) -> Int
-pub fn PresentBatchSubmitResult::get_present_pixel_count(Self) -> Int
+pub fn PresentBatchSubmitResult::get_present_byte_count(Self) -> Int32
+pub fn PresentBatchSubmitResult::get_present_pixel_count(Self) -> Int32
 pub fn PresentBatchSubmitResult::get_present_strategy(Self) -> DirtyPresentStrategy
-pub fn PresentBatchSubmitResult::get_presented_rect_count(Self) -> Int
-pub fn PresentBatchSubmitResult::get_rect_count(Self) -> Int
-pub fn PresentBatchSubmitResult::get_source_byte_count(Self) -> Int
-pub fn PresentBatchSubmitResult::get_source_padding_byte_count(Self) -> Int
+pub fn PresentBatchSubmitResult::get_presented_rect_count(Self) -> Int32
+pub fn PresentBatchSubmitResult::get_rect_count(Self) -> Int32
+pub fn PresentBatchSubmitResult::get_source_byte_count(Self) -> Int32
+pub fn PresentBatchSubmitResult::get_source_padding_byte_count(Self) -> Int32
 pub fn PresentBatchSubmitResult::get_submit_plan(Self) -> PresentBatchSubmitPlan
-pub fn PresentBatchSubmitResult::get_surface_height(Self) -> Int
-pub fn PresentBatchSubmitResult::get_surface_width(Self) -> Int
+pub fn PresentBatchSubmitResult::get_surface_height(Self) -> Int32
+pub fn PresentBatchSubmitResult::get_surface_width(Self) -> Int32
 pub fn PresentBatchSubmitResult::needs_present(Self) -> Bool
 pub fn PresentBatchSubmitResult::saves_full_present_pixels(Self) -> Bool
 pub fn PresentBatchSubmitResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PresentError {
-  InvalidDimensions(Int, Int)
-  SizeMismatch(Int, Int, Int, Int)
-  RectOutOfBounds(Int, Int, Int, Int, Int, Int)
-  InvalidRowBytes(Int, Int)
-  PixelBufferTooSmall(Int, Int)
+  InvalidDimensions(Int32, Int32)
+  SizeMismatch(Int32, Int32, Int32, Int32)
+  RectOutOfBounds(Int32, Int32, Int32, Int32, Int32, Int32)
+  InvalidRowBytes(Int32, Int32)
+  PixelBufferTooSmall(Int32, Int32)
 } derive(Eq, @debug.Debug)
 pub fn PresentError::equal(Self, Self) -> Bool
 pub fn PresentError::not_equal(Self, Self) -> Bool
 pub fn PresentError::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PresentRectInfo {
-  required_row_bytes : Int
-  required_len : Int
+  required_row_bytes : Int32
+  required_len : Int32
 } derive(Eq, @debug.Debug)
 pub fn PresentRectInfo::equal(Self, Self) -> Bool
 pub fn PresentRectInfo::not_equal(Self, Self) -> Bool
-pub fn PresentRectInfo::required_len(Self) -> Int
-pub fn PresentRectInfo::required_row_bytes(Self) -> Int
+pub fn PresentRectInfo::required_len(Self) -> Int32
+pub fn PresentRectInfo::required_row_bytes(Self) -> Int32
 pub fn PresentRectInfo::to_repr(Self) -> @debug.Repr
 
 pub struct PresentRectPayload {
   rect : PixelRect
-  row_bytes : Int
+  row_bytes : Int32
   pixels : FixedArray[Byte]
 } derive(@debug.Debug)
 pub fn PresentRectPayload::get_pixels(Self) -> FixedArray[Byte]
-pub fn PresentRectPayload::get_present_byte_count(Self) -> Int
-pub fn PresentRectPayload::get_present_pixel_count(Self) -> Int
+pub fn PresentRectPayload::get_present_byte_count(Self) -> Int32
+pub fn PresentRectPayload::get_present_pixel_count(Self) -> Int32
 pub fn PresentRectPayload::get_rect(Self) -> PixelRect
-pub fn PresentRectPayload::get_row_bytes(Self) -> Int
-pub fn PresentRectPayload::get_source_byte_count(Self) -> Int
-pub fn PresentRectPayload::get_source_padding_byte_count(Self) -> Int
-pub fn PresentRectPayload::new(PixelRect, Int, FixedArray[Byte]) -> Result[Self, PresentError]
+pub fn PresentRectPayload::get_row_bytes(Self) -> Int32
+pub fn PresentRectPayload::get_source_byte_count(Self) -> Int32
+pub fn PresentRectPayload::get_source_padding_byte_count(Self) -> Int32
+pub fn PresentRectPayload::new(PixelRect, Int32, FixedArray[Byte]) -> Result[Self, PresentError]
 pub fn[S : Surface] PresentRectPayload::submit_to(Self, S) -> Result[Unit, PresentError]
 pub fn PresentRectPayload::to_repr(Self) -> @debug.Repr
 
@@ -992,7 +992,7 @@ pub fn Rect::to_repr(Self) -> @debug.Repr
 pub struct RenderFrame {
   mut canvas : Canvas
   layer_tree : LayerTree
-  mut dirty_rect_limit : Int
+  mut dirty_rect_limit : Int32
 } derive(@debug.Debug)
 pub fn RenderFrame::clear_dirty_regions(Self) -> Unit
 pub fn RenderFrame::dirty_bounds(Self) -> PixelRect?
@@ -1000,25 +1000,25 @@ pub fn[S : Surface] RenderFrame::dirty_present_batch(Self, S) -> Result[PresentB
 pub fn[S : Surface] RenderFrame::dirty_present_plan(Self, S) -> DirtyPresentPlan
 pub fn[S : Surface] RenderFrame::dirty_submit_plan(Self, S) -> DirtySubmitPlan
 pub fn RenderFrame::get_canvas(Self) -> Canvas
-pub fn RenderFrame::get_dirty_rect_limit(Self) -> Int
-pub fn RenderFrame::get_height(Self) -> Int
+pub fn RenderFrame::get_dirty_rect_limit(Self) -> Int32
+pub fn RenderFrame::get_height(Self) -> Int32
 pub fn RenderFrame::get_layer_tree(Self) -> LayerTree
-pub fn RenderFrame::get_width(Self) -> Int
+pub fn RenderFrame::get_width(Self) -> Int32
 pub fn RenderFrame::has_dirty(Self) -> Bool
 pub fn RenderFrame::mark_all_dirty(Self) -> Unit
 pub fn RenderFrame::mark_dirty_rect(Self, PixelRect) -> Unit
-pub fn RenderFrame::new(Int, Int) -> Self
-pub fn[S : Surface] RenderFrame::present_all_to(Self, S) -> Result[Int, PresentError]
-pub fn[S : Surface] RenderFrame::present_dirty_to(Self, S) -> Result[Int, PresentError]
+pub fn RenderFrame::new(Int32, Int32) -> Self
+pub fn[S : Surface] RenderFrame::present_all_to(Self, S) -> Result[Int32, PresentError]
+pub fn[S : Surface] RenderFrame::present_dirty_to(Self, S) -> Result[Int32, PresentError]
 pub fn[S : Surface] RenderFrame::present_strategy(Self, S) -> DirtyPresentStrategy
 pub fn[S : Surface] RenderFrame::redraw_schedule(Self, S) -> RenderFrameSchedule
-pub fn RenderFrame::replace_layer(Self, Int, Layer) -> Layer?
+pub fn RenderFrame::replace_layer(Self, Int32, Layer) -> Layer?
 pub fn RenderFrame::replace_layers(Self, Array[RenderFrameLayerReplacementRequest]) -> Bool
-pub fn RenderFrame::resize(Self, Int, Int) -> Self
-pub fn RenderFrame::resize_and_clear_layer(Self, Int, Int, Int, Color) -> Bool
-pub fn RenderFrame::resize_and_clear_layers(Self, Int, Int, Array[RenderFrameLayerClearRequest]) -> Bool
-pub fn RenderFrame::resize_clear_and_replace_layers(Self, Int, Int, Array[RenderFrameLayerClearRequest], Array[RenderFrameLayerReplacementRequest]) -> Bool
-pub fn RenderFrame::set_dirty_rect_limit(Self, Int) -> Self
+pub fn RenderFrame::resize(Self, Int32, Int32) -> Self
+pub fn RenderFrame::resize_and_clear_layer(Self, Int32, Int32, Int32, Color) -> Bool
+pub fn RenderFrame::resize_and_clear_layers(Self, Int32, Int32, Array[RenderFrameLayerClearRequest]) -> Bool
+pub fn RenderFrame::resize_clear_and_replace_layers(Self, Int32, Int32, Array[RenderFrameLayerClearRequest], Array[RenderFrameLayerReplacementRequest]) -> Bool
+pub fn RenderFrame::set_dirty_rect_limit(Self, Int32) -> Self
 pub fn[S : Surface] RenderFrame::submit_by_strategy_plan(Self, S) -> RenderFrameSubmitPlan
 pub fn[S : Surface] RenderFrame::submit_by_strategy_to(Self, S) -> Result[RenderFrameSubmitResult, PresentError]
 pub fn[S : Surface] RenderFrame::submit_dirty_to(Self, S) -> Result[DirtySubmitResult, PresentError]
@@ -1032,23 +1032,23 @@ pub fn[S : Surface] RenderFrame::submit_to_by_policy(Self, S, RenderFrameSubmitP
 pub fn RenderFrame::to_repr(Self) -> @debug.Repr
 
 pub struct RenderFrameLayerClearRequest {
-  layer_index : Int
+  layer_index : Int32
   color : Color
 } derive(Eq, @debug.Debug)
 pub fn RenderFrameLayerClearRequest::equal(Self, Self) -> Bool
 pub fn RenderFrameLayerClearRequest::get_color(Self) -> Color
-pub fn RenderFrameLayerClearRequest::get_layer_index(Self) -> Int
-pub fn RenderFrameLayerClearRequest::new(Int, Color) -> Self
+pub fn RenderFrameLayerClearRequest::get_layer_index(Self) -> Int32
+pub fn RenderFrameLayerClearRequest::new(Int32, Color) -> Self
 pub fn RenderFrameLayerClearRequest::not_equal(Self, Self) -> Bool
 pub fn RenderFrameLayerClearRequest::to_repr(Self) -> @debug.Repr
 
 pub struct RenderFrameLayerReplacementRequest {
-  layer_index : Int
+  layer_index : Int32
   layer : Layer
 } derive(@debug.Debug)
 pub fn RenderFrameLayerReplacementRequest::get_layer(Self) -> Layer
-pub fn RenderFrameLayerReplacementRequest::get_layer_index(Self) -> Int
-pub fn RenderFrameLayerReplacementRequest::new(Int, Layer) -> Self
+pub fn RenderFrameLayerReplacementRequest::get_layer_index(Self) -> Int32
+pub fn RenderFrameLayerReplacementRequest::new(Int32, Layer) -> Self
 pub fn RenderFrameLayerReplacementRequest::to_repr(Self) -> @debug.Repr
 
 pub struct RenderFrameSchedule {
@@ -1058,9 +1058,9 @@ pub struct RenderFrameSchedule {
 pub fn RenderFrameSchedule::get_action(Self) -> RenderFrameScheduleAction
 pub fn RenderFrameSchedule::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSchedule::get_present_bounds(Self) -> PixelRect?
-pub fn RenderFrameSchedule::get_present_byte_count(Self) -> Int
-pub fn RenderFrameSchedule::get_present_pixel_count(Self) -> Int
-pub fn RenderFrameSchedule::get_present_rect_count(Self) -> Int
+pub fn RenderFrameSchedule::get_present_byte_count(Self) -> Int32
+pub fn RenderFrameSchedule::get_present_pixel_count(Self) -> Int32
+pub fn RenderFrameSchedule::get_present_rect_count(Self) -> Int32
 pub fn RenderFrameSchedule::get_present_strategy(Self) -> DirtyPresentStrategy
 pub fn RenderFrameSchedule::get_state(Self) -> DirtySubmitState
 pub fn RenderFrameSchedule::get_submit_plan(Self) -> RenderFrameSubmitPlan
@@ -1085,16 +1085,16 @@ pub struct RenderFrameSubmitPlan {
   dirty_submit_plan : DirtySubmitPlan
   strategy : DirtyPresentStrategy
   present_bounds : PixelRect?
-  present_rect_count : Int
-  present_pixel_count : Int
-  present_byte_count : Int
+  present_rect_count : Int32
+  present_pixel_count : Int32
+  present_byte_count : Int32
 } derive(@debug.Debug)
 pub fn RenderFrameSubmitPlan::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSubmitPlan::get_dirty_submit_plan(Self) -> DirtySubmitPlan
 pub fn RenderFrameSubmitPlan::get_present_bounds(Self) -> PixelRect?
-pub fn RenderFrameSubmitPlan::get_present_byte_count(Self) -> Int
-pub fn RenderFrameSubmitPlan::get_present_pixel_count(Self) -> Int
-pub fn RenderFrameSubmitPlan::get_present_rect_count(Self) -> Int
+pub fn RenderFrameSubmitPlan::get_present_byte_count(Self) -> Int32
+pub fn RenderFrameSubmitPlan::get_present_pixel_count(Self) -> Int32
+pub fn RenderFrameSubmitPlan::get_present_rect_count(Self) -> Int32
 pub fn RenderFrameSubmitPlan::get_present_strategy(Self) -> DirtyPresentStrategy
 pub fn RenderFrameSubmitPlan::get_state(Self) -> DirtySubmitState
 pub fn RenderFrameSubmitPlan::has_dirty(Self) -> Bool
@@ -1121,9 +1121,9 @@ pub fn RenderFrameSubmitRequest::get_action(Self) -> RenderFrameScheduleAction
 pub fn RenderFrameSubmitRequest::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSubmitRequest::get_policy(Self) -> RenderFrameSubmitPolicy
 pub fn RenderFrameSubmitRequest::get_present_bounds(Self) -> PixelRect?
-pub fn RenderFrameSubmitRequest::get_present_byte_count(Self) -> Int
-pub fn RenderFrameSubmitRequest::get_present_pixel_count(Self) -> Int
-pub fn RenderFrameSubmitRequest::get_present_rect_count(Self) -> Int
+pub fn RenderFrameSubmitRequest::get_present_byte_count(Self) -> Int32
+pub fn RenderFrameSubmitRequest::get_present_pixel_count(Self) -> Int32
+pub fn RenderFrameSubmitRequest::get_present_rect_count(Self) -> Int32
 pub fn RenderFrameSubmitRequest::get_present_strategy(Self) -> DirtyPresentStrategy
 pub fn RenderFrameSubmitRequest::get_schedule(Self) -> RenderFrameSchedule
 pub fn RenderFrameSubmitRequest::get_state(Self) -> DirtySubmitState
@@ -1139,16 +1139,16 @@ pub fn RenderFrameSubmitRequest::was_clipped_away(Self) -> Bool
 
 pub struct RenderFrameSubmitResult {
   submit_plan : RenderFrameSubmitPlan
-  presented_rect_count : Int
+  presented_rect_count : Int32
 } derive(@debug.Debug)
 pub fn RenderFrameSubmitResult::did_present(Self) -> Bool
 pub fn RenderFrameSubmitResult::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSubmitResult::get_present_bounds(Self) -> PixelRect?
-pub fn RenderFrameSubmitResult::get_present_byte_count(Self) -> Int
-pub fn RenderFrameSubmitResult::get_present_pixel_count(Self) -> Int
-pub fn RenderFrameSubmitResult::get_present_rect_count(Self) -> Int
+pub fn RenderFrameSubmitResult::get_present_byte_count(Self) -> Int32
+pub fn RenderFrameSubmitResult::get_present_pixel_count(Self) -> Int32
+pub fn RenderFrameSubmitResult::get_present_rect_count(Self) -> Int32
 pub fn RenderFrameSubmitResult::get_present_strategy(Self) -> DirtyPresentStrategy
-pub fn RenderFrameSubmitResult::get_presented_rect_count(Self) -> Int
+pub fn RenderFrameSubmitResult::get_presented_rect_count(Self) -> Int32
 pub fn RenderFrameSubmitResult::get_state(Self) -> DirtySubmitState
 pub fn RenderFrameSubmitResult::get_submit_plan(Self) -> RenderFrameSubmitPlan
 pub fn RenderFrameSubmitResult::has_dirty(Self) -> Bool
@@ -1159,16 +1159,16 @@ pub fn RenderFrameSubmitResult::uses_bounds_fallback(Self) -> Bool
 pub fn RenderFrameSubmitResult::was_clipped_away(Self) -> Bool
 
 pub struct ScanlineRasterizer {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
 }
 pub fn ScanlineRasterizer::clear(Self, Color) -> Unit
-pub fn ScanlineRasterizer::draw_line(Self, Int, Int, Int, Int, Color) -> Unit
+pub fn ScanlineRasterizer::draw_line(Self, Int32, Int32, Int32, Int32, Color) -> Unit
 pub fn ScanlineRasterizer::fill_polygon(Self, Array[(Double, Double)], Color) -> Unit
 pub fn ScanlineRasterizer::fill_triangle(Self, Double, Double, Double, Double, Double, Double, Color) -> Unit
 pub fn ScanlineRasterizer::get_pixels(Self) -> FixedArray[Byte]
-pub fn ScanlineRasterizer::new(Int, Int) -> Self
+pub fn ScanlineRasterizer::new(Int32, Int32) -> Self
 
 pub struct Size {
   width : Double
@@ -1239,8 +1239,8 @@ pub fn Vec2::to_repr(Self) -> @debug.Repr
 
 // Traits
 pub(open) trait Surface {
-  fn get_width(Self) -> Int
-  fn get_height(Self) -> Int
-  fn present_pixels(Self, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
-  fn present_pixels_rect(Self, Int, Int, Int, Int, Int, FixedArray[Byte]) -> Result[Unit, PresentError]
+  fn get_width(Self) -> Int32
+  fn get_height(Self) -> Int32
+  fn present_pixels(Self, Int32, Int32, Int32, FixedArray[Byte]) -> Result[Unit, PresentError]
+  fn present_pixels_rect(Self, Int32, Int32, Int32, Int32, Int32, FixedArray[Byte]) -> Result[Unit, PresentError]
 }

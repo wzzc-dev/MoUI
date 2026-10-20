@@ -26,25 +26,25 @@ pub fn EmbeddedHostServices::drain_completed(Self) -> Array[@backend.HostComplet
 pub fn EmbeddedHostServices::drain_pending(Self) -> Array[@backend.HostPendingServiceRequest]
 pub fn EmbeddedHostServices::new(capabilities? : @backend.HostServiceCapabilities) -> Self
 pub fn EmbeddedHostServices::on_completed(Self, @backend.HostServiceRequestId, (@backend.HostCompletedServiceResponse) -> Unit) -> Bool
-pub fn EmbeddedHostServices::outstanding_count(Self) -> Int
+pub fn EmbeddedHostServices::outstanding_count(Self) -> Int32
 
 pub struct HostChannel {
-  mut next_request_id : Int
+  mut next_request_id : Int32
   mut pending : Array[HostRequestId]
   mut updates : Array[HostWireUpdate]
 } derive(ToJson, @debug.Debug)
 pub fn HostChannel::begin_request(Self) -> HostRequestId
 pub fn HostChannel::complete(Self, HostRequestId) -> Bool
-pub fn HostChannel::complete_request(Self, id~ : Int) -> Bool
+pub fn HostChannel::complete_request(Self, id~ : Int32) -> Bool
 pub fn HostChannel::drain_update_envelope(Self, HostSession) -> HostWireEnvelope
 pub fn HostChannel::drain_updates(Self) -> Array[HostWireUpdate]
 pub fn HostChannel::enqueue_update(Self, kind~ : String, payload~ : Json, request_id? : HostRequestId?) -> Bool
 pub fn HostChannel::new() -> Self
-pub fn HostChannel::pending_count(Self) -> Int
+pub fn HostChannel::pending_count(Self) -> Int32
 pub fn HostChannel::reset(Self) -> Unit
 pub fn HostChannel::to_json(Self) -> Json
 pub fn HostChannel::to_repr(Self) -> @debug.Repr
-pub fn HostChannel::track_request(Self, id~ : Int) -> HostRequestId?
+pub fn HostChannel::track_request(Self, id~ : Int32) -> HostRequestId?
 
 pub struct HostFrameScheduler {
   mut requested : Bool
@@ -61,7 +61,7 @@ pub fn HostFrameScheduler::to_json(Self) -> Json
 pub fn HostFrameScheduler::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostRequestId {
-  value : Int
+  value : Int32
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostRequestId::equal(Self, Self) -> Bool
 pub fn HostRequestId::not_equal(Self, Self) -> Bool
@@ -69,18 +69,18 @@ pub fn HostRequestId::to_json(Self) -> Json
 pub fn HostRequestId::to_repr(Self) -> @debug.Repr
 
 pub(all) struct HostSession {
-  mut generation : Int
-  mut surface_epoch : Int
+  mut generation : Int32
+  mut surface_epoch : Int32
   mut state : HostSessionState
   mut attached_once : Bool
 } derive(ToJson, @debug.Debug)
-pub fn HostSession::attach(Self, surface_epoch~ : Int) -> Bool
+pub fn HostSession::attach(Self, surface_epoch~ : Int32) -> Bool
 pub fn HostSession::destroy(Self) -> Bool
 pub fn HostSession::detach(Self) -> Bool
-pub fn HostSession::generation(Self) -> Int
-pub fn HostSession::new(generation~ : Int) -> Self
+pub fn HostSession::generation(Self) -> Int32
+pub fn HostSession::new(generation~ : Int32) -> Self
 pub fn HostSession::state(Self) -> HostSessionState
-pub fn HostSession::surface_epoch(Self) -> Int
+pub fn HostSession::surface_epoch(Self) -> Int32
 pub fn HostSession::to_json(Self) -> Json
 pub fn HostSession::to_repr(Self) -> @debug.Repr
 
@@ -99,32 +99,32 @@ pub struct HostSessionTransport {
   scheduler : HostFrameScheduler
   channel : HostChannel
 }
-pub fn HostSessionTransport::accepts_response_generation(Self, generation~ : Int) -> Bool
-pub fn HostSessionTransport::attach(Self, surface_epoch~ : Int) -> Bool
+pub fn HostSessionTransport::accepts_response_generation(Self, generation~ : Int32) -> Bool
+pub fn HostSessionTransport::attach(Self, surface_epoch~ : Int32) -> Bool
 pub fn HostSessionTransport::attached(Self) -> Bool
-pub fn HostSessionTransport::complete_request(Self, id~ : Int) -> Bool
+pub fn HostSessionTransport::complete_request(Self, id~ : Int32) -> Bool
 pub fn HostSessionTransport::destroy(Self) -> Bool
 pub fn HostSessionTransport::detach(Self) -> Bool
 pub fn HostSessionTransport::drain_update_envelope_json(Self) -> String
-pub fn HostSessionTransport::enqueue_tracked_update(Self, kind~ : String, payload~ : Json, request_id~ : Int) -> Bool
-pub fn HostSessionTransport::enqueue_update(Self, kind~ : String, payload~ : Json, request_id? : Int?) -> Bool
+pub fn HostSessionTransport::enqueue_tracked_update(Self, kind~ : String, payload~ : Json, request_id~ : Int32) -> Bool
+pub fn HostSessionTransport::enqueue_update(Self, kind~ : String, payload~ : Json, request_id? : Int32?) -> Bool
 pub fn HostSessionTransport::finish_frame(Self) -> Bool
 pub fn HostSessionTransport::frame_requested(Self) -> Bool
-pub fn HostSessionTransport::new(initial_generation~ : Int) -> Self
+pub fn HostSessionTransport::new(initial_generation~ : Int32) -> Self
 pub fn HostSessionTransport::request_frame(Self) -> Unit
-pub fn HostSessionTransport::session_generation(Self) -> Int
-pub fn HostSessionTransport::surface_epoch(Self) -> Int
+pub fn HostSessionTransport::session_generation(Self) -> Int32
+pub fn HostSessionTransport::surface_epoch(Self) -> Int32
 pub fn HostSessionTransport::take_requested_frame(Self) -> Bool
-pub fn HostSessionTransport::track_request(Self, id~ : Int) -> Bool
+pub fn HostSessionTransport::track_request(Self, id~ : Int32) -> Bool
 
 pub(all) struct HostWireEnvelope {
-  schema_version : Int
-  session_generation : Int
-  surface_epoch : Int
+  schema_version : Int32
+  session_generation : Int32
+  surface_epoch : Int32
   updates : Array[HostWireUpdate]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostWireEnvelope::equal(Self, Self) -> Bool
-pub fn HostWireEnvelope::new(session_generation~ : Int, surface_epoch~ : Int, updates~ : Array[HostWireUpdate]) -> Self
+pub fn HostWireEnvelope::new(session_generation~ : Int32, surface_epoch~ : Int32, updates~ : Array[HostWireUpdate]) -> Self
 pub fn HostWireEnvelope::not_equal(Self, Self) -> Bool
 pub fn HostWireEnvelope::to_json(Self) -> Json
 pub fn HostWireEnvelope::to_json_string(Self) -> String

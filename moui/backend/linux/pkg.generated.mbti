@@ -36,7 +36,7 @@ pub fn linux_environment_with_accessibility_settings(@wzzc-dev/moui/core.Environ
 
 pub fn linux_input_capabilities() -> @backend.HostInputCapabilities
 
-pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int, list_directory? : (String) -> @backend.HostServiceResponse) -> @backend.HostServiceBridge
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int32, list_directory? : (String) -> @backend.HostServiceResponse) -> @backend.HostServiceBridge
 
 pub fn linux_surface_metrics_for_content(@wzzc-dev/moui/core.SurfaceMetrics, LinuxClientDecorationState) -> @wzzc-dev/moui/core.SurfaceMetrics
 
@@ -66,8 +66,8 @@ pub fn LinuxATSPIBinding::publish_semantics(Self, @runtime.SemanticsRead) -> Lin
 
 pub(all) struct LinuxATSPIBindingDiagnostics {
   native_binding_ready : Bool
-  published_node_count : Int
-  action_dispatch_count : Int
+  published_node_count : Int32
+  action_dispatch_count : Int32
   disposed : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LinuxATSPIBindingDiagnostics::equal(Self, Self) -> Bool

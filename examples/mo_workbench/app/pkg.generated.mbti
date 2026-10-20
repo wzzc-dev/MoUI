@@ -31,10 +31,6 @@ pub fn mo_workbench_decode_settings_file(String) -> MoWorkbenchSettingsFile?
 
 pub fn mo_workbench_default_settings_file() -> MoWorkbenchSettingsFile
 
-pub fn mo_workbench_first_openseek_supported_model(Array[String]) -> String?
-
-pub fn mo_workbench_model_supported_by_openseek(String) -> Bool
-
 pub fn program_with_backend(backend~ : AgentBackendRuntime, settings_load? : (() -> MoWorkbenchSettingsFile?)?, settings_persist? : ((MoWorkbenchSettingsFile) -> Unit)?, model_detect? : ((String, String, (Array[String]?) -> Unit) -> Unit)?, environment? : @services.AppEnvironment) -> @core.Program[WorkbenchModel, WorkbenchMsg]
 
 pub fn session_summary(id~ : String, first_prompt~ : String, last_active_unix_seconds? : Int64?) -> SessionSummary
@@ -51,7 +47,6 @@ pub fn AgentBackendFixture::new(script~ : (AgentCommand) -> Array[AgentEvent]) -
 pub fn AgentBackendFixture::runtime(Self) -> AgentBackendRuntime
 
 pub(all) enum AgentBackendKind {
-  OpenSeek
   Acp
 } derive(Eq, @debug.Debug)
 pub fn AgentBackendKind::equal(Self, Self) -> Bool
@@ -225,7 +220,7 @@ pub struct CodeWorkspace {
   last_thought_message_id : String?
   error : String?
   scroll_offset : @core.Point
-  scroll_request_id : Int
+  scroll_request_id : Int32
   follow_latest : Bool
 }
 
@@ -259,7 +254,7 @@ pub struct MoWorkbenchSettingsFile {
   acp_process_cwd : String?
   approval_policy : String
   sandbox_mode : String
-  font_size : Int
+  font_size : Int32
   appearance : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn MoWorkbenchSettingsFile::equal(Self, Self) -> Bool
@@ -333,7 +328,7 @@ pub(all) enum SettingsMsg {
   AcpCommandChanged(String)
   AcpArgsChanged(String)
   AcpProcessCwdChanged(String)
-  FontSizeChanged(Int)
+  FontSizeChanged(Int32)
   AppearanceChanged(AppearanceMode)
   SaveToDisk
   DismissSaveNotice
@@ -367,7 +362,7 @@ pub struct SettingsWorkspace {
   acp_command : String
   acp_args : String
   acp_process_cwd : String
-  font_size : Int
+  font_size : Int32
   active_section : SettingsSection
   save_notice : String?
   env_source : String
@@ -378,7 +373,7 @@ pub struct SettingsWorkspace {
 }
 pub fn SettingsWorkspace::active_provider(Self) -> ProviderConfig?
 pub fn SettingsWorkspace::find_provider(Self, String) -> ProviderConfig?
-pub fn SettingsWorkspace::provider_index(Self, String) -> Int?
+pub fn SettingsWorkspace::provider_index(Self, String) -> Int32?
 
 type TaskFilter derive(Eq, @debug.Debug)
 pub fn TaskFilter::equal(Self, Self) -> Bool

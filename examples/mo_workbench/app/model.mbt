@@ -112,7 +112,7 @@ pub fn ProviderConfig::new(
   name~ : String,
   base_url~ : String,
   api_key~ : String,
-  models? : Array[String] = [],
+  models~ : Array[String] = [],
 ) -> ProviderConfig {
   { id, name, base_url, api_key, models, }
 }
@@ -143,31 +143,6 @@ fn default_openai_provider() -> ProviderConfig {
 ///|
 fn default_providers() -> Array[ProviderConfig] {
   [default_deepseek_provider(), default_openai_provider()]
-}
-
-///|
-/// Current native backend limit: OpenSeek 0.2.x only exposes these typed model
-/// ids. Other provider-discovered/custom ids stay visible but disabled.
-pub fn mo_workbench_model_supported_by_openseek(model_id : String) -> Bool {
-  match model_id {
-    "deepseek-v4-flash"
-    | "deepseek-v4-pro"
-    | "kimi-k2.7-code"
-    | "kimi-k2.7-code-highspeed" => true
-    _ => false
-  }
-}
-
-///|
-pub fn mo_workbench_first_openseek_supported_model(
-  models : Array[String],
-) -> String? {
-  for model_id in models {
-    if mo_workbench_model_supported_by_openseek(model_id) {
-      return Some(model_id)
-    }
-  }
-  None
 }
 
 ///|
@@ -230,7 +205,7 @@ pub fn SettingsWorkspace::find_provider(
 pub fn SettingsWorkspace::provider_index(
   self : SettingsWorkspace,
   id : String,
-) -> Int? {
+) -> Int32? {
   let mut i = 0
   for p in self.providers {
     if p.id == id {
@@ -365,7 +340,7 @@ pub extend TaskGroup with Eq::{not_equal, equal}
 /// (session-backed task). Folder nodes can be expanded/collapsed.
 enum TaskTreeNode {
   Folder(String, String, TaskGroup, Array[TaskTreeNode], Bool)
-  Task(String, String, TaskGroup, TaskStatus, Int)
+  Task(String, String, TaskGroup, TaskStatus, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -397,7 +372,7 @@ pub struct CodeWorkspace {
   last_thought_message_id : String?
   error : String?
   scroll_offset : @geometry.Point
-  scroll_request_id : Int
+  scroll_request_id : Int32
   follow_latest : Bool
 }
 
@@ -447,7 +422,7 @@ pub struct SettingsWorkspace {
   acp_command : String
   acp_args : String
   acp_process_cwd : String
-  font_size : Int
+  font_size : Int32
   active_section : SettingsSection
   priv scroll_offset : @geometry.Point
   save_notice : String?
@@ -478,13 +453,13 @@ pub extend SettingsSection with Eq::{not_equal, equal}
 fn SettingsWorkspace::new() -> SettingsWorkspace {
   let providers = default_providers()
   {
-    agent_backend: OpenSeek,
+    agent_backend: Acp,
     providers,
     active_provider_id: Some("deepseek"),
     approval_policy: AskOnWrite,
     sandbox_mode: WorkspaceWritable,
     working_dir: ".",
-    session_root: "./.openseek",
+    session_root: "./.mo_workbench/sessions",
     acp_command: "",
     acp_args: "",
     acp_process_cwd: "",
@@ -528,9 +503,9 @@ pub struct WorkbenchModel {
 ///|
 fn WorkbenchModel::new(
   backend~ : AgentBackendRuntime,
-  settings_load? : SettingsLoadFn? = None,
-  settings_persist? : SettingsPersistFn? = None,
-  model_detect? : ModelDetectFn? = None,
+  settings_load~ : SettingsLoadFn? = None,
+  settings_persist~ : SettingsPersistFn? = None,
+  model_detect~ : ModelDetectFn? = None,
 ) -> WorkbenchModel {
   let mut settings = SettingsWorkspace::new()
   let mut appearance = AppearanceMode::System
@@ -543,8 +518,7 @@ fn WorkbenchModel::new(
           settings = SettingsWorkspace::merge_settings_file(settings, file)
           appearance = AppearanceMode::merge_settings_file(appearance, file)
           settings = { ..settings, env_source: ".mo_workbench/settings.json", }
-          if !file.current_model.is_empty() &&
-            mo_workbench_model_supported_by_openseek(file.current_model) {
+          if !file.current_model.is_empty() {
             applied_model = file.current_model
           }
           applied_provider = file.active_provider_id
@@ -648,7 +622,7 @@ pub(all) enum SettingsMsg {
   AcpCommandChanged(String)
   AcpArgsChanged(String)
   AcpProcessCwdChanged(String)
-  FontSizeChanged(Int)
+  FontSizeChanged(Int32)
   AppearanceChanged(AppearanceMode)
   SaveToDisk
   DismissSaveNotice
@@ -705,10 +679,10 @@ pub struct MoWorkbenchApp {
 ///|
 fn MoWorkbenchApp::new(
   backend~ : AgentBackendRuntime,
-  settings_load? : SettingsLoadFn? = None,
-  settings_persist? : SettingsPersistFn? = None,
-  model_detect? : ModelDetectFn? = None,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  settings_load~ : SettingsLoadFn? = None,
+  settings_persist~ : SettingsPersistFn? = None,
+  model_detect~ : ModelDetectFn? = None,
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> MoWorkbenchApp {
   { backend, settings_load, settings_persist, model_detect, environment, }
 }

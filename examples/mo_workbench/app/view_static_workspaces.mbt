@@ -4,11 +4,11 @@
 
 ///|
 priv struct WorkTabSummary {
-  total : Int
-  active : Int
-  running : Int
-  completed : Int
-  failed : Int
+  total : Int32
+  active : Int32
+  running : Int32
+  completed : Int32
+  failed : Int32
 }
 
 ///|
@@ -23,7 +23,7 @@ priv struct WorkAction {
 
 ///|
 priv struct DesignTabSummary {
-  total_tasks : Int
+  total_tasks : Int32
   active_session : String
   model : String
   approval : String
