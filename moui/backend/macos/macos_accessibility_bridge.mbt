@@ -138,10 +138,10 @@ fn macos_semantics_live_code(live : @core.SemanticsLive) -> String {
 ///|
 fn macos_checked_json(value : @core.SemanticsCheckedState?) -> Json {
   match value {
-    Some(Unchecked) => "unchecked".to_json()
-    Some(Checked) => "checked".to_json()
-    Some(Mixed) => "mixed".to_json()
-    None => (None : String?).to_json()
+    Some(Unchecked) => Json("unchecked")
+    Some(Checked) => Json("checked")
+    Some(Mixed) => Json("mixed")
+    None => Json((None : String?))
   }
 }
 
@@ -203,7 +203,7 @@ fn macos_announcement_json(
 fn macos_optional_node_id_json(value : @core.SemanticsNodeId?) -> Json {
   match value {
     Some(id) => id.to_json()
-    None => (None : String?).to_json()
+    None => Json((None : String?))
   }
 }
 

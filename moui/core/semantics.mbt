@@ -130,7 +130,7 @@ pub fn SemanticId::value(self : SemanticId) -> String {
 
 ///|
 pub impl ToJson for SemanticId with fn to_json(self : SemanticId) -> Json {
-  self.value.to_json()
+  Json(self.value)
 }
 
 ///|
@@ -172,7 +172,7 @@ pub fn SemanticsNodeId::to_wire(self : SemanticsNodeId) -> String {
 
 ///|
 pub impl ToJson for SemanticsNodeId with fn to_json(self : SemanticsNodeId) -> Json {
-  self.to_wire().to_json()
+  Json(self.to_wire())
 }
 
 ///|
@@ -222,7 +222,7 @@ pub fn SemanticsGeneration::to_wire(self : SemanticsGeneration) -> String {
 pub impl ToJson for SemanticsGeneration with fn to_json(
   self : SemanticsGeneration,
 ) -> Json {
-  self.to_wire().to_json()
+  Json(self.to_wire())
 }
 
 ///|

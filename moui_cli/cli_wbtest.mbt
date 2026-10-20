@@ -62,7 +62,7 @@ test "JSON usage failures remain valid JSON" {
   inspect(outcome.stdout, content="")
   let parsed = @json.parse(outcome.stderr)
   guard parsed is Object(root) else { fail("expected a JSON object") }
-  inspect(root.get("ok") == Some(false.to_json()), content="true")
+  inspect(root.get("ok") == Some(Json(false)), content="true")
 }
 
 ///|
@@ -80,7 +80,7 @@ test "doctor required failures use exit code one" {
   inspect(outcome.exit_code, content="1")
   let parsed = @json.parse(outcome.stdout)
   guard parsed is Object(root) else { fail("expected doctor JSON") }
-  inspect(root.get("ok") == Some(false.to_json()), content="true")
+  inspect(root.get("ok") == Some(Json(false)), content="true")
 }
 
 ///|
@@ -95,10 +95,10 @@ test "help and version routes succeed" {
   inspect(version_result.exit_code, content="0")
   let parsed = @json.parse(version_result.stdout)
   guard parsed is Object(root) else { fail("expected version JSON") }
-  inspect(root.get("version") == Some(cli_version().to_json()), content="true")
+  inspect(root.get("version") == Some(Json(cli_version())), content="true")
   inspect(
     root.get("defaultMouiDependencyVersion") ==
-    Some(@plan.default_moui_dependency_version.to_json()),
+    Some(Json(@plan.default_moui_dependency_version)),
     content="true",
   )
 }

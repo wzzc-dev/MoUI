@@ -78,7 +78,7 @@ pub impl Debug for MarkdownDocumentTextStore with fn to_repr(self) {
 
 ///|
 pub impl ToJson for MarkdownDocumentTextStore with fn to_json(self) {
-  self.source().to_json()
+  Json(self.source())
 }
 
 ///|

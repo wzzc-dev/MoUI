@@ -539,7 +539,7 @@ fn bind_macos_menu_bar_items(
   menus : Array[@host.HostApplicationMenu],
   dispatch : (Int32) -> Unit,
 ) -> Bool {
-  let text = (menus.to_json() : Json).stringify()
+  let text = (Json(menus) : Json).stringify()
   macos_bind_menu_bar_items(
     @utf8.encode(text[:], bom=false),
     fn(callback, action_id) { callback(action_id) },
@@ -553,7 +553,7 @@ fn install_macos_application_menu_items(
   items : Array[@host.HostApplicationMenuItem],
   dispatch : (Int32) -> Unit,
 ) -> Bool {
-  let text = (items.to_json() : Json).stringify()
+  let text = (Json(items) : Json).stringify()
   macos_install_application_menu_items(
     @utf8.encode(text[:], bom=false),
     fn(callback, action_id) { callback(action_id) },

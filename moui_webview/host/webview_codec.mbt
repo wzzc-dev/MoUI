@@ -949,14 +949,12 @@ fn webview_native_config(
 
 ///|
 fn webview_document_start_script(config : WebViewControllerConfig) -> String {
-  let origins_json = config.security.allowed_origins
-    .map(origin => origin.value())
-    .to_json()
-    .stringify()
-  let channels_json = config.security.allowed_channels
-    .map(channel => channel.name)
-    .to_json()
-    .stringify()
+  let origins_json = Json(
+    config.security.allowed_origins.map(origin => origin.value()),
+  ).stringify()
+  let channels_json = Json(
+    config.security.allowed_channels.map(channel => channel.name),
+  ).stringify()
   let scripts = [webview_bridge_bootstrap(origins_json, channels_json)]
   for patch in config.host_patches {
     match patch.stylesheet {
@@ -991,10 +989,7 @@ fn webview_document_end_script(config : WebViewControllerConfig) -> String {
 
 ///|
 fn webview_patch_wrapper(patch : HostPatchBundle, source : String) -> String {
-  let origins = patch.allowed_origins
-    .map(origin => origin.value())
-    .to_json()
-    .stringify()
+  let origins = Json(patch.allowed_origins.map(origin => origin.value())).stringify()
   "(function(){var allowed=" +
   origins +
   ";if(allowed.indexOf(location.origin)<0)return;try{" +

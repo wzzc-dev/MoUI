@@ -171,7 +171,7 @@ fn native_measure_text_layout(
     "|" +
     input.font.to_json().stringify() +
     "|" +
-    input.max_width.to_json().stringify()
+    Json(input.max_width).stringify()
   match cache.measure_cache.get(key) {
     Some(result) => result
     None => {

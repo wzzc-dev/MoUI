@@ -5,15 +5,15 @@
 ///|
 fn manifest_json(manifest : ProjectManifest) -> Json {
   let root : Map[String, Json] = Map([
-    ("schemaVersion", manifest.schema_version.to_json()),
-    ("id", manifest.id.to_json()),
-    ("title", manifest.title.to_json()),
-    ("module", manifest.module_name.to_json()),
-    ("mouiVersion", manifest.moui_version.to_json()),
-    ("platforms", manifest.platforms.to_json()),
+    ("schemaVersion", Json(manifest.schema_version)),
+    ("id", Json(manifest.id)),
+    ("title", Json(manifest.title)),
+    ("module", Json(manifest.module_name)),
+    ("mouiVersion", Json(manifest.moui_version)),
+    ("platforms", Json(manifest.platforms)),
   ])
   match manifest.bundle_id {
-    Some(value) => root["bundleId"] = value.to_json()
+    Some(value) => root["bundleId"] = Json(value)
     None => ()
   }
   Json::object(root)

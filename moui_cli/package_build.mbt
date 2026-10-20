@@ -429,7 +429,7 @@ fn package_windows_portable(
   fields["buildNumber"] = Json::string(options.build_number)
   fields["executable"] = Json::string(executable)
   fields["bundleName"] = Json::string(name)
-  fields["runtimeFiles"] = runtime_files.to_json()
+  fields["runtimeFiles"] = Json(runtime_files)
   let manifest = Json::object(fields).stringify(indent=2) + "\n"
   @fs.write_bytes_to_file(manifest_path, @utf8.encode(manifest[:], bom=false)) catch {
     _ =>
@@ -544,7 +544,7 @@ fn package_macos_bundle(
   fields["buildNumber"] = Json::string(options.build_number)
   fields["executable"] = Json::string(executable)
   fields["bundleName"] = Json::string(name + ".app")
-  fields["runtimeFiles"] = ([] : Array[String]).to_json()
+  fields["runtimeFiles"] = Json(([] : Array[String]))
   let manifest = Json::object(fields).stringify(indent=2) + "\n"
   @fs.write_bytes_to_file(manifest_path, @utf8.encode(manifest[:], bom=false)) catch {
     _ =>

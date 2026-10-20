@@ -13,7 +13,7 @@ test "SemanticId: parse preserves exact case-sensitive values" {
     expect_semantic_id("\u{00E9}") == expect_semantic_id("e\u{0301}"),
     content="false",
   )
-  inspect(upper.to_json() == "Counter.Increment".to_json(), content="true")
+  inspect(upper.to_json() == Json("Counter.Increment"), content="true")
 }
 
 ///|
@@ -49,10 +49,10 @@ test "semantics node and generation IDs use lossless decimal wire strings" {
   let generation = @core.SemanticsGeneration::new(9007199254740993UL)
   inspect(node_id.value() == 0xFFFFFFFFFFFFFFFFUL, content="true")
   inspect(node_id.to_wire(), content="18446744073709551615")
-  inspect(node_id.to_json() == "18446744073709551615".to_json(), content="true")
+  inspect(node_id.to_json() == Json("18446744073709551615"), content="true")
   inspect(generation.value() == 9007199254740993UL, content="true")
   inspect(generation.to_wire(), content="9007199254740993")
-  inspect(generation.to_json() == "9007199254740993".to_json(), content="true")
+  inspect(generation.to_json() == Json("9007199254740993"), content="true")
 }
 
 ///|

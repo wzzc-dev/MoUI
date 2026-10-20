@@ -132,7 +132,7 @@ fn merge_mobile_config_for_platforms(
         }
       }
       if !root.contains("schemaVersion") {
-        root["schemaVersion"] = (1 : Int32).to_json()
+        root["schemaVersion"] = Json((1 : Int32))
       }
       Ok(Json::object(root).stringify(indent=2) + "\n")
     }

@@ -246,11 +246,7 @@ pub fn EmbeddedRuntimeHostBridge::drain_updates(
 pub fn EmbeddedRuntimeHostBridge::drain_updates_json(
   self : EmbeddedRuntimeHostBridge,
 ) -> String {
-  self
-  .drain_updates()
-  .map(update => embedded_host_update_json(update))
-  .to_json()
-  .stringify()
+  Json(self.drain_updates().map(update => embedded_host_update_json(update))).stringify()
 }
 
 ///|
@@ -383,9 +379,7 @@ fn embedded_runtime_clipboard_request_json(
     WriteText(text) => ({ "operation": "write-text", "text": text } : Json)
     ReadImage => ({ "operation": "read-image" } : Json)
     WriteImage(mime, bytes) =>
-      (
-        { "operation": "write-image", "mime": mime, "bytes": bytes.to_json() } :
-        Json)
+      ({ "operation": "write-image", "mime": mime, "bytes": Json(bytes) } : Json)
   }
 }
 

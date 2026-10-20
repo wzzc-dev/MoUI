@@ -21,7 +21,7 @@ fn ElementId::value(self : ElementId) -> Int32 {
 
 ///|
 impl ToJson for ElementId with fn to_json(self) {
-  self.value.to_json()
+  Json(self.value)
 }
 
 ///|

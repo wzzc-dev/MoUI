@@ -577,35 +577,35 @@ fn mobile_platform_json(fields : Array[(String, Json)]) -> Json {
 ///|
 pub fn mobile_config_text(options : ProjectOptions) -> String {
   let root : Map[String, Json] = Map([
-    ("schemaVersion", (1 : Int32).to_json()),
-    ("id", options.id.to_json()),
-    ("displayName", options.title.to_json()),
-    ("artifactName", options.id.to_json()),
-    ("appPackage", "app".to_json()),
+    ("schemaVersion", Json((1 : Int32))),
+    ("id", Json(options.id)),
+    ("displayName", Json(options.title)),
+    ("artifactName", Json(options.id)),
+    ("appPackage", Json("app")),
   ])
   let bundle_id = options.bundle_id.unwrap_or("")
   if options.platforms.contains("android") {
     root["android"] = mobile_platform_json([
-      ("applicationId", bundle_id.to_json()),
-      ("minSdk", (23 : Int32).to_json()),
+      ("applicationId", Json(bundle_id)),
+      ("minSdk", Json((23 : Int32))),
     ])
   }
   if options.platforms.contains("ios") {
     root["ios"] = mobile_platform_json([
-      ("bundleId", bundle_id.to_json()),
-      ("productName", product_name(options.id).to_json()),
-      ("deploymentTarget", "15.0".to_json()),
+      ("bundleId", Json(bundle_id)),
+      ("productName", Json(product_name(options.id))),
+      ("deploymentTarget", Json("15.0")),
     ])
   }
   if options.platforms.contains("harmonyos") {
     root["harmonyos"] = mobile_platform_json([
-      ("bundleName", bundle_id.to_json()),
-      ("productName", product_name(options.id).to_json()),
-      ("appName", options.title.to_json()),
-      ("moduleName", "entry".to_json()),
-      ("moduleDescription", (options.title + " HarmonyOS app").to_json()),
-      ("entryDescription", (options.title + " entry ability").to_json()),
-      ("compatibleSdkVersion", (20 : Int32).to_json()),
+      ("bundleName", Json(bundle_id)),
+      ("productName", Json(product_name(options.id))),
+      ("appName", Json(options.title)),
+      ("moduleName", Json("entry")),
+      ("moduleDescription", Json(options.title + " HarmonyOS app")),
+      ("entryDescription", Json(options.title + " entry ability")),
+      ("compatibleSdkVersion", Json((20 : Int32))),
     ])
   }
   Json::object(root).stringify(indent=2) + "\n"

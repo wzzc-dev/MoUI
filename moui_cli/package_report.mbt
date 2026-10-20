@@ -51,18 +51,18 @@ fn package_report_json(
     Err(message) => return Err(message)
   }
   let root : Map[String, Json] = Map([
-    ("schemaVersion", (1 : Int32).to_json()),
-    ("ok", true.to_json()),
-    ("command", "package".to_json()),
-    ("projectRoot", options.project_root.to_json()),
-    ("id", manifest.id.to_json()),
-    ("module", manifest.module_name.to_json()),
-    ("title", manifest.title.to_json()),
-    ("mouiVersion", manifest.moui_version.to_json()),
-    ("platforms", manifest.platforms.to_json()),
+    ("schemaVersion", Json((1 : Int32))),
+    ("ok", Json(true)),
+    ("command", Json("package")),
+    ("projectRoot", Json(options.project_root)),
+    ("id", Json(manifest.id)),
+    ("module", Json(manifest.module_name)),
+    ("title", Json(manifest.title)),
+    ("mouiVersion", Json(manifest.moui_version)),
+    ("platforms", Json(manifest.platforms)),
   ])
   match manifest.bundle_id {
-    Some(value) => root["bundleId"] = value.to_json()
+    Some(value) => root["bundleId"] = Json(value)
     None => ()
   }
   let mobile_path = join_path(options.project_root, "moui.mobile.json")
@@ -141,30 +141,27 @@ fn package_manifest_json(
     artifacts.push(
       Json::object(
         Map([
-          ("platform", platform.to_json()),
-          ("outputKind", package_output_kind(platform).to_json()),
-          ("outputPath", output_path.to_json()),
-          ("buildRequested", options.build.to_json()),
+          ("platform", Json(platform)),
+          ("outputKind", Json(package_output_kind(platform))),
+          ("outputPath", Json(output_path)),
+          ("buildRequested", Json(options.build)),
           (
             "signing",
             Json::object(
               Map([
-                ("status", "host-required".to_json()),
+                ("status", Json("host-required")),
                 ("signature", Json::null()),
               ]),
             ),
           ),
           (
             "notarization",
-            Json::object(Map([("status", "host-required".to_json())])),
+            Json::object(Map([("status", Json("host-required"))])),
           ),
-          (
-            "installer",
-            Json::object(Map([("status", "host-specific".to_json())])),
-          ),
+          ("installer", Json::object(Map([("status", Json("host-specific"))]))),
           (
             "updateManifest",
-            Json::object(Map([("status", "not-configured".to_json())])),
+            Json::object(Map([("status", Json("not-configured"))])),
           ),
         ]),
       ),
@@ -173,49 +170,51 @@ fn package_manifest_json(
   Ok(
     Json::object(
       Map([
-        ("schemaVersion", (1 : Int32).to_json()),
-        ("ok", true.to_json()),
-        ("command", "package".to_json()),
+        ("schemaVersion", Json((1 : Int32))),
+        ("ok", Json(true)),
+        ("command", Json("package")),
         (
           "status",
-          (if options.dry_run {
-            "dry-run"
-          } else if options.build {
-            "build-requested"
-          } else {
-            "planned"
-          }).to_json(),
+          Json(
+            if options.dry_run {
+              "dry-run"
+            } else if options.build {
+              "build-requested"
+            } else {
+              "planned"
+            },
+          ),
         ),
-        ("projectRoot", options.project_root.to_json()),
+        ("projectRoot", Json(options.project_root)),
         (
           "project",
           Json::object(
             Map([
-              ("id", project.id.to_json()),
-              ("title", project.title.to_json()),
-              ("module", project.module_name.to_json()),
-              ("mouiVersion", project.moui_version.to_json()),
+              ("id", Json(project.id)),
+              ("title", Json(project.title)),
+              ("module", Json(project.module_name)),
+              ("mouiVersion", Json(project.moui_version)),
               (
                 "bundleId",
                 match project.bundle_id {
-                  Some(value) => value.to_json()
+                  Some(value) => Json(value)
                   None => Json::null()
                 },
               ),
             ]),
           ),
         ),
-        ("version", version.to_json()),
-        ("platforms", platforms.to_json()),
-        ("artifacts", artifacts.to_json()),
+        ("version", Json(version)),
+        ("platforms", Json(platforms)),
+        ("artifacts", Json(artifacts)),
         (
           "release",
           Json::object(
             Map([
-              ("signing", "host-required".to_json()),
-              ("notarization", "host-required".to_json()),
-              ("installers", "host-specific".to_json()),
-              ("updateManifest", "not-configured".to_json()),
+              ("signing", Json("host-required")),
+              ("notarization", Json("host-required")),
+              ("installers", Json("host-specific")),
+              ("updateManifest", Json("not-configured")),
             ]),
           ),
         ),

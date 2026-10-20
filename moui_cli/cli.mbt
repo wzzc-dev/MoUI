@@ -590,7 +590,7 @@ fn doctor_report_outcome(
         stderr: "",
       }
     }
-    fields["fixes"] = fixes.to_json()
+    fields["fixes"] = Json(fixes)
     Json::object(fields).stringify(indent=2) + "\n"
   } else {
     let builder = StringBuilder()

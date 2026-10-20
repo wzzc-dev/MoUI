@@ -3,7 +3,7 @@ let acp_protocol_version : Int32 = 1
 
 ///|
 fn acp_json_null() -> Json {
-  (None : String?).to_json()
+  Json((None : String?))
 }
 
 ///|
@@ -81,8 +81,8 @@ fn acp_new_session_request_line(id : String, cwd : String) -> String {
     (
       {
         "cwd": cwd,
-        "mcpServers": ([] : Array[Json]).to_json(),
-        "additionalDirectories": ([] : Array[String]).to_json(),
+        "mcpServers": Json(([] : Array[Json])),
+        "additionalDirectories": Json(([] : Array[String])),
       } : Json),
   ).stringify()
 }
@@ -127,8 +127,8 @@ fn acp_load_session_request_line(
       {
         "sessionId": session_id,
         "cwd": cwd,
-        "mcpServers": ([] : Array[Json]).to_json(),
-        "additionalDirectories": ([] : Array[String]).to_json(),
+        "mcpServers": Json(([] : Array[Json])),
+        "additionalDirectories": Json(([] : Array[String])),
       } : Json),
   ).stringify()
 }
@@ -146,8 +146,8 @@ fn acp_resume_session_request_line(
       {
         "sessionId": session_id,
         "cwd": cwd,
-        "mcpServers": ([] : Array[Json]).to_json(),
-        "additionalDirectories": ([] : Array[String]).to_json(),
+        "mcpServers": Json(([] : Array[Json])),
+        "additionalDirectories": Json(([] : Array[String])),
       } : Json),
   ).stringify()
 }

@@ -145,7 +145,7 @@ fn[Host] find_tool(
 
 ///|
 fn json_null() -> Json {
-  (None : String?).to_json()
+  Json((None : String?))
 }
 
 ///|
@@ -281,7 +281,7 @@ fn semantics_path_segment_json(segment : @core.SemanticsPathSegment) -> Json {
 ///|
 fn optional_string_json(value : String?) -> Json {
   match value {
-    Some(text) => text.to_json()
+    Some(text) => Json(text)
     None => json_null()
   }
 }
@@ -938,7 +938,7 @@ fn optional_semantic_id_json(value : @core.SemanticId?) -> Json {
 ///|
 fn optional_int_json(value : Int32?) -> Json {
   match value {
-    Some(number) => number.to_json()
+    Some(number) => Json(number)
     None => json_null()
   }
 }
@@ -946,9 +946,9 @@ fn optional_int_json(value : Int32?) -> Json {
 ///|
 fn optional_checked_json(value : @core.SemanticsCheckedState?) -> Json {
   match value {
-    Some(Unchecked) => "unchecked".to_json()
-    Some(Checked) => "checked".to_json()
-    Some(Mixed) => "mixed".to_json()
+    Some(Unchecked) => Json("unchecked")
+    Some(Checked) => Json("checked")
+    Some(Mixed) => Json("mixed")
     None => json_null()
   }
 }
