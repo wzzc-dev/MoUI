@@ -435,6 +435,7 @@ set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
 set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
+set "MOUI_SKIA_STUB_CC_FLAGS=$ccFlags"
 echo cl version:
 cl 2>&1
 set SMOKE_EXE=%CD%\_build\native\debug\build\moui_skia_native_smoke.exe
