@@ -18,7 +18,13 @@ import { spawnSync } from "node:child_process";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repoRoot, "checks/external-consumer");
-const registryBaseVersion = "0.1.7";
+// Stable registry line consumed by the backward-compat probe. Registry
+// artifacts are immutable: the 0.1.7 line still ships legacy moon.mod.json
+// manifests (and transitively pulls mizchi/image / moonbitlang/quickcheck
+// copies that do too), which the manifest-migrated toolchain rejects outright.
+// 0.2.4 is the first line published after the moon.mod migration, so its
+// closure installs cleanly under the pinned toolchain.
+const registryBaseVersion = "0.2.4";
 
 // Head versions must track the published module versions. Read them from each
 // module manifest instead of hardcoding so version bumps cannot leave this
