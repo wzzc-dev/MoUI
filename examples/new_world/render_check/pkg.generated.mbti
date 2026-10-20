@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/new_world/render_check"
+
+import {
+  "examples/new_world/app",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn plugin_frame(@app.WorldModel, Double, Double) -> Array[@core.DrawCommand]
+
+pub fn plugin_frame_json(@app.WorldModel, Double, Double) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

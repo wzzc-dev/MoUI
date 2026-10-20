@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f6f7f9" />
+    <title>New World · MoUI</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #f6f7f9;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        touch-action: none;
+      }
+      #canvas-host {
+        /* `100dvh` follows a mobile browser's collapsing URL bar; the `100vh`
+           fallback keeps older engines on the safe value. A portrait phone
+           whose canvas is taller than its visible viewport would put the
+           composer under the browser chrome. */
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+      }
+      #diagnostics {
+        display: none;
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        width: min(520px, calc(100vw - 24px));
+        max-height: 40vh;
+        overflow: auto;
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        font: 12px/1.45 "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+      }
+      body.debug #diagnostics,
+      body.failed #diagnostics { display: block; }
+      #status { font-weight: 600; margin-bottom: 8px; }
+      #log { margin: 0; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-host" aria-label="New World画布"></div>
+    <aside id="diagnostics" aria-live="polite">
+      <div id="status">Loading wasm-gc...</div>
+      <pre id="log"></pre>
+    </aside>
+    <script type="module">
+      import { bootMouiWasmGcApp } from "../../../moui_web_renderer/runtime.js";
+
+      const status = document.querySelector("#status");
+      const log = document.querySelector("#log");
+      let line = "";
+      const append = message => {
+        log.textContent += `${message}\n`;
+        log.scrollTop = log.scrollHeight;
+      };
+      const setStatus = message => {
+        status.textContent = message;
+        append(message);
+      };
+
+      // ------------------------------------------------------------------
+      // new_world_host: provider fetch + folder database, owned by the page.
+      //
+      // Strings cross into wasm only as ids (the same handshake protocol the
+      // web backend's clipboard uses), fetch completions come back through the
+      // exported `ai_llm_complete`, and filesystem operations through
+      // `ai_fs_complete`. The library is a real directory when the File System
+      // Access API is available; otherwise an equivalent in-page store keeps
+      // the same folder shape, so the app cannot tell the difference.
+      // ------------------------------------------------------------------
+
+      let booted = null;
+      // Completions may land while boot is still resolving (the app kicks a
+      // library sync from its init effect, which runs inside _start). Queue
+      // them and replay once the instance is in hand.
+      const bootQueue = [];
+      // Strings handed to a *queued* export must outlive the queue. Releasing
+      // the id at completion time dropped the payload before the wasm side
+      // ever read it, so the first library listing (and any first provider
+      // reply) arrived as an empty string. Release now when booted, otherwise
+      // remember the id and release it once the queue has been replayed.
+      const deferredReleases = new Set();
+      function callExport(name, ...args) {
+        if (booted) {
+          try {
+            booted.exports?.[name]?.(...args);
+          } catch (error) {
+            setStatus(`export ${name} failed: ${error?.message ?? error}`);
+          }
+        } else {
+          bootQueue.push([name, args]);
+        }
+      }
+
+      // Drop a string id after the export that carries it has run (or has been
+      // queued for replay).
+      function releaseString(id) {
+        if (booted) {
+          stringStore.delete(id);
+        } else {
+          deferredReleases.add(id);
+        }
+      }
+
+      const stringStore = new Map();
+      const stringBuilders = new Map();
+      const stringReaders = new Map();
+      let nextStringId = 1;
+      let nextHandle = 1;
+
+      function beginCreateString() {
+        const handle = nextHandle++;
+        stringBuilders.set(handle, []);
+        return handle;
+      }
+
+      function appendStringChar(handle, code) {
+        stringBuilders.get(handle)?.push(code);
+      }
+
+      function finishCreateString(handle) {
+        const codes = stringBuilders.get(handle) ?? [];
+        stringBuilders.delete(handle);
+        const text = codes
+          .map(code => String.fromCodePoint(code))
+          .join("");
+        const id = nextStringId++;
+        stringStore.set(id, text);
+        return id;
+      }
+
+      function takeString(id) {
+        const text = stringStore.get(id) ?? "";
+        stringStore.delete(id);
+        return text;
+      }
+
+      function peekStringId(id) {
+        const text = stringStore.get(id) ?? "";
+        const handle = nextHandle++;
+        stringReaders.set(handle, { chars: [...text], pos: 0 });
+        return handle;
+      }
+
+      function readStringChar(handle) {
+        const reader = stringReaders.get(handle);
+        if (!reader || reader.pos >= reader.chars.length) return -1;
+        const code = reader.chars[reader.pos].codePointAt(0);
+        reader.pos += 1;
+        return code;
+      }
+
+      function finishReadString(handle) {
+        stringReaders.delete(handle);
+      }
+
+      // ---- provider ----------------------------------------------------
+
+      async function llmSubmit(requestId, endpointId, keyId, bodyId) {
+        const endpoint = takeString(endpointId);
+        const apiKey = takeString(keyId);
+        const body = takeString(bodyId);
+        const url = endpoint.includes("/chat/completions")
+          ? endpoint
+          : `${endpoint.replace(/\/+$/, "")}/chat/completions`;
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body,
+          });
+          const text = await response.text();
+          const textId = nextStringId++;
+          stringStore.set(textId, text);
+          const ok = response.ok;
+          callExport("ai_llm_complete", requestId, ok, textId);
+          releaseString(textId);
+        } catch (error) {
+          setStatus(`Provider request failed: ${error}`);
+          callExport("ai_llm_complete", requestId, false, 0);
+        }
+      }
+
+      // ---- folder database ----------------------------------------------
+
+      const LIBRARY_KEY = "new_world_library_v1";
+
+      // The in-page fallback library keeps one localStorage entry per world, so
+      // committing a world no longer re-serializes every other world in the
+      // library (the old single-key store did, on every single turn).
+      const WORLD_KEY_PREFIX = "new_world_world_v1:";
+      // Keys used before the rename to New World. Their worlds still exist on
+      // disk; only the in-page fallback library moved, so migrate on first use
+      // instead of showing the player an empty library.
+      const LEGACY_WORLD_KEY_PREFIX = "ai_world_world_v1:";
+      const LEGACY_CONFIG_KEY = "ai_world_config_v1";
+
+      function worldKey(folder) {
+        return WORLD_KEY_PREFIX + folder;
+      }
+
+      // Move one pre-rename entry to its new key. Returns the migrated value (or
+      // null). The old key is removed only after the new one is written, so an
+      // interrupted migration keeps the data rather than losing it.
+      function migrateLegacyWorld(folder) {
+        try {
+          const legacy = localStorage.getItem(LEGACY_WORLD_KEY_PREFIX + folder);
+          if (legacy === null) return null;
+          localStorage.setItem(worldKey(folder), legacy);
+          localStorage.removeItem(LEGACY_WORLD_KEY_PREFIX + folder);
+          noteStorage(`已从旧版本迁移世界「${folder}」的存档`);
+          return legacy;
+        } catch {
+          return null;
+        }
+      }
+
+      // Worlds that only exist under the old key still have to appear in the
+      // fallback library, otherwise they vanish from the list.
+      function legacyWorldNames() {
+        const names = [];
+        try {
+          for (let i = 0; i < localStorage.length; i += 1) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(LEGACY_WORLD_KEY_PREFIX)) {
+              names.push(key.slice(LEGACY_WORLD_KEY_PREFIX.length));
+            }
+          }
+        } catch { /* storage unavailable: no legacy worlds */ }
+        return names;
+      }
+
+      function readWorldStore(folder) {
+        try {
+          let raw = localStorage.getItem(worldKey(folder));
+          if (raw === null) raw = migrateLegacyWorld(folder);
+          if (raw) return JSON.parse(raw) || {};
+        } catch { /* damaged entry: treat as empty, the Markdown is the truth */ }
+        // Migrate from the legacy single-key library on first read.
+        try {
+          const legacy = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "{}");
+          if (legacy && legacy[folder]) return legacy[folder];
+        } catch { /* ignore */ }
+        return {};
+      }
+
+      function saveWorldStore(folder, folderMap) {
+        try {
+          localStorage.setItem(worldKey(folder), JSON.stringify(folderMap));
+        } catch {
+          /* storage unavailable: the world lives in memory only */
+        }
+      }
+
+      // World names in the in-page library: the per-world keys, plus anything
+      // still only in the legacy aggregate.
+      function virtualWorldNames() {
+        const names = new Set();
+        try {
+          for (let index = 0; index < localStorage.length; index += 1) {
+            const key = localStorage.key(index) ?? "";
+            if (key.startsWith(WORLD_KEY_PREFIX)) {
+              names.add(key.slice(WORLD_KEY_PREFIX.length));
+            }
+          }
+        } catch { /* ignore */ }
+        try {
+          const legacy = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "{}");
+          for (const name of Object.keys(legacy ?? {})) names.add(name);
+        } catch { /* ignore */ }
+        return [...names];
+      }
+
+      function saveVirtualWorld(folder, folderMap) {
+        saveWorldStore(folder, folderMap);
+        // Drop the legacy copy of this world so the two stores cannot diverge.
+        try {
+          const legacy = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "{}");
+          if (legacy && legacy[folder]) {
+            delete legacy[folder];
+            localStorage.setItem(LIBRARY_KEY, JSON.stringify(legacy));
+          }
+        } catch { /* ignore */ }
+      }
+
+      let rootHandle = null;
+
+      // Storage mode after the last pick, surfaced in the diagnostics line:
+      // "folder" = a real picked directory, "virtual" = the in-page library.
+      // Virtual is the fallback for browsers without the File System Access
+      // API (Safari) and for insecure origins — `showDirectoryPicker` is
+      // simply absent there, so the player can never grant a folder.
+      let libraryMode = "virtual";
+
+      function noteStorage(message) {
+        const where = rootHandle ? "真实文件夹" : "页面内等价库";
+        setStatus(`世界库：${where}` + (message ? ` — ${message}` : ""));
+        append(message ?? `已使用${where}作为世界库。`);
+      }
+
+      async function ensureReadWrite(handle) {
+        if (handle.queryPermission) {
+          const state = await handle.queryPermission({ mode: "readwrite" });
+          if (state !== "granted" && handle.requestPermission) {
+            await handle.requestPermission({ mode: "readwrite" });
+          }
+        }
+      }
+
+      // A File System Access handle is structured-cloneable, so it can be
+      // stored in IndexedDB and re-acquired after a reload. Without this the
+      // player had to re-pick their folder on every refresh — a fatal break
+      // for a tool whose whole premise is "your worlds are a folder on disk".
+      // Permission itself is NOT granted by the store: the browser still
+      // requires a gesture, so on reload we re-query and only auto-restore when
+      // the grant is still live.
+      const HANDLE_DB = "new_world_handles";
+      const HANDLE_STORE = "handles";
+      const HANDLE_KEY = "library";
+
+      function handleDb() {
+        return new Promise((resolve, reject) => {
+          if (!("indexedDB" in globalThis)) {
+            reject(new Error("no indexedDB"));
+            return;
+          }
+          const request = indexedDB.open(HANDLE_DB, 1);
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(HANDLE_STORE)) {
+              db.createObjectStore(HANDLE_STORE);
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async function rememberHandle(handle) {
+        try {
+          const db = await handleDb();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(HANDLE_STORE, "readwrite");
+            tx.objectStore(HANDLE_STORE).put(handle, HANDLE_KEY);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          });
+          db.close();
+        } catch { /* private mode / unsupported: the session still works */ }
+      }
+
+      async function forgetHandle() {
+        try {
+          const db = await handleDb();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(HANDLE_STORE, "readwrite");
+            tx.objectStore(HANDLE_STORE).delete(HANDLE_KEY);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          });
+          db.close();
+        } catch { /* ignore */ }
+      }
+
+      async function recallHandle() {
+        try {
+          const db = await handleDb();
+          const handle = await new Promise((resolve, reject) => {
+            const tx = db.transaction(HANDLE_STORE, "readonly");
+            const request = tx.objectStore(HANDLE_STORE).get(HANDLE_KEY);
+            request.onsuccess = () => resolve(request.result ?? null);
+            request.onerror = () => reject(request.error);
+          });
+          db.close();
+          return handle ?? null;
+        } catch {
+          return null;
+        }
+      }
+
+      // Re-acquire the remembered folder without a gesture. `queryPermission`
+      // returns "granted" while the origin still holds the grant (the browser
+      // keeps it for recently used handles); anything else means the player has
+      // to pick again, so we leave the library in the "pick a folder" state
+      // instead of pretending to have one.
+      // Should a stored handle be adopted without a gesture?
+      //
+      // Only an explicit "granted" counts. "prompt" means the browser would
+      // need a gesture (a click the reload did not provide), and "denied"
+      // means the origin lost the permission permanently — adopting either
+      // would leave the UI claiming a library it cannot read. A handle with no
+      // permission API at all predates the query API, so it is treated as
+      // granted and any real failure surfaces as a normal read error.
+      function permissionAllowsRestore(state) {
+        return state == null || state === "granted";
+      }
+
+      async function restoreHandle() {
+        // No capability probe here on purpose: a stored handle can only exist
+        // if the File System Access API was present when it was stored, and
+        // gating on `showDirectoryPicker` would also refuse to restore in
+        // contexts where the picker is unavailable but the handle is still
+        // usable (and made the whole path untestable).
+        const handle = await recallHandle();
+        if (!handle) return false;
+        let state = null;
+        try {
+          state = handle.queryPermission
+            ? await handle.queryPermission({ mode: "readwrite" })
+            : null;
+        } catch {
+          state = "denied";
+        }
+        if (!permissionAllowsRestore(state)) {
+          // Expired or revoked: drop the stale record so the next pick is
+          // clean, and let the UI ask for a folder again.
+          await forgetHandle();
+          return false;
+        }
+        rootHandle = handle;
+        libraryMode = "folder";
+        return true;
+      }
+
+      async function listWorldNames() {
+        if (rootHandle) {
+          const names = [];
+          for await (const [name, entry] of rootHandle.entries()) {
+            if (entry.kind === "directory") names.push(name);
+          }
+          return names.sort();
+        }
+        // Fallback library: include worlds that only exist under a pre-rename
+        // key, so an upgraded player still sees them.
+        return [...new Set([...virtualWorldNames(), ...legacyWorldNames()])].sort();
+      }
+
+      async function seedVirtualLibrary() {
+        if (virtualWorldNames().length > 0) return;
+        const example = "# 雨夜酒馆\n\n夜雨敲窗，炉火正暖。这是一座样本世界——你可以新建自己的世界，或让AI生成。\n";
+        const seeded = {
+          "world.md": example,
+          "characters/林掌柜.md":
+            "# 林掌柜\n\n## 人设\n\n酒馆掌柜，话不多但句句在理，见过的旅人比这条街的青石板还多。\n\n## 说话方式\n\n简短、沉稳，偶尔带一点旧江湖的念白\n\n## 目标\n\n把这壶酒卖给客人，顺便听点新鲜事\n\n## 秘密\n\n后堂埋着一坛三十年的女儿红\n\n## 位置\n\nx=320 y=210\n",
+          "world_book.md":
+            "# 世界书\n\n- 酒 | 花雕: 后堂埋着一坛三十年的女儿红，只有极熟的客人喝得到。\n- 雨夜: 雨大的时候，官道上不会有旅人——来的都是有事的人。\n",
+        };
+        saveVirtualWorld("雨夜酒馆", seeded);
+      }
+
+      async function pickRoot() {
+        if (!window.showDirectoryPicker) {
+          // Safari (and insecure origins) never expose the picker: fall back
+          // to the in-page library and say so, instead of failing silently
+          // and looking like a dead button.
+          libraryMode = "virtual";
+          rootHandle = null;
+          await seedVirtualLibrary();
+          noteStorage(
+            "此浏览器不支持目录句柄（如 Safari）；用 Chrome/Edge 打开本页可授权真实文件夹。",
+          );
+          return { names: await listWorldNames() };
+        }
+        try {
+          const handle = await window.showDirectoryPicker({
+            mode: "readwrite",
+            id: "new-world-library",
+          });
+          rootHandle = handle;
+          libraryMode = "folder";
+          await ensureReadWrite(handle);
+          await rememberHandle(handle);
+          noteStorage(null);
+          return { names: await listWorldNames() };
+        } catch {
+          // Cancelled or denied: KEEP the previously picked folder if any —
+          // silently demoting to the in-page library would make the player's
+          // saved worlds disappear at the next list.
+          noteStorage(rootHandle ? null : "未选择文件夹，使用页面内等价库。");
+          return { names: await listWorldNames() };
+        }
+      }
+
+      // A world folder is the Markdown world (world.md, characters/*.md,
+      // world_book.md) PLUS the JSON journal committed beside it
+      // (conversations.json, events.json). Both halves must be read back:
+      // skipping the journal silently reset every conversation on reload.
+      const WORLD_FILE = /\.(md|json)$/;
+      // Portraits are binary, so they cross as base64 and the app turns them
+      // back into `data:` URIs. The filter lives beside WORLD_FILE because a
+      // world's assets are part of the folder read, not a separate concern.
+      const PORTRAIT_FILE = /\.(png|jpe?g|webp)$/i;
+
+      function bytesToBase64(bytes) {
+        let binary = "";
+        const chunk = 0x8000;
+        for (let index = 0; index < bytes.length; index += chunk) {
+          binary += String.fromCharCode.apply(
+            null,
+            bytes.subarray(index, index + chunk),
+          );
+        }
+        return btoa(binary);
+      }
+
+      async function readWorldFile(entry) {
+        const file = await entry.getFile();
+        if (PORTRAIT_FILE.test(entry.name)) {
+          return bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+        }
+        return file.text();
+      }
+
+      async function readWorld(folder) {
+        const files = [];
+        const wanted = (name) => WORLD_FILE.test(name) || PORTRAIT_FILE.test(name);
+        if (rootHandle) {
+          const dir = await rootHandle.getDirectoryHandle(folder);
+          for await (const [name, entry] of dir.entries()) {
+            if (entry.kind === "file" && wanted(name)) {
+              files.push([name, await readWorldFile(entry)]);
+            } else if (entry.kind === "directory") {
+              for await (const [subName, subEntry] of entry.entries()) {
+                if (subEntry.kind === "file" && wanted(subName)) {
+                  files.push([
+                    `${name}/${subName}`,
+                    await readWorldFile(subEntry),
+                  ]);
+                }
+              }
+            }
+          }
+        } else {
+          const folderMap = readWorldStore(folder);
+          for (const [path, content] of Object.entries(folderMap)) {
+            files.push([path, content]);
+          }
+        }
+        return { files };
+      }
+
+      async function writeWorld(folder, files) {
+        if (rootHandle) {
+          const dir = await rootHandle.getDirectoryHandle(folder, {
+            create: true,
+          });
+          for (const [path, content] of files) {
+            const cut = path.lastIndexOf("/");
+            const fileName = cut >= 0 ? path.slice(cut + 1) : path;
+            const target = cut >= 0
+              ? await dir.getDirectoryHandle(path.slice(0, cut), {
+                  create: true,
+                })
+              : dir;
+            const file = await target.getFileHandle(fileName, {
+              create: true,
+            });
+            const writable = await file.createWritable();
+            await writable.write(content);
+            await writable.close();
+          }
+        } else {
+          // Only this world is rewritten: the per-world key means a turn in
+          // one world no longer pays for every other world in the library.
+          const folderMap = readWorldStore(folder);
+          for (const [path, content] of files) {
+            folderMap[path] = content;
+          }
+          saveVirtualWorld(folder, folderMap);
+        }
+        return {};
+      }
+
+      // ---- world bundles -------------------------------------------------
+      //
+      // A world is portable by design, so export/import is a first-class
+      // operation, not a debug tool. The MoonBit side hands over the exact
+      // file set (Markdown + journal) and builds the bundle body; the page only
+      // owns the file dialog and the write. Import unpacks into a *new* folder
+      // and returns that folder's files so the app can go on stage.
+
+      async function exportBundle(folder, files) {
+        const payload = JSON.stringify({
+          format: "moui.new-world/1",
+          name: folder,
+          files: files.map(([path, content]) => [path, content]),
+        });
+        const blob = new Blob([payload], { type: "application/json" });
+        // Show the save picker where available: the player chooses where the
+        // world lands, which is the point of a portable world.
+        if (window.showSaveFilePicker) {
+          try {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: `${folder}.aiworld.json`,
+              types: [
+                {
+                  description: "New World bundle",
+                  accept: { "application/json": [".json"] },
+                },
+              ],
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            return { ok: true };
+          } catch {
+            return { ok: false };
+          }
+        }
+        // Fallback (no File System Access): a normal download.
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `${folder}.aiworld.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+        return { ok: true };
+      }
+
+      async function importBundle() {
+        const text = await pickBundleText();
+        if (text == null) return { ok: false, folder: "", files: [] };
+        let bundle = null;
+        try {
+          bundle = JSON.parse(text);
+        } catch {
+          return { ok: false, folder: "", files: [] };
+        }
+        if (!bundle || bundle.format !== "moui.new-world/1" || !Array.isArray(bundle.files)) {
+          return { ok: false, folder: "", files: [] };
+        }
+        // Same admission rule as the MoonBit decoder: world files only, no
+        // traversal. The page is a second lock on the same door.
+        const files = bundle.files.filter(
+          ([path]) =>
+            typeof path === "string" &&
+            /\.(md|json)$/.test(path) &&
+            !path.includes(".."),
+        );
+        if (files.length === 0) return { ok: false, folder: "", files: [] };
+        const base = String(bundle.name ?? "导入的世界").replace(/[\\/:*?"<>|]/g, "_").trim();
+        const folder = await uniqueWorldName(base || "导入的世界");
+        await writeWorld(folder, files);
+        return { ok: true, folder, files };
+      }
+
+      function pickBundleText() {
+        return new Promise(resolve => {
+          if (window.showOpenFilePicker) {
+            window
+              .showOpenFilePicker({
+                types: [
+                  {
+                    description: "New World bundle",
+                    accept: { "application/json": [".json"] },
+                  },
+                ],
+              })
+              .then(async handles => {
+                const handle = handles?.[0];
+                if (!handle) return resolve(null);
+                resolve(await (await handle.getFile()).text());
+              })
+              .catch(() => resolve(null));
+            return;
+          }
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = ".json,application/json";
+          input.onchange = async () => {
+            const file = input.files?.[0];
+            resolve(file ? await file.text() : null);
+          };
+          input.click();
+        });
+      }
+
+      // Never overwrite an existing world on import: pick `名字 (2)`, `(3)`, …
+      async function uniqueWorldName(base) {
+        const taken = new Set(await listWorldNames());
+        if (!taken.has(base)) return base;
+        let index = 2;
+        while (taken.has(`${base} (${index})`)) index += 1;
+        return `${base} (${index})`;
+      }
+
+      const CONFIG_KEY = "new_world_config_v1";
+
+      // One-time move of the provider settings; without it the player silently
+      // loses their endpoint key and every turn starts failing.
+      function migrateLegacyConfig() {
+        try {
+          if (localStorage.getItem(CONFIG_KEY) !== null) return;
+          const legacy = localStorage.getItem(LEGACY_CONFIG_KEY);
+          if (legacy === null) return;
+          localStorage.setItem(CONFIG_KEY, legacy);
+          localStorage.removeItem(LEGACY_CONFIG_KEY);
+          noteStorage("已从旧版本迁移模型设置");
+        } catch { /* storage unavailable */ }
+      }
+      const CONFIG_FILE = "config.json";
+
+      async function readConfig() {
+        if (rootHandle) {
+          try {
+            const file = await rootHandle.getFileHandle(CONFIG_FILE);
+            return { content: await (await file.getFile()).text() };
+          } catch {
+            // Missing file = first run: empty content, not an error.
+            return { content: "" };
+          }
+        }
+        migrateLegacyConfig();
+        return { content: localStorage.getItem(CONFIG_KEY) ?? "" };
+      }
+
+      async function writeConfig(content) {
+        if (rootHandle) {
+          const file = await rootHandle.getFileHandle(CONFIG_FILE, {
+            create: true,
+          });
+          const writable = await file.createWritable();
+          await writable.write(content);
+          await writable.close();
+        } else {
+          try {
+            localStorage.setItem(CONFIG_KEY, content);
+          } catch { /* storage unavailable: settings stay in memory */ }
+        }
+        return {};
+      }
+
+      async function runFs(requestId, dirName, operation) {
+        try {
+          const payload = await operation();
+          const textId = finishCreateStringFor(JSON.stringify(payload));
+          const ok = true;
+          callExport("ai_fs_complete", requestId, ok, textId);
+          releaseString(textId);
+        } catch (error) {
+          setStatus(`世界库操作失败（${dirName}）: ${error}`);
+          callExport("ai_fs_complete", requestId, false, 0);
+        }
+      }
+
+      function finishCreateStringFor(text) {
+        const handle = beginCreateString();
+        for (const ch of text) {
+          appendStringChar(handle, ch.codePointAt(0));
+        }
+        return finishCreateString(handle);
+      }
+
+      const newWorldHost = {
+        begin_create_string: beginCreateString,
+        string_append_char: appendStringChar,
+        finish_create_string: finishCreateString,
+        begin_read_string: id => peekStringId(id),
+        string_read_char: readStringChar,
+        finish_read_string: finishReadString,
+        llm_submit: (requestId, endpointId, keyId, bodyId) => {
+          llmSubmit(requestId, endpointId, keyId, bodyId);
+        },
+        fs_pick: requestId => {
+          runFs(requestId, "选择世界库", pickRoot);
+        },
+        fs_list: requestId => {
+          runFs(requestId, "读取世界库", async () => {
+            // First listing after a reload: try to re-acquire the folder the
+            // player granted last time. No gesture is involved; when the grant
+            // is gone this stays a no-op and the UI asks for a folder again.
+            if (!rootHandle) {
+              const restored = await restoreHandle();
+              if (restored) {
+                noteStorage("已恢复上次的世界库授权");
+              }
+            }
+            return { names: await listWorldNames() };
+          });
+        },
+        fs_read: (requestId, folderId) => {
+          const folder = takeString(folderId);
+          runFs(requestId, folder, () => readWorld(folder));
+        },
+        fs_write: (requestId, folderId, manifestId) => {
+          const folder = takeString(folderId);
+          let files = [];
+          try {
+            const manifest = JSON.parse(takeString(manifestId));
+            files = manifest.files ?? [];
+          } catch {
+            files = [];
+          }
+          runFs(requestId, folder, () => writeWorld(folder, files));
+        },
+        fs_config_read: requestId => {
+          runFs(requestId, "读取设置", readConfig);
+        },
+        fs_config_write: (requestId, contentId) => {
+          const content = takeString(contentId);
+          runFs(requestId, "保存设置", () => writeConfig(content));
+        },
+        fs_export_world: (requestId, folderId, manifestId) => {
+          const folder = takeString(folderId);
+          let files = [];
+          try {
+            const manifest = JSON.parse(takeString(manifestId));
+            files = manifest.files ?? [];
+          } catch {
+            files = [];
+          }
+          runFs(requestId, `导出 ${folder}`, () => exportBundle(folder, files));
+        },
+        fs_import_world: requestId => {
+          runFs(requestId, "导入世界", importBundle);
+        },
+      };
+
+      if (new URLSearchParams(window.location.search).get("debug") === "1") {
+        document.body.classList.add("debug");
+      }
+      // Automation surface: the host bridge plus the storage helpers. The
+      // handle-restore path cannot be driven through a real dialog in
+      // automation, so its pieces are observable here (see `?debug=1`).
+      window.__ai = {
+        host: newWorldHost,
+        exports: () => booted?.exports,
+        calls: [],
+        ops: [],
+        log: [],
+        storage: {
+          rememberHandle,
+          recallHandle,
+          forgetHandle,
+          restoreHandle: async () => {
+            const restored = await restoreHandle();
+            return { restored, libraryMode, root: rootHandle?.name ?? null };
+          },
+          mode: () => libraryMode,
+          worldKeys: () => virtualWorldNames(),
+          permissionAllowsRestore,
+        },
+      };
+
+      const pageParams = new URLSearchParams(window.location.search);
+      bootMouiWasmGcApp({
+        // The example is a workspace member: `moon build` writes to the
+        // repo-root `_build`, three levels up from this page. `?v=<n>` on the
+        // page URL feeds `?bv=` here, busting the browser cache on redeploy.
+        wasmUrl: new URL(
+          `../../../_build/wasm-gc/debug/build/examples/new_world/web_wasm/web_wasm.wasm?bv=${pageParams.get("v") ?? "0"}`,
+          import.meta.url,
+        ),
+        canvasHost: "#canvas-host",
+        webgpu: {
+          // `?renderer=2d` forces the Canvas2D renderer (debug/automation aid:
+          // its canvas can be read back programmatically).
+          forceUnavailable: pageParams.get("renderer") === "2d",
+        },
+        onStatus: setStatus,
+        imports: { new_world_host: newWorldHost },
+        onPrint(ch) {
+          if (ch === "\n") {
+            append(line);
+            line = "";
+          } else {
+            line += ch;
+          }
+        },
+      }).then(instance => {
+        booted = instance;
+        for (const [name, args] of bootQueue.splice(0)) {
+          callExport(name, ...args);
+        }
+        // The queue has been replayed: the wasm side has read every payload it
+        // was handed while booting, so the ids can be dropped now.
+        for (const id of deferredReleases) {
+          stringStore.delete(id);
+        }
+        deferredReleases.clear();
+        status.textContent = "Running";
+        append("MoonBit wasm-gc started.");
+      }).catch(error => {
+        document.body.classList.add("failed");
+        status.textContent = "Failed";
+        append(error.stack || String(error));
+        console.error(error);
+      });
+    </script>
+  </body>
+</html>

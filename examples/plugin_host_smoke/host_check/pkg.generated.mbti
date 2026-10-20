@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/plugin_host_smoke/host_check"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn frame_damage(Array[@core.DrawCommand], @core.Rect) -> @core.DamageRegion
+
+pub fn frame_damage_rects(Array[@core.DrawCommand]) -> Array[@core.Rect]
+
+pub fn offset_commands(Array[@core.DrawCommand], @core.Point) -> Array[@core.DrawCommand]
+
+pub fn[Msg] render_plugin(HostedPlugin, @core.View[Msg]) -> Array[@core.DrawCommand]
+
+// Errors
+
+// Types and methods
+pub(all) struct HostedPlugin {
+  id : String
+  origin : @core.Point
+  size : @core.Size
+}
+pub fn HostedPlugin::new(String, @core.Point, @core.Size) -> Self
+
+// Type aliases
+
+// Traits
