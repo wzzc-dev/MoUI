@@ -85,7 +85,7 @@ pub using @core {type DragGestureEvent, type DragGesturePhase}
 pub using @layout {frame}
 
 ///|
-pub using @layout {grid, list}
+pub using @layout {grid, list, wrap, flow}
 
 ///|
 pub using @presentation {

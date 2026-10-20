@@ -52,7 +52,7 @@ members = [
   "./examples/browser",
   "./examples/terminal",
   "./examples/tui_layers",
-  "./examples/ai_world",
+  "./examples/new_world",
   "./moui_studio",
   "./benchmarks/app_cached_layer",
   "./benchmarks/full_cycle",

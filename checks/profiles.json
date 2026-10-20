@@ -665,11 +665,11 @@
           ]
         },
         {
-          "name": "AI World Web build",
+          "name": "New World Web build",
           "argv": [
             "moon",
             "build",
-            "examples/ai_world/web_wasm",
+            "examples/new_world/web_wasm",
             "--target",
             "wasm-gc"
           ]
